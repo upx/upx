@@ -89,6 +89,11 @@ print <<"EOF";
 EOF
 }
 
+$s = $ident;
+$s =~ tr/a-z/A-Z/;
+$s .= "_ADLER32";
+printf("#define %s 0x%08x\n\n", $s, &adler32($data));
+
 printf("unsigned char %s[%d] = {", $ident, $n);
 for ($i = 0; $i < $n; $i++) {
     if ($i % 16 == 0) {
@@ -112,5 +117,27 @@ select(STDOUT);
 
 undef $delim;
 exit(0);
+
+
+# /***********************************************************************
+# //
+# ************************************************************************/
+
+sub adler32 {
+    local($d) = @_;
+    local($n) = length($d);
+    local($i);
+    local($s1) = 1;
+    local($s2) = 0;
+
+    for ($i = 0; $i < $n; $i++) {
+        $s1 += ord(substr($d, $i, 1));
+        $s2 += $s1;
+        $s1 %= 65521;
+        $s2 %= 65521;
+    }
+
+    return ($s2 << 16) | $s1;
+}
 
 # vi:ts=4:et
