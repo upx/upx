@@ -68,15 +68,16 @@ decompress:
 ; // C callable decompressor
 ; **************************************************************************/
 
-%define         INP     dword [esp+8*4+4]
-%define         INS     dword [esp+8*4+8]
-%define         OUTP    dword [esp+8*4+12]
-%define         OUTS    dword [esp+8*4+16]
+%define         INP     dword [esp+8*4+8]
+%define         INS     dword [esp+8*4+12]
+%define         OUTP    dword [esp+8*4+16]
+%define         OUTS    dword [esp+8*4+20]
 
 ;__LEXEC009__
         ;;  empty section for commonality with l_lx_exec86.asm
 ;__LEXEC010__
                 pusha
+                push    byte '?'  ; cto8 (sign extension does not matter)
                 ; cld
 
                 mov     esi, INP
@@ -106,6 +107,8 @@ decompress:
                 sub     edi, OUTP
                 mov     edx, OUTS
                 mov     [edx], edi
+
+                pop edx  ; cto8
 
                 mov [7*4 + esp], eax
                 popa
