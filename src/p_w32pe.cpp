@@ -883,15 +883,14 @@ void Export::build(char *newbase,unsigned newoffs)
 void PackW32Pe::processExports(Export *xport) // pass1
 {
     soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4);
+    if (soexport == 0)
+        return;
     if (!isdll && opt->w32pe.compress_exports)
     {
-        if (soexport)
-            infoWarning("exports compressed, --compress-exports=0 might be needed");
+        infoWarning("exports compressed, --compress-exports=0 might be needed");
         soexport = 0;
         return;
     }
-    if (soexport == 0)
-        return;
     xport->convert(IDADDR(PEDIR_EXPORT),IDSIZE(PEDIR_EXPORT));
     soexport = ALIGN_UP(xport->getsize(),4);
     oexport = new upx_byte[soexport];
@@ -1910,26 +1909,34 @@ int PackW32Pe::canUnpack()
         return true;
     if (!is_packed && !found_ph)
         return -1;
-    bool hacked_upx = false;
     if (is_packed && ih.entry < isection[2].vaddr)
     {
         unsigned char buf[256];
         memset(buf, 0, sizeof(buf));
-        fi->seek(ih.entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
-        fi->read(buf, sizeof(buf));
+        bool x = false;
 
-        static const char getbit_magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
-        // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
+        try {
+            fi->seek(ih.entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
+            fi->read(buf, sizeof(buf));
 
-        unsigned char *p = find(buf, sizeof(buf), getbit_magic, 7);
-        if (p &&  find(p + 1, buf - p + sizeof(buf) - 1, getbit_magic, 7))
-        {
-            hacked_upx = true;
-            fprintf(stderr, "hacked upx header detected\n");
+            static const char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
+            // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
+
+            unsigned char *p = find(buf, sizeof(buf), magic, 7);
+            if (p && find(p + 1, buf - p + sizeof(buf) - 1, magic, 7))
+                x = true;
+        } catch (...) {
+            //x = true;
         }
+        if (x)
+            throwCantUnpack("file is modified/hacked/protected; take care!!!");
+        else
+            throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+        return false;   // not reached
     }
 
-    throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+    // FIXME: what should we say here ?
+    //throwCantUnpack("file is possibly modified/hacked/protected; take care!");
     return false;   // not reached
 }
 
