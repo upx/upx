@@ -152,7 +152,6 @@
 #  define SIGTYPEENTRY      __cdecl
 #  define HAVE_IO_H 1
 #  define HAVE_MALLOC_H 1
-#  define HAVE_UNISTD_H 1
 #  define HAVE_UTIME_H 1
 #  define HAVE_MODE_T 1
 #  define HAVE_CHMOD 1

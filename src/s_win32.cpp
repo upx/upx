@@ -42,6 +42,10 @@
 // direct screen access
 **************************************************************************/
 
+#if defined(_MSC_VER) && (_MSC_VER < 1200)
+#  pragma warning(disable: 4201) // nonstandard extension used: nameless struct/union
+#endif
+
 #include <windows.h>
 #if defined(HAVE_CONIO_H)
 #  include <conio.h>

@@ -98,14 +98,14 @@ class bad_alloc { };
 #  define __USE_MALLOC
 #  define enable                upx_stl_enable
 #endif
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #  pragma warning(push)
 #  pragma warning(disable: 4018 4100 4663)
 #endif
 
 #include <vector>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #  pragma warning(pop)
 #endif
 
