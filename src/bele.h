@@ -1,4 +1,4 @@
-/* bele.h --
+/* bele.h -- access memory in BigEndian and LittleEndian byte order
 
    This file is part of the UPX executable compressor.
 
@@ -31,7 +31,7 @@
 
 
 /*************************************************************************
-// access memory in BigEndian and LittleEndian byte order
+// core
 **************************************************************************/
 
 inline unsigned get_be16(const void *bb)
@@ -142,6 +142,48 @@ inline void set_le32(void *bb, unsigned v)
     b[2] = (unsigned char) (v >> 16);
     b[3] = (unsigned char) (v >> 24);
 #endif
+}
+
+
+/*************************************************************************
+// get signed values, i.e. sign-extend
+**************************************************************************/
+
+inline int sign_extend(int v, int bits)
+{
+    const int sign_bit = 1 << (bits - 1);
+    v |= -(v & sign_bit);
+    return v;
+}
+
+inline int get_be16_signed(const void *bb)
+{
+    int v = get_be16(bb);
+    return sign_extend(v, 16);
+}
+
+inline int get_be32_signed(const void *bb)
+{
+    int v = get_be32(bb);
+    return sign_extend(v, 32);
+}
+
+inline int get_le16_signed(const void *bb)
+{
+    int v = get_le16(bb);
+    return sign_extend(v, 16);
+}
+
+inline int get_le24_signed(const void *bb)
+{
+    int v = get_le24(bb);
+    return sign_extend(v, 24);
+}
+
+inline int get_le32_signed(const void *bb)
+{
+    int v = get_le32(bb);
+    return sign_extend(v, 32);
 }
 
 
@@ -279,7 +321,7 @@ int le32_compare(const void *e1, const void *e2);
 
 
 // just for testing...
-#if 0 && defined(__i386__) && defined(__GNUC__)
+#if 0 && defined(__i386__) && defined(__GNUC_VERSION_HEX__)
 # if (__GNUC_VERSION_HEX__ >= 0x030100)
    typedef unsigned short LE16_unaligned __attribute__((__packed__,__aligned__(1)));
    typedef unsigned int   LE32_unaligned __attribute__((__packed__,__aligned__(1)));
