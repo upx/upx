@@ -65,6 +65,7 @@ const int *PackVmlinuzI386::getCompressionMethods(int method, int level) const
 const int *PackVmlinuzI386::getFilters() const
 {
     static const int filters[] = {
+        /*0x49,*/  /* 2003-07-16 bug in unfilter? */
         0x26, 0x24, 0x11, 0x14, 0x13, 0x16, 0x25, 0x15, 0x12,
     -1 };
     return filters;
@@ -371,6 +372,9 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, e_len, "EDI0", bzimage_offset + edi);
     patch_le32(loader, e_len, "ESI0", bzimage_offset + esi);
 
+    if (0x40==(0xf0 & ft.id)) {
+        patch_le32(loader, e_len, "ULEN", ph.u_len);
+    }
     patch_le32(loader, e_len, "KEIP", kernel_entry);
     patch_le32(loader, e_len, "STAK", stack_during_uncompression);
 
