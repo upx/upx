@@ -48,12 +48,14 @@ start:
                 mov     ss, eax
                 mov     esp, 'STAK'     ; 0x90000
 
+                or      ebp, byte -1
                 mov     eax, 'KEIP'     ; 0x100000 - address of startup_32
                 push    eax
                 push    edi
                 push    esi
-                or      ebp, byte -1
-
+%ifdef  __LZCALLT1__
+                push    eax
+%endif; __LZDUMMY0__
 %ifdef  __LBZIMAGE__
                 mov     esi, 'ESI0'
                 mov     edi, 'EDI0'
@@ -91,7 +93,10 @@ checka20:
 %include      "n2d_d32.ash"
 
 ; =============
-;       __LINUZ990__
+%ifdef  __LZCALLT9__
+                pop     edi
+                cjt32   0
+%endif; __LINUZ990__
                 pop     esi
                 pop     edi
                 xor     ebx, ebx        ; booting the 1st cpu
@@ -108,4 +113,3 @@ eof:
                 section .data
                 dd      -1
                 dw      eof
-
