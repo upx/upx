@@ -294,6 +294,9 @@ l_ps1.h: l_ps1.asm
 # // linux rules (exec, elf, sh, sep)
 # ************************************************************************/
 
+upx_itoa.o: upx_itoa.asm
+	$(NASM) -f elf -o $@ $<
+
 l_lx_elf86.h: l_lx_elf86.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin linux_i386elf_loader $@
@@ -309,6 +312,15 @@ l_lx_sh86.h: l_lx_sh86.asx
 l_lx_elf.o: l_lx_elf.c
 	$(CC_LINUX_I386) -c $<
 
+l_lx_exec.o: l_lx_exec.c
+	$(CC_LINUX_I386) -c $<
+
+l_lx_sep.o: l_lx_sep.c
+	$(CC_LINUX_I386) -c $<
+
+l_lx_sh.o: l_lx_sh.c
+	$(CC_LINUX_I386) -c $<
+
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
 
@@ -318,12 +330,6 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
-
-l_lx_exec.o: l_lx_exec.c
-	$(CC_LINUX_I386) -c $<
-
-upx_itoa.o: upx_itoa.asm
-	$(NASM) -f elf -o $@ $<
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
@@ -335,9 +341,6 @@ fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_fold $@
 
-l_lx_sh.o: l_lx_sh.c
-	$(CC_LINUX_I386) -c $<
-
 fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
 
@@ -347,9 +350,6 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
-
-l_lx_sep.o: l_lx_sep.c
-	$(CC_LINUX_I386) -c $<
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
@@ -377,7 +377,7 @@ DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy
 $(STUBS):       $(srcdir)/scripts/bin2h.pl
 
 l_com.h:        n2b_d16.asy  $(DEPS2)
-l_djgpp2.h:     n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_djgpp2.h:     $(DEPS2) $(DEPS3)
 l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  n2e_d8e.asy  $(DEPS2)
 l_sys.h:        n2b_d16.asy  $(DEPS2)
 l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1)
@@ -386,10 +386,10 @@ l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1)
 l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1)
 l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1)
 l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1)
-l_tmt.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
-l_vxd.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
-l_wcle.h:       n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
-l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_tmt.h:        $(DEPS2) $(DEPS3)
+l_vxd.h:        $(DEPS2) $(DEPS3)
+l_wcle.h:       $(DEPS2) $(DEPS3)
+l_w32pe.h:      $(DEPS2) $(DEPS3)
 
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
