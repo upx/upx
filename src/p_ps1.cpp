@@ -74,7 +74,7 @@ static const
 **************************************************************************/
 
 PackPs1::PackPs1(InputFile *f) :
-    super(f), 
+    super(f),
     isCon(false^opt->ps1_exe.console_run), is32Bit(true^opt->ps1_exe.do_8bit),
     overlap(0), sa_cnt(0), cfile_size(0)
 {
