@@ -704,7 +704,7 @@ char *textdomain(const char *)
 #endif /* __linux__ && __GLIBC__ */
 
 
-}; // extern "C"
+} // extern "C"
 
 
 /*

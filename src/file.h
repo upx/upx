@@ -38,6 +38,9 @@ class MemBuffer;
 
 class File
 {
+protected:
+    File() { }
+    virtual ~File() { }
 public:
     static void chmod(const char *name, int mode);
     static void rename(const char *old_, const char *new_);

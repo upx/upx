@@ -206,7 +206,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
     fo->write(shstrtab, sizeof(shstrtab));
 #endif  // }
 
-#define PAGE_MASK (~0<<12)
+#define PAGE_MASK (~0u<<12)
     // pre-calculate for benefit of runtime disappearing act via munmap()
     elfout.phdr[0].p_memsz =  PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
 #undef PAGE_MASK

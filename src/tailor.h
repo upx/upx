@@ -156,6 +156,12 @@
 #  define HAVE_MODE_T 1
 #  define HAVE_CHMOD 1
 #  define HAVE_UTIME 1
+#elif defined(__INTEL_COMPILER)
+#  if (__INTEL_COMPILER >= 700)
+#    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
+#    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
+#    pragma warning(disable: 1418)      // #1418: external definition with no prior declaration
+#  endif
 #elif defined(_MSC_VER)
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl

@@ -229,7 +229,7 @@ public:
     BE16& operator &= (unsigned v)    { set_be16(d, get_be16(d) & v); return *this; }
     BE16& operator |= (unsigned v)    { set_be16(d, get_be16(d) | v); return *this; }
 
-    operator const unsigned () const  { return get_be16(d); }
+    operator unsigned () const  { return get_be16(d); }
 }
 __attribute_packed;
 
@@ -247,7 +247,7 @@ public:
     BE32& operator &= (unsigned v)    { set_be32(d, get_be32(d) & v); return *this; }
     BE32& operator |= (unsigned v)    { set_be32(d, get_be32(d) | v); return *this; }
 
-    operator const unsigned () const  { return get_be32(d); }
+    operator unsigned () const  { return get_be32(d); }
 }
 __attribute_packed;
 
@@ -265,7 +265,7 @@ public:
     LE16& operator &= (unsigned v)    { set_le16(d, get_le16(d) & v); return *this; }
     LE16& operator |= (unsigned v)    { set_le16(d, get_le16(d) | v); return *this; }
 
-    operator const unsigned () const  { return get_le16(d); }
+    operator unsigned () const  { return get_le16(d); }
 }
 __attribute_packed;
 
@@ -283,7 +283,7 @@ public:
     LE32& operator &= (unsigned v)    { set_le32(d, get_le32(d) & v); return *this; }
     LE32& operator |= (unsigned v)    { set_le32(d, get_le32(d) | v); return *this; }
 
-    operator const unsigned () const  { return get_le32(d); }
+    operator unsigned () const  { return get_le32(d); }
 }
 __attribute_packed;
 
@@ -294,44 +294,44 @@ __attribute_packed;
 
 inline bool operator < (const BE16& v1, const BE16& v2)
 {
-    return (const unsigned)v1 < (const unsigned)v2;
+    return (unsigned)v1 < (unsigned)v2;
 }
 
 inline bool operator < (const BE32& v1, const BE32& v2)
 {
-    return (const unsigned)v1 < (const unsigned)v2;
+    return (unsigned)v1 < (unsigned)v2;
 }
 
 inline bool operator < (const LE16& v1, const LE16& v2)
 {
-    return (const unsigned)v1 < (const unsigned)v2;
+    return (unsigned)v1 < (unsigned)v2;
 }
 
 inline bool operator < (const LE32& v1, const LE32& v2)
 {
-    return (const unsigned)v1 < (const unsigned)v2;
+    return (unsigned)v1 < (unsigned)v2;
 }
 
 
 template <class T>
-inline T* operator + (T* ptr, const BE16& v) { return ptr + (const unsigned) v; }
+inline T* operator + (T* ptr, const BE16& v) { return ptr + (unsigned) v; }
 template <class T>
-inline T* operator - (T* ptr, const BE16& v) { return ptr - (const unsigned) v; }
+inline T* operator - (T* ptr, const BE16& v) { return ptr - (unsigned) v; }
 
 template <class T>
-inline T* operator + (T* ptr, const BE32& v) { return ptr + (const unsigned) v; }
+inline T* operator + (T* ptr, const BE32& v) { return ptr + (unsigned) v; }
 template <class T>
-inline T* operator - (T* ptr, const BE32& v) { return ptr - (const unsigned) v; }
+inline T* operator - (T* ptr, const BE32& v) { return ptr - (unsigned) v; }
 
 template <class T>
-inline T* operator + (T* ptr, const LE16& v) { return ptr + (const unsigned) v; }
+inline T* operator + (T* ptr, const LE16& v) { return ptr + (unsigned) v; }
 template <class T>
-inline T* operator - (T* ptr, const LE16& v) { return ptr - (const unsigned) v; }
+inline T* operator - (T* ptr, const LE16& v) { return ptr - (unsigned) v; }
 
 template <class T>
-inline T* operator + (T* ptr, const LE32& v) { return ptr + (const unsigned) v; }
+inline T* operator + (T* ptr, const LE32& v) { return ptr + (unsigned) v; }
 template <class T>
-inline T* operator - (T* ptr, const LE32& v) { return ptr - (const unsigned) v; }
+inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 
 
 /*************************************************************************

@@ -52,7 +52,7 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual const unsigned getCallTrickOffset() const { return 0x100; }
+    virtual unsigned getCallTrickOffset() const { return 0x100; }
 
 protected:
     virtual int buildLoader(const Filter *ft);

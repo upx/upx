@@ -456,12 +456,10 @@ inline void operator delete[](void *p)
 
 // An Array allocates memory on the heap, but automatically
 // gets destructed when leaving scope or on exceptions.
-// "var" is declared as a read-only reference to a pointer
-// and behaves exactly like an array "var[]".
 #define Array(type, var, size) \
     assert((int)(size) > 0); \
     MemBuffer var ## _membuf((size)*(sizeof(type))); \
-    type * const & var = ((type *) var ## _membuf.getVoidPtr())
+    type * const var = ((type *) var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 

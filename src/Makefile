@@ -218,6 +218,29 @@ endif	# linux
 
 
 ###
+### Linux/i386 with Intel C++ 7.0
+###
+
+ifeq ($(target),linux-intelc70)
+CC = icc
+CXX = icc
+CFLAGS_OUTPUT = -o $@
+LINK_EXE_OUTPUT = -o $@
+
+DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
+CFLAGS  = $(CFLAGS_WERROR)
+ifeq ($(DEBUG),1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O2
+endif
+CXXFLAGS_2 += -fno-rtti
+LDFLAGS += -Wl,-Map,$T.map
+
+endif
+
+
+###
 ### Linux cross compilers
 ###
 

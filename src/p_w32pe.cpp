@@ -1063,13 +1063,13 @@ class Resource
         upx_byte        *name;
         upx_rnode       *parent;
     };
-    struct upx_rbranch : upx_rnode
+    struct upx_rbranch : public upx_rnode
     {
         unsigned        nc;
         upx_rnode       **children;
         res_dir         data;
     };
-    struct upx_rleaf : upx_rnode
+    struct upx_rleaf : public upx_rnode
     {
         upx_rleaf       *next;
         unsigned        newoffset;

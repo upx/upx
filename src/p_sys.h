@@ -46,7 +46,7 @@ public:
     virtual bool canPack();
 
 protected:
-    virtual const unsigned getCallTrickOffset() const { return 0; }
+    virtual unsigned getCallTrickOffset() const { return 0; }
 
 protected:
     virtual int buildLoader(const Filter *ft);
