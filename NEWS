@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.10 beta (20 Dec 2000):
+Changes in 1.11 beta (20 Dec 2000):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING!!! REALLY.
   * vmlinuz/386: new format - UPX now supports bootable linux kernels
   * linux/386: added the new direct-to-memory executable formats - no
