@@ -104,7 +104,7 @@
 #if !defined(WITH_UCL)
 #  error "you lose"
 #endif
-#if !defined(UCL_VERSION) || (UCL_VERSION < 0x009100L)
+#if !defined(UCL_VERSION) || (UCL_VERSION < 0x009200L)
 #  error "please upgrade your UCL installation"
 #endif
 
