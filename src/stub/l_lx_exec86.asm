@@ -58,12 +58,13 @@ _start:
 ;;      end
 ;; Step through the code; remember that <Enter> repeats the previous command.
 ;;
-%if 0
+
+ %if 0
                 ; personality(PER_LINUX)
                 mov     eax, 136            ; syscall_personality
                 xor     ebx, ebx            ; PER_LINUX
                 int     0x80
-%endif
+ %endif
 
         call main  ; push address of decompress subroutine
 decompress:
