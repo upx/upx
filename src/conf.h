@@ -56,8 +56,8 @@
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
 #elif defined(__INTEL_COMPILER)
-#  if (__INTEL_COMPILER < 700)
-#    error "need Intel C++ 7.0 or newer"
+#  if (__INTEL_COMPILER < 450)
+#    error "need Intel C++ 4.5 or newer"
 #  endif
 #  if defined(_WIN32)
 #    define __UPX_CDECL     __cdecl
@@ -174,7 +174,7 @@
 
 // malloc debuggers
 #if defined(WITH_VALGRIND)
-#  include <valgrind.h>
+#  include <valgrind/memcheck.h>
 #elif defined(WITH_DMALLOC)
 #  define DMALLOC_FUNC_CHECK
 #  include <dmalloc.h>
