@@ -126,9 +126,9 @@ void PackUnix::pack(OutputFile *fo)
     // compress blocks
     unsigned total_in = 0;
     unsigned total_out = 0;
-    this->total_passes = (file_size + blocksize - 1) / blocksize;
-    if (this->total_passes == 1)
-        this->total_passes = 0;
+    ui_total_passes = (file_size + blocksize - 1) / blocksize;
+    if (ui_total_passes == 1)
+        ui_total_passes = 0;
     fi->seek(0, SEEK_SET);
     for (;;)
     {

@@ -41,7 +41,7 @@
 
 Packer::Packer(InputFile *f) :
     fi(f), file_size(-1), ph_format(-1), ph_version(-1),
-    uip(NULL), pass(0), total_passes(0), linker(NULL),
+    uip(NULL), ui_pass(0), ui_total_passes(0), linker(NULL),
     last_patch(NULL), last_patch_offset(0)
 {
     file_size = f->st.st_size;
@@ -189,9 +189,9 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     if ((level >= 7) || (level >= 4 && ph.u_len >= 512*1024))
         step = 0;
 #endif
-    if (this->pass >= 0)
-        this->pass++;
-    uip->startCallback(ph.u_len, step, this->pass, this->total_passes);
+    if (ui_pass >= 0)
+        ui_pass++;
+    uip->startCallback(ph.u_len, step, ui_pass, ui_total_passes);
     uip->firstCallback();
 
     //OutputFile::dump("data.raw", in, ph.u_len);
@@ -255,7 +255,7 @@ bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
     assert((int)c_len > 0);
 
     // this assertion may fail if we compress the BSS segment -- disabled
-    //assert((off_t)u_len < file_size);     
+    //assert((off_t)u_len < file_size);
 
 #if 1
     if (c_len >= u_len - u_len / 8)         // min. 12.5% gain
@@ -754,7 +754,7 @@ upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum,
         oc = get_le32(in+jc*4) - pc;
         if (oc == 0)
             continue;
-        else if (oc < 4)
+        else if ((int)oc < 4)
             throwCantPack("overlapping fixups");
         else if (oc < 0xF0)
             *fix++ = (unsigned char) oc;
@@ -886,9 +886,9 @@ const upx_byte *Packer::getLoader() const
 
 int Packer::getLoaderSize() const
 {
-    int l;
-    (void) linker->getLoader(&l);
-    return l;
+    int size;
+    (void) linker->getLoader(&size);
+    return size;
 }
 
 
@@ -1051,12 +1051,12 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
 
     // update total_passes
     if (strategy < 0)
-        this->total_passes += 1;
+        ui_total_passes += 1;
     else
     {
         if (strategy > nfilters)
             nfilters = strategy;
-        this->total_passes += nfilters;
+        ui_total_passes += nfilters;
     }
 
     // Working buffer for compressed data. Don't waste memory.
@@ -1090,7 +1090,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         {
             // filter failed or was usesless
             if (strategy >= 0)
-                this->total_passes -= 1;
+                ui_total_passes -= 1;
             continue;
         }
         // filter success
@@ -1200,8 +1200,8 @@ void Packer::scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
         if (*f == 0)        // skip no-filter
             continue;
         ft->init(*f, addvalue);
-        //static const int pc[] = { 0xff, 0xfe, 0x80, 0x22, -1 };
-        //ft->preferred_ctos = pc;
+        //static const int ctos[] = { 0xff, 0xfe, 0x80, 0x22, -1 };
+        //ft->preferred_ctos = ctos;
         if (ft->scan(buf, buf_len))
         {
             printf("scanFilters: id 0x%02x size: %6d: calls %5d/%5d/%3d, cto 0x%02x\n",

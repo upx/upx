@@ -283,28 +283,28 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     Extent x;
     unsigned k;
 
-    // count
-    total_passes = 0;
-    off_t ptload0hi=0, ptload1lo=0;
+    // count passes, set ptload vars
+    ui_total_passes = 0;
+    off_t ptload0hi = 0, ptload1lo = 0;
     int nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) {
-        if (PT_LOAD==phdri[k].p_type) {
+        if (PT_LOAD == phdri[k].p_type) {
             x.offset = phdri[k].p_offset;
             x.size   = phdri[k].p_filesz;
-            if (0==ptload0hi) {
-                ptload0hi = x.size + x.offset;
+            if (0 == ptload0hi) {
+                ptload0hi = x.offset + x.size;
             }
-            else if (0==ptload1lo) {
-                ptload1lo =          x.offset;
+            else if (0 == ptload1lo) {
+                ptload1lo = x.offset;
             }
-            total_passes++;
+            ui_total_passes++;
         } else {
             if (nx++ == 0)
-                total_passes++;
+                ui_total_passes++;
         }
     }
     if (ptload0hi < ptload1lo)
-        total_passes++;
+        ui_total_passes++;
 
     // compress extents
     unsigned total_in = 0;
@@ -312,15 +312,15 @@ void PackLinuxI386elf::pack(OutputFile *fo)
 
     x.offset = 0;
     x.size = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
-    pass = -1;
+    ui_pass = -1;
     packExtent(x, fo, total_in, total_out);
-    pass = 0;
+    ui_pass = 0;
 
     nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) if (PT_LOAD==phdri[k].p_type) {
         x.offset = phdri[k].p_offset;
         x.size   = phdri[k].p_filesz;
-        if (0==nx) {
+        if (0 == nx) {
             x.offset += sizeof(Elf_LE32_Ehdr) + sz_phdrs;
             x.size   -= sizeof(Elf_LE32_Ehdr) + sz_phdrs;
         }
