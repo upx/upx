@@ -9,8 +9,8 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 ###                                                        ###
 ##############################################################
 
-## $Revision: 2.48 $
-## $Date: 2003/04/21 09:50:52 $
+## $Revision: 2.50 $
+## $Date: 2003/08/25 10:52:04 $
 ## $Author: fluffy $
 ##
 ##   (C) 2001,2002,2003 Martyn J. Pearce <fluffy@cpan.org>, under the GNU GPL.
@@ -36,7 +36,7 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 
 
 use strict;
-use Text::Wrap;
+use Text::Wrap qw( );
 use Time::Local;
 use File::Basename qw( fileparse );
 use User::pwent;
@@ -82,7 +82,7 @@ use constant MAILNAME => "/etc/mailname";
 my $Log_Source_Command = "cvs log";
 
 # In case we have to print it out:
-my $VERSION = '$Revision: 2.48 $';
+my $VERSION = '$Revision: 2.50 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:
@@ -110,6 +110,9 @@ my $Cumulative = 0;
 # as it guarantees at least one entry in the update changelog, which means
 # that there will always be a date to extract for the next update.  The repeat
 # entry can be removed in postprocessing, if necessary.
+
+# MJP 2003-08-02
+# I don't think this actually does anything useful
 my $Update = 0;
 
 # Expand usernames to email addresses based on a map file?
@@ -124,7 +127,7 @@ my $Chronological_Order = 0;
 my $Gecos = 0;
 
 # User domain for gecos email addresses
-my $Domain = "";
+my $Domain;
 
 # Output to a file or to stdout?
 my $Output_To_Stdout = 0;
@@ -154,6 +157,7 @@ my $XML_Encoding = '';
 
 # Format more for programs than for humans.
 my $XML_Output = 0;
+my $No_XML_Namespace = 0;
 
 # Do some special tweaks for log data that was written in FSF
 # ChangeLog style.
@@ -173,6 +177,10 @@ my $Show_Revisions = 0;
 
 # Show dead files in output?
 my $Show_Dead = 0;
+
+# Hide dead trunk files which were created as a result of additions on a
+# branch?
+my $Hide_Branch_Additions = 1;
 
 # Show tags (symbolic names) in output?
 my $Show_Tags = 0;
@@ -300,7 +308,43 @@ sub maybe_grab_accumulation_date ()
   }
 
   close (LOG);
+
+  # convert time from utc to local timezone if the ChangeLog has
+  # dates/times in utc
+  if ($UTC_Times && $boundary_date)
+  {
+    # convert the utc time to a time value
+    my ($year,$mon,$mday,$hour,$min) = $boundary_date =~
+      m#(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)#;
+    my $time = timegm(0,$min,$hour,$mday,$mon-1,$year-1900);
+    # print the timevalue in the local timezone
+    my ($ignore,$wday);
+    ($ignore,$min,$hour,$mday,$mon,$year,$wday) = localtime($time);
+    $boundary_date=sprintf ("%4u-%02u-%02u %02u:%02u",
+                            $year+1900,$mon+1,$mday,$hour,$min);
+  }
+
   return $boundary_date;
+}
+
+# Don't call this wrap, because with 5.5.3, that clashes with the
+# (unconditional :-( ) export of wrap() from Text::Wrap
+sub mywrap {
+  my ($indent1, $indent2, @text) = @_;
+  # If incoming text looks preformatted, don't get clever
+  my $text = Text::Wrap::wrap($indent1, $indent2, @text);
+  if ( grep /^\s+/m, @text ) {
+    return $text;
+  }
+  my @lines = split /\n/, $text;
+  $indent2 =~ s!^((?: {8})+)!"\t" x (length($1)/8)!e;
+  $lines[0] =~ s/^$indent1\s+/$indent1/;
+  s/^$indent2\s+/$indent2/
+    for @lines[1..$#lines];
+  my $newtext = join "\n", @lines;
+  $newtext .= "\n"
+    if substr($text, -1) eq "\n";
+  return $newtext;
 }
 
 # Fills up a ChangeLog structure in the current directory.
@@ -375,7 +419,7 @@ sub derive_change_log ()
     {
       if (/^Working file: (.*)/) {
         $new_full_path = $1;
-      } elsif ($RCS_Mode && m|^RCS file: $RCS_Root/(.*),v$|) {
+      } elsif ($RCS_Mode && m|^RCS file: $RCS_Root[/\\](.*),v$|) {
         $new_full_path = $1;
       }
     }
@@ -554,9 +598,9 @@ sub derive_change_log ()
           &parse_date_author_and_state ($_);
         if (defined ($usermap{$author}) and $usermap{$author}) {
           $author = $usermap{$author};
-        } elsif($Domain ne "" or $Gecos == 1) {
+        } elsif(defined $Domain or $Gecos == 1) {
           my $email = $author;
-          if($Domain ne "") {
+          if(defined $Domain && $Domain ne '') {
             $email = $author."@".$Domain;
           }
           my $pw = getpwnam($author);
@@ -763,16 +807,18 @@ sub derive_change_log ()
         }
       }
 
-      # Add this file to the list
-      # (We use many spoonfuls of autovivication magic. Hashes and arrays
-      # will spring into existence if they aren't there already.)
+      unless ($Hide_Branch_Additions and $msg_txt =~ /file \S+ was initially added on branch \S+./) {
+        # Add this file to the list
+        # (We use many spoonfuls of autovivication magic. Hashes and arrays
+        # will spring into existence if they aren't there already.)
 
-      &debug ("(pushing log msg for ${dir_key}$qunk{'filename'})\n");
+        &debug ("(pushing log msg for ${dir_key}$qunk{'filename'})\n");
 
-      # Store with the files in this commit.  Later we'll loop through
-      # again, making sure that revisions with the same log message
-      # and nearby commit times are grouped together as one commit.
-      push (@{$grand_poobah{$dir_key}{$author}{$time}{$msg_txt}}, \%qunk);
+        # Store with the files in this commit.  Later we'll loop through
+        # again, making sure that revisions with the same log message
+        # and nearby commit times are grouped together as one commit.
+        push (@{$grand_poobah{$dir_key}{$author}{$time}{$msg_txt}}, \%qunk);
+      }
     }
 
   CLEAR:
@@ -865,6 +911,8 @@ sub derive_change_log ()
       my $declaration =
         sprintf '<?xml %s?>', join ' ', grep length, $version, $encoding;
       my $root        =
+        $No_XML_Namespace ?
+        '<changelog>'     :
         '<changelog xmlns="http://www.red-bean.com/xmlns/cvs2cl/">';
       print LOG_OUT "$declaration\n\n$root\n\n";
     }
@@ -912,7 +960,8 @@ sub derive_change_log ()
             }
           }
         }
-        foreach my $tag (keys %tags) {
+        # Sort here for determinism to ease testing
+        foreach my $tag (sort keys %tags) {
           if (!defined $tag_date_printed{$tag}) {
             $tag_date_printed{$tag} = $time;
             if ($XML_Output) {
@@ -996,10 +1045,10 @@ sub derive_change_log ()
           elsif ($No_Wrap && !$Summary)
           {
             $msg = &preprocess_msg_text ($msg);
-            $files = wrap ("\t", "      ", "$files");
-            $msg =~ s/\n(.*)/\n\t$1/g;
+            $files = mywrap ("\t", "\t  ", "* $files");
+            $msg =~ s/\n(.+)/\n\t$1/g;
             unless ($After_Header eq " ") {
-              $msg =~ s/^(.*)/\t$1/g;
+              $msg =~ s/^(.+)/\t$1/g;
             }
             $body = $files . $After_Header . $msg;
           }
@@ -1084,7 +1133,7 @@ sub derive_change_log ()
           {
             if ($FSF_Style)
             {
-              $files = wrap ("\t", "        ", "$files");
+              $files = mywrap ("\t", "\t", "* $files");
 
               my $files_last_line_len = 0;
               if ($After_Header eq " ")
@@ -1101,10 +1150,12 @@ sub derive_change_log ()
             {
               $msg = &preprocess_msg_text ($msg);
               $body = $files . $After_Header . $msg;
-              $body = wrap ("\t", "        ", "$body");
+              $body = mywrap ("\t", "\t  ", "* $body");
+              $body =~ s/[ \t]+\n/\n/g;
             }
           }
 
+          $body =~ s/[ \t]+\n/\n/g;
           $wholething = $header_line . $body;
 
           if ($XML_Output) {
@@ -1497,7 +1548,7 @@ sub pretty_file_list ()
 
   # todo: still have to take care of branch_roots?
 
-  $beauty = "* $beauty:";
+  $beauty = "$beauty:";
 
   return $beauty;
 }
@@ -1555,6 +1606,7 @@ sub preprocess_msg_text ()
   if ($XML_Output)
   {
     $text = &xml_escape ($text);
+    chomp $text;
     $text = "<msg>${text}</msg>\n";
   }
   elsif (! $No_Wrap)
@@ -1776,10 +1828,23 @@ sub xml_escape ()
 sub maybe_read_user_map_file ()
 {
   my %expansions;
+  my $User_Map_Input;
 
   if ($User_Map_File)
   {
-    open (MAPFILE, "<$User_Map_File")
+    if ( $User_Map_File =~ m{^([-\w\@+=.,\/]+):([-\w\@+=.,\/:]+)} and
+         !-f $User_Map_File )
+    {
+      my $rsh = (exists $ENV{'CVS_RSH'} ? $ENV{'CVS_RSH'} : 'ssh');
+      $User_Map_Input = "$rsh $1 'cat $2' |";
+      &debug ("(run \"${User_Map_Input}\")\n");
+    }
+    else
+    {
+      $User_Map_Input = "<$User_Map_File";
+    }
+
+    open (MAPFILE, $User_Map_Input)
         or die ("Unable to open $User_Map_File ($!)");
 
     while (<MAPFILE>)
@@ -1816,9 +1881,9 @@ sub maybe_read_user_map_file ()
 
   if (defined $User_Passwd_File)
   {
-    if ( ! defined $Mail_Domain ) {
+    if ( ! defined $Domain ) {
       if ( -e MAILNAME ) {
-        chomp($Mail_Domain = slurp_file(MAILNAME));
+        chomp($Domain = slurp_file(MAILNAME));
       } else {
       MAILDOMAIN_CMD:
         for ([qw(hostname -d)], 'dnsdomainname', 'domainname') {
@@ -1826,7 +1891,7 @@ sub maybe_read_user_map_file ()
           if ( $exit == 0 && $sig == 0 && $core == 0 ) {
             chomp $text;
             if ( length $text ) {
-              $Mail_Domain = $text;
+              $Domain = $text;
               last MAILDOMAIN_CMD;
             }
           }
@@ -1835,7 +1900,7 @@ sub maybe_read_user_map_file ()
     }
 
     die "No mail domain found\n"
-      unless defined $Mail_Domain;
+      unless defined $Domain;
 
     open (MAPFILE, "<$User_Passwd_File")
         or die ("Unable to open $User_Passwd_File ($!)");
@@ -1847,7 +1912,8 @@ sub maybe_read_user_map_file ()
       ($expansion) = split (',', $gecos)
         if defined $gecos && length $gecos;
 
-      $expansions{$username} = "$expansion <$username\@$Mail_Domain>";
+      my $mailname = $Domain eq '' ? $username : "$username\@$Domain";
+      $expansions{$username} = "$expansion <$mailname>";
     }
     close (MAPFILE);
   }
@@ -1863,6 +1929,8 @@ sub parse_options ()
   # If this gets set, we encountered unknown options and will exit at
   # the end of this subroutine.
   my $exit_with_admonishment = 0;
+
+  my (@Global_Opts, @Local_Opts);
 
   while (my $arg = shift (@ARGV))
   {
@@ -1888,10 +1956,12 @@ sub parse_options ()
     elsif ($arg =~ /^-g$|^--global-opts$/) {
       my $narg = shift (@ARGV) || die "$arg needs argument.\n";
       # Don't assume CVS is called "cvs" on the user's system:
+      push @Global_Opts, $narg;
       $Log_Source_Command =~ s/(^\S*)/$1 $narg/;
     }
     elsif ($arg =~ /^-l$|^--log-opts$/) {
       my $narg = shift (@ARGV) || die "$arg needs argument.\n";
+      push @Local_Opts, $narg;
       $Log_Source_Command .= " $narg";
     }
     elsif ($arg =~ /^-f$|^--file$/) {
@@ -1933,7 +2003,8 @@ sub parse_options ()
     }
     elsif ($arg =~ /^--mailname$/) {
       my $narg = shift (@ARGV) || die "$arg needs argument.\n";
-      $Mail_Domain = $narg;
+      warn "--mailname is deprecated; please use --domain instead\n";
+      $Domain = $narg;
     }
     elsif ($arg =~ /^-W$|^--window$/) {
       defined(my $narg = shift (@ARGV)) || die "$arg needs argument.\n";
@@ -1990,6 +2061,9 @@ sub parse_options ()
     elsif ($arg =~ /^--show-dead$/) {
       $Show_Dead = 1;
     }
+    elsif ($arg =~ /^--no-hide-branch-additions$/) {
+      $Hide_Branch_Additions = 0;
+    }
     elsif ($arg =~ /^-t$|^--tags$/) {
       $Show_Tags = 1;
     }
@@ -2019,6 +2093,9 @@ sub parse_options ()
     }
     elsif ($arg =~ /^--xml$/) {
       $XML_Output = 1;
+    }
+    elsif ($arg =~ /^--noxmlns$/) {
+      $No_XML_Namespace = 1;
     }
     elsif ($arg =~ /^--hide-filenames$/) {
       $Hide_Filenames = 1;
@@ -2062,6 +2139,16 @@ sub parse_options ()
 
   if ($Output_To_Stdout && $output_file) {
     print STDERR "cannot pass both --stdout and --file\n";
+    $exit_with_admonishment = 1;
+  }
+
+  if ($Input_From_Stdin && @Global_Opts) {
+    print STDERR "cannot pass both --stdin and -g\n";
+    $exit_with_admonishment = 1;
+  }
+
+  if ($Input_From_Stdin && @Local_Opts) {
+    print STDERR "cannot pass both --stdin and -l\n";
     $exit_with_admonishment = 1;
   }
 
@@ -2179,12 +2266,13 @@ Options/Arguments:
   --FSF                        Attempt strict FSF-standard compatible output
   -W SECS, --window SECS       Window of time within which log entries unify
   -U UFILE, --usermap UFILE    Expand usernames to email addresses from UFILE
-  --passwd   PASSWORDFILE      Use system passwd file for user name expansion
-  --mailname MAILDOMAIN        Mail domainname to attach to user names for
-                               email addresses.  Only used with --passwd.
-                               Defaults to contents, of /etc/mailname else
-                               output of hostname -d / dnsdomainname /
-                               domainname
+  --passwd   PASSWORDFILE      Use system passwd file for user name expansion.
+                               If no mail domain is provided (via --domain),
+                               it tries to read one from  /etc/mailname else
+                               output of
+                               hostname -d / dnsdomainname / domainname.  Dies
+                               if none successful.  Use a domain of '' to
+                               prevent the addition of a mail domain.
   --domain DOMAIN              Domain to build email addresses from
   --gecos                      Get user information from GECOS data
   -R REGEXP, --regexp REGEXP   Include only entries that match REGEXP
@@ -2193,18 +2281,22 @@ Options/Arguments:
   -F BRANCH, --follow BRANCH   Show only revisions on or ancestral to BRANCH
   --no-ancestors               When using -F, only track changes since the
                                BRANCH started
+  --no-hide-branch-additions   By default, entries generated by cvs for a file
+                               added on a branch (a dead 1.1 entry) are not
+                               shown.  This flag reverses that action.
   -S, --separate-header        Blank line between each header and log message
   --summary                    Add CVS change summary information
   --no-wrap                    Don't auto-wrap log message (recommend -S also)
   --gmt, --utc                 Show times in GMT/UTC instead of local time
   --accum                      Add to an existing ChangeLog (incompat w/ --xml)
-  --update                     As --accum, but lists only files changed since
-                               last run
   -w, --day-of-week            Show day of week
   --no-times                   Don't show times in output
+  --chrono                     Output log in chronological order
+                               (default is reverse chronological order)
   --header FILE                Get ChangeLog header from FILE ("-" means stdin)
   --xml                        Output XML instead of ChangeLog format
   --xml-encoding ENCODING      Insert encoding clause in XML header
+  --noxmlns                    Don't include xmlns= attribute in root element
   --hide-filenames             Don't show filenames (ignored for XML output)
   --no-common-dir              Don't shorten directory names from filenames.
   --rcs CVSROOT                Handle filenames from raw RCS, for instance
