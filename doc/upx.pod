@@ -76,6 +76,7 @@ B<UPX> is a versatile executable packer with the following features:
       * linux/386
       * linux/elf386
       * linux/sh386
+      * ps/exe
       * rtm32/pe
       * tmt/adam
       * vmlinuz/386     [bootable Linux kernel]
@@ -247,8 +248,8 @@ You can use the B<--no-env> option to turn this support off.
 
 =head2 NOTES FOR ATARI/TOS
 
-This is the executable format used by the Atari ST/TT, a 68000 based
-personal computer which was popular in the late '80s. Support
+This is the executable format used by the Atari ST/TT, a Motorola 68000
+based personal computer which was popular in the late '80s. Support
 of this format is only because of nostalgic feelings of one of
 the authors and serves no practical purpose :-).
 
@@ -609,9 +610,9 @@ Extra options available for this executable format:
 
 Please read the general Linux description first.
 
-The generic linux/386 format decompresses to /tmp
-and needs /proc filesystem support.
-It starts the decompressed program via execve().
+The generic linux/386 format decompresses to /tmp and needs
+/proc filesystem support. It starts the decompressed program
+via the execve() syscall.
 
 Linux/386 is only selected if the specialized linux/elf386
 and linux/sh386 won't recognize a file.
@@ -675,6 +676,40 @@ Extra options available for this executable format:
 
 
 
+=head2 NOTES FOR PS/EXE
+
+This is the executable format used by the Sony PlayStation (PSone),
+a Mips R3000 based gaming console which is popular since the late '90s.
+Support of this format is very similar to the Atari one, because of
+nostalgic feelings of one of the authors, but this format maybe serves
+a practical purpose ;-).
+
+Packed programs will be byte-identical to the original after uncompression.
+
+Maximum uncompressed size: ~1998848 bytes.
+
+Notes:
+
+  - Normally the packed files use the same memory areas like the uncompressed
+    versions, so they will not override other memory areas while unpacking.
+    If this isn't possible UPX will abort showing a 'packed data overlap'
+    error. With the "--force" option UPX will set a few 'bytes higher' loading
+    offset for the packed file, but this isn't a real problem if it is a
+    single or will only boot once executable.
+
+Extra options available for this executable format:
+
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --no-align          This option disables mode 2 data sector format
+                      alignment. This saves some bytes, but the compressed
+                      executable will not work when started from a CD.
+
+
+
 =head2 NOTES FOR RTM32/PE
 
 Same as win32/pe.
@@ -726,7 +761,8 @@ Benefits:
          641073  bzImage        [original]
          560755  bzImage.upx    [compressed by "upx -9"]
 
-  - Much faster decompression at kernel boot time.
+  - Much faster decompression at kernel boot time (but decompression
+    speed is not really an issue these days).
 
 Drawbacks:
 
