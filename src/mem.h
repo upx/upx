@@ -49,16 +49,20 @@ public:
 
     void checkState() const;
 
-    unsigned getSize() const { return psize; }
+    unsigned getSize() const { return b_size; }
 
-    operator       unsigned char * ()       { return ptr; }
-    //operator const unsigned char * () const { return ptr; }
-          void *getVoidPtr()                { return (void *) ptr; }
-    const void *getVoidPtr() const          { return (const void *) ptr; }
+    operator       unsigned char * ()       { return b; }
+    //operator const unsigned char * () const { return b; }
+          void *getVoidPtr()                { return (void *) b; }
+    const void *getVoidPtr() const          { return (const void *) b; }
+
+    void fill(unsigned off, unsigned len, int value);
+    void clear(unsigned off, unsigned len)  { fill(off, len, 0); }
+    void clear()                            { fill(0, b_size, 0); }
 
 private:
-    unsigned char *ptr;
-    unsigned psize;
+    unsigned char *b;
+    unsigned b_size;
 
     static unsigned global_alloc_counter;
 

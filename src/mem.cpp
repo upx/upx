@@ -59,12 +59,12 @@ static int mcheck_init()
 
 
 MemBuffer::MemBuffer() :
-    ptr(NULL), psize(0)
+    b(NULL), b_size(0)
 {
 }
 
 MemBuffer::MemBuffer(unsigned size) :
-    ptr(NULL), psize(0)
+    b(NULL), b_size(0)
 {
     alloc(size);
 }
@@ -77,26 +77,26 @@ MemBuffer::~MemBuffer()
 
 void MemBuffer::dealloc()
 {
-    if (ptr)
+    if (b)
     {
         checkState();
         if (use_mcheck)
         {
-            // clear magic constants
-            set_be32(ptr - 8, 0);
-            set_be32(ptr - 4, 0);
-            set_be32(ptr + psize, 0);
-            set_be32(ptr + psize + 4, 0);
+            // remove magic constants
+            set_be32(b - 8, 0);
+            set_be32(b - 4, 0);
+            set_be32(b + b_size, 0);
+            set_be32(b + b_size + 4, 0);
             //
-            ::free(ptr - 8);
+            ::free(b - 8);
         }
         else
-            ::free(ptr);
-        ptr = NULL;
-        psize = 0;
+            ::free(b);
+        b = NULL;
+        b_size = 0;
     }
     else
-        assert(psize == 0);
+        assert(b_size == 0);
 }
 
 
@@ -123,6 +123,19 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
 }
 
 
+void MemBuffer::fill(unsigned off, unsigned len, int value)
+{
+    checkState();
+    assert((int)off >= 0);
+    assert((int)len >= 0);
+    assert(off <= b_size);
+    assert(len <= b_size);
+    assert(off + len <= b_size);
+    if (len > 0)
+        memset(b + off, value, len);
+}
+
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -136,18 +149,18 @@ unsigned MemBuffer::global_alloc_counter = 0;
 
 void MemBuffer::checkState() const
 {
-    if (!ptr)
+    if (!b)
         throwInternalError("block not allocated");
     if (use_mcheck)
     {
-        if (get_be32(ptr - 4) != MAGIC1(ptr))
+        if (get_be32(b - 4) != MAGIC1(b))
             throwInternalError("memory clobbered before allocated block 1");
-        if (get_be32(ptr - 8) != psize)
+        if (get_be32(b - 8) != b_size)
             throwInternalError("memory clobbered before allocated block 2");
-        if (get_be32(ptr + psize) != MAGIC2(ptr))
+        if (get_be32(b + b_size) != MAGIC2(b))
             throwInternalError("memory clobbered past end of allocated block");
     }
-    assert((int)psize > 0);
+    assert((int)b_size > 0);
 }
 
 
@@ -157,8 +170,8 @@ void MemBuffer::alloc(unsigned size)
         mcheck_init();
 
     // NOTE: we don't automatically free a used buffer
-    assert(ptr == NULL);
-    assert(psize == 0);
+    assert(b == NULL);
+    assert(b_size == 0);
     //
     assert((int)size > 0);
     unsigned total = use_mcheck ? size + 16 : size;
@@ -167,21 +180,21 @@ void MemBuffer::alloc(unsigned size)
     if (!p)
     {
         //throw bad_alloc();
-        throwCantPack("out of memory");
+        throw OutOfMemoryException("out of memory");
         //exit(1);
     }
-    psize = size;
+    b_size = size;
     if (use_mcheck)
     {
-        ptr = p + 8;
+        b = p + 8;
         // store magic constants to detect buffer overruns
-        set_be32(ptr - 8, psize);
-        set_be32(ptr - 4, MAGIC1(ptr));
-        set_be32(ptr + psize, MAGIC2(ptr));
-        set_be32(ptr + psize + 4, global_alloc_counter++);
+        set_be32(b - 8, b_size);
+        set_be32(b - 4, MAGIC1(b));
+        set_be32(b + b_size, MAGIC2(b));
+        set_be32(b + b_size + 4, global_alloc_counter++);
     }
     else
-        ptr = p ;
+        b = p ;
 }
 
 
