@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2005 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -308,20 +308,28 @@ inline bool operator < (const LE32& v1, const LE32& v2)
 template <class T>
 inline T* operator + (T* ptr, const BE16& v) { return ptr + (unsigned) v; }
 template <class T>
+inline T* operator + (const BE16& v, T* ptr) { return ptr + (unsigned) v; }
+template <class T>
 inline T* operator - (T* ptr, const BE16& v) { return ptr - (unsigned) v; }
 
 template <class T>
 inline T* operator + (T* ptr, const BE32& v) { return ptr + (unsigned) v; }
+template <class T>
+inline T* operator + (const BE32& v, T* ptr) { return ptr + (unsigned) v; }
 template <class T>
 inline T* operator - (T* ptr, const BE32& v) { return ptr - (unsigned) v; }
 
 template <class T>
 inline T* operator + (T* ptr, const LE16& v) { return ptr + (unsigned) v; }
 template <class T>
+inline T* operator + (const LE16& v, T* ptr) { return ptr + (unsigned) v; }
+template <class T>
 inline T* operator - (T* ptr, const LE16& v) { return ptr - (unsigned) v; }
 
 template <class T>
 inline T* operator + (T* ptr, const LE32& v) { return ptr + (unsigned) v; }
+template <class T>
+inline T* operator + (const LE32& v, T* ptr) { return ptr + (unsigned) v; }
 template <class T>
 inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 
@@ -347,20 +355,20 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 // just for testing...
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
-   typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
-   typedef acc_uint32e_t  LE32_unaligned __attribute__((__aligned__(1)));
+   typedef acc_uint16e_t LE16_unaligned __attribute__((__aligned__(1)));
+   typedef acc_uint32e_t LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
 #if 0 && (ACC_ARCH_I386) && (ACC_CC_INTELC)
-   typedef __declspec(align(1)) unsigned short LE16_unaligned;
-   typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
+   typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
+   typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
-   typedef __declspec(align(1)) unsigned short LE16_unaligned;
-   typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
+   typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
+   typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
