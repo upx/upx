@@ -56,7 +56,9 @@ update_mru(
         if (0 > --tail) {
             tail = N_MRU -1;
         }
-        mru[kh] = mru[tail];
+        unsigned const t2 = mru[tail];
+        mru[tail] = 0;
+        mru[kh] = t2;
     }
     mru[hand] = jc;
 }
@@ -125,7 +127,6 @@ static int F(Filter *f)
                 b[ic-1] = b[ic];
                           b[ic] = t;
             }
-            jc += addvalue;
     // FIXME [?]: Extend to 8 bytes if "ADD ESP, byte 4*n" follows CALL.
     //   This will require two related cto's (consecutive, or otherwise).
             {
@@ -152,6 +153,7 @@ static int F(Filter *f)
                     mru[hand] = jc;
                 }
             }
+            jc += addvalue;
 #endif
             if (ic - lastnoncall < 5)
             {
@@ -213,7 +215,6 @@ static int U(Filter *f)
 
     upx_byte *const b = f->buf;
     const unsigned size5 = f->buf_len - 5;
-    const unsigned addvalue = f->addvalue;
     const unsigned cto = (unsigned)f->cto << 24;
     unsigned lastcall = 0;
     int hand = 0, tail = 0;
@@ -227,14 +228,14 @@ static int U(Filter *f)
             if (b[ic+1] == f->cto)
             {
                 if (1&jc) { // 1st time at this destination
-                    jc = (jc >> 1) - addvalue;
+                    jc >>= 1;
                     if (0 > --hand) {
                         hand = N_MRU -1;
                     }
                     mru[hand] = jc;
                 }
                 else { // not 1st time at this destination
-                    jc = (jc >> 1) - addvalue;
+                    jc >>= 1;
                     int kh = jc + hand;
                     if (N_MRU <= kh) {
                         kh -= N_MRU;
