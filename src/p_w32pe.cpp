@@ -67,6 +67,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
+    COMPILE_TIME_ASSERT(RT_LAST == HIGH(opt->w32pe.compress_rt));
 
     isection = NULL;
     oimport = NULL;
@@ -922,8 +923,19 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
     // note: TLS callbacks are not implemented in Windows 95/98/ME
-    if (tlsp->callbacks && get_le32(ibuf + tlsp->callbacks - ih.imagebase))
-        throwCantPack("TLS callbacks are not supported");
+    if (tlsp->callbacks)
+    {
+        if (tlsp->callbacks < ih.imagebase)
+            throwCantPack("invalid TLS callback");
+        else if (tlsp->callbacks - ih.imagebase + 4 >= ih.imagesize)
+            throwCantPack("invalid TLS callback");
+        unsigned v = get_le32(ibuf + tlsp->callbacks - ih.imagebase);
+        if (v != 0)
+        {
+            //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
+            throwCantPack("TLS callbacks are not supported");
+        }
+    }
 
     const unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
     const unsigned tlsdataend = tlsp->dataend - ih.imagebase;
@@ -1258,6 +1270,24 @@ void PackW32Pe::processResources(Resource *res)
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
     if ((soresources = IDSIZE(PEDIR_RESOURCE)) == 0)
         return;
+
+    // setup default options for resource compression
+    if (opt->w32pe.compress_resources < 0)
+        opt->w32pe.compress_resources = true;
+    if (!opt->w32pe.compress_resources)
+    {
+        opt->w32pe.compress_icons = false;
+        for (int i = 0; i < RT_LAST; i++)
+            opt->w32pe.compress_rt[i] = false;
+    }
+    if (opt->w32pe.compress_rt[RT_STRING] < 0)
+    {
+        // by default, don't compress RT_STRINGs of screensavers (".scr")
+        opt->w32pe.compress_rt[RT_STRING] = true;
+        if (fn_has_ext(fi->getName(),"scr"))
+            opt->w32pe.compress_rt[RT_STRING] = false;
+    }
+
     res->init(ibuf + vaddr);
 
     for (soresources = res->dirsize(); res->next(); soresources += 4 + res->size())
@@ -1268,7 +1298,7 @@ void PackW32Pe::processResources(Resource *res)
     unsigned iconsin1stdir = 0;
     if (opt->w32pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
-            if (res->itype() == 14 && iconsin1stdir == 0)
+            if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0)
                 iconsin1stdir = get_le16(ibuf + res->offs() + 4);
 
     bool compress_icon = false, compress_idir = false;
@@ -1284,25 +1314,28 @@ void PackW32Pe::processResources(Resource *res)
     {
         const unsigned rtype = res->itype();
         bool do_compress = true;
-        if (rtype == 16)                // version info
-            do_compress = false;
-        else if (rtype == 3)            // icon
-            do_compress = compress_icon && opt->w32pe.compress_icons;
-        else if (rtype == 14)           // icon directory
-            do_compress = compress_idir && opt->w32pe.compress_icons;
-        else if (res->ntype())           // named resource type
-            if (0 == memcmp(res->ntype(),"\x7\x0T\x0Y\x0P\x0""E\x0L\x0I\x0""B\x0",16)
-                || 0 == memcmp(res->ntype(),"\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0",18))
-                do_compress = false;    // typelib or registry
-
         if (!opt->w32pe.compress_resources)
             do_compress = false;
+        else if (rtype == RT_VERSION)       // version info
+            do_compress = false;
+        else if (rtype == RT_ICON)          // icon
+            do_compress = compress_icon && opt->w32pe.compress_icons;
+        else if (rtype == RT_GROUP_ICON)    // icon directory
+            do_compress = compress_idir && opt->w32pe.compress_icons;
+        else if (rtype > 0 && rtype < RT_LAST)
+            do_compress = opt->w32pe.compress_rt[rtype] ? true : false;
+        else if (res->ntype())              // named resource type
+            if (0 == memcmp(res->ntype(),"\x7\x0T\x0Y\x0P\x0""E\x0L\x0I\x0""B\x0",16)
+                || 0 == memcmp(res->ntype(),"\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0",18))
+                do_compress = false;        // typelib or registry
+
         if (do_compress)
         {
             csize += res->size();
             cnum++;
             continue;
         }
+
         usize += res->size();
         unum++;
 
@@ -1311,15 +1344,15 @@ void PackW32Pe::processResources(Resource *res)
         memcpy(ores,ibuf + res->offs(),res->size());
         memset(ibuf + res->offs(),FILLVAL,res->size());
         res->newoffs() = ptr_diff(ores,oresources);
-        if (rtype == 3)
+        if (rtype == RT_ICON)
             compress_icon = (++iconcnt >= iconsin1stdir || opt->w32pe.compress_icons == 1);
-        else if (rtype == 14)
+        else if (rtype == RT_GROUP_ICON)
         {
             if (opt->w32pe.compress_icons == 1)
             {
                 icondir_offset = 4 + ptr_diff(ores,oresources);
-                icondir_count = get_le16 (oresources + icondir_offset);
-                set_le16 (oresources + icondir_offset,1);
+                icondir_count = get_le16(oresources + icondir_offset);
+                set_le16(oresources + icondir_offset,1);
             }
             compress_idir = true;
         }
@@ -1507,9 +1540,9 @@ void PackW32Pe::pack(OutputFile *fo)
         throwCantPack("filealign < 0x200 is not yet supported");
 
     handleStub(fi,fo,pe_offset);
-    unsigned usize = ih.imagesize;
+    const unsigned usize = ih.imagesize;
     const unsigned xtrasize = 65536+IDSIZE(PEDIR_IMPORT)+IDSIZE(PEDIR_BOUNDIM)+IDSIZE(PEDIR_IAT)+IDSIZE(PEDIR_DELAYIMP)+IDSIZE(PEDIR_RELOC);
-    ibuf.alloc(usize+xtrasize);
+    ibuf.alloc(usize + xtrasize);
 
     // BOUND IMPORT support. FIXME: is this ok?
     fi->seek(0,SEEK_SET);
@@ -1538,8 +1571,7 @@ void PackW32Pe::pack(OutputFile *fo)
             if (!opt->force)
                 throwCantPack("writeable shared sections not supported (try --force)");
         if (jc && isection[ic].rawdataptr - jc > ih.filealign)
-            if (!opt->force)
-                throwCantPack("superfluous data between sections (try --force)");
+            throwCantPack("superfluous data between sections");
         fi->seek(isection[ic].rawdataptr,SEEK_SET);
         jc = isection[ic].size;
         if (jc > isection[ic].vsize)
@@ -1842,14 +1874,8 @@ void PackW32Pe::pack(OutputFile *fo)
     oh.database = osection[2].vaddr;
     oh.codesize = osection[1].vsize;
     oh.codebase = osection[1].vaddr;
-    oh.headersize = osection[0].rawdataptr;
-
-    if (((oh.headersize + oam1) &~ oam1) < rvamin)
-    {
-        if (!opt->force)
-            throwCantPack("untested branch (try --force)");
-        oh.headersize = rvamin;
-    }
+    // oh.headersize = osection[0].rawdataptr;
+    oh.headersize = rvamin;
 
     if (opt->w32pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;
@@ -2168,7 +2194,7 @@ void PackW32Pe::rebuildResources(upx_byte *& extrainfo)
             unsigned origoffs = get_le32(r + res.offs() - 4);
             res.newoffs() = origoffs;
             memcpy(obuf + origoffs - rvamin,r + res.offs(),res.size());
-            if (icondir_count && res.itype() == 14)
+            if (icondir_count && res.itype() == RT_GROUP_ICON)
             {
                 set_le16(obuf + origoffs - rvamin + 4,icondir_count);
                 icondir_count = 0;
@@ -2241,8 +2267,10 @@ void PackW32Pe::unpack(OutputFile *fo)
     ODSIZE(PEDIR_IAT) = 0;
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
-    //oh.headersize = osection[0].rawdataptr;
-    oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(pe_section_t) * objs, oh.filealign);
+
+    // oh.headersize = osection[0].rawdataptr;
+    // oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(pe_section_t) * objs, oh.filealign);
+    oh.headersize = rvamin;
     oh.chksum = 0;
 
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
@@ -2285,6 +2313,7 @@ void PackW32Pe::unpack(OutputFile *fo)
  <icondir_count 2> - optional
  <offset of extra info 4>
 */
+
 
 /*
 vi:ts=4:et

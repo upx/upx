@@ -224,6 +224,15 @@ protected:
         DLL_FLAG        = 0x2000,
         FBIG_ENDIAN     = 0x8000
     };
+
+    // resource types
+    enum {
+        RT_CURSOR = 1, RT_BITMAP, RT_ICON, RT_MENU, RT_DIALOG, RT_STRING,
+        RT_FONTDIR, RT_FONT, RT_ACCELERATOR, RT_RCDATA, RT_MESSAGE_TABLE,
+        RT_GROUP_CURSOR, RT_GROUP_ICON = 14, RT_VERSION = 16, RT_DLGINCLUDE,
+        RT_PLUGPLAY = 19, RT_VXD, RT_ANICURSOR, RT_ANIICON, RT_HTML,
+        RT_LAST
+    };
 };
 
 
