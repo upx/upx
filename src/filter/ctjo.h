@@ -1,9 +1,10 @@
-/* fctl_ml2.ch -- filter CTO implementation
+/* ctjo.h -- filter CTO implementation
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 2000-2001 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -59,7 +60,7 @@ static int F(Filter *f)
 
 #if 1
         for (ic = 0; ic < size - 5; ic++)
-            if (COND(b,ic) && get_le32(b+ic+1)+ic+1 >= size)
+            if (COND(b,ic,lastcall) && get_le32(b+ic+1)+ic+1 >= size)
             {
                 buf[b[ic+1]] |= 1;
             }
@@ -67,7 +68,7 @@ static int F(Filter *f)
         {
             int i = size - 6;
             do {
-                if (COND(b,i) && get_le32(b+i+1)+i+1 >= size)
+                if (COND(b,i,lastcall) && get_le32(b+i+1)+i+1 >= size)
                     buf[b[i+1]] |= 1;
             } while (--i >= 0);
         }
@@ -105,7 +106,7 @@ static int F(Filter *f)
 
     for (ic = 0; ic < size - 5; ic++)
     {
-        if (!COND(b,ic))
+        if (!COND(b,ic,lastcall))
             continue;
         jc = get_le32(b+ic+1)+ic+1;
         // try to detect 'real' calls only
@@ -118,7 +119,7 @@ static int F(Filter *f)
             {
                 // check the last 4 bytes before this call
                 for (kc = 4; kc; kc--)
-                    if (COND(b,ic-kc) && b[ic-kc+1] == cto8)
+                    if (COND(b,ic-kc,lastcall) && b[ic-kc+1] == cto8)
                         break;
                 if (kc)
                 {
@@ -164,11 +165,12 @@ static int U(Filter *f)
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
     const unsigned cto = f->cto << 24;
+    unsigned lastcall = 0;
 
     unsigned ic, jc;
 
     for (ic = 0; ic < size5; ic++)
-        if (COND(b,ic))
+        if (COND(b,ic,lastcall))
         {
             jc = get_be32(b+ic+1);
             if (b[ic+1] == f->cto)
@@ -176,7 +178,7 @@ static int U(Filter *f)
                 set_le32(b+ic+1,jc-ic-1-addvalue-cto);
                 f->calls++;
                 ic += 4;
-                f->lastcall = ic+1;
+                f->lastcall = lastcall = ic+1;
             }
             else
                 f->noncalls++;
@@ -186,7 +188,11 @@ static int U(Filter *f)
 #endif
 
 
+#undef F
+#undef U
+
+
 /*
-vi:ts=4:et
+vi:ts=4:et:nowrap
 */
 
