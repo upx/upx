@@ -291,7 +291,7 @@ do_xmap(
         ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     int j;
 
-    *(int *)&get_fexp = fdi;
+    *(int *)(void *)&get_fexp = fdi;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
