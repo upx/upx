@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-#  app.pl -- assembly preprocessor for upx
+#  app_68k.pl -- assembly preprocessor for upx
 #
 #  This file is part of the UPX executable compressor.
 #
@@ -28,7 +28,7 @@
 #
 
 #
-# usage: app.pl infile outfile
+# usage: app_68k.pl infile outfile
 #
 
 $in = shift || die;
@@ -82,13 +82,15 @@ for $line (@lines)
 $cs = "";
 $i = 0;
 
+@data = ();
+
 # 2nd pass
 for $line (@lines)
 {
-    if ($line =~ /^\s+(j\w+|loop|call)\s+(\w*)/)
+    if ($line =~ /^\s+(b[\w\.]+|db[\w\.]+)\s+(\w*)/)
     {
         $label = $2;
-        die "$line" if ($label =~ /(\bnear\b|\bshort\b)/);
+        ##print STDERR "$label $cs\n";        # debug
         if (defined $labels{$label})
         {
             $ts = $labels{$label};
@@ -97,25 +99,40 @@ for $line (@lines)
                 $line =~ s/$label/J$i$ilabel/;
                 print OU $line;
                 print OU "J$i$ilabel:\n";
-                print OU "\t\tsection\t.data\n\t\tdd\t";
-                print OU "0,J$i$ilabel,\'$ts\',$label - S$ts$ilabel\n";
-                print OU "\t\tsection\t.text\n\n";
+                $d = "dc.l\t0, J$i$ilabel";
+                push(@data, $d);
+                $d = "dc.b\t'$ts'";
+                push(@data, $d);
+                $d = "dc.l\t$label - S$ts$ilabel";
+                push(@data, $d);
                 $line = "";
             }
         }
     }
 
-    $line = ";$line" if ($line =~ /^\s+align\s/);
+    $line = ";$line" if ($line =~ /^\s+align\b/);
+    $line = ";$line" if ($line =~ /^\s+even\b/);
+    $line = ";$line" if ($line =~ /^\s+end\b/);
 
     print OU $line;
     if ($line =~ /__([A-Z0-9]{8})__/)
     {
         print OU "S$1$ilabel:\n";
-        print OU "\t\tsection\t.data\n\t\tdd\t\'$1\',S$1$ilabel\n";
-        print OU "\t\tsection\t.text\n\n";
         $cs = $1;
+        $d = "dc.b\t'$1'";
+        push(@data, $d);
+        $d = "dc.l\tS$1$ilabel";
+        push(@data, $d);
     }
     $i++;
 }
+
+# print data section
+print OU "\n\n\t\tsection_data\n";
+for $d (@data) {
+    print OU "\t\t$d\n";
+}
+print OU "\t\tdc.b\t'UPX9'\n";
+print OU "\t\tend\n";
 
 # vi:ts=4:et

@@ -36,6 +36,9 @@ STUBS = \
 	l_sh_n2b.h l_sh_n2d.h \
 	l_vmlinz.h
 
+# experimental:
+##STUBS += l_t_x2b.h l_t_x2bs.h l_t_x2d.h l_t_x2ds.h
+
 
 # util var for use in the rules - basename of the current target
 override T = $(basename $@)
@@ -84,12 +87,15 @@ CC_LINUX = gcc    -Os -march=i386 -mcpu=i386 -malign-functions=0 -malign-jumps=0
 
 ifeq (1,1)
 # Preprocessor for the a68k 68000-assembler.
-CPP_A68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
-A68K = a68k -q -x
+CPP_68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
+##CPP_68K = cpp -I$(UCL_UPX) -x assembler-with-cpp -P -C -traditional -nostdinc -D__A68K__
+APP_68K  = perl -w $(srcdir)/scripts/app_68k.pl
+ASM_68K = a68k -q -x
 else
 # Preprocessor for the asl 68000-assembler.
-CPP_A68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
-A68K = sh $(srcdir)/scripts/asl_68k.sh
+CPP_68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
+APP_68K  = perl -w $(srcdir)/scripts/app_68k.pl
+ASM_68K = sh $(srcdir)/scripts/asl_68k.sh
 endif
 
 
@@ -157,30 +163,6 @@ l_sys.h: l_sys.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv2b_loader $@
 
-l_t_n2b.h: l_tos.s
-	$(CPP_A68K) -DNRV2B -o $T.i $<
-	$(A68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader $@
-
-l_t_n2bs.h: l_tos.s
-	$(CPP_A68K) -DNRV2B -DSMALL -o $T.i $<
-	$(A68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader_small $@
-
-l_t_n2d.h: l_tos.s
-	$(CPP_A68K) -DNRV2D -o $T.i $<
-	$(A68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader $@
-
-l_t_n2ds.h: l_tos.s
-	$(CPP_A68K) -DNRV2D -DSMALL -o $T.i $<
-	$(A68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader_small $@
-
 l_tmt.h: l_tmt.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
@@ -200,6 +182,64 @@ l_wcle.h: l_wcle.asx
 l_w32pe.h: l_w32pe.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
+
+
+# /***********************************************************************
+# // atari/tos rules
+# ************************************************************************/
+
+l_t_n2b.h: l_tos.s
+	$(CPP_68K) -DNRV2B -o $T.i $<
+	$(ASM_68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2b_loader $@
+
+l_t_n2bs.h: l_tos.s
+	$(CPP_68K) -DNRV2B -DSMALL -o $T.i $<
+	$(ASM_68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2b_loader_small $@
+
+l_t_n2d.h: l_tos.s
+	$(CPP_68K) -DNRV2D -o $T.i $<
+	$(ASM_68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2d_loader $@
+
+l_t_n2ds.h: l_tos.s
+	$(CPP_68K) -DNRV2D -DSMALL -o $T.i $<
+	$(ASM_68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2d_loader_small $@
+
+# experimental:
+l_t_x2b.h: l_tos2.s
+	$(CPP_68K) -DNRV2B -o $T.i $<
+	$(APP_68K) $T.i $T.asx
+	$(ASM_68K) $T.asx
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2b_loader $@
+
+l_t_x2bs.h: l_tos2.s
+	$(CPP_68K) -DNRV2B -DSMALL -o $T.i $<
+	$(APP_68K) $T.i $T.asx
+	$(ASM_68K) $T.asx
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2b_loader_small $@
+
+l_t_x2d.h: l_tos2.s
+	$(CPP_68K) -DNRV2D -o $T.i $<
+	$(APP_68K) $T.i $T.asx
+	$(ASM_68K) $T.asx
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2d_loader $@
+
+l_t_x2ds.h: l_tos2.s
+	$(CPP_68K) -DNRV2D -DSMALL -o $T.i $<
+	$(APP_68K) $T.i $T.asx
+	$(ASM_68K) $T.asx
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2d_loader_small $@
 
 
 # /***********************************************************************
