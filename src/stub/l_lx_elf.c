@@ -236,43 +236,86 @@ auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
     }
 }
 
+// The PF_* and PROT_* bits are {1,2,4}; the conversion table fits in 32 bits.
+#define REP8(x) \
+    ((x)|((x)<<4)|((x)<<8)|((x)<<12)|((x)<<16)|((x)<<20)|((x)<<24)|((x)<<28))
+#define EXP8(y) \
+    ((1&(y)) ? 0xf0f0f0f0 : (2&(y)) ? 0xff00ff00 : (4&(y)) ? 0xffff0000 : 0)
+
+static inline unsigned
+__attribute__((regparm(1), stdcall))
+pf_to_prot(unsigned const pf)
+{
+    return (PROT_READ|PROT_WRITE|PROT_EXEC) & (
+        ( (REP8(PROT_EXEC ) & EXP8(PF_X))
+         |(REP8(PROT_READ ) & EXP8(PF_R))
+         |(REP8(PROT_WRITE) & EXP8(PF_W))
+        ) >> ((pf & (PF_R|PF_W|PF_X))<<2) );
+}
+
+
+// Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
+// and mmap that much, to be sure that a kernel using exec-shield-randomize
+// won't place the first piece in a way that leaves no room for the rest.
+static unsigned long  // returns relocation constant
+__attribute__((regparm(3), stdcall))
+xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
+    char **const p_brk
+)
+{
+	size_t lo= ~0, hi= 0, szlo= 0;
+    char *addr;
+    mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
+	for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
+		if (phdr->p_vaddr < lo) {
+			lo = phdr->p_vaddr;
+            szlo = phdr->p_filesz;
+		}
+		if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
+			hi =  phdr->p_memsz + phdr->p_vaddr;
+		}
+	}
+    szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
+    lo   -= ~PAGE_MASK & lo;  // round down to page boundary 
+    hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
+    szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
+    addr = do_mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    *p_brk = hi + addr;  // the logical value of brk(0)
+    munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
+    return (unsigned long)addr - lo;
+}
+
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
     Elf32_auxv_t *const av)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (char const *)ehdr);
-    unsigned long base = (ET_DYN==ehdr->e_type) ? 0x40000000 : 0;
+    char *v_brk;
+    unsigned long const reloc = xfind_pages(
+        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
-        auxv_up(av, AT_PHDR, phdr->p_vaddr);
+        auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     }
     else if (PT_LOAD==phdr->p_type) {
+        unsigned const prot = pf_to_prot(phdr->p_flags);
         struct Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
-        char *haddr =           phdr->p_memsz + (char *)phdr->p_vaddr;
+        char *haddr =           phdr->p_memsz +                  addr;
         size_t frag  = (int)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
-        if (ET_DYN==ehdr->e_type) {
-            addr  += base;
-            haddr += base;
-        }
-        else { // There is only one brk, the one for the ET_EXEC
-            // Not needed if compressed a.elf is invoked directly.
-            // Needed only if compressed shell script invokes compressed shell.
-            do_brk(haddr+OVERHEAD);  // Also takes care of whole pages of .bss
-        }
+        addr  += reloc;
+        haddr += reloc;
+
         // Decompressor can overrun the destination by 3 bytes.
         if (addr != do_mmap(addr, mlen + (xi ? 3 : 0), PROT_READ | PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 fdi, phdr->p_offset - frag) ) {
             err_exit(8);
-        }
-        if (0==base) {
-            base = (unsigned long)addr;
         }
         if (xi) {
             unpackExtent(xi, &xo, (f_expand *)fdi,
@@ -288,52 +331,36 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
         }
-        if (phdr->p_memsz != phdr->p_filesz) { // .bss
-            if (ET_DYN==ehdr->e_type) { // PT_INTERP whole pages of .bss?
-                addr += frag + mlen;
-                mlen = haddr - addr;
-                if (0 < (int)mlen) { // need more pages, too
-                    if (addr != do_mmap(addr, mlen, PROT_READ | PROT_WRITE,
-                            MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
-                        err_exit(9);
+        if (0!=mprotect(addr, mlen, prot)) {
+            err_exit(10);
 ERR_LAB
-                    }
-                }
+        }
+        addr += mlen + frag;  /* page boundary on hi end */
+        if (addr < haddr) { // need pages for .bss
+            if (addr != do_mmap(addr, haddr - addr, prot,
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
+                err_exit(9);
             }
         }
-        else { // no .bss
-            int prot = 0;
-            if (phdr->p_flags & PF_X) { prot |= PROT_EXEC; }
-            if (phdr->p_flags & PF_W) { prot |= PROT_WRITE; }
-            if (phdr->p_flags & PF_R) { prot |= PROT_READ; }
-            if (0!=mprotect(addr, mlen, prot)) {
-                err_exit(10);
+        else if (xi) { // cleanup if decompressor overrun crosses page boundary
+            mlen = ~PAGE_MASK & (3+ mlen);
+            if (mlen<=3) { // page fragment was overrun buffer only
+                munmap(addr, mlen);
             }
-            if (xi) { // cleanup if decompressor overrun crosses page boundary
-                mlen += 3;
-                addr += mlen;
-                mlen &= ~PAGE_MASK;
-                if (mlen<=3) { // page fragment was overrun buffer only
-                    munmap(addr - mlen, mlen);
-                }
-            }
-        }
-        if (ET_DYN!=ehdr->e_type) {
-            // Needed only if compressed shell script invokes compressed shell.
-            do_brk(haddr);
         }
     }
-    if (!xi) {
+    if (!xi) { // 2nd call (PT_INTERP); close()+check is smaller here
         if (0!=close(fdi)) {
             err_exit(11);
         }
     }
-    if (ET_DYN==ehdr->e_type) {
-        return ehdr->e_entry + base;
+    else { // 1st call (main); also have (0!=av) here
+        if (ET_DYN!=ehdr->e_type) {
+            // Needed only if compressed shell script invokes compressed shell.
+            do_brk(v_brk);
+        }
     }
-    else {
-        return ehdr->e_entry;
-    }
+    return ehdr->e_entry + reloc;
 }
 
 
