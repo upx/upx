@@ -87,12 +87,13 @@ STRIPELF = ./util/sstrip/sstrip
 
 
 ###
-### linux/i386
+### i386
 ###
 
 LD_LINUX_I386 = ld-2.13.2
 LD_LINUX_I386 = ld
 OBJCOPY_LINUX_I386 = objcopy
+OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
 
 # gcc 2.7.2.3 (fold_*86.bin: 1839 / 1011 / xxxx / 1390)
 CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
@@ -152,18 +153,22 @@ endif
 ### PowerPC 32
 ###
 
-GCC_PPC32 := false
-LD_PPC32  := false
+GCC_PPC32     := false
+LD_PPC32      := false
+OBJCOPY_PPC32 := false
+OBJSTRIP_PPC32 = $(OBJCOPY_PPC32) -R .comment -R .note
 
 d = /home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin
 ifneq ($(wildcard $d),)
-  GCC_PPC32 := $d/powerpc-750-linux-gnu-gcc -m32
-  LD_PPC32  := $d/powerpc-750-linux-gnu-ld
+  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD
+  LD_PPC32      := $d/powerpc-750-linux-gnu-ld
+  OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
 d = /opt/cc-i386-linux/crosstool/powerpc-750-linux-gnu/gcc-3.4.3.20050210-glibc-2.2.5/bin
 ifneq ($(wildcard $d),)
-  GCC_PPC32 := $d/powerpc-750-linux-gnu-gcc -m32
-  LD_PPC32  := $d/powerpc-750-linux-gnu-ld
+  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD
+  LD_PPC32      := $d/powerpc-750-linux-gnu-ld
+  OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
 
 
@@ -330,7 +335,7 @@ l_ps1c.h: l_ps1.asm
 
 upx_itoa.o: upx_itoa.asm
 	$(NASM) -f elf -o $@ $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 l_lx_elf86.h: l_lx_elf86.asx
 	$(NASM) -f bin -o $T.bin $<
@@ -350,50 +355,54 @@ l_lx_pti86.h: l_lx_pti86.asx
 
 l_mac_ppc32.h: l_mac_ppc32.S ppc_d_nrv2e.S
 	$(GCC_PPC32) -c $<
+	$(OBJSTRIP_PPC32) $T.o
 	$(LD_PPC32) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin l_mac_ppc32_loader $@
 
 l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
 	$(GCC_PPC32) -c $<
+	$(OBJSTRIP_PPC32) $T.o
 	$(LD_PPC32) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elfppc32_loader $@
 
 l_lx_elf.o: l_lx_elf.c linux.hh
 	$(CC_LINUX_I386) -c $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 l_lx_exec.o: l_lx_exec.c linux.hh
 	$(CC_LINUX_I386) -c $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 l_lx_sep.o: l_lx_sep.c linux.hh
 	$(CC_LINUX_I386) -c $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 l_lx_sh.o: l_lx_sh.c linux.hh
 	$(CC_LINUX_I386) -c $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 l_lx_pti.o: l_lx_pti.c linux.hh
 	$(CC_LINUX_I386) -c $<
 
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
 	chmod a-x $T.bin
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
+	$(OBJSTRIP_LINUX_I386) $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
 m_lx_elfppc32.o: m_lx_elfppc32.c
-	$(GCC_PPC32) -Os -o $@ -c $<
+	$(GCC_PPC32) -Os -c $<
+	$(OBJSTRIP_PPC32) $@
 
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S
 	$(GCC_PPC32) -c $<
+	$(OBJSTRIP_PPC32) $@
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
@@ -402,24 +411,24 @@ fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
 	chmod a-x $T.bin
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
+	$(OBJSTRIP_LINUX_I386) $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_fold $@
 
 fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
-	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 
 fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
 	chmod a-x $T.bin
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
+	$(OBJSTRIP_LINUX_I386) $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
@@ -430,7 +439,7 @@ fold_pti86.o: fold_pti86.asm
 fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_pti86.lds -Map $T.map -o $T.bin $T.o l_lx_pti.o
 	chmod a-x $T.bin
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
+	$(OBJSTRIP_LINUX_I386) $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386pti_fold $@
@@ -442,21 +451,23 @@ fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
 
 m_mac_mach32.o: m_mac_mach32.c
 	$(GCC_PPC32) -Os -c $<
+	$(OBJSTRIP_PPC32) $@
 
 fold_machppc32.o: fold_machppc32.S ppc_bxx.S
 	$(GCC_PPC32) -c $<
+	$(OBJSTRIP_PPC32) $@
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
 
 upxd: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $@
+	$(OBJSTRIP_LINUX_I386) $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
 
