@@ -1910,6 +1910,25 @@ int PackW32Pe::canUnpack()
         return true;
     if (!is_packed && !found_ph)
         return -1;
+    bool hacked_upx = false;
+    if (is_packed && ih.entry < isection[2].vaddr)
+    {
+        unsigned char buf[256];
+        memset(buf, 0, sizeof(buf));
+        fi->seek(ih.entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
+        fi->read(buf, sizeof(buf));
+
+        static const char getbit_magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
+        // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
+
+        unsigned char *p = find(buf, sizeof(buf), getbit_magic, 7);
+        if (p &&  find(p + 1, buf - p + sizeof(buf) - 1, getbit_magic, 7))
+        {
+            hacked_upx = true;
+            fprintf(stderr, "hacked upx header detected\n");
+        }
+    }
+
     throwCantUnpack("file is possibly modified/hacked/protected; take care!");
     return false;   // not reached
 }
