@@ -378,7 +378,8 @@ int PackDjgpp2::canUnpack()
         return false;
     if (is_dlm(fi,coff_offset))
         throwCantUnpack("can't handle DLM");
-    return readPackHeader(1024, coff_offset) ? 1 : -1;
+    fi->seek(coff_offset, SEEK_SET);
+    return readPackHeader(1024) ? 1 : -1;
 }
 
 

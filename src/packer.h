@@ -180,8 +180,8 @@ protected:
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
-    virtual bool readPackHeader(unsigned len, off_t seek_offset,
-                                upx_byte *buf=NULL);
+    virtual bool getPackHeader(void *b, int blen);
+    virtual bool readPackHeader(int len);
 
     // filter handling
     virtual bool isValidFilter(int filter_id) const;

@@ -745,8 +745,9 @@ int PackWcle::canUnpack()
 {
     if (!LeFile::readFileHeader())
         return false;
+    fi->seek(exe_offset + ih.data_pages_offset, SEEK_SET);
     // FIXME: 1024 could be too large for some files
-    return readPackHeader(1024, ih.data_pages_offset+exe_offset) ? 1 : -1;
+    return readPackHeader(1024) ? 1 : -1;
 }
 
 

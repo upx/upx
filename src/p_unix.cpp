@@ -212,7 +212,8 @@ int PackUnix::canUnpack()
     const int bufsize = sizeof(buf);
 
     fi->seek(-bufsize, SEEK_END);
-    if (!readPackHeader(128, -1, buf))
+    fi->readx(buf, bufsize);
+    if (!getPackHeader(buf, bufsize))
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();

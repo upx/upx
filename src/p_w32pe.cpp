@@ -1925,8 +1925,15 @@ int PackW32Pe::canUnpack()
     bool found_ph = false;
     if (memcmp(isection[0].name,"UPX",3) == 0)
     {
-        found_ph = readPackHeader(1024, isection[1].rawdataptr - 64)  // current version
-                || readPackHeader(1024, isection[2].rawdataptr); // old versions
+        // current version
+        fi->seek(isection[1].rawdataptr - 64, SEEK_SET);
+        found_ph = readPackHeader(1024);
+        if (!found_ph)
+        {
+            // old versions
+            fi->seek(isection[2].rawdataptr, SEEK_SET);
+            found_ph = readPackHeader(1024);
+        }
     }
     if (is_packed && found_ph)
         return true;

@@ -345,7 +345,10 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
 int PackVmlinuzI386::canUnpack()
 {
-    return readFileHeader() == getFormat();
+    if (readFileHeader() != getFormat())
+        return false;
+    fi->seek(setup_size, SEEK_SET);
+    return readPackHeader(1024) ? 1 : -1;
 }
 
 

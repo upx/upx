@@ -531,8 +531,9 @@ int PackExe::canUnpack()
 {
     if (!readFileHeader())
         return false;
-    const off_t off = ih.headsize16*16;
-    bool b = readPackHeader(128, off);
+    const off_t off = ih.headsize16 * 16;
+    fi->seek(off, SEEK_SET);
+    bool b = readPackHeader(128);
     return b && (off + (off_t) ph.c_len <= file_size);
 }
 

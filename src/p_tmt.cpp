@@ -265,7 +265,8 @@ int PackTmt::canUnpack()
 {
     if (!PackTmt::readFileHeader())
         return false;
-    return readPackHeader(512,adam_offset) ? 1 : -1;
+    fi->seek(adam_offset, SEEK_SET);
+    return readPackHeader(512) ? 1 : -1;
 }
 
 

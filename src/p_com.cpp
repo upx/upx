@@ -234,7 +234,7 @@ void PackCom::pack(OutputFile *fo)
 
 int PackCom::canUnpack()
 {
-    if (!readPackHeader(128, 0))
+    if (!readPackHeader(128))
         return false;
     if (file_size <= (off_t) ph.c_len)
         return false;

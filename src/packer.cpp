@@ -594,26 +594,9 @@ int Packer::patchPackHeader(void *b, int blen)
 }
 
 
-bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
+bool Packer::getPackHeader(void *b, int blen)
 {
-    assert((int)len > 0);
-
-    MemBuffer hbuf;
-    if (buf == NULL)
-    {
-        hbuf.alloc(len);
-        buf = hbuf;
-    }
-    memset(buf, 0, len);
-
-    if (seek_offset != -1)
-    {
-        if (seek_offset >= 0)
-            fi->seek(seek_offset, SEEK_SET);
-    }
-    len = fi->read(buf,len);
-
-    if (!ph.fillPackHeader(buf, len))
+    if (!ph.fillPackHeader((unsigned char *)b, blen))
         return false;
 
     if (ph.version > getVersion())
@@ -646,6 +629,17 @@ bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
         return false;
 
     return true;
+}
+
+
+bool Packer::readPackHeader(int len)
+{
+    assert((int)len > 0);
+    MemBuffer buf(len);
+    len = fi->read(buf, len);
+    if (len <= 0)
+        return false;
+    return getPackHeader(buf, len);
 }
 
 
