@@ -26,7 +26,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED
 
-#define ACC_VERSION     20030708L
+#define ACC_VERSION     20030712L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -36,11 +36,11 @@
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
-#if defined(__ICL) && !defined(__INTEL_COMPILER)
-#  define __INTEL_COMPILER __ICL
-#endif
 #if defined(__IBMCPP__) && !defined(__IBMC__)
 #  define __IBMC__ __IBMCPP__
+#endif
+#if defined(__ICL) && !defined(__INTEL_COMPILER)
+#  define __INTEL_COMPILER __ICL
 #endif
 
 /* disable pedantic warnings */

@@ -52,6 +52,9 @@
 #    include <i86.h>
 #  endif
 #elif (ACC_OS_OS216)
+#  if (ACC_CC_WATCOMC)
+#    include <i86.h>
+#  endif
 #  if 0
 #    include <os2.h>
 #  else

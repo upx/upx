@@ -86,17 +86,19 @@
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #endif
 
+#if defined(__cplusplus)
+#endif
 #if (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0200)
-   extern void __near _AHSHIFT(void);
+   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-   extern void __near _AHSHIFT(void);
+   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif (ACC_CC_MSC || ACC_CC_TOPSPEEDC)
-   extern void __near _AHSHIFT(void);
+   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif (ACC_CC_TURBOC && __TURBOC__ >= 0x0295)
-   extern void __near _AHSHIFT(void);
+   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif ((ACC_CC_AZTECC || ACC_CC_PACIFICC || ACC_CC_TURBOC) && ACC_OS_DOS16)
 #  define ACC_MM_AHSHIFT      12

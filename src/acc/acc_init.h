@@ -19,12 +19,12 @@
 ************************************************************************/
 
 /* workaround for preprocessor bugs in some compilers */
-#if 0
-#define ACC_0xffffL             65535ul
-#define ACC_0xffffffffL         4294967295ul
-#else
+#if defined(_MSC_VER)
 #define ACC_0xffffL             0xfffful
 #define ACC_0xffffffffL         0xfffffffful
+#else
+#define ACC_0xffffL             65535ul
+#define ACC_0xffffffffL         4294967295ul
 #endif
 
 /* some things we cannot work around */
@@ -45,11 +45,12 @@
 // try to detect specific compilers
 ************************************************************************/
 
-#if defined(__ZTC__) && defined(__I86__) && (UINT_MAX == ACC_0xffffL)
+#if (UINT_MAX == ACC_0xffffL)
+#if defined(__ZTC__) && defined(__I86__)
 #  if !defined(__DOS__) && !defined(__OS2__)
 #    define __DOS__ 1
 #  endif
-#elif defined(__VERSION) && (UINT_MAX == ACC_0xffffL) && defined(MB_LEN_MAX)
+#elif defined(__VERSION) && defined(MB_LEN_MAX)
 #  if (__VERSION == 520) && (MB_LEN_MAX == 1)
 #    if !defined(__AZTEC_C__)
 #      define __AZTEC_C__ __VERSION
@@ -58,6 +59,7 @@
 #      define __DOS__ 1
 #    endif
 #  endif
+#endif
 #endif
 
 
@@ -76,18 +78,29 @@
 
 /* Fix old compiler versions. */
 #if (UINT_MAX == ACC_0xffffL)
-#if defined(__PACIFIC__) && defined(DOS)
-#  if !defined(__far)
-#    define __far far
+#  undef __ACC_RENAME_A
+#  undef __ACC_RENAME_B
+#  if defined(__AZTEC_C__) && defined(__DOS__)
+#    define __ACC_RENAME_A 1
+#  elif defined(_MSC_VER) && defined(MSDOS)
+#    if (_MSC_VER < 600)
+#      define __ACC_RENAME_A 1
+#    elif (_MSC_VER < 700)
+#      define __ACC_RENAME_B 1
+#    endif
+#  elif defined(__TSC__) && defined(__OS2__)
+#    define __ACC_RENAME_A 1
+#  elif defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0410)
+#    define __ACC_RENAME_A 1
+#  elif defined(__PACIFIC__) && defined(DOS)
+#    if !defined(__far)
+#      define __far far
+#    endif
+#    if !defined(__near)
+#      define __near near
+#    endif
 #  endif
-#  if !defined(__near)
-#    define __near near
-#  endif
-#elif defined(__AZTEC_C__) && defined(__DOS__)
-#  if !defined(__huge)
-#    define __huge huge
-#  endif
-#elif defined(__TSC__) && defined(__OS2__)
+#  if defined(__ACC_RENAME_A)
 #    if !defined(__cdecl)
 #      define __cdecl cdecl
 #    endif
@@ -103,24 +116,10 @@
 #    if !defined(__pascal)
 #      define __pascal pascal
 #    endif
-#elif defined(_MSC_VER) && defined(MSDOS)
-#  if (_MSC_VER < 600)
-#    if !defined(__cdecl)
-#      define __cdecl cdecl
-#    endif
-#    if !defined(__far)
-#      define __far far
-#    endif
 #    if !defined(__huge)
 #      define __huge huge
 #    endif
-#    if !defined(__near)
-#      define __near near
-#    endif
-#    if !defined(__pascal)
-#      define __pascal pascal
-#    endif
-#  elif (_MSC_VER < 700)
+#  elif defined(__ACC_RENAME_B)
 #    if !defined(__cdecl)
 #      define __cdecl _cdecl
 #    endif
@@ -137,28 +136,12 @@
 #      define __pascal _pascal
 #    endif
 #  endif
-#elif defined(__TURBOC__) && defined(__MSDOS__)
-#  if (__TURBOC__ < 0x0410)
-#    if !defined(__cdecl)
-#      define __cdecl cdecl
-#    endif
-#    if !defined(__far)
-#      define __far far
-#    endif
-#    if !defined(__huge)
-#      define __huge huge
-#    endif
-#    if !defined(__near)
-#      define __near near
-#    endif
-#    if !defined(__pascal)
-#      define __pascal pascal
-#    endif
-#  endif
-#endif
+#  undef __ACC_RENAME_A
+#  undef __ACC_RENAME_B
 #endif
 
 
+#if (UINT_MAX == ACC_0xffffL)
 #if defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0200)
 #  define ACC_BROKEN_SIZEOF 1
 #  if (__TURBOC__ < 0x0150)
@@ -170,6 +153,15 @@
 #elif defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
 #  define ACC_BROKEN_SIZEOF 1
 #endif
+#endif
+
+
+/***********************************************************************
+// preprocessor macros
+************************************************************************/
+
+#define ACC_STRINGIZE(x)        #x
+#define ACC_MACRO_EXPAND(x)     ACC_STRINGIZE(x)
 
 
 /***********************************************************************
@@ -185,11 +177,15 @@
 
 
 /***********************************************************************
-// preprocessor macros
+// misc macros
 ************************************************************************/
 
-#define ACC_STRINGIZE(x)        #x
-#define ACC_MACRO_EXPAND(x)     ACC_STRINGIZE(x)
+#if defined(__cplusplus)
+#  define ACC_EXTERN_C extern "C"
+#else
+#  define ACC_EXTERN_C extern
+#endif
+
 
 
 /*

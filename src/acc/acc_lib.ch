@@ -797,7 +797,7 @@ ACC_LIBFUNC(int, acc_isatty) (int fd)
 
 ACC_LIBFUNC(int, acc_mkdir) (const char* name, unsigned mode)
 {
-#if (ACC_OS_POSIX || ACC_OS_CYGWIN || ACC_OS_EMX)
+#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_EMX || ACC_OS_MACOSX || ACC_OS_POSIX)
     return mkdir(name, mode);
 #elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
     ACC_UNUSED(mode);

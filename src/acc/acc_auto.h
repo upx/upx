@@ -191,6 +191,7 @@
 #    undef HAVE_DIRENT_H /* pulls in <windows.h>; use <dir.h> instead */
 #  endif
 #  if (__TURBOC__ < 0x0200)
+#    undef HAVE_SIGNAL_H /* not working */
 #    undef HAVE_SYS_TYPES_H
 #  endif
 #  if (__TURBOC__ < 0x0400)
@@ -230,6 +231,7 @@
 
 #define HAVE_ACCESS 1
 #define HAVE_ALLOCA 1
+#define HAVE_ATEXIT 1
 #define HAVE_ATOI 1
 #define HAVE_ATOL 1
 #define HAVE_CHMOD 1
@@ -247,6 +249,9 @@
 #define HAVE_MEMMOVE 1
 #define HAVE_MEMSET 1
 #define HAVE_MKTIME 1
+#define HAVE_QSORT 1
+#define HAVE_RAISE 1
+#define HAVE_SIGNAL 1
 #define HAVE_SNPRINTF 1
 #define HAVE_STAT 1
 #define HAVE_STRCHR 1
@@ -254,12 +259,13 @@
 #define HAVE_STRERROR 1
 #define HAVE_STRFTIME 1
 #define HAVE_STRRCHR 1
+#define HAVE_STRSTR 1
 #define HAVE_TIME 1
 #define HAVE_UMASK 1
 #define HAVE_UTIME 1
 #define HAVE_VSNPRINTF 1
 
-#if (ACC_OS_POSIX || ACC_OS_CYGWIN)
+#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_MACOSX || ACC_OS_POSIX)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #else
@@ -360,6 +366,7 @@
 #  undef HAVE_DIFFTIME
 #  undef HAVE_FSTAT
 #  undef HAVE_MKTIME
+#  undef HAVE_RAISE
 #  undef HAVE_SNPRINTF
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
@@ -386,6 +393,9 @@
 #  undef HAVE_ALLOCA
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
+#  if (__TURBOC__ < 0x0200)
+#    undef HAVE_SIGNAL
+#  endif
 #  if (__TURBOC__ < 0x0295)
 #    undef HAVE_MKTIME
 #    undef HAVE_STRFTIME
@@ -478,9 +488,18 @@
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_M68K && (ACC_CC_GNUC))
+#elif (ACC_CC_GNUC && (SIZEOF_LONG < 8))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
+#endif
+
+
+/*************************************************************************
+// misc
+**************************************************************************/
+
+#if defined(HAVE_SIGNAL) && !defined(RETSIGTYPE)
+#  define RETSIGTYPE void
 #endif
 
 
