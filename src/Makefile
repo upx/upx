@@ -30,6 +30,9 @@ endif
 
 DEBUG = 0
 
+srcdir = .
+top_srcdir = ..
+
 
 ##### You should not have to change anything below this line. #####
 

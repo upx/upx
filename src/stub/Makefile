@@ -17,8 +17,8 @@ endif
 
 SHELL = /bin/sh
 
-top_srcdir = ../..
 srcdir = .
+top_srcdir = ../..
 
 
 # These are the files we want to create.

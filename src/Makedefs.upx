@@ -9,8 +9,9 @@ SHELL = /bin/sh
 .SUFFIXES: .a .c .cpp .exe .lib .o .obj .rc .res .ttp
 
 
+ifeq ($(srcdir),)
 srcdir = .
-top_srcdir = ..
+endif
 
 VPATH = $(srcdir)
 
