@@ -195,6 +195,15 @@ ACCLIB_EXTERN(int,  acc_mkdir) (const char* name, unsigned mode);
 ACCLIB_EXTERN(int,  acc_response) (int* argc, char*** argv);
 ACCLIB_EXTERN(int,  acc_set_binmode) (int fd, int binary);
 
+#if defined(acc_uint64l_t)
+#  define acc_uclock_t      acc_uint64l_t
+#else
+#  define acc_uclock_t      acc_uint32l_t
+#endif
+ACCLIB_EXTERN(acc_uclock_t, acc_uclock) (void);
+
+ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
 
 typedef struct {
     acc_uint32l_t seed;

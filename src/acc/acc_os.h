@@ -46,7 +46,7 @@
 #elif defined(__QNX__)
 #  define ACC_OS_QNX            1
 #  define ACC_INFO_OS           "qnx"
-#elif defined(__BORLANDC__) && defined(__DPMI32__)
+#elif defined(__BORLANDC__) && defined(__DPMI32__) && (__BORLANDC__ >= 0x0460)
 #  define ACC_OS_DOS32          1
 #  define ACC_INFO_OS           "dos32"
 #elif defined(__BORLANDC__) && defined(__DPMI16__)

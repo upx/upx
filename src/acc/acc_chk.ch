@@ -22,23 +22,23 @@
 #endif
 
 /* compile-time sign */
-#if !defined(ACCCHK_ASSERT_SIGN)
-#  define ACCCHK_ASSERT_SIGN(type, relop) \
+#if !defined(ACCCHK_ASSERT_SIGN_T)
+#  define ACCCHK_ASSERT_SIGN_T(type, relop) \
         ACCCHK_ASSERT( (type) (-1)       relop  (type) 0 ) \
         ACCCHK_ASSERT( (type) (~(type)0) relop  (type) 0 ) \
         ACCCHK_ASSERT( (type) (~(type)0) ==     (type) (-1) )
 #endif
 
-#if !defined(ACCCHK_IS_SIGNED)
-#  define ACCCHK_ASSERT_IS_SIGNED(type)     ACCCHK_ASSERT_SIGN(type,<)
+#if !defined(ACCCHK_IS_SIGNED_T)
+#  define ACCCHK_ASSERT_IS_SIGNED_T(type)       ACCCHK_ASSERT_SIGN_T(type,<)
 #endif
 
-#if !defined(ACCCHK_IS_UNSIGNED)
+#if !defined(ACCCHK_IS_UNSIGNED_T)
 #  if (ACC_BROKEN_INTEGRAL_PROMOTION)
-#    define ACCCHK_ASSERT_IS_UNSIGNED(type) \
+#    define ACCCHK_ASSERT_IS_UNSIGNED_T(type) \
         ACCCHK_ASSERT( (type) (-1) > (type) 0 )
 #  else
-#    define ACCCHK_ASSERT_IS_UNSIGNED(type) ACCCHK_ASSERT_SIGN(type,>)
+#    define ACCCHK_ASSERT_IS_UNSIGNED_T(type)   ACCCHK_ASSERT_SIGN_T(type,>)
 #  endif
 #endif
 
@@ -98,8 +98,8 @@
 // check basic types
 **************************************************************************/
 
-    ACCCHK_ASSERT_IS_SIGNED(signed char)
-    ACCCHK_ASSERT_IS_UNSIGNED(unsigned char)
+    ACCCHK_ASSERT_IS_SIGNED_T(signed char)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned char)
     ACCCHK_ASSERT(sizeof(signed char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(unsigned char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(char) == 1)
@@ -117,8 +117,8 @@
     ACCCHK_ASSERT(acc_alignof(char) == 1)
 #endif
 
-    ACCCHK_ASSERT_IS_SIGNED(short)
-    ACCCHK_ASSERT_IS_UNSIGNED(unsigned short)
+    ACCCHK_ASSERT_IS_SIGNED_T(short)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned short)
     ACCCHK_ASSERT(sizeof(short) == sizeof(unsigned short))
     ACCCHK_ASSERT(sizeof(short) >= 2)
     ACCCHK_ASSERT(sizeof(short) >= sizeof(char))
@@ -127,8 +127,8 @@
     ACCCHK_ASSERT(sizeof(short) == SIZEOF_SHORT)
 #endif
 
-    ACCCHK_ASSERT_IS_SIGNED(int)
-    ACCCHK_ASSERT_IS_UNSIGNED(unsigned int)
+    ACCCHK_ASSERT_IS_SIGNED_T(int)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned int)
     ACCCHK_ASSERT(sizeof(int) == sizeof(unsigned int))
     ACCCHK_ASSERT(sizeof(int) >= 2)
     ACCCHK_ASSERT(sizeof(int) >= sizeof(short))
@@ -138,8 +138,8 @@
     ACCCHK_ASSERT(sizeof(int) == SIZEOF_INT)
 #endif
 
-    ACCCHK_ASSERT_IS_SIGNED(long)
-    ACCCHK_ASSERT_IS_UNSIGNED(unsigned long)
+    ACCCHK_ASSERT_IS_SIGNED_T(long)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned long)
     ACCCHK_ASSERT(sizeof(long) == sizeof(unsigned long))
     ACCCHK_ASSERT(sizeof(long) >= 4)
     ACCCHK_ASSERT(sizeof(long) >= sizeof(int))
@@ -149,14 +149,14 @@
     ACCCHK_ASSERT(sizeof(long) == SIZEOF_LONG)
 #endif
 
-    ACCCHK_ASSERT_IS_UNSIGNED(size_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(size_t)
     ACCCHK_ASSERT(sizeof(size_t) >= sizeof(int))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(sizeof(0))) /* sizeof() returns size_t */
 #if (SIZEOF_SIZE_T > 0)
     ACCCHK_ASSERT(sizeof(size_t) == SIZEOF_SIZE_T)
 #endif
 
-    ACCCHK_ASSERT_IS_SIGNED(ptrdiff_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(ptrdiff_t)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) >= sizeof(int))
     ACCCHK_ASSERT(sizeof(ptrdiff_t) >= sizeof(size_t))
 #if !defined(ACC_BROKEN_SIZEOF)
@@ -205,11 +205,11 @@
     ACCCHK_ASSERT(sizeof(acc_uint32e_t) == 4)
     ACCCHK_ASSERT(sizeof(acc_int32e_t) == sizeof(acc_uint32e_t))
 
-    ACCCHK_ASSERT_IS_SIGNED(acc_int32e_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(acc_int32e_t)
     ACCCHK_ASSERT(((( (acc_int32e_t)1 << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT(((( ACC_INT32E_C(1) << 30) + 1) >> 30) == 1)
 
-    ACCCHK_ASSERT_IS_UNSIGNED(acc_uint32e_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32e_t)
     ACCCHK_ASSERT(((( (acc_uint32e_t)1 << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((( ACC_UINT32E_C(1) << 31) + 1) >> 31) == 1)
 
@@ -221,6 +221,7 @@
 
     ACCCHK_ASSERT((ACC_INT32E_C(1)  << (8*SIZEOF_ACC_INT32E_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32E_C(1) << (8*SIZEOF_ACC_INT32E_T-1)) > 0)
+
     ACCCHK_ASSERT(ACC_INT32E_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32E_C(-2147483647) -1  < 0)
     ACCCHK_ASSERT(ACC_UINT32E_C(4294967295)     > 0)
@@ -228,27 +229,31 @@
 #endif
 
 
+    ACCCHK_ASSERT(sizeof(acc_int32l_t) >= sizeof(int))
     ACCCHK_ASSERT(sizeof(acc_int32l_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == SIZEOF_ACC_INT32L_T)
     ACCCHK_ASSERT(sizeof(acc_uint32l_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == sizeof(acc_uint32l_t))
 
-    ACCCHK_ASSERT_IS_SIGNED(acc_int32l_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(acc_int32l_t)
     ACCCHK_ASSERT(((( (acc_int32l_t)1 << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT(((( ACC_INT32L_C(1) << 30) + 1) >> 30) == 1)
 
-    ACCCHK_ASSERT_IS_UNSIGNED(acc_uint32l_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32l_t)
     ACCCHK_ASSERT(((( (acc_uint32l_t)1 << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((( ACC_UINT32L_C(1) << 31) + 1) >> 31) == 1)
 
     ACCCHK_ASSERT((ACC_INT32L_C(1)  << (8*SIZEOF_ACC_INT32L_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32L_C(1) << (8*SIZEOF_ACC_INT32L_T-1)) > 0)
+    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (int)(8*sizeof(ACC_UINT32L_C(1))-1)) < 0)
+    ACCCHK_ASSERT((ACC_UINT32L_C(1) << (int)(8*sizeof(ACC_UINT32L_C(1))-1)) > 0)
     ACCCHK_ASSERT(ACC_INT32L_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32L_C(-2147483647) -1  < 0)
     ACCCHK_ASSERT(ACC_UINT32L_C(4294967295)     > 0)
     ACCCHK_ASSERT(ACC_UINT32L_C(4294967295) == ACC_0xffffffffL)
 
 
+    ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(int))
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(acc_int32l_t))
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == SIZEOF_ACC_INT32F_T)
@@ -256,16 +261,18 @@
     ACCCHK_ASSERT(sizeof(acc_uint32f_t) >= sizeof(acc_uint32l_t))
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == sizeof(acc_uint32f_t))
 
-    ACCCHK_ASSERT_IS_SIGNED(acc_int32f_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(acc_int32f_t)
     ACCCHK_ASSERT(((( (acc_int32f_t)1 << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT(((( ACC_INT32F_C(1) << 30) + 1) >> 30) == 1)
 
-    ACCCHK_ASSERT_IS_UNSIGNED(acc_uint32f_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32f_t)
     ACCCHK_ASSERT(((( (acc_uint32f_t)1 << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((( ACC_UINT32F_C(1) << 31) + 1) >> 31) == 1)
 
     ACCCHK_ASSERT((ACC_INT32F_C(1)  << (8*SIZEOF_ACC_INT32F_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32F_C(1) << (8*SIZEOF_ACC_INT32F_T-1)) > 0)
+    ACCCHK_ASSERT((ACC_INT32F_C(1)  << (int)(8*sizeof(ACC_UINT32F_C(1))-1)) < 0)
+    ACCCHK_ASSERT((ACC_UINT32F_C(1) << (int)(8*sizeof(ACC_UINT32F_C(1))-1)) > 0)
     ACCCHK_ASSERT(ACC_INT32F_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32F_C(-2147483647) -1  < 0)
     ACCCHK_ASSERT(ACC_UINT32F_C(4294967295)     > 0)
@@ -278,13 +285,13 @@
     ACCCHK_ASSERT(sizeof(acc_uint64l_t) >= 8)
     ACCCHK_ASSERT(sizeof(acc_int64l_t) == sizeof(acc_uint64l_t))
 
-    ACCCHK_ASSERT_IS_SIGNED(acc_int64l_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(acc_int64l_t)
     ACCCHK_ASSERT(((( (acc_int64l_t)1 << 62) + 1) >> 62) == 1)
     ACCCHK_ASSERT(((( ACC_INT64L_C(1) << 62) + 1) >> 62) == 1)
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
 #else
-    ACCCHK_ASSERT_IS_UNSIGNED(acc_uint64l_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint64l_t)
     ACCCHK_ASSERT(ACC_UINT64L_C(18446744073709551615)     > 0)
 #endif
     ACCCHK_ASSERT(((( (acc_uint64l_t)1 << 63) + 1) >> 63) == 1)
@@ -302,8 +309,8 @@
 #endif
 
 
-    ACCCHK_ASSERT_IS_SIGNED(acc_intptr_t)
-    ACCCHK_ASSERT_IS_UNSIGNED(acc_uintptr_t)
+    ACCCHK_ASSERT_IS_SIGNED_T(acc_intptr_t)
+    ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uintptr_t)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) >= sizeof(void *))
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == SIZEOF_ACC_INTPTR_T)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(acc_uintptr_t))

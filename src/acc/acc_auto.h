@@ -326,6 +326,9 @@
 #    undef HAVE_ALLOCA
 #    undef HAVE_UTIME
 #  endif
+#  if ((__BORLANDC__ < 0x0410) && ACC_OS_WIN16)
+#    undef HAVE_ALLOCA
+#  endif
 #  if (__BORLANDC__ < 0x0550)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
@@ -355,7 +358,7 @@
 #    define snprintf _snprintf
 #    define vsnprintf _vsnprintf
 #  endif
-#  if (_MSC_VER < 800 && ACC_OS_WIN16)
+#  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
 #  endif
 #elif defined(__MINGW32__)
