@@ -206,6 +206,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         throwCantPack("out of memory");
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
+    //uip->finalCallback(ph.u_len, ph.c_len);
 
     //ph.min_offset_found = result[0];
     ph.max_offset_found = result[1];

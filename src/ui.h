@@ -53,7 +53,7 @@ public:
     static void uiConfirmUpdate();
     static void uiPackTotal();
     static void uiUnpackTotal();
-    static void uiListTotal();
+    static void uiListTotal(bool uncompress=false);
     static void uiTestTotal();
     static void uiFileInfoTotal();
 
@@ -72,14 +72,16 @@ public:
 
     // callback
     typedef upx_progress_callback_t cb_t;
-    virtual void startCallback(unsigned is, unsigned step,
+    virtual void startCallback(unsigned u_len, unsigned step,
                                int pass, int total_passes);
     virtual void firstCallback();
+    virtual void finalCallback(unsigned u_len, unsigned c_len);
     virtual void endCallback();
     virtual cb_t *getCallback() { return &cb; }
 protected:
-    static void __UPX_ENTRY callback(upx_uint is, upx_uint os, int, void *);
-    virtual void doCallback(unsigned is, unsigned os);
+    static void __UPX_ENTRY callback(upx_uint isize, upx_uint osize,
+                                     int, void *);
+    virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
     virtual void uiUpdate(long fc=-1, long fu=-1);

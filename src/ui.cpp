@@ -51,7 +51,7 @@ struct UiPacker::State
 {
     int mode;
 
-    unsigned is;
+    unsigned u_len;
     unsigned step;
     unsigned next_update;
 
@@ -99,33 +99,38 @@ long UiPacker::update_fu_len = 0;
 
 
 static const char header_line1[] =
-    "        File size        Ratio      Format      Name\n";
+    "        File size         Ratio      Format      Name\n";
 static const char header_line2[] =
 #ifdef __MSDOS__
-    "   ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ   ÄÄÄÄÄÄ   ÄÄÄÄÄÄÄÄÄÄÄ   ÄÄÄÄÄÄÄÄÄÄÄ\n";
+    "   ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ   ÄÄÄÄÄÄ   ÄÄÄÄÄÄÄÄÄÄÄ   ÄÄÄÄÄÄÄÄÄÄÄ\n";
 #else
-    "   -------------------   ------   -----------   -----------\n";
+    "   --------------------   ------   -----------   -----------\n";
 #endif
 
 
 static const char *mkline(unsigned long fu_len, unsigned long fc_len,
                           unsigned long u_len, unsigned long c_len,
-                          const char *format, const char *filename)
+                          const char *format_name, const char *filename,
+                          bool decompress=false)
 {
     static char buf[2000];
-
     char r[7+1];
+    const char *f;
+
 #if 0
     unsigned ratio = get_ratio(fc_len,fu_len);
     upx_snprintf(r,sizeof(r)," %1d.%03d", ratio / 10000, (ratio % 10000) / 10);
 #else
     unsigned ratio = get_ratio(fc_len,fu_len, 1000);
     upx_snprintf(r,sizeof(r),"%3d.%02d%%", ratio / 1000, (ratio % 1000) / 10);
+    UNUSED(u_len); UNUSED(c_len);
 #endif
-    upx_snprintf(buf,sizeof(buf),"%10ld ->%9ld  %7s  %13s  %s\n",
-                 fu_len, fc_len, r, center_string(format,13), filename);
-    UNUSED(u_len);
-    UNUSED(c_len);
+    if (decompress)
+        f = "%10ld <-%10ld  %7s  %13s  %s";
+    else
+        f = "%10ld ->%10ld  %7s  %13s  %s";
+    upx_snprintf(buf,sizeof(buf),f,
+                 fu_len, fc_len, r, center_string(format_name,13), filename);
     return buf;
 }
 
@@ -172,10 +177,10 @@ UiPacker::~UiPacker()
 // start callback
 **************************************************************************/
 
-void UiPacker::startCallback(unsigned is, unsigned step,
+void UiPacker::startCallback(unsigned u_len, unsigned step,
                              int pass, int total_passes)
 {
-    s->is = is;
+    s->u_len = u_len;
     s->step = step;
     s->next_update = step;
 
@@ -193,6 +198,7 @@ void UiPacker::startCallback(unsigned is, unsigned step,
 
     if (s->pass < 0)            // no callback wanted
         return;
+
     if (s->mode <= M_INFO)
         return;
     if (s->mode == M_MSG)
@@ -268,12 +274,23 @@ void UiPacker::firstCallback()
 }
 
 
+// make sure we reach 100% in the progress bar
+void UiPacker::finalCallback(unsigned u_len, unsigned c_len)
+{
+    s->next_update = u_len;
+    doCallback(u_len, c_len);
+}
+
+
 /*************************************************************************
 // end callback
 **************************************************************************/
 
 void UiPacker::endCallback()
 {
+    if (s->pass < 0)            // no callback wanted
+        return;
+
     const bool done = (s->total_passes <= 0 || s->pass >= s->total_passes);
 
     if (s->mode == M_CB_TERM)
@@ -293,9 +310,11 @@ void UiPacker::endCallback()
             s->screen->scrollDown(screen,s->scroll_up);
         else
             s->screen->clearLine(s->screen,s->s_cy+1);
+        s->screen->clearLine(s->screen,s->s_cy);
         s->screen->setCursor(s->screen,s->s_cx,s->s_cy);
 #else
         assert(s->s_cx == 0 && s->b_cx == 0);
+        s->screen->clearLine(s->screen,s->b_cy-1);
         s->screen->clearLine(s->screen,s->b_cy);
         s->screen->setCursor(s->screen,s->b_cx,s->b_cy-1);
 #endif
@@ -318,14 +337,14 @@ void UiPacker::endCallback()
 // the callback
 **************************************************************************/
 
-void __UPX_ENTRY UiPacker::callback(upx_uint is, upx_uint os, int state, void * user)
+void __UPX_ENTRY UiPacker::callback(upx_uint isize, upx_uint osize, int state, void * user)
 {
     //printf("%6d %6d %d\n", is, os, state);
     if (state != -1 && state != 3) return;
     if (user)
     {
         UiPacker *uip = reinterpret_cast<UiPacker *>(user);
-        uip->doCallback(is,os);
+        uip->doCallback(isize,osize);
     }
 }
 
@@ -334,10 +353,13 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
 {
     static const char spinner[] = "|\\-/";
 
-    if (s->is == 0 || isize > s->is)
+    if (s->pass < 0)            // no callback wanted
+        return;
+
+    if (s->u_len == 0 || isize > s->u_len)
         return;
     // check if we should update the display
-    if (s->step > 0 && isize > 0 && isize < s->is)
+    if (s->step > 0 && isize > 0 && isize < s->u_len)
     {
         if (isize < s->next_update)
             return;
@@ -352,7 +374,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     // compute progress position
     int pos = -1;
     if (isize > 0)
-        pos = get_ratio(isize,s->is) * s->bar_len / 10000;
+        pos = get_ratio(isize,s->u_len) * s->bar_len / 10000;
     if (pos < s->pos)
         return;
     if (pos < 0 && pos == s->pos)
@@ -441,10 +463,15 @@ void UiPacker::uiPackEnd(const OutputFile *fo)
         printClearLine(stdout);
     }
 
-    con_fprintf(stdout,"%s",
+    const char *name = p->fi->getName();
+    if (opt->output_name)
+        name = opt->output_name;
+    else if (opt->to_stdout)
+        name = "<stdout>";
+    con_fprintf(stdout,"%s\n",
                 mkline(p->ph.u_file_size, fo->getBytesWritten(),
                        p->ph.u_len, p->ph.c_len,
-                       p->getName(), fn_basename(p->fi->getName())));
+                       p->getName(), fn_basename(name)));
     printSetNl(0);
 }
 
@@ -469,14 +496,24 @@ void UiPacker::uiUnpackStart(const OutputFile *fo)
 
 void UiPacker::uiUnpackEnd(const OutputFile *fo)
 {
-    uiList(fo->getBytesWritten());
     uiUpdate(-1, fo->getBytesWritten());
+
+    const char *name = p->fi->getName();
+    if (opt->output_name)
+        name = opt->output_name;
+    else if (opt->to_stdout)
+        name = "<stdout>";
+    con_fprintf(stdout,"%s\n",
+                mkline(fo->getBytesWritten(), p->file_size,
+                       p->ph.u_len, p->ph.c_len,
+                       p->getName(), fn_basename(name), true));
+    printSetNl(0);
 }
 
 
 void UiPacker::uiUnpackTotal()
 {
-    uiListTotal();
+    uiListTotal(true);
     uiFooter("Unpacked");
 }
 
@@ -495,10 +532,12 @@ void UiPacker::uiList(long fu_len)
 {
     if (fu_len < 0)
         fu_len = p->ph.u_file_size;
-    con_fprintf(stdout,"%s",
+    const char *name = p->fi->getName();
+    con_fprintf(stdout,"%s\n",
                 mkline(fu_len, p->file_size,
                        p->ph.u_len, p->ph.c_len,
-                       p->getName(), p->fi->getName()));
+                       p->getName(), name));
+    printSetNl(0);
 }
 
 
@@ -508,17 +547,18 @@ void UiPacker::uiListEnd()
 }
 
 
-void UiPacker::uiListTotal()
+void UiPacker::uiListTotal(bool decompress)
 {
     if (opt->verbose >= 1 && total_files >= 2)
     {
         char name[32];
         upx_snprintf(name,sizeof(name),"[ %ld file%s ]", total_files_done, total_files_done == 1 ? "" : "s");
-        con_fprintf(stdout,"%s%s",
+        con_fprintf(stdout,"%s%s\n",
                     header_line2,
                     mkline(total_fu_len, total_fc_len,
                            total_u_len, total_c_len,
-                           "", name));
+                           "", name, decompress));
+        printSetNl(0);
     }
 }
 
