@@ -67,7 +67,6 @@ Tools needed to build/modify the UPX sources
 --------------------------------------------
 
   - A modern C++ compiler like gcc 2.95.3 or Visual C++ 6
-    (egcs 1.1.x may work, half-baked implementations like Borland C++ 5.5 won't)
 
   - GNU make for Win32
     http://upx.sourceforge.net/download/tools/
@@ -97,7 +96,7 @@ To compile the packer sources
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Nasm 0.98.08 - the Netwide Assembler
+  - Nasm 0.98.34 - the Netwide Assembler
     http://upx.sourceforge.net/download/tools/
     http://nasm.sourceforge.net/
 
