@@ -60,12 +60,12 @@ struct UiPacker::State
 
     // message stuff
     char msg_buf[1+79+1];
-    int pos;            // last progress bar position
-    int counter;        // for spinner
+    int pos;                // last progress bar position
+    unsigned spin_counter;  // for spinner
 
     int bar_pos;
     int bar_len;
-    int pass_digits;    // number of digits needed to print total_passes
+    int pass_digits;        // number of digits needed to print total_passes
 
 #if defined(UI_USE_SCREEN)
     screen_t *screen;
@@ -78,9 +78,6 @@ struct UiPacker::State
 #else
     void *screen;
 #endif
-
-    // debug
-    unsigned progress_updates;
 };
 
 
@@ -184,9 +181,8 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
 
     s->bar_len = 64;
     s->pos = -2;
-    s->counter = 0;
+    s->spin_counter = 0;
     s->bar_pos = 1;             // because of the leading `\r'
-    s->progress_updates = 0;
     s->pass_digits = 0;
 
     clear_cb();
@@ -323,7 +319,7 @@ void UiPacker::endCallback()
     clear_cb();
 #if 0
     printf("callback: pass %d, step %6d, updates %6d\n",
-           s->pass, s->step, s->progress_updates);
+           s->pass, s->step, s->spin_counter);
 #endif
 }
 
@@ -403,12 +399,11 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
 
     sprintf(m,"  %3d.%1d%%  %c ",
             ratio / 10000, (ratio % 10000) / 1000,
-            spinner[s->counter]);
+            spinner[s->spin_counter & 3]);
     assert((int)strlen(s->msg_buf) < 1 + 80);
 
     s->pos = pos;
-    s->counter = (s->counter + 1) & 3;
-    s->progress_updates++;
+    s->spin_counter++;
 
     if (s->mode == M_CB_TERM)
     {
