@@ -159,7 +159,7 @@ void PackLinuxI386elf::packExtent(
         // compress
         ph.u_len = l;
         ph.overlap_overhead = 0;
-        unsigned end_u_adler;
+        unsigned end_u_adler = 0;
         if (ft) {
             // compressWithFilters() updates u_adler _inside_ compress();
             // that is, AFTER filtering.  We want BEFORE filtering,
