@@ -70,7 +70,6 @@
 #    define upx_bytep     ucl_bytep
 #    define upx_bool      ucl_bool
 #    define upx_progress_callback_t ucl_progress_callback_t
-#    define upx_adler32   ucl_adler32
 #    define UPX_E_OK      UCL_E_OK
 #    define UPX_E_ERROR   UCL_E_ERROR
 #    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
@@ -88,7 +87,6 @@
 #    define upx_bytep     nrv_bytep
 #    define upx_bool      nrv_bool
 #    define upx_progress_callback_t nrv_progress_callback_t
-#    define upx_adler32   nrv_adler32
 #    define UPX_E_OK      NRV_E_OK
 #    define UPX_E_ERROR   NRV_E_ERROR
 #    define UPX_E_OUT_OF_MEMORY NRV_E_OUT_OF_MEMORY
@@ -592,6 +590,9 @@ void show_version(int);
 
 
 // compress.cpp
+unsigned upx_adler32(const void *buf, unsigned len);
+unsigned upx_adler32(unsigned adler, const void *buf, unsigned len);
+
 #if defined(WITH_UCL)
 #define upx_compress_config_t   ucl_compress_config_t
 #elif defined(WITH_NRV)

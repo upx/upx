@@ -87,6 +87,30 @@
 //
 **************************************************************************/
 
+unsigned upx_adler32(unsigned adler, const void *buf, unsigned len)
+{
+#if defined(WITH_NRV)
+    return nrv_adler32(adler, (const nrv_byte *)buf, len);
+#elif defined(WITH_UCL)
+    return ucl_adler32(adler, (const ucl_byte *)buf, len);
+#endif
+}
+
+
+unsigned upx_adler32(const void *buf, unsigned len)
+{
+    //unsigned adler = upx_adler32(0, NULL, 0);
+    unsigned adler = 1;
+    assert(buf != NULL);
+    adler = upx_adler32(adler, buf, len);
+    return adler;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
 int upx_compress           ( const upx_byte *src, upx_uint  src_len,
                                    upx_byte *dst, upx_uint *dst_len,
                                    upx_progress_callback_t *cb,
