@@ -1,13 +1,13 @@
 #
 # UPX stub Makefile (GNU make)
 #
-# see http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+# see http://upx.sourceforge.net/download/tools/
 # for required support tools
 #
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-0.92
+UCLDIR = $(HOME)/local/src/ucl-1.01
 endif
 
 
@@ -28,7 +28,7 @@ STUBS = \
 	l_exe.h \
 	l_psx.h \
 	l_sys.h \
-	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h \
+	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h l_t_n2e.h l_t_n2es.h \
 	l_tmt.h \
 	l_wcle.h \
 	l_w32pe.h \
@@ -96,15 +96,15 @@ CC_LINUX = gcc    -Os -march=i386 -mcpu=i386 -malign-functions=0 -malign-jumps=0
 
 ifeq (1,1)
 # Preprocessor for the a68k 68000-assembler.
-CPP_68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
-##CPP_68K = cpp -I$(UCL_UPX) -x assembler-with-cpp -P -C -traditional -nostdinc -D__A68K__
-APP_68K  = perl -w $(srcdir)/scripts/app_68k.pl
-ASM_68K = a68k -q -x
+CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
+##CPP_M68K = cpp -I$(UCL_UPX) -x assembler-with-cpp -P -C -traditional -nostdinc -D__A68K__
+APP_M68K  = perl -w $(srcdir)/scripts/app_68k.pl
+ASM_M68K = a68k -q -x
 else
 # Preprocessor for the asl 68000-assembler.
-CPP_68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
-APP_68K  = perl -w $(srcdir)/scripts/app_68k.pl
-ASM_68K = sh $(srcdir)/scripts/asl_68k.sh
+CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
+APP_M68K  = perl -w $(srcdir)/scripts/app_68k.pl
+ASM_M68K = sh $(srcdir)/scripts/asl_68k.sh
 endif
 
 # MIPS R3000
@@ -206,55 +206,67 @@ l_w32pe.h: l_w32pe.asx
 # ************************************************************************/
 
 l_t_n2b.h: l_tos.s
-	$(CPP_68K) -DNRV2B -o $T.i $<
-	$(ASM_68K) $T.i
+	$(CPP_M68K) -DNRV2B -o $T.i $<
+	$(ASM_M68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader $@
 
 l_t_n2bs.h: l_tos.s
-	$(CPP_68K) -DNRV2B -DSMALL -o $T.i $<
-	$(ASM_68K) $T.i
+	$(CPP_M68K) -DNRV2B -DSMALL -o $T.i $<
+	$(ASM_M68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader_small $@
 
 l_t_n2d.h: l_tos.s
-	$(CPP_68K) -DNRV2D -o $T.i $<
-	$(ASM_68K) $T.i
+	$(CPP_M68K) -DNRV2D -o $T.i $<
+	$(ASM_M68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader $@
 
 l_t_n2ds.h: l_tos.s
-	$(CPP_68K) -DNRV2D -DSMALL -o $T.i $<
-	$(ASM_68K) $T.i
+	$(CPP_M68K) -DNRV2D -DSMALL -o $T.i $<
+	$(ASM_M68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader_small $@
 
+l_t_n2e.h: l_tos.s
+	$(CPP_M68K) -DNRV2E -o $T.i $<
+	$(ASM_M68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2e_loader $@
+
+l_t_n2es.h: l_tos.s
+	$(CPP_M68K) -DNRV2E -DSMALL -o $T.i $<
+	$(ASM_M68K) $T.i
+	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
+	$(BIN2H) $T.bin nrv2e_loader_small $@
+
 # experimental:
 l_t_x2b.h: l_tos2.s
-	$(CPP_68K) -DNRV2B -o $T.i $<
-	$(APP_68K) $T.i $T.asx
-	$(ASM_68K) $T.asx
+	$(CPP_M68K) -DNRV2B -o $T.i $<
+	$(APP_M68K) $T.i $T.asx
+	$(ASM_M68K) $T.asx
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader $@
 
 l_t_x2bs.h: l_tos2.s
-	$(CPP_68K) -DNRV2B -DSMALL -o $T.i $<
-	$(APP_68K) $T.i $T.asx
-	$(ASM_68K) $T.asx
+	$(CPP_M68K) -DNRV2B -DSMALL -o $T.i $<
+	$(APP_M68K) $T.i $T.asx
+	$(ASM_M68K) $T.asx
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader_small $@
 
 l_t_x2d.h: l_tos2.s
-	$(CPP_68K) -DNRV2D -o $T.i $<
-	$(APP_68K) $T.i $T.asx
-	$(ASM_68K) $T.asx
+	$(CPP_M68K) -DNRV2D -o $T.i $<
+	$(APP_M68K) $T.i $T.asx
+	$(ASM_M68K) $T.asx
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader $@
 
 l_t_x2ds.h: l_tos2.s
-	$(CPP_68K) -DNRV2D -DSMALL -o $T.i $<
-	$(APP_68K) $T.i $T.asx
-	$(ASM_68K) $T.asx
+	$(CPP_M68K) -DNRV2D -DSMALL -o $T.i $<
+	$(APP_M68K) $T.i $T.asx
+	$(ASM_M68K) $T.asx
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader_small $@
 

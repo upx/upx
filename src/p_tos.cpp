@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -41,6 +41,10 @@ static const
 #include "stub/l_t_n2d.h"
 static const
 #include "stub/l_t_n2ds.h"
+static const
+#include "stub/l_t_n2e.h"
+static const
+#include "stub/l_t_n2es.h"
 
 // #define TESTING
 
@@ -62,11 +66,14 @@ const int *PackTos::getCompressionMethods(int method, int level) const
 {
     static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, -1 };
     static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, -1 };
 
     if (M_IS_NRV2B(method))
         return m_nrv2b;
     if (M_IS_NRV2D(method))
         return m_nrv2d;
+    if (M_IS_NRV2E(opt->method))
+        return m_nrv2e;
     if (level == 1 || ih.fh_text + ih.fh_data <= 256*1024)
         return m_nrv2b;
     return m_nrv2d;
@@ -85,6 +92,8 @@ const upx_byte *PackTos::getLoader() const
         return opt->small ? nrv2b_loader_small : nrv2b_loader;
     if (M_IS_NRV2D(ph.method))
         return opt->small ? nrv2d_loader_small : nrv2d_loader;
+    if (M_IS_NRV2E(ph.method))
+        return opt->small ? nrv2e_loader_small : nrv2e_loader;
     return NULL;
 }
 
@@ -95,6 +104,8 @@ int PackTos::getLoaderSize() const
         return opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
     if (M_IS_NRV2D(ph.method))
         return opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
+    if (M_IS_NRV2E(ph.method))
+        return opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
     return 0;
 }
 
@@ -183,64 +194,117 @@ bool PackTos::checkFileHeader()
 
 
 /*************************************************************************
+// some 68000 opcodes for patching
+**************************************************************************/
+
+enum m68k_reg_t {
+    REG_D0, REG_D1, REG_D2, REG_D3, REG_D4, REG_D5, REG_D6, REG_D7,
+    REG_A0, REG_A1, REG_A2, REG_A3, REG_A4, REG_A5, REG_A6, REG_A7
+};
+
+static unsigned OP_DBRA(int d_reg)
+{
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    return 0x51c8 | (d_reg & 7);
+}
+
+static unsigned OP_JMP(int a_reg)
+{
+    // jmp (a0)
+    assert(a_reg >= REG_A0 && a_reg <= REG_A7);
+    return 0x4ed0 | (a_reg & 7);
+}
+
+static unsigned OP_MOVEI_L(int d_reg)
+{
+    // movei.l #XXXXXXXX,d0
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    return 0x203c | ((d_reg & 7) << 9);
+}
+
+static unsigned OP_MOVEQ(int value, int d_reg)
+{
+    // moveq.l #0,d0
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    assert(value >= -128 && value <= 127);
+    return 0x7000 | ((d_reg & 7) << 9) | (value & 0xff);
+}
+
+static unsigned OP_SUBQ_L(int value, int d_reg)
+{
+    assert(value >= 1 && value <= 8);
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    return 0x5180 | ((value & 7) << 9) | (d_reg & 7);
+}
+
+static unsigned OP_SUBQ_W(int value, int d_reg)
+{
+    assert(value >= 1 && value <= 8);
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    return 0x5140 | ((value & 7) << 9) | (d_reg & 7);
+}
+
+
+/*************************************************************************
 //
 **************************************************************************/
 
-unsigned PackTos::patch_d0_subq(void *b, int blen, unsigned d0,
-                                const char *subq_marker)
+unsigned PackTos::patch_d_subq(void *b, int blen,
+                               int d_reg, unsigned d_value,
+                               const char *subq_marker)
 {
     // patch a "subq.l #1,d0" or "subq.w #1,d0".
     // also convert into "dbra" if possible
-    assert((int)d0 > 0);
+    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
+    assert((int)d_value > 0);
 
-    int boff = find_be16(b, blen, get_be16(subq_marker));
+    int boff =  find_be16(b, blen, get_be16(subq_marker));
     if (boff < 0)
         throwBadLoader();
 
-    unsigned char *p = (unsigned char *)b + boff;
-    if (p[2] == 0x66)                   // bne.b XXX
+    upx_byte *p = (upx_byte *)b + boff;
+    if (p[2] == 0x66)                           // bne.b XXX
         checkPatch(b, blen, boff, 4);
     else
         checkPatch(b, blen, boff, 2);
 
-    if (d0 > 65536)
+    if (d_value > 65536)
     {
-        set_be16(p, 0x5380);            // subq.l #1,d0
+        set_be16(p, OP_SUBQ_L(1, d_reg));       // subq.l #1,d0
     }
     else
     {
-        if (p[2] == 0x66)               // bne.b XXX
+        if (p[2] == 0x66)                       // bne.b XXX
         {
-            set_be16(p, 0x51c8);        // dbra d0,XXX
+            set_be16(p, OP_DBRA(d_reg));        // dbra d0,XXX
             // adjust and extend branch from 8 to 16 bits
             int branch = (signed char) p[3];
             set_be16(p+2, branch+2);
             // adjust d0
-            d0 -= 1;
+            d_value -= 1;
         }
         else
         {
-            set_be16(p, 0x5340);        // subq.w #1,d0
+            set_be16(p, OP_SUBQ_W(1, d_reg));   // subq.w #1,d0
         }
-        d0 &= 0xffff;
+        d_value &= 0xffff;
     }
-    return d0;
+    return d_value;
 }
 
 
-unsigned PackTos::patch_d0_loop(void *b, int blen, unsigned d0,
-                                const char *d0_marker, const char *subq_marker)
+unsigned PackTos::patch_d_loop(void *b, int blen,
+                               int d_reg, unsigned d_value,
+                               const char *d_marker, const char *subq_marker)
 {
-    d0 = patch_d0_subq(b, blen, d0, subq_marker);
+    d_value = patch_d_subq(b, blen, d_reg, d_value, subq_marker);
 
-    int boff = find_be32(b, blen, get_be32(d0_marker));
+    int boff = find_be32(b, blen, get_be32(d_marker));
     checkPatch(b, blen, boff, 4);
-
-    unsigned char *p = (unsigned char *)b + boff;
-    assert(get_be16(p - 2) == 0x203c);  // move.l #XXXXXXXX,d0
-    set_be32(p, d0);
-
-    return d0;
+    upx_byte *p = (upx_byte *)b + boff;
+    assert(get_be16(p - 2) == OP_MOVEI_L(d_reg));    // move.l #XXXXXXXX,d0
+    set_be32(p, d_value);
+    return d_value;
 }
 
 
@@ -268,7 +332,7 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
             return -1;
         if (i >= rsize)             // premature EOF in relocs
             return -1;
-        int c = relocs[i++];
+        unsigned c = relocs[i++];
         if (c == 0)                 // end marker
             break;
         else if (c == 1)            // increase fixup, no reloc
@@ -297,6 +361,18 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
 
 bool PackTos::canPack()
 {
+#if 0 // debug
+# define p(x)    printf("%-30s 0x%04x\n", #x, x)
+    p(OP_DBRA(REG_D0));
+    p(OP_MOVEI_L(REG_D0));
+    p(OP_MOVEQ(-1, REG_D0));
+    p(OP_MOVEQ(1, REG_D2));
+    p(OP_MOVEQ(1, REG_D3));
+    p(OP_SUBQ_W(1, REG_D0));
+    p(OP_SUBQ_L(1, REG_D0));
+# undef p
+#endif
+
     if (!readFileHeader())
         return false;
 
@@ -365,7 +441,7 @@ void PackTos::pack(OutputFile *fo)
     printf("xx1 reloc: %d, overlay: %d, fixup: %d\n", relocsize, overlay, overlay >= 4 ? (int)get_be32(ibuf+t) : -1);
 #endif
 
-    // Check relocs (see load_and_reloc() in mint/src/mem.c).
+    // Check relocs (see load_and_reloc() in freemint/sys/memory.c).
     // Must work around TOS bugs and lots of broken programs.
     int r = 0;
     if (overlay < 4)
@@ -462,8 +538,8 @@ void PackTos::pack(OutputFile *fo)
     while (dirty_bss & (dirty_bss_align - 1))
         dirty_bss++;
     // adjust bss, assert room for some stack
-    if (dirty_bss + 256 > o_bss)
-        o_bss = dirty_bss + 256;
+    if (dirty_bss + 512 > o_bss)
+        o_bss = dirty_bss + 512;
 
     // dword align the len of the final bss segment
     while (o_bss & 3)
@@ -477,12 +553,12 @@ void PackTos::pack(OutputFile *fo)
     patchPackHeader(loader,o_text);
     if (!opt->small)
         patchVersion(loader,o_text);
-    //   patch "subq.l #1,d0" or "subq.w #1,d0" - see "up41" below
-    const unsigned dirty_bss_d0 =
-        patch_d0_subq(loader, o_text, dirty_bss / dirty_bss_align, "u4");
-    patch_be32(loader,o_text,"up31",d_off + offset + decomp_offset);
+    //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
+    const unsigned dirty_bss_d6 =
+        patch_d_subq(loader, o_text, REG_D6, dirty_bss / dirty_bss_align, "u4");
+    patch_be32(loader, o_text, "up31", d_off + offset + decomp_offset);
     if (opt->small)
-        patch_d0_loop(loader,o_text,o_data/4,"up22","u1");
+        patch_d_loop(loader, o_text, REG_D0, o_data/4, "up22", "u1");
     else
     {
         if (o_data <= 160)
@@ -494,8 +570,8 @@ void PackTos::pack(OutputFile *fo)
             loop1--;
             loop2 = 160;
         }
-        patch_be16(loader,o_text,"u2", 0x7000 + loop2/4-1); // moveq.l #X,d0
-        patch_d0_loop(loader,o_text,loop1,"up22","u1");
+        patch_be16(loader, o_text, "u2", OP_MOVEQ(loop2/4-1, REG_D0)); // moveq.l #X,d0
+        patch_d_loop(loader, o_text, REG_D0, loop1, "up22", "u1");
     }
     patch_be32(loader,o_text,"up21",o_data + offset);
     patch_be32(loader,o_text,"up13",i_bss);               // p_blen
@@ -504,9 +580,9 @@ void PackTos::pack(OutputFile *fo)
 
     // patch decompressor
     upx_byte *p = obuf + d_off;
-    //   patch "moveq.l #1,d3" or "jmp (a5)"
-    patch_be16(p,d_len,"u3", (nrelocs > 0) ? 0x7601 : 0x4ed5);
-    patch_be32(p,d_len,"up41", dirty_bss_d0);
+    //   patch "moveq.l #1,d5" or "jmp (ASTACK)"
+    patch_be16(p, d_len, "u3", (nrelocs > 0) ? OP_MOVEQ(1, REG_D5) : OP_JMP(REG_A7));
+    patch_be32(p, d_len, "up41", dirty_bss_d6);
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);

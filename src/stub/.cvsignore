@@ -5,6 +5,7 @@
 *.lst
 *.map
 *.o
+GNUmakefile
 fold_elf86.h
 fold_exec86.h
 fold_sh86.h
@@ -14,11 +15,14 @@ l_exe.h
 l_lx_elf86.h
 l_lx_exec86.h
 l_lx_sh86.h
+l_psx.h
 l_sys.h
 l_t_n2b.h
 l_t_n2bs.h
 l_t_n2d.h
 l_t_n2ds.h
+l_t_n2e.h
+l_t_n2es.h
 l_tmt.h
 l_vmlinz.h
 l_w32pe.h
