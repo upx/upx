@@ -2155,7 +2155,7 @@ void PackW32Pe::rebuildRelocs(upx_byte *& extrainfo)
     else
         memcpy (obuf + ODADDR(PEDIR_RELOC) - rvamin,oxrelocs,soxrelocs);
     delete [] oxrelocs; oxrelocs = NULL;
-    wrkmem.free();
+    wrkmem.dealloc();
 
     ODSIZE(PEDIR_RELOC) = soxrelocs;
 }
@@ -2236,7 +2236,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     extrainfo += sizeof(pe_section_t) * objs;
 
     // read the noncompressed section
-    ibuf.free();
+    ibuf.dealloc();
     ibuf.alloc(isection[2].size);
     fi->seek(isection[2].rawdataptr,SEEK_SET);
     fi->readx(ibuf,isection[2].size);
@@ -2284,7 +2284,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     // write decompressed file
     if (fo)
     {
-        ibuf.free();
+        ibuf.dealloc();
         ibuf.alloc(osection[0].rawdataptr);
         memset(ibuf,0,osection[0].rawdataptr);
         infoHeader("[Writing uncompressed file]");
@@ -2298,7 +2298,7 @@ void PackW32Pe::unpack(OutputFile *fo)
                 fo->write(obuf + osection[ic].vaddr - rvamin,ALIGN_UP(osection[ic].size,oh.filealign));
         copyOverlay(fo, overlay, &obuf);
     }
-    ibuf.free();
+    ibuf.dealloc();
 }
 
 /*

@@ -432,7 +432,7 @@ void PackWcle::encodeImage(const Filter *ft)
     ph.overlap_overhead = findOverlapOverhead(oimage+RESERVED, 512);
     buildLoader(ft);
 
-    ibuf.free();
+    ibuf.dealloc();
     soimage = (ph.c_len + 3) &~ 3;
 }
 
@@ -477,7 +477,7 @@ void PackWcle::pack(OutputFile *fo)
     ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
     unsigned ic = objects*sizeof(*iobject_table);
     memcpy(ifixups+sofixups,iobject_desc,ic);
-    iobject_desc.free();
+    iobject_desc.dealloc();
 
     sofixups += ic;
     set_le32(ifixups+sofixups,ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address)); // old stack pointer
@@ -566,7 +566,7 @@ void PackWcle::decodeFixups()
 {
     upx_byte *p = oimage + soimage;
 
-    iimage.free();
+    iimage.dealloc();
 
     MemBuffer tmpbuf;
     unsigned fixupn = unoptimizeReloc32(&p,oimage,&tmpbuf,1);
@@ -584,7 +584,7 @@ void PackWcle::decodeFixups()
         set_le32(oimage+jc,r);
     }
     set_le32(wrkmem+ic*8,0xFFFFFFFF);     // end of 32-bit offset fixups
-    tmpbuf.free();
+    tmpbuf.dealloc();
 
     // selector fixups and self-relative fixups
     const upx_byte *selector_fixups = p;
@@ -788,7 +788,7 @@ void PackWcle::unpack(OutputFile *fo)
     handleStub(fo);
 
     readObjectTable();
-    iobject_desc.free();
+    iobject_desc.dealloc();
     readPageMap();
     readResidentNames();
     readEntryTable();

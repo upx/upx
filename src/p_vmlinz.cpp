@@ -186,7 +186,7 @@ int PackVmlinuzI386::decompressKernel()
                 break;
             // realloc and try again
             unsigned s = ibuf.getSize();
-            ibuf.free();
+            ibuf.dealloc();
             ibuf.alloc(3 * s / 2);
         }
         if (fd >= 0)
@@ -232,7 +232,7 @@ void PackVmlinuzI386::readKernel()
     memcpy(setup_buf, obuf, setup_size);
     //OutputFile::dump("setup.img", setup_buf, setup_size);
 
-    obuf.free();
+    obuf.dealloc();
     obuf.allocForCompression(klen);
 
     ph.u_len = klen;

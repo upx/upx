@@ -44,10 +44,10 @@ MemBuffer::MemBuffer(unsigned size) :
 
 MemBuffer::~MemBuffer()
 {
-    this->free();
+    this->dealloc();
 }
 
-void MemBuffer::free()
+void MemBuffer::dealloc()
 {
     if (alloc_ptr)
         ::free(alloc_ptr);
@@ -69,7 +69,7 @@ unsigned MemBuffer::getSize() const
 void MemBuffer::alloc(unsigned size, unsigned base_offset)
 {
 #if 0
-    this->free();
+    this->dealloc();
 #else
     // don't automaticlly free a used buffer
 #endif

@@ -348,31 +348,31 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define UPX_MIN3(a,b,c)     ((a) <= (b) ? UPX_MIN(a,c) : UPX_MIN(b,c))
 
 
-#if 0 && defined(__cplusplus)
+#if 0 && defined(__cplusplus) && !defined(new) && !defined(delete)
 // global operators - debug
 inline void *operator new(size_t l)
 {
     void *p = malloc(l);
-    printf("new %6ld %p\n",(long)l,p);
+    printf("new   %6ld %p\n",(long)l,p);
     fflush(stdout);
     return p;
 }
 inline void *operator new[](size_t l)
 {
     void *p = malloc(l);
-    printf("new %6ld %p\n",(long)l,p);
+    printf("new[] %6ld %p\n",(long)l,p);
     fflush(stdout);
     return p;
 }
 inline void operator delete(void *p)
 {
-    printf("delete     %p\n",p);
+    printf("delete       %p\n",p);
     fflush(stdout);
     if (p) free(p);
 }
 inline void operator delete[](void *p)
 {
-    printf("delete     %p\n",p);
+    printf("delete[]     %p\n",p);
     fflush(stdout);
     if (p) free(p);
 }

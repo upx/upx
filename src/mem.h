@@ -44,7 +44,7 @@ public:
     void allocForCompression(unsigned uncompressed_size);
     void allocForUncompression(unsigned uncompressed_size);
 
-    void free();
+    void dealloc();
 
     const unsigned char *getBuf()     const { return ptr; }
     unsigned getSize() const;
@@ -66,10 +66,14 @@ private:
     MemBuffer& operator= (MemBuffer const &); // { return *this; }
 
     // disable dynamic allocation
+#ifndef new
     static void *operator new (size_t); // {}
     static void *operator new[] (size_t); // {}
+#endif
+#ifndef delete
     //static void operator delete (void *) {}
     //static void operator delete[] (void *) {}
+#endif
 };
 
 #endif /* already included */
