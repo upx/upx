@@ -108,7 +108,6 @@ public:
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
     virtual int getCompressionMethod() const = 0;
-    virtual int getCompressionLevel() const { return opt->level; }
     virtual const int *getFilters() const = 0;
 
     // PackMaster entries

@@ -85,7 +85,7 @@ INCLUDES = -I$(srcdir)
 CFLAGS_OUTPUT = -o $@
 CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 
-LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
 STUBEDIT_EXE =
 
 o = .o
@@ -257,7 +257,7 @@ else
 endif
 
 ##LINK_LDFLAGS += /verbose
-LINK_EXE = $(CC) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
+LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
 
 endif	# vc6
 
@@ -284,10 +284,10 @@ endif
 ifeq (1,2) # purify
   DEFS += -D__PURIFY__
   LDFLAGS = -g -L/home/ethmola/local/lib
-  LINK_EXE = purify $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+  LINK_EXE = purify $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
 else
   LDFLAGS += -g -L/home/ethmola/local/lib
-  LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+  LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
 endif
 
 endif	# sparc
@@ -320,7 +320,7 @@ else
   CFLAGS += -O2 -d
 endif
 
-LINK_EXE = $(CC) $(LDFLAGS) -e$@ $^ $(LDLIBS)
+LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -e$@ $^ $(LDLIBS)
 
 endif	# bcc
 

@@ -113,6 +113,7 @@ void PackLinuxI386elf::updateLoader(OutputFile *fo)
 #undef PAGE_MASK
 }
 
+
 void PackLinuxI386elf::patchLoader()
 {
     lsize = getLoaderSize();
@@ -170,6 +171,8 @@ bool PackLinuxI386elf::canPack()
 {
     unsigned char buf[512];
 
+    // FIXME: add special checks for uncompresed "vmlinux" kernel
+
     fi->readx(buf,512);
     fi->seek(0,0);
     if (0==memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) { // ELF 32-bit LSB
@@ -188,6 +191,7 @@ bool PackLinuxI386elf::canPack()
                 break;
             }
         }
+        exetype = 1;
         return super::canPack();
     }
     return false;
@@ -405,11 +409,6 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
     }
 }
 
-
-bool PackLinuxI386elf::canUnpackFormat(int format) const
-{
-    return UPX_F_LINUX_ELF_i386==format || UPX_F_LINUX_SEP_i386==format;
-}
 
 void PackLinuxI386elf::unpack(OutputFile *fo)
 {

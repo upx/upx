@@ -127,7 +127,7 @@ protected:
 
 
 /*************************************************************************
-// linux/i386 (execve format)
+// linux/i386 (generic "execve" format)
 **************************************************************************/
 
 class PackLinuxI386 : public PackUnixLe32

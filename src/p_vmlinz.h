@@ -73,7 +73,7 @@ protected:
         unsigned char   hdrs[4];        // "HdrS"
         LE16            version;        // boot protocol
         char            _____[9];
-        unsigned char    load_flags;
+        unsigned char   load_flags;
         char            ______[2];
         LE32            code32_start;
 

@@ -186,6 +186,7 @@ unsigned PackTos::patch_d0_subq(void *b, int blen, unsigned d0,
     // patch a "subq.l #1,d0" or "subq.w #1,d0".
     // also convert into "dbra" if possible
     assert((int)d0 > 0);
+
     int boff = find_be16(b, blen, get_be16(subq_marker));
     if (boff < 0)
         throwBadLoader();

@@ -34,6 +34,9 @@
 
 #include "file.h"
 #include "packer.h"
+#include "p_elf.h"
+#include "p_unix.h"
+#include "p_lx_elf.h"
 #include "p_lx_sep.h"
 
 

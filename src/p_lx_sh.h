@@ -33,6 +33,11 @@
 #ifndef __UPX_P_LX_SH_H  //{
 #define __UPX_P_LX_SH_H
 
+
+/*************************************************************************
+// linux/sh386
+**************************************************************************/
+
 class PackLinuxI386sh : public PackLinuxI386
 {
     typedef PackLinuxI386 super;
@@ -47,8 +52,6 @@ public:
     virtual bool canPack();
     virtual void pack(OutputFile *fo);
     // virtual void unpack(OutputFile *fo) { super::unpack(fo); }
-
-    virtual bool canUnpackFormat(int format) const;
     virtual bool canUnpackVersion(int version) const
         { return (version >= 11); }
 
@@ -65,7 +68,8 @@ protected:
     int l_shname;  // length of name_of_shell
 };
 
-#endif //}__UPX_P_LX_SH_H
+
+#endif /*} already included */
 
 
 /*

@@ -510,7 +510,7 @@ void PackWcle::pack(OutputFile *fo)
     ic = (OOT(0,virtual_size) - d_len) &~ 15;
     assert(ic > ((ph.u_len + overlapoh + 31) &~ 15));
 
-    upx_byte *p = oimage+soimage-d_len;
+    upx_byte * const p = oimage + soimage - d_len;
     patch_le32(p,d_len,"JMPO",ih.init_eip_offset+text_vaddr-(ic+d_len));
     patch_le32(p,d_len,"ESP0",ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address));
     if (patchFilter32(p, d_len, &ft) && text_vaddr)

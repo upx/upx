@@ -26,10 +26,14 @@
    jreiser@BitWagon.com
  */
 
+
 #ifndef __UPX_P_LX_SEP_H  //{
 #define __UPX_P_LX_SEP_H
 
-#include "p_lx_elf.h"
+
+/*************************************************************************
+// linux/sep386
+**************************************************************************/
 
 class PackLinuxI386sep : public PackLinuxI386elf
 {
@@ -49,7 +53,7 @@ protected:
 };
 
 
-#endif //}__UPX_P_LX_SEP_H
+#endif /*} already included */
 
 /*
 vi:ts=4:et

@@ -569,11 +569,13 @@ void Packer::initPackHeader()
 // this is called directly after canPack() from class PackMaster
 void Packer::updatePackHeader()
 {
-    ph.method = getCompressionMethod();
-    ph.level = getCompressionLevel();
     // update our local options
-    opt->method = ph.method;
-    opt->level = ph.level;
+    if (opt->level < 0)
+        opt->level = file_size < 512*1024 ? 8 : 7;
+    opt->method = getCompressionMethod();
+    // set ph
+    ph.level = opt->level;
+    ph.method = opt->method;
 }
 
 

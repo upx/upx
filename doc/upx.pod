@@ -146,7 +146,8 @@ B<--stdout>: writes all output to stdout
 =head1 COMPRESSION LEVELS & TUNING
 
 B<UPX> offers ten different compression levels from B<-1> to B<-9>,
-and B<--best>.  The default compression level is B<-7>.
+and B<--best>.  The default compression level is B<-8> for files
+smaller than 512 kB, and B<-7> otherwise.
 
 =over 4
 
@@ -479,6 +480,8 @@ and does not use /proc.
 
 Linux/elf386 is automatically selected for Linux ELF exectuables.
 
+Packed programs will be byte-identical to the original after uncompression.
+
 How it works:
 
   For ELF executables, UPX decompresses directly to memory, simulating
@@ -525,6 +528,8 @@ It does not use space in /tmp, and does not use /proc.
 Linux/sh386 is automatically selected for shell scripts that
 use a known shell.
 
+Packed programs will be byte-identical to the original after uncompression.
+
 How it works:
 
   For shell script executables (files beginning with "#!/" or "#! /")
@@ -566,6 +571,8 @@ and needs /proc filesystem support.
 
 Linux/386 is only selected if the specialized linux/elf386
 and linux/sh386 won't recognize a file.
+
+Packed programs will be byte-identical to the original after uncompression.
 
 How it works:
 

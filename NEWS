@@ -2,12 +2,18 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.09.4 beta (13 Nov 2000):
-  * BETA VERSION - DO NOT USE EXCEPT FOR TESTING!!! REALLY.
-  * linux/i386: added the new direct-to-memory executable formats - no
-    more temp files are needed for decompression
+Changes in 1.10 beta (20 Dec 2000):
+  * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING!!! REALLY.
+  * vmlinuz/386: new format - UPX now supports bootable linux kernels
+  * linux/386: added the new direct-to-memory executable formats - no
+    more temp files are needed for decompression!
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
+
+Changes in 1.04 (19 Dec 2000)
+  * dos/exe: fixed an internal error when using `--no-reloc'
+  * win32/pe: fixed a rare bug in the relocation handling code
+  * some tunings for the default compression level
 
 Changes in 1.03 (30 Nov 2000)
   * linked with a new version of the NRV compression library:
@@ -51,7 +57,7 @@ Changes in 0.99 (25 Feb 2000)
   * FULL SOURCE CODE RELEASED UNDER THE TERMS OF THE GNU GPL
   * win32/pe: changed default to `--strip-relocs=1'
   * dos/com and dos/sys: fixed a bad decompressor problem
-  * linux/i386: the counter for the progress indicator was off by one
+  * linux/386: the counter for the progress indicator was off by one
 
 Changes in 0.94 (06 Dec 1999)
   * win32/pe: the stub now calls ExitProcess in case of import errors
@@ -61,7 +67,7 @@ Changes in 0.94 (06 Dec 1999)
 Changes in 0.93 (22 Nov 1999)
   * win32/pe: fixed --strip-relocs problem with uncompression
   * win32/pe: fixed a bug which could produce a broken decompressor stub
-  * linux/i386: yet another FreeBSD compatibility fix
+  * linux/386: yet another FreeBSD compatibility fix
 
 Changes in 0.92 (14 Nov 1999)
   * win32/pe: really fixed that one line (see below)
@@ -80,8 +86,8 @@ Changes in 0.90 (10 Nov 1999)
   * win32/pe: resource handling is rewritten
   * win32/pe: the last :-) TLS problem is fixed
   * win32/pe: somewhat less memory is required during compression
-  * linux/i386: fixed compression of scripts which was broken since 0.71
-  * linux/i386: more FreeBSD compatibility issues
+  * linux/386: fixed compression of scripts which was broken since 0.71
+  * linux/386: more FreeBSD compatibility issues
   * changed option: `-i' now prints some more details during compression
     (not finished yet)
 
@@ -92,12 +98,12 @@ Changes in 0.84 (04 Oct 1999)
 Changes in 0.83 (17 Sep 1999)
   * dos/exe: fixed minimal memory requirement problem for some files
   * win32/pe: fixed a bug which caused a crash in some compressed files
-  * linux/i386: various improvements in the stub; also, for the sake
+  * linux/386: various improvements in the stub; also, for the sake
     of FreeBSD users, the stub is now branded as Linux/ELF
 
 Changes in 0.82 (16 Aug 1999)
   * dos/exe: fixed a decompressor bug which could cause crash on some files
-  * linux/i386: section headers are now stripped from the stub so that
+  * linux/386: section headers are now stripped from the stub so that
     `strip' won't ruin a compressed file any longer
   * wc/le: support for stack not in the last object disabled again
   * win32/pe: removed some unneeded data
@@ -143,11 +149,11 @@ Changes in 0.72 (12 May 1999)
   * win32/pe: never compress TYPELIB resources
   * win32/pe: compressed files are hopefully less suspicious to heuristic
     virus scanners now
-  * linux/i386: minor decompressor stub updates, nicer progress bar
+  * linux/386: minor decompressor stub updates, nicer progress bar
 
 Changes in 0.71 (19 Apr 1999)
   * dos/exe: added option `--no-overlay'
-  * linux/i386: various improvements in the stub, most notably the
+  * linux/386: various improvements in the stub, most notably the
     overhead for an extra cleanup process has been removed
   * win32/pe: added support for export forwarders
   * win32/pe: added support for DLLs without entry point or imports
@@ -157,7 +163,7 @@ Changes in 0.71 (19 Apr 1999)
   * win32/pe: rearranged stub to avoid false alerts from some virus scanners
 
 Changes in 0.70 (30 Mar 1999)
-  * added support for linux/i386 executables
+  * added support for linux/386 executables
   * improved compression ratio quite a bit
   * added new compression level `--best' to squeeze out even some more bytes
   * win32/pe: TLS support is much better now

@@ -345,7 +345,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
 int PackVmlinuzI386::canUnpack()
 {
-    return false;
+    return readFileHeader() == getFormat();
 }
 
 
@@ -353,6 +353,9 @@ void PackVmlinuzI386::unpack(OutputFile *)
 {
     // no uncompression support for this format, so that
     // it is possible to remove the original deflate code (>10KB)
+
+    // FIXME: but we could write the uncompressed "vmlinux" image
+
     throwCantUnpack("build a new kernel instead :-)");
 }
 

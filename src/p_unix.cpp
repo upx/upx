@@ -322,7 +322,7 @@ void PackUnix::unpack(OutputFile *fo)
 
 
 /*************************************************************************
-// Linux/i386 specific (execve format)
+// linux/i386 (generic "execve" format)
 **************************************************************************/
 
 static const
@@ -350,6 +350,7 @@ const upx_byte *PackLinuxI386::getLoader() const
     return NULL;
 }
 
+
 int PackLinuxI386::getLoaderSize() const
 {
     if (0!=lsize) {
@@ -362,13 +363,18 @@ int PackLinuxI386::getLoaderSize() const
     return 0;
 }
 
+
 int PackLinuxI386::getLoaderPrefixSize() const
 {
     return 116;
 }
 
+
 bool PackLinuxI386::canPack()
 {
+    if (exetype != 0)
+        return super::canPack();
+
     Elf_LE32_Ehdr ehdr;
     unsigned char *buf = ehdr.e_ident;
 
@@ -377,8 +383,11 @@ bool PackLinuxI386::canPack()
 
     exetype = 0;
     const unsigned l = get_le32(buf);
+#if 0
+    // NOTE: ELF executables are now handled by p_lx_elf.cpp.
     if (!memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
     {
+        // FIXME: add special checks for uncompresed "vmlinux" kernel
         exetype = 1;
         // now check the ELF header
         if (!memcmp(buf+8, "FreeBSD", 7))               // branded
@@ -390,7 +399,9 @@ bool PackLinuxI386::canPack()
         if (ehdr.e_version != 1)                        // version
             exetype = 0;
     }
-    else if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)
+    else
+#endif
+    if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)
     {
         // OMAGIC / NMAGIC / ZMAGIC / QMAGIC
         exetype = 2;
@@ -506,6 +517,8 @@ void PackLinuxI386::updateLoader(OutputFile *fo)
     fo->rewrite(loader, 0x80);
 #undef PAGE_MASK
 }
+
+
 /*
 vi:ts=4:et
 */

@@ -144,6 +144,10 @@ static Packer* try_packers(InputFile *f, try_function func)
     Packer *p = NULL;
 
     // note: order of tries is important !
+
+    //
+    // .exe
+    //
     if (!opt->dos.force_stub)
     {
         if ((p = func(new PackDjgpp2(f),f)) != NULL)
@@ -161,8 +165,16 @@ static Packer* try_packers(InputFile *f, try_function func)
     }
     if ((p = func(new PackExe(f),f)) != NULL)
         return p;
+
+    //
+    // atari
+    //
     if ((p = func(new PackTos(f),f)) != NULL)
         return p;
+
+    //
+    // linux
+    //
 #if 0
     if (opt->unix.script_name)
     {
@@ -180,6 +192,10 @@ static Packer* try_packers(InputFile *f, try_function func)
         return p;
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
+
+    //
+    // .sys and .com
+    //
     if ((p = func(new PackSys(f),f)) != NULL)
         return p;
     if ((p = func(new PackCom(f),f)) != NULL)

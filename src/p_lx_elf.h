@@ -33,8 +33,10 @@
 #ifndef __UPX_P_LX_ELF_H  //{
 #define __UPX_P_LX_ELF_H
 
-#include "p_unix.h"
-#include "p_elf.h"
+
+/*************************************************************************
+// linux/elf386
+**************************************************************************/
 
 class PackLinuxI386elf : public PackLinuxI386
 {
@@ -51,10 +53,10 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpackFormat(int format) const;
     virtual bool canUnpackVersion(int version) const
         { return (version >= 11); }
 
+protected:
     struct Extent {
         off_t offset;
         off_t size;
@@ -76,7 +78,8 @@ protected:
     Elf_LE32_Phdr *phdri; // for  input file
 };
 
-#endif //}__UPX_P_LX_ELF_H
+
+#endif /*} already included */
 
 
 /*

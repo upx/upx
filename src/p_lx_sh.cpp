@@ -167,12 +167,6 @@ bool PackLinuxI386sh::getShellName(char *buf)
 }
 
 
-bool PackLinuxI386sh::canUnpackFormat(int format) const
-{
-    return UPX_F_LINUX_SH_i386==format;
-}
-
-
 bool PackLinuxI386sh::canPack()
 {
 #if defined(__linux__)  //{

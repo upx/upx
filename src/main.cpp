@@ -42,17 +42,18 @@ void init_options(struct options_t *o)
 
     o->cmd = CMD_NONE;
     o->method = -1;
-    o->level = 7;
+    o->level = -1;
     o->mem_level = -1;
     o->filter = -1;
 
     o->backup = -1;
     o->overlay = -1;
 
+    o->console = CON_FILE;
 #if defined(__MFX_DOS) || defined(__MFX_WIN)
     o->console = CON_INIT;
-#else
-    o->console = CON_FILE;
+#elif 1 && defined(__linux__)
+    o->console = CON_INIT;
 #endif
     o->verbose = 2;
 
