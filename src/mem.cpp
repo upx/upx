@@ -90,18 +90,20 @@ void MemBuffer::alloc(unsigned size)
 }
 
 
-void MemBuffer::allocForCompression(unsigned uncompressed_size)
+void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra)
 {
     assert((int)uncompressed_size > 0);
-    alloc(uncompressed_size + uncompressed_size/8 + 256, 0);
+    assert((int)extra >= 0);
+    alloc(uncompressed_size + uncompressed_size/8 + 256 + extra, 0);
 }
 
 
-void MemBuffer::allocForUncompression(unsigned uncompressed_size)
+void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra)
 {
     assert((int)uncompressed_size > 0);
-    //alloc(uncompressed_size + 3 + 512, 0);  // 512 safety bytes
-    alloc(uncompressed_size + 3, 0);  // 3 bytes for asm_fast decompresion
+    assert((int)extra >= 0);
+    //alloc(uncompressed_size + 3 + 512 + extra, 0);  // 512 safety bytes
+    alloc(uncompressed_size + 3 + extra, 0);  // 3 bytes for asm_fast decompresion
 }
 
 

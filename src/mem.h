@@ -41,8 +41,8 @@ public:
     ~MemBuffer();
 
     void alloc(unsigned size);
-    void allocForCompression(unsigned uncompressed_size);
-    void allocForUncompression(unsigned uncompressed_size);
+    void allocForCompression(unsigned uncompressed_size, unsigned extra=0);
+    void allocForUncompression(unsigned uncompressed_size, unsigned extra=0);
 
     void dealloc();
 
