@@ -523,10 +523,10 @@ static int do_option(int optc, const char *arg)
         opt->no_env = true;
         break;
     // compression settings
-    case 520:
+    case 520:                               // --small
         opt->small = 1;
         break;
-    case 521:
+    case 521:                               // --filter=
         getoptvar(&opt->filter, 0, 255);
         opt->all_filters = false;
         break;
