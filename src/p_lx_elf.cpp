@@ -174,7 +174,7 @@ PackLinuxElf32ppc::buildLinuxLoader(
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
-    unsigned sz_unc, sz_cpr;
+    unsigned sz_unc=0, sz_cpr;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
@@ -347,7 +347,7 @@ PackLinuxElf32ppc::generateElfHdr(
 {
     super::generateElfHdr(fo, proto, brka);
 
-    if (ph.format==UPX_F_LINUX_ELF_PPC) {
+    if (ph.format==UPX_F_LINUX_ELFPPC32) {
         cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
         assert(2==get_native16(&h2->ehdr.e_phnum));
         set_native32(&h2->phdr[0].p_flags, Elf32_Phdr::PF_W | get_native32(&h2->phdr[0].p_flags));
