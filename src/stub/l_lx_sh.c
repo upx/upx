@@ -75,7 +75,7 @@ xread(struct Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 0  //{  save space
+#if 1  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -260,6 +260,7 @@ getexec(char const *const fname, Elf32_Ehdr *const ehdr, Elf32_auxv_t *const av)
     int const fdi = open(fname, O_RDONLY, 0);
     if (0 > fdi) {
         err_exit(18);
+ERR_LAB
     }
     if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
         err_exit(19);
@@ -304,6 +305,7 @@ void *upx_main(
     if (xo.buf != do_mmap(xo.buf, 1+3+xo.size, PROT_READ | PROT_WRITE,
             MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0)) {
         err_exit(20);
+ERR_LAB
     }
 
         // Uncompress shell script
