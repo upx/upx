@@ -228,6 +228,7 @@ endif	# linux
 
 ifeq ($(target),linux-intelc70)
 CC = icc
+CXX = icpc
 CCARCH += -march=i386 -mcpu=i686
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@

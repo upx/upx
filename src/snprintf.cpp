@@ -700,7 +700,7 @@ static size_t dopr(char *buffer, size_t maxlen, const char *format, va_list args
                 dopr_outch (buffer, &currlen, maxlen, va_arg (args, int));
                 break;
             case 's':
-                strvalue = va_arg (args, char *);
+                strvalue = va_arg (args, const char *);
                 if (!strvalue) strvalue = "(NULL)";
                 if (max == -1) {
                     max = strlen(strvalue);
@@ -709,7 +709,7 @@ static size_t dopr(char *buffer, size_t maxlen, const char *format, va_list args
                 fmtstr (buffer, &currlen, maxlen, strvalue, flags, min, max);
                 break;
             case 'p':
-                strvalue = (const char *) va_arg (args, void *);
+                strvalue = (const char *) va_arg (args, const void *);
                 fmtint (buffer, &currlen, maxlen, (long) strvalue, 16, min, max, flags);
                 break;
             case 'n':
