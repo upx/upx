@@ -57,7 +57,7 @@ static const
 
 const int *PackLinuxI386::getCompressionMethods(int method, int level) const
 {
-    return Packer::getDefaultCompressionMethods_LE32(method, level);
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 const int *PackLinuxI386::getFilters() const
@@ -289,7 +289,7 @@ PackLinuxI386::buildLinuxLoader(
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
-        checkPatch(0,0,0,0);  // reset
+        checkPatch(NULL, 0, 0, 0);  // reset
     }
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
@@ -307,7 +307,7 @@ PackLinuxI386::buildLoader(Filter const *ft)
     // patch loader
     // note: we only can use /proc/<pid>/fd when exetype > 0.
     //   also, we sleep much longer when compressing a script.
-    checkPatch(0,0,0,0);  // reset
+    checkPatch(NULL, 0, 0, 0);  // reset
     patch_le32(buf,sz_fold,"UPX4",exetype > 0 ? 3 : 15);   // sleep time
     patch_le32(buf,sz_fold,"UPX3",progid);
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);

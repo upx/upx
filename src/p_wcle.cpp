@@ -68,7 +68,7 @@ static const
 
 const int *PackWcle::getCompressionMethods(int method, int level) const
 {
-    return Packer::getDefaultCompressionMethods_LE32(method, level);
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 

@@ -58,7 +58,7 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
 
 const int *PackDjgpp2::getCompressionMethods(int method, int level) const
 {
-    return Packer::getDefaultCompressionMethods_LE32(method, level);
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 

@@ -712,7 +712,7 @@ int Packer::patch_be16(void *b, int blen, unsigned old, unsigned new_)
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_be16(p,new_);
+    set_be16(p, new_);
 
     return boff;
 }
@@ -724,7 +724,7 @@ int Packer::patch_be16(void *b, int blen, const void *old, unsigned new_)
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_be16(p,new_);
+    set_be16(p, new_);
 
     return boff;
 }
@@ -736,7 +736,7 @@ int Packer::patch_be32(void *b, int blen, unsigned old, unsigned new_)
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_be32(p,new_);
+    set_be32(p, new_);
 
     return boff;
 }
@@ -748,7 +748,7 @@ int Packer::patch_be32(void *b, int blen, const void *old, unsigned new_)
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_be32(p,new_);
+    set_be32(p, new_);
 
     return boff;
 }
@@ -760,7 +760,7 @@ int Packer::patch_le16(void *b, int blen, unsigned old, unsigned new_)
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_le16(p,new_);
+    set_le16(p, new_);
 
     return boff;
 }
@@ -772,7 +772,7 @@ int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_)
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_le16(p,new_);
+    set_le16(p, new_);
 
     return boff;
 }
@@ -784,7 +784,7 @@ int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_le32(p,new_);
+    set_le32(p, new_);
 
     return boff;
 }
@@ -796,7 +796,7 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
-    set_le32(p,new_);
+    set_le32(p, new_);
 
     return boff;
 }
@@ -941,7 +941,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
 }
 
 
-const int *Packer::getDefaultCompressionMethods_LE32(int method, int level, int small) const
+const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int small) const
 {
     static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, -1 };
     static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, -1 };

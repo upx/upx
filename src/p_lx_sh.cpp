@@ -66,7 +66,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     MemBuffer buf(sz_fold);
     memcpy(buf, linux_i386sh_fold, sz_fold);
 
-    checkPatch(0,0,0,0);  // reset
+    checkPatch(NULL, 0, 0, 0);  // reset
     patch_le32(buf,sz_fold,"UPX3",l_shname);
     patch_le32(buf,sz_fold,"UPX2",o_shname);
 

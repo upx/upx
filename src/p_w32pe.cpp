@@ -124,7 +124,7 @@ PackW32Pe::~PackW32Pe()
 const int *PackW32Pe::getCompressionMethods(int method, int level) const
 {
     bool small = ih.codesize + ih.datasize <= 256*1024;
-    return Packer::getDefaultCompressionMethods_LE32(method, level, small);
+    return Packer::getDefaultCompressionMethods_le32(method, level, small);
 }
 
 

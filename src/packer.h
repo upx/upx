@@ -241,7 +241,7 @@ protected:
 
     // compression method util
     const int *getDefaultCompressionMethods_8(int method, int level, int small=-1) const;
-    const int *getDefaultCompressionMethods_LE32(int method, int level, int small=-1) const;
+    const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
 public:
     static bool isValidCompressionMethod(int method);
 

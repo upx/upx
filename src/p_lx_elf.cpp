@@ -84,7 +84,7 @@ PackLinuxI386elf::buildLoader(const Filter *ft)
 {
     unsigned char tmp[sizeof(linux_i386elf_fold)];
     memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
-    checkPatch(0,0,0,0);  // reset
+    checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->unix.ptinterp) {
         unsigned j;
         for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
