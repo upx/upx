@@ -197,6 +197,8 @@ PackLinuxI386::buildLinuxLoader(
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
     memcpy(cprLoader, &h, sizeof(h));
+
+    // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr);
     delete cprLoader;
 
@@ -287,6 +289,7 @@ PackLinuxI386::buildLinuxLoader(
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
+        checkPatch(0,0,0,0);  // reset
     }
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
