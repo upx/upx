@@ -221,7 +221,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 
     uip->endCallback();
 
-    //printf("Packer::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
+    //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
     if (!checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
@@ -237,8 +237,10 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         unsigned new_len = ph.u_len;
         r = upx_decompress(out,ph.c_len,in,&new_len,ph.method);
         //printf("%d %d: %d %d %d\n", ph.method, r, ph.c_len, ph.u_len, new_len);
-        if (r != UPX_E_OK || new_len != ph.u_len)
+        if (r != UPX_E_OK)
             throwInternalError("decompression failed");
+        if (new_len != ph.u_len)
+            throwInternalError("decompression failed (size error)");
 
         // verify decompression
         if (ph.u_adler != upx_adler32(saved_u_adler,in,ph.u_len))
