@@ -294,7 +294,7 @@
 
 
 #undef __attribute_packed
-#if (ACC_CC_GNUC || ACC_CC_INTELC)
+#if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
 #  if (1 && (ACC_ARCH_IA32))
 #    define __attribute_packed
 #  else
@@ -323,12 +323,12 @@
 #if 1
 #  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
-     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z[7]; }; \
+     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z[7]; } __attribute_packed; \
      COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
    }
 #else
 #  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
-     struct acc_tmp_t { b x; a y; b z[7]; }; \
+     struct acc_tmp_t { b x; a y; b z[7]; } __attribute_packed; \
      COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
    }
 #endif

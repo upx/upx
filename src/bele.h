@@ -214,106 +214,66 @@ inline int get_le32_signed(const void *bb)
 
 /*************************************************************************
 // classes for portable unaligned access
+//
+// Important: these classes must be PODs (Plain Old Data), i.e. no
+//   constructor, no destructor, no virtual functions and no default
+//   assignment operator, and all fields must be public(!).
 **************************************************************************/
 
-class BE16
+struct BE16
 {
     unsigned char d[2];
 
-public:
-    BE16() { }
-    BE16& operator =  (const BE16 &v) {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-        * (acc_uint32e_t *) d = * (const acc_uint32e_t *) v.d;
-#else
-        memcpy(d, v.d, sizeof(d));
-#endif
-        return *this;
-    }
-
-    BE16& operator =  (unsigned v)    { set_be16(d, v); return *this; }
-    BE16& operator += (unsigned v)    { set_be16(d, get_be16(d) + v); return *this; }
-    BE16& operator -= (unsigned v)    { set_be16(d, get_be16(d) - v); return *this; }
-    BE16& operator &= (unsigned v)    { set_be16(d, get_be16(d) & v); return *this; }
-    BE16& operator |= (unsigned v)    { set_be16(d, get_be16(d) | v); return *this; }
+    BE16& operator =  (unsigned v) { set_be16(d, v); return *this; }
+    BE16& operator += (unsigned v) { set_be16(d, get_be16(d) + v); return *this; }
+    BE16& operator -= (unsigned v) { set_be16(d, get_be16(d) - v); return *this; }
+    BE16& operator &= (unsigned v) { set_be16(d, get_be16(d) & v); return *this; }
+    BE16& operator |= (unsigned v) { set_be16(d, get_be16(d) | v); return *this; }
 
     operator unsigned () const  { return get_be16(d); }
 }
 __attribute_packed;
 
 
-class BE32
+struct BE32
 {
     unsigned char d[4];
 
-public:
-    BE32() { }
-    BE32& operator =  (const BE32 &v) {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-        * (unsigned int *) d = * (const unsigned int *) v.d;
-#else
-        memcpy(d, v.d, sizeof(d));
-#endif
-        return *this;
-    }
-
-    BE32& operator =  (unsigned v)    { set_be32(d, v); return *this; }
-    BE32& operator += (unsigned v)    { set_be32(d, get_be32(d) + v); return *this; }
-    BE32& operator -= (unsigned v)    { set_be32(d, get_be32(d) - v); return *this; }
-    BE32& operator &= (unsigned v)    { set_be32(d, get_be32(d) & v); return *this; }
-    BE32& operator |= (unsigned v)    { set_be32(d, get_be32(d) | v); return *this; }
+    BE32& operator =  (unsigned v) { set_be32(d, v); return *this; }
+    BE32& operator += (unsigned v) { set_be32(d, get_be32(d) + v); return *this; }
+    BE32& operator -= (unsigned v) { set_be32(d, get_be32(d) - v); return *this; }
+    BE32& operator &= (unsigned v) { set_be32(d, get_be32(d) & v); return *this; }
+    BE32& operator |= (unsigned v) { set_be32(d, get_be32(d) | v); return *this; }
 
     operator unsigned () const  { return get_be32(d); }
 }
 __attribute_packed;
 
 
-class LE16
+struct LE16
 {
     unsigned char d[2];
 
-public:
-    LE16() { }
-    LE16& operator =  (const LE16 &v) {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-        * (unsigned short *) d = * (const unsigned short *) v.d;
-#else
-        memcpy(d, v.d, sizeof(d));
-#endif
-        return *this;
-    }
-
-    LE16& operator =  (unsigned v)    { set_le16(d, v); return *this; }
-    LE16& operator += (unsigned v)    { set_le16(d, get_le16(d) + v); return *this; }
-    LE16& operator -= (unsigned v)    { set_le16(d, get_le16(d) - v); return *this; }
-    LE16& operator &= (unsigned v)    { set_le16(d, get_le16(d) & v); return *this; }
-    LE16& operator |= (unsigned v)    { set_le16(d, get_le16(d) | v); return *this; }
+    LE16& operator =  (unsigned v) { set_le16(d, v); return *this; }
+    LE16& operator += (unsigned v) { set_le16(d, get_le16(d) + v); return *this; }
+    LE16& operator -= (unsigned v) { set_le16(d, get_le16(d) - v); return *this; }
+    LE16& operator &= (unsigned v) { set_le16(d, get_le16(d) & v); return *this; }
+    LE16& operator |= (unsigned v) { set_le16(d, get_le16(d) | v); return *this; }
 
     operator unsigned () const  { return get_le16(d); }
 }
 __attribute_packed;
 
 
-class LE32
+struct LE32
 {
     unsigned char d[4];
 
-public:
-    LE32() { }
-    LE32& operator =  (const LE32 &v) {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-        * (acc_uint32e_t *) d = * (const acc_uint32e_t *) v.d;
-#else
-        memcpy(d, v.d, sizeof(d));
-#endif
-        return *this;
-    }
-
-    LE32& operator =  (unsigned v)    { set_le32(d, v); return *this; }
-    LE32& operator += (unsigned v)    { set_le32(d, get_le32(d) + v); return *this; }
-    LE32& operator -= (unsigned v)    { set_le32(d, get_le32(d) - v); return *this; }
-    LE32& operator &= (unsigned v)    { set_le32(d, get_le32(d) & v); return *this; }
-    LE32& operator |= (unsigned v)    { set_le32(d, get_le32(d) | v); return *this; }
+    LE32& operator =  (unsigned v) { set_le32(d, v); return *this; }
+    LE32& operator += (unsigned v) { set_le32(d, get_le32(d) + v); return *this; }
+    LE32& operator -= (unsigned v) { set_le32(d, get_le32(d) - v); return *this; }
+    LE32& operator &= (unsigned v) { set_le32(d, get_le32(d) & v); return *this; }
+    LE32& operator |= (unsigned v) { set_le32(d, get_le32(d) | v); return *this; }
 
     operator unsigned () const  { return get_le32(d); }
 }
@@ -386,7 +346,7 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
-#if 1 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_GNUC >= 0x030200)
+#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_GNUC >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
    typedef acc_uint32e_t  LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
