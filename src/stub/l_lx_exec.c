@@ -128,6 +128,7 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 
 
 static char *
+__attribute__((cdecl))
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
