@@ -159,32 +159,6 @@ endif	# linux
 
 
 ###
-### linux/i386 - Intel C++ 7.x
-###
-
-ifeq ($(target),linux-intelc)
-DEPMODE := intelc_linux
-CC = icc
-CXX = icpc
-CCARCH += -march=i386 -mcpu=i686
-CFLAGS_OUTPUT = -o $@
-LINK_EXE_OUTPUT = -o $@
-ifeq ($(WITH_ZLIB),1)
-LDLIBS += -lz
-endif
-
-CFLAGS  = $(CFLAGS_WERROR)
-ifeq ($(DEBUG),1)
-CFLAGS += -g -O0
-else
-CFLAGS += -O2
-endif
-LDFLAGS += -Wl,-Map,$T.map
-
-endif
-
-
-###
 ### linux/i386 - Borland C++ 5.7 (Kylix 3)
 ###
 
@@ -206,6 +180,46 @@ else
 endif
 # transform `-lxx -lyy' into `libxx.a libyy.a'
 LDLIBS := $(shell echo "$(LDLIBS)" | perl -pe 's/-l(.+?)\b/lib\1.a/g')
+endif
+
+
+###
+### linux/i386 - Intel C++
+###
+
+ifeq ($(target),linux-intelc)
+DEPMODE := intelc_linux
+CC = icc
+CXX = icpc
+CCARCH += -march=i386 -mcpu=i686 -nolib_inline
+CFLAGS_OUTPUT = -o $@
+LINK_EXE_OUTPUT = -o $@
+ifeq ($(WITH_ZLIB),1)
+LDLIBS += -lz
+endif
+
+CFLAGS  = $(CFLAGS_WERROR)
+ifeq ($(DEBUG),1)
+CFLAGS += -g -O0
+else
+CFLAGS += -O2
+endif
+LDFLAGS += -Wl,-Map,$T.map
+
+endif
+
+
+###
+### linux/i386 - Portland Group PGI C++ 5.1
+###
+
+ifeq ($(target),linux-pgi)
+CC = pgcc
+CXX = pgCC
+ifeq ($(DEBUG),1)
+else
+CFLAGS += -O2
+endif
 endif
 
 
@@ -680,6 +694,8 @@ endif
 # /***********************************************************************
 # // main targets
 # ************************************************************************/
+
+-include ./Makefile.local
 
 all: $(upx_exe)
 
