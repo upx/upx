@@ -92,7 +92,7 @@
 #  define HAVE_STRINGS_H 1
 #  if (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_MACOSX || ACC_OS_POSIX_OPENBSD)
 #    undef HAVE_MALLOC_H /* deprecated */
-#  elif (ACC_OS_POSIX_HPUX)
+#  elif (ACC_OS_POSIX_HPUX || ACC_OS_POSIX_INTERIX)
 #    define HAVE_ALLOCA_H 1
 #  endif
 #  if (ACC_OS_POSIX_MACOSX && ACC_CC_MWERKS) && defined(__MSL__)
@@ -599,6 +599,9 @@
 #elif (ACC_CC_GNUC)
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MSC && (_MSC_VER >= 1400))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_OS_WIN64)
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
@@ -627,7 +630,7 @@
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#elif 1 && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #endif

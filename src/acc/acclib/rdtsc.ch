@@ -21,31 +21,31 @@
 #if defined(acc_int32e_t)
 
 
+#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC)
+#  if (ACC_CC_GNUC >= 0x020000ul)
+#    define __ACCLIB_RDTSC_REGS : : "r" (t) : "cc", "memory", "eax", "edx"
+#  else
+#    define __ACCLIB_RDTSC_REGS : : "r" (t) : "ax", "dx"
+#  endif
+#elif (ACC_ARCH_IA32 && ACC_CC_INTELC) && defined(__linux__)
+#  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "memory", "eax", "edx"
+#endif
+
+
 /*************************************************************************
 // read TSC
 **************************************************************************/
 
 ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
 {
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
     __asm__ __volatile__(
         "clc \n" ".byte 0x0f, 0x31\n"
         "movl %%eax,(%0)\n" "movl %%edx,4(%0)\n"
-#  if (ACC_CC_GNUC >= 0x020000ul)
-        : : "r" (t) : "cc", "memory", "eax", "edx"
-#  else
-        : : "r" (t) : "ax", "dx"
-#  endif
+        __ACCLIB_RDTSC_REGS
     );
     return 0;
-#elif (ACC_ARCH_IA32 && ACC_CC_INTELC) && defined(__linux__)
-    __asm__ __volatile__(
-        "clc \n" ".byte 0x0f, 0x31\n"
-        "movl %%eax,(%0)\n" "movl %%edx,4(%0)\n"
-        : : "r" (t) : "memory", "eax", "edx"
-    );
-    return 0;
-#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC))
+#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
     ACC_UNUSED(t);
     __asm {
         mov ecx, t
@@ -73,25 +73,14 @@ ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
 
 ACCLIB_PUBLIC(int, acc_tsc_read_add) (acc_uint32e_t* t)
 {
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
     __asm__ __volatile__(
         "clc \n" ".byte 0x0f, 0x31\n"
         "addl %%eax,(%0)\n" "adcl $0,%%edx\n" "addl %%edx,4(%0)\n"
-#  if (ACC_CC_GNUC >= 0x020000ul)
-        : : "r" (t) : "cc", "memory", "eax", "edx"
-#  else
-        : : "r" (t) : "ax", "dx"
-#  endif
+        __ACCLIB_RDTSC_REGS
     );
     return 0;
-#elif (ACC_ARCH_IA32 && ACC_CC_INTELC) && defined(__linux__)
-    __asm__ __volatile__(
-        "clc \n" ".byte 0x0f, 0x31\n"
-        "addl %%eax,(%0)\n" "adcl $0,%%edx\n" "addl %%edx,4(%0)\n"
-        : : "r" (t) : "memory", "eax", "edx"
-    );
-    return 0;
-#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC))
+#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
     ACC_UNUSED(t);
     __asm {
         mov ecx, t

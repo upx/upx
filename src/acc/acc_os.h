@@ -141,6 +141,9 @@
 #  elif defined(__hpux__) || defined(__hpux)
 #    define ACC_OS_POSIX_HPUX       1
 #    define ACC_INFO_OS_POSIX       "hpux"
+#  elif defined(__INTERIX)
+#    define ACC_OS_POSIX_INTERIX    1
+#    define ACC_INFO_OS_POSIX       "interix"
 #  elif defined(__IRIX__) || defined(__irix__)
 #    define ACC_OS_POSIX_IRIX       1
 #    define ACC_INFO_OS_POSIX       "irix"

@@ -27,7 +27,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20040712L
+#define ACC_VERSION     20040713L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -44,6 +44,9 @@
 #  define __INTEL_COMPILER __ICL
 #endif
 
+#if 1 && defined(__INTERIX) && defined(__GNUC__) && !defined(_ALL_SOURCE)
+#  define _ALL_SOURCE 1
+#endif
 
 /* disable pedantic warnings for undefined preprocessing symbols */
 #if defined(__INTEL_COMPILER) && defined(__linux__)
