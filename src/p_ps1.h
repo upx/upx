@@ -57,9 +57,9 @@ public:
 
 protected:
     virtual int buildLoader(const Filter *ft);
-    virtual int patch_mips_le16(void *b, int blen, const void *old, unsigned new_);
-    virtual int patch_mips_le32(void *b, int blen, const void *old, unsigned new_);
-    virtual int patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_);
+
+    virtual int readFileHeader();
+    virtual bool checkFileHeader();
 
     struct ps1_exe_t
     {
@@ -100,6 +100,11 @@ protected:
     unsigned fdata_size;
     // calculated filesize
     unsigned cfile_size;
+
+protected:
+    int patch_mips_le16(void *b, int blen, const void *old, unsigned new_);
+    int patch_mips_le32(void *b, int blen, const void *old, unsigned new_);
+    void patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_);
 };
 
 
