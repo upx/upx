@@ -34,8 +34,6 @@ More formats:
  - add more file formats / platforms (there were volunteers for FreeBSD,
    BeOS, Windows CE, Amiga, C64, ...)
 
- - add support for Linux kernels
-
  - add support for self-extracting HTML pages using a Javascript stub
    (like the AlgART HTML Packer "AHP")
 
@@ -53,7 +51,6 @@ Existing formats:
      (see SEAL http://www.home.sk/public/seal/ )
 
  - linux/i386:
-     - add support for compressed kernels
      - use the new assembly preprocessor stuff (ie. process the file
        headers internally)
      - UPX uncompressor daemon
