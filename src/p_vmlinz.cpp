@@ -199,8 +199,10 @@ int PackVmlinuzI386::decompressKernel()
             throwCantPack("trailing bytes after kernel image; use option `-f' to force packing");
         }
         // see /usr/src/linux/arch/i386/kernel/head.S:
-        if (memcmp(ibuf, "\xFC\xB8",     2) != 0
-        &&  memcmp(ibuf, "\xFC\x0F\x01", 3) != 0 )
+        if (memcmp(ibuf, "\xFC\xB8",     2) != 0  /* 2.4.x: cld; mov $...,%eax */
+        &&  memcmp(ibuf, "\xFC\x0F\x01", 3) != 0  /* 2.6.x: cld; lgdt ... */
+        && !(0xEA==ibuf[0]  /* 2.6.x+grsecurity+strongswan+openwall+trustix:  ljmp $0x10,... */
+            && 0==memcmp(5+ibuf, "\x10\x00", 2)) )
             throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
 
         // FIXME: more checks for special magic bytes in ibuf ???
