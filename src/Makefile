@@ -38,7 +38,7 @@ upx.out: $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
 mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.map *.o *.res upx.out
+	rm -f *.d *.map *.o *.obj *.res upx.exe upx.out
 
 -include *.d
 .PHONY: all mostlyclean clean distclean maintainer-clean

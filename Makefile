@@ -18,14 +18,15 @@ all mostlyclean clean distclean maintainer-clean:
 dist: distclean
 	false
 
-zip:
-	cd .. && rm -f upx-current.zip && zip -r upx-current.zip upx
-
 cvs-admin-ko:
 	cvs admin -ko .
 	cvs update -P -d
 
-ChangeLog:
+
+# automatically generate ChangeLog from CVS
+ChangeLog: ChangeLog.cvs
+
+ChangeLog.cvs:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
 ChangeLog.cvsps:
@@ -34,6 +35,4 @@ ChangeLog.cvsps:
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 .PHONY: dist cvs-admin-ko ChangeLog
-
-.NOEXPORT:
 
