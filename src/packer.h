@@ -231,9 +231,6 @@ protected:
     virtual upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
     virtual unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
-    // UI util
-    virtual void updateCallbackSizes(unsigned *, unsigned *) const { }
-
 
 protected:
     InputFile *fi;

@@ -356,8 +356,6 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     if (s->pass < 0)            // no callback wanted
         return;
 
-    p->updateCallbackSizes(&isize, &osize);
-
     if (s->u_len == 0 || isize > s->u_len)
         return;
     // check if we should update the display
