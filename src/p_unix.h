@@ -157,37 +157,6 @@ protected:
 
 
 /*************************************************************************
-// bvmlinux/i386 (Linux kernel image)
-// vmlinux/i386 (Linux kernel image)
-**************************************************************************/
-
-class PackBvmlinuxI386 : public Packer
-{
-    typedef Packer super;
-public:
-    PackBvmlinuxI386(InputFile *f);
-    virtual int getVersion() const { return 11; }
-    virtual int getFormat() const { return UPX_F_BVMLINUX_i386; }
-    virtual const char *getName() const { return "bvmlinux/386"; }
-    virtual int getCompressionMethod() const;
-    virtual const int *getFilters() const { return NULL; }
-
-    virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
-
-    virtual bool canPack();
-    virtual int canUnpack();
-
-protected:
-//    virtual const upx_byte *getLoader() const;
-//    virtual int getLoaderSize() const;
-
-    unsigned elf_offset;
-};
-
-
-
-/*************************************************************************
 // solaris/sparc
 **************************************************************************/
 
