@@ -55,11 +55,13 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
     if (!done)
     {
         // init the filter_map[]
+        assert(n_filters <= 254);       // as 0xff means "empty slot"
         memset(filter_map, 0xff, sizeof(filter_map));
         for (int i = 0; i < n_filters; i++)
         {
             int fid = filters[i].id;
             assert(fid >= 0 && fid <= 255);
+            assert(filter_map[fid] == 0xff);
             filter_map[fid] = (unsigned char) i;
         }
         done = true;
@@ -68,7 +70,7 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
     if (id < 0 || id > 255)
         return NULL;
     unsigned index = filter_map[id];
-    if (index == 0xff)
+    if (index == 0xff)                  // empty slot
         return NULL;
     assert(filters[index].id == id);
     return &filters[index];
