@@ -75,6 +75,23 @@ bool PackUnix::canPack()
 }
 
 
+void PackUnix::writePackHeader(OutputFile *fo)
+{
+    unsigned char buf[32];
+    memset(buf, 0, sizeof(buf));
+
+    const int hsize = ph.getPackHeaderSize();
+    assert((unsigned)hsize <= sizeof(buf));
+
+    // note: magic constants are always le32
+    set_le32(buf+0, UPX_MAGIC_LE32);
+    set_le32(buf+4, UPX_MAGIC2_LE32);
+
+    patchPackHeader(buf, hsize);
+    fo->write(buf, hsize);
+}
+
+
 /*************************************************************************
 // Generic Unix pack(). Subclasses must provide patchLoader().
 //
@@ -186,10 +203,7 @@ void PackUnix::pack(OutputFile *fo)
     ph.c_len = total_out;
 
     // write packheader
-    const int hsize = ph.getPackHeaderSize();
-    set_le32(obuf, UPX_MAGIC_LE32);             // note: always le32
-    patchPackHeader(obuf, hsize);
-    fo->write(obuf, hsize);
+    writePackHeader(fo);
 
     // write overlay offset (needed for decompression)
     set_native32(obuf, lsize);

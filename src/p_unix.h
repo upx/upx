@@ -56,6 +56,8 @@ protected:
     virtual void patchLoaderChecksum() {}
     virtual void updateLoader(OutputFile *) = 0;
 
+    virtual void writePackHeader(OutputFile *fo);
+
     // in order too share as much code as possible we introduce
     // an endian abstraction here
     virtual unsigned get_native32(const void *, int off=0) = 0;
