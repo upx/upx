@@ -94,7 +94,7 @@ public:
 using namespace std;
 #elif (ACC_CC_DMC)
 namespace std { class bad_alloc { }; }
-#elif defined(__EMX__)
+#elif (ACC_CC_GNUC && ACC_OS_EMX)
 #define std
 #elif (ACC_CC_SYMANTECC)
 #define std

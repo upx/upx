@@ -36,9 +36,6 @@
 // ACC
 **************************************************************************/
 
-#if 0 && defined(UPX_CONFIG_HEADER)
-#  define ACC_CONFIG_HEADER UPX_CONFIG_HEADER
-#endif
 #include "acc/acc.h"
 #include "acc/acc_incd.h"
 #include "acc/acc_ince.h"
@@ -278,8 +275,8 @@
 
 
 #undef __attribute_packed
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#  if (1 && (ACC_ARCH_IA32 || ACC_ARCH_IA64))
+#if (ACC_CC_GNUC || ACC_CC_INTELC)
+#  if (1 && (ACC_ARCH_IA32))
 #    define __attribute_packed
 #  else
 #    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))

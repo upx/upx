@@ -93,7 +93,7 @@ inline void set_be32(void *bb, unsigned v)
 
 inline unsigned get_le16(const void *bb)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     return * (const unsigned short *) bb;
 #else
     const unsigned char* b = (const unsigned char*) bb;
@@ -106,7 +106,7 @@ inline unsigned get_le16(const void *bb)
 
 inline void set_le16(void *bb, unsigned v)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     (* (unsigned short *) bb) = (unsigned short) (v & 0xffff);
 #else
     unsigned char* b = (unsigned char*) bb;
@@ -137,7 +137,7 @@ inline void set_le24(void *bb, unsigned v)
 
 inline unsigned get_le32(const void *bb)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     return * (const unsigned *) bb;
 #else
     const unsigned char* b = (const unsigned char*) bb;
@@ -152,7 +152,7 @@ inline unsigned get_le32(const void *bb)
 
 inline void set_le32(void *bb, unsigned v)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     (* (unsigned *) bb) = v;
 #else
     unsigned char* b = (unsigned char*) bb;
@@ -261,7 +261,7 @@ class LE16
 public:
     LE16() { }
     LE16& operator =  (const LE16 &v) {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
         * (unsigned short *) d = * (const unsigned short *) v.d;
 #else
         memcpy(d, v.d, sizeof(d));
@@ -287,7 +287,7 @@ class LE32
 public:
     LE32() { }
     LE32& operator =  (const LE32 &v) {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
         * (unsigned int *) d = * (const unsigned int *) v.d;
 #else
         memcpy(d, v.d, sizeof(d));
@@ -372,13 +372,13 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
-#if (1 && ACC_ARCH_IA32 && ACC_CC_GNUC >= 0x030200)
+#if (1 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
    typedef unsigned int   LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
-#if (0 && ACC_ARCH_IA32 && ACC_CC_MSC)
+#if (0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_MSC)
    typedef unsigned short LE16_unaligned;
    typedef unsigned int   LE32_unaligned;
 #  define LE16      LE16_unaligned

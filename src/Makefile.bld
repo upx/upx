@@ -213,6 +213,13 @@ endif
 ### Linux cross compilers
 ###
 
+ifeq ($(target),cross-amd64-linux)
+include $(srcdir)/Makedefs.gcc
+CC = x86_64-linux-gcc
+CXX = x86_64-linux-g++
+##LDLIBS += -lmcheck
+endif	# cross-amd64-linux
+
 ifeq ($(target),cross-m68k-linux)
 include $(srcdir)/Makedefs.gcc
 CC = m68k-linux-gcc
