@@ -1758,7 +1758,7 @@ void PackW32Pe::pack(OutputFile *fo)
     else if (((identsplit + identsize) ^ identsplit) < 0x200)
         identsplit = identsize;
     else
-        identsplit = ALIGN_UP(identsplit, 0x200) - identsplit;
+        identsplit = ALIGN_GAP(identsplit, 0x200);
     ic = identsize - identsplit;
 
     const unsigned clen = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
@@ -1818,7 +1818,7 @@ void PackW32Pe::pack(OutputFile *fo)
     }
 
     const unsigned esi0 = s1addr + ic;
-    patch_le32(loader,codesize,"EDI0", 0u-esi0 + rvamin);
+    patch_le32(loader,codesize,"EDI0", rvamin - esi0);
     patch_le32(loader,codesize,"ESI0",esi0  + ih.imagebase);
     ic = getLoaderSection("PEMAIN01") + 2 + upxsection;
 
@@ -2051,7 +2051,7 @@ int PackW32Pe::canUnpack()
 
     // FIXME: what should we say here ?
     //throwCantUnpack("file is possibly modified/hacked/protected; take care!");
-    return false;   // not reached
+    return false;
 }
 
 
@@ -2069,7 +2069,7 @@ void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
     const upx_byte *import = ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr;
     const upx_byte *p = idata;
 
-    while (get_le32(p))
+    while (get_le32(p) != 0)
     {
         sdllnames += strlen(get_le32(p) + import) + 1;
         for (p += 8; *p;)
@@ -2090,7 +2090,7 @@ void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
     upx_byte *dllnames = Obuf + inamespos;
     upx_byte *importednames = dllnames + sdllnames;
 
-    for (p = idata; get_le32(p); p++)
+    for (p = idata; get_le32(p) != 0; p++)
     {
         // restore the name of the dll
         const unsigned iatoffs = get_le32(p + 4) + rvamin;
