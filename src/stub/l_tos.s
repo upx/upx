@@ -87,7 +87,7 @@ fh_size         equ     $1c     ; 28 bytes
 ;
 ; long living registers:
 ;   d4  p_tbase - start of text segment
-;   a6  p_bbase - start of uncompressed bss segment, this also is the
+;   a6  p_bbase - start of decompressed bss segment, this also is the
 ;                     - end of decompressed text+data
 ;                     - beginning of decompressed relocations
 ;                     - beginning of dirty bss
@@ -126,7 +126,7 @@ L(start):       movem.l d1-d7/a0-a6,-(sp)
                 add.l   (a2)+,a6
                 move.l  a6,(a2)+        ; p_dbase
                 move.l  #'up12',(a2)    ; p_dlen
-                add.l   (a2)+,a6                ; a6 = uncompressed p_bbase
+                add.l   (a2)+,a6                ; a6 = decompressed p_bbase
                 move.l  (a2),a1                 ; a1 = compressed p_bbase
                 move.l  a6,(a2)+        ; p_bbase
                 move.l  #'up13',(a2)    ; p_blen
@@ -177,8 +177,10 @@ L(loop2):       move.l  -(a1),-(a0)
 
 #endif
 
+        ; a0 now points to the start of the compressed block
 
-; ------------- copy code to stack
+
+; ------------- copy code to stack and setup a5
 
 ; Copy the final startup code below the stack. This will get
 ; called via "jmp (a5)" after decompression and relocation.
@@ -198,11 +200,11 @@ L(loop):        move.w  -(a2),-(a5)
 
 ; ------------- prepare decompressor
 
-        ; a0 now points to the start of the compressed block
+        ; a0 still points to the start of the compressed block
                 ; note: the next statement can be moved below cutpoint
                 ;   if it helps for the align4
-                ;;move.l  d4,a1           ; dest. for uncompressing
-                move.l  d4,a1           ; dest. for uncompressing
+                ;;move.l  d4,a1           ; dest. for decompressing
+                move.l  d4,a1           ; dest. for decompressing
 
 
 ; ------------- jump to copied decompressor
@@ -305,7 +307,7 @@ cutpoint:
 
 ; ------------- test if we need to reloc
 
-                dc.b    'u3'            ; jmp (a5) / moveq.l #1,d3
+                dc.b    'u3'            ; moveq.l #1,d3 / jmp (a5)
 
 
 ; ------------- reloc
