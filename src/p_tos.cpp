@@ -497,7 +497,7 @@ void PackTos::pack(OutputFile *fo)
     // patch decompressor
     upx_byte *p = obuf + d_off;
     //   patch "moveq.l #1,d3" or "jmp (a5)"
-    patch_be16(p,d_len,"u3", (relocsize > 4) ? 0x7601 : 0x4ed5);
+    patch_be16(p,d_len,"u3", (nrelocs > 0) ? 0x7601 : 0x4ed5);
     patch_be32(p,d_len,"up41", dirty_bss_d0);
 
     // set new file_hdr
