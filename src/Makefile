@@ -461,7 +461,7 @@ p_exe$o:    packer.h p_exe.h \
 p_lx_elf$o: packer.h p_lx_elf.h p_unix.h p_elf.h \
 		stub/l_le_n2b.h stub/l_le_n2d.h
 p_lx_sep$o: packer.h p_lx_sep.h p_lx_elf.h p_unix.h p_elf.h
-p_lx_sh$o:  packer.h p_lx_sh.h p_lx_elf.h p_unix.h p_elf.h \
+p_lx_sh$o:  packer.h p_lx_sh.h p_unix.h p_elf.h \
 		stub/l_sh_n2b.h stub/l_sh_n2d.h
 p_sys$o:    packer.h p_sys.h p_com.h \
 		stub/l_sys.h

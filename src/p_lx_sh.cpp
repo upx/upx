@@ -94,52 +94,48 @@ static off_t getbrk(Elf_LE32_Phdr const *phdr, int e_phnum)
 void PackLinuxI386sh::patchLoader()
 {
     lsize = getLoaderSize();
-    ehdri = (Elf_LE32_Ehdr *)(void *)loader;
-    Elf_LE32_Phdr *const phdri = (Elf_LE32_Phdr *)(1+ehdri);
+    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(void *)loader;
+    Elf_LE32_Phdr *const phdr = (Elf_LE32_Phdr *)(1+ehdr);
 
     patch_le32(loader,lsize,"UPX3",l_shname);
     patch_le32(loader,lsize,"UPX2",o_shname);
 
     // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
-    off_t const fold_begin = phdri[1].p_offset;
+    off_t const fold_begin = phdr[1].p_offset;
     assert(fold_begin > 0);
     assert(fold_begin < (off_t)lsize);
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader
-    upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
-    conf.c_flags = 0;
-    upx_uint result_buffer[16];
-    upx_uint cprLsize;
-    upx_compress(
-        loader + fold_begin, lsize - fold_begin,
-        cprLoader, &cprLsize,
-        0,  // progress_callback_t ??
-        getCompressionMethod(), 9,
-        &conf,
-        result_buffer
-    );
-    set_le32(0+fold_begin+loader, lsize - fold_begin);
+    upx_uint const uncLsize = lsize - fold_begin;
+    upx_uint       cprLsize;
+    int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
+                         NULL, opt->method, 10, NULL, NULL);
+    if (r != UPX_E_OK || cprLsize >= uncLsize)
+        throwInternalError("loaded compression failed");
+
+    set_le32(0+fold_begin+loader, uncLsize);
     set_le32(4+fold_begin+loader, cprLsize);
     memcpy(  8+fold_begin+loader, cprLoader, cprLsize);
     lsize = 8 + fold_begin + cprLsize;
     patchVersion(loader,lsize);
 
-    unsigned const brka = getbrk(phdri, ehdri->e_phnum);
-    phdri[1].p_offset =  0xfff&brka;
-    phdri[1].p_vaddr = brka;
-    phdri[1].p_paddr = brka;
-    phdri[1].p_filesz = 0;
-    phdri[1].p_memsz =  0;
+    // Info for OS kernel to set the brk()
+    unsigned const brka = getbrk(phdr, ehdr->e_phnum);
+    phdr[1].p_offset = 0xfff&brka;
+    phdr[1].p_vaddr = brka;
+    phdr[1].p_paddr = brka;
+    phdr[1].p_filesz = 0;
+    phdr[1].p_memsz =  0;
 
     // The beginning of our loader consists of a elf_hdr (52 bytes) and
     // two sections elf_phdr (2 * 32 byte), so we have 12 free bytes
     // from offset 116 to the program start at offset 128.
-    assert(ehdri->e_phoff == sizeof(Elf_LE32_Ehdr));
-    assert(ehdri->e_ehsize == sizeof(Elf_LE32_Ehdr));
-    assert(ehdri->e_phentsize == sizeof(Elf_LE32_Phdr));
-    assert(ehdri->e_phnum == 2);
-    assert(ehdri->e_shnum == 0);
+    assert(ehdr->e_phoff == sizeof(Elf_LE32_Ehdr));
+    assert(ehdr->e_ehsize == sizeof(Elf_LE32_Ehdr));
+    assert(ehdr->e_phentsize == sizeof(Elf_LE32_Phdr));
+    assert(ehdr->e_phnum == 2);
+    assert(ehdr->e_shnum == 0);
     assert(lsize > 128 && lsize < 4096);
 
     patchLoaderChecksum();

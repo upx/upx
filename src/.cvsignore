@@ -1,6 +1,10 @@
 *.0??
+*.dat
 *.idb
+*.img
 *.map
+*.raw
+*.rel
 *.pdb
 *.upx
 .gdbinit

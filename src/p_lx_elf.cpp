@@ -46,12 +46,12 @@ static const
 
 PackLinuxI386elf::~PackLinuxI386elf()
 {
-    delete phdri;
+    delete[] phdri;
 }
 
 PackLinuxI386elf::PackLinuxI386elf(InputFile *f)
     :super(f)
-    ,phdri(0)
+    ,phdri(NULL)
 {
 }
 
@@ -127,19 +127,14 @@ void PackLinuxI386elf::patchLoader()
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader
-    upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
-    conf.c_flags = 0;
-    upx_uint result_buffer[16];
-    upx_uint cprLsize;
-    upx_compress(
-        loader + fold_begin, lsize - fold_begin,
-        cprLoader, &cprLsize,
-        0,  // progress_callback_t ??
-        getCompressionMethod(), 9,
-        &conf,
-        result_buffer
-    );
-    set_le32(0+fold_begin+loader, lsize - fold_begin);
+    upx_uint const uncLsize = lsize - fold_begin;
+    upx_uint       cprLsize;
+    int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
+                         NULL, opt->method, 10, NULL, NULL);
+    if (r != UPX_E_OK || cprLsize >= uncLsize)
+        throwInternalError("loaded compression failed");
+
+    set_le32(0+fold_begin+loader, uncLsize);
     set_le32(4+fold_begin+loader, cprLsize);
     memcpy(  8+fold_begin+loader, cprLoader, cprLsize);
     lsize = 8 + fold_begin + cprLsize;
@@ -156,8 +151,8 @@ void PackLinuxI386elf::patchLoader()
     // The beginning of our loader consists of a elf_hdr (52 bytes) and
     // two sections elf_phdr (2 * 32 byte), so we have 12 free bytes
     // from offset 116 to the program start at offset 128.
-    assert(ehdr->e_phoff == sizeof(*ehdr));
-    assert(ehdr->e_ehsize == sizeof(*ehdr));
+    assert(ehdr->e_phoff == sizeof(Elf_LE32_Ehdr));
+    assert(ehdr->e_ehsize == sizeof(Elf_LE32_Ehdr));
     assert(ehdr->e_phentsize == sizeof(Elf_LE32_Phdr));
     assert(ehdr->e_phnum == 2);
     assert(ehdr->e_shnum == 0);

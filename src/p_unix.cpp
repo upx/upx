@@ -445,19 +445,13 @@ void PackLinuxI386::patchLoader()
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader
-    upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
-    conf.c_flags = 0;
-    upx_uint result_buffer[16];
     upx_uint const uncLsize = lsize - fold_begin;
     upx_uint       cprLsize;
-    upx_compress(
-        loader + fold_begin, uncLsize,
-        cprLoader, &cprLsize,
-        0,  // progress_callback_t ??
-        getCompressionMethod(), 9,
-        &conf,
-        result_buffer
-    );
+    int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
+                         NULL, opt->method, 10, NULL, NULL);
+    if (r != UPX_E_OK || cprLsize >= uncLsize)
+        throwInternalError("loaded compression failed");
+
     memcpy(fold_begin+loader, cprLoader, cprLsize);
     lsize = fold_begin + cprLsize;
     phdr->p_filesz = lsize;

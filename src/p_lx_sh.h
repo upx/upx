@@ -62,8 +62,6 @@ protected:
 
     virtual void patchLoader();
 
-    Elf_LE32_Ehdr *ehdri; // from input file
-
     int o_shname;  // offset to name_of_shell
     int l_shname;  // length of name_of_shell
 };
