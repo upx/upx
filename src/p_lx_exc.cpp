@@ -257,7 +257,7 @@ PackLinuxI386::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr);
-    delete cprLoader;
+    delete [] cprLoader;
 
     n_mru = ft->n_mru;
 
