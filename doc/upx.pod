@@ -478,7 +478,7 @@ Drawbacks:
     may decide to kill some processes to regain memory, and you
     may not like the kernel's choice of which to kill.  Running
     /usr/bin/top is one way to check on the usage of swap space.
-    
+
   - For non-ELF, non-shell executables, you need additional free disk
     space for the uncompressed program
     in your /tmp directory. This program is deleted immediately after
