@@ -1,4 +1,4 @@
-/* ctjo.h -- filter CTO implementation
+/* ctoj.h -- filter CTO implementation
 
    This file is part of the UPX executable compressor.
 

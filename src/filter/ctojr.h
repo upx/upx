@@ -1,4 +1,4 @@
-/* ctjor.h -- filter CTO implementation; renumber destinations MRU
+/* ctojr.h -- filter CTO implementation; renumber destinations MRU
 
    This file is part of the UPX executable compressor.
 
