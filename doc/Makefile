@@ -4,7 +4,7 @@ top_srcdir = ..
 
 PACKAGE      = upx
 VERSION_DATE = 04 Jan 2001
-VERSION     := $(shell sed -n 's/^.*UPX_VERSION_STRING.*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
+VERSION     := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
 TRIMSPACE = cat
 TRIMSPACE = sed -e 's/ *$$//'

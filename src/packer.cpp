@@ -816,8 +816,7 @@ int Packer::patchVersion(void *b, int blen)
     checkPatch(b, blen, boff, 14);
 
     unsigned char *p = (unsigned char *)b + boff + 9;
-    memset(p, ' ', 4);
-    memcpy(p, UPX_VERSION_STRING, UPX_MIN(strlen(UPX_VERSION_STRING), 4));
+    memcpy(p, UPX_VERSION_STRING4, 4);
 
     return boff;
 }
@@ -929,7 +928,7 @@ char const *Packer::identstr(unsigned &size)
         "\n\0"
         "$Info: This file is packed with the UPX executable packer http://upx.tsx.org $"
         "\n\0"
-        "$Id: UPX " UPX_VERSION_STRING " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
+        "$Id: UPX " UPX_VERSION_STRING4 " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
         "\n";
 
     static const char identsmall[] =

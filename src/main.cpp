@@ -1019,6 +1019,10 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
     COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
+
+    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
+    assert(strlen(UPX_VERSION_STRING4) == 4);
+    assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 }
 
 
