@@ -537,7 +537,7 @@ unsigned get_ratio(unsigned u_len, unsigned c_len)
 {
     const unsigned n = 1000000;
     if (u_len <= 0)
-        return n;
+        return c_len <= 0 ? 0 : n;
     return (unsigned) ((c_len * (upx_uint64l)n) / u_len) + 5;
 }
 
