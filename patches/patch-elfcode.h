@@ -1,8 +1,11 @@
 The GNU bfd binary file descriptor package, part of the GNU binutils package,
 contains code to recognize an Elf file by looking at fields in the file header.
 Many programs (such as gdb, size, objdump, objcopy, strip and others) use bfd.
-Unfortunately, bfd has been overly strict.  In releases binutils-2.9.1.0.4,
-binutils-2.9.1.0.23, binutils-2.9.5.0.0, gdb-4.17, and probably others,
+Unfortunately, bfd has been overly strict.  In releases
+   binutils-2.9.1.0.4, binutils-2.9.1.0.23, binutils-2.9.5.0.0,
+   binutils-2.10.1,
+   gdb-4.17, gdb-5.0,
+and probably others,
 bfd does not recognize a file with zero in Elf32_Ehdr.e_shoff, .e_shentsize,
 or .e_shnum, even though the operating system kernel does not care, and many
 bfd clients would work just fine in these cases.
