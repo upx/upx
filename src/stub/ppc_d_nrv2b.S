@@ -1,4 +1,4 @@
-/* ppc_d_nrv2e.S -- PowerPC decompressor for NRV2E
+/* ppc_d_nrv2b.S -- PowerPC decompressor for NRV2B
 
    This file is part of the UPX executable compressor.
 
@@ -62,25 +62,28 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
         li disp,-1  # initial displacement
         
         mflr t3  # return address
-        b bot_n2e
+        b bot_n2b
 
 /* jump on next bit, with branch prediction: y==>likely; n==>unlikely
    cr0 is set by the cmpl ["compare logical"==>unsigned]:
     lt  next bit is 0
     gt  next bit is 1
     eq  must load next 32 bits from memory
-
-   beql-: branch and link [call subroutine] if cr0 is eq, unlikely
 */
-#define jnextb0y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt+ 
-#define jnextb0n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt- 
-#define jnextb1y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt+ 
-#define jnextb1n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt- 
+#define jnextb0y  call get1; blt+ cr0,
+#define jnextb0n  call get1; blt- cr0,
+#define jnextb1y  call get1; bgt+ cr0,
+#define jnextb1n  call get1; bgt- cr0,
 
-/* rotate next bit into bottom bit of reg */
-#define getnextb(reg)              addc. bits,bits,bits; beql- get32; adde reg,reg,reg
+/* rotate next bit into bottom bit of reg; set cr0 based on entire result reg */
+#define getnextb(reg) call get1; adde. reg,reg,reg
 
-get32:
+get1:
+        cmpl  cr0,bits,hibit  # cr0  for   jnextb
+        addc bits,bits,bits  # CArry for getnextb
+	bnelr+ cr0  # return if reload not needed; likely 31/32
+
+/* CArry has been set from adding 0x80000000 to itself; preserve for 'adde' */
                 # fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  # lo8
@@ -93,84 +96,68 @@ get32:
         addi src,src,4
 #endif  /*}*/
 
-        cmpl    0,bits,hibit  # cr0  for   jnextb
-        addc bits,bits,bits  # CArry for getnextb
-        ori  bits,bits,1  # the flag bit
+        cmpl  cr0,bits,hibit  # cr0  for   jnextb
+        adde bits,bits,bits  # CArry for getnextb; set lo bit from CarryIn
         ret
 
-lit_n2e:
+lit_n2b:
 #define tmp len
         lbzu tmp,1(src)  # tmp= *++src;
         stbu tmp,1(dst)  # *++dst= tmp;
 #undef tmp
-top_n2e:
-        jnextb1y lit_n2e
-        li off,1
-        b getoff_n2e
-
-off_n2e:
-        addi off,off,-1
+top_n2b:
+        jnextb1y lit_n2b
+        li off,1  # "the msb"
+offmore_n2b:
         getnextb(off)
-getoff_n2e:
-        getnextb(off)
-        jnextb0n off_n2e
+        jnextb0n offmore_n2b
 
-        li len,0
         addic. off,off,-3  # CArry set [and ignored], but no 'addi.'
-        rlwinm off,off,8,0,31-8  # off<<=8;
-        blt- offprev_n2e
+           li len,0
+        blt- offprev_n2b
         lbzu t0,1(src)
+        rlwinm off,off,8,0,31-8  # off<<=8;
         nor. disp,off,t0  # disp = -(1+ (off|t0));
-        srawi disp,disp,1  # shift off low bit (sets CArry; ignored)
-        beq- eof_n2e
-        andi. t0,t0,1  # complement of low bit of unshifted disp
-        beq+ lenlast_n2e # low bit was 1
-        b lenmore_n2e    # low bit was 0
+        beq- eof_n2b
 
-offprev_n2e:
-        jnextb1y lenlast_n2e
-lenmore_n2e:
-        li len,1  # 1: "the msb"
-        jnextb1y lenlast_n2e
-len_n2e:
-        getnextb(len)
-        jnextb0n len_n2e
-        addi len,len,6-2-2
-        b gotlen_n2e
+offprev_n2b:  # In: 0==len
+	getnextb(len); getnextb(len)  # two bits; cr0 set on result
+	li off,1; bne- gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+	li off,3  # raw 2.. ==> 5..
+        li len,1  # "the msb"
+lenmore_n2b:
+	getnextb(len)
+	jnextb0n lenmore_n2b
+gotlen_n2b:
+        subfic t0,disp,(~0)+(-0xd00)  # want CArry only
+        adde len,len,off  # len += off + (disp < -0xd00);
 
-lenlast_n2e:
-        getnextb(len)  # 0,1,2,3
-gotlen_n2e:
-#define tmp off
-        subfic tmp,disp,(~0)+(-0x500)  # want CArry only
-#undef tmp
-        addi  len,len,2
-        addze len,len  # len += (disp < -0x500);
-
+copy:
 #define back off
         add back,disp,dst  # point back to match in dst
         mtctr len
-short_n2e:
+short_n2b:
 #define tmp len
         lbzu tmp,1(back)
         stbu tmp,1(dst)
 #undef tmp
-        bdnz+ short_n2e
-bot_n2e:
+        bdnz+ short_n2b
+
 /* This "prefetch for store" is simple, small, and effective.  Matches
    usually occur more frequently than once per 128 bytes, but G4 line size
    is only 32 bytes anyway.  Assume that an 'unnecessary' dcbtst costs only
-   about as much as a hit.  The counter register is free at top_n2e, so we could
+   about as much as a hit.  The counter register is free at top_n2b, so we could
    pace the dcbtst optimally; but that takes 7 or 8 instructions of space.
 */
+bot_n2b:
 	li back,2*SZ_DLINE
 	dcbtst back,dst  # 2 lines ahead [-1 for stbu]
 	dcbt   back,src  # jump start auto prefetch at page boundary
 /* Auto prefetch for Read quits at page boundary; needs 2 misses to restart. */
-        b top_n2e
 #undef back
+        b top_n2b
 
-eof_n2e:
+eof_n2b:
 #define tmp r0  /* hibit is dead */
         lwz tmp,0(ldst)  # original dst
         mtlr t3  # return address

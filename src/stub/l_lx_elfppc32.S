@@ -39,6 +39,7 @@ _start: .globl _start
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
+  b_method= 8
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -57,36 +58,34 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 unfold:
         mflr r30  # &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
-/* linux ignores fd and off_t when MAP_ANONYMOUS
         li a5,0  # off_t
-        li a4,-1  # BSD fd
-*/
-        li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+        li a4,0  # fd; ignored, but must be in range?
           lwz  a0,sz_cpr(r30)
+        li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         li a2,PROT_READ | PROT_WRITE | PROT_EXEC
-          add  a0,a0,r30
         li a1,PAGE_SIZE
-          addi a0,a0,sz_b_info+PAGE_SIZE-1
+          add  a0,a0,r30
         li 0,SYS_mmap
+          addi a0,a0,sz_b_info+PAGE_SIZE-1
         rlwinm a0,a0,0,0,31-PAGE_SHIFT  # next page boundary after fold
         sc
-         bso- fail  # Branch if SummaryOverflow (syscall failure), unlikely
-
-        mtlr a0  # &continuation
+        bns+ 0f; trap  # Branch if NoSummary[Overflow] (no failure)
+0:
+        mtctr r31
+        lbz meth,b_method(r30)
         la ldst,31*4(sp)  # &do_not_care
         mr dst,a0
-        mtctr r31
+        mtlr   a0  # &continuation
         lwz lsrc,sz_cpr(r30)
         addi src,r30,sz_b_info
         bctr  # goto decomrpess; return to link register (mmap'ed page)
-fail:
-        trap
+
 main:
         stwu r1,-32*4(sp)  # allocate space (keeping 0 mod 16), save r1
         stmw r2,4(sp) # save registers r2 thru r31
-	mflr r31  # &decompress
+        mflr r31  # &decompress
         call unfold
-	/* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+        /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 eof:
 /*__XTHEENDX__*/
