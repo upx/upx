@@ -100,7 +100,7 @@ static Packer* try_pack(Packer *p, InputFile *f)
             f->seek(0,SEEK_SET);
             return p;
         }
-    } catch (IOException&) {
+    } catch (const IOException&) {
     } catch (...) {
         delete p;
         throw;

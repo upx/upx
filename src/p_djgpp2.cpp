@@ -145,7 +145,7 @@ static bool is_dlm(InputFile *fi, long coff_offset)
         fi->readx(buf,4);
         if (memcmp(buf,"DLMF",4) == 0)
             return true;
-    } catch (IOException&) {
+    } catch (const IOException&) {
     }
     return false;
 }
@@ -163,7 +163,7 @@ static void handle_allegropak(InputFile *fi, OutputFile *fo)
             return;
         pfsize = get_be32(buf+4);
         fi->seek(-(off_t)pfsize,SEEK_END);
-    } catch (IOException&) {
+    } catch (const IOException&) {
         return;
     }
     while (pfsize)
