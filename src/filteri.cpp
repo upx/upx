@@ -31,6 +31,8 @@
 
 
 #define set_dummy(p, v)     ((void)0)
+#define get_8(p)            (*(p))
+#define set_8(p, v)         (*(p) = (v))
 
 
 /*************************************************************************
@@ -47,7 +49,10 @@
 #include "filter/ct.h"
 #include "filter/sw.h"
 #include "filter/ctsw.h"
-#include "filter/sub.h"
+
+#include "filter/sub8.h"
+#include "filter/sub16.h"
+#include "filter/sub32.h"
 
 
 /*************************************************************************
@@ -177,10 +182,20 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
 
     // simple delta filter
-    { 0x90, 2,          0, f_sub1, u_sub1, s_sub1 },
-    { 0x91, 3,          0, f_sub2, u_sub2, s_sub2 },
-    { 0x92, 4,          0, f_sub3, u_sub3, s_sub3 },
-    { 0x93, 5,          0, f_sub4, u_sub4, s_sub4 },
+    { 0x90, 2,          0, f_sub8_1, u_sub8_1, s_sub8_1 },
+    { 0x91, 3,          0, f_sub8_2, u_sub8_2, s_sub8_2 },
+    { 0x92, 4,          0, f_sub8_3, u_sub8_3, s_sub8_3 },
+    { 0x93, 5,          0, f_sub8_4, u_sub8_4, s_sub8_4 },
+
+    { 0xa0,99,          0, f_sub16_1, u_sub16_1, s_sub16_1 },
+    { 0xa1,99,          0, f_sub16_2, u_sub16_2, s_sub16_2 },
+    { 0xa2,99,          0, f_sub16_3, u_sub16_3, s_sub16_3 },
+    { 0xa3,99,          0, f_sub16_4, u_sub16_4, s_sub16_4 },
+
+    { 0xb0,99,          0, f_sub32_1, u_sub32_1, s_sub32_1 },
+    { 0xb1,99,          0, f_sub32_2, u_sub32_2, s_sub32_2 },
+    { 0xb2,99,          0, f_sub32_3, u_sub32_3, s_sub32_3 },
+    { 0xb3,99,          0, f_sub32_4, u_sub32_4, s_sub32_4 },
 };
 
 const int FilterImp::n_filters = HIGH(filters);
