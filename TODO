@@ -81,6 +81,9 @@ FORMAT WIN32/PE
 
 - decrease runtime memory overhead
 
+- ??? compressing screensavers looses the description - probably
+     should not compress a special resource type ???
+
 2 - easy - mfx + ml) new switch(es) : do not compress resource types x,y,z
     or resource names a,b,c
 
@@ -98,3 +101,4 @@ FORMAT WIN32/PE
 5 - medium - ml) try to put the preprocessed imports & relocs back to their
     original section if possible. this could save some virtual memory
     address space.
+

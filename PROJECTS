@@ -31,8 +31,19 @@ User interface:
 More formats:
 -------------
 
- - add more file formats / platforms (there were volunteers for FreeBSD,
-   BeOS, Windows CE, Amiga, C64, ...)
+ - Amiga
+
+ - BeOS
+
+ - C64
+
+ - elks/8086 (this is a 16-bit linux-8086 kernel)
+   See http://www.elks.ecs.soton.ac.uk/
+
+ - freebsd/386 (generic), freebsd/elf386 (specialized).
+   Probably could share most of the linux code.
+
+ - Windows CE
 
  - add support for self-extracting HTML pages using a Javascript stub
    (like the AlgART HTML Packer "AHP")
@@ -41,23 +52,20 @@ More formats:
 Existing formats:
 -----------------
 
- - dos/com: add support for very long files - convert to exe if necessary
+ - djgpp2/coff: add support for DLX dynamic loading
+     (see SEAL http://www.home.sk/public/seal/ )
 
- - dos/sys: add support for sys/exe combos
+ - dos/com: add support for very long files - convert to exe if necessary
 
  - dos/exe: implement filter support
 
- - djgpp2/coff: add support for DLX dynamic loading
-     (see SEAL http://www.home.sk/public/seal/ )
+ - dos/sys: add support for sys/exe combos
 
  - linux/i386:
      - use the new assembly preprocessor stuff (ie. process the file
        headers internally)
      - UPX uncompressor daemon
      - rewrite the stub in assembly (not sure if this is a good idea...)
-     - etc...
- - linux/i386: add a special elf/i386 format that understands
-     ELF files and has filter support
 
  - watcom/le: add support for per section compression, LX support, VXD
 
