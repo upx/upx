@@ -423,7 +423,7 @@ void PackLinuxI386::patchLoader()
     patch_le32(loader,lsize,"UPX4",exetype > 0 ? 3 : 15);   // sleep time
     patch_le32(loader,lsize,"UPX3",exetype > 0 ? 0 : 0x7fffffff);
     patch_le32(loader,lsize,"UPX2",progid);
-    patch_le32(loader,lsize,"UPX1",lsize);
+    //patch_le32(loader,lsize,"UPX1",lsize);  no longer used
     patchVersion(loader,lsize);
 
     // The beginning of our loader consists of a elf_hdr (52 bytes) and
