@@ -68,14 +68,14 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
 
-    isection = 0;
-    oimport = 0;
-    oimpdlls = 0;
-    orelocs = 0;
-    oexport = 0;
-    otls = 0;
-    oresources = 0;
-    oxrelocs = 0;
+    isection = NULL;
+    oimport = NULL;
+    oimpdlls = NULL;
+    orelocs = NULL;
+    oexport = NULL;
+    otls = NULL;
+    oresources = NULL;
+    oxrelocs = NULL;
     icondir_offset = 0;
     icondir_count = 0;
     importbyordinal = false;
@@ -207,7 +207,7 @@ public:
     void flatten();
 
     void clear();
-    void dump();
+    void dump() const;
 
 private:
     static int compare(const void *p1,const void *p2)
@@ -261,9 +261,8 @@ void Interval::clear()
         memset((char*) base + ivarr[ic].start,0,ivarr[ic].len);
 }
 
-void Interval::dump()
+void Interval::dump() const
 {
-    flatten();
     printf("%d intervals:\n",ivnum);
     for (unsigned ic = 0; ic < ivnum; ic++)
         printf("%x %x\n",ivarr[ic].start,ivarr[ic].len);
@@ -685,8 +684,10 @@ unsigned PackW32Pe::processImports() // pass 1
         // This decreases compression ratio, so FIXME somehow.
         infoWarning("can't remove unneeded imports");
         ilen += sizeof(import_desc) * dllnum;
+#if defined(DEBUG)
         if (opt->verbose > 3)
             names.dump();
+#endif
         // do some work for the unpacker
         im = im_save;
         for (ic = 0; ic < dllnum; ic++)
@@ -826,8 +827,10 @@ void Export::convert(unsigned eoffs,unsigned esize)
     iv.flatten();
     if (iv.ivnum == 1)
         iv.clear();
+#if defined(DEBUG)
     else
         iv.dump();
+#endif
 }
 
 void Export::build(char *newbase,unsigned newoffs)
@@ -920,10 +923,10 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks && get_le32(ibuf + tlsp->callbacks - ih.imagebase))
-        throwCantPack("tls callbacks are not supported");
+        throwCantPack("TLS callbacks are not supported");
 
-    unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
-    unsigned tlsdataend = tlsp->dataend - ih.imagebase;
+    const unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
+    const unsigned tlsdataend = tlsp->dataend - ih.imagebase;
 
     // now some ugly stuff: find the relocation entries in the tls data area
     unsigned pos,type;
@@ -1087,7 +1090,7 @@ void Resource::check(const res_dir *node,unsigned level)
             check((const res_dir*) (start + (rde->child & 0x7fffffff)),level + 1);
 }
 
-Resource::upx_rnode * Resource::convert(const void *rnode,upx_rnode *parent,unsigned level)
+Resource::upx_rnode *Resource::convert(const void *rnode,upx_rnode *parent,unsigned level)
 {
     if (level == 3)
     {
@@ -1174,13 +1177,13 @@ upx_byte *Resource::build()
 
 void Resource::destroy(upx_rnode *node,unsigned level)
 {
-    delete [] node->name;
+    delete [] node->name; node->name = NULL;
     if (level == 3)
         return;
-    const upx_rbranch *branch = (const upx_rbranch*) node;
+    upx_rbranch * const branch = (upx_rbranch *) node;
     for (int ic = branch->nc; --ic >= 0; )
         destroy(branch->children[ic],level + 1);
-    delete [] branch->children;
+    delete [] branch->children; branch->children = NULL;
 }
 
 static void lame_print_unicode(const upx_byte *p)
@@ -1193,16 +1196,17 @@ void Resource::dump(const upx_rnode *node,unsigned level) const
 {
     if (level)
     {
-        printf("\t\t\t\t" + 6 - level * 2);
+        for (unsigned ic = 1; ic < level; ic++)
+            printf("\t\t");
         if (node->name)
             lame_print_unicode(node->name);
         else
-            printf("%x",node->id);
+            printf("0x%x",node->id);
         printf("\n");
     }
     if (level == 3)
         return;
-    const upx_rbranch *branch = (const upx_rbranch*) node;
+    const upx_rbranch * const branch = (const upx_rbranch *) node;
     for (unsigned ic = 0; ic < branch->nc; ic++)
         dump(branch->children[ic],level + 1);
 }
@@ -1230,8 +1234,10 @@ bool Resource::clear()
     iv.flatten();
     if (iv.ivnum == 1)
         iv.clear();
+#if defined(DEBUG)
     if (opt->verbose > 3)
         iv.dump();
+#endif
     return iv.ivnum == 1;
 }
 
@@ -1525,14 +1531,16 @@ void PackW32Pe::pack(OutputFile *fo)
             holes.add(isection[ic].vaddr,isection[ic].vsize);
             continue;
         }
-        if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
-            == (PEFL_WRITE|PEFL_SHARED)) && !opt->force)
-            throwCantPack("writeable shared sections not supported (try --force)");
-        if (jc && isection[ic].rawdataptr - jc > ih.filealign /**/ && !opt->force)
-            throwCantPack("superfluous data between sections");
-        fi->seek(isection[ic].rawdataptr,SEEK_SET);
         if (isection[ic].vaddr + isection[ic].size > usize)
             throwCantPack("section size problem");
+        if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
+            == (PEFL_WRITE|PEFL_SHARED)))
+            if (!opt->force)
+                throwCantPack("writeable shared sections not supported (try --force)");
+        if (jc && isection[ic].rawdataptr - jc > ih.filealign)
+            if (!opt->force)
+                throwCantPack("superfluous data between sections (try --force)");
+        fi->seek(isection[ic].rawdataptr,SEEK_SET);
         jc = isection[ic].size;
         if (jc > isection[ic].vsize)
             jc = isection[ic].vsize;
@@ -1837,10 +1845,11 @@ void PackW32Pe::pack(OutputFile *fo)
     oh.headersize = osection[0].rawdataptr;
 
     if (((oh.headersize + oam1) &~ oam1) < rvamin)
+    {
         if (!opt->force)
             throwCantPack("untested branch (try --force)");
-        else
-            oh.headersize = rvamin;
+        oh.headersize = rvamin;
+    }
 
     if (opt->w32pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;
@@ -2119,7 +2128,7 @@ void PackW32Pe::rebuildRelocs(upx_byte *& extrainfo)
     }
     else
         memcpy (obuf + ODADDR(PEDIR_RELOC) - rvamin,oxrelocs,soxrelocs);
-    delete [] oxrelocs; oxrelocs = 0;
+    delete [] oxrelocs; oxrelocs = NULL;
     wrkmem.free();
 
     ODSIZE(PEDIR_RELOC) = soxrelocs;
