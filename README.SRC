@@ -6,7 +6,7 @@ Foreword
 --------
 
   The precompiled UPX versions are linked against the NRV compression
-  library instead of the UCL library. Using same compression algorithms,
+  library instead of the UCL library. Using the same compression algorithms,
   NRV achieves a better compression ratio. NRV is not publicly
   available, though, and probably never will be.
 
@@ -36,7 +36,7 @@ Introduction
   and data compression you will need to be firm in C++, assembler,
   Perl and Makefiles. Probably some other things as well.
 
-  If you cant't manage to compile it then the sources are
+  If you can't manage to compile it then the sources are
   probably not for you. Don't email us for help.
 
   The authors use Linux for development. You might want to as well.
@@ -47,7 +47,7 @@ Short overview
 
   The UPX source code consists of two mainly independent parts:
 
-  1) The src/stubs directory contains the decompression stubs that
+  1) The src/stub directory contains the decompression stubs that
      will get added to each compressed executable.
      The stubs are mainly written in assembler and get "compiled"
      into ordinary C header files.
@@ -69,10 +69,10 @@ Tools needed to build/modify the UPX sources
   - A modern C++ compiler like gcc 2.95.2 or Visual C++ 6
     (egcs 1.1.x may work, half-baked implementations like Borland C++ 5.5 won't)
 
-  - GNU make 3.77 for Win32
+  - GNU make for Win32
     http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
 
-  - GNU make 3.77 for DOS
+  - GNU make for DOS
     ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/
 
 
@@ -89,14 +89,14 @@ To compile the packer sources
      make target=linux         # on linux
      make target=djgpp2        # for djgpp2
      make target=mingw32       # for mingw32
-     make target=no-cygwin     # for mingw32 as of cygwin b20.1
+     make target=no-cygwin     # for mingw32 as included in cygwin
      make target=msc           # for Visual C++ 6.0
 
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Nasm - the Netwide Assembler 0.98
+  - Nasm - the Netwide Assembler
     http://www.cryogen.com/Nasm
 
   - Perl 5.004 or better

@@ -16,7 +16,15 @@
 .___..        .
   |  |_  _.._ ;_/ __
   |  [ )(_][ )| \_)
-컴컴컴컴컴컴컴컴컴컴
+--------------------
+
+UPX would not be what it is today without the invaluable help of
+everybody who was kind enough to spend time testing it, using it
+in applications and reporting bugs.
+
+The following people made especially gracious contributions of their
+time and energy in helping to track down bugs, add new features, and
+generally assist in the UPX maintainership process:
 
 Adam Ierymenko <api@one.net>
   for severals ideas for the Linux version
@@ -24,7 +32,7 @@ Andi Kleen <ak@muc.de> and Jamie Lokier <nospam@cern.ch>
   for the /proc/self/fd/X and other Linux suggestions
 Andreas Muegge <andreas.muegge@gmx.de>
   for the Win32 GUI
-Atli Mar Gudmundsson <amg@complex.is>
+Atli Mar Gudmundsson <agudmundsson@symantec.com>
   for several comments on the win32/pe stub
 Charles W. Sandmann <sandmann@clio.rice.edu>
   for the idea with the stubless decompressor in djgpp2/coff
@@ -49,8 +57,4 @@ Salvador Eduardo Tropea
 The WINE project (http://www.winehq.com/)
   for lots of useful information found in their PE loader sources
 Natascha
-
-Everybody else who was kind enough to spend time testing UPX, use it in
-their packages and report bugs, who are too numerous to mention here.
-UPX would not be what it is today without your invaluable help.
 

@@ -2,18 +2,17 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.09.4 beta (13 Nov 2000): 
+Changes in 1.09.4 beta (13 Nov 2000):
   * BETA VERSION - DO NOT USE EXCEPT FOR TESTING!!! REALLY.
   * linux/i386: added the new direct-to-memory executable formats - no
     more temp files are needed for decompression
-  * atari/tos: added support for FreeMiNT
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
 
 Changes in 1.03 (30 Nov 2000)
   * linked with a new version of the NRV compression library:
       - improved compression ratio a little bit
-      - overall significantly faster compression 
+      - overall significantly faster compression
       - much faster when using high compression levels like `-9' or `--best'
       - much faster with large files
   * atari/tos: added support for FreeMiNT
