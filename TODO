@@ -51,9 +51,6 @@ FORMAT DOS/EXE
 FORMAT LINUX/386
 ================
 
-- forward-port fix in 1.23: "don't give up too early if a single block
-  turns out to be incompressible"
-
 - don't mmap() the temporary output file - this seems to improve
     file io speed
 

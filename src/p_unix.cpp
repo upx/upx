@@ -163,23 +163,28 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
 
         if (ph.c_len < ph.u_len) {
             ph.overlap_overhead = OVERHEAD;
-            if (!testOverlappingDecompression(obuf, ph.overlap_overhead))
-                throwNotCompressible();
+            if (!testOverlappingDecompression(obuf, ph.overlap_overhead)) {
+                // not in-place compressible
+                ph.c_len = ph.u_len;
+            }
         }
-        else {
+        if (ph.c_len >= ph.u_len) {
             // block is not compressible
             ph.c_len = ph.u_len;
             // must manually update checksum of compressed data
-            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.c_adler);
+            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.saved_c_adler);
         }
 
         // write block header
-        b_info blk_info; memset(&blk_info, 0, sizeof(blk_info));
+        b_info blk_info;
+        memset(&blk_info, 0, sizeof(blk_info));
         set_native32(&blk_info.sz_unc, ph.u_len);
         set_native32(&blk_info.sz_cpr, ph.c_len);
-        blk_info.b_method = ph.method;
-        blk_info.b_ftid = ph.filter;
-        blk_info.b_cto8 = ph.filter_cto;
+        if (ph.c_len < ph.u_len) {
+            blk_info.b_method = ph.method;
+            blk_info.b_ftid = ph.filter;
+            blk_info.b_cto8 = ph.filter_cto;
+        }
         fo->write(&blk_info, sizeof(blk_info));
         b_len += sizeof(b_info);
 

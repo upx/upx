@@ -194,23 +194,28 @@ void PackLinuxI386elf::packExtent(
         if (ph.c_len < ph.u_len) {
             ph.overlap_overhead = OVERHEAD;
             if (!testOverlappingDecompression(obuf, ph.overlap_overhead)) {
-                throwNotCompressible();
+                // not in-place compressible
+                ph.c_len = ph.u_len;
             }
         }
-        else {
-            ph. c_len = ph.u_len;
+        if (ph.c_len >= ph.u_len) {
+            // block is not compressible
+            ph.c_len = ph.u_len;
             // must update checksum of compressed data
-            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.c_adler);
+            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.saved_c_adler);
         }
 
         // write block sizes
-        b_info tmp; memset(&tmp, 0, sizeof(tmp));
+        b_info tmp;
+        memset(&tmp, 0, sizeof(tmp));
         set_native32(&tmp.sz_unc, ph.u_len);
         set_native32(&tmp.sz_cpr, ph.c_len);
-        tmp.b_method = ph.method;
-        if (ft) {
-            tmp.b_ftid = ft->id;
-            tmp.b_cto8 = ft->cto;
+        if (ph.c_len < ph.u_len) {
+            tmp.b_method = ph.method;
+            if (ft) {
+                tmp.b_ftid = ft->id;
+                tmp.b_cto8 = ft->cto;
+            }
         }
         fo->write(&tmp, sizeof(tmp));
         b_len += sizeof(b_info);
