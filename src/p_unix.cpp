@@ -191,6 +191,8 @@ void PackUnix::pack(OutputFile *fo)
     set_native32(obuf, lsize);
     fo->write(obuf, 4);
 
+    updateLoader(fo);
+
     // finally check compression ratio
     if (!Packer::checkCompressionRatio(fo->getBytesWritten(), ph.u_len))
         throwNotCompressible();
@@ -425,13 +427,14 @@ void PackLinuxI386::patchLoader()
     patchVersion(loader,lsize);
 
     // The beginning of our loader consists of a elf_hdr (52 bytes) and
-    // two sections elf_phdr (2 * 32 byte), so we have 12 free bytes
+    // one     section elf_phdr (32 byte) now,
+    // another section elf_phdr (32 byte) later, so we have 12 free bytes
     // from offset 116 to the program start at offset 128.
     assert(get_le32(loader + 28) == 52);        // e_phoff
     assert(get_le32(loader + 32) == 0);         // e_shoff
     assert(get_le16(loader + 40) == 52);        // e_ehsize
     assert(get_le16(loader + 42) == 32);        // e_phentsize
-    assert(get_le16(loader + 44) == 2);         // e_phnum
+    assert(get_le16(loader + 44) == 1);         // e_phnum
     assert(get_le16(loader + 48) == 0);         // e_shnum
     assert(lsize > 128 && lsize < 4096);
 
@@ -454,6 +457,32 @@ void PackLinuxI386::patchLoaderChecksum()
 }
 
 
+void PackLinuxI386::updateLoader(OutputFile *fo)
+{
+#define PAGE_MASK (~0<<12)
+    Elf_LE32_Ehdr *ehdr = (Elf_LE32_Ehdr *)(unsigned char *)loader;
+    ehdr->e_phnum = 2;
+
+    // The first Phdr maps the stub (instructions, data, bss) rwx.
+    // Round up hi address to page boundary.
+    Elf_LE32_Phdr *phdro = (Elf_LE32_Phdr *)(sizeof(Elf_LE32_Ehdr)+loader);
+    unsigned const vaddr2 = PAGE_MASK & (~PAGE_MASK + phdro->p_memsz + phdro->p_vaddr);
+
+    // The second Phdr maps the overlay r--,
+    // to defend against /usr/bin/strip removing the overlay.
+    ++phdro;
+    phdro->p_type = PT_LOAD;
+    phdro->p_offset = lsize;
+    phdro->p_paddr = phdro->p_vaddr = vaddr2 + (lsize &~ PAGE_MASK);
+    phdro->p_memsz = phdro->p_filesz = fo->getBytesWritten() - lsize;
+    phdro->p_flags = PF_R;
+    phdro->p_align = -PAGE_MASK;
+
+    patchLoaderChecksum();
+    fo->seek(0, SEEK_SET);
+    fo->rewrite(loader, 0x80);
+#undef PAGE_MASK
+}
 /*
 vi:ts=4:et
 */

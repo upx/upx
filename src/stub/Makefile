@@ -186,9 +186,9 @@ l_w32pe.h: l_w32pe.asx
 # // linux rules (exec, elf, sh, sep)
 # ************************************************************************/
 
-l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o
-	$(CC_LINUX) -DNRV2B -s -o $T.o -c $<
-	ld -s -Map l_lx_n2b.map -o $T.bin \
+l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o l_lx_exec86.lds
+	$(CC_LINUX) -DNRV2B -o $T.o -c $<
+	ld -T l_lx_exec86.lds -Map l_lx_n2b.map -o $T.bin \
 		l_xe_n2b.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
@@ -196,8 +196,8 @@ l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o
 	$(BIN2H) $T.bin linux_i386exec_nrv2b_loader $@
 
 l_le_n2b.h: l_lx_elf.c l_6e_n2b.o l_lx_elf86.lds
-	$(CC_LINUX) -DNRV2B -s -o $T.o -c $<
-	ld -T l_lx_elf86.lds -s -Map $T.map -o $T.bin \
+	$(CC_LINUX) -DNRV2B -o $T.o -c $<
+	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
 		l_6e_n2b.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(SETFOLD) $T.bin 0x`nm l_6e_n2b.o | grep fold_begin`
@@ -206,8 +206,8 @@ l_le_n2b.h: l_lx_elf.c l_6e_n2b.o l_lx_elf86.lds
 	$(BIN2H) $T.bin linux_i386elf_nrv2b_loader $@
 
 l_sh_n2b.h: l_lx_sh.c l_6h_n2b.o l_lx_sh86.lds
-	$(CC_LINUX) -DNRV2B -s -o $T.o -c $<
-	ld -T l_lx_sh86.lds -s -Map $T.map -o $T.bin \
+	$(CC_LINUX) -DNRV2B -o $T.o -c $<
+	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
 		l_6h_n2b.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(SETFOLD) $T.bin 0x`nm l_6h_n2b.o | grep fold_begin`
@@ -225,9 +225,9 @@ l_6h_n2b.o: l_lx_sh86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $@ $<
 
 
-l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o
-	$(CC_LINUX) -DNRV2D -s -o $T.o -c $<
-	ld -s -Map $T.map -o $T.bin \
+l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o l_lx_exec86.lds
+	$(CC_LINUX) -DNRV2D -o $T.o -c $<
+	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin \
 		l_xe_n2d.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
@@ -235,8 +235,8 @@ l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o
 	$(BIN2H) $T.bin linux_i386exec_nrv2d_loader $@
 
 l_le_n2d.h: l_lx_elf.c l_6e_n2d.o l_lx_elf86.lds
-	$(CC_LINUX) -DNRV2D -s -o $T.o -c $<
-	ld -T l_lx_elf86.lds -s -Map $T.map -o $T.bin \
+	$(CC_LINUX) -DNRV2D -o $T.o -c $<
+	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
 		l_6e_n2d.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(SETFOLD) $T.bin 0x`nm l_6e_n2d.o | grep fold_begin`
@@ -245,8 +245,8 @@ l_le_n2d.h: l_lx_elf.c l_6e_n2d.o l_lx_elf86.lds
 	$(BIN2H) $T.bin linux_i386elf_nrv2d_loader $@
 
 l_sh_n2d.h: l_lx_sh.c l_6h_n2d.o l_lx_sh86.lds
-	$(CC_LINUX) -DNRV2D -s -o $T.o -c $<
-	ld -T l_lx_sh86.lds -s -Map $T.map -o $T.bin \
+	$(CC_LINUX) -DNRV2D -o $T.o -c $<
+	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
 		l_6h_n2d.o $T.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(SETFOLD) $T.bin 0x`nm l_6h_n2d.o | grep fold_begin`

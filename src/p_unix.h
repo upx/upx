@@ -53,6 +53,7 @@ protected:
     // called by the generic pack()
     virtual void patchLoader() = 0;
     virtual void patchLoaderChecksum() {}
+    virtual void updateLoader(OutputFile *) = 0;
 
     // in order too share as much code as possible we introduce
     // an endian abstraction here
@@ -146,6 +147,7 @@ protected:
 
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
+    virtual void updateLoader(OutputFile *);
 
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
