@@ -17,14 +17,12 @@
 // acc_alignof() / acc_inline
 ************************************************************************/
 
-#if (ACC_CC_GNUC)
+#if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_PGI)
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define acc_alignof(e)        __alignof(e)
-#elif (ACC_CC_PGI)
-#  define acc_alignof(e)        __alignof__(e)
 #endif
 
 #if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
@@ -32,16 +30,14 @@
 #  define acc_inline            inline
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
 #  define acc_inline            __inline
+#elif (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_PGI)
+#  define acc_inline            __inline__
 #elif (ACC_CC_DMC)
 #  define acc_inline            __inline
-#elif (ACC_CC_GNUC)
-#  define acc_inline            __inline__
 #elif (ACC_CC_INTELC)
 #  define acc_inline            __inline
 #elif (ACC_CC_MSC && (_MSC_VER >= 1000))
 #  define acc_inline            __inline
-#elif (ACC_CC_PGI)
-#  define acc_inline            __inline__
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #  define acc_inline            inline
 #endif

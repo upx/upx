@@ -271,6 +271,8 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define __acc_cdecl_sighandler      __pascal
 #  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
 #    define __acc_cdecl_sighandler      _stdcall
+#  elif (ACC_CC_MSC && (_MSC_VER >= 1400)) && defined(_M_CEE_PURE)
+#    define __acc_cdecl_sighandler      __clrcall
 #  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
 #    if defined(_DLL)
 #      define __acc_cdecl_sighandler    _far _cdecl _loadds

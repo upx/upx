@@ -28,6 +28,7 @@
 
 /* FIXME */
 ACC_EXTERN_C int __acc_cdecl __setargv(void);
+ACC_EXTERN_C int __acc_cdecl _setargv(void);
 ACC_EXTERN_C int __acc_cdecl _setargv(void) { return __setargv(); }
 
 #endif
@@ -38,6 +39,7 @@ ACC_EXTERN_C int __acc_cdecl _setargv(void) { return __setargv(); }
 #if (ACC_CC_INTELC || ACC_CC_MSC)
 
 ACC_EXTERN_C int __acc_cdecl __setargv(void);
+ACC_EXTERN_C int __acc_cdecl _setargv(void);
 ACC_EXTERN_C int __acc_cdecl _setargv(void) { return __setargv(); }
 
 #endif

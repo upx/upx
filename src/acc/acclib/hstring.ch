@@ -154,10 +154,10 @@ ACCLIB_PUBLIC(acc_hvoid_p, acc_ascii_hmemimem) (const acc_hvoid_p p, acc_hsize_t
 ACCLIB_PUBLIC(acc_hchar_p, acc_hstrcpy) (acc_hchar_p d, const acc_hchar_p s)
 {
     acc_hchar_p dest = d;
-    for (;;) {
-        if ((*d = *s) == 0) return dest;
+    while ((*d = *s) != 0) {
         ++d; ++s;
     }
+    return dest;
 }
 
 
@@ -165,10 +165,10 @@ ACCLIB_PUBLIC(acc_hchar_p, acc_hstrcat) (acc_hchar_p d, const acc_hchar_p s)
 {
     acc_hchar_p dest = d;
     while (*d) ++d;
-    for (;;) {
-        if ((*d = *s) == 0) return dest;
+    while ((*d = *s) != 0) {
         ++d; ++s;
     }
+    return dest;
 }
 
 

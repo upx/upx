@@ -81,6 +81,8 @@
 // check basic arithmetics
 **************************************************************************/
 
+    ACCCHK_ASSERT(1 == 1)
+
     ACCCHK_ASSERT(__ACC_INT_MAX(2) == 1)
     ACCCHK_ASSERT(__ACC_INT_MAX(8) == 127)
     ACCCHK_ASSERT(__ACC_INT_MAX(16) == 32767)
@@ -103,7 +105,11 @@
     ACCCHK_ASSERT(sizeof(signed char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(unsigned char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(char) == 1)
+#if (ACC_CC_CILLY)
+    /* CIL is broken */
+#else
     ACCCHK_ASSERT(sizeof(char) == sizeof((char)0))
+#endif
 #if defined(__cplusplus)
     ACCCHK_ASSERT(sizeof('\0') == sizeof(char))
 #else
@@ -124,7 +130,11 @@
     ACCCHK_ASSERT(sizeof(short) == sizeof(unsigned short))
     ACCCHK_ASSERT(sizeof(short) >= 2)
     ACCCHK_ASSERT(sizeof(short) >= sizeof(char))
+#if (ACC_CC_CILLY)
+    /* CIL is broken */
+#else
     ACCCHK_ASSERT(sizeof(short) == sizeof((short)0))
+#endif
 #if (SIZEOF_SHORT > 0)
     ACCCHK_ASSERT(sizeof(short) == SIZEOF_SHORT)
 #endif

@@ -27,7 +27,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20040706L
+#define ACC_VERSION     20040712L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -54,7 +54,7 @@
 #elif 0 && defined(__C251__)
 #  pragma warning disable = 322
 #endif
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && !defined(__MWERKS__)
 #  if (_MSC_VER >= 1300)
 #    pragma warning(disable: 4668)
 #  endif

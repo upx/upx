@@ -438,7 +438,8 @@
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
 #  endif
-#  if (_MSC_VER < 1000) && defined(__cplusplus)
+#  if (ACC_ARCH_IA16) && defined(__cplusplus)
+#    undef HAVE_LONGJMP
 #    undef HAVE_SETJMP
 #  endif
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__MINGW32__)
@@ -522,7 +523,7 @@
 #  if (__WATCOMC__ < 1100)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
-#  else
+#  elif (__WATCOMC__ < 1200)
 #    define snprintf _snprintf
 #    define vsnprintf _vsnprintf
 #  endif
@@ -594,7 +595,8 @@
 
 
 #if ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8)
-#if (ACC_CC_GNUC)
+#if (ACC_ARCH_IA16 && ACC_CC_DMC)
+#elif (ACC_CC_GNUC)
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_OS_WIN64)
@@ -603,7 +605,7 @@
 #elif (ACC_ARCH_IA32 && (ACC_CC_DMC))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && __SC__ >= 0x700))
+#elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && (__SC__ >= 0x700)))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
@@ -615,11 +617,11 @@
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0520))
+#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0520)))
    /* INFO: unsigned __int64 is somewhat broken in 0x0520; fixed in 0x0530 */
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && __WATCOMC__ >= 1100))
+#elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && (__WATCOMC__ >= 1100)))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))

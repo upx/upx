@@ -21,7 +21,11 @@
  *   ...
  */
 
-#if defined(__INTEL_COMPILER)
+#if defined(CIL) && defined(_GNUCC) && defined(__GNUC__)
+#  define ACC_CC_CILLY          1
+#  define ACC_INFO_CC           "Cilly"
+#  define ACC_INFO_CCVER        "unknown"
+#elif defined(__INTEL_COMPILER)
 #  define ACC_CC_INTELC         1
 #  define ACC_INFO_CC           "Intel C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__INTEL_COMPILER)
