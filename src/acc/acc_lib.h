@@ -313,6 +313,8 @@ ACCLIB_EXTERN(int, acc_set_binmode) (int, int);
 ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
 
+ACCLIB_EXTERN(void, acc_wildargv) (int*, char***);
+
 
 /*************************************************************************
 // uclock (real, i.e. "wall" clock)

@@ -42,7 +42,7 @@
 #  define acc_inline            __inline
 #elif (ACC_CC_PGI)
 #  define acc_inline            __inline__
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #  define acc_inline            inline
 #endif
 
@@ -73,6 +73,8 @@
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
+#  elif (ACC_CC_MSC && (_MSC_VER >= 1400))
+#    define ACC_UNUSED_FUNC(func)   ((void) (void (*)()) func)
 #  elif (ACC_CC_KEILC)
 #    define ACC_UNUSED_FUNC(func)
 #  else
