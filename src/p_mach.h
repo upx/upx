@@ -53,7 +53,8 @@ struct Mach_header {
         enum {
             MH_NOUNDEFS = 1
         };
-};
+}
+__attribute_packed;
 
 struct Mach_segment_command {
     BE32 cmd;
@@ -78,7 +79,8 @@ struct Mach_segment_command {
     BE32 initprot;
     BE32 nsects;
     BE32 flags;
-};
+}
+__attribute_packed;
 
 struct Mach_section {
     char sectname[16];
@@ -115,7 +117,8 @@ struct Mach_section {
     BE32 reserved1;
     BE32 reserved2;
 
-};
+}
+__attribute_packed;
 
 struct Mach_ppc_thread_state {
     BE32 srr0;      /* Instruction address register (PC; entry addr) */
@@ -146,9 +149,12 @@ struct Mach_thread_command {
             PPC_THREAD_STATE_COUNT = sizeof(struct Mach_ppc_thread_state)/4
         };
     struct Mach_ppc_thread_state state;
-};
+}
+__attribute_packed;
+
 
 #include "p_unix.h"
+
 
 class PackMachPPC32 : public PackUnixBe32
 {
