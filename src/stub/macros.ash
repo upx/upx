@@ -95,25 +95,17 @@ cjt16_L2:
 ;; ============= 32-BIT CALLTRICK & JUMPTRICK
 ;; =============
 
-;;  call & jump & Jxx trick : 3 in 1
+;;  call & jump trick : 2 in 1
 %macro          cjt32   1
 %ifdef  __CALLTR00__
-                mov     bh, 0x0f        ; avoid displ and literal in same instr
                 mov     ecx, 'TEXL'
 calltrickloop:
                 mov     al, [edi]
                 inc     edi
-                sub     al, 0x80        ; base of Jxx <d32>
-                cmp     al, 0x8f - 0x80 ; span of Jxx <d32>
-                ja      ct2             ; not Jxx <d32>
-                cmp     byte [edi -2], bh       ; prefix opcode of Jxx <d32>
-                je      ct3
-ct2:
-                sub     al, 0xE8 - 0x80 ; base of JMP/CALL <d32>
+                sub     al, 0xE8
 ct1:
-                cmp     al, 0xE9 - 0xE8 ; span of JMP/CALL <d32>
+                cmp     al, 1
                 ja      calltrickloop
-ct3:
 %ifdef  __CTCLEVE1__
                 cmp     byte [edi], '?'
                 jnz     calltrickloop
@@ -130,14 +122,14 @@ ct3:
                 xchg    al, ah
 %endif; __CALLTR02__
                 sub     eax, edi
-                sub     bl, 0xE8        ; base of JMP/CALL <d32>
+                sub     bl, 0xE8
  %ifnidn %1,0
                 add     eax, %1
  %endif
                 mov     [edi], eax
                 add     edi, byte 5
                 mov     al, bl
-                loop    ct1     ; no Jxx <d32> next: needs 0x0f prefix first
+                loop    ct1
 %else;  __CALLTR10__
 ;; 32-bit call XOR jump trick
                 mov     ecx, 'TEXL'

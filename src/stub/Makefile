@@ -102,7 +102,7 @@ endif
 default:
 	@echo "UPX info: type 'make all' if you have all the needed build tools."
 
-all: stubs upxb upxd
+all: stubs ## upxb upxd
 
 stubs: $(STUBS)
 
