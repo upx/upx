@@ -393,9 +393,9 @@ clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj tags TAGS ID
 	-rm -f *.idb *.pdb
 	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
+	-rm -rf .deps
 
 distclean: clean
-	-rm -rf .deps
 
 maintainer-clean: distclean
 
