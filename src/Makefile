@@ -114,6 +114,7 @@ CFLAGS    = $(CFLAGS_W) $(CFLAGS_O) $(CFLAGS_M)
 CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
 CXXFLAGS  = $(CFLAGS) -Wsynth -fconserve-space
 CXXFLAGS1 = $(CXXFLAGS)
+##CXXFLAGS1 += -fasynchronous-exceptions
 CXXFLAGS2 = $(CXXFLAGS) -fno-exceptions -fno-rtti
 
 ifeq ($(DEBUG),1)
@@ -371,11 +372,8 @@ $(upx_exe): $(OBJECTS) $(LIBS)
 
 ifeq ($(target),djgpp2)
 cwsbind: $(upx_exe)
-	-rm -f $T.cof
-	$(upx_exe) -1 --coff -o $T.cof $(upx_exe)
-	cat $(DJDIR)/bin/cwsdstub.exe $T.cof > $(upx_exe)
-	$(upx_exe) -d $(upx_exe)
-	$(upx_exe) --best $(upx_exe)
+	mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $(upx_exe)
+###	$(upx_exe) --best $(upx_exe)
 endif
 
 
@@ -392,8 +390,8 @@ mostlyclean:
 clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj tags TAGS ID
 	-rm -f *.idb *.pdb
-	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
 	-rm -rf .deps
+	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
 
 distclean: clean
 
