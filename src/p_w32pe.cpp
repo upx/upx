@@ -369,7 +369,8 @@ void Reloc::finish(upx_byte *&p,unsigned &siz)
     }
     p = start;
     siz = ptr_diff(rel1,start) &~ 3;
-    siz -= 8;
+    siz -= 4;
+    rel->pagestart = 0; // terminating 0
     assert(siz > 0);
     start = 0; // safety
 }
@@ -1704,7 +1705,7 @@ void PackW32Pe::pack(OutputFile *fo)
     // section 2 should start with the resource data, because lots of lame
     // windoze codes assume that resources starts on the beginning of a section
 
-    // identsplit - number of ident + (upx header) bytes to put into the PE heaader
+    // identsplit - number of ident + (upx header) bytes to put into the PE header
     int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
     if ((identsplit & 0x1ff) == 0)
         identsplit = 0;
@@ -1715,9 +1716,7 @@ void PackW32Pe::pack(OutputFile *fo)
     ic = identsize - identsplit;
 
     const unsigned clen = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
-
-    // FIXME: Laszlo: what about this memset ?
-    //memset(obuf + ph.c_len, 0, clen - ph.c_len);
+    memset(obuf + ph.c_len, 0, clen - ph.c_len);
 
     const unsigned s1size = ALIGN_UP(ic + clen + codesize,4) + sotls;
     const unsigned s1addr = (newvsize - (ic + clen) + oam1) &~ oam1;
