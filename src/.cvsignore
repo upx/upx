@@ -13,6 +13,7 @@ GNUmakefile
 .gdbinit
 .Attic
 .deps
+B
 compress_nrv.*
 upx
 upx_nrv

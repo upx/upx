@@ -43,9 +43,6 @@
 #include "acc/acc_incd.h"
 #include "acc/acc_ince.h"
 #include "acc/acc_lib.h"
-#if !defined(acc_int64l_t) || !defined(acc_uint64l_t)
-#  error "need a 64-bit integer type"
-#endif
 #if (ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #    error "something pulled in <windows.h>"
@@ -54,8 +51,8 @@
 
 
 #if (ACC_CC_BORLANDC)
-#  if (__BORLANDC__ < 0x0520)
-#    error "need Borland C++ 5.02 or newer"
+#  if (__BORLANDC__ < 0x0500)
+#    error "need Borland C++ 5.0 or newer"
 #  endif
 #  pragma warn -aus     // 8004: 'x' is assigned a value that is never used
 #  pragma warn -inl     // 8026+8027: Function not expanded inline

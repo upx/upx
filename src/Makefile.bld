@@ -260,7 +260,7 @@ endif
 
 
 ###
-### dos32 - djgpp2
+### dos32 - djgpp2 / emx
 ###
 
 ifeq ($(target),djgpp2)
@@ -275,7 +275,16 @@ ifneq ($(strip $(wildcard $(DJDIR)/bin/cwsdstub.ex[eE])),)
 STUBIFY_EXE = mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $@
 endif
 endif
-endif	# djgpp2
+endif
+
+ifeq ($(target),emx)
+include $(srcdir)/Makedefs.gcc
+e = .exe
+CXX = gcc
+CFLAGS_O = -O2
+CCARCH += -mno-probe
+LDFLAGS = -s
+endif
 
 
 ###
@@ -284,6 +293,7 @@ endif	# djgpp2
 
 ifeq ($(target),cygwin)
 include $(srcdir)/Makedefs.gcc
+##CXX = g++-2
 e = .exe
 CCARCH += -mcygwin -march=i386 -mcpu=i686
 endif
@@ -501,7 +511,7 @@ endif	# vc
 
 
 ###
-### win32 - Watcom C++ 11.0c / Open Watcom C++ 1.0
+### win32 - Watcom C++
 ###
 
 ifeq ($(target),wc)
@@ -509,6 +519,7 @@ o = .obj
 a = .lib
 e = .exe
 CC = wcl386 -zq -bt=nt -mf -5r
+##CC = wcl386 -zq -bt=dos -l=CauseWay -mf -5r
 CFLAGS = -zc -w5 -we
 CXXFLAGS = $(CFLAGS) -xs -xr
 CFLAGS_OUTPUT = -fo=$@
@@ -536,6 +547,90 @@ else
 endif
 
 endif	# wc
+
+
+###
+### win64 - Intel C++
+###
+
+ifeq ($(target),win64-ic)
+o = .obj
+a = .lib
+e = .exe
+CC = ecl -nologo
+CFLAGS = -W3
+CXXFLAGS = $(CFLAGS) -EHac -GR
+LDFLAGS =
+LINK_EXE_OUTPUT = -Fe$@
+LINK_EXE_LDFLAGS = /link /map:$T.map
+##LINK_EXE_LDFLAGS += /verbose
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq (1,2)
+  # statically link libc.lib
+  CC += -ML
+  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+else
+  # link against msvcrt.dll
+  CC += -MD
+  LDLIBS = $(DOS_LDLIBS) setargv.obj
+endif
+ifeq ($(DEBUG),1)
+  CFLAGS += -Od -ZI
+  LINK_EXE_LDFLAGS += /debug
+else
+  CFLAGS += -O1 -GF
+  LINK_EXE_LDFLAGS += /release
+endif
+RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
+
+endif	# win64-ic
+
+
+###
+### win64 - Visual C++
+###
+
+ifeq ($(target),win64-vc)
+o = .obj
+a = .lib
+e = .exe
+CC = cl -nologo
+CFLAGS = -W4
+CXXFLAGS = $(CFLAGS) -EHac -GR
+LDFLAGS =
+LINK_EXE_OUTPUT = -Fe$@
+LINK_EXE_LDFLAGS = /link /map:$T.map
+##LINK_EXE_LDFLAGS += /verbose
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq (1,1)
+  # statically link libc.lib
+  CC += -ML
+  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+else
+  # link against msvcrt.dll
+  CC += -MD
+  LDLIBS = $(DOS_LDLIBS) setargv.obj
+endif
+ifeq ($(DEBUG),1)
+  CFLAGS += -Od -ZI
+  LINK_EXE_LDFLAGS += /debug
+else
+  CFLAGS += -O1 -GF
+  LINK_EXE_LDFLAGS += /release
+endif
+RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
+
+endif	# win64-vc
 
 
 # /***********************************************************************

@@ -710,7 +710,7 @@ static size_t dopr(char *buffer, size_t maxlen, const char *format, va_list args
                 break;
             case 'p':
                 strvalue = (const char *) va_arg (args, const void *);
-                fmtint (buffer, &currlen, maxlen, (long) strvalue, 16, min, max, flags);
+                fmtint (buffer, &currlen, maxlen, (LLONG) (acc_uintptr_t) strvalue, 16, min, max, flags);
                 break;
             case 'n':
                 if (cflags == DP_C_SHORT) {

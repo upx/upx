@@ -910,7 +910,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
     }
     //fprintf(stderr,"relocnum=%x\n",relocn);
     *in = p+1;
-    return relocs - outp;
+    return (unsigned) (relocs - outp);
 }
 
 

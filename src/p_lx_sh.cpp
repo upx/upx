@@ -92,7 +92,7 @@ void PackLinuxI386sh::patchLoader() { }
 bool PackLinuxI386sh::getShellName(char *buf)
 {
     exetype = -1;
-    l_shname = strcspn(buf, " \t\n\v\f\r");
+    l_shname = (int) strcspn(buf, " \t\n\v\f\r");
     buf[l_shname] = 0;
     static char const *const shname[] = { // known shells that accept "-c" arg
         "ash", "bash", "bsh", "csh", "ksh", "pdksh", "sh", "tcsh", "zsh",

@@ -1018,7 +1018,6 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(int) == 4)
     COMPILE_TIME_ASSERT(sizeof(long) >= 4)
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4)
-    COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *))
 
     COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long))
     COMPILE_TIME_ASSERT(((off_t) -1) < 0)

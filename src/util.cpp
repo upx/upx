@@ -538,7 +538,15 @@ unsigned get_ratio(unsigned u_len, unsigned c_len)
     const unsigned n = 1000000;
     if (u_len <= 0)
         return c_len <= 0 ? 0 : n;
+#if defined(acc_uint64l_t)
     return (unsigned) ((c_len * (acc_uint64l_t)n) / u_len);
+#else
+# if 0
+    return (unsigned) acc_umuldiv32(c_len, n, u_len);
+# else
+    return (unsigned) ((c_len * (double)n) / u_len);
+# endif
+#endif
 }
 
 
