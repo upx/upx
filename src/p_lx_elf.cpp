@@ -169,32 +169,50 @@ void PackLinuxI386elf::patchLoader()
 
 bool PackLinuxI386elf::canPack()
 {
-    unsigned char buf[512];
+    unsigned char buf[sizeof(Elf_LE32_Ehdr) + 16*sizeof(Elf_LE32_Phdr)];
+    exetype = 0;
 
     // FIXME: add special checks for uncompresed "vmlinux" kernel
+    // FIXME: add checks for FreeBSD/... ELF executables
 
-    fi->readx(buf,512);
-    fi->seek(0,0);
-    if (0==memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) { // ELF 32-bit LSB
-        Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)buf;
-        Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(ehdr->e_phoff +
-            (char const *)ehdr);
-        if (ehdr->e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-            return false;
-        }
-        // The first PT_LOAD must cover the beginning of the file (0==p_offset).
-        for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
-            if (PT_LOAD==phdr->p_type) {
-                if (phdr->p_offset!=0) {
-                    return false;
-                }
-                break;
-            }
-        }
-        exetype = 1;
-        return super::canPack();
+    fi->readx(buf, sizeof(buf));
+    fi->seek(0, SEEK_SET);
+    if (0 != memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
+        return false;
+
+    // now check the ELF header
+    Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)buf;
+    if (memcmp(buf+8, "FreeBSD", 7) == 0)       // branded as FreeBSD
+        return false;
+    if (ehdr->e_type != 2)                      // executable
+        return false;
+    if (ehdr->e_machine != 3 && ehdr->e_machine != 6) // Intel 80[34]86
+        return false;
+    if (ehdr->e_version != 1)                   // version
+        return false;
+    if (ehdr->e_ehsize != sizeof(*ehdr)) {
+        throwCantPack("invalid Ehdr e_ehsize");
+        return false;
     }
-    return false;
+    if (ehdr->e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
+        throwCantPack("non-contiguous Ehdr/Phdr");
+        return false;
+    }
+
+    // The first PT_LOAD must cover the beginning of the file (0==p_offset).
+    Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(buf + ehdr->e_phoff);
+    for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
+        if (j >= 16)
+            return false;
+        if (PT_LOAD==phdr->p_type) {
+            if (phdr->p_offset!=0)
+                return false;
+            exetype = 1;
+            break;
+        }
+    }
+
+    return super::canPack();
 }
 
 
