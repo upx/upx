@@ -35,7 +35,7 @@ $val = shift || die "$val";
 ###print STDERR "$val\n";
 $val = oct($val);               # acutally hex()
 $val = $val & 0xfff;
-printf STDERR "$fname: setting fold to 0x%x, file size 0x%x\n", $val, $fsize;
+printf STDERR "setfold info: $fname: setting fold to 0x%x, file size 0x%x\n", $val, $fsize;
 die unless $val > 0;
 die unless $val < $fsize;
 $num = pack("V", $val);
