@@ -472,7 +472,7 @@ bool PackLinuxI386::canPack()
     {
         // NOTE: ELF executables are now handled by p_lx_elf.cpp,
         //   so we only handle them here if force_execve
-        if (elf == 0 && opt->unix.force_execve)
+        if (elf == 0 && opt->o_unix.force_execve)
             exetype = 1;
     }
     else if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)

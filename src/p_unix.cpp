@@ -120,8 +120,7 @@ void PackUnix::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     // derived class usually provides this
 }
 
-int
-PackUnix::getStrategy(Filter &/*ft*/)
+int PackUnix::getStrategy(Filter &/*ft*/)
 {
     // Called just before reading and compressing each block.
     // Might want to adjust blocksize, etc.
@@ -250,7 +249,7 @@ void PackUnix::pack(OutputFile *fo)
     progid = 0;
 
     // set options
-    blocksize = opt->unix.blocksize;
+    blocksize = opt->o_unix.blocksize;
     if (blocksize <= 0)
         blocksize = BLOCKSIZE;
     if ((off_t)blocksize > file_size)

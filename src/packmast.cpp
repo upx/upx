@@ -194,7 +194,7 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // linux
     //
-    if (!opt->unix.force_execve)
+    if (!opt->o_unix.force_execve)
     {
 #if 0
         if (opt->unix.script_name)

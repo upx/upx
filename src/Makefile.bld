@@ -210,12 +210,22 @@ endif
 
 
 ###
-### linux/i386 - Portland Group PGI C++ 5.1
+### linux/i386 - Portland Group PGI C++ 5.x
 ###
 
 ifeq ($(target),linux-pgi)
+##DEPMODE := XXX_linux	## FIXME
 CC = pgcc
 CXX = pgCC
+CCARCH += -tp=p6
+CFLAGS_OUTPUT = -o $@
+LINK_EXE_OUTPUT = -o $@
+ifeq ($(WITH_ZLIB),1)
+LDLIBS += -lz
+endif
+
+##CFLAGS += -Minform=info
+CXXFLAGS = $(CFLAGS) -tused
 ifeq ($(DEBUG),1)
 else
 CFLAGS += -O2

@@ -103,6 +103,7 @@ static void pr_error(const char *iname, const char *msg, bool is_warning)
     fg = con_fg(stderr,fg);
 
     UNUSED(is_warning);
+    UNUSED(fg);
 }
 
 

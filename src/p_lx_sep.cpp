@@ -42,7 +42,7 @@
 //
 **************************************************************************/
 
-//#define SCRIPT_SIZE     (opt->unix.SCRIPT_MAX + sizeof(l_info))
+//#define SCRIPT_SIZE     (opt->o_unix.SCRIPT_MAX + sizeof(l_info))
 #define SCRIPT_SIZE     (32 + sizeof(l_info))
 
 const upx_byte *PackLinuxI386sep::getLoader() const
@@ -50,7 +50,7 @@ const upx_byte *PackLinuxI386sep::getLoader() const
     static char script[SCRIPT_SIZE];
 
     memset(script, 0, sizeof(script));
-    char const *name = opt->unix.script_name;
+    char const *name = opt->o_unix.script_name;
     if (0==name) {
         name = "/usr/local/lib/upxX";
     }
@@ -77,7 +77,7 @@ int PackLinuxI386sep::getLoaderSize() const
 
 int PackLinuxI386sep::getLoaderPrefixSize() const
 {
-    return opt->unix.SCRIPT_MAX;
+    return opt->o_unix.SCRIPT_MAX;
 }
 
 void PackLinuxI386sep::patchLoader()

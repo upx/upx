@@ -62,6 +62,8 @@ void show_head(void)
                 UPX_VERSION_DATE);
     fg = con_fg(f,fg);
 #undef V
+
+    UNUSED(fg);
 }
 
 
@@ -275,6 +277,8 @@ void show_help(int x)
                 "\n");
     fg = con_fg(f,fg);
 #endif
+
+    UNUSED(fg);
 }
 
 
@@ -314,6 +318,8 @@ void show_license(void)
         "   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>\n"
     );
     fg = con_fg(f,fg);
+
+    UNUSED(fg);
 }
 
 

@@ -90,7 +90,7 @@ PackLinuxI386elf::buildLoader(const Filter *ft)
     unsigned char tmp[sizeof(linux_i386elf_fold)];
     memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
     checkPatch(NULL, 0, 0, 0);  // reset
-    if (opt->unix.ptinterp) {
+    if (opt->o_unix.ptinterp) {
         unsigned j;
         for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
             if (0x60==tmp[  j]
@@ -162,7 +162,7 @@ bool PackLinuxI386elf::canPack()
     assert(exetype == 1);
 
     // set options
-    opt->unix.blocksize = blocksize = file_size;
+    opt->o_unix.blocksize = blocksize = file_size;
     return true;
 }
 

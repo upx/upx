@@ -81,7 +81,7 @@ public:
     virtual void endCallback();
     virtual cb_t *getCallback() { return &cb; }
 protected:
-    static void __UPX_ENTRY callback(upx_uint isize, upx_uint osize,
+    static void __UPX_CDECL callback(upx_uint isize, upx_uint osize,
                                      int, void *);
     virtual void doCallback(unsigned isize, unsigned osize);
 

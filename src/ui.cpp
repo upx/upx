@@ -393,7 +393,7 @@ void UiPacker::endCallback()
 // the callback
 **************************************************************************/
 
-void __UPX_ENTRY UiPacker::callback(upx_uint isize, upx_uint osize, int state, void *user)
+void __UPX_CDECL UiPacker::callback(upx_uint isize, upx_uint osize, int state, void *user)
 {
     //printf("%6d %6d %d\n", isize, osize, state);
     if (state != -1 && state != 3) return;

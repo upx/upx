@@ -49,6 +49,8 @@
 **************************************************************************/
 
 #if defined(__ACC_CXX_DO_NEW)
+#elif (ACC_CC_PGI)
+#  define __ACC_CXX_DO_NEW          { return 0; }
 #else
 #  define __ACC_CXX_DO_NEW          ;
 #endif

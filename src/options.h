@@ -117,7 +117,7 @@ struct options_t {
         bool ptinterp;              // is PT_INTERP, so don't adjust auxv_t
         enum { SCRIPT_MAX = 32 };
         const char *script_name;
-    } unix;
+    } o_unix;
     struct {
         bool le;
     } watcom_le;

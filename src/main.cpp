@@ -344,12 +344,12 @@ static void set_script_name(const char *n, bool allow_m)
         fprintf(stderr,"%s: missing script name\n",argv0);
         e_usage();
     }
-    if (strlen(n) >= (size_t)opt->unix.SCRIPT_MAX - 3)
+    if (strlen(n) >= (size_t)opt->o_unix.SCRIPT_MAX - 3)
     {
         fprintf(stderr,"%s: script name too long\n",argv0);
         e_usage();
     }
-    opt->unix.script_name = n;
+    opt->o_unix.script_name = n;
     done_script_name++;
 }
 
@@ -685,18 +685,18 @@ static int do_option(int optc, const char *arg)
         opt->atari_tos.split_segments = true;
         break;
     case 660:
-        getoptvar(&opt->unix.blocksize, 8192u, ~0u);
+        getoptvar(&opt->o_unix.blocksize, 8192u, ~0u);
         break;
     case 661:
-        opt->unix.force_execve = true;
+        opt->o_unix.force_execve = true;
         break;
     case 662:
-        opt->unix.script_name = "/usr/local/lib/upx/upxX";
+        opt->o_unix.script_name = "/usr/local/lib/upx/upxX";
         if (mfx_optarg && mfx_optarg[0])
             set_script_name(mfx_optarg,1);
         break;
     case 663:
-        opt->unix.ptinterp = true;
+        opt->o_unix.ptinterp = true;
         break;
     case 670:
         opt->ps1_exe.no_align = true;
@@ -1242,6 +1242,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
         int fg = con_fg(f,FG_RED);
         con_fprintf(f,"\nWARNING: this is an unstable beta version - use for testing only! Really.\n");
         fg = con_fg(f,fg);
+        UNUSED(fg);
     }
 #endif
 

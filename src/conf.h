@@ -116,9 +116,11 @@
 #undef linux
 #undef small
 #undef tos
-#undef unix
-#if defined(__DMC__)
+#if defined(ACC_CC_DMC)
 #  undef tell
+#endif
+#if !defined(ACC_CC_PGI)
+#  undef unix
 #endif
 #if defined(__DJGPP__)
 #  undef sopen
@@ -149,7 +151,7 @@
 #    define UPX_E_OK      UCL_E_OK
 #    define UPX_E_ERROR   UCL_E_ERROR
 #    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
-#    define __UPX_ENTRY   __UCL_ENTRY
+#    define __UPX_CDECL   __UCL_CDECL
 #  endif
 #endif
 #if defined(WITH_NRV)
