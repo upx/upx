@@ -45,22 +45,24 @@ void show_head(void)
         return;
     head_done = 1;
 
+#define V(x)    (strcmp(UPX_VERSION_STRING, UPX_VERSION_STRING4) ? UPX_VERSION_STRING : UPX_VERSION_STRING x)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                     Ultimate Packer for eXecutables\n"
                 "            Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001\n"
                 "UPX %-12s Markus F.X.J. Oberhumer & Laszlo Molnar %20s\n\n",
 #if defined(__MFX_DOS)
-                UPX_VERSION_STRING "d",
+                V("d"),
 #elif defined(__MFX_WIN32)
-                UPX_VERSION_STRING "w",
+                V("w"),
 #elif 0 && defined(__linux__)
-                UPX_VERSION_STRING "l",
+                V("l"),
 #else
                 UPX_VERSION_STRING,
 #endif
                 UPX_VERSION_DATE);
     fg = con_fg(f,fg);
+#undef V
 }
 
 
