@@ -54,6 +54,14 @@
 
 %include "ident.ash"
 
+;;;; names of pseudo-sections for addLoader:
+;; LXUNFnnn  Linux unfilter
+;; LXNJMPnn  omit filtering of 6-byte Jxx (0x0f 0x80..0x8f)
+;; LXMRUnnn  MostRecentlyUsed recoding of destinations
+;; MRUARBnn  arbitrary number of entries in wheel
+;; MRUBITSn  power of 2          entries in wheel (smaller code)
+;; MRUBYTEn  256                 entries in wheel (smallest code)
+
 ; /*************************************************************************
 ; // program entry point
 ; // see glibc/sysdeps/i386/elf/start.S
@@ -81,7 +89,7 @@ _start:
 ;;
         call main  ; push address of decompress subroutine
 decompress:
-;__LXMRU000__
+;__LXUNF000__
         jmps decompr0
   ;; 2+ address of decompress subroutine
   ;; unfilter(upx_byte *, length)
@@ -99,7 +107,8 @@ decompress:
 %endif  ;__LXMRU010__
 
         xor edx, edx  ; zero
-        jmp unf0
+;__LXUNF010__
+        jmpn unf0
 ;__LXELF010__
 
 ; /*************************************************************************
@@ -149,12 +158,14 @@ decompr0:
                 popa
                 ret
 
-;__LXMRU020__
+;__LXUNF020__
 ;; continuation of entry prolog for unfilter
 unf0:
+;__LXMRU020__
         push edx  ; tail
         push ebx  ; n_mru or n_mru1
-        mov esi,esp
+;__LXUNF025__
+        mov esi, esp
 
 %define n_mru    [esi]
 %define n_mru1   [esi]
@@ -163,7 +174,7 @@ unf0:
 %define cto8     [esi + 4*2 +1]
 %define addvalue [esi + 4*3 + 7*4]
 
-%ifdef   __MRUBITS1__
+%ifdef  __MRUBITS1__
         inc ebx  ; n_mru1 ==> n_mru
 %endif ;__LXMRU030__
 unf1:  ; allocate and clear mru[]
@@ -183,6 +194,7 @@ unf1:  ; allocate and clear mru[]
 %define kh     edx
 %define kh_l    dl
 
+;__LXUNF030__
 calltrickloop:
         mov al, [edi]
         inc edi
@@ -198,7 +210,7 @@ calltrickloop:
         dec ecx
         mov byte [edi], al  ; Jcc opcode
         inc edi
-        jmps mru2
+        jmps lxunf
 ct2:
         sub al, 0xE8 - 0x80  ; base of JMP/CALL <d32>
         cmp al, 0xE9 - 0xE8  ; span of JMP/CALL <d32>
@@ -209,7 +221,7 @@ ct2:
         ja unfcount
         mov al, [edi]
         cmp al, cto8
-        je mru2
+        je lxunf
 unfcount:
         dec ecx
         jg calltrickloop
@@ -234,12 +246,12 @@ unfcount:
         push edx
         ret
 
-mru2:
+lxunf:
         mov eax, [edi]
         shr ax, 8
         rol eax, 16
         xchg al, ah
-
+;__LXMRU065__
         shr jc, 1  ; eax= jc, or mru index
         jnc mru4  ; not 1st time for this jc
 %ifdef __MRUBYTE3__
@@ -256,7 +268,7 @@ mru3:
 %endif ;__LXMRU070__
 
         mov [esp + 4*hand], jc  ; 1st time: mru[hand] = jc
-        jmps mru_store
+        jmps unf_store
 
 mru4:  ; not 1st time for this jc
         lea kh, [jc + hand]  ; kh = jc + hand
@@ -311,8 +323,8 @@ mru7:
 mru8:
         mov [esp + 4*kh  ], tmp  ; mru[kh] = tmp
         mov [esp + 4*hand], jc   ; mru[hand] = jc
-
-mru_store:
+;__LXUNF040__
+unf_store:
         sub eax, edi
         sub ecx, byte 4
         add eax, addvalue
