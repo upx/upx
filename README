@@ -21,10 +21,10 @@ All versions 1.1x are unstable beta releases - use them only for testing,
 and never distribute a program that is packed with them !
 There will be hidden bugs. Really.
 
-The current stable release is 1.04, and the next stable release
+The current stable release is 1.06, and the next stable release
 will be called version 1.20.
 
-The main news since 1.04 are support for bootable Linux kernels ("vmlinuz/386")
+The main news since 1.06 are support for bootable Linux kernels ("vmlinuz/386")
 and direct Linux ELF-to-memory decompression ("linux/elf386"), so there's
 no reason to use the unstable versions unless you want to try the new formats.
 
@@ -32,7 +32,7 @@ no reason to use the unstable versions unless you want to try the new formats.
 WELCOME
 =======
 
-Welcome to UPX 1.0x, the first production release after almost two years
+Welcome to UPX 1.0, the first production release after almost two years
 of beta testing.
 
 Please don't forget to read the new LICENSE - UPX is now distributed
@@ -114,8 +114,7 @@ THE FUTURE
     This only gives people a false feeling of security because
     by definition all protectors/compressors can be broken.
     And don't trust any advertisment of authors of other executable
-    compressors about this topic - just do a websearch on something
-    like "procdump"...
+    compressors about this topic - just do a websearch on "unpackers"...
 
   - Fix all remaining bugs - keep your reports coming ;-)
 

@@ -23,7 +23,7 @@ Changes in 1.11 beta (20 Dec 2000):
 Changes in 1.06 (27 Jan 2001)
   * win32/pe: the check for TLS callbacks introduced in 1.05
       was too strict - disabled for now
-  * dos/com: decrease the decompressor stack size a little bit
+  * dos/com: decreased the decompressor stack size a little bit
 
 Changes in 1.05 (24 Jan 2001)
   * win32/pe: refuse to compress programs with TLS callbacks

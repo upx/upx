@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2001-01-04.
+UPX TODO list. Last updated 2001-02-08.
 
 
 
@@ -85,7 +85,7 @@ FORMAT WATCOM/LE
 FORMAT WIN16/NE
 ===============
 
-- implement PackW16Ne::readFileHeader() to corretly identify a win16/ne
+- implement readFileHeader() to correctly identify a win16/ne
   executable, so that the call for contribution will get thrown
 
 
