@@ -39,11 +39,40 @@
 //
 **************************************************************************/
 
+static int do_init(screen_t *s, int fd)
+{
+    int fg, bg;
+
+    if (s->init(s,fd) != 0)
+        return -1;
+
+    if (s->getCols(s) < 80 || s->getCols(s) > 256)
+        return -1;
+    if (s->getRows(s) < 24)
+        return -1;
+
+    fg = s->getFg(s);
+    bg = s->getBg(s);
+    if (s->isMono(s))
+        fg = -1;
+    if (fg == (bg >> 4))
+        return -1;
+    if (bg != BG_BLACK)
+        if (!s->isMono(s))
+        {
+            /* return 0; */     /* we could emulate ANSI mono */
+            return -1;
+        }
+
+    return 0;
+}
+
+
 static screen_t *do_construct(screen_t *s, int fd)
 {
     if (!s)
         return NULL;
-    if (s->init(s,fd) != 0)
+    if (do_init(s,fd) != 0)
     {
         s->destroy(s);
         return NULL;
@@ -51,6 +80,10 @@ static screen_t *do_construct(screen_t *s, int fd)
     return s;
 }
 
+
+/*************************************************************************
+//
+**************************************************************************/
 
 static screen_t *screen = NULL;
 
@@ -102,18 +135,6 @@ static int init(FILE *f, int o, int now)
     init_bg = cur_bg = screen->getBg(screen);
     if (screen->isMono(screen))
         cur_fg = -1;
-    if (screen->getCols(screen) < 80 || screen->getCols(screen) > 256)
-        return CON_INIT;
-    if (screen->getRows(screen) < 24)
-        return CON_INIT;
-    if (cur_fg == (cur_bg >> 4))
-        return CON_INIT;
-    if (cur_bg != BG_BLACK)
-        if (!screen->isMono(screen))
-        {
-            /* return CON_ANSI_MONO; */     /* we could emulate ANSI mono */
-            return CON_INIT;
-        }
 
     if (o == CON_SCREEN)
         n = CON_SCREEN;
@@ -179,10 +200,10 @@ static void print0(FILE *f, const char *ss)
     for (pass = 0; pass < 2; pass++)
     {
         const char *s = ss;
-        int scroll_y = 0;
-        while (*s)
+
+        for (;;)
         {
-            for ( ; *s; s++)
+            for (;;)
             {
                 if (*s == '\n')
                 {
@@ -192,57 +213,57 @@ static void print0(FILE *f, const char *ss)
                 else if (*s == '\r')
                 {
                     c_cx = 0;
-#if 1
                     if (pass > 0 && c_cy < sy)
                         screen->clearLine(screen,c_cy);
-#endif
                 }
                 else
                     break;
+                s++;
             }
             if (c_cx >= sx)
             {
                 c_cy++;
                 c_cx = 0;
             }
-            if (pass > 0 && pi > 0 && py != c_cy)
+            if (pass > 0)
             {
-                screen->putString(screen,p,px,py);
-                pi = 0;
-            }
-            if (c_cy >= sy)
-            {
-                int l = c_cy - sy + 1;
-                if (pass > 0)
-                    c_cy -= screen->scrollUp(screen,l);
-                else
+                if (pi > 0 && py != c_cy)
                 {
-                    scroll_y += l;
-                    c_cy -= l;
+                    screen->putString(screen,p,px,py);
+                    pi = 0;
                 }
-                if (c_cy < 0)
-                    c_cy = 0;
-                c_cx = 0;
-            }
-            if (*s)
-            {
-                if (pass > 0)
+                if (c_cy >= sy)
                 {
-                    if (pi == 0)
-                        px = c_cx, py = c_cy;
-                    p[pi++] = *s;
-                    p[pi] = 0;
+                    int scroll_y = c_cy - sy + 1;
+                    screen->scrollUp(screen,scroll_y);
+                    c_cy -= scroll_y;
+                    if (c_cy < 0)
+                        c_cy = 0;
                 }
-                c_cx++;
-                s++;
             }
+
+            if (!*s)
+                break;
+
+            if (pass > 0)
+            {
+                if (pi == 0)
+                    px = c_cx, py = c_cy;
+                p[pi++] = *s;
+                p[pi] = 0;
+            }
+            c_cx++;
+            s++;
         }
+
         if (pass == 0)
         {
             c_cx = cx;
-            if (scroll_y > 0)
+            if (c_cy >= sy)
             {
-                c_cy -= screen->scrollUp(screen,scroll_y);
+                int scroll_y = c_cy - sy + 1;
+                screen->scrollUp(screen,scroll_y);
+                c_cy = cy - scroll_y;
                 if (c_cy < 0)
                     c_cy = 0;
             }

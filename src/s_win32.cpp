@@ -169,6 +169,10 @@ static void getCursor(const screen_t *this, int *x, int *y)
     {
         cx = csbi.dwCursorPosition.X;
         cy = csbi.dwCursorPosition.Y;
+#if 0
+        assert(cx == this->data->cursor_x);
+        assert(cy == this->data->cursor_y);
+#endif
     }
 #endif
     if (x) *x = cx;
@@ -221,7 +225,7 @@ static void putString(screen_t *this, const char *s, int x, int y)
 
 
 /* private */
-static int cci2shape(CONSOLE_CURSOR_INFO *cci)
+static int cci2shape(const CONSOLE_CURSOR_INFO *cci)
 {
     int shape = cci->dwSize & 255;
     if (!cci->bVisible)
@@ -289,15 +293,25 @@ static int init(screen_t *this, int fd)
     csbi = &this->data->csbi;
     if (!GetConsoleScreenBufferInfo(ho, csbi))
         return -1;
-    if (csbi->srWindow.Left != 0 || csbi->srWindow.Top != 0)
-        return -1;
     if (!GetConsoleCursorInfo(ho, &ae.cci))
         return -1;
     if (!GetConsoleTitle(this->data->title, sizeof(this->data->title)))
         return -1;
 
+#if 0
     this->data->cols = csbi->srWindow.Right - csbi->srWindow.Left + 1;
     this->data->rows = csbi->srWindow.Bottom - csbi->srWindow.Top + 1;
+    if (csbi->srWindow.Left != 0 || csbi->srWindow.Top != 0)
+        return -1;
+    if (this->data->cols != csbi->dwSize.X)
+        return -1;
+#else
+    this->data->cols = csbi->dwSize.X;
+    this->data->rows = csbi->dwSize.Y;
+    if (csbi->srWindow.Left != 0)
+        return -1;
+#endif
+
     this->data->cursor_x = csbi->dwCursorPosition.X;
     this->data->cursor_y = csbi->dwCursorPosition.Y;
 
