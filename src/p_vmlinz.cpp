@@ -147,7 +147,8 @@ int PackVmlinuzI386::decompressKernel()
         if (off < 0)
             break;
         gzoff += off;
-        if (gzoff + 256 >= file_size)
+        const int gzlen = file_size - gzoff;
+        if (gzlen < 256)
             break;
         // check gzip flag byte
         unsigned char flags = obuf[gzoff + 3];
@@ -174,7 +175,7 @@ int PackVmlinuzI386::decompressKernel()
                 break;
             // estimate gzip-decompressed kernel size & alloc buffer
             if (ibuf.getSize() == 0)
-                ibuf.alloc((file_size - gzoff) * 3);
+                ibuf.alloc(gzlen * 3);
             // decompress
             klen = gzread(zf, ibuf, ibuf.getSize());
             fd_pos = lseek(fd, 0, SEEK_CUR);
@@ -192,7 +193,7 @@ int PackVmlinuzI386::decompressKernel()
         if (klen <= 0)
             continue;
 
-        if (klen <= file_size - gzoff)
+        if (klen <= gzlen)
             continue;
 
         if (opt->force > 0)
