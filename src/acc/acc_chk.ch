@@ -352,12 +352,15 @@
 
 #if (ACC_ARCH_IA16)
     ACCCHK_ASSERT(sizeof(size_t) == 2)
-#elif (ACC_ARCH_IA32)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
+#elif (ACC_ARCH_IA32 || ACC_ARCH_M68K)
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)
     ACCCHK_ASSERT(sizeof(size_t) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)

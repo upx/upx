@@ -117,6 +117,10 @@
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
 #endif
 
+#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025b00ul))
+#  define ACC_CXX_DISABLE_NEW_DELETE private:
+#endif
+
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE) && !(__ACC_CXX_HAVE_ARRAY_NEW)
 /* for old compilers use `protected' instead of `private' */
 #  define ACC_CXX_DISABLE_NEW_DELETE \

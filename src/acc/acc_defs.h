@@ -47,10 +47,10 @@
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
 #  if (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
-#  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1u-2*!(e)];
+#  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
 #  else
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-2*!(e)];
 #  endif
@@ -137,6 +137,21 @@
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define acc_alignof(e)        __alignof(e)
+#endif
+
+#if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
+#elif defined(__cplusplus)
+#  define acc_inline            inline
+#elif (ACC_CC_BORLANDC && ACC_MM_FLAT && (__BORLANDC__ >= 0x0500))
+#  define acc_inline            __inline
+#elif (ACC_CC_DMC)
+#  define acc_inline            __inline
+#elif (ACC_CC_GNUC)
+#  define acc_inline            __inline__
+#elif (ACC_CC_INTELC)
+#  define acc_inline            __inline
+#elif (ACC_CC_MSC && (_MSC_VER >= 1000))
+#  define acc_inline            __inline
 #endif
 
 
