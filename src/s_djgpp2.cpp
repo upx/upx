@@ -311,13 +311,10 @@ static int init(screen_t *this, int fd)
     if (getPage(this) != 0)
         return -1;
 
-#if 1
+#if 1 && defined(__DJGPP__)
     /* check for Windows NT/2000 */
-    {
-        unsigned v = _get_dos_version(1);
-        if (v == 0x0532)
-            return -1;
-    }
+    if (_get_dos_version(1) == 0x0532)
+        return -1;
 #endif
 
     cols = ScreenCols();
