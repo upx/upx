@@ -79,7 +79,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     // filter
     optimizeFilter(&fold_ft, buf, sz_fold);
     bool success = fold_ft.filter(buf + sizeof(cprElfHdr2), sz_fold - sizeof(cprElfHdr2));
-    (void)success;
+    UNUSED(success);
 
     return buildLinuxLoader(
         linux_i386sh_loader, sizeof(linux_i386sh_loader),
@@ -94,14 +94,16 @@ bool PackLinuxI386sh::getShellName(char *buf)
     exetype = -1;
     l_shname = strcspn(buf, " \t\n\v\f\r");
     buf[l_shname] = 0;
-    char const *const basename = 1+strrchr(buf, '/');
     static char const *const shname[] = { // known shells that accept "-c" arg
-        "sh", "ash", "bsh", "csh", "ksh", "bash", "tcsh", "pdksh",
+        "ash", "bash", "bsh", "csh", "ksh", "pdksh", "sh", "tcsh", "zsh",
         //"python", // FIXME: does python work ???
         NULL
     };
-    for (int j=0; 0 != shname[j]; ++j) {
-        if (0==strcmp(shname[j], basename)) {
+    const char *bname = strrchr(buf, '/');
+    if (bname == NULL)
+        return false;
+    for (int j = 0; NULL != shname[j]; ++j) {
+        if (0 == strcmp(shname[j], bname + 1)) {
             return super::canPack();
         }
     }
@@ -115,9 +117,9 @@ bool PackLinuxI386sh::canPack()
     // only compress i386sh scripts when running under Linux
     char buf[512];
 
-    fi->readx(buf, 512);
+    fi->readx(buf, sizeof(buf));
     fi->seek(0, SEEK_SET);
-    buf[511] = 0;
+    buf[sizeof(buf) - 1] = 0;
     if (!memcmp(buf, "#!/", 3)) {                       // #!/bin/sh
         o_shname = 2;
         return getShellName(&buf[o_shname]);
