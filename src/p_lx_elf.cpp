@@ -217,9 +217,9 @@ void PackLinuxI386elf::packExtent(
         set_native32(&tmp.sz_unc, ph.u_len);
         set_native32(&tmp.sz_cpr, ph.c_len);
         if (ph.c_len < ph.u_len) {
-            tmp.b_method = ph.method;
+            tmp.b_method = (unsigned char) ph.method;
             if (ft) {
-                tmp.b_ftid = ft->id;
+                tmp.b_ftid = (unsigned char) ft->id;
                 tmp.b_cto8 = ft->cto;
             }
         }
@@ -381,7 +381,7 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
                 else if (ph.filter) {
                     Filter ft(ph.level);
                     ft.init(ph.filter, 0);
-                    ft.cto = ph.filter_cto;
+                    ft.cto = (unsigned char) ph.filter_cto;
                     ft.unfilter(ibuf, sz_unc);
                 }
             }

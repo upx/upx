@@ -41,9 +41,9 @@
     \
     i = N - 1; \
     do { \
-        T delta = get(b) - d[i]; \
+        T delta = (T) (get(b) - d[i]); \
         set(b, delta); \
-        d[i] += delta; \
+        d[i] = (T) (d[i] + delta); \
         b += sizeof(T); \
         if (--i < 0) \
             i = N - 1; \
@@ -63,7 +63,7 @@
     \
     i = N - 1; \
     do { \
-        d[i] += get(b); \
+        d[i] = (T) (d[i] + get(b)); \
         set(b, d[i]); \
         b += sizeof(T); \
         if (--i < 0) \

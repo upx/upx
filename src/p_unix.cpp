@@ -115,7 +115,7 @@ bool PackUnix::checkCompressionRatio(unsigned, unsigned) const
     return true;
 }
 
-void PackUnix::pack1(OutputFile */*fo*/, Filter &/*ft*/)
+void PackUnix::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
 {
     // derived class usually provides this
 }
@@ -193,9 +193,9 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         set_native32(&blk_info.sz_unc, ph.u_len);
         set_native32(&blk_info.sz_cpr, ph.c_len);
         if (ph.c_len < ph.u_len) {
-            blk_info.b_method = ph.method;
-            blk_info.b_ftid = ph.filter;
-            blk_info.b_cto8 = ph.filter_cto;
+            blk_info.b_method = (unsigned char) ph.method;
+            blk_info.b_ftid = (unsigned char) ph.filter;
+            blk_info.b_cto8 = (unsigned char) ph.filter_cto;
         }
         fo->write(&blk_info, sizeof(blk_info));
         b_len += sizeof(b_info);

@@ -211,7 +211,7 @@ void PackTmt::pack(OutputFile *fo)
     {
         for (unsigned ic=4; ic<=rsize; ic+=4)
             set_le32(wrkmem+ic,get_le32(wrkmem+ic)-4);
-        relocsize = optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,1,&big_relocs)- wrkmem;
+        relocsize = ptr_diff(optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,1,&big_relocs), wrkmem);
     }
 
     wrkmem[relocsize++] = 0;
@@ -311,7 +311,7 @@ void PackTmt::unpack(OutputFile *fo)
         Filter ft(ph.level);
         ft.init(ph.filter, 0);
         ft.cto = (unsigned char) (ph.version < 11 ? (get_le32(obuf+ph.u_len-12) >> 24) : ph.filter_cto);
-        ft.unfilter(obuf, relocs-obuf);
+        ft.unfilter(obuf, ptr_diff(relocs, obuf));
     }
 
     // decode relocations

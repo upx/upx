@@ -657,7 +657,7 @@ void PackExe::unpack(OutputFile *fo)
             set_le32(wrkmem+4*relocn++,0);
     }
 
-    unsigned outputlen = sizeof(oh)+relocn*4+relocs-obuf;
+    unsigned outputlen = ptr_diff(relocs, obuf) + sizeof(oh) + relocn*4;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
     oh.headsize16 = 2+relocn/4;
@@ -689,7 +689,7 @@ void PackExe::unpack(OutputFile *fo)
     fo->write(&oh,sizeof(oh));
     if (relocn)
         fo->write(wrkmem,relocn*4);
-    fo->write(obuf,relocs-obuf);
+    fo->write(obuf, ptr_diff(relocs, obuf));
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, &obuf);

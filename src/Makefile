@@ -8,7 +8,7 @@
 #   `make target=mingw32'           # win32 - mingw32
 #   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
 #   `make target=bcc'               # win32 - Borland C++ 5.5.1
-#   `make target=dmc'               # win32 - Digital Mars C++ 8.28
+#   `make target=dmc'               # win32 - Digital Mars C++ 8.30
 #   `make target=vc6'               # win32 - Visual C++ 6.0
 #   `make target=wcc'               # win32 - Watcom C++ 11.0c
 #   `make target=cross-m68k-linux'  # m68k-linux cross compiler
@@ -314,6 +314,7 @@ endif	# djgpp2
 ifeq ($(target),cygwin)
 e = .exe
 CC += -march=i386 -mcpu=i586
+CXXLD = g++
 ##CFLAGS_M += -mno-schedule-prologue
 endif
 
@@ -321,6 +322,7 @@ ifeq ($(target),mingw32)
 e = .exe
 CC = gcc -mno-cygwin
 CC += -march=i386 -mcpu=i586
+CXXLD = g++ -mno-cygwin
 ##CFLAGS_M += -mno-schedule-prologue
 endif
 
@@ -329,6 +331,7 @@ ifeq ($(target),no-cygwin)
 e = .exe
 CC = gcc -mno-cygwin
 CC += -march=i386 -mcpu=i586
+CXXLD = g++ -mno-cygwin
 ##CFLAGS_M += -mno-schedule-prologue
 endif
 
@@ -356,7 +359,7 @@ CXXFLAGS1 = $(CFLAGS)
 CXXFLAGS2 = $(CFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
-LDLIBS = $(DOS_LDLIBS)
+LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -375,14 +378,14 @@ endif	# bcc
 
 
 ###
-### Digital Mars C++ 8.28
+### Digital Mars C++ 8.30
 ###
 
 ifeq ($(target),dmc)
 o = .obj
 a = .lib
 e = .exe
-CC = sc -mn
+CC = dmc -mn
 CFLAGS = -w- -wx
 CXXFLAGS1 = $(CFLAGS) -Aa -Ab -Ae -Ar
 CXXFLAGS2 = $(CFLAGS) -Aa -Ab
@@ -433,7 +436,7 @@ ifeq (1,2)
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) setargv.obj
+  LDLIBS = $(DOS_LDLIBS) zlib114.lib setargv.obj
 endif
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI

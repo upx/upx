@@ -45,6 +45,7 @@
 #include <typeinfo.h>
 
 namespace std {
+#undef type_info
 typedef ::Type_info type_info;
 class exception
 {

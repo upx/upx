@@ -186,9 +186,9 @@ PackLinuxI386::buildLinuxLoader(
         hf->ehdr.e_phentsize * hf->ehdr.e_phnum + sizeof(l_info) );
     struct b_info h; memset(&h, 0, sizeof(h));
     h.sz_unc = szfold - fold_hdrlen;
-    h.b_method = ph.method;
-    h.b_ftid = ph.filter;
-    h.b_cto8 = ph.filter_cto;
+    h.b_method = (unsigned char) ph.method;
+    h.b_ftid = (unsigned char) ph.filter;
+    h.b_cto8 = (unsigned char) ph.filter_cto;
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
