@@ -126,20 +126,26 @@ int PackVmlinuzI386::uncompressKernel()
     // estimate gzip-uncompressed kernel size & alloc buffer
     ibuf.alloc((file_size - setup_size) * 3);
 
-    // find gzip/zlib header
     for (int gzoff = setup_size; gzoff < file_size; gzoff++)
     {
-        int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B", 2);
+        // find gzip header (2 bytes magic, 1 byte method "deflated")
+        int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B\x08", 3);
         if (off < 0)
             break;
         gzoff += off;
+        // try to decompress
         fi->seek(gzoff, SEEK_SET);
         gzFile zf = gzdopen(fi->getFd(), "r");
         if (zf == 0)
             break;
         int klen = gzread(zf, ibuf, ibuf.getSize());
-        if (klen >= file_size)
-            return klen;
+        if (klen <= file_size)
+            continue;
+
+        // FIXME: check for special magic bytes in ibuf ???
+        // FIXME: check for kernel architecture ???
+        // FIXME: check for special klen size, e.g. (klen & 0xfff) == 0 ???
+        return klen;
     }
 
     return 0;
@@ -159,6 +165,7 @@ void PackVmlinuzI386::readKernel()
     // copy the setup boot code
     setup_buf.alloc(setup_size);
     memcpy(setup_buf, obuf, setup_size);
+    //OutputFile::dump("setup.img", setup_buf, setup_size);
 
     obuf.free();
     obuf.allocForCompression(klen);
