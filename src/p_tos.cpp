@@ -255,8 +255,10 @@ void PackTos::fileInfo()
 {
     if (!readFileHeader())
         return;
+#if !defined(WITH_GUI)
     con_fprintf(stdout, "    text: %d, data: %d, sym: %d, bss: %d, flags=0x%x\n",
                 (int)ih.fh_text, (int)ih.fh_data, (int)ih.fh_sym, (int)ih.fh_bss, (int)ih.fh_flag);
+#endif /* !defined(WITH_GUI) */
 }
 
 
