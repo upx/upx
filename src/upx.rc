@@ -51,7 +51,7 @@ BEGIN
             VALUE "FileDescription", "UPX executable packer\0"
             VALUE "FileVersion", VERSION_STRING "\0"
             VALUE "InternalName", "upx.exe\0"
-            VALUE "LegalCopyright", "© 1996-2002 Markus F.X.J. Oberhumer\0"
+            VALUE "LegalCopyright", "© 1996-2003 Markus F.X.J. Oberhumer\0"
             VALUE "OriginalFilename", "upx.exe\0"
             VALUE "ProductName", "UPX\0"
             VALUE "ProductVersion", VERSION_STRING "\0"

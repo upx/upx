@@ -66,7 +66,7 @@ Prerequisites
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A modern C++ compiler like gcc 2.95.3 or Visual C++ 6
+  - A modern C++ compiler like gcc 2.95.3, gcc 3.x or Visual C++ 6
 
   - GNU make for Win32
     http://upx.sourceforge.net/download/tools/

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2002 Laszlo Molnar
+   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2003 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -878,6 +878,15 @@ static const struct mfx_option longopts[] =
     {"mono",                0, 0, 513},
     {"color",               0, 0, 514},
 
+    // compression runtime parameters
+    {"crp-cf",           0x31, 0, 531},
+    {"crp-sl",           0x31, 0, 532},
+    {"crp-hl",           0x31, 0, 533},
+    {"crp-pl",           0x31, 0, 534},
+    {"crp-mo",           0x31, 0, 535},
+    {"crp-mm",           0x31, 0, 536},
+    {"crp-ms",           0x31, 0, 537},
+
     // win32/pe
     {"compress-exports",    2, 0, 630},
     {"compress-icons",      2, 0, 631},
@@ -1150,6 +1159,8 @@ int main(int argc, char *argv[])
 #else
     progname = fn_basename(argv0);
 #endif
+    while (progname[0] == '.' && progname[1] == '/'  && progname[2])
+        progname += 2;
 
     set_term(stderr);
 
@@ -1188,7 +1199,7 @@ int main(int argc, char *argv[])
     i = get_options(argc,argv);
     assert(i <= argc);
 
-    set_term(0);
+    set_term(NULL);
 //    cmdline_cmd = opt->cmd;
     switch (opt->cmd)
     {

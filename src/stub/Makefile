@@ -96,7 +96,7 @@ CC_LINUX_I386 += -funsigned-char
 ###CC_LINUX_I386 += -fwritable-strings -save-temps
 
 # Motorola 68000
-CPP_M68K  = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_M68K  = gcc-2.95 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
   # a68k 68000-assembler
@@ -109,7 +109,7 @@ else
 endif
 
 # MIPS R3000
-CPP_MR3K = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_MR3K = gcc-2.95 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
 

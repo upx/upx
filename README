@@ -8,7 +8,7 @@
 
 
                     The Ultimate Packer for eXecutables
-          Copyright (c) 1996-2002 Markus Oberhumer & Laszlo Molnar
+          Copyright (c) 1996-2003 Markus Oberhumer & Laszlo Molnar
                        http://upx.sourceforge.net
 
 
@@ -20,12 +20,17 @@ All versions 1.9x are unstable beta releases - use them only for testing,
 and never distribute a program that is packed with them !
 There will be hidden bugs. Really.
 
-The current stable release is 1.22, and the next stable release
+The current stable release is 1.24, and the next stable release
 will be called version 2.00.
 
-The main news since 1.22 are support for bootable Linux kernels ("vmlinuz/386")
-and direct Linux ELF-to-memory decompression ("linux/elf386"), so there's
-no reason to use the unstable versions unless you want to try the new formats.
+The main news since 1.24 are:
+  - slightly better compression using the new NRV2E algorithm
+  - new options for compression tuining (e.g. `--brute')
+  - support for bootable Linux kernels ("vmlinuz/386")
+  - direct Linux ELF-to-memory decompression ("linux/elf386") and
+    shell-to-memory decompression ("linux/sh386")
+  - support for playstation exes ("ps1/exe")
+  - lots of new bugs ;-) take care
 
 
 WELCOME
@@ -123,8 +128,8 @@ THE FUTURE
 COPYRIGHT
 =========
 
-Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
-Copyright (C) 1996-2002 Laszlo Molnar
+Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2003 Laszlo Molnar
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

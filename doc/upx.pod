@@ -13,7 +13,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 =head1 ABSTRACT
 
             The Ultimate Packer for eXecutables
-  Copyright (c) 1996-2002 Markus Oberhumer & Laszlo Molnar
+  Copyright (c) 1996-2003 Markus Oberhumer & Laszlo Molnar
                http://upx.sourceforge.net
 
 
@@ -166,16 +166,19 @@ Compression level B<--best> may take a long time.
 
 =back
 
-Note that compression level B<-9> can be somewhat slow for large
+Note that compression level B<--best> can be somewhat slow for large
 files, but you definitely should use it when releasing a final version
 of your program.
 
-Since UPX 0.70 there is also an extra compression level B<--best> which
-squeezes out even some more compression ratio. While it is usually fine
-to use this option with your favorite .com file it may take a long time
-to compress a multi-megabyte program. You have been warned.
+Quick start for achieving the best compression ratio:
 
-Tips for achieving the best compression ratio:
+=over 4
+
+Try B<upx --brute --crp-ms=999999 myfile.exe>.
+
+=back
+
+Details for achieving the best compression ratio:
 
 =over 4
 
@@ -189,6 +192,14 @@ Try one or both of the options B<--all-methods> and B<--all-filters>.
 
 Info: the option B<--brute> is an abbrevation for all the options
 B<S<--best> S<--all-methods> S<--all-filters>>.
+
+=item *
+
+Try the option B<--crp-ms=NUMBER>. This uses more memory during compression
+to achieve a (slightly) better compression ratio.
+
+NUMBER must be a decimal value from 10000 to 999999, inclusive.
+The default value is 10000 (ten thousand).
 
 =item *
 
@@ -250,6 +261,7 @@ This is the executable format used by the Atari ST/TT, a Motorola 68000
 based personal computer which was popular in the late '80s. Support
 of this format is only because of nostalgic feelings of one of
 the authors and serves no practical purpose :-).
+See http://www.freemint.de for more info.
 
 Packed programs will be byte-identical to the original after uncompression.
 All debug information will be stripped, though.
@@ -354,7 +366,7 @@ will fix the 4 KByte aligment of the stub.
 
 B<UPX> includes the full functionality of stubify. This means it will
 automatically stubify your COFF files. Use the option B<--coff> to
-disable this behaviour (see below).
+disable this functionality (see below).
 
 B<UPX> automatically handles Allegro packfiles.
 
@@ -701,7 +713,7 @@ Extra options available for this executable format:
                       the default method gives the best results anyway.
 
   --no-align          This option disables CD mode 2 data sector format
-                      alignment. This will slightly increase the compression
+                      alignment. This will slightly improve the compression
                       ratio, but the compressed executable will not work
                       when started from a CD.
 
@@ -758,8 +770,8 @@ Benefits:
          641073  bzImage        [original]
          560755  bzImage.upx    [compressed by "upx -9"]
 
-  - Much faster decompression at kernel boot time (but decompression
-    speed is not really an issue these days).
+  - Much faster decompression at kernel boot time (but kernel
+    decompression speed is not really an issue these days).
 
 Drawbacks:
 
@@ -815,7 +827,7 @@ will load faster, and require less bandwidth during execution.
 DLLs are supported.
 
 Screensavers are supported, with the restriction that the filename
-must end with ".scr" (as screensavers are handled slightly different
+must end in ".scr" (as screensavers are handled slightly different
 than normal exe files).
 
 Extra options available for this executable format:
@@ -893,13 +905,13 @@ Please report all bugs immediately to the authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
 
-Copyright (C) 1996-2002 Laszlo Molnar
+Copyright (C) 1996-2003 Laszlo Molnar
 
-Copyright (C) 2000-2002 John F. Reiser
+Copyright (C) 2000-2003 John F. Reiser
 
-Copyright (C) 2002      Jens Medoch
+Copyright (C) 2002-2003 Jens Medoch
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

@@ -6,6 +6,9 @@ srcdir = .
 top_srcdir = .
 
 
+default:
+	@echo "UPX info: please choose a target for 'make'"
+
 all mostlyclean clean distclean maintainer-clean:
 	$(MAKE) -C src/stub/util/sstrip $@
 	$(MAKE) -C src/stub $@
