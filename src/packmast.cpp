@@ -169,8 +169,10 @@ static Packer* try_packers(InputFile *f, try_function func)
         return p;
     if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
         return p;
+#if 0
     if ((p = func(new PackBvmlinuxI386(f),f)) != NULL)
         return p;
+#endif
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
     if ((p = func(new PackSys(f),f)) != NULL)

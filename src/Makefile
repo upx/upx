@@ -13,7 +13,7 @@
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-0.90
+UCLDIR = $(HOME)/local/src/ucl-0.91
 endif
 
 DEBUG = 1
@@ -55,7 +55,7 @@ OBJECTS1 = \
 	packer$o packhead$o packmast$o \
 	p_com$o p_djgpp2$o p_exe$o p_lx_elf$o p_lx_sep$o p_lx_sh$o \
 	p_sys$o p_tmt$o p_tos$o \
-	p_unix$o p_vmlinux$o p_w32pe$o p_wcle$o
+	p_unix$o p_w32pe$o p_wcle$o
 
 # no exceptions or RTTI
 OBJECTS2 = \
@@ -117,7 +117,8 @@ else
 LDFLAGS = -s
 endif
 LDFLAGS += -Wl,-Map,$(basename $@).map
-LDLIBS = -lz
+LDLIBS =
+##LDLIBS = -lz
 LIBDIRS =
 
 
@@ -254,11 +255,13 @@ export LIB
 ifeq (1,2)
   # statically link libc
   CC += -ML
-  LDLIBS = $(u)_s.lib zlib_s.lib setargv.obj
+  ##LDLIBS = $(u)_s.lib zlib_s.lib setargv.obj
+  LDLIBS = $(u)_s.lib setargv.obj
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(u).lib zlib.lib setargv.obj
+  ##LDLIBS = $(u).lib zlib.lib setargv.obj
+  LDLIBS = $(u).lib setargv.obj
 endif
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
