@@ -6,6 +6,7 @@
 #
 #  Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
 #  Copyright (C) 1996-2000 Laszlo Molnar
+#  All Rights Reserved.
 #
 #  UPX and the UCL library are free software; you can redistribute them
 #  and/or modify them under the terms of the GNU General Public License as
@@ -56,13 +57,14 @@ $of = $ofile;
 $of =~ s/.*[\/\\]//;
 
 if ($opt_q ne "-q") {
+printf ("/* %s -- created from %s, %d (0x%x) bytes\n", $of, $if, $n, $n);
 print <<"EOF";
-/* $of -- created from $if, $n bytes
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2000 Laszlo Molnar
+   All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
    and/or modify them under the terms of the GNU General Public License as

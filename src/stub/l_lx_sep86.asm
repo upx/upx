@@ -1,9 +1,10 @@
-;  l_lxsep86.asm -- Linux program entry point & decompressor (separate script)
+;  l_lx_sep86.asm -- Linux program entry point & decompressor (separate script)
 ;
 ;  This file is part of the UPX executable compressor.
 ;
 ;  Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 1996-2000 Laszlo Molnar
+;  All Rights Reserved.
 ;
 ;  Integration of virtual exec() with decompression is
 ;  Copyright (C) 2000 John F. Reiser.  All rights reserved.

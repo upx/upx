@@ -1,9 +1,10 @@
-/* l_lxsep.c -- separate loader for Linux Elf executable
+/* l_lx_sep.c -- separate loader for Linux Elf executable
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2000 Laszlo Molnar
+   All Rights Reserved.
 
     Integration of virtual exec() with decompression is
     Copyright (C) 2000 John F. Reiser.  All rights reserved.
