@@ -300,7 +300,7 @@ e = .exe
 CC = bcc32 -q -3
 CFLAGS = -w -w-aus -w-inl -g1
 CFLAGS_OUTPUT = -o$@
-LDFLAGS =
+LDFLAGS = -ls
 LINK_EXE_OUTPUT = -e$@
 LDLIBS = $(DOS_LDLIBS)
 
