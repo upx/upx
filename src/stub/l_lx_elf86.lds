@@ -1,7 +1,7 @@
 /* l_lx_elf86.lds --
 
    This file is part of the UPX executable compressor.
- 
+
    Copyright (C) 2000 John F. Reiser
    All Rights Reserved.
 
