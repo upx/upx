@@ -42,7 +42,7 @@
 Packer::Packer(InputFile *f) :
     fi(f), file_size(-1), ph_format(-1), ph_version(-1),
     uip(NULL), ui_pass(0), ui_total_passes(0), linker(NULL),
-    last_patch(NULL), last_patch_offset(0)
+    last_patch(NULL), last_patch_len(0), last_patch_off(0)
 {
     file_size = f->st.st_size;
     uip = new UiPacker(this);
@@ -642,22 +642,28 @@ void Packer::checkPatch(void *b, int blen, int boff, int size)
     {
         // reset
         last_patch = NULL;
-        last_patch_offset = 0;
+        last_patch_len = 0;
+        last_patch_off = 0;
         return;
     }
     if (b == NULL || blen <= 0 || boff < 0 || size <= 0)
         throwBadLoader();
     if (boff + size <= 0 || boff + size > blen)
         throwBadLoader();
-    //printf("checkPatch: %p %5d %5d %d\n", b, blen, boff, size);
+    //printf("checkPatch: %p %5d %5d %2d\n", b, blen, boff, size);
     if (b == last_patch)
     {
-        if (boff + size > last_patch_offset)
+        if (boff + size > last_patch_off)
             throwInternalError("invalid patch order");
+        // The next check is not strictly necessary, but the buffer
+        // length should better not increase...
+        if (blen > last_patch_len)
+            throwInternalError("invalid patch order (length)");
     }
     else
         last_patch = b;
-    last_patch_offset = boff;
+    last_patch_len = blen;
+    last_patch_off = boff;
 }
 
 
@@ -916,7 +922,7 @@ void Packer::addSection(const char *sname, const char *sdata, unsigned len)
 }
 
 
-int Packer::getLoaderSection(const char *name, int *slen)
+int Packer::getLoaderSection(const char *name, int *slen) const
 {
     int size = -1;
     int ostart = linker->getSection(name, &size);
@@ -924,6 +930,17 @@ int Packer::getLoaderSection(const char *name, int *slen)
         throwBadLoader();
     if (slen)
         *slen = size;
+    return ostart;
+}
+
+
+// same, but the size of the section may be == 0
+int Packer::getLoaderSectionStart(const char *name) const
+{
+    int size = -1;
+    int ostart = linker->getSection(name, &size);
+    if (ostart < 0 || size < 0)
+        throwBadLoader();
     return ostart;
 }
 

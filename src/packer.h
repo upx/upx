@@ -199,7 +199,8 @@ protected:
     virtual void initLoader(const void *pdata, int plen, int pinfo=-1);
     virtual void addLoader(const char *s, ...);
     virtual void addSection(const char *sname, const char *sdata, unsigned len);
-    virtual int getLoaderSection(const char *name, int *slen = NULL);
+    virtual int getLoaderSection(const char *name, int *slen=NULL) const;
+    virtual int getLoaderSectionStart(const char *name) const;
     virtual void addFilter32(int filter_id);
     virtual const char *getDecompressor() const;
 
@@ -253,7 +254,8 @@ private:
 private:
     // private to checkPatch()
     void *last_patch;
-    int last_patch_offset;
+    int last_patch_len;
+    int last_patch_off;
 
 private:
     // disable copy and assignment

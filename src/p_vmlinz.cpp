@@ -156,7 +156,7 @@ void PackvmlinuzI386::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    int e_len = bzImage ? getLoaderSection("LZCUTPOI") : lsize;
+    int e_len = bzImage ? getLoaderSectionStart("LZCUTPOI") : lsize;
     patchPackHeader(loader, lsize);
 
     if (bzImage)
