@@ -69,11 +69,11 @@ Tools needed to build/modify the UPX sources
   - A C++ compiler supporting inner classes, templates, exceptions
     and RTTI.
 
-  - GNU make for Win32
-    http://upx.sourceforge.net/download/tools/
+  - GNU make 3.80 for Win32
+    http://www.cygwin.com/
 
-  - GNU make for DOS
-    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/
+  - GNU make 3.80 for DOS
+    http://www.delorie.com/djgpp/
 
 
 To compile the packer sources
@@ -81,8 +81,8 @@ To compile the packer sources
 
   set the environment variable UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-1.01                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-1.01           (Unix)
+     set UCLDIR=c:\src\ucl-1.02                       (DOS / Windows)
+     export UCLDIR=$HOME/local/src/ucl-1.02           (Unix)
 
   then type
 

@@ -88,10 +88,10 @@
 #  pragma warning(disable: 4514)        // W4: 'function': unreferenced inline function has been removed
 #  pragma warning(disable: 4710)        // W4: 'function': function not inlined
 #  if (_MSC_VER >= 1300)
-#    pragma warning(disable: 4625)      // W4:
-#    pragma warning(disable: 4626)      // W4:
-#    pragma warning(disable: 4711)      // W4:
-#    pragma warning(disable: 4820)      // W4:
+#    pragma warning(disable: 4625)      // W4: 'class' : copy constructor could not be generated because a base class copy constructor is inaccessible
+#    pragma warning(disable: 4626)      // W4: 'class' : assignment operator could not be generated because a base class assignment operator is inaccessible
+#    pragma warning(disable: 4711)      // W4: 'function' selected for automatic inline expansion
+#    pragma warning(disable: 4820)      // W4: 'struct' : 'x' bytes padding added after member 'member'
 #  endif
 #  if (_MSC_VER >= 1400)
 #    pragma warning(disable: 4996)      // W1: 'function': was declared deprecated

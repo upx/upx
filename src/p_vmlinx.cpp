@@ -70,7 +70,7 @@ const int *PackVmlinuxI386::getFilters() const
 }
 
 static int __acc_cdecl_qsort
-compare_Phdr(void const *const aa, void const *const bb)
+compare_Phdr(void const *aa, void const *bb)
 {
     Elf_LE32_Phdr const *const a = (Elf_LE32_Phdr const *)aa;
     Elf_LE32_Phdr const *const b = (Elf_LE32_Phdr const *)bb;
@@ -140,7 +140,7 @@ bool PackVmlinuxI386::canPack()
                 return false;
             }
             if (0 < j) {
-                unsigned const sz = -phdri[j-1].p_align
+                unsigned const sz = (0u - phdri[j-1].p_align)
                                   & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
                 if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
                     return false;
