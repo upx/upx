@@ -42,7 +42,7 @@
 #define DT_NULL     Elf_LE32_Dyn::DT_NULL
 #define DT_NEEDED   Elf_LE32_Dyn::DT_NEEDED
 #define DT_STRTAB   Elf_LE32_Dyn::DT_STRTAB
-#define DT_STRSZ    Elf_LE32_Dyn::DT_STRSZ 
+#define DT_STRSZ    Elf_LE32_Dyn::DT_STRSZ
 
 
 /*************************************************************************
@@ -69,8 +69,7 @@ const int *PackLinuxI386::getCompressionMethods(int method, int level) const
     return m_nrv2d;
 }
 
-int const *
-PackLinuxI386::getFilters() const
+const int *PackLinuxI386::getFilters() const
 {
     static const int filters[] = {
         0x49, 0x46,
@@ -353,19 +352,19 @@ PackLinuxI386::buildLinuxLoader(
         if (ph.format==UPX_F_LINUX_ELF_i386) { // decompr, unfilter are separate
             addLoader("LXUNF000", 0);
             addLoader("LXUNF002", 0);
-	        if (0x80==(ft->id & 0xF0)) {
-	            if (256==n_mru) {
-	                addLoader("MRUBYTE0", 0);
-	            }
-	            else if (n_mru) {
-	                addLoader("LXMRU005", 0);
-	            }
-	            if (n_mru) {
-	                addLoader("LXMRU006", 0);
-	            }
-	            else {
-	                addLoader("LXMRU007", 0);
-	            }
+                if (0x80==(ft->id & 0xF0)) {
+                    if (256==n_mru) {
+                        addLoader("MRUBYTE0", 0);
+                    }
+                    else if (n_mru) {
+                        addLoader("LXMRU005", 0);
+                    }
+                    if (n_mru) {
+                        addLoader("LXMRU006", 0);
+                    }
+                    else {
+                        addLoader("LXMRU007", 0);
+                    }
             }
             else if (0x40==(ft->id & 0xF0)) {
                 addLoader("LXUNF008", 0);

@@ -1123,22 +1123,22 @@ void Packer::addFilter32(int filter_id)
         unsigned const f_jcc2 = f80_jcc2(filter_id);
 
         if (NOFILT!=f_jcc2) {
-	        addLoader("LXJCC010", 0);
-	        if (n_mru) {
-	            addLoader("LXMRU045", 0);
-	        }
-	        else {
-	            addLoader("LXMRU046", 0);
-	        }
-	        if (0==n_mru || MRUFLT!=f_jcc2) {
-	            addLoader("LXJCC020", 0);
-	        }
-	        else { // 0!=n_mru
-	            addLoader("LXJCC021", 0);
-	        }
-	        if (NOFILT!=f_jcc2) {
-	            addLoader("LXJCC023", 0);
-	        }
+                addLoader("LXJCC010", 0);
+                if (n_mru) {
+                    addLoader("LXMRU045", 0);
+                }
+                else {
+                    addLoader("LXMRU046", 0);
+                }
+                if (0==n_mru || MRUFLT!=f_jcc2) {
+                    addLoader("LXJCC020", 0);
+                }
+                else { // 0!=n_mru
+                    addLoader("LXJCC021", 0);
+                }
+                if (NOFILT!=f_jcc2) {
+                    addLoader("LXJCC023", 0);
+                }
         }
         addLoader("LXUNF037", 0);
         if (x386) {
@@ -1236,7 +1236,7 @@ void Packer::addFilter32(int filter_id)
                 addLoader("LXCALLB1", 0);
             }
         }
-        if (n_mru) {    
+        if (n_mru) {
             if (256!=n_mru && mrupwr2) {
                 addLoader("MRUBITS1", 0);
             }
@@ -1262,7 +1262,7 @@ void Packer::addFilter32(int filter_id)
             else {
                 addLoader("LXCJ1MRU", 0);
             }
-    
+
             // determine if in range
             if ((NOFILT!=f_call) && (NOFILT!=f_jmp1)) { // unfilter both
                 addLoader("LXCALJMP", 0);
@@ -1275,7 +1275,7 @@ void Packer::addFilter32(int filter_id)
                     addLoader("LXCALL01", 0);
                 }
             }
-    
+
             // determine if mru applies
             if (0==n_mru || ! ((FNOMRU==f_call) || (FNOMRU==f_jmp1)) ) {
                 addLoader("LXCJ2MRU", 0);  // no mru, or no exceptions
