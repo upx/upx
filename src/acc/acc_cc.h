@@ -59,6 +59,10 @@
 #  define ACC_CC_IBMC           1
 #  define ACC_INFO_CC           "IBM C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__IBMC__)
+#elif defined(__KEIL__) && defined(__C166__)
+#  define ACC_CC_KEILC          1
+#  define ACC_INFO_CC           "Keil C"
+#  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__C166__)
 #elif defined(__LCC__)
 #  define ACC_CC_LCC            1
 #  define ACC_INFO_CC           "lcc"

@@ -50,21 +50,29 @@
 ************************************************************************/
 
 #if !defined(ACC_UNUSED)
-#  if (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_TURBOC)
+#  if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0600))
+#    define ACC_UNUSED(var)         ((void) &var)
+#  elif (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
 #  elif (ACC_CC_GNUC)
 #    define ACC_UNUSED(var)         ((void) var)
+#  elif (ACC_CC_KEILC)
+#    define ACC_UNUSED(var)
 #  else
 #    define ACC_UNUSED(var)         ((void) &var)
 #  endif
 #endif
 #if !defined(ACC_UNUSED_FUNC)
-#  if (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
+#  if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0600))
+#    define ACC_UNUSED_FUNC(func)   ((void) func)
+#  elif (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
+#  elif (ACC_CC_KEILC)
+#    define ACC_UNUSED_FUNC(func)
 #  else
 #    define ACC_UNUSED_FUNC(func)   ((void) func)
 #  endif

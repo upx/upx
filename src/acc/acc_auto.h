@@ -63,6 +63,7 @@
 #define HAVE_LIMITS_H 1
 #define HAVE_MALLOC_H 1
 #define HAVE_MEMORY_H 1
+#define HAVE_SETJMP_H 1
 #define HAVE_SIGNAL_H 1
 #define HAVE_STDARG_H 1
 #define HAVE_STDDEF_H 1
@@ -285,6 +286,7 @@
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GMTIME 1
 #define HAVE_LOCALTIME 1
+#define HAVE_LONGJMP 1
 #define HAVE_LSTAT 1
 #define HAVE_MEMCMP 1
 #define HAVE_MEMCPY 1
@@ -293,6 +295,7 @@
 #define HAVE_MKTIME 1
 #define HAVE_QSORT 1
 #define HAVE_RAISE 1
+#define HAVE_SETJMP 1
 #define HAVE_SIGNAL 1
 #define HAVE_SNPRINTF 1
 #define HAVE_STAT 1
@@ -322,6 +325,7 @@
 #if (ACC_OS_POSIX)
 #  if (ACC_CC_TINYC)
 #    undef HAVE_ALLOCA
+#  elif defined(__dietlibc__)
 #  endif
 #  if (ACC_OS_POSIX_MACOSX && ACC_CC_MWERKS) && defined(__MSL__)
      /* FIXME ??? */
@@ -421,6 +425,9 @@
 #  endif
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
+#  endif
+#  if (_MSC_VER < 1000) && defined(__cplusplus)
+#    undef HAVE_SETJMP
 #  endif
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__MINGW32__)
 #  if (ACC_CC_GNUC < 0x025f00ul)
@@ -554,6 +561,10 @@
 #  else
 #    error "ACC_MM"
 #  endif
+#elif (ACC_ARCH_AVR || ACC_ARCH_C166 || ACC_ARCH_MCS51 || ACC_ARCH_MCS251)
+#  define SIZEOF_PTRDIFF_T      2
+#  define SIZEOF_SIZE_T         2
+#  define SIZEOF_VOID_P         2
 #else
 #  define SIZEOF_PTRDIFF_T      SIZEOF_LONG
 #  define SIZEOF_SIZE_T         SIZEOF_LONG

@@ -27,7 +27,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20040202L
+#define ACC_VERSION     20040511L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -45,18 +45,23 @@
 #endif
 
 
-/* disable pedantic warnings */
+/* disable pedantic warnings for undefined preprocessing symbols */
 #if defined(__INTEL_COMPILER) && defined(__linux__)
-#  pragma warning(disable: 193)     /* #193: zero used for undefined preprocessing identifier */
+#  pragma warning(disable: 193)
+#endif
+#if defined(__KEIL__) && defined(__C166__)
+#  pragma warning disable = 322
+#elif 0 && defined(__C251__)
+#  pragma warning disable = 322
 #endif
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 #  if (_MSC_VER >= 1300)
-#    pragma warning(disable: 4668)  /* -Wall: 4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' */
+#    pragma warning(disable: 4668)
 #  endif
 #endif
 #if 0 && defined(__WATCOMC__)
 #  if (__WATCOMC__ < 1060)
-#    pragma warning 203 9           /* W203: Preprocessing symbol '%s' has not been declared */
+#    pragma warning 203 9
 #  endif
 #endif
 
@@ -65,8 +70,8 @@
 #include ACC_CONFIG_INCLUDE("acc_init.h")
 #include ACC_CONFIG_INCLUDE("acc_os.h")
 #include ACC_CONFIG_INCLUDE("acc_cc.h")
-#include ACC_CONFIG_INCLUDE("acc_mm.h")
 #include ACC_CONFIG_INCLUDE("acc_arch.h")
+#include ACC_CONFIG_INCLUDE("acc_mm.h")
 #include ACC_CONFIG_INCLUDE("acc_defs.h")
 
 #if defined(ACC_CONFIG_NO_HEADER)

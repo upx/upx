@@ -424,7 +424,9 @@
     ACCCHK_ASSERT( (int) ((unsigned char) ((signed char) -1)) == 255)
 #endif
 
-#if (ACC_CC_NDPC)
+#if (ACC_CC_KEILC)
+    /* Keil C is broken */
+#elif (ACC_CC_NDPC)
     /* NDP C is broken */
 #elif !defined(ACC_BROKEN_INTEGRAL_PROMOTION) && (SIZEOF_INT > 1)
     /* check that the compiler correctly promotes integrals */

@@ -113,6 +113,61 @@ extern "C" {
 #endif
 
 
+#elif (ACC_ARCH_C166)
+#if !defined(__MODEL__)
+#  error "FIXME - C166 __MODEL__"
+#elif ((__MODEL__) == 0)
+#  define ACC_MM_SMALL          1
+#elif ((__MODEL__) == 1)
+#  define ACC_MM_SMALL          1
+#elif ((__MODEL__) == 2)
+#  define ACC_MM_LARGE          1
+#elif ((__MODEL__) == 3)
+#  define ACC_MM_TINY           1
+#elif ((__MODEL__) == 4)
+#  define ACC_MM_XTINY          1
+#elif ((__MODEL__) == 5)
+#  define ACC_MM_XSMALL         1
+#else
+#  error "FIXME - C166 __MODEL__"
+#endif
+
+
+#elif (ACC_ARCH_MCS251)
+#if !defined(__MODEL__)
+#  error "FIXME - MCS251 __MODEL__"
+#elif ((__MODEL__) == 0)
+#  define ACC_MM_SMALL          1
+#elif ((__MODEL__) == 2)
+#  define ACC_MM_LARGE          1
+#elif ((__MODEL__) == 3)
+#  define ACC_MM_TINY           1
+#elif ((__MODEL__) == 4)
+#  define ACC_MM_XTINY          1
+#elif ((__MODEL__) == 5)
+#  define ACC_MM_XSMALL         1
+#else
+#  error "FIXME - MCS251 __MODEL__"
+#endif
+
+
+#elif (ACC_ARCH_MCS51)
+#if !defined(__MODEL__)
+#  error "FIXME - MCS51 __MODEL__"
+#elif ((__MODEL__) == 1)
+#  define ACC_MM_SMALL          1
+#elif ((__MODEL__) == 2)
+#  define ACC_MM_LARGE          1
+#elif ((__MODEL__) == 3)
+#  define ACC_MM_TINY           1
+#elif ((__MODEL__) == 4)
+#  define ACC_MM_XTINY          1
+#elif ((__MODEL__) == 5)
+#  define ACC_MM_XSMALL         1
+#else
+#  error "FIXME - MCS51 __MODEL__"
+#endif
+
 #else
 
 #  define ACC_MM_FLAT           1

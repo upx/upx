@@ -39,6 +39,9 @@
 #if defined(HAVE_DIRENT_H)
 #  include <dirent.h>
 #endif
+#if defined(HAVE_SETJMP_H)
+#  include <setjmp.h>
+#endif
 #if defined(HAVE_SIGNAL_H)
 #  include <signal.h>
 #endif

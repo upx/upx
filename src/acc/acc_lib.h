@@ -161,6 +161,8 @@ ACCLIB_EXTERN(acc_hsize_t, acc_hfwrite) (ACC_FILE_P, const acc_hvoid_p, acc_hsiz
 ACCLIB_EXTERN(long, acc_hread) (int, acc_hvoid_p, long);
 ACCLIB_EXTERN(long, acc_hwrite) (int, const acc_hvoid_p, long);
 #endif
+ACCLIB_EXTERN(long, acc_safe_hread) (int, acc_hvoid_p, long);
+ACCLIB_EXTERN(long, acc_safe_hwrite) (int, const acc_hvoid_p, long);
 
 
 /*************************************************************************
@@ -315,6 +317,13 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_u
 /*************************************************************************
 // uclock
 **************************************************************************/
+
+#if defined(acc_int32e_t)
+ACCLIB_EXTERN(int, acc_tsc_read) (acc_uint32e_t*);
+ACCLIB_EXTERN(int, acc_tsc_read_add) (acc_uint32e_t*);
+#define acc_rdtsc(x)    acc_tsc_read(x)
+#endif
+
 
 typedef struct { /* all private */
     acclib_handle_t h;

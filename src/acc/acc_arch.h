@@ -18,11 +18,14 @@
  *
  *   ACC_ARCH_UNKNOWN       [default]
  *   ACC_ARCH_ALPHA
- *   ACC_ARCH_AMD64
+ *   ACC_ARCH_AMD64         aka x86-64 or ia32e
+ *   ACC_ARCH_C166
  *   ACC_ARCH_IA16          Intel Architecture (8088, 8086, 80186, 80286)
  *   ACC_ARCH_IA32          Intel Architecture (80386+)
  *   ACC_ARCH_IA64          Intel Architecture (Itanium)
  *   ACC_ARCH_M68K          Motorola 680x0
+ *   ACC_ARCH_MCS251
+ *   ACC_ARCH_MCS51
  *   ACC_ARCH_PPC64         Power PC
  *   ACC_ARCH_SPARC64
  *
@@ -41,6 +44,18 @@
 #elif defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64)
 #  define ACC_ARCH_AMD64            1
 #  define ACC_INFO_ARCH             "amd64"
+#elif (UINT_MAX <= ACC_0xffffL) && defined(__AVR__)
+#  define ACC_ARCH_AVR              1
+#  define ACC_INFO_ARCH             "avr"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C166__)
+#  define ACC_ARCH_C166             1
+#  define ACC_INFO_ARCH             "c166"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C251__)
+#  define ACC_ARCH_MCS251           1
+#  define ACC_INFO_ARCH             "mcs-251"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C51__)
+#  define ACC_ARCH_MCS51            1
+#  define ACC_INFO_ARCH             "mcs-51"
 #elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86) || defined(_M_I386)
 #  define ACC_ARCH_IA32             1
 #  define ACC_INFO_ARCH             "ia32"
