@@ -192,7 +192,7 @@ protected:
     virtual bool readPackHeader(int len);
     virtual void checkAlreadyPacked(void *b, int blen);
 
-    // filter handling
+    // filter handling [see packerf.cpp]
     virtual bool isValidFilter(int filter_id) const;
     virtual void tryFilters(Filter *ft, upx_byte *buf, unsigned buf_len,
                             unsigned addvalue=0) const;
@@ -200,6 +200,7 @@ protected:
                              unsigned addvalue=0) const;
     virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
         { }
+    virtual void addFilter32(int filter_id);
     virtual bool patchFilter32(void *, int, const Filter *ft);
 
     // loader util
@@ -210,7 +211,6 @@ protected:
     virtual void addLoader(const char *s, ...);
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
-    virtual void addFilter32(int filter_id);
     virtual const char *getDecompressor() const;
     char const *identstr(unsigned &size);
 

@@ -60,7 +60,7 @@ override T = $(basename $@)
 OBJECTS1 = \
 	compress$o except$o file$o lefile$o \
 	filter$o linker$o mem$o msg$o stdcxx$o work$o ui$o \
-	packer$o packhead$o packmast$o \
+	packer$o packerf$o packhead$o packmast$o \
 	p_com$o p_djgpp2$o p_elks$o p_exe$o \
 	p_lx_elf$o p_lx_exc$o p_lx_sep$o p_lx_sh$o \
 	p_sys$o p_tmt$o p_tos$o \
