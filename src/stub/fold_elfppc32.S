@@ -48,7 +48,6 @@ L90:
 	mtlr a0  # entry address
 	lmw r2,4+LINKAREA+OVERHEAD(sp)  # restore registers r2 thru r31
 	lwz r1,  LINKAREA+OVERHEAD(sp)  # restore r1; deallocate space
-    trap  # debugging
 	ret  # enter /lib/ld.so.1
 
 SYS_exit=  1
