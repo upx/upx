@@ -33,7 +33,7 @@
 #    define __ACCLIB_UCLOCK_USE_CLOCK 1
 #  else
 #    define __ACCLIB_UCLOCK_USE_WINMM 1
-#    if (ACC_CC_MSC && (_MSC_VER >= 1000))
+#    if (ACC_CC_MSC && (_MSC_VER >= 900))
        /* avoid `-W4' warnings in <mmsystem.h> */
 #      pragma warning(disable: 4201)
 #    elif (ACC_CC_MWERKS)
