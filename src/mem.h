@@ -46,24 +46,21 @@ public:
 
     void dealloc();
 
-    const unsigned char *getBuf()     const { return ptr; }
-    unsigned getSize() const;
+    void checkState() const;
+
+    unsigned getSize() const { return psize; }
 
     operator       unsigned char * ()       { return ptr; }
     //operator const unsigned char * () const { return ptr; }
-
+    const unsigned char *getBuf()     const { return ptr; }
           void *getVoidPtr()                { return (void *) ptr; }
     const void *getVoidPtr() const          { return (const void *) ptr; }
 
 private:
-    void alloc(unsigned size, unsigned base_offset);
-
-protected:
     unsigned char *ptr;
-    unsigned char *alloc_ptr;
-    unsigned alloc_size;
+    unsigned psize;
+    static unsigned global_alloc_counter;
 
-private:
     // disable copy and assignment
     MemBuffer(MemBuffer const &); // {}
     MemBuffer& operator= (MemBuffer const &); // { return *this; }
