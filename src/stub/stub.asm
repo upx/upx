@@ -716,6 +716,10 @@ load_dpmi:
 loadloop:
 	mov	ah, ';'			; Copy until this character
 	call	store_env_string	; to "loadname"
+	or	al,al			; Check terminating character
+	jne	@f1			; If ';', continue
+	dec	di			; else point at null for next pass.
+@f1:
 	cmp	si, loadname		; anything there?
 	je	do_exec			; final try (no path) let it return
 	mov	al, [si-1]
