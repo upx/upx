@@ -283,7 +283,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
     fo->write(obuf, ph.c_len);
-#if 1
+#if 0
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
     printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
