@@ -212,13 +212,13 @@ void PackTmt::pack(OutputFile *fo)
     // filter
     Filter ft(opt->level);
     tryFilters(&ft, ibuf, usize);
-    buildLoader(&ft);
 
     ph.filter = ft.id;
     ph.filter_cto = ft.cto;
     ph.u_len = usize + relocsize;
     if (!compress(ibuf,obuf))
         throwNotCompressible();
+    buildLoader(&ft);
 
     unsigned overlapoh = findOverlapOverhead(obuf,512);
 

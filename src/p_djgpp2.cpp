@@ -271,7 +271,6 @@ void PackDjgpp2::pack(OutputFile *fo)
     // filter
     Filter ft(opt->level);
     tryFilters(&ft, ibuf, usize - data->size, text->vaddr & ~0x1ff);
-    buildLoader(&ft);
 
     // compress
     ph.filter = ft.id;
@@ -279,6 +278,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     ph.u_len = usize;
     if (!compress(ibuf,obuf))
         throwNotCompressible();
+    buildLoader(&ft);
 
     unsigned overlapoh = findOverlapOverhead(obuf,ibuf,512);
     overlapoh = (overlapoh + 0x3ff) & ~0x1ff;

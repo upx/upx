@@ -1619,13 +1619,14 @@ void PackW32Pe::pack(OutputFile *fo)
     Filter ft(opt->level);
     if (allow_filter)
         tryFilters(&ft, ibuf + ih.codebase, ih.codesize);
-    buildLoader(&ft);
 
     // compress
     ph.filter = ft.id;
     ph.filter_cto = ft.cto;
     if (!compress(ibuf + rvamin,obuf))
         throwNotCompressible();
+    buildLoader(&ft);
+
     const unsigned overlapoh = findOverlapOverhead(obuf, 2048);
 
     // verify filter

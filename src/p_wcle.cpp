@@ -421,6 +421,8 @@ void PackWcle::encodeImage(const Filter *ft)
     // reserve RESERVED bytes for the decompressor
     if (!compress(ibuf,oimage+RESERVED))
         throwNotCompressible();
+    buildLoader(ft);
+
     overlapoh = findOverlapOverhead(oimage+RESERVED, 512);
     ibuf.free();
     soimage = (ph.c_len + 3) &~ 3;
@@ -463,11 +465,6 @@ void PackWcle::pack(OutputFile *fo)
     const unsigned text_size = IOT(ih.init_cs_object-1,npages) * mps;
     const unsigned text_vaddr = IOT(ih.init_cs_object-1,my_base_address);
 
-    // filter
-    Filter ft(opt->level);
-    tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
-    buildLoader(&ft);
-
     // attach some useful data at the end of preprocessed fixups
     ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
     unsigned ic = objects*sizeof(*iobject_table);
@@ -480,6 +477,10 @@ void PackWcle::pack(OutputFile *fo)
     set_le32(ifixups+sofixups+8,mps*pages); // virtual address of unpacked relocations
     ifixups[sofixups+12] = (unsigned char) objects;
     sofixups += 13;
+
+    // filter
+    Filter ft(opt->level);
+    tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
 
     encodeImage(&ft);
 
