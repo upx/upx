@@ -95,8 +95,6 @@ protected:
     upx_uint fdata_size;
     // calculated filesize
     upx_uint cfile_size;
-
-    MemBuffer pad_data;
 };
 
 
