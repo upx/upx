@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2004-07-19.
+UPX TODO list. Last updated 2004-07-20.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -7,6 +7,8 @@ IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
 
 
 OTHER:
+
+- rewrite linker.cpp to allow arbitrary length section names
 
 - check all <const_cast> to make sure they are not invalid
 
