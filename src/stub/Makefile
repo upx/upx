@@ -1,10 +1,13 @@
 #
 # UPX stub Makefile (GNU make)
 #
+# see http://wildsau.idv-edu.uni-linz.ac.at/mfx/download/upx/tools/
+# for required support tools
+#
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-0.91
+UCLDIR = $(HOME)/local/src/ucl-0.92
 endif
 
 
@@ -15,6 +18,7 @@ endif
 SHELL = /bin/sh
 
 top_srcdir = ../..
+srcdir = .
 
 
 # These are the files we want to create.
@@ -55,20 +59,17 @@ vpath %.ash $(UCL_M68K)
 # // tools
 # ************************************************************************/
 
-NASM     = /usr/topics/src/nasm-20000911/nasm -O0 -w+macro-params -w+orphan-labels
-NASM     = /usr/topics/src/nasm-20000911/nasm -O2 -w+macro-params -w+orphan-labels
+NASM     = /usr/topics/src/nasm-20000903/nasm -O0 -w+macro-params -w+orphan-labels
+NASM     = /usr/topics/src/nasm-20000903/nasm -O2 -w+macro-params -w+orphan-labels
 NASM     = nasm -w+macro-params -w+orphan-labels
 
-APP      = perl -w scripts/app.pl
-BIN2H    = perl -w scripts/bin2h.pl
-BRANDELF = perl -w scripts/brandelf.pl
-O2BIN    = perl -w scripts/o2bin.pl
-SETFOLD  = /bin/sh scripts/setfold.sh
-##STRIPELF = perl -w scripts/stripelf.pl
-STRIPELF = ./util/sstrip/sstrip
-
-# Preprocessor for a68k assembler.
-CPP_M68K  = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+APP      = perl -w $(srcdir)/scripts/app.pl
+BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
+BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
+O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
+SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
+##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
+STRIPELF = $(srcdir)/util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
@@ -77,7 +78,17 @@ CC_LINUX_CFLAGS += -funsigned-char
 CC_LINUX = gcc272 -O2 -m386                  -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
 CC_LINUX = gcc    -Os -march=i386 -mcpu=i386 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
 # Specifying -mcpu=i586 inhibits use of 'leave', which costs 2 bytes per subr
-#CC_LINUX =gcc    -Os -march=i386 -mcpu=i586 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
+#CC_LINUX = gcc    -Os -march=i386 -mcpu=i586 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
+
+ifeq (1,1)
+# Preprocessor for the a68k 68000-assembler.
+CPP_A68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
+A68K = a68k -q -x
+else
+# Preprocessor for the asl 68000-assembler.
+CPP_A68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
+A68K = sh $(srcdir)/scripts/asl_68k.sh
+endif
 
 
 # /***********************************************************************
@@ -149,26 +160,26 @@ l_tmt.h: l_tmt.asx
 	$(BIN2H) $T.bin nrv_loader $@
 
 l_t_n2b.h: l_tos.s
-	$(CPP_M68K) -D__A68K__ -DNRV2B -o $T.i $<
-	a68k -q -x $T.i
+	$(CPP_A68K) -DNRV2B -o $T.i $<
+	$(A68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader $@
 
 l_t_n2bs.h: l_tos.s
-	$(CPP_M68K) -D__A68K__ -DNRV2B -DSMALL -o $T.i $<
-	a68k -q -x $T.i
+	$(CPP_A68K) -DNRV2B -DSMALL -o $T.i $<
+	$(A68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2b_loader_small $@
 
 l_t_n2d.h: l_tos.s
-	$(CPP_M68K) -D__A68K__ -DNRV2D -o $T.i $<
-	a68k -q -x $T.i
+	$(CPP_A68K) -DNRV2D -o $T.i $<
+	$(A68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader $@
 
 l_t_n2ds.h: l_tos.s
-	$(CPP_M68K) -D__A68K__ -DNRV2D -DSMALL -o $T.i $<
-	a68k -q -x $T.i
+	$(CPP_A68K) -DNRV2D -DSMALL -o $T.i $<
+	$(A68K) $T.i
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader_small $@
 
@@ -279,10 +290,10 @@ l_com.h:        n2b_d16.asy  $(DEPS2)
 l_djgpp2.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  $(DEPS2)
 l_sys.h:        n2b_d16.asy  $(DEPS2)
-l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1)
-l_t_n2bs.h:     n2b_d.ash    bits.ash  $(DEPS1)
-l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1)
-l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1)
+l_t_n2b.h:      n2b_d.ash    bits.ash     $(DEPS1)
+l_t_n2bs.h:     n2b_d.ash    bits.ash     $(DEPS1)
+l_t_n2d.h:      n2d_d.ash    bits.ash     $(DEPS1)
+l_t_n2ds.h:     n2d_d.ash    bits.ash     $(DEPS1)
 l_tmt.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_vxd.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
