@@ -137,6 +137,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
     Elf_LE32_Ehdr ehdro;
+    LE32 tmp_le32;
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
@@ -193,7 +194,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     char const call = 0xE8;  // opcode for CALL d32
     fo->write(&call, 1); fo_off+=1;
-    fo->write(&ph.c_len, sizeof(ph.c_len));  fo_off += 4;  // XXX LE32
+    tmp_le32 = ph.c_len; fo->write(&tmp_le32, 4); fo_off += 4;
     fo->write(obuf, ph.c_len); fo_off += ph.c_len;
     fo->write(loader, lsize); fo_off += lsize;
 
@@ -211,7 +212,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[2].sh_addralign = 1;
-    fo->write(&ph.u_len, sizeof(ph.u_len));  // XXX LE32
+    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[2].sh_size;
 
     // .note with rest     --------------------------------
@@ -226,7 +227,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[3].sh_addralign = 1;
-    fo->write(&ph.u_len, sizeof(ph.u_len));  // XXX LE32
+    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[3].sh_size;
 
     while (0!=*p++) ;
@@ -288,7 +289,7 @@ int PackVmlinuxI386::canUnpack()
     ||  ehdri.e_version != 1  // version
     ||  ehdri.e_type != Elf_LE32_Ehdr::ET_REL
     ||  ehdri.e_shnum < 4
-    ||  file_size < (ehdri.e_shnum * sizeof(Elf_LE32_Shdr) + ehdri.e_shoff)
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf_LE32_Shdr) + ehdri.e_shoff)
     )
         return false;
 
@@ -302,7 +303,7 @@ int PackVmlinuxI386::canUnpack()
     for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if (Elf_LE32_Shdr::SHT_STRTAB==p->sh_type
         &&  p->sh_size <= sizeof(shstrtab)
-        &&  (p->sh_size + p->sh_offset) <= file_size
+        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
         &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
         ) {
             fi->seek(p->sh_offset, SEEK_SET);
@@ -320,7 +321,7 @@ int PackVmlinuxI386::canUnpack()
     // check for .text .note .note  and sane (.sh_size + .sh_offset)
     p_note0 = p_note1 = p_text = 0;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (file_size < (p->sh_size + p->sh_offset)
+        if ((unsigned)file_size < (p->sh_size + p->sh_offset)
         ||  p_shstrtab->sh_size < (5+ p->sh_name) ) {
             continue;
         }
@@ -352,15 +353,14 @@ int PackVmlinuxI386::canUnpack()
 
 void PackVmlinuxI386::unpack(OutputFile *fo)
 {
-    struct {
-        unsigned char opcode;
-        unsigned char d32[4];
-    } call;
+    unsigned char buf[5];
     PackHeader const ph_tmp(ph);
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
-    fi->readx(&ph.u_len, sizeof(ph.u_len)); // XXX LE32
-    ibuf.alloc(ph.c_len = p_note0->sh_size - sizeof(ph.u_len));
+    fi->readx(&buf[0], 4);
+    ph.u_len = get_le32(buf);
+    ph.c_len = p_note0->sh_size - 4;
+    ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
     obuf.allocForUncompression(ph.u_len);
     decompress(ibuf, obuf, false);
@@ -370,10 +370,9 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 
     ph = ph_tmp;
     fi->seek(p_text->sh_offset, SEEK_SET);
-    fi->readx(&call, 5);
-    if (0xE8!=call.opcode
-    ||  *(int *)&call.d32!=(int)ph.c_len  // XXX LE32
-    ) {
+    fi->readx(&buf[0], 5);
+    if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
+    {
         throwCantUnpack(".text corrupted");
     }
     ibuf.alloc(ph.c_len);
@@ -390,8 +389,10 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
     ibuf.dealloc();
 
     fi->seek(p_note1->sh_offset, SEEK_SET);
-    fi->readx(&ph.u_len, sizeof(ph.u_len)); // XXX LE32
-    ibuf.alloc(ph.c_len = p_note1->sh_size - sizeof(ph.u_len));
+    fi->readx(&buf[0], 4);
+    ph.u_len = get_le32(buf);
+    ph.c_len = p_note1->sh_size - 4;
+    ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
     obuf.allocForUncompression(ph.u_len);
     decompress(ibuf, obuf, false);
