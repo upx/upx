@@ -137,8 +137,6 @@ B<--help>: prints the help
 
 B<--version>: print the version of B<UPX>
 
-B<--stdout>: writes all output to stdout
-
 [ ...to be written... - type `B<upx --help>' for now ]
 
 
