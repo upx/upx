@@ -258,7 +258,7 @@ void PackLinuxI386::updateLoader(OutputFile *fo)
     phdro->p_paddr = phdro->p_vaddr = 0x00400000 + (lsize &~ PAGE_MASK);
     phdro->p_memsz = phdro->p_filesz = fo->getBytesWritten() - lsize;
     phdro->p_flags = phdro->PF_R;
-    phdro->p_align = -PAGE_MASK;
+    phdro->p_align = (unsigned) (-PAGE_MASK);
 
     patchLoaderChecksum();
     fo->seek(0, SEEK_SET);
