@@ -965,7 +965,7 @@ const int *Packer::getDefaultCompressionMethods_LE32(int method, int level, int 
 // loader util
 **************************************************************************/
 
-char const *Packer::identstr(unsigned &size)
+char const *Packer::getIdentstr(unsigned *size, int small)
 {
     static const char identbig[] =
         "\n\0"
@@ -981,20 +981,28 @@ char const *Packer::identstr(unsigned &size)
         "$Id: UPX "
         "(C) 1996-2002 the UPX Team. All Rights Reserved. http://upx.sf.net $"
         "\n";
-//    static const char identtiny[] = UPX_VERSION_STRING4;
-// FIXME
+    static const char identtiny[] = UPX_VERSION_STRING4;
 
-    if (opt->small) {
-        size = sizeof(identsmall);
+    if (small < 0)
+        small = opt->small;
+    if (small >= 2)
+    {
+        *size = sizeof(identtiny);
+        return identtiny;
+    }
+    else if (small >= 1)
+    {
+        *size = sizeof(identsmall);
         return identsmall;
     }
-    else {
-        size = sizeof(identbig);
+    else
+    {
+        *size = sizeof(identbig);
         return identbig;
     }
 }
 
-void Packer::initLoader(const void *pdata, int plen, int pinfo)
+void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 {
     if (pinfo < 0)
     {
@@ -1009,8 +1017,8 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         linker = new BeLinker(pdata, plen, pinfo);  // big endian
 
     unsigned size;
-    char const *const ident = identstr(size);
-    linker->addSection("IDENTSTR",ident,size);
+    char const * const ident = getIdentstr(&size, small);
+    linker->addSection("IDENTSTR", ident, size);
 }
 
 

@@ -207,12 +207,12 @@ protected:
     virtual int buildLoader(const Filter *) { return getLoaderSize(); }
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
-    virtual void initLoader(const void *pdata, int plen, int pinfo=-1);
+    virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
     virtual void addLoader(const char *s, ...);
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
     virtual const char *getDecompressor() const;
-    char const *identstr(unsigned &size);
+    virtual const char *getIdentstr(unsigned *size, int small=-1);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);

@@ -93,7 +93,7 @@ PackLinuxI386::generateElfHdr(
 
 #if 0  //{
     unsigned identsize;
-    char const *const ident = identstr(identsize);
+    char const *const ident = getIdentstr(&identsize);
 #endif  //}
     h2->phdr[0].p_filesz = sizeof(*h2);  // + identsize;
     h2->phdr[0].p_memsz  = h2->phdr[0].p_filesz;
