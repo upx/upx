@@ -23,6 +23,9 @@
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -73,35 +76,44 @@ static __inline__ int xwrite(int fd, const void *buf, int count)
 // util
 **************************************************************************/
 
+#if 1
+
 extern char *
 __attribute__ ((regparm(2), stdcall))  // be ruthless
 upx_itoa(unsigned long v, char *buf);
-//  Some versions of gcc optimize the division and/or remainder using
-//  a multiplication by (2**32)/10, and use a relocatable 32-bit address
-//  to reference the constant.  We require no relocations because we move
-//  the code at runtime.  See upx_itoa.asm for replacement [also smaller.]
-//static char *upx_itoa(unsigned long v, char *buf)
-//{
-//    volatile unsigned TEN = 10;  // an ugly way to achieve no relocation
-//    char *p = buf;
-//    {
-//        unsigned long k = v;
-//        do {
-//            p++;
-//            k /= TEN;
-//        } while (k > 0);
-//    }
-//    buf = p;
-//    *p = 0;
-//    {
-//        unsigned long k = v;
-//        do {
-//            *--p = '0' + k % TEN;
-//            k /= TEN;
-//        } while (k > 0);
-//    }
-//    return buf;
-//}
+
+#else
+
+// Some versions of gcc optimize the division and/or remainder using
+// a multiplication by (2**32)/10, and use a relocatable 32-bit address
+// to reference the constant.  We require no relocations because we move
+// the code at runtime.  See upx_itoa.asm for replacement [also smaller.]
+static char *upx_itoa(unsigned long v, char *buf)
+{
+//    const unsigned TEN = 10;
+    volatile unsigned TEN = 10;  // an ugly way to achieve no relocation
+    char *p = buf;
+    {
+        unsigned long k = v;
+        do {
+            p++;
+            k /= TEN;
+        } while (k > 0);
+    }
+    buf = p;
+    *p = 0;
+    {
+        unsigned long k = v;
+        do {
+            *--p = '0' + k % TEN;
+            k /= TEN;
+        } while (k > 0);
+    }
+    return buf;
+}
+
+#endif
+
 
 static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 {
@@ -113,6 +125,7 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
     } while (--n > 0);
     return v;
 }
+
 
 static char *
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)

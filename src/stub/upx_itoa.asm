@@ -1,4 +1,4 @@
-;  l_lx_itoa.asm -- decimal print; smaller than gcc, and no relocations
+;  upx_itoa.asm -- decimal print; smaller than gcc, and no relocations
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -52,3 +52,4 @@ quo0:
 	add al, byte '0'
 	stosb
 	ret
+
