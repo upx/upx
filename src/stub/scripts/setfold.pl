@@ -29,11 +29,15 @@ $fname = shift || die;
 sysopen (FH,$fname,2) || die;
 binmode FH;
 
+$fsize = (stat($fname))[7];
+
 $val = shift || die "$val";
 ###print STDERR "$val\n";
 $val = oct($val);               # acutally hex()
-###print STDERR "$val\n";
-die unless $val;
+$val = $val & 0xfff;
+printf STDERR "$fname: setting fold to 0x%x, file size 0x%x\n", $val, $fsize;
+die unless $val > 0;
+die unless $val < $fsize;
 $num = pack("V", $val);
 
 # 0x34 = sizeof(Elf32_Ehdr)
