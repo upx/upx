@@ -59,7 +59,8 @@ fold_begin:     ; enter: %ebx= uncDst
 %define AT_NULL   0
 %define AT_IGNORE 1
 %define AT_PHDR   3
-%define AT_NUMBER 20
+%define AT_NUMBER (5+ 23)
+; 2002-11-09  glibc-2.2.90  AT_IGNOREPPC==22  plus 5 for future growth
 
         mov esi, esp
         sub esp, sz_auxv * AT_NUMBER  ; more than 128 bytes
@@ -82,7 +83,8 @@ L20:  ; move envp
 ; complete Elf_auxv table full of AT_IGNORE
         push edi  ; save base of resulting table
         inc eax  ; convert 0 to AT_IGNORE
-        mov ecx, 2 * (AT_NUMBER -1)
+        push byte 2 * (AT_NUMBER -1)  ; less than 128
+        pop ecx
         rep stosd
         dec eax  ; convert AT_IGNORE into AT_NULL
         stosd  ; terminate Elf_auxv
@@ -92,11 +94,11 @@ L20:  ; move envp
 L30:  ; distribute existing Elf32_auxv into new table
         lodsd
         test eax,eax  ; AT_NULL ?
-        xchg eax,edx
+        xchg eax,ecx  ; edx is busy, do not use
         lodsd
         je L40
-        mov [a_type + sz_auxv*(edx -1) + edi], edx
-        mov [a_val  + sz_auxv*(edx -1) + edi], eax
+        mov [a_type + sz_auxv*(ecx -1) + edi], ecx
+        mov [a_val  + sz_auxv*(ecx -1) + edi], eax
         jmp L30
 L40:
 
