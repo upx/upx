@@ -17,7 +17,7 @@
 //
 ************************************************************************/
 
-#if (ACC_CC_GNUC >= 0x020800l)     /* 2.8.0 */
+#if (ACC_CC_GNUC >= 0x020800ul)     /* 2.8.0 */
 #  define __acc_gnuc_extension__ __extension__
 #else
 #  define __acc_gnuc_extension__
@@ -39,10 +39,10 @@ __acc_gnuc_extension__ typedef unsigned __int64 acc_uint64_t;
 
 
 #if !defined(ACC_UINT32_C)
-#  if defined(__PACIFIC__) && defined(DOS)
-     /* workaround Pacific C */
+#  if (ACC_OS_DOS16 && ACC_CC_PACIFICC)
+     /* workaround for Pacific C */
 #    define ACC_UINT32_C(c)     c
-#  elif (UINT_MAX < __ACC_UINT_MAX(32))
+#  elif (UINT_MAX < ACC_0xffffffffL)
 #    define ACC_UINT32_C(c)     c ## UL
 #  else
 #    define ACC_UINT32_C(c)     c ## U

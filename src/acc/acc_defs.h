@@ -25,7 +25,7 @@
 #endif
 
 #if !defined(ACC_COMPILE_TIME_ASSERT)
-#  if (ACC_CC_DMC || ACC_CC_PACIFIC)
+#  if (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC)
 #    define ACC_COMPILE_TIME_ASSERT(expr) \
         switch (0) { case 1: case !(expr): break; }
 #  else
@@ -39,9 +39,13 @@
 // macros
 ************************************************************************/
 
+/* workaround for preprocessor bugs in some compilers */
+#define ACC_0xffffL             65535ul
+#define ACC_0xffffffffL         4294967295ul
+
 #if !defined(__ACC_UINT_MAX)
-#  define __ACC_INT_MAX(b)         ((1l << ((b)-1)) - 1)
-#  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1) << 1) + 1)
+#  define __ACC_INT_MAX(b)      ((((1l  << ((b)-2)) - 1l)  * 2l)  + 1l)
+#  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1ul) * 2ul) + 1ul)
 #endif
 
 
@@ -50,9 +54,9 @@
 ************************************************************************/
 
 #if !defined(__ACC_SHORT_BIT)
-#  if (USHRT_MAX == 0xffffL)
+#  if (USHRT_MAX == ACC_0xffffL)
 #    define __ACC_SHORT_BIT     16
-#  elif (USHRT_MAX == __ACC_UINT_MAX(32))
+#  elif (USHRT_MAX == ACC_0xffffffffL)
 #    define __ACC_SHORT_BIT     32
 #  elif (USHRT_MAX == __ACC_UINT_MAX(64))
 #    define __ACC_SHORT_BIT     64
@@ -64,9 +68,9 @@
 #endif
 
 #if !defined(__ACC_INT_BIT)
-#  if (UINT_MAX == 0xffffL)
+#  if (UINT_MAX == ACC_0xffffL)
 #    define __ACC_INT_BIT       16
-#  elif (UINT_MAX == __ACC_UINT_MAX(32))
+#  elif (UINT_MAX == ACC_0xffffffffL)
 #    define __ACC_INT_BIT       32
 #  elif (UINT_MAX == __ACC_UINT_MAX(64))
 #    define __ACC_INT_BIT       64
@@ -78,7 +82,7 @@
 #endif
 
 #if !defined(__ACC_LONG_BIT)
-#  if (ULONG_MAX == __ACC_UINT_MAX(32))
+#  if (ULONG_MAX == ACC_0xffffffffL)
 #    define __ACC_LONG_BIT      32
 #  elif (ULONG_MAX == __ACC_UINT_MAX(64))
 #    define __ACC_LONG_BIT      64

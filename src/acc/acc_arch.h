@@ -37,6 +37,9 @@
 #elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
 #  define ACC_ARCH_IA32             1
 #  define ACC_INFO_ARCH             "ia32"
+#elif (ACC_CC_ZORTECHC && defined(__I86__))
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "ia32"
 #elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"

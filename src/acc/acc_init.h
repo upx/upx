@@ -17,7 +17,11 @@
 // try to detect specific compilers
 ************************************************************************/
 
-#if defined(__VERSION) && (UINT_MAX == 0xffffL) && defined(MB_LEN_MAX)
+#if defined(__ZTC__) && defined(__I86__) && (UINT_MAX == 0xffffL)
+#  if !defined(__DOS__) && !defined(__OS2__)
+#    define __DOS__ 1
+#  endif
+#elif defined(__VERSION) && (UINT_MAX == 0xffffL) && defined(MB_LEN_MAX)
 #  if (__VERSION == 520) && (MB_LEN_MAX == 1)
 #    if !defined(__AZTEC_C__)
 #      define __AZTEC_C__ __VERSION
@@ -33,16 +37,11 @@
 // fix incorrect and missing stuff
 ************************************************************************/
 
-#if defined(__CYGWIN32__) && !defined(__CYGWIN__)
-#  define __CYGWIN__ __CYGWIN32__
-#endif
-
-
 /* Microsoft C does not correctly define ptrdiff_t for
  * the 16-bit huge memory model.
  */
 #if defined(_MSC_VER) && defined(M_I86HM) && (UINT_MAX == 0xffffL)
-#  if (_MSC_VER <= 800)
+#  if (_MSC_VER < 900)
 #    define ptrdiff_t long
 #    define _PTRDIFF_T_DEFINED
 #  endif
@@ -56,6 +55,21 @@
 #  endif
 #  if !defined(__near)
 #    define __near near
+#  endif
+#elif defined(_MSC_VER) && defined(MSDOS)
+#  if(_MSC_VER < 700)
+#    if !defined(__cdecl)
+#      define __cdecl _cdecl
+#    endif
+#    if !defined(__far)
+#      define __far _far
+#    endif
+#    if !defined(__huge)
+#      define __huge _huge
+#    endif
+#    if !defined(__near)
+#      define __near _near
+#    endif
 #  endif
 #elif defined(__TURBOC__) && defined(__MSDOS__)
 #  if(__TURBOC__ < 0x0410)
@@ -75,7 +89,15 @@
 #endif
 
 
-#if defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
+#if defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0200)
+#  define ACC_BROKEN_SIZEOF 1
+#  if (__TURBOC < 0x0150)
+#    define ACC_BROKEN_INTEGRAL_PROMOTION 1
+#  endif
+#elif defined(MSDOS) && defined(_MSC_VER) && (_MSC_VER < 700)
+#  define ACC_BROKEN_INTEGRAL_PROMOTION 1
+#  define ACC_BROKEN_SIZEOF 1
+#elif defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
 #  define ACC_BROKEN_SIZEOF 1
 #endif
 

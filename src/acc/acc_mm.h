@@ -42,7 +42,7 @@
 #  define ACC_MM_COMPACT        1
 #elif defined(__LARGE__) || defined(M_I86LM) || defined(_M_I86LM) || defined(LARGE_MODEL)
 #  define ACC_MM_LARGE          1
-#elif (ACC_CC_AZTEC_C)
+#elif (ACC_CC_AZTECC)
 #  if defined(_LARGE_CODE) && defined(_LARGE_DATA)
 #    define ACC_MM_LARGE        1
 #  elif defined(_LARGE_CODE)
@@ -52,24 +52,56 @@
 #  else
 #    define ACC_MM_SMALL        1
 #  endif
+#elif (ACC_CC_ZORTECHC && defined(__VCM__))
+#  define ACC_MM_LARGE          1
 #else
 #  error "unknown memory model"
 #endif
 
 
-#if (ACC_CC_AZTEC_C || ACC_CC_PACIFIC)
-#elif (ACC_CC_DMC)
-#  define ACC_HAVE_MM_HUGE_PTR      1
-#elif (ACC_CC_TURBOC && __TURBOC__ < 0x0295)
-#  define ACC_HAVE_MM_HUGE_PTR      1
-#elif (ACC_CC_WATCOMC && __WATCOMC__ >= 1200)
-   /* __huge pointers seem completely broken in OpenWatcom 1.0 */
-#else
-#  define ACC_HAVE_MM_HUGE_PTR      1   /* working __huge pointers */
-#  define ACC_HAVE_MM_HUGE_ARRAY    1   /* char __huge x[256*1024L] works */
-#endif
+/* ACC_HAVE_MM_HUGE_PTR   ... working __huge pointers
+ * ACC_HAVE_MM_HUGE_ARRAY ... char __huge x[256*1024L] works */
+#define ACC_HAVE_MM_HUGE_PTR        1
+#define ACC_HAVE_MM_HUGE_ARRAY      1
+
 #if (ACC_MM_TINY)
 #  undef ACC_HAVE_MM_HUGE_ARRAY
+#  if (ACC_CC_MSC && _MSC_VER < 700)
+#    undef ACC_HAVE_MM_HUGE_PTR
+#  endif
+#endif
+
+#if (ACC_CC_AZTECC || ACC_CC_PACIFICC || ACC_CC_ZORTECHC)
+#  undef ACC_HAVE_MM_HUGE_PTR
+#  undef ACC_HAVE_MM_HUGE_ARRAY
+#elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
+#  undef ACC_HAVE_MM_HUGE_ARRAY
+#elif (ACC_CC_TURBOC && __TURBOC__ < 0x0295)
+#  undef ACC_HAVE_MM_HUGE_ARRAY
+#elif (ACC_CC_WATCOMC && __WATCOMC__ >= 1200)
+   /* __huge pointers seem completely broken in OpenWatcom 1.0 */
+#  undef ACC_HAVE_MM_HUGE_PTR
+#  undef ACC_HAVE_MM_HUGE_ARRAY
+#endif
+
+#if (ACC_HAVE_MM_HUGE_PTR)
+#  if (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0400)
+     extern unsigned short __near _AHSHIFT;
+#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
+#  elif (ACC_CC_DMC || ACC_CC_MSC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
+     extern unsigned short __near _AHSHIFT;
+#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
+#  elif (ACC_CC_TURBOC && __TURBOC__ >= 0x0295)
+     extern unsigned short __near _AHSHIFT;
+#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
+#  elif (ACC_CC_TURBOC && ACC_OS_DOS16)
+#    define ACC_MM_AHSHIFT      12
+#  elif (ACC_CC_WATCOMC)
+     extern unsigned char _HShift;
+#    define ACC_MM_AHSHIFT      ((unsigned) _HShift)
+#  else
+#    error "implement ACC_MM_AHSHIFT"
+#  endif
 #endif
 
 

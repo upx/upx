@@ -65,10 +65,10 @@
 #    error "check your limits.h header"
 #  endif
 #elif defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) || (defined(__PACIFIC__) && defined(DOS))
-#  if (UINT_MAX == 0xffffffffL)
+#  if (UINT_MAX == 0xffffffffUL)
 #    define ACC_OS_DOS32        1
 #    define ACC_INFO_OS         "dos32"
-#  elif (UINT_MAX == 0xffffL)
+#  elif (UINT_MAX == 0xffffUL)
 #    define ACC_OS_DOS16        1
 #    define ACC_INFO_OS         "dos16"
 #  else

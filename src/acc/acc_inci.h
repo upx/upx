@@ -28,12 +28,15 @@
 #  define ACC_H_WINDOWS_H 1
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_WIN16)
 #  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#    include <alloc.h>
 #    include <dir.h>
 #  elif defined(__DJGPP__)
 #    include <sys/exceptn.h>
-#  elif (ACC_CC_PACIFIC)
+#  elif (ACC_CC_PACIFICC)
 #    include <unixio.h>
 #    include <sys.h>
+#  elif (ACC_CC_WATCOMC)
+#    include <i86.h>
 #  endif
 #endif
 

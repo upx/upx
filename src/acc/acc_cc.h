@@ -32,7 +32,7 @@
 #  define ACC_INFO_CC           "gcc"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__AZTEC_C__)
-#  define ACC_CC_AZTEC_C        1
+#  define ACC_CC_AZTECC         1
 #  define ACC_INFO_CC           "Aztec C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__AZTEC_C__)
 #elif defined(__BORLANDC__)
@@ -64,7 +64,7 @@
 #  define ACC_INFO_CC           "Metrowerks C"
 #  define ACC_INFO_CCVER        "unknown"
 #elif defined(__PACIFIC__)
-#  define ACC_CC_PACIFIC        1
+#  define ACC_CC_PACIFICC       1
 #  define ACC_INFO_CC           "Pacific C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__PACIFIC__)
 #elif defined(__PUREC__)
@@ -72,7 +72,7 @@
 #  define ACC_INFO_CC           "Pure C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__PUREC__)
 #elif defined(__SC__)
-#  define ACC_CC_SYMANTEC       1
+#  define ACC_CC_SYMANTECC      1
 #  define ACC_INFO_CC           "Symantec C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__SC__)
 #elif defined(__SUNPRO_C)
@@ -94,7 +94,11 @@
 #elif defined(__ZTC__)
 #  define ACC_CC_ZORTECHC       1
 #  define ACC_INFO_CC           "Zortech C"
-#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__ZTC__)
+#  if (__ZTC__ == 0x310)
+#    define ACC_INFO_CCVER      "0x310"
+#  else
+#    define ACC_INFO_CCVER      ACC_MACRO_EXPAND(__ZTC__)
+#  endif
 #else
 #  define ACC_CC_UNKNOWN        1
 #  define ACC_INFO_CC           "unknown"

@@ -23,12 +23,19 @@
  */
 
 
-#define ACC_VERSION     20030417L
+#define ACC_VERSION     20030423L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
 #endif
 
+
+#if defined(__CYGWIN32__) && !defined(__CYGWIN__)
+#  define __CYGWIN__ __CYGWIN32__
+#endif
+#if defined(__ICL) && !defined(__INTEL_COMPILER)
+#  define __INTEL_COMPILER __ICL
+#endif
 
 /* disable pedantic warnings */
 #if defined(__INTEL_COMPILER) && defined(__linux__)
