@@ -31,7 +31,8 @@
  *   ACC_ENDIAN_BIG_ENDIAN
  *
  * Note that this list is not exhaustive - actually we only really care
- * about IA32 which allows unaligned memory access (at reasonable speed).
+ * about architectures which allows unaligned memory access at reasonable
+ * speed (for the moment this means IA16 and IA32).
  */
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
@@ -50,11 +51,11 @@
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"
 #elif (ACC_OS_DOS32 || ACC_OS_OS2)
-#  error "missing define for CPU architechture"
-#elif (0 && ACC_OS_WIN32)
-#  error "missing define for CPU architechture"
-#elif (0 && ACC_OS_WIN64)
-#  error "missing define for CPU architechture"
+#  error "missing define for CPU architecture"
+#elif (ACC_OS_WIN32)
+#  error "missing define for CPU architecture"
+#elif (ACC_OS_WIN64)
+#  error "missing define for CPU architecture"
 #elif (ACC_OS_TOS) || defined(__m68000__)
 #  define ACC_ARCH_M68K             1
 #  define ACC_INFO_ARCH             "m68k"

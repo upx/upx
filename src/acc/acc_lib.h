@@ -245,7 +245,7 @@ typedef struct {
 } acc_rand48_t;
 ACCLIB_EXTERN(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand48) (acc_rand48_t* r);
-#endif /* defined(acc_uint64l_t) */
+#endif
 
 #if defined(acc_uint64l_t)
 typedef struct {
@@ -253,7 +253,7 @@ typedef struct {
 } acc_rand64_t;
 ACCLIB_EXTERN(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand64) (acc_rand64_t* r);
-#endif /* defined(acc_uint64l_t) */
+#endif
 
 
 #endif /* already included */

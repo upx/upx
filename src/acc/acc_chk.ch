@@ -23,7 +23,7 @@
 
 /* compile-time sign */
 #if !defined(ACCCHK_ASSERT_SIGN_T)
-#  define ACCCHK_ASSERT_SIGN_T(type, relop) \
+#  define ACCCHK_ASSERT_SIGN_T(type,relop) \
         ACCCHK_ASSERT( (type) (-1)       relop  (type) 0 ) \
         ACCCHK_ASSERT( (type) (~(type)0) relop  (type) 0 ) \
         ACCCHK_ASSERT( (type) (~(type)0) ==     (type) (-1) )

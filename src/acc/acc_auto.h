@@ -187,12 +187,12 @@
 #elif (ACC_CC_TURBOC)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_SYS_TIME_H
+#  undef HAVE_SYS_TYPES_H /* useless */
 #  if (ACC_OS_WIN32 || ACC_OS_WIN64)
 #    undef HAVE_DIRENT_H /* pulls in <windows.h>; use <dir.h> instead */
 #  endif
 #  if (__TURBOC__ < 0x0200)
 #    undef HAVE_SIGNAL_H /* not working */
-#    undef HAVE_SYS_TYPES_H
 #  endif
 #  if (__TURBOC__ < 0x0400)
 #    undef HAVE_DIRECT_H
@@ -319,7 +319,7 @@
 #  undef HAVE_UTIME /* struct utimbuf is missing */
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_BORLANDC)
-#  if (ACC_OS_DOS16 || ACC_OS_WIN16)
+#  if defined(ACC_MM_TINY)
 #    undef HAVE_DIFFTIME /* difftime() is in the math library */
 #  endif
 #  if (__BORLANDC__ < 0x0400)
@@ -339,7 +339,7 @@
 #elif defined(__DJGPP__)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
-#elif (ACC_CC_IBMC && ACC_OS_OS2)
+#elif (ACC_CC_IBMC)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_INTELC)
@@ -493,7 +493,7 @@
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0520))
-   /* WARNING: unsigned __int64 is somewhat broken in 0x0520 */
+   /* INFO: unsigned __int64 is somewhat broken in 0x0520; fixed in 0x0530 */
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && __WATCOMC__ >= 1100))
