@@ -920,7 +920,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 bool Packer::isValidCompressionMethod(int method)
 {
-    return (method >= M_NRV2B_LE32 && method <= M_NRV2E_LE16);
+    return (method >= M_NRV2B_LE32 && method <= M_CL1B_LE16);
 }
 
 
@@ -929,6 +929,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
     static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, -1 };
     static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, -1 };
     static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, -1 };
+    static const int m_cl1b[]  = { M_CL1B_8, -1 };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -938,6 +939,8 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
         return m_nrv2d;
     if (M_IS_NRV2E(method))
         return m_nrv2e;
+    if (M_IS_CL1B(method))
+        return m_cl1b;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -949,6 +952,7 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
     static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, -1 };
     static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, -1 };
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_cl1b[]  = { M_CL1B_LE32, -1 };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -958,6 +962,8 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
         return m_nrv2d;
     if (M_IS_NRV2E(method))
         return m_nrv2e;
+    if (M_IS_CL1B(method))
+        return m_cl1b;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -1109,6 +1115,64 @@ const char *Packer::getDecompressor() const
         "N2EFAS10""+80CXXXX""N2EFAS11""N2EDEC10""N2EFAS20"
         "N2EDEC20""N2EFAS30""N2EDEC30""N2EFAS40""N2EFAS50"
         "N2EDEC50""N2EFAS60""+40CXXXX""N2EFAS61""N2EDEC60";
+    static const char cl1b_le32_small[] =
+        "CL1ENTER""CL1SMA10""CL1RLOAD"
+        "CL1WID01""CL1SMA1B"
+        "CL1WID02""CL1SMA1B"
+        "CL1WID03""CL1SMA1B"
+        "CL1WID04""CL1SMA1B"
+        "CL1WID05""CL1SMA1B"
+        "CL1WID06""CL1SMA1B"
+        "CL1WID07""CL1SMA1B"
+        "CL1WID08""CL1SMA1B"
+        "CL1WID09""CL1SMA1B"
+        "CL1WID10"
+        "CL1START"
+        "CL1TOP00""CL1SMA1B"
+        "CL1TOP01""CL1SMA1B"
+        "CL1TOP02""CL1SMA1B"
+        "CL1TOP03""CL1SMA1B"
+        "CL1TOP04""CL1SMA1B"
+        "CL1TOP05""CL1SMA1B"
+        "CL1TOP06""CL1SMA1B"
+        "CL1TOP07""CL1SMA1B"
+        "CL1OFF01""CL1SMA1B"
+        "CL1OFF02""CL1SMA1B"
+        "CL1OFF03""CL1SMA1B"
+        "CL1OFF04"
+        "CL1LEN00""CL1SMA1B"
+        "CL1LEN01""CL1SMA1B"
+        "CL1LEN02"
+        "CL1COPY0";
+    static const char cl1b_le32_fast[] =
+        "CL1ENTER"          "CL1RLOAD"
+        "CL1WID01""CL1FAS1B"
+        "CL1WID02""CL1FAS1B"
+        "CL1WID03""CL1FAS1B"
+        "CL1WID04""CL1FAS1B"
+        "CL1WID05""CL1FAS1B"
+        "CL1WID06""CL1FAS1B"
+        "CL1WID07""CL1FAS1B"
+        "CL1WID08""CL1FAS1B"
+        "CL1WID09""CL1FAS1B"
+        "CL1WID10"
+        "CL1START"
+        "CL1TOP00""CL1FAS1B"
+        "CL1TOP01""CL1FAS1B"
+        "CL1TOP02""CL1FAS1B"
+        "CL1TOP03""CL1FAS1B"
+        "CL1TOP04""CL1FAS1B"
+        "CL1TOP05""CL1FAS1B"
+        "CL1TOP06""CL1FAS1B"
+        "CL1TOP07""CL1FAS1B"
+        "CL1OFF01""CL1FAS1B"
+        "CL1OFF02""CL1FAS1B"
+        "CL1OFF03""CL1FAS1B"
+        "CL1OFF04"
+        "CL1LEN00""CL1FAS1B"
+        "CL1LEN01""CL1FAS1B"
+        "CL1LEN02"
+        "CL1COPY0";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
@@ -1116,6 +1180,8 @@ const char *Packer::getDecompressor() const
         return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
     if (ph.method == M_NRV2E_LE32)
         return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
+    if (ph.method == M_CL1B_LE32)
+        return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
     throwInternalError("bad decompressor");
     return NULL;
 }
@@ -1250,11 +1316,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
     }
     assert(nmethods > 0);
 
-    // update total_passes
+    // update total_passes; previous (0 < ui_total_passes) means incremental
     if (strategy < 0)
-        ui_total_passes += 1 * nmethods;
+        ui_total_passes += 1 * nmethods - (0 < ui_total_passes);
     else
-        ui_total_passes += nfilters * nmethods;
+        ui_total_passes += nfilters * nmethods - (0 < ui_total_passes);
 
     // Working buffer for compressed data. Don't waste memory.
     MemBuffer *otemp = &obuf;
