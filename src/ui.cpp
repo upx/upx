@@ -143,12 +143,22 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
                           bool decompress=false)
 {
     static char buf[2000];
-    char r[7+1];
+    char r[7+1] = "";
     char fn[13+1];
     const char *f;
 
+    // Large ratios can happen because of overlays that are
+    // appended after a program is packed.
     unsigned ratio = get_ratio(fu_len, fc_len);
-    upx_snprintf(r, sizeof(r), "%3d.%02d%%", ratio / 10000, (ratio % 10000) / 100);
+#if 1
+    if (ratio >= 1000*1000)
+        strcpy(r, "overlay");
+#else
+    if (ratio >= 10*1000*1000)      // >= "1000%"
+        strcpy(r, "999.99%");
+#endif
+    else
+        upx_snprintf(r, sizeof(r), "%3d.%02d%%", ratio / 10000, (ratio % 10000) / 100);
     if (decompress)
         f = "%10ld <-%10ld  %7s  %13s  %s";
     else

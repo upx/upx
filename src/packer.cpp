@@ -958,7 +958,7 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         pinfo =  (pinfo + 3) &~ 3;
     }
 
-    delete linker;
+    delete linker; linker = NULL;
     if (getFormat() < 128)
         linker = new Linker(pdata, plen, pinfo);    // little endian
     else
