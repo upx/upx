@@ -105,6 +105,33 @@ protected:
 };
 
 
+/*************************************************************************
+// elks/8086 (linux-8086 uncompressed kernel image)
+**************************************************************************/
+
+class PackElks8086 : public PackVmlinuzI386
+{
+    typedef PackVmlinuzI386 super;
+public:
+    PackElks8086(InputFile *f) : super(f) { }
+    virtual int getFormat() const { return UPX_F_ELKS_8086; }
+    virtual const char *getName() const { return "elks/8086"; }
+    virtual int getCompressionMethod() const;
+    virtual const int *getFilters() const;
+
+    virtual void pack(OutputFile *fo);
+    virtual void unpack(OutputFile *fo);
+
+    virtual int canUnpack();
+
+protected:
+    virtual int uncompressKernel();
+    virtual void readKernel();
+
+    virtual int buildLoader(const Filter *ft);
+};
+
+
 #endif /* already included */
 
 

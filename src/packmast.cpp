@@ -177,10 +177,14 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // linux kernel
     //
-    if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
-        return p;
     if ((p = func(new PackVmlinuzI386(f),f)) != NULL)
         return p;
+    if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
+        return p;
+#if 0
+    if ((p = func(new PackElks8086(f),f)) != NULL)
+        return p;
+#endif
 
     //
     // linux
