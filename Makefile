@@ -15,7 +15,11 @@ distclean: clean
 dist:
 	sh ./maint/util/laszlo.sh
 
-.PHONY: all clean distclean dist
+cvs-admin-ko:
+	cvs admin -ko .
+	cvs update
+
+.PHONY: all clean distclean dist cvs-admin-ko
 
 .NOEXPORT:
 
