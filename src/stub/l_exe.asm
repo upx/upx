@@ -33,6 +33,7 @@
                 BITS    16
                 ORG     0
                 SECTION .text
+                CPU     8086
 
 ; =============
 ; ============= ENTRY POINT
@@ -83,9 +84,11 @@ do_copy:
 ; ============= DECOMPRESSION
 ; =============
 
+                CPU     286
 %include        "n2b_d8e.ash"
 %include        "n2d_d8e.ash"
 %include        "n2e_d8e.ash"
+                CPU     8086
 
 ; =============
 ; ============= RELOCATION

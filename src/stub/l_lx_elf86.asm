@@ -32,6 +32,7 @@
 
                 BITS    32
                 SECTION .text
+                CPU     386
 
 %define         jmps    jmp short
 %define         jmpn    jmp near

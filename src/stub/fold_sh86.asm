@@ -32,6 +32,7 @@
 
                 BITS    32
                 SECTION .text
+                CPU     386
 
 %define PAGE_SIZE ( 1<<12)
 %define szElf32_Ehdr 0x34

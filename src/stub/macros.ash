@@ -282,6 +282,9 @@ reloc_endx:
 ;; MRUBYTEn  256                 entries in wheel (smallest code)
 
 %macro          ctojr32 0
+
+                CPU     486     ; FIXME: ctojr32 uses bswap
+
 ;; I got confused by the syntactic sugar of the fake %ifdefs.
 ;; I can read the section name more easily when it is at the left margin.
 ;; Also, some of the logic to select the sections is not that simple,
@@ -576,6 +579,7 @@ unfcount:
         push edx
         ret
 
+        CPU     386
 %endmacro
 
 ; vi:ts=8:et:nowrap

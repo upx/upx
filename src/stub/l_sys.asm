@@ -36,6 +36,7 @@
                 BITS    16
                 ORG     0
                 SECTION .text
+                CPU     8086
 
 ; =============
 ; ============= ENTRY POINT
@@ -49,7 +50,9 @@ start:
                 dw      0               ; opendos wants this field untouched
 strategy:
 %ifdef  __SYSI2861__
+                CPU     286
                 pusha
+                CPU     8086
 %else;  __SYSI0861__
                 push    ax
                 push    bx
@@ -94,7 +97,9 @@ cutpoint:
 ; ============= DECOMPRESSION
 ; =============
 
+                CPU     286
 %include        "n2b_d16.ash"
+                CPU     8086
 
 ; =============
 ; ============= CALLTRICK
@@ -106,7 +111,9 @@ cutpoint:
 ;       __SYSMAIN5__
                 pop     es
 %ifdef  __SYSI2862__
+                CPU     286
                 popa
+                CPU     8086
 %else;  __SYSI0862__
                 pop     bp
                 pop     di

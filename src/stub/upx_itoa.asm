@@ -27,6 +27,7 @@
 
         BITS    32
         SECTION .text
+        CPU     386
         GLOBAL upx_itoa
 
 upx_itoa:  ; char *upx_itoa(eax= unsigned v, edx= char *buf)  /* 0<=(int)v */

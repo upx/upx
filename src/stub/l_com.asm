@@ -35,6 +35,7 @@
                 BITS    16
                 ORG     0
                 SECTION .text
+                CPU     8086
 
 ; =============
 ; ============= ENTRY POINT
@@ -78,7 +79,9 @@ cutpoint:
 ; ============= DECOMPRESSION
 ; =============
 
+                CPU     286
 %include        "n2b_d16.ash"
+                CPU     8086
 
 ; =============
 ; ============= CALLTRICK

@@ -30,6 +30,7 @@
 
                 BITS    32
                 SECTION .text
+                CPU     386
 
 ;; control just falls through, after this part and compiled C code
 ;; are uncompressed.

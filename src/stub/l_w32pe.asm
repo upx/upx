@@ -36,6 +36,7 @@
                 BITS    32
                 SECTION .text
                 ORG     0
+                CPU     386
 
 ; =============
 ; ============= ENTRY POINT
