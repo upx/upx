@@ -1077,17 +1077,23 @@ void upx_sanity_check(void)
     assert(strlen(UPX_VERSION_STRING4) == 4);
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
-    const unsigned char dd[4] = { 0xff, 0xff, 0xff, 0xff };
-    assert(get_be16(dd) == 0xffff);
-    assert(get_be16_signed(dd) == -1);
-    assert(get_be32(dd) == 0xffffffff);
-    assert(get_be32_signed(dd) == -1);
-    assert(get_le16(dd) == 0xffff);
-    assert(get_le16_signed(dd) == -1);
-    assert(get_le24(dd) == 0xffffff);
-    assert(get_le24_signed(dd) == -1);
-    assert(get_le32(dd) == 0xffffffff);
-    assert(get_le32_signed(dd) == -1);
+    const unsigned char dd[4] = { 0xff, 0xfe, 0xfd, 0xfc };
+    assert(get_be16(dd) == 0xfffe);
+    assert(get_be16_signed(dd) == -2);
+    assert(get_be24(dd) == 0xfffefd);
+    assert(get_be24_signed(dd) == -259);
+    assert(get_be32(dd) == 0xfffefdfc);
+    assert(get_be32_signed(dd) == -66052);
+    assert(get_le16(dd) == 0xfeff);
+    assert(get_le16_signed(dd) == -257);
+    assert(get_le24(dd) == 0xfdfeff);
+    assert(get_le24_signed(dd) == -131329);
+    assert(get_le32(dd) == 0xfcfdfeff);
+    assert(get_le32_signed(dd) == -50462977);
+    assert(find_be16(dd, sizeof(dd), 0xfffe) == 0);
+    assert(find_le16(dd, sizeof(dd), 0xfeff) == 0);
+    assert(find_be32(dd, sizeof(dd), 0xfffefdfc) == 0);
+    assert(find_le32(dd, sizeof(dd), 0xfcfdfeff) == 0);
 }
 
 
