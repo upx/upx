@@ -70,8 +70,9 @@ unsigned MemBuffer::getSize() const
 void MemBuffer::alloc(unsigned size, unsigned base_offset)
 {
 #if 0
-    // don't automaticlly free a used buffer
     this->free();
+#else
+    // don't automaticlly free a used buffer
 #endif
     assert(alloc_ptr == NULL);
     assert((int)size > 0);
@@ -109,8 +110,8 @@ void MemBuffer::allocForCompression(unsigned uncompressed_size)
 
 void MemBuffer::allocForUncompression(unsigned uncompressed_size)
 {
-    //alloc(uncompressed_size + 512, 0);  // 512 safety bytes
-    alloc(uncompressed_size + 3, 0);  // 3 safety bytes for asm_fast
+    //alloc(uncompressed_size + 3 + 512, 0);  // 512 safety bytes
+    alloc(uncompressed_size + 3, 0);  // 3 bytes for asm_fast decompresion
 }
 
 

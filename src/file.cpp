@@ -66,7 +66,7 @@ void File::unlink(const char *name)
 **************************************************************************/
 
 FileBase::FileBase() :
-    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(0)
+    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(NULL)
 {
     memset(&st,0,sizeof(st));
 }
@@ -94,7 +94,7 @@ bool FileBase::close()
     _fd = -1;
     _flags = 0;
     _mode = 0;
-    _name = 0;
+    _name = NULL;
     return ok;
 }
 
@@ -290,7 +290,7 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode)
     if (!isOpen())
     {
 #if 0
-        // don't throw FileNotFound here - confusing
+        // don't throw FileNotFound here -- this is confusing
         if (errno == ENOENT)
             throw FileNotFoundException(_name,errno);
         else

@@ -196,7 +196,7 @@ static void print0(FILE *f, const char *ss)
 
     // Note:
     //   We use 2 passes to avoid unnecessary system calls because
-    //   scrollUp() under Win32 is *extremely* slow.
+    //   scrollUp() under Win95/98 is *extremely* slow.
     UNUSED(f);
 
     screen->getCursor(screen,&old_cx,&old_cy);
