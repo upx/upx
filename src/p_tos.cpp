@@ -136,6 +136,8 @@ int PackTos::getLoaderSize() const
 
 /*************************************************************************
 // util
+//   readFileHeader() reads ih and checks for illegal values
+//   checkFileHeader() checks ih for legal but unsupported values
 **************************************************************************/
 
 int PackTos::readFileHeader()
@@ -365,14 +367,15 @@ bool PackTos::canPack()
     if (!readFileHeader())
         return false;
 
-    unsigned char buf[512];
+    unsigned char buf[768];
     fi->readx(buf, sizeof(buf));
     checkAlreadyPacked(buf, sizeof(buf));
 
     if (!checkFileHeader())
         throwCantPack("unsupported header flags");
-    if (file_size < 256)
-        throwCantPack("program too small");
+    if (file_size < 1024)
+        throwCantPack("program is too small");
+
     return true;
 }
 
@@ -474,8 +477,8 @@ void PackTos::pack(OutputFile *fo)
     // After compression this will become the first part of the
     // data segement. The second part will be the decompressor.
 
-    // alloc buffer
-    obuf.allocForCompression(t + d_len + 512);
+    // alloc buffer (512 is for the various alignments)
+    obuf.allocForCompression(t, d_len + 512);
 
     // prepare packheader
     ph.u_len = t;
@@ -536,12 +539,12 @@ void PackTos::pack(OutputFile *fo)
 
     // prepare loader
     MemBuffer loader(o_text);
-    memcpy(loader,getLoader(),o_text);
+    memcpy(loader, getLoader(), o_text);
 
     // patch loader
-    patchPackHeader(loader,o_text);
+    patchPackHeader(loader, o_text);
     if (!opt->small)
-        patchVersion(loader,o_text);
+        patchVersion(loader, o_text);
     //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
     const unsigned dirty_bss_d6 =
         patch_d_subq(loader, o_text, REG_D6, dirty_bss / dirty_bss_align, "u4");
@@ -635,6 +638,7 @@ int PackTos::canUnpack()
     if ((ih.fh_text & 3) != 0 || (ih.fh_data & 3) != 0 || (ih.fh_bss & 3) != 0
         || ih.fh_sym != 0 || ih.fh_reserved != 0 || ih.fh_reloc > 1)
         throwCantUnpack("program header damaged");
+    // generic check
     if (!checkFileHeader())
         throwCantUnpack("unsupported header flags");
     return true;
@@ -650,8 +654,8 @@ void PackTos::unpack(OutputFile *fo)
     ibuf.alloc(ph.c_len);
     obuf.allocForUncompression(ph.u_len);
 
-    fi->seek(ph.buf_offset + ph.getPackHeaderSize(),SEEK_SET);
-    fi->readx(ibuf,ph.c_len);
+    fi->seek(ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
+    fi->readx(ibuf, ph.c_len);
 
     // decompress
     decompress(ibuf,obuf);
