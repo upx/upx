@@ -45,16 +45,16 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_SH_i386; }
     virtual const char *getName() const { return "linux/sh386"; }
     virtual const int *getFilters() const { return NULL; }
+    virtual int buildLoader(const Filter *);
+
+    virtual void pack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual void pack(OutputFile *fo);
     // virtual void unpack(OutputFile *fo) { super::unpack(fo); }
     virtual bool canUnpackVersion(int version) const
         { return (version >= 11); }
 
 protected:
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
     virtual bool getShellName(char *buf);
 
     virtual void patchLoader();

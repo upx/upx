@@ -1042,29 +1042,259 @@ const char *Packer::getDecompressor() const
 }
 
 
+#define NOFILT 0  // no filter
+#define FNOMRU 1  // filter, but not using mru
+#define MRUFLT 2  // mru filter
+
+static unsigned
+f80_call(int fid)
+{
+    return (1+ (0x0f & fid)) % 3;
+}
+
+static unsigned
+f80_jmp1(int fid)
+{
+    return ((1+ (0x0f & fid)) / 3) % 3;
+}
+
+static unsigned
+f80_jcc2(int fid)
+{
+    return f80_jmp1(fid);
+}
+
 void Packer::addFilter32(int filter_id)
 {
     assert(filter_id > 0);
     assert(isValidFilter(filter_id));
 
-    if ((filter_id & 0xf) % 3 == 0)
-        addLoader("CALLTR00",
-                  (filter_id > 0x20) ? "CTCLEVE1" : "",
-                  "CALLTR01",
-                  (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR01""CTBSWA01" : "CTBROR01""CTBSWA01") : "",
-                  "CALLTR02",
-                  NULL
-                 );
-    else
-        addLoader("CALLTR10",
-                  (filter_id & 0xf) % 3  == 1 ? "CALLTRE8" : "CALLTRE9",
-                  "CALLTR11",
-                  (filter_id > 0x20) ? "CTCLEVE2" : "",
-                  "CALLTR12",
-                  (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR11""CTBSWA11" : "CTBROR11""CTBSWA11") : "",
-                  "CALLTR13",
-                  NULL
-                 );
+    if (filter_id < 0x80) {
+        if ((filter_id & 0xf) % 3 == 0) {
+            if (filter_id < 0x40) {
+                addLoader("CALLTR00",
+                        (filter_id > 0x20) ? "CTCLEVE1" : "",
+                        "CALLTR01",
+                        (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR01""CTBSWA01" : "CTBROR01""CTBSWA01") : "",
+                        "CALLTR02",
+                        NULL
+                        );
+            }
+            else if (0x40==(0xF0 & filter_id)) {
+                addLoader("CKLLTR00", 0);
+                if (9<=(0xf & filter_id)) {
+                    addLoader("CKLLTR10", 0);
+                }
+                addLoader("CKLLTR20", 0);
+                if (9<=(0xf & filter_id)) {
+                    addLoader("CKLLTR30", 0);
+                }
+                addLoader("CKLLTR40", 0);
+            }
+        }
+        else
+            addLoader("CALLTR10",
+                    (filter_id & 0xf) % 3  == 1 ? "CALLTRE8" : "CALLTRE9",
+                    "CALLTR11",
+                    (filter_id > 0x20) ? "CTCLEVE2" : "",
+                    "CALLTR12",
+                    (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR11""CTBSWA11" : "CTBROR11""CTBSWA11") : "",
+                    "CALLTR13",
+                    NULL
+                    );
+    }
+    if (0x80==(filter_id & 0xF0)) {
+        bool const x386 = (opt->cpu <= opt->CPU_386);
+        unsigned const n_mru = ph.n_mru ? 1+ ph.n_mru : 0;
+        bool const mrupwr2 = (0!=n_mru) && 0==((n_mru -1) & n_mru);
+        unsigned const f_call = f80_call(filter_id);
+        unsigned const f_jmp1 = f80_jmp1(filter_id);
+        unsigned const f_jcc2 = f80_jcc2(filter_id);
+
+        if (NOFILT!=f_jcc2) {
+	        addLoader("LXJCC010", 0);
+	        if (n_mru) {
+	            addLoader("LXMRU045", 0);
+	        }
+	        else {
+	            addLoader("LXMRU046", 0);
+	        }
+	        if (0==n_mru || MRUFLT!=f_jcc2) {
+	            addLoader("LXJCC020", 0);
+	        }
+	        else { // 0!=n_mru
+	            addLoader("LXJCC021", 0);
+	        }
+	        if (NOFILT!=f_jcc2) {
+	            addLoader("LXJCC023", 0);
+	        }
+        }
+        addLoader("LXUNF037", 0);
+        if (x386) {
+            if (n_mru) {
+                addLoader("LXUNF386", 0);
+            }
+            addLoader("LXUNF387", 0);
+            if (n_mru) {
+                addLoader("LXUNF388", 0);
+            }
+        }
+        else {
+            addLoader("LXUNF486", 0);
+            if (n_mru) {
+                addLoader("LXUNF487", 0);
+            }
+        }
+        if (n_mru) {
+            addLoader("LXMRU065", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE3", 0);
+            }
+            else {
+                addLoader("MRUARB30", 0);
+                if (mrupwr2) {
+                    addLoader("MRUBITS3", 0);
+                }
+                else {
+                    addLoader("MRUARB40", 0);
+                }
+            }
+            addLoader("LXMRU070", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE4", 0);
+            }
+            else if (mrupwr2) {
+                addLoader("MRUBITS4", 0);
+            }
+            else {
+                addLoader("MRUARB50", 0);
+            }
+            addLoader("LXMRU080", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE5", 0);
+            }
+            else {
+                addLoader("MRUARB60", 0);
+                if (mrupwr2) {
+                    addLoader("MRUBITS5", 0);
+                }
+                else {
+                    addLoader("MRUARB70", 0);
+                }
+            }
+            addLoader("LXMRU090", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE6", 0);
+            }
+            else {
+                addLoader("MRUARB80", 0);
+                if (mrupwr2) {
+                        addLoader("MRUBITS6", 0);
+                }
+                else {
+                    addLoader("MRUARB90", 0);
+                }
+            }
+            addLoader("LXMRU100", 0);
+        }
+        addLoader("LXUNF040", 0);
+        if (n_mru) {
+            addLoader("LXMRU110", 0);
+        }
+        else {
+            addLoader("LXMRU111", 0);
+        }
+        addLoader("LXUNF041", 0);
+        addLoader("LXUNF042", 0);
+        if (n_mru) {
+            addLoader("LXMRU010", 0);
+            if (NOFILT!=f_jmp1 && NOFILT==f_call) {
+                addLoader("LXJMPA00", 0);
+            }
+            else {
+                addLoader("LXCALLB0", 0);
+            }
+            addLoader("LXUNF021", 0);
+        }
+        else {
+            addLoader("LXMRU022", 0);
+            if (NOFILT!=f_jmp1 && NOFILT==f_call) {
+                addLoader("LXJMPA01", 0);
+            }
+            else {
+                addLoader("LXCALLB1", 0);
+            }
+        }
+        if (n_mru) {    
+            if (256!=n_mru && mrupwr2) {
+                addLoader("MRUBITS1", 0);
+            }
+            addLoader("LXMRU030", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE1", 0);
+            }
+            else {
+                addLoader("MRUARB10", 0);
+            }
+            addLoader("LXMRU040", 0);
+        }
+
+        addLoader("LXUNF030", 0);
+        if (NOFILT!=f_jcc2) {
+            addLoader("LXJCC000", 0);
+        }
+        if (NOFILT!=f_call || NOFILT!=f_jmp1) { // at least one is filtered
+            // shift opcode origin to zero
+            if (0==n_mru) {
+                addLoader("LXCJ0MRU", 0);
+            }
+            else {
+                addLoader("LXCJ1MRU", 0);
+            }
+    
+            // determine if in range
+            if ((NOFILT!=f_call) && (NOFILT!=f_jmp1)) { // unfilter both
+                addLoader("LXCALJMP", 0);
+            }
+            if ((NOFILT==f_call) ^  (NOFILT==f_jmp1)) { // unfilter just one
+                if (0==n_mru) {
+                    addLoader("LXCALL00", 0);
+                }
+                else {
+                    addLoader("LXCALL01", 0);
+                }
+            }
+    
+            // determine if mru applies
+            if (0==n_mru || ! ((FNOMRU==f_call) || (FNOMRU==f_jmp1)) ) {
+                addLoader("LXCJ2MRU", 0);  // no mru, or no exceptions
+            }
+            else {  // mru on one, but not the other
+                addLoader("LXCJ4MRU", 0);
+                if (MRUFLT==f_jmp1) { // JMP only
+                    addLoader("LXCJ6MRU", 0);
+                } else
+                if (MRUFLT==f_call) { // CALL only
+                    addLoader("LXCJ7MRU", 0);
+                }
+                addLoader("LXCJ8MRU", 0);
+            }
+        }
+        addLoader("LXUNF034", 0);
+        if (n_mru) {
+            addLoader("LXMRU055", 0);
+            if (256==n_mru) {
+                addLoader("MRUBYTE2", 0);
+            }
+            else if (mrupwr2) {
+                addLoader("MRUBITS2", 0);
+            }
+            else if (n_mru) {
+                addLoader("MRUARB20", 0);
+            }
+            addLoader("LXMRU057", 0);
+        }
+    }
 }
 
 
@@ -1222,6 +1452,10 @@ void Packer::compressWithFilters(Filter *parm_ft,
             ft.init(ph.filter, orig_ft.addvalue);
             // filter
             optimizeFilter(&ft, ibuf + filter_off, filter_len);
+
+    unsigned char *const save = new unsigned char[filter_len];
+    memcpy(save, ibuf + filter_off, filter_len);
+
             bool success = ft.filter(ibuf + filter_off, filter_len);
             if (ft.id != 0 && ft.calls == 0)
             {
@@ -1251,6 +1485,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             nfilters_success++;
             ph.filter_cto = ft.cto;
+            ph.n_mru = ft.n_mru;
             // compress
             if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
             {
@@ -1294,6 +1529,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             // restore ibuf[] - unfilter with verify
             ft.unfilter(ibuf + filter_off, filter_len, true);
+        for (unsigned k = 0; k < filter_len; ++k) {
+            if ((ibuf + filter_off)[k] != save[k]) {
+                printf("mismatch at %d\n", k);
+            }
+        }
             //
             if (strategy < 0)
                 break;
@@ -1305,6 +1545,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     assert(best_ph.u_len == orig_ph.u_len);
     assert(best_ph.filter == best_ft.id);
     assert(best_ph.filter_cto == best_ft.cto);
+    // FIXME  assert(best_ph.n_mru == best_ft.n_mru);
 
     // copy back results
     this->ph = best_ph;
@@ -1396,10 +1637,27 @@ bool Packer::patchFilter32(void *loader, int lsize, const Filter *ft)
     if (ft->id == 0)
         return false;
     assert(ft->calls > 0);
-    if (ft->id > 0x20)
-        patch_le16(loader, lsize, "??", '?' + (ft->cto << 8));
-    patch_le32(loader, lsize, "TEXL", (ft->id & 0xf) % 3 == 0 ? ft->calls :
-               ft->lastcall - ft->calls * 4);
+    if (ft->id < 0x80) {
+        if (0x40 <= ft->id && ft->id < 0x50 && UPX_F_LINUX_i386==ph.format) {
+            // "push byte '?'"
+            patch_le16(loader, lsize, "\x6a?", 0x6a + (ft->cto << 8));
+        }
+        if (0x20 <= ft->id && ft->id < 0x40) {
+            // 077==modr/m of "cmp [edi], byte '?'" (compare immediate 8 bits)
+            patch_le16(loader, lsize, "\077?", 077 + (ft->cto << 8));
+        }
+        if (ft->id < 0x40) {
+            patch_le32(loader, lsize, "TEXL", (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                    ft->lastcall - ft->calls * 4);
+        }
+    }
+    if (0x80==(ft->id & 0xF0)) {
+        int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
+        if (mru && mru!=256) {
+            unsigned const is_pwr2 = (0==((mru -1) & mru));
+            patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
+        }
+    }
     return true;
 }
 

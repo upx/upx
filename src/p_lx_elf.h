@@ -59,15 +59,17 @@ protected:
         off_t offset;
         off_t size;
     };
-    virtual void packExtent(Extent const &x, OutputFile *fo,
+    virtual void packExtent(Extent const &x,
         unsigned &total_in, unsigned &total_out, Filter *);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
-        unsigned &c_adler, unsigned &u_adler);
+        unsigned &c_adler, unsigned &u_adler, bool first_PF_X);
 
 protected:
+#if 0  //{
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
+#endif  //}
 
     virtual void patchLoader();
     virtual void updateLoader(OutputFile *);
@@ -75,7 +77,6 @@ protected:
     Elf_LE32_Ehdr  ehdri; // from input file
     Elf_LE32_Phdr *phdri; // for  input file
 
-    unsigned n_mru;
 };
 
 

@@ -27,18 +27,29 @@
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
-ENTRY(_start)
+/*ENTRY(_start)*/
 SECTIONS
 {
   /*  0x00800000: avoid 0x00400000 for shell itself being compressed */
   . = 0x00800000 + SIZEOF_HEADERS;
   . = ALIGN(0x80);
+/*
   .text : {
     *(.text)
     *(.data)
+    }
+*/
+  .data : { /* put everything together in one Phdr */
+    *(.text)
+    *(.rodata)
+    *(.data)
+    *(.bss)
+    *(COMMON)
   }
   /*  0x08048000: customary Linux/x86 Elf .text start */
+/*
   . = 0x08048000 + (0xfff & .);
   .data : {
   }
+*/
 }

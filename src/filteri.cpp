@@ -88,9 +88,7 @@
 // cto calltrick with jmp
 **************************************************************************/
 
-#define COND(b,x,lastcall) \
-        (b[x] == 0xe8 || b[x] == 0xe9 \
-         || (lastcall!=(x) && 0xf==b[(x)-1] && 0x80<=b[x] && b[x]<=0x8f) )
+#define COND(b,x,lastcall) (b[x] == 0xe8 || b[x] == 0xe9)
 #define F                       f_ctoj32_e8e9_bswap_le
 #define U                       u_ctoj32_e8e9_bswap_le
 #include "filter/ctoj.h"
@@ -100,15 +98,37 @@
 
 
 /*************************************************************************
-// cto calltrick with jmp and relative renumbering
+// cto calltrick with jmp, optional jcc
 **************************************************************************/
 
-#define COND1(b,x) (b[x] == 0xe8 || b[x] == 0xe9)
-#define COND2(b,lastcall,x,y,z) \
-         (lastcall!=(x) && 0xf==b[y] && 0x80<=b[z] && b[z]<=0x8f)
+#define COND1(b,x)     (b[x] == 0xe8 || b[x] == 0xe9)
+#define COND2(b,x,lc)  (lc!=(x) && 0xf==b[(x)-1] && 0x80<=b[x] && b[x]<=0x8f)
+#define  COND(b,x,lc,id) (COND1(b,x) || ((9<=(0xf&(id))) && COND2(b,x,lc)))
+#define F                       f_ctok32_e8e9_bswap_le
+#define U                       u_ctok32_e8e9_bswap_le
+#include "filter/ctok.h"
+#define F                       s_ctok32_e8e9_bswap_le
+#include "filter/ctok.h"
+#undef COND
+#undef COND2
+#undef COND1
 
-#define CONDF(b,x,lastcall) (COND1(b,x) || COND2(b,lastcall,x,(x)-1, x   ))
-#define CONDU(b,x,lastcall) (COND1(b,x) || COND2(b,lastcall,x, x   ,(x)-1))
+
+/*************************************************************************
+// cto calltrick with jmp and jcc and relative renumbering
+**************************************************************************/
+
+#define COND_CALL(which,b,x) ((which = 0), b[x] == 0xe8)
+#define COND_JMP( which,b,x) ((which = 1), b[x] == 0xe9)
+#define COND_JCC( which,b,lastcall,x,y,z) ((which = 2), \
+         (lastcall!=(x) && 0xf==b[y] && 0x80<=b[z] && b[z]<=0x8f))
+#define COND1(which,b,x) (COND_CALL(which,b,x) || COND_JMP(which,b,x))
+#define COND2(which,b,lastcall,x,y,z) COND_JCC(which,b,lastcall,x,y,z)
+
+#define CONDF(which,b,x,lastcall) \
+    (COND1(which,b,x) || COND2(which,b,lastcall,x,(x)-1, x   ))
+#define CONDU(which,b,x,lastcall) \
+    (COND1(which,b,x) || COND2(which,b,lastcall,x, x   ,(x)-1))
 
 #define F                       f_ctojr32_e8e9_bswap_le
 #define U                       u_ctojr32_e8e9_bswap_le
@@ -120,6 +140,9 @@
 #undef CONDF
 #undef COND2
 #undef COND1
+#undef COND_JCC
+#undef COND_JMP
+#undef COND_CALL
 
 
 /*************************************************************************
@@ -178,8 +201,19 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     // 32-bit cto calltrick with jmp
     { 0x36, 6, 0x00ffffff, f_ctoj32_e8e9_bswap_le, u_ctoj32_e8e9_bswap_le, s_ctoj32_e8e9_bswap_le },
 
-    // 32-bit cto calltrick with jmp and relative renumbering
+    // 32-bit calltrick with jmp, optional jcc; runtime can unfilter more than one block
+    { 0x46, 6, 0x00ffffff, f_ctok32_e8e9_bswap_le, u_ctok32_e8e9_bswap_le, s_ctok32_e8e9_bswap_le },
+    { 0x49, 6, 0x00ffffff, f_ctok32_e8e9_bswap_le, u_ctok32_e8e9_bswap_le, s_ctok32_e8e9_bswap_le },
+
+    // 32-bit cto calltrick with jmp and jcc(swap 0x0f/0x8Y) and relative renumbering
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x81, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x82, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x83, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x84, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x85, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x86, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+    { 0x87, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
 
     // simple delta filter
     { 0x90, 2,          0, f_sub8_1, u_sub8_1, s_sub8_1 },

@@ -31,6 +31,7 @@
 
 #include "file.h"
 #include "filter.h"
+#include "linker.h"
 #include "packer.h"
 #include "p_elf.h"
 #include "p_unix.h"
@@ -45,9 +46,9 @@
 **************************************************************************/
 
 static const
-#include "stub/l_le_n2b.h"
+#include "stub/l_lx_elf86.h"
 static const
-#include "stub/l_le_n2d.h"
+#include "stub/fold_elf86.h"
 
 
 PackLinuxI386elf::PackLinuxI386elf(InputFile *f) :
@@ -64,7 +65,12 @@ int const *
 PackLinuxI386elf::getFilters() const
 {
     static const int filters[] = {
-        0x80, 0x36, 0x26, 0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
+        0x49, 0x46,
+        0x83, 0x36, 0x26,
+              0x86, 0x80,
+        0x84, 0x87, 0x81,
+        0x82, 0x85,
+        0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
     -1 };
     return filters;
 }
@@ -72,103 +78,34 @@ PackLinuxI386elf::getFilters() const
 int
 PackLinuxI386elf::buildLoader(const Filter *ft)
 {
-    if (ft) {
-        n_mru = ft->n_mru;
-    }
-    else {
-        n_mru = 0;
-    }
-    return super::buildLoader(ft);
-}
-
-const upx_byte *PackLinuxI386elf::getLoader() const
-{
-    if (M_IS_NRV2B(ph.method))
-        return linux_i386elf_nrv2b_loader;
-    if (M_IS_NRV2D(ph.method))
-        return linux_i386elf_nrv2d_loader;
-    return NULL;
-}
-
-int PackLinuxI386elf::getLoaderSize() const
-{
-    if (0 != lsize) {
-        return lsize;
-    }
-    if (M_IS_NRV2B(ph.method))
-        return sizeof(linux_i386elf_nrv2b_loader);
-    if (M_IS_NRV2D(ph.method))
-        return sizeof(linux_i386elf_nrv2d_loader);
-    return 0;
+    return buildLinuxLoader(
+        linux_i386elf_loader, sizeof(linux_i386elf_loader),
+        linux_i386elf_fold,   sizeof(linux_i386elf_fold),
+        ft, getbrk(phdri, ehdri.e_phnum) );
 }
 
 
 void PackLinuxI386elf::updateLoader(OutputFile *fo)
 {
 #define PAGE_MASK (~0<<12)
-    Elf_LE32_Phdr *const phdro = (Elf_LE32_Phdr *)(sizeof(Elf_LE32_Ehdr)+loader);
+    upx_byte *const ptr = const_cast<upx_byte *>(getLoader());
+    Elf_LE32_Phdr *const phdro = (Elf_LE32_Phdr *)(sizeof(Elf_LE32_Ehdr) + ptr);
     off_t const totlen = fo->getBytesWritten();
     phdro->p_filesz = totlen;
 
     // pre-calculate for benefit of runtime disappearing act via munmap()
     phdro->p_memsz =  PAGE_MASK & (~PAGE_MASK + totlen);
 
-    int d1=0x80, d2=0x80;
-    if (this->n_mru) {
-        int const bytes = ('?'<<8) | 0x0f;
-        d1 += 4+ patch_le32(d1+loader, 400, "NMRU", this->n_mru);
-        d2 += 4+ patch_le32(d2+loader, 400, &bytes, (ph.filter_cto<<8)|0x0f);
-    }
     patchLoaderChecksum();
-    fo->seek(0, SEEK_SET);
-    fo->rewrite(loader, UPX_MAX3(0x80, d1, d2));
 #undef PAGE_MASK
 }
 
-
 void PackLinuxI386elf::patchLoader()
 {
+    unsigned char *const ptr = const_cast<unsigned char *>(getLoader());
     lsize = getLoaderSize();
-    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(void *)loader;
-    Elf_LE32_Phdr *const phdr = (Elf_LE32_Phdr *)(1+ehdr);
-
-    // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
-    off_t const fold_begin = phdr[1].p_offset;
-    assert(fold_begin > 0);
-    assert(fold_begin < (off_t)lsize);
-    MemBuffer cprLoader(lsize);
-
-    // compress compiled C-code portion of loader
-    upx_uint const uncLsize = lsize - fold_begin;
-    upx_uint       cprLsize;
-    int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
-                         NULL, ph.method, 10, NULL, NULL);
-    if (r != UPX_E_OK || cprLsize >= uncLsize)
-        throwInternalError("loaded compression failed");
-
-    set_le32(0+fold_begin+loader, uncLsize);
-    set_le32(4+fold_begin+loader, cprLsize);
-    memcpy(  8+fold_begin+loader, cprLoader, cprLsize);
-    lsize = 8 + fold_begin + cprLsize;
-    patchVersion(loader,lsize);
-
-    // Info for OS kernel to set the brk()
-    unsigned const brka = getbrk(phdri, ehdri.e_phnum);
-    phdr[1].p_offset = 0xfff&brka;
-    phdr[1].p_vaddr = brka;
-    phdr[1].p_paddr = brka;
-    phdr[1].p_filesz = 0;
-    phdr[1].p_memsz =  0;
-
-    // The beginning of our loader consists of a elf_hdr (52 bytes) and
-    // two sections elf_phdr (2 * 32 byte), so we have 12 free bytes
-    // from offset 116 to the program start at offset 128.
-    assert(ehdr->e_phoff == sizeof(Elf_LE32_Ehdr));
-    assert(ehdr->e_ehsize == sizeof(Elf_LE32_Ehdr));
-    assert(ehdr->e_phentsize == sizeof(Elf_LE32_Phdr));
-    assert(ehdr->e_phnum == 2);
-    assert(ehdr->e_shnum == 0);
     assert(lsize > 128 && lsize < 4096);
+    patchVersion(ptr, lsize);
 
     patchLoaderChecksum();
 }
@@ -228,10 +165,13 @@ bool PackLinuxI386elf::canPack()
     return super::canPack();
 }
 
+struct cprBlkHdr {
+    unsigned sz_unc;  // uncompressed size (0 means EOF)
+    unsigned sz_cpr;  // (compressed_size<<8) | cto8
+};
 
 void PackLinuxI386elf::packExtent(
     Extent const &x,
-    OutputFile *fo,
     unsigned &total_in,
     unsigned &total_out,
     Filter *ft
@@ -249,11 +189,13 @@ void PackLinuxI386elf::packExtent(
         //       file is e.g. blocksize + 1 bytes long
 
         // compress
+        unsigned char *const hdrptr = obuf;
+        obuf.seek(sizeof(cprBlkHdr), SEEK_CUR);
         ph.u_len = l;
         ph.overlap_overhead = 0;
         if (ft) {
             ft->buf_len = l;
-            compressWithFilters(ft, OVERHEAD);
+            compressWithFilters(ft, OVERHEAD, ((opt->filter > 0) ? -2 : 2));
         }
         else {
             (void) compress(ibuf, obuf);    // ignore return value
@@ -273,19 +215,18 @@ void PackLinuxI386elf::packExtent(
         }
 
         // write block sizes
-        unsigned char size[8];
-        set_native32(size+0, ph.u_len);
-        set_native32(size+4, ph.c_len);
-        fo->write(size, 8);
+        set_native32(0+hdrptr, ph.u_len);
+        set_native32(4+hdrptr, (ph.c_len<<8) | ph.filter_cto);
 
         // write compressed data
         if (ph.c_len < ph.u_len)
         {
-            fo->write(obuf, ph.c_len);
-            verifyOverlappingDecompression();
+            obuf.write(obuf, ph.c_len);
+            // FIXME: obuf is not discardable!
+            // verifyOverlappingDecompression();
         }
         else
-            fo->write(ibuf, ph.u_len);
+            obuf.write(ibuf, ph.u_len);
 
         total_in += ph.u_len;
         total_out += ph.c_len;
@@ -300,30 +241,24 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     progid = 0;  // not used
 
     fi->readx(&ehdri, sizeof(ehdri));
+    assert(ehdri.e_phoff == sizeof(Elf_LE32_Ehdr));  // checked by canPack()
     off_t const sz_phdrs = ehdri.e_phnum * ehdri.e_phentsize;
 
     phdri = new Elf_LE32_Phdr[ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    // prepare loader
-    lsize = getLoaderSize();
-    loader.alloc(lsize + sizeof(p_info));
-    memcpy(loader,getLoader(),lsize);
-
-    // patch loader, prepare header info, write loader + header info
-    patchLoader();  // can change lsize by packing upx_main
-    p_info *const hbuf = (p_info *)(loader + lsize);
-    set_native32(&hbuf->p_progid, progid);
-    set_native32(&hbuf->p_filesize, file_size);
-    set_native32(&hbuf->p_blocksize, blocksize);
-    fo->write(loader, lsize + sizeof(p_info));
-
     // init compression buffers
     ibuf.alloc(blocksize);
     obuf.allocForCompression(blocksize);
+    {
+        p_info hbuf;
+        set_native32(&hbuf.p_progid, progid);
+        set_native32(&hbuf.p_filesize, file_size);
+        set_native32(&hbuf.p_blocksize, blocksize);
+        obuf.write(&hbuf, sizeof(hbuf));
+    }
 
-    assert(ehdri.e_phoff == sizeof(Elf_LE32_Ehdr));  // checked by canPack()
     Extent x;
     unsigned k;
 
@@ -354,51 +289,68 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
+    ui_pass = -1;
     x.offset = 0;
     x.size = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
-    ui_pass = -1;
-    packExtent(x, fo, total_in, total_out, 0);
-    ui_pass = 0;
+    {
+        int const old_level = ph.level; ph.level = 10;
+        packExtent(x, total_in, total_out, 0);
+        ph.level = old_level;
+    }
 
+    ui_pass = 0;
     Filter ft(ph.level);
+    ft.addvalue = 0;
 
     nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) if (PT_LOAD==phdri[k].p_type) {
-        ft.addvalue = (unsigned)phdri[k].p_paddr;
+        if (ft.id < 0x40) {
+            // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
+        }
         x.offset = phdri[k].p_offset;
         x.size   = phdri[k].p_filesz;
         if (0 == nx) { // 1st PT_LOAD must cover Ehdr at 0==p_offset
             unsigned const delta = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
-            ft.addvalue += delta;
+            if (ft.id < 0x40) {
+                // FIXME: ??     ft.addvalue += delta;
+            }
             x.offset    += delta;
             x.size      -= delta;
         }
-        packExtent(x, fo, total_in, total_out,
-            ((Elf_LE32_Phdr::PF_X & phdri[k].p_flags) ? &ft : 0) );
-        // FIXME: All PF_X Phdrs must use same ft.cto
-        // (There is usually only one such Phdr, so we're mostly lucky.)
+        packExtent(x, total_in, total_out,
+            ((Elf_LE32_Phdr::PF_X & phdri[k].p_flags)
+                ? &ft : 0 ) );
         ++nx;
     }
     if (ptload0hi < ptload1lo) { // alignment hole?
         x.offset = ptload0hi;
         x.size   = ptload1lo - ptload0hi;
-        packExtent(x, fo, total_in, total_out, 0);
+        packExtent(x, total_in, total_out, 0);
     }
     if ((off_t)total_in < file_size) {  // non-PT_LOAD stuff
         x.offset = total_in;
         x.size = file_size - total_in;
-        packExtent(x, fo, total_in, total_out, 0);
+        packExtent(x, total_in, total_out, 0);
     }
 
     if ((off_t)total_in != file_size)
         throwEOFException();
 
     // write block end marker (uncompressed size 0)
-    fo->write("\x00\x00\x00\x00", 4);
+    set_native32(obuf, 0);
+    obuf.write(obuf, 4);
 
     // update header with totals
     ph.u_len = total_in;
     ph.c_len = total_out;
+
+    upx_byte const *p = getLoader();
+    lsize = getLoaderSize();
+    patchFilter32(const_cast<upx_byte *>(p), lsize, &ft);
+    fo->write(p, lsize);
+
+    unsigned pos = obuf.seek(0, SEEK_CUR);
+    fo->write(obuf - pos, pos);
 
     // write packheader
     writePackHeader(fo);
@@ -408,6 +360,8 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     fo->write(obuf, 4);
 
     updateLoader(fo);
+    fo->seek(0, SEEK_SET);
+    fo->rewrite(p, lsize);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
@@ -417,12 +371,16 @@ void PackLinuxI386elf::pack(OutputFile *fo)
 
 void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
     unsigned &total_in, unsigned &total_out,
-    unsigned &c_adler, unsigned &u_adler)
+    unsigned &c_adler, unsigned &u_adler,
+    bool first_PF_X
+)
 {
     while (wanted) {
         fi->readx(ibuf, 8);
         int const sz_unc = ph.u_len = get_native32(ibuf+0);
-        int const sz_cpr = ph.c_len = get_native32(ibuf+4);
+        unsigned const tmp =          get_native32(ibuf+4);
+        int const sz_cpr = ph.c_len = tmp>>8;
+        ph.filter_cto = tmp<<24;
 
         if (sz_unc == 0) { // must never happen while 0!=wanted
             throwCompressedDataViolation();
@@ -441,6 +399,15 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
         if (sz_cpr < sz_unc)
         {
             decompress(ibuf+j, ibuf, false);
+            if (first_PF_X) { // Elf32_Ehdr is never filtered
+                first_PF_X = false;  // but everything else might be
+            }
+            else if (ph.filter) {
+                Filter ft(ph.level);
+                ft.init(ph.filter, 0);
+                ft.cto = ph.filter_cto;
+                ft.unfilter(ibuf, sz_unc);
+            }
             j = 0;
         }
         // update checksum of uncompressed data
@@ -473,7 +440,9 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     ibuf.alloc(blocksize + OVERHEAD);
     fi->readx(ibuf, 2*4);
     ph.u_len = get_native32(0+ibuf);
-    ph.c_len = get_native32(4+ibuf);
+    unsigned const tmp = get_native32(4+ibuf);
+    ph.c_len = tmp>>8;
+    ph.filter_cto = tmp<<24;
 
     // Uncompress Ehdr and Phdrs.
     fi->readx(ibuf, ph.c_len);
@@ -486,6 +455,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     off_t ptload0hi=0, ptload1lo=0;
 
     // decompress PT_LOAD
+    bool first_PF_X = true;
     fi->seek(- (off_t) (2*4 + ph.c_len), SEEK_CUR);
     for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
         if (PT_LOAD==phdr->p_type) {
@@ -497,19 +467,29 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
             }
             if (fo)
                 fo->seek(phdr->p_offset, SEEK_SET);
-            unpackExtent(phdr->p_filesz, fo, total_in, total_out, c_adler, u_adler);
+            if (Elf_LE32_Phdr::PF_X & phdr->p_flags) {
+                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                    c_adler, u_adler, first_PF_X);
+                first_PF_X = false;
+            }
+            else {
+                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                    c_adler, u_adler, false);
+            }
         }
     }
 
     if (ptload0hi < ptload1lo) {  // alignment hole?
         if (fo)
             fo->seek(ptload0hi, SEEK_SET);
-        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out, c_adler, u_adler);
+        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
+            c_adler, u_adler, false);
     }
     if (total_out != orig_file_size) {  // non-PT_LOAD stuff
         if (fo)
             fo->seek(0, SEEK_END);
-        unpackExtent(orig_file_size - total_out, fo, total_in, total_out, c_adler, u_adler);
+        unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
+            c_adler, u_adler, false);
     }
 
     // check for end-of-file

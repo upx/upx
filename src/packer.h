@@ -74,6 +74,7 @@ public:
     int filter;
     int filter_cto;
     int header_checksum;
+    int n_mru;
 
     //
     unsigned saved_u_adler;
@@ -250,15 +251,15 @@ protected:
     int ph_version;
 
     // compression buffers
-    MemBuffer ibuf;         // input
-    MemBuffer obuf;         // output
+    MemBuffer   ibuf;         // input
+    MemBufferIO obuf;         // output
 
     // UI handler
     UiPacker *uip;
     int ui_pass;
     int ui_total_passes;
 
-private:
+protected:
     // linker
     Linker *linker;
 

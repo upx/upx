@@ -47,6 +47,14 @@ MemBuffer::~MemBuffer()
     this->free();
 }
 
+MemBufferIO::MemBufferIO(unsigned size) :
+    MemBuffer(size)
+{
+}
+
+MemBufferIO::~MemBufferIO()
+{
+}
 
 void MemBuffer::free()
 {
@@ -66,6 +74,39 @@ unsigned MemBuffer::getSize() const
     return size;
 }
 
+
+unsigned MemBufferIO::seek(unsigned offset, int whence)
+{
+    switch (whence) {
+    default: {
+        assert(false);
+    } break;
+    case SEEK_SET: {
+        assert(offset<=alloc_size);
+        ptr = offset + alloc_ptr;
+    } break;
+    case SEEK_CUR: {
+        assert((offset + (ptr - alloc_ptr))<=alloc_size);
+        ptr += offset;
+    } break;
+    case SEEK_END: {
+        assert((offset + alloc_size)<=alloc_size);
+        ptr = offset + alloc_size + alloc_ptr;
+    } break;
+    }
+    return ptr - alloc_ptr;
+}
+
+unsigned MemBufferIO::write(void const *data, unsigned size)
+{
+    unsigned const avail = getSize();
+    unsigned const len = UPX_MIN(size, avail);
+    if (data!=ptr) {
+        memmove(ptr, data, len);
+    }
+    ptr += len;
+    return len;
+}
 
 void MemBuffer::alloc(unsigned size, unsigned base_offset)
 {

@@ -42,14 +42,28 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
     virtual const char *getName() const { return "linux/386"; }
     virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+    virtual int buildLoader(const Filter *);
 
     virtual bool canPack();
 
 protected:
     // loader util
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
     virtual int getLoaderPrefixSize() const;
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft,
+        unsigned const brka
+    );
+
+    struct cprElfhdr {
+        struct Elf_LE32_Ehdr ehdr;
+        struct Elf_LE32_Phdr phdr[2];
+        struct PackUnix::l_info linfo;
+    };
 
     // patch util
     virtual void patchLoader();
@@ -63,6 +77,8 @@ protected:
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
     };
+
+    unsigned n_mru;
 };
 
 

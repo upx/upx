@@ -35,10 +35,11 @@ class Linker
 public:
     Linker(const void *pdata, int plen, int pinfo);
     virtual ~Linker();
-    void addSection(const char *sect);
+    int addSection(const char *sect);
     void addSection(const char *sname, const void *sdata, unsigned len);
     const char *getLoader(int *llen);
     int getSection(const char *name, int *slen) const;
+    int getLoaderSize() const { return olen; }
 
 protected:
     // little endian

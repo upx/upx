@@ -31,9 +31,10 @@ STUBS = \
 	l_tmt.h \
 	l_wcle.h \
 	l_w32pe.h \
-	l_lx_n2b.h l_lx_n2d.h \
-	l_le_n2b.h l_le_n2d.h \
-	l_sh_n2b.h l_sh_n2d.h \
+	l_lx_exec86.h fold_exec86.h \
+	l_lx_elf86.h  fold_elf86.h \
+    l_lx_sh86.h   fold_sh86.h \
+	l_ext2.h \
 	l_vmlinz.h
 
 # experimental:
@@ -80,7 +81,7 @@ STRIPELF = ./util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
-CC_LINUX_CFLAGS += -Werror
+###CC_LINUX_CFLAGS += -Werror
 CC_LINUX_CFLAGS += -funsigned-char
 ###CC_LINUX_CFLAGS += -fwritable-strings -save-temps
 CC_LINUX = gcc272 -O2 -m386                  -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
@@ -170,6 +171,10 @@ l_tmt.h: l_tmt.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 
+l_ext2.h: l_ext2.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
 l_vmlinz.h: l_vmlinz.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
@@ -249,66 +254,56 @@ l_t_x2ds.h: l_tos2.s
 # // linux rules (exec, elf, sh, sep)
 # ************************************************************************/
 
-l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o l_lx_exec86.lds Makefile
-	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin l_xe_n2b.o $T.o
-	$(SETFOLD) $T.bin
+l_lx_elf86.h: l_lx_elf86.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin linux_i386elf_loader $@
+
+l_lx_exec86.h: l_lx_exec86.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin linux_i386exec_loader $@
+
+l_lx_sh86.h: l_lx_sh86.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin linux_i386sh_loader $@
+
+l_lx_elf.o: l_lx_elf.c
+	$(CC_LINUX) -c $<
+
+fold_elf86.o: fold_elf86.asm
+	$(NASM) -f elf -o $@ $<
+
+fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
+	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
+	objcopy -S -R .comment -R .note $T.bin
+	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386exec_nrv2b_loader $@
+	$(BIN2H) $T.bin linux_i386elf_fold $@
 
-l_le_n2b.h: l_lx_elf.c l_6e_n2b.o l_lx_elf86.lds
-	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin l_6e_n2b.o $T.o
-	$(SETFOLD) $T.bin
+l_lx_exec.o: l_lx_exec.c
+	$(CC_LINUX) -c $<
+
+fold_exec86.o: fold_exec86.asm
+	$(NASM) -f elf -o $@ $<
+
+fold_exec86.h: l_lx_exec.o fold_exec86.o l_lx_exec86.lds
+	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o
+	objcopy -S -R .comment -R .note $T.bin
+	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386elf_nrv2b_loader $@
+	$(BIN2H) $T.bin linux_i386exec_fold $@
 
-l_sh_n2b.h: l_lx_sh.c l_6h_n2b.o l_lx_sh86.lds
-	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin l_6h_n2b.o $T.o
-	$(SETFOLD) $T.bin
+l_lx_sh.o: l_lx_sh.c
+	$(CC_LINUX) -c $<
+
+fold_sh86.o: fold_sh86.asm
+	$(NASM) -f elf -o $@ $<
+
+fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
+	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
+	objcopy -S -R .comment -R .note $T.bin
+	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386sh_nrv2b_loader $@
-
-l_xe_n2b.o: l_lx_exec86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $@ $<
-
-l_6e_n2b.o: l_lx_elf86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $@ $<
-
-l_6h_n2b.o: l_lx_sh86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $@ $<
-
-
-l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o l_lx_exec86.lds
-	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin l_xe_n2d.o $T.o
-	$(SETFOLD) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386exec_nrv2d_loader $@
-
-l_le_n2d.h: l_lx_elf.c l_6e_n2d.o l_lx_elf86.lds
-	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin l_6e_n2d.o $T.o
-	$(SETFOLD) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386elf_nrv2d_loader $@
-
-l_sh_n2d.h: l_lx_sh.c l_6h_n2d.o l_lx_sh86.lds
-	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin l_6h_n2d.o $T.o
-	$(SETFOLD) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386sh_nrv2d_loader $@
-
-l_xe_n2d.o: l_lx_exec86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $@ $<
-
-l_6e_n2d.o: l_lx_elf86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $@ $<
-
-l_6h_n2d.o: l_lx_sh86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $@ $<
+	$(BIN2H) $T.bin linux_i386sh_fold $@
 
 l_lx_sep.o: l_lx_sep.c
 	$(CC_LINUX) -c $<
@@ -344,25 +339,16 @@ l_t_n2bs.h:     n2b_d.ash    bits.ash     $(DEPS1)
 l_t_n2d.h:      n2d_d.ash    bits.ash     $(DEPS1)
 l_t_n2ds.h:     n2d_d.ash    bits.ash     $(DEPS1)
 l_tmt.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
+l_ext2.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_vmlinz.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_vxd.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 
-l_xe_n2b.o:     n2b_d32.ash  $(DEPS1)
-l_6e_n2b.o:     n2b_d32.ash  $(DEPS1)
-l_6h_n2b.o:     n2b_d32.ash  $(DEPS1)
+l_lx_elf86.asx:  l_lx_elf86.asm  macros.ash macros.asy
+l_lx_exec86.asx: l_lx_exec86.asm macros.ash macros.asy
+l_lx_sh86.asx:    l_lx_sh86.asm  macros.ash macros.asy
 
-l_xe_n2d.o:     n2d_d32.ash  $(DEPS1)
-l_6e_n2d.o:     n2d_d32.ash  $(DEPS1)
-l_6h_n2d.o:     n2d_d32.ash  $(DEPS1)
-
-l_lx_n2b.h:     linux.hh
-l_lx_n2d.h:     linux.hh
-l_le_n2b.h:     linux.hh
-l_le_n2d.h:     linux.hh
-l_sh_n2b.h:     linux.hh
-l_sh_n2d.h:     linux.hh
 upxb:           linux.hh
 upxd:           linux.hh
 

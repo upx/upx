@@ -102,7 +102,11 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 // UPX & NRV stuff
 **************************************************************************/
 
-typedef void f_unfilter(nrv_byte *, nrv_uint);  // 1st param is also addvalue
+typedef void f_unfilter(
+    nrv_byte *,  // also addvalue
+    nrv_uint,
+    unsigned cto8  // junk in high 24 bits
+);
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
           nrv_byte *, nrv_uint * );
@@ -116,6 +120,7 @@ unpackExtent(
 )
 {
     while (xo->size) {
+        unsigned cto8;
         struct {
             int32_t sz_unc;  // uncompressed
             int32_t sz_cpr;  //   compressed
@@ -125,6 +130,8 @@ unpackExtent(
 
         // Read and check block sizes.
         xread(xi, (char *)&h, sizeof(h));
+        cto8 = h.sz_cpr;
+        h.sz_cpr >>= 8;
         if (h.sz_unc == 0) {                     // uncompressed size 0 -> EOF
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 err_exit(2);
@@ -155,7 +162,7 @@ ERR_LAB
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
             ) {
-                (*f_unf)(xo->buf, out_len);
+                (*f_unf)(xo->buf, out_len, cto8);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
@@ -330,14 +337,19 @@ void *upx_main(
     Elf32_Ehdr *const ehdr  // temp char[MAX_ELF_HDR+OVERHEAD]
 )
 {
-    size_t const lsize = *(unsigned short const *)(0x7c + (char const *)my_ehdr);
+    struct cprElfhdr {
+        Elf32_Ehdr ehdr;
+        Elf32_Phdr phdr[2];
+        struct l_info linfo;
+    };
+    size_t const lsize = ((struct cprElfhdr const *)my_ehdr)->linfo.l_lsize;
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ehdr);
     Elf32_Addr entry;
     struct Extent xo;
     struct Extent xi = { 0, sizeof(struct p_info) + lsize + CONST_CAST(char *, my_ehdr) };
 
-    size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];  // sizeof(Ehdr+Phdrs), uncompressed
-    size_t const sz_pckhdrs = ((size_t *)xi.buf)[1];  // sizeof(Ehdr+Phdrs),   compressed
+    size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];     // sizeof(Ehdr+Phdrs), uncompressed
+    size_t const sz_pckhdrs = ((size_t *)xi.buf)[1]>>8;  // sizeof(Ehdr+Phdrs),   compressed
 
     (void)uncbuf;  // used by l_lx_sh.c
     // Uncompress Ehdr and Phdrs.

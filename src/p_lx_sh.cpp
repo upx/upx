@@ -30,6 +30,7 @@
 #include "conf.h"
 
 #include "file.h"
+#include "filter.h"
 #include "packer.h"
 #include "p_elf.h"
 #include "p_unix.h"
@@ -44,9 +45,9 @@
 **************************************************************************/
 
 static const
-#include "stub/l_sh_n2b.h"
+#include "stub/l_lx_sh86.h"
 static const
-#include "stub/l_sh_n2d.h"
+#include "stub/fold_sh86.h"
 
 
 PackLinuxI386sh::PackLinuxI386sh(InputFile *f) :
@@ -58,76 +59,35 @@ PackLinuxI386sh::~PackLinuxI386sh()
 {
 }
 
-const upx_byte *PackLinuxI386sh::getLoader() const
+int
+PackLinuxI386sh::buildLoader(Filter const *ft)
 {
-    if (M_IS_NRV2B(ph.method))
-        return linux_i386sh_nrv2b_loader;
-    if (M_IS_NRV2D(ph.method))
-        return linux_i386sh_nrv2d_loader;
-    return NULL;
-}
+    unsigned const sz_fold = sizeof(linux_i386sh_fold);
+    MemBuffer buf(sz_fold);
+    memcpy(buf, linux_i386sh_fold, sz_fold);
 
-int PackLinuxI386sh::getLoaderSize() const
-{
-    if (0 != lsize) {
-        return lsize;
-    }
-    if (M_IS_NRV2B(ph.method))
-        return sizeof(linux_i386sh_nrv2b_loader);
-    if (M_IS_NRV2D(ph.method))
-        return sizeof(linux_i386sh_nrv2d_loader);
-    return 0;
-}
+    checkPatch(0,0,0,0);  // reset
+    patch_le32(buf,sz_fold,"UPX3",l_shname);
+    patch_le32(buf,sz_fold,"UPX2",o_shname);
 
+    // get fresh filter
+    Filter fold_ft = *ft;
+    fold_ft.init(ft->id, ft->addvalue);
+    int preferred_ctos[2] = {ft->cto, -1};
+    fold_ft.preferred_ctos = preferred_ctos;
+
+    // filter
+    optimizeFilter(&fold_ft, buf, sz_fold);
+    bool success = fold_ft.filter(buf + sizeof(cprElfhdr), sz_fold - sizeof(cprElfhdr));
+    (void)success;
+
+    return buildLinuxLoader(
+        linux_i386sh_loader, sizeof(linux_i386sh_loader),
+        buf, sz_fold, ft, 0x08048000 );
+}
 
 void PackLinuxI386sh::patchLoader()
 {
-    lsize = getLoaderSize();
-    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(void *)loader;
-    Elf_LE32_Phdr *const phdr = (Elf_LE32_Phdr *)(1+ehdr);
-
-    patch_le32(loader,lsize,"UPX3",l_shname);
-    patch_le32(loader,lsize,"UPX2",o_shname);
-
-    // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
-    off_t const fold_begin = phdr[1].p_offset;
-    assert(fold_begin > 0);
-    assert(fold_begin < (off_t)lsize);
-    MemBuffer cprLoader(lsize);
-
-    // compress compiled C-code portion of loader
-    upx_uint const uncLsize = lsize - fold_begin;
-    upx_uint       cprLsize;
-    int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
-                         NULL, ph.method, 10, NULL, NULL);
-    if (r != UPX_E_OK || cprLsize >= uncLsize)
-        throwInternalError("loaded compression failed");
-
-    set_le32(0+fold_begin+loader, uncLsize);
-    set_le32(4+fold_begin+loader, cprLsize);
-    memcpy(  8+fold_begin+loader, cprLoader, cprLsize);
-    lsize = 8 + fold_begin + cprLsize;
-    patchVersion(loader,lsize);
-
-    // Info for OS kernel to set the brk()
-    unsigned const brka = getbrk(phdr, ehdr->e_phnum);
-    phdr[1].p_offset = 0xfff&brka;
-    phdr[1].p_vaddr = brka;
-    phdr[1].p_paddr = brka;
-    phdr[1].p_filesz = 0;
-    phdr[1].p_memsz =  0;
-
-    // The beginning of our loader consists of a elf_hdr (52 bytes) and
-    // two sections elf_phdr (2 * 32 byte), so we have 12 free bytes
-    // from offset 116 to the program start at offset 128.
-    assert(ehdr->e_phoff == sizeof(Elf_LE32_Ehdr));
-    assert(ehdr->e_ehsize == sizeof(Elf_LE32_Ehdr));
-    assert(ehdr->e_phentsize == sizeof(Elf_LE32_Phdr));
-    assert(ehdr->e_phnum == 2);
-    assert(ehdr->e_shnum == 0);
-    assert(lsize > 128 && lsize < 4096);
-
-    patchLoaderChecksum();
 }
 
 
@@ -181,7 +141,8 @@ void PackLinuxI386sh::pack(OutputFile *fo)
     PackUnix::pack(fo);
 
     // update loader
-    Elf_LE32_Phdr *const phdro = (Elf_LE32_Phdr *)(sizeof(Elf_LE32_Ehdr)+loader);
+    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)const_cast<upx_byte *>(getLoader());
+    Elf_LE32_Phdr *const phdro = (Elf_LE32_Phdr *)(1+ehdr);
     off_t const totlen = fo->getBytesWritten();
     phdro[0].p_filesz = totlen;
     phdro[0].p_memsz = PAGE_MASK & (~PAGE_MASK + totlen);
@@ -196,7 +157,7 @@ void PackLinuxI386sh::pack(OutputFile *fo)
 
     patchLoaderChecksum();
     fo->seek(0, SEEK_SET);
-    fo->rewrite(loader, 0x80);
+    fo->rewrite(ehdr, sizeof(cprElfhdr));
 #undef PAGE_MASK
 }
 

@@ -150,7 +150,8 @@ void PackHeader::putPackHeader(upx_bytep p)
             set_le32(p+24,u_file_size);
             p[28] = (unsigned char) filter;
             p[29] = (unsigned char) filter_cto;
-            p[30] = 0;
+            p[30] = (unsigned char) (n_mru ? 0 : n_mru -1);
+            size = 32;
         }
         set_le32(p+8,u_adler);
         set_le32(p+12,c_adler);
@@ -166,7 +167,8 @@ void PackHeader::putPackHeader(upx_bytep p)
         set_be32(p+24,u_file_size);
         p[28] = (unsigned char) filter;
         p[29] = (unsigned char) filter_cto;
-        p[30] = 0;
+        p[30] = (unsigned char) (n_mru ? 0 : n_mru -1);
+        size = 32;
     }
 
     p[4] = (unsigned char) version;
@@ -246,6 +248,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen)
             u_file_size = get_le32(p+24);
             off_filter = 28;
             filter_cto = p[29];
+            n_mru = p[30] ? 1+ p[30] : 0;
         }
     }
     else
@@ -257,6 +260,7 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen)
         u_file_size = get_be32(p+24);
         off_filter = 28;
         filter_cto = p[29];
+        n_mru = p[30] ? 1+ p[30] : 0;
     }
 
     if (version >= 10)

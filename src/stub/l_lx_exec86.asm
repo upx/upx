@@ -33,34 +33,13 @@
 %define         jmps    jmp short
 %define         jmpn    jmp near
 
-; defines for ident.ash and n2b_d32.ash
-%ifdef SMALL
-  %define       __IDENTSMA__
-  %define       __N2BSMA10__
-  %define       __N2BSMA20__
-  %define       __N2BSMA30__
-  %define       __N2BSMA40__
-  %define       __N2BSMA50__
-  %define       __N2BSMA60__
-  %define       __N2DSMA10__
-  %define       __N2DSMA20__
-  %define       __N2DSMA30__
-  %define       __N2DSMA40__
-  %define       __N2DSMA50__
-  %define       __N2DSMA60__
-%endif
-
-
-
-%include "ident.ash"
-
 ; /*************************************************************************
 ; // program entry point
 ; // see glibc/sysdeps/i386/elf/start.S
 ; **************************************************************************/
 
 GLOBAL _start
-
+;__LEXEC000__
 _start:
 ;;;;    int3
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
@@ -85,19 +64,24 @@ _start:
                 xor     ebx, ebx            ; PER_LINUX
                 int     0x80
 %endif
+
         call main  ; push address of decompress subroutine
+decompress:
 
 ; /*************************************************************************
 ; // C callable decompressor
 ; **************************************************************************/
 
-%define         INP     dword [esp+8*4+4]
-%define         INS     dword [esp+8*4+8]
-%define         OUTP    dword [esp+8*4+12]
-%define         OUTS    dword [esp+8*4+16]
+%define         INP     dword [esp+8*4+8]
+%define         INS     dword [esp+8*4+12]
+%define         OUTP    dword [esp+8*4+16]
+%define         OUTS    dword [esp+8*4+20]
 
-decompress:
+;__LEXEC009__
+                mov     eax, 'NMRU'  ; free slot in following 'pusha'
+;__LEXEC010__
                 pusha
+                push    byte '?'  ; cto8 (sign extension does not matter)
                 ; cld
 
                 mov     esi, INP
@@ -105,75 +89,81 @@ decompress:
 
                 or      ebp, byte -1
 ;;;             align   8
-%ifdef NRV2B
-  %include      "n2b_d32.ash"
-%elifdef NRV2D
-  %include      "n2d_d32.ash"
-%else
-  %error
-%endif
 
+%include      "n2b_d32.ash"
+%include      "n2d_d32.ash"
+%include      "macros.ash"
+                cjt32 0
 
+;__LEXEC015__
                 ; eax is 0 from decompressor code
                 ;xor     eax, eax               ; return code
 
 ; check compressed size
                 mov     edx, INP
                 add     edx, INS
-                cmp     esi, edx
+                cmp     edx, esi
                 jz      .ok
                 dec     eax
 .ok:
+                xchg [8*4 + esp], eax  ; store success/failure, fetch NMRU
 
-; write back the uncompressed size
-                sub     edi, OUTP
-                mov     edx, OUTS
-                mov     [edx], edi
+; write back the uncompressed size, and prepare for unfilter
+                mov edx, OUTS
+                mov ecx, edi
+                mov edi, OUTP
+                sub ecx, edi  ; ecx= uncompressed size
+                mov [edx], ecx
 
-                mov [7*4 + esp], eax
+                pop edx  ; cto8
+
+;__LEXEC110__  Jcc and/or possible n_mru
+                push edi  ; addvalue
+                push byte 0x0f
+                pop ebx
+                mov bh, dl  ; ebx= 0,,cto8,0x0F
+
+;__LEXEC100__  0!=n_mru
+                xchg eax, ebx  ; eax= ct08_0f; ebx= n_mru {or n_mru1}
+
+;;LEXEC016 bug in APP: jmp and target must be in same .asx
+;;              jmpn lxunf0  ; logically belongs here
+
+                ctojr32
+                ckt32   dl
+;__LEXEC017__
                 popa
                 ret
 
+;__LEXEC020__
 
 %define PAGE_MASK (~0<<12)
 %define PAGE_SIZE ( 1<<12)
 
-%define szElf32_Ehdr 0x34
-%define szElf32_Phdr 8*4
-%define p_filesz 4*4
-%define p_memsz  5*4
-%define a_val  4
-
-%define MAP_FIXED     0x10
-%define MAP_PRIVATE   0x02
-%define MAP_ANONYMOUS 0x20
-%define PROT_READ      1
-%define PROT_WRITE     2
-%define PROT_EXEC      4
-%define __NR_mmap     90
-%define __NR_munmap   91
-
 ; Decompress the rest of this loader, and jump to it
 unfold:
-        pop esi  ; &fold_begin = src
+        pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
+        mov ecx, PAGE_MASK
           push esi  ; &dst
-        mov ecx, ebp  ; &decompress
-        and ecx, dword PAGE_MASK  ; &my_elfhdr
-        mov ebx, ecx  ; save &my_elfhdr for later
+        mov ebx, ebp  ; &decompress
+        and ebx, ecx  ; &my_elfhdr
+        neg ecx  ; ecx= PAGE_SIZE
+
+        cld
+        lodsd  ; sz_uncompressed
+        lodsd  ; sz_compressed
 
 ;; Compressed code now begins at fold_begin.
 ;; We want decompressed code to begin at fold_begin, too.
 ;; Move the compressed code to the high end of the page.
 ;; Assume non-overlapping so that forward movsb is OK.
-        lea edi, [-PAGE_MASK + ecx]  ; high end of page
-        add ecx, [p_filesz + szElf32_Ehdr + ecx]  ; beyond src
-        sub ecx, esi  ; srclen
-          push ecx  ; srclen
-        sub edi, ecx
-          push edi  ; &src
-        cld
-        rep movsb
 
+        lea edi, [ecx + ebx]  ; high end of page
+          push eax  ; srclen (of both movsb and decompress)
+        sub edi, eax  ; dst of movsb
+          push edi  ; &src for decompression (after movsb)
+        xchg ecx, eax  ; ecx= len of movsb
+        rep movsb
           call ebp  ; decompress(&src, srclen, &dst, &dstlen)
         pop eax  ; discard &src
         pop eax  ; discard srclen
@@ -188,23 +178,14 @@ unfold:
 
 main:
         pop ebp  ; &decompress
-          push eax  ; place to store dstlen
-          push esp  ; &dstlen
+          push eax  ; sz_uncompressed  (junk, actually)
+          push esp  ; &sz_uncompressed
         call unfold
-fold_begin:  ;; this label is known to the Makefile
-        pop eax  ; discard &dstlen
-        pop eax  ; discard  dstlen
 
-                pop     eax                 ; Pop the argument count
-                mov     ecx, esp            ; argv starts just at the current stack top
-                lea     edx, [ecx+eax*4+4]  ; envp = &argv[argc + 1]
-                push    eax                 ; Restore the stack
-                push    ebp  ; argument: &decompress
-                push    ebx  ; argument: &my_elfhdr
-                push    edx  ; argument: envp
-                push    ecx  ; argument: argv
-EXTERN upx_main
-                call    upx_main            ; Call the UPX main function
-                hlt                         ; Crash if somehow upx_main does return
+eof:
+;       __XTHEENDX__
+        section .data
+        dd      -1
+        dw      eof
 
 ; vi:ts=8:et:nowrap

@@ -46,7 +46,6 @@ struct Linker::jump
     int  toffs;
 };
 
-
 Linker::Linker(const void *pdata, int plen, int pinfo)
 {
     iloader = new char[(ilen = plen) + 4096];
@@ -101,7 +100,7 @@ Linker::~Linker()
 }
 
 
-void Linker::addSection(const char *sect)
+int Linker::addSection(const char *sect)
 {
     int ic;
     while (*sect)
@@ -129,11 +128,12 @@ void Linker::addSection(const char *sect)
                     olen += sections[ic].len;
                     break;
                 }
-            //printf("%8.8s",section);
+            //printf("%8.8s",sect);
             assert(ic!=nsections);
         }
         sect += 8;
     }
+    return olen;
 }
 
 

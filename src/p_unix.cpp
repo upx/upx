@@ -29,6 +29,7 @@
 #include "conf.h"
 
 #include "file.h"
+#include "filter.h"
 #include "packer.h"
 #include "p_unix.h"
 #include "p_elf.h"
@@ -125,22 +126,16 @@ void PackUnix::pack(OutputFile *fo)
     // create a pseudo-unique program id for our paranoid stub
     progid = getRandomId();
 
-    // prepare loader
-    lsize = getLoaderSize();
-    loader.alloc(lsize + sizeof(p_info));
-    memcpy(loader,getLoader(),lsize);
-
-    // patch loader, prepare header info
-    patchLoader();  // can change lsize by packing C-code of upx_main etc.
-    p_info *const hbuf = (p_info *)(loader + lsize);
-    set_native32(&hbuf->p_progid, progid);
-    set_native32(&hbuf->p_filesize, file_size);
-    set_native32(&hbuf->p_blocksize, blocksize);
-    fo->write(loader, lsize + sizeof(p_info));
-
     // init compression buffers
     ibuf.alloc(blocksize);
     obuf.allocForCompression(blocksize);
+    {
+        p_info hbuf;
+        set_native32(&hbuf.p_progid, progid);
+        set_native32(&hbuf.p_filesize, file_size);
+        set_native32(&hbuf.p_blocksize, blocksize);
+        obuf.write(&hbuf, sizeof(hbuf));
+    }
 
     // compress blocks
     unsigned total_in = 0;
@@ -148,6 +143,10 @@ void PackUnix::pack(OutputFile *fo)
     ui_total_passes = (file_size + blocksize - 1) / blocksize;
     if (ui_total_passes == 1)
         ui_total_passes = 0;
+
+    Filter ft(ph.level);
+    ft.addvalue = 0;
+
     fi->seek(0, SEEK_SET);
     for (;;)
     {
@@ -159,9 +158,19 @@ void PackUnix::pack(OutputFile *fo)
         //       file is e.g. blocksize + 1 bytes long
 
         // compress
-        ph.u_len = l;
+        ph.c_len = ph.u_len = l;
         ph.overlap_overhead = 0;
-        (void) compress(ibuf, obuf);    // ignore return value
+        ft.buf_len = l;
+
+        // leave room for block sizes
+        unsigned char size[8];
+        set_native32(size+0, ph.u_len);
+        set_native32(size+4, ph.c_len);  // will be rewritten
+        obuf.write(size, 8);
+
+        // If user specified the filter, then use it (-2==strategy).
+        // Else try the first two filters, and pick the better (2==strategy).
+        compressWithFilters(&ft, OVERHEAD, ((opt->filter > 0) ? -2 : 2));
 
         if (ph.c_len < ph.u_len)
         {
@@ -177,20 +186,18 @@ void PackUnix::pack(OutputFile *fo)
             ph.c_adler = upx_adler32(ph.c_adler, ibuf, ph.u_len);
         }
 
-        // write block sizes
-        unsigned char size[8];
-        set_native32(size+0, ph.u_len);
-        set_native32(size+4, ph.c_len);
-        fo->write(size, 8);
+        // update compressed size
+        set_native32(obuf - 4, ph.c_len);
 
         // write compressed data
         if (ph.c_len < ph.u_len)
         {
-            fo->write(obuf, ph.c_len);
-            verifyOverlappingDecompression();
+            obuf.write(obuf, ph.c_len);
+            // FIXME: obuf is not discardable!
+            // verifyOverlappingDecompression();
         }
         else
-            fo->write(ibuf, ph.u_len);
+            obuf.write(ibuf, ph.u_len);
 
         total_in += ph.u_len;
         total_out += ph.c_len;
@@ -199,11 +206,20 @@ void PackUnix::pack(OutputFile *fo)
         throwEOFException();
 
     // write block end marker (uncompressed size 0)
-    fo->write("\x00\x00\x00\x00", 4);
+    set_native32(obuf, 0);
+    obuf.write(obuf, 4);
 
     // update header with totals
     ph.u_len = total_in;
     ph.c_len = total_out;
+
+    upx_byte const *p = getLoader();
+    lsize = getLoaderSize();
+    patchFilter32(const_cast<upx_byte *>(p), lsize, &ft);
+    fo->write(p, lsize);
+
+    unsigned pos = obuf.seek(0, SEEK_CUR);
+    fo->write(obuf - pos, pos);
 
     // write packheader
     writePackHeader(fo);
@@ -213,6 +229,8 @@ void PackUnix::pack(OutputFile *fo)
     fo->write(obuf, 4);
 
     updateLoader(fo);
+    fo->seek(0, SEEK_SET); 
+    fo->rewrite(p, lsize);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))

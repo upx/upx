@@ -101,10 +101,17 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
     do {
         unsigned char d = v % 32;
         if (d >= 26) d -= 43;       // 43 == 'Z' - '0' + 1
-        *--p += d;
+        *--p = (d += 'A');
         v /= 32;
     } while (--n > 0);
     return v;
+}
+
+static char *
+do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+    (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
+    return mmap((int *)&addr);
 }
 
 
@@ -124,6 +131,51 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
         (p)[0] = c0, (p)[1] = c1, (p)[2] = c2, (p)[3] = c3
 #endif
 
+
+// go_self is a separate subroutine to spread the burden of local arrays.
+// Otherwise the size of the stack frame in upx_main exceeds 128 bytes,
+// which causes too many offsets to expand from 1 byte to 4.
+
+static int
+go_self(char const *tmpname, char *argv[], char *envp[])
+{
+    // FIXME:  why not use "/proc/self/fd/XX"?  *BSD doesn't have it?
+
+    // Open the temp file.
+    int const fdi = open(tmpname, O_RDONLY, 0);
+
+    if (0 <= fdi) {
+        // 17 chars for "/proc/PPPPP/fd/XX" should be enough, but we
+        // play safe in case there will be 32-bit pid_t at some time.
+        //char procself_buf[17+1];
+        char procself_buf[31+1];
+
+        // Compute name of temp fdi.
+        SET4(procself_buf + 0, '/', 'p', 'r', 'o');
+        SET4(procself_buf + 4, 'c', '/',  0 ,  0 );
+        {
+            char *const procself = upx_itoa(procself_buf + 6, getpid());
+            SET4(procself, '/', 'f', 'd', '/');
+            upx_itoa(procself + 4, fdi);
+        }
+
+        // Check for working /proc/self/fd/X by accessing the
+        // temp file again, now via temp fdi.
+        if (UPX2 == access(procself_buf, R_OK | X_OK)) {
+            // Now it's safe to unlink the temp file (as it is still open).
+            unlink(tmpname);
+            // Set the file close-on-exec.
+            fcntl(fdi, F_SETFD, FD_CLOEXEC);
+            // Execute the original program via /proc/self/fd/X.
+            execve(procself_buf, argv, envp);
+            // NOTE: if we get here we've lost.
+        }
+
+        // The proc filesystem isn't working. No problem.
+        close(fdi);
+    }
+    return fdi;
+}
 
 /*************************************************************************
 // UPX & NRV stuff
@@ -153,59 +205,29 @@ void upx_main(
     f_expand *const f_decompress
 )
 {
-    // file descriptors
-    int fdi, fdo;
-    Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
-        (my_ehdr->e_phoff + (char const *)my_ehdr);
-    struct Extent xi = { phdr[1].p_memsz, (char *)phdr[1].p_vaddr };
-    char *next_unmap = (char *)(PAGE_MASK & (unsigned)xi.buf);
-    struct p_info header;
-
-    // for getpid()
-    pid_t pid;
-
-    // temporary file name (max 14 chars)
-    static char tmpname_buf[] = "/tmp/upxAAAAAAAAAAA";
-    char *tmpname = tmpname_buf;
-    // 17 chars for "/proc/PPPPP/fd/XX" should be enough, but we
-    // play safe in case there will be 32-bit pid_t at some time.
-    //char procself_buf[17+1];
-    char procself_buf[31+1];
-    char *procself;
+    // file descriptor
+    int fdo;
 
     // decompression buffer
     unsigned char *buf;
-    static struct MallocArgs {
-        char *ma_addr;
-        size_t ma_length;
-        int ma_prot;
-        int ma_flags;
-        int ma_fd;
-        off_t ma_offset;
-    } malloc_args = {
-#if defined(USE_MMAP_FO)
-        0, 0, PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0
-#else
-        0, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0
-#endif
-    };
-#if defined(USE_MMAP_FO)
-    static struct MallocArgs scratch_page = {
-        0, -PAGE_MASK, PROT_READ | PROT_WRITE,
-            MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0
-    };
-#endif
+
+    char *tmpname;
+
+    Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
+        (my_ehdr->e_phoff + (char const *)my_ehdr);
+    struct Extent xi = { phdr[1].p_memsz, (char *)phdr[1].p_vaddr };
+
+    char *next_unmap = (char *)(PAGE_MASK & (unsigned)xi.buf);
+    struct p_info header;
+
+    // temporary file name
+    char tmpname_buf[20];
 
     //
     // ----- Step 0: set /proc/self using /proc/<pid> -----
     //
 
     //personality(PER_LINUX);
-    pid = getpid();
-    SET4(procself_buf + 0, '/', 'p', 'r', 'o');
-    SET2(procself_buf + 4, 'c', '/');
-    procself = upx_itoa(procself_buf + 6, pid);
-    *procself++ = '/';
 
 
     //
@@ -226,7 +248,7 @@ void upx_main(
     // Paranoia. Make sure this is actually our expected executable
     // by checking the random program id. (The id is both stored
     // in the header and patched into this stub.)
-    if (header.p_progid != UPX2)
+    if (header.p_progid != UPX3)
         goto error1;
 
 
@@ -234,13 +256,17 @@ void upx_main(
     // ----- Step 2: prepare temporary output file -----
     //
 
+    tmpname = tmpname_buf;
+    SET4(tmpname + 0, '/', 't', 'm', 'p');
+    SET4(tmpname + 4, '/', 'u', 'p', 'x');
+
     // Compute name of temporary output file in tmpname[].
     // Protect against Denial-of-Service attacks.
     {
         char *p = tmpname_buf + sizeof(tmpname_buf) - 1;
 
         // Compute the last 4 characters (20 bits) from getpid().
-        uint32_t r = ascii5(p, (uint32_t)pid, 4); p-=4;
+        uint32_t r = ascii5(p, (uint32_t)getpid(), 4); *p = '\0'; p -= 4;
 
         // Provide 4 random bytes from our program id.
         r ^= header.p_progid;
@@ -254,7 +280,7 @@ void upx_main(
             r ^= ((uint32_t) tv.tv_usec) << 12;      // shift into high-bits
 #else
             // using adjtimex() may cause portability problems
-            static struct timex tx;
+            struct timex tx;
             adjtimex(&tx);
             r ^= (uint32_t) tx.time.tv_sec;
             r ^= ((uint32_t) tx.time.tv_usec) << 12; // shift into high-bits
@@ -294,23 +320,23 @@ void upx_main(
     //
 
 #if defined(USE_MMAP_FO)
-    // mmap()ed output file.
-    malloc_args.ma_fd = fdo;
-    // FIXME: packer could set ma_length
-    malloc_args.ma_length = header.p_filesize;
-    buf = mmap((int *)&malloc_args);
+    // FIXME: packer could set length
+    buf = do_mmap(0, header.p_filesize,
+        PROT_READ | PROT_WRITE, MAP_SHARED, fdo, 0);
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
 
     // Decompressor can overrun the output by 3 bytes.
     // Defend against SIGSEGV by using a scratch page.
-    scratch_page.ma_addr = buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK));
-    mmap((int *)&scratch_page);
+    // FIXME: packer could set address delta
+    do_mmap(buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK)),
+        -PAGE_MASK, PROT_READ | PROT_WRITE,
+        MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
 #else
     // Temporary decompression buffer.
-    // FIXME: packer could set ma_length
-    malloc_args.ma_length = (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK;
-    buf = mmap((int *)&malloc_args);
+    // FIXME: packer could set length
+    buf = do_mmap(0, (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK,
+        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
 #endif
@@ -429,33 +455,8 @@ void upx_main(
     // Many thanks to Andi Kleen <ak@muc.de> and
     // Jamie Lokier <nospam@cern.ch> for this nice idea.
 
-    // Open the temp file.
-    fdi = open(tmpname, O_RDONLY, 0);
-    if (fdi < 0)
+    if (0 > go_self(tmpname, argv, envp))
         goto error;
-
-    // Compute name of temp fdi.
-    SET3(procself, 'f', 'd', '/');
-    upx_itoa(procself + 3, fdi);
-
-    // Check for working /proc/self/fd/X by accessing the
-    // temp file again, now via temp fdi.
-#define err fdo
-    err = access(procself_buf, R_OK | X_OK);
-    if (err == UPX3)
-    {
-        // Now it's safe to unlink the temp file (as it is still open).
-        unlink(tmpname);
-        // Set the file close-on-exec.
-        fcntl(fdi, F_SETFD, FD_CLOEXEC);
-        // Execute the original program via /proc/self/fd/X.
-        execve(procself_buf, argv, envp);
-        // NOTE: if we get here we've lost.
-    }
-#undef err
-
-    // The proc filesystem isn't working. No problem.
-    close(fdi);
 
 
     //
@@ -474,7 +475,7 @@ void upx_main(
         if (fork() == 0)
         {
             // Sleep 3 seconds, then remove the temp file.
-            static const struct timespec ts = { UPX4, 0 };
+            struct timespec ts; ts.tv_sec = UPX4; ts.tv_nsec = 0;
             nanosleep(&ts, 0);
             unlink(tmpname);
         }
@@ -500,4 +501,3 @@ void upx_main(
 /*
 vi:ts=4:et:nowrap
 */
-
