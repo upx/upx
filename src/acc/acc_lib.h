@@ -17,11 +17,11 @@
 #define __ACC_LIB_H_INCLUDED
 
 
-#if !defined(__ACCLIB_FUNC)
-#  define __ACCLIB_FUNC(a,b)    a b
+#if !defined(__ACCLIB_FUNCNAME)
+#  define __ACCLIB_FUNCNAME(f)  f
 #endif
 #if !defined(ACCLIB_EXTERN)
-#  define ACCLIB_EXTERN(a,b)    extern __ACCLIB_FUNC(a,b)
+#  define ACCLIB_EXTERN(r,f)    extern r __ACCLIB_FUNCNAME(f)
 #endif
 
 

@@ -203,7 +203,6 @@
     ACCCHK_ASSERT(sizeof(acc_int32e_t) == 4)
     ACCCHK_ASSERT(sizeof(acc_int32e_t) == SIZEOF_ACC_INT32E_T)
     ACCCHK_ASSERT(sizeof(acc_uint32e_t) == 4)
-    ACCCHK_ASSERT(sizeof(acc_uint32e_t) == SIZEOF_ACC_UINT32E_T)
     ACCCHK_ASSERT(sizeof(acc_int32e_t) == sizeof(acc_uint32e_t))
 
     ACCCHK_ASSERT_IS_SIGNED(acc_int32e_t)
@@ -232,7 +231,6 @@
     ACCCHK_ASSERT(sizeof(acc_int32l_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == SIZEOF_ACC_INT32L_T)
     ACCCHK_ASSERT(sizeof(acc_uint32l_t) >= 4)
-    ACCCHK_ASSERT(sizeof(acc_uint32l_t) == SIZEOF_ACC_UINT32L_T)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == sizeof(acc_uint32l_t))
 
     ACCCHK_ASSERT_IS_SIGNED(acc_int32l_t)
@@ -256,7 +254,6 @@
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == SIZEOF_ACC_INT32F_T)
     ACCCHK_ASSERT(sizeof(acc_uint32f_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_uint32f_t) >= sizeof(acc_uint32l_t))
-    ACCCHK_ASSERT(sizeof(acc_uint32f_t) == SIZEOF_ACC_UINT32F_T)
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == sizeof(acc_uint32f_t))
 
     ACCCHK_ASSERT_IS_SIGNED(acc_int32f_t)
@@ -279,7 +276,6 @@
     ACCCHK_ASSERT(sizeof(acc_int64l_t) >= 8)
     ACCCHK_ASSERT(sizeof(acc_int64l_t) == SIZEOF_ACC_INT64L_T)
     ACCCHK_ASSERT(sizeof(acc_uint64l_t) >= 8)
-    ACCCHK_ASSERT(sizeof(acc_uint64l_t) == SIZEOF_ACC_UINT64L_T)
     ACCCHK_ASSERT(sizeof(acc_int64l_t) == sizeof(acc_uint64l_t))
 
     ACCCHK_ASSERT_IS_SIGNED(acc_int64l_t)
@@ -304,6 +300,13 @@
     ACCCHK_ASSERT(ACC_UINT64L_C(9223372036854775807) % 2147483629ul == 721)
     ACCCHK_ASSERT(ACC_UINT64L_C(9223372036854775807) % 2147483647ul == 1)
 #endif
+
+
+    ACCCHK_ASSERT_IS_SIGNED(acc_intptr_t)
+    ACCCHK_ASSERT_IS_UNSIGNED(acc_uintptr_t)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) >= sizeof(void *))
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == SIZEOF_ACC_INTPTR_T)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(acc_uintptr_t))
 
 
 /*************************************************************************

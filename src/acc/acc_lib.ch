@@ -36,7 +36,7 @@
 
 
 #if !defined(ACCLIB_PUBLIC)
-#  define ACCLIB_PUBLIC(a,b)    __ACCLIB_FUNC(a,b)
+#  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
 
 
@@ -454,7 +454,7 @@ ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 #if !defined(__ACCLIB_USE_OPENDIR)
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
-static int acc_opendir_init(acc_dir_t* f, const char* path, char* buf, size_t bufsize)
+static int __ACCLIB_FUNCNAME(acc_opendir_init)(acc_dir_t* f, const char* path, char* buf, size_t bufsize)
 {
     size_t l; char* p;
     f->f_name[0] = 0; buf[0] = 0;
@@ -480,7 +480,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     f->u_dirp = opendir(path);
     if (!f->u_dirp)
         return -2;
-    return acc_readdir(f);
+    return __ACCLIB_FUNCNAME(acc_readdir)(f);
 }
 
 ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
@@ -489,7 +489,7 @@ ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
     f->f_name[0] = 0;
     if (!f->u_dirp)
         return -1;
-    dp = readdir((DIR*) f->u_dirp);
+    dp = (const struct dirent*) readdir((DIR*) f->u_dirp);
     if (!dp)
         return -1;
     if (!dp->d_name[0] || strlen(dp->d_name) >= sizeof(f->f_name))
@@ -520,7 +520,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     WIN32_FIND_DATAA d;
     HANDLE h;
-    if (acc_opendir_init(f, path, f->f_name, sizeof(f->f_name)) != 0)
+    if (__ACCLIB_FUNCNAME(acc_opendir_init)(f, path, f->f_name, sizeof(f->f_name)) != 0)
         return -1;
     h = FindFirstFileA(f->f_name, &d);
     f->f_name[0] = 0;
@@ -567,7 +567,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     char tmp[ACC_FN_PATH_MAX+1];
     int r;
     f->u_dirp = 0;
-    if (acc_opendir_init(f, path, tmp, sizeof(tmp)) != 0)
+    if (__ACCLIB_FUNCNAME(acc_opendir_init)(f, path, tmp, sizeof(tmp)) != 0)
         return -1;
 #if (ACC_CC_AZTECC || ACC_CC_PACIFICC)
     r = -1;
@@ -617,7 +617,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     int r;
     DTA* olddta;
     f->u_dirp = 0;
-    if (acc_opendir_init(f, path, tmp, sizeof(tmp)) != 0)
+    if (__ACCLIB_FUNCNAME(acc_opendir_init)(f, path, tmp, sizeof(tmp)) != 0)
         return -1;
     olddta = Fgetdta();
     Fsetdta((DTA*) f->u_dta);
@@ -786,7 +786,7 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
     }
 #elif (ACC_H_WINDOWS_H)
     {
-        long h = acc_get_osfhandle(fd);
+        long h = __ACCLIB_FUNCNAME(acc_get_osfhandle)(fd);
         if (h != -1)
         {
             DWORD d = 0;

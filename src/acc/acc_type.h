@@ -30,6 +30,13 @@ __acc_gnuc_extension__ typedef long long acc_llong_t;
 __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
 
+#if (!(SIZEOF_SHORT > 0 && SIZEOF_INT > 0 && SIZEOF_LONG > 0))
+#  error
+#endif
+#if (!(SIZEOF_PTRDIFF_T > 0 && SIZEOF_SIZE_T > 0 && SIZEOF_VOID_P > 0 && SIZEOF_CHAR_P > 0))
+#  error
+#endif
+
 
 /***********************************************************************
 // some <stdint.h> types:
@@ -79,7 +86,6 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
 #if defined(acc_int32e_t)
 #  define SIZEOF_ACC_INT32E_T   4
-#  define SIZEOF_ACC_UINT32E_T  4
 #endif
 
 
@@ -91,21 +97,18 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define ACC_INT32L_C          ACC_INT32E_C
 #  define ACC_UINT32L_C         ACC_UINT32E_C
 #  define SIZEOF_ACC_INT32L_T   SIZEOF_ACC_INT32E_T
-#  define SIZEOF_ACC_UINT32L_T  SIZEOF_ACC_UINT32E_T
 #elif (SIZEOF_INT > 4)
 #  define acc_int32l_t          int
 #  define acc_uint32l_t         unsigned int
 #  define ACC_INT32L_C(c)       c
 #  define ACC_UINT32L_C(c)      c##U
 #  define SIZEOF_ACC_INT32L_T   SIZEOF_INT
-#  define SIZEOF_ACC_UINT32L_T  SIZEOF_INT
 #elif (SIZEOF_LONG > 4)
 #  define acc_int32l_t          long int
 #  define acc_uint32l_t         unsigned long int
 #  define ACC_INT32L_C(c)       c##L
 #  define ACC_UINT32L_C(c)      c##UL
 #  define SIZEOF_ACC_INT32L_T   SIZEOF_LONG
-#  define SIZEOF_ACC_UINT32L_T  SIZEOF_LONG
 #else
 #  error "acc_int32l_t"
 #endif
@@ -120,21 +123,18 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define ACC_INT32F_C(c)       c
 #  define ACC_UINT32F_C(c)      c##U
 #  define SIZEOF_ACC_INT32F_T   SIZEOF_INT
-#  define SIZEOF_ACC_UINT32F_T  SIZEOF_INT
 #elif (SIZEOF_LONG >= 4)
 #  define acc_int32f_t          long int
 #  define acc_uint32f_t         unsigned long int
 #  define ACC_INT32F_C(c)       c##L
 #  define ACC_UINT32F_C(c)      c##UL
 #  define SIZEOF_ACC_INT32F_T   SIZEOF_LONG
-#  define SIZEOF_ACC_UINT32F_T  SIZEOF_LONG
 #elif defined(acc_int32e_t)
 #  define acc_int32f_t          acc_int32e_t
 #  define acc_uint32f_t         acc_uint32e_t
 #  define ACC_INT32F_C          ACC_INT32E_C
 #  define ACC_UINT32F_C         ACC_UINT32E_C
 #  define SIZEOF_ACC_INT32F_T   SIZEOF_ACC_INT32E_T
-#  define SIZEOF_ACC_UINT32F_T  SIZEOF_ACC_UINT32E_T
 #else
 #  error "acc_int32f_t"
 #endif
@@ -155,14 +155,12 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define ACC_INT64L_C(c)       c
 #  define ACC_UINT64L_C(c)      c##U
 #  define SIZEOF_ACC_INT64L_T   SIZEOF_INT
-#  define SIZEOF_ACC_UINT64L_T  SIZEOF_INT
 #elif (SIZEOF_LONG >= 8)
 #  define acc_int64l_t          long int
 #  define acc_uint64l_t         unsigned long int
 #  define ACC_INT64L_C(c)       c##L
 #  define ACC_UINT64L_C(c)      c##UL
 #  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG
-#  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG
 #elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8) && !defined(__ACC_PREFER___INT64)
 #  define acc_int64l_t          acc_llong_t
 #  define acc_uint64l_t         acc_ullong_t
@@ -174,7 +172,6 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define ACC_UINT64L_C(c)    c##ULL
 #  endif
 #  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG_LONG
-#  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG_LONG
 #elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
 #  define acc_int64l_t          __int64
 #  define acc_uint64l_t         unsigned __int64
@@ -186,9 +183,27 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define ACC_UINT64L_C(c)    c##ui64
 #  endif
 #  define SIZEOF_ACC_INT64L_T   SIZEOF___INT64
-#  define SIZEOF_ACC_UINT64L_T  SIZEOF___INT64
 #else
   /* no least 64-bit integral type on this machine */
+#endif
+#endif
+
+
+#if !defined(acc_intptr_t)
+#if (SIZEOF_INT >= SIZEOF_VOID_P)
+#  define acc_intptr_t          int
+#  define acc_uintptr_t         unsigned int
+#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
+#elif (SIZEOF_LONG >= SIZEOF_VOID_P)
+#  define acc_intptr_t          long
+#  define acc_uintptr_t         unsigned long
+#  define SIZEOF_ACC_INTPTR_T   SIZEOF_LONG
+#elif (SIZEOF_ACC_INT64L_T >= SIZEOF_VOID_P)
+#  define acc_intptr_t          acc_int64l_t
+#  define acc_uintptr_t         acc_uint64l_t
+#  define SIZEOF_ACC_INTPTR_T   SIZEOF_ACC_INT64L_T
+#else
+#  error "acc_intptr_t"
 #endif
 #endif
 
