@@ -64,7 +64,7 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         mov esi, [e_entry + ebx]  ; beyond compressed data
         sub esi, eax  ; length of compressed data
         mov ebx, [   eax]  ; length of uncompressed ELF headers
-        mov edx, esp  ; 
+        mov edx, esp  ;
         mov ecx, [4+ eax]  ; length of   compressed ELF headers
         add ecx, byte szb_info
         pusha  ; (AT_next, sz_cpr, f_expand, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )

@@ -32,7 +32,7 @@ PHDRS
 {
     text PT_LOAD FILEHDR PHDRS ;
     data PT_LOAD ;  /* for setting brk(0) */
-	/* 3rd Phdr was not worth it; use "upx -d" first, then apply ldd */
+        /* 3rd Phdr was not worth it; use "upx -d" first, then apply ldd */
     /*null PT_NULL;*/  /* changed to PT_DYNAMIC for ldd */
 }
 SECTIONS

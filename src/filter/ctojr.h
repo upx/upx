@@ -198,35 +198,35 @@ static int F(Filter *f)
             }
 #endif
             if (f_on) {
-	            if (ic - lastnoncall < 5)
-	            {
-	                // check the last 4 bytes before this call
-	                for (kc = 4; kc; kc--)
-	                    if (CONDF(which,b,ic-kc,lastcall) && b[ic-kc+1] == cto8)
-	                        break;
-	                if (kc)
-	                {
-	#ifdef U
-	                    // restore original
-	                    if (2==which) {
-	                        // Unswap prefix and opcode for 6-byte Jcc <disp32>
-	                        unsigned char const t =
-	                        b[ic-1];
-	                        b[ic-1] = b[ic];
-	                                  b[ic] = t;
-	                    }
-	                    set_le32(b+ic+1,jc-ic-1);
-	#endif
-	                    if (b[ic+1] == cto8)
-	                        return 1;           // fail - buffer not restored
-	                    lastnoncall = ic;
-	                    noncalls2++;
-	                    continue;
-	                }
-	            }
-	            calls++;
-	            ic += 4;
-	            lastcall = ic+1;
+                    if (ic - lastnoncall < 5)
+                    {
+                        // check the last 4 bytes before this call
+                        for (kc = 4; kc; kc--)
+                            if (CONDF(which,b,ic-kc,lastcall) && b[ic-kc+1] == cto8)
+                                break;
+                        if (kc)
+                        {
+        #ifdef U
+                            // restore original
+                            if (2==which) {
+                                // Unswap prefix and opcode for 6-byte Jcc <disp32>
+                                unsigned char const t =
+                                b[ic-1];
+                                b[ic-1] = b[ic];
+                                          b[ic] = t;
+                            }
+                            set_le32(b+ic+1,jc-ic-1);
+        #endif
+                            if (b[ic+1] == cto8)
+                                return 1;           // fail - buffer not restored
+                            lastnoncall = ic;
+                            noncalls2++;
+                            continue;
+                        }
+                    }
+                    calls++;
+                    ic += 4;
+                    lastcall = ic+1;
             }
         }
         else
@@ -283,22 +283,22 @@ static int U(Filter *f)
                 ||  (1==which && MRUFLT==f_jmp1)
                 ||  (2==which && MRUFLT==f_jcc2) ) {
                     f_on = 1;
-	                if (1&jc) { // 1st time at this destination
-	                    jc >>= 1;
-	                    if (0 > --hand) {
-	                        hand = N_MRU -1;
-	                    }
-	                    mru[hand] = jc;
-	                }
-	                else { // not 1st time at this destination
-	                    jc >>= 1;
-	                    int kh = jc + hand;
-	                    if (N_MRU <= kh) {
-	                        kh -= N_MRU;
-	                    }
-	                    jc = mru[kh];
-	                    update_mru(jc, kh, mru, hand, tail);
-	                }
+                        if (1&jc) { // 1st time at this destination
+                            jc >>= 1;
+                            if (0 > --hand) {
+                                hand = N_MRU -1;
+                            }
+                            mru[hand] = jc;
+                        }
+                        else { // not 1st time at this destination
+                            jc >>= 1;
+                            int kh = jc + hand;
+                            if (N_MRU <= kh) {
+                                kh -= N_MRU;
+                            }
+                            jc = mru[kh];
+                            update_mru(jc, kh, mru, hand, tail);
+                        }
                     set_le32(b+ic+1,jc-ic-1);
                 } else
                 if ((0==which && NOFILT!=f_call)
