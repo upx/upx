@@ -28,6 +28,7 @@
 
 #include "conf.h"
 #include "filter.h"
+#include "file.h"
 
 
 /*************************************************************************
@@ -119,13 +120,12 @@ bool Filter::filter(upx_byte *buf_, unsigned buf_len_)
         throwInternalError("filter-2");
 
     // save checksum
+    this->adler = 0;
     if (clevel != 1)
-    {
-        this->adler = upx_adler32(0,NULL,0);
-        this->adler = upx_adler32(this->adler, this->buf, this->buf_len);
-    }
+        this->adler = upx_adler32(this->buf, this->buf_len);
 
     //printf("filter: %02x %p %d\n", this->id, this->buf, this->buf_len);
+    //OutputFile::dump("filter.dat", buf, buf_len);
     int r = (*fe->do_filter)(this);
     //printf("filter: %02x %d\n", fe->id, r);
     if (r > 0)
@@ -157,12 +157,12 @@ void Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
     //printf("unfilter: %02x %d\n", fe->id, r);
     if (r != 0)
         throwInternalError("unfilter-3");
+    //OutputFile::dump("unfilter.dat", buf, buf_len);
 
     // verify checksum
     if (verify_checksum && clevel != 1)
     {
-        unsigned a = upx_adler32(0,NULL,0);
-        if (this->adler != upx_adler32(a, this->buf, this->buf_len))
+        if (this->adler != upx_adler32(this->buf, this->buf_len))
             throwInternalError("unfilter-4");
     }
 }
