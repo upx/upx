@@ -183,7 +183,7 @@ bool Filter::verifyUnfilter()
 bool Filter::scan(const upx_byte *buf_, unsigned buf_len_)
 {
     // Note: must use const_cast here. This is fine as the scan
-    //   implementations (f->s) actually don't change the buffer.
+    //   implementations (fe->do_scan) actually don't change the buffer.
     upx_byte *b = const_cast<upx_byte *>(buf_);
     initFilter(this, b, buf_len_);
 
