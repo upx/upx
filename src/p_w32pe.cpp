@@ -1614,7 +1614,7 @@ void PackW32Pe::pack(OutputFile *fo)
     obuf.allocForCompression(ph.u_len);
     ph.u_len -= rvamin;
 
-#if 1
+#if 0
     // filter
     Filter ft(opt->level);
     if (allow_filter)
@@ -1632,7 +1632,6 @@ void PackW32Pe::pack(OutputFile *fo)
     buildLoader(&ft);
 #else
     // new version using compressWithFilters()
-    // FIXME - this does not work yet !!!
 
     // prepare packheader
     ph.filter = 0;
@@ -1856,6 +1855,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     //for (ic = 0; ic < oh.filealign; ic += 4)
     //    set_le32(ibuf + ic,get_le32("UPX "));
+    assert(oh.filealign <= ibuf.getSize());
     memset(ibuf,0,oh.filealign);
 
     infoHeader("[Writing compressed file]");
@@ -1865,7 +1865,11 @@ void PackW32Pe::pack(OutputFile *fo)
     fo->write(osection,sizeof(osection));
     // some alignment
     if (identsplit == identsize)
-        fo->write(ibuf,osection[0].rawdataptr - fo->getBytesWritten() - identsize);
+    {
+        unsigned n = osection[0].rawdataptr - fo->getBytesWritten() - identsize;
+        assert(n <= oh.filealign);
+        fo->write(ibuf, n);
+    }
     fo->write(loader + codesize,identsize);
     infoWriting("loader", fo->getBytesWritten());
     fo->write(obuf,clen);
