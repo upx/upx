@@ -83,4 +83,6 @@ include $(srcdir)/Makefile.bld
 
 include $(srcdir)/Makedefs.dep
 
+$(OBJECTS): miniacc.h
+
 # vi:nowrap

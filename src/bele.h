@@ -93,8 +93,8 @@ inline void set_be32(void *bb, unsigned v)
 
 inline unsigned get_le16(const void *bb)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    return * (const unsigned short *) bb;
+#if defined(ACC_GET_LE16)
+    return ACC_GET_LE16(bb);
 #else
     const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
@@ -106,8 +106,8 @@ inline unsigned get_le16(const void *bb)
 
 inline void set_le16(void *bb, unsigned v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    (* (unsigned short *) bb) = (unsigned short) (v & 0xffff);
+#if defined(ACC_SET_LE16)
+    ACC_SET_LE16(bb, v);
 #else
     unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);
@@ -137,8 +137,8 @@ inline void set_le24(void *bb, unsigned v)
 
 inline unsigned get_le32(const void *bb)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    return * (const acc_uint32e_t *) bb;
+#if defined(ACC_GET_LE32)
+    return ACC_GET_LE32(bb);
 #else
     const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
@@ -152,8 +152,8 @@ inline unsigned get_le32(const void *bb)
 
 inline void set_le32(void *bb, unsigned v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    (* (acc_uint32e_t *) bb) = v;
+#if defined(ACC_SET_LE32)
+    ACC_SET_LE32(bb, v);
 #else
     unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);

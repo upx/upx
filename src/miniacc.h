@@ -1,5 +1,7 @@
 /* ACC -- Automatic Compiler Configuration
 
+   This file is part of the UPX executable compressor.
+
    Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
@@ -11,9 +13,20 @@
    Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
-   This software is a copyrighted work licensed under the terms of
-   the GNU General Public License. Please consult the file "COPYING"
-   for details.
+   UPX and the UCL library are free software; you can redistribute them
+   and/or modify them under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation, Inc.,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer
    <markus@oberhumer.com>
@@ -22,7 +35,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20040722L
+#define ACC_VERSION     20040723L
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
 #endif
@@ -713,6 +726,11 @@ extern "C" {
 #else
 #  error "unknown memory model"
 #endif
+#if (ACC_CC_GNUC >= 0x020800ul)
+#  define __acc_gnuc_extension__ __extension__
+#else
+#  define __acc_gnuc_extension__
+#endif
 #if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_PGI)
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
@@ -832,6 +850,66 @@ extern "C" {
 #  else
 #    error "check your compiler installation: ULONG_MAX"
 #  endif
+#endif
+#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC)
+#  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
+#    define __acc_cdecl                 __cdecl
+#    define __acc_cdecl_atexit
+#    define __acc_cdecl_main            __cdecl
+#    if (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#      define __acc_cdecl_qsort         __pascal
+#    elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
+#      define __acc_cdecl_qsort         _stdcall
+#    else
+#      define __acc_cdecl_qsort         __cdecl
+#    endif
+#  elif (ACC_CC_WATCOMC)
+#    define __acc_cdecl                 __cdecl
+#  else
+#    define __acc_cdecl                 __cdecl
+#    define __acc_cdecl_atexit          __cdecl
+#    define __acc_cdecl_main            __cdecl
+#    define __acc_cdecl_qsort           __cdecl
+#  endif
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
+#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#    define __acc_cdecl_sighandler      __pascal
+#  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
+#    define __acc_cdecl_sighandler      _stdcall
+#  elif (ACC_CC_MSC && (_MSC_VER >= 1400)) && defined(_M_CEE_PURE)
+#    define __acc_cdecl_sighandler      __clrcall
+#  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
+#    if defined(_DLL)
+#      define __acc_cdecl_sighandler    _far _cdecl _loadds
+#    elif defined(_MT)
+#      define __acc_cdecl_sighandler    _far _cdecl
+#    else
+#      define __acc_cdecl_sighandler    _cdecl
+#    endif
+#  else
+#    define __acc_cdecl_sighandler      __cdecl
+#  endif
+#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
+#  define __acc_cdecl                   cdecl
+#endif
+#if !defined(__acc_cdecl)
+#  define __acc_cdecl
+#endif
+#if !defined(__acc_cdecl_atexit)
+#  define __acc_cdecl_atexit
+#endif
+#if !defined(__acc_cdecl_main)
+#  define __acc_cdecl_main
+#endif
+#if !defined(__acc_cdecl_qsort)
+#  define __acc_cdecl_qsort
+#endif
+#if !defined(__acc_cdecl_sighandler)
+#  define __acc_cdecl_sighandler
+#endif
+#if !defined(__acc_cdecl_va)
+#  define __acc_cdecl_va                __acc_cdecl
 #endif
 #if (ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)) || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
@@ -1412,11 +1490,6 @@ extern "C" {
 #endif
 #if defined(ACC_CONFIG_NO_TYPE)
 #else
-#if (ACC_CC_GNUC >= 0x020800ul)
-#  define __acc_gnuc_extension__ __extension__
-#else
-#  define __acc_gnuc_extension__
-#endif
 #if (SIZEOF_LONG_LONG > 0)
 __acc_gnuc_extension__ typedef long long acc_llong_t;
 #endif
@@ -1605,66 +1678,6 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  else
 #    error "integral constants"
 #  endif
-#endif
-#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC)
-#  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-#    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit
-#    define __acc_cdecl_main            __cdecl
-#    if (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
-#      define __acc_cdecl_qsort         __pascal
-#    elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
-#      define __acc_cdecl_qsort         _stdcall
-#    else
-#      define __acc_cdecl_qsort         __cdecl
-#    endif
-#  elif (ACC_CC_WATCOMC)
-#    define __acc_cdecl                 __cdecl
-#  else
-#    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit          __cdecl
-#    define __acc_cdecl_main            __cdecl
-#    define __acc_cdecl_qsort           __cdecl
-#  endif
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
-#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
-#    define __acc_cdecl_sighandler      __pascal
-#  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
-#    define __acc_cdecl_sighandler      _stdcall
-#  elif (ACC_CC_MSC && (_MSC_VER >= 1400)) && defined(_M_CEE_PURE)
-#    define __acc_cdecl_sighandler      __clrcall
-#  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
-#    if defined(_DLL)
-#      define __acc_cdecl_sighandler    _far _cdecl _loadds
-#    elif defined(_MT)
-#      define __acc_cdecl_sighandler    _far _cdecl
-#    else
-#      define __acc_cdecl_sighandler    _cdecl
-#    endif
-#  else
-#    define __acc_cdecl_sighandler      __cdecl
-#  endif
-#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
-#  define __acc_cdecl                   cdecl
-#endif
-#if !defined(__acc_cdecl)
-#  define __acc_cdecl
-#endif
-#if !defined(__acc_cdecl_atexit)
-#  define __acc_cdecl_atexit
-#endif
-#if !defined(__acc_cdecl_main)
-#  define __acc_cdecl_main
-#endif
-#if !defined(__acc_cdecl_qsort)
-#  define __acc_cdecl_qsort
-#endif
-#if !defined(__acc_cdecl_sighandler)
-#  define __acc_cdecl_sighandler
-#endif
-#if !defined(__acc_cdecl_va)
-#  define __acc_cdecl_va                __acc_cdecl
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
@@ -1676,11 +1689,6 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #endif
 #endif
 #if defined(ACC_WANT_ACC_TYPE_H)
-#if (ACC_CC_GNUC >= 0x020800ul)
-#  define __acc_gnuc_extension__ __extension__
-#else
-#  define __acc_gnuc_extension__
-#endif
 #if (SIZEOF_LONG_LONG > 0)
 __acc_gnuc_extension__ typedef long long acc_llong_t;
 #endif
@@ -1869,66 +1877,6 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  else
 #    error "integral constants"
 #  endif
-#endif
-#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC)
-#  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-#    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit
-#    define __acc_cdecl_main            __cdecl
-#    if (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
-#      define __acc_cdecl_qsort         __pascal
-#    elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
-#      define __acc_cdecl_qsort         _stdcall
-#    else
-#      define __acc_cdecl_qsort         __cdecl
-#    endif
-#  elif (ACC_CC_WATCOMC)
-#    define __acc_cdecl                 __cdecl
-#  else
-#    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit          __cdecl
-#    define __acc_cdecl_main            __cdecl
-#    define __acc_cdecl_qsort           __cdecl
-#  endif
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
-#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
-#    define __acc_cdecl_sighandler      __pascal
-#  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
-#    define __acc_cdecl_sighandler      _stdcall
-#  elif (ACC_CC_MSC && (_MSC_VER >= 1400)) && defined(_M_CEE_PURE)
-#    define __acc_cdecl_sighandler      __clrcall
-#  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
-#    if defined(_DLL)
-#      define __acc_cdecl_sighandler    _far _cdecl _loadds
-#    elif defined(_MT)
-#      define __acc_cdecl_sighandler    _far _cdecl
-#    else
-#      define __acc_cdecl_sighandler    _cdecl
-#    endif
-#  else
-#    define __acc_cdecl_sighandler      __cdecl
-#  endif
-#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
-#  define __acc_cdecl                   cdecl
-#endif
-#if !defined(__acc_cdecl)
-#  define __acc_cdecl
-#endif
-#if !defined(__acc_cdecl_atexit)
-#  define __acc_cdecl_atexit
-#endif
-#if !defined(__acc_cdecl_main)
-#  define __acc_cdecl_main
-#endif
-#if !defined(__acc_cdecl_qsort)
-#  define __acc_cdecl_qsort
-#endif
-#if !defined(__acc_cdecl_sighandler)
-#  define __acc_cdecl_sighandler
-#endif
-#if !defined(__acc_cdecl_va)
-#  define __acc_cdecl_va                __acc_cdecl
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
