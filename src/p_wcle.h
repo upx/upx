@@ -40,7 +40,7 @@ class PackWcle : public Packer, public LeFile
 public:
     PackWcle(InputFile *f) : super(f), LeFile(f){};
     virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_WC_LE; }
+    virtual int getFormat() const { return UPX_F_WATCOM_LE; }
     virtual const char *getName() const { return "watcom/le"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;

@@ -526,7 +526,7 @@ inline void operator delete[](void *p)
 #define UPX_F_DOS_SYS           2
 #define UPX_F_DOS_EXE           3
 #define UPX_F_DJGPP2_COFF       4
-#define UPX_F_WC_LE             5
+#define UPX_F_WATCOM_LE         5
 #define UPX_F_VXD_LE            6
 #define UPX_F_DOS_EXEH          7               /* OBSOLETE */
 #define UPX_F_TMT_ADAM          8

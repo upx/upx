@@ -4,6 +4,14 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
+[ WARNING: there are known bugs in the win32/pe format which cause
+  crashes on a number of exes ]
+
+Changes in 1.91 beta (XX Mar 2003):
+  * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * djgpp2/coff: added support for recent binutils versions
+  * watcom/le: don't crash on files without relocations
+
 Changes in 1.90 beta (11 Nov 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * implemented several new options for finer compression control:
