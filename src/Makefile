@@ -4,7 +4,7 @@
 
 .SUFFIXES:
 MAKEFLAGS += -rR
-override e = $($1) $(EXTRA_$1) $(UPX_EXTRA_$1)
+override e = $($1) $(EXTRA_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
 
 srcdir ?= $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 ifneq ($(srcdir),./)
@@ -22,7 +22,7 @@ CXXLD = $(CXX)
 # we need UCL and zlib - you can set envvar UCLDIR
 ifneq ($(wildcard $(UCLDIR)/include/ucl/ucl.h),)
 INCLUDES += -I$(UCLDIR)/include
-LIBS += -L$(UCLDIR) -L$(UCLDIR)/src/.libs
+LIBS += $(addprefix -L,$(dir $(wildcard $(UCLDIR)/libucl.a $(UCLDIR)/src/.libs/libucl.a)))
 endif
 LIBS += -lucl -lz
 
