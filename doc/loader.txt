@@ -1,4 +1,4 @@
-This documentation was written for those brave souls who want to
+This documentation is written for those brave souls who want to
 understand and/or modify the UPX assembly stubs - the small snippets
 that do the runtime decompression when a compressed program is started.
 
