@@ -29,6 +29,7 @@
 #include "conf.h"
 
 #include "file.h"
+#include "filter.h"
 #include "packer.h"
 #include "p_vmlinz.h"
 #include <zlib.h>
@@ -67,7 +68,9 @@ int PackVmlinuzI386::getCompressionMethod() const
 
 const int *PackVmlinuzI386::getFilters() const
 {
-    return NULL;
+    static const int filters[] = { 0x26, 0x24, 0x11, 0x14, 0x13, 0x16,
+                                   0x25, 0x15, 0x12, -1 };
+    return filters;
 }
 
 
@@ -88,10 +91,11 @@ int PackVmlinuzI386::readFileHeader()
     fi->readx(&h, sizeof(h));
     if (h.boot_flag != 0xAA55)
         return -1;
-    // FIXME: add more checks for a valid kernel
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size > file_size)
+        return -1;
+    if (h.sys_size * 16 + setup_size - ALIGN_UP(file_size, 16))
         return -1;
 
     if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
@@ -110,39 +114,34 @@ int PackVmlinuzI386::uncompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
+    // estimate gzip-uncompressed kernel size &
+    // alloc buffer to hold the gzip-uncompressed kernel
+    ibuf.alloc((file_size - setup_size) * 3);
+
     // find gzip/zlib header
-    // FIXME - improve this
-    int gzoff = setup_size;
-    while (gzoff < file_size)
+    int klen = 0;
+    gzFile zf= 0;
+
+    for (int gzoff = setup_size; gzoff < file_size; gzoff++)
     {
         int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B", 2);
         if (off < 0)
-            return 0;
-        gzoff += off;
-        break;
+            break;
+
+        fi->seek(gzoff += off, SEEK_SET);
+        zf = gzdopen(dup(fi->getFd()), "r");
+        if (zf == 0)
+            break;
+        klen = gzread(zf, ibuf, ibuf.getSize());
+        if (klen >= file_size)
+            break;
+        gzclose(zf);
+        zf = 0;
+        klen = 0;
     }
-    if (gzoff >= file_size)
-        return 0;
 
-    // estimate gzip-uncompressed kernel size
-    int isize = file_size - gzoff;
-    isize = UPX_MAX(3 * isize, 4*1024*1024);
-
-    // alloc buffer to hold the gzip-uncompressed kernel
-    ibuf.alloc(isize);
-
-    // gzip-uncompress
-    fi->seek(gzoff, SEEK_SET);
-    gzFile zf = gzdopen(fi->getFd(), "r");
-    if (zf == 0)
-        return 0;
-    int klen = gzread(zf, ibuf, isize);
-    if (klen <= 0 || klen <= file_size)
-        return 0;
-    if (klen >= isize)
-        throwCantPack("kernel is too big - send a bug report");
-
-    // success
+    if (zf)
+        gzclose(zf);
     return klen;
 }
 
@@ -160,9 +159,10 @@ void PackVmlinuzI386::readKernel()
     memcpy(setup_buf, obuf, setup_size);
 
     obuf.free();
-    obuf.allocForCompression(ibuf.getSize());
+    obuf.allocForCompression(klen);
 
     ph.u_len = klen;
+    ph.filter = 0;
 }
 
 
@@ -170,40 +170,64 @@ void PackVmlinuzI386::readKernel()
 // vmlinuz specific
 **************************************************************************/
 
+
+int PackVmlinuzI386::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(nrv_loader, sizeof(nrv_loader));
+    addLoader("LINUZ000",
+              ft->id ? "LZCALLT1" : "",
+              "LZIMAGE0",
+              getDecompressor(),
+              NULL
+             );
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addLoader("LZCALLT9", NULL);
+        addFilter32(ft->id);
+    }
+    addLoader("LINUZ990""IDENTSTR""UPX1HEAD", NULL);
+    return getLoaderSize();
+}
+
+
 void PackVmlinuzI386::pack(OutputFile *fo)
 {
     readKernel();
 
-    if (!compress(ibuf, obuf))
-        throwNotCompressible();
+    // prepare filter
+    Filter ft(opt->level);
+    ft.buf_len = ph.u_len;
+    ft.addvalue = kernel_entry;
+    // prepare other settings
+    unsigned overlapoh;
 
-    const unsigned clen = ph.c_len;
-
-    initLoader(nrv_loader, sizeof(nrv_loader));
-
-    addLoader("LINUZ000""LZIMAGE0",
-              getDecompressor(),
-              "LINUZ990""IDENTSTR""UPX1HEAD",
-              NULL
-             );
+    int strategy = -1;      // try the first working filter
+    if (opt->filter >= 0 && isValidFilter(opt->filter))
+        // try opt->filter or 0 if that fails
+        strategy = -2;
+    else if (opt->all_filters)
+        // choose best from all available filters
+        strategy = 0;
+    compressWithFilters(&ft, &overlapoh, 1 << 20, strategy);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
     patchPackHeader(loader, lsize);
-
+    patchFilter32(ft, loader, lsize);
     patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
-
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_during_uncompression);
 
     boot_sect_t *bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
+    bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16) / 16;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
-    fo->write(obuf, clen);
+    fo->write(obuf, ph.c_len);
 #if 0
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
     printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
@@ -220,35 +244,61 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 // bvmlinuz specific
 **************************************************************************/
 
+int PackBvmlinuzI386::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(nrv_loader, sizeof(nrv_loader));
+    addLoader("LINUZ000",
+              ft->id ? "LZCALLT1" : "",
+              "LBZIMAGE""IDENTSTR",
+              "+40D++++", // align the stuff to 4 byte boundary
+              "UPX1HEAD", // 32 byte
+              "LZCUTPOI""+0000000",
+              getDecompressor(),
+              NULL
+             );
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addLoader("LZCALLT9", NULL);
+        addFilter32(ft->id);
+    }
+    addLoader("LINUZ990", NULL);
+    return getLoaderSize();
+}
+
+
 void PackBvmlinuzI386::pack(OutputFile *fo)
 {
     readKernel();
 
-    if (!compress(ibuf, obuf))
-        throwNotCompressible();
+    // prepare filter
+    Filter ft(opt->level);
+    ft.buf_len = ph.u_len;
+    ft.addvalue = kernel_entry;
+    // prepare other settings
+    const unsigned overlap_range = 512;
+    unsigned overlapoh;
 
-    const unsigned overlapoh = findOverlapOverhead(obuf, 512);
+    int strategy = -1;      // try the first working filter
+    if (opt->filter >= 0 && isValidFilter(opt->filter))
+        // try opt->filter or 0 if that fails
+        strategy = -2;
+    else if (opt->all_filters)
+        // choose best from all available filters
+        strategy = 0;
+    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
 
     // align everything to dword boundary - it is easier to handle
     unsigned clen = ph.c_len;
     memset(obuf + clen, 0, 4);
     clen = ALIGN_UP(clen, 4);
 
-    initLoader(nrv_loader, sizeof(nrv_loader));
-
-    addLoader("LINUZ000""LBZIMAGE""IDENTSTR",
-              "+40D++++", // align the stuff to 4 byte boundary
-              "UPX1HEAD", // 32 byte
-              "LZCUTPOI""+0000000",
-              getDecompressor(),
-              "LINUZ990",
-              NULL
-             );
-
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
+    patchFilter32(ft, loader, lsize);
     patchPackHeader(loader, lsize);
 
     const int e_len = getLoaderSectionStart("LZCUTPOI");

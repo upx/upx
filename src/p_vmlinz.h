@@ -56,6 +56,7 @@ protected:
     virtual int uncompressKernel();
     virtual void readKernel();
 
+    virtual int buildLoader(const Filter *ft);
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
@@ -98,6 +99,7 @@ public:
     virtual const char *getName() const { return "bvmlinuz/386"; }
 
     virtual void pack(OutputFile *fo);
+    virtual int buildLoader(const Filter *ft);
 };
 
 
