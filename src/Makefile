@@ -13,7 +13,7 @@
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-0.91
+UCLDIR = $(HOME)/local/src/ucl-0.92
 endif
 
 DEBUG = 0
@@ -150,7 +150,7 @@ LDFLAGS += $(LDLIBDIRS)
 
 
 ###
-### linux
+### linux/i386
 ###
 
 ifeq ($(target),linux)
