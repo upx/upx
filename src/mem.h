@@ -63,8 +63,8 @@ private:
     static unsigned global_alloc_counter;
 
     // disable copy and assignment
-    MemBuffer(MemBuffer const &); // {}
-    MemBuffer& operator= (MemBuffer const &); // { return *this; }
+    MemBuffer(const MemBuffer &); // {}
+    MemBuffer& operator= (const MemBuffer &); // { return *this; }
 
     // disable dynamic allocation
     DISABLE_NEW_DELETE

@@ -64,8 +64,8 @@ private:
 
 private:
     // disable copy and assignment
-    Linker(Linker const &); // {}
-    Linker& operator= (Linker const &); // { return *this; }
+    Linker(const Linker &); // {}
+    Linker& operator= (const Linker &); // { return *this; }
 };
 
 
@@ -83,8 +83,8 @@ protected:
 
 private:
     // disable copy and assignment
-    BeLinker(BeLinker const &); // {}
-    BeLinker& operator= (BeLinker const &); // { return *this; }
+    BeLinker(const BeLinker &); // {}
+    BeLinker& operator= (const BeLinker &); // { return *this; }
 };
 
 

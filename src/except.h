@@ -45,7 +45,7 @@ class Throwable : public std::exception
 protected:
     Throwable(const char *m = 0, int e = 0, bool w = false);
 public:
-    Throwable(Throwable const &);
+    Throwable(const Throwable &);
     virtual ~Throwable() NOTHROW;
     const char *getMsg() const { return msg; }
     int getErrno() const { return err; }
@@ -58,7 +58,7 @@ protected:
 
 private:
     // disable assignment
-    Throwable& operator= (Throwable const &);
+    Throwable& operator= (const Throwable &);
     // disable dynamic allocation
     DISABLE_NEW_DELETE
 

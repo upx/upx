@@ -58,7 +58,7 @@ protected:
         off_t offset;
         off_t size;
     };
-    virtual void packExtent(Extent const &x,
+    virtual void packExtent(const Extent &x,
         unsigned &total_in, unsigned &total_out, Filter *, OutputFile *);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,

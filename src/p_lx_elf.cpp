@@ -167,7 +167,7 @@ bool PackLinuxI386elf::canPack()
 }
 
 void PackLinuxI386elf::packExtent(
-    Extent const &x,
+    const Extent &x,
     unsigned &total_in,
     unsigned &total_out,
     Filter *ft,

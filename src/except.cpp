@@ -47,7 +47,7 @@ Throwable::Throwable(const char *m, int e, bool w)
 }
 
 
-Throwable::Throwable(Throwable const &other)
+Throwable::Throwable(const Throwable &other)
     : super(other), msg(NULL), err(other.err), is_warning(other.is_warning)
 {
     if (other.msg)

@@ -273,8 +273,8 @@ private:
 
 private:
     // disable copy and assignment
-    Packer(Packer const &); // {}
-    Packer& operator= (Packer const &); // { return *this; }
+    Packer(const Packer &); // {}
+    Packer& operator= (const Packer &); // { return *this; }
 };
 
 

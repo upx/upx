@@ -219,8 +219,8 @@ protected:
 
 private:
     // disable copy and assignment
-    LeFile(LeFile const &); // {}
-    LeFile& operator= (LeFile const &); // { return *this; }
+    LeFile(const LeFile &); // {}
+    LeFile& operator= (const LeFile &); // { return *this; }
 };
 
 
