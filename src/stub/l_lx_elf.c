@@ -179,8 +179,8 @@ ERR_LAB
 void *
 make_hatch(Elf32_Phdr const *const phdr)
 {
+    unsigned *hatch = 0;
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
-        unsigned *hatch;
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
         //  ||   ( (hatch = loc2), test_loc2 ) ) {
@@ -199,23 +199,23 @@ make_hatch(Elf32_Phdr const *const phdr)
             // Omitting 'const' saves repeated literal in gcc.
             unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
             // Don't store into read-only page if value is already there.
-            if (*hatch != escape) {
-                *hatch  = escape;
+            if (* (volatile unsigned*) hatch != escape) {
+                * hatch  = escape;
             }
-            return hatch;
         }
     }
-    return 0;
+    return hatch;
 }
 
 static void
 __attribute__ ((regparm(2), stdcall))
-bzero(char *p, size_t len)
+upx_bzero(char *p, size_t len)
 {
     if (len) do {
         *p++= 0;
     } while (--len);
 }
+#define bzero upx_bzero
 
 
 static void

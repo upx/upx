@@ -275,6 +275,7 @@ type name(type1 arg1,type2 arg2,type3 arg3) \
 }
 
 #define access          syscall_access
+#define _exit           syscall_exit
 #define fcntl           syscall_fcntl
 #define getcwd          syscall_getcwd
 #define getrusage       syscall_getrusage

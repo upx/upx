@@ -95,10 +95,11 @@ ifeq (1,2)
   CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
   CC_LINUX_I386 += -Werror
 else
-  # gcc 3.4 (fold_*.bin: 1549 / 1043 / 1331)
+  # gcc 3.4 20040118 (fold_*.bin: 1552 / 1043 / 1320)
   #   info: -mcpu=k6 procduces the smallest code
   CC_LINUX_I386  = gcc-3.4 -march=i386 -mtune=k6 -Os -fno-omit-frame-pointer -fno-exceptions
   CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+  CC_LINUX_I386 += -fweb
   CC_LINUX_I386 += -Werror
 endif
 endif
