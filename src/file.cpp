@@ -128,29 +128,13 @@ void FileBase::closex()
 
 int FileBase::read(void *buf, int len)
 {
-    int l;
     if (!isOpen() || len < 0)
         throwIOException("bad read");
-    if (len == 0)
-        return 0;
-    for (;;)
-    {
-#if defined(__DJGPP__)
-        l = ::_read(_fd, buf, len);
-#else
-        l = ::read(_fd, buf, len);
-#endif
-        if (l < 0)
-        {
-#if defined(EINTR)
-            if (errno == EINTR)
-                continue;
-#endif
-            throwIOException("read error",errno);
-        }
-        break;
-    }
-    return l;
+    errno = 0;
+    long l = acc_safe_hread(_fd, buf, len);
+    if (errno)
+        throwIOException("read error",errno);
+    return (int) l;
 }
 
 
@@ -165,26 +149,12 @@ int FileBase::readx(void *buf, int len)
 
 void FileBase::write(const void *buf, int len)
 {
-    int l;
     if (!isOpen() || len < 0)
         throwIOException("bad write");
-    if (len == 0)
-        return;
-    for (;;)
-    {
-#if defined(__DJGPP__)
-        l = ::_write(_fd,buf,len);
-#else
-        l = ::write(_fd,buf,len);
-#endif
-#if defined(EINTR)
-        if (l < 0 && errno == EINTR)
-            continue;
-#endif
-        if (l != len)
-            throwIOException("write error",errno);
-        break;
-    }
+    errno = 0;
+    long l = acc_safe_hwrite(_fd, buf, len);
+    if (l != len)
+        throwIOException("write error",errno);
 }
 
 

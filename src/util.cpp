@@ -40,6 +40,7 @@
 #else
 #  include "acc/acc_inci.h"
 #  include "acc/acclib/misc.ch"
+#  include "acc/acclib/hsread.ch"
 #endif
 
 
