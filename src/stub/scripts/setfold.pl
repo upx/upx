@@ -29,7 +29,11 @@ $fname = shift || die;
 sysopen (FH,$fname,2) || die;
 binmode FH;
 
-$val = oct shift || die;
+$val = shift || die "$val";
+###print STDERR "$val\n";
+$val = oct($val);               # acutally hex()
+###print STDERR "$val\n";
+die unless $val;
 $num = pack("V", $val);
 
 # 0x34 = sizeof(Elf32_Ehdr)

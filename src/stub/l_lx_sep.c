@@ -270,7 +270,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
         (char const *)ehdr);
     unsigned long base = (ET_DYN==ehdr->e_type) ? 0x40000000 : 0;
     int j;
-    for (j=0; j < ehdr->e_phnum; ++phdr, ++j) 
+    for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
         a->a_un.a_val = phdr->p_vaddr;
     }
@@ -340,7 +340,7 @@ ERR_LAB
             do_brk(haddr);
         }
     }
-    if (close(fdi) != 0) 
+    if (close(fdi) != 0)
         err_exit(11);
     if (ET_DYN==ehdr->e_type) {
         return ehdr->e_entry + base;
@@ -402,7 +402,7 @@ void *upx_main(
     // ----- Step 4: decompress blocks -----
     //
 
-    // Get Elf32_Ehdr.  First set xo.size = size[0] = uncompressed size 
+    // Get Elf32_Ehdr.  First set xo.size = size[0] = uncompressed size
     if (0!=xread(fdi, (void *)&xo, sizeof(xo))) {
         err_exit(15);
     }

@@ -61,7 +61,7 @@ APP      = perl -w scripts/app.pl
 BIN2H    = perl -w scripts/bin2h.pl
 BRANDELF = perl -w scripts/brandelf.pl
 O2BIN    = perl -w scripts/o2bin.pl
-SETFOLD  = perl -w scripts/setfold.pl
+SETFOLD  = /bin/sh scripts/setfold.sh
 ##STRIPELF = perl -w scripts/stripelf.pl
 STRIPELF = ./util/sstrip/sstrip
 
@@ -95,14 +95,14 @@ mostlyclean:
 	-rm -f *~ *.bin *.bkp *.i *.lst *.map
 
 clean: mostlyclean
-	-rm -f *.o *.asx *.asy upxb upxd
+	-rm -f *.o *.asx *.asy
 
 distclean: clean
 
 # This command is intended for maintainers to use; it deletes files
 # that may require special tools to rebuild.
 maintainer-clean: distclean
-	-rm -f $(STUBS)
+	-rm -f $(STUBS) upxb upxd
 
 ident: all
 	ident *.bin
@@ -188,12 +188,9 @@ l_w32pe.h: l_w32pe.asx
 
 l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o l_lx_exec86.lds Makefile
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T l_lx_exec86.lds -Map l_lx_n2b.map -o $T.bin \
+	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin \
 		l_xe_n2b.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_nrv2b_loader $@
 
@@ -201,10 +198,7 @@ l_le_n2b.h: l_lx_elf.c l_6e_n2b.o l_lx_elf86.lds
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
 	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
 		l_6e_n2b.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_nrv2b_loader $@
 
@@ -212,10 +206,7 @@ l_sh_n2b.h: l_lx_sh.c l_6h_n2b.o l_lx_sh86.lds
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
 	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
 		l_6h_n2b.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_nrv2b_loader $@
 
@@ -233,10 +224,7 @@ l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o l_lx_exec86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
 	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin \
 		l_xe_n2d.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_nrv2d_loader $@
 
@@ -244,10 +232,7 @@ l_le_n2d.h: l_lx_elf.c l_6e_n2d.o l_lx_elf86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
 	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
 		l_6e_n2d.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_nrv2d_loader $@
 
@@ -255,10 +240,7 @@ l_sh_n2d.h: l_lx_sh.c l_6h_n2d.o l_lx_sh86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
 	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
 		l_6h_n2d.o $T.o
-	fold=`nm $T.bin | grep fold_begin | sed 's/.....\(...\).*/0x\1/'`; \
-		objcopy -S -R .comment -R .note $T.bin; \
-		$(SETFOLD) $T.bin $$fold
-	$(STRIPELF) $T.bin
+	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_nrv2d_loader $@
 
@@ -273,20 +255,21 @@ l_6h_n2d.o: l_lx_sh86.asm
 
 l_lx_sep.o: l_lx_sep.c
 	$(CC_LINUX) -c $<
-	
+
 upxb: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o upxb.o l_lx_sep86.asm
-	ld -T l_lx_sep86.lds -Map upxb.map -o upxb upxb.o l_lx_sep.o
-	objcopy -S -R .comment -R .note upxb
-	$(STRIPELF) upxb
-	$(BRANDELF) upxb
+	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
+	ld -T l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
+	objcopy -S -R .comment -R .note $@
+	$(STRIPELF) $@
+	$(BRANDELF) $@
 
 upxd: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o upxd.o l_lx_sep86.asm
-	ld -T l_lx_sep86.lds -Map upxd.map -o upxd upxd.o l_lx_sep.o
-	objcopy -S -R .comment -R .note upxd
-	$(STRIPELF) upxd
-	$(BRANDELF) upxd
+	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
+	ld -T l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
+	objcopy -S -R .comment -R .note $@
+	$(STRIPELF) $@
+	$(BRANDELF) $@
+
 
 # /***********************************************************************
 # // dependencies
@@ -316,14 +299,14 @@ l_xe_n2d.o:     n2d_d32.ash  $(DEPS1)
 l_6e_n2d.o:     n2d_d32.ash  $(DEPS1)
 l_6h_n2d.o:     n2d_d32.ash  $(DEPS1)
 
-l_lx_n2b.h:	linux.hh
-l_lx_n2d.h:	linux.hh
-l_le_n2b.h:	linux.hh
-l_le_n2d.h:	linux.hh
-l_sh_n2b.h:	linux.hh
-l_sh_n2d.h:	linux.hh
-upxb:	linux.hh
-upxd:	linux.hh
+l_lx_n2b.h:     linux.hh
+l_lx_n2d.h:     linux.hh
+l_le_n2b.h:     linux.hh
+l_le_n2d.h:     linux.hh
+l_sh_n2b.h:     linux.hh
+l_sh_n2d.h:     linux.hh
+upxb:           linux.hh
+upxd:           linux.hh
 
 .NOEXPORT:
 
