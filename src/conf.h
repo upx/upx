@@ -294,6 +294,9 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 // avoid warnings about shadowing that obsolete index() function
 #define index   upx_index
 
+// dummy statement
+#define nop     ((void)0)
+
 
 /*************************************************************************
 // file io
