@@ -112,6 +112,7 @@ struct timespec {
 #define MAP_ANONYMOUS   0x20
 
 
+#ifdef __i386__  /*{*/
 // <asm/unistd.h>
 #define __NR_exit                 1
 #define __NR_fork                 2
@@ -326,7 +327,15 @@ static inline _syscall1(int,unlink,const char *,file)
 #undef Z0
 #undef Z1
 
-
+#else  /*}{ generic */
+extern void *brk(void *);
+extern int close(int);
+extern void *mmap(void *, size_t, int, int, int, off_t);
+extern int munmap(void *, size_t);
+extern int mprotect(void const *, size_t, int);
+extern int open(char const *, unsigned, unsigned);
+extern size_t read(int, void *, size_t);
+#endif  /*}*/
 /*************************************************************************
 // <elf.h>
 **************************************************************************/
