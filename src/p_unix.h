@@ -68,6 +68,7 @@ protected:
     // an endian abstraction here
     virtual unsigned get_native32(const void *) = 0;
     virtual void set_native32(void *, unsigned) = 0;
+    virtual void set_native16(void *, unsigned) = 0;
 
     virtual bool checkCompressionRatio(unsigned, unsigned) const;
 
@@ -133,6 +134,10 @@ protected:
     {
         set_be32(b, v);
     }
+    virtual void set_native16(void *b, unsigned v)
+    {
+        set_be16(b, v);
+    }
 };
 
 
@@ -148,6 +153,10 @@ protected:
     virtual void set_native32(void *b, unsigned v)
     {
         set_le32(b, v);
+    }
+    virtual void set_native16(void *b, unsigned v)
+    {
+        set_le16(b, v);
     }
 };
 

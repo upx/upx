@@ -82,6 +82,53 @@ struct Elf_LE32_Phdr
 __attribute_packed;
 
 
+struct Elf_LE32_Shdr
+{
+    LE32 sh_name;        /* Section name (string tbl index) */
+    LE32 sh_type;        /* Section type */
+    LE32 sh_flags;       /* Section flags */
+    LE32 sh_addr;        /* Section virtual addr at execution */
+    LE32 sh_offset;      /* Section file offset */
+    LE32 sh_size;        /* Section size in bytes */
+    LE32 sh_link;        /* Link to another section */
+    LE32 sh_info;        /* Additional section information */
+    LE32 sh_addralign;   /* Section alignment */
+    LE32 sh_entsize;     /* Entry size if section holds table */
+
+    enum {  // values for sh_type
+        SHT_NULL = 0,    /* Section header table entry unused */
+        SHT_PROGBITS = 1,/* Program data */
+        SHT_SYMTAB = 2,  /* Symbol table */
+        SHT_STRTAB = 3,  /* String table */
+        SHT_RELA = 4,    /* Relocation entries with addends */
+        SHT_HASH = 5,    /* Symbol hash table */
+        SHT_DYNAMIC = 6, /* Dynamic linking information */
+        SHT_NOTE = 7,    /* Notes */
+        SHT_NOBITS = 8,  /* Program space with no data (bss) */
+        SHT_REL = 9,     /* Relocation entries, no addends */
+        SHT_SHLIB = 10,  /* Reserved */
+        SHT_DYNSYM = 11, /* Dynamic linker symbol table */
+            /* 12, 13  hole */
+        SHT_INIT_ARRAY = 14,    /* Array of constructors */
+        SHT_FINI_ARRAY = 15,    /* Array of destructors */
+        SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
+        SHT_GROUP = 17,  /* Section group */
+        SHT_SYMTAB_SHNDX = 18,	/* Extended section indeces */
+        SHT_NUM = 19     /* Number of defined types.  */
+    };
+
+    enum {  // values for sh_flags
+        SHF_WRITE      = (1 << 0),  /* Writable */
+        SHF_ALLOC	   = (1 << 1),  /* Occupies memory during execution */
+        SHF_EXECINSTR  = (1 << 2),  /* Executable */
+        SHF_MERGE	   = (1 << 4),  /* Might be merged */
+        SHF_STRINGS	   = (1 << 5),  /* Contains nul-terminated strings */
+        SHF_INFO_LINK  = (1 << 6),  /* `sh_info' contains SHT index */
+        SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
+    };
+}
+__attribute_packed;
+
 struct Elf_LE32_Dyn
 {
     LE32 d_tag;
