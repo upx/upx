@@ -88,7 +88,7 @@ FileBase::~FileBase()
 void FileBase::sopen()
 {
     if (_shflags < 0)
-        _fd = ::open(_name,_flags,_mode);
+        _fd = ::open(_name, _flags, _mode);
     else
     {
 #if defined(__DJGPP__)
@@ -96,7 +96,7 @@ void FileBase::sopen()
 #elif defined(__MINT__)
         _fd = ::open(_name,_flags | (_shflags & O_SHMODE), _mode);
 #elif defined(SH_DENYRW)
-        _fd = ::sopen(_name,_flags,_shflags,_mode);
+        _fd = ::sopen(_name, _flags, _shflags, _mode);
 #else
         assert(0);
 #endif
@@ -135,9 +135,9 @@ int FileBase::read(void *buf, int len)
     for (;;)
     {
 #if 1 && defined(__DJGPP__)
-        l = ::_read(_fd,buf,len);
+        l = ::_read(_fd, buf, len);
 #else
-        l = ::read(_fd,buf,len);
+        l = ::read(_fd, buf, len);
 #endif
         if (l < 0)
         {
@@ -155,7 +155,7 @@ int FileBase::read(void *buf, int len)
 
 int FileBase::readx(void *buf, int len)
 {
-    int l = this->read(buf,len);
+    int l = this->read(buf, len);
     if (l != len)
         throwEOFException();
     return l;
@@ -204,7 +204,7 @@ off_t FileBase::tell() const
 {
     if (!isOpen())
         throwIOException("bad tell");
-    off_t l = ::lseek(_fd,0,SEEK_CUR);
+    off_t l = ::lseek(_fd, 0, SEEK_CUR);
     if (l < 0)
         throwIOException("tell error",errno);
     return l;
@@ -340,7 +340,7 @@ bool OutputFile::openStdout(int flags, bool force)
 
 void OutputFile::write(const void *buf, int len)
 {
-    super::write(buf,len);
+    super::write(buf, len);
     bytes_written += len;
 }
 

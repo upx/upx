@@ -411,7 +411,7 @@ bool file_exists(const char *name)
     struct stat st;
 
     /* return true if we can open it */
-    fd = open(name, O_RDONLY);
+    fd = open(name, O_RDONLY, 0);
     if (fd >= 0)
     {
         (void) close(fd);
@@ -440,7 +440,7 @@ bool maketempname(char *ofilename, size_t size,
                   const char *ifilename, const char *ext, bool force)
 {
     char *ofext = NULL, *ofname;
-    int ofile = -1;
+    int ofile;
 
     if (size <= 0)
         return false;
@@ -455,14 +455,14 @@ bool maketempname(char *ofilename, size_t size,
         ofext = ofilename + strlen(ofilename);
     strcpy(ofext, ext);
 
-    while (ofile < 1000)
+    for (ofile = 0; ofile < 1000; ofile++)
     {
         assert(strlen(ofilename) < size);
         if (!file_exists(ofilename))
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ++ofile);
+        upx_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
@@ -474,7 +474,7 @@ bool makebakname(char *ofilename, size_t size,
                  const char *ifilename, bool force)
 {
     char *ofext = NULL, *ofname;
-    int ofile = -1;
+    int ofile;
 
     if (size <= 0)
         return false;
@@ -495,14 +495,14 @@ bool makebakname(char *ofilename, size_t size,
     else
         ofext[strlen(ofext)-1] = '~';
 
-    while (ofile < 1000)
+    for (ofile = 0; ofile < 1000; ofile++)
     {
         assert(strlen(ofilename) < size);
         if (!file_exists(ofilename))
             return true;
         if (!force)
             break;
-        upx_snprintf(ofext, 5, ".%03d", ++ofile);
+        upx_snprintf(ofext, 5, ".%03d", ofile);
     }
 
     ofilename[0] = 0;
