@@ -369,6 +369,7 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 
 DEPS1 = header.ash macros.ash ident.ash ident_n.ash ident_s.ash
 DEPS2 = header.asy macros.asy
+DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy
 
 $(STUBS):       $(srcdir)/scripts/bin2h.pl
 
@@ -387,9 +388,10 @@ l_vxd.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 
-l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy n2e_d32.asy
-l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy n2e_d32.asy
-l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy n2e_d32.asy
+l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
+l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
+l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
+l_vmlinz.h:     l_vmlinz.asm    macros.ash macros.asy $(DEPS3)
 
 upxb:           linux.hh
 upxd:           linux.hh
