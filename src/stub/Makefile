@@ -109,7 +109,7 @@ endif
 
 # MIPS R3000
 APP_R3K = perl -w $(srcdir)/scripts/app_r3k.pl
-ASM_R3K = asm5900
+ASM_R3K = asm5900 --nologo -q
 
 
 # /***********************************************************************
@@ -350,7 +350,7 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 
 l_psx.h: l_psx.asm
 	$(APP_R3K) $< $T.asx
-	$(ASM_R3K) $T.asx -i:$(UCL_UPX) -o:$T.bin
+	$(ASM_R3K) $T.asx -I$(UCL_UPX) -o$T.bin -l$T.lst
 	$(BIN2H) $T.bin nrv_loader $@
 
 
