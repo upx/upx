@@ -108,11 +108,12 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 typedef void f_unfilter(
     nrv_byte *,  // also addvalue
     nrv_uint,
-    unsigned cto8  // junk in high 24 bits
+    unsigned cto8, // junk in high 24 bits
+    unsigned ftid
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, nrv_uint * );
+          nrv_byte *, nrv_uint *, unsigned );
 
 static void
 unpackExtent(
@@ -151,7 +152,8 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len;
-            int const j = (*f_decompress)(xi->buf, h.sz_cpr, xo->buf, &out_len);
+            int const j = (*f_decompress)(xi->buf, h.sz_cpr, xo->buf, &out_len,
+                h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             // Skip Ehdr+Phdrs: separate 1st block, not filtered
@@ -159,7 +161,7 @@ ERR_LAB
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
             ) {
-                (*f_unf)(xo->buf, out_len, h.b_cto8);
+                (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
