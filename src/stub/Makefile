@@ -1,7 +1,7 @@
 #
 # UPX stub Makefile (GNU make)
 #
-# see http://wildsau.idv-edu.uni-linz.ac.at/mfx/download/upx/tools/
+# see http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
 # for required support tools
 #
 
