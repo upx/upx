@@ -153,6 +153,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     ph.c_len = 0;
     assert(ph.level >= 1); assert(ph.level <= 10);
 
+    // save current checksums
     ph.saved_u_adler = ph.u_adler;
     ph.saved_c_adler = ph.c_adler;
     // update checksum of uncompressed data
@@ -202,11 +203,14 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     int r = upx_compress(in, ph.u_len, out, &ph.c_len,
                          uip->getCallback(),
                          ph.method, ph.level, &conf, result);
+
+    //uip->finalCallback(ph.u_len, ph.c_len);
+    uip->endCallback();
+
     if (r == UPX_E_OUT_OF_MEMORY)
         throwCantPack("out of memory");
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
-    //uip->finalCallback(ph.u_len, ph.c_len);
 
     //ph.min_offset_found = result[0];
     ph.max_offset_found = result[1];
@@ -218,8 +222,6 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     //ph.same_match_offsets_found = result[7];
     assert(max_offset == 0 || max_offset >= ph.max_offset_found);
     assert(max_match == 0 || max_match >= ph.max_match_found);
-
-    uip->endCallback();
 
     //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
     if (!checkCompressionRatio(ph.u_len, ph.c_len))
@@ -290,7 +292,7 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
 
 
 /*************************************************************************
-//
+// decompress
 **************************************************************************/
 
 void Packer::decompress(const upx_bytep in, upx_bytep out,
@@ -323,7 +325,7 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 
 
 /*************************************************************************
-//
+// overlapping decompression
 **************************************************************************/
 
 bool Packer::testOverlappingDecompression(const upx_bytep buf,
@@ -664,7 +666,7 @@ void Packer::checkAlreadyPacked(void *b, int blen)
     //    return;
     //
     // This also would require that the buffer in `b' holds
-    // the full PackHeader, and not only the magic.
+    // the full PackHeader, and not only the 4 magic bytes.
 
     throwAlreadyPacked();
 }
@@ -713,7 +715,7 @@ void Packer::checkPatch(void *b, int blen, int boff, int size)
 
 int Packer::patch_be16(void *b, int blen, unsigned old, unsigned new_)
 {
-    int boff = find_be16(b,blen,old);
+    int boff = find_be16(b, blen, old);
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -725,7 +727,7 @@ int Packer::patch_be16(void *b, int blen, unsigned old, unsigned new_)
 
 int Packer::patch_be16(void *b, int blen, const void *old, unsigned new_)
 {
-    int boff = find(b,blen,old,2);
+    int boff = find(b, blen, old, 2);
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -737,7 +739,7 @@ int Packer::patch_be16(void *b, int blen, const void *old, unsigned new_)
 
 int Packer::patch_be32(void *b, int blen, unsigned old, unsigned new_)
 {
-    int boff = find_be32(b,blen,old);
+    int boff = find_be32(b, blen, old);
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -749,7 +751,7 @@ int Packer::patch_be32(void *b, int blen, unsigned old, unsigned new_)
 
 int Packer::patch_be32(void *b, int blen, const void *old, unsigned new_)
 {
-    int boff = find(b,blen,old,4);
+    int boff = find(b, blen, old, 4);
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -761,7 +763,7 @@ int Packer::patch_be32(void *b, int blen, const void *old, unsigned new_)
 
 int Packer::patch_le16(void *b, int blen, unsigned old, unsigned new_)
 {
-    int boff = find_le16(b,blen,old);
+    int boff = find_le16(b, blen, old);
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -773,7 +775,7 @@ int Packer::patch_le16(void *b, int blen, unsigned old, unsigned new_)
 
 int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_)
 {
-    int boff = find(b,blen,old,2);
+    int boff = find(b, blen, old, 2);
     checkPatch(b, blen, boff, 2);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -785,7 +787,7 @@ int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_)
 
 int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
 {
-    int boff = find_le32(b,blen,old);
+    int boff = find_le32(b, blen, old);
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -797,7 +799,7 @@ int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
 
 int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 {
-    int boff = find(b,blen,old,4);
+    int boff = find(b, blen, old, 4);
     checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
@@ -810,7 +812,7 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 // patch version into stub/ident_n.ash
 int Packer::patchVersion(void *b, int blen)
 {
-    int boff = find(b,blen,"$Id: UPX UPXV ",14);
+    int boff = find(b, blen, "$Id: UPX UPXV ", 14);
     checkPatch(b, blen, boff, 14);
 
     unsigned char *p = (unsigned char *)b + boff + 9;
@@ -1226,7 +1228,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
             {
                 // filter failed or was usesless
                 if (strategy > 0)
-                    ui_total_passes -= 1;
+                {
+                    // adjust passes
+                    if (ui_pass >= 0)
+                        ui_pass++;
+                }
                 continue;
             }
             // filter success
@@ -1261,13 +1267,13 @@ void Packer::compressWithFilters(Filter *parm_ft,
                     update = true;
                 else if (ph.c_len + lsize == best_ph.c_len + best_ph_lsize)
                 {
-                    // prefer less overlap_overhead
-                    if (ph.overlap_overhead < best_ph.overlap_overhead)
+                    // prefer smaller loaders
+                    if (lsize < best_ph_lsize)
                         update = true;
-                    else if (ph.overlap_overhead == best_ph.overlap_overhead)
+                    else if (lsize == best_ph_lsize)
                     {
-                        // prefer bigger loaders
-                        if (lsize > best_ph_lsize)
+                        // prefer less overlap_overhead
+                        if (ph.overlap_overhead < best_ph.overlap_overhead)
                             update = true;
                     }
                 }
@@ -1320,6 +1326,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
 
 bool Packer::isValidFilter(int filter_id) const
 {
+    if (!Filter::isValidFilter(filter_id))
+        return false;
     if (filter_id == 0)
         return true;
     for (const int *f = getFilters(); f && *f >= 0; f++)
