@@ -75,8 +75,8 @@ start:
 ; ============= UNFILTER
 ; =============
 
-                pop     ecx     ; MATCH05  len
 %ifdef  __LXCKLLT9__
+                pop     ecx     ; MATCH05  len
                 pop     edx     ; MATCH04  cto
                 pop     edi     ; MATCH03  src
 
@@ -89,6 +89,7 @@ start:
 
 %endif; __LXDUMMY2__
 %ifdef  __LXCALLT9__
+                pop     ecx     ; MATCH05  len
                 pop     edi     ; MATCH03  src
                 cjt32   0
 %endif; __LINUX990__
