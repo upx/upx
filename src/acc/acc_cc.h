@@ -21,7 +21,11 @@
  *   ...
  */
 
-#if defined(__GNUC__) && defined(__VERSION__)
+#if defined(__INTEL_COMPILER)
+#  define ACC_CC_INTELC         1
+#  define ACC_INFO_CC           "Intel C"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__INTEL_COMPILER)
+#elif defined(__GNUC__) && defined(__VERSION__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
 #  elif defined(__GNUC_MINOR__)
@@ -51,10 +55,6 @@
 #  define ACC_CC_IBMC           1
 #  define ACC_INFO_CC           "IBM C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__IBMC__)
-#elif defined(__INTEL_COMPILER)
-#  define ACC_CC_INTELC         1
-#  define ACC_INFO_CC           "Intel C"
-#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__INTEL_COMPILER)
 #elif defined(__LCC__)
 #  define ACC_CC_LCC            1
 #  define ACC_INFO_CC           "lcc"
@@ -72,6 +72,10 @@
 #  define ACC_CC_PACIFICC       1
 #  define ACC_INFO_CC           "Pacific C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__PACIFIC__)
+#elif defined(__PGI) && (defined(__linux__) || defined(__WIN32__))
+#  define ACC_CC_PGI            1
+#  define ACC_INFO_CC           "Portland Group PGI C"
+#  define ACC_INFO_CCVER        "unknown"
 #elif defined(__PUREC__)
 #  define ACC_CC_PUREC          1
 #  define ACC_INFO_CC           "Pure C"

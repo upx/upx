@@ -137,6 +137,8 @@
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define acc_alignof(e)        __alignof(e)
+#elif (ACC_CC_PGI)
+#  define acc_alignof(e)        __alignof__(e)
 #endif
 
 #if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
@@ -152,6 +154,8 @@
 #  define acc_inline            __inline
 #elif (ACC_CC_MSC && (_MSC_VER >= 1000))
 #  define acc_inline            __inline
+#elif (ACC_CC_PGI)
+#  define acc_inline            __inline__
 #endif
 
 

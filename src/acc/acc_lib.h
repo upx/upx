@@ -378,7 +378,7 @@ typedef struct {
     char** go_argv;
     const char* go_shortopts;
     const acc_getopt_longopt_p longopts;
-#if (ACC_CC_AZTECC || ACC_CC_TURBOC)
+#if (ACC_BROKEN_CDECL_ALT_SYNTAX)
     int __acc_cdecl_va (*go_error)(const char *, ...);
 #else
     int (__acc_cdecl_va *go_error)(const char *, ...);

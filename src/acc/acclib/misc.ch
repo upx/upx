@@ -31,7 +31,7 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
     return get_osfhandle(fd);
 #elif (ACC_OS_EMX && defined(__RSXNT__))
     return -1; /* FIXME */
-#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
     return -1; /* FIXME */
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
 # if (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))

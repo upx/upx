@@ -305,7 +305,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define __acc_cdecl_va                __acc_cdecl
 #endif
 
-#if (ACC_CC_AZTECC || ACC_CC_TURBOC)
+#if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
 #elif defined(RETSIGTYPE)
 typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(int);

@@ -19,27 +19,41 @@
 #endif
 
 
-#if (ACC_H_WINDOWS_H) && defined(acc_int64l_t)
-   /* See also: KB Q274323: PRB: Performance Counter Value May
-    *   Unexpectedly Leap Forward */
-#  define __ACCLIB_UCLOCK_USE_QPC 1
-#endif
-
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #elif (ACC_OS_DOS32 && defined(__DJGPP__))
-#elif (ACC_H_WINDOWS_H) && (ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_DMC || ACC_CC_LCC)
+#elif (ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_H_WINDOWS_H)
+#  if defined(acc_int64l_t)
+     /* See also: KB Q274323: PRB: Performance Counter Value May
+      *   Unexpectedly Leap Forward */
+#    define __ACCLIB_UCLOCK_USE_QPC 1
+#  endif
+   /* fallbacks */
+#  if ((ACC_CC_DMC && (__DMC__ < 0x838)) || ACC_CC_LCC)
      /* winmm.lib is missing */
 #    define __ACCLIB_UCLOCK_USE_CLOCK 1
 #  else
-#    define __ACCLIB_UCLOCK_USE_MMSYSTEM 1
+#    define __ACCLIB_UCLOCK_USE_WINMM 1
 #    if (ACC_CC_MSC && (_MSC_VER >= 1000))
        /* avoid -W4 warnings in <mmsystem.h> */
 #      pragma warning(disable: 4201)
 #    endif
-#    include <mmsystem.h>
-#    if (ACC_CC_INTELC || ACC_CC_MSC)
-#      pragma comment(lib,"winmm")
+#    if 1
+#      include <mmsystem.h>
+#    else
+#      if (ACC_CC_INTELC || ACC_CC_MSC)
+         ACC_EXTERN_C __declspec(dllimport) unsigned long __stdcall timeGetTime(void);
+#      else
+         ACC_EXTERN_C unsigned long __stdcall timeGetTime(void);
+#      endif
+#    endif
+#    if (ACC_CC_DMC)
+#      pragma DMC includelib "winmm.lib"
+#    elif (ACC_CC_INTELC || ACC_CC_MSC)
+#      pragma comment(lib, "winmm")
+#    elif (ACC_CC_SYMANTECC)
+#      pragma SC includelib "winmm.lib"
+#    elif (ACC_CC_WATCOMC)
+#      pragma library("winmm.lib")
 #    endif
 #  endif
 #elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN32 || ACC_OS_WIN64)
@@ -127,7 +141,7 @@ ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
     c->ticks.t64 = clock();
 #elif (__ACCLIB_UCLOCK_USE_CLOCK)
     c->ticks.t32 = clock();
-#elif (__ACCLIB_UCLOCK_USE_MMSYSTEM)
+#elif (__ACCLIB_UCLOCK_USE_WINMM)
     c->ticks.t32 = timeGetTime();
 #elif (__ACCLIB_UCLOCK_USE_GETRUSAGE)
     struct rusage ru;
@@ -175,7 +189,7 @@ ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_
 #elif (__ACCLIB_UCLOCK_USE_CLOCK)
     h->mode = 5;
     d = (double) (stop->ticks.t32 - start->ticks.t32) / (CLOCKS_PER_SEC);
-#elif (__ACCLIB_UCLOCK_USE_MMSYSTEM)
+#elif (__ACCLIB_UCLOCK_USE_WINMM)
     h->mode = 6;
     d = (double) (stop->ticks.t32 - start->ticks.t32) / 1000.0;
 #elif (__ACCLIB_UCLOCK_USE_GETRUSAGE)

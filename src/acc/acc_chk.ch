@@ -366,9 +366,11 @@
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
+    ACCCHK_ASSERT(sizeof(void (*)(void)) == 4)
 #elif (ACC_OS_WIN64)
     ACCCHK_ASSERT(sizeof(size_t) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
+    ACCCHK_ASSERT(sizeof(void (*)(void)) == 8)
 #endif
 
 

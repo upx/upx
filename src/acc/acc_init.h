@@ -141,6 +141,13 @@
 #    if !defined(__pascal)
 #      define __pascal _pascal
 #    endif
+#  elif (defined(__PUREC__) || defined(__TURBOC__)) && defined(__TOS__)
+#    if !defined(__cdecl)
+#      define __cdecl cdecl
+#    endif
+#    if !defined(__pascal)
+#      define __pascal pascal
+#    endif
 #  endif
 #  undef __ACC_RENAME_A
 #  undef __ACC_RENAME_B
@@ -148,15 +155,9 @@
 
 
 #if (UINT_MAX == ACC_0xffffL)
-#if defined(__MSDOS__) && defined(__TURBOC__)
-#  if (__TURBOC__ < 0x0150)
-#    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
-#    define ACC_BROKEN_INTEGRAL_PROMOTION 1
-#  endif
-#  if (__TURBOC__ < 0x0200)
-#    define ACC_BROKEN_SIZEOF 1
-#  endif
-#elif defined(MSDOS) && defined(_MSC_VER)
+#if defined(__AZTEC_C__) && defined(__DOS__)
+#  define ACC_BROKEN_CDECL_ALT_SYNTAX 1
+#elif defined(_MSC_VER) && defined(MSDOS)
 #  if (_MSC_VER < 600)
 #    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #  endif
@@ -166,7 +167,20 @@
 #  endif
 #elif defined(__PACIFIC__) && defined(DOS)
 #  define ACC_BROKEN_INTEGRAL_CONSTANTS 1
-#elif defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
+#elif defined(__TURBOC__) && defined(__MSDOS__)
+#  if (__TURBOC__ < 0x0150)
+#    define ACC_BROKEN_CDECL_ALT_SYNTAX 1
+#    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
+#    define ACC_BROKEN_INTEGRAL_PROMOTION 1
+#  endif
+#  if (__TURBOC__ < 0x0200)
+#    define ACC_BROKEN_SIZEOF 1
+#  endif
+#  if (__TURBOC__ < 0x0400) && defined(__cplusplus)
+#    define ACC_BROKEN_CDECL_ALT_SYNTAX 1
+#  endif
+#elif (defined(__PUREC__) || defined(__TURBOC__)) && defined(__TOS__)
+#  define ACC_BROKEN_CDECL_ALT_SYNTAX 1
 #  define ACC_BROKEN_SIZEOF 1
 #endif
 #endif

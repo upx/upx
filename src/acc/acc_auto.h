@@ -169,7 +169,10 @@
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
-#elif defined(__PW32__) && defined(__GNUC__)
+#elif (ACC_CC_PGI) && defined(__MINGW32__)
+#  undef HAVE_UTIME_H
+#  define HAVE_SYS_UTIME_H 1
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
 #elif (ACC_CC_SYMANTECC)
 #  undef HAVE_DIRENT_H /* opendir() not implemented in libc */
 #  undef HAVE_UNISTD_H /* not working */
@@ -268,7 +271,7 @@
 #if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX || ACC_OS_QNX)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
-#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #else
@@ -385,7 +388,10 @@
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
 #  undef HAVE_VSNPRINTF
-#elif defined(__PW32__) && defined(__GNUC__)
+#elif (ACC_CC_PGI) && defined(__MINGW32__)
+#  define snprintf _snprintf
+#  define vsnprintf _vsnprintf
+#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_SYMANTECC)
@@ -499,6 +505,9 @@
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif (ACC_ARCH_IA32 && (ACC_CC_PGI))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))

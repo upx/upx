@@ -33,6 +33,8 @@
 #  define ACC_CXX_NOTHROW
 #elif (ACC_CC_WATCOMC && !defined(_CPPUNWIND))
 #  define ACC_CXX_NOTHROW
+#elif (ACC_CC_ZORTECHC)
+#  define ACC_CXX_NOTHROW
 #endif
 
 #if !defined(ACC_CXX_NOTHROW)
@@ -93,6 +95,8 @@
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
+#  elif (ACC_CC_PGI)
+#    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  endif
 #endif
 
@@ -120,6 +124,7 @@
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025b00ul))
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
 #endif
+
 
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE) && !(__ACC_CXX_HAVE_ARRAY_NEW)
 /* for old compilers use `protected' instead of `private' */
