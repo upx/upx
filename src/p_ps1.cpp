@@ -71,7 +71,7 @@ const int *PackPs1::getCompressionMethods(int method, int level) const
 #ifdef EIGHTBIT
     return Packer::getDefaultCompressionMethods_8(method, level);
 #else
-    return Packer::getDefaultCompressionMethods_LE32(method, level);
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 #endif
 }
 
@@ -233,29 +233,32 @@ void PackPs1::pack(OutputFile *fo)
     memcpy(loader,getLoader(),lsize);
 
     unsigned pad, pad_code;
-    pad = cfile_size ? cfile_size : ih.tx_len;
-    pad = ALIGN_DOWN(pad, 4);
+    pad = ALIGN_UP((cfile_size ? cfile_size : ih.tx_len), 4);
     pad_code = CHK_ALIGNED(ph.c_len, 4);
 
     const unsigned decomp_data_start = ih.tx_ptr;
 
     // set the offset for compressed stuff at the very end of file
-    const unsigned comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
+    const unsigned comp_data_start = (decomp_data_start+pad+overlap)-ph.c_len;
 
-    pad = 0;
     if (!opt->ps1.no_align)
         // align the packed file to mode 2 data sector size (2048)
-        pad = CHK_ALIGNED(ph.c_len+pad_code+e_len, 2048);
+        pad = CHK_ALIGNED(ph.c_len+pad_code+e_len+overlap, 2048);
+    else
+        // no align
+        pad = 0;
 
-    const int entry = comp_data_start - e_len - pad_code;
+    const unsigned entry = comp_data_start - e_len - pad_code;
     patchPackHeader(loader,lsize);
     patch_mips_le32(loader,e_len,"JPEP",MIPS_JP(ih.epc));
     if (sa_cnt)
         patch_mips_le16(loader,e_len,"SC",
                         MIPS_LO(sa_cnt > 0xfffc ? sa_cnt >> 3 : sa_cnt));
     if (ih.tx_ptr & 0xffff)
+        //we have to set the high/low value of the offset
         patch_hi_lo(loader,e_len,"OH","OL",decomp_data_start);
     else
+        //only high has to be set, this will save 4 bytes
         patch_mips_le16(loader,e_len,"OH",decomp_data_start>>16);
     patch_hi_lo(loader,e_len,"CH","CL",comp_data_start);
     patch_hi_lo(loader,e_len,"DH","DL",entry+(e_len-d_len));
@@ -298,12 +301,11 @@ void PackPs1::pack(OutputFile *fo)
 #if 0
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) e_len);
-
-    printf("%-13s: code entry   :%0X8 bytes\n", getName(), (unsigned int) oh.epc);
-    printf("%-13s: load address :%0X8 bytes\n", getName(), (unsigned int) oh.tx_ptr);
+    printf("%-13s: code entry   : %08X bytes\n", getName(), (unsigned int) oh.epc);
+    printf("%-13s: load address : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr);
     printf("%-13s: section size : %8ld bytes\n", getName(), (long) oh.tx_len);
-    printf("%-13s: eof in mem IF:%0X8 bytes\n", getName(), (unsigned int) ih.tx_ptr+ih.tx_len);
-    printf("%-13s: eof in mem OF:%0X8 bytes\n", getName(), (unsigned int) oh.tx_ptr+oh.tx_len);
+    printf("%-13s: eof in mem IF: %08X bytes\n", getName(), (unsigned int) ih.tx_ptr+ih.tx_len);
+    printf("%-13s: eof in mem OF: %08X bytes\n", getName(), (unsigned int) oh.tx_ptr+oh.tx_len);
 #endif
 }
 
