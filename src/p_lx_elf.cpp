@@ -144,7 +144,7 @@ bool PackLinuxI386elf::canPack()
             // detect possible conflict upon invocation
             if (phdr->p_vaddr < (unsigned)(0x400000 + file_size)
             ||  phdr->p_paddr < (unsigned)(0x400000 + file_size) ) {
-                throwCantPack("invalid Phdr p_vaddr; try `--force-execve'");
+                throwAlreadyPackedByUPX();  // not necessarily, but mostly true
                 return false;
             }
             exetype = 1;
