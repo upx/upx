@@ -62,41 +62,43 @@
 #  include <ucl/uclconf.h>
 #  include <ucl/ucl.h>
 #  if !defined(UPX_UINT_MAX)
-#  define UPX_UINT_MAX  UCL_UINT_MAX
-#  define upx_uint      ucl_uint
-#  define upx_voidp     ucl_voidp
-#  define upx_uintp     ucl_uintp
-#  define upx_byte      ucl_byte
-#  define upx_bytep     ucl_bytep
-#  define upx_bool      ucl_bool
-#  define upx_progress_callback_t ucl_progress_callback_t
-#  define upx_adler32   ucl_adler32
-#  define UPX_E_OK      UCL_E_OK
-#  define UPX_E_ERROR   UCL_E_ERROR
-#  define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
-#  define __UPX_ENTRY   __UCL_ENTRY
+#    define UPX_UINT_MAX  UCL_UINT_MAX
+#    define upx_uint      ucl_uint
+#    define upx_voidp     ucl_voidp
+#    define upx_uintp     ucl_uintp
+#    define upx_byte      ucl_byte
+#    define upx_bytep     ucl_bytep
+#    define upx_bool      ucl_bool
+#    define upx_progress_callback_t ucl_progress_callback_t
+#    define upx_adler32   ucl_adler32
+#    define UPX_E_OK      UCL_E_OK
+#    define UPX_E_ERROR   UCL_E_ERROR
+#    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
+#    define __UPX_ENTRY   __UCL_ENTRY
 #  endif
 #endif
 #if defined(WITH_NRV)
 #  include <nrv/nrvconf.h>
 #  if !defined(UPX_UINT_MAX)
-#  define UPX_UINT_MAX  NRV_UINT_MAX
-#  define upx_uint      nrv_uint
-#  define upx_voidp     nrv_voidp
-#  define upx_uintp     nrv_uintp
-#  define upx_byte      nrv_byte
-#  define upx_bytep     nrv_bytep
-#  define upx_bool      nrv_bool
-#  define upx_progress_callback_t nrv_progress_callback_t
-#  define upx_adler32   nrv_adler32
-#  define UPX_E_OK      NRV_E_OK
-#  define UPX_E_ERROR   NRV_E_ERROR
-#  define UPX_E_OUT_OF_MEMORY NRV_E_OUT_OF_MEMORY
-#  define __UPX_ENTRY   __NRV_ENTRY
+#    define UPX_UINT_MAX  NRV_UINT_MAX
+#    define upx_uint      nrv_uint
+#    define upx_voidp     nrv_voidp
+#    define upx_uintp     nrv_uintp
+#    define upx_byte      nrv_byte
+#    define upx_bytep     nrv_bytep
+#    define upx_bool      nrv_bool
+#    define upx_progress_callback_t nrv_progress_callback_t
+#    define upx_adler32   nrv_adler32
+#    define UPX_E_OK      NRV_E_OK
+#    define UPX_E_ERROR   NRV_E_ERROR
+#    define UPX_E_OUT_OF_MEMORY NRV_E_OUT_OF_MEMORY
+#    define __UPX_ENTRY   __NRV_ENTRY
 #  endif
 #endif
-#ifndef WITH_ZLIB
-#  define WITH_ZLIB 1
+#if !defined(__UPX_CHECKER)
+#  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
+#    define __UPX_CHECKER
+#  endif
 #endif
 #if !defined(UPX_UINT_MAX) || (UINT_MAX < 0xffffffffL)
 #  error "you lose"
@@ -106,6 +108,10 @@
 #endif
 #if !defined(UCL_VERSION) || (UCL_VERSION < 0x009200L)
 #  error "please upgrade your UCL installation"
+#endif
+
+#ifndef WITH_ZLIB
+#  define WITH_ZLIB 1
 #endif
 
 

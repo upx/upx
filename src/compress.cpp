@@ -147,7 +147,7 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
         if (method == M_NRV2B_LE32)
         {
             upx_byte wrkmem[NRV2B_1_16_MEM_COMPRESS];
-#if defined(__CHECKER__) || defined(__PURIFY__)
+#if defined(__UPX_CHECKER)
             memset(wrkmem,0,NRV2B_1_16_MEM_COMPRESS);
 #endif
             r = nrv2b_1_16_compress(src, src_len, dst, dst_len, wrkmem);
@@ -155,7 +155,7 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
         else if (method == M_NRV2D_LE32)
         {
             upx_byte wrkmem[NRV2D_1_16_MEM_COMPRESS];
-#if defined(__CHECKER__) || defined(__PURIFY__)
+#if defined(__UPX_CHECKER)
             memset(wrkmem,0,NRV2D_1_16_MEM_COMPRESS);
 #endif
             r = nrv2d_1_16_compress(src, src_len, dst, dst_len, wrkmem);
