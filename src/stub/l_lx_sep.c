@@ -196,7 +196,7 @@ ERR_LAB
 
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it, and by assembler code to find it.
-static void *
+void *
 make_hatch(Elf32_Phdr const *const phdr)
 {
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
