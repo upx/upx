@@ -36,7 +36,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20050227L
+#define ACC_VERSION     20050312L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1098,6 +1098,9 @@ extern "C" {
 #elif defined(__dietlibc__)
 #  define ACC_LIBC_DIETLIBC     1
 #  define ACC_INFO_LIBC         "dietlibc"
+#elif defined(_NEWLIB_VERSION)
+#  define ACC_LIBC_NEWLIB       1
+#  define ACC_INFO_LIBC         "newlib"
 #elif defined(__UCLIBC__) && defined(__UCLIBC_MAJOR__) && defined(__UCLIBC_MINOR__)
 #  if defined(__UCLIBC_SUBLEVEL__)
 #    define ACC_LIBC_UCLIBC     (__UCLIBC_MAJOR__ * 0x10000L + __UCLIBC_MINOR__ * 0x100 + __UCLIBC_SUBLEVEL__)
@@ -1477,7 +1480,9 @@ extern "C" {
 #undef HAVE_STRINGS_H
 #undef HAVE_SYS_UTIME_H
 #if (ACC_OS_POSIX)
-#  define HAVE_STRINGS_H 1
+#  if 0
+#    define HAVE_STRINGS_H 1
+#  endif
 #  if (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_MACOSX || ACC_OS_POSIX_OPENBSD)
 #    undef HAVE_MALLOC_H
 #  elif (ACC_OS_POSIX_HPUX || ACC_OS_POSIX_INTERIX)
@@ -1488,6 +1493,9 @@ extern "C" {
 #  if (ACC_OS_POSIX_MACOSX && ACC_LIBC_MSL)
 #    undef HAVE_SYS_TIME_H
 #    undef HAVE_SYS_TYPES_H
+#  endif
+#  if (ACC_LIBC_NEWLIB)
+#    undef HAVE_STRINGS_H
 #  endif
 #elif (ACC_OS_CYGWIN)
 #  define HAVE_IO_H 1
@@ -4755,21 +4763,21 @@ ACCLIB_PUBLIC(void, acc_debug_nop) (void)
 }
 ACCLIB_PUBLIC(int, acc_debug_align_check_query) (void)
 {
-    int r;
 #if ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
+    long r;
     __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
-    r = (r >> 18) & 1;
+    return (int)(r >> 18) & 1;
 #elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
+    long r;
     __asm {
         pushf
         pop eax
         mov r,eax
     }
-    r = (r >> 18) & 1;
+    return (int)(r >> 18) & 1;
 #else
-    r = -1;
+    return -1;
 #endif
-    return r;
 }
 ACCLIB_PUBLIC(int, acc_debug_align_check_enable) (int v)
 {
