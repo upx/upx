@@ -34,25 +34,38 @@
                 SECTION .text
                 ORG     0
 
-; gdt segment 3 is flat data
-%define __BOOT_DS 3*8
-; gdt segment 2 is flat code
-%define __BOOT_CS 2*8
-
 ; =============
 ; ============= ENTRY POINT
 ; =============
 
 start:
 ;       __LINUZ000__
-                cli
-                xor     eax, eax
-                mov     al, __BOOT_DS
-                mov     ds, eax
-                mov     es, eax
-; fs, gs set by startup_32 in arch/i386/kernel/head.S
-                mov     ss, eax
-                lea     esp, ['STAK' + esi]  ; (0x9000 + 0x90000) typical
+                ;cli    ;this must be true already
+
+        ; The only facts about segments here, that are true for all kernels:
+        ; %cs is a valid "flat" code segment; no other segment reg is valid;
+        ; the next segment after %cs is a valid "flat" data segment, but
+        ; no segment register designates it yet.
+                mov eax, cs
+                add eax, byte 1<<3      ; the next segment after %cs
+                mov ds, eax
+                mov es, eax
+        ; fs, gs set by startup_32 in arch/i386/kernel/head.S
+
+        ; Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
+        ; 0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
+        ; just below the command line at offset 0x9000].
+
+        ; arch/i386/boot/compressed/head.S "Do the decompression ..." says
+        ; %esi contains the "real mode pointer" [as a 32-bit addr].
+
+        ; In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
+        ; boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
+
+                lea ecx, ['STAK' + esi]  ; (0x9000 + 0x90000) typical
+                mov      [-8 + ecx], ecx  ; 32-bit offset for stack pointer
+                mov      [-4 + ecx], eax  ; segment for stack
+                lss esp, [-8 + ecx]       ; %ss:%esp= %ds:0x99000
 
                 push    byte 0
                 popf            ; BIOS can leave random flags (such as NT)
@@ -62,7 +75,7 @@ start:
 
                 or      ebp, byte -1    ; decompressor assumption
                 mov     eax, 'KEIP'     ; 0x100000 : address of startup_32
-                push    byte __BOOT_CS        ; MATCH00
+                push    cs      ; MATCH00
                 push    eax     ; MATCH00  entry address
                 push    edi     ; MATCH01  save
                 push    esi     ; MATCH02  save
