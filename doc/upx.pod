@@ -850,7 +850,7 @@ Please report all bugs immediately to the authors.
 =head1 AUTHORS
 
  Markus F.X.J. Oberhumer <markus@oberhumer.com>
- http://www.oberhumer.com/mfx/
+ http://www.oberhumer.com
 
  Laszlo Molnar <ml1050@cdata.tvnet.hu>
 

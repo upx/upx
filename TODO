@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2001-01-03.
+UPX TODO list. Last updated 2001-01-04.
 
 
 
@@ -80,6 +80,13 @@ FORMAT WATCOM/LE
 - implement compressWithFilters()
 
 - add a call to verifyOverlappingDecompression()
+
+
+FORMAT WIN16/NE
+===============
+
+- implement PackW16Ne::readFileHeader() to corretly identify a win16/ne
+  executable, so that the call for contribution will get thrown
 
 
 FORMAT WIN32/PE
