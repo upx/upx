@@ -508,11 +508,13 @@ unsigned PackW32Pe::processImports() // pass 1
             if (!u2->shname) return -1;
             return strlen(u1->shname) - strlen(u2->shname);
         }
-    } *dlls, **idlls;
+    };
+
+    // +1 for dllnum=0
+    autoheap_array(struct udll, dlls, dllnum+1);
+    autoheap_array(struct udll *, idlls, dllnum+1);
 
     soimport = 1024; // safety
-    dlls = new udll[dllnum+1];  // +1 for dllnum=0
-    idlls = new udll*[dllnum+1];
 
     unsigned ic,k32o;
     for (ic = k32o = 0; dllnum && im->dllname; ic++, im++)
@@ -721,9 +723,6 @@ unsigned PackW32Pe::processImports() // pass 1
     iats.flatten();
     for (ic = 0; ic < iats.ivnum; ic++)
         ilen += iats.ivarr[ic].len;
-
-    delete [] dlls;
-    delete [] idlls;
 
     info("Imports: original size: %u bytes, preprocessed size: %u bytes",ilen,soimport);
     return names.ivnum == 1 ? names.ivarr[0].start : 0;
@@ -1899,16 +1898,20 @@ int PackW32Pe::canUnpack()
     fi->readx(isection,sizeof(pe_section_t)*objs);
     if (ih.objects < 3)
         return -1;
-    if (memcmp(isection[0].name,"UPX",3))
+    bool is_packed = (ih.objects == 3 &&
+                      (IDSIZE(15) || ih.entry > isection[1].vaddr));
+    bool found_ph = false;
+    if (memcmp(isection[0].name,"UPX",3) == 0)
     {
-        if (ih.objects == 3 && (IDSIZE(15) || ih.entry > isection[1].vaddr))
-            throwCantUnpack("file is possibly modified/hacked/protected; take care!");
-        return -1;
+        found_ph = readPackHeader(1024, isection[1].rawdataptr - 64)  // current version
+                || readPackHeader(1024, isection[2].rawdataptr); // old versions
     }
-    ph_format = getFormat();
-    bool b = readPackHeader(1024, isection[1].rawdataptr - 64)  // current version
-          || readPackHeader(1024, isection[2].rawdataptr); // old versions
-    return b ? 1 : -1;
+    if (is_packed && found_ph)
+        return true;
+    if (!is_packed && !found_ph)
+        return -1;
+    throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+    return false;   // not reached
 }
 
 
@@ -2136,7 +2139,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     extrainfo += sizeof (oh);
     unsigned objs = oh.objects;
 
-    pe_section_t *osection = new pe_section_t[objs]; // FIXME: this might leak
+    autoheap_array(pe_section_t, osection, objs);
     memcpy(osection,extrainfo,sizeof(pe_section_t) * objs);
     rvamin = osection[0].vaddr;
     extrainfo += sizeof(pe_section_t) * objs;
@@ -2177,7 +2180,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     oh.headersize = ALIGN_UP(pe_offset + sizeof(oh) + sizeof(pe_section_t) * objs, oh.filealign);
     oh.chksum = 0;
 
-    // FIXME: ih.flags is checked here because of a bug in 0.92
+    // FIXME: ih.flags is checked here because of a bug in UPX 0.92
     if ((opt->w32pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
     {
         oh.flags |= RELOCS_STRIPPED;
@@ -2202,7 +2205,7 @@ void PackW32Pe::unpack(OutputFile *fo)
                 fo->write(obuf + osection[ic].vaddr - rvamin,ALIGN_UP(osection[ic].size,oh.filealign));
         copyOverlay(fo, overlay, &obuf);
     }
-    delete [] osection;
+    ibuf.free();
 }
 
 /*

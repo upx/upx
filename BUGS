@@ -44,6 +44,7 @@ win32/pe
 --------
  * writeable shared sections (`--force' *may* work)
  * certificates in the image
+ * compressing files containing big BSS requires lots of memory
 
 djgpp2/coff
 -----------

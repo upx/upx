@@ -166,12 +166,19 @@ bool PackHeader::fillPackHeader(upx_bytep buf, unsigned len)
     if (l == 0)
         return false;
     buf_offset = l - buf;
+    const int hlen = len - buf_offset;
+    if (hlen < 8)
+        return false;
 
     version = l[4];
     format = l[5];
     method = l[6];
     level = l[7];
     filter_cto = 0;
+
+    const int hs = getPackHeaderSize();
+    if (hs > hlen)
+        throwCantUnpack("header corrupted");
 
     // the new variable length header
     int off_filter = 0;

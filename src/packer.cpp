@@ -572,15 +572,21 @@ void Packer::putPackHeader(upx_bytep buf, unsigned len)
 
 bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
 {
-    unsigned char hbuf[1024];
+    assert((int)len > 0);
+
+    MemBuffer hbuf;
     if (buf == NULL)
     {
-        assert(len <= sizeof(hbuf));
+        hbuf.alloc(len);
         buf = hbuf;
     }
+    memset(buf, 0, len);
 
-    if (seek_offset >= 0)
-        fi->seek(seek_offset, SEEK_SET);
+    if (seek_offset != -1)
+    {
+        if (seek_offset >= 0)
+            fi->seek(seek_offset, SEEK_SET);
+    }
     len = fi->read(buf,len);
 
     if (!ph.fillPackHeader(buf, len))

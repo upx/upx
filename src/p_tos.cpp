@@ -499,7 +499,7 @@ int PackTos::canUnpack()
     // check header as set by packer
     if ((ih.fh_text & 3) != 0 || (ih.fh_data & 3) != 0 || (ih.fh_bss & 3) != 0
         || ih.fh_sym != 0 || ih.fh_reserved != 0 || ih.fh_reloc > 1)
-        throwCantUnpack("file damaged");
+        throwCantUnpack("program header damaged");
     if (!checkFileHeader())
         throwCantUnpack("unsupported header flags");
     return true;
