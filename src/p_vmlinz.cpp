@@ -95,7 +95,8 @@ int PackVmlinuzI386::readFileHeader()
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size <= 0 || setup_size >= file_size)
         return -1;
-    if (setup_size + 16 * h.sys_size != (unsigned) ALIGN_UP(file_size, 16))
+    if (setup_size + 16 * h.sys_size  // beware 16-bit sys_size
+    != (~(~0u<<20) & (unsigned) ALIGN_UP(file_size, 16)) )
         return -1;
 
     // FIXME: add more checks for a valid kernel
