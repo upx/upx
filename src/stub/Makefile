@@ -322,11 +322,14 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 l_lx_exec.o: l_lx_exec.c
 	$(CC_LINUX_I386) -c $<
 
+upx_itoa.o: upx_itoa.asm
+	$(NASM) -f elf -o $@ $<
+
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
 
-fold_exec86.h: l_lx_exec.o fold_exec86.o l_lx_exec86.lds
-	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o
+fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
+	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
 	objcopy -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin

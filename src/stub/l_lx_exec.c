@@ -73,33 +73,35 @@ static __inline__ int xwrite(int fd, const void *buf, int count)
 // util
 **************************************************************************/
 
-// FIXME: all code in this source file must be relocatible, so
-//  we have to use `volatile' here.
-// FIXME: rewrite upx_itoa() in assembly
-static char *upx_itoa(char *buf, unsigned long v)
-{
-//    const unsigned TEN = 10;
-    volatile unsigned TEN = 10;
-    char *p = buf;
-    {
-        unsigned long k = v;
-        do {
-            p++;
-            k /= TEN;
-        } while (k > 0);
-    }
-    buf = p;
-    *p = 0;
-    {
-        unsigned long k = v;
-        do {
-            *--p = '0' + k % TEN;
-            k /= TEN;
-        } while (k > 0);
-    }
-    return buf;
-}
-
+extern char *
+__attribute__ ((regparm(2), stdcall))  // be ruthless
+upx_itoa(unsigned long v, char *buf);
+//  Some versions of gcc optimize the division and/or remainder using
+//  a multiplication by (2**32)/10, and use a relocatable 32-bit address
+//  to reference the constant.  We require no relocations because we move
+//  the code at runtime.  See upx_itoa.asm for replacement [also smaller.]
+//static char *upx_itoa(unsigned long v, char *buf)
+//{
+//    volatile unsigned TEN = 10;  // an ugly way to achieve no relocation
+//    char *p = buf;
+//    {
+//        unsigned long k = v;
+//        do {
+//            p++;
+//            k /= TEN;
+//        } while (k > 0);
+//    }
+//    buf = p;
+//    *p = 0;
+//    {
+//        unsigned long k = v;
+//        do {
+//            *--p = '0' + k % TEN;
+//            k /= TEN;
+//        } while (k > 0);
+//    }
+//    return buf;
+//}
 
 static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 {
@@ -159,9 +161,9 @@ go_self(char const *tmpname, char *argv[], char *envp[])
         SET4(procself_buf + 0, '/', 'p', 'r', 'o');
         SET4(procself_buf + 4, 'c', '/',  0 ,  0 );
         {
-            char *const procself = upx_itoa(procself_buf + 6, getpid());
+            char *const procself = upx_itoa(getpid(), procself_buf + 6);
             SET4(procself, '/', 'f', 'd', '/');
-            upx_itoa(procself + 4, fdi);
+            upx_itoa(fdi, procself + 4);
         }
 
         // Check for working /proc/self/fd/X by accessing the
