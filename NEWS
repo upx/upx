@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+[ BETA VERSION - please see README.1ST for some more info ]
+
 Changes in 1.90 beta (XX Oct 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * implemented several new options for finer compression control:
