@@ -56,6 +56,7 @@ public:
     virtual int canUnpack();
 
 protected:
+	virtual void patch_mips_le(void *b, int blen, const void *old, unsigned new_);
     virtual int buildLoader(const Filter *ft);
 
     virtual int readFileHeader();
@@ -63,12 +64,19 @@ protected:
 
     struct ps1_exe_t
     {
+        // ident string
         char id[8];
+        // contains NULL in normal ps-x exe
         LE32 text;
+        // contains NULL in normal ps-x exe
         LE32 data;
+        // entry offset
         LE32 epc;
+        // gp register value load at execution
         LE32 gp;
+        // load offset of binary data
         LE32 tx_ptr;
+        // file length
         LE32 tx_len;
         LE32 da_ptr;
         LE32 da_len;
@@ -77,7 +85,9 @@ protected:
         LE32 sd_ptr;
         LE32 sd_len;
         LE32 sp,fp,gp0,ra,k0;
+        // origin of executable Jap/USA/Europe
         char origin[60];
+
         // some safety space after that
         char pad[8];
         // i'll place the backup of the original
@@ -100,11 +110,6 @@ protected:
     unsigned fdata_size;
     // calculated filesize
     unsigned cfile_size;
-
-protected:
-    int patch_mips_le16(void *b, int blen, const void *old, unsigned new_);
-    int patch_mips_le32(void *b, int blen, const void *old, unsigned new_);
-    void patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_);
 };
 
 
