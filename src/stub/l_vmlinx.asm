@@ -111,12 +111,10 @@ move_up:
 
                 mov ecx,[-4+ edx]  ; length of compressed data
                 add ecx, byte  3
-                and ecx, byte ~3   ; pad to 0 mod 4
-                add edx,ecx        ; unmoved top    of compressed data
+                shr ecx,2          ; count of .long
         ; copy compressed data
-                lea esi,[-4+ edx]  ; unmoved top -4 of compressed data
-                lea edi,[-4+ eax]  ;   moved top -4 of compressed data
-                shr ecx,2
+                lea esi,[-4+ 4*ecx + edx] ; unmoved top -4 of compressed data
+                lea edi,[-4+         eax] ;   moved top -4 of compressed data
                 rep
                 movsd
 
