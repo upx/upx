@@ -40,7 +40,7 @@ class PackDjgpp2 : public Packer
 
 public:
     PackDjgpp2(InputFile *f);
-    virtual int getVersion() const { return 13; }
+    virtual int getVersion() const { return 14; }
     virtual int getFormat() const { return UPX_F_DJGPP2_COFF; }
     virtual const char *getName() const { return "djgpp2/coff"; }
     virtual const int *getCompressionMethods(int method, int level) const;

@@ -84,7 +84,7 @@ unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf,
 int PackDjgpp2::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
+    initLoader(nrv_loader, sizeof(nrv_loader));
     addLoader("IDENTSTR""DJ2MAIN1",
               ft->id ? "DJCALLT1" : "",
               "DJ2MAIN2",
@@ -95,10 +95,10 @@ int PackDjgpp2::buildLoader(const Filter *ft)
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader("DJCALLT2",NULL);
+        addLoader("DJCALLT2", NULL);
         addFilter32(ft->id);
     }
-    addLoader("DJRETURN+40DXXXXUPX1HEAD",NULL);
+    addLoader("DJRETURN+40DXXXXUPX1HEAD", NULL);
     return getLoaderSize();
 }
 
@@ -114,13 +114,13 @@ void PackDjgpp2::handleStub(OutputFile *fo)
         if (coff_offset > 0)
         {
             // copy stub from exe
-            Packer::handleStub(fi,fo,coff_offset);
+            Packer::handleStub(fi, fo, coff_offset);
         }
         else
         {
             // "stubify" stub
             info("Adding stub: %ld bytes", (long)sizeof(stubify_stub));
-            fo->write(stubify_stub,sizeof(stubify_stub));
+            fo->write(stubify_stub, sizeof(stubify_stub));
         }
     }
 }
@@ -132,14 +132,14 @@ static bool is_dlm(InputFile *fi, long coff_offset)
     long off;
 
     try {
-        fi->seek(coff_offset,SEEK_SET);
-        fi->readx(buf,4);
+        fi->seek(coff_offset, SEEK_SET);
+        fi->readx(buf, 4);
         off = get_le32(buf);
         if (off < 0 || off > coff_offset + 4)
             return false;
-        fi->seek(off,SEEK_SET);
-        fi->readx(buf,4);
-        if (memcmp(buf,"DLMF",4) == 0)
+        fi->seek(off, SEEK_SET);
+        fi->readx(buf, 4);
+        if (memcmp(buf, "DLMF", 4) == 0)
             return true;
     } catch (const IOException&) {
     }
@@ -179,25 +179,25 @@ int PackDjgpp2::readFileHeader()
     unsigned char hdr[0x1c];
     unsigned char magic[8];
 
-    fi->seek(0,SEEK_SET);
-    fi->readx(hdr,sizeof(hdr));
+    fi->seek(0, SEEK_SET);
+    fi->readx(hdr, sizeof(hdr));
     if (get_le16(hdr) == 0x5a4d)        // MZ exe signature, stubbed?
     {
         coff_offset = 512 * get_le16(hdr+4);
         if (get_le16(hdr+2) != 0)
             coff_offset += get_le16(hdr+2) - 512;
-        fi->seek(512,SEEK_SET);
-        fi->readx(magic,8);
-        if (memcmp("go32stub",magic,8) != 0)
+        fi->seek(512, SEEK_SET);
+        fi->readx(magic, 8);
+        if (memcmp("go32stub", magic, 8) != 0)
             return 0;                   // not V2 image
-        fi->seek(coff_offset,SEEK_SET);
-        if (fi->read(&coff_hdr,sizeof(coff_hdr)) != sizeof(coff_hdr))
+        fi->seek(coff_offset, SEEK_SET);
+        if (fi->read(&coff_hdr, sizeof(coff_hdr)) != sizeof(coff_hdr))
             throwCantPack("skipping djgpp symlink");
     }
     else
     {
-        fi->seek(coff_offset,SEEK_SET);
-        fi->readx(&coff_hdr,0xa8);
+        fi->seek(coff_offset, SEEK_SET);
+        fi->readx(&coff_hdr, 0xa8);
     }
     if (coff_hdr.f_magic != 0x014c)    // I386MAGIC
         return 0;
@@ -220,7 +220,7 @@ void PackDjgpp2::stripDebug()
     coff_hdr.f_symptr = 0;
     coff_hdr.f_nsyms = 0;
     coff_hdr.f_flags = 0x10f;   // 0x100: "32 bit machine: LSB first"
-    memset(text->misc,0,12);
+    memset(text->misc, 0, 12);
 }
 
 
@@ -232,7 +232,7 @@ bool PackDjgpp2::canPack()
 {
     if (!readFileHeader())
         return false;
-    if (is_dlm(fi,coff_offset))
+    if (is_dlm(fi, coff_offset))
         throwCantPack("can't handle DLM");
 
     if (opt->force == 0)
@@ -269,28 +269,25 @@ void PackDjgpp2::pack(OutputFile *fo)
     // read file
     const unsigned size = text->size + data->size;
     const unsigned tpos = text->scnptr;
-    const unsigned usize = size + (tpos & 0x1ff);
-    const unsigned hdrsize = 20 + 28 + (40 * coff_hdr.f_nscns);
+    const unsigned hdrsize = 20 + 28 + sizeof(external_scnhdr_t) * coff_hdr.f_nscns;
+    const unsigned usize = size + hdrsize;
     if (hdrsize < sizeof(coff_hdr) || hdrsize > tpos)
         throwCantPack("coff header error");
-    if (hdrsize > (tpos & 0x1ff))
-        throwCantPack("unsupported coff header");
 
     ibuf.alloc(usize);
     obuf.allocForCompression(usize);
 
-    fi->seek(coff_offset,SEEK_SET);
-    fi->readx(ibuf,hdrsize);             // orig. coff header
-    memset(ibuf + hdrsize, 0, tpos - hdrsize);
-    fi->seek(coff_offset+tpos,SEEK_SET);
-    fi->readx(ibuf + (tpos & 0x1ff),size);
+    fi->seek(coff_offset, SEEK_SET);
+    fi->readx(ibuf, hdrsize);             // orig. coff header
+    fi->seek(coff_offset + tpos, SEEK_SET);
+    fi->readx(ibuf + hdrsize, size);
 
     // prepare packheader
     ph.u_len = usize;
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = usize - data->size;
-    ft.addvalue = text->vaddr & ~0x1ff;
+    ft.addvalue = text->vaddr - hdrsize;
     // compress
     compressWithFilters(&ft, 512);
 
@@ -309,16 +306,21 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     // prepare loader
     MemBuffer loader(lsize);
-    memcpy(loader,getLoader(),lsize);
+    memcpy(loader, getLoader(), lsize);
 
     // patch loader
-    patchPackHeader(loader,lsize);
-    patch_le32(loader,lsize,"ENTR",coff_hdr.a_entry);
+    patchPackHeader(loader, lsize);
+    patch_le32(loader, lsize, "ENTR", coff_hdr.a_entry);
     patchFilter32(loader, lsize, &ft);
-    patch_le32(loader,lsize,"BSSL",ph.overlap_overhead/4);
+    patch_le32(loader, lsize, "BSSL", ph.overlap_overhead / 4);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
-    patch_le32(loader,lsize,"OUTP",text->vaddr &~ 0x1ff);
-    patch_le32(loader,lsize,"INPP",data->vaddr);
+    patch_le32(loader, lsize, "OUTP", text->vaddr - hdrsize);
+    patch_le32(loader, lsize, "INPP", data->vaddr);
+
+    // we should not overwrite our decompressor during unpacking
+    // the original coff header (which is put just before the
+    // beginning of the original .text section)
+    assert(text->vaddr > hdrsize + lsize + sizeof(coff_hdr));
 
     // patch coff header #3
     text->vaddr = sizeof(coff_hdr);
@@ -327,13 +329,13 @@ void PackDjgpp2::pack(OutputFile *fo)
     bss->size -= ph.overlap_overhead;
 
     // because of a feature (bug?) in stub.asm we need some padding
-    memcpy(obuf+data->size,"UPX",3);
-    data->size = ALIGN_UP(data->size,4);
+    memcpy(obuf+data->size, "UPX", 3);
+    data->size = ALIGN_UP(data->size, 4);
 
     // write coff header, loader and compressed file
-    fo->write(&coff_hdr,sizeof(coff_hdr));
-    fo->write(loader,lsize);
-    fo->write(obuf,data->size);
+    fo->write(&coff_hdr, sizeof(coff_hdr));
+    fo->write(loader, lsize);
+    fo->write(obuf, data->size);
 #if 0
     printf("%-13s: coff hdr   : %8ld bytes\n", getName(), (long) sizeof(coff_hdr));
     printf("%-13s: loader     : %8ld bytes\n", getName(), (long) lsize);
@@ -345,7 +347,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     // handle overlay
     // FIXME: only Allegro pakfiles are supported
-    handle_allegropak(fi,fo);
+    handle_allegropak(fi, fo);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
@@ -361,7 +363,7 @@ int PackDjgpp2::canUnpack()
 {
     if (!readFileHeader())
         return false;
-    if (is_dlm(fi,coff_offset))
+    if (is_dlm(fi, coff_offset))
         throwCantUnpack("can't handle DLM");
     fi->seek(coff_offset, SEEK_SET);
     return readPackHeader(1024) ? 1 : -1;
@@ -379,19 +381,28 @@ void PackDjgpp2::unpack(OutputFile *fo)
     ibuf.alloc(ph.c_len);
     obuf.allocForUncompression(ph.u_len);
 
-    fi->seek(coff_offset + ph.buf_offset + ph.getPackHeaderSize(),SEEK_SET);
-    fi->readx(ibuf,ph.c_len);
+    fi->seek(coff_offset + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
+    fi->readx(ibuf, ph.c_len);
 
     // decompress
-    decompress(ibuf,obuf);
+    decompress(ibuf, obuf);
+
+    coff_header_t *chdr = (coff_header_t*) (unsigned char *) obuf;
+    text = chdr->sh;
+    data = text + 1;
+
+    const unsigned hdrsize = 20 + 28
+        + sizeof(external_scnhdr_t) * chdr->f_nscns;
+
+    unsigned addvalue = text->vaddr &~ 0x1ff; // for old versions
+    if (ph.version >= 14)
+        addvalue = text->vaddr - hdrsize;
 
     // unfilter
     if (ph.filter)
     {
-        memcpy(&coff_hdr,obuf,sizeof(coff_hdr));
-
         Filter ft(ph.level);
-        ft.init(ph.filter, text->vaddr &~ 0x1ff);
+        ft.init(ph.filter, addvalue);
         ft.cto = (unsigned char) ph.filter_cto;
         if (ph.version < 11)
         {
@@ -402,18 +413,31 @@ void PackDjgpp2::unpack(OutputFile *fo)
         ft.unfilter(obuf, ph.u_len - data->size);
     }
 
-    // fixup for the aligning bug in strip 2.8+
-    text = ((coff_header_t*) (unsigned char *) obuf)->sh;
-    data = text + 1;
-    text->scnptr &= 0x1ff;
-    data->scnptr = text->scnptr + text->size;
-
-    // write decompressed file
-    if (fo)
+    if (ph.version < 14)
     {
-        fo->write(obuf,ph.u_len);
-        handle_allegropak(fi,fo);
+        // fixup for the aligning bug in strip 2.8+
+        text->scnptr &= 0x1ff;
+        data->scnptr = text->scnptr + text->size;
+        // write decompressed file
+        if (fo)
+            fo->write(obuf, ph.u_len);
     }
+    else if (fo)
+    {
+        // write the header
+        // some padding might be required between the end
+        // of the header and the start of the .text section
+
+        const unsigned padding = text->scnptr - hdrsize;
+        memset(ibuf, 0, padding);
+
+        fo->write(obuf, hdrsize);
+        fo->write(ibuf, padding);
+        fo->write(obuf + hdrsize, ph.u_len - hdrsize);
+    }
+
+    if (fo)
+        handle_allegropak(fi, fo);
 }
 
 
