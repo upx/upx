@@ -95,7 +95,6 @@ Changes in 1.20 (23 May 2001)
            our unstable development releases 1.1x and 1.9x]
 
 Changes in 1.08 (30 Apr 2001)
-  * INFO: http://upx.sourceforge.net now is the new permanent UPX home page
   * new native port to atari/tos
   * win32/pe: shortened the identstring
   * source code: portability fixes - UPX now builds cleanly under m68k CPUs
@@ -315,7 +314,7 @@ Changes in 0.40 (05 Oct 1998)
   * fixed a small but fatal bug in dos/sys introduced in 0.30
   * fixed a rare bug in dos/exe
   * worked around a bug in djgpp's strip 2.8
-  * Allegro packfile support should work now
+  * djgpp/coff: Allegro packfile support should work now
   * added dos/exeh compression method (works on 386+)
 
 Changes in 0.30 (27 Jul 1998)

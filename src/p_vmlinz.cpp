@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
@@ -262,7 +262,7 @@ int PackVmlinuzI386::buildLoader(const Filter *ft)
         addLoader("LZCALLT9", NULL);
         addFilter32(ft->id);
     }
-    addLoader("LINUZ990""IDENTSTR""UPX1HEAD", NULL);
+    addLoader("LINUZ990,IDENTSTR,UPX1HEAD", NULL);
     return getLoaderSize();
 }
 
@@ -319,10 +319,10 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
     initLoader(nrv_loader, sizeof(nrv_loader));
     addLoader("LINUZ000",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
-              "LBZIMAGE""IDENTSTR",
+              "LBZIMAGE,IDENTSTR",
               "+40D++++", // align the stuff to 4 byte boundary
               "UPX1HEAD", // 32 byte
-              "LZCUTPOI""+0000000",
+              "LZCUTPOI,+0000000",
               getDecompressor(),
               NULL
              );

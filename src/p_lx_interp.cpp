@@ -183,13 +183,13 @@ void PackLinuxI386interp::pack3(OutputFile *fo, Filter &/*ft*/)
 
         addLoader("LXPTI140", 0);
 
-        addLoader("LXUNF002""LXUNF008""LXUNF010", 0);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", 0);
         addFilter32(0x46);
-        addLoader("LXUNF042""LXUNF035", 0);
+        addLoader("LXUNF042,LXUNF035", 0);
 
-        addLoader("LXUNF002""LXUNF008""LXUNF010", 0);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", 0);
         addFilter32(0x49);
-        addLoader("LXUNF042""LXUNF035", 0);
+        addLoader("LXUNF042,LXUNF035", 0);
 
         addLoader("LXPTI200", 0);
         addLoader("FOLDEXEC", 0);

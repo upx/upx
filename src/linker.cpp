@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2005 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -22,28 +22,42 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
 #include "conf.h"
 #include "linker.h"
 
+class LinkerLabel
+{
+    enum { LINKER_MAX_LABEL_LEN = 32 };
+    char label[LINKER_MAX_LABEL_LEN + 1];
+
+public:
+    unsigned set(const char *l)
+    {
+        strncpy(label, l, sizeof(label));
+        return strlen(label) + 1;
+    }
+    operator const char *() const { return label; }
+};
+
 
 struct Linker::section
 {
-    int  istart;
-    int  ostart;
-    int  len;
-    char name[8];
+    int         istart;
+    int         ostart;
+    int         len;
+    LinkerLabel name;
 };
 
 struct Linker::jump
 {
-    int  pos;
-    int  len;
-    char tsect[8];
-    int  toffs;
+    int         pos;
+    int         len;
+    int         toffs;
+    LinkerLabel tsect;
 };
 
 Linker::Linker(const void *pdata, int plen, int pinfo)
@@ -65,10 +79,10 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     {
         if (get32(p))
         {
-            memcpy(sections[nsections].name,p,8);
-            sections[nsections].istart = get32(p+8);
+            p += sections[nsections].name.set(p);
+            sections[nsections].istart = get32(p);
             sections[nsections++].ostart = -1;
-            p += 12;
+            p += 4;
             assert(nsections < NSECTIONS);
         }
         else
@@ -79,9 +93,9 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
 
             jumps[njumps].pos = l+1;
             jumps[njumps].len = get32(p+4)-jumps[njumps].pos;
-            memcpy(jumps[njumps].tsect,p+8,8);
-            jumps[njumps++].toffs = get32(p+16);
-            p += 20;
+            p += 8 + jumps[njumps].tsect.set(p + 8);
+            jumps[njumps++].toffs = get32(p);
+            p += 4;
             assert(njumps < 200);
         }
     }
@@ -112,11 +126,19 @@ static int hex(char c)
     return (c & 0xf) + (c > '9' ? 9 : 0);
 }
 
-int Linker::addSection(const char *sect)
+int Linker::addSection(const char *psect)
 {
-    int ic;
-    while (*sect)
+    char *begin = strdup(psect);
+    char *end = begin + strlen(begin);
+    for (char *sect = begin; sect < end; )
     {
+        for (char *tokend = sect; *tokend; tokend++)
+            if (*tokend == ' ' || *tokend == ',')
+            {
+                *tokend = 0;
+                break;
+            }
+
         if (*sect == '+') // alignment
         {
             if (sect[1] == '0')
@@ -131,21 +153,22 @@ int Linker::addSection(const char *sect)
         }
         else
         {
+            int ic;
             for (ic = 0; ic < nsections; ic++)
-                if (memcmp(sect,sections[ic].name,8) == 0)
+                if (strcmp(sect, sections[ic].name) == 0)
                 {
                     memcpy(oloader+olen,iloader+sections[ic].istart,sections[ic].len);
                     sections[ic].ostart = olen;
                     olen += sections[ic].len;
                     break;
                 }
-            if (ic==nsections) {
-                printf("%8.8s",sect);
-            }
-            assert(ic!=nsections);
+            if (ic == nsections)
+                printf("%s", sect);
+            assert(ic != nsections);
         }
-        sect += 8;
+        sect += strlen(sect) + 1;
     }
+    free(begin);
     return olen;
 }
 
@@ -153,7 +176,7 @@ int Linker::addSection(const char *sect)
 void Linker::addSection(const char *sname, const void *sdata, unsigned len)
 {
     // add a new section - can be used for adding stuff like ident or header
-    memcpy(sections[nsections].name,sname,8);
+    sections[nsections].name.set(sname);
     sections[nsections].istart = ilen;
     sections[nsections].len = len;
     sections[nsections++].ostart = olen;
@@ -179,7 +202,7 @@ const char *Linker::getLoader(int *llen)
                 continue;
 
             for (kc = 0; kc < nsections-1; kc++)
-                if (memcmp(jumps[ic].tsect,sections[kc].name,8) == 0)
+                if (strcmp(jumps[ic].tsect,sections[kc].name) == 0)
                     break;
             assert(kc!=nsections-1);
 
@@ -205,7 +228,7 @@ int Linker::getSection(const char *name, int *slen) const
     if (!frozen)
         return -1;
     for (int ic = 0; ic < nsections; ic++)
-        if (memcmp(name,sections[ic].name,8) == 0)
+        if (strcmp(name, sections[ic].name) == 0)
         {
             if (slen)
                 *slen = sections[ic].len;

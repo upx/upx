@@ -9,6 +9,9 @@ ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
 UCLDIR = $(HOME)/local/src/ucl-1.03
 endif
+ifeq ($(wildcard $(UCLDIR)/upx),)
+$(error Please set UCLDIR in Makefile or environment)
+endif
 
 
 # -------------------------------------------------------
@@ -91,17 +94,17 @@ LD_LINUX_I386 = ld-2.13.2
 LD_LINUX_I386 = ld
 OBJCOPY_LINUX_I386 = objcopy
 
-# gcc 2.7.2.3 (fold_*.bin: 1839 / 1011 / 1390)
+# gcc 2.7.2.3 (fold_*86.bin: 1839 / 1011 / xxxx / 1390)
 CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
 CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
-# gcc 2.95.3 (fold_*.bin: 1721 / 995 / 1321)
+# gcc 2.95.3 (fold_*86.bin: 1721 / 995 / xxxx / 1321)
 CC_LINUX_I386_GCC295  = gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
-# gcc 3.4.3 (fold_*.bin: 1624 / 931 / 1207)
+# gcc 3.4.3 (fold_*86.bin: 1624 / 931 / 1544 / 1207)
 CC_LINUX_I386_GCC34  = gcc-3.4.3
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
@@ -142,6 +145,25 @@ else
   # asl 68000-assembler
   CPP_M68K += -D__ASL__
   ASM_M68K  = sh $(srcdir)/scripts/asl_m68k.sh
+endif
+
+
+###
+### PowerPC 32
+###
+
+GCC_PPC32 := false
+LD_PPC32  := false
+
+d = /home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin
+ifneq ($(wildcard $d),)
+  GCC_PPC32 := $d/powerpc-750-linux-gnu-gcc -m32
+  LD_PPC32  := $d/powerpc-750-linux-gnu-ld
+endif
+d = /opt/cc-i386-linux/crosstool/powerpc-750-linux-gnu/gcc-3.4.3.20050210-glibc-2.2.5/bin
+ifneq ($(wildcard $d),)
+  GCC_PPC32 := $d/powerpc-750-linux-gnu-gcc -m32
+  LD_PPC32  := $d/powerpc-750-linux-gnu-ld
 endif
 
 
@@ -326,17 +348,14 @@ l_lx_pti86.h: l_lx_pti86.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin linux_i386pti_loader $@
 
-GCC_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-gcc
-LD_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-ld
-
 l_mac_ppc32.h: l_mac_ppc32.S ppc_d_nrv2e.S
-	$(GCC_PPC) -c $T.S
-	$(LD_PPC) -o $T.bin --oformat binary $T.o
+	$(GCC_PPC32) -c $<
+	$(LD_PPC32) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin l_mac_ppc32_loader $@
 
 l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
-	$(GCC_PPC) -c $T.S
-	$(LD_PPC) -o $T.bin --oformat binary $T.o
+	$(GCC_PPC32) -c $<
+	$(LD_PPC32) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elfppc32_loader $@
 
 l_lx_elf.o: l_lx_elf.c linux.hh
@@ -371,13 +390,13 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
 m_lx_elfppc32.o: m_lx_elfppc32.c
-	$(GCC_PPC) -c -Os -o $@ $<
+	$(GCC_PPC32) -Os -o $@ -c $<
 
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S
-	$(GCC_PPC) -c -O $T.S
+	$(GCC_PPC32) -c $<
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
-	$(LD_PPC) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
+	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
 		fold_elfppc32.o m_lx_elfppc32.o
 	$(BIN2H) $T.bin linux_elfppc32_fold $@
 
@@ -417,15 +436,15 @@ fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
 	$(BIN2H) $T.bin linux_i386pti_fold $@
 
 fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
-	$(LD_PPC) -Map $T.map -o $T.bin --oformat binary fold_machppc32.o m_mac_mach32.o
+	$(LD_PPC32) -Map $T.map -o $T.bin --oformat binary fold_machppc32.o m_mac_mach32.o
 	chmod a-x $T.bin
 	$(BIN2H) $T.bin fold_machppc32 $@
 
 m_mac_mach32.o: m_mac_mach32.c
-	$(GCC_PPC) -c -Os m_mac_mach32.c
+	$(GCC_PPC32) -Os -c $<
 
 fold_machppc32.o: fold_machppc32.S ppc_bxx.S
-	$(GCC_PPC) -c $T.S
+	$(GCC_PPC32) -c $<
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
@@ -453,7 +472,7 @@ endif
 
 DEPS1 = header.ash macros.ash ident.ash ident_n.ash ident_s.ash
 DEPS2 = header.asy macros.asy
-DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy
+DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy cl1_d32.asy
 
 $(STUBS):       $(srcdir)/scripts/bin2h.pl
 

@@ -52,7 +52,7 @@ $ilabel =~ s/\W//g;
 for $line (@lines)
 {
     $labels{$1} = "$cs" if ($line =~ /^(\w+):/ && $cs);
-    if ($line =~ /__([A-Z0-9]{8})__/) {
+    if ($line =~ /__([A-Z0-9]+)__/) {
         $cs = $1;
         # verify the line
         if ($line =~ /^[\%\;]ifdef/) {
@@ -66,7 +66,7 @@ for $line (@lines)
 
     if ($line =~ /^[\%\;](if|el|endi)/)
     {
-        if ($line =~ /__([A-Z0-9]{8})__/)
+        if ($line =~ /__([A-Z0-9]+)__/)
         {
             $line=";$line" unless ($line =~ /^\;/);
         }
@@ -98,7 +98,7 @@ for $line (@lines)
                 print OU $line;
                 print OU "J$i$ilabel:\n";
                 print OU "\t\tsection\t.data\n\t\tdd\t";
-                print OU "0,J$i$ilabel,\'$ts\',$label - S$ts$ilabel\n";
+                print OU "0,J$i$ilabel\n\t\tdb\t\'$ts\',0\n\t\tdd\t$label - S$ts$ilabel\n";
                 print OU "\t\tsection\t.text\n\n";
                 $line = "";
             }
@@ -108,10 +108,10 @@ for $line (@lines)
     $line = ";$line" if ($line =~ /^\s+align\s/);
 
     print OU $line;
-    if ($line =~ /__([A-Z0-9]{8})__/)
+    if ($line =~ /__([A-Z0-9]+)__/)
     {
         print OU "S$1$ilabel:\n";
-        print OU "\t\tsection\t.data\n\t\tdd\t\'$1\',S$1$ilabel\n";
+        print OU "\t\tsection\t.data\n\t\tdb\t\'$1\',0\n\t\tdd\tS$1$ilabel\n";
         print OU "\t\tsection\t.text\n\n";
         $cs = $1;
     }

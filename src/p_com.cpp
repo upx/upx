@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
@@ -142,15 +142,15 @@ void PackCom::patchLoader(OutputFile *fo,
 int PackCom::buildLoader(const Filter *ft)
 {
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
-    addLoader("COMMAIN1""COMSUBSI",
+    addLoader("COMMAIN1,COMSUBSI",
               ph.first_offset_found == 1 ? "COMSBBBP" : "",
               "COMPSHDI",
               ft->id ? "COMCALLT" : "",
-              "COMMAIN2""UPX1HEAD""COMCUTPO""NRV2B160",
+              "COMMAIN2,UPX1HEAD,COMCUTPO,NRV2B160",
               ft->id ? "NRVDDONE" : "NRVDRETU",
               "NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
-              "NRVDECO2""NRV2B169",
+              "NRVDECO2,NRV2B169",
               NULL
              );
     if (ft->id)
@@ -170,7 +170,7 @@ void PackCom::addFilter16(int filter_id)
     if (filter_id % 3 == 0)
         addLoader("CALLTR16",
                   filter_id < 4 ? "CT16SUB0" : "",
-                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286""CT16SUB0"),
+                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I086" : "CT16I286,CT16SUB0"),
                   "CALLTRI2",
                   getFormat() == UPX_F_DOS_COM ? "CORETURN" : "",
                   NULL
@@ -180,7 +180,7 @@ void PackCom::addFilter16(int filter_id)
                   "CALLTRI5",
                   getFormat() == UPX_F_DOS_COM ? "CT16JEND" : "CT16JUL2",
                   filter_id < 4 ? "CT16SUB1" : "",
-                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287""CT16SUB1"),
+                  filter_id < 4 ? "" : (opt->cpu == opt->CPU_8086 ? "CT16I087" : "CT16I287,CT16SUB1"),
                   "CALLTRI6",
                   NULL
                  );

@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
@@ -133,7 +133,7 @@ void Packer::addFilter32(int filter_id)
                 addLoader("CALLTR00",
                         (filter_id > 0x20) ? "CTCLEVE1" : "",
                         "CALLTR01",
-                        (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR01""CTBSWA01" : "CTBROR01""CTBSWA01") : "",
+                        (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR01,CTBSWA01" : "CTBROR01,CTBSWA01") : "",
                         "CALLTR02",
                         NULL
                         );
@@ -156,7 +156,7 @@ void Packer::addFilter32(int filter_id)
                     "CALLTR11",
                     (filter_id > 0x20) ? "CTCLEVE2" : "",
                     "CALLTR12",
-                    (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR11""CTBSWA11" : "CTBROR11""CTBSWA11") : "",
+                    (filter_id & 0xf) > 3 ? (filter_id > 0x20 ? "CTBSHR11,CTBSWA11" : "CTBROR11,CTBSWA11") : "",
                     "CALLTR13",
                     NULL
                     );

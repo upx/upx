@@ -1579,7 +1579,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
     if (sorelocs)
     {
         addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
-                  "PERELOC3""RELOC320",
+                  "PERELOC3,RELOC320",
                   big_relocs ? "REL32BIG" : "",
                   "RELOC32J",
                   NULL
@@ -1593,7 +1593,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
     }
     addLoader("PEMAIN20",
               ih.entry ? "PEDOJUMP" : "PERETURN",
-              "IDENTSTR""UPX1HEAD",
+              "IDENTSTR,UPX1HEAD",
               NULL
              );
     return getLoaderSize();

@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
@@ -78,9 +78,9 @@ int PackTmt::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("IDENTSTR""TMTMAIN1",
+    addLoader("IDENTSTR,TMTMAIN1",
               ft->id ? "TMTCALT1" : "",
-              "TMTMAIN2""UPX1HEAD""TMTCUTPO""+0XXXXXX",
+              "TMTMAIN2,UPX1HEAD,TMTCUTPO,+0XXXXXX",
               getDecompressor(),
               "TMTMAIN5",
               NULL
@@ -91,9 +91,9 @@ int PackTmt::buildLoader(const Filter *ft)
         addLoader("TMTCALT2",NULL);
         addFilter32(ft->id);
     }
-    addLoader("TMTRELOC""RELOC320",
+    addLoader("TMTRELOC,RELOC320",
               big_relocs ? "REL32BIG" : "",
-              "RELOC32J""TMTJUMP1",
+              "RELOC32J,TMTJUMP1",
               NULL
              );
     return getLoaderSize();

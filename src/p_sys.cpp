@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   markus@oberhumer.com      ml1050@users.sourceforge.net
  */
 
 
@@ -107,12 +107,12 @@ int PackSys::buildLoader(const Filter *ft)
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("SYSMAIN1",
               opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
-              "SYSMAIN2""SYSSUBSI",
+              "SYSMAIN2,SYSSUBSI",
               ph.first_offset_found == 1 ? "SYSSBBBP" : "",
               ft->id ? "SYSCALLT" : "",
-              "SYSMAIN3""UPX1HEAD""SYSCUTPO""NRV2B160""NRVDDONE""NRVDECO1",
+              "SYSMAIN3,UPX1HEAD,SYSCUTPO,NRV2B160,NRVDDONE,NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
-              "NRVDECO2""NRV2B169",
+              "NRVDECO2,NRV2B169",
               NULL
              );
     if (ft->id)
