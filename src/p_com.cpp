@@ -123,6 +123,11 @@ void PackCom::patchLoader(OutputFile *fo,
     fo->write(loader,e_len);            // entry
     fo->write(obuf,ph.c_len);
     fo->write(loader+e_len,d_len);      // decompressor
+#if 0
+    printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) d_len);
+#endif
 }
 
 

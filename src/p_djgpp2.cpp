@@ -356,6 +356,11 @@ void PackDjgpp2::pack(OutputFile *fo)
     fo->write(&coff_hdr,sizeof(coff_hdr));
     fo->write(loader,lsize);
     fo->write(obuf,data->size);
+#if 0
+    printf("%-13s: coff hdr   : %8ld bytes\n", getName(), (long) sizeof(coff_hdr));
+    printf("%-13s: loader     : %8ld bytes\n", getName(), (long) lsize);
+    printf("%-13s: compressed : %8ld bytes\n", getName(), (long) data->size);
+#endif
 
     // verify
     verifyOverlappingDecompression(&obuf, overlapoh);

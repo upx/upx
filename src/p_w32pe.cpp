@@ -1638,7 +1638,7 @@ void PackW32Pe::pack(OutputFile *fo)
     obuf.allocForCompression(ph.u_len);
     ph.u_len -= rvamin;
 
-#if 0
+#if 1
     // filter
     Filter ft(opt->level);
     if (allow_filter)
@@ -1656,6 +1656,7 @@ void PackW32Pe::pack(OutputFile *fo)
     buildLoader(&ft);
 #else
     // new version using compressWithFilters()
+    // FIXME - this does not work yet !!!
 
     // prepare packheader
     ph.filter = 0;
@@ -1714,6 +1715,10 @@ void PackW32Pe::pack(OutputFile *fo)
     ic = identsize - identsplit;
 
     const unsigned clen = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
+
+    // FIXME: Laszlo: what about this memset ?
+    //memset(obuf + ph.c_len, 0, clen - ph.c_len);
+
     const unsigned s1size = ALIGN_UP(ic + clen + codesize,4) + sotls;
     const unsigned s1addr = (newvsize - (ic + clen) + oam1) &~ oam1;
 
@@ -1722,9 +1727,9 @@ void PackW32Pe::pack(OutputFile *fo)
     const unsigned myimport = ncsection + soresources - rvamin;
 
     // patch loader
-    unsigned jmp_pos;
     if (ih.entry)
     {
+        unsigned jmp_pos;
         jmp_pos = ptr_diff(find_le32(loader,codesize + 4,get_le32("JMPO")),loader);
         patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
     }
@@ -1910,6 +1915,19 @@ void PackW32Pe::pack(OutputFile *fo)
 
     if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
         fo->write(ibuf,oh.filealign - ic);
+
+#if 0
+    printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
+    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
+    printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
+    printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
+    printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);
+    printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
+    printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
+    printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
+#endif
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);

@@ -509,6 +509,13 @@ void PackExe::pack(OutputFile *fo)
     fo->write(obuf,packedsize);
     fo->write(loader+e_len,d_len);      // decompressor
     fo->write(extra_info,eisize);
+#if 0
+    printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
+    printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) packedsize);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) d_len);
+    printf("%-13s: extra info   : %8ld bytes\n", getName(), (long) eisize);
+#endif
 
     // verify
     verifyOverlappingDecompression(&obuf, overlapoh);
