@@ -1,5 +1,11 @@
 # Toplevel Makefile for UPX
 
+SHELL = /bin/sh
+
+srcdir = .
+top_srcdir = .
+
+
 all mostlyclean clean distclean maintainer-clean:
 	$(MAKE) -C src/stub/util/sstrip $@
 	$(MAKE) -C src/stub $@
@@ -17,7 +23,8 @@ cvs-admin-ko:
 	cvs update
 
 ChangeLog:
-	perl scripts/cvs2cl.pl --utc -f ChangeLog.cvs
+	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
+
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 .PHONY: dist cvs-admin-ko ChangeLog
