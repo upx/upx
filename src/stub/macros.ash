@@ -128,7 +128,7 @@ ct1:
  %endif
                 mov     [edi], eax
                 add     edi, byte 5
-                mov     eax, ebx
+                mov     al, bl
                 loop    ct1
 %else;  __CALLTR10__
 ;; 32-bit call XOR jump trick
