@@ -101,11 +101,16 @@ int PackTos::getLoaderSize() const
 #define F_FASTLOAD      0x01        // don't zero heap
 #define F_ALTLOAD       0x02        // OK to load in alternate ram
 #define F_ALTALLOC      0x04        // OK to malloc from alt. ram
-#define F_RESERVED      0x08        // reserved for future use
+#define F_SMALLTPA      0x08        // used in MagiC: TPA can be allocated
+                                    // as specified in the program header
+                                    // rather than the biggest free memory
+                                    // block
 #define F_MEMFLAGS      0xf0        // reserved for future use
 #define F_SHTEXT        0x800       // program's text may be shared
 
 #define F_MINALT        0xf0000000  // used to decide which type of RAM to load in
+
+#define F_ALLOCZERO     0x2000      // zero mem, for bugged (GEM...) programs
 
 /* Bit in Mxalloc's arg for "don't auto-free this memory" */
 #define F_KEEP          0x4000
@@ -148,10 +153,10 @@ bool PackTos::checkFileHeader()
         throwCantPack("I won't pack F_OS_SPECIAL programs");
     if ((f & F_PROTMODE) > F_PROT_I)
         throwCantPack("invalid protection mode");
-    if (ih.fh_reserved != 0)
+    if (f & F_MEMFLAGS)
     {
         if (opt->force < 1)
-            throwCantPack("reserved header field set; use option `-f' to force packing");
+            throwCantPack("invalid memory flags; use option `-f' to force packing");
     }
     if ((f & F_PROTMODE) != F_PROT_P)
     {
@@ -163,6 +168,14 @@ bool PackTos::checkFileHeader()
         if (opt->force < 1)
             throwCantPack("shared text segment; use option `-f' to force packing");
     }
+#if 0
+    // fh_reserved seems to be unused
+    if (ih.fh_reserved != 0)
+    {
+        if (opt->force < 1)
+            throwCantPack("reserved header field set; use option `-f' to force packing");
+    }
+#endif
     return true;
 }
 
@@ -190,7 +203,7 @@ void PackTos::patch_d0_subq(void *l, int llen,
 
 // Check relocation for errors to make sure our loader can handle it.
 static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
-                        unsigned *relocsize, unsigned *overlay)
+                        unsigned *nrelocs, unsigned *relocsize, unsigned *overlay)
 {
     unsigned fixup = get_be32(relocs);
     unsigned last_fixup = fixup;
@@ -199,6 +212,7 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
     assert(isize >= 4);
     assert(fixup > 0);
 
+    *nrelocs = 1;
     for (;;)
     {
         if (fixup & 1)              // must be word-aligned
@@ -220,6 +234,7 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
             if (fixup - last_fixup < 4)     // overlapping relocation
                 return -1;
             last_fixup = fixup;
+            *nrelocs += 1;
         }
     }
 
@@ -269,6 +284,7 @@ void PackTos::fileInfo()
 void PackTos::pack(OutputFile *fo)
 {
     unsigned t;
+    unsigned nrelocs = 0;
     unsigned relocsize = 0;
     unsigned overlay = 0;
 
@@ -321,10 +337,10 @@ void PackTos::pack(OutputFile *fo)
     else if (ih.fh_reloc != 0)
         relocsize = 0;
     else
-        r = check_relocs(ibuf+t, overlay, t, &relocsize, &overlay);
+        r = check_relocs(ibuf+t, overlay, t, &nrelocs, &relocsize, &overlay);
 
 #if 0 || defined(TESTING)
-    printf("xx2 reloc: %d, overlay: %d, t: %d\n", relocsize, overlay, t);
+    printf("xx2: %d relocs: %d, overlay: %d, t: %d\n", nrelocs, relocsize, overlay, t);
 #endif
 
     if (r != 0)
@@ -410,9 +426,9 @@ void PackTos::pack(OutputFile *fo)
     memcpy(loader,getLoader(),o_text);
 
     // patch loader
-    //   patch "subq.l #1,d0" or "subq.w #1,d0" - see "up41" below
     if (!opt->small)
         patchVersion(loader,o_text);
+    //   patch "subq.l #1,d0" or "subq.w #1,d0" - see "up41" below
     patch_be16(loader,o_text,"u4",
                dirty_bss / dirty_bss_align > 65535 ? 0x5380 : 0x5340);
     patch_be32(loader,o_text,"up31",d_off + offset);
@@ -441,8 +457,9 @@ void PackTos::pack(OutputFile *fo)
 
     // patch decompressor
     upx_byte *p = obuf + d_off;
+    //   patch "moveq.l #1,d3" or "jmp (a5)"
+    patch_be16(p,d_len,"u3", (relocsize > 4) ? 0x7601 : 0x4ed5);
     patch_be32(p,d_len,"up41", dirty_bss / dirty_bss_align);
-    patch_be16(p,d_len,"u3", 0x7600 + (relocsize > 4));   // moveq.l #X,d3
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);
@@ -461,7 +478,7 @@ void PackTos::pack(OutputFile *fo)
     oh.fh_sym  = 0;
     oh.fh_reserved = 0;
     // only keep the following flags:
-    oh.fh_flag = ih.fh_flag & (F_FASTLOAD | F_ALTALLOC | F_KEEP);
+    oh.fh_flag = ih.fh_flag & (F_FASTLOAD | F_ALTALLOC | F_SMALLTPA | F_ALLOCZERO | F_KEEP);
     // add an empty relocation fixup to workaround a bug in some TOS versions
     oh.fh_reloc = 0;
 

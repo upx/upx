@@ -291,18 +291,29 @@ cutpoint:
 #  error
 #endif
 
+        ; note: d1 and d2 are 0 from decompressor above
+
+
+; ------------- prepare d0 for clearing the dirty bss
+
+#if defined(SMALL)
+                move.l  #'up41',d0      ; dirty_bss / 4
+#else
+                move.l  #'up41',d0      ; dirty_bss / 16
+#endif
+
+
+; ------------- test if we need to reloc
+
+                dc.b    'u3'            ; jmp (a5) / moveq.l #1,d3
+
 
 ; ------------- reloc
 
 ; The decompressed relocations now are just after the decompressed
 ; data segment, i.e. at the beginning of the (dirty) bss.
 
-        ; note: d1 and d2 are 0 from decompressor above
-
-reloc:
-                ;;move.w  #'u3',d3        ; #0 or #1
-                dc.b    'u3'            ; moveq.l #0,d3 / moveq.l #1,d3
-                beq     reloc_end       ; don't reloc
+        ; note: d1 and d2 are still 0
 
                 move.l  a6,a0           ; a0 = start of relocations
 
@@ -320,21 +331,16 @@ L(loop2):       move.b  (a0)+,d1
 
 reloc_end:
 
-        ; note: d1 and d2 are still 0
-
 
 ; ------------- clear dirty bss & start program
 
 ; We are currently running in the dirty bss.
 ; Jump to the code we copied below the stack.
 
-#if defined(SMALL)
-                move.l  #'up41',d0      ; dirty_bss / 4
-#else
-                move.l  #'up41',d0      ; dirty_bss / 16
-#endif
+        ; note: d1 and d2 are still 0
 
                 jmp     (a5)            ; jmp clear_bss (on stack)
+
 
 
 eof:
