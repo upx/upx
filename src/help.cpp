@@ -50,9 +50,9 @@ void show_head(void)
                 "                     Ultimate Packer for eXecutables\n"
                 "      Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003\n"
                 "UPX %-12s Markus F.X.J. Oberhumer & Laszlo Molnar %20s\n\n",
-#if defined(__MFX_DOS)
+#if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
-#elif defined(__MFX_WIN32)
+#elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
                 V("w"),
 #elif 0 && defined(__linux__)
                 V("l"),

@@ -56,7 +56,7 @@ void init_options(struct options_t *o)
     o->overlay = -1;
 
     o->console = CON_FILE;
-#if defined(__MFX_DOS) || defined(__MFX_WIN)
+#if (ACC_OS_DOS32 || ACC_OS_WIN32)
     o->console = CON_INIT;
 #elif 1 && defined(__linux__)
     o->console = CON_INIT;
@@ -1142,7 +1142,7 @@ int main(int argc, char *argv[])
     if (!argv[0] || !argv[0][0])
         argv[0] = default_argv0;
     argv0 = argv[0];
-#if defined(DOSISH)
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
     {
         char *prog = fn_basename(argv0);
         char *p;
