@@ -184,11 +184,13 @@ void upx_main(
     f_expand *const f_decompress
 )
 {
+#define PAGE_MASK (~0<<12)
     // file descriptors
     int fdi, fdo;
     Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
         (my_ehdr->e_phoff + (char const *)my_ehdr);
     struct Extent xi = { phdr[1].p_memsz, (char *)phdr[1].p_vaddr };
+    char *next_unmap = (char *)(PAGE_MASK & (unsigned)xi.buf);
     struct p_info header;
 
     // for getpid()
@@ -384,6 +386,11 @@ void upx_main(
                 (void) exit(127);
         }
         header.p_filesize -= h.sz_unc;
+
+        // We will never touch these pages again.
+        i = (PAGE_MASK & (unsigned)xi.buf) - (unsigned)next_unmap;
+        munmap(next_unmap, i);
+        next_unmap += i;
     }
 
 
