@@ -82,15 +82,26 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 STRIPELF = ./util/sstrip/sstrip
 
 # Compiler for the Linux/386 stubs.
+# gcc 2.95.3 seems to produce the smallest code
 ifeq (1,2)
   CC_LINUX_I386 = gcc272 -m386 -O2
 else
-  # gcc 2.95.3 seems to produce the smallest code
-  # (specifying -mcpu=i586 inhibits use of 'leave', which costs 2 bytes per subr)
-  CC_LINUX_I386 = gcc-2.95 -march=i386 -mcpu=i386 -Os -fno-strict-aliasing
+ifeq (1,1)
+  # gcc 2.95
+  #   info: -mcpu=i386 and -mcpu=k6 procduce the smallest code
+  #         (specifying -mcpu=i586 inhibits use of 'leave',
+  #         which costs 2 bytes per subr)
+  CC_LINUX_I386 = gcc-2.95 -march=i386 -mcpu=i386 -Os
+  CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+  CC_LINUX_I386 += -Werror
+else
+  # gcc 3.2
+  #   info: -mcpu=k6 procduces the smallest code
+  CC_LINUX_I386 = gcc-3.2 -march=i386 -mcpu=k6 -Os
+  CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+  CC_LINUX_I386 += -Werror
 endif
-CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
-CC_LINUX_I386 += -Werror
+endif
 CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
 CC_LINUX_I386 += -funsigned-char
 ###CC_LINUX_I386 += -fwritable-strings -save-temps
