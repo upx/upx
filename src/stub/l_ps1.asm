@@ -78,6 +78,9 @@ copyloop:
 ;               lui     a1,'LH'        ; compressed data length
 ;               ori     a1,'LL'        ; HI and LO !disabled
 ;       __PSXMAINZ__
+
+; =============
+
 ;       __PSXJSTA0__
                 lui     a2,'OH'        ; load DECOMPDATA HI offset
                 jr      a3
@@ -113,6 +116,7 @@ copyloop:
 #include <mr3k/n2e_d.ash>
 ;       __PSXN2EDZ__
 
+; =============
 
 ;       __MSETBIG0__
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
@@ -121,6 +125,9 @@ copyloop:
 ;       __MSETSML0__
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
 ;       __MSETSMLZ__
+
+; =============
+
 ;       __MSETALG0__
 memset_aligned:
                 addi    a0,-4
@@ -136,11 +143,20 @@ memset_unaligned:
                 bnez    a0,memset_unaligned
                 addiu   a2,4
 ;       __MSETUALZ__
+
+; =============
+
 ;       __PSXEXIT0__
+                li      t2,160          ; flushes
+                jalr    ra,t2           ; instruction
+                li      t1,68           ; cache
                 do_regs lw              ; pop used regs
                 DW      'JPEP'          ; marker for the entry jump
                 addu    sp,at
 ;       __PSXEXITZ__
+
+; =============
+
 ;       __PSXPHDR0__
                 DB      85,80,88,33     ;  0  UPX_MAGIC_LE32
         ; another magic for PackHeader::putPackHeader

@@ -39,15 +39,16 @@ static const
 #include "stub/l_ps1.h"
 
 
-#define MIPS_HI(a)      (((a) >> 16) /*+(((a)&0x8000)>>15)*/)
+#define MIPS_HI(a)      (((a) >> 16) /* + (((a)&0x8000)>>15) */ )
 #define MIPS_LO(a)      ((a) & 0xffff)
-#define MIPS_JP(a)      ((0x08 <<24) | (((a) & 0x0fffffff) >> 2))
+#define MIPS_JP(a)      ((0x08 << 24) | (((a) & 0x0fffffff) >> 2))
 #define CHK_ALIGNED(a,b) ((b) - ((a) % (b)))
+#define NOCACHE(a)      ((a) & 0x1FFFFFFF)
 
 #define PS_HDR_SIZE     2048  // one CD sector in bytes
 #define PS_MAX_SIZE     0x1e8000
 
-#define IH_BKUP         (10*sizeof(LE32))
+#define IH_BKUP         (10 * sizeof(LE32))
 #define EIGHTBIT
 
 
@@ -236,10 +237,10 @@ void PackPs1::pack(OutputFile *fo)
     pad = ALIGN_UP((cfile_size ? cfile_size : ih.tx_len), 4);
     pad_code = CHK_ALIGNED(ph.c_len, 4);
 
-    const unsigned decomp_data_start = ih.tx_ptr;
+    const unsigned decomp_data_start = NOCACHE(ih.tx_ptr);
 
     // set the offset for compressed stuff at the very end of file
-    const unsigned comp_data_start = (decomp_data_start+pad+overlap)-ph.c_len;
+    const unsigned comp_data_start = NOCACHE(((decomp_data_start+pad+overlap)-ph.c_len));
 
     if (!opt->ps1.no_align)
         // align the packed file to mode 2 data sector size (2048)
@@ -248,7 +249,7 @@ void PackPs1::pack(OutputFile *fo)
         // no align
         pad = 0;
 
-    const unsigned entry = comp_data_start - e_len - pad_code;
+    const unsigned entry = NOCACHE(comp_data_start - e_len - pad_code);
     patchPackHeader(loader,lsize);
     patch_mips_le32(loader,e_len,"JPEP",MIPS_JP(ih.epc));
     if (sa_cnt)
@@ -265,9 +266,9 @@ void PackPs1::pack(OutputFile *fo)
     patch_mips_le16(loader,e_len,"LS",d_len+s_len);
 
     // set the file load address
-    oh.tx_ptr = entry-pad;
+    oh.tx_ptr = entry - pad;
     // set the correct file len in header
-    oh.tx_len = (ph.c_len+e_len+pad+pad_code);
+    oh.tx_len = ph.c_len + e_len + pad + pad_code;
     // set the code entry
     oh.epc = entry;
 
