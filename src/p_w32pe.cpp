@@ -1485,12 +1485,19 @@ bool PackW32Pe::canPack()
 
 int PackW32Pe::buildLoader(const Filter *ft)
 {
+    // recompute tlsindex (see pack() below)
+    unsigned tmp_tlsindex = tlsindex;
+    const unsigned oam1 = ih.objectalign - 1;
+    const unsigned newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
+    if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
+        tmp_tlsindex = 0;
+
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader), -1, 2);
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
-              tlsindex ? "PETLSHAK" : "",
+              tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
               getDecompressor(),
               /*multipass ? "PEMULTIP" :  */  "",
@@ -1669,7 +1676,7 @@ void PackW32Pe::pack(OutputFile *fo)
         || (isection[virta2objnum(ih.codebase,isection,objs)].flags & PEFL_CODE) == 0)
         allow_filter = false;
 
-    const unsigned oam1 = ih.objectalign-1;
+    const unsigned oam1 = ih.objectalign - 1;
 
     // FIXME: disabled: the uncompressor would not allocate enough memory
     //objs = tryremove(IDADDR(PEDIR_RELOC),objs);
@@ -1728,7 +1735,7 @@ void PackW32Pe::pack(OutputFile *fo)
     int strategy = allow_filter ? 0 : -3;
     compressWithFilters(&ft, 2048, strategy,
                         NULL, 0, 0, ih.codebase, rvamin);
-
+// info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
         tlsindex = 0;
