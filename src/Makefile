@@ -146,7 +146,6 @@ LINK_EXE_OUTPUT =
 LDLIBS =
 LINK_EXE_LDFLAGS =
 
-
 # update defaults
 ifeq ($(DEBUG),1)
   DEFS += -DDEBUG
@@ -378,7 +377,7 @@ else
   CFLAGS += -O2 -d
 endif
 
-endif	# bcc
+endif	# bc
 
 
 ###
@@ -409,7 +408,7 @@ else
   CFLAGS += -o
 endif
 
-endif	# dmc
+endif	# dm
 
 
 ###
@@ -443,7 +442,7 @@ else
 endif
 RESOURCES = upx.res
 
-endif	# icl
+endif	# ic
 
 
 ###
@@ -485,7 +484,7 @@ else
 endif
 RESOURCES = upx.res
 
-endif	# vc6
+endif	# vc
 
 
 ###
@@ -523,7 +522,7 @@ else
   CFLAGS += -olr
 endif
 
-endif	# wcc
+endif	# wc
 
 
 # /***********************************************************************
