@@ -101,8 +101,7 @@ EXTERN make_hatch
         mov ch, PAGE_SIZE>>8  ; 0x1000
         add ecx, [p_memsz + szElf32_Ehdr + ebx]  ; length to unmap
         mov bh, 0  ; from 0x401000 to 0x400000
-        push byte __NR_munmap
-        pop eax
+        mov eax, __NR_munmap  ; do not dirty the stack with push byte + pop
         jmp edx  ; unmap ourselves via escape hatch, then goto entry
 
 do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL

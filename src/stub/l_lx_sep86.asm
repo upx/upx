@@ -196,8 +196,7 @@ EXTERN make_hatch
         mov ebx, ebp
         and ebx, ecx  ; round down to page boundary
         neg ecx  ; PAGE_SIZE  (this stub fits in it)
-        push byte __NR_munmap
-        pop eax
+        mov eax, __NR_munmap  ; do not dirty the stack with push byte + pop
         jmp edx  ; unmap ourselves, then goto entry
 
 do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
