@@ -167,7 +167,6 @@ void PackHeader::putPackHeader(upx_bytep p)
         p[28] = (unsigned char) filter;
         p[29] = (unsigned char) filter_cto;
         p[30] = (unsigned char) (n_mru ? 0 : n_mru -1);
-        size = 32;
     }
 
     p[4] = (unsigned char) version;
