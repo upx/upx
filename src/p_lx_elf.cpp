@@ -261,7 +261,6 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
     // count passes, set ptload vars
     ui_total_passes = 0;
     off_t ptload0hi = 0, ptload1lo = 0, ptload1sz = 0;
-    int nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) {
         if (PT_LOAD == phdri[k].p_type) {
             x.offset = phdri[k].p_offset;
@@ -274,9 +273,6 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
                 ptload1sz = x.size;
             }
             ui_total_passes++;
-        } else {
-            if (nx++ == 0)
-                ui_total_passes++;
         }
     }
     if (0!=ptload1sz && ptload0hi < ptload1lo)
@@ -286,7 +282,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    ui_pass = -1;
+    ui_pass = -1;  // Compressing Elf headers is invisible to UI.
     x.offset = 0;
     x.size = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
     {
@@ -298,7 +294,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
     ui_pass = 0;
     ft.addvalue = 0;
 
-    nx = 0;
+    int nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) if (PT_LOAD==phdri[k].p_type) {
         if (ft.id < 0x40) {
             // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
