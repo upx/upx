@@ -275,8 +275,8 @@ bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
 
 bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
 {
-    unsigned u_len = file_size;
-    unsigned c_len = fo->getBytesWritten();
+    const unsigned u_len = file_size;
+    const unsigned c_len = fo->getBytesWritten();
 
     assert((int)u_len > 0);
     assert((int)c_len > 0);
@@ -284,7 +284,12 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
     if (c_len + 4096 <= u_len)          // ok if we have 4096 bytes gain
         return true;
 
-    return checkCompressionRatio(u_len, c_len);
+    if (c_len + 512 >= u_len)           // min. 512 bytes gain
+        return false;
+    if (c_len >= u_len - u_len / 8)     // min. 12.5% gain
+        return false;
+
+    return true;
 }
 
 
@@ -653,7 +658,6 @@ void Packer::checkAlreadyPacked(void *b, int blen)
     //   is a real PackHeader, e.g.
     //
     //PackHeader tmp;
-    //tmp.magic = UPX_MAGIC_LE32;
     //if (!tmp.fillPackHeader((unsigned char *)b + boff, blen - boff))
     //    return;
     //
