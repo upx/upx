@@ -47,7 +47,7 @@ Packer::Packer(InputFile *f) :
 {
     file_size = f->st.st_size;
     uip = new UiPacker(this);
-    memset(&ph,0,sizeof(ph));
+    memset(&ph, 0, sizeof(ph));
 }
 
 
@@ -151,12 +151,11 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     return false;
 #else
     ph.c_len = 0;
+    assert(ph.level >= 1); assert(ph.level <= 10);
 
-    const int level = ph.level;
-    assert(level >= 1); assert(level <= 10);
-
+    ph.saved_u_adler = ph.u_adler;
+    ph.saved_c_adler = ph.c_adler;
     // update checksum of uncompressed data
-    const unsigned saved_u_adler = ph.u_adler;
     ph.u_adler = upx_adler32(ph.u_adler,in,ph.u_len);
 
     // set compression paramters
@@ -173,7 +172,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 #if 0
     else
         // this is based on experimentation
-        conf.c_flags = (level >= 7) ? 0 : 1 | 2;
+        conf.c_flags = (ph.level >= 7) ? 0 : 1 | 2;
 #endif
     if (opt->crp.p_level != -1)
         conf.p_level = opt->crp.p_level;
@@ -187,7 +186,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
     unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
 #if defined(WITH_NRV)
-    if ((level >= 7) || (level >= 4 && ph.u_len >= 512*1024))
+    if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
         step = 0;
 #endif
     if (ui_pass >= 0)
@@ -202,7 +201,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     memset(result, 0, sizeof(result));
     int r = upx_compress(in, ph.u_len, out, &ph.c_len,
                          uip->getCallback(),
-                         ph.method, level, &conf, result);
+                         ph.method, ph.level, &conf, result);
     if (r == UPX_E_OUT_OF_MEMORY)
         throwCantPack("out of memory");
     if (r != UPX_E_OK)
@@ -232,7 +231,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // update checksum of compressed data
     ph.c_adler = upx_adler32(ph.c_adler,out,ph.c_len);
     // Decompress and verify. Skip this when using the fastest level.
-    if (level > 1)
+    if (ph.level > 1)
     {
         // decompress
         unsigned new_len = ph.u_len;
@@ -244,7 +243,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
             throwInternalError("decompression failed (size error)");
 
         // verify decompression
-        if (ph.u_adler != upx_adler32(saved_u_adler,in,ph.u_len))
+        if (ph.u_adler != upx_adler32(ph.saved_u_adler,in,ph.u_len))
             throwInternalError("decompression failed (checksum error)");
     }
     return true;
@@ -256,9 +255,6 @@ bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
 {
     assert((int)u_len > 0);
     assert((int)c_len > 0);
-
-    // this assertion may fail if we compress the BSS segment -- disabled
-    //assert((off_t)u_len < file_size);
 
 #if 1
     if (c_len + 512 >= u_len)           // min. 512 bytes gain
@@ -305,23 +301,21 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
     // verify checksum of compressed data
     if (verify_checksum)
     {
-        adler = upx_adler32(0,NULL,0);
-        adler = upx_adler32(adler,in,ph.c_len);
+        adler = upx_adler32(ph.saved_c_adler, in, ph.c_len);
         if (adler != ph.c_adler)
             throwChecksumError();
     }
 
     // decompress
     unsigned new_len = ph.u_len;
-    int r = upx_decompress(in,ph.c_len,out,&new_len,ph.method);
+    int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method);
     if (r != UPX_E_OK || new_len != ph.u_len)
         throwCompressedDataViolation();
 
     // verify checksum of decompressed data
     if (verify_checksum)
     {
-        adler = upx_adler32(0,NULL,0);
-        adler = upx_adler32(adler,out,ph.u_len);
+        adler = upx_adler32(ph.saved_u_adler, out, ph.u_len);
         if (adler != ph.u_adler)
             throwChecksumError();
     }
@@ -360,18 +354,16 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
 }
 
 
-void Packer::verifyOverlappingDecompression(MemBuffer *buf,
-                                            unsigned overlap_overhead)
+void Packer::verifyOverlappingDecompression()
 {
-#if defined(UNUPX)
-#else
-    // FIXME (well, this is complete paranoia anyway)
-    //
+    assert(ph.c_len < ph.u_len);
+    assert((int)ph.overlap_overhead > 0);
+#if 1 && !defined(UNUPX)
     // Idea:
-    //   buf was allocated with MemBuffer.allocForCompression(), and
+    //   obuf was allocated with MemBuffer::allocForCompression(), and
     //   its contents are no longer needed, i.e. the compressed data
     //   must have been already written.
-    //   We now could perform a real overlapping decompression and
+    //   We now can perform a real overlapping decompression and
     //   verify the checksum.
     //
     // Note:
@@ -381,9 +373,15 @@ void Packer::verifyOverlappingDecompression(MemBuffer *buf,
     //
     // See also:
     //   Filter::verifyUnfilter()
-#endif
-    UNUSED(buf);
-    UNUSED(overlap_overhead);
+
+    if (ph.level == 1)
+        return;
+    unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
+    if (offset + ph.c_len > obuf.getSize())
+        return;
+    memmove(obuf + offset, obuf, ph.c_len);
+    decompress(obuf + offset, obuf, true);
+#endif /* !UNUPX */
 }
 
 
@@ -473,7 +471,7 @@ void Packer::handleStub(InputFile *fif, OutputFile *fo, long size)
 
 void Packer::checkOverlay(unsigned overlay)
 {
-    assert((int)overlay >= 0);
+    assert((off_t)overlay >= 0);
     assert((off_t)overlay < file_size);
     if (overlay == 0)
         return;
@@ -566,7 +564,7 @@ void Packer::initPackHeader()
     ph.format = getFormat();
     ph.method = -1;
     ph.level = -1;
-    ph.c_adler = ph.u_adler = upx_adler32(0,NULL,0);
+    ph.u_adler = ph.c_adler = ph.saved_u_adler = ph.saved_c_adler = upx_adler32(0,NULL,0);
     ph.buf_offset = -1;
     ph.u_file_size = file_size;
 }
@@ -1255,8 +1253,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 }
 #if 0
                 printf("\n%2d %02x: %d + %d = %d  (best: %d + %d = %d)\n", ph.method, ph.filter,
-                   ph.c_len, getLoaderSize(), ph.c_len + getLoaderSize(),
-                   best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
+                       ph.c_len, getLoaderSize(), ph.c_len + getLoaderSize(),
+                       best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
 #endif
                 bool update = false;
                 if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)

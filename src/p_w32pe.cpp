@@ -1873,6 +1873,9 @@ void PackW32Pe::pack(OutputFile *fo)
     printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
 #endif
 
+    // verify
+    verifyOverlappingDecompression();
+
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);
 

@@ -96,15 +96,7 @@ void MemBuffer::alloc(unsigned size)
 
 void MemBuffer::allocForCompression(unsigned uncompressed_size)
 {
-    // Idea:
-    //   We allocate the buffer at an offset of 4096 so
-    //   that we could do an in-place decompression for
-    //   verifying our overlap_overhead at the end
-    //   of packing.
-    //
-    // See Packer::verifyOverlappingDecompression().
-
-    alloc(uncompressed_size + uncompressed_size/8 + 256, MAX_OVERLAP_OVERHEAD);
+    alloc(uncompressed_size + uncompressed_size/8 + 256, 0);
 }
 
 

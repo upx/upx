@@ -545,7 +545,7 @@ void PackTos::pack(OutputFile *fo)
     fo->write("\x00\x00\x00\x00",4);
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);

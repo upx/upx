@@ -217,11 +217,13 @@ void PackLinuxI386elf::packExtent(
 
         // compress
         ph.u_len = l;
-        compress(ibuf, obuf);   // ignore return value
+        ph.overlap_overhead = 0;
+        (void) compress(ibuf, obuf);    // ignore return value
 
         if (ph.c_len < ph.u_len)
         {
-            if (!testOverlappingDecompression(obuf, OVERHEAD))
+            ph.overlap_overhead = OVERHEAD;
+            if (!testOverlappingDecompression(obuf, ph.overlap_overhead))
                 throwNotCompressible();
         }
         else
@@ -241,7 +243,7 @@ void PackLinuxI386elf::packExtent(
         if (ph.c_len < ph.u_len)
         {
             fo->write(obuf, ph.c_len);
-            verifyOverlappingDecompression(&obuf, OVERHEAD);
+            verifyOverlappingDecompression();
         }
         else
             fo->write(ibuf, ph.u_len);

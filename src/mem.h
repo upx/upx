@@ -52,8 +52,6 @@ public:
     operator       unsigned char * ()       { return ptr; }
     //operator const unsigned char * () const { return ptr; }
 
-    enum { MAX_OVERLAP_OVERHEAD = 4096 };
-
 private:
     void alloc(unsigned size, unsigned base_offset);
 

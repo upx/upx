@@ -339,7 +339,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // handle overlay
     // FIXME: only Allegro pakfiles are supported

@@ -75,6 +75,10 @@ public:
     int filter_cto;
     int header_checksum;
 
+    //
+    unsigned saved_u_adler;
+    unsigned saved_c_adler;
+
     // info fields set by fillPackHeader()
     long buf_offset;
 
@@ -178,8 +182,7 @@ protected:
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
-    virtual void verifyOverlappingDecompression(MemBuffer *buf,
-                                                unsigned overlap_overhead);
+    virtual void verifyOverlappingDecompression();
 
 
     // packheader handling

@@ -342,7 +342,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))

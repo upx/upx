@@ -536,7 +536,7 @@ void PackExe::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, &obuf);

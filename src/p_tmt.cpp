@@ -274,7 +274,7 @@ void PackTmt::pack(OutputFile *fo)
     fo->write(rel_entry,sizeof (rel_entry));
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);

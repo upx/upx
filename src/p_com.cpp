@@ -209,7 +209,7 @@ void PackCom::pack(OutputFile *fo)
     patchLoader(fo, loader, lsize, calls);
 
     // verify
-    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
+    verifyOverlappingDecompression();
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))

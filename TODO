@@ -77,6 +77,8 @@ FORMAT WATCOM/LE
 
 - implement compressWithFilters()
 
+- add a call to verifyOverlappingDecompression()
+
 
 FORMAT WIN32/PE
 ===============
