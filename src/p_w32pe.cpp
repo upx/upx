@@ -214,7 +214,7 @@ public:
 
     unsigned ivnum;
 
-    Interval(void *b) : capacity(0),base(b),ivarr(0),ivnum(0) {}
+    Interval(void *b) : capacity(0),base(b),ivarr(NULL),ivnum(0) {}
     ~Interval() {free(ivarr);}
 
     void add(unsigned start,unsigned len);
