@@ -277,7 +277,7 @@ void PackWcle::preprocessFixups()
     if (jc == 0)
     {
         // FIXME: implement this
-        thowCantPack("files without relocations are not supported");
+        throwCantPack("files without relocations are not supported");
     }
 
     ByteArray(rl, jc);

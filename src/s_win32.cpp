@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-#if defined(USE_SCREEN) && defined(__MFX_WIN32)
+#if defined(USE_SCREEN) && (ACC_OS_WIN32 || ACC_OS_WIN64)
 
 #include "screen.h"
 
@@ -520,7 +520,7 @@ screen_t *screen_win32_construct(void)
 }
 
 
-#endif /* defined(USE_SCREEN) && defined(__MFX_WIN32) */
+#endif /* defined(USE_SCREEN) && (ACC_OS_WIN32 || ACC_OS_WIN64) */
 
 
 /*

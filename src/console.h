@@ -59,7 +59,7 @@
 #  define USE_SCREEN
 #endif
 
-#if 1 && defined(__MFX_WIN32)
+#if (1 && ACC_OS_WIN32)
 #  define USE_SCREEN
 #endif
 

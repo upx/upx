@@ -29,26 +29,73 @@
 #ifndef __UPX_CONF_H
 #define __UPX_CONF_H
 
+#include "version.h"
+
+
+/*************************************************************************
+// ACC
+**************************************************************************/
+
 #if 0 && defined(__EMX__)
 #  include <sys/emx.h>
 #endif
 
-#if defined(UPX_CONFIG_H)
-#  include UPX_CONFIG_H
+#if 0 && defined(UPX_CONFIG_HEADER)
+#  define ACC_CONFIG_HEADER UPX_CONFIG_HEADER
+#endif
+#include "acc/acc.h"
+
+
+#if defined(__BORLANDC__)
+#  if (__BORLANDC__ < 0x550)
+#    error "need Borland C++ 5.5 or newer"
+#  endif
+#  define __UPX_CDECL       __cdecl
+#  define SIGTYPEENTRY      __cdecl
+#elif defined(__DMC__)
+#  define __UPX_CDECL       __cdecl
+#  define SIGTYPEENTRY      __cdecl
+#elif defined(__INTEL_COMPILER)
+#  if (__INTEL_COMPILER < 700)
+#    error "need Intel C++ 7.0 or newer"
+#  endif
+#  if defined(_WIN32)
+#    define __UPX_CDECL     __cdecl
+#    define SIGTYPEENTRY    __cdecl
+#  elif defined(__linux__)
+#    pragma warning(error: 424)         // #424: extra ";" ignored
+#    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
+#    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
+#    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
+#    pragma warning(disable: 1418)      // #1418: external definition with no prior declaration
+#  else
+#    error "untested platform"
+#  endif
+#elif defined(_MSC_VER)
+#  if (_MSC_VER < 1100)
+#    error "need Visual C++ 5.0 or newer"
+#  endif
+#  define __UPX_CDECL       __cdecl
+#  define SIGTYPEENTRY      __cdecl
+#  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
+#  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
+#  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
+#  pragma warning(disable: 4514)        // W4: 'function' : unreferenced inline function has been removed
+#  pragma warning(disable: 4710)        // W4: 'function': function not inlined
+#elif defined(__WATCOMC__)
+#  if (__WATCOMC__ < 1100)
+#    error "need Watcom C++ 11.0c or newer"
+#  endif
+#  define __UPX_CDECL       __cdecl
+#  if defined(__cplusplus)
+#    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
+#  endif
 #endif
 
-#if defined(HAVE_STDINT_H)
-#  if !defined(__STDC_LIMIT_MACROS)
-#    define __STDC_LIMIT_MACROS 1
-#  endif
-#  if !defined(__STDC_CONSTANT_MACROS)
-#    define __STDC_CONSTANT_MACROS 1
-#  endif
-#  include <stdint.h>
-#endif
-#include <limits.h>
-#include "version.h"
-#include "tailor.h"
+
+/*************************************************************************
+//
+**************************************************************************/
 
 // upx_int64l is int_least64_t in <stdint.h> terminology
 #if !defined(upx_int64l)
@@ -69,11 +116,6 @@
 #  endif
 #endif
 
-#if !defined(__i386__)
-#  if defined(__386__) || defined(_M_IX86)
-#    define __i386__ 1
-#  endif
-#endif
 #if defined(__linux__) && !defined(__unix__)
 #  define __unix__ 1
 #endif
@@ -129,45 +171,29 @@
 // system includes
 **************************************************************************/
 
-#if !defined(NO_SYS_TYPES_H)
-#  include <sys/types.h>
-#endif
-
-#define NDEBUG
-#undef NDEBUG
-#include <assert.h>
-
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <limits.h>
-#include <errno.h>
-#if !defined(NO_FCNTL_H)
+#if defined(HAVE_ERRNO_H)
+#  include <errno.h>
+#endif
+#if defined(HAVE_FCNTL_H)
 #  include <fcntl.h>
 #endif
-#if !defined(NO_SYS_STAT_H)
-#  include <sys/stat.h>
-#endif
-#if defined(HAVE_IO_H) && !defined(NO_IO_H)
+#if defined(HAVE_IO_H)
 #  include <io.h>
 #endif
-#if defined(HAVE_DOS_H) && !defined(NO_DOS_H)
+#if defined(HAVE_DOS_H)
 #  include <dos.h>
 #endif
-#if defined(HAVE_MALLOC_H) && !defined(NO_MALLOC_H)
+#if defined(HAVE_MALLOC_H)
 #  include <malloc.h>
 #endif
-#if defined(HAVE_ALLOCA_H) && !defined(NO_ALLOCA_H)
+#if defined(HAVE_ALLOCA_H)
 #  include <alloca.h>
 #endif
 #if defined(HAVE_SIGNAL_H)
 #  include <signal.h>
-#endif
-#if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
 #endif
 #if defined(TIME_WITH_SYS_TIME)
 #  include <sys/time.h>
@@ -215,6 +241,10 @@
 #if !defined(VALGRIND_DISCARD)
 #  define VALGRIND_DISCARD(handle)              ((void) &handle)
 #endif
+
+
+#undef NDEBUG
+#include <assert.h>
 
 
 /*************************************************************************
@@ -351,7 +381,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 #undef __attribute_packed
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#  if 1 && defined(__i386__)
+#  if (1 && ACC_ARCH_IA32)
 #    define __attribute_packed
 #  else
 #    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))
@@ -393,23 +423,16 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  undef USE_SETMODE
 #endif
 
+#ifndef OPTIONS_VAR
+#  define OPTIONS_VAR   "UPX"
+#endif
+
 
 /*************************************************************************
 // memory util
 **************************************************************************/
 
-#undef UNUSED
-#if 1
-#  define UNUSED(var)       ((void) &(var))
-#elif 1 && defined(__GNUC__)
-#  define UNUSED(var)       { typedef int __upx_unused[sizeof(var) ? 1 : -1]; }
-#elif 0
-#  define UNUSED(var)       do { } while (!sizeof(var))
-#elif defined(__BORLANDC__)
-#  define UNUSED(parm)      ((void)(parm))
-#else
-#  define UNUSED(parm)      (parm = parm)
-#endif
+#define UNUSED              ACC_UNUSED
 
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 

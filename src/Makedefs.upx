@@ -141,7 +141,6 @@ include $(srcdir)/Makedefs.gcc
 ifeq ($(arch),i386)
   CCARCH += -march=i386 -mcpu=i686
 endif
-DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ##CFLAGS_WERROR = -Werror
@@ -173,7 +172,6 @@ ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
 endif
 
-DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 CFLAGS  = $(CFLAGS_WERROR)
 ifeq ($(DEBUG),1)
 CFLAGS += -g -O0
@@ -193,7 +191,6 @@ ifeq ($(target),cross-m68k-linux)
 include $(srcdir)/Makedefs.gcc
 CC = m68k-linux-gcc
 CXX = m68k-linux-g++
-DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 ##LDLIBS += -lmcheck
 endif	# cross-m68k-linux
 
@@ -204,7 +201,6 @@ endif	# cross-m68k-linux
 
 ifeq ($(target),sparc-sun-solaris)
 include $(srcdir)/Makedefs.gcc
-DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
 endif
 
 

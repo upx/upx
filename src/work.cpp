@@ -35,7 +35,7 @@
 
 #if defined(__DJGPP__)
 #  define USE_FTIME
-#elif defined(__MFX_WIN32) && defined(_MSC_VER)
+#elif defined(_MSC_VER) && (defined(_WIN32) || defined(_WIN64))
 #  define USE__FUTIME
 #elif defined(HAVE_UTIME)
 #  define USE_UTIME

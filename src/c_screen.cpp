@@ -130,7 +130,7 @@ static int init(FILE *f, int o, int now)
     if (!screen)
         screen = do_construct(screen_djgpp2_construct(),fd);
 #endif
-#if defined(__MFX_WIN32)
+#if (ACC_OS_WIN32)
     if (!screen)
         screen = do_construct(screen_win32_construct(),fd);
 #endif

@@ -93,7 +93,7 @@ inline void set_be32(void *bb, unsigned v)
 
 inline unsigned get_le16(const void *bb)
 {
-#if defined(__i386__)
+#if (ACC_ARCH_IA32)
     return * (const unsigned short *) bb;
 #else
     const upx_bytep b = (const upx_bytep) bb;
@@ -106,7 +106,7 @@ inline unsigned get_le16(const void *bb)
 
 inline void set_le16(void *bb, unsigned v)
 {
-#if defined(__i386__)
+#if (ACC_ARCH_IA32)
     (* (unsigned short *) bb) = (unsigned short) (v & 0xffff);
 #else
     upx_bytep b = (upx_bytep) bb;
@@ -137,7 +137,7 @@ inline void set_le24(void *bb, unsigned v)
 
 inline unsigned get_le32(const void *bb)
 {
-#if defined(__i386__)
+#if (ACC_ARCH_IA32)
     return * (const unsigned *) bb;
 #else
     const upx_bytep b = (const upx_bytep) bb;
@@ -152,7 +152,7 @@ inline unsigned get_le32(const void *bb)
 
 inline void set_le32(void *bb, unsigned v)
 {
-#if defined(__i386__)
+#if (ACC_ARCH_IA32)
     (* (unsigned *) bb) = v;
 #else
     upx_bytep b = (upx_bytep) bb;
@@ -354,7 +354,7 @@ int le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
-#if 0 && defined(__i386__) && defined(__GNUC_VERSION_HEX__)
+#if 0 && defined(__GNUC_VERSION_HEX__) && (ACC_ARCH_IA32)
 # if (__GNUC_VERSION_HEX__ >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__packed__,__aligned__(1)));
    typedef unsigned int   LE32_unaligned __attribute__((__packed__,__aligned__(1)));
