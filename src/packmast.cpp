@@ -41,6 +41,7 @@
 #include "p_lx_elf.h"
 #include "p_lx_sep.h"
 #include "p_lx_sh.h"
+#include "p_lx_interp.h"
 #include "p_sys.h"
 #include "p_tos.h"
 #include "p_wcle.h"
@@ -51,6 +52,7 @@
 #include "p_vmlinz.h"
 #include "p_vmlinx.h"
 #include "p_ps1.h"
+#include "p_mach.h"
 
 
 /*************************************************************************
@@ -206,6 +208,12 @@ static Packer* try_packers(InputFile *f, try_function func)
                 return p;
         }
 #endif
+        if (opt->o_unix.use_ptinterp) {
+            if ((p = func(new PackLinuxI386interp(f),f)) != NULL)
+                return p;
+        }
+        if ((p = func(new PackLinuxElf32ppc(f),f)) != NULL)
+            return p;
         if ((p = func(new PackLinuxI386elf(f),f)) != NULL)
             return p;
         if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
@@ -226,6 +234,10 @@ static Packer* try_packers(InputFile *f, try_function func)
     if ((p = func(new PackSys(f),f)) != NULL)
         return p;
     if ((p = func(new PackCom(f),f)) != NULL)
+        return p;
+
+    // Mach (MacOS X PowerPC)
+    if ((p = func(new PackMachPPC32(f), f)) != NULL)
         return p;
 
     return NULL;
