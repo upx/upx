@@ -155,7 +155,7 @@ ERR_LAB
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             // Skip Ehdr+Phdrs: separate 1st block, not filtered
-            if (f_unf  // have filter
+            if (h.b_ftid!=0 && f_unf  // have filter
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
             ) {
