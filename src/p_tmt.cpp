@@ -65,6 +65,32 @@ const int *PackTmt::getFilters() const
 }
 
 
+int PackTmt::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(nrv_loader,sizeof(nrv_loader));
+    addLoader("IDENTSTR""TMTMAIN1",
+              ft->id ? "TMTCALT1" : "",
+              "TMTMAIN2""UPX1HEAD""TMTCUTPO""+0XXXXXX",
+              getDecompressor(),
+              "TMTMAIN5",
+              NULL
+             );
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addLoader("TMTCALT2",NULL);
+        addFilter32(ft->id);
+    }
+    addLoader("TMTRELOC""RELOC320",
+              big_relocs ? "REL32BIG" : "",
+              "RELOC32J""TMTJUMP1",
+              NULL
+             );
+    return getLoaderSize();
+}
+
+
 /*************************************************************************
 // util
 **************************************************************************/
@@ -142,6 +168,8 @@ bool PackTmt::canPack()
 
 void PackTmt::pack(OutputFile *fo)
 {
+    big_relocs = 0;
+
     Packer::handleStub(fi,fo,adam_offset);
 
     const unsigned usize = ih.imagesize;
@@ -166,17 +194,12 @@ void PackTmt::pack(OutputFile *fo)
     checkOverlay(overlay);
 
     unsigned relocsize = 0;
-    int big;
     //if (rsize)
     {
         for (unsigned ic=4; ic<=rsize; ic+=4)
             set_le32(wrkmem+ic,get_le32(wrkmem+ic)-4);
-        relocsize = optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,1,&big)-wrkmem;
+        relocsize = optimizeReloc32(wrkmem+4,rsize/4,wrkmem,ibuf,1,&big_relocs)- wrkmem;
     }
-
-    // filter
-    Filter ft(opt->level);
-    tryFilters(&ft, ibuf, usize);
 
     wrkmem[relocsize++] = 0;
     set_le32(wrkmem+relocsize,ih.entry); // save original entry point
@@ -185,38 +208,47 @@ void PackTmt::pack(OutputFile *fo)
     relocsize += 4;
     memcpy(ibuf+usize,wrkmem,relocsize);
 
+#if 0
+    // filter
+    Filter ft(opt->level);
+    tryFilters(&ft, ibuf, usize);
+    buildLoader(&ft);
+
     ph.filter = ft.id;
     ph.filter_cto = ft.cto;
-    ph.u_len = usize+relocsize;
+    ph.u_len = usize + relocsize;
     if (!compress(ibuf,obuf))
         throwNotCompressible();
-    // make sure the decompressor will be paragraph aligned
-    const unsigned overlapoh = ((findOverlapOverhead(obuf,512)+0x20)
-                                &~ 0xf) - (ph.u_len & 0xf);
+
+    unsigned overlapoh = findOverlapOverhead(obuf,512);
 
     // verify filter
     ft.verifyUnfilter();
+#else
+    // new version using compressWithFilters()
 
-    // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("IDENTSTR""TMTMAIN1",
-              ft.id ? "TMTCALT1" : "",
-              "TMTMAIN2""UPX1HEAD""TMTCUTPO""+0XXXXXX",
-              getDecompressor(),
-              "TMTMAIN5",
-              NULL
-             );
-    if (ft.id)
-    {
-        assert(ft.calls > 0);
-        addLoader("TMTCALT2",NULL);
-        addFilter32(ft.id);
-    }
-    addLoader("TMTRELOC""RELOC320",
-              big ? "REL32BIG" : "",
-              "RELOC32J""TMTJUMP1",
-              NULL
-             );
+    // prepare packheader
+    ph.u_len = usize + relocsize;
+    ph.filter = 0;
+    // prepare filter
+    Filter ft(opt->level);
+    ft.buf_len = usize;
+    // prepare other settings
+    const unsigned overlap_range = 512;
+    unsigned overlapoh;
+
+    int strategy = -1;      // try the first working filter
+    if (opt->filter >= 0 && isValidFilter(opt->filter))
+        // try opt->filter or 0 if that fails
+        strategy = -2;
+    else if (opt->all_filters)
+        // choose best from all available filters
+        strategy = 0;
+    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+#endif
+
+    // make sure the decompressor will be paragraph aligned
+    overlapoh = ((overlapoh + 0x20) &~ 0xf) - (ph.u_len & 0xf);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);

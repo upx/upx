@@ -52,9 +52,11 @@ public:
     virtual int canUnpack();
 
 protected:
-    bool readFileHeader();
+    virtual int buildLoader(const Filter *ft);
+    virtual bool readFileHeader();
 
     unsigned adam_offset;
+    int big_relocs;
 
     struct tmt_header_t
     {
