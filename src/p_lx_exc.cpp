@@ -465,7 +465,7 @@ off_t PackLinuxI386::getbase(const Elf32_Phdr *phdr, int e_phnum) const
     off_t base = ~0u;
     for (int j = 0; j < e_phnum; ++phdr, ++j) {
         if (phdr->PT_LOAD == phdr->p_type) {
-            if ((unsigned)phdr->p_vaddr < base)
+            if (phdr->p_vaddr < (unsigned) base)
                 base = phdr->p_vaddr;
         }
     }
