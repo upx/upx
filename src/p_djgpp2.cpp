@@ -159,7 +159,7 @@ static void handle_allegropak(InputFile *fi, OutputFile *fo)
         if (memcmp(buf, "slh+", 4) != 0)
             return;
         pfsize = get_be32_signed(buf+4);
-        if (pfsize <= 8 || pfsize >= fi->st.st_size)
+        if (pfsize <= 8 || (off_t) pfsize >= (off_t) fi->st.st_size)
             return;
         fi->seek(-pfsize, SEEK_END);
     } catch (const IOException&) {

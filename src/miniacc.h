@@ -2,6 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
@@ -35,7 +36,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20041222L
+#define ACC_VERSION     20050227L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -76,8 +77,13 @@
 #if defined(__BORLANDC__) && defined(__MSDOS__) && !defined(__FLAT__)
 #  pragma option -h
 #endif
-#if defined(ACC_CONFIG_NO_LIMITS_H)
-#elif defined(ACC_LIBC_FALLBACK_FREESTANDING) || defined(ACC_BROKEN_LIMITS_H)
+#if defined(ACC_CFG_NO_CONFIG_HEADER)
+#elif defined(ACC_CFG_CONFIG_HEADER)
+#  include ACC_CFG_CONFIG_HEADER
+#else
+#endif
+#if defined(ACC_CFG_NO_LIMITS_H)
+#elif defined(ACC_LIBC_NAKED) || defined(ACC_BROKEN_LIMITS_H)
 #ifndef __ACC_FALLBACK_LIMITS_H_INCLUDED
 #define __ACC_FALLBACK_LIMITS_H_INCLUDED
 #undef CHAR_BIT
@@ -95,7 +101,7 @@
 #define __INT_MAX__     2147483647
 #endif
 #ifndef __LONG_MAX__
-#if defined(__alpha__) || defined(__MIPS_PSX2__)
+#if defined(__alpha__) || defined(_LP64) || defined(__MIPS_PSX2__)
 #define __LONG_MAX__    9223372036854775807L
 #else
 #define __LONG_MAX__    2147483647L
@@ -171,7 +177,7 @@
 #  if !defined(_MSDOS)
 #    define _MSDOS 1
 #  endif
-#elif defined(__VERSION) && defined(MB_LEN_MAX)
+#elif 0 && defined(__VERSION) && defined(MB_LEN_MAX)
 #  if (__VERSION == 520) && (MB_LEN_MAX == 1)
 #    if !defined(__AZTEC_C__)
 #      define __AZTEC_C__ __VERSION
@@ -288,11 +294,6 @@
 #if defined(__WATCOMC__) && (__WATCOMC__ < 900)
 #  define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #endif
-#if !defined(ACC_CONFIG_NO_INLINE_ASM)
-#if defined(__GNUC__) && defined(__llvm__)
-#  define ACC_CONFIG_NO_INLINE_ASM 1
-#endif
-#endif
 #define ACC_CPP_STRINGIZE(x)            #x
 #define ACC_CPP_MACRO_EXPAND(x)         ACC_CPP_STRINGIZE(x)
 #define ACC_CPP_CONCAT2(a,b)            a ## b
@@ -303,8 +304,8 @@
 #define ACC_CPP_ECONCAT3(a,b,c)         ACC_CPP_CONCAT3(a,b,c)
 #define ACC_CPP_ECONCAT4(a,b,c,d)       ACC_CPP_CONCAT4(a,b,c,d)
 #define ACC_CPP_ECONCAT5(a,b,c,d,e)     ACC_CPP_CONCAT5(a,b,c,d,e)
-#if defined(ACC_CONFIG_NO_STDINT_H)
-#elif 1 && defined(__cplusplus)
+#define __ACC_MASK_GEN(o,b)     ((((o << ((b)-1)) - o) << 1) + o)
+#if 1 && defined(__cplusplus)
 #  if !defined(__STDC_CONSTANT_MACROS)
 #    define __STDC_CONSTANT_MACROS 1
 #  endif
@@ -319,6 +320,8 @@
 #endif
 #if defined(ACC_OS_FREESTANDING)
 #  define ACC_INFO_OS           "freestanding"
+#elif defined(ACC_OS_EMBEDDED)
+#  define ACC_INFO_OS           "embedded"
 #elif defined(__CYGWIN__) && defined(__GNUC__)
 #  define ACC_OS_CYGWIN         1
 #  define ACC_INFO_OS           "cygwin"
@@ -393,12 +396,8 @@
 #    error "please specify a target using the -bt compiler option"
 #  endif
 #elif defined(__palmos__)
-#  if (UINT_MAX == ACC_0xffffL)
-#    define ACC_OS_PALMOS       1
-#    define ACC_INFO_OS         "palmos"
-#  else
-#    error "check your limits.h header"
-#  endif
+#  define ACC_OS_PALMOS         1
+#  define ACC_INFO_OS           "palmos"
 #elif defined(__TOS__) || defined(__atarist__)
 #  define ACC_OS_TOS            1
 #  define ACC_INFO_OS           "tos"
@@ -478,7 +477,11 @@
 #if defined(CIL) && defined(_GNUCC) && defined(__GNUC__)
 #  define ACC_CC_CILLY          1
 #  define ACC_INFO_CC           "Cilly"
-#  define ACC_INFO_CCVER        "unknown"
+#  if defined(__CILLY__)
+#    define ACC_INFO_CCVER      ACC_CPP_MACRO_EXPAND(__CILLY__)
+#  else
+#    define ACC_INFO_CCVER      "unknown"
+#  endif
 #elif defined(__PATHSCALE__) && defined(__PATHCC_PATCHLEVEL__)
 #  define ACC_CC_PATHSCALE      (__PATHCC__ * 0x10000L + __PATHCC_MINOR__ * 0x100 + __PATHCC_PATCHLEVEL__)
 #  define ACC_INFO_CC           "Pathscale C"
@@ -491,6 +494,10 @@
 #  define ACC_CC_PELLESC        1
 #  define ACC_INFO_CC           "Pelles C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__POCC__)
+#elif defined(__llvm__) && defined(__GNUC__) && defined(__VERSION__)
+#  define ACC_CC_LLVM           1
+#  define ACC_INFO_CC           "llvm gcc"
+#  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__GNUC__) && defined(__VERSION__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
@@ -509,7 +516,7 @@
 #  define ACC_CC_BORLANDC       1
 #  define ACC_INFO_CC           "Borland C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__BORLANDC__)
-#elif defined(__DMC__)
+#elif defined(__DMC__) && defined(__SC__)
 #  define ACC_CC_DMC            1
 #  define ACC_INFO_CC           "Digital Mars C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__DMC__)
@@ -565,7 +572,7 @@
 #  define ACC_CC_PUREC          1
 #  define ACC_INFO_CC           "Pure C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__PUREC__)
-#elif defined(__SC__)
+#elif defined(__SC__) && defined(__ZTC__)
 #  define ACC_CC_SYMANTECC      1
 #  define ACC_INFO_CC           "Symantec C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__SC__)
@@ -608,41 +615,15 @@
 #if defined(ACC_ARCH_GENERIC)
 #  define ACC_INFO_ARCH             "generic"
 #elif (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
+#  define ACC_ARCH_I086             1
 #  define ACC_ARCH_IA16             1
-#  define ACC_INFO_ARCH             "ia16"
+#  define ACC_INFO_ARCH             "i086"
+#elif defined(__alpha__) || defined(__alpha) || defined(_M_ALPHA)
+#  define ACC_ARCH_ALPHA            1
+#  define ACC_INFO_ARCH             "alpha"
 #elif defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64)
 #  define ACC_ARCH_AMD64            1
 #  define ACC_INFO_ARCH             "amd64"
-#elif (UINT_MAX <= ACC_0xffffL) && defined(__AVR__)
-#  define ACC_ARCH_AVR              1
-#  define ACC_INFO_ARCH             "avr"
-#elif (UINT_MAX == ACC_0xffffL) && defined(__C166__)
-#  define ACC_ARCH_C166             1
-#  define ACC_INFO_ARCH             "c166"
-#elif (UINT_MAX == ACC_0xffffL) && defined(__C251__)
-#  define ACC_ARCH_MCS251           1
-#  define ACC_INFO_ARCH             "mcs251"
-#elif (UINT_MAX == ACC_0xffffL) && defined(__C51__)
-#  define ACC_ARCH_MCS51            1
-#  define ACC_INFO_ARCH             "mcs51"
-#elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86) || defined(_M_I386)
-#  define ACC_ARCH_IA32             1
-#  define ACC_INFO_ARCH             "ia32"
-#elif (ACC_CC_ZORTECHC && defined(__I86__))
-#  define ACC_ARCH_IA32             1
-#  define ACC_INFO_ARCH             "ia32"
-#elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
-#  define ACC_ARCH_IA64             1
-#  define ACC_INFO_ARCH             "ia64"
-#elif (ACC_OS_DOS32 && ACC_CC_HIGHC) && defined(_I386)
-#  define ACC_ARCH_IA32             1
-#  define ACC_INFO_ARCH             "ia32"
-#elif (ACC_OS_TOS) || defined(__m68k__) || defined(__m68000__) || defined(__mc68000__)
-#  define ACC_ARCH_M68K             1
-#  define ACC_INFO_ARCH             "m68k"
-#elif defined(__alpha__) || defined(__alpha)
-#  define ACC_ARCH_ALPHA            1
-#  define ACC_INFO_ARCH             "alpha"
 #elif defined(__thumb__) || (defined(_M_ARM) && defined(_M_THUMB))
 #  define ACC_ARCH_ARM              1
 #  define ACC_ARCH_ARM_THUMB        1
@@ -650,27 +631,54 @@
 #elif defined(__arm__) || defined(_M_ARM)
 #  define ACC_ARCH_ARM              1
 #  define ACC_INFO_ARCH             "arm"
+#elif (UINT_MAX <= ACC_0xffffL) && defined(__AVR__)
+#  define ACC_ARCH_AVR              1
+#  define ACC_INFO_ARCH             "avr"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C166__)
+#  define ACC_ARCH_C166             1
+#  define ACC_INFO_ARCH             "c166"
 #elif defined(__hppa__) || defined(__hppa)
 #  define ACC_ARCH_HPPA             1
 #  define ACC_INFO_ARCH             "hppa"
+#elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86) || defined(_M_I386)
+#  define ACC_ARCH_I386             1
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "i386"
+#elif (ACC_CC_ZORTECHC && defined(__I86__))
+#  define ACC_ARCH_I386             1
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "i386"
+#elif (ACC_OS_DOS32 && ACC_CC_HIGHC) && defined(_I386)
+#  define ACC_ARCH_I386             1
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "i386"
+#elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
+#  define ACC_ARCH_IA64             1
+#  define ACC_INFO_ARCH             "ia64"
+#elif (ACC_OS_TOS) || defined(__m68k__) || defined(__m68000__) || defined(__mc68000__) || defined(_M_M68K)
+#  define ACC_ARCH_M68K             1
+#  define ACC_INFO_ARCH             "m68k"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C251__)
+#  define ACC_ARCH_MCS251           1
+#  define ACC_INFO_ARCH             "mcs251"
+#elif (UINT_MAX == ACC_0xffffL) && defined(__C51__)
+#  define ACC_ARCH_MCS51            1
+#  define ACC_INFO_ARCH             "mcs51"
 #elif defined(__mips__) || defined(__mips) || defined(_MIPS_ARCH) || defined(_M_MRX000)
 #  define ACC_ARCH_MIPS             1
 #  define ACC_INFO_ARCH             "mips"
-#elif defined(__powerpc__) || defined(__powerpc)
+#elif defined(__powerpc__) || defined(__powerpc) || defined(__ppc__) || defined(__PPC__) || defined(_M_PPC)
 #  define ACC_ARCH_POWERPC          1
 #  define ACC_INFO_ARCH             "powerpc"
-#elif defined(__s390x__) || defined(__s390x)
-#  define ACC_ARCH_S390X            1
-#  define ACC_INFO_ARCH             "s390x"
-#elif defined(__s390__) || defined(__s390)
+#elif defined(__s390__) || defined(__s390) || defined(__s390x__) || defined(__s390x)
 #  define ACC_ARCH_S390             1
 #  define ACC_INFO_ARCH             "s390"
-#elif defined(__sparc__) || defined(__sparc) || defined(__sparcv8)
-#  define ACC_ARCH_SPARC            1
-#  define ACC_INFO_ARCH             "sparc"
 #elif defined(__sh__) || defined(_M_SH)
 #  define ACC_ARCH_SH               1
 #  define ACC_INFO_ARCH             "sh"
+#elif defined(__sparc__) || defined(__sparc) || defined(__sparcv8)
+#  define ACC_ARCH_SPARC            1
+#  define ACC_INFO_ARCH             "sparc"
 #else
 #  define ACC_ARCH_UNKNOWN          1
 #  define ACC_INFO_ARCH             "unknown"
@@ -685,34 +693,25 @@
 #  error "FIXME - missing WIN64 define for CPU architecture"
 #endif
 #if (ACC_OS_OS216 || ACC_OS_WIN16)
+#  define ACC_ARCH_I086PM           1
 #  define ACC_ARCH_IA16PM           1
 #elif 1 && (ACC_OS_DOS16 && defined(BLX286))
+#  define ACC_ARCH_I086PM           1
 #  define ACC_ARCH_IA16PM           1
 #elif 1 && (ACC_OS_DOS16 && defined(DOSX286))
+#  define ACC_ARCH_I086PM           1
 #  define ACC_ARCH_IA16PM           1
 #elif 1 && (ACC_OS_DOS16 && ACC_CC_BORLANDC && defined(__DPMI16__))
+#  define ACC_ARCH_I086PM           1
 #  define ACC_ARCH_IA16PM           1
 #endif
 #if defined(ACC_ARCH_ARM_THUMB) && !defined(ACC_ARCH_ARM)
 #  error "this should not happen"
 #endif
-#if defined(ACC_ARCH_IA16PM) && !defined(ACC_ARCH_IA16)
+#if defined(ACC_ARCH_I086PM) && !defined(ACC_ARCH_I086)
 #  error "this should not happen"
 #endif
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA16 || ACC_ARCH_IA32)
-#  define ACC_ENDIAN_LITTLE_ENDIAN  1
-#elif (ACC_ARCH_M68K)
-#  define ACC_ENDIAN_BIG_ENDIAN     1
-#endif
-#if defined(ACC_ENDIAN_BIG_ENDIAN) && defined(ACC_ENDIAN_LITTLE_ENDIAN)
-#  error "this should not happen"
-#endif
-#if defined(ACC_ENDIAN_BIG_ENDIAN)
-#  define ACC_INFO_ENDIAN           "big-endian"
-#elif defined(ACC_ENDIAN_LITTLE_ENDIAN)
-#  define ACC_INFO_ENDIAN           "little-endian"
-#endif
-#if (ACC_ARCH_IA16)
+#if (ACC_ARCH_I086)
 #  if (UINT_MAX != ACC_0xffffL)
 #    error "this should not happen"
 #  endif
@@ -720,7 +719,7 @@
 #    error "this should not happen"
 #  endif
 #endif
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_I386)
 #  if (UINT_MAX != ACC_0xffffffffL)
 #    error "this should not happen"
 #  endif
@@ -777,7 +776,7 @@
 #elif (ACC_CC_TURBOC && (__TURBOC__ < 0x0295))
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #endif
-#if (ACC_ARCH_IA16PM) && !defined(ACC_HAVE_MM_HUGE_PTR)
+#if (ACC_ARCH_I086PM) && !defined(ACC_HAVE_MM_HUGE_PTR)
 #  if (ACC_OS_DOS16)
 #    error "this should not happen"
 #  elif (ACC_CC_ZORTECHC)
@@ -881,61 +880,221 @@ extern "C" {
 #else
 #  error "unknown memory model"
 #endif
-#if !defined(ACC_ARCH_GENERIC)
-#if (ACC_MM_FLAT) && (UINT_MAX >= ACC_0xffffffffL) && (ULONG_MAX >= UINT_MAX)
-#if defined(__LLP64__) || defined(__LLP64) || defined(_LLP64)
-#  define ACC_MM_LLP64          1
+#if defined(SIZEOF_SHORT)
+#  define ACC_SIZEOF_SHORT          (SIZEOF_SHORT)
+#endif
+#if defined(SIZEOF_INT)
+#  define ACC_SIZEOF_INT            (SIZEOF_INT)
+#endif
+#if defined(SIZEOF_LONG)
+#  define ACC_SIZEOF_LONG           (SIZEOF_LONG)
+#endif
+#if defined(SIZEOF_LONG_LONG)
+#  define ACC_SIZEOF_LONG_LONG      (SIZEOF_LONG_LONG)
+#endif
+#if defined(SIZEOF___INT16)
+#  define ACC_SIZEOF___INT16        (SIZEOF___INT16)
+#endif
+#if defined(SIZEOF___INT32)
+#  define ACC_SIZEOF___INT32        (SIZEOF___INT32)
+#endif
+#if defined(SIZEOF___INT64)
+#  define ACC_SIZEOF___INT64        (SIZEOF___INT64)
+#endif
+#if defined(SIZEOF_VOID_P)
+#  define ACC_SIZEOF_VOID_P         (SIZEOF_VOID_P)
+#endif
+#if defined(SIZEOF_SIZE_T)
+#  define ACC_SIZEOF_SIZE_T         (SIZEOF_SIZE_T)
+#endif
+#if defined(SIZEOF_PTRDIFF_T)
+#  define ACC_SIZEOF_PTRDIFF_T      (SIZEOF_PTRDIFF_T)
+#endif
+#define __ACC_LSR(x,b)    (((x)+0ul) >> (b))
+#if !defined(ACC_SIZEOF_SHORT)
+#  if (USHRT_MAX == ACC_0xffffL)
+#    define ACC_SIZEOF_SHORT        2
+#  elif (__ACC_LSR(USHRT_MAX,7) == 1)
+#    define ACC_SIZEOF_SHORT        1
+#  elif (__ACC_LSR(USHRT_MAX,15) == 1)
+#    define ACC_SIZEOF_SHORT        2
+#  elif (__ACC_LSR(USHRT_MAX,31) == 1)
+#    define ACC_SIZEOF_SHORT        4
+#  elif (__ACC_LSR(USHRT_MAX,63) == 1)
+#    define ACC_SIZEOF_SHORT        8
+#  elif (__ACC_LSR(USHRT_MAX,127) == 1)
+#    define ACC_SIZEOF_SHORT        16
+#  else
+#    error "ACC_SIZEOF_SHORT"
+#  endif
+#endif
+#if !defined(ACC_SIZEOF_INT)
+#  if (UINT_MAX == ACC_0xffffL)
+#    define ACC_SIZEOF_INT          2
+#  elif (UINT_MAX == ACC_0xffffffffL)
+#    define ACC_SIZEOF_INT          4
+#  elif (__ACC_LSR(UINT_MAX,7) == 1)
+#    define ACC_SIZEOF_INT          1
+#  elif (__ACC_LSR(UINT_MAX,15) == 1)
+#    define ACC_SIZEOF_INT          2
+#  elif (__ACC_LSR(UINT_MAX,31) == 1)
+#    define ACC_SIZEOF_INT          4
+#  elif (__ACC_LSR(UINT_MAX,63) == 1)
+#    define ACC_SIZEOF_INT          8
+#  elif (__ACC_LSR(UINT_MAX,127) == 1)
+#    define ACC_SIZEOF_INT          16
+#  else
+#    error "ACC_SIZEOF_INT"
+#  endif
+#endif
+#if !defined(ACC_SIZEOF_LONG)
+#  if (ULONG_MAX == ACC_0xffffffffL)
+#    define ACC_SIZEOF_LONG         4
+#  elif (__ACC_LSR(ULONG_MAX,7) == 1)
+#    define ACC_SIZEOF_LONG         1
+#  elif (__ACC_LSR(ULONG_MAX,15) == 1)
+#    define ACC_SIZEOF_LONG         2
+#  elif (__ACC_LSR(ULONG_MAX,31) == 1)
+#    define ACC_SIZEOF_LONG         4
+#  elif (__ACC_LSR(ULONG_MAX,63) == 1)
+#    define ACC_SIZEOF_LONG         8
+#  elif (__ACC_LSR(ULONG_MAX,127) == 1)
+#    define ACC_SIZEOF_LONG         16
+#  else
+#    error "ACC_SIZEOF_LONG"
+#  endif
+#endif
+#if !defined(ACC_SIZEOF_LONG_LONG) && !defined(ACC_SIZEOF___INT64)
+#if (ACC_SIZEOF_LONG > 0 && ACC_SIZEOF_LONG < 8)
+#if (ACC_ARCH_I086 && ACC_CC_DMC)
+#elif (ACC_CC_CILLY) && defined(__GNUC__)
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MSC && (_MSC_VER >= 1400))
+#  define ACC_SIZEOF_LONG_LONG      8
 #elif (ACC_OS_WIN64)
-#  define ACC_MM_LLP64          1
-#elif (ULONG_MAX == ACC_0xffffffffL)
-#  define ACC_MM_ILP32          1
-#elif (UINT_MAX == ACC_0xffffffffL)
-#  if (ULONG_MAX == ((((1ul << ((64)-1)) - 1ul) * 2ul) + 1ul))
-#    if (ACC_ARCH_MIPS && ((_MIPS_SZPTR)+0 == 32))
-#      define ACC_MM_IP32L64    1
-#    elif (ACC_ARCH_MIPS && defined(__MIPS_PSX2__))
-#      define ACC_MM_IP32L64    1
-#    else
-#      define ACC_MM_LP64       1
-#    endif
+#  define ACC_SIZEOF___INT64        8
+#elif (ACC_ARCH_I386 && (ACC_CC_DMC))
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif (ACC_ARCH_I386 && (ACC_CC_SYMANTECC && (__SC__ >= 0x700)))
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif (ACC_ARCH_I386 && (ACC_CC_INTELC && defined(__linux__)))
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif (ACC_ARCH_I386 && (ACC_CC_MWERKS || ACC_CC_PELLESC || ACC_CC_PGI))
+#  define ACC_SIZEOF_LONG_LONG      8
+#elif (ACC_ARCH_I386 && (ACC_CC_INTELC || ACC_CC_MSC))
+#  define ACC_SIZEOF___INT64        8
+#elif (ACC_OS_WIN32 && (ACC_CC_MSC))
+#  define ACC_SIZEOF___INT64        8
+#elif (ACC_ARCH_I386 && (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0520)))
+#  define ACC_SIZEOF___INT64        8
+#elif (ACC_ARCH_I386 && (ACC_CC_WATCOMC && (__WATCOMC__ >= 1100)))
+#  define ACC_SIZEOF___INT64        8
+#elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
+#  define ACC_SIZEOF___INT64        8
+#elif 1 && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#  define ACC_SIZEOF_LONG_LONG      8
+#endif
+#endif
+#endif
+#if defined(__cplusplus) && defined(ACC_CC_GNUC)
+#  if (ACC_CC_GNUC < 0x020800ul)
+#    undef ACC_SIZEOF_LONG_LONG
 #  endif
-#elif (UINT_MAX == ULONG_MAX)
-#  if (ULONG_MAX == ((((1ul << ((64)-1)) - 1ul) * 2ul) + 1ul))
-#    define ACC_MM_ILP64        1
+#endif
+#if !defined(ACC_SIZEOF_VOID_P)
+#if (ACC_ARCH_I086)
+#  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+#    define ACC_SIZEOF_VOID_P       2
+#  elif (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
+#    define ACC_SIZEOF_VOID_P       4
+#  else
+#    error "ACC_MM"
 #  endif
-#endif
-#endif
-#endif
-#if (ACC_MM_ILP32) || (ACC_ARCH_M68K)
-#  define ACC_MM_WORDSIZE       32
-#elif (ACC_MM_ILP64 || ACC_MM_LLP64 || ACC_MM_LP64)
-#  define ACC_MM_WORDSIZE       64
-#elif (ACC_ARCH_IA16)
-#  define ACC_MM_WORDSIZE       16
-#elif (ACC_MM_IP32L64 || ACC_MM_LP32)
-#endif
-#if defined(ACC_CONFIG_NO_INLINE_ASM)
-#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
-#  define ACC_ASM_SYNTAX_MSC 1
-#elif (ACC_OS_WIN64 && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
-#elif (ACC_ARCH_IA32 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
-#  define ACC_ASM_SYNTAX_GNUC 1
-#elif (ACC_ARCH_AMD64 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
-#  define ACC_ASM_SYNTAX_GNUC 1
-#endif
-#if (ACC_ASM_SYNTAX_GNUC)
-#if (ACC_ARCH_IA32 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
-#  define __ACC_ASM_CLOBBER         "ax"
-#elif (ACC_CC_INTELC)
-#  define __ACC_ASM_CLOBBER         "memory"
+#elif (ACC_ARCH_AVR || ACC_ARCH_C166 || ACC_ARCH_I086 || ACC_ARCH_MCS51 || ACC_ARCH_MCS251)
+#  define ACC_SIZEOF_VOID_P         2
+#elif (ACC_SIZEOF_LONG == 8) && ((defined(__mips__) && ((_MIPS_SZPTR)+0 == 32)) || defined(__MIPS_PSX2__))
+#  define ACC_SIZEOF_VOID_P         4
+#elif defined(__LLP64__) || defined(__LLP64) || defined(_LLP64) || defined(_WIN64)
+#  define ACC_SIZEOF_VOID_P         8
 #else
-#  define __ACC_ASM_CLOBBER         "cc", "memory"
+#  define ACC_SIZEOF_VOID_P         ACC_SIZEOF_LONG
 #endif
 #endif
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
-#  define ACC_INFO_LIBC         "strict_freestanding"
+#if !defined(ACC_SIZEOF_SIZE_T)
+#if (ACC_ARCH_I086)
+#  define ACC_SIZEOF_SIZE_T         2
+#else
+#  define ACC_SIZEOF_SIZE_T         ACC_SIZEOF_VOID_P
+#endif
+#endif
+#if !defined(ACC_SIZEOF_PTRDIFF_T)
+#if (ACC_ARCH_I086)
+#  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM || ACC_MM_HUGE)
+#    define ACC_SIZEOF_PTRDIFF_T    ACC_SIZEOF_VOID_P
+#  elif (ACC_MM_COMPACT || ACC_MM_LARGE)
+#    if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#      define ACC_SIZEOF_PTRDIFF_T  4
+#    else
+#      define ACC_SIZEOF_PTRDIFF_T  2
+#    endif
+#  else
+#    error "ACC_MM"
+#  endif
+#else
+#  define ACC_SIZEOF_PTRDIFF_T      ACC_SIZEOF_SIZE_T
+#endif
+#endif
+#if !defined(ACC_ABI_BIG_ENDIAN) && !defined(ACC_ABI_LITTLE_ENDIAN) && !defined(ACC_ABI_NEUTRAL_ENDIAN)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I086 || ACC_ARCH_I386)
+#  define ACC_ABI_LITTLE_ENDIAN     1
+#elif (ACC_ARCH_M68K)
+#  define ACC_ABI_BIG_ENDIAN        1
+#elif 1 && defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+#  define ACC_ABI_BIG_ENDIAN        1
+#elif 1 && defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#  define ACC_ABI_LITTLE_ENDIAN     1
+#endif
+#endif
+#if defined(ACC_ABI_BIG_ENDIAN) && defined(ACC_ABI_LITTLE_ENDIAN)
+#  error "this should not happen"
+#endif
+#if defined(ACC_ABI_BIG_ENDIAN)
+#  define ACC_INFO_ABI_ENDIAN       "be"
+#elif defined(ACC_ABI_LITTLE_ENDIAN)
+#  define ACC_INFO_ABI_ENDIAN       "le"
+#elif defined(ACC_ABI_NEUTRAL_ENDIAN)
+#  define ACC_INFO_ABI_ENDIAN       "neutral"
+#endif
+#if (ACC_SIZEOF_INT == 1 && ACC_SIZEOF_LONG == 2 && ACC_SIZEOF_VOID_P == 2)
+#  define ACC_ABI_I8LP16         1
+#  define ACC_INFO_ABI_PM       "i8lp16"
+#elif (ACC_SIZEOF_INT == 2 && ACC_SIZEOF_LONG == 2 && ACC_SIZEOF_VOID_P == 2)
+#  define ACC_ABI_ILP16         1
+#  define ACC_INFO_ABI_PM       "ilp16"
+#elif (ACC_SIZEOF_INT == 4 && ACC_SIZEOF_LONG == 4 && ACC_SIZEOF_VOID_P == 4)
+#  define ACC_ABI_ILP32         1
+#  define ACC_INFO_ABI_PM       "ilp32"
+#elif (ACC_SIZEOF_INT == 4 && ACC_SIZEOF_LONG == 4 && ACC_SIZEOF_VOID_P == 8)
+#  define ACC_ABI_LLP64         1
+#  define ACC_INFO_ABI_PM       "llp64"
+#elif (ACC_SIZEOF_INT == 4 && ACC_SIZEOF_LONG == 8 && ACC_SIZEOF_VOID_P == 8)
+#  define ACC_ABI_LP64          1
+#  define ACC_INFO_ABI_PM       "lp64"
+#elif (ACC_SIZEOF_INT == 8 && ACC_SIZEOF_LONG == 8 && ACC_SIZEOF_VOID_P == 8)
+#  define ACC_ABI_ILP64         1
+#  define ACC_INFO_ABI_PM       "ilp64"
+#elif (ACC_SIZEOF_INT == 4 && ACC_SIZEOF_LONG == 8 && ACC_SIZEOF_VOID_P == 4)
+#  define ACC_ABI_IP32L64       1
+#  define ACC_INFO_ABI_PM       "ip32l64"
+#endif
+#if defined(ACC_LIBC_NAKED)
+#  define ACC_INFO_LIBC         "naked"
 #elif defined(ACC_LIBC_FREESTANDING)
 #  define ACC_INFO_LIBC         "freestanding"
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
+#  define ACC_INFO_LIBC         "mfreestanding"
 #elif defined(__dietlibc__)
 #  define ACC_LIBC_DIETLIBC     1
 #  define ACC_INFO_LIBC         "dietlibc"
@@ -945,6 +1104,7 @@ extern "C" {
 #  else
 #    define ACC_LIBC_UCLIBC     0x00090bL
 #  endif
+#  define ACC_INFO_LIBC         "uclibc"
 #elif defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 #  define ACC_LIBC_GLIBC        (__GLIBC__ * 0x10000L + __GLIBC_MINOR__ * 0x100)
 #  define ACC_INFO_LIBC         "glibc"
@@ -957,12 +1117,12 @@ extern "C" {
 #endif
 #if (ACC_CC_GNUC >= 0x020800ul)
 #  define __acc_gnuc_extension__ __extension__
-#elif (ACC_CC_PATHSCALE)
+#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_gnuc_extension__ __extension__
 #else
 #  define __acc_gnuc_extension__
 #endif
-#if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define acc_alignof(e)        __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
 #  define acc_alignof(e)        __alignof__(e)
@@ -974,11 +1134,13 @@ extern "C" {
 #  define __acc_inline          inline
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
 #  define __acc_inline          __inline
-#elif (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#elif (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define __acc_inline          __inline__
 #elif (ACC_CC_DMC)
 #  define __acc_inline          __inline
 #elif (ACC_CC_INTELC)
+#  define __acc_inline          __inline
+#elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x2405))
 #  define __acc_inline          __inline
 #elif (ACC_CC_MSC && (_MSC_VER >= 900))
 #  define __acc_inline          __inline
@@ -993,7 +1155,7 @@ extern "C" {
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #  define __acc_forceinline     __forceinline
-#elif (ACC_CC_PATHSCALE)
+#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #endif
 #if (ACC_CC_GNUC >= 0x030200ul)
@@ -1004,7 +1166,7 @@ extern "C" {
 #  define __acc_noinline        __attribute__((__noinline__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define __acc_noinline        __declspec(noinline)
-#elif (ACC_CC_PATHSCALE)
+#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noinline        __attribute__((__noinline__))
 #endif
 #if (defined(__acc_forceinline) || defined(__acc_noinline)) && !defined(__acc_inline)
@@ -1018,7 +1180,7 @@ extern "C" {
 #  define __acc_noreturn        __attribute__((__noreturn__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #  define __acc_noreturn        __declspec(noreturn)
-#elif (ACC_CC_PATHSCALE)
+#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noreturn        __attribute__((__noreturn__))
 #endif
 #if (ACC_CC_GNUC >= 0x030200ul)
@@ -1027,7 +1189,7 @@ extern "C" {
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
-#elif (ACC_CC_PATHSCALE)
+#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
 #else
@@ -1039,7 +1201,7 @@ extern "C" {
 #    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
-#  elif (ACC_CC_GNUC || ACC_CC_PATHSCALE)
+#  elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNUSED(var)         ((void) var)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
@@ -1058,7 +1220,7 @@ extern "C" {
 #    define ACC_UNUSED_FUNC(func)   ((void) func)
 #  elif (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
-#  elif (ACC_CC_GNUC == 0x030400ul) && defined(__llvm__)
+#  elif (ACC_CC_LLVM)
 #    define ACC_UNUSED_FUNC(func)   ((void) &func)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
@@ -1101,47 +1263,6 @@ extern "C" {
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  else
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-2*!(e)];}
-#  endif
-#endif
-#if !defined(__ACC_UINT_MAX)
-#  define __ACC_INT_MAX(b)      ((((1l  << ((b)-2)) - 1l)  * 2l)  + 1l)
-#  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1ul) * 2ul) + 1ul)
-#endif
-#if !defined(__ACC_SHORT_BIT)
-#  if (USHRT_MAX == ACC_0xffffL)
-#    define __ACC_SHORT_BIT     16
-#  elif (USHRT_MAX == ACC_0xffffffffL)
-#    define __ACC_SHORT_BIT     32
-#  elif (USHRT_MAX == __ACC_UINT_MAX(64))
-#    define __ACC_SHORT_BIT     64
-#  elif (USHRT_MAX == __ACC_UINT_MAX(128))
-#    define __ACC_SHORT_BIT     128
-#  else
-#    error "check your compiler installation: USHRT_MAX"
-#  endif
-#endif
-#if !defined(__ACC_INT_BIT)
-#  if (UINT_MAX == ACC_0xffffL)
-#    define __ACC_INT_BIT       16
-#  elif (UINT_MAX == ACC_0xffffffffL)
-#    define __ACC_INT_BIT       32
-#  elif (UINT_MAX == __ACC_UINT_MAX(64))
-#    define __ACC_INT_BIT       64
-#  elif (UINT_MAX == __ACC_UINT_MAX(128))
-#    define __ACC_INT_BIT       128
-#  else
-#    error "check your compiler installation: UINT_MAX"
-#  endif
-#endif
-#if !defined(__ACC_LONG_BIT)
-#  if (ULONG_MAX == ACC_0xffffffffL)
-#    define __ACC_LONG_BIT      32
-#  elif (ULONG_MAX == __ACC_UINT_MAX(64))
-#    define __ACC_LONG_BIT      64
-#  elif (ULONG_MAX == __ACC_UINT_MAX(128))
-#    define __ACC_LONG_BIT      128
-#  else
-#    error "check your compiler installation: ULONG_MAX"
 #  endif
 #endif
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
@@ -1239,31 +1360,65 @@ extern "C" {
 #  define ACC_OPT_PREFER_POSTINC    1
 #  define ACC_OPT_PREFER_PREDEC     1
 #endif
-#if defined(__ACC_INFOSTR_OSNAME)
-#elif defined(ACC_INFO_OS_POSIX)
-#  define __ACC_INFOSTR_OSNAME     ACC_INFO_OS "/" ACC_INFO_OS_POSIX
+#if !defined(ACC_CFG_NO_INLINE_ASM)
+#if defined(ACC_CC_LLVM)
+#  define ACC_CFG_NO_INLINE_ASM 1
+#endif
+#endif
+#if !defined(ACC_CFG_NO_UNALIGNED)
+#if defined(ACC_ABI_NEUTRAL_ENDIAN) || defined(ACC_ARCH_GENERIC)
+#  define ACC_CFG_NO_UNALIGNED 1
+#endif
+#endif
+#if defined(ACC_CFG_NO_INLINE_ASM)
+#elif (ACC_ARCH_I386 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
+#  define ACC_ASM_SYNTAX_MSC 1
+#elif (ACC_OS_WIN64 && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
+#elif (ACC_ARCH_I386 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
+#  define ACC_ASM_SYNTAX_GNUC 1
+#elif (ACC_ARCH_AMD64 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
+#  define ACC_ASM_SYNTAX_GNUC 1
+#endif
+#if (ACC_ASM_SYNTAX_GNUC)
+#if (ACC_ARCH_I386 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+#  define __ACC_ASM_CLOBBER         "ax"
+#elif (ACC_CC_INTELC)
+#  define __ACC_ASM_CLOBBER         "memory"
 #else
-#  define __ACC_INFOSTR_OSNAME     ACC_INFO_OS
+#  define __ACC_ASM_CLOBBER         "cc", "memory"
+#endif
+#endif
+#if defined(__ACC_INFOSTR_MM)
+#elif (ACC_MM_FLAT) && (defined(__ACC_INFOSTR_PM) || defined(ACC_INFO_ABI_PM))
+#  define __ACC_INFOSTR_MM          ""
+#elif defined(ACC_INFO_MM)
+#  define __ACC_INFOSTR_MM          "." ACC_INFO_MM
+#else
+#  define __ACC_INFOSTR_MM          ""
+#endif
+#if defined(__ACC_INFOSTR_PM)
+#elif defined(ACC_INFO_ABI_PM)
+#  define __ACC_INFOSTR_PM          "." ACC_INFO_ABI_PM
+#else
+#  define __ACC_INFOSTR_PM          ""
 #endif
 #if defined(__ACC_INFOSTR_ENDIAN)
-#elif defined(ACC_INFO_ENDIAN)
-#  define __ACC_INFOSTR_ENDIAN      "/" ACC_INFO_ENDIAN
+#elif defined(ACC_INFO_ABI_ENDIAN)
+#  define __ACC_INFOSTR_ENDIAN      "." ACC_INFO_ABI_ENDIAN
 #else
 #  define __ACC_INFOSTR_ENDIAN      ""
 #endif
-#if defined(__ACC_INFOSTR_MM_PM)
-#elif defined(ACC_MM_ILP32)
-#  define __ACC_INFOSTR_MM_PM      "ilp32/"
-#elif defined(ACC_MM_ILP64)
-#  define __ACC_INFOSTR_MM_PM      "ilp64/"
-#elif defined(ACC_MM_IP32L64)
-#  define __ACC_INFOSTR_MM_PM      "ip32l64/"
-#elif defined(ACC_MM_LLP64)
-#  define __ACC_INFOSTR_MM_PM      "llp64/"
-#elif defined(ACC_MM_LP64)
-#  define __ACC_INFOSTR_MM_PM      "lp64/"
+#if defined(__ACC_INFOSTR_OSNAME)
+#elif defined(ACC_INFO_OS_POSIX)
+#  define __ACC_INFOSTR_OSNAME      ACC_INFO_OS "." ACC_INFO_OS_POSIX
 #else
-#  define __ACC_INFOSTR_MM_PM      ""
+#  define __ACC_INFOSTR_OSNAME      ACC_INFO_OS
+#endif
+#if defined(__ACC_INFOSTR_LIBC)
+#elif defined(ACC_INFO_LIBC)
+#  define __ACC_INFOSTR_LIBC        "." ACC_INFO_LIBC
+#else
+#  define __ACC_INFOSTR_LIBC        ""
 #endif
 #if defined(__ACC_INFOSTR_CCVER)
 #elif defined(ACC_INFO_CCVER)
@@ -1272,18 +1427,17 @@ extern "C" {
 #  define __ACC_INFOSTR_CCVER       ""
 #endif
 #define ACC_INFO_STRING \
-    ACC_INFO_ARCH __ACC_INFOSTR_ENDIAN " " __ACC_INFOSTR_OSNAME \
-    " " __ACC_INFOSTR_MM_PM ACC_INFO_MM " " ACC_INFO_CC __ACC_INFOSTR_CCVER
-#if defined(ACC_CONFIG_NO_HEADER)
-#elif defined(ACC_CONFIG_HEADER)
-#  include ACC_CONFIG_HEADER
+    ACC_INFO_ARCH __ACC_INFOSTR_MM __ACC_INFOSTR_PM __ACC_INFOSTR_ENDIAN \
+    " " __ACC_INFOSTR_OSNAME __ACC_INFOSTR_LIBC " " ACC_INFO_CC __ACC_INFOSTR_CCVER
+#if defined(ACC_CFG_NO_CONFIG_HEADER)
+#elif defined(ACC_CFG_CONFIG_HEADER)
 #else
-#if !defined(ACC_CONFIG_AUTO_NO_HEADERS)
-#if defined(ACC_LIBC_FALLBACK_FREESTANDING)
-#elif defined(ACC_LIBC_STRICT_FREESTANDING)
+#if !defined(ACC_CFG_AUTO_NO_HEADERS)
+#if defined(ACC_LIBC_NAKED)
+#elif defined(ACC_LIBC_FREESTANDING)
 #  define HAVE_LIMITS_H 1
 #  define HAVE_STDDEF_H 1
-#elif defined(ACC_LIBC_FREESTANDING)
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
 #  define HAVE_LIMITS_H 1
 #  define HAVE_SETJMP_H 1
 #  define HAVE_STDDEF_H 1
@@ -1515,9 +1669,10 @@ extern "C" {
 #endif
 #endif
 #endif
-#if !defined(ACC_CONFIG_AUTO_NO_FUNCTIONS)
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
+#if !defined(ACC_CFG_AUTO_NO_FUNCTIONS)
+#if defined(ACC_LIBC_NAKED)
 #elif defined(ACC_LIBC_FREESTANDING)
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
 #  define HAVE_LONGJMP 1
 #  define HAVE_MEMCMP 1
 #  define HAVE_MEMCPY 1
@@ -1669,7 +1824,7 @@ extern "C" {
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
 #  endif
-#  if (ACC_ARCH_IA16) && defined(__cplusplus)
+#  if (ACC_ARCH_I086) && defined(__cplusplus)
 #    undef HAVE_LONGJMP
 #    undef HAVE_SETJMP
 #  endif
@@ -1770,327 +1925,267 @@ extern "C" {
 #endif
 #endif
 #endif
-#if !defined(ACC_CONFIG_AUTO_NO_SIZES)
-#define SIZEOF_SHORT            (__ACC_SHORT_BIT / 8)
-#define SIZEOF_INT              (__ACC_INT_BIT / 8)
-#define SIZEOF_LONG             (__ACC_LONG_BIT / 8)
-#if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
-#  define SIZEOF_SIZE_T         2
-#  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
-#    define SIZEOF_VOID_P       2
-#  elif (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
-#    define SIZEOF_VOID_P       4
-#  else
-#    error "ACC_MM"
-#  endif
-#  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
-#    define SIZEOF_PTRDIFF_T    2
-#  elif (ACC_MM_COMPACT || ACC_MM_LARGE)
-#    if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
-#      define SIZEOF_PTRDIFF_T  4
-#    else
-#      define SIZEOF_PTRDIFF_T  2
-#    endif
-#  elif (ACC_MM_HUGE)
-#    define SIZEOF_PTRDIFF_T    4
-#  else
-#    error "ACC_MM"
-#  endif
-#elif (ACC_ARCH_AVR || ACC_ARCH_C166 || ACC_ARCH_IA16 || ACC_ARCH_MCS51 || ACC_ARCH_MCS251)
-#  define SIZEOF_PTRDIFF_T      2
-#  define SIZEOF_SIZE_T         2
-#  define SIZEOF_VOID_P         2
-#elif (ACC_MM_IP32L64)
-#  define SIZEOF_PTRDIFF_T      4
-#  define SIZEOF_SIZE_T         4
-#  define SIZEOF_VOID_P         4
-#elif (ACC_MM_LLP64) || (ACC_OS_WIN64)
-#  define SIZEOF_PTRDIFF_T      8
-#  define SIZEOF_SIZE_T         8
-#  define SIZEOF_VOID_P         8
-#else
-#  define SIZEOF_PTRDIFF_T      SIZEOF_LONG
-#  define SIZEOF_SIZE_T         SIZEOF_LONG
-#  define SIZEOF_VOID_P         SIZEOF_LONG
+#if !defined(ACC_CFG_AUTO_NO_SIZES)
+#if !defined(SIZEOF_SHORT) && defined(ACC_SIZEOF_SHORT)
+#  define SIZEOF_SHORT          ACC_SIZEOF_SHORT
 #endif
-#if !defined(SIZEOF_CHAR_P) && (SIZEOF_VOID_P > 0)
-#  define SIZEOF_CHAR_P         SIZEOF_VOID_P
+#if !defined(SIZEOF_INT) && defined(ACC_SIZEOF_INT)
+#  define SIZEOF_INT            ACC_SIZEOF_INT
 #endif
-#if ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8)
-#if (ACC_ARCH_IA16 && ACC_CC_DMC)
-#elif (ACC_CC_GNUC)
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MSC && (_MSC_VER >= 1400))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_OS_WIN64)
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_DMC))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && (__SC__ >= 0x700)))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_MWERKS || ACC_CC_PELLESC || ACC_CC_PGI))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_OS_WIN32 && (ACC_CC_MSC))
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0520)))
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && (__WATCOMC__ >= 1100)))
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
-#  define SIZEOF___INT64            8
-#  define SIZEOF_UNSIGNED___INT64   8
-#elif 1 && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
+#if !defined(SIZEOF_LONG) && defined(ACC_SIZEOF_LONG)
+#  define SIZEOF_LONG           ACC_SIZEOF_LONG
 #endif
+#if !defined(SIZEOF_LONG_LONG) && defined(ACC_SIZEOF_LONG_LONG)
+#  define SIZEOF_LONG_LONG      ACC_SIZEOF_LONG_LONG
 #endif
-#if defined(__cplusplus) && defined(ACC_CC_GNUC)
-#  if (ACC_CC_GNUC < 0x020800ul)
-#    undef SIZEOF_LONG_LONG
-#    undef SIZEOF_UNSIGNED_LONG_LONG
-#  endif
+#if !defined(SIZEOF___INT32) && defined(ACC_SIZEOF___INT32)
+#  define SIZEOF___INT32        ACC_SIZEOF___INT32
+#endif
+#if !defined(SIZEOF___INT64) && defined(ACC_SIZEOF___INT64)
+#  define SIZEOF___INT64        ACC_SIZEOF___INT64
+#endif
+#if !defined(SIZEOF_VOID_P) && defined(ACC_SIZEOF_VOID_P)
+#  define SIZEOF_VOID_P         ACC_SIZEOF_VOID_P
+#endif
+#if !defined(SIZEOF_SIZE_T) && defined(ACC_SIZEOF_SIZE_T)
+#  define SIZEOF_SIZE_T         ACC_SIZEOF_SIZE_T
+#endif
+#if !defined(SIZEOF_PTRDIFF_T) && defined(ACC_SIZEOF_PTRDIFF_T)
+#  define SIZEOF_PTRDIFF_T      ACC_SIZEOF_PTRDIFF_T
 #endif
 #endif
 #if defined(HAVE_SIGNAL) && !defined(RETSIGTYPE)
 #  define RETSIGTYPE void
 #endif
 #endif
-#if defined(ACC_CONFIG_NO_TYPE)
+#if defined(ACC_CFG_NO_ACC_TYPE_H)
 #else
-#if (SIZEOF_LONG_LONG > 0)
+#if (ACC_SIZEOF_LONG_LONG+0 > 0)
 __acc_gnuc_extension__ typedef long long acc_llong_t;
-#endif
-#if (SIZEOF_UNSIGNED_LONG_LONG > 0)
 __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
-#if (!(SIZEOF_SHORT > 0 && SIZEOF_INT > 0 && SIZEOF_LONG > 0))
+#if (!(ACC_SIZEOF_SHORT+0 > 0 && ACC_SIZEOF_INT+0 > 0 && ACC_SIZEOF_LONG+0 > 0))
 #  error "missing defines for sizes"
 #endif
-#if (!(SIZEOF_PTRDIFF_T > 0 && SIZEOF_SIZE_T > 0 && SIZEOF_VOID_P > 0 && SIZEOF_CHAR_P > 0))
+#if (!(ACC_SIZEOF_PTRDIFF_T+0 > 0 && ACC_SIZEOF_SIZE_T+0 > 0 && ACC_SIZEOF_VOID_P+0 > 0))
 #  error "missing defines for sizes"
 #endif
 #if !defined(acc_int16e_t)
-#if (SIZEOF_SHORT == 2)
-#  define acc_int16e_t          short int
-#  define acc_uint16e_t         unsigned short int
-#elif (SIZEOF_INT == 2)
+#if (ACC_SIZEOF_LONG == 2)
+#  define acc_int16e_t          long
+#  define acc_uint16e_t         unsigned long
+#elif (ACC_SIZEOF_INT == 2)
 #  define acc_int16e_t          int
 #  define acc_uint16e_t         unsigned int
-#elif 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32 || ACC_ARCH_MIPS) && (ACC_CC_GNUC >= 0x025f00ul) && (SIZEOF_INT > 2)
+#elif (ACC_SIZEOF_SHORT == 2)
+#  define acc_int16e_t          short int
+#  define acc_uint16e_t         unsigned short int
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_GNUC >= 0x025f00ul) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int16e_hi_t __attribute__((__mode__(__HI__)));
    typedef unsigned int __acc_uint16e_hi_t __attribute__((__mode__(__HI__)));
 #  define acc_int16e_t          __acc_int16e_hi_t
 #  define acc_uint16e_t         __acc_uint16e_hi_t
+#elif (ACC_SIZEOF___INT16 == 2)
+#  define acc_int16e_t          __int16
+#  define acc_uint16e_t         unsigned __int16
 #else
 #endif
 #endif
 #if defined(acc_int16e_t)
-#  define SIZEOF_ACC_INT16E_T   2
-#  define ACC_INT16E_C(c)       c
-#  define ACC_UINT16E_C(c)      c##U
+#  define ACC_SIZEOF_ACC_INT16E_T   2
 #endif
 #if !defined(acc_int32e_t)
-#if (SIZEOF_INT == 4)
-#  define acc_int32e_t          int
-#  define acc_uint32e_t         unsigned int
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
-#elif (SIZEOF_LONG == 4)
+#if (ACC_SIZEOF_LONG == 4)
 #  define acc_int32e_t          long int
 #  define acc_uint32e_t         unsigned long int
-#  define ACC_INT32E_C(c)       c##L
-#  define ACC_UINT32E_C(c)      c##UL
-#elif (SIZEOF_SHORT == 4)
+#elif (ACC_SIZEOF_INT == 4)
+#  define acc_int32e_t          int
+#  define acc_uint32e_t         unsigned int
+#elif (ACC_SIZEOF_SHORT == 4)
 #  define acc_int32e_t          short int
 #  define acc_uint32e_t         unsigned short int
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
-#elif (SIZEOF_LONG_LONG == 4 && SIZEOF_UNSIGNED_LONG_LONG == 4)
+#elif (ACC_SIZEOF_LONG_LONG == 4)
 #  define acc_int32e_t          acc_llong_t
 #  define acc_uint32e_t         acc_ullong_t
-#  define ACC_INT32E_C(c)       c##LL
-#  define ACC_UINT32E_C(c)      c##ULL
-#elif (SIZEOF___INT32 == 4 && SIZEOF_UNSIGNED___INT32 == 4)
-#  define acc_int32e_t          __int32
-#  define acc_uint32e_t         unsigned __int32
-#  if (SIZEOF_INT > 4)
-#    define ACC_INT32E_C(c)     c
-#    define ACC_UINT32E_C(c)    c##U
-#  elif (SIZEOF_LONG > 4)
-#    define ACC_INT32E_C(c)     c##L
-#    define ACC_UINT32E_C(c)    c##UL
-#  else
-#    define ACC_INT32E_C(c)     c##i32
-#    define ACC_UINT32E_C(c)    c##ui32
-#  endif
-#elif 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32 || ACC_ARCH_MIPS) && (ACC_CC_GNUC >= 0x025f00ul) && (SIZEOF_INT > 4)
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
    typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
 #  define acc_int32e_t          __acc_int32e_si_t
 #  define acc_uint32e_t         __acc_uint32e_si_t
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul) && defined(__AVR__) && (__LONG_MAX__+0 == 32767L)
+   typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
+   typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
+#  define acc_int32e_t          __acc_int32e_si_t
+#  define acc_uint32e_t         __acc_uint32e_si_t
+#  define ACC_INT32_C(c)        c##LL
+#  define ACC_UINT32_C(c)       c##ULL
+#elif (ACC_SIZEOF___INT32 == 4)
+#  define acc_int32e_t          __int32
+#  define acc_uint32e_t         unsigned __int32
 #else
 #endif
 #endif
 #if defined(acc_int32e_t)
-#  define SIZEOF_ACC_INT32E_T   4
+#  define ACC_SIZEOF_ACC_INT32E_T   4
 #endif
 #if !defined(acc_int32l_t)
 #if defined(acc_int32e_t)
 #  define acc_int32l_t          acc_int32e_t
 #  define acc_uint32l_t         acc_uint32e_t
-#  define ACC_INT32L_C(c)       ACC_INT32E_C(c)
-#  define ACC_UINT32L_C(c)      ACC_UINT32E_C(c)
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_ACC_INT32E_T
-#elif (SIZEOF_INT >= 4)
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_ACC_INT32E_T
+#elif (ACC_SIZEOF_INT >= 4) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int32l_t          int
 #  define acc_uint32l_t         unsigned int
-#  define ACC_INT32L_C(c)       c
-#  define ACC_UINT32L_C(c)      c##U
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 4)
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= 4)
 #  define acc_int32l_t          long int
 #  define acc_uint32l_t         unsigned long int
-#  define ACC_INT32L_C(c)       c##L
-#  define ACC_UINT32L_C(c)      c##UL
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_LONG
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_LONG
 #else
 #  error "acc_int32l_t"
 #endif
 #endif
-#if !defined(acc_int32f_t)
-#if (SIZEOF_INT >= 4)
-#  define acc_int32f_t          int
-#  define acc_uint32f_t         unsigned int
-#  define ACC_INT32F_C(c)       c
-#  define ACC_UINT32F_C(c)      c##U
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 4)
-#  define acc_int32f_t          long int
-#  define acc_uint32f_t         unsigned long int
-#  define ACC_INT32F_C(c)       c##L
-#  define ACC_UINT32F_C(c)      c##UL
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_LONG
-#elif defined(acc_int32e_t)
-#  define acc_int32f_t          acc_int32e_t
-#  define acc_uint32f_t         acc_uint32e_t
-#  define ACC_INT32F_C(c)       ACC_INT32E_C(c)
-#  define ACC_UINT32F_C(c)      ACC_UINT32E_C(c)
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_ACC_INT32E_T
-#else
-#  error "acc_int32f_t"
-#endif
-#endif
 #if !defined(acc_int64l_t)
-#if (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
-#  if (ACC_CC_BORLANDC) && !defined(ACC_CONFIG_PREFER___INT64)
-#    define ACC_CONFIG_PREFER___INT64 1
+#if (ACC_SIZEOF___INT64 >= 8)
+#  if (ACC_CC_BORLANDC) && !defined(ACC_CFG_TYPE_PREFER___INT64)
+#    define ACC_CFG_TYPE_PREFER___INT64 1
 #  endif
 #endif
-#if (SIZEOF_INT >= 8)
+#if (ACC_SIZEOF_INT >= 8) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int64l_t          int
 #  define acc_uint64l_t         unsigned int
-#  define ACC_INT64L_C(c)       c
-#  define ACC_UINT64L_C(c)      c##U
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 8)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= 8)
 #  define acc_int64l_t          long int
 #  define acc_uint64l_t         unsigned long int
-#  define ACC_INT64L_C(c)       c##L
-#  define ACC_UINT64L_C(c)      c##UL
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG
-#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8) && !defined(ACC_CONFIG_PREFER___INT64)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_LONG
+#elif (ACC_SIZEOF_LONG_LONG >= 8) && !defined(ACC_CFG_TYPE_PREFER___INT64)
 #  define acc_int64l_t          acc_llong_t
 #  define acc_uint64l_t         acc_ullong_t
 #  if (ACC_CC_BORLANDC)
-#    define ACC_INT64L_C(c)     ((c) + 0ll)
-#    define ACC_UINT64L_C(c)    ((c) + 0ull)
+#    define ACC_INT64_C(c)      ((c) + 0ll)
+#    define ACC_UINT64_C(c)     ((c) + 0ull)
 #  else
-#    define ACC_INT64L_C(c)     c##LL
-#    define ACC_UINT64L_C(c)    c##ULL
+#    define ACC_INT64_C(c)      c##LL
+#    define ACC_UINT64_C(c)     c##ULL
 #  endif
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG_LONG
-#elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_LONG_LONG
+#elif (ACC_SIZEOF___INT64 >= 8)
 #  define acc_int64l_t          __int64
 #  define acc_uint64l_t         unsigned __int64
 #  if (ACC_CC_BORLANDC)
-#    define ACC_INT64L_C(c)     ((c) + 0i64)
-#    define ACC_UINT64L_C(c)    ((c) + 0ui64)
+#    define ACC_INT64_C(c)      ((c) + 0i64)
+#    define ACC_UINT64_C(c)     ((c) + 0ui64)
 #  else
-#    define ACC_INT64L_C(c)     c##i64
-#    define ACC_UINT64L_C(c)    c##ui64
+#    define ACC_INT64_C(c)      c##i64
+#    define ACC_UINT64_C(c)     c##ui64
 #  endif
-#  define SIZEOF_ACC_INT64L_T   SIZEOF___INT64
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF___INT64
 #else
 #endif
 #endif
+#if !defined(acc_int32f_t)
+#if (ACC_SIZEOF_SIZE_T >= 8)
+#  define acc_int32f_t          acc_int64l_t
+#  define acc_uint32f_t         acc_uint64l_t
+#  define ACC_SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT64L_T
+#else
+#  define acc_int32f_t          acc_int32l_t
+#  define acc_uint32f_t         acc_uint32l_t
+#  define ACC_SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT32L_T
+#endif
+#endif
 #if !defined(acc_intptr_t)
-#if (ACC_ARCH_IA32 && ACC_CC_MSC && (_MSC_VER >= 1300))
+#if (ACC_ARCH_I386 && ACC_CC_MSC && (_MSC_VER >= 1300))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
-#elif (SIZEOF_INT >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_INT >= ACC_SIZEOF_VOID_P) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_intptr_t          int
 #  define acc_uintptr_t         unsigned int
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= ACC_SIZEOF_VOID_P)
 #  define acc_intptr_t          long
 #  define acc_uintptr_t         unsigned long
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_LONG
-#elif (SIZEOF_ACC_INT64L_T >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_LONG
+#elif (ACC_SIZEOF_ACC_INT64L_T >= ACC_SIZEOF_VOID_P)
 #  define acc_intptr_t          acc_int64l_t
 #  define acc_uintptr_t         acc_uint64l_t
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_ACC_INT64L_T
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_ACC_INT64L_T
 #else
 #  error "acc_intptr_t"
 #endif
 #endif
-#if (ACC_BROKEN_INTEGRAL_CONSTANTS)
-#  undef ACC_INT16E_C
-#  undef ACC_UINT16E_C
-#  undef ACC_INT32E_C
-#  undef ACC_UINT32E_C
-#  undef ACC_INT32L_C
-#  undef ACC_UINT32L_C
-#  undef ACC_INT32F_C
-#  undef ACC_UINT32F_C
-#  define ACC_INT16E_C(c)       ((c) + 0)
-#  define ACC_UINT16E_C(c)      ((c) + 0U)
-#  if (SIZEOF_INT == 4)
-#    define ACC_INT32E_C(c)     ((c) + 0)
-#    define ACC_UINT32E_C(c)    ((c) + 0U)
-#    define ACC_INT32L_C(c)     ((c) + 0)
-#    define ACC_UINT32L_C(c)    ((c) + 0U)
-#    define ACC_INT32F_C(c)     ((c) + 0)
-#    define ACC_UINT32F_C(c)    ((c) + 0U)
-#  elif (SIZEOF_LONG == 4)
-#    define ACC_INT32E_C(c)     ((c) + 0L)
-#    define ACC_UINT32E_C(c)    ((c) + 0UL)
-#    define ACC_INT32L_C(c)     ((c) + 0L)
-#    define ACC_UINT32L_C(c)    ((c) + 0UL)
-#    define ACC_INT32F_C(c)     ((c) + 0L)
-#    define ACC_UINT32F_C(c)    ((c) + 0UL)
+#if !defined(ACC_INT16_C)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 2)
+#    define ACC_INT16_C(c)      ((c) + 0)
+#    define ACC_UINT16_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 2)
+#    define ACC_INT16_C(c)      ((c) + 0L)
+#    define ACC_UINT16_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 2)
+#    define ACC_INT16_C(c)      c
+#    define ACC_UINT16_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 2)
+#    define ACC_INT16_C(c)      c##L
+#    define ACC_UINT16_C(c)     c##UL
 #  else
-#    error "integral constants"
+#    error "ACC_INT16_C"
 #  endif
+#endif
+#if !defined(ACC_INT32_C)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 4)
+#    define ACC_INT32_C(c)      ((c) + 0)
+#    define ACC_UINT32_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 4)
+#    define ACC_INT32_C(c)      ((c) + 0L)
+#    define ACC_UINT32_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 4)
+#    define ACC_INT32_C(c)      c
+#    define ACC_UINT32_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 4)
+#    define ACC_INT32_C(c)      c##L
+#    define ACC_UINT32_C(c)     c##UL
+#  else
+#    error "ACC_INT32_C"
+#  endif
+#endif
+#if !defined(ACC_INT64_C) && defined(acc_int64l_t)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 8)
+#    define ACC_INT64_C(c)      ((c) + 0)
+#    define ACC_UINT64_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 8)
+#    define ACC_INT64_C(c)      ((c) + 0L)
+#    define ACC_UINT64_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 8)
+#    define ACC_INT64_C(c)      c
+#    define ACC_UINT64_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 8)
+#    define ACC_INT64_C(c)      c##L
+#    define ACC_UINT64_C(c)     c##UL
+#  else
+#    error "ACC_INT64_C"
+#  endif
+#endif
+#if !defined(SIZEOF_ACC_INT16E_T) && defined(ACC_SIZEOF_ACC_INT16E_T)
+#  define SIZEOF_ACC_INT16E_T   ACC_SIZEOF_ACC_INT16E_T
+#endif
+#if !defined(SIZEOF_ACC_INT32E_T) && defined(ACC_SIZEOF_ACC_INT32E_T)
+#  define SIZEOF_ACC_INT32E_T   ACC_SIZEOF_ACC_INT32E_T
+#endif
+#if !defined(SIZEOF_ACC_INT32L_T) && defined(ACC_SIZEOF_ACC_INT32L_T)
+#  define SIZEOF_ACC_INT32L_T   ACC_SIZEOF_ACC_INT32L_T
+#endif
+#if !defined(SIZEOF_ACC_INT64L_T) && defined(ACC_SIZEOF_ACC_INT64L_T)
+#  define SIZEOF_ACC_INT64L_T   ACC_SIZEOF_ACC_INT64L_T
+#endif
+#if !defined(SIZEOF_ACC_INT32F_T) && defined(ACC_SIZEOF_ACC_INT32F_T)
+#  define SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT32F_T
+#endif
+#if !defined(SIZEOF_ACC_INTPTR_T) && defined(ACC_SIZEOF_ACC_INTPTR_T)
+#  define SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_ACC_INTPTR_T
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
@@ -2103,225 +2198,235 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #endif
 #if defined(ACC_WANT_ACC_TYPE_H)
 #  undef ACC_WANT_ACC_TYPE_H
-#if (SIZEOF_LONG_LONG > 0)
+#  if defined(ACC_CFG_NO_ACC_TYPE_H)
+#    error "ACC_WANT_ACC_TYPE_H with ACC_CFG_NO_ACC_TYPE_H"
+#  endif
+#if (ACC_SIZEOF_LONG_LONG+0 > 0)
 __acc_gnuc_extension__ typedef long long acc_llong_t;
-#endif
-#if (SIZEOF_UNSIGNED_LONG_LONG > 0)
 __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
-#if (!(SIZEOF_SHORT > 0 && SIZEOF_INT > 0 && SIZEOF_LONG > 0))
+#if (!(ACC_SIZEOF_SHORT+0 > 0 && ACC_SIZEOF_INT+0 > 0 && ACC_SIZEOF_LONG+0 > 0))
 #  error "missing defines for sizes"
 #endif
-#if (!(SIZEOF_PTRDIFF_T > 0 && SIZEOF_SIZE_T > 0 && SIZEOF_VOID_P > 0 && SIZEOF_CHAR_P > 0))
+#if (!(ACC_SIZEOF_PTRDIFF_T+0 > 0 && ACC_SIZEOF_SIZE_T+0 > 0 && ACC_SIZEOF_VOID_P+0 > 0))
 #  error "missing defines for sizes"
 #endif
 #if !defined(acc_int16e_t)
-#if (SIZEOF_SHORT == 2)
-#  define acc_int16e_t          short int
-#  define acc_uint16e_t         unsigned short int
-#elif (SIZEOF_INT == 2)
+#if (ACC_SIZEOF_LONG == 2)
+#  define acc_int16e_t          long
+#  define acc_uint16e_t         unsigned long
+#elif (ACC_SIZEOF_INT == 2)
 #  define acc_int16e_t          int
 #  define acc_uint16e_t         unsigned int
-#elif 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32 || ACC_ARCH_MIPS) && (ACC_CC_GNUC >= 0x025f00ul) && (SIZEOF_INT > 2)
+#elif (ACC_SIZEOF_SHORT == 2)
+#  define acc_int16e_t          short int
+#  define acc_uint16e_t         unsigned short int
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_GNUC >= 0x025f00ul) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int16e_hi_t __attribute__((__mode__(__HI__)));
    typedef unsigned int __acc_uint16e_hi_t __attribute__((__mode__(__HI__)));
 #  define acc_int16e_t          __acc_int16e_hi_t
 #  define acc_uint16e_t         __acc_uint16e_hi_t
+#elif (ACC_SIZEOF___INT16 == 2)
+#  define acc_int16e_t          __int16
+#  define acc_uint16e_t         unsigned __int16
 #else
 #endif
 #endif
 #if defined(acc_int16e_t)
-#  define SIZEOF_ACC_INT16E_T   2
-#  define ACC_INT16E_C(c)       c
-#  define ACC_UINT16E_C(c)      c##U
+#  define ACC_SIZEOF_ACC_INT16E_T   2
 #endif
 #if !defined(acc_int32e_t)
-#if (SIZEOF_INT == 4)
-#  define acc_int32e_t          int
-#  define acc_uint32e_t         unsigned int
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
-#elif (SIZEOF_LONG == 4)
+#if (ACC_SIZEOF_LONG == 4)
 #  define acc_int32e_t          long int
 #  define acc_uint32e_t         unsigned long int
-#  define ACC_INT32E_C(c)       c##L
-#  define ACC_UINT32E_C(c)      c##UL
-#elif (SIZEOF_SHORT == 4)
+#elif (ACC_SIZEOF_INT == 4)
+#  define acc_int32e_t          int
+#  define acc_uint32e_t         unsigned int
+#elif (ACC_SIZEOF_SHORT == 4)
 #  define acc_int32e_t          short int
 #  define acc_uint32e_t         unsigned short int
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
-#elif (SIZEOF_LONG_LONG == 4 && SIZEOF_UNSIGNED_LONG_LONG == 4)
+#elif (ACC_SIZEOF_LONG_LONG == 4)
 #  define acc_int32e_t          acc_llong_t
 #  define acc_uint32e_t         acc_ullong_t
-#  define ACC_INT32E_C(c)       c##LL
-#  define ACC_UINT32E_C(c)      c##ULL
-#elif (SIZEOF___INT32 == 4 && SIZEOF_UNSIGNED___INT32 == 4)
-#  define acc_int32e_t          __int32
-#  define acc_uint32e_t         unsigned __int32
-#  if (SIZEOF_INT > 4)
-#    define ACC_INT32E_C(c)     c
-#    define ACC_UINT32E_C(c)    c##U
-#  elif (SIZEOF_LONG > 4)
-#    define ACC_INT32E_C(c)     c##L
-#    define ACC_UINT32E_C(c)    c##UL
-#  else
-#    define ACC_INT32E_C(c)     c##i32
-#    define ACC_UINT32E_C(c)    c##ui32
-#  endif
-#elif 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32 || ACC_ARCH_MIPS) && (ACC_CC_GNUC >= 0x025f00ul) && (SIZEOF_INT > 4)
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
    typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
 #  define acc_int32e_t          __acc_int32e_si_t
 #  define acc_uint32e_t         __acc_uint32e_si_t
-#  define ACC_INT32E_C(c)       c
-#  define ACC_UINT32E_C(c)      c##U
+#elif 1 && !defined(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul) && defined(__AVR__) && (__LONG_MAX__+0 == 32767L)
+   typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
+   typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
+#  define acc_int32e_t          __acc_int32e_si_t
+#  define acc_uint32e_t         __acc_uint32e_si_t
+#  define ACC_INT32_C(c)        c##LL
+#  define ACC_UINT32_C(c)       c##ULL
+#elif (ACC_SIZEOF___INT32 == 4)
+#  define acc_int32e_t          __int32
+#  define acc_uint32e_t         unsigned __int32
 #else
 #endif
 #endif
 #if defined(acc_int32e_t)
-#  define SIZEOF_ACC_INT32E_T   4
+#  define ACC_SIZEOF_ACC_INT32E_T   4
 #endif
 #if !defined(acc_int32l_t)
 #if defined(acc_int32e_t)
 #  define acc_int32l_t          acc_int32e_t
 #  define acc_uint32l_t         acc_uint32e_t
-#  define ACC_INT32L_C(c)       ACC_INT32E_C(c)
-#  define ACC_UINT32L_C(c)      ACC_UINT32E_C(c)
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_ACC_INT32E_T
-#elif (SIZEOF_INT >= 4)
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_ACC_INT32E_T
+#elif (ACC_SIZEOF_INT >= 4) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int32l_t          int
 #  define acc_uint32l_t         unsigned int
-#  define ACC_INT32L_C(c)       c
-#  define ACC_UINT32L_C(c)      c##U
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 4)
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= 4)
 #  define acc_int32l_t          long int
 #  define acc_uint32l_t         unsigned long int
-#  define ACC_INT32L_C(c)       c##L
-#  define ACC_UINT32L_C(c)      c##UL
-#  define SIZEOF_ACC_INT32L_T   SIZEOF_LONG
+#  define ACC_SIZEOF_ACC_INT32L_T   ACC_SIZEOF_LONG
 #else
 #  error "acc_int32l_t"
 #endif
 #endif
-#if !defined(acc_int32f_t)
-#if (SIZEOF_INT >= 4)
-#  define acc_int32f_t          int
-#  define acc_uint32f_t         unsigned int
-#  define ACC_INT32F_C(c)       c
-#  define ACC_UINT32F_C(c)      c##U
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 4)
-#  define acc_int32f_t          long int
-#  define acc_uint32f_t         unsigned long int
-#  define ACC_INT32F_C(c)       c##L
-#  define ACC_UINT32F_C(c)      c##UL
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_LONG
-#elif defined(acc_int32e_t)
-#  define acc_int32f_t          acc_int32e_t
-#  define acc_uint32f_t         acc_uint32e_t
-#  define ACC_INT32F_C(c)       ACC_INT32E_C(c)
-#  define ACC_UINT32F_C(c)      ACC_UINT32E_C(c)
-#  define SIZEOF_ACC_INT32F_T   SIZEOF_ACC_INT32E_T
-#else
-#  error "acc_int32f_t"
-#endif
-#endif
 #if !defined(acc_int64l_t)
-#if (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
-#  if (ACC_CC_BORLANDC) && !defined(ACC_CONFIG_PREFER___INT64)
-#    define ACC_CONFIG_PREFER___INT64 1
+#if (ACC_SIZEOF___INT64 >= 8)
+#  if (ACC_CC_BORLANDC) && !defined(ACC_CFG_TYPE_PREFER___INT64)
+#    define ACC_CFG_TYPE_PREFER___INT64 1
 #  endif
 #endif
-#if (SIZEOF_INT >= 8)
+#if (ACC_SIZEOF_INT >= 8) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int64l_t          int
 #  define acc_uint64l_t         unsigned int
-#  define ACC_INT64L_C(c)       c
-#  define ACC_UINT64L_C(c)      c##U
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= 8)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= 8)
 #  define acc_int64l_t          long int
 #  define acc_uint64l_t         unsigned long int
-#  define ACC_INT64L_C(c)       c##L
-#  define ACC_UINT64L_C(c)      c##UL
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG
-#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8) && !defined(ACC_CONFIG_PREFER___INT64)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_LONG
+#elif (ACC_SIZEOF_LONG_LONG >= 8) && !defined(ACC_CFG_TYPE_PREFER___INT64)
 #  define acc_int64l_t          acc_llong_t
 #  define acc_uint64l_t         acc_ullong_t
 #  if (ACC_CC_BORLANDC)
-#    define ACC_INT64L_C(c)     ((c) + 0ll)
-#    define ACC_UINT64L_C(c)    ((c) + 0ull)
+#    define ACC_INT64_C(c)      ((c) + 0ll)
+#    define ACC_UINT64_C(c)     ((c) + 0ull)
 #  else
-#    define ACC_INT64L_C(c)     c##LL
-#    define ACC_UINT64L_C(c)    c##ULL
+#    define ACC_INT64_C(c)      c##LL
+#    define ACC_UINT64_C(c)     c##ULL
 #  endif
-#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG_LONG
-#elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF_LONG_LONG
+#elif (ACC_SIZEOF___INT64 >= 8)
 #  define acc_int64l_t          __int64
 #  define acc_uint64l_t         unsigned __int64
 #  if (ACC_CC_BORLANDC)
-#    define ACC_INT64L_C(c)     ((c) + 0i64)
-#    define ACC_UINT64L_C(c)    ((c) + 0ui64)
+#    define ACC_INT64_C(c)      ((c) + 0i64)
+#    define ACC_UINT64_C(c)     ((c) + 0ui64)
 #  else
-#    define ACC_INT64L_C(c)     c##i64
-#    define ACC_UINT64L_C(c)    c##ui64
+#    define ACC_INT64_C(c)      c##i64
+#    define ACC_UINT64_C(c)     c##ui64
 #  endif
-#  define SIZEOF_ACC_INT64L_T   SIZEOF___INT64
+#  define ACC_SIZEOF_ACC_INT64L_T   ACC_SIZEOF___INT64
 #else
 #endif
 #endif
+#if !defined(acc_int32f_t)
+#if (ACC_SIZEOF_SIZE_T >= 8)
+#  define acc_int32f_t          acc_int64l_t
+#  define acc_uint32f_t         acc_uint64l_t
+#  define ACC_SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT64L_T
+#else
+#  define acc_int32f_t          acc_int32l_t
+#  define acc_uint32f_t         acc_uint32l_t
+#  define ACC_SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT32L_T
+#endif
+#endif
 #if !defined(acc_intptr_t)
-#if (ACC_ARCH_IA32 && ACC_CC_MSC && (_MSC_VER >= 1300))
+#if (ACC_ARCH_I386 && ACC_CC_MSC && (_MSC_VER >= 1300))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
-#elif (SIZEOF_INT >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_INT >= ACC_SIZEOF_VOID_P) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_intptr_t          int
 #  define acc_uintptr_t         unsigned int
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
-#elif (SIZEOF_LONG >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_INT
+#elif (ACC_SIZEOF_LONG >= ACC_SIZEOF_VOID_P)
 #  define acc_intptr_t          long
 #  define acc_uintptr_t         unsigned long
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_LONG
-#elif (SIZEOF_ACC_INT64L_T >= SIZEOF_VOID_P)
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_LONG
+#elif (ACC_SIZEOF_ACC_INT64L_T >= ACC_SIZEOF_VOID_P)
 #  define acc_intptr_t          acc_int64l_t
 #  define acc_uintptr_t         acc_uint64l_t
-#  define SIZEOF_ACC_INTPTR_T   SIZEOF_ACC_INT64L_T
+#  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_ACC_INT64L_T
 #else
 #  error "acc_intptr_t"
 #endif
 #endif
-#if (ACC_BROKEN_INTEGRAL_CONSTANTS)
-#  undef ACC_INT16E_C
-#  undef ACC_UINT16E_C
-#  undef ACC_INT32E_C
-#  undef ACC_UINT32E_C
-#  undef ACC_INT32L_C
-#  undef ACC_UINT32L_C
-#  undef ACC_INT32F_C
-#  undef ACC_UINT32F_C
-#  define ACC_INT16E_C(c)       ((c) + 0)
-#  define ACC_UINT16E_C(c)      ((c) + 0U)
-#  if (SIZEOF_INT == 4)
-#    define ACC_INT32E_C(c)     ((c) + 0)
-#    define ACC_UINT32E_C(c)    ((c) + 0U)
-#    define ACC_INT32L_C(c)     ((c) + 0)
-#    define ACC_UINT32L_C(c)    ((c) + 0U)
-#    define ACC_INT32F_C(c)     ((c) + 0)
-#    define ACC_UINT32F_C(c)    ((c) + 0U)
-#  elif (SIZEOF_LONG == 4)
-#    define ACC_INT32E_C(c)     ((c) + 0L)
-#    define ACC_UINT32E_C(c)    ((c) + 0UL)
-#    define ACC_INT32L_C(c)     ((c) + 0L)
-#    define ACC_UINT32L_C(c)    ((c) + 0UL)
-#    define ACC_INT32F_C(c)     ((c) + 0L)
-#    define ACC_UINT32F_C(c)    ((c) + 0UL)
+#if !defined(ACC_INT16_C)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 2)
+#    define ACC_INT16_C(c)      ((c) + 0)
+#    define ACC_UINT16_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 2)
+#    define ACC_INT16_C(c)      ((c) + 0L)
+#    define ACC_UINT16_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 2)
+#    define ACC_INT16_C(c)      c
+#    define ACC_UINT16_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 2)
+#    define ACC_INT16_C(c)      c##L
+#    define ACC_UINT16_C(c)     c##UL
 #  else
-#    error "integral constants"
+#    error "ACC_INT16_C"
 #  endif
+#endif
+#if !defined(ACC_INT32_C)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 4)
+#    define ACC_INT32_C(c)      ((c) + 0)
+#    define ACC_UINT32_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 4)
+#    define ACC_INT32_C(c)      ((c) + 0L)
+#    define ACC_UINT32_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 4)
+#    define ACC_INT32_C(c)      c
+#    define ACC_UINT32_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 4)
+#    define ACC_INT32_C(c)      c##L
+#    define ACC_UINT32_C(c)     c##UL
+#  else
+#    error "ACC_INT32_C"
+#  endif
+#endif
+#if !defined(ACC_INT64_C) && defined(acc_int64l_t)
+#  if (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_INT >= 8)
+#    define ACC_INT64_C(c)      ((c) + 0)
+#    define ACC_UINT64_C(c)     ((c) + 0U)
+#  elif (ACC_BROKEN_INTEGRAL_CONSTANTS) && (ACC_SIZEOF_LONG >= 8)
+#    define ACC_INT64_C(c)      ((c) + 0L)
+#    define ACC_UINT64_C(c)     ((c) + 0UL)
+#  elif (ACC_SIZEOF_INT >= 8)
+#    define ACC_INT64_C(c)      c
+#    define ACC_UINT64_C(c)     c##U
+#  elif (ACC_SIZEOF_LONG >= 8)
+#    define ACC_INT64_C(c)      c##L
+#    define ACC_UINT64_C(c)     c##UL
+#  else
+#    error "ACC_INT64_C"
+#  endif
+#endif
+#if !defined(SIZEOF_ACC_INT16E_T) && defined(ACC_SIZEOF_ACC_INT16E_T)
+#  define SIZEOF_ACC_INT16E_T   ACC_SIZEOF_ACC_INT16E_T
+#endif
+#if !defined(SIZEOF_ACC_INT32E_T) && defined(ACC_SIZEOF_ACC_INT32E_T)
+#  define SIZEOF_ACC_INT32E_T   ACC_SIZEOF_ACC_INT32E_T
+#endif
+#if !defined(SIZEOF_ACC_INT32L_T) && defined(ACC_SIZEOF_ACC_INT32L_T)
+#  define SIZEOF_ACC_INT32L_T   ACC_SIZEOF_ACC_INT32L_T
+#endif
+#if !defined(SIZEOF_ACC_INT64L_T) && defined(ACC_SIZEOF_ACC_INT64L_T)
+#  define SIZEOF_ACC_INT64L_T   ACC_SIZEOF_ACC_INT64L_T
+#endif
+#if !defined(SIZEOF_ACC_INT32F_T) && defined(ACC_SIZEOF_ACC_INT32F_T)
+#  define SIZEOF_ACC_INT32F_T   ACC_SIZEOF_ACC_INT32F_T
+#endif
+#if !defined(SIZEOF_ACC_INTPTR_T) && defined(ACC_SIZEOF_ACC_INTPTR_T)
+#  define SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_ACC_INTPTR_T
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
@@ -2335,7 +2440,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #  undef ACC_WANT_ACC_INCD_H
 #ifndef __ACC_INCD_H_INCLUDED
 #define __ACC_INCD_H_INCLUDED 1
-#if defined(ACC_LIBC_FALLBACK_FREESTANDING)
+#if defined(ACC_LIBC_NAKED)
 #ifndef __ACC_FALLBACK_STDDEF_H_INCLUDED
 #define __ACC_FALLBACK_STDDEF_H_INCLUDED
 #if 0
@@ -2343,16 +2448,36 @@ FIXME
   __PTRDIFF_TYPE__, __SSIZE_TYPE__, __SIZE_TYPE__
   wchar_t, wint_t
 #endif
-typedef int ptrdiff_t;
-typedef unsigned int size_t;
-#define _PTRDIFF_T_DEFINED
-#define _SIZE_T_DEFINED
-#define _INTPTR_T_DEFINED
-#define _UINTPTR_T_DEFINED
-#if !defined(__cplusplus)
-#ifndef _WCHAR_T_DEFINED
+#if defined(__PTRDIFF_TYPE__)
+typedef __PTRDIFF_TYPE__ acc_fallback_ptrdiff_t;
+#elif defined(__MIPS_PSX2__)
+typedef int acc_fallback_ptrdiff_t;
+#else
+typedef long acc_fallback_ptrdiff_t;
+#endif
+#if defined(__SIZE_TYPE__)
+typedef __SIZE_TYPE__ acc_fallback_size_t;
+#elif defined(__MIPS_PSX2__)
+typedef unsigned int acc_fallback_size_t;
+#else
+typedef unsigned long acc_fallback_size_t;
+#endif
+#if !defined(ptrdiff_t)
+typedef acc_fallback_ptrdiff_t ptrdiff_t;
+#ifndef _PTRDIFF_T_DEFINED
+#define _PTRDIFF_T_DEFINED 1
+#endif
+#endif
+#if !defined(size_t)
+typedef acc_fallback_size_t size_t;
+#ifndef _SIZE_T_DEFINED
+#define _SIZE_T_DEFINED 1
+#endif
+#endif
+#if !defined(__cplusplus) && !defined(wchar_t)
 typedef unsigned short wchar_t;
-#define _WCHAR_T_DEFINED
+#ifndef _WCHAR_T_DEFINED
+#define _WCHAR_T_DEFINED 1
 #endif
 #endif
 #ifndef NULL
@@ -2366,14 +2491,14 @@ typedef unsigned short wchar_t;
 #define offsetof(s,m)   ((size_t)((ptrdiff_t)&(((s*)0)->m)))
 #endif
 #endif
-#elif defined(ACC_LIBC_STRICT_FREESTANDING)
+#elif defined(ACC_LIBC_FREESTANDING)
 # if HAVE_STDDEF_H
 #  include <stddef.h>
 # endif
 # if HAVE_STDINT_H
 #  include <stdint.h>
 # endif
-#elif defined(ACC_LIBC_FREESTANDING)
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
 # if HAVE_STDIO_H
 #  include <stdio.h>
 # endif
@@ -2428,8 +2553,9 @@ typedef unsigned short wchar_t;
 #  undef ACC_WANT_ACC_INCE_H
 #ifndef __ACC_INCE_H_INCLUDED
 #define __ACC_INCE_H_INCLUDED 1
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
+#if defined(ACC_LIBC_NAKED)
 #elif defined(ACC_LIBC_FREESTANDING)
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
 #  if defined(HAVE_SETJMP_H)
 #    include <setjmp.h>
 #  endif
@@ -2497,8 +2623,9 @@ typedef unsigned short wchar_t;
 #  undef ACC_WANT_ACC_INCI_H
 #ifndef __ACC_INCI_H_INCLUDED
 #define __ACC_INCI_H_INCLUDED 1
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
+#if defined(ACC_LIBC_NAKED)
 #elif defined(ACC_LIBC_FREESTANDING)
+#elif defined(ACC_LIBC_MOSTLY_FREESTANDING)
 #else
 #if (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
 #  include <tos.h>
@@ -2572,6 +2699,11 @@ typedef unsigned short wchar_t;
 #  undef ACC_WANT_ACC_LIB_H
 #ifndef __ACC_LIB_H_INCLUDED
 #define __ACC_LIB_H_INCLUDED 1
+#if defined(ACC_ABI_NEUTRAL_ENDIAN) || defined(ACC_ARCH_GENERIC)
+#  if !defined(ACC_CFG_NO_UNALIGNED)
+#    define ACC_CFG_NO_UNALIGNED 1
+#  endif
+#endif
 #if !defined(__ACCLIB_FUNCNAME)
 #  define __ACCLIB_FUNCNAME(f)  f
 #endif
@@ -2579,9 +2711,9 @@ typedef unsigned short wchar_t;
 #  define ACCLIB_EXTERN(r,f)    extern r __ACCLIB_FUNCNAME(f)
 #endif
 #if !defined(__ACCLIB_CONST_CAST_RETURN)
-#if 1 && (ACC_CC_GNUC || ACC_CC_PATHSCALE)
+#if 1 && (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __ACCLIB_CONST_CAST_RETURN(type,var) return (type) (acc_uintptr_t) (var);
-#elif (ACC_CC_GNUC || ACC_CC_PATHSCALE)
+#elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __ACCLIB_CONST_CAST_RETURN(type,var) \
         { union { type a; const type b; } u; u.b = (var); return u.a; }
 #else
@@ -2591,7 +2723,7 @@ typedef unsigned short wchar_t;
 #if (ACC_OS_WIN64)
 #  define acclib_handle_t       acc_int64l_t
 #  define acclib_uhandle_t      acc_uint64l_t
-#elif (ACC_ARCH_IA32 && ACC_CC_MSC && (_MSC_VER >= 1300))
+#elif (ACC_ARCH_I386 && ACC_CC_MSC && (_MSC_VER >= 1300))
    typedef __w64 long           acclib_handle_t;
    typedef __w64 unsigned long  acclib_uhandle_t;
 #  define acclib_handle_t       acclib_handle_t
@@ -2777,27 +2909,27 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 #endif
 #if (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #  define acc_stackavail()  stackavail()
-#elif (ACC_ARCH_IA16 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0410))
+#elif (ACC_ARCH_I086 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0410))
 #  define acc_stackavail()  stackavail()
-#elif (ACC_ARCH_IA16 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0400))
+#elif (ACC_ARCH_I086 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0400))
 #  if (ACC_OS_WIN16) && (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
 #  else
 #    define acc_stackavail()  stackavail()
 #  endif
-#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#elif ((ACC_ARCH_I086 || ACC_ARCH_I386) && (ACC_CC_DMC || ACC_CC_SYMANTECC))
 #  define acc_stackavail()  stackavail()
-#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER >= 700))
+#elif ((ACC_ARCH_I086) && ACC_CC_MSC && (_MSC_VER >= 700))
 #  define acc_stackavail()  _stackavail()
-#elif ((ACC_ARCH_IA16) && ACC_CC_MSC)
+#elif ((ACC_ARCH_I086) && ACC_CC_MSC)
 #  define acc_stackavail()  stackavail()
-#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && ACC_CC_TURBOC && (__TURBOC__ >= 0x0450))
+#elif ((ACC_ARCH_I086 || ACC_ARCH_I386) && ACC_CC_TURBOC && (__TURBOC__ >= 0x0450))
 #  define acc_stackavail()  stackavail()
-#elif (ACC_ARCH_IA16 && ACC_CC_TURBOC && (__TURBOC__ >= 0x0400))
+#elif (ACC_ARCH_I086 && ACC_CC_TURBOC && (__TURBOC__ >= 0x0400))
    ACC_EXTERN_C size_t __cdecl stackavail(void);
 #  define acc_stackavail()  stackavail()
-#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_WATCOMC))
+#elif ((ACC_ARCH_I086 || ACC_ARCH_I386) && (ACC_CC_WATCOMC))
 #  define acc_stackavail()  stackavail()
-#elif (ACC_ARCH_IA16 && ACC_CC_ZORTECHC)
+#elif (ACC_ARCH_I086 && ACC_CC_ZORTECHC)
 #  define acc_stackavail()  _chkstack()
 #endif
 ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int);
@@ -2891,12 +3023,12 @@ ACCLIB_EXTERN(void, acc_set_be64) (acc_hvoid_p, acc_uint64l_t);
 ACCLIB_EXTERN(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p);
 ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #endif
-#if !defined(ACC_CONFIG_NO_UNALIGNED)
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(acc_int16e_t)
+#if !defined(ACC_CFG_NO_UNALIGNED)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && defined(acc_int16e_t)
 #  define ACC_GET_LE16(p)       (* (const acc_uint16e_t *) (p))
 #  define ACC_SET_LE16(p,v)     (* (acc_uint16e_t *) (p) = (acc_uint16e_t) (v))
 #endif
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(acc_int32e_t)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && defined(acc_int32e_t)
 #  define ACC_GET_LE32(p)       (* (const acc_uint32e_t *) (p))
 #  define ACC_SET_LE32(p,v)     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v))
 #endif
@@ -2996,7 +3128,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 #if defined(__ACC_CXX_DO_NEW)
 #elif (ACC_CC_NDPC || ACC_CC_PGI)
 #  define __ACC_CXX_DO_NEW          { return 0; }
-#elif ((ACC_CC_BORLANDC || ACC_CC_TURBOC) && ACC_ARCH_IA16)
+#elif ((ACC_CC_BORLANDC || ACC_CC_TURBOC) && ACC_ARCH_I086)
 #  define __ACC_CXX_DO_NEW          { return 0; }
 #else
 #  define __ACC_CXX_DO_NEW          ;
@@ -3028,7 +3160,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
-#  elif (ACC_CC_PATHSCALE)
+#  elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  elif (ACC_CC_PGI)
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
@@ -3094,10 +3226,10 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0530) && (__BORLANDC__ < 0x0550))
 #  pragma option push -w-osh
 #endif
-#if (ACC_0xffffffffL - ACC_UINT32L_C(4294967294) != 1)
+#if (ACC_0xffffffffL - ACC_UINT32_C(4294967294) != 1)
 #  error "preprocessor error 1"
 #endif
-#if (ACC_0xffffffffL - ACC_UINT32L_C(0xfffffffd) != 2)
+#if (ACC_0xffffffffL - ACC_UINT32_C(0xfffffffd) != 2)
 #  error "preprocessor error 2"
 #endif
 #define ACCCHK_VAL  1
@@ -3132,30 +3264,27 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 #  endif
 #endif
     ACCCHK_ASSERT(1 == 1)
-    ACCCHK_ASSERT(__ACC_INT_MAX(2) == 1)
-    ACCCHK_ASSERT(__ACC_INT_MAX(8) == 127)
-    ACCCHK_ASSERT(__ACC_INT_MAX(16) == 32767)
-    ACCCHK_ASSERT(__ACC_INT_MAX(32) == 2147483647L)
-#if (SIZEOF_LONG >= 8)
-    ACCCHK_ASSERT(__ACC_INT_MAX(64) == 9223372036854775807L)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,2) == 3)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,8) == 255)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,16) == 0xffffU)
+#if (SIZEOF_LONG >= 4)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,32) == 0xffffffffUL)
 #endif
-    ACCCHK_ASSERT(__ACC_UINT_MAX(2) == 3)
-    ACCCHK_ASSERT(__ACC_UINT_MAX(8) == 255)
-    ACCCHK_ASSERT(__ACC_UINT_MAX(16) == 0xffffU)
-    ACCCHK_ASSERT(__ACC_UINT_MAX(32) == 0xffffffffUL)
 #if (SIZEOF_LONG >= 8)
-    ACCCHK_ASSERT(__ACC_UINT_MAX(64) == 0xffffffffffffffffUL)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,64) == 0xffffffffffffffffUL)
 #endif
 #if !defined(ACC_BROKEN_INTEGRAL_PROMOTION)
-    ACCCHK_ASSERT(__ACC_UINT_MAX(__ACC_INT_BIT) == ~(0u))
-    ACCCHK_ASSERT(__ACC_UINT_MAX(__ACC_LONG_BIT) == ~(0ul))
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,SIZEOF_INT*8) == ~(0u))
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,SIZEOF_LONG*8) == ~(0ul))
 #endif
+    ACCCHK_ASSERT(((-1) >> 7) == -1)
+    ACCCHK_ASSERT(((1)  >> 7) == 0)
     ACCCHK_ASSERT_IS_SIGNED_T(signed char)
     ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned char)
     ACCCHK_ASSERT(sizeof(signed char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(unsigned char) == sizeof(char))
     ACCCHK_ASSERT(sizeof(char) == 1)
-#if (ACC_CC_CILLY)
+#if (ACC_CC_CILLY) && (!defined(__CILLY__) || (__CILLY__ < 0x010302L))
 #else
     ACCCHK_ASSERT(sizeof(char) == sizeof((char)0))
 #endif
@@ -3183,9 +3312,11 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT_IS_SIGNED_T(short)
     ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned short)
     ACCCHK_ASSERT(sizeof(short) == sizeof(unsigned short))
+#if !defined(ACC_ABI_I8LP16)
     ACCCHK_ASSERT(sizeof(short) >= 2)
+#endif
     ACCCHK_ASSERT(sizeof(short) >= sizeof(char))
-#if (ACC_CC_CILLY)
+#if (ACC_CC_CILLY) && (!defined(__CILLY__) || (__CILLY__ < 0x010302L))
 #else
     ACCCHK_ASSERT(sizeof(short) == sizeof((short)0))
 #endif
@@ -3195,7 +3326,9 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT_IS_SIGNED_T(int)
     ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned int)
     ACCCHK_ASSERT(sizeof(int) == sizeof(unsigned int))
+#if !defined(ACC_ABI_I8LP16)
     ACCCHK_ASSERT(sizeof(int) >= 2)
+#endif
     ACCCHK_ASSERT(sizeof(int) >= sizeof(short))
     ACCCHK_ASSERT(sizeof(int) == sizeof(0))
     ACCCHK_ASSERT(sizeof(int) == sizeof((int)0))
@@ -3206,7 +3339,9 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT_IS_SIGNED_T(long)
     ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned long)
     ACCCHK_ASSERT(sizeof(long) == sizeof(unsigned long))
+#if !defined(ACC_ABI_I8LP16)
     ACCCHK_ASSERT(sizeof(long) >= 4)
+#endif
     ACCCHK_ASSERT(sizeof(long) >= sizeof(int))
     ACCCHK_ASSERT(sizeof(long) == sizeof(0L))
     ACCCHK_ASSERT(sizeof(long) == sizeof((long)0))
@@ -3235,16 +3370,19 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(void*) >= sizeof(char*))
 #if (SIZEOF_VOID_P > 0)
     ACCCHK_ASSERT(sizeof(void*) == SIZEOF_VOID_P)
-#endif
-#if (SIZEOF_CHAR_P > 0)
-    ACCCHK_ASSERT(sizeof(char*) == SIZEOF_CHAR_P)
+    ACCCHK_ASSERT(sizeof(char*) == SIZEOF_VOID_P)
 #endif
 #if (ACC_HAVE_MM_HUGE_PTR)
     ACCCHK_ASSERT(4 == sizeof(void __huge*))
     ACCCHK_ASSERT(4 == sizeof(char __huge*))
 #endif
+#if defined(ACC_ABI_I8LP16)
+    ACCCHK_ASSERT((((1u  <<  7) + 1) >>  7) == 1)
+    ACCCHK_ASSERT((((1ul << 15) + 1) >> 15) == 1)
+#else
     ACCCHK_ASSERT((((1u  << 15) + 1) >> 15) == 1)
     ACCCHK_ASSERT((((1ul << 31) + 1) >> 31) == 1)
+#endif
 #if (ACC_CC_TURBOC && (__TURBOC__ < 0x0150))
 #else
     ACCCHK_ASSERT((1   << (8*SIZEOF_INT-1)) < 0)
@@ -3275,31 +3413,13 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(acc_int32e_t) == sizeof(acc_uint32e_t))
     ACCCHK_ASSERT_IS_SIGNED_T(acc_int32e_t)
     ACCCHK_ASSERT(((( (acc_int32e_t)1 << 30) + 1) >> 30) == 1)
-    ACCCHK_ASSERT(((( ACC_INT32E_C(1) << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32e_t)
     ACCCHK_ASSERT(((( (acc_uint32e_t)1 << 31) + 1) >> 31) == 1)
-    ACCCHK_ASSERT(((( ACC_UINT32E_C(1) << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((acc_uint32e_t)(~(acc_uint32e_t)0ul) >> 31) == 1)
     ACCCHK_ASSERT( (acc_int32e_t) (1 + ~(acc_int32e_t)0) == 0)
 #if defined(ACCCHK_CONFIG_PEDANTIC)
     ACCCHK_ASSERT( (acc_uint32e_t)(1 + ~(acc_uint32e_t)0) == 0)
 #endif
-#if (SIZEOF_ACC_INT32E_T < SIZEOF_INT)
-    ACCCHK_ASSERT(sizeof(ACC_INT32E_C(0)) == sizeof(int))
-    ACCCHK_ASSERT(sizeof(ACC_UINT32E_C(0)) == sizeof(int))
-    ACCCHK_ASSERT((ACC_INT32E_C(1)  << (8*SIZEOF_ACC_INT32E_T-1)) > 0)
-#else
-    ACCCHK_ASSERT(sizeof(ACC_INT32E_C(0)) == SIZEOF_ACC_INT32E_T)
-    ACCCHK_ASSERT(sizeof(ACC_UINT32E_C(0)) == SIZEOF_ACC_INT32E_T)
-    ACCCHK_ASSERT((ACC_INT32E_C(1)  << (8*SIZEOF_ACC_INT32E_T-1)) < 0)
-#endif
-    ACCCHK_ASSERT((ACC_UINT32E_C(1) << (8*SIZEOF_ACC_INT32E_T-1)) > 0)
-    ACCCHK_ASSERT((ACC_INT32E_C(1)  << (int)(8*sizeof(ACC_INT32E_C(1))-1)) < 0)
-    ACCCHK_ASSERT((ACC_UINT32E_C(1) << (int)(8*sizeof(ACC_UINT32E_C(1))-1)) > 0)
-    ACCCHK_ASSERT(ACC_INT32E_C(2147483647)      > 0)
-    ACCCHK_ASSERT(ACC_INT32E_C(-2147483647) -1  < 0)
-    ACCCHK_ASSERT(ACC_UINT32E_C(4294967295)     > 0)
-    ACCCHK_ASSERT(ACC_UINT32E_C(4294967295) == ACC_0xffffffffL)
 #endif
 #if defined(acc_int32e_t)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) >= sizeof(acc_int32e_t))
@@ -3310,26 +3430,8 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == sizeof(acc_uint32l_t))
     ACCCHK_ASSERT_IS_SIGNED_T(acc_int32l_t)
     ACCCHK_ASSERT(((( (acc_int32l_t)1 << 30) + 1) >> 30) == 1)
-    ACCCHK_ASSERT(((( ACC_INT32L_C(1) << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32l_t)
     ACCCHK_ASSERT(((( (acc_uint32l_t)1 << 31) + 1) >> 31) == 1)
-    ACCCHK_ASSERT(((( ACC_UINT32L_C(1) << 31) + 1) >> 31) == 1)
-#if (SIZEOF_ACC_INT32L_T < SIZEOF_INT)
-    ACCCHK_ASSERT(sizeof(ACC_INT32L_C(0)) == sizeof(int))
-    ACCCHK_ASSERT(sizeof(ACC_UINT32L_C(0)) == sizeof(int))
-    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (8*SIZEOF_ACC_INT32L_T-1)) > 0)
-#else
-    ACCCHK_ASSERT(sizeof(ACC_INT32L_C(0)) == SIZEOF_ACC_INT32L_T)
-    ACCCHK_ASSERT(sizeof(ACC_UINT32L_C(0)) == SIZEOF_ACC_INT32L_T)
-    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (8*SIZEOF_ACC_INT32L_T-1)) < 0)
-#endif
-    ACCCHK_ASSERT((ACC_UINT32L_C(1) << (8*SIZEOF_ACC_INT32L_T-1)) > 0)
-    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (int)(8*sizeof(ACC_INT32L_C(1))-1)) < 0)
-    ACCCHK_ASSERT((ACC_UINT32L_C(1) << (int)(8*sizeof(ACC_UINT32L_C(1))-1)) > 0)
-    ACCCHK_ASSERT(ACC_INT32L_C(2147483647)      > 0)
-    ACCCHK_ASSERT(ACC_INT32L_C(-2147483647) -1  < 0)
-    ACCCHK_ASSERT(ACC_UINT32L_C(4294967295)     > 0)
-    ACCCHK_ASSERT(ACC_UINT32L_C(4294967295) == ACC_0xffffffffL)
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(int))
 #if defined(acc_int32e_t)
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(acc_int32e_t))
@@ -3343,25 +3445,8 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == sizeof(acc_uint32f_t))
     ACCCHK_ASSERT_IS_SIGNED_T(acc_int32f_t)
     ACCCHK_ASSERT(((( (acc_int32f_t)1 << 30) + 1) >> 30) == 1)
-    ACCCHK_ASSERT(((( ACC_INT32F_C(1) << 30) + 1) >> 30) == 1)
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint32f_t)
     ACCCHK_ASSERT(((( (acc_uint32f_t)1 << 31) + 1) >> 31) == 1)
-    ACCCHK_ASSERT(((( ACC_UINT32F_C(1) << 31) + 1) >> 31) == 1)
-#if (SIZEOF_ACC_INT32F_T < SIZEOF_INT)
-    ACCCHK_ASSERT(sizeof(ACC_INT32F_C(0)) == sizeof(int))
-    ACCCHK_ASSERT(sizeof(ACC_UINT32F_C(0)) == sizeof(int))
-#else
-    ACCCHK_ASSERT(sizeof(ACC_INT32F_C(0)) == SIZEOF_ACC_INT32F_T)
-    ACCCHK_ASSERT(sizeof(ACC_UINT32F_C(0)) == SIZEOF_ACC_INT32F_T)
-#endif
-    ACCCHK_ASSERT((ACC_INT32F_C(1)  << (8*SIZEOF_ACC_INT32F_T-1)) < 0)
-    ACCCHK_ASSERT((ACC_UINT32F_C(1) << (8*SIZEOF_ACC_INT32F_T-1)) > 0)
-    ACCCHK_ASSERT((ACC_INT32F_C(1)  << (int)(8*sizeof(ACC_INT32F_C(1))-1)) < 0)
-    ACCCHK_ASSERT((ACC_UINT32F_C(1) << (int)(8*sizeof(ACC_UINT32F_C(1))-1)) > 0)
-    ACCCHK_ASSERT(ACC_INT32F_C(2147483647)      > 0)
-    ACCCHK_ASSERT(ACC_INT32F_C(-2147483647) -1  < 0)
-    ACCCHK_ASSERT(ACC_UINT32F_C(4294967295)     > 0)
-    ACCCHK_ASSERT(ACC_UINT32F_C(4294967295) == ACC_0xffffffffL)
 #if defined(acc_int64l_t)
     ACCCHK_ASSERT(sizeof(acc_int64l_t) >= 8)
     ACCCHK_ASSERT(sizeof(acc_int64l_t) == SIZEOF_ACC_INT64L_T)
@@ -3369,42 +3454,45 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(acc_int64l_t) == sizeof(acc_uint64l_t))
     ACCCHK_ASSERT_IS_SIGNED_T(acc_int64l_t)
     ACCCHK_ASSERT(((( (acc_int64l_t)1 << 62) + 1) >> 62) == 1)
-    ACCCHK_ASSERT(((( ACC_INT64L_C(1) << 62) + 1) >> 62) == 1)
+    ACCCHK_ASSERT(((( ACC_INT64_C(1) << 62) + 1) >> 62) == 1)
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
 #else
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint64l_t)
-    ACCCHK_ASSERT(ACC_UINT64L_C(18446744073709551615)     > 0)
+    ACCCHK_ASSERT(ACC_UINT64_C(18446744073709551615)     > 0)
 #endif
     ACCCHK_ASSERT(((( (acc_uint64l_t)1 << 63) + 1) >> 63) == 1)
-    ACCCHK_ASSERT(((( ACC_UINT64L_C(1) << 63) + 1) >> 63) == 1)
-#if defined(ACCCHK_CONFIG_PEDANTIC)
-#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0560))
-#elif (SIZEOF_ACC_INT64L_T < SIZEOF_INT)
-    ACCCHK_ASSERT(sizeof(ACC_INT64L_C(0)) == sizeof(int))
-    ACCCHK_ASSERT(sizeof(ACC_UINT64L_C(0)) == sizeof(int))
-#else
-    ACCCHK_ASSERT(sizeof(ACC_INT64L_C(0)) == SIZEOF_ACC_INT64L_T)
-    ACCCHK_ASSERT(sizeof(ACC_UINT64L_C(0)) == SIZEOF_ACC_INT64L_T)
-#endif
-#endif
-    ACCCHK_ASSERT((ACC_INT64L_C(1)  << (8*SIZEOF_ACC_INT64L_T-1)) < 0)
-    ACCCHK_ASSERT((ACC_UINT64L_C(1) << (8*SIZEOF_ACC_INT64L_T-1)) > 0)
+    ACCCHK_ASSERT(((( ACC_UINT64_C(1) << 63) + 1) >> 63) == 1)
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020600ul))
-    ACCCHK_ASSERT(ACC_INT64L_C(9223372036854775807)       > ACC_INT64L_C(0))
+    ACCCHK_ASSERT(ACC_INT64_C(9223372036854775807)       > ACC_INT64_C(0))
 #else
-    ACCCHK_ASSERT(ACC_INT64L_C(9223372036854775807)       > 0)
+    ACCCHK_ASSERT(ACC_INT64_C(9223372036854775807)       > 0)
 #endif
-    ACCCHK_ASSERT(ACC_INT64L_C(-9223372036854775807) - 1  < 0)
-    ACCCHK_ASSERT( ACC_INT64L_C(9223372036854775807) % 2147483629l  == 721)
-    ACCCHK_ASSERT( ACC_INT64L_C(9223372036854775807) % 2147483647l  == 1)
-    ACCCHK_ASSERT(ACC_UINT64L_C(9223372036854775807) % 2147483629ul == 721)
-    ACCCHK_ASSERT(ACC_UINT64L_C(9223372036854775807) % 2147483647ul == 1)
+    ACCCHK_ASSERT(ACC_INT64_C(-9223372036854775807) - 1  < 0)
+    ACCCHK_ASSERT( ACC_INT64_C(9223372036854775807) % ACC_INT32_C(2147483629)  == 721)
+    ACCCHK_ASSERT( ACC_INT64_C(9223372036854775807) % ACC_INT32_C(2147483647)  == 1)
+    ACCCHK_ASSERT(ACC_UINT64_C(9223372036854775807) % ACC_UINT32_C(2147483629) == 721)
+    ACCCHK_ASSERT(ACC_UINT64_C(9223372036854775807) % ACC_UINT32_C(2147483647) == 1)
 #endif
     ACCCHK_ASSERT_IS_SIGNED_T(acc_intptr_t)
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uintptr_t)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) >= sizeof(void *))
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == SIZEOF_ACC_INTPTR_T)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(acc_uintptr_t))
+#if defined(ACC_INT16_C)
+    ACCCHK_ASSERT(sizeof(ACC_INT16_C(0)) >= 2)
+    ACCCHK_ASSERT(sizeof(ACC_UINT16_C(0)) >= 2)
+    ACCCHK_ASSERT((ACC_UINT16_C(0xffff) >> 15) == 1)
+#endif
+#if defined(ACC_INT32_C)
+    ACCCHK_ASSERT(sizeof(ACC_INT32_C(0)) >= 4)
+    ACCCHK_ASSERT(sizeof(ACC_UINT32_C(0)) >= 4)
+    ACCCHK_ASSERT((ACC_UINT32_C(0xffffffff) >> 31) == 1)
+#endif
+#if defined(ACC_INT64_C)
+    ACCCHK_ASSERT(sizeof(ACC_INT64_C(0)) >= 8)
+    ACCCHK_ASSERT(sizeof(ACC_UINT64_C(0)) >= 8)
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) >> 63) == 1)
+#endif
 #if (ACC_MM_FLAT)
 #if 0
     ACCCHK_ASSERT(sizeof(void*) == sizeof(void (*)(void)))
@@ -3421,25 +3509,23 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 #elif (ACC_MM_MEDIUM || ACC_MM_LARGE || ACC_MM_HUGE)
     ACCCHK_ASSERT(sizeof(void (*)(void)) == 4)
 #endif
-#if (ACC_MM_ILP32)
+#if (ACC_ABI_ILP32)
     ACCCHK_ASSERT(sizeof(int) == 4)
     ACCCHK_ASSERT(sizeof(long) == 4)
     ACCCHK_ASSERT(sizeof(void*) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 32)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_MM_ILP64)
+#if (ACC_ABI_ILP64)
     ACCCHK_ASSERT(sizeof(int) == 8)
     ACCCHK_ASSERT(sizeof(long) == 8)
     ACCCHK_ASSERT(sizeof(void*) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_MM_IP32L64)
+#if (ACC_ABI_IP32L64)
     ACCCHK_ASSERT(sizeof(int) == 4)
     ACCCHK_ASSERT(sizeof(long) == 8)
     ACCCHK_ASSERT(sizeof(void*) == 4)
@@ -3447,58 +3533,51 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_MM_LLP64)
+#if (ACC_ABI_LLP64)
     ACCCHK_ASSERT(sizeof(int) == 4)
     ACCCHK_ASSERT(sizeof(long) == 4)
     ACCCHK_ASSERT(sizeof(void*) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_MM_LP32)
+#if (ACC_ABI_LP32)
     ACCCHK_ASSERT(sizeof(int) == 2)
     ACCCHK_ASSERT(sizeof(long) == 4)
     ACCCHK_ASSERT(sizeof(void*) == 4)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_MM_LP64)
+#if (ACC_ABI_LP64)
     ACCCHK_ASSERT(sizeof(int) == 4)
     ACCCHK_ASSERT(sizeof(long) == 8)
     ACCCHK_ASSERT(sizeof(void*) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
-#if (ACC_ARCH_IA16)
+#if (ACC_ARCH_I086)
     ACCCHK_ASSERT(sizeof(size_t) == 2)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 16)
-#elif (ACC_ARCH_IA32 || ACC_ARCH_M68K)
+#elif (ACC_ARCH_I386 || ACC_ARCH_M68K)
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 32)
 #elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)
     ACCCHK_ASSERT(sizeof(size_t) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
 #endif
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
     ACCCHK_ASSERT(sizeof(void (*)(void)) == 4)
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 32)
 #elif (ACC_OS_WIN64)
     ACCCHK_ASSERT(sizeof(size_t) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
     ACCCHK_ASSERT(sizeof(void (*)(void)) == 8)
-    ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
 #endif
 #if (ACC_CC_NDPC)
-#else
+#elif (SIZEOF_INT > 1)
     ACCCHK_ASSERT( (int) ((unsigned char) ((signed char) -1)) == 255)
 #endif
 #if (ACC_CC_KEILC)
@@ -3555,7 +3634,7 @@ ACCLIB_PUBLIC(void, acc_set_be32) (acc_hvoid_p p, acc_uint32l_t v)
 }
 ACCLIB_PUBLIC(unsigned, acc_get_le16) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int16e_t)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int16e_t)
     return (* (const acc_uint16e_t *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -3569,7 +3648,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le24) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int32e_t)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int32e_t)
     return (* (const acc_uint32e_t *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -3578,7 +3657,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(void, acc_set_le16) (acc_hvoid_p p, unsigned v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int16e_t)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int16e_t)
     (* (acc_uint16e_t *) (p) = (acc_uint16e_t) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -3595,7 +3674,7 @@ ACCLIB_PUBLIC(void, acc_set_le24) (acc_hvoid_p p, acc_uint32l_t v)
 }
 ACCLIB_PUBLIC(void, acc_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int32e_t)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int32e_t)
     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -3609,7 +3688,7 @@ ACCLIB_PUBLIC(void, acc_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 ACCLIB_PUBLIC(acc_uint64l_t, acc_get_be64) (const acc_hvoid_p p)
 {
     const acc_hbyte_p b = (const acc_hbyte_p) p;
-#if (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
+#if (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     return ((acc_uint64l_t)b[7]) | ((acc_uint64l_t)b[6] << 8) | ((acc_uint64l_t)b[5] << 16) | ((acc_uint64l_t)b[4] << 24) | ((acc_uint64l_t)b[3] << 32) | ((acc_uint64l_t)b[2] << 40) | ((acc_uint64l_t)b[1] << 48) | ((acc_uint64l_t)b[0] << 56);
 #else
     acc_uint32l_t v0, v1;
@@ -3622,7 +3701,7 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_get_be64) (const acc_hvoid_p p)
 ACCLIB_PUBLIC(void, acc_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
 {
     acc_hbyte_p b = (acc_hbyte_p) p;
-#if (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
+#if (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     b[7] = (unsigned char) ((v >>  0) & 0xff);
     b[6] = (unsigned char) ((v >>  8) & 0xff);
     b[5] = (unsigned char) ((v >> 16) & 0xff);
@@ -3649,12 +3728,12 @@ ACCLIB_PUBLIC(void, acc_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
 #if defined(acc_int64l_t)
 ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64) && !defined(ACC_CONFIG_NO_UNALIGNED)
+#if (ACC_ARCH_AMD64) && !defined(ACC_CFG_NO_UNALIGNED)
     return (* (const acc_uint64l_t *) (p));
-#elif (ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int32e_t)
+#elif (ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int32e_t)
     const acc_uint32e_t* b = (const acc_uint32e_t*) p;
     return ((acc_uint64l_t)b[0]) | ((acc_uint64l_t)b[1] << 32);
-#elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
+#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     const acc_hbyte_p b = (const acc_hbyte_p) p;
     return ((acc_uint64l_t)b[0]) | ((acc_uint64l_t)b[1] << 8) | ((acc_uint64l_t)b[2] << 16) | ((acc_uint64l_t)b[3] << 24) | ((acc_uint64l_t)b[4] << 32) | ((acc_uint64l_t)b[5] << 40) | ((acc_uint64l_t)b[6] << 48) | ((acc_uint64l_t)b[7] << 56);
 #else
@@ -3668,12 +3747,12 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(void, acc_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 {
-#if (ACC_ARCH_AMD64) && !defined(ACC_CONFIG_NO_UNALIGNED)
+#if (ACC_ARCH_AMD64) && !defined(ACC_CFG_NO_UNALIGNED)
     (* (acc_uint64l_t *) (p)) = v;
-#elif (ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED) && defined(acc_int32e_t)
+#elif (ACC_ARCH_I386) && !defined(ACC_CFG_NO_UNALIGNED) && defined(acc_int32e_t)
     (((acc_uint32e_t *)(p))[0] = (acc_uint32e_t) (v >>  0));
     (((acc_uint32e_t *)(p))[1] = (acc_uint32e_t) (v >> 32));
-#elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
+#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     acc_hbyte_p b = (acc_hbyte_p) p;
     b[0] = (unsigned char) ((v >>  0) & 0xff);
     b[1] = (unsigned char) ((v >>  8) & 0xff);
@@ -3785,51 +3864,51 @@ ACCLIB_PUBLIC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len)
 #endif
 ACCLIB_PUBLIC(void, acc_srand31) (acc_rand31_p r, acc_uint32l_t seed)
 {
-    r->seed = seed & ACC_UINT32L_C(0xffffffff);
+    r->seed = seed & ACC_UINT32_C(0xffffffff);
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand31) (acc_rand31_p r)
 {
-    r->seed = r->seed * ACC_UINT32L_C(1103515245) + 12345;
-    r->seed &= ACC_UINT32L_C(0x7fffffff);
+    r->seed = r->seed * ACC_UINT32_C(1103515245) + 12345;
+    r->seed &= ACC_UINT32_C(0x7fffffff);
     return r->seed;
 }
 #if defined(acc_int64l_t)
 ACCLIB_PUBLIC(void, acc_srand48) (acc_rand48_p r, acc_uint32l_t seed)
 {
-    r->seed = seed & ACC_UINT32L_C(0xffffffff);
+    r->seed = seed & ACC_UINT32_C(0xffffffff);
     r->seed <<= 16; r->seed |= 0x330e;
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48) (acc_rand48_p r)
 {
-    r->seed = r->seed * ACC_UINT64L_C(25214903917) + 11;
-    r->seed &= ACC_UINT64L_C(0xffffffffffff);
+    r->seed = r->seed * ACC_UINT64_C(25214903917) + 11;
+    r->seed &= ACC_UINT64_C(0xffffffffffff);
     return (acc_uint32l_t) (r->seed >> 17);
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48_r32) (acc_rand48_p r)
 {
-    r->seed = r->seed * ACC_UINT64L_C(25214903917) + 11;
-    r->seed &= ACC_UINT64L_C(0xffffffffffff);
+    r->seed = r->seed * ACC_UINT64_C(25214903917) + 11;
+    r->seed &= ACC_UINT64_C(0xffffffffffff);
     return (acc_uint32l_t) (r->seed >> 16);
 }
 #endif
 #if defined(acc_int64l_t)
 ACCLIB_PUBLIC(void, acc_srand64) (acc_rand64_p r, acc_uint64l_t seed)
 {
-    r->seed = seed & ACC_UINT64L_C(0xffffffffffffffff);
+    r->seed = seed & ACC_UINT64_C(0xffffffffffffffff);
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64) (acc_rand64_p r)
 {
-    r->seed = r->seed * ACC_UINT64L_C(6364136223846793005) + 1;
-#if (SIZEOF_ACC_INT64L_T > 8)
-    r->seed &= ACC_UINT64L_C(0xffffffffffffffff);
+    r->seed = r->seed * ACC_UINT64_C(6364136223846793005) + 1;
+#if (ACC_SIZEOF_ACC_INT64L_T > 8)
+    r->seed &= ACC_UINT64_C(0xffffffffffffffff);
 #endif
     return (acc_uint32l_t) (r->seed >> 33);
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64_r32) (acc_rand64_p r)
 {
-    r->seed = r->seed * ACC_UINT64L_C(6364136223846793005) + 1;
-#if (SIZEOF_ACC_INT64L_T > 8)
-    r->seed &= ACC_UINT64L_C(0xffffffffffffffff);
+    r->seed = r->seed * ACC_UINT64_C(6364136223846793005) + 1;
+#if (ACC_SIZEOF_ACC_INT64L_T > 8)
+    r->seed &= ACC_UINT64_C(0xffffffffffffffff);
 #endif
     return (acc_uint32l_t) (r->seed >> 32);
 }
@@ -3838,9 +3917,9 @@ ACCLIB_PUBLIC(void, acc_srandmt) (acc_randmt_p r, acc_uint32l_t seed)
 {
     unsigned i = 0;
     do {
-        r->s[i++] = (seed &= ACC_UINT32L_C(0xffffffff));
+        r->s[i++] = (seed &= ACC_UINT32_C(0xffffffff));
         seed ^= seed >> 30;
-        seed = seed * ACC_UINT32L_C(0x6c078965) + i;
+        seed = seed * ACC_UINT32_C(0x6c078965) + i;
     } while (i != 624);
     r->n = i;
 }
@@ -3856,15 +3935,15 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p r)
         r->n = 0;
         do {
             j = i - 623; if (j < 0) j += 624;
-            v = (r->s[i] & ACC_UINT32L_C(0x80000000)) ^ (r->s[j] & ACC_UINT32L_C(0x7fffffff));
+            v = (r->s[i] & ACC_UINT32_C(0x80000000)) ^ (r->s[j] & ACC_UINT32_C(0x7fffffff));
             j = i - 227; if (j < 0) j += 624;
             r->s[i] = r->s[j] ^ (v >> 1);
-            if (v & 1) r->s[i] ^= ACC_UINT32L_C(0x9908b0df);
+            if (v & 1) r->s[i] ^= ACC_UINT32_C(0x9908b0df);
         } while (++i != 624);
     }
     v = r->s[r->n++];
-    v ^= v >> 11; v ^= (v & ACC_UINT32L_C(0x013a58ad)) << 7;
-    v ^= (v & ACC_UINT32L_C(0x0001df8c)) << 15; v ^= v >> 18;
+    v ^= v >> 11; v ^= (v & ACC_UINT32_C(0x013a58ad)) << 7;
+    v ^= (v & ACC_UINT32_C(0x0001df8c)) << 15; v ^= v >> 18;
     return v;
 }
 #endif
@@ -3879,12 +3958,12 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p r)
 #  pragma warn(push)
 #  pragma warn(disable:2007)
 #endif
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_ASM_SYNTAX_GNUC)
+#if ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
 #if (ACC_ARCH_AMD64)
 #  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "cc", "memory", "rax", "rdx"
-#elif (ACC_ARCH_IA32 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+#elif (ACC_ARCH_I386 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
 #  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "ax", "dx"
-#elif (ACC_ARCH_IA32 && ACC_CC_INTELC)
+#elif (ACC_ARCH_I386 && ACC_CC_INTELC)
 #  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "memory", "eax", "edx"
 #else
 #  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "cc", "memory", "eax", "edx"
@@ -3892,14 +3971,14 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p r)
 #endif
 ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
 {
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_ASM_SYNTAX_GNUC)
+#if ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
     __asm__ __volatile__(
         "clc \n" ".byte 0x0f, 0x31\n"
         "movl %%eax,(%0)\n" "movl %%edx,4(%0)\n"
         __ACCLIB_RDTSC_REGS
     );
     return 0;
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_MSC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
     ACC_UNUSED(t);
     __asm {
         mov ecx, t
@@ -3920,14 +3999,14 @@ ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
 }
 ACCLIB_PUBLIC(int, acc_tsc_read_add) (acc_uint32e_t* t)
 {
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_ASM_SYNTAX_GNUC)
+#if ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
     __asm__ __volatile__(
         "clc \n" ".byte 0x0f, 0x31\n"
         "addl %%eax,(%0)\n" "adcl $0,%%edx\n" "addl %%edx,4(%0)\n"
         __ACCLIB_RDTSC_REGS
     );
     return 0;
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_MSC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
     ACC_UNUSED(t);
     __asm {
         mov ecx, t
@@ -4656,14 +4735,14 @@ ACCLIB_PUBLIC(void, acc_debug_break) (void)
 {
 #if (ACC_OS_WIN16)
     DebugBreak();
-#elif (ACC_ARCH_IA16)
+#elif (ACC_ARCH_I086)
 #elif (ACC_OS_WIN64) && (ACC_HAVE_WINDOWS_H)
     DebugBreak();
-#elif defined(ACC_CONFIG_NO_INLINE_ASM) && (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
+#elif defined(ACC_CFG_NO_INLINE_ASM) && (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
     DebugBreak();
-#elif ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_ASM_SYNTAX_GNUC)
+#elif ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
     __asm__ __volatile__("int $3\n" : : : __ACC_ASM_CLOBBER);
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_MSC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
     __asm { int 3 }
 #elif (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
     DebugBreak();
@@ -4677,10 +4756,10 @@ ACCLIB_PUBLIC(void, acc_debug_nop) (void)
 ACCLIB_PUBLIC(int, acc_debug_align_check_query) (void)
 {
     int r;
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_ASM_SYNTAX_GNUC)
+#if ((ACC_ARCH_AMD64 || ACC_ARCH_I386) && ACC_ASM_SYNTAX_GNUC)
     __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
     r = (r >> 18) & 1;
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_MSC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
     __asm {
         pushf
         pop eax
@@ -4702,14 +4781,14 @@ ACCLIB_PUBLIC(int, acc_debug_align_check_enable) (int v)
         __asm__ __volatile__("pushf\n andl $-262145,(%%rsp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     }
     r = 0;
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_GNUC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_GNUC)
     if (v) {
         __asm__ __volatile__("pushf\n orl $262144,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     } else {
         __asm__ __volatile__("pushf\n andl $-262145,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     }
     r = 0;
-#elif (ACC_ARCH_IA32 && ACC_ASM_SYNTAX_MSC)
+#elif (ACC_ARCH_I386 && ACC_ASM_SYNTAX_MSC)
     if (v) { __asm {
         pushf
         or dword ptr [esp],262144
@@ -4761,7 +4840,7 @@ ACCLIB_PUBLIC(void, acc_wildargv) (int* argc, char*** argv)
 #define __ACCLIB_HAVE_ACC_WILDARGV 1
 ACCLIB_PUBLIC(void, acc_wildargv) (int* argc, char*** argv)
 {
-#if 1 && (ACC_ARCH_IA16PM)
+#if 1 && (ACC_ARCH_I086PM)
     if (ACC_MM_AHSHIFT != 3) { exit(1); }
 #endif
     ACC_UNUSED(argc); ACC_UNUSED(argv);

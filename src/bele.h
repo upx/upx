@@ -346,19 +346,19 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
-#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_GNUC >= 0x030200)
+#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
    typedef acc_uint32e_t  LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
-#if 0 && (ACC_ARCH_IA32) && (ACC_CC_INTELC)
+#if 0 && (ACC_ARCH_I386) && (ACC_CC_INTELC)
    typedef __declspec(align(1)) unsigned short LE16_unaligned;
    typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
-#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
+#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
    typedef __declspec(align(1)) unsigned short LE16_unaligned;
    typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
 #  define LE16      LE16_unaligned

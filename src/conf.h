@@ -295,7 +295,7 @@
 
 #undef __attribute_packed
 #if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
-#  if (1 && (ACC_ARCH_IA32))
+#  if (1 && (ACC_ARCH_I386))
 #    define __attribute_packed
 #  else
 #    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))

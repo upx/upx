@@ -115,7 +115,7 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
     unsigned size = uncompressed_size + extra;
 //    size += 512;   // 512 safety bytes
     // INFO: 3 bytes are the allowed overrun for the i386 asm_fast decompressors
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_I386)
     size += 3;
 #endif
     alloc(size);
