@@ -47,7 +47,7 @@ public:
     void free();
 
     const unsigned char *getBuf()     const { return ptr; }
-    unsigned getSize() const ;
+    unsigned getSize() const;
 
     operator       unsigned char * ()       { return ptr; }
     //operator const unsigned char * () const { return ptr; }
