@@ -25,6 +25,7 @@ The main news since 1.25 are:
   - slightly better compression using the new NRV2E algorithm
   - new options for compression tuining (e.g. `--brute')
   - support for bootable Linux kernels ("vmlinuz/386")
+  - support for Linux kernel building  ("vmlinux/386")
   - direct Linux ELF-to-memory decompression ("linux/elf386") and
     shell-to-memory decompression ("linux/sh386")
   - support for playstation exes ("ps1/exe")
