@@ -34,6 +34,8 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 
+#define PT_LOAD     Elf_LE32_Phdr::PT_LOAD
+
 
 /*************************************************************************
 // linux/386 (generic "execve" format)
@@ -85,7 +87,7 @@ int PackLinuxI386::getLoaderPrefixSize() const
 
 
 /*************************************************************************
-//
+// some ELF utitlity functions
 **************************************************************************/
 
 // basic check of an Linux ELF Ehdr
@@ -112,6 +114,24 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
     return 0;
 }
 
+
+off_t PackLinuxI386::getbrk(const Elf_LE32_Phdr *phdr, int e_phnum) const
+{
+    off_t brka = 0;
+    for (int j = 0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD == phdr->p_type) {
+            off_t b = phdr->p_vaddr + phdr->p_memsz;
+            if (b > brka)
+                brka = b;
+        }
+    }
+    return brka;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
 
 bool PackLinuxI386::canPack()
 {
@@ -225,7 +245,7 @@ void PackLinuxI386::patchLoaderChecksum()
 void PackLinuxI386::updateLoader(OutputFile *fo)
 {
 #define PAGE_MASK (~0<<12)
-    Elf_LE32_Ehdr *ehdr = (Elf_LE32_Ehdr *)(unsigned char *)loader;
+    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(unsigned char *)loader;
     ehdr->e_phnum = 2;
 
     // The first Phdr maps the stub (instructions, data, bss) rwx.
@@ -237,7 +257,7 @@ void PackLinuxI386::updateLoader(OutputFile *fo)
     phdro->p_offset = lsize;
     phdro->p_paddr = phdro->p_vaddr = 0x00400000 + (lsize &~ PAGE_MASK);
     phdro->p_memsz = phdro->p_filesz = fo->getBytesWritten() - lsize;
-    phdro->p_flags = PF_R;
+    phdro->p_flags = phdro->PF_R;
     phdro->p_align = -PAGE_MASK;
 
     patchLoaderChecksum();

@@ -65,18 +65,19 @@ struct Elf_LE32_Phdr
     LE32 p_memsz;               /* Segment size in memory */
     LE32 p_flags;               /* Segment flags */
     LE32 p_align;               /* Segment alignment */
+
+    // Values for p_type
+    enum { PT_LOAD = 1 };       /* Loadable program segment */
+
+    // Values for p_flags
+    enum { PF_X = (1 << 0) };   /* Segment is executable */
+    enum { PF_W = (1 << 1) };   /* Segment is writable */
+    enum { PF_R = (1 << 2) };   /* Segment is readable */
 };
 
 
-// Values for p_type
-#define PT_LOAD     1           /* Loadable program segment */
-
-// Values for p_flags
-#define PF_X        (1 << 0)    /* Segment is executable */
-#define PF_W        (1 << 1)    /* Segment is writable */
-#define PF_R        (1 << 2)    /* Segment is readable */
-
 #endif /* already included */
+
 
 /*
 vi:ts=4:et

@@ -39,19 +39,25 @@
 #include "p_lx_exc.h"
 #include "p_lx_sh.h"
 
+#define PT_LOAD     Elf_LE32_Phdr::PT_LOAD
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
 static const
 #include "stub/l_sh_n2b.h"
 static const
 #include "stub/l_sh_n2d.h"
 
-PackLinuxI386sh::~PackLinuxI386sh()
+
+PackLinuxI386sh::PackLinuxI386sh(InputFile *f) :
+    super(f), o_shname(0), l_shname(0)
 {
 }
 
-PackLinuxI386sh::PackLinuxI386sh(InputFile *f)
-    :super(f)
-    ,o_shname(0)
-    ,l_shname(0)
+PackLinuxI386sh::~PackLinuxI386sh()
 {
 }
 
@@ -74,21 +80,6 @@ int PackLinuxI386sh::getLoaderSize() const
     if (M_IS_NRV2D(opt->method))
         return sizeof(linux_i386sh_nrv2d_loader);
     return 0;
-}
-
-
-static inline off_t max_off_t(off_t a, off_t b)
-{
-    return a > b ? a : b;
-}
-
-static off_t getbrk(Elf_LE32_Phdr const *phdr, int e_phnum)
-{
-    off_t brka = 0;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) if (PT_LOAD==phdr->p_type) {
-        brka = max_off_t(brka, phdr->p_vaddr + phdr->p_memsz);
-    }
-    return brka;
 }
 
 

@@ -39,21 +39,27 @@
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
 
+#define PT_LOAD     Elf_LE32_Phdr::PT_LOAD
+
+
+/*************************************************************************
+//
+**************************************************************************/
 
 static const
 #include "stub/l_le_n2b.h"
 static const
 #include "stub/l_le_n2d.h"
 
+
+PackLinuxI386elf::PackLinuxI386elf(InputFile *f) :
+    super(f), phdri(NULL)
+{
+}
+
 PackLinuxI386elf::~PackLinuxI386elf()
 {
     delete[] phdri;
-}
-
-PackLinuxI386elf::PackLinuxI386elf(InputFile *f)
-    :super(f)
-    ,phdri(NULL)
-{
 }
 
 const upx_byte *PackLinuxI386elf::getLoader() const
@@ -75,26 +81,6 @@ int PackLinuxI386elf::getLoaderSize() const
     if (M_IS_NRV2D(opt->method))
         return sizeof(linux_i386elf_nrv2d_loader);
     return 0;
-}
-
-
-static inline off_t min_off_t(off_t a, off_t b)
-{
-    return a < b ? a : b;
-}
-
-static inline off_t max_off_t(off_t a, off_t b)
-{
-    return a > b ? a : b;
-}
-
-static off_t getbrk(Elf_LE32_Phdr const *phdr, int e_phnum)
-{
-    off_t brka = 0;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) if (PT_LOAD==phdr->p_type) {
-        brka = max_off_t(brka, phdr->p_vaddr + phdr->p_memsz);
-    }
-    return brka;
 }
 
 
@@ -165,7 +151,9 @@ void PackLinuxI386elf::patchLoader()
 
 bool PackLinuxI386elf::canPack()
 {
-    unsigned char buf[sizeof(Elf_LE32_Ehdr) + 16*sizeof(Elf_LE32_Phdr)];
+    unsigned char buf[sizeof(Elf_LE32_Ehdr) + 14*sizeof(Elf_LE32_Phdr)];
+    assert(sizeof(buf) <= 512);
+
     exetype = 0;
 
     // FIXME: add special checks for uncompresed "vmlinux" kernel
@@ -181,20 +169,20 @@ bool PackLinuxI386elf::canPack()
 
     // additional requirements for linux/elf386
     if (ehdr->e_ehsize != sizeof(*ehdr)) {
-        throwCantPack("invalid Ehdr e_ehsize");
+        throwCantPack("invalid Ehdr e_ehsize; try `--force-execve'");
         return false;
     }
     if (ehdr->e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-        throwCantPack("non-contiguous Ehdr/Phdr");
+        throwCantPack("non-contiguous Ehdr/Phdr; try `--force-execve'");
         return false;
     }
 
     // The first PT_LOAD must cover the beginning of the file (0==p_offset).
     Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(buf + ehdr->e_phoff);
     for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
-        if (j >= 16)
+        if (j >= 14)
             return false;
-        if (PT_LOAD==phdr->p_type) {
+        if (phdr->PT_LOAD == phdr->p_type) {
             if (phdr->p_offset!=0)
                 return false;
             exetype = 1;
@@ -214,9 +202,9 @@ void PackLinuxI386elf::packExtent(
 )
 {
     fi->seek(x.offset, SEEK_SET);
-    for (off_t rest = x.size; 0!=rest; )
+    for (off_t rest = x.size; 0 != rest; )
     {
-        int l = fi->readx(ibuf, min_off_t(rest, opt->unix.blocksize));
+        int l = fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
         if (l == 0)
             break;
         rest -= l;

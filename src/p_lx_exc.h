@@ -46,15 +46,19 @@ public:
     virtual bool canPack();
 
 protected:
+    // loader util
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual int getLoaderPrefixSize() const;
 
-    virtual int checkEhdr(const Elf_LE32_Ehdr *ehdr) const;
-
+    // patch util
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);
+
+    // ELF util
+    virtual int checkEhdr(const Elf_LE32_Ehdr *ehdr) const;
+    virtual off_t getbrk(const Elf_LE32_Phdr *phdr, int e_phnum) const;
 
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
