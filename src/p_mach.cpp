@@ -342,7 +342,7 @@ PackMachPPC32::canPack()
     unsigned char *ptr = (unsigned char *)rawmseg;
     for (unsigned j= 0; j < mhdri.ncmds; ++j) {
         msegcmd[j] = *(Mach_segment_command *)ptr;
-        ptr += ((Mach_segment_command *)ptr)->cmdsize;
+        ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
     }
 
 
