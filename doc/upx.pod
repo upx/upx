@@ -350,7 +350,7 @@ Introduction
   ("linux/386").
 
   We will start with a general discussion first, but please
-  also read the relevant docs for each of the formats.
+  also read the relevant docs for each of the individual formats.
 
   Also, there is special support for bootable kernels - see the
   description of the vmlinuz/386 format.
@@ -537,7 +537,7 @@ How it works:
   the file into low memory, then maps the shell (and its PT_INTERP),
   and passes control to the shell with the entire decompressed file
   as the argument after "-c".  Known shells are sh, ash, bash, bsh, csh,
-  ksh, tcsh, pdksh.  Restriction: UPX 1.10 cannot use this method
+  ksh, tcsh, pdksh.  Restriction: UPX cannot use this method
   for shell scripts which use the one optional string argument after
   the shell name in the script (example: "#! /bin/sh option3\n".)
 

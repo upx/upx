@@ -447,8 +447,8 @@ void PackLinuxI386::patchLoader()
     upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
     conf.c_flags = 0;
     upx_uint result_buffer[16];
-    size_t const uncLsize = lsize - fold_begin;
-    size_t       cprLsize;
+    upx_uint const uncLsize = lsize - fold_begin;
+    upx_uint       cprLsize;
     upx_compress(
         loader + fold_begin, uncLsize,
         cprLoader, &cprLsize,

@@ -127,9 +127,21 @@ void show_help(int x)
         con_fprintf(f,"Overlay options:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
-                    "  --overlay=skip      don't compress a file with an overlay\n"
                     "  --overlay=copy      copy any extra data attached to the file [default]\n"
                     "  --overlay=strip     strip any extra data attached to the file [dangerous]\n"
+                    "  --overlay=skip      don't compress a file with an overlay\n"
+                    "\n");
+        fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"Options for djgpp2/coff:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --coff              produce COFF output [default: EXE]\n"
+                    "\n");
+        fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"Options for dos/com:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --8086              make compressed com work on any 8086\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for dos/exe:\n");
@@ -139,22 +151,10 @@ void show_help(int x)
                     "  --no-reloc          put no relocations in to the exe header\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for dos/com:\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --8086              make compressed com work on any 8086\n"
-                    "\n");
-        fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for dos/sys:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --8086              make compressed sys work on any 8086\n"
-                    "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for djgpp2/coff:\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --coff              produce COFF output [default: EXE]\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for watcom/le:\n");
@@ -177,7 +177,7 @@ void show_help(int x)
                     "\n");
 #if 0
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for linux/i386\n");
+        con_fprintf(f,"Options for linux/386\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --script             use /usr/local/lib/upx/upx[bd] as decompressor\n"
@@ -189,12 +189,23 @@ void show_help(int x)
     con_fprintf(f,
                 "  file.. executables to (de)compress\n"
                 "\n"
-                "This version supports: dos/exe, dos/com, dos/sys, djgpp2/coff, watcom/le,\n"
-                "                       win32/pe, rtm32/pe, tmt/adam, atari/tos\n"
-                "                       linux/elf386, linux/sh386, linux/386\n"
-                "%s",
-                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.tsx.org\n"
-                //"\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
+                "This version supports:\n    "
+                "atari/tos, "
+                "bvmlinuz/386, "
+                "djgpp2/coff, "
+                "dos/com, "
+                "dos/exe, "
+                "dos/sys,\n    "
+                "linux/386, "
+                "linux/elf386, "
+                "linux/sh386, "
+                "rtm32/pe, "
+                "tmt/adam, "
+                "vmlinuz/386,\n    "
+                "watcom/le, "
+                "win32/pe"
+                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.tsx.org\n"
+                //"\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
                 "");
 
 

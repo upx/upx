@@ -227,11 +227,6 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  define MODE_T            int
 #endif
 
-#if !defined(HAVE_STRCHR)
-#  if defined(HAVE_INDEX)
-#    define strchr          index
-#  endif
-#endif
 #if !defined(HAVE_STRCASECMP)
 #  if defined(HAVE_STRICMP)
 #    define strcasecmp      stricmp
@@ -299,8 +294,10 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #endif
 
 
-// avoid warnings about shadowing that obsolete index() function
-#define index   upx_index
+// avoid warnings about shadowing global functions
+#define basename            upx_basename
+#define index               upx_index
+#define outp                upx_outp
 
 // a dummy statement
 #define nop     ((void)0)

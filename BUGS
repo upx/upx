@@ -13,8 +13,12 @@
                             http://upx.tsx.org
 
 
-Things not (yet) supported:
-===========================
+Limitations and other things which are not (yet) supported:
+===========================================================
+
+djgpp2/coff
+-----------
+ * all overlays (except Allegro pakfiles) are silently stripped
 
 dos/exe
 -------
@@ -22,30 +26,27 @@ dos/exe
  * max ~24000 relocation records (...should be enough for everyone ;-)
  * exe + sys combined images
 
-wc/le
------
+watcom/le
+---------
  * 16-bit selector alias fixups
- * 16-bit offset relocation for objects larger than 4 kbyte
+ * 16-bit offset relocation for objects larger than 4 kB
  * 16:16 fixups
 
-If you need any of the above (they're very rare), send us an url of a
+If you need any of the above (they're very rare), send us an URL of a
 test file.
 
  * 16-bit objects are not loaded into DOS memory
  * There is still a problem with the wdosx extender: if you compress a
-   wc/le file which does NOT contain the wdosx extender, and after this
+   watcom/le file which does NOT contain the wdosx extender, and after this
    you bind the wdosx stub to the compressed file, then it will work.
    Otherwise it won't.
  * unpacked pmwlite compressed programs might not work when compressed
-   with upx (pmwunlite bug mainly :-)
+   with UPX (this is a bug in pmwunlite)
 
 win32/pe
 --------
  * writeable shared sections (`--force' *may* work)
  * certificates in the image
- * compressing files containing big BSS requires lots of memory
-
-djgpp2/coff
------------
- * all overlays (except Allegro pakfiles) are silently stripped
+ * compressing files which contain a big BSS requires lots of memory
+   during compression
 

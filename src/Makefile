@@ -48,6 +48,10 @@ override target = vc6
 endif
 
 
+# util var for use in the rules - basename of the current target
+override T = $(basename $@)
+
+
 # /***********************************************************************
 # // object files
 # ************************************************************************/
@@ -120,7 +124,7 @@ LDFLAGS = -g
 else
 LDFLAGS = -s
 endif
-LDFLAGS += -Wl,-Map,$(basename $@).map
+LDFLAGS += -Wl,-Map,$T.map
 LDLIBS =
 LDLIBS = -lz
 LIBDIRS =
@@ -230,7 +234,7 @@ CFLAGS = -W4 -WX
 CXXFLAGS1 = $(CFLAGS) -GR -GX -EHa
 CXXFLAGS2 = $(CFLAGS)
 LDFLAGS =
-LINK_LDFLAGS = /link /map:$(basename $@).map
+LINK_LDFLAGS = /link /map:$T.map
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -245,8 +249,7 @@ ifeq (1,2)
 else
   # link against msvcrt.dll
   CC += -MD
-  ##LDLIBS = $(u).lib zlib.lib setargv.obj
-  LDLIBS = $(u).lib setargv.obj
+  LDLIBS = $(DOS_LDLIBS) zlib.lib setargv.obj
 endif
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
@@ -306,8 +309,7 @@ CXXFLAGS1 = $(CFLAGS)
 CXXFLAGS2 = $(CFLAGS)
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
-##LDLIBS = $(u).lib zlib.lib
-LDLIBS = $(u).lib
+LDLIBS = $(DOS_LDLIBS) zlib.lib
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -362,6 +364,17 @@ all: $(upx_exe)
 $(upx_exe): $(OBJECTS) $(LIBS)
 	$(LINK_EXE)
 	$(STUBEDIT_EXE)
+
+
+ifeq ($(target),djgpp2)
+cwsbind: $(upx_exe)
+	-rm -f $T.cof
+	$(upx_exe) -1 --coff -o $T.cof $(upx_exe)
+	cat $(DJDIR)/bin/cwsdstub.exe $T.cof > $(upx_exe)
+	$(upx_exe) -d $(upx_exe)
+	$(upx_exe) --best $(upx_exe)
+endif
+
 
 unupx:
 	$(MAKE) target=vc6 unupx.dll

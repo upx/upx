@@ -130,7 +130,7 @@ void PackLinuxI386elf::patchLoader()
     upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
     conf.c_flags = 0;
     upx_uint result_buffer[16];
-    size_t cprLsize;
+    upx_uint cprLsize;
     upx_compress(
         loader + fold_begin, lsize - fold_begin,
         cprLoader, &cprLsize,

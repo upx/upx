@@ -26,10 +26,12 @@ DOS_LIBDIRS := $(DOS_LIBDIRS);$(UDIR)
 endif
 
 LDLIBS += -l$(u)
+DOS_LDLIBS += $(u).lib
 
 
 DEFS := $(DEFS)
 INCLUDES := $(INCLUDES)
 LIBDIRS := $(LIBDIRS)
 LDLIBS := $(LDLIBS)
+DOS_LDLIBS := $(DOS_LDLIBS)
 

@@ -1136,6 +1136,14 @@ int main(int argc, char *argv[])
         fg = con_fg(f,fg);
     }
 #endif
+#if 1 && !defined(WITH_NRV)
+    {
+        FILE *f = stdout;
+        int fg = con_fg(f,FG_GREEN);
+        con_fprintf(f,"\nINFO: this version does not use the NRV library - compression ratio is worse\n");
+        fg = con_fg(f,fg);
+    }
+#endif
 
 #if 0 && defined(__GLIBC__)
     //malloc_stats();
