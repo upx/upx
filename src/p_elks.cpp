@@ -51,11 +51,7 @@ static const unsigned zimage_offset = 0x1000;
 
 const int *PackElks8086::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(method))
-        return M_NRV2B_8;
-    if (M_IS_NRV2D(method))
-        return M_NRV2D_8;
-    return level > 1 ? M_NRV2D_8 : M_NRV2B_8;
+    return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
 

@@ -671,12 +671,6 @@ void Packer::checkAlreadyPacked(void *b, int blen)
 }
 
 
-bool Packer::isValidCompressionMethod(int method)
-{
-    return (method >= M_NRV2B_LE32 && method <= M_NRV2D_LE16);
-}
-
-
 /*************************************************************************
 // patch util for loader
 **************************************************************************/
@@ -918,6 +912,56 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 
 /*************************************************************************
+// compression method util [static]
+**************************************************************************/
+
+bool Packer::isValidCompressionMethod(int method)
+{
+    return (method >= M_NRV2B_LE32 && method <= M_NRV2D_LE16);
+}
+
+
+const int *Packer::getDefaultCompressionMethods_8(int method, int level, int small) const
+{
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, -1 };
+
+    if (small < 0)
+        small = file_size <= 512*1024;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
+    if (level == 1 || small)
+        return m_nrv2b;
+    return m_nrv2d;
+}
+
+
+const int *Packer::getDefaultCompressionMethods_LE32(int method, int level, int small) const
+{
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+
+    if (small < 0)
+        small = file_size <= 512*1024;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
+    if (level == 1 || small)
+        return m_nrv2b;
+    return m_nrv2d;
+}
+
+
+/*************************************************************************
 // loader util
 **************************************************************************/
 
@@ -1034,26 +1078,33 @@ const char *Packer::getDecompressor() const
         "N2BSMA10""N2BDEC10""N2BSMA20""N2BDEC20""N2BSMA30"
         "N2BDEC30""N2BSMA40""N2BSMA50""N2BDEC50""N2BSMA60"
         "N2BDEC60";
-
     static const char nrv2b_le32_fast[] =
         "N2BFAS10""+80CXXXX""N2BFAS11""N2BDEC10""N2BFAS20"
         "N2BDEC20""N2BFAS30""N2BDEC30""N2BFAS40""N2BFAS50"
         "N2BDEC50""N2BFAS60""+40CXXXX""N2BFAS61""N2BDEC60";
-
     static const char nrv2d_le32_small[] =
         "N2DSMA10""N2DDEC10""N2DSMA20""N2DDEC20""N2DSMA30"
         "N2DDEC30""N2DSMA40""N2DSMA50""N2DDEC50""N2DSMA60"
         "N2DDEC60";
-
     static const char nrv2d_le32_fast[] =
         "N2DFAS10""+80CXXXX""N2DFAS11""N2DDEC10""N2DFAS20"
         "N2DDEC20""N2DFAS30""N2DDEC30""N2DFAS40""N2DFAS50"
         "N2DDEC50""N2DFAS60""+40CXXXX""N2DFAS61""N2DDEC60";
+    static const char nrv2e_le32_small[] =
+        "N2ESMA10""N2EDEC10""N2ESMA20""N2EDEC20""N2ESMA30"
+        "N2EDEC30""N2ESMA40""N2ESMA50""N2EDEC50""N2ESMA60"
+        "N2EDEC60";
+    static const char nrv2e_le32_fast[] =
+        "N2EFAS10""+80CXXXX""N2EFAS11""N2EDEC10""N2EFAS20"
+        "N2EDEC20""N2EFAS30""N2EDEC30""N2EFAS40""N2EFAS50"
+        "N2EDEC50""N2EFAS60""+40CXXXX""N2EFAS61""N2EDEC60";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
     if (ph.method == M_NRV2D_LE32)
         return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
+    if (ph.method == M_NRV2E_LE32)
+        return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
     throwInternalError("bad decompressor");
     return NULL;
 }

@@ -79,6 +79,7 @@ void MemBuffer::alloc(unsigned size, unsigned base_offset)
     alloc_ptr = (unsigned char *) malloc(size);
     if (!alloc_ptr)
     {
+        //throw bad_alloc();
         throwCantPack("out of memory");
         //exit(1);
     }

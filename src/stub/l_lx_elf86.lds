@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2000-2001 John F. Reiser
+   Copyright (C) 2000-2002 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -20,8 +20,11 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar           John F. Reiser
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu   jreiser@BitWagon.com
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 

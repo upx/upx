@@ -84,6 +84,7 @@ typedef int nrv_int32;
 typedef unsigned int nrv_uint;
 typedef unsigned int nrv_uint32;
 #define nrv_byte unsigned char
+#define nrv_bytep unsigned char *
 #define nrv_voidp void *
 
 
