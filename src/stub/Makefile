@@ -82,7 +82,7 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 STRIPELF = ./util/sstrip/sstrip
 
 # Compiler for the Linux/386 stubs.
-# gcc 3.4 (20040314 prerelease) seems to produce the smallest code
+# gcc 3.4 (20040404 prerelease) seems to produce the smallest code
 ifeq (1,2)
   CC_LINUX_I386 = gcc-2.72 -m386 -O2
 ##  CC_LINUX_I386 = gcc-1.41 -O -Mcxx
@@ -96,7 +96,7 @@ ifeq (1,2)
   CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
   CC_LINUX_I386 += -Werror
 else
-  # gcc 3.4 20040314 (fold_*.bin: 1531 / 1043 / 1306)
+  # gcc 3.4 20040404 (fold_*.bin: 1525 / 1043 / 1300)
   #   info: -mtune=k6 procduces the smallest code
   CC_LINUX_I386  = gcc-3.4 -march=i386 -mtune=k6 -Os -fno-omit-frame-pointer -fno-exceptions
   CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
@@ -180,7 +180,7 @@ strings: all
 
 
 stubify.h: stub.asm
-	djasm $< stubify.exe
+	djasm --gmtime=1070220810 --iname=stub.asm --oname=stub.h $< stubify.exe
 	$(BIN2H) stubify.exe stubify_stub $@ -q
 
 l_com.h: l_com.asx

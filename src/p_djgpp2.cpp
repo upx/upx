@@ -33,14 +33,9 @@
 #include "p_djgpp2.h"
 
 static const
-#if 0
-#include "stub/djstub.h"
-#else
-#include "stub/stubify.h"
-#endif
-
-static const
 #include "stub/l_djgpp2.h"
+static const
+#include "stub/stubify.h"
 
 
 /*************************************************************************
@@ -55,10 +50,10 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(stubify_stub) == 2048);
     COMPILE_TIME_ASSERT_ALIGNOF(external_scnhdr_t, char)
     COMPILE_TIME_ASSERT_ALIGNOF(coff_header_t, char)
-#if defined(STUBIFY_STUB_ADLER32)
+    COMPILE_TIME_ASSERT(STUBIFY_STUB_ADLER32 == 0xbf689ba8);
+    COMPILE_TIME_ASSERT(STUBIFY_STUB_CRC32   == 0x2ae982b2);
     //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
     assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
-#endif
 }
 
 

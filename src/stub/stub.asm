@@ -1,3 +1,5 @@
+; Copyright (C) 2002 DJ Delorie, see COPYING.DJ for details
+; Copyright (C) 2001 DJ Delorie, see COPYING.DJ for details
 ; Copyright (C) 1998 DJ Delorie, see COPYING.DJ for details
 ; Copyright (C) 1997 DJ Delorie, see COPYING.DJ for details
 ; Copyright (C) 1996 DJ Delorie, see COPYING.DJ for details
@@ -69,7 +71,7 @@
 	.org	0			; just in case
 stubinfo:
 stubinfo_magic:				; char [16]
-	.db	"go32stub, v 2.02"	; version may change, [0..7] won't
+	.db	"go32stub, v 2.04"	; version may change, [0..7] won't
 stubinfo_size:				; unsigned long
 	.dd	stubinfo_end		; bytes in structure
 stubinfo_minstack:			; unsigned long
@@ -319,13 +321,11 @@ file_is_just_coff:			; cx:dx is offset
 	add	eax, ecx
 	mov	[text_foffset], eax
 
-	mov	eax, data_section[s_scnptr]
-	add	eax, ecx
-	mov	[data_foffset], eax
+	add	ecx, data_section[s_scnptr] ; Ok to destroy ecx now: last use.
+	mov	[data_foffset], ecx
 
 	mov	ebx, bss_section[s_vaddr]
-	mov	eax, bss_section[s_size]
-	add	ebx, eax
+	add	ebx, bss_section[s_size]
 	mov	eax, 0x00010001
 	cmp	ebx, eax
 	jae	@f1
