@@ -55,12 +55,16 @@ FORMAT LINUX/ELF386
 
 - implement filters
 
+- implement compressWithFilters()
+
 
 FORMAT TMT/ADAM
 ===============
 
 - the decompressors are already aligned, no need for an
     extra alignment
+
+- implement compressWithFilters()
 
 
 FORMAT WATCOM/LE
@@ -73,11 +77,15 @@ FORMAT WATCOM/LE
 
 - handle holes in the file
 
+- implement compressWithFilters()
+
 
 FORMAT WIN32/PE
 ===============
 
-- make compressWithFilters() work
+- verify that compressWithFilters() works
+
+- fix the section alignment with the Intel compiler
 
 - decrease runtime memory overhead
 
