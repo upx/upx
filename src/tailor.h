@@ -198,11 +198,10 @@
 #    define HAVE_UTIME 1
 #    define HAVE_VSNPRINTF 1
 #    define vsnprintf _vsnprintf
-//#    pragma warning(once: 4097 4710)
-//#    pragma warning(disable: 4097 4511 4512 4710)
 #    pragma warning(disable: 4097)      // W3: typedef-name 'A' used as synonym for class-name 'B'
 #    pragma warning(disable: 4511)      // W3: 'class': copy constructor could not be generated
 #    pragma warning(disable: 4512)      // W4: 'class': assignment operator could not be generated
+#    pragma warning(disable: 4514)      // W4: 'function' : unreferenced inline function has been removed
 #    pragma warning(disable: 4710)      // W4: 'function': function not inlined
 #  endif
 #elif defined(__WATCOMC__)
