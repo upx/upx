@@ -66,43 +66,39 @@ protected:
     {
         // ident string
         char id[8];
-        // contains NULL in normal ps-x exe
+        // is NULL
         LE32 text;
-        // contains NULL in normal ps-x exe
+        // is NULL
         LE32 data;
-        // entry offset
+        // initial program counter
         LE32 epc;
-        // gp register value load at execution
+        // initial gp register value
         LE32 gp;
         // load offset of binary data
-        LE32 tx_ptr;
-        // file length
-        LE32 tx_len;
-        LE32 da_ptr;
-        LE32 da_len;
-        LE32 bs_ptr;
-        LE32 bs_len;
-        LE32 sd_ptr;
-        LE32 sd_len;
-        LE32 sp,fp,gp0,ra,k0;
-        // origin of executable Jap/USA/Europe
+        LE32 tx_ptr, tx_len;
+        LE32 da_ptr, da_len;
+        LE32 bs_ptr, bs_len;
+        // initial stack params
+        LE32 is_ptr, is_len;
+        // saved regs on execution
+        LE32 sp, fp, gp0, ra, k0;
+        // origin Jap/USA/Europe
         char origin[60];
 
         // some safety space after that
         char pad[8];
-        // i'll place the backup of the original
-        // execution file structure here (epc - sd_len)
+        // backup of the original header (epc - is_len)
         LE32 ih_bkup[10];
         // plus checksum for the backup
         LE32 ih_csum;
-        // here will find the id & the upx header it's place.
-        // btw only the 'epc - sd_len' entries init the executable.
-        // so stuff placed here will not load and waste memory.
+        // id & the upx header.
     }
     __attribute_packed;
 
     ps1_exe_t ih, oh;
 
+    bool isCon;
+    bool is32Bit;
     unsigned overlap;
     unsigned sa_cnt;
 
@@ -110,8 +106,6 @@ protected:
     unsigned fdata_size;
     // calculated filesize
     unsigned cfile_size;
-
-    bool isCon;
 };
 
 

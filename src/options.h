@@ -111,6 +111,7 @@ struct options_t {
     struct {
         bool console_run;
         bool no_align;
+        bool do_8bit;
     } ps1_exe;
     struct {
         unsigned blocksize;

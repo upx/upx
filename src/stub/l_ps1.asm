@@ -35,12 +35,6 @@
 #define HI(a)   (a >> 16)
 #define LO(a)   (a & 0xffff)
 
-#if 1
-#   define NRV_BB 8
-#else
-#   define NRV_BB 32
-#endif
-
 #define  SZ_REG  4
 
 #if CDBOOT
@@ -61,7 +55,7 @@ regs            ENDM
 
 #else //console
 
-regs            MACRO   _w
+regs            MACRO   _w, marker
                 _w      at,SZ_REG*0(sp)
                 _w      a0,SZ_REG*1(sp)
                 _w      a1,SZ_REG*2(sp)
@@ -70,6 +64,10 @@ regs            MACRO   _w
                 _w      v0,SZ_REG*5(sp)
                 _w      v1,SZ_REG*6(sp)
                 _w      ra,SZ_REG*7(sp)
+IF (marker != 0)
+                DW      marker
+                addu    sp,at
+ENDIF
 regs            ENDM
 
 #define  REG_SZ (8*SZ_REG)
@@ -77,7 +75,6 @@ regs            ENDM
 #endif //CDBOOT
 
                 ORG      0
-
 start:
 
 #if CDBOOT
@@ -93,7 +90,7 @@ start:
                 subiu   sp,REG_SZ       ; adjust stack
 cutpoint:
 ;       __PS1ENTRY__
-                regs    sw, 0           ; push used regs
+                regs    sw,0            ; push used regs
                 li      a0,'CPDO'       ; load COMPDATA offset
 ;               li      a1,'CDSZ'       ; compressed data size - disabled!
 ;       __PS1CONHL__
@@ -111,16 +108,16 @@ cutpoint:
 ;       __PS1START__
                 addiu   at,zero,'LS'    ; size of decomp. routine
                 subu    sp,at           ; adjust the stack with this size
-                regs    sw              ; push used regs
-                subiu   a2,at,REG_SZ    ; a0 = counter copyloop
+                regs    sw,0            ; push used regs
+                subiu   a2,at,REG_SZ    ; a2 = counter copyloop
                 addiu   a3,sp,REG_SZ    ; get offset for decomp. routine
                 move    a1,a3
                 li      a0,'DCRT'       ; load decompression routine's offset
 copyloop:
-                addi    a2,-4
-                lw      at,0(a0)        ; memcpy *a2 -> at -> *a1
-                addiu   a0,4
+                lw      at,0(a0)        ; memcpy *a0 -> at -> *a1
+                addiu   a2,-4
                 sw      at,0(a1)
+                addiu   a0,4
                 bnez    a2,copyloop
                 addiu   a1,4
 
@@ -141,22 +138,44 @@ cutpoint:
 ; ============= DECOMPRESSION
 ; =============
 
+#ifndef FAST
+#   define FAST
+#endif
+
 #if CDBOOT
-#   if  SMALL
+#   ifdef SMALL
 #       undef   SMALL
 #   endif
 #else //CONSOLE
-#   if  !SMALL
-#   define SMALL
+#   ifndef SMALL
+#       define  SMALL
 #   endif
 #endif //CDBOOT
 
-;       __PS1N2BD8__
+#ifdef NRV_BB
+#   undef NRV_BB
+#endif
+#define NRV_BB 8
+
+;       __PS1N2B08__
 #include <mr3k/n2b_d.ash>
-;       __PS1N2DD8__
+;       __PS1N2D08__
 #include <mr3k/n2d_d.ash>
-;       __PS1N2ED8__
+;       __PS1N2E08__
 #include <mr3k/n2e_d.ash>
+
+#ifdef NRV_BB
+#   undef NRV_BB
+#endif
+#define NRV_BB 32
+
+;       __PS1N2B32__
+#include <mr3k/n2b_d.ash>
+;       __PS1N2D32__
+#include <mr3k/n2d_d.ash>
+;       __PS1N2E32__
+#include <mr3k/n2e_d.ash>
+
 
 ; =============
 
@@ -167,36 +186,26 @@ cutpoint:
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
 ;       __PS1MSETA__
 memset_aligned:
-                addi    a0,-4
                 sw      zero,0(a2)
+                addiu   a0,-4
                 bnez    a0,memset_aligned
                 addiu   a2,4
 ;       __PS1MSETU__
 memset_unaligned:
-                addi    a0,-4
                 swl     zero,3(a2)
                 swr     zero,0(a2)
+                addiu   a0,-4
                 bnez    a0,memset_unaligned
                 addiu   a2,4
 
 ; =============
 
-;       __PS1FLUSH__
+;       __PS1EXITC__
                 li      t2,160          ; flushes
                 jalr    ra,t2           ; instruction
                 li      t1,68           ; cache
-
-; =============
-
-;       __PS1JMPEP__
-#if CDBOOT
                 regs    lw, 'JPEP'      ; marker for the entry jump
 
-#else //CONSOLE
-                regs    lw              ; pop used regs
-                DW      'JPEP'          ; marker for the entry jump
-                addu    sp,at
-#endif //CDBOOT
 ; =============
 
 ;       __PS1PAHDR__
@@ -222,6 +231,6 @@ memset_unaligned:
 
 ;       __PS1EOASM__
 eof:
-;                section .data
+;               section .data
                 DW      -1
                 DH      eof

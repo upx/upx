@@ -705,6 +705,9 @@ static int do_option(int optc, const char *arg)
         opt->ps1_exe.no_align = true;
         opt->ps1_exe.console_run = true;
         break;
+    case 672:
+        opt->ps1_exe.do_8bit = true;
+        break;
 
     case '\0':
         return -1;
@@ -824,6 +827,7 @@ static const struct mfx_option longopts[] =
     // ps1/exe
     {"console-run",      0x10, 0, 670},
     {"no-align",         0x10, 0, 671},
+    {"8-bit",            0x10, 0, 672},
 
     { NULL, 0, NULL, 0 }
 };
