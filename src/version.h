@@ -1,4 +1,4 @@
-#define UPX_VERSION_HEX         0x019100        /* 01.91.00 */
-#define UPX_VERSION_STRING      "1.91 beta"
-#define UPX_VERSION_STRING4     "1.91"
-#define UPX_VERSION_DATE        "Jun 30th 2004"
+#define UPX_VERSION_HEX         0x019200        /* 01.92.00 */
+#define UPX_VERSION_STRING      "1.92 beta"
+#define UPX_VERSION_STRING4     "1.92"
+#define UPX_VERSION_DATE        "Jul 1st 2004"
