@@ -276,7 +276,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 		}
 	}
     szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
-    lo   -= ~PAGE_MASK & lo;  // round down to page boundary 
+    lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
     addr = do_mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
