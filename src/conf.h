@@ -304,7 +304,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 
 #define COMPILE_TIME_ASSERT(expr) \
-    { typedef int upx_compile_time_assert_fail[(expr) ? 1 : -1]; }
+    { typedef int __upx_compile_time_assert_fail[(expr) ? 1 : -1]; }
 
 
 /*************************************************************************
@@ -336,10 +336,14 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define FREE(ptr)           if (ptr) { free(ptr); ptr = NULL; }
 
 #undef UNUSED
-#if defined(__BORLANDC__)
-#define UNUSED(parm)        ((void)(parm))
+#if 1
+#  define UNUSED(var)       { typedef int __upx_unused[sizeof(var) ? 2 : 1]; }
+#elif 1
+#  define UNUSED(var)       do { } while (!sizeof(var))
+#elif defined(__BORLANDC__)
+#  define UNUSED(var)       ((void)(var))
 #else
-#define UNUSED(parm)        (parm = parm)
+#  define UNUSED(var)       (var = var)
 #endif
 
 #define HIGH(array)         ((unsigned) (sizeof(array)/sizeof((array)[0])))
