@@ -233,6 +233,7 @@ CXX = icc
 CCARCH += -march=i386 -mcpu=i686
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@
+LDLIBS += -lz
 
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 CFLAGS  = $(CFLAGS_WERROR)

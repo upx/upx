@@ -51,8 +51,6 @@
 #  if 1
 #    define DISABLE_NEW_DELETE_PLACEMENT_NEW \
         static void *operator new(size_t, void *);
-#  else
-#    define DISABLE_NEW_DELETE_PLACEMENT_NEW
 #  endif
 #  if defined(__GNUC__) && (__GNUC__ >= 3)
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
@@ -63,7 +61,13 @@
 #  elif defined(_MSC_VER) && (_MSC_VER >= 1200)
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
         static void operator delete(void *, void *) NOTHROW { }
-#  else
+#  endif
+
+#  if !defined(DISABLE_NEW_DELETE_PLACEMENT_NEW)
+#    define DISABLE_NEW_DELETE_PLACEMENT_NEW
+#    undef DISABLE_NEW_DELETE_PLACEMENT_DELETE
+#  endif
+#  if !defined(DISABLE_NEW_DELETE_PLACEMENT_DELETE)
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE
 #  endif
 
