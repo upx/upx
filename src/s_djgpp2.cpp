@@ -198,6 +198,7 @@ static void setCursor(screen_t *this, int x, int y)
 }
 
 
+/*
 // I added ScreenGetCursor, because when upx prints something longer than
 // 1 line (an error message for example), the this->data->cursor_y can
 // have a bad value - ml1050
@@ -206,6 +207,7 @@ static void setCursor(screen_t *this, int x, int y)
 //   Laszlo: when does this happen ? This probably indicates a
 //     bug in c_screen.cpp(print0) I've introduced with
 //     the 2 passes implementation.
+*/
 
 static void getCursor(const screen_t *this, int *x, int *y)
 {

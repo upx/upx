@@ -39,7 +39,7 @@ class PackW16Ne : public Packer
     typedef Packer super;
 public:
     PackW16Ne(InputFile *f);
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WIN16_NE; }
     virtual const char *getName() const { return "win16/ne"; }
     virtual const int *getCompressionMethods(int method, int level) const;

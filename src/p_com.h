@@ -39,7 +39,7 @@ class PackCom : public Packer
     typedef Packer super;
 public:
     PackCom(InputFile *f) : super(f) { }
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_DOS_COM; }
     virtual const char *getName() const { return "dos/com"; }
     virtual const int *getCompressionMethods(int method, int level) const;

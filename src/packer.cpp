@@ -630,7 +630,7 @@ bool Packer::getPackHeader(void *b, int blen)
 #endif
     }
     if (!isValidCompressionMethod(ph.method))
-        throwCantUnpack("unknown compression method");
+        throwCantUnpack("unknown compression method (try a newer version of UPX)");
 
     // Some formats might be able to unpack "subformats". Ask them.
     if (!testUnpackFormat(ph.format))
@@ -912,12 +912,12 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 
 /*************************************************************************
-// compression method util [static]
+// compression method util
 **************************************************************************/
 
 bool Packer::isValidCompressionMethod(int method)
 {
-    return (method >= M_NRV2B_LE32 && method <= M_NRV2D_LE16);
+    return (method >= M_NRV2B_LE32 && method <= M_NRV2E_LE16);
 }
 
 

@@ -39,7 +39,7 @@ class PackExe : public Packer
     typedef Packer super;
 public:
     PackExe(InputFile *f);
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_DOS_EXE; }
     virtual const char *getName() const { return "dos/exe"; }
     virtual const int *getCompressionMethods(int method, int level) const;

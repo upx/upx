@@ -39,7 +39,7 @@ class PackTos : public Packer
     typedef Packer super;
 public:
     PackTos(InputFile *f);
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_ATARI_TOS; }
     virtual const char *getName() const { return "atari/tos"; }
     virtual const int *getCompressionMethods(int method, int level) const;

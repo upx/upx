@@ -40,7 +40,7 @@ class PackVxd : public PackWcle
 public:
     PackVxd(InputFile *f);
     ~PackVxd();
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VXD_LE; }
     virtual const char *getName() const { return "vxd/le"; }
     virtual const int *getCompressionMethods(int method, int level) const;

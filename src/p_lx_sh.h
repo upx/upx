@@ -41,7 +41,7 @@ class PackLinuxI386sh : public PackLinuxI386
 public:
     PackLinuxI386sh(InputFile *f);
     virtual ~PackLinuxI386sh();
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_SH_i386; }
     virtual const char *getName() const { return "linux/sh386"; }
     virtual const int *getFilters() const { return NULL; }

@@ -47,7 +47,7 @@ class PackW32Pe : public Packer
 public:
     PackW32Pe(InputFile *f);
     ~PackW32Pe();
-    virtual int getVersion() const { return 12; }
+    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WIN32_PE; }
     virtual const char *getName() const { return isrtm ? "rtm32/pe" : "win32/pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;

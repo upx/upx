@@ -41,7 +41,7 @@ class PackUnix : public Packer
 protected:
     PackUnix(InputFile *f);
 public:
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 13; }
     virtual const int *getFilters() const { return NULL; }
     virtual int getStrategy(Filter &);
 
