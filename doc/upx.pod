@@ -824,8 +824,9 @@ The PE support in B<UPX> is quite stable now, but probably there are
 still some incompabilities with some files.
 
 Because of the way B<UPX> (and other packers for this format) works, you
-can see increased memory usage of your compressed files. If you start
-several instances of huge compressed programs you're wasting memory
+can see increased memory usage of your compressed files because the whole
+program is loaded into memory at startup.
+If you start several instances of huge compressed programs you're wasting memory
 because the common segements of the program won't get shared
 across the instances.
 On the other hand if you're compressing only smaller programs, or
