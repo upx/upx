@@ -109,6 +109,7 @@ struct options_t {
         bool no_reloc;
     } dos_exe;
     struct {
+        bool console_run;
         bool no_align;
     } ps1_exe;
     struct {

@@ -704,6 +704,9 @@ Maximum uncompressed size: ~1998848 bytes.
 
 Notes:
 
+  - UPX creates as default a 'CD-Rom only' PS1/PS2 compatible executable.
+    For transfer between client/target use options below.
+
   - Normally the packed files use the same memory areas like the uncompressed
     versions, so they will not override other memory areas while unpacking.
     If this isn't possible UPX will abort showing a 'packed data overlap'
@@ -718,10 +721,17 @@ Extra options available for this executable format:
                       the compression ratio in some cases, but usually
                       the default method gives the best results anyway.
 
+  --console-run       This enables client/target transfer compatibility.
+                      This format also run from a CD, except the "--no-align"
+                      option is used. Upto 2024 bytes larger files
+                      than [default] will be the result, also a
+                      slower decompression speed can be expected.
+
   --no-align          This option disables CD mode 2 data sector format
-                      alignment. This will slightly improve the compression
-                      ratio, but the compressed executable will not work
-                      when started from a CD.
+                      alignment, and enables "--console-run".
+                      This will slightly improve the compression ratio,
+                      but the compressed executable will not boot from a CD.
+                      So use it for client/target transfer only!.
 
 
 

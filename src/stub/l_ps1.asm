@@ -32,9 +32,36 @@
 
 #include <mr3k/macros.ash>
 
+#define HI(a)   (a >> 16)
+#define LO(a)   (a & 0xffff)
+
+#if 1
+#   define NRV_BB 8
+#else
+#   define NRV_BB 32
+#endif
+
 #define  SZ_REG  4
 
-do_regs         MACRO   _w
+#if CDBOOT
+regs            MACRO   _w, marker
+                _w      a0,SZ_REG*0(sp)
+                _w      a1,SZ_REG*1(sp)
+                _w      a2,SZ_REG*2(sp)
+                _w      a3,SZ_REG*3(sp)
+                _w      v0,SZ_REG*4(sp)
+                _w      v1,SZ_REG*5(sp)
+IF (marker != 0)
+                DW      marker
+ENDIF
+                _w      ra,SZ_REG*6(sp)
+regs            ENDM
+
+#define  REG_SZ (7*SZ_REG)
+
+#else //console
+
+regs            MACRO   _w
                 _w      at,SZ_REG*0(sp)
                 _w      a0,SZ_REG*1(sp)
                 _w      a1,SZ_REG*2(sp)
@@ -43,119 +70,136 @@ do_regs         MACRO   _w
                 _w      v0,SZ_REG*5(sp)
                 _w      v1,SZ_REG*6(sp)
                 _w      ra,SZ_REG*7(sp)
-do_regs         ENDM
+regs            ENDM
 
 #define  REG_SZ (8*SZ_REG)
 
-#define HI(a)   (a >> 16)
-#define LO(a)   (a & 0xffff)
+#endif //CDBOOT
 
                 ORG      0
 
+start:
+
+#if CDBOOT
 ; =============
 ; ============= ENTRY POINT
 ; =============
+; for cd-boot only
 
-entry:
-;       __PS1MAIN0__
+;       __PS1START__
+                li      t0,'PSVR'       ; prepare to compute value
+                subu    t0,s0,t0        ; get stored header offset in mem
+                jr      t0
+                subiu   sp,REG_SZ       ; adjust stack
+cutpoint:
+;       __PS1ENTRY__
+                regs    sw, 0           ; push used regs
+                li      a0,'CPDO'       ; load COMPDATA offset
+;               li      a1,'CDSZ'       ; compressed data size - disabled!
+;       __PS1CONHL__
+                li      a2,'DECO'
+;       __PS1CONHI__
+                lui     a2,HI('DECO')
+
+
+#else //CONSOLE
+; =============
+; ============= ENTRY POINT
+; =============
+; for console- / cd-boot
+
+;       __PS1START__
                 addiu   at,zero,'LS'    ; size of decomp. routine
                 subu    sp,at           ; adjust the stack with this size
-                do_regs sw              ; push used regs
-                subiu   a0,at,REG_SZ    ; a0 = counter copyloop
+                regs    sw              ; push used regs
+                subiu   a2,at,REG_SZ    ; a0 = counter copyloop
                 addiu   a3,sp,REG_SZ    ; get offset for decomp. routine
                 move    a1,a3
-                li      a2,'DCRT'       ; load decompression routine's offset
+                li      a0,'DCRT'       ; load decompression routine's offset
 copyloop:
-                addi    a0,-4
-                lw      at,0(a2)        ; memcpy *a2 -> at -> *a1
-                addiu   a2,4
+                addi    a2,-4
+                lw      at,0(a0)        ; memcpy *a2 -> at -> *a1
+                addiu   a0,4
                 sw      at,0(a1)
-                bnez    a0,copyloop
+                bnez    a2,copyloop
                 addiu   a1,4
 
-                li      a0,'COMP'       ; load COMPDATA HI offset
-;               li      a1,'CDSZ'       ; compressed data size !disabled
-;       __PS1MAINZ__
-
-; =============
-
-;       __PS1JSTA0__
+;       __PS1PADCD__
+                addiu   a0,'PC'         ; a0 = pointer compressed data
+;       __PS1CONHL__
                 lui     a2,HI('DECO')   ; load DECOMPDATA HI offset
                 jr      a3
                 ori     a2,LO('DECO')   ; load DECOMPDATA LO offset
-;       __PS1JSTAZ__
-;       __PS1JSTH0__
+;       __PS1CONHI__
                 jr      a3
                 lui     a2,HI('DECO')   ; same for HI only !(offset&0xffff)
-;       __PS1JSTHZ__
+cutpoint:
+;       __PS1ENTRY__
 
+#endif //CDBOOT
 ; =============
 ; ============= DECOMPRESSION
 ; =============
-#if 1
-#   define NRV_BB 8
-#else
-#   define NRV_BB 32
-#endif
 
-#if 1
+#if CDBOOT
+#   if  SMALL
+#       undef   SMALL
+#   endif
+#else //CONSOLE
+#   if  !SMALL
 #   define SMALL
-#endif
+#   endif
+#endif //CDBOOT
 
-;       __PS1DECO0__
-;       __PS1DECOZ__
-;       __PS1N2BD0__
+;       __PS1N2BD8__
 #include <mr3k/n2b_d.ash>
-;       __PS1N2BDZ__
-;       __PS1N2DD0__
+;       __PS1N2DD8__
 #include <mr3k/n2d_d.ash>
-;       __PS1N2DDZ__
-;       __PS1N2ED0__
+;       __PS1N2ED8__
 #include <mr3k/n2e_d.ash>
-;       __PS1N2EDZ__
 
 ; =============
 
-;       __MSETBIG0__
+;       __PS1MSETB__
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
                 sll     a0,3            ; (cd mode 2 data sector alignment)
-;       __MSETBIGZ__
-;       __MSETSML0__
+;       __PS1MSETS__
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
-;       __MSETSMLZ__
-
-; =============
-
-;       __MSETALG0__
+;       __PS1MSETA__
 memset_aligned:
                 addi    a0,-4
                 sw      zero,0(a2)
                 bnez    a0,memset_aligned
                 addiu   a2,4
-;       __MSETALGZ__
-;       __MSETUAL0__
+;       __PS1MSETU__
 memset_unaligned:
                 addi    a0,-4
                 swl     zero,3(a2)
                 swr     zero,0(a2)
                 bnez    a0,memset_unaligned
                 addiu   a2,4
-;       __MSETUALZ__
 
 ; =============
 
-;       __PS1EXIT0__
+;       __PS1FLUSH__
                 li      t2,160          ; flushes
                 jalr    ra,t2           ; instruction
                 li      t1,68           ; cache
-                do_regs lw              ; pop used regs
-                DW      'JPEP'          ; marker for the entry jump
-                addu    sp,at
-;       __PS1EXITZ__
 
 ; =============
 
-;       __PS1PHDR0__
+;       __PS1JMPEP__
+#if CDBOOT
+                regs    lw, 'JPEP'      ; marker for the entry jump
+
+#else //CONSOLE
+                regs    lw              ; pop used regs
+                DW      'JPEP'          ; marker for the entry jump
+                addu    sp,at
+#endif //CDBOOT
+; =============
+
+;       __PS1PAHDR__
                 DB      85,80,88,33     ;  0  UPX_MAGIC_LE32
         ; another magic for PackHeader::putPackHeader
                 DB      161,216,208,213 ;     UPX_MAGIC2_LE32
@@ -168,17 +212,16 @@ memset_unaligned:
                 DB      0               ; 29  filter cto
                 DB      0               ;  unsused
                 DB      45              ; 31  header checksum
-;       __PS1PHDRZ__
 
 ; =============
 
-;       __PS1RGSZ0__
+#if !CDBOOT
+;       __PS1SREGS__
                 DW      REG_SZ
-;       __PS1RGSZZ__
-eof:
+#endif //CDBOOT
 
+;       __PS1EOASM__
+eof:
 ;                section .data
                 DW      -1
                 DH      eof
-
-; vi:ts=8:et:nowrap

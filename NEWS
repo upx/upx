@@ -7,11 +7,15 @@ User visible changes for UPX
 [ WARNING: there are known bugs in the win32/pe format which cause
   crashes on a number of exes ]
 
-Changes in 1.91 beta (XX Sep 2003):
+Changes in 1.91 beta (XX Apr 2004):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * djgpp2/coff: added support for recent binutils versions
   * watcom/le: don't crash on files without relocations
   * Option `--brute' now implies `--crp-ms=999999'.
+  * source code: much improved portability using ACC, the
+    Automatic Compiler Configuration
+  * source code: compile fixes for strict ISO C++ compilers
+  * source code: compile fixes for Win64
 
 Changes in 1.90 beta (11 Nov 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
@@ -51,8 +55,8 @@ Changes in 1.23 (05 Sep 2002)
 Changes in 1.22 (27 Jun 2002)
   * atari/tos: the stub now flushes the CPU cache to avoid
     problems on 68030+ machines
-  * source code: additional compiler support for Borland C++ 5.5.1,
-    Digital Mars C++ 8.28 and Watcom C++ 11.0c
+  * source code: additional compiler support for Borland C++,
+    Digital Mars C++ and Watcom C++
 
 Changes in 1.21 (01 Jun 2002)
   * New option `--crp-ms=' for slightly better compression at the cost

@@ -26,7 +26,7 @@ STUBS = \
 	l_com.h \
 	l_djgpp2.h stubify.h \
 	l_exe.h \
-	l_ps1.h \
+	l_ps1b.h l_ps1c.h \
 	l_sys.h \
 	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h l_t_n2e.h l_t_n2es.h \
 	l_tmt.h \
@@ -298,11 +298,17 @@ l_t_x2ds.h: l_tos2.s
 # // ps1/exe
 # ************************************************************************/
 
-l_ps1.h: l_ps1.asm
+l_ps1b.h: l_ps1.asm
+	$(CPP_MR3K) -DCDBOOT -o $T.asx $<
+	$(APP_MR3K) $T.asx $T.asy
+	$(ASM_MR3K) $T.asy -o$T.bin -l$T.lst
+	$(BIN2H) $T.bin nrv_boot_loader $@
+
+l_ps1c.h: l_ps1.asm
 	$(CPP_MR3K) -o $T.asx $<
 	$(APP_MR3K) $T.asx $T.asy
 	$(ASM_MR3K) $T.asy -o$T.bin -l$T.lst
-	$(BIN2H) $T.bin nrv_loader $@
+	$(BIN2H) $T.bin nrv_con_loader $@
 
 
 # /***********************************************************************

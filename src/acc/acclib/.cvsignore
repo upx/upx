@@ -1,2 +1,3 @@
-getopt.ch
 fnmatch.ch
+getopt.ch
+perfctr.ch

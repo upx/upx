@@ -37,7 +37,9 @@
 #include "p_ps1.h"
 
 static const
-#include "stub/l_ps1.h"
+#include "stub/l_ps1b.h"
+static const
+#include "stub/l_ps1c.h"
 
 
 #define MIPS_HI(a)          ((a) >> 16)
@@ -50,10 +52,7 @@ static const
 #define PS_MAX_SIZE         0x1e8000
 
 #define SZ_IH_BKUP          (10 * sizeof(LE32))
-
-// FIXME: would be nice to set this once, so runtime and handler will
-//        use this define together
-#define EIGHTBIT
+#define HD_CODE_OFS         (sizeof(ps1_exe_t))
 
 
 /*************************************************************************
@@ -71,27 +70,24 @@ static const
 **************************************************************************/
 
 PackPs1::PackPs1(InputFile *f) :
-    super(f), overlap(0), sa_cnt(0), cfile_size(0)
+    super(f), overlap(0), sa_cnt(0), cfile_size(0), isCon(false)
 {
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
-#if defined(WITH_NRV)
-    COMPILE_TIME_ASSERT(sizeof(nrv_loader) == 1570);
-    COMPILE_TIME_ASSERT(NRV_LOADER_CRC32 == 0xd78b1eb4);
+#if 1 || defined(WITH_NRV)
+    COMPILE_TIME_ASSERT(sizeof(nrv_boot_loader) == 1950);
+    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0x10936e44);
+    COMPILE_TIME_ASSERT(sizeof(nrv_con_loader) == 1434);
+    COMPILE_TIME_ASSERT(NRV_CON_LOADER_CRC32 == 0xe2a42bc3);
 #endif
-
     fdata_size = file_size - PS_HDR_SIZE;
 }
 
 
 const int *PackPs1::getCompressionMethods(int method, int level) const
 {
-#ifdef EIGHTBIT
     return Packer::getDefaultCompressionMethods_8(method, level);
-#else
-    return Packer::getDefaultCompressionMethods_le32(method, level);
-#endif
 }
 
 
@@ -132,8 +128,9 @@ bool PackPs1::checkFileHeader()
         }
         cfile_size = fdata_size;
     }
-    if (ih.da_ptr != 0 && ih.da_len != 0
-        && ih.bs_ptr != 0 && ih.bs_len != 0 && !opt->force)
+    if (ih.da_ptr != 0 || ih.da_len != 0
+        || ih.bs_ptr != 0 || ih.bs_len != 0
+        && !opt->force)
         return false;
     cfile_size = ih.tx_len;
     return true;
@@ -196,7 +193,7 @@ bool PackPs1::canPack()
         throwCantPack("file is too small (try --force)");
     if (file_size > PS_MAX_SIZE && !opt->force)
         throwCantPack("file is too big (try --force)");
-
+    isCon = opt->ps1_exe.console_run;
     return true;
 }
 
@@ -207,32 +204,36 @@ bool PackPs1::canPack()
 
 int PackPs1::buildLoader(const Filter *)
 {
-    initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("PS1MAIN0",
-              ih.tx_ptr & 0xffff ?  "PS1JSTA0" : "PS1JSTH0",
-              "PS1DECO0", NULL);
-#ifdef EIGHTBIT
+    if (isCon)
+        initLoader(nrv_con_loader,sizeof(nrv_con_loader));
+    else
+        initLoader(nrv_boot_loader,sizeof(nrv_boot_loader));
+
+    addLoader("PS1START",
+              isCon ? ph.c_len & 3 ? "PS1PADCD" : "" : "PS1ENTRY",
+              ih.tx_ptr & 0xffff ?  "PS1CONHL" : "PS1CONHI",
+              isCon ? "PS1ENTRY" : "",
+              NULL
+             );
+
     if (ph.method == M_NRV2B_8)
-        addLoader("PS1N2BD0", NULL);
+        addLoader("PS1N2BD8", NULL);
     else if (ph.method == M_NRV2D_8)
-        addLoader("PS1N2DD0", NULL);
+        addLoader("PS1N2DD8", NULL);
     else if (ph.method == M_NRV2E_8)
-        addLoader("PS1N2ED0", NULL);
-#else
-    if (ph.method == M_NRV2B_LE32)
-        addLoader("PS1N2BD0", NULL);
-    else if (ph.method == M_NRV2D_LE32)
-        addLoader("PS1N2DD0", NULL);
-    else if (ph.method == M_NRV2E_LE32)
-        addLoader("PS1N2ED0", NULL);
-#endif
+        addLoader("PS1N2ED8", NULL);
     else
         throwInternalError("unknown compression method");
+
     if (sa_cnt)
-        addLoader((sa_cnt > 0xfffc) ? "MSETBIG0" : "MSETSML0",    // set small/big memset
-                  (ih.tx_len & 3)   ? "MSETUAL0" : "MSETALG0",    // un/aligned memset
-                  NULL);
-    addLoader("PS1EXIT0", "IDENTSTR", "PS1PHDR0", "PS1RGSZ0", NULL);
+        addLoader(sa_cnt > 0xfffc ? "PS1MSETB" : "PS1MSETS",    // set small/big memset
+                  ih.tx_len & 3   ? "PS1MSETU" : "PS1MSETA",    // un/aligned memset
+                  NULL
+                 );
+    addLoader("PS1FLUSH", "PS1JMPEP", "IDENTSTR", "PS1PAHDR",
+              isCon ? "PS1SREGS" : "",
+              NULL
+             );
     return getLoaderSize();
 }
 
@@ -254,6 +255,7 @@ void PackPs1::pack(OutputFile *fo)
     // scan the end of file for 2048 bytes sector alignment
     // the removed space will secure in-place decompression
     while (!(*p_scan--)) { if (sa_cnt++ > (0xfffc<<3)) break; }
+
     if (sa_cnt > 0xfffc)
         sa_cnt = ALIGN_DOWN(sa_cnt,8);
     else
@@ -262,8 +264,8 @@ void PackPs1::pack(OutputFile *fo)
     // prepare packheader
     ph.u_len = (fdata_size - sa_cnt);
     ph.filter = 0;
-
     Filter ft(ph.level);
+
     // compress (max_match = 65535)
     compressWithFilters(&ft, 512, 0, NULL, 0, 65535);
 
@@ -278,7 +280,7 @@ void PackPs1::pack(OutputFile *fo)
         {
             overlap = ALIGN_UP((ph.overlap_overhead-sa_cnt),4);
             opt->info_mode += !opt->info_mode ? 1 : 0;
-            infoWarning("%s will load to a %d bytes higher offset",fi->getName(),overlap);
+            infoWarning("%s: memory overlap %d bytes",fi->getName(),overlap);
         }
     }
 
@@ -287,40 +289,46 @@ void PackPs1::pack(OutputFile *fo)
     oh.ih_csum = upx_adler32(&ih.epc, SZ_IH_BKUP);
 
     const int lsize = getLoaderSize();
-
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
+
+    patchPackHeader(loader,lsize);
 
     unsigned pad = 0;
     unsigned filelen = ALIGN_UP((cfile_size ? cfile_size : (unsigned) ih.tx_len), 4);
     unsigned pad_code = TIL_ALIGNED(ph.c_len, 4);
 
-    const int h_len = lsize-getLoaderSectionStart("IDENTSTR");
-    const int e_len = lsize-h_len;
-    const int d_len = e_len-getLoaderSectionStart("PS1DECO0");
-    const int s_len = get_le32(&loader[getLoaderSectionStart("PS1RGSZ0")]);
-
-    // set the offset for compressed stuff at the very end of file
     const unsigned decomp_data_start = ih.tx_ptr;
     const unsigned comp_data_start = ((decomp_data_start + filelen + overlap) - ph.c_len);
-    const unsigned entry = comp_data_start - e_len - pad_code;
 
-    patchPackHeader(loader,lsize);
-    patch_mips_le(loader,e_len,"JPEP",MIPS_JP(ih.epc));
+    const int h_len = lsize-getLoaderSectionStart("IDENTSTR");
+    const int c_len = lsize-h_len;
+    int d_len = 0;
+    int e_len = 0;
 
-    if (sa_cnt)
-        patch_mips_le(loader,e_len,"SC",MIPS_LO(sa_cnt > 0xfffc ? sa_cnt >> 3 : sa_cnt));
-    if (ih.tx_ptr & 0xffff)
-        patch_mips_le(loader,e_len,"DECO",decomp_data_start);
+    if (isCon)
+    {
+        e_len = lsize - h_len;
+        d_len = e_len - getLoaderSectionStart("PS1ENTRY");
+    }
     else
-        patch_mips_le(loader,e_len,"DE",MIPS_HI(decomp_data_start));
-    patch_mips_le(loader,e_len,"COMP",comp_data_start);
-    patch_mips_le(loader,e_len,"DCRT",entry + (e_len - d_len));
-    patch_mips_le(loader,e_len,"LS",d_len + s_len);
+    {
+        d_len = (lsize - h_len) - getLoaderSectionStart("PS1ENTRY");
+        e_len = (lsize - d_len) - h_len;
+    }
 
+    patch_mips_le(loader,c_len,"JPEP",MIPS_JP(ih.epc));
+    if (sa_cnt)
+        patch_mips_le(loader,c_len,"SC",MIPS_LO(sa_cnt > 0xfffc ? sa_cnt >> 3 : sa_cnt));
+    if (ih.tx_ptr & 0xffff)
+        patch_mips_le(loader,c_len,"DECO",decomp_data_start);
+    else
+        patch_mips_le(loader,c_len,"DE",MIPS_HI(decomp_data_start));
+
+    const unsigned entry = comp_data_start - e_len - pad_code;
     oh.tx_ptr = entry;
     oh.tx_len = ph.c_len + e_len + pad_code;
-    oh.epc = entry;
+    oh.epc = comp_data_start - e_len - pad_code;
 
     if (!opt->ps1_exe.no_align)
     {
@@ -333,24 +341,45 @@ void PackPs1::pack(OutputFile *fo)
     ibuf.clear(0,fdata_size);
     upx_bytep paddata = ibuf;
 
+    if (isCon)
+    {
+        if (pad_code)
+            patch_mips_le(loader,c_len,"PC",pad_code);
+        patch_mips_le(loader, c_len, "DCRT", entry + (e_len - d_len));
+        patch_mips_le(loader, c_len, "LS",
+                      d_len + get_le32(&loader[getLoaderSectionStart("PS1SREGS")]));
+
     // ps1_exe_t structure 188 bytes
     fo->write(&oh,sizeof(oh));
-    // id & upx header some more bytes
-    fo->write(loader+e_len,h_len);
-    // remember? header size is 2048 bytes so we write the rest
-    fo->write(paddata,PS_HDR_SIZE - fo->getBytesWritten());
+        // id & upx header
+        fo->write(loader + e_len,h_len);
+    }
+    else
+    {
+        patch_mips_le(loader,c_len,"CPDO",comp_data_start);
+        patch_mips_le(loader, e_len,"PSVR",
+                      (0xa0000000 - (ih.epc & 0x80000000)) + (0x800 - HD_CODE_OFS));
 
-    // padding placed in front of the runtime, so it doesn't overwrite other
-    // than the allowed space (ih.tx_ptr >= allowed space <= (ih.tx_ptr+ih.tx_len))
+        // ps1_exe_t structure 188 bytes
+        fo->write(&oh,sizeof(oh));
+        // decompressor
+        fo->write(loader + e_len, d_len);
+        // id & upx header
+        fo->write(loader + e_len + d_len, h_len);
+    }
+
+    // header size is 2048 bytes
+    fo->write(paddata, PS_HDR_SIZE - fo->getBytesWritten());
+    // sector alignment
     if (pad)
-        fo->write(paddata,pad);
-    // runtime
-    fo->write(loader,e_len);
-    // does the code need to be padded? must be aligned to 4!
+        fo->write(paddata, pad);
+    // entry
+    fo->write(loader, e_len);
+    // code must be aligned to 4!
     if (pad_code)
-        fo->write(paddata,pad_code);
+        fo->write(paddata, pad_code);
     // compressed binary / data
-    fo->write(obuf,ph.c_len);
+    fo->write(obuf, ph.c_len);
 
     verifyOverlappingDecompression();
     if (!checkFinalCompressionRatio(fo))
@@ -358,12 +387,14 @@ void PackPs1::pack(OutputFile *fo)
 
 #if 0
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
-    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) e_len);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) lsize - h_len);
     printf("%-13s: code entry   : %08X bytes\n", getName(), (unsigned int) oh.epc);
     printf("%-13s: load address : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr);
     printf("%-13s: section size : %8ld bytes\n", getName(), (long) oh.tx_len);
     printf("%-13s: eof in mem IF: %08X bytes\n", getName(), (unsigned int) ih.tx_ptr+ih.tx_len);
     printf("%-13s: eof in mem OF: %08X bytes\n", getName(), (unsigned int) oh.tx_ptr+oh.tx_len);
+    char method_name[32+1]; set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
+    printf("%-13s: compressor   : %s\n", getName(), method_name);
 #endif
 }
 

@@ -110,6 +110,8 @@ protected:
     unsigned fdata_size;
     // calculated filesize
     unsigned cfile_size;
+
+    bool isCon;
 };
 
 

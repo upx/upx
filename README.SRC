@@ -96,7 +96,7 @@ To compile the packer sources
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Nasm 0.98.36 - the Netwide Assembler
+  - Nasm 0.98.38 - the Netwide Assembler
     http://upx.sourceforge.net/download/tools/
     http://sourceforge.net/projects/nasm/
 
@@ -106,7 +106,7 @@ If you want to modify the stub sources you'll also need
   - djasm - an assembler for the djgpp stub
     http://upx.sourceforge.net/download/tools/
 
-  - Perl 5.004 or better
+  - Perl 5.6 or better
 
   - Linux (for the linux/386 stubs)
 

@@ -195,7 +195,8 @@ void show_help(int x)
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --all-methods       try all available compression methods\n"
-                    "  --no-align          don't align to mode2 sector format\n"
+                    "  --console-run       enables client/host transfer compatibility\n"
+                    "  --no-align          don't align to 2048 bytes [enables: --console-run]\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for tmt/adam:\n");
