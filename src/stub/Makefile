@@ -82,7 +82,7 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 STRIPELF = ./util/sstrip/sstrip
 
 # Compiler for the Linux/386 stubs.
-# gcc 3.4 (20031206 experimental) seems to produce the smallest code
+# gcc 3.4 (20040118 experimental) seems to produce the smallest code
 ifeq (1,2)
   CC_LINUX_I386 = gcc-2.72 -m386 -O2
 else

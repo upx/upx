@@ -3,7 +3,7 @@ SHELL = /bin/sh
 top_srcdir = ..
 
 PACKAGE      = upx
-VERSION_DATE = 27 Jan 2003
+VERSION_DATE = 20 Jan 2004
 VERSION     := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
 TRIMSPACE = cat
