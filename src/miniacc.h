@@ -35,7 +35,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20040930L
+#define ACC_VERSION     20041019L
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
 #endif
@@ -68,6 +68,9 @@
 #  if (__WATCOMC__ >= 1050) && (__WATCOMC__ < 1060)
 #    pragma warning 203 9
 #  endif
+#endif
+#if defined(__BORLANDC__) && defined(__MSDOS__) && !defined(__FLAT__)
+#  pragma option -h
 #endif
 #if defined(ACC_CONFIG_NO_LIMITS_H)
 #else
@@ -218,6 +221,11 @@
 #endif
 #if defined(__WATCOMC__) && (__WATCOMC__ < 900)
 #  define ACC_BROKEN_INTEGRAL_CONSTANTS 1
+#endif
+#if !defined(ACC_CONFIG_NO_INLINE_ASM)
+#if defined(__GNUC__) && defined(__llvm__)
+#  define ACC_CONFIG_NO_INLINE_ASM 1
+#endif
 #endif
 #define ACC_CPP_STRINGIZE(x)            #x
 #define ACC_CPP_MACRO_EXPAND(x)         ACC_CPP_STRINGIZE(x)
@@ -962,6 +970,15 @@ extern "C" {
 #    define ACC_UNUSED_FUNC(func)   ((void) func)
 #  endif
 #endif
+#if !defined(ACC_UNUSED_LABEL)
+#  if (ACC_CC_WATCOMC) && defined(__cplusplus)
+#    define ACC_UNUSED_LABEL(l)     switch(0) case 1:goto l
+#  elif (ACC_CC_INTELC || ACC_CC_WATCOMC)
+#    define ACC_UNUSED_LABEL(l)     if (0) goto l
+#  else
+#    define ACC_UNUSED_LABEL(l)     switch(0) case 1:goto l
+#  endif
+#endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
 #  if (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
@@ -1193,6 +1210,7 @@ extern "C" {
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO_H 1
 #define HAVE_FCNTL_H 1
+#define HAVE_FLOAT_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_MALLOC_H 1
 #define HAVE_MEMORY_H 1
@@ -2561,7 +2579,7 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 #  define acc_alloca(x)     __builtin_alloca((x))
 #elif (ACC_CC_BORLANDC || ACC_CC_LCC) && defined(__linux__)
 #elif (HAVE_ALLOCA)
-#  define acc_alloca(x)     alloca((x))
+#  define acc_alloca(x)     ((void *) (alloca((x))))
 #endif
 #if (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #  define acc_stackavail()  stackavail()
@@ -2596,6 +2614,8 @@ ACCLIB_EXTERN(int, acc_set_binmode) (int, int);
 ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
 ACCLIB_EXTERN(void, acc_wildargv) (int*, char***);
+ACCLIB_EXTERN(void, acc_debug_break) (void);
+ACCLIB_EXTERN(void, acc_debug_nop) (void);
 #if defined(acc_int32e_t)
 ACCLIB_EXTERN(int, acc_tsc_read) (acc_uint32e_t*);
 ACCLIB_EXTERN(int, acc_tsc_read_add) (acc_uint32e_t*);
@@ -2675,6 +2695,7 @@ ACCLIB_EXTERN(void, acc_set_be64) (acc_hvoid_p, acc_uint64l_t);
 ACCLIB_EXTERN(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p);
 ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #endif
+#if !defined(ACC_CONFIG_NO_UNALIGNED)
 #if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
 #  define ACC_GET_LE16(p)       (* (const unsigned short *) (p))
 #  define ACC_GET_LE32(p)       (* (const acc_uint32e_t *) (p))
@@ -2684,6 +2705,7 @@ ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #if (ACC_ARCH_AMD64)
 #  define ACC_GET_LE64(p)       (* (const acc_uint64l_t *) (p))
 #  define ACC_SET_LE64(p,v)     (* (acc_uint64l_t *) (p) = (acc_uint64l_t) (v))
+#endif
 #endif
 typedef struct {
     const char* name;
@@ -3269,7 +3291,7 @@ ACCLIB_PUBLIC(void, acc_set_be32) (acc_hvoid_p p, acc_uint32l_t v)
 }
 ACCLIB_PUBLIC(unsigned, acc_get_le16) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     return (* (const unsigned short *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -3283,7 +3305,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le24) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     return (* (const acc_uint32e_t *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -3292,7 +3314,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(void, acc_set_le16) (acc_hvoid_p p, unsigned v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     (* (unsigned short *) (p) = (unsigned short) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -3309,7 +3331,7 @@ ACCLIB_PUBLIC(void, acc_set_le24) (acc_hvoid_p p, acc_uint32l_t v)
 }
 ACCLIB_PUBLIC(void, acc_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -3363,9 +3385,9 @@ ACCLIB_PUBLIC(void, acc_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
 #if defined(acc_uint64l_t)
 ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_AMD64)
+#if (ACC_ARCH_AMD64) && !defined(ACC_CONFIG_NO_UNALIGNED)
     return (* (const acc_uint64l_t *) (p));
-#elif (ACC_ARCH_IA32)
+#elif (ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     const acc_uint32e_t* b = (const acc_uint32e_t*) p;
     return ((acc_uint64l_t)b[0]) | ((acc_uint64l_t)b[1] << 32);
 #elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
@@ -3382,9 +3404,9 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 }
 ACCLIB_PUBLIC(void, acc_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 {
-#if (ACC_ARCH_AMD64)
+#if (ACC_ARCH_AMD64) && !defined(ACC_CONFIG_NO_UNALIGNED)
     (* (acc_uint64l_t *) (p)) = v;
-#elif (ACC_ARCH_IA32)
+#elif (ACC_ARCH_IA32) && !defined(ACC_CONFIG_NO_UNALIGNED)
     (((acc_uint32e_t *)(p))[0] = (acc_uint32e_t) (v >>  0));
     (((acc_uint32e_t *)(p))[1] = (acc_uint32e_t) (v >> 32));
 #elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
@@ -3593,26 +3615,21 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p r)
 #  pragma warn(push)
 #  pragma warn(disable:2007)
 #endif
-#if ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC)
-#  if (ACC_CC_GNUC >= 0x020000ul)
-#    define __ACCLIB_RDTSC_REGS : : "r" (t) : "cc", "memory", "eax", "edx"
-#  else
-#    define __ACCLIB_RDTSC_REGS : : "r" (t) : "ax", "dx"
-#  endif
-#elif (ACC_ARCH_IA32 && ACC_CC_INTELC) && defined(__linux__)
-#  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "memory", "eax", "edx"
-#elif (ACC_ARCH_IA32 && ACC_CC_PATHSCALE)
+#undef __ACCLIB_RDTSC_REGS
+#if defined(ACC_CONFIG_NO_INLINE_ASM)
+#elif (ACC_ARCH_AMD64 && (ACC_CC_GNUC || ACC_CC_PATHSCALE))
+#  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "cc", "memory", "rax", "rdx"
+#elif (ACC_ARCH_IA32 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+#  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "ax", "dx"
+#elif (ACC_ARCH_IA32 && (ACC_CC_GNUC || ACC_CC_PATHSCALE))
+#  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "cc", "memory", "eax", "edx"
+#elif (ACC_ARCH_IA32 && ACC_CC_INTELC)
 #  define __ACCLIB_RDTSC_REGS   : : "r" (t) : "memory", "eax", "edx"
 #endif
 ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
-    __asm__ __volatile__(
-        "clc \n" ".byte 0x0f, 0x31\n"
-        "movl %%eax,(%0)\n" "movl %%edx,4(%0)\n"
-        __ACCLIB_RDTSC_REGS
-    );
-    return 0;
+#if defined(ACC_CONFIG_NO_INLINE_ASM)
+    t[0] = t[1] = 0; return -1;
 #elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
     ACC_UNUSED(t);
     __asm {
@@ -3628,21 +3645,22 @@ ACCLIB_PUBLIC(int, acc_tsc_read) (acc_uint32e_t* t)
         mov [ecx+4], edx
     }
     return 0;
+#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
+    __asm__ __volatile__(
+        "clc \n" ".byte 0x0f, 0x31\n"
+        "movl %%eax,(%0)\n" "movl %%edx,4(%0)\n"
+        __ACCLIB_RDTSC_REGS
+    );
+    return 0;
 #else
-    t[0] = t[1] = 0;
-    return -1;
+    t[0] = t[1] = 0; return -1;
 #endif
 }
 ACCLIB_PUBLIC(int, acc_tsc_read_add) (acc_uint32e_t* t)
 {
-#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
-    __asm__ __volatile__(
-        "clc \n" ".byte 0x0f, 0x31\n"
-        "addl %%eax,(%0)\n" "adcl $0,%%edx\n" "addl %%edx,4(%0)\n"
-        __ACCLIB_RDTSC_REGS
-    );
-    return 0;
-#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
+#if defined(ACC_CONFIG_NO_INLINE_ASM)
+    ACC_UNUSED(t); return -1;
+#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC)) && !defined(ACC_CONFIG_NO_INLINE_ASM)
     ACC_UNUSED(t);
     __asm {
         mov ecx, t
@@ -3658,14 +3676,15 @@ ACCLIB_PUBLIC(int, acc_tsc_read_add) (acc_uint32e_t* t)
         add [ecx+4], edx
     }
     return 0;
+#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && defined(__ACCLIB_RDTSC_REGS)
+    __asm__ __volatile__(
+        "clc \n" ".byte 0x0f, 0x31\n"
+        "addl %%eax,(%0)\n" "adcl $0,%%edx\n" "addl %%edx,4(%0)\n"
+        __ACCLIB_RDTSC_REGS
+    );
+    return 0;
 #else
-    acc_uint32e_t v[2];
-    int r;
-    r = acc_tsc_read(v);
-    t[0] += v[0];
-    if (t[0] < v[0]) t[1] += 1;
-    t[1] += v[1];
-    return r;
+    ACC_UNUSED(t); return -1;
 #endif
 }
 #if (ACC_OS_WIN32 && ACC_CC_PELLESC && (__POCC__ >= 290))
@@ -4366,6 +4385,42 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t a, acc_uint32l_t b, a
     ACC_UNUSED(a); ACC_UNUSED(b);
     return r;
 }
+#if (ACC_OS_WIN32 && ACC_CC_PELLESC && (__POCC__ >= 290))
+#  pragma warn(push)
+#  pragma warn(disable:2007)
+#endif
+#if (ACC_OS_WIN16)
+ACC_EXTERN_C void __far __pascal DebugBreak(void);
+#endif
+ACCLIB_PUBLIC(void, acc_debug_break) (void)
+{
+#if (ACC_OS_WIN16)
+    DebugBreak();
+#elif (ACC_ARCH_IA16)
+#elif (ACC_OS_WIN64) && (ACC_HAVE_WINDOWS_H)
+    DebugBreak();
+#elif defined(ACC_CONFIG_NO_INLINE_ASM) && (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
+    DebugBreak();
+#elif defined(ACC_CONFIG_NO_INLINE_ASM)
+    * (int *) 0x1 = -1;
+#elif (ACC_ARCH_IA32 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
+    __asm { int 3 }
+#elif (ACC_ARCH_IA32 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+    __asm__ __volatile__("int $3\n");
+#elif ((ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
+    __asm__ __volatile__("int $3\n" : : : "memory" );
+#elif (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
+    DebugBreak();
+#else
+    * (int *) 0x1 = -1;
+#endif
+}
+ACCLIB_PUBLIC(void, acc_debug_nop) (void)
+{
+}
+#if (ACC_OS_WIN32 && ACC_CC_PELLESC && (__POCC__ >= 290))
+#  pragma warn(pop)
+#endif
 #endif
 #if defined(ACC_WANT_ACCLIB_WILDARGV)
 #  undef ACC_WANT_ACCLIB_WILDARGV
