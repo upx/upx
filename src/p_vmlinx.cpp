@@ -429,19 +429,21 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //#include <asm/segment.h>
 //
 //	.text
-//startup_32: .globl startup_32  # In: %esi=0x90000
+//startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
 //	cli  # but if it matters, then there is a race!
 //
-//	movl $ __BOOT_DS,%eax  # flat addressing, please
-//	movl %eax,%ss; movl %esi,%esp
-//	movl %eax,%ds
+//	movl $ __BOOT_DS,%eax
+//	movl %eax,%ss; movl $0x99000,%esp  # 2.6.7 setup had ss:sp of 9000:8ffe
+//		/* Avoid EBDA (Extended BIOS Data Area) below 0xA0000. */
+//
+//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
+//
+//	movl %eax,%ds  # all non-code segments identical
 //	movl %eax,%es
 //	movl %eax,%fs
 //	movl %eax,%gs
 //
-//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
-//
-//	movl $ startup_32,%eax  # base address of uncompressed execution
+//	movl $ 0x100000,%eax  # destination of uncompression (and entry point)
 //	pushl $ __BOOT_CS
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
