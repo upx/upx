@@ -18,7 +18,7 @@ cvs-admin-ko:
 	cvs update
 
 ChangeLog:
-	perl scripts/cvs2cl.pl --utc
+	perl scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
 .PHONY: all clean distclean dist cvs-admin-ko ChangeLog
 
