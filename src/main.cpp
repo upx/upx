@@ -1136,7 +1136,7 @@ int main(int argc, char *argv[])
         fg = con_fg(f,fg);
     }
 #endif
-#if 1 && !defined(WITH_NRV)
+#if 0 && !defined(WITH_NRV)
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_GREEN);

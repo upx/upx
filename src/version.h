@@ -1,3 +1,3 @@
-#define UPX_VERSION             0x011100        /* 01.11.00 */
-#define UPX_VERSION_STRING      "1.11"
-#define UPX_VERSION_DATE        "Dec 20th 2000"
+#define UPX_VERSION             0x011101        /* 01.11.01 */
+#define UPX_VERSION_STRING      "1.11.1"
+#define UPX_VERSION_DATE        "Dec 21st 2000"
