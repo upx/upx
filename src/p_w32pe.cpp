@@ -113,6 +113,16 @@ const int *PackW32Pe::getFilters() const
 }
 
 
+bool PackW32Pe::testUnpackVersion(int version) const
+{
+    if (version != ph_version && ph_version != -1)
+        throwCantUnpack("program has been modified; run a virus checker!");
+    if (!canUnpackVersion(version))
+        throwCantUnpack("this program is packed with an obsolete version and cannot be unpacked");
+    return true;
+}
+
+
 /*************************************************************************
 // util
 **************************************************************************/
@@ -1434,11 +1444,11 @@ void PackW32Pe::pack(OutputFile *fo)
             ih.flags |= RELOCS_STRIPPED;
 
     if (memcmp(isection[0].name,"UPX",3) == 0)
-        throwAlreadyPacked();
+        throwAlreadyPackedByUPX();
     if (!opt->force && (IDSIZE(15) || ih.entry > isection[1].vaddr))
-        throwCantPack("file is possibly packed/protected  (try --force)");
+        throwCantPack("file is possibly packed/protected (try --force)");
     if (ih.entry && ih.entry < rvamin)
-        throwCantPack("run a virus scanner on this file first");
+        throwCantPack("run a virus scanner on this file!");
     if (!opt->force && ih.subsystem == 1)
         throwCantPack("subsystem `native' is not supported (try --force)");
     if (ih.filealign < 0x200)
@@ -1515,7 +1525,7 @@ void PackW32Pe::pack(OutputFile *fo)
     //fwrite(ibuf,1,usize,f1);
     //fclose(f1);
 
-    // some check for broken linkers - disable filter if neccessary
+    // some checks for broken linkers - disable filter if neccessary
     bool allow_filter = true;
     if (ih.codebase == ih.database
         || ih.codebase + ih.codesize > ih.imagesize
@@ -1878,7 +1888,7 @@ void PackW32Pe::pack(OutputFile *fo)
 // unpack
 **************************************************************************/
 
-bool PackW32Pe::canUnpack()
+int PackW32Pe::canUnpack()
 {
     if (!readFileHeader())
         return false;
@@ -1887,10 +1897,18 @@ bool PackW32Pe::canUnpack()
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
-    if (ih.objects < 3 || memcmp(isection[0].name,"UPX",3))
-        return false;
-    return super::readPackHeader(1024, isection[1].rawdataptr - 64)  // current version
-        || super::readPackHeader(1024, isection[2].rawdataptr); // old versions
+    if (ih.objects < 3)
+        return -1;
+    if (memcmp(isection[0].name,"UPX",3))
+    {
+        if (ih.objects == 3 && (IDSIZE(15) || ih.entry > isection[1].vaddr))
+            throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+        return -1;
+    }
+    ph_format = getFormat();
+    bool b = readPackHeader(1024, isection[1].rawdataptr - 64)  // current version
+          || readPackHeader(1024, isection[2].rawdataptr); // old versions
+    return b ? 1 : -1;
 }
 
 
