@@ -625,6 +625,9 @@
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
 #endif
 #endif
 

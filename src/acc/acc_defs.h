@@ -71,10 +71,12 @@
 #    define ACC_UNUSED_FUNC(func)   ((void) func)
 #  elif (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
+#  elif (ACC_CC_GNUC == 0x030400ul) && defined(__llvm__)
+#    define ACC_UNUSED_FUNC(func)   ((void) (void (*)(void)) func)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER >= 1400))
-#    define ACC_UNUSED_FUNC(func)   ((void) (void (*)()) func)
+#    define ACC_UNUSED_FUNC(func)   ((void) (void (*)(void)) func)
 #  elif (ACC_CC_KEILC)
 #    define ACC_UNUSED_FUNC(func)
 #  else

@@ -369,13 +369,9 @@ ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_p, const acc_uc
 #if defined(acc_int64l_t)
 
 typedef struct { /* all private */
-#if (ACC_OS_POSIX_LINUX)
     void* h;
     unsigned cpu_type, cpu_features, cpu_khz, cpu_nrctrs;
     const char* cpu_name;
-#else
-    void* h;
-#endif
 } acc_perfctr_handle_t;
 
 typedef struct {
