@@ -18,10 +18,10 @@ All versions 1.9x are unstable beta releases - use them only for testing,
 and never distribute a program that is packed with them !
 There will be hidden bugs. Really.
 
-The current stable release is 1.24, and the next stable release
+The current stable release is 1.25, and the next stable release
 will be called version 2.00.
 
-The main news since 1.24 are:
+The main news since 1.25 are:
   - slightly better compression using the new NRV2E algorithm
   - new options for compression tuining (e.g. `--brute')
   - support for bootable Linux kernels ("vmlinuz/386")

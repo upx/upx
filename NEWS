@@ -19,6 +19,7 @@ Changes in 1.91 beta (30 Jun 2004):
     Automatic Compiler Configuration
   * source code: compile fixes for strict ISO C++ compilers
   * source code: compile fixes for Win64
+  * re-synced with upx 1.25 branch
 
 Changes in 1.90 beta (11 Nov 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
