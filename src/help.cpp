@@ -61,7 +61,7 @@ void show_usage(void)
 {
     FILE *f = con_term;
 
-    con_fprintf(f,"Usage: %s [-123456788dlsthVL] [-qvfk] [-o file] %sfile..\n", progname,
+    con_fprintf(f,"Usage: %s [-123456788dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
 #if defined(__DJGPP__) || defined(__EMX__)
                 "[@]");
 #else
@@ -178,8 +178,8 @@ void show_help(int x)
         con_fprintf(f,"Options for linux/i386\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
-                    "  -s            use /usr/local/lib/upx[bd] as decompressor\n"
-                    "  -s=path/upxX  use path/upxX as decompressor\n"
+                    "  --script             use /usr/local/lib/upx/upx[bd] as decompressor\n"
+                    "  --script=/path/upxX  use path/upxX as decompressor\n"
                     "\n");
     }
 
@@ -261,7 +261,8 @@ void show_version(int x)
     fprintf(f,"upx %s\n",UPX_VERSION_STRING);
 #if defined(WITH_NRV)
     fprintf(f,"NRV data compression library %s\n", nrv_version_string());
-#elif defined(WITH_UCL)
+#endif
+#if defined(WITH_UCL)
     fprintf(f,"UCL data compression library %s\n", ucl_version_string());
 #endif
     fprintf(f,"Copyright (C) 1996,1997,1998,1999,2000 Markus Franz Xaver Johannes Oberhumer\n");

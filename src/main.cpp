@@ -304,7 +304,7 @@ static void set_script_name(const char *n, bool allow_m)
 #if 1
     if (done_script_name > 0)
     {
-        fprintf(stderr,"%s: option `-script' more than once given\n",argv0);
+        fprintf(stderr,"%s: option `--script' more than once given\n",argv0);
         e_usage();
     }
 #endif
@@ -313,12 +313,12 @@ static void set_script_name(const char *n, bool allow_m)
         fprintf(stderr,"%s: missing script name\n",argv0);
         e_usage();
     }
-    if (strlen(n) >= SCRIPT_MAX - 3)
+    if (strlen(n) >= opt->unix.SCRIPT_MAX - 3)
     {
         fprintf(stderr,"%s: script name too long\n",argv0);
         e_usage();
     }
-    opt->script_name = n;
+    opt->unix.script_name = n;
     done_script_name++;
 }
 
@@ -444,9 +444,6 @@ static int do_option(int optc, const char *arg)
     case 'q':
         opt->verbose = (opt->verbose > 1 ? 1 : opt->verbose - 1);
         break;
-    case 's':
-        set_script_name("/usr/local/lib/upxX", 1);
-        break;
     case 't':
         set_cmd(CMD_TEST);
         break;
@@ -512,9 +509,6 @@ static int do_option(int optc, const char *arg)
         break;
     case 519:
         opt->no_env = true;
-        break;
-    case 520:
-        set_script_name(mfx_optarg,1);
         break;
     // compression settings
     case 525:
@@ -639,6 +633,11 @@ static int do_option(int optc, const char *arg)
     case 660:
         getoptvar(&opt->unix.blocksize, 8192u, ~0u);
         break;
+    case 661:
+        opt->unix.script_name = "/usr/local/lib/upx/upxX";
+        if (mfx_optarg && mfx_optarg[0])
+            set_script_name(mfx_optarg,1);
+        break;
 
     case '\0':
         return -1;
@@ -680,7 +679,6 @@ static const struct mfx_option longopts[] =
     {"no-progress",         0, 0, 516},     // no progress bar
     {"output",           0x21, 0, 'o'},
     {"quiet",               0, 0, 'q'},     // quiet mode
-    {"script",           0x31, 0, 520},     // --script=
     {"silent",              0, 0, 'q'},     // quiet mode
     {"stdout",           0x10, 0, 517},     // write output on standard output
     {"to-stdout",        0x10, 0, 517},     // write output on standard output
@@ -741,6 +739,7 @@ static const struct mfx_option longopts[] =
     // dos/sys
     // unix
     {"blocksize",        0x31, 0, 660},     // --blocksize=
+    {"script",           0x31, 0, 661},     // --script=
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output
     // win32/pe
@@ -755,7 +754,7 @@ static const struct mfx_option longopts[] =
     int optc, longind;
     char buf[256];
 
-    prepare_shortopts(buf,"123456789hH?sV",longopts),
+    prepare_shortopts(buf,"123456789hH?V",longopts),
     mfx_optind = 0;
     mfx_opterr = 1;
     while ((optc = mfx_getopt_long(argc, argv, buf, longopts, &longind)) >= 0)
@@ -1033,21 +1032,20 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ucl_init() failed - check your UCL installation !\n");
         if (UCL_VERSION != ucl_version())
             fprintf(stderr,"library version conflict (%lx, %lx) - check your UCL installation !\n",
-                    UCL_VERSION, (long) ucl_version());
+                    (long) UCL_VERSION, (long) ucl_version());
         e_exit(EXIT_INIT);
     }
-#elif defined(WITH_NRV)
+#endif
+#if defined(WITH_NRV)
     if (nrv_init() != NRV_E_OK)
     {
         show_head();
         fprintf(stderr,"nrv_init() failed - check your NRV installation !\n");
         if (NRV_VERSION != nrv_version())
             fprintf(stderr,"library version conflict (%lx, %lx) - check your NRV installation !\n",
-                    NRV_VERSION, (long) nrv_version());
+                    (long) NRV_VERSION, (long) nrv_version());
         e_exit(EXIT_INIT);
     }
-#else
-#error
 #endif
 
     //srand((int) time(NULL));
