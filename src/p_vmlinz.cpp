@@ -198,12 +198,18 @@ int PackVmlinuzI386::decompressKernel()
             //printf("fd_pos: %ld, file_size: %ld\n", (long)fd_pos, (long)file_size);
             throwCantPack("trailing bytes after kernel image; use option `-f' to force packing");
         }
-        // see /usr/src/linux/arch/i386/kernel/head.S:
-        if (memcmp(ibuf, "\xFC\xB8",     2) != 0  /* 2.4.x: cld; mov $...,%eax */
-        &&  memcmp(ibuf, "\xFC\x0F\x01", 3) != 0  /* 2.6.x: cld; lgdt ... */
-        && !(0xEA==ibuf[0]  /* 2.6.x+grsecurity+strongswan+openwall+trustix:  ljmp $0x10,... */
-            && 0==memcmp(5+ibuf, "\x10\x00", 2)) )
-            throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
+
+
+        // see /usr/src/linux/arch/i386/kernel/head.S
+        // 2.4.x: cld; mov $...,%eax
+        if (memcmp(ibuf, "\xFC\xB8", 2) == 0) goto head_ok;
+        // 2.6.x: cld; lgdt ...
+        if (memcmp(ibuf, "\xFC\x0F\x01", 3) == 0) goto head_ok;
+        // 2.6.x+grsecurity+strongswan+openwall+trustix: ljmp $0x10,...
+        if (ibuf[0] == 0xEA && memcmp(ibuf+5, "\x10\x00", 2) == 0) goto head_ok;
+
+        throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
+    head_ok:
 
         // FIXME: more checks for special magic bytes in ibuf ???
         // FIXME: more checks for kernel architecture ???
