@@ -61,7 +61,7 @@ public:
 
 public:
     // fields stored in compressed file
-    unsigned magic;             // UPX_MAGIC_LE32
+    enum { magic = UPX_MAGIC_LE32 };
     int version;
     int format;                 // executable format
     int method;                 // compresison method

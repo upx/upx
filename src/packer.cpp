@@ -556,7 +556,6 @@ unsigned Packer::getRandomId() const
 void Packer::initPackHeader()
 {
     memset(&ph, 0, sizeof(ph));
-    ph.magic = UPX_MAGIC_LE32;                    // "UPX!"
     ph.version = getVersion();
     ph.format = getFormat();
     ph.method = -1;
