@@ -724,6 +724,7 @@ static const struct mfx_option longopts[] =
     {"decompress",          0, 0, 'd'},     // decompress
     {"fast",             0x10, 0, '1'},     // compress faster
     {"fileinfo",         0x10, 0, 902},     // display info about file
+    {"file-info",        0x10, 0, 902},     // display info about file
     {"help",                0, 0, 'h'+256}, // give help
     {"license",             0, 0, 'L'},     // display software license
     {"list",                0, 0, 'l'},     // list compressed exe
