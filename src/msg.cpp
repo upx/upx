@@ -66,9 +66,9 @@ void printClearLine(FILE *f)
 static void pr_print(bool c, const char *msg)
 {
     if (c && !opt->to_stdout)
-        con_fprintf(stderr,msg);
+        con_fprintf(stderr, "%s", msg);
     else
-        fprintf(stderr,msg);
+        fprintf(stderr, "%s", msg);
 }
 
 static void pr_error(const char *iname, const char *msg, bool is_warning)
