@@ -37,68 +37,14 @@
 // configuration section
 **************************************************************************/
 
-// use malloc instead of the bss segement
-#define USE_MALLOC
-
-
 /*************************************************************************
 // file util
 **************************************************************************/
-
-#undef xread
-#undef xwrite
 
 struct Extent {
     int  size;  // must be first to match size[0] uncompressed size
     char *buf;
 };
-
-static void
-xread(struct Extent *const x, char *const buf, size_t const count)
-{
-    if (x->size < (int)count) {
-        exit(127);
-    }
-#if 0  //{
-    {
-        char *p=x->buf, *q=buf;
-        size_t j;
-        for (j = count; 0!=j--; ++p, ++q) {
-            *q = *p;
-        }
-    }
-#else //}{
-    {
-        register unsigned long int __d0, __d1, __d2;
-        __asm__ __volatile__( "cld; rep; movsb"
-            : "=&c" (__d0), "=&D" (__d1), "=&S" (__d2)
-            : "0" (count), "1" (buf), "2" (x->buf)
-            : "memory");
-    }
-#endif  //}
-    x->buf  += count;
-    x->size -= count;
-}
-
-#if 1
-static int xwrite(int fd, const void *buf, int count)
-{
-    // note: we can assert(count > 0);
-    do {
-        int n = write(fd, buf, count);
-        if (n == -EINTR)
-            continue;
-        if (n <= 0)
-            break;
-        buf += n;               // gcc extension: add to void *
-        count -= n;
-    } while (count > 0);
-    return count;
-}
-#else
-#define xwrite(fd,buf,count)    ((count) - write(fd,buf,count))
-#endif
-
 
 /*************************************************************************
 // util
@@ -159,12 +105,6 @@ static uint32_t ascii5(uint32_t r, unsigned k, char *p)
 // UPX & NRV stuff
 **************************************************************************/
 
-// must be the same as in p_unix.cpp !
-#if !defined(USE_MALLOC)
-#  define BLOCKSIZE     (512*1024)
-#endif
-
-
 // patch constants for our loader (le32 format)
 #define UPX1            0x31585055          // "UPX1"
 #define UPX2            0x32585055          // "UPX2"
@@ -214,14 +154,17 @@ void upx_main(
     char *procself;
 
     // decompression buffer
-#if defined(USE_MALLOC)
     unsigned char *buf;
-    static int malloc_args[6] = {
-        0, UPX5, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0
+    static struct MallocArgs {
+        char *ma_addr;
+        size_t ma_length;
+        int ma_prot;
+        int ma_flags;
+        int ma_fd;
+        off_t ma_offset;
+    } malloc_args = {
+        0, 0, PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0
     };
-#else
-    static unsigned char buf[BLOCKSIZE + OVERHEAD];
-#endif
 
     //
     // ----- Step 0: set /proc/self using /proc/<pid> -----
@@ -240,7 +183,15 @@ void upx_main(
     //
 
     // Read header.
-    xread(&xi, (void *)&header, sizeof(header));
+    {
+	    register char *__d0, *__d1;
+	    __asm__ __volatile__( "movsl; movsl; movsl"
+	        : "=&D" (__d0), "=&S" (__d1)
+	        : "0" (&header), "1" (xi.buf)
+	        : "memory");
+        xi.buf   = __d1;
+        xi.size -= sizeof(header);
+    }
 
     // Paranoia. Make sure this is actually our expected executable
     // by checking the random program id. (The id is both stored
@@ -292,7 +243,7 @@ void upx_main(
     }
 
     // Create the temporary output file.
-    fdo = open(tmpname, O_WRONLY | O_CREAT | O_EXCL, 0700);
+    fdo = open(tmpname, O_RDWR | O_CREAT | O_EXCL, 0700);
 #if 0
     // Save some bytes of code - the ftruncate() below will fail anyway.
     if (fdo < 0)
@@ -308,14 +259,11 @@ void upx_main(
     // ----- Step 3: setup memory -----
     //
 
-#if defined(USE_MALLOC)
-    buf = mmap(malloc_args);
+    malloc_args.ma_fd = fdo;
+    malloc_args.ma_length = header.p_filesize;  // could packer do this?
+    buf = mmap((int *)&malloc_args);
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
-#else
-    if (header.p_blocksize > BLOCKSIZE)
-        goto error;
-#endif
 
 
     //
@@ -333,7 +281,15 @@ void upx_main(
         int i;
 
         // Read and check block sizes.
-        xread(&xi, (void *)&h, sizeof(h));
+        {
+	        register char *__d0, *__d1;
+	        __asm__ __volatile__( "movsl; movsl"
+	            : "=&D" (__d0), "=&S" (__d1)
+	            : "0" (&h), "1" (xi.buf)
+	            : "memory");
+            xi.buf   = __d1;
+            xi.size -= sizeof(h);
+        }
         if (h.sz_unc == 0)                       // uncompressed size 0 -> EOF
         {
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
@@ -351,21 +307,28 @@ void upx_main(
         //   assert(h.sz_unc > 0 && h.sz_unc <= blocksize);
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
-        header.p_filesize -= h.sz_unc;
         if (h.sz_cpr < h.sz_unc) { // Decompress block.
             nrv_uint out_len;
             i = (*f_decompress)(xi.buf, h.sz_cpr, buf, &out_len);
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
-            i = xwrite(fdo,    buf, h.sz_unc);
         }
         else { // Incompressible block
-            i = xwrite(fdo, xi.buf, h.sz_unc);
+            //memcpy(buf, xi.buf, h.sz_unc);
+	        register unsigned long int __d0, __d1, __d2;
+	        __asm__ __volatile__( "rep; movsb"
+	            : "=&c" (__d0), "=&D" (__d1), "=&S" (__d2)
+	            : "0" (h.sz_unc), "1" (buf), "2" (xi.buf)
+	            : "memory");
         }
+        munmap(buf, h.sz_unc);
+        buf     += h.sz_unc;
+        header.p_filesize -= h.sz_unc;
+
         xi.buf  += h.sz_cpr;
         xi.size -= h.sz_cpr;
 
-        if (xi.size < 0 || i != 0) {
+        if (xi.size < 0) {
 // error exit is here in the middle to keep the jumps short.
         error:
             (void) unlink(tmpname);
@@ -386,10 +349,6 @@ void upx_main(
     //
     // ----- Step 5: release resources -----
     //
-
-#if defined(USE_MALLOC)
-    munmap(buf, malloc_args[1]);
-#endif
 
     if (close(fdo) != 0)
         goto error;

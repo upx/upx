@@ -412,18 +412,12 @@ void PackLinuxI386::patchLoader()
 {
     lsize = getLoaderSize();
 
-    // mmapsize is (blocksize + OVERHEAD) rounded up to next PAGE_SIZE
-    const unsigned pagesize = 4096;
-    const unsigned mmapsize = ALIGN_UP(blocksize + OVERHEAD, pagesize);
-
     // patch loader
     // note: we only can use /proc/<pid>/fd when exetype > 0.
     //   also, we sleep much longer when compressing a script.
-    patch_le32(loader,lsize,"UPX5",mmapsize);
     patch_le32(loader,lsize,"UPX4",exetype > 0 ? 3 : 15);   // sleep time
     patch_le32(loader,lsize,"UPX3",exetype > 0 ? 0 : 0x7fffffff);
     patch_le32(loader,lsize,"UPX2",progid);
-    //patch_le32(loader,lsize,"UPX1",lsize);  no longer used
     patchVersion(loader,lsize);
 
     Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(void *)loader;
