@@ -1034,11 +1034,11 @@ static void first_options(int argc, char **argv)
 
 void upx_sanity_check(void)
 {
+#define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #define ACCCHK_ASSERT(expr)   ACC_COMPILE_TIME_ASSERT(expr)
 #include "miniacc.h"
 #undef ACCCHK_ASSERT
-#undef ACC_WANT_ACC_CHK_CH
 
     COMPILE_TIME_ASSERT(sizeof(char) == 1)
     COMPILE_TIME_ASSERT(sizeof(short) == 2)

@@ -40,10 +40,6 @@
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #include "miniacc.h"
-#undef ACC_WANT_ACC_INCI_H
-#undef ACC_WANT_ACCLIB_MISC
-#undef ACC_WANT_ACCLIB_HSREAD
-#undef ACC_WANT_ACCLIB_WILDARGV
 
 
 /*************************************************************************
