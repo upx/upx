@@ -5,10 +5,10 @@ compression ratio of the files UPX processes.
 Currently the filters UPX uses are all based on one very special
 algorithm which is working well on ix86 executable files.
 This is what upx calls the "naive" implementation. There is also a
-"clever" method which works only with 32 bit executable file formats
+"clever" method which works only with 32-bit executable file formats
 and was first implemented in UPX.
 
-Let's start with an example (from this point I assume a 32 bit file
+Let's start with an example (from this point I assume a 32-bit file
 format). Consider this code fragment:
 
 00025970: E877410600                     calln     FatalError
@@ -57,13 +57,13 @@ above.
 
 Of course there are several possibilities where this scheme could be
 improved. First, not only calls could be handled this way - near jumps
-(0xE9 + 32 bit offset) could work similarly.
+(0xE9 + 32-bit offset) could work similarly.
 
 A second improvement could be if we limit this filtering only for the
 area occupied by real code - there is no point in messing with general
 data.
 
-Another improvement comes if the byte order of the 32 bit offset is
+Another improvement comes if the byte order of the 32-bit offset is
 reversed. Why? Here is another call which follows the above fragment:
 
 000261FA: E8C9390600                     calln     ErrorF
@@ -139,7 +139,7 @@ fcto_ml2.ch, filteri.cpp).
 As it can be seen in filteri.cpp, there are lots of variants of this
 filtering implemented - native/clever, calls/jumps/calls&jumps,
 reversed/unreversed offsets - a sum of 18 slightly different filters
-(and another 9 variants for 16 bit programs).
+(and another 9 variants for 16-bit programs).
 
 You can select one of them using the command line parameter "--filter="
 or try most of them with "--all-filters". Or just let upx use the one

@@ -12,10 +12,10 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 
 =head1 ABSTRACT
 
-            The Ultimate Packer for eXecutables
-  Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
-             Copyright (c) 2000 John F. Reiser
-       http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+             The Ultimate Packer for eXecutables
+          Copyright (c) 1996, 1997, 1998, 1999, 2000
+     Markus F.X.J. Oberhumer, Laszlo Molnar & John F. Reiser
+        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
                     http://upx.tsx.org
 
 
@@ -41,7 +41,7 @@ UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 Having said that, we think that UPX is quite stable now. Indeed we
 have compressed lots of files without any problems. Also, the
 current version has undergone several months of beta testing -
-actually it's almost 2 years since our first public beta.
+actually it's more than 2 1/2 years since our first public beta.
 
 This is the first production quality release, and we plan that future 1.xx
 releases will be backward compatible with this version.
@@ -67,18 +67,20 @@ B<UPX> is a versatile executable packer with the following features:
       maintained internally.
 
   - universal: UPX can pack a number of executable formats:
+      * atari/tos
+      * bvmlinuz/386    [bootable Linux kernel]
+      * djgpp2/coff
+      * dos/com
       * dos/exe
       * dos/sys
-      * dos/com
-      * djgpp2/coff
-      * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
-      * win32/pe
-      * rtm32/pe
-      * tmt/adam
+      * linux/386
       * linux/elf386
       * linux/sh386
-      * linux/i386
-      * atari/tos
+      * rtm32/pe
+      * tmt/adam
+      * vmlinuz/386     [bootable Linux kernel]
+      * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
+      * win32/pe
 
   - portable: UPX is written in portable endian-neutral C++
 
@@ -166,7 +168,7 @@ Compression level B<--best> may take a long time.
 
 =back
 
-Note that compression level B<-9> can be somewaht slow for large
+Note that compression level B<-9> can be somewhat slow for large
 files, but you definitely should use it when releasing a final version
 of your program.
 
@@ -239,7 +241,7 @@ You can use the B<--no-env> option to turn this support off.
 
 =head2 NOTES FOR ATARI/TOS
 
-This is the executable format used by the Atari ST, a 68000 based
+This is the executable format used by the Atari ST/TT, a 68000 based
 personal computer which was popular in the late '80s. Support
 of this format is only because of nostalgic feelings of one of
 the authors and serves no practical purpose :-).
@@ -253,10 +255,16 @@ Extra options available for this executable format:
 
 
 
+=head2 NOTES FOR BVMLINUZ/I386
+
+Same as vmlinuz/i386.
+
+
+
 =head2 NOTES FOR DOS/COM
 
 Obviously UPX won't work with executables that want to read data from
-themselves (like some commandline utilities that ship with Win95/98).
+themselves (like some commandline utilities that ship with Win95/98/ME).
 
 Compressed programs only work on a 286+.
 
@@ -275,7 +283,7 @@ Extra options available for this executable format:
 dos/exe stands for all "normal" 16-bit DOS executables.
 
 Obviously UPX won't work with executables that want to read data from
-themselves (like some command line utilities that ship with Win95/98).
+themselves (like some command line utilities that ship with Win95/98/ME).
 
 Compressed programs only work on a 286+.
 
@@ -331,9 +339,22 @@ Extra options available for this executable format:
 
 
 
-=head2 NOTES FOR LINUX
+=head2 NOTES FOR LINUX [general]
 
-User's overview
+Introduction
+
+  Linux/386 support in UPX consists of 3 different executable formats,
+  one optimized for ELF excutables ("linux/elf386"), one optimized
+  for shell scripts ("linux/sh386"), and one generic format
+  ("linux/386").
+
+  We will start with a general discussion first, but please
+  also read the relevant docs for each of the formats.
+
+  Also, there is special support for bootable kernels - see the
+  description of the vmlinuz/386 format.
+
+General user's overview
 
   Running a compressed executable program trades space on a ``permanent''
   storage medium (such as a hard disk, floppy disk, CD-ROM, flash
@@ -348,8 +369,7 @@ User's overview
   overhead is there?  Again, it depends on the executable, but
   decompression speed generally is at least many megabytes per second,
   and frequently is limited by the speed of the underlying disk
-  or network I/O.  Compression speed can be slower by a couple
-  orders of magnitude.
+  or network I/O.
 
   Depending on the statistics of usage and access, and the relative
   speeds of CPU, RAM, swap space, /tmp, and filesystem storage, then
@@ -363,7 +383,7 @@ User's overview
   Small programs tend not to benefit as much because the absolute
   savings is less.  Big programs tend not to benefit proportionally
   because each invocation may use only a small fraction of the program,
-  yet UPX 1.1 decompresses the entire program before invoking it.
+  yet UPX decompresses the entire program before invoking it.
   But in environments where disk or flash memory storage is limited,
   then compression may win anyway.
 
@@ -374,8 +394,8 @@ User's overview
   swap space.  So, shell programs (bash, csh, etc.)  and ``make''
   might not be good candidates for compression.
 
-  UPX 1.1 recognizes three executable formats for Linux: Linux/elf386,
-  Linux/sh386, and Linux/i386.  Linux/i386 is the most general format;
+  UPX recognizes three executable formats for Linux: Linux/elf386,
+  Linux/sh386, and Linux/386.  Linux/386 is the most generic format;
   it accommodates any file that can be executed.  At runtime, the UPX
   decompression stub re-creates in /tmp a copy of the original file,
   and then the copy is (re-)executed with the same arguments.
@@ -387,15 +407,77 @@ User's overview
   into low memory, then maps the shell and passes the entire text of the
   script as an argument with a leading ``-c''.
 
-  For highly-motivated users, such as administrators of embedded systems,
-  the sources for UPX (but not the distributed binary of UPX 1.1) support
-  a fourth format, Linux/sep386; see p_lx_sep.cpp.  In this format the
-  decompressor stub resides in a separate file in the file system;
-  all compressed excutables look like shell scripts for the separate
-  decompressor.  This saves slightly less than 2KB per compressed
-  executable, but makes the compressed executables not self-contained,
-  and thus creates usability and administrative problems for users
-  who are not highly motivated.
+General benefits:
+
+  - UPX can compress all executables, be it AOUT, ELF, libc4, libc5,
+    libc6, Shell/Perl/Python/... scripts, standalone Java .class
+    binaries, or whatever...
+    All scripts and programs will work just as before.
+
+  - Compressed programs are completely self-contained. No need for
+    any external program.
+
+  - UPX keeps your original program untouched. This means that
+    after decompression you will have a byte-identical version,
+    and you can use UPX as a file compressor just like gzip.
+    [ Note that UPX maintains a checksum of the file internally,
+      so it is indeed a reliable alternative. ]
+
+  - As the stub only uses syscalls and isn't linked against libc it
+    should run under any Linux configuration that can run ELF
+    binaries.
+
+  - For the same reason compressed executables should run under
+    FreeBSD and other systems which can run Linux binaries.
+    [ Please send feedback on this topic ]
+
+General drawbacks:
+
+  - It is not advisable to compress programs which usually have many
+    instances running (like `sh' or `make') because the common segments of
+    compressed programs won't be shared any longer between different
+    processes.
+
+  - `ldd' and `size' won't show anything useful because all they
+    see is the statically linked stub.  Since version 0.82 the section
+    headers are stripped from the UPX stub and `size' doesn't even
+    recognize the file format.  The file patches/patch-elfcode.h has a
+    patch to fix this bug in `size' and other programs which use GNU BFD.
+
+General notes:
+
+  - As UPX leaves your original program untouched it is advantageous
+    to strip it before compression.
+
+  - If you compress a script you will lose platform independence -
+    this could be a problem if you are using NFS mounted disks.
+
+  - Compression of suid, guid and sticky-bit programs is rejected
+    because of possible security implications.
+
+  - For the same reason there is no sense in making any compressed
+    program suid.
+
+  - Obviously UPX won't work with executables that want to read data
+    from themselves. E.g., this might be a problem for Perl scripts
+    which access their __DATA__ lines.
+
+  - In case of internal errors the stub will abort with exitcode 127.
+    Typical reasons for this to happen are that the program has somehow
+    been modified after compression.
+    Running `strace -o strace.log compressed_file' will tell you more.
+
+
+
+=head2 NOTES FOR LINUX/ELF386
+
+Please read the general Linux description first.
+
+The linux/elf386 format decompresses directly into RAM,
+uses only one exec, does not use space in /tmp,
+and does not use /proc.
+
+Linux/elf386 is automatically selected for Linux ELF exectuables.
 
 How it works:
 
@@ -409,6 +491,42 @@ How it works:
   May 2000), and transfers control to the program interpreter or
   the e_entry address of the original executable.
 
+  The UPX stub is about 1700 bytes long, partly written in assembler
+  and only uses kernel syscalls. It is not linked against any libc.
+
+Specific drawbacks:
+
+  - For linux/elf386 and linux/sh386 formats, you will be relying on
+    RAM and swap space to hold all of the decompressed program during
+    the lifetime of the process.  If you already use most of your swap
+    space, then you may run out.  A system that is "out of memory"
+    can become fragile.  Many programs do not react gracefully when
+    malloc() returns 0.  With newer Linux kernels, the kernel
+    may decide to kill some processes to regain memory, and you
+    may not like the kernel's choice of which to kill.  Running
+    /usr/bin/top is one way to check on the usage of swap space.
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR LINUX/SH386
+
+Please read the general Linux description first.
+
+Shell scripts where the underling shell accepts a ``-c'' argument
+can use the Linux/sh386 format.  UPX decompresses the shell script
+into low memory, then maps the shell and passes the entire text of the
+script as an argument with a leading ``-c''.
+It does not use space in /tmp, and does not use /proc.
+
+Linux/sh386 is automatically selected for shell scripts that
+use a known shell.
+
+How it works:
+
   For shell script executables (files beginning with "#!/" or "#! /")
   where the shell is known to accept "-c <command>", UPX decompresses
   the file into low memory, then maps the shell (and its PT_INTERP),
@@ -418,9 +536,42 @@ How it works:
   for shell scripts which use the one optional string argument after
   the shell name in the script (example: "#! /bin/sh option3\n".)
 
+  The UPX stub is about 1700 bytes long, partly written in assembler
+  and only uses kernel syscalls. It is not linked against any libc.
+
+Specific drawbacks:
+
+  - For linux/elf386 and linux/sh386 formats, you will be relying on
+    RAM and swap space to hold all of the decompressed program during
+    the lifetime of the process.  If you already use most of your swap
+    space, then you may run out.  A system that is "out of memory"
+    can become fragile.  Many programs do not react gracefully when
+    malloc() returns 0.  With newer Linux kernels, the kernel
+    may decide to kill some processes to regain memory, and you
+    may not like the kernel's choice of which to kill.  Running
+    /usr/bin/top is one way to check on the usage of swap space.
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR LINUX/386
+
+Please read the general Linux description first.
+
+The generic linux/386 format deompresses to /tmp
+and needs /proc filesystem support.
+
+Linux/386 is only selected if the specialized linux/elf386
+and linux/sh386 won't recognize a file.
+
+How it works:
+
   For files which are not ELF and not a script for a known "-c" shell,
   UPX uses kernel exec(), which first requires decompressing to a
-  file in the filesystem.  Interestingly -
+  temporary file in the filesystem.  Interestingly -
   because of the good memory management of the Linux kernel - this
   often does not introduce a noticable delay, and in fact there
   will be no disk access at all if you have enough free memory as
@@ -443,110 +594,27 @@ How it works:
   The UPX stub is about 1700 bytes long, partly written in assembler
   and only uses kernel syscalls. It is not linked against any libc.
 
-Benefits:
+Specific drawbacks:
 
-  - UPX can compress all executables, be it AOUT, ELF, libc4, libc5,
-    libc6, Shell/Perl/Python/... scripts, standalone Java .class
-    binaries, or whatever...
-    All scripts and programs will work just as before.
-
-  - Compressed programs are completely self-contained. No need for
-    any external program.
-
-  - UPX keeps your original program untouched. This means that
-    after decompression you will have a byte-identical version,
-    and you can use UPX as a file compressor just like gzip.
-    [ Note that UPX maintains a checksum of the file internally,
-      so it is indeed a reliable alternative. ]
-
-  - As the stub only uses syscalls and isn't linked against libc it
-    should run under any Linux configuration that can run ELF
-    binaries and has working /proc support.
-
-  - For the same reason compressed executables should run under
-    FreeBSD and other systems which can run Linux binaries.
-    [ Please send feedback on this topic ]
-
-Drawbacks:
-
-  - For linux/elf386 and linux/sh386 formats, you will be relying on
-    RAM and swap space to hold all of the decompressed program during
-    the lifetime of the process.  If you already use most of your swap
-    space, then you may run out.  A system that is "out of memory"
-    can become fragile.  Many programs do not react gracefully when
-    malloc() returns 0.  With newer Linux kernels, the kernel
-    may decide to kill some processes to regain memory, and you
-    may not like the kernel's choice of which to kill.  Running
-    /usr/bin/top is one way to check on the usage of swap space.
-
-  - For non-ELF, non-shell executables, you need additional free disk
-    space for the uncompressed program
+  - You need additional free disk space for the uncompressed program
     in your /tmp directory. This program is deleted immediately after
     decompression, but you still need it for the full execution time
     of the program.
 
-  - For non-ELF, non-shell executables, you must have /proc filesystem
-    support as the stub wants to open
+  - You must have /proc filesystem support as the stub wants to open
     /proc/<pid>/exe and needs /proc/<pid>/fd/X. This also means that you
     cannot compress programs that are used during the boot sequence
-    before /proc is mounted, unless those programs are ELF or are
-    scripts for known "-c" shells.
+    before /proc is mounted.
 
-  - `ldd' and `size' won't show anything useful because all they
-    see is the statically linked stub.  Since version 0.82 the section
-    headers are stripped from the UPX stub and `size' doesn't even
-    recognize the file format.  File patches/patch-elfcode.h has a
-    patch to fix this bug in `size' and other programs which use GNU BFD.
-
-  - For non-ELF, non-shell executables, utilities like `top' will
-    display numerical values in the process
+  - Utilities like `top' will display numerical values in the process
     name field. This is because Linux computes the process name from
     the first argument of the last execve syscall (which is typically
     something like /proc/<pid>/fd/3).
 
-  - For non-ELF, non-shell executables, to reduce memory requirements
-    during uncompression UPX splits the
-    original file into blocks, so the compression ratio is a little bit
-    worse than with the other executable formats (but still quite nice).
-    [ Advise from kernel experts which can tell me more about the
-      execve memory semantics is welcome. Maybe this shortcoming
-      could be removed. ]
-
-  - For non-ELF, non-shell executables, because of temporary decompression
-    to disk the decompression speed
+  - Because of temporary decompression to disk the decompression speed
     is not as fast as with the other executable formats. Still, I can see
     no noticable delay when starting programs like my ~3 MB emacs (which
     is less than 1 MB when compressed :-).
-
-Notes:
-
-  - As UPX leaves your original program untouched it is advantageous
-    to strip it before compression.
-
-  - It is not advisable to compress programs which usually have many
-    instances running (like `make') because the common segments of
-    compressed programs won't be shared any longer between different
-    processes.
-
-  - If you compress a script you will lose platform independence -
-    this could be a problem if you are using NFS mounted disks.
-
-  - Compression of suid, guid and sticky-bit programs is rejected
-    because of possible security implications.
-
-  - For the same reason there is no sense in making any compressed
-    program suid.
-
-  - Obviously UPX won't work with executables that want to read data
-    from themselves. E.g., this might be a problem for Perl scripts
-    which access their __DATA__ lines.
-
-  - In case of internal errors the stub will abort with exitcode 127.
-    Typical reasons for this to happen are that the program has somehow
-    been modified after compression, you have run out of disk space
-    or your /proc filesystem is not yet mounted.
-    Running `strace -o strace.log compressed_exe' will tell you more.
-
 
 Extra options available for this executable format:
 
@@ -563,6 +631,45 @@ Same as win32/pe.
 =head2 NOTES FOR TMT/ADAM
 
 This format is used by the TMT Pascal compiler - see http://www.tmt.com/ .
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR VMLINUZ/386
+
+The vmlinuz/386 and bvmlinuz/386 formats take a gzip-compressed
+bootable kernel image ("vmlinuz", "zImage", "bzImage"), gzip-decompress
+it and re-compress it with the UPX compression method.
+
+vmlinuz/386 is completely unrelated to the other Linux executable
+formats, and it does not share any of their drawbacks.
+
+Notes:
+
+  - Be sure that "vmlinuz/386" or "bmlinuz/386" is displayed
+  during compression - otherwise a wrong executable format
+  may have been used, and the kernel won't boot.
+
+Benefits:
+
+  - Better compression (but note that the kernel was already compressed,
+  so the improvement is not as large as with other formats).
+  Still, the bytes saved may be essential for special needs like
+  bootdisks.
+
+     For example, this is what I get for my 2.2.16 kernel:
+        1589708  vmlinux
+         641073  bzImage        [original]
+         560755  bzImage.upx    [compressed by "upx -9"]
+
+  - Much faster decompression at kernel boot time.
+
+Drawbacks:
+
+  (none)
 
 Extra options available for this executable format:
 
@@ -592,7 +699,7 @@ Extra options available for this executable format:
 
 =head2 NOTES FOR WIN32/PE
 
-The PE support in UPX is quite stable now, but definitely there are
+The PE support in UPX is quite stable now, but probably there are
 still some incompabilities with some files.
 
 Because of the way UPX (and other packers for this format) works, you
@@ -662,10 +769,11 @@ Please report all bugs immediately to the authors.
 =head1 AUTHORS
 
  Markus F.X.J. Oberhumer <markus.oberhumer@jk.uni-linz.ac.at>
- http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+ http://wildsau.idv.uni-linz.ac.at/mfx/
 
  Laszlo Molnar <ml1050@cdata.tvnet.hu>
- http://www.nexus.hu/upx
+
+ John F. Reiser <jreiser@BitWagon.com>
 
 
 
@@ -674,6 +782,8 @@ Please report all bugs immediately to the authors.
 Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
 
 Copyright (C) 1996-2000 Laszlo Molnar
+
+Copyright (C) 2000 John Reiser
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.
