@@ -183,8 +183,11 @@ bool PackLinuxI386elf::canPack()
         if (j >= 14)
             return false;
         if (phdr->PT_LOAD == phdr->p_type) {
-            if (phdr->p_offset!=0)
+            if (phdr->p_offset != 0)
+            {
+                throwCantPack("invalid Phdr p_offset; try `--force-execve'");
                 return false;
+            }
             exetype = 1;
             break;
         }

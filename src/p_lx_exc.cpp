@@ -95,11 +95,10 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
 
-    // NOTE: ELF executables are now handled by p_lx_elf.cpp.
+    // info: ELF executables are now handled by p_lx_elf.cpp
     if (memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
         return -1;
 
-    // FIXME: add special checks for uncompresed "vmlinux" kernel
     // now check the ELF header
     if (!memcmp(buf+8, "FreeBSD", 7))                   // branded
         return 1;
@@ -109,6 +108,12 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
         return 3;
     if (ehdr->e_version != 1)                           // version
         return 4;
+    if (ehdr->e_phnum < 1)
+        return 5;
+
+    // FIXME: add special checks for uncompresed "vmlinux" kernel
+    // FIXME: add special checks for other ELF i386 formats, like
+    //        NetBSD, OpenBSD, Solaris, ....
 
     // success
     return 0;
