@@ -146,7 +146,7 @@
 
 
 #if !defined(WITH_UCL)
-#  error "please set UCLDIR in the Makefile"
+#  define WITH_UCL 1
 #endif
 #if defined(WITH_UCL)
 #  include <ucl/uclconf.h>
