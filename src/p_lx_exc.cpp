@@ -79,43 +79,15 @@ const int *PackLinuxI386::getFilters() const
     return filters;
 }
 
-Elf_LE32_Phdr const *
-PackLinuxI386::find_DYNAMIC(Elf_LE32_Phdr const *phdr, unsigned n)
-{
-    if (n) do if (PT_DYNAMIC==phdr->p_type) {
-        return phdr;
-    } while (++phdr, 0!=--n);
-    return 0;
-}
-
-unsigned
-PackLinuxI386::find_file_offset(
-    unsigned const vaddr,
-    Elf_LE32_Phdr const *phdr,
-    unsigned e_phnum
-)
-{
-    if (e_phnum) do {
-        unsigned t = vaddr - phdr->p_vaddr;
-        if (t < phdr->p_memsz) {
-            return t + phdr->p_offset;
-        }
-    } while (++phdr, 0!=--e_phnum);
-    return ~0u;
-}
-
 void
 PackLinuxI386::generateElfHdr(
     OutputFile *const fo,
     void const *const proto,
-    Elf_LE32_Phdr const *const phdr0,
-    unsigned e_phnum,
     unsigned const brka
 )
 {
     cprElfHdr1 *const h1 = (cprElfHdr1 *)&elfout;
     cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
-    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
     memcpy(h2, proto, sizeof(*h2));
 
     assert(h2->ehdr.e_phoff     == sizeof(Elf_LE32_Ehdr));
@@ -147,12 +119,9 @@ PackLinuxI386::generateElfHdr(
         fo->write(h1, sizeof(*h1));
     }
     else if (ph.format==UPX_F_LINUX_ELF_i386) {
-        int const j = ((char *)&h3->phdr[2]) - (char *)h3;
-        memcpy(&h3->phdr[2], j + (char const *)proto, sizeof(h3->phdr[2]));
-
-        assert(h3->ehdr.e_phnum==3);
-        memset(&h3->linfo, 0, sizeof(h3->linfo));
-        fo->write(h3, sizeof(*h3));
+        assert(h2->ehdr.e_phnum==2);
+        memset(&h2->linfo, 0, sizeof(h2->linfo));
+        fo->write(h2, sizeof(*h2));
     }
     else if (ph.format==UPX_F_LINUX_SH_i386) {
         assert(h2->ehdr.e_phnum==1);
@@ -163,99 +132,6 @@ PackLinuxI386::generateElfHdr(
     else {
         assert(false);  // unknown ph.format, PackUnix::generateElfHdr
     }
-
-    Elf_LE32_Phdr const *const phdrdyn = find_DYNAMIC(phdr0, e_phnum);
-    if (phdrdyn) { // propagate DT_NEEDED
-        MemBuffer dynhdr(phdrdyn->p_memsz);
-        fi->seek(phdrdyn->p_offset, SEEK_SET);
-        fi->read(dynhdr, phdrdyn->p_memsz);
-
-        unsigned strtabx = ~0u;
-        unsigned strsz = 0;
-        int j;
-
-        Elf_LE32_Dyn const *p = (Elf_LE32_Dyn const *)(unsigned char *)dynhdr;
-        int so_needed = 0;
-        for (j = phdrdyn->p_memsz / sizeof(*p); --j>=0; ++p) {
-            if (p->d_tag==DT_NEEDED) {
-                so_needed++;
-            }
-            if (p->d_tag==DT_STRTAB) {
-                strtabx = find_file_offset(p->d_val, phdr0, e_phnum);
-            }
-            if (p->d_tag==DT_STRSZ) {
-                strsz= p->d_val;
-            }
-        }
-
-        if (so_needed) {
-            assert(0!=strsz && ~0u!=strtabx);
-            MemBuffer strtab(strsz);
-            fi->seek(strtabx, SEEK_SET);
-            fi->read(strtab, strsz);
-
-            int c_needed = 1;  // index 0 is reserved
-            p = (Elf_LE32_Dyn const *)(unsigned char *)dynhdr;
-            for (j = phdrdyn->p_memsz / sizeof(*p); --j>=0; ++p) {
-                if (p->d_tag==DT_NEEDED) {
-                    c_needed += 1+ strlen(p->d_val + strtab);
-                }
-            }
-
-            MemBuffer newtab(c_needed);
-            unsigned char *cp = newtab;
-            *cp++ = 0;
-            p = (Elf_LE32_Dyn const *)(unsigned char *)dynhdr;
-            for (j = phdrdyn->p_memsz / sizeof(*p); --j>=0; ++p) {
-                if (p->d_tag==DT_NEEDED) {
-                    unsigned char const *const str = p->d_val + strtab;
-                    unsigned const len = 1+ strlen(str);
-                    memcpy(cp, str, len);
-                    cp += len;
-                }
-            }
-            Elf_LE32_Dyn outdyn[3 + so_needed], *q = &outdyn[0];
-            q->d_tag = DT_STRSZ;
-            q->d_val = c_needed;  // + identsize;
-            ++q;
-            q->d_tag = DT_STRTAB;
-            q->d_val = sizeof(*h3) + sizeof(outdyn) + h3->phdr[0].p_vaddr;
-            ++q;
-            cp = 1+ newtab;
-            for (j= so_needed; --j>=0; ++q) {
-                q->d_tag = DT_NEEDED; q->d_val = cp - newtab;
-                cp += 1+ strlen(cp);
-            }
-            q->d_tag = DT_NULL;  q->d_val = 0;
-            h3->phdr[2].p_type = PT_DYNAMIC;
-            h3->phdr[2].p_offset = sizeof(*h3);
-            h3->phdr[2].p_vaddr = sizeof(*h3) + h3->phdr[0].p_vaddr;
-            h3->phdr[2].p_paddr = h3->phdr[2].p_vaddr;
-            h3->phdr[2].p_filesz = sizeof(outdyn) + c_needed;  // + identsize;
-            h3->phdr[2].p_memsz = h3->phdr[2].p_filesz;
-            h3->phdr[2].p_flags = Elf_LE32_Phdr::PF_R;
-            h3->phdr[2].p_align = 4;
-            pt_dynamic.alloc(h3->phdr[2].p_filesz);
-
-            j = 0;
-            memcpy(j + pt_dynamic, &outdyn[0], sizeof(outdyn));
-            j += sizeof(outdyn);
-            memcpy(j + pt_dynamic, newtab, c_needed);
-            j += c_needed;
-#if 0  //{
-            memcpy(j + pt_dynamic, ident, identsize);
-            // FIXME ?? patchVersion(j + pt_dynamic, identsize);
-            j += identsize;
-#endif  //}
-            sz_dynamic = j;
-
-#if 0  //{ debugging: see the results early
-            fo->seek(0, SEEK_SET);
-            fo->write(h3, sizeof(*h3));
-#endif  //}
-            fo->write(pt_dynamic, sz_dynamic);
-        }
-    }
 }
 
 void
@@ -264,7 +140,7 @@ PackLinuxI386::pack1(OutputFile *fo, Filter &)
     // create a pseudo-unique program id for our paranoid stub
     progid = getRandomId();
 
-    generateElfHdr(fo, linux_i386exec_fold, 0, 0, 0);
+    generateElfHdr(fo, linux_i386exec_fold, 0);
 }
 
 void

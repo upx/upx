@@ -28,6 +28,7 @@
 %define szElf32_Phdr 8*4
 %define e_entry  (16 + 2*2 + 4)
 %define p_memsz  5*4
+%define szb_info 12
 %define szl_info 12
 %define szp_info 12
 %define a_val  4
@@ -57,19 +58,20 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         mov edi, esp
         call do_auxv
 
-          mov eax, [p_memsz + 2*szElf32_Phdr + szElf32_Ehdr + ebx]  ; size of PT_DYNAMIC
+        push ebx  ; save &Elf32_Ehdr of this stub
         sub esp, dword MAX_ELF_HDR + OVERHEAD
-          mov ecx, [e_entry + ebx]  ; beyond compressed data
-        push esp  ; argument: temp space
-          lea eax, [szElf32_Ehdr + 3*szElf32_Phdr + szl_info + szp_info + ebx + eax]  ; 1st &b_info
-        push edi  ; argument: AT_next
-          sub ecx, eax  ; length of compressed data
-        push ebp  ; argument: &decompress
-          push ecx  ; argument: sz_compressed
-        push eax  ; argument: 1st &b_info
+        lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  ; 1st &b_info
+        mov esi, [e_entry + ebx]  ; beyond compressed data
+        sub esi, eax  ; length of compressed data
+        mov ebx, [   eax]  ; length of uncompressed ELF headers
+        mov edx, esp  ; 
+        mov ecx, [4+ eax]  ; length of   compressed ELF headers
+        add ecx, byte szb_info
+        pusha  ; (AT_next, sz_cpr, f_expand, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
 EXTERN upx_main
-        call upx_main  ; entry = upx_main(b1st_info, sz_cpr, &decompress, AT_next, tmp_ehdr)
-        add esp, dword 5*4 + MAX_ELF_HDR + OVERHEAD  ; remove 5 params, temp space
+        call upx_main  ; returns entry address
+        add esp, dword 8*4 + MAX_ELF_HDR + OVERHEAD  ; remove 8 params, temp space
+        pop ebx  ; &Elf32_Ehdr of this stub
         push eax  ; save entry address
 
         mov edi, [a_val + edi]  ; AT_PHDR

@@ -134,7 +134,7 @@ bool PackLinuxI386sh::canPack()
 void
 PackLinuxI386sh::pack1(OutputFile *fo, Filter &)
 {
-    generateElfHdr(fo, linux_i386sh_fold, 0, 0, 0x08048000);
+    generateElfHdr(fo, linux_i386sh_fold, 0x08048000);
 }
 
 /*

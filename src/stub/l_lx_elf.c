@@ -316,35 +316,30 @@ ERR_LAB
 **************************************************************************/
 
 void *upx_main(
-    char /*const*/ *const b1st_info,
+    Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    Elf32_auxv_t *const av,
-    Elf32_Ehdr *const ehdr
+    Elf32_Ehdr *const ehdr,
+    struct Extent xo,
+    struct Extent xi
 ) __asm__("upx_main");
 
 void *upx_main(
-    char /*const*/ *const b1st_info,
+    Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    Elf32_auxv_t *const av,
-    Elf32_Ehdr *const ehdr  // temp char[MAX_ELF_HDR+OVERHEAD]
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR+OVERHEAD]
+    struct Extent xo,  // {sz_unc, ehdr}    for ELF headers
+    struct Extent xi   // {sz_cpr, &b_info} for ELF headers
 )
 {
-    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ehdr);
+    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
     Elf32_Addr entry;
-    struct Extent xo;
-    struct Extent xi = { 0, b1st_info };  // location of 1st b_info
-
-    // sizeof(Ehdr+Phdrs), uncompressed
-    size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];
 
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
-    size_t const sz_pckhdrs = sizeof(struct b_info) + ((size_t *)xi.buf)[1];
+    size_t const sz_pckhdrs = xi.size;
 
     // Uncompress Ehdr and Phdrs.
-    xo.size = sz_elfhdrs;   xo.buf = (char *)ehdr;
-    xi.size = sz_pckhdrs;
     unpackExtent(&xi, &xo, f_decompress, 0);
 
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.

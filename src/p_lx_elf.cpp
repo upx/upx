@@ -229,8 +229,7 @@ void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    generateElfHdr(fo, linux_i386elf_fold, phdri, ehdri.e_phnum,
-              getbrk(phdri, ehdri.e_phnum) );
+    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
 void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)

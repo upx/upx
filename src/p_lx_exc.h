@@ -42,8 +42,6 @@ public:
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
-        Elf_LE32_Phdr const *const phdr0,
-        unsigned e_phnum,
         unsigned brka
     );
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
@@ -59,13 +57,6 @@ protected:
     // virtual void pack2(OutputFile *, Filter &);  // append compressed data
     // virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-
-    unsigned find_file_offset(
-        unsigned vaddr,
-        Elf_LE32_Phdr const *phdr,
-        unsigned e_phnum
-    );
-    Elf_LE32_Phdr const *find_DYNAMIC(Elf_LE32_Phdr const *phdr, unsigned n);
 
     // loader util
     virtual int getLoaderPrefixSize() const;
