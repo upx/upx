@@ -44,26 +44,31 @@ void initFilter(Filter *f, upx_byte *buf, unsigned buf_len)
 
 
 /*************************************************************************
-// implementation
+// get a FilterEntry
 **************************************************************************/
 
-const FilterImp::f_t *FilterImp::getFilter(int id)
+const FilterImp::FilterEntry *FilterImp::getFilter(int id)
 {
     static bool done = false;
-    static unsigned filter_id[256];
+    static unsigned char filter_map[256];
 
-    if (id < 0 || id > 255)
-        return NULL;
     if (!done)
     {
-        memset(filter_id, 0xff, sizeof(filter_id));
+        // init the filter_map[]
+        memset(filter_map, 0xff, sizeof(filter_map));
         for (int i = 0; i < n_filters; i++)
-            filter_id[filters[i].id] = i;
+        {
+            int fid = filters[i].id;
+            assert(fid >= 0 && fid <= 255);
+            filter_map[fid] = (unsigned char) i;
+        }
         done = true;
     }
 
-    unsigned index = filter_id[id];
-    if (index > 255)
+    if (id < 0 || id > 255)
+        return NULL;
+    unsigned index = filter_map[id];
+    if (index == 0xff)
         return NULL;
     assert(filters[index].id == id);
     return &filters[index];
@@ -90,27 +95,29 @@ void Filter::init(int id_, unsigned addvalue_)
 bool Filter::filter(upx_byte *buf_, unsigned buf_len_)
 {
     initFilter(this, buf_, buf_len_);
-    const FilterImp::f_t *ft = FilterImp::getFilter(id);
-    if (ft == NULL)
+
+    const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
+    if (fe == NULL)
         throwInternalError("filter-1");
-    if (ft->id == 0)
+    if (fe->id == 0)
         return true;
-    if (buf_len < ft->min_buf_len)
+    if (buf_len < fe->min_buf_len)
         return false;
-    if (ft->max_buf_len && buf_len > ft->max_buf_len)
+    if (fe->max_buf_len && buf_len > fe->max_buf_len)
         return false;
-    if (!ft->f)
+    if (!fe->do_filter)
         throwInternalError("filter-2");
 
-    // setChecksum
+    // save checksum
     if (clevel != 1)
     {
         this->adler = upx_adler32(0,NULL,0);
         this->adler = upx_adler32(this->adler, this->buf, this->buf_len);
     }
+
     //printf("filter: %02x %p %d\n", this->id, this->buf, this->buf_len);
-    int r = (*ft->f)(this);
-    //printf("filter: %02x %d\n", ft->id, r);
+    int r = (*fe->do_filter)(this);
+    //printf("filter: %02x %d\n", fe->id, r);
     if (r > 0)
         throwFilterException();
     if (r == 0)
@@ -119,29 +126,30 @@ bool Filter::filter(upx_byte *buf_, unsigned buf_len_)
 }
 
 
-bool Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool vc)
+bool Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
 {
     initFilter(this, buf_, buf_len_);
-    const FilterImp::f_t *ft = FilterImp::getFilter(id);
-    if (ft == NULL)
+
+    const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
+    if (fe == NULL)
         throwInternalError("unfilter-1");
-    if (ft->id == 0)
+    if (fe->id == 0)
         return true;
-    if (buf_len < ft->min_buf_len)
+    if (buf_len < fe->min_buf_len)
         return false;
-    if (ft->max_buf_len && buf_len > ft->max_buf_len)
+    if (fe->max_buf_len && buf_len > fe->max_buf_len)
         return false;
-    if (!ft->u)
+    if (!fe->do_unfilter)
         throwInternalError("unfilter-2");
 
     //printf("unfilter: %02x %p %d\n", this->id, this->buf, this->buf_len);
-    int r = (*ft->u)(this);
-    //printf("unfilter: %02x %d\n", ft->id, r);
+    int r = (*fe->do_unfilter)(this);
+    //printf("unfilter: %02x %d\n", fe->id, r);
     if (r != 0)
         throwInternalError("unfilter-3");
 
-    // verifyChecksum
-    if (vc && clevel != 1)
+    // verify checksum
+    if (verify_checksum && clevel != 1)
     {
         unsigned a = upx_adler32(0,NULL,0);
         if (this->adler != upx_adler32(a, this->buf, this->buf_len))
@@ -177,21 +185,21 @@ bool Filter::scan(const upx_byte *buf_, unsigned buf_len_)
     upx_byte *b = const_cast<upx_byte *>(buf_);
     initFilter(this, b, buf_len_);
 
-    const FilterImp::f_t *ft = FilterImp::getFilter(id);
-    if (ft == NULL)
-        throwInternalError("filter-1");
-    if (ft->id == 0)
+    const FilterImp::FilterEntry * const fe = FilterImp::getFilter(id);
+    if (fe == NULL)
+        throwInternalError("scan-1");
+    if (fe->id == 0)
         return true;
-    if (buf_len < ft->min_buf_len)
+    if (buf_len < fe->min_buf_len)
         return false;
-    if (ft->max_buf_len && buf_len > ft->max_buf_len)
+    if (fe->max_buf_len && buf_len > fe->max_buf_len)
         return false;
-    if (!ft->s)
-        throwInternalError("filter-2");
+    if (!fe->do_scan)
+        throwInternalError("scan-2");
 
     //printf("filter: %02x %p %d\n", this->id, this->buf, this->buf_len);
-    int r = (*ft->s)(this);
-    //printf("filter: %02x %d\n", ft->id, r);
+    int r = (*fe->do_scan)(this);
+    //printf("filter: %02x %d\n", fe->id, r);
     if (r > 0)
         throwFilterException();
     if (r == 0)

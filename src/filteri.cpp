@@ -28,7 +28,7 @@
 #include "conf.h"
 #include "filter.h"
 
-#define filter_t            Filter
+
 #define set_dummy(p, v)     ((void)0)
 
 
@@ -56,153 +56,153 @@
 
 
 // filter: e8, e9, e8e9
-static int f_ct16_e8(filter_t *f)
+static int f_ct16_e8(Filter *f)
 {
     CT16(f, (*b == 0xe8), a + f->addvalue, get_le16, set_le16)
 }
 
-static int f_ct16_e9(filter_t *f)
+static int f_ct16_e9(Filter *f)
 {
     CT16(f, (*b == 0xe9), a + f->addvalue, get_le16, set_le16)
 }
 
-static int f_ct16_e8e9(filter_t *f)
+static int f_ct16_e8e9(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_le16, set_le16)
 }
 
 
 // unfilter: e8, e9, e8e9
-static int u_ct16_e8(filter_t *f)
+static int u_ct16_e8(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_le16, set_le16)
 }
 
-static int u_ct16_e9(filter_t *f)
+static int u_ct16_e9(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_le16, set_le16)
 }
 
-static int u_ct16_e8e9(filter_t *f)
+static int u_ct16_e8e9(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le16, set_le16)
 }
 
 
 // scan: e8, e9, e8e9
-static int s_ct16_e8(filter_t *f)
+static int s_ct16_e8(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_le16, set_dummy)
 }
 
-static int s_ct16_e9(filter_t *f)
+static int s_ct16_e9(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_le16, set_dummy)
 }
 
-static int s_ct16_e8e9(filter_t *f)
+static int s_ct16_e8e9(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le16, set_dummy)
 }
 
 
 // filter: e8, e9, e8e9 with bswap le->be
-static int f_ct16_e8_bswap_le(filter_t *f)
+static int f_ct16_e8_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8), a + f->addvalue, get_le16, set_be16)
 }
 
-static int f_ct16_e9_bswap_le(filter_t *f)
+static int f_ct16_e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe9), a + f->addvalue, get_le16, set_be16)
 }
 
-static int f_ct16_e8e9_bswap_le(filter_t *f)
+static int f_ct16_e8e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_le16, set_be16)
 }
 
 
 // unfilter: e8, e9, e8e9 with bswap le->be
-static int u_ct16_e8_bswap_le(filter_t *f)
+static int u_ct16_e8_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_be16, set_le16)
 }
 
-static int u_ct16_e9_bswap_le(filter_t *f)
+static int u_ct16_e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_be16, set_le16)
 }
 
-static int u_ct16_e8e9_bswap_le(filter_t *f)
+static int u_ct16_e8e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_be16, set_le16)
 }
 
 
 // scan: e8, e9, e8e9 with bswap le->be
-static int s_ct16_e8_bswap_le(filter_t *f)
+static int s_ct16_e8_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_be16, set_dummy)
 }
 
-static int s_ct16_e9_bswap_le(filter_t *f)
+static int s_ct16_e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_be16, set_dummy)
 }
 
-static int s_ct16_e8e9_bswap_le(filter_t *f)
+static int s_ct16_e8e9_bswap_le(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_be16, set_dummy)
 }
 
 
 // filter: e8, e9, e8e9 with bswap be->le
-static int f_ct16_e8_bswap_be(filter_t *f)
+static int f_ct16_e8_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8), a + f->addvalue, get_be16, set_le16)
 }
 
-static int f_ct16_e9_bswap_be(filter_t *f)
+static int f_ct16_e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe9), a + f->addvalue, get_be16, set_le16)
 }
 
-static int f_ct16_e8e9_bswap_be(filter_t *f)
+static int f_ct16_e8e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_be16, set_le16)
 }
 
 
 // unfilter: e8, e9, e8e9 with bswap be->le
-static int u_ct16_e8_bswap_be(filter_t *f)
+static int u_ct16_e8_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_le16, set_be16)
 }
 
-static int u_ct16_e9_bswap_be(filter_t *f)
+static int u_ct16_e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_le16, set_be16)
 }
 
-static int u_ct16_e8e9_bswap_be(filter_t *f)
+static int u_ct16_e8e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le16, set_be16)
 }
 
 
 // scan: e8, e9, e8e9 with bswap be->le
-static int s_ct16_e8_bswap_be(filter_t *f)
+static int s_ct16_e8_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8), 0 - a - f->addvalue, get_le16, set_dummy)
 }
 
-static int s_ct16_e9_bswap_be(filter_t *f)
+static int s_ct16_e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe9), 0 - a - f->addvalue, get_le16, set_dummy)
 }
 
-static int s_ct16_e8e9_bswap_be(filter_t *f)
+static int s_ct16_e8e9_bswap_be(Filter *f)
 {
     CT16(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le16, set_dummy)
 }
@@ -234,159 +234,161 @@ static int s_ct16_e8e9_bswap_be(filter_t *f)
 
 
 // filter: e8, e9, e8e9
-static int f_ct32_e8(filter_t *f)
+static int f_ct32_e8(Filter *f)
 {
     CT32(f, (*b == 0xe8), a + f->addvalue, get_le32, set_le32)
 }
 
-static int f_ct32_e9(filter_t *f)
+static int f_ct32_e9(Filter *f)
 {
     CT32(f, (*b == 0xe9), a + f->addvalue, get_le32, set_le32)
 }
 
-static int f_ct32_e8e9(filter_t *f)
+static int f_ct32_e8e9(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_le32, set_le32)
 }
 
 
 // unfilter: e8, e9, e8e9
-static int u_ct32_e8(filter_t *f)
+static int u_ct32_e8(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_le32, set_le32)
 }
 
-static int u_ct32_e9(filter_t *f)
+static int u_ct32_e9(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_le32, set_le32)
 }
 
-static int u_ct32_e8e9(filter_t *f)
+static int u_ct32_e8e9(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le32, set_le32)
 }
 
 
 // scan: e8, e9, e8e9
-static int s_ct32_e8(filter_t *f)
+static int s_ct32_e8(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
-static int s_ct32_e9(filter_t *f)
+static int s_ct32_e9(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
-static int s_ct32_e8e9(filter_t *f)
+static int s_ct32_e8e9(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
 
 // filter: e8, e9, e8e9 with bswap le->be
-static int f_ct32_e8_bswap_le(filter_t *f)
+static int f_ct32_e8_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8), a + f->addvalue, get_le32, set_be32)
 }
 
-static int f_ct32_e9_bswap_le(filter_t *f)
+static int f_ct32_e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe9), a + f->addvalue, get_le32, set_be32)
 }
 
-static int f_ct32_e8e9_bswap_le(filter_t *f)
+static int f_ct32_e8e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_le32, set_be32)
 }
 
 
 // unfilter: e8, e9, e8e9 with bswap le->be
-static int u_ct32_e8_bswap_le(filter_t *f)
+static int u_ct32_e8_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_be32, set_le32)
 }
 
-static int u_ct32_e9_bswap_le(filter_t *f)
+static int u_ct32_e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_be32, set_le32)
 }
 
-static int u_ct32_e8e9_bswap_le(filter_t *f)
+static int u_ct32_e8e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_be32, set_le32)
 }
 
 
 // scan: e8, e9, e8e9 with bswap le->be
-static int s_ct32_e8_bswap_le(filter_t *f)
+static int s_ct32_e8_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_be32, set_dummy)
 }
 
-static int s_ct32_e9_bswap_le(filter_t *f)
+static int s_ct32_e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_be32, set_dummy)
 }
 
-static int s_ct32_e8e9_bswap_le(filter_t *f)
+static int s_ct32_e8e9_bswap_le(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_be32, set_dummy)
 }
 
 
 // filter: e8, e9, e8e9 with bswap be->le
-static int f_ct32_e8_bswap_be(filter_t *f)
+static int f_ct32_e8_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8), a + f->addvalue, get_be32, set_le32)
 }
 
-static int f_ct32_e9_bswap_be(filter_t *f)
+static int f_ct32_e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe9), a + f->addvalue, get_be32, set_le32)
 }
 
-static int f_ct32_e8e9_bswap_be(filter_t *f)
+static int f_ct32_e8e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), a + f->addvalue, get_be32, set_le32)
 }
 
 
 // unfilter: e8, e9, e8e9 with bswap be->le
-static int u_ct32_e8_bswap_be(filter_t *f)
+static int u_ct32_e8_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_le32, set_be32)
 }
 
-static int u_ct32_e9_bswap_be(filter_t *f)
+static int u_ct32_e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_le32, set_be32)
 }
 
-static int u_ct32_e8e9_bswap_be(filter_t *f)
+static int u_ct32_e8e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le32, set_be32)
 }
 
 
 // scan: e8, e9, e8e9 with bswap be->le
-static int s_ct32_e8_bswap_be(filter_t *f)
+static int s_ct32_e8_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
-static int s_ct32_e9_bswap_be(filter_t *f)
+static int s_ct32_e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe9), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
-static int s_ct32_e8e9_bswap_be(filter_t *f)
+static int s_ct32_e8e9_bswap_be(Filter *f)
 {
     CT32(f, (*b == 0xe8 || *b == 0xe9), 0 - a - f->addvalue, get_le32, set_dummy)
 }
 
 
 #undef CT32
+
+#undef set_dummy
 
 
 /*************************************************************************
@@ -406,10 +408,10 @@ static int s_ct32_e8e9_bswap_be(filter_t *f)
 
 
 /*************************************************************************
-// database for class Filter
+// database for use in class Filter
 **************************************************************************/
 
-const FilterImp::f_t FilterImp::filters[] = {
+const FilterImp::FilterEntry FilterImp::filters[] = {
     // no filter
     { 0x00, 0,          0, NULL, NULL, NULL },
     // 16-bit calltrick

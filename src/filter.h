@@ -97,7 +97,7 @@ private:
 // We don't want a full OO interface here because of
 // certain implementation speed reasons.
 //
-// This class is strictly private to Filter - don't look.
+// This class is private to Filter - don't look.
 **************************************************************************/
 
 class FilterImp
@@ -105,18 +105,23 @@ class FilterImp
     friend class Filter;
 
 private:
-    struct f_t {
-        int id;
+    struct FilterEntry
+    {
+        int id;                             // 0 .. 255
         unsigned min_buf_len;
         unsigned max_buf_len;
-        int (*f)(Filter *);
-        int (*u)(Filter *);
-        int (*s)(Filter *);
+        int (*do_filter)(Filter *);         // filter a buffer
+        int (*do_unfilter)(Filter *);       // unfilter a buffer
+        int (*do_scan)(Filter *);           // scan a buffer
     };
-    static const f_t filters[];
-    static const int n_filters;
 
-    static const f_t *getFilter(int id);
+    // get a specific filter entry
+    static const FilterEntry *getFilter(int id);
+
+private:
+    // strictly private filter database
+    static const FilterEntry filters[];
+    static const int n_filters;             // number of filters[]
 };
 
 

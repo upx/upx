@@ -974,7 +974,7 @@ void Packer::addFilter32(int filter_id)
 //  -1:  try all filters, use first working one
 //  -2:  try only the opt->filter filter
 //
-// This is prepared for generalization into class Packer so that
+// This has been prepared for generalization into class Packer so that
 // opt->all_filters is available for all executable formats.
 //
 // It will replace the tryFilters() / compress() call sequence.
@@ -1048,7 +1048,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         filters[nfilters++] = 0;
     filters[nfilters] = -1;
 
-    // update
+    // update total_passes
     if (strategy < 0)
         this->total_passes += 1;
     else

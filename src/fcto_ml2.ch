@@ -30,7 +30,7 @@
 //
 **************************************************************************/
 
-static int F(filter_t *f)
+static int F(Filter *f)
 {
 #ifdef U
     // filter
@@ -157,7 +157,7 @@ static int F(filter_t *f)
 
 
 #ifdef U
-static int U(filter_t *f)
+static int U(Filter *f)
 {
     upx_byte *b = f->buf;
     const unsigned size5 = f->buf_len - 5;
