@@ -45,6 +45,7 @@ static const
 
 PackLinuxI386elf::~PackLinuxI386elf()
 {
+    delete phdri;
 }
 
 PackLinuxI386elf::PackLinuxI386elf(InputFile *f)
