@@ -71,11 +71,17 @@ const int *PackVmlinuzI386::getFilters() const
 }
 
 
+bool PackVmlinuzI386::canPack()
+{
+    return readFileHeader() == getFormat();
+}
+
+
 /*************************************************************************
-// common routines
+// common util routines
 **************************************************************************/
 
-int PackVmlinuzI386::readHeader()
+int PackVmlinuzI386::readFileHeader()
 {
     boot_sect_t h;
 
@@ -95,7 +101,7 @@ int PackVmlinuzI386::readHeader()
 }
 
 
-// read kernel into obuf, gzip-uncompress into ibuf,
+// read full kernel into obuf, gzip-uncompress into ibuf,
 // return uncompressed size
 int PackVmlinuzI386::uncompressKernel()
 {
@@ -147,8 +153,9 @@ void PackVmlinuzI386::readKernel()
     if (klen <= 0)
         throwCantPack("kernel decompression failed");
 
-    // OutputFile::dump("kernel.img", ibuf, ulen);
+    //OutputFile::dump("kernel.img", ibuf, klen);
 
+    // copy the setup boot code
     setup_buf.alloc(setup_size);
     memcpy(setup_buf, obuf, setup_size);
 
@@ -162,12 +169,6 @@ void PackVmlinuzI386::readKernel()
 /*************************************************************************
 // vmlinuz specific
 **************************************************************************/
-
-bool PackVmlinuzI386::canPack()
-{
-    return readHeader() == UPX_F_VMLINUZ_i386;
-}
-
 
 void PackVmlinuzI386::pack(OutputFile *fo)
 {
@@ -203,21 +204,21 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
     fo->write(obuf, clen);
+#if 0
+    printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
+    printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+#endif
 
-    //if (!checkCompressionRatio(file_size, fo->getBytesWritten()))
-    //    throwNotCompressible();
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 
 /*************************************************************************
 // bvmlinuz specific
 **************************************************************************/
-
-bool PackBvmlinuzI386::canPack()
-{
-    return readHeader() == UPX_F_BVMLINUZ_i386;
-}
-
 
 void PackBvmlinuzI386::pack(OutputFile *fo)
 {
@@ -277,12 +278,19 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     fo->write(loader, e_len);
     fo->write(obuf, clen);
     fo->write(loader + e_len, lsize - e_len);
+#if 0
+    printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
+    printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) (lsize - e_len));
+#endif
 
     // verify
     verifyOverlappingDecompression(&obuf, overlapoh);
 
-    //if (!checkCompressionRatio(file_size, fo->getBytesWritten()))
-    //    throwNotCompressible();
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 
@@ -294,6 +302,7 @@ int PackVmlinuzI386::canUnpack()
 {
     return false;
 }
+
 
 void PackVmlinuzI386::unpack(OutputFile *)
 {

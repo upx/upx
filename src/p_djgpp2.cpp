@@ -368,6 +368,10 @@ void PackDjgpp2::pack(OutputFile *fo)
     // handle overlay
     // FIXME: only Allegro pakfiles are supported
     handle_allegropak(fi,fo);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 

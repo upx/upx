@@ -263,6 +263,10 @@ void PackTmt::pack(OutputFile *fo)
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 

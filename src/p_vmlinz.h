@@ -52,7 +52,7 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual int readHeader();
+    virtual int readFileHeader();
     virtual int uncompressKernel();
     virtual void readKernel();
 
@@ -98,8 +98,6 @@ public:
     virtual const char *getName() const { return "bvmlinuz/386"; }
 
     virtual void pack(OutputFile *fo);
-
-    virtual bool canPack();
 };
 
 

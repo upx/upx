@@ -516,6 +516,10 @@ void PackExe::pack(OutputFile *fo)
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);
 //fprintf (stderr,"%x %x\n",relocsize,ph.u_len);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 

@@ -221,6 +221,10 @@ void PackCom::pack(OutputFile *fo)
 
     // verify
     verifyOverlappingDecompression(&obuf, overlapoh);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 

@@ -260,15 +260,30 @@ bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
     //assert((off_t)u_len < file_size);
 
 #if 1
-    if (c_len >= u_len - u_len / 8)         // min. 12.5% gain
+    if (c_len + 512 >= u_len)           // min. 512 bytes gain
         return false;
-    if (c_len + 512 >= u_len)               // min. 512 bytes gain
+    if (c_len >= u_len - u_len / 8)     // min. 12.5% gain
         return false;
 #else
     if (c_len >= u_len)
         return false;
 #endif
     return true;
+}
+
+
+bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
+{
+    unsigned u_len = file_size;
+    unsigned c_len = fo->getBytesWritten();
+
+    assert((int)u_len > 0);
+    assert((int)c_len > 0);
+
+    if (c_len + 4096 <= u_len)          // ok if we have 4096 bytes gain
+        return true;
+
+    return checkCompressionRatio(u_len, c_len);
 }
 
 
@@ -350,7 +365,7 @@ void Packer::verifyOverlappingDecompression(MemBuffer *buf,
     //   buf was allocated with MemBuffer.allocForCompression(), and
     //   its contents are no longer needed, i.e. the compressed data
     //   must have been already written.
-    //   We now could performa a real overlapping decompression and
+    //   We now could perform a real overlapping decompression and
     //   verify the checksum.
     //
     // Note:

@@ -544,6 +544,10 @@ void PackWcle::pack(OutputFile *fo)
     const unsigned overlay = file_size - overlaystart - ih.non_resident_name_table_length;
     checkOverlay(overlay);
     copyOverlay(fo, overlay, &oimage);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
 }
 
 
