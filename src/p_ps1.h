@@ -56,7 +56,7 @@ public:
     virtual int canUnpack();
 
 protected:
-	virtual void patch_mips_le(void *b, int blen, const void *old, unsigned new_);
+    virtual void patch_mips_le(void *b, int blen, const void *old, unsigned new_);
     virtual int buildLoader(const Filter *ft);
 
     virtual int readFileHeader();
