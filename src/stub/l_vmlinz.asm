@@ -50,7 +50,7 @@ start:
                 mov     al, __KERNEL_DS
                 mov     ds, eax
                 mov     es, eax
-; fs, gs set by startup_32 in arch/i386/kernel/head.S 
+; fs, gs set by startup_32 in arch/i386/kernel/head.S
                 mov     ss, eax
                 mov     esp, 'STAK'     ; 0x90000
 
