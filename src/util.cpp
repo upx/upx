@@ -35,10 +35,15 @@
    /* avoid -W4 warnings in <windows.h> */
 #  pragma warning(disable: 4201 4214 4514)
 #endif
-#include "acc/acc_inci.h"
-#include "acc/acclib/misc.ch"
-#include "acc/acclib/hsread.ch"
-#include "acc/acclib/wildargv.ch"
+#define ACC_WANT_ACC_INCI_H 1
+#define ACC_WANT_ACCLIB_MISC 1
+#define ACC_WANT_ACCLIB_HSREAD 1
+#define ACC_WANT_ACCLIB_WILDARGV 1
+#include "miniacc.h"
+#undef ACC_WANT_ACC_INCI_H
+#undef ACC_WANT_ACCLIB_MISC
+#undef ACC_WANT_ACCLIB_HSREAD
+#undef ACC_WANT_ACCLIB_WILDARGV
 
 
 /*************************************************************************

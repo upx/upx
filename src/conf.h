@@ -36,7 +36,7 @@
 // ACC
 **************************************************************************/
 
-#include "acc/acc.h"
+#include "miniacc.h"
 #if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
 #  undef HAVE_UTIME_H /* this pulls in <windows.h> */
 #endif
@@ -106,9 +106,15 @@
 #endif
 
 
-#include "acc/acc_incd.h"
-#include "acc/acc_ince.h"
-#include "acc/acc_lib.h"
+#define ACC_WANT_ACC_INCD_H 1
+#define ACC_WANT_ACC_INCE_H 1
+#define ACC_WANT_ACC_LIB_H 1
+#define ACC_WANT_ACC_CXX_H 1
+#include "miniacc.h"
+#undef ACC_WANT_ACC_INCD_H
+#undef ACC_WANT_ACC_INCE_H
+#undef ACC_WANT_ACC_LIB_H
+#undef ACC_WANT_ACC_CXX_H
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #    error "something pulled in <windows.h>"
