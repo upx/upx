@@ -941,9 +941,9 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         "\n";
 
     if (opt->small)
-        addSection("IDENTSTR",identsmall,sizeof(identsmall));
+        linker->addSection("IDENTSTR",identsmall,sizeof(identsmall));
     else
-        addSection("IDENTSTR",identbig,sizeof(identbig));
+        linker->addSection("IDENTSTR",identbig,sizeof(identbig));
 }
 
 
@@ -960,12 +960,6 @@ void Packer::addLoader(const char *s, ...)
 }
 
 
-void Packer::addSection(const char *sname, const char *sdata, unsigned len)
-{
-    linker->addSection(sname, sdata, len);
-}
-
-
 int Packer::getLoaderSection(const char *name, int *slen) const
 {
     int size = -1;
@@ -979,12 +973,14 @@ int Packer::getLoaderSection(const char *name, int *slen) const
 
 
 // same, but the size of the section may be == 0
-int Packer::getLoaderSectionStart(const char *name) const
+int Packer::getLoaderSectionStart(const char *name, int *slen) const
 {
     int size = -1;
     int ostart = linker->getSection(name, &size);
     if (ostart < 0 || size < 0)
         throwBadLoader();
+    if (slen)
+        *slen = size;
     return ostart;
 }
 
