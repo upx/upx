@@ -106,50 +106,56 @@ L50:
         mov ecx, [4+ eax]  ; length of   compressed ELF headers
         add ecx, byte szb_info
         pusha  ; (AT_table, sz_cpr, f_expand, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
+        inc edi  ; swap with above 'pusha' to inhibit auxv_up for PT_INTERP
 EXTERN upx_main
         call upx_main  ; returns entry address
         add esp, dword 8*4 + MAX_ELF_HDR + OVERHEAD  ; remove 8 params, temp space
         pop ebx  ; &Elf32_Ehdr of this stub
         push eax  ; save entry address
 
-        mov esi, edi  ; auxv table
-L60:  ; search for AT_PHDR
-        lodsd  ; a_type
-        cmp al, byte AT_PHDR
-        lodsd  ; a_un.a_ptr
-        jne L60
-        xchg eax, edi
+        dec edi  ; auxv table
+        sub eax,eax  ; 0, also AT_NULL
+        db 0x3c  ; "cmpb al, byte ..." like "jmp 1+L60" but 1 byte shorter
+L60:
+        scasd  ; a_un
+        scasd  ; a_val
+        jne L60  ; not AT_NULL
+        mov edx,[edi]  ; &hatch
+        stosd  ; clear a_un.a_ptr for AT_NULL
 
-find_hatch:
-        push edi
-EXTERN make_hatch
-        call make_hatch  ; find hatch = make_hatch(phdr)
-        pop ecx  ; junk the parameter
-        add edi, byte szElf32_Phdr  ; prepare to try next Elf32_Phdr
-        test eax,eax
-        jz find_hatch
-        xchg eax,edx  ; edx= &hatch
-
-; _dl_start and company (ld-linux.so.2) assumes that it has virgin stack,
-; and does not initialize all its stack local variables to zero.
-; Ulrich Drepper (drepper@cyngus.com) has refused to fix the bugs.
-; See GNU wwwgnats libc/1165 .
+; _dl_start and company (ld-linux.so.2) once assumed that it had virgin stack,
+; and did not initialize all its stack local variables to zero.
+; See bug libc/1165 at  http://bugs.gnu.org/cgi-bin/gnatsweb.pl
+; Found 1999-06-16 glibc-2.1.1
+; Fixed 1999-12-29 glibc-2.1.2
 
 %define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
-        lea edi, [esp - 4*N_STKCLR]
-        pusha  ; values will be zeroed
-        mov esi,esp  ; save
-        mov esp,edi  ; Linux does not grow stack below esp
-        mov ecx, N_STKCLR
-        xor eax,eax
-        rep stosd
-        mov esp,esi  ; restore
+%define  N_STKCLR 8
+;       lea edi, [esp - 4*N_STKCLR]
+;       pusha  ; values will be zeroed
+;       mov esi,esp  ; save
+;       mov esp,edi  ; Linux does not grow stack below esp
+;       mov ecx, N_STKCLR
+;       ; xor eax,eax  ; eax already 0 from L60
+;       rep stosd
+;       mov esp,esi  ; restore
+        ; xor ecx, ecx  ; ecx already 0 from "rep stosd"
 
-        xor ecx, ecx  ; 0
+        push eax
+        push eax
+        push eax
+        push eax
+        push eax
+        push eax
+        push eax
+        push eax  ; 32 bytes of zeroes now on stack
+        push eax
+        pop ecx  ; 0
+
+        mov al, __NR_munmap  ; eax was 0 from L60
         mov ch, PAGE_SIZE>>8  ; 0x1000
         add ecx, [p_memsz + szElf32_Ehdr + ebx]  ; length to unmap
         mov bh, 0  ; from 0x401000 to 0x400000
-        mov eax, __NR_munmap  ; do not dirty the stack with push byte + pop
         jmp edx  ; unmap ourselves via escape hatch, then goto entry
 
 ; called twice:

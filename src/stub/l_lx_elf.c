@@ -220,8 +220,9 @@ static void
 __attribute__ ((regparm(3), stdcall))
 auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
 {
+    if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
     for (;; ++av) {
-        if (av->a_type==type || av->a_type==AT_IGNORE) {
+        if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
             av->a_un.a_val = value;
             return;
@@ -275,7 +276,11 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
         if (xi) {
-            make_hatch(phdr);
+            void *const hatch = make_hatch(phdr);
+            if (0!=hatch) {
+                /* always update AT_NULL, especially for compressed PT_INTERP */
+                auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, hatch);
+            }
         }
         if (phdr->p_memsz != phdr->p_filesz) { // .bss
             if (ET_DYN==ehdr->e_type) { // PT_INTERP whole pages of .bss?
