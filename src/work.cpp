@@ -268,29 +268,33 @@ void do_files(int i, int argc, char *argv[])
         try {
             do_one_file(iname,oname);
         } catch (const Exception &e) {
+            unlink_ofile(oname);
             if (opt->verbose >= 2 || (opt->verbose >= 1 && !e.isWarning()))
                 printErr(iname,&e);
-            unlink_ofile(oname);
         } catch (const Error &e) {
+            unlink_ofile(oname);
             printErr(iname,&e);
-            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
-            //throw;
+        } catch (const std::bad_alloc &e) {
+            unlink_ofile(oname);
+            printErr(iname,"out of memory");
+            e_exit(EXIT_ERROR);
+        } catch (const std::bad_alloc *e) {
+            unlink_ofile(oname);
+            printErr(iname,"out of memory");
+            e_exit(EXIT_ERROR);
         } catch (const exception &e) {
+            unlink_ofile(oname);
             printUnhandledException(iname,&e);
-            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
-            //throw;
         } catch (const exception *e) {
+            unlink_ofile(oname);
             printUnhandledException(iname,e);
-            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
-            //throw;
         } catch (...) {
-            printUnhandledException(iname,NULL);
             unlink_ofile(oname);
+            printUnhandledException(iname,NULL);
             e_exit(EXIT_ERROR);
-            //throw;
         }
 
 #if defined(WITH_MSS)
