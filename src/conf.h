@@ -282,7 +282,7 @@
 
 #undef __attribute_packed
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#  if (1 && ACC_ARCH_IA32)
+#  if (1 && (ACC_ARCH_IA32 || ACC_ARCH_IA64))
 #    define __attribute_packed
 #  else
 #    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))

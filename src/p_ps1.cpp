@@ -76,8 +76,11 @@ PackPs1::PackPs1(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
+#if defined(WITH_NRV)
+    COMPILE_TIME_ASSERT(NRV_LOADER_CRC32 == 0xd78b1eb4);
+#endif
 
-    fdata_size = file_size-PS_HDR_SIZE;
+    fdata_size = file_size - PS_HDR_SIZE;
 }
 
 

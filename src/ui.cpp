@@ -454,7 +454,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     if (osize > 0)
         ratio = get_ratio(isize, osize);
 
-    int buflen = &s->msg_buf[sizeof(s->msg_buf)] - m;
+    int buflen = (int) (&s->msg_buf[sizeof(s->msg_buf)] - m);
     upx_snprintf(m, buflen, "  %3d.%1d%%  %c ",
                  ratio / 10000, (ratio % 10000) / 1000,
                  spinner[s->spin_counter & 3]);

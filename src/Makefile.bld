@@ -419,7 +419,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
 else
-  CFLAGS += -O1 -GF -Gy
+  CFLAGS += -O1 -GF
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
@@ -491,7 +491,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
 else
-  CFLAGS += -O1 -GF -Gy
+  CFLAGS += -O1 -GF
   LINK_EXE_LDFLAGS += /release
   ##LINK_EXE_LDFLAGS += /opt:nowin98
 endif

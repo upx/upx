@@ -35,7 +35,12 @@
    /* avoid -W4 warnings in <windows.h> */
 #  pragma warning(disable: 4201 4214 4514)
 #endif
-#include "acc/acc_lib.ch"
+#if 0
+#  include "acc/acc_lib.ch"
+#else
+#  include "acc/acc_inci.h"
+#  include "acc/acclib/misc.ch"
+#endif
 
 
 /*************************************************************************
@@ -246,7 +251,7 @@ int upx_tolower(int c)
 // filename util
 **************************************************************************/
 
-#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS16 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
 static const char dir_sep[] = "/\\";
 #define fn_is_drive(s)      (s[0] && s[1] == ':')
