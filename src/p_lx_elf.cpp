@@ -120,6 +120,8 @@ void PackLinuxI386elf::patchLoader()
 
     // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
     off_t const fold_begin = phdr[1].p_offset;
+    assert(fold_begin > 0);
+    assert(fold_begin < (off_t)lsize);
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader

@@ -31,10 +31,6 @@
  */
 
 
-#if !defined(__linux__) || !defined(__i386__)
-#  error "this stub must be compiled under linux/i386"
-#endif
-
 #include "linux.hh"
 
 
@@ -46,9 +42,6 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-
-#define PAGEMASK (~0u<<12)  // discards the offset, keeps the page
-#define PAGESIZE ( 1u<<12)
 #define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
 
 
@@ -112,7 +105,6 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
-
 
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
@@ -202,7 +194,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Elf32_auxv_t *const a)
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz + (char *)phdr->p_vaddr;
-        size_t frag  = (int)addr &~ PAGEMASK;
+        size_t frag  = (int)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
         if (ET_DYN==ehdr->e_type) {
@@ -222,7 +214,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Elf32_auxv_t *const a)
             base = (unsigned long)addr;
         }
         bzero(addr, frag);  // fragment at lo end
-        frag = (-mlen) &~ PAGEMASK;  // distance to next page boundary
+        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
         if (phdr->p_memsz != phdr->p_filesz) { // .bss
             if (ET_DYN==ehdr->e_type) { // PT_INTERP whole pages of .bss?
@@ -322,9 +314,6 @@ void *upx_main(
         // 'fn' and 'efn' must not suffer constant-propagation by gcc
         // UPX2 = 3 + offset to name_of_shell
         // UPX3 = strlen(name_of_shell)
-// patch & magic constants for our loader (le32 format)
-#define UPX2            0x32585055          // "UPX2"
-#define UPX3            0x33585055          // "UPX3"
     char * /*const*/ volatile  fn = UPX2 + uncbuf;  // past "-c" and "#!"
     char * /*const*/ volatile efn = UPX3 + fn;  // &terminator
     char const c = *efn;  *efn = 0;  // terminator
@@ -334,7 +323,7 @@ void *upx_main(
     av[0].a_type = AT_PHDR;   // av[0].a_un.a_val  is set by do_xmap
     av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
     av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;
-    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGESIZE;
+    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGE_SIZE;
     av[4].a_type = AT_ENTRY;  av[4].a_un.a_val = entry;
     av[5].a_type = AT_NULL;
   }
@@ -347,6 +336,7 @@ void *upx_main(
         break;
     }
   }
+
     return (void *)entry;
 }
 

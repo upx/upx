@@ -25,17 +25,16 @@
  */
 
 
-#if !defined(__linux__) || !defined(__i386__)
-#  error "this stub must be compiled under linux/i386"
-#endif
-
 #include "linux.hh"
-#include <elf.h>
 
 
 /*************************************************************************
 // configuration section
 **************************************************************************/
+
+// mmap() the temporary output file
+#define USE_MMAP_FO
+
 
 /*************************************************************************
 // file util
@@ -45,6 +44,29 @@ struct Extent {
     int  size;  // must be first to match size[0] uncompressed size
     char *buf;
 };
+
+
+#if !defined(USE_MMAP_FO)
+#if 1
+static __inline__ int xwrite(int fd, const void *buf, int count)
+{
+    // note: we can assert(count > 0);
+    do {
+        int n = write(fd, buf, count);
+        if (n == -EINTR)
+            continue;
+        if (n <= 0)
+            break;
+        buf += n;               // gcc extension: add to void *
+        count -= n;
+    } while (count > 0);
+    return count;
+}
+#else
+#define xwrite(fd,buf,count)    ((count) - write(fd,buf,count))
+#endif
+#endif /* !USE_MMAP_FO */
+
 
 /*************************************************************************
 // util
@@ -72,15 +94,16 @@ static char *upx_itoa(char *buf, unsigned long v)
     return buf;
 }
 
-static uint32_t ascii5(uint32_t r, unsigned k, char *p)
+
+static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 {
     do {
-        unsigned char d = r % 32;
+        unsigned char d = v % 32;
         if (d >= 26) d += '0' - 'Z' - 1;
         *--p += d;
-        r /= 32;
-    } while (--k > 0);
-    return r;
+        v /= 32;
+    } while (--n > 0);
+    return v;
 }
 
 
@@ -105,16 +128,10 @@ static uint32_t ascii5(uint32_t r, unsigned k, char *p)
 // UPX & NRV stuff
 **************************************************************************/
 
-// patch constants for our loader (le32 format)
-#define UPX1            0x31585055          // "UPX1"
-#define UPX2            0x32585055          // "UPX2"
-#define UPX3            0x33585055          // "UPX4"
-#define UPX4            0x34585055          // "UPX4"
-#define UPX5            0x35585055          // "UPX5"
-
 typedef int f_expand(
     const nrv_byte *src, nrv_uint  src_len,
           nrv_byte *dst, nrv_uint *dst_len );
+
 
 /*************************************************************************
 // upx_main - called by our entry code
@@ -135,7 +152,6 @@ void upx_main(
     f_expand *const f_decompress
 )
 {
-#define PAGE_MASK (~0<<12)
     // file descriptors
     int fdi, fdo;
     Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
@@ -150,7 +166,10 @@ void upx_main(
     // temporary file name (max 14 chars)
     static char tmpname_buf[] = "/tmp/upxAAAAAAAAAAA";
     char *tmpname = tmpname_buf;
-    char procself_buf[24];  // /proc/PPPPP/fd/XX
+    // 17 chars for "/proc/PPPPP/fd/XX" should be enough, but we
+    // play safe in case there will be 32-bit pid_t at some time.
+    //char procself_buf[17+1];
+    char procself_buf[31+1];
     char *procself;
 
     // decompression buffer
@@ -163,12 +182,18 @@ void upx_main(
         int ma_fd;
         off_t ma_offset;
     } malloc_args = {
+#if defined(USE_MMAP_FO)
         0, 0, PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0
+#else
+        0, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0
+#endif
     };
+#if defined(USE_MMAP_FO)
     static struct MallocArgs scratch_page = {
         0, -PAGE_MASK, PROT_READ | PROT_WRITE,
             MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0
     };
+#endif
 
     //
     // ----- Step 0: set /proc/self using /proc/<pid> -----
@@ -188,11 +213,11 @@ void upx_main(
 
     // Read header.
     {
-	    register char *__d0, *__d1;
-	    __asm__ __volatile__( "movsl; movsl; movsl"
-	        : "=&D" (__d0), "=&S" (__d1)
-	        : "0" (&header), "1" (xi.buf)
-	        : "memory");
+        register char *__d0, *__d1;
+        __asm__ __volatile__( "movsl; movsl; movsl"
+            : "=&D" (__d0), "=&S" (__d1)
+            : "0" (&header), "1" (xi.buf)
+            : "memory");
         xi.buf   = __d1;
         xi.size -= sizeof(header);
     }
@@ -214,7 +239,7 @@ void upx_main(
         char *p = tmpname_buf + sizeof(tmpname_buf) - 1;
 
         // Compute the last 4 characters (20 bits) from getpid().
-        uint32_t r = ascii5((uint32_t)pid, 4, p); p-=4;
+        uint32_t r = ascii5(p, (uint32_t)pid, 4); p-=4;
 
         // Provide 4 random bytes from our program id.
         r ^= header.p_progid;
@@ -236,7 +261,7 @@ void upx_main(
 #endif
         }
         // Compute 7 more characters from the 32 random bits.
-        ascii5(r, 7, p);
+        ascii5(p, r, 7);
     }
 
     // Just in case, remove the file.
@@ -247,7 +272,11 @@ void upx_main(
     }
 
     // Create the temporary output file.
+#if defined(USE_MMAP_FO)
     fdo = open(tmpname, O_RDWR | O_CREAT | O_EXCL, 0700);
+#else
+    fdo = open(tmpname, O_WRONLY | O_CREAT | O_EXCL, 0700);
+#endif
 #if 0
     // Save some bytes of code - the ftruncate() below will fail anyway.
     if (fdo < 0)
@@ -263,8 +292,11 @@ void upx_main(
     // ----- Step 3: setup memory -----
     //
 
+#if defined(USE_MMAP_FO)
+    // mmap()ed output file.
     malloc_args.ma_fd = fdo;
-    malloc_args.ma_length = header.p_filesize;  // could packer do this?
+    // FIXME: packer could set ma_length
+    malloc_args.ma_length = header.p_filesize;
     buf = mmap((int *)&malloc_args);
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
@@ -273,6 +305,14 @@ void upx_main(
     // Defend against SIGSEGV by using a scratch page.
     scratch_page.ma_addr = buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK));
     mmap((int *)&scratch_page);
+#else
+    // Temporary decompression buffer.
+    // FIXME: packer could set ma_length
+    malloc_args.ma_length = (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK;
+    buf = mmap((int *)&malloc_args);
+    if ((unsigned long) buf >= (unsigned long) -4095)
+        goto error;
+#endif
 
     //
     // ----- Step 4: decompress blocks -----
@@ -290,19 +330,19 @@ void upx_main(
 
         // Read and check block sizes.
         {
-	        register char *__d0, *__d1;
-	        __asm__ __volatile__( "movsl; movsl"
-	            : "=&D" (__d0), "=&S" (__d1)
-	            : "0" (&h), "1" (xi.buf)
-	            : "memory");
+            register char *__d0, *__d1;
+            __asm__ __volatile__( "movsl; movsl"
+                : "=&D" (__d0), "=&S" (__d1)
+                : "0" (&h), "1" (xi.buf)
+                : "memory");
             xi.buf   = __d1;
             xi.size -= sizeof(h);
         }
-        if (h.sz_unc == 0)                       // uncompressed size 0 -> EOF
+        if (h.sz_unc == 0)                      // uncompressed size 0 -> EOF
         {
-            if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
+            if (h.sz_cpr != UPX_MAGIC_LE32)     // h.sz_cpr must be h->magic
                 goto error;
-            if (header.p_filesize != 0)        // all bytes must be written
+            if (header.p_filesize != 0)         // all bytes must be written
                 goto error;
             break;
         }
@@ -321,16 +361,29 @@ void upx_main(
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
         }
-        else { // Incompressible block
+        else
+        {
+            // Incompressible block
+#if defined(USE_MMAP_FO)
             //memcpy(buf, xi.buf, h.sz_unc);
-	        register unsigned long int __d0, __d1, __d2;
-	        __asm__ __volatile__( "rep; movsb"
-	            : "=&c" (__d0), "=&D" (__d1), "=&S" (__d2)
-	            : "0" (h.sz_unc), "1" (buf), "2" (xi.buf)
-	            : "memory");
+            register unsigned long int __d0, __d1, __d2;
+            __asm__ __volatile__( "rep; movsb"
+                : "=&c" (__d0), "=&D" (__d1), "=&S" (__d2)
+                : "0" (h.sz_unc), "1" (buf), "2" (xi.buf)
+                : "memory");
+#endif
         }
+
+#if defined(USE_MMAP_FO)
+        // unmap part of the output
         munmap(buf, h.sz_unc);
         buf     += h.sz_unc;
+#else
+        // write output file
+        if (xwrite(fdo, buf, h.sz_unc) != 0)
+            goto error;
+#endif
+
         header.p_filesize -= h.sz_unc;
 
         xi.buf  += h.sz_cpr;
@@ -357,6 +410,12 @@ void upx_main(
     //
     // ----- Step 5: release resources -----
     //
+
+
+#if !defined(USE_MMAP_FO)
+    // Free our temporary decompression buffer.
+    munmap(buf, malloc_args.ma_length);
+#endif
 
     if (close(fdo) != 0)
         goto error;
@@ -390,7 +449,7 @@ void upx_main(
         fcntl(fdi, F_SETFD, FD_CLOEXEC);
         // Execute the original program via /proc/self/fd/X.
         execve(procself_buf, argv, envp);
-        // If we get here we've lost.
+        // NOTE: if we get here we've lost.
     }
 #undef err
 

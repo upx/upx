@@ -1,3 +1,5 @@
+*.00?
 *.upx
+.gdbinit
 upx
 upx.map

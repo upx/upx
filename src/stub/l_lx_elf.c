@@ -31,10 +31,6 @@
  */
 
 
-#if !defined(__linux__) || !defined(__i386__)
-#  error "this stub must be compiled under linux/i386"
-#endif
-
 #include "linux.hh"
 
 
@@ -46,9 +42,6 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-
-#define PAGEMASK (~0u<<12)  // discards the offset, keeps the page
-#define PAGESIZE ( 1u<<12)
 #define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
 
 
@@ -188,7 +181,7 @@ make_hatch(Elf32_Phdr const *const phdr)
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  4<=(~PAGEMASK & -(int)hatch) ) ) // space left on page
+                &&  4<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Try Elf32_Ehdr.e_ident[12..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr)->e_ident[12])),
                 (phdr->p_offset==0) ) ) {
@@ -230,7 +223,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz + (char *)phdr->p_vaddr;
-        size_t frag  = (int)addr &~ PAGEMASK;
+        size_t frag  = (int)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
         if (ET_DYN==ehdr->e_type) {
@@ -255,7 +248,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
             unpackExtent(xi, &xo, (f_expand *)fdi);
         }
         bzero(addr, frag);  // fragment at lo end
-        frag = (-mlen) &~ PAGEMASK;  // distance to next page boundary
+        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
         if (xi) {
             make_hatch(phdr);
@@ -284,7 +277,7 @@ ERR_LAB
             if (xi) { // cleanup if decompressor overrun crosses page boundary
                 mlen += 3;
                 addr += mlen;
-                mlen &= ~PAGEMASK;
+                mlen &= ~PAGE_MASK;
                 if (mlen<=3) { // page fragment was overrun buffer only
                     munmap(addr - mlen, mlen);
                 }
@@ -354,7 +347,7 @@ void *upx_main(
     av[0].a_type = AT_PHDR;   // av[0].a_un.a_val  is set by do_xmap
     av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
     av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;
-    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGESIZE;
+    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGE_SIZE;
     av[4].a_type = AT_ENTRY;  av[4].a_un.a_val = ehdr->e_entry;
     av[5].a_type = AT_NULL;
     entry = do_xmap((int)f_decompress, ehdr, &xi, av);

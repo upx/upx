@@ -188,24 +188,21 @@ l_w32pe.h: l_w32pe.asx
 
 l_lx_n2b.h: l_lx_exec.c l_xe_n2b.o l_lx_exec86.lds Makefile
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin \
-		l_xe_n2b.o $T.o
+	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin l_xe_n2b.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_nrv2b_loader $@
 
 l_le_n2b.h: l_lx_elf.c l_6e_n2b.o l_lx_elf86.lds
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
-		l_6e_n2b.o $T.o
+	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin l_6e_n2b.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_nrv2b_loader $@
 
 l_sh_n2b.h: l_lx_sh.c l_6h_n2b.o l_lx_sh86.lds
 	$(CC_LINUX) -DNRV2B -o $T.o -c $<
-	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
-		l_6h_n2b.o $T.o
+	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin l_6h_n2b.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_nrv2b_loader $@
@@ -222,24 +219,21 @@ l_6h_n2b.o: l_lx_sh86.asm
 
 l_lx_n2d.h: l_lx_exec.c l_xe_n2d.o l_lx_exec86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin \
-		l_xe_n2d.o $T.o
+	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin l_xe_n2d.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_nrv2d_loader $@
 
 l_le_n2d.h: l_lx_elf.c l_6e_n2d.o l_lx_elf86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin \
-		l_6e_n2d.o $T.o
+	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin l_6e_n2d.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_nrv2d_loader $@
 
 l_sh_n2d.h: l_lx_sh.c l_6h_n2d.o l_lx_sh86.lds
 	$(CC_LINUX) -DNRV2D -o $T.o -c $<
-	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin \
-		l_6h_n2d.o $T.o
+	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin l_6h_n2d.o $T.o
 	$(SETFOLD) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_nrv2d_loader $@

@@ -7,7 +7,6 @@
 
     Integration of virtual exec() with decompression is
     Copyright (C) 2000 John F. Reiser.  All rights reserved.
-    <jreiser@BitWagon.com>
 
    UPX and the UCL library are free software; you can redistribute them
    and/or modify them under the terms of the GNU General Public License as
@@ -27,39 +26,20 @@
    Markus F.X.J. Oberhumer                   Laszlo Molnar
    markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
 
+   John F. Reiser
+   jreiser@BitWagon.com
  */
 
 
-#if !defined(__linux__) || !defined(__i386__)
-#  error "this stub must be compiled under linux/i386"
-#endif
-
-#include <sys/types.h>
-#include <fcntl.h>
-#include <linux/errno.h>
-#include <linux/mman.h>
-#include <linux/unistd.h>
-
 #include "linux.hh"
+
 
 /*************************************************************************
 // configuration section
 **************************************************************************/
 
-// must be the same as in p_linux.cpp !
-#define OVERHEAD        2048
-
-#define PAGEMASK (~0u<<12)  // discards the offset, keeps the page
-#define PAGESIZE ( 1u<<12)
 #define MAX_ELF 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
 
-#undef int32_t
-#undef uint32_t
-#define int32_t         int
-#define uint32_t        unsigned int
-
-#define SEEK_SET 0
-#define SEEK_CUR 1
 
 /*************************************************************************
 // file util
@@ -139,13 +119,10 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
     return mmap((int *)&addr);
 }
 
+
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
-
-
-// patch & magic constants for our loader (le32 format)
-#define UPX_MAGIC_LE32  0x21585055          // "UPX!"
 
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
@@ -217,8 +194,6 @@ ERR_LAB
     }
 }
 
-#include <elf.h>
-
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it, and by assembler code to find it.
 void *
@@ -237,7 +212,7 @@ make_hatch(Elf32_Phdr const *const phdr)
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  4<=(~PAGEMASK & -(int)hatch) ) ) // space left on page
+                &&  4<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Try Elf32_Ehdr.e_ident[12..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr)->e_ident[12])),
                 (phdr->p_offset==0) ) ) {
@@ -278,7 +253,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
         size_t mlen = x.size =                phdr->p_filesz;
         char  *addr = x.buf  =        (char *)phdr->p_vaddr;
         char *haddr = phdr->p_memsz + (char *)phdr->p_vaddr;
-        size_t frag  = (int)addr &~ PAGEMASK;
+        size_t frag  = (int)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
         if (ET_DYN==ehdr->e_type) {
@@ -301,7 +276,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
             unpackExtent(&x, fdi, f_decompress);
         }
         bzero(addr, frag);  // fragment at lo end
-        frag = (-mlen) &~ PAGEMASK;  // distance to next page boundary
+        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
         if (f_decompress) {
             make_hatch(phdr);
@@ -330,7 +305,7 @@ ERR_LAB
             if (f_decompress) { // cleanup if decompressor overrun crosses page boundary
                 mlen += 3;
                 addr += mlen;
-                mlen &= ~PAGEMASK;
+                mlen &= ~PAGE_MASK;
                 if (mlen<=3) { // page fragment was overrun buffer only
                     munmap(addr - mlen, mlen);
                 }
@@ -422,7 +397,7 @@ ERR_LAB
     av[0].a_type = AT_PHDR;   av[0].a_un.a_val = 0;  // updated by do_xmap
     av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
     av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;
-    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGESIZE;
+    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGE_SIZE;
     av[4].a_type = AT_ENTRY;  av[4].a_un.a_val = ehdr->e_entry;
     av[5].a_type = AT_NULL;
     entry = do_xmap(fdi, ehdr, f_decompress, av);

@@ -55,8 +55,14 @@
 // !!! must be the same as in p_unix.h !!!
 #define OVERHEAD        2048
 
-
 #define UPX_MAGIC_LE32  0x21585055          // "UPX!"
+
+// patch constants for our loader (le32 format)
+#define UPX1            0x31585055          // "UPX1"
+#define UPX2            0x32585055          // "UPX2"
+#define UPX3            0x33585055          // "UPX4"
+#define UPX4            0x34585055          // "UPX4"
+#define UPX5            0x35585055          // "UPX5"
 
 
 #undef int32_t
@@ -74,19 +80,28 @@ typedef unsigned int nrv_uint32;
 
 
 // From ../p_unix.h
-struct l_info { // 12-byte trailer in header for loader
+struct l_info       // 12-byte trailer in header for loader (offset 116)
+{
     uint32_t l_checksum;
     uint32_t l_magic;
     uint16_t l_lsize;
     uint8_t  l_version;
     uint8_t  l_format;
 };
+
 struct p_info       // 12-byte packed program header follows stub loader
 {
     uint32_t p_progid;
     uint32_t p_filesize;
     uint32_t p_blocksize;
 };
+
+
+#define SEEK_SET    0
+#define SEEK_CUR    1
+
+#define PAGE_MASK   (~0u<<12)   // discards the offset, keeps the page
+#define PAGE_SIZE   ( 1u<<12)
 
 
 /*************************************************************************
