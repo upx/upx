@@ -73,6 +73,7 @@ NASM    += -I$(srcdir)/
 
 APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
 BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
+##BIN2H    = python  $(srcdir)/scripts/bin2h.py
 BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
@@ -98,7 +99,8 @@ CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
 # gcc 3.4.3 (fold_*.bin: 1624 / 931 / 1207)
-CC_LINUX_I386_GCC34  = gcc-3.4.3 -march=i386 -mtune=k6 -fno-exceptions -MMD
+CC_LINUX_I386_GCC34  = gcc-3.4.3
+CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
 CC_LINUX_I386_GCC34 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
@@ -118,7 +120,7 @@ CC_LINUX_I386 += -funsigned-char
 ### MIPS R3000
 ###
 
-CPP_MR3K = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_MR3K = gcc-2.95.3 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
 
@@ -127,7 +129,7 @@ ASM_MR3K = asm5900 --nologo -q
 ### Motorola 68000
 ###
 
-CPP_M68K  = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_M68K  = $(CPP_MR3K)
 APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
   # a68k 68000-assembler
@@ -303,6 +305,7 @@ l_ps1c.h: l_ps1.asm
 
 upx_itoa.o: upx_itoa.asm
 	$(NASM) -f elf -o $@ $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 l_lx_elf86.h: l_lx_elf86.asx
 	$(NASM) -f bin -o $T.bin $<
@@ -318,18 +321,23 @@ l_lx_sh86.h: l_lx_sh86.asx
 
 l_lx_elf.o: l_lx_elf.c linux.hh
 	$(CC_LINUX_I386) -c $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 l_lx_exec.o: l_lx_exec.c linux.hh
 	$(CC_LINUX_I386) -c $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 l_lx_sep.o: l_lx_sep.c linux.hh
 	$(CC_LINUX_I386) -c $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 l_lx_sh.o: l_lx_sh.c linux.hh
 	$(CC_LINUX_I386) -c $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
@@ -341,6 +349,7 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
@@ -352,6 +361,7 @@ fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
 
 fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
+	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
 fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o

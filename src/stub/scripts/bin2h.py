@@ -1,6 +1,8 @@
-#! /usr/bin/perl -w
+#! /usr/bin/env python
+# -*- coding: iso-8859-1 -*-
+# vi:ts=4:et
 #
-#  bin2h.pl --
+#  bin2h.py --
 #
 #  This file is part of the UPX executable compressor.
 #
@@ -28,56 +30,12 @@
 #
 
 
-use Compress::Zlib;
+import os, sys, zlib
 
-$delim = $/;
-undef $/;       # undef input record separator - read file as a whole
 
-$ifile = shift || die;
-$ident = shift || die;
-$ofile = shift || die;
-
-$opt_q = "";
-$opt_q = shift if ($#ARGV >= 0);
-
-# open ifile
-open(INFILE,$ifile) || die "open $ifile\n";
-binmode(INFILE);
-
-# check file size
-@st = stat($ifile);
-if (1 && $st[7] <= 0) {
-    print STDERR "$ifile: ERROR: emtpy file\n";
-    exit(1);
-}
-if (1 && $st[7] > 64*1024) {
-    print STDERR "$ifile: ERROR: file is too big (${st[7]} bytes)\n";
-    if ($ifile =~ /^fold/) {
-        print STDERR "  (please upgrade your binutils to 2.12.90.0.15 or better)\n";
-    }
-    exit(1);
-}
-
-# read whole file
-$data = <INFILE>;
-close(INFILE) || die;
-$n = length($data);
-die if ($n != $st[7]);
-
-# open ofile
-open(OUTFILE,">$ofile") || die "open $ofile\n";
-binmode(OUTFILE);
-select(OUTFILE);
-
-$if = $ifile;
-$if =~ s/.*[\/\\]//;
-$of = $ofile;
-$of =~ s/.*[\/\\]//;
-
-if ($opt_q ne "-q") {
-printf ("/* %s -- created from %s, %d (0x%x) bytes\n", $of, $if, $n, $n);
-print <<"EOF";
-
+def w_header(w, ifile, ofile, n):
+    w("/* %s -- created from %s, %d (0x%x) bytes\n" % (os.path.basename(ofile), os.path.basename(ifile), n, n))
+    w("""\n\
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
@@ -100,41 +58,72 @@ print <<"EOF";
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <mfx\@users.sourceforge.net>          <ml1050\@users.sourceforge.net>
- */
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+ */\n\n\n""")
 
 
-EOF
-}
+def w_checksum(w, s, data):
+    w("#define %s_ADLER32 0x%08x\n" % (s, 0xffffffffL & zlib.adler32(data)))
+    w("#define %s_CRC32   0x%08x\n" % (s, 0xffffffffL & zlib.crc32(data)))
+    w("\n")
 
-$s = $ident;
-$s =~ tr/a-z/A-Z/;
-printf("#define %s_ADLER32 0x%08x\n", $s, &adler32($data));
-printf("#define %s_CRC32   0x%08x\n", $s, &crc32($data));
-printf("\n");
 
-printf("unsigned char %s[%d] = {", $ident, $n);
-for ($i = 0; $i < $n; $i++) {
-    if ($i % 16 == 0) {
-        printf("   /* 0x%4x */", $i - 16) if $i > 0;
-        print "\n";
-    }
-    printf("%3d", ord(substr($data, $i, 1)));
-    print "," if ($i != $n - 1);
-}
+def w_data(w, data):
+    def w_eol(w, i):
+        if i > 0:
+            w("   /* 0x%4x */" % (i - 16))
+            w("\n")
 
-while (($i % 16) != 0) {
-    $i++;
-    print "    ";
-}
-printf("    /* 0x%4x */", $i - 16);
+    n = len(data)
+    for i in range(n):
+        if i % 16 == 0:
+            w_eol(w, i)
+        w("%3d" % ord(data[i]))
+        w(", " [i == n - 1])
+    i = n
+    while i % 16 != 0:
+        i += 1
+        w("    ")
+    w_eol(w, i)
 
-print "\n};\n";
 
-close(OUTFILE) || die;
-select(STDOUT);
+def main(argv):
+    ifile = argv[1]
+    ident = argv[2]
+    ofile = argv[3]
 
-undef $delim;
-exit(0);
+    opt_q = len(argv) >= 5
 
-# vi:ts=4:et
+    # check file size
+    st = os.stat(ifile)
+    if 1 and st.st_size <= 0:
+        print >> sys.stderr, "%s: ERROR: emtpy file" % (ifile)
+        sys.exit(1)
+    if 1 and st.st_size > 64*1024:
+        print >> sys.stderr, "%s: ERROR: file is too big (%d bytes)" % (ifile, st.st_size)
+        if re.search(r"^fold", ifile):
+            print >> sys.stderr, "  (please upgrade your binutils to 2.12.90.0.15 or better)"
+        sys.exit(1)
+
+    # read ifile
+    fp = open(ifile, "rb")
+    data = fp.read()
+    fp.close()
+    assert len(data) == st.st_size
+
+    # write ofile
+    fp = open(ofile, "wb")
+    w = fp.write
+    if not opt_q:
+        w_header(w, ifile, ofile, len(data))
+    w_checksum(w, ident.upper(), data)
+    w("unsigned char %s[%d] = {\n" % (ident, len(data)))
+    w_data(w, data)
+    w("};\n")
+    fp.close()
+
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
