@@ -100,7 +100,7 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 {
     do {
         unsigned char d = v % 32;
-        if (d >= 26) d += '0' - 'Z' - 1;
+        if (d >= 26) d -= 43;       // 43 == 'Z' - '0' + 1
         *--p += d;
         v /= 32;
     } while (--n > 0);
