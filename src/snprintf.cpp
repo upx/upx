@@ -795,13 +795,13 @@ static int xdopr(char *buffer, size_t maxlen, const char *format, va_list args)
 }
 
 
-int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap)
+int __UPX_CDECL upx_vsnprintf(char *str, size_t count, const char *format, va_list ap)
 {
     return xdopr(str, count, format, ap);
 }
 
 
-int upx_snprintf(char *str, size_t count, const char *format,...)
+int __UPX_CDECL upx_snprintf(char *str, size_t count, const char *format,...)
 {
     va_list ap;
     int ret;
@@ -813,7 +813,7 @@ int upx_snprintf(char *str, size_t count, const char *format,...)
 }
 
 
-int upx_vasprintf(char **ptr, const char *format, va_list ap)
+int __UPX_CDECL upx_vasprintf(char **ptr, const char *format, va_list ap)
 {
     int ret;
 
@@ -832,7 +832,7 @@ int upx_vasprintf(char **ptr, const char *format, va_list ap)
 }
 
 
-int upx_asprintf(char **ptr, const char *format, ...)
+int __UPX_CDECL upx_asprintf(char **ptr, const char *format, ...)
 {
     va_list ap;
     int ret;

@@ -149,7 +149,7 @@ ifeq ($(DEBUG),0)
   ##LDFLAGS += -static
   STUBEDIT_EXE = objcopy -S -R .comment -R .note $@
   ifeq ($(arch),i386)
-    STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
+##    STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
   endif
 endif
 CHMOD_EXE = chmod 755 $@
@@ -158,7 +158,7 @@ endif	# linux
 
 
 ###
-### linux/i386 - Intel C++ 7.0
+### linux/i386 - Intel C++ 7.x
 ###
 
 ifeq ($(target),linux-intelc70)
@@ -180,6 +180,30 @@ CFLAGS += -O2
 endif
 LDFLAGS += -Wl,-Map,$T.map
 
+endif
+
+
+###
+### linux/i386 - Borland C++ 5.7 (Kylix 3)
+###
+
+ifeq ($(target),linux-bc57)
+##DEPMODE := XXX_linux
+CC = bc++ -q -3
+CFLAGS = -w -w-aus -w-inl -w!
+CFLAGS_OUTPUT = -o$@
+LDFLAGS += -ls
+LINK_EXE_OUTPUT = -e$@
+ifeq ($(WITH_ZLIB),1)
+LDLIBS += -lz
+endif
+ifeq ($(DEBUG),1)
+  CFLAGS += -Od -d
+else
+  CFLAGS += -O2 -d
+endif
+# transform `-lxx -lyy' into `libxx.a libyy.a'
+LDLIBS := $(shell echo "$(LDLIBS)" | perl -pe 's/-l(.*?)\b/lib\1.a/g')
 endif
 
 
@@ -297,14 +321,14 @@ endif
 
 
 ###
-### win32 - Borland C++ 5.5.1
+### win32 - Borland C++
 ###
 
 ifeq ($(target),bc)
 o = .obj
 a = .lib
 e = .exe
-CC = bcc32 -q -3
+CC = bcc32 -q -6
 CFLAGS = -w -w-aus -w-inl -g1
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
@@ -326,7 +350,7 @@ endif	# bc
 
 
 ###
-### win32 - Digital Mars C++ 8.33
+### win32 - Digital Mars C++
 ###
 
 ifeq ($(target),dm)
@@ -356,7 +380,7 @@ endif	# dm
 
 
 ###
-### win32 - Intel C++ 7.0
+### win32 - Intel C++
 ###
 
 ifeq ($(target),ic)
@@ -390,7 +414,7 @@ endif	# ic
 
 
 ###
-### win32 - Visual C++ 6
+### win32 - Visual C++
 ###
 
 ifeq ($(target),vc)
@@ -524,17 +548,6 @@ distclean: clean
 maintainer-clean: distclean
 
 
-untabify:
-	mfxtu -d4 -t *.ch *.cpp *.h
-	mfxtu -d8 -t stub/[ln]*.asm stub/*.ash stub/*.[cs]
-
-tags TAGS:
-	ctags *.ch *.cpp *.h
-
-ID:
-	mkid *.ch *.cpp *.h
-
-
 # /***********************************************************************
 # // rules
 # ************************************************************************/
@@ -544,11 +557,6 @@ ID:
 
 %$o : %.cpp
 	$(strip $(CXX_COMPILE))
-
-ifneq ($(strip $(OBJECTS2)),)
-$(OBJECTS2): %$o : %.cpp
-	$(strip $(CXX_COMPILE))
-endif
 
 %.res : %.rc
 	rc -l 0x409 -fo$@ $<

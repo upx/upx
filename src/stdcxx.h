@@ -114,7 +114,9 @@ class bad_alloc { };
 #endif
 
 
-#if defined(__EMX__)
+#if defined(__BORLANDC__)
+using namespace std;
+#elif defined(__EMX__)
 #define std
 #elif defined(__WATCOMC__)
 #define std

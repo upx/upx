@@ -41,6 +41,9 @@
 #endif
 #include "acc/acc.h"
 #include "acc/acc_ince.h"
+#if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
+#  error "something pulled in <windows.h>"
+#endif
 
 
 #if defined(__BORLANDC__)
@@ -77,6 +80,7 @@
 #  endif
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
+#  pragma warning(disable: 4096)        // __cdecl + '...'
 #  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
 #  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
@@ -86,10 +90,13 @@
 #  if (__WATCOMC__ < 1100)
 #    error "need Watcom C++ 11.0c or newer"
 #  endif
-#  define __UPX_CDECL       __cdecl
 #  if defined(__cplusplus)
 #    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
 #  endif
+#endif
+
+#if !defined(__UPX_CDECL)
+#  define __UPX_CDECL
 #endif
 
 

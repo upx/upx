@@ -88,7 +88,7 @@ static screen_t *do_construct(screen_t *s, int fd)
 
 static screen_t *screen = NULL;
 
-static void do_destroy(void)
+static void __UPX_CDECL do_destroy(void)
 {
     if (screen)
     {

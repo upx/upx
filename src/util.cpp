@@ -29,6 +29,12 @@
 #include "conf.h"
 #include "util.h"
 
+#if (ACC_CC_MSC && _MSC_VER >= 1000 && _MSC_VER < 1200)
+   /* avoid -W4 warnings in <conio.h> */
+#  pragma warning(disable: 4032)
+   /* avoid -W4 warnings in <windows.h> */
+#  pragma warning(disable: 4201 4214 4514)
+#endif
 #include "acc/acc_lib.ch"
 
 
@@ -36,28 +42,28 @@
 // qsort() util
 **************************************************************************/
 
-int be16_compare(const void *e1, const void *e2)
+int __UPX_CDECL be16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_be16(e1);
     const unsigned d2 = get_be16(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int be32_compare(const void *e1, const void *e2)
+int __UPX_CDECL be32_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_be32(e1);
     const unsigned d2 = get_be32(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int le16_compare(const void *e1, const void *e2)
+int __UPX_CDECL le16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le16(e1);
     const unsigned d2 = get_le16(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int le32_compare(const void *e1, const void *e2)
+int __UPX_CDECL le32_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le32(e1);
     const unsigned d2 = get_le32(e2);
@@ -65,28 +71,28 @@ int le32_compare(const void *e1, const void *e2)
 }
 
 
-int be16_compare_signed(const void *e1, const void *e2)
+int __UPX_CDECL be16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_be16_signed(e1);
     const int d2 = get_be16_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int be32_compare_signed(const void *e1, const void *e2)
+int __UPX_CDECL be32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_be32_signed(e1);
     const int d2 = get_be32_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int le16_compare_signed(const void *e1, const void *e2)
+int __UPX_CDECL le16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le16_signed(e1);
     const int d2 = get_le16_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int le32_compare_signed(const void *e1, const void *e2)
+int __UPX_CDECL le32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le32_signed(e1);
     const int d2 = get_le32_signed(e2);

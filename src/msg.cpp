@@ -116,8 +116,16 @@ void printErr(const char *iname, const Throwable *e)
     if (l < sizeof(buf) && e->getMsg())
         upx_snprintf(buf+l, sizeof(buf)-l, ": %s", e->getMsg());
     l = strlen(buf);
-    if (l < sizeof(buf) && e->getErrno())
+    if (l < sizeof(buf) && e->getErrno()) {
         upx_snprintf(buf+l, sizeof(buf)-l, ": %s", strerror(e->getErrno()));
+#if 1
+        // some compilers (e.g. Borland C++) put a trailing '\n'
+        // into strerror() result
+        l = strlen(buf);
+        while (l-- > 0 && (buf[l] == '\n' || buf[l] == ' '))
+            buf[l] = 0;
+#endif
+    }
     pr_error(iname,buf,e->isWarning());
 }
 

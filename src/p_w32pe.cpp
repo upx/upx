@@ -63,7 +63,7 @@ static const
 
 #if defined(__BORLANDC__)
 #  undef strcpy
-#  define strcpy(a,b)   std::strcpy((char *)(a),(const char *)(b))
+#  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
 #endif
 
 

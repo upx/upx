@@ -1034,7 +1034,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if defined(__GNUC__) || (ACC_CC_INTELC >= 700)
     COMPILE_TIME_ASSERT(__alignof__(BE16) == 1);
     COMPILE_TIME_ASSERT(__alignof__(BE32) == 1);
     COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);
@@ -1118,7 +1118,7 @@ void upx_sanity_check(void)
 
 #if !defined(WITH_GUI)
 
-int main(int argc, char *argv[])
+int __UPX_CDECL main(int argc, char *argv[])
 {
     int i;
     static char default_argv0[] = "upx";

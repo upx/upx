@@ -31,6 +31,17 @@
 #include "stdcxx.h"
 
 
+#if 0
+#undef _Nomemory
+namespace std {
+void __cdecl _Nomemory() {
+    static const bad_alloc ba;
+    throw ba;
+}
+}
+#endif
+
+
 #ifdef WANT_STL
 
 #if defined(__GNUC__)
