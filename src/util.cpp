@@ -212,7 +212,7 @@ char *fn_basename(const char *name)
 }
 
 
-bool fn_has_ext(const char *name, const char *ext)
+bool fn_has_ext(const char *name, const char *ext, bool ignore_case)
 {
     const char *n, *e;
 
@@ -220,7 +220,10 @@ bool fn_has_ext(const char *name, const char *ext)
     for (n = e = name; *n; n++)
         if (*n == '.')
             e = n;
-    return (fn_strcmp(ext,e+1) == 0);
+    if (ignore_case)
+        return (strcasecmp(ext,e+1) == 0);
+    else
+        return (fn_strcmp(ext,e+1) == 0);
 }
 
 

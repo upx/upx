@@ -40,7 +40,7 @@ int upx_vsnprintf(char *str, long n, const char *format, va_list ap);
 char *fn_basename(const char *name);
 int fn_strcmp(const char *n1, const char *n2);
 char *fn_strlwr(char *n);
-bool fn_has_ext(const char *name, const char *ext);
+bool fn_has_ext(const char *name, const char *ext, bool ignore_case=true);
 
 bool file_exists(const char *name);
 bool maketempname(char *ofilename, const char *ifilename,
