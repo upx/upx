@@ -26,7 +26,7 @@ STUBS = \
 	l_com.h \
 	l_djgpp2.h stubify.h \
 	l_exe.h \
-	l_psx.h \
+	l_ps1.h \
 	l_sys.h \
 	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h l_t_n2e.h l_t_n2es.h \
 	l_tmt.h \
@@ -108,8 +108,11 @@ ASM_M68K = sh $(srcdir)/scripts/asl_m68k.sh
 endif
 
 # MIPS R3000
+CPP_MR3K = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
-ASM_MR3K = asm5900 --nologo -q -I$(UCL_UPX) -I$(srcdir)
+ASM_MR3K = asm5900 --nologo -q
+#APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
+#ASM_MR3K = asm5900 --nologo -q -I$(UCL_UPX) -I$(srcdir)
 
 
 # /***********************************************************************
@@ -272,6 +275,17 @@ l_t_x2ds.h: l_tos2.s
 
 
 # /***********************************************************************
+# // ps1/exe
+# ************************************************************************/
+
+l_ps1.h: l_ps1.asm
+	$(CPP_MR3K) -o $T.asx $<
+	$(APP_MR3K) $T.asx $T.asy
+	$(ASM_MR3K) $T.asy -o$T.bin -l$T.lst
+	$(BIN2H) $T.bin nrv_loader $@
+
+
+# /***********************************************************************
 # // linux rules (exec, elf, sh, sep)
 # ************************************************************************/
 
@@ -342,16 +356,6 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	objcopy -S -R .comment -R .note $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
-
-
-# /***********************************************************************
-# // psx/exe
-# ************************************************************************/
-
-l_psx.h: l_psx.asm
-	$(APP_MR3K) $< $T.asx
-	$(ASM_MR3K) $T.asx -o$T.bin -l$T.lst
-	$(BIN2H) $T.bin nrv_loader $@
 
 
 # /***********************************************************************

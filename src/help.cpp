@@ -192,7 +192,7 @@ void show_help(int x)
 #endif
 #if 1
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for psx/exe:\n");
+        con_fprintf(f,"Options for ps1/exe:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --all-methods       try all available compression methods\n"
@@ -257,7 +257,7 @@ void show_help(int x)
                 "linux/386, "
                 "linux/elf386, "
                 "linux/sh386, "
-                "psx/exe, "
+                "ps1/exe, "
                 "rtm32/pe, "
                 "tmt/adam,\n    "
                 "vmlinuz/386, "
@@ -346,6 +346,7 @@ void show_version(int x)
     fprintf(f,"Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer\n");
     fprintf(f,"Copyright (C) 1996-2002 Laszlo Molnar\n");
     fprintf(f,"Copyright (C) 2000-2002 John F. Reiser\n");
+    fprintf(f,"Copyright (C) 2002      Jens Medoch\n");
     fprintf(f,"UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
 }
 

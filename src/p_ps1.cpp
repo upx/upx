@@ -1,9 +1,10 @@
-/* p_psx.cpp --
+/* p_ps1.cpp --
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 2002      Jens Medoch
 
    UPX and the UCL library are free software; you can redistribute them
    and/or modify them under the terms of the GNU General Public License as
@@ -20,8 +21,11 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   Jens Medoch
+   <jssg@users.sourceforge.net>
  */
 
 
@@ -29,10 +33,10 @@
 #include "file.h"
 #include "filter.h"
 #include "packer.h"
-#include "p_psx.h"
+#include "p_ps1.h"
 
 static const
-#include "stub/l_psx.h"
+#include "stub/l_ps1.h"
 
 
 #define MIPS_HI(a)      (((a) >> 16) /*+(((a)&0x8000)>>15)*/)
@@ -44,35 +48,40 @@ static const
 #define PS_MAX_SIZE     0x1e8000
 
 #define IH_BKUP         (10*sizeof(LE32))
+#define EIGHTBIT
 
 
 /*************************************************************************
 //
 **************************************************************************/
 
-PackPsx::PackPsx(InputFile *f) :
+PackPs1::PackPs1(InputFile *f) :
     super(f)
 {
-    COMPILE_TIME_ASSERT(sizeof(psx_exe_t) == 188);
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(IH_BKUP == 40);
 
-    cfile_size = 0;
-    scan_count = 0;
+    fdata_size = cfile_size = 0;
+    sa_cnt = 0;
 }
 
-const int *PackPsx::getCompressionMethods(int method, int level) const
+const int *PackPs1::getCompressionMethods(int method, int level) const
 {
+#ifdef EIGHTBIT
+    return Packer::getDefaultCompressionMethods_8(method, level);
+#else
     return Packer::getDefaultCompressionMethods_LE32(method, level);
+#endif
 }
 
-const int *PackPsx::getFilters() const
+const int *PackPs1::getFilters() const
 {
     return NULL;
 }
 
 
 // functions for marker handling
-int PackPsx::patch_mips_le16(void *b, int blen, const void *old, unsigned new_)
+int PackPs1::patch_mips_le16(void *b, int blen, const void *old, unsigned new_)
 {
     unsigned char w[2];
 
@@ -80,7 +89,7 @@ int PackPsx::patch_mips_le16(void *b, int blen, const void *old, unsigned new_)
     return patch_le16(b, blen, &w, new_);
 }
 
-int PackPsx::patch_mips_le32(void *b, int blen, const void *old, unsigned new_)
+int PackPs1::patch_mips_le32(void *b, int blen, const void *old, unsigned new_)
 {
     unsigned char w[4];
 
@@ -88,7 +97,7 @@ int PackPsx::patch_mips_le32(void *b, int blen, const void *old, unsigned new_)
     return patch_le32(b, blen, &w, new_);
 }
 
-int PackPsx::patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_)
+int PackPs1::patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_)
 {
     patch_mips_le16(b, blen, old_lo, MIPS_LO(new_));
     patch_mips_le16(b, blen, old_hi, MIPS_HI(new_));
@@ -100,7 +109,7 @@ int PackPsx::patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_
 //
 **************************************************************************/
 
-bool PackPsx::canPack()
+bool PackPs1::canPack()
 {
     unsigned char buf[256];
     fdata_size = file_size-PS_HDR_SIZE;
@@ -130,27 +139,34 @@ bool PackPsx::canPack()
 //
 **************************************************************************/
 
-int PackPsx::buildLoader(const Filter *)
+int PackPs1::buildLoader(const Filter *)
 {
     initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("PSXMAIN0", "PSXDECO0", NULL);
-    if (ph.method == M_NRV2B_LE32)
+    addLoader("PSXPREP0","PSXSTSZ0","PSXMAIN0", 
+              ih.tx_ptr&0xffff ?  "PSXJSTA0" : "PSXJSTH0", 
+              "PSXDECO0",
+              NULL);
+#ifdef EIGHTBIT
+    if (ph.method == M_NRV2B_8)
+        addLoader("PSXN2BD0", NULL);
+    else if (ph.method == M_NRV2D_8)
+        addLoader("PSXN2DD0", NULL);
+    else if (ph.method == M_NRV2E_8)
+        addLoader("PSXN2ED0", NULL);
+#else
+   if (ph.method == M_NRV2B_LE32)
         addLoader("PSXN2BD0", NULL);
     else if (ph.method == M_NRV2D_LE32)
         addLoader("PSXN2DD0", NULL);
+    else if (ph.method == M_NRV2E_LE32)
+        addLoader("PSXN2ED0", NULL);
+#endif
     else
         throwInternalError("unknown compression method");
-    if (scan_count)
-    {
-        if (scan_count > 0xfffc)
-            addLoader("MSETBIG0", NULL); // set big memset
-        else
-            addLoader("MSETSML0", NULL); // set small memset
-        if ((ih.tx_len & 3))
-            addLoader("MSETUAL0", NULL); // unaligned memset
-        else
-            addLoader("MSETALG0", NULL); // aligned memset
-    }
+    if (sa_cnt)
+        addLoader((sa_cnt > 0xfffc) ? "MSETBIG0" : "MSETSML0",    // set small/big memset
+                  (ih.tx_len & 3)   ? "MSETUAL0" : "MSETALG0",    // un/aligned memset
+                  NULL);
     addLoader("PSXEXIT0", "IDENTSTR", "PSXPHDR0", NULL);
     return getLoaderSize();
 }
@@ -160,7 +176,7 @@ int PackPsx::buildLoader(const Filter *)
 //
 **************************************************************************/
 
-void PackPsx::pack(OutputFile *fo)
+void PackPs1::pack(OutputFile *fo)
 {
 
     ibuf.alloc(fdata_size);
@@ -173,21 +189,21 @@ void PackPsx::pack(OutputFile *fo)
 
     // this scans the end of file for 2048 bytes sector alignment
     // this should be padded with zeros
-    while (!(*p_scan--)) { if ((scan_count += 1) > (0xfffc<<3)) break; }
-    if (scan_count > 0xfffc)
-        scan_count = ALIGN_DOWN(scan_count,8);
+    while (!(*p_scan--)) { if ((sa_cnt += 1) > (0xfffc<<3)) break; }
+    if (sa_cnt > 0xfffc)
+        sa_cnt = ALIGN_DOWN(sa_cnt,8);
     else
-        scan_count = ALIGN_DOWN(scan_count,4);
+        sa_cnt = ALIGN_DOWN(sa_cnt,4);
 
     // prepare packheader
-    ph.u_len = (fdata_size - scan_count);
+    ph.u_len = (fdata_size - sa_cnt);
     ph.filter = 0;
 
     Filter ft(ph.level);
     // compress (max_match = 65535)
     compressWithFilters(&ft, 512, 0, NULL, 0, 65535, 0, 0);
 
-    if (ph.overlap_overhead <= scan_count)
+    if (ph.overlap_overhead <= sa_cnt)
         overlap = 0;
     else
     {
@@ -195,7 +211,7 @@ void PackPsx::pack(OutputFile *fo)
             throwCantPack("packed data overlap (try --force)");
         else
         {
-            overlap = ALIGN_UP((ph.overlap_overhead-scan_count),4);
+            overlap = ALIGN_UP((ph.overlap_overhead-sa_cnt),4);
             opt->info_mode += !opt->info_mode ? 1 : 0;
             infoWarning("%s will load to a %d bytes higher offset",fi->getName(),overlap);
         }
@@ -209,6 +225,8 @@ void PackPsx::pack(OutputFile *fo)
     const int h_len = lsize-getLoaderSectionStart("IDENTSTR");
     const int e_len = lsize-h_len;
     const int d_len = e_len-getLoaderSectionStart("PSXDECO0");
+    int s_len;
+    getLoaderSection("PSXSTSZ0",&s_len);   // get size of pushed/poped regs
 
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
@@ -224,21 +242,23 @@ void PackPsx::pack(OutputFile *fo)
     unsigned comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
 
     pad = 0;
-    if (!opt->psx.no_align)
+    if (!opt->ps1.no_align)
         // align the packed file to mode 2 data sector size (2048)
         pad = CHK_ALIGNED(ph.c_len+pad_code+e_len, 2048);
 
     const int entry = comp_data_start - e_len - pad_code;
     patchPackHeader(loader,lsize);
     patch_mips_le32(loader,e_len,"JPEP",MIPS_JP(ih.epc));
-    if (scan_count)
+    if (sa_cnt)
         patch_mips_le16(loader,e_len,"SC",
-                        MIPS_LO(scan_count > 0xfffc ? scan_count >> 3 : scan_count));
-    patch_hi_lo(loader,e_len,"OH","OL",decomp_data_start);
-//    patch_hi_lo(loader,e_len,"LH","LL",ph.u_len+pad_code+pad);
+                        MIPS_LO(sa_cnt > 0xfffc ? sa_cnt >> 3 : sa_cnt));
+    if (ih.tx_ptr & 0xffff)
+        patch_hi_lo(loader,e_len,"OH","OL",decomp_data_start);
+    else
+        patch_mips_le16(loader,e_len,"OH",decomp_data_start>>16);
     patch_hi_lo(loader,e_len,"CH","CL",comp_data_start);
     patch_hi_lo(loader,e_len,"DH","DL",entry+(e_len-d_len));
-    patch_mips_le16(loader,e_len,"LS",d_len);
+    patch_mips_le16(loader,e_len,"LS",d_len+s_len);
 
     // set the file load address
     oh.tx_ptr = entry-pad;
@@ -277,9 +297,12 @@ void PackPsx::pack(OutputFile *fo)
 #if 0
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) e_len);
-    printf("%-13s: code entry   : %8ld bytes\n", getName(), (long) oh.epc);
-    printf("%-13s: load address : %8ld bytes\n", getName(), (long) oh.tx_ptr);
+
+    printf("%-13s: code entry   :%0X8 bytes\n", getName(), (unsigned int) oh.epc);
+    printf("%-13s: load address :%0X8 bytes\n", getName(), (unsigned int) oh.tx_ptr);
     printf("%-13s: section size : %8ld bytes\n", getName(), (long) oh.tx_len);
+    printf("%-13s: eof in mem IF:%0X8 bytes\n", getName(), (unsigned int) ih.tx_ptr+ih.tx_len);
+    printf("%-13s: eof in mem OF:%0X8 bytes\n", getName(), (unsigned int) oh.tx_ptr+oh.tx_len);
 #endif
 }
 
@@ -288,7 +311,7 @@ void PackPsx::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-int PackPsx::canUnpack()
+int PackPs1::canUnpack()
 {
     if (!readPackHeader(0x400))
         return false;
@@ -302,7 +325,7 @@ int PackPsx::canUnpack()
 //
 **************************************************************************/
 
-void PackPsx::unpack(OutputFile *fo)
+void PackPs1::unpack(OutputFile *fo)
 {
     fdata_size = file_size-PS_HDR_SIZE;
     ibuf.alloc(file_size);

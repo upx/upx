@@ -49,7 +49,7 @@
 #include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_vmlinz.h"
-#include "p_psx.h"
+#include "p_ps1.h"
 
 
 /*************************************************************************
@@ -214,7 +214,7 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // psone
     //
-    if ((p = func(new PackPsx(f),f)) != NULL)
+    if ((p = func(new PackPs1(f),f)) != NULL)
         return p;
 
     //

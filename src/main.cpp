@@ -696,7 +696,7 @@ static int do_option(int optc, const char *arg)
         opt->unix.ptinterp = true;
         break;
     case 670:
-        opt->psx.no_align = true;
+        opt->ps1.no_align = true;
         break;
 
     case '\0':
@@ -813,7 +813,7 @@ static const struct mfx_option longopts[] =
     {"compress-icons",      2, 0, 631},
     {"compress-resources",  2, 0, 632},
     {"strip-relocs",        2, 0, 633},
-    // psx/exe
+    // ps1/exe
     {"no-align",         0x10, 0, 670},
 
     { NULL, 0, NULL, 0 }

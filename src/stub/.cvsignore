@@ -15,7 +15,7 @@ l_exe.h
 l_lx_elf86.h
 l_lx_exec86.h
 l_lx_sh86.h
-l_psx.h
+l_ps1.h
 l_sys.h
 l_t_n2b.h
 l_t_n2bs.h

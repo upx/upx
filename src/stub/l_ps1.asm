@@ -1,9 +1,11 @@
-;  l_psx.asm -- psx/exe program entry & decompressor
+;  l_ps1.asm -- ps1/exe program entry & decompressor
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
-;  Copyright (C) 1996-2002 Laszlo Molnar
+;  Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2001 Laszlo Molnar
+;  Copyright (C) 2002      Jens Medoch
+;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them
 ;  and/or modify them under the terms of the GNU General Public License as
@@ -23,9 +25,25 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
-;  psOne r3k v1.2 by ssg
+;  Jens Medoch
+;  <jssg@users.sourceforge.net>
+;
 
-INCLUDE "mr3k/macros.asm"
+
+#include "mr3k/macros.ash"
+
+do_regs         MACRO   _w
+                _w      at,0(sp)
+                _w      a0,4(sp)
+                _w      a1,8(sp)
+                _w      a2,12(sp)
+                _w      a3,16(sp)
+                _w      v0,20(sp)
+                _w      v1,24(sp)
+                _w      ra,28(sp)
+do_regs         ENDM
+
+DEFINE  REG_SZ = (8*4)
 
                 ORG      0
 
@@ -33,56 +51,67 @@ INCLUDE "mr3k/macros.asm"
 ; ============= ENTRY POINT
 ; =============
 
-;       __PSXMAIN0__
 entry:
+;       __PSXPREP0__                    ; needed by packer to calc the LS value
                 addiu   at,zero,'LS'    ; size of decomp. routine
                 sub     sp,at           ; adjust the stack with this size
-                addi    sp,-(8*4)
-                sw      at,0(sp)
-                sw      a0,4(sp)
-                sw      a1,8(sp)
-                sw      a2,12(sp)
-                sw      a3,16(sp)
-                sw      v0,20(sp)
-                sw      v1,24(sp)
-                sw      ra,28(sp)
-                move    a0,at
-                lui     a2,'DH'         ; load DECOMPRESSION HI offset
-                ori     a2,'DL'         ; and the LO part
-                addiu   a3,sp,(8*4)
+;       __PSXPREPZ__                    ; needed by packer to calc the LS value
+;       __PSXSTSZ0__                    ; needed by packer to calc the LS value
+                do_regs sw              ; push used regs
+;       __PSXSTSZZ__
+;       __PSXMAIN0__
+                subiu   a0,at,REG_SZ    ; a0 = counter copyloop
+                addiu   a3,sp,REG_SZ    ; get offset for decomp. routine
                 move    a1,a3
+                lui     a2,'DH'         ; load decomp routine HI offset
+                ori     a2,'DL'         ; and the LO offset
 copyloop:
+                addi    a0,-4
                 lw      at,0(a2)        ; memcpy *a2 -> at -> *a1
                 addiu   a2,4
-                addi    a0,-4
                 sw      at,0(a1)
                 bnez    a0,copyloop
                 addiu   a1,4
 
                 lui     a0,'CH'        ; load COMPDATA HI offset
                 ori     a0,'CL'        ; and the LO part
-;               lui     a1,'LH'        ; length of compressed data
-;               ori     a1,'LL'        ; HI and LO, but disabled
+;               lui     a1,'LH'        ; compressed data length
+;               ori     a1,'LL'        ; HI and LO !disabled
+;       __PSXMAINZ__
+;       __PSXJSTA0__
                 lui     a2,'OH'        ; load DECOMPDATA HI offset
                 jr      a3
                 ori     a2,'OL'        ; load DECOMPDATA LO offset
-;       __PSXMAINZ__
+;       __PSXJSTAZ__
+;       __PSXJSTH0__
+                jr      a3             ; 
+                lui     a2,'OH'        ; same for HI only !(offset&0xffff) 
+;       __PSXJSTHZ__
 
 ; =============
 ; ============= DECOMPRESSION
 ; =============
+#if 1
+#   define NRV_BB 8
+#else
+#   define NRV_BB 32
+#endif
+
+#if 1
+#   define SMALL
+#endif
 
 ;       __PSXDECO0__
 ;       __PSXDECOZ__
 ;       __PSXN2BD0__
-                INCLUDE "mr3k/n2b_d32.asm"
+#include "mr3k/n2b_d.ash"
 ;       __PSXN2BDZ__
 ;       __PSXN2DD0__
-                INCLUDE "mr3k/n2d_d32.asm"
+#include "mr3k/n2d_d.ash"
 ;       __PSXN2DDZ__
-;       ;_PSXN2ED0__
-;               ;;;;;INCLUDE "mr3k/n2e_d32.asm"
-;       ;_PSXN2EDZ__
+;       __PSXN2ED0__
+#include "mr3k/n2e_d.ash"
+;       __PSXN2EDZ__
 
 
 ;       __MSETBIG0__
@@ -108,15 +137,7 @@ memset_unaligned:
                 addiu   a2,4
 ;       __MSETUALZ__
 ;       __PSXEXIT0__
-                lw      a0,4(sp)
-                lw      a1,8(sp)
-                lw      a2,12(sp)
-                lw      a3,16(sp)
-                lw      v0,20(sp)
-                lw      v1,24(sp)
-                lw      ra,28(sp)
-                lw      at,0(sp)
-                addiu   sp,(8*4)
+                do_regs lw              ; pop used regs
                 DW      'JPEP'          ; marker for the entry jump
                 addu    sp,at
 ;       __PSXEXITZ__

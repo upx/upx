@@ -107,7 +107,7 @@ struct options_t {
     } djgpp2;
     struct {
         bool no_align;
-    } psx;
+    } ps1;
     struct {
         bool split_segments;
     } tos;

@@ -13,7 +13,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 =head1 ABSTRACT
 
               The Ultimate Packer for eXecutables
-        Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001
+      Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002
      Markus F.X.J. Oberhumer, Laszlo Molnar & John F. Reiser
          http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
                       http://upx.tsx.org
@@ -76,7 +76,7 @@ B<UPX> is a versatile executable packer with the following features:
       * linux/386
       * linux/elf386
       * linux/sh386
-      * ps/exe
+      * ps1/exe
       * rtm32/pe
       * tmt/adam
       * vmlinuz/386     [bootable Linux kernel]
@@ -676,7 +676,7 @@ Extra options available for this executable format:
 
 
 
-=head2 NOTES FOR PS/EXE
+=head2 NOTES FOR PS1/EXE
 
 This is the executable format used by the Sony PlayStation (PSone),
 a Mips R3000 based gaming console which is popular since the late '90s.
@@ -891,6 +891,8 @@ Please report all bugs immediately to the authors.
 
  John F. Reiser <jreiser@BitWagon.com>
 
+ Jens Medoch <jssg@users.sourceforge.net>
+
 
 
 =head1 COPYRIGHT
@@ -900,6 +902,8 @@ Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
 Copyright (C) 1996-2001 Laszlo Molnar
 
 Copyright (C) 2000-2001 John F. Reiser
+
+Copyright (C) 2002      Jens Medoch
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

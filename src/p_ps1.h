@@ -1,9 +1,10 @@
-/* p_psx.cpp --
+/* p_ps1.h --
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 2002      Jens Medoch
 
    UPX and the UCL library are free software; you can redistribute them
    and/or modify them under the terms of the GNU General Public License as
@@ -20,27 +21,30 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   Jens Medoch
+   <jssg@users.sourceforge.net>
  */
 
 
-#ifndef __UPX_P_PSX_H
-#define __UPX_P_PSX_H
+#ifndef __UPX_P_PS1_H
+#define __UPX_P_PS1_H
 
 
 /*************************************************************************
-// psx/exe
+// ps1/exe
 **************************************************************************/
 
-class PackPsx : public Packer
+class PackPs1 : public Packer
 {
     typedef Packer super;
 public:
-    PackPsx(InputFile *f);
+    PackPs1(InputFile *f);
     virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_PSX_EXE; }
-    virtual const char *getName() const { return "ps/exe"; }
+    virtual int getFormat() const { return UPX_F_PS_EXE; }
+    virtual const char *getName() const { return "ps1/exe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
@@ -56,7 +60,7 @@ protected:
     virtual int patch_mips_le32(void *b, int blen, const void *old, unsigned new_);
     virtual int patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_);
 
-    struct psx_exe_t
+    struct ps1_exe_t
     {
         char id[8];
         LE32 text;
@@ -86,10 +90,10 @@ protected:
     }
     __attribute_packed;
 
-    psx_exe_t ih, oh;
+    ps1_exe_t ih, oh;
 
     upx_uint overlap;
-    upx_uint scan_count;
+    upx_uint sa_cnt;
 
     // filesize-PS_HDR_SIZE
     upx_uint fdata_size;
