@@ -53,11 +53,37 @@ unsigned get_ratio(unsigned long packedsize, unsigned long size,
 char *center_string(const char *name, size_t s);
 
 
-upx_bytep find(const void * b, int blen, const void * what, int wlen);
-upx_bytep find_be16(const void * b, int blen, unsigned what);
-upx_bytep find_be32(const void * b, int blen, unsigned what);
-upx_bytep find_le16(const void * b, int blen, unsigned what);
-upx_bytep find_le32(const void * b, int blen, unsigned what);
+unsigned char *find(const void *b, int blen, const void *what, int wlen);
+unsigned char *find_be16(const void *b, int blen, unsigned what);
+unsigned char *find_be32(const void *b, int blen, unsigned what);
+unsigned char *find_le16(const void *b, int blen, unsigned what);
+unsigned char *find_le32(const void *b, int blen, unsigned what);
+
+
+inline ptrdiff_t ptr_diff(const void *p1, const void *p2)
+{
+    return (const char*) p1 - (const char*) p2;
+}
+
+
+/*************************************************************************
+// some unsigned char string support functions
+**************************************************************************/
+
+inline char *strcpy(unsigned char *s1,const unsigned char *s2)
+{
+    return strcpy((char*) s1,(const char*) s2);
+}
+
+inline int strcasecmp(const unsigned char *s1,const unsigned char *s2)
+{
+    return strcasecmp((const char*) s1,(const char*) s2);
+}
+
+inline size_t strlen(const unsigned char *s)
+{
+    return strlen((const char*) s);
+}
 
 
 /*************************************************************************

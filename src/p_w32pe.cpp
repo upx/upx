@@ -172,26 +172,6 @@ bool PackW32Pe::readFileHeader()
     return true;
 }
 
-// FIXME: put these into util.h
-
-// s/upx_byte/char/g would possibly be better
-static inline char* strcpy(unsigned char *s1,const unsigned char *s2)
-{
-    return strcpy((char*) s1,(const char*) s2);
-}
-static inline int strcasecmp(const unsigned char *s1,const unsigned char *s2)
-{
-    return strcasecmp((const char*) s1,(const char*) s2);
-}
-static inline unsigned strlen(const unsigned char *s)
-{
-    return strlen((const char*) s);
-}
-static inline int ptr_diff(const void *p1,const void *p2)
-{
-    return (const char*) p1 - (const char*) p2;
-}
-
 
 /*************************************************************************
 // interval handling
