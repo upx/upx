@@ -482,12 +482,16 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //      @:
 //
 //$(obj)/upx-piggy.o: vmlinux FORCE
-//      rm -f  $(obj)/upx-piggy.o
-//      upx -o $(obj)/upx-piggy.o $<
+//      rm -f $@
+//      upx --best -o $@ $<
 //-----
 //
 //----- arch/i386/boot/compressed/upx-head.S
 //#include <asm/segment.h>
+//#ifndef __BOOT_CS  /* Linux 2.4.x */
+//#define __BOOT_CS __KERNEL_CS
+//#define __BOOT_DS __KERNEL_DS
+//#endif
 //
 //      .text
 //startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
@@ -518,11 +522,65 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
+// Approximate translation for Linux 2.4.x:
+// - - -
+// arch/i386/Makefile: LD_FLAGS=-e startup_32
+//----- arch/i386/boot/compressed/Makefile
+//# linux/arch/i386/boot/compressed/Makefile
+//#
+//# create a compressed vmlinux image from the original vmlinux
+//#
+//
+//HEAD = upx-head.o
+//SYSTEM = $(TOPDIR)/vmlinux
+//
+//OBJECTS = $(HEAD)
+//
+//ZLDFLAGS = -e startup_32
+//
+//#
+//# ZIMAGE_OFFSET is the load offset of the compression loader
+//# BZIMAGE_OFFSET is the load offset of the high loaded compression loader
+//#
+//ZIMAGE_OFFSET = 0x1000
+//BZIMAGE_OFFSET = 0x100000
+//
+//ZLINKFLAGS = -Ttext $(ZIMAGE_OFFSET) $(ZLDFLAGS)
+//BZLINKFLAGS = -Ttext $(BZIMAGE_OFFSET) $(ZLDFLAGS)
+//
+//all: vmlinux
+//
+//vmlinux: upx-piggy.o $(OBJECTS)
+//	$(LD) $(ZLINKFLAGS) -o vmlinux $(OBJECTS) upx-piggy.o
+//
+//bvmlinux: upx-piggy.o $(OBJECTS)
+//	$(LD) $(BZLINKFLAGS) -o bvmlinux $(OBJECTS) upx-piggy.o
+//
+//upx-piggy.o:	$(SYSTEM)
+//	$(RM) -f $@
+//	upx --best -o $@ $<
+//
+//clean:
+//	rm -f vmlinux bvmlinux _tmp_*
+//-----
+
 //
 // Example test jig:
-//  gcc -o test-piggy -nostartfiles -nostdlib test-piggy.o piggy.o
-//  gdb test-piggy
+//  $ gcc -o test-piggy -nostartfiles -nostdlib test-piggy.o piggy.o
+//  $ gdb test-piggy
 //  (gdb) run >dumped
+//  (gdb)  /* Execute [single step, etc.; the decompressor+unfilter moves!]
+//          * until reaching the 'lret' at the end of unfilter.
+//          */
+//  (gdb) set $pc= &dump
+//  (gdb) stepi
+//  (gdb) set $edx=<actual_uncompressed_length>
+//  (gdb) continue
+//  (gdb) q
+//  $ # Compare file 'dumped' with the portion of vmlinux that made piggy.o.
+//  $ dd if=vmlinux bs=<leader_size> skip=1  |  cmp - dumped
+//  cmp: EOF on dumped
+//  $ 
 //----- test-piggy.S
 //#include <asm/mman.h>
 //#include <asm/unistd.h>
@@ -550,9 +608,10 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //      pushl $0
 //      pushl $ MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
 //      pushl $ PROT_EXEC | PROT_WRITE | PROT_READ
-//      pushl $0x600000  # 6MB
-//      pushl $0x100000  # 1MB
+//      pushl $0x600000  # 6MB length
+//      pushl $0x100000  # 1MB address
 //      call mmap
+//      leal -0x9000(%esp),%esi  # expect "lea 0x9000(%esi),%esp" later
 //      push %cs
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
