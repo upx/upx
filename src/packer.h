@@ -68,16 +68,15 @@ public:
     int level;                  // compresison level 1..10
     unsigned u_len;
     unsigned c_len;
-    unsigned b_len;  // total length of b_info blocks
     unsigned u_adler;
     unsigned c_adler;
     off_t u_file_size;
     int filter;
     int filter_cto;
+    int n_mru;                  // FIXME: rename to filter_misc
     int header_checksum;
-    int n_mru;
 
-    //
+    // support fields for verifying decompression
     unsigned saved_u_adler;
     unsigned saved_c_adler;
 
@@ -96,6 +95,9 @@ public:
 
     // info fields set by Packer::compressWithFilters()
     unsigned overlap_overhead;
+
+    // FIXME: john, what is this ???
+    unsigned b_len;  // total length of b_info blocks
 };
 
 
