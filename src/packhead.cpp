@@ -99,7 +99,7 @@ int PackHeader::getPackHeaderSize() const
 
 
 /*************************************************************************
-//
+// see stub/header.ash
 **************************************************************************/
 
 void PackHeader::putPackHeader(upx_bytep p)
@@ -108,32 +108,34 @@ void PackHeader::putPackHeader(upx_bytep p)
     throwBadLoader();
 #else
     assert(get_le32(p) == UPX_MAGIC_LE32);
-    int size = 0;
+    if (get_le32(p+4) != UPX_MAGIC2_LE32)
+    {
+        printf("%x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
+        throwBadLoader();
+    }
 
-    p[4] = (unsigned char) version;
-    p[5] = (unsigned char) format;
-    p[6] = (unsigned char) method;
-    p[7] = (unsigned char) level;
+    int size = 0;
+    int old_chksum = 0;
 
     // the new variable length header
     if (format < 128)
     {
-        set_le32(p+8,u_adler);
-        set_le32(p+12,c_adler);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS)
         {
+            size = 22;
+            old_chksum = get_packheader_checksum(p, size - 1);
             set_le16(p+16,u_len);
             set_le16(p+18,c_len);
             p[20] = (unsigned char) filter;
-            size = 22;
         }
         else if (format == UPX_F_DOS_EXE)
         {
+            size = 27;
+            old_chksum = get_packheader_checksum(p, size - 1);
             set_le24(p+16,u_len);
             set_le24(p+19,c_len);
             set_le24(p+22,u_file_size);
             p[25] = (unsigned char) filter;
-            size = 27;
         }
         else if (format == UPX_F_DOS_EXEH)
         {
@@ -141,17 +143,22 @@ void PackHeader::putPackHeader(upx_bytep p)
         }
         else
         {
+            size = 32;
+            old_chksum = get_packheader_checksum(p, size - 1);
             set_le32(p+16,u_len);
             set_le32(p+20,c_len);
             set_le32(p+24,u_file_size);
             p[28] = (unsigned char) filter;
             p[29] = (unsigned char) filter_cto;
             p[30] = 0;
-            size = 32;
         }
+        set_le32(p+8,u_adler);
+        set_le32(p+12,c_adler);
     }
     else
     {
+        size = 32;
+        old_chksum = get_packheader_checksum(p, size - 1);
         set_be32(p+8,u_len);
         set_be32(p+12,c_len);
         set_be32(p+16,u_adler);
@@ -160,11 +167,25 @@ void PackHeader::putPackHeader(upx_bytep p)
         p[28] = (unsigned char) filter;
         p[29] = (unsigned char) filter_cto;
         p[30] = 0;
-        size = 32;
     }
 
-    // store header_checksum
+    p[4] = (unsigned char) version;
+    p[5] = (unsigned char) format;
+    p[6] = (unsigned char) method;
+    p[7] = (unsigned char) level;
+
+    // header_checksum
     assert(size == getPackHeaderSize());
+    // check old header_checksum
+    if (p[size - 1] != 0)
+    {
+        if (p[size - 1] != old_chksum)
+        {
+            printf("old_checksum: %d %d\n", p[size - 1], old_chksum);
+            throwBadLoader();
+        }
+    }
+    // store new header_checksum
     p[size - 1] = get_packheader_checksum(p, size - 1);
 #endif /* UNUPX */
 }

@@ -288,8 +288,11 @@ clear_bss_end:
 
                 align4
 
-                dc.b    'UPX!'          ; magic
-                dc.l    0,0,0,0,0,0,0   ; 28 bytes - #include "header.ash"
+                ; 32 bytes - #include "header.ash"
+                dc.b    85,80,88,33         ; UPX_MAGIC_LE32
+                dc.b    161,216,208,213     ; UPX_MAGIC2_LE32
+                dc.l    0,0,0,0,0           ; 20 bytes
+                dc.b    0,0,0,45
 
 
         ; end of text segment - size is a multiple of 4

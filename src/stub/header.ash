@@ -28,11 +28,16 @@
 
 ; ------------- HEADER -------------    ;     __UPX1HEAD__
 
-                db      'UPX!'          ;  0  magic
+                db      85,80,88,33     ;  0  UPX_MAGIC_LE32
+ %if 0
                 db      0               ;  4  version
-                db      0               ;  5  type (com,sys,...)
+                db      0               ;  5  format
                 db      0               ;  6  compression method
                 db      0               ;  7  compression level
+ %else
+        ; another magic for PackHeader::putPackHeader
+                db      161,216,208,213 ;     UPX_MAGIC2_LE32
+ %endif
                 dd      0               ;  8  uncompressed adler32
                 dd      0               ; 12  compressed adler32
 
@@ -52,9 +57,9 @@
                 dd      0               ; 20  compressed len
                 dd      0               ; 24  original file size
                 db      0               ; 28  filter id
-                db      0               ; 29  cto (for filters 0x21..0x29)
+                db      0               ; 29  filter cto
                 db      0               ;  unsused
-                db      0               ; 31  header checksum
+                db      45              ; 31  header checksum
  %endif
 
 
