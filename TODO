@@ -7,6 +7,9 @@ UPX TODO list. Last updated 2002-10-14.
 - resync stub with UPX 1.2 branch
   [mostly done]
 
+- resync docs with UPX 1.2 branch
+  [mostly done]
+
 - p_ps1.cpp (ps1/exe) needs some work
   [mostly done]
 
