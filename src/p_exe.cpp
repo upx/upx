@@ -171,7 +171,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
     crel += 4; // to be filled in later
 
     unsigned ones = 0;
-    unsigned es = 0,di,t;
+    unsigned es = 0, di, t;
     i = 0;
     do
     {
@@ -337,7 +337,7 @@ void PackExe::pack(OutputFile *fo)
 
     unsigned destpara = (ph.u_len+overlapoh-packedsize+31)/16;
 
-    oh.ss = packedsize/16+destpara;
+    oh.ss = packedsize/16 + destpara;
     if (ih.ss*16 + ih.sp < 0x100000 && ih.ss > oh.ss && ih.sp > 0x200)
         oh.ss = ih.ss;
     oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
