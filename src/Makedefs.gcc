@@ -28,8 +28,8 @@ CXXFLAGS  = $(CXXFLAGS_W) $(EXTRA_CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O) $(EXTR
 
 ##CFLAGS_WERROR = -Werror
 CFLAGS_WERROR =
-CFLAGS_W   = $(CFLAGS_WERROR) -Wall -W -Wbad-function-cast -Wcast-align -Wcast-qual -Winline -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wshadow         -Wwrite-strings
-CXXFLAGS_W = $(CFLAGS_WERROR) -Wall -W                     -Wcast-align -Wcast-qual -Winline                        -Wmissing-prototypes                  -Wpointer-arith -Wshadow -Wsynth -Wwrite-strings
+CFLAGS_W   = $(CFLAGS_WERROR) -Wall -W -Wbad-function-cast -Wcast-align -Wcast-qual -Winline -Wmissing-declarations -Wmissing-prototypes -Wnested-externs                      -Wpointer-arith -Wshadow                      -Wwrite-strings
+CXXFLAGS_W = $(CFLAGS_WERROR) -Wall -W                     -Wcast-align -Wcast-qual -Winline                        -Wmissing-prototypes                  -Woverloaded-virtual -Wpointer-arith -Wshadow -Wsign-promo -Wsynth -Wwrite-strings
 
 ##CFLAGS_M += -fno-builtin
 ##CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
@@ -47,8 +47,7 @@ CXXFLAGS_O = $(CFLAGS_O) -fconserve-space
 
 
 #
-# cxxflags for gcc 3.2
-#
+# cxxflags for g++ 3.2 or better
 
 ##CXXFLAGS_W += -Wdisabled-optimization -Wpacked
 
