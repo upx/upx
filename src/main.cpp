@@ -1028,36 +1028,16 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE16) == 2)
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4)
 
-#if defined(acc_alignof)
-    COMPILE_TIME_ASSERT(acc_alignof(BE16) == 1)
-    COMPILE_TIME_ASSERT(acc_alignof(BE32) == 1)
-    COMPILE_TIME_ASSERT(acc_alignof(LE16) == 1)
-    COMPILE_TIME_ASSERT(acc_alignof(LE32) == 1)
-#endif
-
-#if !defined(ACC_CC_WATCOMC)
-    struct foo1a_t { char c1; LE16 v[4]; } __attribute_packed;
-    struct align_assertion_1a_t { foo1a_t d[3]; } __attribute_packed;
-    struct foo1b_t { char c1; char v[4*2]; } __attribute_packed;
-    struct align_assertion_1b_t { foo1b_t d[3]; } __attribute_packed;
-    struct foo2a_t { char c1; LE32 v[4]; } __attribute_packed;
-    struct align_assertion_2a_t { foo2a_t d[3]; } __attribute_packed;
-    struct foo2b_t { char c1; char v[4*4]; } __attribute_packed;
-    struct align_assertion_2b_t { foo2b_t d[3]; } __attribute_packed;
-    //printf("%d\n", (int) sizeof(align_assertion_1a_t));
-    //printf("%d\n", (int) sizeof(align_assertion_1b_t));
-    //printf("%d\n", (int) sizeof(align_assertion_2a_t));
-    //printf("%d\n", (int) sizeof(align_assertion_2b_t));
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == sizeof(align_assertion_1b_t))
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t))
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9)
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17)
-#endif
+    COMPILE_TIME_ASSERT_ALIGNOF(BE16, char)
+    COMPILE_TIME_ASSERT_ALIGNOF(BE32, char)
+    COMPILE_TIME_ASSERT_ALIGNOF(LE16, char)
+    COMPILE_TIME_ASSERT_ALIGNOF(LE32, char)
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1)
     assert(strlen(UPX_VERSION_STRING4) == 4);
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
+#if 1
     const unsigned char dd[4] = { 0xff, 0xfe, 0xfd, 0xfc };
     assert(upx_adler32(dd, 4) == 0x09f003f7);
     assert(upx_adler32(dd, 4, 0) == 0x09ec03f6);
@@ -1079,6 +1059,7 @@ void upx_sanity_check(void)
     assert(find_le16(dd, sizeof(dd), 0xfeff) == 0);
     assert(find_be32(dd, sizeof(dd), 0xfffefdfc) == 0);
     assert(find_le32(dd, sizeof(dd), 0xfcfdfeff) == 0);
+#endif
 }
 
 

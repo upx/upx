@@ -138,7 +138,7 @@ inline void set_le24(void *bb, unsigned v)
 inline unsigned get_le32(const void *bb)
 {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    return * (const unsigned *) bb;
+    return * (const acc_uint32e_t *) bb;
 #else
     const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
@@ -153,7 +153,7 @@ inline unsigned get_le32(const void *bb)
 inline void set_le32(void *bb, unsigned v)
 {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-    (* (unsigned *) bb) = v;
+    (* (acc_uint32e_t *) bb) = v;
 #else
     unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);
@@ -222,7 +222,14 @@ class BE16
 
 public:
     BE16() { }
-    BE16& operator =  (const BE16 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
+    BE16& operator =  (const BE16 &v) {
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+        * (acc_uint32e_t *) d = * (const acc_uint32e_t *) v.d;
+#else
+        memcpy(d, v.d, sizeof(d));
+#endif
+        return *this;
+    }
 
     BE16& operator =  (unsigned v)    { set_be16(d, v); return *this; }
     BE16& operator += (unsigned v)    { set_be16(d, get_be16(d) + v); return *this; }
@@ -241,7 +248,14 @@ class BE32
 
 public:
     BE32() { }
-    BE32& operator =  (const BE32 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
+    BE32& operator =  (const BE32 &v) {
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
+        * (unsigned int *) d = * (const unsigned int *) v.d;
+#else
+        memcpy(d, v.d, sizeof(d));
+#endif
+        return *this;
+    }
 
     BE32& operator =  (unsigned v)    { set_be32(d, v); return *this; }
     BE32& operator += (unsigned v)    { set_be32(d, get_be32(d) + v); return *this; }
@@ -288,7 +302,7 @@ public:
     LE32() { }
     LE32& operator =  (const LE32 &v) {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
-        * (unsigned int *) d = * (const unsigned int *) v.d;
+        * (acc_uint32e_t *) d = * (const acc_uint32e_t *) v.d;
 #else
         memcpy(d, v.d, sizeof(d));
 #endif
@@ -372,15 +386,21 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
-#if (1 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_GNUC >= 0x030200)
+#if 1 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_GNUC >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
-   typedef unsigned int   LE32_unaligned __attribute__((__aligned__(1)));
+   typedef acc_uint32e_t  LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
-#if (0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && ACC_CC_MSC)
-   typedef unsigned short LE16_unaligned;
-   typedef unsigned int   LE32_unaligned;
+#if 0 && (ACC_ARCH_IA32) && (ACC_CC_INTELC)
+   typedef __declspec(align(1)) unsigned short LE16_unaligned;
+   typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
+#  define LE16      LE16_unaligned
+#  define LE32      LE32_unaligned
+#endif
+#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_IA32) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
+   typedef __declspec(align(1)) unsigned short LE16_unaligned;
+   typedef __declspec(align(1)) acc_uint32e_t  LE32_unaligned;
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data

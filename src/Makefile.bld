@@ -335,22 +335,14 @@ ifeq ($(target),win32-cygwin)
 include $(srcdir)/Makedefs.gcc
 ##CXX = g++-2
 e = .exe
-CCARCH += -mcygwin -march=i386 -mcpu=i686
+CCARCH += -march=i386 -mcpu=i686
 LDLIBS += -lwinmm
 endif
 
 ifeq ($(target),win32-mingw32)
 include $(srcdir)/Makedefs.gcc
 e = .exe
-CCARCH += -mno-cygwin -march=i386 -mcpu=i686
-LDLIBS += -lwinmm
-endif
-
-# mingw32 as included in cygwin
-ifeq ($(target),win32-no-cygwin)
-include $(srcdir)/Makedefs.gcc
-e = .exe
-CCARCH += -mno-cygwin -march=i386 -mcpu=i686
+CCARCH += -march=i386 -mcpu=i686
 LDLIBS += -lwinmm
 endif
 
@@ -473,11 +465,11 @@ ifeq ($(target),win32-mwerks)
 o = .obj
 a = .lib
 e = .exe
-CC = mwcc -runtime ss -gccinc
+CC = mwcc -gccinc
 CFLAGS = -w on
 CXXFLAGS = $(CFLAGS)
 CFLAGS_OUTPUT = -o $@
-LDFLAGS = -map $T.map
+LDFLAGS = -lwinmm.lib -map $T.map
 LINK_EXE_OUTPUT = -o $@
 LDLIBS = $(DOS_LDLIBS)
 ifeq ($(DEBUG),1)

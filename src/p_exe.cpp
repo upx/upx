@@ -668,13 +668,13 @@ void PackExe::unpack(OutputFile *fo)
     oh.ss = ih.ss;
 
     if (flag & MAXMEM)
-        imagesize -= 2, oh.max = get_le16(ibuf+imagesize);
+        { imagesize -= 2; oh.max = get_le16(ibuf+imagesize); }
     if (flag & MINMEM)
-        imagesize -= 2, oh.min = get_le16(ibuf+imagesize);
+        { imagesize -= 2; oh.min = get_le16(ibuf+imagesize); }
     if (flag & SP)
-        imagesize -= 2, oh.sp = get_le16(ibuf+imagesize);
+        { imagesize -= 2; oh.sp = get_le16(ibuf+imagesize); }
     if (flag & SS)
-        imagesize -= 2, oh.ss = get_le16(ibuf+imagesize);
+        { imagesize -= 2; oh.ss = get_le16(ibuf+imagesize); }
 
     unsigned ip = (flag & USEJUMP) ? get_le32(ibuf+imagesize-4) : (unsigned) ih.firstreloc;
     oh.ip = ip & 0xffff;

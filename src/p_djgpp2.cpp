@@ -49,6 +49,8 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(external_scnhdr_t) == 40);
     COMPILE_TIME_ASSERT(sizeof(coff_header_t) == 0xa8);
     COMPILE_TIME_ASSERT(sizeof(stubify_stub) == 2048);
+    COMPILE_TIME_ASSERT_ALIGNOF(external_scnhdr_t, char)
+    COMPILE_TIME_ASSERT_ALIGNOF(coff_header_t, char)
 #if defined(STUBIFY_STUB_ADLER32)
     //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
     assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);

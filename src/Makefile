@@ -6,7 +6,6 @@
 #   `make target=dos32-djggp2'      # dos32 - djggp2
 #   `make target=win32-cygwin'      # win32 - cygwin
 #   `make target=win32-mingw32'     # win32 - mingw32
-#   `make target=win32-no-cygwin'   # win32 - mingw32 as included in cygwin
 #   `make target=win32-rsxnt'       # win32 - rsxnt
 #   `make target=win32-bc'          # win32 - Borland C++
 #   `make target=win32-dm'          # win32 - Digital Mars C++

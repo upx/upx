@@ -37,13 +37,13 @@
 **************************************************************************/
 
 #include "acc/acc.h"
-#if (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+#if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
 # undef HAVE_UTIME_H /* this pulls in <windows.h> */
 #endif
 #include "acc/acc_incd.h"
 #include "acc/acc_ince.h"
 #include "acc/acc_lib.h"
-#if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #    error "something pulled in <windows.h>"
 #  endif
@@ -300,11 +300,33 @@
 
 
 /*************************************************************************
-// memory util
+//
 **************************************************************************/
 
-#define UNUSED              ACC_UNUSED
-#define COMPILE_TIME_ASSERT ACC_COMPILE_TIME_ASSERT
+#define UNUSED(var)              ACC_UNUSED(var)
+#define COMPILE_TIME_ASSERT(e)   ACC_COMPILE_TIME_ASSERT(e)
+
+#if 1
+#  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
+     typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
+     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z[7]; }; \
+     COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
+   }
+#else
+#  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
+     struct acc_tmp_t { b x; a y; b z[7]; }; \
+     COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
+   }
+#endif
+
+#if defined(acc_alignof)
+#  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
+     __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) \
+     COMPILE_TIME_ASSERT(acc_alignof(a) == sizeof(b))
+#else
+#  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
+     __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b)
+#endif
 
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 
@@ -512,7 +534,7 @@ int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
 #endif /* __cplusplus */
 
 
-#if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #    error "something pulled in <windows.h>"
 #  endif
