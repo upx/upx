@@ -53,7 +53,7 @@
 #  endif
 #  pragma warn -aus     // 8004: 'x' is assigned a value that is never used
 #  pragma warn -inl     // 8026+8027: Function not expanded inline
-   // Borland compilers typically generate a number of bogus warnings, and
+   // Borland compilers typically produce a number of bogus warnings, and
    // the actual diagnostics vary from version to version...
 #  if (__BORLANDC__ < 0x0530)
 #    pragma warn -csu   // 8012: Comparing signed and unsigned values
@@ -161,7 +161,7 @@
 #  endif
 #endif
 #if !defined(UINT_MAX) || (UINT_MAX < 0xffffffffL)
-#  error "you lose"
+#  error "UINT_MAX"
 #endif
 
 
@@ -197,7 +197,7 @@
 #  endif
 #endif
 #if !defined(VALGRIND_DISCARD)
-#  define VALGRIND_DISCARD(handle)              ACC_UNUSED(handle)
+#  define VALGRIND_DISCARD(handle)              ((void)(&handle))
 #endif
 
 

@@ -23,7 +23,7 @@ zip:
 
 cvs-admin-ko:
 	cvs admin -ko .
-	cvs update
+	cvs update -P -d
 
 ChangeLog:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
