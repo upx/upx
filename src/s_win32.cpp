@@ -53,7 +53,9 @@ struct screen_data_t
     HANDLE hi;
     HANDLE ho;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
+#if 0
     char title[512];
+#endif
 
     int mode;
     int cols;
@@ -185,10 +187,9 @@ static void putCharAttr(screen_t *this, int ch, int attr, int x, int y)
 {
     CHAR_INFO ci;
     SMALL_RECT region = { P(x), P(y), P(x), P(y) };
-    ci.Char.UnicodeChar = 0;
     ci.Char.AsciiChar = (CHAR) ch;
     ci.Attributes = (WORD) attr;
-    WriteConsoleOutput(this->data->ho, &ci, size11, pos00, &region);
+    WriteConsoleOutputA(this->data->ho, &ci, size11, pos00, &region);
 }
 
 
@@ -211,11 +212,10 @@ static void putStringAttr(screen_t *this, const char *s, int attr, int x, int y)
     SMALL_RECT region = { P(x), P(y), P(x + l - 1), P(y) };
     for (i = 0; i < l; i++)
     {
-        ci[i].Char.UnicodeChar = 0;
         ci[i].Char.AsciiChar = *s++;
         ci[i].Attributes = (WORD) attr;
     }
-    WriteConsoleOutput(this->data->ho, &ci[0], size, pos00, &region);
+    WriteConsoleOutputA(this->data->ho, &ci[0], size, pos00, &region);
 }
 
 
@@ -296,8 +296,10 @@ static int init(screen_t *this, int fd)
         return -1;
     if (!GetConsoleCursorInfo(ho, &ae.cci))
         return -1;
+#if 0
     if (!GetConsoleTitle(this->data->title, sizeof(this->data->title)))
         return -1;
+#endif
 
 #if 0
     this->data->cols = csbi->srWindow.Right - csbi->srWindow.Left + 1;
@@ -350,11 +352,10 @@ static void updateLineN(screen_t *this, const void *line, int y, int len)
         SMALL_RECT region = { 0, P(y), P(0 + l - 1), P(y) };
         for (i = 0; i < l; i++)
         {
-            ci[i].Char.UnicodeChar = 0;
             ci[i].Char.AsciiChar = *s++;
             ci[i].Attributes = *s++;
         }
-        WriteConsoleOutput(this->data->ho, &ci[0], size, pos00, &region);
+        WriteConsoleOutputA(this->data->ho, &ci[0], size, pos00, &region);
 #endif
         UNUSED(line);
     }
@@ -367,7 +368,7 @@ static void clearLine(screen_t *this, int y)
     {
         COORD size = { P(this->data->cols), 1 };
         SMALL_RECT region = { 0, P(y), P(this->data->cols-1), P(y) };
-        WriteConsoleOutput(this->data->ho, this->data->empty_line, size, pos00, &region);
+        WriteConsoleOutputA(this->data->ho, this->data->empty_line, size, pos00, &region);
     }
 }
 
