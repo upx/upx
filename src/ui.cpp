@@ -95,15 +95,47 @@ long UiPacker::update_fu_len = 0;
 #define clear_cb()    memset(&cb, 0, sizeof(cb))
 
 
+/*************************************************************************
+// constants
+**************************************************************************/
+
 static const char header_line1[] =
     "        File size         Ratio      Format      Name\n";
-static const char header_line2[] =
-#ifdef __MSDOS__
-    "   컴컴컴컴컴컴컴컴컴컴   컴컴컴   컴컴컴컴컴�   컴컴컴컴컴�\n";
-#else
+static char header_line2[] =
     "   --------------------   ------   -----------   -----------\n";
+
+static char progress_filler[] = ".*[]";
+
+
+static void init_global_constants(void)
+{
+#ifdef __MSDOS__
+    static bool done = false;
+    if (done)
+        return;
+    done = true;
+
+#if 1 && defined(__DJGPP__)
+    /* check for Windows NT/2000 */
+    if (_get_dos_version(1) == 0x0532)
+        return;
 #endif
 
+    char *p;
+    for (p = header_line2; *p; p++)
+        if (*p == '-')
+            *p = '\xc4';
+
+    //strcpy(progress_filler, "\x07\xb0[]");
+    //strcpy(progress_filler, "\x07\xb1[]");
+    strcpy(progress_filler, "\xf9\xfe[]");
+#endif
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
 
 static const char *mkline(unsigned long fu_len, unsigned long fc_len,
                           unsigned long u_len, unsigned long c_len,
@@ -134,6 +166,8 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
 UiPacker::UiPacker(const Packer *p_) :
     p(p_), s(NULL)
 {
+    init_global_constants();
+
     clear_cb();
 
     s = new State;
@@ -342,6 +376,7 @@ void __UPX_ENTRY UiPacker::callback(upx_uint isize, upx_uint osize, int state, v
 
 void UiPacker::doCallback(unsigned isize, unsigned osize)
 {
+    int i;
     static const char spinner[] = "|/-\\";
 
     if (s->pass < 0)            // no callback wanted
@@ -378,19 +413,10 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
 
     // fill the progress bar
     char *m = &s->msg_buf[s->bar_pos];
-    *m++ = '[';
-    for (int i = 0; i < s->bar_len; i++)
-    {
-#ifdef __MSDOS__
-        //*m++ = i <= pos ? '\xdb' : '.';
-        //*m++ = i <= pos ? '\xb0' : '\x07';
-        //*m++ = i <= pos ? '\xb1' : '\x07';
-        *m++ = i <= pos ? '\xfe' : '\xf9';
-#else
-        *m++ = i <= pos ? '*' : '.';
-#endif
-    }
-    *m++ = ']';
+    *m++ = progress_filler[2];
+    for (i = 0; i < s->bar_len; i++)
+        *m++ = progress_filler[i <= pos];
+    *m++ = progress_filler[3];
 
     // compute current compression ratio
     unsigned ratio = 1000000;
