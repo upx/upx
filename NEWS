@@ -1,0 +1,197 @@
+============================================================================
+User visible changes for UPX
+============================================================================
+
+Changes in 1.01 (09 Apr 2000)
+  * win32/pe: fixed an uncompression problem in DLLs with empty
+    fixup sections
+  * win32/pe: fixed another rare uncompression problem - a field in the
+    PE header was set incorrectly
+
+Changes in 1.00 (26 Mar 2000)
+  * documentation updates
+  * watcom/le: do not duplicate the non-resident name table
+  * win32/pe: fixed an import handling problem: sometimes too much data
+    could be deleted from a file -> the uncompressed file would not work
+    anymore
+
+Changes in 0.99.3 (07 Mar 2000)
+  * win32/pe: fixed a rare problem in the stub string handling part
+
+Changes in 0.99.2 (02 Mar 2000)
+  * dos/exe: fixed a typo causing an internal error (introduced in 0.99.1)
+
+Changes in 0.99.1 (29 Feb 2000)
+  * win32/pe: fixed some object alignments which were causing
+    problems when loading compressed DLLs under Windows NT/2000
+
+Changes in 0.99 (25 Feb 2000)
+  * FULL SOURCE CODE RELEASED UNDER THE TERMS OF THE GNU GPL
+  * win32/pe: changed default to `--strip-relocs=1'
+  * dos/com and dos/sys: fixed a bad decompressor problem
+  * linux/i386: the counter for the progress indicator was off by one
+
+Changes in 0.94 (06 Dec 1999)
+  * win32/pe: the stub now calls ExitProcess in case of import errors
+  * under DOS and Windows, the environment variable UPX now accepts
+    a '#' as replacement for '=' because of a COMMAND.COM limitation
+
+Changes in 0.93 (22 Nov 1999)
+  * win32/pe: fixed --strip-relocs problem with uncompression
+  * win32/pe: fixed a bug which could produce a broken decompressor stub
+  * linux/i386: yet another FreeBSD compatibility fix
+
+Changes in 0.92 (14 Nov 1999)
+  * win32/pe: really fixed that one line (see below)
+
+Changes in 0.91 (13 Nov 1999)
+  * win32/pe: an important one-line fix for the newly introduced problems
+  * dos/com and dos/sys: fixed an internal error
+  * dos/exe: correctly restore cs when uncompressing
+
+Changes in 0.90 (10 Nov 1999)
+  * all formats: `--overlay=copy' now is the default overlay mode
+  * improved compression ratio for most files
+  * win32/pe: uncompression is finally supported
+  * win32/pe: never compress REGISTRY resources
+  * win32/pe: headersize was not set in PE header
+  * win32/pe: resource handling is rewritten
+  * win32/pe: the last :-) TLS problem is fixed
+  * win32/pe: somewhat less memory is required during compression
+  * linux/i386: fixed compression of scripts which was broken since 0.71
+  * linux/i386: more FreeBSD compatibility issues
+  * changed option: `-i' now prints some more details during compression
+    (not finished yet)
+
+Changes in 0.84 (04 Oct 1999)
+  * dos/exe: fixed a rare problem where the decompressor could crash
+  * some other minor fixes
+
+Changes in 0.83 (17 Sep 1999)
+  * dos/exe: fixed minimal memory requirement problem for some files
+  * win32/pe: fixed a bug which caused a crash in some compressed files
+  * linux/i386: various improvements in the stub; also, for the sake
+    of FreeBSD users, the stub is now branded as Linux/ELF
+
+Changes in 0.82 (16 Aug 1999)
+  * dos/exe: fixed a decompressor bug which could cause crash on some files
+  * linux/i386: section headers are now stripped from the stub so that
+    `strip' won't ruin a compressed file any longer
+  * wc/le: support for stack not in the last object disabled again
+  * win32/pe: removed some unneeded data
+
+Changes in 0.81 (04 Aug 1999)
+  * win32/pe: fixed an important bug in import handling
+  * dos/com: fixed an internal error that could happen with very small files
+
+Changes in 0.80 (03 Aug 1999)
+  * you can set some default options in the environment var `UPX'
+  * dos/com: the decompressor stub now checks for enough free memory
+  * dos/exe: decompressor rewritten, some bugs are fixed
+  * dos/exe: new option `--no-reloc': no relocation data is put into
+    the DOS header
+  * tmt/adam: added support for more stubs, detect already packed files
+  * tmt/adam: new option `--copy-overlay'
+  * wc/le: reduced memory requirement during uncompression
+  * wc/le: support files which do not contain their stack in the last object
+  * wc/le: fixed a bug which could cause a crash, improved relocation
+    handling
+  * wc/le: new option `--copy-overlay'
+  * win32/pe: `--compress-icons=2' is now the default
+  * win32/pe: even better TLS support
+  * win32/pe: versioninfo works on NT
+  * win32/pe: import by ordinal from kernel32.dll works
+  * win32/pe: other import improvements: importing a nonexistant DLL
+    results in a usual Windows message, importing a nonexistant function
+    results in program exit (instead of crash ;-)
+  * win32/pe: new option: `--compress-resources=0'
+  * win32/pe: reduced memory requirement during uncompression, some
+    files might even require LESS memory when they're compressed
+  * win32/pe: TYPELIBs should work now
+  * win32/pe: improved relocation handling, 16-bit relocations should work
+  * win32/pe: new option `--strip-relocs' (only if you know what you are doing)
+  * win32/pe: new option `--copy-overlay'
+  * important internal changes: now the stubs are built at runtime
+
+Changes in 0.72 (12 May 1999)
+  * tmt/adam: fixed a serious problem in the decompressor stub; all
+    compressed tmt files should be recompressed
+  * win32/pe: fixed the 'shared sections not supported' warning:
+    read-only shared sections are fine
+  * win32/pe: never compress TYPELIB resources
+  * win32/pe: compressed files are hopefully less suspicious to heuristic
+    virus scanners now
+  * linux/i386: minor decompressor stub updates, nicer progress bar
+
+Changes in 0.71 (19 Apr 1999)
+  * dos/exe: added option `--no-overlay'
+  * linux/i386: various improvements in the stub, most notably the
+    overhead for an extra cleanup process has been removed
+  * win32/pe: added support for export forwarders
+  * win32/pe: added support for DLLs without entry point or imports
+  * win32/pe: yet another .bss fix
+  * win32/pe: new option `--compress-icons=2': compress all icons
+    which are not in the first icon directory
+  * win32/pe: rearranged stub to avoid false alerts from some virus scanners
+
+Changes in 0.70 (30 Mar 1999)
+  * added support for linux/i386 executables
+  * improved compression ratio quite a bit
+  * added new compression level `--best' to squeeze out even some more bytes
+  * win32/pe: TLS support is much better now
+  * win32/pe: --compress-icons=0 should now work as well
+  * the usual minor fixes for win32/pe
+
+Changes in 0.62 (16 Mar 1999)
+  * win32/pe: --compress-icons and --compress-exports are on now by default
+  * win32/pe: --compress-icons should really work now
+  * win32/pe: fixed a problem with embedded .bss sections
+
+Changes in 0.61 (08 Mar 1999)
+  * atari/tos: fixed a problem where the bss segment could become too small
+
+Changes in 0.60 (06 Mar 1999)
+  * win32/pe: fixed file corruption when the size of the export data is invalid
+  * win32/pe: fixed a problem with empty resource data
+  * win32/pe: compressed file alignment set to minimum value
+  * win32/pe: made all compressed sections writeable
+  * fixed some other win32/pe bugs
+  * fixed an address optimization problem for some not Watcom LE files
+  * fixed a bug which could make UPX hang when an exe header contained
+    an illegal value
+  * added some compression flags for the win32/pe format
+  * added support for Atari ST executables (atari/tos)
+  * improved compression ratio
+  * improved compression speed
+
+Changes in 0.51 (14 Jan 1999)
+  * fixed a small bug in the PE header that would prevent some compressed
+    win32/pe executables from running under Windows NT and WINE
+
+Changes in 0.50 (03 Jan 1999)
+  * added support for PE format executables (win32/pe & rtm32/pe)
+  * added support for TMT executables (tmt/adam)
+  * fixed a dos/sys bug that affected OpenDOS
+
+Changes in 0.40 (05 Oct 1998)
+  * improved compression ratio
+  * fixed a small but fatal bug in dos/sys introduced in 0.30
+  * fixed a rare bug in dos/exe
+  * worked around a bug in djgpp's strip 2.8
+  * Allegro packfile support should work now
+  * added dos/exeh compression method (works on 386+)
+
+Changes in 0.30 (27 Jul 1998)
+  * fixed a serious bug in the 32-bit compressors - please don't use
+    djgpp/coff and watcom/le compressed files from previous versions,
+    some of them are possibly damaged !
+  * the 16-bit uncompressors are a little bit shorter & faster
+  * fixed progress indicator for VESA and SVGA text modes
+
+Changes in 0.20 (05 Jul 1998)
+  * second public beta release
+  * too many changes to list here
+
+Changes in 0.05 (26 May 1998)
+  * first public beta release
+

@@ -1,0 +1,51 @@
+                 ooooo     ooo ooooooooo.   ooooooo  ooooo
+                 `888'     `8' `888   `Y88.  `8888    d8'
+                  888       8   888   .d88'    Y888..8P
+                  888       8   888ooo88P'      `8888'
+                  888       8   888            .8PY888.
+                  `88.    .8'   888           d8'  `888b
+                    `YbodP'    o888o        o888o  o88888o
+
+
+                    The Ultimate Packer for eXecutables
+          Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
+               http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+                          http://www.nexus.hu/upx
+                            http://upx.tsx.org
+
+
+Things not (yet) supported:
+===========================
+
+dos/exe
+-------
+ * normal dos/exes with new exe headers
+ * max ~24000 relocation records (...should be enough for everyone ;-)
+ * exe + sys combined images
+
+wc/le
+-----
+ * 16-bit selector alias fixups
+ * 16-bit offset relocation for objects larger than 4 kbyte
+ * 16:16 fixups
+
+If you need any of the above (they're very rare), send us an url of a
+test file.
+
+ * 16-bit objects are not loaded into DOS memory
+ * There is still a problem with the wdosx extender: if you compress a
+   wc/le file which does NOT contain the wdosx extender, and after this
+   you bind the wdosx stub to the compressed file, then it will work.
+   Otherwise it won't.
+ * unpacked pmwlite compressed programs might not work when compressed
+   with upx (pmwunlite bug mainly :-)
+
+win32/pe
+--------
+ * writeable shared sections (`--force' *may* work)
+ * certificates in the image
+
+djgpp2/coff
+-----------
+ * all overlays (except Allegro pakfiles) are silently stripped
+

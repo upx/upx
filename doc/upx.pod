@@ -1,0 +1,612 @@
+=head1 NAME
+
+upx - compress or expand executable files
+
+
+
+=head1 SYNOPSIS
+
+B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
+
+
+
+=head1 ABSTRACT
+
+            The Ultimate Packer for eXecutables
+  Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
+       http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+                  http://www.nexus.hu/upx
+                    http://upx.tsx.org
+
+
+B<UPX> is a portable, extendable, high-performance executable packer for
+several different executable formats. It achieves an excellent compression
+ratio and offers I<*very*> fast decompression. Your executables suffer
+no memory overhead or other drawbacks for most of the formats supported.
+
+While you may use UPX freely for both non-commercial and commercial
+executables (for details see the file LICENSE), we would highly
+appreciate if you credit UPX and ourselves in the documentation,
+possibly including a reference to the UPX home page. Thanks.
+
+[ Using UPX in non-OpenSource applications without proper credits
+is considered not politically correct ;-) ]
+
+
+
+=head1 DISCLAIMER
+
+UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
+
+Having said that, we think that UPX is quite stable now. Indeed we
+have compressed lots of files without any problems. Also, the
+current version has undergone several months of beta testing -
+actually it's almost 2 years since our first public beta.
+
+This is the first production quality release, and we plan that future 1.xx
+releases will be backward compatible with this version.
+
+Please report all problems or suggestions to the authors. Thanks.
+
+
+
+=head1 DESCRIPTION
+
+B<UPX> is a versatile executable packer with the following features:
+
+  - excellent compression ratio: compresses better than zip/gzip,
+      use UPX to decrease the size of your distribution !
+
+  - very fast decompression: about 10 MB/sec even on my old Pentium 133
+
+  - no memory overhead for your compressed executables for most of the
+      supported formats
+
+  - safe: you can list, test and unpack your executables
+      Also, a checksum of both the compressed and uncompressed file is
+      maintained internally.
+
+  - universal: UPX can pack a number of executable formats:
+      * dos/exe
+      * dos/sys
+      * dos/com
+      * djgpp2/coff
+      * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
+      * win32/pe
+      * rtm32/pe
+      * tmt/adam
+      * linux/i386
+      * atari/tos
+
+  - portable: UPX is written in portable endian-neutral C++
+
+  - extendable: because of the class layout it's very easy to support
+      new executable formats or add new compression algorithms
+
+  - free: UPX can be distributed and used freely. And from version 0.99
+      the full source code of UPX is released under the GNU General Public
+      License (GPL) !
+
+You probably understand now why we call UPX the "I<ultimate>"
+executable packer.
+
+
+
+=head1 COMMANDS
+
+=head2 Compress
+
+This is the default operation, eg. B<upx yourfile.exe> will compress the file
+specified on the command line.
+
+=head2 Decompress
+
+All UPX supported file formats can be unpacked using the B<-d> switch, eg.
+B<upx -d yourfile.exe> will uncompress the file you've just compressed.
+
+=head2 Test
+
+The B<-t> command tests the integrity of the compressed and uncompressed
+data, eg. B<upx -t yourfile.exe> check whether your file can be safely
+decompressed. Note, that this command doesn't check the whole file, only
+the part that will be uncompressed during program execution. This means
+that you should not use this command instead of a virus checker.
+
+=head2 List
+
+The B<-l> command prints out some information about the compressed files
+specified on the command line as parameters, eg B<upx -l yourfile.exe>
+shows the compressed / uncompressed size and the compression ratio of
+I<yourfile.exe>.
+
+
+
+=head1 OPTIONS
+
+B<-q>: be quiet, suppress warnings
+
+B<-q -q> (or B<-qq>): be very quiet, suppress errors
+
+B<-q -q -q> (or B<-qqq>): produce no output at all
+
+B<--help>: prints the help
+
+B<--version>: print the version of UPX
+
+B<--stdout>: writes all output to stdout
+
+[ ...to be written... - type `B<upx --help>' for now ]
+
+
+
+=head1 COMPRESSION LEVELS & TUNING
+
+B<UPX> offers ten different compression levels from B<-1> to B<-9>,
+and B<--best>.  The default compression level is B<-7>.
+
+=over 4
+
+=item *
+
+Compression levels 1, 2 and 3 are pretty fast.
+
+=item *
+
+Compression levels 4, 5 and 6 achieve a good time/ratio performance.
+
+=item *
+
+Compression levels 7, 8 and 9 favor compression ratio over speed.
+
+=item *
+
+Compression level B<--best> may take a very long time.
+
+=back
+
+Note that compression level B<-9> can be quite slow for some large
+files, but you definitely should use it when releasing a final version
+of your program. (E.g. it took about 20 minutes to compress the almost
+5 MB MAME 0.34 with B<-9> on my Pentium 133, but the resulting executable
+was still ~65 kB smaller than when using B<-7>.)
+
+Since UPX 0.70 there is also an extra compression level B<--best> which
+squeezes out even some more compression ratio. While it is usually fine
+to use this option with your favorite .com file it may take several hours
+to compress a multi-megabyte program. You have been warned.
+
+Tips for even better compression:
+
+=over 4
+
+=item *
+
+Try if B<--overlay=strip> works.
+
+=item *
+
+For win32/pe programs there's B<--strip-relocs=0>. See notes below.
+
+=back
+
+
+
+=head1 OVERLAY HANDLING OPTIONS
+
+B<UPX> handles overlays like many other executable packers do: it simply
+copies the overlay after the compressed image. This works with some
+files, but doesn't work with others.
+
+Since version 0.90 UPX defaults to B<--overlay=copy> for
+all executable formats.
+
+  --overlay=copy    Copy any extra data attached to the file. [DEFAULT]
+
+  --overlay=strip   Strip any overlay from the program instead of
+                    copying it. Be warned, this may make the compressed
+                    program crash or otherwise unusable.
+
+  --overlay=skip    Refuse to compress any program which has an overlay.
+
+
+
+=head1 ENVIRONMENT
+
+The environment variable B<UPX> can hold a set of default
+options for UPX. These options are interpreted first and
+can be overwritten by explicit command line parameters.
+For example:
+
+    for DOS/Windows:   set UPX=-9 --compress-icons#1
+    for sh/ksh/zsh:    UPX="-9 --compress-icons=1"; export UPX
+    for csh/tcsh:      setenv UPX "-9 --compress-icons=1"
+
+Under DOS/Windows you must use '#' instead of '=' when setting the
+environment variable because of a command.com limitation.
+
+On Vax/VMS, the name of the environment variable is
+UPX_OPT, to avoid a conflict with the symbol set for
+invocation of the program.
+
+Not all of the options are valid in the environment variable -
+UPX will tell you.
+
+You can use the B<--no-env> option to turn this support off.
+
+
+
+=head1 NOTES FOR THE SUPPORTED EXECUTABLE FORMATS
+
+=head2 NOTES FOR ATARI/TOS
+
+This is the executable format used by the Atari ST, a 68000 based
+personal computer which was popular in the late '80s. Support
+of this format is only because of nostalgic feelings of one of
+the authors and serves no practical purpose :-).
+
+Packed programs will be byte-identical to the original after uncompression.
+All debug information will be stripped, though.
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR DOS/COM
+
+Obviously UPX won't work with executables that want to read data from
+themselves (like some commandline utilities that ship with Win95/98).
+
+Compressed programs only work on a 286+.
+
+Packed programs will be byte-identical to the original after uncompression.
+
+Maximum uncompressed size: ~65100 bytes.
+
+Extra options available for this executable format:
+
+  --8086              Create an executable that works on any 8086 CPU.
+
+
+
+=head2 NOTES FOR DOS/EXE
+
+dos/exe stands for all "normal" 16-bit DOS executables.
+
+Obviously UPX won't work with executables that want to read data from
+themselves (like some command line utilities that ship with Win95/98).
+
+Compressed programs only work on a 286+.
+
+Extra options available for this executable format:
+
+  --8086              Create an executable that works on any 8086 CPU.
+
+  --no-reloc          Use no relocation records in the exe header.
+
+
+
+=head2 NOTES FOR DOS/SYS
+
+You can only compress plain sys files, sys/exe (two in one)
+combos are not supported.
+
+Compressed programs only work on a 286+.
+
+Packed programs will be byte-identical to the original after uncompression.
+
+Maximum uncompressed size: ~65350 bytes.
+
+Extra options available for this executable format:
+
+  --8086              Create an executable that works on any 8086 CPU.
+
+
+
+=head2 NOTES FOR DJGPP2/COFF
+
+First of all, it is recommended to use UPX *instead* of B<strip>. strip has
+the very bad habit of replacing your stub with its own (outdated) version.
+Additionally UPX corrects a bug/feature in strip v2.8.x: it
+will fix the 4 KByte aligment of the stub.
+
+UPX includes the full functionality of stubify. This means it will
+automatically stubify your COFF files. Use the option B<--coff> to
+disable this behaviour (see below).
+
+UPX automatically handles Allegro packfiles.
+
+The DLM format (a rather exotic shared library extension) is not supported.
+
+Packed programs will be byte-identical to the original after uncompression.
+All debug information and trailing garbage will be stripped, though.
+
+BTW, UPX is the successor of the DJP executable packer.
+
+Extra options available for this executable format:
+
+  --coff              Produce COFF output instead of EXE. By default
+                      UPX keeps your current stub.
+
+
+
+=head2 NOTES FOR LINUX/i386
+
+How it works:
+
+  For ELF executables, UPX decompresses directly to memory, simulating
+  the mapping that the operating system kernel uses during exec(),
+  including the PT_INTERP program interpreter (if any).
+  The brk() is set by a special PT_LOAD segment in the compressed
+  executable itself.  UPX then wipes the stack clean except for
+  arguments, environment variables, and Elf_auxv entries (this is
+  required by bugs in the startup code of /lib/ld-linux.so as of
+  May 2000), and transfers control to the program interpreter or
+  the e_entry address of the original executable.
+
+  For shell script executables (files beginning with "#!/" or "#! /") 
+  where the shell is known to accept "-c <command>", UPX decompresses
+  the file into low memory, then maps the shell (and its PT_INTERP),
+  and passes control to the shell with the entire decompressed file
+  as the argument after "-c".  Known shells are sh, ash, bsh, csh,
+  ksh, tcsh, pdksh.  Restriction: UPX 1.10 cannot use this method
+  for shell scripts which use the one optional string argument after
+  the shell name in the script (example: "#! /bin/sh option3\n".)
+
+  For files which are not ELF and not a script for a known "-c" shell,
+  UPX uses kernel exec(), which first requires decompressing to a
+  file in the filesystem.  Interestingly -
+  because of the good memory management of the Linux kernel - this
+  often does not introduce a noticable delay, and in fact there
+  will be no disk access at all if you have enough free memory as
+  the entire process takes places within the filesystem buffers.
+
+  A compressed executable consists of the UPX stub and an overlay
+  which contains the original program in a compressed form.
+
+  The UPX stub is a statically linked ELF executable and does
+  the following at program startup:
+
+    1) decompress the overlay to a temporary location in /tmp
+    2) open the temporary file for reading
+    3) try to delete the temporary file and start (execve)
+       the uncompressed program in /tmp using /proc/<pid>/fd/X as
+       attained by step 2)
+    4) if that fails, fork off a subprocess to clean up and
+       start the program in /tmp in the meantime
+
+  The UPX stub is about 1700 bytes long, partly written in assembler
+  and only uses kernel syscalls. It is not linked against any libc.
+
+Benefits:
+
+  - UPX can compress all executables, be it AOUT, ELF, libc4, libc5,
+    libc6, Shell/Perl/Python/... scripts, standalone Java .class
+    binaries, or whatever...
+    All scripts and programs will work just as before.
+
+  - Compressed programs are completely self-contained. No need for
+    any external program.
+
+  - UPX keeps your original program untouched. This means that
+    after decompression you will have a byte-identical version,
+    and you can use UPX as a file compressor just like gzip.
+    [ Note that UPX maintains a checksum of the file internally,
+      so it is indeed a reliable alternative. ]
+
+  - As the stub only uses syscalls and isn't linked against libc it
+    should run under any Linux configuration that can run ELF
+    binaries and has working /proc support.
+
+  - For the same reason compressed executables should run under
+    FreeBSD and other systems which can run Linux binaries.
+    [ Please send feedback on this topic ]
+
+Drawbacks:
+
+  - For non-ELF, non-shell executables, you need additional free disk
+    space for the uncompressed program
+    in your /tmp directory. This program is deleted immediately after
+    decompression, but you still need it for the full execution time
+    of the program.
+
+  - For non-ELF, non-shell executables, you must have /proc filesystem
+    support as the stub wants to open
+    /proc/<pid>/exe and needs /proc/<pid>/fd/X. This also means that you
+    cannot compress programs that are used during the boot sequence
+    before /proc is mounted, unless those programs are ELF or are
+    scripts for known "-c" shells.
+
+  - `ldd' and `size' won't show anything useful because all they
+    see is the statically linked stub (since version 0.82 the section
+    headers are stripped from the UPX stub and `size' doesn't even
+    recognize the file format any longer - looks like a binutils bug).
+
+  - For non-ELF, non-shell executables, utilities like `top' will
+    display numerical values in the process
+    name field. This is because Linux computes the process name from
+    the first argument of the last execve syscall (which is typically
+    something like /proc/<pid>/fd/3).
+
+  - For non-ELF, non-shell executables, to reduce memory requirements
+    during uncompression UPX splits the
+    original file into blocks, so the compression ratio is a little bit
+    worse than with the other executable formats (but still quite nice).
+    [ Advise from kernel experts which can tell me more about the
+      execve memory semantics is welcome. Maybe this shortcoming
+      could be removed. ]
+
+  - For non-ELF, non-shell executables, because of temporary decompression
+    to disk the decompression speed
+    is not as fast as with the other executable formats. Still, I can see
+    no noticable delay when starting programs like my ~3 MB emacs (which
+    is less than 1 MB when compressed :-).
+
+Notes:
+
+  - As UPX leaves your original program untouched it is advantageous
+    to strip it before compression.
+
+  - It is not advisable to compress programs which usually have many
+    instances running (like `make') because the common segments of
+    compressed programs won't be shared any longer between different
+    processes.
+
+  - If you compress a script you will lose platform independence -
+    this could be a problem if you are using NFS mounted disks.
+
+  - Compression of suid, guid and sticky-bit programs is rejected
+    because of possible security implications.
+
+  - For the same reason there is no sense in making any compressed
+    program suid.
+
+  - Obviously UPX won't work with executables that want to read data
+    from themselves. E.g., this might be a problem for Perl scripts
+    which access their __DATA__ lines.
+
+  - In case of internal errors the stub will abort with exitcode 127.
+    Typical reasons for this to happen are that the program has somehow
+    been modified after compression, you have run out of disk space
+    or your /proc filesystem is not yet mounted.
+    Running `strace -o strace.log compressed_exe' will tell you more.
+
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR RTM32/PE
+
+Same as win32/pe.
+
+
+
+=head2 NOTES FOR TMT/ADAM
+
+This format is used by the TMT Pascal compiler - see http://www.tmt.com/ .
+
+Extra options available for this executable format:
+
+  (none)
+
+
+
+=head2 NOTES FOR WATCOM/LE
+
+UPX has been successfully tested with the following extenders:
+  DOS4G, DOS4GW, PMODE/W, DOS32a, CauseWay.
+  The WDOS/X extender is partly supported (for details
+  see the file bugs BUGS).
+
+Yes, you can use your compressed executables with DOS4GW.
+
+The LX format is not yet supported.
+
+DLLs are not supported.
+
+Extra options available for this executable format:
+
+  --le                Produce an unbound LE output instead of
+                      keeping the current stub.
+
+
+
+=head2 NOTES FOR WIN32/PE
+
+The PE support in UPX is quite stable now, but definitely there are
+still some incompabilities with some files.
+
+Because of the way UPX (and other packers for this format) works, you
+can see increased memory usage of your compressed files. If you start
+several instances of huge compressed programs you're wasting memory
+because the common segements of the program won't get shared
+across the instances.
+On the other hand if you're compressing only smaller programs, or
+running only one instance of larger programs, then this penalty is
+smaller, but it's still there.
+
+If you're running executables from network, then compressed programs
+will load faster, and require less bandwidth during execution.
+
+DLLs are supported.
+
+Extra options available for this executable format:
+
+ --compress-exports=0 Don't compress the export section.
+                      Use this if you plan to run the compressed
+                      program under Wine.
+ --compress-exports=1 Compress the export section. [DEFAULT]
+                      Compression of the export section can improve the
+                      compression ratio quite a bit but may not work
+                      with all programs (like winword.exe).
+                      UPX never compresses the export section of a DLL
+                      regardless of this option.
+
+  --compress-icons=0  Don't compress any icons.
+  --compress-icons=1  Compress all but the first icon.
+  --compress-icons=2  Compress all icons which are not in the
+                      first icon directory. [DEFAULT]
+
+  --compress-resources=0  Don't compress any resources at all.
+
+  --force             Force compression even when there is an
+                      unexpected value in a header field.
+                      Use with care.
+
+  --strip-relocs=0    Don't strip relocation records.
+  --strip-relocs=1    Strip relocation records. [DEFAULT]
+                      This option only works on executables with base
+                      address greater or equal to 0x400000. Usually the
+                      compressed files becomes smaller, but some files
+                      may become larger. Note that the resulting file will
+                      not work under Win32s.
+                      UPX never strips relocations from a DLL
+                      regardless of this option.
+
+
+
+=head1 DIAGNOSTICS
+
+Exit status is normally 0; if an error occurs, exit status
+is 1. If a warning occurs, exit status is 2.
+
+B<UPX>'s diagnostics are intended to be self-explanatory.
+
+
+
+=head1 BUGS
+
+Please report all bugs immediately to the authors.
+
+
+
+=head1 AUTHORS
+
+ Markus F.X.J. Oberhumer <markus.oberhumer@jk.uni-linz.ac.at>
+ http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+
+ Laszlo Molnar <ml1050@cdata.tvnet.hu>
+ http://www.nexus.hu/upx
+
+
+
+=head1 COPYRIGHT
+
+Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2000 Laszlo Molnar
+
+This program may be used freely, and you are welcome to
+redistribute it under certain conditions.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+UPX License Agreement for more details.
+
+You should have received a copy of the UPX License Agreement along
+with this program; see the file LICENSE. If not, visit the UPX home page.
+

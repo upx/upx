@@ -1,0 +1,244 @@
+/* packer.h --
+
+   This file is part of the UPX executable compressor.
+
+   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2000 Laszlo Molnar
+
+   UPX and the UCL library are free software; you can redistribute them
+   and/or modify them under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation, Inc.,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+   Markus F.X.J. Oberhumer                   Laszlo Molnar
+   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
+ */
+
+
+#ifndef __UPX_PACKER_H
+#define __UPX_PACKER_H
+
+#include "mem.h"
+
+class InputFile;
+class OutputFile;
+class Packer;
+class PackMaster;
+class UiPacker;
+class Linker;
+class Filter;
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+// see stub/header.ash
+class PackHeader
+{
+public:
+    bool fillPackHeader(upx_bytep buf, unsigned len);
+    bool checkPackHeader(const upx_bytep hbuf, int hlen) const;
+    void putPackHeader(upx_bytep buf, unsigned len);
+    int getPackHeaderSize() const;
+
+public:
+    // fields stored in compressed file
+    unsigned magic;             // UPX_MAGIC_LE32
+    int version;
+    int format;                 // executable format
+    int method;                 // compresison method
+    int level;                  // compresison level 1..10
+    unsigned u_len;
+    unsigned c_len;
+    unsigned u_adler;
+    unsigned c_adler;
+    off_t u_file_size;
+    int filter;
+    int filter_cto;
+    int header_checksum;
+
+    // info fields set by fillPackHeader()
+    long buf_offset;
+
+    // info fields set by Packer::compress()
+    //unsigned min_offset_found;
+    unsigned max_offset_found;
+    //unsigned min_match_found;
+    unsigned max_match_found;
+    //unsigned min_run_found;
+    unsigned max_run_found;
+    unsigned first_offset_found;
+    //unsigned same_match_offsets_found;
+};
+
+
+/*************************************************************************
+// abstract base class for packers
+**************************************************************************/
+
+class Packer
+{
+    //friend class PackMaster;
+    friend class UiPacker;
+protected:
+    Packer(InputFile *f);
+public:
+    virtual ~Packer();
+
+    virtual int getVersion() const = 0;
+    // A unique integer ID for this executable format. See conf.h.
+    virtual int getFormat() const = 0;
+    virtual const char *getName() const = 0;
+    virtual int getCompressionMethod() const = 0;
+    virtual int getCompressionLevel() const { return opt->level; }
+    virtual const int *getFilters() const = 0;
+
+    // PackMaster entries
+    void initPackHeader();
+    void updatePackHeader();
+    void doPack(OutputFile *fo);
+    void doUnpack(OutputFile *fo);
+    void doTest();
+    void doList();
+    void doFileInfo();
+
+    // unpacker capabilities
+    virtual bool canUnpackVersion(int version) const
+        { return (version >= 8); }
+    virtual bool canUnpackFormat(int format) const
+        { return (format == getFormat()); }
+
+protected:
+    virtual void pack(OutputFile *fo) = 0;
+    virtual void unpack(OutputFile *fo) = 0;
+    virtual void test();
+    virtual void list();
+    virtual void fileInfo();
+
+public:
+    virtual bool canPack() = 0;
+    virtual bool canUnpack() = 0;
+    virtual bool canTest() { return canUnpack(); }
+    virtual bool canList() { return canUnpack(); }
+
+protected:
+    // main compression drivers
+    virtual bool compress(upx_bytep in, upx_bytep out,
+                          unsigned max_offset = 0, unsigned max_match = 0);
+    virtual void decompress(const upx_bytep in,
+                            upx_bytep out, bool verify_checksum=true);
+    virtual bool checkCompressionRatio(unsigned c_len, unsigned u_len) const;
+
+    // high-level compression drivers
+    void compressWithFilters(Filter *ft, unsigned *overlapoh,
+                             const unsigned overlap_range,
+                             int strategy=-1, const int *filters=NULL,
+                             unsigned max_offset = 0, unsigned max_match = 0);
+
+    // util for verifying overlapping decompresion
+    //   non-destructive test
+    bool testOverlappingDecompression(const upx_bytep buf,
+                                      unsigned overlap_overhead) const;
+    //   non-destructive find
+    unsigned findOverlapOverhead(const upx_bytep buf,
+                                 unsigned range = 0,
+                                 unsigned upper_limit = ~0u) const;
+    //   destructive decompress + verify
+    void verifyOverlappingDecompression(MemBuffer *buf,
+                                        unsigned overlap_overhead);
+
+
+    // packheader handling
+    virtual void putPackHeader(upx_byte *buf, unsigned len);
+    virtual bool readPackHeader(unsigned len, off_t seek_offset,
+                                upx_byte *buf=NULL);
+
+    // filter handling
+    virtual bool isValidFilter(int filter_id) const;
+    virtual void tryFilters(Filter *ft, upx_byte *buf, unsigned buf_len,
+                            unsigned addvalue=0) const;
+    virtual void scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
+                             unsigned addvalue=0) const;
+    virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
+        { }
+
+    // loader util
+    virtual int buildLoader(const Filter *) { return getLoaderSize(); }
+    virtual const upx_byte *getLoader() const;
+    virtual int getLoaderSize() const;
+    virtual void initLoader(const void *pdata, int plen, int pinfo=-1);
+    virtual void addLoader(const char *s, ...);
+    virtual void addSection(const char *sname, const char *sdata, unsigned len);
+    virtual int getLoaderSection(const char *name, int *slen = NULL);
+    virtual void addFilter32(int filter_id);
+    virtual const char *getDecompressor() const;
+
+    // stub and overlay util
+    static void handleStub(InputFile *fi, OutputFile *fo, long size);
+    virtual void checkOverlay(unsigned overlay);
+    virtual void copyOverlay(OutputFile *fo, unsigned overlay,
+                             MemBuffer *buf, bool do_seek=true);
+
+    // misc util
+    virtual unsigned getRandomId() const;
+
+    // patch util
+    void patch_be16(void *l, int llen, unsigned old, unsigned new_);
+    void patch_be16(void *l, int llen, const void * old, unsigned new_);
+    void patch_be32(void *l, int llen, unsigned old, unsigned new_);
+    void patch_be32(void *l, int llen, const void * old, unsigned new_);
+    void patch_le16(void *l, int llen, unsigned old, unsigned new_);
+    void patch_le16(void *l, int llen, const void * old, unsigned new_);
+    void patch_le32(void *l, int llen, unsigned old, unsigned new_);
+    void patch_le32(void *l, int llen, const void * old, unsigned new_);
+    void patchVersion(void *l, int llen);
+    void checkPatch(void *l, void *p, int size);
+
+protected:
+    // relocation util
+    virtual upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
+    virtual unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
+
+
+protected:
+    InputFile *fi;
+    off_t file_size;        // will get set by constructor
+    PackHeader ph;          // must be filled by canUnpack()
+
+    // compression buffers
+    MemBuffer ibuf;         // input
+    MemBuffer obuf;         // output
+
+    // UI handler
+    UiPacker *uip;
+    int pass;
+    int total_passes;
+
+    // linker
+    Linker *linker;
+
+private:
+    // private to checkPatch()
+    void *last_patch;
+    long last_patch_offset;
+};
+
+
+#endif /* already included */
+
+
+/*
+vi:ts=4:et
+*/
+

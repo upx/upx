@@ -1,0 +1,186 @@
+- The UCL license is GPL, this will cause problems for the antivirus
+programs which can't use the uncompressor because of this. Or am I wrong?
+
+- Rearrange this TODO list, sort by categories, add a priority (1-5)
+
+
+For 0.95:
+
+- FIXME: what do we want in 1.00 ???
+
+- add NRV2D for dos/exe (use by default when >= 400 kB)
+
+- implement switch `-m' for method: 1 NRV2B, 2 NRV2D
+
+- DLL problem under NT ? is this fixed ???
+
+
+PE
+==
+
+2 - easy - mfx + ml) new switch(es) : do not compress resource types x,y,z
+    or resource names a,b,c
+3 - medium - ml) rebuild exports
+3 - difficult) don't compress the BSS section and other holes.
+4 - medium - ml) fix when objectalign < 0x1000
+4 - easy - ml) put the original offset of moved resources somewhere into
+    the res.dir. (if it's safe to do)
+4 - ??? - ml) fix FIXMEs
+5 - medium - ml) try to put the preprocessed imports & relocs back to their
+    original section if possible this could save some virtual memory
+    address space
+
+
+COM
+===
+
+
+EXE
+===
+
+
+
+LE
+==
+
+4 - easy - ml) the decompressors are already aligned, no need for an
+    extra alignment
+
+4 - difficult - ml) handle holes in the file
+
+
+TMT
+===
+
+4 - easy - ml) the decompressors are already aligned, no need for an
+    extra alignment
+
+
+LINUX
+=====
+
+4 - ???)
+    - test with AOUT binaries
+    - test with Java binaries
+    - make a compressed program suid. what happens ?
+
+5 - difficult) rewrite the whole stub in assembly
+
+
+SPARC
+=====
+
+3 - easy - ml) finish support - should generate byte-identical versions
+  for all formats (except those which are using Packer::getRandomId())
+
+
+DJGPP2
+======
+
+1 - ???) do we support overlays at all ???
+
+5 - ???) fix file extension handling when the --coff option is set
+
+
+FOR 0.95
+========
+
+- enable automatic dependency tracking
+
+1 - mfx) determine when to use NRV2D, find best c_flags values for
+  NRV2B & NRV2D (see util/runtest.sh)
+
+5 - boring - mfx) Finally fix all screen and UI problems. How boring...
+  Probably should think about the whole system (printf vs. fprintf vs.
+  con_fprintf...)
+
+5 - policy - ml+mfx) Discuss a default C++ style (GNU indent 2.2.3)
+    with Laszlo and use it. Or maybe Artistic Style?
+
+10) Examine why pod2text breaks lines within something like `B<--coff>'.
+    (pod sucks anyway. unfortunately all alternatives as well.)
+
+
+MISC
+====
+
+3 - difficult ml) The first two sentences of the README look too much like
+  those from the aspack docs. Laszlo, could you rewrite this ?
+
+1 - easy - mfx) Check whether the compressed size of the executable is
+  really smaller than the uncompressed
+
+1 - ??? - mfx) Implement a more informational interface.
+    Probably add some global functions in msg.cpp.
+    Should think about the requirements first, i.e. should there be
+    some simple hierarchies (header1, header2, ...) etc. ?
+    Could use the `-v' switch for enabling this (or `-i' ??).
+  - Something like this would be fine:  (with colors :-)
+    [Processing kernel32.dll]
+      [Import]
+        3 DLL.
+        Original size: 12345 bytes.
+        Preprocessed size: 6789 bytes.
+      [Relocations]
+        Original size: 50000 bytes.
+        Preprocessed size: 25000 bytes.
+      [Exports]
+        <warning> exports compressed (try --compress-export=0 if needed)
+      [TLS]
+        Added 56 bytes TLS data.
+        Added 5 fixup records.
+      [Resources]
+        Directory size: 1234 bytes.
+        Resource data size: 100000 bytes.
+        Compressed resources: 8 (99900 bytes).
+        Not compressed resources: 1 (100 bytes).
+
+3 - ???) delete temporary files when something wrong happens
+
+4 - easy - ml) Add a `--486' option to use bswap on the 32-bit formats.
+
+4 - easy - ml) consider removing 'sbb bp,bp' or "or ebp,-1" when not needed
+
+5 - ???) idea: --subfile=xx  compress xx. subfile: we'd need a list_subfiles
+  for this...
+
+
+FIXME: classify
+
+GOALS FOR 0.90
+==============
+
+- Provide additional NRV2D stubs for all 32-bit formats. Try to do this
+    in a generic way so that we can possibly add more algorithms.
+    Start by adding a `--nrv2d' switch.
+
+FOR 0.90
+========
+
+/ update the output of `--help'
+
+- filters: implement the missing scan() function for f_cto32.
+    Maybe could use this to try to find an optimal filter (e.g.
+    if level >= 9) based on the counts.
+
+- filters: could we have use for a f->firstcall info field ?
+
+TODO
+====
+
+- all formats: more thoroughly test the exe-header in canPack()
+  and throw exceptions when encountering bad values.
+
+- experiment with filters
+
+- for small programs (e.g. < 64k) try an additional algorithm (like
+  the non yet finished NRV2C) to see if it gives better compression ?
+
+/ make checkerg++ work -> test
+
+- fix file extension handling when the --coff option is set
+
+- set up an "official" test suite
+
+- finish documentation
+

@@ -1,0 +1,153 @@
+                        The UPX Hacker's Guide
+                        ======================
+
+
+Foreword
+--------
+
+  The precompiled UPX versions are linked against the NRV compression
+  library instead of the UCL library. Using same compression algorithms,
+  NRV achieves a better compression ratio. NRV is not publicly
+  available, though, and probably never will be.
+
+  While you may be disappointed that you don't have access to the
+  latest state-of-the-art compression technology this is actually
+  a safe guard for all of us. The UPX source code release makes
+  it very easy for any evil-minded person to do all sort of bad
+  things. By not providing the very best compression ratio it is much
+  more difficult to create fake or otherwise disguised UPX versions (or
+  similar trojans), as any end user will notice when the compression
+  has gotten worse with a new "version" or "product".
+
+  Finally please be aware that you now have your hands on the source
+  code of the most sophisticated executable packer ever.
+  Let's join our forces to make it even better :-)
+
+  Share and enjoy,
+  Markus & Laszlo
+
+
+Introduction
+------------
+
+  Welcome to the UPX source code release!
+
+  UPX is not a toy for kids. Apart from basic knowledge about executables
+  and data compression you will need to be firm in C++, assembler,
+  Perl and Makefiles. Probably some other things as well.
+
+  If you cant't manage to compile it then the sources are
+  probably not for you. Don't email us for help.
+
+  The authors use Linux for development. You might want to as well.
+
+
+Short overview
+--------------
+
+  The UPX source code consists of two mainly independent parts:
+
+  1) The src/stubs directory contains the decompression stubs that
+     will get added to each compressed executable.
+     The stubs are mainly written in assembler and get "compiled"
+     into ordinary C header files.
+
+  2) The src directory contains the actual packer sources. The stubs
+     are #included by the individual executable format handlers.
+
+
+Prerequisites
+-------------
+
+  - first of all you need to build the UCL compression library
+    http://wildsau.idv.uni-linz.ac.at/mfx/ucl.html
+
+
+Tools needed to build/modify the UPX sources
+--------------------------------------------
+
+  - A modern C++ compiler like gcc 2.95.2 or Visual C++ 6
+    (egcs 1.1.x may work, half-baked implementations like Borland C++ 5.5 won't)
+
+  - GNU make 3.77 for Win32
+    ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/newnew/
+
+  - GNU make 3.77 for DOS
+    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/
+
+
+To compile the packer sources
+-----------------------------
+
+  set the environment variable UCLDIR to point to your UCL installation, e.g.
+
+     set UCLDIR=c:\src\ucl-0.90                       (DOS)
+     export UCLDIR=$HOME/local/src/ucl-0.90           (Unix)
+
+  then type
+
+     make target=linux         # on linux
+     make target=djgpp2        # for djgpp2
+     make target=mingw32       # for mingw32
+     make target=no-cygwin     # for mingw32 as of cygwin b20.1
+     make target=msc           # for Visual C++ 6.0
+
+
+If you want to modify the stub sources you'll also need
+-------------------------------------------------------
+
+  - Nasm - the Netwide Assembler 0.98
+    http://www.cryogen.com/Nasm
+
+  - Perl 5.004 or better
+    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/perl*b.zip
+
+  - A68K - a 68000 macro assembler
+    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+
+  - djasm - an assembler for the djgpp stub
+    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2/djdev203.zip
+
+  - Linux (for the linux/i386 stubs)
+
+
+Misc. notes
+-----------
+
+  As the docs say: UPX is a portable, extendable and endian neutral
+  program, so if you want to add some new stuff, try not to break these
+  nice properties.
+
+  - Use the types LE16, LE32, BE16 and BE32 for fields in file headers.
+  - Use [sg]et_[bl]e(16|32) for getting/setting values in the data
+    stream.
+  - Use gcc extensions and other compiler specific stuff only through
+    macros.
+  - Keep in mind that it should be possible to build UPX on braindead
+    file systems (FAT). Don't use long file names or other things
+    that break building under plain DOS.
+
+***
+
+Some conventions:
+
+  - follow our coding style
+  - indent level = 4
+  - expand all tabulators
+
+  - Use throwSomeException() functions instead of throw SomeException():
+    this makes the code shorter if used often.
+
+***
+
+Patches/Contributions
+
+  - Please send us bug fixes/contributions only using
+
+      diff -u oldfile newfile
+
+    or
+
+      diff -uNr olddirectory newdirectory
+

@@ -1,0 +1,55 @@
+                 ooooo     ooo ooooooooo.   ooooooo  ooooo
+                 `888'     `8' `888   `Y88.  `8888    d8'
+                  888       8   888   .d88'    Y888..8P
+                  888       8   888ooo88P'      `8888'
+                  888       8   888            .8PY888.
+                  `88.    .8'   888           d8'  `888b
+                    `YbodP'    o888o        o888o  o88888o
+
+
+                    The Ultimate Packer for eXecutables
+          Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
+               http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+                          http://www.nexus.hu/upx
+                            http://upx.tsx.org
+
+
+.___..        .
+  |  |_  _.._ ;_/ __
+  |  [ )(_][ )| \_)
+컴컴컴컴컴컴컴컴컴컴
+
+Adam Ierymenko <api@one.net>
+  for severals ideas for the Linux version
+Andi Kleen <ak@muc.de> and Jamie Lokier <nospam@cern.ch>
+  for the /proc/self/fd/X and other Linux suggestions
+Atli Mar Gudmundsson <amg@complex.is>
+  for several comments on the win32/pe stub
+Charles W. Sandmann <sandmann@clio.rice.edu>
+  for the idea with the stubless decompressor in djgpp2/coff
+Ice
+  for debugging the PE headersize problem down
+Joergen Ibsen <jibz@hotmail.com> and d'b
+  for the relocation & address optimization ideas
+John S. Fine <johnfine@erols.com>
+  for the new version of the dos/exe decompressor
+Lukundoo <Lukundoo@softhome.net>
+  for beta testing
+Oleg V. Volkov <rover@lglobus.ru>
+  for various FreeBSD specific informations
+The Owl & G-RoM
+  for the --compress-icons fix
+Ralph Roth <RalphRoth@gmx.net>
+  for reporting several bugs
+Salvador Eduardo Tropea
+  for beta testing
+The WINE project (http://www.winehq.com/)
+  for lots of useful information found in their PE loader sources
+DJ Delorie <dj@delorie.com> for djgpp
+Linus for Linux
+Natascha
+
+Everybody else who was kind enough to spend time testing UPX, use it in
+their packages and report bugs, who are too numerous to mention here.
+UPX would not be what it is today without your invaluable help.
+

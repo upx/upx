@@ -1,0 +1,68 @@
+/* packmast.h --
+
+   This file is part of the UPX executable compressor.
+
+   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2000 Laszlo Molnar
+
+   UPX and the UCL library are free software; you can redistribute them
+   and/or modify them under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation, Inc.,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+   Markus F.X.J. Oberhumer                   Laszlo Molnar
+   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
+ */
+
+
+#ifndef __UPX_PACKMASTER_H
+#define __UPX_PACKMASTER_H
+
+class Packer;
+class InputFile;
+class OutputFile;
+
+
+/*************************************************************************
+// interface for work.cpp
+**************************************************************************/
+
+class PackMaster
+{
+public:
+    PackMaster(InputFile *f, struct options_t *o = NULL);
+    virtual ~PackMaster();
+
+    void pack(OutputFile *fo);
+    void unpack(OutputFile *fo);
+    void test();
+    void list();
+    void fileInfo();
+
+private:
+    InputFile *fi;
+    Packer *p;
+
+    // setup local options for each file
+    struct options_t local_options;
+    struct options_t *saved_opt;
+};
+
+
+#endif /* already included */
+
+
+/*
+vi:ts=4:et
+*/
+
