@@ -75,7 +75,7 @@ xread(struct Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 0  //{  save space
+#if 1  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -361,6 +361,7 @@ void *upx_main(
             err_exit(18);
         }
         if (MAX_ELF_HDR!=read(fdi, (void *)ehdr, MAX_ELF_HDR)) {
+ERR_LAB
             err_exit(19);
         }
         entry = do_xmap(fdi, ehdr, 0, 0);
