@@ -79,6 +79,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     importbyordinal = false;
     kernel32ordinal = false;
     tlsindex = 0;
+    big_relocs = 0;
 }
 
 
@@ -380,8 +381,10 @@ void PackW32Pe::processRelocs(Reloc *rel) // pass2
         soxrelocs = 0;
 }
 
-int PackW32Pe::processRelocs() // pass1
+void PackW32Pe::processRelocs() // pass1
 {
+    big_relocs = 0;
+
     Reloc rel(ibuf + IDADDR(PEDIR_RELOC),IDSIZE(PEDIR_RELOC));
     const unsigned *counts = rel.getcounts();
     const unsigned rnum = counts[1] + counts[2] + counts[3];
@@ -391,7 +394,8 @@ int PackW32Pe::processRelocs() // pass1
         if (IDSIZE(PEDIR_RELOC))
             memset(ibuf + IDADDR(PEDIR_RELOC),FILLVAL,IDSIZE(PEDIR_RELOC));
         orelocs = new upx_byte [1];
-        return sorelocs = 0;
+        sorelocs = 0;
+        return;
     }
 
     unsigned ic;
@@ -415,9 +419,8 @@ int PackW32Pe::processRelocs() // pass1
     fix[3] -= counts[3];
 
     memset(ibuf + IDADDR(PEDIR_RELOC),FILLVAL,IDSIZE(PEDIR_RELOC));
-    int big = 0;
     orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
-    sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3],counts[3],orelocs,ibuf + rvamin,1,&big),orelocs);
+    sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3],counts[3],orelocs,ibuf + rvamin,1,&big_relocs),orelocs);
 
     // append relocs type "LOW" then "HIGH"
     for (ic = 2; ic ; ic--)
@@ -431,12 +434,11 @@ int PackW32Pe::processRelocs() // pass1
         if (counts[ic])
         {
             sorelocs += 4;
-            big |= 2 * ic;
+            big_relocs |= 2 * ic;
         }
     }
     delete [] fix[3];
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
-    return big;
 }
 
 
@@ -1401,6 +1403,61 @@ bool PackW32Pe::canPack()
 }
 
 
+int PackW32Pe::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(nrv_loader,sizeof(nrv_loader));
+    addLoader(isdll ? "PEISDLL1" : "",
+              "PEMAIN01",
+              icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
+              tlsindex ? "PETLSHAK" : "",
+              "PEMAIN02",
+              getDecompressor(),
+              /*multipass ? "PEMULTIP" :  */  "",
+              "PEMAIN10",
+              NULL
+             );
+    if (ft->id)
+    {
+        const unsigned texv = ih.codebase - rvamin;
+        assert(ft->calls > 0);
+        addLoader(texv ? "PECTTPOS" : "PECTTNUL",NULL);
+        addFilter32(ft->id);
+    }
+    if (soimport)
+        addLoader("PEIMPORT",
+                  importbyordinal ? "PEIBYORD" : "",
+                  kernel32ordinal ? "PEK32ORD" : "",
+                  importbyordinal ? "PEIMORD1" : "",
+                  "PEIMPOR2",
+                  isdll ? "PEIERDLL" : "PEIEREXE",
+                  "PEIMDONE",
+                  NULL
+                 );
+    if (sorelocs)
+    {
+        addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
+                  "PERELOC3""RELOC320",
+                  big_relocs ? "REL32BIG" : "",
+                  "RELOC32J",
+                  NULL
+                 );
+        //FIXME: the following should be moved out of the above if
+        addLoader(big_relocs&6 ? "PERLOHI0" : "",
+                  big_relocs&4 ? "PERELLO0" : "",
+                  big_relocs&2 ? "PERELHI0" : "",
+                  NULL
+                 );
+    }
+    addLoader("PEMAIN20",
+              ih.entry ? "PEDOJUMP" : "PERETURN",
+              "IDENTSTR""UPX1HEAD",
+              NULL
+             );
+    return getLoaderSize();
+}
+
+
 void PackW32Pe::pack(OutputFile *fo)
 {
     unsigned objs = ih.objects;
@@ -1518,7 +1575,7 @@ void PackW32Pe::pack(OutputFile *fo)
     processTls(&tlsiv); // call before processRelocs!!
     processResources(&res);
     processExports(&xport);
-    const int big = processRelocs();
+    processRelocs();
 
     //FILE *f1=fopen("x1","wb");
     //fwrite(ibuf,1,usize,f1);
@@ -1545,8 +1602,8 @@ void PackW32Pe::pack(OutputFile *fo)
     memcpy(ibuf+newvsize,oimport,soimport);
     memcpy(ibuf+newvsize+soimport,orelocs,sorelocs);
 
-    const unsigned cimports = newvsize - rvamin; // rva of preprocessed imports
-    const unsigned crelocs = cimports + soimport; // rva of preprocessed fixups
+    cimports = newvsize - rvamin;   // rva of preprocessed imports
+    crelocs = cimports + soimport;  // rva of preprocessed fixups
 
     ph.u_len = newvsize + soimport + sorelocs;
 
@@ -1566,7 +1623,7 @@ void PackW32Pe::pack(OutputFile *fo)
     if (sorelocs)
     {
         set_le32(p1 + s,crelocs);
-        p1[s + 4] = (unsigned char) (big & 6);
+        p1[s + 4] = (unsigned char) (big_relocs & 6);
         s += 5;
     }
     if (soresources)
@@ -1596,6 +1653,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     // verify filter
     ft.verifyUnfilter();
+    buildLoader(&ft);
 #else
     // new version using compressWithFilters()
 
@@ -1626,56 +1684,6 @@ void PackW32Pe::pack(OutputFile *fo)
     newvsize = (ph.u_len + rvamin + overlapoh + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
         tlsindex = 0;
-
-    // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader(isdll ? "PEISDLL1" : "",
-              "PEMAIN01",
-              icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
-              tlsindex ? "PETLSHAK" : "",
-              "PEMAIN02",
-              getDecompressor(),
-              /*multipass ? "PEMULTIP" :  */  "",
-              "PEMAIN10",
-              NULL
-             );
-    const unsigned texv = ih.codebase - rvamin;
-    if (ft.id)
-    {
-        assert(ft.calls > 0);
-        addLoader(texv ? "PECTTPOS" : "PECTTNUL",NULL);
-        addFilter32(ft.id);
-    }
-    if (soimport)
-        addLoader("PEIMPORT",
-                  importbyordinal ? "PEIBYORD" : "",
-                  kernel32ordinal ? "PEK32ORD" : "",
-                  importbyordinal ? "PEIMORD1" : "",
-                  "PEIMPOR2",
-                  isdll ? "PEIERDLL" : "PEIEREXE",
-                  "PEIMDONE",
-                  NULL
-                 );
-    if (sorelocs)
-    {
-        addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
-                  "PERELOC3""RELOC320",
-                  big ? "REL32BIG" : "",
-                  "RELOC32J",
-                  NULL
-                 );
-        //FIXME: the following should be moved out of the above if
-        addLoader(big&6 ? "PERLOHI0" : "",
-                  big&4 ? "PERELLO0" : "",
-                  big&2 ? "PERELHI0" : "",
-                  NULL
-                 );
-    }
-    addLoader("PEMAIN20",
-              ih.entry ? "PEDOJUMP" : "PERETURN",
-              "IDENTSTR""UPX1HEAD",
-              NULL
-             );
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -1720,7 +1728,7 @@ void PackW32Pe::pack(OutputFile *fo)
         jmp_pos = ptr_diff(find_le32(loader,codesize + 4,get_le32("JMPO")),loader);
         patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
     }
-    if (big & 6)
+    if (big_relocs & 6)
         patch_le32(loader,codesize,"DELT", 0u -ih.imagebase - rvamin);
     if (sorelocs && (soimport == 0 || soimport + cimports != crelocs))
         patch_le32(loader,codesize,"BREL",crelocs);
@@ -1742,6 +1750,7 @@ void PackW32Pe::pack(OutputFile *fo)
             patch_le16(loader,codesize,"??",'?' + (ft.cto << 8));
         patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
                    ft.lastcall - ft.calls * 4);
+        const unsigned texv = ih.codebase - rvamin;
         if (texv)
             patch_le32(loader,codesize,"TEXV",texv);
     }

@@ -65,6 +65,7 @@ public:
 
 protected:
     virtual bool testUnpackVersion(int version) const;
+    virtual int buildLoader(const Filter *ft);
 
     unsigned pe_offset;
     bool isrtm;
@@ -78,7 +79,7 @@ protected:
     upx_byte *oimpdlls;
     unsigned soimpdlls;
 
-    int processRelocs();
+    void processRelocs();
     void processRelocs(PackW32Pe_Reloc *);
     void rebuildRelocs(upx_byte *&);
     upx_byte *orelocs;
@@ -113,18 +114,21 @@ protected:
     bool kernel32ordinal;
     unsigned tlsindex;
     unsigned rvamin;
+    unsigned cimports;              // rva of preprocessed imports
+    unsigned crelocs;               // rva of preprocessed fixups
+    int big_relocs;
 
     struct pe_header_t
     {
         // 0x0
-        char    _[4];                // pemagic
+        char    _[4];               // pemagic
         LE16    cpu;
         LE16    objects;
-        char    __[12];              // timestamp + reserved
+        char    __[12];             // timestamp + reserved
         LE16    opthdrsize;
         LE16    flags;
         // optional header
-        char    ___[4];              // coffmagic + linkerversion
+        char    ___[4];             // coffmagic + linkerversion
         LE32    codesize;
         // 0x20
         LE32    datasize;
@@ -136,19 +140,19 @@ protected:
         // nt specific fields
         LE32    imagebase;
         LE32    objectalign;
-        LE32    filealign;           // should set to 0x200 ?
+        LE32    filealign;          // should set to 0x200 ?
         // 0x40
-        char    ____[16];            // versions
+        char    ____[16];           // versions
         // 0x50
         LE32    imagesize;
         LE32    headersize;
-        LE32    chksum;              // should set to 0
+        LE32    chksum;             // should set to 0
         LE16    subsystem;
         LE16    dllflags;
         // 0x60
-        char    _____[20];           // stack + heap sizes
+        char    _____[20];          // stack + heap sizes
         // 0x74
-        LE32    ddirsentries;        // usually 16
+        LE32    ddirsentries;       // usually 16
 
         struct ddirs_t
         {
