@@ -136,8 +136,8 @@ endif
 ###
 
 ifeq ($(target),linux)
-override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
 include $(srcdir)/Makedefs.gcc
+override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
 ifeq ($(arch),i386)
   CCARCH += -march=i386 -mcpu=i686
 endif
@@ -161,7 +161,7 @@ endif	# linux
 ### linux/i386 - Intel C++ 7.x
 ###
 
-ifeq ($(target),linux-intelc70)
+ifeq ($(target),linux-intelc)
 DEPMODE := intelc_linux
 CC = icc
 CXX = icpc
@@ -190,20 +190,21 @@ endif
 ifeq ($(target),linux-bc57)
 ##DEPMODE := XXX_linux
 CC = bc++ -q -3
-CFLAGS = -w -w-aus -w-inl -w!
+CFLAGS = -w -w-aus -w-inl '-w!'
 CFLAGS_OUTPUT = -o$@
 LDFLAGS += -ls
 LINK_EXE_OUTPUT = -e$@
 ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
 endif
+# warning: do _not_ use option `-d' --> incorrect string merging will happen
 ifeq ($(DEBUG),1)
-  CFLAGS += -Od -d
+  CFLAGS += -Od -dc
 else
-  CFLAGS += -O2 -d
+  CFLAGS += -O2 -dc
 endif
 # transform `-lxx -lyy' into `libxx.a libyy.a'
-LDLIBS := $(shell echo "$(LDLIBS)" | perl -pe 's/-l(.*?)\b/lib\1.a/g')
+LDLIBS := $(shell echo "$(LDLIBS)" | perl -pe 's/-l(.+?)\b/lib\1.a/g')
 endif
 
 
@@ -229,7 +230,7 @@ endif
 
 
 ###
-### Atari cross compiler
+### Atari cross compilers
 ###
 
 ifeq ($(target),cross-mint)
@@ -270,7 +271,7 @@ CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
 ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.ex[eE])),)
 ifneq ($(strip $(wildcard $(DJDIR)/bin/cwsdstub.ex[eE])),)
-STUBIFY_EXE = mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $(upx_exe)
+STUBIFY_EXE = mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $@
 endif
 endif
 endif	# djgpp2
@@ -387,12 +388,11 @@ ifeq ($(target),ic)
 o = .obj
 a = .lib
 e = .exe
-CC = icl -nologo -MD
+CC = icl -nologo
 CFLAGS = -W3 -WX
 CXXFLAGS = $(CFLAGS) -EHac -GR
 LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
-LDLIBS = $(DOS_LDLIBS) setargv.obj
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
 
@@ -401,6 +401,15 @@ LIB := $(DOS_LIBDIRS);$(LIB)
 endif
 export LIB
 
+ifeq (1,2)
+  # statically link libc.lib
+  CC += -ML
+  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+else
+  # link against msvcrt.dll
+  CC += -MD
+  LDLIBS = $(DOS_LDLIBS) setargv.obj
+endif
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -525,14 +534,11 @@ endif
 
 all: $(upx_exe)
 
-.PHONY: all mostlyclean clean distclean maintainer-clean untabify tags
-
 $(upx_exe): $(OBJECTS) $(LIBS) $(RESOURCES)
 	$(strip $(CXX_LINK_EXE))
-	$(STUBEDIT_EXE)
-	$(STUBIFY_EXE)
-	$(CHMOD_EXE)
-
+	$(strip $(STUBEDIT_EXE))
+	$(strip $(STUBIFY_EXE))
+	$(strip $(CHMOD_EXE))
 
 mostlyclean:
 	-rm -f *.d *.err *.i *.log *.map *~ gdb-trans*
@@ -541,11 +547,13 @@ clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj *.res *.tds tags TAGS ID
 	-rm -f *.idb *.pdb
 	-rm -f $(upx_exe) upx upx.exe upx.ttp upx_nrv upx_nrv.exe upx_nrv.ttp upx_ucl upx_ucl.exe upx_ucl.ttp
-	-rm -rf .deps
+	-rm -rf .deps _deps
 
 distclean: clean
 
 maintainer-clean: distclean
+
+.PHONY: all mostlyclean clean distclean maintainer-clean
 
 
 # /***********************************************************************

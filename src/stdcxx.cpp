@@ -26,12 +26,18 @@
  */
 
 
+#if 0 && defined(_MSC_VER) && (_MSC_VER >= 1300)
+#  define _Nomemory UNUSED_Nomemory
+#  include <xstddef>
+#  undef _Nomemory
+#endif
+
 //#define WANT_STL
 #include "conf.h"
 #include "stdcxx.h"
 
 
-#if 0
+#if 0 && defined(_MSC_VER) && (_MSC_VER >= 1300)
 #undef _Nomemory
 namespace std {
 void __cdecl _Nomemory() {
@@ -39,6 +45,20 @@ void __cdecl _Nomemory() {
     throw ba;
 }
 }
+#endif
+
+
+#if 1 && defined(__linux__) && (ACC_CC_GNUC >= 0x030400)
+/* this is used by __gnu_cxx::__verbose_terminate_handler() */
+extern "C" {
+char * __attribute__((__weak__)) __cxa_demangle(const char *, char *, size_t *, int *);
+char *__cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status)
+{
+    UNUSED(mangled_name); UNUSED(buf); UNUSED(n);
+    if (status) *status = -1; /* memory_allocation_failure */
+    return NULL;
+}
+} /* extern "C" */
 #endif
 
 

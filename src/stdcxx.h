@@ -89,7 +89,7 @@ private:
 // exceptions & RTTI
 **************************************************************************/
 
-#if defined(__DMC__)
+#if defined(__DMC__) && (__DMC__ < 0x834)
 
 #include <new.h>
 #include <typeinfo.h>
@@ -102,8 +102,7 @@ public:
     virtual ~exception() NOTHROW { }
     virtual const char* what() const NOTHROW { return "exception"; }
 };
-class bad_alloc { };
-};
+}
 
 #else
 
@@ -116,6 +115,8 @@ class bad_alloc { };
 
 #if defined(__BORLANDC__)
 using namespace std;
+#elif defined(__DMC__)
+namespace std { class bad_alloc { }; }
 #elif defined(__EMX__)
 #define std
 #elif defined(__WATCOMC__)

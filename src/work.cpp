@@ -110,7 +110,7 @@ void do_one_file(const char *iname, char *oname)
         }
         else
         {
-            char tname[PATH_MAX+1];
+            char tname[ACC_FN_PATH_MAX+1];
             if (opt->output_name)
                 strcpy(tname,opt->output_name);
             else
@@ -201,7 +201,7 @@ void do_one_file(const char *iname, char *oname)
         else
         {
             // make backup
-            char bakname[PATH_MAX+1];
+            char bakname[ACC_FN_PATH_MAX+1];
             if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
             File::rename(iname,bakname);
@@ -268,7 +268,7 @@ void do_files(int i, int argc, char *argv[])
         infoHeader();
 
         const char *iname = argv[i];
-        char oname[PATH_MAX+1];
+        char oname[ACC_FN_PATH_MAX+1];
         oname[0] = 0;
 
         try {

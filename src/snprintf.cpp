@@ -72,9 +72,9 @@
 
 #undef LLONG
 #undef ULLONG
-#if 1 && defined(upx_int64l)
-#  define LLONG     upx_int64l
-#  define ULLONG    upx_uint64l
+#if 1 && defined(acc_int64l_t)
+#  define LLONG     acc_int64l_t
+#  define ULLONG    acc_uint64l_t
 #else
 #  define LLONG     long int
 #  define ULLONG    unsigned long int

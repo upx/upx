@@ -3,19 +3,19 @@
 #
 # usage:
 #   `make target=linux'             # linux
-#   `make target=djggp2'            # dos32 - djggp2 2.03
+#   `make target=djggp2'            # dos32 - djggp2
 #   `make target=cygwin'            # win32 - cygwin 1.3.x
 #   `make target=mingw32'           # win32 - mingw32
-#   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
+#   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin
 #   `make target=rsxnt'             # win32 - rsxnt
-#   `make target=bc'                # win32 - Borland C++ 5.5.1
-#   `make target=dm'                # win32 - Digital Mars C++ 8.33
-#   `make target=ic'                # win32 - Intel C++ 7.0
-#   `make target=vc'                # win32 - Visual C++ 6
-#   `make target=wc'                # win32 - Watcom C++ 11.0c
-#   `make target=cross-m68k-linux'  # m68k-linux cross compiler
+#   `make target=bc'                # win32 - Borland C++
+#   `make target=dm'                # win32 - Digital Mars C++
+#   `make target=ic'                # win32 - Intel C++
+#   `make target=vc'                # win32 - Visual C++
+#   `make target=wc'                # win32 - Watcom C++
 #   `make target=cross-mingw32'     # i586-mingw32msvc cross compiler
 #   `make target=cross-mint'        # m68k-atari-mint cross compiler
+#   `make target=gcc'               # generic gcc
 #
 
 
@@ -72,13 +72,13 @@ RESOURCES =
 
 override WITH_ZLIB = 1
 
-include $(srcdir)/Makedefs.upx
+include $(srcdir)/Makefile.bld
 
 
 # /***********************************************************************
 # // dependencies
 # ************************************************************************/
 
--include $(srcdir)/Makedefs.dep
+include $(srcdir)/Makedefs.dep
 
 # vi:nowrap

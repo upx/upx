@@ -41,30 +41,30 @@
 #endif
 #include "acc/acc.h"
 #include "acc/acc_ince.h"
+#if !defined(acc_int64l_t) || !defined(acc_uint64l_t)
+#  error "need a 64-bit integer type"
+#endif
 #if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
 #  error "something pulled in <windows.h>"
 #endif
 
 
-#if defined(__BORLANDC__)
+#if (ACC_CC_BORLANDC)
 #  if (__BORLANDC__ < 0x550)
 #    error "need Borland C++ 5.5 or newer"
 #  endif
 #  define __UPX_CDECL       __cdecl
-#  define SIGTYPEENTRY      __cdecl
 #  if (__BORLANDC__ >= 0x560)
 #    pragma warn -use
 #  endif
-#elif defined(__DMC__)
+#elif (ACC_CC_DMC)
 #  define __UPX_CDECL       __cdecl
-#  define SIGTYPEENTRY      __cdecl
-#elif defined(__INTEL_COMPILER)
+#elif (ACC_CC_INTELC)
 #  if (__INTEL_COMPILER < 450)
 #    error "need Intel C++ 4.5 or newer"
 #  endif
-#  if defined(_WIN32)
+#  if (ACC_CC_WIN32 || ACC_CC_WIN64)
 #    define __UPX_CDECL     __cdecl
-#    define SIGTYPEENTRY    __cdecl
 #  elif defined(__linux__)
 #    pragma warning(error: 424)         // #424: extra ";" ignored
 #    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
@@ -74,19 +74,18 @@
 #  else
 #    error "untested platform"
 #  endif
-#elif defined(_MSC_VER)
+#elif (ACC_CC_MSC)
 #  if (_MSC_VER < 1100)
 #    error "need Visual C++ 5.0 or newer"
 #  endif
 #  define __UPX_CDECL       __cdecl
-#  define SIGTYPEENTRY      __cdecl
 #  pragma warning(disable: 4096)        // __cdecl + '...'
 #  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
 #  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
 #  pragma warning(disable: 4514)        // W4: 'function' : unreferenced inline function has been removed
 #  pragma warning(disable: 4710)        // W4: 'function': function not inlined
-#elif defined(__WATCOMC__)
+#elif (ACC_CC_WATCOMC)
 #  if (__WATCOMC__ < 1100)
 #    error "need Watcom C++ 11.0c or newer"
 #  endif
@@ -104,22 +103,6 @@
 //
 **************************************************************************/
 
-// upx_int64l is int_least64_t in <stdint.h> terminology
-#if !defined(upx_int64l)
-#  if (SIZEOF_LONG >= 8)
-#    define upx_int64l      long int
-#    define upx_uint64l     unsigned long int
-#  elif (SIZEOF_LONG_LONG >= 8)
-#    define upx_int64l      acc_llong_t
-#    define upx_uint64l     acc_ullong_t
-#  elif (SIZEOF___INT64 >= 8)
-#    define upx_int64l      acc_int64_t
-#    define upx_uint64l     acc_uint64_t
-#  else
-#    error "need a 64-bit integer type"
-#  endif
-#endif
-
 #if defined(__linux__) && !defined(__unix__)
 #  define __unix__ 1
 #endif
@@ -131,9 +114,13 @@
 #undef small
 #undef tos
 #undef unix
+#if defined(__DMC__)
+#  undef tell
+#endif
 #if defined(__DJGPP__)
-#undef __unix__
-#undef __unix
+#  undef sopen
+#  undef __unix__
+#  undef __unix
 #endif
 
 
@@ -219,47 +206,6 @@
 // portab
 **************************************************************************/
 
-#if !defined(PATH_MAX)
-#  define PATH_MAX          512
-#elif (PATH_MAX < 512)
-#  undef PATH_MAX
-#  define PATH_MAX          512
-#endif
-
-
-#ifndef RETSIGTYPE
-#  define RETSIGTYPE        void
-#endif
-#ifndef SIGTYPEENTRY
-#  define SIGTYPEENTRY
-#endif
-typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
-
-
-#undef MODE_T
-#if defined(HAVE_MODE_T)
-#  define MODE_T            mode_t
-#else
-#  define MODE_T            int
-#endif
-
-
-#if !defined(HAVE_STRCASECMP)
-#  if defined(HAVE_STRICMP)
-#    define strcasecmp      stricmp
-#  else
-#    define strcasecmp      strcmp
-#  endif
-#endif
-#if !defined(HAVE_STRNCASECMP)
-#  if defined(HAVE_STRNICMP)
-#    define strncasecmp     strnicmp
-#  else
-#    define strncasecmp     strncmp
-#  endif
-#endif
-
-
 #ifndef STDIN_FILENO
 #  define STDIN_FILENO      (fileno(stdin))
 #endif
@@ -268,6 +214,14 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #endif
 #ifndef STDERR_FILENO
 #  define STDERR_FILENO     (fileno(stderr))
+#endif
+
+
+#if !defined(HAVE_STRCASECMP) && defined(HAVE_STRICMP)
+#  define strcasecmp      stricmp
+#endif
+#if !defined(HAVE_STRNCASECMP) && defined(HAVE_STRNICMP)
+#  define strncasecmp     strnicmp
 #endif
 
 
@@ -294,14 +248,14 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  if defined(S_IFMT) && defined(S_IFREG)
 #    define S_ISREG(m)      (((m) & S_IFMT) == S_IFREG)
 #  else
-#    error S_ISREG
+#    error "S_ISREG"
 #  endif
 #endif
 #if !defined(S_ISDIR)
 #  if defined(S_IFMT) && defined(S_IFDIR)
 #    define S_ISDIR(m)      (((m) & S_IFMT) == S_IFDIR)
 #  else
-#    error S_ISDIR
+#    error "S_ISDIR"
 #  endif
 #endif
 #if !defined(S_ISCHR)
@@ -315,24 +269,6 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define basename            upx_basename
 #define index               upx_index
 #define outp                upx_outp
-
-
-#if 0
-#  define COMPILE_TIME_ASSERT(expr) \
-     { typedef char __upx_compile_time_assert_fail[1 - 2 * !(expr)]; \
-       switch (sizeof(__upx_compile_time_assert_fail)) { \
-         case 1: case !(expr): break; \
-     } }
-#elif defined(__SC__)
-#  define COMPILE_TIME_ASSERT(expr) \
-     { switch (1) { case 1: case !(expr): break; } }
-#elif 0
-#  define COMPILE_TIME_ASSERT(expr) \
-     { typedef int __upx_compile_time_assert_fail[1 - 2 * !(expr)]; typedef int a[sizeof(__upx_compile_time_assert_fail]; }
-#else
-#  define COMPILE_TIME_ASSERT(expr) \
-     { typedef int __upx_compile_time_assert_fail[1 - 2 * !(expr)]; }
-#endif
 
 
 #undef __attribute_packed
@@ -354,20 +290,8 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  define NOTHROW
 #endif
 
-
-/*************************************************************************
-// file io
-**************************************************************************/
-
 #if !defined(O_BINARY)
 #  define O_BINARY  0
-#endif
-
-#if defined(__DMC__)
-#  undef tell
-#endif
-#if defined(__DJGPP__)
-#  undef sopen
 #endif
 
 #ifndef OPTIONS_VAR
@@ -380,6 +304,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 **************************************************************************/
 
 #define UNUSED              ACC_UNUSED
+#define COMPILE_TIME_ASSERT ACC_COMPILE_TIME_ASSERT
 
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 

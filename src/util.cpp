@@ -42,28 +42,28 @@
 // qsort() util
 **************************************************************************/
 
-int __UPX_CDECL be16_compare(const void *e1, const void *e2)
+int __acc_cdecl_qsort be16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_be16(e1);
     const unsigned d2 = get_be16(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL be32_compare(const void *e1, const void *e2)
+int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_be32(e1);
     const unsigned d2 = get_be32(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL le16_compare(const void *e1, const void *e2)
+int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le16(e1);
     const unsigned d2 = get_le16(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL le32_compare(const void *e1, const void *e2)
+int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le32(e1);
     const unsigned d2 = get_le32(e2);
@@ -71,28 +71,28 @@ int __UPX_CDECL le32_compare(const void *e1, const void *e2)
 }
 
 
-int __UPX_CDECL be16_compare_signed(const void *e1, const void *e2)
+int __acc_cdecl_qsort be16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_be16_signed(e1);
     const int d2 = get_be16_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL be32_compare_signed(const void *e1, const void *e2)
+int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_be32_signed(e1);
     const int d2 = get_be32_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL le16_compare_signed(const void *e1, const void *e2)
+int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le16_signed(e1);
     const int d2 = get_le16_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __UPX_CDECL le32_compare_signed(const void *e1, const void *e2)
+int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le32_signed(e1);
     const int d2 = get_le32_signed(e2);
@@ -533,7 +533,7 @@ unsigned get_ratio(unsigned u_len, unsigned c_len)
     const unsigned n = 1000000;
     if (u_len <= 0)
         return c_len <= 0 ? 0 : n;
-    return (unsigned) ((c_len * (upx_uint64l)n) / u_len) + 5;
+    return (unsigned) ((c_len * (acc_uint64l_t)n) / u_len) + 5;
 }
 
 

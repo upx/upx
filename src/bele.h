@@ -339,18 +339,18 @@ inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 **************************************************************************/
 
 // for use with qsort()
-int __UPX_CDECL be16_compare(const void *e1, const void *e2);
-int __UPX_CDECL be24_compare(const void *e1, const void *e2);
-int __UPX_CDECL be32_compare(const void *e1, const void *e2);
-int __UPX_CDECL le16_compare(const void *e1, const void *e2);
-int __UPX_CDECL le24_compare(const void *e1, const void *e2);
-int __UPX_CDECL le32_compare(const void *e1, const void *e2);
-int __UPX_CDECL be16_compare_signed(const void *e1, const void *e2);
-int __UPX_CDECL be24_compare_signed(const void *e1, const void *e2);
-int __UPX_CDECL be32_compare_signed(const void *e1, const void *e2);
-int __UPX_CDECL le16_compare_signed(const void *e1, const void *e2);
-int __UPX_CDECL le24_compare_signed(const void *e1, const void *e2);
-int __UPX_CDECL le32_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort be16_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort be24_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort le24_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort be16_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort be24_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort le24_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...

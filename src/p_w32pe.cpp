@@ -227,7 +227,7 @@ public:
     void dump() const;
 
 private:
-    static int compare(const void *p1,const void *p2)
+    static int __acc_cdecl_qsort compare(const void *p1,const void *p2)
     {
         const interval *i1 = (const interval*) p1;
         const interval *i2 = (const interval*) p2;
@@ -514,7 +514,7 @@ unsigned PackW32Pe::processImports() // pass 1
         bool       isk32;
         unsigned   _;           // padding to 32
 
-        static int compare(const void *p1, const void *p2)
+        static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
         {
             const udll *u1 = * (const udll * const *) p1;
             const udll *u2 = * (const udll * const *) p2;

@@ -208,7 +208,7 @@ void e_envopt(const char *n)
 #endif /* defined(OPTIONS_VAR) */
 
 
-RETSIGTYPE SIGTYPEENTRY e_sighandler(int signum)
+void __acc_cdecl_sighandler e_sighandler(int signum)
 {
     UNUSED(signum);
     e_exit(EXIT_FATAL);
@@ -321,7 +321,7 @@ static void set_output_name(const char *n, bool allow_m)
         fprintf(stderr,"%s: missing output name\n",argv0);
         e_usage();
     }
-    if (strlen(n) >= PATH_MAX - 4)
+    if (strlen(n) >= ACC_FN_PATH_MAX - 4)
     {
         fprintf(stderr,"%s: output name too long\n",argv0);
         e_usage();
@@ -1018,9 +1018,9 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
     COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
 
-    COMPILE_TIME_ASSERT(sizeof(upx_int64l) >= 8);
-    COMPILE_TIME_ASSERT(sizeof(upx_int64l) >= sizeof(long));
-    COMPILE_TIME_ASSERT(sizeof(upx_int64l) == sizeof(upx_uint64l));
+    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) >= 8);
+    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) >= sizeof(long));
+    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) == sizeof(acc_uint64l_t));
 
     COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long));
     COMPILE_TIME_ASSERT(((off_t) -1) < 0);
@@ -1034,50 +1034,24 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
 
-#if defined(__GNUC__) || (ACC_CC_INTELC >= 700)
+#if (ACC_CC_GNUC) || (ACC_CC_INTELC && __INTEL_COMPILER >= 700)
     COMPILE_TIME_ASSERT(__alignof__(BE16) == 1);
     COMPILE_TIME_ASSERT(__alignof__(BE32) == 1);
     COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);
     COMPILE_TIME_ASSERT(__alignof__(LE32) == 1);
 #endif
 
-    COMPILE_TIME_ASSERT((((unsigned)1    << 31) >> 31) == 1);
-    COMPILE_TIME_ASSERT((((upx_uint64l)1 << 63) >> 63) == 1);
+    COMPILE_TIME_ASSERT(((((unsigned)1      << 31) + 1) >> 31) == 1);
+    COMPILE_TIME_ASSERT(((((acc_uint64l_t)1 << 63) + 1) >> 63) == 1);
 
-#if !defined(__WATCOMC__)   // Watcom C does not support inner classes
-    struct align_assertion_1a_t
-    {
-        struct foo_t {
-            char c1;
-            LE16 v[4];
-        } __attribute_packed;
-        foo_t d[3];
-    } __attribute_packed;
-    struct align_assertion_1b_t
-    {
-        struct foo_t {
-            char c1;
-            char v[4*2];
-        } __attribute_packed;
-        foo_t d[3];
-    } __attribute_packed;
-    struct align_assertion_2a_t
-    {
-        struct foo_t {
-            char c1;
-            LE32 v[4];
-        } __attribute_packed;
-        foo_t d[3];
-    } __attribute_packed;
-    struct align_assertion_2b_t
-    {
-        struct foo_t {
-            char c1;
-            char v[4*4];
-        } __attribute_packed;
-        foo_t d[3];
-    } __attribute_packed;
-
+    struct foo1a_t { char c1; LE16 v[4]; } __attribute_packed;
+    struct align_assertion_1a_t { foo1a_t d[3]; } __attribute_packed;
+    struct foo1b_t { char c1; char v[4*2]; } __attribute_packed;
+    struct align_assertion_1b_t { foo1b_t d[3]; } __attribute_packed;
+    struct foo2a_t { char c1; LE32 v[4]; } __attribute_packed;
+    struct align_assertion_2a_t { foo2a_t d[3]; } __attribute_packed;
+    struct foo2b_t { char c1; char v[4*4]; } __attribute_packed;
+    struct align_assertion_2b_t { foo2b_t d[3]; } __attribute_packed;
     //printf("%d\n", (int) sizeof(align_assertion_1a_t));
     //printf("%d\n", (int) sizeof(align_assertion_1b_t));
     //printf("%d\n", (int) sizeof(align_assertion_2a_t));
@@ -1086,13 +1060,16 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
     COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
-#endif
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
     assert(strlen(UPX_VERSION_STRING4) == 4);
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
     const unsigned char dd[4] = { 0xff, 0xfe, 0xfd, 0xfc };
+    assert(upx_adler32(dd, 4) == 0x09f003f7);
+    assert(upx_adler32(dd, 4, 0) == 0x09ec03f6);
+    assert(upx_adler32(dd, 4, 1) == 0x09f003f7);
+
     assert(get_be16(dd) == 0xfffe);
     assert(get_be16_signed(dd) == -2);
     assert(get_be24(dd) == 0xfffefd);
@@ -1118,7 +1095,7 @@ void upx_sanity_check(void)
 
 #if !defined(WITH_GUI)
 
-int __UPX_CDECL main(int argc, char *argv[])
+int __acc_cdecl_main main(int argc, char *argv[])
 {
     int i;
     static char default_argv0[] = "upx";
