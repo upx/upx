@@ -208,6 +208,7 @@ static Packer *getUnpacker(InputFile *f)
 
 static void assertPacker(const Packer *p)
 {
+    assert(p->getVersion() >= 11);
     assert(strlen(p->getName()) <= 13);
 }
 
