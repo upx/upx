@@ -26,7 +26,7 @@
 
 
 %define         jmps    jmp short
-%define         jmpl    jmp dword
+%define         jmpn    jmp near
 %include        "macros.ash"
 
                 BITS    32
@@ -65,7 +65,7 @@ start:
                 pop     edi
                 or      ebp, byte -1
                 push    edi
-                jmpl    .1 + 'JMPD'
+                jmpn    .1+'JMPD'
 .1:
 %include        "header.ash"
 
@@ -125,7 +125,7 @@ cutpoint:
                 pop     es
                 lea     esp, [ebp + 'ESP0']
 
-                jmpl    .1+'JMPO'
+                jmpn    .1+'JMPO'
 .1:
 
 ; =============
