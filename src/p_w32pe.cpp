@@ -1660,7 +1660,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     handleStub(fi,fo,pe_offset);
     const unsigned usize = ih.imagesize;
-    const unsigned xtrasize = 65536+IDSIZE(PEDIR_IMPORT)+IDSIZE(PEDIR_BOUNDIM)+IDSIZE(PEDIR_IAT)+IDSIZE(PEDIR_DELAYIMP)+IDSIZE(PEDIR_RELOC);
+    const unsigned xtrasize = UPX_MAX(ih.datasize, 65536u) + IDSIZE(PEDIR_IMPORT) + IDSIZE(PEDIR_BOUNDIM) + IDSIZE(PEDIR_IAT) + IDSIZE(PEDIR_DELAYIMP) + IDSIZE(PEDIR_RELOC);
     ibuf.alloc(usize + xtrasize);
 
     // BOUND IMPORT support. FIXME: is this ok?
