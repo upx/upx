@@ -48,7 +48,7 @@ struct Linker::jump
 
 Linker::Linker(const void *pdata, int plen, int pinfo)
 {
-    iloader = new char[(ilen = plen) + 4096];
+    iloader = new char[(ilen = plen) + 8192];
     memcpy(iloader,pdata,plen);
     oloader = new char[plen];
     olen = 0;
@@ -57,7 +57,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     info = pinfo;
     njumps = nsections = frozen = 0;
     jumps = new jump[200];
-#define NSECTIONS 350
+#define NSECTIONS 550
     sections = new section[NSECTIONS];
 
     char *p = iloader + info;
@@ -139,7 +139,9 @@ int Linker::addSection(const char *sect)
                     olen += sections[ic].len;
                     break;
                 }
-            //printf("%8.8s",sect);
+            if (ic==nsections) {
+                printf("%8.8s",sect);
+            }
             assert(ic!=nsections);
         }
         sect += 8;
