@@ -1,7 +1,10 @@
 #  Makefile for sstrip
 
 sstrip: sstrip.c
-	gcc -O2 -g -Wall -W -o sstrip $<
+	gcc -O2 -g -Wall -W -o $@ $<
 
-clean:
+mostlyclean clean distclean maintainer-clean:
 	rm -f sstrip
+
+.PHONY: all mostlyclean clean distclean maintainer-clean
+

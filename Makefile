@@ -1,11 +1,7 @@
 # Toplevel Makefile for UPX
 
-all:
-	$(MAKE) -C src/stub
-	$(MAKE) -C src
-	$(MAKE) -C doc
-
-mostlyclean clean distclean maintainer-clean:
+all mostlyclean clean distclean maintainer-clean:
+	$(MAKE) -C src/stub/util/sstrip $@
 	$(MAKE) -C src/stub $@
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
@@ -14,8 +10,7 @@ dist: distclean
 	false
 
 zip:
-	cd .. && rm -f upx-currenz.zip && zip -r upx-current.zip upx
-
+	cd .. && rm -f upx-current.zip && zip -r upx-current.zip upx
 
 cvs-admin-ko:
 	cvs admin -ko .
