@@ -231,13 +231,13 @@ void InputFile::sopen(const char *name, int flags, int shflags)
 }
 
 
-int InputFile::read(void * buf, int len)
+int InputFile::read(void *buf, int len)
 {
     return super::read(buf,len);
 }
 
 
-int InputFile::readx(void * buf, int len)
+int InputFile::readx(void *buf, int len)
 {
     return super::readx(buf,len);
 }
@@ -331,7 +331,7 @@ bool OutputFile::openStdout(int flags, bool force)
 }
 
 
-void OutputFile::write(const void * buf, int len)
+void OutputFile::write(const void *buf, int len)
 {
     super::write(buf,len);
     bytes_written += len;
@@ -346,7 +346,7 @@ void OutputFile::dump(const char *name, const void *buf, int len, int flags)
     OutputFile f;
     f.open(name, flags, 0666);
     f.write(buf, len);
-    f.close();
+    f.closex();
 }
 
 
@@ -360,7 +360,7 @@ MemoryOutputFile::MemoryOutputFile() :
 }
 
 
-void MemoryOutputFile::write(const void * buf, int len)
+void MemoryOutputFile::write(const void *buf, int len)
 {
     if (!isOpen() || len < 0)
         throwIOException("bad write");
