@@ -48,8 +48,7 @@ bool maketempname(char *ofilename, const char *ifilename,
 bool makebakname(char *ofilename, const char *ifilename, bool force=true);
 bool isafile(int fd);
 
-unsigned get_ratio(unsigned long packedsize, unsigned long size,
-                   unsigned long scale=100);
+unsigned get_ratio(unsigned u_len, unsigned c_len);
 char *center_string(const char *name, size_t s);
 
 

@@ -443,23 +443,21 @@ bool isafile(int fd)
 
 
 /*************************************************************************
-//
+// return compression ratio, where 100% == 1000*1000 == 1e6
 **************************************************************************/
 
-unsigned get_ratio (unsigned long packedsize, unsigned long size,
-                    unsigned long scale)
+unsigned get_ratio (unsigned u_len, unsigned c_len)
 {
-    unsigned long n1, n2;
-
-    n1 = 100 * scale; n2 = 1;
-    if (size <= 0)
-        return (unsigned) n1;
-    while (n1 > 1 && packedsize > (ULONG_MAX / n1))
-    {
-        n1 /= 10;
-        n2 *= 10;
-    }
-    return (unsigned) ((packedsize * n1) / (size / n2)) + 5;
+#if defined(__GNUC__)
+    const unsigned long long n = 1000000;
+#elif defined(_MSC_VER)
+    const unsigned __int64 n = 1000000;
+#else
+#error
+#endif
+    if (u_len <= 0)
+        return (unsigned) n;
+    return (unsigned) ((c_len * n) / u_len) + 5;
 }
 
 

@@ -117,20 +117,15 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
     char r[7+1];
     const char *f;
 
-#if 0
-    unsigned ratio = get_ratio(fc_len,fu_len);
-    upx_snprintf(r,sizeof(r)," %1d.%03d", ratio / 10000, (ratio % 10000) / 10);
-#else
-    unsigned ratio = get_ratio(fc_len,fu_len, 1000);
-    upx_snprintf(r,sizeof(r),"%3d.%02d%%", ratio / 1000, (ratio % 1000) / 10);
-    UNUSED(u_len); UNUSED(c_len);
-#endif
+    unsigned ratio = get_ratio(fu_len, fc_len);
+    upx_snprintf(r,sizeof(r),"%3d.%02d%%", ratio / 10000, (ratio % 10000) / 100);
     if (decompress)
         f = "%10ld <-%10ld  %7s  %13s  %s";
     else
         f = "%10ld ->%10ld  %7s  %13s  %s";
     upx_snprintf(buf,sizeof(buf),f,
                  fu_len, fc_len, r, center_string(format_name,13), filename);
+    UNUSED(u_len); UNUSED(c_len);
     return buf;
 }
 
@@ -351,7 +346,7 @@ void __UPX_ENTRY UiPacker::callback(upx_uint isize, upx_uint osize, int state, v
 
 void UiPacker::doCallback(unsigned isize, unsigned osize)
 {
-    static const char spinner[] = "|\\-/";
+    static const char spinner[] = "|/-\\";
 
     if (s->pass < 0)            // no callback wanted
         return;
@@ -373,8 +368,13 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
 
     // compute progress position
     int pos = -1;
-    if (isize > 0)
-        pos = get_ratio(isize,s->u_len) * s->bar_len / 10000;
+    if (isize >= s->u_len)
+        pos = s->bar_len;
+    else if (isize > 0)
+    {
+        pos = get_ratio(s->u_len, isize) * s->bar_len / 1000000;
+        assert(pos >= 0); assert(pos <= s->bar_len);
+    }
     if (pos < s->pos)
         return;
     if (pos < 0 && pos == s->pos)
@@ -397,12 +397,12 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     *m++ = ']';
 
     // compute current compression ratio
-    unsigned ratio = 100*100;
+    unsigned ratio = 1000000;
     if (osize > 0)
-        ratio = get_ratio(osize,isize);
+        ratio = get_ratio(isize, osize);
 
     sprintf(m,"  %3d.%1d%%  %c ",
-            ratio / 100, (ratio % 100) / 10,
+            ratio / 10000, (ratio % 10000) / 1000,
             spinner[s->counter]);
     assert((int)strlen(s->msg_buf) < 1 + 80);
 
