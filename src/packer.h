@@ -48,10 +48,12 @@ class Filter;
 class PackHeader
 {
 public:
-    bool fillPackHeader(upx_bytep buf, unsigned len);
-    bool checkPackHeader(const upx_bytep hbuf, int hlen) const;
-    void putPackHeader(upx_bytep buf, unsigned len);
+    PackHeader();
+
     int getPackHeaderSize() const;
+
+    void putPackHeader(upx_bytep p);
+    bool fillPackHeader(const upx_bytep b, int blen);
 
 public:
     // fields stored in compressed file
@@ -173,7 +175,7 @@ protected:
 
 
     // packheader handling
-    virtual void putPackHeader(upx_byte *buf, unsigned len);
+    virtual int patchPackHeader(void *b, int blen);
     virtual bool readPackHeader(unsigned len, off_t seek_offset,
                                 upx_byte *buf=NULL);
 

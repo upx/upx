@@ -562,10 +562,18 @@ void Packer::updatePackHeader()
 }
 
 
-void Packer::putPackHeader(upx_bytep buf, unsigned len)
+int Packer::patchPackHeader(void *b, int blen)
 {
+    const int size = ph.getPackHeaderSize();
     assert(isValidFilter(ph.filter));
-    ph.putPackHeader(buf, len);
+
+    int boff = find_le32(b, blen, ph.magic);
+    checkPatch(b, blen, boff, size);
+
+    unsigned char *p = (unsigned char *)b + boff;
+    ph.putPackHeader(p);
+
+    return boff;
 }
 
 
@@ -589,8 +597,6 @@ bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
     len = fi->read(buf,len);
 
     if (!ph.fillPackHeader(buf, len))
-        return false;
-    if (!ph.checkPackHeader(buf + ph.buf_offset, len - ph.buf_offset))
         return false;
 
     if (ph.version > getVersion())
@@ -641,7 +647,7 @@ void Packer::checkPatch(void *b, int blen, int boff, int size)
     }
     if (b == NULL || blen <= 0 || boff < 0 || size <= 0)
         throwBadLoader();
-    if (boff + size < 0 || boff + size > blen)
+    if (boff + size <= 0 || boff + size > blen)
         throwBadLoader();
     //printf("checkPatch: %p %5d %5d %d\n", b, blen, boff, size);
     if (b == last_patch)
@@ -913,7 +919,7 @@ void Packer::addSection(const char *sname, const char *sdata, unsigned len)
 int Packer::getLoaderSection(const char *name, int *slen)
 {
     int ostart = linker->getSection(name, slen);
-    if (ostart < 0)
+    if (ostart <= 0)
         throwBadLoader();
     return ostart;
 }
@@ -923,7 +929,7 @@ const upx_byte *Packer::getLoader() const
 {
     int size = -1;
     const char *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size < 0)
+    if (oloader == NULL || size <= 0)
         throwBadLoader();
     return (const upx_byte *) oloader;
 }
@@ -933,7 +939,7 @@ int Packer::getLoaderSize() const
 {
     int size = -1;
     const char *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size < 0)
+    if (oloader == NULL || size <= 0)
         throwBadLoader();
     return size;
 }

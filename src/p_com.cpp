@@ -78,7 +78,7 @@ bool PackCom::canPack()
         return false;
     if (!fn_has_ext(fi->getName(),"com"))
         return false;
-    if (find_le32(buf,128,UPX_MAGIC_LE32))
+    if (find_le32(buf,128,UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
     if (file_size < 1024)
         throwCantPack("file is too small");
@@ -111,6 +111,9 @@ void PackCom::patchLoader(OutputFile *fo,
         assert(calls > 0);
         patch_le16(loader,lsize,"CT",calls);
     }
+
+    patchPackHeader(loader,e_len);
+
     // NOTE: Depends on: decompr_start == cutpoint+1 !!!
     patch_le16(loader,e_len,"JM",upper_end - 0xff - d_len - getLoaderSection("UPX1HEAD"));
     loader[getLoaderSection("COMSUBSI") - 1] = (upx_byte) -e_len;
@@ -212,7 +215,6 @@ void PackCom::pack(OutputFile *fo)
     const int lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
-    putPackHeader(loader,lsize);
 
     const unsigned calls = ft.id % 3 ? ft.lastcall - 2 * ft.calls : ft.calls;
     patchLoader(fo, loader, lsize, calls, overlapoh);

@@ -69,7 +69,7 @@ bool PackUnix::canPack()
     unsigned char buf[256];
     fi->seek(-(long)sizeof(buf), SEEK_END);
     fi->readx(buf,sizeof(buf));
-    if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32))  // note: always le32
+    if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32) >= 0)  // note: always le32
         throwAlreadyPacked();
 
     return true;
@@ -187,7 +187,7 @@ void PackUnix::pack(OutputFile *fo)
     // write packheader
     const int hsize = ph.getPackHeaderSize();
     set_le32(obuf, ph.magic);               // note: always le32
-    putPackHeader(obuf, hsize);
+    patchPackHeader(obuf, hsize);
     fo->write(obuf, hsize);
 
     // write overlay offset (needed for decompression)

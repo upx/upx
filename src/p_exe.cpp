@@ -229,14 +229,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
     set_le16 (crel_save,ones);
     set_le16 (crel_save+2,seg_high);
 
-#if 0 // def TESTING
-    //if (opt->debug >= 3)
-    {
-        FILE *f1=fopen ("x.rel","wb");
-        fwrite (crel_save,crel-crel_save,1,f1);
-        fclose (f1);
-    }
-#endif
+    //OutputFile::dump("x.rel", crel_save, crel - crel_save);
     return crel - crel_save;
 }
 
@@ -250,7 +243,7 @@ void PackExe::pack(OutputFile *fo)
     unsigned ic;
     unsigned char flag = 0;
 
-    char extra_info[32];
+    unsigned char extra_info[32];
     unsigned eisize = 0;
 
     //
@@ -271,7 +264,7 @@ void PackExe::pack(OutputFile *fo)
     fi->seek(ih.headsize16*16,SEEK_SET);
     fi->readx(ibuf,imagesize);
 
-    if (find_le32(ibuf,imagesize < 127 ? imagesize : 127, UPX_MAGIC_LE32))
+    if (find_le32(ibuf, UPX_MAX(imagesize, 127u), UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
 
     // relocations
@@ -420,7 +413,6 @@ void PackExe::pack(OutputFile *fo)
     //OutputFile::dump("xxloader.dat", loader, lsize);
 
     // patch loader
-    putPackHeader(loader,lsize);
     const unsigned e_len = getLoaderSection("EXECUTPO");
     const unsigned d_len = lsize - e_len;
     assert((e_len&15) == 0);
@@ -452,27 +444,33 @@ void PackExe::pack(OutputFile *fo)
         flag |= MAXMEM;
     }
 
-    putPackHeader(loader,lsize);
-//    upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
-    upx_bytep p = NULL;
-    if (p == NULL)
-        throwBadLoader();
     if (flag & USEJUMP)
     {
-        memcpy(p,&ih.ip,4);
+        // I use a relocation entry to set the original cs
+        unsigned n = find_le32(loader,lsize,get_le32("IPCS"));
+        patch_le32(loader,lsize,get_le32("IPCS"), ih.cs*0x10000 + ih.ip);
+        n += packedsize + 2;
+        oh.relocs = 1;
+        oh.firstreloc = (n&0xf) + ((n>>4)<<16);
     }
     else
     {
         patch_le16(loader,lsize,"IP",ih.ip);
         if (ih.cs)
             patch_le16(loader,lsize,"CS",ih.cs);
+        oh.relocs = 0;
+        oh.firstreloc = ih.cs*0x10000 + ih.ip;
     }
+    oh.relocoffs = offsetof(exe_header_t, firstreloc);
+
     if (flag & SP)
         patch_le16(loader,lsize,"SP",ih.sp);
     if (flag & SS)
         patch_le16(loader,lsize,"SS",ih.ss);
     if (relocsize)
         patch_le16(loader,lsize,"RS",(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? 0 : MAXRELOCS) - relocsize);
+
+    patchPackHeader(loader,e_len);
 
     patch_le16(loader,e_len,"BX",0x800F + 0x10*((packedsize&15)+1) - 0x10);
     patch_le16(loader,e_len,"BP",(packedsize&15)+1);
@@ -485,13 +483,6 @@ void PackExe::pack(OutputFile *fo)
     // finish --stub support
     //if (ih.relocoffs >= 0x40 && memcmp(&ih.relocoffs,">TIPPACH",8))
     //    throwCantPack("FIXME");
-    // I use a relocation entry to set the original cs
-    oh.relocs = (flag & USEJUMP) ? 1 : 0;
-    oh.relocoffs = (char*)(&oh.firstreloc)-(char*)&oh;
-    oh.firstreloc = (p-loader) + packedsize + 2;
-    oh.firstreloc = (oh.firstreloc&0xf)+((oh.firstreloc>>4)<<16);
-    if (!(flag & USEJUMP))
-        oh.firstreloc = ih.cs*0x10000 + ih.ip;
 
     extra_info[eisize++] = flag;
     const unsigned outputlen = sizeof(oh)+lsize+packedsize+eisize;
@@ -510,6 +501,7 @@ void PackExe::pack(OutputFile *fo)
     fo->write(obuf,packedsize);
     fo->write(loader+e_len,d_len);      // decompressor
     fo->write(extra_info,eisize);
+    assert(eisize <= 9);
 #if 0
     printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
     printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);

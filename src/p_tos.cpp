@@ -295,7 +295,7 @@ bool PackTos::canPack()
 
     unsigned char buf[512];
     fi->readx(buf,sizeof(buf));
-    if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32))
+    if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
 
     if (!checkFileHeader())
@@ -467,6 +467,7 @@ void PackTos::pack(OutputFile *fo)
     memcpy(loader,getLoader(),o_text);
 
     // patch loader
+    patchPackHeader(loader,o_text);
     if (!opt->small)
         patchVersion(loader,o_text);
     //   patch "subq.l #1,d0" or "subq.w #1,d0" - see "up41" below
@@ -493,8 +494,6 @@ void PackTos::pack(OutputFile *fo)
     patch_be32(loader,o_text,"up13",i_bss);               // p_blen
     patch_be32(loader,o_text,"up12",i_data);              // p_dlen
     patch_be32(loader,o_text,"up11",i_text);              // p_tlen
-
-    putPackHeader(loader,o_text);
 
     // patch decompressor
     upx_byte *p = obuf + d_off;

@@ -31,13 +31,22 @@
 
 
 /*************************************************************************
-// packheader
+// PackHeader
 //
 // We try to be able to unpack UPX 0.7x (versions 8 & 9) and at
 // least to detect older versions, so this is a little bit messy.
 **************************************************************************/
 
+PackHeader::PackHeader() :
+    version(-1), format(-1)
+{
+}
+
+
+/*************************************************************************
 // simple checksum for the header itself (since version 10)
+**************************************************************************/
+
 static unsigned char get_packheader_checksum(const upx_bytep buf, int len)
 {
     assert(get_le32(buf) == UPX_MAGIC_LE32);
@@ -57,8 +66,11 @@ static unsigned char get_packheader_checksum(const upx_bytep buf, int len)
 //
 **************************************************************************/
 
-static int get_packheader_size(int version, int format)
+int PackHeader::getPackHeaderSize() const
 {
+    if (format < 0 || version < 0)
+        throwInternalError("getPackHeaderSize");
+
     int n = 0;
     if (version <= 3)
         n = 24;
@@ -80,15 +92,9 @@ static int get_packheader_size(int version, int format)
         else
             n = 32;
     }
-    if (n == 0)
+    if (n < 20)
         throwCantUnpack("unknown header version");
     return n;
-}
-
-
-int PackHeader::getPackHeaderSize() const
-{
-    return get_packheader_size(version, format);
 }
 
 
@@ -96,64 +102,61 @@ int PackHeader::getPackHeaderSize() const
 //
 **************************************************************************/
 
-void PackHeader::putPackHeader(upx_bytep buf, unsigned len)
+void PackHeader::putPackHeader(upx_bytep p)
 {
 #if defined(UNUPX)
     throwBadLoader();
 #else
-    int offset = find_le32(buf,len,magic);
-    if (offset < 0)
-        throwBadLoader();
-    upx_bytep l = buf + offset;
+    assert(get_le32(p) == UPX_MAGIC_LE32);
 
-    l[4] = (unsigned char) version;
-    l[5] = (unsigned char) format;
-    l[6] = (unsigned char) method;
-    l[7] = (unsigned char) level;
+    p[4] = (unsigned char) version;
+    p[5] = (unsigned char) format;
+    p[6] = (unsigned char) method;
+    p[7] = (unsigned char) level;
 
     // the new variable length header
     if (format < 128)
     {
-        set_le32(l+8,u_adler);
-        set_le32(l+12,c_adler);
+        set_le32(p+8,u_adler);
+        set_le32(p+12,c_adler);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS)
         {
-            set_le16(l+16,u_len);
-            set_le16(l+18,c_len);
-            l[20] = (unsigned char) filter;
+            set_le16(p+16,u_len);
+            set_le16(p+18,c_len);
+            p[20] = (unsigned char) filter;
         }
         else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH)
         {
-            set_le24(l+16,u_len);
-            set_le24(l+19,c_len);
-            set_le24(l+22,u_file_size);
-            l[25] = (unsigned char) filter;
+            set_le24(p+16,u_len);
+            set_le24(p+19,c_len);
+            set_le24(p+22,u_file_size);
+            p[25] = (unsigned char) filter;
         }
         else
         {
-            set_le32(l+16,u_len);
-            set_le32(l+20,c_len);
-            set_le32(l+24,u_file_size);
-            l[28] = (unsigned char) filter;
-            l[29] = (unsigned char) filter_cto;
-            l[30] = 0;
+            set_le32(p+16,u_len);
+            set_le32(p+20,c_len);
+            set_le32(p+24,u_file_size);
+            p[28] = (unsigned char) filter;
+            p[29] = (unsigned char) filter_cto;
+            p[30] = 0;
         }
     }
     else
     {
-        set_be32(l+8,u_len);
-        set_be32(l+12,c_len);
-        set_be32(l+16,u_adler);
-        set_be32(l+20,c_adler);
-        set_be32(l+24,u_file_size);
-        l[28] = (unsigned char) filter;
-        l[29] = (unsigned char) filter_cto;
-        l[30] = 0;
+        set_be32(p+8,u_len);
+        set_be32(p+12,c_len);
+        set_be32(p+16,u_adler);
+        set_be32(p+20,c_adler);
+        set_be32(p+24,u_file_size);
+        p[28] = (unsigned char) filter;
+        p[29] = (unsigned char) filter_cto;
+        p[30] = 0;
     }
 
     // store header_checksum
-    const int hs = getPackHeaderSize();
-    l[hs - 1] = get_packheader_checksum(l, hs - 1);
+    const int size = getPackHeaderSize();
+    p[size - 1] = get_packheader_checksum(p, size - 1);
 #endif /* UNUPX */
 }
 
@@ -162,70 +165,72 @@ void PackHeader::putPackHeader(upx_bytep buf, unsigned len)
 //
 **************************************************************************/
 
-bool PackHeader::fillPackHeader(upx_bytep buf, unsigned len)
+bool PackHeader::fillPackHeader(const upx_bytep buf, int blen)
 {
-    int offset = find_le32(buf,len,magic);
-    if (offset < 0)
-        return false;
-    const int hlen = len - offset;
-    if (hlen < 8)
+    int boff = find_le32(buf, blen, magic);
+    if (boff < 0)
         return false;
 
-    upx_bytep l = buf + offset;
-    buf_offset = offset;
+    if (boff + 8 <= 0 || boff + 8 > blen)
+        throwCantUnpack("header corrupted 1");
 
-    version = l[4];
-    format = l[5];
-    method = l[6];
-    level = l[7];
+    const upx_bytep p = buf + boff;
+
+    version = p[4];
+    format = p[5];
+    method = p[6];
+    level = p[7];
     filter_cto = 0;
 
-    const int hs = getPackHeaderSize();
-    if (hs > hlen)
-        throwCantUnpack("header corrupted");
+    const int size = getPackHeaderSize();
+    if (boff + size <= 0 || boff + size > blen)
+        throwCantUnpack("header corrupted 2");
 
-    // the new variable length header
+    //
+    // decode the new variable length header
+    //
+
     int off_filter = 0;
     if (format < 128)
     {
-        u_adler = get_le32(l+8);
-        c_adler = get_le32(l+12);
+        u_adler = get_le32(p+8);
+        c_adler = get_le32(p+12);
         if (format == UPX_F_DOS_COM || format == UPX_F_DOS_SYS)
         {
-            u_len = get_le16(l+16);
-            c_len = get_le16(l+18);
+            u_len = get_le16(p+16);
+            c_len = get_le16(p+18);
             u_file_size = u_len;
             off_filter = 20;
         }
         else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH)
         {
-            u_len = get_le24(l+16);
-            c_len = get_le24(l+19);
-            u_file_size = get_le24(l+22);
+            u_len = get_le24(p+16);
+            c_len = get_le24(p+19);
+            u_file_size = get_le24(p+22);
             off_filter = 25;
         }
         else
         {
-            u_len = get_le32(l+16);
-            c_len = get_le32(l+20);
-            u_file_size = get_le32(l+24);
+            u_len = get_le32(p+16);
+            c_len = get_le32(p+20);
+            u_file_size = get_le32(p+24);
             off_filter = 28;
-            filter_cto = l[29];
+            filter_cto = p[29];
         }
     }
     else
     {
-        u_len = get_be32(l+8);
-        c_len = get_be32(l+12);
-        u_adler = get_be32(l+16);
-        c_adler = get_be32(l+20);
-        u_file_size = get_be32(l+24);
+        u_len = get_be32(p+8);
+        c_len = get_be32(p+12);
+        u_adler = get_be32(p+16);
+        c_adler = get_be32(p+20);
+        u_file_size = get_be32(p+24);
         off_filter = 28;
-        filter_cto = l[29];
+        filter_cto = p[29];
     }
 
     if (version >= 10)
-        filter = l[off_filter];
+        filter = p[off_filter];
     else if ((level & 128) == 0)
         filter = 0;
     else
@@ -239,24 +244,23 @@ bool PackHeader::fillPackHeader(upx_bytep buf, unsigned len)
     }
     level &= 15;
 
-    return true;
-}
+    //
+    // now some checks
+    //
 
-
-bool PackHeader::checkPackHeader(const upx_bytep hbuf, int hlen) const
-{
     if (version == 0xff)
         throwCantUnpack("cannot unpack UPX ;-)");
 
-    const int hs = getPackHeaderSize();
-    if (hlen <= 0 || hs > hlen)
-        throwCantUnpack("header corrupted");
-
     // check header_checksum
     if (version > 9)
-        if (hbuf[hs - 1] != get_packheader_checksum(hbuf, hs - 1))
-            throwCantUnpack("header corrupted");
+        if (p[size - 1] != get_packheader_checksum(p, size - 1))
+            throwCantUnpack("header corrupted 3");
 
+    //
+    // success
+    //
+
+    this->buf_offset = boff;
     return true;
 }
 

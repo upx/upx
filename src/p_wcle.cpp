@@ -418,7 +418,7 @@ void PackWcle::pack(OutputFile *fo)
     readImage();
     readNonResidentNames();
 
-    if (find_le32(iimage,20,get_le32("UPX ")))
+    if (find_le32(iimage,20,get_le32("UPX ")) >= 0)
         throwAlreadyPacked();
 
     if (ih.init_ss_object != objects)
@@ -526,6 +526,8 @@ void PackWcle::pack(OutputFile *fo)
     }
     patch_le32(p,d_len,"RELO",mps*pages);
 
+    patchPackHeader(oimage,e_len);
+
     unsigned jpos = find_le32(oimage,e_len,get_le32("JMPD"));
     patch_le32(oimage,e_len,"JMPD",ic-jpos-4);
 
@@ -533,7 +535,6 @@ void PackWcle::pack(OutputFile *fo)
     patch_le32(oimage,e_len,"ECX0",jpos);
     patch_le32(oimage,e_len,"EDI0",((ic+d_len+3)&~3)-4);
     patch_le32(oimage,e_len,"ESI0",e_len+jpos*4-4);
-    putPackHeader(oimage,e_len);
 
     writeFile(fo, opt->wcle.le);
 

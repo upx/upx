@@ -152,7 +152,7 @@ void PackTmt::pack(OutputFile *fo)
     fi->readx(wrkmem+4,rsize);
     const unsigned overlay = file_size - fi->tell();
 
-    if (find_le32(ibuf,128,get_le32("UPX ")))
+    if (find_le32(ibuf,128,get_le32("UPX ")) >= 0)
         throwAlreadyPacked();
     if (rsize == 0)
         throwCantPack("file is already compressed with another packer");
@@ -232,13 +232,15 @@ void PackTmt::pack(OutputFile *fo)
         patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
                    ft.lastcall - ft.calls * 4);
     }
+
+    patchPackHeader(loader,e_len);
+
     const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));
     patch_le32(loader,e_len,"JMPD",ph.u_len+overlapoh-jmp_pos-4);
 
     patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);
     patch_le32(loader,e_len,"EDI0",ph.u_len+overlapoh+d_len-1);
     patch_le32(loader,e_len,"ESI0",ph.c_len+e_len+d_len-1);
-    putPackHeader(loader,e_len);
     //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  clen=%x \n\n",
     //                e_len,d_len,copy_len,copy_to,overlapoh,jmp_pos,ph.u_len,ph.c_len);
 

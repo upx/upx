@@ -327,7 +327,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     memcpy(loader,getLoader(),lsize);
 
     // patch loader
-    putPackHeader(loader,lsize);
+    patchPackHeader(loader,lsize);
     patch_le32(loader,lsize,"ENTR",coff_hdr.a_entry);
     if (ft.id)
     {

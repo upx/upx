@@ -50,7 +50,7 @@ bool PackSys::canPack()
         return false;
     if (!fn_has_ext(fi->getName(),"sys"))
         return false;
-    if (find_le32(buf,128,UPX_MAGIC_LE32))
+    if (find_le32(buf,128,UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
     if (file_size < 1024)
         throwCantPack("file is too small");

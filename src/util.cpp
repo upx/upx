@@ -362,7 +362,7 @@ bool maketempname(char *ofilename, const char *ifilename,
                   const char *ext, bool force)
 {
     char *ofext = NULL, *ofname;
-    int ofile;
+    int ofile = -1;
 
     strcpy(ofilename, ifilename);
     for (ofname = fn_basename(ofilename); *ofname; ofname++)
@@ -373,15 +373,15 @@ bool maketempname(char *ofilename, const char *ifilename,
     if (ofext == NULL)
         ofext = ofilename + strlen(ofilename);
     strcpy(ofext, ext);
-    if (!force)
-        return true;
-    if (file_exists(ofilename))
-        for (ofile = 0; ofile < 999; ofile++)
-        {
-            sprintf(ofext, ".%03d", ofile);
-            if (!file_exists(ofilename))
-                return true;
-        }
+
+    while (ofile < 1000)
+    {
+        if (!file_exists(ofilename))
+            return true;
+        if (!force)
+            break;
+        sprintf(ofext, ".%03d", ++ofile);
+    }
 
     ofilename[0] = 0;
     return false;
@@ -391,7 +391,7 @@ bool maketempname(char *ofilename, const char *ifilename,
 bool makebakname(char *ofilename, const char *ifilename, bool force)
 {
     char *ofext = NULL, *ofname;
-    int ofile;
+    int ofile = -1;
 
     strcpy(ofilename, ifilename);
     for (ofname = fn_basename(ofilename); *ofname; ofname++)
@@ -408,15 +408,15 @@ bool makebakname(char *ofilename, const char *ifilename, bool force)
         strcat(ofilename, "~");
     else
         ofext[strlen(ofext)-1] = '~';
-    if (!force)
-        return true;
-    if (file_exists(ofilename))
-        for (ofile = 0; ofile < 999; ofile++)
-        {
-            sprintf(ofext, ".%03d", ofile);
-            if (!file_exists(ofilename))
-                return true;
-        }
+
+    while (ofile < 1000)
+    {
+        if (!file_exists(ofilename))
+            return true;
+        if (!force)
+            break;
+        sprintf(ofext, ".%03d", ++ofile);
+    }
 
     ofilename[0] = 0;
     return false;

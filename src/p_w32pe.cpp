@@ -665,14 +665,9 @@ unsigned PackW32Pe::processImports() // pass 1
 
     if (soimport == 4)
         soimport = 0;
-#if 0
-    FILE *f1=fopen("x0.imp","wb");
-    fwrite(oimport,1,soimport,f1);
-    fclose(f1);
-    f1=fopen("x1.imp","wb");
-    fwrite(oimpdlls,1,soimpdlls,f1);
-    fclose(f1);
-#endif
+
+    //OutputFile::dump("x0.imp", oimport, soimport);
+    //OutputFile::dump("x1.imp", oimpdlls, soimpdlss);
 
     unsigned ilen = 0;
     names.flatten();
@@ -1558,9 +1553,7 @@ void PackW32Pe::pack(OutputFile *fo)
     processExports(&xport);
     processRelocs();
 
-    //FILE *f1=fopen("x1","wb");
-    //fwrite(ibuf,1,usize,f1);
-    //fclose(f1);
+    //OutputFile::dump("x1", ibuf, usize);
 
     // some checks for broken linkers - disable filter if neccessary
     bool allow_filter = true;
@@ -1670,6 +1663,7 @@ void PackW32Pe::pack(OutputFile *fo)
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
+    patchPackHeader(loader, lsize);
 
     int identsize = 0;
     const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
@@ -1762,8 +1756,6 @@ void PackW32Pe::pack(OutputFile *fo)
 
     Reloc rel(1024); // new relocations are put here
     rel.add(ic,3);
-
-    putPackHeader(loader,lsize);
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));

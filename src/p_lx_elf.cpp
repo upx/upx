@@ -351,7 +351,7 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     // write header
     const int hsize = ph.getPackHeaderSize();
     set_le32(obuf, ph.magic);               // note: always le32
-    putPackHeader(obuf, hsize);
+    patchPackHeader(obuf, hsize);
     fo->write(obuf, hsize);
 
     // write overlay offset (needed for decompression)
