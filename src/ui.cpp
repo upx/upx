@@ -536,6 +536,9 @@ void UiPacker::uiUnpackEnd(const OutputFile *fo)
 {
     uiUpdate(-1, fo->getBytesWritten());
 
+    if (s->mode == M_QUIET)
+        return;
+
     const char *name = p->fi->getName();
     if (opt->output_name)
         name = opt->output_name;
