@@ -63,7 +63,12 @@ public:
     }
 
 protected:
-    virtual bool readFileHeader(void);
+    struct exe_header_t;
+
+    virtual int readFileHeader(void);
+
+    virtual int fillExeHeader(struct exe_header_t *) const;
+    virtual int buildLoader(const Filter *ft);
 
     struct exe_header_t
     {
@@ -87,6 +92,7 @@ protected:
     unsigned ih_exesize;
     unsigned ih_imagesize;
     unsigned ih_overlay;
+    unsigned relocsize;
 
     bool has_9a;
 

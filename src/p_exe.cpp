@@ -39,6 +39,8 @@ static const
 #define MAXMATCH        0x2000
 #define MAXRELOCS       (0x8000-MAXMATCH)
 
+#define DI_LIMIT        0xff00  // see the assembly why
+
 
 /*************************************************************************
 //
@@ -68,16 +70,113 @@ const int *PackExe::getFilters() const
 }
 
 
+int PackExe::fillExeHeader(struct exe_header_t *eh) const
+{
+#define oh  (*eh)
+    // fill new exe header
+    int flag = 0;
+    if (!opt->dos.no_reloc)
+        flag |= USEJUMP;
+    if (ih.relocs == 0)
+        flag |= NORELOC;
+
+    memset(&oh,0,sizeof(oh));
+    oh.ident = 'M' + 'Z' * 256;
+    oh.headsize16 = 2;
+    oh.ip = 0;
+
+    unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
+
+    oh.ss = ph.c_len/16 + destpara;
+    if (ih.ss*16 + ih.sp < 0x100000 && ih.ss > oh.ss && ih.sp > 0x200)
+        oh.ss = ih.ss;
+    oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
+    if (oh.ss*16u + 0x50 < ih.ss*16u + ih.sp
+        && oh.ss*16u + 0x200 > ih.ss*16u + ih.sp)
+        oh.ss += 0x20;
+
+    if (oh.ss != ih.ss)
+        flag |= SS;
+    if (oh.sp != ih.sp)
+        flag |= SP;
+    return flag;
+#undef oh
+}
+
+
+int PackExe::buildLoader(const Filter *)
+{
+    struct exe_header_t tmp_oh;
+    int flag = fillExeHeader(&tmp_oh);
+
+    // prepare loader
+    initLoader(nrv_loader,sizeof(nrv_loader));
+    addLoader("EXEENTRY",
+              relocsize ? "EXERELPU" : "",
+              "EXEMAIN4""+G5DXXXX""UPX1HEAD""EXECUTPO",
+              NULL
+             );
+    if (ph.method == M_NRV2B_8)
+        addLoader("NRV2B16S",               // decompressor
+                  ph.u_len > DI_LIMIT ? "NDIGT64K" : "",
+                  "NRV2BEX1",
+                  opt->cpu == opt->CPU_8086 ? "N2BX8601" : "N2B28601",
+                  "NRV2BEX2",
+                  opt->cpu == opt->CPU_8086 ? "N2BX8602" : "N2B28602",
+                  "NRV2BEX3",
+                  ph.c_len > 0xffff ? "NSIGT64K" : "",
+                  "NRV2BEX9""NRV2B16E",
+                  NULL
+                 );
+    else if (ph.method == M_NRV2D_8)
+        addLoader("NRV2D16S",
+                  ph.u_len > DI_LIMIT ? "NDIGT64D" : "",
+                  "NRV2DEX1",
+                  opt->cpu == opt->CPU_8086 ? "N2DX8601" : "N2D28601",
+                  "NRV2DEX2",
+                  opt->cpu == opt->CPU_8086 ? "N2DX8602" : "N2D28602",
+                  "NRV2DEX3",
+                  ph.c_len > 0xffff ? "NSIGT64D" : "",
+                  "NRV2DEX9""NRV2D16E",
+                  NULL
+                 );
+    else
+        throwInternalError("unknown compression method");
+    addLoader("EXEMAIN5", NULL);
+    if (relocsize)
+        addLoader(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? "EXENOADJ" : "EXEADJUS",
+                  "EXERELO1",
+                  has_9a ? "EXEREL9A" : "",
+                  "EXERELO2",
+                  ih_exesize > 0xFE00 ? "EXEREBIG" : "",
+                  "EXERELO3",
+                  NULL
+                 );
+    addLoader("EXEMAIN8",
+              (flag & SS) ? "EXESTACK" : "",
+              (flag & SP) ? "EXESTASP" : "",
+              (flag & USEJUMP) ? "EXEJUMPF" : "",
+              NULL
+             );
+    if (!(flag & USEJUMP))
+        addLoader(ih.cs ? "EXERCSPO" : "",
+                  "EXERETIP",
+                  NULL
+                 );
+    return getLoaderSize();
+}
+
+
 /*************************************************************************
 //
 **************************************************************************/
 
-bool PackExe::readFileHeader()
+int PackExe::readFileHeader()
 {
     ih_exesize = ih_imagesize = ih_overlay = 0;
     fi->readx(&ih,sizeof(ih));
     if (ih.ident != 'M' + 'Z'*256 && ih.ident != 'Z' + 'M'*256)
-        return false;
+        return 0;
     ih_exesize = ih.m512 + ih.p512*512 - (ih.m512 ? 512 : 0);
     ih_imagesize = ih_exesize - ih.headsize16*16;
     ih_overlay = file_size - ih_exesize;
@@ -88,7 +187,7 @@ bool PackExe::readFileHeader()
 #if 0
     printf("dos/exe header: %d %d %d\n", ih_exesize, ih_imagesize, ih_overlay);
 #endif
-    return true;
+    return UPX_F_DOS_EXE;
 }
 
 
@@ -241,34 +340,25 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
 void PackExe::pack(OutputFile *fo)
 {
     unsigned ic;
-    unsigned char flag = 0;
 
-    unsigned char extra_info[32];
-    unsigned eisize = 0;
-
-    //
-    const unsigned exesize = ih_exesize;
-    const unsigned imagesize = ih_imagesize;
-    const unsigned overlay = ih_overlay;
     if (ih.relocs > MAXRELOCS)
         throwCantPack("too many relocations");
-    checkOverlay(overlay);
+    checkOverlay(ih_overlay);
 
     // alloc buffers
-    unsigned relocsize = RSFCRI + 4*ih.relocs;
-
-    ibuf.alloc(imagesize+16+relocsize+2);
-    obuf.allocForCompression(imagesize+16+relocsize+2);
+    relocsize = RSFCRI + 4*ih.relocs;
+    ibuf.alloc(ih_imagesize+16+relocsize+2);
+    obuf.allocForCompression(ih_imagesize+16+relocsize+2);
 
     // read image
     fi->seek(ih.headsize16*16,SEEK_SET);
-    fi->readx(ibuf,imagesize);
+    fi->readx(ibuf,ih_imagesize);
 
-    checkAlreadyPacked(ibuf, UPX_MIN(imagesize, 127u));
+    checkAlreadyPacked(ibuf, UPX_MIN(ih_imagesize, 127u));
 
     // relocations
     has_9a = false;
-    upx_byte *w = ibuf + imagesize;
+    upx_byte *w = ibuf + ih_imagesize;
     if (ih.relocs)
     {
         upx_byte *wr = w + RSFCRI;
@@ -282,7 +372,7 @@ void PackExe::pack(OutputFile *fo)
             set_le32(wr+4*ic, (jc>>16)*16+(jc&0xffff));
         }
         qsort(wr,ih.relocs,4,le32_compare);
-        relocsize = optimize_relocs(ibuf, imagesize, wr, ih.relocs, w, &has_9a);
+        relocsize = optimize_relocs(ibuf, ih_imagesize, wr, ih.relocs, w, &has_9a);
         set_le16(w+relocsize, relocsize+2);
         relocsize += 2;
         if (relocsize > MAXRELOCS)
@@ -297,121 +387,38 @@ void PackExe::pack(OutputFile *fo)
     }
     else
     {
-        flag |= NORELOC;
         relocsize = 0;
     }
 
-    ph.u_len = imagesize + relocsize;
+    Filter ft(opt->level);
+
+    ph.u_len = ih_imagesize + relocsize;
     if (!compress(ibuf,obuf,0,MAXMATCH))
         throwNotCompressible();
-    const unsigned overlapoh = findOverlapOverhead(obuf,32);
-
     if (ph.max_run_found + ph.max_match_found > 0x8000)
         throwCantPack("decompressor limit exceeded, send a bugreport");
+
+    ph.overlap_overhead = findOverlapOverhead(obuf,32);
+
 #ifdef TESTING
     if (opt->debug)
     {
-        printf("image+relocs %d -> %d\n",imagesize+relocsize,ph.c_len);
+        printf("image+relocs %d -> %d\n",ih_imagesize+relocsize,ph.c_len);
         printf("offsets: %d - %d\nmatches: %d - %d\nruns: %d - %d\n",
                0/*ph.min_offset_found*/,ph.max_offset_found,
                0/*ph.min_match_found*/,ph.max_match_found,
                0/*ph.min_run_found*/,ph.max_run_found);
     }
 #endif
-    const unsigned packedsize = ph.c_len;
 
-    if (!opt->dos.no_reloc)
-        flag |= USEJUMP;
-
-    // fill new exe header
-    memset(&oh,0,sizeof(oh));
-    oh.ident = 'M' + 'Z' * 256;
-
-    unsigned destpara = (ph.u_len+overlapoh-packedsize+31)/16;
-
-    oh.ss = packedsize/16 + destpara;
-    if (ih.ss*16 + ih.sp < 0x100000 && ih.ss > oh.ss && ih.sp > 0x200)
-        oh.ss = ih.ss;
-    oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
-    if (oh.ss*16u + 0x50 < ih.ss*16u + ih.sp
-        && oh.ss*16u + 0x200 > ih.ss*16u + ih.sp)
-        oh.ss += 0x20;
-
-    destpara = oh.ss - packedsize/16;
-    if (oh.ss != ih.ss)
-    {
-        set_le16(extra_info+eisize,ih.ss);
-        eisize += 2;
-        flag |= SS;
-    }
-    if (oh.sp != ih.sp)
-    {
-        set_le16(extra_info+eisize,ih.sp);
-        eisize += 2;
-        flag |= SP;
-    }
-
-#define DI_LIMIT 0xff00  // see the assembly why
-    // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("EXEENTRY",
-              relocsize ? "EXERELPU" : "",
-              "EXEMAIN4""+G5DXXXX""UPX1HEAD""EXECUTPO",
-              NULL
-             );
-    if (ph.method == M_NRV2B_8)
-        addLoader("NRV2B16S",               // decompressor
-                  ph.u_len > DI_LIMIT ? "NDIGT64K" : "",
-                  "NRV2BEX1",
-                  opt->cpu == opt->CPU_8086 ? "N2BX8601" : "N2B28601",
-                  "NRV2BEX2",
-                  opt->cpu == opt->CPU_8086 ? "N2BX8602" : "N2B28602",
-                  "NRV2BEX3",
-                  packedsize > 0xffff ? "NSIGT64K" : "",
-                  "NRV2BEX9""NRV2B16E",
-                  NULL
-                 );
-    else if (ph.method == M_NRV2D_8)
-        addLoader("NRV2D16S",
-                  ph.u_len > DI_LIMIT ? "NDIGT64D" : "",
-                  "NRV2DEX1",
-                  opt->cpu == opt->CPU_8086 ? "N2DX8601" : "N2D28601",
-                  "NRV2DEX2",
-                  opt->cpu == opt->CPU_8086 ? "N2DX8602" : "N2D28602",
-                  "NRV2DEX3",
-                  packedsize > 0xffff ? "NSIGT64D" : "",
-                  "NRV2DEX9""NRV2D16E",
-                  NULL
-                 );
-    else
-        throwInternalError("unknown compression method");
-    addLoader("EXEMAIN5", NULL);
-    if (relocsize)
-        addLoader(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? "EXENOADJ" : "EXEADJUS",
-                  "EXERELO1",
-                  has_9a ? "EXEREL9A" : "",
-                  "EXERELO2",
-                  exesize > 0xFE00 ? "EXEREBIG" : "",
-                  "EXERELO3",
-                  NULL
-                 );
-    addLoader("EXEMAIN8",
-              (flag & SS) ? "EXESTACK" : "",
-              (flag & SP) ? "EXESTASP" : "",
-              (flag & USEJUMP) ? "EXEJUMPF" : "",
-              NULL
-             );
-    if (!(flag & USEJUMP))
-        addLoader(ih.cs ? "EXERCSPO" : "",
-                  "EXERETIP",
-                  NULL
-                 );
-    const unsigned lsize = getLoaderSize();
+    int flag = fillExeHeader(&oh);
+    const unsigned lsize = buildLoader(&ft);
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
     //OutputFile::dump("xxloader.dat", loader, lsize);
 
     // patch loader
+    const unsigned packedsize = ph.c_len;
     const unsigned e_len = getLoaderSectionStart("EXECUTPO");
     const unsigned d_len = lsize - e_len;
     assert((e_len&15) == 0);
@@ -419,17 +426,29 @@ void PackExe::pack(OutputFile *fo)
     const unsigned copysize = (1+packedsize+d_len) & ~1;
     const unsigned firstcopy = copysize%0x10000 ? copysize%0x10000 : 0x10000;
 
-    oh.headsize16 = 2;
-    oh.ip = 0;
-
-    ic = ih.min*16+imagesize;
+    // set oh.min & oh.max
+    ic = ih.min*16 + ih_imagesize;
     if (ic < oh.ss*16u + oh.sp)
         ic = oh.ss*16u + oh.sp;
-
     oh.min = (ic - (packedsize + lsize)) / 16;
-    ic = ((unsigned) oh.min) + (ih.max - ih.min);
+    ic = oh.min + (ih.max - ih.min);
     oh.max = ic < 0xffff && ih.max != 0xffff ? ic : 0xffff;
 
+    // set extra info
+    unsigned char extra_info[9];
+    unsigned eisize = 0;
+    if (oh.ss != ih.ss)
+    {
+        set_le16(extra_info+eisize,ih.ss);
+        eisize += 2;
+        assert((flag & SS) != 0);   // set in fillExeHeader()
+    }
+    if (oh.sp != ih.sp)
+    {
+        set_le16(extra_info+eisize,ih.sp);
+        eisize += 2;
+        assert((flag & SP) != 0);   // set in fillExeHeader()
+    }
     if (ih.min != oh.min)
     {
         set_le16(extra_info+eisize,ih.min);
@@ -442,7 +461,9 @@ void PackExe::pack(OutputFile *fo)
         eisize += 2;
         flag |= MAXMEM;
     }
+    extra_info[eisize++] = (unsigned char) flag;
 
+    // patch loader
     if (flag & USEJUMP)
     {
         // I use a relocation entry to set the original cs
@@ -474,6 +495,7 @@ void PackExe::pack(OutputFile *fo)
     patch_le16(loader,e_len,"BX",0x800F + 0x10*((packedsize&15)+1) - 0x10);
     patch_le16(loader,e_len,"BP",(packedsize&15)+1);
 
+    unsigned destpara = oh.ss - ph.c_len/16;
     patch_le16(loader,e_len,"ES",destpara-e_len/16);
     patch_le16(loader,e_len,"DS",e_len/16+(copysize-firstcopy)/16);
     patch_le16(loader,e_len,"SI",firstcopy-2);
@@ -483,12 +505,11 @@ void PackExe::pack(OutputFile *fo)
     //if (ih.relocoffs >= 0x40 && memcmp(&ih.relocoffs,">TIPPACH",8))
     //    throwCantPack("FIXME");
 
-    extra_info[eisize++] = flag;
     const unsigned outputlen = sizeof(oh)+lsize+packedsize+eisize;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
-//fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,overlapoh,ph.u_len,destpara,copysize,imagesize);
+//fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
 
     // write header + write loader + compressed file
 #ifdef TESTING
@@ -510,10 +531,10 @@ void PackExe::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // copy the overlay
-    copyOverlay(fo, overlay, &obuf);
+    copyOverlay(fo, ih_overlay, &obuf);
 //fprintf (stderr,"%x %x\n",relocsize,ph.u_len);
 
     // finally check the compression ratio
@@ -548,7 +569,6 @@ void PackExe::unpack(OutputFile *fo)
 
     // read the file
     unsigned imagesize = ih_imagesize;
-    const unsigned overlay = ih_overlay;
 
     fi->seek(ih.headsize16*16,SEEK_SET);
     fi->readx(ibuf,imagesize);
@@ -558,7 +578,7 @@ void PackExe::unpack(OutputFile *fo)
     if (imagesize <= e_len + ph.c_len)
         throwCantUnpack("file damaged");
 
-    checkOverlay(overlay);
+    checkOverlay(ih_overlay);
 
     // decompress
     decompress(ibuf+e_len,obuf);
@@ -656,7 +676,7 @@ void PackExe::unpack(OutputFile *fo)
     fo->write(obuf,relocs-obuf);
 
     // copy the overlay
-    copyOverlay(fo, overlay, &obuf);
+    copyOverlay(fo, ih_overlay, &obuf);
 }
 
 
