@@ -399,13 +399,7 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 // tries to change actual calls and/or jumps.
 **************************************************************************/
 
-#if 1
-// use Laszlo's implementation
 #include "fcto_ml.ch"
-#else
-// use Marco's implementation
-#include "fcto_mfx.ch"
-#endif
 
 
 /*************************************************************************
@@ -445,6 +439,8 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x27, 6, 0x00ffffff, f_cto32_e8_bswap_be, u_cto32_e8_bswap_be, s_cto32_e8_bswap_be },
     { 0x28, 6, 0x00ffffff, f_cto32_e9_bswap_be, u_cto32_e9_bswap_be, s_cto32_e9_bswap_be },
     { 0x29, 6, 0x00ffffff, f_cto32_e8e9_bswap_be, u_cto32_e8e9_bswap_be, s_cto32_e8e9_bswap_be },
+    // 32-bit cto calltrick + jmp
+    { 0x36, 6, 0x00ffffff, f_ctjo32_e8e9_bswap_le, u_ctjo32_e8e9_bswap_le, s_ctjo32_e8e9_bswap_le },
 };
 
 const int FilterImp::n_filters = HIGH(filters);
