@@ -31,6 +31,8 @@
 
 #include "ppc_regs.h"
 
+SZ_DLINE=128  # size of data cache line in Apple G5
+
 /* Returns 0 on success; non-zero on failure. */
 decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst)
 
@@ -47,6 +49,8 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst)
 #define bits a6
 #define disp a7
 
+	dcbtst 0,dst  # prime dcache for store
+
         stw dst,0(ldst)  # original dst
         add lsrc,lsrc,src  # input eof
 
@@ -57,7 +61,7 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst)
         li disp,-1  # initial displacement
         
         mflr t3  # return address
-        b top_n2e
+        b bot_n2e
 
 /* jump on next bit, with branch prediction: y==>likely; n==>unlikely
    cr0 is set by the cmpl ["compare logical"==>unsigned]:
@@ -95,8 +99,8 @@ get32:
 
 lit_n2e:
 #define tmp len
-        lbzu tmp,1(src)
-        stbu tmp,1(dst)
+        lbzu tmp,1(src)  # tmp= *++src;
+        stbu tmp,1(dst)  # *++dst= tmp;
 #undef tmp
 top_n2e:
         jnextb1y lit_n2e
@@ -151,6 +155,17 @@ short_n2e:
         stbu tmp,1(dst)
 #undef tmp
         bdnz+ short_n2e
+bot_n2e:
+/* This "prefetch for store" is simple, small, and effective.  Matches
+   usually occur more frequently than once per 128 bytes, but G4 line size
+   is only 32 bytes anyway.  Assume that an 'unnecessary' dcbtst costs only
+   about as much as a hit.  The counter register is free at top_n2e, so we could
+   pace the dcbtst optimally; but that takes 7 or 8 instructions of space.
+*/
+	li back,2*SZ_DLINE
+	dcbtst back,dst  # 2 lines ahead [-1 for stbu]
+	dcbt   back,src  # jump start auto prefetch at page boundary
+/* Auto prefetch for Read quits at page boundary; needs 2 misses to restart. */
         b top_n2e
 #undef back
 
