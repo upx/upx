@@ -38,7 +38,8 @@ static const
 #include "stub/l_vmlinz.h"
 
 static const unsigned kernel_entry = 0x100000;
-static const unsigned stack_during_uncompression = 0x90000;
+static const unsigned stack_offset_during_uncompression = 0x9000;
+// add to "real mode pointer" in %esi; total 0x99000 is typical
 
 // from /usr/src/linux/arch/i386/boot/compressed/Makefile
 static const unsigned zimage_offset = 0x1000;
@@ -273,7 +274,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = kernel_entry;
+    ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
     // compress
     compressWithFilters(&ft, 1 << 20);
 
@@ -285,7 +286,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     patchFilter32(loader, lsize, &ft);
     patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
     patch_le32(loader, lsize, "KEIP", kernel_entry);
-    patch_le32(loader, lsize, "STAK", stack_during_uncompression);
+    patch_le32(loader, lsize, "STAK", stack_offset_during_uncompression);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16) / 16;
@@ -348,7 +349,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = kernel_entry;
+    ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
     // compress
     compressWithFilters(&ft, 512);
 
@@ -385,7 +386,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
         patch_le32(loader, e_len, "ULEN", ph.u_len);
     }
     patch_le32(loader, e_len, "KEIP", kernel_entry);
-    patch_le32(loader, e_len, "STAK", stack_during_uncompression);
+    patch_le32(loader, e_len, "STAK", stack_offset_during_uncompression);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = (ALIGN_UP(lsize + clen, 16) / 16) & 0xffff;

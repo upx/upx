@@ -79,7 +79,14 @@ start:
 %ifdef  __LXCKLLT9__
                 pop     edx     ; MATCH04  cto
                 pop     edi     ; MATCH03  src
-                ckt32   edi, dl
+
+                ckt32   edi, dl ; dl has cto8
+        ;edi: adjust for the difference between 0 origin of buffer at filter,
+        ;and actual origin of destination at unfilter.
+        ;Filter.addvalue is 0: destination origin is unknown at filter time.
+        ;The input data is still relocatable, and address is assigned later
+        ;[as of 2004-12-15 it is 'always' 0x100000].
+
 %endif; __LXDUMMY2__
 %ifdef  __LXCALLT9__
                 pop     edi     ; MATCH03  src

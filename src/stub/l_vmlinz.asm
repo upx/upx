@@ -35,9 +35,9 @@
                 ORG     0
 
 ; gdt segment 3 is flat data
-%define __KERNEL_DS 3*8
+%define __BOOT_DS 3*8
 ; gdt segment 2 is flat code
-%define __KERNEL_CS 2*8
+%define __BOOT_CS 2*8
 
 ; =============
 ; ============= ENTRY POINT
@@ -47,12 +47,12 @@ start:
 ;       __LINUZ000__
                 cli
                 xor     eax, eax
-                mov     al, __KERNEL_DS
+                mov     al, __BOOT_DS
                 mov     ds, eax
                 mov     es, eax
 ; fs, gs set by startup_32 in arch/i386/kernel/head.S
                 mov     ss, eax
-                mov     esp, 'STAK'     ; 0x90000
+                lea     esp, ['STAK' + esi]  ; (0x9000 + 0x90000) typical
 
                 push    byte 0
                 popf            ; BIOS can leave random flags (such as NT)
@@ -62,7 +62,7 @@ start:
 
                 or      ebp, byte -1    ; decompressor assumption
                 mov     eax, 'KEIP'     ; 0x100000 : address of startup_32
-                push    byte __KERNEL_CS        ; MATCH00
+                push    byte __BOOT_CS        ; MATCH00
                 push    eax     ; MATCH00  entry address
                 push    edi     ; MATCH01  save
                 push    esi     ; MATCH02  save
@@ -111,6 +111,7 @@ checka20:
 %include      "n2b_d32.ash"
 %include      "n2d_d32.ash"
 %include      "n2e_d32.ash"
+;;%include      "cl1_d32.ash"
 
 ; =============
 ; ============= UNFILTER
@@ -120,7 +121,14 @@ checka20:
                 pop     ecx     ; MATCH05  len
                 pop     edx     ; MATCH04  cto
                 pop     edi     ; MATCH03  src
-                ckt32   edi, dl
+
+                ckt32   0, dl   ; dl has cto8
+        ;0: Filter.addvalue = kernel_entry already did the 'add' at filter time
+        ;[the runtime address of the destination was known], so we save 4 bytes
+        ;(plus 1 cycle per instance) by not doing the 'add' when unfiltering.
+        ;If .addvalue was 0, then use 'edi' instead of 0 in call to ckt32,
+        ;to compensate for difference in origin of buffer.
+
 %endif; __LZDUMMY2__
 %ifdef  __LZCALLT9__
                 pop     edi     ; MATCH03  src

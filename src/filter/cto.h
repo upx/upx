@@ -36,11 +36,11 @@ static int F(Filter *f)
 #ifdef U
     // filter
     upx_byte *b = f->buf;
-    const unsigned addvalue = f->addvalue;
 #else
     // scan
     const upx_byte *b = f->buf;
 #endif
+    const unsigned addvalue = f->addvalue;
     const unsigned size = f->buf_len;
 
     unsigned ic, jc, kc;
@@ -52,6 +52,11 @@ static int F(Filter *f)
         unsigned char buf[256];
         memset(buf,0,256);
 
+        // A call to a destination that is inside the buffer
+        // will be rewritten and marked with cto8 as first byte.
+        // So, a call to a destination that is outside the buffer
+        // must not conflict with the mark.
+        // Note that unsigned comparison checks both edges of buffer.
         for (ic = 0; ic < size - 5; ic++)
             if (COND(b,ic) && get_le32(b+ic+1)+ic+1 >= size)
             {
@@ -74,6 +79,8 @@ static int F(Filter *f)
         // try to detect 'real' calls only
         if (jc < size)
         {
+            if ((1u<<24)<=(jc+addvalue))  // hi 8 bits won't be cto8
+                return 1;  // fail - buffer not restored
 #ifdef U
             set_be32(b+ic+1,jc+addvalue+cto);
 #endif

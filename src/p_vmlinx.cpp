@@ -217,7 +217,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ph.filter = 0;
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = 0;
+    ft.addvalue = 0;  // we are independent of actual runtime address; see ckt32
 
     compressWithFilters(&ft, 1 << 20);
 
@@ -243,6 +243,10 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     fo->write(obuf, ph.c_len); fo_off += ph.c_len;
     fo->write(loader, lsize); fo_off += lsize;
 
+#if 0
+    printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
+    printf("%-13s: decompressor : %8u bytes\n", getName(), lsize);
+#endif
     verifyOverlappingDecompression();
 
     // .note with 1st page --------------------------------
@@ -490,8 +494,17 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //      cli  # but if it matters, then there is a race!
 //
 //      movl $ __BOOT_DS,%eax
-//      movl %eax,%ss; movl $0x99000,%esp  # 2.6.7 setup had ss:sp of 9000:8ffe
-//              /* Avoid EBDA (Extended BIOS Data Area) below 0xA0000. */
+//      movl %eax,%ss; leal 0x9000(%esi),%esp  # 0x99000 typical
+//          /* Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
+//             0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
+//             just below the command line at offset 0x9000].
+//
+//             arch/i386/boot/compressed/head.S "Do the decompression ..." says
+//             %esi contains the "real mode pointer" [as a 32-bit addr].
+//
+//             In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
+//             boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
+//          */
 //
 //      pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 //

@@ -40,11 +40,11 @@ static int F(Filter *f)
 #ifdef U
     // filter
     upx_byte *b = f->buf;
-    const unsigned addvalue = f->addvalue;
 #else
     // scan
     const upx_byte *b = f->buf;
 #endif
+    const unsigned addvalue = f->addvalue;
     const unsigned size = f->buf_len;
     unsigned const id = f->id;
 
@@ -79,6 +79,8 @@ static int F(Filter *f)
         // try to detect 'real' calls only
         if (jc < size)
         {
+            if ((1u<<24)<=(jc+addvalue))  // hi 8 bits won't be cto8
+                return 1;  // fail - buffer not restored
 #ifdef U
             set_be32(b+ic+1,jc+addvalue+cto);
 #endif
