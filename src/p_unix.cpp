@@ -87,7 +87,10 @@ void PackUnix::writePackHeader(OutputFile *fo)
     set_le32(buf+0, UPX_MAGIC_LE32);
     set_le32(buf+4, UPX_MAGIC2_LE32);
 
+    checkPatch(NULL, 0, 0, 0);
     patchPackHeader(buf, hsize);
+    checkPatch(NULL, 0, 0, 0);
+
     fo->write(buf, hsize);
 }
 
