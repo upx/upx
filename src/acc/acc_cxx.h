@@ -19,29 +19,25 @@
 
 
 /*************************************************************************
-// exceptions
+// exception specification
 //   ACC_CXX_NOTHROW
 **************************************************************************/
 
 #if defined(ACC_CXX_NOTHROW)
 #elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul))
-#  define ACC_CXX_NOTHROW
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0450))
-#  define ACC_CXX_NOTHROW
 #elif (ACC_CC_HIGHC)
-#  define ACC_CXX_NOTHROW
 #elif (ACC_CC_MSC && (_MSC_VER < 1100))
-#  define ACC_CXX_NOTHROW
+#elif (ACC_CC_NDPC)
 #elif (ACC_CC_TURBOC)
-#  define ACC_CXX_NOTHROW
 #elif (ACC_CC_WATCOMC && !defined(_CPPUNWIND))
-#  define ACC_CXX_NOTHROW
 #elif (ACC_CC_ZORTECHC)
-#  define ACC_CXX_NOTHROW
+#else
+#  define ACC_CXX_NOTHROW   throw()
 #endif
 
 #if !defined(ACC_CXX_NOTHROW)
-#  define ACC_CXX_NOTHROW   throw()
+#  define ACC_CXX_NOTHROW
 #endif
 
 
@@ -52,7 +48,7 @@
 **************************************************************************/
 
 #if defined(__ACC_CXX_DO_NEW)
-#elif (ACC_CC_PGI)
+#elif (ACC_CC_NDPC || ACC_CC_PGI)
 #  define __ACC_CXX_DO_NEW          { return 0; }
 #else
 #  define __ACC_CXX_DO_NEW          ;
@@ -71,17 +67,19 @@
 /*************************************************************************
 // disable dynamic allocation of an object
 //   ACC_CXX_DISABLE_NEW_DELETE
-//   ACC_CXX_DISABLE_NEW_DELETE_STRICT
 **************************************************************************/
 
+/*
 #undef __ACC_CXX_HAVE_ARRAY_NEW
 #undef __ACC_CXX_HAVE_PLACEMENT_NEW
 #undef __ACC_CXX_HAVE_PLACEMENT_DELETE
+*/
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0450))
 #elif (ACC_CC_MSC && ACC_MM_HUGE)
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
 #elif (ACC_CC_MSC && (_MSC_VER < 1100))
+#elif (ACC_CC_NDPC)
 #elif (ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #elif (ACC_CC_TURBOC)
 #elif (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))
@@ -106,65 +104,48 @@
 #endif
 
 
-#if !defined(__ACC_CXX_PLACEMENT_NEW) && (__ACC_CXX_HAVE_PLACEMENT_NEW)
-#  define __ACC_CXX_PLACEMENT_NEW \
-            static void* operator new(size_t, void*) __ACC_CXX_DO_NEW
-#endif
-#if !defined(__ACC_CXX_PLACEMENT_DELETE) && (__ACC_CXX_HAVE_PLACEMENT_DELETE)
-#  define __ACC_CXX_PLACEMENT_DELETE \
-            static void operator delete(void*, void*) __ACC_CXX_DO_DELETE
-#endif
-#if !defined(__ACC_CXX_PLACEMENT_NEW)
-#  define __ACC_CXX_PLACEMENT_NEW
-#endif
-#if !defined(__ACC_CXX_PLACEMENT_DELETE)
-#  define __ACC_CXX_PLACEMENT_DELETE
-#endif
-
-
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (defined(new) || defined(delete))
+#if defined(ACC_CXX_DISABLE_NEW_DELETE)
+#elif defined(new) || defined(delete)
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
-#endif
-
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025b00ul))
+#elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025b00ul))
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
-#endif
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_HIGHC)
+#elif  (ACC_CC_HIGHC)
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
-#endif
-
-
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && !(__ACC_CXX_HAVE_ARRAY_NEW)
-/* for old compilers use `protected' instead of `private' */
+#elif !defined(__ACC_CXX_HAVE_ARRAY_NEW)
+   /* for old compilers use `protected' instead of `private' */
 #  define ACC_CXX_DISABLE_NEW_DELETE \
         protected: static void operator delete(void*) __ACC_CXX_DO_DELETE \
         protected: static void* operator new(size_t) __ACC_CXX_DO_NEW \
         private:
-#endif
-
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE)
+#else
 #  define ACC_CXX_DISABLE_NEW_DELETE \
-        protected: \
-            static void operator delete(void*) __ACC_CXX_DO_DELETE \
-            static void operator delete[](void*) __ACC_CXX_DO_DELETE \
-        private: \
-            static void* operator new(size_t) __ACC_CXX_DO_NEW \
-            static void* operator new[](size_t) __ACC_CXX_DO_NEW
-#  define ACC_CXX_DISABLE_NEW_DELETE_STRICT \
-        protected: \
-            static void operator delete(void*) __ACC_CXX_DO_DELETE \
-            static void operator delete[](void*) __ACC_CXX_DO_DELETE \
-            __ACC_CXX_PLACEMENT_DELETE \
-        private: \
-            static void* operator new(size_t) __ACC_CXX_DO_NEW \
-            static void* operator new[](size_t) __ACC_CXX_DO_NEW \
-            __ACC_CXX_PLACEMENT_NEW
+        protected: static void operator delete(void*) __ACC_CXX_DO_DELETE \
+                   static void operator delete[](void*) __ACC_CXX_DO_DELETE \
+        private:   static void* operator new(size_t)  __ACC_CXX_DO_NEW \
+                   static void* operator new[](size_t) __ACC_CXX_DO_NEW
 #endif
 
-#if !defined(ACC_CXX_DISABLE_NEW_DELETE_STRICT)
-#  define ACC_CXX_DISABLE_NEW_DELETE_STRICT ACC_CXX_DISABLE_NEW_DELETE
+
+/*************************************************************************
+// Assist the compiler by defining a unique location for vtables and RTTI.
+// Every class which has virtual member functions or derives from a class
+// with virtual members should put this macro at the very top of its
+// class declaration.
+//   ACC_CXX_TRIGGER_FUNCTION
+**************************************************************************/
+
+#if defined(ACC_CXX_TRIGGER_FUNCTION)
+#else
+#  define ACC_CXX_TRIGGER_FUNCTION \
+        protected: virtual const void* acc_cxx_trigger_function() const; \
+        private:
 #endif
 
+#if defined(ACC_CXX_TRIGGER_FUNCTION_IMPL)
+#else
+#  define ACC_CXX_TRIGGER_FUNCTION_IMPL(klass) \
+        const void* klass::acc_cxx_trigger_function() const { return 0; }
+#endif
 
 
 #endif /* __cplusplus */

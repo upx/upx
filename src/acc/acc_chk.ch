@@ -108,7 +108,7 @@
     ACCCHK_ASSERT(sizeof('\0') == sizeof(char))
 #else
 #  if (ACC_CC_DMC)
-    /* Digital Mars is broken */
+    /* Digital Mars C is broken */
 #  else
     ACCCHK_ASSERT(sizeof('\0') == sizeof(int))
 #  endif
@@ -417,10 +417,16 @@
 // check promotion rules
 **************************************************************************/
 
+#if (ACC_CC_NDPC)
+    /* NDP C is broken */
+#else
     /* check that the compiler correctly casts signed to unsigned */
     ACCCHK_ASSERT( (int) ((unsigned char) ((signed char) -1)) == 255)
+#endif
 
-#if !defined(ACC_BROKEN_INTEGRAL_PROMOTION) && (SIZEOF_INT > 1)
+#if (ACC_CC_NDPC)
+    /* NDP C is broken */
+#elif !defined(ACC_BROKEN_INTEGRAL_PROMOTION) && (SIZEOF_INT > 1)
     /* check that the compiler correctly promotes integrals */
     ACCCHK_ASSERT( (((unsigned char)128) << (int)(8*sizeof(int)-8)) < 0)
 #endif

@@ -67,6 +67,9 @@
 #if defined(HAVE_SHARE_H)
 #  include <share.h>
 #endif
+#if defined(ACC_CC_NDPC)
+#  include <os.h>
+#endif
 
 /* TOS */
 #if defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))

@@ -246,7 +246,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 ************************************************************************/
 
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_PACIFICC)
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC)
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define __acc_cdecl                 __cdecl
 #    define __acc_cdecl_atexit
@@ -266,7 +266,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define __acc_cdecl_main            __cdecl
 #    define __acc_cdecl_qsort           __cdecl
 #  endif
-#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
 #  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
 #    define __acc_cdecl_sighandler      __pascal
 #  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))

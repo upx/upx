@@ -217,7 +217,7 @@ ACCLIB_EXTERN(int, acc_fnmatch) (const acc_hchar_p, const acc_hchar_p, int);
 #  elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #  elif (ACC_OS_OS2 || ACC_OS_OS216)
 #  elif (ACC_OS_TOS && ACC_CC_GNUC)
-#  elif (ACC_OS_WIN32 && !defined(ACC_H_WINDOWS_H))
+#  elif (ACC_OS_WIN32 && !defined(ACC_HAVE_WINDOWS_H))
 #  elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #    undef __ACCLIB_USE_OPENDIR
 #  endif
@@ -278,14 +278,28 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 
 #if (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #  define acc_stackavail()  stackavail()
-#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER < 700))
+#elif (ACC_ARCH_IA16 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0410))
 #  define acc_stackavail()  stackavail()
-#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER < 900))
-#  define acc_stackavail()  _stackavail()
+#elif (ACC_ARCH_IA16 && ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0400))
+#  if (ACC_OS_WIN16) && (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+#  else
+#    define acc_stackavail()  stackavail()
+#  endif
 #elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#  define acc_stackavail()  stackavail()
+#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER >= 700))
+#  define acc_stackavail()  _stackavail()
+#elif ((ACC_ARCH_IA16) && ACC_CC_MSC)
+#  define acc_stackavail()  stackavail()
+#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && ACC_CC_TURBOC && (__TURBOC__ >= 0x0450))
+#  define acc_stackavail()  stackavail()
+#elif (ACC_ARCH_IA16 && ACC_CC_TURBOC && (__TURBOC__ >= 0x0400))
+   ACC_EXTERN_C size_t __cdecl stackavail(void);
 #  define acc_stackavail()  stackavail()
 #elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_WATCOMC))
 #  define acc_stackavail()  stackavail()
+#elif (ACC_ARCH_IA16 && ACC_CC_ZORTECHC)
+#  define acc_stackavail()  _chkstack()
 #endif
 
 ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int);
@@ -305,7 +319,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_u
 typedef struct { /* all private */
     acclib_handle_t h;
     int mode;
-#if (ACC_H_WINDOWS_H) && defined(acc_int64l_t)
+#if (ACC_HAVE_WINDOWS_H) && defined(acc_int64l_t)
     double qpf;
 #endif
 } acc_uclock_handle_t;
@@ -320,7 +334,7 @@ typedef struct { /* all private */
 #  endif
 #endif
     } ticks;
-#if (ACC_H_WINDOWS_H) && defined(acc_int64l_t)
+#if (ACC_HAVE_WINDOWS_H) && defined(acc_int64l_t)
     acc_int64l_t qpc;
 #endif
 } acc_uclock_t;

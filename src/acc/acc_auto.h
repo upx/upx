@@ -181,10 +181,16 @@
 #  undef HAVE_UTIME_H
 #  define HAVE_SYS_UTIME_H 1
 #elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+#  define HAVE_ALLOCA_H 1
 #  undef HAVE_DOS_H
 #  undef HAVE_SHARE_H
 #  undef HAVE_SYS_TIME_H
-#  define HAVE_ALLOCA_H 1
+#elif (ACC_CC_NDPC)
+#  undef HAVE_DIRENT_H
+#  undef HAVE_DOS_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_TIME_H
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_DIRECT_H
 #  undef HAVE_DIRENT_H
@@ -323,6 +329,10 @@
 #    undef HAVE_LSTAT
 #  endif
 #elif (ACC_OS_CYGWIN)
+#  if (ACC_CC_GNUC < 0x025a00ul)
+#    undef HAVE_GETTIMEOFDAY
+#    undef HAVE_LSTAT
+#  endif
 #  if (ACC_CC_GNUC < 0x025f00ul)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
@@ -421,7 +431,18 @@
 #    define vsnprintf _vsnprintf
 #  endif
 #elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
-#  undef HAVE_SETMODE
+#  if (__MSL__ < 0x8000ul)
+#    undef HAVE_CHMOD /* <unix.h> which in turn pulls in <windows.h> */
+#  endif
+#elif (ACC_CC_NDPC)
+#  undef HAVE_ALLOCA
+#  undef HAVE_SNPRINTF
+#  undef HAVE_STRNICMP
+#  undef HAVE_UTIME
+#  undef HAVE_VSNPRINTF
+#  if defined(__cplusplus)
+#    undef HAVE_STAT
+#  endif
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_ACCESS
 #  undef HAVE_ALLOCA

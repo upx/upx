@@ -190,11 +190,23 @@
 
 
 /***********************************************************************
-// preprocessor macros
+// ANSI C preprocessor macros (cpp)
 ************************************************************************/
 
-#define ACC_STRINGIZE(x)        #x
-#define ACC_MACRO_EXPAND(x)     ACC_STRINGIZE(x)
+#define ACC_CPP_STRINGIZE(x)            #x
+#define ACC_CPP_MACRO_EXPAND(x)         ACC_CPP_STRINGIZE(x)
+
+/* concatenate */
+#define ACC_CPP_CONCAT2(a,b)            a ## b
+#define ACC_CPP_CONCAT3(a,b,c)          a ## b ## c
+#define ACC_CPP_CONCAT4(a,b,c,d)        a ## b ## c ## d
+#define ACC_CPP_CONCAT5(a,b,c,d,e)      a ## b ## c ## d ## e
+
+/* expand and concatenate (by using one level of indirection) */
+#define ACC_CPP_ECONCAT2(a,b)           ACC_CPP_CONCAT2(a,b)
+#define ACC_CPP_ECONCAT3(a,b,c)         ACC_CPP_CONCAT3(a,b,c)
+#define ACC_CPP_ECONCAT4(a,b,c,d)       ACC_CPP_CONCAT4(a,b,c,d)
+#define ACC_CPP_ECONCAT5(a,b,c,d,e)     ACC_CPP_CONCAT5(a,b,c,d,e)
 
 
 /***********************************************************************

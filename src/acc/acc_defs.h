@@ -14,11 +14,43 @@
 
 
 /***********************************************************************
-//
+// acc_alignof() / acc_inline
+************************************************************************/
+
+#if (ACC_CC_GNUC)
+#  define acc_alignof(e)        __alignof__(e)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
+#  define acc_alignof(e)        __alignof__(e)
+#elif (ACC_CC_MSC && (_MSC_VER >= 1300))
+#  define acc_alignof(e)        __alignof(e)
+#elif (ACC_CC_PGI)
+#  define acc_alignof(e)        __alignof__(e)
+#endif
+
+#if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
+#elif defined(__cplusplus)
+#  define acc_inline            inline
+#elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
+#  define acc_inline            __inline
+#elif (ACC_CC_DMC)
+#  define acc_inline            __inline
+#elif (ACC_CC_GNUC)
+#  define acc_inline            __inline__
+#elif (ACC_CC_INTELC)
+#  define acc_inline            __inline
+#elif (ACC_CC_MSC && (_MSC_VER >= 1000))
+#  define acc_inline            __inline
+#elif (ACC_CC_PGI)
+#  define acc_inline            __inline__
+#endif
+
+
+/***********************************************************************
+// ACC_UNUSED / ACC_UNUSED_FUNC
 ************************************************************************/
 
 #if !defined(ACC_UNUSED)
-#  if (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_TURBOC)
+#  if (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
@@ -29,7 +61,7 @@
 #  endif
 #endif
 #if !defined(ACC_UNUSED_FUNC)
-#  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#  if (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
@@ -128,34 +160,18 @@
 
 
 /***********************************************************************
-//
+// acc_auto.h supplements
 ************************************************************************/
 
-#if (ACC_CC_GNUC)
-#  define acc_alignof(e)        __alignof__(e)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
-#  define acc_alignof(e)        __alignof__(e)
-#elif (ACC_CC_MSC && (_MSC_VER >= 1300))
-#  define acc_alignof(e)        __alignof(e)
-#elif (ACC_CC_PGI)
-#  define acc_alignof(e)        __alignof__(e)
-#endif
-
-#if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
-#elif defined(__cplusplus)
-#  define acc_inline            inline
-#elif (ACC_CC_BORLANDC && ACC_MM_FLAT && (__BORLANDC__ >= 0x0550))
-#  define acc_inline            __inline
-#elif (ACC_CC_DMC)
-#  define acc_inline            __inline
-#elif (ACC_CC_GNUC)
-#  define acc_inline            __inline__
-#elif (ACC_CC_INTELC)
-#  define acc_inline            __inline
-#elif (ACC_CC_MSC && (_MSC_VER >= 1000))
-#  define acc_inline            __inline
-#elif (ACC_CC_PGI)
-#  define acc_inline            __inline__
+#if (ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)) || ACC_OS_WIN32 || ACC_OS_WIN64)
+#  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
+#  elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
+     /* ancient pw32 version */
+#  elif ((ACC_OS_CYGWIN || defined(__MINGW32__)) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025f00ul)))
+     /* ancient cygwin/mingw version */
+#  else
+#    define ACC_HAVE_WINDOWS_H 1
+#  endif
 #endif
 
 

@@ -23,23 +23,15 @@
 
 #if (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
 #  include <tos.h>
-#elif (ACC_OS_WIN32 || ACC_OS_WIN64 || ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)))
-#  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
-#  elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
-     /* ancient pw32 version */
-#  elif ((ACC_OS_CYGWIN || defined(__MINGW32__)) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025f00ul)))
-     /* ancient cygwin/mingw version */
-#  else
-#    if 1 && !defined(WIN32_LEAN_AND_MEAN)
-#      define WIN32_LEAN_AND_MEAN 1
-#    endif
-#    if 1 && !defined(_WIN32_WINNT)
-       /* Restrict to a subset of Windows NT 4.0 header files */
-#      define _WIN32_WINNT 0x0400
-#    endif
-#    include <windows.h>
-#    define ACC_H_WINDOWS_H 1
+#elif (ACC_HAVE_WINDOWS_H)
+#  if 1 && !defined(WIN32_LEAN_AND_MEAN)
+#    define WIN32_LEAN_AND_MEAN 1
 #  endif
+#  if 1 && !defined(_WIN32_WINNT)
+     /* Restrict to a subset of Windows NT 4.0 header files */
+#    define _WIN32_WINNT 0x0400
+#  endif
+#  include <windows.h>
 #  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
 #    include <dir.h>
 #  endif
@@ -62,12 +54,6 @@
 #elif (ACC_OS_OS216)
 #  if (ACC_CC_WATCOMC)
 #    include <i86.h>
-#  endif
-#  if 0
-#    include <os2.h>
-#  else
-     ACC_EXTERN_C unsigned short __far __pascal DosAllocHuge(unsigned short, unsigned short, unsigned short __far *, unsigned short, unsigned short);
-     ACC_EXTERN_C unsigned short __far __pascal DosFreeSeg(unsigned short);
 #  endif
 #endif
 

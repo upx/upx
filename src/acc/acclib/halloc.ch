@@ -19,6 +19,44 @@
 #endif
 
 
+#if (ACC_HAVE_MM_HUGE_PTR)
+#if 1 && (ACC_OS_DOS16 && defined(BLX286))
+#  define __ACCLIB_HALLOC_USE_DAH 1
+#elif 1 && (ACC_OS_DOS16 && defined(DOSX286))
+#  define __ACCLIB_HALLOC_USE_DAH 1
+#elif 1 && (ACC_OS_OS216)
+#  define __ACCLIB_HALLOC_USE_DAH 1
+#elif 1 && (ACC_OS_WIN16)
+#  define __ACCLIB_HALLOC_USE_GA 1
+#elif 1 && (ACC_OS_DOS16) && (ACC_CC_BORLANDC) && defined(__DPMI16__)
+#  define __ACCLIB_HALLOC_USE_GA 1
+#endif
+#endif
+
+
+#if (__ACCLIB_HALLOC_USE_DAH)
+#if 0 && (ACC_OS_OS216)
+#include <os2.h>
+#else
+ACC_EXTERN_C unsigned short __far __pascal DosAllocHuge(unsigned short, unsigned short, unsigned short __far *, unsigned short, unsigned short);
+ACC_EXTERN_C unsigned short __far __pascal DosFreeSeg(unsigned short);
+#endif
+#endif
+
+#if (__ACCLIB_HALLOC_USE_GA)
+#if 0
+#define STRICT 1
+#include <windows.h>
+#else
+ACC_EXTERN_C const void __near* __far __pascal GlobalAlloc(unsigned, unsigned long);
+ACC_EXTERN_C const void __near* __far __pascal GlobalFree(const void __near*);
+ACC_EXTERN_C unsigned long __far __pascal GlobalHandle(unsigned);
+ACC_EXTERN_C void __far* __far __pascal GlobalLock(const void __near*);
+ACC_EXTERN_C int __far __pascal GlobalUnlock(const void __near*);
+#endif
+#endif
+
+
 /***********************************************************************
 // halloc
 ************************************************************************/
@@ -36,7 +74,25 @@ ACCLIB_PUBLIC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
     if (size < (size_t) -1)
         p = malloc((size_t) size);
 #else
-#if (ACC_CC_MSC && _MSC_VER >= 700)
+    if ((long)size <= 0)
+        return p;
+{
+#if (__ACCLIB_HALLOC_USE_DAH)
+    unsigned short sel = 0;
+    if (DosAllocHuge((unsigned short)(size >> 16), (unsigned short)size, &sel, 0, 0) == 0)
+        p = (acc_hvoid_p) ACC_MK_FP(sel, 0);
+#elif (__ACCLIB_HALLOC_USE_GA)
+    const void __near* h = GlobalAlloc(2, size);
+    if (h) {
+        p = GlobalLock(h);
+        if (p && ACC_FP_OFF(p) != 0) {
+            GlobalUnlock(h);
+            p = 0;
+        }
+        if (!p)
+            GlobalFree(h);
+    }
+#elif (ACC_CC_MSC && (_MSC_VER >= 700))
     p = _halloc(size, 1);
 #elif (ACC_CC_MSC || ACC_CC_WATCOMC)
     p = halloc(size, 1);
@@ -50,6 +106,7 @@ ACCLIB_PUBLIC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
     if (size < (size_t) -1)
         p = malloc((size_t) size);
 #endif
+}
 #endif
 
     return p;
@@ -66,7 +123,18 @@ ACCLIB_PUBLIC(void, acc_hfree) (acc_hvoid_p p)
 #elif !defined(ACC_HAVE_MM_HUGE_PTR)
     free(p);
 #else
-#if (ACC_CC_MSC && (_MSC_VER >= 700))
+#if (__ACCLIB_HALLOC_USE_DAH)
+    if (ACC_FP_OFF(p) == 0)
+        DosFreeSeg((unsigned short) ACC_FP_SEG(p));
+#elif (__ACCLIB_HALLOC_USE_GA)
+    if (ACC_FP_OFF(p) == 0) {
+        const void __near* h = (const void __near*) (unsigned) GlobalHandle(ACC_FP_SEG(p));
+        if (h) {
+            GlobalUnlock(h);
+            GlobalFree(h);
+        }
+    }
+#elif (ACC_CC_MSC && (_MSC_VER >= 700))
     _hfree(p);
 #elif (ACC_CC_MSC || ACC_CC_WATCOMC)
     hfree(p);

@@ -19,11 +19,17 @@
 #endif
 
 
+#if (ACC_OS_OS216)
+ACC_EXTERN_C unsigned short __far __pascal DosAllocHuge(unsigned short, unsigned short, unsigned short __far *, unsigned short, unsigned short);
+ACC_EXTERN_C unsigned short __far __pascal DosFreeSeg(unsigned short);
+#endif
+
+
 /***********************************************************************
 // dos_alloc
 ************************************************************************/
 
-#if (ACC_OS_DOS16)
+#if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #if !defined(ACC_CC_AZTECC)
 
 ACCLIB_PUBLIC(void __far*, acc_dos_alloc) (unsigned long size)
@@ -73,11 +79,9 @@ ACCLIB_PUBLIC(void __far*, acc_dos_alloc) (unsigned long size)
 {
     void __far* p = 0;
     unsigned short sel = 0;
-    unsigned long pmask = 0xffffu >> ACC_MM_AHSHIFT; /* 8191 */
 
     if ((long)size <= 0)
         return p;
-    size = (size + pmask) &~ pmask;     /* align up to paragraph size */
     if (DosAllocHuge((unsigned short)(size >> 16), (unsigned short)size, &sel, 0, 0) == 0)
         p = (void __far*) ACC_MK_FP(sel, 0);
     return p;

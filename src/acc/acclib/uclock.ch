@@ -21,7 +21,7 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
-#elif (ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_H_WINDOWS_H)
+#elif (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_HAVE_WINDOWS_H)
 #  if defined(acc_int64l_t)
      /* See also: KB Q274323: PRB: Performance Counter Value May
       *   Unexpectedly Leap Forward */
@@ -51,15 +51,19 @@
 #    endif
 #    if (ACC_CC_DMC)
 #      pragma DMC includelib "winmm.lib"
-#    elif (ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_MWERKS)
-#      pragma comment(lib, "winmm")
+#    elif (ACC_CC_INTELC || ACC_CC_MSC)
+#      pragma comment(lib, "winmm.lib")
+#    elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x3000))
+#      pragma comment(lib, "winmm.lib")
 #    elif (ACC_CC_SYMANTECC)
 #      pragma SC includelib "winmm.lib"
-#    elif (ACC_CC_WATCOMC)
+#    elif (ACC_CC_WATCOMC && (__WATCOMC__ >= 1050))
 #      pragma library("winmm.lib")
 #    endif
 #  endif
-#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN32 || ACC_OS_WIN64)
+#elif (ACC_OS_EMX) && (ACC_HAVE_WINDOWS_H) && defined(acc_int64l_t)
+#  define __ACCLIB_UCLOCK_USE_QPC 1
+#elif (ACC_OS_CYGWIN || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  define __ACCLIB_UCLOCK_USE_CLOCK 1
 #endif
 

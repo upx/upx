@@ -34,8 +34,10 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
     return -1; /* FIXME */
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
-# if (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))
+# if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
     return -1; /* FIXME */
+# elif (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))
+    return _os_handle(fd);
 # else
     return _get_osfhandle(fd);
 # endif
@@ -48,8 +50,7 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
 {
 #if (ACC_OS_TOS && defined(__MINT__))
-    int old_binary;
-    FILE* fp;
+    FILE* fp; int old_binary;
     if (fd == STDIN_FILENO) fp = stdin;
     else if (fd == STDOUT_FILENO) fp = stdout;
     else if (fd == STDERR_FILENO) fp = stderr;
@@ -64,37 +65,35 @@ ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
     ACC_UNUSED(fd); ACC_UNUSED(binary);
     return -1; /* FIXME */
 #elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
-    int r;
-    unsigned old_flags = __djgpp_hwint_flags;
+    int r; unsigned old_flags = __djgpp_hwint_flags;
     ACC_COMPILE_TIME_ASSERT(O_BINARY > 0)
     ACC_COMPILE_TIME_ASSERT(O_TEXT > 0)
-    if (fd < 0)
-        return -1;
+    if (fd < 0) return -1;
     r = setmode(fd, binary ? O_BINARY : O_TEXT);
     if ((old_flags & 1u) != (__djgpp_hwint_flags & 1u))
         __djgpp_set_ctrl_c(!(old_flags & 1));
-    if (r == -1)
-        return -1;
+    if (r == -1) return -1;
     return (r & O_TEXT) ? 0 : 1;
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
     if (fd < 0) return -1;
     ACC_UNUSED(binary);
     return 1;
 #elif (ACC_OS_DOS32 && ACC_CC_HIGHC)
-    int r;
-    FILE* fp;
+    FILE* fp; int r;
     if (fd == fileno(stdin)) fp = stdin;
     else if (fd == fileno(stdout)) fp = stdout;
     else if (fd == fileno(stderr)) fp = stderr;
     else return -1;
     r = _setmode(fp, binary ? _BINARY : _TEXT);
-    if (r == -1)
-        return -1;
+    if (r == -1) return -1;
     return (r & _BINARY) ? 1 : 0;
 #elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
     ACC_UNUSED(fd); ACC_UNUSED(binary);
     return -1; /* FIXME */
-#elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64 || ACC_OS_CYGWIN || ACC_OS_EMX)
+#elif (ACC_OS_CYGWIN && (ACC_CC_GNUC < 0x025a00ul))
+    ACC_UNUSED(fd); ACC_UNUSED(binary);
+    return -1; /* FIXME */
+#elif (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
     int r;
 #if !defined(ACC_CC_ZORTECHC)
     ACC_COMPILE_TIME_ASSERT(O_BINARY > 0)
@@ -102,8 +101,7 @@ ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
     ACC_COMPILE_TIME_ASSERT(O_TEXT > 0)
     if (fd < 0) return -1;
     r = setmode(fd, binary ? O_BINARY : O_TEXT);
-    if (r == -1)
-        return -1;
+    if (r == -1) return -1;
     return (r & O_TEXT) ? 0 : 1;
 #else
     if (fd < 0) return -1;
@@ -137,7 +135,7 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
             if ((ro.w.ax & 0x83) != 0x83)
                 return 0;
     }
-#elif (ACC_H_WINDOWS_H)
+#elif (ACC_HAVE_WINDOWS_H)
     {
         acclib_handle_t h = __ACCLIB_FUNCNAME(acc_get_osfhandle)(fd);
         if ((HANDLE)h != INVALID_HANDLE_VALUE)

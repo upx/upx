@@ -27,7 +27,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20040113L
+#define ACC_VERSION     20040202L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -55,7 +55,7 @@
 #  endif
 #endif
 #if 0 && defined(__WATCOMC__)
-#  if (__WATCOMC__ < 1000)
+#  if (__WATCOMC__ < 1060)
 #    pragma warning 203 9           /* W203: Preprocessing symbol '%s' has not been declared */
 #  endif
 #endif
