@@ -562,8 +562,9 @@ Extra options available for this executable format:
 
 Please read the general Linux description first.
 
-The generic linux/386 format deompresses to /tmp
+The generic linux/386 format decompresses to /tmp
 and needs /proc filesystem support.
+It starts the decompressed program via execve().
 
 Linux/386 is only selected if the specialized linux/elf386
 and linux/sh386 won't recognize a file.
@@ -573,7 +574,7 @@ Packed programs will be byte-identical to the original after uncompression.
 How it works:
 
   For files which are not ELF and not a script for a known "-c" shell,
-  UPX uses kernel exec(), which first requires decompressing to a
+  UPX uses kernel execve(), which first requires decompressing to a
   temporary file in the filesystem.  Interestingly -
   because of the good memory management of the Linux kernel - this
   often does not introduce a noticable delay, and in fact there
@@ -621,7 +622,9 @@ Specific drawbacks:
 
 Extra options available for this executable format:
 
-  (none)
+  --force-execve      Force the use of the generic linux/386 "execve"
+                      format, i.e. do not try the linux/elf386 and
+                      linux/sh386 formats.
 
 
 
