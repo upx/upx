@@ -87,6 +87,8 @@ $i = 0;
 # 2nd pass
 for $line (@lines)
 {
+    last if ($line =~ /^\s*end\b/i);
+
     if ($line =~ /^\s+(b[\w\.]+|db[\w\.]+)\s+(\w*)/)
     {
         $label = $2;
@@ -110,11 +112,15 @@ for $line (@lines)
         }
     }
 
-    $line = ";$line" if ($line =~ /^\s+align\b/);
-    $line = ";$line" if ($line =~ /^\s+even\b/);
-    $line = ";$line" if ($line =~ /^\s+end\b/);
+    $line = ";$line" if ($line =~ /^\s+align\b/i);
+    $line = ";$line" if ($line =~ /^\s+even\b/i);
 
-    print OU $line;
+    if ($line =~ /^;*\s+print_data\b/i) {
+        &print_data();
+    } else {
+        print OU $line;
+    }
+
     if ($line =~ /__([A-Z0-9]{8})__/)
     {
         print OU "S$1$ilabel:\n";
@@ -127,12 +133,23 @@ for $line (@lines)
     $i++;
 }
 
-# print data section
-print OU "\n\n\t\tsection_data\n";
-for $d (@data) {
-    print OU "\t\t$d\n";
-}
-print OU "\t\tdc.b\t'UPX9'\n";
+&print_data();
 print OU "\t\tend\n";
+exit(0);
+
+
+# /***********************************************************************
+# //
+# ************************************************************************/
+
+sub print_data {
+    return if ($#data < 0);
+    ###print OU "\n\n\t\tsection_data\n";
+    local ($d);
+    for $d (@data) {
+        print OU "\t\t$d\n";
+    }
+    @data = ();
+}
 
 # vi:ts=4:et
