@@ -41,12 +41,13 @@
 
 
 /*************************************************************************
-// calltrick / swaptrick
+// simple filters: calltrick / swaptrick / delta / ...
 **************************************************************************/
 
 #include "filter/ct.h"
 #include "filter/sw.h"
 #include "filter/ctsw.h"
+#include "filter/sub.h"
 
 
 /*************************************************************************
@@ -174,6 +175,12 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
 
     // 32-bit cto calltrick with jmp and relative renumbering
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
+
+    // simple delta filter
+    { 0x90, 2,          0, f_sub1, u_sub1, s_sub1 },
+    { 0x91, 3,          0, f_sub2, u_sub2, s_sub2 },
+    { 0x92, 4,          0, f_sub3, u_sub3, s_sub3 },
+    { 0x93, 5,          0, f_sub4, u_sub4, s_sub4 },
 };
 
 const int FilterImp::n_filters = HIGH(filters);

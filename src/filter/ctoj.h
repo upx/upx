@@ -64,7 +64,7 @@ static int F(Filter *f)
     }
     const unsigned char cto8 = f->cto;
 #ifdef U
-    const unsigned cto = (unsigned)cto8 << 24;
+    const unsigned cto = (unsigned)f->cto << 24;
 #endif
 
     for (ic = 0; ic < size - 5; ic++)
