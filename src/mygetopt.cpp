@@ -167,7 +167,7 @@ static int last_nonopt;
 
 static void exchange (char **argv)
 {
-  char *temp, **first, **last;
+  char *temp; char **first, **last;
 
   /* Reverse all the elements [first_nonopt, optind) */
   first = &argv[first_nonopt];
@@ -523,7 +523,7 @@ static int _getopt_internal (int argc, char **argv, const char *optstring,
           optind++;
           return BAD_OPTION;
         }
-        ambig = ambig;
+        (void) &ambig;  /* UNUSED */
     }
 
   /* Look at and handle the next option-character.  */
