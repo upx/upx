@@ -52,6 +52,7 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual int buildLoader(const Filter *ft);
     virtual void handleStub(OutputFile *fo);
 
     virtual void readObjectTable();
@@ -66,7 +67,7 @@ protected:
     virtual void encodeEntryTable();
     virtual void decodeEntryTable();
 
-    virtual int  preprocessFixups();
+    virtual void preprocessFixups();
     virtual void encodeFixups();
     virtual void decodeFixups();
 
@@ -78,6 +79,7 @@ protected:
     // temporary copy of the object descriptors
     MemBuffer iobject_desc;
 
+    int big_relocs;
     bool has_extra_code;
     unsigned overlapoh;
     unsigned neweip;

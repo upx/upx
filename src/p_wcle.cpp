@@ -84,6 +84,39 @@ const int *PackWcle::getFilters() const
 }
 
 
+int PackWcle::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(nrv_loader,sizeof(nrv_loader));
+    addLoader("IDENTSTR""WCLEMAIN""UPX1HEAD""WCLECUTP""+0000000",
+              getDecompressor(),
+              "WCLEMAI2",
+              NULL
+             );
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addLoader(ft->addvalue ? "WCCTTPOS" : "WCCTTNUL", NULL);
+        addFilter32(ft->id);
+    }
+#if 1
+    // FIXME: if (has_relocation)
+    {
+        addLoader("WCRELOC1""RELOC320",
+                  big_relocs ? "REL32BIG" : "",
+                  "RELOC32J",
+                  NULL
+                 );
+    }
+#endif
+    addLoader(has_extra_code ? "WCRELSEL" : "",
+              "WCLEMAI4",
+              NULL
+             );
+    return getLoaderSize();
+}
+
+
 /*************************************************************************
 // util
 **************************************************************************/
@@ -229,10 +262,11 @@ void PackWcle::encodeFixups()
 }
 
 
-int PackWcle::preprocessFixups()
+void PackWcle::preprocessFixups()
 {
+    big_relocs = 0;
+
     unsigned ic,jc;
-    int big;
 
     MemBuffer counts_buf((objects+2)*sizeof(unsigned));
     unsigned *counts = (unsigned *) (unsigned char *) counts_buf;
@@ -351,7 +385,7 @@ int PackWcle::preprocessFixups()
         delete[] ifixups;
         ifixups = new upx_byte[1000];
     }
-    fix = optimizeReloc32 (rl,rc,ifixups,iimage,1,&big);
+    fix = optimizeReloc32 (rl,rc,ifixups,iimage,1,&big_relocs);
     has_extra_code = srf != selector_fixups;
     // FIXME: this could be removed if has_extra_code = false
     // but then we'll need a flag
@@ -364,9 +398,9 @@ int PackWcle::preprocessFixups()
     set_le32(fix,0xFFFFFFFFUL);
     fix += 4;
 
-    sofixups = fix-ifixups;
-    return big;
+    sofixups = fix - ifixups;
 }
+
 
 #define RESERVED 0x1000
 void PackWcle::encodeImage(const Filter *ft)
@@ -424,7 +458,7 @@ void PackWcle::pack(OutputFile *fo)
     if (ih.init_ss_object != objects)
         throwCantPack("the stack is not in the last object");
 
-    int big = preprocessFixups();
+    preprocessFixups();
 
     const unsigned text_size = IOT(ih.init_cs_object-1,npages) * mps;
     const unsigned text_vaddr = IOT(ih.init_cs_object-1,my_base_address);
@@ -432,6 +466,7 @@ void PackWcle::pack(OutputFile *fo)
     // filter
     Filter ft(opt->level);
     tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
+    buildLoader(&ft);
 
     // attach some useful data at the end of preprocessed fixups
     ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
@@ -450,34 +485,6 @@ void PackWcle::pack(OutputFile *fo)
 
     // verify filter
     ft.verifyUnfilter();
-
-    // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("IDENTSTR""WCLEMAIN""UPX1HEAD""WCLECUTP""+0000000",
-              getDecompressor(),
-              "WCLEMAI2",
-              NULL
-             );
-    if (ft.id)
-    {
-        assert(ft.calls > 0);
-        addLoader(text_vaddr ? "WCCTTPOS" : "WCCTTNUL",NULL);
-        addFilter32(ft.id);
-    }
-#if 1
-    // FIXME: if (has_relocation)
-    {
-        addLoader("WCRELOC1""RELOC320",
-                  big ? "REL32BIG" : "",
-                  "RELOC32J",
-                  NULL
-                 );
-    }
-#endif
-    addLoader(has_extra_code ? "WCRELSEL" : "",
-              "WCLEMAI4",
-              NULL
-             );
 
     const unsigned lsize = getLoaderSize();
     neweip = getLoaderSection("WCLEMAIN");
