@@ -13,10 +13,12 @@
  */
 
 
+#ifndef __ACC_INCD_H_INCLUDED
+#define __ACC_INCD_H_INCLUDED
+
+/* default system includes */
 /* see Autoconf:
- *   headers.m4
- *   _AC_INCLUDES_DEFAULT_REQUIREMENTS
- *   ac_includes_default
+ *   headers.m4, _AC_INCLUDES_DEFAULT_REQUIREMENTS ac_includes_default
  */
 
 #include <stdio.h>
@@ -53,6 +55,8 @@
 #if HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#endif /* already included */
 
 
 /*

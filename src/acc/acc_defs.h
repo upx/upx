@@ -40,19 +40,8 @@
 ************************************************************************/
 
 #if !defined(__ACC_UINT_MAX)
-#  define __ACC_INT_MAX(b)         ((1l << ((b)-1)) - 1l)
-#  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1ul) << 1) + 1ul)
-#endif
-
-#if !defined(ACC_UINT32_C)
-#  if defined(__PACIFIC__) && defined(DOS)
-     /* workaround Pacific C */
-#    define ACC_UINT32_C(c)     c
-#  elif (UINT_MAX < __ACC_UINT_MAX(32))
-#    define ACC_UINT32_C(c)     c ## UL
-#  else
-#    define ACC_UINT32_C(c)     c ## U
-#  endif
+#  define __ACC_INT_MAX(b)         ((1l << ((b)-1)) - 1)
+#  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1) << 1) + 1)
 #endif
 
 
@@ -61,7 +50,7 @@
 ************************************************************************/
 
 #if !defined(__ACC_SHORT_BIT)
-#  if (USHRT_MAX == 0xffff)
+#  if (USHRT_MAX == 0xffffL)
 #    define __ACC_SHORT_BIT     16
 #  elif (USHRT_MAX == __ACC_UINT_MAX(32))
 #    define __ACC_SHORT_BIT     32
@@ -75,7 +64,7 @@
 #endif
 
 #if !defined(__ACC_INT_BIT)
-#  if (UINT_MAX == 0xffff)
+#  if (UINT_MAX == 0xffffL)
 #    define __ACC_INT_BIT       16
 #  elif (UINT_MAX == __ACC_UINT_MAX(32))
 #    define __ACC_INT_BIT       32

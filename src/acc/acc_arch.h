@@ -17,6 +17,7 @@
  * CPU architecture - exactly one of:
  *
  *   ACC_ARCH_UNKNOWN       [default]
+ *   ACC_ARCH_ALPHA
  *   ACC_ARCH_IA16          Intel Architecture (8088, 8086, 80186, 80286)
  *   ACC_ARCH_IA32          Intel Architecture (80386+)
  *   ACC_ARCH_IA64
@@ -36,16 +37,21 @@
 #elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
 #  define ACC_ARCH_IA32             1
 #  define ACC_INFO_ARCH             "ia32"
-#elif defined(__ia64__) || defined(_M_IA64)
+#elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"
-#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
+#elif (ACC_OS_DOS32 || ACC_OS_OS2)
 #  error "missing define for CPU architechture"
-#elif (ACC_OS_WIN64)
+#elif (0 && ACC_OS_WIN32)
+#  error "missing define for CPU architechture"
+#elif (0 && ACC_OS_WIN64)
 #  error "missing define for CPU architechture"
 #elif (ACC_OS_TOS) || defined(__m68000__)
 #  define ACC_ARCH_M68K             1
 #  define ACC_INFO_ARCH             "m68k"
+#elif defined(__alpha__) || defined(__alpha)
+#  define ACC_ARCH_ALPHA            1
+#  define ACC_INFO_ARCH             "alpha"
 #else
 #  define ACC_ARCH_UNKNOWN          1
 #  define ACC_INFO_ARCH             "unknown"

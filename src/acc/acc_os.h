@@ -21,7 +21,7 @@
  *   ACC_OS_CYGWIN          hybrid WIN32 and POSIX
  *   ACC_OS_DOS16           16-bit DOS (segmented memory model)
  *   ACC_OS_DOS32
- *   ACC_OS_EMX             hybrid OS/2, DOS32 and POSIX
+ *   ACC_OS_EMX             hybrid OS/2, DOS32, WIN32 (with RSX) and POSIX
  *   ACC_OS_MAC9            Macintosh Classic
  *   ACC_OS_MACOSX          Mac OS/X
  *   ACC_OS_PALMOS
@@ -134,6 +134,9 @@
 #  elif defined(__OpenBSD__)
 #    define ACC_OS_POSIX_OPENBSD    1
 #    define ACC_INFO_OS_POSIX       "openbsd"
+#  elif defined(__osf__)
+#    define ACC_OS_POSIX_OSF        1
+#    define ACC_INFO_OS_POSIX       "osf"
 #  elif defined(__solaris__) || defined(__sun)
 #    if defined(__SVR4) || defined(__svr4__)
 #      define ACC_OS_POSIX_SOLARIS  1
@@ -159,6 +162,9 @@
 #endif
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (UINT_MAX != 0xffffffffL)
+#    error "this should not happen"
+#  endif
+#  if (ULONG_MAX != 0xffffffffL)
 #    error "this should not happen"
 #  endif
 #endif

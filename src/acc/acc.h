@@ -19,17 +19,30 @@
  *   ACC_CONFIG_HEADER          if given, then use this as <config.h>
  *   ACC_CONFIG_INCLUDE         include path to acc_ files
  *   ACC_CONFIG_FRESSTANDING    only use <limits.h> and possibly <stdint.h>
+ *                              [use this for embedded targets]
  */
 
 
-#define ACC_VERSION     20030405L
+#define ACC_VERSION     20030417L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
 #endif
 
-#include ACC_CONFIG_INCLUDE("acc_init.h")
+
+/* disable pedantic warnings */
+#if defined(__INTEL_COMPILER) && defined(__linux__)
+#  pragma warning(disable: 193)     /* #193: zero used for undefined preprocessing identifier */
+#endif
+#if 0 && defined(__WATCOMC__)
+#  if (__WATCOMC__ < 1000)
+#    pragma warning 203 9           /* W203: Preprocessing symbol '%s' has not been declared */
+#  endif
+#endif
+
+
 #include <limits.h>
+#include ACC_CONFIG_INCLUDE("acc_init.h")
 #include ACC_CONFIG_INCLUDE("acc_os.h")
 #include ACC_CONFIG_INCLUDE("acc_cc.h")
 #include ACC_CONFIG_INCLUDE("acc_mm.h")
@@ -42,8 +55,11 @@
 #  include ACC_CONFIG_INCLUDE("acc_auto.h")
 #endif
 
+#include ACC_CONFIG_INCLUDE("acc_type.h")
+
 #if !defined(ACC_CONFIG_FREESTANDING)
 #  include ACC_CONFIG_INCLUDE("acc_incd.h")
+#  include ACC_CONFIG_INCLUDE("acc_lib.h")
 #endif
 
 

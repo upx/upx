@@ -22,9 +22,19 @@
  */
 
 #if defined(__GNUC__) && defined(__VERSION__)
-#  define ACC_CC_GNUC           1
+#  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#  elif defined(__GNUC_MINOR__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#  else
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
+#  endif
 #  define ACC_INFO_CC           "gcc"
 #  define ACC_INFO_CCVER        __VERSION__
+#elif defined(__AZTEC_C__)
+#  define ACC_CC_AZTEC_C        1
+#  define ACC_INFO_CC           "Aztec C"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__AZTEC_C__)
 #elif defined(__BORLANDC__)
 #  define ACC_CC_BORLANDC       1
 #  define ACC_INFO_CC           "Borland C"
@@ -33,6 +43,10 @@
 #  define ACC_CC_DMC            1
 #  define ACC_INFO_CC           "Digital Mars C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__DMC__)
+#elif defined(__DECC)
+#  define ACC_CC_DECC           1
+#  define ACC_INFO_CC           "DEC C"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__DECC)
 #elif defined(__INTEL_COMPILER)
 #  define ACC_CC_INTELC         1
 #  define ACC_INFO_CC           "Intel C"

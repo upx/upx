@@ -14,16 +14,17 @@
 
 
 /***********************************************************************
-// disable pedantic warnings
+// try to detect specific compilers
 ************************************************************************/
 
-#if defined(__INTEL_COMPILER) && defined(__linux__)
-#  pragma warning(disable: 193)     /* #193: zero used for undefined preprocessing identifier */
-#endif
-
-#if 0 && defined(__WATCOMC__)
-#  if (__WATCOMC__ < 1000)
-#    pragma warning 203 9           /* W203: Preprocessing symbol '%s' has not been declared */
+#if defined(__VERSION) && (UINT_MAX == 0xffffL) && defined(MB_LEN_MAX)
+#  if (__VERSION == 520) && (MB_LEN_MAX == 1)
+#    if !defined(__AZTEC_C__)
+#      define __AZTEC_C__ __VERSION
+#    endif
+#    if !defined(__DOS__)
+#      define __DOS__ 1
+#    endif
 #  endif
 #endif
 
@@ -40,7 +41,7 @@
 /* Microsoft C does not correctly define ptrdiff_t for
  * the 16-bit huge memory model.
  */
-#if defined(_MSC_VER) && defined(M_I86HM)
+#if defined(_MSC_VER) && defined(M_I86HM) && (UINT_MAX == 0xffffL)
 #  if (_MSC_VER <= 800)
 #    define ptrdiff_t long
 #    define _PTRDIFF_T_DEFINED

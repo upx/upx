@@ -14,20 +14,40 @@
 
 
 /*************************************************************************
+// Checks for <stdint.h>
+**************************************************************************/
+
+#if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
+#  if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1))
+#    define HAVE_STDINT_H 1
+#  endif
+#elif defined(__dietlibc__)
+#  undef HAVE_STDINT_H /* incomplete */
+#elif (ACC_CC_BORLANDC) && (__BORLANDC__ >= 0x560)
+#  undef HAVE_STDINT_H /* broken & incomplete */
+#elif (ACC_CC_DMC) && (__DMC__ >= 0x825)
+#  define HAVE_STDINT_H 1
+#endif
+
+#if HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+
+
+/*************************************************************************
 // Checks for header files
 **************************************************************************/
 
 #define STDC_HEADERS 1
 
-#define HAVE_CONIO_H 1
+#define HAVE_ASSERT_H 1
 #define HAVE_CTYPE_H 1
-#define HAVE_DOS_H 1
+#define HAVE_DIRENT_H 1
 #define HAVE_ERRNO_H 1
 #define HAVE_FCNTL_H 1
-#define HAVE_IO_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_MALLOC_H 1
-#define HAVE_SHARE_H 1
+#define HAVE_MEMORY_H 1
 #define HAVE_SIGNAL_H 1
 #define HAVE_STDARG_H 1
 #define HAVE_STDDEF_H 1
@@ -39,77 +59,62 @@
 #define HAVE_UTIME_H 1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TIME_H 1
-#define HAVE_SYS_UTIME_H 1
 #define HAVE_SYS_TYPES_H 1
 
+#undef HAVE_ALLOCA_H
+#undef HAVE_CONIO_H
+#undef HAVE_DIRECT_H
+#undef HAVE_DOS_H
+#undef HAVE_IO_H
+#undef HAVE_SHARE_H
 #undef HAVE_STDINT_H
 #undef HAVE_STRINGS_H
+#undef HAVE_SYS_UTIME_H
 
 
-#if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#  undef HAVE_CONIO_H
-#  undef HAVE_DOS_H
-#  undef HAVE_IO_H
-#  undef HAVE_SHARE_H
-#  undef HAVE_SYS_UTIME_H
+#if (ACC_OS_POSIX)
 #  define HAVE_STRINGS_H 1
-#elif defined(__dietlibc__)
-#  undef HAVE_CONIO_H
-#  undef HAVE_DOS_H
-#  undef HAVE_IO_H
-#  undef HAVE_SHARE_H
-#  undef HAVE_SYS_UTIME_H
-#  define HAVE_STRINGS_H 1
-#elif (ACC_CC_BORLANDC)
-#  undef HAVE_UNISTD_H
-#  undef HAVE_SYS_TIME_H
-#  undef HAVE_SYS_UTIME_H
-#elif (ACC_CC_DMC)
-#  undef HAVE_UNISTD_H /* not working */
-#elif (ACC_CC_GNUC && ACC_OS_CYGWIN)
-#  undef HAVE_CONIO_H
-#  undef HAVE_DOS_H
-#  undef HAVE_SHARE_H
-#elif (ACC_CC_GNUC && ACC_OS_DOS32 && defined(__DJGPP__))
-#  undef HAVE_SYS_UTIME_H
-#elif (ACC_CC_GNUC && ACC_OS_WIN32 && defined(__MINGW32__))
-#  undef HAVE_UTIME_H
-#elif (ACC_CC_GNUC && ACC_OS_TOS)
-#  undef HAVE_CONIO_H
-#  undef HAVE_DOS_H
-#  undef HAVE_IO_H
-#  undef HAVE_SHARE_H
-#  undef HAVE_SYS_UTIME_H
+#  if (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_OPENBSD)
+#    undef HAVE_MALLOC_H /* deprecated */
+#  elif (ACC_OS_POSIX_HPUX)
+#    define HAVE_ALLOCA_H 1
+#  endif
+#elif (ACC_OS_CYGWIN)
+#  define HAVE_ALLOCA_H 1
+#  define HAVE_IO_H 1
+#elif (ACC_OS_EMX)
+#  define HAVE_ALLOCA_H 1
+#  define HAVE_IO_H 1
+#elif (ACC_OS_TOS && ACC_CC_GNUC)
 #  if !defined(__MINT__)
 #    undef HAVE_MALLOC_H
 #  endif
-#elif (ACC_CC_INTELC && ACC_OS_WIN32)
-#  undef HAVE_UNISTD_H
-#  undef HAVE_UTIME_H
-#  undef HAVE_SYS_TIME_H
-#elif (ACC_CC_LCC && ACC_OS_WIN32)
-#  undef HAVE_DOS_H
-#  undef HAVE_SYS_TIME_H
-#elif (ACC_CC_MSC)
-#  undef HAVE_UNISTD_H
-#  undef HAVE_UTIME_H
-#  undef HAVE_SYS_TIME_H
-#elif (ACC_CC_PACIFIC && ACC_OS_DOS16)
+#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
+#  undef HAVE_DIRENT_H
 #  undef HAVE_FCNTL_H
-#  undef HAVE_IO_H
 #  undef HAVE_MALLOC_H
-#  undef HAVE_SHARE_H
+#  undef HAVE_MEMORY_H
 #  undef HAVE_UNISTD_H
 #  undef HAVE_UTIME_H
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
-#  undef HAVE_SYS_UTIME_H
-#elif ((ACC_CC_PUREC || ACC_CC_TURBOC) && ACC_OS_TOS)
+#endif
+
+
+/* DOS, OS/2 & Windows */
+#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+
+#define HAVE_CONIO_H 1
+#define HAVE_DIRECT_H 1
+#define HAVE_DOS_H 1
+#define HAVE_IO_H 1
+#define HAVE_SHARE_H 1
+
+#if (ACC_CC_AZTEC_C)
 #  undef HAVE_CONIO_H
-#  undef HAVE_DOS_H
-#  undef HAVE_FCNTL_H
-#  undef HAVE_IO_H
+#  undef HAVE_DIRECT_H
+#  undef HAVE_DIRENT_H
 #  undef HAVE_MALLOC_H
 #  undef HAVE_SHARE_H
 #  undef HAVE_UNISTD_H
@@ -117,22 +122,59 @@
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
-#  undef HAVE_SYS_UTIME_H
-#elif (ACC_CC_TURBOC && ACC_OS_DOS16)
+#elif (ACC_CC_BORLANDC)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_SYS_TIME_H
-#  undef HAVE_SYS_UTIME_H
+#elif (ACC_CC_DMC)
+#  undef HAVE_UNISTD_H /* not working */
+#elif defined(__DJGPP__)
+#elif (ACC_CC_INTELC || ACC_CC_MSC)
+#  undef HAVE_DIRENT_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_TIME_H
+#  define HAVE_SYS_UTIME_H 1
+#elif (ACC_CC_LCC)
+#  undef HAVE_DIRENT_H
+#  undef HAVE_DOS_H
+#  undef HAVE_SYS_TIME_H
+#elif defined(__MINGW32__)
+#  undef HAVE_UTIME_H
+#  define HAVE_SYS_UTIME_H 1
+#elif (ACC_CC_PACIFIC)
+#  undef HAVE_DIRECT_H
+#  undef HAVE_DIRENT_H
+#  undef HAVE_FCNTL_H
+#  undef HAVE_IO_H
+#  undef HAVE_MALLOC_H
+#  undef HAVE_MEMORY_H
+#  undef HAVE_SHARE_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_STAT_H
+#  undef HAVE_SYS_TIME_H
+#  undef HAVE_SYS_TYPES_H
+#elif (ACC_CC_TURBOC)
+#  undef HAVE_UNISTD_H
+#  undef HAVE_SYS_TIME_H
 #  if (__TURBOC__ < 0x0400)
+#    undef HAVE_DIRECT_H
+#    undef HAVE_DIRENT_H
 #    undef HAVE_MALLOC_H
+#    undef HAVE_MEMORY_H
 #    undef HAVE_UTIME_H
 #  endif
 #elif (ACC_CC_WATCOMC)
+#  undef HAVE_DIRENT_H
 #  undef HAVE_UTIME_H
 #  undef HAVE_SYS_TIME_H
+#  define HAVE_SYS_UTIME_H 1
 #  if (__WATCOMC__ < 900)
 #    undef HAVE_UNISTD_H
 #  endif
 #endif
+
+#endif /* DOS, OS/2 & Windows */
 
 
 #if (HAVE_SYS_TIME_H && HAVE_TIME_H)
@@ -141,24 +183,134 @@
 
 
 /*************************************************************************
-// Checks for <stdint.h>
+// Checks for library functions
 **************************************************************************/
 
-#if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#  if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1))
-#    define HAVE_STDINT_H 1
-#  endif
-#elif defined(__dietlibc__)
-#  undef HAVE_STDINT_H /* incomplete */
-#elif (ACC_CC_BORLANDC) && (__BORLANDC__ >= 0x560)
-#  define HAVE_STDINT_H 1
-#elif (ACC_CC_DMC) && (__DMC__ >= 0x825)
-#  define HAVE_STDINT_H 1
+#define HAVE_ACCESS 1
+#define HAVE_ALLOCA 1
+#define HAVE_ATOI 1
+#define HAVE_ATOL 1
+#define HAVE_CHMOD 1
+#define HAVE_CHOWN 1
+#define HAVE_CTIME 1
+#define HAVE_DIFFTIME 1
+#define HAVE_FILENO 1
+#define HAVE_FSTAT 1
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_GMTIME 1
+#define HAVE_LOCALTIME 1
+#define HAVE_LSTAT 1
+#define HAVE_MEMCMP 1
+#define HAVE_MEMCPY 1
+#define HAVE_MEMMOVE 1
+#define HAVE_MEMSET 1
+#define HAVE_SNPRINTF 1
+#define HAVE_STRCHR 1
+#define HAVE_STRDUP 1
+#define HAVE_STRERROR 1
+#define HAVE_STRFTIME 1
+#define HAVE_STRRCHR 1
+#define HAVE_UMASK 1
+#define HAVE_UTIME 1
+#define HAVE_VSNPRINTF 1
+
+#if (ACC_OS_POSIX || ACC_OS_CYGWIN)
+#  define HAVE_STRCASECMP 1
+#  define HAVE_STRNCASECMP 1
+#else
+#  define HAVE_STRICMP 1
+#  define HAVE_STRNICMP 1
 #endif
 
-#if HAVE_STDINT_H
-#  include <stdint.h>
+
+#if (ACC_OS_POSIX)
+#elif (ACC_OS_CYGWIN)
+#elif (ACC_OS_EMX)
+#  undef HAVE_CHOWN
+#  undef HAVE_LSTAT
+#elif (ACC_OS_TOS && ACC_CC_GNUC)
+#  if !defined(__MINT__)
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  endif
+#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
+#  undef HAVE_ALLOCA
+#  undef HAVE_ACCESS
+#  undef HAVE_CHMOD
+#  undef HAVE_CHOWN
+#  undef HAVE_FSTAT
+#  undef HAVE_GETTIMEOFDAY
+#  undef HAVE_LSTAT
+#  undef HAVE_SNPRINTF
+#  undef HAVE_UMASK
+#  undef HAVE_UTIME
+#  undef HAVE_VSNPRINTF
 #endif
+
+
+/* DOS, OS/2 & Windows */
+#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+
+#undef HAVE_CHOWN
+#undef HAVE_GETTIMEOFDAY
+#undef HAVE_LSTAT
+#undef HAVE_UMASK
+
+#if (ACC_CC_AZTEC_C)
+#  undef HAVE_DIFFTIME /* difftime() is in the math library */
+#  undef HAVE_FSTAT
+#  undef HAVE_STRDUP /* missing in 5.2a */
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
+#elif (ACC_CC_BORLANDC)
+#  if (__BORLANDC__ < 0x0500)
+#    undef HAVE_DIFFTIME /* difftime() is in the math library */
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  endif
+#elif (ACC_CC_DMC)
+#  define snprintf _snprintf
+#  define vsnprintf _vsnprintf
+#elif defined(__DJGPP__)
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
+#elif (ACC_CC_INTELC || ACC_CC_MSC)
+#  define snprintf _snprintf
+#  define vsnprintf _vsnprintf
+#elif (ACC_CC_LCC)
+#  define utime _utime
+#elif defined(__MINGW32__)
+#elif (ACC_CC_PACIFIC)
+#  undef HAVE_ACCESS
+#  undef HAVE_ALLOCA
+#  undef HAVE_CHMOD
+#  undef HAVE_DIFFTIME
+#  undef HAVE_FSTAT
+#  undef HAVE_SNPRINTF
+#  undef HAVE_STRFTIME
+#  undef HAVE_UTIME
+#  undef HAVE_VSNPRINTF
+#elif (ACC_CC_TURBOC)
+#  undef HAVE_ALLOCA
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
+#  if (__TURBOC__ < 0x0295)
+#    undef HAVE_STRFTIME
+#  endif
+#  if (__TURBOC__ < 0x0400)
+#    undef HAVE_UTIME
+#  endif
+#elif (ACC_CC_WATCOMC)
+#  if (__WATCOMC__ >= 1100)
+#    define snprintf _snprintf
+#    define vsnprintf _vsnprintf
+#  else
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  endif
+#endif
+
+#endif /* DOS, OS/2 & Windows */
 
 
 /*************************************************************************
@@ -169,7 +321,7 @@
 #define SIZEOF_INT              (__ACC_INT_BIT / 8)
 #define SIZEOF_LONG             (__ACC_LONG_BIT / 8)
 
-#if (ACC_OS_WIN64)
+#if (ACC_OS_WIN64) /* LLP64 programming model */
 #  define SIZEOF_PTRDIFF_T      8
 #  define SIZEOF_SIZE_T         8
 #  define SIZEOF_VOID_P         8
@@ -199,140 +351,28 @@
 #  define SIZEOF_VOID_P         SIZEOF_LONG
 #endif
 
-
 #if !defined(SIZEOF_CHAR_P) && (SIZEOF_VOID_P > 0)
 #  define SIZEOF_CHAR_P         SIZEOF_VOID_P
 #endif
 
+
 /* FIXME: add more sizes */
 
-
-/*************************************************************************
-// Checks for library functions
-**************************************************************************/
-
-#define HAVE_ACCESS 1
-#define HAVE_ATOI 1
-#define HAVE_ATOL 1
-#define HAVE_CHMOD 1
-#define HAVE_CHOWN 1
-#define HAVE_CTIME 1
-#define HAVE_DIFFTIME 1
-#define HAVE_FILENO 1
-#define HAVE_FSTAT 1
-#define HAVE_GETUMASK 1
-#define HAVE_GETTIMEOFDAY 1
-#define HAVE_GMTIME 1
-#define HAVE_LOCALTIME 1
-#define HAVE_LSTAT 1
-#define HAVE_MEMCMP 1
-#define HAVE_MEMCPY 1
-#define HAVE_MEMMOVE 1
-#define HAVE_MEMSET 1
-#define HAVE_SETMODE 1
-#define HAVE_SNPRINTF 1
-#define HAVE_STRCHR 1
-#define HAVE_STRDUP 1
-#define HAVE_STRERROR 1
-#define HAVE_STRFTIME 1
-#define HAVE_STRRCHR 1
-#define HAVE_UMASK 1
-#define HAVE_UTIME 1
-#define HAVE_VSNPRINTF 1
-
-#if (ACC_OS_POSIX || ACC_OS_CYGWIN)
-#  define HAVE_STRCASECMP 1
-#  define HAVE_STRNCASECMP 1
-#else
-#  define HAVE_STRICMP 1
-#  define HAVE_STRNICMP 1
-#endif
-
-#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  undef HAVE_CHOWN
-#  undef HAVE_GETTIMEOFDAY
-#  undef HAVE_GETUMASK
-#  undef HAVE_LSTAT
-#  undef HAVE_UMASK
-#endif
-
-
-#if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#  undef HAVE_GETUMASK
-#  undef HAVE_SETMODE
-#elif defined(__dietlibc__)
-#  undef HAVE_GETUMASK
-#  undef HAVE_SETMODE
-#elif (ACC_CC_BORLANDC)
-#  if (__BORLANDC__ < 0x500)
-#    undef HAVE_DIFFTIME /* difftime() is in the math library */
-#    undef HAVE_SNPRINTF
-#    undef HAVE_VSNPRINTF
-#  endif
-#elif (ACC_CC_DMC)
-#  define snprintf _snprintf
-#  define vsnprintf _vsnprintf
-#elif (ACC_CC_GNUC && ACC_OS_CYGWIN)
-#  undef HAVE_GETUMASK
-#elif (ACC_CC_GNUC && ACC_OS_DOS32 && defined(__DJGPP__))
-#  undef HAVE_SNPRINTF
-#  undef HAVE_VSNPRINTF
-#elif (ACC_CC_GNUC && ACC_OS_WIN32 && defined(__MINGW32__))
-#elif (ACC_CC_GNUC && ACC_OS_TOS)
-#  undef HAVE_SETMODE
-#  if !defined(__MINT__)
-#    undef HAVE_GETUMASK
-#    undef HAVE_SNPRINTF
-#    undef HAVE_VSNPRINTF
-#  endif
-#elif (ACC_CC_INTELC && ACC_OS_WIN32)
-#  define snprintf _snprintf
-#  define vsnprintf _vsnprintf
-#elif (ACC_CC_LCC && ACC_OS_WIN32)
-#  define utime _utime
-#elif (ACC_CC_MSC)
-#  define snprintf _snprintf
-#  define vsnprintf _vsnprintf
-#elif (ACC_CC_PACIFIC && ACC_OS_DOS16)
-#  undef HAVE_ACCESS
-#  undef HAVE_CHMOD
-#  undef HAVE_DIFFTIME
-#  undef HAVE_FSTAT
-#  undef HAVE_SETMODE
-#  undef HAVE_SNPRINTF
-#  undef HAVE_STRFTIME
-#  undef HAVE_UTIME
-#  undef HAVE_VSNPRINTF
-#elif ((ACC_CC_PUREC || ACC_CC_TURBOC) && ACC_OS_TOS)
-#  undef HAVE_ACCESS
-#  undef HAVE_CHMOD
-#  undef HAVE_CHOWN
-#  undef HAVE_FSTAT
-#  undef HAVE_GETTIMEOFDAY
-#  undef HAVE_GETUMASK
-#  undef HAVE_LSTAT
-#  undef HAVE_SETMODE
-#  undef HAVE_SNPRINTF
-#  undef HAVE_UMASK
-#  undef HAVE_UTIME
-#  undef HAVE_VSNPRINTF
-#elif (ACC_CC_TURBOC && (ACC_OS_DOS16 || ACC_OS_WIN16))
-#  undef HAVE_SNPRINTF
-#  undef HAVE_VSNPRINTF
-#  if (__TURBOC__ < 0x0295)
-#    undef HAVE_STRFTIME
-#  endif
-#  if (__TURBOC__ < 0x0400)
-#    undef HAVE_UTIME
-#  endif
-#elif (ACC_CC_WATCOMC)
-#  if (__WATCOMC__ >= 1100)
-#    define snprintf _snprintf
-#    define vsnprintf _vsnprintf
-#  else
-#    undef HAVE_SNPRINTF
-#    undef HAVE_VSNPRINTF
-#  endif
+#if (ACC_ARCH_IA32 && (ACC_CC_DMC || ACC_CC_GNUC))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
+#  define SIZEOF___INT64            8
+#  define SIZEOF_UNSIGNED___INT64   8
+#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0550))
+#  define SIZEOF___INT64            8
+#  define SIZEOF_UNSIGNED___INT64   8
+#elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && __WATCOMC__ >= 1100))
+#  define SIZEOF___INT64            8
+#  define SIZEOF_UNSIGNED___INT64   8
+#elif (ACC_ARCH_M68K && (ACC_CC_GNUC))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
 #endif
 
 
