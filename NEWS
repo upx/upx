@@ -4,8 +4,10 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
-Changes in 1.93 beta (07 Feb 2005):
+Changes in 1.94 beta (XX XXX 2005):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+
+Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels
 
 Changes in 1.92 beta (20 Jul 2004):

@@ -1,7 +1,9 @@
-UPX TODO list. Last updated 2005-01-08.
+UPX TODO list. Last updated 2005-02-08.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
+
+- brute + linux/elf386 does not work
 
 - stub ctojr32 needs CPU 486 because of bswap
 
