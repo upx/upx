@@ -19,13 +19,15 @@
  *   ACC_CONFIG_NO_HEADER
  *   ACC_CONFIG_HEADER          if given, then use this as <config.h>
  *   ACC_CONFIG_INCLUDE         include path to acc_ files
+ *
+ *   ACC_CONFIG_PREFER___INT64  [acc_type.h]
  */
 
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20031020L
+#define ACC_VERSION     20031115L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -38,7 +40,7 @@
 #if defined(__IBMCPP__) && !defined(__IBMC__)
 #  define __IBMC__ __IBMCPP__
 #endif
-#if defined(__ICL) && !defined(__INTEL_COMPILER)
+#if defined(__ICL) && defined(_WIN32) && !defined(__INTEL_COMPILER)
 #  define __INTEL_COMPILER __ICL
 #endif
 

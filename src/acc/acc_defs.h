@@ -41,30 +41,33 @@
 
 /***********************************************************************
 // compile-time-assertions
-//
-// The "switch" version works on all compilers, whereas the "typedef" gets
-// ignored or misinterpreted (e.g. implicit cast from -1 to unsigned long)
-// on some systems. OTOS, on modern compilers, the "switch" version
-// may produce a pedantic warning about "selector expr. is constant".
 ************************************************************************/
 
-/* This can be put into a header file but may get ignored by some compilers */
+/* This can be put into a header file but may get ignored by some compilers. */
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
 #  if (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  {typedef int __acc_cta[1-!(e)];}
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
+#  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-!(e)];
+#  elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1u-2*!(e)];
 #  else
-#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  {typedef int __acc_cta[1-2*!(e)];}
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  extern int __acc_cta[1-2*!(e)];
 #  endif
 #endif
 
-/* This must appear within a function body */
+/* This must appear within a function body. */
 #if !defined(ACC_COMPILE_TIME_ASSERT)
-#  if (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
+#  if (ACC_CC_AZTECC)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-!(e)];}
+#  elif (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
+#  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
+#    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  else
-#    define ACC_COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT_HEADER(e)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-2*!(e)];}
 #  endif
 #endif
 
