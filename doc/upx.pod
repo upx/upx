@@ -224,9 +224,6 @@ copies the overlay after the compressed image. This works with some
 files, but doesn't work with others, depending on how an application
 actually accesses this overlayed data.
 
-Since version 0.90 UPX defaults to B<--overlay=copy> for
-all executable formats.
-
   --overlay=copy    Copy any extra data attached to the file. [DEFAULT]
 
   --overlay=strip   Strip any overlay from the program instead of
@@ -843,7 +840,7 @@ will load faster, and require less bandwidth during execution.
 DLLs are supported.
 
 Screensavers are supported, with the restriction that the filename
-must end in ".scr" (as screensavers are handled slightly different
+must end with ".scr" (as screensavers are handled slightly different
 than normal exe files).
 
 Extra options available for this executable format:
