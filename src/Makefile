@@ -330,9 +330,9 @@ endif
 export LIB
 
 ifeq ($(DEBUG),1)
-  CFLAGS +=
+  CFLAGS += -Od -d
 else
-  CFLAGS += -O2
+  CFLAGS += -O2 -d
 endif
 
 LINK_EXE = $(CC) $(LDFLAGS) -e$@ $^ $(LDLIBS)
