@@ -47,7 +47,7 @@ static int __ACCCHKR_FUNCNAME(assert_fail)(const char* s, unsigned l)
 
 /* avoid inlining */
 static int __ACCCHKR_FUNCNAME(schedule_insns_bug)(void);
-static int __ACCCHKR_FUNCNAME(strength_reduce_bug)(int *);
+static int __ACCCHKR_FUNCNAME(strength_reduce_bug)(int*);
 
 
 /*************************************************************************
@@ -89,7 +89,7 @@ static int __ACCCHKR_FUNCNAME(schedule_insns_bug)(void)
 }
 
 
-static int __ACCCHKR_FUNCNAME(strength_reduce_bug)(int *x)
+static int __ACCCHKR_FUNCNAME(strength_reduce_bug)(int* x)
 {
 #if 0 && (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
     ACC_UNUSED(x); return 0;

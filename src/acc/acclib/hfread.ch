@@ -22,7 +22,7 @@
 // huge pointer layer - stdio.h
 ************************************************************************/
 
-ACCLIB_PUBLIC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size)
+ACCLIB_PUBLIC(acc_hsize_t, acc_hfread) (ACC_FILE_P fp, acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
@@ -62,7 +62,7 @@ ACCLIB_PUBLIC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t s
 }
 
 
-ACCLIB_PUBLIC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size)
+ACCLIB_PUBLIC(acc_hsize_t, acc_hfwrite) (ACC_FILE_P fp, const acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)

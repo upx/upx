@@ -26,7 +26,7 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #elif (ACC_OS_DOS32 && defined(__DJGPP__))
-#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216)
+#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS)
 #  define __ACCLIB_UCLOCK_USE_CLOCK 1
 #elif (ACC_H_WINDOWS_H) && (ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (ACC_CC_DMC || ACC_CC_LCC)
@@ -45,12 +45,20 @@
 #  endif
 #endif
 
+#if (__ACCLIB_UCLOCK_USE_CLOCK) && !defined(CLOCKS_PER_SEC)
+#  if defined(CLK_TCK)
+#    define CLOCKS_PER_SEC CLK_TCK
+#  else
+#    undef __ACCLIB_UCLOCK_USE_CLOCK
+#  endif
+#endif
+
 
 /*************************************************************************
 //
 **************************************************************************/
 
-ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_t* h)
+ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_p h)
 {
     acc_uclock_t c;
     int i;
@@ -66,6 +74,7 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_t* h)
     }
 #endif
     h->h = 1;
+    h->mode = 0;
 
     /* warm up */
     i = 100;
@@ -80,15 +89,15 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_t* h)
 }
 
 
-ACCLIB_PUBLIC(int, acc_uclock_close) (acc_uclock_handle_t* h)
+ACCLIB_PUBLIC(int, acc_uclock_close) (acc_uclock_handle_p h)
 {
     h->h = 0;
-    h->mode = 0;
+    h->mode = -1;
     return 0;
 }
 
 
-ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_t* h, acc_uclock_t* c)
+ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
 {
 #if (__ACCLIB_UCLOCK_USE_QPC)
     if (h->qpf > 0.0) {
@@ -135,12 +144,14 @@ ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_t* h, acc_uclock_t* c)
 }
 
 
-ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_t* h, const acc_uclock_t* start, const acc_uclock_t* stop)
+ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_uclock_p start, const acc_uclock_p stop)
 {
     double d;
 
-    if (!h->h)
+    if (!h->h) {
+        h->mode = -1;
         return 0.0;
+    }
 
 #if (__ACCLIB_UCLOCK_USE_QPC)
     if (h->qpf > 0.0) {

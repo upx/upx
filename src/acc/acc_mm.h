@@ -81,7 +81,7 @@
 #elif (ACC_CC_TURBOC && (__TURBOC__ < 0x0295))
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #elif (ACC_CC_WATCOMC && (__WATCOMC__ >= 1200))
-   /* pointer arithmetics with __huge arrays seems broken in OpenWatcom 1.0 */
+   /* pointer arithmetics with __huge arrays seems broken in OpenWatcom 1.x */
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #endif
 

@@ -19,7 +19,7 @@
 
 
 /***********************************************************************
-// huge pointer layer: memcmp, memcpy, memmove, memset
+// memcmp, memcpy, memmove, memset
 ************************************************************************/
 
 ACCLIB_PUBLIC(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_hsize_t len)

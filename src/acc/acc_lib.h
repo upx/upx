@@ -25,6 +25,16 @@
 #endif
 
 
+#if !defined(__ACCLIB_CONST_CAST_RETURN)
+#if (ACC_CC_GNUC)
+#  define __ACCLIB_CONST_CAST_RETURN(type,var) \
+        { union { type a; const type b; } u; u.b = (var); return u.a; }
+#else
+#  define __ACCLIB_CONST_CAST_RETURN(type,var) return (type) (var);
+#endif
+#endif
+
+
 #if (ACC_OS_WIN64)
 #  define acclib_handle_t       acc_int64l_t
 #  define acclib_uhandle_t      acc_uint64l_t
@@ -43,7 +53,7 @@
 // huge pointer layer
 **************************************************************************/
 
-#if !defined(acc_hsize_t)
+#ifndef acc_hsize_t
 #if (ACC_HAVE_MM_HUGE_PTR)
 #  define acc_hsize_t  unsigned long
 #  define acc_hvoid_p  void __huge *
@@ -58,35 +68,51 @@
 #  define acc_hbyte_p  unsigned char *
 #endif
 #endif
+#ifndef ACC_FILE_P
+#define ACC_FILE_P FILE *
+#endif
 
 /* halloc */
-ACCLIB_EXTERN(acc_hvoid_p, acc_halloc) (acc_hsize_t size);
-ACCLIB_EXTERN(void, acc_hfree) (acc_hvoid_p p);
+ACCLIB_EXTERN(acc_hvoid_p, acc_halloc) (acc_hsize_t);
+ACCLIB_EXTERN(void, acc_hfree) (acc_hvoid_p);
 
 /* dos_alloc */
 #if (ACC_OS_DOS16 || ACC_OS_OS216)
-ACCLIB_EXTERN(void __far*, acc_dos_alloc) (unsigned long size);
-ACCLIB_EXTERN(int, acc_dos_free) (void __far* p);
+ACCLIB_EXTERN(void __far*, acc_dos_alloc) (unsigned long);
+ACCLIB_EXTERN(int, acc_dos_free) (void __far*);
 #endif
 
 /* string */
-ACCLIB_EXTERN(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_hsize_t len);
-ACCLIB_EXTERN(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len);
-ACCLIB_EXTERN(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len);
-ACCLIB_EXTERN(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len);
+ACCLIB_EXTERN(int, acc_hmemcmp) (const acc_hvoid_p, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemset) (acc_hvoid_p, int, acc_hsize_t);
 
 /* string */
-ACCLIB_EXTERN(acc_hchar_p, acc_hstrpbrk) (const acc_hchar_p, const acc_hchar_p);
-ACCLIB_EXTERN(acc_hchar_p, acc_hstrsep) (acc_hchar_pp, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrlen) (const acc_hchar_p);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrlcpy) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrlcat) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(int, acc_hstrscpy) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(int, acc_hstrscat) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrchr)  (const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrrchr) (const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrspn)  (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrrspn) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrcspn)  (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hsize_t, acc_hstrrcspn) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrpbrk)  (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrrpbrk) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrsep)  (acc_hchar_pp, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrrsep) (acc_hchar_pp, const acc_hchar_p);
 
 /* stdio */
-ACCLIB_EXTERN(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size);
-ACCLIB_EXTERN(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size);
+ACCLIB_EXTERN(acc_hsize_t, acc_hfread) (ACC_FILE_P, acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hsize_t, acc_hfwrite) (ACC_FILE_P, const acc_hvoid_p, acc_hsize_t);
 
 /* io */
 #if (ACC_HAVE_MM_HUGE_PTR)
-ACCLIB_EXTERN(long, acc_hread) (int fd, acc_hvoid_p buf, long size);
-ACCLIB_EXTERN(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size);
+ACCLIB_EXTERN(long, acc_hread) (int, acc_hvoid_p, long);
+ACCLIB_EXTERN(long, acc_hwrite) (int, const acc_hvoid_p, long);
 #endif
 
 
@@ -170,19 +196,13 @@ typedef struct
 #endif
 } acc_dir_t;
 
-ACCLIB_EXTERN(int, acc_opendir)  (acc_dir_t* d, const char* path);
-ACCLIB_EXTERN(int, acc_readdir)  (acc_dir_t* d);
-ACCLIB_EXTERN(int, acc_closedir) (acc_dir_t* d);
+#ifndef acc_dir_p
+#define acc_dir_p acc_dir_t *
+#endif
 
-
-/*************************************************************************
-// wrap <fnmatch.h>
-**************************************************************************/
-
-
-/*************************************************************************
-// wrap <getopt.h>
-**************************************************************************/
+ACCLIB_EXTERN(int, acc_opendir)  (acc_dir_p, const char*);
+ACCLIB_EXTERN(int, acc_readdir)  (acc_dir_p);
+ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 
 
 /*************************************************************************
@@ -198,11 +218,11 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_t* d);
 #  define acc_alloca(x)     alloca((x))
 #endif
 
-ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int fd);
-ACCLIB_EXTERN(int,  acc_isatty) (int fd);
-ACCLIB_EXTERN(int,  acc_mkdir) (const char* name, unsigned mode);
-ACCLIB_EXTERN(int,  acc_response) (int* argc, char*** argv);
-ACCLIB_EXTERN(int,  acc_set_binmode) (int fd, int binary);
+ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int);
+ACCLIB_EXTERN(int,  acc_isatty) (int);
+ACCLIB_EXTERN(int,  acc_mkdir) (const char*, unsigned);
+ACCLIB_EXTERN(int,  acc_response) (int*, char***);
+ACCLIB_EXTERN(int,  acc_set_binmode) (int, int);
 
 ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
@@ -235,10 +255,17 @@ typedef struct { /* all private */
 #endif
 } acc_uclock_t;
 
-ACCLIB_EXTERN(int, acc_uclock_open)  (acc_uclock_handle_t*);
-ACCLIB_EXTERN(int, acc_uclock_close) (acc_uclock_handle_t*);
-ACCLIB_EXTERN(void, acc_uclock_read) (acc_uclock_handle_t*, acc_uclock_t*);
-ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_t*, const acc_uclock_t*, const acc_uclock_t*);
+#ifndef acc_uclock_handle_p
+#define acc_uclock_handle_p acc_uclock_handle_t *
+#endif
+#ifndef acc_uclock_p
+#define acc_uclock_p acc_uclock_t *
+#endif
+
+ACCLIB_EXTERN(int, acc_uclock_open)  (acc_uclock_handle_p);
+ACCLIB_EXTERN(int, acc_uclock_close) (acc_uclock_handle_p);
+ACCLIB_EXTERN(void, acc_uclock_read) (acc_uclock_handle_p, acc_uclock_p);
+ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_p, const acc_uclock_p, const acc_uclock_p);
 
 
 /*************************************************************************
@@ -267,9 +294,9 @@ ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 /* inline versions */
 #if (ACC_ARCH_IA32)
 #  define ACC_GET_LE16(p)       (* (const unsigned short *) (p))
-#  define ACC_GET_LE32(p)       (* (const unsigned int *) (p))
+#  define ACC_GET_LE32(p)       (* (const acc_uint32e_t *) (p))
 #  define ACC_SET_LE16(p,v)     (* (unsigned short *) (p) = (unsigned short) (v))
-#  define ACC_SET_LE32(p,v)     (* (unsigned int *) (p) = (unsigned int) (v))
+#  define ACC_SET_LE32(p,v)     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v))
 #endif
 
 
@@ -280,34 +307,46 @@ ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 typedef struct {
     acc_uint32l_t seed;
 } acc_rand31_t;
-ACCLIB_EXTERN(void, acc_srand31) (acc_rand31_t* r, acc_uint32l_t seed);
-ACCLIB_EXTERN(acc_uint32l_t, acc_rand31) (acc_rand31_t* r);
+#ifndef acc_rand31_p
+#define acc_rand31_p acc_rand31_t *
+#endif
+ACCLIB_EXTERN(void, acc_srand31) (acc_rand31_p, acc_uint32l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand31) (acc_rand31_p);
 
 #if defined(acc_uint64l_t)
 typedef struct {
     acc_uint64l_t seed;
 } acc_rand48_t;
-ACCLIB_EXTERN(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed);
-ACCLIB_EXTERN(acc_uint32l_t, acc_rand48) (acc_rand48_t* r);
-ACCLIB_EXTERN(acc_uint32l_t, acc_rand48_r32) (acc_rand48_t* r);
+#ifndef acc_rand48_p
+#define acc_rand48_p acc_rand48_t *
+#endif
+ACCLIB_EXTERN(void, acc_srand48) (acc_rand48_p, acc_uint32l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand48) (acc_rand48_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand48_r32) (acc_rand48_p);
 #endif
 
 #if defined(acc_uint64l_t)
 typedef struct {
     acc_uint64l_t seed;
 } acc_rand64_t;
-ACCLIB_EXTERN(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed);
-ACCLIB_EXTERN(acc_uint32l_t, acc_rand64) (acc_rand64_t* r);
-ACCLIB_EXTERN(acc_uint32l_t, acc_rand64_r32) (acc_rand64_t* r);
+#ifndef acc_rand64_p
+#define acc_rand64_p acc_rand64_t *
+#endif
+ACCLIB_EXTERN(void, acc_srand64) (acc_rand64_p, acc_uint64l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand64) (acc_rand64_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand64_r32) (acc_rand64_p);
 #endif
 
 typedef struct {
     unsigned n;
     acc_uint32l_t s[624];
 } acc_randmt_t;
-ACCLIB_EXTERN(void, acc_srandmt) (acc_randmt_t* r, acc_uint32l_t seed);
-ACCLIB_EXTERN(acc_uint32l_t, acc_randmt) (acc_randmt_t* r);
-ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_t* r);
+#ifndef acc_randmt_p
+#define acc_randmt_p acc_randmt_t *
+#endif
+ACCLIB_EXTERN(void, acc_srandmt) (acc_randmt_p, acc_uint32l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_randmt) (acc_randmt_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
 
 
 #endif /* already included */

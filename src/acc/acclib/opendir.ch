@@ -25,7 +25,7 @@
 #if !defined(__ACCLIB_USE_OPENDIR)
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
-static int __ACCLIB_FUNCNAME(acc_opendir_init)(acc_dir_t* f, const char* path, char* buf, size_t bufsize)
+static int __ACCLIB_FUNCNAME(acc_opendir_init)(acc_dir_p f, const char* path, char* buf, size_t bufsize)
 {
     size_t l; char* p;
     f->f_name[0] = 0; buf[0] = 0;
@@ -46,7 +46,7 @@ static int __ACCLIB_FUNCNAME(acc_opendir_init)(acc_dir_t* f, const char* path, c
 
 #if defined(__ACCLIB_USE_OPENDIR)
 
-ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_p f, const char* path)
 {
     f->u_dirp = opendir(path);
     if (!f->u_dirp)
@@ -54,7 +54,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     return __ACCLIB_FUNCNAME(acc_readdir)(f);
 }
 
-ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_p f)
 {
     const struct dirent* dp;
     f->f_name[0] = 0;
@@ -75,7 +75,7 @@ ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_p f)
 {
     int r = -1;
     if (f->u_dirp)
@@ -87,7 +87,7 @@ ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
 
-ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_p f, const char* path)
 {
     WIN32_FIND_DATAA d;
     HANDLE h;
@@ -106,7 +106,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_p f)
 {
     WIN32_FIND_DATAA d;
     f->f_name[0] = 0;
@@ -121,7 +121,7 @@ ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_p f)
 {
     int r = -1;
     if (f->u_handle != -1)
@@ -133,7 +133,7 @@ ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_WIN16)
 
-ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_p f, const char* path)
 {
     char tmp[ACC_FN_PATH_MAX+1];
     int r;
@@ -153,7 +153,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_p f)
 {
     int r;
     f->f_name[0] = 0;
@@ -171,7 +171,7 @@ ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_p f)
 {
     ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
     f->f_name[0] = 0;
@@ -182,7 +182,7 @@ ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 
 #elif (ACC_OS_TOS)
 
-ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_p f, const char* path)
 {
     char tmp[ACC_FN_PATH_MAX+1];
     int r;
@@ -200,7 +200,7 @@ ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_p f)
 {
     int r;
     DTA* olddta;
@@ -216,7 +216,7 @@ ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
     return 0;
 }
 
-ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_p f)
 {
     ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
     f->f_name[0] = 0;
@@ -227,20 +227,20 @@ ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 
 #else
 
-ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_p f, const char* path)
 {
     ACC_UNUSED(path);
     f->f_name[0] = 0;
     return -3;
 }
 
-ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_p f)
 {
     f->f_name[0] = 0;
     return -1;
 }
 
-ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_p f)
 {
     f->u_dirp = 0;
     return -1;

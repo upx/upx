@@ -33,6 +33,8 @@
  * Note that this list is not exhaustive - actually we only really care
  * about architectures which allows unaligned memory access at reasonable
  * speed (for the moment this means IA16 and IA32).
+ *
+ * FIXME: Need some hard facts on unaligned-timings for AMD64.
  */
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
