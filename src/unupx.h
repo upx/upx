@@ -81,7 +81,7 @@ typedef unsigned upx_uint32;
 #define UPX_F_LINUX_SEP_i386    13
 #define UPX_F_LINUX_SH_i386     14
 #define UPX_F_VMLINUZ_i386      15
-#define UPX_F_BVMLINUX_i386     16
+#define UPX_F_BVMLINUZ_i386     16
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130
 

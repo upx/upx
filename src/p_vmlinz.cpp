@@ -36,22 +36,26 @@
 static const
 #include "stub/l_vmlinz.h"
 
-const unsigned kernel_entry = 0x100000;
-const unsigned stack_during_uncompression = 0x90000;
+static const unsigned kernel_entry = 0x100000;
+static const unsigned stack_during_uncompression = 0x90000;
 
 // from /usr/src/linux/arch/i386/boot/compressed/Makefile
-const unsigned bzimage_offset = 0x100000;
-const unsigned zimage_offset = 0x1000;
+static const unsigned zimage_offset = 0x1000;
+static const unsigned bzimage_offset = 0x100000;
 
 
-PackvmlinuzI386::PackvmlinuzI386(InputFile *f) :
+/*************************************************************************
+//
+**************************************************************************/
+
+PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     super(f)
 {
     assert(sizeof(boot_sect_t) == 0x218);
 }
 
 
-int PackvmlinuzI386::getCompressionMethod() const
+int PackVmlinuzI386::getCompressionMethod() const
 {
     if (M_IS_NRV2B(opt->method))
         return M_NRV2B_LE32;
@@ -61,25 +65,37 @@ int PackvmlinuzI386::getCompressionMethod() const
 }
 
 
-const int *PackvmlinuzI386::getFilters() const
+const int *PackVmlinuzI386::getFilters() const
 {
     return NULL;
 }
 
 
-bool PackvmlinuzI386::canPack()
+/*************************************************************************
+//
+**************************************************************************/
+
+int PackVmlinuzI386::readHeader()
 {
     boot_sect_t h;
+
     fi->readx(&h, sizeof(h));
     if (h.boot_flag != 0xAA55)
-        return false;
+        return -1;
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size > file_size)
-        return false;
+        return -1;
 
-    bzImage = memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0;
+    if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
+        return UPX_F_BVMLINUZ_i386;
 
+    return UPX_F_VMLINUZ_i386;
+}
+
+
+bool PackVmlinuzI386::readKernel()
+{
     obuf.alloc(file_size);
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
@@ -104,81 +120,136 @@ bool PackvmlinuzI386::canPack()
         if (zf == 0)
             return false;
         ulen = gzread(zf, ibuf, ibuf.getSize());
-        return ulen > (unsigned) file_size;
+        return ulen > (unsigned) file_size && ulen < ibuf.getSize();
 #endif
     }
     return false;
 }
 
 
-void PackvmlinuzI386::pack(OutputFile *fo)
+/*************************************************************************
+// vmlinuz specific
+**************************************************************************/
+
+bool PackVmlinuzI386::canPack()
 {
+    return readHeader() == UPX_F_VMLINUZ_i386;
+}
+
+
+void PackVmlinuzI386::pack(OutputFile *fo)
+{
+    if (!readKernel())
+        throwCantPack("kernel decompression failed");
+    // OutputFile::dump("kernel.img", ibuf, ulen);
+
     MemBuffer setupbuf(setup_size);
     memcpy(setupbuf, obuf, setup_size);
 
     obuf.free();
     obuf.allocForCompression(ibuf.getSize());
 
-    // FILE *f1 = fopen("kernel.img", "wb"); fwrite(ibuf, 1, ulen, f1); fclose(f1);
-
     ph.u_len = ulen;
     if (!compress(ibuf, obuf))
         throwNotCompressible();
+    const unsigned clen = ph.c_len;
 
     initLoader(nrv_loader, sizeof(nrv_loader));
 
-    const unsigned overlapoh = bzImage ? findOverlapOverhead(obuf, 512) : 0;
-    unsigned clen = ph.c_len;
-
-    if (bzImage)
-    {
-        // align everything to dword boundary - it is easier to handle
-        memset(obuf + clen, 0, 4);
-        clen = ALIGN_UP(clen, 4);
-
-        addLoader("LINUZ000""LBZIMAGE""IDENTSTR",
-                  "+40D++++", // align the stuff to 4 byte boundary
-                  "UPX1HEAD", // 32 byte
-                  "LZCUTPOI""+0000000",
-                  getDecompressor(),
-                  "LINUZ990",
-                  NULL
-                 );
-    }
-    else
-        addLoader("LINUZ000""LZIMAGE0",
-                  getDecompressor(),
-                  "LINUZ990""IDENTSTR""UPX1HEAD",
-                  NULL
-                 );
+    addLoader("LINUZ000""LZIMAGE0",
+              getDecompressor(),
+              "LINUZ990""IDENTSTR""UPX1HEAD",
+              NULL
+             );
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    int e_len = bzImage ? getLoaderSectionStart("LZCUTPOI") : lsize;
     patchPackHeader(loader, lsize);
 
-    if (bzImage)
-    {
-        assert(e_len > 0);
+    patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
 
-        const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
-        const unsigned decompr_pos = ALIGN_UP(ulen + overlapoh, 16);
-        const unsigned copy_size = clen + d_len4;
-        const unsigned edi = decompr_pos + d_len4 - 4; // copy to
-        const unsigned esi = ALIGN_UP(clen + lsize, 4) - 4; // copy from
+    patch_le32(loader, lsize, "KEIP", kernel_entry);
+    patch_le32(loader, lsize, "STAK", stack_during_uncompression);
 
-        unsigned jpos = find_le32(loader, e_len, get_le32("JMPD"));
-        patch_le32(loader, e_len, "JMPD", decompr_pos - jpos - 4);
+    ((boot_sect_t *)((unsigned char *)setupbuf))->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
 
-        patch_le32(loader, e_len, "ESI1", bzimage_offset + decompr_pos - clen);
-        patch_le32(loader, e_len, "ECX0", copy_size / 4);
-        patch_le32(loader, e_len, "EDI0", bzimage_offset + edi);
-        patch_le32(loader, e_len, "ESI0", bzimage_offset + esi);
-    }
-    else
-        patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
+    fo->write(setupbuf, setupbuf.getSize());
+    fo->write(loader, lsize);
+    fo->write(obuf, clen);
+
+    //if (!checkCompressionRatio(file_size, fo->getBytesWritten()))
+    //    throwNotCompressible();
+}
+
+
+/*************************************************************************
+// bvmlinuz specific
+**************************************************************************/
+
+bool PackBvmlinuzI386::canPack()
+{
+    return readHeader() == UPX_F_BVMLINUZ_i386;
+}
+
+
+void PackBvmlinuzI386::pack(OutputFile *fo)
+{
+    if (!readKernel())
+        throwCantPack("kernel decompression failed");
+    // OutputFile::dump("kernel.img", ibuf, ulen);
+
+    MemBuffer setupbuf(setup_size);
+    memcpy(setupbuf, obuf, setup_size);
+
+    obuf.free();
+    obuf.allocForCompression(ibuf.getSize());
+
+    ph.u_len = ulen;
+    if (!compress(ibuf, obuf))
+        throwNotCompressible();
+
+    const unsigned overlapoh = findOverlapOverhead(obuf, 512);
+
+    // align everything to dword boundary - it is easier to handle
+    unsigned clen = ph.c_len;
+    memset(obuf + clen, 0, 4);
+    clen = ALIGN_UP(clen, 4);
+
+    initLoader(nrv_loader, sizeof(nrv_loader));
+
+    addLoader("LINUZ000""LBZIMAGE""IDENTSTR",
+              "+40D++++", // align the stuff to 4 byte boundary
+              "UPX1HEAD", // 32 byte
+              "LZCUTPOI""+0000000",
+              getDecompressor(),
+              "LINUZ990",
+              NULL
+             );
+
+    const unsigned lsize = getLoaderSize();
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+
+    const int e_len = getLoaderSectionStart("LZCUTPOI");
+    assert(e_len > 0);
+
+    patchPackHeader(loader, lsize);
+
+    const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
+    const unsigned decompr_pos = ALIGN_UP(ulen + overlapoh, 16);
+    const unsigned copy_size = clen + d_len4;
+    const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
+    const unsigned esi = ALIGN_UP(clen + lsize, 4) - 4;     // copy from
+
+    unsigned jpos = find_le32(loader, e_len, get_le32("JMPD"));
+    patch_le32(loader, e_len, "JMPD", decompr_pos - jpos - 4);
+
+    patch_le32(loader, e_len, "ESI1", bzimage_offset + decompr_pos - clen);
+    patch_le32(loader, e_len, "ECX0", copy_size / 4);
+    patch_le32(loader, e_len, "EDI0", bzimage_offset + edi);
+    patch_le32(loader, e_len, "ESI0", bzimage_offset + esi);
 
     patch_le32(loader, e_len, "KEIP", kernel_entry);
     patch_le32(loader, e_len, "STAK", stack_during_uncompression);
@@ -194,18 +265,26 @@ void PackvmlinuzI386::pack(OutputFile *fo)
     //    throwNotCompressible();
 }
 
+
 /*************************************************************************
-//
+// unpack
 **************************************************************************/
 
-int PackvmlinuzI386::canUnpack()
+int PackVmlinuzI386::canUnpack()
 {
     return false;
 }
 
-void PackvmlinuzI386::unpack(OutputFile *)
+void PackVmlinuzI386::unpack(OutputFile *)
 {
-    // no uncompression support for this format, so
+    // no uncompression support for this format, so that
     // it is possible to remove the original deflate code (>10KB)
     throwCantUnpack("build a new kernel instead :-)");
 }
+
+
+/*
+vi:ts=4:et
+*/
+
+

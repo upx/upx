@@ -4,6 +4,7 @@
 *.pdb
 *.upx
 .gdbinit
+.Attic
 upx
 upx_nrv
 upx_nrv.*

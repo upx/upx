@@ -25,15 +25,20 @@
    markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
  */
 
+
+#ifndef __UPX_P_VMLINZ_H
+#define __UPX_P_VMLINZ_H
+
+
 /*************************************************************************
 // vmlinuz/i386 (zlib compressed Linux kernel image)
 **************************************************************************/
 
-class PackvmlinuzI386 : public Packer
+class PackVmlinuzI386 : public Packer
 {
     typedef Packer super;
 public:
-    PackvmlinuzI386(InputFile *f);
+    PackVmlinuzI386(InputFile *f);
     virtual int getVersion() const { return 1; }
     virtual int getFormat() const { return UPX_F_VMLINUZ_i386; }
     virtual const char *getName() const { return "vmlinuz/386"; }
@@ -47,6 +52,9 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual int readHeader();
+    virtual bool readKernel();
+
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
@@ -72,6 +80,32 @@ protected:
     };
 
     off_t  setup_size;
-    bool   bzImage;
     unsigned long ulen;
 };
+
+
+/*************************************************************************
+// bvmlinuz/i386 (zlib compressed Linux kernel image)
+**************************************************************************/
+
+class PackBvmlinuzI386 : public PackVmlinuzI386
+{
+    typedef PackVmlinuzI386 super;
+public:
+    PackBvmlinuzI386(InputFile *f) : super(f) { }
+    virtual int getFormat() const { return UPX_F_BVMLINUZ_i386; }
+    virtual const char *getName() const { return "bvmlinuz/386"; }
+
+    virtual void pack(OutputFile *fo);
+
+    virtual bool canPack();
+};
+
+
+#endif /* already included */
+
+
+/*
+vi:ts=4:et
+*/
+

@@ -59,7 +59,7 @@ OBJECTS1 = \
 	packer$o packhead$o packmast$o \
 	p_com$o p_djgpp2$o p_exe$o p_lx_elf$o p_lx_sep$o p_lx_sh$o \
 	p_sys$o p_tmt$o p_tos$o \
-	p_unix$o p_w32pe$o p_wcle$o p_vmlinz$o
+	p_unix$o p_vmlinz$o p_w32pe$o p_wcle$o
 
 # no exceptions or RTTI
 OBJECTS2 = \
@@ -122,7 +122,7 @@ LDFLAGS = -s
 endif
 LDFLAGS += -Wl,-Map,$(basename $@).map
 LDLIBS =
-##LDLIBS = -lz
+LDLIBS = -lz
 LIBDIRS =
 DOS_LIBDIRS =
 
@@ -164,7 +164,7 @@ DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 ##CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
 CFLAGS_WERROR = -Werror
-LDLIBS += -lmcheck -lz
+LDLIBS += -lmcheck
 
 ifeq (1,2) 	# checkergcc
   CC = checkergcc
@@ -435,7 +435,7 @@ packhead$o: packer.h
 packmast$o: packmast.h packer.h lefile.h \
 		p_com.h p_djgpp2.h p_exe.h p_lx_elf.h p_lx_sep.h p_lx_sh.h \
 		p_sys.h p_tmt.h p_tos.h \
-		p_unix.h p_vxd.h p_w32pe.h p_wcle.h p_vmlinz.h
+		p_unix.h p_vmlinz.h p_vxd.h p_w32pe.h p_wcle.h
 ui$o:       packer.h ui.h
 work$o:     packer.h ui.h packmast.h
 
@@ -456,13 +456,11 @@ p_tos$o:    packer.h p_tos.h \
 		stub/l_t_n2d.h stub/l_t_n2ds.h
 p_unix$o:   packer.h p_unix.h p_elf.h \
 		stub/l_lx_n2b.h stub/l_lx_n2d.h
-p_vmlinux$o: packer.h p_unix.h p_elf.h \
-		stub/l_lx_n2b.h stub/l_lx_n2d.h
+p_vmlinz$o: packer.h p_vmlinz.h \
+		stub/l_vmlinz.h
 p_w32pe$o:  packer.h p_w32pe.h \
 		stub/l_w32pe.h
 p_wcle$o:   packer.h p_wcle.h lefile.h \
 		stub/l_wcle.h
-p_vmlinz$o: packer.h p_vmlinz.h \
-		stub/l_vmlinz.h
 
 # vi:nowrap

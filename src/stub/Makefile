@@ -157,10 +157,6 @@ l_sys.h: l_sys.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv2b_loader $@
 
-l_tmt.h: l_tmt.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
 l_t_n2b.h: l_tos.s
 	$(CPP_A68K) -DNRV2B -o $T.i $<
 	$(A68K) $T.i
@@ -185,7 +181,15 @@ l_t_n2ds.h: l_tos.s
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2d_loader_small $@
 
-l_vxd.h: l_vxd.asm
+l_tmt.h: l_tmt.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
+l_vmlinz.h: l_vmlinz.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
+l_vxd.h: l_vxd.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 
@@ -194,10 +198,6 @@ l_wcle.h: l_wcle.asx
 	$(BIN2H) $T.bin nrv_loader $@
 
 l_w32pe.h: l_w32pe.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_vmlinz.h: l_vmlinz.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 
@@ -301,10 +301,10 @@ l_t_n2bs.h:     n2b_d.ash    bits.ash     $(DEPS1)
 l_t_n2d.h:      n2d_d.ash    bits.ash     $(DEPS1)
 l_t_n2ds.h:     n2d_d.ash    bits.ash     $(DEPS1)
 l_tmt.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
+l_vmlinz.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_vxd.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_vmlinz.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 
 l_xe_n2b.o:     n2b_d32.ash  $(DEPS1)
 l_6e_n2b.o:     n2b_d32.ash  $(DEPS1)
