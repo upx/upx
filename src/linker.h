@@ -52,6 +52,11 @@ private:
     int      nsections;
     int      frozen;
     int      align_hack;
+
+private:
+    // disable copy and assignment
+    Linker(Linker const &); // {}
+    Linker& operator= (Linker const &); // { return *this; }
 };
 
 
