@@ -360,7 +360,7 @@ void Packer::verifyOverlappingDecompression()
     assert((int)ph.overlap_overhead > 0);
 #if 1 && !defined(UNUPX)
     // Idea:
-    //   obuf was allocated with MemBuffer::allocForCompression(), and
+    //   obuf[] was allocated with MemBuffer::allocForCompression(), and
     //   its contents are no longer needed, i.e. the compressed data
     //   must have been already written.
     //   We now can perform a real overlapping decompression and
@@ -1230,6 +1230,10 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 continue;
             }
             // filter success
+#if 0
+            printf("filter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
+                   ft.id, ft.buf_len, ft.calls, ft.noncalls, ft.wrongcalls, ft.firstcall, ft.lastcall, ft.cto);
+#endif
             if (nfilters_success > 0 && otemp == obuf)
             {
                 otemp_buf.allocForCompression(compress_buf_len);
@@ -1248,8 +1252,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
                     lsize = buildLoader(&ft);
                 }
 #if 0
-                printf("\n%2d %02x: %d + %d = %d  (best: %d + %d = %d)\n", ph.method, ph.filter,
-                       ph.c_len, getLoaderSize(), ph.c_len + getLoaderSize(),
+                printf("\n%2d %02x: %d +%4d = %d  (best: %d +%4d = %d)\n", ph.method, ph.filter,
+                       ph.c_len, lsize, ph.c_len + lsize,
                        best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
 #endif
                 bool update = false;
