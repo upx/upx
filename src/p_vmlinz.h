@@ -79,7 +79,8 @@ protected:
 
         // some more uninteresting fields here ...
         // see /usr/src/linux/Documentation/i386/zero-page.txt
-    };
+    }
+    __attribute_packed;
 
     MemBuffer setup_buf;
     int setup_size;

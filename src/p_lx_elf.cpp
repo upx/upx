@@ -404,8 +404,8 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
 
     unsigned total_in = 0;
     unsigned total_out = 0;
-    unsigned c_adler = upx_adler32(0, NULL, 0);
-    unsigned u_adler = upx_adler32(0, NULL, 0);
+    unsigned c_adler = upx_adler32(NULL, 0);
+    unsigned u_adler = upx_adler32(NULL, 0);
     off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD

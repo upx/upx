@@ -92,19 +92,24 @@ protected:
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
         unsigned char b_unused;
-    };
+    }
+    __attribute_packed;
+
     struct l_info { // 12-byte trailer in header for loader
         unsigned l_checksum;
         unsigned l_magic;
         unsigned short l_lsize;
         unsigned char l_version;
         unsigned char l_format;
-    };
+    }
+    __attribute_packed;
+
     struct p_info { // 12-byte packed program header
         unsigned p_progid;
         unsigned p_filesize;
         unsigned p_blocksize;
-    };
+    }
+    __attribute_packed;
 
     // do not change !!!
     enum { OVERHEAD = 2048 };

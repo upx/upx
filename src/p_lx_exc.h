@@ -87,17 +87,22 @@ protected:
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[1];
         struct PackUnix::l_info linfo;
-    };
+    }
+    __attribute_packed;
+
     struct cprElfHdr2 {
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[2];
         struct PackUnix::l_info linfo;
-    };
+    }
+    __attribute_packed;
+
     struct cprElfHdr3 {
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[3];
         struct PackUnix::l_info linfo;
-    };
+    }
+    __attribute_packed;
 
     cprElfHdr3 elfout;
 

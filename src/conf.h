@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -58,24 +58,6 @@
 #undef unix
 
 
-#if defined(WITH_UCL)
-#  include <ucl/uclconf.h>
-#  include <ucl/ucl.h>
-#  if !defined(UPX_UINT_MAX)
-#    define UPX_UINT_MAX  UCL_UINT_MAX
-#    define upx_uint      ucl_uint
-#    define upx_voidp     ucl_voidp
-#    define upx_uintp     ucl_uintp
-#    define upx_byte      ucl_byte
-#    define upx_bytep     ucl_bytep
-#    define upx_bool      ucl_bool
-#    define upx_progress_callback_t ucl_progress_callback_t
-#    define UPX_E_OK      UCL_E_OK
-#    define UPX_E_ERROR   UCL_E_ERROR
-#    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
-#    define __UPX_ENTRY   __UCL_ENTRY
-#  endif
-#endif
 #if defined(WITH_NRV)
 #  include <nrv/nrvconf.h>
 #  if !defined(UPX_UINT_MAX)
@@ -92,6 +74,30 @@
 #    define UPX_E_OUT_OF_MEMORY NRV_E_OUT_OF_MEMORY
 #    define __UPX_ENTRY   __NRV_ENTRY
 #  endif
+#  if 1 && defined(__i386__) && !defined(__BORLANDC__) && !defined(__DMC__)
+#    define NRV_USE_ASM
+#  endif
+#endif
+#if defined(WITH_UCL)
+#  include <ucl/uclconf.h>
+#  include <ucl/ucl.h>
+#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010100L)
+#    error "please upgrade your UCL installation"
+#  endif
+#  if !defined(UPX_UINT_MAX)
+#    define UPX_UINT_MAX  UCL_UINT_MAX
+#    define upx_uint      ucl_uint
+#    define upx_voidp     ucl_voidp
+#    define upx_uintp     ucl_uintp
+#    define upx_byte      ucl_byte
+#    define upx_bytep     ucl_bytep
+#    define upx_bool      ucl_bool
+#    define upx_progress_callback_t ucl_progress_callback_t
+#    define UPX_E_OK      UCL_E_OK
+#    define UPX_E_ERROR   UCL_E_ERROR
+#    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
+#    define __UPX_ENTRY   __UCL_ENTRY
+#  endif
 #endif
 #if !defined(__UPX_CHECKER)
 #  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
@@ -103,9 +109,6 @@
 #endif
 #if !defined(WITH_UCL)
 #  error "you lose"
-#endif
-#if !defined(UCL_VERSION) || (UCL_VERSION < 0x009200L)
-#  error "please upgrade your UCL installation"
 #endif
 
 #ifndef WITH_ZLIB
@@ -195,6 +198,17 @@
 /*************************************************************************
 // portab
 **************************************************************************/
+
+#if defined(__GNUC__) && !defined(__GNUC_VERSION_HEX__)
+#  if !defined(__GNUC_MINOR__)
+#    error
+#  endif
+#  if !defined(__GNUC_PATCHLEVEL__)
+#    define __GNUC_PATCHLEVEL__ 0
+#  endif
+#  define __GNUC_VERSION_HEX__ \
+        (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#endif
 
 #if defined(NO_BOOL)
 typedef int bool;
@@ -297,8 +311,41 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define outp                upx_outp
 
 
-#define COMPILE_TIME_ASSERT(expr) \
-    { typedef int __upx_compile_time_assert_fail[(expr) ? 1 : -1]; }
+#if 0
+#  define COMPILE_TIME_ASSERT(expr) \
+     { typedef char __upx_compile_time_assert_fail[1 - 2 * !(expr)]; \
+       switch (sizeof(__upx_compile_time_assert_fail)) { \
+         case 1: case !(expr): break; \
+     } }
+#elif defined(__SC__)
+#  define COMPILE_TIME_ASSERT(expr) \
+     { switch (1) { case 1: case !(expr): break; } }
+#elif 0
+#  define COMPILE_TIME_ASSERT(expr) \
+     { typedef int __upx_compile_time_assert_fail[1 - 2 * !(expr)]; typedef int a[sizeof(__upx_compile_time_assert_fail]; }
+#else
+#  define COMPILE_TIME_ASSERT(expr) \
+     { typedef int __upx_compile_time_assert_fail[1 - 2 * !(expr)]; }
+#endif
+
+
+#undef __attribute_packed
+#if defined(__GNUC__)
+#  if 1 && defined(__i386__)
+#    define __attribute_packed
+#  else
+#    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))
+#  endif
+#else
+#  define __attribute_packed
+#endif
+
+
+#if defined(__cplusplus)
+#define NOTHROW throw()
+#else
+#define NOTHROW
+#endif
 
 
 /*************************************************************************
@@ -316,6 +363,10 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  define O_BINARY  0
 #endif
 
+#if defined(__DMC__)
+#  undef tell
+#endif
+
 #if defined(__DJGPP__)
 #  undef sopen
 #  undef USE_SETMODE
@@ -328,13 +379,15 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 #undef UNUSED
 #if 1
+#  define UNUSED(var)       ((void) &(var))
+#elif 1 && defined(__GNUC__)
 #  define UNUSED(var)       { typedef int __upx_unused[sizeof(var) ? 1 : -1]; }
-#elif 1
+#elif 0
 #  define UNUSED(var)       do { } while (!sizeof(var))
 #elif defined(__BORLANDC__)
-#  define UNUSED(var)       ((void)(var))
+#  define UNUSED(parm)      ((void)(parm))
 #else
-#  define UNUSED(var)       (var = var)
+#  define UNUSED(parm)      (parm = parm)
 #endif
 
 #define HIGH(array)         ((unsigned) (sizeof(array)/sizeof((array)[0])))
@@ -379,21 +432,23 @@ inline void operator delete[](void *p)
 #endif
 
 
-// A autoheap_array allocates memory on the heap, but automatically
+// An Array allocates memory on the heap, but automatically
 // gets destructed when leaving scope or on exceptions.
 // "var" is declared as a read-only reference to a pointer
 // and behaves exactly like an array "var[]".
 #if 0
-# define autoheap_array(type, var, size) \
+# define Array(type, var, size) \
     assert((int)(size) > 0); \
-    vector<type> var ## _autoheap_vec((size)); \
-    type * const & var = & var ## _autoheap_vec[0]
+    std::vector<type> var ## _array_vec((size)); \
+    type * const & var = & var ## _array_vec[0]
 #else
-# define autoheap_array(type, var, size) \
+# define Array(type, var, size) \
     assert((int)(size) > 0); \
-    MemBuffer var ## _autoheap_buf((size)*(sizeof(type))); \
-    type * const & var = (type *) (unsigned char *) var ## _autoheap_buf
+    MemBuffer var ## _array_buf((size)*(sizeof(type))); \
+    type * const & var = ((type *) var ## _array_buf.getVoidPtr())
 #endif
+
+#define ByteArray(var, size)    Array(unsigned char, var, size)
 
 
 /*************************************************************************
@@ -421,9 +476,13 @@ inline void operator delete[](void *p)
 #define M_NRV2D_LE32    5
 #define M_NRV2D_8       6
 #define M_NRV2D_LE16    7
+#define M_NRV2E_LE32    8
+#define M_NRV2E_8       9
+#define M_NRV2E_LE16    10
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
+#define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
 
 
 /*************************************************************************
@@ -530,7 +589,7 @@ struct options_t {
         int compress_exports;
         int compress_icons;
         int compress_resources;
-        signed char compress_rt[24];    // 24 == RT_LAST
+        signed char compress_rt[25];    // 25 == RT_LAST
         int strip_relocs;
     } w32pe;
 };
@@ -553,7 +612,7 @@ void e_exit(int ec);
 void printSetNl(int need_nl);
 void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
-void printUnhandledException(const char *iname, const exception *e);
+void printUnhandledException(const char *iname, const std::exception *e);
 #if defined(__GNUC__)
 void printErr(const char *iname, const char *format, ...)
         __attribute__((format(printf,2,3)));
@@ -594,12 +653,10 @@ void show_version(int);
 
 
 // compress.cpp
-unsigned upx_adler32(const void *buf, unsigned len);
+unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);
 unsigned upx_adler32(unsigned adler, const void *buf, unsigned len);
 
-#if defined(WITH_UCL)
-#define upx_compress_config_t   ucl_compress_config_t
-#elif defined(WITH_NRV)
+#if defined(WITH_NRV)
 struct nrv_compress_config_t;
 struct nrv_compress_config_t
 {
@@ -614,6 +671,8 @@ struct nrv_compress_config_t
     nrv_uint m_size;
 };
 #define upx_compress_config_t   nrv_compress_config_t
+#elif defined(WITH_UCL)
+#define upx_compress_config_t   ucl_compress_config_t
 #endif
 
 int upx_compress           ( const upx_byte *src, upx_uint  src_len,

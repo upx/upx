@@ -71,7 +71,8 @@ protected:
         LE32    scnptr;
         char    misc[12]; // relptr, lnnoptr, nreloc, nlnno
         char    __[4];    // flags
-    };
+    }
+    __attribute_packed;
 
     struct coff_header_t
     {
@@ -95,8 +96,10 @@ protected:
 
         // section headers
         external_scnhdr_t sh[3];
-    } coff_hdr;
+    }
+    __attribute_packed;
 
+    coff_header_t coff_hdr;
     external_scnhdr_t *text,*data,*bss;
 
     void stripDebug();

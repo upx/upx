@@ -60,17 +60,17 @@ Prerequisites
 -------------
 
   - first of all you need to build the UCL compression library
-    http://wildsau.idv.uni-linz.ac.at/mfx/ucl.html
+    http://www.oberhumer.com/opensource/ucl/
 
 
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A modern C++ compiler like gcc 2.95.2 or Visual C++ 6
+  - A modern C++ compiler like gcc 2.95.3 or Visual C++ 6
     (egcs 1.1.x may work, half-baked implementations like Borland C++ 5.5 won't)
 
   - GNU make for Win32
-    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+    http://upx.sourceforge.net/download/tools/
 
   - GNU make for DOS
     ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/
@@ -81,34 +81,35 @@ To compile the packer sources
 
   set the environment variable UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-0.92                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-0.92           (Unix)
+     set UCLDIR=c:\src\ucl-1.01                       (DOS / Windows)
+     export UCLDIR=$HOME/local/src/ucl-1.01           (Unix)
 
   then type
 
-     make target=linux         # on linux
-     make target=djgpp2        # for djgpp2
-     make target=mingw32       # for mingw32
-     make target=no-cygwin     # for mingw32 as included in cygwin
-     make target=msc           # for Visual C++ 6.0
+     make target=linux              # on linux
+     make target=djgpp2             # for djgpp2
+     make target=mingw32            # for mingw32
+     make target=cygwin             # cygwin 1.3.x
+     make target=no-cygwin          # for mingw32 as included in cygwin
+     make target=vc6                # for Visual C++ 6.0
 
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Nasm - the Netwide Assembler
-    http://www.cryogen.com/Nasm
-
-  - Perl 5.004 or better
-    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/perl*b.zip
+  - Nasm 0.98.08 - the Netwide Assembler
+    http://upx.sourceforge.net/download/tools/
+    http://nasm.sourceforge.net/
 
   - A68K - a 68000 macro assembler
-    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+    http://upx.sourceforge.net/download/tools/
 
   - djasm - an assembler for the djgpp stub
-    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
+    http://upx.sourceforge.net/download/tools/
 
-  - Linux (for the linux/i386 stubs)
+  - Perl 5.004 or better
+
+  - Linux (for the linux/386 stubs)
 
 
 Misc. notes

@@ -456,9 +456,7 @@ void PackLinuxI386::patchLoaderChecksum()
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
     // INFO: lp->l_checksum is currently unused
-    unsigned adler = upx_adler32(0,NULL,0);
-    adler = upx_adler32(adler, ptr, lsize);
-    lp->l_checksum = adler;
+    lp->l_checksum = upx_adler32(ptr, lsize);
 }
 
 

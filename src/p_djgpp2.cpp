@@ -46,8 +46,13 @@ static const
 PackDjgpp2::PackDjgpp2(InputFile *f) :
     super(f), coff_offset(0)
 {
-    COMPILE_TIME_ASSERT(sizeof(coff_hdr) == 0xa8);
+    COMPILE_TIME_ASSERT(sizeof(external_scnhdr_t) == 40);
+    COMPILE_TIME_ASSERT(sizeof(coff_header_t) == 0xa8);
     COMPILE_TIME_ASSERT(sizeof(stubify_stub) == 2048);
+#if defined(STUBIFY_STUB_ADLER32)
+    //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
+    assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
+#endif
 }
 
 

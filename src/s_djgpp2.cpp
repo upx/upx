@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -65,6 +65,7 @@ struct screen_data_t
     int rows;
     int cursor_x;
     int cursor_y;
+    int scroll_counter;
     unsigned char attr;
     unsigned char init_attr;
     unsigned char empty_attr;
@@ -312,7 +313,7 @@ static int init(screen_t *this, int fd)
         return -1;
 
 #if 1 && defined(__DJGPP__)
-    /* check for Windows NT/2000 */
+    /* check for Windows NT/2000/XP */
     if (_get_dos_version(1) == 0x0532)
         return -1;
 #endif
@@ -419,6 +420,7 @@ static int scrollUp(screen_t *this, int lines)
     for (y = sr - lines; y < sr; y++)
         clearLine(this,y);
 
+    this->data->scroll_counter += lines;
     return lines;
 }
 
@@ -456,7 +458,14 @@ static int scrollDown(screen_t *this, int lines)
 #endif
     }
 
+    this->data->scroll_counter -= lines;
     return lines;
+}
+
+
+static int getScrollCounter(const screen_t *this)
+{
+    return this->data->scroll_counter;
 }
 
 
@@ -531,6 +540,7 @@ static const screen_t driver =
     updateLineN,
     scrollUp,
     scrollDown,
+    getScrollCounter,
     s_kbhit,
     intro,
     (struct screen_data_t *) 0

@@ -1,5 +1,4 @@
 .cvsignore
-.mfxcvsup
 ChangeLog.cvs*
 build
 maint

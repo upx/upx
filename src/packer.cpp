@@ -458,7 +458,7 @@ void Packer::handleStub(InputFile *fif, OutputFile *fo, long size)
         {
             // copy stub from exe
             info("Copying original stub: %ld bytes", size);
-            autoheap_array(char, stub, size);
+            ByteArray(stub, size);
             fif->seek(0,SEEK_SET);
             fif->readx(stub,size);
             fo->write(stub,size);
@@ -566,7 +566,7 @@ void Packer::initPackHeader()
     ph.format = getFormat();
     ph.method = -1;
     ph.level = -1;
-    ph.u_adler = ph.c_adler = ph.saved_u_adler = ph.saved_c_adler = upx_adler32(0,NULL,0);
+    ph.u_adler = ph.c_adler = ph.saved_u_adler = ph.saved_c_adler = upx_adler32(NULL,0);
     ph.buf_offset = -1;
     ph.u_file_size = file_size;
 }
@@ -1160,7 +1160,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     // copy filters, add a 0
     int nfilters = 0;
     bool zero_seen = false;
-    autoheap_array(int, filters, raw_nfilters + 2);
+    Array(int, filters, raw_nfilters + 2);
     for (f = raw_filters; *f >= 0; f++)
     {
         if (*f == 0)

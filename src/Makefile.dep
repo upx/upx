@@ -1,0 +1,16 @@
+
+# /***********************************************************************
+# // automated dependencies
+# ************************************************************************/
+
+CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
+
+ifeq ($(strip $(wildcard .deps)),)
+  DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+else
+  DEP_FILES := $(wildcard .deps/*.pp)
+  ifneq ($(strip $(DEP_FILES)),)
+    include $(DEP_FILES)
+  endif
+endif
+

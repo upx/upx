@@ -1,12 +1,19 @@
-# UPX Makefile (GNU make) - works with djgpp2/win32/unix
+#
+# UPX Makefile (GNU make) - works with unix/win32/djgpp2
 #
 # usage:
-#   `make target=linux'         # linux
-#   `make target=djggp2'        # djggp2 2.03
-#   `make target=cygwin'        # cygwin 1.1.x
-#   `make target=mingw32'       # mingw32
-#   `make target=no-cygwin'     # mingw32 as included in cygwin 1.1.x
-#   `make target=vc6'           # Visual C++ 6.0
+#   `make target=linux'             # linux
+#   `make target=djggp2'            # dos32 - djggp2 2.03
+#   `make target=cygwin'            # win32 - cygwin 1.3.x
+#   `make target=mingw32'           # win32 - mingw32
+#   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
+#   `make target=bcc'               # win32 - Borland C++ 5.5.1
+#   `make target=dmc'               # win32 - Digital Mars C++ 8.28
+#   `make target=vc6'               # win32 - Visual C++ 6.0
+#   `make target=wcc'               # win32 - Watcom C++ 11.0c
+#   `make target=cross-m68k-linux'  # m68k-linux cross compiler
+#   `make target=cross-mingw32'     # i586-mingw32msvc cross compiler
+#   `make target=cross-mint'        # m68k-atari-mint cross compiler
 #
 
 
@@ -14,7 +21,7 @@
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-0.92
+UCLDIR = $(HOME)/local/src/ucl-1.01
 endif
 
 DEBUG = 0
@@ -28,23 +35,28 @@ SHELL = /bin/sh
 
 
 .SUFFIXES:
-.SUFFIXES: .a .c .cpp .exe .lib .o .obj
+.SUFFIXES: .a .c .cpp .exe .lib .o .obj .rc .res .ttp
 
 
 srcdir = .
 top_srcdir = ..
 
+VPATH = $(srcdir)
+
 
 # auto-detect the target unless given on the commandline
-target = djgpp2
+ifeq ($(strip $(target)),)
+##target = djgpp2
 ifneq ($(strip $(wildcard /usr/include/linux)),)
 target = linux
 endif
-ifneq ($(strip $(wildcard /platform/sun4?/kernel/unix)),)
-target = sparc
+##ifneq ($(strip $(wildcard /platform/sun4?/kernel/unix)),)
+##target = sparc
+##endif
 endif
-ifeq ($(target),msc)
-override target = vc6
+
+ifeq ($(strip $(target)),)
+include please_specify_a_target
 endif
 
 
@@ -77,44 +89,55 @@ OBJECTS2 = \
 OBJECTS3 =
 
 OBJECTS = $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
+LIBS =
+RESOURCES =
 
 
 # /***********************************************************************
 # // compiler settings
 # ************************************************************************/
 
-# default to a gcc unix-type compiler
+###
+### default compiler (gcc under unix)
+###
+
+o = .o
+a = .a
+e =
+
 CC = gcc
-CXX = $(CC)
 DEFS =
+INCLUDES =
 INCLUDES = -I. -I$(srcdir)
 CFLAGS_OUTPUT = -o $@
-CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 
-LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+LINK_EXE = $(CXXLD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 STUBEDIT_EXE =
 STUBIFY_EXE =
 CHMOD_EXE =
 
-o = .o
-a = .a
-e = .exe
+# C++ defaults are set later
+CXX =
+CXXLD =
+CXXFLAGS_OUTPUT =
 
 
 ###
 ### gcc defaults
 ###
 
-##CFLAGS_O  = -Os
-CFLAGS_O  = -O2
 ##CFLAGS_WERROR = -Werror
+CFLAGS_WERROR =
 CFLAGS_W  = $(CFLAGS_WERROR)
-CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wshadow -Wwrite-strings
-##CFLAGS_M  = -fno-builtin
-## CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Wmissing-prototypes -Wpointer-arith -Wshadow -Wwrite-strings
+CFLAGS_M  =
+##CFLAGS_M += -fno-builtin
+##CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+##CFLAGS_O  = -Os -fstrict-aliasing
+##CFLAGS_O  = -O2 -fstrict-aliasing
+CFLAGS_O  = -O2 -fno-strict-aliasing
 
-CFLAGS    = $(CFLAGS_W) $(CFLAGS_O) $(CFLAGS_M)
-CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
+CFLAGS    = $(CFLAGS_W) $(CFLAGS_M) $(CFLAGS_O)
 CXXFLAGS  = $(CFLAGS) -Wsynth -fconserve-space
 CXXFLAGS1 = $(CXXFLAGS)
 ##CXXFLAGS1 += -fasynchronous-exceptions
@@ -131,9 +154,9 @@ else
 LDFLAGS = -s
 endif
 LDFLAGS += -Wl,-Map,$T.map
-LDLIBS =
 LDLIBS = -lz
 LIBDIRS =
+DOS_LDLIBS =
 DOS_LIBDIRS =
 
 
@@ -154,7 +177,7 @@ ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   include $(srcdir)/Makefile.inc
 endif
 
-tmp := -Wl,--rpath,
+override tmp := -Wl,--rpath,
 LDRPATH := $(addprefix $(tmp),$(LIBDIRS))
 LIBDIRS += .
 LDLIBDIRS := $(addprefix -L,$(LIBDIRS))
@@ -164,17 +187,18 @@ LDFLAGS += $(LDLIBDIRS)
 
 
 ###
-### linux/i386
+### Linux
 ###
 
 ifeq ($(target),linux)
-e =
-###CC = /usr/local/packages/gcc-cvs/bin/g++
+override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
-##CFLAGS_M += -mno-schedule-prologue
-CFLAGS_M += -march=i386 -mcpu=pentium
-CFLAGS_WERROR = -Werror
 LDLIBS += -lmcheck
+ifeq ($(arch),i386)
+  CC += -march=i386 -mcpu=i586
+  ##CFLAGS_M += -mno-schedule-prologue
+endif
+##CFLAGS_WERROR = -Werror
 
 ifeq (1,2) 	# checkergcc
   CC = checkergcc
@@ -187,12 +211,73 @@ ifeq ($(DEBUG),1)
 else
   ##LDFLAGS += -static
   STUBEDIT_EXE = objcopy -S -R .comment -R .note $@
-  STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
+  ifeq ($(arch),i386)
+    STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
+    CHMOD_EXE = chmod 755 $@
+  endif
 endif
-CHMOD_EXE = chmod 755 $@
 endif
 
 endif	# linux
+
+
+###
+### Linux cross compilers
+###
+
+ifeq ($(target),cross-m68k-linux)
+CC = m68k-linux-gcc
+DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
+##LDLIBS += -lmcheck
+endif	# cross-m68k-linux
+
+
+###
+### sparc-sun-solaris2.8
+###
+
+ifeq ($(target),sparc)
+CC = gcc
+DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
+endif	# sparc
+
+
+ifeq ($(target),XXX-sparc)
+DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
+INCLUDES += -I/home/ethmola/local/include
+
+ifeq (1,2) # native compiler
+  CFLAGS = -O0 -g
+  CXXFLAGS1 =
+  CXXFLAGS2 =
+  DEFS += -DUSE_STDNAMESPACE
+else # gcc
+  CFLAGS += -O0 -gstabs+
+endif
+
+ifeq (1,2) # purify
+  DEFS += -D__PURIFY__
+  CXXLD := purify $(CXXLD)
+endif
+
+endif	# XXX-sparc
+
+
+###
+### Atari cross compiler
+###
+
+ifeq ($(target),cross-mint)
+e = .ttp
+CC = m68k-atari-mint-gcc
+CC += -m68000
+endif
+
+ifeq ($(target),cross-mint-m68040)
+e = .ttp
+CC = m68k-atari-mint-gcc
+CC += -m68040
+endif
 
 
 ###
@@ -200,8 +285,9 @@ endif	# linux
 ###
 
 ifeq ($(target),djgpp2)
-CFLAGS_M += -mno-schedule-prologue
-CFLAGS_M += -march=i386 -mcpu=pentium
+e = .exe
+CC += -march=i386 -mcpu=i586
+##CFLAGS_M += -mno-schedule-prologue
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
 ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.exe)),)
@@ -217,113 +303,50 @@ endif	# djgpp2
 ###
 
 ifeq ($(target),cygwin)
-CFLAGS_M += -mno-schedule-prologue
-CFLAGS_M += -march=i386 -mcpu=pentium
-CFLAGS_WERROR = -Werror
+e = .exe
+CC += -march=i386 -mcpu=i586
+##CFLAGS_M += -mno-schedule-prologue
 endif
 
 ifeq ($(target),mingw32)
-CFLAGS_M += -mno-schedule-prologue
-CFLAGS_M += -march=i386 -mcpu=pentium
+e = .exe
+CC = gcc -mno-cygwin
+CC += -march=i386 -mcpu=i586
+##CFLAGS_M += -mno-schedule-prologue
 endif
 
 # mingw32 as included in cygwin
 ifeq ($(target),no-cygwin)
+e = .exe
 CC = gcc -mno-cygwin
-CFLAGS_M += -mno-schedule-prologue
-CFLAGS_M += -march=i386 -mcpu=pentium
-CFLAGS_WERROR = -Werror
+CC += -march=i386 -mcpu=i586
+##CFLAGS_M += -mno-schedule-prologue
+endif
+
+# mingw32 cross compiler
+ifeq ($(target),cross-mingw32)
+e = .exe
+CC = i586-mingw32msvc-gcc
+CC += -march=i386 -mcpu=i586
+##CFLAGS_M += -mno-schedule-prologue
 endif
 
 
 ###
-### Microsoft 32-bit C/C++ Compiler 12.00 (aka Visual C++ 6)
-###
-
-ifeq ($(target),vc6)
-o = .obj
-a = .lib
-CC = cl -nologo
-CFLAGS = -W4 -WX
-CXXFLAGS1 = $(CFLAGS) -GR -GX -EHa
-CXXFLAGS2 = $(CFLAGS)
-LDFLAGS =
-LINK_LDFLAGS = /link /map:$T.map
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
-ifeq (1,2)
-  # statically link libc.lib
-  CC += -ML
-  ##LDLIBS = $(u)_s.lib zlib_s.lib setargv.obj
-  LDLIBS = $(u)_s.lib setargv.obj
-else
-  # link against msvcrt.dll
-  CC += -MD
-  LDLIBS = $(DOS_LDLIBS) zlib.lib setargv.obj
-endif
-ifeq ($(DEBUG),1)
-  CFLAGS += -Od -ZI
-  LINK_LDFLAGS += /debug
-else
-  CFLAGS += -O2 -GF
-  LINK_LDFLAGS += /release
-endif
-
-##LINK_LDFLAGS += /verbose
-LINK_EXE = $(CC) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
-
-endif	# vc6
-
-
-###
-### sparc
-###
-
-ifeq ($(target),sparc)
-e =
-DEFS += '-DUPX_CONFIG_H="config_h/sparc.h"'
-INCLUDES += -I/home/ethmola/local/include
-
-ifeq (1,2) # native compiler
-  CFLAGS = -O0 -g
-  CXXFLAGS1 =
-  CXXFLAGS2 =
-  CFLAGS_M =
-  DEFS += -DUSE_STDNAMESPACE
-else # gcc
-  CFLAGS += -O0 -gstabs+
-endif
-
-ifeq (1,2) # purify
-  DEFS += -D__PURIFY__
-  LDFLAGS = -g -L/home/ethmola/local/lib
-  LINK_EXE = purify $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-else
-  LDFLAGS += -g -L/home/ethmola/local/lib
-  LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-endif
-
-endif	# sparc
-
-
-###
-### Borland C++ 5.5 (DOES NOT WORK - INCOMPLETE C++ IMPLEMENTATION)
+### Borland C++ 5.5.1
 ###
 
 ifeq ($(target),bcc)
 o = .obj
 a = .lib
-CC = bcc32
-CFLAGS = -w -w-par
+e = .exe
+CC = bcc32 -q
+CFLAGS = -w -w-aus -g1
 CXXFLAGS1 = $(CFLAGS)
-CXXFLAGS2 = $(CFLAGS)
+CXXFLAGS2 = $(CFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
-LDLIBS = $(DOS_LDLIBS) zlib.lib
+LDLIBS = $(DOS_LDLIBS)
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -336,14 +359,130 @@ else
   CFLAGS += -O2 -d
 endif
 
-LINK_EXE = $(CC) $(LDFLAGS) -e$@ $^ $(LDLIBS)
+LINK_EXE = $(CXXLD) $(LDFLAGS) -e$@ $^ $(LDLIBS)
 
 endif	# bcc
 
 
 ###
-### malloc debuggers and memory checkers
+### Digital Mars C++ 8.28
 ###
+
+ifeq ($(target),dmc)
+o = .obj
+a = .lib
+e = .exe
+CC = sc -mn
+CFLAGS = -w- -wx
+CXXFLAGS1 = $(CFLAGS) -Aa -Ab -Ae -Ar
+CXXFLAGS2 = $(CFLAGS) -Aa -Ab
+CFLAGS_OUTPUT = -o$@
+LDFLAGS =
+LDLIBS = $(DOS_LDLIBS)
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq ($(DEBUG),1)
+  CFLAGS += -o- -g -s
+else
+  CFLAGS += -o
+endif
+
+LINK_EXE = $(CXXLD) $(LDFLAGS) -o$@ $^ $(LDLIBS)
+
+endif	# dmc
+
+
+###
+### Visual C++ 6 (aka Microsoft C/C++ Compiler 12.00)
+###
+
+ifeq ($(target),vc6)
+o = .obj
+a = .lib
+e = .exe
+CC = cl -nologo
+CFLAGS = -W4 -WX
+CXXFLAGS1 = $(CFLAGS) -EHac -GR
+CXXFLAGS2 = $(CFLAGS)
+LDFLAGS =
+LINK_LDFLAGS = /link /map:$T.map
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq (1,2)
+  # statically link libc.lib
+  CC += -ML
+  LDLIBS = $(u)_s.lib setargv.obj
+else
+  # link against msvcrt.dll
+  CC += -MD
+  LDLIBS = $(DOS_LDLIBS) setargv.obj
+endif
+ifeq ($(DEBUG),1)
+  CFLAGS += -Od -ZI
+  LINK_LDFLAGS += /debug
+else
+  CFLAGS += -O2 -GF
+  LINK_LDFLAGS += /release
+endif
+RESOURCES = upx.res
+
+##LINK_LDFLAGS += /verbose
+LINK_EXE = $(CXXLD) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
+
+endif	# vc6
+
+
+###
+### Watcom C++ 11.0c
+###
+
+ifeq ($(target),wcc)
+o = .obj
+a = .lib
+e = .exe
+CC = wcl386 -zq -bt=nt -mf -5r
+CFLAGS = -zc -w5 -we
+CXXFLAGS1 = $(CFLAGS) -xs -xr
+CXXFLAGS2 = $(CFLAGS)
+CFLAGS_OUTPUT = -fo=$@
+LDFLAGS = -k0x100000 -fm
+LDLIBS = $(DOS_LDLIBS)
+
+INCLUDES:=$(strip $(subst /,\\,$(INCLUDES)))
+ifeq (1,2)
+  WCL386:=$(INCLUDES)
+  export WCL386
+  INCLUDES:=
+endif
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq ($(DEBUG),1)
+  CFLAGS +=
+else
+  # note: it seems that the optimizer is generating bad code with `-ox'
+  CFLAGS += -olr
+endif
+
+LINK_EXE = $(CXXLD) $(LDFLAGS) -fe=$@ $^ $(LDLIBS)
+
+endif	# wcc
+
+
+# /***********************************************************************
+# // malloc debuggers and memory checkers
+# ************************************************************************/
 
 ifeq (1,2)
   LDLIBS += -lefence
@@ -367,15 +506,42 @@ ifeq (1,2)
 endif
 
 
-###
-### extra flags
-###
+# /***********************************************************************
+# // finish settings
+# ************************************************************************/
 
+# C++ defaults
+ifeq ($(strip $(CXX)),)
+  ifeq ($(strip $(CC)),gcc)
+    CXX = g++
+  else
+    CXX = $(CC)
+  endif
+endif
+ifeq ($(strip $(CXXLD)),)
+  CXXLD = $(CXX)
+endif
+ifeq ($(strip $(CXXFLAGS_OUTPUT)),)
+  CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
+endif
+
+
+# extra flags
+DEFS      += $(EXTRA_DEFS)
 CFLAGS    += $(EXTRA_CFLAGS)
+CFLAGS_W  += $(EXTRA_CFLAGS_W)
+CFLAGS_M  += $(EXTRA_CFLAGS_M)
+CFLAGS_O  += $(EXTRA_CFLAGS_O)
 CXXFLAGS1 += $(EXTRA_CXXFLAGS1)
 CXXFLAGS2 += $(EXTRA_CXXFLAGS2)
 LDFLAGS   += $(EXTRA_LDFLAGS)
 LDLIBS    += $(EXTRA_LDLIBS)
+
+
+# To better deal with asynchronous exceptions we compile all source
+# files with exception handling and RTTI enabled - the size overhead
+# is negligible.
+CXXFLAGS2 = $(CXXFLAGS1)
 
 
 # /***********************************************************************
@@ -386,7 +552,7 @@ all: $(upx_exe)
 
 .PHONY: all unupx mostlyclean clean distclean maintainer-clean untabify tags
 
-$(upx_exe): $(OBJECTS) $(LIBS)
+$(upx_exe): $(OBJECTS) $(LIBS) $(RESOURCES)
 	$(LINK_EXE)
 	$(STUBEDIT_EXE)
 	$(STUBIFY_EXE)
@@ -404,9 +570,9 @@ mostlyclean:
 	-rm -f *.d *.err *.i *.log *.map *~ gdb-trans*
 
 clean: mostlyclean
-	-rm -f *.a *.lib *.o *.obj tags TAGS ID
+	-rm -f *.a *.lib *.o *.obj *.res *.tds tags TAGS ID
 	-rm -f *.idb *.pdb
-	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
+	-rm -f upx upx.exe upx.ttp upx_nrv upx_nrv.exe upx_nrv.ttp upx_ucl upx_ucl.exe upx_ucl.ttp
 	-rm -rf .deps
 
 distclean: clean
@@ -429,36 +595,25 @@ ID:
 # // rules
 # ************************************************************************/
 
-.c$o:
+%$o : %.c
 	$(CC) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -c $<
 
-.cpp$o:
+%$o : %.cpp
 	$(CXX) $(DEFS) $(INCLUDES) $(CXXFLAGS1) $(CXXFLAGS_OUTPUT) -c $<
 
-$(OBJECTS1): %$o : %.cpp
-	$(CXX) $(DEFS) $(INCLUDES) $(CXXFLAGS1) $(CXXFLAGS_OUTPUT) -c $<
-
+ifneq ($(strip $(OBJECTS2)),)
 $(OBJECTS2): %$o : %.cpp
 	$(CXX) $(DEFS) $(INCLUDES) $(CXXFLAGS2) $(CXXFLAGS_OUTPUT) -c $<
-
-ifneq ($(strip $(OBJECTS3)),)
-$(OBJECTS3): %$o : %.c
-	$(CC) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -c $<
 endif
+
+%.res : %.rc
+	rc -l 0x409 -fo$@ $<
 
 
 # /***********************************************************************
 # // dependencies
 # ************************************************************************/
 
-ifeq ($(strip $(wildcard .deps)),)
-  DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
-else
-  DEP_FILES := $(wildcard .deps/*.pp)
-  ifneq ($(strip $(DEP_FILES)),)
-    include $(DEP_FILES)
-  endif
-endif
-
+include $(srcdir)/Makefile.dep
 
 # vi:nowrap

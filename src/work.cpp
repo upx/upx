@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -31,6 +31,7 @@
 #include "packmast.h"
 #include "packer.h"
 #include "ui.h"
+#include "version.h"
 
 
 #if defined(__DJGPP__)
@@ -129,6 +130,10 @@ void do_one_file(const char *iname, char *oname)
             else
                 flags |= O_EXCL;
             int shmode = SH_DENYWR;
+#if defined(__MINT__)
+            flags |= O_TRUNC;
+            shmode = O_DENYRW;
+#endif
 #if defined(__DJGPP__) || defined(_MSC_VER)
             // we can avoid the chmod() call below
             int omode = st.st_mode;
@@ -146,7 +151,11 @@ void do_one_file(const char *iname, char *oname)
     }
 
     // handle command
+#if (UPX_VERSION_HEX >= 0x019000)
     PackMaster pm(&fi, opt);
+#else
+    PackMaster pm(&fi);
+#endif
     if (opt->cmd == CMD_COMPRESS)
         pm.pack(&fo);
     else if (opt->cmd == CMD_DECOMPRESS)
@@ -275,21 +284,23 @@ void do_files(int i, int argc, char *argv[])
             unlink_ofile(oname);
             printErr(iname,&e);
             e_exit(EXIT_ERROR);
-        } catch (const std::bad_alloc &e) {
+        } catch (const std::bad_alloc &) {
             unlink_ofile(oname);
             printErr(iname,"out of memory");
             e_exit(EXIT_ERROR);
-        } catch (const std::bad_alloc *e) {
+        } catch (std::bad_alloc *e) {
             unlink_ofile(oname);
             printErr(iname,"out of memory");
+            delete e;
             e_exit(EXIT_ERROR);
-        } catch (const exception &e) {
+        } catch (const std::exception &e) {
             unlink_ofile(oname);
             printUnhandledException(iname,&e);
             e_exit(EXIT_ERROR);
-        } catch (const exception *e) {
+        } catch (std::exception *e) {
             unlink_ofile(oname);
             printUnhandledException(iname,e);
+            delete e;
             e_exit(EXIT_ERROR);
         } catch (...) {
             unlink_ofile(oname);

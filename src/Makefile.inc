@@ -1,11 +1,12 @@
 UDIR := $($(U)DIR)
 
+ifneq ($(strip $(wildcard $(UDIR)/include)),) # { include
 DEFS += -DWITH_$(U)
-
-ifneq ($(strip $(wildcard $(UDIR)/include)),)
 INCLUDES += -I$(UDIR)/include
-endif
 
+ifneq ($(strip $(wildcard $(UDIR)/build/$(target)/src/.libs)),)
+LIBDIRS += $(UDIR)/build/$(target)/src/.libs
+endif
 ifneq ($(strip $(wildcard $(UDIR)/src/.libs)),)
 LIBDIRS += $(UDIR)/src/.libs
 endif
@@ -35,3 +36,4 @@ LIBDIRS := $(LIBDIRS)
 LDLIBS := $(LDLIBS)
 DOS_LDLIBS := $(DOS_LDLIBS)
 
+endif # } include

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -32,15 +32,55 @@
 #ifdef __cplusplus
 
 
+//#define NOTHROW throw()
+
+
 /*************************************************************************
-// exceptions, RTTI
+// exceptions & RTTI
 **************************************************************************/
+
+#if defined(__DMC__)
+
+#include <new.h>
+#include <typeinfo.h>
+
+namespace std {
+typedef ::Type_info type_info;
+class exception
+{
+public:
+    exception() NOTHROW { }
+    virtual ~exception() NOTHROW { }
+    virtual const char* what() const NOTHROW { return "exception"; }
+};
+class bad_alloc : public exception
+{
+public:
+    bad_alloc() NOTHROW { }
+    virtual ~bad_alloc() NOTHROW { }
+    virtual const char* what() const NOTHROW { return "bad_alloc"; }
+};
+};
+
+#elif defined(__WATCOMC__)
+
+#define std
 
 #include <exception>
 //#include <stdexcept>
-
 #include <new>
 #include <typeinfo>
+
+class bad_alloc { };
+
+#else
+
+#include <exception>
+//#include <stdexcept>
+#include <new>
+#include <typeinfo>
+
+#endif
 
 
 /*************************************************************************
@@ -52,7 +92,7 @@
 #if defined(__linux__)
 #  define _NOTHREADS
 #endif
-#if defined(__DJGPP__) || defined(__MINGW32__) || defined(__sparc__)
+#if defined(__GNUC__)
 #  define __THROW_BAD_ALLOC     throw bad_alloc()
 #  define __USE_MALLOC
 #  define enable                upx_stl_enable
@@ -70,8 +110,6 @@
 
 #endif /* WANT_STL */
 
-
-using namespace std;
 
 #endif /* __cplusplus */
 

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -62,6 +62,7 @@ struct screen_data_t
     int rows;
     int cursor_x;
     int cursor_y;
+    int scroll_counter;
 
     WORD attr;
     WORD init_attr;
@@ -311,8 +312,10 @@ static int init(screen_t *this, int fd)
 #else
     this->data->cols = csbi->dwSize.X;
     this->data->rows = csbi->dwSize.Y;
+#if 0
     if (csbi->srWindow.Left != 0)
         return -1;
+#endif
 #endif
 
     this->data->cursor_x = csbi->dwCursorPosition.X;
@@ -413,12 +416,21 @@ static int do_scroll(screen_t *this, int lines, int way)
 
 static int scrollUp(screen_t *this, int lines)
 {
-    return do_scroll(this, lines, 0);
+    lines = do_scroll(this, lines, 0);
+    this->data->scroll_counter += lines;
+    return lines;
 }
 
 static int scrollDown(screen_t *this, int lines)
 {
-    return do_scroll(this, lines, 1);
+    lines = do_scroll(this, lines, 1);
+    this->data->scroll_counter -= lines;
+    return lines;
+}
+
+static int getScrollCounter(const screen_t *this)
+{
+    return this->data->scroll_counter;
 }
 
 
@@ -426,7 +438,11 @@ static int s_kbhit(screen_t *this)
 {
 #if defined(HAVE_CONIO_H)
     UNUSED(this);
+# if defined(__BORLANDC__)
+    return kbhit();
+# else
     return _kbhit();
+# endif
 #else
     UNUSED(this);
     return 0;
@@ -483,6 +499,7 @@ static const screen_t driver =
     updateLineN,
     scrollUp,
     scrollDown,
+    getScrollCounter,
     s_kbhit,
     intro,
     (struct screen_data_t *) 0

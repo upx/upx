@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -69,15 +69,16 @@ int le32_compare(const void *e1, const void *e2)
 
 int find(const void *b, int blen, const void *what, int wlen)
 {
-    if (b == NULL || what == NULL || wlen <= 0)
+    if (b == NULL || blen <= 0 || what == NULL || wlen <= 0)
         return -1;
 
     int i;
     const unsigned char *base = (const unsigned char *) b;
     unsigned char firstc = * (const unsigned char *) what;
 
-    for (i = 0; i <= blen - wlen; i++, base++)
-        if (*base == firstc && memcmp(base,what,wlen) == 0)
+    blen -= wlen;
+    for (i = 0; i <= blen; i++, base++)
+        if (*base == firstc && memcmp(base, what, wlen) == 0)
             return i;
 
     return -1;
@@ -87,33 +88,91 @@ int find(const void *b, int blen, const void *what, int wlen)
 int find_be16(const void *b, int blen, unsigned what)
 {
     unsigned char w[2];
-    set_be16(w,what);
-    return find(b,blen,w,2);
+    set_be16(w, what);
+    return find(b, blen, w, 2);
 }
 
 
 int find_be32(const void *b, int blen, unsigned what)
 {
     unsigned char w[4];
-    set_be32(w,what);
-    return find(b,blen,w,4);
+    set_be32(w, what);
+    return find(b, blen, w, 4);
 }
 
 
 int find_le16(const void *b, int blen, unsigned what)
 {
     unsigned char w[2];
-    set_le16(w,what);
-    return find(b,blen,w,2);
+    set_le16(w, what);
+    return find(b, blen, w, 2);
 }
 
 
 int find_le32(const void *b, int blen, unsigned what)
 {
     unsigned char w[4];
-    set_le32(w,what);
-    return find(b,blen,w,4);
+    set_le32(w, what);
+    return find(b, blen, w, 4);
 }
+
+
+/*************************************************************************
+// find util
+**************************************************************************/
+
+#if (UPX_VERSION_HEX < 0x019000)
+
+upx_bytep pfind(const void *b, int blen, const void *what, int wlen)
+{
+    if (b == NULL || blen <= 0 || what == NULL || wlen <= 0)
+        return NULL;
+
+    int i;
+    const upx_bytep base = (const upx_bytep) b;
+    unsigned char firstc = * (const upx_bytep) what;
+
+    blen -= wlen;
+    for (i = 0; i <= blen; i++, base++)
+        if (*base == firstc && memcmp(base, what, wlen) == 0)
+            return const_cast<upx_bytep>(base);
+
+    return NULL;
+}
+
+
+upx_bytep pfind_be16(const void *b, int blen, unsigned what)
+{
+    unsigned char w[2];
+    set_be16(w,what);
+    return pfind(b,blen,w,2);
+}
+
+
+upx_bytep pfind_be32(const void *b, int blen, unsigned what)
+{
+    unsigned char w[4];
+    set_be32(w,what);
+    return pfind(b,blen,w,4);
+}
+
+
+upx_bytep pfind_le16(const void *b, int blen, unsigned what)
+{
+    unsigned char w[2];
+    set_le16(w,what);
+    return pfind(b,blen,w,2);
+}
+
+
+upx_bytep pfind_le32(const void *b, int blen, unsigned what)
+{
+    unsigned char w[4];
+    set_le32(w,what);
+    return pfind(b,blen,w,4);
+}
+
+#endif /* UPX_VERSION_HEX */
 
 
 /*************************************************************************
@@ -318,15 +377,37 @@ void time2str(char *s, const time_t *t)
 // misc.
 **************************************************************************/
 
-char *center_string(const char *name, size_t s)
+bool set_method_name(char *buf, size_t size, int method, int level)
 {
-    static char buf[256+1];
-    size_t l = strlen(name);
-    assert(l <= s && l < sizeof(buf));
-    memset(buf,' ',s);
-    memcpy(buf+(s-l)/2,name,l);
-    buf[s] = 0;
-    return buf;
+    bool r = true;
+    const char *alg;
+    if (M_IS_NRV2B(method))
+        alg = "NRV2B";
+    else if (M_IS_NRV2D(method))
+        alg = "NRV2D";
+    else if (M_IS_NRV2E(method))
+        alg = "NRV2E";
+    else
+    {
+        alg = "???";
+        r = false;
+    }
+    if (level > 0)
+        upx_snprintf(buf, size, "%s/%d", alg, level);
+    else
+        upx_snprintf(buf, size, "%s", alg);
+    return r;
+}
+
+
+void center_string(char *buf, size_t size, const char *s)
+{
+    size_t l = strlen(s);
+    size_t len = size - 1;
+    assert(l < size);
+    memset(buf, ' ', len);
+    memcpy(buf+(len-l)/2, s, l);
+    buf[len] = 0;
 }
 
 
@@ -449,15 +530,20 @@ bool isafile(int fd)
 // return compression ratio, where 100% == 1000*1000 == 1e6
 **************************************************************************/
 
-unsigned get_ratio (unsigned u_len, unsigned c_len)
+unsigned get_ratio(unsigned u_len, unsigned c_len)
 {
-#if defined(__GNUC__)
+#if (ULONG_MAX <= 0xffffffffL)
+# if defined(__GNUC__) || defined(__DMC__)
     const unsigned long long n = 1000000;
-#elif defined(_MSC_VER)
+# elif defined(__BORLANDC__) || defined(_MSC_VER) || defined(__WATCOMC__)
     const unsigned __int64 n = 1000000;
+# else
+#  error "need a 64-bit integer type"
+# endif
 #else
-#error
+    const unsigned long n = 1000000;
 #endif
+    COMPILE_TIME_ASSERT(sizeof(n) >= 8);
     if (u_len <= 0)
         return (unsigned) n;
     return (unsigned) ((c_len * n) / u_len) + 5;
@@ -509,7 +595,7 @@ int _is_executable(const char *, int , const char *)
     return 0;
 }
 
-//FIXME: something wants to link in ctime.o
+// FIXME: something wants to link in ctime.o
 time_t mktime(struct tm *)
 {
     return 0;

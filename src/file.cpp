@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -82,6 +82,25 @@ FileBase::~FileBase()
     // FIXME: we should use close() during exception unwinding but
     //        closex() otherwise
     closex();
+}
+
+
+void FileBase::sopen()
+{
+    if (_shflags < 0)
+        _fd = ::open(_name,_flags,_mode);
+    else
+    {
+#if defined(__DJGPP__)
+        _fd = ::open(_name,_flags | _shflags, _mode);
+#elif defined(__MINT__)
+        _fd = ::open(_name,_flags | (_shflags & O_SHMODE), _mode);
+#elif defined(SH_DENYRW)
+        _fd = ::sopen(_name,_flags,_shflags,_mode);
+#else
+        assert(0);
+#endif
+    }
 }
 
 
@@ -213,16 +232,7 @@ void InputFile::sopen(const char *name, int flags, int shflags)
     _flags = flags;
     _shflags = shflags;
     _mode = 0;
-    if (shflags < 0)
-        _fd = ::open(_name,_flags);
-    else
-#if defined(__DJGPP__)
-        _fd = ::open(_name,_flags | _shflags);
-#elif defined(SH_DENYRW)
-        _fd = ::sopen(_name,_flags,_shflags);
-#else
-        assert(0);
-#endif
+    FileBase::sopen();
     if (!isOpen())
     {
         if (errno == ENOENT)
@@ -281,16 +291,7 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode)
     _flags = flags;
     _shflags = shflags;
     _mode = mode;
-    if (shflags < 0)
-        _fd = ::open(_name,_flags,_mode);
-    else
-#if defined(__DJGPP__)
-        _fd = ::open(_name,_flags | _shflags, _mode);
-#elif defined(SH_DENYRW)
-        _fd = ::sopen(_name,_flags,_shflags,_mode);
-#else
-        assert(0);
-#endif
+    FileBase::sopen();
     if (!isOpen())
     {
 #if 0
@@ -323,7 +324,9 @@ bool OutputFile::openStdout(int flags, bool force)
     if (flags != 0)
     {
         assert(flags == O_BINARY);
-#if defined(HAVE_SETMODE) && defined(USE_SETMODE)
+#if defined(__MINT__)
+        __set_binmode(stdout, 1);
+#elif defined(HAVE_SETMODE) && defined(USE_SETMODE)
         if (setmode(_fd, O_BINARY) == -1)
             throwIOException(_name,errno);
 #if defined(__DJGPP__)
@@ -358,6 +361,8 @@ void OutputFile::dump(const char *name, const void *buf, int len, int flags)
 //
 **************************************************************************/
 
+#if 0
+
 MemoryOutputFile::MemoryOutputFile() :
     b(NULL), b_size(0), b_pos(0), bytes_written(0)
 {
@@ -376,6 +381,9 @@ void MemoryOutputFile::write(const void *buf, int len)
     b_pos += len;
     bytes_written += len;
 }
+
+
+#endif /* if 0 */
 
 
 /*

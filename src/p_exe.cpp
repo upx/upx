@@ -227,7 +227,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
                          const upx_byte *relocs, const unsigned nrelocs,
                          upx_byte *crel, bool *has_9a)
 {
-    upx_byte *crel_save = crel;
+    upx_byte * const crel_save = crel;
     unsigned i;
     unsigned seg_high = 0;
 #if 0
@@ -486,7 +486,10 @@ void PackExe::pack(OutputFile *fo)
         oh.relocs = 0;
         oh.firstreloc = ih.cs*0x10000 + ih.ip;
     }
-    oh.relocoffs = offsetof(exe_header_t, firstreloc);
+
+    // g++ 3.1 does not like the following line...
+//    oh.relocoffs = offsetof(exe_header_t, firstreloc);
+    oh.relocoffs = ptr_diff(&oh.firstreloc, &oh);
 
     if (flag & SP)
         patch_le16(loader,lsize,"SP",ih.sp);

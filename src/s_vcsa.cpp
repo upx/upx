@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -63,6 +63,7 @@ struct screen_data_t
     int rows;
     int cursor_x;
     int cursor_y;
+    int scroll_counter;
     unsigned char attr;
     unsigned char init_attr;
     unsigned char map[256];
@@ -324,7 +325,7 @@ static int init(screen_t *this, int fd)
 #if defined(MINOR) && defined(MAJOR) && defined(TTY_MAJOR)
     if (MAJOR(st.st_rdev) == TTY_MAJOR)
     {
-        char vc_name[32];
+        char vc_name[64];
         unsigned char vc_data[4];
         int i;
         int attr;
@@ -332,6 +333,11 @@ static int init(screen_t *this, int fd)
 
         sprintf(vc_name, "/dev/vcsa%d", (int) MINOR(st.st_rdev));
         this->data->fd = open(vc_name, O_RDWR);
+        if (this->data->fd == -1)
+        {
+            sprintf(vc_name, "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
+            this->data->fd = open(vc_name, O_RDWR);
+        }
         if (this->data->fd != -1)
         {
             if (read(this->data->fd, vc_data, 4) == 4)
@@ -446,6 +452,7 @@ static int scrollUp(screen_t *this, int lines)
     for (y = sr - lines; y < sr; y++)
         clearLine(this,y);
 
+    this->data->scroll_counter += lines;
     return lines;
 }
 
@@ -483,7 +490,14 @@ static int scrollDown(screen_t *this, int lines)
 #endif
     }
 
+    this->data->scroll_counter -= lines;
     return lines;
+}
+
+
+static int getScrollCounter(const screen_t *this)
+{
+    return this->data->scroll_counter;
 }
 
 
@@ -580,6 +594,7 @@ static const screen_t driver =
     updateLineN,
     scrollUp,
     scrollDown,
+    getScrollCounter,
     kbhit,
     intro,
     (struct screen_data_t *) 0

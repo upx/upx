@@ -42,7 +42,8 @@
 //
 **************************************************************************/
 
-#define SCRIPT_SIZE     (opt->unix.SCRIPT_MAX + sizeof(l_info))
+//#define SCRIPT_SIZE     (opt->unix.SCRIPT_MAX + sizeof(l_info))
+#define SCRIPT_SIZE     (32 + sizeof(l_info))
 
 const upx_byte *PackLinuxI386sep::getLoader() const
 {

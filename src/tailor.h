@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -40,6 +40,8 @@
 #  if defined(__WINDOWS__) || defined(_WINDOWS) || defined(_Windows)
 #    define __MFX_WIN
 #  elif defined(__WIN32__) || defined(_WIN32) || defined(WIN32)
+#    define __MFX_WIN
+#  elif defined(__CYGWIN__) || defined(__MINGW32__)
 #    define __MFX_WIN
 #  elif defined(__NT__) || defined(__NT_DLL__) || defined(__WINDOWS_386__)
 #    define __MFX_WIN
@@ -122,13 +124,18 @@
 #  define HAVE_MODE_T 1
 #  define HAVE_CHMOD 1
 #  define HAVE_UTIME 1
-#elif defined(__GNUC__) && defined(__MFX_TOS)
+#elif defined(__MINT__)
+#  undef HAVE_SETMODE
 #  define TIME_WITH_SYS_TIME 1
 #  define HAVE_UNISTD_H 1
 #  define HAVE_UTIME_H 1
 #  define HAVE_CHMOD 1
+#  define HAVE_CHOWN 1
 #  define HAVE_UTIME 1
 #elif defined(__BORLANDC__)
+#  if (__BORLANDC__ < 0x551)
+#    error "need Borland C 5.5.1 or newer"
+#  endif
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
 #  define HAVE_CONIO_H 1
@@ -140,6 +147,16 @@
 #  define HAVE_UTIME 1
 #  define HAVE_VSNPRINTF 1
 #  define vsnprintf _vsnprintf
+#elif defined(__DMC__)
+#  define __UPX_CDECL       __cdecl
+#  define SIGTYPEENTRY      __cdecl
+#  define HAVE_IO_H 1
+#  define HAVE_MALLOC_H 1
+#  define HAVE_UNISTD_H 1
+#  define HAVE_UTIME_H 1
+#  define HAVE_MODE_T 1
+#  define HAVE_CHMOD 1
+#  define HAVE_UTIME 1
 #elif defined(_MSC_VER)
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
@@ -154,16 +171,27 @@
 #    define HAVE_VSNPRINTF 1
 #    define vsnprintf _vsnprintf
 //#    pragma warning(once: 4097 4710)
-#    pragma warning(disable: 4097 4710)
-#    pragma warning(disable: 4511 4512)
+//#    pragma warning(disable: 4097 4511 4512 4710)
+#    pragma warning(disable: 4097)      // W3: typedef-name 'A' used as synonym for class-name 'B'
+#    pragma warning(disable: 4511)      // W3: 'class': copy constructor could not be generated
+#    pragma warning(disable: 4512)      // W4: 'class': assignment operator could not be generated
+#    pragma warning(disable: 4710)      // W4: 'function': function not inlined
 #  endif
 #elif defined(__WATCOMC__)
+#  if (__WATCOMC__ < 1100)
+#    error "need Watcom C 11.0c or newer"
+#    define NO_BOOL 1
+#  endif
 #  define __UPX_CDECL       __cdecl
 #  define HAVE_IO_H 1
 #  define HAVE_SYS_UTIME_H 1
 #  define HAVE_CHMOD 1
 #  define HAVE_UTIME 1
-#  define NO_BOOL 1
+#  define HAVE_VSNPRINTF 1
+#  define vsnprintf _vsnprintf
+#  if defined(__cplusplus)
+#    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
+#  endif
 #endif
 
 #if defined(__MFX_DOS)

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -117,7 +117,8 @@ protected:
         LE16  device_id;
         LE16  ddk_version;
 #endif
-    };
+    }
+    __attribute_packed;
 
     struct le_object_table_entry_t
     {
@@ -127,15 +128,17 @@ protected:
         LE32  pagemap_index;
         LE32  npages;
         LE32  reserved;
-    };
+    }
+    __attribute_packed;
 
     struct le_pagemap_entry_t
     {
-        upx_byte  h;
-        upx_byte  m;
-        upx_byte  l;
-        upx_byte  type;              // 0x00-legal;0x40-iterated;0x80-invalid;0xC0-zeroed
-    };
+        unsigned char h;
+        unsigned char m;
+        unsigned char l;
+        unsigned char type;  // 0x00-legal;0x40-iterated;0x80-invalid;0xC0-zeroed
+    }
+    __attribute_packed;
 
     virtual void readObjectTable();
     virtual void writeObjectTable();
@@ -178,6 +181,7 @@ protected:
     //virtual void decodeImage(){encodeImage();}
 
     void countFixups(unsigned *) const;
+    unsigned getImageSize() const;
 
     InputFile *fif;
     OutputFile *fof;

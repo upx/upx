@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.12 beta (XX Jan 2001):
+Changes in 1.90 beta (XX Jul 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * implemented several new options for finer compression control:
       `--all-methods', `--all-filters' and `--brute'
@@ -19,6 +19,34 @@ Changes in 1.11 beta (20 Dec 2000):
     more temp files are needed for decompression!
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
+
+Changes in 1.22 (27 Jun 2002)
+  * atari/tos: the stub now flushes the CPU cache to avoid
+    problems on 68030+ machines
+  * source code: additional compiler support for Borland C++ 5.5.1,
+    Digital Mars C++ 8.28 and Watcom C++ 11.0c
+
+Changes in 1.21 (01 Jun 2002)
+  * New option `--crp-ms=' for slightly better compression at the cost
+    of higher memory requirements during compression.
+    Try `upx --best --crp-ms=100000'. See the docs for more info.
+  * source code: portability fixes
+  * source code: compile fixes for g++ 3.0 and g++ 3.1
+
+Changes in 1.20 (23 May 2001)
+  * slightly faster compression
+  * work around a gcc problem in the latest djgpp2 distribution
+  * watcom/le: fixed detection of already compressed files
+  * win32/pe: do not compress RT_MANIFEST resource types
+  * win32/pe: improved the error message for empty resource sections
+  * [NOTE: the jump from 1.08 to 1.20 is to avoid confusion with
+           our unstable development releases 1.1x and 1.9x]
+
+Changes in 1.08 (30 Apr 2001)
+  * INFO: http://upx.sourceforge.net now is the new permanent UPX home page
+  * new native port to atari/tos
+  * win32/pe: shortened the identstring
+  * source code: portability fixes - UPX now builds cleanly under m68k CPUs
 
 Changes in 1.07 (20 Feb 2001)
   * win32/pe: corrected the TLS callback check

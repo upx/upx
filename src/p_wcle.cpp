@@ -173,6 +173,7 @@ void PackWcle::encodeEntryTable()
     }
 
     //if (Opt_debug) printf("%d entries encoded.\n",n);
+    UNUSED(n);
 
     soentries = p - ientries + 1;
     oentries = ientries;
@@ -276,20 +277,18 @@ void PackWcle::preprocessFixups()
 
     unsigned ic,jc;
 
-    MemBuffer counts_buf((objects+2)*sizeof(unsigned));
-    unsigned *counts = (unsigned *) (unsigned char *) counts_buf;
+    Array(unsigned, counts, objects+2);
     countFixups(counts);
 
     for (ic = jc = 0; ic < objects; ic++)
         jc += counts[ic];
 
-    MemBuffer rl(jc);
-    MemBuffer srf(counts[objects+0]+1);
-    MemBuffer slf(counts[objects+1]+1);
+    ByteArray(rl,jc);
+    ByteArray(srf, counts[objects+0]+1);
+    ByteArray(slf, counts[objects+1]+1);
 
     upx_byte *selector_fixups = srf;
     upx_byte *selfrel_fixups = slf;
-
     unsigned rc = 0;
 
     upx_byte *fix = ifixups;
@@ -297,7 +296,7 @@ void PackWcle::preprocessFixups()
     {
         while ((unsigned)(fix - ifixups) < get_le32(ifpage_table+ic+1))
         {
-            const short fixp2 = get_le16(fix+2);
+            const signed short fixp2 = (signed short) get_le16(fix+2);
             unsigned value;
 
             switch (*fix)
@@ -319,7 +318,7 @@ void PackWcle::preprocessFixups()
                     fix += 5;
                     break;
                 case 5:       // 16-bit offset
-                    if ((unsigned)fixp2 < 4096 && IOT(fix[4]-1,my_base_address) == jc)
+                    if ((unsigned short)fixp2 < 4096 && IOT(fix[4]-1,my_base_address) == jc)
                         dputc('6',stdout);
                     else
                         throwCantPack("unsupported 16-bit offset relocation");
@@ -483,7 +482,7 @@ void PackWcle::pack(OutputFile *fo)
     set_le32(ifixups+sofixups,ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address)); // old stack pointer
     set_le32(ifixups+sofixups+4,ih.init_eip_offset+text_vaddr); // real entry point
     set_le32(ifixups+sofixups+8,mps*pages); // virtual address of unpacked relocations
-    ifixups[sofixups+12] = (unsigned char) objects;
+    ifixups[sofixups+12] = (unsigned char) (unsigned) objects;
     sofixups += 13;
 
     // filter
@@ -832,7 +831,7 @@ void PackWcle::unpack(OutputFile *fo)
 
     // copy the overlay
     const unsigned overlaystart = ih.data_pages_offset + exe_offset
-        + mps * (pages - 1) + ih.bytes_on_last_page;
+        + getImageSize();
     const unsigned overlay = file_size - overlaystart - ih.non_resident_name_table_length;
     checkOverlay(overlay);
     copyOverlay(fo, overlay, &oimage);

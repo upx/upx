@@ -314,8 +314,8 @@ void PackUnix::unpack(OutputFile *fo)
         }
     }
 
-    unsigned c_adler = upx_adler32(0, NULL, 0);
-    unsigned u_adler = upx_adler32(0, NULL, 0);
+    unsigned c_adler = upx_adler32(NULL, 0);
+    unsigned u_adler = upx_adler32(NULL, 0);
 
     // defaults for ph.version == 8
     unsigned orig_file_size = 0;

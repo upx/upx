@@ -69,6 +69,7 @@ void init_options(struct options_t *o)
     o->w32pe.compress_resources = -1;
     for (unsigned i = 0; i < HIGH(opt->w32pe.compress_rt); i++)
         opt->w32pe.compress_rt[i] = -1;
+    opt->w32pe.compress_rt[24] = false;     // 24 == RT_MANIFEST
     o->w32pe.strip_relocs = -1;
 }
 
@@ -179,6 +180,14 @@ static void e_optarg(const char *n)
 {
     fflush(con_term);
     fprintf(stderr,"%s: invalid argument in option `%s'\n", argv0, n);
+    e_exit(EXIT_USAGE);
+}
+
+
+static void e_optval(const char *n)
+{
+    fflush(con_term);
+    fprintf(stderr,"%s: invalid value for option `%s'\n", argv0, n);
     e_exit(EXIT_USAGE);
 }
 
@@ -334,7 +343,7 @@ static void set_script_name(const char *n, bool allow_m)
         fprintf(stderr,"%s: missing script name\n",argv0);
         e_usage();
     }
-    if (strlen(n) >= opt->unix.SCRIPT_MAX - 3)
+    if (strlen(n) >= (size_t)opt->unix.SCRIPT_MAX - 3)
     {
         fprintf(stderr,"%s: script name too long\n",argv0);
         e_usage();
@@ -422,10 +431,13 @@ static int do_option(int optc, const char *arg)
 
     switch (optc)
     {
+#if 0
+    // FIXME: to_stdout doesn't work because of console code mess
     //case 'c':
     case 517:
         opt->to_stdout = true;
         break;
+#endif
     case 'd':
         set_cmd(CMD_DECOMPRESS);
         break;
@@ -537,7 +549,9 @@ static int do_option(int optc, const char *arg)
         break;
     // compression settings
     case 520:                               // --small
-        opt->small = 1;
+        if (opt->small < 0)
+            opt->small = 0;
+        opt->small++;
         break;
     case 521:                               // --filter=
         getoptvar(&opt->filter, 0, 255);
@@ -575,7 +589,8 @@ static int do_option(int optc, const char *arg)
         getoptvar(&opt->crp.max_match, 16u, ~0u);
         break;
     case 537:
-        getoptvar(&opt->crp.m_size, 1024u, 512*1024u);
+        if (getoptvar(&opt->crp.m_size, 10000u, (unsigned)999999u) != 0)
+            e_optval("--crp-ms=");
         break;
     // backup
     case 'k':
@@ -720,8 +735,11 @@ static const struct mfx_option longopts[] =
     {"output",           0x21, 0, 'o'},
     {"quiet",               0, 0, 'q'},     // quiet mode
     {"silent",              0, 0, 'q'},     // quiet mode
+#if 0
+    // FIXME: to_stdout doesn't work because of console code mess
     {"stdout",           0x10, 0, 517},     // write output on standard output
     {"to-stdout",        0x10, 0, 517},     // write output on standard output
+#endif
     {"verbose",             0, 0, 'v'},     // verbose mode
 
     // backup options
@@ -794,7 +812,7 @@ static const struct mfx_option longopts[] =
     // psx/exe
     {"no-align",         0x10, 0, 670},
 
-    { 0, 0, 0, 0 }
+    { NULL, 0, NULL, 0 }
 };
 
     int optc, longind;
@@ -862,7 +880,7 @@ static const struct mfx_option longopts[] =
     {"compress-resources",  2, 0, 632},
     {"strip-relocs",        2, 0, 633},
 
-    { 0, 0, 0, 0 }
+    { NULL, 0, NULL, 0 }
 };
 
     char *env, *p;
@@ -950,14 +968,22 @@ static const struct mfx_option longopts[] =
 static void first_options(int argc, char **argv)
 {
     int i;
+    int n = argc;
 
-    for (i = 1; i < argc; i++)
+    for (i = 1; i < n; i++)
+    {
+        if (strcmp(argv[i],"--") == 0)
+        {
+            n = i;
+            break;
+        }
         if (strcmp(argv[i],"--version") == 0)
             do_option('V'+256, argv[i]);
-    for (i = 1; i < argc; i++)
+    }
+    for (i = 1; i < n; i++)
         if (strcmp(argv[i],"--help") == 0)
             do_option('h'+256, argv[i]);
-    for (i = 1; i < argc; i++)
+    for (i = 1; i < n; i++)
         if (strcmp(argv[i],"--no-env") == 0)
             do_option(519, argv[i]);
 }
@@ -988,34 +1014,47 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
 
+#if defined(__GNUC__)
+    COMPILE_TIME_ASSERT(__alignof__(BE16) == 1);
+    COMPILE_TIME_ASSERT(__alignof__(BE32) == 1);
+    COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);
+    COMPILE_TIME_ASSERT(__alignof__(LE32) == 1);
+#endif
+
+#if !defined(__WATCOMC__)
     struct align_assertion_1a_t
     {
         struct foo_t {
             char c1;
             LE16 v[4];
-        } d[3];
-    };
+        } __attribute_packed;
+        foo_t d[3];
+    } __attribute_packed;
     struct align_assertion_1b_t
     {
         struct foo_t {
             char c1;
             char v[4*2];
-        } d[3];
-    };
+        } __attribute_packed;
+        foo_t d[3];
+    } __attribute_packed;
     struct align_assertion_2a_t
     {
         struct foo_t {
             char c1;
             LE32 v[4];
-        } d[3];
-    };
+        } __attribute_packed;
+        foo_t d[3];
+    } __attribute_packed;
     struct align_assertion_2b_t
     {
         struct foo_t {
             char c1;
             char v[4*4];
-        } d[3];
-    };
+        } __attribute_packed;
+        foo_t d[3];
+    } __attribute_packed;
+
     //printf("%d\n", (int) sizeof(align_assertion_1a_t));
     //printf("%d\n", (int) sizeof(align_assertion_1b_t));
     //printf("%d\n", (int) sizeof(align_assertion_2a_t));
@@ -1024,6 +1063,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
     COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
+#endif
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
     assert(strlen(UPX_VERSION_STRING4) == 4);
@@ -1041,18 +1081,27 @@ int main(int argc, char *argv[])
 {
     int i;
     static char default_argv0[] = "upx";
-    int cmdline_cmd = CMD_NONE;
+//    int cmdline_cmd = CMD_NONE;
+
+#if 0 && defined(__DJGPP__)
+    // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
+    putenv("LFN=y");
+#endif
+#if defined(__EMX__)
+    _response(&argc,&argv);
+    _wildcard(&argc,&argv);
+#endif
+#if defined(__MINT__)
+    __binmode(1);
+    __set_binmode(stdout, 0);
+    __set_binmode(stderr, 0);
+#endif
 
     upx_sanity_check();
     init_options(opt);
 
 #if defined(WITH_MSS)
     MSS_DISABLE_LOG_OUTPUT;
-#endif
-
-#if defined(__EMX__)
-    _response(&argc,&argv);
-    _wildcard(&argc,&argv);
 #endif
 
     if (!argv[0] || !argv[0][0])
@@ -1062,15 +1111,15 @@ int main(int argc, char *argv[])
     {
         char *prog = fn_basename(argv0);
         char *p;
-        bool allupper = 1;
+        bool allupper = true;
         for (p = prog; *p; p++)
             if (islower((unsigned char)*p))
-                allupper = 0;
+                allupper = false;
         if (allupper)
             fn_strlwr(prog);
-        if (strlen(prog) > 4)
+        if (p - prog > 4)
         {
-            p = prog + strlen(prog) - 4;
+            p -= 4;
             if (fn_strcmp(p, ".exe") == 0 || fn_strcmp(p, ".ttp") == 0)
                 *p = 0;
         }
@@ -1118,7 +1167,7 @@ int main(int argc, char *argv[])
     assert(i <= argc);
 
     set_term(0);
-    cmdline_cmd = opt->cmd;
+//    cmdline_cmd = opt->cmd;
     switch (opt->cmd)
     {
     case CMD_NONE:
@@ -1178,7 +1227,7 @@ int main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
-#if 1 && (UPX_VERSION < 0x012000)
+#if 1 && (UPX_VERSION_HEX < 0x020000)
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);

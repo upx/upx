@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -32,31 +32,41 @@
 #ifdef __cplusplus
 
 const char *prettyName(const char *n);
-const char *prettyName(const type_info &ti);
+const char *prettyName(const std::type_info &ti);
 
 
 /*************************************************************************
 // exceptions
 **************************************************************************/
 
-class Throwable : public exception
+class Throwable : public std::exception
 {
+    typedef std::exception super;
 protected:
-    Throwable(const char *m = 0, int e = 0, bool w = false)
-        : msg(m), err(e), is_warning(w) { }
+    Throwable(const char *m = 0, int e = 0, bool w = false);
 public:
-    virtual ~Throwable() { }
+    Throwable(Throwable const &);
+    virtual ~Throwable() NOTHROW;
     const char *getMsg() const { return msg; }
     int getErrno() const { return err; }
     bool isWarning() const { return is_warning; }
 private:
-    //Throwable(const Throwable &);
-private:
-//  void * operator new(size_t);        // ...
-    const char *msg;
+    char *msg;
     int err;
 protected:
     bool is_warning;                    // can be set by subclasses
+
+private:
+    // disable assignment
+    Throwable& operator= (Throwable const &);
+    // disable dynamic allocation
+#ifndef new
+    static void *operator new (size_t); // {}
+    static void *operator new[] (size_t); // {}
+#endif
+
+private:
+    static long counter;                // for debugging
 };
 
 
@@ -196,25 +206,25 @@ public:
 #undef NORET
 #if 0 && defined(__GNUC__)
 // (noreturn) is probably not the correct semantics for throwing exceptions
-#define NORET __attribute__((noreturn))
+#define NORET __attribute__((__noreturn__))
 #else
 #define NORET
 #endif
 
 void throwCantPack(const char *msg) NORET;
-void throwUnknownExecutableFormat(const char *msg = 0, bool warn = false) NORET;
-void throwNotCompressible(const char *msg = 0) NORET;
-void throwAlreadyPacked(const char *msg = 0) NORET;
-void throwAlreadyPackedByUPX(const char *msg = 0) NORET;
+void throwUnknownExecutableFormat(const char *msg = NULL, bool warn = false) NORET;
+void throwNotCompressible(const char *msg = NULL) NORET;
+void throwAlreadyPacked(const char *msg = NULL) NORET;
+void throwAlreadyPackedByUPX(const char *msg = NULL) NORET;
 void throwCantUnpack(const char *msg) NORET;
-void throwNotPacked(const char *msg = 0) NORET;
+void throwNotPacked(const char *msg = NULL) NORET;
 void throwFilterException() NORET;
 void throwBadLoader() NORET;
 void throwChecksumError() NORET;
 void throwCompressedDataViolation() NORET;
 void throwInternalError(const char *msg) NORET;
-void throwIOException(const char *msg = 0, int e = 0) NORET;
-void throwEOFException(const char *msg = 0, int e = 0) NORET;
+void throwIOException(const char *msg = NULL, int e = 0) NORET;
+void throwEOFException(const char *msg = NULL, int e = 0) NORET;
 
 #undef NORET
 

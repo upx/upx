@@ -61,6 +61,27 @@ static const
 //
 **************************************************************************/
 
+#if defined(__BORLANDC__)
+#  undef strcpy
+#  define strcpy(a,b)   std::strcpy((char *)(a),(const char *)(b))
+#endif
+
+
+// Unicode string compare
+static bool ustrsame(const void *s1, const void *s2)
+{
+    unsigned len1 = get_le16(s1);
+    unsigned len2 = get_le16(s2);
+    if (len1 != len2)
+        return false;
+    return memcmp(s1, s2, 2 + 2*len1) == 0;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
 PackW32Pe::PackW32Pe(InputFile *f) : super(f)
 {
     //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
@@ -140,7 +161,7 @@ bool PackW32Pe::testUnpackVersion(int version) const
 
 int PackW32Pe::readFileHeader()
 {
-    struct h_t
+    struct exe_header_t
     {
         LE16 mz;
         LE16 m512;
@@ -149,8 +170,11 @@ int PackW32Pe::readFileHeader()
         LE16 relocoffs;
         char __[34];
         LE32 nexepos;
-    } h;
+    }
+    __attribute_packed;
+    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64);
 
+    exe_header_t h;
     int ic;
     pe_offset = 0;
 
@@ -283,10 +307,17 @@ class Reloc
     {
         LE32  pagestart;
         LE32  size;
-    } *rel;
-    LE16 *rel1;
-    void newRelocPos(void *p) { rel = (reloc*) p; rel1 = (LE16*) ((char*) p + sizeof (reloc)); }
+    }
+    __attribute_packed;
 
+    void newRelocPos(void *p)
+    {
+        rel = (reloc*) p;
+        rel1 = (LE16*) ((char*) p + sizeof (reloc));
+    }
+
+    reloc *rel;
+    LE16 *rel1;
     unsigned counts[16];
 
 public:
@@ -302,6 +333,7 @@ public:
 
 Reloc::Reloc(upx_byte *s,unsigned si) : start(s), size(si), rel(0)
 {
+    COMPILE_TIME_ASSERT(sizeof(reloc) == 8);
     memset(counts,0,sizeof(counts));
     unsigned pos,type;
     while (next(pos,type))
@@ -350,7 +382,7 @@ void Reloc::finish(upx_byte *&p,unsigned &siz)
             prev = pos;
             *rel1 = 0;
             rel->size = ALIGN_UP(ptr_diff(rel1,rel),4);
-            newRelocPos(rel->size + (char*) rel);
+            newRelocPos((char *)rel + rel->size);
             rel->pagestart = (pos >> 4) &~ 0xfff;
         }
         *rel1++ = (pos << 12) + ((pos >> 4) & 0xfff);
@@ -440,10 +472,13 @@ struct import_desc
     char  _[8];
     LE32  dllname;
     LE32  iat;      // import address table
-};
+}
+__attribute_packed;
 
 void PackW32Pe::processImports(unsigned myimport) // pass 2
 {
+    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
+
     // adjust import data
     for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
     {
@@ -499,11 +534,12 @@ unsigned PackW32Pe::processImports() // pass 1
             if (!u2->shname) return -1;
             return strlen(u1->shname) - strlen(u2->shname);
         }
-    };
+    }
+    __attribute_packed;
 
     // +1 for dllnum=0
-    autoheap_array(struct udll, dlls, dllnum+1);
-    autoheap_array(struct udll *, idlls, dllnum+1);
+    Array(struct udll, dlls, dllnum+1);
+    Array(struct udll *, idlls, dllnum+1);
 
     soimport = 1024; // safety
 
@@ -691,10 +727,10 @@ unsigned PackW32Pe::processImports() // pass 1
 #endif
         // do some work for the unpacker
         im = im_save;
-        for (ic = 0; ic < dllnum; ic++)
+        for (ic = 0; ic < dllnum; ic++, im++)
         {
             memset(im,FILLVAL,sizeof(*im));
-            im++->dllname = ptr_diff(idlls[ic]->name,ibuf); // I only need this info
+            im->dllname = ptr_diff(idlls[ic]->name,ibuf); // I only need this info
         }
     }
     else
@@ -723,7 +759,7 @@ unsigned PackW32Pe::processImports() // pass 1
 
 class Export
 {
-    struct export_dir
+    struct export_dir_t
     {
         char  _[12]; // flags, timedate, version
         LE32  name;
@@ -733,9 +769,10 @@ class Export
         LE32  addrtable;
         LE32  nameptrtable;
         LE32  ordinaltable;
-    };
+    }
+    __attribute_packed;
 
-    export_dir edir;
+    export_dir_t edir;
     char  *ename;
     char  *functionptrs;
     char  *ordinals;
@@ -760,6 +797,7 @@ private:
 
 Export::Export(char *_base) : base(_base), iv(_base)
 {
+    COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40);
     ename = functionptrs = ordinals = 0;
     names = 0;
     memset(&edir,0,sizeof(edir));
@@ -778,8 +816,8 @@ Export::~Export()
 
 void Export::convert(unsigned eoffs,unsigned esize)
 {
-    memcpy(&edir,base + eoffs,sizeof(export_dir));
-    size = sizeof(export_dir);
+    memcpy(&edir,base + eoffs,sizeof(export_dir_t));
+    size = sizeof(export_dir_t);
     iv.add(eoffs,size);
 
     unsigned len = strlen(base + edir.name) + 1;
@@ -914,10 +952,13 @@ struct tls
     LE32 tlsindex;  // VA tls index
     LE32 callbacks; // VA tls callbacks
     char _[8];      // zero init, characteristics
-};
+}
+__attribute_packed;
 
 void PackW32Pe::processTls(Interval *iv) // pass 1
 {
+    COMPILE_TIME_ASSERT(sizeof(tls) == 24);
+
     if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
         return;
 
@@ -1000,7 +1041,8 @@ class Resource
     {
         LE32  tnl; // Type | Name | Language id - depending on level
         LE32  child;
-    };
+    }
+    __attribute_packed;
     struct res_dir
     {
         char  _[12]; // flags, timedate, version
@@ -1011,13 +1053,15 @@ class Resource
         res_dir_entry entries[1];
         // it's usually safe to assume that every res_dir contains
         // at least one res_dir_entry - check() complains otherwise
-    };
+    }
+    __attribute_packed;
     struct res_data
     {
         LE32  offset;
         LE32  size;
         char  _[8]; // codepage, reserved
-    };
+    }
+    __attribute_packed;
     //
     struct upx_rnode
     {
@@ -1083,6 +1127,10 @@ public:
 
 void Resource::init(const upx_byte *res)
 {
+    COMPILE_TIME_ASSERT(sizeof(res_dir_entry) == 8);
+    COMPILE_TIME_ASSERT(sizeof(res_dir) == 16 + sizeof(res_dir_entry));
+    COMPILE_TIME_ASSERT(sizeof(res_data) == 16);
+
     start = res;
     root = head = current = 0;
     dsize = ssize = 0;
@@ -1094,7 +1142,10 @@ void Resource::check(const res_dir *node,unsigned level)
 {
     int ic = node->identr + node->namedentr;
     if (ic == 0)
-        throwCantPack("unsupported resource structure");
+    {
+        //throwCantPack("unsupported resource structure");
+        throwCantPack("empty resource sections are not supported");
+    }
     for (const res_dir_entry *rde = node->entries; --ic >= 0; rde++)
         if (((rde->child & 0x80000000) == 0) ^ (level == 2))
             throwCantPack("unsupported resource structure");
@@ -1325,9 +1376,13 @@ void PackW32Pe::processResources(Resource *res)
         else if (rtype > 0 && rtype < RT_LAST)
             do_compress = opt->w32pe.compress_rt[rtype] ? true : false;
         else if (res->ntype())              // named resource type
-            if (0 == memcmp(res->ntype(),"\x7\x0T\x0Y\x0P\x0""E\x0L\x0I\x0""B\x0",16)
-                || 0 == memcmp(res->ntype(),"\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0",18))
-                do_compress = false;        // typelib or registry
+        {
+            const upx_byte * const t = res->ntype();
+            if (ustrsame(t, "\x7\x0T\x0Y\x0P\x0""E\x0L\x0I\x0""B\x0"))
+                do_compress = false;        // u"TYPELIB"
+            else if (ustrsame(t, "\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0"))
+                do_compress = false;        // u"REGISTRY"
+        }
 
         if (do_compress)
         {
@@ -1409,7 +1464,8 @@ unsigned PackW32Pe::stripDebug(unsigned overlaystart)
         LE32  size;
         char  __[4]; // rva
         LE32  fpos;
-    };
+    }
+    __attribute_packed;
 
     const debug_dir_t *dd = (const debug_dir_t*) (ibuf + IDADDR(PEDIR_DEBUG));
     for (unsigned ic = 0; ic < IDSIZE(PEDIR_DEBUG) / sizeof(debug_dir_t); ic++, dd++)
@@ -2230,7 +2286,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     extrainfo += sizeof (oh);
     unsigned objs = oh.objects;
 
-    autoheap_array(pe_section_t, osection, objs);
+    Array(pe_section_t, osection, objs);
     memcpy(osection,extrainfo,sizeof(pe_section_t) * objs);
     rvamin = osection[0].vaddr;
     extrainfo += sizeof(pe_section_t) * objs;

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -43,10 +43,12 @@ class CMainDlg;
 //
 **************************************************************************/
 
+struct UiPacker__State;
+
 class UiPacker
 {
 public:
-    UiPacker(const Packer *p);
+    UiPacker(const Packer *p_);
 public:
     virtual ~UiPacker();
 
@@ -91,14 +93,14 @@ public:
     static void uiFooter(const char *n);
 
 protected:
+    virtual void printInfo(int nl=0);
     const Packer *p;
 
     // callback
     cb_t cb;
 
     // internal state
-    struct State;
-    struct State *s;
+    UiPacker__State *s;
 
     // totals
     static long total_files;

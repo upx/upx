@@ -8,23 +8,22 @@
 
 
                     The Ultimate Packer for eXecutables
-          Copyright (c) 1996-2001 Markus Oberhumer & Laszlo Molnar
-               http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
-                            http://upx.tsx.org
+          Copyright (c) 1996-2002 Markus Oberhumer & Laszlo Molnar
+                       http://upx.sourceforge.net
 
 
 
 WARNING - UNSTABLE BETA VERSION
 ===============================
 
-All versions 1.1x are unstable beta releases - use them only for testing,
+All versions 1.9x are unstable beta releases - use them only for testing,
 and never distribute a program that is packed with them !
 There will be hidden bugs. Really.
 
-The current stable release is 1.06, and the next stable release
-will be called version 1.20.
+The current stable release is 1.22, and the next stable release
+will be called version 2.00.
 
-The main news since 1.06 are support for bootable Linux kernels ("vmlinuz/386")
+The main news since 1.22 are support for bootable Linux kernels ("vmlinuz/386")
 and direct Linux ELF-to-memory decompression ("linux/elf386"), so there's
 no reason to use the unstable versions unless you want to try the new formats.
 
@@ -32,10 +31,9 @@ no reason to use the unstable versions unless you want to try the new formats.
 WELCOME
 =======
 
-Welcome to UPX 1.0, the first production release after almost two years
-of beta testing.
+Welcome to UPX !
 
-Please don't forget to read the new LICENSE - UPX is now distributed
+Please don't forget to read the file LICENSE - UPX is distributed
 under the GNU General Public License (GPL) with special exceptions
 allowing the distribution of all compressed executables, including
 commercial programs.
@@ -54,8 +52,8 @@ and run exactly as before, with no runtime or memory penalty for most
 of the supported formats.
 
 UPX supports a number of different executable formats, including
-Win95/98/ME/NT/2000 programs and DLLs, DOS programs, and Linux
-executables and kernels.
+Windows 95/98/ME/NT/2000/XP programs and DLLs, DOS programs,
+and Linux executables and kernels.
 
 UPX is free software distributed under the term of the GNU General
 Public License. Full source code is available.
@@ -64,7 +62,7 @@ UPX may be distributed and used freely, even with commercial applications.
 See the UPX License Agreement for details.
 
 UPX is rated number one in the well known Archive Comparison Test. Visit
-http://web.act.by.net/~act/act-exepack.html
+http://compression.ca/ .
 
 UPX aims to be Commercial Quality Freeware.
 
@@ -87,7 +85,7 @@ UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 Having said that, we think that UPX is quite stable now. Indeed we
 have compressed lots of files without any problems. Also, the
 current version has undergone several months of beta testing -
-actually it's almost 2 years since our first public beta.
+actually it's more than 4 years since our first public beta.
 
 This is the first production quality release, and we plan that future
 releases will be backward compatible with this version.
@@ -125,8 +123,8 @@ THE FUTURE
 COPYRIGHT
 =========
 
-Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-Copyright (C) 1996-2001 Laszlo Molnar
+Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2002 Laszlo Molnar
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

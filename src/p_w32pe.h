@@ -159,8 +159,12 @@ protected:
         {
             LE32    vaddr;
             LE32    size;
-        }       ddirs[16];
-    } ih, oh;
+        }
+        __attribute_packed;
+
+        struct ddirs_t ddirs[16];
+    }
+    __attribute_packed;
 
     struct pe_section_t
     {
@@ -171,7 +175,11 @@ protected:
         LE32    rawdataptr;
         char    _[12];
         LE32    flags;
-    } *isection;
+    }
+    __attribute_packed;
+
+    pe_header_t ih, oh;
+    pe_section_t *isection;
 
     static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);
     unsigned tryremove (unsigned, unsigned);
@@ -225,13 +233,13 @@ protected:
         FBIG_ENDIAN     = 0x8000
     };
 
-    // resource types
+    // predefined resource types
     enum {
         RT_CURSOR = 1, RT_BITMAP, RT_ICON, RT_MENU, RT_DIALOG, RT_STRING,
-        RT_FONTDIR, RT_FONT, RT_ACCELERATOR, RT_RCDATA, RT_MESSAGE_TABLE,
+        RT_FONTDIR, RT_FONT, RT_ACCELERATOR, RT_RCDATA, RT_MESSAGETABLE,
         RT_GROUP_CURSOR, RT_GROUP_ICON = 14, RT_VERSION = 16, RT_DLGINCLUDE,
         RT_PLUGPLAY = 19, RT_VXD, RT_ANICURSOR, RT_ANIICON, RT_HTML,
-        RT_LAST
+        RT_MANIFEST, RT_LAST
     };
 };
 

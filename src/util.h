@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -49,7 +49,8 @@ bool makebakname(char *ofilename, const char *ifilename, bool force=true);
 bool isafile(int fd);
 
 unsigned get_ratio(unsigned u_len, unsigned c_len);
-char *center_string(const char *name, size_t s);
+bool set_method_name(char *buf, size_t size, int method, int level);
+void center_string(char *buf, size_t size, const char *s);
 
 
 int find(const void *b, int blen, const void *what, int wlen);
@@ -57,6 +58,14 @@ int find_be16(const void *b, int blen, unsigned what);
 int find_be32(const void *b, int blen, unsigned what);
 int find_le16(const void *b, int blen, unsigned what);
 int find_le32(const void *b, int blen, unsigned what);
+
+#if (UPX_VERSION_HEX < 0x019000)
+upx_bytep pfind(const void *b, int blen, const void *what, int wlen);
+upx_bytep pfind_be16(const void *b, int blen, unsigned what);
+upx_bytep pfind_be32(const void *b, int blen, unsigned what);
+upx_bytep pfind_le16(const void *b, int blen, unsigned what);
+upx_bytep pfind_le32(const void *b, int blen, unsigned what);
+#endif
 
 
 inline ptrdiff_t ptr_diff(const void *p1, const void *p2)

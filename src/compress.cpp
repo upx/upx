@@ -1,9 +1,9 @@
-/* compress.cpp -- interface to the compression library
+/* compress.cpp --
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,17 +21,58 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
 #include "conf.h"
+#include "version.h"
 
-#if defined(WITH_UCL) && !defined(WITH_NRV)
+#if 0 && defined(WITH_NRV) && defined(__i386__)
+#  define NRV_USE_ASM
+#endif
+#if 0 && defined(WITH_UCL) && defined(__i386__)
+#  define UCL_USE_ASM
+#endif
+#if defined(WITH_NRV)
+#  include <nrv/nrv2b.h>
+#  include <nrv/nrv2d.h>
+//#  include <nrv/nrv2e.h>
+#  if !defined(NRV_VERSION) || (NRV_VERSION < 0x008000L)
+#    error
+#  endif
+   NRV_EXTERN_CDECL(int) nrv2b_99_compress_internal(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2d_99_compress_internal(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2e_99_compress_internal(const upx_byte *, ...);
+#elif defined(WITH_UCL)
 #  define nrv2b_99_compress_internal    ucl_nrv2b_99_compress
 #  define nrv2d_99_compress_internal    ucl_nrv2d_99_compress
-#  if 0 && defined(__i386__)
+#  define nrv2e_99_compress_internal    ucl_nrv2e_99_compress
+#endif
+#if 1 && defined(WITH_NRV) && defined(NRV_USE_ASM)
+#  if 1 &&  defined(NRV_USE_ASM)
+#    define nrv2b_decompress_safe_8       nrv2b_decompress_asm_safe_8
+#    define nrv2b_decompress_safe_le16    nrv2b_decompress_asm_safe_le16
+#    define nrv2b_decompress_safe_le32    nrv2b_decompress_asm_safe_le32
+#    define nrv2d_decompress_safe_8       nrv2d_decompress_asm_safe_8
+#    define nrv2d_decompress_safe_le16    nrv2d_decompress_asm_safe_le16
+#    define nrv2d_decompress_safe_le32    nrv2d_decompress_asm_safe_le32
+#    define nrv2e_decompress_safe_8       nrv2e_decompress_asm_safe_8
+#    define nrv2e_decompress_safe_le16    nrv2e_decompress_asm_safe_le16
+#    define nrv2e_decompress_safe_le32    nrv2e_decompress_asm_safe_le32
+#  endif
+   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_8(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_le16(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_le32(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_8(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_le16(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_le32(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2e_decompress_safe_8(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2e_decompress_safe_le16(const upx_byte *, ...);
+   NRV_EXTERN_CDECL(int) nrv2e_decompress_safe_le32(const upx_byte *, ...);
+#elif defined(WITH_UCL)
+#  if defined(UCL_USE_ASM)
 #    include <ucl/ucl_asm.h>
 #    define nrv2b_decompress_safe_8     ucl_nrv2b_decompress_asm_safe_8
 #    define nrv2b_decompress_safe_le16  ucl_nrv2b_decompress_asm_safe_le16
@@ -39,6 +80,9 @@
 #    define nrv2d_decompress_safe_8     ucl_nrv2d_decompress_asm_safe_8
 #    define nrv2d_decompress_safe_le16  ucl_nrv2d_decompress_asm_safe_le16
 #    define nrv2d_decompress_safe_le32  ucl_nrv2d_decompress_asm_safe_le32
+#    define nrv2e_decompress_safe_8     ucl_nrv2e_decompress_asm_safe_8
+#    define nrv2e_decompress_safe_le16  ucl_nrv2e_decompress_asm_safe_le16
+#    define nrv2e_decompress_safe_le32  ucl_nrv2e_decompress_asm_safe_le32
 #  else
 #    define nrv2b_decompress_safe_8     ucl_nrv2b_decompress_safe_8
 #    define nrv2b_decompress_safe_le16  ucl_nrv2b_decompress_safe_le16
@@ -46,36 +90,12 @@
 #    define nrv2d_decompress_safe_8     ucl_nrv2d_decompress_safe_8
 #    define nrv2d_decompress_safe_le16  ucl_nrv2d_decompress_safe_le16
 #    define nrv2d_decompress_safe_le32  ucl_nrv2d_decompress_safe_le32
+#    define nrv2e_decompress_safe_8     ucl_nrv2e_decompress_safe_8
+#    define nrv2e_decompress_safe_le16  ucl_nrv2e_decompress_safe_le16
+#    define nrv2e_decompress_safe_le32  ucl_nrv2e_decompress_safe_le32
 #  endif
-#endif
-
-#if defined(WITH_NRV)
-#  include <nrv/nrv2b.h>
-#  include <nrv/nrv2d.h>
-#  if !defined(NRV_VERSION) || (NRV_VERSION < 0x007300L)
-#    error
-#  endif
-#  if 1 && defined(__i386__)
-#    define nrv2b_decompress_safe_8     nrv2b_decompress_asm_safe_8
-#    define nrv2b_decompress_safe_le16  nrv2b_decompress_asm_safe_le16
-#    define nrv2d_decompress_safe_8     nrv2d_decompress_asm_safe_8
-#    define nrv2d_decompress_safe_le16  nrv2d_decompress_asm_safe_le16
-#    if (NRV_VERSION < 0x008000L)
-#    define nrv2b_decompress_safe_le32  nrv2b_decompress_asm_safe
-#    define nrv2d_decompress_safe_le32  nrv2d_decompress_asm_safe
-#    else
-#    define nrv2b_decompress_safe_le32  nrv2b_decompress_asm_safe_le32
-#    define nrv2d_decompress_safe_le32  nrv2d_decompress_asm_safe_le32
-#    endif
-#  endif
-   NRV_EXTERN_CDECL(int) nrv2b_99_compress_internal(...);
-   NRV_EXTERN_CDECL(int) nrv2d_99_compress_internal(...);
-   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_8(...);
-   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_le16(...);
-   NRV_EXTERN_CDECL(int) nrv2b_decompress_safe_le32(...);
-   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_8(...);
-   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_le16(...);
-   NRV_EXTERN_CDECL(int) nrv2d_decompress_safe_le32(...);
+#else
+#  error
 #endif
 
 #if 0 && defined(WITH_ZLIB) && defined(M_ZLIB)
@@ -87,14 +107,11 @@
 //
 **************************************************************************/
 
-unsigned upx_adler32(unsigned adler, const void *buf, unsigned len)
+unsigned upx_adler32(const void *buf, unsigned len, unsigned adler)
 {
-    if (buf == NULL)
-    {
-        assert(adler == 0);
-        assert(len == 0);
-        return 1;
-    }
+    if (len == 0)
+        return adler;
+    assert(buf != NULL);
 #if defined(WITH_NRV)
     return nrv_adler32(adler, (const nrv_byte *)buf, len);
 #elif defined(WITH_UCL)
@@ -103,14 +120,28 @@ unsigned upx_adler32(unsigned adler, const void *buf, unsigned len)
 }
 
 
-unsigned upx_adler32(const void *buf, unsigned len)
+#if (UPX_VERSION_HEX >= 0x019000)
+unsigned upx_adler32(unsigned adler, const void *buf, unsigned len)
 {
-    //unsigned adler = upx_adler32(0, NULL, 0);
-    unsigned adler = 1;
-    assert(buf != NULL);
-    adler = upx_adler32(adler, buf, len);
-    return adler;
+    return upx_adler32(buf, len, adler);
 }
+#endif /* UPX_VERSION_HEX */
+
+
+
+#if 0 // NOT USED
+unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
+{
+    if (len == 0)
+        return crc;
+    assert(buf != NULL);
+#if defined(WITH_NRV)
+    return nrv_crc32(crc, (const nrv_byte *)buf, len);
+#elif defined(WITH_UCL)
+    return ucl_crc32(crc, (const ucl_byte *)buf, len);
+#endif
+}
+#endif
 
 
 /*************************************************************************
@@ -136,14 +167,14 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
         result = result_buffer;
 
     // assume no info available - fill in worst case results
-    //result[0] = 1;            // min_offset_found - NOT USED
+    //result[0] = 1;              // min_offset_found - NOT USED
     result[1] = src_len - 1;    // max_offset_found
-    //result[2] = 2;            // min_match_found - NOT USED
+    //result[2] = 2;              // min_match_found - NOT USED
     result[3] = src_len - 1;    // max_match_found
-    //result[4] = 1;            // min_run_found - NOT USED
+    //result[4] = 1;              // min_run_found - NOT USED
     result[5] = src_len;        // max_run_found
     result[6] = 1;              // first_offset_found
-    //result[7] = 999999;       // same_match_offsets_found - NOT USED
+    //result[7] = 999999;         // same_match_offsets_found - NOT USED
 
 #if 0 && defined(WITH_ZLIB) && defined(M_ZLIB)
     if (method == M_ZLIB)
@@ -162,18 +193,22 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
     // prepare bit-buffer settings
     conf.bb_endian = 0;
     conf.bb_size = 0;
-    if (method == M_NRV2B_LE32 || method == M_NRV2D_LE32)
-        conf.bb_size = 32;
-    else if (method == M_NRV2B_8 || method == M_NRV2D_8)
-        conf.bb_size = 8;
-    else if (method == M_NRV2B_LE16 || method == M_NRV2D_LE16)
-        conf.bb_size = 16;
+    if (method >= M_NRV2B_LE32 && method <= M_NRV2E_LE16)
+    {
+        int n = (method - M_NRV2B_LE32) % 3;
+        if (n == 0)
+            conf.bb_size = 32;
+        else if (n == 1)
+            conf.bb_size = 8;
+        else
+            conf.bb_size = 16;
+    }
     else
         throwInternalError("unknown compression method");
 
 #if 1 && defined(WITH_NRV)
     if (level == 1 && conf.bb_size == 32 &&
-        conf.max_offset == UPX_UINT_MAX && conf.max_match == UPX_UINT_MAX)
+        conf.max_offset >= src_len && conf.max_match >= src_len)
     {
         if (method == M_NRV2B_LE32)
         {
@@ -191,6 +226,16 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
 #endif
             r = nrv2d_1_16_compress(src, src_len, dst, dst_len, wrkmem);
         }
+#if 0
+        else if (method == M_NRV2E_LE32)
+        {
+            upx_byte wrkmem[NRV2E_1_16_MEM_COMPRESS];
+#if defined(__UPX_CHECKER)
+            memset(wrkmem,0,NRV2E_1_16_MEM_COMPRESS);
+#endif
+            r = nrv2e_1_16_compress(src, src_len, dst, dst_len, wrkmem);
+        }
+#endif
         else
             throwInternalError("unknown compression method");
         return r;
@@ -203,12 +248,12 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
     else if (level == 4 && conf.max_offset == UPX_UINT_MAX)
         conf.max_offset = 32*1024-1;
 #if defined(WITH_NRV)
-    else if (level <= 7 && conf.max_offset == UPX_UINT_MAX)
-        conf.max_offset = 1024*1024-1;
+    else if (level <= 6 && conf.max_offset == UPX_UINT_MAX)
+        conf.max_offset = 1*1024*1024-1;
     else if (level <= 8 && conf.max_offset == UPX_UINT_MAX)
-        conf.max_offset = 2048*1024-1;
+        conf.max_offset = 2*1024*1024-1;
     else if (level <= 10 && conf.max_offset == UPX_UINT_MAX)
-        conf.max_offset = 4096*1024-1;
+        conf.max_offset = 4*1024*1024-1;
 #endif
 
     if M_IS_NRV2B(method)
@@ -217,6 +262,11 @@ int upx_compress           ( const upx_byte *src, upx_uint  src_len,
     else if M_IS_NRV2D(method)
         r = nrv2d_99_compress_internal(src, src_len, dst, dst_len,
                                        cb, level, &conf, result);
+#if 0
+    else if M_IS_NRV2E(method)
+        r = nrv2e_99_compress_internal(src, src_len, dst, dst_len,
+                                       cb, level, &conf, result);
+#endif
     else
         throwInternalError("unknown compression method");
 
@@ -248,20 +298,42 @@ int upx_decompress         ( const upx_byte *src, upx_uint  src_len,
     }
 #endif
 
-    if (method == M_NRV2B_LE32)
-        r = nrv2b_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
-    else if (method == M_NRV2B_8)
+    switch (method)
+    {
+    case M_NRV2B_8:
         r = nrv2b_decompress_safe_8(src,src_len,dst,dst_len,NULL);
-    else if (method == M_NRV2B_LE16)
+        break;
+    case M_NRV2B_LE16:
         r = nrv2b_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
-    else if (method == M_NRV2D_LE32)
-        r = nrv2d_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
-    else if (method == M_NRV2D_8)
+        break;
+    case M_NRV2B_LE32:
+        r = nrv2b_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        break;
+    case M_NRV2D_8:
         r = nrv2d_decompress_safe_8(src,src_len,dst,dst_len,NULL);
-    else if (method == M_NRV2D_LE16)
+        break;
+    case M_NRV2D_LE16:
         r = nrv2d_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
-    else
+        break;
+    case M_NRV2D_LE32:
+        r = nrv2d_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        break;
+#if 0
+    case M_NRV2E_8:
+        r = nrv2e_decompress_safe_8(src,src_len,dst,dst_len,NULL);
+        break;
+    case M_NRV2E_LE16:
+        r = nrv2e_decompress_safe_le16(src,src_len,dst,dst_len,NULL);
+        break;
+    case M_NRV2E_LE32:
+        r = nrv2e_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
+        break;
+#endif
+    default:
         throwInternalError("unknown decompression method");
+        break;
+    }
+
     return r;
 }
 
@@ -270,28 +342,54 @@ int upx_decompress         ( const upx_byte *src, upx_uint  src_len,
 //
 **************************************************************************/
 
+#if (UPX_VERSION_HEX >= 0x019000)
+
 int upx_test_overlap       ( const upx_byte *buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uint *dst_len,
                                    int method )
 {
     int r = UPX_E_ERROR;
 
-    if (method == M_NRV2B_LE32)
-        r = ucl_nrv2b_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
-    else if (method == M_NRV2B_8)
+    switch (method)
+    {
+    case M_NRV2B_8:
         r = ucl_nrv2b_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
-    else if (method == M_NRV2B_LE16)
+        break;
+    case M_NRV2B_LE16:
         r = ucl_nrv2b_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
-    else if (method == M_NRV2D_LE32)
-        r = ucl_nrv2d_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
-    else if (method == M_NRV2D_8)
+        break;
+    case M_NRV2B_LE32:
+        r = ucl_nrv2b_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        break;
+    case M_NRV2D_8:
         r = ucl_nrv2d_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
-    else if (method == M_NRV2D_LE16)
+        break;
+    case M_NRV2D_LE16:
         r = ucl_nrv2d_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
-    else
+        break;
+    case M_NRV2D_LE32:
+        r = ucl_nrv2d_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        break;
+#if 0
+    case M_NRV2E_8:
+        r = ucl_nrv2e_test_overlap_8(buf,src_off,src_len,dst_len,NULL);
+        break;
+    case M_NRV2E_LE16:
+        r = ucl_nrv2e_test_overlap_le16(buf,src_off,src_len,dst_len,NULL);
+        break;
+    case M_NRV2E_LE32:
+        r = ucl_nrv2e_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
+        break;
+#endif
+    default:
         throwInternalError("unknown decompression method");
+        break;
+    }
+
     return r;
 }
+
+#endif /* UPX_VERSION_HEX */
 
 
 /*

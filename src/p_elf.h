@@ -51,7 +51,8 @@ struct Elf_LE32_Ehdr
     LE16 e_shentsize;           /* Section header table entry size */
     LE16 e_shnum;               /* Section header table entry count */
     LE16 e_shstrndx;            /* Section header string table index */
-};
+}
+__attribute_packed;
 
 
 // Program segment header.
@@ -77,7 +78,8 @@ struct Elf_LE32_Phdr
     enum { PF_X = (1 << 0) };   /* Segment is executable */
     enum { PF_W = (1 << 1) };   /* Segment is writable */
     enum { PF_R = (1 << 2) };   /* Segment is readable */
-};
+}
+__attribute_packed;
 
 
 struct Elf_LE32_Dyn
@@ -91,7 +93,9 @@ struct Elf_LE32_Dyn
         DT_STRTAB   =  5,   /* String table */
         DT_STRSZ    = 10    /* Sizeof string table */
     };
-};
+}
+__attribute_packed;
+
 #endif /* already included */
 
 

@@ -49,7 +49,7 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                     Ultimate Packer for eXecutables\n"
-                "            Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001\n"
+                "         Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002\n"
                 "UPX %-12s Markus F.X.J. Oberhumer & Laszlo Molnar %20s\n\n",
 #if defined(__MFX_DOS)
                 V("d"),
@@ -74,7 +74,7 @@ void show_usage(void)
 {
     FILE *f = con_term;
 
-    con_fprintf(f,"Usage: %s [-123456788dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
+    con_fprintf(f,"Usage: %s [-123456789dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
 #if defined(__DJGPP__) || defined(__EMX__)
                 "[@]");
 #else
@@ -295,7 +295,7 @@ void show_license(void)
 
     show_head();
 
-con_fprintf(f,
+    con_fprintf(f,
         "   This program may be used freely, and you are welcome to\n"
         "   redistribute it under certain conditions.\n"
         "\n"
@@ -310,16 +310,15 @@ con_fprintf(f,
         "\n"
     );
     int fg = con_fg(f,FG_CYAN);
-con_fprintf(f,
-        "        http://upx.tsx.org\n"
-        "        http://www.oberhumer.com/upx/\n"
-        "        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html\n"
+    con_fprintf(f,
+        "        http://upx.sourceforge.net\n"
+        "        http://www.oberhumer.com/opensource/upx/\n"
     );
     (void)con_fg(f,FG_ORANGE);
-con_fprintf(f,
+    con_fprintf(f,
         "\n"
-        "   Markus F.X.J. Oberhumer                   Laszlo Molnar\n"
-        "   markus@oberhumer.com                      ml1050@cdata.tvnet.hu\n"
+        "   Markus F.X.J. Oberhumer              Laszlo Molnar\n"
+        "   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>\n"
     );
     fg = con_fg(f,fg);
 }
@@ -334,16 +333,20 @@ void show_version(int x)
     FILE *f = stdout;
     UNUSED(x);
 
-    fprintf(f,"upx %s\n",UPX_VERSION_STRING);
+#if 0 && defined(__GNUC__)
+    fprintf(f,"upx %s (gcc 0x%lx)\n", UPX_VERSION_STRING, __GNUC_VERSION_HEX__);
+#else
+    fprintf(f,"upx %s\n", UPX_VERSION_STRING);
+#endif
 #if defined(WITH_NRV)
     fprintf(f,"NRV data compression library %s\n", nrv_version_string());
 #endif
 #if defined(WITH_UCL)
     fprintf(f,"UCL data compression library %s\n", ucl_version_string());
 #endif
-    fprintf(f,"Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(f,"Copyright (C) 1996-2001 Laszlo Molnar\n");
-    fprintf(f,"Copyright (C) 2000-2001 John F. Reiser\n");
+    fprintf(f,"Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(f,"Copyright (C) 1996-2002 Laszlo Molnar\n");
+    fprintf(f,"Copyright (C) 2000-2002 John F. Reiser\n");
     fprintf(f,"UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
 }
 
