@@ -344,7 +344,8 @@ void *upx_main(
     xi.buf  -= 2*sizeof(size_t) + sz_pckhdrs;
     xi.size = ((Elf32_Phdr const *)(1 + my_ehdr))->p_filesz - lsize;
 
-    av[0].a_type = AT_PHDR;   // av[0].a_un.a_val  is set by do_xmap
+    // av[0].a_un.a_val  is set again by do_xmap if PT_PHDR is present
+    av[0].a_type = AT_PHDR;   av[0].a_un.a_ptr = 1+(Elf32_Ehdr *)phdr->p_vaddr;
     av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
     av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;
     av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGE_SIZE;
