@@ -33,11 +33,13 @@ STUBS = \
 	l_w32pe.h \
 	l_lx_exec86.h fold_exec86.h \
 	l_lx_elf86.h  fold_elf86.h \
-    l_lx_sh86.h   fold_sh86.h \
-	l_ext2.h \
+	l_lx_sh86.h   fold_sh86.h \
 	l_vmlinz.h
 
 # experimental:
+ifneq ($(strip $(wildcard l_ext2.asm)),)
+STUBS += l_ext2.h
+endif
 ifneq ($(strip $(wildcard l_tos2.s)),)
 STUBS += l_t_x2b.h l_t_x2bs.h l_t_x2d.h l_t_x2ds.h
 endif
@@ -75,13 +77,13 @@ APP      = perl -w $(srcdir)/scripts/app.pl
 BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
 BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
-SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
+##SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
 STRIPELF = ./util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
-###CC_LINUX_CFLAGS += -Werror
+CC_LINUX_CFLAGS += -Werror
 CC_LINUX_CFLAGS += -funsigned-char
 ###CC_LINUX_CFLAGS += -fwritable-strings -save-temps
 CC_LINUX = gcc272 -O2 -m386                  -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
