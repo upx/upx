@@ -1,0 +1,69 @@
+
+# /***********************************************************************
+# // defaults for gcc
+# ************************************************************************/
+
+CC = gcc
+CXX = g++
+CFLAGS_OUTPUT = -o $@
+
+
+CFLAGS_W =
+CFLAGS_M =
+CFLAGS_O =
+CXXFLAGS_W = $(CFLAGS_W)
+CXXFLAGS_M = $(CFLAGS_M)
+CXXFLAGS_O = $(CFLAGS_O)
+
+CFLAGS    = $(CFLAGS_W) $(CFLAGS_M) $(CFLAGS_O)
+CXXFLAGS  = $(CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O)
+
+
+#
+# cflags
+#
+
+##CFLAGS_WERROR = -Werror
+CFLAGS_WERROR =
+CFLAGS_W  = $(CFLAGS_WERROR)
+CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Winline -Wmissing-prototypes -Wpointer-arith -Wshadow -Wwrite-strings
+##CFLAGS_M += -fno-builtin
+##CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+ifeq ($(DEBUG),1)
+CFLAGS_O  = -g -O0
+else
+##CFLAGS_O  = -Os -fstrict-aliasing
+##CFLAGS_O  = -O2 -fstrict-aliasing
+CFLAGS_O  = -O2 -fno-strict-aliasing
+endif
+
+CXXFLAGS_W += -Wsynth
+CXXFLAGS_O += -fconserve-space
+
+##CXXFLAGS_1 += -fasynchronous-exceptions
+CXXFLAGS_2 += -fno-exceptions -fno-rtti
+
+
+#
+# cflags for gcc 3.2
+#
+
+##CXXFLAGS_W += -Wdisabled-optimization -Wpacked
+
+
+#
+# ldflags
+#
+
+ifeq ($(DEBUG),1)
+LDFLAGS += -g
+else
+LDFLAGS += -s
+endif
+LDFLAGS += -Wl,-Map,$T.map
+
+# zlib 1.1.4
+LDLIBS += -lz
+
+
+# vi:nowrap

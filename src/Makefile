@@ -8,7 +8,7 @@
 #   `make target=mingw32'           # win32 - mingw32
 #   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
 #   `make target=bcc'               # win32 - Borland C++ 5.5.1
-#   `make target=dmc'               # win32 - Digital Mars C++ 8.30
+#   `make target=dmc'               # win32 - Digital Mars C++ 8.32
 #   `make target=vc6'               # win32 - Visual C++ 6.0
 #   `make target=wcc'               # win32 - Watcom C++ 11.0c
 #   `make target=cross-m68k-linux'  # m68k-linux cross compiler
@@ -95,87 +95,73 @@ RESOURCES =
 
 
 # /***********************************************************************
-# // compiler settings
+# // compiler defaults
+# //   CXX_1: use exceptions & RTTI
+# //   CXX_2: no exceptions or RTTI
 # ************************************************************************/
 
-###
-### default compiler (gcc under unix)
-###
+CC_COMPILE    = $(CC) $(CCARCH) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -c $<
+CXX_COMPILE_1 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_1) $(CXXFLAGS_OUTPUT) -c $<
+CXX_COMPILE_2 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_2) $(CXXFLAGS_OUTPUT) -c $<
+CXX_COMPILE   = $(CXX_COMPILE_1)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+STUBEDIT_EXE  =
+STUBIFY_EXE   =
+CHMOD_EXE     =
 
+# set defaults
 o = .o
 a = .a
 e =
-
-CC = gcc
 DEFS =
 INCLUDES =
-##INCLUDES = -I. -I$(srcdir)
-CFLAGS_OUTPUT = -o $@
-
-LINK_EXE = $(CXXLD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-STUBEDIT_EXE =
-STUBIFY_EXE =
-CHMOD_EXE =
-
-# C++ defaults are set later
-CXX =
-CXXLD =
-CXXFLAGS_OUTPUT =
-
-
-###
-### gcc defaults
-###
-
-##CFLAGS_WERROR = -Werror
-CFLAGS_WERROR =
-CFLAGS_W  = $(CFLAGS_WERROR)
-CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Wmissing-prototypes -Wpointer-arith -Wshadow -Wwrite-strings
-CFLAGS_M  =
-##CFLAGS_M += -fno-builtin
-##CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
-##CFLAGS_O  = -Os -fstrict-aliasing
-##CFLAGS_O  = -O2 -fstrict-aliasing
-CFLAGS_O  = -O2 -fno-strict-aliasing
-
-CFLAGS    = $(CFLAGS_W) $(CFLAGS_M) $(CFLAGS_O)
-CXXFLAGS  = $(CFLAGS) -Wsynth -fconserve-space
-CXXFLAGS1 = $(CXXFLAGS)
-##CXXFLAGS1 += -fasynchronous-exceptions
-CXXFLAGS2 = $(CXXFLAGS) -fno-exceptions -fno-rtti
-
-ifeq ($(DEBUG),1)
-DEFS += -DDEBUG
-## DEFS += -DTESTING
-endif
-
-ifeq ($(DEBUG),1)
-LDFLAGS = -g
-else
-LDFLAGS = -s
-endif
-LDFLAGS += -Wl,-Map,$T.map
-LDLIBS = -lz
 LIBDIRS =
 DOS_LDLIBS =
 DOS_LIBDIRS =
 
+# set CC defaults
+CC =
+CCARCH =
+CCFLAGS =
+CFLAGS_OUTPUT =
 
-###
-### compression library
-###
+# set CXX defaults
+CXX = $(CC)
+CXXARCH = $(CCARCH)
+CXXFLAGS = $(CFLAGS)
+CXXFLAGS_1 = $(CXXFLAGS)
+CXXFLAGS_2 = $(CXXFLAGS)
+CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
+
+# set CXXLD defaults
+CXXLD = $(CXX)
+CXXLDARCH = $(CXXARCH)
+LDFLAGS =
+LDLIBS =
+
+
+# update defaults
+ifeq ($(DEBUG),1)
+  DEFS += -DDEBUG
+##  DEFS += -DTESTING
+endif
+
+
+# /***********************************************************************
+# // compression library
+# ************************************************************************/
 
 UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
 NRVDIR:=$(strip $(subst \,/,$(NRVDIR)))
 u = ucl
 U = UCL
 upx_exe_tail =
-include $(srcdir)/Makefile.inc
+include $(srcdir)/Makedefs.inc
 ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   u = nrv
   U = NRV
   upx_exe_tail = _$(u)
-  include $(srcdir)/Makefile.inc
+  include $(srcdir)/Makedefs.inc
 endif
 upx_exe = upx$(upx_exe_tail)$(e)
 
@@ -188,38 +174,33 @@ LDLIBDIRS := $(addprefix -L,$(LIBDIRS))
 LDFLAGS += $(LDLIBDIRS)
 
 
+# /***********************************************************************
+# // compiler settings
+# ************************************************************************/
+
 ###
 ### Linux
 ###
 
 ifeq ($(target),linux)
+include $(srcdir)/Makedefs.gcc
 override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ifeq ($(arch),i386)
-  CC += -march=i386 -mcpu=i686
-  ##CFLAGS_M += -mno-schedule-prologue
+  CCARCH += -march=i386 -mcpu=i686
 endif
 ##CFLAGS_WERROR = -Werror
 
-ifeq (1,2) 	# checkergcc
-  CC = checkergcc
-  CXX = checkerg++
-else
-ifeq ($(DEBUG),1)
-  ##CFLAGS += -O0 -gstabs+3
-  ##CFLAGS += -O0 -gdwarf-2
-  CFLAGS += -O0 -g
-else
+ifeq ($(DEBUG),0)
   ##LDFLAGS += -static
   STUBEDIT_EXE = objcopy -S -R .comment -R .note $@
   ifeq ($(arch),i386)
     STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
-    CHMOD_EXE = chmod 755 $@
   endif
 endif
-endif
+CHMOD_EXE = chmod 755 $@
 
 endif	# linux
 
@@ -229,7 +210,9 @@ endif	# linux
 ###
 
 ifeq ($(target),cross-m68k-linux)
+include $(srcdir)/Makedefs.gcc
 CC = m68k-linux-gcc
+CC = m68k-linux-g++
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 ##LDLIBS += -lmcheck
 endif	# cross-m68k-linux
@@ -240,30 +223,9 @@ endif	# cross-m68k-linux
 ###
 
 ifeq ($(target),sparc)
-CC = gcc
+include $(srcdir)/Makedefs.gcc
 DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
 endif	# sparc
-
-
-ifeq ($(target),XXX-sparc)
-DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
-INCLUDES += -I/home/ethmola/local/include
-
-ifeq (1,2) # native compiler
-  CFLAGS = -O0 -g
-  CXXFLAGS1 =
-  CXXFLAGS2 =
-  DEFS += -DUSE_STDNAMESPACE
-else # gcc
-  CFLAGS += -O0 -gstabs+
-endif
-
-ifeq (1,2) # purify
-  DEFS += -D__PURIFY__
-  CXXLD := purify $(CXXLD)
-endif
-
-endif	# XXX-sparc
 
 
 ###
@@ -271,21 +233,27 @@ endif	# XXX-sparc
 ###
 
 ifeq ($(target),cross-mint)
+include $(srcdir)/Makedefs.gcc
 e = .ttp
 CC = m68k-atari-mint-gcc
-CC += -m68000
+CXX = m68k-atari-mint-g++
+CCARCH += -m68000
 endif
 
 ifeq ($(target),cross-mint-m68040)
+include $(srcdir)/Makedefs.gcc
 e = .ttp
 CC = m68k-atari-mint-gcc
-CC += -m68040
+CXX = m68k-atari-mint-g++
+CCARCH += -m68040
 endif
 
 ifeq ($(target),cross-mint-m68020-60)
+include $(srcdir)/Makedefs.gcc
 e = .ttp
 CC = m68k-atari-mint-gcc
-CC += -m68020-60 -m68881
+CXX = m68k-atari-mint-g++
+CCARCH += -m68020-60 -m68881
 endif
 
 
@@ -294,9 +262,9 @@ endif
 ###
 
 ifeq ($(target),djgpp2)
+include $(srcdir)/Makedefs.gcc
 e = .exe
-CC += -march=i386 -mcpu=i686
-##CFLAGS_M += -mno-schedule-prologue
+CCARCH += -march=i386 -mcpu=i686
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
 ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.ex[eE])),)
@@ -312,36 +280,31 @@ endif	# djgpp2
 ###
 
 ifeq ($(target),cygwin)
+include $(srcdir)/Makedefs.gcc
 e = .exe
-CC += -march=i386 -mcpu=i686
-CXXLD = g++
-##CFLAGS_M += -mno-schedule-prologue
+CCARCH += -march=i386 -mcpu=i686
 endif
 
 ifeq ($(target),mingw32)
+include $(srcdir)/Makedefs.gcc
 e = .exe
-CC = gcc -mno-cygwin
-CC += -march=i386 -mcpu=i686
-CXXLD = g++ -mno-cygwin
-##CFLAGS_M += -mno-schedule-prologue
+CCARCH += -mno-cygwin -march=i386 -mcpu=i686
 endif
 
 # mingw32 as included in cygwin
 ifeq ($(target),no-cygwin)
+include $(srcdir)/Makedefs.gcc
 e = .exe
-CC = gcc -mno-cygwin
-CC += -march=i386 -mcpu=i686
-CXXLD = g++ -mno-cygwin
-##CFLAGS_M += -mno-schedule-prologue
+CCARCH += -mno-cygwin -march=i386 -mcpu=i686
 endif
 
 # mingw32 cross compiler
 ifeq ($(target),cross-mingw32)
+include $(srcdir)/Makedefs.gcc
 e = .exe
 CC = i586-mingw32msvc-gcc
-CC += -march=i386 -mcpu=i686
-CXXLD = i586-mingw32msvc-g++
-##CFLAGS_M += -mno-schedule-prologue
+CXX = i586-mingw32msvc-g++
+CCARCH += -march=i386 -mcpu=i686
 endif
 
 
@@ -355,8 +318,7 @@ a = .lib
 e = .exe
 CC = bcc32 -q
 CFLAGS = -w -w-aus -g1
-CXXFLAGS1 = $(CFLAGS)
-CXXFLAGS2 = $(CFLAGS) -x- -xd- -RT-
+CXXFLAGS_2 = $(CXXFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
 LDLIBS = $(DOS_LDLIBS) zlib114.lib
@@ -372,13 +334,13 @@ else
   CFLAGS += -O2 -d
 endif
 
-LINK_EXE = $(CXXLD) $(LDFLAGS) -e$@ $^ $(LDLIBS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -e$@ $^ $(LDLIBS)
 
 endif	# bcc
 
 
 ###
-### Digital Mars C++ 8.30
+### Digital Mars C++ 8.32
 ###
 
 ifeq ($(target),dmc)
@@ -387,11 +349,11 @@ a = .lib
 e = .exe
 CC = dmc -mn
 CFLAGS = -w- -wx
-CXXFLAGS1 = $(CFLAGS) -Aa -Ab -Ae -Ar
-CXXFLAGS2 = $(CFLAGS) -Aa -Ab
+CXXFLAGS = $(CFLAGS) -Aa -Ab
+CXXFLAGS_1 = $(CXXFLAGS) -Ae -Ar
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
-LDLIBS = $(DOS_LDLIBS)
+LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -404,7 +366,7 @@ else
   CFLAGS += -o
 endif
 
-LINK_EXE = $(CXXLD) $(LDFLAGS) -o$@ $^ $(LDLIBS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -o$@ $^ $(LDLIBS)
 
 endif	# dmc
 
@@ -419,8 +381,7 @@ a = .lib
 e = .exe
 CC = cl -nologo
 CFLAGS = -W4 -WX
-CXXFLAGS1 = $(CFLAGS) -EHac -GR
-CXXFLAGS2 = $(CFLAGS)
+CXXFLAGS_1 = $(CXXFLAGS) -EHac -GR
 LDFLAGS =
 LINK_LDFLAGS = /link /map:$T.map
 
@@ -432,7 +393,7 @@ export LIB
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(u)_s.lib setargv.obj
+  LDLIBS = $(u)_s.lib zlib114.lib setargv.obj
 else
   # link against msvcrt.dll
   CC += -MD
@@ -448,7 +409,7 @@ endif
 RESOURCES = upx.res
 
 ##LINK_LDFLAGS += /verbose
-LINK_EXE = $(CXXLD) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
 
 endif	# vc6
 
@@ -463,11 +424,10 @@ a = .lib
 e = .exe
 CC = wcl386 -zq -bt=nt -mf -5r
 CFLAGS = -zc -w5 -we
-CXXFLAGS1 = $(CFLAGS) -xs -xr
-CXXFLAGS2 = $(CFLAGS)
+CXXFLAGS_1 = $(CXXFLAGS) -xs -xr
 CFLAGS_OUTPUT = -fo=$@
 LDFLAGS = -k0x100000 -fm
-LDLIBS = $(DOS_LDLIBS)
+LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 INCLUDES:=$(strip $(subst /,\\,$(INCLUDES)))
 ifeq (1,2)
@@ -488,7 +448,7 @@ else
   CFLAGS += -olr
 endif
 
-LINK_EXE = $(CXXLD) $(LDFLAGS) -fe=$@ $^ $(LDLIBS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -fe=$@ $^ $(LDLIBS)
 
 endif	# wcc
 
@@ -499,7 +459,7 @@ endif	# wcc
 
 ifeq (1,2)
   # compile in extra valgrind support
-  CFLAGS += -DWITH_VALGRIND
+  DEFS += -DWITH_VALGRIND
 endif
 
 ifeq (1,2)
@@ -507,12 +467,12 @@ ifeq (1,2)
 endif
 
 ifeq (1,2)
-  CFLAGS += -DWITH_DMALLOC
+  DEFS += -DWITH_DMALLOC
   LDLIBS += -ldmalloc
 endif
 
 ifeq (1,2)
-  CFLAGS += -DWITH_GC -DLINUX_THREADS -D_REENTRANT
+  DEFS += -DWITH_GC -DLINUX_THREADS -D_REENTRANT
   LDLIBS += -lgc -lpthread
   # only needed when using -static:
   ##LDFLAGS += -Wl,-defsym,_DYNAMIC=0
@@ -523,38 +483,26 @@ endif
 # // finish settings
 # ************************************************************************/
 
-# C++ defaults
-ifeq ($(strip $(CXX)),)
-  ifeq ($(strip $(CC)),gcc)
-    CXX = g++
-  else
-    CXX = $(CC)
-  endif
-endif
-ifeq ($(strip $(CXXLD)),)
-  CXXLD = $(CXX)
-endif
-ifeq ($(strip $(CXXFLAGS_OUTPUT)),)
-  CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
-endif
-
-
 # extra flags
-DEFS      += $(EXTRA_DEFS)
-CFLAGS    += $(EXTRA_CFLAGS)
-CFLAGS_W  += $(EXTRA_CFLAGS_W)
-CFLAGS_M  += $(EXTRA_CFLAGS_M)
-CFLAGS_O  += $(EXTRA_CFLAGS_O)
-CXXFLAGS1 += $(EXTRA_CXXFLAGS1)
-CXXFLAGS2 += $(EXTRA_CXXFLAGS2)
-LDFLAGS   += $(EXTRA_LDFLAGS)
-LDLIBS    += $(EXTRA_LDLIBS)
+DEFS       += $(EXTRA_DEFS)
+CFLAGS     += $(EXTRA_CFLAGS)
+CFLAGS_W   += $(EXTRA_CFLAGS_W)
+CFLAGS_M   += $(EXTRA_CFLAGS_M)
+CFLAGS_O   += $(EXTRA_CFLAGS_O)
+CXXFLAGS_W += $(EXTRA_CXXFLAGS_W)
+CXXFLAGS_M += $(EXTRA_CXXFLAGS_M)
+CXXFLAGS_O += $(EXTRA_CXXFLAGS_O)
+CXXFLAGS   += $(EXTRA_CXXFLAGS)
+CXXFLAGS_1 += $(EXTRA_CXXFLAGS_1)
+CXXFLAGS_2 += $(EXTRA_CXXFLAGS_2)
+LDFLAGS    += $(EXTRA_LDFLAGS)
+LDLIBS     += $(EXTRA_LDLIBS)
 
 
 # To better deal with asynchronous exceptions we compile all source
 # files with exception handling and RTTI enabled - the size overhead
 # is negligible.
-CXXFLAGS2 = $(CXXFLAGS1)
+CXXFLAGS_2 = $(CXXFLAGS_1)
 
 
 # /***********************************************************************
@@ -566,7 +514,7 @@ all: $(upx_exe)
 .PHONY: all mostlyclean clean distclean maintainer-clean untabify tags
 
 $(upx_exe): $(OBJECTS) $(LIBS) $(RESOURCES)
-	$(LINK_EXE)
+	$(CXX_LINK_EXE)
 	$(STUBEDIT_EXE)
 	$(STUBIFY_EXE)
 	$(CHMOD_EXE)
@@ -602,14 +550,14 @@ ID:
 # ************************************************************************/
 
 %$o : %.c
-	$(CC) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -c $<
+	$(CC_COMPILE)
 
 %$o : %.cpp
-	$(CXX) $(DEFS) $(INCLUDES) $(CXXFLAGS1) $(CXXFLAGS_OUTPUT) -c $<
+	$(CXX_COMPILE_1)
 
 ifneq ($(strip $(OBJECTS2)),)
 $(OBJECTS2): %$o : %.cpp
-	$(CXX) $(DEFS) $(INCLUDES) $(CXXFLAGS2) $(CXXFLAGS_OUTPUT) -c $<
+	$(CXX_COMPILE_2)
 endif
 
 %.res : %.rc
@@ -620,6 +568,6 @@ endif
 # // dependencies
 # ************************************************************************/
 
-include $(srcdir)/Makefile.dep
+include $(srcdir)/Makedefs.dep
 
 # vi:nowrap
