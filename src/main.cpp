@@ -692,6 +692,9 @@ static int do_option(int optc, const char *arg)
         if (mfx_optarg && mfx_optarg[0])
             set_script_name(mfx_optarg,1);
         break;
+    case 663:
+        opt->unix.ptinterp = true;
+        break;
     case 670:
         opt->psx.no_align = true;
         break;
@@ -802,6 +805,7 @@ static const struct mfx_option longopts[] =
 #if 0
     {"script",           0x31, 0, 662},     // --script=
 #endif
+    {"ptinterp",            0, 0, 663},     // linux/elf386 PT_INTERP program
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output
     // win32/pe

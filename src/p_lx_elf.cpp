@@ -78,9 +78,23 @@ PackLinuxI386elf::getFilters() const
 int
 PackLinuxI386elf::buildLoader(const Filter *ft)
 {
+    unsigned char tmp[sizeof(linux_i386elf_fold)];
+    memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
+    if (opt->unix.ptinterp) {
+        unsigned j;
+        for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
+            if (0x60==tmp[  j]
+            &&  0x47==tmp[1+j] ) {
+                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
+                tmp[  j] = 0x47;
+                tmp[1+j] = 0x60;
+                break;
+            }
+        }
+    }
     return buildLinuxLoader(
         linux_i386elf_loader, sizeof(linux_i386elf_loader),
-        linux_i386elf_fold,   sizeof(linux_i386elf_fold),  ft );
+        tmp,                  sizeof(linux_i386elf_fold),  ft );
 }
 
 
