@@ -16,7 +16,7 @@ ifeq ($(strip $(UCLDIR)),)
 UCLDIR = $(HOME)/local/src/ucl-0.91
 endif
 
-DEBUG = 1
+DEBUG = 0
 
 
 # -------------------------------------------------------
@@ -242,7 +242,7 @@ o = .obj
 a = .lib
 CC = cl -nologo
 CFLAGS = -W4
-CXXFLAGS1 = $(CFLAGS) -GX -GR
+CXXFLAGS1 = $(CFLAGS) -GR -GX -EHa
 CXXFLAGS2 = $(CFLAGS)
 LDFLAGS =
 LINK_LDFLAGS = /link /map:$(basename $@).map
@@ -253,7 +253,7 @@ endif
 export LIB
 
 ifeq (1,2)
-  # statically link libc
+  # statically link libc.lib
   CC += -ML
   ##LDLIBS = $(u)_s.lib zlib_s.lib setargv.obj
   LDLIBS = $(u)_s.lib setargv.obj
@@ -267,7 +267,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_LDFLAGS += /debug
 else
-  CFLAGS += -O2 -Gs -GF
+  CFLAGS += -O2 -GF
   LINK_LDFLAGS += /release
 endif
 
@@ -321,7 +321,8 @@ CXXFLAGS1 = $(CFLAGS)
 CXXFLAGS2 = $(CFLAGS)
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
-LDLIBS = $(u).lib zlib.lib
+##LDLIBS = $(u).lib zlib.lib
+LDLIBS = $(u).lib
 
 ifneq ($(strip $(wildcard $(UDIR))),)
 LIB := $(UDIR);$(LIB)
@@ -389,6 +390,7 @@ mostlyclean:
 
 clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj tags TAGS ID
+	-rm -f *.idb *.pdb
 	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
 
 distclean: clean

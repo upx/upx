@@ -33,7 +33,7 @@
 //
 **************************************************************************/
 
-MemBuffer::MemBuffer(unsigned size=0) :
+MemBuffer::MemBuffer(unsigned size) :
     ptr(NULL), alloc_ptr(NULL), alloc_size(0)
 {
     if (size > 0)

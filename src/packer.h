@@ -243,6 +243,11 @@ private:
     // private to checkPatch()
     void *last_patch;
     long last_patch_offset;
+
+private:
+    // disable copy and assignment
+    Packer(Packer const &); // {}
+    Packer& operator= (Packer const &); // { return *this; }
 };
 
 

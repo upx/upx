@@ -434,7 +434,7 @@ void PackWcle::pack(OutputFile *fo)
     const unsigned calltrickoffset = ft.cto << 24;
 
     // attach some useful data at the end of preprocessed fixups
-    ifixups[sofixups++] = ih.automatic_data_object;
+    ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
     unsigned ic = objects*sizeof(*iobject_table);
     memcpy(ifixups+sofixups,iobject_desc,ic);
     iobject_desc.free();

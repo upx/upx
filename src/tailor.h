@@ -154,6 +154,7 @@
 #    define vsnprintf _vsnprintf
 //#    pragma warning(once: 4097 4710)
 #    pragma warning(disable: 4097 4710)
+#    pragma warning(disable: 4511 4512)
 #  endif
 #elif defined(__WATCOMC__)
 #  define __UPX_CDECL       __cdecl

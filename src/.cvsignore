@@ -1,4 +1,6 @@
 *.0??
+*.idb
+*.pdb
 *.upx
 .gdbinit
 upx

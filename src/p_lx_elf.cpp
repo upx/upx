@@ -446,7 +446,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     off_t ptload0hi=0, ptload1lo=0;
 
     // decompress PT_LOAD
-    fi->seek(-(2*4 + ph.c_len), SEEK_CUR);
+    fi->seek(- (off_t) (2*4 + ph.c_len), SEEK_CUR);
     for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
         if (PT_LOAD==phdr->p_type) {
             if (0==ptload0hi) {

@@ -211,6 +211,11 @@ protected:
     unsigned sononres_names;
     unsigned soimage;
     unsigned soentries;
+
+private:
+    // disable copy and assignment
+    LeFile(LeFile const &); // {}
+    LeFile& operator= (LeFile const &); // { return *this; }
 };
 
 

@@ -471,7 +471,7 @@ void PackLinuxI386::patchLoaderChecksum()
     // checksum for loader + p_info
     lp->l_checksum = 0;  // (this checksum is currently unused)
     lp->l_magic = UPX_ELF_MAGIC;
-    lp->l_lsize = lsize;
+    lp->l_lsize = (unsigned short) lsize;
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
     unsigned adler = upx_adler32(0,NULL,0);
