@@ -67,8 +67,9 @@ const int *PackDjgpp2::getCompressionMethods(int method, int level) const
 
 const int *PackDjgpp2::getFilters() const
 {
-    static const int filters[] = { 0x26, 0x24, 0x11, 0x14, 0x13, 0x16,
-                                   0x25, 0x15, 0x12, -1 };
+    static const int filters[] = {
+        0x26, 0x24, 0x11, 0x14, 0x13, 0x16, 0x25, 0x15, 0x12,
+    -1 };
     return filters;
 }
 

@@ -104,20 +104,22 @@ void PackSys::patchLoader(OutputFile *fo,
 
 int PackSys::buildLoader(const Filter *ft)
 {
-    const int filter_id = ft->id;
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("SYSMAIN1",
               opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
               "SYSMAIN2""SYSSUBSI",
               ph.first_offset_found == 1 ? "SYSSBBBP" : "",
-              filter_id ? "SYSCALLT" : "",
+              ft->id ? "SYSCALLT" : "",
               "SYSMAIN3""UPX1HEAD""SYSCUTPO""NRV2B160""NRVDDONE""NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
               "NRVDECO2""NRV2B169",
               NULL
              );
-    if (filter_id)
-        addFilter16(filter_id);
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addFilter16(ft->id);
+    }
     addLoader("SYSMAIN5",
               opt->cpu == opt->CPU_8086 ? "SYSI0862" : "SYSI2862",
               "SYSJUMP1",

@@ -62,7 +62,9 @@ const int *PackCom::getCompressionMethods(int method, int level) const
 
 const int *PackCom::getFilters() const
 {
-    static const int filters[] = { 0x06, 0x03, 0x04, 0x01, 0x05, 0x02, -1 };
+    static const int filters[] = {
+        0x06, 0x03, 0x04, 0x01, 0x05, 0x02,
+    -1 };
     return filters;
 }
 
@@ -138,21 +140,23 @@ void PackCom::patchLoader(OutputFile *fo,
 
 int PackCom::buildLoader(const Filter *ft)
 {
-    const int filter_id = ft->id;
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("COMMAIN1""COMSUBSI",
               ph.first_offset_found == 1 ? "COMSBBBP" : "",
               "COMPSHDI",
-              filter_id ? "COMCALLT" : "",
+              ft->id ? "COMCALLT" : "",
               "COMMAIN2""UPX1HEAD""COMCUTPO""NRV2B160",
-              filter_id ? "NRVDDONE" : "NRVDRETU",
+              ft->id ? "NRVDDONE" : "NRVDRETU",
               "NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
               "NRVDECO2""NRV2B169",
               NULL
              );
-    if (filter_id)
-        addFilter16(filter_id);
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+        addFilter16(ft->id);
+    }
     return getLoaderSize();
 }
 
