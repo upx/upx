@@ -797,16 +797,16 @@ ACC_LIBFUNC(int, acc_isatty) (int fd)
 
 ACC_LIBFUNC(int, acc_mkdir) (const char* name, unsigned mode)
 {
-#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_EMX || ACC_OS_MACOSX || ACC_OS_POSIX)
-    return mkdir(name, mode);
-#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
+#if (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
     ACC_UNUSED(mode);
     return Dcreate(name);
-#elif defined(__DJGPP__) || (ACC_OS_TOS)
+#elif defined(__DJGPP__)
     return mkdir(name, mode);
-#else
+#elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
     ACC_UNUSED(mode);
     return mkdir(name);
+#else
+    return mkdir(name, mode);
 #endif
 }
 
@@ -816,6 +816,58 @@ ACC_LIBFUNC(int, acc_response) (int* argc, char*** argv)
 {
 }
 #endif
+
+
+/*************************************************************************
+// some linear congruential pseudo random number generators (PRNG)
+**************************************************************************/
+
+ACC_LIBFUNC(void, acc_srand31) (acc_rand31_t* r, acc_uint32l_t seed)
+{
+    r->seed = seed & ACC_UINT32L_C(0xffffffff);
+}
+
+ACC_LIBFUNC(acc_uint32l_t, acc_rand31) (acc_rand31_t* r)
+{
+    r->seed = (r->seed * ACC_UINT32L_C(1103515245)) + 12345;
+    r->seed &= ACC_UINT32L_C(0x7fffffff);
+    return r->seed;
+}
+
+
+#if defined(acc_uint64l_t)
+
+ACC_LIBFUNC(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed)
+{
+    r->seed = seed & ACC_UINT32L_C(0xffffffff);
+    r->seed <<= 16; r->seed |= 0x330e;
+}
+
+ACC_LIBFUNC(acc_uint32l_t, acc_rand48) (acc_rand48_t* r)
+{
+    r->seed = (r->seed * ACC_UINT64L_C(25214903917)) + 11;
+    r->seed &= ACC_UINT64L_C(0xffffffffffff);
+    return (acc_uint32l_t) (r->seed >> 17);
+}
+
+#endif /* defined(acc_uint64l_t) */
+
+
+#if defined(acc_uint64l_t)
+
+ACC_LIBFUNC(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed)
+{
+    r->seed = seed & ACC_UINT64L_C(0xffffffffffffffff);
+}
+
+ACC_LIBFUNC(acc_uint32l_t, acc_rand64) (acc_rand64_t* r)
+{
+    r->seed = (r->seed * ACC_UINT64L_C(6364136223846793005)) + 1;
+    r->seed &= ACC_UINT64L_C(0xffffffffffffffff);
+    return (acc_uint32l_t) (r->seed >> 33);
+}
+
+#endif /* defined(acc_uint64l_t) */
 
 
 /*

@@ -74,7 +74,7 @@
 
 #if (ACC_OS_POSIX)
 #  define HAVE_STRINGS_H 1
-#  if (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_OPENBSD)
+#  if (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_MACOSX || ACC_OS_POSIX_OPENBSD)
 #    undef HAVE_MALLOC_H /* deprecated */
 #  elif (ACC_OS_POSIX_HPUX)
 #    define HAVE_ALLOCA_H 1
@@ -265,7 +265,7 @@
 #define HAVE_UTIME 1
 #define HAVE_VSNPRINTF 1
 
-#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_MACOSX || ACC_OS_POSIX)
+#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #else
@@ -476,11 +476,14 @@
 #elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && __SC__ >= 0x700))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0550))
-   /* info: unsigned __int64 is broken in 0x0520 */
+#elif (ACC_ARCH_IA32 && (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0520))
+   /* WARNING: unsigned __int64 is somewhat broken in 0x0520 */
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && __WATCOMC__ >= 1100))
@@ -489,7 +492,7 @@
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_CC_GNUC && (SIZEOF_LONG < 8))
+#elif (ACC_CC_GNUC && ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #endif

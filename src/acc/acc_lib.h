@@ -181,6 +181,30 @@ ACC_LIBFUNC(int,  acc_mkdir) (const char* name, unsigned mode);
 ACC_LIBFUNC(int,  acc_response) (int* argc, char*** argv);
 ACC_LIBFUNC(int,  acc_set_binmode) (int fd, int binary);
 
+
+typedef struct {
+    acc_uint32l_t seed;
+} acc_rand31_t;
+ACC_LIBFUNC(void, acc_srand31) (acc_rand31_t* r, acc_uint32l_t seed);
+ACC_LIBFUNC(acc_uint32l_t, acc_rand31) (acc_rand31_t* r);
+
+#if defined(acc_uint64l_t)
+typedef struct {
+    acc_uint64l_t seed;
+} acc_rand48_t;
+ACC_LIBFUNC(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed);
+ACC_LIBFUNC(acc_uint32l_t, acc_rand48) (acc_rand48_t* r);
+#endif /* defined(acc_uint64l_t) */
+
+#if defined(acc_uint64l_t)
+typedef struct {
+    acc_uint64l_t seed;
+} acc_rand64_t;
+ACC_LIBFUNC(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed);
+ACC_LIBFUNC(acc_uint32l_t, acc_rand64) (acc_rand64_t* r);
+#endif /* defined(acc_uint64l_t) */
+
+
 #endif /* already included */
 
 

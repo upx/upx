@@ -19,7 +19,7 @@
 ************************************************************************/
 
 /* workaround for preprocessor bugs in some compilers */
-#if defined(_MSC_VER)
+#if 0
 #define ACC_0xffffL             0xfffful
 #define ACC_0xffffffffL         0xfffffffful
 #else
@@ -28,15 +28,18 @@
 #endif
 
 /* some things we cannot work around */
-#if 0
 #if (ACC_0xffffL == ACC_0xffffffffL)
 #  error "your preprocessor is broken 1"
 #endif
-#if (32767 >= 4294967295ul)
+#if (16ul * 16384ul != 262144ul)
 #  error "your preprocessor is broken 2"
 #endif
-#if (65535u >= 4294967295ul)
+#if 0
+#if (32767 >= 4294967295ul)
 #  error "your preprocessor is broken 3"
+#endif
+#if (65535u >= 4294967295ul)
+#  error "your preprocessor is broken 4"
 #endif
 #endif
 
@@ -47,8 +50,8 @@
 
 #if (UINT_MAX == ACC_0xffffL)
 #if defined(__ZTC__) && defined(__I86__)
-#  if !defined(__DOS__) && !defined(__OS2__)
-#    define __DOS__ 1
+#  if !defined(_MSDOS) && !defined(__OS2__)
+#    define _MSDOS 1
 #  endif
 #elif defined(__VERSION) && defined(MB_LEN_MAX)
 #  if (__VERSION == 520) && (MB_LEN_MAX == 1)
@@ -142,17 +145,30 @@
 
 
 #if (UINT_MAX == ACC_0xffffL)
-#if defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0200)
-#  define ACC_BROKEN_SIZEOF 1
+#if defined(__MSDOS__) && defined(__TURBOC__)
 #  if (__TURBOC__ < 0x0150)
+#    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #    define ACC_BROKEN_INTEGRAL_PROMOTION 1
 #  endif
-#elif defined(MSDOS) && defined(_MSC_VER) && (_MSC_VER < 700)
-#  define ACC_BROKEN_INTEGRAL_PROMOTION 1
-#  define ACC_BROKEN_SIZEOF 1
+#  if(__TURBOC__ < 0x0200)
+#    define ACC_BROKEN_SIZEOF 1
+#  endif
+#elif defined(MSDOS) && defined(_MSC_VER)
+#  if (_MSC_VER < 600)
+#    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
+#  endif
+#  if (_MSC_VER < 700)
+#    define ACC_BROKEN_INTEGRAL_PROMOTION 1
+#    define ACC_BROKEN_SIZEOF 1
+#  endif
+#elif defined(__PACIFIC__) && defined(DOS)
+#  define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #elif defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
 #  define ACC_BROKEN_SIZEOF 1
 #endif
+#endif
+#if defined(__WATCOMC__) && (__WATCOMC__ < 900)
+#  define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #endif
 
 

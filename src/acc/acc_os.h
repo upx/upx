@@ -24,7 +24,6 @@
  *   ACC_OS_DOS32
  *   ACC_OS_EMX             hybrid OS/2, DOS32, WIN32 (with RSX) and POSIX
  *   ACC_OS_MACCLASSIC      Macintosh Classic
- *   ACC_OS_MACOSX          Mac OS/X
  *   ACC_OS_PALMOS
  *   ACC_OS_OS2             OS/2
  *   ACC_OS_OS216           16-bit OS/2 1.x (segmented memory model)
@@ -117,9 +116,6 @@
 #elif defined(__TOS__) || defined(__atarist__)
 #  define ACC_OS_TOS            1
 #  define ACC_INFO_OS           "tos"
-#elif defined(__MACOSX__)
-#  define ACC_OS_MACOSX         1
-#  define ACC_INFO_OS           "macosx"
 #elif defined(macintosh)
 #  define ACC_OS_MACCLASSIC     1
 #  define ACC_INFO_OS           "macclassic"
@@ -136,6 +132,9 @@
 #  if defined(_AIX) || defined(__AIX__) || defined(__aix__)
 #    define ACC_OS_POSIX_AIX        1
 #    define ACC_INFO_OS_POSIX       "aix"
+#  elif defined(__APPLE__)
+#    define ACC_OS_POSIX_MACOSX     1
+#    define ACC_INFO_OS_POSIX       "macosx"
 #  elif defined(__FreeBSD__)
 #    define ACC_OS_POSIX_FREEBSD    1
 #    define ACC_INFO_OS_POSIX       "freebsd"

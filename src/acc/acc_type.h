@@ -30,27 +30,180 @@ __acc_gnuc_extension__ typedef long long acc_llong_t;
 __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
 
-/* acc_int64l_t is int_least64_t in <stdint.h> terminology */
-#if (SIZEOF_LONG >= 8)
-#  define acc_int64l_t      long int
-#  define acc_uint64l_t     unsigned long int
-#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8)
-#  define acc_int64l_t      acc_llong_t
-#  define acc_uint64l_t     acc_ullong_t
-#elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
-#  define acc_int64l_t      __int64
-#  define acc_uint64l_t     unsigned __int64
+
+/***********************************************************************
+// some <stdint.h> types:
+//   required: least & fast: acc_int32l_t, acc_int32f_t
+//   optional: exact32 acc_int32e_t
+//   optional: least64 acc_int64l_t
+************************************************************************/
+
+/* acc_int32e_t is int32_t in <stdint.h> terminology */
+#if !defined(acc_int32e_t)
+#if (SIZEOF_INT == 4)
+#  define acc_int32e_t          int
+#  define acc_uint32e_t         unsigned int
+#  define ACC_INT32E_C(c)       c
+#  define ACC_UINT32E_C(c)      c##U
+#elif (SIZEOF_LONG == 4)
+#  define acc_int32e_t          long int
+#  define acc_uint32e_t         unsigned long int
+#  define ACC_INT32E_C(c)       c##L
+#  define ACC_UINT32E_C(c)      c##UL
+#elif (SIZEOF_SHORT == 4)
+#  define acc_int32e_t          short int
+#  define acc_uint32e_t         unsigned short int
+#  define ACC_INT32E_C(c)       c
+#  define ACC_UINT32E_C(c)      c##U
+#elif (SIZEOF_LONG_LONG == 4 && SIZEOF_UNSIGNED_LONG_LONG == 4)
+#  define acc_int32e_t          acc_llong_t
+#  define acc_uint32e_t         acc_ullong_t
+#  define ACC_INT32E_C(c)       c##LL
+#  define ACC_UINT32E_C(c)      c##ULL
+#elif (SIZEOF___INT32 == 4 && SIZEOF_UNSIGNED___INT32 == 4)
+#  define acc_int32e_t          __int32
+#  define acc_uint32e_t         unsigned __int32
+#  if (SIZEOF_INT > 4)
+#    define ACC_INT32E_C(c)     c
+#    define ACC_UINT32E_C(c)    c##U
+#  elif (SIZEOF_LONG > 4)
+#    define ACC_INT32E_C(c)     c##L
+#    define ACC_UINT32E_C(c)    c##UL
+#  else
+#    define ACC_INT32E_C(c)     c##i32
+#    define ACC_UINT32E_C(c)    c##ui32
+#  endif
+#else
+  /* no exact 32-bit integral type on this machine */
+#endif
+#endif
+#if defined(acc_int32e_t)
+#  define SIZEOF_ACC_INT32E_T   4
+#  define SIZEOF_ACC_UINT32E_T  4
 #endif
 
 
-#if !defined(ACC_UINT32_C)
-#  if (ACC_OS_DOS16 && ACC_CC_PACIFICC)
-     /* workaround for Pacific C */
-#    define ACC_UINT32_C(c)     c
-#  elif (UINT_MAX < ACC_0xffffffffL)
-#    define ACC_UINT32_C(c)     c ## UL
+/* acc_int32l_t is int_least32_t in <stdint.h> terminology */
+#if !defined(acc_int32l_t)
+#if defined(acc_int32e_t)
+#  define acc_int32l_t          acc_int32e_t
+#  define acc_uint32l_t         acc_uint32e_t
+#  define ACC_INT32L_C          ACC_INT32E_C
+#  define ACC_UINT32L_C         ACC_UINT32E_C
+#  define SIZEOF_ACC_INT32L_T   SIZEOF_ACC_INT32E_T
+#  define SIZEOF_ACC_UINT32L_T  SIZEOF_ACC_UINT32E_T
+#elif (SIZEOF_INT > 4)
+#  define acc_int32l_t          int
+#  define acc_uint32l_t         unsigned int
+#  define ACC_INT32L_C(c)       c
+#  define ACC_UINT32L_C(c)      c##U
+#  define SIZEOF_ACC_INT32L_T   SIZEOF_INT
+#  define SIZEOF_ACC_UINT32L_T  SIZEOF_INT
+#elif (SIZEOF_LONG > 4)
+#  define acc_int32l_t          long int
+#  define acc_uint32l_t         unsigned long int
+#  define ACC_INT32L_C(c)       c##L
+#  define ACC_UINT32L_C(c)      c##UL
+#  define SIZEOF_ACC_INT32L_T   SIZEOF_LONG
+#  define SIZEOF_ACC_UINT32L_T  SIZEOF_LONG
+#else
+#  error "acc_int32l_t"
+#endif
+#endif
+
+
+/* acc_int32f_t is int_fast32_t in <stdint.h> terminology */
+#if !defined(acc_int32f_t)
+#if (SIZEOF_INT >= 4)
+#  define acc_int32f_t          int
+#  define acc_uint32f_t         unsigned int
+#  define ACC_INT32F_C(c)       c
+#  define ACC_UINT32F_C(c)      c##U
+#  define SIZEOF_ACC_INT32F_T   SIZEOF_INT
+#  define SIZEOF_ACC_UINT32F_T  SIZEOF_INT
+#elif (SIZEOF_LONG >= 4)
+#  define acc_int32f_t          long int
+#  define acc_uint32f_t         unsigned long int
+#  define ACC_INT32F_C(c)       c##L
+#  define ACC_UINT32F_C(c)      c##UL
+#  define SIZEOF_ACC_INT32F_T   SIZEOF_LONG
+#  define SIZEOF_ACC_UINT32F_T  SIZEOF_LONG
+#elif defined(acc_int32e_t)
+#  define acc_int32f_t          acc_int32e_t
+#  define acc_uint32f_t         acc_uint32e_t
+#  define ACC_INT32F_C          ACC_INT32E_C
+#  define ACC_UINT32F_C         ACC_UINT32E_C
+#  define SIZEOF_ACC_INT32F_T   SIZEOF_ACC_INT32E_T
+#  define SIZEOF_ACC_UINT32F_T  SIZEOF_ACC_UINT32E_T
+#else
+#  error "acc_int32f_t"
+#endif
+#endif
+
+
+/* acc_int64l_t is int_least64_t in <stdint.h> terminology */
+#if !defined(acc_int64l_t)
+#if (SIZEOF_INT >= 8)
+#  define acc_int64l_t          int
+#  define acc_uint64l_t         unsigned int
+#  define ACC_INT64L_C(c)       c
+#  define ACC_UINT64L_C(c)      c##U
+#  define SIZEOF_ACC_INT64L_T   SIZEOF_INT
+#  define SIZEOF_ACC_UINT64L_T  SIZEOF_INT
+#elif (SIZEOF_LONG >= 8)
+#  define acc_int64l_t          long int
+#  define acc_uint64l_t         unsigned long int
+#  define ACC_INT64L_C(c)       c##L
+#  define ACC_UINT64L_C(c)      c##UL
+#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG
+#  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG
+#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8)
+#  define acc_int64l_t          acc_llong_t
+#  define acc_uint64l_t         acc_ullong_t
+#  define ACC_INT64L_C(c)       c##LL
+#  define ACC_UINT64L_C(c)      c##ULL
+#  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG_LONG
+#  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG_LONG
+#elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
+#  define acc_int64l_t          __int64
+#  define acc_uint64l_t         unsigned __int64
+#  if (ACC_CC_BORLANDC)
+#    define ACC_INT64L_C(c)     ((c) + 0i64)
+#    define ACC_UINT64L_C(c)    ((c) + 0ui64)
 #  else
-#    define ACC_UINT32_C(c)     c ## U
+#    define ACC_INT64L_C(c)     c##i64
+#    define ACC_UINT64L_C(c)    c##ui64
+#  endif
+#  define SIZEOF_ACC_INT64L_T   SIZEOF___INT64
+#  define SIZEOF_ACC_UINT64L_T  SIZEOF___INT64
+#else
+  /* no least 64-bit integral type on this machine */
+#endif
+#endif
+
+
+/* workaround for broken compilers */
+#if (ACC_BROKEN_INTEGRAL_CONSTANTS)
+#  undef ACC_INT32E_C
+#  undef ACC_UINT32E_C
+#  undef ACC_INT32L_C
+#  undef ACC_UINT32L_C
+#  undef ACC_INT32F_C
+#  undef ACC_UINT32F_C
+#  if (SIZEOF_INT == 4)
+#    define ACC_INT32E_C(c)     c
+#    define ACC_UINT32E_C(c)    ((c) + 0U)
+#    define ACC_INT32L_C(c)     c
+#    define ACC_UINT32L_C(c)    ((c) + 0U)
+#    define ACC_INT32F_C(c)     c
+#    define ACC_UINT32F_C(c)    ((c) + 0U)
+#  elif (SIZEOF_LONG == 4)
+#    define ACC_INT32E_C(c)     ((c) + 0L)
+#    define ACC_UINT32E_C(c)    ((c) + 0UL)
+#    define ACC_INT32L_C(c)     ((c) + 0L)
+#    define ACC_UINT32L_C(c)    ((c) + 0UL)
+#    define ACC_INT32F_C(c)     ((c) + 0L)
+#    define ACC_UINT32F_C(c)    ((c) + 0UL)
 #  endif
 #endif
 
@@ -61,11 +214,17 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (ACC_CC_GNUC || ACC_CC_PACIFICC)
-#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC))
+#  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit          __pascal
+#    define __acc_cdecl_atexit
 #    define __acc_cdecl_main            __cdecl
-#    define __acc_cdecl_qsort           __pascal
+#    if (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#      define __acc_cdecl_qsort         __pascal
+#    elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
+#      define __acc_cdecl_qsort         _stdcall
+#    else
+#      define __acc_cdecl_qsort         __cdecl
+#    endif
 #  elif (ACC_CC_WATCOMC)
 #    define __acc_cdecl                 __cdecl
 #  else
@@ -75,8 +234,10 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define __acc_cdecl_qsort           __cdecl
 #  endif
 #  if (ACC_CC_GNUC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
-#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC))
+#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
 #    define __acc_cdecl_sighandler      __pascal
+#  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))
+#    define __acc_cdecl_sighandler      _stdcall
 #  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
 #    if defined(_DLL)
 #      define __acc_cdecl_sighandler    _far _cdecl _loadds
@@ -108,12 +269,13 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define __acc_cdecl_sighandler
 #endif
 
-#if (ACC_CC_AZTECC) || (ACC_CC_TURBOC && __TURBOC__ < 0x150)
+#if (ACC_CC_AZTECC) || (ACC_CC_TURBOC && __TURBOC__ < 0x0150)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
+#elif defined(RETSIGTYPE)
+typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #endif
-
 
 
 /*

@@ -64,6 +64,7 @@
 #  define ACC_INFO_CC           "Microsoft C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(_MSC_VER)
 #elif defined(__MWERKS__)
+   /* FIXME */
 #  define ACC_CC_MWERKS         1
 #  define ACC_INFO_CC           "Metrowerks C"
 #  define ACC_INFO_CCVER        "unknown"
