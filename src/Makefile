@@ -198,7 +198,7 @@ DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ifeq ($(arch),i386)
-  CC += -march=i386 -mcpu=i586
+  CC += -march=i386 -mcpu=i686
   ##CFLAGS_M += -mno-schedule-prologue
 endif
 ##CFLAGS_WERROR = -Werror
@@ -295,7 +295,7 @@ endif
 
 ifeq ($(target),djgpp2)
 e = .exe
-CC += -march=i386 -mcpu=i586
+CC += -march=i386 -mcpu=i686
 ##CFLAGS_M += -mno-schedule-prologue
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
@@ -313,7 +313,7 @@ endif	# djgpp2
 
 ifeq ($(target),cygwin)
 e = .exe
-CC += -march=i386 -mcpu=i586
+CC += -march=i386 -mcpu=i686
 CXXLD = g++
 ##CFLAGS_M += -mno-schedule-prologue
 endif
@@ -321,7 +321,7 @@ endif
 ifeq ($(target),mingw32)
 e = .exe
 CC = gcc -mno-cygwin
-CC += -march=i386 -mcpu=i586
+CC += -march=i386 -mcpu=i686
 CXXLD = g++ -mno-cygwin
 ##CFLAGS_M += -mno-schedule-prologue
 endif
@@ -330,7 +330,7 @@ endif
 ifeq ($(target),no-cygwin)
 e = .exe
 CC = gcc -mno-cygwin
-CC += -march=i386 -mcpu=i586
+CC += -march=i386 -mcpu=i686
 CXXLD = g++ -mno-cygwin
 ##CFLAGS_M += -mno-schedule-prologue
 endif
@@ -339,7 +339,7 @@ endif
 ifeq ($(target),cross-mingw32)
 e = .exe
 CC = i586-mingw32msvc-gcc
-CC += -march=i386 -mcpu=i586
+CC += -march=i386 -mcpu=i686
 CXXLD = i586-mingw32msvc-g++
 ##CFLAGS_M += -mno-schedule-prologue
 endif
