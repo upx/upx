@@ -193,6 +193,15 @@ void show_help(int x)
 #endif
 #if 1
         fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"Options for psx/exe:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --all-methods       try all available compression methods\n"
+                    "  --no-align          don't align to mode2 sector format\n"
+                    "\n");
+#endif
+#if 1
+        fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for tmt/adam:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
@@ -249,13 +258,14 @@ void show_help(int x)
                 "linux/386, "
                 "linux/elf386, "
                 "linux/sh386, "
+                "psx/exe, "
                 "rtm32/pe, "
-                "tmt/adam, "
-                "vmlinuz/386,\n    "
+                "tmt/adam,\n    "
+                "vmlinuz/386, "
                 "watcom/le, "
                 //"win16/ne, "
                 "win32/pe"
-                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.tsx.org\n"
+                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
                 //"\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
                 "");
 

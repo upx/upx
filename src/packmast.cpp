@@ -49,6 +49,7 @@
 #include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_vmlinz.h"
+#include "p_psx.h"
 
 
 /*************************************************************************
@@ -208,6 +209,12 @@ static Packer* try_packers(InputFile *f, try_function func)
             return p;
     }
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
+        return p;
+
+    //
+    // psone
+    //
+    if ((p = func(new PackPsx(f),f)) != NULL)
         return p;
 
     //

@@ -38,14 +38,17 @@ PHDRS
 SECTIONS
 {
   /*  0x00401000: l_lx_elf86.asm assumes 1 page up from 64KB boundary */
+/* mfx 2002-07-16: FIXME - something is wrong here
   . = 0x00401000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+/* mfx 2002-07-16: FIXME - something is wrong here
   .text : {
     *(.text)
     *(.data)
   } : text
+*/
   /*  0x08048000: customary Linux/x86 Elf .text start */
   /* PackLinuxI386::buildLinuxLoader will overwrite the address anyway. */
-  . = 0x08048000 + (0xfff & .);
+/*  . = 0x08048000 + (0xfff & .); */
   .data : {
   } : data
 }

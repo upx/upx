@@ -1,4 +1,4 @@
-#define UPX_VERSION             0x011104        /* 01.11.04 */
-#define UPX_VERSION_STRING      "1.11.4"
-#define UPX_VERSION_STRING4     "1.11"
-#define UPX_VERSION_DATE        "Mar 1st 2001"
+#define UPX_VERSION             0x019001        /* 01.90.01 */
+#define UPX_VERSION_STRING      "1.90.1"
+#define UPX_VERSION_STRING4     "1.90"
+#define UPX_VERSION_DATE        "Jul 16th 2002"

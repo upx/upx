@@ -26,6 +26,7 @@ STUBS = \
 	l_com.h \
 	l_djgpp2.h stubify.h \
 	l_exe.h \
+	l_psx.h \
 	l_sys.h \
 	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h \
 	l_tmt.h \
@@ -56,12 +57,14 @@ override T = $(basename $@)
 UCL_UPX  = $(UCLDIR)/upx
 UCL_I386 = $(UCLDIR)/upx/i386
 UCL_M68K = $(UCLDIR)/upx/m68k
+UCL_MR3K = $(UCLDIR)/upx/mr3k
 
 .SUFFIXES:
 .SUFFIXES: .asm .ash .asx .asy .bin .c .h .s
 
 vpath %.ash $(UCL_I386)
 vpath %.ash $(UCL_M68K)
+vpath %.ash $(UCL_MR3K)
 
 
 # /***********************************************************************
@@ -103,6 +106,10 @@ CPP_68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_68K  = perl -w $(srcdir)/scripts/app_68k.pl
 ASM_68K = sh $(srcdir)/scripts/asl_68k.sh
 endif
+
+# MIPS R3000
+APP_R3K = perl -w $(srcdir)/scripts/app_r3k.pl
+ASM_R3K = asm5900
 
 
 # /***********************************************************************
@@ -323,6 +330,16 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	objcopy -S -R .comment -R .note $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
+
+
+# /***********************************************************************
+# // psx/exe
+# ************************************************************************/
+
+l_psx.h: l_psx.asm
+	$(APP_R3K) $< $T.asx
+	$(ASM_R3K) $T.asx -i:$(UCL_UPX) -o:$T.bin
+	$(BIN2H) $T.bin nrv_loader $@
 
 
 # /***********************************************************************

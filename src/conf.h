@@ -512,6 +512,9 @@ struct options_t {
         bool coff;
     } djgpp2;
     struct {
+        unsigned no_align;
+    } psx;
+    struct {
         bool split_segments;
     } tos;
     struct {

@@ -674,6 +674,9 @@ static int do_option(int optc, const char *arg)
         if (mfx_optarg && mfx_optarg[0])
             set_script_name(mfx_optarg,1);
         break;
+    case 670:
+        opt->psx.no_align = true;
+        break;
 
     case '\0':
         return -1;
@@ -788,6 +791,8 @@ static const struct mfx_option longopts[] =
     {"compress-icons",      2, 0, 631},
     {"compress-resources",  2, 0, 632},
     {"strip-relocs",        2, 0, 633},
+    // psx/exe
+    {"no-align",         0x10, 0, 670},
 
     { 0, 0, 0, 0 }
 };

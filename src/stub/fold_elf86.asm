@@ -178,7 +178,7 @@ L30:  ; process auxv
         sub edi, byte 8  ; backup to AT_NULL
         add ecx, ecx  ; two words per auxv
         inc eax  ; convert 0 to AT_IGNORE
-        rep stosd  ; allocate and fill 
+        rep stosd  ; allocate and fill
         dec eax  ; convert AT_IGNORE to AT_NULL
         stosd  ; re-terminate with AT_NULL
         stosd

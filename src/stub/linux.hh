@@ -47,7 +47,7 @@ struct timex;
 #include <time.h>
 #include <linux/errno.h>
 #include <linux/mman.h>
-#include <linux/personality.h>
+//#include <linux/personality.h>
 //#include <linux/timex.h>
 #include <linux/unistd.h>
 
