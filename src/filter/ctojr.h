@@ -135,6 +135,7 @@ static int F(Filter *f)
             {
                 buf[b[ic+1]] |= 1;
             }
+        UNUSED(which);
 
         if (getcto(f, buf) < 0)
             return -1;

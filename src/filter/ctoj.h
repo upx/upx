@@ -134,8 +134,7 @@ static int U(Filter *f)
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
     const unsigned cto = (unsigned)f->cto << 24;
-    unsigned lastcall = 0;
-
+//    unsigned lastcall = 0;    // lastcall is not used in COND macro
     unsigned ic, jc;
 
     for (ic = 0; ic < size5; ic++)
@@ -147,7 +146,7 @@ static int U(Filter *f)
                 set_le32(b+ic+1,jc-ic-1-addvalue-cto);
                 f->calls++;
                 ic += 4;
-                f->lastcall = lastcall = ic+1;
+                f->lastcall = ic+1;
             }
             else
                 f->noncalls++;
