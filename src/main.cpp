@@ -1159,7 +1159,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #if defined(WITH_NRV)
-    if (nrv_init() != NRV_E_OK)
+    if (nrv_init() != NRV_E_OK || NRV_VERSION != nrv_version())
     {
         show_head();
         fprintf(stderr,"nrv_init() failed - check your NRV installation !\n");

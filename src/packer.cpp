@@ -236,7 +236,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     {
         // decompress
         unsigned new_len = ph.u_len;
-        r = upx_decompress(out,ph.c_len,in,&new_len,ph.method);
+        r = upx_decompress(out, ph.c_len, in, &new_len, ph.method);
         //printf("%d %d: %d %d %d\n", ph.method, r, ph.c_len, ph.u_len, new_len);
         if (r != UPX_E_OK)
             throwInternalError("decompression failed");

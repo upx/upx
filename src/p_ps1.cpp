@@ -61,8 +61,9 @@ PackPs1::PackPs1(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(IH_BKUP == 40);
 
-    fdata_size = cfile_size = 0;
+    overlap = 0;
     sa_cnt = 0;
+    fdata_size = cfile_size = 0;
 }
 
 const int *PackPs1::getCompressionMethods(int method, int level) const
@@ -85,16 +86,16 @@ int PackPs1::patch_mips_le16(void *b, int blen, const void *old, unsigned new_)
 {
     unsigned char w[2];
 
-    set_le16(&w,get_be16(old));
-    return patch_le16(b, blen, &w, new_);
+    set_le16(w, get_be16(old));
+    return patch_le16(b, blen, w, new_);
 }
 
 int PackPs1::patch_mips_le32(void *b, int blen, const void *old, unsigned new_)
 {
     unsigned char w[4];
 
-    set_le32(&w,get_be32(old));
-    return patch_le32(b, blen, &w, new_);
+    set_le32(w, get_be32(old));
+    return patch_le32(b, blen, w, new_);
 }
 
 int PackPs1::patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_)
@@ -120,7 +121,7 @@ bool PackPs1::canPack()
     if ((memcmp(&ih.id,"PS-X EXE",8) != 0) && (memcmp(&ih.id,"EXE X-SP",8) != 0))
         return false;
     fi->readx(buf, sizeof(buf));
-    checkAlreadyPacked(&buf, sizeof(buf));
+    checkAlreadyPacked(buf, sizeof(buf));
     if (fdata_size != ih.tx_len || (ih.tx_len & 3))
     {
         if (!opt->force)
@@ -143,7 +144,7 @@ int PackPs1::buildLoader(const Filter *)
 {
     initLoader(nrv_loader,sizeof(nrv_loader));
     addLoader("PSXPREP0","PSXSTSZ0","PSXMAIN0",
-              ih.tx_ptr&0xffff ?  "PSXJSTA0" : "PSXJSTH0",
+              ih.tx_ptr & 0xffff ?  "PSXJSTA0" : "PSXJSTH0",
               "PSXDECO0",
               NULL);
 #ifdef EIGHTBIT
@@ -181,7 +182,7 @@ void PackPs1::pack(OutputFile *fo)
 
     ibuf.alloc(fdata_size);
     obuf.allocForCompression(fdata_size);
-    upx_byte *p_scan = ibuf+(fdata_size-1);
+    const upx_byte *p_scan = ibuf+(fdata_size-1);
 
     // read file
     fi->seek(PS_HDR_SIZE,SEEK_SET);
@@ -201,7 +202,7 @@ void PackPs1::pack(OutputFile *fo)
 
     Filter ft(ph.level);
     // compress (max_match = 65535)
-    compressWithFilters(&ft, 512, 0, NULL, 0, 65535, 0, 0);
+    compressWithFilters(&ft, 512, 0, NULL, 0, 65535);
 
     if (ph.overlap_overhead <= sa_cnt)
         overlap = 0;
@@ -236,10 +237,10 @@ void PackPs1::pack(OutputFile *fo)
     pad = ALIGN_DOWN(pad, 4);
     pad_code = CHK_ALIGNED(ph.c_len, 4);
 
-    unsigned decomp_data_start = ih.tx_ptr;
+    const unsigned decomp_data_start = ih.tx_ptr;
 
     // set the offset for compressed stuff at the very end of file
-    unsigned comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
+    const unsigned comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
 
     pad = 0;
     if (!opt->ps1.no_align)
