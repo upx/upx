@@ -107,7 +107,6 @@ If you want to modify the stub sources you'll also need
 
   - djasm - an assembler for the djgpp stub
     http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
-    ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2/djdev203.zip
 
   - Linux (for the linux/i386 stubs)
 

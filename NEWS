@@ -2,6 +2,12 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 1.02 (13 Sep 2000)
+  * watcom/le: fixed a problem with the Causeway extender
+  * win32/pe: don't automatically strip relocs if they seem needed
+  * support multiple backup generations when using `-k'
+  * updated the console screen driver
+
 Changes in 1.01 (09 Apr 2000)
   * win32/pe: fixed an uncompression problem in DLLs with empty
     fixup sections
