@@ -1,9 +1,10 @@
-;  l_vmlinz.asm -- loader & decompressor for the vmlinuz/i386 format
+;  l_vmlinx.asm -- loader & decompressor for the vmlinux/i386 format
 ;
 ;  This file is part of the UPX executable compressor.
 ;
 ;  Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
 ;  Copyright (C) 1996-2004 Laszlo Molnar
+;  Copyright (C)      2004 John Reiser
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them
@@ -24,6 +25,8 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+;  John Reiser
+;  <jreiser@users.sourceforge.net>
 
 
 %define         jmps    jmp short
@@ -34,75 +37,30 @@
                 SECTION .text
                 ORG     0
 
-; gdt segment 3 is flat data
-%define __KERNEL_DS 3*8
-; gdt segment 2 is flat code
-%define __KERNEL_CS 2*8
-
 ; =============
 ; ============= ENTRY POINT
 ; =============
 
 start:
-;       __LINUZ000__
-                cli
-                xor     eax, eax
-                mov     al, __KERNEL_DS
-                mov     ds, eax
-                mov     es, eax
-; fs, gs set by startup_32 in arch/i386/kernel/head.S
-                mov     ss, eax
-                mov     esp, 'STAK'     ; 0x90000
+;  In:
+;       %eax= &uncompressed [and final entry]; %ds= %es= __BOOT_DS
+;       %esp: &compressed; __BOOT_CS
+;       __LINUX000__
+                pop     edx  ; &compressed; length at -4(%edx)
 
-                push    byte 0
-                popf            ; BIOS can leave random flags (such as NT)
-
-; do not clear .bss: at this point, .bss comes only from
-; arch/i386/boot/compressed/*.o  which we are replacing entirely
-
-                or      ebp, byte -1    ; decompressor assumption
-                mov     eax, 'KEIP'     ; 0x100000 : address of startup_32
-                push    byte __KERNEL_CS        ; MATCH00
-                push    eax     ; MATCH00  entry address
+                push    eax     ; MATCH00(1/2)  entry address; __BOOT_CS
                 push    edi     ; MATCH01  save
                 push    esi     ; MATCH02  save
 
-%ifdef  __LZCALLT1__
+%ifdef  __LXCALLT1__
                 push    eax     ; MATCH03  src unfilter
-%endif; __LZDUMMY0__
-%ifdef  __LZCKLLT1__
+%endif; __LXDUMMY0__
+%ifdef  __LXCKLLT1__
                 push    eax     ; MATCH03  src unfilter
                 push    byte '?'  ; MATCH04  cto unfilter
-                push    'ULEN'    ; MATCH05  len unfilter
-%endif; __LZDUMMY1__
-%ifdef  __LBZIMAGE__
-                mov     esi, 'ESI0'
-                mov     edi, 'EDI0'
-                mov     ecx, 'ECX0'
-
-                std
-                rep
-                movsd
-                cld
-
-                mov     esi, 'ESI1'     ; esi = src for decompressor
-                xchg    eax, edi        ; edi = dst for decompressor = 0x100000
-                jmp     .1 + 'JMPD'     ; jump to the copied decompressor
-.1:
-%else;  __LZIMAGE0__
-
-; this checka20 stuff looks very unneccessary to me
-checka20:
-                inc                edi  ; change value
-                mov     [1 + ebp], edi  ; store to 0x000000 (even megabyte)
-                cmp         [eax], edi  ; compare  0x100000 ( odd megabyte)
-                je      checka20        ; addresses are [still] aliased
-
-                cld
-                mov     esi, 'ESI1'
-                xchg    eax, edi        ; edi = dst for decompressor = 0x100000
-
-%endif; __LZCUTPOI__
+%endif; __LXMOVEUP__
+                push    'ULEN'  ; MATCH05  uncompressed length
+                call move_up    ; MATCH06
 
 ; =============
 ; ============= DECOMPRESSION
@@ -111,25 +69,62 @@ checka20:
 %include      "n2b_d32.ash"
 %include      "n2d_d32.ash"
 %include      "n2e_d32.ash"
+%include      "cl1_d32.ash"
 
 ; =============
 ; ============= UNFILTER
 ; =============
 
-%ifdef  __LZCKLLT9__
                 pop     ecx     ; MATCH05  len
+%ifdef  __LXCKLLT9__
                 pop     edx     ; MATCH04  cto
                 pop     edi     ; MATCH03  src
                 ckt32   edi, dl
-%endif; __LZDUMMY2__
-%ifdef  __LZCALLT9__
+%endif; __LXDUMMY2__
+%ifdef  __LXCALLT9__
                 pop     edi     ; MATCH03  src
                 cjt32   0
-%endif; __LINUZ990__
+%endif; __LINUX990__
                 pop     esi     ; MATCH02  restore
                 pop     edi     ; MATCH01  restore
                 xor     ebx, ebx        ; booting the 1st cpu
                 retf    ; MATCH00  set cs
+
+%define UNLAP 0x10
+%define ALIGN (~0<<4)
+        ; must have 0==(UNLAP &~ ALIGN)
+
+move_up:
+                pop esi           ; MATCH06  &decompressor
+                mov ecx,[-4+ esi] ; length of decompressor+unfilter
+                mov ebp,eax       ; &uncompressed
+                add eax,[esp]     ; MATCH05  ULEN + base; entry to decompressor
+                add eax, byte ~ALIGN + UNLAP
+                and eax, byte  ALIGN
+
+                std
+        ; copy decompressor
+                lea esi,[-1+ ecx + esi]  ; unmoved top -1 of decompressor
+                lea edi,[-1+ ecx + eax]  ;   moved top -1 of decompressor
+                rep
+                movsb
+
+                mov ecx,[-4+ edx]  ; length of compressed data
+                add ecx, byte  3
+                and ecx, byte ~3   ; pad to 0 mod 4
+                add edx,ecx        ; unmoved top    of compressed data
+        ; copy compressed data
+                lea esi,[-4+ edx]  ; unmoved top -4 of compressed data
+                lea edi,[-4+ eax]  ;   moved top -4 of compressed data
+                shr ecx,2
+                rep
+                movsd
+
+                cld
+                lea esi,[4+ edi]   ;   &compressed [after move]
+                mov edi,ebp        ; &uncompressed
+                or  ebp, byte -1   ; decompressor assumption
+                jmp eax            ; enter moved decompressor
 
 ; =============
 ; ============= CUT HERE

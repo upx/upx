@@ -57,7 +57,8 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     info = pinfo;
     njumps = nsections = frozen = 0;
     jumps = new jump[200];
-    sections = new section[200];
+#define NSECTIONS 350
+    sections = new section[NSECTIONS];
 
     char *p = iloader + info;
     while (get32(p) != (unsigned)(-1))
@@ -68,7 +69,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
             sections[nsections].istart = get32(p+8);
             sections[nsections++].ostart = -1;
             p += 12;
-            assert(nsections < 200);
+            assert(nsections < NSECTIONS);
         }
         else
         {
@@ -154,7 +155,7 @@ void Linker::addSection(const char *sname, const void *sdata, unsigned len)
     sections[nsections].istart = ilen;
     sections[nsections].len = len;
     sections[nsections++].ostart = olen;
-    assert(nsections < 200);
+    assert(nsections < NSECTIONS);
     memcpy(iloader+ilen,sdata,len);
     ilen += len;
 }

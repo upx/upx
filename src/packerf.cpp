@@ -373,6 +373,7 @@ bool Packer::patchFilter32(void *loader, int lsize, const Filter *ft)
     if (ft->id < 0x80) {
         if (0x40 <= ft->id && ft->id < 0x50
         && (  UPX_F_LINUX_i386   ==ph.format
+           || UPX_F_VMLINUX_i386 ==ph.format
            || UPX_F_VMLINUZ_i386 ==ph.format
            || UPX_F_BVMLINUZ_i386==ph.format ) ) {
             // "push byte '?'"

@@ -260,6 +260,7 @@ void show_help(int x)
                 " rtm32/pe,"
                 " tmt/adam,"
                 "\n   "
+                " vmlinux/386,"
                 " vmlinuz/386,"
                 " watcom/le,"
                 //" win16/ne,"

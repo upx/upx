@@ -35,7 +35,7 @@ STUBS = \
 	l_lx_exec86.h fold_exec86.h \
 	l_lx_elf86.h  fold_elf86.h \
 	l_lx_sh86.h   fold_sh86.h \
-	l_vmlinz.h
+	l_vmlinz.h l_vmlinx.h
 
 # experimental:
 ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
@@ -221,6 +221,10 @@ l_vmlinz.h: l_vmlinz.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 
+l_vmlinx.h: l_vmlinx.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
 l_vxd.h: l_vxd.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
@@ -398,6 +402,7 @@ l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1) ../version.h
 l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1) ../version.h
 l_tmt.h:        $(DEPS2) $(DEPS3)
 l_vmlinz.h:     $(DEPS2) $(DEPS3)
+l_vmlinx.h:     $(DEPS2) $(DEPS3)
 l_vxd.h:        $(DEPS2) $(DEPS3)
 l_wcle.h:       $(DEPS2) $(DEPS3)
 l_w32pe.h:      $(DEPS2) $(DEPS3)

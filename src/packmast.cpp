@@ -49,6 +49,7 @@
 #include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_vmlinz.h"
+#include "p_vmlinx.h"
 #include "p_ps1.h"
 
 
@@ -182,6 +183,8 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // linux kernel
     //
+    if ((p = func(new PackVmlinuxI386(f),f)) != NULL)
+        return p;
     if ((p = func(new PackVmlinuzI386(f),f)) != NULL)
         return p;
     if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
@@ -224,6 +227,7 @@ static Packer* try_packers(InputFile *f, try_function func)
         return p;
     if ((p = func(new PackCom(f),f)) != NULL)
         return p;
+
     return NULL;
 }
 

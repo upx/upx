@@ -51,6 +51,15 @@ struct Elf_LE32_Ehdr
     LE16 e_shentsize;           /* Section header table entry size */
     LE16 e_shnum;               /* Section header table entry count */
     LE16 e_shstrndx;            /* Section header string table index */
+
+    // Values for e_type
+    enum {
+        ET_NONE	=0, /* No file type */
+        ET_REL	=1, /* Relocatable file */
+        ET_EXEC	=2, /* Executable file */
+        ET_DYN	=3, /* Shared object file */
+        ET_CORE	=4  /* Core file */
+    };
 }
 __attribute_packed;
 
