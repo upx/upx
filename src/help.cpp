@@ -170,7 +170,7 @@ void show_help(int x)
                     "  --compress-icons=0      do not compress any icons\n"
                     "  --compress-icons=1      compress all but the first icon\n"
                     "  --compress-icons=2      compress all but the first icon directory [default]\n"
-                    "  --compress-resources=0  do not compress any resources\n"
+                    "  --compress-resources=0  do not compress any resources at all\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "\n");
