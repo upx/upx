@@ -2,14 +2,21 @@
  * General Public License. No warranty. See COPYING for details.
  */
 
-#include        <stdio.h>
-#include        <stdlib.h>
-#include        <string.h>
-#include        <errno.h>
-#include        <unistd.h>
-#include        <fcntl.h>
-#include        <elf.h>
-#include        <asm/elf.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <elf.h>
+#undef EM_X8664
+#define EM_X8664 EM_X86_64
+#include <asm/types.h>
+#undef u32
+#define u32 __u32
+#undef u64
+#define u64 __u64
+#include <asm/elf.h>
 
 #ifndef TRUE
 #define TRUE            1
@@ -121,9 +128,9 @@ static int readphdrtable(int fd, Elf_Ehdr const *ehdr, Elf_Phdr **phdrs)
 static int getmemorysize(Elf_Ehdr const *ehdr, Elf_Phdr const *phdrs,
                          unsigned long *newsize)
 {
-    Elf32_Phdr const   *phdr;
+    Elf_Phdr const     *phdr;
     unsigned long       size, n;
-    int                 i;
+    size_t              i;
 
     /* Start by setting the size to include the ELF header and the
      * complete program segment header table.
@@ -185,8 +192,8 @@ static int truncatezeros(int fd, unsigned long *newsize)
 static int modifyheaders(Elf_Ehdr *ehdr, Elf_Phdr *phdrs,
                          unsigned long newsize)
 {
-    Elf32_Phdr *phdr;
-    int         i;
+    Elf_Phdr *phdr;
+    size_t    i;
 
     /* If the section header table is gone, then remove all references
      * to it in the ELF header.
@@ -309,6 +316,6 @@ int main(int argc, char *argv[])
 }
 
 /*
-vi:ts=8:et:nowrap
+vi:ts=4:et:nowrap
 */
 

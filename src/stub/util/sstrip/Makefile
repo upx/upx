@@ -2,22 +2,17 @@
 
 SHELL = /bin/sh
 
-all: sstrip
+##all: amd64-linux-sstrip
+all: i386-linux-sstrip
 
-sstrip: sstrip.c
-	gcc -O2 -g -Wall -W -o $@ $<
+amd64-linux-sstrip: sstrip.c
+	gcc -m64 -O2 -g -Wall -W -o $@ $<
+i386-linux-sstrip: sstrip.c
+	gcc -m32 -O2 -g -Wall -W -o $@ $<
 
-mostlyclean:
-	-rm -f *.d *.err *.i *.log *.map *~ gdb-trans*
-
-clean distclean maintainer-clean: mostlyclean
-	-rm -f *.a *.lib *.o *.obj tags TAGS ID
-	-rm -rf .deps
-	rm -f sstrip
+mostlyclean clean distclean maintainer-clean:
+	rm -f *.d *.o *.obj
+	rm -f sstrip amd64-linux-sstrip i386-linux-sstrip
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
-
-.NOEXPORT:
-
-# vi:nowrap
 
