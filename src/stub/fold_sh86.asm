@@ -55,7 +55,7 @@ fold_begin:     ; enter: %ebx= uncDst
         call do_auxv  ; edi= &AT_NEXT
 
         sub esp, dword MAX_ELF_HDR + OVERHEAD
-        
+
         xchg eax, ebx  ; eax= uncDst
         lea edx, [szl_info + szp_info + edx]  ; cprSrc
         mov ecx, [   edx]  ; sz_unc
