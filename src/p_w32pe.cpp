@@ -918,12 +918,10 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
-#if 0
-    // FIXME: !!! the check for TLS callbacks is broken !!!
     // note: TLS callbacks are not implemented in Windows 95/98/ME
-    if (tlsp->callbacks)
-        throwCantPack("TLS callbacks are not supported");
-#endif
+    if (tlsp->callbacks && get_le32(ibuf + tlsp->callbacks - ih.imagebase))
+        throwCantPack("tls callbacks are not supported");
+
     unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
     unsigned tlsdataend = tlsp->dataend - ih.imagebase;
 
@@ -1515,7 +1513,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     unsigned ic,jc,overlaystart = 0;
     memset(ibuf,0,usize);
-    for (ic = 0; ic < objs; ic++)
+    for (ic = jc = 0; ic < objs; ic++)
     {
         if (isection[ic].rawdataptr && overlaystart < isection[ic].rawdataptr + isection[ic].size)
             overlaystart = ALIGN_UP(isection[ic].rawdataptr + isection[ic].size,ih.filealign);
@@ -1530,6 +1528,8 @@ void PackW32Pe::pack(OutputFile *fo)
         if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
             == (PEFL_WRITE|PEFL_SHARED)) && !opt->force)
             throwCantPack("writeable shared sections not supported (try --force)");
+        if (jc && isection[ic].rawdataptr - jc > ih.filealign /**/ && !opt->force)
+            throwCantPack("superfluous data between sections");
         fi->seek(isection[ic].rawdataptr,SEEK_SET);
         if (isection[ic].vaddr + isection[ic].size > usize)
             throwCantPack("section size problem");
@@ -1539,6 +1539,7 @@ void PackW32Pe::pack(OutputFile *fo)
         if (isection[ic].vsize == 0) // hack for some tricky programs - may this break other progs?
             jc = isection[ic].vsize = isection[ic].size;
         fi->readx(ibuf + isection[ic].vaddr,jc);
+        jc += isection[ic].rawdataptr;
     }
 
     // check for NeoLite
@@ -1631,6 +1632,7 @@ void PackW32Pe::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ih.codesize;
+    ft.addvalue = ih.codebase - rvamin;
     // compress
     int strategy = allow_filter ? 0 : -3;
     compressWithFilters(&ft, 2048, strategy,
@@ -1784,9 +1786,14 @@ void PackW32Pe::pack(OutputFile *fo)
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;
 
-    // this is here, because soxrelocs changes some lines above
+    // this is computed here, because soxrelocs changes some lines above
     const unsigned ncsize = soresources + soimpdlls + soexport + soxrelocs;
     ic = oh.filealign - 1;
+
+    // this one is tricky: it seems windoze touches 4 bytes after
+    // the end of the relocation data - so we have to increase
+    // the virtual size of this section
+    const unsigned ncsize_virt_increase = (ncsize & oam1) == 0 ? 8 : 0;
 
     // fill the sections
     strcpy(osection[0].name,"UPX0");
@@ -1811,7 +1818,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     osection[0].vsize = osection[1].vaddr - osection[0].vaddr;
     osection[1].vsize = (osection[1].size + oam1) &~ oam1;
-    osection[2].vsize = (osection[2].size + oam1) &~ oam1;
+    osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
 
     osection[0].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + ic) &~ ic;
     osection[1].rawdataptr = osection[0].rawdataptr;
@@ -1828,6 +1835,12 @@ void PackW32Pe::pack(OutputFile *fo)
     oh.codesize = osection[1].vsize;
     oh.codebase = osection[1].vaddr;
     oh.headersize = osection[0].rawdataptr;
+
+    if (((oh.headersize + oam1) &~ oam1) < rvamin)
+        if (!opt->force)
+            throwCantPack("untested branch (try --force)");
+        else
+            oh.headersize = rvamin;
 
     if (opt->w32pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;
