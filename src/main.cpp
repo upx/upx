@@ -1032,7 +1032,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
     COMPILE_TIME_ASSERT(__alignof__(BE16) == 1);
     COMPILE_TIME_ASSERT(__alignof__(BE32) == 1);
     COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);

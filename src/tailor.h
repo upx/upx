@@ -134,7 +134,7 @@
 #  define HAVE_UTIME 1
 #elif defined(__BORLANDC__)
 #  if (__BORLANDC__ < 0x551)
-#    error "need Borland C 5.5.1 or newer"
+#    error "need Borland C++ 5.5.1 or newer"
 #  endif
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
@@ -157,12 +157,30 @@
 #  define HAVE_CHMOD 1
 #  define HAVE_UTIME 1
 #elif defined(__INTEL_COMPILER)
-#  if (__INTEL_COMPILER >= 700)
+#  if (__INTEL_COMPILER < 700)
+#    error "need Intel C++ 7.0 or newer"
+#  endif
+#  if defined(_WIN32)
+#    define __UPX_CDECL       __cdecl
+#    define SIGTYPEENTRY      __cdecl
+#    define HAVE_CONIO_H 1
+#    define HAVE_IO_H 1
+#    define HAVE_MALLOC_H 1
+#    define HAVE_SHARE_H 1
+#    define HAVE_SYS_UTIME_H 1
+#    define HAVE_CHMOD 1
+#    define HAVE_UTIME 1
+#    define HAVE_VSNPRINTF 1
+#    define vsnprintf _vsnprintf
+#  else
 #    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
 #    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
 #    pragma warning(disable: 1418)      // #1418: external definition with no prior declaration
 #  endif
 #elif defined(_MSC_VER)
+#  if (_MSC_VER < 1100)
+#    error "need Visual C++ 5.0 or newer"
+#  endif
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
 #  define HAVE_CONIO_H 1
@@ -184,7 +202,7 @@
 #  endif
 #elif defined(__WATCOMC__)
 #  if (__WATCOMC__ < 1100)
-#    error "need Watcom C 11.0c or newer"
+#    error "need Watcom C++ 11.0c or newer"
 #    define NO_BOOL 1
 #  endif
 #  define __UPX_CDECL       __cdecl

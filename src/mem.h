@@ -67,14 +67,7 @@ private:
     MemBuffer& operator= (MemBuffer const &); // { return *this; }
 
     // disable dynamic allocation
-#ifndef new
-    static void *operator new (size_t); // {}
-    static void *operator new[] (size_t); // {}
-#endif
-#ifndef delete
-    //static void operator delete (void *) {}
-    //static void operator delete[] (void *) {}
-#endif
+    DISABLE_NEW_DELETE
 };
 
 #endif /* already included */

@@ -61,7 +61,7 @@
 #  elif defined(__GNUC__) || defined(__DMC__)
 #    define upx_int64l      long long int
 #    define upx_uint64l     unsigned long long int
-#  elif defined(__BORLANDC__) || defined(_MSC_VER) || defined(__WATCOMC__)
+#  elif defined(__BORLANDC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER) || defined(__WATCOMC__)
 #    define upx_int64l      __int64
 #    define upx_uint64l     unsigned __int64
 #  else
@@ -350,7 +350,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 
 #undef __attribute_packed
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #  if 1 && defined(__i386__)
 #    define __attribute_packed
 #  else

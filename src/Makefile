@@ -7,10 +7,11 @@
 #   `make target=cygwin'            # win32 - cygwin 1.3.x
 #   `make target=mingw32'           # win32 - mingw32
 #   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
-#   `make target=bcc'               # win32 - Borland C++ 5.5.1
-#   `make target=dmc'               # win32 - Digital Mars C++ 8.32
-#   `make target=vc6'               # win32 - Visual C++ 6.0
-#   `make target=wcc'               # win32 - Watcom C++ 11.0c
+#   `make target=bc'                # win32 - Borland C++ 5.5.1
+#   `make target=dm'                # win32 - Digital Mars C++ 8.32
+#   `make target=ic'                # win32 - Intel C++ 7.0
+#   `make target=vc'                # win32 - Visual C++ 6
+#   `make target=wc'                # win32 - Watcom C++ 11.0c
 #   `make target=cross-m68k-linux'  # m68k-linux cross compiler
 #   `make target=cross-mingw32'     # i586-mingw32msvc cross compiler
 #   `make target=cross-mint'        # m68k-atari-mint cross compiler
@@ -24,6 +25,7 @@ ifeq ($(strip $(UCLDIR)),)
 UCLDIR = $(HOME)/local/src/ucl-1.01
 endif
 
+## you can set the default target here
 ##target =
 
 DEBUG = 0
@@ -48,11 +50,15 @@ VPATH = $(srcdir)
 
 # auto-detect the target unless given on the commandline
 ifeq ($(strip $(target)),)
+  # try environment variable UPX_TARGET
+  target := $(UPX_TARGET)
+endif
+ifeq ($(strip $(target)),)
 ifneq ($(strip $(wildcard /usr/include/linux)),)
 target = linux
 endif
 ##ifneq ($(strip $(wildcard /platform/sun4?/kernel/unix)),)
-##target = sparc
+##target = sparc-sun-solaris
 ##endif
 endif
 
@@ -191,18 +197,18 @@ endif
 
 
 ###
-### Linux
+### linux
 ###
 
 ifeq ($(target),linux)
-include $(srcdir)/Makedefs.gcc
 override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
-DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
-DEFS += -D_FILE_OFFSET_BITS=64
-LDLIBS += -lmcheck
+include $(srcdir)/Makedefs.gcc
 ifeq ($(arch),i386)
   CCARCH += -march=i386 -mcpu=i686
 endif
+DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
+DEFS += -D_FILE_OFFSET_BITS=64
+LDLIBS += -lmcheck
 ##CFLAGS_WERROR = -Werror
 
 ifeq ($(DEBUG),0)
@@ -218,12 +224,13 @@ endif	# linux
 
 
 ###
-### Linux/i386 with Intel C++ 7.0
+### linux/i386 - Intel C++ 7.0
 ###
 
 ifeq ($(target),linux-intelc70)
 CC = icc
 CXX = icc
+CCARCH += -march=i386 -mcpu=i686
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@
 
@@ -257,10 +264,10 @@ endif	# cross-m68k-linux
 ### sparc-sun-solaris2.8
 ###
 
-ifeq ($(target),sparc)
+ifeq ($(target),sparc-sun-solaris)
 include $(srcdir)/Makedefs.gcc
 DEFS += '-DUPX_CONFIG_H="config_h/sparc_sun_solaris28.h"'
-endif	# sparc
+endif
 
 
 ###
@@ -293,7 +300,7 @@ endif
 
 
 ###
-### djgpp2
+### dos32 - djgpp2
 ###
 
 ifeq ($(target),djgpp2)
@@ -312,13 +319,13 @@ endif	# djgpp2
 
 
 ###
-### cygwin / mingw32
+### win32 - cygwin / mingw32
 ###
 
 ifeq ($(target),cygwin)
 include $(srcdir)/Makedefs.gcc
 e = .exe
-CCARCH += -march=i386 -mcpu=i686
+CCARCH += -mcygwin -march=i386 -mcpu=i686
 endif
 
 ifeq ($(target),mingw32)
@@ -345,15 +352,15 @@ endif
 
 
 ###
-### Borland C++ 5.5.1
+### win32 - Borland C++ 5.5.1
 ###
 
-ifeq ($(target),bcc)
+ifeq ($(target),bc)
 o = .obj
 a = .lib
 e = .exe
 CC = bcc32 -q -3
-CFLAGS = -w -w-aus -g1
+CFLAGS = -w -w-aus -w-inl -g1
 CXXFLAGS_2 = $(CXXFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
@@ -375,10 +382,10 @@ endif	# bcc
 
 
 ###
-### Digital Mars C++ 8.32
+### win32 - Digital Mars C++ 8.32
 ###
 
-ifeq ($(target),dmc)
+ifeq ($(target),dm)
 o = .obj
 a = .lib
 e = .exe
@@ -406,10 +413,44 @@ endif	# dmc
 
 
 ###
-### Visual C++ 6 (aka Microsoft C/C++ Compiler 12.00)
+### win32 - Intel C++ 7.0
 ###
 
-ifeq ($(target),vc6)
+ifeq ($(target),ic)
+o = .obj
+a = .lib
+e = .exe
+CC = icl -nologo -MD
+CFLAGS = -W3 -WX
+CXXFLAGS_1 = $(CXXFLAGS) -EHac -GR
+LDFLAGS =
+LINK_EXE_OUTPUT = -Fe$@
+LDLIBS = $(DOS_LDLIBS) setargv.obj
+LINK_EXE_LDFLAGS = /link /map:$T.map
+##LINK_EXE_LDFLAGS += /verbose
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq ($(DEBUG),1)
+  CFLAGS += -Od -ZI
+  LINK_EXE_LDFLAGS += /debug
+else
+  CFLAGS += -O1 -GF
+  LINK_EXE_LDFLAGS += /release
+endif
+RESOURCES = upx.res
+
+endif	# icl
+
+
+###
+### win32 - Visual C++ 6
+###
+
+ifeq ($(target),vc)
 o = .obj
 a = .lib
 e = .exe
@@ -439,7 +480,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
 else
-  CFLAGS += -O2 -GF
+  CFLAGS += -O1 -GF
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES = upx.res
@@ -448,10 +489,10 @@ endif	# vc6
 
 
 ###
-### Watcom C++ 11.0c / Open Watcom C++ 1.0
+### win32 - Watcom C++ 11.0c / Open Watcom C++ 1.0
 ###
 
-ifeq ($(target),wcc)
+ifeq ($(target),wc)
 o = .obj
 a = .lib
 e = .exe

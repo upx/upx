@@ -158,7 +158,7 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
         strcpy(r, "999.99%");
 #endif
     else
-        upx_snprintf(r, sizeof(r), "%3d.%02d%%", ratio / 10000, (ratio % 10000) / 100);
+        upx_snprintf(r, sizeof(r), "%3u.%02u%%", ratio / 10000, (ratio % 10000) / 100);
     if (decompress)
         f = "%10ld <-%10ld  %7s  %13s  %s";
     else

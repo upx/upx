@@ -127,8 +127,9 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
 //
 **************************************************************************/
 
-#define MAGIC1(p)   (((unsigned)(p) & 0xffffffff) ^ 0xfefdbeeb)
-#define MAGIC2(p)   (((unsigned)(p) & 0xffffffff) ^ 0xfefdbeeb ^ 0x80024001)
+#define PTR(p)      ((unsigned)(p) & 0xffffffff)
+#define MAGIC1(p)   (PTR(p) ^ 0xfefdbeeb)
+#define MAGIC2(p)   (PTR(p) ^ 0xfefdbeeb ^ 0x80024001)
 
 unsigned MemBuffer::global_alloc_counter = 0;
 

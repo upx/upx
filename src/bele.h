@@ -355,7 +355,7 @@ int le32_compare_signed(const void *e1, const void *e2);
 
 // just for testing...
 #if 0 && defined(__i386__) && defined(__GNUC_VERSION_HEX__)
-# if (__GNUC_VERSION_HEX__ >= 0x030100)
+# if (__GNUC_VERSION_HEX__ >= 0x030200)
    typedef unsigned short LE16_unaligned __attribute__((__packed__,__aligned__(1)));
    typedef unsigned int   LE32_unaligned __attribute__((__packed__,__aligned__(1)));
 #  define LE16      LE16_unaligned

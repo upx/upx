@@ -32,7 +32,54 @@
 #ifdef __cplusplus
 
 
-//#define NOTHROW throw()
+#if !defined(NOTHROW)
+#  define NOTHROW throw()
+#endif
+
+
+/*************************************************************************
+// disable dynamic allocation of an object
+**************************************************************************/
+
+#if defined(new) || defined(delete)
+
+// debug
+#  define DISABLE_NEW_DELETE
+
+#else
+
+#  if 1
+#    define DISABLE_NEW_DELETE_PLACEMENT_NEW \
+        static void *operator new(size_t, void *);
+#  else
+#    define DISABLE_NEW_DELETE_PLACEMENT_NEW
+#  endif
+#  if defined(__GNUC__) && (__GNUC__ >= 3)
+#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
+        static void operator delete(void *, void *) NOTHROW { }
+#  elif defined(__INTEL_COMPILER)
+#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
+        static void operator delete(void *, void *) NOTHROW { }
+#  elif defined(_MSC_VER) && (_MSC_VER >= 1200)
+#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
+        static void operator delete(void *, void *) NOTHROW { }
+#  else
+#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE
+#  endif
+
+#  define DISABLE_NEW_DELETE \
+private: \
+    static void *operator new(size_t); \
+    static void *operator new[](size_t); \
+    DISABLE_NEW_DELETE_PLACEMENT_NEW \
+protected: \
+    static void operator delete(void *) NOTHROW { } \
+    static void operator delete[](void *) NOTHROW { } \
+    DISABLE_NEW_DELETE_PLACEMENT_DELETE \
+private:
+
+#endif
+
 
 
 /*************************************************************************

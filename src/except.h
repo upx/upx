@@ -60,10 +60,7 @@ private:
     // disable assignment
     Throwable& operator= (Throwable const &);
     // disable dynamic allocation
-#ifndef new
-    static void *operator new (size_t); // {}
-    static void *operator new[] (size_t); // {}
-#endif
+    DISABLE_NEW_DELETE
 
 private:
     static long counter;                // for debugging
