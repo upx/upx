@@ -284,7 +284,7 @@ void upx_main(
         goto error;
 #endif
 
-    // Set expected file size.
+    // Set expected uncompressed file size.
     if (ftruncate(fdo, header.p_filesize) != 0)
         goto error;
 
