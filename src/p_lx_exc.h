@@ -42,7 +42,7 @@ public:
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
-        unsigned brka
+        unsigned const brka
     );
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
     virtual const char *getName() const { return "linux/386"; }
@@ -86,25 +86,25 @@ protected:
     struct cprElfHdr1 {
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[1];
-        struct PackUnix::l_info linfo;
+        struct l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr2 {
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[2];
-        struct PackUnix::l_info linfo;
+        struct l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr3 {
         struct Elf_LE32_Ehdr ehdr;
         struct Elf_LE32_Phdr phdr[3];
-        struct PackUnix::l_info linfo;
+        struct l_info linfo;
     }
     __attribute_packed;
 
-    cprElfHdr3 elfout;
+    struct cprElfHdr3 elfout;
 
 };
 

@@ -81,8 +81,8 @@ const int *PackLinuxI386::getFilters() const
 
 void
 PackLinuxI386::generateElfHdr(
-    OutputFile *const fo,
-    void const *const proto,
+    OutputFile *fo,
+    void const *proto,
     unsigned const brka
 )
 {

@@ -257,7 +257,7 @@ void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
     assert(ehdri.e_phoff == sizeof(Elf_LE32_Ehdr));  // checked by canPack()
     sz_phdrs = ehdri.e_phnum * ehdri.e_phentsize;
 
-    phdri = new Elf_LE32_Phdr[ehdri.e_phnum];
+    phdri = new Elf_LE32_Phdr[(unsigned)ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
