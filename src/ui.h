@@ -110,7 +110,7 @@ protected:
     static long update_fu_len;
 
 #if defined(WITH_GUI)
-	CMainDlg* pMain;
+    CMainDlg* pMain;
 #endif
 };
 
