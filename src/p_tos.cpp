@@ -355,7 +355,7 @@ void PackTos::pack(OutputFile *fo)
 
 #if 0 || defined(TESTING)
     printf("text: %d, data: %d, sym: %d, bss: %d, flags=0x%x\n",
-           i_text, i_data, i_sym, i_bss, (int)fh_flag);
+           i_text, i_data, i_sym, i_bss, (int)ih.fh_flag);
     printf("xx1 reloc: %d, overlay: %d, fixup: %d\n", relocsize, overlay, overlay >= 4 ? (int)get_be32(ibuf+t) : -1);
 #endif
 
@@ -526,7 +526,7 @@ void PackTos::pack(OutputFile *fo)
     printf("old text: %6d, data: %6d, bss: %6d, reloc: %d, overlay: %d\n",
            i_text, i_data, i_bss, relocsize, overlay);
     printf("new text: %6d, data: %6d, bss: %6d, dirty_bss: %d, flag=0x%x\n",
-           o_text, o_data, o_bss, dirty_bss, (int)fh_flag);
+           o_text, o_data, o_bss, dirty_bss, (int)oh.fh_flag);
 #endif
 
     // write new file header, loader and compressed file

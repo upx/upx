@@ -314,9 +314,9 @@ void PackExe::pack(OutputFile *fo)
     {
         printf("image+relocs %d -> %d\n",imagesize+relocsize,ph.c_len);
         printf("offsets: %d - %d\nmatches: %d - %d\nruns: %d - %d\n",
-               ph.min_offset_found,ph.max_offset_found,
-               ph.min_match_found,ph.max_match_found,
-               ph.min_run_found,ph.max_run_found);
+               0/*ph.min_offset_found*/,ph.max_offset_found,
+               0/*ph.min_match_found*/,ph.max_match_found,
+               0/*ph.min_run_found*/,ph.max_run_found);
     }
 #endif
     const unsigned packedsize = ph.c_len;
