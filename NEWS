@@ -20,6 +20,13 @@ Changes in 1.11 beta (20 Dec 2000):
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
 
+Changes in 1.07 (20 Feb 2001)
+  * win32/pe: corrected the TLS callback check
+  * win32/pe: really fixed that rare bug in relocation handling
+  * win32/pe: experimental support for SizeOfHeaders > 0x1000
+  * win32/pe: check for superfluous data between sections
+  * win32/pe: compressing screensavers (.scr) should finally work
+
 Changes in 1.06 (27 Jan 2001)
   * win32/pe: the check for TLS callbacks introduced in 1.05
       was too strict - disabled for now

@@ -73,8 +73,6 @@ Existing formats:
      of problems (like importing a DLL or function fails)
  - win32/pe: finer control over resource compression, per section
      compression
- - win32/pe: compressing screensavers looses the description - probably
-     should not compress a special resource type
 
 
 Compression ratio:
