@@ -29,6 +29,8 @@
 #ifndef __UPX_FILE_H
 #define __UPX_FILE_H
 
+class MemBuffer;
+
 
 /*************************************************************************
 //
@@ -92,6 +94,10 @@ public:
 
     virtual int read(void *buf, int len);
     virtual int readx(void *buf, int len);
+    virtual int read(MemBuffer *buf, int len);
+    virtual int readx(MemBuffer *buf, int len);
+    virtual int read(MemBuffer &buf, int len);
+    virtual int readx(MemBuffer &buf, int len);
 
     virtual void seek(off_t off, int whence);
     virtual off_t tell() const;

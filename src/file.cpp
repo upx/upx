@@ -28,6 +28,7 @@
 
 #include "conf.h"
 #include "file.h"
+#include "mem.h"
 
 
 /*************************************************************************
@@ -236,24 +237,47 @@ void InputFile::sopen(const char *name, int flags, int shflags)
     if (!isOpen())
     {
         if (errno == ENOENT)
-            throw FileNotFoundException(_name,errno);
+            throw FileNotFoundException(_name, errno);
         else if (errno == EEXIST)
-            throw FileAlreadyExistsException(_name,errno);
+            throw FileAlreadyExistsException(_name, errno);
         else
-            throwIOException(_name,errno);
+            throwIOException(_name, errno);
     }
 }
 
 
 int InputFile::read(void *buf, int len)
 {
-    return super::read(buf,len);
+    return super::read(buf, len);
 }
-
 
 int InputFile::readx(void *buf, int len)
 {
-    return super::readx(buf,len);
+    return super::readx(buf, len);
+}
+
+
+int InputFile::read(MemBuffer *buf, int len)
+{
+    assert((unsigned)len <= buf->getSize());
+    return super::read(buf->getVoidPtr(), len);
+}
+
+int InputFile::readx(MemBuffer *buf, int len)
+{
+    assert((unsigned)len <= buf->getSize());
+    return super::readx(buf->getVoidPtr(), len);
+}
+
+
+int InputFile::read(MemBuffer &buf, int len)
+{
+    return read(&buf, len);
+}
+
+int InputFile::readx(MemBuffer &buf, int len)
+{
+    return readx(&buf, len);
 }
 
 
