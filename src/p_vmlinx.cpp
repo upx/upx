@@ -367,7 +367,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
     fo->write(obuf, ph.u_len);
     obuf.dealloc();
     ibuf.dealloc();
-    
+
     ph = ph_tmp;
     fi->seek(p_text->sh_offset, SEEK_SET);
     fi->readx(&call, 5);
@@ -412,39 +412,39 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //# create a compressed vmlinux image from the original vmlinux
 //#
 //
-//targets		:= vmlinux upx-head.o upx-piggy.o
+//targets := vmlinux upx-head.o upx-piggy.o
 //
 //LDFLAGS_vmlinux := -Ttext $(IMAGE_OFFSET) -e startup_32
 //
 //$(obj)/vmlinux: $(obj)/upx-head.o $(obj)/upx-piggy.o FORCE
-//	$(call if_changed,ld)
-//	@:
+//      $(call if_changed,ld)
+//      @:
 //
 //$(obj)/upx-piggy.o: vmlinux FORCE
-//	rm -f  $(obj)/upx-piggy.o
-//	upx -o $(obj)/upx-piggy.o $<
+//      rm -f  $(obj)/upx-piggy.o
+//      upx -o $(obj)/upx-piggy.o $<
 //-----
 //
 //----- arch/i386/boot/compressed/upx-head.S
 //#include <asm/segment.h>
 //
-//	.text
+//      .text
 //startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
-//	cli  # but if it matters, then there is a race!
+//      cli  # but if it matters, then there is a race!
 //
-//	movl $ __BOOT_DS,%eax
-//	movl %eax,%ss; movl $0x99000,%esp  # 2.6.7 setup had ss:sp of 9000:8ffe
-//		/* Avoid EBDA (Extended BIOS Data Area) below 0xA0000. */
+//      movl $ __BOOT_DS,%eax
+//      movl %eax,%ss; movl $0x99000,%esp  # 2.6.7 setup had ss:sp of 9000:8ffe
+//              /* Avoid EBDA (Extended BIOS Data Area) below 0xA0000. */
 //
-//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
+//      pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 //
-//	movl %eax,%ds  # all non-code segments identical
-//	movl %eax,%es
-//	movl %eax,%fs
-//	movl %eax,%gs
+//      movl %eax,%ds  # all non-code segments identical
+//      movl %eax,%es
+//      movl %eax,%fs
+//      movl %eax,%gs
 //
-//	movl $ 0x100000,%eax  # destination of uncompression (and entry point)
-//	pushl $ __BOOT_CS
+//      movl $ 0x100000,%eax  # destination of uncompression (and entry point)
+//      pushl $ __BOOT_CS
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
@@ -458,32 +458,32 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //#include <asm/unistd.h>
 //
 //dump:
-//	movl $0x456789,%edx  # length  MODIFY THIS VALUE TO SUIT YOUR CASE
-//	movl $0x100000,%ecx  # base
-//	movl $1,%ebx         # stdout
-//	movl $ __NR_write,%eax
-//	int $0x80
-//	nop
-//	hlt
+//      movl $0x456789,%edx  # length  MODIFY THIS VALUE TO SUIT YOUR CASE
+//      movl $0x100000,%ecx  # base
+//      movl $1,%ebx         # stdout
+//      movl $ __NR_write,%eax
+//      int $0x80
+//      nop
+//      hlt
 //mmap:
-//	pushl %ebx
-//	leal 2*4(%esp),%ebx
-//	pushl $ __NR_mmap; popl %eax
-//	int $0x80
-//	popl %ebx
-//	ret $6*4
+//      pushl %ebx
+//      leal 2*4(%esp),%ebx
+//      pushl $ __NR_mmap; popl %eax
+//      int $0x80
+//      popl %ebx
+//      ret $6*4
 //
 //_start: .globl _start
-//	nop
-//	int3  # enter debugger!
-//	pushl $0
-//	pushl $0
-//	pushl $ MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
-//	pushl $ PROT_EXEC | PROT_WRITE | PROT_READ
-//	pushl $0x600000  # 6MB
-//	pushl $0x100000  # 1MB
-//	call mmap
-//	push %cs
+//      nop
+//      int3  # enter debugger!
+//      pushl $0
+//      pushl $0
+//      pushl $ MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
+//      pushl $ PROT_EXEC | PROT_WRITE | PROT_READ
+//      pushl $0x600000  # 6MB
+//      pushl $0x100000  # 1MB
+//      call mmap
+//      push %cs
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
