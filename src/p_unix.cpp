@@ -181,7 +181,7 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         blk_info.b_ftid = ph.filter;
         blk_info.b_cto8 = ph.filter_cto;
         fo->write(&blk_info, sizeof(blk_info));
-        ph.b_len += sizeof(b_info);
+        b_len += sizeof(b_info);
 
         // write compressed data
         if (ph.c_len < ph.u_len) {
@@ -229,7 +229,7 @@ void PackUnix::pack(OutputFile *fo)
 {
     Filter ft(ph.level);
     ft.addvalue = 0;
-    ph.b_len = 0;
+    b_len = 0;
     progid = 0;
 
     // set options

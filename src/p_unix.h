@@ -81,6 +81,8 @@ protected:
     MemBuffer pt_dynamic;
     int sz_dynamic;
 
+    unsigned b_len;  // total length of b_info blocks
+
     // must agree with stub/linux.hh
     struct b_info { // 12-byte header before each compressed block
         unsigned sz_unc;  // uncompressed_size

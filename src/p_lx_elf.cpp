@@ -194,7 +194,7 @@ void PackLinuxI386elf::packExtent(
             tmp.b_cto8 = ft->cto;
         }
         fo->write(&tmp, sizeof(tmp));
-        ph.b_len += sizeof(b_info);
+        b_len += sizeof(b_info);
 
         // write compressed data
         if (ph.c_len < ph.u_len) {

@@ -344,7 +344,7 @@ PackLinuxI386::buildLinuxLoader(
             // p_progid, p_filesize, p_blocksize
         sizeof(p_info) +
             // compressed data
-        ph.b_len + ph.c_len );
+        b_len + ph.c_len );
             // entry to stub
     addLoader("LEXEC000", 0);
 

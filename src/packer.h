@@ -95,9 +95,6 @@ public:
 
     // info fields set by Packer::compressWithFilters()
     unsigned overlap_overhead;
-
-    // FIXME: john, what is this ???
-    unsigned b_len;  // total length of b_info blocks
 };
 
 
