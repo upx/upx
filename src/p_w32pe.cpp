@@ -1720,16 +1720,12 @@ void PackW32Pe::pack(OutputFile *fo)
         patch_le32(loader,codesize,"IMPS",myimport);
         patch_le32(loader,codesize,"BIMP",cimports);
     }
-    if (ft.id)
+
+    if (patchFilter32(ft, loader, lsize))
     {
-        assert(ft.calls > 0);
-        if (ft.id > 0x20)
-            patch_le16(loader,codesize,"??",'?' + (ft.cto << 8));
-        patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
-                   ft.lastcall - ft.calls * 4);
         const unsigned texv = ih.codebase - rvamin;
         if (texv)
-            patch_le32(loader,codesize,"TEXV",texv);
+            patch_le32(loader, codesize, "TEXV", texv);
     }
     if (tlsindex)
     {

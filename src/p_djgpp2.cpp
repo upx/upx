@@ -329,14 +329,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     // patch loader
     patchPackHeader(loader,lsize);
     patch_le32(loader,lsize,"ENTR",coff_hdr.a_entry);
-    if (ft.id)
-    {
-        assert(ft.calls > 0);
-        if (ft.id > 0x20)
-            patch_le16(loader,lsize,"??",'?' + (ft.cto << 8));
-        patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
-                   ft.lastcall - ft.calls * 4);
-    }
+    patchFilter32(ft, loader, lsize);
     patch_le32(loader,lsize,"BSSL",overlapoh/4);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     patch_le32(loader,lsize,"OUTP",text->vaddr &~ 0x1ff);

@@ -192,6 +192,7 @@ protected:
                              unsigned addvalue=0) const;
     virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
         { }
+    virtual bool patchFilter32(const Filter &, void *, unsigned);
 
     // loader util
     virtual int buildLoader(const Filter *) { return getLoaderSize(); }

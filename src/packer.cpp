@@ -1301,6 +1301,19 @@ void Packer::scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
 }
 
 
+bool Packer::patchFilter32(const Filter &ft, void *loader, unsigned lsize)
+{
+    if (ft.id == 0)
+        return false;
+    assert(ft.calls > 0);
+    if (ft.id > 0x20)
+        patch_le16(loader, lsize, "??", '?' + (ft.cto << 8));
+    patch_le32(loader, lsize, "TEXL", (ft.id & 0xf) % 3 == 0 ? ft.calls :
+               ft.lastcall - ft.calls * 4);
+    return true;
+}
+
+
 /*
 vi:ts=4:et:nowrap
 */

@@ -432,7 +432,6 @@ void PackWcle::pack(OutputFile *fo)
     // filter
     Filter ft(opt->level);
     tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
-    const unsigned calltrickoffset = ft.cto << 24;
 
     // attach some useful data at the end of preprocessed fixups
     ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
@@ -514,16 +513,8 @@ void PackWcle::pack(OutputFile *fo)
     upx_byte *p = oimage+soimage-d_len;
     patch_le32(p,d_len,"JMPO",ih.init_eip_offset+text_vaddr-(ic+d_len));
     patch_le32(p,d_len,"ESP0",ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address));
-    if (ft.id)
-    {
-        assert(ft.calls > 0);
-        if (ft.id > 0x20)
-            patch_le16(p,d_len,"??",'?'+(calltrickoffset>>16));
-        patch_le32(p,d_len,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
-                   ft.lastcall - ft.calls * 4);
-        if (text_vaddr)
-            patch_le32(p,d_len,"TEXV",text_vaddr);
-    }
+    if (patchFilter32(ft, p, d_len) && text_vaddr)
+        patch_le32(p, d_len, "TEXV", text_vaddr);
     patch_le32(p,d_len,"RELO",mps*pages);
 
     patchPackHeader(oimage,e_len);
