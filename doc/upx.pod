@@ -695,7 +695,7 @@ Notes:
     If this isn't possible UPX will abort showing a 'packed data overlap'
     error. With the "--force" option UPX will set a few 'bytes higher' loading
     offset for the packed file, but this isn't a real problem if it is a
-    single or will only boot once executable.
+    single or boot-only executable.
 
 Extra options available for this executable format:
 
@@ -704,9 +704,10 @@ Extra options available for this executable format:
                       the compression ratio in some cases, but usually
                       the default method gives the best results anyway.
 
-  --no-align          This option disables mode 2 data sector format
-                      alignment. This saves some bytes, but the compressed
-                      executable will not work when started from a CD.
+  --no-align          This option disables CD mode 2 data sector format
+                      alignment. This will slightly increase the compression
+                      ratio, but the compressed executable will not work
+                      when started from a CD.
 
 
 
