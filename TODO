@@ -42,6 +42,8 @@ FORMAT DOS/EXE
 
 - implement filters
 
+- add a check so that we don't pack djgpp1 binaries
+
 
 FORMAT LINUX/386
 ================
