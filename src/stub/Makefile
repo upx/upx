@@ -38,10 +38,10 @@ STUBS = \
 	l_vmlinz.h
 
 # experimental:
-ifneq ($(strip $(wildcard l_ext2.asm)),)
+ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
 STUBS += l_ext2.h
 endif
-ifneq ($(strip $(wildcard l_tos2.s)),)
+ifneq ($(strip $(wildcard $(srcdir)/l_tos2.s)),)
 STUBS += l_t_x2b.h l_t_x2bs.h l_t_x2d.h l_t_x2ds.h
 endif
 
@@ -71,9 +71,7 @@ vpath %.ash $(UCL_MR3K)
 # // tools
 # ************************************************************************/
 
-NASM     = /usr/topics/asm/nasm-20000903/nasm -O0 -w+macro-params -w+orphan-labels
-NASM     = /usr/topics/asm/nasm-20000903/nasm -O2 -w+macro-params -w+orphan-labels
-NASM     = nasm -w+macro-params -w+orphan-labels
+NASM     = nasm -O2 -w+macro-params -w+orphan-labels
 NASM    += -i$(srcdir)/
 
 APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
@@ -83,15 +81,19 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
 STRIPELF = ./util/sstrip/sstrip
 
-# Use gcc 2.95.2 for smallest code.
-CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
-CC_LINUX_CFLAGS += -Werror
-CC_LINUX_CFLAGS += -funsigned-char
-###CC_LINUX_CFLAGS += -fwritable-strings -save-temps
-CC_LINUX = gcc272 -O2 -m386                  -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
-CC_LINUX = gcc    -Os -march=i386 -mcpu=i386 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
-# Specifying -mcpu=i586 inhibits use of 'leave', which costs 2 bytes per subr
-#CC_LINUX = gcc    -Os -march=i386 -mcpu=i586 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
+# Compiler for the Linux/386 stubs.
+ifeq (1,2)
+  CC_LINUX_I386 = gcc272 -m386 -O2
+else
+  # gcc 2.95.3 seems to produce the smallest code
+  # (specifying -mcpu=i586 inhibits use of 'leave', which costs 2 bytes per subr)
+  CC_LINUX_I386 = gcc-2.95 -march=i386 -mcpu=i386 -Os -fno-strict-aliasing
+endif
+CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+CC_LINUX_I386 += -Werror
+CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
+CC_LINUX_I386 += -funsigned-char
+###CC_LINUX_I386 += -fwritable-strings -save-temps
 
 # Motorola 68000
 CPP_M68K  = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
@@ -122,21 +124,27 @@ default:
 	@echo "UPX info: type 'make all' if you have all the required build tools."
 
 all: stubs ## upxb upxd
+	@echo "timestamp" > stamp-h
 
 stubs: $(STUBS)
 
+
 mostlyclean:
 	-rm -f *~ *.bin *.bkp *.i *.lst *.map stubify.exe
-
-clean: mostlyclean
 	-rm -f *.o *.asx *.asy
 
-distclean: clean
+clean: mostlyclean
+ifneq ($(strip $(wildcard stamp-h)),)
+	-rm -f l_*.h $(STUBS)
+endif
 
-# This command is intended for maintainers to use; it deletes files
-# that may require special tools to rebuild.
-maintainer-clean: distclean
-	-rm -f $(STUBS) upxb upxd
+distclean: mostlyclean
+	@-rm -f stamp-h
+
+maintainer-clean: mostlyclean
+	-rm -f l_*.h $(STUBS)
+	@-rm -f stamp-h
+
 
 ident: all
 	ident *.bin
@@ -149,10 +157,10 @@ strings: all
 # // rules
 # ************************************************************************/
 
-.asm.asx:
+%.asx : %.asm
 	$(APP_I386) $< $@
 
-.ash.asy:
+%.asy : %.ash
 	$(APP_I386) $< $@
 
 
@@ -299,7 +307,7 @@ l_lx_sh86.h: l_lx_sh86.asx
 	$(BIN2H) $T.bin linux_i386sh_loader $@
 
 l_lx_elf.o: l_lx_elf.c
-	$(CC_LINUX) -c $<
+	$(CC_LINUX_I386) -c $<
 
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
@@ -312,7 +320,7 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
 l_lx_exec.o: l_lx_exec.c
-	$(CC_LINUX) -c $<
+	$(CC_LINUX_I386) -c $<
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
@@ -325,7 +333,7 @@ fold_exec86.h: l_lx_exec.o fold_exec86.o l_lx_exec86.lds
 	$(BIN2H) $T.bin linux_i386exec_fold $@
 
 l_lx_sh.o: l_lx_sh.c
-	$(CC_LINUX) -c $<
+	$(CC_LINUX_I386) -c $<
 
 fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
@@ -338,7 +346,7 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(BIN2H) $T.bin linux_i386sh_fold $@
 
 l_lx_sep.o: l_lx_sep.c
-	$(CC_LINUX) -c $<
+	$(CC_LINUX_I386) -c $<
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
