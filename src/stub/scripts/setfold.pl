@@ -22,9 +22,10 @@
 #  If not, write to the Free Software Foundation, Inc.,
 #  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-#  John Reiser
-#  jreiser@BitWagon.com
+#  Markus F.X.J. Oberhumer   Laszlo Molnar           John F. Reiser
+#  markus@oberhumer.com      ml1050@cdata.tvnet.hu   jreiser@BitWagon.com
 #
+
 
 $fname = shift || die;
 sysopen (FH,$fname,2) || die;

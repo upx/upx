@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer                   Laszlo Molnar
-   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer   Laszlo Molnar
+   markus@oberhumer.com      ml1050@cdata.tvnet.hu
  */
 
 
@@ -301,13 +301,14 @@ con_fprintf(f,
     int fg = con_fg(f,FG_CYAN);
 con_fprintf(f,
         "        http://upx.tsx.org\n"
+        "        http://www.oberhumer.com/upx/\n"
         "        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html\n"
     );
     (void)con_fg(f,FG_ORANGE);
 con_fprintf(f,
         "\n"
         "   Markus F.X.J. Oberhumer                   Laszlo Molnar\n"
-        "   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu\n"
+        "   markus@oberhumer.com                      ml1050@cdata.tvnet.hu\n"
     );
     fg = con_fg(f,fg);
 }

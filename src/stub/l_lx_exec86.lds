@@ -20,11 +20,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer                   Laszlo Molnar
-   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
-
-   John F. Reiser
-   jreiser@BitWagon.com
+   Markus F.X.J. Oberhumer   Laszlo Molnar           John F. Reiser
+   markus@oberhumer.com      ml1050@cdata.tvnet.hu   jreiser@BitWagon.com
  */
 
 
