@@ -72,16 +72,15 @@ p_blen          equ     $1c     ; .l
 
 #if 0
 ; file header offsets (NOT USED)
-fh_branch       equ     $0      ; .w   $601a
-fh_tlen         equ     $2      ; .l
-fh_dlen         equ     $6      ; .l
-fh_blen         equ     $a      ; .l
-fh_slen         equ     $e      ; .l
-fh_res1         equ     $12     ; .l
-fh_res2         equ     $16     ; .l
-fh_flag         equ     $1a     ; .w
-
-fh_size         equ     $1c     ; 28 bytes
+fh_magic        equ     $0      ; .w   $601a
+fh_text         equ     $2      ; .l
+fh_data         equ     $6      ; .l
+fh_bss          equ     $a      ; .l
+fh_sym          equ     $e      ; .l
+fh_reserved     equ     $12     ; .l
+fh_flag         equ     $16     ; .l
+fh_reloc        equ     $1a     ; .w
+FH_SIZE         equ     $1c     ; 28 bytes
 #endif
 
 ;
