@@ -315,12 +315,12 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
 void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
     unsigned &total_in, unsigned &total_out,
     unsigned &c_adler, unsigned &u_adler,
-    bool first_PF_X
+    bool first_PF_X, unsigned szb_info
 )
 {
+    b_info hdr; memset(&hdr, 0, sizeof(hdr));
     while (wanted) {
-        b_info hdr;
-        fi->readx(&hdr, sizeof(hdr));
+        fi->readx(&hdr, szb_info);
         int const sz_unc = ph.u_len = get_native32(&hdr.sz_unc);
         int const sz_cpr = ph.c_len = get_native32(&hdr.sz_cpr);
         ph.filter_cto = hdr.b_cto8;
@@ -372,6 +372,16 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)bufehdr;
     Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr *)(1+ehdr);
 
+    unsigned szb_info = sizeof(b_info);
+    {
+        fi->seek(0, SEEK_SET);
+        fi->readx(bufehdr, MAX_ELF_HDR);
+        unsigned const e_entry = get_native32(&ehdr->e_entry);
+        if (e_entry < 0x401180) { /* old style, 8-byte b_info */
+            szb_info = 2*sizeof(unsigned);
+        }
+    }
+
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
@@ -381,8 +391,8 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
-    b_info bhdr;
-    fi->readx(&bhdr, sizeof(bhdr));
+    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
+    fi->readx(&bhdr, szb_info);
     ph.u_len = get_native32(&bhdr.sz_unc);
     ph.c_len = get_native32(&bhdr.sz_cpr);
     ph.filter_cto = bhdr.b_cto8;
@@ -399,7 +409,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
 
     // decompress PT_LOAD
     bool first_PF_X = true;
-    fi->seek(- (off_t) (sizeof(bhdr) + ph.c_len), SEEK_CUR);
+    fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
     for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
         if (PT_LOAD==phdr->p_type) {
             if (0==ptload0hi) {
@@ -412,12 +422,12 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
                 fo->seek(phdr->p_offset, SEEK_SET);
             if (Elf_LE32_Phdr::PF_X & phdr->p_flags) {
                 unpackExtent(phdr->p_filesz, fo, total_in, total_out,
-                    c_adler, u_adler, first_PF_X);
+                    c_adler, u_adler, first_PF_X, szb_info);
                 first_PF_X = false;
             }
             else {
                 unpackExtent(phdr->p_filesz, fo, total_in, total_out,
-                    c_adler, u_adler, false);
+                    c_adler, u_adler, false, szb_info);
             }
         }
     }
@@ -426,17 +436,17 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
         if (fo)
             fo->seek(ptload0hi, SEEK_SET);
         unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
-            c_adler, u_adler, false);
+            c_adler, u_adler, false, szb_info);
     }
     if (total_out != orig_file_size) {  // non-PT_LOAD stuff
         if (fo)
             fo->seek(0, SEEK_END);
         unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
-            c_adler, u_adler, false);
+            c_adler, u_adler, false, szb_info);
     }
 
     // check for end-of-file
-    fi->readx(&bhdr, sizeof(bhdr));
+    fi->readx(&bhdr, szb_info);
     unsigned const sz_unc = ph.u_len = get_native32(&bhdr.sz_unc);
 
     if (sz_unc == 0) { // uncompressed size 0 -> EOF

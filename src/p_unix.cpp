@@ -303,6 +303,17 @@ int PackUnix::canUnpack()
 
 void PackUnix::unpack(OutputFile *fo)
 {
+    unsigned szb_info = sizeof(b_info);
+    {
+        Elf_LE32_Ehdr ehdr;
+        fi->seek(0, SEEK_SET);
+        fi->readx(&ehdr, sizeof(ehdr));
+        unsigned const e_entry = get_native32(&ehdr.e_entry);
+        if (e_entry < 0x401180) { /* old style, 8-byte b_info */
+            szb_info = 2*sizeof(unsigned);
+        }
+    }
+
     unsigned c_adler = upx_adler32(0, NULL, 0);
     unsigned u_adler = upx_adler32(0, NULL, 0);
 
@@ -332,14 +343,14 @@ void PackUnix::unpack(OutputFile *fo)
     // decompress blocks
     unsigned total_in = 0;
     unsigned total_out = 0;
+    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
     for (;;)
     {
 #define buf ibuf
         int i;
-        b_info bhdr;
         unsigned sz_unc, sz_cpr;
 
-        fi->readx(&bhdr, sizeof(bhdr));
+        fi->readx(&bhdr, szb_info);
         ph.u_len = sz_unc = get_native32(&bhdr.sz_unc);
         ph.c_len = sz_cpr = get_native32(&bhdr.sz_cpr);
 

@@ -62,7 +62,8 @@ protected:
         unsigned &total_in, unsigned &total_out, Filter *, OutputFile *);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
-        unsigned &c_adler, unsigned &u_adler, bool first_PF_X);
+        unsigned &c_adler, unsigned &u_adler,
+        bool first_PF_X, unsigned szb_info );
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
