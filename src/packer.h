@@ -126,6 +126,7 @@ protected:
     virtual bool testUnpackFormat(int format) const;
 
 protected:
+    // implementation
     virtual void pack(OutputFile *fo) = 0;
     virtual void unpack(OutputFile *fo) = 0;
     virtual void test();
@@ -206,15 +207,15 @@ protected:
     virtual unsigned getRandomId() const;
 
     // patch util
-    void patch_be16(void *l, int llen, unsigned old, unsigned new_);
-    void patch_be16(void *l, int llen, const void * old, unsigned new_);
-    void patch_be32(void *l, int llen, unsigned old, unsigned new_);
-    void patch_be32(void *l, int llen, const void * old, unsigned new_);
-    void patch_le16(void *l, int llen, unsigned old, unsigned new_);
-    void patch_le16(void *l, int llen, const void * old, unsigned new_);
-    void patch_le32(void *l, int llen, unsigned old, unsigned new_);
-    void patch_le32(void *l, int llen, const void * old, unsigned new_);
-    void patchVersion(void *l, int llen);
+    unsigned patch_be16(void *l, int llen, unsigned old, unsigned new_);
+    unsigned patch_be16(void *l, int llen, const void * old, unsigned new_);
+    unsigned patch_be32(void *l, int llen, unsigned old, unsigned new_);
+    unsigned patch_be32(void *l, int llen, const void * old, unsigned new_);
+    unsigned patch_le16(void *l, int llen, unsigned old, unsigned new_);
+    unsigned patch_le16(void *l, int llen, const void * old, unsigned new_);
+    unsigned patch_le32(void *l, int llen, unsigned old, unsigned new_);
+    unsigned patch_le32(void *l, int llen, const void * old, unsigned new_);
+    unsigned patchVersion(void *l, int llen);
     void checkPatch(void *l, void *p, int size);
 
 protected:
@@ -245,7 +246,7 @@ protected:
 private:
     // private to checkPatch()
     void *last_patch;
-    long last_patch_offset;
+    ptrdiff_t last_patch_offset;
 
 private:
     // disable copy and assignment

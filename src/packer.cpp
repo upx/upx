@@ -325,7 +325,7 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
     assert((int)overlap_overhead >= 0);
     // Because we are not using the asm_fast decompressor here
     // we must account for extra 3 bytes or else we may fail
-    // at UPX decompression time.
+    // at runtime decompression.
     if (overlap_overhead <= 4 + 3)  // don't waste time here
         return false;
     overlap_overhead -= 3;
@@ -426,7 +426,7 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
 
 
 /*************************************************************************
-// file io utils
+// file i/o utils
 **************************************************************************/
 
 void Packer::handleStub(InputFile *fif, OutputFile *fo, long size)
@@ -482,7 +482,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
 
     // get buffer size, align to improve i/o speed
     unsigned buf_size = buf->getSize();
-    if (buf_size >= 65536)
+    if (buf_size > 65536)
         buf_size = ALIGN_DOWN(buf_size, 4096);
     assert((int)buf_size > 0);
 
@@ -641,7 +641,7 @@ void Packer::checkPatch(void *l, void *p, int size)
     }
     if (l == NULL || p == NULL || p < l || size <= 0)
         throwBadLoader();
-    long offset = (upx_bytep) p - (upx_bytep) l;
+    ptrdiff_t offset = (upx_bytep) p - (upx_bytep) l;
     //printf("checkPatch: %p %5ld %d\n", l, offset, size);
     if (l == last_patch)
     {
@@ -654,72 +654,80 @@ void Packer::checkPatch(void *l, void *p, int size)
 }
 
 
-void Packer::patch_be16(void *l, int llen, unsigned old, unsigned new_)
+unsigned Packer::patch_be16(void *l, int llen, unsigned old, unsigned new_)
 {
     void *p = find_be16(l,llen,old);
     checkPatch(l,p,2);
     set_be16(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_be16(void *l, int llen, const void * old, unsigned new_)
+unsigned Packer::patch_be16(void *l, int llen, const void * old, unsigned new_)
 {
     void *p = find(l,llen,old,2);
     checkPatch(l,p,2);
     set_be16(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_be32(void *l, int llen, unsigned old, unsigned new_)
+unsigned Packer::patch_be32(void *l, int llen, unsigned old, unsigned new_)
 {
     void *p = find_be32(l,llen,old);
     checkPatch(l,p,4);
     set_be32(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_be32(void *l, int llen, const void * old, unsigned new_)
+unsigned Packer::patch_be32(void *l, int llen, const void * old, unsigned new_)
 {
     void *p = find(l,llen,old,4);
     checkPatch(l,p,4);
     set_be32(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_le16(void *l, int llen, unsigned old, unsigned new_)
+unsigned Packer::patch_le16(void *l, int llen, unsigned old, unsigned new_)
 {
     void *p = find_le16(l,llen,old);
     checkPatch(l,p,2);
     set_le16(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_le16(void *l, int llen, const void * old, unsigned new_)
+unsigned Packer::patch_le16(void *l, int llen, const void * old, unsigned new_)
 {
     void *p = find(l,llen,old,2);
     checkPatch(l,p,2);
     set_le16(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_le32(void *l, int llen, unsigned old, unsigned new_)
+unsigned Packer::patch_le32(void *l, int llen, unsigned old, unsigned new_)
 {
     void *p = find_le32(l,llen,old);
     checkPatch(l,p,4);
     set_le32(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
-void Packer::patch_le32(void *l, int llen, const void * old, unsigned new_)
+unsigned Packer::patch_le32(void *l, int llen, const void * old, unsigned new_)
 {
     void *p = find(l,llen,old,4);
     checkPatch(l,p,4);
     set_le32(p,new_);
+    return (unsigned) last_patch_offset;
 }
 
 
 // patch version into stub/ident_n.ash
-void Packer::patchVersion(void *l, int llen)
+unsigned Packer::patchVersion(void *l, int llen)
 {
     upx_byte *p = find(l,llen,"$Id: UPX UPXV ",14);
     checkPatch(l,p,14);
@@ -728,6 +736,7 @@ void Packer::patchVersion(void *l, int llen)
     size_t len = UPX_MIN(strlen(UPX_VERSION_STRING), 4);
     memcpy(buf, UPX_VERSION_STRING, len);
     memcpy(p + 9, buf, 4);
+    return (unsigned) last_patch_offset;
 }
 
 
@@ -869,10 +878,12 @@ void Packer::addLoader(const char *s, ...)
     va_end(ap);
 }
 
+
 void Packer::addSection(const char *sname, const char *sdata, unsigned len)
 {
     linker->addSection(sname,sdata,len);
 }
+
 
 int Packer::getLoaderSection(const char *name, int *slen)
 {
@@ -972,7 +983,7 @@ void Packer::addFilter32(int filter_id)
 //   n:  try the first N filters in parm_filters[], use best one
 //  -1:  try all filters, use first working one
 //  -2:  try only the opt->filter filter
-//  -3:  use no filter
+//  -3:  use no filter at all
 //
 // This has been prepared for generalization into class Packer so that
 // opt->all_filters is available for all executable formats.
