@@ -337,6 +337,7 @@ ifeq ($(target),cross-mingw32)
 e = .exe
 CC = i586-mingw32msvc-gcc
 CC += -march=i386 -mcpu=i586
+CXXLD = i586-mingw32msvc-g++
 ##CFLAGS_M += -mno-schedule-prologue
 endif
 
