@@ -1531,11 +1531,6 @@ void PackW32Pe::pack(OutputFile *fo)
         || (isection[virta2objnum(ih.codebase,isection,objs)].flags & PEFL_CODE) == 0)
         allow_filter = false;
 
-    // filter
-    Filter ft(opt->level);
-    if (allow_filter)
-        tryFilters(&ft, ibuf + ih.codebase, ih.codesize);
-
     const unsigned oam1 = ih.objectalign-1;
 
     // FIXME: disabled: the uncompressor would not allocate enough memory
@@ -1553,13 +1548,11 @@ void PackW32Pe::pack(OutputFile *fo)
     const unsigned cimports = newvsize - rvamin; // rva of preprocessed imports
     const unsigned crelocs = cimports + soimport; // rva of preprocessed fixups
 
-    ph.filter = ft.id;
-    ph.filter_cto = ft.cto;
-    ph.u_len = newvsize+sorelocs+soimport;
+    ph.u_len = newvsize + soimport + sorelocs;
 
     // some extra data for uncompression support
     unsigned s = 0;
-    upx_byte *p1 = ibuf + ph.u_len;
+    upx_byte * const p1 = ibuf + ph.u_len;
     memcpy(p1 + s,&ih,sizeof (ih));
     s += sizeof (ih);
     memcpy(p1 + s,isection,ih.objects * sizeof(*isection));
@@ -1586,14 +1579,49 @@ void PackW32Pe::pack(OutputFile *fo)
     s += 4;
     ph.u_len += s;
     obuf.allocForCompression(ph.u_len);
-
     ph.u_len -= rvamin;
+
+#if 0
+    // filter
+    Filter ft(opt->level);
+    if (allow_filter)
+        tryFilters(&ft, ibuf + ih.codebase, ih.codesize);
+
+    // compress
+    ph.filter = ft.id;
+    ph.filter_cto = ft.cto;
     if (!compress(ibuf + rvamin,obuf))
         throwNotCompressible();
     const unsigned overlapoh = findOverlapOverhead(obuf, 2048);
 
     // verify filter
     ft.verifyUnfilter();
+#else
+    // new version using compressWithFilters()
+
+    // prepare packheader
+    ph.filter = 0;
+    // prepare filter
+    Filter ft(opt->level);
+    ft.buf_len = ih.codesize;
+    ft.addvalue = 0;
+    // prepare other settings
+    const unsigned overlap_range = 2048;
+    unsigned overlapoh;
+
+    int strategy = -1;      // try the first working filter
+    if (!allow_filter)
+        // no filter
+        strategy = -3;
+    else if (opt->filter >= 0 && isValidFilter(opt->filter))
+        // try opt->filter or 0 if that fails
+        strategy = -2;
+    else if (opt->all_filters)
+        // choose best from all available filters
+        strategy = 0;
+    compressWithFilters(&ft, &overlapoh, overlap_range, strategy,
+                        NULL, 0, 0, ih.codebase, rvamin);
+#endif
 
     newvsize = (ph.u_len + rvamin + overlapoh + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
