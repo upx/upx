@@ -312,6 +312,15 @@ void PackUnix::unpack(OutputFile *fo)
         if (e_entry < 0x401180) { /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
         }
+        else {
+            Elf_LE32_Phdr phdr;
+            fi->seek(get_native32(&ehdr.e_phoff), SEEK_SET);
+            fi->readx(&phdr, sizeof(phdr));
+            unsigned const p_vaddr = get_native32(&phdr.p_vaddr);
+            if (0x80==(e_entry - p_vaddr)) { /* 1.22 old style */
+                szb_info = 2*sizeof(unsigned);
+            }
+        }
     }
 
     unsigned c_adler = upx_adler32(NULL, 0);
