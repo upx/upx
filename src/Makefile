@@ -229,7 +229,6 @@ endif	# linux
 
 ifeq ($(target),linux-intelc70)
 CC = icc
-CXX = icc
 CCARCH += -march=i386 -mcpu=i686
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@
@@ -609,14 +608,14 @@ maintainer-clean: distclean
 
 
 untabify:
-	mfxtu -d4 -t *.h *.cpp *.ch
+	mfxtu -d4 -t *.ch *.cpp *.h
 	mfxtu -d8 -t stub/[ln]*.asm stub/*.ash stub/*.[cs]
 
 tags TAGS:
-	ctags *.h *.cpp *.ch
+	ctags *.ch *.cpp *.h
 
 ID:
-	mkid *.h *.cpp *.ch
+	mkid *.ch *.cpp *.h
 
 
 # /***********************************************************************
