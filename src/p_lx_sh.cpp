@@ -153,7 +153,8 @@ bool PackLinuxI386sh::getShellName(char *buf)
     char const *const basename = 1+strrchr(buf, '/');
     static char const *const shname[] = { // known shells that accept "-c" arg
         "sh", "ash", "bsh", "csh", "ksh", "bash", "tcsh", "pdksh",
-        0
+        //"python", // FIXME: does python work ???
+        NULL
     };
     for (int j=0; 0 != shname[j]; ++j) {
         if (0==strcmp(shname[j], basename)) {
@@ -169,6 +170,7 @@ bool PackLinuxI386sh::canUnpackFormat(int format) const
 {
     return UPX_F_LINUX_SH_i386==format;
 }
+
 
 bool PackLinuxI386sh::canPack()
 {
@@ -195,7 +197,7 @@ bool PackLinuxI386sh::canPack()
 void PackLinuxI386sh::pack(OutputFile *fo)
 {
 #define PAGE_MASK (~0<<12)
-    opt->unix.blocksize = file_size;
+    opt->unix.blocksize = blocksize = file_size;
     PackUnix::pack(fo);
 
     // update loader

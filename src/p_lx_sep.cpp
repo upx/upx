@@ -1,4 +1,4 @@
-/* p_lxsep.cpp --
+/* p_lx_sep.cpp --
 
    This file is part of the UPX executable compressor.
 
@@ -40,11 +40,14 @@
 //
 **************************************************************************/
 
+#define SCRIPT_SIZE     (opt->unix.SCRIPT_MAX + sizeof(l_info))
+
 const upx_byte *PackLinuxI386sep::getLoader() const
 {
-    static char script[SCRIPT_MAX + sizeof(l_info)];
+    static char script[SCRIPT_SIZE];
+
     memset(script, 0, sizeof(script));
-    char const *name = opt->script_name;
+    char const *name = opt->unix.script_name;
     if (0==name) {
         name = "/usr/local/lib/upxX";
     }
@@ -63,15 +66,15 @@ const upx_byte *PackLinuxI386sep::getLoader() const
 int PackLinuxI386sep::getLoaderSize() const
 {
     if (M_IS_NRV2B(opt->method))
-        return SCRIPT_MAX + sizeof(l_info);
+        return SCRIPT_SIZE;
     if (M_IS_NRV2D(opt->method))
-        return SCRIPT_MAX + sizeof(l_info);
+        return SCRIPT_SIZE;
     return 0;
 }
 
 int PackLinuxI386sep::getLoaderPrefixSize() const
 {
-    return SCRIPT_MAX;
+    return opt->unix.SCRIPT_MAX;
 }
 
 void PackLinuxI386sep::patchLoader()

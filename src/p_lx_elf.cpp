@@ -200,17 +200,13 @@ void PackLinuxI386elf::packExtent(
     unsigned &total_out
 )
 {
-    blocksize = opt->unix.blocksize;
-    if ((off_t)blocksize > x.size)
-        blocksize = x.size;
-
     fi->seek(x.offset, SEEK_SET);
     for (off_t rest = x.size; 0!=rest; )
     {
-        int l = fi->readx(ibuf, min_off_t(rest, blocksize));
-        rest -= l;
+        int l = fi->readx(ibuf, min_off_t(rest, opt->unix.blocksize));
         if (l == 0)
             break;
+        rest -= l;
 
         // Note: compression for a block can fail if the
         //       file is e.g. blocksize + 1 bytes long
@@ -255,8 +251,7 @@ void PackLinuxI386elf::packExtent(
 void PackLinuxI386elf::pack(OutputFile *fo)
 {
     // set options
-    opt->unix.blocksize = file_size;
-    blocksize = file_size;
+    opt->unix.blocksize = blocksize = file_size;
     progid = 0;  // not used
 
     fi->readx(&ehdri, sizeof(ehdri));
