@@ -1,4 +1,3 @@
-ifeq ($(USE_GCC_DEPS),1)
 ifeq ($(DEPS_DONE),)
 DEPS_DONE = 1
 
@@ -6,6 +5,8 @@ DEPS_DONE = 1
 # /***********************************************************************
 # // gcc automated dependencies
 # ************************************************************************/
+
+ifeq ($(DEPMODE),gcc)
 
 EXTRA_CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
 EXTRA_CXXFLAGS += -Wp,-MMD,.deps/$(*F).pp
@@ -19,6 +20,29 @@ else
   endif
 endif
 
+endif
+
+
+# /***********************************************************************
+# // Intel C automated dependencies
+# ************************************************************************/
+
+ifeq ($(DEPMODE),intelc_linux)
+
+EXTRA_CFLAGS   += -MMD -MF.deps/$(*F).pp
+EXTRA_CXXFLAGS += -MMD -MF.deps/$(*F).pp
+
+ifeq ($(strip $(wildcard .deps)),)
+  DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+else
+  DEP_FILES := $(wildcard .deps/*.pp)
+  ifneq ($(strip $(DEP_FILES)),)
+    include $(DEP_FILES)
+  endif
+endif
 
 endif
+
+
 endif
+

@@ -1,4 +1,4 @@
-USE_GCC_DEPS := 1
+DEPMODE := gcc
 
 
 # /***********************************************************************
@@ -14,12 +14,12 @@ LINK_EXE_OUTPUT = -o $@
 CFLAGS_W =
 CFLAGS_M =
 CFLAGS_O =
-CXXFLAGS_W = $(CFLAGS_W)
-CXXFLAGS_M = $(CFLAGS_M)
-CXXFLAGS_O = $(CFLAGS_O)
+CXXFLAGS_W =
+CXXFLAGS_M =
+CXXFLAGS_O =
 
-CFLAGS    = $(CFLAGS_W) $(CFLAGS_M) $(CFLAGS_O)
-CXXFLAGS  = $(CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O)
+CFLAGS    = $(CFLAGS_W)   $(EXTRA_CFLAGS_W)   $(CFLAGS_M)   $(CFLAGS_O)   $(EXTRA_CFLAGS_O)
+CXXFLAGS  = $(CXXFLAGS_W) $(EXTRA_CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O) $(EXTRA_CXXFLAGS_O)
 
 
 #
@@ -28,10 +28,13 @@ CXXFLAGS  = $(CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O)
 
 ##CFLAGS_WERROR = -Werror
 CFLAGS_WERROR =
-CFLAGS_W  = $(CFLAGS_WERROR)
-CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Winline -Wmissing-prototypes -Wpointer-arith -Wshadow -Wwrite-strings
+CFLAGS_W   = $(CFLAGS_WERROR) -Wall -W -Wbad-function-cast -Wcast-align -Wcast-qual -Winline -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wshadow         -Wwrite-strings
+CXXFLAGS_W = $(CFLAGS_WERROR) -Wall -W                     -Wcast-align -Wcast-qual -Winline                        -Wmissing-prototypes                  -Wpointer-arith -Wshadow -Wsynth -Wwrite-strings
+
 ##CFLAGS_M += -fno-builtin
 ##CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+CXXFLAGS_M = $(CFLAGS_M)
+
 ifeq ($(DEBUG),1)
 CFLAGS_O  = -g -O0
 else
@@ -39,16 +42,12 @@ else
 CFLAGS_O  = -O2 -fstrict-aliasing
 ##CFLAGS_O  = -O2 -fno-strict-aliasing
 endif
-
-CXXFLAGS_W += -Wsynth
-CXXFLAGS_O += -fconserve-space
-
-##CXXFLAGS_1 += -fasynchronous-exceptions
-CXXFLAGS_2 += -fno-exceptions -fno-rtti
+CXXFLAGS_O = $(CFLAGS_O) -fconserve-space
+##CXXFLAGS += -fasynchronous-exceptions
 
 
 #
-# cflags for gcc 3.2
+# cxxflags for gcc 3.2
 #
 
 ##CXXFLAGS_W += -Wdisabled-optimization -Wpacked
@@ -65,8 +64,9 @@ LDFLAGS += -s
 endif
 LDFLAGS += -Wl,-Map,$T.map
 
-# zlib 1.1.4
+ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
+endif
 
 
 # vi:nowrap
