@@ -78,6 +78,7 @@ strategy:
                 xchg    si, di
                 sub     si, byte start - cutpoint
 ;       __SYSSUBSI__
+;       __SYSSBBBP__
                 sbb     bp, bp
 %ifdef  __SYSCALLT__
                 push    di

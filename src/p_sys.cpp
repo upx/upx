@@ -91,7 +91,7 @@ void PackSys::patchLoader(OutputFile *fo,
 
     const unsigned jmp_pos = find_le16(loader,e_len,get_le16("JM"));
     patch_le16(loader,e_len,"JM",ph.u_len+ph.overlap_overhead+2-jmp_pos-2);
-    loader[getLoaderSection("SYSSUBSI") - 1] = (upx_byte) -e_len;
+    loader[getLoaderSectionStart("SYSSUBSI") - 1] = (upx_byte) -e_len;
     patch_le16(loader,e_len,"DI",copy_to);
     patch_le16(loader,e_len,"SI",ph.c_len+e_len+d_len-1);
 
@@ -109,6 +109,7 @@ int PackSys::buildLoader(const Filter *ft)
     addLoader("SYSMAIN1",
               opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
               "SYSMAIN2""SYSSUBSI",
+              ph.first_offset_found == 1 ? "SYSSBBBP" : "",
               filter_id ? "SYSCALLT" : "",
               "SYSMAIN3""UPX1HEAD""SYSCUTPO""NRV2B160""NRVDDONE""NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",

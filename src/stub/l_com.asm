@@ -59,7 +59,9 @@ mem_ok:
                 xchg    si, di
                 sub     si, byte start - cutpoint
 ;       __COMSUBSI__
+;       __COMSBBBP__
                 sbb     bp, bp
+;       __COMPSHDI__
                 push    di
 %ifdef  __COMCALLT__
                 push    di

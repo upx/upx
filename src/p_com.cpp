@@ -118,7 +118,7 @@ void PackCom::patchLoader(OutputFile *fo,
 
     // NOTE: Depends on: decompr_start == cutpoint+1 !!!
     patch_le16(loader,e_len,"JM",upper_end - 0xff - d_len - getLoaderSection("UPX1HEAD"));
-    loader[getLoaderSection("COMSUBSI") - 1] = (upx_byte) -e_len;
+    loader[getLoaderSectionStart("COMSUBSI") - 1] = (upx_byte) -e_len;
     patch_le16(loader,e_len,"DI",upper_end);
     patch_le16(loader,e_len,"SI",ph.c_len + lsize + 0x100);
     patch_le16(loader,e_len,"CX",ph.c_len + lsize);
@@ -141,6 +141,8 @@ int PackCom::buildLoader(const Filter *ft)
     const int filter_id = ft->id;
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("COMMAIN1""COMSUBSI",
+              ph.first_offset_found == 1 ? "COMSBBBP" : "",
+              "COMPSHDI",
               filter_id ? "COMCALLT" : "",
               "COMMAIN2""UPX1HEAD""COMCUTPO""NRV2B160",
               filter_id ? "NRVDDONE" : "NRVDRETU",
