@@ -83,6 +83,7 @@ decompress:
 
 %include      "n2b_d32.ash"
 %include      "n2d_d32.ash"
+%include      "n2e_d32.ash"
 %include      "macros.ash"
                 cjt32 0
 

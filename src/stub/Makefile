@@ -387,9 +387,9 @@ l_vxd.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 
-l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy
-l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy
-l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy
+l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy n2e_d32.asy
+l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy n2e_d32.asy
+l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy n2e_d32.asy
 
 upxb:           linux.hh
 upxd:           linux.hh
