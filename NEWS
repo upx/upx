@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-[ BETA VERSION - please see README.1ST for some more info ]
+[ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
 Changes in 1.90 beta (11 Nov 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
@@ -11,6 +11,7 @@ Changes in 1.90 beta (11 Nov 2002):
   * ps1/exe: new format - UPX now supports PlayStation One programs
   * linux/386: added the option `--force-execve'
   * vmlinuz/386: better kernel detection and sanity checks
+  * re-synced with upx 1.24 branch
   * documentation updates
 
 Changes in 1.11 beta (20 Dec 2000):
