@@ -186,18 +186,18 @@ static unsigned long  // returns relocation constant
 __attribute__((regparm(3), stdcall))
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum)
 {
-	size_t lo= ~0, hi= 0, szlo= 0;
+    size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
-	for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
-		if (phdr->p_vaddr < lo) {
-			lo = phdr->p_vaddr;
+    for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
+        if (phdr->p_vaddr < lo) {
+            lo = phdr->p_vaddr;
             szlo = phdr->p_filesz;
-		}
-		if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
-			hi =  phdr->p_memsz + phdr->p_vaddr;
-		}
-	}
+        }
+        if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
+            hi =  phdr->p_memsz + phdr->p_vaddr;
+        }
+    }
     if (MAP_FIXED & mflags) { // the "shell", and not the PT_INTERP
         // This is a dirty hack to set the proper value for brk(0) as seen by
         // the "shell" which we will mmap() soon, upon return to do_xmap().

@@ -258,18 +258,18 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
 )
 {
-	size_t lo= ~0, hi= 0, szlo= 0;
+    size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
-	for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
-		if (phdr->p_vaddr < lo) {
-			lo = phdr->p_vaddr;
+    for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
+        if (phdr->p_vaddr < lo) {
+            lo = phdr->p_vaddr;
             szlo = phdr->p_filesz;
-		}
-		if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
-			hi =  phdr->p_memsz + phdr->p_vaddr;
-		}
-	}
+        }
+        if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
+            hi =  phdr->p_memsz + phdr->p_vaddr;
+        }
+    }
     szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
