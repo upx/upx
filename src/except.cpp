@@ -35,7 +35,7 @@
 
 long Throwable::counter = 0;
 
-Throwable::Throwable(const char *m, int e, bool w)
+Throwable::Throwable(const char *m, int e, bool w) NOTHROW
     : super(), msg(NULL), err(e), is_warning(w)
 {
     if (m)
@@ -47,7 +47,7 @@ Throwable::Throwable(const char *m, int e, bool w)
 }
 
 
-Throwable::Throwable(const Throwable &other)
+Throwable::Throwable(const Throwable &other) NOTHROW
     : super(other), msg(NULL), err(other.err), is_warning(other.is_warning)
 {
     if (other.msg)
@@ -174,7 +174,7 @@ void throwEOFException(const char *msg, int e)
 //
 **************************************************************************/
 
-const char *prettyName(const char *n)
+const char *prettyName(const char *n) NOTHROW
 {
     if (n == NULL)
         return "(null)";
@@ -190,11 +190,6 @@ const char *prettyName(const char *n)
             break;
     }
     return n;
-}
-
-const char *prettyName(const std::type_info &ti)
-{
-    return prettyName(ti.name());
 }
 
 

@@ -31,8 +31,7 @@
 
 #ifdef __cplusplus
 
-const char *prettyName(const char *n);
-const char *prettyName(const std::type_info &ti);
+const char *prettyName(const char *n) NOTHROW;
 
 
 /*************************************************************************
@@ -43,13 +42,13 @@ class Throwable : public std::exception
 {
     typedef std::exception super;
 protected:
-    Throwable(const char *m = 0, int e = 0, bool w = false);
+    Throwable(const char *m = 0, int e = 0, bool w = false) NOTHROW;
 public:
-    Throwable(const Throwable &);
+    Throwable(const Throwable &) NOTHROW;
     virtual ~Throwable() NOTHROW;
-    const char *getMsg() const { return msg; }
-    int getErrno() const { return err; }
-    bool isWarning() const { return is_warning; }
+    const char *getMsg() const NOTHROW { return msg; }
+    int getErrno() const NOTHROW { return err; }
+    bool isWarning() const NOTHROW { return is_warning; }
 private:
     char *msg;
     int err;
@@ -72,7 +71,7 @@ class Exception : public Throwable
 {
     typedef Throwable super;
 public:
-    Exception(const char *m = 0, int e = 0, bool w = false) : super(m,e,w) { }
+    Exception(const char *m = 0, int e = 0, bool w = false) NOTHROW : super(m,e,w) { }
 };
 
 
@@ -81,7 +80,7 @@ class Error : public Throwable
 {
     typedef Throwable super;
 public:
-    Error(const char *m = 0, int e = 0) : super(m,e) { }
+    Error(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -93,7 +92,7 @@ class OutOfMemoryException : public Exception
 {
     typedef Exception super;
 public:
-    OutOfMemoryException(const char *m = 0, int e = 0) : super(m,e) { }
+    OutOfMemoryException(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -101,7 +100,7 @@ class IOException : public Exception
 {
     typedef Exception super;
 public:
-    IOException(const char *m = 0, int e = 0) : super(m,e) { }
+    IOException(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -109,7 +108,7 @@ class EOFException : public IOException
 {
     typedef IOException super;
 public:
-    EOFException(const char *m = 0, int e = 0) : super(m,e) { }
+    EOFException(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -117,7 +116,7 @@ class FileNotFoundException : public IOException
 {
     typedef IOException super;
 public:
-    FileNotFoundException(const char *m = 0, int e = 0) : super(m,e) { }
+    FileNotFoundException(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -125,7 +124,7 @@ class FileAlreadyExistsException : public IOException
 {
     typedef IOException super;
 public:
-    FileAlreadyExistsException(const char *m = 0, int e = 0) : super(m,e) { }
+    FileAlreadyExistsException(const char *m = 0, int e = 0) NOTHROW : super(m,e) { }
 };
 
 
@@ -137,35 +136,35 @@ class OverlayException : public Exception
 {
     typedef Exception super;
 public:
-    OverlayException(const char *m = 0, bool w = false) : super(m,0,w) { }
+    OverlayException(const char *m = 0, bool w = false) NOTHROW : super(m,0,w) { }
 };
 
 class CantPackException : public Exception
 {
     typedef Exception super;
 public:
-    CantPackException(const char *m = 0, bool w = false) : super(m,0,w) { }
+    CantPackException(const char *m = 0, bool w = false) NOTHROW : super(m,0,w) { }
 };
 
 class UnknownExecutableFormatException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    UnknownExecutableFormatException(const char *m = 0, bool w = false) : super(m,w) { }
+    UnknownExecutableFormatException(const char *m = 0, bool w = false) NOTHROW : super(m,w) { }
 };
 
 class AlreadyPackedException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    AlreadyPackedException(const char *m = 0) : super(m) { is_warning = true; }
+    AlreadyPackedException(const char *m = 0) NOTHROW : super(m) { is_warning = true; }
 };
 
 class NotCompressibleException : public CantPackException
 {
     typedef CantPackException super;
 public:
-    NotCompressibleException(const char *m = 0) : super(m) { }
+    NotCompressibleException(const char *m = 0) NOTHROW : super(m) { }
 };
 
 
@@ -173,14 +172,14 @@ class CantUnpackException : public Exception
 {
     typedef Exception super;
 public:
-    CantUnpackException(const char *m = 0, bool w = false) : super(m,0,w) { }
+    CantUnpackException(const char *m = 0, bool w = false) NOTHROW : super(m,0,w) { }
 };
 
 class NotPackedException : public CantUnpackException
 {
     typedef CantUnpackException super;
 public:
-    NotPackedException(const char *m = 0) : super(m,true) { }
+    NotPackedException(const char *m = 0) NOTHROW : super(m,true) { }
 };
 
 
@@ -192,7 +191,7 @@ class InternalError : public Error
 {
     typedef Error super;
 public:
-    InternalError(const char *m = 0) : super(m,0) { }
+    InternalError(const char *m = 0) NOTHROW : super(m,0) { }
 };
 
 

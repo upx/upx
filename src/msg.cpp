@@ -110,7 +110,7 @@ void printErr(const char *iname, const Throwable *e)
 {
     char buf[1024];
 
-    upx_snprintf(buf, sizeof(buf), "%s", prettyName(typeid(*e)));
+    upx_snprintf(buf, sizeof(buf), "%s", prettyName(typeid(e).name()));
     if (e->getMsg())
         upx_snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),": %s", e->getMsg());
     if (e->getErrno())

@@ -44,7 +44,7 @@
 #if defined(new) || defined(delete)
 
 // debug
-#  define DISABLE_NEW_DELETE
+#  define DISABLE_NEW_DELETE private:
 
 #else
 
@@ -95,8 +95,6 @@ private:
 #include <typeinfo.h>
 
 namespace std {
-#undef type_info
-typedef ::Type_info type_info;
 class exception
 {
 public:
