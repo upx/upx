@@ -382,6 +382,7 @@ void Packer::verifyOverlappingDecompression()
         return;
     memmove(obuf + offset, obuf, ph.c_len);
     decompress(obuf + offset, obuf, true);
+    obuf.checkState();
 #endif /* !UNUPX */
 }
 
@@ -488,6 +489,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
 {
     assert((int)overlay >= 0);
     assert((off_t)overlay < file_size);
+    buf->checkState();
     if (!fo || overlay == 0)
         return;
     if (opt->overlay != opt->COPY_OVERLAY)
@@ -512,6 +514,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
         fo->write(buf, len);
         overlay -= len;
     } while (overlay > 0);
+    buf->checkState();
 }
 
 
@@ -1263,6 +1266,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
     {
         for (int i = 0; i < nfilters; i++)          // for all filters
         {
+            ibuf.checkState();
+            obuf.checkState();
             // get fresh packheader
             ph = orig_ph;
             ph.method = methods[m];
@@ -1346,6 +1351,9 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             // restore ibuf[] - unfilter with verify
             ft.unfilter(ibuf + filter_off, filter_len, true);
+            //
+            ibuf.checkState();
+            obuf.checkState();
             //
             if (strategy < 0)
                 break;

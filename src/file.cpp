@@ -259,12 +259,14 @@ int InputFile::readx(void *buf, int len)
 
 int InputFile::read(MemBuffer *buf, int len)
 {
+    buf->checkState();
     assert((unsigned)len <= buf->getSize());
     return read(buf->getVoidPtr(), len);
 }
 
 int InputFile::readx(MemBuffer *buf, int len)
 {
+    buf->checkState();
     assert((unsigned)len <= buf->getSize());
     return read(buf->getVoidPtr(), len);
 }
@@ -371,6 +373,7 @@ void OutputFile::write(const void *buf, int len)
 
 void OutputFile::write(const MemBuffer *buf, int len)
 {
+    buf->checkState();
     assert((unsigned)len <= buf->getSize());
     write(buf->getVoidPtr(), len);
 }
