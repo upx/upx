@@ -2,6 +2,10 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 1.10 (XX XXX 2000): BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * atari/tos: added support for FreeMiNT
+  * reduced overall memory requirements during packing
+
 Changes in 1.02 (13 Sep 2000)
   * watcom/le: fixed a problem with the Causeway extender
   * win32/pe: don't automatically strip relocs if they seem needed
