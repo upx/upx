@@ -165,6 +165,10 @@ void upx_main(
     } malloc_args = {
         0, 0, PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0
     };
+    static struct MallocArgs scratch_page = {
+        0, -PAGE_MASK, PROT_READ | PROT_WRITE,
+            MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0
+    };
 
     //
     // ----- Step 0: set /proc/self using /proc/<pid> -----
@@ -265,6 +269,10 @@ void upx_main(
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
 
+    // Decompressor can overrun the output by 3 bytes.
+    // Defend against SIGSEGV by using a scratch page.
+    scratch_page.ma_addr = buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK));
+    mmap((int *)&scratch_page);
 
     //
     // ----- Step 4: decompress blocks -----
