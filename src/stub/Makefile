@@ -81,36 +81,55 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
 STRIPELF = ./util/sstrip/sstrip
 
-# Compiler for the Linux/386 stubs.
-# gcc 3.4 (20040404 prerelease) seems to produce the smallest code
-ifeq (1,2)
-  CC_LINUX_I386 = gcc-2.72 -m386 -O2
-##  CC_LINUX_I386 = gcc-1.41 -O -Mcxx
-else
-ifeq (1,2)
-  # gcc 2.95
-  #   info: -mcpu=i386 and -mcpu=k6 procduce the smallest code
-  #         (specifying -mcpu=i586 inhibits use of 'leave',
-  #         which costs 2 bytes per subr)
-  CC_LINUX_I386  = gcc-2.95 -march=i386 -mcpu=k6 -Os -fno-omit-frame-pointer -fno-exceptions
-  CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
-  CC_LINUX_I386 += -Werror
-else
-  # gcc 3.4 20040404 (fold_*.bin: 1525 / 1043 / 1300)
-  #   info: -mtune=k6 procduces the smallest code
-  CC_LINUX_I386  = gcc-3.4 -march=i386 -mtune=k6 -Os -fno-omit-frame-pointer -fno-exceptions
-  CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-  CC_LINUX_I386 += -fweb
-  CC_LINUX_I386 += -momit-leaf-frame-pointer
-  CC_LINUX_I386 += -Werror
-endif
-endif
+
+###
+### linux/i386
+###
+
+LD_LINUX_I386 = ld-2.13.2
+LD_LINUX_I386 = ld
+OBJCOPY_LINUX_I386 = objcopy
+
+# gcc 2.7.2.3 (fold_*.bin: 1718 / 1011 / 1340)
+CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2
+CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+
+# gcc 2.95.3 (fold_*.bin: 1618 / 995 / 1305)
+CC_LINUX_I386_GCC295  = gcc-2.95 -march=i386 -mcpu=k6 -fno-exceptions
+CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
+CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
+CC_LINUX_I386_GCC295 += -Werror
+
+# gcc 3.4.0 (fold_*.bin: 1541 / 931 / 1236)
+CC_LINUX_I386_GCC340  = gcc-3.4 -march=i386 -mtune=k6 -fno-exceptions
+CC_LINUX_I386_GCC340 += -Os -fno-omit-frame-pointer
+CC_LINUX_I386_GCC340 += -momit-leaf-frame-pointer
+CC_LINUX_I386_GCC340 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+##CC_LINUX_I386_GCC340 += -fweb
+CC_LINUX_I386_GCC340 += -fno-unit-at-a-time
+CC_LINUX_I386_GCC340 += -Werror
+
+CC_LINUX_I386  = $(CC_LINUX_I386_GCC272)
+CC_LINUX_I386  = $(CC_LINUX_I386_GCC295)
+CC_LINUX_I386  = $(CC_LINUX_I386_GCC340)
 CC_LINUX_I386 += -nostdinc
 CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
 CC_LINUX_I386 += -funsigned-char
-###CC_LINUX_I386 += -fwritable-strings -save-temps
 
-# Motorola 68000
+
+###
+### MIPS R3000
+###
+
+CPP_MR3K = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
+ASM_MR3K = asm5900 --nologo -q
+
+
+###
+### Motorola 68000
+###
+
 CPP_M68K  = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
@@ -122,11 +141,6 @@ else
   CPP_M68K += -D__ASL__
   ASM_M68K  = sh $(srcdir)/scripts/asl_m68k.sh
 endif
-
-# MIPS R3000
-CPP_MR3K = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
-APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
-ASM_MR3K = asm5900 --nologo -q
 
 
 # /***********************************************************************
@@ -346,8 +360,9 @@ fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
-	ld -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
-	objcopy -S -R .comment -R .note $T.bin
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
+	chmod a-x $T.bin
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
@@ -356,8 +371,9 @@ fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
-	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
-	objcopy -S -R .comment -R .note $T.bin
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
+	chmod a-x $T.bin
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_fold $@
@@ -366,23 +382,24 @@ fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
-	ld -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
-	objcopy -S -R .comment -R .note $T.bin
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
+	chmod a-x $T.bin
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
-	ld -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	objcopy -S -R .comment -R .note $@
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
 
 upxd: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
-	ld -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	objcopy -S -R .comment -R .note $@
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $@
 	$(STRIPELF) $@
 	$(BRANDELF) $@
 
