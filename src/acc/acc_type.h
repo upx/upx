@@ -60,13 +60,23 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 ************************************************************************/
 
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_GNUC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
+#  if (ACC_CC_GNUC || ACC_CC_PACIFICC)
+#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC))
+#    define __acc_cdecl                 __cdecl
+#    define __acc_cdecl_atexit          __pascal
+#    define __acc_cdecl_main            __cdecl
+#    define __acc_cdecl_qsort           __pascal
+#  elif (ACC_CC_WATCOMC)
+#    define __acc_cdecl                 __cdecl
 #  else
+#    define __acc_cdecl                 __cdecl
 #    define __acc_cdecl_atexit          __cdecl
 #    define __acc_cdecl_main            __cdecl
 #    define __acc_cdecl_qsort           __cdecl
 #  endif
 #  if (ACC_CC_GNUC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
+#  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC))
+#    define __acc_cdecl_sighandler      __pascal
 #  elif (ACC_CC_MSC && (_MSC_VER >= 600 && _MSC_VER < 700))
 #    if defined(_DLL)
 #      define __acc_cdecl_sighandler    _far _cdecl _loadds
@@ -78,8 +88,13 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  else
 #    define __acc_cdecl_sighandler      __cdecl
 #  endif
+#elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
+#  define __acc_cdecl                   cdecl
 #endif
 
+#if !defined(__acc_cdecl)
+#  define __acc_cdecl
+#endif
 #if !defined(__acc_cdecl_atexit)
 #  define __acc_cdecl_atexit
 #endif

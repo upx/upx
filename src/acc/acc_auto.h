@@ -394,6 +394,7 @@
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #  if (__TURBOC__ < 0x0200)
+#    undef HAVE_RAISE
 #    undef HAVE_SIGNAL
 #  endif
 #  if (__TURBOC__ < 0x0295)
