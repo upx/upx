@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -56,6 +56,27 @@ static int __ACCCHKR_FUNCNAME(strength_reduce_bug)(int*);
 
 static int __ACCCHKR_FUNCNAME(check)(int r)
 {
+#if defined(ACC_ENDIAN_BIG_ENDIAN)
+    {
+        union { long l; unsigned char c[sizeof(long)]; } u;
+        u.l = 0; u.c[sizeof(long)-1] = 0x80;
+        r &= ACCCHKR_ASSERT(u.l == 128);
+        u.l = 0; u.c[0] = 0x80;
+        r &= ACCCHKR_ASSERT(u.l < 0);
+        ACC_UNUSED(u);
+    }
+#endif
+#if defined(ACC_ENDIAN_LITTLE_ENDIAN)
+    {
+        union { long l; unsigned char c[sizeof(long)]; } u;
+        u.l = 0; u.c[0] = 0x80;
+        r &= ACCCHKR_ASSERT(u.l == 128);
+        u.l = 0; u.c[sizeof(long)-1] = 0x80;
+        r &= ACCCHKR_ASSERT(u.l < 0);
+        ACC_UNUSED(u);
+    }
+#endif
+
     /* check for the gcc schedule-insns optimization bug */
     if (r == 1)
     {

@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -94,8 +94,8 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #if defined(acc_int32e_t)
 #  define acc_int32l_t          acc_int32e_t
 #  define acc_uint32l_t         acc_uint32e_t
-#  define ACC_INT32L_C          ACC_INT32E_C
-#  define ACC_UINT32L_C         ACC_UINT32E_C
+#  define ACC_INT32L_C(c)       ACC_INT32E_C(c)
+#  define ACC_UINT32L_C(c)      ACC_UINT32E_C(c)
 #  define SIZEOF_ACC_INT32L_T   SIZEOF_ACC_INT32E_T
 #elif (SIZEOF_INT > 4)
 #  define acc_int32l_t          int
@@ -132,8 +132,8 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #elif defined(acc_int32e_t)
 #  define acc_int32f_t          acc_int32e_t
 #  define acc_uint32f_t         acc_uint32e_t
-#  define ACC_INT32F_C          ACC_INT32E_C
-#  define ACC_UINT32F_C         ACC_UINT32E_C
+#  define ACC_INT32F_C(c)       ACC_INT32E_C(c)
+#  define ACC_UINT32F_C(c)      ACC_UINT32E_C(c)
 #  define SIZEOF_ACC_INT32F_T   SIZEOF_ACC_INT32E_T
 #else
 #  error "acc_int32f_t"
@@ -246,7 +246,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 ************************************************************************/
 
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (ACC_CC_GNUC || ACC_CC_PACIFICC)
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_PACIFICC)
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define __acc_cdecl                 __cdecl
 #    define __acc_cdecl_atexit
@@ -266,7 +266,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define __acc_cdecl_main            __cdecl
 #    define __acc_cdecl_qsort           __cdecl
 #  endif
-#  if (ACC_CC_GNUC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
+#  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_PACIFICC || ACC_CC_WATCOMC)
 #  elif (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
 #    define __acc_cdecl_sighandler      __pascal
 #  elif (ACC_OS_OS2 && (ACC_CC_ZORTECHC))

@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of

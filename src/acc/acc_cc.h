@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -51,6 +51,10 @@
 #  define ACC_CC_DECC           1
 #  define ACC_INFO_CC           "DEC C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__DECC)
+#elif defined(__HIGHC__)
+#  define ACC_CC_HIGHC          1
+#  define ACC_INFO_CC           "MetaWare High C"
+#  define ACC_INFO_CCVER        "unknown"
 #elif defined(__IBMC__)
 #  define ACC_CC_IBMC           1
 #  define ACC_INFO_CC           "IBM C"
@@ -64,10 +68,9 @@
 #  define ACC_INFO_CC           "Microsoft C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(_MSC_VER)
 #elif defined(__MWERKS__)
-   /* FIXME */
 #  define ACC_CC_MWERKS         1
 #  define ACC_INFO_CC           "Metrowerks C"
-#  define ACC_INFO_CCVER        "unknown"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__MWERKS__)
 #elif defined(__PACIFIC__)
 #  define ACC_CC_PACIFICC       1
 #  define ACC_INFO_CC           "Pacific C"

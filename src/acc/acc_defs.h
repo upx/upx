@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -18,7 +18,7 @@
 ************************************************************************/
 
 #if !defined(ACC_UNUSED)
-#  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#  if (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
@@ -144,7 +144,7 @@
 #if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
 #elif defined(__cplusplus)
 #  define acc_inline            inline
-#elif (ACC_CC_BORLANDC && ACC_MM_FLAT && (__BORLANDC__ >= 0x0500))
+#elif (ACC_CC_BORLANDC && ACC_MM_FLAT && (__BORLANDC__ >= 0x0550))
 #  define acc_inline            __inline
 #elif (ACC_CC_DMC)
 #  define acc_inline            __inline

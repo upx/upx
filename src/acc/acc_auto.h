@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -13,9 +13,20 @@
  */
 
 
+/*
+ * Possible configuration values:
+ *
+ *   ACC_CONFIG_AUTO_NO_HEADERS
+ *   ACC_CONFIG_AUTO_NO_FUNCTIONS
+ *   ACC_CONFIG_AUTO_NO_SIZES
+ */
+
+
 /*************************************************************************
 // Checks for <stdint.h>
 **************************************************************************/
+
+#if !defined(ACC_CONFIG_AUTO_NO_HEADERS)
 
 #if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 #  if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1))
@@ -33,10 +44,14 @@
 #  include <stdint.h>
 #endif
 
+#endif /* !defined(ACC_CONFIG_AUTO_NO_HEADERS) */
+
 
 /*************************************************************************
 // Checks for header files
 **************************************************************************/
+
+#if !defined(ACC_CONFIG_AUTO_NO_HEADERS)
 
 #define STDC_HEADERS 1
 
@@ -78,6 +93,11 @@
 #    undef HAVE_MALLOC_H /* deprecated */
 #  elif (ACC_OS_POSIX_HPUX)
 #    define HAVE_ALLOCA_H 1
+#  endif
+#  if (ACC_OS_POSIX_MACOSX && ACC_CC_MWERKS) && defined(__MSL__)
+     /* FIXME ??? */
+#    undef HAVE_SYS_TIME_H
+#    undef HAVE_SYS_TYPES_H
 #  endif
 #elif (ACC_OS_CYGWIN)
 #  define HAVE_IO_H 1
@@ -135,7 +155,11 @@
 #  undef HAVE_DIRENT_H /* not working */
 #  undef HAVE_UNISTD_H /* not working */
 #  define HAVE_SYS_DIRENT_H 1
-#elif defined(__DJGPP__) && defined(__GNUC__)
+#elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
+#elif (ACC_OS_DOS32 && ACC_CC_HIGHC)
+#  define HAVE_ALLOCA_H 1
+#  undef HAVE_DIRENT_H
+#  undef HAVE_UNISTD_H
 #elif (ACC_CC_IBMC && ACC_OS_OS2)
 #  undef HAVE_DOS_H
 #  undef HAVE_DIRENT_H
@@ -153,9 +177,14 @@
 #  undef HAVE_DIRENT_H
 #  undef HAVE_DOS_H
 #  undef HAVE_SYS_TIME_H
-#elif defined(__MINGW32__) && defined(__GNUC__)
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__MINGW32__)
 #  undef HAVE_UTIME_H
 #  define HAVE_SYS_UTIME_H 1
+#elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+#  undef HAVE_DOS_H
+#  undef HAVE_SHARE_H
+#  undef HAVE_SYS_TIME_H
+#  define HAVE_ALLOCA_H 1
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_DIRECT_H
 #  undef HAVE_DIRENT_H
@@ -169,10 +198,10 @@
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
-#elif (ACC_CC_PGI) && defined(__MINGW32__)
+#elif (ACC_OS_WIN32 && ACC_CC_PGI) && defined(__MINGW32__)
 #  undef HAVE_UTIME_H
 #  define HAVE_SYS_UTIME_H 1
-#elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
 #elif (ACC_CC_SYMANTECC)
 #  undef HAVE_DIRENT_H /* opendir() not implemented in libc */
 #  undef HAVE_UNISTD_H /* not working */
@@ -209,7 +238,7 @@
 #  undef HAVE_UTIME_H
 #  undef HAVE_SYS_TIME_H
 #  define HAVE_SYS_UTIME_H 1
-#  if (__WATCOMC__ < 900)
+#  if (__WATCOMC__ < 950)
 #    undef HAVE_UNISTD_H
 #  endif
 #elif (ACC_CC_ZORTECHC)
@@ -227,10 +256,14 @@
 #  define TIME_WITH_SYS_TIME 1
 #endif
 
+#endif /* !defined(ACC_CONFIG_AUTO_NO_HEADERS) */
+
 
 /*************************************************************************
 // Checks for library functions
 **************************************************************************/
+
+#if !defined(ACC_CONFIG_AUTO_NO_FUNCTIONS)
 
 #define HAVE_ACCESS 1
 #define HAVE_ALLOCA 1
@@ -271,7 +304,7 @@
 #if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX || ACC_OS_QNX)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
-#elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #else
@@ -283,6 +316,11 @@
 #if (ACC_OS_POSIX)
 #  if (ACC_CC_TINYC)
 #    undef HAVE_ALLOCA
+#  endif
+#  if (ACC_OS_POSIX_MACOSX && ACC_CC_MWERKS) && defined(__MSL__)
+     /* FIXME ??? */
+#    undef HAVE_CHOWN
+#    undef HAVE_LSTAT
 #  endif
 #elif (ACC_OS_CYGWIN)
 #  if (ACC_CC_GNUC < 0x025f00ul)
@@ -341,9 +379,15 @@
 #    undef HAVE_VSNPRINTF
 #  endif
 #elif (ACC_CC_DMC)
+#  if (ACC_OS_WIN16)
+#    undef HAVE_ALLOCA
+#  endif
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
-#elif defined(__DJGPP__) && defined(__GNUC__)
+#elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
+#elif (ACC_OS_DOS32 && ACC_CC_HIGHC)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_IBMC)
@@ -368,7 +412,7 @@
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
 #  endif
-#elif defined(__MINGW32__) && defined(__GNUC__)
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__MINGW32__)
 #  if (ACC_CC_GNUC < 0x025f00ul)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
@@ -376,6 +420,8 @@
 #    define snprintf _snprintf
 #    define vsnprintf _vsnprintf
 #  endif
+#elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+#  undef HAVE_SETMODE
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_ACCESS
 #  undef HAVE_ALLOCA
@@ -388,10 +434,10 @@
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
 #  undef HAVE_VSNPRINTF
-#elif (ACC_CC_PGI) && defined(__MINGW32__)
+#elif (ACC_OS_WIN32 && ACC_CC_PGI) && defined(__MINGW32__)
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
-#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
+#elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_SYMANTECC)
@@ -448,9 +494,14 @@
 #endif /* DOS, OS/2 & Windows */
 
 
+#endif /* !defined(ACC_CONFIG_AUTO_NO_FUNCTIONS) */
+
+
 /*************************************************************************
-// Checks for typedefs and structures
+// Checks for sizes
 **************************************************************************/
+
+#if !defined(ACC_CONFIG_AUTO_NO_SIZES)
 
 #define SIZEOF_SHORT            (__ACC_SHORT_BIT / 8)
 #define SIZEOF_INT              (__ACC_INT_BIT / 8)
@@ -469,16 +520,18 @@
 #  else
 #    error "ACC_MM"
 #  endif
-#  if (ACC_MM_HUGE)
-#    define SIZEOF_PTRDIFF_T    4
+#  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+#    define SIZEOF_PTRDIFF_T    2
 #  elif (ACC_MM_COMPACT || ACC_MM_LARGE)
 #    if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
 #      define SIZEOF_PTRDIFF_T  4
 #    else
 #      define SIZEOF_PTRDIFF_T  2
 #    endif
+#  elif (ACC_MM_HUGE)
+#    define SIZEOF_PTRDIFF_T    4
 #  else
-#    define SIZEOF_PTRDIFF_T    2
+#    error "ACC_MM"
 #  endif
 #else
 #  define SIZEOF_PTRDIFF_T      SIZEOF_LONG
@@ -507,7 +560,7 @@
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_PGI))
+#elif (ACC_ARCH_IA32 && (ACC_CC_MWERKS || ACC_CC_PGI))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
@@ -532,6 +585,8 @@
 #    undef SIZEOF_UNSIGNED_LONG_LONG
 #  endif
 #endif
+
+#endif /* !defined(ACC_CONFIG_AUTO_NO_SIZES) */
 
 
 /*************************************************************************

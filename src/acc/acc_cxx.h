@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -23,13 +23,16 @@
 //   ACC_CXX_NOTHROW
 **************************************************************************/
 
-#if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul))
+#if defined(ACC_CXX_NOTHROW)
+#elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul))
 #  define ACC_CXX_NOTHROW
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0450))
 #  define ACC_CXX_NOTHROW
-#elif (ACC_CC_TURBOC)
+#elif (ACC_CC_HIGHC)
 #  define ACC_CXX_NOTHROW
 #elif (ACC_CC_MSC && (_MSC_VER < 1100))
+#  define ACC_CXX_NOTHROW
+#elif (ACC_CC_TURBOC)
 #  define ACC_CXX_NOTHROW
 #elif (ACC_CC_WATCOMC && !defined(_CPPUNWIND))
 #  define ACC_CXX_NOTHROW
@@ -124,6 +127,9 @@
 #endif
 
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025b00ul))
+#  define ACC_CXX_DISABLE_NEW_DELETE private:
+#endif
+#if !defined(ACC_CXX_DISABLE_NEW_DELETE) && (ACC_CC_HIGHC)
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
 #endif
 

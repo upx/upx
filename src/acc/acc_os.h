@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -119,7 +119,7 @@
 #elif defined(__TOS__) || defined(__atarist__)
 #  define ACC_OS_TOS            1
 #  define ACC_INFO_OS           "tos"
-#elif defined(macintosh)
+#elif defined(macintosh) && !defined(__ppc__)
 #  define ACC_OS_MACCLASSIC     1
 #  define ACC_INFO_OS           "macclassic"
 #elif defined(__VMS)
@@ -147,7 +147,7 @@
 #  elif defined(__linux__) || defined(__linux)
 #    define ACC_OS_POSIX_LINUX      1
 #    define ACC_INFO_OS_POSIX       "linux"
-#  elif defined(__APPLE__)
+#  elif defined(__APPLE__) || defined(__MACOS__)
 #    define ACC_OS_POSIX_MACOSX     1
 #    define ACC_INFO_OS_POSIX       "macosx"
 #  elif defined(__NetBSD__)

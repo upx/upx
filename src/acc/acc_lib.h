@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -168,27 +168,31 @@ ACCLIB_EXTERN(long, acc_hwrite) (int, const acc_hvoid_p, long);
 **************************************************************************/
 
 /* maximum length of full pathname (excl. '\0') */
+#if !defined(ACC_FN_PATH_MAX)
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #  define ACC_FN_PATH_MAX   143
 #elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  define ACC_FN_PATH_MAX   259
 #elif (ACC_OS_TOS)
 #  define ACC_FN_PATH_MAX   259
-#else
+#endif
+#endif
+#if !defined(ACC_FN_PATH_MAX)
    /* arbitrary limit for acclib implementation */
 #  define ACC_FN_PATH_MAX   1024
 #endif
 
 /* maximum length of a filename (a single path component) (excl. '\0') */
+#if !defined(ACC_FN_NAME_MAX)
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #  define ACC_FN_NAME_MAX   12
 #elif (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
 #  define ACC_FN_NAME_MAX   12
-#elif (ACC_OS_DOS32 && defined(__DJGPP__))
+#elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #elif (ACC_OS_DOS32)
 #  define ACC_FN_NAME_MAX   12
 #endif
-
+#endif
 #if !defined(ACC_FN_NAME_MAX)
 #  define ACC_FN_NAME_MAX   ACC_FN_PATH_MAX
 #endif
@@ -210,7 +214,7 @@ ACCLIB_EXTERN(int, acc_fnmatch) (const acc_hchar_p, const acc_hchar_p, int);
 #if (HAVE_DIRENT_H || ACC_CC_WATCOMC)
 #  define __ACCLIB_USE_OPENDIR 1
 #  if (ACC_OS_DOS32 && defined(__BORLANDC__))
-#  elif (ACC_OS_DOS32 && defined(__DJGPP__))
+#  elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #  elif (ACC_OS_OS2 || ACC_OS_OS216)
 #  elif (ACC_OS_TOS && ACC_CC_GNUC)
 #  elif (ACC_OS_WIN32 && !defined(ACC_H_WINDOWS_H))
@@ -264,20 +268,31 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 // wrap misc
 **************************************************************************/
 
-#undef acc_alloca
-#if defined(__CYGWIN__) || defined(__MINGW32__)
+#if (ACC_CC_GNUC) && (defined(__CYGWIN__) || defined(__MINGW32__))
 #  define acc_alloca(x)     __builtin_alloca((x))
-#elif defined(__BORLANDC__) && defined(__linux__)
+#elif (ACC_CC_BORLANDC) && defined(__linux__)
   /* FIXME: alloca does not work */
 #elif (HAVE_ALLOCA)
 #  define acc_alloca(x)     alloca((x))
 #endif
 
+#if (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
+#  define acc_stackavail()  stackavail()
+#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER < 700))
+#  define acc_stackavail()  stackavail()
+#elif ((ACC_ARCH_IA16) && ACC_CC_MSC && (_MSC_VER < 900))
+#  define acc_stackavail()  _stackavail()
+#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_DMC || ACC_CC_SYMANTECC))
+#  define acc_stackavail()  stackavail()
+#elif ((ACC_ARCH_IA16 || ACC_ARCH_IA32) && (ACC_CC_WATCOMC))
+#  define acc_stackavail()  stackavail()
+#endif
+
 ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int);
-ACCLIB_EXTERN(int,  acc_isatty) (int);
-ACCLIB_EXTERN(int,  acc_mkdir) (const char*, unsigned);
-ACCLIB_EXTERN(int,  acc_response) (int*, char***);
-ACCLIB_EXTERN(int,  acc_set_binmode) (int, int);
+ACCLIB_EXTERN(int, acc_isatty) (int);
+ACCLIB_EXTERN(int, acc_mkdir) (const char*, unsigned);
+ACCLIB_EXTERN(int, acc_response) (int*, char***);
+ACCLIB_EXTERN(int, acc_set_binmode) (int, int);
 
 ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);

@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -115,6 +115,8 @@
 #endif
 #if defined(acc_alignof)
     ACCCHK_ASSERT(acc_alignof(char) == 1)
+    ACCCHK_ASSERT(acc_alignof(signed char) == 1)
+    ACCCHK_ASSERT(acc_alignof(unsigned char) == 1)
 #endif
 
     ACCCHK_ASSERT_IS_SIGNED_T(short)
@@ -214,14 +216,22 @@
     ACCCHK_ASSERT(((( ACC_UINT32E_C(1) << 31) + 1) >> 31) == 1)
 
     ACCCHK_ASSERT( (acc_int32e_t) (1 + ~(acc_int32e_t)0) == 0)
-#if defined(ACCCHK_PEDANTIC)
+#if defined(ACCCHK_CONFIG_PEDANTIC)
     /* compiler may warn about overflow */
     ACCCHK_ASSERT( (acc_uint32e_t)(1 + ~(acc_uint32e_t)0) == 0)
-#endif
+#endif /* ACCCHK_CONFIG_PEDANTIC */
 
+#if (SIZEOF_ACC_INT32E_T < SIZEOF_INT)
+    ACCCHK_ASSERT(sizeof(ACC_INT32E_C(0)) == sizeof(int))
+    ACCCHK_ASSERT(sizeof(ACC_UINT32E_C(0)) == sizeof(int))
+#else
+    ACCCHK_ASSERT(sizeof(ACC_INT32E_C(0)) == SIZEOF_ACC_INT32E_T)
+    ACCCHK_ASSERT(sizeof(ACC_UINT32E_C(0)) == SIZEOF_ACC_INT32E_T)
+#endif
     ACCCHK_ASSERT((ACC_INT32E_C(1)  << (8*SIZEOF_ACC_INT32E_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32E_C(1) << (8*SIZEOF_ACC_INT32E_T-1)) > 0)
-
+    ACCCHK_ASSERT((ACC_INT32E_C(1)  << (int)(8*sizeof(ACC_INT32E_C(1))-1)) < 0)
+    ACCCHK_ASSERT((ACC_UINT32E_C(1) << (int)(8*sizeof(ACC_UINT32E_C(1))-1)) > 0)
     ACCCHK_ASSERT(ACC_INT32E_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32E_C(-2147483647) -1  < 0)
     ACCCHK_ASSERT(ACC_UINT32E_C(4294967295)     > 0)
@@ -247,9 +257,16 @@
     ACCCHK_ASSERT(((( (acc_uint32l_t)1 << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((( ACC_UINT32L_C(1) << 31) + 1) >> 31) == 1)
 
+#if (SIZEOF_ACC_INT32L_T < SIZEOF_INT)
+    ACCCHK_ASSERT(sizeof(ACC_INT32L_C(0)) == sizeof(int))
+    ACCCHK_ASSERT(sizeof(ACC_UINT32L_C(0)) == sizeof(int))
+#else
+    ACCCHK_ASSERT(sizeof(ACC_INT32L_C(0)) == SIZEOF_ACC_INT32L_T)
+    ACCCHK_ASSERT(sizeof(ACC_UINT32L_C(0)) == SIZEOF_ACC_INT32L_T)
+#endif
     ACCCHK_ASSERT((ACC_INT32L_C(1)  << (8*SIZEOF_ACC_INT32L_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32L_C(1) << (8*SIZEOF_ACC_INT32L_T-1)) > 0)
-    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (int)(8*sizeof(ACC_UINT32L_C(1))-1)) < 0)
+    ACCCHK_ASSERT((ACC_INT32L_C(1)  << (int)(8*sizeof(ACC_INT32L_C(1))-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32L_C(1) << (int)(8*sizeof(ACC_UINT32L_C(1))-1)) > 0)
     ACCCHK_ASSERT(ACC_INT32L_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32L_C(-2147483647) -1  < 0)
@@ -278,9 +295,16 @@
     ACCCHK_ASSERT(((( (acc_uint32f_t)1 << 31) + 1) >> 31) == 1)
     ACCCHK_ASSERT(((( ACC_UINT32F_C(1) << 31) + 1) >> 31) == 1)
 
+#if (SIZEOF_ACC_INT32F_T < SIZEOF_INT)
+    ACCCHK_ASSERT(sizeof(ACC_INT32F_C(0)) == sizeof(int))
+    ACCCHK_ASSERT(sizeof(ACC_UINT32F_C(0)) == sizeof(int))
+#else
+    ACCCHK_ASSERT(sizeof(ACC_INT32F_C(0)) == SIZEOF_ACC_INT32F_T)
+    ACCCHK_ASSERT(sizeof(ACC_UINT32F_C(0)) == SIZEOF_ACC_INT32F_T)
+#endif
     ACCCHK_ASSERT((ACC_INT32F_C(1)  << (8*SIZEOF_ACC_INT32F_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32F_C(1) << (8*SIZEOF_ACC_INT32F_T-1)) > 0)
-    ACCCHK_ASSERT((ACC_INT32F_C(1)  << (int)(8*sizeof(ACC_UINT32F_C(1))-1)) < 0)
+    ACCCHK_ASSERT((ACC_INT32F_C(1)  << (int)(8*sizeof(ACC_INT32F_C(1))-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT32F_C(1) << (int)(8*sizeof(ACC_UINT32F_C(1))-1)) > 0)
     ACCCHK_ASSERT(ACC_INT32F_C(2147483647)      > 0)
     ACCCHK_ASSERT(ACC_INT32F_C(-2147483647) -1  < 0)
@@ -299,6 +323,7 @@
     ACCCHK_ASSERT(((( ACC_INT64L_C(1) << 62) + 1) >> 62) == 1)
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
+    /* Borland C is broken */
 #else
     ACCCHK_ASSERT_IS_UNSIGNED_T(acc_uint64l_t)
     ACCCHK_ASSERT(ACC_UINT64L_C(18446744073709551615)     > 0)
@@ -306,6 +331,17 @@
     ACCCHK_ASSERT(((( (acc_uint64l_t)1 << 63) + 1) >> 63) == 1)
     ACCCHK_ASSERT(((( ACC_UINT64L_C(1) << 63) + 1) >> 63) == 1)
 
+#if defined(ACCCHK_CONFIG_PEDANTIC)
+#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0560))
+    /* Borland C is broken */
+#elif (SIZEOF_ACC_INT64L_T < SIZEOF_INT)
+    ACCCHK_ASSERT(sizeof(ACC_INT64L_C(0)) == sizeof(int))
+    ACCCHK_ASSERT(sizeof(ACC_UINT64L_C(0)) == sizeof(int))
+#else
+    ACCCHK_ASSERT(sizeof(ACC_INT64L_C(0)) == SIZEOF_ACC_INT64L_T)
+    ACCCHK_ASSERT(sizeof(ACC_UINT64L_C(0)) == SIZEOF_ACC_INT64L_T)
+#endif
+#endif /* ACCCHK_CONFIG_PEDANTIC */
     ACCCHK_ASSERT((ACC_INT64L_C(1)  << (8*SIZEOF_ACC_INT64L_T-1)) < 0)
     ACCCHK_ASSERT((ACC_UINT64L_C(1) << (8*SIZEOF_ACC_INT64L_T-1)) > 0)
     ACCCHK_ASSERT(ACC_INT64L_C(9223372036854775807)       > 0)
@@ -330,7 +366,10 @@
 **************************************************************************/
 
 #if (ACC_MM_FLAT)
+#if 0
+    /* this is not a valid assumption -- disabled */
     ACCCHK_ASSERT(sizeof(void*) == sizeof(void (*)(void)))
+#endif
 #endif
 
 #if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)

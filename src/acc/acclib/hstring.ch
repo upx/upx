@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -124,6 +124,7 @@ ACCLIB_PUBLIC(acc_hchar_p, acc_ascii_hstristr) (const acc_hchar_p p, const acc_h
 
 ACCLIB_PUBLIC(acc_hvoid_p, acc_hmemmem) (const acc_hvoid_p p, acc_hsize_t pn, const acc_hvoid_p s, acc_hsize_t sn)
 {
+#define __ACCLIB_REQUIRE_HMEMCPY_CH 1
     if (sn == 0) __ACCLIB_CONST_CAST_RETURN(acc_hvoid_p, p)
     for ( ; pn >= sn; --pn) {
         if (__ACCLIB_FUNCNAME(acc_hmemcmp)(p, s, sn) == 0)

@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -28,6 +28,7 @@
 ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
 {
 #if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+#define __ACCLIB_REQUIRE_HMEMCPY_CH 1
     unsigned char tmp[512];
     long l = 0;
 
@@ -70,6 +71,7 @@ ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
 ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 {
 #if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+#define __ACCLIB_REQUIRE_HMEMCPY_CH 1
     unsigned char tmp[512];
     long l = 0;
 

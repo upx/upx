@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -22,6 +22,9 @@
  */
 
 #include <stdio.h>
+#if defined(HAVE_TIME_H) && defined(__MSL__) && defined(__cplusplus)
+# include <time.h>
+#endif
 #if HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif

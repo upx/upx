@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -25,7 +25,7 @@
 #  include <tos.h>
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64 || ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)))
 #  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
-#  elif (ACC_OS_WIN32 && ACC_CC_GNUC && defined(__PW32__))
+#  elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
      /* ancient pw32 version */
 #  elif ((ACC_OS_CYGWIN || defined(__MINGW32__)) && (ACC_CC_GNUC && (ACC_CC_GNUC < 0x025f00ul)))
      /* ancient cygwin/mingw version */
@@ -50,7 +50,7 @@
 #  elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
 #    include <alloc.h>
 #    include <dir.h>
-#  elif defined(__DJGPP__)
+#  elif (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__)
 #    include <sys/exceptn.h>
 #  elif (ACC_CC_PACIFICC)
 #    include <unixio.h>

@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -27,7 +27,7 @@
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20031215L
+#define ACC_VERSION     20040113L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -44,9 +44,15 @@
 #  define __INTEL_COMPILER __ICL
 #endif
 
+
 /* disable pedantic warnings */
 #if defined(__INTEL_COMPILER) && defined(__linux__)
 #  pragma warning(disable: 193)     /* #193: zero used for undefined preprocessing identifier */
+#endif
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#  if (_MSC_VER >= 1300)
+#    pragma warning(disable: 4668)  /* -Wall: 4668: 'symbol' is not defined as a preprocessor macro, replacing with '0' */
+#  endif
 #endif
 #if 0 && defined(__WATCOMC__)
 #  if (__WATCOMC__ < 1000)

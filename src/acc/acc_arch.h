@@ -1,6 +1,6 @@
 /* ACC -- Automatic Compiler Configuration
 
-   Copyright (C) 1996-2003 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    This software is a copyrighted work licensed under the terms of
@@ -21,7 +21,7 @@
  *   ACC_ARCH_AMD64
  *   ACC_ARCH_IA16          Intel Architecture (8088, 8086, 80186, 80286)
  *   ACC_ARCH_IA32          Intel Architecture (80386+)
- *   ACC_ARCH_IA64
+ *   ACC_ARCH_IA64          Intel Architecture (Itanium)
  *   ACC_ARCH_M68K          Motorola 680x0
  *   ACC_ARCH_PPC64         Power PC
  *   ACC_ARCH_SPARC64
@@ -31,10 +31,8 @@
  *   ACC_ENDIAN_BIG_ENDIAN
  *
  * Note that this list is not exhaustive - actually we only really care
- * about architectures which allows unaligned memory access at reasonable
- * speed (for the moment this means IA16 and IA32).
- *
- * FIXME: Need some hard facts on unaligned-timings for AMD64.
+ * about architectures which allow unaligned memory access at reasonable
+ * speed (for the moment this means IA16, IA32 and AMD64).
  */
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
@@ -52,6 +50,9 @@
 #elif defined(__ia64__) || defined(__ia64) || defined(_M_IA64)
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"
+#elif (ACC_OS_DOS32 && ACC_CC_HIGHC) && defined(_I386)
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "ia32"
 #elif (ACC_OS_DOS32 || ACC_OS_OS2)
 #  error "missing define for CPU architecture"
 #elif (ACC_OS_WIN32)
