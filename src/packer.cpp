@@ -843,12 +843,12 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         "\n\0"
         "$Info: This file is packed with the UPX executable packer http://upx.tsx.org $"
         "\n\0"
-        "$Id: packer.cpp,v 1.1 2000/05/10 04:58:23 jreiser Exp jreiser $"
+        "$Id: UPX " UPX_VERSION_STRING " Copyright (C) 1996-2000 the UPX Team. All Rights Reserved. $"
         "\n";
 
     static const char identsmall[] =
         "\n"
-        "$Id: packer.cpp,v 1.1 2000/05/10 04:58:23 jreiser Exp jreiser $"
+        "$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserverd. http://upx.tsx.org $"
         "\n";
 
     if (opt->small)

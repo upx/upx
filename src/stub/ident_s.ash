@@ -28,7 +28,7 @@
 ; ------------- COPYRIGHT -------------
 
                 db      10
-                db      '$Id: ident_s.ash,v 1.1 2000/05/10 04:57:58 jreiser Exp jreiser $'
+                db      '$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserved. http://upx.tsx.org $'
                 db      10,0
 
 
