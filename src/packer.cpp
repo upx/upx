@@ -848,7 +848,7 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
 
     static const char identsmall[] =
         "\n"
-        "$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserverd. http://upx.tsx.org $"
+        "$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
         "\n";
 
     if (opt->small)
