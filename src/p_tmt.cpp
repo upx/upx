@@ -217,7 +217,7 @@ void PackTmt::pack(OutputFile *fo)
     memcpy(loader,getLoader(),lsize);
 
     const unsigned s_point = getLoaderSection("TMTMAIN1");
-    int e_len = getLoaderSection("TMTCUTPO");
+    int e_len = getLoaderSectionStart("TMTCUTPO");
     const unsigned d_len = lsize - e_len;
     assert(e_len > 0  && s_point > 0);
 

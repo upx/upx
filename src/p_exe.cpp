@@ -264,7 +264,7 @@ void PackExe::pack(OutputFile *fo)
     fi->seek(ih.headsize16*16,SEEK_SET);
     fi->readx(ibuf,imagesize);
 
-    if (find_le32(ibuf, UPX_MAX(imagesize, 127u), UPX_MAGIC_LE32) >= 0)
+    if (find_le32(ibuf, UPX_MIN(imagesize, 127u), UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
 
     // relocations
@@ -413,7 +413,7 @@ void PackExe::pack(OutputFile *fo)
     //OutputFile::dump("xxloader.dat", loader, lsize);
 
     // patch loader
-    const unsigned e_len = getLoaderSection("EXECUTPO");
+    const unsigned e_len = getLoaderSectionStart("EXECUTPO");
     const unsigned d_len = lsize - e_len;
     assert((e_len&15) == 0);
 

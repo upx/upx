@@ -97,7 +97,7 @@ void PackCom::patchLoader(OutputFile *fo,
                           unsigned calls, unsigned overlapoh)
 {
     const int filter_id = ph.filter;
-    const int e_len = getLoaderSection("COMCUTPO");
+    const int e_len = getLoaderSectionStart("COMCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 256);
     assert(d_len > 0 && d_len < 256);

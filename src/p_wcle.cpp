@@ -481,7 +481,7 @@ void PackWcle::pack(OutputFile *fo)
 
     const unsigned lsize = getLoaderSize();
     neweip = getLoaderSection("WCLEMAIN");
-    int e_len = getLoaderSection("WCLECUTP");
+    int e_len = getLoaderSectionStart("WCLECUTP");
     const unsigned d_len = lsize - e_len;
     assert(e_len > 0);
 

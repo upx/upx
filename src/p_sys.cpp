@@ -69,7 +69,7 @@ void PackSys::patchLoader(OutputFile *fo,
                           unsigned calls, unsigned overlapoh)
 {
     const int filter_id = ph.filter;
-    const int e_len = getLoaderSection("SYSCUTPO");
+    const int e_len = getLoaderSectionStart("SYSCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 256);
     assert(d_len > 0 && d_len < 256);
@@ -88,6 +88,7 @@ void PackSys::patchLoader(OutputFile *fo,
         assert(calls > 0);
         patch_le16(loader,lsize,"CT",calls);
     }
+    patchPackHeader(loader,e_len);
 
     const unsigned jmp_pos = find_le16(loader,e_len,get_le16("JM"));
     patch_le16(loader,e_len,"JM",ph.u_len+overlapoh+2-jmp_pos-2);
