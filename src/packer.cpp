@@ -472,7 +472,7 @@ void Packer::handleStub(InputFile *fif, OutputFile *fo, long size)
 
 void Packer::checkOverlay(unsigned overlay)
 {
-    assert((off_t)overlay >= 0);
+    assert((int)overlay >= 0);
     assert((off_t)overlay < file_size);
     if (overlay == 0)
         return;

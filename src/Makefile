@@ -195,6 +195,7 @@ LDFLAGS += $(LDLIBDIRS)
 ifeq ($(target),linux)
 override arch := $(shell uname -m | sed -e 's/^i[3456789]86$$/i386/')
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
+DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ifeq ($(arch),i386)
   CC += -march=i386 -mcpu=i586
