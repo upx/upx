@@ -26,6 +26,7 @@
 ;
 
 
+%define         UPX102  1
 %define         jmps    jmp short
 %define         jmpn    jmp near
 %define         jnzn    jnz near
