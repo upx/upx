@@ -1,7 +1,11 @@
 *.0??
 *.idb
+*.map
 *.pdb
 *.upx
 .gdbinit
 upx
-upx.map
+upx_nrv
+upx_nrv.*
+upx_ucl
+upx_ucl.*
