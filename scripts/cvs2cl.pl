@@ -1,6 +1,4 @@
-#!/bin/sh
-exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
-#!perl -w
+#!/usr/bin/perl -w
 
 
 ##############################################################
@@ -9,8 +7,8 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 ###                                                        ###
 ##############################################################
 
-## $Revision: 2.53 $
-## $Date: 2004/03/07 11:56:25 $
+## $Revision: 2.55 $
+## $Date: 2004/05/15 20:09:14 $
 ## $Author: fluffy $
 ##
 
@@ -19,8 +17,8 @@ use strict;
 use File::Basename qw( fileparse );
 use Getopt::Long   qw( GetOptions );
 use Text::Wrap     qw( );
-use Time::Local    qw( timegm );
 use User::pwent    qw( getpwnam );
+use Time::Local    qw( timegm );
 
 # The Plan:
 #
@@ -142,10 +140,8 @@ use User::pwent    qw( getpwnam );
 
 # Globals --------------------------------------------------------------------
 
-use constant MAILNAME => "/etc/mailname";
-
 # In case we have to print it out:
-my $VERSION = '$Revision: 2.53 $';
+my $VERSION = '$Revision: 2.55 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:
@@ -257,6 +253,9 @@ my $Show_Branches = 0;
 
 # Show only revisions on these branches or their ancestors.
 my @Follow_Branches;
+# Show only revisions on these branches or their ancestors; ignore descendent
+# branches.
+my @Follow_Only;
 
 # Don't bother with files matching this regexp.
 my @Ignore_Files;
@@ -304,20 +303,15 @@ my $TestCode;
 # prefix to strip.
 my $RCS_Root;
 
+# Whether to output information on the # of lines added and removed
+# by each file modification.
+my $Show_Lines_Modified = 0;
+
 ## end vars set by options.
 
 # latest observed times for the start/end tags in delta mode
 my $Delta_StartTime = 0;
 my $Delta_EndTime = 0;
-
-# In 'cvs log' output, one long unbroken line of equal signs separates
-# files:
-my $file_separator = "======================================="
-                   . "======================================";
-
-# In 'cvs log' output, a shorter line of dashes separates log messages
-# within a file:
-my $logmsg_separator = "----------------------------";
 
 my $No_Ancestors = 0;
 
@@ -340,7 +334,50 @@ sub new {
 sub output_changelog {
   my $output_type = $XML_Output ? 'XML' : 'Text';
   my $output_class = "CVS::Utils::ChangeLog::EntrySet::Output::${output_type}";
-  $output_class->new->output_changelog(@_);
+  my $output = $output_class->new(follow_branches => \@Follow_Branches,
+                                  follow_only     => \@Follow_Only,
+                                  ignore_tags     => \%ignore_tags,
+                                  show_tags       => \%show_tags,
+                                 );
+  $output->output_changelog(@_);
+}
+
+# -------------------------------------
+
+sub add_fileentry {
+  my ($self, $file_full_path, $time, $revision, $state, $lines,
+      $branch_names, $branch_roots, $branch_numbers,
+      $symbolic_names, $author, $msg_txt) = @_;
+
+      my $qunk =
+        CVS::Utils::ChangeLog::FileEntry->new($file_full_path, $time, $revision,
+                                              $state, $lines,
+                                              $branch_names, $branch_roots,
+                                              $branch_numbers,
+                                              $symbolic_names);
+
+      # We might be including revision numbers and/or tags and/or
+      # branch names in the output.  Most of the code from here to
+      # loop-end deals with organizing these in qunk.
+
+      unless ( $Hide_Branch_Additions
+               and
+               $msg_txt =~ /file .+ was initially added on branch \S+./ ) {
+        # Add this file to the list
+        # (We use many spoonfuls of autovivication magic. Hashes and arrays
+        # will spring into existence if they aren't there already.)
+
+        &main::debug ("(pushing log msg for ". $qunk->dir_key . $qunk->filename . ")\n");
+
+        # Store with the files in this commit.  Later we'll loop through
+        # again, making sure that revisions with the same log message
+        # and nearby commit times are grouped together as one commit.
+        $self->{$qunk->dir_key}{$author}{$time}{$msg_txt} =
+          CVS::Utils::ChangeLog::Message->new($msg_txt)
+              unless exists $self->{$qunk->dir_key}{$author}{$time}{$msg_txt};
+        $self->{$qunk->dir_key}{$author}{$time}{$msg_txt}->add_fileentry($qunk);
+      }
+
 }
 
 # ----------------------------------------------------------------------------
@@ -353,7 +390,7 @@ use File::Basename qw( fileparse );
 
 sub new {
   my $class = shift;
-  bless \(my($ self)), $class;
+  my $self = $class->SUPER::new(@_);
 }
 
 # -------------------------------------
@@ -735,7 +772,7 @@ use File::Basename qw( fileparse );
 
 sub new {
   my $class = shift;
-  bless \(my($ self)), $class;
+  my $self = $class->SUPER::new(@_);
 }
 
 # -------------------------------------
@@ -833,7 +870,7 @@ sub preprocess_msg_text {
 
 # -------------------------------------
 
-# Here we take a bunch of qunks and convert them into printed
+# Here we take a bunch of qunks and convert them into a printed
 # summary that will include all the information the user asked for.
 sub pretty_file_list {
   my $self = shift;
@@ -864,6 +901,7 @@ sub pretty_file_list {
     my $tags        = $qunkref->tags;
     my $branch      = $qunkref->branch;
     my $branchroots = $qunkref->roots;
+    my $lines       = $qunkref->lines;
 
     $filename = $self->escape($filename);   # probably paranoia
     $revision = $self->escape($revision);   # definitely paranoia
@@ -872,6 +910,13 @@ sub pretty_file_list {
     $beauty .= "<name>${filename}</name>\n";
     $beauty .= "<cvsstate>${state}</cvsstate>\n";
     $beauty .= "<revision>${revision}</revision>\n";
+
+    if ($Show_Lines_Modified
+        && $lines && $lines =~ m/\+(\d+)\s+-(\d+)/) {
+        $beauty .= "<linesadded>$1</linesadded>\n";
+        $beauty .= "<linesremoved>$2</linesremoved>\n";
+    }
+
     if ($branch) {
       $branch   = $self->escape($branch);     # more paranoia
       $beauty .= "<branch>${branch}</branch>\n";
@@ -950,6 +995,26 @@ sub weekday_en {
 
 }
 
+# -------------------------------------
+
+sub new {
+  my ($proto, %args) = @_;
+  my $class = ref $proto || $proto;
+
+  my $follow_branches = delete $args{follow_branches};
+  my $follow_only     = delete $args{follow_only};
+  my $ignore_tags     = delete $args{ignore_tags};
+  my $show_tags       = delete $args{show_tags};
+  die "Unrecognized arg to EntrySet::Output::new: '$_'\n"
+    for keys %args;
+
+  bless +{follow_branches => $follow_branches,
+          follow_only     => $follow_only,
+          show_tags       => $show_tags,
+          ignore_tags     => $ignore_tags,
+         }, $class;
+}
+
 # Abstract Subrs ----------------------
 
 sub wday               { croak "Whoops.  Abtract method call (wday).\n" }
@@ -976,6 +1041,82 @@ sub output_footer { }
 # -------------------------------------
 
 sub escape { return $_[1] }
+
+# -------------------------------------
+
+sub _revision_is_wanted {
+  my ($self, $qunk) = @_;
+
+  my ($revision, $branch_numbers) = @{$qunk}{qw( revision branch_numbers )};
+  my $follow_branches = $self->{follow_branches};
+  my $follow_only     = $self->{follow_only};
+
+#print STDERR "IG: ", join(',', keys %{$self->{ignore_tags}}), "\n";
+#print STDERR "IX: ", join(',', @{$qunk->{tags}}), "\n" if defined $qunk->{tags};
+#print STDERR "IQ: ", join(',', keys %{$qunk->{branch_numbers}}), "\n" if defined $qunk->{branch_numbers};
+#use Data::Dumper; print STDERR Dumper $qunk;
+
+  for my $ignore_tag (keys %{$self->{ignore_tags}}) {
+    return
+      if defined $qunk->{tags} and grep $_ eq $ignore_tag, @{$qunk->{tags}};
+  }
+
+  if ( keys %{$self->{show_tags}} ) {
+    for my $show_tag (keys %{$self->{show_tags}}) {
+      return
+        if ! defined $qunk->{tags} or ! grep $_ eq $show_tag, @{$qunk->{tags}};
+    }
+  }
+
+  return 1
+    unless @$follow_branches + @$follow_only; # no follow is follow all
+
+  for my $x (map([$_, 1], @$follow_branches),
+             map([$_, 0], @$follow_only    )) {
+    my ($branch, $followsub) = @$x;
+
+    # Special case for following trunk revisions
+    return 1
+      if $branch =~ /^trunk$/i and $revision =~ /^[0-9]+\.[0-9]+$/;
+
+    if ( my $branch_number = $branch_numbers->{$branch} ) {
+      # Are we on one of the follow branches or an ancestor of same?
+
+      # If this revision is a prefix of the branch number, or possibly is less
+      # in the minormost number, OR if this branch number is a prefix of the
+      # revision, then yes.  Otherwise, no.
+
+      # So below, we determine if any of those conditions are met.
+
+      # Trivial case: is this revision on the branch?  (Compare this way to
+      # avoid regexps that screw up Emacs indentation, argh.)
+      if ( substr($revision, 0, (length($branch_number) + 1))
+           eq
+           ($branch_number . ".") ) {
+        if ( $followsub ) {
+          return 1;
+        } elsif (length($revision) == length($branch_number)+2 ) {
+          return 1;
+        }
+      } elsif ( length($branch_number) > length($revision)
+                and
+                $No_Ancestors ) {
+        # Non-trivial case: check if rev is ancestral to branch
+
+        # r_left still has the trailing "."
+        my ($r_left, $r_end) = ($revision =~ /^((?:\d+\.)+)(\d+)$/);
+
+        # b_left still has trailing "."
+        # b_mid has no trailing "."
+        my ($b_left, $b_mid) = ($branch_number =~ /^((?:\d+\.)+)(\d+)\.\d+$/);
+        return 1
+          if $r_left eq $b_left and $r_end <= $b_mid;
+      }
+    }
+  }
+
+  return;
+}
 
 # -------------------------------------
 
@@ -1104,24 +1245,12 @@ my $self = shift; my $class = ref $self;
         {
           my $qunklist = $mesghash->{$msg};
 
-          ## MJP: 19.xii.01 : Exclude @ignore_tags
-          for my $ignore_tag (keys %ignore_tags) {
-            next FOOBIE
-              if grep($_ eq $ignore_tag, map(@{$_->{tags}},
-                                             grep(defined $_->{tags},
-                                                  @$qunklist)));
-          }
-          ## MJP: 19.xii.01 : End exclude @ignore_tags
+          my @qunklist =
+            grep $self->_revision_is_wanted($_), @$qunklist;
 
-          # show only files with tag --show-tag $show_tag
-          if ( keys %show_tags ) {
-            next FOOBIE
-              if !grep(exists $show_tags{$_}, map(@{$_->{tags}},
-                                                  grep(defined $_->{tags},
-                                                       @$qunklist)));
-          }
+          next FOOBIE unless @qunklist;
 
-          my $files               = $self->pretty_file_list($qunklist);
+          my $files               = $self->pretty_file_list(\@qunklist);
           my $header_line;          # date and author
           my $wholething;           # $header_line + $body
 
@@ -1132,7 +1261,7 @@ my $self = shift; my $class = ref $self;
           $Text::Wrap::huge = 'overflow'
             if $Text::Wrap::VERSION >= 2001.0130;
           # Reshape the body according to user preferences.
-          my $body = $self->format_body($msg, $files, $qunklist);
+          my $body = $self->format_body($msg, $files, \@qunklist);
 
           $body =~ s/[ \t]+\n/\n/g;
           $wholething = $header_line . $body;
@@ -1648,6 +1777,7 @@ package CVS::Utils::ChangeLog::FileEntry;
 #     tags        =>    [ "tag1", "tag2", ... ],
 #     branch      =>    "branchname" # There should be only one, right?
 #     roots       =>    [ "branchtag1", "branchtag2", ... ]
+#     lines       =>    "+x -y" # or undefined; x and y are integers
 #   }
 
 # Single top-level ChangeLog, or one per subdirectory?
@@ -1657,12 +1787,13 @@ sub distributed { $#_ ? ($distributed = $_[1]) : $distributed; }
 sub new {
   my $class = shift;
   my ($path, $time, $revision, $state, $lines,
-      $branch_names, $branch_roots, $symbolic_names) = @_;
+      $branch_names, $branch_roots, $branch_numbers, $symbolic_names) = @_;
 
   my %self = (time     => $time,
               revision => $revision,
               state    => $state,
               lines    => $lines,
+              branch_numbers => $branch_numbers,
              );
 
   if ( $distributed ) {
@@ -1671,11 +1802,19 @@ sub new {
     @self{qw(filename dir_key)} = ($path, './');
   }
 
-  # Grab the branch, even though we may or may not need it:
-  (my ($branch_prefix) = ($revision =~ /((?:\d+\.)+)\d+/));
-  $branch_prefix =~ s/\.$//;
-  $self{branch} = $branch_names->{$branch_prefix}
-    if $branch_names->{$branch_prefix};
+  { # Scope for $branch_prefix
+    (my ($branch_prefix) = ($revision =~ /((?:\d+\.)+)\d+/));
+    $branch_prefix =~ s/\.$//;
+    if ( $branch_names->{$branch_prefix} ) {
+      my $branch_name = $branch_names->{$branch_prefix};
+      $self{branch}   = $branch_name;
+      $self{branches} = [$branch_name];
+    }
+    while ( $branch_prefix =~ s/^(\d+(?:\.\d+\.\d+)+)\.\d+\.\d+$/$1/ ) {
+      push @{$self{branches}}, $branch_names->{$branch_prefix}
+        if exists $branch_names->{$branch_prefix};
+    }
+  }
 
   # If there's anything in the @branch_roots array, then this
   # revision is the root of at least one branch.  We'll display
@@ -1692,13 +1831,14 @@ sub new {
   bless \%self, $class;
 }
 
-sub filename    { $_[0]->{filename} }
-sub dir_key     { $_[0]->{dir_key}  }
-sub revision    { $_[0]->{revision} }
-sub branch      { $_[0]->{branch}   }
-sub state       { $_[0]->{state}    }
-sub lines       { $_[0]->{lines}    }
-sub roots       { $_[0]->{roots}    }
+sub filename       { $_[0]->{filename}       }
+sub dir_key        { $_[0]->{dir_key}        }
+sub revision       { $_[0]->{revision}       }
+sub branch         { $_[0]->{branch}         }
+sub state          { $_[0]->{state}          }
+sub lines          { $_[0]->{lines}          }
+sub roots          { $_[0]->{roots}          }
+sub branch_numbers { $_[0]->{branch_numbers} }
 
 sub tags        { $_[0]->{tags}     }
 sub tags_exists {
@@ -1711,83 +1851,161 @@ sub tags_exists {
 # be "good enough" as it stands.
 sub time     { $_[0]->{time}     }
 
-package main;
+# ----------------------------------------------------------------------------
 
-# Subrs ----------------------------------------------------------------------
+package CVS::Utils::ChangeLog::EntrySetBuilder;
 
-sub delta_check {
-  my ($time, $tags) = @_;
+use File::Basename qw( fileparse );
+use Time::Local    qw( timegm );
 
-  # If we're in 'delta' mode, update the latest observed times for the
-  # beginning and ending tags, and when we get around to printing output, we
-  # will simply restrict ourselves to that timeframe...
-  return
-    unless $Delta_Mode;
+use constant MAILNAME => "/etc/mailname";
 
-  $Delta_StartTime = $time
-    if $time > $Delta_StartTime and grep { $_ eq $Delta_From } @$tags;
+# In 'cvs log' output, one long unbroken line of equal signs separates files:
+use constant FILE_SEPARATOR => '=' x 77;# . "\n";
+# In 'cvs log' output, a shorter line of dashes separates log messages within
+# a file:
+use constant REV_SEPARATOR  => '-' x 28;# . "\n";
 
-  $Delta_EndTime = $time
-    if $time > $Delta_EndTime and grep { $_ eq $Delta_To } @$tags;
-}
+use constant EMPTY_LOG_MESSAGE => '*** empty log message ***';
 
-sub run_ext {
-  my ($cmd) = @_;
-  $cmd = [$cmd]
-    unless ref $cmd;
-  local $" = ' ';
-  my $out = qx"@$cmd 2>&1";
-  my $rv  = $?;
-  my ($sig, $core, $exit) = ($? & 127, $? & 128, $? >> 8);
-  return $out, $exit, $sig, $core;
+# -------------------------------------
+
+sub new {
+  my ($proto) = @_;
+  my $class = ref $proto || $proto;
+
+  my $poobah  = CVS::Utils::ChangeLog::EntrySet->new;
+  my $self = bless +{ grand_poobah => $poobah }, $class;
+
+  $self->clear_file;
+  $self->maybe_read_user_map_file;
+  return $self;
 }
 
 # -------------------------------------
 
-# If accumulating, grab the boundary date from pre-existing ChangeLog.
-sub maybe_grab_accumulation_date {
-  if (! $Cumulative || $Update) {
-    return '';
+sub clear_msg {
+  my ($self) = @_;
+
+  # Make way for the next message
+  undef $self->{rev_msg};
+  undef $self->{rev_time};
+  undef $self->{rev_revision};
+  undef $self->{rev_author};
+  undef $self->{rev_state};
+  undef $self->{lines};
+  $self->{rev_branch_roots} = [];       # For showing which files are branch
+                                        # ancestors.
+  $self->{collecting_symbolic_names} = 0;
+}
+
+# -------------------------------------
+
+sub clear_file {
+  my ($self) = @_;
+  $self->clear_msg;
+
+  undef $self->{filename};
+  $self->{branch_names}   = +{};        # We'll grab branch names while we're
+                                        # at it.
+  $self->{branch_numbers} = +{};        # Save some revisions for
+                                        # @Follow_Branches
+  $self->{symbolic_names} = +{};        # Where tag names get stored.
+}
+
+# -------------------------------------
+
+sub grand_poobah { $_[0]->{grand_poobah} }
+
+# -------------------------------------
+
+sub read_changelog {
+  my ($self, $command) = @_;
+
+#  my $grand_poobah = CVS::Utils::ChangeLog::EntrySet->new;
+
+  if (! $Input_From_Stdin) {
+    my $Log_Source_Command = join(' ', @$command);
+    &main::debug ("(run \"${Log_Source_Command}\")\n");
+    open (LOG_SOURCE, "$Log_Source_Command |")
+        or die "unable to run \"${Log_Source_Command}\"";
+  }
+  else {
+    open (LOG_SOURCE, "-") or die "unable to open stdin for reading";
   }
 
-  # else
+  binmode LOG_SOURCE;
 
-  open (LOG, "$Log_File_Name")
-      or die ("trouble opening $Log_File_Name for reading ($!)");
+ XX_Log_Source:
+  while (<LOG_SOURCE>) {
+    chomp;
 
-  my $boundary_date;
-  while (<LOG>)
-  {
-    if (/^(\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d)/)
-    {
-      $boundary_date = "$1";
-      last;
+    # If on a new file and don't see filename, skip until we find it, and
+    # when we find it, grab it.
+    if ( ! defined $self->{filename} ) {
+      $self->read_file_path($_);
+    } elsif ( /^symbolic names:$/ ) {
+      $self->{collecting_symbolic_names} = 1;
+    } elsif ( $self->{collecting_symbolic_names} ) {
+      $self->read_symbolic_name($_);
+    } elsif ( $_ eq FILE_SEPARATOR and ! defined $self->{rev_revision} ) {
+      $self->clear_file;
+    } elsif ( ! defined $self->{rev_revision} ) {
+        # If have file name, but not revision, and see revision, then grab
+        # it.  (We collect unconditionally, even though we may or may not
+        # ever use it.)
+      $self->read_revision($_);
+    } elsif ( ! defined $self->{rev_time} ) { # and /^date: /) {
+      $self->read_date_author_and_state($_);
+    } elsif ( /^branches:\s+(.*);$/ ) {
+      $self->read_branches($1);
+    } elsif ( ! ( $_ eq FILE_SEPARATOR or $_ eq REV_SEPARATOR ) ) {
+      # If have file name, time, and author, then we're just grabbing
+      # log message texts:
+      $self->{rev_msg} .= $_ . "\n";   # Normally, just accumulate the message...
+    } else {
+      if ( ! $self->{rev_msg}
+           or $self->{rev_msg} =~ /^\s*(\.\s*)?$/
+           or index($self->{rev_msg}, EMPTY_LOG_MESSAGE) > -1 ) {
+        # ... until a msg separator is encountered:
+        # Ensure the message contains something:
+        $self->clear_msg
+          if $Prune_Empty_Msgs;
+        $self->{rev_msg} = "[no log message]\n";
+      }
+
+      $self->add_file_entry;
+
+      if ( $_ eq FILE_SEPARATOR ) {
+        $self->clear_file;
+      } else {
+        $self->clear_msg;
+      }
     }
   }
 
-  close (LOG);
+  close LOG_SOURCE
+    or die sprintf("Problem reading log input (exit/signal/core: %d/%d/%d)\n",
+                   $? >> 8, $? & 127, $? & 128);
+  return;
+}
 
-  # convert time from utc to local timezone if the ChangeLog has
-  # dates/times in utc
-  if ($UTC_Times && $boundary_date)
-  {
-    # convert the utc time to a time value
-    my ($year,$mon,$mday,$hour,$min) = $boundary_date =~
-      m#(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)#;
-    my $time = timegm(0,$min,$hour,$mday,$mon-1,$year-1900);
-    # print the timevalue in the local timezone
-    my ($ignore,$wday);
-    ($ignore,$min,$hour,$mday,$mon,$year,$wday) = localtime($time);
-    $boundary_date=sprintf ("%4u-%02u-%02u %02u:%02u",
-                            $year+1900,$mon+1,$mday,$hour,$min);
-  }
+# -------------------------------------
 
-  return $boundary_date;
+sub add_file_entry {
+  $_[0]->grand_poobah->add_fileentry(@{$_[0]}{qw(filename rev_time rev_revision
+                                                 rev_state lines branch_names
+                                                 rev_branch_roots
+                                                 branch_numbers
+                                                 symbolic_names
+                                                 rev_author rev_msg)});
 }
 
 # -------------------------------------
 
 sub maybe_read_user_map_file {
+  my ($self) = @_;
+
   my %expansions;
   my $User_Map_Input;
 
@@ -1798,7 +2016,7 @@ sub maybe_read_user_map_file {
     {
       my $rsh = (exists $ENV{'CVS_RSH'} ? $ENV{'CVS_RSH'} : 'ssh');
       $User_Map_Input = "$rsh $1 'cat $2' |";
-      &debug ("(run \"${User_Map_Input}\")\n");
+      &main::debug ("(run \"${User_Map_Input}\")\n");
     }
     else
     {
@@ -1879,13 +2097,13 @@ sub maybe_read_user_map_file {
     close (MAPFILE);
   }
 
-  return %expansions;
+ $self->{usermap} = \%expansions;
 }
 
 # -------------------------------------
 
 sub read_file_path {
-  my ($line) = @_;
+  my ($self, $line) = @_;
 
   my $path;
 
@@ -1910,18 +2128,20 @@ sub read_file_path {
     }
   }
 
-  return $path;
+  $self->{filename} = $path;
+  return;
 }
 
 # -------------------------------------
 
 sub read_symbolic_name {
-  my ($line, $branch_names, $branch_numbers, $symbolic_names) = @_;
+  my ($self, $line) = @_;
 
   # All tag names are listed with whitespace in front in cvs log
   # output; so if see non-whitespace, then we're done collecting.
   if ( /^\S/ ) {
-    return 0;
+    $self->{collecting_symbolic_names} = 0;
+    return;
   } else {
     # we're looking at a tag name, so parse & store it
 
@@ -1945,74 +2165,29 @@ sub read_symbolic_name {
 
     # If we got a branch, record its number.
     if ( $real_branch_rev ) {
-      $branch_names->{$real_branch_rev} = $tag_name;
-      if ( @Follow_Branches ) {
-        if ( grep $_ eq $tag_name, @Follow_Branches ) {
-          $branch_numbers->{$tag_name} = $real_branch_rev;
-        }
-      }
+      $self->{branch_names}->{$real_branch_rev} = $tag_name;
+      $self->{branch_numbers}->{$tag_name} = $real_branch_rev;
     } else {
       # Else it's just a regular (non-branch) tag.
-      push @{$symbolic_names->{$tag_rev}}, $tag_name;
+      push @{$self->{symbolic_names}->{$tag_rev}}, $tag_name;
     }
   }
 
-  return 1;
+  $self->{collecting_symbolic_names} = 1;
+  return;
 }
 
 # -------------------------------------
 
 sub read_revision {
-  my ($line, $branch_numbers) = @_;
+  my ($self, $line) = @_;
 
   my ($revision) = ( $line =~ /^revision (\d+\.[\d.]+)/ );
 
   return
     unless $revision;
 
-  return $revision
-    unless @Follow_Branches;
-
-  foreach my $branch (@Follow_Branches) {
-    # Special case for following trunk revisions
-    return $revision
-      if $branch =~ /^trunk$/i and $revision =~ /^[0-9]+\.[0-9]+$/;
-
-    if ( my $branch_number = $branch_numbers->{$branch} ) {
-      # Are we on one of the follow branches or an ancestor of same?
-
-      # If this revision is a prefix of the branch number, or possibly is less
-      # in the minormost number, OR if this branch number is a prefix of the
-      # revision, then yes.  Otherwise, no.
-
-      # So below, we determine if any of those conditions are met.
-
-      # Trivial case: is this revision on the branch?  (Compare this way to
-      # avoid regexps that screw up Emacs indentation, argh.)
-      if ( substr($revision, 0, (length($branch_number) + 1))
-           eq
-           ($branch_number . ".") ) {
-        return $revision;
-      } elsif ( length($branch_number) > length($revision)
-                and
-                $No_Ancestors ) {
-        # Non-trivial case: check if rev is ancestral to branch
-
-        # r_left still has the trailing "."
-        my ($r_left, $r_end) = ($revision =~ /^((?:\d+\.)+)(\d+)$/);
-
-        # b_left still has trailing "."
-        # b_mid has no trailing "."
-        my ($b_left, $b_mid) = ($branch_number =~ /^((?:\d+\.)+)(\d+)\.\d+$/);
-
-        return $revision
-          if $r_left eq $b_left and $r_end <= $b_mid;
-      }
-    }
-  }
-
-  # Else we are following branches, but this revision isn't on the
-  # path.  So skip it.
+  $self->{rev_revision} = $revision;
   return;
 }
 
@@ -2021,12 +2196,12 @@ sub read_revision {
 { # Closure over %gecos_warned
 my %gecos_warned;
 sub read_date_author_and_state {
-  my ($line, $usermap) = @_;
+  my ($self, $line) = @_;
 
-  my ($time, $author, $state, $lines) = parse_date_author_and_state($line);
+  my ($time, $author, $state) = $self->parse_date_author_and_state($line);
 
-  if ( defined($usermap->{$author}) and $usermap->{$author} ) {
-    $author = $usermap->{$author};
+  if ( defined($self->{usermap}->{$author}) and $self->{usermap}->{$author} ) {
+    $author = $self->{usermap}->{$author};
   } elsif ( defined $Domain or $Gecos == 1 ) {
     my $email = $author;
     $email = $author."@".$Domain
@@ -2049,245 +2224,158 @@ sub read_date_author_and_state {
       if $fullname ne '';
   }
 
-  return $time, $author, $state, $lines;
+  $self->{rev_state}  = $state;
+  $self->{rev_time}   = $time;
+  $self->{rev_author} = $author;
+  return;
 }
 }
 
 # -------------------------------------
 
 sub read_branches {
-  my ($line) = @_;
+  # A "branches: ..." line here indicates that one or more branches
+  # are rooted at this revision.  If we're showing branches, then we
+  # want to show that fact as well, so we collect all the branches
+  # that this is the latest ancestor of and store them in
+  # $self->[rev_branch_roots}.  Just for reference, the format of the
+  # line we're seeing at this point is:
+  #
+  #    branches:  1.5.2;  1.5.4;  ...;
+  #
+  # Okay, here goes:
+  my ($self, $line) = @_;
 
+  # Ugh.  This really bothers me.  Suppose we see a log entry
+  # like this:
+  #
+  #    ----------------------------
+  #    revision 1.1
+  #    date: 1999/10/17 03:07:38;  author: jrandom;  state: Exp;
+  #    branches:  1.1.2;
+  #    Intended first line of log message begins here.
+  #    ----------------------------
+  #
+  # The question is, how we can tell the difference between that
+  # log message and a *two*-line log message whose first line is
+  #
+  #    "branches:  1.1.2;"
+  #
+  # See the problem?  The output of "cvs log" is inherently
+  # ambiguous.
+  #
+  # For now, we punt: we liberally assume that people don't
+  # write log messages like that, and just toss a "branches:"
+  # line if we see it but are not showing branches.  I hope no
+  # one ever loses real log data because of this.
   if ( $Show_Branches ) {
-    my $lst = $1;
-    $lst =~ s/(1\.)+1;|(1\.)+1$//;  # ignore the trivial branch 1.1.1
-    if ( $lst ) {
-      return split (/;\s+/, $lst);
-    } else {
-      return;
-    }
-  } else {
-    # Ugh.  This really bothers me.  Suppose we see a log entry
-    # like this:
-    #
-    #    ----------------------------
-    #    revision 1.1
-    #    date: 1999/10/17 03:07:38;  author: jrandom;  state: Exp;
-    #    branches:  1.1.2;
-    #    Intended first line of log message begins here.
-    #    ----------------------------
-    #
-    # The question is, how we can tell the difference between that
-    # log message and a *two*-line log message whose first line is
-    #
-    #    "branches:  1.1.2;"
-    #
-    # See the problem?  The output of "cvs log" is inherently
-    # ambiguous.
-    #
-    # For now, we punt: we liberally assume that people don't
-    # write log messages like that, and just toss a "branches:"
-    # line if we see it but are not showing branches.  I hope no
-    # one ever loses real log data because of this.
-    return;
+    $line =~ s/(1\.)+1;|(1\.)+1$//;  # ignore the trivial branch 1.1.1
+    $self->{rev_branch_roots} = [split /;\s+/, $line]
+      if length $line;
   }
 }
 
 # -------------------------------------
 
-sub read_changelog {
-  my ($command) = @_;
+sub parse_date_author_and_state {
+  my ($self, $line) = @_;
+  # Parses the date/time and author out of a line like:
+  #
+  # date: 1999/02/19 23:29:05;  author: apharris;  state: Exp;
 
-  my $grand_poobah = CVS::Utils::ChangeLog::EntrySet->new;
-
-  my $file_full_path;
-  my $detected_file_separator;
-  my $author;
-  my $revision;
-  my $time;
-  my $state;
-  my $lines;
-  my $msg_txt;
-
-  # We might be expanding usernames
-  my %usermap = maybe_read_user_map_file;
-
-  # In general, it's probably not very maintainable to use state
-  # variables like this to tell the loop what it's doing at any given
-  # moment, but this is only the first one, and if we never have more
-  # than a few of these, it's okay.
-  my $collecting_symbolic_names = 0;
-  my %symbolic_names;    # Where tag names get stored.
-  my %branch_names;      # We'll grab branch names while we're at it.
-  my %branch_numbers;    # Save some revisions for @Follow_Branches
-  my @branch_roots;      # For showing which files are branch ancestors.
-
-  if (! $Input_From_Stdin) {
-    my $Log_Source_Command = join(' ', @$command);
-    &debug ("(run \"${Log_Source_Command}\")\n");
-    open (LOG_SOURCE, "$Log_Source_Command |")
-        or die "unable to run \"${Log_Source_Command}\"";
+  my ($year, $mon, $mday, $hours, $min, $secs, $utcOffset, $author, $state, $rest) =
+    $line =~
+      m!(\d+)[-/](\d+)[-/](\d+) \s+ (\d+):(\d+):(\d+)(\s+[+-]\d{4})?;\s+
+        author:\s+([^;]+);\s+state:\s+([^;]+);(.*)!x
+    or  die "Couldn't parse date ``$line''";
+  die "Bad date or Y2K issues"
+    unless $year > 1969 and $year < 2258;
+  # Kinda arbitrary, but useful as a sanity check
+  my $time = timegm($secs, $min, $hours, $mday, $mon-1, $year-1900);
+  if (defined $utcOffset) {
+    my ($plusminus, $hour, $minute) = $utcOffset =~ m/([+-])(\d\d)(\d\d)/;
+    my $offset = (($hour * 60) + $minute) * 60 * ($plusminus eq '+' ? -1 : 1);
+    $time += $offset;
   }
-  else {
-    open (LOG_SOURCE, "-") or die "unable to open stdin for reading";
+  if ( $rest =~ m!\s+lines:\s+(.*)! ) {
+    $self->{lines} = $1;
   }
 
-  binmode LOG_SOURCE;
+  return $time, $author, $state;
+}
 
- XX_Log_Source:
-  while (<LOG_SOURCE>) {
-    # Canonicalize line endings
-    s/\r$//;
+# Subrs ----------------------------------------------------------------------
 
-    # If on a new file and don't see filename, skip until we find it, and
-    # when we find it, grab it.
-    if ( ! defined $file_full_path ) {
-      $file_full_path = read_file_path($_);
-      next XX_Log_Source;
-    } elsif ( /^symbolic names:$/ ) {
-      # Collect tag names in case we're asked to print them in the output.
-      $collecting_symbolic_names = 1;
-      next XX_Log_Source;  # There's no more info on this line, so skip to next
-    } elsif ($collecting_symbolic_names) {
-      $collecting_symbolic_names =
-        read_symbolic_name($_,
-                           \(%branch_names, %branch_numbers, %symbolic_names));
-      next XX_Log_Source;
-    }
+package main;
 
-    # If have file name, but not revision, and see revision, then grab
-    # it.  (We collect unconditionally, even though we may or may not
-    # ever use it.)
-    if ( ( ! defined $revision) ) {
-      $revision = read_revision($_, \%branch_numbers);
-      # This breaks, because files with no messages don't get to call clear
-      # and so the file picks up messages from the next file in sequence
-      #      next XX_Log_Source;
-    }
+sub delta_check {
+  my ($time, $tags) = @_;
 
-    # If we don't have a revision right now, we couldn't possibly
-    # be looking at anything useful.
-    if (! (defined ($revision))) {
-      $detected_file_separator = /^$file_separator$/o;
-      if ($detected_file_separator) {
-        # No revisions for this file; can happen, e.g. "cvs log -d DATE"
-        goto XX_Clear;
-      }
-      else {
-        next XX_Log_Source;
-      }
-    }
+  # If we're in 'delta' mode, update the latest observed times for the
+  # beginning and ending tags, and when we get around to printing output, we
+  # will simply restrict ourselves to that timeframe...
+  return
+    unless $Delta_Mode;
 
-    # If have file name but not date and author, and see date or
-    # author, then grab them:
-    unless (defined $time) {
-      if (/^date: .*/) {
-        ($time, $author, $state, $lines) =
-          read_date_author_and_state($_, \%usermap);
-      } else {
-        $detected_file_separator = /^$file_separator$/o;
-        goto XX_Clear
-          # No revisions for this file; can happen, e.g. "cvs log -d DATE"
-          if $detected_file_separator;
-      }
+  $Delta_StartTime = $time
+    if $time > $Delta_StartTime and grep { $_ eq $Delta_From } @$tags;
 
-      # If the date/time/author hasn't been found yet, we couldn't
-      # possibly care about anything we see.  So skip:
-      next XX_Log_Source;
-    }
+  $Delta_EndTime = $time
+    if $time > $Delta_EndTime and grep { $_ eq $Delta_To } @$tags;
+}
 
-    # A "branches: ..." line here indicates that one or more branches
-    # are rooted at this revision.  If we're showing branches, then we
-    # want to show that fact as well, so we collect all the branches
-    # that this is the latest ancestor of and store them in
-    # @branch_roots.  Just for reference, the format of the line we're
-    # seeing at this point is:
-    #
-    #    branches:  1.5.2;  1.5.4;  ...;
-    #
-    # Okay, here goes:
-    if ( /^branches:\s+(.*);$/ ) {
-      @branch_roots = read_branches($_);
-      next XX_Log_Source;
-    }
+sub run_ext {
+  my ($cmd) = @_;
+  $cmd = [$cmd]
+    unless ref $cmd;
+  local $" = ' ';
+  my $out = qx"@$cmd 2>&1";
+  my $rv  = $?;
+  my ($sig, $core, $exit) = ($? & 127, $? & 128, $? >> 8);
+  return $out, $exit, $sig, $core;
+}
 
-    # If have file name, time, and author, then we're just grabbing
-    # log message texts:
-    $detected_file_separator = /^$file_separator$/o;
-    if ($detected_file_separator && ! (defined $revision)) {
-      # No revisions for this file; can happen, e.g. "cvs log -d DATE"
-      goto XX_Clear;
-    }
-    unless ($detected_file_separator || /^$logmsg_separator$/o)
+# -------------------------------------
+
+# If accumulating, grab the boundary date from pre-existing ChangeLog.
+sub maybe_grab_accumulation_date {
+  if (! $Cumulative || $Update) {
+    return '';
+  }
+
+  # else
+
+  open (LOG, "$Log_File_Name")
+      or die ("trouble opening $Log_File_Name for reading ($!)");
+
+  my $boundary_date;
+  while (<LOG>)
+  {
+    if (/^(\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d)/)
     {
-      $msg_txt .= $_;   # Normally, just accumulate the message...
-      next XX_Log_Source;
-    }
-    # ... until a msg separator is encountered:
-    # Ensure the message contains something:
-    if ((! $msg_txt)
-        || ($msg_txt =~ /^\s*\.\s*$|^\s*$/)
-        || ($msg_txt =~ /\*\*\* empty log message \*\*\*/))
-    {
-      if ($Prune_Empty_Msgs) {
-        goto XX_Clear;
-      }
-      # else
-      $msg_txt = "[no log message]\n";
-    }
-
-    ### Store it all in the Grand Poobah:
-    {
-      my $qunk = CVS::Utils::ChangeLog::FileEntry->new($file_full_path, $time, $revision,
-                                                   $state, $lines,
-                                                   \%branch_names, \@branch_roots,
-                                                   \%symbolic_names);
-
-      # We might be including revision numbers and/or tags and/or
-      # branch names in the output.  Most of the code from here to
-      # loop-end deals with organizing these in qunk.
-
-      unless ( $Hide_Branch_Additions
-               and
-               $msg_txt =~ /file .+ was initially added on branch \S+./ ) {
-        # Add this file to the list
-        # (We use many spoonfuls of autovivication magic. Hashes and arrays
-        # will spring into existence if they aren't there already.)
-
-        &debug ("(pushing log msg for ". $qunk->dir_key . $qunk->filename . ")\n");
-
-        # Store with the files in this commit.  Later we'll loop through
-        # again, making sure that revisions with the same log message
-        # and nearby commit times are grouped together as one commit.
-        $grand_poobah->{$qunk->dir_key}{$author}{$time}{$msg_txt} =
-          CVS::Utils::ChangeLog::Message->new($msg_txt)
-              unless exists $grand_poobah->{$qunk->dir_key}{$author}{$time}{$msg_txt};
-        $grand_poobah->{$qunk->dir_key}{$author}{$time}{$msg_txt}->add_fileentry($qunk);
-      }
-    }
-
-  XX_Clear:
-    # Make way for the next message
-    undef $msg_txt;
-    undef $time;
-    undef $revision;
-    undef $author;
-    undef @branch_roots;
-
-    # Maybe even make way for the next file:
-    if ($detected_file_separator) {
-      undef $file_full_path;
-      undef %branch_names;
-      undef %branch_numbers;
-      undef %symbolic_names;
+      $boundary_date = "$1";
+      last;
     }
   }
 
-  close LOG_SOURCE
-    or die sprintf("Problem reading log input (exit/signal/core: %d/%d/%d)\n",
-                   $? >> 8, $? & 127, $? & 128);
+  close (LOG);
 
-  return $grand_poobah;
+  # convert time from utc to local timezone if the ChangeLog has
+  # dates/times in utc
+  if ($UTC_Times && $boundary_date)
+  {
+    # convert the utc time to a time value
+    my ($year,$mon,$mday,$hour,$min) = $boundary_date =~
+      m#(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)#;
+    my $time = timegm(0,$min,$hour,$mday,$mon-1,$year-1900);
+    # print the timevalue in the local timezone
+    my ($ignore,$wday);
+    ($ignore,$min,$hour,$mday,$mon,$year,$wday) = localtime($time);
+    $boundary_date=sprintf ("%4u-%02u-%02u %02u:%02u",
+                            $year+1900,$mon+1,$mday,$hour,$min);
+  }
+
+  return $boundary_date;
 }
 
 # -------------------------------------
@@ -2310,31 +2398,9 @@ sub derive_changelog {
   }
 
 #  output_changelog(read_changelog($command));
-  read_changelog($command)->output_changelog;
-}
-
-# -------------------------------------
-
-sub parse_date_author_and_state {
-  # Parses the date/time and author out of a line like:
-  #
-  # date: 1999/02/19 23:29:05;  author: apharris;  state: Exp;
-
-  my $line = shift;
-
-  my ($year, $mon, $mday, $hours, $min, $secs, $author, $state, $rest) =
-    $line =~
-      m#(\d+)/(\d+)/(\d+)\s+(\d+):(\d+):(\d+);\s+author:\s+([^;]+);\s+state:\s+([^;]+);(.*)#
-          or  die "Couldn't parse date ``$line''";
-  die "Bad date or Y2K issues" unless ($year > 1969 and $year < 2258);
-  # Kinda arbitrary, but useful as a sanity check
-  my $time = timegm($secs,$min,$hours,$mday,$mon-1,$year-1900);
-  my $lines;
-  if ( $rest =~ m#\s+lines:\s+(.*)# )
-    {
-      $lines =$1;
-    }
-  return ($time, $author, $state, $lines);
+  my $builder = CVS::Utils::ChangeLog::EntrySetBuilder->new;
+  $builder->read_changelog($command);
+  $builder->grand_poobah->output_changelog;
 }
 
 # -------------------------------------
@@ -2427,11 +2493,13 @@ sub parse_options {
              'tagdates|T'     => \$Show_Tag_Dates,
              'branches|b'     => \$Show_Branches,
              'follow|F=s'     => \@Follow_Branches,
+             'follow-only=s'  => \@Follow_Only,
              'xml-encoding=s' => \$XML_Encoding,
              'xml'            => \$XML_Output,
              'noxmlns'        => \$No_XML_Namespace,
              'no-xml-iso-date' => \$No_XML_ISO_Date,
              'no-ancestors'   => \$No_Ancestors,
+             'lines-modified' => \$Show_Lines_Modified,
 
              'no-indent'    => sub {
                $Indent = '';
@@ -2469,7 +2537,7 @@ sub parse_options {
              'delta=s'        => sub {
                my $arg = $_[1];
                if ( $arg =~
-                    /^([A-Za-z][A-Za-z0-9_\-]*):([A-Za-z][A-Za-z0-9_\-]*)$/ ) {
+                    /^([A-Za-z][A-Za-z0-9_\-\]\[]*):([A-Za-z][A-Za-z0-9_\-\]\[]*)$/ ) {
                  $Delta_From = $1;
                  $Delta_To = $2;
                  $Delta_Mode = 1;
@@ -2598,10 +2666,8 @@ sub slurp_file {
   my $retstr;
 
   open (SLURPEE, "<${filename}") or die ("unable to open $filename ($!)");
-  my $saved_sep = $/;
-  undef $/;
+  local $/ = undef;
   $retstr = <SLURPEE>;
-  $/ = $saved_sep;
   close (SLURPEE);
   return $retstr;
 }
@@ -2793,6 +2859,10 @@ Any regexp matching is done case-insensitively.
 
 Show only revisions on or ancestral to I<BRANCH>.
 
+=item B<--follow-only> I<BRANCH>
+
+Like --follow, but sub-branches are not followed.
+
 =item B<--no-ancestors>
 
 When using B<-F>, only track changes since the I<BRANCH> started.
@@ -2870,6 +2940,12 @@ output, stripping the prefix I<CVSROOT>.
 =item B<-P>, B<--prune>
 
 Don't show empty log messages.
+
+=item B<--lines-modified>
+
+Output the number of lines added and the number of lines removed for
+each checkin (if applicable). At the moment, this only affects the
+XML output mode.
 
 =item B<--ignore-tag> I<TAG>
 
@@ -2978,7 +3054,7 @@ Some examples (on non-UNIX shells):
 
 =item Karl Fogel
 
-=item Melissa O'Neal
+=item Melissa O'Neill
 
 =item Martyn J. Pearce
 
@@ -2997,6 +3073,8 @@ Contributions from
 =item Nathan Bryant
 
 =item Oswald Buddenhagen
+
+=item Neil Conway
 
 =item Arthur de Jong
 
