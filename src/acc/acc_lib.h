@@ -14,7 +14,7 @@
 
 
 #ifndef __ACC_LIB_H_INCLUDED
-#define __ACC_LIB_H_INCLUDED
+#define __ACC_LIB_H_INCLUDED 1
 
 
 #if !defined(__ACCLIB_FUNCNAME)
@@ -47,6 +47,30 @@
 #  define acclib_handle_t       long
 #  define acclib_uhandle_t      unsigned long
 #endif
+
+
+/*************************************************************************
+// wrap <ctype.h>
+**************************************************************************/
+
+#if 0
+ACCLIB_EXTERN(int, acc_ascii_digit)   (int);
+ACCLIB_EXTERN(int, acc_ascii_islower) (int);
+ACCLIB_EXTERN(int, acc_ascii_isupper) (int);
+ACCLIB_EXTERN(int, acc_ascii_tolower) (int);
+ACCLIB_EXTERN(int, acc_ascii_toupper) (int);
+ACCLIB_EXTERN(int, acc_ascii_utolower) (int);
+ACCLIB_EXTERN(int, acc_ascii_utoupper) (int);
+#endif
+
+#define acc_ascii_isdigit(c)    (((unsigned)(c) - 48) < 10)
+#define acc_ascii_islower(c)    (((unsigned)(c) - 97) < 26)
+#define acc_ascii_isupper(c)    (((unsigned)(c) - 65) < 26)
+#define acc_ascii_tolower(c)    ((int)(c) + (acc_ascii_isupper(c) << 5))
+#define acc_ascii_toupper(c)    ((int)(c) - (acc_ascii_islower(c) << 5))
+
+#define acc_ascii_utolower(c)   acc_ascii_tolower((unsigned char)(c))
+#define acc_ascii_utoupper(c)   acc_ascii_toupper((unsigned char)(c))
 
 
 /*************************************************************************
@@ -90,12 +114,31 @@ ACCLIB_EXTERN(acc_hvoid_p, acc_hmemset) (acc_hvoid_p, int, acc_hsize_t);
 
 /* string */
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrlen) (const acc_hchar_p);
+ACCLIB_EXTERN(int, acc_hstrcmp) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(int, acc_hstrncmp)(const acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(int, acc_ascii_hstricmp) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(int, acc_ascii_hstrnicmp)(const acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(int, acc_ascii_hmemicmp) (const acc_hvoid_p, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrstr) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_ascii_hstristr) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemmem) (const acc_hvoid_p, acc_hsize_t, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_ascii_hmemimem) (const acc_hvoid_p, acc_hsize_t, const acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrcpy) (acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrcat) (acc_hchar_p, const acc_hchar_p);
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrlcpy) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrlcat) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
 ACCLIB_EXTERN(int, acc_hstrscpy) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
 ACCLIB_EXTERN(int, acc_hstrscat) (acc_hchar_p, const acc_hchar_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrccpy) (acc_hchar_p, const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemccpy) (acc_hvoid_p, const acc_hvoid_p, int, acc_hsize_t);
 ACCLIB_EXTERN(acc_hchar_p, acc_hstrchr)  (const acc_hchar_p, int);
 ACCLIB_EXTERN(acc_hchar_p, acc_hstrrchr) (const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hchar_p, acc_ascii_hstrichr) (const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hchar_p, acc_ascii_hstrrichr) (const acc_hchar_p, int);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemchr)  (const acc_hvoid_p, int, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_hmemrchr) (const acc_hvoid_p, int, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_ascii_hmemichr) (const acc_hvoid_p, int, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_ascii_hmemrichr) (const acc_hvoid_p, int, acc_hsize_t);
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrspn)  (const acc_hchar_p, const acc_hchar_p);
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrrspn) (const acc_hchar_p, const acc_hchar_p);
 ACCLIB_EXTERN(acc_hsize_t, acc_hstrcspn)  (const acc_hchar_p, const acc_hchar_p);
@@ -104,6 +147,10 @@ ACCLIB_EXTERN(acc_hchar_p, acc_hstrpbrk)  (const acc_hchar_p, const acc_hchar_p)
 ACCLIB_EXTERN(acc_hchar_p, acc_hstrrpbrk) (const acc_hchar_p, const acc_hchar_p);
 ACCLIB_EXTERN(acc_hchar_p, acc_hstrsep)  (acc_hchar_pp, const acc_hchar_p);
 ACCLIB_EXTERN(acc_hchar_p, acc_hstrrsep) (acc_hchar_pp, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_ascii_hstrlwr) (acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_ascii_hstrupr) (acc_hchar_p);
+ACCLIB_EXTERN(acc_hvoid_p, acc_ascii_hmemlwr) (acc_hvoid_p, acc_hsize_t);
+ACCLIB_EXTERN(acc_hvoid_p, acc_ascii_hmemupr) (acc_hvoid_p, acc_hsize_t);
 
 /* stdio */
 ACCLIB_EXTERN(acc_hsize_t, acc_hfread) (ACC_FILE_P, acc_hvoid_p, acc_hsize_t);
@@ -145,6 +192,14 @@ ACCLIB_EXTERN(long, acc_hwrite) (int, const acc_hvoid_p, long);
 #if !defined(ACC_FN_NAME_MAX)
 #  define ACC_FN_NAME_MAX   ACC_FN_PATH_MAX
 #endif
+
+
+#define ACC_FNMATCH_NOESCAPE        1
+#define ACC_FNMATCH_PATHNAME        2
+#define ACC_FNMATCH_PATHSTAR        4
+#define ACC_FNMATCH_PERIOD          8
+#define ACC_FNMATCH_ASCII_CASEFOLD  16
+ACCLIB_EXTERN(int, acc_fnmatch) (const acc_hchar_p, const acc_hchar_p, int);
 
 
 /*************************************************************************
@@ -235,7 +290,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_u
 typedef struct { /* all private */
     acclib_handle_t h;
     int mode;
-#if (ACC_H_WINDOWS_H) && defined(acc_uint64l_t)
+#if (ACC_H_WINDOWS_H) && defined(acc_int64l_t)
     double qpf;
 #endif
 } acc_uclock_handle_t;
@@ -269,7 +324,7 @@ ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_p, const acc_uc
 
 
 /*************************************************************************
-// bele (Big Endian / Little Endian)
+// Big Endian / Little Endian
 **************************************************************************/
 
 ACCLIB_EXTERN(unsigned, acc_get_be16) (const acc_hvoid_p);
@@ -292,19 +347,57 @@ ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #endif
 
 /* inline versions */
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
 #  define ACC_GET_LE16(p)       (* (const unsigned short *) (p))
 #  define ACC_GET_LE32(p)       (* (const acc_uint32e_t *) (p))
 #  define ACC_SET_LE16(p,v)     (* (unsigned short *) (p) = (unsigned short) (v))
 #  define ACC_SET_LE32(p,v)     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v))
 #endif
+#if (ACC_ARCH_AMD64)
+#  define ACC_GET_LE64(p)       (* (const acc_uint64l_t *) (p))
+#  define ACC_SET_LE64(p,v)     (* (acc_uint64l_t *) (p) = (acc_uint64l_t) (v))
+#endif
+
+
+/*************************************************************************
+// getopt
+**************************************************************************/
+
+typedef struct {
+    const char* name;
+    int has_arg;
+    int* flag;
+    int val;
+} acc_getopt_longopt_t;
+#ifndef acc_getopt_longopt_p
+#define acc_getopt_longopt_p acc_getopt_longopt_t *
+#endif
+
+typedef struct {
+    int go_argc;
+    char** go_argv;
+    const char* go_shortopts;
+    const acc_getopt_longopt_p longopts;
+#if (ACC_CC_AZTECC || ACC_CC_TURBOC)
+    int __acc_cdecl_va (*go_error)(const char *, ...);
+#else
+    int (__acc_cdecl_va *go_error)(const char *, ...);
+#endif
+} acc_getopt_t;
+#ifndef acc_getopt_p
+#define acc_getopt_p acc_getopt_t *
+#endif
+
+ACCLIB_EXTERN(void, acc_getopt_init) (acc_getopt_p);
+ACCLIB_EXTERN(int, acc_getopt) (acc_getopt_p);
+ACCLIB_EXTERN(void, acc_getopt_close)(acc_getopt_p);
 
 
 /*************************************************************************
 // rand
 **************************************************************************/
 
-typedef struct {
+typedef struct { /* all private */
     acc_uint32l_t seed;
 } acc_rand31_t;
 #ifndef acc_rand31_p
@@ -314,7 +407,7 @@ ACCLIB_EXTERN(void, acc_srand31) (acc_rand31_p, acc_uint32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand31) (acc_rand31_p);
 
 #if defined(acc_uint64l_t)
-typedef struct {
+typedef struct { /* all private */
     acc_uint64l_t seed;
 } acc_rand48_t;
 #ifndef acc_rand48_p
@@ -326,7 +419,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_rand48_r32) (acc_rand48_p);
 #endif
 
 #if defined(acc_uint64l_t)
-typedef struct {
+typedef struct { /* all private */
     acc_uint64l_t seed;
 } acc_rand64_t;
 #ifndef acc_rand64_p
@@ -337,7 +430,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_rand64) (acc_rand64_p);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand64_r32) (acc_rand64_p);
 #endif
 
-typedef struct {
+typedef struct { /* all private */
     unsigned n;
     acc_uint32l_t s[624];
 } acc_randmt_t;

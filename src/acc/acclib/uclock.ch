@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_UCLOCK_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
@@ -26,8 +27,6 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #elif (ACC_OS_DOS32 && defined(__DJGPP__))
-#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS)
-#  define __ACCLIB_UCLOCK_USE_CLOCK 1
 #elif (ACC_H_WINDOWS_H) && (ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (ACC_CC_DMC || ACC_CC_LCC)
      /* winmm.lib is missing */
@@ -43,6 +42,8 @@
 #      pragma comment(lib,"winmm")
 #    endif
 #  endif
+#elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN32 || ACC_OS_WIN64)
+#  define __ACCLIB_UCLOCK_USE_CLOCK 1
 #endif
 
 #if (__ACCLIB_UCLOCK_USE_CLOCK) && !defined(CLOCKS_PER_SEC)
@@ -163,10 +164,8 @@ ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_
 
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
     h->mode = 2;
-    if (stop->ticks.t32 < start->ticks.t32) /* midnight passed */
-        d = 86400.0 - (start->ticks.t32 - stop->ticks.t32) / 100.0;
-    else
-        d = (stop->ticks.t32 - start->ticks.t32) / 100.0;
+    d = (double) (stop->ticks.t32 - start->ticks.t32) / 100.0;
+    if (d < 0.0) d += 86400.0; /* midnight passed */
 #elif (ACC_OS_DOS32 && defined(__DJGPP__))
     h->mode = 3;
     d = (double) (stop->ticks.t64 - start->ticks.t64) / (UCLOCKS_PER_SEC);

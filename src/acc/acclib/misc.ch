@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_MISC_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
@@ -29,8 +30,9 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 #if (ACC_OS_CYGWIN)
     return get_osfhandle(fd);
 #elif (ACC_OS_EMX && defined(__RSXNT__))
-    /* FIXME */
-    return -1;
+    return -1; /* FIXME */
+#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
+    return -1; /* FIXME */
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
 # if (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))
     /* FIXME */
@@ -75,21 +77,23 @@ ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
     if (r == -1)
         return -1;
     return (r & O_TEXT) ? 0 : 1;
+#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
+    if (fd < 0) return -1;
+    ACC_UNUSED(binary);
+    return 1;
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64 || ACC_OS_CYGWIN || ACC_OS_EMX)
     int r;
 #if !defined(ACC_CC_ZORTECHC)
     ACC_COMPILE_TIME_ASSERT(O_BINARY > 0)
 #endif
     ACC_COMPILE_TIME_ASSERT(O_TEXT > 0)
-    if (fd < 0)
-        return -1;
+    if (fd < 0) return -1;
     r = setmode(fd, binary ? O_BINARY : O_TEXT);
     if (r == -1)
         return -1;
     return (r & O_TEXT) ? 0 : 1;
 #else
-    if (fd < 0)
-        return -1;
+    if (fd < 0) return -1;
     ACC_UNUSED(binary);
     return 1;
 #endif
@@ -106,7 +110,6 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
     {
         union REGS ri, ro;
         ri.x.ax = 0x4400; ri.x.bx = fd;
-        ro.x.ax = 0xffff; ro.x.cflag = 1;
         int86(0x21, &ri, &ro);
         if ((ro.x.cflag & 1) == 0)  /* if carry flag not set */
             if ((ro.x.ax & 0x83) != 0x83)
@@ -116,7 +119,6 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
     {
         union REGS ri, ro;
         ri.w.ax = 0x4400; ri.w.bx = (unsigned short) fd;
-        ro.w.ax = 0xffff; ro.w.cflag = 1;
         int386(0x21, &ri, &ro);
         if ((ro.w.cflag & 1) == 0)  /* if carry flag not set */
             if ((ro.w.ax & 0x83) != 0x83)
@@ -143,6 +145,8 @@ ACCLIB_PUBLIC(int, acc_mkdir) (const char* name, unsigned mode)
     ACC_UNUSED(mode);
     return Dcreate(name);
 #elif (ACC_OS_DOS32 && defined(__DJGPP__))
+    return mkdir(name, mode);
+#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
     return mkdir(name, mode);
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
     ACC_UNUSED(mode);

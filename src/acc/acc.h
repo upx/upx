@@ -23,9 +23,9 @@
 
 
 #ifndef __ACC_H_INCLUDED
-#define __ACC_H_INCLUDED
+#define __ACC_H_INCLUDED 1
 
-#define ACC_VERSION     20030913L
+#define ACC_VERSION     20031020L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file

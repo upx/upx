@@ -335,6 +335,7 @@
 
 #if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
     ACCCHK_ASSERT(sizeof(void*) == 2)
+    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 2)
 #elif (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
     ACCCHK_ASSERT(sizeof(void*) == 4)
 #endif
@@ -342,6 +343,29 @@
     ACCCHK_ASSERT(sizeof(void (*)(void)) == 2)
 #elif (ACC_MM_MEDIUM || ACC_MM_LARGE || ACC_MM_HUGE)
     ACCCHK_ASSERT(sizeof(void (*)(void)) == 4)
+#endif
+
+
+/*************************************************************************
+// check ACC_ARCH and ACC_OS
+**************************************************************************/
+
+#if (ACC_ARCH_IA16)
+    ACCCHK_ASSERT(sizeof(size_t) == 2)
+#elif (ACC_ARCH_IA32)
+    ACCCHK_ASSERT(sizeof(size_t) == 4)
+    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
+#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)
+    ACCCHK_ASSERT(sizeof(size_t) == 8)
+    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
+#endif
+
+#if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
+    ACCCHK_ASSERT(sizeof(size_t) == 4)
+    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
+#elif (ACC_OS_WIN64)
+    ACCCHK_ASSERT(sizeof(size_t) == 8)
+    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
 #endif
 
 

@@ -40,7 +40,7 @@
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  define ACC_ARCH_IA16             1
 #  define ACC_INFO_ARCH             "ia16"
-#elif defined(__amd64__) || defined(__x86_64__)
+#elif defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64)
 #  define ACC_ARCH_AMD64            1
 #  define ACC_INFO_ARCH             "amd64"
 #elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86) || defined(_M_I386)
@@ -57,7 +57,7 @@
 #elif (ACC_OS_WIN32)
 #  error "missing define for CPU architecture"
 #elif (ACC_OS_WIN64)
-#  error "missing define for CPU architecture"
+/* #  error "missing define for CPU architecture" */
 #elif (ACC_OS_TOS) || defined(__m68000__)
 #  define ACC_ARCH_M68K             1
 #  define ACC_INFO_ARCH             "m68k"
@@ -76,7 +76,7 @@
 #endif
 
 
-#if (ACC_ARCH_IA16 || ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA16 || ACC_ARCH_IA32)
 #  define ACC_ENDIAN_LITTLE_ENDIAN  1
 #  define ACC_INFO_ENDIAN           "little-endian"
 #elif (ACC_ARCH_M68K)

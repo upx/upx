@@ -14,7 +14,7 @@
 
 
 #ifndef __ACC_INCE_H_INCLUDED
-#define __ACC_INCE_H_INCLUDED
+#define __ACC_INCE_H_INCLUDED 1
 
 /* extra system includes */
 

@@ -14,7 +14,7 @@
 
 
 #ifndef __ACC_INCI_H_INCLUDED
-#define __ACC_INCI_H_INCLUDED
+#define __ACC_INCI_H_INCLUDED 1
 
 
 /*************************************************************************
@@ -24,7 +24,11 @@
 #if (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
 #  include <tos.h>
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64 || ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)))
-#  if (ACC_CC_WATCOMC && __WATCOMC__ < 1000)
+#  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
+#  elif defined(__PW32__) && defined(__GNUC__)
+     /* ancient pw32 version */
+#  elif ((ACC_OS_CYGWIN || defined(__MINGW32__)) && (ACC_CC_GNUC < 0x025f00ul))
+     /* ancient cygwin/mingw version */
 #  else
 #    if 1 && !defined(WIN32_LEAN_AND_MEAN)
 #      define WIN32_LEAN_AND_MEAN 1

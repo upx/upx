@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_DOSALLOC_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
@@ -37,7 +38,6 @@ ACCLIB_PUBLIC(void __far*, acc_dos_alloc) (unsigned long size)
         return p;
     ri.x.ax = 0x4800;
     ri.x.bx = (unsigned short) size;
-    ro.x.cflag = 1;
     int86(0x21, &ri, &ro);
     if ((ro.x.cflag & 1) == 0)  /* if carry flag not set */
         p = (void __far*) ACC_MK_FP(ro.x.ax, 0);
@@ -57,7 +57,6 @@ ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
     segread(&rs);
     ri.x.ax = 0x4900;
     rs.es = ACC_FP_SEG(p);
-    ro.x.cflag = 1;
     int86x(0x21, &ri, &ro, &rs);
     if (ro.x.cflag & 1)         /* if carry flag set */
         return -1;

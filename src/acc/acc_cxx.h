@@ -14,7 +14,7 @@
 
 
 #ifndef __ACC_CXX_H_INCLUDED
-#define __ACC_CXX_H_INCLUDED
+#define __ACC_CXX_H_INCLUDED 1
 #if defined(__cplusplus)
 
 
@@ -23,7 +23,7 @@
 //   ACC_CXX_NOTHROW
 **************************************************************************/
 
-#if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x028000ul))
+#if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul))
 #  define ACC_CXX_NOTHROW
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0450))
 #  define ACC_CXX_NOTHROW
@@ -41,6 +41,27 @@
 
 
 /*************************************************************************
+// disable dynamic allocation of an object - private helpers
+//   __ACC_CXX_DO_NEW
+//   __ACC_CXX_DO_DELETE
+**************************************************************************/
+
+#if defined(__ACC_CXX_DO_NEW)
+#else
+#  define __ACC_CXX_DO_NEW          ;
+#endif
+
+
+/* need an implementation in case a class has virtual members */
+#if defined(__ACC_CXX_DO_DELETE)
+#elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#  define __ACC_CXX_DO_DELETE       { }
+#else
+#  define __ACC_CXX_DO_DELETE       ACC_CXX_NOTHROW { }
+#endif
+
+
+/*************************************************************************
 // disable dynamic allocation of an object
 //   ACC_CXX_DISABLE_NEW_DELETE
 //   ACC_CXX_DISABLE_NEW_DELETE_STRICT
@@ -51,8 +72,6 @@
 #undef __ACC_CXX_HAVE_PLACEMENT_DELETE
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0450))
-#elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x029000ul))
-#  define ACC_CXX_DISABLE_NEW_DELETE private:
 #elif (ACC_CC_MSC && ACC_MM_HUGE)
 #  define ACC_CXX_DISABLE_NEW_DELETE private:
 #elif (ACC_CC_MSC && (_MSC_VER < 1100))
@@ -80,11 +99,11 @@
 
 #if !defined(__ACC_CXX_PLACEMENT_NEW) && (__ACC_CXX_HAVE_PLACEMENT_NEW)
 #  define __ACC_CXX_PLACEMENT_NEW \
-            static void* operator new(size_t, void*);
+            static void* operator new(size_t, void*) __ACC_CXX_DO_NEW
 #endif
 #if !defined(__ACC_CXX_PLACEMENT_DELETE) && (__ACC_CXX_HAVE_PLACEMENT_DELETE)
 #  define __ACC_CXX_PLACEMENT_DELETE \
-            static void operator delete(void*, void*) ACC_CXX_NOTHROW { }
+            static void operator delete(void*, void*) __ACC_CXX_DO_DELETE
 #endif
 #if !defined(__ACC_CXX_PLACEMENT_NEW)
 #  define __ACC_CXX_PLACEMENT_NEW
@@ -101,27 +120,27 @@
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE) && !(__ACC_CXX_HAVE_ARRAY_NEW)
 /* for old compilers use `protected' instead of `private' */
 #  define ACC_CXX_DISABLE_NEW_DELETE \
-        protected: static void operator delete(void*) ACC_CXX_NOTHROW { } \
-        protected: static void* operator new(size_t); \
+        protected: static void operator delete(void*) __ACC_CXX_DO_DELETE \
+        protected: static void* operator new(size_t) __ACC_CXX_DO_NEW \
         private:
 #endif
 
 #if !defined(ACC_CXX_DISABLE_NEW_DELETE)
 #  define ACC_CXX_DISABLE_NEW_DELETE \
         protected: \
-            static void operator delete(void*) ACC_CXX_NOTHROW { } \
-            static void operator delete[](void*) ACC_CXX_NOTHROW { } \
+            static void operator delete(void*) __ACC_CXX_DO_DELETE \
+            static void operator delete[](void*) __ACC_CXX_DO_DELETE \
         private: \
-            static void* operator new(size_t); \
-            static void* operator new[](size_t);
+            static void* operator new(size_t) __ACC_CXX_DO_NEW \
+            static void* operator new[](size_t) __ACC_CXX_DO_NEW
 #  define ACC_CXX_DISABLE_NEW_DELETE_STRICT \
         protected: \
-            static void operator delete(void*) ACC_CXX_NOTHROW { } \
-            static void operator delete[](void*) ACC_CXX_NOTHROW { } \
+            static void operator delete(void*) __ACC_CXX_DO_DELETE \
+            static void operator delete[](void*) __ACC_CXX_DO_DELETE \
             __ACC_CXX_PLACEMENT_DELETE \
         private: \
-            static void* operator new(size_t); \
-            static void* operator new[](size_t); \
+            static void* operator new(size_t) __ACC_CXX_DO_NEW \
+            static void* operator new[](size_t) __ACC_CXX_DO_NEW \
             __ACC_CXX_PLACEMENT_NEW
 #endif
 

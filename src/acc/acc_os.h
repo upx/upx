@@ -43,6 +43,9 @@
 #elif defined(__EMX__) && defined(__GNUC__)
 #  define ACC_OS_EMX            1
 #  define ACC_INFO_OS           "emx"
+#elif defined(__BEOS__)
+#  define ACC_OS_BEOS           1
+#  define ACC_INFO_OS           "beos"
 #elif defined(__QNX__)
 #  define ACC_OS_QNX            1
 #  define ACC_INFO_OS           "qnx"

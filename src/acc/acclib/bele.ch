@@ -13,13 +13,14 @@
  */
 
 
+#define __ACCLIB_BELE_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
 
 
 /*************************************************************************
-//
+// be16 / be24 / be32
 **************************************************************************/
 
 ACCLIB_PUBLIC(unsigned, acc_get_be16) (const acc_hvoid_p p)
@@ -70,7 +71,7 @@ ACCLIB_PUBLIC(void, acc_set_be32) (acc_hvoid_p p, acc_uint32l_t v)
 
 ACCLIB_PUBLIC(unsigned, acc_get_le16) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     return (* (const unsigned short *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -86,7 +87,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le24) (const acc_hvoid_p p)
 
 ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     return (* (const acc_uint32e_t *) (p));
 #else
     const acc_hbyte_p b = (const acc_hbyte_p) p;
@@ -95,10 +96,13 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p p)
 }
 
 
+/*************************************************************************
+// le16 / le24 / le32
+**************************************************************************/
 
 ACCLIB_PUBLIC(void, acc_set_le16) (acc_hvoid_p p, unsigned v)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     (* (unsigned short *) (p) = (unsigned short) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -117,7 +121,7 @@ ACCLIB_PUBLIC(void, acc_set_le24) (acc_hvoid_p p, acc_uint32l_t v)
 
 ACCLIB_PUBLIC(void, acc_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64 || ACC_ARCH_IA32)
     (* (acc_uint32e_t *) (p) = (acc_uint32e_t) (v));
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
@@ -129,6 +133,9 @@ ACCLIB_PUBLIC(void, acc_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 }
 
 
+/*************************************************************************
+// be64
+**************************************************************************/
 
 #if defined(acc_uint64l_t)
 
@@ -173,11 +180,20 @@ ACCLIB_PUBLIC(void, acc_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
 #endif
 }
 
+#endif /* acc_uint64l_t */
 
+
+/*************************************************************************
+// le64
+**************************************************************************/
+
+#if defined(acc_uint64l_t)
 
 ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64)
+    return (* (const acc_uint64l_t *) (p));
+#elif (ACC_ARCH_IA32)
     const acc_uint32e_t* b = (const acc_uint32e_t*) p;
     return ((acc_uint64l_t)b[0]) | ((acc_uint64l_t)b[1] << 32);
 #elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
@@ -195,7 +211,9 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p p)
 
 ACCLIB_PUBLIC(void, acc_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 {
-#if (ACC_ARCH_IA32)
+#if (ACC_ARCH_AMD64)
+    (* (acc_uint64l_t *) (p)) = v;
+#elif (ACC_ARCH_IA32)
     (((acc_uint32e_t *)(p))[0] = (acc_uint32e_t) (v >>  0));
     (((acc_uint32e_t *)(p))[1] = (acc_uint32e_t) (v >> 32));
 #elif (SIZEOF_LONG >= 8) || (SIZEOF_SIZE_T >= 8)
@@ -223,7 +241,6 @@ ACCLIB_PUBLIC(void, acc_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
     b[7] = (unsigned char) ((x >> 24) & 0xff);
 #endif
 }
-
 
 #endif /* acc_uint64l_t */
 

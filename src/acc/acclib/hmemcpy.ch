@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_HMEMCPY_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif

@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_HREAD_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
@@ -26,7 +27,23 @@
 
 ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
 {
-#if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
+#if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+    unsigned char tmp[512];
+    long l = 0;
+
+    while (l < size)
+    {
+        int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
+        n = read(fd, tmp, n);
+        if (n == 0)
+            break;
+        if (n < 0)
+            return -1;
+        __ACCLIB_FUNCNAME(acc_hmemcpy)((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
+        l += n;
+    }
+    return l;
+#elif (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
     acc_hbyte_p b = (acc_hbyte_p) buf;
     long l = 0;
 
@@ -45,28 +62,30 @@ ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
     }
     return l;
 #else
-    unsigned char tmp[512];
-    long l = 0;
-
-    while (l < size)
-    {
-        int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
-        n = read(fd, tmp, n);
-        if (n == 0)
-            break;
-        if (n < 0)
-            return -1;
-        __ACCLIB_FUNCNAME(acc_hmemcpy)((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
-        l += n;
-    }
-    return l;
+#  error "unknown memory model"
 #endif
 }
 
 
 ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 {
-#if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
+#if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
+    unsigned char tmp[512];
+    long l = 0;
+
+    while (l < size)
+    {
+        int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
+        __ACCLIB_FUNCNAME(acc_hmemcpy)(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
+        n = write(fd, tmp, n);
+        if (n == 0)
+            break;
+        if (n < 0)
+            return -1;
+        l += n;
+    }
+    return l;
+#elif (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
     const acc_hbyte_p b = (const acc_hbyte_p) buf;
     long l = 0;
 
@@ -85,25 +104,11 @@ ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
     }
     return l;
 #else
-    unsigned char tmp[512];
-    long l = 0;
-
-    while (l < size)
-    {
-        int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
-        __ACCLIB_FUNCNAME(acc_hmemcpy)(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
-        n = write(fd, tmp, n);
-        if (n == 0)
-            break;
-        if (n < 0)
-            return -1;
-        l += n;
-    }
-    return l;
+#  error "unknown memory model"
 #endif
 }
 
-#endif
+#endif /* #if (ACC_HAVE_MM_HUGE_PTR) */
 
 
 /*

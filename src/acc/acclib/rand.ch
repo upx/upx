@@ -13,6 +13,7 @@
  */
 
 
+#define __ACCLIB_RAND_CH_INCLUDED 1
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
@@ -57,7 +58,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48_r32) (acc_rand48_p r)
     return (acc_uint32l_t) (r->seed >> 16);
 }
 
-#endif /* defined(acc_uint64l_t) */
+#endif /* acc_uint64l_t */
 
 
 #if defined(acc_uint64l_t)
@@ -81,7 +82,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64_r32) (acc_rand64_p r)
     return (acc_uint32l_t) (r->seed >> 32);
 }
 
-#endif /* defined(acc_uint64l_t) */
+#endif /* acc_uint64l_t */
 
 
 /*************************************************************************

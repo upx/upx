@@ -80,7 +80,6 @@
 #    define HAVE_ALLOCA_H 1
 #  endif
 #elif (ACC_OS_CYGWIN)
-#  define HAVE_ALLOCA_H 1
 #  define HAVE_IO_H 1
 #elif (ACC_OS_EMX)
 #  define HAVE_ALLOCA_H 1
@@ -136,7 +135,7 @@
 #  undef HAVE_DIRENT_H /* not working */
 #  undef HAVE_UNISTD_H /* not working */
 #  define HAVE_SYS_DIRENT_H 1
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) && defined(__GNUC__)
 #elif (ACC_CC_IBMC && ACC_OS_OS2)
 #  undef HAVE_DOS_H
 #  undef HAVE_DIRENT_H
@@ -154,7 +153,7 @@
 #  undef HAVE_DIRENT_H
 #  undef HAVE_DOS_H
 #  undef HAVE_SYS_TIME_H
-#elif defined(__MINGW32__)
+#elif defined(__MINGW32__) && defined(__GNUC__)
 #  undef HAVE_UTIME_H
 #  define HAVE_SYS_UTIME_H 1
 #elif (ACC_CC_PACIFICC)
@@ -170,6 +169,7 @@
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
+#elif defined(__PW32__) && defined(__GNUC__)
 #elif (ACC_CC_SYMANTECC)
 #  undef HAVE_DIRENT_H /* opendir() not implemented in libc */
 #  undef HAVE_UNISTD_H /* not working */
@@ -265,7 +265,10 @@
 #define HAVE_UTIME 1
 #define HAVE_VSNPRINTF 1
 
-#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX)
+#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX || ACC_OS_QNX)
+#  define HAVE_STRCASECMP 1
+#  define HAVE_STRNCASECMP 1
+#elif (ACC_OS_WIN32 && defined(__PW32__) && defined(__GNUC__))
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #else
@@ -279,6 +282,10 @@
 #    undef HAVE_ALLOCA
 #  endif
 #elif (ACC_OS_CYGWIN)
+#  if (ACC_CC_GNUC < 0x025f00ul)
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  endif
 #elif (ACC_OS_EMX)
 #  undef HAVE_CHOWN
 #  undef HAVE_LSTAT
@@ -333,7 +340,7 @@
 #elif (ACC_CC_DMC)
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
-#elif defined(__DJGPP__)
+#elif defined(__DJGPP__) && defined(__GNUC__)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_IBMC)
@@ -358,9 +365,14 @@
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA
 #  endif
-#elif defined(__MINGW32__)
-#  define snprintf _snprintf
-#  define vsnprintf _vsnprintf
+#elif defined(__MINGW32__) && defined(__GNUC__)
+#  if (ACC_CC_GNUC < 0x025f00ul)
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  else
+#    define snprintf _snprintf
+#    define vsnprintf _vsnprintf
+#  endif
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_ACCESS
 #  undef HAVE_ALLOCA
@@ -372,6 +384,9 @@
 #  undef HAVE_SNPRINTF
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
+#  undef HAVE_VSNPRINTF
+#elif defined(__PW32__) && defined(__GNUC__)
+#  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_SYMANTECC)
 #  if (ACC_OS_WIN16 && (ACC_MM_MEDIUM || ACC_MM_LARGE || ACC_MM_HUGE))

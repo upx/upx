@@ -14,7 +14,7 @@
 
 
 #ifndef __ACC_INCD_H_INCLUDED
-#define __ACC_INCD_H_INCLUDED
+#define __ACC_INCD_H_INCLUDED 1
 
 /* default system includes */
 /* see Autoconf:

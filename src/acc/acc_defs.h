@@ -22,7 +22,7 @@
 #    define ACC_UNUSED(var)         if (&var) ; else
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
-#  elif (ACC_CC_GCC)
+#  elif (ACC_CC_GNUC)
 #    define ACC_UNUSED(var)         ((void) var)
 #  else
 #    define ACC_UNUSED(var)         ((void) &var)
