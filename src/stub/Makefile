@@ -71,7 +71,7 @@ vpath %.ash $(UCL_MR3K)
 # // tools
 # ************************************************************************/
 
-NASM     = nasm -O2 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
+NASM     = nasm -O15 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 NASM    += -I$(srcdir)/
 
 APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
