@@ -27,29 +27,31 @@
 
         BITS    32
         SECTION .text
-	GLOBAL upx_itoa
+        GLOBAL upx_itoa
 
 upx_itoa:  ; char *upx_itoa(eax= unsigned v, edx= char *buf)  /* 0<=(int)v */
-	push edi  ; save register
-	mov edi,edx  ; output ptr
-	push byte 10
-	cld
-	pop ecx  ; radix
-	call recur
-	mov [edi],ah  ; NUL terminate
-	xchg eax,edi  ; eax= continuation point
-	pop edi  ; restore register
-	ret
+        push edi  ; save register
+        mov edi,edx  ; output ptr
+        push byte 10
+        cld
+        pop ecx  ; radix
+        call recur
+        mov [edi],ah  ; NUL terminate
+        xchg eax,edi  ; eax= continuation point
+        pop edi  ; restore register
+        ret
 recur:
-	cdq  ; zero extend eax into edx [use "sub edx,edx" if eax < 0 ]
-	div ecx  ; eax=quo, edx=rem;  flags are undefined
-	push edx
-	test eax,eax
-	je quo0
-	call recur
+        cdq  ; zero extend eax into edx [use "sub edx,edx" if eax < 0 ]
+        div ecx  ; eax=quo, edx=rem;  flags are undefined
+        push edx
+        test eax,eax
+        je quo0
+        call recur
 quo0:
-	pop eax  ; remainder
-	add al, byte '0'
-	stosb
-	ret
+        pop eax  ; remainder
+        add al, byte '0'
+        stosb
+        ret
 
+
+; vi:ts=8:et:nowrap

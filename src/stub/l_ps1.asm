@@ -177,3 +177,6 @@ eof:
                 DW      -1
                 DH      eof
 
+
+; vi:ts=8:et:nowrap
+

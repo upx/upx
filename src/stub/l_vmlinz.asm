@@ -50,14 +50,14 @@ start:
 
                 or      ebp, byte -1
                 mov     eax, 'KEIP'     ; 0x100000 - address of startup_32
-                push    eax	; MATCH00
-                push    edi	; MATCH01
-                push    esi	; MATCH02
+                push    eax     ; MATCH00
+                push    edi     ; MATCH01
+                push    esi     ; MATCH02
 %ifdef  __LZCALLT1__
-                push    eax	; MATCH03
+                push    eax     ; MATCH03
 %endif; __LZDUMMY0__
 %ifdef  __LZCKLLT1__
-                push    eax	; MATCH03
+                push    eax     ; MATCH03
                 push    byte '?'  ; MATCH04
 %endif; __LZDUMMY1__
 %ifdef  __LBZIMAGE__
@@ -102,18 +102,18 @@ checka20:
 ; =============
 
 %ifdef  __LZCKLLT9__
-                pop     edx	; MATCH04
-                pop     edi	; MATCH03
+                pop     edx     ; MATCH04
+                pop     edi     ; MATCH03
                 ckt32   dl
 %endif; __LZDUMMY2__
 %ifdef  __LZCALLT9__
-                pop     edi	; MATCH03
+                pop     edi     ; MATCH03
                 cjt32   0
 %endif; __LINUZ990__
-                pop     esi	; MATCH02
-                pop     edi	; MATCH01
+                pop     esi     ; MATCH02
+                pop     edi     ; MATCH01
                 xor     ebx, ebx        ; booting the 1st cpu
-                retn	; MATCH00
+                retn    ; MATCH00
 
 ; =============
 ; ============= CUT HERE
@@ -126,3 +126,6 @@ eof:
                 section .data
                 dd      -1
                 dw      eof
+
+
+; vi:ts=8:et:nowrap
