@@ -57,9 +57,10 @@ static int F(Filter *f)
     {
         unsigned char buf[256];
         unsigned short wbuf[256];
+        const size_t WW = (size_t)0 - (~(size_t)0) << W_CTO; // ???
         memset(wbuf, 0, sizeof(wbuf));
-        memset(buf               , 0,      -(~0u<<W_CTO));
-        memset(buf - (~0u<<W_CTO), 1, 256 + (~0u<<W_CTO));
+        memset(buf     , 0,       WW);
+        memset(buf + WW, 1, 256 - WW);
 
         for (ic = 0; ic < size - 4; ic+=4) if (COND(b,ic)) {
             unsigned const off = (int)(get_be32(b+ic)<<6) >>6;
@@ -70,7 +71,7 @@ static int F(Filter *f)
         }
 
         if (getcto(f, buf) < 0) {
-            if (0!=W_CTO)
+            if (0!=W_CTO)  // FIXME: what is this ???
                 return -1;
             f->cto = 0;
         }
@@ -93,7 +94,7 @@ static int F(Filter *f)
             lastcall = ic;
         }
         else {
-            assert(0==W_CTO
+            assert(0==W_CTO  // FIXME: what is this ???
             || (~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
             lastnoncall = ic;
             noncalls++;
