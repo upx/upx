@@ -590,7 +590,7 @@ void free(__malloc_ptr_t ptr)
 extern "C" {
 
 #if defined(__DJGPP__)
-int _is_executable(const char *, int , const char *)
+int _is_executable(const char *, int, const char *)
 {
     return 0;
 }
@@ -601,8 +601,9 @@ time_t mktime(struct tm *)
     return 0;
 }
 
-time_t time(time_t *)
+time_t time(time_t *t)
 {
+    if (t) *t = 0;
     return 0;
 }
 #endif /* __DJGPP__ */

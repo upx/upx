@@ -52,7 +52,6 @@ STUBEDIT_EXE  =
 STUBIFY_EXE   =
 CHMOD_EXE     =
 
-# set defaults
 o = .o
 a = .a
 e =
@@ -62,19 +61,19 @@ LIBDIRS =
 DOS_LDLIBS =
 DOS_LIBDIRS =
 
-# set CC defaults
+# CC defaults
 CC = INVALID_TARGET_CC
 CCARCH =
 CFLAGS =
 CFLAGS_OUTPUT =
 
-# set CXX defaults
+# CXX defaults
 CXX = $(CC)
 CXXARCH = $(CCARCH)
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 
-# set CXXLD defaults
+# CXXLD defaults
 CXXLD = $(CXX)
 CXXLDARCH = $(CXXARCH)
 LDFLAGS =
@@ -82,7 +81,6 @@ LINK_EXE_OUTPUT =
 LDLIBS =
 LINK_EXE_LDFLAGS =
 
-# update defaults
 ifeq ($(DEBUG),1)
   DEFS += -DDEBUG
 ##  DEFS += -DTESTING
@@ -106,7 +104,7 @@ include $(srcdir)/Makedefs.inc
 ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   u = nrv
   U = NRV
-  upx_exe_tail = _$(u)
+  upx_exe_tail := _$(u)
   include $(srcdir)/Makedefs.inc
 endif
 upx_exe = upx$(upx_exe_tail)$(e)
@@ -191,7 +189,7 @@ endif
 ###
 
 ifeq ($(target),linux-bc57)
-##DEPMODE := XXX_linux
+##DEPMODE := XXX_linux	## FIXME
 CC = bc++ -q -3
 CFLAGS = -w '-w!'
 CFLAGS_OUTPUT = -o$@
