@@ -75,6 +75,7 @@ static unsigned my_strlen(const unsigned char *s)
 {
     size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
 }
+#undef strlen
 #define strlen my_strlen
 #endif
 
@@ -1624,16 +1625,17 @@ void PackW32Pe::pack(OutputFile *fo)
         || ih.ddirsentries != 16
         || IDSIZE(PEDIR_EXCEPTION) // is this used on i386?
 //        || IDSIZE(PEDIR_COPYRIGHT)
-        || IDSIZE(PEDIR_COMRT)
        ))
         throwCantPack("unexpected value in PE header (try --force)");
+
+    if (IDSIZE(PEDIR_SEC))
+        throwCantPack("compressing certificate info is not supported");
+    if (IDSIZE(PEDIR_COMRT))
+        throwCantPack(".NET files (win32/net) are not yet supported");
 
     // Structured Exception Handling
     if (!opt->win32_pe.strip_loadconf && IDSIZE(PEDIR_LOADCONF))
         throwCantPack("Structured Exception Handling present (try --strip-loadconf)");
-
-    if (IDSIZE(PEDIR_SEC))
-        throwCantPack("compressing certificate info is not supported");
 
     if (isdll)
         opt->win32_pe.strip_relocs = false;
