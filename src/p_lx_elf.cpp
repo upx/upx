@@ -238,6 +238,8 @@ void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
 {
     // set options
     opt->unix.blocksize = blocksize = file_size;
+    ibuf.dealloc();
+    ibuf.alloc(blocksize);
 
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
