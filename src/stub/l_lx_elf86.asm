@@ -80,6 +80,21 @@ _start:
 ;; Step through the code; remember that <Enter> repeats the previous command.
 ;;
         call main  ; push address of decompress subroutine
+decompress:
+        jmps decompr0
+  ;; 2+ address of decompress subroutine
+  ;; unfilter(upx_byte *, length)
+        pop edx  ; return address
+        pop eax  ; upx_byte *, same as addvalue
+        pop ecx  ; length
+        pusha
+        xchg eax,edi  ; edi= pointer
+
+        push dword ('?'<<8) | 0x0f  ; cto8_0f  (cto8 byte is modified)
+        mov ebx, 'NMRU'  ; modified
+
+        xor edx,edx
+        jmp unf0
 
 ; /*************************************************************************
 ; // C callable decompressor
@@ -90,7 +105,7 @@ _start:
 %define         OUTP    dword [esp+8*4+12]
 %define         OUTS    dword [esp+8*4+16]
 
-decompress:
+decompr0:
                 pusha
                 ; cld
 
@@ -127,6 +142,122 @@ decompress:
                 mov [7*4 + esp], eax
                 popa
                 ret
+
+;; continuation of entry prolog for unfilter
+unf0:
+        push edx    ; tail
+        push ebx  ; n_mru
+        mov esi,esp
+
+%define n_mru    [esi]
+%define tail     [esi + 4*1]
+%define cto8_0f  [esi + 4*2]
+%define cto8     [esi + 4*2 +1]
+%define addvalue [esi + 4*3 + 7*4]
+
+unf1:  ; allocate and clear mru[]
+        push edx
+        dec ebx
+        jnz unf1  ; leaves 0=='hand'
+
+%define tmp ebp
+
+%define jc   eax
+%define hand ebx
+%define kh   edx
+
+calltrickloop:
+        mov al, [edi]
+        inc edi
+        sub al, 0x80        ; base of Jcc <d32>
+        cmp al, 0x8f - 0x80 ; span of Jcc <d32>
+        ja ct2             ; not Jcc <d32>
+        mov edx, [edi]  ; often unaligned
+        cmp dx, cto8_0f
+        jne unfcount
+        mov byte [edi -1], dl  ; 0x0f prefix
+        add al, 0x80  ; reconstitute Jcc
+        dec ecx
+        mov byte [edi], al  ; Jcc opcode
+        inc edi
+        jmps ct4
+ct2:
+        sub al, 0xE8 - 0x80 ; base of JMP/CALL <d32>
+        cmp al, 0xE9 - 0xE8 ; span of JMP/CALL <d32>
+        ja unfcount
+ct3:
+        mov al, [edi]
+        cmp al, cto8
+        jnz unfcount
+ct4:
+        mov eax, [edi]
+        shr ax, 8
+        rol eax, 16
+        xchg al, ah
+
+        shr jc, 1  ; eax= jc, or mru index
+        jnc ct6  ; not 1st time for this jc
+        dec hand
+        jge ct5
+        add hand, n_mru
+ct5:
+        mov [esp + 4*hand], jc  ; 1st time: mru[hand] = jc
+        jmps ct_store
+
+ct6:  ; not 1st time for this jc
+        lea kh, [jc + hand]  ; kh = jc + hand
+        cmp kh, n_mru
+        jb ct7
+        sub kh, n_mru
+ct7:
+        mov jc, [esp + 4*kh]  ; jc = mru[kh]
+        dec hand
+        jge ct8
+        add hand, n_mru
+ct8:
+        mov tmp, [esp + 4*hand]  ; tmp = mru[hand]
+          push jc  ; ran out of registers
+        test tmp,tmp
+        jnz ctmp1
+
+        mov eax, tail
+        dec eax
+        jge ct9
+        add eax, n_mru
+ct9:
+        xor tmp,tmp
+        mov tail, eax
+        xchg [4+ esp + 4*eax], tmp  ; tmp = mru[tail]; mru[tail] = 0
+ctmp1:
+          pop jc
+        mov [esp + 4*kh  ], tmp  ; mru[kh] = tmp
+        mov [esp + 4*hand], jc   ; mru[hand] = jc
+
+ct_store:
+        sub eax, edi
+        sub ecx, byte 4
+        add eax, addvalue
+        mov [edi], eax
+        add edi, byte 4
+unfcount:
+        dec ecx
+        ;; jg calltrickloop
+        db 0x0f, 0x8f
+        dd calltrickloop - unfdone
+unfdone:
+
+        mov edi,esp ; clear mru[] portion of stack
+        mov ecx, n_mru
+        add ecx, byte 3  ; n_mru, tail, ct8_0f
+        xor eax,eax
+        rep
+        stosd
+        mov esp,edi
+        popa
+        push ecx
+        push eax
+        push edx
+        ret
 
 
 %define PAGE_MASK (~0<<12)
@@ -273,7 +404,6 @@ L30:  ; move existing Elf32_auxv
 
         sub edi, byte 8  ; point to AT_NULL
         ret
-
 
 ; vi:ts=8:et:nowrap
 

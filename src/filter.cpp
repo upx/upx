@@ -98,6 +98,7 @@ void Filter::init(int id_, unsigned addvalue_)
     this->preferred_ctos = NULL;
     // clear input/output parameters
     this->cto = 0;
+    this->n_mru = 0;
 }
 
 

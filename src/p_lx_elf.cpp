@@ -30,6 +30,7 @@
 #include "conf.h"
 
 #include "file.h"
+#include "filter.h"
 #include "packer.h"
 #include "p_elf.h"
 #include "p_unix.h"
@@ -57,6 +58,27 @@ PackLinuxI386elf::PackLinuxI386elf(InputFile *f) :
 PackLinuxI386elf::~PackLinuxI386elf()
 {
     delete[] phdri;
+}
+
+int const *
+PackLinuxI386elf::getFilters() const
+{
+    static const int filters[] = {
+        0x80, 0x36, 0x26, 0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
+    -1 };
+    return filters;
+}
+
+int
+PackLinuxI386elf::buildLoader(const Filter *ft)
+{
+    if (ft) {
+        n_mru = ft->n_mru;
+    }
+    else {
+        n_mru = 0;
+    }
+    return super::buildLoader(ft);
 }
 
 const upx_byte *PackLinuxI386elf::getLoader() const
@@ -91,9 +113,15 @@ void PackLinuxI386elf::updateLoader(OutputFile *fo)
     // pre-calculate for benefit of runtime disappearing act via munmap()
     phdro->p_memsz =  PAGE_MASK & (~PAGE_MASK + totlen);
 
+    int d1=0x80, d2=0x80;
+    if (this->n_mru) {
+        int const bytes = ('?'<<8) | 0x0f;
+        d1 += 4+ patch_le32(d1+loader, 400, "NMRU", this->n_mru);
+        d2 += 4+ patch_le32(d2+loader, 400, &bytes, (ph.filter_cto<<8)|0x0f);
+    }
     patchLoaderChecksum();
     fo->seek(0, SEEK_SET);
-    fo->rewrite(loader, 0x80);
+    fo->rewrite(loader, UPX_MAX3(0x80, d1, d2));
 #undef PAGE_MASK
 }
 
@@ -205,7 +233,8 @@ void PackLinuxI386elf::packExtent(
     Extent const &x,
     OutputFile *fo,
     unsigned &total_in,
-    unsigned &total_out
+    unsigned &total_out,
+    Filter *ft
 )
 {
     fi->seek(x.offset, SEEK_SET);
@@ -222,7 +251,13 @@ void PackLinuxI386elf::packExtent(
         // compress
         ph.u_len = l;
         ph.overlap_overhead = 0;
-        (void) compress(ibuf, obuf);    // ignore return value
+        if (ft) {
+            ft->buf_len = l;
+            compressWithFilters(ft, OVERHEAD);
+        }
+        else {
+            (void) compress(ibuf, obuf);    // ignore return value
+        }
 
         if (ph.c_len < ph.u_len)
         {
@@ -322,29 +357,37 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     x.offset = 0;
     x.size = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
     ui_pass = -1;
-    packExtent(x, fo, total_in, total_out);
+    packExtent(x, fo, total_in, total_out, 0);
     ui_pass = 0;
+
+    Filter ft(ph.level);
 
     nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) if (PT_LOAD==phdri[k].p_type) {
+        ft.addvalue = (unsigned)phdri[k].p_paddr;
         x.offset = phdri[k].p_offset;
         x.size   = phdri[k].p_filesz;
-        if (0 == nx) {
-            x.offset += sizeof(Elf_LE32_Ehdr) + sz_phdrs;
-            x.size   -= sizeof(Elf_LE32_Ehdr) + sz_phdrs;
+        if (0 == nx) { // 1st PT_LOAD must cover Ehdr at 0==p_offset
+            unsigned const delta = sizeof(Elf_LE32_Ehdr) + sz_phdrs;
+            ft.addvalue += delta;
+            x.offset    += delta;
+            x.size      -= delta;
         }
-        packExtent(x, fo, total_in, total_out);
+        packExtent(x, fo, total_in, total_out,
+            ((Elf_LE32_Phdr::PF_X & phdri[k].p_flags) ? &ft : 0) );
+        // FIXME: All PF_X Phdrs must use same ft.cto
+        // (There is usually only one such Phdr, so we're mostly lucky.)
         ++nx;
     }
     if (ptload0hi < ptload1lo) { // alignment hole?
         x.offset = ptload0hi;
         x.size   = ptload1lo - ptload0hi;
-        packExtent(x, fo, total_in, total_out);
+        packExtent(x, fo, total_in, total_out, 0);
     }
     if ((off_t)total_in < file_size) {  // non-PT_LOAD stuff
         x.offset = total_in;
         x.size = file_size - total_in;
-        packExtent(x, fo, total_in, total_out);
+        packExtent(x, fo, total_in, total_out, 0);
     }
 
     if ((off_t)total_in != file_size)

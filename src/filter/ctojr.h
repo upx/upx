@@ -85,6 +85,7 @@ static int F(Filter *f)
     int hand = 0, tail = 0;
     unsigned mru[N_MRU];
     memset(&mru[0], 0, sizeof(mru));
+    f->n_mru = N_MRU;
 #endif  //}
 
     // FIXME: We must fit into 8MB because we steal one bit.

@@ -44,7 +44,8 @@ public:
     virtual int getVersion() const { return 11; }
     virtual int getFormat() const { return UPX_F_LINUX_ELF_i386; }
     virtual const char *getName() const { return "linux/elf386"; }
-    virtual const int *getFilters() const { return NULL; }
+    virtual const int *getFilters() const;
+    virtual int buildLoader(const Filter *);
 
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
@@ -59,7 +60,7 @@ protected:
         off_t size;
     };
     virtual void packExtent(Extent const &x, OutputFile *fo,
-        unsigned &total_in, unsigned &total_out);
+        unsigned &total_in, unsigned &total_out, Filter *);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
         unsigned &c_adler, unsigned &u_adler);
@@ -73,6 +74,8 @@ protected:
 
     Elf_LE32_Ehdr  ehdri; // from input file
     Elf_LE32_Phdr *phdri; // for  input file
+
+    unsigned n_mru;
 };
 
 

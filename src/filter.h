@@ -86,6 +86,7 @@ public:
     unsigned wrongcalls;
     unsigned firstcall;
     unsigned lastcall;
+    unsigned n_mru;  // ctojr only
 
     // Read only.
     int id;

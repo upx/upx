@@ -102,6 +102,7 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 // UPX & NRV stuff
 **************************************************************************/
 
+typedef void f_unfilter(nrv_byte *, nrv_uint);  // 1st param is also addvalue
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
           nrv_byte *, nrv_uint * );
@@ -110,7 +111,8 @@ static void
 unpackExtent(
     struct Extent *const xi,  // input
     struct Extent *const xo,  // output
-    f_expand *const f_decompress
+    f_expand *const f_decompress,
+    f_unfilter *f_unf
 )
 {
     while (xo->size) {
@@ -148,6 +150,13 @@ ERR_LAB
             int const j = (*f_decompress)(xi->buf, h.sz_cpr, xo->buf, &out_len);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
+            // Skip Ehdr+Phdrs: separate 1st block, not filtered
+            if (f_unf  // have filter
+            &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
+              || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
+            ) {
+                (*f_unf)(xo->buf, out_len);
+            }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
         }
@@ -241,7 +250,8 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
             base = (unsigned long)addr;
         }
         if (xi) {
-            unpackExtent(xi, &xo, (f_expand *)fdi);
+            unpackExtent(xi, &xo, (f_expand *)fdi,
+                ((phdr->p_flags & PF_X) ? (f_unfilter *)(2+ fdi) : 0));
         }
         bzero(addr, frag);  // fragment at lo end
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
@@ -333,7 +343,7 @@ void *upx_main(
     // Uncompress Ehdr and Phdrs.
     xo.size =                    sz_elfhdrs;   xo.buf = (char *)ehdr;
     xi.size = 2*sizeof(size_t) + sz_pckhdrs;
-    unpackExtent(&xi, &xo, f_decompress);
+    unpackExtent(&xi, &xo, f_decompress, 0);
 
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
     xi.buf  -= 2*sizeof(size_t) + sz_pckhdrs;
