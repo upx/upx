@@ -82,7 +82,7 @@ BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
-STRIPELF = $(srcdir)/util/sstrip/sstrip
+STRIPELF = ./util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
