@@ -50,12 +50,16 @@ start:
 
                 or      ebp, byte -1
                 mov     eax, 'KEIP'     ; 0x100000 - address of startup_32
-                push    eax
-                push    edi
-                push    esi
+                push    eax	; MATCH00
+                push    edi	; MATCH01
+                push    esi	; MATCH02
 %ifdef  __LZCALLT1__
-                push    eax
+                push    eax	; MATCH03
 %endif; __LZDUMMY0__
+%ifdef  __LZCKLLT1__
+                push    eax	; MATCH03
+                push    byte '?'  ; MATCH04
+%endif; __LZDUMMY1__
 %ifdef  __LBZIMAGE__
                 mov     esi, 'ESI0'
                 mov     edi, 'EDI0'
@@ -94,14 +98,22 @@ checka20:
 %include      "n2e_d32.ash"
 
 ; =============
+; ============= UNFILTER
+; =============
+
+%ifdef  __LZCKLLT9__
+                pop     edx	; MATCH04
+                pop     edi	; MATCH03
+                ckt32   dl
+%endif; __LZDUMMY2__
 %ifdef  __LZCALLT9__
-                pop     edi
+                pop     edi	; MATCH03
                 cjt32   0
 %endif; __LINUZ990__
-                pop     esi
-                pop     edi
+                pop     esi	; MATCH02
+                pop     edi	; MATCH01
                 xor     ebx, ebx        ; booting the 1st cpu
-                retn
+                retn	; MATCH00
 
 ; =============
 ; ============= CUT HERE
