@@ -55,7 +55,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     align_hack = 0;
     info = pinfo;
     njumps = nsections = frozen = 0;
-    jumps = new jump [200];
+    jumps = new jump[200];
     sections = new section[200];
 
     char *p = iloader + info;
@@ -172,6 +172,9 @@ const char *Linker::getLoader(int *llen)
             int offs = sections[kc].ostart+jumps[ic].toffs -
                 (jumps[ic].pos+jumps[ic].len -
                  sections[jc].istart+sections[jc].ostart);
+
+            if (jumps[ic].len == 1)
+                assert(-128 <= offs && offs <= 127);
 
             set_le32(&offs,offs);
             memcpy(oloader+sections[jc].ostart+jumps[ic].pos-sections[jc].istart,&offs,jumps[ic].len);
