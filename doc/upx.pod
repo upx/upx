@@ -20,7 +20,8 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 B<UPX> is a portable, extendable, high-performance executable packer for
 several different executable formats. It achieves an excellent compression
 ratio and offers I<*very*> fast decompression. Your executables suffer
-no memory overhead or other drawbacks for most of the formats supported.
+no memory overhead or other drawbacks for most of the formats supported,
+because of in-place decompression.
 
 While you may use B<UPX> freely for both non-commercial and commercial
 executables (for details see the file LICENSE), we would highly
@@ -36,11 +37,6 @@ is considered not politically correct ;-) ]
 
 B<UPX> comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 
-Having said that, we think that B<UPX> is quite stable now. Indeed we
-have compressed lots of files without any problems. Also, the
-current version has undergone several months of beta testing -
-actually it's more than 4 years since our first public beta back in 1998.
-
 This is the first production quality release, and we plan that future 1.xx
 releases will be backward compatible with this version.
 
@@ -55,7 +51,8 @@ B<UPX> is a versatile executable packer with the following features:
   - excellent compression ratio: compresses better than zip/gzip,
       use UPX to decrease the size of your distribution !
 
-  - very fast decompression: about 10 MB/sec even on my old Pentium 133
+  - very fast decompression: about 10 MB/sec on an ancient Pentium 133,
+      about 200 MB/sec on an Athlon XP 2000+.
 
   - no memory overhead for your compressed executables for most of the
       supported formats
@@ -174,7 +171,7 @@ Quick start for achieving the best compression ratio:
 
 =over 4
 
-Try B<upx --brute --crp-ms=999999 myfile.exe>.
+Try B<upx --brute myfile.exe>.
 
 =back
 
@@ -190,9 +187,6 @@ Use the compression level B<--best>.
 
 Try one or both of the options B<--all-methods> and B<--all-filters>.
 
-Info: the option B<--brute> is an abbrevation for all the options
-B<S<--best> S<--all-methods> S<--all-filters>>.
-
 =item *
 
 Try the option B<--crp-ms=NUMBER>. This uses more memory during compression
@@ -200,6 +194,11 @@ to achieve a (slightly) better compression ratio.
 
 NUMBER must be a decimal value from 10000 to 999999, inclusive.
 The default value is 10000 (ten thousand).
+
+=item *
+
+Info: the option B<--brute> is an abbrevation for the options
+B<S<--best> S<--all-methods> S<--all-filters> S<--crp-ms=999999>>.
 
 =item *
 
@@ -215,9 +214,15 @@ For win32/pe programs there's B<--strip-relocs=0>. See notes below.
 
 =head1 OVERLAY HANDLING OPTIONS
 
+Info: An "overlay" means auxillary data atached after the logical end of
+an executable, and it often contains application specific data
+(this is a common practice to avoid an extra data file, though
+it would be better to use resource sections).
+
 B<UPX> handles overlays like many other executable packers do: it simply
 copies the overlay after the compressed image. This works with some
-files, but doesn't work with others.
+files, but doesn't work with others, depending on how an application
+actually accesses this overlayed data.
 
 Since version 0.90 UPX defaults to B<--overlay=copy> for
 all executable formats.
@@ -249,7 +254,8 @@ environment variable because of a COMMAND.COM limitation.
 Not all of the options are valid in the environment variable -
 B<UPX> will tell you.
 
-You can use the B<--no-env> option to turn this support off.
+You can explicitly use the B<--no-env> option to ignore the
+environment variable.
 
 
 
@@ -859,7 +865,7 @@ Extra options available for this executable format:
                       address greater or equal to 0x400000. Usually the
                       compressed files becomes smaller, but some files
                       may become larger. Note that the resulting file will
-                      not work under Win32s.
+                      not work under Windows 3.x (Win32s).
                       UPX never strips relocations from a DLL
                       regardless of this option.
 

@@ -158,7 +158,7 @@ protected:
 //
 **************************************************************************/
 
-#if 0
+#if 0 /* NOT USED */
 class MemoryOutputFile : public FileBase
 {
     typedef FileBase super;

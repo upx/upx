@@ -11,6 +11,7 @@ Changes in 1.91 beta (XX Sep 2003):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * djgpp2/coff: added support for recent binutils versions
   * watcom/le: don't crash on files without relocations
+  * Option `--brute' now implies `--crp-ms=999999'.
 
 Changes in 1.90 beta (11 Nov 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING

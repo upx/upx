@@ -3,19 +3,22 @@
 #
 # usage:
 #   `make target=linux'             # linux
-#   `make target=djggp2'            # dos32 - djggp2
-#   `make target=cygwin'            # win32 - cygwin 1.3.x
-#   `make target=mingw32'           # win32 - mingw32
-#   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin
-#   `make target=rsxnt'             # win32 - rsxnt
-#   `make target=bc'                # win32 - Borland C++
-#   `make target=dm'                # win32 - Digital Mars C++
-#   `make target=ic'                # win32 - Intel C++
-#   `make target=vc'                # win32 - Visual C++
-#   `make target=wc'                # win32 - Watcom C++
+#   `make target=dos32-djggp2'      # dos32 - djggp2
+#   `make target=win32-cygwin'      # win32 - cygwin
+#   `make target=win32-mingw32'     # win32 - mingw32
+#   `make target=win32-no-cygwin'   # win32 - mingw32 as included in cygwin
+#   `make target=win32-rsxnt'       # win32 - rsxnt
+#   `make target=win32-bc'          # win32 - Borland C++
+#   `make target=win32-dm'          # win32 - Digital Mars C++
+#   `make target=win32-ic'          # win32 - Intel C++
+#   `make target=win32-vc'          # win32 - Visual C++
+#   `make target=win32-wc'          # win32 - Watcom C++
+#   `make target=cross-amd64-linux' # x86_64-linux cross compiler
 #   `make target=cross-mingw32'     # i586-mingw32msvc cross compiler
 #   `make target=cross-mint'        # m68k-atari-mint cross compiler
 #   `make target=gcc'               # generic gcc
+#
+# you can also set the `UPX_MAKE_TARGET' environment variable.
 #
 
 

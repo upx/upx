@@ -530,6 +530,7 @@ static int do_option(int optc, const char *arg)
         opt->method = -1;
         opt->all_filters = true;
         opt->filter = -1;
+        opt->crp.m_size = 999999;
         /* fallthrough */
     case 900:                               // --best
         if (!set_method(-1, 10))

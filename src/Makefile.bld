@@ -1,5 +1,5 @@
 # /***********************************************************************
-# // setup
+# // perpare setup
 # ************************************************************************/
 
 SHELL = /bin/sh
@@ -217,7 +217,7 @@ ifeq ($(target),cross-amd64-linux)
 include $(srcdir)/Makedefs.gcc
 CC = x86_64-linux-gcc
 CXX = x86_64-linux-g++
-##LDLIBS += -lmcheck
+LDLIBS += -lmcheck
 endif	# cross-amd64-linux
 
 ifeq ($(target),cross-m68k-linux)
@@ -270,7 +270,7 @@ endif
 ### dos32 - djgpp2 / emx
 ###
 
-ifeq ($(target),djgpp2)
+ifeq ($(target),dos32-djgpp2)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CXX = gxx
@@ -284,7 +284,7 @@ endif
 endif
 endif
 
-ifeq ($(target),emx)
+ifeq ($(target),dos32-emx)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CXX = gcc
@@ -298,24 +298,27 @@ endif
 ### win32 - cygwin / mingw32 / rsxnt
 ###
 
-ifeq ($(target),cygwin)
+ifeq ($(target),win32-cygwin)
 include $(srcdir)/Makedefs.gcc
 ##CXX = g++-2
 e = .exe
 CCARCH += -mcygwin -march=i386 -mcpu=i686
+LDLIBS += -lwinmm
 endif
 
-ifeq ($(target),mingw32)
+ifeq ($(target),win32-mingw32)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CCARCH += -mno-cygwin -march=i386 -mcpu=i686
+LDLIBS += -lwinmm
 endif
 
 # mingw32 as included in cygwin
-ifeq ($(target),no-cygwin)
+ifeq ($(target),win32-no-cygwin)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CCARCH += -mno-cygwin -march=i386 -mcpu=i686
+LDLIBS += -lwinmm
 endif
 
 # mingw32 cross compiler
@@ -325,10 +328,11 @@ e = .exe
 CC = i586-mingw32msvc-gcc
 CXX = i586-mingw32msvc-g++
 CCARCH += -march=i386 -mcpu=i686
+LDLIBS += -lwinmm
 endif
 
 # rsxnt (g++ 2.8.1)
-ifeq ($(target),rsxnt)
+ifeq ($(target),win32-rsxnt)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CXX = gcc
@@ -343,7 +347,7 @@ endif
 ### win32 - Borland C++
 ###
 
-ifeq ($(target),bc)
+ifeq ($(target),win32-bc)
 o = .obj
 a = .lib
 e = .exe
@@ -374,14 +378,14 @@ else
   CFLAGS += -O2 -d
 endif
 
-endif	# bc
+endif	# win32-bc
 
 
 ###
 ### win32 - Digital Mars C++
 ###
 
-ifeq ($(target),dm)
+ifeq ($(target),win32-dm)
 o = .obj
 a = .lib
 e = .exe
@@ -404,14 +408,14 @@ else
   CFLAGS += -o
 endif
 
-endif	# dm
+endif	# win32-dm
 
 
 ###
 ### win32 - Intel C++
 ###
 
-ifeq ($(target),ic)
+ifeq ($(target),win32-ic)
 o = .obj
 a = .lib
 e = .exe
@@ -446,14 +450,14 @@ else
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
 
-endif	# ic
+endif	# win32-ic
 
 
 ###
 ### win32 - Symantec C++
 ###
 
-ifeq ($(target),sc)
+ifeq ($(target),win32-sc)
 o = .obj
 a = .lib
 e = .exe
@@ -476,14 +480,14 @@ else
   CFLAGS += -o
 endif
 
-endif	# dm
+endif	# win32-sc
 
 
 ###
 ### win32 - Visual C++
 ###
 
-ifeq ($(target),vc)
+ifeq ($(target),win32-vc)
 o = .obj
 a = .lib
 e = .exe
@@ -519,14 +523,14 @@ else
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
 
-endif	# vc
+endif	# win32-vc
 
 
 ###
 ### win32 - Watcom C++
 ###
 
-ifeq ($(target),wc)
+ifeq ($(target),win32-wc)
 o = .obj
 a = .lib
 e = .exe
@@ -560,11 +564,11 @@ else
   CFLAGS += -olr
 endif
 
-endif	# wc
+endif	# win32-wc
 
 
 ###
-### win64 - Intel C++
+### win64 - Intel C++ [IA64]
 ###
 
 ifeq ($(target),win64-ic)
@@ -606,7 +610,7 @@ endif	# win64-ic
 
 
 ###
-### win64 - Visual C++
+### win64 - Visual C++ [AMD64 & IA64]
 ###
 
 ifeq ($(target),win64-vc)
