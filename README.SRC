@@ -81,8 +81,8 @@ To compile the packer sources
 
   set the environment variable UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-1.02                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-1.02           (Unix)
+     set UCLDIR=c:\src\ucl-1.03                       (DOS / Windows)
+     export UCLDIR=$HOME/local/src/ucl-1.03           (Unix)
 
   then type
 

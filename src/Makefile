@@ -25,7 +25,7 @@
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-1.02
+UCLDIR = $(HOME)/local/src/ucl-1.03
 endif
 
 ## you can set the default target here
