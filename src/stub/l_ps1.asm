@@ -168,7 +168,7 @@ memset_unaligned:
                 DW      0               ; 24  original file size
                 DB      0               ; 28  filter id
                 DB      0               ; 29  filter cto
-                DB      0               ;  unsused
+                DB      0               ;  unused
                 DB      45              ; 31  header checksum
 ;       __PSXPHDRZ__
 eof:

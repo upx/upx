@@ -58,7 +58,7 @@
                 dd      0               ; 24  original file size
                 db      0               ; 28  filter id
                 db      0               ; 29  filter cto
-                db      0               ;  unsused
+                db      0               ;  unused
                 db      45              ; 31  header checksum
  %endif
 
