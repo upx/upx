@@ -34,6 +34,9 @@ $ifile = shift || die;
 $ident = shift || die;
 $ofile = shift || die;
 
+$opt_q = "";
+$opt_q = shift if ($#ARGV >= 0);
+
 open(INFILE,$ifile) || die "$ifile\n";
 binmode(INFILE);
 open(OUTFILE,">$ofile") || die "$ofile\n";
@@ -50,6 +53,7 @@ select(OUTFILE);
 $o = $ofile;
 $o =~ s/.*[\/\\]//;
 
+if ($opt_q ne "-q") {
 print <<"EOF";
 /* $o -- created from $ifile, $n bytes
 
@@ -79,6 +83,7 @@ print <<"EOF";
 
 
 EOF
+}
 
 printf("unsigned char %s[%d] = {", $ident, $n);
 for ($i = 0; $i < $n; $i++) {
@@ -89,6 +94,13 @@ for ($i = 0; $i < $n; $i++) {
     printf("%3d", ord(substr($data, $i, 1)));
     print "," if ($i != $n - 1);
 }
+
+while (($i % 16) != 0) {
+    $i++;
+    print "    ";
+}
+printf("    /* 0x%4x */", $i - 16);
+
 print "\n};\n";
 
 close(OUTFILE) || die;

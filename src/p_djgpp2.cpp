@@ -30,9 +30,8 @@
 #include "packer.h"
 #include "p_djgpp2.h"
 
-static const unsigned char stubify_stub[] = {
+static const
 #include "stub/stubify.h"
-};
 
 static const
 #include "stub/l_djgpp2.h"

@@ -94,7 +94,7 @@ all: stubs upxb upxd
 stubs: $(STUBS)
 
 mostlyclean:
-	-rm -f *~ *.bin *.bkp *.i *.lst *.map
+	-rm -f *~ *.bin *.bkp *.i *.lst *.map stubify.exe
 
 clean: mostlyclean
 	-rm -f *.o *.asx *.asy
@@ -125,7 +125,8 @@ strings: all
 
 
 stubify.h: stub.asm
-	djasm $< $@
+	djasm $< stubify.exe
+	$(BIN2H) stubify.exe stubify_stub $@ -q
 
 l_com.h: l_com.asx
 	$(NASM) -f bin -o $T.bin $<
