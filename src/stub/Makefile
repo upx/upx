@@ -7,7 +7,7 @@
 
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-1.01
+UCLDIR = $(HOME)/local/src/ucl-1.02
 endif
 
 
@@ -82,22 +82,22 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 STRIPELF = ./util/sstrip/sstrip
 
 # Compiler for the Linux/386 stubs.
-# gcc 2.95.3 seems to produce the smallest code
+# gcc 3.4 (20031206 experimental) seems to produce the smallest code
 ifeq (1,2)
-  CC_LINUX_I386 = gcc272 -m386 -O2
+  CC_LINUX_I386 = gcc-2.72 -m386 -O2
 else
-ifeq (1,1)
+ifeq (1,2)
   # gcc 2.95
   #   info: -mcpu=i386 and -mcpu=k6 procduce the smallest code
   #         (specifying -mcpu=i586 inhibits use of 'leave',
   #         which costs 2 bytes per subr)
-  CC_LINUX_I386 = gcc-2.95 -march=i386 -mcpu=i386 -Os
+  CC_LINUX_I386  = gcc-2.95 -march=i386 -mcpu=k6 -Os -fno-omit-frame-pointer -fno-exceptions
   CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
   CC_LINUX_I386 += -Werror
 else
-  # gcc 3.2
+  # gcc 3.4 (fold_*.bin: 1549 / 1043 / 1331)
   #   info: -mcpu=k6 procduces the smallest code
-  CC_LINUX_I386 = gcc-3.2 -march=i386 -mcpu=k6 -Os
+  CC_LINUX_I386  = gcc-3.4 -march=i386 -mtune=k6 -Os -fno-omit-frame-pointer -fno-exceptions
   CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
   CC_LINUX_I386 += -Werror
 endif
@@ -107,7 +107,7 @@ CC_LINUX_I386 += -funsigned-char
 ###CC_LINUX_I386 += -fwritable-strings -save-temps
 
 # Motorola 68000
-CPP_M68K  = gcc-2.95 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_M68K  = gcc-2.72 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
   # a68k 68000-assembler
@@ -120,7 +120,7 @@ else
 endif
 
 # MIPS R3000
-CPP_MR3K = gcc-2.95 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_MR3K = gcc-2.72 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
 

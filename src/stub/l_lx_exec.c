@@ -131,7 +131,7 @@ static char *
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return mmap((int *)&addr);
+    return mmap((void *)&addr);
 }
 
 
