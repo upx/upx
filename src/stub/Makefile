@@ -13,6 +13,11 @@ ifeq ($(wildcard $(UCLDIR)/upx),)
 $(error Please set UCLDIR in Makefile or environment)
 endif
 
+# update path for build tools
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
+export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
+endif
+
 
 # -------------------------------------------------------
 # You should not have to change anything below this line.
@@ -74,7 +79,7 @@ vpath %.ash $(UCL_MR3K)
 # // tools
 # ************************************************************************/
 
-NASM     = nasm -O15 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
+NASM     = nasm -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 NASM    += -I$(srcdir)/
 
 APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
@@ -83,7 +88,6 @@ BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
 BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
-STRIPELF = ./util/sstrip/sstrip
 
 
 ###
@@ -94,6 +98,7 @@ LD_LINUX_I386 = ld-2.13.2
 LD_LINUX_I386 = ld
 OBJCOPY_LINUX_I386 = objcopy
 OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
+STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
 
 # gcc 2.7.2.3 (fold_*86.bin: 1839 / 1011 / xxxx / 1390)
 CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
@@ -392,7 +397,7 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
 	chmod a-x $T.bin
 	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF) $T.bin
+	$(STRIPELF_LINUX_I386) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
@@ -417,7 +422,7 @@ fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
 	chmod a-x $T.bin
 	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF) $T.bin
+	$(STRIPELF_LINUX_I386) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_fold $@
 
@@ -429,7 +434,7 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
 	chmod a-x $T.bin
 	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF) $T.bin
+	$(STRIPELF_LINUX_I386) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
 
@@ -440,7 +445,7 @@ fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_pti86.lds -Map $T.map -o $T.bin $T.o l_lx_pti.o
 	chmod a-x $T.bin
 	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF) $T.bin
+	$(STRIPELF_LINUX_I386) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386pti_fold $@
 
@@ -461,14 +466,14 @@ upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
-	$(STRIPELF) $@
+	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
 upxd: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
-	$(STRIPELF) $@
+	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
 
@@ -476,10 +481,7 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 # // dependencies
 # ************************************************************************/
 
-DEPS_FILES := $(wildcard *.d)
-ifneq ($(strip $(DEPS_FILES)),)
-  include $(DEPS_FILES)
-endif
+-include *.d
 
 DEPS1 = header.ash macros.ash ident.ash ident_n.ash ident_s.ash
 DEPS2 = header.asy macros.asy
@@ -508,16 +510,14 @@ l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
 l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
 
-.NOEXPORT:
 
+# FIXME: what is this ???
 upxrun: start-interp.o interp.o
-	gcc -nostartfiles -nostdlib -o upxrun -Ttext=0x10000 \
-		start-interp.o interp.o
-
+	gcc -nostartfiles -nostdlib -o $@ -Ttext=0x10000 $^
 start-interp.o: start-interp.S
 	gcc -c $<
-
 interp.o: interp.c
 	gcc -c -g $<
+
 
 # vi:nowrap
