@@ -38,7 +38,7 @@ class PackWcle : public Packer, public LeFile
     typedef Packer super;
 public:
     PackWcle(InputFile *f) : super(f), LeFile(f){};
-    virtual int getVersion() const { return 11; }
+    virtual int getVersion() const { return 12; }
     virtual int getFormat() const { return UPX_F_WC_LE; }
     virtual const char *getName() const { return "watcom/le"; }
     virtual int getCompressionMethod() const;

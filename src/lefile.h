@@ -98,11 +98,11 @@ protected:
         LE32  non_resident_name_table_offset;
         LE32  non_resident_name_table_length;
         // 0x90
-#if 1
-        char  _7[52];
-#else
-        LE32  non_resident_names_checksum;
+        char  _7[4]; //non_resident_names_checksum
         LE32  automatic_data_object;
+#if 1
+        char  _8[44];
+#else
         LE32  debug_info_offset;
         LE32  debug_info_length;
         // 0xA0

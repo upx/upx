@@ -192,6 +192,7 @@ void PackWcle::encodeObjectTable()
     oh.init_eip_offset = neweip;
     oh.init_ss_object = 2;
     oh.init_esp_offset = OOT(1,virtual_size);
+    oh.automatic_data_object = 2;
 }
 
 
@@ -433,6 +434,7 @@ void PackWcle::pack(OutputFile *fo)
     const unsigned calltrickoffset = ft.cto << 24;
 
     // attach some useful data at the end of preprocessed fixups
+    ifixups[sofixups++] = ih.automatic_data_object;
     unsigned ic = objects*sizeof(*iobject_table);
     memcpy(ifixups+sofixups,iobject_desc,ic);
     iobject_desc.free();
@@ -668,6 +670,8 @@ void PackWcle::decodeObjectTable()
 
     const unsigned extradata = ph.version == 10 ? 17 : 13;
     memcpy(oobject_table,oimage + ph.u_len - extradata - ic,ic);
+    if (ph.version >= 12)
+        oh.automatic_data_object = oimage[ph.u_len - ic - 14];
 
     for (ic = jc = 0; ic < soobject_table; ic++)
     {
