@@ -1,4 +1,4 @@
-/* ctjo.h -- filter CTO implementation
+/* ctjor.h -- filter CTO implementation; renumber destinations MRU
 
    This file is part of the UPX executable compressor.
 
@@ -32,19 +32,41 @@
 //
 **************************************************************************/
 #ifdef U  //{
-static int const N_LRU = 1024;  // does not have to be a power of 2
-static unsigned lru[N_LRU];
-static int hand;
+static int const N_MRU = 1024;  // does not have to be a power of 2
+
+// Adaptively remember recent destinations.
+static void
+update_mru(
+    unsigned const jc,  // destination address
+    int const kh,  // mru[kh] is slot where found
+    unsigned mru[N_MRU],  // circular buffer of most recent destinations
+    int &hand,  // mru[hand] is most recent destination
+    int &tail   // mru[tail] is beyond oldest destination ("cold cache" startup)
+)
+{
+    if (0 > --hand) {
+        hand = N_MRU -1;
+    }
+    unsigned const t = mru[hand];  // entry which will be overwritten by jc
+    if (0!=t) { // have seen at least N_MRU destinations
+        mru[kh] = t;
+    }
+    else { // "cold cache": keep active region contiguous
+        if (0 > --tail) {
+            tail = N_MRU -1;
+        }
+        mru[kh] = mru[tail];
+    }
+    mru[hand] = jc;
+}
 #endif  //}
 
 static int F(Filter *f)
 {
 #ifdef U
     // filter
-    upx_byte *b = f->buf;
+    upx_byte *const b = f->buf;
     const unsigned addvalue = f->addvalue;
-    hand = 0;
-    memset(&lru[0], 0, sizeof(lru));
 #else
     // scan
     const upx_byte *b = f->buf;
@@ -56,6 +78,12 @@ static int F(Filter *f)
     unsigned char cto8;
     unsigned calls = 0, noncalls = 0, noncalls2 = 0;
     unsigned lastnoncall = size, lastcall = 0;
+
+#ifdef U  //{
+    int hand = 0, tail = 0;
+    unsigned mru[N_MRU];
+    memset(&mru[0], 0, sizeof(mru));
+#endif  //}
 
     // FIXME: We must fit into 8MB because we steal one bit.
     // find a 16MB large empty address space
@@ -123,7 +151,7 @@ static int F(Filter *f)
 #ifdef U
             if (COND2(b,lastcall,ic,ic-1,ic)) { // 6-byte Jcc <disp32>
                 // Prefix 0x0f is constant, but opcode condition 0x80..0x8f
-                // varies.  Because we store the destination (or its lru index)
+                // varies.  Because we store the destination (or its mru index)
                 // in be32 big endian format, the low-addressed bytes
                 // will tend to be constant.  Swap prefix and opcode
                 // so that constants are together for better compression.
@@ -136,28 +164,29 @@ static int F(Filter *f)
     // FIXME [?]: Extend to 8 bytes if "ADD ESP, byte 4*n" follows CALL.
     //   This will require two related cto's (consecutive, or otherwise).
             {
-                // Recode the destination: narrower lru indices
+                // Recode the destination: narrower mru indices
                 // should compress better than wider addresses.
                 int k;
-	            for (k = 0; k < N_LRU; ++k) {
-	                int kh = hand + k;
-	                if (N_LRU <= kh) {
-	                    kh -= N_LRU;
-	                }
-	                if (lru[kh] == jc) { // destination was seen recently
-	                    set_be32(b+ic+1,((k<<1)|0)+cto);
-	                    break;
-	                }
-	            }
-	            if (k == N_LRU) { // loop failed; jc is not in lru[]
-	                set_be32(b+ic+1,((jc<<1)|1)+cto);
-	            }
+                for (k = 0; k < N_MRU; ++k) {
+                    int kh = hand + k;
+                    if (N_MRU <= kh) {
+                        kh -= N_MRU;
+                    }
+                    if (mru[kh] == jc) { // destination was seen recently
+                        set_be32(b+ic+1,((k<<1)|0)+cto);
+                        update_mru(jc, kh, mru, hand, tail);
+                        break;
+                    }
+                }
+                if (k == N_MRU) { // loop failed; jc is not in mru[]
+                    set_be32(b+ic+1,((jc<<1)|1)+cto);
+                    // Adaptively remember recent destinations.
+                    if (0 > --hand) {
+                        hand = N_MRU -1;
+                    }
+                    mru[hand] = jc;
+                }
             }
-            // Adaptively remember recent destinations.
-            if (0 > --hand) {
-                hand = N_LRU -1;
-            }
-            lru[hand] = jc;
 #endif
             if (ic - lastnoncall < 5)
             {
@@ -212,16 +241,18 @@ static int F(Filter *f)
 #ifdef U
 static int U(Filter *f)
 {
-    upx_byte *b = f->buf;
+    unsigned ic, jc;
+
+    upx_byte *const b = f->buf;
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
     const unsigned cto = f->cto << 24;
     unsigned lastcall = 0;
+    int hand = 0, tail = 0;
+    unsigned mru[N_MRU];
+    memset(&mru[0], 0, sizeof(mru));
 
-    unsigned ic, jc;
-
-    hand = 0;
-    for (ic = 0; ic < size5; ic++)
+    for (ic = 0; ic < size5; ic++) {
         if (CONDU(b,ic,lastcall))
         {
             jc = get_be32(b+ic+1) - cto;
@@ -229,19 +260,20 @@ static int U(Filter *f)
             {
                 if (1&jc) { // 1st time at this destination
                     jc = (jc >> 1) - addvalue;
+                    if (0 > --hand) {
+                        hand = N_MRU -1;
+                    }
+                    mru[hand] = jc;
                 }
                 else { // not 1st time at this destination
                     jc = (jc >> 1) - addvalue;
                     int kh = jc + hand;
-                    if (N_LRU <= kh) {
-                        kh -= N_LRU;
+                    if (N_MRU <= kh) {
+                        kh -= N_MRU;
                     }
-                    jc = lru[kh];
+                    jc = mru[kh];
+                    update_mru(jc, kh, mru, hand, tail);
                 }
-                if (0 > --hand) {
-                    hand = N_LRU -1;
-                }
-                lru[hand] = jc;
                 set_le32(b+ic+1,jc-ic-1);
 
                 if (COND2(b,lastcall,ic,ic,ic-1)) {
@@ -258,6 +290,7 @@ static int U(Filter *f)
             else
                 f->noncalls++;
         }
+    }
     return 0;
 }
 #endif
