@@ -76,9 +76,11 @@ compare_Phdr(void const *const aa, void const *const bb)
     Elf_LE32_Phdr const *const b = (Elf_LE32_Phdr const *)bb;
     unsigned const xa = a->p_type - Elf_LE32_Phdr::PT_LOAD;
     unsigned const xb = b->p_type - Elf_LE32_Phdr::PT_LOAD;
-    if (xa < xb) return -1;
-    if (xa > xb) return  1;
-    return le32_compare(&a->p_paddr, &b->p_paddr);
+            if (xa < xb)         return -1;  // PT_LOAD first
+            if (xa > xb)         return  1;
+    if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
+    if (a->p_paddr > b->p_paddr) return  1;
+                                 return  0;
 }
 
 //
@@ -262,7 +264,18 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ph.u_len = file_size - (sz_ptload + phdri[0].p_offset);
     fi->seek(sz_ptload + phdri[0].p_offset, SEEK_SET);
     fi->readx(ibuf, ph.u_len);
+
+    // Temporarily decrease ph.level by about (1+ log2(sz_rest / sz_ptload))
+    // to avoid spending unreasonable effort compressing large symbol tables
+    // that are discarded 99.9% of the time anyway.
+    int const old_level(ph.level);
+    for (unsigned v = ((ph.u_len>>3) + ph.u_len) / sz_ptload; 0 < v; v>>=1) {
+        if (0== --ph.level) {
+            ph.level = 1;
+        }
+    }
     compress(ibuf, obuf);
+    ph.level = old_level;
 
     // while (0!=*p++) ;  // name is the same
     shdro[3].sh_name = p - shstrtab;
