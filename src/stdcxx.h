@@ -41,7 +41,7 @@
 // disable dynamic allocation of an object
 **************************************************************************/
 
-#if defined(new) || defined(delete) || defined(__EMX__)
+#if defined(new) || defined(delete) || defined(__EMX__) || (ACC_CC_SYMANTECC)
 
 // debug
 #  define DISABLE_NEW_DELETE private:
@@ -89,7 +89,16 @@ private:
 // exceptions & RTTI
 **************************************************************************/
 
-#if defined(__DMC__) && (__DMC__ < 0x834)
+#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
+
+#include <stdcomp.h>
+#undef RWSTD_MULTI_THREAD
+#include <stdexcep.h>
+#include <new.h>
+#include <typeinfo.h>
+namespace std { class bad_alloc { }; }
+
+#elif (ACC_CC_DMC && (__DMC__ < 0x834))
 
 #include <new.h>
 #include <typeinfo.h>
@@ -104,14 +113,21 @@ public:
 };
 }
 
-#elif defined(__BORLANDC__) && (__BORLANDC__ < 0x0530)
+#elif (ACC_CC_SYMANTECC)
 
-#include <stdcomp.h>
-#undef RWSTD_MULTI_THREAD
-#include <stdexcep.h>
 #include <new.h>
 #include <typeinfo.h>
-namespace std { class bad_alloc { }; }
+
+class exception
+{
+public:
+    exception() NOTHROW { }
+    virtual ~exception() NOTHROW { }
+    virtual const char* what() const NOTHROW { return "exception"; }
+};
+#define bool int
+#define true 1
+#define false 0
 
 #else
 
@@ -122,13 +138,16 @@ namespace std { class bad_alloc { }; }
 #endif
 
 
-#if defined(__BORLANDC__)
+#if (ACC_CC_BORLANDC)
 using namespace std;
-#elif defined(__DMC__)
+#elif (ACC_CC_DMC)
 namespace std { class bad_alloc { }; }
 #elif defined(__EMX__)
 #define std
-#elif defined(__WATCOMC__)
+#elif (ACC_CC_SYMANTECC)
+#define std
+class bad_alloc { };
+#elif (ACC_CC_WATCOMC)
 #define std
 class bad_alloc { };
 #endif

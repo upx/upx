@@ -142,7 +142,7 @@ console_t console_init =
 };
 
 
-void __acc_cdecl con_fprintf(FILE *f, const char *format, ...)
+void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
 {
     va_list args;
     char buf[80*25];

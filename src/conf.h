@@ -40,7 +40,9 @@
 #  define ACC_CONFIG_HEADER UPX_CONFIG_HEADER
 #endif
 #include "acc/acc.h"
+#include "acc/acc_incd.h"
 #include "acc/acc_ince.h"
+#include "acc/acc_lib.h"
 #if !defined(acc_int64l_t) || !defined(acc_uint64l_t)
 #  error "need a 64-bit integer type"
 #endif
@@ -55,11 +57,18 @@
 #  if (__BORLANDC__ < 0x0520)
 #    error "need Borland C++ 5.02 or newer"
 #  endif
+#  pragma warn -aus     // 8004: 'x' is assigned a value that is never used
+#  pragma warn -inl     // 8026+8027: Function not expanded inline
+   // Borland compilers typically generate a number of bogus warnings, and
+   // the actual diagnostics vary from version to version...
 #  if (__BORLANDC__ < 0x0530)
-#    pragma warn -csu                   // 8012: comparing signed and unsigned values
+#    pragma warn -csu   // 8012: Comparing signed and unsigned values
+#  endif
+#  if (__BORLANDC__ >= 0x0530 && __BORLANDC__ < 0x0560)
+#    pragma warn -osh   // 8055: Possible overflow in shift operation
 #  endif
 #  if (__BORLANDC__ >= 0x0560)
-#    pragma warn -use
+#    pragma warn -use   // 8080: 'x' is declared but never used
 #  endif
 #elif (ACC_CC_DMC)
 #  if (__DMC__ < 0x829)
@@ -83,13 +92,11 @@
 #  if (_MSC_VER < 1100)
 #    error "need Visual C++ 5.0 or newer"
 #  endif
-#if 0
-#  pragma warning(disable: 4096)        // W2: '__cdecl' must be used with '...'
-#endif
+#  pragma warning(error: 4096)          // W2: '__cdecl' must be used with '...'
 #  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
 #  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
-#  pragma warning(disable: 4514)        // W4: 'function' : unreferenced inline function has been removed
+#  pragma warning(disable: 4514)        // W4: 'function': unreferenced inline function has been removed
 #  pragma warning(disable: 4710)        // W4: 'function': function not inlined
 #elif (ACC_CC_WATCOMC)
 #  if (__WATCOMC__ < 1100)
@@ -443,7 +450,7 @@ extern const char *progname;
 void init_options(struct options_t *o);
 bool set_ec(int ec);
 #if defined(__GNUC__)
-void e_exit(int ec) __attribute__((noreturn));
+void e_exit(int ec) __attribute__((__noreturn__));
 #else
 void e_exit(int ec);
 #endif
@@ -455,26 +462,26 @@ void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
 #if defined(__GNUC__)
-void __acc_cdecl printErr(const char *iname, const char *format, ...)
-        __attribute__((format(printf,2,3)));
-void __acc_cdecl printWarn(const char *iname, const char *format, ...)
-        __attribute__((format(printf,2,3)));
+void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
+        __attribute__((__format__(printf,2,3)));
+void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
+        __attribute__((__format__(printf,2,3)));
 #else
-void __acc_cdecl printErr(const char *iname, const char *format, ...);
-void __acc_cdecl printWarn(const char *iname, const char *format, ...);
+void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
+void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
 #endif
 
 #if defined(__GNUC__)
-void __acc_cdecl infoWarning(const char *format, ...)
-        __attribute__((format(printf,1,2)));
-void __acc_cdecl infoHeader(const char *format, ...)
-        __attribute__((format(printf,1,2)));
-void __acc_cdecl info(const char *format, ...)
-        __attribute__((format(printf,1,2)));
+void __acc_cdecl_va infoWarning(const char *format, ...)
+        __attribute__((__format__(printf,1,2)));
+void __acc_cdecl_va infoHeader(const char *format, ...)
+        __attribute__((__format__(printf,1,2)));
+void __acc_cdecl_va info(const char *format, ...)
+        __attribute__((__format__(printf,1,2)));
 #else
-void __acc_cdecl infoWarning(const char *format, ...);
-void __acc_cdecl infoHeader(const char *format, ...);
-void __acc_cdecl info(const char *format, ...);
+void __acc_cdecl_va infoWarning(const char *format, ...);
+void __acc_cdecl_va infoHeader(const char *format, ...);
+void __acc_cdecl_va info(const char *format, ...);
 #endif
 void infoHeader();
 void infoWriting(const char *what, long size);

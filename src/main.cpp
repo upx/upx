@@ -94,7 +94,7 @@ static int exit_code = EXIT_OK;
 **************************************************************************/
 
 #if defined(__GNUC__)
-static void do_exit(void) __attribute__((noreturn));
+static void do_exit(void) __attribute__((__noreturn__));
 #endif
 static void do_exit(void)
 {

@@ -801,7 +801,7 @@ int __acc_cdecl upx_vsnprintf(char *str, size_t count, const char *format, va_li
 }
 
 
-int __acc_cdecl upx_snprintf(char *str, size_t count, const char *format,...)
+int __acc_cdecl_va upx_snprintf(char *str, size_t count, const char *format,...)
 {
     va_list ap;
     int ret;
@@ -832,7 +832,7 @@ int __acc_cdecl upx_vasprintf(char **ptr, const char *format, va_list ap)
 }
 
 
-int __acc_cdecl upx_asprintf(char **ptr, const char *format, ...)
+int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...)
 {
     va_list ap;
     int ret;

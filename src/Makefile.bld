@@ -145,7 +145,8 @@ DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ##CFLAGS_WERROR = -Werror
 
-ifeq ($(DEBUG),0)
+ifeq ($(DEBUG),1)
+else
   ##LDFLAGS += -static
   STUBEDIT_EXE = objcopy -S -R .comment -R .note $@
   ifeq ($(arch),i386)
@@ -190,7 +191,7 @@ endif
 ifeq ($(target),linux-bc57)
 ##DEPMODE := XXX_linux
 CC = bc++ -q -3
-CFLAGS = -w -w-aus -w-inl '-w!'
+CFLAGS = -w '-w!'
 CFLAGS_OUTPUT = -o$@
 LDFLAGS += -ls
 LINK_EXE_OUTPUT = -e$@
@@ -314,7 +315,7 @@ ifeq ($(target),rsxnt)
 include $(srcdir)/Makedefs.gcc
 e = .exe
 CXX = gcc
-CFLAGS_O = -O0
+CFLAGS_O = -O2
 CCARCH += -Zwin32 -Zsys -mno-probe
 LDFLAGS = -s
 STUBEDIT_EXE = pestack -s1024 -c1024 $@
@@ -330,8 +331,8 @@ o = .obj
 a = .lib
 e = .exe
 CC = bcc32 -3
-INCLUDES += -I$(srcdir)/acc
-CFLAGS = -w -w-aus -w-inl -g1
+INCLUDES += -I$(srcdir)/acc -I$(srcdir)/filter
+CFLAGS = -w -w-inl -g1
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
 LINK_EXE_OUTPUT = -e$@
@@ -418,9 +419,39 @@ else
   CFLAGS += -O1 -GF
   LINK_EXE_LDFLAGS += /release
 endif
-RESOURCES = upx.res
+RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
 
 endif	# ic
+
+
+###
+### win32 - Symantec C++
+###
+
+ifeq ($(target),sc)
+o = .obj
+a = .lib
+e = .exe
+CC = sc -mn
+CFLAGS = -w- -wx
+CXXFLAGS = $(CFLAGS) -EH -ER
+CFLAGS_OUTPUT = -o$@
+LDFLAGS = -L/map
+LINK_EXE_OUTPUT = -o$@
+LDLIBS = $(DOS_LDLIBS)
+
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
+endif
+export LIB
+
+ifeq ($(DEBUG),1)
+  CFLAGS += -o- -g -s
+else
+  CFLAGS += -o
+endif
+
+endif	# dm
 
 
 ###
@@ -460,7 +491,7 @@ else
   CFLAGS += -O1 -GF
   LINK_EXE_LDFLAGS += /release
 endif
-RESOURCES = upx.res
+RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
 
 endif	# vc
 
