@@ -226,7 +226,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 #if 0
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
     printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
-    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
 #endif
 
     // finally check the compression ratio
