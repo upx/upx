@@ -17,7 +17,7 @@ ifeq ($(strip $(UCLDIR)),)
 UCLDIR = $(HOME)/local/src/ucl-0.92
 endif
 
-DEBUG = 1
+DEBUG = 0
 
 
 # -------------------------------------------------------
