@@ -10,6 +10,15 @@ Changes in 1.09.4 beta (13 Nov 2000):
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
 
+Changes in 1.03 (30 Nov 2000)
+  * linked with a new version of the NRV compression library:
+      - improved compression ratio a little bit
+      - overall significantly faster compression 
+      - much faster when using high compression levels like `-9' or `--best'
+      - much faster with large files
+  * atari/tos: added support for FreeMiNT
+  * the 32-bit DOS version now uses the new CWSDSTUB extender
+
 Changes in 1.02 (13 Sep 2000)
   * watcom/le: fixed a problem with the Causeway extender
   * win32/pe: don't automatically strip relocs if they seem needed

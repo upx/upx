@@ -159,19 +159,17 @@ Compression levels 7, 8 and 9 favor compression ratio over speed.
 
 =item *
 
-Compression level B<--best> may take a very long time.
+Compression level B<--best> may take a long time.
 
 =back
 
-Note that compression level B<-9> can be quite slow for some large
+Note that compression level B<-9> can be somewaht slow for large
 files, but you definitely should use it when releasing a final version
-of your program. (E.g. it took about 20 minutes to compress the almost
-5 MB MAME 0.34 with B<-9> on my Pentium 133, but the resulting executable
-was still ~65 kB smaller than when using B<-7>.)
+of your program.
 
 Since UPX 0.70 there is also an extra compression level B<--best> which
 squeezes out even some more compression ratio. While it is usually fine
-to use this option with your favorite .com file it may take several hours
+to use this option with your favorite .com file it may take a long time
 to compress a multi-megabyte program. You have been warned.
 
 Tips for even better compression:
@@ -596,6 +594,7 @@ Please report all bugs immediately to the authors.
 =head1 COPYRIGHT
 
 Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
+
 Copyright (C) 1996-2000 Laszlo Molnar
 
 This program may be used freely, and you are welcome to
