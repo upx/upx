@@ -360,14 +360,24 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
         if (sz_cpr < sz_unc)
         {
             decompress(ibuf+j, ibuf, false);
-            if (first_PF_X) { // Elf32_Ehdr is never filtered
-                first_PF_X = false;  // but everything else might be
+            if (12==szb_info) { // modern per-block filter
+                if (hdr.b_ftid) {
+                    Filter ft(ph.level);  // FIXME: ph.level for b_info?
+                    ft.init(hdr.b_ftid, 0);
+                    ft.cto = hdr.b_cto8;
+                    ft.unfilter(ibuf, sz_unc);
+                }
             }
-            else if (ph.filter) {
-                Filter ft(ph.level);
-                ft.init(ph.filter, 0);
-                ft.cto = ph.filter_cto;
-                ft.unfilter(ibuf, sz_unc);
+            else { // ancient per-file filter
+                if (first_PF_X) { // Elf32_Ehdr is never filtered
+                    first_PF_X = false;  // but everything else might be
+                }
+                else if (ph.filter) {
+                    Filter ft(ph.level);
+                    ft.init(ph.filter, 0);
+                    ft.cto = ph.filter_cto;
+                    ft.unfilter(ibuf, sz_unc);
+                }
             }
             j = 0;
         }
