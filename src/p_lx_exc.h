@@ -1,10 +1,9 @@
-/* p_lx_sep.cpp --
+/* p_lx_exc.h --
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2000 Laszlo Molnar
-   Copyright (C) 2000 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -24,68 +23,45 @@
 
    Markus F.X.J. Oberhumer                   Laszlo Molnar
    markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
-
-   John F. Reiser
-   jreiser@BitWagon.com
  */
 
 
-#include "conf.h"
-
-#include "file.h"
-#include "packer.h"
-#include "p_elf.h"
-#include "p_unix.h"
-#include "p_lx_exc.h"
-#include "p_lx_elf.h"
-#include "p_lx_sep.h"
+#ifndef __UPX_P_LX_EXC_H
+#define __UPX_P_LX_EXC_H
 
 
 /*************************************************************************
-//
+// linux/386 (generic "execve" format)
 **************************************************************************/
 
-#define SCRIPT_SIZE     (opt->unix.SCRIPT_MAX + sizeof(l_info))
-
-const upx_byte *PackLinuxI386sep::getLoader() const
+class PackLinuxI386 : public PackUnixLe32
 {
-    static char script[SCRIPT_SIZE];
+    typedef PackUnixLe32 super;
+public:
+    PackLinuxI386(InputFile *f) : super(f) { }
+    virtual int getFormat() const { return UPX_F_LINUX_i386; }
+    virtual const char *getName() const { return "linux/386"; }
+    virtual int getCompressionMethod() const;
 
-    memset(script, 0, sizeof(script));
-    char const *name = opt->unix.script_name;
-    if (0==name) {
-        name = "/usr/local/lib/upxX";
-    }
-    sprintf(script, "#!%s\n", name);
-    if (M_IS_NRV2B(opt->method)) {
-        script[strlen(script)-2] = 'b';
-        return (upx_byte const *)script;
-    }
-    if (M_IS_NRV2D(opt->method)) {
-        script[strlen(script)-2] = 'd';
-        return (upx_byte const *)script;
-    }
-    return NULL;
-}
+    virtual bool canPack();
 
-int PackLinuxI386sep::getLoaderSize() const
-{
-    if (M_IS_NRV2B(opt->method))
-        return SCRIPT_SIZE;
-    if (M_IS_NRV2D(opt->method))
-        return SCRIPT_SIZE;
-    return 0;
-}
+protected:
+    virtual const upx_byte *getLoader() const;
+    virtual int getLoaderSize() const;
+    virtual int getLoaderPrefixSize() const;
 
-int PackLinuxI386sep::getLoaderPrefixSize() const
-{
-    return opt->unix.SCRIPT_MAX;
-}
+    virtual void patchLoader();
+    virtual void patchLoaderChecksum();
+    virtual void updateLoader(OutputFile *);
 
-void PackLinuxI386sep::patchLoader()
-{
-    patchLoaderChecksum();
-}
+    enum {
+        UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
+    };
+};
+
+
+#endif /* already included */
+
 
 /*
 vi:ts=4:et

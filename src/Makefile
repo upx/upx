@@ -61,7 +61,8 @@ OBJECTS1 = \
 	compress$o except$o file$o lefile$o \
 	filter$o mem$o msg$o stdcxx$o work$o ui$o \
 	packer$o packhead$o packmast$o \
-	p_com$o p_djgpp2$o p_exe$o p_lx_elf$o p_lx_sep$o p_lx_sh$o \
+	p_com$o p_djgpp2$o p_exe$o \
+	p_lx_elf$o p_lx_exc$o p_lx_sep$o p_lx_sh$o \
 	p_sys$o p_tmt$o p_tos$o \
 	p_unix$o p_vmlinz$o p_w32pe$o p_wcle$o
 
@@ -446,7 +447,8 @@ mygetopt$o: mygetopt.h
 packer$o:   packer.h filter.h linker.h ui.h version.h
 packhead$o: packer.h
 packmast$o: packmast.h packer.h lefile.h \
-		p_com.h p_djgpp2.h p_exe.h p_lx_elf.h p_lx_sep.h p_lx_sh.h \
+		p_com.h p_djgpp2.h p_exe.h \
+		p_lx_elf.h p_lx_exc.h p_lx_sep.h p_lx_sh.h \
 		p_sys.h p_tmt.h p_tos.h \
 		p_unix.h p_vmlinz.h p_vxd.h p_w32pe.h p_wcle.h
 ui$o:       packer.h ui.h
@@ -458,10 +460,12 @@ p_djgpp2$o: packer.h p_djgpp2.h stub/stubify.h \
 		stub/l_djgpp2.h
 p_exe$o:    packer.h p_exe.h \
 		stub/l_exe.h
-p_lx_elf$o: packer.h p_lx_elf.h p_unix.h p_elf.h \
+p_lx_elf$o: packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_elf.h \
 		stub/l_le_n2b.h stub/l_le_n2d.h
-p_lx_sep$o: packer.h p_lx_sep.h p_lx_elf.h p_unix.h p_elf.h
-p_lx_sh$o:  packer.h p_lx_sh.h p_unix.h p_elf.h \
+p_lx_exc$o: packer.h p_unix.h p_elf.h p_lx_exc.h \
+		stub/l_lx_n2b.h stub/l_lx_n2d.h
+p_lx_sep$o: packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_elf.h p_lx_sep.h
+p_lx_sh$o:  packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_sh.h \
 		stub/l_sh_n2b.h stub/l_sh_n2d.h
 p_sys$o:    packer.h p_sys.h p_com.h \
 		stub/l_sys.h
@@ -470,8 +474,7 @@ p_tmt$o:    packer.h p_tmt.h \
 p_tos$o:    packer.h p_tos.h \
 		stub/l_t_n2b.h stub/l_t_n2bs.h \
 		stub/l_t_n2d.h stub/l_t_n2ds.h
-p_unix$o:   packer.h p_unix.h p_elf.h \
-		stub/l_lx_n2b.h stub/l_lx_n2d.h
+p_unix$o:   packer.h p_unix.h p_elf.h
 p_vmlinz$o: packer.h p_vmlinz.h \
 		stub/l_vmlinz.h
 p_w32pe$o:  packer.h p_w32pe.h \

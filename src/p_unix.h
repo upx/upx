@@ -127,36 +127,6 @@ protected:
 
 
 /*************************************************************************
-// linux/i386 (generic "execve" format)
-**************************************************************************/
-
-class PackLinuxI386 : public PackUnixLe32
-{
-    typedef PackUnixLe32 super;
-public:
-    PackLinuxI386(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_LINUX_i386; }
-    virtual const char *getName() const { return "linux/386"; }
-    virtual int getCompressionMethod() const;
-
-    virtual bool canPack();
-
-protected:
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
-    virtual int getLoaderPrefixSize() const;
-
-    virtual void patchLoader();
-    virtual void patchLoaderChecksum();
-    virtual void updateLoader(OutputFile *);
-
-    enum {
-        UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
-    };
-};
-
-
-/*************************************************************************
 // solaris/sparc
 **************************************************************************/
 

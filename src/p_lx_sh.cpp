@@ -36,6 +36,7 @@
 #include "packer.h"
 #include "p_elf.h"
 #include "p_unix.h"
+#include "p_lx_exc.h"
 #include "p_lx_sh.h"
 
 static const
