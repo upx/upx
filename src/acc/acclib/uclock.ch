@@ -43,7 +43,7 @@
 #    if 1
 #      include <mmsystem.h>
 #    else
-#      if (ACC_CC_INTELC || ACC_CC_MSC)
+#      if (ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC)
          ACC_EXTERN_C __declspec(dllimport) unsigned long __stdcall timeGetTime(void);
 #      else
          ACC_EXTERN_C unsigned long __stdcall timeGetTime(void);
@@ -51,7 +51,7 @@
 #    endif
 #    if (ACC_CC_DMC)
 #      pragma DMC includelib "winmm.lib"
-#    elif (ACC_CC_INTELC || ACC_CC_MSC)
+#    elif (ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC)
 #      pragma comment(lib, "winmm.lib")
 #    elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x3000))
 #      pragma comment(lib, "winmm.lib")
@@ -94,6 +94,8 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_p h)
             h->qpf = 0.0;
         }
     }
+#elif (ACC_HAVE_WINDOWS_H) && defined(acc_int64l_t)
+    h->qpf = 0.0;
 #endif
     h->h = 1;
     h->mode = 0;
@@ -119,6 +121,10 @@ ACCLIB_PUBLIC(int, acc_uclock_close) (acc_uclock_handle_p h)
 }
 
 
+/*************************************************************************
+//
+**************************************************************************/
+
 ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
 {
 #if (__ACCLIB_UCLOCK_USE_QPC)
@@ -131,6 +137,8 @@ ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
         }
         c->qpc = 0; /* failed */
     }
+#elif (ACC_HAVE_WINDOWS_H) && defined(acc_int64l_t)
+    /* c->qpc = 0; */
 #endif
 
     {
@@ -165,6 +173,10 @@ ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
     ACC_UNUSED(h);
 }
 
+
+/*************************************************************************
+//
+**************************************************************************/
 
 ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_uclock_p start, const acc_uclock_p stop)
 {

@@ -34,7 +34,9 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
     return -1; /* FIXME */
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
-# if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
+# if (ACC_CC_PELLESC && (__POCC__ < 280))
+    return -1; /* FIXME */
+# elif (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
     return -1; /* FIXME */
 # elif (ACC_CC_WATCOMC && (__WATCOMC__ < 1100))
     return _os_handle(fd);

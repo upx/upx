@@ -42,6 +42,8 @@
 #  define acc_inline            __inline
 #elif (ACC_CC_PGI)
 #  define acc_inline            __inline__
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#  define acc_inline            inline
 #endif
 
 

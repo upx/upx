@@ -315,13 +315,12 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_u
 
 
 /*************************************************************************
-// uclock
+// uclock (real, i.e. "wall" clock)
 **************************************************************************/
 
 #if defined(acc_int32e_t)
 ACCLIB_EXTERN(int, acc_tsc_read) (acc_uint32e_t*);
 ACCLIB_EXTERN(int, acc_tsc_read_add) (acc_uint32e_t*);
-#define acc_rdtsc(x)    acc_tsc_read(x)
 #endif
 
 
@@ -359,6 +358,47 @@ ACCLIB_EXTERN(int, acc_uclock_open)  (acc_uclock_handle_p);
 ACCLIB_EXTERN(int, acc_uclock_close) (acc_uclock_handle_p);
 ACCLIB_EXTERN(void, acc_uclock_read) (acc_uclock_handle_p, acc_uclock_p);
 ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_p, const acc_uclock_p, const acc_uclock_p);
+
+
+/*************************************************************************
+// performance counters (virtual clock)
+**************************************************************************/
+
+#if defined(acc_int64l_t)
+
+typedef struct { /* all private */
+#if (ACC_OS_POSIX_LINUX)
+    void* h;
+    unsigned cpu_type, cpu_features, cpu_khz, cpu_nrctrs;
+    const char* cpu_name;
+#else
+    void* h;
+#endif
+} acc_perfctr_handle_t;
+
+typedef struct {
+    acc_uint64l_t tsc;
+#if (ACC_OS_POSIX_LINUX)
+    acc_uint64l_t pmc[18];
+#else
+    acc_uint64l_t pmc[1];
+#endif
+} acc_perfctr_clock_t;
+
+#ifndef acc_perfctr_handle_p
+#define acc_perfctr_handle_p acc_perfctr_handle_t *
+#endif
+#ifndef acc_perfctr_clock_p
+#define acc_perfctr_clock_p acc_perfctr_clock_t *
+#endif
+
+ACCLIB_EXTERN(int, acc_perfctr_open)  (acc_perfctr_handle_p);
+ACCLIB_EXTERN(int, acc_perfctr_close) (acc_perfctr_handle_p);
+ACCLIB_EXTERN(void, acc_perfctr_read) (acc_perfctr_handle_p, acc_perfctr_clock_p);
+ACCLIB_EXTERN(double, acc_perfctr_get_elapsed) (acc_perfctr_handle_p, const acc_perfctr_clock_p, const acc_perfctr_clock_p);
+ACCLIB_EXTERN(double, acc_perfctr_get_elapsed_tsc) (acc_perfctr_handle_p, acc_uint64l_t);
+
+#endif
 
 
 /*************************************************************************

@@ -205,6 +205,18 @@
 #  undef HAVE_SYS_STAT_H
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
+#elif (ACC_OS_WIN32 && ACC_CC_PELLESC)
+#  undef HAVE_DIRENT_H
+#  undef HAVE_DOS_H
+#  undef HAVE_MALLOC_H
+#  undef HAVE_SHARE_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_TIME_H
+#  if (__POCC__ < 280)
+#  else
+#    define HAVE_SYS_UTIME_H 1
+#  endif
 #elif (ACC_OS_WIN32 && ACC_CC_PGI) && defined(__MINGW32__)
 #  undef HAVE_UTIME_H
 #  define HAVE_SYS_UTIME_H 1
@@ -462,6 +474,11 @@
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
 #  undef HAVE_VSNPRINTF
+#elif (ACC_OS_WIN32 && ACC_CC_PELLESC)
+#  if (__POCC__ < 280)
+#    define alloca _alloca
+#    undef HAVE_UTIME
+#  endif
 #elif (ACC_OS_WIN32 && ACC_CC_PGI) && defined(__MINGW32__)
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
@@ -592,7 +609,7 @@
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC && defined(__linux__)))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
-#elif (ACC_ARCH_IA32 && (ACC_CC_MWERKS || ACC_CC_PGI))
+#elif (ACC_ARCH_IA32 && (ACC_CC_MWERKS || ACC_CC_PELLESC || ACC_CC_PGI))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))

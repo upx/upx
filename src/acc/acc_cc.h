@@ -25,6 +25,10 @@
 #  define ACC_CC_INTELC         1
 #  define ACC_INFO_CC           "Intel C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__INTEL_COMPILER)
+#elif defined(__POCC__)
+#  define ACC_CC_PELLESC        1
+#  define ACC_INFO_CC           "Pelles C"
+#  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__POCC__)
 #elif defined(__GNUC__) && defined(__VERSION__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
