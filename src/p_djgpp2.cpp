@@ -80,6 +80,7 @@ int PackDjgpp2::buildLoader(const Filter *ft)
              );
     if (ft->id)
     {
+        assert(ft->calls > 0);
         addLoader("DJCALLT2",NULL);
         addFilter32(ft->id);
     }
