@@ -23,6 +23,8 @@ Adam Ierymenko <api@one.net>
   for severals ideas for the Linux version
 Andi Kleen <ak@muc.de> and Jamie Lokier <nospam@cern.ch>
   for the /proc/self/fd/X and other Linux suggestions
+Andreas Muegge <andreas.muegge@gmx.de>
+  for the Win32 GUI
 Atli Mar Gudmundsson <amg@complex.is>
   for several comments on the win32/pe stub
 Charles W. Sandmann <sandmann@clio.rice.edu>
@@ -31,6 +33,8 @@ Ice
   for debugging the PE headersize problem down
 Joergen Ibsen <jibz@hotmail.com> and d'b
   for the relocation & address optimization ideas
+John F. Reiser <jreiser@BitWagon.com>
+  for the new Linux executable formats
 John S. Fine <johnfine@erols.com>
   for the new version of the dos/exe decompressor
 Lukundoo <Lukundoo@softhome.net>
@@ -45,8 +49,6 @@ Salvador Eduardo Tropea
   for beta testing
 The WINE project (http://www.winehq.com/)
   for lots of useful information found in their PE loader sources
-DJ Delorie <dj@delorie.com> for djgpp
-Linus for Linux
 Natascha
 
 Everybody else who was kind enough to spend time testing UPX, use it in

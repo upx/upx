@@ -50,8 +50,10 @@
 #endif
 
 // just in case
+#undef NDEBUG
 #undef dos
 #undef linux
+#undef small
 #undef tos
 #undef unix
 
@@ -503,7 +505,7 @@ struct options_t {
         bool le;
     } wcle;
     struct {
-        bool compress_exports;
+        int compress_exports;
         int compress_icons;
         bool compress_resources;
         int strip_relocs;
@@ -515,6 +517,7 @@ extern struct options_t * volatile opt;
 
 // main.cpp
 extern const char *progname;
+void init_options(struct options_t *o);
 bool set_ec(int ec);
 #if defined(__GNUC__)
 void e_exit(int ec) __attribute__((noreturn));
@@ -527,6 +530,7 @@ void e_exit(int ec);
 void printSetNl(int need_nl);
 void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
+void printUnhandledException(const char *iname, const exception *e);
 #if defined(__GNUC__)
 void printErr(const char *iname, const char *format, ...)
         __attribute__((format(printf,2,3)));

@@ -65,7 +65,7 @@ void do_one_file(const char *iname, char *oname)
 
     if (r == -1)
         throw FileNotFoundException(iname);
-    if (!S_ISREG(st.st_mode))
+    if (!(S_ISREG(st.st_mode)))
         throwIOException("not a regular file -- skipped");
 #if defined(__unix__)
     // no special bits may be set
@@ -124,7 +124,7 @@ void do_one_file(const char *iname, char *oname)
             int omode = 0600;
             fo.sopen(tname,flags,shmode,omode);
 #endif
-            // open succeeded - set oname
+            // open succeeded - now set oname[]
             strcpy(oname,tname);
         }
     }
@@ -177,6 +177,8 @@ void do_one_file(const char *iname, char *oname)
             // make backup
             char bakname[PATH_MAX+1];
             makebakname(bakname,iname);
+            if (file_exists(bakname))
+                maketempname(bakname,iname,".000",1);
             File::rename(iname,bakname);
         }
         File::rename(oname,iname);
@@ -213,6 +215,8 @@ void do_one_file(const char *iname, char *oname)
 // process all files from the commandline
 **************************************************************************/
 
+#if !defined(WITH_GUI)
+
 void do_files(int i, int argc, char *argv[])
 {
     if (opt->verbose >= 1)
@@ -247,19 +251,19 @@ void do_files(int i, int argc, char *argv[])
             e_exit(EXIT_ERROR);
             //throw;
         } catch (const exception &e) {
-            printErr(iname,"unhandled exception: %s\n", prettyName(e.what()));
+            printUnhandledException(iname,&e);
             if (oname[0])
                 (void) ::unlink(oname);
             e_exit(EXIT_ERROR);
             //throw;
         } catch (const exception *e) {
-            printErr(iname,"unhandled exception: %s\n", prettyName(e->what()));
+            printUnhandledException(iname,e);
             if (oname[0])
                 (void) ::unlink(oname);
             e_exit(EXIT_ERROR);
             //throw;
         } catch (...) {
-            printErr(iname,"internal error: unhandled exception !\n");
+            printUnhandledException(iname,NULL);
             if (oname[0])
                 (void) ::unlink(oname);
             e_exit(EXIT_ERROR);
@@ -283,6 +287,8 @@ void do_files(int i, int argc, char *argv[])
     else if (opt->cmd == CMD_FILEINFO)
         UiPacker::uiFileInfoTotal();
 }
+
+#endif /* !defined(WITH_GUI) */
 
 
 /*

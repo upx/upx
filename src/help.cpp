@@ -238,7 +238,6 @@ con_fprintf(f,
 con_fprintf(f,
         "        http://upx.tsx.org\n"
         "        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html\n"
-        "        http://www.nexus.hu/upx\n"
     );
     (void)con_fg(f,FG_ORANGE);
 con_fprintf(f,
@@ -260,10 +259,10 @@ void show_version(int x)
     UNUSED(x);
 
     fprintf(f,"upx %s\n",UPX_VERSION_STRING);
-#if defined(WITH_UCL)
-    fprintf(f,"UCL data compression library %s\n", ucl_version_string());
-#elif defined(WITH_NRV)
+#if defined(WITH_NRV)
     fprintf(f,"NRV data compression library %s\n", nrv_version_string());
+#elif defined(WITH_UCL)
+    fprintf(f,"UCL data compression library %s\n", ucl_version_string());
 #endif
     fprintf(f,"Copyright (C) 1996,1997,1998,1999,2000 Markus Franz Xaver Johannes Oberhumer\n");
     fprintf(f,"Copyright (C) 1996,1997,1998,1999,2000 Laszlo Molnar\n");

@@ -34,7 +34,7 @@
 // options
 **************************************************************************/
 
-static void init_options(struct options_t *o)
+void init_options(struct options_t *o)
 {
     memset(o, 0, sizeof(*o));
     memset(&o->crp, 0xff, sizeof(o->crp));
@@ -51,7 +51,7 @@ static void init_options(struct options_t *o)
     o->console = CON_INIT;
     o->verbose = 2;
 
-    o->w32pe.compress_exports = true;
+    o->w32pe.compress_exports = 1;
     o->w32pe.compress_icons = 2;
     o->w32pe.compress_resources = true;
     o->w32pe.strip_relocs = -1;
@@ -608,9 +608,8 @@ static int do_option(int optc, const char *arg)
         opt->wcle.le = true;
         break;
     case 630:
-        opt->w32pe.compress_exports = true;
-        if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->w32pe.compress_exports = false;
+        opt->w32pe.compress_exports = 1;
+        getoptvar(&opt->w32pe.compress_exports, 0, 1);
         //printf("compress_exports: %d\n", opt->w32pe.compress_exports);
         break;
     case 631:
@@ -977,6 +976,8 @@ void upx_sanity_check(void)
 // main entry point
 **************************************************************************/
 
+#if !defined(WITH_GUI)
+
 int main(int argc, char *argv[])
 {
     int i;
@@ -1126,6 +1127,8 @@ int main(int argc, char *argv[])
     do_exit();
     return exit_code;
 }
+
+#endif /* !defined(WITH_GUI) */
 
 
 /*

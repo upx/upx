@@ -37,6 +37,10 @@
 #undef USE_SCREEN_CURSES
 #undef USE_FRAMES
 
+#if defined(WITH_GUI) && !defined(NO_CONSOLE)
+#  define NO_CONSOLE
+#endif
+
 #if 1 && defined(__linux__)
 #  define USE_SCREEN
 #  define USE_SCREEN_VCSA

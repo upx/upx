@@ -33,6 +33,10 @@ class OutputFile;
 class Packer;
 class UiPacker;
 
+#if defined(WITH_GUI)
+class CMainDlg;
+#endif
+
 
 /*************************************************************************
 //
@@ -104,6 +108,10 @@ protected:
     static long update_u_len;
     static long update_fc_len;
     static long update_fu_len;
+
+#if defined(WITH_GUI)
+	CMainDlg* pMain;
+#endif
 };
 
 

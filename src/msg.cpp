@@ -145,6 +145,19 @@ void printWarn(const char *iname, const char *format, ...)
 }
 
 
+void printUnhandledException(const char *iname, const exception *e)
+{
+    if (e)
+        printErr(iname,"unhandled exception: %s\n", prettyName(e->what()));
+    else
+        printErr(iname,"internal error: unhandled exception!\n");
+    if (opt->cmd != CMD_COMPRESS)
+    {
+        printErr(iname,"  this file has possibly been modified/hacked; take care!\n");
+    }
+}
+
+
 /*************************************************************************
 // FIXME: should use colors and a consistent layout here
 **************************************************************************/
@@ -208,7 +221,10 @@ void info(const char *format, ...)
 void infoWarning(const char *format, ...)
 {
     if (opt->info_mode <= 0)
+    {
+        // FIXME - should still print something here
         return;
+    }
     va_list args;
     char buf[1024];
     va_start(args,format);

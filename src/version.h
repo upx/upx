@@ -1,2 +1,2 @@
-#define UPX_VERSION_STRING      "1.09.2"
-#define UPX_VERSION_DATE        "May 13th 2000"
+#define UPX_VERSION_STRING      "1.09.3"
+#define UPX_VERSION_DATE        "Sep 10th 2000"

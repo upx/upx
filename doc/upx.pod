@@ -15,7 +15,6 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
             The Ultimate Packer for eXecutables
   Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
-                  http://www.nexus.hu/upx
                     http://upx.tsx.org
 
 
@@ -222,7 +221,7 @@ For example:
     for csh/tcsh:      setenv UPX "-9 --compress-icons=1"
 
 Under DOS/Windows you must use '#' instead of '=' when setting the
-environment variable because of a command.com limitation.
+environment variable because of a COMMAND.COM limitation.
 
 On Vax/VMS, the name of the environment variable is
 UPX_OPT, to avoid a conflict with the symbol set for
@@ -345,7 +344,7 @@ How it works:
   May 2000), and transfers control to the program interpreter or
   the e_entry address of the original executable.
 
-  For shell script executables (files beginning with "#!/" or "#! /") 
+  For shell script executables (files beginning with "#!/" or "#! /")
   where the shell is known to accept "-c <command>", UPX decompresses
   the file into low memory, then maps the shell (and its PT_INTERP),
   and passes control to the shell with the entire decompressed file
