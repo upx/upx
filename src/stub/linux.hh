@@ -34,17 +34,20 @@
 // includes
 **************************************************************************/
 
+struct timex;
+
 #define __need_timeval
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <elf.h>
 #include <fcntl.h>
 #include <sched.h>
+#include <sys/time.h>
 #include <time.h>
 #include <linux/errno.h>
 #include <linux/mman.h>
 #include <linux/personality.h>
-#include <linux/timex.h>
+//#include <linux/timex.h>
 #include <linux/unistd.h>
 
 
