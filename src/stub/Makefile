@@ -35,6 +35,9 @@ STUBS = \
 	l_lx_exec86.h fold_exec86.h \
 	l_lx_elf86.h  fold_elf86.h \
 	l_lx_sh86.h   fold_sh86.h \
+	l_lx_pti86.h  fold_pti86.h \
+	l_lx_elfppc32.h fold_elfppc32.h \
+	l_mac_ppc32.h fold_machppc32.h \
 	l_vmlinz.h l_vmlinx.h
 
 # experimental:
@@ -319,6 +322,23 @@ l_lx_sh86.h: l_lx_sh86.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin linux_i386sh_loader $@
 
+l_lx_pti86.h: l_lx_pti86.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin linux_i386pti_loader $@
+
+GCC_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-gcc
+LD_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-ld
+
+l_mac_ppc32.h: l_mac_ppc32.S
+	$(GCC_PPC) -c $<
+	$(LD_PPC) -o $T.bin --oformat binary $T.o
+	$(BIN2H) $T.bin l_mac_ppc32_loader $@
+
+l_lx_elfppc32.h: l_lx_elfppc32.S
+	$(GCC_PPC) -c $<
+	$(LD_PPC) -o $T.bin --oformat binary $T.o
+	$(BIN2H) $T.bin linux_elfppc32_loader $@
+
 l_lx_elf.o: l_lx_elf.c linux.hh
 	$(CC_LINUX_I386) -c $<
 	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
@@ -335,6 +355,9 @@ l_lx_sh.o: l_lx_sh.c linux.hh
 	$(CC_LINUX_I386) -c $<
 	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
 
+l_lx_pti.o: l_lx_pti.c linux.hh
+	$(CC_LINUX_I386) -c $<
+
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
 	$(OBJCOPY_LINUX_I386) -R .comment -R .note $@
@@ -346,6 +369,17 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
+
+m_lx_elfppc32.o: m_lx_elfppc32.c
+	$(GCC_PPC) -c -Os -o $@ $<
+
+fold_elfppc32.o: fold_elfppc32.S
+	$(GCC_PPC) -c -O $<
+
+fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
+	$(LD_PPC) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
+		fold_elfppc32.o m_lx_elfppc32.o
+	$(BIN2H) $T.bin linux_elfppc32_fold $@
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
@@ -370,6 +404,28 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
+
+fold_pti86.o: fold_pti86.asm
+	$(NASM) -i$(UCL_I386)/ -f elf -o $@ $<
+
+fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
+	$(LD_LINUX_I386) -T $(srcdir)/l_lx_pti86.lds -Map $T.map -o $T.bin $T.o l_lx_pti.o
+	chmod a-x $T.bin
+	$(OBJCOPY_LINUX_I386) -S -R .comment -R .note $T.bin
+	$(STRIPELF) $T.bin
+	$(BRANDELF) $T.bin
+	$(BIN2H) $T.bin linux_i386pti_fold $@
+
+fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
+	$(LD_PPC) -Map $T.map -o $T.bin --oformat binary fold_machppc32.o m_mac_mach32.o
+	chmod a-x $T.bin
+	$(BIN2H) $T.bin fold_machppc32 $@
+
+m_mac_mach32.o: m_mac_mach32.c
+	$(GCC_PPC) -c -Os m_mac_mach32.c
+
+fold_machppc32.o: fold_machppc32.S
+	$(GCC_PPC) -c fold_machppc32.S
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
@@ -423,5 +479,15 @@ l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
 l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
 
 .NOEXPORT:
+
+upxrun: start-interp.o interp.o
+	gcc -nostartfiles -nostdlib -o upxrun -Ttext=0x10000 \
+		start-interp.o interp.o
+
+start-interp.o: start-interp.S
+	gcc -c $<
+
+interp.o: interp.c
+	gcc -c -g $<
 
 # vi:nowrap
