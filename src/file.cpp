@@ -181,7 +181,7 @@ void FileBase::seek(off_t off, int whence)
 }
 
 
-off_t FileBase::tell()
+off_t FileBase::tell() const
 {
     if (!isOpen())
         throwIOException("bad tell");
@@ -253,7 +253,7 @@ void InputFile::seek(off_t off, int whence)
 }
 
 
-off_t InputFile::tell()
+off_t InputFile::tell() const
 {
     return super::tell();
 }

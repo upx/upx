@@ -60,7 +60,7 @@ protected:
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);
     virtual void seek(off_t off, int whence);
-    virtual off_t tell();
+    virtual off_t tell() const;
 
     int _fd;
     int _flags;
@@ -93,7 +93,7 @@ public:
     virtual int readx(void * buf, int len);
 
     virtual void seek(off_t off, int whence);
-    virtual off_t tell();
+    virtual off_t tell() const;
 };
 
 
