@@ -113,6 +113,9 @@
     ACCCHK_ASSERT(sizeof('\0') == sizeof(int))
 #  endif
 #endif
+#if defined(acc_alignof)
+    ACCCHK_ASSERT(acc_alignof(char) == 1)
+#endif
 
     ACCCHK_ASSERT_IS_SIGNED(short)
     ACCCHK_ASSERT_IS_UNSIGNED(unsigned short)

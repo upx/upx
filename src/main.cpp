@@ -1013,26 +1013,26 @@ void upx_sanity_check(void)
 {
 #include "acc/acc_chk.ch"
 
-    COMPILE_TIME_ASSERT(sizeof(char) == 1);
-    COMPILE_TIME_ASSERT(sizeof(short) == 2);
-    COMPILE_TIME_ASSERT(sizeof(int) == 4);
-    COMPILE_TIME_ASSERT(sizeof(long) >= 4);
-    COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
-    COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
+    COMPILE_TIME_ASSERT(sizeof(char) == 1)
+    COMPILE_TIME_ASSERT(sizeof(short) == 2)
+    COMPILE_TIME_ASSERT(sizeof(int) == 4)
+    COMPILE_TIME_ASSERT(sizeof(long) >= 4)
+    COMPILE_TIME_ASSERT(sizeof(void *) >= 4)
+    COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *))
 
-    COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long));
-    COMPILE_TIME_ASSERT(((off_t) -1) < 0);
+    COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long))
+    COMPILE_TIME_ASSERT(((off_t) -1) < 0)
 
-    COMPILE_TIME_ASSERT(sizeof(BE16) == 2);
-    COMPILE_TIME_ASSERT(sizeof(BE32) == 4);
-    COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
-    COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
+    COMPILE_TIME_ASSERT(sizeof(BE16) == 2)
+    COMPILE_TIME_ASSERT(sizeof(BE32) == 4)
+    COMPILE_TIME_ASSERT(sizeof(LE16) == 2)
+    COMPILE_TIME_ASSERT(sizeof(LE32) == 4)
 
-#if (ACC_CC_GNUC) || (ACC_CC_INTELC && __INTEL_COMPILER >= 700)
-    COMPILE_TIME_ASSERT(__alignof__(BE16) == 1);
-    COMPILE_TIME_ASSERT(__alignof__(BE32) == 1);
-    COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);
-    COMPILE_TIME_ASSERT(__alignof__(LE32) == 1);
+#if defined(acc_alignof)
+    COMPILE_TIME_ASSERT(acc_alignof(BE16) == 1)
+    COMPILE_TIME_ASSERT(acc_alignof(BE32) == 1)
+    COMPILE_TIME_ASSERT(acc_alignof(LE16) == 1)
+    COMPILE_TIME_ASSERT(acc_alignof(LE32) == 1)
 #endif
 
 #if !defined(ACC_CC_WATCOMC)
@@ -1048,13 +1048,13 @@ void upx_sanity_check(void)
     //printf("%d\n", (int) sizeof(align_assertion_1b_t));
     //printf("%d\n", (int) sizeof(align_assertion_2a_t));
     //printf("%d\n", (int) sizeof(align_assertion_2b_t));
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == sizeof(align_assertion_1b_t));
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
-    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == sizeof(align_assertion_1b_t))
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t))
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9)
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17)
 #endif
 
-    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
+    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1)
     assert(strlen(UPX_VERSION_STRING4) == 4);
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
@@ -1248,7 +1248,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
 #if 0 && defined(__GLIBC__)
     //malloc_stats();
 #endif
-    do_exit();
     return exit_code;
 }
 

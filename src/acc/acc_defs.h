@@ -126,6 +126,19 @@
 #endif
 
 
+/***********************************************************************
+//
+************************************************************************/
+
+#if (ACC_CC_GNUC)
+#  define acc_alignof(e)        __alignof__(e)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
+#  define acc_alignof(e)        __alignof__(e)
+#elif (ACC_CC_MSC && (_MSC_VER >= 1300))
+#  define acc_alignof(e)        __alignof(e)
+#endif
+
+
 
 /*
 vi:ts=4:et
