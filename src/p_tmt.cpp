@@ -65,6 +65,17 @@ const int *PackTmt::getFilters() const
 }
 
 
+unsigned PackTmt::findOverlapOverhead(const upx_bytep buf,
+                                      unsigned range,
+                                      unsigned upper_limit) const
+{
+    // make sure the decompressor will be paragraph aligned
+    unsigned o = super::findOverlapOverhead(buf, range, upper_limit);
+    o = ((o + 0x20) &~ 0xf) - (ph.u_len & 0xf);
+    return o;
+}
+
+
 int PackTmt::buildLoader(const Filter *ft)
 {
     // prepare loader
@@ -95,7 +106,7 @@ int PackTmt::buildLoader(const Filter *ft)
 // util
 **************************************************************************/
 
-bool PackTmt::readFileHeader()
+int PackTmt::readFileHeader()
 {
 #define H(x)  get_le16(h,2*(x))
 #define H4(x) get_le32(h,x)
@@ -143,14 +154,16 @@ bool PackTmt::readFileHeader()
         else if (memcmp(h,"Adam",4) == 0)
             break;
         else
-            return false;
+            return 0;
     }
     if (ic == 20)
-        return false;
+        return 0;
+
     fi->seek(adam_offset,SEEK_SET);
     fi->readx(&ih,sizeof(ih));
+    // FIXME: should add some checks for the values in `ih'
 
-    return true;
+    return UPX_F_TMT_ADAM;
 #undef H4
 #undef H
 }
@@ -218,9 +231,9 @@ void PackTmt::pack(OutputFile *fo)
     ph.u_len = usize + relocsize;
     if (!compress(ibuf,obuf))
         throwNotCompressible();
-    buildLoader(&ft);
 
-    unsigned overlapoh = findOverlapOverhead(obuf,512);
+    ph.overlap_overhead = findOverlapOverhead(obuf,512);
+    buildLoader(&ft);
 
     // verify filter
     ft.verifyUnfilter();
@@ -233,9 +246,6 @@ void PackTmt::pack(OutputFile *fo)
     // prepare filter
     Filter ft(opt->level);
     ft.buf_len = usize;
-    // prepare other settings
-    const unsigned overlap_range = 512;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -244,11 +254,8 @@ void PackTmt::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+    compressWithFilters(&ft, 512, strategy);
 #endif
-
-    // make sure the decompressor will be paragraph aligned
-    overlapoh = ((overlapoh + 0x20) &~ 0xf) - (ph.u_len & 0xf);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -260,18 +267,18 @@ void PackTmt::pack(OutputFile *fo)
     assert(e_len > 0  && s_point > 0);
 
     // patch loader
-    patch_le32(loader,lsize,"JMPO",ih.entry-(ph.u_len+overlapoh+d_len));
+    patch_le32(loader,lsize,"JMPO",ih.entry-(ph.u_len+ph.overlap_overhead+d_len));
     patchFilter32(loader, lsize, &ft);
     patchPackHeader(loader,e_len);
 
     const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));
-    patch_le32(loader,e_len,"JMPD",ph.u_len+overlapoh-jmp_pos-4);
+    patch_le32(loader,e_len,"JMPD",ph.u_len+ph.overlap_overhead-jmp_pos-4);
 
     patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);
-    patch_le32(loader,e_len,"EDI0",ph.u_len+overlapoh+d_len-1);
+    patch_le32(loader,e_len,"EDI0",ph.u_len+ph.overlap_overhead+d_len-1);
     patch_le32(loader,e_len,"ESI0",ph.c_len+e_len+d_len-1);
     //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  clen=%x \n\n",
-    //                e_len,d_len,copy_len,copy_to,overlapoh,jmp_pos,ph.u_len,ph.c_len);
+    //                e_len,d_len,copy_len,copy_to,ph.overlap_overhead,jmp_pos,ph.u_len,ph.c_len);
 
     memcpy(&oh,&ih,sizeof(oh));
     oh.imagesize = ph.c_len+e_len+d_len; // new size
@@ -288,7 +295,7 @@ void PackTmt::pack(OutputFile *fo)
     fo->write(rel_entry,sizeof (rel_entry));
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);

@@ -1088,7 +1088,7 @@ void Packer::addFilter32(int filter_id)
 // It will replace the tryFilters() / compress() call sequence.
 **************************************************************************/
 
-void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
+void Packer::compressWithFilters(Filter *parm_ft,
                                  const unsigned overlap_range,
                                  int strategy, const int *parm_filters,
                                  unsigned max_offset, unsigned max_match,
@@ -1106,8 +1106,8 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     const unsigned filter_len = orig_ft.buf_len ? orig_ft.buf_len : compress_buf_len;
     //
     best_ph.c_len = orig_ph.u_len;
+    best_ph.overlap_overhead = 0;
     unsigned best_ph_lsize = 0;
-    unsigned best_overlapoh = 0;
 
     // preconditions
     assert(orig_ph.filter == 0);
@@ -1209,14 +1209,27 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         // compress
         if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
         {
-            // get results
-            const unsigned lsize = buildLoader(&ft);
+            unsigned lsize = 0;
+            if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+            {
+                // get results
+                ph.overlap_overhead = findOverlapOverhead(otemp, overlap_range);
+                lsize = buildLoader(&ft);
+            }
 #if 0
             printf("\n%02x: %d + %d = %d  (best: %d + %d = %d)\n", ft.id,
                    ph.c_len, getLoaderSize(), ph.c_len + getLoaderSize(),
                    best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
 #endif
+            bool update = false;
             if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+                update = true;
+            else if (ph.c_len + lsize == best_ph.c_len + best_ph_lsize)
+            {
+                if (ph.overlap_overhead < best_ph.overlap_overhead)
+                    update = true;
+            }
+            if (update)
             {
                 // update obuf[] with best version
                 if (otemp != obuf)
@@ -1225,7 +1238,6 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
                 best_ph = ph;
                 best_ph_lsize = lsize;
                 best_ft = ft;
-                best_overlapoh = findOverlapOverhead(obuf, overlap_range);
             }
         }
         // restore ibuf[] - unfilter with verify
@@ -1240,11 +1252,11 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     assert(best_ph.u_len == orig_ph.u_len);
     assert(best_ph.filter == best_ft.id);
     assert(best_ph.filter_cto == best_ft.cto);
+    assert(best_ph.overlap_overhead > 0);
 
     // copy back results
     this->ph = best_ph;
     *parm_ft = best_ft;
-    *parm_overlapoh = best_overlapoh;
 
     // finally check compression ratio
     if (best_ph.c_len + best_ph_lsize >= best_ph.u_len)

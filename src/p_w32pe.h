@@ -64,8 +64,9 @@ public:
         {  return (version == 12); }
 
 protected:
-    virtual bool readFileHeader();
+    virtual int readFileHeader();
     virtual bool testUnpackVersion(int version) const;
+
     virtual int buildLoader(const Filter *ft);
 
     unsigned pe_offset;

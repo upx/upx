@@ -116,9 +116,6 @@ void PackElks8086::pack(OutputFile *fo)
     Filter ft(opt->level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-    // prepare other settings
-    const unsigned overlap_range = 1 << 20;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -127,7 +124,7 @@ void PackElks8086::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+    compressWithFilters(&ft, overlap_range, strategy);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);

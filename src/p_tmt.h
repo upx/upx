@@ -52,8 +52,12 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual int readFileHeader();
+
+    virtual unsigned findOverlapOverhead(const upx_bytep buf,
+                                         unsigned range = 0,
+                                         unsigned upper_limit = ~0u) const;
     virtual int buildLoader(const Filter *ft);
-    virtual bool readFileHeader();
 
     unsigned adam_offset;
     int big_relocs;

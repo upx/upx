@@ -93,7 +93,7 @@ bool PackCom::canPack()
 
 void PackCom::patchLoader(OutputFile *fo,
                           upx_byte *loader, int lsize,
-                          unsigned calls, unsigned overlapoh)
+                          unsigned calls)
 {
     const int filter_id = ph.filter;
     const int e_len = getLoaderSectionStart("COMCUTPO");
@@ -101,7 +101,7 @@ void PackCom::patchLoader(OutputFile *fo,
     assert(e_len > 0 && e_len < 256);
     assert(d_len > 0 && d_len < 256);
 
-    const unsigned upper_end = ph.u_len + overlapoh + d_len + 0x100;
+    const unsigned upper_end = ph.u_len + ph.overlap_overhead + d_len + 0x100;
     if (upper_end + STACKSIZE > 0xfffe)
         throwNotCompressible();
 
@@ -195,9 +195,6 @@ void PackCom::pack(OutputFile *fo)
     // prepare filter
     Filter ft(opt->level);
     ft.addvalue = getCallTrickOffset();
-    // prepare other settings
-    const unsigned overlap_range = ph.u_len < 0xFE00 - ft.addvalue ? 32 : 0;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -209,17 +206,18 @@ void PackCom::pack(OutputFile *fo)
     else if (opt->level == 9)
         // choose best from the first 4 filters
         strategy = 4;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+    const unsigned overlap_range = ph.u_len < 0xFE00 - ft.addvalue ? 32 : 0;
+    compressWithFilters(&ft, overlap_range, strategy);
 
     const int lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
 
     const unsigned calls = ft.id % 3 ? ft.lastcall - 2 * ft.calls : ft.calls;
-    patchLoader(fo, loader, lsize, calls, overlapoh);
+    patchLoader(fo, loader, lsize, calls);
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))

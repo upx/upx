@@ -65,7 +65,7 @@ bool PackSys::canPack()
 
 void PackSys::patchLoader(OutputFile *fo,
                           upx_byte *loader, int lsize,
-                          unsigned calls, unsigned overlapoh)
+                          unsigned calls)
 {
     const int filter_id = ph.filter;
     const int e_len = getLoaderSectionStart("SYSCUTPO");
@@ -73,13 +73,13 @@ void PackSys::patchLoader(OutputFile *fo,
     assert(e_len > 0 && e_len < 256);
     assert(d_len > 0 && d_len < 256);
 
-    if (ph.u_len + d_len + overlapoh > 0xfffe)
+    if (ph.u_len + d_len + ph.overlap_overhead > 0xfffe)
         throwNotCompressible();
 
     memcpy(loader,ibuf,6);              // copy from orig. header
     memcpy(loader+8,ibuf+8,2);          // opendos wants this word too
 
-    unsigned copy_to = ph.u_len + d_len + overlapoh;
+    unsigned copy_to = ph.u_len + d_len + ph.overlap_overhead;
 
     patch_le16(loader,lsize,"JO",get_le16(ibuf+6)-copy_to-1);
     if (filter_id)
@@ -90,7 +90,7 @@ void PackSys::patchLoader(OutputFile *fo,
     patchPackHeader(loader,e_len);
 
     const unsigned jmp_pos = find_le16(loader,e_len,get_le16("JM"));
-    patch_le16(loader,e_len,"JM",ph.u_len+overlapoh+2-jmp_pos-2);
+    patch_le16(loader,e_len,"JM",ph.u_len+ph.overlap_overhead+2-jmp_pos-2);
     loader[getLoaderSection("SYSSUBSI") - 1] = (upx_byte) -e_len;
     patch_le16(loader,e_len,"DI",copy_to);
     patch_le16(loader,e_len,"SI",ph.c_len+e_len+d_len-1);

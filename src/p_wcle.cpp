@@ -208,7 +208,7 @@ void PackWcle::encodeObjectTable()
     if (ic < jc)
         ic = jc;
 
-    unsigned csection = (ic + overlapoh + mps-1) &~ (mps-1);
+    unsigned csection = (ic + ph.overlap_overhead + mps-1) &~ (mps-1);
 
     OOT(0,virtual_size) = csection + mps;
     OOT(0,flags) = LEOF_READ|LEOF_EXEC|LEOF_HUGE32|LEOF_PRELOAD;
@@ -421,9 +421,9 @@ void PackWcle::encodeImage(const Filter *ft)
     // reserve RESERVED bytes for the decompressor
     if (!compress(ibuf,oimage+RESERVED))
         throwNotCompressible();
+    ph.overlap_overhead = findOverlapOverhead(oimage+RESERVED, 512);
     buildLoader(ft);
 
-    overlapoh = findOverlapOverhead(oimage+RESERVED, 512);
     ibuf.free();
     soimage = (ph.c_len + 3) &~ 3;
 }
@@ -516,7 +516,7 @@ void PackWcle::pack(OutputFile *fo)
 
     // patch loader
     ic = (OOT(0,virtual_size) - d_len) &~ 15;
-    assert(ic > ((ph.u_len + overlapoh + 31) &~ 15));
+    assert(ic > ((ph.u_len + ph.overlap_overhead + 31) &~ 15));
 
     upx_byte * const p = oimage + soimage - d_len;
     patch_le32(p,d_len,"JMPO",ih.init_eip_offset+text_vaddr-(ic+d_len));

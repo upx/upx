@@ -78,11 +78,12 @@ int PackW16Ne::buildLoader(const Filter *ft)
 //
 **************************************************************************/
 
-bool PackW16Ne::readFileHeader()
+int PackW16Ne::readFileHeader()
 {
     // FIXME: identify a win16/ne executable, so that the call
     // for contribution below will get thrown
-    return false;
+    return 0;
+    //return UPX_F_WIN16_NE;
 }
 
 

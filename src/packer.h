@@ -87,6 +87,9 @@ public:
     unsigned max_run_found;
     unsigned first_offset_found;
     //unsigned same_match_offsets_found;
+
+    // info fields set by Packer::compressWithFilters()
+    unsigned overlap_overhead;
 };
 
 
@@ -158,24 +161,25 @@ protected:
     virtual bool checkFinalCompressionRatio(const OutputFile *fo) const;
 
     // high-level compression drivers
-    void compressWithFilters(Filter *ft, unsigned *overlapoh,
+    void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
-                             int strategy = -1, const int *filters = NULL,
+                             int strategy, 
+                             const int *filters = NULL,
                              unsigned max_offset = 0, unsigned max_match = 0,
                              unsigned filter_buf_off = 0,
                              unsigned compress_buf_off = 0);
 
     // util for verifying overlapping decompresion
     //   non-destructive test
-    bool testOverlappingDecompression(const upx_bytep buf,
-                                      unsigned overlap_overhead) const;
+    virtual bool testOverlappingDecompression(const upx_bytep buf,
+                                              unsigned overlap_overhead) const;
     //   non-destructive find
-    unsigned findOverlapOverhead(const upx_bytep buf,
-                                 unsigned range = 0,
-                                 unsigned upper_limit = ~0u) const;
+    virtual unsigned findOverlapOverhead(const upx_bytep buf,
+                                         unsigned range = 0,
+                                         unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
-    void verifyOverlappingDecompression(MemBuffer *buf,
-                                        unsigned overlap_overhead);
+    virtual void verifyOverlappingDecompression(MemBuffer *buf,
+                                                unsigned overlap_overhead);
 
 
     // packheader handling

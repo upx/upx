@@ -130,7 +130,7 @@ bool PackW32Pe::testUnpackVersion(int version) const
 // util
 **************************************************************************/
 
-bool PackW32Pe::readFileHeader()
+int PackW32Pe::readFileHeader()
 {
     struct h_t
     {
@@ -161,16 +161,16 @@ bool PackW32Pe::readFileHeader()
         else if (get_le32(&h) == 'P' + 'E'*256)
             break;
         else
-            return false;
+            return 0;
     }
     if (ic == 20)
-        return false;
+        return 0;
     fi->seek(pe_offset,SEEK_SET);
     fi->readx(&ih,sizeof(ih));
     fi->seek(0x200,SEEK_SET);
     fi->readx(&h,6);
     isrtm = memcmp(&h,"32STUB",6) == 0;
-    return true;
+    return UPX_F_WIN32_PE;
 }
 
 
@@ -1625,9 +1625,9 @@ void PackW32Pe::pack(OutputFile *fo)
     ph.filter_cto = ft.cto;
     if (!compress(ibuf + rvamin,obuf))
         throwNotCompressible();
-    buildLoader(&ft);
 
-    const unsigned overlapoh = findOverlapOverhead(obuf, 2048);
+    ph.overlap_overhead = findOverlapOverhead(obuf, 2048);
+    buildLoader(&ft);
 
     // verify filter
     ft.verifyUnfilter();
@@ -1640,9 +1640,6 @@ void PackW32Pe::pack(OutputFile *fo)
     Filter ft(opt->level);
     ft.buf_len = ih.codesize;
     ft.addvalue = 0;
-    // prepare other settings
-    const unsigned overlap_range = 2048;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (!allow_filter)
@@ -1654,11 +1651,11 @@ void PackW32Pe::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy,
+    compressWithFilters(&ft, 2048, strategy,
                         NULL, 0, 0, ih.codebase, rvamin);
 #endif
 
-    newvsize = (ph.u_len + rvamin + overlapoh + oam1) &~ oam1;
+    newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
         tlsindex = 0;
 

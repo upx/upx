@@ -132,15 +132,15 @@ int PackTos::getLoaderSize() const
 // util
 **************************************************************************/
 
-bool PackTos::readFileHeader()
+int PackTos::readFileHeader()
 {
     fi->seek(0,SEEK_SET);
     fi->readx(&ih, FH_SIZE);
     if (ih.fh_magic != 0x601a)
-        return false;
+        return 0;
     if (FH_SIZE + ih.fh_text + ih.fh_data + ih.fh_sym > (unsigned) file_size)
-        return false;
-    return true;
+        return 0;
+    return UPX_F_ATARI_TOS;
 }
 
 
@@ -412,8 +412,8 @@ void PackTos::pack(OutputFile *fo)
         throwNotCompressible();
 
     // The decompressed data will now get placed at this offset:
-    const unsigned overlapoh = findOverlapOverhead(obuf, 512);
-    unsigned offset = (ph.u_len + overlapoh) - ph.c_len;
+    ph.overlap_overhead = findOverlapOverhead(obuf, 512);
+    unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
 
     // compute addresses
     unsigned o_text, o_data, o_bss;
@@ -538,7 +538,7 @@ void PackTos::pack(OutputFile *fo)
     fo->write("\x00\x00\x00\x00",4);
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);

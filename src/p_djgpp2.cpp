@@ -67,6 +67,16 @@ const int *PackDjgpp2::getFilters() const
 }
 
 
+unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf,
+                                         unsigned range,
+                                         unsigned upper_limit) const
+{
+    unsigned o = super::findOverlapOverhead(buf, range, upper_limit);
+    o = (o + 0x3ff) &~ 0x1ff;
+    return o;
+}
+
+
 int PackDjgpp2::buildLoader(const Filter *ft)
 {
     // prepare loader
@@ -158,7 +168,7 @@ static void handle_allegropak(InputFile *fi, OutputFile *fo)
 }
 
 
-bool PackDjgpp2::readFileHeader()
+int PackDjgpp2::readFileHeader()
 {
     unsigned char hdr[0x1c];
     unsigned char magic[8];
@@ -173,7 +183,7 @@ bool PackDjgpp2::readFileHeader()
         fi->seek(512,SEEK_SET);
         fi->readx(magic,8);
         if (memcmp("go32stub",magic,8) != 0)
-            return false;               // not V2 image
+            return 0;                   // not V2 image
         fi->seek(coff_offset,SEEK_SET);
         if (fi->read(&coff_hdr,sizeof(coff_hdr)) != sizeof(coff_hdr))
             throwCantPack("skipping djgpp symlink");
@@ -184,17 +194,17 @@ bool PackDjgpp2::readFileHeader()
         fi->readx(&coff_hdr,0xa8);
     }
     if (coff_hdr.f_magic != 0x014c)    // I386MAGIC
-        return false;
+        return 0;
     if ((coff_hdr.f_flags & 2) == 0)   // F_EXEC - COFF executable
-        return false;
+        return 0;
     if (coff_hdr.a_magic != 0413)      // ZMAGIC - demand load format
-        return false;
+        return 0;
     // FIXME: check for Linux etc.
 
     text = coff_hdr.sh;
     data = text + 1;
     bss  = data + 1;
-    return true;
+    return UPX_F_DJGPP2_COFF;
 }
 
 
@@ -278,10 +288,9 @@ void PackDjgpp2::pack(OutputFile *fo)
     ph.u_len = usize;
     if (!compress(ibuf,obuf))
         throwNotCompressible();
-    buildLoader(&ft);
 
-    unsigned overlapoh = findOverlapOverhead(obuf,ibuf,512);
-    overlapoh = (overlapoh + 0x3ff) & ~0x1ff;
+    ph.overlap_overhead = findOverlapOverhead(obuf,ibuf,512);
+    buildLoader(&ft);
 
     // verify filter
     ft.verifyUnfilter();
@@ -295,9 +304,6 @@ void PackDjgpp2::pack(OutputFile *fo)
     Filter ft(opt->level);
     ft.buf_len = usize - data->size;
     ft.addvalue = text->vaddr & ~0x1ff;
-    // prepare other settings
-    const unsigned overlap_range = 512;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -306,8 +312,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
-    overlapoh = (overlapoh + 0x3ff) & ~0x1ff;
+    compressWithFilters(&ft, 512, strategy);
 #endif
 
     // patch coff header #2
@@ -315,12 +320,12 @@ void PackDjgpp2::pack(OutputFile *fo)
     text->size = lsize;                   // new size of .text
     data->size = ph.c_len;                // new size of .data
 
-    if (bss->size < overlapoh)            // give it a .bss
-        bss->size = overlapoh;
+    if (bss->size < ph.overlap_overhead)  // give it a .bss
+        bss->size = ph.overlap_overhead;
 
     text->scnptr = sizeof(coff_hdr);
     data->scnptr = text->scnptr + text->size;
-    data->vaddr = bss->vaddr + ((data->scnptr + data->size) & 0x1ff) - data->size + overlapoh - 0x200;
+    data->vaddr = bss->vaddr + ((data->scnptr + data->size) & 0x1ff) - data->size + ph.overlap_overhead - 0x200;
     coff_hdr.f_nscns = 3;
 
     // prepare loader
@@ -331,7 +336,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     patchPackHeader(loader,lsize);
     patch_le32(loader,lsize,"ENTR",coff_hdr.a_entry);
     patchFilter32(loader, lsize, &ft);
-    patch_le32(loader,lsize,"BSSL",overlapoh/4);
+    patch_le32(loader,lsize,"BSSL",ph.overlap_overhead/4);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     patch_le32(loader,lsize,"OUTP",text->vaddr &~ 0x1ff);
     patch_le32(loader,lsize,"INPP",data->vaddr);
@@ -339,8 +344,8 @@ void PackDjgpp2::pack(OutputFile *fo)
     // patch coff header #3
     text->vaddr = sizeof(coff_hdr);
     coff_hdr.a_entry = sizeof(coff_hdr) + getLoaderSection("DJ2MAIN1");
-    bss->vaddr += overlapoh;
-    bss->size -= overlapoh;
+    bss->vaddr += ph.overlap_overhead;
+    bss->size -= ph.overlap_overhead;
 
     // because of a feature (bug?) in stub.asm we need some padding
     memcpy(obuf+data->size,"UPX",3);
@@ -357,7 +362,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // handle overlay
     // FIXME: only Allegro pakfiles are supported

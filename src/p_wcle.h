@@ -52,8 +52,9 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual int buildLoader(const Filter *ft);
     virtual void handleStub(OutputFile *fo);
+
+    virtual int buildLoader(const Filter *ft);
 
     virtual void readObjectTable();
     virtual void encodeObjectTable();
@@ -81,7 +82,6 @@ protected:
 
     int big_relocs;
     bool has_extra_code;
-    unsigned overlapoh;
     unsigned neweip;
 };
 

@@ -220,9 +220,6 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     Filter ft(opt->level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-    // prepare other settings
-    const unsigned overlap_range = 1 << 20;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -231,7 +228,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+    compressWithFilters(&ft, 1 << 20, strategy);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -297,9 +294,6 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     Filter ft(opt->level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-    // prepare other settings
-    const unsigned overlap_range = 512;
-    unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
     if (opt->filter >= 0 && isValidFilter(opt->filter))
@@ -308,7 +302,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
+    compressWithFilters(&ft, 512, strategy);
 
     // align everything to dword boundary - it is easier to handle
     unsigned clen = ph.c_len;
@@ -326,7 +320,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     assert(e_len > 0);
 
     const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
-    const unsigned decompr_pos = ALIGN_UP(ph.u_len + overlapoh, 16);
+    const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16);
     const unsigned copy_size = clen + d_len4;
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
     const unsigned esi = ALIGN_UP(clen + lsize, 4) - 4;     // copy from
@@ -357,7 +351,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 #endif
 
     // verify
-    verifyOverlappingDecompression(&obuf, overlapoh);
+    verifyOverlappingDecompression(&obuf, ph.overlap_overhead);
 
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))

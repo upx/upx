@@ -57,7 +57,7 @@ protected:
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
 
-    virtual bool readFileHeader();
+    virtual int readFileHeader();
     virtual bool checkFileHeader();
 
     struct tos_header_t

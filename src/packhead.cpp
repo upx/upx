@@ -38,7 +38,7 @@
 **************************************************************************/
 
 PackHeader::PackHeader() :
-    version(-1), format(-1)
+    version(-1), format(-1), filter(0), filter_cto(0), overlap_overhead(0)
 {
 }
 

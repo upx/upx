@@ -50,7 +50,7 @@ protected:
 
 protected:
     virtual int buildLoader(const Filter *ft);
-    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned, unsigned);
+    virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
 };
 
 

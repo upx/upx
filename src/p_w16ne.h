@@ -52,7 +52,8 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual bool readFileHeader(void);
+    virtual int readFileHeader(void);
+
     virtual int buildLoader(const Filter *ft);
 };
 
