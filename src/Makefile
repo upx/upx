@@ -132,12 +132,12 @@ NRVDIR:=$(strip $(subst \,/,$(NRVDIR)))
 u = ucl
 U = UCL
 upx_exe = upx$e
-include Makefile.inc
+include $(srcdir)/Makefile.inc
 ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   u = nrv
   U = NRV
   upx_exe = upx_$u$e
-  include Makefile.inc
+  include $(srcdir)/Makefile.inc
 endif
 
 tmp := -Wl,--rpath,
