@@ -66,6 +66,18 @@ static const
 #  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
 #endif
 
+#if 1
+static unsigned my_strlen(const char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+static unsigned my_strlen(const unsigned char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+#define strlen my_strlen
+#endif
+
 
 // Unicode string compare
 static bool ustrsame(const void *s1, const void *s2)
@@ -728,11 +740,11 @@ unsigned PackW32Pe::processImports() // pass 1
             }
         ppi++;
 
-        unsigned esize = ptr_diff(tarr,idlls[ic]->lookupt);
+        unsigned esize = ptr_diff((char *)tarr, (char *)idlls[ic]->lookupt);
         lookups.add(idlls[ic]->lookupt,esize);
-        if (ptr_diff(ibuf + idlls[ic]->iat,idlls[ic]->lookupt))
+        if (ptr_diff(ibuf + idlls[ic]->iat, (char *)idlls[ic]->lookupt))
         {
-            memcpy(ibuf + idlls[ic]->iat,idlls[ic]->lookupt,esize);
+            memcpy(ibuf + idlls[ic]->iat, idlls[ic]->lookupt, esize);
             iats.add(idlls[ic]->iat,esize);
         }
         names.add(idlls[ic]->name,strlen(idlls[ic]->name) + 1 + 1);
@@ -908,26 +920,26 @@ void Export::convert(unsigned eoffs,unsigned esize)
 #endif
 }
 
-void Export::build(char *newbase,unsigned newoffs)
+void Export::build(char *newbase, unsigned newoffs)
 {
-    char *functionp = newbase + sizeof(edir);
-    char *namep = functionp + 4 * edir.functions;
-    char *ordinalp = namep + 4 * edir.names;
-    char *enamep = ordinalp + 2 * edir.names;
-    char *exports = enamep + strlen(ename) + 1;
+    char * const functionp = newbase + sizeof(edir);
+    char * const namep = functionp + 4 * edir.functions;
+    char * const ordinalp = namep + 4 * edir.names;
+    char * const enamep = ordinalp + 2 * edir.names;
+    char * exports = enamep + strlen(ename) + 1;
 
-    edir.addrtable = newoffs + functionp - newbase;
-    edir.ordinaltable = newoffs + ordinalp - newbase;
+    edir.addrtable = newoffs + ptr_diff(functionp, newbase);
+    edir.ordinaltable = newoffs + ptr_diff(ordinalp, newbase);
     memcpy(ordinalp,ordinals,2 * edir.names);
 
-    edir.name = newoffs + enamep - newbase;
+    edir.name = newoffs + ptr_diff(enamep, newbase);
     strcpy(enamep,ename);
-    edir.nameptrtable = newoffs + namep - newbase;
+    edir.nameptrtable = newoffs + ptr_diff(namep, newbase);
     unsigned ic;
     for (ic = 0; ic < edir.names; ic++)
     {
         strcpy(exports,names[ic]);
-        set_le32(namep + 4 * ic,newoffs + exports - newbase);
+        set_le32(namep + 4 * ic,newoffs + ptr_diff(exports, newbase));
         exports += strlen(exports) + 1;
     }
 
@@ -936,7 +948,7 @@ void Export::build(char *newbase,unsigned newoffs)
         if (names[edir.names + ic])
         {
             strcpy(exports,names[edir.names + ic]);
-            set_le32(functionp + 4 * ic,newoffs + exports - newbase);
+            set_le32(functionp + 4 * ic,newoffs + ptr_diff(exports, newbase));
             exports += strlen(exports) + 1;
         }
 

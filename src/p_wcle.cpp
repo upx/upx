@@ -166,7 +166,7 @@ void PackWcle::encodeEntryTable()
     //if (Opt_debug) printf("%d entries encoded.\n",n);
     UNUSED(n);
 
-    soentries = p - ientries + 1;
+    soentries = ptr_diff(p, ientries) + 1;
     oentries = ientries;
     ientries = NULL;
 }
@@ -402,7 +402,7 @@ void PackWcle::preprocessFixups()
     set_le32(fix,0xFFFFFFFFUL);
     fix += 4;
 
-    sofixups = fix - ifixups;
+    sofixups = ptr_diff(fix, ifixups);
 }
 
 
@@ -590,7 +590,7 @@ void PackWcle::decodeFixups()
     while (*selfrel_fixups != 0xC3)
         selfrel_fixups += 9;
     selfrel_fixups++;
-    unsigned selectlen = (selfrel_fixups - selector_fixups)/9;
+    unsigned selectlen = ptr_diff(selfrel_fixups, selector_fixups)/9;
 
     ofixups = new upx_byte[fixupn*9+1000+selectlen*5];
     upx_bytep fp = ofixups;
@@ -656,11 +656,11 @@ void PackWcle::decodeFixups()
             fp += fp[1] ? 9 : 7;
             jc += 2;
         }
-        set_le32(ofpage_table+ic,fp-ofixups);
+        set_le32(ofpage_table+ic,ptr_diff(fp,ofixups));
     }
     for (ic=0; ic < FIXUP_EXTRA; ic++)
         *fp++ = 0;
-    sofixups = fp-ofixups;
+    sofixups = ptr_diff(fp, ofixups);
 }
 
 
@@ -748,7 +748,7 @@ void PackWcle::decodeEntryTable()
 
     //if (Opt_debug) printf("\n%d entries decoded.\n",n);
 
-    soentries = p - ientries + 1;
+    soentries = ptr_diff(p, ientries) + 1;
     oentries = ientries;
     ientries = NULL;
 }

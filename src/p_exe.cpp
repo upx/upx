@@ -338,7 +338,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
     set_le16 (crel_save+2,seg_high);
 
     //OutputFile::dump("x.rel", crel_save, crel - crel_save);
-    return crel - crel_save;
+    return (unsigned) (crel - crel_save);
 }
 
 
@@ -605,12 +605,11 @@ void PackExe::unpack(OutputFile *fo)
     {
         relocs -= get_le16(obuf+ph.u_len-2);
         ph.u_len -= 2;
-        upx_byte *p;
 
         wrkmem.alloc(4*MAXRELOCS);
-        unsigned es = 0,ones = get_le16(relocs);
-        unsigned seghi = get_le16(relocs+2);
-        p = relocs + 4;
+        unsigned es = 0, ones = get_le16(relocs);
+        const unsigned seghi = get_le16(relocs+2);
+        const upx_byte *p = relocs + 4;
 
         while (ones)
         {
@@ -628,10 +627,10 @@ void PackExe::unpack(OutputFile *fo)
                 dorel = true;
                 if (*p == 0)
                 {
-                    upx_byte *q;
+                    const upx_byte *q;
                     for (q = obuf+es*16+di; !(*q == 0x9a && get_le16(q+3) <= seghi); q++)
                         ;
-                    di = q - (obuf+es*16) + 3;
+                    di = ptr_diff(q, obuf+es*16) + 3;
                 }
                 else if (*p == 1)
                 {
