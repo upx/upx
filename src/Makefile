@@ -3,9 +3,10 @@
 # usage:
 #   `make target=linux'         # linux
 #   `make target=djggp2'        # djggp2
+#   `make target=cygwin'        # cygwin
 #   `make target=mingw32'       # mingw32
-#   `make target=no-cygwin'     # mingw32 as of cygwin b20.1
-#   `make target=msc'           # Visual C++ 6.0
+#   `make target=no-cygwin'     # mingw32 as included in cygwin
+#   `make target=vc6'           # Visual C++ 6.0
 #
 
 
@@ -42,6 +43,9 @@ endif
 ifneq ($(strip $(wildcard /platform/sun4?/kernel/unix)),)
 target = sparc
 endif
+ifeq ($(target),msc)
+target = vc6
+endif
 
 
 # /***********************************************************************
@@ -73,7 +77,7 @@ OBJECTS = $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
 # // compiler settings
 # ************************************************************************/
 
-# default to a unix-type compiler
+# default to a gcc unix-type compiler
 CC = gcc
 CXX = $(CC)
 DEFS =
@@ -155,8 +159,9 @@ LDFLAGS += $(LDLIBDIRS)
 
 ifeq ($(target),linux)
 e =
+###CC = /usr/local/packages/gcc-cvs/bin/g++
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
-CFLAGS_M += -mno-schedule-prologue
+##CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
 CFLAGS_WERROR = -Werror
 LDLIBS += -lmcheck
@@ -203,7 +208,7 @@ CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
 endif
 
-# mingw32 as included in cygwin b20.1
+# mingw32 as included in cygwin
 ifeq ($(target),no-cygwin)
 CC = gcc -mno-cygwin
 CFLAGS_M += -mno-schedule-prologue
@@ -215,7 +220,7 @@ endif
 ### Microsoft 32-bit C/C++ Compiler 12.00 (aka Visual C++ 6)
 ###
 
-ifeq ($(target),msc)
+ifeq ($(target),vc6)
 o = .obj
 a = .lib
 CC = cl -nologo
@@ -252,7 +257,7 @@ endif
 ##LINK_LDFLAGS += /verbose
 LINK_EXE = $(CC) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
 
-endif	# msc
+endif	# vc6
 
 
 ###
@@ -357,7 +362,7 @@ $(upx_exe): $(OBJECTS) $(LIBS)
 	$(STUBEDIT_EXE)
 
 unupx:
-	$(MAKE) target=msc unupx.dll
+	$(MAKE) target=vc6 unupx.dll
 
 unupx.dll: $(OBJECTS) $(LIBS)
 	$(LINK_DLL)
