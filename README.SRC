@@ -70,7 +70,7 @@ Tools needed to build/modify the UPX sources
     (egcs 1.1.x may work, half-baked implementations like Borland C++ 5.5 won't)
 
   - GNU make 3.77 for Win32
-    ftp://agnes.dida.physik.uni-essen.de/home/janjaap/mingw32/newnew/
+    http://wildsau.idv.uni-linz.ac.at/mfx/download/upx/tools/
 
   - GNU make 3.77 for DOS
     ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/
@@ -81,8 +81,8 @@ To compile the packer sources
 
   set the environment variable UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-0.91                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-0.91           (Unix)
+     set UCLDIR=c:\src\ucl-0.92                       (DOS / Windows)
+     export UCLDIR=$HOME/local/src/ucl-0.92           (Unix)
 
   then type
 
