@@ -171,13 +171,18 @@ ctend:
 ;;  call/jump/jcc trick; also used more than once (and/or optionally), so
 ;;  ecx has byte count (not count of applied instances), and
 ;;  edi points to buffer.
-%macro          ckt32   1  ; param: where is cto8 (dl, bl, or literal)
+%macro          ckt32   2
+; 1st param: effective addvalue (typically 0 or edi; any rvalue)
+; 2nd param: where is cto8 (dl, bl, or literal)
+
 ;__CKLLTR00__
-                mov     esi, edi  ; base of block
+ %ifnidn %1,0
+                mov     esi, %1
+ %endif
                 jmps    ckstart
 ckloop3:
                 mov     al, [edi]
-                inc     edi
+                add     edi, byte 1
 ;__CKLLTR10__  Jcc only
                 cmp     al, 0x80  ; lo of 6-byte Jcc
                 jb      ckloop2
@@ -191,27 +196,32 @@ ckloop2:
                 cmp     al, 0xE9 - 0xE8
                 ja      ckcount
 ckmark:
-                cmp     byte [edi], %1  ; cto8
+                cmp     byte [edi], %2  ; cto8
                 jnz     ckcount
                 mov     eax, [edi]
 
                 shr     ax, 8
                 rol     eax, 16
                 xchg    al, ah
+; above 3 instr are equivalent to the following 2 instr:
+;               mov     al, 0   ; clear cto8  [setup partial-write stall]
+;               bswap   eax     ; not on 386: need 486 and up
 
                 sub     eax, edi
+ %ifnidn %1,0
                 add     eax, esi
+ %endif
                 mov     [edi], eax
                 add     edi, byte 4
 ckstart:
                 sub     ecx, byte 4
 ;__CKLLTR30__  Jcc only
                 mov     al, [edi]
-                inc     edi
+                add     edi, byte 1
                 loop    ckloop2  ; prefix cannot overlap previous displacement
 ;__CKLLTR40__
 ckcount:
-                dec     ecx
+                sub     ecx, byte 1
                 jg      ckloop3
 ckend:
 %endmacro
@@ -497,7 +507,7 @@ lxunf1:  ; allocate and clear mru[]
 ;__LXUNF030__
 lxctloop:
         movzx eax, word [edi]  ; 2 bytes, zero extended
-        inc edi
+        add edi, byte 1
 ;__LXJCC000__
         cmp al, 0x80  ; lo of Jcc <d32>
         jb lxct1
@@ -537,7 +547,7 @@ lxct3:
 
 ;__LXUNF034__
 unfcount:
-        dec ecx
+        sub ecx, byte 1
         jg lxctloop
 
 ;__LXMRU055__

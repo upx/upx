@@ -135,7 +135,7 @@ decompress:
 ;;              jmpn lxunf0  ; logically belongs here
 
                 ctojr32
-                ckt32   dl
+                ckt32   edi, dl
 ;__LEXEC017__
                 popa
                 ret

@@ -120,7 +120,7 @@ checka20:
                 pop     ecx     ; MATCH05  len
                 pop     edx     ; MATCH04  cto
                 pop     edi     ; MATCH03  src
-                ckt32   dl
+                ckt32   0, dl
 %endif; __LZDUMMY2__
 %ifdef  __LZCALLT9__
                 pop     edi     ; MATCH03  src

@@ -65,7 +65,7 @@ const int *PackVmlinuzI386::getCompressionMethods(int method, int level) const
 const int *PackVmlinuzI386::getFilters() const
 {
     static const int filters[] = {
-        /*0x49,*/  /* 2003-07-16 bug in unfilter? */
+        0x49,
         0x26, 0x24, 0x11, 0x14, 0x13, 0x16, 0x25, 0x15, 0x12,
     -1 };
     return filters;
