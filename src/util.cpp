@@ -325,13 +325,28 @@ char *center_string(const char *name, size_t s)
 
 bool file_exists(const char *name)
 {
-    int fd;
+    int fd, r;
+    struct stat st;
 
+    /* return true if we can open it */
     fd = open(name,O_RDONLY);
-    if (fd < 0)
-        return 0;
-    (void) close(fd);
-    return 1;
+    if (fd >= 0)
+    {
+        (void) close(fd);
+        return true;
+    }
+
+    /* return true if we can stat it */
+    memset(&st, 0, sizeof(st));
+#if defined(HAVE_LSTAT)
+    r = lstat(name,&st);
+#else
+    r = stat(name,&st);
+#endif
+    if (r != -1)
+        return true;
+
+    return false;
 }
 
 
@@ -363,9 +378,10 @@ bool maketempname(char *ofilename, const char *ifilename,
 }
 
 
-void makebakname(char *ofilename, const char *ifilename)
+bool makebakname(char *ofilename, const char *ifilename, bool force)
 {
     char *ofext = NULL, *ofname;
+    int ofile;
 
     strcpy(ofilename, ifilename);
     for (ofname = fn_basename(ofilename); *ofname; ofname++)
@@ -374,11 +390,24 @@ void makebakname(char *ofilename, const char *ifilename)
             ofext = ofname;
     }
     if (ofext == NULL)
-        strcat(ofilename, ".~");
+    {
+        ofext = ofilename + strlen(ofilename);
+        strcpy(ofext, ".~");
+    }
     else if (strlen(ofext) < 1 + 3)
         strcat(ofilename, "~");
     else
         ofext[strlen(ofext)-1] = '~';
+    if (!force)
+        return true;
+    if (file_exists(ofilename))
+        for (ofile = 0; ofile < 999; ofile++)
+        {
+            sprintf(ofext, ".%03d", ofile);
+            if (!file_exists(ofilename))
+                return true;
+        }
+    return false;
 }
 
 

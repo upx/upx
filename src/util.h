@@ -43,8 +43,8 @@ bool fn_has_ext(const char *name, const char *ext);
 
 bool file_exists(const char *name);
 bool maketempname(char *ofilename, const char *ifilename,
-                  const char *ext, bool force);
-void makebakname(char *ofilename, const char *ifilename);
+                  const char *ext, bool force=true);
+bool makebakname(char *ofilename, const char *ifilename, bool force=true);
 bool isafile(int fd);
 
 unsigned get_ratio(unsigned long packedsize, unsigned long size,

@@ -99,7 +99,7 @@ void do_one_file(const char *iname, char *oname)
             if (opt->output_name)
                 strcpy(tname,opt->output_name);
             else
-                maketempname(tname,iname,".upx",1);
+                maketempname(tname,iname,".upx");
             if (opt->force >= 2)
             {
 #if defined(HAVE_CHMOD)
@@ -177,8 +177,6 @@ void do_one_file(const char *iname, char *oname)
             // make backup
             char bakname[PATH_MAX+1];
             makebakname(bakname,iname);
-            if (file_exists(bakname))
-                maketempname(bakname,iname,".000",1);
             File::rename(iname,bakname);
         }
         File::rename(oname,iname);
