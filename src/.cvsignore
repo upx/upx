@@ -9,6 +9,7 @@
 *.upx
 .gdbinit
 .Attic
+.deps
 upx
 upx_nrv
 upx_nrv.*

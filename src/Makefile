@@ -111,6 +111,7 @@ CFLAGS_W += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wmissing-p
 ## CFLAGS_M += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
 CFLAGS    = $(CFLAGS_W) $(CFLAGS_O) $(CFLAGS_M)
+CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
 CXXFLAGS  = $(CFLAGS) -Wsynth -fconserve-space
 CXXFLAGS1 = $(CXXFLAGS)
 CXXFLAGS2 = $(CXXFLAGS) -fno-exceptions -fno-rtti
@@ -393,6 +394,7 @@ clean: mostlyclean
 	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
 
 distclean: clean
+	-rm -rf .deps
 
 maintainer-clean: distclean
 
@@ -434,52 +436,14 @@ endif
 # // dependencies
 # ************************************************************************/
 
-# FIXME: use automated dependencies
+ifeq ($(strip $(wildcard .deps)),)
+  DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+else
+  DEP_FILES := $(wildcard .deps/*.pp)
+  ifneq ($(strip $(DEP_FILES)),)
+    include $(DEP_FILES)
+  endif
+endif
 
-main$o:     mygetopt.h version.h
-filter$o:   filter.h
-filteri$o:  filter.h fcto_ml.ch fcto_ml2.ch fcto_ml3.ch
-help$o:     version.h
-msg$o:      ui.h
-lefile$o:   lefile.h
-linker$o:   linker.h
-mygetopt$o: mygetopt.h
-packer$o:   packer.h filter.h linker.h ui.h version.h
-packhead$o: packer.h
-packmast$o: packmast.h packer.h lefile.h \
-		p_com.h p_djgpp2.h p_exe.h \
-		p_lx_elf.h p_lx_exc.h p_lx_sep.h p_lx_sh.h \
-		p_sys.h p_tmt.h p_tos.h \
-		p_unix.h p_vmlinz.h p_vxd.h p_w32pe.h p_wcle.h
-ui$o:       packer.h ui.h
-work$o:     packer.h ui.h packmast.h
-
-p_com$o:    packer.h p_com.h \
-		stub/l_com.h
-p_djgpp2$o: packer.h p_djgpp2.h stub/stubify.h \
-		stub/l_djgpp2.h
-p_exe$o:    packer.h p_exe.h \
-		stub/l_exe.h
-p_lx_elf$o: packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_elf.h \
-		stub/l_le_n2b.h stub/l_le_n2d.h
-p_lx_exc$o: packer.h p_unix.h p_elf.h p_lx_exc.h \
-		stub/l_lx_n2b.h stub/l_lx_n2d.h
-p_lx_sep$o: packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_elf.h p_lx_sep.h
-p_lx_sh$o:  packer.h p_unix.h p_elf.h p_lx_exc.h p_lx_sh.h \
-		stub/l_sh_n2b.h stub/l_sh_n2d.h
-p_sys$o:    packer.h p_sys.h p_com.h \
-		stub/l_sys.h
-p_tmt$o:    packer.h p_tmt.h \
-		stub/l_tmt.h
-p_tos$o:    packer.h p_tos.h \
-		stub/l_t_n2b.h stub/l_t_n2bs.h \
-		stub/l_t_n2d.h stub/l_t_n2ds.h
-p_unix$o:   packer.h p_unix.h p_elf.h
-p_vmlinz$o: packer.h p_vmlinz.h \
-		stub/l_vmlinz.h
-p_w32pe$o:  packer.h p_w32pe.h \
-		stub/l_w32pe.h
-p_wcle$o:   packer.h p_wcle.h lefile.h \
-		stub/l_wcle.h
 
 # vi:nowrap
