@@ -43,9 +43,14 @@
 ;
 
 
-#ifdef __A68K__
+#if defined(__A68K__)
 #  define align4        align   0,4
 #  define L(label)      \/**/label
+#  define macro(name)   name    macro
+#  define text          section code
+#elif defined(__ASL__)
+#  define align4        align   4
+#  define L(label)      $$/**/label
 #  define macro(name)   name    macro
 #  define text          section code
 #else
@@ -61,18 +66,22 @@
 
 
 ; basepage offsets
-p_lowtpa        equ     $0      ; .l
-p_hitpa         equ     $4      ; .l
-p_tbase         equ     $8      ; .l
-p_tlen          equ     $c      ; .l
-p_dbase         equ     $10     ; .l
-p_dlen          equ     $14     ; .l
-p_bbase         equ     $18     ; .l
-p_blen          equ     $1c     ; .l
+p_lowtpa        equ     $0      ; .l    pointer to self (bottom of TPA)
+p_hitpa         equ     $4      ; .l    pointer to top of TPA + 1
+p_tbase         equ     $8      ; .l    base of text segment
+p_tlen          equ     $c      ; .l    length of text segment
+p_dbase         equ     $10     ; .l    base of data segment
+p_dlen          equ     $14     ; .l    length of data segment
+p_bbase         equ     $18     ; .l    base of BSS segment
+p_blen          equ     $1c     ; .l    length of BSS segment
+p_dta           equ     $20     ; .l    pointer to current DTA
+p_parent        equ     $24     ; .l    pointer to parent's basepage
+p_flags         equ     $28     ; .l    memory usage flags
+p_env           equ     $2c     ; .l    pointer to environment string
 
 #if 0
 ; file header offsets (NOT USED)
-fh_magic        equ     $0      ; .w   $601a
+fh_magic        equ     $0      ; .w    $601a
 fh_text         equ     $2      ; .l
 fh_data         equ     $6      ; .l
 fh_bss          equ     $a      ; .l
@@ -80,7 +89,7 @@ fh_sym          equ     $e      ; .l
 fh_reserved     equ     $12     ; .l
 fh_flag         equ     $16     ; .l
 fh_reloc        equ     $1a     ; .w
-FH_SIZE         equ     $1c     ; 28 bytes
+FH_SIZE         equ     $1c     ;       28 bytes
 #endif
 
 ;
@@ -88,8 +97,8 @@ FH_SIZE         equ     $1c     ; 28 bytes
 ;   d4  p_tbase - start of text segment
 ;   a6  p_bbase - start of decompressed bss segment, this also is the
 ;                     - end of decompressed text+data
-;                     - beginning of decompressed relocations
-;                     - beginning of dirty bss
+;                     - start of decompressed relocations
+;                     - start of dirty bss
 ;   a5  final startup code copied below stack
 ;
 
@@ -102,13 +111,18 @@ FH_SIZE         equ     $1c     ; 28 bytes
 ; //       are contiguous in memory
 ; **************************************************************************/
 
+#if defined(__ASL__)
+                padding off
+#endif
                 text
                 dc.b    'UPX1'          ; marker for o2bin.pl
+
 start:
                 move.l  a0,d0           ; a0 is basepage if accessory
                 beq     L(l_app)
                 move.l  4(a0),sp        ; accessory - get stack
                 bra     L(start)
+
 L(l_app):       move.l  4(sp),d0        ; application - get basepage
 L(start):       movem.l d1-d7/a0-a6,-(sp)
 
@@ -187,54 +201,63 @@ L(loop2):       move.l  -(a1),-(a0)
 copy_to_stack:
                 lea.l   clear_bss_end(pc),a2
                 move.l  sp,a5
-                moveq.l #((clear_bss_end-clear_bss)/2),d0
+                moveq.l #((clear_bss_end-clear_bss)/2-1),d5
 
                 move.l  d4,-(a5)        ; entry point for final jmp
 L(loop):        move.w  -(a2),-(a5)
-                subq.w  #1,d0
-                bne     L(loop)
+                subq.l  #1,d5
+                bcc     L(loop)
 
-        ; note: now d0 is 0
+        ; note: d5.l is now -1 (needed for decompressor)
 
 
 ; ------------- prepare decompressor
 
         ; a0 still points to the start of the compressed block
-                ; note: the next statement can be moved below cutpoint
-                ;   if it helps for the align4
-                ;;move.l  d4,a1           ; dest. for decompressing
                 move.l  d4,a1           ; dest. for decompressing
+
+#define NRV_NO_INIT
+                ;;moveq.l #-1,d5        ; last_off = -1
+                moveq.l #-1,d7
+                moveq.l #-128,d0        ; d0.b = $80
+#if defined(NRV2B)
+                moveq.l #-$68,d6        ; 0xffffff98
+                lsl.w   #5,d6           ; 0xfffff300 == -0xd00
+#elif defined(NRV2D)
+                moveq.l #-$50,d6        ; 0xffffffb0
+                lsl.w   #4,d6           ; 0xfffffb00 == -0x500
+#endif
 
 
 ; ------------- jump to copied decompressor
 
                 move.l  d4,a2
                 add.l   #'up31',a2
-                jmp     (a2)            ; jmp cutpoint
+                jmp     (a2)            ; jmp decompr_start
 
 
 ; /*************************************************************************
 ; // this is the final part of the startup code which runs in the stack
 ; **************************************************************************/
 
-        ; on entry d1 and d2 are 0
-
 ; ------------- clear dirty bss
 
 clear_bss:
 
+        ; on entry d2 is 0
+
 #if defined(SMALL)
-L(loop):        move.l  d1,(a6)+
+L(loop):        move.l  d2,(a6)+
                 ;;subq.l  #1,d0
                 dc.b    'u4'            ; subq.l #1,d0 / subq.w #1,d0
                 bne     L(loop)
 #else
         ; the dirty bss is usually not too large, so we don't
         ; bother making movem optimizations here
-L(loop):        move.l  d1,(a6)+
-                move.l  d1,(a6)+
-                move.l  d1,(a6)+
-                move.l  d1,(a6)+
+L(loop):        move.l  d2,(a6)+
+                move.l  d2,(a6)+
+                move.l  d2,(a6)+
+                move.l  d2,(a6)+
                 ;;subq.l  #1,d0
                 dc.b    'u4'            ; subq.l #1,d0 / subq.w #1,d0
                 bne     L(loop)
@@ -243,13 +266,10 @@ L(loop):        move.l  d1,(a6)+
 
 ; ------------- start program
 
-        ; note: d0.l is now 0
-
                 movem.l (sp)+,d1-d7/a0-a6
-                cmp.l   d0,a0
+                move.l  a0,d0
                 beq     L(l_app)
-                ;;suba.l  sp,sp           ; accessory: no stack
-                move.l  d0,sp           ; accessory: no stack
+                sub.l   sp,sp           ; accessory: no stack
 L(l_app):       dc.w    $4ef9           ; jmp $xxxxxxxx - jmp to text segment
 
 clear_bss_end:
@@ -264,12 +284,11 @@ clear_bss_end:
 #else
 #  include "ident_n.ash"
 #endif
-                even
 
                 align4
 
                 dc.b    'UPX!'          ; magic
-                ds.b    28              ; #include "header.ash"
+                dc.l    0,0,0,0,0,0,0   ; 28 bytes - #include "header.ash"
 
 
         ; end of text segment - size is a multiple of 4
@@ -277,7 +296,8 @@ clear_bss_end:
 
 ; /*************************************************************************
 ; // This part is appended after the compressed data.
-; // It runs in the last part of the dirty bss (after the relocations).
+; // It runs in the last part of the dirty bss (after the
+; // relocations and the original fileheader).
 ; **************************************************************************/
 
 cutpoint:
@@ -292,7 +312,7 @@ cutpoint:
 #  error
 #endif
 
-        ; note: d1 and d2 are 0 from decompressor above
+        ; note: d2 is 0 from decompressor above
 
 
 ; ------------- prepare d0 for clearing the dirty bss
@@ -311,23 +331,25 @@ cutpoint:
 
 ; ------------- reloc
 
+reloc:
+
 ; The decompressed relocations now are just after the decompressed
 ; data segment, i.e. at the beginning of the (dirty) bss.
 
-        ; note: d1 and d2 are still 0
+        ; note: d2 is still 0
 
                 move.l  a6,a0           ; a0 = start of relocations
 
                 move.l  d4,a1
                 add.l   (a0)+,a1        ; get initial fixup
 
-L(loop1):       add.l   d1,a1           ; increase fixup
+L(loop1):       add.l   d2,a1           ; increase fixup
                 add.l   d4,(a1)         ; reloc one address
-L(loop2):       move.b  (a0)+,d1
+L(loop2):       move.b  (a0)+,d2
                 beq     reloc_end
-                cmp.b   d3,d1           ; note: d3.b is #1
+                cmp.b   d3,d2           ; note: d3.b is #1
                 bne     L(loop1)
-                lea     254(a1),a1      ; d1 == 1 -> add 254, don't reloc
+                lea     254(a1),a1      ; d2 == 1 -> add 254, don't reloc
                 bra     L(loop2)
 
 reloc_end:
@@ -338,7 +360,7 @@ reloc_end:
 ; We are currently running in the dirty bss.
 ; Jump to the code we copied below the stack.
 
-        ; note: d1 and d2 are still 0
+        ; note: d2 is still 0
 
                 jmp     (a5)            ; jmp clear_bss (on stack)
 
@@ -347,8 +369,12 @@ reloc_end:
 eof:
                 dc.w    cutpoint-start  ; size of entry
                 dc.w    eof-cutpoint    ; size of decompressor
+                dc.w    decompr_start-cutpoint  ; offset of decompressor start
                 dc.b    'UPX9'          ; marker for o2bin.pl
 
+#if defined(__ASL__)
+                endsection code
+#endif
                 end
 
 

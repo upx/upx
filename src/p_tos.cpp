@@ -153,11 +153,6 @@ bool PackTos::checkFileHeader()
         throwCantPack("I won't pack F_OS_SPECIAL programs");
     if ((f & F_PROTMODE) > F_PROT_I)
         throwCantPack("invalid protection mode");
-    if (f & F_MEMFLAGS)
-    {
-        if (opt->force < 1)
-            throwCantPack("invalid memory flags; use option `-f' to force packing");
-    }
     if ((f & F_PROTMODE) != F_PROT_P)
     {
         if (opt->force < 1)
@@ -180,20 +175,62 @@ bool PackTos::checkFileHeader()
 }
 
 
-void PackTos::patch_d0_subq(void *l, int llen,
-                            const char *d0_old, const char *subq_old,
-                            unsigned d0_new)
+/*************************************************************************
+//
+**************************************************************************/
+
+unsigned PackTos::patch_d0_subq(void *l, int llen, unsigned d0,
+                                const char *subq_marker)
 {
-    void *p;
-    // patch "subq.l #1,d0" or "subq.w #1,d0"
-    p = find_be16(l, llen, get_be16(subq_old));
-    checkPatch(l, p, 2);
-    set_be16(p, d0_new > 65535 ? 0x5380 : 0x5340);
-    //
-    p = find_be32(l, llen, get_be32(d0_old));
+    // patch a "subq.l #1,d0" or "subq.w #1,d0".
+    // also convert into "dbra" if possible
+    upx_byte *p;
+
+    assert((int)d0 > 0);
+    p = find_be16(l, llen, get_be16(subq_marker));
+
+    if (p[2] == 0x66)                   // bne.b XXX
+        checkPatch(l, p, 4);
+    else
+        checkPatch(l, p, 2);
+
+    if (d0 > 65536)
+    {
+        set_be16(p, 0x5380);            // subq.l #1,d0
+    }
+    else
+    {
+        if (p[2] == 0x66)               // bne.b XXX
+        {
+            set_be16(p, 0x51c8);        // dbra d0,XXX
+            // adjust and extend branch from 8 to 16 bits
+            int branch = (signed char) p[3];
+            set_be16(p+2, branch+2);
+            // adjust d0
+            d0 -= 1;
+        }
+        else
+        {
+            set_be16(p, 0x5340);        // subq.w #1,d0
+        }
+        d0 &= 0xffff;
+    }
+    return d0;
+}
+
+
+unsigned PackTos::patch_d0_loop(void *l, int llen, unsigned d0,
+                                const char *d0_marker, const char *subq_marker)
+{
+    upx_byte *p;
+
+    d0 = patch_d0_subq(l, llen, d0, subq_marker);
+
+    p = find_be32(l, llen, get_be32(d0_marker));
+    assert(get_be16(p - 2) == 0x203c);  // move.l #XXXXXXXX,d0
     checkPatch(l, p, 4);
-    set_be32(p, d0_new);
-    assert(get_be16(p, -2) == 0x203c);  // move.l #XXXXXXXX,d0
+    set_be32(p, d0);
+    return d0;
 }
 
 
@@ -289,9 +326,10 @@ void PackTos::pack(OutputFile *fo)
     unsigned overlay = 0;
 
     const unsigned lsize = getLoaderSize();
-    const unsigned e_len = get_be16(getLoader()+lsize-4);
-    const unsigned d_len = get_be16(getLoader()+lsize-2);
-    assert(e_len + d_len == lsize - 4);
+    const unsigned e_len = get_be16(getLoader()+lsize-6);
+    const unsigned d_len = get_be16(getLoader()+lsize-4);
+    const unsigned decomp_offset = get_be16(getLoader()+lsize-2);
+    assert(e_len + d_len == lsize - 6);
     assert((e_len & 3) == 0 && (d_len & 1) == 0);
 
     const unsigned i_text = ih.fh_text;
@@ -429,11 +467,11 @@ void PackTos::pack(OutputFile *fo)
     if (!opt->small)
         patchVersion(loader,o_text);
     //   patch "subq.l #1,d0" or "subq.w #1,d0" - see "up41" below
-    patch_be16(loader,o_text,"u4",
-               dirty_bss / dirty_bss_align > 65535 ? 0x5380 : 0x5340);
-    patch_be32(loader,o_text,"up31",d_off + offset);
+    const unsigned dirty_bss_d0 =
+        patch_d0_subq(loader, o_text, dirty_bss / dirty_bss_align, "u4");
+    patch_be32(loader,o_text,"up31",d_off + offset + decomp_offset);
     if (opt->small)
-        patch_d0_subq(loader,o_text,"up22","u1", o_data/4);
+        patch_d0_loop(loader,o_text,o_data/4,"up22","u1");
     else
     {
         if (o_data <= 160)
@@ -446,7 +484,7 @@ void PackTos::pack(OutputFile *fo)
             loop2 = 160;
         }
         patch_be16(loader,o_text,"u2", 0x7000 + loop2/4-1); // moveq.l #X,d0
-        patch_d0_subq(loader,o_text,"up22","u1", loop1);
+        patch_d0_loop(loader,o_text,loop1,"up22","u1");
     }
     patch_be32(loader,o_text,"up21",o_data + offset);
     patch_be32(loader,o_text,"up13",i_bss);               // p_blen
@@ -459,7 +497,7 @@ void PackTos::pack(OutputFile *fo)
     upx_byte *p = obuf + d_off;
     //   patch "moveq.l #1,d3" or "jmp (a5)"
     patch_be16(p,d_len,"u3", (relocsize > 4) ? 0x7601 : 0x4ed5);
-    patch_be32(p,d_len,"up41", dirty_bss / dirty_bss_align);
+    patch_be32(p,d_len,"up41", dirty_bss_d0);
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);
@@ -474,8 +512,8 @@ void PackTos::pack(OutputFile *fo)
         oh.fh_text = o_text + o_data;
         oh.fh_data = 0;
     }
-    oh.fh_bss  = o_bss;
-    oh.fh_sym  = 0;
+    oh.fh_bss = o_bss;
+    oh.fh_sym = 0;
     oh.fh_reserved = 0;
     // only keep the following flags:
     oh.fh_flag = ih.fh_flag & (F_FASTLOAD | F_ALTALLOC | F_SMALLTPA | F_ALLOCZERO | F_KEEP);
