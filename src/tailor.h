@@ -172,10 +172,15 @@
 #    define HAVE_UTIME 1
 #    define HAVE_VSNPRINTF 1
 #    define vsnprintf _vsnprintf
-#  else
+#  elif defined(__linux__)
+#    pragma warning(error: 424)         // #424: extra ";" ignored
+#    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
+
 #    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
 #    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
 #    pragma warning(disable: 1418)      // #1418: external definition with no prior declaration
+#  else
+#    error "untested platform"
 #  endif
 #elif defined(_MSC_VER)
 #  if (_MSC_VER < 1100)
