@@ -649,7 +649,10 @@ This format is used by the TMT Pascal compiler - see http://www.tmt.com/ .
 
 Extra options available for this executable format:
 
-  (none)
+  --all-filters       Compress the program several times, using different
+                      preprocessing filters. This may improve the compression
+                      ratio in some cases, but usually the default filter
+                      gives the best results anyway.
 
 
 
