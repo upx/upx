@@ -1619,6 +1619,7 @@ void PackW32Pe::pack(OutputFile *fo)
     Filter ft(opt->level);
     if (allow_filter)
         tryFilters(&ft, ibuf + ih.codebase, ih.codesize);
+    buildLoader(&ft);
 
     // compress
     ph.filter = ft.id;
@@ -1629,7 +1630,6 @@ void PackW32Pe::pack(OutputFile *fo)
 
     // verify filter
     ft.verifyUnfilter();
-    buildLoader(&ft);
 #else
     // new version using compressWithFilters()
 

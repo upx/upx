@@ -271,6 +271,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     // filter
     Filter ft(opt->level);
     tryFilters(&ft, ibuf, usize - data->size, text->vaddr & ~0x1ff);
+    buildLoader(&ft);
 
     // compress
     ph.filter = ft.id;

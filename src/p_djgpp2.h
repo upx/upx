@@ -55,6 +55,7 @@ public:
 protected:
     virtual int buildLoader(const Filter *ft);
     virtual void handleStub(OutputFile *fo);
+    virtual bool readFileHeader();
 
     long coff_offset;
 
@@ -94,7 +95,6 @@ protected:
 
     external_scnhdr_t *text,*data,*bss;
 
-    bool readFileHeader();
     void stripDebug();
 };
 
