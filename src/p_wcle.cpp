@@ -412,7 +412,7 @@ void PackWcle::encodeImage(const Filter *ft)
     delete[] ifixups; ifixups = NULL;
 
     // compress
-    oimage.allocForCompression(isize+RESERVED+512);
+    oimage.allocForCompression(isize, RESERVED+512);
     ph.filter = ft->id;
     ph.filter_cto = ft->cto;
     ph.u_len = isize;
