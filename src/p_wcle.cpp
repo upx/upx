@@ -526,7 +526,7 @@ void PackWcle::pack(OutputFile *fo)
     }
     patch_le32(p,d_len,"RELO",mps*pages);
 
-    unsigned jpos = find_le32(oimage,e_len,get_le32("JMPD")) - oimage;
+    unsigned jpos = find_le32(oimage,e_len,get_le32("JMPD"));
     patch_le32(oimage,e_len,"JMPD",ic-jpos-4);
 
     jpos = (((ph.c_len+3)&~3) + d_len+3)/4;

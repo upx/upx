@@ -89,8 +89,7 @@ void PackSys::patchLoader(OutputFile *fo,
         patch_le16(loader,lsize,"CT",calls);
     }
 
-    unsigned jmp_pos;
-    jmp_pos = find_le16(loader,e_len,get_le16("JM")) - loader;
+    const unsigned jmp_pos = find_le16(loader,e_len,get_le16("JM"));
     patch_le16(loader,e_len,"JM",ph.u_len+overlapoh+2-jmp_pos-2);
     loader[getLoaderSection("SYSSUBSI") - 1] = (upx_byte) -e_len;
     patch_le16(loader,e_len,"DI",copy_to);

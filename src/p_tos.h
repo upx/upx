@@ -73,8 +73,8 @@ protected:
     } ih, oh;
 
 protected:
-    unsigned patch_d0_subq(void *l, int llen, unsigned, const char*);
-    unsigned patch_d0_loop(void *l, int llen, unsigned, const char*, const char*);
+    unsigned patch_d0_subq(void *b, int blen, unsigned, const char*);
+    unsigned patch_d0_loop(void *b, int blen, unsigned, const char*, const char*);
 };
 
 

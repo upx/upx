@@ -630,113 +630,138 @@ bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
 // patch util for loader
 **************************************************************************/
 
-void Packer::checkPatch(void *l, void *p, int size)
+void Packer::checkPatch(void *b, int blen, int boff, int size)
 {
-    if (l == NULL && p == NULL && size == 0)
+    if (b == NULL && blen == 0 && boff == 0 && size == 0)
     {
         // reset
         last_patch = NULL;
         last_patch_offset = 0;
         return;
     }
-    if (l == NULL || p == NULL || p < l || size <= 0)
+    if (b == NULL || blen <= 0 || boff < 0 || size <= 0)
         throwBadLoader();
-    ptrdiff_t offset = (upx_bytep) p - (upx_bytep) l;
-    //printf("checkPatch: %p %5ld %d\n", l, offset, size);
-    if (l == last_patch)
+    if (boff + size < 0 || boff + size > blen)
+        throwBadLoader();
+    //printf("checkPatch: %p %5d %5d %d\n", b, blen, boff, size);
+    if (b == last_patch)
     {
-        if (offset + size > last_patch_offset)
+        if (boff + size > last_patch_offset)
             throwInternalError("invalid patch order");
     }
     else
-        last_patch = l;
-    last_patch_offset = offset;
+        last_patch = b;
+    last_patch_offset = boff;
 }
 
 
-unsigned Packer::patch_be16(void *l, int llen, unsigned old, unsigned new_)
+int Packer::patch_be16(void *b, int blen, unsigned old, unsigned new_)
 {
-    void *p = find_be16(l,llen,old);
-    checkPatch(l,p,2);
+    int boff = find_be16(b,blen,old);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_be16(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_be16(void *l, int llen, const void * old, unsigned new_)
+int Packer::patch_be16(void *b, int blen, const void *old, unsigned new_)
 {
-    void *p = find(l,llen,old,2);
-    checkPatch(l,p,2);
+    int boff = find(b,blen,old,2);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_be16(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_be32(void *l, int llen, unsigned old, unsigned new_)
+int Packer::patch_be32(void *b, int blen, unsigned old, unsigned new_)
 {
-    void *p = find_be32(l,llen,old);
-    checkPatch(l,p,4);
+    int boff = find_be32(b,blen,old);
+    checkPatch(b, blen, boff, 4);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_be32(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_be32(void *l, int llen, const void * old, unsigned new_)
+int Packer::patch_be32(void *b, int blen, const void *old, unsigned new_)
 {
-    void *p = find(l,llen,old,4);
-    checkPatch(l,p,4);
+    int boff = find(b,blen,old,4);
+    checkPatch(b, blen, boff, 4);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_be32(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_le16(void *l, int llen, unsigned old, unsigned new_)
+int Packer::patch_le16(void *b, int blen, unsigned old, unsigned new_)
 {
-    void *p = find_le16(l,llen,old);
-    checkPatch(l,p,2);
+    int boff = find_le16(b,blen,old);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_le16(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_le16(void *l, int llen, const void * old, unsigned new_)
+int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_)
 {
-    void *p = find(l,llen,old,2);
-    checkPatch(l,p,2);
+    int boff = find(b,blen,old,2);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_le16(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_le32(void *l, int llen, unsigned old, unsigned new_)
+int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
 {
-    void *p = find_le32(l,llen,old);
-    checkPatch(l,p,4);
+    int boff = find_le32(b,blen,old);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_le32(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
-unsigned Packer::patch_le32(void *l, int llen, const void * old, unsigned new_)
+int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 {
-    void *p = find(l,llen,old,4);
-    checkPatch(l,p,4);
+    int boff = find(b,blen,old,4);
+    checkPatch(b, blen, boff, 2);
+
+    unsigned char *p = (unsigned char *)b + boff;
     set_le32(p,new_);
-    return (unsigned) last_patch_offset;
+
+    return boff;
 }
 
 
 // patch version into stub/ident_n.ash
-unsigned Packer::patchVersion(void *l, int llen)
+int Packer::patchVersion(void *b, int blen)
 {
-    upx_byte *p = find(l,llen,"$Id: UPX UPXV ",14);
-    checkPatch(l,p,14);
-    unsigned char buf[4+1];
-    memset(buf, ' ', 4);
-    size_t len = UPX_MIN(strlen(UPX_VERSION_STRING), 4);
-    memcpy(buf, UPX_VERSION_STRING, len);
-    memcpy(p + 9, buf, 4);
-    return (unsigned) last_patch_offset;
+    int boff = find(b,blen,"$Id: UPX UPXV ",14);
+    checkPatch(b, blen, boff, 14);
+
+    unsigned char *p = (unsigned char *)b + boff + 9;
+    memset(p, ' ', 4);
+    memcpy(p, UPX_VERSION_STRING, UPX_MIN(strlen(UPX_VERSION_STRING), 4));
+
+    return boff;
 }
 
 

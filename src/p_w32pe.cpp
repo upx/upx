@@ -1708,8 +1708,7 @@ void PackW32Pe::pack(OutputFile *fo)
     // patch loader
     if (ih.entry)
     {
-        unsigned jmp_pos;
-        jmp_pos = ptr_diff(find_le32(loader,codesize + 4,get_le32("JMPO")),loader);
+        unsigned jmp_pos = find_le32(loader,codesize + 4,get_le32("JMPO"));
         patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
     }
     if (big_relocs & 6)
@@ -1957,8 +1956,8 @@ int PackW32Pe::canUnpack()
             static const char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
             // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
 
-            unsigned char *p = find(buf, sizeof(buf), magic, 7);
-            if (p && find(p + 1, buf - p + sizeof(buf) - 1, magic, 7))
+            int offset = find(buf, sizeof(buf), magic, 7);
+            if (offset >= 0 && find(buf + offset + 1, sizeof(buf) - offset - 1, magic, 7) >= 0)
                 x = true;
         } catch (...) {
             //x = true;

@@ -31,7 +31,7 @@
 
 
 /*************************************************************************
-//
+// qsort() util
 **************************************************************************/
 
 int be16_compare(const void *e1, const void *e2)
@@ -64,24 +64,27 @@ int le32_compare(const void *e1, const void *e2)
 
 
 /*************************************************************************
-//
+// find util
 **************************************************************************/
 
-upx_bytep find(const void *b, int blen, const void *what, int wlen)
+int find(const void *b, int blen, const void *what, int wlen)
 {
+    if (b == NULL || what == NULL || wlen <= 0)
+        return -1;
+
     int i;
-    const upx_bytep base = (const upx_bytep) b;
-    unsigned char firstc = * (const upx_bytep) what;
+    const unsigned char *base = (const unsigned char *) b;
+    unsigned char firstc = * (const unsigned char *) what;
 
     for (i = 0; i <= blen - wlen; i++, base++)
         if (*base == firstc && memcmp(base,what,wlen) == 0)
-            return const_cast<upx_bytep>(base);
+            return i;
 
-    return NULL;
+    return -1;
 }
 
 
-upx_bytep find_be16(const void *b, int blen, unsigned what)
+int find_be16(const void *b, int blen, unsigned what)
 {
     unsigned char w[2];
     set_be16(w,what);
@@ -89,7 +92,7 @@ upx_bytep find_be16(const void *b, int blen, unsigned what)
 }
 
 
-upx_bytep find_be32(const void *b, int blen, unsigned what)
+int find_be32(const void *b, int blen, unsigned what)
 {
     unsigned char w[4];
     set_be32(w,what);
@@ -97,7 +100,7 @@ upx_bytep find_be32(const void *b, int blen, unsigned what)
 }
 
 
-upx_bytep find_le16(const void *b, int blen, unsigned what)
+int find_le16(const void *b, int blen, unsigned what)
 {
     unsigned char w[2];
     set_le16(w,what);
@@ -105,7 +108,7 @@ upx_bytep find_le16(const void *b, int blen, unsigned what)
 }
 
 
-upx_bytep find_le32(const void *b, int blen, unsigned what)
+int find_le32(const void *b, int blen, unsigned what)
 {
     unsigned char w[4];
     set_le32(w,what);
@@ -330,7 +333,7 @@ bool file_exists(const char *name)
     struct stat st;
 
     /* return true if we can open it */
-    fd = open(name,O_RDONLY);
+    fd = open(name, O_RDONLY);
     if (fd >= 0)
     {
         (void) close(fd);
@@ -338,14 +341,18 @@ bool file_exists(const char *name)
     }
 
     /* return true if we can stat it */
-    memset(&st, 0, sizeof(st));
-#if defined(HAVE_LSTAT)
-    r = lstat(name,&st);
-#else
-    r = stat(name,&st);
-#endif
+    //memset(&st, 0, sizeof(st));
+    r = stat(name, &st);
     if (r != -1)
         return true;
+
+    /* return true if we can lstat it */
+#if defined(HAVE_LSTAT)
+    //memset(&st, 0, sizeof(st));
+    r = lstat(name, &st);
+    if (r != -1)
+        return true;
+#endif
 
     return false;
 }
@@ -375,6 +382,8 @@ bool maketempname(char *ofilename, const char *ifilename,
             if (!file_exists(ofilename))
                 return true;
         }
+
+    ofilename[0] = 0;
     return false;
 }
 
@@ -408,6 +417,8 @@ bool makebakname(char *ofilename, const char *ifilename, bool force)
             if (!file_exists(ofilename))
                 return true;
         }
+
+    ofilename[0] = 0;
     return false;
 }
 

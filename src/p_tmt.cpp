@@ -232,7 +232,7 @@ void PackTmt::pack(OutputFile *fo)
         patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
                    ft.lastcall - ft.calls * 4);
     }
-    const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD")) - loader;
+    const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));
     patch_le32(loader,e_len,"JMPD",ph.u_len+overlapoh-jmp_pos-4);
 
     patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);

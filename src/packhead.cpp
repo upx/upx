@@ -101,9 +101,10 @@ void PackHeader::putPackHeader(upx_bytep buf, unsigned len)
 #if defined(UNUPX)
     throwBadLoader();
 #else
-    upx_bytep l = find_le32(buf,len,magic);
-    if (l == 0)
+    int offset = find_le32(buf,len,magic);
+    if (offset < 0)
         throwBadLoader();
+    upx_bytep l = buf + offset;
 
     l[4] = (unsigned char) version;
     l[5] = (unsigned char) format;
@@ -163,13 +164,15 @@ void PackHeader::putPackHeader(upx_bytep buf, unsigned len)
 
 bool PackHeader::fillPackHeader(upx_bytep buf, unsigned len)
 {
-    upx_bytep l = find_le32(buf,len,magic);
-    if (l == 0)
+    int offset = find_le32(buf,len,magic);
+    if (offset < 0)
         return false;
-    buf_offset = l - buf;
-    const int hlen = len - buf_offset;
+    const int hlen = len - offset;
     if (hlen < 8)
         return false;
+
+    upx_bytep l = buf + offset;
+    buf_offset = offset;
 
     version = l[4];
     format = l[5];

@@ -180,20 +180,21 @@ bool PackTos::checkFileHeader()
 //
 **************************************************************************/
 
-unsigned PackTos::patch_d0_subq(void *l, int llen, unsigned d0,
+unsigned PackTos::patch_d0_subq(void *b, int blen, unsigned d0,
                                 const char *subq_marker)
 {
     // patch a "subq.l #1,d0" or "subq.w #1,d0".
     // also convert into "dbra" if possible
-    upx_byte *p;
-
     assert((int)d0 > 0);
-    p = find_be16(l, llen, get_be16(subq_marker));
+    int boff = find_be16(b, blen, get_be16(subq_marker));
+    if (boff < 0)
+        throwBadLoader();
 
+    unsigned char *p = (unsigned char *)b + boff;
     if (p[2] == 0x66)                   // bne.b XXX
-        checkPatch(l, p, 4);
+        checkPatch(b, blen, boff, 4);
     else
-        checkPatch(l, p, 2);
+        checkPatch(b, blen, boff, 2);
 
     if (d0 > 65536)
     {
@@ -220,17 +221,18 @@ unsigned PackTos::patch_d0_subq(void *l, int llen, unsigned d0,
 }
 
 
-unsigned PackTos::patch_d0_loop(void *l, int llen, unsigned d0,
+unsigned PackTos::patch_d0_loop(void *b, int blen, unsigned d0,
                                 const char *d0_marker, const char *subq_marker)
 {
-    upx_byte *p;
+    d0 = patch_d0_subq(b, blen, d0, subq_marker);
 
-    d0 = patch_d0_subq(l, llen, d0, subq_marker);
+    int boff = find_be32(b, blen, get_be32(d0_marker));
+    checkPatch(b, blen, boff, 4);
 
-    p = find_be32(l, llen, get_be32(d0_marker));
+    unsigned char *p = (unsigned char *)b + boff;
     assert(get_be16(p - 2) == 0x203c);  // move.l #XXXXXXXX,d0
-    checkPatch(l, p, 4);
     set_be32(p, d0);
+
     return d0;
 }
 

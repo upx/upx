@@ -453,7 +453,8 @@ void PackExe::pack(OutputFile *fo)
     }
 
     putPackHeader(loader,lsize);
-    upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
+//    upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
+    upx_bytep p = NULL;
     if (p == NULL)
         throwBadLoader();
     if (flag & USEJUMP)

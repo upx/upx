@@ -207,16 +207,16 @@ protected:
     virtual unsigned getRandomId() const;
 
     // patch util
-    unsigned patch_be16(void *l, int llen, unsigned old, unsigned new_);
-    unsigned patch_be16(void *l, int llen, const void * old, unsigned new_);
-    unsigned patch_be32(void *l, int llen, unsigned old, unsigned new_);
-    unsigned patch_be32(void *l, int llen, const void * old, unsigned new_);
-    unsigned patch_le16(void *l, int llen, unsigned old, unsigned new_);
-    unsigned patch_le16(void *l, int llen, const void * old, unsigned new_);
-    unsigned patch_le32(void *l, int llen, unsigned old, unsigned new_);
-    unsigned patch_le32(void *l, int llen, const void * old, unsigned new_);
-    unsigned patchVersion(void *l, int llen);
-    void checkPatch(void *l, void *p, int size);
+    int patch_be16(void *b, int blen, unsigned old, unsigned new_);
+    int patch_be16(void *b, int blen, const void * old, unsigned new_);
+    int patch_be32(void *b, int blen, unsigned old, unsigned new_);
+    int patch_be32(void *b, int blen, const void * old, unsigned new_);
+    int patch_le16(void *b, int blen, unsigned old, unsigned new_);
+    int patch_le16(void *b, int blen, const void * old, unsigned new_);
+    int patch_le32(void *b, int blen, unsigned old, unsigned new_);
+    int patch_le32(void *b, int blen, const void * old, unsigned new_);
+    int patchVersion(void *b, int blen);
+    void checkPatch(void *b, int blen, int boff, int size);
 
 protected:
     // relocation util
@@ -240,13 +240,14 @@ protected:
     int ui_pass;
     int ui_total_passes;
 
+private:
     // linker
     Linker *linker;
 
 private:
     // private to checkPatch()
     void *last_patch;
-    ptrdiff_t last_patch_offset;
+    int last_patch_offset;
 
 private:
     // disable copy and assignment

@@ -53,11 +53,11 @@ unsigned get_ratio(unsigned long packedsize, unsigned long size,
 char *center_string(const char *name, size_t s);
 
 
-unsigned char *find(const void *b, int blen, const void *what, int wlen);
-unsigned char *find_be16(const void *b, int blen, unsigned what);
-unsigned char *find_be32(const void *b, int blen, unsigned what);
-unsigned char *find_le16(const void *b, int blen, unsigned what);
-unsigned char *find_le32(const void *b, int blen, unsigned what);
+int find(const void *b, int blen, const void *what, int wlen);
+int find_be16(const void *b, int blen, unsigned what);
+int find_be32(const void *b, int blen, unsigned what);
+int find_le16(const void *b, int blen, unsigned what);
+int find_le32(const void *b, int blen, unsigned what);
 
 
 inline ptrdiff_t ptr_diff(const void *p1, const void *p2)
