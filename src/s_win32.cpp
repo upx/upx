@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-#if defined(USE_SCREEN) && (ACC_OS_WIN32 || ACC_OS_WIN64)
+#if defined(USE_SCREEN) && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
 
 #include "screen.h"
 
