@@ -37,7 +37,8 @@
 class MemBuffer
 {
 public:
-    MemBuffer(unsigned size=0);
+    MemBuffer();
+    MemBuffer(unsigned size);
     ~MemBuffer();
 
     void alloc(unsigned size);
@@ -52,13 +53,13 @@ public:
 
     operator       unsigned char * ()       { return ptr; }
     //operator const unsigned char * () const { return ptr; }
-    const unsigned char *getBuf()     const { return ptr; }
           void *getVoidPtr()                { return (void *) ptr; }
     const void *getVoidPtr() const          { return (const void *) ptr; }
 
 private:
     unsigned char *ptr;
     unsigned psize;
+
     static unsigned global_alloc_counter;
 
     // disable copy and assignment

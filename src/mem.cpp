@@ -34,11 +34,39 @@
 //
 **************************************************************************/
 
+static int use_mcheck = -1;
+
+static int mcheck_init()
+{
+    if (use_mcheck < 0)
+    {
+        use_mcheck = 1;
+#if defined(WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
+        if (RUNNING_ON_VALGRIND)
+        {
+            //fprintf(stderr, "upx: detected RUNNING_ON_VALGRIND\n");
+            use_mcheck = 0;
+        }
+#endif
+    }
+    return use_mcheck;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+
+MemBuffer::MemBuffer() :
+    ptr(NULL), psize(0)
+{
+}
+
 MemBuffer::MemBuffer(unsigned size) :
     ptr(NULL), psize(0)
 {
-    if (size > 0)
-        alloc(size);
+    alloc(size);
 }
 
 
@@ -52,10 +80,23 @@ void MemBuffer::dealloc()
     if (ptr)
     {
         checkState();
-        ::free(ptr - 8);
+        if (use_mcheck)
+        {
+            // clear magic constants
+            set_be32(ptr - 8, 0);
+            set_be32(ptr - 4, 0);
+            set_be32(ptr + psize, 0);
+            set_be32(ptr + psize + 4, 0);
+            //
+            ::free(ptr - 8);
+        }
+        else
+            ::free(ptr);
+        ptr = NULL;
+        psize = 0;
     }
-    ptr = NULL;
-    psize = 0;
+    else
+        assert(psize == 0);
 }
 
 
@@ -63,7 +104,8 @@ void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra)
 {
     assert((int)uncompressed_size > 0);
     assert((int)extra >= 0);
-    alloc(uncompressed_size + uncompressed_size/8 + 256 + extra);
+    unsigned size = uncompressed_size + uncompressed_size/8 + 256 + extra;
+    alloc(size);
 }
 
 
@@ -71,9 +113,13 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
 {
     assert((int)uncompressed_size > 0);
     assert((int)extra >= 0);
-    // note: 3 bytes are allowed overrun for the asm_fast decompressors
-//    alloc(uncompressed_size + 3 + 512 + extra); // 512 safety bytes
-    alloc(uncompressed_size + 3 + extra);
+    unsigned size = uncompressed_size + extra;
+//    size += 512;   // 512 safety bytes
+    // INFO: 3 bytes are the allowed overrun for the i386 asm_fast decompressors
+#if defined(__i386__)
+    size += 3;
+#endif
+    alloc(size);
 }
 
 
@@ -81,8 +127,8 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
 //
 **************************************************************************/
 
-#define MAGIC1(p)       ((unsigned)(p) ^ 0xfefdbeeb)
-#define MAGIC2(p)       ((unsigned)(p) ^ 0xfefdbeeb ^ 0x80024001)
+#define MAGIC1(p)   (((unsigned)(p) & 0xffffffff) ^ 0xfefdbeeb)
+#define MAGIC2(p)   (((unsigned)(p) & 0xffffffff) ^ 0xfefdbeeb ^ 0x80024001)
 
 unsigned MemBuffer::global_alloc_counter = 0;
 
@@ -91,23 +137,30 @@ void MemBuffer::checkState() const
 {
     if (!ptr)
         throwInternalError("block not allocated");
-    if (get_be32(ptr - 4) != MAGIC1(ptr))
-        throwInternalError("memory clobbered before allocated block 1");
-    if (get_be32(ptr - 8) != psize)
-        throwInternalError("memory clobbered before allocated block 2");
-    if (get_be32(ptr + psize) != MAGIC2(ptr))
-        throwInternalError("memory clobbered past end of allocated block");
+    if (use_mcheck)
+    {
+        if (get_be32(ptr - 4) != MAGIC1(ptr))
+            throwInternalError("memory clobbered before allocated block 1");
+        if (get_be32(ptr - 8) != psize)
+            throwInternalError("memory clobbered before allocated block 2");
+        if (get_be32(ptr + psize) != MAGIC2(ptr))
+            throwInternalError("memory clobbered past end of allocated block");
+    }
+    assert((int)psize > 0);
 }
 
 
 void MemBuffer::alloc(unsigned size)
 {
-    // NOTE: we don't automaticlly free a used buffer
+    if (use_mcheck < 0)
+        mcheck_init();
+
+    // NOTE: we don't automatically free a used buffer
     assert(ptr == NULL);
     assert(psize == 0);
     //
     assert((int)size > 0);
-    unsigned total = 4 + 4 + size + 4 + 4;
+    unsigned total = use_mcheck ? size + 16 : size;
     assert((int)total > 0);
     unsigned char *p = (unsigned char *) malloc(total);
     if (!p)
@@ -116,13 +169,18 @@ void MemBuffer::alloc(unsigned size)
         throwCantPack("out of memory");
         //exit(1);
     }
-    ptr = p + 8;
     psize = size;
-    // store magic state
-    set_be32(ptr - 8, psize);
-    set_be32(ptr - 4, MAGIC1(ptr));
-    set_be32(ptr + psize, MAGIC2(ptr));
-    set_be32(ptr + psize + 4, global_alloc_counter++);
+    if (use_mcheck)
+    {
+        ptr = p + 8;
+        // store magic constants to detect buffer overruns
+        set_be32(ptr - 8, psize);
+        set_be32(ptr - 4, MAGIC1(ptr));
+        set_be32(ptr + psize, MAGIC2(ptr));
+        set_be32(ptr + psize + 4, global_alloc_counter++);
+    }
+    else
+        ptr = p ;
 }
 
 
