@@ -95,6 +95,9 @@
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
 #  pragma warning(disable: 4514)        // W4: 'function': unreferenced inline function has been removed
 #  pragma warning(disable: 4710)        // W4: 'function': function not inlined
+#  if (_MSC_VER >= 1400)
+#    pragma warning(disable: 4996)      // W1: 'function': was declared deprecated
+#  endif
 #elif (ACC_CC_WATCOMC)
 #  if (__WATCOMC__ < 1100)
 #    error "need Watcom C++ 11.0c or newer"

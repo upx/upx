@@ -35,13 +35,10 @@
    /* avoid -W4 warnings in <windows.h> */
 #  pragma warning(disable: 4201 4214 4514)
 #endif
-#if 0
-#  include "acc/acc_lib.ch"
-#else
-#  include "acc/acc_inci.h"
-#  include "acc/acclib/misc.ch"
-#  include "acc/acclib/hsread.ch"
-#endif
+#include "acc/acc_inci.h"
+#include "acc/acclib/misc.ch"
+#include "acc/acclib/hsread.ch"
+#include "acc/acclib/wildargv.ch"
 
 
 /*************************************************************************

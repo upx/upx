@@ -65,9 +65,24 @@ upx_bytep pfind_le32(const void *b, int blen, unsigned what);
 #endif
 
 
-inline ptrdiff_t ptr_diff(const void *p1, const void *p2)
+#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
+#elif (ACC_CC_DMC && (__DMC__ < 0x830))
+#elif (ACC_CC_MSC && (_MSC_VER < 1310))
+#else
+template <class T>
+inline int ptr_diff(const T *p1, const T *p2)
 {
-    return (const char*) p1 - (const char*) p2;
+    COMPILE_TIME_ASSERT(sizeof(T) == 1)
+    ptrdiff_t d = (const char*) p1 - (const char*) p2;
+    assert((int)d == d);
+    return (int) d;
+}
+#endif
+inline int ptr_diff(const void *p1, const void *p2)
+{
+    ptrdiff_t d = (const char*) p1 - (const char*) p2;
+    assert((int)d == d);
+    return (int) d;
 }
 
 

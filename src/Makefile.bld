@@ -440,14 +440,14 @@ LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
 ifeq (1,2)
-  # statically link libc.lib
-  CC += -ML
+  # statically link libcmt.lib
+  CC += -MT
 ##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
 endif
-LDLIBS = $(DOS_LDLIBS) setargv.obj
+LDLIBS = $(DOS_LDLIBS)
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -521,14 +521,14 @@ LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
 ifeq (1,1)
-  # statically link libc.lib
-  CC += -ML
+  # statically link libcmt.lib
+  CC += -MT
 ##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
 endif
-LDLIBS = $(DOS_LDLIBS) setargv.obj
+LDLIBS = $(DOS_LDLIBS)
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -590,14 +590,14 @@ LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
 ifeq (1,2)
-  # statically link libc.lib
-  CC += -ML
+  # statically link libcmt.lib
+  CC += -MT
 ##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
 endif
-LDLIBS = $(DOS_LDLIBS) setargv.obj
+LDLIBS = $(DOS_LDLIBS)
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -625,14 +625,14 @@ LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
 ifeq (1,1)
-  # statically link libc.lib
-  CC += -ML
+  # statically link libcmt.lib
+  CC += -MT
 ##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
 endif
-LDLIBS = $(DOS_LDLIBS) setargv.obj
+LDLIBS = $(DOS_LDLIBS)
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug

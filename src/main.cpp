@@ -1088,15 +1088,12 @@ int __acc_cdecl_main main(int argc, char *argv[])
     // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
     putenv("LFN=y");
 #endif
-#if defined(__EMX__)
-    _response(&argc,&argv);
-    _wildcard(&argc,&argv);
-#endif
 #if defined(__MINT__)
     __binmode(1);
     __set_binmode(stdout, 0);
     __set_binmode(stderr, 0);
 #endif
+    acc_wildargv(&argc, &argv);
 
     upx_sanity_check();
     init_options(opt);
