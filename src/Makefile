@@ -59,7 +59,7 @@ override T = $(basename $@)
 # these use exceptions & RTTI
 OBJECTS1 = \
 	compress$o except$o file$o lefile$o \
-	filter$o mem$o msg$o stdcxx$o work$o ui$o \
+	filter$o linker$o mem$o msg$o stdcxx$o work$o ui$o \
 	packer$o packhead$o packmast$o \
 	p_com$o p_djgpp2$o p_elks$o p_exe$o \
 	p_lx_elf$o p_lx_exc$o p_lx_sep$o p_lx_sh$o \
@@ -68,7 +68,7 @@ OBJECTS1 = \
 
 # no exceptions or RTTI
 OBJECTS2 = \
-	filteri$o help$o main$o mygetopt$o util$o linker$o \
+	filteri$o help$o main$o mygetopt$o util$o \
 	c_init$o c_file$o c_none$o c_screen$o \
 	s_object$o s_djgpp2$o s_vcsa$o s_win32$o
 

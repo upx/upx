@@ -925,10 +925,14 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 void Packer::initLoader(const void *pdata, int plen, int pinfo)
 {
-    delete linker;
     if (pinfo < 0)
         pinfo =  ~3 & (3 + get_le16(pdata, plen - 2));
-    linker = new Linker(pdata,plen,pinfo);
+
+    delete linker;
+    if (getFormat() < 128)
+        linker = new Linker(pdata, plen, pinfo);    // little endian
+    else
+        linker = new BeLinker(pdata, plen, pinfo);  // big endian
 
     static const char identbig[] =
         "\n\0"

@@ -34,11 +34,16 @@ class Linker
 {
 public:
     Linker(const void *pdata, int plen, int pinfo);
-    ~Linker();
+    virtual ~Linker();
     void addSection(const char *sect);
     void addSection(const char *sname, const void *sdata, unsigned len);
     const char *getLoader(int *llen);
     int getSection(const char *name, int *slen) const;
+
+protected:
+    // little endian
+    virtual unsigned get32(const void *b) const { return get_le32(b); }
+    virtual void set32(void *b, unsigned v) const { set_le32(b, v); }
 
 private:
     struct section;
@@ -58,6 +63,25 @@ private:
     // disable copy and assignment
     Linker(Linker const &); // {}
     Linker& operator= (Linker const &); // { return *this; }
+};
+
+
+class BeLinker : public Linker
+{
+    typedef Linker super;
+public:
+    BeLinker(const void *pdata, int plen, int pinfo) :
+        super(pdata, plen, pinfo) { }
+
+protected:
+    // big endian
+    virtual unsigned get32(const void *b) const { return get_be32(b); }
+    virtual void set32(void *b, unsigned v) const { set_be32(b, v); }
+
+private:
+    // disable copy and assignment
+    BeLinker(BeLinker const &); // {}
+    BeLinker& operator= (BeLinker const &); // { return *this; }
 };
 
 

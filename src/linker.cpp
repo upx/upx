@@ -60,12 +60,12 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     sections = new section[200];
 
     char *p = iloader + info;
-    while (get_le32(p) != (unsigned)(-1))
+    while (get32(p) != (unsigned)(-1))
     {
-        if (get_le32(p))
+        if (get32(p))
         {
             memcpy(sections[nsections].name,p,8);
-            sections[nsections].istart = get_le32(p+8);
+            sections[nsections].istart = get32(p+8);
             sections[nsections++].ostart = -1;
             p += 12;
             assert(nsections < 200);
@@ -73,13 +73,13 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
         else
         {
             int l;
-            for (l = get_le32(p+4) - 1; iloader[l] == 0; l--)
+            for (l = get32(p+4) - 1; iloader[l] == 0; l--)
                 ;
 
             jumps[njumps].pos = l+1;
-            jumps[njumps].len = get_le32(p+4)-jumps[njumps].pos;
+            jumps[njumps].len = get32(p+4)-jumps[njumps].pos;
             memcpy(jumps[njumps].tsect,p+8,8);
-            jumps[njumps++].toffs = get_le32(p+16);
+            jumps[njumps++].toffs = get32(p+16);
             p += 20;
             assert(njumps < 200);
         }
@@ -177,7 +177,7 @@ const char *Linker::getLoader(int *llen)
             if (jumps[ic].len == 1)
                 assert(-128 <= offs && offs <= 127);
 
-            set_le32(&offs,offs);
+            set32(&offs,offs);
             memcpy(oloader+sections[jc].ostart+jumps[ic].pos-sections[jc].istart,&offs,jumps[ic].len);
         }
         frozen=1;
