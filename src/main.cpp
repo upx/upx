@@ -229,6 +229,11 @@ void check_options(int i, int argc)
         opt->backup = 1;
 
     check_not_both(opt->to_stdout, opt->output_name != NULL, "--stdout", "-o");
+    if (opt->to_stdout && opt->cmd == CMD_COMPRESS)
+    {
+        fprintf(stderr,"%s: cannot use `--stdout' when compressing\n", argv0);
+        e_usage();
+    }
     if (opt->to_stdout || opt->output_name)
     {
         if (i + 1 != argc)

@@ -122,10 +122,12 @@ public:
     // FIXME - these won't work when using the `--stdout' option
     virtual void seek(off_t off, int whence)
     {
+        assert(!opt->to_stdout);
         super::seek(off,whence);
     }
     virtual void rewrite(const void *buf, int len)
     {
+        assert(!opt->to_stdout);
         write(buf, len);
         bytes_written -= len;       // restore
     }
