@@ -224,7 +224,10 @@ static Packer *getUnpacker(InputFile *f)
 
 static void assertPacker(const Packer *p)
 {
+    assert(p->getFormat() > 0);
+    assert(p->getFormat() <= 255);
     assert(p->getVersion() >= 11);
+    assert(p->getVersion() < 255);
     assert(strlen(p->getName()) <= 13);
 }
 
