@@ -34,7 +34,7 @@ sstrip is a very simplistic program. It depends upon the common
 practice of putting the parts of the file that contribute to the
 memory image at the front, and the remaining material at the end. This
 permits it to discard the latter material without affecting file
-offsets and memory addresses in what remains. However, the ELF
-standard permits files to be organized in almost any order. So
-although this procedure usually works in practice, it is not meant to
-be taken too seriously.
+offsets and memory addresses in what remains. Of course, the ELF
+standard permits files to be organized in almost any order, so if a
+pathological linker decided to put its section headers at the top,
+sstrip would be useless on such executables.

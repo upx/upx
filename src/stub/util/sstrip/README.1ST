@@ -68,3 +68,21 @@ Share and enjoy.
 Brian Raiter
 breadbox@muppetlabs.com
 July, 1999
+
+________________
+
+
+This is a minor update of the original release. Shortly after
+installing a 2.2 Linux kernel, I discovered that changes to the system
+header files, plus a new warning in gcc 2.95.2, caused several of the
+programs to generate numerous compiler warnings and errors. The errors
+were caused by system headers re-defining a macro (benignly), and were
+suppressed by rearranging the inclusion of some header files. The
+warnings were due to my taking advantage of the standard feature of
+omitting trailing initializers in the definition of a structure, and
+were suppressed by omitting the -W gcc option in the Makefiles,
+leaving just -Wall. My apologies to any Linux 2.2 users who were
+bitten by this. (Hopefully Linux 2.4 isn't in the process of breaking
+this version as I write.)
+
+August, 2000
