@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2005 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -977,12 +977,12 @@ char const *Packer::getIdentstr(unsigned *size, int small)
         "\n\0"
         "$Id: UPX "
         UPX_VERSION_STRING4
-        " Copyright (C) 1996-2004 the UPX Team. All Rights Reserved. $"
+        " Copyright (C) 1996-2005 the UPX Team. All Rights Reserved. $"
         "\n";
     static const char identsmall[] =
         "\n"
         "$Id: UPX "
-        "(C) 1996-2004 the UPX Team. All Rights Reserved. http://upx.sf.net $"
+        "(C) 1996-2005 the UPX Team. All Rights Reserved. http://upx.sf.net $"
         "\n";
     static const char identtiny[] = UPX_VERSION_STRING4;
 

@@ -4,11 +4,13 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
-Changes in 1.93 beta (XX XXX 2004):
+Changes in 1.93 beta (07 Feb 2005):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * vmlinuz/386: fixes to support more kernels
 
 Changes in 1.92 beta (20 Jul 2004):
-  * win32/pe: added option `--strip-loadconf' to strip the SEH load config section
+  * win32/pe: added option `--strip-loadconf' to strip the SEH
+    load config section
   * win32/pe: try to detect .NET (win32/net) files [not yet supported by UPX]
   * vmlinux/386: new format that directly supports building Linux kernels
   * source code: now compiles cleanly under Win64

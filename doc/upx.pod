@@ -13,7 +13,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 =head1 ABSTRACT
 
             The Ultimate Packer for eXecutables
-  Copyright (c) 1996-2004 Markus Oberhumer & Laszlo Molnar
+  Copyright (c) 1996-2005 Markus Oberhumer & Laszlo Molnar
                http://upx.sourceforge.net
 
 
@@ -826,9 +826,9 @@ still some incompabilities with some files.
 Because of the way B<UPX> (and other packers for this format) works, you
 can see increased memory usage of your compressed files because the whole
 program is loaded into memory at startup.
-If you start several instances of huge compressed programs you're wasting memory
-because the common segements of the program won't get shared
-across the instances.
+If you start several instances of huge compressed programs you're
+wasting memory because the common segements of the program won't
+get shared across the instances.
 On the other hand if you're compressing only smaller programs, or
 running only one instance of larger programs, then this penalty is
 smaller, but it's still there.
@@ -920,13 +920,13 @@ Please report all bugs immediately to the authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
 
-Copyright (C) 1996-2004 Laszlo Molnar
+Copyright (C) 1996-2005 Laszlo Molnar
 
-Copyright (C) 2000-2004 John F. Reiser
+Copyright (C) 2000-2005 John F. Reiser
 
-Copyright (C) 2002-2004 Jens Medoch
+Copyright (C) 2002-2005 Jens Medoch
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

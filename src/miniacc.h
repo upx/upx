@@ -35,7 +35,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20041221L
+#define ACC_VERSION     20041222L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -77,6 +77,68 @@
 #  pragma option -h
 #endif
 #if defined(ACC_CONFIG_NO_LIMITS_H)
+#elif defined(ACC_LIBC_FALLBACK_FREESTANDING) || defined(ACC_BROKEN_LIMITS_H)
+#ifndef __ACC_FALLBACK_LIMITS_H_INCLUDED
+#define __ACC_FALLBACK_LIMITS_H_INCLUDED
+#undef CHAR_BIT
+#define CHAR_BIT        8
+#ifndef MB_LEN_MAX
+#define MB_LEN_MAX      1
+#endif
+#ifndef __SCHAR_MAX__
+#define __SCHAR_MAX__   127
+#endif
+#ifndef __SHRT_MAX__
+#define __SHRT_MAX__    32767
+#endif
+#ifndef __INT_MAX__
+#define __INT_MAX__     2147483647
+#endif
+#ifndef __LONG_MAX__
+#if defined(__alpha__) || defined(__MIPS_PSX2__)
+#define __LONG_MAX__    9223372036854775807L
+#else
+#define __LONG_MAX__    2147483647L
+#endif
+#endif
+#undef SCHAR_MIN
+#undef SCHAR_MAX
+#undef UCHAR_MAX
+#define SCHAR_MIN       (-1 - SCHAR_MAX)
+#define SCHAR_MAX       (__SCHAR_MAX__)
+#define UCHAR_MAX       (SCHAR_MAX * 2 + 1)
+#undef SHRT_MIN
+#undef SHRT_MAX
+#undef USHRT_MAX
+#define SHRT_MIN        (-1 - SHRT_MAX)
+#define SHRT_MAX        (__SHRT_MAX__)
+#if ((__INT_MAX__) == (__SHRT_MAX__))
+#define USHRT_MAX       (SHRT_MAX * 2U + 1U)
+#else
+#define USHRT_MAX       (SHRT_MAX * 2 + 1)
+#endif
+#undef INT_MIN
+#undef INT_MAX
+#undef UINT_MAX
+#define INT_MIN         (-1 - INT_MAX)
+#define INT_MAX         (__INT_MAX__)
+#define UINT_MAX        (INT_MAX * 2U + 1U)
+#undef LONG_MIN
+#undef LONG_MAX
+#undef ULONG_MAX
+#define LONG_MIN        (-1L - LONG_MAX)
+#define LONG_MAX        ((__LONG_MAX__) + 0L)
+#define ULONG_MAX       (LONG_MAX * 2UL + 1UL)
+#undef CHAR_MIN
+#undef CHAR_MAX
+#if defined(__CHAR_UNSIGNED__) || defined(_CHAR_UNSIGNED)
+#define CHAR_MIN        0
+#define CHAR_MAX        UCHAR_MAX
+#else
+#define CHAR_MIN        SCHAR_MIN
+#define CHAR_MAX        SCHAR_MAX
+#endif
+#endif
 #else
 #  include <limits.h>
 #endif
@@ -819,6 +881,7 @@ extern "C" {
 #else
 #  error "unknown memory model"
 #endif
+#if !defined(ACC_ARCH_GENERIC)
 #if (ACC_MM_FLAT) && (UINT_MAX >= ACC_0xffffffffL) && (ULONG_MAX >= UINT_MAX)
 #if defined(__LLP64__) || defined(__LLP64) || defined(_LLP64)
 #  define ACC_MM_LLP64          1
@@ -840,6 +903,7 @@ extern "C" {
 #  if (ULONG_MAX == ((((1ul << ((64)-1)) - 1ul) * 2ul) + 1ul))
 #    define ACC_MM_ILP64        1
 #  endif
+#endif
 #endif
 #endif
 #if (ACC_MM_ILP32) || (ACC_ARCH_M68K)
@@ -1215,24 +1279,8 @@ extern "C" {
 #  include ACC_CONFIG_HEADER
 #else
 #if !defined(ACC_CONFIG_AUTO_NO_HEADERS)
-#if (ACC_LIBC_GLIBC >= 0x020100ul)
-#  define HAVE_STDINT_H 1
-#elif (ACC_LIBC_DIETLIBC)
-#  undef HAVE_STDINT_H
-#elif (ACC_LIBC_UCLIBC)
-#  define HAVE_STDINT_H 1
-#elif (ACC_CC_BORLANDC) && (__BORLANDC__ >= 0x560)
-#  undef HAVE_STDINT_H
-#elif (ACC_CC_DMC) && (__DMC__ >= 0x825)
-#  define HAVE_STDINT_H 1
-#endif
-#if defined(ACC_CONFIG_NO_STDINT_H)
-#elif HAVE_STDINT_H
-#  include <stdint.h>
-#endif
-#endif
-#if !defined(ACC_CONFIG_AUTO_NO_HEADERS)
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
+#if defined(ACC_LIBC_FALLBACK_FREESTANDING)
+#elif defined(ACC_LIBC_STRICT_FREESTANDING)
 #  define HAVE_LIMITS_H 1
 #  define HAVE_STDDEF_H 1
 #elif defined(ACC_LIBC_FREESTANDING)
@@ -1450,6 +1498,17 @@ extern "C" {
 #  undef HAVE_UTIME_H
 #  undef HAVE_SYS_TIME_H
 #endif
+#endif
+#if (ACC_LIBC_GLIBC >= 0x020100ul)
+#  define HAVE_STDINT_H 1
+#elif (ACC_LIBC_DIETLIBC)
+#  undef HAVE_STDINT_H
+#elif (ACC_LIBC_UCLIBC)
+#  define HAVE_STDINT_H 1
+#elif (ACC_CC_BORLANDC) && (__BORLANDC__ >= 0x560)
+#  undef HAVE_STDINT_H
+#elif (ACC_CC_DMC) && (__DMC__ >= 0x825)
+#  define HAVE_STDINT_H 1
 #endif
 #if (HAVE_SYS_TIME_H && HAVE_TIME_H)
 #  define TIME_WITH_SYS_TIME 1
@@ -1715,11 +1774,7 @@ extern "C" {
 #define SIZEOF_SHORT            (__ACC_SHORT_BIT / 8)
 #define SIZEOF_INT              (__ACC_INT_BIT / 8)
 #define SIZEOF_LONG             (__ACC_LONG_BIT / 8)
-#if (ACC_OS_WIN64)
-#  define SIZEOF_PTRDIFF_T      8
-#  define SIZEOF_SIZE_T         8
-#  define SIZEOF_VOID_P         8
-#elif (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
+#if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  define SIZEOF_SIZE_T         2
 #  if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
 #    define SIZEOF_VOID_P       2
@@ -1741,14 +1796,18 @@ extern "C" {
 #  else
 #    error "ACC_MM"
 #  endif
-#elif (ACC_ARCH_AVR || ACC_ARCH_C166 || ACC_ARCH_MCS51 || ACC_ARCH_MCS251)
+#elif (ACC_ARCH_AVR || ACC_ARCH_C166 || ACC_ARCH_IA16 || ACC_ARCH_MCS51 || ACC_ARCH_MCS251)
 #  define SIZEOF_PTRDIFF_T      2
 #  define SIZEOF_SIZE_T         2
 #  define SIZEOF_VOID_P         2
 #elif (ACC_MM_IP32L64)
-#  define SIZEOF_PTRDIFF_T      SIZEOF_INT
-#  define SIZEOF_SIZE_T         SIZEOF_INT
-#  define SIZEOF_VOID_P         SIZEOF_INT
+#  define SIZEOF_PTRDIFF_T      4
+#  define SIZEOF_SIZE_T         4
+#  define SIZEOF_VOID_P         4
+#elif (ACC_MM_LLP64) || (ACC_OS_WIN64)
+#  define SIZEOF_PTRDIFF_T      8
+#  define SIZEOF_SIZE_T         8
+#  define SIZEOF_VOID_P         8
 #else
 #  define SIZEOF_PTRDIFF_T      SIZEOF_LONG
 #  define SIZEOF_SIZE_T         SIZEOF_LONG
@@ -2276,7 +2335,38 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(int);
 #  undef ACC_WANT_ACC_INCD_H
 #ifndef __ACC_INCD_H_INCLUDED
 #define __ACC_INCD_H_INCLUDED 1
-#if defined(ACC_LIBC_STRICT_FREESTANDING)
+#if defined(ACC_LIBC_FALLBACK_FREESTANDING)
+#ifndef __ACC_FALLBACK_STDDEF_H_INCLUDED
+#define __ACC_FALLBACK_STDDEF_H_INCLUDED
+#if 0
+FIXME
+  __PTRDIFF_TYPE__, __SSIZE_TYPE__, __SIZE_TYPE__
+  wchar_t, wint_t
+#endif
+typedef int ptrdiff_t;
+typedef unsigned int size_t;
+#define _PTRDIFF_T_DEFINED
+#define _SIZE_T_DEFINED
+#define _INTPTR_T_DEFINED
+#define _UINTPTR_T_DEFINED
+#if !defined(__cplusplus)
+#ifndef _WCHAR_T_DEFINED
+typedef unsigned short wchar_t;
+#define _WCHAR_T_DEFINED
+#endif
+#endif
+#ifndef NULL
+#if defined(__cplusplus)
+#define NULL    0
+#else
+#define NULL    ((void*)0)
+#endif
+#endif
+#ifndef offsetof
+#define offsetof(s,m)   ((size_t)((ptrdiff_t)&(((s*)0)->m)))
+#endif
+#endif
+#elif defined(ACC_LIBC_STRICT_FREESTANDING)
 # if HAVE_STDDEF_H
 #  include <stddef.h>
 # endif
@@ -3338,6 +3428,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
     ACCCHK_ASSERT(ACC_MM_WORDSIZE == 32)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_MM_ILP64)
     ACCCHK_ASSERT(sizeof(int) == 8)
@@ -3346,6 +3437,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
     ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_MM_IP32L64)
     ACCCHK_ASSERT(sizeof(int) == 4)
@@ -3353,6 +3445,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(void*) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_MM_LLP64)
     ACCCHK_ASSERT(sizeof(int) == 4)
@@ -3361,11 +3454,13 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
     ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_MM_LP32)
     ACCCHK_ASSERT(sizeof(int) == 2)
     ACCCHK_ASSERT(sizeof(long) == 4)
     ACCCHK_ASSERT(sizeof(void*) == 4)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_MM_LP64)
     ACCCHK_ASSERT(sizeof(int) == 4)
@@ -3374,6 +3469,7 @@ ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p);
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == sizeof(void*))
     ACCCHK_ASSERT(sizeof(size_t) == sizeof(void*))
     ACCCHK_ASSERT(ACC_MM_WORDSIZE == 64)
+    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_ARCH_IA16)
     ACCCHK_ASSERT(sizeof(size_t) == 2)
