@@ -99,6 +99,8 @@ public:
     virtual const char *getName() const { return "bvmlinuz/386"; }
 
     virtual void pack(OutputFile *fo);
+
+protected:
     virtual int buildLoader(const Filter *ft);
 };
 
