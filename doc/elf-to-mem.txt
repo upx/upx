@@ -1,0 +1,65 @@
+           Decompressing ELF Directly to Memory on Linux/x86
+          Copyright 2000 John F. Reiser  jreiser@BitWagon.com
+
+References:
+  <elf.h>   definitions for the ELF file format
+  /usr/src/linux/fs/binfmt_elf.c   what Linux execve() does with ELF
+  objdump --private-headers a.elf  dump the Elf32_Phdr
+  http://www.cygnus.com/pubs/gnupro/5_ut/b_Usingld/ldLinker_scripts.html
+     how to construct unusual ELF using /bin/ld
+
+There is exactly one immovable object:  In all of the Linux kernel,
+only the execve() system call sets the initial value of "the brk(0)",
+the value that is manipulated by system call 45 (__NR_brk in
+/usr/include/asm/unistd.h).  For "direct to memory" decompression,
+there will be no execve() except for the execve() of the decompressor
+program itself.  So, the decompressor program (which contains the
+compressed version of the original executable) must have the same
+brk() as the original executable.  So, the second PT_LOAD
+ELF "segment" of the compressed program is used only to set the brk(0).
+See src/p_lx_elf.cpp, function PackLinuxI386elf::patchLoader().
+All of the decompressor's code, and all of the compressed image
+of the original executable, reside in the first PT_LOAD of the
+decompressor program.
+
+The decompressor program stub is just under 2K bytes when linked.
+After linking, the decompressor code is converted to an initialized
+array, and #included into the compilation of the compressor;
+see src/stub/l_le_n2b.h.  To make self-contained compressed
+executables even smaller, the compressor also compresses all but the
+startup and decompression subroutine of the decompressor itself,
+saving a few hundred bytes.  The startup code first decompresses the
+rest of the decompressor, then jumps to it.  A nonstandard linker
+script src/stub/l_lx_elf86.lds places both the .text and .data
+of the decompressor into the same PT_LOAD at 0x00401000.  The
+compressor includes the compressed bytes of the original executable
+at the end of this first PT_LOAD.
+
+At runtime, the decompressed stub lives at 0x00400000.  In order for the
+decompressed stub to work properly at an address that is different
+from its link-time address, the compiled code must contain no absolute
+addresses.  So, the data items in l_lx_elf.c must be only parameters
+and automatic (on-stack) local variables; no global data, no static data,
+and no string constants.  Use "size l_le_n2b.o l_6e_n2b.o" to check
+that both data and bss have length zero.  Also, the '&' operator
+may not be used to take the address of a function.
+
+The address  0x00400000 was chosen to be out of the way of the usual
+load address 0x08048000, and to minimize fragmentation in kernel
+page tables; one page of page tables covers 4MB. The address
+0x00401000 was chosen as 1 page up from a 64KB boundary, to
+make the startup code and its constants smaller.
+
+Decompression of the executable begins by decompressing the Elf32_Ehdr
+and Elf32_Phdr, and then uses the Ehdr and Phdrs to control decompression
+of the PT_LOAD segments.
+Subroutine do_xmap() of src/stub/l_lx_elf.c performs the
+"virtual execve()" using the compressed data as source, and stores
+the decompressed bytes directly into the appropriate virtual addresses.
+
+Before transfering control to the PT_INTERP "program interpreter",
+minor tricks are required to setup the Elf32_auxv_t entries,
+clear the free portion of the stack (to compensate for ld-linux.so.2
+assuming that its automatic stack variables are initialized to zero),
+and remove (all but 4 bytes of) the decompression program (and
+compressed executable) from the address space.
