@@ -194,13 +194,13 @@
 #endif
 #if !defined(VALGRIND_MAKE_READABLE)
 #  if 0
-#    define VALGRIND_MAKE_READABLE(addr,len)    memset(addr,0,len), 0
+#    define VALGRIND_MAKE_READABLE(addr,len)    (memset(addr,0,len), 0)
 #  else
 #    define VALGRIND_MAKE_READABLE(addr,len)    0
 #  endif
 #endif
 #if !defined(VALGRIND_DISCARD)
-#  define VALGRIND_DISCARD(handle)              ((void) &handle)
+#  define VALGRIND_DISCARD(handle)              ACC_UNUSED(handle)
 #endif
 
 
@@ -286,14 +286,6 @@
 #  endif
 #else
 #  define __attribute_packed
-#endif
-
-
-#undef NOTHROW
-#if defined(__cplusplus)
-#  define NOTHROW throw()
-#else
-#  define NOTHROW
 #endif
 
 #if !defined(O_BINARY)

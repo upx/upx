@@ -378,7 +378,7 @@ void OutputFile::dump(const char *name, const void *buf, int len, int flags)
          flags = O_CREAT | O_BINARY | O_TRUNC;
     flags |= O_WRONLY;
     OutputFile f;
-    f.open(name, flags, 0666);
+    f.open(name, flags, 0600);
     f.write(buf, len);
     f.closex();
 }

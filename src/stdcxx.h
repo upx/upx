@@ -31,58 +31,10 @@
 
 #ifdef __cplusplus
 
+#include "acc/acc_cxx.h"
 
-#if !defined(NOTHROW)
-#  define NOTHROW throw()
-#endif
-
-
-/*************************************************************************
-// disable dynamic allocation of an object
-**************************************************************************/
-
-#if defined(new) || defined(delete) || defined(__EMX__) || (ACC_CC_SYMANTECC)
-
-// debug
-#  define DISABLE_NEW_DELETE private:
-
-#else
-
-#  if 1
-#    define DISABLE_NEW_DELETE_PLACEMENT_NEW \
-        static void *operator new(size_t, void *);
-#  endif
-#  if (ACC_CC_GNUC >= 0x030000ul)
-#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
-        static void operator delete(void *, void *) NOTHROW { }
-#  elif (ACC_CC_INTELC)
-#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
-        static void operator delete(void *, void *) NOTHROW { }
-#  elif (ACC_CC_MSC && (_MSC_VER >= 1200))
-#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
-        static void operator delete(void *, void *) NOTHROW { }
-#  endif
-
-#  if !defined(DISABLE_NEW_DELETE_PLACEMENT_NEW)
-#    define DISABLE_NEW_DELETE_PLACEMENT_NEW
-#    undef DISABLE_NEW_DELETE_PLACEMENT_DELETE
-#  endif
-#  if !defined(DISABLE_NEW_DELETE_PLACEMENT_DELETE)
-#    define DISABLE_NEW_DELETE_PLACEMENT_DELETE
-#  endif
-
-#  define DISABLE_NEW_DELETE \
-private: \
-    static void *operator new(size_t); \
-    static void *operator new[](size_t); \
-    DISABLE_NEW_DELETE_PLACEMENT_NEW \
-protected: \
-    static void operator delete(void *) NOTHROW { } \
-    static void operator delete[](void *) NOTHROW { } \
-    DISABLE_NEW_DELETE_PLACEMENT_DELETE \
-private:
-
-#endif
+#define NOTHROW             ACC_CXX_NOTHROW
+#define DISABLE_NEW_DELETE  ACC_CXX_DISABLE_NEW_DELETE_STRICT
 
 
 /*************************************************************************

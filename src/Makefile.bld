@@ -43,8 +43,10 @@ override T = $(basename $@)
 # // compiler defaults
 # ************************************************************************/
 
-CC_COMPILE    = $(CC)  $(CCARCH)  $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CFLAGS)   $(EXTRA_CFLAGS)   $(CFLAGS_OUTPUT)   -c $<
-CXX_COMPILE   = $(CXX) $(CXXARCH) $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $(CXXFLAGS_OUTPUT) -c $<
+CC_SRC  = $<
+CXX_SRC = $<
+CC_COMPILE    = $(CC)  $(CCARCH)  $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CFLAGS)   $(EXTRA_CFLAGS)   $(CFLAGS_OUTPUT)   -c $(CC_SRC)
+CXX_COMPILE   = $(CXX) $(CXXARCH) $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $(CXXFLAGS_OUTPUT) -c $(CXX_SRC)
 CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) $(EXTRA_LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(LDLIBS) $(EXTRA_LDLIBS) $(LINK_EXE_LDFLAGS)
 STUBEDIT_EXE  =
 STUBIFY_EXE   =
@@ -92,7 +94,7 @@ endif
 # ************************************************************************/
 
 ifeq ($(WITH_ZLIB),1)
-DOS_LDLIBS += zlib114.lib
+DOS_LDLIBS += zlib.lib
 endif
 
 UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
@@ -283,7 +285,7 @@ e = .exe
 CXX = gcc
 CFLAGS_O = -O2
 CCARCH += -mno-probe
-LDFLAGS = -s
+LDFLAGS = -L. -s
 endif
 
 
@@ -327,7 +329,7 @@ e = .exe
 CXX = gcc
 CFLAGS_O = -O2
 CCARCH += -Zwin32 -Zsys -mno-probe
-LDFLAGS = -s
+LDFLAGS = -L. -s
 STUBEDIT_EXE = pestack -s1024 -c1024 $@
 endif
 
@@ -341,9 +343,14 @@ o = .obj
 a = .lib
 e = .exe
 CC = bcc32 -3
+ifeq ($(UPX_BROKEN_INCLUDES),1)
+ifneq ($(srcdir),.)
+INCLUDES += -I$(srcdir)
+endif
 INCLUDES += -I$(srcdir)/acc
 ifneq ($(strip $(wildcard $(srcdir)/filter)),)
 INCLUDES += -I$(srcdir)/filter
+endif
 endif
 CFLAGS = -w -w-inl -g1
 CFLAGS_OUTPUT = -o$@
@@ -419,12 +426,12 @@ export LIB
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) setargv.obj
 endif
+LDLIBS = $(DOS_LDLIBS) setargv.obj
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -491,12 +498,12 @@ export LIB
 ifeq (1,1)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) setargv.obj
 endif
+LDLIBS = $(DOS_LDLIBS) setargv.obj
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -527,11 +534,13 @@ LDFLAGS = -k0x100000 -fm
 LINK_EXE_OUTPUT = -fe=$@
 LDLIBS = $(DOS_LDLIBS)
 
-INCLUDES:=$(strip $(subst /,\\,$(INCLUDES)))
+CC_SRC  = $(subst /,\\,$<)
+CXX_SRC = $(subst /,\\,$<)
+INCLUDES := $(strip $(subst /,\\,$(INCLUDES)))
 ifeq (1,2)
-  WCL386:=$(INCLUDES)
+  WCL386 := $(INCLUDES)
   export WCL386
-  INCLUDES:=
+  INCLUDES :=
 endif
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
@@ -573,12 +582,12 @@ export LIB
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) setargv.obj
 endif
+LDLIBS = $(DOS_LDLIBS) setargv.obj
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
@@ -615,12 +624,12 @@ export LIB
 ifeq (1,1)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
+##  DOS_LDLIBS := $(DOS_LDLIBS:.lib=_ml.lib)
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) setargv.obj
 endif
+LDLIBS = $(DOS_LDLIBS) setargv.obj
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
