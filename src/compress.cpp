@@ -37,6 +37,7 @@
 #  define upx_compress      upx_compress
 #  define upx_decompress    upx_decompress
 #  if (UPX_VERSION_HEX >= 0x019000)
+#    define ALG_NRV2E
 #    define upx_test_overlap  upx_test_overlap
 #  endif
 #  include "compress.ch"
