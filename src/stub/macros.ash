@@ -282,6 +282,7 @@ reloc_endx:
 ;; MRUBYTEn  256                 entries in wheel (smallest code)
 
 %macro          ctojr32 0
+%push ctojr32
 
                 CPU     486     ; FIXME: ctojr32 uses bswap
 
@@ -327,24 +328,24 @@ decompr0:
 
 ;; These %define are only if 0!=n_mru;
 ;; else 0x0F==bl && cto8==bh==dh && 0xE8==dl && addvalue==esi .
-%define n_mru      [esi]
-%define n_mru1     [esi]
-%define tail       [esi + 4*1]
-%define cto8_e8e9  [esi + 4*2]
-%define cto8_0f    [esi + 4*3]
-%define addvalue   [esi + 4*4]
-%define tmp        ebp
-%define hand       ebx
-%define hand_l      bl
-%define kh         edx
-%define kh_l        dl
+%define %$n_mru      [esi]
+%define %$n_mru1     [esi]
+%define %$tail       [esi + 4*1]
+%define %$cto8_e8e9  [esi + 4*2]
+%define %$cto8_0f    [esi + 4*3]
+%define %$addvalue   [esi + 4*4]
+%define %$tmp        ebp
+%define %$hand       ebx
+%define %$hand_l      bl
+%define %$kh         edx
+%define %$kh_l        dl
 
 ;__LXJCC010__
 lxunf2:  ; have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
         movzx ebp, word [edi]  ; 2 bytes, zero-extended
 
 ;__LXMRU045__  0!=n_mru
-        sub ebp, cto8_0f
+        sub ebp, %$cto8_0f
 ;__LXMRU046__  0==n_mru
         sub ebp, ebx
 
@@ -361,7 +362,7 @@ lxunf2:  ; have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
         inc edi  ; preserve Carry
 
 ;__LXUNF037__
-%define jc     eax
+%define %$jc     eax
 
 lxunf:  ; in: Carry set iff we should apply mru and 0!=n_mru
         mov eax, [edi]  ; BE32 displacement with cto8 in low 8 bits
@@ -383,74 +384,74 @@ lxunf:  ; in: Carry set iff we should apply mru and 0!=n_mru
         jnc unf_store  ; do not apply mru
 
 ;__LXMRU065__  0!=n_mru
-        shr jc, 1  ; eax= jc, or mru index
+        shr %$jc, 1  ; eax= jc, or mru index
         jnc mru4  ; not 1st time for this jc
 ;__MRUBYTE3__
-        dec hand_l
+        dec %$hand_l
 ;__MRUARB30__
-        dec hand
+        dec %$hand
 ;__MRUBITS3__
-        and hand, n_mru1
+        and %$hand, %$n_mru1
 ;__MRUARB40__
         jge mru3
-        add hand, n_mru
+        add %$hand, %$n_mru
 mru3:
 ;__LXMRU070__
 
-        mov [esp + 4*hand], jc  ; 1st time: mru[hand] = jc
+        mov [esp + 4*%$hand], %$jc  ; 1st time: mru[hand] = jc
         jmps unf_store
 
 mru4:  ; not 1st time for this jc
-        lea kh, [jc + hand]  ; kh = jc + hand
+        lea %$kh, [%$jc + %$hand]  ; kh = jc + hand
 ;__MRUBYTE4__
-        movzx kh, kh_l
+        movzx %$kh, %$kh_l
 ;__MRUBITS4__
-        and kh, n_mru1
+        and %$kh, %$n_mru1
 ;__MRUARB50__
-        cmp kh, n_mru
+        cmp %$kh, %$n_mru
         jb mru5
-        sub kh, n_mru
+        sub %$kh, %$n_mru
 mru5:
 ;__LXMRU080__
-        mov jc, [esp + 4*kh]  ; jc = mru[kh]
+        mov %$jc, [esp + 4*%$kh]  ; jc = mru[kh]
 ;__MRUBYTE5__
-        dec hand_l
+        dec %$hand_l
 ;__MRUARB60__
-        dec hand
+        dec %$hand
 ;__MRUBITS5__
-        and hand, n_mru1
+        and %$hand, %$n_mru1
 ;__MRUARB70__
         jge mru6
-        add hand, n_mru
+        add %$hand, %$n_mru
 mru6:
 ;__LXMRU090__
 
-        mov tmp, [esp + 4*hand]  ; tmp = mru[hand]
-        test tmp,tmp
+        mov %$tmp, [esp + 4*%$hand]  ; tmp = mru[hand]
+        test %$tmp,%$tmp
         jnz mru8
 
-          push jc  ; ran out of registers
-        mov eax, tail
+          push %$jc  ; ran out of registers
+        mov eax, %$tail
 
 ;__MRUBYTE6__
         dec al
 ;__MRUARB80__
         dec eax
 ;__MRUBITS6__
-        and eax, n_mru1
+        and eax, %$n_mru1
 ;__MRUARB90__
         jge mru7
-        add eax, n_mru
+        add eax, %$n_mru
 mru7:
 ;__LXMRU100__
 
-        xor tmp,tmp
-        mov tail, eax
-        xchg [4+ esp + 4*eax], tmp  ; tmp = mru[tail]; mru[tail] = 0
-          pop jc
+        xor %$tmp,%$tmp
+        mov %$tail, eax
+        xchg [4+ esp + 4*eax], %$tmp  ; tmp = mru[tail]; mru[tail] = 0
+          pop %$jc
 mru8:
-        mov [esp + 4*kh  ], tmp  ; mru[kh] = tmp
-        mov [esp + 4*hand], jc   ; mru[hand] = jc
+        mov [esp + 4*%$kh  ], %$tmp  ; mru[kh] = tmp
+        mov [esp + 4*%$hand], %$jc   ; mru[hand] = jc
 ;__LXUNF040__
 unf_store:
         sub eax, edi
@@ -458,7 +459,7 @@ unf_store:
 
 ; one of the next2
 ;__LXMRU110__  0!=n_mru
-        add eax, addvalue
+        add eax, %$addvalue
 ;__LXMRU111__  0==n_mru
         add eax, esi  ; addvalue (same as initial pointer)
 
@@ -493,16 +494,16 @@ lxunf0:           ;; continuation of entry prolog for unfilter
 
 
 ;__MRUBITS1__
-        inc hand  ; n_mru1 ==> n_mru
+        inc %$hand  ; n_mru1 ==> n_mru
 ;__LXMRU030__
 lxunf1:  ; allocate and clear mru[]
         push byte 0
 
 ; one of the next 2, if n_mru
 ;__MRUBYTE1__
-        dec hand_l
+        dec %$hand_l
 ;__MRUARB10__
-        dec hand
+        dec %$hand
 
 ;__LXMRU040__  0!=n_mru
         jnz lxunf1  ; leaves 0=='hand'
@@ -521,7 +522,7 @@ lxct1:
 ;__LXCJ0MRU__  0==n_mru
         sub eax, edx
 ;__LXCJ1MRU__  0!=n_mru
-        sub eax, cto8_e8e9
+        sub eax, %$cto8_e8e9
 
 ; both CALL and JMP are filtered
 ;__LXCALJMP__
@@ -558,10 +559,10 @@ unfcount:
 ;__MRUBYTE2__
         mov ecx, 4+ 256  ; unused, tail, cto8_e8e9, cto8_0f
 ;__MRUBITS2__
-        mov ecx, n_mru1
+        mov ecx, %$n_mru1
         add ecx, byte 1+ 4  ; n_mru1, tail, cto8_e8e9, cto8_0f
 ;__MRUARB20__
-        mov ecx, n_mru
+        mov ecx, %$n_mru
         add ecx, byte 4  ; n_mru, tail, cto8_e8e9, cto8_0f
 ;__LXMRU057__
         xor eax, eax
@@ -580,6 +581,7 @@ unfcount:
         ret
 
         CPU     386
+%pop
 %endmacro
 
 ; vi:ts=8:et:nowrap
