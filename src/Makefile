@@ -4,7 +4,7 @@
 
 .SUFFIXES:
 MAKEFLAGS += -rR
-override e = $($1) $(EXTRA_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
+override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
 
 srcdir ?= $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 ifneq ($(srcdir),./)
@@ -32,7 +32,7 @@ upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=.o))
 all: upx.out
 
 upx.out: $(upx_OBJECTS) $(upx_DEPENDENCIES)
-	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(upx_OJBECTS) $(upx_LDADD) $(call e,LIBS))
+	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 
 %.o : %.cpp
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
