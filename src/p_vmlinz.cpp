@@ -93,10 +93,12 @@ int PackVmlinuzI386::readFileHeader()
         return -1;
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
-    if (setup_size > file_size)
+    if (setup_size <= 0 || setup_size >= file_size)
         return -1;
-    if (h.sys_size * 16 + setup_size - ALIGN_UP(file_size, 16))
+    if (setup_size + 16 * h.sys_size != (unsigned) ALIGN_UP(file_size, 16))
         return -1;
+
+    // FIXME: add more checks for a valid kernel
 
     if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
         return UPX_F_BVMLINUZ_i386;
@@ -114,35 +116,26 @@ int PackVmlinuzI386::uncompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    // estimate gzip-uncompressed kernel size &
-    // alloc buffer to hold the gzip-uncompressed kernel
+    // estimate gzip-uncompressed kernel size & alloc buffer
     ibuf.alloc((file_size - setup_size) * 3);
 
     // find gzip/zlib header
-    int klen = 0;
-    gzFile zf= 0;
-
     for (int gzoff = setup_size; gzoff < file_size; gzoff++)
     {
         int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B", 2);
         if (off < 0)
             break;
-
-        fi->seek(gzoff += off, SEEK_SET);
-        zf = gzdopen(dup(fi->getFd()), "r");
+        gzoff += off;
+        fi->seek(gzoff, SEEK_SET);
+        gzFile zf = gzdopen(fi->getFd(), "r");
         if (zf == 0)
             break;
-        klen = gzread(zf, ibuf, ibuf.getSize());
+        int klen = gzread(zf, ibuf, ibuf.getSize());
         if (klen >= file_size)
-            break;
-        gzclose(zf);
-        zf = 0;
-        klen = 0;
+            return klen;
     }
 
-    if (zf)
-        gzclose(zf);
-    return klen;
+    return 0;
 }
 
 
@@ -151,6 +144,8 @@ void PackVmlinuzI386::readKernel()
     int klen = uncompressKernel();
     if (klen <= 0)
         throwCantPack("kernel decompression failed");
+    if (klen >= (int) ibuf.getSize())
+        throwCantPack("kernel decompression failed -- too big");
 
     //OutputFile::dump("kernel.img", ibuf, klen);
 
@@ -169,7 +164,6 @@ void PackVmlinuzI386::readKernel()
 /*************************************************************************
 // vmlinuz specific
 **************************************************************************/
-
 
 int PackVmlinuzI386::buildLoader(const Filter *ft)
 {
@@ -201,6 +195,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
     // prepare other settings
+    const unsigned overlap_range = 1 << 20;
     unsigned overlapoh;
 
     int strategy = -1;      // try the first working filter
@@ -210,7 +205,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     else if (opt->all_filters)
         // choose best from all available filters
         strategy = 0;
-    compressWithFilters(&ft, &overlapoh, 1 << 20, strategy);
+    compressWithFilters(&ft, &overlapoh, overlap_range, strategy);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
