@@ -120,6 +120,7 @@ LDFLAGS += -Wl,-Map,$(basename $@).map
 LDLIBS =
 ##LDLIBS = -lz
 LIBDIRS =
+DOS_LIBDIRS =
 
 
 ###
@@ -128,37 +129,15 @@ LIBDIRS =
 
 UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
 NRVDIR:=$(strip $(subst \,/,$(NRVDIR)))
-ifeq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
-  u = ucl
-  U = UCL
-  upx_exe = upx$e
-else
+u = ucl
+U = UCL
+upx_exe = upx$e
+include Makefile.inc
+ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   u = nrv
   U = NRV
   upx_exe = upx_$u$e
-endif
-UDIR := $($(U)DIR)
-
-DEFS += -DWITH_$(U)
-ifneq ($(strip $(wildcard $(UDIR)/include)),)
-INCLUDES += -I$(UDIR)/include
-endif
-ifneq ($(strip $(wildcard $(UDIR)/src/.libs)),)
-LIBDIRS += $(UDIR)/src/.libs
-endif
-ifeq ($(DEBUG),1)
-ifneq ($(strip $(wildcard $(UDIR)/build/debug/src/.libs)),)
-LIBDIRS += $(UDIR)/build/debug/src/.libs
-endif
-endif
-ifneq ($(strip $(wildcard $(UDIR)/build/release/src/.libs)),)
-LIBDIRS += $(UDIR)/build/release/src/.libs
-endif
-ifneq ($(strip $(wildcard $(UDIR)/build/src/.libs)),)
-LIBDIRS += $(UDIR)/build/src/.libs
-endif
-ifneq ($(strip $(wildcard $(UDIR))),)
-LIBDIRS += $(UDIR)
+  include Makefile.inc
 endif
 
 tmp := -Wl,--rpath,
@@ -168,7 +147,6 @@ LDLIBDIRS := $(addprefix -L,$(LIBDIRS))
 
 ##LDFLAGS += $(LDRPATH)
 LDFLAGS += $(LDLIBDIRS)
-LDLIBS += -l$(u)
 
 
 ###
@@ -247,8 +225,8 @@ CXXFLAGS2 = $(CFLAGS)
 LDFLAGS =
 LINK_LDFLAGS = /link /map:$(basename $@).map
 
-ifneq ($(strip $(wildcard $(UDIR))),)
-LIB := $(UDIR);$(LIB)
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
 endif
 export LIB
 
@@ -324,8 +302,8 @@ LDFLAGS =
 ##LDLIBS = $(u).lib zlib.lib
 LDLIBS = $(u).lib
 
-ifneq ($(strip $(wildcard $(UDIR))),)
-LIB := $(UDIR);$(LIB)
+ifneq ($(strip $(DOS_LIBDIRS)),)
+LIB := $(DOS_LIBDIRS);$(LIB)
 endif
 export LIB
 
