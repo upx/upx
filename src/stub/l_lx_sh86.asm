@@ -136,7 +136,7 @@ unfold:
         lodsd
         push eax  ; sz_uncompressed of folded stub (junk, actually)
         push esp  ; &sz_uncompressed
-        mov edx, 0x00800000  ; origin of this program
+        mov edx, 0x01400000  ; origin of this program
         mov eax, [p_memsz + szElf32_Ehdr + edx]  ; length of loaded pages
         add eax, edx
         add edx, szElf32_Ehdr + 2*szElf32_Phdr  ; convenient ptr

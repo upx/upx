@@ -141,7 +141,7 @@ unfold:
         lodsd
         push eax  ; sz_uncompressed  (junk, actually)
         push esp  ; &sz_uncompressed
-        mov eax, 0x400000
+        mov eax, 0x1000000
         push eax  ; &destination
 
                 ; mmap a page to hold the decompressed program
@@ -158,7 +158,7 @@ unfold:
         pop eax
         int 0x80
         xchg eax, ebx
-        mov bh, PAGE_SIZE>>8  ; ebx= 0x401000
+        mov bh, PAGE_SIZE>>8  ; ebx= 0x1001000
         add esp, byte 6*4  ; discard args to mmap
 
         lodsd

@@ -38,8 +38,8 @@ PHDRS  /* force exactly 1 ELF32_Phdr: in particular, no PT_GNU_STACK */
 
 SECTIONS
 {
-  /*  0x00800000: avoid 0x00400000 for shell itself being compressed */
-  . = 0x00800000 + SIZEOF_HEADERS;
+  /*  0x01400000: avoid 0x01000000 for shell itself being compressed */
+  . = 0x01400000 + SIZEOF_HEADERS;
   . = ALIGN(0x80);
   .data : { /* put everything together in one Phdr */
     *(.text)
