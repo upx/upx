@@ -3,44 +3,38 @@ DEPS_DONE := 1
 
 
 # /***********************************************************************
-# // gcc automated dependencies
+# // automated dependencies
 # ************************************************************************/
 
 ifeq ($(DEPMODE),gcc)
+EXTRA_CFLAGS   += -Wp,-MMD,.deps/$(*F).d
+EXTRA_CXXFLAGS += -Wp,-MMD,.deps/$(*F).d
+HAVE_DEPS := 1
+endif
 
-EXTRA_CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
-EXTRA_CXXFLAGS += -Wp,-MMD,.deps/$(*F).pp
+ifeq ($(DEPMODE),linux-intelc)
+EXTRA_CFLAGS   += -MMD -MF.deps/$(*F).d
+EXTRA_CXXFLAGS += -MMD -MF.deps/$(*F).d
+HAVE_DEPS := 1
+endif
 
+ifeq ($(DEPMODE),linux-pgi)
+## NOTE: -MMD does not work...
+EXTRA_CFLAGS   += -MD.deps/$(*F).d
+EXTRA_CXXFLAGS += -MD.deps/$(*F).d
+HAVE_DEPS := 1
+endif
+
+
+ifeq ($(HAVE_DEPS),1)
 ifeq ($(strip $(wildcard .deps)),)
   DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
 else
-  DEP_FILES := $(wildcard .deps/*.pp)
-  ifneq ($(strip $(DEP_FILES)),)
-    include $(DEP_FILES)
+  DEPS_FILES := $(wildcard .deps/*.d)
+  ifneq ($(strip $(DEPS_FILES)),)
+    include $(DEPS_FILES)
   endif
 endif
-
-endif
-
-
-# /***********************************************************************
-# // Intel C automated dependencies
-# ************************************************************************/
-
-ifeq ($(DEPMODE),intelc_linux)
-
-EXTRA_CFLAGS   += -MMD -MF.deps/$(*F).pp
-EXTRA_CXXFLAGS += -MMD -MF.deps/$(*F).pp
-
-ifeq ($(strip $(wildcard .deps)),)
-  DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
-else
-  DEP_FILES := $(wildcard .deps/*.pp)
-  ifneq ($(strip $(DEP_FILES)),)
-    include $(DEP_FILES)
-  endif
-endif
-
 endif
 
 

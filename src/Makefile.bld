@@ -163,7 +163,7 @@ endif	# linux
 ###
 
 ifeq ($(target),linux-bc57)
-##DEPMODE := XXX_linux	## FIXME
+##DEPMODE := linux-XXX	## FIXME
 CC = bc++ -q -3
 CFLAGS = -w '-w!'
 CFLAGS_OUTPUT = -o$@
@@ -188,7 +188,7 @@ endif
 ###
 
 ifeq ($(target),linux-intelc)
-DEPMODE := intelc_linux
+DEPMODE := linux-intelc
 CC = icc
 CXX = icpc
 CCARCH += -march=i386 -mcpu=i686 -nolib_inline
@@ -214,7 +214,7 @@ endif
 ###
 
 ifeq ($(target),linux-pgi)
-##DEPMODE := XXX_linux	## FIXME
+DEPMODE := linux-pgi
 CC = pgcc
 CXX = pgCC
 CCARCH += -tp=p6

@@ -135,7 +135,7 @@
 #if defined(WITH_UCL)
 #  include <ucl/uclconf.h>
 #  include <ucl/ucl.h>
-#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010100L)
+#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010200L)
 #    error "please upgrade your UCL installation"
 #  endif
 #  if !defined(UPX_UINT_MAX)
