@@ -573,7 +573,7 @@ mostlyclean:
 clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj *.res *.tds tags TAGS ID
 	-rm -f *.idb *.pdb
-	-rm -f upx upx.exe upx.ttp upx_nrv upx_nrv.exe upx_nrv.ttp upx_ucl upx_ucl.exe upx_ucl.ttp
+	-rm -f $(upx_exe) upx upx.exe upx.ttp upx_nrv upx_nrv.exe upx_nrv.ttp upx_ucl upx_ucl.exe upx_ucl.ttp
 	-rm -rf .deps
 
 distclean: clean
