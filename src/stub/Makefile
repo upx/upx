@@ -33,7 +33,8 @@ STUBS = \
 	l_w32pe.h \
 	l_lx_n2b.h l_lx_n2d.h \
 	l_le_n2b.h l_le_n2d.h \
-	l_sh_n2b.h l_sh_n2d.h
+	l_sh_n2b.h l_sh_n2d.h \
+	l_vmlinz.h
 
 
 # util var for use in the rules - basename of the current target
@@ -196,6 +197,10 @@ l_w32pe.h: l_w32pe.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 
+l_vmlinz.h: l_vmlinz.asx
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
 
 # /***********************************************************************
 # // linux rules (exec, elf, sh, sep)
@@ -299,6 +304,7 @@ l_tmt.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_vxd.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_wcle.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  $(DEPS2)
+l_vmlinz.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
 
 l_xe_n2b.o:     n2b_d32.ash  $(DEPS1)
 l_6e_n2b.o:     n2b_d32.ash  $(DEPS1)

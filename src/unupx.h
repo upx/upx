@@ -80,6 +80,7 @@ typedef unsigned upx_uint32;
 #define UPX_F_LINUX_ELF_i386    12
 #define UPX_F_LINUX_SEP_i386    13
 #define UPX_F_LINUX_SH_i386     14
+#define UPX_F_VMLINUZ_i386      15
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130
 

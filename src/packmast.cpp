@@ -45,6 +45,7 @@
 #include "p_tmt.h"
 #include "p_vxd.h"
 #include "p_w32pe.h"
+#include "p_vmlinz.h"
 
 
 /*************************************************************************
@@ -124,7 +125,7 @@ static Packer* try_unpack(Packer *p, InputFile *f)
             // FIXME - could stop testing all other unpackers at this time
             // see canUnpack() in packer.h
         }
-    } catch (IOException&) {
+    } catch (const IOException&) {
     } catch (...) {
         delete p;
         throw;
@@ -177,6 +178,8 @@ static Packer* try_packers(InputFile *f, try_function func)
     if ((p = func(new PackBvmlinuxI386(f),f)) != NULL)
         return p;
 #endif
+    if ((p = func(new PackvmlinuzI386(f),f)) != NULL)
+        return p;
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
     if ((p = func(new PackSys(f),f)) != NULL)
