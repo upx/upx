@@ -29,7 +29,8 @@
 ; ------------- COPYRIGHT -------------
 
                 db      10
-                db      '$Id: UPX (C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $'
+                db      '$Id: UPX '
+                db      '(C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $'
                 db      10,0
 
 

@@ -926,14 +926,18 @@ char const *Packer::identstr(unsigned &size)
 {
     static const char identbig[] =
         "\n\0"
-        "$Info: This file is packed with the UPX executable packer http://upx.tsx.org $"
+        "$Info: "
+        "This file is packed with the UPX executable packer http://upx.tsx.org $"
         "\n\0"
-        "$Id: UPX " UPX_VERSION_STRING4 " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
+        "$Id: UPX "
+        UPX_VERSION_STRING4
+        " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
         "\n";
 
     static const char identsmall[] =
         "\n"
-        "$Id: UPX (C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
+        "$Id: UPX "
+        "(C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
         "\n";
 
     if (opt->small) {
