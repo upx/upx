@@ -93,10 +93,6 @@ private:
         if (ptr_) checkRange(extra);
     }
 
-    void throwBoundedPtr(const char *msg) const {
-        throwCantPack(msg);
-    }
-
     T* ptr_;
     void* base_;
     size_t size_;
