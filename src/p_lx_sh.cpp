@@ -104,7 +104,11 @@ bool PackLinuxI386sh::getShellName(char *buf)
         return false;
     for (int j = 0; NULL != shname[j]; ++j) {
         if (0 == strcmp(shname[j], bname + 1)) {
-            return super::canPack();
+            bool const s = super::canPack();
+            if (s) {
+                opt->o_unix.blocksize = blocksize = file_size;
+            }
+            return s;
         }
     }
     return false;
@@ -137,6 +141,13 @@ void
 PackLinuxI386sh::pack1(OutputFile *fo, Filter &)
 {
     generateElfHdr(fo, linux_i386sh_fold, 0x08048000);
+}
+
+void
+PackLinuxI386sh::pack3(OutputFile *fo, Filter &ft)
+{
+    super::pack3(fo,ft);
+    elfout.phdr[0].p_filesz = fo->getBytesWritten();
 }
 
 /*
