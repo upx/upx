@@ -151,7 +151,7 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
 
     // Large ratios can happen because of overlays that are
     // appended after a program is packed.
-    unsigned ratio = get_ratio(fu_len, fc_len);
+    unsigned ratio = get_ratio(fu_len, fc_len) + 50;
 #if 1
     if (ratio >= 1000*1000)
         strcpy(r, "overlay");
