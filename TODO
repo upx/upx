@@ -1,4 +1,12 @@
-UPX TODO list. Last updated 2001-02-08.
+UPX TODO list. Last updated 2002-07-16.
+
+
+- rotten code, bring back to life and resync with UPX 1.2 branch
+
+- p_psx.cpp (psx/exe) needs some work
+
+- src/stub/l_lx_elf86.lds does not work with current binutils
+  (generates a several MB file)
 
 
 
