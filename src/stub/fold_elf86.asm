@@ -166,11 +166,11 @@ L20:  ; move envp
 L30:  ; process auxv
         lodsd  ; a_type
         stosd
-        btr edx, eax  ; no longer need a slot of type eax
-        test eax, eax  ; AT_NULL ?
+        test eax, eax  ; AT_NULL ?  [flags: Zero, Sign, Parity; C=0, V=0]
+        btr edx, eax  ; no longer need a slot of type eax  [Carry only]
         lodsd
         stosd
-        jne L30
+        jne L30  ; checks only Zero bit of flags
 
         sub edi, byte 8  ; backup to AT_NULL
         add ecx, ecx  ; two words per auxv
