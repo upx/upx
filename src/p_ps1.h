@@ -92,13 +92,13 @@ protected:
 
     ps1_exe_t ih, oh;
 
-    upx_uint overlap;
-    upx_uint sa_cnt;
+    unsigned overlap;
+    unsigned sa_cnt;
 
     // filesize-PS_HDR_SIZE
-    upx_uint fdata_size;
+    unsigned fdata_size;
     // calculated filesize
-    upx_uint cfile_size;
+    unsigned cfile_size;
 };
 
 
