@@ -20,6 +20,7 @@
 #define STDC_HEADERS 1
 
 #define HAVE_CONIO_H 1
+#define HAVE_CTYPE_H 1
 #define HAVE_DOS_H 1
 #define HAVE_ERRNO_H 1
 #define HAVE_FCNTL_H 1
@@ -41,6 +42,7 @@
 #define HAVE_SYS_UTIME_H 1
 #define HAVE_SYS_TYPES_H 1
 
+#undef HAVE_STDINT_H
 #undef HAVE_STRINGS_H
 
 
@@ -103,7 +105,7 @@
 #  undef HAVE_SYS_TIME_H
 #  undef HAVE_SYS_TYPES_H
 #  undef HAVE_SYS_UTIME_H
-#elif (ACC_CC_PUREC && ACC_OS_TOS)
+#elif ((ACC_CC_PUREC || ACC_CC_TURBOC) && ACC_OS_TOS)
 #  undef HAVE_CONIO_H
 #  undef HAVE_DOS_H
 #  undef HAVE_FCNTL_H
@@ -142,12 +144,16 @@
 // Checks for <stdint.h>
 **************************************************************************/
 
-#if (ACC_CC_DMC) && defined(__DMC_VERSION_STRING__)
-#  define HAVE_STDINT_H 1
-#elif defined(__GLIBC__) && defined(__GLIBC_MINOR__)
+#if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 #  if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1))
 #    define HAVE_STDINT_H 1
 #  endif
+#elif defined(__dietlibc__)
+#  undef HAVE_STDINT_H /* incomplete */
+#elif (ACC_CC_BORLANDC) && (__BORLANDC__ >= 0x560)
+#  define HAVE_STDINT_H 1
+#elif (ACC_CC_DMC) && (__DMC__ >= 0x825)
+#  define HAVE_STDINT_H 1
 #endif
 
 #if HAVE_STDINT_H
@@ -158,9 +164,6 @@
 /*************************************************************************
 // Checks for typedefs and structures
 **************************************************************************/
-
-/* FIXME - types ??? */
-#define HAVE_MODE_T 1
 
 #define SIZEOF_SHORT            (__ACC_SHORT_BIT / 8)
 #define SIZEOF_INT              (__ACC_INT_BIT / 8)
@@ -300,7 +303,7 @@
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
 #  undef HAVE_VSNPRINTF
-#elif (ACC_CC_PUREC && ACC_OS_TOS)
+#elif ((ACC_CC_PUREC || ACC_CC_TURBOC) && ACC_OS_TOS)
 #  undef HAVE_ACCESS
 #  undef HAVE_CHMOD
 #  undef HAVE_CHOWN
@@ -313,7 +316,7 @@
 #  undef HAVE_UMASK
 #  undef HAVE_UTIME
 #  undef HAVE_VSNPRINTF
-#elif (ACC_CC_TURBOC && ACC_OS_DOS16)
+#elif (ACC_CC_TURBOC && (ACC_OS_DOS16 || ACC_OS_WIN16))
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #  if (__TURBOC__ < 0x0295)

@@ -33,24 +33,16 @@
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  define ACC_ARCH_IA16             1
 #  define ACC_INFO_ARCH             "ia16"
+#elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+#  define ACC_ARCH_IA32             1
+#  define ACC_INFO_ARCH             "ia32"
+#elif defined(__ia64__) || defined(_M_IA64)
+#  define ACC_ARCH_IA64             1
+#  define ACC_INFO_ARCH             "ia64"
 #elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
-#  if defined(_MSC_VER) && !defined(_M_IX86)
-#    error "unexpected CPU architechture"
-#  endif
-#  define ACC_ARCH_IA32             1
-#  define ACC_INFO_ARCH             "ia32"
+#  error "missing define for CPU architechture"
 #elif (ACC_OS_WIN64)
-#  if defined(_MSC_VER) && !defined(_M_IA64)
-#    error "unexpected CPU architechture"
-#  endif
-#  define ACC_ARCH_IA64             1
-#  define ACC_INFO_ARCH             "ia64"
-#elif defined(__386__) || defined(__i386__) || defined(__i386)
-#  define ACC_ARCH_IA32             1
-#  define ACC_INFO_ARCH             "ia32"
-#elif defined(__ia64__)
-#  define ACC_ARCH_IA64             1
-#  define ACC_INFO_ARCH             "ia64"
+#  error "missing define for CPU architechture"
 #elif (ACC_OS_TOS) || defined(__m68000__)
 #  define ACC_ARCH_M68K             1
 #  define ACC_INFO_ARCH             "m68k"

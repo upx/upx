@@ -32,6 +32,11 @@
 // fix incorrect and missing stuff
 ************************************************************************/
 
+#if defined(__CYGWIN32__) && !defined(__CYGWIN__)
+#  define __CYGWIN__ __CYGWIN32__
+#endif
+
+
 /* Microsoft C does not correctly define ptrdiff_t for
  * the 16-bit huge memory model.
  */
@@ -69,7 +74,7 @@
 #endif
 
 
-#if defined(__TOS__) && defined(__PUREC__)
+#if defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
 #  define ACC_BROKEN_SIZEOF 1
 #endif
 

@@ -36,10 +36,6 @@
  */
 
 
-#if defined(__CYGWIN32__) && !defined(__CYGWIN__)
-#  define __CYGWIN__ __CYGWIN32__
-#endif
-
 #if defined(__CYGWIN__) && defined(__GNUC__)
 #  define ACC_OS_CYGWIN         1
 #  define ACC_INFO_OS           "cygwin"
@@ -68,7 +64,7 @@
 #  else
 #    error "check your limits.h header"
 #  endif
-#elif defined(__DOS__) || defined(__MSDOS__) || defined(MSDOS) || (defined(__PACIFIC__) && defined(DOS))
+#elif defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) || (defined(__PACIFIC__) && defined(DOS))
 #  if (UINT_MAX == 0xffffffffL)
 #    define ACC_OS_DOS32        1
 #    define ACC_INFO_OS         "dos32"
@@ -158,12 +154,12 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  if (UINT_MAX != 0xffffL)
-#    error
+#    error "this should not happen"
 #  endif
 #endif
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (UINT_MAX != 0xffffffffL)
-#    error
+#    error "this should not happen"
 #  endif
 #endif
 
