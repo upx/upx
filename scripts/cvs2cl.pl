@@ -8,8 +8,8 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 ###                                                        ###
 ##############################################################
 
-## $Revision: 2.29 $
-## $Date: 2000/09/06 16:57:18 $
+## $Revision: 2.37 $
+## $Date: 2000/12/28 23:19:48 $
 ## $Author: kfogel $
 ##
 ##   (C) 1999 Karl Fogel <kfogel@red-bean.com>, under the GNU GPL.
@@ -78,7 +78,7 @@ use File::Basename;
 my $Log_Source_Command = "cvs log";
 
 # In case we have to print it out:
-my $VERSION = '$Revision: 2.29 $';
+my $VERSION = '$Revision: 2.37 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:
@@ -605,6 +605,7 @@ sub derive_change_log ()
       undef $file_full_path;
       undef %branch_names;
       undef %branch_numbers;
+      undef %symbolic_names;
     }
   }
 
@@ -1017,7 +1018,7 @@ sub pretty_file_list ()
             # Collect the revision numbers' last components, but don't
             # print them -- they'll get printed with the branch name
             # later.
-            $$qunkref{'revision'} =~ /.+\.([\d])+$/;
+            $$qunkref{'revision'} =~ /.+\.([\d]+)$/;
             push (@brevisions, $1);
 
             # todo: we're still collecting branch roots, but we're not
@@ -1185,17 +1186,18 @@ sub last_line_len ()
 # log entries.
 sub wrap_log_entry ()
 {
-  my $text = shift;                # The text to wrap.
-  my $left_pad_str = shift;        # String to pad with on the left.
+  my $text = shift;                  # The text to wrap.
+  my $left_pad_str = shift;          # String to pad with on the left.
 
   # These do NOT take left_pad_str into account:
-  my $length_remaining = shift;    # Amount left on current line.
-  my $max_line_length  = shift;    # Amount left for a blank line.
+  my $length_remaining = shift;      # Amount left on current line.
+  my $max_line_length  = shift;      # Amount left for a blank line.
 
-  my $wrapped_text = "";           # The accumulating wrapped entry.
-  my $indentation = "";            # Inherited indentation from prev line.
+  my $wrapped_text = "";             # The accumulating wrapped entry.
+  my $user_indent = "";              # Inherited user_indent from prev line.
 
-  my $first_time = 1;              # Is this the first iteration of the loop?
+  my $first_time = 1;                # First iteration of the loop?
+  my $suppress_line_start_match = 0; # Set to disable line start checks.
 
   my @lines = split (/\n/, $text);
   while (@lines)   # Don't use `foreach' here, it won't work.
@@ -1203,29 +1205,45 @@ sub wrap_log_entry ()
     my $this_line = shift (@lines);
     chomp $this_line;
 
-    # First, if it matches any of the line-start regexps, then print a
-    # newline now...
-    if (($this_line =~ /^(\s*)\*\s+[a-zA-Z0-9]/)
-        || ($this_line =~ /^(\s*)\* [a-zA-Z0-9_\.\/\+-]+/)
-        || ($this_line =~ /^(\s*)\([a-zA-Z0-9_\.\/\+-]+(\)|,\s*)/)
-        || ($this_line =~ /^(\s*)- +/)
-        || ($this_line =~ /^(\s*)[^\s]+:\s*$/)
-        || ($this_line =~ /^(\s*)\*\) +/)
-        || ($this_line =~ /^(\s*)[a-zA-Z0-9](\)|\.|\:) +/))
+    if ($this_line =~ /^(\s+)/) {
+      $user_indent = $1;
+    }
+    else {
+      $user_indent = "";
+    }
+
+    # If it matches any of the line-start regexps, print a newline now...
+    if ($suppress_line_start_match)
+    {
+      $suppress_line_start_match = 0;
+    }
+    elsif (($this_line =~ /^(\s*)\*\s+[a-zA-Z0-9]/)
+           || ($this_line =~ /^(\s*)\* [a-zA-Z0-9_\.\/\+-]+/)
+           || ($this_line =~ /^(\s*)\([a-zA-Z0-9_\.\/\+-]+(\)|,\s*)/)
+           || ($this_line =~ /^(\s+)(\S+)/)
+           || ($this_line =~ /^(\s*)- +/)
+           || ($this_line =~ /^()\s*$/)
+           || ($this_line =~ /^(\s*)\*\) +/)
+           || ($this_line =~ /^(\s*)[a-zA-Z0-9](\)|\.|\:) +/))
     {
       # Make a line break immediately, unless header separator is set
       # and this line is the first line in the entry, in which case
       # we're getting the blank line for free already and shouldn't
       # add an extra one.
-      unless (($After_Header ne " ") and ($first_time)) {
+      unless (($After_Header ne " ") and ($first_time))
+      {
+        if ($this_line =~ /^()\s*$/) {
+          $suppress_line_start_match = 1;
+          $wrapped_text .= "\n${left_pad_str}";
+        }
+
         $wrapped_text .= "\n${left_pad_str}";
       }
 
-      $indentation = $1;
-      $length_remaining = $max_line_length - (length ($indentation));
+      $length_remaining = $max_line_length - (length ($user_indent));
     }
 
-    # Now that any indentation has been preserved, strip off leading
+    # Now that any user_indent has been preserved, strip off leading
     # whitespace, so up-folding has no ugly side-effects.
     $this_line =~ s/^\s*//;
 
@@ -1233,13 +1251,11 @@ sub wrap_log_entry ()
     my $this_len = length ($this_line);
     if ($this_len == 0)
     {
-      # Blank lines should be preserved, and should cancel any
-      # indentation level.
-      $this_line = "\n${left_pad_str}";
-      $indentation = "";
+      # Blank lines should cancel any user_indent level.
+      $user_indent = "";
       $length_remaining = $max_line_length;
     }
-    elsif ($this_len >= $length_remaining)
+    elsif ($this_len >= $length_remaining) # Line too long, try breaking it.
     {
       # Walk backwards from the end.  At first acceptable spot, break
       # a new line.
@@ -1260,13 +1276,34 @@ sub wrap_log_entry ()
           $this_line .= "\n${left_pad_str}";
 
           # Make sure the next line is allowed full room.
-          $length_remaining = $max_line_length - (length ($indentation));
+          $length_remaining = $max_line_length - (length ($user_indent));
 
-          # Strip next_line, but then preserve any indentation.
+          # Strip next_line, but then preserve any user_indent.
           $next_line =~ s/^\s*//;
-          $next_line = $indentation . $next_line;
 
+          # Sneak a peek at the user_indent of the upcoming line, so
+          # $next_line (which will now precede it) can inherit that
+          # indent level.  Otherwise, use whatever user_indent level
+          # we currently have, which might be none.
+          my $next_next_line = shift (@lines);
+          if ((defined ($next_next_line)) && ($next_next_line =~ /^(\s+)/)) {
+            $next_line = $1 . $next_line if (defined ($1));
+            # $length_remaining = $max_line_length - (length ($1));
+            $next_next_line =~ s/^\s*//;
+          }
+          else {
+            $next_line = $user_indent . $next_line;
+          }
+          if (defined ($next_next_line)) {
+            unshift (@lines, $next_next_line);
+          }
           unshift (@lines, $next_line);
+
+          # Our new next line might, coincidentally, begin with one of
+          # the line-start regexps, so we temporarily turn off
+          # sensitivity to that until we're past the line.
+          $suppress_line_start_match = 1;
+
           last;
         }
         else
@@ -1275,11 +1312,14 @@ sub wrap_log_entry ()
         }
       }
 
-      # If we just bottomed out, the line is too long, so just break
-      # it where the original text does.
       if ($idx == 0)
       {
-        if ($length_remaining == ($max_line_length - (length ($indentation))))
+        # We bottomed out because the line is longer than the
+        # available space.  But that could be because the space is
+        # small, or because the line is longer than even the maximum
+        # possible space.  Handle both cases below.
+
+        if ($length_remaining == ($max_line_length - (length ($user_indent))))
         {
           # The line is simply too long -- there is no hope of ever
           # breaking it nicely, so just insert it verbatim, with
@@ -1288,9 +1328,9 @@ sub wrap_log_entry ()
         }
         else
         {
-          # Can't break it here, but may be able to on the next round.
+          # Can't break it here, but may be able to on the next round...
           unshift (@lines, $this_line);
-          $length_remaining = $max_line_length - (length ($indentation));
+          $length_remaining = $max_line_length - (length ($user_indent));
           $this_line = "\n${left_pad_str}";
         }
       }
@@ -1315,7 +1355,7 @@ sub wrap_log_entry ()
     # Unconditionally indicate that loop has run at least once.
     $first_time = 0;
 
-    $wrapped_text .= "${this_line}";
+    $wrapped_text .= "${user_indent}${this_line}";
   }
 
   # One last bit of padding.
@@ -1636,7 +1676,7 @@ Options/Arguments:
   -l OPTS, --log-opts OPTS     Invoke like this "cvs ... log OPTS"
   FILE1 [FILE2 ...]            Show only log information for the named FILE(s)
 
-See http://www.red-bean.com/~kfogel/cvs2cl.shtml for maintenance and bug info.
+See http://www.red-bean.com/cvs2cl for maintenance and bug info.
 END_OF_INFO
 }
 
@@ -1655,11 +1695,11 @@ information.  Basic usage: just run it inside a working copy and a
 ChangeLog will appear.  It requires repository access (i.e., 'cvs log'
 must work).  Run "cvs2cl.pl --help" to see more advanced options.
 
-See http://www.red-bean.com/~kfogel/cvs2cl.shtml for updates, and
-for instructions on getting anonymous CVS access to this script.
+See http://www.red-bean.com/cvs2cl for updates, and for instructions
+on getting anonymous CVS access to this script.
 
 Maintainer: Karl Fogel <kfogel@red-bean.com>
-Please report bugs to <cvs2cl-bugs@red-bean.com>.
+Please report bugs to <bug-cvs2cl@red-bean.com>.
 
 =head1 README
 
@@ -1668,11 +1708,11 @@ information.  Basic usage: just run it inside a working copy and a
 ChangeLog will appear.  It requires repository access (i.e., 'cvs log'
 must work).  Run "cvs2cl.pl --help" to see more advanced options.
 
-See http://www.red-bean.com/~kfogel/cvs2cl.shtml for updates, and
-for instructions on getting anonymous CVS access to this script.
+See http://www.red-bean.com/cvs2cl for updates, and for instructions
+on getting anonymous CVS access to this script.
 
 Maintainer: Karl Fogel <kfogel@red-bean.com>
-Please report bugs to <cvs2cl-bugs@red-bean.com>.
+Please report bugs to <bug-cvs2cl@red-bean.com>.
 
 =head1 PREREQUISITES
 
