@@ -188,99 +188,108 @@ static int set_fg(FILE *f, int fg)
 static void print0(FILE *f, const char *ss)
 {
     int cx, cy;
-    int c_cx, c_cy;
+    int old_cx = 0, old_cy = 0;
     const int sx = screen->getCols(screen);
     const int sy = screen->getRows(screen);
     int pass;
 
     // Note:
     //   We use 2 passes to avoid unnecessary system calls because
-    //   scrollScreen() under Win32 is *extremely* slow.
+    //   scrollUp() under Win32 is *extremely* slow.
     UNUSED(f);
-    screen->getCursor(screen,&cx,&cy);
-    c_cx = cx; c_cy = cy;
+
+    screen->getCursor(screen,&old_cx,&old_cy);
+    cx = old_cx; cy = old_cy;
+
     for (pass = 0; pass < 2; pass++)
     {
         const char *s = ss;
-        // char buffer for pass == 1
+        // char buffer for pass 2
         char p[256+1];
-        int pi = 0, px = -1, py = -1;
+        int pi = 0, px = 0, py = 0;
 
         for (;;)
         {
+            // walk over whitespace
             for (;;)
             {
                 if (*s == '\n')
                 {
-                    c_cy++;
-                    c_cx = 0;
+                    cx = 0;
+                    cy++;
                 }
                 else if (*s == '\r')
                 {
-                    c_cx = 0;
-                    if (pass > 0 && c_cy < sy)
-                        screen->clearLine(screen,c_cy);
+                    cx = 0;
+                    if (pass > 0 && cy < sy)
+                        screen->clearLine(screen,cy);
                 }
                 else
                     break;
                 s++;
             }
-            if (c_cx >= sx)
+            // adjust cursor
+            if (cx >= sx)
             {
-                c_cy++;
-                c_cx = 0;
+                cx = 0;
+                cy++;
             }
             if (pass > 0)
             {
-                if (pi > 0 && (*s == 0 || py != c_cy))
+                // check if we should print something
+                if (pi > 0 && (*s == 0 || py != cy))
                 {
                     p[pi] = 0;
                     screen->putString(screen,p,px,py);
                     pi = 0;
                 }
-                if (c_cy >= sy)
+                // check if we should scroll even more (this can happen
+                // if the string is longer than sy lines)
+                if (cy >= sy)
                 {
-                    int scroll_y = c_cy - sy + 1;
+                    int scroll_y = cy - sy + 1;
                     screen->scrollUp(screen,scroll_y);
-                    c_cy -= scroll_y;
-                    if (c_cy < 0)
-                        c_cy = 0;
+                    cy -= scroll_y;
+                    if (cy < 0)
+                        cy = 0;
                 }
             }
-
+            // done ?
             if (*s == 0)
                 break;
-
             if (pass > 0)
             {
+                // store current char
                 if (pi == 0)
                 {
-                    px = c_cx;
-                    py = c_cy;
+                    px = cx;
+                    py = cy;
                 }
                 p[pi++] = *s;
             }
-            c_cx++;
+            // advance
+            cx++;
             s++;
         }
 
         if (pass == 0)
         {
-            c_cx = cx;
-            if (c_cy >= sy)
+            // end of pass 1 - scroll up, restore cursor
+            if (cy >= sy)
             {
-                int scroll_y = c_cy - sy + 1;
+                int scroll_y = cy - sy + 1;
                 screen->scrollUp(screen,scroll_y);
-                c_cy = cy - scroll_y;
-                if (c_cy < 0)
-                    c_cy = 0;
+                cy = old_cy - scroll_y;
+                if (cy < 0)
+                    cy = 0;
             }
             else
-                c_cy = cy;
+                cy = old_cy;
+            cx = old_cx;
         }
     }
 
-    screen->setCursor(screen,c_cx,c_cy);
+    screen->setCursor(screen,cx,cy);
     screen->refresh(screen);
 }
 
