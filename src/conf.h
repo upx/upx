@@ -328,7 +328,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 #undef UNUSED
 #if 1
-#  define UNUSED(var)       { typedef int __upx_unused[sizeof(var) ? 2 : 1]; }
+#  define UNUSED(var)       { typedef int __upx_unused[sizeof(var) ? 1 : -1]; }
 #elif 1
 #  define UNUSED(var)       do { } while (!sizeof(var))
 #elif defined(__BORLANDC__)
@@ -432,6 +432,22 @@ inline void operator delete[](void *p)
 
 #include "unupx.h"
 
+// options - command
+enum {
+    CMD_NONE,
+    CMD_COMPRESS, CMD_DECOMPRESS, CMD_TEST, CMD_LIST, CMD_FILEINFO,
+    CMD_HELP, CMD_LICENSE, CMD_VERSION
+};
+
+// win32/pe resource types
+enum {
+    RT_CURSOR = 1, RT_BITMAP, RT_ICON, RT_MENU, RT_DIALOG, RT_STRING,
+    RT_FONTDIR, RT_FONT, RT_ACCELERATOR, RT_RCDATA, RT_MESSAGE_TABLE,
+    RT_GROUP_CURSOR, RT_GROUP_ICON = 14, RT_VERSION = 16, RT_DLGINCLUDE,
+    RT_PLUGPLAY = 19, RT_VXD, RT_ANICURSOR, RT_ANIICON, RT_HTML,
+    RT_LAST
+};
+
 
 #if defined(__cplusplus)
 
@@ -440,13 +456,6 @@ inline void operator delete[](void *p)
 #include "bele.h"
 #include "util.h"
 #include "console.h"
-
-// options
-enum {
-    CMD_NONE,
-    CMD_COMPRESS, CMD_DECOMPRESS, CMD_TEST, CMD_LIST, CMD_FILEINFO,
-    CMD_HELP, CMD_LICENSE, CMD_VERSION
-};
 
 struct options_t {
     int cmd;
@@ -526,7 +535,8 @@ struct options_t {
     struct {
         int compress_exports;
         int compress_icons;
-        bool compress_resources;
+        int compress_resources;
+        signed char compress_rt[RT_LAST];
         int strip_relocs;
     } w32pe;
 };

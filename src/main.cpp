@@ -33,6 +33,12 @@
 #include "packer.h"
 
 
+#if 1 && defined(__DJGPP__)
+#include <crt0.h>
+int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
+#endif
+
+
 /*************************************************************************
 // options
 **************************************************************************/
@@ -60,7 +66,9 @@ void init_options(struct options_t *o)
 
     o->w32pe.compress_exports = 1;
     o->w32pe.compress_icons = 2;
-    o->w32pe.compress_resources = true;
+    o->w32pe.compress_resources = -1;
+    for (int i = 0; i < RT_LAST; i++)
+        opt->w32pe.compress_rt[i] = -1;
     o->w32pe.strip_relocs = -1;
 }
 
