@@ -78,27 +78,27 @@
 #  if (_MSC_VER < 600)
 #    undef ACC_HAVE_MM_HUGE_PTR
 #  endif
-#elif (ACC_CC_TURBOC && __TURBOC__ < 0x0295)
+#elif (ACC_CC_TURBOC && (__TURBOC__ < 0x0295))
 #  undef ACC_HAVE_MM_HUGE_ARRAY
-#elif (ACC_CC_WATCOMC && __WATCOMC__ >= 1200)
-   /* pointer arithmetics with __huge arrays seems completely
-    * broken in OpenWatcom 1.0 */
+#elif (ACC_CC_WATCOMC && (__WATCOMC__ >= 1200))
+   /* pointer arithmetics with __huge arrays seems broken in OpenWatcom 1.0 */
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #endif
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
+extern "C" {
 #endif
-#if (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0200)
-   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
+#if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0200))
+   extern void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
+   extern void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif (ACC_CC_MSC || ACC_CC_TOPSPEEDC)
-   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
+   extern void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
-#elif (ACC_CC_TURBOC && __TURBOC__ >= 0x0295)
-   ACC_EXTERN_C void __near __cdecl _AHSHIFT(void);
+#elif (ACC_CC_TURBOC && (__TURBOC__ >= 0x0295))
+   extern void __near __cdecl _AHSHIFT(void);
 #  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
 #elif ((ACC_CC_AZTECC || ACC_CC_PACIFICC || ACC_CC_TURBOC) && ACC_OS_DOS16)
 #  define ACC_MM_AHSHIFT      12
@@ -106,7 +106,10 @@
    extern unsigned char _HShift;
 #  define ACC_MM_AHSHIFT      ((unsigned) _HShift)
 #else
-#  error "implement ACC_MM_AHSHIFT"
+#  error "FIXME - implement ACC_MM_AHSHIFT"
+#endif
+#ifdef __cplusplus
+} /* extern "C" */
 #endif
 
 

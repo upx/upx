@@ -58,8 +58,8 @@
 #  if 0
 #    include <os2.h>
 #  else
-     unsigned short __far __pascal DosAllocHuge(unsigned short, unsigned short, unsigned short __far *, unsigned short, unsigned short);
-     unsigned short __far __pascal DosFreeSeg(unsigned short);
+     ACC_EXTERN_C unsigned short __far __pascal DosAllocHuge(unsigned short, unsigned short, unsigned short __far *, unsigned short, unsigned short);
+     ACC_EXTERN_C unsigned short __far __pascal DosFreeSeg(unsigned short);
 #  endif
 #endif
 

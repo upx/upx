@@ -49,8 +49,11 @@
 ************************************************************************/
 
 #if (UINT_MAX == ACC_0xffffL)
-#if defined(__ZTC__) && defined(__I86__)
-#  if !defined(_MSDOS) && !defined(__OS2__)
+#if defined(__ZTC__) && defined(__I86__) && !defined(__OS2__)
+#  if !defined(MSDOS)
+#    define MSDOS 1
+#  endif
+#  if !defined(_MSDOS)
 #    define _MSDOS 1
 #  endif
 #elif defined(__VERSION) && defined(MB_LEN_MAX)
@@ -201,7 +204,6 @@
 #else
 #  define ACC_EXTERN_C extern
 #endif
-
 
 
 /*

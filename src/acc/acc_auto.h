@@ -497,6 +497,13 @@
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #endif
 
+#if defined(__cplusplus) && defined(ACC_CC_GNUC)
+#  if(ACC_CC_GNUC < 0x020800ul)
+#    undef SIZEOF_LONG_LONG
+#    undef SIZEOF_UNSIGNED_LONG_LONG
+#  endif
+#endif
+
 
 /*************************************************************************
 // misc

@@ -21,6 +21,9 @@
 #    include "acc.h"
 #  endif
 #endif
+#ifndef __ACC_INCD_H_INCLUDED
+#  include ACC_CONFIG_INCLUDE("acc_incd.h")
+#endif
 #ifndef __ACC_INCE_H_INCLUDED
 #  include ACC_CONFIG_INCLUDE("acc_ince.h")
 #endif
@@ -32,11 +35,16 @@
 #endif
 
 
+#if !defined(ACCLIB_PUBLIC)
+#  define ACCLIB_PUBLIC(a,b)    __ACCLIB_FUNC(a,b)
+#endif
+
+
 /***********************************************************************
 // halloc
 ************************************************************************/
 
-ACC_LIBFUNC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
+ACCLIB_PUBLIC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
 {
     acc_hvoid_p p = 0;
 
@@ -69,7 +77,7 @@ ACC_LIBFUNC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
 }
 
 
-ACC_LIBFUNC(int, acc_hfree) (acc_hvoid_p p)
+ACCLIB_PUBLIC(int, acc_hfree) (acc_hvoid_p p)
 {
     int r = 0;
 
@@ -107,7 +115,7 @@ ACC_LIBFUNC(int, acc_hfree) (acc_hvoid_p p)
 #if (ACC_OS_DOS16)
 #if !defined(ACC_CC_AZTECC)
 
-ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
+ACCLIB_PUBLIC(void __far*, acc_dos_alloc) (unsigned long size)
 {
     void __far* p = 0;
     union REGS ri, ro;
@@ -127,7 +135,7 @@ ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
 }
 
 
-ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
+ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
 {
     union REGS ri, ro;
     struct SREGS rs;
@@ -152,7 +160,7 @@ ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
 
 #if (ACC_OS_OS216)
 
-ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
+ACCLIB_PUBLIC(void __far*, acc_dos_alloc) (unsigned long size)
 {
     void __far* p = 0;
     unsigned short sel = 0;
@@ -166,7 +174,7 @@ ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
     return p;
 }
 
-ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
+ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
 {
     if (!p)
         return 0;
@@ -184,7 +192,7 @@ ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
 // huge pointer layer - string.h
 ************************************************************************/
 
-ACC_LIBFUNC(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_hsize_t len)
+ACCLIB_PUBLIC(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_hsize_t len)
 {
 #if (ACC_HAVE_MM_HUGE_PTR) || !defined(HAVE_MEMCMP)
     const acc_hbyte_p p1 = (const acc_hbyte_p) s1;
@@ -204,7 +212,7 @@ ACC_LIBFUNC(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_h
 }
 
 
-ACC_LIBFUNC(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len)
+ACCLIB_PUBLIC(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len)
 {
 #if (ACC_HAVE_MM_HUGE_PTR) || !defined(HAVE_MEMCPY)
     acc_hbyte_p p1 = (acc_hbyte_p) dest;
@@ -222,7 +230,7 @@ ACC_LIBFUNC(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src, 
 }
 
 
-ACC_LIBFUNC(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len)
+ACCLIB_PUBLIC(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len)
 {
 #if (ACC_HAVE_MM_HUGE_PTR) || !defined(HAVE_MEMMOVE)
     acc_hbyte_p p1 = (acc_hbyte_p) dest;
@@ -252,7 +260,7 @@ ACC_LIBFUNC(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src,
 }
 
 
-ACC_LIBFUNC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len)
+ACCLIB_PUBLIC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len)
 {
 #if (ACC_HAVE_MM_HUGE_PTR) || !defined(HAVE_MEMSET)
     acc_hbyte_p p = (acc_hbyte_p) s;
@@ -271,7 +279,7 @@ ACC_LIBFUNC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len)
 // huge pointer layer - stdio.h
 ************************************************************************/
 
-ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size)
+ACCLIB_PUBLIC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
@@ -311,7 +319,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t siz
 }
 
 
-ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size)
+ACCLIB_PUBLIC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
@@ -357,7 +365,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsiz
 
 #if (ACC_HAVE_MM_HUGE_PTR)
 
-ACC_LIBFUNC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
+ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
 {
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
     acc_hbyte_p b = (acc_hbyte_p) buf;
@@ -397,7 +405,7 @@ ACC_LIBFUNC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
 }
 
 
-ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
+ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 {
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
     const acc_hbyte_p b = (const acc_hbyte_p) buf;
@@ -443,20 +451,17 @@ ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 // wrap <dirent.h>
 **************************************************************************/
 
-#if !defined(ACCLIB_USE_OPENDIR)
+#if !defined(__ACCLIB_USE_OPENDIR)
 #if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
-static int acc_opendir_init(struct acc_dir_t* f, const char* path, char* buf, size_t bufsize)
+static int acc_opendir_init(acc_dir_t* f, const char* path, char* buf, size_t bufsize)
 {
-    size_t l;
-    char* p;
-    f->f_name[0] = 0;
-    buf[0] = 0;
+    size_t l; char* p;
+    f->f_name[0] = 0; buf[0] = 0;
     l = strlen(path);
-    if (l == 0 || l >= bufsize - 4)
+    if (l == 0 || bufsize <= 4 || l >= bufsize - 4)
         return -1;
-    strcpy(buf, path);
-    p = buf + l;
+    strcpy(buf, path); p = buf + l;
     if (p[-1] == ':' || p[-1] == '\\' || p[-1] == '/')
         strcpy(p, "*.*");
     else
@@ -468,9 +473,9 @@ static int acc_opendir_init(struct acc_dir_t* f, const char* path, char* buf, si
 #endif
 
 
-#if (ACCLIB_USE_OPENDIR)
+#if defined(__ACCLIB_USE_OPENDIR)
 
-ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     f->u_dirp = opendir(path);
     if (!f->u_dirp)
@@ -478,7 +483,7 @@ ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
     return acc_readdir(f);
 }
 
-ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
 {
     const struct dirent* dp;
     f->f_name[0] = 0;
@@ -499,7 +504,7 @@ ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 {
     int r = -1;
     if (f->u_dirp)
@@ -511,7 +516,7 @@ ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
 
-ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     WIN32_FIND_DATAA d;
     HANDLE h;
@@ -530,7 +535,7 @@ ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
 {
     WIN32_FIND_DATAA d;
     f->f_name[0] = 0;
@@ -545,7 +550,7 @@ ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 {
     int r = -1;
     if (f->u_handle != -1)
@@ -557,7 +562,7 @@ ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_WIN16)
 
-ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     char tmp[ACC_FN_PATH_MAX+1];
     int r;
@@ -577,7 +582,7 @@ ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
 {
     int r;
     f->f_name[0] = 0;
@@ -595,7 +600,7 @@ ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 {
     ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
     f->f_name[0] = 0;
@@ -606,7 +611,7 @@ ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 
 #elif (ACC_OS_TOS)
 
-ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     char tmp[ACC_FN_PATH_MAX+1];
     int r;
@@ -624,7 +629,7 @@ ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
 {
     int r;
     DTA* olddta;
@@ -640,7 +645,7 @@ ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 {
     ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
     f->f_name[0] = 0;
@@ -651,20 +656,20 @@ ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 
 #else
 
-ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+ACCLIB_PUBLIC(int, acc_opendir) (acc_dir_t* f, const char* path)
 {
     ACC_UNUSED(path);
     f->f_name[0] = 0;
     return -3;
 }
 
-ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_readdir) (acc_dir_t* f)
 {
     f->f_name[0] = 0;
     return -1;
 }
 
-ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+ACCLIB_PUBLIC(int, acc_closedir) (acc_dir_t* f)
 {
     f->u_dirp = 0;
     return -1;
@@ -687,7 +692,7 @@ ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 // wrap misc
 **************************************************************************/
 
-ACC_LIBFUNC(long, acc_get_osfhandle) (int fd)
+ACCLIB_PUBLIC(long, acc_get_osfhandle) (int fd)
 {
     if (fd < 0)
         return -1;
@@ -709,7 +714,7 @@ ACC_LIBFUNC(long, acc_get_osfhandle) (int fd)
 }
 
 
-ACC_LIBFUNC(int, acc_set_binmode) (int fd, int binary)
+ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
 {
 #if (ACC_OS_TOS && defined(__MINT__))
     int old_binary;
@@ -761,7 +766,7 @@ ACC_LIBFUNC(int, acc_set_binmode) (int fd, int binary)
 }
 
 
-ACC_LIBFUNC(int, acc_isatty) (int fd)
+ACCLIB_PUBLIC(int, acc_isatty) (int fd)
 {
     /* work around library implementations that think that
      * any character device like `nul' is a tty */
@@ -795,7 +800,7 @@ ACC_LIBFUNC(int, acc_isatty) (int fd)
 }
 
 
-ACC_LIBFUNC(int, acc_mkdir) (const char* name, unsigned mode)
+ACCLIB_PUBLIC(int, acc_mkdir) (const char* name, unsigned mode)
 {
 #if (ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
     ACC_UNUSED(mode);
@@ -812,7 +817,7 @@ ACC_LIBFUNC(int, acc_mkdir) (const char* name, unsigned mode)
 
 
 #if 0
-ACC_LIBFUNC(int, acc_response) (int* argc, char*** argv)
+ACCLIB_PUBLIC(int, acc_response) (int* argc, char*** argv)
 {
 }
 #endif
@@ -822,12 +827,12 @@ ACC_LIBFUNC(int, acc_response) (int* argc, char*** argv)
 // some linear congruential pseudo random number generators (PRNG)
 **************************************************************************/
 
-ACC_LIBFUNC(void, acc_srand31) (acc_rand31_t* r, acc_uint32l_t seed)
+ACCLIB_PUBLIC(void, acc_srand31) (acc_rand31_t* r, acc_uint32l_t seed)
 {
     r->seed = seed & ACC_UINT32L_C(0xffffffff);
 }
 
-ACC_LIBFUNC(acc_uint32l_t, acc_rand31) (acc_rand31_t* r)
+ACCLIB_PUBLIC(acc_uint32l_t, acc_rand31) (acc_rand31_t* r)
 {
     r->seed = (r->seed * ACC_UINT32L_C(1103515245)) + 12345;
     r->seed &= ACC_UINT32L_C(0x7fffffff);
@@ -837,13 +842,13 @@ ACC_LIBFUNC(acc_uint32l_t, acc_rand31) (acc_rand31_t* r)
 
 #if defined(acc_uint64l_t)
 
-ACC_LIBFUNC(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed)
+ACCLIB_PUBLIC(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed)
 {
     r->seed = seed & ACC_UINT32L_C(0xffffffff);
     r->seed <<= 16; r->seed |= 0x330e;
 }
 
-ACC_LIBFUNC(acc_uint32l_t, acc_rand48) (acc_rand48_t* r)
+ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48) (acc_rand48_t* r)
 {
     r->seed = (r->seed * ACC_UINT64L_C(25214903917)) + 11;
     r->seed &= ACC_UINT64L_C(0xffffffffffff);
@@ -855,12 +860,12 @@ ACC_LIBFUNC(acc_uint32l_t, acc_rand48) (acc_rand48_t* r)
 
 #if defined(acc_uint64l_t)
 
-ACC_LIBFUNC(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed)
+ACCLIB_PUBLIC(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed)
 {
     r->seed = seed & ACC_UINT64L_C(0xffffffffffffffff);
 }
 
-ACC_LIBFUNC(acc_uint32l_t, acc_rand64) (acc_rand64_t* r)
+ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64) (acc_rand64_t* r)
 {
     r->seed = (r->seed * ACC_UINT64L_C(6364136223846793005)) + 1;
     r->seed &= ACC_UINT64L_C(0xffffffffffffffff);

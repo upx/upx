@@ -69,7 +69,7 @@
 #endif
 
 /* TOS */
-#if defined(__TOS__) && defined(__TURBOC__)
+#if defined(__TOS__) && (defined(__PUREC__) || defined(__TURBOC__))
 #  include <ext.h>
 #endif
 

@@ -143,6 +143,12 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 
 /* acc_int64l_t is int_least64_t in <stdint.h> terminology */
 #if !defined(acc_int64l_t)
+#undef __ACC_PREFER___INT64
+#if (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
+#  if (ACC_CC_BORLANDC)
+#    define __ACC_PREFER___INT64 1
+#  endif
+#endif
 #if (SIZEOF_INT >= 8)
 #  define acc_int64l_t          int
 #  define acc_uint64l_t         unsigned int
@@ -157,11 +163,16 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define ACC_UINT64L_C(c)      c##UL
 #  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG
 #  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG
-#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8)
+#elif (SIZEOF_LONG_LONG >= 8 && SIZEOF_UNSIGNED_LONG_LONG >= 8) && !defined(__ACC_PREFER___INT64)
 #  define acc_int64l_t          acc_llong_t
 #  define acc_uint64l_t         acc_ullong_t
-#  define ACC_INT64L_C(c)       c##LL
-#  define ACC_UINT64L_C(c)      c##ULL
+#  if (ACC_CC_BORLANDC)
+#    define ACC_INT64L_C(c)     ((c) + 0ll)
+#    define ACC_UINT64L_C(c)    ((c) + 0ull)
+#  else
+#    define ACC_INT64L_C(c)     c##LL
+#    define ACC_UINT64L_C(c)    c##ULL
+#  endif
 #  define SIZEOF_ACC_INT64L_T   SIZEOF_LONG_LONG
 #  define SIZEOF_ACC_UINT64L_T  SIZEOF_LONG_LONG
 #elif (SIZEOF___INT64 >= 8 && SIZEOF_UNSIGNED___INT64 >= 8)
@@ -268,8 +279,11 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #if !defined(__acc_cdecl_sighandler)
 #  define __acc_cdecl_sighandler
 #endif
+#if !defined(__acc_cdecl_va)
+#  define __acc_cdecl_va                __acc_cdecl
+#endif
 
-#if (ACC_CC_AZTECC) || (ACC_CC_TURBOC && __TURBOC__ < 0x0150)
+#if (ACC_CC_AZTECC || ACC_CC_TURBOC)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(int);
 #elif defined(RETSIGTYPE)
 typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(int);

@@ -283,7 +283,7 @@
     ACCCHK_ASSERT(((( (acc_int64l_t)1 << 62) + 1) >> 62) == 1)
     ACCCHK_ASSERT(((( ACC_INT64L_C(1) << 62) + 1) >> 62) == 1)
 
-#if (ACC_CC_BORLANDC && (__BORLANDC__ <= 0x0520))
+#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
 #else
     ACCCHK_ASSERT_IS_UNSIGNED(acc_uint64l_t)
     ACCCHK_ASSERT(ACC_UINT64L_C(18446744073709551615)     > 0)
@@ -332,7 +332,6 @@
 
 #if !defined(ACC_BROKEN_INTEGRAL_PROMOTION) && (SIZEOF_INT > 1)
     /* check that the compiler correctly promotes integrals */
-    ACCCHK_ASSERT(sizeof(int) == SIZEOF_INT)
     ACCCHK_ASSERT( (((unsigned char)128) << (int)(8*sizeof(int)-8)) < 0)
 #endif
 

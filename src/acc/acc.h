@@ -16,17 +16,16 @@
 /*
  * Possible configuration values:
  *
+ *   ACC_CONFIG_NO_HEADER
  *   ACC_CONFIG_HEADER          if given, then use this as <config.h>
  *   ACC_CONFIG_INCLUDE         include path to acc_ files
- *   ACC_CONFIG_FRESSTANDING    only use <limits.h> and possibly <stdint.h>
- *                              [use this for embedded targets]
  */
 
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED
 
-#define ACC_VERSION     20030717L
+#define ACC_VERSION     20030720L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -62,18 +61,14 @@
 #include ACC_CONFIG_INCLUDE("acc_arch.h")
 #include ACC_CONFIG_INCLUDE("acc_defs.h")
 
-#if defined(ACC_CONFIG_HEADER)
+#if defined(ACC_CONFIG_NO_HEADER)
+#elif defined(ACC_CONFIG_HEADER)
 #  include ACC_CONFIG_HEADER
 #else
 #  include ACC_CONFIG_INCLUDE("acc_auto.h")
 #endif
 
 #include ACC_CONFIG_INCLUDE("acc_type.h")
-
-#if !defined(ACC_CONFIG_FREESTANDING)
-#  include ACC_CONFIG_INCLUDE("acc_incd.h")
-#  include ACC_CONFIG_INCLUDE("acc_lib.h")
-#endif
 
 #endif /* already included */
 

@@ -18,22 +18,55 @@
 ************************************************************************/
 
 #if !defined(ACC_UNUSED)
-#  define ACC_UNUSED(var)       ((void) &var)
+#  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#    define ACC_UNUSED(var)         if (&var) ; else
+#  elif (ACC_CC_MSC && (_MSC_VER < 900))
+#    define ACC_UNUSED(var)         if (&var) ; else
+#  elif (ACC_CC_GCC)
+#    define ACC_UNUSED(var)         ((void) var)
+#  else
+#    define ACC_UNUSED(var)         ((void) &var)
+#  endif
 #endif
 #if !defined(ACC_UNUSED_FUNC)
-#  define ACC_UNUSED_FUNC(func) ((void) func)
+#  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#    define ACC_UNUSED_FUNC(func)   if (func) ; else
+#  elif (ACC_CC_MSC && (_MSC_VER < 900))
+#    define ACC_UNUSED_FUNC(func)   if (func) ; else
+#  else
+#    define ACC_UNUSED_FUNC(func)   ((void) func)
+#  endif
 #endif
 
-#if !defined(ACC_COMPILE_TIME_ASSERT)
-#  if (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC)
-#    define ACC_COMPILE_TIME_ASSERT(expr) \
-        switch (0) { case 1: case !(expr): break; }
-#  elif (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
-#    define ACC_COMPILE_TIME_ASSERT(expr) \
-        { typedef int __acc_compile_time_assert_fail[1 - !(expr)]; }
+
+/***********************************************************************
+// compile-time-assertions
+//
+// The "switch" version works on all compilers, whereas the "typedef" gets
+// ignored or misinterpreted (e.g. implicit cast from -1 to unsigned long)
+// on some systems. OTOS, on modern compilers, the "switch" version
+// may produce a pedantic warning about "selector expr. is constant".
+// Also, the "switch" version must appear in a function body, so you
+// cannot use this macro in header files.
+************************************************************************/
+
+/* This can be put into a header file but may get ignored by some compilers */
+#if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
+#  if (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  {typedef int __acc_cta[1-!(e)];}
 #  else
-#    define ACC_COMPILE_TIME_ASSERT(expr) \
-        { typedef int __acc_compile_time_assert_fail[1 - 2 * !(expr)]; }
+#    define ACC_COMPILE_TIME_ASSERT_HEADER(e)  {typedef int __acc_cta[1-2*!(e)];}
+#  endif
+#endif
+
+/* This must appear within a function body */
+#if !defined(ACC_COMPILE_TIME_ASSERT)
+#  if (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
+#    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
+#  elif (ACC_CC_MSC && (_MSC_VER < 900))
+#    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
+#  else
+#    define ACC_COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT_HEADER(e)
 #  endif
 #endif
 
@@ -91,7 +124,6 @@
 #    error "check your compiler installation: ULONG_MAX"
 #  endif
 #endif
-
 
 
 

@@ -132,9 +132,6 @@
 #  if defined(_AIX) || defined(__AIX__) || defined(__aix__)
 #    define ACC_OS_POSIX_AIX        1
 #    define ACC_INFO_OS_POSIX       "aix"
-#  elif defined(__APPLE__)
-#    define ACC_OS_POSIX_MACOSX     1
-#    define ACC_INFO_OS_POSIX       "macosx"
 #  elif defined(__FreeBSD__)
 #    define ACC_OS_POSIX_FREEBSD    1
 #    define ACC_INFO_OS_POSIX       "freebsd"
@@ -147,6 +144,9 @@
 #  elif defined(__linux__) || defined(__linux)
 #    define ACC_OS_POSIX_LINUX      1
 #    define ACC_INFO_OS_POSIX       "linux"
+#  elif defined(__APPLE__)
+#    define ACC_OS_POSIX_MACOSX     1
+#    define ACC_INFO_OS_POSIX       "macosx"
 #  elif defined(__NetBSD__)
 #    define ACC_OS_POSIX_NETBSD     1
 #    define ACC_INFO_OS_POSIX       "netbsd"
