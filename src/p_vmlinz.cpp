@@ -129,9 +129,9 @@ int PackVmlinuzI386::readFileHeader()
 }
 
 
-// read full kernel into obuf, gzip-uncompress into ibuf,
-// return uncompressed size
-int PackVmlinuzI386::uncompressKernel()
+// read full kernel into obuf[], gzip-decompress into ibuf[],
+// return decompressed size
+int PackVmlinuzI386::decompressKernel()
 {
     // read whole kernel image
     obuf.alloc(file_size);
@@ -140,28 +140,77 @@ int PackVmlinuzI386::uncompressKernel()
 
     checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024));
 
-    // estimate gzip-uncompressed kernel size & alloc buffer
-    ibuf.alloc((file_size - setup_size) * 3);
-
     for (int gzoff = setup_size; gzoff < file_size; gzoff++)
     {
-        // find gzip header (2 bytes magic, 1 byte method "deflated")
+        // find gzip header (2 bytes magic + 1 byte method "deflated")
         int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B\x08", 3);
         if (off < 0)
             break;
         gzoff += off;
-        // try to decompress
-        fi->seek(gzoff, SEEK_SET);
-        gzFile zf = gzdopen(fi->getFd(), "r");
-        if (zf == 0)
+        if (gzoff + 256 >= file_size)
             break;
-        int klen = gzread(zf, ibuf, ibuf.getSize());
-        if (klen <= file_size)
+        // check gzip flag byte
+        unsigned char flags = obuf[gzoff + 3];
+        if ((flags & 0xe0) != 0)        // reserved bits set
+            continue;
+        //printf("found gzip header at offset %d\n", gzoff);
+
+        // try to decompress
+        int klen;
+        int fd;
+        off_t fd_pos;
+        for (;;)
+        {
+            klen = -1;
+            fd = -1;
+            fd_pos = -1;
+            // open
+            fi->seek(gzoff, SEEK_SET);
+            fd = dup(fi->getFd());
+            if (fd < 0)
+                break;
+            gzFile zf = gzdopen(fd, "r");
+            if (zf == NULL)
+                break;
+            // estimate gzip-decompressed kernel size & alloc buffer
+            if (ibuf.getSize() == 0)
+                ibuf.alloc((file_size - gzoff) * 3);
+            // decompress
+            klen = gzread(zf, ibuf, ibuf.getSize());
+            fd_pos = lseek(fd, 0, SEEK_CUR);
+            gzclose(zf);
+            fd = -1;
+            if (klen != (int)ibuf.getSize())
+                break;
+            // realloc and try again
+            unsigned s = ibuf.getSize();
+            ibuf.free();
+            ibuf.alloc(3 * s / 2);
+        }
+        if (fd >= 0)
+            (void) close(fd);
+        if (klen <= 0)
             continue;
 
-        // FIXME: check for special magic bytes in ibuf ???
-        // FIXME: check for kernel architecture ???
-        // FIXME: check for special klen size, e.g. (klen & 0xfff) == 0 ???
+        if (klen <= file_size - gzoff)
+            continue;
+
+        if (opt->force > 0)
+            return klen;
+
+        // some checks
+        if (fd_pos != file_size)
+        {
+            //printf("fd_pos: %ld, file_size: %ld\n", (long)fd_pos, (long)file_size);
+            throwCantPack("trailing bytes after kernel image; use option `-f' to force packing");
+        }
+        // see /usr/src/linux/arch/i386/kernel/head.S:
+        if (memcmp(ibuf, "\xFC\xB8", 2) != 0)
+            throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
+
+        // FIXME: more checks for special magic bytes in ibuf ???
+        // FIXME: more checks for kernel architecture ???
+
         return klen;
     }
 
@@ -171,12 +220,9 @@ int PackVmlinuzI386::uncompressKernel()
 
 void PackVmlinuzI386::readKernel()
 {
-    int klen = uncompressKernel();
+    int klen = decompressKernel();
     if (klen <= 0)
         throwCantPack("kernel decompression failed");
-    if (klen >= (int) ibuf.getSize())
-        throwCantPack("kernel decompression failed -- too big; send a bug report");
-
     //OutputFile::dump("kernel.img", ibuf, klen);
 
     // copy the setup boot code

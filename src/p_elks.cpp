@@ -69,7 +69,7 @@ const int *PackElks8086::getFilters() const
 // common util routines
 **************************************************************************/
 
-int PackElks8086::uncompressKernel()
+int PackElks8086::decompressKernel()
 {
     // not used
     return 0;

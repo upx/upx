@@ -53,7 +53,7 @@ public:
 
 protected:
     virtual int readFileHeader();
-    virtual int uncompressKernel();
+    virtual int decompressKernel();
     virtual void readKernel();
 
     virtual int buildLoader(const Filter *ft);
@@ -125,7 +125,7 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual int uncompressKernel();
+    virtual int decompressKernel();
     virtual void readKernel();
 
     virtual int buildLoader(const Filter *ft);
