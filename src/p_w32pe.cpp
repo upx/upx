@@ -1697,6 +1697,8 @@ void PackW32Pe::pack(OutputFile *fo)
             jc = isection[ic].vsize;
         if (isection[ic].vsize == 0) // hack for some tricky programs - may this break other progs?
             jc = isection[ic].vsize = isection[ic].size;
+        if (isection[ic].vaddr + jc > ibuf.getSize())
+            throwInternalError("buffer too small 1");
         fi->readx(ibuf + isection[ic].vaddr,jc);
         jc += isection[ic].rawdataptr;
     }
@@ -1748,6 +1750,8 @@ void PackW32Pe::pack(OutputFile *fo)
     unsigned newvsize = (isection[objs-1].vaddr + isection[objs-1].vsize + oam1) &~ oam1;
 
     //fprintf(stderr,"newvsize=%x objs=%d\n",newvsize,objs);
+    if (newvsize + soimport + sorelocs > ibuf.getSize())
+         throwInternalError("buffer too small 2");
     memcpy(ibuf+newvsize,oimport,soimport);
     memcpy(ibuf+newvsize+soimport,orelocs,sorelocs);
 
