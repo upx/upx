@@ -223,6 +223,7 @@ static unsigned OP_MOVEQ(int value, int d_reg)
 
 static unsigned OP_SUBQ_L(int value, int d_reg)
 {
+    // subq.l #X,d0
     assert(value >= 1 && value <= 8);
     assert(d_reg >= REG_D0 && d_reg <= REG_D7);
     return 0x5180 | ((value & 7) << 9) | (d_reg & 7);
@@ -230,6 +231,7 @@ static unsigned OP_SUBQ_L(int value, int d_reg)
 
 static unsigned OP_SUBQ_W(int value, int d_reg)
 {
+    // subq.w #X,d0
     assert(value >= 1 && value <= 8);
     assert(d_reg >= REG_D0 && d_reg <= REG_D7);
     return 0x5140 | ((value & 7) << 9) | (d_reg & 7);

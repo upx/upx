@@ -103,7 +103,7 @@ p_env           equ     $2c     ; .l    pointer to environment string
 
 ; Ssystem(S_FLUSHCACHE, base, length) - inside the kernel this
 ; is called `cpush(base, length)'.
-;   returns: d0.l should be either 0 or -32 (== ENOSYS == EINVFN)
+;   returns: d0.w should be either 0 or -32 (== ENOSYS == EINVFN)
 ; Available since FreeMiNT 1.15.1 (1999-04-13).
 ;
 ; Note that on a 68060 FreeMiNT just uses `cpusha bc' in all cases,
@@ -391,7 +391,7 @@ L(loop):        move.l  d3,(a6)+
 ; info:
 ;  This is also called as a subroutine (before decompression, NOT running
 ;  in the stack). When running in the stack the `rts' is replaced by a `nop'.
-;
+
 flush_cache:
                 FLUSH_CACHE
 flush_cache_rts:
@@ -410,7 +410,6 @@ flush_cache_rts:
 ; ------------- clear the dirty stack
 
 #if 0
-;;; /* 0 || defined(FLUSH_CACHE) */
 
 ; better don't do this - we are currently running in the stack
 ; and don't want to make yet another instruction-cache-line dirty
