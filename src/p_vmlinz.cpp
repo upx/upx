@@ -90,11 +90,11 @@ int PackVmlinuzI386::readFileHeader()
 
     fi->readx(&h, sizeof(h));
     if (h.boot_flag != 0xAA55)
-        return -1;
+        return 0;
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size <= 0 || setup_size >= file_size)
-        return -1;
+        return 0;
 
     int format = UPX_F_VMLINUZ_i386;
     unsigned sys_size = ALIGN_UP(file_size, 16) - setup_size;
@@ -106,7 +106,7 @@ int PackVmlinuzI386::readFileHeader()
     }
 
     if (16 * h.sys_size != sys_size)
-        return -1;
+        return 0;
 
     // FIXME: add more checks for a valid kernel
 
