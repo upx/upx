@@ -1,7 +1,8 @@
+.bzr
 _darcs
 B
 ChangeLog.cvs*
 TODO.*
-build
+build*
 doxygen
 maint
