@@ -47,13 +47,17 @@ class Filter;
 // see stub/header.ash
 class PackHeader
 {
-public:
-    PackHeader();
+    friend class Packer;
 
-    int getPackHeaderSize() const;
+private:
+    // these are strictly private to Packer and not accessible in subclasses:
+    PackHeader();
 
     void putPackHeader(upx_bytep p);
     bool fillPackHeader(const upx_bytep b, int blen);
+
+public:
+    int getPackHeaderSize() const;
 
 public:
     // fields stored in compressed file
