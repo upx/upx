@@ -1068,6 +1068,18 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
     assert(strlen(UPX_VERSION_STRING4) == 4);
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
+
+    const unsigned char dd[4] = { 0xff, 0xff, 0xff, 0xff };
+    assert(get_be16(dd) == 0xffff);
+    assert(get_be16_signed(dd) == -1);
+    assert(get_be32(dd) == 0xffffffff);
+    assert(get_be32_signed(dd) == -1);
+    assert(get_le16(dd) == 0xffff);
+    assert(get_le16_signed(dd) == -1);
+    assert(get_le24(dd) == 0xffffff);
+    assert(get_le24_signed(dd) == -1);
+    assert(get_le32(dd) == 0xffffffff);
+    assert(get_le32_signed(dd) == -1);
 }
 
 
