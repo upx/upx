@@ -111,7 +111,10 @@ void do_one_file(const char *iname, char *oname)
             if (opt->output_name)
                 strcpy(tname,opt->output_name);
             else
-                maketempname(tname,iname,".upx");
+            {
+                if (!maketempname(tname,iname,".upx"))
+                    throwIOException("could not create a temporary file name");
+            }
             if (opt->force >= 2)
             {
 #if defined(HAVE_CHMOD)
@@ -188,7 +191,8 @@ void do_one_file(const char *iname, char *oname)
         {
             // make backup
             char bakname[PATH_MAX+1];
-            makebakname(bakname,iname);
+            if (!makebakname(bakname,iname))
+                throwIOException("could not create a backup file name");
             File::rename(iname,bakname);
         }
         File::rename(oname,iname);
