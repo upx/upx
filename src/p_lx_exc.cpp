@@ -152,7 +152,59 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         ((elfout.ehdr.e_phnum==3) ? elfout.phdr[2].p_memsz : 0) ;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
-    elfout.phdr[0].p_filesz = fo->getBytesWritten();
+    unsigned eod = fo->getBytesWritten();
+    elfout.phdr[0].p_filesz = eod;
+
+#if 0  // {
+    // /usr/bin/strip from RedHat 8.0 (binutils-2.13.90.0.2-2)
+    // generates a 92-byte [only] output, because the "linking view"
+    // is empty.  This code supplies a "linking view".
+    // However, 'strip' then generates _plausible_ junk that gets
+    // "Illegal instruction"  because 'strip' changes p_hdr[1].p_align,
+    // .p_offset, and .p_vaddr incorrectly.  So the "cure" is worse than
+    // the disease.  It is obvious that a 92-byte file is bad,
+    // but it is not obvious that the changed .p_align is bad.
+    // Also, having a totally empty "linking view" is easier for 'strip'
+    // to fix: just detect that, and do nothing.
+    // So, we don't use this code for now [2003-01-11].
+
+    // Supply a "linking view" that covers everything,
+    // so that 'strip' does not omit everything.
+    Elf_LE32_Shdr shdr;
+    // The section header string table.
+    char const shstrtab[] = "\0.\0.shstrtab";
+
+    set_native32(&elfout.ehdr.e_shoff, eod);
+    set_native16(&elfout.ehdr.e_shentsize, sizeof(shdr));
+    set_native16(&elfout.ehdr.e_shnum, 3);
+    set_native16(&elfout.ehdr.e_shstrndx, 2);
+
+    // An empty Elf32_Shdr for space as a null index.
+    memset(&shdr, 0, sizeof(shdr));
+    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_NULL);
+    fo->write(&shdr, sizeof(shdr));
+
+    // Cover all the bits we need at runtime.
+    memset(&shdr, 0, sizeof(shdr));
+    set_native32(&shdr.sh_name, 1);
+    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_PROGBITS);
+    set_native32(&shdr.sh_flags, Elf_LE32_Shdr::SHF_ALLOC);
+    set_native32(&shdr.sh_addr, elfout.phdr[0].p_vaddr);
+    set_native32(&shdr.sh_offset, overlay_offset);
+    set_native32(&shdr.sh_size, eod - overlay_offset);
+    set_native32(&shdr.sh_addralign, 4096);
+    fo->write(&shdr, sizeof(shdr));
+
+    // A section header for the section header string table.
+    memset(&shdr, 0, sizeof(shdr));
+    set_native32(&shdr.sh_name, 3);
+    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_STRTAB);
+    set_native32(&shdr.sh_offset, 3*sizeof(shdr) + eod);
+    set_native32(&shdr.sh_size, sizeof(shstrtab));
+    fo->write(&shdr, sizeof(shdr));
+
+    fo->write(shstrtab, sizeof(shstrtab));
+#endif  // }
 
 #define PAGE_MASK (~0<<12)
     // pre-calculate for benefit of runtime disappearing act via munmap()
