@@ -258,6 +258,13 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  define STDERR_FILENO     (fileno(stderr))
 #endif
 
+
+#if !defined(S_IWUSR) && defined(_S_IWUSR)
+#  define S_IWUSR           _S_IWUSR
+#elif !defined(S_IWUSR) && defined(_S_IWRITE)
+#  define S_IWUSR           _S_IWRITE
+#endif
+
 #if !defined(S_IFMT) && defined(_S_IFMT)
 #  define S_IFMT            _S_IFMT
 #endif
@@ -291,10 +298,11 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  endif
 #endif
 
+
 // avoid warnings about shadowing that obsolete index() function
 #define index   upx_index
 
-// dummy statement
+// a dummy statement
 #define nop     ((void)0)
 
 
