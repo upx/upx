@@ -44,64 +44,27 @@ static int F(Filter *f)
     const unsigned size = f->buf_len;
 
     unsigned ic, jc, kc;
-    unsigned cto;
-    unsigned char cto8;
     unsigned calls = 0, noncalls = 0, noncalls2 = 0;
     unsigned lastnoncall = size, lastcall = 0;
 
     // find a 16MB large empty address space
-    if (f->forced_cto >= 0 && f->forced_cto <= 255)
-        cto8 = (unsigned char) f->forced_cto;
-    else
     {
         unsigned char buf[256];
         memset(buf,0,256);
 
-#if 1
         for (ic = 0; ic < size - 5; ic++)
             if (COND(b,ic) && get_le32(b+ic+1)+ic+1 >= size)
             {
                 buf[b[ic+1]] |= 1;
             }
-#else
-        {
-            int i = size - 6;
-            do {
-                if (COND(b,i) && get_le32(b+i+1)+i+1 >= size)
-                    buf[b[i+1]] |= 1;
-            } while (--i >= 0);
-        }
-#endif
 
-        ic = 256;
-        if (f->preferred_ctos)
-        {
-            for (const int *pc = f->preferred_ctos; *pc >= 0; pc++)
-            {
-                if (buf[*pc & 255] == 0)
-                {
-                    ic = *pc & 255;
-                    break;
-                }
-            }
-        }
-#if 0
-        // just a test to see if certain ctos would improve compression
-        if (ic >= 256)
-            for (ic = 0; ic < 256; ic += 16)
-                if (buf[ic] == 0)
-                    break;
-#endif
-        if (ic >= 256)
-            for (ic = 0; ic < 256; ic++)
-                if (buf[ic] == 0)
-                    break;
-        if (ic >= 256)
-            //throwCantPack("call trick problem");
+        if (getcto(f, buf) < 0)
             return -1;
-        cto8 = (unsigned char) ic;
     }
-    cto = (unsigned)cto8 << 24;
+    const unsigned char cto8 = f->cto;
+#ifdef U
+    const unsigned cto = (unsigned)f->cto << 24;
+#endif
 
     for (ic = 0; ic < size - 5; ic++)
     {
@@ -145,7 +108,6 @@ static int F(Filter *f)
         }
     }
 
-    f->cto = cto8;
     f->calls = calls;
     f->noncalls = noncalls;
     f->lastcall = lastcall;
@@ -167,7 +129,7 @@ static int U(Filter *f)
     upx_byte *b = f->buf;
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
-    const unsigned cto = f->cto << 24;
+    const unsigned cto = (unsigned)f->cto << 24;
 
     unsigned ic, jc;
 

@@ -75,7 +75,6 @@ public:
 
     // Input parameters used by various filters.
     unsigned addvalue;
-    int forced_cto;
     const int *preferred_ctos;
 
     // Input/output parameters used by various filters

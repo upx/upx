@@ -95,7 +95,6 @@ void Filter::init(int id_, unsigned addvalue_)
     initFilter(this, NULL, 0);
     // clear input parameters
     this->addvalue = addvalue_;
-    this->forced_cto = -1;
     this->preferred_ctos = NULL;
     // clear input/output parameters
     this->cto = 0;

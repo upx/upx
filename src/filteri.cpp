@@ -32,6 +32,9 @@
 
 #define set_dummy(p, v)     ((void)0)
 
+// util
+#include "filter/getcto.h"
+
 
 /*************************************************************************
 // calltrick / swaptrick
