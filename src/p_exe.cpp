@@ -452,11 +452,11 @@ void PackExe::pack(OutputFile *fo)
     }
 
     putPackHeader(loader,lsize);
+    upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
+    if (p == NULL)
+        throwBadLoader();
     if (flag & USEJUMP)
     {
-        upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
-        if (p == NULL)
-            throwBadLoader();
         memcpy(p,&ih.ip,4);
     }
     else
