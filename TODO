@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2003-05-27.
+UPX TODO list. Last updated 2003-08-ß5.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -7,7 +7,10 @@ IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
 
 - win32/pe should add support for PEDIR_LOADCONF (Visual C 7.1 generated exes)
 
-- vmlinuz/386 cannot handle current 2.5.xx kernels
+- win32/pe should reliably detect .NET exes and somehow deal with them
+
+- vmlinuz/386 cannot handle current 2.[56].xx kernels ?
+  (update: this seems to be fixed now - need more testing)
 
 - atari/tos is incompatible with upx 1.2 ???
 
