@@ -470,7 +470,14 @@
 
 /* FIXME: add more sizes */
 
-#if (ACC_ARCH_IA32 && (ACC_CC_DMC || ACC_CC_GNUC))
+#if ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8)
+#if (ACC_CC_GNUC)
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif (ACC_OS_WIN64)
+#  define SIZEOF___INT64            8
+#  define SIZEOF_UNSIGNED___INT64   8
+#elif (ACC_ARCH_IA32 && (ACC_CC_DMC))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && __SC__ >= 0x700))
@@ -492,13 +499,11 @@
 #elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
-#elif (ACC_CC_GNUC && ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8))
-#  define SIZEOF_LONG_LONG          8
-#  define SIZEOF_UNSIGNED_LONG_LONG 8
+#endif
 #endif
 
 #if defined(__cplusplus) && defined(ACC_CC_GNUC)
-#  if(ACC_CC_GNUC < 0x020800ul)
+#  if (ACC_CC_GNUC < 0x020800ul)
 #    undef SIZEOF_LONG_LONG
 #    undef SIZEOF_UNSIGNED_LONG_LONG
 #  endif

@@ -31,10 +31,10 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #endif
 
 #if (!(SIZEOF_SHORT > 0 && SIZEOF_INT > 0 && SIZEOF_LONG > 0))
-#  error
+#  error "missing defines for sizes"
 #endif
 #if (!(SIZEOF_PTRDIFF_T > 0 && SIZEOF_SIZE_T > 0 && SIZEOF_VOID_P > 0 && SIZEOF_CHAR_P > 0))
-#  error
+#  error "missing defines for sizes"
 #endif
 
 
@@ -190,7 +190,13 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 
 
 #if !defined(acc_intptr_t)
-#if (SIZEOF_INT >= SIZEOF_VOID_P)
+#if (ACC_ARCH_IA32 && ACC_CC_MSC && (_MSC_VER >= 1300))
+   typedef __w64 int            acc_intptr_t;
+   typedef __w64 unsigned int   acc_uintptr_t;
+#  define acc_intptr_t          acc_intptr_t
+#  define acc_uintptr_t         acc_uintptr_t
+#  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
+#elif (SIZEOF_INT >= SIZEOF_VOID_P)
 #  define acc_intptr_t          int
 #  define acc_uintptr_t         unsigned int
 #  define SIZEOF_ACC_INTPTR_T   SIZEOF_INT
@@ -217,11 +223,11 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  undef ACC_INT32F_C
 #  undef ACC_UINT32F_C
 #  if (SIZEOF_INT == 4)
-#    define ACC_INT32E_C(c)     c
+#    define ACC_INT32E_C(c)     ((c) + 0)
 #    define ACC_UINT32E_C(c)    ((c) + 0U)
-#    define ACC_INT32L_C(c)     c
+#    define ACC_INT32L_C(c)     ((c) + 0)
 #    define ACC_UINT32L_C(c)    ((c) + 0U)
-#    define ACC_INT32F_C(c)     c
+#    define ACC_INT32F_C(c)     ((c) + 0)
 #    define ACC_UINT32F_C(c)    ((c) + 0U)
 #  elif (SIZEOF_LONG == 4)
 #    define ACC_INT32E_C(c)     ((c) + 0L)
@@ -230,6 +236,8 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #    define ACC_UINT32L_C(c)    ((c) + 0UL)
 #    define ACC_INT32F_C(c)     ((c) + 0L)
 #    define ACC_UINT32F_C(c)    ((c) + 0UL)
+#  else
+#    error "integral constants"
 #  endif
 #endif
 

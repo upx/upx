@@ -153,7 +153,7 @@
 #    define ACC_BROKEN_INTEGRAL_CONSTANTS 1
 #    define ACC_BROKEN_INTEGRAL_PROMOTION 1
 #  endif
-#  if(__TURBOC__ < 0x0200)
+#  if (__TURBOC__ < 0x0200)
 #    define ACC_BROKEN_SIZEOF 1
 #  endif
 #elif defined(MSDOS) && defined(_MSC_VER)

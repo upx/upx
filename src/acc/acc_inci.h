@@ -29,6 +29,10 @@
 #    if 1 && !defined(WIN32_LEAN_AND_MEAN)
 #      define WIN32_LEAN_AND_MEAN 1
 #    endif
+#    if 1 && !defined(_WIN32_WINNT)
+       /* Restrict to a subset of Windows NT 4.0 header files */
+#      define _WIN32_WINNT 0x0400
+#    endif
 #    include <windows.h>
 #    define ACC_H_WINDOWS_H 1
 #  endif
@@ -70,23 +74,23 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  if defined(FP_OFF)
-#    define ACC_FP_OFF      FP_OFF
+#    define ACC_FP_OFF(x)   FP_OFF(x)
 #  elif defined(_FP_OFF)
-#    define ACC_FP_OFF      _FP_OFF
+#    define ACC_FP_OFF(x)   _FP_OFF(x)
 #  else
 #    define ACC_FP_OFF(x)   (((const unsigned __far*)&(x))[0])
 #  endif
 #  if defined(FP_SEG)
-#    define ACC_FP_SEG      FP_SEG
+#    define ACC_FP_SEG(x)   FP_SEG(x)
 #  elif defined(_FP_SEG)
-#    define ACC_FP_SEG      _FP_SEG
+#    define ACC_FP_SEG(x)   _FP_SEG(x)
 #  else
 #    define ACC_FP_SEG(x)   (((const unsigned __far*)&(x))[1])
 #  endif
 #  if defined(MK_FP)
-#    define ACC_MK_FP       MK_FP
+#    define ACC_MK_FP(s,o)  MK_FP(s,o)
 #  elif defined(_MK_FP)
-#    define ACC_MK_FP       _MK_FP
+#    define ACC_MK_FP(s,o)  _MK_FP(s,o)
 #  else
 #    define ACC_MK_FP(s,o)  ((void __far*)(((unsigned long)(s)<<16)+(unsigned)(o)))
 #  endif

@@ -25,6 +25,20 @@
 #endif
 
 
+#if (ACC_OS_WIN64)
+#  define acclib_handle_t       acc_int64l_t
+#  define acclib_uhandle_t      acc_uint64l_t
+#elif (ACC_ARCH_IA32 && ACC_CC_MSC && (_MSC_VER >= 1300))
+   typedef __w64 long           acclib_handle_t;
+   typedef __w64 unsigned long  acclib_uhandle_t;
+#  define acclib_handle_t       acclib_handle_t
+#  define acclib_uhandle_t      acclib_uhandle_t
+#else
+#  define acclib_handle_t       long
+#  define acclib_uhandle_t      unsigned long
+#endif
+
+
 /*************************************************************************
 // huge pointer layer
 **************************************************************************/
@@ -33,19 +47,15 @@
 #  define acc_hsize_t  unsigned long
 #  define acc_hvoid_p  void __huge *
 #  define acc_hbyte_p  unsigned char __huge *
-#  define acc_hvoid_cp const void __huge *
-#  define acc_hbyte_cp const unsigned char __huge *
 #else
 #  define acc_hsize_t  size_t
 #  define acc_hvoid_p  void *
 #  define acc_hbyte_p  unsigned char *
-#  define acc_hvoid_cp const void *
-#  define acc_hbyte_cp const unsigned char *
 #endif
 
 /* halloc */
 ACCLIB_EXTERN(acc_hvoid_p, acc_halloc) (acc_hsize_t size);
-ACCLIB_EXTERN(int, acc_hfree) (acc_hvoid_p p);
+ACCLIB_EXTERN(void, acc_hfree) (acc_hvoid_p p);
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216)
 ACCLIB_EXTERN(void __far*, acc_dos_alloc) (unsigned long size);
@@ -127,7 +137,7 @@ typedef struct
 # endif
     char f_name[ACC_FN_NAME_MAX+1];
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
-    long u_handle; /* private */
+    acclib_handle_t u_handle; /* private */
     unsigned f_attr;
     unsigned f_size_low;
     unsigned f_size_high;
@@ -179,7 +189,7 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_t* d);
 #  define acc_alloca(x)     alloca((x))
 #endif
 
-ACCLIB_EXTERN(long, acc_get_osfhandle) (int fd);
+ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int fd);
 ACCLIB_EXTERN(int,  acc_isatty) (int fd);
 ACCLIB_EXTERN(int,  acc_mkdir) (const char* name, unsigned mode);
 ACCLIB_EXTERN(int,  acc_response) (int* argc, char*** argv);
