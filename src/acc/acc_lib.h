@@ -43,20 +43,27 @@
 // huge pointer layer
 **************************************************************************/
 
+#if !defined(acc_hsize_t)
 #if (ACC_HAVE_MM_HUGE_PTR)
 #  define acc_hsize_t  unsigned long
 #  define acc_hvoid_p  void __huge *
+#  define acc_hchar_p  char __huge *
+#  define acc_hchar_pp char __huge * __huge *
 #  define acc_hbyte_p  unsigned char __huge *
 #else
 #  define acc_hsize_t  size_t
 #  define acc_hvoid_p  void *
+#  define acc_hchar_p  char *
+#  define acc_hchar_pp char **
 #  define acc_hbyte_p  unsigned char *
+#endif
 #endif
 
 /* halloc */
 ACCLIB_EXTERN(acc_hvoid_p, acc_halloc) (acc_hsize_t size);
 ACCLIB_EXTERN(void, acc_hfree) (acc_hvoid_p p);
 
+/* dos_alloc */
 #if (ACC_OS_DOS16 || ACC_OS_OS216)
 ACCLIB_EXTERN(void __far*, acc_dos_alloc) (unsigned long size);
 ACCLIB_EXTERN(int, acc_dos_free) (void __far* p);
@@ -68,10 +75,15 @@ ACCLIB_EXTERN(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src
 ACCLIB_EXTERN(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len);
 ACCLIB_EXTERN(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len);
 
+/* string */
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrpbrk) (const acc_hchar_p, const acc_hchar_p);
+ACCLIB_EXTERN(acc_hchar_p, acc_hstrsep) (acc_hchar_pp, const acc_hchar_p);
+
 /* stdio */
 ACCLIB_EXTERN(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size);
 ACCLIB_EXTERN(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size);
 
+/* io */
 #if (ACC_HAVE_MM_HUGE_PTR)
 ACCLIB_EXTERN(long, acc_hread) (int fd, acc_hvoid_p buf, long size);
 ACCLIB_EXTERN(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size);
@@ -170,11 +182,6 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_t* d);
 
 /*************************************************************************
 // wrap <getopt.h>
-**************************************************************************/
-
-
-/*************************************************************************
-// wrap <string.h>
 **************************************************************************/
 
 

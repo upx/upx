@@ -319,9 +319,6 @@
 #  undef HAVE_UTIME /* struct utimbuf is missing */
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_BORLANDC)
-#  if defined(ACC_MM_TINY)
-#    undef HAVE_DIFFTIME /* difftime() is in the math library */
-#  endif
 #  if (__BORLANDC__ < 0x0400)
 #    undef HAVE_ALLOCA
 #    undef HAVE_UTIME
@@ -472,8 +469,6 @@
 #  define SIZEOF_CHAR_P         SIZEOF_VOID_P
 #endif
 
-
-/* FIXME: add more sizes */
 
 #if ((SIZEOF_LONG) > 0 && (SIZEOF_LONG) < 8)
 #if (ACC_CC_GNUC)

@@ -85,7 +85,7 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64_r32) (acc_rand64_t* r)
 
 
 /*************************************************************************
-// mersenne twister
+// mersenne twister PRNG
 **************************************************************************/
 
 ACCLIB_PUBLIC(void, acc_srandmt) (acc_randmt_t* r, acc_uint32l_t seed)

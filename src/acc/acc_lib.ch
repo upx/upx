@@ -41,6 +41,7 @@
 
 #include ACC_CONFIG_INCLUDE("acclib/bele.ch")
 #include ACC_CONFIG_INCLUDE("acclib/hmemcpy.ch")
+#include ACC_CONFIG_INCLUDE("acclib/hstring.ch")
 #include ACC_CONFIG_INCLUDE("acclib/halloc.ch")
 #include ACC_CONFIG_INCLUDE("acclib/dosalloc.ch")
 #include ACC_CONFIG_INCLUDE("acclib/hfread.ch")

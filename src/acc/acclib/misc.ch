@@ -128,8 +128,7 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
         if ((HANDLE)h != INVALID_HANDLE_VALUE)
         {
             DWORD d = 0;
-            int r = GetConsoleMode((HANDLE)h, &d);
-            if (!r)
+            if (GetConsoleMode((HANDLE)h, &d) == 0)
                 return 0;   /* GetConsoleMode failed -> not a tty */
         }
     }
