@@ -251,11 +251,12 @@ void PackLinuxI386::patchLoaderChecksum()
 {
     l_info *const lp = (l_info *)(loader + getLoaderPrefixSize());
     // checksum for loader + p_info
-    lp->l_checksum = 0;  // (this checksum is currently unused)
+    lp->l_checksum = 0;
     lp->l_magic = UPX_ELF_MAGIC;
     lp->l_lsize = (unsigned short) lsize;
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
+    // INFO: lp->l_checksum is currently unused
     unsigned adler = upx_adler32(0,NULL,0);
     adler = upx_adler32(adler, loader, lsize + sizeof(p_info));
     lp->l_checksum = adler;
