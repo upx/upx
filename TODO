@@ -1,10 +1,27 @@
-UPX TODO list. Last updated 2002-11-11.
+UPX TODO list. Last updated 2003-05-27.
+
+
+IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
+
+- win32/pe is currently broken
+
+- win32/pe should add support for PEDIR_LOADCONF (Visual C 7.1 generated exes)
+
+- vmlinuz/386 cannot handle current 2.5.xx kernels
+
+- atari/tos is incompatible with upx 1.2 ???
+
+
+
+OTHER:
 
 - check all <const_cast> to make sure they are not invalid
 
 - throwNotCompressible() is not a real error, so make the output nicer
   (info: bla bla). Also ui.cpp (total_*).
 
+
+-----------------------------------------------------------------------
 
 
 IMPROVED COMPRESSION RATIO
