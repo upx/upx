@@ -50,12 +50,14 @@ $n = length($data);
 # print
 select(OUTFILE);
 
-$o = $ofile;
-$o =~ s/.*[\/\\]//;
+$if = $ifile;
+$if =~ s/.*[\/\\]//;
+$of = $ofile;
+$of =~ s/.*[\/\\]//;
 
 if ($opt_q ne "-q") {
 print <<"EOF";
-/* $o -- created from $ifile, $n bytes
+/* $of -- created from $if, $n bytes
 
    This file is part of the UPX executable compressor.
 
