@@ -212,6 +212,18 @@ bzero(char *p, size_t len)
 }
 
 
+static void
+auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
+{
+    for (;; ++av) {
+        if (av->a_type==type || av->a_type==AT_IGNORE) {
+            av->a_type = type;
+            av->a_un.a_val = value;
+            return;
+        }
+    }
+}
+
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
     Elf32_auxv_t *const av)
@@ -222,7 +234,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
-        av[AT_PHDR -1].a_un.a_val = phdr->p_vaddr;
+        auxv_up(av, AT_PHDR, phdr->p_vaddr);
     }
     else if (PT_LOAD==phdr->p_type) {
         struct Extent xo;
@@ -346,12 +358,12 @@ void *upx_main(
     xi.buf  -= sz_pckhdrs;
     xi.size  = sz_compressed;
 
-    // av[AT_PHDR -1].a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    av[AT_PHDR   -1].a_type = AT_PHDR  ; av[AT_PHDR   -1].a_un.a_ptr = 1+(Elf32_Ehdr *)phdr->p_vaddr;
-    av[AT_PHENT  -1].a_type = AT_PHENT ; av[AT_PHENT  -1].a_un.a_val = ehdr->e_phentsize;
-    av[AT_PHNUM  -1].a_type = AT_PHNUM ; av[AT_PHNUM  -1].a_un.a_val = ehdr->e_phnum;
-    av[AT_PAGESZ -1].a_type = AT_PAGESZ; av[AT_PAGESZ -1].a_un.a_val = PAGE_SIZE;
-    av[AT_ENTRY  -1].a_type = AT_ENTRY ; av[AT_ENTRY  -1].a_un.a_val = ehdr->e_entry;
+    // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
+    auxv_up(av, AT_PHDR  , (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
+    auxv_up(av, AT_PHENT , ehdr->e_phentsize);
+    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
+    //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
+    auxv_up(av, AT_ENTRY , (unsigned)ehdr->e_entry);
     entry = do_xmap((int)f_decompress, ehdr, &xi, av);
 
   { // Map PT_INTERP program interpreter

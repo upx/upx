@@ -49,56 +49,42 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         pop eax  ; discard &sz_uncompressed
         pop eax  ; discard  sz_uncompressed
 
-; Move argc,argv,envp down to make room for complete Elf_auxv table.
+; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance.
+; Move argc,argv,envp down to make room for Elf_auxv table.
 ; Linux kernel 2.4.2 and earlier give only AT_HWCAP and AT_PLATFORM
 ; because we have no PT_INTERP.  Linux kernel 2.4.5 (and later?)
 ; give not quite everything.  It is simpler and smaller code for us
 ; to generate a "complete" table where Elf_auxv[k -1].a_type = k.
-; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance
+; On second thought, that wastes a lot of stack space (the entire kernel
+; auxv, plus those slots that remain empty anyway).  So try for minimal
+; space on stack, without too much code, by doing it serially.
 
 %define AT_NULL   0
 %define AT_IGNORE 1
 %define AT_PHDR   3
+%define AT_PHENT  4
+%define AT_PHNUM  5
+%define AT_PAGESZ 6
+%define AT_ENTRY  9
 %define AT_NUMBER 20
 
+        sub ecx, ecx
+        mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
         mov esi, esp
-        sub esp, sz_auxv * AT_NUMBER  ; more than 128 bytes
         mov edi, esp
-do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
-        ; cld
+        call do_auxv  ; clear bits in edx according to existing auxv slots
 
-L10:  ; move argc+argv
-        lodsd
-        stosd
-        test eax,eax
-        jne L10
+        mov esi, esp
+L50:
+        shr edx, 1  ; Carry = bottom bit
+        sbb eax, eax  ; -1 or 0
+        sub ecx, eax  ; count of 1 bits that remained in edx
+        lea esp, [esp + sz_auxv * eax]  ; allocate one auxv slot, if needed
+        test edx,edx
+        jne L50
 
-L20:  ; move envp
-        lodsd
-        stosd
-        test eax,eax
-        jne L20
-
-; complete Elf_auxv table full of AT_IGNORE
-        push edi  ; save base of resulting table
-        inc eax  ; convert 0 to AT_IGNORE
-        mov ecx, 2 * (AT_NUMBER -1)
-        rep stosd
-        dec eax  ; convert AT_IGNORE into AT_NULL
-        stosd  ; terminate Elf_auxv
-        stosd
-        pop edi  ; base of resulting table
-
-L30:  ; distribute existing Elf32_auxv into new table
-        lodsd
-        test eax,eax  ; AT_NULL ?
-        xchg eax,edx
-        lodsd
-        je L40
-        mov [a_type + sz_auxv*(edx -1) + edi], edx
-        mov [a_val  + sz_auxv*(edx -1) + edi], eax
-        jmp L30
-L40:
+        mov edi, esp
+        call do_auxv  ; move; fill new auxv slots with AT_IGNORE
 
 %define OVERHEAD 2048
 %define MAX_ELF_HDR 512
@@ -148,6 +134,47 @@ EXTERN make_hatch
         mov bh, 0  ; from 0x401000 to 0x400000
         mov eax, __NR_munmap  ; do not dirty the stack with push byte + pop
         jmp edx  ; unmap ourselves via escape hatch, then goto entry
+
+; called twice:
+;  1st with esi==edi, ecx=0, edx= bitmap of slots needed: just update edx.
+;  2nd with esi!=edi, ecx= slot_count: move, then append AT_IGNORE slots
+; entry: esi= src = &argc; edi= dst; ecx= # slots wanted; edx= bits wanted
+; exit:  edi= &auxtab; edx= bits still needed
+do_auxv:
+        ; cld
+
+L10:  ; move argc+argv
+        lodsd
+        stosd
+        test eax,eax
+        jne L10
+
+L20:  ; move envp
+        lodsd
+        stosd
+        test eax,eax
+        jne L20
+
+        push edi  ; return value
+L30:  ; process auxv
+        lodsd  ; a_type
+        stosd
+        btr edx, eax  ; no longer need a slot of type eax
+        test eax, eax  ; AT_NULL ?
+        lodsd
+        stosd
+        jne L30
+
+        sub edi, byte 8  ; backup to AT_NULL
+        add ecx, ecx  ; two words per auxv
+        inc eax  ; convert 0 to AT_IGNORE
+        rep stosd  ; allocate and fill 
+        dec eax  ; convert AT_IGNORE to AT_NULL
+        stosd  ; re-terminate with AT_NULL
+        stosd
+
+        pop edi  ; &auxtab
+        ret
 
 ; vi:ts=8:et:nowrap
 
