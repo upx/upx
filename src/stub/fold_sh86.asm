@@ -141,9 +141,12 @@ EXTERN upx_main
 %define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
         lea edi, [esp - 4*N_STKCLR]
         pusha  ; values will be zeroed
+        mov ebx,esp  ; save
+        mov esp,edi  ; Linux does not grow stack below esp
         mov ecx, N_STKCLR
         xor eax,eax
         rep stosd
+        mov esp,ebx  ; restore
 
 ; Because the decompressed shell script occupies low memory anyway,
 ; there isn't much payback to unmapping the compressed script and

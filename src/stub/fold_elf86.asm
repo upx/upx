@@ -131,9 +131,12 @@ EXTERN make_hatch
 %define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
         lea edi, [esp - 4*N_STKCLR]
         pusha  ; values will be zeroed
+        mov esi,esp  ; save
+        mov esp,edi  ; Linux does not grow stack below esp
         mov ecx, N_STKCLR
         xor eax,eax
         rep stosd
+        mov esp,esi  ; restore
 
         xor ecx, ecx  ; 0
         mov ch, PAGE_SIZE>>8  ; 0x1000
