@@ -241,7 +241,7 @@ ifeq ($(target),msc)
 o = .obj
 a = .lib
 CC = cl -nologo
-CFLAGS = -W4
+CFLAGS = -W4 -WX
 CXXFLAGS1 = $(CFLAGS) -GR -GX -EHa
 CXXFLAGS2 = $(CFLAGS)
 LDFLAGS =
