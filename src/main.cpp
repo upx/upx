@@ -523,20 +523,25 @@ static int do_option(int optc, const char *arg)
         opt->no_env = true;
         break;
     // compression settings
-    case 525:
+    case 520:
         opt->small = 1;
         break;
-    case 526:
+    case 521:
         getoptvar(&opt->filter, 0, 255);
         opt->all_filters = false;
         break;
-    case 527:
+    case 522:                               // --no-filter
+        opt->filter = 0;
+        opt->all_filters = false;
+        break;
+    case 523:                               // --all-filters
         opt->all_filters = true;
         opt->filter = -1;
         break;
-    case 528:
+    case 524:                               // --all-methods
         opt->all_methods = true;
         opt->method = -1;
+        break;
     // compression parms
     case 531:
         getoptvar(&opt->crp.c_flags, 0, 3);
@@ -734,10 +739,11 @@ static const struct mfx_option longopts[] =
     {"n2d",              0x10, 0, 704},     // --n2d
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     // compression settings
-    {"all-filters",      0x10, 0, 527},
-    {"all-methods",      0x10, 0, 528},
-    {"filter",           0x31, 0, 526},     // --filter=
-    {"small",            0x10, 0, 525},
+    {"all-filters",      0x10, 0, 523},
+    {"all-methods",      0x10, 0, 524},
+    {"filter",           0x31, 0, 521},     // --filter=
+    {"no-filter",        0x10, 0, 522},
+    {"small",            0x10, 0, 520},
     // compression runtime parameters
     {"crp-cf",           0x31, 0, 531},
     {"crp-sl",           0x31, 0, 532},
