@@ -78,27 +78,27 @@ protected:
     unsigned sz_elf_hdrs;  // all Elf headers
 
     struct cprElfHdr1 {
-        struct Elf32_Ehdr ehdr;
-        struct Elf32_Phdr phdr[1];
-        struct l_info linfo;
+        Elf32_Ehdr ehdr;
+        Elf32_Phdr phdr[1];
+        l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr2 {
-        struct Elf32_Ehdr ehdr;
-        struct Elf32_Phdr phdr[2];
-        struct l_info linfo;
+        Elf32_Ehdr ehdr;
+        Elf32_Phdr phdr[2];
+        l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr3 {
-        struct Elf32_Ehdr ehdr;
-        struct Elf32_Phdr phdr[3];
-        struct l_info linfo;
+        Elf32_Ehdr ehdr;
+        Elf32_Phdr phdr[3];
+        l_info linfo;
     }
     __attribute_packed;
 
-    struct cprElfHdr3 elfout;
+    cprElfHdr3 elfout;
 };
 
 class PackLinuxElf32Be : public PackLinuxElf32
