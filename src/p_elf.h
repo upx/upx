@@ -185,10 +185,12 @@ __attribute_packed;
 typedef TT_Elf32_Ehdr<LE16,LE32> Elf_LE32_Ehdr;
 typedef TT_Elf32_Phdr<LE16,LE32> Elf_LE32_Phdr;
 typedef TT_Elf32_Shdr<LE16,LE32> Elf_LE32_Shdr;
+typedef TT_Elf32_Dyn <LE16,LE32> Elf_LE32_Dyn;
 
 typedef TT_Elf32_Ehdr<unsigned short,unsigned int> Elf32_Ehdr;
 typedef TT_Elf32_Phdr<unsigned short,unsigned int> Elf32_Phdr;
 typedef TT_Elf32_Shdr<unsigned short,unsigned int> Elf32_Shdr;
+typedef TT_Elf32_Dyn <unsigned short,unsigned int> Elf32_Dyn;
 
 
 #endif /* already included */

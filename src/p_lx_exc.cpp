@@ -39,10 +39,12 @@
 
 #define PT_LOAD     Elf32_Phdr::PT_LOAD
 #define PT_DYNAMIC  Elf32_Phdr::PT_DYNAMIC
+#if 0 // UNUSED
 #define DT_NULL     Elf32_Dyn::DT_NULL
 #define DT_NEEDED   Elf32_Dyn::DT_NEEDED
 #define DT_STRTAB   Elf32_Dyn::DT_STRTAB
 #define DT_STRSZ    Elf32_Dyn::DT_STRSZ
+#endif
 
 
 /*************************************************************************
