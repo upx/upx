@@ -125,7 +125,7 @@ void do_one_file(const char *iname, char *oname)
             else
                 flags |= O_EXCL;
             int shmode = SH_DENYWR;
-#if defined(__MFX_DOS) || defined(__MFX_WIN32)
+#if defined(__DJGPP__) || defined(_MSC_VER)
             // we can avoid the chmod() call below
             int omode = st.st_mode;
             fo.sopen(tname,flags,shmode,omode);
@@ -227,6 +227,18 @@ void do_one_file(const char *iname, char *oname)
 
 #if !defined(WITH_GUI)
 
+static void unlink_ofile(const char *oname)
+{
+    if (oname && oname[0])
+    {
+#if defined(HAVE_CHMOD)
+        (void) ::chmod(oname, 0777);
+#endif
+        (void) ::unlink(oname);
+    }
+}
+
+
 void do_files(int i, int argc, char *argv[])
 {
     if (opt->verbose >= 1)
@@ -252,30 +264,25 @@ void do_files(int i, int argc, char *argv[])
         } catch (const Exception &e) {
             if (opt->verbose >= 2 || (opt->verbose >= 1 && !e.isWarning()))
                 printErr(iname,&e);
-            if (oname[0])
-                (void) ::unlink(oname);
+            unlink_ofile(oname);
         } catch (const Error &e) {
             printErr(iname,&e);
-            if (oname[0])
-                (void) ::unlink(oname);
+            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
             //throw;
         } catch (const exception &e) {
             printUnhandledException(iname,&e);
-            if (oname[0])
-                (void) ::unlink(oname);
+            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
             //throw;
         } catch (const exception *e) {
             printUnhandledException(iname,e);
-            if (oname[0])
-                (void) ::unlink(oname);
+            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
             //throw;
         } catch (...) {
             printUnhandledException(iname,NULL);
-            if (oname[0])
-                (void) ::unlink(oname);
+            unlink_ofile(oname);
             e_exit(EXIT_ERROR);
             //throw;
         }
