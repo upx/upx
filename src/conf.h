@@ -452,7 +452,7 @@ inline void operator delete[](void *p)
 
 
 /*************************************************************************
-//
+// constants
 **************************************************************************/
 
 /* exit codes of this program: 0 ok, 1 error, 2 warning */
@@ -485,11 +485,36 @@ inline void operator delete[](void *p)
 #define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
 
 
+// Executable formats. Note: big endian types are >= 128.
+#define UPX_F_DOS_COM           1
+#define UPX_F_DOS_SYS           2
+#define UPX_F_DOS_EXE           3
+#define UPX_F_DJGPP2_COFF       4
+#define UPX_F_WC_LE             5
+#define UPX_F_VXD_LE            6
+#define UPX_F_DOS_EXEH          7               /* OBSOLETE */
+#define UPX_F_TMT_ADAM          8
+#define UPX_F_WIN32_PE          9
+#define UPX_F_LINUX_i386        10
+#define UPX_F_WIN16_NE          11
+#define UPX_F_LINUX_ELF_i386    12
+#define UPX_F_LINUX_SEP_i386    13
+#define UPX_F_LINUX_SH_i386     14
+#define UPX_F_VMLINUZ_i386      15
+#define UPX_F_BVMLINUZ_i386     16
+#define UPX_F_ELKS_8086         17
+#define UPX_F_PSX_EXE           18
+#define UPX_F_ATARI_TOS         129
+#define UPX_F_SOLARIS_SPARC     130
+
+
+#define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */
+#define UPX_MAGIC2_LE32     0xD5D0D8A1
+
+
 /*************************************************************************
 // globals
 **************************************************************************/
-
-#include "unupx.h"
 
 // options - command
 enum {
