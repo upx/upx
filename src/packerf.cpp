@@ -371,9 +371,13 @@ bool Packer::patchFilter32(void *loader, int lsize, const Filter *ft)
     assert(ft->calls > 0);
 
     if (ft->id < 0x80) {
-        if (0x40 <= ft->id && ft->id < 0x50 && UPX_F_LINUX_i386==ph.format) {
+        if (0x40 <= ft->id && ft->id < 0x50
+        && (  UPX_F_LINUX_i386   ==ph.format
+           || UPX_F_VMLINUZ_i386 ==ph.format
+           || UPX_F_BVMLINUZ_i386==ph.format ) ) {
             // "push byte '?'"
             patch_le16(loader, lsize, "\x6a?", 0x6a + (ft->cto << 8));
+            checkPatch(NULL, 0, 0, 0);  // reset
         }
         if (0x20 <= ft->id && ft->id < 0x40) {
             // 077==modr/m of "cmp [edi], byte '?'" (compare immediate 8 bits)

@@ -283,7 +283,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
     fo->write(obuf, ph.c_len);
-#if 0
+#if 1
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
     printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
@@ -307,7 +307,7 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
     addLoader("LINUZ000",
-              ft->id ? "LZCALLT1" : "",
+              (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE""IDENTSTR",
               "+40D++++", // align the stuff to 4 byte boundary
               "UPX1HEAD", // 32 byte
@@ -318,7 +318,12 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
     if (ft->id)
     {
         assert(ft->calls > 0);
-        addLoader("LZCALLT9", NULL);
+        if (0x40==(0xf0 & ft->id)) {
+            addLoader("LZCKLLT9", NULL);
+        }
+        else {
+            addLoader("LZCALLT9", NULL);
+        }
         addFilter32(ft->id);
     }
     addLoader("LINUZ990", NULL);
