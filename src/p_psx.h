@@ -20,28 +20,13 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer                   Laszlo Molnar
-   markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer   Laszlo Molnar
+   markus@oberhumer.com      ml1050@cdata.tvnet.hu
  */
 
 
 #ifndef __UPX_P_PSX_H
 #define __UPX_P_PSX_H
-
-#include "version.h"
-
-#define MIPS_HI(a) (((a)>>16)/*+((a&0x8000)>>15)*/)
-#define MIPS_LO(a) (a&0xffff)
-#define MIPS_JP(a) ((0x08<<24)|((a&0xfffffff)>>2))
-#define CHK_ALIGNED(a,b) (b-(a%b))
-
-#define PS_HDR_SIZE  2048  //one cd sector in bytes
-#define PS_HDR       16
-
-#define HDR_SIZE     (sizeof(p_hdr_t))
-#define VERSION_ID   (sizeof(UPX_VERSION_STRING))
-
-#define PS_MAX_SIZE  0x1e8000
 
 
 /*************************************************************************
@@ -52,7 +37,7 @@ class PackPsx : public Packer
 {
     typedef Packer super;
 public:
-    PackPsx(InputFile *f) : super(f) { }
+    PackPsx(InputFile *f);
     virtual int getVersion() const { return 11; }
     virtual int getFormat() const { return UPX_F_PSX_EXE; }
     virtual const char *getName() const { return "psx/exe"; }
@@ -71,17 +56,6 @@ protected:
     virtual int patch_mips_le32(void *b, int blen, const void *old, unsigned new_);
     virtual int patch_hi_lo(void *b, int blen, const void *old_hi, const void *old_lo, unsigned new_);
 
-#if 0
-    typedef struct
-    {
-        upx_byte id[VERSION_ID];
-        upx_byte ph_hdr[32];
-        LE32 hdr_adler;
-        exec_hdr_t exec_bkup;
-    }
-    upx_hdr_t;
-#endif
-
     struct psx_exe_t
     {
         char id[8];
@@ -99,16 +73,28 @@ protected:
         LE32 sd_len;
         LE32 sp,fp,gp0,ra,k0;
         char origin[60];
-        char pad[14];
-    };
+        // some safety space after that
+        char pad[8];
+        // i'll place the backup of the original
+        // execution file structure here (epc - sd_len)
+        LE32 ih_bkup[10];
+        // plus checksum for the backup
+        LE32 ih_csum;
+        // here will find the id & the upx header it's place.
+        // btw only the 'epc - sd_len' entries init the executable.
+        // so stuff placed here will not load and waste memory.
+    }
+    __attribute_packed;
 
-    struct psx_exe_t ih, oh;
+    psx_exe_t ih, oh;
 
     upx_uint overlap;
     upx_uint scan_count;
 
-    upx_uint file_data_size;
-    upx_uint right_file_size;
+    // filesize-PS_HDR_SIZE
+    upx_uint fdata_size;
+    // calculated filesize
+    upx_uint cfile_size;
 
     MemBuffer pad_data;
 };
@@ -120,4 +106,5 @@ protected:
 /*
 vi:ts=4:et
 */
+
 
