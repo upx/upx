@@ -67,7 +67,7 @@ bool PackTmt::readFileHeader()
 {
 #define H(x)  get_le16(h,2*(x))
 #define H4(x) get_le32(h,x)
-    upx_byte h[0x40];
+    unsigned char h[0x40];
     int ic;
     unsigned exe_offset = 0;
     adam_offset = 0;
@@ -126,7 +126,7 @@ bool PackTmt::readFileHeader()
 
 bool PackTmt::canPack()
 {
-    return PackTmt::readFileHeader();
+    return readFileHeader();
 }
 
 
@@ -232,8 +232,7 @@ void PackTmt::pack(OutputFile *fo)
         patch_le32(loader,lsize,"TEXL",(ft.id & 0xf) % 3 == 0 ? ft.calls :
                    ft.lastcall - ft.calls * 4);
     }
-    unsigned jmp_pos;
-    jmp_pos = find_le32(loader,e_len,get_le32("JMPD")) - loader;
+    const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD")) - loader;
     patch_le32(loader,e_len,"JMPD",ph.u_len+overlapoh-jmp_pos-4);
 
     patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);
