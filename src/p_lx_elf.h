@@ -123,7 +123,7 @@ class PackLinuxElf32ppc : public PackLinuxElf32Be
 public:
     PackLinuxElf32ppc(InputFile *f);
     virtual ~PackLinuxElf32ppc();
-    virtual int getFormat() const { return UPX_F_LINUX_ELF_PPC; }
+    virtual int getFormat() const { return UPX_F_LINUX_ELFPPC32; }
     virtual const char *getName() const { return "linux/ElfPPC"; }
     virtual const int *getFilters() const;
     virtual bool canPack();

@@ -156,6 +156,8 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
         sizeof(l_info) +
         ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
+    unsigned len = fo->getBytesWritten();
+    set_native32(&elfout.phdr[0].p_filesz, len);
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
 
@@ -218,9 +220,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
 
     // rewrite Elf header
     fo->seek(0, SEEK_SET);
-    fo->rewrite(&elfout, sizeof(elfout.ehdr) +
-        elfout.ehdr.e_phnum * sizeof(elfout.phdr[0]) +
-        sizeof(l_info) );
+    fo->rewrite(&elfout, overlay_offset);
 }
 
 static unsigned
