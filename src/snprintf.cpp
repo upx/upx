@@ -775,6 +775,7 @@ static int xdopr(char *buffer, size_t maxlen, const char *format, va_list args)
     size_t ret;
 
     // preconditions
+    assert(maxlen < INT_MAX);
     if (buffer != NULL)
         assert((int)maxlen > 0);
     else

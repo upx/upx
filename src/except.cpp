@@ -177,11 +177,18 @@ void throwEOFException(const char *msg, int e)
 const char *prettyName(const char *n)
 {
     if (n == NULL)
-        return "";
-    while (*n >= '0' && *n <= '9')              // gcc
-        n++;
-    if (strncmp(n, "class ", 6) == 0)           // Visual C++
-        n += 6;
+        return "(null)";
+    while (*n)
+    {
+        if (*n >= '0' && *n <= '9')             // Linux ABI
+            n++;
+        else if (*n == ' ')
+            n++;
+        else if (strncmp(n, "class ", 6) == 0)  // Visual C++
+            n += 6;
+        else
+            break;
+    }
     return n;
 }
 
