@@ -906,26 +906,35 @@ void Packer::addLoader(const char *s, ...)
 
 void Packer::addSection(const char *sname, const char *sdata, unsigned len)
 {
-    linker->addSection(sname,sdata,len);
+    linker->addSection(sname, sdata, len);
 }
 
 
 int Packer::getLoaderSection(const char *name, int *slen)
 {
-    return linker->getSection(name,slen);
+    int ostart = linker->getSection(name, slen);
+    if (ostart < 0)
+        throwBadLoader();
+    return ostart;
 }
 
 
 const upx_byte *Packer::getLoader() const
 {
-    return (const upx_byte *) linker->getLoader(NULL);
+    int size = -1;
+    const char *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size < 0)
+        throwBadLoader();
+    return (const upx_byte *) oloader;
 }
 
 
 int Packer::getLoaderSize() const
 {
-    int size;
-    (void) linker->getLoader(&size);
+    int size = -1;
+    const char *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size < 0)
+        throwBadLoader();
     return size;
 }
 
@@ -956,6 +965,7 @@ const char *Packer::getDecompressor() const
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
     if (ph.method == M_NRV2D_LE32)
         return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
+    throwInternalError("bad decompressor");
     return NULL;
 }
 
