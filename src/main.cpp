@@ -920,7 +920,7 @@ static void first_options(int argc, char **argv)
 
 
 /*************************************************************************
-// assert a sane architecture
+// assert a sane architecture and compiler
 **************************************************************************/
 
 void upx_sanity_check(void)
@@ -931,6 +931,8 @@ void upx_sanity_check(void)
     assert(sizeof(long) >= 4);
     assert(sizeof(void *) >= 4);
     assert(sizeof(long) >= sizeof(void *));
+    assert(((size_t) -1) > 0);
+    assert(((ptrdiff_t) -1) < 0);
     assert(((off_t) -1) < 0);
 
     assert(sizeof(BE16) == 2);
