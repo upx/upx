@@ -445,7 +445,7 @@ static int s_kbhit(screen_t *this)
 {
 #if defined(HAVE_CONIO_H)
     UNUSED(this);
-# if defined(__BORLANDC__)
+# if defined(__BORLANDC__) || defined(__WATCOMC__)
     return kbhit();
 # else
     return _kbhit();
