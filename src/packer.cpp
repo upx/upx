@@ -508,8 +508,8 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
 
     do {
         unsigned len = overlay < buf_size ? overlay : buf_size;
-        fi->readx(*buf, len);
-        fo->write(*buf, len);
+        fi->readx(buf, len);
+        fo->write(buf, len);
         overlay -= len;
     } while (overlay > 0);
 }
