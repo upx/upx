@@ -34,6 +34,11 @@
                 SECTION .text
                 ORG     0
 
+; gdt segment 3 is flat data
+%define __KERNEL_DS 3*8
+; gdt segment 2 is flat code
+%define __KERNEL_CS 2*8
+
 ; =============
 ; ============= ENTRY POINT
 ; =============
@@ -42,23 +47,33 @@ start:
 ;       __LINUZ000__
                 cli
                 xor     eax, eax
-                mov     al, 0x18
+                mov     al, __KERNEL_DS
                 mov     ds, eax
                 mov     es, eax
+; fs, gs set by startup_32 in arch/i386/kernel/head.S 
                 mov     ss, eax
                 mov     esp, 'STAK'     ; 0x90000
 
-                or      ebp, byte -1
-                mov     eax, 'KEIP'     ; 0x100000 - address of startup_32
-                push    eax     ; MATCH00
-                push    edi     ; MATCH01
-                push    esi     ; MATCH02
+                push    byte 0
+                popf            ; BIOS can leave random flags (such as NT)
+
+; do not clear .bss: at this point, .bss comes only from
+; arch/i386/boot/compressed/*.o  which we are replacing entirely
+
+                or      ebp, byte -1    ; decompressor assumption
+                mov     eax, 'KEIP'     ; 0x100000 : address of startup_32
+                push    byte __KERNEL_CS        ; MATCH00
+                push    eax     ; MATCH00  entry address
+                push    edi     ; MATCH01  save
+                push    esi     ; MATCH02  save
+
 %ifdef  __LZCALLT1__
-                push    eax     ; MATCH03
+                push    eax     ; MATCH03  src unfilter
 %endif; __LZDUMMY0__
 %ifdef  __LZCKLLT1__
-                push    eax     ; MATCH03
-                push    byte '?'  ; MATCH04
+                push    eax     ; MATCH03  src unfilter
+                push    byte '?'  ; MATCH04  cto unfilter
+                push    'ULEN'    ; MATCH05  len unfilter
 %endif; __LZDUMMY1__
 %ifdef  __LBZIMAGE__
                 mov     esi, 'ESI0'
@@ -70,22 +85,22 @@ start:
                 movsd
                 cld
 
-                mov     esi, 'ESI1'
-                xchg    eax, edi
+                mov     esi, 'ESI1'     ; esi = src for decompressor
+                xchg    eax, edi        ; edi = dst for decompressor = 0x100000
                 jmp     .1 + 'JMPD'     ; jump to the copied decompressor
 .1:
 %else;  __LZIMAGE0__
 
-                cld
-                mov     esi, 'ESI1'
-                xchg    eax, edi
-
 ; this checka20 stuff looks very unneccessary to me
 checka20:
-                inc     eax
-                mov     [ebp + 1], eax
-                cmp     [edi], eax
-                je      checka20
+                inc                edi  ; change value
+                mov     [1 + ebp], edi  ; store to 0x000000 (even megabyte)
+                cmp         [eax], edi  ; compare  0x100000 ( odd megabyte)
+                je      checka20        ; addresses are [still] aliased
+
+                cld
+                mov     esi, 'ESI1'
+                xchg    eax, edi        ; edi = dst for decompressor = 0x100000
 
 %endif; __LZCUTPOI__
 
@@ -102,18 +117,19 @@ checka20:
 ; =============
 
 %ifdef  __LZCKLLT9__
-                pop     edx     ; MATCH04
-                pop     edi     ; MATCH03
+                pop     ecx     ; MATCH05  len
+                pop     edx     ; MATCH04  cto
+                pop     edi     ; MATCH03  src
                 ckt32   dl
 %endif; __LZDUMMY2__
 %ifdef  __LZCALLT9__
-                pop     edi     ; MATCH03
+                pop     edi     ; MATCH03  src
                 cjt32   0
 %endif; __LINUZ990__
-                pop     esi     ; MATCH02
-                pop     edi     ; MATCH01
+                pop     esi     ; MATCH02  restore
+                pop     edi     ; MATCH01  restore
                 xor     ebx, ebx        ; booting the 1st cpu
-                retn    ; MATCH00
+                retf    ; MATCH00  set cs
 
 ; =============
 ; ============= CUT HERE
