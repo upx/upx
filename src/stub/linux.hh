@@ -132,12 +132,12 @@ type name(type1 arg1) \
     long __res; \
     if (Z1(__NR_##name)) { \
         if (Z0(arg1)) { \
-            __asm__ __volatile__ ("push %1; popl %0; xorl %%ebx,%%ebx; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name) \
                 : "ebx"); \
         } else if (Z1(arg1)) { \
-            __asm__ __volatile__ ("push %1; popl %0; push %2; popl %%ebx; int $0x80" \
+            __asm__ __volatile__ ("push %2; popl %%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name),"g" ((long)(arg1)) \
                 : "ebx"); \
@@ -154,33 +154,44 @@ type name(type1 arg1) \
     return (type) __res; \
 }
 
+// special for mmap; somehow Z0(arg1) and Z1(arg1) don't work
+#define _syscall1m(type,name,type1,arg1) \
+type name(type1 arg1) \
+{ \
+    long __res; \
+            __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
+                : "=a" (__res) \
+                : "g" (__NR_##name),"b" ((long)(arg1))); \
+    return (type) __res; \
+}
+
 #define _syscall2(type,name,type1,arg1,type2,arg2) \
 type name(type1 arg1,type2 arg2) \
 { \
     long __res; \
     if (Z1(__NR_##name)) { \
         if (Z0(arg1) && Z0(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; xorl %%ebx,%%ebx; xorl %%ecx,%%ecx; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ecx,%%ecx; xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name) \
                 : "ebx", "ecx"); \
         } else if (Z0(arg1) && Z1(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; xorl %%ebx,%%ebx; push %2; popl %%ecx; int $0x80" \
+            __asm__ __volatile__ ("push %2; popl %%ecx; xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name),"g" ((long)(arg2)) \
                 : "ebx", "ecx"); \
         } else if (Z1(arg1) && Z0(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; push %2; popl %%ebx; xorl %%ecx,%%ecx; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ecx,%%ecx; push %2; popl %%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name),"g" ((long)(arg1)) \
                 : "ebx", "ecx"); \
         } else if (Z1(arg1) && Z1(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; push %2; popl %%ebx; push %3; popl %%ecx; int $0x80" \
+            __asm__ __volatile__ ("push %3; popl %%ecx; push %2; popl %%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name),"g" ((long)(arg1)),"g" ((long)(arg2)) \
                 : "ebx", "ecx"); \
         } else if (Z0(arg1)) { \
-            __asm__ __volatile__ ("push %1; popl %0; xorl %%ebx,%%ebx; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
                 : "=a" (__res) \
                 : "g" (__NR_##name),"c" ((long)(arg2)) \
                 : "ebx"); \
@@ -253,7 +264,7 @@ static inline _syscall0(pid_t,getpid)
 static inline _syscall2(int,getrusage,int,who,struct rusage *,usage);
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
-static inline _syscall1(caddr_t,mmap,const int *,args)
+static inline _syscall1m(caddr_t,mmap,const int *,args)
 static inline _syscall3(int,mprotect,void *,addr,size_t,len,int,prot)
 static inline _syscall3(int,msync,const void *,start,size_t,length,int,flags)
 static inline _syscall2(int,munmap,void *,start,size_t,length)
