@@ -156,9 +156,6 @@ bool PackLinuxI386elf::canPack()
 
     exetype = 0;
 
-    // FIXME: add special checks for uncompresed "vmlinux" kernel
-    // FIXME: add checks for FreeBSD/... ELF executables
-
     fi->readx(buf, sizeof(buf));
     fi->seek(0, SEEK_SET);
     Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)buf;
@@ -183,11 +180,21 @@ bool PackLinuxI386elf::canPack()
         if (j >= 14)
             return false;
         if (phdr->PT_LOAD == phdr->p_type) {
-            if (phdr->p_offset != 0)
-            {
+            if (phdr->p_offset != 0) {
                 throwCantPack("invalid Phdr p_offset; try `--force-execve'");
                 return false;
             }
+#if 1
+            // FIXME: what about these checks ?
+            if (phdr->p_vaddr != 0x08048000) {
+                throwCantPack("invalid Phdr p_vaddr; try `--force-execve'");
+                return false;
+            }
+            if (phdr->p_paddr != 0x08048000) {
+                throwCantPack("invalid Phdr p_paddr; try `--force-execve'");
+                return false;
+            }
+#endif
             exetype = 1;
             break;
         }

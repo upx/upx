@@ -100,7 +100,6 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
 
-    // info: ELF executables are now handled by p_lx_elf.cpp
     if (memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
         return -1;
 
@@ -109,14 +108,25 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
         return 1;
     if (ehdr->e_type != 2)                              // executable
         return 2;
-    if (ehdr->e_machine != 3 && ehdr->e_machine != 6)   // Intel 80[34]86
+    if (ehdr->e_machine != 3)                           // Intel 80386
         return 3;
     if (ehdr->e_version != 1)                           // version
         return 4;
     if (ehdr->e_phnum < 1)
         return 5;
+    if (ehdr->e_phentsize != sizeof(Elf_LE32_Phdr))
+        return 6;
 
-    // FIXME: add special checks for uncompresed "vmlinux" kernel
+    // check for Linux kernels
+    if (ehdr->e_entry == 0xC0100000)                    // uncompressed vmlinux
+        return 1000;
+    if (ehdr->e_entry == 0x00001000)                    // compressed vmlinux
+        return 1001;
+    if (ehdr->e_entry == 0x00100000)                    // compressed bvmlinux
+        return 1002;
+
+    // FIXME: add more checks for kernels
+
     // FIXME: add special checks for other ELF i386 formats, like
     //        NetBSD, OpenBSD, Solaris, ....
 
