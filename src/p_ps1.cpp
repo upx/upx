@@ -318,7 +318,7 @@ void PackPs1::pack(OutputFile *fo)
     oh.tx_len = ph.c_len + e_len + pad_code;
     oh.epc = entry;
 
-    if (!opt->ps1.no_align)
+    if (!opt->ps1_exe.no_align)
     {
         pad = oh.tx_len;
         oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC);

@@ -153,7 +153,7 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // .exe
     //
-    if (!opt->dos.force_stub)
+    if (!opt->dos_exe.force_stub)
     {
         if ((p = func(new PackDjgpp2(f),f)) != NULL)
             return p;

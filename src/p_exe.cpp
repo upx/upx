@@ -72,7 +72,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 #define oh  (*eh)
     // fill new exe header
     int flag = 0;
-    if (!opt->dos.no_reloc)
+    if (!opt->dos_exe.no_reloc)
         flag |= USEJUMP;
     if (ih.relocs == 0)
         flag |= NORELOC;
@@ -213,7 +213,7 @@ bool PackExe::canPack()
     fi->readx(&offs,sizeof (offs));
     if (ih.relocoffs >= 0x40 && offs)
     {
-        if (opt->dos.force_stub)
+        if (opt->dos_exe.force_stub)
             opt->overlay = opt->COPY_OVERLAY;
         else
             throwCantPack("can't pack new-exe");

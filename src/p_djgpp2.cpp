@@ -109,7 +109,7 @@ int PackDjgpp2::buildLoader(const Filter *ft)
 
 void PackDjgpp2::handleStub(OutputFile *fo)
 {
-    if (fo && !opt->djgpp2.coff)
+    if (fo && !opt->djgpp2_coff.coff)
     {
         if (coff_offset > 0)
         {

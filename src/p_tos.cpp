@@ -580,7 +580,7 @@ void PackTos::pack(OutputFile *fo)
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);
-    if (opt->tos.split_segments)
+    if (opt->atari_tos.split_segments)
     {
         oh.fh_text = o_text;
         oh.fh_data = o_data;

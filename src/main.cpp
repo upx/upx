@@ -65,13 +65,13 @@ void init_options(struct options_t *o)
 #endif
     o->verbose = 2;
 
-    o->w32pe.compress_exports = 1;
-    o->w32pe.compress_icons = 2;
-    o->w32pe.compress_resources = -1;
-    for (unsigned i = 0; i < TABLESIZE(opt->w32pe.compress_rt); i++)
-        opt->w32pe.compress_rt[i] = -1;
-    opt->w32pe.compress_rt[24] = false;     // 24 == RT_MANIFEST
-    o->w32pe.strip_relocs = -1;
+    o->win32_pe.compress_exports = 1;
+    o->win32_pe.compress_icons = 2;
+    o->win32_pe.compress_resources = -1;
+    for (unsigned i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
+        o->win32_pe.compress_rt[i] = -1;
+    o->win32_pe.compress_rt[24] = false;    // 24 == RT_MANIFEST
+    o->win32_pe.strip_relocs = -1;
 }
 
 static struct options_t global_options;
@@ -403,7 +403,7 @@ char* prepare_shortopts(char *buf, const char *n,
 
 
 template <class T>
-int getoptvar(T *var, T minval, T maxval)
+int getoptvar(T *var, const T minval, const T maxval)
 {
     const char *p = mfx_optarg;
     char *endptr;
@@ -594,7 +594,7 @@ static int do_option(int optc, const char *arg)
         getoptvar(&opt->crp.max_match, 16u, ~0u);
         break;
     case 537:
-        if (getoptvar(&opt->crp.m_size, 10000u, (unsigned)999999u) != 0)
+        if (getoptvar(&opt->crp.m_size, 10000u, 999999u) != 0)
             e_optval("--crp-ms=");
         break;
     // backup
@@ -647,41 +647,41 @@ static int do_option(int optc, const char *arg)
         break;
     //
     case 600:
-        opt->dos.force_stub = true;
+        opt->dos_exe.force_stub = true;
         break;
     case 601:
-        opt->dos.no_reloc = true;
+        opt->dos_exe.no_reloc = true;
         break;
     case 610:
-        opt->djgpp2.coff = true;
+        opt->djgpp2_coff.coff = true;
         break;
     case 620:
-        opt->wcle.le = true;
+        opt->watcom_le.le = true;
         break;
     case 630:
-        opt->w32pe.compress_exports = 1;
-        getoptvar(&opt->w32pe.compress_exports, 0, 1);
-        //printf("compress_exports: %d\n", opt->w32pe.compress_exports);
+        opt->win32_pe.compress_exports = 1;
+        getoptvar(&opt->win32_pe.compress_exports, 0, 1);
+        //printf("compress_exports: %d\n", opt->win32_pe.compress_exports);
         break;
     case 631:
-        opt->w32pe.compress_icons = 1;
-        getoptvar(&opt->w32pe.compress_icons, 0, 2);
-        //printf("compress_icons: %d\n", opt->w32pe.compress_icons);
+        opt->win32_pe.compress_icons = 1;
+        getoptvar(&opt->win32_pe.compress_icons, 0, 2);
+        //printf("compress_icons: %d\n", opt->win32_pe.compress_icons);
         break;
     case 632:
-        opt->w32pe.compress_resources = true;
+        opt->win32_pe.compress_resources = true;
         if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->w32pe.compress_resources = false;
-        //printf("compress_resources: %d\n", opt->w32pe.compress_resources);
+            opt->win32_pe.compress_resources = false;
+        //printf("compress_resources: %d\n", opt->win32_pe.compress_resources);
         break;
     case 633:
-        opt->w32pe.strip_relocs = 1;
+        opt->win32_pe.strip_relocs = 1;
         if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->w32pe.strip_relocs = 0;
-        //printf("strip_relocs: %d\n", opt->w32pe.strip_relocs);
+            opt->win32_pe.strip_relocs = 0;
+        //printf("strip_relocs: %d\n", opt->win32_pe.strip_relocs);
         break;
     case 650:
-        opt->tos.split_segments = true;
+        opt->atari_tos.split_segments = true;
         break;
     case 660:
         getoptvar(&opt->unix.blocksize, 8192u, ~0u);
@@ -698,7 +698,7 @@ static int do_option(int optc, const char *arg)
         opt->unix.ptinterp = true;
         break;
     case 670:
-        opt->ps1.no_align = true;
+        opt->ps1_exe.no_align = true;
         break;
 
     case '\0':
@@ -1044,6 +1044,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(((((unsigned)1      << 31) + 1) >> 31) == 1);
     COMPILE_TIME_ASSERT(((((acc_uint64l_t)1 << 63) + 1) >> 63) == 1);
 
+#if !defined(ACC_CC_WATCOMC)
     struct foo1a_t { char c1; LE16 v[4]; } __attribute_packed;
     struct align_assertion_1a_t { foo1a_t d[3]; } __attribute_packed;
     struct foo1b_t { char c1; char v[4*2]; } __attribute_packed;
@@ -1060,6 +1061,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
     COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
     COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
+#endif
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1);
     assert(strlen(UPX_VERSION_STRING4) == 4);

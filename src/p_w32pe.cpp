@@ -88,7 +88,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
-    COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->w32pe.compress_rt));
+    COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt));
 
     isection = NULL;
     oimport = NULL;
@@ -391,7 +391,7 @@ void Reloc::finish(upx_byte *&p,unsigned &siz)
 void PackW32Pe::processRelocs(Reloc *rel) // pass2
 {
     rel->finish(oxrelocs,soxrelocs);
-    if (opt->w32pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs && !isdll)
         soxrelocs = 0;
 }
 
@@ -403,7 +403,7 @@ void PackW32Pe::processRelocs() // pass1
     const unsigned *counts = rel.getcounts();
     const unsigned rnum = counts[1] + counts[2] + counts[3];
 
-    if ((opt->w32pe.strip_relocs && !isdll) || rnum == 0)
+    if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
     {
         if (IDSIZE(PEDIR_RELOC))
             ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
@@ -489,7 +489,7 @@ void PackW32Pe::processImports(unsigned myimport) // pass 2
 
 unsigned PackW32Pe::processImports() // pass 1
 {
-    static const upx_byte kernel32dll[] = "KERNEL32.DLL";
+    static const unsigned char kernel32dll[] = "KERNEL32.DLL";
     static const char llgpa[] = "\x0\x0""LoadLibraryA\x0\x0""GetProcAddress\x0\x0";
     static const char exitp[] = "ExitProcess\x0\x0\x0";
 
@@ -777,7 +777,7 @@ class Export
     Interval iv;
 
 public:
-    Export(char *base);
+    Export(char *_base);
     ~Export();
 
     void convert(unsigned eoffs,unsigned esize);
@@ -785,6 +785,7 @@ public:
     unsigned getsize() const { return size; }
 
 private:
+    // disable copy and assignment
     Export(const Export&);
     Export& operator=(const Export&);
 };
@@ -850,7 +851,7 @@ void Export::convert(unsigned eoffs,unsigned esize)
             names[ic + edir.names] = strdup(forw);
         }
         else
-            names[ic + edir.names] = 0;
+            names[ic + edir.names] = NULL;
 
     len = 2 * edir.names;
     ordinals = new char[len + 1];
@@ -907,7 +908,7 @@ void PackW32Pe::processExports(Export *xport) // pass1
     soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4);
     if (soexport == 0)
         return;
-    if (!isdll && opt->w32pe.compress_exports)
+    if (!isdll && opt->win32_pe.compress_exports)
     {
         infoWarning("exports compressed, --compress-exports=0 might be needed");
         soexport = 0;
@@ -1098,7 +1099,7 @@ public:
     void init(const upx_byte *);
 
     unsigned dirsize() const {return ALIGN_UP(dsize + ssize,4);}
-    bool next() {return (current = current ? current->next : head) != 0;} // wow, builtin autorewind... :-)
+    bool next() {return (current = current ? current->next : head) != NULL;} // wow, builtin autorewind... :-)
 
     unsigned itype() const {return current->parent->parent->id;}
     const upx_byte *ntype() const {return current->parent->parent->name;}
@@ -1126,10 +1127,10 @@ void Resource::init(const upx_byte *res)
     COMPILE_TIME_ASSERT(sizeof(res_data) == 16);
 
     start = res;
-    root = head = current = 0;
+    root = head = current = NULL;
     dsize = ssize = 0;
     check((const res_dir*) start,0);
-    root = convert(start,0,0);
+    root = convert(start,NULL,0);
 }
 
 void Resource::check(const res_dir *node,unsigned level)
@@ -1153,7 +1154,7 @@ Resource::upx_rnode *Resource::convert(const void *rnode,upx_rnode *parent,unsig
     {
         const res_data *node = (const res_data *) rnode;
         upx_rleaf *leaf = new upx_rleaf;
-        leaf->name = 0;
+        leaf->name = NULL;
         leaf->parent = parent;
         leaf->next = head;
         leaf->newoffset = 0;
@@ -1166,7 +1167,7 @@ Resource::upx_rnode *Resource::convert(const void *rnode,upx_rnode *parent,unsig
 
     const res_dir *node = (const res_dir *) rnode;
     upx_rbranch *branch = new upx_rbranch;
-    branch->name = 0;
+    branch->name = NULL;
     branch->parent = parent;
     int ic = branch->nc = node->identr + node->namedentr;
     branch->children = new upx_rnode*[ic];
@@ -1317,20 +1318,20 @@ void PackW32Pe::processResources(Resource *res)
         return;
 
     // setup default options for resource compression
-    if (opt->w32pe.compress_resources < 0)
-        opt->w32pe.compress_resources = true;
-    if (!opt->w32pe.compress_resources)
+    if (opt->win32_pe.compress_resources < 0)
+        opt->win32_pe.compress_resources = true;
+    if (!opt->win32_pe.compress_resources)
     {
-        opt->w32pe.compress_icons = false;
+        opt->win32_pe.compress_icons = false;
         for (int i = 0; i < RT_LAST; i++)
-            opt->w32pe.compress_rt[i] = false;
+            opt->win32_pe.compress_rt[i] = false;
     }
-    if (opt->w32pe.compress_rt[RT_STRING] < 0)
+    if (opt->win32_pe.compress_rt[RT_STRING] < 0)
     {
         // by default, don't compress RT_STRINGs of screensavers (".scr")
-        opt->w32pe.compress_rt[RT_STRING] = true;
+        opt->win32_pe.compress_rt[RT_STRING] = true;
         if (fn_has_ext(fi->getName(),"scr"))
-            opt->w32pe.compress_rt[RT_STRING] = false;
+            opt->win32_pe.compress_rt[RT_STRING] = false;
     }
 
     res->init(ibuf + vaddr);
@@ -1341,7 +1342,7 @@ void PackW32Pe::processResources(Resource *res)
     upx_byte *ores = oresources + res->dirsize();
 
     unsigned iconsin1stdir = 0;
-    if (opt->w32pe.compress_icons == 2)
+    if (opt->win32_pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0)
                 iconsin1stdir = get_le16(ibuf + res->offs() + 4);
@@ -1359,16 +1360,16 @@ void PackW32Pe::processResources(Resource *res)
     {
         const unsigned rtype = res->itype();
         bool do_compress = true;
-        if (!opt->w32pe.compress_resources)
+        if (!opt->win32_pe.compress_resources)
             do_compress = false;
         else if (rtype == RT_VERSION)       // version info
             do_compress = false;
         else if (rtype == RT_ICON)          // icon
-            do_compress = compress_icon && opt->w32pe.compress_icons;
+            do_compress = compress_icon && opt->win32_pe.compress_icons;
         else if (rtype == RT_GROUP_ICON)    // icon directory
-            do_compress = compress_idir && opt->w32pe.compress_icons;
+            do_compress = compress_idir && opt->win32_pe.compress_icons;
         else if (rtype > 0 && rtype < RT_LAST)
-            do_compress = opt->w32pe.compress_rt[rtype] ? true : false;
+            do_compress = opt->win32_pe.compress_rt[rtype] ? true : false;
         else if (res->ntype())              // named resource type
         {
             const upx_byte * const t = res->ntype();
@@ -1394,10 +1395,10 @@ void PackW32Pe::processResources(Resource *res)
         ibuf.fill(res->offs(), res->size(), FILLVAL);
         res->newoffs() = ptr_diff(ores,oresources);
         if (rtype == RT_ICON)
-            compress_icon = (++iconcnt >= iconsin1stdir || opt->w32pe.compress_icons == 1);
+            compress_icon = (++iconcnt >= iconsin1stdir || opt->win32_pe.compress_icons == 1);
         else if (rtype == RT_GROUP_ICON)
         {
-            if (opt->w32pe.compress_icons == 1)
+            if (opt->win32_pe.compress_icons == 1)
             {
                 icondir_offset = 4 + ptr_diff(ores,oresources);
                 icondir_count = get_le16(oresources + icondir_offset);
@@ -1539,7 +1540,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
 
 void PackW32Pe::pack(OutputFile *fo)
 {
-    unsigned objs = ih.objects;
+    const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
@@ -1569,10 +1570,10 @@ void PackW32Pe::pack(OutputFile *fo)
     //if (IDSIZE(PEDIR_DELAYIMP))
     //   throwCantPack("delay load imports are not supported");
     if (isdll)
-        opt->w32pe.strip_relocs = 0;
-    else if (opt->w32pe.strip_relocs < 0)
-        opt->w32pe.strip_relocs = (ih.imagebase >= 0x400000);
-    if (opt->w32pe.strip_relocs)
+        opt->win32_pe.strip_relocs = false;
+    else if (opt->win32_pe.strip_relocs < 0)
+        opt->win32_pe.strip_relocs = (ih.imagebase >= 0x400000);
+    if (opt->win32_pe.strip_relocs)
         if (ih.imagebase < 0x400000)
             throwCantPack("--strip-relocs is not allowed when imagebase < 0x400000");
         else
@@ -1819,7 +1820,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     const unsigned esi0 = s1addr + ic;
     patch_le32(loader,codesize,"EDI0", rvamin - esi0);
-    patch_le32(loader,codesize,"ESI0",esi0  + ih.imagebase);
+    patch_le32(loader,codesize,"ESI0", esi0 + ih.imagebase);
     ic = getLoaderSection("PEMAIN01") + 2 + upxsection;
 
     Reloc rel(1024); // new relocations are put here
@@ -1865,7 +1866,7 @@ void PackW32Pe::pack(OutputFile *fo)
     processExports(&xport,ic);
     ODADDR(PEDIR_EXPORT) = soexport ? ic : 0;
     ODSIZE(PEDIR_EXPORT) = soexport;
-    if (!isdll && opt->w32pe.compress_exports)
+    if (!isdll && opt->win32_pe.compress_exports)
     {
         ODADDR(PEDIR_EXPORT) = IDADDR(PEDIR_EXPORT);
         ODSIZE(PEDIR_EXPORT) = IDSIZE(PEDIR_EXPORT);
@@ -1927,7 +1928,7 @@ void PackW32Pe::pack(OutputFile *fo)
     // oh.headersize = osection[0].rawdataptr;
     oh.headersize = rvamin;
 
-    if (opt->w32pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;
 
     //for (ic = 0; ic < oh.filealign; ic += 4)
@@ -2026,14 +2027,14 @@ int PackW32Pe::canUnpack()
     if (is_packed && ih.entry < isection[2].vaddr)
     {
         unsigned char buf[256];
-        memset(buf, 0, sizeof(buf));
         bool x = false;
 
+        memset(buf, 0, sizeof(buf));
         try {
             fi->seek(ih.entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
             fi->read(buf, sizeof(buf));
 
-            static const char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
+            static const unsigned char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
             // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
 
             int offset = find(buf, sizeof(buf), magic, 7);
@@ -2194,7 +2195,7 @@ void PackW32Pe::rebuildRelocs(upx_byte *& extrainfo)
     }
     rel.finish (oxrelocs,soxrelocs);
 
-    if (opt->w32pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs && !isdll)
     {
         obuf.clear(ODADDR(PEDIR_RELOC) - rvamin, ODSIZE(PEDIR_RELOC));
         ODADDR(PEDIR_RELOC) = 0;
@@ -2214,7 +2215,7 @@ void PackW32Pe::rebuildExports()
     if (ODSIZE(PEDIR_EXPORT) == 0 || ODADDR(PEDIR_EXPORT) == IDADDR(PEDIR_EXPORT))
         return; // nothing to do
 
-    opt->w32pe.compress_exports = 0;
+    opt->win32_pe.compress_exports = 0;
     Export xport((char*)(unsigned char*) ibuf - isection[2].vaddr);
     processExports(&xport);
     processExports(&xport,ODADDR(PEDIR_EXPORT));
@@ -2323,7 +2324,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     oh.chksum = 0;
 
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
-    if ((opt->w32pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
+    if ((opt->win32_pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
     {
         oh.flags |= RELOCS_STRIPPED;
         ODADDR(PEDIR_RELOC) = 0;

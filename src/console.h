@@ -123,10 +123,10 @@ console_t;
 
 
 #if defined(__GNUC__)
-void con_fprintf(FILE *f, const char *format, ...)
+void __acc_cdecl con_fprintf(FILE *f, const char *format, ...)
         __attribute__((format(printf,2,3)));
 #else
-void con_fprintf(FILE *f, const char *format, ...);
+void __acc_cdecl con_fprintf(FILE *f, const char *format, ...);
 #endif
 
 

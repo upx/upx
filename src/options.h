@@ -99,18 +99,18 @@ struct options_t {
 
     // options for various executable formats
     struct {
-        bool force_stub;
-        bool no_reloc;
-    } dos;
+        bool split_segments;
+    } atari_tos;
     struct {
         bool coff;
-    } djgpp2;
+    } djgpp2_coff;
+    struct {
+        bool force_stub;
+        bool no_reloc;
+    } dos_exe;
     struct {
         bool no_align;
-    } ps1;
-    struct {
-        bool split_segments;
-    } tos;
+    } ps1_exe;
     struct {
         unsigned blocksize;
         bool force_execve;          // force the linux/386 execve format
@@ -120,14 +120,14 @@ struct options_t {
     } unix;
     struct {
         bool le;
-    } wcle;
+    } watcom_le;
     struct {
         int compress_exports;
         int compress_icons;
         int compress_resources;
         signed char compress_rt[25];    // 25 == RT_LAST
         int strip_relocs;
-    } w32pe;
+    } win32_pe;
 };
 
 extern struct options_t * volatile opt;

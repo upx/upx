@@ -130,7 +130,7 @@ void printErr(const char *iname, const Throwable *e)
 }
 
 
-void printErr(const char *iname, const char *format, ...)
+void __acc_cdecl printErr(const char *iname, const char *format, ...)
 {
     va_list args;
     char buf[1024];
@@ -143,7 +143,7 @@ void printErr(const char *iname, const char *format, ...)
 }
 
 
-void printWarn(const char *iname, const char *format, ...)
+void __acc_cdecl printWarn(const char *iname, const char *format, ...)
 {
     va_list args;
     char buf[1024];
@@ -200,7 +200,7 @@ void infoHeader()
     info_header = 0;
 }
 
-void infoHeader(const char *format, ...)
+void __acc_cdecl infoHeader(const char *format, ...)
 {
     if (opt->info_mode <= 0)
         return;
@@ -214,7 +214,7 @@ void infoHeader(const char *format, ...)
 }
 
 
-void info(const char *format, ...)
+void __acc_cdecl info(const char *format, ...)
 {
     if (opt->info_mode <= 0)
         return;
@@ -229,7 +229,7 @@ void info(const char *format, ...)
 }
 
 
-void infoWarning(const char *format, ...)
+void __acc_cdecl infoWarning(const char *format, ...)
 {
     if (opt->info_mode <= 0)
     {

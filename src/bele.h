@@ -221,6 +221,7 @@ class BE16
     unsigned char d[2];
 
 public:
+    BE16() { }
     BE16& operator =  (const BE16 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
 
     BE16& operator =  (unsigned v)    { set_be16(d, v); return *this; }
@@ -239,6 +240,7 @@ class BE32
     unsigned char d[4];
 
 public:
+    BE32() { }
     BE32& operator =  (const BE32 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
 
     BE32& operator =  (unsigned v)    { set_be32(d, v); return *this; }
@@ -257,6 +259,7 @@ class LE16
     unsigned char d[2];
 
 public:
+    LE16() { }
     LE16& operator =  (const LE16 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
 
     LE16& operator =  (unsigned v)    { set_le16(d, v); return *this; }
@@ -275,6 +278,7 @@ class LE32
     unsigned char d[4];
 
 public:
+    LE32() { }
     LE32& operator =  (const LE32 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
 
     LE32& operator =  (unsigned v)    { set_le32(d, v); return *this; }

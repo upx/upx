@@ -120,7 +120,7 @@ int PackWcle::buildLoader(const Filter *ft)
 
 void PackWcle::handleStub(OutputFile *fo)
 {
-    if (fo && !opt->wcle.le)
+    if (fo && !opt->watcom_le.le)
         Packer::handleStub(fi,fo,le_offset);
 }
 
@@ -540,7 +540,7 @@ void PackWcle::pack(OutputFile *fo)
     patch_le32(oimage,e_len,"EDI0",((ic+d_len+3)&~3)-4);
     patch_le32(oimage,e_len,"ESI0",e_len+jpos*4-4);
 
-    writeFile(fo, opt->wcle.le);
+    writeFile(fo, opt->watcom_le.le);
 
     // copy the overlay
     const unsigned overlaystart = ih.data_pages_offset + exe_offset
@@ -827,7 +827,7 @@ void PackWcle::unpack(OutputFile *fo)
 
     // write decompressed file
     if (fo)
-        writeFile(fo, opt->wcle.le);
+        writeFile(fo, opt->watcom_le.le);
 
     // copy the overlay
     const unsigned overlaystart = ih.data_pages_offset + exe_offset

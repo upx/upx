@@ -57,7 +57,6 @@ static int mcheck_init()
 //
 **************************************************************************/
 
-
 MemBuffer::MemBuffer() :
     b(NULL), b_size(0)
 {

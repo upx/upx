@@ -53,18 +53,18 @@
 #  if (__BORLANDC__ < 0x550)
 #    error "need Borland C++ 5.5 or newer"
 #  endif
-#  define __UPX_CDECL       __cdecl
 #  if (__BORLANDC__ >= 0x560)
 #    pragma warn -use
 #  endif
 #elif (ACC_CC_DMC)
-#  define __UPX_CDECL       __cdecl
+#  if (__DMC__ < 0x829)
+#    error "need Digital Mars C++ 8.29 or newer"
+#  endif
 #elif (ACC_CC_INTELC)
 #  if (__INTEL_COMPILER < 450)
 #    error "need Intel C++ 4.5 or newer"
 #  endif
-#  if (ACC_CC_WIN32 || ACC_CC_WIN64)
-#    define __UPX_CDECL     __cdecl
+#  if (ACC_OS_WIN32 || ACC_OS_WIN64)
 #  elif defined(__linux__)
 #    pragma warning(error: 424)         // #424: extra ";" ignored
 #    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
@@ -78,8 +78,9 @@
 #  if (_MSC_VER < 1100)
 #    error "need Visual C++ 5.0 or newer"
 #  endif
-#  define __UPX_CDECL       __cdecl
-#  pragma warning(disable: 4096)        // __cdecl + '...'
+#if 0
+#  pragma warning(disable: 4096)        // W2: '__cdecl' must be used with '...'
+#endif
 #  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
 #  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
@@ -92,10 +93,6 @@
 #  if defined(__cplusplus)
 #    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
 #  endif
-#endif
-
-#if !defined(__UPX_CDECL)
-#  define __UPX_CDECL
 #endif
 
 
@@ -453,26 +450,26 @@ void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
 #if defined(__GNUC__)
-void printErr(const char *iname, const char *format, ...)
+void __acc_cdecl printErr(const char *iname, const char *format, ...)
         __attribute__((format(printf,2,3)));
-void printWarn(const char *iname, const char *format, ...)
+void __acc_cdecl printWarn(const char *iname, const char *format, ...)
         __attribute__((format(printf,2,3)));
 #else
-void printErr(const char *iname, const char *format, ...);
-void printWarn(const char *iname, const char *format, ...);
+void __acc_cdecl printErr(const char *iname, const char *format, ...);
+void __acc_cdecl printWarn(const char *iname, const char *format, ...);
 #endif
 
 #if defined(__GNUC__)
-void infoWarning(const char *format, ...)
+void __acc_cdecl infoWarning(const char *format, ...)
         __attribute__((format(printf,1,2)));
-void infoHeader(const char *format, ...)
+void __acc_cdecl infoHeader(const char *format, ...)
         __attribute__((format(printf,1,2)));
-void info(const char *format, ...)
+void __acc_cdecl info(const char *format, ...)
         __attribute__((format(printf,1,2)));
 #else
-void infoWarning(const char *format, ...);
-void infoHeader(const char *format, ...);
-void info(const char *format, ...);
+void __acc_cdecl infoWarning(const char *format, ...);
+void __acc_cdecl infoHeader(const char *format, ...);
+void __acc_cdecl info(const char *format, ...);
 #endif
 void infoHeader();
 void infoWriting(const char *what, long size);

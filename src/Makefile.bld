@@ -329,7 +329,7 @@ ifeq ($(target),bc)
 o = .obj
 a = .lib
 e = .exe
-CC = bcc32 -q -6
+CC = bcc32 -q -3
 CFLAGS = -w -w-aus -w-inl -g1
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
