@@ -1127,6 +1127,15 @@ int main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
+#if 1 && (UPX_VERSION < 0x012000)
+    {
+        FILE *f = stdout;
+        int fg = con_fg(f,FG_RED);
+        con_fprintf(f,"\nWARNING: this is an unstable beta version - use for testing only! Really.\n");
+        fg = con_fg(f,fg);
+    }
+#endif
+
 #if 0 && defined(__GLIBC__)
     //malloc_stats();
 #endif
