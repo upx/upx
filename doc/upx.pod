@@ -14,6 +14,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 
             The Ultimate Packer for eXecutables
   Copyright (c) 1996-2000 Markus Oberhumer & Laszlo Molnar
+             Copyright (c) 2000 John F. Reiser
        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
                     http://upx.tsx.org
 
@@ -74,6 +75,8 @@ B<UPX> is a versatile executable packer with the following features:
       * win32/pe
       * rtm32/pe
       * tmt/adam
+      * linux/elf386
+      * linux/sh386
       * linux/i386
       * atari/tos
 
@@ -328,7 +331,71 @@ Extra options available for this executable format:
 
 
 
-=head2 NOTES FOR LINUX/i386
+=head2 NOTES FOR LINUX
+
+User's overview
+
+  Running a compressed executable program trades space on a ``permanent''
+  storage medium (such as a hard disk, floppy disk, CD-ROM, flash
+  memory, EPROM, etc.) for space in one or more ``temporary'' storage
+  media (such as RAM, swap space, /tmp, etc.).  Running a compressed
+  executable also requires some additional CPU cycles to generate
+  the compressed executable in the first place, and to decompress
+  it at each invocation.
+
+  How much space is traded?  It depends on the executable, but many
+  programs save 30% to 50% of permanent disk space.  How much CPU
+  overhead is there?  Again, it depends on the executable, but
+  decompression speed generally is at least many megabytes per second,
+  and frequently is limited by the speed of the underlying disk
+  or network I/O.  Compression speed can be slower by a couple
+  orders of magnitude.
+
+  Depending on the statistics of usage and access, and the relative
+  speeds of CPU, RAM, swap space, /tmp, and filesystem storage, then
+  invoking and running a compressed executable can be faster than
+  directly running the corresponding uncompressed program.
+  The operating system might perfrom fewer expensive I/O operations
+  to invoke the compressed program.  Paging to or from swap space
+  or /tmp might be faster than paging from the general filesystem.
+  ``Medium-sized'' programs which access about 1/3 to 1/2 of their
+  stored program bytes can do particulary well with compression.
+  Small programs tend not to benefit as much because the absolute
+  savings is less.  Big programs tend not to benefit proportionally
+  because each invocation may use only a small fraction of the program,
+  yet UPX 1.1 decompresses the entire program before invoking it.
+  But in environments where disk or flash memory storage is limited,
+  then compression may win anyway.
+
+  Currently, executables compressed by UPX do not share RAM at runtime
+  in the way that executables mapped from a filesystem do.  As a
+  result, if the same program is run simultaneously by more than one
+  process, then using the compressed version will require more RAM and/or
+  swap space.  So, shell programs (bash, csh, etc.)  and ``make''
+  might not be good candidates for compression.
+
+  UPX 1.1 recognizes three executable formats for Linux: Linux/elf386,
+  Linux/sh386, and Linux/i386.  Linux/i386 is the most general format;
+  it accommodates any file that can be executed.  At runtime, the UPX
+  decompression stub re-creates in /tmp a copy of the original file,
+  and then the copy is (re-)executed with the same arguments.
+  ELF binary executables prefer the Linux/elf386 format by default,
+  because UPX decompresses them directly into RAM, uses only one
+  exec, does not use space in /tmp, and does not use /proc.
+  Shell scripts where the underling shell accepts a ``-c'' argument
+  can use the Linux/sh386 format.  UPX decompresses the shell script
+  into low memory, then maps the shell and passes the entire text of the
+  script as an argument with a leading ``-c''.
+
+  For highly-motivated users, such as administrators of embedded systems,
+  the sources for UPX (but not the distributed binary of UPX 1.1) support
+  a fourth format, Linux/sep386; see p_lx_sep.cpp.  In this format the
+  decompressor stub resides in a separate file in the file system;
+  all compressed excutables look like shell scripts for the separate
+  decompressor.  This saves slightly less than 2KB per compressed
+  executable, but makes the compressed executables not self-contained,
+  and thus creates usability and administrative problems for users
+  who are not highly motivated.
 
 How it works:
 
@@ -402,6 +469,16 @@ Benefits:
 
 Drawbacks:
 
+  - For linux/elf386 and linux/sh386 formats, you will be relying on
+    RAM and swap space to hold all of the decompressed program during
+    the lifetime of the process.  If you already use most of your swap
+    space, then you may run out.  A system that is "out of memory"
+    can become fragile.  Many programs do not react gracefully when
+    malloc() returns 0.  With newer Linux kernels, the kernel
+    may decide to kill some processes to regain memory, and you
+    may not like the kernel's choice of which to kill.  Running
+    /usr/bin/top is one way to check on the usage of swap space.
+    
   - For non-ELF, non-shell executables, you need additional free disk
     space for the uncompressed program
     in your /tmp directory. This program is deleted immediately after
@@ -416,9 +493,10 @@ Drawbacks:
     scripts for known "-c" shells.
 
   - `ldd' and `size' won't show anything useful because all they
-    see is the statically linked stub (since version 0.82 the section
+    see is the statically linked stub.  Since version 0.82 the section
     headers are stripped from the UPX stub and `size' doesn't even
-    recognize the file format any longer - looks like a binutils bug).
+    recognize the file format.  File patches/patch-elfcode.h has a
+    patch to fix this bug in `size' and other programs which use GNU BFD.
 
   - For non-ELF, non-shell executables, utilities like `top' will
     display numerical values in the process
