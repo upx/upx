@@ -146,6 +146,19 @@
 
 
 /*************************************************************************
+// PowerPC branch [incl. call] trick
+**************************************************************************/
+
+#define COND(b,x) (18==(get_be32(b+x)>>26))
+#define F                       f_ppcbxx
+#define U                       u_ppcbxx
+#include "filter/ppcbxx.h"
+#define F                       s_ppcbxx
+#include "filter/ppcbxx.h"
+#undef COND
+
+
+/*************************************************************************
 // database for use in class Filter
 **************************************************************************/
 
@@ -230,6 +243,9 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0xb1,99,          0, f_sub32_2, u_sub32_2, s_sub32_2 },
     { 0xb2,99,          0, f_sub32_3, u_sub32_3, s_sub32_3 },
     { 0xb3,99,          0, f_sub32_4, u_sub32_4, s_sub32_4 },
+
+    // PowerPC call trick
+    { 0xd0, 8, 0x01000000, f_ppcbxx, u_ppcbxx, s_ppcbxx },
 };
 
 const int FilterImp::n_filters = TABLESIZE(filters);
