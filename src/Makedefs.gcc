@@ -8,6 +8,7 @@ USE_GCC_DEPS := 1
 CC = gcc
 CXX = g++
 CFLAGS_OUTPUT = -o $@
+LINK_EXE_OUTPUT = -o $@
 
 
 CFLAGS_W =
@@ -35,8 +36,8 @@ ifeq ($(DEBUG),1)
 CFLAGS_O  = -g -O0
 else
 ##CFLAGS_O  = -Os -fstrict-aliasing
-##CFLAGS_O  = -O2 -fstrict-aliasing
-CFLAGS_O  = -O2 -fno-strict-aliasing
+CFLAGS_O  = -O2 -fstrict-aliasing
+##CFLAGS_O  = -O2 -fno-strict-aliasing
 endif
 
 CXXFLAGS_W += -Wsynth

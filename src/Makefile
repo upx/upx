@@ -48,7 +48,6 @@ VPATH = $(srcdir)
 
 # auto-detect the target unless given on the commandline
 ifeq ($(strip $(target)),)
-##target = djgpp2
 ifneq ($(strip $(wildcard /usr/include/linux)),)
 target = linux
 endif
@@ -104,7 +103,7 @@ CC_COMPILE    = $(CC) $(CCARCH) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -
 CXX_COMPILE_1 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_1) $(CXXFLAGS_OUTPUT) -c $<
 CXX_COMPILE_2 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_2) $(CXXFLAGS_OUTPUT) -c $<
 CXX_COMPILE   = $(CXX_COMPILE_1)
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(LDLIBS) $(LINK_LDFLAGS)
 STUBEDIT_EXE  =
 STUBIFY_EXE   =
 CHMOD_EXE     =
@@ -120,7 +119,7 @@ DOS_LDLIBS =
 DOS_LIBDIRS =
 
 # set CC defaults
-CC =
+CC = INVALID_TARGET_CC
 CCARCH =
 CCFLAGS =
 CFLAGS_OUTPUT =
@@ -137,7 +136,9 @@ CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 CXXLD = $(CXX)
 CXXLDARCH = $(CXXARCH)
 LDFLAGS =
+LINK_EXE_OUTPUT =
 LDLIBS =
+LINK_LDFLAGS =
 
 
 # update defaults
@@ -177,6 +178,15 @@ LDFLAGS += $(LDLIBDIRS)
 # /***********************************************************************
 # // compiler settings
 # ************************************************************************/
+
+###
+### generic gcc
+###
+
+ifeq ($(target),gcc)
+include $(srcdir)/Makedefs.gcc
+endif
+
 
 ###
 ### Linux
@@ -264,6 +274,7 @@ endif
 ifeq ($(target),djgpp2)
 include $(srcdir)/Makedefs.gcc
 e = .exe
+CXX = gxx
 CCARCH += -march=i386 -mcpu=i686
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
@@ -316,11 +327,12 @@ ifeq ($(target),bcc)
 o = .obj
 a = .lib
 e = .exe
-CC = bcc32 -q
+CC = bcc32 -q -3
 CFLAGS = -w -w-aus -g1
 CXXFLAGS_2 = $(CXXFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
+LINK_EXE_OUTPUT = -e$@
 LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
@@ -333,8 +345,6 @@ ifeq ($(DEBUG),1)
 else
   CFLAGS += -O2 -d
 endif
-
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -e$@ $^ $(LDLIBS)
 
 endif	# bcc
 
@@ -352,7 +362,8 @@ CFLAGS = -w- -wx
 CXXFLAGS = $(CFLAGS) -Aa -Ab
 CXXFLAGS_1 = $(CXXFLAGS) -Ae -Ar
 CFLAGS_OUTPUT = -o$@
-LDFLAGS =
+LDFLAGS = -L/map
+LINK_EXE_OUTPUT = -o$@
 LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
@@ -365,8 +376,6 @@ ifeq ($(DEBUG),1)
 else
   CFLAGS += -o
 endif
-
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -o$@ $^ $(LDLIBS)
 
 endif	# dmc
 
@@ -383,7 +392,9 @@ CC = cl -nologo
 CFLAGS = -W4 -WX
 CXXFLAGS_1 = $(CXXFLAGS) -EHac -GR
 LDFLAGS =
+LINK_EXE_OUTPUT = -Fe$@
 LINK_LDFLAGS = /link /map:$T.map
+##LINK_LDFLAGS += /verbose
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -408,9 +419,6 @@ else
 endif
 RESOURCES = upx.res
 
-##LINK_LDFLAGS += /verbose
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
-
 endif	# vc6
 
 
@@ -427,6 +435,7 @@ CFLAGS = -zc -w5 -we
 CXXFLAGS_1 = $(CXXFLAGS) -xs -xr
 CFLAGS_OUTPUT = -fo=$@
 LDFLAGS = -k0x100000 -fm
+LINK_EXE_OUTPUT = -fe$@
 LDLIBS = $(DOS_LDLIBS) zlib114.lib
 
 INCLUDES:=$(strip $(subst /,\\,$(INCLUDES)))
@@ -447,8 +456,6 @@ else
   # note: it seems that the optimizer is generating bad code with `-ox'
   CFLAGS += -olr
 endif
-
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) -fe=$@ $^ $(LDLIBS)
 
 endif	# wcc
 
