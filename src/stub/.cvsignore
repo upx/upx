@@ -1,6 +1,7 @@
 *.asx
 *.asy
 *.bin
+*.d
 *.i
 *.lst
 *.map

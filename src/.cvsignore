@@ -1,5 +1,6 @@
 GNUmakefile
 *.0??
+*.d
 *.dat
 *.idb
 *.img

@@ -91,17 +91,17 @@ LD_LINUX_I386 = ld
 OBJCOPY_LINUX_I386 = objcopy
 
 # gcc 2.7.2.3 (fold_*.bin: 1718 / 1011 / 1340)
-CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2
+CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
 CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
 # gcc 2.95.3 (fold_*.bin: 1618 / 995 / 1305)
-CC_LINUX_I386_GCC295  = gcc-2.95 -march=i386 -mcpu=k6 -fno-exceptions
+CC_LINUX_I386_GCC295  = gcc-2.95 -march=i386 -mcpu=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
 # gcc 3.4.0 (fold_*.bin: 1482 / 931 / 1173)
-CC_LINUX_I386_GCC340  = gcc-3.4 -march=i386 -mtune=k6 -fno-exceptions
+CC_LINUX_I386_GCC340  = gcc-3.4 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC340 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC340 += -momit-leaf-frame-pointer
 CC_LINUX_I386_GCC340 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
@@ -158,7 +158,7 @@ stubs: $(STUBS)
 
 
 mostlyclean:
-	-rm -f *~ *.bin *.bkp *.i *.lst *.map stubify.exe
+	-rm -f *.bin *.bkp *.d *.i *.lst *.map stubify.exe
 	-rm -f *.o *.asx *.asy
 
 clean: mostlyclean
@@ -406,6 +406,11 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 # /***********************************************************************
 # // dependencies
 # ************************************************************************/
+
+DEPS_FILES := $(wildcard *.d)
+ifneq ($(strip $(DEPS_FILES)),)
+  include $(DEPS_FILES)
+endif
 
 DEPS1 = header.ash macros.ash ident.ash ident_n.ash ident_s.ash
 DEPS2 = header.asy macros.asy

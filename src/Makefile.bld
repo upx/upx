@@ -204,6 +204,7 @@ DEPMODE := linux-intelc
 CC = icc
 CXX = icpc
 CCARCH += -march=i386 -mcpu=i686 -nolib_inline
+DEFS += -D_FILE_OFFSET_BITS=64
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@
 ifeq ($(WITH_ZLIB),1)
@@ -228,6 +229,7 @@ DEPMODE := linux-pgi
 CC = pgcc
 CXX = pgCC
 CCARCH += -tp=p6
+DEFS += -D_FILE_OFFSET_BITS=64
 CFLAGS_OUTPUT = -o $@
 LINK_EXE_OUTPUT = -o $@
 ifeq ($(WITH_ZLIB),1)
@@ -683,7 +685,7 @@ $(upx_exe): $(OBJECTS) $(LIBS) $(RESOURCES)
 	$(strip $(CHMOD_EXE))
 
 mostlyclean:
-	-rm -f *.d *.err *.i *.log *.map *~ gdb-trans*
+	-rm -f *.d *.err *.i *.log *.map gdb-trans*
 
 clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj *.res *.tds tags TAGS ID
