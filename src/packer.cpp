@@ -497,7 +497,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
     }
     info("Copying overlay: %d bytes", overlay);
     if (do_seek)
-        fi->seek(-(long)overlay, SEEK_END);
+        fi->seek(-(off_t)overlay, SEEK_END);
 
     // get buffer size, align to improve i/o speed
     unsigned buf_size = buf->getSize();

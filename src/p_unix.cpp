@@ -67,7 +67,7 @@ bool PackUnix::canPack()
 
     // info: currently the header is 36 (32+4) bytes before EOF
     unsigned char buf[256];
-    fi->seek(-(long)sizeof(buf), SEEK_END);
+    fi->seek(-(off_t)sizeof(buf), SEEK_END);
     fi->readx(buf, sizeof(buf));
     checkAlreadyPacked(buf, sizeof(buf));
 

@@ -7,6 +7,7 @@ Changes in 1.12 beta (XX Jan 2001):
   * implemented several new options for finer compression control:
       `--all-methods', `--all-filters' and `--brute'
   * linux/386: added the option `--force-execve'
+  * documentation updates
 
 Changes in 1.11 beta (20 Dec 2000):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING

@@ -957,9 +957,13 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(long) >= 4);
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
     COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
-    COMPILE_TIME_ASSERT(((size_t) -1) > 0);
-    COMPILE_TIME_ASSERT(((ptrdiff_t) -1) < 0);
+
+    COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long));
     COMPILE_TIME_ASSERT(((off_t) -1) < 0);
+    COMPILE_TIME_ASSERT(sizeof(ptrdiff_t) >= sizeof(int));
+    COMPILE_TIME_ASSERT(((ptrdiff_t) -1) < 0);
+    COMPILE_TIME_ASSERT(sizeof(size_t) >= sizeof(int));
+    COMPILE_TIME_ASSERT(((size_t) -1) > 0);
 
     COMPILE_TIME_ASSERT(sizeof(BE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(BE32) == 4);
