@@ -308,7 +308,7 @@ ACCLIB_PUBLIC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t s
         n = fread(tmp, 1, n, fp);
         if (n == 0)
             break;
-        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
+        __ACCLIB_FUNCNAME(acc_hmemcpy)((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
         l += n;
     }
     return l;
@@ -345,7 +345,7 @@ ACCLIB_PUBLIC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hs
     while (l < size)
     {
         size_t n = size - l > sizeof(tmp) ? sizeof(tmp) : (size_t) (size - l);
-        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
+        __ACCLIB_FUNCNAME(acc_hmemcpy)(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
         n = fwrite(tmp, 1, n, fp);
         if (n == 0)
             break;
@@ -397,7 +397,7 @@ ACCLIB_PUBLIC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
             break;
         if (n < 0)
             return -1;
-        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
+        __ACCLIB_FUNCNAME(acc_hmemcpy)((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
         l += n;
     }
     return l;
@@ -432,7 +432,7 @@ ACCLIB_PUBLIC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
     while (l < size)
     {
         int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
-        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
+        __ACCLIB_FUNCNAME(acc_hmemcpy)(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
         n = write(fd, tmp, n);
         if (n == 0)
             break;
