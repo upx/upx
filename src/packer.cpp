@@ -489,8 +489,8 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
 
     do {
         unsigned len = overlay < buf_size ? overlay : buf_size;
-        fi->readx(buf, len);
-        fo->write(buf, len);
+        fi->readx(*buf, len);
+        fo->write(*buf, len);
         overlay -= len;
     } while (overlay > 0);
 }
@@ -800,7 +800,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
         }
     //fprintf(stderr,"relocnum=%x\n",relocn);
     out->alloc(4*relocn+4); // one extra data
-    LE32 *outp = (LE32*) (unsigned char *) out;
+    LE32 *outp = (LE32*) (unsigned char *) *out;
     LE32 *relocs = outp;
     unsigned jc = (unsigned) -4;
     for (p = *in; *p; p++)
