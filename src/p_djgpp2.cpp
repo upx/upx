@@ -33,7 +33,11 @@
 #include "p_djgpp2.h"
 
 static const
+#if 0
+#include "stub/djstub.h"
+#else
 #include "stub/stubify.h"
+#endif
 
 static const
 #include "stub/l_djgpp2.h"
