@@ -89,6 +89,12 @@
 
 unsigned upx_adler32(unsigned adler, const void *buf, unsigned len)
 {
+    if (buf == NULL)
+    {
+        assert(adler == 0);
+        assert(len == 0);
+        return 1;
+    }
 #if defined(WITH_NRV)
     return nrv_adler32(adler, (const nrv_byte *)buf, len);
 #elif defined(WITH_UCL)
