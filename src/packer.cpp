@@ -28,6 +28,7 @@
 
 //#define WANT_STL
 #include "conf.h"
+#include "version.h"
 #include "file.h"
 #include "packer.h"
 #include "filter.h"

@@ -27,6 +27,7 @@
 
 
 #include "conf.h"
+#include "version.h"
 #include "mygetopt.h"
 #include "file.h"
 

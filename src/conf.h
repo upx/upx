@@ -38,7 +38,6 @@
 #endif
 #include <limits.h>
 
-#include "version.h"
 #include "tailor.h"
 
 #if !defined(__i386__)
