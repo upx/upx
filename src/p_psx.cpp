@@ -35,17 +35,16 @@
 static const
 #include "stub/l_psx.h"
 
-//#define TESTING
 
-#define MIPS_HI(a) (((a)>>16)/*+((a&0x8000)>>15)*/)
-#define MIPS_LO(a) (a&0xffff)
-#define MIPS_JP(a) ((0x08<<24)|((a&0xfffffff)>>2))
-#define CHK_ALIGNED(a,b) (b-(a%b))
+#define MIPS_HI(a)      (((a) >> 16) /*+(((a)&0x8000)>>15)*/)
+#define MIPS_LO(a)      ((a) & 0xffff)
+#define MIPS_JP(a)      ((0x08 <<24) | (((a) & 0x0fffffff) >> 2))
+#define CHK_ALIGNED(a,b) ((b) - ((a) % (b)))
 
-#define PS_HDR_SIZE  2048  //one cd sector in bytes
-#define PS_MAX_SIZE  0x1e8000
+#define PS_HDR_SIZE     2048  // one CD sector in bytes
+#define PS_MAX_SIZE     0x1e8000
 
-#define IH_BKUP     (10*sizeof(LE32))
+#define IH_BKUP         (10*sizeof(LE32))
 
 
 /*************************************************************************
@@ -125,10 +124,11 @@ bool PackPsx::canPack()
     fi->readx(buf, sizeof(buf));
     checkAlreadyPacked(&buf, sizeof(buf));
     if (fdata_size != ih.tx_len || (ih.tx_len & 3))
+    {
         if (!opt->force)
             throwCantPack("check header for file size (try --force)");
-        else
-            cfile_size = fdata_size;
+        cfile_size = fdata_size;
+    }
     if (file_size <= (PS_HDR_SIZE*3) && !opt->force)
         throwCantPack("file is too small (try --force)");
     if (file_size > PS_MAX_SIZE && !opt->force)
@@ -220,28 +220,26 @@ void PackPsx::pack(OutputFile *fo)
     const int h_len = lsize-getLoaderSectionStart("IDENTSTR");
     const int e_len = lsize-h_len;
     const int d_len = e_len-getLoaderSectionStart("PSXDECO0");
-    upx_uint pad_code = 0;
-    upx_uint pad = 0;
 
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
 
-    pad = !cfile_size ? ih.tx_len : cfile_size;
-    pad = ALIGN_DOWN(pad,4);
-    pad_code = CHK_ALIGNED((ph.c_len),4);
+    unsigned pad, pad_code;
+    pad = cfile_size ? cfile_size : ih.tx_len;
+    pad = ALIGN_DOWN(pad, 4);
+    pad_code = CHK_ALIGNED(ph.c_len, 4);
 
-    upx_uint decomp_data_start = ih.tx_ptr;
+    unsigned decomp_data_start = ih.tx_ptr;
 
     // set the offset for compressed stuff at the very end of file
-    upx_uint comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
+    unsigned comp_data_start = (decomp_data_start+pad)-ph.c_len+(overlap ? overlap : 0);
 
     pad = 0;
-
     if (!opt->psx.no_align)
         // align the packed file to mode 2 data sector size (2048)
-        pad = CHK_ALIGNED((ph.c_len+pad_code+e_len),2048);
+        pad = CHK_ALIGNED(ph.c_len+pad_code+e_len, 2048);
 
-    int entry = (comp_data_start-e_len-pad_code);
+    const int entry = comp_data_start - e_len - pad_code;
     patchPackHeader(loader,lsize);
     patch_mips_le32(loader,e_len,"JPEP",MIPS_JP(ih.epc));
     if (scan_count)
@@ -336,7 +334,7 @@ void PackPsx::unpack(OutputFile *fo)
     memset(&oh.ih_bkup,0,IH_BKUP+4);
 
     // check for removed sector alignment
-    upx_uint pad = oh.tx_len-ph.u_len;
+    const unsigned pad = oh.tx_len - ph.u_len;
 
     obuf.allocForUncompression(ph.u_len+pad);
     memset(obuf,0,obuf.getSize());
