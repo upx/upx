@@ -345,7 +345,7 @@ PackMachPPC32::canPack()
         ptr += ((Mach_segment_command *)ptr)->cmdsize;
     }
 
-    
+
     // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
     qsort(msegcmd, mhdri.ncmds, sizeof(*msegcmd), compare_segment_command);
 

@@ -60,7 +60,7 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
         addi src,src,-1  # prepare for 'lbzu'
         addi dst,dst,-1  # prepare for 'stbu'
         li disp,-1  # initial displacement
-        
+
         mflr t3  # return address
         b bot_n2e
 
@@ -72,10 +72,10 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
 
    beql-: branch and link [call subroutine] if cr0 is eq, unlikely
 */
-#define jnextb0y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt+ 
-#define jnextb0n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt- 
-#define jnextb1y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt+ 
-#define jnextb1n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt- 
+#define jnextb0y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt+
+#define jnextb0n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt-
+#define jnextb1y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt+
+#define jnextb1n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt-
 
 /* rotate next bit into bottom bit of reg */
 #define getnextb(reg)              addc. bits,bits,bits; beql- get32; adde reg,reg,reg

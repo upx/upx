@@ -579,7 +579,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //  $ # Compare file 'dumped' with the portion of vmlinux that made piggy.o.
 //  $ dd if=vmlinux bs=<leader_size> skip=1  |  cmp - dumped
 //  cmp: EOF on dumped
-//  $ 
+//  $
 //----- test-piggy.S
 //#include <asm/mman.h>
 //#include <asm/unistd.h>
