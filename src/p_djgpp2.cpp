@@ -150,24 +150,26 @@ static bool is_dlm(InputFile *fi, long coff_offset)
 static void handle_allegropak(InputFile *fi, OutputFile *fo)
 {
     unsigned char buf[0x4000];
-    unsigned pfsize=0, ic;
+    int pfsize = 0;
 
     try {
-        fi->seek(-8,SEEK_END);
-        fi->readx(buf,8);
-        if (memcmp(buf,"slh+",4) != 0)
+        fi->seek(-8, SEEK_END);
+        fi->readx(buf, 8);
+        if (memcmp(buf, "slh+", 4) != 0)
             return;
-        pfsize = get_be32(buf+4);
-        fi->seek(-(off_t)pfsize,SEEK_END);
+        pfsize = get_be32_signed(buf+4);
+        if (pfsize <= 8 || pfsize >= fi->st.st_size)
+            return;
+        fi->seek(-pfsize, SEEK_END);
     } catch (const IOException&) {
         return;
     }
-    while (pfsize)
+    while (pfsize > 0)
     {
-        ic = pfsize < sizeof(buf) ? pfsize : sizeof(buf);
-        fi->readx(buf,ic);
-        fo->write(buf,ic);
-        pfsize -= ic;
+        const int len = UPX_MIN(pfsize, (int)sizeof(buf));
+        fi->readx(buf, len);
+        fo->write(buf, len);
+        pfsize -= len;
     }
 }
 

@@ -280,7 +280,7 @@ void PackTmt::pack(OutputFile *fo)
 
 int PackTmt::canUnpack()
 {
-    if (!PackTmt::readFileHeader())
+    if (!readFileHeader())
         return false;
     fi->seek(adam_offset, SEEK_SET);
     return readPackHeader(512) ? 1 : -1;

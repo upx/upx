@@ -323,7 +323,8 @@ public:
     void finish(upx_byte *&p,unsigned &size);
 };
 
-Reloc::Reloc(upx_byte *s,unsigned si) : start(s), size(si), rel(0)
+Reloc::Reloc(upx_byte *s,unsigned si) :
+    start(s), size(si), rel(NULL), rel1(NULL)
 {
     COMPILE_TIME_ASSERT(sizeof(reloc) == 8);
     memset(counts,0,sizeof(counts));
@@ -332,7 +333,8 @@ Reloc::Reloc(upx_byte *s,unsigned si) : start(s), size(si), rel(0)
         counts[type]++;
 }
 
-Reloc::Reloc(unsigned rnum) : rel(0)
+Reloc::Reloc(unsigned rnum) :
+    start(NULL), size(0), rel(NULL), rel1(NULL)
 {
     start = new upx_byte[rnum * 4 + 8192];
     counts[0] = 0;
@@ -790,8 +792,8 @@ private:
 Export::Export(char *_base) : base(_base), iv(_base)
 {
     COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40);
-    ename = functionptrs = ordinals = 0;
-    names = 0;
+    ename = functionptrs = ordinals = NULL;
+    names = NULL;
     memset(&edir,0,sizeof(edir));
     size = 0;
 }
@@ -1090,7 +1092,7 @@ class Resource
     void destroy(upx_rnode *urd,unsigned level);
 
 public:
-    Resource() : root(0) {}
+    Resource() : root(NULL) {}
     Resource(const upx_byte *p) {init(p);}
     ~Resource() {if (root) destroy (root,0);}
     void init(const upx_byte *);
@@ -1107,7 +1109,7 @@ public:
     upx_byte *build();
     bool clear();
 
-    void dump() const {dump (root,0);}
+    void dump() const { dump(root,0); }
 /*
     unsigned iname()  const {return current->parent->id;}
     const upx_byte *nname() const {return current->parent->name;}
