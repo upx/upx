@@ -5,15 +5,13 @@ all:
 	$(MAKE) -C src
 	$(MAKE) -C doc
 
-clean:
+clean distclean:
 	$(MAKE) -C src/stub $@
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
 
-distclean: clean
-
-dist:
-	sh ./maint/util/laszlo.sh
+dist: distclean
+	false
 
 cvs-admin-ko:
 	cvs admin -ko .
