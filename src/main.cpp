@@ -66,7 +66,7 @@ void init_options(struct options_t *o)
     o->w32pe.compress_exports = 1;
     o->w32pe.compress_icons = 2;
     o->w32pe.compress_resources = -1;
-    for (unsigned i = 0; i < HIGH(opt->w32pe.compress_rt); i++)
+    for (unsigned i = 0; i < TABLESIZE(opt->w32pe.compress_rt); i++)
         opt->w32pe.compress_rt[i] = -1;
     opt->w32pe.compress_rt[24] = false;     // 24 == RT_MANIFEST
     o->w32pe.strip_relocs = -1;

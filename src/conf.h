@@ -411,7 +411,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #  define UNUSED(parm)      (parm = parm)
 #endif
 
-#define HIGH(array)         ((unsigned) (sizeof(array)/sizeof((array)[0])))
+#define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 
 #define ALIGN_DOWN(a,b)     (((a) / (b)) * (b))
 #define ALIGN_UP(a,b)       ALIGN_DOWN((a) + ((b) - 1), b)

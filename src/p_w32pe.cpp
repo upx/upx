@@ -88,7 +88,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
-    COMPILE_TIME_ASSERT(RT_LAST == HIGH(opt->w32pe.compress_rt));
+    COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->w32pe.compress_rt));
 
     isection = NULL;
     oimport = NULL;
@@ -1831,7 +1831,7 @@ void PackW32Pe::pack(OutputFile *fo)
     memset(osection,0,sizeof(osection));
 
     oh.entry = upxsection;
-    oh.objects = HIGH(osection);
+    oh.objects = 3;
     oh.chksum = 0;
 
     // fill the data directory

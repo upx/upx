@@ -232,7 +232,7 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0xb3,99,          0, f_sub32_4, u_sub32_4, s_sub32_4 },
 };
 
-const int FilterImp::n_filters = HIGH(filters);
+const int FilterImp::n_filters = TABLESIZE(filters);
 
 
 /*

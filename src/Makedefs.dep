@@ -1,9 +1,14 @@
+ifeq ($(USE_GCC_DEPS),1)
+ifeq ($(DEPS_DONE),)
+DEPS_DONE = 1
+
 
 # /***********************************************************************
-# // automated dependencies
+# // gcc automated dependencies
 # ************************************************************************/
 
-CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
+EXTRA_CFLAGS   += -Wp,-MMD,.deps/$(*F).pp
+EXTRA_CXXFLAGS += -Wp,-MMD,.deps/$(*F).pp
 
 ifeq ($(strip $(wildcard .deps)),)
   DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
@@ -14,3 +19,6 @@ else
   endif
 endif
 
+
+endif
+endif

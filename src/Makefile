@@ -212,7 +212,7 @@ endif	# linux
 ifeq ($(target),cross-m68k-linux)
 include $(srcdir)/Makedefs.gcc
 CC = m68k-linux-gcc
-CC = m68k-linux-g++
+CXX = m68k-linux-g++
 DEFS += '-DUPX_CONFIG_H="config_h/linux.h"'
 ##LDLIBS += -lmcheck
 endif	# cross-m68k-linux
@@ -568,6 +568,6 @@ endif
 # // dependencies
 # ************************************************************************/
 
-include $(srcdir)/Makedefs.dep
+-include $(srcdir)/Makedefs.dep
 
 # vi:nowrap
