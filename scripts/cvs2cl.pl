@@ -9,14 +9,15 @@ exec perl -w -x $0 ${1+"$@"} # -*- mode: perl; perl-indent-level: 2; -*-
 ###                                                        ###
 ##############################################################
 
-## $Revision: 2.46 $
-## $Date: 2003/01/18 13:14:52 $
+## $Revision: 2.47 $
+## $Date: 2003/03/10 16:08:30 $
 ## $Author: fluffy $
 ##
 ##   (C) 2001,2002,2003 Martyn J. Pearce <fluffy@cpan.org>, under the GNU GPL.
 ##   (C) 1999 Karl Fogel <kfogel@red-bean.com>, under the GNU GPL.
 ##
 ##   (Extensively hacked on by Melissa O'Neill <oneill@cs.sfu.ca>.)
+##   (Gecos hacking by Robin Johnson <robbat2@orbis-terrarum.net>.)
 ##
 ## cvs2cl.pl is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -38,6 +39,7 @@ use strict;
 use Text::Wrap;
 use Time::Local;
 use File::Basename;
+use User::pwent;
 
 
 # The Plan:
@@ -78,7 +80,7 @@ use File::Basename;
 my $Log_Source_Command = "cvs log";
 
 # In case we have to print it out:
-my $VERSION = '$Revision: 2.46 $';
+my $VERSION = '$Revision: 2.47 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:
@@ -105,6 +107,15 @@ my $Cumulative = 0;
 # Expand usernames to email addresses based on a map file?
 my $User_Map_File = "";
 
+# Output log in chronological order? [default is reverse chronological order]
+my $Chronological_Order = 0;
+
+# Grab user details via gecos
+my $Gecos = 0;
+
+# User domain for gecos email addresses
+my $Domain = "";
+
 # Output to a file or to stdout?
 my $Output_To_Stdout = 0;
 
@@ -112,7 +123,10 @@ my $Output_To_Stdout = 0;
 my $Prune_Empty_Msgs = 0;
 
 # Tags of which not to output
-my @ignore_tags;
+my %ignore_tags;
+
+# Show only revisions with Tags
+my %show_tags;
 
 # Don't call Text::Wrap on the body of the message
 my $No_Wrap = 0;
@@ -177,6 +191,9 @@ my $Input_From_Stdin = 0;
 
 # Don't show filenames in output.
 my $Hide_Filenames = 0;
+
+# Don't shorten directory names from filenames.
+my $Common_Dir = 1;
 
 # Max checkin duration. CVS checkin is not atomic, so we may have checkin
 # times that span a range of time. We assume that checkins will last no
@@ -477,6 +494,22 @@ sub derive_change_log ()
         ($time, $author) = &parse_date_and_author ($_);
         if (defined ($usermap{$author}) and $usermap{$author}) {
           $author = $usermap{$author};
+        } elsif($Domain ne "" or $Gecos == 1) {
+          my $email = $author;
+          if($Domain ne "") {
+            $email = $author."@".$Domain;
+          }
+          my $pw = getpwnam($author);
+          my $fullname;
+          my $office;
+          my $workphone;
+          my $homephone;
+          for (($fullname, $office, $workphone, $homephone) = split /\s*,\s*/, $pw->gecos) {
+            s/&/ucfirst(lc($pw->name))/ge;
+          }
+          if($fullname ne "") {
+            $author = $fullname . "  <" . $email . ">";
+          }
         }
       }
       else {
@@ -769,7 +802,13 @@ sub derive_change_log ()
       print LOG_OUT "$declaration\n\n$root\n\n";
     }
 
-    foreach my $time (sort {$main::b <=> $main::a} (keys %changelog))
+    my @key_list = ();
+    if($Chronological_Order) {
+        @key_list = sort {$main::a <=> $main::b} (keys %changelog);
+    } else {
+        @key_list = sort {$main::b <=> $main::a} (keys %changelog);
+    }
+    foreach my $time (@key_list)
     {
       next if ($Delta_Mode &&
 	       (($time <= $Delta_StartTime) ||
@@ -832,16 +871,27 @@ sub derive_change_log ()
         }
 
       FOOBIE:
-        while (my ($msg,$qunklist) = each %$mesghash)
+        # We sort here to enable predictable ordering for the testing porpoises
+        for my $msg (sort keys %$mesghash)
         {
+          my $qunklist = $mesghash->{$msg};
+
           ## MJP: 19.xii.01 : Exclude @ignore_tags
-          for my $ignore_tag (@ignore_tags) {
+          for my $ignore_tag (keys %ignore_tags) {
             next FOOBIE
-              if grep $_ eq $ignore_tag, map(@{$_->{tags}},
+              if grep($_ eq $ignore_tag, map(@{$_->{tags}},
                                              grep(defined $_->{tags},
-                                                  @$qunklist));
+                                                  @$qunklist)));
           }
           ## MJP: 19.xii.01 : End exclude @ignore_tags
+
+	  # show only files with tag --show-tag $show_tag
+          if ( keys %show_tags ) {
+            next FOOBIE
+              if !grep(exists $show_tags{$_}, map(@{$_->{tags}},
+                                                  grep(defined $_->{tags},
+                                                       @$qunklist)));
+          }
 
           my $files               = &pretty_file_list ($qunklist);
           my $header_line;          # date and author
@@ -1017,7 +1067,15 @@ sub pretty_file_list ()
   }
 
   my $qunksref = shift;
-  my @qunkrefs = @$qunksref;
+
+  my @qunkrefs =
+    grep +((! exists $_->{'tags'}                             or
+            ! grep exists $ignore_tags{$_}, @{$_->{'tags'}})        and
+           (! keys %show_tags                                 or
+            (exists $_->{'tags'}                                and
+             grep exists $show_tags{$_}, @{$_->{'tags'}}))
+          ),
+    @$qunksref;
   my @filenames;
   my $beauty = "";          # The accumulating header string for this entry.
   my %non_unanimous_tags;   # Tags found in a proper subset of qunks
@@ -1032,17 +1090,10 @@ sub pretty_file_list ()
  QUNKREF:
   foreach my $qunkref (@qunkrefs)
   {
-    ## MJP: 19.xii.01 : Exclude @ignore_tags
-    for my $ignore_tag (@ignore_tags) {
-      next QUNKREF
-        if grep $_ eq $ignore_tag, @{$$qunkref{'tags'}};
-    }
-    ## MJP: 19.xii.01 : End exclude @ignore_tags
-
     # Keep track of whether all the files in this commit were in the
     # same directory, and memorize it if so.  We can make the output a
     # little more compact by mentioning the directory only once.
-    if ((scalar (@qunkrefs)) > 1)
+    if ($Common_Dir && (scalar (@qunkrefs)) > 1)
     {
       if (! (defined ($common_dir)))
       {
@@ -1232,17 +1283,12 @@ sub pretty_file_list ()
   # Okay; any qunks that were done according to branch are taken care
   # of, and marked as printed.  Now print everyone else.
 
+  my %fileinfo_printed;
   foreach my $qunkref (@qunkrefs)
   {
     next if (defined ($$qunkref{'printed'}));   # skip if already printed
 
-    if ($fbegun) {
-      $beauty .= ", ";
-    }
-    else {
-      $fbegun = 1;
-    }
-    $beauty .= substr ($$qunkref{'filename'}, length ($common_dir));
+    my $b = substr ($$qunkref{'filename'}, length ($common_dir));
     # todo: Shlomo's change was this:
     # $beauty .= substr ($$qunkref{'filename'},
     #              (($common_dir eq "./") ? "" : length ($common_dir)));
@@ -1254,25 +1300,34 @@ sub pretty_file_list ()
 
       if ($Show_Revisions) {
         $started_addendum = 1;
-        $beauty .= " (";
-        $beauty .= "$$qunkref{'revision'}";
+        $b .= " (";
+        $b .= "$$qunkref{'revision'}";
       }
       if ($Show_Tags && (defined $$qunkref{'tags'})) {
         my @tags = grep ($non_unanimous_tags{$_}, @{$$qunkref{'tags'}});
         if ((scalar (@tags)) > 0) {
           if ($started_addendum) {
-            $beauty .= ", ";
+            $b .= ", ";
           }
           else {
-            $beauty .= " (tags: ";
+            $b .= " (tags: ";
           }
-          $beauty .= join (', ', @tags);
+          $b .= join (', ', @tags);
           $started_addendum = 1;
         }
       }
       if ($started_addendum) {
-        $beauty .= ")";
+        $b .= ")";
       }
+    }
+
+    unless ( exists $fileinfo_printed{$b} ) {
+      if ($fbegun) {
+        $beauty .= ", ";
+      } else {
+        $fbegun = 1;
+      }
+      $beauty .= $b, $fileinfo_printed{$b} = 1;
     }
   }
 
@@ -1591,7 +1646,7 @@ sub maybe_read_user_map_file ()
       else {
         $expansions{$username} = $expansion;
       }
-    }
+    } # fi ($User_Map_File)
 
     close (MAPFILE);
   }
@@ -1648,13 +1703,27 @@ sub parse_options ()
     elsif ($arg =~ /^--fsf$/) {
       $FSF_Style = 1;
     }
+    elsif ($arg =~ /^--FSF$/) {
+      $Show_Times = 0;
+      $Common_Dir = 0;
+    }
     elsif ($arg =~ /^-U$|^--usermap$/) {
       my $narg = shift (@ARGV) || die "$arg needs argument.\n";
       $User_Map_File = $narg;
     }
+    elsif ($arg =~ /^--gecos$/) {
+      $Gecos = 1;
+    }
+    elsif ($arg =~ /^--domain$/) {
+      my $narg = shift (@ARGV) || die "$arg needs argument.\n";
+      $Domain = $narg;
+    }
     elsif ($arg =~ /^-W$|^--window$/) {
       defined(my $narg = shift (@ARGV)) || die "$arg needs argument.\n";
       $Max_Checkin_Duration = $narg;
+    }
+    elsif ($arg =~ /^--chrono$/) {
+      $Chronological_Order = 1;
     }
     elsif ($arg =~ /^-I$|^--ignore$/) {
       my $narg = shift (@ARGV) || die "$arg needs argument.\n";
@@ -1731,10 +1800,18 @@ sub parse_options ()
       $Hide_Filenames = 1;
       $After_Header = "";
     }
+    elsif ($arg =~ /^--no-common-dir$/) {
+      $Common_Dir = 0;
+    }
     elsif ($arg =~ /^--ignore-tag$/ ) {
       die "$arg needs argument.\n"
         unless @ARGV;
-      push @ignore_tags, shift @ARGV;
+      $ignore_tags{shift @ARGV} = 1;
+    }
+    elsif ($arg =~ /^--show-tag$/ ) {
+      die "$arg needs argument.\n"
+        unless @ARGV;
+      $show_tags{shift @ARGV} = 1;
     }
     else {
       # Just add a filename as argument to the log command
@@ -1864,8 +1941,11 @@ Options/Arguments:
   -d, --distributed            Put ChangeLogs in subdirs
   -f FILE, --file FILE         Write to FILE instead of "ChangeLog"
   --fsf                        Use this if log data is in FSF ChangeLog style
+  --FSF                        Attempt strict FSF-standard compatible output
   -W SECS, --window SECS       Window of time within which log entries unify
   -U UFILE, --usermap UFILE    Expand usernames to email addresses from UFILE
+  --domain DOMAIN              Domain to build email addresses from
+  --gecos                      Get user information from GECOS data
   -R REGEXP, --regexp REGEXP   Include only entries that match REGEXP
   -I REGEXP, --ignore REGEXP   Ignore files whose names match REGEXP
   -C, --case-insensitive       Any regexp matching is done case-insensitively
@@ -1880,7 +1960,20 @@ Options/Arguments:
   --xml                        Output XML instead of ChangeLog format
   --xml-encoding ENCODING      Insert encoding clause in XML header
   --hide-filenames             Don't show filenames (ignored for XML output)
+  --no-common-dir              Don't shorten directory names from filenames.
   -P, --prune                  Don't show empty log messages
+  --ignore-tag TAG             Ignore individual changes that are associated
+                               with a given tag.  May be repeated, if so,
+                               changes that are associated with any of the
+                               given tags are ignored.
+  --show-tag TAG               Log only individual changes that are associated
+                               with a given tag.  May be repeated, if so,
+                               changes that are associated with any of the
+                               given tags are logged.
+  --delta FROM_TAG:TO_TAG      Attempt a delta between two tags (since FROM_TAG
+                               up to & including TO_TAG).  The algorithm is a
+                               simple date-based one (this is a *hard* problem)
+                               so results are imperfect
   -g OPTS, --global-opts OPTS  Invoke like this "cvs OPTS log ..."
   -l OPTS, --log-opts OPTS     Invoke like this "cvs ... log OPTS"
   FILE1 [FILE2 ...]            Show only log information for the named FILE(s)
