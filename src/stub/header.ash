@@ -45,13 +45,13 @@
                 dw      0               ; 16  uncompressed len
                 dw      0               ; 18  compressed len
                 db      0               ; 20  filter
-                db      0               ; 21  header checksum
+                db      45              ; 21  header checksum
  %elifdef EXE
                 db      0,0,0           ; 16  uncompressed len
                 db      0,0,0           ; 19  compressed len
                 db      0,0,0           ; 22  original file size
                 db      0               ; 25  filter
-                db      0               ; 26  header checksum
+                db      45              ; 26  header checksum
  %else
                 dd      0               ; 16  uncompressed len
                 dd      0               ; 20  compressed len

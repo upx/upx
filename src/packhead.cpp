@@ -110,7 +110,7 @@ void PackHeader::putPackHeader(upx_bytep p)
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p+4) != UPX_MAGIC2_LE32)
     {
-        printf("%x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
+        //printf("%x %x\n", get_le32(p+4), UPX_MAGIC2_LE32);
         throwBadLoader();
     }
 
@@ -181,7 +181,7 @@ void PackHeader::putPackHeader(upx_bytep p)
     {
         if (p[size - 1] != old_chksum)
         {
-            printf("old_checksum: %d %d\n", p[size - 1], old_chksum);
+            //printf("old_checksum: %d %d\n", p[size - 1], old_chksum);
             throwBadLoader();
         }
     }
