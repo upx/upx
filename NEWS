@@ -7,12 +7,15 @@ Changes in 1.12 beta (XX Jan 2001):
   * implemented several new options for finer compression control:
       `--all-methods', `--all-filters' and `--brute'
   * linux/386: added the option `--force-execve'
+  * vmlinuz/386: better kernel detection and sanity checks
   * documentation updates
 
 Changes in 1.11 beta (20 Dec 2000):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * vmlinuz/386: new format - UPX now supports bootable linux kernels
-  * linux/386: added the new direct-to-memory executable formats - no
+  * linux/elf386: added the new ELF direct-to-memory executable format - no
+    more temp files are needed for decompression!
+  * linux/sh386: added the new shell direct-to-memory executable format - no
     more temp files are needed for decompression!
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
