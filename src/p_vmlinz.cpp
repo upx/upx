@@ -411,14 +411,34 @@ int PackVmlinuzI386::canUnpack()
 }
 
 
-void PackVmlinuzI386::unpack(OutputFile *)
+void PackVmlinuzI386::unpack(OutputFile *fo)
 {
     // no uncompression support for this format, so that
     // it is possible to remove the original deflate code (>10KB)
 
     // FIXME: but we could write the uncompressed "vmlinux" image
 
-    throwCantUnpack("build a new kernel instead :-)");
+    ibuf.alloc(ph.c_len);
+    obuf.allocForUncompression(ph.u_len);
+
+    fi->seek(setup_size + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
+    fi->readx(ibuf, ph.c_len);
+
+    // decompress
+    decompress(ibuf, obuf);
+
+    // unfilter
+    Filter ft(ph.level);
+    ft.init(ph.filter, kernel_entry);
+    ft.cto = (unsigned char) ph.filter_cto;
+    ft.unfilter(obuf, ph.u_len);
+
+    // write decompressed file
+    if (fo)
+    {
+        throwCantUnpack("build a new kernel instead :-)");
+        //fo->write(obuf, ph.u_len);
+    }
 }
 
 
