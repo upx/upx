@@ -51,6 +51,25 @@ inline void set_be16(void *bb, unsigned v)
 }
 
 
+inline unsigned get_be24(const void *bb)
+{
+    const upx_bytep b = (const upx_bytep) bb;
+    unsigned v;
+    v  = (unsigned) b[2] <<  0;
+    v |= (unsigned) b[1] <<  8;
+    v |= (unsigned) b[0] << 16;
+    return v;
+}
+
+inline void set_be24(void *bb, unsigned v)
+{
+    upx_bytep b = (upx_bytep) bb;
+    b[2] = (unsigned char) (v >>  0);
+    b[1] = (unsigned char) (v >>  8);
+    b[0] = (unsigned char) (v >> 16);
+}
+
+
 inline unsigned get_be32(const void *bb)
 {
     const upx_bytep b = (const upx_bytep) bb;
@@ -160,6 +179,12 @@ inline int get_be16_signed(const void *bb)
 {
     int v = get_be16(bb);
     return sign_extend(v, 16);
+}
+
+inline int get_be24_signed(const void *bb)
+{
+    int v = get_be24(bb);
+    return sign_extend(v, 24);
 }
 
 inline int get_be32_signed(const void *bb)
@@ -315,12 +340,16 @@ inline T* operator - (T* ptr, const LE32& v) { return ptr - (const unsigned) v; 
 
 // for use with qsort()
 int be16_compare(const void *e1, const void *e2);
+int be24_compare(const void *e1, const void *e2);
 int be32_compare(const void *e1, const void *e2);
 int le16_compare(const void *e1, const void *e2);
+int le24_compare(const void *e1, const void *e2);
 int le32_compare(const void *e1, const void *e2);
 int be16_compare_signed(const void *e1, const void *e2);
+int be24_compare_signed(const void *e1, const void *e2);
 int be32_compare_signed(const void *e1, const void *e2);
 int le16_compare_signed(const void *e1, const void *e2);
+int le24_compare_signed(const void *e1, const void *e2);
 int le32_compare_signed(const void *e1, const void *e2);
 
 
