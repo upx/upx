@@ -35,8 +35,6 @@
 static const
 #include "stub/l_com.h"
 
-#define STACKSIZE 0x60
-
 //#define TESTING
 
 
@@ -107,7 +105,10 @@ void PackCom::patchLoader(OutputFile *fo,
     assert(d_len > 0 && d_len < 256);
 
     const unsigned upper_end = ph.u_len + ph.overlap_overhead + d_len + 0x100;
-    if (upper_end + STACKSIZE > 0xfffe)
+    unsigned stacksize = 0x60;
+    if (upper_end + stacksize > 0xfffe)
+        stacksize = 0x56;
+    if (upper_end + stacksize > 0xfffe)
         throwNotCompressible();
 
     if (filter_id)
@@ -124,7 +125,7 @@ void PackCom::patchLoader(OutputFile *fo,
     patch_le16(loader,e_len,"DI",upper_end);
     patch_le16(loader,e_len,"SI",ph.c_len + lsize + 0x100);
     patch_le16(loader,e_len,"CX",ph.c_len + lsize);
-    patch_le16(loader,e_len,"SP",upper_end + STACKSIZE);
+    patch_le16(loader,e_len,"SP",upper_end + stacksize);
 
     // write loader + compressed file
     fo->write(loader,e_len);            // entry
