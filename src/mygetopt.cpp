@@ -21,14 +21,13 @@
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 
+
+#undef PROGNAME
+#if 0
 #ifndef EOF
 #include <stdio.h>
 #include <string.h>
 #endif
-
-
-#undef PROGNAME
-#if 1
 #define PROGNAME(x)     (x)
 #else
 #include "conf.h"

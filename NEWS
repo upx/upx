@@ -4,9 +4,12 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
-Changes in 1.92 beta (XX XXX 2004):
+Changes in 1.92 beta (20 Jul 2004):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * win32/pe: added option `--strip-loadconf' to strip the SEH load config section
+  * win32/pe: try to detect .NET (win32/net) files [not yet supported by UPX]
+  * vmlinux/386: new format that directly supports ELF kernels
+  * source code: now compiles cleanly under Win64
 
 Changes in 1.91 beta (30 Jun 2004):
   * djgpp2/coff: added support for recent binutils versions

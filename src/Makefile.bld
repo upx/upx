@@ -38,6 +38,9 @@ endif
 # util var for use in the rules - basename of the current target
 override T = $(basename $@)
 
+# expand "VAR" into "$(VAR) $(EXTRA_VAR) $(UPX_EXTRA_VAR)"
+override __mkflags = $(strip $($(1)) $(EXTRA_$(1)) $(UPX_EXTRA_$(1)))
+
 
 # /***********************************************************************
 # // compiler defaults
@@ -45,9 +48,9 @@ override T = $(basename $@)
 
 CC_SRC  = $<
 CXX_SRC = $<
-CC_COMPILE    = $(CC)  $(CCARCH)  $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CFLAGS)   $(EXTRA_CFLAGS)   $(CFLAGS_OUTPUT)   -c $(CC_SRC)
-CXX_COMPILE   = $(CXX) $(CXXARCH) $(DEFS) $(EXTRA_DEFS) $(INCLUDES) $(EXTRA_INCLUDES) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $(CXXFLAGS_OUTPUT) -c $(CXX_SRC)
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) $(EXTRA_LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(LDLIBS) $(EXTRA_LDLIBS) $(LINK_EXE_LDFLAGS)
+CC_COMPILE    = $(CC)  $(CCARCH)  $(call __mkflags,DEFS) $(call __mkflags,INCLUDES) $(call __mkflags,CFLAGS)   $(CFLAGS_OUTPUT)   -c $(CC_SRC)
+CXX_COMPILE   = $(CXX) $(CXXARCH) $(call __mkflags,DEFS) $(call __mkflags,INCLUDES) $(call __mkflags,CXXFLAGS) $(CXXFLAGS_OUTPUT) -c $(CXX_SRC)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(call __mkflags,LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(call __mkflags,LDLIBS)
 STUBEDIT_EXE  =
 STUBIFY_EXE   =
 CHMOD_EXE     =
@@ -618,7 +621,7 @@ o = .obj
 a = .lib
 e = .exe
 CC = cl -nologo
-CFLAGS = -W4
+CFLAGS = -W4 -Wall
 CXXFLAGS = $(CFLAGS) -EHac -GR
 LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@

@@ -18,8 +18,8 @@ CXXFLAGS_W =
 CXXFLAGS_M =
 CXXFLAGS_O =
 
-CFLAGS    = $(CFLAGS_W)   $(EXTRA_CFLAGS_W)   $(CFLAGS_M)   $(CFLAGS_O)   $(EXTRA_CFLAGS_O)
-CXXFLAGS  = $(CXXFLAGS_W) $(EXTRA_CXXFLAGS_W) $(CXXFLAGS_M) $(CXXFLAGS_O) $(EXTRA_CXXFLAGS_O)
+CFLAGS    = $(call __mkflags,CFLAGS_W)   $(call __mkflags,CFLAGS_M)   $(call __mkflags,CFLAGS_O)
+CXXFLAGS  = $(call __mkflags,CXXFLAGS_W) $(call __mkflags,CXXFLAGS_M) $(call __mkflags,CXXFLAGS_O)
 
 
 #

@@ -38,15 +38,7 @@
 
 #include "acc/acc.h"
 #if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
-# undef HAVE_UTIME_H /* this pulls in <windows.h> */
-#endif
-#include "acc/acc_incd.h"
-#include "acc/acc_ince.h"
-#include "acc/acc_lib.h"
-#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
-#    error "something pulled in <windows.h>"
-#  endif
+#  undef HAVE_UTIME_H /* this pulls in <windows.h> */
 #endif
 
 
@@ -95,6 +87,12 @@
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
 #  pragma warning(disable: 4514)        // W4: 'function': unreferenced inline function has been removed
 #  pragma warning(disable: 4710)        // W4: 'function': function not inlined
+#  if (_MSC_VER >= 1300)
+#    pragma warning(disable: 4625)      // W4:
+#    pragma warning(disable: 4626)      // W4:
+#    pragma warning(disable: 4711)      // W4:
+#    pragma warning(disable: 4820)      // W4:
+#  endif
 #  if (_MSC_VER >= 1400)
 #    pragma warning(disable: 4996)      // W1: 'function': was declared deprecated
 #  endif
@@ -104,6 +102,16 @@
 #  endif
 #  if defined(__cplusplus)
 #    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
+#  endif
+#endif
+
+
+#include "acc/acc_incd.h"
+#include "acc/acc_ince.h"
+#include "acc/acc_lib.h"
+#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
+#    error "something pulled in <windows.h>"
 #  endif
 #endif
 
