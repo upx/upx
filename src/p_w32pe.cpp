@@ -1721,7 +1721,7 @@ void PackW32Pe::pack(OutputFile *fo)
         patch_le32(loader,codesize,"BIMP",cimports);
     }
 
-    if (patchFilter32(loader, lsize, &ft))
+    if (patchFilter32(loader, codesize, &ft))
     {
         const unsigned texv = ih.codebase - rvamin;
         if (texv)
