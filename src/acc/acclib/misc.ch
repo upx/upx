@@ -105,10 +105,8 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
 #if (ACC_OS_DOS16 && !defined(ACC_CC_AZTECC))
     {
         union REGS ri, ro;
-        ri.x.ax = 0x4400;
-        ri.x.bx = fd;
-        ro.x.ax = 0xffff;
-        ro.x.cflag = 1;
+        ri.x.ax = 0x4400; ri.x.bx = fd;
+        ro.x.ax = 0xffff; ro.x.cflag = 1;
         int86(0x21, &ri, &ro);
         if ((ro.x.cflag & 1) == 0)  /* if carry flag not set */
             if ((ro.x.ax & 0x83) != 0x83)
@@ -116,7 +114,13 @@ ACCLIB_PUBLIC(int, acc_isatty) (int fd)
     }
 #elif (ACC_OS_DOS32 && ACC_CC_WATCOMC)
     {
-        /* FIXME */
+        union REGS ri, ro;
+        ri.w.ax = 0x4400; ri.w.bx = (unsigned short) fd;
+        ro.w.ax = 0xffff; ro.w.cflag = 1;
+        int386(0x21, &ri, &ro);
+        if ((ro.w.cflag & 1) == 0)  /* if carry flag not set */
+            if ((ro.w.ax & 0x83) != 0x83)
+                return 0;
     }
 #elif (ACC_H_WINDOWS_H)
     {
@@ -153,26 +157,17 @@ ACCLIB_PUBLIC(int, acc_mkdir) (const char* name, unsigned mode)
 ACCLIB_PUBLIC(acc_int32l_t, acc_muldiv32) (acc_int32l_t a, acc_int32l_t b, acc_int32l_t x)
 {
     acc_int32l_t r = 0;
-    if (x == 0)
-        return r;
-#if (SIZEOF_ACC_INT32L_T > 4)
-    if (a > ACC_INT32L_C(2147483647) || b > (ACC_INT32L_C(-2147483647) - 1))
-        return r;
-#endif
+    if (x == 0) return x;
     /* FIXME */
     ACC_UNUSED(a); ACC_UNUSED(b);
     return r;
 }
 
+
 ACCLIB_PUBLIC(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t a, acc_uint32l_t b, acc_uint32l_t x)
 {
     acc_uint32l_t r = 0;
-    if (x == 0)
-        return r;
-#if (SIZEOF_ACC_INT32L_T > 4)
-    if (a > ACC_UINT32L_C(0xffffffff) || b > ACC_UINT32L_C(0xffffffff))
-        return r;
-#endif
+    if (x == 0) return x;
     /* FIXME */
     ACC_UNUSED(a); ACC_UNUSED(b);
     return r;

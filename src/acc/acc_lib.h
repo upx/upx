@@ -197,12 +197,46 @@ ACCLIB_EXTERN(int,  acc_mkdir) (const char* name, unsigned mode);
 ACCLIB_EXTERN(int,  acc_response) (int* argc, char*** argv);
 ACCLIB_EXTERN(int,  acc_set_binmode) (int fd, int binary);
 
-#if defined(acc_uint64l_t)
-#  define acc_uclock_t      acc_uint64l_t
-#else
-#  define acc_uclock_t      acc_uint32l_t
+ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
+ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
+
+
+/*************************************************************************
+// uclock
+**************************************************************************/
+
+typedef struct { /* all private */
+    acclib_handle_t h;
+    int mode;
+#if (ACC_H_WINDOWS_H) && defined(acc_uint64l_t)
+    double qpf;
 #endif
-ACCLIB_EXTERN(acc_uclock_t, acc_uclock) (void);
+} acc_uclock_handle_t;
+
+typedef struct { /* all private */
+    union {
+        acc_uint32l_t t32;
+#if !(ACC_OS_DOS16 || ACC_OS_WIN16)
+        double td;
+#  if defined(acc_int64l_t)
+        acc_int64l_t t64;
+#  endif
+#endif
+    } ticks;
+#if (ACC_H_WINDOWS_H) && defined(acc_int64l_t)
+    acc_int64l_t qpc;
+#endif
+} acc_uclock_t;
+
+ACCLIB_EXTERN(int, acc_uclock_open)  (acc_uclock_handle_t*);
+ACCLIB_EXTERN(int, acc_uclock_close) (acc_uclock_handle_t*);
+ACCLIB_EXTERN(void, acc_uclock_read) (acc_uclock_handle_t*, acc_uclock_t*);
+ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_t*, const acc_uclock_t*, const acc_uclock_t*);
+
+
+/*************************************************************************
+// bele (Big Endian / Little Endian)
+**************************************************************************/
 
 ACCLIB_EXTERN(unsigned, acc_get_be16) (const acc_hvoid_p);
 ACCLIB_EXTERN(acc_uint32l_t, acc_get_be24) (const acc_hvoid_p);
@@ -222,6 +256,7 @@ ACCLIB_EXTERN(void, acc_set_be64) (acc_hvoid_p, acc_uint64l_t);
 ACCLIB_EXTERN(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p);
 ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #endif
+
 /* inline versions */
 #if (ACC_ARCH_IA32)
 #  define ACC_GET_LE16(p)       (* (const unsigned short *) (p))
@@ -230,8 +265,10 @@ ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
 #  define ACC_SET_LE32(p,v)     (* (unsigned int *) (p) = (unsigned int) (v))
 #endif
 
-ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
-ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);
+
+/*************************************************************************
+// rand
+**************************************************************************/
 
 typedef struct {
     acc_uint32l_t seed;
@@ -245,6 +282,7 @@ typedef struct {
 } acc_rand48_t;
 ACCLIB_EXTERN(void, acc_srand48) (acc_rand48_t* r, acc_uint32l_t seed);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand48) (acc_rand48_t* r);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand48_r32) (acc_rand48_t* r);
 #endif
 
 #if defined(acc_uint64l_t)
@@ -253,7 +291,16 @@ typedef struct {
 } acc_rand64_t;
 ACCLIB_EXTERN(void, acc_srand64) (acc_rand64_t* r, acc_uint64l_t seed);
 ACCLIB_EXTERN(acc_uint32l_t, acc_rand64) (acc_rand64_t* r);
+ACCLIB_EXTERN(acc_uint32l_t, acc_rand64_r32) (acc_rand64_t* r);
 #endif
+
+typedef struct {
+    unsigned n;
+    acc_uint32l_t s[624];
+} acc_randmt_t;
+ACCLIB_EXTERN(void, acc_srandmt) (acc_randmt_t* r, acc_uint32l_t seed);
+ACCLIB_EXTERN(acc_uint32l_t, acc_randmt) (acc_randmt_t* r);
+ACCLIB_EXTERN(acc_uint32l_t, acc_randmt_r32) (acc_randmt_t* r);
 
 
 #endif /* already included */

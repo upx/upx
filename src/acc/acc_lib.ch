@@ -39,6 +39,7 @@
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
 
+#include ACC_CONFIG_INCLUDE("acclib/bele.ch")
 #include ACC_CONFIG_INCLUDE("acclib/hmemcpy.ch")
 #include ACC_CONFIG_INCLUDE("acclib/halloc.ch")
 #include ACC_CONFIG_INCLUDE("acclib/dosalloc.ch")
@@ -47,6 +48,11 @@
 #include ACC_CONFIG_INCLUDE("acclib/opendir.ch")
 #include ACC_CONFIG_INCLUDE("acclib/rand.ch")
 #include ACC_CONFIG_INCLUDE("acclib/misc.ch")
+
+#if 0
+/* modules which use floating point are not included by default */
+#include ACC_CONFIG_INCLUDE("acclib/uclock.ch")
+#endif
 
 
 /*

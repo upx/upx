@@ -362,6 +362,8 @@
 #    undef HAVE_ALLOCA
 #  endif
 #elif defined(__MINGW32__)
+#  define snprintf _snprintf
+#  define vsnprintf _vsnprintf
 #elif (ACC_CC_PACIFICC)
 #  undef HAVE_ACCESS
 #  undef HAVE_ALLOCA

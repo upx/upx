@@ -46,8 +46,6 @@
 // ignored or misinterpreted (e.g. implicit cast from -1 to unsigned long)
 // on some systems. OTOS, on modern compilers, the "switch" version
 // may produce a pedantic warning about "selector expr. is constant".
-// Also, the "switch" version must appear in a function body, so you
-// cannot use this macro in header files.
 ************************************************************************/
 
 /* This can be put into a header file but may get ignored by some compilers */
