@@ -30,7 +30,7 @@
  */
 
 
-#if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
+#if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1300))
 #  pragma warning(disable: 4702)        // W4: unreachable code
 #endif
 

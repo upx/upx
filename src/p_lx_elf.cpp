@@ -353,7 +353,7 @@ void PackLinuxI386elf::pack3(OutputFile *fo, Filter &ft)
             // checksum UPX! lsize version format
         sizeof(l_info) +
             // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((elfout.ehdr.e_phnum==3) ? elfout.phdr[2].p_memsz : 0) +
+        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0u) +
             // p_progid, p_filesize, p_blocksize
         sizeof(p_info) +
             // compressed data
