@@ -34,26 +34,26 @@
 // access memory in BigEndian and LittleEndian byte order
 **************************************************************************/
 
-inline unsigned short get_be16(const void *bb, int off=0)
+inline unsigned short get_be16(const void *bb)
 {
-    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb) + off;
+    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb);
     unsigned v;
     v  = (unsigned) b[1] <<  0;
     v |= (unsigned) b[0] <<  8;
     return (unsigned short) v;
 }
 
-inline void set_be16(void *bb, unsigned v, int off=0)
+inline void set_be16(void *bb, unsigned v)
 {
-    upx_bytep const b = reinterpret_cast<upx_bytep>(bb) + off;
+    upx_bytep const b = reinterpret_cast<upx_bytep>(bb);
     b[1] = (unsigned char) (v >>  0);
     b[0] = (unsigned char) (v >>  8);
 }
 
 
-inline unsigned get_be32(const void *bb, int off=0)
+inline unsigned get_be32(const void *bb)
 {
-    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb) + off;
+    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb);
     unsigned v;
     v  = (unsigned) b[3] <<  0;
     v |= (unsigned) b[2] <<  8;
@@ -62,9 +62,9 @@ inline unsigned get_be32(const void *bb, int off=0)
     return v;
 }
 
-inline void set_be32(void *bb, unsigned v, int off=0)
+inline void set_be32(void *bb, unsigned v)
 {
-    upx_bytep const b = reinterpret_cast<upx_bytep>(bb) + off;
+    upx_bytep const b = reinterpret_cast<upx_bytep>(bb);
     b[3] = (unsigned char) (v >>  0);
     b[2] = (unsigned char) (v >>  8);
     b[1] = (unsigned char) (v >> 16);
@@ -72,9 +72,9 @@ inline void set_be32(void *bb, unsigned v, int off=0)
 }
 
 
-inline unsigned short get_le16(const void *bb, int off=0)
+inline unsigned short get_le16(const void *bb)
 {
-    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb) + off;
+    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb);
     unsigned v;
 #if defined(__i386__)
     v = * (const unsigned short *) b;
@@ -85,9 +85,9 @@ inline unsigned short get_le16(const void *bb, int off=0)
     return (unsigned short) v;
 }
 
-inline void set_le16(void *bb, unsigned v, int off=0)
+inline void set_le16(void *bb, unsigned v)
 {
-    upx_bytep const b = reinterpret_cast<upx_bytep>(bb) + off;
+    upx_bytep const b = reinterpret_cast<upx_bytep>(bb);
 #if defined(__i386__)
     (* (unsigned short *) b) = (unsigned short) v;
 #else
@@ -97,9 +97,9 @@ inline void set_le16(void *bb, unsigned v, int off=0)
 }
 
 
-inline unsigned get_le24(const void *bb, int off=0)
+inline unsigned get_le24(const void *bb)
 {
-    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb) + off;
+    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb);
     unsigned v;
     v  = (unsigned) b[0] <<  0;
     v |= (unsigned) b[1] <<  8;
@@ -107,18 +107,18 @@ inline unsigned get_le24(const void *bb, int off=0)
     return v;
 }
 
-inline void set_le24(void *bb, unsigned v, int off=0)
+inline void set_le24(void *bb, unsigned v)
 {
-    upx_bytep const b = reinterpret_cast<upx_bytep>(bb) + off;
+    upx_bytep const b = reinterpret_cast<upx_bytep>(bb);
     b[0] = (unsigned char) (v >>  0);
     b[1] = (unsigned char) (v >>  8);
     b[2] = (unsigned char) (v >> 16);
 }
 
 
-inline unsigned get_le32(const void *bb, int off=0)
+inline unsigned get_le32(const void *bb)
 {
-    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb) + off;
+    const upx_bytep const b = reinterpret_cast<const upx_bytep>(bb);
     unsigned v;
 #if defined(__i386__)
     v = * (const unsigned *) b;
@@ -131,9 +131,9 @@ inline unsigned get_le32(const void *bb, int off=0)
     return v;
 }
 
-inline void set_le32(void *bb, unsigned v, int off=0)
+inline void set_le32(void *bb, unsigned v)
 {
-    upx_bytep const b = reinterpret_cast<upx_bytep>(bb) + off;
+    upx_bytep const b = reinterpret_cast<upx_bytep>(bb);
 #if defined(__i386__)
     (* (unsigned *) b) = v;
 #else

@@ -949,7 +949,10 @@ char const *Packer::identstr(unsigned &size)
 void Packer::initLoader(const void *pdata, int plen, int pinfo)
 {
     if (pinfo < 0)
-        pinfo =  ~3 & (3 + get_le16(pdata, plen - 2));
+    {
+        pinfo =  get_le16((const unsigned char *)pdata + plen - 2);
+        pinfo =  (pinfo + 3) &~ 3;
+    }
 
     delete linker;
     if (getFormat() < 128)

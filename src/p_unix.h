@@ -66,8 +66,8 @@ protected:
 
     // in order too share as much code as possible we introduce
     // an endian abstraction here
-    virtual unsigned get_native32(const void *, int off=0) = 0;
-    virtual void set_native32(void *, unsigned, int off=0) = 0;
+    virtual unsigned get_native32(const void *) = 0;
+    virtual void set_native32(void *, unsigned) = 0;
 
     virtual bool checkCompressionRatio(unsigned, unsigned) const;
 
@@ -121,13 +121,13 @@ class PackUnixBe32 : public PackUnix
     typedef PackUnix super;
 protected:
     PackUnixBe32(InputFile *f) : super(f) { }
-    virtual unsigned get_native32(const void * b, int off=0)
+    virtual unsigned get_native32(const void *b)
     {
-        return get_be32(b, off);
+        return get_be32(b);
     }
-    virtual void set_native32(void * b, unsigned v, int off=0)
+    virtual void set_native32(void *b, unsigned v)
     {
-        set_be32(b, v, off);
+        set_be32(b, v);
     }
 };
 
@@ -137,13 +137,13 @@ class PackUnixLe32 : public PackUnix
     typedef PackUnix super;
 protected:
     PackUnixLe32(InputFile *f) : super(f) { }
-    virtual unsigned get_native32(const void * b, int off=0)
+    virtual unsigned get_native32(const void *b)
     {
-        return get_le32(b, off);
+        return get_le32(b);
     }
-    virtual void set_native32(void * b, unsigned v, int off=0)
+    virtual void set_native32(void *b, unsigned v)
     {
-        set_le32(b, v, off);
+        set_le32(b, v);
     }
 };
 
