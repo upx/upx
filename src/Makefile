@@ -90,8 +90,9 @@ INCLUDES = -I. -I$(srcdir)
 CFLAGS_OUTPUT = -o $@
 CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 
-LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
+LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 STUBEDIT_EXE =
+STUBIFY_EXE =
 
 o = .o
 a = .a
@@ -199,6 +200,11 @@ CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
+ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.exe)),)
+ifneq ($(strip $(wildcard $(DJDIR)/bin/cwsdstub.exe)),)
+STUBIFY_EXE = mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $(upx_exe)
+endif
+endif
 endif	# djgpp2
 
 
@@ -264,7 +270,7 @@ else
 endif
 
 ##LINK_LDFLAGS += /verbose
-LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
+LINK_EXE = $(CC) $(LDFLAGS) -Fe$@ $^ $(LDLIBS) $(LINK_LDFLAGS)
 
 endif	# vc6
 
@@ -291,10 +297,10 @@ endif
 ifeq (1,2) # purify
   DEFS += -D__PURIFY__
   LDFLAGS = -g -L/home/ethmola/local/lib
-  LINK_EXE = purify $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
+  LINK_EXE = purify $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 else
   LDFLAGS += -g -L/home/ethmola/local/lib
-  LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -o $@ $^ $(LDLIBS)
+  LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 endif
 
 endif	# sparc
@@ -326,13 +332,13 @@ else
   CFLAGS += -O2 -d
 endif
 
-LINK_EXE = $(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -e$@ $^ $(LDLIBS)
+LINK_EXE = $(CC) $(LDFLAGS) -e$@ $^ $(LDLIBS)
 
 endif	# bcc
 
 
 ###
-### malloc debuggers (Linux only)
+### malloc debuggers and memory checkers
 ###
 
 ifeq (1,2)
@@ -357,6 +363,17 @@ ifeq (1,2)
 endif
 
 
+###
+### extra flags
+###
+
+CFLAGS    += $(EXTRA_CFLAGS)
+CXXFLAGS1 += $(EXTRA_CXXFLAGS1)
+CXXFLAGS2 += $(EXTRA_CXXFLAGS2)
+LDFLAGS   += $(EXTRA_LDFLAGS)
+LDLIBS    += $(EXTRA_LDLIBS)
+
+
 # /***********************************************************************
 # // main targets
 # ************************************************************************/
@@ -368,13 +385,7 @@ all: $(upx_exe)
 $(upx_exe): $(OBJECTS) $(LIBS)
 	$(LINK_EXE)
 	$(STUBEDIT_EXE)
-
-
-ifeq ($(target),djgpp2)
-cwsbind: $(upx_exe)
-	mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $(upx_exe)
-###	$(upx_exe) --best $(upx_exe)
-endif
+	$(STUBIFY_EXE)
 
 
 unupx:
