@@ -87,7 +87,10 @@ protected:
         LE16 relocoffs;
         char __[2];             // overlnum
         LE32 firstreloc;
-    } ih, oh;
+    }
+    __attribute_packed;
+
+    exe_header_t ih, oh;
 
     unsigned ih_exesize;
     unsigned ih_imagesize;
