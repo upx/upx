@@ -26,100 +26,118 @@
  */
 
 
-#if !defined(__linux__) || !defined(__i386__)
-#  error "this stub must be compiled under linux/i386"
+// NOTE:
+//   to avoid endless problems with moving libc and kernel headers, this
+//   section is now completly freestanding
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+// <stddef.h>
+typedef long ptrdiff_t;
+typedef unsigned long size_t;
+// <stdint.h>
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef int int32_t;
+typedef unsigned uint32_t;
+#if defined(_WIN32) && !defined(__GNUC__)
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#else
+typedef long long int64_t;
+typedef unsigned long long uint64_t;
 #endif
+typedef size_t uintptr_t;
 
+// <sys/types.h>
+typedef long off_t;
+//typedef int64_t off64_t;
+//typedef size_t caddr_t;
+typedef void* caddr_t;
+typedef unsigned pid_t;
 
-/*************************************************************************
-// includes
-**************************************************************************/
-
+struct rusage;
 struct timex;
-
-#define __need_timeval
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <elf.h>
-#include <fcntl.h>
-#include <sched.h>
-#include <sys/time.h>
-#include <time.h>
-#include <linux/errno.h>
-#include <linux/mman.h>
-//#include <linux/personality.h>
-//#include <linux/timex.h>
-#include <linux/unistd.h>
-
-
-#define CONST_CAST(type, var) \
-    ((type) ((unsigned long) (var)))
-
-
-/*************************************************************************
-// constants and types
-**************************************************************************/
-
-// !!! must be the same as in p_unix.h !!!
-#define OVERHEAD        2048
-
-#define UPX_MAGIC_LE32  0x21585055          // "UPX!"
-
-// patch constants for our loader (le32 format)
-#define UPX1            0x31585055          // "UPX1"
-#define UPX2            0x32585055          // "UPX2"
-#define UPX3            0x33585055          // "UPX4"
-#define UPX4            0x34585055          // "UPX4"
-#define UPX5            0x35585055          // "UPX5"
-
-
-#undef int32_t
-#undef uint32_t
-#define int32_t         int
-#define uint32_t        unsigned int
-
-
-typedef int nrv_int;
-typedef int nrv_int32;
-typedef unsigned int nrv_uint;
-typedef unsigned int nrv_uint32;
-#define nrv_byte unsigned char
-#define nrv_bytep unsigned char *
-#define nrv_voidp void *
-
-
-// From ../p_unix.h
-struct b_info { // 12-byte header before each compressed block
-    unsigned sz_unc;  // uncompressed_size
-    unsigned sz_cpr;  //   compressed_size
-    unsigned char b_method;  // compression algorithm
-    unsigned char b_ftid;  // filter id
-    unsigned char b_cto8;  // filter parameter
-    unsigned char b_unused;
+struct timeval {
+    unsigned tv_sec;
+    unsigned tv_usec;
 };
-
-struct l_info       // 12-byte trailer in header for loader (offset 116)
-{
-    uint32_t l_checksum;
-    uint32_t l_magic;
-    uint16_t l_lsize;
-    uint8_t  l_version;
-    uint8_t  l_format;
-};
-
-struct p_info       // 12-byte packed program header follows stub loader
-{
-    uint32_t p_progid;
-    uint32_t p_filesize;
-    uint32_t p_blocksize;
+struct timespec {
+    unsigned tv_sec;
+    long tv_nsec;
 };
 
 
-#define SEEK_SET    0
-#define SEEK_CUR    1
+// misc constants
 
-#define PAGE_MASK   (~0u<<12)   // discards the offset, keeps the page
-#define PAGE_SIZE   ( 1u<<12)
+#define SEEK_SET        0
+#define SEEK_CUR        1
+
+#define PAGE_MASK       (~0u<<12)   // discards the offset, keeps the page
+#define PAGE_SIZE       ( 1u<<12)
+
+#define O_RDONLY        00
+#define O_WRONLY        01
+#define O_RDWR          02
+#define O_CREAT         0100
+#define O_EXCL          0200
+
+#define R_OK            4
+#define W_OK            2
+#define X_OK            1
+#define F_OK            0
+
+#define F_GETFD         1
+#define F_SETFD         2
+#define FD_CLOEXEC      1
+
+
+// <errno.h>
+#define ENOENT          2
+#define EINTR           4
+
+
+// <sys/mman.h>
+#define PROT_READ       0x1
+#define PROT_WRITE      0x2
+#define PROT_EXEC       0x4
+#define PROT_NONE       0x0
+
+#define MAP_SHARED      0x01
+#define MAP_PRIVATE     0x02
+#define MAP_FIXED       0x10
+#define MAP_ANONYMOUS   0x20
+
+
+// <asm/unistd.h>
+#define __NR_exit                 1
+#define __NR_fork                 2
+#define __NR_read                 3
+#define __NR_write                4
+#define __NR_open                 5
+#define __NR_close                6
+#define __NR_waitpid              7
+#define __NR_unlink              10
+#define __NR_execve              11
+#define __NR_lseek               19
+#define __NR_getpid              20
+#define __NR_access              33
+#define __NR_brk                 45
+#define __NR_fcntl               55
+#define __NR_getrusage           77
+#define __NR_gettimeofday        78
+#define __NR_mmap                90
+#define __NR_munmap              91
+#define __NR_ftruncate           93
+#define __NR_adjtimex           124
+#define __NR_mprotect           125
+#define __NR_personality        136
+#define __NR_msync              144
+#define __NR_nanosleep          162
+#define __NR_getcwd             183
 
 
 /*************************************************************************
@@ -187,7 +205,7 @@ type name(type1 arg1) \
     return (type) __res; \
 }
 
-// special for mmap; somehow Z0(arg1) and Z1(arg1) don't work
+// special for mmap; somehow Z0(arg1) and Z1(arg1) do not work
 #define _syscall1m(type,name,type1,arg1) \
 type name(type1 arg1) \
 { \
@@ -274,15 +292,9 @@ type name(type1 arg1,type2 arg2,type3 arg3) \
     return (type) __res; \
 }
 
-#define access          syscall_access
+
 #define _exit           syscall_exit
-#define fcntl           syscall_fcntl
-#define getcwd          syscall_getcwd
-#define getrusage       syscall_getrusage
-#define gettimeofday    syscall_gettimeofday
-#define nanosleep       syscall_nanosleep
-#define open            syscall_open
-#define personality     syscall_personality
+#define exit            syscall_exit
 
 static inline _syscall2(int,access,const char *,file,int,mode)
 static inline _syscall1(int,adjtimex,struct timex *,ntx)
@@ -309,10 +321,153 @@ static inline _syscall3(int,read,int,fd,char *,buf,off_t,count)
 static inline _syscall3(pid_t,waitpid,pid_t,pid,int *,wait_stat,int,options)
 static inline _syscall3(int,write,int,fd,const char *,buf,off_t,count)
 static inline _syscall1(int,unlink,const char *,file)
-#define exit _exit
+
 
 #undef Z0
 #undef Z1
+
+
+/*************************************************************************
+// <elf.h>
+**************************************************************************/
+
+typedef uint16_t Elf32_Half;
+typedef uint16_t Elf64_Half;
+typedef uint32_t Elf32_Word;
+typedef int32_t  Elf32_Sword;
+typedef uint32_t Elf64_Word;
+typedef int32_t  Elf64_Sword;
+typedef uint64_t Elf32_Xword;
+typedef int64_t  Elf32_Sxword;
+typedef uint64_t Elf64_Xword;
+typedef int64_t  Elf64_Sxword;
+typedef uint32_t Elf32_Addr;
+typedef uint64_t Elf64_Addr;
+typedef uint32_t Elf32_Off;
+typedef uint64_t Elf64_Off;
+typedef uint16_t Elf32_Section;
+typedef uint16_t Elf64_Section;
+typedef Elf32_Half Elf32_Versym;
+typedef Elf64_Half Elf64_Versym;
+
+
+#define EI_NIDENT 16
+
+typedef struct
+{
+  unsigned char e_ident[EI_NIDENT];
+  Elf32_Half    e_type;
+  Elf32_Half    e_machine;
+  Elf32_Word    e_version;
+  Elf32_Addr    e_entry;
+  Elf32_Off     e_phoff;
+  Elf32_Off     e_shoff;
+  Elf32_Word    e_flags;
+  Elf32_Half    e_ehsize;
+  Elf32_Half    e_phentsize;
+  Elf32_Half    e_phnum;
+  Elf32_Half    e_shentsize;
+  Elf32_Half    e_shnum;
+  Elf32_Half    e_shstrndx;
+} Elf32_Ehdr;
+
+typedef struct
+{
+  Elf32_Word    p_type;
+  Elf32_Off     p_offset;
+  Elf32_Addr    p_vaddr;
+  Elf32_Addr    p_paddr;
+  Elf32_Word    p_filesz;
+  Elf32_Word    p_memsz;
+  Elf32_Word    p_flags;
+  Elf32_Word    p_align;
+} Elf32_Phdr;
+
+typedef struct
+{
+  int a_type;
+  union {
+      long a_val;
+      void *a_ptr;
+      void (*a_fcn) (void);
+  } a_un;
+} Elf32_auxv_t;
+
+
+#define AT_NULL         0
+#define AT_IGNORE       1
+#define AT_PHDR         3
+#define AT_PHENT        4
+#define AT_PHNUM        5
+#define AT_PAGESZ       6
+#define AT_ENTRY        9
+
+#define ET_DYN          3
+
+#define PF_X            1
+#define PF_W            2
+#define PF_R            4
+
+#define PT_LOAD         1
+#define PT_INTERP       3
+#define PT_PHDR         6
+
+
+/*************************************************************************
+// UPX stuff
+**************************************************************************/
+
+// !!! must be the same as in p_unix.h !!!
+#define OVERHEAD        2048
+
+#define UPX_MAGIC_LE32  0x21585055          // "UPX!"
+
+// patch constants for our loader (le32 format)
+#define UPX1            0x31585055          // "UPX1"
+#define UPX2            0x32585055          // "UPX2"
+#define UPX3            0x33585055          // "UPX4"
+#define UPX4            0x34585055          // "UPX4"
+#define UPX5            0x35585055          // "UPX5"
+
+
+typedef int nrv_int;
+typedef int nrv_int32;
+typedef unsigned int nrv_uint;
+typedef unsigned int nrv_uint32;
+#define nrv_byte unsigned char
+#define nrv_bytep unsigned char *
+#define nrv_voidp void *
+
+
+// From ../p_unix.h
+struct b_info {     // 12-byte header before each compressed block
+    unsigned sz_unc;            // uncompressed_size
+    unsigned sz_cpr;            // compressed_size
+    unsigned char b_method;     // compression algorithm
+    unsigned char b_ftid;       // filter id
+    unsigned char b_cto8;       // filter parameter
+    unsigned char b_unused;
+};
+
+struct l_info       // 12-byte trailer in header for loader (offset 116)
+{
+    uint32_t l_checksum;
+    uint32_t l_magic;
+    uint16_t l_lsize;
+    uint8_t  l_version;
+    uint8_t  l_format;
+};
+
+struct p_info       // 12-byte packed program header follows stub loader
+{
+    uint32_t p_progid;
+    uint32_t p_filesize;
+    uint32_t p_blocksize;
+};
+
+
+#define CONST_CAST(type, var) \
+    ((type) ((uintptr_t) (var)))
 
 
 /*

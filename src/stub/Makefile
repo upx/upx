@@ -85,6 +85,7 @@ STRIPELF = ./util/sstrip/sstrip
 # gcc 3.4 (20040118 experimental) seems to produce the smallest code
 ifeq (1,2)
   CC_LINUX_I386 = gcc-2.72 -m386 -O2
+##  CC_LINUX_I386 = gcc-1.41 -O -Mcxx
 else
 ifeq (1,2)
   # gcc 2.95
@@ -95,20 +96,22 @@ ifeq (1,2)
   CC_LINUX_I386 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
   CC_LINUX_I386 += -Werror
 else
-  # gcc 3.4 20040118 (fold_*.bin: 1552 / 1043 / 1320)
+  # gcc 3.4 20040118 (fold_*.bin: 1525 / 1043 / 1300)
   #   info: -mcpu=k6 procduces the smallest code
   CC_LINUX_I386  = gcc-3.4 -march=i386 -mtune=k6 -Os -fno-omit-frame-pointer -fno-exceptions
   CC_LINUX_I386 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
   CC_LINUX_I386 += -fweb
+  CC_LINUX_I386 += -momit-leaf-frame-pointer
   CC_LINUX_I386 += -Werror
 endif
 endif
+CC_LINUX_I386 += -nostdinc
 CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
 CC_LINUX_I386 += -funsigned-char
 ###CC_LINUX_I386 += -fwritable-strings -save-temps
 
 # Motorola 68000
-CPP_M68K  = gcc-2.72 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_M68K  = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
   # a68k 68000-assembler
@@ -121,7 +124,7 @@ else
 endif
 
 # MIPS R3000
-CPP_MR3K = gcc-2.72 -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_MR3K = gcc-2.72 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
 
@@ -321,16 +324,16 @@ l_lx_sh86.h: l_lx_sh86.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin linux_i386sh_loader $@
 
-l_lx_elf.o: l_lx_elf.c
+l_lx_elf.o: l_lx_elf.c linux.hh
 	$(CC_LINUX_I386) -c $<
 
-l_lx_exec.o: l_lx_exec.c
+l_lx_exec.o: l_lx_exec.c linux.hh
 	$(CC_LINUX_I386) -c $<
 
-l_lx_sep.o: l_lx_sep.c
+l_lx_sep.o: l_lx_sep.c linux.hh
 	$(CC_LINUX_I386) -c $<
 
-l_lx_sh.o: l_lx_sh.c
+l_lx_sh.o: l_lx_sh.c linux.hh
 	$(CC_LINUX_I386) -c $<
 
 fold_elf86.o: fold_elf86.asm
@@ -399,6 +402,7 @@ l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1)
 l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1)
 l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1)
 l_tmt.h:        $(DEPS2) $(DEPS3)
+l_vmlinz.h:     $(DEPS2) $(DEPS3)
 l_vxd.h:        $(DEPS2) $(DEPS3)
 l_wcle.h:       $(DEPS2) $(DEPS3)
 l_w32pe.h:      $(DEPS2) $(DEPS3)
@@ -406,10 +410,6 @@ l_w32pe.h:      $(DEPS2) $(DEPS3)
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
 l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
-l_vmlinz.h:     l_vmlinz.asm    macros.ash macros.asy $(DEPS3)
-
-upxb:           linux.hh
-upxd:           linux.hh
 
 .NOEXPORT:
 

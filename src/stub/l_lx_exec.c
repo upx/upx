@@ -79,7 +79,7 @@ static __inline__ int xwrite(int fd, const void *buf, int count)
 #if 1
 
 extern char *
-__attribute__ ((regparm(2), stdcall))  // be ruthless
+__attribute__((regparm(2), stdcall))  // be ruthless
 upx_itoa(unsigned long v, char *buf);
 
 #else
@@ -131,7 +131,7 @@ static char *
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return mmap((void *)&addr);
+    return (char *) mmap((void *)&addr);
 }
 
 

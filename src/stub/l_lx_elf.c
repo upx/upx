@@ -208,7 +208,7 @@ make_hatch(Elf32_Phdr const *const phdr)
 }
 
 static void
-__attribute__ ((regparm(2), stdcall))
+__attribute__((regparm(2), stdcall))
 upx_bzero(char *p, size_t len)
 {
     if (len) do {
@@ -219,7 +219,7 @@ upx_bzero(char *p, size_t len)
 
 
 static void
-__attribute__ ((regparm(3), stdcall))
+__attribute__((regparm(3), stdcall))
 auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
 {
     if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
