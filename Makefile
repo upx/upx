@@ -28,6 +28,9 @@ cvs-admin-ko:
 ChangeLog:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
+ChangeLog.cvsps:
+	cvsps > $@
+
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 .PHONY: dist cvs-admin-ko ChangeLog
