@@ -271,6 +271,8 @@ void PackDjgpp2::pack(OutputFile *fo)
     const unsigned hdrsize = 20 + 28 + (40 * coff_hdr.f_nscns);
     if (hdrsize < sizeof(coff_hdr) || hdrsize > tpos)
         throwCantPack("coff header error");
+    if (hdrsize > (tpos & 0x1ff))
+        throwCantPack("unsupported coff header");
 
     ibuf.alloc(usize);
     obuf.allocForCompression(usize);
