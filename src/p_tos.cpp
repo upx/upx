@@ -295,9 +295,8 @@ bool PackTos::canPack()
         return false;
 
     unsigned char buf[512];
-    fi->readx(buf,sizeof(buf));
-    if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32) >= 0)
-        throwAlreadyPacked();
+    fi->readx(buf, sizeof(buf));
+    checkAlreadyPacked(buf, sizeof(buf));
 
     if (!checkFileHeader())
         throwCantPack("unsupported header flags");

@@ -123,8 +123,7 @@ int PackVmlinuzI386::uncompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    if (find_le32(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024), UPX_MAGIC_LE32) >= 0)
-        throwAlreadyPacked();
+    checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024));
 
     // estimate gzip-uncompressed kernel size & alloc buffer
     ibuf.alloc((file_size - setup_size) * 3);

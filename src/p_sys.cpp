@@ -45,13 +45,12 @@ bool PackSys::canPack()
 {
     unsigned char buf[128];
 
-    fi->readx(buf,128);
+    fi->readx(buf, sizeof(buf));
     if (memcmp (buf,"\xff\xff\xff\xff",4) != 0)
         return false;
     if (!fn_has_ext(fi->getName(),"sys"))
         return false;
-    if (find_le32(buf,128,UPX_MAGIC_LE32) >= 0)
-        throwAlreadyPacked();
+    checkAlreadyPacked(buf, sizeof(buf));
     if (file_size < 1024)
         throwCantPack("file is too small");
     if (file_size > 0x10000)

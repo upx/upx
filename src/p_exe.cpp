@@ -264,8 +264,7 @@ void PackExe::pack(OutputFile *fo)
     fi->seek(ih.headsize16*16,SEEK_SET);
     fi->readx(ibuf,imagesize);
 
-    if (find_le32(ibuf, UPX_MIN(imagesize, 127u), UPX_MAGIC_LE32) >= 0)
-        throwAlreadyPacked();
+    checkAlreadyPacked(ibuf, UPX_MIN(imagesize, 127u));
 
     // relocations
     has_9a = false;

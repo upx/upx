@@ -643,6 +643,27 @@ bool Packer::readPackHeader(int len)
 }
 
 
+void Packer::checkAlreadyPacked(void *b, int blen)
+{
+    int boff = find_le32(b, blen, UPX_MAGIC_LE32);
+    if (boff < 0)
+        return;
+
+    // FIXME: could add some more checks to verify that this
+    //   is a real PackHeader, e.g.
+    //
+    //PackHeader tmp;
+    //tmp.magic = UPX_MAGIC_LE32;
+    //if (!tmp.fillPackHeader((unsigned char *)b + boff, blen - boff))
+    //    return;
+    //
+    // This also would require that the buffer in `b' holds
+    // the full PackHeader, and not only the magic.
+
+    throwAlreadyPacked();
+}
+
+
 /*************************************************************************
 // patch util for loader
 **************************************************************************/
