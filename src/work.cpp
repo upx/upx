@@ -75,6 +75,17 @@ void do_one_file(const char *iname, char *oname)
 #endif
     if (st.st_size <= 0)
         throwIOException("empty file -- skipped");
+    if ((st.st_mode & S_IWUSR) == 0)
+    {
+        if (opt->output_name)
+            nop;
+        else if (opt->to_stdout)
+            nop;
+        else if (opt->backup)
+            nop;
+        else
+            throwIOException("file is write protected -- skipped");
+    }
 
     InputFile fi;
     fi.st = st;
