@@ -73,14 +73,19 @@ static __inline__ int xwrite(int fd, const void *buf, int count)
 // util
 **************************************************************************/
 
+// FIXME: all code in this source file must be relocatible, so
+//  we have to use `volatile' here.
+// FIXME: rewrite upx_itoa() in assembly
 static char *upx_itoa(char *buf, unsigned long v)
 {
+//    const unsigned TEN = 10;
+    volatile unsigned TEN = 10;
     char *p = buf;
     {
         unsigned long k = v;
         do {
             p++;
-            k /= 10;
+            k /= TEN;
         } while (k > 0);
     }
     buf = p;
@@ -88,8 +93,8 @@ static char *upx_itoa(char *buf, unsigned long v)
     {
         unsigned long k = v;
         do {
-            *--p = '0' + k % 10;
-            k /= 10;
+            *--p = '0' + k % TEN;
+            k /= TEN;
         } while (k > 0);
     }
     return buf;
