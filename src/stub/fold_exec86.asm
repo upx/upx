@@ -27,18 +27,26 @@
 ;; control just falls through, after this part and compiled C code
 ;; are uncompressed.
 
-fold_begin:  ;; this label is known to the Makefile
+%define szElf32_Ehdr 0x34
+%define szElf32_Phdr 8*4
+%define e_entry  (16 + 2*2 + 4)
+%define p_vaddr  2*4
+%define p_memsz  5*4
+%define szl_info 12
+%define szp_info 12
+
+fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         pop eax  ; discard &dstlen
         pop eax  ; discard  dstlen
 
                 pop     eax                 ; Pop the argument count
                 mov     ecx, esp            ; argv starts just at the current stack top
-                lea     edx, [ecx+eax*4+4]  ; envp = &argv[argc + 1]
-                push    eax                 ; Restore the stack
-                push    ebp  ; argument: &decompress
-                push    ebx  ; argument: &my_elfhdr
-                push    edx  ; argument: envp
-                push    ecx  ; argument: argv
+                lea     edx, [esp+eax*4+4]  ; envp = &argv[argc + 1]
+                mov esi, [e_entry + ebx]
+                add ebx, szElf32_Ehdr + szElf32_Phdr + szl_info
+                sub esi, ebx  ; length
+                lea edi, [2 + ebp]  ; f_unfilter, maybe
+                pusha  ; (f_unf, cprLen, f_decpr, xx, cprSrc, envp, argv, argc)
 EXTERN upx_main
                 call    upx_main            ; Call the UPX main function
                 hlt                         ; Crash if somehow upx_main does return

@@ -114,10 +114,7 @@ unpackExtent(
 )
 {
     while (xo->size) {
-        struct {
-            int32_t sz_unc;  // uncompressed
-            int32_t sz_cpr;  //   compressed
-        } h;
+        struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
 
@@ -135,7 +132,7 @@ unpackExtent(
 ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
-        ||  h.sz_unc > (int32_t)xo->size ) {
+        ||  h.sz_unc > xo->size ) {
             err_exit(5);
         }
         // Now we have:
@@ -272,48 +269,34 @@ ERR_LAB
 **************************************************************************/
 
 void *upx_main(
-    char *const uncbuf,
-    Elf32_Ehdr const *const my_ehdr,
-    f_expand *const f_decompress,
     Elf32_auxv_t *const av,
-    Elf32_Ehdr *const ehdr
+    unsigned const junk,
+    f_expand *const f_decompress,
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR]
+    struct Extent xi,
+    struct Extent xo
 ) __asm__("upx_main");
 
 void *upx_main(
-    char *const uncbuf,  // place to put decompressed shell script
-    Elf32_Ehdr const *const my_ehdr,  // to get compressed size and data
-    f_expand *const f_decompress,
     Elf32_auxv_t *const av,
-    Elf32_Ehdr *const ehdr  // temp char[MAX_ELF_HDR]
+    unsigned const junk,
+    f_expand *const f_decompress,
+    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR]
+    struct Extent xi,
+    struct Extent xo
 )
 {
+        // 'fn' and 'efn' must not suffer constant-propagation by gcc
+        // UPX2 = offset to name_of_shell
+        // UPX3 = strlen(name_of_shell)
+    char * /*const*/ volatile  fn = UPX2 + xo.buf;  // past "-c" and "#!"
+    char * /*const*/ volatile efn = UPX3 + fn;  // &terminator
     Elf32_Addr entry;
-    size_t const lsize = sizeof(struct p_info) +
-        *(unsigned short const *)(0x7c + (char const *)my_ehdr);
-    struct Extent xi = { // describe compressed shell script
-        ((Elf32_Phdr const *)(1 + my_ehdr))->p_filesz - lsize,
-        lsize + CONST_CAST(char *, my_ehdr)
-    };
-    struct Extent xo = { ((struct p_info *)xi.buf)[-1].p_filesize, uncbuf };
 
-        // Allocate space for decompressed shell script.
-        // "1+": guarantee '\0' terminator at end of decompressed script
-    if (xo.buf != do_mmap(xo.buf, 1+3+xo.size, PROT_READ | PROT_WRITE,
-            MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0)) {
-        err_exit(20);
-ERR_LAB
-    }
-
-        // Uncompress shell script
-    xo.buf += 3;  // leave room for "-c" argument
+    (void)junk;
     unpackExtent(&xi, &xo, f_decompress);
 
   {     // Map shell program
-        // 'fn' and 'efn' must not suffer constant-propagation by gcc
-        // UPX2 = 3 + offset to name_of_shell
-        // UPX3 = strlen(name_of_shell)
-    char * /*const*/ volatile  fn = UPX2 + uncbuf;  // past "-c" and "#!"
-    char * /*const*/ volatile efn = UPX3 + fn;  // &terminator
     char const c = *efn;  *efn = 0;  // terminator
     entry = getexec(fn, ehdr, av);
     *efn = c;  // replace terminator character

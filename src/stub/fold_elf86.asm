@@ -26,7 +26,10 @@
 
 %define szElf32_Ehdr 0x34
 %define szElf32_Phdr 8*4
+%define e_entry  (16 + 2*2 + 4)
 %define p_memsz  5*4
+%define szl_info 12
+%define szp_info 12
 %define a_val  4
 
 %define __NR_munmap   91
@@ -34,7 +37,7 @@
 ;; control just falls through, after this part and compiled C code
 ;; are uncompressed.
 
-fold_begin:
+fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         ; patchLoader will modify to be
         ;   dword sz_uncompressed, sz_compressed
         ;   byte  compressed_data...
@@ -45,6 +48,7 @@ fold_begin:
 ; Move argc,argv,envp down so that we can insert more Elf_auxv entries.
 ; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance
 
+%define PAGE_SIZE ( 1<<12)
 %define OVERHEAD 2048
 %define MAX_ELF_HDR 512
 
@@ -53,18 +57,19 @@ fold_begin:
         mov edi, esp
         call do_auxv
 
+          mov eax, [p_memsz + 2*szElf32_Phdr + szElf32_Ehdr + ebx]  ; size of PT_DYNAMIC
         sub esp, dword MAX_ELF_HDR + OVERHEAD
+          mov ecx, [e_entry + ebx]  ; beyond compressed data
         push esp  ; argument: temp space
+          lea eax, [szElf32_Ehdr + 3*szElf32_Phdr + szl_info + szp_info + ebx + eax]  ; 1st &b_info
         push edi  ; argument: AT_next
+          sub ecx, eax  ; length of compressed data
         push ebp  ; argument: &decompress
-        push edx  ; argument: my_elfhdr
-        add edx, [p_memsz + szElf32_Ehdr + edx]
-        push edx  ; argument: uncbuf
+          push ecx  ; argument: sz_compressed
+        push eax  ; argument: 1st &b_info
 EXTERN upx_main
-        call upx_main  ; entry = upx_main(uncbuf, my_elfhdr, &decompress, AT_next, tmp_ehdr)
-        pop esi  ; decompression buffer == (p_vaddr + p_memsz) of stub
-        pop ebx  ; my_elfhdr
-        add esp, dword 3*4 + MAX_ELF_HDR + OVERHEAD  ; remove 3 params, temp space
+        call upx_main  ; entry = upx_main(b1st_info, sz_cpr, &decompress, AT_next, tmp_ehdr)
+        add esp, dword 5*4 + MAX_ELF_HDR + OVERHEAD  ; remove 5 params, temp space
         push eax  ; save entry address
 
         mov edi, [a_val + edi]  ; AT_PHDR
@@ -90,9 +95,10 @@ EXTERN make_hatch
         xor eax,eax
         rep stosd
 
-        mov ecx,esi  ; my p_vaddr + p_memsz
-        mov bh,0  ; round down to 64KB boundary
-        sub ecx,ebx  ; length to unmap
+        xor ecx, ecx  ; 0
+        mov ch, PAGE_SIZE>>8  ; 0x1000
+        add ecx, [p_memsz + szElf32_Ehdr + ebx]  ; length to unmap
+        mov bh, 0  ; from 0x401000 to 0x400000
         push byte __NR_munmap
         pop eax
         jmp edx  ; unmap ourselves via escape hatch, then goto entry

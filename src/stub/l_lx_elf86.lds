@@ -28,17 +28,23 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 /*ENTRY(_start)*/
+PHDRS
+{
+    text PT_LOAD FILEHDR PHDRS ;
+    data PT_LOAD ;  /* for setting brk(0) */
+    null PT_NULL;  /* changed to PT_DYNAMIC for ldd */
+}
 SECTIONS
 {
   /*  0x00401000: l_lx_elf86.asm assumes 1 page up from 64KB boundary */
-  . = 0x00401000 + SIZEOF_HEADERS;
-  . = ALIGN(0x80);
+  . = 0x00401000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
   .text : {
     *(.text)
     *(.data)
-  }
+  } : text
   /*  0x08048000: customary Linux/x86 Elf .text start */
+  /* PackLinuxI386::buildLinuxLoader will overwrite the address anyway. */
   . = 0x08048000 + (0xfff & .);
   .data : {
-  }
+  } : data
 }

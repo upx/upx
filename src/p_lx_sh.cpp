@@ -78,17 +78,15 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
 
     // filter
     optimizeFilter(&fold_ft, buf, sz_fold);
-    bool success = fold_ft.filter(buf + sizeof(cprElfhdr), sz_fold - sizeof(cprElfhdr));
+    bool success = fold_ft.filter(buf + sizeof(cprElfHdr2), sz_fold - sizeof(cprElfHdr2));
     (void)success;
 
     return buildLinuxLoader(
         linux_i386sh_loader, sizeof(linux_i386sh_loader),
-        buf, sz_fold, ft, 0x08048000 );
+        buf, sz_fold, ft );
 }
 
-void PackLinuxI386sh::patchLoader()
-{
-}
+void PackLinuxI386sh::patchLoader() { }
 
 
 bool PackLinuxI386sh::getShellName(char *buf)
@@ -104,7 +102,6 @@ bool PackLinuxI386sh::getShellName(char *buf)
     };
     for (int j=0; 0 != shname[j]; ++j) {
         if (0==strcmp(shname[j], basename)) {
-            o_shname += 3;  // space for "-c\x00"
             return super::canPack();
         }
     }
@@ -134,33 +131,11 @@ bool PackLinuxI386sh::canPack()
 }
 
 
-void PackLinuxI386sh::pack(OutputFile *fo)
+void
+PackLinuxI386sh::pack1(OutputFile *fo, Filter &)
 {
-#define PAGE_MASK (~0<<12)
-    opt->unix.blocksize = blocksize = file_size;
-    PackUnix::pack(fo);
-
-    // update loader
-    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)const_cast<upx_byte *>(getLoader());
-    Elf_LE32_Phdr *const phdro = (Elf_LE32_Phdr *)(1+ehdr);
-    off_t const totlen = fo->getBytesWritten();
-    phdro[0].p_filesz = totlen;
-    phdro[0].p_memsz = PAGE_MASK & (~PAGE_MASK + totlen);
-
-    // Try to make brk() work by faking it for exec().
-    unsigned const brka = 0x08048000;
-    phdro[1].p_offset = 0xfff&brka;
-    phdro[1].p_vaddr = brka;
-    phdro[1].p_paddr = brka;
-    phdro[1].p_filesz = 0;
-    phdro[1].p_memsz =  0;
-
-    patchLoaderChecksum();
-    fo->seek(0, SEEK_SET);
-    fo->rewrite(ehdr, sizeof(cprElfhdr));
-#undef PAGE_MASK
+    generateElfHdr(fo, linux_i386sh_fold, 0, 0, 0x08048000);
 }
-
 
 /*
 vi:ts=4:et

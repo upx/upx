@@ -106,11 +106,7 @@ decompress:
 
 ;__LEXEC020__
 
-%define PAGE_MASK (~0<<12)
 %define PAGE_SIZE ( 1<<12)
-
-%define szElf32_Ehdr 0x34
-%define p_memsz  5*4
 
 %define MAP_FIXED     0x10
 %define MAP_PRIVATE   0x02
@@ -120,42 +116,52 @@ decompress:
 %define PROT_EXEC      4
 %define __NR_mmap     90
 
+%define szElf32_Ehdr 0x34
+%define szElf32_Phdr 8*4
+%define e_entry  (16 + 2*2 + 4)
+%define p_memsz  5*4
+%define szl_info 12
+%define szp_info 12
+%define p_filesize 4
+
 ; Decompress the rest of this loader, and jump to it
 unfold:
         pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
         cld
         lodsd
-        push eax  ; sz_uncompressed  (junk, actually)
+        push eax  ; sz_uncompressed of folded stub (junk, actually)
         push esp  ; &sz_uncompressed
-        mov eax, ebp  ; &decompress
-        and eax, dword PAGE_MASK  ; &my_elfhdr
-        mov edx, eax  ; need my_elfhdr later
-        add eax, [p_memsz + szElf32_Ehdr + eax]
+        mov edx, 0x00800000  ; origin of this program
+        mov eax, [p_memsz + szElf32_Ehdr + edx]  ; length of loaded pages
+        add eax, edx
+        add edx, szElf32_Ehdr + 2*szElf32_Phdr  ; convenient ptr
         push eax  ; &destination
 
-                ; mmap a page to hold the decompressed program
-        xor ecx,ecx
-        push ecx
-        push ecx
-        mov ch, PAGE_SIZE >> 8
+                ; mmap space for unfolded stub, and uncompressed script
+        mov ecx, [szl_info + p_filesize + edx]  ; script size
+        add ecx, 1+ 3+ (3 -1)+ PAGE_SIZE  ; '\0' + "-c" + decompr_overrun + stub
+
+        push eax  ; offset (ignored when MAP_ANONYMOUS)
+        push eax  ; fd     (ignored when MAP_ANONYMOUS)
         push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         push byte PROT_READ | PROT_WRITE | PROT_EXEC
-        push ecx
+        push ecx  ; length
         push eax  ; destination
+        mov ebx, esp  ; address of parameter vector for __NR_mmap
         push byte __NR_mmap
         pop eax
-        mov ebx, esp
         int 0x80
+        lea ebx, [3+ PAGE_SIZE + eax]  ; place for uncompressed script
         add esp, byte 6*4  ; discard args to mmap
 
         lodsd
-        push eax  ; sz_compressed
+        push eax  ; sz_compressed of folded stub
+        lodsd  ; junk cto8, algo, unused[2]
         push esi  ; &compressed_data
         call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        pop ecx  ; discard &compressed_data
-        pop ecx  ; discard sz_compressed
-        pop ecx  ; &destination
-        jmp ecx  ; goto fold_begin at p_vaddr + p_memsz
+        pop eax  ; discard &compressed_data
+        pop eax  ; discard sz_compressed
+        ret      ; &destination
 main:
         pop ebp  ; &decompress
         call unfold

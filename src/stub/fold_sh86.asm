@@ -30,11 +30,15 @@
                 BITS    32
                 SECTION .text
 
-fold_begin:
-        ; patchLoader will modify to be
-        ;   dword sz_uncompressed, sz_compressed
-        ;   byte  compressed_data...
+%define szElf32_Ehdr 0x34
+%define szElf32_Phdr 8*4
+%define e_entry  (16 + 2*2 + 4)
+%define p_memsz  5*4
+%define szl_info 12
+%define szp_info 12
 
+fold_begin:     ; enter: %ebx= uncDst
+                ; also edx= szElf32_Ehdr + 2*szElf32_Phdr + &Elf32_Ehdr
         pop eax  ; discard &sz_uncompressed
         pop eax  ; discard  sz_uncompressed
 
@@ -48,39 +52,40 @@ fold_begin:
         mov esi, esp
         sub esp, byte 6*8  ; AT_PHENT, AT_PHNUM, AT_PAGESZ, AT_ENTRY, AT_PHDR, AT_NULL
         mov edi, esp
-        call do_auxv
+        call do_auxv  ; edi= &AT_NEXT
 
         sub esp, dword MAX_ELF_HDR + OVERHEAD
-        push esp  ; argument: temp space
-        push edi  ; argument: AT_next
-        push ebp  ; argument: &decompress
-        push edx  ; argument: my_elfhdr
-        add ecx, PAGE_SIZE  ; uncompressed stub fits in this
-        push ecx  ; argument: uncbuf
+        
+        xchg eax, ebx  ; eax= uncDst
+        lea edx, [szl_info + szp_info + edx]  ; cprSrc
+        mov ecx, [   edx]  ; sz_unc
+        mov ebx, [4+ edx]  ; sz_cpr
+        mov esi, eax  ; extra copy of uncDst
+        pusha  ; (&AT_NEXT,uncDst,f_decpr,&ehdr,{sz_cpr,cprSrc},{sz_unc,uncDst})
 EXTERN upx_main
-        call upx_main  ; entry = upx_main(uncbuf, my_elfhdr, &decompress, AT_next, tmp_ehdr)
-        pop esi  ; decompression buffer
-        pop ebx  ; my_elfhdr
-        add esp, dword 3*4 + MAX_ELF_HDR + OVERHEAD  ; remove 3 params, temp space
+        call upx_main  ; entry = upx_main(...)
+        pop ecx  ; junk
+        push eax  ; save entry address
+        popa  ; edi= entry address; esi= uncDst
+        add esp, dword MAX_ELF_HDR + OVERHEAD  ; remove temp space
 
         pop ecx  ; argc
         pop edx  ; $0 filename, to become argv[0]
         push edx  ; restore $0 filename
 
-        add esi, byte 3
         inc ecx
         push esi  ; &uncompressed shell script
         sub esi, byte 3
 
         mov [esi], word 0x632d  ; "-c"
         inc ecx
-        push esi  ; "-c"
+        push esi  ; &"-c"
 
         inc ecx
         push edx  ; argv[0] is duplicate of $0
 
         push ecx  ; new argc
-        push eax  ; save entry address
+        push edi  ; save entry address
 
 ; _dl_start and company (ld-linux.so.2) assumes that it has virgin stack,
 ; and does not initialize all its stack local variables to zero.

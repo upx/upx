@@ -39,6 +39,13 @@ class PackLinuxI386 : public PackUnixLe32
     typedef PackUnixLe32 super;
 public:
     PackLinuxI386(InputFile *f) : super(f) { }
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        Elf_LE32_Phdr const *const phdr0,
+        unsigned e_phnum,
+        unsigned brka
+    );
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
     virtual const char *getName() const { return "linux/386"; }
     virtual const int *getCompressionMethods(int method, int level) const;
@@ -48,6 +55,18 @@ public:
     virtual bool canPack();
 
 protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    // virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    // virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+
+    unsigned find_file_offset(
+        unsigned vaddr,
+        Elf_LE32_Phdr const *phdr,
+        unsigned e_phnum
+    );
+    Elf_LE32_Phdr const *find_DYNAMIC(Elf_LE32_Phdr const *phdr, unsigned n);
+
     // loader util
     virtual int getLoaderPrefixSize() const;
     virtual int buildLinuxLoader(
@@ -55,15 +74,8 @@ protected:
         unsigned const szproto,
         upx_byte const *const fold,  // linked assembly + C section
         unsigned const szfold,
-        Filter const *ft,
-        unsigned const brka
+        Filter const *ft
     );
-
-    struct cprElfhdr {
-        struct Elf_LE32_Ehdr ehdr;
-        struct Elf_LE32_Phdr phdr[2];
-        struct PackUnix::l_info linfo;
-    };
 
     // patch util
     virtual void patchLoader();
@@ -79,6 +91,25 @@ protected:
     };
 
     unsigned n_mru;
+
+    struct cprElfHdr1 {
+        struct Elf_LE32_Ehdr ehdr;
+        struct Elf_LE32_Phdr phdr[1];
+        struct PackUnix::l_info linfo;
+    };
+    struct cprElfHdr2 {
+        struct Elf_LE32_Ehdr ehdr;
+        struct Elf_LE32_Phdr phdr[2];
+        struct PackUnix::l_info linfo;
+    };
+    struct cprElfHdr3 {
+        struct Elf_LE32_Ehdr ehdr;
+        struct Elf_LE32_Phdr phdr[3];
+        struct PackUnix::l_info linfo;
+    };
+
+    cprElfHdr3 elfout;
+
 };
 
 

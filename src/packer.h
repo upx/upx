@@ -68,6 +68,7 @@ public:
     int level;                  // compresison level 1..10
     unsigned u_len;
     unsigned c_len;
+    unsigned b_len;  // total length of b_info blocks
     unsigned u_adler;
     unsigned c_adler;
     off_t u_file_size;
@@ -212,6 +213,7 @@ protected:
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
     virtual void addFilter32(int filter_id);
     virtual const char *getDecompressor() const;
+    char const *identstr(unsigned &size);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);
@@ -252,7 +254,7 @@ protected:
 
     // compression buffers
     MemBuffer   ibuf;         // input
-    MemBufferIO obuf;         // output
+    MemBuffer   obuf;         // output
 
     // UI handler
     UiPacker *uip;

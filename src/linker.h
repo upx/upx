@@ -40,6 +40,7 @@ public:
     const char *getLoader(int *llen);
     int getSection(const char *name, int *slen) const;
     int getLoaderSize() const { return olen; }
+    void setLoaderAlignOffset(int phase);
 
 protected:
     // little endian
@@ -59,6 +60,7 @@ private:
     int      nsections;
     int      frozen;
     int      align_hack;
+    int     align_offset;
 
 private:
     // disable copy and assignment

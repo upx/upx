@@ -923,17 +923,8 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 // loader util
 **************************************************************************/
 
-void Packer::initLoader(const void *pdata, int plen, int pinfo)
+char const *Packer::identstr(unsigned &size)
 {
-    if (pinfo < 0)
-        pinfo =  ~3 & (3 + get_le16(pdata, plen - 2));
-
-    delete linker;
-    if (getFormat() < 128)
-        linker = new Linker(pdata, plen, pinfo);    // little endian
-    else
-        linker = new BeLinker(pdata, plen, pinfo);  // big endian
-
     static const char identbig[] =
         "\n\0"
         "$Info: This file is packed with the UPX executable packer http://upx.tsx.org $"
@@ -946,10 +937,30 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         "$Id: UPX (C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
         "\n";
 
-    if (opt->small)
-        linker->addSection("IDENTSTR",identsmall,sizeof(identsmall));
+    if (opt->small) {
+        size = sizeof(identsmall);
+        return identsmall;
+    }
+    else {
+        size = sizeof(identbig);
+        return identbig;
+    }
+}
+
+void Packer::initLoader(const void *pdata, int plen, int pinfo)
+{
+    if (pinfo < 0)
+        pinfo =  ~3 & (3 + get_le16(pdata, plen - 2));
+
+    delete linker;
+    if (getFormat() < 128)
+        linker = new Linker(pdata, plen, pinfo);    // little endian
     else
-        linker->addSection("IDENTSTR",identbig,sizeof(identbig));
+        linker = new BeLinker(pdata, plen, pinfo);  // big endian
+
+    unsigned size;
+    char const *const ident = identstr(size);
+    linker->addSection("IDENTSTR",ident,size);
 }
 
 
@@ -1453,9 +1464,6 @@ void Packer::compressWithFilters(Filter *parm_ft,
             // filter
             optimizeFilter(&ft, ibuf + filter_off, filter_len);
 
-    unsigned char *const save = new unsigned char[filter_len];
-    memcpy(save, ibuf + filter_off, filter_len);
-
             bool success = ft.filter(ibuf + filter_off, filter_len);
             if (ft.id != 0 && ft.calls == 0)
             {
@@ -1529,11 +1537,6 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             // restore ibuf[] - unfilter with verify
             ft.unfilter(ibuf + filter_off, filter_len, true);
-        for (unsigned k = 0; k < filter_len; ++k) {
-            if ((ibuf + filter_off)[k] != save[k]) {
-                printf("mismatch at %d\n", k);
-            }
-        }
             //
             if (strategy < 0)
                 break;

@@ -72,15 +72,6 @@ private:
     //static void operator delete[] (void *) {}
 };
 
-class MemBufferIO : public MemBuffer {
-public:
-    MemBufferIO(unsigned size=0);
-    ~MemBufferIO();
-
-    unsigned seek(unsigned offset, int whence);  // returns new position
-    unsigned write(void const *data, unsigned size);  // returns xfer count
-};
-
 #endif /* already included */
 
 

@@ -139,7 +139,7 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 static int
 go_self(char const *tmpname, char *argv[], char *envp[])
 {
-    // FIXME:  why not use "/proc/self/fd/XX"?  *BSD doesn't have it?
+    // Old FreeBSD does not have /proc/self, so use /proc/<pid> instead.
 
     // Open the temp file.
     int const fdi = open(tmpname, O_RDONLY, 0);
@@ -181,6 +181,11 @@ go_self(char const *tmpname, char *argv[], char *envp[])
 // UPX & NRV stuff
 **************************************************************************/
 
+typedef void f_unfilter(
+    nrv_byte *,  // also addvalue
+    nrv_uint,
+    unsigned cto8  // junk in high 24 bits
+);
 typedef int f_expand(
     const nrv_byte *src, nrv_uint  src_len,
           nrv_byte *dst, nrv_uint *dst_len );
@@ -193,16 +198,24 @@ typedef int f_expand(
 **************************************************************************/
 
 void upx_main(
-    char *argv[],
+    f_unfilter *const f_unf,
+    unsigned cprLen,
+    f_expand *const f_decompress,
+    int junk2,
+    char /*const*/ *cprSrc,
     char *envp[],
-    Elf32_Ehdr const *const my_ehdr,
-    f_expand *const f_decompress
+    char *argv[],
+    int argc
 ) __asm__("upx_main");
 void upx_main(
-    char *argv[],
+    f_unfilter *const f_unf,
+    unsigned cprLen,
+    f_expand *const f_decompress,
+    int junk,
+    char /*const*/ *cprSrc,
     char *envp[],
-    Elf32_Ehdr const *const my_ehdr,
-    f_expand *const f_decompress
+    char *argv[],
+    int argc
 )
 {
     // file descriptor
@@ -213,15 +226,15 @@ void upx_main(
 
     char *tmpname;
 
-    Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
-        (my_ehdr->e_phoff + (char const *)my_ehdr);
-    struct Extent xi = { phdr[1].p_memsz, (char *)phdr[1].p_vaddr };
+    struct Extent xi = { cprLen, cprSrc };
 
     char *next_unmap = (char *)(PAGE_MASK & (unsigned)xi.buf);
     struct p_info header;
 
     // temporary file name
     char tmpname_buf[20];
+
+    (void)junk;
 
     //
     // ----- Step 0: set /proc/self using /proc/<pid> -----
@@ -347,18 +360,13 @@ void upx_main(
 
     for (;;)
     {
-        struct {
-            int32_t sz_unc;  // uncompressed
-            int32_t sz_cpr;  //   compressed
-        } h;
-        //   Note: if h.sz_unc == h.sz_cpr then the block was not
-        //   compressible and is stored in its uncompressed form.
+        struct b_info h;
         int i;
 
         // Read and check block sizes.
         {
             register char *__d0, *__d1;
-            __asm__ __volatile__( "movsl; movsl"
+            __asm__ __volatile__( "movsl; movsl; movsl"
                 : "=&D" (__d0), "=&S" (__d1)
                 : "0" (&h), "1" (xi.buf)
                 : "memory");
@@ -373,9 +381,10 @@ void upx_main(
                 goto error;
             break;
         }
-        if (h.sz_cpr <= 0)
-            goto error;
-        if (h.sz_cpr > h.sz_unc || h.sz_unc > (int32_t)header.p_blocksize)
+        //   Note: if sz_unc == sz_cpr then the block was not
+        //   compressible and is stored in its uncompressed form.
+
+        if (h.sz_cpr > h.sz_unc || h.sz_cpr > header.p_blocksize)
             goto error;
         // Now we have:
         //   assert(h.sz_cpr <= h.sz_unc);
@@ -387,6 +396,9 @@ void upx_main(
             i = (*f_decompress)(xi.buf, h.sz_cpr, buf, &out_len);
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
+            // Right now, unfilter is combined with decompression.
+            // (*f_unfilter)(buf, out_len, cto8);
+            (void)f_unf;
         }
         else
         {
@@ -486,6 +498,7 @@ void upx_main(
     waitpid(-1, (int *)0, 0);
 
     // Execute the original program.
+    (void)argc;
     execve(tmpname, argv, envp);
 
 

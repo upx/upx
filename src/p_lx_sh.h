@@ -47,7 +47,7 @@ public:
     virtual const int *getFilters() const { return NULL; }
     virtual int buildLoader(const Filter *);
 
-    virtual void pack(OutputFile *fo);
+    virtual void pack1(OutputFile *fo, Filter &ft);
 
     virtual bool canPack();
     // virtual void unpack(OutputFile *fo) { super::unpack(fo); }

@@ -43,6 +43,7 @@ protected:
 public:
     virtual int getVersion() const { return 11; }
     virtual const int *getFilters() const { return NULL; }
+    virtual int getStrategy(Filter &);
 
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
@@ -52,6 +53,11 @@ public:
 
 protected:
     // called by the generic pack()
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+
     virtual void patchLoader() = 0;
     virtual void patchLoaderChecksum() {}
     virtual void updateLoader(OutputFile *) = 0;
@@ -72,7 +78,19 @@ protected:
 
     MemBuffer loader;
     int lsize;
+    MemBuffer pt_dynamic;
+    int sz_dynamic;
 
+    // must agree with stub/linux.hh
+    struct b_info { // 12-byte header before each compressed block
+        unsigned sz_unc;  // uncompressed_size
+        unsigned sz_cpr;  //   compressed_size
+            // FIXME: Unfortunately, endian-ness can BSWAP these four:
+        unsigned char b_method;  // compression algorithm
+        unsigned char b_ftid;  // filter id
+        unsigned char b_cto8;  // filter parameter
+        unsigned char b_unused;
+    };
     struct l_info { // 12-byte trailer in header for loader
         unsigned l_checksum;
         unsigned l_magic;

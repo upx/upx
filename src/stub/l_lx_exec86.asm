@@ -138,49 +138,53 @@ decompress:
 
 ;__LEXEC020__
 
-%define PAGE_MASK (~0<<12)
 %define PAGE_SIZE ( 1<<12)
+
+%define MAP_FIXED     0x10
+%define MAP_PRIVATE   0x02
+%define MAP_ANONYMOUS 0x20
+%define PROT_READ      1
+%define PROT_WRITE     2
+%define PROT_EXEC      4
+%define __NR_mmap     90
 
 ; Decompress the rest of this loader, and jump to it
 unfold:
         pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
-        mov ecx, PAGE_MASK
-          push esi  ; &dst
-        mov ebx, ebp  ; &decompress
-        and ebx, ecx  ; &my_elfhdr
-        neg ecx  ; ecx= PAGE_SIZE
-
         cld
-        lodsd  ; sz_uncompressed
-        lodsd  ; sz_compressed
+        lodsd
+        push eax  ; sz_uncompressed  (junk, actually)
+        push esp  ; &sz_uncompressed
+        mov eax, 0x400000
+        push eax  ; &destination
 
-;; Compressed code now begins at fold_begin.
-;; We want decompressed code to begin at fold_begin, too.
-;; Move the compressed code to the high end of the page.
-;; Assume non-overlapping so that forward movsb is OK.
+                ; mmap a page to hold the decompressed program
+        xor ecx, ecx
+        push ecx
+        push ecx
+        mov ch, PAGE_SIZE >> 8
+        push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
+        push byte PROT_READ | PROT_WRITE | PROT_EXEC
+        push ecx  ; length
+        push eax  ; destination
+        mov ebx, esp  ; address of parameter vector for __NR_mmap
+        push byte __NR_mmap
+        pop eax
+        int 0x80
+        xchg eax, ebx
+        mov bh, PAGE_SIZE>>8  ; ebx= 0x401000
+        add esp, byte 6*4  ; discard args to mmap
 
-        lea edi, [ecx + ebx]  ; high end of page
-          push eax  ; srclen (of both movsb and decompress)
-        sub edi, eax  ; dst of movsb
-          push edi  ; &src for decompression (after movsb)
-        xchg ecx, eax  ; ecx= len of movsb
-        rep movsb
-          call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        pop eax  ; discard &src
-        pop eax  ; discard srclen
-        pop eax  ; &dst == fold_begin
-
-;; icache lookahead of compressed code after "call unfold" is still there.
-;; Synchronize with dcache of decompressed code.
-        pushf
-        push cs
-        push eax
-        iret  ; back to fold_begin!
-
+        lodsd
+        push eax  ; sz_compressed
+        lodsd  ; junk cto8, algo, unused[2]
+        push esi  ; &compressed_data
+        call ebp  ; decompress(&src, srclen, &dst, &dstlen)
+        pop eax  ; discard &compressed_data
+        pop eax  ; discard sz_compressed
+        ret      ; &destination
 main:
         pop ebp  ; &decompress
-          push eax  ; sz_uncompressed  (junk, actually)
-          push esp  ; &sz_uncompressed
         call unfold
 
 eof:
@@ -190,3 +194,4 @@ eof:
         dw      eof
 
 ; vi:ts=8:et:nowrap
+

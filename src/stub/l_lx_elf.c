@@ -120,18 +120,12 @@ unpackExtent(
 )
 {
     while (xo->size) {
-        unsigned cto8;
-        struct {
-            int32_t sz_unc;  // uncompressed
-            int32_t sz_cpr;  //   compressed
-        } h;
+        struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
 
         // Read and check block sizes.
         xread(xi, (char *)&h, sizeof(h));
-        cto8 = h.sz_cpr;
-        h.sz_cpr >>= 8;
         if (h.sz_unc == 0) {                     // uncompressed size 0 -> EOF
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 err_exit(2);
@@ -144,7 +138,7 @@ unpackExtent(
 ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
-        ||  h.sz_unc > (int32_t)xo->size ) {
+        ||  h.sz_unc > xo->size ) {
             err_exit(5);
         }
         // Now we have:
@@ -162,7 +156,7 @@ ERR_LAB
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
             ) {
-                (*f_unf)(xo->buf, out_len, cto8);
+                (*f_unf)(xo->buf, out_len, h.b_cto8);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
@@ -322,46 +316,43 @@ ERR_LAB
 **************************************************************************/
 
 void *upx_main(
-    char *const uncbuf,
-    Elf32_Ehdr const *const my_ehdr,
+    char /*const*/ *const b1st_info,
+    unsigned const sz_compressed,
     f_expand *const f_decompress,
     Elf32_auxv_t *const av,
     Elf32_Ehdr *const ehdr
 ) __asm__("upx_main");
 
 void *upx_main(
-    char *const uncbuf,
-    Elf32_Ehdr const *const my_ehdr,  // to get compressed size and data
+    char /*const*/ *const b1st_info,
+    unsigned const sz_compressed,
     f_expand *const f_decompress,
     Elf32_auxv_t *const av,
     Elf32_Ehdr *const ehdr  // temp char[MAX_ELF_HDR+OVERHEAD]
 )
 {
-    struct cprElfhdr {
-        Elf32_Ehdr ehdr;
-        Elf32_Phdr phdr[2];
-        struct l_info linfo;
-    };
-    size_t const lsize = ((struct cprElfhdr const *)my_ehdr)->linfo.l_lsize;
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ehdr);
     Elf32_Addr entry;
     struct Extent xo;
-    struct Extent xi = { 0, sizeof(struct p_info) + lsize + CONST_CAST(char *, my_ehdr) };
+    struct Extent xi = { 0, b1st_info };  // location of 1st b_info
 
-    size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];     // sizeof(Ehdr+Phdrs), uncompressed
-    size_t const sz_pckhdrs = ((size_t *)xi.buf)[1]>>8;  // sizeof(Ehdr+Phdrs),   compressed
+    // sizeof(Ehdr+Phdrs), uncompressed
+    size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];
 
-    (void)uncbuf;  // used by l_lx_sh.c
+    // sizeof(Ehdr+Phdrs),   compressed; including b_info header
+    size_t const sz_pckhdrs = sizeof(struct b_info) + ((size_t *)xi.buf)[1];
+
     // Uncompress Ehdr and Phdrs.
-    xo.size =                    sz_elfhdrs;   xo.buf = (char *)ehdr;
-    xi.size = 2*sizeof(size_t) + sz_pckhdrs;
+    xo.size = sz_elfhdrs;   xo.buf = (char *)ehdr;
+    xi.size = sz_pckhdrs;
     unpackExtent(&xi, &xo, f_decompress, 0);
 
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
-    xi.buf  -= 2*sizeof(size_t) + sz_pckhdrs;
-    xi.size = ((Elf32_Phdr const *)(1 + my_ehdr))->p_filesz - lsize;
+    xi.buf  -= sz_pckhdrs;
+    xi.size  = sz_compressed;
 
-    // av[0].a_un.a_val  is set again by do_xmap if PT_PHDR is present
+    // av[0].a_un.a_val  is set again by do_xmap if PT_PHDR is present.
+    // Caller of upx_main assumes that AT_PHDR will be set into av[0] .
     av[0].a_type = AT_PHDR;   av[0].a_un.a_ptr = 1+(Elf32_Ehdr *)phdr->p_vaddr;
     av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
     av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;

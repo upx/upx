@@ -67,7 +67,11 @@ struct Elf_LE32_Phdr
     LE32 p_align;               /* Segment alignment */
 
     // Values for p_type
-    enum { PT_LOAD = 1 };       /* Loadable program segment */
+    enum {
+        PT_LOAD     = 1,    /* Loadable program segment */
+        PT_DYNAMIC  = 2,    /* Dynamic linking information */
+        PT_PHDR     = 6     /* Entry for header table itself */
+    };
 
     // Values for p_flags
     enum { PF_X = (1 << 0) };   /* Segment is executable */
@@ -76,6 +80,18 @@ struct Elf_LE32_Phdr
 };
 
 
+struct Elf_LE32_Dyn
+{
+    LE32 d_tag;
+    LE32 d_val;
+
+    enum {  // tags
+        DT_NULL     =  0,   /* End flag */
+        DT_NEEDED   =  1,   /* Name of needed library */
+        DT_STRTAB   =  5,   /* String table */
+        DT_STRSZ    = 10    /* Sizeof string table */
+    };
+};
 #endif /* already included */
 
 

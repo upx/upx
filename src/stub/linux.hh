@@ -88,6 +88,15 @@ typedef unsigned int nrv_uint32;
 
 
 // From ../p_unix.h
+struct b_info { // 12-byte header before each compressed block
+    unsigned sz_unc;  // uncompressed_size
+    unsigned sz_cpr;  //   compressed_size
+    unsigned char b_method;  // compression algorithm
+    unsigned char b_ftid;  // filter id
+    unsigned char b_cto8;  // filter parameter
+    unsigned char b_unused;
+};
+
 struct l_info       // 12-byte trailer in header for loader (offset 116)
 {
     uint32_t l_checksum;

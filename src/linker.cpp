@@ -53,6 +53,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
     oloader = new char[plen];
     olen = 0;
     align_hack = 0;
+    align_offset = 0;
     info = pinfo;
     njumps = nsections = frozen = 0;
     jumps = new jump[200];
@@ -100,6 +101,16 @@ Linker::~Linker()
 }
 
 
+void Linker::setLoaderAlignOffset(int offset)
+{
+    align_offset = offset;
+}
+
+static int hex(char c)
+{
+    return (c & 0xf) + (c > '9' ? 9 : 0);
+}
+
 int Linker::addSection(const char *sect)
 {
     int ic;
@@ -108,14 +119,13 @@ int Linker::addSection(const char *sect)
         if (*sect == '+') // alignment
         {
             if (sect[1] == '0')
-                align_hack = olen;
+                align_hack = olen + align_offset;
             else
             {
-                ic = (sect[1] & 0xf) + (sect[1] > '9' ? 9 : 0);
-                ic = (ic + (sect[2] & 0xf) + (sect[2] > '9' ? 9 : 0)
-                      - (olen - align_hack) % ic) % ic;
-                memset(oloader+olen,sect[3] == 'C' ? 0x90 : 0,ic);
-                olen += ic;
+                unsigned j =  hex(sect[1]);
+                j = (hex(sect[2]) - ((olen + align_offset) - align_hack) ) % j;
+                memset(oloader+olen, (sect[3] == 'C' ? 0x90 : 0), j);
+                olen += j;
             }
         }
         else

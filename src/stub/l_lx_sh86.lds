@@ -46,10 +46,4 @@ SECTIONS
     *(.bss)
     *(COMMON)
   }
-  /*  0x08048000: customary Linux/x86 Elf .text start */
-/*
-  . = 0x08048000 + (0xfff & .);
-  .data : {
-  }
-*/
 }
