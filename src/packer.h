@@ -148,7 +148,7 @@ protected:
                           unsigned max_offset = 0, unsigned max_match = 0);
     virtual void decompress(const upx_bytep in,
                             upx_bytep out, bool verify_checksum=true);
-    virtual bool checkCompressionRatio(unsigned c_len, unsigned u_len) const;
+    virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
 
     // high-level compression drivers
     void compressWithFilters(Filter *ft, unsigned *overlapoh,

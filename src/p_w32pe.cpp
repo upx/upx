@@ -1915,7 +1915,7 @@ void PackW32Pe::pack(OutputFile *fo)
     copyOverlay(fo, overlay, &obuf);
 
     // finally check compresion ratio
-    if (!checkCompressionRatio(fo->getBytesWritten(), file_size))
+    if (!checkCompressionRatio(file_size, fo->getBytesWritten()))
         throwNotCompressible();
 }
 

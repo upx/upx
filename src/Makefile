@@ -2,10 +2,10 @@
 #
 # usage:
 #   `make target=linux'         # linux
-#   `make target=djggp2'        # djggp2
-#   `make target=cygwin'        # cygwin
+#   `make target=djggp2'        # djggp2 2.03
+#   `make target=cygwin'        # cygwin 1.1.x
 #   `make target=mingw32'       # mingw32
-#   `make target=no-cygwin'     # mingw32 as included in cygwin
+#   `make target=no-cygwin'     # mingw32 as included in cygwin 1.1.x
 #   `make target=vc6'           # Visual C++ 6.0
 #
 
@@ -44,7 +44,7 @@ ifneq ($(strip $(wildcard /platform/sun4?/kernel/unix)),)
 target = sparc
 endif
 ifeq ($(target),msc)
-target = vc6
+override target = vc6
 endif
 
 
@@ -201,6 +201,7 @@ endif	# djgpp2
 ifeq ($(target),cygwin)
 CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
+CFLAGS_WERROR = -Werror
 endif
 
 ifeq ($(target),mingw32)
@@ -213,6 +214,7 @@ ifeq ($(target),no-cygwin)
 CC = gcc -mno-cygwin
 CFLAGS_M += -mno-schedule-prologue
 CFLAGS_M += -march=i386 -mcpu=pentium
+CFLAGS_WERROR = -Werror
 endif
 
 

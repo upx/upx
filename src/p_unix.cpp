@@ -197,7 +197,7 @@ void PackUnix::pack(OutputFile *fo)
     updateLoader(fo);
 
     // finally check compression ratio
-    if (!Packer::checkCompressionRatio(fo->getBytesWritten(), ph.u_len))
+    if (!Packer::checkCompressionRatio(ph.u_len, fo->getBytesWritten()))
         throwNotCompressible();
 }
 

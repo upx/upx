@@ -361,7 +361,7 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     updateLoader(fo);
 
     // finally check compression ratio
-    if (!super::checkCompressionRatio(fo->getBytesWritten(), ph.u_len))
+    if (!super::checkCompressionRatio(ph.u_len, fo->getBytesWritten()))
         throwNotCompressible();
 }
 

@@ -222,7 +222,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     uip->endCallback();
 
     //printf("Packer::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
-    if (!checkCompressionRatio(ph.c_len, ph.u_len))
+    if (!checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
     if (ph.c_len >= ph.u_len)
@@ -249,8 +249,12 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 }
 
 
-bool Packer::checkCompressionRatio(unsigned c_len, unsigned u_len) const
+bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
 {
+    assert((int)u_len > 0);
+    assert((int)c_len > 0);
+    assert((off_t)u_len < file_size);
+
 #if 1
     if (c_len >= u_len - u_len / 8)         // min. 12.5% gain
         return false;
@@ -1133,7 +1137,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     // finally check compression ratio
     if (best_ph.c_len + best_ph_lsize >= best_ph.u_len)
         throwNotCompressible();
-    if (!checkCompressionRatio(best_ph.c_len, best_ph.u_len))
+    if (!checkCompressionRatio(best_ph.u_len, best_ph.c_len))
         throwNotCompressible();
 
     // convenience
