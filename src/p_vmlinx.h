@@ -58,12 +58,14 @@ protected:
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
-    Elf_LE32_Ehdr ehdri; // from input file
-    Elf_LE32_Phdr phdri[2]; // from  input file
+    int n_ptload;
+    unsigned sz_ptload;
+    Elf_LE32_Phdr *phdri; // from  input file
     Elf_LE32_Shdr *shdri; // from input file
     Elf_LE32_Shdr *p_text;
     Elf_LE32_Shdr *p_note0;
     Elf_LE32_Shdr *p_note1;
+    Elf_LE32_Ehdr ehdri; // from input file
 };
 
 

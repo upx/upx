@@ -45,12 +45,13 @@ static const
 **************************************************************************/
 
 PackVmlinuxI386::PackVmlinuxI386(InputFile *f) :
-    super(f), shdri(NULL)
+    super(f), n_ptload(0), phdri(NULL), shdri(NULL)
 {
 }
 
 PackVmlinuxI386::~PackVmlinuxI386()
 {
+    delete [] phdri;
     delete [] shdri;
 }
 
@@ -68,6 +69,36 @@ const int *PackVmlinuxI386::getFilters() const
     return filters;
 }
 
+static int __acc_cdecl_qsort
+compare_Phdr(void const *const aa, void const *const bb)
+{
+    Elf_LE32_Phdr const *const a = (Elf_LE32_Phdr const *)aa;
+    Elf_LE32_Phdr const *const b = (Elf_LE32_Phdr const *)bb;
+    unsigned const xa = a->p_type - Elf_LE32_Phdr::PT_LOAD;
+    unsigned const xb = b->p_type - Elf_LE32_Phdr::PT_LOAD;
+    if (xa < xb) return -1;
+    if (xa > xb) return  1;
+    return le32_compare(&a->p_paddr, &b->p_paddr);
+}
+
+//
+// Examples as of 2004-07-16 [readelf --segments vmlinux  # before fiddling]:
+//
+//----- kernel-2.6.7 plain [defconfig?]
+//Program Headers(2):
+//  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+//  LOAD           0x001000 0x00100000 0x00100000 0x1c7e61 0x1c7e61 R E 0x1000
+//  LOAD           0x1c8e64 0x002c8e64 0x002c8e64 0x00000 0x00000 RW  0x1000
+//
+//----- kernel-2.6.7-1.488 Fedora Core 3 test 1
+//Program Headers(5):
+//  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+//  LOAD           0x001000 0x02100000 0x02100000 0x202246 0x202246 R E 0x1000
+//  LOAD           0x204000 0xffff3000 0x02303000 0x00664 0x00664 R E 0x1000
+//  LOAD           0x205000 0x02304000 0x02304000 0x43562 0x43562 R   0x1000
+//  LOAD           0x249000 0x02348000 0x02348000 0x81800 0xcb0fc RWE 0x1000
+//  STACK          0x000000 0x00000000 0x00000000 0x00000 0x00000 RWE 0x4
+//
 
 bool PackVmlinuxI386::canPack()
 {
@@ -84,27 +115,40 @@ bool PackVmlinuxI386::canPack()
 
     // additional requirements for vmlinux
     if (ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    ||   ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phnum!=2 || ehdri.e_phentsize!=sizeof(Elf_LE32_Phdr)
+    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
+    ||  ehdri.e_phentsize!=sizeof(Elf_LE32_Phdr)
     ||  ehdri.e_type!=Elf_LE32_Ehdr::ET_EXEC
     ||  0x00100000!=(0x001fffff & ehdri.e_entry) // entry not an odd 1MB
     ) {
         return false;
     }
 
+    phdri = new Elf_LE32_Phdr[ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
-    fi->readx(phdri, sizeof(phdri));
-    if (Elf_LE32_Phdr::PT_LOAD!=phdri[0].p_type || 0!=(0xfff & phdri[0].p_offset)
-    ||  Elf_LE32_Phdr::PT_LOAD!=phdri[1].p_type || 0!=(0xfff & phdri[1].p_offset)
-    ||  0!=(0xfff & phdri[0].p_paddr) || 0!=(0xfff & phdri[0].p_vaddr)
-    ||  0!=(0xfff & phdri[1].p_paddr) || 0!=(0xfff & phdri[1].p_vaddr)
-    ||  0x1000!=phdri[0].p_offset
-    ||  phdri[1].p_offset!=(phdri[0].p_offset + (~0xfff & (0xfff + phdri[0].p_filesz)))
-    ) {
-        return false;
-    }
+    fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
 
-    return true;
+    // Put PT_LOAD together at the beginning, ascending by .p_paddr.
+    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
+
+    // Check that PT_LOADs form one contiguous chunk of the file.
+    for (int j= 0; j < ehdri.e_phnum; ++j) {
+        if (Elf_LE32_Phdr::PT_LOAD==phdri[j].p_type) {
+            if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
+                       | phdri[j].p_align  | phdri[j].p_vaddr) ) {
+                return false;
+            }
+            if (0 < j) {
+                unsigned const sz = -phdri[j-1].p_align
+                                  & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
+                if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
+                    return false;
+                }
+            }
+            ++n_ptload;
+            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
+        }
+    }
+    return 0 < n_ptload;
 }
 
 int PackVmlinuxI386::buildLoader(const Filter *ft)
@@ -162,8 +206,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ehdro.e_shstrndx = 4;
     fo->write(&ehdro, sizeof(ehdro)); fo_off+= sizeof(ehdro);
 
-    // .data length + (.text length padded to PAGE_SIZE)
-    ph.u_len = phdri[1].p_filesz + (phdri[1].p_offset - phdri[0].p_offset);
+    ph.u_len = sz_ptload;
     fi->seek(phdri[0].p_offset, SEEK_SET);
     fi->readx(ibuf, ph.u_len);
     checkAlreadyPacked(ibuf + ph.u_len - 1024, 1024);
@@ -201,8 +244,8 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     verifyOverlappingDecompression();
 
     // .note with 1st page --------------------------------
-    fi->seek(0, SEEK_SET);
     ph.u_len = phdri[0].p_offset;
+    fi->seek(0, SEEK_SET);
     fi->readx(ibuf, ph.u_len);
     compress(ibuf, obuf);
 
@@ -216,8 +259,8 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     fo->write(obuf, ph.c_len); fo_off += shdro[2].sh_size;
 
     // .note with rest     --------------------------------
-    fi->seek(phdri[1].p_offset + phdri[1].p_filesz, SEEK_SET);
-    ph.u_len = file_size - (phdri[1].p_offset + phdri[1].p_filesz);
+    ph.u_len = file_size - (sz_ptload + phdri[0].p_offset);
+    fi->seek(sz_ptload + phdri[0].p_offset, SEEK_SET);
     fi->readx(ibuf, ph.u_len);
     compress(ibuf, obuf);
 
@@ -298,7 +341,7 @@ int PackVmlinuxI386::canUnpack()
     Elf_LE32_Shdr *p, *p_shstrtab=0;
     shdri = new Elf_LE32_Shdr[ehdri.e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
-    fi->readx(shdri, ehdri.e_shnum * sizeof(Elf_LE32_Shdr));
+    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
     int j;
     for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if (Elf_LE32_Shdr::SHT_STRTAB==p->sh_type
