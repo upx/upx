@@ -909,7 +909,7 @@ struct tls
     LE32 dataend;   // VA tls init data end
     LE32 tlsindex;  // VA tls index
     LE32 callbacks; // VA tls callbacks
-    char _[8];      //  zero init, characteristics
+    char _[8];      // zero init, characteristics
 };
 
 void PackW32Pe::processTls(Interval *iv) // pass 1
@@ -918,6 +918,8 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+    if (tlsp->callbacks) // note: callbacks are not implemented on windoze 9x
+        throwCantPack("tls callbacks are not supported");
     unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
     unsigned tlsdataend = tlsp->dataend - ih.imagebase;
 
@@ -967,7 +969,7 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
 
     tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
     tlsp->dataend = newaddr + sotls + ih.imagebase;
-    tlsp->callbacks = 0; // note: callbacks are not implemented in windoze
+    tlsp->callbacks = 0; // note: callbacks are not implemented on windoze 9x
 }
 
 
@@ -1179,7 +1181,7 @@ void Resource::destroy(upx_rnode *node,unsigned level)
     delete [] branch->children;
 }
 
-static void lame_print_unicode (const upx_byte *p)
+static void lame_print_unicode(const upx_byte *p)
 {
     for (unsigned ic = 0; ic < get_le16(p); ic++)
         printf("%c",(char)p[ic * 2 + 2]);
@@ -1231,7 +1233,7 @@ bool Resource::clear()
     return iv.ivnum == 1;
 }
 
-void PackW32Pe::processResources(Resource* res,unsigned newaddr)
+void PackW32Pe::processResources(Resource *res,unsigned newaddr)
 {
     if (IDSIZE(PEDIR_RESOURCE) == 0)
         return;
@@ -1243,7 +1245,7 @@ void PackW32Pe::processResources(Resource* res,unsigned newaddr)
     delete [] p;
 }
 
-void PackW32Pe::processResources(Resource* res)
+void PackW32Pe::processResources(Resource *res)
 {
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
     if ((soresources = IDSIZE(PEDIR_RESOURCE)) == 0)
