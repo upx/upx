@@ -152,7 +152,13 @@ bool PackLinuxI386elf::canPack()
         }
     }
 
-    return super::canPack();
+    if (!super::canPack())
+        return false;
+    assert(exetype == 1);
+
+    // set options
+    opt->unix.blocksize = blocksize = file_size;
+    return true;
 }
 
 void PackLinuxI386elf::packExtent(
@@ -176,7 +182,7 @@ void PackLinuxI386elf::packExtent(
         //       file is e.g. blocksize + 1 bytes long
 
         // compress
-        ph.u_len = l;
+        ph.c_len = ph.u_len = l;
         ph.overlap_overhead = 0;
         unsigned end_u_adler = 0;
         if (ft) {
@@ -241,11 +247,6 @@ void PackLinuxI386elf::packExtent(
 
 void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
 {
-    // set options
-    opt->unix.blocksize = blocksize = file_size;
-    ibuf.dealloc();
-    ibuf.alloc(blocksize);
-
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
     assert(ehdri.e_phoff == sizeof(Elf_LE32_Ehdr));  // checked by canPack()
