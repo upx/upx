@@ -1315,7 +1315,7 @@ void PackW32Pe::processResources(Resource* res)
         memset(ibuf + res->offs(),FILLVAL,res->size());
         res->newoffs() = ptr_diff(ores,oresources);
         if (rtype == 3)
-            compress_icon = iconcnt++ > iconsin1stdir || opt->w32pe.compress_icons == 1;
+            compress_icon = (++iconcnt >= iconsin1stdir || opt->w32pe.compress_icons == 1);
         else if (rtype == 14)
         {
             if (opt->w32pe.compress_icons == 1)
