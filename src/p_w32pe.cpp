@@ -1779,7 +1779,7 @@ void PackW32Pe::pack(OutputFile *fo)
         patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
     }
     if (big_relocs & 6)
-        patch_le32(loader,codesize,"DELT", rvamin - ih.imagebase);
+        patch_le32(loader,codesize,"DELT", 0u - (unsigned) ih.imagebase - rvamin);
     if (sorelocs && (soimport == 0 || soimport + cimports != crelocs))
         patch_le32(loader,codesize,"BREL",crelocs);
     if (soimport)
@@ -1819,7 +1819,7 @@ void PackW32Pe::pack(OutputFile *fo)
     }
 
     const unsigned esi0 = s1addr + ic;
-    patch_le32(loader,codesize,"EDI0", rvamin - esi0);
+    patch_le32(loader,codesize,"EDI0", 0u - esi0 + rvamin);
     patch_le32(loader,codesize,"ESI0", esi0 + ih.imagebase);
     ic = getLoaderSection("PEMAIN01") + 2 + upxsection;
 
