@@ -180,7 +180,6 @@ int PackPs1::buildLoader(const Filter *)
 
 void PackPs1::pack(OutputFile *fo)
 {
-
     ibuf.alloc(fdata_size);
     obuf.allocForCompression(fdata_size);
     const upx_byte *p_scan = ibuf+(fdata_size-1);
