@@ -19,7 +19,7 @@ BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
 all: $(BUILT_SOURCES)
 
 mostlyclean:
-	-rm -f $(BUILT_SOURCES) pod2html*cache
+	-rm -f $(BUILT_SOURCES) pod2htm*
 
 clean: mostlyclean
 
@@ -42,7 +42,7 @@ maintainer-clean: distclean
 .pod.html:
 ###	pod2html $< | $(TRIMSPACE) > $@
 	pod2html --noindex $< | $(TRIMSPACE) > $@
-	@-rm -f pod2html*cache
+	@-rm -f pod2htm*
 
 .pod.tex:
 	pod2latex $<
