@@ -18,14 +18,18 @@ BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
 
 all: $(BUILT_SOURCES)
 
-clean:
+mostlyclean:
 	-rm -f $(BUILT_SOURCES) pod2html*cache
+
+clean: mostlyclean
 
 distclean: clean
 
+maintainer-clean: distclean
+
 .SUFFIXES: .1 .doc .html .man .pod .ps .tex .texi
 
-.PHONY: all clean distclean
+.PHONY: all mostlyclean clean distclean maintainer-clean
 
 
 ###
