@@ -175,6 +175,7 @@ void show_help(int x)
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "\n");
+#if 0
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for linux/i386\n");
         fg = con_fg(f,fg);
@@ -182,6 +183,7 @@ void show_help(int x)
                     "  --script             use /usr/local/lib/upx/upx[bd] as decompressor\n"
                     "  --script=/path/upxX  use path/upxX as decompressor\n"
                     "\n");
+#endif
     }
 
     con_fprintf(f,

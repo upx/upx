@@ -740,7 +740,9 @@ static const struct mfx_option longopts[] =
     // dos/sys
     // unix
     {"blocksize",        0x31, 0, 660},     // --blocksize=
+#if 0
     {"script",           0x31, 0, 661},     // --script=
+#endif
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output
     // win32/pe
