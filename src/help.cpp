@@ -49,8 +49,17 @@ void show_head(void)
     con_fprintf(f,
                 "                     Ultimate Packer for eXecutables\n"
                 "            Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001\n"
-                "UPX v%-12sMarkus F.X.J. Oberhumer & Laszlo Molnar%21s\n\n",
-                UPX_VERSION_STRING, UPX_VERSION_DATE);
+                "UPX %-12s Markus F.X.J. Oberhumer & Laszlo Molnar %20s\n\n",
+#if defined(__MFX_DOS)
+                UPX_VERSION_STRING "d",
+#elif defined(__MFX_WIN32)
+                UPX_VERSION_STRING "w",
+#elif 0 && defined(__linux__)
+                UPX_VERSION_STRING "l",
+#else
+                UPX_VERSION_STRING,
+#endif
+                UPX_VERSION_DATE);
     fg = con_fg(f,fg);
 }
 
