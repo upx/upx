@@ -88,7 +88,7 @@
 
 
 #if !defined(WITH_UCL)
-#  error "you lose"
+#  error "please set UCLDIR in the Makefile"
 #endif
 #if defined(WITH_UCL)
 #  include <ucl/uclconf.h>

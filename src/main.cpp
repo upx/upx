@@ -1039,7 +1039,10 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(__alignof__(LE32) == 1);
 #endif
 
-#if !defined(__WATCOMC__)
+    COMPILE_TIME_ASSERT((((unsigned)1    << 31) >> 31) == 1);
+    COMPILE_TIME_ASSERT((((upx_uint64l)1 << 63) >> 63) == 1);
+
+#if !defined(__WATCOMC__)   // Watcom C does not support inner classes
     struct align_assertion_1a_t
     {
         struct foo_t {
