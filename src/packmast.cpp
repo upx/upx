@@ -221,42 +221,6 @@ static Packer *getPacker(InputFile *f)
 
 static Packer *getUnpacker(InputFile *f)
 {
-#if 0
-    if (opt->unix.script_name)
-    {
-        if ((p = func(new PackLinuxI386sep(f),f)) != NULL)
-            return p;
-    }
-#endif
-    if ((p = func(new PackLinuxI386elf(f),f)) != NULL)
-        return p;
-    if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
-        return p;
-    if ((p = func(new PackLinuxI386(f),f)) != NULL)
-        return p;
-
-    //
-    // .sys and .com
-    //
-    if ((p = func(new PackSys(f),f)) != NULL)
-        return p;
-    if ((p = func(new PackCom(f),f)) != NULL)
-        return p;
-    return NULL;
-}
-
-
-static Packer *getPacker(InputFile *f)
-{
-    Packer *p = try_packers(f, try_pack);
-    if (!p)
-        throwUnknownExecutableFormat();
-    return p;
-}
-
-
-static Packer *getUnpacker(InputFile *f)
-{
     Packer *p = try_packers(f, try_unpack);
     if (!p)
         throwNotPacked();
