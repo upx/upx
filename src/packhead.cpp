@@ -151,7 +151,6 @@ void PackHeader::putPackHeader(upx_bytep p)
             p[28] = (unsigned char) filter;
             p[29] = (unsigned char) filter_cto;
             p[30] = (unsigned char) (n_mru ? 0 : n_mru -1);
-            size = 32;
         }
         set_le32(p+8,u_adler);
         set_le32(p+12,c_adler);

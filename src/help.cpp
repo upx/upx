@@ -111,7 +111,6 @@ void show_help(int x)
 
     con_fprintf(f,
                 "  -q     be quiet                          -v    be verbose\n"
-                //"  -oFILE write output to `FILE'            -c    write output to stdout\n"
                 "  -oFILE write output to `FILE'\n"
                 //"  -f     force overwrite of output files and compression of suspicious files\n"
                 "  -f     force compression of suspicious files\n"

@@ -573,14 +573,12 @@ void PackExe::unpack(OutputFile *fo)
     obuf.allocForUncompression(ph.u_len);
 
     // read the file
-    unsigned imagesize = ih_imagesize;
-
     fi->seek(ih.headsize16*16,SEEK_SET);
-    fi->readx(ibuf,imagesize);
+    fi->readx(ibuf,ih_imagesize);
 
     // get compressed data offset
     unsigned e_len = ph.buf_offset + ph.getPackHeaderSize();
-    if (imagesize <= e_len + ph.c_len)
+    if (ih_imagesize <= e_len + ph.c_len)
         throwCantUnpack("file damaged");
 
     checkOverlay(ih_overlay);
@@ -588,7 +586,9 @@ void PackExe::unpack(OutputFile *fo)
     // decompress
     decompress(ibuf+e_len,obuf);
 
-    const unsigned char flag = ibuf[imagesize-1];
+    unsigned imagesize = ih_imagesize;
+    imagesize--;
+    const unsigned char flag = ibuf[imagesize];
 
     unsigned relocn = 0;
     upx_byte *relocs = obuf + ph.u_len;
@@ -638,20 +638,23 @@ void PackExe::unpack(OutputFile *fo)
             }
         }
     }
+
     // fill new exe header
     memset(&oh,0,sizeof(oh));
     oh.ident = 'M' + 'Z'*256;
 
-    oh.relocs = relocn;
-    while (relocn&3)
-        set_le32(wrkmem+4*relocn++,0);
+    if (relocn)
+    {
+        oh.relocs = relocn;
+        while (relocn & 3)
+            set_le32(wrkmem+4*relocn++,0);
+    }
 
     unsigned outputlen = sizeof(oh)+relocn*4+relocs-obuf;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
     oh.headsize16 = 2+relocn/4;
 
-    imagesize--;
     oh.max = ih.max;
     oh.min = ih.min;
     oh.sp = ih.sp;
@@ -677,7 +680,8 @@ void PackExe::unpack(OutputFile *fo)
 
     // write header + relocations + uncompressed file
     fo->write(&oh,sizeof(oh));
-    fo->write(wrkmem,relocn*4);
+    if (relocn)
+        fo->write(wrkmem,relocn*4);
     fo->write(obuf,relocs-obuf);
 
     // copy the overlay
