@@ -19,7 +19,10 @@ cvs-admin-ko:
 	cvs admin -ko .
 	cvs update
 
-.PHONY: all clean distclean dist cvs-admin-ko
+ChangeLog:
+	perl scripts/cvs2cl.pl --utc
+
+.PHONY: all clean distclean dist cvs-admin-ko ChangeLog
 
 .NOEXPORT:
 

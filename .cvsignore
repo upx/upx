@@ -1,3 +1,5 @@
 .cvsignore
 .mfxcvsup
+ChangeLog
+ChangeLog.bak
 maint
