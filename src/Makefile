@@ -32,13 +32,13 @@ upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=.o))
 all: upx.out
 
 upx.out: $(upx_OBJECTS) $(upx_DEPENDENCIES)
-	$(strip $(CXXLD) $(call m,CPPFLAGS) $(call m,CXXFLAGS) $(call m,LDFLAGS) -o $@ $(upx_OBJECTS) $(upx_OJBECTS) $(LIBS))
+	$(strip $(CXXLD) $(call m,CPPFLAGS) $(call m,CXXFLAGS) $(call m,LDFLAGS) -o $@ $(upx_OBJECTS) $(upx_OJBECTS) $(call m,LIBS))
 
 %.o : %.cpp
 	$(strip $(CXX) $(call m,CPPFLAGS) $(call m,CXXFLAGS) -o $@ -c $<)
 
 clean:
-	rm -f *.d *.o upx.out
+	rm -f *.d *.map *.o *.res upx.out
 
 -include *.d
 .PHONY: all clean

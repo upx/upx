@@ -10,15 +10,11 @@ GNUmakefile
 *.rel
 *.res
 *.pdb
+*.out
 *.upx
 .gdbinit
 .Attic
 .deps
-B
 compress_nrv.*
 upx
-upx_nrv
-upx_nrv.*
-upx_ucl
-upx_ucl.*
 version1*.h
