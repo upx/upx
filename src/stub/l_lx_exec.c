@@ -30,6 +30,7 @@
 #endif
 
 #include "linux.hh"
+#include <elf.h>
 
 
 /*************************************************************************
@@ -47,26 +48,37 @@
 #undef xread
 #undef xwrite
 
-#if 1
-//static int xread(int fd, void *buf, int count) __attribute__((__stdcall__));
-static int xread(int fd, void *buf, int count)
-{
-    // note: we can assert(count > 0);
-    do {
-        int n = read(fd, buf, count);
-        if (n == -EINTR)
-            continue;
-        if (n <= 0)
-            break;
-        buf += n;               // gcc extension: add to void *
-        count -= n;
-    } while (count > 0);
-    return count;
-}
-#else
-#define xread(fd,buf,count)     ((count) - read(fd,buf,count))
-#endif
+struct Extent {
+    size_t size;  // must be first to match size[0] uncompressed size
+    char *buf;
+};
 
+static void
+xread(struct Extent *const x, char *const buf, size_t const count)
+{
+    if (x->size < count) {
+        exit(127);
+    }
+#if 0  //{
+    {
+        char *p=x->buf, *q=buf;
+        size_t j;
+        for (j = count; 0!=j--; ++p, ++q) {
+            *q = *p;
+        }
+    }
+#else //}{
+    {
+        register unsigned long int __d0, __d1, __d2;
+        __asm__ __volatile__( "cld; rep; movsb"
+            : "=&c" (__d0), "=&D" (__d1), "=&S" (__d2)
+            : "0" (count), "1" (buf), "2" (x->buf)
+            : "memory");
+    }
+#endif  //}
+    x->buf  += count;
+    x->size -= count;
+}
 
 #if 1
 static __inline__ int xwrite(int fd, const void *buf, int count)
@@ -149,18 +161,9 @@ static char *upx_itoa(char *buf, unsigned long v)
 #define UPX4            0x34585055          // "UPX4"
 #define UPX5            0x35585055          // "UPX5"
 
-
-#if defined(__i386__)
-extern int
-nrv2b_decompress_asm_fast ( const nrv_byte *src, nrv_uint src_len,
-                            nrv_byte *dst, nrv_uint *dst_len );
-#define nrv2b_decompress        nrv2b_decompress_asm_fast
-extern int
-nrv2d_decompress_asm_fast ( const nrv_byte *src, nrv_uint src_len,
-                            nrv_byte *dst, nrv_uint *dst_len );
-#define nrv2d_decompress        nrv2d_decompress_asm_fast
-#endif /* __i386__ */
-
+typedef int f_expand(
+    const nrv_byte *src, nrv_uint  src_len,
+          nrv_byte *dst, nrv_uint *dst_len );
 
 /*************************************************************************
 // upx_main - called by our entry code
@@ -168,12 +171,24 @@ nrv2d_decompress_asm_fast ( const nrv_byte *src, nrv_uint src_len,
 // This function is optimized for size.
 **************************************************************************/
 
-void upx_main(char *argv[], char *envp[]) __asm__("upx_main");
-void upx_main(char *argv[], char *envp[])
+void upx_main(
+    char *argv[],
+    char *envp[],
+    Elf32_Ehdr const *const my_ehdr,
+    f_expand *const f_decompress
+) __asm__("upx_main");
+void upx_main(
+    char *argv[],
+    char *envp[],
+    Elf32_Ehdr const *const my_ehdr,
+    f_expand *const f_decompress
+)
 {
     // file descriptors
     int fdi, fdo;
-
+    Elf32_Phdr const *const phdr = (Elf32_Phdr const *)
+        (my_ehdr->e_phoff + (char const *)my_ehdr);
+    struct Extent xi = { phdr[1].p_memsz, (char *)phdr[1].p_vaddr };
     struct p_info header;
 
     // for getpid()
@@ -182,7 +197,7 @@ void upx_main(char *argv[], char *envp[])
     // temporary file name (max 14 chars)
     static char tmpname_buf[] = "/tmp/upxAAAAAAAAAAA";
     char *tmpname = tmpname_buf;
-    char procself_buf[64];
+    char procself_buf[24];  // /proc/PPPPP/fd/XX
     char *procself;
 
     // decompression buffer
@@ -211,30 +226,9 @@ void upx_main(char *argv[], char *envp[])
     // ----- Step 1: prepare input file -----
     //
 
-    // Open the exe.
-    SET3(procself, 'e', 'x', 'e');
-    fdi = open(procself_buf, O_RDONLY, 0);
-#if 1
-    // try /proc/<pid>/file for the sake of FreeBSD
-    if (fdi < 0)
-    {
-        SET4(procself, 'f', 'i', 'l', 'e');
-        fdi = open(procself_buf, O_RDONLY, 0);
-    }
-#endif
-#if 0
-    // Save some bytes of code - the lseek() below will fail anyway.
-    if (fdi < 0)
-        goto error1;
-#endif
-
-    // Seek to start of compressed data. The offset is patched
-    // by the compressor.
-    if (lseek(fdi, UPX1, 0) < 0)
-        goto error1;
     // Read header.
-    if (xread(fdi, (void *)&header, sizeof(header)) != 0)
-        goto error1;
+    xread(&xi, (void *)&header, sizeof(header));
+
     // Paranoia. Make sure this is actually our expected executable
     // by checking the random program id. (The id is both stored
     // in the header and patched into this stub.)
@@ -335,57 +329,50 @@ void upx_main(char *argv[], char *envp[])
 
     for (;;)
     {
-        int32_t size[2];
-        // size[0]: uncompressed block size
-        // size[1]: compressed block size
-        //   Note: if size[0] == size[1] then the block was not
+        struct {
+            int32_t sz_unc;  // uncompressed
+            int32_t sz_cpr;  //   compressed
+        } h;
+        //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
         int i;
 
         // Read and check block sizes.
-        if (xread(fdi, (void *)size, 8) != 0)
-            goto error;
-        if (size[0] == 0)                       // uncompressed size 0 -> EOF
+        xread(&xi, (void *)&h, sizeof(h));
+        if (h.sz_unc == 0)                       // uncompressed size 0 -> EOF
         {
-            if (size[1] != UPX_MAGIC_LE32)      // size[1] must be h->magic
+            if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 goto error;
             if (header.p_filesize != 0)        // all bytes must be written
                 goto error;
             break;
         }
-        if (size[1] <= 0)
+        if (h.sz_cpr <= 0)
             goto error;
-        if (size[1] > size[0] || size[0] > (int32_t)header.p_blocksize)
+        if (h.sz_cpr > h.sz_unc || h.sz_unc > (int32_t)header.p_blocksize)
             goto error;
         // Now we have:
-        //   assert(size[1] <= size[0]);
-        //   assert(size[0] > 0 && size[0] <= blocksize);
-        //   assert(size[1] > 0 && size[1] <= blocksize);
+        //   assert(h.sz_cpr <= h.sz_unc);
+        //   assert(h.sz_unc > 0 && h.sz_unc <= blocksize);
+        //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         // Read compressed block.
-        i = header.p_blocksize + OVERHEAD - size[1];
-        if (xread(fdi, buf+i, size[1]) != 0)
-            goto error;
+        i = header.p_blocksize + OVERHEAD - h.sz_cpr;
+        xread(&xi, buf+i, h.sz_cpr);
 
         // Decompress block.
-        if (size[1] < size[0])
+        if (h.sz_cpr < h.sz_unc)
         {
             // in-place decompression
             nrv_uint out_len;
-#if defined(NRV2B)
-            i = nrv2b_decompress(buf+i, size[1], buf, &out_len);
-#elif defined(NRV2D)
-            i = nrv2d_decompress(buf+i, size[1], buf, &out_len);
-#else
-#  error
-#endif
-            if (i != 0 || out_len != (nrv_uint)size[0])
+            i = (*f_decompress)(buf+i, h.sz_cpr, buf, &out_len);
+            if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
             // i == 0 now
         }
 
         // Write uncompressed block.
-        if (xwrite(fdo, buf+i, size[0]) != 0)
+        if (xwrite(fdo, buf+i, h.sz_unc) != 0)
         {
 // error exit is here in the middle to keep the jumps short.
         error:
@@ -396,7 +383,7 @@ void upx_main(char *argv[], char *envp[])
             for (;;)
                 (void) exit(127);
         }
-        header.p_filesize -= size[0];
+        header.p_filesize -= h.sz_unc;
     }
 
 
@@ -409,8 +396,6 @@ void upx_main(char *argv[], char *envp[])
 #endif
 
     if (close(fdo) != 0)
-        goto error;
-    if (close(fdi) != 0)
         goto error;
 
 

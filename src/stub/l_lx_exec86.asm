@@ -48,6 +48,9 @@
 %endif
 
 
+%include        "ident.ash"
+
+
 ; /*************************************************************************
 ; // program entry point
 ; // see glibc/sysdeps/i386/elf/start.S
@@ -57,40 +60,11 @@ GLOBAL _start
 EXTERN upx_main
 
 _start:
-                xor     ebp, ebp            ; Clear the frame pointer
-%if 0
-                ; personality(PER_LINUX)
-                mov     eax, 136            ; syscall_personality
-                xor     ebx, ebx            ; PER_LINUX
-                int     0x80
-%endif
-                pop     eax                 ; Pop the argument count
-                mov     ecx, esp            ; argv starts just at the current stack top
-                lea     edx, [ecx+eax*4+4]  ; envp = &argv[argc + 1]
-                push    eax                 ; Restore the stack
-                and     esp, byte -8        ; Align the stack
-                push    edx                 ; Push third argument: envp
-                push    ecx                 ; Push second argument: argv
-;;;             push    eax                 ; Push first argument: argc
-                call    upx_main            ; Call the UPX main function
-                hlt                         ; Crash if somehow upx_main does return
-
-%include        "ident.ash"
-
+                call main  ; push &decompress
 
 ; /*************************************************************************
 ; // C callable decompressor
 ; **************************************************************************/
-
-%ifdef NRV2B
-  %define decompress    nrv2b_decompress_asm_fast
-%elifdef NRV2D
-  %define decompress    nrv2d_decompress_asm_fast
-%else
-  %error
-%endif
-
-GLOBAL decompress
 
 %define         INP     dword [esp+24+4]
 %define         INS     dword [esp+24+8]
@@ -144,5 +118,29 @@ decompress:
                 pop     ebp
                 ret
 
+; /*************************************************************************
+; // prepare arguments and call upx_main
+; **************************************************************************/
+main:
+                pop ebp  ; &decompress
+%if 0
+                ; personality(PER_LINUX)
+                mov     eax, 136            ; syscall_personality
+                xor     ebx, ebx            ; PER_LINUX
+                int     0x80
+%endif
+                pop     eax                 ; Pop the argument count
+                mov     ecx, esp            ; argv starts just at the current stack top
+                lea     edx, [ecx+eax*4+4]  ; envp = &argv[argc + 1]
+                push    eax                 ; Restore the stack
+                push    ebp  ; argument: &decompress
+%define PAGE_MASK (~0<<12)
+                and     ebp, PAGE_MASK
+                push    ebp  ; argument: &Elf32_Ehdr
+                push    edx                 ; Push third argument: envp
+                push    ecx                 ; Push second argument: argv
+;;;             push    eax                 ; Push first argument: argc
+                call    upx_main            ; Call the UPX main function
+                hlt                         ; Crash if somehow upx_main does return
 
 ; vi:ts=8:et:nowrap
