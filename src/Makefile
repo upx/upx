@@ -103,7 +103,7 @@ CC_COMPILE    = $(CC) $(CCARCH) $(DEFS) $(INCLUDES) $(CFLAGS) $(CFLAGS_OUTPUT) -
 CXX_COMPILE_1 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_1) $(CXXFLAGS_OUTPUT) -c $<
 CXX_COMPILE_2 = $(CXX) $(CXXARCH) $(DEFS) $(INCLUDES) $(CXXFLAGS_2) $(CXXFLAGS_OUTPUT) -c $<
 CXX_COMPILE   = $(CXX_COMPILE_1)
-CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(LDLIBS) $(LINK_LDFLAGS)
+CXX_LINK_EXE  = $(CXXLD) $(CXXLDARCH) $(LDFLAGS) $(LINK_EXE_OUTPUT) $^ $(LDLIBS) $(LINK_EXE_LDFLAGS)
 STUBEDIT_EXE  =
 STUBIFY_EXE   =
 CHMOD_EXE     =
@@ -138,7 +138,7 @@ CXXLDARCH = $(CXXARCH)
 LDFLAGS =
 LINK_EXE_OUTPUT =
 LDLIBS =
-LINK_LDFLAGS =
+LINK_EXE_LDFLAGS =
 
 
 # update defaults
@@ -151,6 +151,8 @@ endif
 # /***********************************************************************
 # // compression library
 # ************************************************************************/
+
+DOS_LDLIBS += zlib114.lib
 
 UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
 NRVDIR:=$(strip $(subst \,/,$(NRVDIR)))
@@ -333,7 +335,7 @@ CXXFLAGS_2 = $(CXXFLAGS) -x- -xd- -RT-
 CFLAGS_OUTPUT = -o$@
 LDFLAGS =
 LINK_EXE_OUTPUT = -e$@
-LDLIBS = $(DOS_LDLIBS) zlib114.lib
+LDLIBS = $(DOS_LDLIBS)
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -364,7 +366,7 @@ CXXFLAGS_1 = $(CXXFLAGS) -Ae -Ar
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -L/map
 LINK_EXE_OUTPUT = -o$@
-LDLIBS = $(DOS_LDLIBS) zlib114.lib
+LDLIBS = $(DOS_LDLIBS)
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -393,8 +395,8 @@ CFLAGS = -W4 -WX
 CXXFLAGS_1 = $(CXXFLAGS) -EHac -GR
 LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
-LINK_LDFLAGS = /link /map:$T.map
-##LINK_LDFLAGS += /verbose
+LINK_EXE_LDFLAGS = /link /map:$T.map
+##LINK_EXE_LDFLAGS += /verbose
 
 ifneq ($(strip $(DOS_LIBDIRS)),)
 LIB := $(DOS_LIBDIRS);$(LIB)
@@ -404,18 +406,18 @@ export LIB
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
-  LDLIBS = $(u)_s.lib zlib114.lib setargv.obj
+  LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
 else
   # link against msvcrt.dll
   CC += -MD
-  LDLIBS = $(DOS_LDLIBS) zlib114.lib setargv.obj
+  LDLIBS = $(DOS_LDLIBS) setargv.obj
 endif
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
-  LINK_LDFLAGS += /debug
+  LINK_EXE_LDFLAGS += /debug
 else
   CFLAGS += -O2 -GF
-  LINK_LDFLAGS += /release
+  LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES = upx.res
 
@@ -423,7 +425,7 @@ endif	# vc6
 
 
 ###
-### Watcom C++ 11.0c
+### Watcom C++ 11.0c / Open Watcom C++ 1.0
 ###
 
 ifeq ($(target),wcc)
@@ -435,8 +437,8 @@ CFLAGS = -zc -w5 -we
 CXXFLAGS_1 = $(CXXFLAGS) -xs -xr
 CFLAGS_OUTPUT = -fo=$@
 LDFLAGS = -k0x100000 -fm
-LINK_EXE_OUTPUT = -fe$@
-LDLIBS = $(DOS_LDLIBS) zlib114.lib
+LINK_EXE_OUTPUT = -fe=$@
+LDLIBS = $(DOS_LDLIBS)
 
 INCLUDES:=$(strip $(subst /,\\,$(INCLUDES)))
 ifeq (1,2)
