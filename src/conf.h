@@ -36,14 +36,11 @@
 // ACC
 **************************************************************************/
 
-#if 0 && defined(__EMX__)
-#  include <sys/emx.h>
-#endif
-
 #if 0 && defined(UPX_CONFIG_HEADER)
 #  define ACC_CONFIG_HEADER UPX_CONFIG_HEADER
 #endif
 #include "acc/acc.h"
+#include "acc/acc_ince.h"
 
 
 #if defined(__BORLANDC__)
@@ -102,18 +99,15 @@
 
 // upx_int64l is int_least64_t in <stdint.h> terminology
 #if !defined(upx_int64l)
-#  if defined(HAVE_STDINT_H)
-#    define upx_int64l      int_least64_t
-#    define upx_uint64l     uint_least64_t
-#  elif (ULONG_MAX > 0xffffffffL)
+#  if (SIZEOF_LONG >= 8)
 #    define upx_int64l      long int
 #    define upx_uint64l     unsigned long int
-#  elif defined(__GNUC__) || defined(__DMC__)
-#    define upx_int64l      long long int
-#    define upx_uint64l     unsigned long long int
-#  elif defined(__BORLANDC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER) || defined(__WATCOMC__)
-#    define upx_int64l      __int64
-#    define upx_uint64l     unsigned __int64
+#  elif (SIZEOF_LONG_LONG >= 8)
+#    define upx_int64l      acc_llong_t
+#    define upx_uint64l     acc_ullong_t
+#  elif (SIZEOF___INT64 >= 8)
+#    define upx_int64l      acc_int64_t
+#    define upx_uint64l     acc_uint64_t
 #  else
 #    error "need a 64-bit integer type"
 #  endif
@@ -130,6 +124,10 @@
 #undef small
 #undef tos
 #undef unix
+#if defined(__DJGPP__)
+#undef __unix__
+#undef __unix
+#endif
 
 
 #if !defined(WITH_UCL)
@@ -174,46 +172,6 @@
 // system includes
 **************************************************************************/
 
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#if defined(HAVE_ERRNO_H)
-#  include <errno.h>
-#endif
-#if defined(HAVE_FCNTL_H)
-#  include <fcntl.h>
-#endif
-#if defined(HAVE_IO_H)
-#  include <io.h>
-#endif
-#if defined(HAVE_DOS_H)
-#  include <dos.h>
-#endif
-#if defined(HAVE_MALLOC_H)
-#  include <malloc.h>
-#endif
-#if defined(HAVE_ALLOCA_H)
-#  include <alloca.h>
-#endif
-#if defined(HAVE_SIGNAL_H)
-#  include <signal.h>
-#endif
-#if defined(TIME_WITH_SYS_TIME)
-#  include <sys/time.h>
-#  include <time.h>
-#else
-#  include <time.h>
-#endif
-#if defined(HAVE_UTIME_H)
-#  include <utime.h>
-#elif defined(HAVE_SYS_UTIME_H)
-#  include <sys/utime.h>
-#endif
-#if defined(HAVE_SHARE_H)
-#  include <share.h>
-#endif
-
-
 // malloc debuggers
 #if defined(WITH_VALGRIND)
 #  include <valgrind.h>
@@ -253,18 +211,6 @@
 /*************************************************************************
 // portab
 **************************************************************************/
-
-#if defined(__GNUC__) && !defined(__GNUC_VERSION_HEX__)
-#  if !defined(__GNUC_MINOR__)
-#    error
-#  endif
-#  if !defined(__GNUC_PATCHLEVEL__)
-#    define __GNUC_PATCHLEVEL__ 0
-#  endif
-#  define __GNUC_VERSION_HEX__ \
-        (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
-#endif
-
 
 #if !defined(PATH_MAX)
 #  define PATH_MAX          512
@@ -406,13 +352,6 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 // file io
 **************************************************************************/
 
-#if defined(HAVE_SETMODE)
-#  if !defined(O_BINARY)
-#    error "setmode without O_BINARY"
-#  endif
-#  define USE_SETMODE 1
-#endif
-
 #if !defined(O_BINARY)
 #  define O_BINARY  0
 #endif
@@ -420,10 +359,8 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #if defined(__DMC__)
 #  undef tell
 #endif
-
 #if defined(__DJGPP__)
 #  undef sopen
-#  undef USE_SETMODE
 #endif
 
 #ifndef OPTIONS_VAR

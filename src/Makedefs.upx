@@ -284,6 +284,17 @@ CXX = i586-mingw32msvc-g++
 CCARCH += -march=i386 -mcpu=i686
 endif
 
+# rsxnt (g++ 2.8.1)
+ifeq ($(target),rsxnt)
+include $(srcdir)/Makedefs.gcc
+e = .exe
+CXX = gcc
+CFLAGS_O = -O0
+CCARCH += -Zwin32 -Zsys -mno-probe
+LDFLAGS = -s
+STUBEDIT_EXE = pestack -s1024 -c1024 $@
+endif
+
 
 ###
 ### win32 - Borland C++ 5.5.1

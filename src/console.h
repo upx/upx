@@ -34,8 +34,9 @@
 #undef USE_CONSOLE
 #undef USE_ANSI
 #undef USE_SCREEN
-#undef USE_SCREEN_VCSA
 #undef USE_SCREEN_CURSES
+#undef USE_SCREEN_VCSA
+#undef USE_SCREEN_WIN32
 #undef USE_FRAMES
 
 #if defined(WITH_GUI) && !defined(NO_CONSOLE)
@@ -57,9 +58,12 @@
 
 #if 1 && defined(__DJGPP__)
 #  define USE_SCREEN
-#endif
-#if 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
+#elif 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  define USE_SCREEN
+#  define USE_SCREEN_WIN32
+#elif 1 && (ACC_OS_EMX && defined(__RSXNT__))
+#  define USE_SCREEN
+#  define USE_SCREEN_WIN32
 #endif
 
 

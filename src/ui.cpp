@@ -109,7 +109,9 @@ static char progress_filler[] = ".*[]";
 
 static void init_global_constants(void)
 {
-#ifdef __MSDOS__
+#if 0 && (ACC_OS_DOS16 || ACC_OS_DOS32)
+    // FIXME: should test codepage here
+
     static bool done = false;
     if (done)
         return;
@@ -193,7 +195,7 @@ UiPacker::UiPacker(const Packer *p_) :
 
     if (opt->verbose < 0)
         s->mode = M_QUIET;
-    else if (opt->verbose == 0 || !isatty(STDOUT_FILENO))
+    else if (opt->verbose == 0 || !acc_isatty(STDOUT_FILENO))
         s->mode = M_INFO;
     else if (opt->verbose == 1 || opt->no_progress)
         s->mode = M_MSG;

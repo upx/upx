@@ -7,6 +7,7 @@
 #   `make target=cygwin'            # win32 - cygwin 1.3.x
 #   `make target=mingw32'           # win32 - mingw32
 #   `make target=no-cygwin'         # win32 - mingw32 as included in cygwin 1.3.x
+#   `make target=rsxnt'             # win32 - rsxnt
 #   `make target=bc'                # win32 - Borland C++ 5.5.1
 #   `make target=dm'                # win32 - Digital Mars C++ 8.33
 #   `make target=ic'                # win32 - Intel C++ 7.0

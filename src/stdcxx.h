@@ -41,7 +41,7 @@
 // disable dynamic allocation of an object
 **************************************************************************/
 
-#if defined(new) || defined(delete)
+#if defined(new) || defined(delete) || defined(__EMX__)
 
 // debug
 #  define DISABLE_NEW_DELETE private:
@@ -102,33 +102,23 @@ public:
     virtual ~exception() NOTHROW { }
     virtual const char* what() const NOTHROW { return "exception"; }
 };
-class bad_alloc : public exception
-{
-public:
-    bad_alloc() NOTHROW { }
-    virtual ~bad_alloc() NOTHROW { }
-    virtual const char* what() const NOTHROW { return "bad_alloc"; }
-};
-};
-
-#elif defined(__WATCOMC__)
-
-#define std
-
-#include <exception>
-//#include <stdexcept>
-#include <new>
-#include <typeinfo>
-
 class bad_alloc { };
+};
 
 #else
 
 #include <exception>
-//#include <stdexcept>
 #include <new>
 #include <typeinfo>
 
+#endif
+
+
+#if defined(__EMX__)
+#define std
+#elif defined(__WATCOMC__)
+#define std
+class bad_alloc { };
 #endif
 
 

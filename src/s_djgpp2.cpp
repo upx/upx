@@ -309,7 +309,7 @@ static int init(screen_t *this, int fd)
     this->data->sb_base = 0;
     this->data->sb_sp = 0;
 #endif
-    if (fd < 0 || !isatty(fd))
+    if (fd < 0 || !acc_isatty(fd))
         return -1;
     if (getPage(this) != 0)
         return -1;

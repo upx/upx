@@ -437,8 +437,8 @@ void PackExe::pack(OutputFile *fo)
 
     // set oh.min & oh.max
     ic = ih.min*16 + ih_imagesize;
-    if (ic < oh.ss*16 + oh.sp)
-        ic = oh.ss*16 + oh.sp;
+    if (ic < oh.ss*16u + oh.sp)
+        ic = oh.ss*16u + oh.sp;
     oh.min = (ic - (packedsize + lsize)) / 16;
     ic = oh.min + (ih.max - ih.min);
     oh.max = ic < 0xffff && ih.max != 0xffff ? ic : 0xffff;

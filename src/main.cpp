@@ -56,7 +56,9 @@ void init_options(struct options_t *o)
     o->overlay = -1;
 
     o->console = CON_FILE;
-#if (ACC_OS_CYGWIN || ACC_OS_DOS32 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#if defined(__DJGPP__)
+    o->console = CON_INIT;
+#elif defined(USE_SCREEN_WIN32)
     o->console = CON_INIT;
 #elif 1 && defined(__linux__)
     o->console = CON_INIT;
@@ -278,7 +280,7 @@ static void set_term(FILE *f)
     if (f)
         con_term = f;
     else
-        con_term = isafile(STDIN_FILENO) ? stderr : stdout;
+        con_term = acc_isatty(STDIN_FILENO) ? stderr : stdout;
 }
 
 

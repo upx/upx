@@ -46,7 +46,7 @@ void File::chmod(const char *name, int mode)
 
 void File::rename(const char *old_, const char *new_)
 {
-#if 1 && defined(__DJGPP__)
+#if defined(__DJGPP__)
     if (::_rename(old_,new_) != 0)
 #else
     if (::rename(old_,new_) != 0)
@@ -135,7 +135,7 @@ int FileBase::read(void *buf, int len)
         return 0;
     for (;;)
     {
-#if 1 && defined(__DJGPP__)
+#if defined(__DJGPP__)
         l = ::_read(_fd, buf, len);
 #else
         l = ::read(_fd, buf, len);
@@ -172,7 +172,7 @@ void FileBase::write(const void *buf, int len)
         return;
     for (;;)
     {
-#if 1 && defined(__DJGPP__)
+#if defined(__DJGPP__)
         l = ::_write(_fd,buf,len);
 #else
         l = ::write(_fd,buf,len);
@@ -337,29 +337,16 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode)
 bool OutputFile::openStdout(int flags, bool force)
 {
     close();
-    if (!force)
-    {
-        if (!isafile(STDOUT_FILENO))
-            return false;
-    }
-    _fd = STDOUT_FILENO;
+    int fd = STDOUT_FILENO;
+    if (!force && acc_isatty(fd))
+        return false;
     _name = "<stdout>";
     _flags = flags;
     _shflags = -1;
     _mode = 0;
-    if (flags != 0)
-    {
-        assert(flags == O_BINARY);
-#if defined(__MINT__)
-        __set_binmode(stdout, 1);
-#elif defined(HAVE_SETMODE) && defined(USE_SETMODE)
-        if (setmode(_fd, O_BINARY) == -1)
-            throwIOException(_name,errno);
-#if defined(__DJGPP__)
-        __djgpp_set_ctrl_c(1);
-#endif
-#endif
-    }
+    if (flags && acc_set_binmode(fd, 1) == -1)
+        throwIOException(_name, errno);
+    _fd = fd;
     return true;
 }
 

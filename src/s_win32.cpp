@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-#if defined(USE_SCREEN) && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
+#if defined(USE_SCREEN_WIN32)
 
 #include "screen.h"
 
@@ -46,6 +46,9 @@
 #  pragma warning(disable: 4201) // nonstandard extension used: nameless struct/union
 #endif
 
+#if defined(__RSXNT__)
+#  define timeval win32_timeval  /* struct timeval already in <sys/time.h> */
+#endif
 #include <windows.h>
 #if defined(HAVE_CONIO_H)
 #  include <conio.h>
@@ -289,7 +292,7 @@ static int init(screen_t *this, int fd)
     this->data->hi = INVALID_HANDLE_VALUE;
     this->data->ho = INVALID_HANDLE_VALUE;
     this->data->mode = -1;
-    if (fd < 0 || !isatty(fd))
+    if (fd < 0 || !acc_isatty(fd))
         return -1;
 
     hi = GetStdHandle(STD_INPUT_HANDLE);
@@ -443,15 +446,16 @@ static int getScrollCounter(const screen_t *this)
 
 static int s_kbhit(screen_t *this)
 {
-#if defined(HAVE_CONIO_H)
     UNUSED(this);
-# if defined(__BORLANDC__) || defined(__WATCOMC__)
+#if defined(HAVE_CONIO_H)
+# if defined(__RSXNT__)
+    return 0;
+# elif defined(__BORLANDC__) || defined(__WATCOMC__)
     return kbhit();
 # else
     return _kbhit();
 # endif
 #else
-    UNUSED(this);
     return 0;
 #endif
 }

@@ -88,7 +88,7 @@ static void pr_error(const char *iname, const char *msg, bool is_warning)
     // This hack is needed, otherwise error messages may get lost
     // when the cursor is not yet at the bottom of the screen.
     // At least I can use some colors then...
-    bool c = isatty(STDERR_FILENO) ? 1 : 0;
+    bool c = acc_isatty(STDERR_FILENO) ? 1 : 0;
 
     int fg = con_fg(stderr,FG_BRTRED);
     upx_snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),"%s: ", progname);

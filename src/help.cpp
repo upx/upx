@@ -326,8 +326,8 @@ void show_version(int x)
     FILE *f = stdout;
     UNUSED(x);
 
-#if 0 && defined(__GNUC__)
-    fprintf(f,"upx %s (gcc 0x%lx)\n", UPX_VERSION_STRING, __GNUC_VERSION_HEX__);
+#if (0 && ACC_CC_GNUC)
+    fprintf(f,"upx %s (gcc 0x%06lx)\n", UPX_VERSION_STRING, ACC_CC_GNUC);
 #else
     fprintf(f,"upx %s\n", UPX_VERSION_STRING);
 #endif

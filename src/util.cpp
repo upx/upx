@@ -29,6 +29,8 @@
 #include "conf.h"
 #include "util.h"
 
+#include "acc/acc_lib.ch"
+
 
 /*************************************************************************
 // qsort() util
@@ -513,25 +515,6 @@ bool makebakname(char *ofilename, size_t size,
 
     ofilename[0] = 0;
     return false;
-}
-
-
-/* test if fd is connected to a file or a pipe */
-bool isafile(int fd)
-{
-    if (isatty(fd))
-        return 0;
-#if defined(HAVE_FSTAT)
-    {
-        struct stat st;
-        if (fstat(fd, &st) != 0)
-            return 0;
-        /* fprintf(stderr,"fstat(%d): %o\n", fd, st.st_mode); */
-        if (S_ISDIR(st.st_mode))
-            return 0;
-    }
-#endif
-    return 1;
 }
 
 

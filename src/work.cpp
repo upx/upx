@@ -105,7 +105,7 @@ void do_one_file(const char *iname, char *oname)
     {
         if (opt->to_stdout)
         {
-            if (!fo.openStdout(O_BINARY, opt->force ? true : false))
+            if (!fo.openStdout(1, opt->force ? true : false))
                 throwIOException("data not written to a terminal; Use `-f' to force.");
         }
         else
