@@ -66,7 +66,7 @@
 //
 **************************************************************************/
 
-#define COND(b,x)   (b[x] == 0xe8)
+#define COND(b,x,lastcall)   (b[x] == 0xe8)
 #define F           f_cto32_e8_bswap_le
 #define U           u_cto32_e8_bswap_le
 #include "fcto_ml2.ch"
@@ -77,7 +77,7 @@
 #undef F
 #undef COND
 
-#define COND(b,x)   (b[x] == 0xe9)
+#define COND(b,x,lastcall)   (b[x] == 0xe9)
 #define F           f_cto32_e9_bswap_le
 #define U           u_cto32_e9_bswap_le
 #include "fcto_ml2.ch"
@@ -88,7 +88,9 @@
 #undef F
 #undef COND
 
-#define COND(b,x)   (b[x] == 0xe8 || b[x] == 0xe9)
+#define COND(b,x,lastcall)  (b[x] == 0xe8 || b[x] == 0xe9 \
+                            || (lastcall!=(x) && 0xf==b[(x)-1] \
+                               && 0x80<=b[x] && b[x]<=0x8f) )
 #define F           f_cto32_e8e9_bswap_le
 #define U           u_cto32_e8e9_bswap_le
 #include "fcto_ml2.ch"

@@ -43,8 +43,7 @@ static int F(Filter *f)
 #endif
     const unsigned size = f->buf_len;
 
-    unsigned ic, jc, kc;
-    unsigned cto;
+    unsigned ic;
     unsigned char cto8;
     unsigned calls = 0, noncalls = 0, noncalls2 = 0;
     unsigned lastnoncall = size, lastcall = 0;
@@ -59,7 +58,7 @@ static int F(Filter *f)
 
 #if 1
         for (ic = 0; ic < size - 5; ic++)
-            if (COND(b,ic) && get_le32(b+ic+1)+ic+1 >= size)
+            if (COND(b,ic,lastcall) && get_le32(b+ic+1)+ic+1 >= size)
             {
                 buf[b[ic+1]] |= 1;
             }
@@ -67,7 +66,7 @@ static int F(Filter *f)
         {
             int i = size - 6;
             do {
-                if (COND(b,i) && get_le32(b+i+1)+i+1 >= size)
+                if (COND(b,i,lastcall) && get_le32(b+i+1)+i+1 >= size)
                     buf[b[i+1]] |= 1;
             } while (--i >= 0);
         }
@@ -101,13 +100,13 @@ static int F(Filter *f)
             return -1;
         cto8 = (unsigned char) ic;
     }
-    cto = (unsigned)cto8 << 24;
+    unsigned const cto = (unsigned)cto8 << 24;
 
     for (ic = 0; ic < size - 5; ic++)
     {
-        if (!COND(b,ic))
+        if (!COND(b,ic,lastcall))
             continue;
-        jc = get_le32(b+ic+1)+ic+1;
+        unsigned const jc = get_le32(b+ic+1)+ic+1;
         // try to detect 'real' calls only
         if (jc < size)
         {
@@ -117,8 +116,9 @@ static int F(Filter *f)
             if (ic - lastnoncall < 5)
             {
                 // check the last 4 bytes before this call
+                unsigned kc;
                 for (kc = 4; kc; kc--)
-                    if (COND(b,ic-kc) && b[ic-kc+1] == cto8)
+                    if (COND(b,ic-kc,lastcall) && b[ic-kc+1] == cto8)
                         break;
                 if (kc)
                 {
@@ -164,11 +164,12 @@ static int U(Filter *f)
     const unsigned size5 = f->buf_len - 5;
     const unsigned addvalue = f->addvalue;
     const unsigned cto = f->cto << 24;
+    unsigned lastcall = 0;
 
     unsigned ic, jc;
 
     for (ic = 0; ic < size5; ic++)
-        if (COND(b,ic))
+        if (COND(b,ic,lastcall))
         {
             jc = get_be32(b+ic+1);
             if (b[ic+1] == f->cto)
@@ -176,7 +177,7 @@ static int U(Filter *f)
                 set_le32(b+ic+1,jc-ic-1-addvalue-cto);
                 f->calls++;
                 ic += 4;
-                f->lastcall = ic+1;
+                f->lastcall = lastcall = ic+1;
             }
             else
                 f->noncalls++;
