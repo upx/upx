@@ -73,7 +73,6 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
 %define AT_PHNUM  5
 %define AT_PAGESZ 6
 %define AT_ENTRY  9
-%define AT_NUMBER 20
 
         sub ecx, ecx
         mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
@@ -181,14 +180,14 @@ L20:  ; move envp
 L30:  ; process auxv
         lodsd  ; a_type
         stosd
-        cmp al, 32
-        jae L32  ; prevent aliasing of 'btr' when 32<=a_type
+        cmp eax, byte 32
+        jae L32  ; prevent aliasing by 'btr' when 32<=a_type
         btr edx, eax  ; no longer need a slot of type eax  [Carry only]
 L32:
-        test eax, eax  ; AT_NULL ?  [flags: Zero, Sign, Parity; C=0, V=0]
+        test eax, eax  ; AT_NULL ?
         lodsd
         stosd
-        jnz L30  ; checks only Zero bit of flags
+        jnz L30  ; a_type != AT_NULL
 
         sub edi, byte 8  ; backup to AT_NULL
         add ecx, ecx  ; two words per auxv
