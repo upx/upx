@@ -43,7 +43,7 @@ MemBuffer::MemBuffer(unsigned size=0) :
 
 MemBuffer::~MemBuffer()
 {
-    free();
+    this->free();
 }
 
 
@@ -68,8 +68,11 @@ unsigned MemBuffer::getSize() const
 
 void MemBuffer::alloc(unsigned size, unsigned base_offset)
 {
+#if 0
+    // don't automaticlly free a used buffer
+    this->free();
+#endif
     assert(alloc_ptr == NULL);
-    //free();
     assert((int)size > 0);
     size = base_offset + size;
     alloc_ptr = (unsigned char *) malloc(size);
@@ -94,7 +97,7 @@ void MemBuffer::allocForCompression(unsigned uncompressed_size)
     // Idea:
     //   We allocate the buffer at an offset of 4096 so
     //   that we could do an in-place decompression for
-    //   verifying our overlap overhead at the end
+    //   verifying our overlap_overhead at the end
     //   of packing.
     //
     // See Packer::verifyOverlappingDecompression().
@@ -105,7 +108,8 @@ void MemBuffer::allocForCompression(unsigned uncompressed_size)
 
 void MemBuffer::allocForUncompression(unsigned uncompressed_size)
 {
-    alloc(uncompressed_size + 512, 0);  // 512 safety bytes
+    //alloc(uncompressed_size + 512, 0);  // 512 safety bytes
+    alloc(uncompressed_size + 3, 0);  // 3 safety bytes for asm_fast
 }
 
 

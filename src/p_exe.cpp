@@ -34,7 +34,7 @@
 static const
 #include "stub/l_exe.h"
 
-#define RSFCRI          4096    // reserved space for compressed relocation info
+#define RSFCRI          4096    // Reserved Space For Compressed Relocation Info
 #define MAXMATCH        0x2000
 #define MAXRELOCS       (0x8000-MAXMATCH)
 
@@ -120,7 +120,7 @@ bool PackExe::canPack()
 static
 unsigned optimize_relocs(upx_byte *b, const unsigned size,
                          const upx_byte *relocs, const unsigned nrelocs,
-                         upx_byte *crel,bool *has_9a)
+                         upx_byte *crel, bool *has_9a)
 {
     upx_byte *crel_save = crel;
     unsigned i;
@@ -270,7 +270,7 @@ void PackExe::pack(OutputFile *fo)
     fi->seek(ih.headsize16*16,SEEK_SET);
     fi->readx(ibuf,imagesize);
 
-    if (find_le32(ibuf,imagesize < 127 ? imagesize : 127,UPX_MAGIC_LE32))
+    if (find_le32(ibuf,imagesize < 127 ? imagesize : 127, UPX_MAGIC_LE32))
         throwAlreadyPacked();
 
     // relocations
@@ -308,7 +308,7 @@ void PackExe::pack(OutputFile *fo)
         relocsize = 0;
     }
 
-    ph.u_len = imagesize+relocsize;
+    ph.u_len = imagesize + relocsize;
     if (!compress(ibuf,obuf,0,MAXMATCH))
         throwNotCompressible();
     const unsigned overlapoh = findOverlapOverhead(obuf,32);
@@ -452,11 +452,13 @@ void PackExe::pack(OutputFile *fo)
     }
 
     putPackHeader(loader,lsize);
-    upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
-    if (p == NULL && (flag & USEJUMP))
-        throwBadLoader();
     if (flag & USEJUMP)
+    {
+        upx_bytep p = find_le32(loader,lsize,get_le32("IPCS"));
+        if (p == NULL)
+            throwBadLoader();
         memcpy(p,&ih.ip,4);
+    }
     else
     {
         patch_le16(loader,lsize,"IP",ih.ip);
@@ -495,6 +497,7 @@ void PackExe::pack(OutputFile *fo)
     oh.p512 = (outputlen + 511) >> 9;
 
 //fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,overlapoh,ph.u_len,destpara,copysize,imagesize);
+
     // write header + write loader + compressed file
 #ifdef TESTING
     if (opt->debug)

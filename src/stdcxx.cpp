@@ -33,9 +33,11 @@
 #ifdef WANT_STL
 
 #if defined(__DJGPP__) || defined(__MINGW32__) || defined(__sparc__)
+// provide missing oom_handler
 void (*__malloc_alloc_template<0>::__malloc_alloc_oom_handler)() = 0;
 # if !defined(__USE_MALLOC)
-template class  __default_alloc_template<false, 0>;
+// instantiate default allocator
+template class __default_alloc_template<false, 0>;
 # endif
 #endif
 

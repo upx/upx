@@ -111,7 +111,7 @@ void PackDjgpp2::handleStub(OutputFile *fo)
 }
 
 
-static bool is_dlm(InputFile *fi,long coff_offset)
+static bool is_dlm(InputFile *fi, long coff_offset)
 {
     unsigned char buf[4];
     long off;
@@ -132,7 +132,7 @@ static bool is_dlm(InputFile *fi,long coff_offset)
 }
 
 
-static void handle_allegropak(InputFile *fi,OutputFile *fo)
+static void handle_allegropak(InputFile *fi, OutputFile *fo)
 {
     unsigned char buf[0x4000];
     unsigned pfsize=0, ic;
@@ -285,6 +285,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     ft.verifyUnfilter();
 #else
     // new version using compressWithFilters()
+
     // prepare packheader
     ph.u_len = usize;
     ph.filter = 0;
