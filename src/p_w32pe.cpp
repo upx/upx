@@ -918,9 +918,12 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+#if 0
+    // FIXME: !!! the check for TLS callbacks is broken !!!
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks)
         throwCantPack("TLS callbacks are not supported");
+#endif
     unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
     unsigned tlsdataend = tlsp->dataend - ih.imagebase;
 
