@@ -73,6 +73,7 @@ STRIPELF = $(srcdir)/util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
+CC_LINUX_CFLAGS += -Werror
 CC_LINUX_CFLAGS += -funsigned-char
 ###CC_LINUX_CFLAGS += -fwritable-strings -save-temps
 CC_LINUX = gcc272 -O2 -m386                  -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
