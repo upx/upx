@@ -429,11 +429,17 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //#include <asm/segment.h>
 //
 //	.text
-//startup_32: .globl startup_32
-//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
+//startup_32: .globl startup_32  # In: %esi=0x90000
+//	cli  # but if it matters, then there is a race!
 //
-//	pushl $ __BOOT_DS; pop %ds  # %ds= __BOOT_DS
-//	push %ds; pop %es           # %es= __BOOT_DS
+//	movl $ __BOOT_DS,%eax  # flat addressing, please
+//	movl %eax,%ss; movl %esi,%esp
+//	movl %eax,%ds
+//	movl %eax,%es
+//	movl %eax,%fs
+//	movl %eax,%gs
+//
+//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 //
 //	movl $ startup_32,%eax  # base address of uncompressed execution
 //	pushl $ __BOOT_CS
