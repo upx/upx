@@ -59,7 +59,7 @@ for $line (@lines)
         } elsif ($line =~ /^(\%\w+)?\s*;/) {
             # ok
         } else {
-            print STDERR "$in:$i:warning:$line"
+            print STDERR "$in:$i:warning 1:$line"
         }
     }
 
@@ -71,7 +71,7 @@ for $line (@lines)
         }
         else
         {
-            print STDERR "$in:$i:warning:$line";
+            print STDERR "$in:$i:warning 2:$line";
         }
     }
     $line =~ s/\.ash/\.asy/ if ($line =~ /^\s*\%include/);
