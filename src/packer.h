@@ -253,8 +253,8 @@ protected:
     int ph_version;
 
     // compression buffers
-    MemBuffer   ibuf;         // input
-    MemBuffer   obuf;         // output
+    MemBuffer ibuf;         // input
+    MemBuffer obuf;         // output
 
     // UI handler
     UiPacker *uip;
