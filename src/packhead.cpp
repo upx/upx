@@ -167,7 +167,7 @@ void PackHeader::putPackHeader(upx_bytep p)
 
 bool PackHeader::fillPackHeader(const upx_bytep buf, int blen)
 {
-    int boff = find_le32(buf, blen, magic);
+    int boff = find_le32(buf, blen, UPX_MAGIC_LE32);
     if (boff < 0)
         return false;
 

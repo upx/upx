@@ -584,7 +584,7 @@ int Packer::patchPackHeader(void *b, int blen)
     const int size = ph.getPackHeaderSize();
     assert(isValidFilter(ph.filter));
 
-    int boff = find_le32(b, blen, ph.magic);
+    int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     checkPatch(b, blen, boff, size);
 
     unsigned char *p = (unsigned char *)b + boff;

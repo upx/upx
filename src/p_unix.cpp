@@ -185,7 +185,7 @@ void PackUnix::pack(OutputFile *fo)
 
     // write packheader
     const int hsize = ph.getPackHeaderSize();
-    set_le32(obuf, ph.magic);               // note: always le32
+    set_le32(obuf, UPX_MAGIC_LE32);             // note: always le32
     patchPackHeader(obuf, hsize);
     fo->write(obuf, hsize);
 
