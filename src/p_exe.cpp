@@ -85,14 +85,14 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     oh.headsize16 = 2;
     oh.ip = 0;
 
-    unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
+    oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
 
+    unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
     oh.ss = ph.c_len/16 + destpara;
     if (ih.ss*16 + ih.sp < 0x100000 && ih.ss > oh.ss && ih.sp > 0x200)
         oh.ss = ih.ss;
-    oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
-    if (oh.ss*16u + 0x50 < ih.ss*16u + ih.sp
-        && oh.ss*16u + 0x200 > ih.ss*16u + ih.sp)
+    if (oh.ss*16 + 0x50 < ih.ss*16 + ih.sp
+        && oh.ss*16 + 0x200 > ih.ss*16 + ih.sp)
         oh.ss += 0x20;
 
     if (oh.ss != ih.ss)
@@ -398,8 +398,6 @@ void PackExe::pack(OutputFile *fo)
     if (ph.max_run_found + ph.max_match_found > 0x8000)
         throwCantPack("decompressor limit exceeded, send a bugreport");
 
-    ph.overlap_overhead = findOverlapOverhead(obuf,32);
-
 #ifdef TESTING
     if (opt->debug)
     {
@@ -411,8 +409,10 @@ void PackExe::pack(OutputFile *fo)
     }
 #endif
 
-    int flag = fillExeHeader(&oh);
+    ph.overlap_overhead = findOverlapOverhead(obuf,32);
     const unsigned lsize = buildLoader(&ft);
+    int flag = fillExeHeader(&oh);
+
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
     //OutputFile::dump("xxloader.dat", loader, lsize);
@@ -428,8 +428,8 @@ void PackExe::pack(OutputFile *fo)
 
     // set oh.min & oh.max
     ic = ih.min*16 + ih_imagesize;
-    if (ic < oh.ss*16u + oh.sp)
-        ic = oh.ss*16u + oh.sp;
+    if (ic < oh.ss*16 + oh.sp)
+        ic = oh.ss*16 + oh.sp;
     oh.min = (ic - (packedsize + lsize)) / 16;
     ic = oh.min + (ih.max - ih.min);
     oh.max = ic < 0xffff && ih.max != 0xffff ? ic : 0xffff;

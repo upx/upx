@@ -38,7 +38,7 @@
 **************************************************************************/
 
 PackHeader::PackHeader() :
-    version(-1), format(-1), filter(0), filter_cto(0), overlap_overhead(0)
+    version(-1), format(-1)
 {
 }
 
@@ -108,6 +108,7 @@ void PackHeader::putPackHeader(upx_bytep p)
     throwBadLoader();
 #else
     assert(get_le32(p) == UPX_MAGIC_LE32);
+    int size = 0;
 
     p[4] = (unsigned char) version;
     p[5] = (unsigned char) format;
@@ -124,13 +125,19 @@ void PackHeader::putPackHeader(upx_bytep p)
             set_le16(p+16,u_len);
             set_le16(p+18,c_len);
             p[20] = (unsigned char) filter;
+            size = 22;
         }
-        else if (format == UPX_F_DOS_EXE || format == UPX_F_DOS_EXEH)
+        else if (format == UPX_F_DOS_EXE)
         {
             set_le24(p+16,u_len);
             set_le24(p+19,c_len);
             set_le24(p+22,u_file_size);
             p[25] = (unsigned char) filter;
+            size = 27;
+        }
+        else if (format == UPX_F_DOS_EXEH)
+        {
+            throwInternalError("invalid format");
         }
         else
         {
@@ -140,6 +147,7 @@ void PackHeader::putPackHeader(upx_bytep p)
             p[28] = (unsigned char) filter;
             p[29] = (unsigned char) filter_cto;
             p[30] = 0;
+            size = 32;
         }
     }
     else
@@ -152,10 +160,11 @@ void PackHeader::putPackHeader(upx_bytep p)
         p[28] = (unsigned char) filter;
         p[29] = (unsigned char) filter_cto;
         p[30] = 0;
+        size = 32;
     }
 
     // store header_checksum
-    const int size = getPackHeaderSize();
+    assert(size == getPackHeaderSize());
     p[size - 1] = get_packheader_checksum(p, size - 1);
 #endif /* UNUPX */
 }
