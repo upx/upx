@@ -31,6 +31,11 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 /*ENTRY(_start)*/
+PHDRS  /* force exactly 1 ELF32_Phdr: in particular, no PT_GNU_STACK */
+{
+  phdr0 PT_LOAD FILEHDR PHDRS FLAGS(7);
+}
+
 SECTIONS
 {
   /*  0x00401000: l_lx_exec86.asm assumes 1 page up from 64KB boundary */
@@ -41,6 +46,5 @@ SECTIONS
     *(.data)
     *(.bss)
     *(COMMON)
-  }
-  /* save other Phdr for the overlay */
+  } : phdr0
 }

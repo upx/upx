@@ -31,22 +31,21 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 /*ENTRY(_start)*/
+PHDRS  /* force exactly 1 ELF32_Phdr: in particular, no PT_GNU_STACK */
+{
+  phdr0 PT_LOAD FILEHDR PHDRS FLAGS(7);
+}
+
 SECTIONS
 {
   /*  0x00800000: avoid 0x00400000 for shell itself being compressed */
   . = 0x00800000 + SIZEOF_HEADERS;
   . = ALIGN(0x80);
-/*
-  .text : {
-    *(.text)
-    *(.data)
-    }
-*/
   .data : { /* put everything together in one Phdr */
     *(.text)
     *(.rodata)
     *(.data)
     *(.bss)
     *(COMMON)
-  }
+  } : phdr0
 }
