@@ -105,7 +105,7 @@ void show_help(int x)
                 "  -d     decompress                        -l    list compressed file\n"
                 "  -t     test compressed file              -V    display version number\n"
                 "  -h     give %s help                    -L    display software license\n%s",
-                x == 0 ? "" : "  --best compress best (can be very slow for big files)\n",
+                x == 0 ? "" : "  --best compress best (can be slow for big files)\n",
                 x == 0 ? "more" : "this", x == 0 ? "" : "\n");
 
     fg = con_fg(f,FG_YELLOW);
@@ -140,7 +140,7 @@ void show_help(int x)
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --overlay=copy      copy any extra data attached to the file [default]\n"
-                    "  --overlay=strip     strip any extra data attached to the file [dangerous]\n"
+                    "  --overlay=strip     strip any extra data attached to the file [DANGEROUS]\n"
                     "  --overlay=skip      don't compress a file with an overlay\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
@@ -207,7 +207,7 @@ void show_help(int x)
                     "  --all-filters       try all available preprocessing filters\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for [b]vmlinuz/386\n");
+        con_fprintf(f,"Options for vmlinuz/386\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --all-methods       try all available compression methods\n"
@@ -229,6 +229,8 @@ void show_help(int x)
                     "  --compress-icons=1      compress all but the first icon\n"
                     "  --compress-icons=2      compress all but the first icon directory [default]\n"
                     "  --compress-resources=0  do not compress any resources at all\n"
+                    "  --strip-loadconf=0      do not strip SEH load config [default]\n"
+                    "  --strip-loadconf=1      strip SEH load config [DANGEROUS]\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "  --all-methods           try all available compression methods\n"

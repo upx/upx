@@ -869,6 +869,9 @@ Extra options available for this executable format:
                       unexpected value in a header field.
                       Use with care.
 
+  --strip-loadconf=0  Don't strip Structured Exception Handling load config [DEFAULT].
+  --strip-loadconf=1  Strip Structured Exception Handling load config.
+
   --strip-relocs=0    Don't strip relocation records.
   --strip-relocs=1    Strip relocation records. [DEFAULT]
                       This option only works on executables with base

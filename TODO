@@ -1,10 +1,7 @@
-UPX TODO list. Last updated 2004-06-30.
+UPX TODO list. Last updated 2004-07-12.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
-
-- win32/pe should add support for PEDIR_LOADCONF (Visual C++ 7.1 generated
-  exes, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG)
 
 - win32/pe should reliably detect .NET exes and somehow deal with them
 

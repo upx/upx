@@ -1601,6 +1601,9 @@ int PackW32Pe::buildLoader(const Filter *ft)
 
 void PackW32Pe::pack(OutputFile *fo)
 {
+    if (opt->win32_pe.strip_loadconf < 0)
+        opt->win32_pe.strip_loadconf = false;
+
     const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
@@ -1612,8 +1615,8 @@ void PackW32Pe::pack(OutputFile *fo)
 
     // check the PE header
     // FIXME: add more checks
-    if (!opt->force
-        && (ih.cpu < 0x14c || ih.cpu > 0x150
+    if (!opt->force && (
+           ih.cpu < 0x14c || ih.cpu > 0x150
         || ih.opthdrsize != 0xE0
         || (ih.flags & EXECUTABLE) == 0
         || (ih.subsystem != 2 && ih.subsystem != 3 && ih.subsystem != 1)
@@ -1621,15 +1624,17 @@ void PackW32Pe::pack(OutputFile *fo)
         || ih.ddirsentries != 16
         || IDSIZE(PEDIR_EXCEPTION) // is this used on i386?
 //        || IDSIZE(PEDIR_COPYRIGHT)
-        || IDSIZE(PEDIR_LOADCONF)
         || IDSIZE(PEDIR_COMRT)
        ))
         throwCantPack("unexpected value in PE header (try --force)");
 
+    // Structured Exception Handling
+    if (!opt->win32_pe.strip_loadconf && IDSIZE(PEDIR_LOADCONF))
+        throwCantPack("Structured Exception Handling present (try --strip-loadconf)");
+
     if (IDSIZE(PEDIR_SEC))
         throwCantPack("compressing certificate info is not supported");
-    //if (IDSIZE(PEDIR_DELAYIMP))
-    //   throwCantPack("delay load imports are not supported");
+
     if (isdll)
         opt->win32_pe.strip_relocs = false;
     else if (opt->win32_pe.strip_relocs < 0)
@@ -1903,6 +1908,12 @@ void PackW32Pe::pack(OutputFile *fo)
     ODSIZE(PEDIR_IAT) = 0;
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
+
+    if (opt->win32_pe.strip_loadconf)
+    {
+        ODADDR(PEDIR_LOADCONF) = 0;
+        ODSIZE(PEDIR_LOADCONF) = 0;
+    }
 
     // tls is put into section 1
 

@@ -6,6 +6,7 @@ User visible changes for UPX
 
 Changes in 1.92 beta (XX XXX 2004):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * win32/pe: added option `--strip-loadconf' to strip the SEH load config section
 
 Changes in 1.91 beta (30 Jun 2004):
   * djgpp2/coff: added support for recent binutils versions
