@@ -73,7 +73,6 @@ static void pr_print(bool c, const char *msg)
 
 static void pr_error(const char *iname, const char *msg, bool is_warning)
 {
-    set_ec(EXIT_ERROR);
     fflush(stdout); fflush(stderr);
     char buf[1024];
     buf[0] = 0;
