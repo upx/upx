@@ -260,13 +260,13 @@ int InputFile::readx(void *buf, int len)
 int InputFile::read(MemBuffer *buf, int len)
 {
     assert((unsigned)len <= buf->getSize());
-    return super::read(buf->getVoidPtr(), len);
+    return read(buf->getVoidPtr(), len);
 }
 
 int InputFile::readx(MemBuffer *buf, int len)
 {
     assert((unsigned)len <= buf->getSize());
-    return super::readx(buf->getVoidPtr(), len);
+    return read(buf->getVoidPtr(), len);
 }
 
 
@@ -366,6 +366,19 @@ void OutputFile::write(const void *buf, int len)
 {
     super::write(buf, len);
     bytes_written += len;
+}
+
+
+void OutputFile::write(const MemBuffer *buf, int len)
+{
+    assert((unsigned)len <= buf->getSize());
+    write(buf->getVoidPtr(), len);
+}
+
+
+void OutputFile::write(const MemBuffer &buf, int len)
+{
+    write(&buf, len);
 }
 
 

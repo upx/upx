@@ -123,6 +123,8 @@ public:
     virtual bool openStdout(int flags=0, bool force=false);
 
     virtual void write(const void *buf, int len);
+    virtual void write(const MemBuffer *buf, int len);
+    virtual void write(const MemBuffer &buf, int len);
 
     off_t getBytesWritten() const { return bytes_written; }
 
