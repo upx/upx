@@ -41,9 +41,6 @@ STUBS = \
 ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
 STUBS += l_ext2.h
 endif
-ifneq ($(strip $(wildcard $(srcdir)/l_tos2.s)),)
-STUBS += l_t_x2b.h l_t_x2bs.h l_t_x2d.h l_t_x2ds.h
-endif
 
 
 # util var for use in the rules - basename of the current target
@@ -277,35 +274,6 @@ l_t_n2es.h: l_tos.s
 	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
 	$(BIN2H) $T.bin nrv2e_loader_small $@
 
-# experimental:
-l_t_x2b.h: l_tos2.s
-	$(CPP_M68K) -DNRV2B -o $T.i $<
-	$(APP_M68K) $T.i $T.asx
-	$(ASM_M68K) $T.asx
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader $@
-
-l_t_x2bs.h: l_tos2.s
-	$(CPP_M68K) -DNRV2B -DSMALL -o $T.i $<
-	$(APP_M68K) $T.i $T.asx
-	$(ASM_M68K) $T.asx
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader_small $@
-
-l_t_x2d.h: l_tos2.s
-	$(CPP_M68K) -DNRV2D -o $T.i $<
-	$(APP_M68K) $T.i $T.asx
-	$(ASM_M68K) $T.asx
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader $@
-
-l_t_x2ds.h: l_tos2.s
-	$(CPP_M68K) -DNRV2D -DSMALL -o $T.i $<
-	$(APP_M68K) $T.i $T.asx
-	$(ASM_M68K) $T.asx
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader_small $@
-
 
 # /***********************************************************************
 # // ps1/exe
@@ -422,12 +390,12 @@ l_com.h:        n2b_d16.asy  $(DEPS2)
 l_djgpp2.h:     $(DEPS2) $(DEPS3)
 l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  n2e_d8e.asy  $(DEPS2)
 l_sys.h:        n2b_d16.asy  $(DEPS2)
-l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1)
-l_t_n2bs.h:     n2b_d.ash    bits.ash  $(DEPS1)
-l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1)
-l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1)
-l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1)
-l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1)
+l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1) ../version.h
+l_t_n2bs.h:     n2b_d.ash    bits.ash  $(DEPS1) ../version.h
+l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1) ../version.h
+l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1) ../version.h
+l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1) ../version.h
+l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1) ../version.h
 l_tmt.h:        $(DEPS2) $(DEPS3)
 l_vmlinz.h:     $(DEPS2) $(DEPS3)
 l_vxd.h:        $(DEPS2) $(DEPS3)
