@@ -234,7 +234,7 @@ bzero(char *p, size_t len)
 
 static Elf32_Addr  // entry address
 do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
-        Elf32_auxv_t *const a)
+        Elf32_auxv_t *const av)
 {
     struct Extent x;
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
@@ -243,7 +243,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
-        a->a_un.a_val = phdr->p_vaddr;
+        av[AT_PHDR -1].a_un.a_val = phdr->p_vaddr;
     }
     else if (PT_LOAD==phdr->p_type) {
         size_t mlen = x.size =                phdr->p_filesz;
@@ -390,13 +390,12 @@ ERR_LAB
     if (lseek(fdi, -(sizeof(xo) + sz_pckhdrs), SEEK_CUR) < 0) {
         err_exit(17);
     }
-    // av[0].a_un.a_val  is set again by do_xmap if PT_PHDR is present
-    av[0].a_type = AT_PHDR;   av[0].a_un.a_ptr = 1+(Elf32_Ehdr *)phdr->p_vaddr;
-    av[1].a_type = AT_PHENT;  av[1].a_un.a_val = ehdr->e_phentsize;
-    av[2].a_type = AT_PHNUM;  av[2].a_un.a_val = ehdr->e_phnum;
-    av[3].a_type = AT_PAGESZ; av[3].a_un.a_val = PAGE_SIZE;
-    av[4].a_type = AT_ENTRY;  av[4].a_un.a_val = ehdr->e_entry;
-    av[5].a_type = AT_NULL;
+    // av[AT_PHDR -1].a_un.a_val  is set again by do_xmap if PT_PHDR is present.
+    av[AT_PHDR   -1].a_type = AT_PHDR  ; av[AT_PHDR   -1].a_un.a_ptr = 1+(Elf32_Ehdr *)phdr->p_vaddr;
+    av[AT_PHENT  -1].a_type = AT_PHENT ; av[AT_PHENT  -1].a_un.a_val = ehdr->e_phentsize;
+    av[AT_PHNUM  -1].a_type = AT_PHNUM ; av[AT_PHNUM  -1].a_un.a_val = ehdr->e_phnum;
+    av[AT_PAGESZ -1].a_type = AT_PAGESZ; av[AT_PAGESZ -1].a_un.a_val = PAGE_SIZE;
+    av[AT_ENTRY  -1].a_type = AT_ENTRY ; av[AT_ENTRY  -1].a_un.a_val = ehdr->e_entry;
     entry = do_xmap(fdi, ehdr, f_decompress, av);
 
     // Map PT_INTERP program interpreter

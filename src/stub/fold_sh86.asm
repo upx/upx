@@ -30,29 +30,75 @@
                 BITS    32
                 SECTION .text
 
+%define PAGE_SIZE ( 1<<12)
 %define szElf32_Ehdr 0x34
 %define szElf32_Phdr 8*4
 %define e_entry  (16 + 2*2 + 4)
 %define p_memsz  5*4
 %define szl_info 12
 %define szp_info 12
+%define a_type 0
+%define a_val  4
+%define sz_auxv 8
 
 fold_begin:     ; enter: %ebx= uncDst
                 ; also edx= szElf32_Ehdr + 2*szElf32_Phdr + &Elf32_Ehdr
         pop eax  ; discard &sz_uncompressed
         pop eax  ; discard  sz_uncompressed
 
-; Move argc,argv,envp down so that we can insert more Elf_auxv entries.
+; Move argc,argv,envp down to make room for complete Elf_auxv table.
+; Linux kernel 2.4.2 and earlier give only AT_HWCAP and AT_PLATFORM
+; because we have no PT_INTERP.  Linux kernel 2.4.5 (and later?)
+; give not quite everything.  It is simpler and smaller code for us
+; to generate a "complete" table where Elf_auxv[k -1].a_type = k.
 ; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance
+
+%define AT_NULL   0
+%define AT_IGNORE 1
+%define AT_PHDR   3
+%define AT_NUMBER 20
+
+        mov esi, esp
+        sub esp, sz_auxv * AT_NUMBER  ; more than 128 bytes
+        mov edi, esp
+do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
+        ; cld
+
+L10:  ; move argc+argv
+        lodsd
+        stosd
+        test eax,eax
+        jne L10
+
+L20:  ; move envp
+        lodsd
+        stosd
+        test eax,eax
+        jne L20
+
+; complete Elf_auxv table full of AT_IGNORE
+        push edi  ; save base of resulting table
+        inc eax  ; convert 0 to AT_IGNORE
+        mov ecx, 2 * (AT_NUMBER -1)
+        rep stosd
+        dec eax  ; convert AT_IGNORE into AT_NULL
+        stosd  ; terminate Elf_auxv
+        stosd
+        pop edi  ; base of resulting table
+
+L30:  ; distribute existing Elf32_auxv into new table
+        lodsd
+        test eax,eax  ; AT_NULL ?
+        xchg eax,edx
+        lodsd
+        je L40
+        mov [a_type + sz_auxv*(edx -1) + edi], edx
+        mov [a_val  + sz_auxv*(edx -1) + edi], eax
+        jmp L30
+L40:
 
 %define OVERHEAD 2048
 %define MAX_ELF_HDR 512
-%define PAGE_SIZE ( 1<<12)
-
-        mov esi, esp
-        sub esp, byte 6*8  ; AT_PHENT, AT_PHNUM, AT_PAGESZ, AT_ENTRY, AT_PHDR, AT_NULL
-        mov edi, esp
-        call do_auxv  ; edi= &AT_NEXT
 
         sub esp, dword MAX_ELF_HDR + OVERHEAD
 
@@ -61,7 +107,7 @@ fold_begin:     ; enter: %ebx= uncDst
         mov ecx, [   edx]  ; sz_unc
         mov ebx, [4+ edx]  ; sz_cpr
         mov esi, eax  ; extra copy of uncDst
-        pusha  ; (&AT_NEXT,uncDst,f_decpr,&ehdr,{sz_cpr,cprSrc},{sz_unc,uncDst})
+        pusha  ; (AT_table,uncDst,f_decpr,&ehdr,{sz_cpr,cprSrc},{sz_unc,uncDst})
 EXTERN upx_main
         call upx_main  ; entry = upx_main(...)
         pop ecx  ; junk
@@ -106,32 +152,6 @@ EXTERN upx_main
 ; on the stack.  So, we would have to dirty a page of the shell
 ; or of /lib/ld-linux.so.  It's simpler just to omit the unapping.
         popa
-        ret
-
-do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
-        ; cld
-
-L10:  ; move argc+argv
-        lodsd
-        stosd
-        test eax,eax
-        jne L10
-
-L20:  ; move envp
-        lodsd
-        stosd
-        test eax,eax
-        jne L20
-
-L30:  ; move existing Elf32_auxv
-        lodsd
-        stosd
-        test eax,eax  ; AT_NULL ?
-        lodsd
-        stosd
-        jne L30
-
-        sub edi, byte 8  ; point to AT_NULL
         ret
 
 

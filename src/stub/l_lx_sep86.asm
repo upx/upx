@@ -132,6 +132,9 @@ decompress:
 
 %define PAGE_MASK (~0<<12)
 %define PAGE_SIZE ( 1<<12)
+%define a_type 0
+%define a_val  4
+%define sz_auxv 8
 
 %define szElf32_Phdr 8*4
 %define a_val  4
@@ -141,26 +144,69 @@ main:
         pop ebp  ; &decompress
         cld
 
-; Move argc,argv,envp down so that we can insert more Elf_auxv entries.
+; Move argc,argv,envp down to make room for complete Elf_auxv table.
+; Linux kernel 2.4.2 and earlier give only AT_HWCAP and AT_PLATFORM
+; because we have no PT_INTERP.  Linux kernel 2.4.5 (and later?)
+; give not quite everything.  It is simpler and smaller code for us
+; to generate a "complete" table where Elf_auxv[k -1].a_type = k.
 ; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance
+
+%define AT_NULL   0
+%define AT_IGNORE 1
+%define AT_PHDR   3
+%define AT_NUMBER 20
+
+        mov esi, esp
+        sub esp, sz_auxv * AT_NUMBER  ; more than 128 bytes
+        mov edi, esp
+do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
+        ; cld
+
+L10:  ; move argc+argv
+        lodsd
+        stosd
+        test eax,eax
+        jne L10
+
+L20:  ; move envp
+        lodsd
+        stosd
+        test eax,eax
+        jne L20
+
+; complete Elf_auxv table full of AT_IGNORE
+        push edi  ; save base of resulting table
+        inc eax  ; convert 0 to AT_IGNORE
+        mov ecx, 2 * (AT_NUMBER -1)
+        rep stosd
+        dec eax  ; convert AT_IGNORE into AT_NULL
+        stosd  ; terminate Elf_auxv
+        stosd
+        pop edi  ; base of resulting table
+
+L30:  ; distribute existing Elf32_auxv into new table
+        lodsd
+        test eax,eax  ; AT_NULL ?
+        xchg eax,edx
+        lodsd
+        je L40
+        mov [a_type + sz_auxv*(edx -1) + edi], edx
+        mov [a_val  + sz_auxv*(edx -1) + edi], eax
+        jmp L30
+L40:
 
 %define OVERHEAD 2048
 %define MAX_ELF_HDR 512
-
-        mov esi, esp
-        sub esp, byte 6*8  ; AT_PHENT, AT_PHNUM, AT_PAGESZ, AT_ENTRY, AT_PHDR, AT_NULL
-        mov edi, esp
-        call do_auxv  ; edi= &AT_next
 
         lea ecx, [4+esp]  ; argv
         sub esp, dword MAX_ELF_HDR + OVERHEAD
 
         push esp  ; argument: temp space
-        push edi  ; argument: AT_next
+        push edi  ; argument: AT_table
         push ebp  ; argument: &decompress
         push ecx  ; argument: argv
 EXTERN upx_main
-        call upx_main  ; entry = upx_main(argv, &decompress, AT_next, tmp_ehdr)
+        call upx_main  ; entry = upx_main(argv, &decompress, AT_table, tmp_ehdr)
         add esp, dword 4*4 + MAX_ELF_HDR + OVERHEAD  ; remove temp space, args
 
         pop ecx  ; argc
@@ -169,7 +215,7 @@ EXTERN upx_main
         push ecx
         push eax  ; save entry address
 
-        mov edi, [a_val + edi]  ; AT_PHDR
+        mov edi, [a_val + sz_auxv * (AT_PHDR -1) + edi]
 find_hatch:
         push edi
 EXTERN make_hatch
@@ -199,31 +245,6 @@ EXTERN make_hatch
         mov eax, __NR_munmap  ; do not dirty the stack with push byte + pop
         jmp edx  ; unmap ourselves, then goto entry
 
-do_auxv:  ; entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
-        ; cld
-
-L10:  ; move argc+argv
-        lodsd
-        stosd
-        test eax,eax
-        jne L10
-
-L20:  ; move envp
-        lodsd
-        stosd
-        test eax,eax
-        jne L20
-
-L30:  ; move existing Elf32_auxv
-        lodsd
-        stosd
-        test eax,eax  ; AT_NULL ?
-        lodsd
-        stosd
-        jne L30
-
-        sub edi, byte 8  ; point to AT_NULL
-        ret
 
 ; vi:ts=8:et:nowrap
 
