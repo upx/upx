@@ -275,7 +275,7 @@ fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
-	ld -T l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
+	ld -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
 	objcopy -S -R .comment -R .note $T.bin
 	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
@@ -288,7 +288,7 @@ fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_exec86.h: l_lx_exec.o fold_exec86.o l_lx_exec86.lds
-	ld -T l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o
+	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o
 	objcopy -S -R .comment -R .note $T.bin
 	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
@@ -301,7 +301,7 @@ fold_sh86.o: fold_sh86.asm
 	$(NASM) -f elf -o $@ $<
 
 fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
-	ld -T l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
+	ld -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
 	objcopy -S -R .comment -R .note $T.bin
 	./util/sstrip/sstrip $T.bin
 	$(BRANDELF) $T.bin
