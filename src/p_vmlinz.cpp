@@ -298,6 +298,9 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
 #endif
 
+    // verify
+    verifyOverlappingDecompression();
+
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
