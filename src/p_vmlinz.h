@@ -31,7 +31,7 @@
 
 
 /*************************************************************************
-// vmlinuz/i386 (zlib compressed Linux kernel image)
+// vmlinuz/i386 (gzip compressed Linux kernel image)
 **************************************************************************/
 
 class PackVmlinuzI386 : public Packer
@@ -62,23 +62,23 @@ protected:
 
     struct boot_sect_t
     {
-        char    _[0x1f1];
-        char    setup_sects;
-        char    _1[2];
-        LE16    sys_size;
-        char    _2[8];
-        LE16    boot_flag;     // 0xAA55
+        char            _[0x1f1];
+        unsigned char   setup_sects;
+        char            __[2];
+        LE16            sys_size;
+        char            ___[8];
+        LE16            boot_flag;      // 0xAA55
         // 0x200
-        char    _3[2];
-        char    hdrs[4];        // "HdrS"
-        LE16    version;        // boot protocol
-        char    _4[9];
-        char    load_flags;
-        char    _5[2];
-        LE32    code32_start;
+        char            ____[2];
+        unsigned char   hdrs[4];        // "HdrS"
+        LE16            version;        // boot protocol
+        char            _____[9];
+        unsigned char    load_flags;
+        char            ______[2];
+        LE32            code32_start;
 
         // some more uninteresting fields here ...
-        // see /usr/src/linux/Documentation/i386/
+        // see /usr/src/linux/Documentation/i386/zero-page.txt
     };
 
     MemBuffer setup_buf;
@@ -87,7 +87,7 @@ protected:
 
 
 /*************************************************************************
-// bvmlinuz/i386 (zlib compressed Linux kernel image)
+// bvmlinuz/i386 (gzip compressed Linux kernel image)
 **************************************************************************/
 
 class PackBvmlinuzI386 : public PackVmlinuzI386
