@@ -329,13 +329,13 @@ l_lx_pti86.h: l_lx_pti86.asx
 GCC_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-gcc
 LD_PPC=/home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin/powerpc-750-linux-gnu-ld
 
-l_mac_ppc32.h: l_mac_ppc32.S
-	$(GCC_PPC) -c $<
+l_mac_ppc32.h: l_mac_ppc32.S ppc_d_nrv2e.S
+	$(GCC_PPC) -c $T.S
 	$(LD_PPC) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin l_mac_ppc32_loader $@
 
-l_lx_elfppc32.h: l_lx_elfppc32.S
-	$(GCC_PPC) -c $<
+l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
+	$(GCC_PPC) -c $T.S
 	$(LD_PPC) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elfppc32_loader $@
 
@@ -373,8 +373,8 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 m_lx_elfppc32.o: m_lx_elfppc32.c
 	$(GCC_PPC) -c -Os -o $@ $<
 
-fold_elfppc32.o: fold_elfppc32.S
-	$(GCC_PPC) -c -O $<
+fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S
+	$(GCC_PPC) -c -O $T.S
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 	$(LD_PPC) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
@@ -424,8 +424,8 @@ fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
 m_mac_mach32.o: m_mac_mach32.c
 	$(GCC_PPC) -c -Os m_mac_mach32.c
 
-fold_machppc32.o: fold_machppc32.S
-	$(GCC_PPC) -c fold_machppc32.S
+fold_machppc32.o: fold_machppc32.S ppc_bxx.S
+	$(GCC_PPC) -c $T.S
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
