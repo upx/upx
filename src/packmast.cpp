@@ -31,11 +31,12 @@
 #include "packmast.h"
 #include "packer.h"
 #include "lefile.h"
+#include "p_elf.h"
+
 #include "p_com.h"
 #include "p_djgpp2.h"
 #include "p_exe.h"
 #include "p_unix.h"
-#include "p_elf.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
 #include "p_lx_sep.h"
@@ -174,6 +175,14 @@ static Packer* try_packers(InputFile *f, try_function func)
         return p;
 
     //
+    // linux kernel
+    //
+    if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
+        return p;
+    if ((p = func(new PackVmlinuzI386(f),f)) != NULL)
+        return p;
+
+    //
     // linux
     //
 #if 0
@@ -187,9 +196,41 @@ static Packer* try_packers(InputFile *f, try_function func)
         return p;
     if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
         return p;
-    if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
+    if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
-    if ((p = func(new PackVmlinuzI386(f),f)) != NULL)
+
+    //
+    // .sys and .com
+    //
+    if ((p = func(new PackSys(f),f)) != NULL)
+        return p;
+    if ((p = func(new PackCom(f),f)) != NULL)
+        return p;
+    return NULL;
+}
+
+
+static Packer *getPacker(InputFile *f)
+{
+    Packer *p = try_packers(f, try_pack);
+    if (!p)
+        throwUnknownExecutableFormat();
+    return p;
+}
+
+
+static Packer *getUnpacker(InputFile *f)
+{
+#if 0
+    if (opt->unix.script_name)
+    {
+        if ((p = func(new PackLinuxI386sep(f),f)) != NULL)
+            return p;
+    }
+#endif
+    if ((p = func(new PackLinuxI386elf(f),f)) != NULL)
+        return p;
+    if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
         return p;
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
