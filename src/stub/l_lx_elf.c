@@ -241,17 +241,12 @@ auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
     ((x)|((x)<<4)|((x)<<8)|((x)<<12)|((x)<<16)|((x)<<20)|((x)<<24)|((x)<<28))
 #define EXP8(y) \
     ((1&(y)) ? 0xf0f0f0f0 : (2&(y)) ? 0xff00ff00 : (4&(y)) ? 0xffff0000 : 0)
-
-static inline unsigned
-__attribute__((regparm(1), stdcall))
-pf_to_prot(unsigned const pf)
-{
-    return (PROT_READ|PROT_WRITE|PROT_EXEC) & (
-        ( (REP8(PROT_EXEC ) & EXP8(PF_X))
-         |(REP8(PROT_READ ) & EXP8(PF_R))
-         |(REP8(PROT_WRITE) & EXP8(PF_W))
-        ) >> ((pf & (PF_R|PF_W|PF_X))<<2) );
-}
+#define PF_TO_PROT(pf) \
+    ((PROT_READ|PROT_WRITE|PROT_EXEC) & ( \
+        ( (REP8(PROT_EXEC ) & EXP8(PF_X)) \
+         |(REP8(PROT_READ ) & EXP8(PF_R)) \
+         |(REP8(PROT_WRITE) & EXP8(PF_W)) \
+        ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
@@ -300,7 +295,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     }
     else if (PT_LOAD==phdr->p_type) {
-        unsigned const prot = pf_to_prot(phdr->p_flags);
+        unsigned const prot = PF_TO_PROT(phdr->p_flags);
         struct Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;

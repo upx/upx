@@ -172,16 +172,11 @@ bzero(char *p, size_t len)
     ((x)|((x)<<4)|((x)<<8)|((x)<<12)|((x)<<16)|((x)<<20)|((x)<<24)|((x)<<28))
 #define EXP8(y) \
     ((1&(y)) ? 0xf0f0f0f0 : (2&(y)) ? 0xff00ff00 : (4&(y)) ? 0xffff0000 : 0)
-
-static inline unsigned
-__attribute__((regparm(1), stdcall))
-pf_to_prot(unsigned const pf)
-{
-    return 7 & (( (REP8(PROT_EXEC ) & EXP8(PF_X))
-                 |(REP8(PROT_READ ) & EXP8(PF_R))
-                 |(REP8(PROT_WRITE) & EXP8(PF_W)) )
-               >> ((pf & (PF_R|PF_W|PF_X))<<2) );
-}
+#define PF_TO_PROT(pf) \
+          (7 & (( (REP8(PROT_EXEC ) & EXP8(PF_X)) \
+                 |(REP8(PROT_READ ) & EXP8(PF_R)) \
+                 |(REP8(PROT_WRITE) & EXP8(PF_W)) ) \
+               >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
@@ -249,7 +244,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Elf32_auxv_t *const av)
         av[AT_PHDR -1].a_un.a_val = phdr->p_vaddr;
     }
     else if (PT_LOAD==phdr->p_type) {
-        unsigned const prot = pf_to_prot(phdr->p_flags);
+        unsigned const prot = PF_TO_PROT(phdr->p_flags);
         struct Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;

@@ -97,17 +97,17 @@ CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
-# gcc 3.4.0 (fold_*.bin: 1482 / 931 / 1173)
-CC_LINUX_I386_GCC340  = gcc-3.4 -march=i386 -mtune=k6 -fno-exceptions -MMD
-CC_LINUX_I386_GCC340 += -Os -fno-omit-frame-pointer
-CC_LINUX_I386_GCC340 += -momit-leaf-frame-pointer
-CC_LINUX_I386_GCC340 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-##CC_LINUX_I386_GCC340 += -fweb
-CC_LINUX_I386_GCC340 += -Werror
+# gcc 3.4.0 (fold_*.bin: 1628 / 931 / 1210)
+CC_LINUX_I386_GCC34  = gcc-3.4.0 -march=i386 -mtune=k6 -fno-exceptions -MMD
+CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
+CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
+CC_LINUX_I386_GCC34 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+##CC_LINUX_I386_GCC34 += -fweb
+CC_LINUX_I386_GCC34 += -Werror
 
 CC_LINUX_I386  = $(CC_LINUX_I386_GCC272)
 CC_LINUX_I386  = $(CC_LINUX_I386_GCC295)
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC340)
+CC_LINUX_I386  = $(CC_LINUX_I386_GCC34)
 CC_LINUX_I386 += -nostdinc
 CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
 CC_LINUX_I386 += -funsigned-char
