@@ -426,10 +426,37 @@ void PackLinuxI386::patchLoader()
     //patch_le32(loader,lsize,"UPX1",lsize);  no longer used
     patchVersion(loader,lsize);
 
+    Elf_LE32_Ehdr *const ehdr = (Elf_LE32_Ehdr *)(void *)loader;
+    Elf_LE32_Phdr *const phdr = (Elf_LE32_Phdr *)(1+ehdr);
+
+    // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
+    off_t const fold_begin = phdr[1].p_offset;
+    MemBuffer cprLoader(lsize);
+
+    // compress compiled C-code portion of loader
+    upx_compress_config_t conf; memset(&conf, 0xff, sizeof(conf));
+    conf.c_flags = 0;
+    upx_uint result_buffer[16];
+    size_t const uncLsize = lsize - fold_begin;
+    size_t       cprLsize;
+    upx_compress(
+        loader + fold_begin, uncLsize,
+        cprLoader, &cprLsize,
+        0,  // progress_callback_t ??
+        getCompressionMethod(), 9,
+        &conf,
+        result_buffer
+    );
+    memcpy(fold_begin+loader, cprLoader, cprLsize);
+    lsize = fold_begin + cprLsize;
+    phdr->p_filesz = lsize;
+    // phdr->p_memsz is the decompressed size
+
     // The beginning of our loader consists of a elf_hdr (52 bytes) and
     // one     section elf_phdr (32 byte) now,
     // another section elf_phdr (32 byte) later, so we have 12 free bytes
     // from offset 116 to the program start at offset 128.
+    // These 12 bytes are used for l_info by ::patchLoaderChecksum().
     assert(get_le32(loader + 28) == 52);        // e_phoff
     assert(get_le32(loader + 32) == 0);         // e_shoff
     assert(get_le16(loader + 40) == 52);        // e_ehsize
@@ -464,16 +491,13 @@ void PackLinuxI386::updateLoader(OutputFile *fo)
     ehdr->e_phnum = 2;
 
     // The first Phdr maps the stub (instructions, data, bss) rwx.
-    // Round up hi address to page boundary.
-    Elf_LE32_Phdr *phdro = (Elf_LE32_Phdr *)(sizeof(Elf_LE32_Ehdr)+loader);
-    unsigned const vaddr2 = PAGE_MASK & (~PAGE_MASK + phdro->p_memsz + phdro->p_vaddr);
-
     // The second Phdr maps the overlay r--,
     // to defend against /usr/bin/strip removing the overlay.
-    ++phdro;
+    Elf_LE32_Phdr *const phdro = 1+(Elf_LE32_Phdr *)(1+ehdr);
+
     phdro->p_type = PT_LOAD;
     phdro->p_offset = lsize;
-    phdro->p_paddr = phdro->p_vaddr = vaddr2 + (lsize &~ PAGE_MASK);
+    phdro->p_paddr = phdro->p_vaddr = 0x00400000 + (lsize &~ PAGE_MASK);
     phdro->p_memsz = phdro->p_filesz = fo->getBytesWritten() - lsize;
     phdro->p_flags = PF_R;
     phdro->p_align = -PAGE_MASK;

@@ -100,7 +100,7 @@ void PackLinuxI386sh::patchLoader()
     patch_le32(loader,lsize,"UPX2",o_shname);
 
     // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
-    off_t const fold_begin = phdri[1].p_offset + 0x80;
+    off_t const fold_begin = phdri[1].p_offset;
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader

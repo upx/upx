@@ -118,7 +118,7 @@ void PackLinuxI386elf::patchLoader()
     Elf_LE32_Phdr *const phdr = (Elf_LE32_Phdr *)(1+ehdr);
 
     // stub/scripts/setfold.pl puts address of 'fold_begin' in phdr[1].p_offset
-    off_t const fold_begin = phdr[1].p_offset + 0x80;
+    off_t const fold_begin = phdr[1].p_offset;
     MemBuffer cprLoader(lsize);
 
     // compress compiled C-code portion of loader
