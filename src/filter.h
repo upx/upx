@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -44,8 +44,7 @@ class FilterImp;
 // call throwFilterException() - this will cause the compression
 // to fail.
 //
-// The return value of unfilters can/should be ignored. They throw
-// exceptions in case of errors.
+// Unfilters throw exceptions in case of errors.
 //
 // The main idea behind filters is to convert relative jumps and calls
 // to absolute addresses so that the buffer compresses better.
@@ -58,8 +57,8 @@ public:
     void init(int id=0, unsigned addvalue=0);
 
     bool filter(upx_byte *buf, unsigned buf_len);
-    bool unfilter(upx_byte *buf, unsigned buf_len, bool verify_checksum=false);
-    bool verifyUnfilter();
+    void unfilter(upx_byte *buf, unsigned buf_len, bool verify_checksum=false);
+    void verifyUnfilter();
     bool scan(const upx_byte *buf, unsigned buf_len);
 
 public:

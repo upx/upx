@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -129,7 +129,7 @@ bool Filter::filter(upx_byte *buf_, unsigned buf_len_)
 }
 
 
-bool Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
+void Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
 {
     initFilter(this, buf_, buf_len_);
 
@@ -137,11 +137,11 @@ bool Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
     if (fe == NULL)
         throwInternalError("unfilter-1");
     if (fe->id == 0)
-        return true;
+        return;
     if (buf_len < fe->min_buf_len)
-        return false;
+        return;
     if (fe->max_buf_len && buf_len > fe->max_buf_len)
-        return false;
+        return;
     if (!fe->do_unfilter)
         throwInternalError("unfilter-2");
 
@@ -158,12 +158,10 @@ bool Filter::unfilter(upx_byte *buf_, unsigned buf_len_, bool verify_checksum)
         if (this->adler != upx_adler32(a, this->buf, this->buf_len))
             throwInternalError("unfilter-4");
     }
-
-    return true;
 }
 
 
-bool Filter::verifyUnfilter()
+void Filter::verifyUnfilter()
 {
     // Note:
     //   This verify is just because of complete paranoia that there
@@ -175,9 +173,8 @@ bool Filter::verifyUnfilter()
     //   Packer::verifyOverlappingDecompression()
 
     //printf("verifyUnfilter: %02x %p %d\n", this->id, this->buf, this->buf_len);
-    if (clevel == 1)
-        return true;
-    return unfilter(this->buf, this->buf_len, true);
+    if (clevel != 1)
+        unfilter(this->buf, this->buf_len, true);
 }
 
 

@@ -178,7 +178,8 @@ ifeq (1,2) 	# checkergcc
 else
 ifeq ($(DEBUG),1)
   ##CFLAGS += -O0 -gstabs+3
-  CFLAGS += -O0 -gdwarf-2
+  ##CFLAGS += -O0 -gdwarf-2
+  CFLAGS += -O0 -g
 else
   ##LDFLAGS += -static
   STUBEDIT_EXE = objcopy -S -R .comment -R .note $@ && perl $(srcdir)/stub/scripts/brandelf.pl $@ && chmod 755 $@

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -571,16 +571,20 @@ void Packer::initPackHeader()
     ph.u_file_size = file_size;
 }
 
+
 // this is called directly after canPack() from class PackMaster
 void Packer::updatePackHeader()
 {
-    // update our local options
-    if (opt->level < 0)
-        opt->level = file_size < 512*1024 ? 8 : 7;
-    opt->method = getCompressionMethod();
-    // set ph
+    assert(opt->cmd == CMD_COMPRESS);
+    //
+    const int *m = getCompressionMethods(opt->method, opt->level);
+    ph.method = m[0];
     ph.level = opt->level;
-    ph.method = opt->method;
+    if (ph.level < 0)
+        ph.level = file_size < 512*1024 ? 8 : 7;
+    //
+    assert(isValidCompressionMethod(ph.method));
+    assert(1 <= ph.level && ph.level <= 10);
 }
 
 
@@ -626,7 +630,7 @@ bool Packer::getPackHeader(void *b, int blen)
             throwCantUnpack("header size corrupted");
 #endif
     }
-    if (ph.method < M_NRV2B_LE32 || ph.method > M_NRV2D_LE16)
+    if (!isValidCompressionMethod(ph.method))
         throwCantUnpack("unknown compression method");
 
     // Some formats might be able to unpack "subformats". Ask them.
@@ -665,6 +669,12 @@ void Packer::checkAlreadyPacked(void *b, int blen)
     // the full PackHeader, and not only the magic.
 
     throwAlreadyPacked();
+}
+
+
+bool Packer::isValidCompressionMethod(int method)
+{
+    return (method >= M_NRV2B_LE32 && method <= M_NRV2D_LE16);
 }
 
 
@@ -924,12 +934,12 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo)
         "\n\0"
         "$Info: This file is packed with the UPX executable packer http://upx.tsx.org $"
         "\n\0"
-        "$Id: UPX " UPX_VERSION_STRING " Copyright (C) 1996-2000 the UPX Team. All Rights Reserved. $"
+        "$Id: UPX " UPX_VERSION_STRING " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
         "\n";
 
     static const char identsmall[] =
         "\n"
-        "$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
+        "$Id: UPX (C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
         "\n";
 
     if (opt->small)
@@ -1059,8 +1069,8 @@ void Packer::addFilter32(int filter_id)
 
 
 /*************************************************************************
-// Try compression with several filters, choose the best or first one.
-// Needs buildLoader().
+// Try compression with several methods and filters, choose the best
+/  or first working one. Needs buildLoader().
 //
 // Required inputs:
 //   this->ph
@@ -1072,18 +1082,18 @@ void Packer::addFilter32(int filter_id)
 //
 // - updates this->ph
 // - updates *ft
-// - ibuf[] is restored to unfiltered version
+// - ibuf[] is restored to the original unfiltered version
 // - obuf[] contains the best compressed version
 //
 // strategy:
-//   0:  try all filters, use best one
-//   n:  try the first N filters in parm_filters[], use best one
+//   n:  try the first N filters, use best one
 //  -1:  try all filters, use first working one
 //  -2:  try only the opt->filter filter
 //  -3:  use no filter at all
 //
 // This has been prepared for generalization into class Packer so that
-// opt->all_filters is available for all executable formats.
+// opt->all_methods and/or opt->all_filters are available for all
+// executable formats.
 //
 // It will replace the tryFilters() / compress() call sequence.
 **************************************************************************/
@@ -1114,23 +1124,39 @@ void Packer::compressWithFilters(Filter *parm_ft,
     assert(orig_ft.id == 0);
     assert(filter_off + filter_len <= compress_buf_off + compress_buf_len);
 
-    // setup raw_filters
-    static const int no_filters[] = { 0, -1 };
-    int strategy_filters[] = { 0, -1 };
-
-    const int *raw_filters = parm_filters;
-    if (raw_filters == NULL)
-        raw_filters = getFilters();
-    if (raw_filters == NULL)
-        raw_filters = no_filters;
-    if (strategy == -2)
+    // setup filter strategy
+    if (strategy == 0)
     {
-        assert(opt->filter >= 0);
-        strategy_filters[0] = opt->filter;
-        raw_filters = strategy_filters;
+        if (opt->all_filters)
+            // choose best from all available filters
+            strategy = INT_MAX;
+        else if (opt->filter >= 0 && isValidFilter(opt->filter))
+            // try opt->filter
+            strategy = -2;
+        else
+            // try the first working filter
+            strategy = -1;
     }
-    else if (strategy == -3)
-        raw_filters = no_filters;
+    assert(strategy != 0);
+
+    // setup raw_filters
+    int tmp_filters[] = { 0, -1 };
+    const int *raw_filters = NULL;
+    if (strategy == -3)
+        raw_filters = tmp_filters;
+    else if (strategy == -2 && opt->filter >= 0)
+    {
+        tmp_filters[0] = opt->filter;
+        raw_filters = tmp_filters;
+    }
+    else
+    {
+        raw_filters = parm_filters;
+        if (raw_filters == NULL)
+            raw_filters = getFilters();
+        if (raw_filters == NULL)
+            raw_filters = tmp_filters;
+    }
 
     // first pass - count number of filters
     int raw_nfilters = 0;
@@ -1140,7 +1166,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
         raw_nfilters++;
     }
 
-    // copy filters, eliminate duplicates, add a 0
+    // copy filters, add a 0
     int nfilters = 0;
     bool zero_seen = false;
     autoheap_array(int, filters, raw_nfilters + 2);
@@ -1148,111 +1174,129 @@ void Packer::compressWithFilters(Filter *parm_ft,
     {
         if (*f == 0)
             zero_seen = true;
-        bool duplicate = false;
-        for (int i = 0; i < nfilters; i++)
-            if (filters[i] == *f)
-                duplicate = true;
-        if (!duplicate)
-            filters[nfilters++] = *f;
+        filters[nfilters++] = *f;
+        if (nfilters == strategy)
+            break;
     }
     if (!zero_seen)
         filters[nfilters++] = 0;
     filters[nfilters] = -1;
 
+    // methods
+    int tmp_methods[] = { ph.method, -1 };
+    const int *methods = NULL;
+    if (opt->all_methods)
+        methods = getCompressionMethods(-1, ph.level);
+    if (methods == NULL)
+        methods = tmp_methods;
+    int nmethods = 0;
+    while (methods[nmethods] >= 0)
+    {
+        assert(isValidCompressionMethod(methods[nmethods]));
+        nmethods++;
+    }
+    assert(nmethods > 0);
+
     // update total_passes
     if (strategy < 0)
-        ui_total_passes += 1;
+        ui_total_passes += 1 * nmethods;
     else
-    {
-        if (strategy > nfilters)
-            nfilters = strategy;
-        ui_total_passes += nfilters;
-    }
+        ui_total_passes += nfilters * nmethods;
 
     // Working buffer for compressed data. Don't waste memory.
     upx_byte *otemp = obuf;
     MemBuffer otemp_buf;
-    if (nfilters > 1 && strategy >= 0)
-    {
-        otemp_buf.allocForCompression(compress_buf_len);
-        otemp = otemp_buf;
-    }
 
     // compress
     int nfilters_success = 0;
-    for (int i = 0; i < nfilters; i++)
+    for (int m = 0; m < nmethods; m++)          // for all methods
     {
-        // get fresh packheader
-        ph = orig_ph;
-        ph.filter = filters[i];
-        // get fresh filter
-        Filter ft = orig_ft;
-        ft.init(filters[i], orig_ft.addvalue);
-        // filter
-        optimizeFilter(&ft, ibuf + filter_off, filter_len);
-        bool success = ft.filter(ibuf + filter_off, filter_len);
-        if (ft.id != 0 && ft.calls == 0)
+        for (int i = 0; i < nfilters; i++)          // for all filters
         {
-            // filter did not do anything - no need to call ft.unfilter()
-            success = false;
-        }
-        if (!success)
-        {
-            // filter failed or was usesless
-            if (strategy >= 0)
-                ui_total_passes -= 1;
-            continue;
-        }
-        // filter success
-        nfilters_success++;
-        ph.filter_cto = ft.cto;
-        // compress
-        if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
-        {
-            unsigned lsize = 0;
-            if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+            // get fresh packheader
+            ph = orig_ph;
+            ph.method = methods[m];
+            ph.filter = filters[i];
+            // get fresh filter
+            Filter ft = orig_ft;
+            ft.init(ph.filter, orig_ft.addvalue);
+            // filter
+            optimizeFilter(&ft, ibuf + filter_off, filter_len);
+            bool success = ft.filter(ibuf + filter_off, filter_len);
+            if (ft.id != 0 && ft.calls == 0)
             {
-                // get results
-                ph.overlap_overhead = findOverlapOverhead(otemp, overlap_range);
-                lsize = buildLoader(&ft);
+                // filter did not do anything - no need to call ft.unfilter()
+                success = false;
             }
+            if (!success)
+            {
+                // filter failed or was usesless
+                if (strategy > 0)
+                    ui_total_passes -= 1;
+                continue;
+            }
+            // filter success
+            if (nfilters_success > 0 && otemp == obuf)
+            {
+                otemp_buf.allocForCompression(compress_buf_len);
+                otemp = otemp_buf;
+            }
+            nfilters_success++;
+            ph.filter_cto = ft.cto;
+            // compress
+            if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
+            {
+                unsigned lsize = 0;
+                if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+                {
+                    // get results
+                    ph.overlap_overhead = findOverlapOverhead(otemp, overlap_range);
+                    lsize = buildLoader(&ft);
+                }
 #if 0
-            printf("\n%02x: %d + %d = %d  (best: %d + %d = %d)\n", ft.id,
+                printf("\n%2d %02x: %d + %d = %d  (best: %d + %d = %d)\n", ph.method, ph.filter,
                    ph.c_len, getLoaderSize(), ph.c_len + getLoaderSize(),
                    best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
 #endif
-            bool update = false;
-            if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
-                update = true;
-            else if (ph.c_len + lsize == best_ph.c_len + best_ph_lsize)
-            {
-                if (ph.overlap_overhead < best_ph.overlap_overhead)
+                bool update = false;
+                if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
                     update = true;
+                else if (ph.c_len + lsize == best_ph.c_len + best_ph_lsize)
+                {
+                    // prefer less overlap_overhead
+                    if (ph.overlap_overhead < best_ph.overlap_overhead)
+                        update = true;
+                    else if (ph.overlap_overhead == best_ph.overlap_overhead)
+                    {
+                        // prefer bigger loaders
+                        if (lsize > best_ph_lsize)
+                            update = true;
+                    }
+                }
+                if (update)
+                {
+                    // update obuf[] with best version
+                    if (otemp != obuf)
+                        memcpy(obuf, otemp, ph.c_len);
+                    // save compression results
+                    best_ph = ph;
+                    best_ph_lsize = lsize;
+                    best_ft = ft;
+                }
             }
-            if (update)
-            {
-                // update obuf[] with best version
-                if (otemp != obuf)
-                    memcpy(obuf, otemp, ph.c_len);
-                // save compression results
-                best_ph = ph;
-                best_ph_lsize = lsize;
-                best_ft = ft;
-            }
+            // restore ibuf[] - unfilter with verify
+            ft.unfilter(ibuf + filter_off, filter_len, true);
+            //
+            if (strategy < 0)
+                break;
         }
-        // restore ibuf[] - unfilter with verify
-        ft.unfilter(ibuf + filter_off, filter_len, true);
-        //
-        if (strategy < 0)
-            break;
     }
 
-    // postconditions
+    // postconditions 1)
     assert(nfilters_success > 0);
     assert(best_ph.u_len == orig_ph.u_len);
     assert(best_ph.filter == best_ft.id);
     assert(best_ph.filter_cto == best_ft.cto);
-    assert(best_ph.overlap_overhead > 0);
 
     // copy back results
     this->ph = best_ph;
@@ -1263,6 +1307,9 @@ void Packer::compressWithFilters(Filter *parm_ft,
         throwNotCompressible();
     if (!checkCompressionRatio(best_ph.u_len, best_ph.c_len))
         throwNotCompressible();
+
+    // postconditions 2)
+    assert(best_ph.overlap_overhead > 0);
 
     // convenience
     buildLoader(&best_ft);

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -66,13 +66,18 @@ static const
 //
 **************************************************************************/
 
-int PackWcle::getCompressionMethod() const
+const int *PackWcle::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE32;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE32;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_LE32 : M_NRV2B_LE32;
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || file_size <= 512*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -130,7 +135,9 @@ void PackWcle::handleStub(OutputFile *fo)
 
 bool PackWcle::canPack()
 {
-    return LeFile::readFileHeader();
+    if (!LeFile::readFileHeader())
+        return false;
+    return true;
 }
 
 
@@ -479,7 +486,7 @@ void PackWcle::pack(OutputFile *fo)
     sofixups += 13;
 
     // filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
 
     encodeImage(&ft);

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -49,13 +49,13 @@ static const unsigned zimage_offset = 0x1000;
 //
 **************************************************************************/
 
-int PackElks8086::getCompressionMethod() const
+const int *PackElks8086::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
+    if (M_IS_NRV2B(method))
         return M_NRV2B_8;
-    if (M_IS_NRV2D(opt->method))
+    if (M_IS_NRV2D(method))
         return M_NRV2D_8;
-    return opt->level > 1 ? M_NRV2D_8 : M_NRV2B_8;
+    return level > 1 ? M_NRV2D_8 : M_NRV2B_8;
 }
 
 
@@ -113,18 +113,11 @@ void PackElks8086::pack(OutputFile *fo)
     readKernel();
 
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-
-    int strategy = -1;      // try the first working filter
-    if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters)
-        // choose best from all available filters
-        strategy = 0;
-    compressWithFilters(&ft, overlap_range, strategy);
+    // compress
+    compressWithFilters(&ft, overlap_range);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -30,6 +30,7 @@
 #include "version.h"
 #include "mygetopt.h"
 #include "file.h"
+#include "packer.h"
 
 
 /*************************************************************************
@@ -44,7 +45,6 @@ void init_options(struct options_t *o)
     o->cmd = CMD_NONE;
     o->method = -1;
     o->level = -1;
-    o->mem_level = -1;
     o->filter = -1;
 
     o->backup = -1;
@@ -271,7 +271,12 @@ static void set_cmd(int cmd)
 static bool set_method(int m, int l)
 {
     if (m > 0)
+    {
+        if (!Packer::isValidCompressionMethod(m))
+            return false;
         opt->method = m;
+        opt->all_methods = false;
+    }
     if (l > 0)
         opt->level = l;
     set_cmd(CMD_COMPRESS);
@@ -417,7 +422,7 @@ static int do_option(int optc, const char *arg)
     case 'f':
         opt->force++;
         break;
-    case 901:
+    case 902:
         set_cmd(CMD_FILEINFO);
         break;
     case 'h':
@@ -426,9 +431,11 @@ static int do_option(int optc, const char *arg)
         set_cmd(CMD_HELP);
         break;
     case 'h'+256:
+#if 0
         /* according to GNU standards */
         set_term(stdout);
         opt->console = CON_FILE;
+#endif
         show_help(1);
         e_exit(EXIT_OK);
         break;
@@ -487,14 +494,16 @@ static int do_option(int optc, const char *arg)
         if (!set_method(-1, optc - '0'))
             e_method(opt->method, optc);
         break;
-    case 900:
+
+    case 901:                               // --brute
+        opt->all_methods = true;
+        opt->method = -1;
+        opt->all_filters = true;
+        opt->filter = -1;
+        /* fallthrough */
+    case 900:                               // --best
         if (!set_method(-1, 10))
             e_method(opt->method, 10);
-        break;
-
-    // compression memory level
-    case 902:
-        getoptvar(&opt->mem_level, 1, 9);
         break;
 
     // misc
@@ -525,6 +534,9 @@ static int do_option(int optc, const char *arg)
         opt->all_filters = true;
         opt->filter = -1;
         break;
+    case 528:
+        opt->all_methods = true;
+        opt->method = -1;
     // compression parms
     case 531:
         getoptvar(&opt->crp.c_flags, 0, 3);
@@ -665,10 +677,11 @@ static int get_options(int argc, char **argv)
 static const struct mfx_option longopts[] =
 {
     // commands
-    {"best",                0, 0, 900},     // compress best
+    {"best",             0x10, 0, 900},     // compress best
+    {"brute",            0x10, 0, 901},     // compress best, brute force
     {"decompress",          0, 0, 'd'},     // decompress
-    {"fast",                0, 0, '1'},     // compress faster
-    {"fileinfo",         0x10, 0, 901},     // display info about file
+    {"fast",             0x10, 0, '1'},     // compress faster
+    {"fileinfo",         0x10, 0, 902},     // display info about file
     {"help",                0, 0, 'h'+256}, // give help
     {"license",             0, 0, 'L'},     // display software license
     {"list",                0, 0, 'l'},     // list compressed exe
@@ -722,8 +735,8 @@ static const struct mfx_option longopts[] =
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     // compression settings
     {"all-filters",      0x10, 0, 527},
+    {"all-methods",      0x10, 0, 528},
     {"filter",           0x31, 0, 526},     // --filter=
-    {"mem",              0x31, 0, 902},     // --mem=
     {"small",            0x10, 0, 525},
     // compression runtime parameters
     {"crp-cf",           0x31, 0, 531},
@@ -785,8 +798,9 @@ static void get_envoptions(int argc, char **argv)
 static const struct mfx_option longopts[] =
 {
     // commands
-    {"best",                0, 0, 900},     // compress best
-    {"fast",                0, 0, '1'},     // compress faster
+    {"best",             0x10, 0, 900},     // compress best
+    {"brute",            0x10, 0, 901},     // compress best, brute force
+    {"fast",             0x10, 0, '1'},     // compress faster
 
     // options
     {"info",                0, 0, 'i'},     // info mode
@@ -1111,7 +1125,6 @@ int main(int argc, char *argv[])
         // invalidate compression options
         opt->method = 0;
         opt->level = 0;
-        opt->mem_level = 0;
         memset(&opt->crp, 0xff, sizeof(opt->crp));
     }
 

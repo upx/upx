@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -43,13 +43,18 @@ PackW16Ne::PackW16Ne(InputFile *f) :
 }
 
 
-int PackW16Ne::getCompressionMethod() const
+const int *PackW16Ne::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_8;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_8;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_8 : M_NRV2B_8;
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 

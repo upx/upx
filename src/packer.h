@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -107,10 +107,10 @@ public:
     virtual ~Packer();
 
     virtual int getVersion() const = 0;
-    // A unique integer ID for this executable format. See conf.h.
+    // A unique integer ID for this executable format. See unupx.h.
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
-    virtual int getCompressionMethod() const = 0;
+    virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
     // PackMaster entries
@@ -163,7 +163,7 @@ protected:
     // high-level compression drivers
     void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
-                             int strategy, 
+                             int strategy = 0,
                              const int *filters = NULL,
                              unsigned max_offset = 0, unsigned max_match = 0,
                              unsigned filter_buf_off = 0,
@@ -234,6 +234,10 @@ protected:
     // relocation util
     virtual upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
     virtual unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
+
+    // compression method util
+public:
+    static bool isValidCompressionMethod(int method);
 
 
 protected:

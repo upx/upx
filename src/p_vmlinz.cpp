@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -56,13 +56,18 @@ PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
 }
 
 
-int PackVmlinuzI386::getCompressionMethod() const
+const int *PackVmlinuzI386::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE32;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE32;
-    return opt->level > 1 ? M_NRV2D_LE32 : M_NRV2B_LE32;
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -217,18 +222,11 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     readKernel();
 
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-
-    int strategy = -1;      // try the first working filter
-    if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters)
-        // choose best from all available filters
-        strategy = 0;
-    compressWithFilters(&ft, 1 << 20, strategy);
+    // compress
+    compressWithFilters(&ft, 1 << 20);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -291,18 +289,11 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     readKernel();
 
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
-
-    int strategy = -1;      // try the first working filter
-    if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters)
-        // choose best from all available filters
-        strategy = 0;
-    compressWithFilters(&ft, 512, strategy);
+    // compress
+    compressWithFilters(&ft, 512);
 
     // align everything to dword boundary - it is easier to handle
     unsigned clen = ph.c_len;

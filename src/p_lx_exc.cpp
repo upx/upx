@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -47,21 +47,26 @@ static const
 #include "stub/l_lx_n2d.h"
 
 
-int PackLinuxI386::getCompressionMethod() const
+const int *PackLinuxI386::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE32;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE32;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_LE32 : M_NRV2B_LE32;
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || file_size <= 512*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
 const upx_byte *PackLinuxI386::getLoader() const
 {
-    if (M_IS_NRV2B(opt->method))
+    if (M_IS_NRV2B(ph.method))
         return linux_i386exec_nrv2b_loader;
-    if (M_IS_NRV2D(opt->method))
+    if (M_IS_NRV2D(ph.method))
         return linux_i386exec_nrv2d_loader;
     return NULL;
 }
@@ -72,9 +77,9 @@ int PackLinuxI386::getLoaderSize() const
     if (0!=lsize) {
         return lsize;
     }
-    if (M_IS_NRV2B(opt->method))
+    if (M_IS_NRV2B(ph.method))
         return sizeof(linux_i386exec_nrv2b_loader);
-    if (M_IS_NRV2D(opt->method))
+    if (M_IS_NRV2D(ph.method))
         return sizeof(linux_i386exec_nrv2d_loader);
     return 0;
 }
@@ -206,7 +211,7 @@ void PackLinuxI386::patchLoader()
     upx_uint const uncLsize = lsize - fold_begin;
     upx_uint       cprLsize;
     int r = upx_compress(loader + fold_begin, uncLsize, cprLoader, &cprLsize,
-                         NULL, opt->method, 10, NULL, NULL);
+                         NULL, ph.method, 10, NULL, NULL);
     if (r != UPX_E_OK || cprLsize >= uncLsize)
         throwInternalError("loaded compression failed");
 

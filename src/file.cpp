@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -171,7 +171,11 @@ void FileBase::write(const void *buf, int len)
 void FileBase::seek(off_t off, int whence)
 {
     if (!isOpen())
-        throwIOException("bad seek");
+        throwIOException("bad seek 1");
+    if (whence == SEEK_SET && off < 0)
+        throwIOException("bad seek 2");
+    if (whence == SEEK_END && off > 0)
+        throwIOException("bad seek 3");
     if (::lseek(_fd,off,whence) < 0)
         throwIOException("seek error",errno);
 }

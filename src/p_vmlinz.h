@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -42,7 +42,7 @@ public:
     virtual int getVersion() const { return 11; }
     virtual int getFormat() const { return UPX_F_VMLINUZ_i386; }
     virtual const char *getName() const { return "vmlinuz/386"; }
-    virtual int getCompressionMethod() const;
+    virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
@@ -116,7 +116,7 @@ public:
     PackElks8086(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_ELKS_8086; }
     virtual const char *getName() const { return "elks/8086"; }
-    virtual int getCompressionMethod() const;
+    virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);

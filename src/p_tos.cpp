@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -29,6 +29,7 @@
 #include "conf.h"
 
 #include "file.h"
+#include "filter.h"
 #include "packer.h"
 #include "p_tos.h"
 
@@ -57,13 +58,18 @@ PackTos::PackTos(InputFile *f) :
 }
 
 
-int PackTos::getCompressionMethod() const
+const int *PackTos::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_8;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_8;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_8 : M_NRV2B_8;
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || ih.fh_text + ih.fh_data <= 256*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -75,9 +81,9 @@ const int *PackTos::getFilters() const
 
 const upx_byte *PackTos::getLoader() const
 {
-    if (M_IS_NRV2B(opt->method))
+    if (M_IS_NRV2B(ph.method))
         return opt->small ? nrv2b_loader_small : nrv2b_loader;
-    if (M_IS_NRV2D(opt->method))
+    if (M_IS_NRV2D(ph.method))
         return opt->small ? nrv2d_loader_small : nrv2d_loader;
     return NULL;
 }
@@ -85,9 +91,9 @@ const upx_byte *PackTos::getLoader() const
 
 int PackTos::getLoaderSize() const
 {
-    if (M_IS_NRV2B(opt->method))
+    if (M_IS_NRV2B(ph.method))
         return opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
-    if (M_IS_NRV2D(opt->method))
+    if (M_IS_NRV2D(ph.method))
         return opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
     return 0;
 }
@@ -406,13 +412,14 @@ void PackTos::pack(OutputFile *fo)
     // alloc buffer
     obuf.allocForCompression(t + d_len + 512);
 
-    // compress (max_match = 65535)
+    // prepare packheader
     ph.u_len = t;
-    if (!compress(ibuf,obuf,0,65535))
-        throwNotCompressible();
+    // prepare filter
+    Filter ft(ph.level);
+    // compress (max_match = 65535)
+    compressWithFilters(&ft, 512, 0, NULL, 0, 65535);
 
     // The decompressed data will now get placed at this offset:
-    ph.overlap_overhead = findOverlapOverhead(obuf, 512);
     unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
 
     // compute addresses

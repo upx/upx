@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -98,13 +98,18 @@ PackW32Pe::~PackW32Pe()
 }
 
 
-int PackW32Pe::getCompressionMethod() const
+const int *PackW32Pe::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE32;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE32;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_LE32 : M_NRV2B_LE32;
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || ih.codesize + ih.datasize <= 256*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -1377,7 +1382,9 @@ unsigned PackW32Pe::stripDebug(unsigned overlaystart)
 
 bool PackW32Pe::canPack()
 {
-    return readFileHeader();
+    if (!readFileHeader())
+        return false;
+    return true;
 }
 
 
@@ -1528,9 +1535,8 @@ void PackW32Pe::pack(OutputFile *fo)
     }
 
     // check for NeoLite
-    for (ic = 0; ic < 64; ic++)
-        if (memcmp(ibuf + ih.entry + ic,"NeoLite",7) == 0)
-            throwCantPack("file is already compressed with another packer");
+    if (find(ibuf + ih.entry, 64+7, "NeoLite", 7) >= 0)
+        throwCantPack("file is already compressed with another packer");
 
     unsigned overlay = file_size - stripDebug(overlaystart);
     if (overlay >= (unsigned) file_size)
@@ -1612,48 +1618,16 @@ void PackW32Pe::pack(OutputFile *fo)
     s += 4;
     ph.u_len += s;
     obuf.allocForCompression(ph.u_len);
-    ph.u_len -= rvamin;
-
-#if 0
-    // filter
-    Filter ft(opt->level);
-    if (allow_filter)
-        tryFilters(&ft, ibuf + ih.codebase, ih.codesize);
-
-    // compress
-    ph.filter = ft.id;
-    ph.filter_cto = ft.cto;
-    if (!compress(ibuf + rvamin,obuf))
-        throwNotCompressible();
-
-    ph.overlap_overhead = findOverlapOverhead(obuf, 2048);
-    buildLoader(&ft);
-
-    // verify filter
-    ft.verifyUnfilter();
-#else
-    // new version using compressWithFilters()
 
     // prepare packheader
-    ph.filter = 0;
+    ph.u_len -= rvamin;
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.buf_len = ih.codesize;
-    ft.addvalue = 0;
-
-    int strategy = -1;      // try the first working filter
-    if (!allow_filter)
-        // no filter
-        strategy = -3;
-    else if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters)
-        // choose best from all available filters
-        strategy = 0;
+    // compress
+    int strategy = allow_filter ? 0 : -3;
     compressWithFilters(&ft, 2048, strategy,
                         NULL, 0, 0, ih.codebase, rvamin);
-#endif
 
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)

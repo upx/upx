@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -135,10 +135,14 @@ void throwEOFException(const char *msg, int e)
 
 const char *prettyName(const char *n)
 {
-    while (*n >= '0' && *n <= '9')              // gcc / egcs
+#if defined(__GNUC__)
+    while (*n >= '0' && *n <= '9')              // gcc
         n++;
+#endif
+#if defined(_MSC_VER)
     if (strncmp(n, "class ", 6) == 0)           // Visual C++
         n += 6;
+#endif
     return n;
 }
 

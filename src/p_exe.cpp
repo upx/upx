@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -54,13 +54,18 @@ PackExe::PackExe(InputFile *f) :
 }
 
 
-int PackExe::getCompressionMethod() const
+const int *PackExe::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_8;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_8;
-    return opt->level > 1 && ih_imagesize >= 300000 ? M_NRV2D_8 : M_NRV2B_8;
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || ih_imagesize <= 256*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -390,11 +395,12 @@ void PackExe::pack(OutputFile *fo)
         relocsize = 0;
     }
 
-    Filter ft(opt->level);
-
+    // prepare packheader
     ph.u_len = ih_imagesize + relocsize;
-    if (!compress(ibuf,obuf,0,MAXMATCH))
-        throwNotCompressible();
+    // prepare filter
+    Filter ft(ph.level);
+    // compress
+    compressWithFilters(&ft, 32, 0, NULL, 0, MAXMATCH);
     if (ph.max_run_found + ph.max_match_found > 0x8000)
         throwCantPack("decompressor limit exceeded, send a bugreport");
 
@@ -409,10 +415,9 @@ void PackExe::pack(OutputFile *fo)
     }
 #endif
 
-    ph.overlap_overhead = findOverlapOverhead(obuf,32);
-    const unsigned lsize = buildLoader(&ft);
     int flag = fillExeHeader(&oh);
 
+    const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);
     //OutputFile::dump("xxloader.dat", loader, lsize);

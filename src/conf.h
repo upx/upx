@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -459,9 +459,9 @@ struct options_t {
     // compression options
     int method;
     int level;          // compression level 1..10
-    int mem_level;      // memory level 1..9
     int filter;         // preferred filter from Packer::getFilters()
-    bool all_filters;   // try all filters ?
+    bool all_methods;   // try all available compression methods ?
+    bool all_filters;   // try all available filters ?
 
     // other options
     int backup;

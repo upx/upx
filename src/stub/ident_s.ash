@@ -2,8 +2,8 @@
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-;  Copyright (C) 1996-2000 Laszlo Molnar
+;  Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2001 Laszlo Molnar
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them
@@ -29,7 +29,7 @@
 ; ------------- COPYRIGHT -------------
 
                 db      10
-                db      '$Id: UPX (C) 1996-2000 the UPX Team. All Rights Reserved. http://upx.tsx.org $'
+                db      '$Id: UPX (C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $'
                 db      10,0
 
 

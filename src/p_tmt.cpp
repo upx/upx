@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -47,13 +47,18 @@ PackTmt::PackTmt(InputFile *f) : super(f)
 }
 
 
-int PackTmt::getCompressionMethod() const
+const int *PackTmt::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE32;
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE32;
-    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_LE32 : M_NRV2B_LE32;
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, -1 };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, -1 };
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (level == 1 || file_size <= 512*1024)
+        return m_nrv2b;
+    return m_nrv2d;
 }
 
 
@@ -103,7 +108,7 @@ int PackTmt::buildLoader(const Filter *ft)
 
 
 /*************************************************************************
-// util
+//
 **************************************************************************/
 
 int PackTmt::readFileHeader()
@@ -171,7 +176,9 @@ int PackTmt::readFileHeader()
 
 bool PackTmt::canPack()
 {
-    return readFileHeader();
+    if (!readFileHeader())
+        return false;
+    return true;
 }
 
 
@@ -221,41 +228,13 @@ void PackTmt::pack(OutputFile *fo)
     relocsize += 4;
     memcpy(ibuf+usize,wrkmem,relocsize);
 
-#if 0
-    // filter
-    Filter ft(opt->level);
-    tryFilters(&ft, ibuf, usize);
-
-    ph.filter = ft.id;
-    ph.filter_cto = ft.cto;
-    ph.u_len = usize + relocsize;
-    if (!compress(ibuf,obuf))
-        throwNotCompressible();
-
-    ph.overlap_overhead = findOverlapOverhead(obuf,512);
-    buildLoader(&ft);
-
-    // verify filter
-    ft.verifyUnfilter();
-#else
-    // new version using compressWithFilters()
-
     // prepare packheader
     ph.u_len = usize + relocsize;
-    ph.filter = 0;
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.buf_len = usize;
-
-    int strategy = -1;      // try the first working filter
-    if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters)
-        // choose best from all available filters
-        strategy = 0;
-    compressWithFilters(&ft, 512, strategy);
-#endif
+    // compress
+    compressWithFilters(&ft, 512);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);

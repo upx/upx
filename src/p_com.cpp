@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2000 Laszlo Molnar
+   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2001 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -44,16 +44,19 @@ static const
 //
 **************************************************************************/
 
-int PackCom::getCompressionMethod() const
+const int *PackCom::getCompressionMethods(int method, int level) const
 {
-    if (M_IS_NRV2B(opt->method))
-        return M_NRV2B_LE16;
+    static const int m_nrv2b[] = { M_NRV2B_LE16, -1 };
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
 #if 0
     // NOT IMPLEMENTED
-    if (M_IS_NRV2D(opt->method))
-        return M_NRV2D_LE16;
+    static const int m_nrv2d[] = { M_NRV2D_LE16, -1 };
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
 #endif
-    return M_NRV2B_LE16;
+    UNUSED(level);
+    return m_nrv2b;
 }
 
 
@@ -191,23 +194,12 @@ void PackCom::pack(OutputFile *fo)
 
     // prepare packheader
     ph.u_len = file_size;
-    ph.filter = 0;
     // prepare filter
-    Filter ft(opt->level);
+    Filter ft(ph.level);
     ft.addvalue = getCallTrickOffset();
-
-    int strategy = -1;      // try the first working filter
-    if (opt->filter >= 0 && isValidFilter(opt->filter))
-        // try opt->filter or 0 if that fails
-        strategy = -2;
-    else if (opt->all_filters || opt->level > 9)
-        // choose best from all available filters
-        strategy = 0;
-    else if (opt->level == 9)
-        // choose best from the first 4 filters
-        strategy = 4;
+    // compress
     const unsigned overlap_range = ph.u_len < 0xFE00 - ft.addvalue ? 32 : 0;
-    compressWithFilters(&ft, overlap_range, strategy);
+    compressWithFilters(&ft, overlap_range);
 
     const int lsize = getLoaderSize();
     MemBuffer loader(lsize);

@@ -13,6 +13,10 @@ mostlyclean clean distclean maintainer-clean:
 dist: distclean
 	false
 
+zip:
+	cd .. && rm -f upx-currenz.zip && zip -r upx-current.zip upx
+
+
 cvs-admin-ko:
 	cvs admin -ko .
 	cvs update

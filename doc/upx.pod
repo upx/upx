@@ -12,11 +12,11 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 
 =head1 ABSTRACT
 
-             The Ultimate Packer for eXecutables
-          Copyright (c) 1996, 1997, 1998, 1999, 2000
+              The Ultimate Packer for eXecutables
+        Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001
      Markus F.X.J. Oberhumer, Laszlo Molnar & John F. Reiser
-        http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
-                    http://upx.tsx.org
+         http://wildsau.idv.uni-linz.ac.at/mfx/upx.html
+                      http://upx.tsx.org
 
 
 B<UPX> is a portable, extendable, high-performance executable packer for
@@ -178,17 +178,24 @@ squeezes out even some more compression ratio. While it is usually fine
 to use this option with your favorite .com file it may take a long time
 to compress a multi-megabyte program. You have been warned.
 
-Tips for even better compression:
+Tips for achieving the best compression ratio:
 
 =over 4
 
 =item *
 
-Try if B<--overlay=strip> works.
+Use the compression level B<--best>.
 
 =item *
 
-Try B<--all-filters>.
+Try one or both of the options B<--all-methods> and B<--all-filters>.
+
+Info: the option B<--brute> is an abbrevation for all the options
+B<S<--best> S<--all-methods> S<--all-filters>>.
+
+=item *
+
+Try if B<--overlay=strip> works.
 
 =item *
 
@@ -277,6 +284,16 @@ Extra options available for this executable format:
 
   --8086              Create an executable that works on any 8086 CPU.
 
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
+
 
 
 =head2 NOTES FOR DOS/EXE
@@ -294,6 +311,11 @@ Extra options available for this executable format:
 
   --no-reloc          Use no relocation records in the exe header.
 
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
 
 
 =head2 NOTES FOR DOS/SYS
@@ -310,6 +332,16 @@ Maximum uncompressed size: ~65350 bytes.
 Extra options available for this executable format:
 
   --8086              Create an executable that works on any 8086 CPU.
+
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
 
 
 
@@ -338,10 +370,15 @@ Extra options available for this executable format:
   --coff              Produce COFF output instead of EXE. By default
                       UPX keeps your current stub.
 
-  --all-filters       Compress the program several times, using different
-                      preprocessing filters. This may improve the compression
-                      ratio in some cases, but usually the default filter
-                      gives the best results anyway.
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
 
 
 
@@ -649,10 +686,15 @@ This format is used by the TMT Pascal compiler - see http://www.tmt.com/ .
 
 Extra options available for this executable format:
 
-  --all-filters       Compress the program several times, using different
-                      preprocessing filters. This may improve the compression
-                      ratio in some cases, but usually the default filter
-                      gives the best results anyway.
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
 
 
 
@@ -691,10 +733,15 @@ Drawbacks:
 
 Extra options available for this executable format:
 
-  --all-filters       Compress the program several times, using different
-                      preprocessing filters. This may improve the compression
-                      ratio in some cases, but usually the default filter
-                      gives the best results anyway.
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
 
 
 
@@ -770,10 +817,15 @@ Extra options available for this executable format:
                       UPX never strips relocations from a DLL
                       regardless of this option.
 
-  --all-filters       Compress the program several times, using different
-                      preprocessing filters. This may improve the compression
-                      ratio in some cases, but usually the default filter
-                      gives the best results anyway.
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
+
+  --all-filters       Compress the program several times, using all
+                      available preprocessing filters. This may improve
+                      the compression ratio in some cases, but usually
+                      the default filter gives the best results anyway.
 
 
 
@@ -805,11 +857,11 @@ Please report all bugs immediately to the authors.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1996-2000 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
 
-Copyright (C) 1996-2000 Laszlo Molnar
+Copyright (C) 1996-2001 Laszlo Molnar
 
-Copyright (C) 2000 John Reiser
+Copyright (C) 2000-2001 John F. Reiser
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.
