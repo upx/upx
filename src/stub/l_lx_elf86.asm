@@ -81,20 +81,26 @@ _start:
 ;;
         call main  ; push address of decompress subroutine
 decompress:
+;__LXMRU000__
         jmps decompr0
   ;; 2+ address of decompress subroutine
   ;; unfilter(upx_byte *, length)
         pop edx  ; return address
         pop eax  ; upx_byte *, same as addvalue
         pop ecx  ; length
-        pusha
-        xchg eax,edi  ; edi= pointer
+        pusha  ; save C-convention ebx, ebp, esi, edi; also eax, edx
+        xchg eax, edi  ; edi= pointer
 
         push dword ('?'<<8) | 0x0f  ; cto8_0f  (cto8 byte is modified)
-        mov ebx, 'NMRU'  ; modified
+%ifdef   __MRUBYTE0__
+        xor ebx, ebx  ; zero
+%else   ;__MRUARB00__  (also __MRUBITS0__)
+        mov ebx, 'NMRU'  ; modified N_MRU or N_MRU -1
+%endif  ;__LXMRU010__
 
-        xor edx,edx
+        xor edx, edx  ; zero
         jmp unf0
+;__LXELF010__
 
 ; /*************************************************************************
 ; // C callable decompressor
@@ -143,32 +149,44 @@ decompr0:
                 popa
                 ret
 
+;__LXMRU020__
 ;; continuation of entry prolog for unfilter
 unf0:
-        push edx    ; tail
-        push ebx  ; n_mru
+        push edx  ; tail
+        push ebx  ; n_mru or n_mru1
         mov esi,esp
 
 %define n_mru    [esi]
+%define n_mru1   [esi]
 %define tail     [esi + 4*1]
 %define cto8_0f  [esi + 4*2]
 %define cto8     [esi + 4*2 +1]
 %define addvalue [esi + 4*3 + 7*4]
 
+%ifdef   __MRUBITS1__
+        inc ebx  ; n_mru1 ==> n_mru
+%endif ;__LXMRU030__
 unf1:  ; allocate and clear mru[]
-        push edx
+        push edx  ; zero
+%ifdef __MRUBYTE1__
+        dec bl
+%else ;__MRUARB10__
         dec ebx
+%endif ;__LXMRU040__
         jnz unf1  ; leaves 0=='hand'
 
 %define tmp ebp
 
-%define jc   eax
-%define hand ebx
-%define kh   edx
+%define jc     eax
+%define hand   ebx
+%define hand_l  al
+%define kh     edx
+%define kh_l    dl
 
 calltrickloop:
         mov al, [edi]
         inc edi
+%ifndef __LXNJMP00__
         sub al, 0x80        ; base of Jcc <d32>
         cmp al, 0x8f - 0x80 ; span of Jcc <d32>
         ja ct2             ; not Jcc <d32>
@@ -180,75 +198,32 @@ calltrickloop:
         dec ecx
         mov byte [edi], al  ; Jcc opcode
         inc edi
-        jmps ct4
+        jmps mru2
 ct2:
-        sub al, 0xE8 - 0x80 ; base of JMP/CALL <d32>
-        cmp al, 0xE9 - 0xE8 ; span of JMP/CALL <d32>
+        sub al, 0xE8 - 0x80  ; base of JMP/CALL <d32>
+        cmp al, 0xE9 - 0xE8  ; span of JMP/CALL <d32>
+%else  ;__LXNJMP10__
+        sub al, 0xE8         ; base of JMP/CALL <d32>
+        cmp al, 0xE9 - 0xE8  ; span of JMP/CALL <d32>
+%endif ;__LXMRU050__
         ja unfcount
-ct3:
         mov al, [edi]
         cmp al, cto8
-        jnz unfcount
-ct4:
-        mov eax, [edi]
-        shr ax, 8
-        rol eax, 16
-        xchg al, ah
-
-        shr jc, 1  ; eax= jc, or mru index
-        jnc ct6  ; not 1st time for this jc
-        dec hand
-        jge ct5
-        add hand, n_mru
-ct5:
-        mov [esp + 4*hand], jc  ; 1st time: mru[hand] = jc
-        jmps ct_store
-
-ct6:  ; not 1st time for this jc
-        lea kh, [jc + hand]  ; kh = jc + hand
-        cmp kh, n_mru
-        jb ct7
-        sub kh, n_mru
-ct7:
-        mov jc, [esp + 4*kh]  ; jc = mru[kh]
-        dec hand
-        jge ct8
-        add hand, n_mru
-ct8:
-        mov tmp, [esp + 4*hand]  ; tmp = mru[hand]
-          push jc  ; ran out of registers
-        test tmp,tmp
-        jnz ctmp1
-
-        mov eax, tail
-        dec eax
-        jge ct9
-        add eax, n_mru
-ct9:
-        xor tmp,tmp
-        mov tail, eax
-        xchg [4+ esp + 4*eax], tmp  ; tmp = mru[tail]; mru[tail] = 0
-ctmp1:
-          pop jc
-        mov [esp + 4*kh  ], tmp  ; mru[kh] = tmp
-        mov [esp + 4*hand], jc   ; mru[hand] = jc
-
-ct_store:
-        sub eax, edi
-        sub ecx, byte 4
-        add eax, addvalue
-        mov [edi], eax
-        add edi, byte 4
+        je mru2
 unfcount:
         dec ecx
-        ;; jg calltrickloop
-        db 0x0f, 0x8f
-        dd calltrickloop - unfdone
-unfdone:
+        jg calltrickloop
 
         mov edi,esp ; clear mru[] portion of stack
+%ifdef __MRUBYTE2__
+        mov ecx, 3+ 256  ; unused, tail, ct8_0f
+%elifdef __MRUBITS2__
+        mov ecx, n_mru1
+        add ecx, byte 1+ 3  ; n_mru1, tail, ct8_0f
+%else ;__MRUARB20__
         mov ecx, n_mru
         add ecx, byte 3  ; n_mru, tail, ct8_0f
+%endif ;__LXMRU060__
         xor eax,eax
         rep
         stosd
@@ -259,6 +234,93 @@ unfdone:
         push edx
         ret
 
+mru2:
+        mov eax, [edi]
+        shr ax, 8
+        rol eax, 16
+        xchg al, ah
+
+        shr jc, 1  ; eax= jc, or mru index
+        jnc mru4  ; not 1st time for this jc
+%ifdef __MRUBYTE3__
+        dec hand_l
+%else ;__MRUARB30__
+        dec hand
+%ifdef   __MRUBITS3__
+        and hand, n_mru1
+%else ;__MRUARB40__
+        jge mru3
+        add hand, n_mru
+mru3:
+%endif
+%endif ;__LXMRU070__
+
+        mov [esp + 4*hand], jc  ; 1st time: mru[hand] = jc
+        jmps mru_store
+
+mru4:  ; not 1st time for this jc
+        lea kh, [jc + hand]  ; kh = jc + hand
+%ifdef __MRUBYTE4__
+        movzbl kh, kh_l
+%elifdef __MRUBITS4__
+        and kh, n_mru1
+%else ;__MRUARB50__
+        cmp kh, n_mru
+        jb mru5
+        sub kh, n_mru
+mru5:
+%endif ;__LXMRU080__
+        mov jc, [esp + 4*kh]  ; jc = mru[kh]
+%ifdef __MRUBYTE5__
+        dec hand_l
+%else ;__MRUARB60__
+        dec hand
+%ifdef   __MRUBITS5__
+        and hand, n_mru1
+%else ;__MRUARB70__
+        jge mru6
+        add hand, n_mru
+mru6:
+%endif
+%endif ;__LXMRU090__
+
+        mov tmp, [esp + 4*hand]  ; tmp = mru[hand]
+        test tmp,tmp
+        jnz mru8
+
+          push jc  ; ran out of registers
+        mov eax, tail
+
+%ifdef  __MRUBYTE6__
+        dec al
+%else  ;__MRUARB80__
+        dec eax
+%ifdef  __MRUBITS6__
+        and eax, n_mru1
+%else  ;__MRUARB90__
+        jge mru7
+        add eax, n_mru
+mru7:
+%endif
+%endif ;__LXMRU100__
+
+        xor tmp,tmp
+        mov tail, eax
+        xchg [4+ esp + 4*eax], tmp  ; tmp = mru[tail]; mru[tail] = 0
+          pop jc
+mru8:
+        mov [esp + 4*kh  ], tmp  ; mru[kh] = tmp
+        mov [esp + 4*hand], jc   ; mru[hand] = jc
+
+mru_store:
+        sub eax, edi
+        sub ecx, byte 4
+        add eax, addvalue
+        mov [edi], eax
+        add edi, byte 4
+        jmps unfcount
+
+;__LXELF020__
 
 %define PAGE_MASK (~0<<12)
 %define PAGE_SIZE ( 1<<12)
