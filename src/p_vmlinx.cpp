@@ -125,7 +125,7 @@ bool PackVmlinuxI386::canPack()
         return false;
     }
 
-    phdri = new Elf_LE32_Phdr[ehdri.e_phnum];
+    phdri = new Elf_LE32_Phdr[(unsigned) ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
 
@@ -133,7 +133,7 @@ bool PackVmlinuxI386::canPack()
     qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
 
     // Check that PT_LOADs form one contiguous chunk of the file.
-    for (int j= 0; j < ehdri.e_phnum; ++j) {
+    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
         if (Elf_LE32_Phdr::PT_LOAD==phdri[j].p_type) {
             if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
                        | phdri[j].p_align  | phdri[j].p_vaddr) ) {
@@ -230,14 +230,14 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     patchFilter32(loader, lsize, &ft);
 
     while (0!=*p++) ;
-    shdro[1].sh_name = p - shstrtab;
+    shdro[1].sh_name = ptr_diff(p, shstrtab);
     shdro[1].sh_type = Elf_LE32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf_LE32_Shdr::SHF_ALLOC | Elf_LE32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
     shdro[1].sh_size = 1+ 4+ ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
-    char const call = 0xE8;  // opcode for CALL d32
+    unsigned char const call = 0xE8;  // opcode for CALL d32
     fo->write(&call, 1); fo_off+=1;
     tmp_le32 = ph.c_len; fo->write(&tmp_le32, 4); fo_off += 4;
     fo->write(obuf, ph.c_len); fo_off += ph.c_len;
@@ -252,7 +252,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     compress(ibuf, obuf);
 
     while (0!=*p++) ;
-    shdro[2].sh_name = p - shstrtab;
+    shdro[2].sh_name = ptr_diff(p, shstrtab);
     shdro[2].sh_type = Elf_LE32_Shdr::SHT_NOTE;
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
@@ -268,7 +268,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     // Temporarily decrease ph.level by about (1+ log2(sz_rest / sz_ptload))
     // to avoid spending unreasonable effort compressing large symbol tables
     // that are discarded 99.9% of the time anyway.
-    int const old_level(ph.level);
+    int const old_level = ph.level;
     for (unsigned v = ((ph.u_len>>3) + ph.u_len) / sz_ptload; 0 < v; v>>=1) {
         if (0== --ph.level) {
             ph.level = 1;
@@ -278,7 +278,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ph.level = old_level;
 
     // while (0!=*p++) ;  // name is the same
-    shdro[3].sh_name = p - shstrtab;
+    shdro[3].sh_name = ptr_diff(p, shstrtab);
     shdro[3].sh_type = Elf_LE32_Shdr::SHT_NOTE;
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
@@ -287,7 +287,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     fo->write(obuf, ph.c_len); fo_off += shdro[3].sh_size;
 
     while (0!=*p++) ;
-    shdro[4].sh_name = p - shstrtab;
+    shdro[4].sh_name = ptr_diff(p, shstrtab);
     shdro[4].sh_type = Elf_LE32_Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
     shdro[4].sh_size = 1+ sizeof(shstrtab);  // 1+: terminating '\0'
@@ -297,7 +297,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 #if 0  /*{ no symbols! */
     while (0!=*p++) ;
     fo_off = ~3 & (3+ fo_off);
-    shdro[5].sh_name = p - shstrtab;
+    shdro[5].sh_name = ptr_diff(p, shstrtab);
     shdro[5].sh_type = Elf_LE32_Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
     shdro[5].sh_size = 16;  // XXX ?
@@ -308,7 +308,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     fo->write("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16); fo_off += 16;
 
     while (0!=*p++) ;
-    shdro[6].sh_name = p - shstrtab;
+    shdro[6].sh_name = ptr_diff(p, shstrtab);
     shdro[6].sh_type = Elf_LE32_Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
     shdro[6].sh_size = 1;  // XXX ?
@@ -352,7 +352,7 @@ int PackVmlinuxI386::canUnpack()
     // find the .shstrtab section
     char shstrtab[40];
     Elf_LE32_Shdr *p, *p_shstrtab=0;
-    shdri = new Elf_LE32_Shdr[ehdri.e_shnum];
+    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
     fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
     int j;
@@ -364,7 +364,7 @@ int PackVmlinuxI386::canUnpack()
         ) {
             fi->seek(p->sh_offset, SEEK_SET);
             fi->readx(shstrtab, p->sh_size);
-            if (0==strcmp(".shstrtab", &shstrtab[p->sh_name])) {
+            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
                 p_shstrtab = p;
                 break;
             }
@@ -381,10 +381,10 @@ int PackVmlinuxI386::canUnpack()
         ||  p_shstrtab->sh_size < (5+ p->sh_name) ) {
             continue;
         }
-        if (0==strcmp(".text", &shstrtab[p->sh_name])) {
+        if (0==strcmp(".text", shstrtab + p->sh_name)) {
             p_text = p;
         }
-        if (0==strcmp(".note", &shstrtab[p->sh_name])) {
+        if (0==strcmp(".note", shstrtab + p->sh_name)) {
             if (0==p_note0) {
                 p_note0 = p;
             } else
