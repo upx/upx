@@ -227,14 +227,15 @@ void do_one_file(const char *iname, char *oname)
 
 #if !defined(WITH_GUI)
 
-static void unlink_ofile(const char *oname)
+static void unlink_ofile(char *oname)
 {
     if (oname && oname[0])
     {
 #if defined(HAVE_CHMOD)
         (void) ::chmod(oname, 0777);
 #endif
-        (void) ::unlink(oname);
+        if (::unlink(oname) == 0)
+            oname[0] = 0;
     }
 }
 
