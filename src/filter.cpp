@@ -78,6 +78,13 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
 }
 
 
+bool Filter::isValidFilter(int filter_id)
+{
+    const FilterImp::FilterEntry * const fe = FilterImp::getFilter(filter_id);
+    return fe != NULL;
+}
+
+
 /*************************************************************************
 // high level API
 **************************************************************************/
