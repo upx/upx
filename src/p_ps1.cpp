@@ -233,7 +233,7 @@ void PackPs1::pack(OutputFile *fo)
     memcpy(loader,getLoader(),lsize);
 
     unsigned pad, pad_code;
-    pad = ALIGN_UP((cfile_size ? cfile_size : ih.tx_len), 4);
+    pad = ALIGN_DOWN((cfile_size ? cfile_size : ih.tx_len), 4);
     pad_code = CHK_ALIGNED(ph.c_len, 4);
 
     const unsigned decomp_data_start = NOCACHE(ih.tx_ptr);
