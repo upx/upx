@@ -45,15 +45,16 @@ static const
 #define FILLVAL         0
 
 
-// keep the namespace clean
-// it would be better to use inner classes except for Interval, which
-// could be used elsewhere too
+// Some defines to keep the namespace clean.
+// It would be better to use inner classes except for Interval, which
+// could be used elsewhere too.
 
 #define Interval        PackW32Pe_Interval
 #define Reloc           PackW32Pe_Reloc
 #define Resource        PackW32Pe_Resource
 #define import_desc     PackW32Pe_import_desc
 #define Export          PackW32Pe_Export
+#define tls             PackW32Pe_tls
 
 
 /*************************************************************************
@@ -356,8 +357,7 @@ void Reloc::finish(upx_byte *&p,unsigned &siz)
     }
     p = start;
     siz = ptr_diff(rel1,start) &~ 3;
-    siz -= 4;
-    rel->pagestart = 0; // terminating 0
+    siz -= 8;
     assert(siz > 0);
     start = 0; // safety
 }
@@ -918,8 +918,9 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
-    if (tlsp->callbacks) // note: callbacks are not implemented on windoze 9x
-        throwCantPack("tls callbacks are not supported");
+    // note: TLS callbacks are not implemented in Windows 95/98/ME
+    if (tlsp->callbacks)
+        throwCantPack("TLS callbacks are not supported");
     unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
     unsigned tlsdataend = tlsp->dataend - ih.imagebase;
 
@@ -969,7 +970,7 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
 
     tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
     tlsp->dataend = newaddr + sotls + ih.imagebase;
-    tlsp->callbacks = 0; // note: callbacks are not implemented on windoze 9x
+    tlsp->callbacks = 0; // note: TLS callbacks are not implemented in Windows 95/98/ME
 }
 
 

@@ -20,6 +20,13 @@ Changes in 1.11 beta (20 Dec 2000):
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
 
+Changes in 1.05 (24 Jan 2001)
+  * win32/pe: refuse to compress programs with TLS callbacks
+  * win32/pe: stub changes to avoid slowdowns with some virus monitors
+  * win32/pe: reverted the relocation handling changes in 1.04
+  * linux/386: dont try to compress Linux kernel images (have a look
+      at the unstable UPX 1.1x beta versions for that)
+
 Changes in 1.04 (19 Dec 2000)
   * dos/exe: fixed an internal error when using `--no-reloc'
   * win32/pe: fixed a rare bug in the relocation handling code
