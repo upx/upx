@@ -227,10 +227,12 @@ protected:
     int patchVersion(void *b, int blen);
     void checkPatch(void *b, int blen, int boff, int size);
 
-protected:
     // relocation util
     virtual upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
     virtual unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
+
+    // UI util
+    virtual void updateCallbackSizes(unsigned *, unsigned *) const { }
 
 
 protected:
