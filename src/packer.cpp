@@ -937,7 +937,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
         return m_nrv2e;
     if (level == 1 || small)
         return m_nrv2b;
-    return m_nrv2d;
+    return m_nrv2e;
 }
 
 
@@ -957,7 +957,7 @@ const int *Packer::getDefaultCompressionMethods_LE32(int method, int level, int 
         return m_nrv2e;
     if (level == 1 || small)
         return m_nrv2b;
-    return m_nrv2d;
+    return m_nrv2e;
 }
 
 
