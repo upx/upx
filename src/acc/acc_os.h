@@ -55,37 +55,37 @@
 #  define ACC_OS_WIN32          1
 #  define ACC_INFO_OS           "win32"
 #elif defined(__WINDOWS__) || defined(_WINDOWS) || defined(_Windows)
-#  if (UINT_MAX == 0xffffffffL)
+#  if (UINT_MAX == ACC_0xffffffffL)
 #    define ACC_OS_WIN32        1
 #    define ACC_INFO_OS         "win32"
-#  elif (UINT_MAX == 0xffffL)
+#  elif (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_WIN16        1
 #    define ACC_INFO_OS         "win16"
 #  else
 #    error "check your limits.h header"
 #  endif
 #elif defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) || (defined(__PACIFIC__) && defined(DOS))
-#  if (UINT_MAX == 0xffffffffUL)
+#  if (UINT_MAX == ACC_0xffffffffL)
 #    define ACC_OS_DOS32        1
 #    define ACC_INFO_OS         "dos32"
-#  elif (UINT_MAX == 0xffffUL)
+#  elif (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_DOS16        1
 #    define ACC_INFO_OS         "dos16"
 #  else
 #    error "check your limits.h header"
 #  endif
 #elif defined(__OS2__) || defined(__OS2V2__)
-#  if (UINT_MAX == 0xffffffffL)
+#  if (UINT_MAX == ACC_0xffffffffL)
 #    define ACC_OS_OS2          1
 #    define ACC_INFO_OS         "os2"
-#  elif (UINT_MAX == 0xffffL)
+#  elif (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_OS216       1
 #    define ACC_INFO_OS         "os216"
 #  else
 #    error "check your limits.h header"
 #  endif
 #elif defined(__palmos__)
-#  if (UINT_MAX == 0xffffL)
+#  if (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_PALMOS       1
 #    define ACC_INFO_OS         "palmos"
 #  else
@@ -156,15 +156,15 @@
 
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
-#  if (UINT_MAX != 0xffffL)
+#  if (UINT_MAX != ACC_0xffffL)
 #    error "this should not happen"
 #  endif
 #endif
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if (UINT_MAX != 0xffffffffL)
+#  if (UINT_MAX != ACC_0xffffffffL)
 #    error "this should not happen"
 #  endif
-#  if (ULONG_MAX != 0xffffffffL)
+#  if (ULONG_MAX != ACC_0xffffffffL)
 #    error "this should not happen"
 #  endif
 #endif

@@ -125,6 +125,9 @@
 #elif (ACC_CC_BORLANDC)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_SYS_TIME_H
+#  if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#    undef HAVE_DIRENT_H /* pulls in <windows.h>; use <dir.h> instead */
+#  endif
 #elif (ACC_CC_DMC)
 #  undef HAVE_DIRENT_H /* not working */
 #  undef HAVE_UNISTD_H /* not working */
@@ -163,9 +166,19 @@
 #    undef HAVE_UTIME_H
 #    undef HAVE_SYS_TIME_H
 #  endif
+#elif (ACC_CC_TOPSPEEDC)
+#  undef HAVE_DIRENT_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_STAT_H
+#  undef HAVE_SYS_TIME_H
+#  undef HAVE_SYS_TYPES_H
 #elif (ACC_CC_TURBOC)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_SYS_TIME_H
+#  if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#    undef HAVE_DIRENT_H /* pulls in <windows.h>; use <dir.h> instead */
+#  endif
 #  if (__TURBOC__ < 0x0200)
 #    undef HAVE_SYS_TYPES_H
 #  endif
@@ -222,12 +235,15 @@
 #define HAVE_MEMCPY 1
 #define HAVE_MEMMOVE 1
 #define HAVE_MEMSET 1
+#define HAVE_MKTIME 1
 #define HAVE_SNPRINTF 1
+#define HAVE_STAT 1
 #define HAVE_STRCHR 1
 #define HAVE_STRDUP 1
 #define HAVE_STRERROR 1
 #define HAVE_STRFTIME 1
 #define HAVE_STRRCHR 1
+#define HAVE_TIME 1
 #define HAVE_UMASK 1
 #define HAVE_UTIME 1
 #define HAVE_VSNPRINTF 1
@@ -314,6 +330,7 @@
 #  undef HAVE_CHMOD
 #  undef HAVE_DIFFTIME
 #  undef HAVE_FSTAT
+#  undef HAVE_MKTIME
 #  undef HAVE_SNPRINTF
 #  undef HAVE_STRFTIME
 #  undef HAVE_UTIME
@@ -324,6 +341,7 @@
 #  endif
 #  if (__SC__ < 0x700)
 #    undef HAVE_DIFFTIME /* difftime() is broken */
+#    undef HAVE_UTIME /* struct utimbuf is missing */
 #  endif
 #  if (__SC__ >= 0x610)
 #    define snprintf _snprintf
@@ -332,11 +350,15 @@
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
 #  endif
+#elif (ACC_CC_TOPSPEEDC)
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
 #elif (ACC_CC_TURBOC)
 #  undef HAVE_ALLOCA
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #  if (__TURBOC__ < 0x0295)
+#    undef HAVE_MKTIME
 #    undef HAVE_STRFTIME
 #  endif
 #  if (__TURBOC__ < 0x0400)
@@ -356,6 +378,7 @@
 #  endif
 #  undef HAVE_DIFFTIME /* difftime() is broken */
 #  undef HAVE_SNPRINTF
+#  undef HAVE_UTIME /* struct utimbuf is missing */
 #  undef HAVE_VSNPRINTF
 #endif
 

@@ -39,10 +39,6 @@
 // macros
 ************************************************************************/
 
-/* workaround for preprocessor bugs in some compilers */
-#define ACC_0xffffL             65535ul
-#define ACC_0xffffffffL         4294967295ul
-
 #if !defined(__ACC_UINT_MAX)
 #  define __ACC_INT_MAX(b)      ((((1l  << ((b)-2)) - 1l)  * 2l)  + 1l)
 #  define __ACC_UINT_MAX(b)     ((((1ul << ((b)-1)) - 1ul) * 2ul) + 1ul)

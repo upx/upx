@@ -27,7 +27,7 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 
-#if (UINT_MAX != 0xffffL)
+#if (UINT_MAX != ACC_0xffffL)
 #  error "this should not happen"
 #endif
 #if defined(__TINY__) || defined(M_I86TM) || defined(_M_I86TM)

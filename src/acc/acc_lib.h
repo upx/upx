@@ -47,26 +47,40 @@ acc_alloc_t;
 ACC_LIBFUNC(acc_hvoid_p, acc_halloc) (acc_alloc_p ap, acc_hsize_t items, size_t size);
 ACC_LIBFUNC(int, acc_hfree) (acc_alloc_p ap);
 
-/* stdlib */
+/* string */
+ACC_LIBFUNC(int, acc_hmemcmp) (const acc_hvoid_p s1, const acc_hvoid_p s2, acc_hsize_t len);
+ACC_LIBFUNC(acc_hvoid_p, acc_hmemcpy) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len);
+ACC_LIBFUNC(acc_hvoid_p, acc_hmemmove) (acc_hvoid_p dest, const acc_hvoid_p src, acc_hsize_t len);
+ACC_LIBFUNC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len);
 
 /* stdio */
-
+ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE *fp, acc_hvoid_p buf, acc_hsize_t size);
+ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE *fp, const acc_hvoid_p buf, acc_hsize_t size);
+#if (ACC_HAVE_MM_HUGE_PTR)
+ACC_LIBFUNC(long, acc_hread) (int fd, acc_hvoid_p buf, long size);
+ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size);
+#endif
 
 
 /*************************************************************************
 // wrap <dirent.h>
 **************************************************************************/
 
-struct ACC_DIR { acc_hvoid_p dirp; };     /* opaque type */
-typedef struct ACC_DIR ACC_DIR;
-struct acc_dirent
+struct acc_find_t
 {
-    char d_name[255+1];
+    union { acc_hvoid_p dirp; long h; } u;  /* private */
+#if (ACC_OS_DOS16 || ACC_OS_WIN16)
+    char f_name[8+1+3+1];
+#elif (ACC_DOS32 || ACC_OS_WIN32 || ACC_OS_WIN64)
+    char f_name[259+1];
+#else
+    char f_name[1024+1];
+#endif
 };
 
-ACC_LIBFUNC(int, acc_opendir)  (ACC_DIR* dirp, const char* name);
-ACC_LIBFUNC(int, acc_readdir)  (ACC_DIR* dirp, struct acc_dirent* d);
-ACC_LIBFUNC(int, acc_closedir) (ACC_DIR* dirp);
+ACC_LIBFUNC(int, acc_findfirst) (struct acc_find_t* f, const char* path);
+ACC_LIBFUNC(int, acc_findnext)  (struct acc_find_t* f);
+ACC_LIBFUNC(int, acc_findclose) (struct acc_find_t* f);
 
 
 /*************************************************************************
@@ -90,6 +104,8 @@ ACC_LIBFUNC(int, acc_closedir) (ACC_DIR* dirp);
 
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 #  define acc_alloca(x)     __builtin_alloca((x))
+#elif defined(__BORLANDC__) && defined(__linux__)
+  /* FIXME: this does not work */
 #elif (HAVE_ALLOCA)
 #  define acc_alloca(x)     alloca((x))
 #endif

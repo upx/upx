@@ -13,15 +13,35 @@
  */
 
 
+
+/***********************************************************************
+// preprocessor
+************************************************************************/
+
+/* workaround for preprocessor bugs in some compilers */
+#define ACC_0xffffL             65535ul
+#define ACC_0xffffffffL         4294967295ul
+
+/* some things we cannot work around */
+#if 0
+#if (32767 >= 4294967295ul)
+#  error "your preprocessor is broken 1"
+#endif
+#if (65535u >= 4294967295ul)
+#  error "your preprocessor is broken 2"
+#endif
+#endif
+
+
 /***********************************************************************
 // try to detect specific compilers
 ************************************************************************/
 
-#if defined(__ZTC__) && defined(__I86__) && (UINT_MAX == 0xffffL)
+#if defined(__ZTC__) && defined(__I86__) && (UINT_MAX == ACC_0xffffL)
 #  if !defined(__DOS__) && !defined(__OS2__)
 #    define __DOS__ 1
 #  endif
-#elif defined(__VERSION) && (UINT_MAX == 0xffffL) && defined(MB_LEN_MAX)
+#elif defined(__VERSION) && (UINT_MAX == ACC_0xffffL) && defined(MB_LEN_MAX)
 #  if (__VERSION == 520) && (MB_LEN_MAX == 1)
 #    if !defined(__AZTEC_C__)
 #      define __AZTEC_C__ __VERSION
@@ -40,11 +60,9 @@
 /* Microsoft C does not correctly define ptrdiff_t for
  * the 16-bit huge memory model.
  */
-#if defined(_MSC_VER) && defined(M_I86HM) && (UINT_MAX == 0xffffL)
-#  if (_MSC_VER < 900)
-#    define ptrdiff_t long
-#    define _PTRDIFF_T_DEFINED
-#  endif
+#if defined(_MSC_VER) && defined(M_I86HM) && (UINT_MAX == ACC_0xffffL)
+#  define ptrdiff_t long
+#  define _PTRDIFF_T_DEFINED
 #endif
 
 
@@ -107,12 +125,10 @@
 ************************************************************************/
 
 #if defined(__cplusplus)
-#  if !defined(__STDC_LIMIT_MACROS)
-#    define __STDC_LIMIT_MACROS 1
-#  endif
-#  if !defined(__STDC_CONSTANT_MACROS)
-#    define __STDC_CONSTANT_MACROS 1
-#  endif
+#  undef __STDC_CONSTANT_MACROS
+#  undef __STDC_LIMIT_MACROS
+#  define __STDC_CONSTANT_MACROS 1
+#  define __STDC_LIMIT_MACROS 1
 #endif
 
 

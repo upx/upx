@@ -23,7 +23,10 @@
  */
 
 
-#define ACC_VERSION     20030423L
+#ifndef __ACC_H_INCLUDED
+#define __ACC_H_INCLUDED
+
+#define ACC_VERSION     20030527L
 
 #if !defined(ACC_CONFIG_INCLUDE)
 #  define ACC_CONFIG_INCLUDE(file)     file
@@ -68,6 +71,8 @@
 #  include ACC_CONFIG_INCLUDE("acc_incd.h")
 #  include ACC_CONFIG_INCLUDE("acc_lib.h")
 #endif
+
+#endif /* already included */
 
 
 /*

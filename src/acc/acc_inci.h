@@ -26,6 +26,9 @@
 #  endif
 #  include <windows.h>
 #  define ACC_H_WINDOWS_H 1
+#  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+#    include <dir.h>
+#  endif
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_WIN16)
 #  if (ACC_CC_BORLANDC || ACC_CC_TURBOC)
 #    include <alloc.h>
@@ -34,6 +37,7 @@
 #    include <sys/exceptn.h>
 #  elif (ACC_CC_PACIFICC)
 #    include <unixio.h>
+#    include <stat.h>
 #    include <sys.h>
 #  elif (ACC_CC_WATCOMC)
 #    include <i86.h>

@@ -47,6 +47,10 @@
 #  define ACC_CC_DECC           1
 #  define ACC_INFO_CC           "DEC C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__DECC)
+#elif defined(__IBMC__)
+#  define ACC_CC_VISUALAGEC     1
+#  define ACC_INFO_CC           "VisualAge C"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__IBMC__)
 #elif defined(__INTEL_COMPILER)
 #  define ACC_CC_INTELC         1
 #  define ACC_INFO_CC           "Intel C"
@@ -83,6 +87,10 @@
 #  define ACC_CC_TINYC          1
 #  define ACC_INFO_CC           "Tiny C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__TINYC__)
+#elif defined(__TSC__)
+#  define ACC_CC_TOPSPEEDC      1
+#  define ACC_INFO_CC           "TopSpeed C"
+#  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__TSC__)
 #elif defined(__WATCOMC__)
 #  define ACC_CC_WATCOMC        1
 #  define ACC_INFO_CC           "Watcom C"

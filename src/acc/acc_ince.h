@@ -68,6 +68,11 @@
 #  include <share.h>
 #endif
 
+/* TOS */
+#if defined(__TOS__) && defined(__TURBOC__)
+#  include <ext.h>
+#endif
+
 #endif /* already included */
 
 
