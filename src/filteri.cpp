@@ -32,7 +32,11 @@
 
 #define set_dummy(p, v)     ((void)0)
 
+
+/*************************************************************************
 // util
+**************************************************************************/
+
 #include "filter/getcto.h"
 
 
@@ -46,7 +50,7 @@
 
 
 /*************************************************************************
-// cto "clever" calltrick
+// cto calltrick
 **************************************************************************/
 
 #define COND(b,x)               (b[x] == 0xe8)
@@ -75,7 +79,7 @@
 
 
 /*************************************************************************
-//
+// cto calltrick with jmp
 **************************************************************************/
 
 #define COND(b,x,lastcall) \
@@ -90,7 +94,7 @@
 
 
 /*************************************************************************
-//
+// cto calltrick with jmp and relative renumbering
 **************************************************************************/
 
 #define COND1(b,x) (b[x] == 0xe8 || b[x] == 0xe9)
@@ -105,6 +109,7 @@
 #include "filter/ctojr.h"
 #define F                       s_ctojr32_e8e9_bswap_le
 #include "filter/ctojr.h"
+
 #undef CONDU
 #undef CONDF
 #undef COND2
@@ -118,6 +123,7 @@
 const FilterImp::FilterEntry FilterImp::filters[] = {
     // no filter
     { 0x00, 0,          0, NULL, NULL, NULL },
+
     // 16-bit calltrick
     { 0x01, 4,          0, f_ct16_e8, u_ct16_e8, s_ct16_e8 },
     { 0x02, 4,          0, f_ct16_e9, u_ct16_e9, s_ct16_e9 },
@@ -128,13 +134,16 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x07, 4,          0, f_ct16_e8_bswap_be, u_ct16_e8_bswap_be, s_ct16_e8_bswap_be },
     { 0x08, 4,          0, f_ct16_e9_bswap_be, u_ct16_e9_bswap_be, s_ct16_e9_bswap_be },
     { 0x09, 4,          0, f_ct16_e8e9_bswap_be, u_ct16_e8e9_bswap_be, s_ct16_e8e9_bswap_be },
+
     // 16-bit swaptrick
     { 0x0a, 4,          0, f_sw16_e8, u_sw16_e8, s_sw16_e8 },
     { 0x0b, 4,          0, f_sw16_e9, u_sw16_e9, s_sw16_e9 },
     { 0x0c, 4,          0, f_sw16_e8e9, u_sw16_e8e9, s_sw16_e8e9 },
+
     // 16-bit call-/swaptrick
     { 0x0d, 4,          0, f_ctsw16_e8_e9, u_ctsw16_e8_e9, s_ctsw16_e8_e9 },
     { 0x0e, 4,          0, f_ctsw16_e9_e8, u_ctsw16_e9_e8, s_ctsw16_e9_e8 },
+
     // 32-bit calltrick
     { 0x11, 6,          0, f_ct32_e8, u_ct32_e8, s_ct32_e8 },
     { 0x12, 6,          0, f_ct32_e9, u_ct32_e9, s_ct32_e9 },
@@ -145,21 +154,25 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x17, 6,          0, f_ct32_e8_bswap_be, u_ct32_e8_bswap_be, s_ct32_e8_bswap_be },
     { 0x18, 6,          0, f_ct32_e9_bswap_be, u_ct32_e9_bswap_be, s_ct32_e9_bswap_be },
     { 0x19, 6,          0, f_ct32_e8e9_bswap_be, u_ct32_e8e9_bswap_be, s_ct32_e8e9_bswap_be },
+
     // 32-bit swaptrick
     { 0x1a, 6,          0, f_sw32_e8, u_sw32_e8, s_sw32_e8 },
     { 0x1b, 6,          0, f_sw32_e9, u_sw32_e9, s_sw32_e9 },
     { 0x1c, 6,          0, f_sw32_e8e9, u_sw32_e8e9, s_sw32_e8e9 },
+
     // 32-bit call-/swaptrick
     { 0x1d, 6,          0, f_ctsw32_e8_e9, u_ctsw32_e8_e9, s_ctsw32_e8_e9 },
     { 0x1e, 6,          0, f_ctsw32_e9_e8, u_ctsw32_e9_e8, s_ctsw32_e9_e8 },
+
     // 32-bit cto calltrick
     { 0x24, 6, 0x00ffffff, f_cto32_e8_bswap_le, u_cto32_e8_bswap_le, s_cto32_e8_bswap_le },
     { 0x25, 6, 0x00ffffff, f_cto32_e9_bswap_le, u_cto32_e9_bswap_le, s_cto32_e9_bswap_le },
     { 0x26, 6, 0x00ffffff, f_cto32_e8e9_bswap_le, u_cto32_e8e9_bswap_le, s_cto32_e8e9_bswap_le },
-    // 32-bit cto calltrick + jmp
+
+    // 32-bit cto calltrick with jmp
     { 0x36, 6, 0x00ffffff, f_ctoj32_e8e9_bswap_le, u_ctoj32_e8e9_bswap_le, s_ctoj32_e8e9_bswap_le },
 
-    // 32-bit ctor calltrick with relative renumbering + jmp
+    // 32-bit cto calltrick with jmp and relative renumbering
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
 };
 
