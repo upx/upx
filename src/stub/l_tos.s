@@ -339,6 +339,8 @@ L(loop):        move.w  -(a2),-(ASTACK)
                 moveq.l #0,d7
                 moveq.l #-$50,d6        ; 0xffffffb0
                 lsl.w   #4,d6           ; 0xfffffb00 == -0x500
+#else
+#  error
 #endif
 
 
