@@ -36,7 +36,8 @@ file="$1"
 bindir=`echo "$0" | sed -e 's|[^/][^/]*$||'`
 bindir=`cd "$bindir" && pwd`
 
-sstrip="$bindir/../util/sstrip/sstrip"
+sstrip="./util/sstrip/sstrip"
+test -x "$sstrip" || sstrip="$bindir/../util/sstrip/sstrip"
 
 # get address of symbol "fold_begin"
 fold=`nm -f bsd "$file" | grep fold_begin | sed 's/^0*\([0-9a-fA-F]*\).*/0x\1/'`
