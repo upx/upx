@@ -87,6 +87,28 @@
 
 
 /*************************************************************************
+//
+**************************************************************************/
+
+#define COND1(b,x) (b[x] == 0xe8 || b[x] == 0xe9)
+#define COND2(b,lastcall,x,y,z) \
+         (lastcall!=(x) && 0xf==b[y] && 0x80<=b[z] && b[z]<=0x8f)
+
+#define CONDF(b,x,lastcall) (COND1(b,x) || COND2(b,lastcall,x,(x)-1, x   ))
+#define CONDU(b,x,lastcall) (COND1(b,x) || COND2(b,lastcall,x, x   ,(x)-1))
+
+#define F                       f_ctjor32_e8e9_bswap_le
+#define U                       u_ctjor32_e8e9_bswap_le
+#include "filter/ctjor.h"
+#define F                       s_ctjor32_e8e9_bswap_le
+#include "filter/ctjor.h"
+#undef CONDU
+#undef CONDF
+#undef COND2
+#undef COND1
+
+
+/*************************************************************************
 // database for use in class Filter
 **************************************************************************/
 
@@ -133,6 +155,9 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x26, 6, 0x00ffffff, f_cto32_e8e9_bswap_le, u_cto32_e8e9_bswap_le, s_cto32_e8e9_bswap_le },
     // 32-bit cto calltrick + jmp
     { 0x36, 6, 0x00ffffff, f_ctjo32_e8e9_bswap_le, u_ctjo32_e8e9_bswap_le, s_ctjo32_e8e9_bswap_le },
+
+    // 32-bit ctor calltrick with relative renumbering + jmp
+    { 0x80, 8, 0x00ffffff, f_ctjor32_e8e9_bswap_le, u_ctjor32_e8e9_bswap_le, s_ctjor32_e8e9_bswap_le },
 };
 
 const int FilterImp::n_filters = HIGH(filters);
