@@ -1,0 +1,148 @@
+This document explains the concept of "filtering" in UPX. Basically
+filtering is a data preprocessing method which could improve the
+compression ratio of the files UPX processes.
+
+Currently the filters UPX uses are all based on one very special
+algorithm which is working well on ix86 executable files.
+This is what upx calls the "naive" implementation. There is also a
+"clever" method which works only with 32 bit executable file formats
+and was first implemented in UPX.
+
+Let's start with an example (from this point I assume a 32 bit file
+format). Consider this code fragment:
+
+00025970: E877410600                     calln     FatalError
+00025975: 8B414C                         mov       eax,[ecx+4C]
+00025978: 85C0                           test      eax,eax
+0002597A: 7419                           je        file:00025995
+0002597C: 85F6                           test      esi,esi
+0002597E: 7504                           jne       file:00025984
+00025980: 89C6                           mov       esi,eax
+00025982: EB11                           jmps      file:00025995
+00025984: 39C6                           cmp       esi,eax
+00025986: 740D                           je        file:00025995
+00025988: 83C4F4                         add (d)   esp,F4
+0002598B: 68A0A91608                     push      0816A9A0
+00025990: E857410600                     calln     FatalError
+00025995: FF45F4                         inc       [ebp-0C]
+
+Here you can find two calls to a function called "FatalError". As you
+probably know the compression ratio is better if the compressor engine
+finds longer sequences of repeated strings. In this case the engine
+sees the following two byte sequences:
+
+E877 410600 8B   and
+E857 410600 FF.
+
+So it can find a 3-byte-long match.
+
+Now comes the trick. On ix86 near calls are encoded as 0xE8 then a 32
+bit relative offset to the destination address. Let's see what
+happens if the position of the call is added to that offset:
+
+0x64177 + 0x25970 = 0x89AE7
+0x64157 + 0x25990 = 0x89AE7
+
+E8 E79A0800 8B
+E8 E79A0800 FF
+
+As you can see now the compressor engine finds a 5-byte-long match.
+Which means, that we've just saved 2 bytes of compressed data. Not bad.
+
+So this is the basic idea (the "naive" implementation). All we have to
+do is to "filter" the uncompressed data using this method before
+compression, and "unfilter" it after decompression. Simply go over the
+memory, find 0xE8 bytes and process the next 4 bytes as specified
+above.
+
+Of course there are several possibilities where this scheme could be
+improved. First, not only calls could be handled this way - near jumps
+(0xE9 + 32 bit offset) could work similarly.
+
+A second improvement could be if we limit this filtering only for the
+area occupied by real code - there is no point in messing with general
+data.
+
+Another improvement comes if the byte order of the 32 bit offset is
+reversed. Why? Here is another call which follows the above fragment:
+
+000261FA: E8C9390600                     calln     ErrorF
+
+0x639C9 + 0x261FA = 0x89BC3
+
+E8 C39B 0800     compare this with
+
+E8 E79A 0800
+
+As you can see these two functions are quite close together, but the
+compressor is not able to utilize this information (2-byte-long matches
+are usually not useful) unless the byte order of the offsets are
+reversed. In this case:
+
+E8 0008 9AE7
+
+E8 0008 9BC3
+
+So, the compressor engine finds a 3-byte-long match here. This is a
+nice improvement - now the engine utilizes the similarity of nearby
+destinations too.
+
+This is nice, but what happens when we find a "fake" call - ie. an 0xE8
+which is part of another instruction? Like this:
+
+0002A3B1: C745 E8 00000000               mov       [ebp-18],00000000
+
+In this case those nice 0x00 bytes are overwritten with some less
+compressible data. This is the disadvantage of the "naive"
+implementation.
+
+So let's be clever and try to detect and process only "real" calls. In
+UPX a simple method is used to find these calls. We simply check that
+the destinations of these calls are inside the same area as the calls
+themselves (so the above code is still a false positive, but it helps
+generally). A better method would be to actually disassemble the code -
+contributions are welcome :-)
+
+But this is only half of the job. We can not simply process one call
+then skip another one - the unfiltering process needs some information
+to be able to reverse the filtering.
+
+UPX uses the following idea, which works nicely. First we assume that
+the size of the area that should be filtered is less than 16MB. Then
+UPX scans over this area and keeps a record of the bytes that are
+following the 0xE8 bytes. If we are lucky, there will be bytes that
+were not found following 0xE8. These bytes are our candidates to be
+used as markers.
+
+Do you still remember that we assumed that the size of scanned area is
+less than 16MB? Well, this means that when we process a real call, the
+resulting offset will be less than 0x00FFFFFF too. So the MSB is always
+0x00. Which is a nice place to store our marker. Of course we should
+reverse the byte order in the resulting offset - so this marker will
+appear just after the 0xE8 byte and not 4 bytes after it.
+
+That's all. Just go over the memory area, identify the "real" calls,
+and use this method to mark them. Then the job of the unfilter is very
+easy - it just searches for a 0xE8 + marker sequence and does the
+unfiltering if it finds one. It's clever, isn't it? :)
+
+To tell you the truth it's not this simple in UPX. It can use an
+additional parameter ("add_value") which makes things a little bit more
+complicated (for example it can happen that a found marker is proven to
+be unusable because of some overflow during an addition).
+
+And the whole algorithm is optimized for simplicity on the unfiltering
+side (as short and as fast assembly as possible - see stub/macros.ash),
+which makes the filtering process a little more difficult (fcto_ml.ch,
+fcto_ml2.ch, filteri.cpp).
+
+As it can be seen in filteri.cpp, there are lots of variants of this
+filtering implemented - native/clever, calls/jumps/calls&jumps,
+reversed/unreversed offsets - a sum of 18 slightly different filters
+(and another 9 variants for 16 bit programs).
+
+You can select one of them using the command line parameter "--filter="
+or try most of them with "--all-filters". Or just let upx use the one
+we defined as the default for that executable format.
+
+EOF
