@@ -279,7 +279,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
             void *const hatch = make_hatch(phdr);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
-                auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, hatch);
+                auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
         }
         if (phdr->p_memsz != phdr->p_filesz) { // .bss
