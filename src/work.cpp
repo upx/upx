@@ -33,10 +33,13 @@
 #include "ui.h"
 
 
+#define ALWAYS_CHMOD 1
 #if defined(__DJGPP__)
 #  define USE_FTIME
-#elif defined(_MSC_VER) && (defined(_WIN32) || defined(_WIN64))
+#  undef ALWAYS_CHMOD
+#elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define USE__FUTIME
+#  undef ALWAYS_CHMOD
 #elif defined(HAVE_UTIME)
 #  define USE_UTIME
 #endif
@@ -135,7 +138,7 @@ void do_one_file(const char *iname, char *oname)
             flags |= O_TRUNC;
             shmode = O_DENYRW;
 #endif
-#if defined(__DJGPP__) || defined(_MSC_VER)
+#if !defined(ALWAYS_CHMOD)
             // we can avoid the chmod() call below
             int omode = st.st_mode;
             fo.sopen(tname,flags,shmode,omode);

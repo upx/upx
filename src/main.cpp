@@ -1011,6 +1011,8 @@ static void first_options(int argc, char **argv)
 
 void upx_sanity_check(void)
 {
+#include "acc/acc_chk.ch"
+
     COMPILE_TIME_ASSERT(sizeof(char) == 1);
     COMPILE_TIME_ASSERT(sizeof(short) == 2);
     COMPILE_TIME_ASSERT(sizeof(int) == 4);
@@ -1018,16 +1020,8 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
     COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
 
-    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) >= 8);
-    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) >= sizeof(long));
-    COMPILE_TIME_ASSERT(sizeof(acc_int64l_t) == sizeof(acc_uint64l_t));
-
     COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long));
     COMPILE_TIME_ASSERT(((off_t) -1) < 0);
-    COMPILE_TIME_ASSERT(sizeof(ptrdiff_t) >= sizeof(int));
-    COMPILE_TIME_ASSERT(((ptrdiff_t) -1) < 0);
-    COMPILE_TIME_ASSERT(sizeof(size_t) >= sizeof(int));
-    COMPILE_TIME_ASSERT(((size_t) -1) > 0);
 
     COMPILE_TIME_ASSERT(sizeof(BE16) == 2);
     COMPILE_TIME_ASSERT(sizeof(BE32) == 4);
@@ -1040,9 +1034,6 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(__alignof__(LE16) == 1);
     COMPILE_TIME_ASSERT(__alignof__(LE32) == 1);
 #endif
-
-    COMPILE_TIME_ASSERT(((((unsigned)1      << 31) + 1) >> 31) == 1);
-    COMPILE_TIME_ASSERT(((((acc_uint64l_t)1 << 63) + 1) >> 63) == 1);
 
 #if !defined(ACC_CC_WATCOMC)
     struct foo1a_t { char c1; LE16 v[4]; } __attribute_packed;
@@ -1250,14 +1241,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);
         con_fprintf(f,"\nWARNING: this is an unstable beta version - use for testing only! Really.\n");
-        fg = con_fg(f,fg);
-    }
-#endif
-#if 0 && !defined(WITH_NRV)
-    {
-        FILE *f = stdout;
-        int fg = con_fg(f,FG_GREEN);
-        con_fprintf(f,"\nINFO: this version does not use the NRV library - compression ratio is worse\n");
         fg = con_fg(f,fg);
     }
 #endif

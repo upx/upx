@@ -44,16 +44,21 @@
 #if !defined(acc_int64l_t) || !defined(acc_uint64l_t)
 #  error "need a 64-bit integer type"
 #endif
-#if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
-#  error "something pulled in <windows.h>"
+#if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
+#    error "something pulled in <windows.h>"
+#  endif
 #endif
 
 
 #if (ACC_CC_BORLANDC)
-#  if (__BORLANDC__ < 0x550)
-#    error "need Borland C++ 5.5 or newer"
+#  if (__BORLANDC__ < 0x0520)
+#    error "need Borland C++ 5.02 or newer"
 #  endif
-#  if (__BORLANDC__ >= 0x560)
+#  if (__BORLANDC__ < 0x0530)
+#    pragma warn -csu                   // 8012: comparing signed and unsigned values
+#  endif
+#  if (__BORLANDC__ >= 0x0560)
 #    pragma warn -use
 #  endif
 #elif (ACC_CC_DMC)
@@ -507,6 +512,13 @@ int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
 
 
 #endif /* __cplusplus */
+
+
+#if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
+#    error "something pulled in <windows.h>"
+#  endif
+#endif
 
 
 #endif /* already included */

@@ -82,7 +82,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     oh.headsize16 = 2;
     oh.ip = 0;
 
-    oh.sp = ih.sp > 0x200 ? ih.sp : 0x200;
+    oh.sp = ih.sp > 0x200 ? (unsigned) ih.sp : 0x200;
 
     unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
     oh.ss = ph.c_len/16 + destpara;
@@ -676,7 +676,7 @@ void PackExe::unpack(OutputFile *fo)
     if (flag & SS)
         imagesize -= 2, oh.ss = get_le16(ibuf+imagesize);
 
-    unsigned ip = (flag & USEJUMP) ? get_le32(ibuf+imagesize-4) : ih.firstreloc;
+    unsigned ip = (flag & USEJUMP) ? get_le32(ibuf+imagesize-4) : (unsigned) ih.firstreloc;
     oh.ip = ip & 0xffff;
     oh.cs = ip >> 16;
 

@@ -36,7 +36,7 @@
 
 inline unsigned get_be16(const void *bb)
 {
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[1] <<  0;
     v |= (unsigned) b[0] <<  8;
@@ -45,7 +45,7 @@ inline unsigned get_be16(const void *bb)
 
 inline void set_be16(void *bb, unsigned v)
 {
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[1] = (unsigned char) (v >>  0);
     b[0] = (unsigned char) (v >>  8);
 }
@@ -53,7 +53,7 @@ inline void set_be16(void *bb, unsigned v)
 
 inline unsigned get_be24(const void *bb)
 {
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[2] <<  0;
     v |= (unsigned) b[1] <<  8;
@@ -63,7 +63,7 @@ inline unsigned get_be24(const void *bb)
 
 inline void set_be24(void *bb, unsigned v)
 {
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[2] = (unsigned char) (v >>  0);
     b[1] = (unsigned char) (v >>  8);
     b[0] = (unsigned char) (v >> 16);
@@ -72,7 +72,7 @@ inline void set_be24(void *bb, unsigned v)
 
 inline unsigned get_be32(const void *bb)
 {
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[3] <<  0;
     v |= (unsigned) b[2] <<  8;
@@ -83,7 +83,7 @@ inline unsigned get_be32(const void *bb)
 
 inline void set_be32(void *bb, unsigned v)
 {
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[3] = (unsigned char) (v >>  0);
     b[2] = (unsigned char) (v >>  8);
     b[1] = (unsigned char) (v >> 16);
@@ -96,7 +96,7 @@ inline unsigned get_le16(const void *bb)
 #if (ACC_ARCH_IA32)
     return * (const unsigned short *) bb;
 #else
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[0] <<  0;
     v |= (unsigned) b[1] <<  8;
@@ -109,7 +109,7 @@ inline void set_le16(void *bb, unsigned v)
 #if (ACC_ARCH_IA32)
     (* (unsigned short *) bb) = (unsigned short) (v & 0xffff);
 #else
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);
     b[1] = (unsigned char) (v >>  8);
 #endif
@@ -118,7 +118,7 @@ inline void set_le16(void *bb, unsigned v)
 
 inline unsigned get_le24(const void *bb)
 {
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[0] <<  0;
     v |= (unsigned) b[1] <<  8;
@@ -128,7 +128,7 @@ inline unsigned get_le24(const void *bb)
 
 inline void set_le24(void *bb, unsigned v)
 {
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);
     b[1] = (unsigned char) (v >>  8);
     b[2] = (unsigned char) (v >> 16);
@@ -140,7 +140,7 @@ inline unsigned get_le32(const void *bb)
 #if (ACC_ARCH_IA32)
     return * (const unsigned *) bb;
 #else
-    const upx_bytep b = (const upx_bytep) bb;
+    const unsigned char* b = (const unsigned char*) bb;
     unsigned v;
     v  = (unsigned) b[0] <<  0;
     v |= (unsigned) b[1] <<  8;
@@ -155,7 +155,7 @@ inline void set_le32(void *bb, unsigned v)
 #if (ACC_ARCH_IA32)
     (* (unsigned *) bb) = v;
 #else
-    upx_bytep b = (upx_bytep) bb;
+    unsigned char* b = (unsigned char*) bb;
     b[0] = (unsigned char) (v >>  0);
     b[1] = (unsigned char) (v >>  8);
     b[2] = (unsigned char) (v >> 16);
@@ -260,7 +260,14 @@ class LE16
 
 public:
     LE16() { }
-    LE16& operator =  (const LE16 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
+    LE16& operator =  (const LE16 &v) {
+#if (ACC_ARCH_IA32)
+        * (unsigned short *) d = * (const unsigned short *) v.d;
+#else
+        memcpy(d, v.d, sizeof(d));
+#endif
+        return *this;
+    }
 
     LE16& operator =  (unsigned v)    { set_le16(d, v); return *this; }
     LE16& operator += (unsigned v)    { set_le16(d, get_le16(d) + v); return *this; }
@@ -279,7 +286,14 @@ class LE32
 
 public:
     LE32() { }
-    LE32& operator =  (const LE32 &v) { memcpy(d, v.d, sizeof(d)); return *this; }
+    LE32& operator =  (const LE32 &v) {
+#if (ACC_ARCH_IA32)
+        * (unsigned int *) d = * (const unsigned int *) v.d;
+#else
+        memcpy(d, v.d, sizeof(d));
+#endif
+        return *this;
+    }
 
     LE32& operator =  (unsigned v)    { set_le32(d, v); return *this; }
     LE32& operator += (unsigned v)    { set_le32(d, get_le32(d) + v); return *this; }
@@ -363,6 +377,13 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
    typedef unsigned int   LE32_unaligned __attribute__((__packed__,__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
+#endif
+#if (0 && ACC_ARCH_IA32 && ACC_CC_MSC)
+   typedef unsigned short LE16_unaligned;
+   typedef unsigned int   LE32_unaligned;
+#  define LE16      LE16_unaligned
+#  define LE32      LE32_unaligned
+#  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
 #endif
 
 

@@ -149,7 +149,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
     overlay_offset = sizeof(elfout.ehdr) +
         (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
         sizeof(l_info) +
-        ((elfout.ehdr.e_phnum==3) ? elfout.phdr[2].p_memsz : 0) ;
+        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
     unsigned eod = fo->getBytesWritten();
@@ -270,7 +270,7 @@ PackLinuxI386::buildLinuxLoader(
             // checksum UPX! lsize version format
         sizeof(l_info) +
             // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((elfout.ehdr.e_phnum==3) ? elfout.phdr[2].p_memsz : 0) +
+        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) +
             // p_progid, p_filesize, p_blocksize
         sizeof(p_info) +
             // compressed data

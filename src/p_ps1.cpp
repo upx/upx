@@ -288,7 +288,7 @@ void PackPs1::pack(OutputFile *fo)
     memcpy(loader,getLoader(),lsize);
 
     unsigned pad = 0;
-    unsigned filelen = ALIGN_UP((cfile_size ? cfile_size : ih.tx_len), 4);
+    unsigned filelen = ALIGN_UP((cfile_size ? cfile_size : (unsigned) ih.tx_len), 4);
     unsigned pad_code = TIL_ALIGNED(ph.c_len, 4);
 
     const int h_len = lsize-getLoaderSectionStart("IDENTSTR");

@@ -104,6 +104,15 @@ public:
 };
 }
 
+#elif defined(__BORLANDC__) && (__BORLANDC__ < 0x0530)
+
+#include <stdcomp.h>
+#undef RWSTD_MULTI_THREAD
+#include <stdexcep.h>
+#include <new.h>
+#include <typeinfo.h>
+namespace std { class bad_alloc { }; }
+
 #else
 
 #include <exception>

@@ -42,7 +42,7 @@
 // direct screen access
 **************************************************************************/
 
-#if (ACC_CC_MSC && _MSC_VER >= 1000 && _MSC_VER < 1200)
+#if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
    /* avoid -W4 warnings in <conio.h> */
 #  pragma warning(disable: 4032)
    /* avoid -W4 warnings in <windows.h> */

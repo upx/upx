@@ -18,8 +18,8 @@ VPATH = $(srcdir)
 
 # auto-detect the target unless given on the commandline
 ifeq ($(strip $(target)),)
-  # try environment variable UPX_TARGET
-  target := $(UPX_TARGET)
+  # try environment variable UPX_MAKE_TARGET
+  target := $(UPX_MAKE_TARGET)
 endif
 ifeq ($(strip $(target)),)
 ifneq ($(strip $(wildcard /usr/include/linux)),)
@@ -329,7 +329,8 @@ ifeq ($(target),bc)
 o = .obj
 a = .lib
 e = .exe
-CC = bcc32 -q -3
+CC = bcc32 -3
+INCLUDES += -I$(srcdir)/acc
 CFLAGS = -w -w-aus -w-inl -g1
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
