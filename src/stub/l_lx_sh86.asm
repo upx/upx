@@ -34,6 +34,7 @@
                 SECTION .text
 
 %define         jmps    jmp short
+%define         jmpl    jmp dword
 
 ; defines for ident.ash and n2b_d32.ash
 %ifdef SMALL

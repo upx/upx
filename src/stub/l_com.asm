@@ -28,6 +28,7 @@
 %define         COM     1
 %define         CJT16   1
 %define         jmps    jmp short
+%define         jmpl    jmp word
 %include        "macros.ash"
 
                 BITS    16
@@ -62,7 +63,7 @@ mem_ok:
 %ifdef  __COMCALLT__
                 push    di
 %endif; __COMMAIN2__
-                jmp     .1+'JM'
+                jmpl    .1+'JM'
 .1:
 %include        "header.ash"
 

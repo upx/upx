@@ -29,6 +29,7 @@
 %define         COM     0
 %define         CJT16   1
 %define         jmps    jmp short
+%define         jmpl    jmp word
 %include        "macros.ash"
 
                 BITS    16
@@ -80,7 +81,7 @@ strategy:
 %ifdef  __SYSCALLT__
                 push    di
 %endif; __SYSMAIN3__
-                jmp     .1+'JM'         ; jump to the decompressor
+                jmpl    .1+'JM'         ; jump to the decompressor
 .1:
 %include        "header.ash"
 
@@ -113,7 +114,7 @@ cutpoint:
                 pop     bx
                 pop     ax
 %endif; __SYSJUMP1__
-                jmp     eof+'JO'
+                jmpl    eof+'JO'
 eof:
 ;       __SYSTHEND__
                 section .data

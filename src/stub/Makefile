@@ -55,6 +55,8 @@ vpath %.ash $(UCL_M68K)
 # // tools
 # ************************************************************************/
 
+NASM     = /usr/topics/src/nasm-20000911/nasm -O0 -w+macro-params -w+orphan-labels
+NASM     = /usr/topics/src/nasm-20000911/nasm -O2 -w+macro-params -w+orphan-labels
 NASM     = nasm -w+macro-params -w+orphan-labels
 
 APP      = perl -w scripts/app.pl

@@ -26,6 +26,7 @@
 
 
 %define         jmps    jmp short
+%define         jmpl    jmp dword
 %include        "macros.ash"
 
                 BITS    32

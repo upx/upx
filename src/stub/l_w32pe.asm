@@ -26,6 +26,7 @@
 
 
 %define         jmps    jmp short
+%define         jmpl    jmp dword
 %define         jnzn    jnz near
 %define         jbn     jb near
 %include        "macros.ash"
@@ -204,7 +205,7 @@ reloc_end_jmp:
                 inc     eax
                 retn    0x0C
 %else;  __PEDOJUMP__
-                jmp     .1+'JMPO'
+                jmpl    .1+'JMPO'
 .1:
 %endif; __PEDUMMY3__
 

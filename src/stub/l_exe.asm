@@ -27,6 +27,7 @@
 
 %define         EXE
 %define         jmps    jmp short
+%define         jmpl    jmp word
 
                 BITS    16
                 ORG     0

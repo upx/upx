@@ -26,6 +26,7 @@
 
 
 %define         jmps    jmp short
+%define         jmpl    jmp dword
 %include        "macros.ash"
 
                 BITS    32
@@ -56,7 +57,7 @@ start:
 %ifdef  __TMTCALT1__
                 push    edi
 %endif; __TMTMAIN2__
-                jmp     .1 + 'JMPD'
+                jmpl    .1 + 'JMPD'
 .1:
 %include        "header.ash"
 
@@ -93,7 +94,7 @@ cutpoint:
 
 ; =============
 ;       __TMTJUMP1__
-                jmp     .1+'JMPO'
+                jmpl    .1+'JMPO'
 .1:
 eof:
 ;       __TMTHEEND__
