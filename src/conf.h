@@ -287,6 +287,7 @@
 
 
 // avoid warnings about shadowing global functions
+#undef index
 #define basename            upx_basename
 #define index               upx_index
 #define outp                upx_outp
