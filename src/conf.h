@@ -299,10 +299,6 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define outp                upx_outp
 
 
-// a dummy statement
-#define nop     ((void)0)
-
-
 #define COMPILE_TIME_ASSERT(expr) \
     { typedef int __upx_compile_time_assert_fail[(expr) ? 1 : -1]; }
 
@@ -331,9 +327,6 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 /*************************************************************************
 // memory util
 **************************************************************************/
-
-#undef FREE
-#define FREE(ptr)           if (ptr) { free(ptr); ptr = NULL; }
 
 #undef UNUSED
 #if 1

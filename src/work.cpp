@@ -77,13 +77,14 @@ void do_one_file(const char *iname, char *oname)
         throwIOException("empty file -- skipped");
     if ((st.st_mode & S_IWUSR) == 0)
     {
+        bool skip = true;
         if (opt->output_name)
-            nop;
+            skip = false;
         else if (opt->to_stdout)
-            nop;
+            skip = false;
         else if (opt->backup)
-            nop;
-        else
+            skip = false;
+        if (skip)
             throwIOException("file is write protected -- skipped");
     }
 
