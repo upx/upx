@@ -93,6 +93,7 @@ CXXFLAGS_OUTPUT = $(CFLAGS_OUTPUT)
 LINK_EXE = $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 STUBEDIT_EXE =
 STUBIFY_EXE =
+CHMOD_EXE =
 
 o = .o
 a = .a
@@ -184,8 +185,10 @@ ifeq ($(DEBUG),1)
   CFLAGS += -O0 -g
 else
   ##LDFLAGS += -static
-  STUBEDIT_EXE = objcopy -S -R .comment -R .note $@ && perl $(srcdir)/stub/scripts/brandelf.pl $@ && chmod 755 $@
+  STUBEDIT_EXE = objcopy -S -R .comment -R .note $@
+  STUBIFY_EXE = perl $(srcdir)/stub/scripts/brandelf.pl $@
 endif
+CHMOD_EXE = chmod 755 $@
 endif
 
 endif	# linux
@@ -386,6 +389,7 @@ $(upx_exe): $(OBJECTS) $(LIBS)
 	$(LINK_EXE)
 	$(STUBEDIT_EXE)
 	$(STUBIFY_EXE)
+	$(CHMOD_EXE)
 
 
 unupx:
@@ -401,8 +405,8 @@ mostlyclean:
 clean: mostlyclean
 	-rm -f *.a *.lib *.o *.obj tags TAGS ID
 	-rm -f *.idb *.pdb
-	-rm -rf .deps
 	-rm -f upx upx.exe upx_nrv upx_nrv.exe upx_ucl upx_ucl.exe
+	-rm -rf .deps
 
 distclean: clean
 
