@@ -395,6 +395,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
         (void) con_fg(stdout,fg);
         fflush(stdout);
         printSetNl(1);
+        UNUSED(fg);
         return;
     }
 

@@ -48,7 +48,11 @@ void init_options(struct options_t *o)
     o->backup = -1;
     o->overlay = -1;
 
+#if defined(__MFX_DOS) || defined(__MFX_WIN)
     o->console = CON_INIT;
+#else
+    o->console = CON_FILE;
+#endif
     o->verbose = 2;
 
     o->w32pe.compress_exports = 1;
@@ -704,7 +708,6 @@ static const struct mfx_option longopts[] =
     {"no-color",            0, 0, 512},
     {"mono",                0, 0, 513},
     {"color",               0, 0, 514},
-    //{"intro",               0, 0, 515},
 
     // compression method
     {"2b",               0x10, 0, 702},     // --2b

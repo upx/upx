@@ -1,4 +1,4 @@
-/* c_screen.cpp -- screen driver console output
+/* c_screen.cpp -- console screen driver
 
    This file is part of the UPX executable compressor.
 
@@ -91,6 +91,8 @@ static void do_destroy(void)
 {
     if (screen)
     {
+        if (screen->atExit)
+            screen->atExit();
         screen->destroy(screen);
         screen = NULL;
     }
@@ -107,11 +109,22 @@ static int cur_bg = -1;
 static int init(FILE *f, int o, int now)
 {
     int fd = fileno(f);
-    int n = CON_INIT;
+    int n;
 
     UNUSED(now);
     assert(screen == NULL);
-    atexit(do_destroy);
+
+    if (o == CON_SCREEN)
+        n = CON_SCREEN;
+    else if (o == CON_INIT)                 /* use by default */
+        n = CON_SCREEN;
+    else if (o == CON_ANSI_COLOR)           /* can emulate ANSI color */
+        n = CON_ANSI_COLOR;
+    else if (o == CON_ANSI_MONO)            /* can emulate ANSI mono */
+        n = CON_ANSI_MONO;
+    else
+        return CON_INIT;
+
 #if defined(__DJGPP__)
     if (!screen)
         screen = do_construct(screen_djgpp2_construct(),fd);
@@ -130,23 +143,14 @@ static int init(FILE *f, int o, int now)
 #endif
     if (!screen)
         return CON_INIT;
+
     mode = screen->getMode(screen);
     init_fg = cur_fg = screen->getFg(screen);
     init_bg = cur_bg = screen->getBg(screen);
     if (screen->isMono(screen))
         cur_fg = -1;
 
-    if (o == CON_SCREEN)
-        n = CON_SCREEN;
-    if (o == CON_INIT)                      /* use by default */
-        n = CON_SCREEN;
-    if (o == CON_ANSI_COLOR)                /* can emulate ANSI color */
-        n = CON_ANSI_COLOR;
-    if (o == CON_ANSI_MONO)                 /* can emulate ANSI mono */
-        n = CON_ANSI_MONO;
-
-    if (screen->atExit)
-        atexit(screen->atExit);
+    atexit(do_destroy);
     return n;
 }
 
@@ -185,8 +189,6 @@ static void print0(FILE *f, const char *ss)
 {
     int cx, cy;
     int c_cx, c_cy;
-    char p[256+1];
-    int pi = 0, px = -1, py = -1;
     const int sx = screen->getCols(screen);
     const int sy = screen->getRows(screen);
     int pass;
@@ -200,6 +202,9 @@ static void print0(FILE *f, const char *ss)
     for (pass = 0; pass < 2; pass++)
     {
         const char *s = ss;
+        // char buffer for pass == 1
+        char p[256+1];
+        int pi = 0, px = -1, py = -1;
 
         for (;;)
         {
@@ -227,8 +232,9 @@ static void print0(FILE *f, const char *ss)
             }
             if (pass > 0)
             {
-                if (pi > 0 && py != c_cy)
+                if (pi > 0 && (*s == 0 || py != c_cy))
                 {
+                    p[pi] = 0;
                     screen->putString(screen,p,px,py);
                     pi = 0;
                 }
@@ -242,15 +248,17 @@ static void print0(FILE *f, const char *ss)
                 }
             }
 
-            if (!*s)
+            if (*s == 0)
                 break;
 
             if (pass > 0)
             {
                 if (pi == 0)
-                    px = c_cx, py = c_cy;
+                {
+                    px = c_cx;
+                    py = c_cy;
+                }
                 p[pi++] = *s;
-                p[pi] = 0;
             }
             c_cx++;
             s++;
@@ -271,8 +279,7 @@ static void print0(FILE *f, const char *ss)
                 c_cy = cy;
         }
     }
-    if (pi > 0)
-        screen->putString(screen,p,px,py);
+
     screen->setCursor(screen,c_cx,c_cy);
     screen->refresh(screen);
 }
