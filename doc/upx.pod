@@ -357,13 +357,13 @@ Introduction
 
 General user's overview
 
-  Running a compressed executable program trades space on a ``permanent''
-  storage medium (such as a hard disk, floppy disk, CD-ROM, flash
-  memory, EPROM, etc.) for space in one or more ``temporary'' storage
-  media (such as RAM, swap space, /tmp, etc.).  Running a compressed
-  executable also requires some additional CPU cycles to generate
-  the compressed executable in the first place, and to decompress
-  it at each invocation.
+  Running a compressed executable program trades less space on a
+  ``permanent'' storage medium (such as a hard disk, floppy disk,
+  CD-ROM, flash memory, EPROM, etc.) for more space in one or more
+  ``temporary'' storage media (such as RAM, swap space, /tmp, etc.).
+  Running a compressed executable also requires some additional CPU
+  cycles to generate the compressed executable in the first place,
+  and to decompress it at each invocation.
 
   How much space is traded?  It depends on the executable, but many
   programs save 30% to 50% of permanent disk space.  How much CPU
@@ -403,7 +403,7 @@ General user's overview
   ELF binary executables prefer the Linux/elf386 format by default,
   because UPX decompresses them directly into RAM, uses only one
   exec, does not use space in /tmp, and does not use /proc.
-  Shell scripts where the underling shell accepts a ``-c'' argument
+  Shell scripts where the underlying shell accepts a ``-c'' argument
   can use the Linux/sh386 format.  UPX decompresses the shell script
   into low memory, then maps the shell and passes the entire text of the
   script as an argument with a leading ``-c''.
@@ -536,7 +536,7 @@ How it works:
   where the shell is known to accept "-c <command>", UPX decompresses
   the file into low memory, then maps the shell (and its PT_INTERP),
   and passes control to the shell with the entire decompressed file
-  as the argument after "-c".  Known shells are sh, ash, bsh, csh,
+  as the argument after "-c".  Known shells are sh, ash, bash, bsh, csh,
   ksh, tcsh, pdksh.  Restriction: UPX 1.10 cannot use this method
   for shell scripts which use the one optional string argument after
   the shell name in the script (example: "#! /bin/sh option3\n".)
@@ -656,7 +656,7 @@ formats, and it does not share any of their drawbacks.
 
 Notes:
 
-  - Be sure that "vmlinuz/386" or "bmlinuz/386" is displayed
+  - Be sure that "vmlinuz/386" or "bvmlinuz/386" is displayed
   during compression - otherwise a wrong executable format
   may have been used, and the kernel won't boot.
 
