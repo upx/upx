@@ -74,8 +74,9 @@ protected:
     virtual void updateLoader(OutputFile *);
 
     // ELF util
-    virtual int checkEhdr(const Elf_LE32_Ehdr *ehdr) const;
-    virtual off_t getbrk(const Elf_LE32_Phdr *phdr, int e_phnum) const;
+    virtual int checkEhdr(const Elf32_Ehdr *ehdr) const;
+    virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
+    virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"
@@ -84,22 +85,22 @@ protected:
     unsigned n_mru;
 
     struct cprElfHdr1 {
-        struct Elf_LE32_Ehdr ehdr;
-        struct Elf_LE32_Phdr phdr[1];
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[1];
         struct l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr2 {
-        struct Elf_LE32_Ehdr ehdr;
-        struct Elf_LE32_Phdr phdr[2];
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[2];
         struct l_info linfo;
     }
     __attribute_packed;
 
     struct cprElfHdr3 {
-        struct Elf_LE32_Ehdr ehdr;
-        struct Elf_LE32_Phdr phdr[3];
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[3];
         struct l_info linfo;
     }
     __attribute_packed;

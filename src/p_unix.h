@@ -59,18 +59,31 @@ protected:
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 
     virtual void patchLoader() = 0;
-    virtual void patchLoaderChecksum() {}
+    virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *) = 0;
 
     virtual void writePackHeader(OutputFile *fo);
 
     // in order too share as much code as possible we introduce
     // an endian abstraction here
-    virtual unsigned get_native32(const void *) = 0;
-    virtual void set_native32(void *, unsigned) = 0;
-    virtual void set_native16(void *, unsigned) = 0;
+    virtual unsigned get_native32(const void *) const = 0;
+    virtual unsigned get_native16(const void *) const = 0;
+    virtual void set_native32(void *, unsigned) const = 0;
+    virtual void set_native16(void *, unsigned) const = 0;
 
     virtual bool checkCompressionRatio(unsigned, unsigned) const;
+
+protected:
+    struct Extent {
+        off_t offset;
+        off_t size;
+    };
+    virtual void packExtent(const Extent &x,
+        unsigned &total_in, unsigned &total_out, Filter *, OutputFile *);
+    virtual void unpackExtent(unsigned wanted, OutputFile *fo,
+        unsigned &total_in, unsigned &total_out,
+        unsigned &c_adler, unsigned &u_adler,
+        bool first_PF_X, unsigned szb_info );
 
     int exetype;
     unsigned blocksize;
@@ -94,7 +107,6 @@ protected:
         unsigned char b_unused;
     }
     __attribute_packed;
-
     struct l_info { // 12-byte trailer in header for loader
         unsigned l_checksum;
         unsigned l_magic;
@@ -111,6 +123,8 @@ protected:
     }
     __attribute_packed;
 
+    struct l_info linfo;
+
     // do not change !!!
     enum { OVERHEAD = 2048 };
 };
@@ -120,24 +134,42 @@ protected:
 // abstract classes encapsulating endian issues
 // note: UPX_MAGIC is always stored in le32 format
 **************************************************************************/
-
 class PackUnixBe32 : public PackUnix
 {
     typedef PackUnix super;
 protected:
     PackUnixBe32(InputFile *f) : super(f) { }
-    virtual unsigned get_native32(const void *b)
-    {
-        return get_be32(b);
+    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
+
+    // must agree with stub/linux.hh
+    struct b_info { // 12-byte header before each compressed block
+        BE32 sz_unc;  // uncompressed_size
+        BE32 sz_cpr;  //   compressed_size
+        unsigned char b_method;  // compression algorithm
+        unsigned char b_ftid;  // filter id
+        unsigned char b_cto8;  // filter parameter
+        unsigned char b_unused;
     }
-    virtual void set_native32(void *b, unsigned v)
-    {
-        set_be32(b, v);
+    __attribute_packed;
+    struct l_info { // 12-byte trailer in header for loader
+        BE32 l_checksum;
+        BE32 l_magic;
+        BE16 l_lsize;
+        unsigned char l_version;
+        unsigned char l_format;
     }
-    virtual void set_native16(void *b, unsigned v)
-    {
-        set_be16(b, v);
+    __attribute_packed;
+
+    struct p_info { // 12-byte packed program header
+        BE32 p_progid;
+        BE32 p_filesize;
+        BE32 p_blocksize;
     }
+    __attribute_packed;
+
 };
 
 
@@ -146,18 +178,37 @@ class PackUnixLe32 : public PackUnix
     typedef PackUnix super;
 protected:
     PackUnixLe32(InputFile *f) : super(f) { }
-    virtual unsigned get_native32(const void *b)
-    {
-        return get_le32(b);
+    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
+    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
+
+    // must agree with stub/linux.hh
+    struct b_info { // 12-byte header before each compressed block
+        LE32 sz_unc;  // uncompressed_size
+        LE32 sz_cpr;  //   compressed_size
+        unsigned char b_method;  // compression algorithm
+        unsigned char b_ftid;  // filter id
+        unsigned char b_cto8;  // filter parameter
+        unsigned char b_unused;
     }
-    virtual void set_native32(void *b, unsigned v)
-    {
-        set_le32(b, v);
+    __attribute_packed;
+    struct l_info { // 12-byte trailer in header for loader
+        LE32 l_checksum;
+        LE32 l_magic;
+        LE16 l_lsize;
+        unsigned char l_version;
+        unsigned char l_format;
     }
-    virtual void set_native16(void *b, unsigned v)
-    {
-        set_le16(b, v);
+    __attribute_packed;
+
+    struct p_info { // 12-byte packed program header
+        LE32 p_progid;
+        LE32 p_filesize;
+        LE32 p_blocksize;
     }
+    __attribute_packed;
+
 };
 
 

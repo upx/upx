@@ -72,10 +72,10 @@ const int *PackVmlinuxI386::getFilters() const
 static int __acc_cdecl_qsort
 compare_Phdr(void const *aa, void const *bb)
 {
-    Elf_LE32_Phdr const *const a = (Elf_LE32_Phdr const *)aa;
-    Elf_LE32_Phdr const *const b = (Elf_LE32_Phdr const *)bb;
-    unsigned const xa = a->p_type - Elf_LE32_Phdr::PT_LOAD;
-    unsigned const xb = b->p_type - Elf_LE32_Phdr::PT_LOAD;
+    Elf32_Phdr const *const a = (Elf32_Phdr const *)aa;
+    Elf32_Phdr const *const b = (Elf32_Phdr const *)bb;
+    unsigned const xa = a->p_type - Elf32_Phdr::PT_LOAD;
+    unsigned const xb = b->p_type - Elf32_Phdr::PT_LOAD;
             if (xa < xb)         return -1;  // PT_LOAD first
             if (xa > xb)         return  1;
     if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
@@ -118,14 +118,14 @@ bool PackVmlinuxI386::canPack()
     // additional requirements for vmlinux
     if (ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
     ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phentsize!=sizeof(Elf_LE32_Phdr)
-    ||  ehdri.e_type!=Elf_LE32_Ehdr::ET_EXEC
+    ||  ehdri.e_phentsize!=sizeof(Elf32_Phdr)
+    ||  ehdri.e_type!=Elf32_Ehdr::ET_EXEC
     ||  0x00100000!=(0x001fffff & ehdri.e_entry) // entry not an odd 1MB
     ) {
         return false;
     }
 
-    phdri = new Elf_LE32_Phdr[(unsigned) ehdri.e_phnum];
+    phdri = new Elf32_Phdr[(unsigned) ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
 
@@ -134,7 +134,7 @@ bool PackVmlinuxI386::canPack()
 
     // Check that PT_LOADs form one contiguous chunk of the file.
     for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
-        if (Elf_LE32_Phdr::PT_LOAD==phdri[j].p_type) {
+        if (Elf32_Phdr::PT_LOAD==phdri[j].p_type) {
             if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
                        | phdri[j].p_align  | phdri[j].p_vaddr) ) {
                 return false;
@@ -182,13 +182,13 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
 void PackVmlinuxI386::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
-    Elf_LE32_Ehdr ehdro;
+    Elf32_Ehdr ehdro;
     LE32 tmp_le32;
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
     // .shstrtab /* .symtab .strtab */
-    Elf_LE32_Shdr shdro[1+3+1/*+2*/];
+    Elf32_Shdr shdro[1+3+1/*+2*/];
     memset(shdro, 0, sizeof(shdro));
     char const shstrtab[]= "\0.text\0.note\0.shstrtab\0.symtab\0.strtab";
     char const *p = shstrtab;
@@ -198,7 +198,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     // .e_ident, .e_machine, .e_version, .e_flags
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
-    ehdro.e_type = Elf_LE32_Ehdr::ET_REL;
+    ehdro.e_type = Elf32_Ehdr::ET_REL;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = 0;  // later
@@ -231,8 +231,8 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
-    shdro[1].sh_type = Elf_LE32_Shdr::SHT_PROGBITS;
-    shdro[1].sh_flags = Elf_LE32_Shdr::SHF_ALLOC | Elf_LE32_Shdr::SHF_EXECINSTR;
+    shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
+    shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
     shdro[1].sh_size = 1+ 4+ ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
@@ -257,7 +257,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[2].sh_name = ptr_diff(p, shstrtab);
-    shdro[2].sh_type = Elf_LE32_Shdr::SHT_NOTE;
+    shdro[2].sh_type = Elf32_Shdr::SHT_NOTE;
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[2].sh_addralign = 1;
@@ -283,7 +283,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     // while (0!=*p++) ;  // name is the same
     shdro[3].sh_name = ptr_diff(p, shstrtab);
-    shdro[3].sh_type = Elf_LE32_Shdr::SHT_NOTE;
+    shdro[3].sh_type = Elf32_Shdr::SHT_NOTE;
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[3].sh_addralign = 1;
@@ -292,7 +292,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[4].sh_name = ptr_diff(p, shstrtab);
-    shdro[4].sh_type = Elf_LE32_Shdr::SHT_STRTAB;
+    shdro[4].sh_type = Elf32_Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
     shdro[4].sh_size = 1+ sizeof(shstrtab);  // 1+: terminating '\0'
     shdro[4].sh_addralign = 1;
@@ -302,7 +302,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     while (0!=*p++) ;
     fo_off = ~3 & (3+ fo_off);
     shdro[5].sh_name = ptr_diff(p, shstrtab);
-    shdro[5].sh_type = Elf_LE32_Shdr::SHT_SYMTAB;
+    shdro[5].sh_type = Elf32_Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
     shdro[5].sh_size = 16;  // XXX ?
     shdro[5].sh_link = 6;  // to .strtab for symbols
@@ -313,7 +313,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
-    shdro[6].sh_type = Elf_LE32_Shdr::SHT_STRTAB;
+    shdro[6].sh_type = Elf32_Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
     shdro[6].sh_size = 1;  // XXX ?
     shdro[6].sh_addralign = 1;
@@ -347,21 +347,21 @@ int PackVmlinuxI386::canUnpack()
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
     ||  ehdri.e_machine != 3  // Intel 80386
     ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Elf_LE32_Ehdr::ET_REL
+    ||  ehdri.e_type != Elf32_Ehdr::ET_REL
     ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf_LE32_Shdr) + ehdri.e_shoff)
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf32_Shdr) + ehdri.e_shoff)
     )
         return false;
 
     // find the .shstrtab section
     char shstrtab[40];
-    Elf_LE32_Shdr *p, *p_shstrtab=0;
-    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
+    Elf32_Shdr *p, *p_shstrtab=0;
+    shdri = new Elf32_Shdr[(unsigned) ehdri.e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
     fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
     int j;
     for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf_LE32_Shdr::SHT_STRTAB==p->sh_type
+        if (Elf32_Shdr::SHT_STRTAB==p->sh_type
         &&  p->sh_size <= sizeof(shstrtab)
         &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
         &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")

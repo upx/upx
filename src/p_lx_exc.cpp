@@ -37,12 +37,12 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 
-#define PT_LOAD     Elf_LE32_Phdr::PT_LOAD
-#define PT_DYNAMIC  Elf_LE32_Phdr::PT_DYNAMIC
-#define DT_NULL     Elf_LE32_Dyn::DT_NULL
-#define DT_NEEDED   Elf_LE32_Dyn::DT_NEEDED
-#define DT_STRTAB   Elf_LE32_Dyn::DT_STRTAB
-#define DT_STRSZ    Elf_LE32_Dyn::DT_STRSZ
+#define PT_LOAD     Elf32_Phdr::PT_LOAD
+#define PT_DYNAMIC  Elf32_Phdr::PT_DYNAMIC
+#define DT_NULL     Elf32_Dyn::DT_NULL
+#define DT_NEEDED   Elf32_Dyn::DT_NEEDED
+#define DT_STRTAB   Elf32_Dyn::DT_STRTAB
+#define DT_STRSZ    Elf32_Dyn::DT_STRSZ
 
 
 /*************************************************************************
@@ -88,12 +88,13 @@ PackLinuxI386::generateElfHdr(
 {
     cprElfHdr1 *const h1 = (cprElfHdr1 *)&elfout;
     cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
-    memcpy(h2, proto, sizeof(*h2));
+    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
+    memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
 
-    assert(h2->ehdr.e_phoff     == sizeof(Elf_LE32_Ehdr));
+    assert(h2->ehdr.e_phoff     == sizeof(Elf32_Ehdr));
     assert(h2->ehdr.e_shoff     == 0);
-    assert(h2->ehdr.e_ehsize    == sizeof(Elf_LE32_Ehdr));
-    assert(h2->ehdr.e_phentsize == sizeof(Elf_LE32_Phdr));
+    assert(h2->ehdr.e_ehsize    == sizeof(Elf32_Ehdr));
+    assert(h2->ehdr.e_phentsize == sizeof(Elf32_Phdr));
     assert(h2->ehdr.e_shnum     == 0);
 
 #if 0  //{
@@ -129,6 +130,11 @@ PackLinuxI386::generateElfHdr(
         memset(&h2->linfo, 0, sizeof(h2->linfo));
         fo->write(h2, sizeof(*h2));
     }
+    else if (ph.format==UPX_F_LINUX_ELFI_i386) {
+        assert(h3->ehdr.e_phnum==3);
+        memset(&h3->linfo, 0, sizeof(h3->linfo));
+        fo->write(h3, sizeof(*h3));
+    }
     else {
         assert(false);  // unknown ph.format, PackUnix::generateElfHdr
     }
@@ -152,8 +158,6 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
-    unsigned eod = fo->getBytesWritten();
-    elfout.phdr[0].p_filesz = eod;
 
 #if 0  // {
     // /usr/bin/strip from RedHat 8.0 (binutils-2.13.90.0.2-2)
@@ -170,10 +174,11 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
 
     // Supply a "linking view" that covers everything,
     // so that 'strip' does not omit everything.
-    Elf_LE32_Shdr shdr;
+    Elf32_Shdr shdr;
     // The section header string table.
     char const shstrtab[] = "\0.\0.shstrtab";
 
+    unsigned eod = elfout.phdr[0].p_filesz;
     set_native32(&elfout.ehdr.e_shoff, eod);
     set_native16(&elfout.ehdr.e_shentsize, sizeof(shdr));
     set_native16(&elfout.ehdr.e_shnum, 3);
@@ -181,14 +186,14 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
 
     // An empty Elf32_Shdr for space as a null index.
     memset(&shdr, 0, sizeof(shdr));
-    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_NULL);
+    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_NULL);
     fo->write(&shdr, sizeof(shdr));
 
     // Cover all the bits we need at runtime.
     memset(&shdr, 0, sizeof(shdr));
     set_native32(&shdr.sh_name, 1);
-    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_PROGBITS);
-    set_native32(&shdr.sh_flags, Elf_LE32_Shdr::SHF_ALLOC);
+    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_PROGBITS);
+    set_native32(&shdr.sh_flags, Elf32_Shdr::SHF_ALLOC);
     set_native32(&shdr.sh_addr, elfout.phdr[0].p_vaddr);
     set_native32(&shdr.sh_offset, overlay_offset);
     set_native32(&shdr.sh_size, eod - overlay_offset);
@@ -198,7 +203,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
     // A section header for the section header string table.
     memset(&shdr, 0, sizeof(shdr));
     set_native32(&shdr.sh_name, 3);
-    set_native32(&shdr.sh_type, Elf_LE32_Shdr::SHT_STRTAB);
+    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_STRTAB);
     set_native32(&shdr.sh_offset, 3*sizeof(shdr) + eod);
     set_native32(&shdr.sh_size, sizeof(shstrtab));
     fo->write(&shdr, sizeof(shdr));
@@ -238,21 +243,28 @@ PackLinuxI386::buildLinuxLoader(
 {
     initLoader(proto, szproto);
 
-    cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    unsigned const fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
-        hf->ehdr.e_phentsize * hf->ehdr.e_phnum + sizeof(l_info) );
     struct b_info h; memset(&h, 0, sizeof(h));
-    h.sz_unc = szfold - fold_hdrlen;
+    unsigned fold_hdrlen = 0;
+  if (0 < szfold) {
+    cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
+    fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
+        hf->ehdr.e_phentsize * hf->ehdr.e_phnum + sizeof(l_info) );
+    h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
     h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
+  }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
+  if (0 < szfold) {
+    unsigned sz_cpr;
+    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
+    h.sz_cpr = sz_cpr;
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+  }
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
@@ -396,7 +408,7 @@ int PackLinuxI386::getLoaderPrefixSize() const
 **************************************************************************/
 
 // basic check of an Linux ELF Ehdr
-int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
+int PackLinuxI386::checkEhdr(const Elf32_Ehdr *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
 
@@ -414,7 +426,7 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
         return 4;
     if (ehdr->e_phnum < 1)
         return 5;
-    if (ehdr->e_phentsize != sizeof(Elf_LE32_Phdr))
+    if (ehdr->e_phentsize != sizeof(Elf32_Phdr))
         return 6;
 
     // check for Linux kernels
@@ -435,7 +447,7 @@ int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 }
 
 
-off_t PackLinuxI386::getbrk(const Elf_LE32_Phdr *phdr, int e_phnum) const
+off_t PackLinuxI386::getbrk(const Elf32_Phdr *phdr, int e_phnum) const
 {
     off_t brka = 0;
     for (int j = 0; j < e_phnum; ++phdr, ++j) {
@@ -448,6 +460,21 @@ off_t PackLinuxI386::getbrk(const Elf_LE32_Phdr *phdr, int e_phnum) const
     return brka;
 }
 
+off_t PackLinuxI386::getbase(const Elf32_Phdr *phdr, int e_phnum) const
+{
+    off_t base = ~0u;
+    for (int j = 0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD == phdr->p_type) {
+            if ((unsigned)phdr->p_vaddr < base)
+                base = phdr->p_vaddr;
+        }
+    }
+    if (0!=base) {
+        return base;
+    }
+    return 0x12000;
+}
+
 
 /*************************************************************************
 //
@@ -458,7 +485,7 @@ bool PackLinuxI386::canPack()
     if (exetype != 0)
         return super::canPack();
 
-    Elf_LE32_Ehdr ehdr;
+    Elf32_Ehdr ehdr;
     unsigned char *buf = ehdr.e_ident;
 
     fi->readx(&ehdr, sizeof(ehdr));

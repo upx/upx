@@ -45,8 +45,8 @@
 PackUnix::PackUnix(InputFile *f) :
     super(f), exetype(0), blocksize(0), overlay_offset(0), lsize(0)
 {
-    COMPILE_TIME_ASSERT(sizeof(Elf_LE32_Ehdr) == 52);
-    COMPILE_TIME_ASSERT(sizeof(Elf_LE32_Phdr) == 32);
+    COMPILE_TIME_ASSERT(sizeof(Elf32_Ehdr) == 52);
+    COMPILE_TIME_ASSERT(sizeof(Elf32_Phdr) == 32);
     COMPILE_TIME_ASSERT(sizeof(b_info) == 12);
     COMPILE_TIME_ASSERT(sizeof(l_info) == 12);
     COMPILE_TIME_ASSERT(sizeof(p_info) == 12);
@@ -127,7 +127,7 @@ int PackUnix::getStrategy(Filter &/*ft*/)
 
     // If user specified the filter, then use it (-2==strategy).
     // Else try the first two filters, and pick the better (2==strategy).
-    return ((opt->filter > 0) ? -2 : 2);
+    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
 void PackUnix::pack2(OutputFile *fo, Filter &ft)
@@ -222,6 +222,20 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
     }
 }
 
+void
+PackUnix::patchLoaderChecksum()
+{
+    unsigned char *const ptr = const_cast<unsigned char *>(getLoader());
+    l_info *const lp = &linfo;
+    // checksum for loader; also some PackHeader info
+    lp->l_magic = UPX_MAGIC_LE32;  // LE32 always
+    lp->l_lsize = (unsigned short) lsize;
+    lp->l_version = (unsigned char) ph.version;
+    lp->l_format  = (unsigned char) ph.format;
+    // INFO: lp->l_checksum is currently unused
+    lp->l_checksum = upx_adler32(ptr, lsize);
+}
+
 void PackUnix::pack3(OutputFile *fo, Filter &ft)
 {
     upx_byte const *p = getLoader();
@@ -285,6 +299,158 @@ void PackUnix::pack(OutputFile *fo)
 }
 
 
+void PackUnix::packExtent(
+    const Extent &x,
+    unsigned &total_in,
+    unsigned &total_out,
+    Filter *ft,
+    OutputFile *fo
+)
+{
+    fi->seek(x.offset, SEEK_SET);
+    for (off_t rest = x.size; 0 != rest; ) {
+        int const strategy = getStrategy(*ft);
+        int l = fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
+        if (l == 0) {
+            break;
+        }
+        rest -= l;
+
+        // Note: compression for a block can fail if the
+        //       file is e.g. blocksize + 1 bytes long
+
+        // compress
+        ph.c_len = ph.u_len = l;
+        ph.overlap_overhead = 0;
+        unsigned end_u_adler = 0;
+        if (ft) {
+            // compressWithFilters() updates u_adler _inside_ compress();
+            // that is, AFTER filtering.  We want BEFORE filtering,
+            // so that decompression checks the end-to-end checksum.
+            end_u_adler = upx_adler32(ibuf, ph.u_len, ph.u_adler);
+            ft->buf_len = l;
+
+                // compressWithFilters() requirements?
+            ph.filter = 0;
+            ph.filter_cto = 0;
+            ft->id = 0;
+            ft->cto = 0;
+
+            compressWithFilters(ft, OVERHEAD, strategy);
+        }
+        else {
+            (void) compress(ibuf, obuf);    // ignore return value
+        }
+
+        if (ph.c_len < ph.u_len) {
+            ph.overlap_overhead = OVERHEAD;
+            if (!testOverlappingDecompression(obuf, ph.overlap_overhead)) {
+                // not in-place compressible
+                ph.c_len = ph.u_len;
+            }
+        }
+        if (ph.c_len >= ph.u_len) {
+            // block is not compressible
+            ph.c_len = ph.u_len;
+            // must update checksum of compressed data
+            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.saved_c_adler);
+        }
+
+        // write block sizes
+        b_info tmp;
+        memset(&tmp, 0, sizeof(tmp));
+        set_native32(&tmp.sz_unc, ph.u_len);
+        set_native32(&tmp.sz_cpr, ph.c_len);
+        if (ph.c_len < ph.u_len) {
+            tmp.b_method = (unsigned char) ph.method;
+            if (ft) {
+                tmp.b_ftid = (unsigned char) ft->id;
+                tmp.b_cto8 = ft->cto;
+            }
+        }
+        fo->write(&tmp, sizeof(tmp));
+        b_len += sizeof(b_info);
+
+        // write compressed data
+        if (ph.c_len < ph.u_len) {
+            fo->write(obuf, ph.c_len);
+            // Checks ph.u_adler after decompression but before unfiltering
+            verifyOverlappingDecompression();
+        }
+        else {
+            fo->write(ibuf, ph.u_len);
+        }
+
+        if (ft) {
+            ph.u_adler = end_u_adler;
+        }
+        total_in += ph.u_len;
+        total_out += ph.c_len;
+    }
+}
+
+void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
+    unsigned &total_in, unsigned &total_out,
+    unsigned &c_adler, unsigned &u_adler,
+    bool first_PF_X, unsigned szb_info
+)
+{
+    b_info hdr; memset(&hdr, 0, sizeof(hdr));
+    while (wanted) {
+        fi->readx(&hdr, szb_info);
+        int const sz_unc = ph.u_len = get_native32(&hdr.sz_unc);
+        int const sz_cpr = ph.c_len = get_native32(&hdr.sz_cpr);
+        ph.filter_cto = hdr.b_cto8;
+
+        if (sz_unc == 0) { // must never happen while 0!=wanted
+            throwCompressedDataViolation();
+            break;
+        }
+        if (sz_unc <= 0 || sz_cpr <= 0)
+            throwCompressedDataViolation();
+        if (sz_cpr > sz_unc || sz_unc > (int)blocksize)
+            throwCompressedDataViolation();
+
+        int j = blocksize + OVERHEAD - sz_cpr;
+        fi->readx(ibuf+j, sz_cpr);
+        // update checksum of compressed data
+        c_adler = upx_adler32(ibuf + j, sz_cpr, c_adler);
+        // decompress
+        if (sz_cpr < sz_unc)
+        {
+            decompress(ibuf+j, ibuf, false);
+            if (12==szb_info) { // modern per-block filter
+                if (hdr.b_ftid) {
+                    Filter ft(ph.level);  // FIXME: ph.level for b_info?
+                    ft.init(hdr.b_ftid, 0);
+                    ft.cto = hdr.b_cto8;
+                    ft.unfilter(ibuf, sz_unc);
+                }
+            }
+            else { // ancient per-file filter
+                if (first_PF_X) { // Elf32_Ehdr is never filtered
+                    first_PF_X = false;  // but everything else might be
+                }
+                else if (ph.filter) {
+                    Filter ft(ph.level);
+                    ft.init(ph.filter, 0);
+                    ft.cto = (unsigned char) ph.filter_cto;
+                    ft.unfilter(ibuf, sz_unc);
+                }
+            }
+            j = 0;
+        }
+        // update checksum of uncompressed data
+        u_adler = upx_adler32(ibuf + j, sz_unc, u_adler);
+        total_in  += sz_cpr;
+        total_out += sz_unc;
+        // write block
+        if (fo)
+            fo->write(ibuf + j, sz_unc);
+        wanted -= sz_unc;
+    }
+}
+
 /*************************************************************************
 // Generic Unix canUnpack().
 **************************************************************************/
@@ -321,7 +487,7 @@ void PackUnix::unpack(OutputFile *fo)
 {
     unsigned szb_info = sizeof(b_info);
     {
-        Elf_LE32_Ehdr ehdr;
+        Elf32_Ehdr ehdr;
         fi->seek(0, SEEK_SET);
         fi->readx(&ehdr, sizeof(ehdr));
         unsigned const e_entry = get_native32(&ehdr.e_entry);
@@ -329,7 +495,7 @@ void PackUnix::unpack(OutputFile *fo)
             szb_info = 2*sizeof(unsigned);
         }
         else {
-            Elf_LE32_Phdr phdr;
+            Elf32_Phdr phdr;
             fi->seek(get_native32(&ehdr.e_phoff), SEEK_SET);
             fi->readx(&phdr, sizeof(phdr));
             unsigned const p_vaddr = get_native32(&phdr.p_vaddr);

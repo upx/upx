@@ -31,6 +31,120 @@
 #define __UPX_P_LX_ELF_H
 
 
+class PackLinuxElf32 : public PackUnix
+{
+    typedef PackUnix super;
+public:
+    PackLinuxElf32(InputFile *f);
+    virtual ~PackLinuxElf32();
+    /*virtual int buildLoader(const Filter *);*/
+    virtual bool canUnpackVersion(int version) const { return (version >= 11); }
+
+protected:
+    virtual int checkEhdr(
+        Elf32_Ehdr const *ehdr,
+        unsigned char e_machine,
+        unsigned char ei_class,
+        unsigned char ei_data) const;
+
+    virtual const int *getCompressionMethods(int method, int level) const;
+
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append pack header
+
+    virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    );
+    virtual void patchLoader();
+    virtual void updateLoader(OutputFile *fo);
+    virtual void unpack(OutputFile *fo);
+
+protected:
+    Elf32_Ehdr  ehdri; // from input file
+    Elf32_Phdr *phdri; // for  input file
+    unsigned sz_phdrs;  // sizeof Phdr[]
+    unsigned sz_elf_hdrs;  // all Elf headers
+
+    struct cprElfHdr1 {
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[1];
+        struct l_info linfo;
+    }
+    __attribute_packed;
+
+    struct cprElfHdr2 {
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[2];
+        struct l_info linfo;
+    }
+    __attribute_packed;
+
+    struct cprElfHdr3 {
+        struct Elf32_Ehdr ehdr;
+        struct Elf32_Phdr phdr[3];
+        struct l_info linfo;
+    }
+    __attribute_packed;
+
+    struct cprElfHdr3 elfout;
+};
+
+class PackLinuxElf32Be : public PackLinuxElf32
+{
+    typedef PackLinuxElf32 super;
+protected:
+    PackLinuxElf32Be(InputFile *f) : super(f) { }
+
+    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
+};
+
+/*************************************************************************
+// linux/elf32ppc
+**************************************************************************/
+
+class PackLinuxElf32ppc : public PackLinuxElf32Be
+{
+    typedef PackLinuxElf32Be super;
+public:
+    PackLinuxElf32ppc(InputFile *f);
+    virtual ~PackLinuxElf32ppc();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF_PPC; }
+    virtual const char *getName() const { return "linux/ElfPPC"; }
+    virtual const int *getFilters() const;
+    virtual bool canPack();
+protected:
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    );
+    virtual int buildLoader(const Filter *);
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
+};
+
 /*************************************************************************
 // linux/elf386
 **************************************************************************/
@@ -54,26 +168,14 @@ public:
         { return (version >= 11); }
 
 protected:
-    struct Extent {
-        off_t offset;
-        off_t size;
-    };
-    virtual void packExtent(const Extent &x,
-        unsigned &total_in, unsigned &total_out, Filter *, OutputFile *);
-    virtual void unpackExtent(unsigned wanted, OutputFile *fo,
-        unsigned &total_in, unsigned &total_out,
-        unsigned &c_adler, unsigned &u_adler,
-        bool first_PF_X, unsigned szb_info );
-
-protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &);  // append loader
 
     virtual void patchLoader();
 
-    Elf_LE32_Ehdr  ehdri; // from input file
-    Elf_LE32_Phdr *phdri; // for  input file
+    Elf32_Ehdr  ehdri; // from input file
+    Elf32_Phdr *phdri; // for  input file
     unsigned sz_phdrs;  // sizeof Phdr[]
 
 };
