@@ -17,22 +17,24 @@
  * Operating System - exactly one of:
  *
  *   ACC_OS_POSIX           [default]
+ *   ACC_OS_AMIGAOS
  *   ACC_OS_BEOS
  *   ACC_OS_CYGWIN          hybrid WIN32 and POSIX
  *   ACC_OS_DOS16           16-bit DOS (segmented memory model)
  *   ACC_OS_DOS32
  *   ACC_OS_EMX             hybrid OS/2, DOS32, WIN32 (with RSX) and POSIX
- *   ACC_OS_MAC9            Macintosh Classic
+ *   ACC_OS_MACCLASSIC      Macintosh Classic
  *   ACC_OS_MACOSX          Mac OS/X
  *   ACC_OS_PALMOS
  *   ACC_OS_OS2             OS/2
  *   ACC_OS_OS216           16-bit OS/2 1.x (segmented memory model)
  *   ACC_OS_QNX
+ *   ACC_OS_RISCOS
  *   ACC_OS_TOS             Atari TOS / MiNT
  *   ACC_OS_VMS
  *   ACC_OS_WIN16           16-bit Windows 3.x (segmented memory model)
  *   ACC_OS_WIN32
- *   ACC_OS_WIN64
+ *   ACC_OS_WIN64           64-bit Windows (LLP64 programming model)
  */
 
 
@@ -42,47 +44,68 @@
 #elif defined(__EMX__) && defined(__GNUC__)
 #  define ACC_OS_EMX            1
 #  define ACC_INFO_OS           "emx"
+#elif defined(__QNX__)
+#  define ACC_OS_QNX            1
+#  define ACC_INFO_OS           "qnx"
+#elif defined(__BORLANDC__) && defined(__DPMI32__)
+#  define ACC_OS_DOS32          1
+#  define ACC_INFO_OS           "dos32"
+#elif defined(__BORLANDC__) && defined(__DPMI16__)
+#  define ACC_OS_DOS16          1
+#  define ACC_INFO_OS           "dos16"
+#elif defined(__ZTC__) && defined(DOS386)
+#  define ACC_OS_DOS32          1
+#  define ACC_INFO_OS           "dos32"
+#elif defined(__OS2__) || defined(__OS2V2__)
+#  if (UINT_MAX == ACC_0xffffL)
+#    define ACC_OS_OS216        1
+#    define ACC_INFO_OS         "os216"
+#  elif (UINT_MAX == ACC_0xffffffffL)
+#    define ACC_OS_OS2          1
+#    define ACC_INFO_OS         "os2"
+#  else
+#    error "check your limits.h header"
+#  endif
 #elif defined(__WIN64__) || defined(_WIN64) || defined(WIN64)
 #  define ACC_OS_WIN64          1
 #  define ACC_INFO_OS           "win64"
-#elif defined(__WIN32__) || defined(_WIN32) || defined(WIN32)
-#  define ACC_OS_WIN32          1
-#  define ACC_INFO_OS           "win32"
-#elif defined(__NT__) || defined(__NT_DLL__) || defined(__WINDOWS_386__)
+#elif defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS_386__)
 #  define ACC_OS_WIN32          1
 #  define ACC_INFO_OS           "win32"
 #elif defined(__MWERKS__) && defined(__INTEL__)
 #  define ACC_OS_WIN32          1
 #  define ACC_INFO_OS           "win32"
 #elif defined(__WINDOWS__) || defined(_WINDOWS) || defined(_Windows)
-#  if (UINT_MAX == ACC_0xffffffffL)
-#    define ACC_OS_WIN32        1
-#    define ACC_INFO_OS         "win32"
-#  elif (UINT_MAX == ACC_0xffffL)
+#  if (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_WIN16        1
 #    define ACC_INFO_OS         "win16"
+#  elif (UINT_MAX == ACC_0xffffffffL)
+#    define ACC_OS_WIN32        1
+#    define ACC_INFO_OS         "win32"
 #  else
 #    error "check your limits.h header"
 #  endif
 #elif defined(__DOS__) || defined(__MSDOS__) || defined(_MSDOS) || defined(MSDOS) || (defined(__PACIFIC__) && defined(DOS))
-#  if (UINT_MAX == ACC_0xffffffffL)
-#    define ACC_OS_DOS32        1
-#    define ACC_INFO_OS         "dos32"
-#  elif (UINT_MAX == ACC_0xffffL)
+#  if (UINT_MAX == ACC_0xffffL)
 #    define ACC_OS_DOS16        1
 #    define ACC_INFO_OS         "dos16"
+#  elif (UINT_MAX == ACC_0xffffffffL)
+#    define ACC_OS_DOS32        1
+#    define ACC_INFO_OS         "dos32"
 #  else
 #    error "check your limits.h header"
 #  endif
-#elif defined(__OS2__) || defined(__OS2V2__)
-#  if (UINT_MAX == ACC_0xffffffffL)
-#    define ACC_OS_OS2          1
-#    define ACC_INFO_OS         "os2"
-#  elif (UINT_MAX == ACC_0xffffL)
-#    define ACC_OS_OS216       1
-#    define ACC_INFO_OS         "os216"
+#elif defined(__WATCOMC__)
+#  if defined(__NT__) && (UINT_MAX == ACC_0xffffL)
+     /* wcl: NT host defaults to DOS target */
+#    define ACC_OS_DOS16        1
+#    define ACC_INFO_OS         "dos16"
+#  elif defined(__NT__) && (__WATCOMC__ < 1100)
+     /* wcl386: Watcom C 11 defines _WIN32 */
+#    define ACC_OS_WIN32        1
+#    define ACC_INFO_OS         "win32"
 #  else
-#    error "check your limits.h header"
+#    error "please specify a target using the -bt compiler option"
 #  endif
 #elif defined(__palmos__)
 #  if (UINT_MAX == ACC_0xffffL)
@@ -94,15 +117,12 @@
 #elif defined(__TOS__) || defined(__atarist__)
 #  define ACC_OS_TOS            1
 #  define ACC_INFO_OS           "tos"
-#elif defined(__QNX__)
-#  define ACC_OS_QNX            1
-#  define ACC_INFO_OS           "qnx"
 #elif defined(__MACOSX__)
 #  define ACC_OS_MACOSX         1
 #  define ACC_INFO_OS           "macosx"
 #elif defined(macintosh)
-#  define ACC_OS_MACOS9         1
-#  define ACC_INFO_OS           "macos9"
+#  define ACC_OS_MACCLASSIC     1
+#  define ACC_INFO_OS           "macclassic"
 #elif defined(__VMS)
 #  define ACC_OS_VMS            1
 #  define ACC_INFO_OS           "vms"
@@ -157,6 +177,9 @@
 
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  if (UINT_MAX != ACC_0xffffL)
+#    error "this should not happen"
+#  endif
+#  if (ULONG_MAX != ACC_0xffffffffL)
 #    error "this should not happen"
 #  endif
 #endif

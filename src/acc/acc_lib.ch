@@ -33,70 +33,50 @@
 
 
 /***********************************************************************
-// huge pointer layer - alloc
+// halloc
 ************************************************************************/
 
-ACC_LIBFUNC(acc_hvoid_p, acc_halloc) (acc_alloc_p ap, acc_hsize_t items, size_t size)
+ACC_LIBFUNC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
 {
     acc_hvoid_p p = 0;
-#if (SIZEOF_SIZE_T > SIZEOF_LONG)
-    size_t s = (size_t) items * size;
-#else
-    unsigned long s = (unsigned long) items * size;
-#endif
 
-    if (!ap)
-        return p;
-    ap->ptr = p;
-#if 0
-    ap->items = items;
-    ap->size = size;
-    ap->flags = 0;
-#endif
-    if (items <= 0 || size <= 0 || s < items || s < size)
+    if (size <= 0)
         return p;
 
-#if defined(__palmos__)
-    p = MemPtrNew(s);
+#if 0 && defined(__palmos__)
+    p = MemPtrNew(size);
 #elif !defined(ACC_HAVE_MM_HUGE_PTR)
-    if (s < (size_t) -1)
-        p = malloc((size_t) s);
+    if (size < (size_t) -1)
+        p = malloc((size_t) size);
 #else
 #if (ACC_CC_MSC && _MSC_VER >= 700)
-    if (size < (size_t) -1)
-        p = _halloc(items, (size_t) size);
+    p = _halloc(size, 1);
 #elif (ACC_CC_MSC || ACC_CC_WATCOMC)
-    if (size < (size_t) -1)
-        p = halloc(items, (size_t) size);
+    p = halloc(size, 1);
 #elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-    if (size < (size_t) -1)
-        p = _halloc(items, (size_t) size);
+    p = farmalloc(size);
 #elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
-    p = farmalloc(s);
+    p = farmalloc(size);
 #elif defined(ACC_CC_AZTECC)
-    p = lmalloc(s);
+    p = lmalloc(size);
 #else
-    if (s < (size_t) -1)
-        p = malloc((size_t) s);
+    if (size < (size_t) -1)
+        p = malloc((size_t) size);
 #endif
 #endif
 
-    ap->ptr = p;
     return p;
 }
 
 
-ACC_LIBFUNC(int, acc_hfree) (acc_alloc_p ap)
+ACC_LIBFUNC(int, acc_hfree) (acc_hvoid_p p)
 {
-    acc_hvoid_p p;
     int r = 0;
 
-    if (!ap || !ap->ptr)
+    if (!p)
         return r;
-    p = ap->ptr;
-    ap->ptr = 0;
 
-#if defined(__palmos__)
+#if 0 && defined(__palmos__)
     r = MemPtrFree(p);
 #elif !defined(ACC_HAVE_MM_HUGE_PTR)
     free(p);
@@ -106,9 +86,9 @@ ACC_LIBFUNC(int, acc_hfree) (acc_alloc_p ap)
 #elif (ACC_CC_MSC || ACC_CC_WATCOMC)
     hfree(p);
 #elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-    _hfree(p);
+    farfree((void __far*) p);
 #elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
-    farfree((void __far *) p);
+    farfree((void __far*) p);
 #elif defined(ACC_CC_AZTECC)
     lfree(p);
 #else
@@ -118,6 +98,86 @@ ACC_LIBFUNC(int, acc_hfree) (acc_alloc_p ap)
 
     return r;
 }
+
+
+/***********************************************************************
+// dos_alloc
+************************************************************************/
+
+#if (ACC_OS_DOS16)
+#if !defined(ACC_CC_AZTECC)
+
+ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
+{
+    void __far* p = 0;
+    union REGS ri, ro;
+
+    if ((long)size <= 0)
+        return p;
+    size = (size + 15) >> 4;
+    if (size > 0xffffu)
+        return p;
+    ri.x.ax = 0x4800;
+    ri.x.bx = (unsigned short) size;
+    ro.x.cflag = 1;
+    int86(0x21, &ri, &ro);
+    if ((ro.x.cflag & 1) == 0)  /* if carry flag not set */
+        p = (void __far*) ACC_MK_FP(ro.x.ax, 0);
+    return p;
+}
+
+
+ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
+{
+    union REGS ri, ro;
+    struct SREGS rs;
+
+    if (!p)
+        return 0;
+    if (ACC_FP_OFF(p) != 0)
+        return -1;
+    segread(&rs);
+    ri.x.ax = 0x4900;
+    rs.es = ACC_FP_SEG(p);
+    ro.x.cflag = 1;
+    int86x(0x21, &ri, &ro, &rs);
+    if (ro.x.cflag & 1)         /* if carry flag set */
+        return -1;
+    return 0;
+}
+
+#endif
+#endif
+
+
+#if (ACC_OS_OS216)
+
+ACC_LIBFUNC(void __far*, acc_dos_alloc) (unsigned long size)
+{
+    void __far* p = 0;
+    unsigned short sel = 0;
+    unsigned long pmask = 0xffffu >> ACC_MM_AHSHIFT; /* 8191 */
+
+    if ((long)size <= 0)
+        return p;
+    size = (size + pmask) &~ pmask;     /* align up to paragraph size */
+    if (DosAllocHuge((unsigned short)(size >> 16), (unsigned short)size, &sel, 0, 0) == 0)
+        p = (void __far*) ACC_MK_FP(sel, 0);
+    return p;
+}
+
+ACC_LIBFUNC(int, acc_dos_free) (void __far* p)
+{
+    if (!p)
+        return 0;
+    if (ACC_FP_OFF(p) != 0)
+        return -1;
+    if (DosFreeSeg(ACC_FP_SEG(p)) != 0)
+        return -1;
+    return 0;
+}
+
+#endif
 
 
 /***********************************************************************
@@ -211,7 +271,7 @@ ACC_LIBFUNC(acc_hvoid_p, acc_hmemset) (acc_hvoid_p s, int c, acc_hsize_t len)
 // huge pointer layer - stdio.h
 ************************************************************************/
 
-ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE *fp, acc_hvoid_p buf, acc_hsize_t size)
+ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE* fp, acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
@@ -221,7 +281,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE *fp, acc_hvoid_p buf, acc_hsize_t siz
     while (l < size)
     {
         size_t n;
-        n = FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
+        n = ACC_FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
         if ((acc_hsize_t) n > size - l)
             n = (size_t) (size - l);
         n = fread((void __far*)b, 1, n, fp);
@@ -240,7 +300,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE *fp, acc_hvoid_p buf, acc_hsize_t siz
         n = fread(tmp, 1, n, fp);
         if (n == 0)
             break;
-        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, n);
+        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
         l += n;
     }
     return l;
@@ -251,7 +311,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfread) (FILE *fp, acc_hvoid_p buf, acc_hsize_t siz
 }
 
 
-ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE *fp, const acc_hvoid_p buf, acc_hsize_t size)
+ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE* fp, const acc_hvoid_p buf, acc_hsize_t size)
 {
 #if (ACC_HAVE_MM_HUGE_PTR)
 #if (ACC_MM_COMPACT || ACC_MM_LARGE || ACC_MM_HUGE)
@@ -261,7 +321,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE *fp, const acc_hvoid_p buf, acc_hsiz
     while (l < size)
     {
         size_t n;
-        n = FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
+        n = ACC_FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
         if ((acc_hsize_t) n > size - l)
             n = (size_t) (size - l);
         n = fwrite((void __far*)b, 1, n, fp);
@@ -277,7 +337,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE *fp, const acc_hvoid_p buf, acc_hsiz
     while (l < size)
     {
         size_t n = size - l > sizeof(tmp) ? sizeof(tmp) : (size_t) (size - l);
-        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, n);
+        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
         n = fwrite(tmp, 1, n, fp);
         if (n == 0)
             break;
@@ -292,7 +352,7 @@ ACC_LIBFUNC(acc_hsize_t, acc_hfwrite) (FILE *fp, const acc_hvoid_p buf, acc_hsiz
 
 
 /***********************************************************************
-// huge pointer layer - stdio.h
+// huge pointer layer - read/write
 ************************************************************************/
 
 #if (ACC_HAVE_MM_HUGE_PTR)
@@ -306,7 +366,7 @@ ACC_LIBFUNC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
     while (l < size)
     {
         unsigned n;
-        n = FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
+        n = ACC_FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
         if ((long) n > size - l)
             n = (unsigned) (size - l);
         n = read(fd, (void __far*)b, n);
@@ -329,7 +389,7 @@ ACC_LIBFUNC(long, acc_hread) (int fd, acc_hvoid_p buf, long size)
             break;
         if (n < 0)
             return -1;
-        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, n);
+        acc_hmemcpy((acc_hbyte_p)buf + l, tmp, (acc_hsize_t)n);
         l += n;
     }
     return l;
@@ -346,7 +406,7 @@ ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
     while (l < size)
     {
         unsigned n;
-        n = FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
+        n = ACC_FP_OFF(b); n = (n <= 1) ? 0x8000u : (0u - n);
         if ((long) n > size - l)
             n = (unsigned) (size - l);
         n = write(fd, (void __far*)b, n);
@@ -364,7 +424,7 @@ ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
     while (l < size)
     {
         int n = size - l > (long)sizeof(tmp) ? (int) sizeof(tmp) : (int) (size - l);
-        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, n);
+        acc_hmemcpy(tmp, (const acc_hbyte_p)buf + l, (acc_hsize_t)n);
         n = write(fd, tmp, n);
         if (n == 0)
             break;
@@ -383,112 +443,230 @@ ACC_LIBFUNC(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size)
 // wrap <dirent.h>
 **************************************************************************/
 
-#if (ACC_OS_WIN32 || ACC_OS_WIN64)
+#if !defined(ACCLIB_USE_OPENDIR)
+#if (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
 
-ACC_LIBFUNC(int, acc_findfirst) (struct acc_find_t* f, const char* path)
+static int acc_opendir_init(struct acc_dir_t* f, const char* path, char* buf, size_t bufsize)
 {
-    WIN32_FIND_DATAA d;
-    HANDLE h;
-#if 1
-    /* transform to backslashes, and add a '\*' to the directory name */
-    char* p = f->f_name;
-    p[0] = 0;
-    if (!path[0] || strlen(path) >= sizeof(f->f_name) - 2)
+    size_t l;
+    char* p;
+    f->f_name[0] = 0;
+    buf[0] = 0;
+    l = strlen(path);
+    if (l == 0 || l >= bufsize - 4)
         return -1;
-    strcpy(p, path);
-    for ( ; *p; p++)
-        if (*p == '/')
-            *p = '\\';
-    if (p[-1] != '\\')
-        *p++ = '\\';
-    *p++ = '*';
-    *p = '\0';
-    h = FindFirstFileA(f->f_name, &d);
-#else
-    h = FindFirstFileA(path, &d);
+    strcpy(buf, path);
+    p = buf + l;
+    if (p[-1] == ':' || p[-1] == '\\' || p[-1] == '/')
+        strcpy(p, "*.*");
+    else
+        strcpy(p, "\\*.*");
+    return 0;
+}
+
 #endif
-    f->f_name[0] = 0;
-    if ((f->u.h = (long) h) == -1)
-        return -1;
-    if (!d.cFileName[0] || strlen(d.cFileName) >= sizeof(f->f_name))
-        return -1;
-    strcpy(f->f_name, d.cFileName);
-    return 0;
-}
+#endif
 
-ACC_LIBFUNC(int, acc_findnext) (struct acc_find_t* f)
+
+#if (ACCLIB_USE_OPENDIR)
+
+ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
 {
-    WIN32_FIND_DATAA d;
-    f->f_name[0] = 0;
-    if (f->u.h == -1 || FindNextFileA((HANDLE) f->u.h, &d) != 0)
-        return -1;
-    if (!d.cFileName[0] || strlen(d.cFileName) >= sizeof(f->f_name))
-        return -1;
-    strcpy(f->f_name, d.cFileName);
-    return 0;
+    f->u_dirp = opendir(path);
+    if (!f->u_dirp)
+        return -2;
+    return acc_readdir(f);
 }
 
-ACC_LIBFUNC(int, acc_findclose) (struct acc_find_t* f)
-{
-    int r = -1;
-    if (f->u.h != -1)
-        r = FindClose((HANDLE) f->u.h);
-    f->u.h = -1;
-    return r;
-}
-
-
-#elif (HAVE_DIRENT_H)
-
-ACC_LIBFUNC(int, acc_findfirst) (struct acc_find_t* f, const char* path)
-{
-    f->u.dirp = opendir(path);
-    return acc_findnext(f);
-}
-
-ACC_LIBFUNC(int, acc_findnext) (struct acc_find_t* f)
+ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
 {
     const struct dirent* dp;
     f->f_name[0] = 0;
-    if (!f->u.dirp)
+    if (!f->u_dirp)
         return -1;
-    dp = readdir((DIR*) f->u.dirp);
+    dp = readdir((DIR*) f->u_dirp);
     if (!dp)
         return -1;
     if (!dp->d_name[0] || strlen(dp->d_name) >= sizeof(f->f_name))
         return -1;
     strcpy(f->f_name, dp->d_name);
+#if (ACC_CC_WATCOMC)
+    ACC_COMPILE_TIME_ASSERT(sizeof(f->f_name) >= sizeof(dp->d_name))
+    f->f_time = dp->d_time;
+    f->f_date = dp->d_date;
+    f->f_size = dp->d_size;
+#endif
     return 0;
 }
 
-ACC_LIBFUNC(int, acc_findclose) (struct acc_find_t* f)
+ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 {
     int r = -1;
-    if (f->u.dirp)
-        r = closedir((DIR*) f->u.dirp);
-    f->u.dirp = 0;
+    if (f->u_dirp)
+        r = closedir((DIR*) f->u_dirp);
+    f->u_dirp = 0;
     return r;
+}
+
+
+#elif (ACC_OS_WIN32 || ACC_OS_WIN64)
+
+ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+{
+    WIN32_FIND_DATAA d;
+    HANDLE h;
+    if (acc_opendir_init(f, path, f->f_name, sizeof(f->f_name)) != 0)
+        return -1;
+    h = FindFirstFileA(f->f_name, &d);
+    f->f_name[0] = 0;
+    if ((f->u_handle = (long) h) == -1)
+        return -1;
+    if (!d.cFileName[0] || strlen(d.cFileName) >= sizeof(f->f_name))
+        return -1;
+    strcpy(f->f_name, d.cFileName);
+    f->f_attr = d.dwFileAttributes;
+    f->f_size_high = d.nFileSizeHigh;
+    f->f_size_low = d.nFileSizeLow;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+{
+    WIN32_FIND_DATAA d;
+    f->f_name[0] = 0;
+    if (f->u_handle == -1 || FindNextFileA((HANDLE) f->u_handle, &d) == 0)
+        return -1;
+    if (!d.cFileName[0] || strlen(d.cFileName) >= sizeof(f->f_name))
+        return -1;
+    strcpy(f->f_name, d.cFileName);
+    f->f_attr = d.dwFileAttributes;
+    f->f_size_high = d.nFileSizeHigh;
+    f->f_size_low = d.nFileSizeLow;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+{
+    int r = -1;
+    if (f->u_handle != -1)
+        r = FindClose((HANDLE) f->u_handle);
+    f->u_handle = -1;
+    return r;
+}
+
+
+#elif (ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_WIN16)
+
+ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+{
+    char tmp[ACC_FN_PATH_MAX+1];
+    int r;
+    f->u_dirp = 0;
+    if (acc_opendir_init(f, path, tmp, sizeof(tmp)) != 0)
+        return -1;
+#if (ACC_CC_AZTECC || ACC_CC_PACIFICC)
+    r = -1;
+#elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+    r = findfirst(tmp, (struct ffblk*) f->u_dta, FA_HIDDEN|FA_SYSTEM|FA_RDONLY|FA_DIREC);
+#else
+    r = _dos_findfirst(tmp, _A_HIDDEN|_A_SYSTEM|_A_RDONLY|_A_SUBDIR, (struct find_t*) f->u_dta);
+#endif
+    if (r != 0) f->f_name[0] = 0;
+    if (!f->f_name[0]) return -1;
+    f->u_dirp = 1;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+{
+    int r;
+    f->f_name[0] = 0;
+    if (!f->u_dirp)
+        return -1;
+#if (ACC_CC_AZTECC || ACC_CC_PACIFICC)
+    r = -1;
+#elif (ACC_CC_BORLANDC || ACC_CC_TURBOC)
+    r = findnext((struct ffblk*) f->u_dta);
+#else
+    r = _dos_findnext((struct find_t*) f->u_dta);
+#endif
+    if (r != 0) f->f_name[0] = 0;
+    if (!f->f_name[0]) return -1;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+{
+    ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
+    f->f_name[0] = 0;
+    f->u_dirp = 0;
+    return 0;
+}
+
+
+#elif (ACC_OS_TOS)
+
+ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
+{
+    char tmp[ACC_FN_PATH_MAX+1];
+    int r;
+    DTA* olddta;
+    f->u_dirp = 0;
+    if (acc_opendir_init(f, path, tmp, sizeof(tmp)) != 0)
+        return -1;
+    olddta = Fgetdta();
+    Fsetdta((DTA*) f->u_dta);
+    r = Fsfirst(tmp, FA_HIDDEN|FA_SYSTEM|FA_READONLY|FA_SUBDIR);
+    Fsetdta(olddta);
+    if (r != 0) f->f_name[0] = 0;
+    if (!f->f_name[0]) return -1;
+    f->u_dirp = 1;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
+{
+    int r;
+    DTA* olddta;
+    f->f_name[0] = 0;
+    if (!f->u_dirp)
+        return -1;
+    olddta = Fgetdta();
+    Fsetdta((DTA*) f->u_dta);
+    r = Fsnext();
+    Fsetdta(olddta);
+    if (r != 0) f->f_name[0] = 0;
+    if (!f->f_name[0]) return -1;
+    return 0;
+}
+
+ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
+{
+    ACC_COMPILE_TIME_ASSERT(sizeof(*f) == 44);
+    f->f_name[0] = 0;
+    f->u_dirp = 0;
+    return 0;
 }
 
 
 #else
 
-ACC_LIBFUNC(int, acc_findfirst) (struct acc_find_t* f, const char* path)
+ACC_LIBFUNC(int, acc_opendir) (struct acc_dir_t* f, const char* path)
 {
     ACC_UNUSED(path);
     f->f_name[0] = 0;
-    return -1;
+    return -3;
 }
 
-ACC_LIBFUNC(int, acc_findnext) (struct acc_find_t* f)
+ACC_LIBFUNC(int, acc_readdir) (struct acc_dir_t* f)
 {
     f->f_name[0] = 0;
     return -1;
 }
 
-ACC_LIBFUNC(int, acc_findclose) (struct acc_find_t* f)
+ACC_LIBFUNC(int, acc_closedir) (struct acc_dir_t* f)
 {
-    f->u.dirp = 0;
+    f->u_dirp = 0;
     return -1;
 }
 
@@ -519,7 +697,12 @@ ACC_LIBFUNC(long, acc_get_osfhandle) (int fd)
     /* FIXME */
     return -1;
 #elif (ACC_OS_WIN32 || ACC_OS_WIN64)
+# if (ACC_CC_WATCOMC && __WATCOMC__ < 1100)
+    /* FIXME */
+    return -1;
+# else
     return _get_osfhandle(fd);
+# endif
 #else
     return fd;
 #endif
@@ -580,20 +763,34 @@ ACC_LIBFUNC(int, acc_set_binmode) (int fd, int binary)
 
 ACC_LIBFUNC(int, acc_isatty) (int fd)
 {
-#if (ACC_H_WINDOWS_H)
-    /* work around naive library implementations that think that
+    /* work around library implementations that think that
      * any character device like `nul' is a tty */
-    long h = acc_get_osfhandle(fd);
-    if (h != -1)
-    {
-        DWORD d = 0;
-        int r = GetConsoleMode((HANDLE)h, &d);
-        if (!r)
-            return 0;   /* GetConsoleMode failed -> not a tty */
-    }
-#endif
     if (fd < 0)
         return 0;
+#if (ACC_OS_DOS16 && !defined(ACC_CC_AZTECC))
+    {
+        union REGS ri, ro;
+        ri.x.ax = 0x4400;
+        ri.x.bx = fd;
+        ro.x.ax = 0;
+        ro.x.cflag = 1;
+        int86(0x21, &ri, &ro);
+        if ((ro.x.cflag & 1) == 0)  /* if carry flag not set */
+            if ((ro.x.ax & 0x83) != 0x83)
+                return 0;
+    }
+#elif (ACC_H_WINDOWS_H)
+    {
+        long h = acc_get_osfhandle(fd);
+        if (h != -1)
+        {
+            DWORD d = 0;
+            int r = GetConsoleMode((HANDLE)h, &d);
+            if (!r)
+                return 0;   /* GetConsoleMode failed -> not a tty */
+        }
+    }
+#endif
     return (isatty(fd)) ? 1 : 0;
 }
 

@@ -19,16 +19,24 @@
 ************************************************************************/
 
 /* workaround for preprocessor bugs in some compilers */
+#if 0
 #define ACC_0xffffL             65535ul
 #define ACC_0xffffffffL         4294967295ul
+#else
+#define ACC_0xffffL             0xfffful
+#define ACC_0xffffffffL         0xfffffffful
+#endif
 
 /* some things we cannot work around */
 #if 0
-#if (32767 >= 4294967295ul)
+#if (ACC_0xffffL == ACC_0xffffffffL)
 #  error "your preprocessor is broken 1"
 #endif
-#if (65535u >= 4294967295ul)
+#if (32767 >= 4294967295ul)
 #  error "your preprocessor is broken 2"
+#endif
+#if (65535u >= 4294967295ul)
+#  error "your preprocessor is broken 3"
 #endif
 #endif
 
@@ -67,6 +75,7 @@
 
 
 /* Fix old compiler versions. */
+#if (UINT_MAX == ACC_0xffffL)
 #if defined(__PACIFIC__) && defined(DOS)
 #  if !defined(__far)
 #    define __far far
@@ -74,23 +83,11 @@
 #  if !defined(__near)
 #    define __near near
 #  endif
-#elif defined(_MSC_VER) && defined(MSDOS)
-#  if(_MSC_VER < 700)
-#    if !defined(__cdecl)
-#      define __cdecl _cdecl
-#    endif
-#    if !defined(__far)
-#      define __far _far
-#    endif
-#    if !defined(__huge)
-#      define __huge _huge
-#    endif
-#    if !defined(__near)
-#      define __near _near
-#    endif
+#elif defined(__AZTEC_C__) && defined(__DOS__)
+#  if !defined(__huge)
+#    define __huge huge
 #  endif
-#elif defined(__TURBOC__) && defined(__MSDOS__)
-#  if(__TURBOC__ < 0x0410)
+#elif defined(__TSC__) && defined(__OS2__)
 #    if !defined(__cdecl)
 #      define __cdecl cdecl
 #    endif
@@ -103,13 +100,68 @@
 #    if !defined(__near)
 #      define __near near
 #    endif
+#    if !defined(__pascal)
+#      define __pascal pascal
+#    endif
+#elif defined(_MSC_VER) && defined(MSDOS)
+#  if (_MSC_VER < 600)
+#    if !defined(__cdecl)
+#      define __cdecl cdecl
+#    endif
+#    if !defined(__far)
+#      define __far far
+#    endif
+#    if !defined(__huge)
+#      define __huge huge
+#    endif
+#    if !defined(__near)
+#      define __near near
+#    endif
+#    if !defined(__pascal)
+#      define __pascal pascal
+#    endif
+#  elif (_MSC_VER < 700)
+#    if !defined(__cdecl)
+#      define __cdecl _cdecl
+#    endif
+#    if !defined(__far)
+#      define __far _far
+#    endif
+#    if !defined(__huge)
+#      define __huge _huge
+#    endif
+#    if !defined(__near)
+#      define __near _near
+#    endif
+#    if !defined(__pascal)
+#      define __pascal _pascal
+#    endif
 #  endif
+#elif defined(__TURBOC__) && defined(__MSDOS__)
+#  if (__TURBOC__ < 0x0410)
+#    if !defined(__cdecl)
+#      define __cdecl cdecl
+#    endif
+#    if !defined(__far)
+#      define __far far
+#    endif
+#    if !defined(__huge)
+#      define __huge huge
+#    endif
+#    if !defined(__near)
+#      define __near near
+#    endif
+#    if !defined(__pascal)
+#      define __pascal pascal
+#    endif
+#  endif
+#endif
 #endif
 
 
 #if defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0200)
 #  define ACC_BROKEN_SIZEOF 1
-#  if (__TURBOC < 0x0150)
+#  if (__TURBOC__ < 0x0150)
 #    define ACC_BROKEN_INTEGRAL_PROMOTION 1
 #  endif
 #elif defined(MSDOS) && defined(_MSC_VER) && (_MSC_VER < 700)

@@ -28,6 +28,9 @@
 #  if (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC)
 #    define ACC_COMPILE_TIME_ASSERT(expr) \
         switch (0) { case 1: case !(expr): break; }
+#  elif (ACC_CC_AZTECC || ACC_CC_ZORTECHC)
+#    define ACC_COMPILE_TIME_ASSERT(expr) \
+        { typedef int __acc_compile_time_assert_fail[1 - !(expr)]; }
 #  else
 #    define ACC_COMPILE_TIME_ASSERT(expr) \
         { typedef int __acc_compile_time_assert_fail[1 - 2 * !(expr)]; }

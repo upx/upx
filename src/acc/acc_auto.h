@@ -128,11 +128,22 @@
 #  if (ACC_OS_WIN32 || ACC_OS_WIN64)
 #    undef HAVE_DIRENT_H /* pulls in <windows.h>; use <dir.h> instead */
 #  endif
+#  if (__BORLANDC__ < 0x0400)
+#    undef HAVE_DIRENT_H
+#    undef HAVE_UTIME_H
+#  endif
 #elif (ACC_CC_DMC)
 #  undef HAVE_DIRENT_H /* not working */
 #  undef HAVE_UNISTD_H /* not working */
 #  define HAVE_SYS_DIRENT_H 1
 #elif defined(__DJGPP__)
+#elif (ACC_CC_IBMC && ACC_OS_OS2)
+#  undef HAVE_DOS_H
+#  undef HAVE_DIRENT_H
+#  undef HAVE_UNISTD_H
+#  undef HAVE_UTIME_H
+#  undef HAVE_SYS_TIME_H
+#  define HAVE_SYS_UTIME_H 1
 #elif (ACC_CC_INTELC || ACC_CC_MSC)
 #  undef HAVE_DIRENT_H
 #  undef HAVE_UNISTD_H
@@ -258,6 +269,9 @@
 
 
 #if (ACC_OS_POSIX)
+#  if (ACC_CC_TINYC)
+#    undef HAVE_ALLOCA
+#  endif
 #elif (ACC_OS_CYGWIN)
 #elif (ACC_OS_EMX)
 #  undef HAVE_CHOWN
@@ -291,14 +305,20 @@
 #undef HAVE_UMASK
 
 #if (ACC_CC_AZTECC)
+#  undef HAVE_ALLOCA
 #  undef HAVE_DIFFTIME /* difftime() is in the math library */
 #  undef HAVE_FSTAT
 #  undef HAVE_STRDUP /* missing in 5.2a */
 #  undef HAVE_SNPRINTF
+#  undef HAVE_UTIME /* struct utimbuf is missing */
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_BORLANDC)
 #  if (ACC_OS_DOS16 || ACC_OS_WIN16)
 #    undef HAVE_DIFFTIME /* difftime() is in the math library */
+#  endif
+#  if (__BORLANDC__ < 0x0400)
+#    undef HAVE_ALLOCA
+#    undef HAVE_UTIME
 #  endif
 #  if (__BORLANDC__ < 0x0550)
 #    undef HAVE_SNPRINTF
@@ -310,18 +330,27 @@
 #elif defined(__DJGPP__)
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
+#elif (ACC_CC_IBMC && ACC_OS_OS2)
+#  undef HAVE_SNPRINTF
+#  undef HAVE_VSNPRINTF
 #elif (ACC_CC_INTELC)
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
 #elif (ACC_CC_LCC)
 #  define utime _utime
 #elif (ACC_CC_MSC)
-#  if (_MSC_VER >= 700)
-#    define snprintf _snprintf
-#    define vsnprintf _vsnprintf
-#  else
+#  if (_MSC_VER < 600)
+#    undef HAVE_STRFTIME
+#  endif
+#  if (_MSC_VER < 700)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
+#  else
+#    define snprintf _snprintf
+#    define vsnprintf _vsnprintf
+#  endif
+#  if (_MSC_VER < 800 && ACC_OS_WIN16)
+#    undef HAVE_ALLOCA
 #  endif
 #elif defined(__MINGW32__)
 #elif (ACC_CC_PACIFICC)
@@ -339,16 +368,16 @@
 #  if (ACC_OS_WIN16 && (ACC_MM_MEDIUM || ACC_MM_LARGE || ACC_MM_HUGE))
 #    undef HAVE_ALLOCA
 #  endif
+#  if (__SC__ < 0x600)
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  else
+#    define snprintf _snprintf
+#    define vsnprintf _vsnprintf
+#  endif
 #  if (__SC__ < 0x700)
 #    undef HAVE_DIFFTIME /* difftime() is broken */
 #    undef HAVE_UTIME /* struct utimbuf is missing */
-#  endif
-#  if (__SC__ >= 0x610)
-#    define snprintf _snprintf
-#    define vsnprintf _vsnprintf
-#  else
-#    undef HAVE_SNPRINTF
-#    undef HAVE_VSNPRINTF
 #  endif
 #elif (ACC_CC_TOPSPEEDC)
 #  undef HAVE_SNPRINTF
@@ -365,12 +394,12 @@
 #    undef HAVE_UTIME
 #  endif
 #elif (ACC_CC_WATCOMC)
-#  if (__WATCOMC__ >= 1100)
-#    define snprintf _snprintf
-#    define vsnprintf _vsnprintf
-#  else
+#  if (__WATCOMC__ < 1100)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
+#  else
+#    define snprintf _snprintf
+#    define vsnprintf _vsnprintf
 #  endif
 #elif (ACC_CC_ZORTECHC)
 #  if (ACC_OS_WIN16 && (ACC_MM_MEDIUM || ACC_MM_LARGE || ACC_MM_HUGE))
@@ -433,6 +462,9 @@
 #if (ACC_ARCH_IA32 && (ACC_CC_DMC || ACC_CC_GNUC))
 #  define SIZEOF_LONG_LONG          8
 #  define SIZEOF_UNSIGNED_LONG_LONG 8
+#elif (ACC_ARCH_IA32 && (ACC_CC_SYMANTECC && __SC__ >= 0x700))
+#  define SIZEOF_LONG_LONG          8
+#  define SIZEOF_UNSIGNED_LONG_LONG 8
 #elif (ACC_ARCH_IA32 && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
@@ -441,6 +473,9 @@
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_ARCH_IA32 && (ACC_CC_WATCOMC && __WATCOMC__ >= 1100))
+#  define SIZEOF___INT64            8
+#  define SIZEOF_UNSIGNED___INT64   8
+#elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
 #  define SIZEOF___INT64            8
 #  define SIZEOF_UNSIGNED___INT64   8
 #elif (ACC_ARCH_M68K && (ACC_CC_GNUC))

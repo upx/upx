@@ -32,7 +32,7 @@
 #endif
 #if defined(__TINY__) || defined(M_I86TM) || defined(_M_I86TM)
 #  define ACC_MM_TINY           1
-#elif defined(__HUGE__) || defined(M_I86HM) || defined(_M_I86HM)
+#elif defined(__HUGE__) || defined(_HUGE_) || defined(M_I86HM) || defined(_M_I86HM)
 #  define ACC_MM_HUGE           1
 #elif defined(__SMALL__) || defined(M_I86SM) || defined(_M_I86SM) || defined(SMALL_MODEL)
 #  define ACC_MM_SMALL          1
@@ -66,9 +66,6 @@
 
 #if (ACC_MM_TINY)
 #  undef ACC_HAVE_MM_HUGE_ARRAY
-#  if (ACC_CC_MSC && _MSC_VER < 700)
-#    undef ACC_HAVE_MM_HUGE_PTR
-#  endif
 #endif
 
 #if (ACC_CC_AZTECC || ACC_CC_PACIFICC || ACC_CC_ZORTECHC)
@@ -76,32 +73,38 @@
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #elif (ACC_CC_DMC || ACC_CC_SYMANTECC)
 #  undef ACC_HAVE_MM_HUGE_ARRAY
+#elif (ACC_CC_MSC && defined(_QC))
+#  undef ACC_HAVE_MM_HUGE_ARRAY
+#  if (_MSC_VER < 600)
+#    undef ACC_HAVE_MM_HUGE_PTR
+#  endif
 #elif (ACC_CC_TURBOC && __TURBOC__ < 0x0295)
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #elif (ACC_CC_WATCOMC && __WATCOMC__ >= 1200)
-   /* __huge pointers seem completely broken in OpenWatcom 1.0 */
-#  undef ACC_HAVE_MM_HUGE_PTR
+   /* pointer arithmetics with __huge arrays seems completely
+    * broken in OpenWatcom 1.0 */
 #  undef ACC_HAVE_MM_HUGE_ARRAY
 #endif
 
-#if (ACC_HAVE_MM_HUGE_PTR)
-#  if (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0400)
-     extern unsigned short __near _AHSHIFT;
-#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
-#  elif (ACC_CC_DMC || ACC_CC_MSC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
-     extern unsigned short __near _AHSHIFT;
-#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
-#  elif (ACC_CC_TURBOC && __TURBOC__ >= 0x0295)
-     extern unsigned short __near _AHSHIFT;
-#    define ACC_MM_AHSHIFT      ((unsigned) &_AHSHIFT)
-#  elif (ACC_CC_TURBOC && ACC_OS_DOS16)
-#    define ACC_MM_AHSHIFT      12
-#  elif (ACC_CC_WATCOMC)
-     extern unsigned char _HShift;
-#    define ACC_MM_AHSHIFT      ((unsigned) _HShift)
-#  else
-#    error "implement ACC_MM_AHSHIFT"
-#  endif
+#if (ACC_CC_BORLANDC && __BORLANDC__ >= 0x0200)
+   extern void __near _AHSHIFT(void);
+#  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
+#elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
+   extern void __near _AHSHIFT(void);
+#  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
+#elif (ACC_CC_MSC || ACC_CC_TOPSPEEDC)
+   extern void __near _AHSHIFT(void);
+#  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
+#elif (ACC_CC_TURBOC && __TURBOC__ >= 0x0295)
+   extern void __near _AHSHIFT(void);
+#  define ACC_MM_AHSHIFT      ((unsigned) _AHSHIFT)
+#elif ((ACC_CC_AZTECC || ACC_CC_PACIFICC || ACC_CC_TURBOC) && ACC_OS_DOS16)
+#  define ACC_MM_AHSHIFT      12
+#elif (ACC_CC_WATCOMC)
+   extern unsigned char _HShift;
+#  define ACC_MM_AHSHIFT      ((unsigned) _HShift)
+#else
+#  error "implement ACC_MM_AHSHIFT"
 #endif
 
 

@@ -48,8 +48,8 @@
 #  define ACC_INFO_CC           "DEC C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__DECC)
 #elif defined(__IBMC__)
-#  define ACC_CC_VISUALAGEC     1
-#  define ACC_INFO_CC           "VisualAge C"
+#  define ACC_CC_IBMC           1
+#  define ACC_INFO_CC           "IBM C"
 #  define ACC_INFO_CCVER        ACC_MACRO_EXPAND(__IBMC__)
 #elif defined(__INTEL_COMPILER)
 #  define ACC_CC_INTELC         1

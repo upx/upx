@@ -34,7 +34,7 @@
 #if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #  define ACC_ARCH_IA16             1
 #  define ACC_INFO_ARCH             "ia16"
-#elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+#elif defined(__386__) || defined(__i386__) || defined(__i386) || defined(_M_IX86) || defined(_M_I386)
 #  define ACC_ARCH_IA32             1
 #  define ACC_INFO_ARCH             "ia32"
 #elif (ACC_CC_ZORTECHC && defined(__I86__))
