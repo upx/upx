@@ -48,7 +48,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
@@ -62,7 +62,7 @@ public:
     }
 
 protected:
-    virtual bool readExeHeader(void);
+    virtual bool readFileHeader(void);
 
     struct exe_header_t
     {

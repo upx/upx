@@ -137,7 +137,7 @@ void PackBvmlinuxI386::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-bool PackBvmlinuxI386::canUnpack()
+int PackBvmlinuxI386::canUnpack()
 {
     return false;
 }

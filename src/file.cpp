@@ -137,7 +137,7 @@ int FileBase::readx(void *buf, int len)
 {
     int l = this->read(buf,len);
     if (l != len)
-        throw EOFException();
+        throwEOFException();
     return l;
 }
 

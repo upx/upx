@@ -740,12 +740,12 @@ void PackWcle::decodeEntryTable()
 }
 
 
-bool PackWcle::canUnpack()
+int PackWcle::canUnpack()
 {
     if (!LeFile::readFileHeader())
         return false;
     // FIXME: 1024 could be too large for some files
-    return super::readPackHeader(1024, ih.data_pages_offset+exe_offset);
+    return readPackHeader(1024, ih.data_pages_offset+exe_offset) ? 1 : -1;
 }
 
 

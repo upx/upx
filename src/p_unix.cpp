@@ -172,7 +172,7 @@ void PackUnix::pack(OutputFile *fo)
         total_out += ph.c_len;
     }
     if ((off_t)total_in != file_size)
-        throw EOFException();
+        throwEOFException();
 
     // write block end marker (uncompressed size 0)
     fo->write("\x00\x00\x00\x00", 4);
@@ -203,7 +203,7 @@ void PackUnix::pack(OutputFile *fo)
 // Generic Unix canUnpack().
 **************************************************************************/
 
-bool PackUnix::canUnpack()
+int PackUnix::canUnpack()
 {
     upx_byte buf[128];
     const int bufsize = sizeof(buf);
@@ -310,7 +310,7 @@ void PackUnix::unpack(OutputFile *fo)
 
     // all bytes must be written
     if (ph.version > 8 && total_out != orig_file_size)
-        throw EOFException();
+        throwEOFException();
 
     // finally test the checksums
     if (ph.c_adler != c_adler || ph.u_adler != u_adler)

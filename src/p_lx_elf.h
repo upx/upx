@@ -46,11 +46,11 @@ public:
     virtual const char *getName() const { return "linux/elf386"; }
     virtual const int *getFilters() const { return NULL; }
 
-    virtual bool canPack();
-    virtual bool canUnpackFormat(int format) const;
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
 
+    virtual bool canPack();
+    virtual bool canUnpackFormat(int format) const;
     virtual bool canUnpackVersion(int version) const
         { return (version >= 11); }
 

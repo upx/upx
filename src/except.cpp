@@ -63,6 +63,13 @@ void throwAlreadyPacked(const char *msg)
     throw AlreadyPackedException(msg);
 }
 
+void throwAlreadyPackedByUPX(const char *msg)
+{
+    if (msg == NULL)
+        msg = "already packed by UPX";
+    throwAlreadyPacked(msg);
+}
+
 
 /*************************************************************************
 // decompression
@@ -109,7 +116,15 @@ void throwBadLoader()
 
 void throwIOException(const char *msg, int e)
 {
-    throw IOException(msg,e);
+    throw IOException(msg, e);
+}
+
+
+void throwEOFException(const char *msg, int e)
+{
+    if (msg == NULL && e == 0)
+        msg = "premature end of file";
+    throw EOFException(msg, e);
 }
 
 
@@ -119,9 +134,9 @@ void throwIOException(const char *msg, int e)
 
 const char *prettyName(const char *n)
 {
-    while (*n >= '0' && *n <= '9')                      // gcc / egcs
+    while (*n >= '0' && *n <= '9')              // gcc / egcs
         n++;
-    if (strlen(n) > 6 && memcmp(n, "class ", 6) == 0)   // Visual C++
+    if (strncmp(n, "class ", 6) == 0)           // Visual C++
         n += 6;
     return n;
 }

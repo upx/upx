@@ -220,7 +220,7 @@ void PackCom::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-bool PackCom::canUnpack()
+int PackCom::canUnpack()
 {
     if (!readPackHeader(128, 0))
         return false;

@@ -192,8 +192,9 @@ public:
 // util
 **************************************************************************/
 
+#undef NORET
 #if 0 && defined(__GNUC__)
-// (noreturn) is probably not the correct semantics
+// (noreturn) is probably not the correct semantics for throwing exceptions
 #define NORET __attribute__((noreturn))
 #else
 #define NORET
@@ -203,6 +204,7 @@ void throwCantPack(const char *msg) NORET;
 void throwUnknownExecutableFormat(const char *msg = 0, bool warn = false) NORET;
 void throwNotCompressible(const char *msg = 0) NORET;
 void throwAlreadyPacked(const char *msg = 0) NORET;
+void throwAlreadyPackedByUPX(const char *msg = 0) NORET;
 void throwCantUnpack(const char *msg) NORET;
 void throwNotPacked(const char *msg = 0) NORET;
 void throwFilterException() NORET;
@@ -211,6 +213,7 @@ void throwChecksumError() NORET;
 void throwCompressedDataViolation() NORET;
 void throwInternalError(const char *msg) NORET;
 void throwIOException(const char *msg = 0, int e = 0) NORET;
+void throwEOFException(const char *msg = 0, int e = 0) NORET;
 
 #undef NORET
 

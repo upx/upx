@@ -264,11 +264,11 @@ void PackTmt::pack(OutputFile *fo)
 }
 
 
-bool PackTmt::canUnpack()
+int PackTmt::canUnpack()
 {
     if (!PackTmt::readFileHeader())
         return false;
-    return readPackHeader(512,adam_offset);
+    return readPackHeader(512,adam_offset) ? 1 : -1;
 }
 
 

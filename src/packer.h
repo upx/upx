@@ -120,6 +120,11 @@ public:
         { return (format == getFormat()); }
 
 protected:
+    // unpacker tests - these may throw exceptions
+    virtual bool testUnpackVersion(int version) const;
+    virtual bool testUnpackFormat(int format) const;
+
+protected:
     virtual void pack(OutputFile *fo) = 0;
     virtual void unpack(OutputFile *fo) = 0;
     virtual void test();
@@ -127,10 +132,14 @@ protected:
     virtual void fileInfo();
 
 public:
+    // canPack() should throw a cantPackException eplaining why it
+    // cannot pack a recognized format.
+    // canUnpack() can return -1 meaning "format recognized, but file
+    // is definitely not packed" (see packmast.cpp).
     virtual bool canPack() = 0;
-    virtual bool canUnpack() = 0;
-    virtual bool canTest() { return canUnpack(); }
-    virtual bool canList() { return canUnpack(); }
+    virtual int canUnpack() = 0;
+    virtual int canTest() { return canUnpack(); }
+    virtual int canList() { return canUnpack(); }
 
 protected:
     // main compression drivers
@@ -215,6 +224,8 @@ protected:
     InputFile *fi;
     off_t file_size;        // will get set by constructor
     PackHeader ph;          // must be filled by canUnpack()
+    int ph_format;
+    int ph_version;
 
     // compression buffers
     MemBuffer ibuf;         // input

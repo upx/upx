@@ -49,7 +49,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
 protected:
     virtual int buildLoader(const Filter *ft);

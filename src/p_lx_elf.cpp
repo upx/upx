@@ -343,7 +343,7 @@ void PackLinuxI386elf::pack(OutputFile *fo)
     }
 
     if ((off_t)total_in != file_size)
-        throw EOFException();
+        throwEOFException();
 
     // write block end marker (uncompressed size 0)
     fo->write("\x00\x00\x00\x00", 4);
@@ -492,7 +492,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
 
     // all bytes must be written
     if (total_out != orig_file_size)
-        throw EOFException();
+        throwEOFException();
 
     // finally test the checksums
     if (ph.c_adler != c_adler || ph.u_adler != u_adler)

@@ -112,10 +112,16 @@ static Packer* try_unpack(Packer *p, InputFile *f)
     try {
         p->initPackHeader();
         f->seek(0,SEEK_SET);
-        if (p->canUnpack())
+        int r = p->canUnpack();
+        if (r > 0)
         {
             f->seek(0,SEEK_SET);
             return p;
+        }
+        if (r < 0)
+        {
+            // FIXME - could stop testing all other unpackers at this time
+            // see canUnpack() in packer.h
         }
     } catch (IOException&) {
     } catch (...) {

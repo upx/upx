@@ -126,7 +126,7 @@ int PackTos::getLoaderSize() const
 // util
 **************************************************************************/
 
-bool PackTos::readExeHeader()
+bool PackTos::readFileHeader()
 {
     fi->seek(0,SEEK_SET);
     fi->readx(&ih, FH_SIZE);
@@ -138,7 +138,7 @@ bool PackTos::readExeHeader()
 }
 
 
-bool PackTos::checkExeHeader()
+bool PackTos::checkFileHeader()
 {
     const unsigned f = ih.fh_flag;
     //printf("flags: 0x%x, text: %d, data: %d, bss: %d, sym: %d\n", f, (int)ih.fh_text, (int)ih.fh_data, (int)ih.fh_bss, (int)ih.fh_sym);
@@ -235,7 +235,7 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
 
 bool PackTos::canPack()
 {
-    if (!readExeHeader())
+    if (!readFileHeader())
         return false;
 
     unsigned char buf[512];
@@ -243,7 +243,7 @@ bool PackTos::canPack()
     if (find_le32(buf,sizeof(buf),UPX_MAGIC_LE32))
         throwAlreadyPacked();
 
-    if (!checkExeHeader())
+    if (!checkFileHeader())
         throwCantPack("unsupported header flags");
     if (file_size < 256)
         throwCantPack("program too small");
@@ -253,7 +253,7 @@ bool PackTos::canPack()
 
 void PackTos::fileInfo()
 {
-    if (!readExeHeader())
+    if (!readFileHeader())
         return;
     con_fprintf(stdout, "    text: %d, data: %d, sym: %d, bss: %d, flags=0x%x\n",
                 (int)ih.fh_text, (int)ih.fh_data, (int)ih.fh_sym, (int)ih.fh_bss, (int)ih.fh_flag);
@@ -490,17 +490,17 @@ void PackTos::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-bool PackTos::canUnpack()
+int PackTos::canUnpack()
 {
-    if (!readPackHeader(512, 0))
+    if (!readFileHeader())
         return false;
-    if (!readExeHeader())
+    if (!readPackHeader(512, 0))
         return false;
     // check header as set by packer
     if ((ih.fh_text & 3) != 0 || (ih.fh_data & 3) != 0 || (ih.fh_bss & 3) != 0
         || ih.fh_sym != 0 || ih.fh_reserved != 0 || ih.fh_reloc > 1)
         throwCantUnpack("file damaged");
-    if (!checkExeHeader())
+    if (!checkFileHeader())
         throwCantUnpack("unsupported header flags");
     return true;
 }

@@ -368,13 +368,13 @@ void PackDjgpp2::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-bool PackDjgpp2::canUnpack()
+int PackDjgpp2::canUnpack()
 {
     if (!readFileHeader())
         return false;
     if (is_dlm(fi,coff_offset))
         throwCantUnpack("can't handle DLM");
-    return readPackHeader(1024, coff_offset);
+    return readPackHeader(1024, coff_offset) ? 1 : -1;
 }
 
 

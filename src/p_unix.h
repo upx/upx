@@ -47,7 +47,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
 protected:
     // called by the generic pack()
@@ -175,7 +175,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
 protected:
 //    virtual const upx_byte *getLoader() const;

@@ -39,7 +39,7 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f) :
-    fi(f), file_size(-1),
+    fi(f), file_size(-1), ph_format(-1), ph_version(-1),
     uip(NULL), pass(0), total_passes(0), linker(NULL),
     last_patch(NULL), last_patch_offset(0)
 {
@@ -116,6 +116,24 @@ void Packer::fileInfo()
 {
     // FIXME: subclasses should list their sections here
     // We also should try to get a nice layout...
+}
+
+
+bool Packer::testUnpackVersion(int version) const
+{
+    if (version != ph_version && ph_version != -1)
+        throwCantUnpack("program has been modified; run a virus checker!");
+    if (!canUnpackVersion(version))
+        throwCantUnpack("I am not compatible with older versions of UPX");
+    return true;
+}
+
+
+bool Packer::testUnpackFormat(int format) const
+{
+    if (format != ph_format && ph_format != -1)
+        throwCantUnpack("program has been modified; run a virus checker!");
+    return canUnpackFormat(format);
 }
 
 
@@ -575,8 +593,8 @@ bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
     // Some formats might be able to unpack old versions because
     // their implementation hasn't changed. Ask them.
     if (opt->cmd != CMD_FILEINFO)
-        if (!canUnpackVersion(ph.version))
-            throwCantUnpack("I am not compatible with older versions of UPX");
+        if (!testUnpackVersion(ph.version))
+            return false;
 
     if (ph.c_len >= ph.u_len || (off_t)ph.c_len >= file_size
         || ph.version <= 0 || ph.version >= 0xff)
@@ -596,7 +614,7 @@ bool Packer::readPackHeader(unsigned len, off_t seek_offset, upx_byte *buf)
         throwCantUnpack("unknown compression method");
 
     // Some formats might be able to unpack "subformats". Ask them.
-    if (!canUnpackFormat(ph.format))
+    if (!testUnpackFormat(ph.format))
         return false;
 
     return true;

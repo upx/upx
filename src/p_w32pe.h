@@ -56,15 +56,15 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
-    {
-        return (version == 12);
-    }
+        {  return (version == 12); }
 
 protected:
+    virtual bool testUnpackVersion(int version) const;
+
     unsigned pe_offset;
     bool isrtm;
     bool readFileHeader();

@@ -71,7 +71,7 @@ const int *PackExe::getFilters() const
 //
 **************************************************************************/
 
-bool PackExe::readExeHeader()
+bool PackExe::readFileHeader()
 {
     ih_exesize = ih_imagesize = ih_overlay = 0;
     fi->readx(&ih,sizeof(ih));
@@ -95,7 +95,7 @@ bool PackExe::canPack()
 {
     if (fn_has_ext(fi->getName(),"sys"))
         return false;
-    if (!readExeHeader())
+    if (!readFileHeader())
         return false;
     if (file_size < 1024)
         throwCantPack("file is too small");
@@ -519,9 +519,9 @@ void PackExe::pack(OutputFile *fo)
 //
 **************************************************************************/
 
-bool PackExe::canUnpack()
+int PackExe::canUnpack()
 {
-    if (!readExeHeader())
+    if (!readFileHeader())
         return false;
     const off_t off = ih.headsize16*16;
     bool b = readPackHeader(128, off);

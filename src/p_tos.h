@@ -48,7 +48,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpack();
+    virtual int canUnpack();
 
     virtual void fileInfo();
 
@@ -56,8 +56,8 @@ protected:
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
 
-    bool readExeHeader();
-    bool checkExeHeader();
+    bool readFileHeader();
+    bool checkFileHeader();
 
     struct tos_header_t
     {
