@@ -274,6 +274,12 @@ void PackWcle::preprocessFixups()
     for (ic = jc = 0; ic < objects; ic++)
         jc += counts[ic];
 
+    if (jc == 0)
+    {
+        // FIXME: implement this
+        thowCantPack("files without relocations are not supported");
+    }
+
     ByteArray(rl, jc);
     ByteArray(srf, counts[objects+0]+1);
     ByteArray(slf, counts[objects+1]+1);

@@ -65,6 +65,8 @@ FORMAT TMT/ADAM
 FORMAT WATCOM/LE
 ================
 
+- handle files without relocations
+
 - the decompressors are already aligned, no need for an
     extra alignment
 
