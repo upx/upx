@@ -153,8 +153,10 @@ protected:
     // high-level compression drivers
     void compressWithFilters(Filter *ft, unsigned *overlapoh,
                              const unsigned overlap_range,
-                             int strategy=-1, const int *filters=NULL,
-                             unsigned max_offset = 0, unsigned max_match = 0);
+                             int strategy = -1, const int *filters = NULL,
+                             unsigned max_offset = 0, unsigned max_match = 0,
+                             unsigned filter_buf_off = 0,
+                             unsigned compress_buf_off = 0);
 
     // util for verifying overlapping decompresion
     //   non-destructive test

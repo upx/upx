@@ -155,7 +155,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     assert(level >= 1); assert(level <= 10);
 
     // update checksum of uncompressed data
-    unsigned saved_u_adler = ph.u_adler;
+    const unsigned saved_u_adler = ph.u_adler;
     ph.u_adler = upx_adler32(ph.u_adler,in,ph.u_len);
 
     // set compression paramters
@@ -178,17 +178,6 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         conf.p_level = opt->crp.p_level;
     if (opt->crp.h_level != -1)
         conf.h_level = opt->crp.h_level;
-    else if (level >= 7)
-    {
-        static const int h_level[9] =
-            { 0, 17, 18, 19, 20, 4369, 4626, 4883, 5140 };
-        int ml = opt->mem_level;
-        if (ml < 0)
-            ml = 9;
-        if (ml < 1 || ml > 9)
-            ml = 1;
-        conf.h_level = h_level[ml - 1];
-    }
     if (opt->crp.max_offset != UPX_UINT_MAX && opt->crp.max_offset < conf.max_offset)
         conf.max_offset = opt->crp.max_offset;
     if (opt->crp.max_match != UPX_UINT_MAX && opt->crp.max_match < conf.max_match)
@@ -974,6 +963,7 @@ void Packer::addFilter32(int filter_id)
 //   n:  try the first N filters in parm_filters[], use best one
 //  -1:  try all filters, use first working one
 //  -2:  try only the opt->filter filter
+//  -3:  use no filter
 //
 // This has been prepared for generalization into class Packer so that
 // opt->all_filters is available for all executable formats.
@@ -984,7 +974,8 @@ void Packer::addFilter32(int filter_id)
 void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
                                  const unsigned overlap_range,
                                  int strategy, const int *parm_filters,
-                                 unsigned max_offset, unsigned max_match)
+                                 unsigned max_offset, unsigned max_match,
+                                 unsigned filter_off, unsigned compress_buf_off)
 {
     const int *f;
     //
@@ -994,8 +985,8 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     const Filter orig_ft = *parm_ft;
           Filter best_ft = *parm_ft;
     //
-    const unsigned buf_len = orig_ph.u_len;
-    const unsigned filter_len = orig_ft.buf_len ? orig_ft.buf_len : buf_len;
+    const unsigned compress_buf_len = orig_ph.u_len;
+    const unsigned filter_len = orig_ft.buf_len ? orig_ft.buf_len : compress_buf_len;
     //
     best_ph.c_len = orig_ph.u_len;
     unsigned best_ph_lsize = 0;
@@ -1004,7 +995,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     // preconditions
     assert(orig_ph.filter == 0);
     assert(orig_ft.id == 0);
-    assert(filter_len <= buf_len);
+    assert(filter_off + filter_len <= compress_buf_off + compress_buf_len);
 
     // setup raw_filters
     static const int no_filters[] = { 0, -1 };
@@ -1021,6 +1012,8 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         strategy_filters[0] = opt->filter;
         raw_filters = strategy_filters;
     }
+    else if (strategy == -3)
+        raw_filters = no_filters;
 
     // first pass - count number of filters
     int raw_nfilters = 0;
@@ -1064,7 +1057,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
     MemBuffer otemp_buf;
     if (nfilters > 1 && strategy >= 0)
     {
-        otemp_buf.allocForCompression(buf_len);
+        otemp_buf.allocForCompression(compress_buf_len);
         otemp = otemp_buf;
     }
 
@@ -1079,8 +1072,8 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         Filter ft = orig_ft;
         ft.init(filters[i], orig_ft.addvalue);
         // filter
-        optimizeFilter(&ft, ibuf, filter_len);
-        bool success = ft.filter(ibuf, filter_len);
+        optimizeFilter(&ft, ibuf + filter_off, filter_len);
+        bool success = ft.filter(ibuf + filter_off, filter_len);
         if (ft.id != 0 && ft.calls == 0)
         {
             // filter did not do anything - no need to call ft.unfilter()
@@ -1097,7 +1090,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
         nfilters_success++;
         ph.filter_cto = ft.cto;
         // compress
-        if (compress(ibuf, otemp, max_offset, max_match))
+        if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
         {
             // get results
             const unsigned lsize = buildLoader(&ft);
@@ -1119,7 +1112,7 @@ void Packer::compressWithFilters(Filter *parm_ft, unsigned *parm_overlapoh,
             }
         }
         // restore ibuf[] - unfilter with verify
-        ft.unfilter(ibuf, filter_len, true);
+        ft.unfilter(ibuf + filter_off, filter_len, true);
         //
         if (strategy < 0)
             break;
