@@ -49,14 +49,14 @@
 #undef xwrite
 
 struct Extent {
-    size_t size;  // must be first to match size[0] uncompressed size
+    int  size;  // must be first to match size[0] uncompressed size
     char *buf;
 };
 
 static void
 xread(struct Extent *const x, char *const buf, size_t const count)
 {
-    if (x->size < count) {
+    if (x->size < (int)count) {
         exit(127);
     }
 #if 0  //{
@@ -81,7 +81,7 @@ xread(struct Extent *const x, char *const buf, size_t const count)
 }
 
 #if 1
-static __inline__ int xwrite(int fd, const void *buf, int count)
+static int xwrite(int fd, const void *buf, int count)
 {
     // note: we can assert(count > 0);
     do {
@@ -124,6 +124,17 @@ static char *upx_itoa(char *buf, unsigned long v)
         } while (k > 0);
     }
     return buf;
+}
+
+static uint32_t ascii5(uint32_t r, unsigned k, char *p)
+{
+    do {
+        unsigned char d = r % 32;
+        if (d >= 26) d += '0' - 'Z' - 1;
+        *--p += d;
+        r /= 32;
+    } while (--k > 0);
+    return r;
 }
 
 
@@ -246,19 +257,9 @@ void upx_main(
     // Protect against Denial-of-Service attacks.
     {
         char *p = tmpname_buf + sizeof(tmpname_buf) - 1;
-        uint32_t r;
 
         // Compute the last 4 characters (20 bits) from getpid().
-        {
-            unsigned k = 4;
-            r = (uint32_t) pid;
-            do {
-                unsigned char d = r % 32;
-                if (d >= 26) d += '0' - 'Z' - 1;
-                *--p += d;
-                r /= 32;
-            } while (--k > 0);
-        }
+        uint32_t r = ascii5((uint32_t)pid, 4, p); p-=4;
 
         // Provide 4 random bytes from our program id.
         r ^= header.p_progid;
@@ -280,15 +281,7 @@ void upx_main(
 #endif
         }
         // Compute 7 more characters from the 32 random bits.
-        {
-            unsigned k = 7;
-            do {
-                unsigned char d = r % 32;
-                if (d >= 26) d += '0' - 'Z' - 1;
-                *--p += d;
-                r /= 32;
-            } while (--k > 0);
-        }
+        ascii5(r, 7, p);
     }
 
     // Just in case, remove the file.
@@ -358,24 +351,21 @@ void upx_main(
         //   assert(h.sz_unc > 0 && h.sz_unc <= blocksize);
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
-        // Read compressed block.
-        i = header.p_blocksize + OVERHEAD - h.sz_cpr;
-        xread(&xi, buf+i, h.sz_cpr);
-
-        // Decompress block.
-        if (h.sz_cpr < h.sz_unc)
-        {
-            // in-place decompression
+        header.p_filesize -= h.sz_unc;
+        if (h.sz_cpr < h.sz_unc) { // Decompress block.
             nrv_uint out_len;
-            i = (*f_decompress)(buf+i, h.sz_cpr, buf, &out_len);
+            i = (*f_decompress)(xi.buf, h.sz_cpr, buf, &out_len);
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
-            // i == 0 now
+            i = xwrite(fdo,    buf, h.sz_unc);
         }
+        else { // Incompressible block
+            i = xwrite(fdo, xi.buf, h.sz_unc);
+        }
+        xi.buf  += h.sz_cpr;
+        xi.size -= h.sz_cpr;
 
-        // Write uncompressed block.
-        if (xwrite(fdo, buf+i, h.sz_unc) != 0)
-        {
+        if (xi.size < 0 || i != 0) {
 // error exit is here in the middle to keep the jumps short.
         error:
             (void) unlink(tmpname);
@@ -385,7 +375,6 @@ void upx_main(
             for (;;)
                 (void) exit(127);
         }
-        header.p_filesize -= h.sz_unc;
 
         // We will never touch these pages again.
         i = (PAGE_MASK & (unsigned)xi.buf) - (unsigned)next_unmap;
