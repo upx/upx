@@ -26,7 +26,7 @@
    jreiser@BitWagon.com
  */
 
-#ifndef __UPX_P_LX_SEP_H  // {
+#ifndef __UPX_P_LX_SEP_H  //{
 #define __UPX_P_LX_SEP_H
 
 #include "p_lx_elf.h"
@@ -49,8 +49,7 @@ protected:
 };
 
 
-#endif __UPX_P_LX_SEP_H  //}
-#define __UPX_P_LX_SEP_H
+#endif //}__UPX_P_LX_SEP_H
 
 /*
 vi:ts=4:et
