@@ -88,6 +88,31 @@ int PackLinuxI386::getLoaderPrefixSize() const
 //
 **************************************************************************/
 
+// basic check of an Linux ELF Ehdr
+int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
+{
+    const unsigned char * const buf = ehdr->e_ident;
+
+    // NOTE: ELF executables are now handled by p_lx_elf.cpp.
+    if (memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
+        return -1;
+
+    // FIXME: add special checks for uncompresed "vmlinux" kernel
+    // now check the ELF header
+    if (!memcmp(buf+8, "FreeBSD", 7))                   // branded
+        return 1;
+    if (ehdr->e_type != 2)                              // executable
+        return 2;
+    if (ehdr->e_machine != 3 && ehdr->e_machine != 6)   // Intel 80[34]86
+        return 3;
+    if (ehdr->e_version != 1)                           // version
+        return 4;
+
+    // success
+    return 0;
+}
+
+
 bool PackLinuxI386::canPack()
 {
     if (exetype != 0)
@@ -101,25 +126,16 @@ bool PackLinuxI386::canPack()
 
     exetype = 0;
     const unsigned l = get_le32(buf);
-#if 0
-    // NOTE: ELF executables are now handled by p_lx_elf.cpp.
-    if (!memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
+
+    int elf = checkEhdr(&ehdr);
+    if (elf >= 0)
     {
-        // FIXME: add special checks for uncompresed "vmlinux" kernel
-        exetype = 1;
-        // now check the ELF header
-        if (!memcmp(buf+8, "FreeBSD", 7))               // branded
-            exetype = 0;
-        if (ehdr.e_type != 2)                           // executable
-            exetype = 0;
-        if (ehdr.e_machine != 3 && ehdr.e_machine != 6) // Intel 80[34]86
-            exetype = 0;
-        if (ehdr.e_version != 1)                        // version
-            exetype = 0;
+        // NOTE: ELF executables are now handled by p_lx_elf.cpp,
+        //   so we only handle them here if force_execve
+        if (elf == 0 && opt->unix.force_execve)
+            exetype = 1;
     }
-    else
-#endif
-    if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)
+    else if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)
     {
         // OMAGIC / NMAGIC / ZMAGIC / QMAGIC
         exetype = 2;

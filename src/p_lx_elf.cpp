@@ -173,19 +173,13 @@ bool PackLinuxI386elf::canPack()
 
     fi->readx(buf, sizeof(buf));
     fi->seek(0, SEEK_SET);
-    if (0 != memcmp(buf, "\x7f\x45\x4c\x46\x01\x01\x01", 7)) // ELF 32-bit LSB
-        return false;
+    Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)buf;
 
     // now check the ELF header
-    Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)buf;
-    if (memcmp(buf+8, "FreeBSD", 7) == 0)       // branded as FreeBSD
+    if (checkEhdr(ehdr) != 0)
         return false;
-    if (ehdr->e_type != 2)                      // executable
-        return false;
-    if (ehdr->e_machine != 3 && ehdr->e_machine != 6) // Intel 80[34]86
-        return false;
-    if (ehdr->e_version != 1)                   // version
-        return false;
+
+    // additional requirements for linux/elf386
     if (ehdr->e_ehsize != sizeof(*ehdr)) {
         throwCantPack("invalid Ehdr e_ehsize");
         return false;

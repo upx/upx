@@ -637,6 +637,9 @@ static int do_option(int optc, const char *arg)
         getoptvar(&opt->unix.blocksize, 8192u, ~0u);
         break;
     case 661:
+        opt->unix.force_execve = true;
+        break;
+    case 662:
         opt->unix.script_name = "/usr/local/lib/upx/upxX";
         if (mfx_optarg && mfx_optarg[0])
             set_script_name(mfx_optarg,1);
@@ -742,8 +745,9 @@ static const struct mfx_option longopts[] =
     // dos/sys
     // unix
     {"blocksize",        0x31, 0, 660},     // --blocksize=
+    {"force-execve",     0x10, 0, 661},     // force linux/386 execve format
 #if 0
-    {"script",           0x31, 0, 661},     // --script=
+    {"script",           0x31, 0, 662},     // --script=
 #endif
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output

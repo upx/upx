@@ -516,6 +516,7 @@ struct options_t {
     } tos;
     struct {
         unsigned blocksize;
+        bool force_execve;          // force the linux/386 execve format
         enum { SCRIPT_MAX = 32 };
         const char *script_name;
     } unix;

@@ -50,6 +50,8 @@ protected:
     virtual int getLoaderSize() const;
     virtual int getLoaderPrefixSize() const;
 
+    virtual int checkEhdr(const Elf_LE32_Ehdr *ehdr) const;
+
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);

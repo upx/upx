@@ -185,17 +185,20 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // linux
     //
-#if 0
-    if (opt->unix.script_name)
+    if (!opt->unix.force_execve)
     {
-        if ((p = func(new PackLinuxI386sep(f),f)) != NULL)
+#if 0
+        if (opt->unix.script_name)
+        {
+            if ((p = func(new PackLinuxI386sep(f),f)) != NULL)
+                return p;
+        }
+#endif
+        if ((p = func(new PackLinuxI386elf(f),f)) != NULL)
+            return p;
+        if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
             return p;
     }
-#endif
-    if ((p = func(new PackLinuxI386elf(f),f)) != NULL)
-        return p;
-    if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
-        return p;
     if ((p = func(new PackLinuxI386(f),f)) != NULL)
         return p;
 
