@@ -118,7 +118,7 @@ public:
 
     off_t getBytesWritten() const { return bytes_written; }
 
-    // FIXME - won't work with `--stdout' option
+    // FIXME - these won't work when using the `--stdout' option
     virtual void seek(off_t off, int whence)
     {
         super::seek(off,whence);
@@ -126,7 +126,7 @@ public:
     virtual void rewrite(const void *buf, int len)
     {
         write(buf, len);
-        bytes_written -= len;
+        bytes_written -= len;       // restore
     }
 
     // util
