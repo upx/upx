@@ -35,13 +35,13 @@
 #  define ACC_INFO_ARCH             "ia16"
 #elif (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
 #  if defined(_MSC_VER) && !defined(_M_IX86)
-#    error
+#    error "unexpected CPU architechture"
 #  endif
 #  define ACC_ARCH_IA32             1
 #  define ACC_INFO_ARCH             "ia32"
 #elif (ACC_OS_WIN64)
 #  if defined(_MSC_VER) && !defined(_M_IA64)
-#    error
+#    error "unexpected CPU architechture"
 #  endif
 #  define ACC_ARCH_IA64             1
 #  define ACC_INFO_ARCH             "ia64"

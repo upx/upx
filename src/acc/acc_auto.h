@@ -41,6 +41,8 @@
 #define HAVE_SYS_UTIME_H 1
 #define HAVE_SYS_TYPES_H 1
 
+#undef HAVE_STRINGS_H
+
 
 #if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 #  undef HAVE_CONIO_H
@@ -48,6 +50,14 @@
 #  undef HAVE_IO_H
 #  undef HAVE_SHARE_H
 #  undef HAVE_SYS_UTIME_H
+#  define HAVE_STRINGS_H 1
+#elif defined(__dietlibc__)
+#  undef HAVE_CONIO_H
+#  undef HAVE_DOS_H
+#  undef HAVE_IO_H
+#  undef HAVE_SHARE_H
+#  undef HAVE_SYS_UTIME_H
+#  define HAVE_STRINGS_H 1
 #elif (ACC_CC_BORLANDC)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_SYS_TIME_H
@@ -62,12 +72,15 @@
 #  undef HAVE_SYS_UTIME_H
 #elif (ACC_CC_GNUC && ACC_OS_WIN32 && defined(__MINGW32__))
 #  undef HAVE_UTIME_H
-#elif (ACC_CC_GNUC && ACC_OS_TOS && defined(__MINT__))
+#elif (ACC_CC_GNUC && ACC_OS_TOS)
 #  undef HAVE_CONIO_H
 #  undef HAVE_DOS_H
 #  undef HAVE_IO_H
 #  undef HAVE_SHARE_H
 #  undef HAVE_SYS_UTIME_H
+#  if !defined(__MINT__)
+#    undef HAVE_MALLOC_H
+#  endif
 #elif (ACC_CC_INTELC && ACC_OS_WIN32)
 #  undef HAVE_UNISTD_H
 #  undef HAVE_UTIME_H
@@ -244,6 +257,9 @@
 #if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
 #  undef HAVE_GETUMASK
 #  undef HAVE_SETMODE
+#elif defined(__dietlibc__)
+#  undef HAVE_GETUMASK
+#  undef HAVE_SETMODE
 #elif (ACC_CC_BORLANDC)
 #  if (__BORLANDC__ < 0x500)
 #    undef HAVE_DIFFTIME /* difftime() is in the math library */
@@ -259,8 +275,13 @@
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_GNUC && ACC_OS_WIN32 && defined(__MINGW32__))
-#elif (ACC_CC_GNUC && ACC_OS_TOS && defined(__MINT__))
+#elif (ACC_CC_GNUC && ACC_OS_TOS)
 #  undef HAVE_SETMODE
+#  if !defined(__MINT__)
+#    undef HAVE_GETUMASK
+#    undef HAVE_SNPRINTF
+#    undef HAVE_VSNPRINTF
+#  endif
 #elif (ACC_CC_INTELC && ACC_OS_WIN32)
 #  define snprintf _snprintf
 #  define vsnprintf _vsnprintf
