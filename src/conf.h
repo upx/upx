@@ -415,6 +415,7 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
 #define ALIGN_DOWN(a,b)     (((a) / (b)) * (b))
 #define ALIGN_UP(a,b)       ALIGN_DOWN((a) + ((b) - 1), b)
+#define ALIGN_GAP(a,b)      (ALIGN_UP(a,b) - (a))
 
 #define UPX_MAX(a,b)        ((a) >= (b) ? (a) : (b))
 #define UPX_MIN(a,b)        ((a) <= (b) ? (a) : (b))
