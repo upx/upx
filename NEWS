@@ -2,10 +2,11 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.90 beta (XX Jul 2002):
+Changes in 1.90 beta (XX Oct 2002):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * implemented several new options for finer compression control:
       `--all-methods', `--all-filters' and `--brute'
+  * ps1/exe: new format - UPX now supports PlayStation One programs
   * linux/386: added the option `--force-execve'
   * vmlinuz/386: better kernel detection and sanity checks
   * documentation updates
@@ -19,6 +20,17 @@ Changes in 1.11 beta (20 Dec 2000):
     more temp files are needed for decompression!
   * reduced overall memory requirements during packing
   * quite a number of internal source code rearrangements
+
+==================================================================
+
+Changes in 1.23 (05 Sep 2002)
+  * atari/tos: fixed an unpacking problem where a buffer was too
+    small (introduced in 1.22)
+  * linux/386: don't give up too early if a single block turns out
+    to be incompressible
+  * documentation: added some quick tips how to achieve the best
+    compression ratio for the final release of your application
+  * fixed a rare situation where the exit code was not set correctly
 
 Changes in 1.22 (27 Jun 2002)
   * atari/tos: the stub now flushes the CPU cache to avoid
