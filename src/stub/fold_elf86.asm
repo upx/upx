@@ -105,7 +105,14 @@ EXTERN upx_main
         pop ebx  ; &Elf32_Ehdr of this stub
         push eax  ; save entry address
 
-        mov edi, [a_val + sz_auxv * (AT_PHDR -1) + edi]
+        mov esi, edi  ; auxv table
+L60:  ; search for AT_PHDR
+        lodsd  ; a_type
+        cmp al, byte AT_PHDR
+        lodsd  ; a_un.a_ptr
+        jne L60
+        xchg eax, edi
+
 find_hatch:
         push edi
 EXTERN make_hatch
