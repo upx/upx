@@ -52,6 +52,9 @@
 #  endif
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
+#  if (__BORLANDC__ >= 0x560)
+#    pragma warn -use
+#  endif
 #elif defined(__DMC__)
 #  define __UPX_CDECL       __cdecl
 #  define SIGTYPEENTRY      __cdecl
