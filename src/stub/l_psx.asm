@@ -25,7 +25,7 @@
 ;
 ;  mips version by ssg
 
-INCLUDE "mr3k/macros.asm"
+;;;;;INCLUDE "mr3k/macros.asm"
 
                 ORG      0
 
@@ -75,13 +75,13 @@ copyloop:
 ;       __PSXDECO0__
 ;       __PSXDECOZ__
 ;       __PSXN2BD0__
-                INCLUDE "mr3k/n2b_d32.asm"
+                ;;;;;INCLUDE "mr3k/n2b_d32.asm"
 ;       __PSXN2BDZ__
 ;       __PSXN2DD0__
-                INCLUDE "mr3k/n2d_d32.asm"
+                ;;;;;INCLUDE "mr3k/n2d_d32.asm"
 ;       __PSXN2DDZ__
 ;       ;_PSXN2ED0__
-;               INCLUDE "mr3k/n2e_d32.asm"
+;               ;;;;;INCLUDE "mr3k/n2e_d32.asm"
 ;       ;_PSXN2EDZ__
 
 
