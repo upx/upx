@@ -918,9 +918,12 @@ void Packer::addSection(const char *sname, const char *sdata, unsigned len)
 
 int Packer::getLoaderSection(const char *name, int *slen)
 {
-    int ostart = linker->getSection(name, slen);
-    if (ostart <= 0)
+    int size = -1;
+    int ostart = linker->getSection(name, &size);
+    if (ostart < 0 || size <= 0)
         throwBadLoader();
+    if (slen)
+        *slen = size;
     return ostart;
 }
 
