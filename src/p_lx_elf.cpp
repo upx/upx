@@ -152,7 +152,7 @@ void PackLinuxI386elf::patchLoader()
 bool PackLinuxI386elf::canPack()
 {
     unsigned char buf[sizeof(Elf_LE32_Ehdr) + 14*sizeof(Elf_LE32_Phdr)];
-    assert(sizeof(buf) <= 512);
+    COMPILE_TIME_ASSERT(sizeof(buf) <= 512);
 
     exetype = 0;
 

@@ -52,7 +52,7 @@ static const unsigned bzimage_offset = 0x100000;
 PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     super(f)
 {
-    assert(sizeof(boot_sect_t) == 0x218);
+    COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x218);
 }
 
 
@@ -88,9 +88,12 @@ int PackVmlinuzI386::readFileHeader()
 {
     boot_sect_t h;
 
+    setup_size = 0;
+
     fi->readx(&h, sizeof(h));
     if (h.boot_flag != 0xAA55)
         return 0;
+    const bool hdrs = (memcmp(h.hdrs, "HdrS", 4) == 0);
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size <= 0 || setup_size >= file_size)
@@ -98,14 +101,21 @@ int PackVmlinuzI386::readFileHeader()
 
     int format = UPX_F_VMLINUZ_i386;
     unsigned sys_size = ALIGN_UP(file_size, 16) - setup_size;
-    if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
+
+    const unsigned char *p = (const unsigned char *) &h + 0x1e3;
+
+    if (hdrs && memcmp(p, "\x0d\x0a\x07""ELKS", 7) == 0)
+    {
+        format = UPX_F_ELKS_8086;
+    }
+    else if (hdrs && (h.load_flags & 1) != 0)
     {
         format = UPX_F_BVMLINUZ_i386;
-        // account for 16-bit h.sys_size, wraparound at 20 bits
+        // account for 16-bit h.sys_size, wrap around at 20 bits
         sys_size &= (1 << 20) - 1;
     }
 
-    if (16 * h.sys_size != sys_size)
+    if (16u * h.sys_size != sys_size)
         return 0;
 
     // FIXME: add more checks for a valid kernel
@@ -160,7 +170,7 @@ void PackVmlinuzI386::readKernel()
     if (klen <= 0)
         throwCantPack("kernel decompression failed");
     if (klen >= (int) ibuf.getSize())
-        throwCantPack("kernel decompression failed -- too big");
+        throwCantPack("kernel decompression failed -- too big; send a bug report");
 
     //OutputFile::dump("kernel.img", ibuf, klen);
 
@@ -233,7 +243,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_during_uncompression);
 
-    boot_sect_t *bs = (boot_sect_t *) ((unsigned char *) setup_buf);
+    boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16) / 16;
 
     fo->write(setup_buf, setup_buf.getSize());
@@ -332,8 +342,8 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, e_len, "KEIP", kernel_entry);
     patch_le32(loader, e_len, "STAK", stack_during_uncompression);
 
-    boot_sect_t *bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
+    boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
+    bs->sys_size = (ALIGN_UP(lsize + clen, 16) / 16) & 0xffff;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, e_len);

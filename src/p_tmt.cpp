@@ -41,6 +41,12 @@ static const
 //
 **************************************************************************/
 
+PackTmt::PackTmt(InputFile *f) : super(f)
+{
+    COMPILE_TIME_ASSERT(sizeof(tmt_header_t) == 44);
+}
+
+
 int PackTmt::getCompressionMethod() const
 {
     if (M_IS_NRV2B(opt->method))

@@ -53,7 +53,7 @@ static const
 PackTos::PackTos(InputFile *f) :
     super(f)
 {
-    assert(FH_SIZE == 28);
+    COMPILE_TIME_ASSERT(FH_SIZE == 28);
 }
 
 

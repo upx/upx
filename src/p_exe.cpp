@@ -47,7 +47,7 @@ static const
 PackExe::PackExe(InputFile *f) :
     super(f)
 {
-    assert(sizeof(exe_header_t) == 32);
+    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32);
     ih_exesize = ih_imagesize = ih_overlay = 0;
 }
 

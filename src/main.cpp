@@ -931,20 +931,20 @@ static void first_options(int argc, char **argv)
 
 void upx_sanity_check(void)
 {
-    assert(sizeof(char) == 1);
-    assert(sizeof(short) == 2);
-    assert(sizeof(int) == 4);
-    assert(sizeof(long) >= 4);
-    assert(sizeof(void *) >= 4);
-    assert(sizeof(long) >= sizeof(void *));
-    assert(((size_t) -1) > 0);
-    assert(((ptrdiff_t) -1) < 0);
-    assert(((off_t) -1) < 0);
+    COMPILE_TIME_ASSERT(sizeof(char) == 1);
+    COMPILE_TIME_ASSERT(sizeof(short) == 2);
+    COMPILE_TIME_ASSERT(sizeof(int) == 4);
+    COMPILE_TIME_ASSERT(sizeof(long) >= 4);
+    COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
+    COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
+    COMPILE_TIME_ASSERT(((size_t) -1) > 0);
+    COMPILE_TIME_ASSERT(((ptrdiff_t) -1) < 0);
+    COMPILE_TIME_ASSERT(((off_t) -1) < 0);
 
-    assert(sizeof(BE16) == 2);
-    assert(sizeof(BE32) == 4);
-    assert(sizeof(LE16) == 2);
-    assert(sizeof(LE32) == 4);
+    COMPILE_TIME_ASSERT(sizeof(BE16) == 2);
+    COMPILE_TIME_ASSERT(sizeof(BE32) == 4);
+    COMPILE_TIME_ASSERT(sizeof(LE16) == 2);
+    COMPILE_TIME_ASSERT(sizeof(LE32) == 4);
 
     struct align_assertion_1a_t
     {
@@ -978,10 +978,10 @@ void upx_sanity_check(void)
     //printf("%d\n", (int) sizeof(align_assertion_1b_t));
     //printf("%d\n", (int) sizeof(align_assertion_2a_t));
     //printf("%d\n", (int) sizeof(align_assertion_2b_t));
-    assert(sizeof(align_assertion_1a_t) == sizeof(align_assertion_1b_t));
-    assert(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
-    assert(sizeof(align_assertion_1a_t) == 3*9);
-    assert(sizeof(align_assertion_2a_t) == 3*17);
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == sizeof(align_assertion_1b_t));
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == sizeof(align_assertion_2b_t));
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_1a_t) == 3*9);
+    COMPILE_TIME_ASSERT(sizeof(align_assertion_2a_t) == 3*17);
 }
 
 

@@ -298,8 +298,13 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #define index               upx_index
 #define outp                upx_outp
 
+
 // a dummy statement
 #define nop     ((void)0)
+
+
+#define COMPILE_TIME_ASSERT(expr) \
+    { typedef int upx_compile_time_assert_fail[(expr) ? 1 : -1]; }
 
 
 /*************************************************************************

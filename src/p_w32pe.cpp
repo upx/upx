@@ -64,8 +64,8 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
 {
     //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
-    assert(sizeof(pe_header_t) == 248);
-    assert(sizeof(pe_section_t) == 40);
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
+    COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
 
     isection = 0;
     oimport = 0;
@@ -1204,8 +1204,9 @@ void Resource::clear(upx_byte *node,unsigned level,Interval *iv)
     else
     {
         const res_dir * const rd = (res_dir*) node;
+        const unsigned n = rd->identr + rd->namedentr;
         const res_dir_entry *rde = rd->entries;
-        for (unsigned ic = 0; ic < rd->identr + rd->namedentr; ic++, rde++)
+        for (unsigned ic = 0; ic < n; ic++, rde++)
             clear(newstart + (rde->child & 0x7fffffff),level + 1,iv);
         iv->add(rd,rd->Sizeof());
     }

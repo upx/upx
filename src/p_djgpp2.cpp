@@ -45,8 +45,8 @@ static const
 PackDjgpp2::PackDjgpp2(InputFile *f) :
     super(f), coff_offset(0)
 {
-    assert(sizeof(coff_hdr) == 0xa8);
-    assert(sizeof(stubify_stub) == 2048);
+    COMPILE_TIME_ASSERT(sizeof(coff_hdr) == 0xa8);
+    COMPILE_TIME_ASSERT(sizeof(stubify_stub) == 2048);
 }
 
 

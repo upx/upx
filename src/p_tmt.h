@@ -38,7 +38,7 @@ class PackTmt : public Packer
 {
     typedef Packer super;
 public:
-    PackTmt(InputFile *f) : super(f) { assert(sizeof(tmt_header_t) == 44); }
+    PackTmt(InputFile *f);
     virtual int getVersion() const { return 11; }
     virtual int getFormat() const { return UPX_F_TMT_ADAM; }
     virtual const char *getName() const { return "tmt/adam"; }
@@ -64,7 +64,7 @@ protected:
         LE32 entry;
         char ___[12];   // esp,numfixups,flags
         LE32 relocsize;
-    } ih,oh;
+    } ih, oh;
 };
 
 
