@@ -210,7 +210,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
             }
             t = offs - di;
             if (t < 2)
-                throwCantPack("unexpected relocation 1");
+                throwCantPack("unexpected relocation 2");
 
             while (t >= 256)
             {
