@@ -404,13 +404,6 @@ void PackTos::pack(OutputFile *fo)
     unsigned relocsize = 0;
     unsigned overlay = 0;
 
-    const unsigned lsize = getLoaderSize();
-    const unsigned e_len = get_be16(getLoader()+lsize-6);
-    const unsigned d_len = get_be16(getLoader()+lsize-4);
-    const unsigned decomp_offset = get_be16(getLoader()+lsize-2);
-    assert(e_len + d_len == lsize - 6);
-    assert((e_len & 3) == 0 && (d_len & 1) == 0);
-
     const unsigned i_text = ih.fh_text;
     const unsigned i_data = ih.fh_data;
     const unsigned i_sym = ih.fh_sym;
@@ -479,8 +472,8 @@ void PackTos::pack(OutputFile *fo)
     // After compression this will become the first part of the
     // data segement. The second part will be the decompressor.
 
-    // alloc buffer (512 is for the various alignments)
-    obuf.allocForCompression(t, d_len + 512);
+    // alloc buffer (2048 is for decompressor and the various alignments)
+    obuf.allocForCompression(t, 2048);
 
     // prepare packheader
     ph.u_len = t;
@@ -488,6 +481,14 @@ void PackTos::pack(OutputFile *fo)
     Filter ft(ph.level);
     // compress (max_match = 65535)
     compressWithFilters(&ft, 512, 0, NULL, 0, 65535);
+
+    // get loader
+    const unsigned lsize = getLoaderSize();
+    const unsigned e_len = get_be16(getLoader()+lsize-6);
+    const unsigned d_len = get_be16(getLoader()+lsize-4);
+    const unsigned decomp_offset = get_be16(getLoader()+lsize-2);
+    assert(e_len + d_len == lsize - 6);
+    assert((e_len & 3) == 0 && (d_len & 1) == 0);
 
     // The decompressed data will now get placed at this offset:
     unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
@@ -544,7 +545,8 @@ void PackTos::pack(OutputFile *fo)
     memcpy(loader, getLoader(), o_text);
 
     // patch loader
-    patchPackHeader(loader, o_text);
+    int tmp = patchPackHeader(loader, o_text);
+    assert(tmp + 32 == (int)o_text); UNUSED(tmp);
     if (!opt->small)
         patchVersion(loader, o_text);
     //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
@@ -656,7 +658,7 @@ void PackTos::unpack(OutputFile *fo)
     ibuf.alloc(ph.c_len);
     obuf.allocForUncompression(ph.u_len);
 
-    fi->seek(ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
+    fi->seek(FH_SIZE + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
     fi->readx(ibuf, ph.c_len);
 
     // decompress
