@@ -259,7 +259,10 @@ All debug information will be stripped, though.
 
 Extra options available for this executable format:
 
-  (none)
+  --all-methods       Compress the program several times, using all
+                      available compression methods. This may improve
+                      the compression ratio in some cases, but usually
+                      the default method gives the best results anyway.
 
 
 
@@ -701,8 +704,8 @@ Extra options available for this executable format:
 =head2 NOTES FOR VMLINUZ/386
 
 The vmlinuz/386 and bvmlinuz/386 formats take a gzip-compressed
-bootable kernel image ("vmlinuz", "zImage", "bzImage"), gzip-decompress
-it and re-compress it with the B<UPX> compression method.
+bootable Linux kernel image ("vmlinuz", "zImage", "bzImage"),
+gzip-decompress it and re-compress it with the B<UPX> compression method.
 
 vmlinuz/386 is completely unrelated to the other Linux executable
 formats, and it does not share any of their drawbacks.

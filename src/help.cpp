@@ -132,6 +132,14 @@ void show_help(int x)
                     "  --overlay=strip     strip any extra data attached to the file [dangerous]\n"
                     "  --overlay=skip      don't compress a file with an overlay\n"
                     "\n");
+#if 1
+        fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"Options for atari/tos:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --all-methods       try all available compression methods\n"
+                    "\n");
+#endif
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for djgpp2/coff:\n");
         fg = con_fg(f,fg);
