@@ -5,7 +5,9 @@ GNUmakefile
 *.img
 *.map
 *.raw
+*.rc
 *.rel
+*.res
 *.pdb
 *.upx
 .gdbinit
