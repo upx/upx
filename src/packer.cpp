@@ -1025,7 +1025,7 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 }
 
 
-void Packer::addLoader(const char *s, ...)
+void __acc_cdecl_va Packer::addLoader(const char *s, ...)
 {
     const char *p;
     va_list ap;
