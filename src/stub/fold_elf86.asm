@@ -117,11 +117,10 @@ EXTERN upx_main
         sub eax,eax  ; 0, also AT_NULL
         db 0x3c  ; "cmpb al, byte ..." like "jmp 1+L60" but 1 byte shorter
 L60:
-        scasd  ; a_un
-        scasd  ; a_val
+        scasd  ; a_un.a_val etc.
+        scasd  ; a_type
         jne L60  ; not AT_NULL
-        mov edx,[edi]  ; &hatch
-        stosd  ; clear a_un.a_ptr for AT_NULL
+; edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
 
 ; _dl_start and company (ld-linux.so.2) once assumed that it had virgin stack,
 ; and did not initialize all its stack local variables to zero.
@@ -156,7 +155,7 @@ L60:
         mov ch, PAGE_SIZE>>8  ; 0x1000
         add ecx, [p_memsz + szElf32_Ehdr + ebx]  ; length to unmap
         mov bh, 0  ; from 0x401000 to 0x400000
-        jmp edx  ; unmap ourselves via escape hatch, then goto entry
+        jmp [edi]  ; unmap ourselves via escape hatch, then goto entry
 
 ; called twice:
 ;  1st with esi==edi, ecx=0, edx= bitmap of slots needed: just update edx.
