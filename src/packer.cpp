@@ -1257,7 +1257,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
         ui_total_passes += nfilters * nmethods;
 
     // Working buffer for compressed data. Don't waste memory.
-    upx_byte *otemp = obuf;
+    MemBuffer *otemp = &obuf;
     MemBuffer otemp_buf;
 
     // compress
@@ -1300,22 +1300,22 @@ void Packer::compressWithFilters(Filter *parm_ft,
             printf("filter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
                    ft.id, ft.buf_len, ft.calls, ft.noncalls, ft.wrongcalls, ft.firstcall, ft.lastcall, ft.cto);
 #endif
-            if (nfilters_success > 0 && otemp == obuf)
+            if (nfilters_success > 0 && otemp == &obuf)
             {
                 otemp_buf.allocForCompression(compress_buf_len);
-                otemp = otemp_buf;
+                otemp = &otemp_buf;
             }
             nfilters_success++;
             ph.filter_cto = ft.cto;
             ph.n_mru = ft.n_mru;
             // compress
-            if (compress(ibuf + compress_buf_off, otemp, max_offset, max_match))
+            if (compress(ibuf + compress_buf_off, *otemp, max_offset, max_match))
             {
                 unsigned lsize = 0;
                 if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
                 {
                     // get results
-                    ph.overlap_overhead = findOverlapOverhead(otemp, overlap_range);
+                    ph.overlap_overhead = findOverlapOverhead(*otemp, overlap_range);
                     lsize = buildLoader(&ft);
                 }
 #if 0
@@ -1341,8 +1341,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 if (update)
                 {
                     // update obuf[] with best version
-                    if (otemp != obuf)
-                        memcpy(obuf, otemp, ph.c_len);
+                    if (otemp != &obuf)
+                        memcpy(obuf, *otemp, ph.c_len);
                     // save compression results
                     best_ph = ph;
                     best_ph_lsize = lsize;
@@ -1354,6 +1354,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             //
             ibuf.checkState();
             obuf.checkState();
+            otemp->checkState();
             //
             if (strategy < 0)
                 break;
