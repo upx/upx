@@ -48,7 +48,7 @@ public:
     PackW32Pe(InputFile *f);
     ~PackW32Pe();
     virtual int getVersion() const { return 12; }
-    virtual int getFormat() const { return UPX_F_W32_PE; }
+    virtual int getFormat() const { return UPX_F_WIN32_PE; }
     virtual const char *getName() const { return isrtm ? "rtm32/pe" : "win32/pe"; }
     virtual int getCompressionMethod() const;
     virtual const int *getFilters() const;

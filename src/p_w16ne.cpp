@@ -1,4 +1,4 @@
-/* unupx.h --
+/* p_w16ne.cpp --
 
    This file is part of the UPX executable compressor.
 
@@ -26,76 +26,105 @@
  */
 
 
-#ifndef __UPX_UNUPX_H
-#define __UPX_UNUPX_H
+#include "conf.h"
+#include "file.h"
+#include "filter.h"
+#include "packer.h"
+#include "p_w16ne.h"
 
 
 /*************************************************************************
-// integral and pointer types
+//
 **************************************************************************/
 
-#ifndef upx_byte
-typedef int upx_int;
-typedef unsigned upx_uint;
-typedef int upx_int32;
-typedef unsigned upx_uint32;
+PackW16Ne::PackW16Ne(InputFile *f) :
+    super(f)
+{
+}
 
-#define upx_byte unsigned char
-#define upx_bytep upx_byte *
-#define upx_voidp void *
-#define upx_uintp upx_uint *
-#endif
+
+int PackW16Ne::getCompressionMethod() const
+{
+    if (M_IS_NRV2B(opt->method))
+        return M_NRV2B_8;
+    if (M_IS_NRV2D(opt->method))
+        return M_NRV2D_8;
+    return opt->level > 1 && file_size >= 512*1024 ? M_NRV2D_8 : M_NRV2B_8;
+}
+
+
+const int *PackW16Ne::getFilters() const
+{
+    return NULL;
+}
+
+
+int PackW16Ne::buildLoader(const Filter *ft)
+{
+    // prepare loader
+//    initLoader(nrv_loader,sizeof(nrv_loader));
+//    addLoader("...");
+    if (ft->id)
+    {
+        assert(ft->calls > 0);
+//        addLoader("...");
+    }
+//
+    return getLoaderSize();
+}
 
 
 /*************************************************************************
-// calling conventions
+//
 **************************************************************************/
 
-#ifndef __UPX_CDECL
-#define __UPX_CDECL
-#endif
-#ifndef __UPX_ENTRY
-#define __UPX_ENTRY __UPX_CDECL
-#endif
-#define UPX_EXTERN(x)           extern "C" x __UPX_ENTRY
-#define UPX_EXTERN_CDECL(x)     extern "C" x __UPX_CDECL
+bool PackW16Ne::readFileHeader()
+{
+    // FIXME: identify a win16/ne executable, so that the call
+    // for contribution below will get thrown
+    return false;
+}
+
+
+bool PackW16Ne::canPack()
+{
+    if (!readFileHeader())
+        return false;
+    throwCantPack("win16/ne is not supported yet; your contribution is welcome");
+    return false;
+}
 
 
 /*************************************************************************
-// constants
+//
 **************************************************************************/
 
-/* Executable formats. Note: big endian types are >= 128 */
-#define UPX_F_DOS_COM           1
-#define UPX_F_DOS_SYS           2
-#define UPX_F_DOS_EXE           3
-#define UPX_F_DJGPP2_COFF       4
-#define UPX_F_WC_LE             5
-#define UPX_F_VXD_LE            6
-#define UPX_F_DOS_EXEH          7               /* OBSOLETE */
-#define UPX_F_TMT_ADAM          8
-#define UPX_F_WIN32_PE          9
-#define UPX_F_LINUX_i386        10
-#define UPX_F_WIN16_NE          11
-#define UPX_F_LINUX_ELF_i386    12
-#define UPX_F_LINUX_SEP_i386    13
-#define UPX_F_LINUX_SH_i386     14
-#define UPX_F_VMLINUZ_i386      15
-#define UPX_F_BVMLINUZ_i386     16
-#define UPX_F_ELKS_8086         17
-#define UPX_F_ATARI_TOS         129
-#define UPX_F_SOLARIS_SPARC     130
-
-
-#define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */
+void PackW16Ne::pack(OutputFile *)
+{
+    throwCantPack("not yet implemented");
+}
 
 
 /*************************************************************************
-// prototypes
+//
 **************************************************************************/
 
+int PackW16Ne::canUnpack()
+{
+    if (!readFileHeader())
+        return false;
+    return false;
+}
 
-#endif /* already included */
+
+/*************************************************************************
+//
+**************************************************************************/
+
+void PackW16Ne::unpack(OutputFile *)
+{
+    throwCantUnpack("not yet implemented");
+}
 
 
 /*

@@ -46,6 +46,7 @@
 #include "p_wcle.h"
 #include "p_tmt.h"
 #include "p_vxd.h"
+#include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_vmlinz.h"
 
@@ -162,6 +163,8 @@ static Packer* try_packers(InputFile *f, try_function func)
         if ((p = func(new PackVxd(f),f)) != NULL)
             return p;
 #endif
+        if ((p = func(new PackW16Ne(f),f)) != NULL)
+            return p;
         if ((p = func(new PackW32Pe(f),f)) != NULL)
             return p;
     }
