@@ -109,7 +109,7 @@ struct options_t {
         bool no_reloc;
     } dos_exe;
     struct {
-        bool console_run;
+        bool boot_only;
         bool no_align;
         bool do_8bit;
     } ps1_exe;

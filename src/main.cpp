@@ -706,11 +706,11 @@ static int do_option(int optc, const char *arg)
         opt->o_unix.ptinterp = true;
         break;
     case 670:
-        opt->ps1_exe.console_run = true;
+        opt->ps1_exe.boot_only = true;
         break;
     case 671:
         opt->ps1_exe.no_align = true;
-        opt->ps1_exe.console_run = true;
+        opt->ps1_exe.boot_only = false;
         break;
     case 672:
         opt->ps1_exe.do_8bit = true;
@@ -833,7 +833,7 @@ static const struct mfx_option longopts[] =
     {"strip-loadconf",   0x12, 0, 633},
     {"strip-relocs",     0x12, 0, 634},
     // ps1/exe
-    {"console-run",      0x10, 0, 670},
+    {"boot-only",        0x10, 0, 670},
     {"no-align",         0x10, 0, 671},
     {"8-bit",            0x10, 0, 672},
 

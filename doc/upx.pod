@@ -692,10 +692,10 @@ Extra options available for this executable format:
 This is the executable format used by the Sony PlayStation (PSone),
 a Mips R3000 based gaming console which is popular since the late '90s.
 Support of this format is very similar to the Atari one, because of
-nostalgic feelings of one of the authors, but this format maybe serves
-a practical purpose ;-).
+nostalgic feelings of one of the authors.
 
-Packed programs will be byte-identical to the original after uncompression.
+Packed programs will be byte-identical to the original after uncompression,
+until further notice.
 
 Maximum uncompressed size: ~1998848 bytes.
 
@@ -718,17 +718,15 @@ Extra options available for this executable format:
                       the compression ratio in some cases, but usually
                       the default method gives the best results anyway.
 
-  --console-run       This enables client/target transfer compatibility.
-                      This format also run from a CD, except the "--no-align"
-                      option is used. Upto 2024 bytes larger files
-                      than [default] will be the result, also a
-                      slower decompression speed can be expected.
+  --boot-only         The format will only run from a CD and may slightly
+                      improves the compression ratio. The decompression
+                      routines are faster than default ones.
+                      But it cannot be used for host/client transfer !
 
   --no-align          This option disables CD mode 2 data sector format
-                      alignment, and enables "--console-run".
-                      This will slightly improve the compression ratio,
+                      alignment. May slightly improves the compression ratio,
                       but the compressed executable will not boot from a CD.
-                      So use it for client/target transfer only!.
+                      Use it for client/target transfer only !
 
 
 

@@ -104,8 +104,6 @@ protected:
 
     // filesize-PS_HDR_SIZE
     unsigned fdata_size;
-    // calculated filesize
-    unsigned cfile_size;
 };
 
 

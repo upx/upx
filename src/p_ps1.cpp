@@ -49,6 +49,8 @@ static const
 
 #define CD_SEC              2048
 #define PS_HDR_SIZE         CD_SEC
+#define PS_RAM_SIZE         0x200000
+#define PS_MIN_SIZE         (PS_HDR_SIZE*3)
 #define PS_MAX_SIZE         0x1e8000
 
 #define SZ_IH_BKUP          (10 * sizeof(LE32))
@@ -75,17 +77,17 @@ static const
 
 PackPs1::PackPs1(InputFile *f) :
     super(f),
-    isCon(false^opt->ps1_exe.console_run), is32Bit(true^opt->ps1_exe.do_8bit),
-    overlap(0), sa_cnt(0), cfile_size(0)
+    isCon(true^opt->ps1_exe.boot_only), is32Bit(true^opt->ps1_exe.do_8bit),
+    overlap(0), sa_cnt(0)
 {
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
 #if 1 || defined(WITH_NRV)
     COMPILE_TIME_ASSERT(sizeof(nrv_boot_loader) == 3918);
-    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0xb1939f02);
+    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0xdf0cbd9e);
     COMPILE_TIME_ASSERT(sizeof(nrv_con_loader) == 2810);
-    COMPILE_TIME_ASSERT(NRV_CON_LOADER_CRC32 == 0xaf39f37f);
+    COMPILE_TIME_ASSERT(NRV_CON_LOADER_CRC32 == 0x31747f8b);
 #endif
     fdata_size = file_size - PS_HDR_SIZE;
 }
@@ -127,23 +129,30 @@ int PackPs1::readFileHeader()
 
 bool PackPs1::checkFileHeader()
 {
-    if (fdata_size != ih.tx_len || (ih.tx_len & 3) && !opt->force )
+    if (fdata_size != ih.tx_len || (ih.tx_len & 3))
     {
-        infoWarning("check header for file size");
+        if (!opt->force)
+            throwCantPack("file size entry damaged (try --force)");
+        else
+        {
+            opt->info_mode += !opt->info_mode ? 1 : 0;
+            infoWarning("fixing damaged header, keeping backup file");
+            opt->backup = 1;
+            ih.tx_len = fdata_size;
+        }
+    }
+    if (!opt->force &&
+       (ih.da_ptr != 0 || ih.da_len != 0 ||
+        ih.bs_ptr != 0 || ih.bs_len != 0))
+    {
+        infoWarning("unsupported header field entry");
         return false;
     }
-    cfile_size = fdata_size;
-    if (ih.da_ptr != 0 || ih.da_len != 0 ||
-        ih.bs_ptr != 0 || ih.bs_len != 0 && !opt->force)
+    if (!opt->force && ih.is_ptr == 0)
     {
+        infoWarning("stack pointer field empty");
         return false;
     }
-    if (ih.is_ptr == 0 && !opt->force)
-    {
-        infoWarning("check header for stack pointer");
-        return false;
-    }
-    cfile_size = ih.tx_len;
     return true;
 }
 
@@ -189,20 +198,30 @@ void PackPs1::patch_mips_le(void *b, int blen, const void *old, unsigned new_)
 
 bool PackPs1::canPack()
 {
+    unsigned char buf[PS_HDR_SIZE-HD_CODE_OFS];
+
     if (!readFileHeader())
         return false;
 
-    unsigned char buf[PS_HDR_SIZE-HD_CODE_OFS];
     fi->readx(buf, sizeof(buf));
-    for (unsigned i = 0; i < sizeof(buf); i++)
-        if (buf[i] != 0 && !opt->force)
-            throwCantPack("unknown data in header (try --force)");
     checkAlreadyPacked(buf, sizeof(buf));
+
+    for (unsigned i = 0; i < sizeof(buf); i++)
+        if (buf[i] != 0)
+            if (!opt->force)
+                throwCantPack("unknown data in header (try --force)");
+            else
+            {
+                opt->info_mode += !opt->info_mode ? 1 : 0;
+                infoWarning("clearing header, keeping backup file");
+                opt->backup = 1;
+                break;
+            }
     if (!checkFileHeader())
         throwCantPack("unsupported header flags (try --force)");
-    if (file_size <= (PS_HDR_SIZE*3) && !opt->force)
+    if (!opt->force && file_size < PS_MIN_SIZE)
         throwCantPack("file is too small (try --force)");
-    if (file_size > PS_MAX_SIZE && !opt->force)
+    if (!opt->force && file_size > PS_MAX_SIZE)
         throwCantPack("file is too big (try --force)");
     return true;
 }
@@ -223,8 +242,7 @@ int PackPs1::buildLoader(const Filter *)
               isCon ? ph.c_len & 3 ? "PS1PADCD" : "" : "PS1ENTRY",
               ih.tx_ptr & 0xffff ?  "PS1CONHL" : "PS1CONHI",
               isCon ? "PS1ENTRY" : "",
-              NULL
-             );
+              NULL);
 
     if (ph.method == M_NRV2B_8)
         addLoader("PS1N2B08", NULL);
@@ -242,14 +260,14 @@ int PackPs1::buildLoader(const Filter *)
         throwInternalError("unknown compression method");
 
     if (sa_cnt)
-        addLoader(sa_cnt > 0xfffc ? "PS1MSETB" : "PS1MSETS",    // set small/big memset
-                  ih.tx_len & 3   ? "PS1MSETU" : "PS1MSETA",    // un/aligned memset
-                  NULL
-                 );
+        addLoader(sa_cnt > (0x10000 << 2) ? "PS1MSETB" : "PS1MSETS",
+                  ih.tx_len & 3 ? "PS1MSETU" : "PS1MSETA",
+                  NULL);
+
     addLoader("PS1EXITC", "IDENTSTR", "PS1PAHDR",
               isCon ? "PS1SREGS" : "",
-              NULL
-             );
+              NULL);
+
     return getLoaderSize();
 }
 
@@ -262,7 +280,7 @@ void PackPs1::pack(OutputFile *fo)
 {
     ibuf.alloc(fdata_size);
     obuf.allocForCompression(fdata_size);
-    const upx_byte *p_scan = ibuf+(fdata_size-1);
+    const upx_byte *p_scan = ibuf+fdata_size;
 
     // read file
     fi->seek(PS_HDR_SIZE,SEEK_SET);
@@ -270,10 +288,10 @@ void PackPs1::pack(OutputFile *fo)
 
     // scan EOF for 2048 bytes sector alignment
     // the removed space will secure in-place decompression
-    while (!(*p_scan--)) { if (sa_cnt++ > (0xfffc<<3)) break; }
+    while (!(*--p_scan)) { if (sa_cnt++ > (0x10000<<5) || sa_cnt >= fdata_size-1024) break; }
 
-    if (sa_cnt > 0xfffc)
-        sa_cnt = ALIGN_DOWN(sa_cnt,8);
+    if (sa_cnt > (0x10000<<2))
+        sa_cnt = ALIGN_DOWN(sa_cnt,32);
     else
         sa_cnt = ALIGN_DOWN(sa_cnt,4);
 
@@ -304,6 +322,14 @@ void PackPs1::pack(OutputFile *fo)
     memcpy(&oh.ih_bkup, &ih.epc, SZ_IH_BKUP);
     oh.ih_csum = upx_adler32(&ih.epc, SZ_IH_BKUP);
 
+    if (ih.is_ptr == 0)
+        oh.is_ptr = PS_RAM_SIZE-0x10;
+
+    if (ih.da_ptr != 0 || ih.da_len != 0 ||
+        ih.bs_ptr != 0 || ih.bs_len != 0)
+        oh.da_ptr = oh.da_len =
+        oh.bs_ptr = oh.bs_len = 0;
+
     const int lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
@@ -311,7 +337,7 @@ void PackPs1::pack(OutputFile *fo)
     patchPackHeader(loader,lsize);
 
     unsigned pad = 0;
-    unsigned filelen = ALIGN_UP((cfile_size ? cfile_size : (unsigned) ih.tx_len), 4);
+    unsigned filelen = ALIGN_UP(ih.tx_len, 4);
     unsigned pad_code = TIL_ALIGNED(ph.c_len, 4);
 
     const unsigned decomp_data_start = ih.tx_ptr;
@@ -335,7 +361,8 @@ void PackPs1::pack(OutputFile *fo)
 
     patch_mips_le(loader,c_len,"JPEP",MIPS_JP(ih.epc));
     if (sa_cnt)
-        patch_mips_le(loader,c_len,"SC",MIPS_LO(sa_cnt > 0xfffc ? sa_cnt >> 3 : sa_cnt));
+        patch_mips_le(loader,c_len,"SC",
+                      MIPS_LO(sa_cnt > (0x10000 << 2) ? sa_cnt >> 5 : sa_cnt >> 2));
     if (ih.tx_ptr & 0xffff)
         patch_mips_le(loader,c_len,"DECO",decomp_data_start);
     else
@@ -401,6 +428,7 @@ void PackPs1::pack(OutputFile *fo)
         throwNotCompressible();
 
 #if 0
+    printf("%-13s: uncompressed : %8ld bytes\n", getName(), (long) ph.u_len);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) lsize - h_len);
     printf("%-13s: code entry   : %08X bytes\n", getName(), (unsigned int) oh.epc);
@@ -448,7 +476,7 @@ void PackPs1::unpack(OutputFile *fo)
     assert(oh.tx_len >= ph.u_len);
     const unsigned pad = oh.tx_len - ph.u_len;
 
-    ibuf.alloc(fdata_size);
+    ibuf.alloc(fdata_size > PS_HDR_SIZE ? fdata_size : PS_HDR_SIZE);
     obuf.allocForUncompression(ph.u_len, pad);
 
     fi->seek(PS_HDR_SIZE, SEEK_SET);
@@ -466,7 +494,7 @@ void PackPs1::unpack(OutputFile *fo)
         // write header
         fo->write(&oh, sizeof(oh));
         // align the ps exe header (mode 2 sector data size)
-        ibuf.clear(0, PS_HDR_SIZE - sizeof(oh));
+        ibuf.clear();
         // write uncompressed data + pad
         fo->write(ibuf, PS_HDR_SIZE - sizeof(oh));
         obuf.clear(ph.u_len, pad);

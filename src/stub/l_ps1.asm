@@ -179,22 +179,22 @@ cutpoint:
 
 ; =============
 
-;       __PS1MSETB__
-                ori     a0,zero,'SC'    ; amount of removed zero's at eof
-                sll     a0,3            ; (cd mode 2 data sector alignment)
 ;       __PS1MSETS__
-                ori     a0,zero,'SC'    ; amount of removed zero's at eof
+                ori     a0,zero,'SC'    ; amount of removed zeros at eof
+;       __PS1MSETB__
+                ori     a0,zero,'SC'    ; amount of removed zeros at eof
+                sll     a0,3            ; (cd mode 2 data sector alignment)
 ;       __PS1MSETA__
 memset_aligned:
                 sw      zero,0(a2)
-                addiu   a0,-4
+                addiu   a0,-1
                 bnez    a0,memset_aligned
                 addiu   a2,4
 ;       __PS1MSETU__
 memset_unaligned:
                 swl     zero,3(a2)
                 swr     zero,0(a2)
-                addiu   a0,-4
+                addiu   a0,-1
                 bnez    a0,memset_unaligned
                 addiu   a2,4
 
