@@ -470,11 +470,11 @@ cutpoint:
 #define d2 D3
 
 #if defined(NRV2B)
-#  include "m68k/n2b_d.ash"
+#  include <m68k/n2b_d.ash>
 #elif defined(NRV2D)
-#  include "m68k/n2d_d.ash"
+#  include <m68k/n2d_d.ash>
 #elif defined(NRV2E)
-#  include "m68k/n2e_d.ash"
+#  include <m68k/n2e_d.ash>
 #else
 #  error
 #endif

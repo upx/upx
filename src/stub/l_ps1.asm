@@ -30,7 +30,7 @@
 ;
 
 
-#include "mr3k/macros.ash"
+#include <mr3k/macros.ash>
 
 do_regs         MACRO   _w
                 _w      at,0(sp)
@@ -104,13 +104,13 @@ copyloop:
 ;       __PSXDECO0__
 ;       __PSXDECOZ__
 ;       __PSXN2BD0__
-#include "mr3k/n2b_d.ash"
+#include <mr3k/n2b_d.ash>
 ;       __PSXN2BDZ__
 ;       __PSXN2DD0__
-#include "mr3k/n2d_d.ash"
+#include <mr3k/n2d_d.ash>
 ;       __PSXN2DDZ__
 ;       __PSXN2ED0__
-#include "mr3k/n2e_d.ash"
+#include <mr3k/n2e_d.ash>
 ;       __PSXN2EDZ__
 
 

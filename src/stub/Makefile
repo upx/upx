@@ -80,7 +80,6 @@ APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
 BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
 BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
-##SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
 STRIPELF = ./util/sstrip/sstrip
 
@@ -94,25 +93,23 @@ CC_LINUX = gcc    -Os -march=i386 -mcpu=i386 -malign-functions=0 -malign-jumps=0
 # Specifying -mcpu=i586 inhibits use of 'leave', which costs 2 bytes per subr
 #CC_LINUX = gcc    -Os -march=i386 -mcpu=i586 -malign-functions=0 -malign-jumps=0 -malign-loops=0 $(CC_LINUX_CFLAGS)
 
+# Motorola 68000
+CPP_M68K  = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ifeq (1,1)
-# Preprocessor for the a68k 68000-assembler.
-CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
-##CPP_M68K = cpp -I$(UCL_UPX) -x assembler-with-cpp -P -C -traditional -nostdinc -D__A68K__
-APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
-ASM_M68K = a68k -q -x
+  # a68k 68000-assembler
+  CPP_M68K += -D__A68K__
+  ASM_M68K  = a68k -q -x
 else
-# Preprocessor for the asl 68000-assembler.
-CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
-APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
-ASM_M68K = sh $(srcdir)/scripts/asl_m68k.sh
+  # asl 68000-assembler
+  CPP_M68K += -D__ASL__
+  ASM_M68K  = sh $(srcdir)/scripts/asl_m68k.sh
 endif
 
 # MIPS R3000
 CPP_MR3K = gcc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
-#APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
-#ASM_MR3K = asm5900 --nologo -q -I$(UCL_UPX) -I$(srcdir)
 
 
 # /***********************************************************************
