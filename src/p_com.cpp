@@ -109,7 +109,7 @@ void PackCom::patchLoader(OutputFile *fo,
     if (upper_end + stacksize > 0xfffe)
         stacksize = 0x56;
     if (upper_end + stacksize > 0xfffe)
-        throwNotCompressible();
+        throwCantPack("file is too big for dos/com");
 
     if (filter_id)
     {
