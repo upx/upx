@@ -58,13 +58,13 @@ static int F(Filter *f)
         unsigned char buf[256];
         unsigned short wbuf[256];
         memset(wbuf, 0, sizeof(wbuf));
-        memset(buf              , 0,      -(~0<<W_CTO));
-        memset(buf - (~0<<W_CTO), 1, 256 + (~0<<W_CTO));
+        memset(buf               , 0,      -(~0u<<W_CTO));
+        memset(buf - (~0u<<W_CTO), 1, 256 + (~0u<<W_CTO));
 
         for (ic = 0; ic < size - 4; ic+=4) if (COND(b,ic)) {
             unsigned const off = (int)(get_be32(b+ic)<<6) >>6;
-            if (size <= (off & (~0<<2))+ic) {
-                buf[(~(~0<<W_CTO)) & (off>>(26 - W_CTO))] |= 1;
+            if (size <= (off & (~0u<<2))+ic) {
+                buf[(~(~0u<<W_CTO)) & (off>>(26 - W_CTO))] |= 1;
                 ++wbuf[0xff&(off>>18)];
             }
         }
@@ -83,7 +83,7 @@ static int F(Filter *f)
     for (ic = 0; ic < size - 4; ic+=4) if (COND(b,ic)) {
         unsigned const word = get_be32(b+ic);
         unsigned const off = (int)(word<<6) >>6;
-        unsigned const jc = (off & (~0<<2))+ic;
+        unsigned const jc = (off & (~0u<<2))+ic;
         // try to detect 'real' calls only
         if (jc < size) {
 #ifdef U
@@ -94,7 +94,7 @@ static int F(Filter *f)
         }
         else {
             assert(0==W_CTO
-            || (~(~0<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
+            || (~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
             lastnoncall = ic;
             noncalls++;
         }
@@ -127,8 +127,8 @@ static int U(Filter *f)
 
    for (ic = 0; ic < size4; ic+=4) if (COND(b,ic)) {
         unsigned const word = get_be32(b+ic);
-        if ((~(~0<<W_CTO) & (word>>(24+2 - W_CTO))) == f->cto) {
-            unsigned const jc = word & (~(~0<<(26 - W_CTO)) & (~0<<2));
+        if ((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) == f->cto) {
+            unsigned const jc = word & (~(~0u<<(26 - W_CTO)) & (~0u<<2));
             set_be32(b+ic, (0xfc000003&word)|(0x03fffffc&(jc-ic-addvalue)));
             f->calls++;
             f->lastcall = ic;
