@@ -387,16 +387,18 @@ void PackDjgpp2::unpack(OutputFile *fo)
     // decompress
     decompress(ibuf, obuf);
 
-    coff_header_t *chdr = (coff_header_t*) (unsigned char *) obuf;
+    coff_header_t *chdr = (coff_header_t*) obuf.getVoidPtr();
     text = chdr->sh;
     data = text + 1;
 
     const unsigned hdrsize = 20 + 28
         + sizeof(external_scnhdr_t) * chdr->f_nscns;
 
-    unsigned addvalue = text->vaddr &~ 0x1ff; // for old versions
+    unsigned addvalue;
     if (ph.version >= 14)
         addvalue = text->vaddr - hdrsize;
+    else
+        addvalue = text->vaddr &~ 0x1ff; // for old versions
 
     // unfilter
     if (ph.filter)
@@ -422,18 +424,21 @@ void PackDjgpp2::unpack(OutputFile *fo)
         if (fo)
             fo->write(obuf, ph.u_len);
     }
-    else if (fo)
+    else
     {
         // write the header
         // some padding might be required between the end
         // of the header and the start of the .text section
 
         const unsigned padding = text->scnptr - hdrsize;
-        memset(ibuf, 0, padding);
+        ibuf.clear(0, padding);
 
-        fo->write(obuf, hdrsize);
-        fo->write(ibuf, padding);
-        fo->write(obuf + hdrsize, ph.u_len - hdrsize);
+        if (fo)
+        {
+            fo->write(obuf, hdrsize);
+            fo->write(ibuf, padding);
+            fo->write(obuf + hdrsize, ph.u_len - hdrsize);
+        }
     }
 
     if (fo)

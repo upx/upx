@@ -301,7 +301,7 @@ void PackPs1::pack(OutputFile *fo)
 
     // prepare paddata
     MemBuffer paddata(PS_HDR_SIZE);
-    memset(paddata, 0, paddata.getSize());
+    paddata.clear();
 
     // write loader + compressed file
     fo->write(&oh, sizeof(oh));
@@ -392,10 +392,10 @@ void PackPs1::unpack(OutputFile *fo)
         // write header
         fo->write(&oh, sizeof(oh));
         // align the ps exe header (mode 2 sector data size)
-        memset(ibuf, 0, PS_HDR_SIZE - sizeof(oh));
+        ibuf.clear(0, PS_HDR_SIZE - sizeof(oh));
         fo->write(ibuf, PS_HDR_SIZE - sizeof(oh));
         // write uncompressed data + pad
-        memset(obuf + ph.u_len, 0, pad);
+        obuf.clear(ph.u_len, pad);
         fo->write(obuf, ph.u_len + pad);
     }
 }

@@ -406,7 +406,7 @@ void PackW32Pe::processRelocs() // pass1
     if ((opt->w32pe.strip_relocs && !isdll) || rnum == 0)
     {
         if (IDSIZE(PEDIR_RELOC))
-            memset(ibuf + IDADDR(PEDIR_RELOC),FILLVAL,IDSIZE(PEDIR_RELOC));
+            ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
         orelocs = new upx_byte [1];
         sorelocs = 0;
         return;
@@ -432,7 +432,7 @@ void PackW32Pe::processRelocs() // pass1
     }
     fix[3] -= counts[3];
 
-    memset(ibuf + IDADDR(PEDIR_RELOC),FILLVAL,IDSIZE(PEDIR_RELOC));
+    ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3],counts[3],orelocs,ibuf + rvamin,1,&big_relocs),orelocs);
 
@@ -1390,8 +1390,8 @@ void PackW32Pe::processResources(Resource *res)
 
         set_le32(ores,res->offs()); // save original offset
         ores += 4;
-        memcpy(ores,ibuf + res->offs(),res->size());
-        memset(ibuf + res->offs(),FILLVAL,res->size());
+        memcpy(ores, ibuf + res->offs(), res->size());
+        ibuf.fill(res->offs(), res->size(), FILLVAL);
         res->newoffs() = ptr_diff(ores,oresources);
         if (rtype == RT_ICON)
             compress_icon = (++iconcnt >= iconsin1stdir || opt->w32pe.compress_icons == 1);
@@ -1465,7 +1465,7 @@ unsigned PackW32Pe::stripDebug(unsigned overlaystart)
     for (unsigned ic = 0; ic < IDSIZE(PEDIR_DEBUG) / sizeof(debug_dir_t); ic++, dd++)
         if (overlaystart == dd->fpos)
             overlaystart += dd->size;
-    memset(ibuf + IDADDR(PEDIR_DEBUG),FILLVAL,IDSIZE(PEDIR_DEBUG));
+    ibuf.fill(IDADDR(PEDIR_DEBUG), IDSIZE(PEDIR_DEBUG), FILLVAL);
     return overlaystart;
 }
 
@@ -1601,7 +1601,7 @@ void PackW32Pe::pack(OutputFile *fo)
     Interval holes(ibuf);
 
     unsigned ic,jc,overlaystart = 0;
-    memset(ibuf,0,usize);
+    ibuf.clear(0, usize);
     for (ic = jc = 0; ic < objs; ic++)
     {
         if (isection[ic].rawdataptr && overlaystart < isection[ic].rawdataptr + isection[ic].size)
@@ -1762,7 +1762,7 @@ void PackW32Pe::pack(OutputFile *fo)
     ic = identsize - identsplit;
 
     const unsigned clen = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
-    memset(obuf + ph.c_len, 0, clen - ph.c_len);
+    obuf.clear(ph.c_len, clen - ph.c_len);
 
     const unsigned s1size = ALIGN_UP(ic + clen + codesize,4) + sotls;
     const unsigned s1addr = (newvsize - (ic + clen) + oam1) &~ oam1;
@@ -1932,8 +1932,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     //for (ic = 0; ic < oh.filealign; ic += 4)
     //    set_le32(ibuf + ic,get_le32("UPX "));
-    assert(oh.filealign <= ibuf.getSize());
-    memset(ibuf,0,oh.filealign);
+    ibuf.clear(0, oh.filealign);
 
     infoHeader("[Writing compressed file]");
 
@@ -2197,7 +2196,7 @@ void PackW32Pe::rebuildRelocs(upx_byte *& extrainfo)
 
     if (opt->w32pe.strip_relocs && !isdll)
     {
-        memset(obuf + ODADDR(PEDIR_RELOC) - rvamin,0,ODSIZE(PEDIR_RELOC));
+        obuf.clear(ODADDR(PEDIR_RELOC) - rvamin, ODSIZE(PEDIR_RELOC));
         ODADDR(PEDIR_RELOC) = 0;
         soxrelocs = 0;
         // FIXME: try to remove the original relocation section somehow
@@ -2336,7 +2335,7 @@ void PackW32Pe::unpack(OutputFile *fo)
     {
         ibuf.dealloc();
         ibuf.alloc(osection[0].rawdataptr);
-        memset(ibuf,0,osection[0].rawdataptr);
+        ibuf.clear();
         infoHeader("[Writing uncompressed file]");
 
         // write loader + compressed file
