@@ -66,9 +66,14 @@ PackLinuxI386elf::getFilters() const
 {
     static const int filters[] = {
         0x49, 0x46,
-#if 1
+// FIXME 2002-11-11: We use stub/fold_elf86.asm, which calls the
+// decompressor multiple times, and unfilter is independent of decompress.
+// Currently only filters 0x49, 0x46, 0x80..0x87 can handle this;
+// and 0x80..0x87 are regarded as "untested".
+#if 0
         0x26, 0x24, 0x11, 0x14, 0x13, 0x16, 0x25, 0x15, 0x12,
-#else
+#endif
+#if 0
         0x83, 0x36, 0x26,
               0x86, 0x80,
         0x84, 0x87, 0x81,
