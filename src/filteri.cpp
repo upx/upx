@@ -213,6 +213,152 @@ static int s_ct16_e8e9_bswap_be(Filter *f)
 
 
 /*************************************************************************
+// 16-bit swaptrick ("naive")
+**************************************************************************/
+
+#define SW16(f, cond, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 3; \
+    do { \
+        if (cond) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b)); \
+            f->calls++; \
+            b += 2 - 1; \
+        } \
+    } while (++b < b_end); \
+    if (f->lastcall) f->lastcall += 2; \
+    return 0;
+
+
+// filter
+static int f_sw16_e8(Filter *f)
+{
+    SW16(f, (*b == 0xe8), get_le16, set_be16)
+}
+
+static int f_sw16_e9(Filter *f)
+{
+    SW16(f, (*b == 0xe9), get_le16, set_be16)
+}
+
+static int f_sw16_e8e9(Filter *f)
+{
+    SW16(f, (*b == 0xe8 || *b == 0xe9), get_le16, set_be16)
+}
+
+
+// unfilter
+static int u_sw16_e8(Filter *f)
+{
+    SW16(f, (*b == 0xe8), get_be16, set_le16)
+}
+
+static int u_sw16_e9(Filter *f)
+{
+    SW16(f, (*b == 0xe9), get_be16, set_le16)
+}
+
+static int u_sw16_e8e9(Filter *f)
+{
+    SW16(f, (*b == 0xe8 || *b == 0xe9), get_be16, set_le16)
+}
+
+
+// scan
+static int s_sw16_e8(Filter *f)
+{
+    SW16(f, (*b == 0xe8), get_le16, set_dummy)
+}
+
+static int s_sw16_e9(Filter *f)
+{
+    SW16(f, (*b == 0xe9), get_le16, set_dummy)
+}
+
+static int s_sw16_e8e9(Filter *f)
+{
+    SW16(f, (*b == 0xe8 || *b == 0xe9), get_le16, set_dummy)
+}
+
+
+#undef SW16
+
+
+/*************************************************************************
+// 16-bit call-/swaptrick ("naive")
+**************************************************************************/
+
+#define CTSW16(f, cond1, cond2, addvalue, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 3; \
+    do { \
+        if (cond1) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b) + (addvalue)); \
+            f->calls++; \
+            b += 2 - 1; \
+        } \
+        else if (cond2) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b)); \
+            f->calls++; \
+            b += 2 - 1; \
+        } \
+    } while (++b < b_end); \
+    if (f->lastcall) f->lastcall += 2; \
+    return 0;
+
+
+// filter
+static int f_ctsw16_e8_e9(Filter *f)
+{
+    CTSW16(f, (*b == 0xe8), (*b == 0xe9), a + f->addvalue, get_le16, set_be16)
+}
+
+static int f_ctsw16_e9_e8(Filter *f)
+{
+    CTSW16(f, (*b == 0xe9), (*b == 0xe8), a + f->addvalue, get_le16, set_be16)
+}
+
+
+// unfilter
+static int u_ctsw16_e8_e9(Filter *f)
+{
+    CTSW16(f, (*b == 0xe8), (*b == 0xe9), 0 - a - f->addvalue, get_be16, set_le16)
+}
+
+static int u_ctsw16_e9_e8(Filter *f)
+{
+    CTSW16(f, (*b == 0xe9), (*b == 0xe8), 0 - a - f->addvalue, get_be16, set_le16)
+}
+
+
+// scan
+static int s_ctsw16_e8_e9(Filter *f)
+{
+    CTSW16(f, (*b == 0xe8), (*b == 0xe9), a + f->addvalue, get_le16, set_dummy)
+}
+
+static int s_ctsw16_e9_e8(Filter *f)
+{
+    CTSW16(f, (*b == 0xe9), (*b == 0xe8), a + f->addvalue, get_le16, set_dummy)
+}
+
+
+#undef CTSW16
+
+
+/*************************************************************************
 // 32-bit calltrick ("naive")
 **************************************************************************/
 
@@ -389,7 +535,151 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 
 #undef CT32
 
-#undef set_dummy
+
+/*************************************************************************
+// 32-bit swaptrick ("naive")
+**************************************************************************/
+
+#define SW32(f, cond, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 5; \
+    do { \
+        if (cond) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b)); \
+            f->calls++; \
+            b += 4 - 1; \
+        } \
+    } while (++b < b_end); \
+    if (f->lastcall) f->lastcall += 4; \
+    return 0;
+
+
+// filter
+static int f_sw32_e8(Filter *f)
+{
+    SW32(f, (*b == 0xe8), get_le32, set_be32)
+}
+
+static int f_sw32_e9(Filter *f)
+{
+    SW32(f, (*b == 0xe9), get_le32, set_be32)
+}
+
+static int f_sw32_e8e9(Filter *f)
+{
+    SW32(f, (*b == 0xe8 || *b == 0xe9), get_le32, set_be32)
+}
+
+
+// unfilter
+static int u_sw32_e8(Filter *f)
+{
+    SW32(f, (*b == 0xe8), get_be32, set_le32)
+}
+
+static int u_sw32_e9(Filter *f)
+{
+    SW32(f, (*b == 0xe9), get_be32, set_le32)
+}
+
+static int u_sw32_e8e9(Filter *f)
+{
+    SW32(f, (*b == 0xe8 || *b == 0xe9), get_be32, set_le32)
+}
+
+
+// scan
+static int s_sw32_e8(Filter *f)
+{
+    SW32(f, (*b == 0xe8), get_le32, set_dummy)
+}
+
+static int s_sw32_e9(Filter *f)
+{
+    SW32(f, (*b == 0xe9), get_le32, set_dummy)
+}
+
+static int s_sw32_e8e9(Filter *f)
+{
+    SW32(f, (*b == 0xe8 || *b == 0xe9), get_le32, set_dummy)
+}
+
+
+#undef SW32
+
+
+/*************************************************************************
+// 32-bit call-/swaptrick ("naive")
+**************************************************************************/
+
+#define CTSW32(f, cond1, cond2, addvalue, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 5; \
+    do { \
+        if (cond1) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b) + (addvalue)); \
+            f->calls++; \
+            b += 4 - 1; \
+        } \
+        else if (cond2) \
+        { \
+            b += 1; \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b)); \
+            f->calls++; \
+            b += 4 - 1; \
+        } \
+    } while (++b < b_end); \
+    if (f->lastcall) f->lastcall += 4; \
+    return 0;
+
+
+// filter
+static int f_ctsw32_e8_e9(Filter *f)
+{
+    CTSW32(f, (*b == 0xe8), (*b == 0xe9), a + f->addvalue, get_le32, set_be32)
+}
+
+static int f_ctsw32_e9_e8(Filter *f)
+{
+    CTSW32(f, (*b == 0xe9), (*b == 0xe8), a + f->addvalue, get_le32, set_be32)
+}
+
+
+// unfilter
+static int u_ctsw32_e8_e9(Filter *f)
+{
+    CTSW32(f, (*b == 0xe8), (*b == 0xe9), 0 - a - f->addvalue, get_be32, set_le32)
+}
+
+static int u_ctsw32_e9_e8(Filter *f)
+{
+    CTSW32(f, (*b == 0xe9), (*b == 0xe8), 0 - a - f->addvalue, get_be32, set_le32)
+}
+
+
+// scan
+static int s_ctsw32_e8_e9(Filter *f)
+{
+    CTSW32(f, (*b == 0xe8), (*b == 0xe9), a + f->addvalue, get_le32, set_dummy)
+}
+
+static int s_ctsw32_e9_e8(Filter *f)
+{
+    CTSW32(f, (*b == 0xe9), (*b == 0xe8), a + f->addvalue, get_le32, set_dummy)
+}
+
+
+#undef CTSW32
 
 
 /*************************************************************************
@@ -398,6 +688,8 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 // This version is more sophisticated because it only
 // tries to change actual calls and/or jumps.
 **************************************************************************/
+
+#undef set_dummy
 
 #include "fcto_ml.ch"
 
@@ -410,7 +702,7 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     // no filter
     { 0x00, 0,          0, NULL, NULL, NULL },
     // 16-bit calltrick
-    { 0x01, 4,          0, f_ct16_e8, u_ct16_e8, s_ct16_e8,},
+    { 0x01, 4,          0, f_ct16_e8, u_ct16_e8, s_ct16_e8 },
     { 0x02, 4,          0, f_ct16_e9, u_ct16_e9, s_ct16_e9 },
     { 0x03, 4,          0, f_ct16_e8e9, u_ct16_e8e9, s_ct16_e8e9 },
     { 0x04, 4,          0, f_ct16_e8_bswap_le, u_ct16_e8_bswap_le, s_ct16_e8_bswap_le },
@@ -419,6 +711,13 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x07, 4,          0, f_ct16_e8_bswap_be, u_ct16_e8_bswap_be, s_ct16_e8_bswap_be },
     { 0x08, 4,          0, f_ct16_e9_bswap_be, u_ct16_e9_bswap_be, s_ct16_e9_bswap_be },
     { 0x09, 4,          0, f_ct16_e8e9_bswap_be, u_ct16_e8e9_bswap_be, s_ct16_e8e9_bswap_be },
+    // 16-bit swaptrick
+    { 0x0a, 4,          0, f_sw16_e8, u_sw16_e8, s_sw16_e8 },
+    { 0x0b, 4,          0, f_sw16_e9, u_sw16_e9, s_sw16_e9 },
+    { 0x0c, 4,          0, f_sw16_e8e9, u_sw16_e8e9, s_sw16_e8e9 },
+    // 16-bit call-/swaptrick
+    { 0x0d, 4,          0, f_ctsw16_e8_e9, u_ctsw16_e8_e9, s_ctsw16_e8_e9 },
+    { 0x0e, 4,          0, f_ctsw16_e9_e8, u_ctsw16_e9_e8, s_ctsw16_e9_e8 },
     // 32-bit calltrick
     { 0x11, 6,          0, f_ct32_e8, u_ct32_e8, s_ct32_e8 },
     { 0x12, 6,          0, f_ct32_e9, u_ct32_e9, s_ct32_e9 },
@@ -429,6 +728,13 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x17, 6,          0, f_ct32_e8_bswap_be, u_ct32_e8_bswap_be, s_ct32_e8_bswap_be },
     { 0x18, 6,          0, f_ct32_e9_bswap_be, u_ct32_e9_bswap_be, s_ct32_e9_bswap_be },
     { 0x19, 6,          0, f_ct32_e8e9_bswap_be, u_ct32_e8e9_bswap_be, s_ct32_e8e9_bswap_be },
+    // 32-bit swaptrick
+    { 0x1a, 6,          0, f_sw32_e8, u_sw32_e8, s_sw32_e8 },
+    { 0x1b, 6,          0, f_sw32_e9, u_sw32_e9, s_sw32_e9 },
+    { 0x1c, 6,          0, f_sw32_e8e9, u_sw32_e8e9, s_sw32_e8e9 },
+    // 32-bit call-/swaptrick
+    { 0x1d, 6,          0, f_ctsw32_e8_e9, u_ctsw32_e8_e9, s_ctsw32_e8_e9 },
+    { 0x1e, 6,          0, f_ctsw32_e9_e8, u_ctsw32_e9_e8, s_ctsw32_e9_e8 },
     // 32-bit cto calltrick
     { 0x21, 6, 0x00ffffff, f_cto32_e8, u_cto32_e8, s_cto32_e8 },
     { 0x22, 6, 0x00ffffff, f_cto32_e9, u_cto32_e9, s_cto32_e9 },

@@ -83,6 +83,7 @@ public:
     unsigned calls;
     unsigned noncalls;
     unsigned wrongcalls;
+    unsigned firstcall;
     unsigned lastcall;
 
     // Read only.

@@ -40,7 +40,7 @@ void initFilter(Filter *f, upx_byte *buf, unsigned buf_len)
     f->buf = buf;
     f->buf_len = buf_len;
     // clear output parameters
-    f->calls = f->wrongcalls = f->noncalls = f->lastcall = 0;
+    f->calls = f->wrongcalls = f->noncalls = f->firstcall = f->lastcall = 0;
 }
 
 
