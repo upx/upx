@@ -1,0 +1,97 @@
+/*  l_lx_elfppc.S -- Linux program entry point & decompressor (Elf binary)
+*
+*  This file is part of the UPX executable compressor.
+*
+*  Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
+*  Copyright (C) 1996-2004 Laszlo Molnar
+*  Copyright (C) 2000-2005 John F. Reiser
+*  All Rights Reserved.
+*
+*  UPX and the UCL library are free software; you can redistribute them
+*  and/or modify them under the terms of the GNU General Public License as
+*  published by the Free Software Foundation; either version 2 of
+*  the License, or (at your option) any later version.
+*
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with this program; see the file COPYING.
+*  If not, write to the Free Software Foundation, Inc.,
+*  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*
+*  Markus F.X.J. Oberhumer              Laszlo Molnar
+*  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+*
+*  John F. Reiser
+*  <jreiser@users.sourceforge.net>
+*/
+
+#include "ppc_regs.h"
+
+/*__MACOS000__*/
+_start: .globl _start
+        call main  # must be exactly 1 instruction; link_register= &decompress
+#include "ppc_d_nrv2e.S"
+
+sz_b_info= 12
+  sz_unc= 0
+  sz_cpr= 4
+
+PROT_READ=  1
+PROT_WRITE= 2
+PROT_EXEC=  4
+
+MAP_PRIVATE= 2
+MAP_FIXED=     0x10
+MAP_ANONYMOUS= 0x20
+
+SYS_mmap= 90
+
+PAGE_SHIFT= 12
+PAGE_SIZE = -(~0<<PAGE_SHIFT)
+
+/* Decompress the rest of this loader, and jump to it. */
+unfold:
+        mflr r30  # &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+
+/* linux ignores fd and off_t when MAP_ANONYMOUS
+        li a5,0  # off_t
+        li a4,-1  # BSD fd
+*/
+        li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+          lwz  a0,sz_cpr(r30)
+        li a2,PROT_READ | PROT_WRITE | PROT_EXEC
+          add  a0,a0,r30
+        li a1,PAGE_SIZE
+          addi a0,a0,sz_b_info+PAGE_SIZE-1
+        li 0,SYS_mmap
+        rlwinm a0,a0,0,0,31-PAGE_SHIFT  # next page boundary after fold
+        sc
+         bso- fail  # Branch if SummaryOverflow (syscall failure), unlikely
+
+        mtlr a0  # &continuation
+        la ldst,31*4(sp)  # &do_not_care
+        mr dst,a0
+        mtctr r31
+        lwz lsrc,sz_cpr(r30)
+        addi src,r30,sz_b_info
+        bctr  # goto decomrpess; return to link register (mmap'ed page)
+fail:
+        trap
+main:
+        stwu r1,-32*4(sp)  # allocate space (keeping 0 mod 16), save r1
+        stmw r2,4(sp) # save registers r2 thru r31
+	mflr r31  # &decompress
+        call unfold
+	/* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+
+eof:
+/*__XTHEENDX__*/
+
+/*
+vi:ts=8:et:nowrap
+*/
+
