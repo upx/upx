@@ -20,10 +20,10 @@
 ;  If not, write to the Free Software Foundation, Inc.,
 ;  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ;
-;  Markus F.X.J. Oberhumer                   Laszlo Molnar
-;  markus.oberhumer@jk.uni-linz.ac.at        ml1050@cdata.tvnet.hu
+;  Markus F.X.J. Oberhumer   Laszlo Molnar
+;  markus@oberhumer.com      ml1050@cdata.tvnet.hu
 ;
-;  mips version by ssg
+;  psOne r3k v1.2 by ssg
 
 INCLUDE "mr3k/macros.asm"
 
@@ -81,22 +81,33 @@ copyloop:
                 INCLUDE "mr3k/n2d_d32.asm"
 ;       __PSXN2DDZ__
 ;       ;_PSXN2ED0__
-;               INCLUDE "mr3k/n2e_d32.asm"
+;               ;;;;;INCLUDE "mr3k/n2e_d32.asm"
 ;       ;_PSXN2EDZ__
 
 
-;       __PSXMSET0__
+;       __MSETBIG0__
                 ori     a0,zero,'SC'    ; amount of removed zero's at eof
                 sll     a0,3            ; (cd mode 2 data sector alignment)
-memset:
+;       __MSETBIGZ__
+;       __MSETSML0__
+                ori     a0,zero,'SC'    ; amount of removed zero's at eof
+;       __MSETSMLZ__
+;       __MSETALG0__
+memset_aligned:
+                addi    a0,-4
+                sw      zero,0(a2)
+                bnez    a0,memset_aligned
+                addiu   a2,4
+;       __MSETALGZ__
+;       __MSETUAL0__
+memset_unaligned:
                 addi    a0,-4
                 swl     zero,3(a2)
                 swr     zero,0(a2)
-                bnez    a0,memset
+                bnez    a0,memset_unaligned
                 addiu   a2,4
-;       __PSXMSETZ__
+;       __MSETUALZ__
 ;       __PSXEXIT0__
-                lw      at,0(sp)
                 lw      a0,4(sp)
                 lw      a1,8(sp)
                 lw      a2,12(sp)
@@ -104,6 +115,7 @@ memset:
                 lw      v0,20(sp)
                 lw      v1,24(sp)
                 lw      ra,28(sp)
+                lw      at,0(sp)
                 addiu   sp,(8*4)
                 DW      'JPEP'          ; marker for the entry jump
                 addu    sp,at
@@ -127,3 +139,4 @@ eof:
 ;                section .data
                 DW      -1
                 DH      eof
+
