@@ -136,16 +136,28 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
     // compress blocks
     unsigned total_in = 0;
     unsigned total_out = 0;
-    ui_total_passes = (file_size + blocksize - 1) / blocksize;
-    if (ui_total_passes == 1)
-        ui_total_passes = 0;
 
-    for (;;) {
-        int const strategy = getStrategy(ft);  // might adjust blocksize, etc.
-        int l = fi->read(ibuf, blocksize);
-        if (l == 0) {
-            break;
-        }
+// FIXME: ui_total_passes is not correct with multiple blocks...
+//    ui_total_passes = (file_size + blocksize - 1) / blocksize;
+//    if (ui_total_passes == 1)
+//        ui_total_passes = 0;
+
+    unsigned remaining = file_size;
+    while (remaining > 0)
+    {
+        // FIXME: disable filters if we have more than one block.
+        // FIXME: There is only 1 un-filter in the stub [as of 2002-11-10].
+        // So the next block really has no choice!
+        // This merely prevents an assert() in compressWithFilters(),
+        // which assumes it has free choice on each call [block].
+        // And if the choices aren't the same on each block,
+        // then un-filtering will give incorrect results.
+        int strategy = getStrategy(ft);
+        if (file_size > (off_t)blocksize)
+            strategy = -3;      // no filters
+
+        int l = fi->readx(ibuf, UPX_MIN(blocksize, remaining));
+        remaining -= l;
 
         // Note: compression for a block can fail if the
         //       file is e.g. blocksize + 1 bytes long
