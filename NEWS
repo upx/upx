@@ -2,9 +2,13 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 1.10 (XX XXX 2000): BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+Changes in 1.09.4 beta (13 Nov 2000): 
+  * BETA VERSION - DO NOT USE EXCEPT FOR TESTING!!! REALLY.
+  * linux/i386: added the new direct-to-memory executable formats - no
+    more temp files are needed for decompression
   * atari/tos: added support for FreeMiNT
   * reduced overall memory requirements during packing
+  * quite a number of internal source code rearrangements
 
 Changes in 1.02 (13 Sep 2000)
   * watcom/le: fixed a problem with the Causeway extender
