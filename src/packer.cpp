@@ -253,7 +253,9 @@ bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
 {
     assert((int)u_len > 0);
     assert((int)c_len > 0);
-    assert((off_t)u_len < file_size);
+
+    // this assertion may fail if we compress the BSS segment -- disabled
+    //assert((off_t)u_len < file_size);     
 
 #if 1
     if (c_len >= u_len - u_len / 8)         // min. 12.5% gain
