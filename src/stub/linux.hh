@@ -470,6 +470,25 @@ struct p_info       // 12-byte packed program header follows stub loader
     ((type) ((uintptr_t) (var)))
 
 
+#if defined(__GNUC__)
+#  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#  elif defined(__GNUC_MINOR__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#  else
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
+#  endif
+#endif
+
+#if (ACC_CC_GNUC >= 0x030300)
+#  define __attribute_cdecl     __attribute__((__cdecl__, __used__))
+#elif (ACC_CC_GNUC >= 0x020700)
+#  define __attribute_cdecl     __attribute__((__cdecl__))
+#else
+#  define __attribute_cdecl
+#endif
+
+
 /*
 vi:ts=4:et:nowrap
 */

@@ -94,7 +94,7 @@ do_brk(void *addr)
 }
 
 static char *
-__attribute__((cdecl))
+__attribute_cdecl
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
@@ -251,7 +251,7 @@ ERR_LAB
 }
 
 
-Elf32_Addr  // entry address
+static Elf32_Addr  // entry address
 getexec(char const *const fname, Elf32_Ehdr *const ehdr, Elf32_auxv_t *const av)
 {
     int const fdi = open(fname, O_RDONLY, 0);

@@ -55,6 +55,9 @@ struct Extent {
 
 
 static void
+#if (ACC_CC_GNUC >= 0x030300)
+__attribute__((__noinline__, __used__, regparm(3), stdcall))
+#endif
 xread(struct Extent *x, char *buf, size_t count)
 {
     char *p=x->buf, *q=buf;
@@ -94,7 +97,7 @@ do_brk(void *addr)
 }
 
 static char *
-__attribute__((cdecl))
+__attribute_cdecl
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
@@ -177,7 +180,7 @@ ERR_LAB
 
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it, and by assembler code to find it.
-void *
+static void *
 make_hatch(Elf32_Phdr const *const phdr)
 {
     unsigned *hatch = 0;

@@ -128,7 +128,7 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 
 
 static char *
-__attribute__((cdecl))
+__attribute_cdecl
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
@@ -158,6 +158,9 @@ do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 // which causes too many offsets to expand from 1 byte to 4.
 
 static int
+#if (ACC_CC_GNUC >= 0x030300)
+__attribute__((__noinline__, __used__, __stdcall__))
+#endif
 go_self(char const *tmpname, char *argv[], char *envp[])
 {
     // Old FreeBSD does not have /proc/self, so use /proc/<pid> instead.
@@ -197,6 +200,7 @@ go_self(char const *tmpname, char *argv[], char *envp[])
     }
     return fdi;
 }
+
 
 /*************************************************************************
 // UPX & NRV stuff

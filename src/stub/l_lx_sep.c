@@ -112,7 +112,7 @@ do_brk(void *addr)
 }
 
 static char *
-__attribute__((cdecl))
+__attribute_cdecl
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
@@ -196,7 +196,7 @@ ERR_LAB
 
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it, and by assembler code to find it.
-void *
+static void *
 make_hatch(Elf32_Phdr const *const phdr)
 {
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
