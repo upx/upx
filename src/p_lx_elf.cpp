@@ -239,7 +239,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
 
     // count passes, set ptload vars
     ui_total_passes = 0;
-    off_t ptload0hi = 0, ptload1lo = 0;
+    off_t ptload0hi = 0, ptload1lo = 0, ptload1sz = 0;
     int nx = 0;
     for (k = 0; k < ehdri.e_phnum; ++k) {
         if (PT_LOAD == phdri[k].p_type) {
@@ -250,6 +250,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
             }
             else if (0 == ptload1lo) {
                 ptload1lo = x.offset;
+                ptload1sz = x.size;
             }
             ui_total_passes++;
         } else {
@@ -257,7 +258,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
                 ui_total_passes++;
         }
     }
-    if (ptload0hi < ptload1lo)
+    if (0!=ptload1sz && ptload0hi < ptload1lo)
         ui_total_passes++;
 
     // compress extents
@@ -296,7 +297,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
                 ? &ft : 0 ), fo );
         ++nx;
     }
-    if (ptload0hi < ptload1lo) { // alignment hole?
+    if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
         x.offset = ptload0hi;
         x.size   = ptload1lo - ptload0hi;
         packExtent(x, total_in, total_out, 0, fo);
@@ -405,7 +406,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(0, NULL, 0);
     unsigned u_adler = upx_adler32(0, NULL, 0);
-    off_t ptload0hi=0, ptload1lo=0;
+    off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD
     bool first_PF_X = true;
@@ -417,6 +418,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
             }
             else if (0==ptload1lo) {
                 ptload1lo = phdr->p_offset;
+                ptload1sz = phdr->p_filesz;
             }
             if (fo)
                 fo->seek(phdr->p_offset, SEEK_SET);
@@ -432,7 +434,7 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
         }
     }
 
-    if (ptload0hi < ptload1lo) {  // alignment hole?
+    if (0!=ptload1sz && ptload0hi < ptload1lo) {  // alignment hole?
         if (fo)
             fo->seek(ptload0hi, SEEK_SET);
         unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
