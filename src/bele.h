@@ -253,6 +253,15 @@ int le16_compare(const void *e1, const void *e2);
 int le32_compare(const void *e1, const void *e2);
 
 
+// just for testing...
+#if 0 && defined(__i386__) && defined(__GNUC__)
+   typedef unsigned short LE16_unaligned __attribute__((aligned(1)));
+   typedef unsigned int   LE32_unaligned __attribute__((aligned(1)));
+#  define LE16      LE16_unaligned
+#  define LE32      LE32_unaligned
+#endif
+
+
 #endif /* already included */
 
 
