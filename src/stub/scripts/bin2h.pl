@@ -41,17 +41,32 @@ $ofile = shift || die;
 $opt_q = "";
 $opt_q = shift if ($#ARGV >= 0);
 
-open(INFILE,$ifile) || die "$ifile\n";
+# open ifile
+open(INFILE,$ifile) || die "open $ifile\n";
 binmode(INFILE);
-open(OUTFILE,">$ofile") || die "$ofile\n";
-binmode(OUTFILE);
+
+# check file size
+@st = stat($ifile);
+if (1 && $st[7] <= 0) {
+    print STDERR "$ifile: ERROR: emtpy file\n";
+    exit(1);
+}
+if (1 && $st[7] > 64*1024) {
+    print STDERR "$ifile: ERROR: file is too big (${st[7]} bytes)\n";
+    if ($st[7] > 1024*1024)
+        print STDERR "  (please upgrade your binutils to 2.12.90.0.15 or better)\n";
+    exit(1);
+}
 
 # read whole file
 $data = <INFILE>;
-close(INFILE);
+close(INFILE) || die;
 $n = length($data);
+die if ($n != $st[7]);
 
-# print
+# open ofile
+open(OUTFILE,">$ofile") || die "open $ofile\n";
+binmode(OUTFILE);
 select(OUTFILE);
 
 $if = $ifile;
