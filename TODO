@@ -1,17 +1,4 @@
-UPX TODO list. Last updated 2002-10-14.
-
-
-- rotten code, bring back to life and resync with UPX 1.2 branch
-  [mostly done]
-
-- resync stub with UPX 1.2 branch
-  [mostly done]
-
-- resync docs with UPX 1.2 branch
-  [mostly done]
-
-- p_ps1.cpp (ps1/exe) needs some work
-  [mostly done]
+UPX TODO list. Last updated 2002-11-11.
 
 - check all <const_cast> to make sure they are not invalid
 
@@ -19,20 +6,11 @@ UPX TODO list. Last updated 2002-10-14.
   (info: bla bla). Also ui.cpp (total_*).
 
 
-TEST:
-
-- test new linux formats
-- test unpacking of old linux formats
-- test new filters
-
-
 
 IMPROVED COMPRESSION RATIO
 ==========================
 
 - experiment with new filters
-
-- implement filters for linux/elf386
 
 - implement filters for dos/exe
 
@@ -73,16 +51,11 @@ FORMAT DOS/EXE
 FORMAT LINUX/386
 ================
 
+- forward-port fix in 1.23: "don't give up too early if a single block
+  turns out to be incompressible"
+
 - don't mmap() the temporary output file - this seems to improve
     file io speed
-
-
-FORMAT LINUX/ELF386
-===================
-
-- implement filters
-
-- implement compressWithFilters()
 
 
 FORMAT TMT/ADAM
@@ -116,8 +89,6 @@ FORMAT WIN16/NE
 
 FORMAT WIN32/PE
 ===============
-
-- verify that compressWithFilters() works
 
 - fix the section alignment with the Intel compiler
 
