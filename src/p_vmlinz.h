@@ -53,7 +53,8 @@ public:
 
 protected:
     virtual int readHeader();
-    virtual bool readKernel();
+    virtual int uncompressKernel();
+    virtual void readKernel();
 
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
@@ -79,8 +80,8 @@ protected:
         // see /usr/src/linux/Documentation/i386/
     };
 
-    off_t  setup_size;
-    unsigned long ulen;
+    MemBuffer setup_buf;
+    int setup_size;
 };
 
 

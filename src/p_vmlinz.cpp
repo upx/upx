@@ -72,7 +72,7 @@ const int *PackVmlinuzI386::getFilters() const
 
 
 /*************************************************************************
-//
+// common routines
 **************************************************************************/
 
 int PackVmlinuzI386::readHeader()
@@ -82,6 +82,7 @@ int PackVmlinuzI386::readHeader()
     fi->readx(&h, sizeof(h));
     if (h.boot_flag != 0xAA55)
         return -1;
+    // FIXME: add more checks for a valid kernel
 
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size > file_size)
@@ -94,36 +95,67 @@ int PackVmlinuzI386::readHeader()
 }
 
 
-bool PackVmlinuzI386::readKernel()
+// read kernel into obuf, gzip-uncompress into ibuf,
+// return uncompressed size
+int PackVmlinuzI386::uncompressKernel()
 {
+    // read whole kernel image
     obuf.alloc(file_size);
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    ibuf.alloc(3 * 1024 * 1024); // 3M should be enough
-
-    upx_bytep gzpos = obuf + setup_size;
-    while (1)
+    // find gzip/zlib header
+    // FIXME - improve this
+    int gzoff = setup_size;
+    while (gzoff < file_size)
     {
-        int pos = find(gzpos, file_size - (gzpos - obuf), "\x1F\x8B", 2);
-        if (pos < 0)
-            return false;
-        gzpos += pos;
-#if 0
-        ulen = ibuf.getSize();
-        if (::uncompress(ibuf, &ulen, gzpos, file_size - (gzpos - obuf)) == Z_OK)
-            return true;
-        gzpos++;
-#else
-        fi->seek(gzpos - obuf, SEEK_SET);
-        gzFile zf = gzdopen(fi->getFd(), "r");
-        if (zf == 0)
-            return false;
-        ulen = gzread(zf, ibuf, ibuf.getSize());
-        return ulen > (unsigned) file_size && ulen < ibuf.getSize();
-#endif
+        int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B", 2);
+        if (off < 0)
+            return 0;
+        gzoff += off;
+        break;
     }
-    return false;
+    if (gzoff >= file_size)
+        return 0;
+
+    // estimate gzip-uncompressed kernel size
+    int isize = file_size - gzoff;
+    isize = UPX_MAX(3 * isize, 4*1024*1024);
+
+    // alloc buffer to hold the gzip-uncompressed kernel
+    ibuf.alloc(isize);
+
+    // gzip-uncompress
+    fi->seek(gzoff, SEEK_SET);
+    gzFile zf = gzdopen(fi->getFd(), "r");
+    if (zf == 0)
+        return 0;
+    int klen = gzread(zf, ibuf, isize);
+    if (klen <= 0 || klen <= file_size)
+        return 0;
+    if (klen >= isize)
+        throwCantPack("kernel is too big - send a bug report");
+
+    // success
+    return klen;
+}
+
+
+void PackVmlinuzI386::readKernel()
+{
+    int klen = uncompressKernel();
+    if (klen <= 0)
+        throwCantPack("kernel decompression failed");
+
+    // OutputFile::dump("kernel.img", ibuf, ulen);
+
+    setup_buf.alloc(setup_size);
+    memcpy(setup_buf, obuf, setup_size);
+
+    obuf.free();
+    obuf.allocForCompression(ibuf.getSize());
+
+    ph.u_len = klen;
 }
 
 
@@ -139,19 +171,11 @@ bool PackVmlinuzI386::canPack()
 
 void PackVmlinuzI386::pack(OutputFile *fo)
 {
-    if (!readKernel())
-        throwCantPack("kernel decompression failed");
-    // OutputFile::dump("kernel.img", ibuf, ulen);
+    readKernel();
 
-    MemBuffer setupbuf(setup_size);
-    memcpy(setupbuf, obuf, setup_size);
-
-    obuf.free();
-    obuf.allocForCompression(ibuf.getSize());
-
-    ph.u_len = ulen;
     if (!compress(ibuf, obuf))
         throwNotCompressible();
+
     const unsigned clen = ph.c_len;
 
     initLoader(nrv_loader, sizeof(nrv_loader));
@@ -173,9 +197,10 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_during_uncompression);
 
-    ((boot_sect_t *)((unsigned char *)setupbuf))->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
+    boot_sect_t *bs = (boot_sect_t *) ((unsigned char *) setup_buf);
+    bs->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
 
-    fo->write(setupbuf, setupbuf.getSize());
+    fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
     fo->write(obuf, clen);
 
@@ -196,17 +221,8 @@ bool PackBvmlinuzI386::canPack()
 
 void PackBvmlinuzI386::pack(OutputFile *fo)
 {
-    if (!readKernel())
-        throwCantPack("kernel decompression failed");
-    // OutputFile::dump("kernel.img", ibuf, ulen);
+    readKernel();
 
-    MemBuffer setupbuf(setup_size);
-    memcpy(setupbuf, obuf, setup_size);
-
-    obuf.free();
-    obuf.allocForCompression(ibuf.getSize());
-
-    ph.u_len = ulen;
     if (!compress(ibuf, obuf))
         throwNotCompressible();
 
@@ -232,13 +248,13 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
+    patchPackHeader(loader, lsize);
+
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
 
-    patchPackHeader(loader, lsize);
-
     const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
-    const unsigned decompr_pos = ALIGN_UP(ulen + overlapoh, 16);
+    const unsigned decompr_pos = ALIGN_UP(ph.u_len + overlapoh, 16);
     const unsigned copy_size = clen + d_len4;
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
     const unsigned esi = ALIGN_UP(clen + lsize, 4) - 4;     // copy from
@@ -254,12 +270,16 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, e_len, "KEIP", kernel_entry);
     patch_le32(loader, e_len, "STAK", stack_during_uncompression);
 
-    ((boot_sect_t *)((unsigned char *)setupbuf))->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
+    boot_sect_t *bs = (boot_sect_t *) ((unsigned char *) setup_buf);
+    bs->sys_size = ALIGN_UP(lsize + clen, 16) / 16;
 
-    fo->write(setupbuf, setupbuf.getSize());
+    fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, e_len);
     fo->write(obuf, clen);
     fo->write(loader + e_len, lsize - e_len);
+
+    // verify
+    verifyOverlappingDecompression(&obuf, overlapoh);
 
     //if (!checkCompressionRatio(file_size, fo->getBytesWritten()))
     //    throwNotCompressible();
