@@ -423,10 +423,14 @@ inline void operator delete[](void *p)
 #define M_NRV2E_LE32    8
 #define M_NRV2E_8       9
 #define M_NRV2E_LE16    10
+#define M_CL1B_LE32     11
+#define M_CL1B_8        12
+#define M_CL1B_LE16     13
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
 #define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
+#define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
 
 
 // Executable formats. Note: big endian types are >= 128.
@@ -449,8 +453,12 @@ inline void operator delete[](void *p)
 #define UPX_F_ELKS_8086         17
 #define UPX_F_PS1_EXE           18
 #define UPX_F_VMLINUX_i386      19
+#define UPX_F_LINUX_ELFI_i386   20
+
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130
+#define UPX_F_MACH_PPC32        131
+#define UPX_F_LINUX_ELFPPC32    132
 
 
 #define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */

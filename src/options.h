@@ -51,6 +51,7 @@ struct options_t {
     int filter;         // preferred filter from Packer::getFilters()
     bool all_methods;   // try all available compression methods ?
     bool all_filters;   // try all available filters ?
+    bool no_filter;     // force no filter
 
     // other options
     int backup;
@@ -116,7 +117,9 @@ struct options_t {
     struct {
         unsigned blocksize;
         bool force_execve;          // force the linux/386 execve format
-        bool ptinterp;              // is PT_INTERP, so don't adjust auxv_t
+        bool is_ptinterp;           // is PT_INTERP, so don't adjust auxv_t
+        bool use_ptinterp;          // use PT_INTERP /opt/upx/run
+        bool make_ptinterp;         // make PT_INTERP [ignore current file!]
         enum { SCRIPT_MAX = 32 };
         const char *script_name;
     } o_unix;

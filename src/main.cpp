@@ -567,6 +567,7 @@ static int do_option(int optc, const char *arg)
     case 522:                               // --no-filter
         opt->filter = 0;
         opt->all_filters = false;
+        opt->no_filter = true;
         break;
     case 523:                               // --all-filters
         opt->all_filters = true;
@@ -703,7 +704,13 @@ static int do_option(int optc, const char *arg)
             set_script_name(mfx_optarg,1);
         break;
     case 663:
-        opt->o_unix.ptinterp = true;
+        opt->o_unix.is_ptinterp = true;
+        break;
+    case 664:
+        opt->o_unix.use_ptinterp = true;
+        break;
+    case 665:
+        opt->o_unix.make_ptinterp = true;
         break;
     case 670:
         opt->ps1_exe.boot_only = true;
@@ -823,7 +830,9 @@ static const struct mfx_option longopts[] =
 #if 0
     {"script",           0x31, 0, 662},     // --script=
 #endif
-    {"ptinterp",            0, 0, 663},     // linux/elf386 PT_INTERP program
+    {"is_ptinterp",         0, 0, 663},     // linux/elf386 PT_INTERP program
+    {"use_ptinterp",        0, 0, 664},     // linux/elf386 PT_INTERP program
+    {"make_ptinterp",       0, 0, 665},     // linux/elf386 PT_INTERP program
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output
     // win32/pe
