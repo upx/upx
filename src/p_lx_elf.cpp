@@ -340,6 +340,28 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
         throwEOFException();
 }
 
+void PackLinuxI386elf::pack3(OutputFile *fo, Filter &ft)
+{
+    // We have packed multiple blocks, so PackLinuxI386::buildLinuxLoader
+    // needs an adjusted ph.c_len in order to get alignment correct.
+    unsigned const save_c_len = ph.c_len;
+    ph.c_len = fo->getBytesWritten() - (
+            // Elf32_Edhr
+        sizeof(elfout.ehdr) +
+            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
+        (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
+            // checksum UPX! lsize version format
+        sizeof(l_info) +
+            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
+        ((elfout.ehdr.e_phnum==3) ? elfout.phdr[2].p_memsz : 0) +
+            // p_progid, p_filesize, p_blocksize
+        sizeof(p_info) +
+            // compressed data
+        b_len );
+    buildLoader(&ft);  /* redo for final .align constraints */
+    ph.c_len = save_c_len;
+    super::pack3(fo, ft);
+}
 
 void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
     unsigned &total_in, unsigned &total_out,
