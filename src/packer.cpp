@@ -1281,7 +1281,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             if (!success)
             {
-                // filter failed or was usesless
+                // filter failed or was useless
                 if (strategy > 0)
                 {
                     // adjust passes
