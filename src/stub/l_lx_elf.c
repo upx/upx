@@ -328,8 +328,7 @@ void *upx_main(
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ehdr);
     Elf32_Addr entry;
     struct Extent xo;
-    struct Extent xi = { 0, (sizeof(struct p_info) + lsize + (char *)my_ehdr) };
-    // warning: 'const' cast away
+    struct Extent xi = { 0, sizeof(struct p_info) + lsize + CONST_CAST(char *, my_ehdr) };
 
     size_t const sz_elfhdrs = ((size_t *)xi.buf)[0];  // sizeof(Ehdr+Phdrs), uncompressed
     size_t const sz_pckhdrs = ((size_t *)xi.buf)[1];  // sizeof(Ehdr+Phdrs),   compressed

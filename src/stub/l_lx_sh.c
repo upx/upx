@@ -296,7 +296,7 @@ void *upx_main(
         *(unsigned short const *)(0x7c + (char const *)my_ehdr);
     struct Extent xi = { // describe compressed shell script
         ((Elf32_Phdr const *)(1 + my_ehdr))->p_filesz - lsize,
-        (lsize + (char *)my_ehdr)  // warning: 'const' cast away
+        lsize + CONST_CAST(char *, my_ehdr)
     };
     struct Extent xo = { ((struct p_info *)xi.buf)[-1].p_filesize, uncbuf };
 

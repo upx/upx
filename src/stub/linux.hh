@@ -51,6 +51,10 @@ struct timex;
 #include <linux/unistd.h>
 
 
+#define CONST_CAST(type, var) \
+    ((type) ((unsigned long) (var)))
+
+
 /*************************************************************************
 // constants and types
 **************************************************************************/
