@@ -26,26 +26,9 @@
  */
 
 
-#if 0 && defined(_MSC_VER) && (_MSC_VER >= 1300)
-#  define _Nomemory UNUSED_Nomemory
-#  include <xstddef>
-#  undef _Nomemory
-#endif
-
 //#define WANT_STL
 #include "conf.h"
 #include "stdcxx.h"
-
-
-#if 0 && defined(_MSC_VER) && (_MSC_VER >= 1300)
-#undef _Nomemory
-namespace std {
-void __cdecl _Nomemory() {
-    static const bad_alloc ba;
-    throw ba;
-}
-}
-#endif
 
 
 #if 1 && defined(__linux__) && (ACC_CC_GNUC >= 0x030400)

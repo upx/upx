@@ -52,13 +52,13 @@
 #    define DISABLE_NEW_DELETE_PLACEMENT_NEW \
         static void *operator new(size_t, void *);
 #  endif
-#  if defined(__GNUC__) && (__GNUC__ >= 3)
+#  if (ACC_CC_GNUC >= 0x030000ul)
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
         static void operator delete(void *, void *) NOTHROW { }
-#  elif defined(__INTEL_COMPILER)
+#  elif (ACC_CC_INTELC)
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
         static void operator delete(void *, void *) NOTHROW { }
-#  elif defined(_MSC_VER) && (_MSC_VER >= 1200)
+#  elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #    define DISABLE_NEW_DELETE_PLACEMENT_DELETE \
         static void operator delete(void *, void *) NOTHROW { }
 #  endif

@@ -198,7 +198,7 @@ LINK_EXE_OUTPUT = -e$@
 ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
 endif
-# warning: do _not_ use option `-d' --> incorrect string merging will happen
+# warning: do not use option `-d' --> incorrect string merging will happen
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -dc
 else
@@ -279,7 +279,7 @@ endif	# djgpp2
 
 
 ###
-### win32 - cygwin / mingw32
+### win32 - cygwin / mingw32 / rsxnt
 ###
 
 ifeq ($(target),cygwin)
@@ -331,7 +331,10 @@ o = .obj
 a = .lib
 e = .exe
 CC = bcc32 -3
-INCLUDES += -I$(srcdir)/acc -I$(srcdir)/filter
+INCLUDES += -I$(srcdir)/acc
+ifneq ($(strip $(wildcard $(srcdir)/filter)),)
+INCLUDES += -I$(srcdir)/filter
+endif
 CFLAGS = -w -w-inl -g1
 CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
@@ -416,7 +419,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
 else
-  CFLAGS += -O1 -GF
+  CFLAGS += -O1 -GF -Gy
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
@@ -475,7 +478,7 @@ LIB := $(DOS_LIBDIRS);$(LIB)
 endif
 export LIB
 
-ifeq (1,2)
+ifeq (1,1)
   # statically link libc.lib
   CC += -ML
   LDLIBS = $(DOS_LDLIBS:.lib=_ml.lib) setargv.obj
@@ -488,7 +491,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -Od -ZI
   LINK_EXE_LDFLAGS += /debug
 else
-  CFLAGS += -O1 -GF
+  CFLAGS += -O1 -GF -Gy
   LINK_EXE_LDFLAGS += /release
   ##LINK_EXE_LDFLAGS += /opt:nowin98
 endif

@@ -1,5 +1,5 @@
 ifeq ($(DEPS_DONE),)
-DEPS_DONE = 1
+DEPS_DONE := 1
 
 
 # /***********************************************************************
@@ -44,5 +44,5 @@ endif
 endif
 
 
-endif
+endif # DEPS_DONE
 

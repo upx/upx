@@ -373,8 +373,8 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 // just for testing...
 #if (1 && ACC_ARCH_IA32 && ACC_CC_GNUC >= 0x030200)
-   typedef unsigned short LE16_unaligned __attribute__((__packed__,__aligned__(1)));
-   typedef unsigned int   LE32_unaligned __attribute__((__packed__,__aligned__(1)));
+   typedef unsigned short LE16_unaligned __attribute__((__aligned__(1)));
+   typedef unsigned int   LE32_unaligned __attribute__((__aligned__(1)));
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #endif
