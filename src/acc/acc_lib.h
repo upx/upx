@@ -90,6 +90,7 @@ ACCLIB_EXTERN(long, acc_hwrite) (int fd, const acc_hvoid_p buf, long size);
 #elif (ACC_OS_TOS)
 #  define ACC_FN_PATH_MAX   259
 #else
+   /* arbitrary limit for acclib implementation */
 #  define ACC_FN_PATH_MAX   1024
 #endif
 
@@ -181,6 +182,7 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_t* d);
 // wrap misc
 **************************************************************************/
 
+#undef acc_alloca
 #if defined(__CYGWIN__) || defined(__MINGW32__)
 #  define acc_alloca(x)     __builtin_alloca((x))
 #elif defined(__BORLANDC__) && defined(__linux__)
@@ -201,6 +203,32 @@ ACCLIB_EXTERN(int,  acc_set_binmode) (int fd, int binary);
 #  define acc_uclock_t      acc_uint32l_t
 #endif
 ACCLIB_EXTERN(acc_uclock_t, acc_uclock) (void);
+
+ACCLIB_EXTERN(unsigned, acc_get_be16) (const acc_hvoid_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_get_be24) (const acc_hvoid_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_get_be32) (const acc_hvoid_p);
+ACCLIB_EXTERN(void, acc_set_be16) (acc_hvoid_p, unsigned);
+ACCLIB_EXTERN(void, acc_set_be24) (acc_hvoid_p, acc_uint32l_t);
+ACCLIB_EXTERN(void, acc_set_be32) (acc_hvoid_p, acc_uint32l_t);
+ACCLIB_EXTERN(unsigned, acc_get_le16) (const acc_hvoid_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_get_le24) (const acc_hvoid_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_get_le32) (const acc_hvoid_p);
+ACCLIB_EXTERN(void, acc_set_le16) (acc_hvoid_p, unsigned);
+ACCLIB_EXTERN(void, acc_set_le24) (acc_hvoid_p, acc_uint32l_t);
+ACCLIB_EXTERN(void, acc_set_le32) (acc_hvoid_p, acc_uint32l_t);
+#if defined(acc_uint64l_t)
+ACCLIB_EXTERN(acc_uint64l_t, acc_get_be64) (const acc_hvoid_p);
+ACCLIB_EXTERN(void, acc_set_be64) (acc_hvoid_p, acc_uint64l_t);
+ACCLIB_EXTERN(acc_uint64l_t, acc_get_le64) (const acc_hvoid_p);
+ACCLIB_EXTERN(void, acc_set_le64) (acc_hvoid_p, acc_uint64l_t);
+#endif
+/* inline versions */
+#if (ACC_ARCH_IA32)
+#  define ACC_GET_LE16(p)       (* (const unsigned short *) (p))
+#  define ACC_GET_LE32(p)       (* (const unsigned int *) (p))
+#  define ACC_SET_LE16(p,v)     (* (unsigned short *) (p) = (unsigned short) (v))
+#  define ACC_SET_LE32(p,v)     (* (unsigned int *) (p) = (unsigned int) (v))
+#endif
 
 ACCLIB_EXTERN(acc_int32l_t, acc_muldiv32) (acc_int32l_t, acc_int32l_t, acc_int32l_t);
 ACCLIB_EXTERN(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t, acc_uint32l_t, acc_uint32l_t);

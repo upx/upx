@@ -150,6 +150,35 @@ ACCLIB_PUBLIC(int, acc_mkdir) (const char* name, unsigned mode)
 }
 
 
+ACCLIB_PUBLIC(acc_int32l_t, acc_muldiv32) (acc_int32l_t a, acc_int32l_t b, acc_int32l_t x)
+{
+    acc_int32l_t r = 0;
+    if (x == 0)
+        return r;
+#if (SIZEOF_ACC_INT32L_T > 4)
+    if (a > ACC_INT32L_C(2147483647) || b > (ACC_INT32L_C(-2147483647) - 1))
+        return r;
+#endif
+    /* FIXME */
+    ACC_UNUSED(a); ACC_UNUSED(b);
+    return r;
+}
+
+ACCLIB_PUBLIC(acc_uint32l_t, acc_umuldiv32) (acc_uint32l_t a, acc_uint32l_t b, acc_uint32l_t x)
+{
+    acc_uint32l_t r = 0;
+    if (x == 0)
+        return r;
+#if (SIZEOF_ACC_INT32L_T > 4)
+    if (a > ACC_UINT32L_C(0xffffffff) || b > ACC_UINT32L_C(0xffffffff))
+        return r;
+#endif
+    /* FIXME */
+    ACC_UNUSED(a); ACC_UNUSED(b);
+    return r;
+}
+
+
 /*
 vi:ts=4:et
 */

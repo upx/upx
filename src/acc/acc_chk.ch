@@ -230,6 +230,10 @@
 
 
     ACCCHK_ASSERT(sizeof(acc_int32l_t) >= sizeof(int))
+#if defined(acc_int32e_t)
+    ACCCHK_ASSERT(sizeof(acc_int32l_t) >= sizeof(acc_int32e_t))
+#endif
+
     ACCCHK_ASSERT(sizeof(acc_int32l_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32l_t) == SIZEOF_ACC_INT32L_T)
     ACCCHK_ASSERT(sizeof(acc_uint32l_t) >= 4)
@@ -254,6 +258,11 @@
 
 
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(int))
+#if defined(acc_int32e_t)
+    ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(acc_int32e_t))
+#endif
+    ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(acc_int32l_t))
+
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= 4)
     ACCCHK_ASSERT(sizeof(acc_int32f_t) >= sizeof(acc_int32l_t))
     ACCCHK_ASSERT(sizeof(acc_int32f_t) == SIZEOF_ACC_INT32F_T)
