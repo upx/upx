@@ -40,7 +40,7 @@ public:
     PackPsx(InputFile *f);
     virtual int getVersion() const { return 11; }
     virtual int getFormat() const { return UPX_F_PSX_EXE; }
-    virtual const char *getName() const { return "psx/exe"; }
+    virtual const char *getName() const { return "ps/exe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
