@@ -24,21 +24,21 @@ several different executable formats. It achieves an excellent compression
 ratio and offers I<*very*> fast decompression. Your executables suffer
 no memory overhead or other drawbacks for most of the formats supported.
 
-While you may use UPX freely for both non-commercial and commercial
+While you may use B<UPX> freely for both non-commercial and commercial
 executables (for details see the file LICENSE), we would highly
-appreciate if you credit UPX and ourselves in the documentation,
-possibly including a reference to the UPX home page. Thanks.
+appreciate if you credit B<UPX> and ourselves in the documentation,
+possibly including a reference to the B<UPX> home page. Thanks.
 
-[ Using UPX in non-OpenSource applications without proper credits
+[ Using B<UPX> in non-OpenSource applications without proper credits
 is considered not politically correct ;-) ]
 
 
 
 =head1 DISCLAIMER
 
-UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
+B<UPX> comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 
-Having said that, we think that UPX is quite stable now. Indeed we
+Having said that, we think that B<UPX> is quite stable now. Indeed we
 have compressed lots of files without any problems. Also, the
 current version has undergone several months of beta testing -
 actually it's more than 2 1/2 years since our first public beta.
@@ -91,7 +91,7 @@ B<UPX> is a versatile executable packer with the following features:
       the full source code of UPX is released under the GNU General Public
       License (GPL) !
 
-You probably understand now why we call UPX the "I<ultimate>"
+You probably understand now why we call B<UPX> the "I<ultimate>"
 executable packer.
 
 
@@ -105,7 +105,7 @@ specified on the command line.
 
 =head2 Decompress
 
-All UPX supported file formats can be unpacked using the B<-d> switch, eg.
+All B<UPX> supported file formats can be unpacked using the B<-d> switch, eg.
 B<upx -d yourfile.exe> will uncompress the file you've just compressed.
 
 =head2 Test
@@ -135,7 +135,7 @@ B<-q -q -q> (or B<-qqq>): produce no output at all
 
 B<--help>: prints the help
 
-B<--version>: print the version of UPX
+B<--version>: print the version of B<UPX>
 
 B<--stdout>: writes all output to stdout
 
@@ -216,7 +216,7 @@ all executable formats.
 =head1 ENVIRONMENT
 
 The environment variable B<UPX> can hold a set of default
-options for UPX. These options are interpreted first and
+options for B<UPX>. These options are interpreted first and
 can be overwritten by explicit command line parameters.
 For example:
 
@@ -227,12 +227,8 @@ For example:
 Under DOS/Windows you must use '#' instead of '=' when setting the
 environment variable because of a COMMAND.COM limitation.
 
-On Vax/VMS, the name of the environment variable is
-UPX_OPT, to avoid a conflict with the symbol set for
-invocation of the program.
-
 Not all of the options are valid in the environment variable -
-UPX will tell you.
+B<UPX> will tell you.
 
 You can use the B<--no-env> option to turn this support off.
 
@@ -264,7 +260,7 @@ Same as vmlinuz/i386.
 
 =head2 NOTES FOR DOS/COM
 
-Obviously UPX won't work with executables that want to read data from
+Obviously B<UPX> won't work with executables that want to read data from
 themselves (like some commandline utilities that ship with Win95/98/ME).
 
 Compressed programs only work on a 286+.
@@ -283,7 +279,7 @@ Extra options available for this executable format:
 
 dos/exe stands for all "normal" 16-bit DOS executables.
 
-Obviously UPX won't work with executables that want to read data from
+Obviously B<UPX> won't work with executables that want to read data from
 themselves (like some command line utilities that ship with Win95/98/ME).
 
 Compressed programs only work on a 286+.
@@ -315,23 +311,23 @@ Extra options available for this executable format:
 
 =head2 NOTES FOR DJGPP2/COFF
 
-First of all, it is recommended to use UPX *instead* of B<strip>. strip has
+First of all, it is recommended to use B<UPX> *instead* of B<strip>. strip has
 the very bad habit of replacing your stub with its own (outdated) version.
-Additionally UPX corrects a bug/feature in strip v2.8.x: it
+Additionally B<UPX> corrects a bug/feature in strip v2.8.x: it
 will fix the 4 KByte aligment of the stub.
 
-UPX includes the full functionality of stubify. This means it will
+B<UPX> includes the full functionality of stubify. This means it will
 automatically stubify your COFF files. Use the option B<--coff> to
 disable this behaviour (see below).
 
-UPX automatically handles Allegro packfiles.
+B<UPX> automatically handles Allegro packfiles.
 
 The DLM format (a rather exotic shared library extension) is not supported.
 
 Packed programs will be byte-identical to the original after uncompression.
 All debug information and trailing garbage will be stripped, though.
 
-BTW, UPX is the successor of the DJP executable packer.
+BTW, B<UPX> is the successor of the DJP executable packer.
 
 Extra options available for this executable format:
 
@@ -520,7 +516,7 @@ Extra options available for this executable format:
 Please read the general Linux description first.
 
 Shell scripts where the underling shell accepts a ``-c'' argument
-can use the Linux/sh386 format.  UPX decompresses the shell script
+can use the Linux/sh386 format.  B<UPX> decompresses the shell script
 into low memory, then maps the shell and passes the entire text of the
 script as an argument with a leading ``-c''.
 It does not use space in /tmp, and does not use /proc.
@@ -649,7 +645,7 @@ Extra options available for this executable format:
 
 The vmlinuz/386 and bvmlinuz/386 formats take a gzip-compressed
 bootable kernel image ("vmlinuz", "zImage", "bzImage"), gzip-decompress
-it and re-compress it with the UPX compression method.
+it and re-compress it with the B<UPX> compression method.
 
 vmlinuz/386 is completely unrelated to the other Linux executable
 formats, and it does not share any of their drawbacks.
@@ -686,7 +682,7 @@ Extra options available for this executable format:
 
 =head2 NOTES FOR WATCOM/LE
 
-UPX has been successfully tested with the following extenders:
+B<UPX> has been successfully tested with the following extenders:
   DOS4G, DOS4GW, PMODE/W, DOS32a, CauseWay.
   The WDOS/X extender is partly supported (for details
   see the file bugs BUGS).
@@ -706,10 +702,10 @@ Extra options available for this executable format:
 
 =head2 NOTES FOR WIN32/PE
 
-The PE support in UPX is quite stable now, but probably there are
+The PE support in B<UPX> is quite stable now, but probably there are
 still some incompabilities with some files.
 
-Because of the way UPX (and other packers for this format) works, you
+Because of the way B<UPX> (and other packers for this format) works, you
 can see increased memory usage of your compressed files. If you start
 several instances of huge compressed programs you're wasting memory
 because the common segements of the program won't get shared
@@ -798,7 +794,7 @@ redistribute it under certain conditions.
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-UPX License Agreement for more details.
+B<UPX License Agreement> for more details.
 
 You should have received a copy of the UPX License Agreement along
 with this program; see the file LICENSE. If not, visit the UPX home page.
