@@ -57,15 +57,19 @@ struct TT_Elf32_Ehdr
         EI_CLASS   = 4,
         EI_DATA    = 5,
         EI_VERSION = 6,
-        EI_OSABI   = 7
+        EI_OSABI   = 7,
+        EI_ABIVERSION = 8
     };
     enum { // EI_CLASS
-        ELFCLASS32 = 1,	/* 32-bit objects */
+        ELFCLASS32 = 1, /* 32-bit objects */
         ELFCLASS64 = 2  /* 64-bit objects */
     };
     enum { // EI_DATA
-        ELFDATA2LSB	= 1, /* 2's complement, little endian */
-        ELFDATA2MSB	= 2	 /* 2's complement, big endian */
+        ELFDATA2LSB = 1, /* 2's complement, little endian */
+        ELFDATA2MSB = 2  /* 2's complement, big endian */
+    };
+    enum { // EI_OSABI
+        ELFOSABI_LINUX = 3
     };
     enum {  // e_type
         ET_NONE = 0,    /* No file type */
@@ -74,11 +78,12 @@ struct TT_Elf32_Ehdr
         ET_DYN  = 3,    /* Shared object file */
         ET_CORE = 4     /* Core file */
     };
+    enum {  // e_machine
+        EM_386 = 3,
+        EM_PPC = 20
+    };
     enum {  // e_version
         EV_CURRENT = 1
-    };
-    enum {  // e_machine
-        EM_PPC      = 20
     };
 }
 __attribute_packed;

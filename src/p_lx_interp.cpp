@@ -83,33 +83,17 @@ void PackLinuxI386interp::pack1(OutputFile *fo, Filter &)
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-#define EI_ABIVERSION	8		/* ABI version */
-
-#define EI_OSABI	7		/* OS ABI identification */
-#define ELFOSABI_LINUX		3	/* Linux.  */
-
-#define EI_VERSION	6		/* File version byte index */
-#define EV_CURRENT	1		/* Current version */
-
-#define EI_DATA		5		/* Data encoding byte index */
-#define ELFDATA2LSB	1		/* 2's complement, little endian */
-
-#define EI_CLASS	4		/* File class byte index */
-#define ELFCLASS32	1		/* 32-bit objects */
-
-#define ET_EXEC 2
-#define EM_386 3
-
+#define E Elf32_Ehdr
     cprElfHdr3 h3;
     memset(&h3, 0, sizeof(h3));
     memcpy(h3.ehdr.e_ident, "\177ELF", 4);
-    h3.ehdr.e_ident[EI_CLASS] = ELFCLASS32;
-    h3.ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
-    h3.ehdr.e_ident[EI_VERSION] = EV_CURRENT;
-    h3.ehdr.e_ident[EI_OSABI] = ELFOSABI_LINUX;
-    h3.ehdr.e_ident[EI_ABIVERSION] = EV_CURRENT;
-    h3.ehdr.e_type = ET_EXEC;
-    h3.ehdr.e_machine = EM_386;
+    h3.ehdr.e_ident[E::EI_CLASS] = E::ELFCLASS32;
+    h3.ehdr.e_ident[E::EI_DATA] = E::ELFDATA2LSB;
+    h3.ehdr.e_ident[E::EI_VERSION] = E::EV_CURRENT;
+    h3.ehdr.e_ident[E::EI_OSABI] = E::ELFOSABI_LINUX;
+    h3.ehdr.e_ident[E::EI_ABIVERSION] = E::EV_CURRENT;
+    h3.ehdr.e_type = E::ET_EXEC;
+    h3.ehdr.e_machine = E::EM_386;
     h3.ehdr.e_version = 1;
     h3.ehdr.e_phoff = sizeof(Elf32_Ehdr);
     h3.ehdr.e_ehsize = sizeof(Elf32_Ehdr);
@@ -134,6 +118,7 @@ void PackLinuxI386interp::pack1(OutputFile *fo, Filter &)
     else { // usual case
         generateElfHdr(fo, &h3, getbrk(phdri, ehdri.e_phnum));
     }
+#undef E
 }
 
 void PackLinuxI386interp::pack2(OutputFile *fo, Filter &ft)
