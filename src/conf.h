@@ -436,22 +436,24 @@ enum {
 
 struct options_t {
     int cmd;
+
+    // compression options
     int method;
     int level;          // compression level 1..10
     int mem_level;      // memory level 1..9
     int filter;         // preferred filter from Packer::getFilters()
     bool all_filters;   // try all filters ?
 
+    // other options
+    int backup;
     int console;
     int debug;
     int force;
     int info_mode;
     bool ignorewarn;
-    int backup;
     bool no_env;
     bool no_progress;
     const char *output_name;
-    const char *script_name;
     int small;
     int verbose;
     bool to_stdout;
@@ -500,6 +502,8 @@ struct options_t {
     } tos;
     struct {
         unsigned blocksize;
+        enum { SCRIPT_MAX = 32 };
+        const char *script_name;
     } unix;
     struct {
         bool le;
@@ -605,8 +609,6 @@ int upx_test_overlap       ( const upx_byte *buf, upx_uint src_off,
 
 #endif /* __cplusplus */
 
-
-#define SCRIPT_MAX 32
 
 #endif /* already included */
 
