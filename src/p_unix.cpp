@@ -45,6 +45,8 @@ PackUnix::PackUnix(InputFile *f) :
 {
     assert(sizeof(Elf_LE32_Ehdr) == 52);
     assert(sizeof(Elf_LE32_Phdr) == 32);
+    assert(sizeof(l_info) == 12);
+    assert(sizeof(p_info) == 12);
 }
 
 
