@@ -424,7 +424,7 @@ endif
 
 main$o:     mygetopt.h version.h
 filter$o:   filter.h
-filteri$o:  filter.h fcto_ml.ch fcto_ml2.ch
+filteri$o:  filter.h fcto_ml.ch fcto_ml2.ch fcto_ml3.ch
 help$o:     version.h
 msg$o:      ui.h
 lefile$o:   lefile.h
@@ -439,16 +439,19 @@ packmast$o: packmast.h packer.h lefile.h \
 ui$o:       packer.h ui.h
 work$o:     packer.h ui.h packmast.h
 
-p_com$o:    packer.h p_com.h           stub/l_com.h
+p_com$o:    packer.h p_com.h \
+		stub/l_com.h
 p_djgpp2$o: packer.h p_djgpp2.h stub/stubify.h \
 		stub/l_djgpp2.h
-p_exe$o:    packer.h p_exe.h           stub/l_exe.h
+p_exe$o:    packer.h p_exe.h \
+		stub/l_exe.h
 p_lx_elf$o: packer.h p_lx_elf.h p_unix.h p_elf.h \
 		stub/l_le_n2b.h stub/l_le_n2d.h
-p_lx_sep$o: packer.h p_lx_sep.h
-p_lx_sh$o:  packer.h p_lx_elf.h p_unix.h p_elf.h \
+p_lx_sep$o: packer.h p_lx_sep.h p_lx_elf.h p_unix.h p_elf.h
+p_lx_sh$o:  packer.h p_lx_sh.h p_lx_elf.h p_unix.h p_elf.h \
 		stub/l_sh_n2b.h stub/l_sh_n2d.h
-p_sys$o:    packer.h p_sys.h p_com.h   stub/l_sys.h
+p_sys$o:    packer.h p_sys.h p_com.h \
+		stub/l_sys.h
 p_tmt$o:    packer.h p_tmt.h \
 		stub/l_tmt.h
 p_tos$o:    packer.h p_tos.h \
