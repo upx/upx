@@ -329,7 +329,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     // patch loader
     patchPackHeader(loader,lsize);
     patch_le32(loader,lsize,"ENTR",coff_hdr.a_entry);
-    patchFilter32(ft, loader, lsize);
+    patchFilter32(loader, lsize, &ft);
     patch_le32(loader,lsize,"BSSL",overlapoh/4);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     patch_le32(loader,lsize,"OUTP",text->vaddr &~ 0x1ff);

@@ -513,7 +513,7 @@ void PackWcle::pack(OutputFile *fo)
     upx_byte *p = oimage+soimage-d_len;
     patch_le32(p,d_len,"JMPO",ih.init_eip_offset+text_vaddr-(ic+d_len));
     patch_le32(p,d_len,"ESP0",ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address));
-    if (patchFilter32(ft, p, d_len) && text_vaddr)
+    if (patchFilter32(p, d_len, &ft) && text_vaddr)
         patch_le32(p, d_len, "TEXV", text_vaddr);
     patch_le32(p,d_len,"RELO",mps*pages);
 

@@ -217,7 +217,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     memcpy(loader, getLoader(), lsize);
 
     patchPackHeader(loader, lsize);
-    patchFilter32(ft, loader, lsize);
+    patchFilter32(loader, lsize, &ft);
     patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_during_uncompression);
@@ -298,7 +298,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    patchFilter32(ft, loader, lsize);
+    patchFilter32(loader, lsize, &ft);
     patchPackHeader(loader, lsize);
 
     const int e_len = getLoaderSectionStart("LZCUTPOI");

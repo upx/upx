@@ -223,7 +223,7 @@ void PackTmt::pack(OutputFile *fo)
 
     // patch loader
     patch_le32(loader,lsize,"JMPO",ih.entry-(ph.u_len+overlapoh+d_len));
-    patchFilter32(ft, loader, lsize);
+    patchFilter32(loader, lsize, &ft);
     patchPackHeader(loader,e_len);
 
     const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));
