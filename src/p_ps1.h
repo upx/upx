@@ -43,7 +43,7 @@ class PackPs1 : public Packer
 public:
     PackPs1(InputFile *f);
     virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_PS_EXE; }
+    virtual int getFormat() const { return UPX_F_PS1_EXE; }
     virtual const char *getName() const { return "ps1/exe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
