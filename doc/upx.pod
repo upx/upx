@@ -188,6 +188,10 @@ Try if B<--overlay=strip> works.
 
 =item *
 
+Try B<--all-filters>.
+
+=item *
+
 For win32/pe programs there's B<--strip-relocs=0>. See notes below.
 
 =back
@@ -333,6 +337,11 @@ Extra options available for this executable format:
 
   --coff              Produce COFF output instead of EXE. By default
                       UPX keeps your current stub.
+
+  --all-filters       Compress the program several times, using different
+                      preprocessing filters. This may improve the compression
+                      ratio in some cases, but usually the default filter
+                      gives the best results anyway.
 
 
 
@@ -679,7 +688,10 @@ Drawbacks:
 
 Extra options available for this executable format:
 
-  (none)
+  --all-filters       Compress the program several times, using different
+                      preprocessing filters. This may improve the compression
+                      ratio in some cases, but usually the default filter
+                      gives the best results anyway.
 
 
 
@@ -754,6 +766,11 @@ Extra options available for this executable format:
                       not work under Win32s.
                       UPX never strips relocations from a DLL
                       regardless of this option.
+
+  --all-filters       Compress the program several times, using different
+                      preprocessing filters. This may improve the compression
+                      ratio in some cases, but usually the default filter
+                      gives the best results anyway.
 
 
 
