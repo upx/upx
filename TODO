@@ -64,7 +64,7 @@ FORMAT TMT/ADAM
 - the decompressors are already aligned, no need for an
     extra alignment
 
-- implement compressWithFilters()
+- verify that compressWithFilters() works
 
 
 FORMAT WATCOM/LE
