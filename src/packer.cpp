@@ -757,7 +757,7 @@ int Packer::patch_le16(void *b, int blen, const void *old, unsigned new_)
 int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
 {
     int boff = find_le32(b,blen,old);
-    checkPatch(b, blen, boff, 2);
+    checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
     set_le32(p,new_);
@@ -769,7 +769,7 @@ int Packer::patch_le32(void *b, int blen, unsigned old, unsigned new_)
 int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 {
     int boff = find(b,blen,old,4);
-    checkPatch(b, blen, boff, 2);
+    checkPatch(b, blen, boff, 4);
 
     unsigned char *p = (unsigned char *)b + boff;
     set_le32(p,new_);
