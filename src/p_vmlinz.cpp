@@ -95,16 +95,22 @@ int PackVmlinuzI386::readFileHeader()
     setup_size = (1 + (h.setup_sects ? h.setup_sects : 4)) * 0x200;
     if (setup_size <= 0 || setup_size >= file_size)
         return -1;
-    if (setup_size + 16 * h.sys_size  // beware 16-bit sys_size
-    != (~(~0u<<20) & (unsigned) ALIGN_UP(file_size, 16)) )
+
+    int format = UPX_F_VMLINUZ_i386;
+    unsigned sys_size = ALIGN_UP(file_size, 16) - setup_size;
+    if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
+    {
+        format = UPX_F_BVMLINUZ_i386;
+        // account for 16-bit h.sys_size, wraparound at 20 bits
+        sys_size &= (1 << 20) - 1;
+    }
+
+    if (16 * h.sys_size != sys_size)
         return -1;
 
     // FIXME: add more checks for a valid kernel
 
-    if (memcmp(h.hdrs, "HdrS", 4) == 0 && (h.load_flags & 1) != 0)
-        return UPX_F_BVMLINUZ_i386;
-
-    return UPX_F_VMLINUZ_i386;
+    return format;
 }
 
 
