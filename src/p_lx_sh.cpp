@@ -96,7 +96,7 @@ bool PackLinuxI386sh::getShellName(char *buf)
     buf[l_shname] = 0;
     static char const *const shname[] = { // known shells that accept "-c" arg
         "ash", "bash", "bsh", "csh", "ksh", "pdksh", "sh", "tcsh", "zsh",
-        //"python", // FIXME: does python work ???
+        "python",
         NULL
     };
     const char *bname = strrchr(buf, '/');
