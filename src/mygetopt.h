@@ -19,7 +19,7 @@
 #define __MFX_GETOPT_H 1
 
 #ifdef __cplusplus
-//extern "C" {
+/* extern "C" { */
 #endif
 
 /* For communication from `getopt' to the caller.
@@ -96,7 +96,7 @@ int mfx_getopt_long(int argc, char **argv, const char *shortopts,
                     const struct mfx_option *longopts, int *longind);
 
 #ifdef __cplusplus
-//}
+/* } */
 #endif
 
-#endif /* _GETOPT_H */
+#endif /* __MFX_GETOPT_H */

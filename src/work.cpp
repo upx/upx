@@ -35,13 +35,16 @@
 
 #define ALWAYS_CHMOD 1
 #if defined(__DJGPP__)
-#  define USE_FTIME
+#  define USE_FTIME 1
 #  undef ALWAYS_CHMOD
+#elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+#  include <utime.h>
+#  define USE_UTIME 1
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
-#  define USE__FUTIME
+#  define USE__FUTIME 1
 #  undef ALWAYS_CHMOD
 #elif defined(HAVE_UTIME)
-#  define USE_UTIME
+#  define USE_UTIME 1
 #endif
 
 #if !defined(SH_DENYRW)

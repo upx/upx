@@ -34,7 +34,7 @@
 #include "acc/acc_cxx.h"
 
 #define NOTHROW             ACC_CXX_NOTHROW
-#define DISABLE_NEW_DELETE  ACC_CXX_DISABLE_NEW_DELETE_STRICT
+#define DISABLE_NEW_DELETE  ACC_CXX_DISABLE_NEW_DELETE
 
 
 /*************************************************************************

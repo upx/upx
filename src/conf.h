@@ -37,6 +37,9 @@
 **************************************************************************/
 
 #include "acc/acc.h"
+#if (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
+# undef HAVE_UTIME_H /* this pulls in <windows.h> */
+#endif
 #include "acc/acc_incd.h"
 #include "acc/acc_ince.h"
 #include "acc/acc_lib.h"

@@ -88,11 +88,25 @@ endif
 
 
 # /***********************************************************************
-# // compression library
+# // compression libraries
 # ************************************************************************/
 
 ifeq ($(WITH_ZLIB),1)
 DOS_LDLIBS += zlib.lib
+ZLIBDIR:=$(strip $(subst \,/,$(ZLIBDIR)))
+ifneq ($(strip $(wildcard $(ZLIBDIR))),)
+ifneq ($(strip $(wildcard $(ZLIBDIR)/include/zlib.h)),)
+INCLUDES += -I$(ZLIBDIR)/include
+else
+ifneq ($(strip $(wildcard $(ZLIBDIR)/src/zlib.h)),)
+INCLUDES += -I$(ZLIBDIR)/src
+else
+ifneq ($(strip $(wildcard $(ZLIBDIR)/zlib.h)),)
+INCLUDES += -I$(ZLIBDIR)
+endif
+endif
+endif
+endif
 endif
 
 UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
@@ -132,7 +146,7 @@ endif
 
 
 ###
-### linux
+### linux - gcc
 ###
 
 ifeq ($(target),linux)
@@ -144,7 +158,6 @@ endif
 DEFS += -D_FILE_OFFSET_BITS=64
 LDLIBS += -lmcheck
 ##CFLAGS_WERROR = -Werror
-
 ifeq ($(DEBUG),1)
 else
   ##LDFLAGS += -static
@@ -154,7 +167,6 @@ else
   endif
 endif
 CHMOD_EXE = chmod 755 $@
-
 endif	# linux
 
 
@@ -197,7 +209,6 @@ LINK_EXE_OUTPUT = -o $@
 ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
 endif
-
 CFLAGS  = $(CFLAGS_WERROR)
 ifeq ($(DEBUG),1)
 CFLAGS += -g -O0
@@ -205,7 +216,6 @@ else
 CFLAGS += -O2
 endif
 LDFLAGS += -Wl,-Map,$T.map
-
 endif
 
 
@@ -223,7 +233,6 @@ LINK_EXE_OUTPUT = -o $@
 ifeq ($(WITH_ZLIB),1)
 LDLIBS += -lz
 endif
-
 ##CFLAGS += -Minform=info
 CXXFLAGS = $(CFLAGS) -tused
 ifeq ($(DEBUG),1)
@@ -390,18 +399,11 @@ CFLAGS_OUTPUT = -o$@
 LDFLAGS = -ls
 LINK_EXE_OUTPUT = -e$@
 LDLIBS = $(DOS_LDLIBS)
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq ($(DEBUG),1)
   CFLAGS += -Od -d
 else
   CFLAGS += -O2 -d
 endif
-
 endif	# win32-bc
 
 
@@ -420,18 +422,11 @@ CFLAGS_OUTPUT = -o$@
 LDFLAGS = -L/map
 LINK_EXE_OUTPUT = -o$@
 LDLIBS = $(DOS_LDLIBS)
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq ($(DEBUG),1)
   CFLAGS += -o- -g -s
 else
   CFLAGS += -o
 endif
-
 endif	# win32-dm
 
 
@@ -450,12 +445,6 @@ LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
@@ -473,8 +462,30 @@ else
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
-
 endif	# win32-ic
+
+
+###
+### win32 - Metrowerks C++
+###
+
+ifeq ($(target),win32-mwerks)
+o = .obj
+a = .lib
+e = .exe
+CC = mwcc -runtime ss -gccinc
+CFLAGS = -w on
+CXXFLAGS = $(CFLAGS)
+CFLAGS_OUTPUT = -o $@
+LDFLAGS = -map $T.map
+LINK_EXE_OUTPUT = -o $@
+LDLIBS = $(DOS_LDLIBS)
+ifeq ($(DEBUG),1)
+  CFLAGS += -opt full
+else
+  CFLAGS +=
+endif
+endif	# win32-mwerks
 
 
 ###
@@ -492,18 +503,11 @@ CFLAGS_OUTPUT = -o$@
 LDFLAGS = -L/map
 LINK_EXE_OUTPUT = -o$@
 LDLIBS = $(DOS_LDLIBS)
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq ($(DEBUG),1)
   CFLAGS += -o- -g -s
 else
   CFLAGS += -o
 endif
-
 endif	# win32-sc
 
 
@@ -522,12 +526,6 @@ LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq (1,1)
   # statically link libc.lib
   CC += -ML
@@ -546,7 +544,6 @@ else
   ##LINK_EXE_LDFLAGS += /opt:nowin98
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
-
 endif	# win32-vc
 
 
@@ -566,7 +563,6 @@ CFLAGS_OUTPUT = -fo=$@
 LDFLAGS = -k0x100000 -fm
 LINK_EXE_OUTPUT = -fe=$@
 LDLIBS = $(DOS_LDLIBS)
-
 CC_SRC  = $(subst /,\\,$<)
 CXX_SRC = $(subst /,\\,$<)
 INCLUDES := $(strip $(subst /,\\,$(INCLUDES)))
@@ -575,24 +571,17 @@ ifeq (1,2)
   export WCL386
   INCLUDES :=
 endif
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq ($(DEBUG),1)
   CFLAGS +=
 else
   # note: it seems that the optimizer is generating bad code with `-ox'
   CFLAGS += -olr
 endif
-
 endif	# win32-wc
 
 
 ###
-### win64 - Intel C++ [IA64]
+### win64 - Intel C++ [Itanium]
 ###
 
 ifeq ($(target),win64-ic)
@@ -606,12 +595,6 @@ LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq (1,2)
   # statically link libc.lib
   CC += -ML
@@ -629,12 +612,11 @@ else
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
-
 endif	# win64-ic
 
 
 ###
-### win64 - Visual C++ [AMD64 & IA64]
+### win64 - Visual C++ [AMD64 or Itanium]
 ###
 
 ifeq ($(target),win64-vc)
@@ -648,12 +630,6 @@ LDFLAGS =
 LINK_EXE_OUTPUT = -Fe$@
 LINK_EXE_LDFLAGS = /link /map:$T.map
 ##LINK_EXE_LDFLAGS += /verbose
-
-ifneq ($(strip $(DOS_LIBDIRS)),)
-LIB := $(DOS_LIBDIRS);$(LIB)
-endif
-export LIB
-
 ifeq (1,1)
   # statically link libc.lib
   CC += -ML
@@ -671,12 +647,11 @@ else
   LINK_EXE_LDFLAGS += /release
 endif
 RESOURCES := $(subst .rc,.res,$(notdir $(wildcard $(srcdir)/*.rc)))
-
 endif	# win64-vc
 
 
 # /***********************************************************************
-# // malloc debuggers and memory checkers - somewhat obsolete, use valgrind
+# // malloc debuggers and memory checkers - obsolete, use valgrind
 # ************************************************************************/
 
 ifeq (1,2)
