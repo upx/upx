@@ -5,7 +5,7 @@ all:
 	$(MAKE) -C src
 	$(MAKE) -C doc
 
-clean distclean:
+mostlyclean clean distclean maintainer-clean:
 	$(MAKE) -C src/stub $@
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
@@ -20,7 +20,8 @@ cvs-admin-ko:
 ChangeLog:
 	perl scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
-.PHONY: all clean distclean dist cvs-admin-ko ChangeLog
+.PHONY: all mostlyclean clean distclean maintainer-clean
+.PHONY: dist cvs-admin-ko ChangeLog
 
 .NOEXPORT:
 
