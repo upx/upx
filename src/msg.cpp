@@ -109,12 +109,15 @@ static void pr_error(const char *iname, const char *msg, bool is_warning)
 void printErr(const char *iname, const Throwable *e)
 {
     char buf[1024];
+    size_t l;
 
     upx_snprintf(buf, sizeof(buf), "%s", prettyName(typeid(*e).name()));
-    if (e->getMsg())
-        upx_snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),": %s", e->getMsg());
-    if (e->getErrno())
-        upx_snprintf(buf+strlen(buf),sizeof(buf)-strlen(buf),": %s", strerror(e->getErrno()));
+    l = strlen(buf);
+    if (l < sizeof(buf) && e->getMsg())
+        upx_snprintf(buf+l, sizeof(buf)-l, ": %s", e->getMsg());
+    l = strlen(buf);
+    if (l < sizeof(buf) && e->getErrno())
+        upx_snprintf(buf+l, sizeof(buf)-l, ": %s", strerror(e->getErrno()));
     pr_error(iname,buf,e->isWarning());
 }
 
