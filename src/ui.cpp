@@ -271,13 +271,15 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
     // set pass
     if (total_passes > 1)
     {
+        int buflen, l;
         do {
             s->pass_digits++;
             total_passes /= 10;
         } while (total_passes > 0);
-        int l = sprintf(&s->msg_buf[s->bar_pos], "%*d/%*d  ",
-                        s->pass_digits, s->pass,
-                        s->pass_digits, s->total_passes);
+        buflen = sizeof(s->msg_buf) - s->bar_pos;
+        l = upx_snprintf(&s->msg_buf[s->bar_pos], buflen, "%*d/%*d  ",
+                         s->pass_digits, s->pass,
+                         s->pass_digits, s->total_passes);
         if (l > 0 && s->bar_len - l > 10)
         {
             s->bar_len -= l;
@@ -385,7 +387,7 @@ void __UPX_ENTRY UiPacker::callback(upx_uint isize, upx_uint osize, int state, v
     if (state != -1 && state != 3) return;
     if (user)
     {
-        UiPacker *uip = reinterpret_cast<UiPacker *>(user);
+        UiPacker *uip = (UiPacker *) user;
         uip->doCallback(isize, osize);
     }
 }
@@ -440,9 +442,10 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     if (osize > 0)
         ratio = get_ratio(isize, osize);
 
-    sprintf(m,"  %3d.%1d%%  %c ",
-            ratio / 10000, (ratio % 10000) / 1000,
-            spinner[s->spin_counter & 3]);
+    int buflen = &s->msg_buf[sizeof(s->msg_buf)] - m;
+    upx_snprintf(m, buflen, "  %3d.%1d%%  %c ",
+                 ratio / 10000, (ratio % 10000) / 1000,
+                 spinner[s->spin_counter & 3]);
     assert((int)strlen(s->msg_buf) < 1 + 80);
 
     s->pos = pos;
@@ -593,8 +596,9 @@ void UiPacker::uiListTotal(bool decompress)
     if (opt->verbose >= 1 && total_files >= 2)
     {
         char name[32];
-        upx_snprintf(name,sizeof(name),"[ %ld file%s ]", total_files_done, total_files_done == 1 ? "" : "s");
-        con_fprintf(stdout,"%s%s\n",
+        upx_snprintf(name, sizeof(name), "[ %ld file%s ]",
+                     total_files_done, total_files_done == 1 ? "" : "s");
+        con_fprintf(stdout, "%s%s\n",
                     header_line2,
                     mkline(total_fu_len, total_fc_len,
                            total_u_len, total_c_len,

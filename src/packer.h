@@ -112,7 +112,7 @@ public:
     virtual ~Packer();
 
     virtual int getVersion() const = 0;
-    // A unique integer ID for this executable format. See unupx.h.
+    // A unique integer ID for this executable format. See conf.h.
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
     virtual const int *getCompressionMethods(int method, int level) const = 0;

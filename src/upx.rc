@@ -1,10 +1,17 @@
 #include <winres.h>
 #include "version.h"
 
-#define VERSION_MAJOR   ((UPX_VERSION_HEX >> 16) & 0xff)
-#define VERSION_MINOR   ((UPX_VERSION_HEX >> 8) & 0xff)
-#define VERSION_MICRO   ((UPX_VERSION_HEX >> 0) & 0xff)
+#define VERSION_MAJOR   1
+#define VERSION_MINOR   90
+#define VERSION_MICRO   0
 #define VERSION_STRING  UPX_VERSION_STRING
+
+#define H(v,s)          ((0x ## v) << (s))
+#define VERSION_HEX \
+    (H(VERSION_MAJOR, 16) | H(VERSION_MINOR, 8) | H(VERSION_MICRO, 0))
+#if (VERSION_HEX != UPX_VERSION_HEX)
+#  error "version mismatch"
+#endif
 
 #if 0
 #ifdef _WIN32

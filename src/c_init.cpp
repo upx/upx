@@ -147,8 +147,8 @@ void con_fprintf(FILE *f, const char *format, ...)
     va_list args;
     char buf[80*25];
 
-    va_start(args,format);
-    upx_vsnprintf(buf,sizeof(buf),format,args);
+    va_start(args, format);
+    upx_vsnprintf(buf, sizeof(buf), format,args);
     va_end(args);
 
     if (con == me)

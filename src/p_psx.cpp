@@ -30,7 +30,6 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_psx.h"
-#include "version.h"
 
 static const
 #include "stub/l_psx.h"

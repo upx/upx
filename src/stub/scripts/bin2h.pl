@@ -53,7 +53,7 @@ if (1 && $st[7] <= 0) {
 }
 if (1 && $st[7] > 64*1024) {
     print STDERR "$ifile: ERROR: file is too big (${st[7]} bytes)\n";
-    if ($st[7] > 1024*1024) {
+    if ($ifile =~ /^fold/) {
         print STDERR "  (please upgrade your binutils to 2.12.90.0.15 or better)\n";
     }
     exit(1);

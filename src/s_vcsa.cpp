@@ -331,11 +331,11 @@ static int init(screen_t *this, int fd)
         int attr;
         unsigned short a;
 
-        sprintf(vc_name, "/dev/vcsa%d", (int) MINOR(st.st_rdev));
+        upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
         this->data->fd = open(vc_name, O_RDWR);
         if (this->data->fd == -1)
         {
-            sprintf(vc_name, "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
+            upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcc/a%d", (int) MINOR(st.st_rdev));
             this->data->fd = open(vc_name, O_RDWR);
         }
         if (this->data->fd != -1)

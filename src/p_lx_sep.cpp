@@ -54,7 +54,7 @@ const upx_byte *PackLinuxI386sep::getLoader() const
     if (0==name) {
         name = "/usr/local/lib/upxX";
     }
-    sprintf(script, "#!%s\n", name);
+    upx_snprintf(script, sizeof(script), "#!%s\n", name);
     if (M_IS_NRV2B(ph.method)) {
         script[strlen(script)-2] = 'b';
         return (upx_byte const *)script;

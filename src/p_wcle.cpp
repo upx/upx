@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,8 +21,8 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
@@ -283,7 +283,7 @@ void PackWcle::preprocessFixups()
     for (ic = jc = 0; ic < objects; ic++)
         jc += counts[ic];
 
-    ByteArray(rl,jc);
+    ByteArray(rl, jc);
     ByteArray(srf, counts[objects+0]+1);
     ByteArray(slf, counts[objects+1]+1);
 
@@ -296,7 +296,7 @@ void PackWcle::preprocessFixups()
     {
         while ((unsigned)(fix - ifixups) < get_le32(ifpage_table+ic+1))
         {
-            const signed short fixp2 = (signed short) get_le16(fix+2);
+            const int fixp2 = get_le16_signed(fix+2);
             unsigned value;
 
             switch (*fix)
@@ -318,7 +318,7 @@ void PackWcle::preprocessFixups()
                     fix += 5;
                     break;
                 case 5:       // 16-bit offset
-                    if ((unsigned short)fixp2 < 4096 && IOT(fix[4]-1,my_base_address) == jc)
+                    if ((unsigned)fixp2 < 4096 && IOT(fix[4]-1,my_base_address) == jc)
                         dputc('6',stdout);
                     else
                         throwCantPack("unsupported 16-bit offset relocation");
@@ -461,7 +461,8 @@ void PackWcle::pack(OutputFile *fo)
     readImage();
     readNonResidentNames();
 
-    if (find_le32(iimage,20,get_le32("UPX ")) >= 0)
+//    if (find_le32(iimage,20,get_le32("UPX ")) >= 0)
+    if (find_le32(iimage,UPX_MIN(soimage,256u),UPX_MAGIC_LE32) >= 0)
         throwAlreadyPacked();
 
     if (ih.init_ss_object != objects)
@@ -546,7 +547,7 @@ void PackWcle::pack(OutputFile *fo)
 
     // copy the overlay
     const unsigned overlaystart = ih.data_pages_offset + exe_offset
-        + mps * (pages - 1) + ih.bytes_on_last_page;
+        + getImageSize();
     const unsigned overlay = file_size - overlaystart - ih.non_resident_name_table_length;
     checkOverlay(overlay);
     copyOverlay(fo, overlay, &oimage);
@@ -762,7 +763,9 @@ int PackWcle::canUnpack()
         return false;
     fi->seek(exe_offset + ih.data_pages_offset, SEEK_SET);
     // FIXME: 1024 could be too large for some files
-    return readPackHeader(1024) ? 1 : -1;
+    //int len = 1024;
+    int len = UPX_MIN(getImageSize(), 256u);
+    return readPackHeader(len) ? 1 : -1;
 }
 
 

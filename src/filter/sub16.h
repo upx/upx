@@ -31,7 +31,7 @@
 //
 **************************************************************************/
 
-#include "filter/sub.hh"
+#include "sub.hh"
 
 #define SUB16(f, N)     SUB(f, N, unsigned short, get_le16, set_le16)
 #define ADD16(f, N)     ADD(f, N, unsigned short, get_le16, set_le16)

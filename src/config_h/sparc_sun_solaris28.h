@@ -1,4 +1,4 @@
-/* pseudo <config.h> for Linux */
+/* pseudo <config.h> for sparc-sun-solaris2.8 */
 
 #ifndef __UPX_CONFIG_H
 #define __UPX_CONFIG_H
@@ -172,9 +172,6 @@
 
 /* Define if you have the <stddef.h> header file.  */
 #define HAVE_STDDEF_H 1
-
-/* Define if you have the <stdint.h> header file.  */
-#define HAVE_STDINT_H 1
 
 /* Define if you have the <sys/param.h> header file.  */
 #define HAVE_SYS_PARAM_H 1

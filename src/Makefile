@@ -24,6 +24,8 @@ ifeq ($(strip $(UCLDIR)),)
 UCLDIR = $(HOME)/local/src/ucl-1.01
 endif
 
+##target =
+
 DEBUG = 0
 
 
@@ -75,13 +77,12 @@ OBJECTS1 = \
 	packer$o packerf$o packhead$o packmast$o \
 	p_com$o p_djgpp2$o p_elks$o p_exe$o \
 	p_lx_elf$o p_lx_exc$o p_lx_sep$o p_lx_sh$o \
-	p_psx$o \
-	p_sys$o p_tmt$o p_tos$o \
+	p_psx$o p_sys$o p_tmt$o p_tos$o \
 	p_unix$o p_vmlinz$o p_w16ne$o p_w32pe$o p_wcle$o
 
 # no exceptions or RTTI
 OBJECTS2 = \
-	filteri$o help$o main$o mygetopt$o util$o \
+	filteri$o help$o main$o mygetopt$o snprintf$o util$o \
 	c_init$o c_file$o c_none$o c_screen$o \
 	s_object$o s_djgpp2$o s_vcsa$o s_win32$o
 
@@ -108,7 +109,7 @@ e =
 CC = gcc
 DEFS =
 INCLUDES =
-INCLUDES = -I. -I$(srcdir)
+##INCLUDES = -I. -I$(srcdir)
 CFLAGS_OUTPUT = -o $@
 
 LINK_EXE = $(CXXLD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -168,14 +169,15 @@ UCLDIR:=$(strip $(subst \,/,$(UCLDIR)))
 NRVDIR:=$(strip $(subst \,/,$(NRVDIR)))
 u = ucl
 U = UCL
-upx_exe = upx$e
+upx_exe_tail =
 include $(srcdir)/Makefile.inc
 ifneq ($(strip $(wildcard $(NRVDIR)/include/nrv)),)
   u = nrv
   U = NRV
-  upx_exe = upx_$u$e
+  upx_exe_tail = _$(u)
   include $(srcdir)/Makefile.inc
 endif
+upx_exe = upx$(upx_exe_tail)$(e)
 
 override tmp := -Wl,--rpath,
 LDRPATH := $(addprefix $(tmp),$(LIBDIRS))
@@ -279,6 +281,12 @@ CC = m68k-atari-mint-gcc
 CC += -m68040
 endif
 
+ifeq ($(target),cross-mint-m68020-60)
+e = .ttp
+CC = m68k-atari-mint-gcc
+CC += -m68020-60 -m68881
+endif
+
 
 ###
 ### djgpp2
@@ -290,8 +298,8 @@ CC += -march=i386 -mcpu=i586
 ##CFLAGS_M += -mno-schedule-prologue
 CFLAGS_WERROR = -Werror
 STUBEDIT_EXE = stubedit $@ bufsize=0xfc00
-ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.exe)),)
-ifneq ($(strip $(wildcard $(DJDIR)/bin/cwsdstub.exe)),)
+ifneq ($(strip $(wildcard $(DJDIR)/bin/mfxdjstubify.ex[eE])),)
+ifneq ($(strip $(wildcard $(DJDIR)/bin/cwsdstub.ex[eE])),)
 STUBIFY_EXE = mfxdjstubify -v -s $(DJDIR)/bin/cwsdstub.exe $(upx_exe)
 endif
 endif
@@ -481,8 +489,13 @@ endif	# wcc
 
 
 # /***********************************************************************
-# // malloc debuggers and memory checkers
+# // malloc debuggers and memory checkers - somewhat obsolete, use valgrind
 # ************************************************************************/
+
+ifeq (1,2)
+  # compile in extra valgrind support
+  CFLAGS += -DWITH_VALGRIND
+endif
 
 ifeq (1,2)
   LDLIBS += -lefence
@@ -498,11 +511,6 @@ ifeq (1,2)
   LDLIBS += -lgc -lpthread
   # only needed when using -static:
   ##LDFLAGS += -Wl,-defsym,_DYNAMIC=0
-endif
-
-ifeq (1,2)
-  CFLAGS += -DWITH_MSS
-  LDLIBS += -lmss
 endif
 
 
@@ -550,20 +558,13 @@ CXXFLAGS2 = $(CXXFLAGS1)
 
 all: $(upx_exe)
 
-.PHONY: all unupx mostlyclean clean distclean maintainer-clean untabify tags
+.PHONY: all mostlyclean clean distclean maintainer-clean untabify tags
 
 $(upx_exe): $(OBJECTS) $(LIBS) $(RESOURCES)
 	$(LINK_EXE)
 	$(STUBEDIT_EXE)
 	$(STUBIFY_EXE)
 	$(CHMOD_EXE)
-
-
-unupx:
-	$(MAKE) target=vc6 unupx.dll
-
-unupx.dll: $(OBJECTS) $(LIBS)
-	$(LINK_DLL)
 
 
 mostlyclean:

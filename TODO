@@ -13,6 +13,9 @@ UPX TODO list. Last updated 2002-07-16.
 
 - check all <const_cast> to make sure they are not invalid
 
+- throwNotCompressible() is not a real error, so make the output nicer
+  (info: bla bla). Also ui.cpp (total_*).
+
 
 TEST:
 

@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-#  app.pl -- assembly preprocessor for upx
+#  app_mr3k.pl -- assembly preprocessor for upx
 #
 #  This file is part of the UPX executable compressor.
 #
@@ -28,7 +28,7 @@
 #
 
 #
-# usage: app.pl infile outfile
+# usage: app_mr3k.pl infile outfile
 #
 
 $in = shift || die;
@@ -81,41 +81,31 @@ for $line (@lines)
 
 $cs = "";
 $i = 0;
+$test = "";
 
 # 2nd pass
 for $line (@lines)
 {
-    if ($line =~ /^\s+(j\w+|loop|call)\s+(\w*)/)
-    {
-        $label = $2;
-        die "$line" if ($label =~ /(\bnear\b|\bshort\b)/);
-        if (defined $labels{$label})
-        {
-            $ts = $labels{$label};
-            if ($ts ne $cs)
-            {
-                $line =~ s/$label/J$i$ilabel/;
-                print OU $line;
-                print OU "J$i$ilabel:\n";
-                print OU "\t\tsection\t.data\n\t\tdd\t";
-                print OU "0,J$i$ilabel,\'$ts\',$label - S$ts$ilabel\n";
-                print OU "\t\tsection\t.text\n\n";
-                $line = "";
-            }
-        }
-    }
-
     $line = ";$line" if ($line =~ /^\s+align\s/);
 
     print OU $line;
+
     if ($line =~ /__([A-Z0-9]{8})__/)
     {
         print OU "S$1$ilabel:\n";
-        print OU "\t\tsection\t.data\n\t\tdd\t\'$1\',S$1$ilabel\n";
-        print OU "\t\tsection\t.text\n\n";
+        push @{ $test[++$#test] }, "\t\tDB\t\"$1\"\n\t\tDW\tS$1$ilabel\n";
+
         $cs = $1;
     }
     $i++;
+
+    if ($line =~ /section .data/)
+    {
+        for $i ( 0 .. $#test )
+        {
+            print OU "@{$test[$i]}";
+        }
+    }
 }
 
 # vi:ts=4:et

@@ -1,4 +1,4 @@
-/* compress.cpp --
+/* snprintf.h --
 
    This file is part of the UPX executable compressor.
 
@@ -26,23 +26,34 @@
  */
 
 
-#include "conf.h"
+#ifndef __UPX_SNPRINTF_H
+#define __UPX_SNPRINTF_H
 
-
-#if defined(WITH_NRV)
-#  include "compress_nrv.ch"
-#elif defined(WITH_UCL)
-#  define upx_adler32       upx_adler32
-//#  define upx_crc32         upx_crc32
-#  define upx_compress      upx_compress
-#  define upx_decompress    upx_decompress
-#  if (UPX_VERSION_HEX >= 0x019000)
-#    define upx_test_overlap  upx_test_overlap
-#  endif
-#  include "compress.ch"
-#else
-#  error
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap);
+int upx_snprintf(char *str, size_t count, const char *format,...);
+int upx_vasprintf(char **ptr, const char *format, va_list ap);
+int upx_asprintf(char **ptr, const char *format, ...);
+
+#if 1
+#  undef sprintf
+#  define sprintf   error_sprintf_is_dangerous_use_snprintf
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* already included */
 
 
 /*

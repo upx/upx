@@ -28,7 +28,6 @@
 
 //#define WANT_STL
 #include "conf.h"
-#include "version.h"
 #include "file.h"
 #include "packer.h"
 #include "filter.h"
@@ -157,7 +156,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     ph.saved_u_adler = ph.u_adler;
     ph.saved_c_adler = ph.c_adler;
     // update checksum of uncompressed data
-    ph.u_adler = upx_adler32(ph.u_adler,in,ph.u_len);
+    ph.u_adler = upx_adler32(in, ph.u_len, ph.u_adler);
 
     // set compression paramters
     upx_compress_config_t conf;
@@ -231,7 +230,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         return false;
 
     // update checksum of compressed data
-    ph.c_adler = upx_adler32(ph.c_adler,out,ph.c_len);
+    ph.c_adler = upx_adler32(out, ph.c_len, ph.c_adler);
     // Decompress and verify. Skip this when using the fastest level.
     if (ph.level > 1)
     {
@@ -245,7 +244,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
             throwInternalError("decompression failed (size error)");
 
         // verify decompression
-        if (ph.u_adler != upx_adler32(ph.saved_u_adler,in,ph.u_len))
+        if (ph.u_adler != upx_adler32(in, ph.u_len, ph.saved_u_adler))
             throwInternalError("decompression failed (checksum error)");
     }
     return true;
@@ -303,7 +302,7 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
     // verify checksum of compressed data
     if (verify_checksum)
     {
-        adler = upx_adler32(ph.saved_c_adler, in, ph.c_len);
+        adler = upx_adler32(in, ph.c_len, ph.saved_c_adler);
         if (adler != ph.c_adler)
             throwChecksumError();
     }
@@ -317,7 +316,7 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
     // verify checksum of decompressed data
     if (verify_checksum)
     {
-        adler = upx_adler32(ph.saved_u_adler, out, ph.u_len);
+        adler = upx_adler32(out, ph.u_len, ph.saved_u_adler);
         if (adler != ph.u_adler)
             throwChecksumError();
     }
@@ -927,18 +926,19 @@ char const *Packer::identstr(unsigned &size)
     static const char identbig[] =
         "\n\0"
         "$Info: "
-        "This file is packed with the UPX executable packer http://upx.tsx.org $"
+        "This file is packed with the UPX executable packer http://upx.sf.net $"
         "\n\0"
         "$Id: UPX "
         UPX_VERSION_STRING4
-        " Copyright (C) 1996-2001 the UPX Team. All Rights Reserved. $"
+        " Copyright (C) 1996-2002 the UPX Team. All Rights Reserved. $"
         "\n";
-
     static const char identsmall[] =
         "\n"
         "$Id: UPX "
-        "(C) 1996-2001 the UPX Team. All Rights Reserved. http://upx.tsx.org $"
+        "(C) 1996-2002 the UPX Team. All Rights Reserved. http://upx.sf.net $"
         "\n";
+//    static const char identtiny[] = UPX_VERSION_STRING4;
+// FIXME
 
     if (opt->small) {
         size = sizeof(identsmall);

@@ -2,7 +2,7 @@
 # UPX stub Makefile (GNU make)
 #
 # see http://upx.sourceforge.net/download/tools/
-# for required support tools
+# for required build tools
 #
 
 ifeq ($(strip $(UCLDIR)),)
@@ -76,13 +76,13 @@ NASM     = /usr/topics/asm/nasm-20000903/nasm -O2 -w+macro-params -w+orphan-labe
 NASM     = nasm -w+macro-params -w+orphan-labels
 NASM    += -i$(srcdir)/
 
-APP      = perl -w $(srcdir)/scripts/app.pl
+APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
 BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
 BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
 O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ##SETFOLD  = /bin/sh $(srcdir)/scripts/setfold.sh
 ##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
-STRIPELF = ./util/sstrip/sstrip
+STRIPELF = $(srcdir)/util/sstrip/sstrip
 
 # Use gcc 2.95.2 for smallest code.
 CC_LINUX_CFLAGS = -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
@@ -98,18 +98,18 @@ ifeq (1,1)
 # Preprocessor for the a68k 68000-assembler.
 CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__A68K__
 ##CPP_M68K = cpp -I$(UCL_UPX) -x assembler-with-cpp -P -C -traditional -nostdinc -D__A68K__
-APP_M68K  = perl -w $(srcdir)/scripts/app_68k.pl
+APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
 ASM_M68K = a68k -q -x
 else
 # Preprocessor for the asl 68000-assembler.
 CPP_M68K = gcc -I$(UCL_UPX) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional -D__ASL__
-APP_M68K  = perl -w $(srcdir)/scripts/app_68k.pl
-ASM_M68K = sh $(srcdir)/scripts/asl_68k.sh
+APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
+ASM_M68K = sh $(srcdir)/scripts/asl_m68k.sh
 endif
 
 # MIPS R3000
-APP_R3K = perl -w $(srcdir)/scripts/app_r3k.pl
-ASM_R3K = asm5900 --nologo -q
+APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
+ASM_MR3K = asm5900 --nologo -q
 
 
 # /***********************************************************************
@@ -119,7 +119,7 @@ ASM_R3K = asm5900 --nologo -q
 .PHONY: default all stubs mostlyclean clean distclean maintainer-clean ident strings
 
 default:
-	@echo "UPX info: type 'make all' if you have all the needed build tools."
+	@echo "UPX info: type 'make all' if you have all the required build tools."
 
 all: stubs ## upxb upxd
 
@@ -150,10 +150,10 @@ strings: all
 # ************************************************************************/
 
 .asm.asx:
-	$(APP) $< $@
+	$(APP_I386) $< $@
 
 .ash.asy:
-	$(APP) $< $@
+	$(APP_I386) $< $@
 
 
 stubify.h: stub.asm
@@ -296,7 +296,7 @@ fold_elf86.o: fold_elf86.asm
 fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	ld -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
 	objcopy -S -R .comment -R .note $T.bin
-	./util/sstrip/sstrip $T.bin
+	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
@@ -309,7 +309,7 @@ fold_exec86.o: fold_exec86.asm
 fold_exec86.h: l_lx_exec.o fold_exec86.o l_lx_exec86.lds
 	ld -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o
 	objcopy -S -R .comment -R .note $T.bin
-	./util/sstrip/sstrip $T.bin
+	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386exec_fold $@
 
@@ -322,7 +322,7 @@ fold_sh86.o: fold_sh86.asm
 fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	ld -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
 	objcopy -S -R .comment -R .note $T.bin
-	./util/sstrip/sstrip $T.bin
+	$(STRIPELF) $T.bin
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386sh_fold $@
 
@@ -349,8 +349,8 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 # ************************************************************************/
 
 l_psx.h: l_psx.asm
-	$(APP_R3K) $< $T.asx
-	$(ASM_R3K) $T.asx -I$(UCL_UPX) -o$T.bin -l$T.lst
+	$(APP_MR3K) $< $T.asx
+	$(ASM_MR3K) $T.asx -I$(UCL_UPX) -o$T.bin -l$T.lst
 	$(BIN2H) $T.bin nrv_loader $@
 
 
@@ -364,19 +364,19 @@ DEPS2 = header.asy macros.asy
 $(STUBS):       $(srcdir)/scripts/bin2h.pl
 
 l_com.h:        n2b_d16.asy  $(DEPS2)
-l_djgpp2.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  $(DEPS2)
+l_djgpp2.h:     n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  n2e_d8e.asy  $(DEPS2)
 l_sys.h:        n2b_d16.asy  $(DEPS2)
-l_t_n2b.h:      n2b_d.ash    bits.ash     $(DEPS1)
-l_t_n2bs.h:     n2b_d.ash    bits.ash     $(DEPS1)
-l_t_n2d.h:      n2d_d.ash    bits.ash     $(DEPS1)
-l_t_n2ds.h:     n2d_d.ash    bits.ash     $(DEPS1)
-l_tmt.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_ext2.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_vmlinz.h:     n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_vxd.h:        n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_wcle.h:       n2b_d32.asy  n2d_d32.asy  $(DEPS2)
-l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  $(DEPS2)
+l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1)
+l_t_n2bs.h:     n2b_d.ash    bits.ash  $(DEPS1)
+l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1)
+l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1)
+l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1)
+l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1)
+l_tmt.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_vxd.h:        n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_wcle.h:       n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
+l_w32pe.h:      n2b_d32.asy  n2d_d32.asy  n2e_d32.asy  $(DEPS2)
 
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy

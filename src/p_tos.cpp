@@ -640,7 +640,7 @@ int PackTos::canUnpack()
 {
     if (!readFileHeader())
         return false;
-    if (!readPackHeader(512))
+    if (!readPackHeader(768))
         return false;
     // check header as set by packer
     if ((ih.fh_text & 3) != 0 || (ih.fh_data & 3) != 0 || (ih.fh_bss & 3) != 0

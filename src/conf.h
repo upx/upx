@@ -36,9 +36,38 @@
 #if defined(UPX_CONFIG_H)
 #  include UPX_CONFIG_H
 #endif
-#include <limits.h>
 
+#if defined(HAVE_STDINT_H)
+#  if !defined(__STDC_LIMIT_MACROS)
+#    define __STDC_LIMIT_MACROS 1
+#  endif
+#  if !defined(__STDC_CONSTANT_MACROS)
+#    define __STDC_CONSTANT_MACROS 1
+#  endif
+#  include <stdint.h>
+#endif
+#include <limits.h>
+#include "version.h"
 #include "tailor.h"
+
+// upx_int64l is int_least64_t in <stdint.h> terminology
+#if !defined(upx_int64l)
+#  if defined(HAVE_STDINT_H)
+#    define upx_int64l      int_least64_t
+#    define upx_uint64l     uint_least64_t
+#  elif (ULONG_MAX > 0xffffffffL)
+#    define upx_int64l      long int
+#    define upx_uint64l     unsigned long int
+#  elif defined(__GNUC__) || defined(__DMC__)
+#    define upx_int64l      long long int
+#    define upx_uint64l     unsigned long long int
+#  elif defined(__BORLANDC__) || defined(_MSC_VER) || defined(__WATCOMC__)
+#    define upx_int64l      __int64
+#    define upx_uint64l     unsigned __int64
+#  else
+#    error "need a 64-bit integer type"
+#  endif
+#endif
 
 #if !defined(__i386__)
 #  if defined(__386__) || defined(_M_IX86)
@@ -58,25 +87,8 @@
 #undef unix
 
 
-#if defined(WITH_NRV)
-#  include <nrv/nrvconf.h>
-#  if !defined(UPX_UINT_MAX)
-#    define UPX_UINT_MAX  NRV_UINT_MAX
-#    define upx_uint      nrv_uint
-#    define upx_voidp     nrv_voidp
-#    define upx_uintp     nrv_uintp
-#    define upx_byte      nrv_byte
-#    define upx_bytep     nrv_bytep
-#    define upx_bool      nrv_bool
-#    define upx_progress_callback_t nrv_progress_callback_t
-#    define UPX_E_OK      NRV_E_OK
-#    define UPX_E_ERROR   NRV_E_ERROR
-#    define UPX_E_OUT_OF_MEMORY NRV_E_OUT_OF_MEMORY
-#    define __UPX_ENTRY   __NRV_ENTRY
-#  endif
-#  if 1 && defined(__i386__) && !defined(__BORLANDC__) && !defined(__DMC__)
-#    define NRV_USE_ASM
-#  endif
+#if !defined(WITH_UCL)
+#  error "you lose"
 #endif
 #if defined(WITH_UCL)
 #  include <ucl/uclconf.h>
@@ -92,6 +104,7 @@
 #    define upx_byte      ucl_byte
 #    define upx_bytep     ucl_bytep
 #    define upx_bool      ucl_bool
+#    define upx_compress_config_t   ucl_compress_config_t
 #    define upx_progress_callback_t ucl_progress_callback_t
 #    define UPX_E_OK      UCL_E_OK
 #    define UPX_E_ERROR   UCL_E_ERROR
@@ -99,20 +112,16 @@
 #    define __UPX_ENTRY   __UCL_ENTRY
 #  endif
 #endif
+#if defined(WITH_NRV)
+#  include <nrv/nrvconf.h>
+#endif
 #if !defined(__UPX_CHECKER)
 #  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
 #    define __UPX_CHECKER
 #  endif
 #endif
-#if !defined(UPX_UINT_MAX) || (UINT_MAX < 0xffffffffL)
+#if !defined(UINT_MAX) || (UINT_MAX < 0xffffffffL)
 #  error "you lose"
-#endif
-#if !defined(WITH_UCL)
-#  error "you lose"
-#endif
-
-#ifndef WITH_ZLIB
-#  define WITH_ZLIB 1
 #endif
 
 
@@ -177,7 +186,9 @@
 
 
 // malloc debuggers
-#if defined(WITH_DMALLOC)
+#if defined(WITH_VALGRIND)
+#  include <valgrind.h>
+#elif defined(WITH_DMALLOC)
 #  define DMALLOC_FUNC_CHECK
 #  include <dmalloc.h>
 #elif defined(WITH_GC)
@@ -189,9 +200,20 @@
 #  define malloc            GC_MALLOC
 #  define realloc           GC_REALLOC
 #  define free              GC_FREE
-#elif defined(WITH_MSS)
-#  define MSS
-#  include <mss.h>
+#endif
+
+#if !defined(VALGRIND_MAKE_WRITABLE)
+#  define VALGRIND_MAKE_WRITABLE(addr,len)      0
+#endif
+#if !defined(VALGRIND_MAKE_READABLE)
+#  if 0
+#    define VALGRIND_MAKE_READABLE(addr,len)    memset(addr,0,len), 0
+#  else
+#    define VALGRIND_MAKE_READABLE(addr,len)    0
+#  endif
+#endif
+#if !defined(VALGRIND_DISCARD)
+#  define VALGRIND_DISCARD(handle)              ((void) &handle)
 #endif
 
 
@@ -210,10 +232,6 @@
         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
 #endif
 
-#if defined(NO_BOOL)
-typedef int bool;
-enum { false, true };
-#endif
 
 #if !defined(PATH_MAX)
 #  define PATH_MAX          512
@@ -231,12 +249,14 @@ enum { false, true };
 #endif
 typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 
+
 #undef MODE_T
 #if defined(HAVE_MODE_T)
 #  define MODE_T            mode_t
 #else
 #  define MODE_T            int
 #endif
+
 
 #if !defined(HAVE_STRCASECMP)
 #  if defined(HAVE_STRICMP)
@@ -341,10 +361,11 @@ typedef RETSIGTYPE (SIGTYPEENTRY *sig_type)(int);
 #endif
 
 
+#undef NOTHROW
 #if defined(__cplusplus)
-#define NOTHROW throw()
+#  define NOTHROW throw()
 #else
-#define NOTHROW
+#  define NOTHROW
 #endif
 
 
@@ -436,17 +457,10 @@ inline void operator delete[](void *p)
 // gets destructed when leaving scope or on exceptions.
 // "var" is declared as a read-only reference to a pointer
 // and behaves exactly like an array "var[]".
-#if 0
-# define Array(type, var, size) \
+#define Array(type, var, size) \
     assert((int)(size) > 0); \
-    std::vector<type> var ## _array_vec((size)); \
-    type * const & var = & var ## _array_vec[0]
-#else
-# define Array(type, var, size) \
-    assert((int)(size) > 0); \
-    MemBuffer var ## _array_buf((size)*(sizeof(type))); \
-    type * const & var = ((type *) var ## _array_buf.getVoidPtr())
-#endif
+    MemBuffer var ## _membuf((size)*(sizeof(type))); \
+    type * const & var = ((type *) var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 
@@ -516,110 +530,16 @@ inline void operator delete[](void *p)
 // globals
 **************************************************************************/
 
-// options - command
-enum {
-    CMD_NONE,
-    CMD_COMPRESS, CMD_DECOMPRESS, CMD_TEST, CMD_LIST, CMD_FILEINFO,
-    CMD_HELP, CMD_LICENSE, CMD_VERSION
-};
-
+#include "snprintf.h"
 
 #if defined(__cplusplus)
 
 #include "stdcxx.h"
+#include "options.h"
 #include "except.h"
 #include "bele.h"
 #include "util.h"
 #include "console.h"
-
-struct options_t {
-    int cmd;
-
-    // compression options
-    int method;
-    int level;          // compression level 1..10
-    int filter;         // preferred filter from Packer::getFilters()
-    bool all_methods;   // try all available compression methods ?
-    bool all_filters;   // try all available filters ?
-
-    // other options
-    int backup;
-    int console;
-    int debug;
-    int force;
-    int info_mode;
-    bool ignorewarn;
-    bool no_env;
-    bool no_progress;
-    const char *output_name;
-    int small;
-    int verbose;
-    bool to_stdout;
-
-    // overlay handling
-    enum {
-        SKIP_OVERLAY      = 0,
-        COPY_OVERLAY      = 1,
-        STRIP_OVERLAY     = 2
-    };
-    int overlay;
-
-    // compression runtime parameters - see struct ucl_compress_config_t
-    struct {
-        upx_uint max_offset;
-        upx_uint max_match;
-        int s_level;
-        int h_level;
-        int p_level;
-        int c_flags;
-        upx_uint m_size;
-    } crp;
-
-    // CPU
-    enum {
-        CPU_DEFAULT = 0,
-        CPU_8086    = 1,
-        CPU_286     = 2,
-        CPU_386     = 3,
-        CPU_486     = 4,
-        CPU_586     = 5,
-        CPU_686     = 6
-    };
-    int cpu;
-
-    // options for various executable formats
-    struct {
-        bool force_stub;
-        bool no_reloc;
-    } dos;
-    struct {
-        bool coff;
-    } djgpp2;
-    struct {
-        unsigned no_align;
-    } psx;
-    struct {
-        bool split_segments;
-    } tos;
-    struct {
-        unsigned blocksize;
-        bool force_execve;          // force the linux/386 execve format
-        enum { SCRIPT_MAX = 32 };
-        const char *script_name;
-    } unix;
-    struct {
-        bool le;
-    } wcle;
-    struct {
-        int compress_exports;
-        int compress_icons;
-        int compress_resources;
-        signed char compress_rt[25];    // 25 == RT_LAST
-        int strip_relocs;
-    } w32pe;
-};
-
-extern struct options_t * volatile opt;
 
 
 // main.cpp
@@ -679,39 +599,21 @@ void show_version(int);
 
 // compress.cpp
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);
-unsigned upx_adler32(unsigned adler, const void *buf, unsigned len);
+unsigned upx_crc32(const void *buf, unsigned len, unsigned crc=0);
 
-#if defined(WITH_NRV)
-struct nrv_compress_config_t;
-struct nrv_compress_config_t
-{
-    int bb_endian;
-    int bb_size;
-    nrv_uint max_offset;
-    nrv_uint max_match;
-    int s_level;
-    int h_level;
-    int p_level;
-    int c_flags;
-    nrv_uint m_size;
-};
-#define upx_compress_config_t   nrv_compress_config_t
-#elif defined(WITH_UCL)
-#define upx_compress_config_t   ucl_compress_config_t
-#endif
-
-int upx_compress           ( const upx_byte *src, upx_uint  src_len,
-                                   upx_byte *dst, upx_uint *dst_len,
+int upx_compress           ( const upx_bytep src, upx_uint  src_len,
+                                   upx_bytep dst, upx_uintp dst_len,
                                    upx_progress_callback_t *cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
-                                   upx_uintp result);
-int upx_decompress         ( const upx_byte *src, upx_uint  src_len,
-                                   upx_byte *dst, upx_uint *dst_len,
+                                   upx_uintp result );
+int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
+                                   upx_bytep dst, upx_uintp dst_len,
                                    int method );
-int upx_test_overlap       ( const upx_byte *buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uint *dst_len,
+int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
+                                   upx_uint  src_len, upx_uintp dst_len,
                                    int method );
+
 
 #endif /* __cplusplus */
 

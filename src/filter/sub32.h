@@ -31,7 +31,7 @@
 //
 **************************************************************************/
 
-#include "filter/sub.hh"
+#include "sub.hh"
 
 #define SUB32(f, N)     SUB(f, N, unsigned int, get_le32, set_le32)
 #define ADD32(f, N)     ADD(f, N, unsigned int, get_le32, set_le32)

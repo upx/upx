@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2001 Laszlo Molnar
+   Copyright (C) 1996-2002 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2002 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -21,13 +21,12 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@cdata.tvnet.hu
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
  */
 
 
 #include "conf.h"
-#include "version.h"
 #include "mygetopt.h"
 #include "file.h"
 #include "packer.h"
@@ -505,6 +504,10 @@ static int do_option(int optc, const char *arg)
         if (!set_method(M_NRV2D_LE32, -1))
             e_method(M_NRV2D_LE32, opt->level);
         break;
+    case 705:
+        if (!set_method(M_NRV2E_LE32, -1))
+            e_method(M_NRV2E_LE32, opt->level);
+        break;
 
     // compression level
     case '1':
@@ -766,12 +769,9 @@ static const struct mfx_option longopts[] =
     {"color",               0, 0, 514},
 
     // compression method
-    {"2b",               0x10, 0, 702},     // --2b
-    {"n2b",              0x10, 0, 702},     // --n2b
     {"nrv2b",            0x10, 0, 702},     // --nrv2b
-    {"2d",               0x10, 0, 704},     // --2d
-    {"n2d",              0x10, 0, 704},     // --n2d
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
+    {"nrv2e",            0x10, 0, 705},     // --nrv2e
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},
@@ -1002,6 +1002,10 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(void *) >= 4);
     COMPILE_TIME_ASSERT(sizeof(long) >= sizeof(void *));
 
+    COMPILE_TIME_ASSERT(sizeof(upx_int64l) >= 8);
+    COMPILE_TIME_ASSERT(sizeof(upx_int64l) >= sizeof(long));
+    COMPILE_TIME_ASSERT(sizeof(upx_int64l) == sizeof(upx_uint64l));
+
     COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long));
     COMPILE_TIME_ASSERT(((off_t) -1) < 0);
     COMPILE_TIME_ASSERT(sizeof(ptrdiff_t) >= sizeof(int));
@@ -1111,10 +1115,6 @@ int main(int argc, char *argv[])
 
     upx_sanity_check();
     init_options(opt);
-
-#if defined(WITH_MSS)
-    MSS_DISABLE_LOG_OUTPUT;
-#endif
 
     if (!argv[0] || !argv[0][0])
         argv[0] = default_argv0;

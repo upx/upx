@@ -123,7 +123,7 @@ static __inline__
 unsigned short make_cell(screen_t *this, int ch, int attr)
 {
     UNUSED(this);
-    return ((attr & 0xff) << 8) | (ch & 0xff);
+    return (unsigned short) (((attr & 0xff) << 8) | (ch & 0xff));
 }
 
 

@@ -31,7 +31,6 @@
 #include "packmast.h"
 #include "packer.h"
 #include "ui.h"
-#include "version.h"
 
 
 #if defined(__DJGPP__)
@@ -114,7 +113,7 @@ void do_one_file(const char *iname, char *oname)
                 strcpy(tname,opt->output_name);
             else
             {
-                if (!maketempname(tname,iname,".upx"))
+                if (!maketempname(tname, sizeof(tname), iname, ".upx"))
                     throwIOException("could not create a temporary file name");
             }
             if (opt->force >= 2)
@@ -201,7 +200,7 @@ void do_one_file(const char *iname, char *oname)
         {
             // make backup
             char bakname[PATH_MAX+1];
-            if (!makebakname(bakname,iname))
+            if (!makebakname(bakname, sizeof(bakname), iname))
                 throwIOException("could not create a backup file name");
             File::rename(iname,bakname);
         }
@@ -264,10 +263,6 @@ void do_files(int i, int argc, char *argv[])
 
     for ( ; i < argc; i++)
     {
-#if defined(WITH_MSS)
-        //MSS_ENABLE_LOG_OUTPUT;
-        //MSS_ENTER_SCOPE;
-#endif
         infoHeader();
 
         const char *iname = argv[i];
@@ -308,11 +303,6 @@ void do_files(int i, int argc, char *argv[])
             printUnhandledException(iname,NULL);
             e_exit(EXIT_ERROR);
         }
-
-#if defined(WITH_MSS)
-        //MSS_LEAVE_SCOPE;
-        MSS_CHECK_ALL_BLOCKS;
-#endif
     }
 
     if (opt->cmd == CMD_COMPRESS)

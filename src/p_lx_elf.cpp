@@ -164,7 +164,7 @@ void PackLinuxI386elf::packExtent(
             // compressWithFilters() updates u_adler _inside_ compress();
             // that is, AFTER filtering.  We want BEFORE filtering,
             // so that decompression checks the end-to-end checksum.
-            end_u_adler = upx_adler32(ph.u_adler, ibuf, ph.u_len);
+            end_u_adler = upx_adler32(ibuf, ph.u_len, ph.u_adler);
             ft->buf_len = l;
             compressWithFilters(ft, OVERHEAD, strategy);
         }
@@ -181,7 +181,7 @@ void PackLinuxI386elf::packExtent(
         else {
             ph. c_len = ph.u_len;
             // must update checksum of compressed data
-            ph.c_adler = upx_adler32(ph.c_adler, ibuf, ph.u_len);
+            ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.c_adler);
         }
 
         // write block sizes
@@ -338,7 +338,7 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
         int j = blocksize + OVERHEAD - sz_cpr;
         fi->readx(ibuf+j, sz_cpr);
         // update checksum of compressed data
-        c_adler = upx_adler32(c_adler, ibuf + j, sz_cpr);
+        c_adler = upx_adler32(ibuf + j, sz_cpr, c_adler);
         // decompress
         if (sz_cpr < sz_unc)
         {
@@ -355,7 +355,7 @@ void PackLinuxI386elf::unpackExtent(unsigned wanted, OutputFile *fo,
             j = 0;
         }
         // update checksum of uncompressed data
-        u_adler = upx_adler32(u_adler, ibuf + j, sz_unc);
+        u_adler = upx_adler32(ibuf + j, sz_unc, u_adler);
         total_in  += sz_cpr;
         total_out += sz_unc;
         // write block

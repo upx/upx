@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-#  app_68k.pl -- assembly preprocessor for upx
+#  app_i386.pl -- assembly preprocessor for upx
 #
 #  This file is part of the UPX executable compressor.
 #
@@ -28,7 +28,7 @@
 #
 
 #
-# usage: app_68k.pl infile outfile
+# usage: app.pl infile outfile
 #
 
 $in = shift || die;
@@ -82,17 +82,13 @@ for $line (@lines)
 $cs = "";
 $i = 0;
 
-@data = ();
-
 # 2nd pass
 for $line (@lines)
 {
-    last if ($line =~ /^\s*end\b/i);
-
-    if ($line =~ /^\s+(b[\w\.]+|db[\w\.]+)\s+(\w*)/)
+    if ($line =~ /^\s+(j\w+|loop|call)\s+(\w*)/)
     {
         $label = $2;
-        ##print STDERR "$label $cs\n";        # debug
+        die "$line" if ($label =~ /(\bnear\b|\bshort\b)/);
         if (defined $labels{$label})
         {
             $ts = $labels{$label};
@@ -101,55 +97,25 @@ for $line (@lines)
                 $line =~ s/$label/J$i$ilabel/;
                 print OU $line;
                 print OU "J$i$ilabel:\n";
-                $d = "dc.l\t0, J$i$ilabel";
-                push(@data, $d);
-                $d = "dc.b\t'$ts'";
-                push(@data, $d);
-                $d = "dc.l\t$label - S$ts$ilabel";
-                push(@data, $d);
+                print OU "\t\tsection\t.data\n\t\tdd\t";
+                print OU "0,J$i$ilabel,\'$ts\',$label - S$ts$ilabel\n";
+                print OU "\t\tsection\t.text\n\n";
                 $line = "";
             }
         }
     }
 
-    $line = ";$line" if ($line =~ /^\s+align\b/i);
-    $line = ";$line" if ($line =~ /^\s+even\b/i);
+    $line = ";$line" if ($line =~ /^\s+align\s/);
 
-    if ($line =~ /^;*\s+print_data\b/i) {
-        &print_data();
-    } else {
-        print OU $line;
-    }
-
+    print OU $line;
     if ($line =~ /__([A-Z0-9]{8})__/)
     {
         print OU "S$1$ilabel:\n";
+        print OU "\t\tsection\t.data\n\t\tdd\t\'$1\',S$1$ilabel\n";
+        print OU "\t\tsection\t.text\n\n";
         $cs = $1;
-        $d = "dc.b\t'$1'";
-        push(@data, $d);
-        $d = "dc.l\tS$1$ilabel";
-        push(@data, $d);
     }
     $i++;
-}
-
-&print_data();
-print OU "\t\tend\n";
-exit(0);
-
-
-# /***********************************************************************
-# //
-# ************************************************************************/
-
-sub print_data {
-    return if ($#data < 0);
-    ###print OU "\n\n\t\tsection_data\n";
-    local ($d);
-    for $d (@data) {
-        print OU "\t\t$d\n";
-    }
-    @data = ();
 }
 
 # vi:ts=4:et

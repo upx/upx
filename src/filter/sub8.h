@@ -31,7 +31,7 @@
 //
 **************************************************************************/
 
-#include "filter/sub.hh"
+#include "sub.hh"
 
 #define SUB8(f, N)      SUB(f, N, unsigned char, get_8, set_8)
 #define ADD8(f, N)      ADD(f, N, unsigned char, get_8, set_8)

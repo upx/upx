@@ -1,3 +1,4 @@
+GNUmakefile
 *.0??
 *.dat
 *.idb
@@ -10,6 +11,7 @@
 .gdbinit
 .Attic
 .deps
+compress_nrv.*
 upx
 upx_nrv
 upx_nrv.*
