@@ -142,8 +142,8 @@ bool PackPs1::canPack()
 int PackPs1::buildLoader(const Filter *)
 {
     initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("PSXPREP0","PSXSTSZ0","PSXMAIN0", 
-              ih.tx_ptr&0xffff ?  "PSXJSTA0" : "PSXJSTH0", 
+    addLoader("PSXPREP0","PSXSTSZ0","PSXMAIN0",
+              ih.tx_ptr&0xffff ?  "PSXJSTA0" : "PSXJSTH0",
               "PSXDECO0",
               NULL);
 #ifdef EIGHTBIT

@@ -84,8 +84,8 @@ copyloop:
                 ori     a2,'OL'        ; load DECOMPDATA LO offset
 ;       __PSXJSTAZ__
 ;       __PSXJSTH0__
-                jr      a3             ; 
-                lui     a2,'OH'        ; same for HI only !(offset&0xffff) 
+                jr      a3             ;
+                lui     a2,'OH'        ; same for HI only !(offset&0xffff)
 ;       __PSXJSTHZ__
 
 ; =============
