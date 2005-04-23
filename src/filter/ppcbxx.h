@@ -47,7 +47,8 @@ static int F(Filter *f)
     // scan
     const upx_byte *b = f->buf;
 #endif
-    const unsigned size = f->buf_len;
+    const unsigned size  = umin(f->buf_len, -(~0u<<(32 - (6+ W_CTO))));
+    const unsigned size4 = size -4;
 
     unsigned ic;
     unsigned calls = 0, noncalls = 0;
@@ -62,7 +63,7 @@ static int F(Filter *f)
         memset(buf     , 0,       WW);
         memset(buf + WW, 1, 256 - WW);
 
-        for (ic = 0; ic < size - 4; ic+=4) if (COND(b,ic)) {
+        for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
             unsigned const off = (int)(get_be32(b+ic)<<6) >>6;
             if (size <= (off & (~0u<<2))+ic) {
                 buf[(~(~0u<<W_CTO)) & (off>>(26 - W_CTO))] |= 1;
@@ -81,7 +82,7 @@ static int F(Filter *f)
     const unsigned cto = (unsigned)f->cto << (24+2 - W_CTO);
 #endif
 
-    for (ic = 0; ic < size - 4; ic+=4) if (COND(b,ic)) {
+    for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
         unsigned const word = get_be32(b+ic);
         unsigned const off = (int)(word<<6) >>6;
         unsigned const jc = (off & (~0u<<2))+ic;
@@ -121,12 +122,12 @@ static int F(Filter *f)
 static int U(Filter *f)
 {
     upx_byte *b = f->buf;
-    const unsigned size4 = f->buf_len - 4;
+    const unsigned size4 = umin(f->buf_len - 4, -(~0u<<(32 - (6+ W_CTO))));
     const unsigned addvalue = f->addvalue;
 
     unsigned ic;
 
-   for (ic = 0; ic < size4; ic+=4) if (COND(b,ic)) {
+   for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
         unsigned const word = get_be32(b+ic);
         if ((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) == f->cto) {
             unsigned const jc = word & (~(~0u<<(26 - W_CTO)) & (~0u<<2));

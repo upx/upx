@@ -29,6 +29,12 @@
 #include "conf.h"
 #include "filter.h"
 
+static unsigned
+umin(unsigned const a, unsigned const b)
+{
+    return (a<=b) ? a : b;
+}
+
 
 #define set_dummy(p, v)     ((void)0)
 #define get_8(p)            (*(p))
@@ -244,8 +250,8 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0xb2,99,          0, f_sub32_3, u_sub32_3, s_sub32_3 },
     { 0xb3,99,          0, f_sub32_4, u_sub32_4, s_sub32_4 },
 
-    // PowerPC call trick
-    { 0xd0, 8, 0x01000000, f_ppcbxx, u_ppcbxx, s_ppcbxx },
+    // PowerPC branch+call trick
+    { 0xd0, 8,          0, f_ppcbxx, u_ppcbxx, s_ppcbxx },
 };
 
 const int FilterImp::n_filters = TABLESIZE(filters);
