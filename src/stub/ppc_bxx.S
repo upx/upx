@@ -49,12 +49,11 @@ L5:
 	mtctr len  # count of words
 	b L20
 L10:
-	subf   t1,ptr,t0  # raw distance
+	rlwinm t1,t0,0,6+W_CTO,31-2  # the displacement field in position
+	subf   t1,ptr,t1   # raw distance
 	add    t1,t1,ptr0  # relative to virtual address of base
-	rlwinm t1,t1,6+W_CTO,0,31-(6+W_CTO)  # shift displacement up to sign bit
-	srawi  t1,t1,6+W_CTO  # sign extended displacement
-	rlwimi t0,t1,0,6,31-2  # t0= unfiltered instruction
-	stw    t0,0(ptr)  # replace in memory
+	rlwimi t0,t1,0,6      ,31-2  # unfiltered instruction
+	stw    t0,0(ptr)   # replace in memory
 	bdzlr-  # if (0==--ctr) return;  // extremely unlikely
 L20:
 	lwzu t0,4(ptr)  # t0= *++ptr;
