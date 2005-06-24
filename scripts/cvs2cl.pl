@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 
 
 ##############################################################
@@ -7,9 +7,9 @@
 ###                                                        ###
 ##############################################################
 
-## $Revision: 2.58 $
-## $Date: 2004/11/07 15:28:35 $
-## $Author: fluffy $
+## $Revision: 2.59 $
+## $Date: 2005/05/18 05:34:34 $
+## $Author: kfogel $
 ##
 
 use strict;
@@ -141,7 +141,7 @@ use User::pwent    qw( getpwnam );
 # Globals --------------------------------------------------------------------
 
 # In case we have to print it out:
-my $VERSION = '$Revision: 2.58 $';
+my $VERSION = '$Revision: 2.59 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:
@@ -1317,9 +1317,9 @@ my $self = shift; my $class = ref $self;
         while (<OLD_LOG>) {
           if ( ! $passed_first_entry ) {
             if ( ( ! $started_first_entry )
-                and /^(\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d)/ ) {
+                and /^(\d\d\d\d-\d\d-\d\d\s+(\w+\s+)?\d\d:\d\d)/ ) {
               $started_first_entry = 1;
-            } elsif ( /^(\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d)/ ) {
+            } elsif ( /^(\d\d\d\d-\d\d-\d\d\s+(\w+\s+)?\d\d:\d\d)/ ) {
               $passed_first_entry = 1;
               print NEW_LOG $_;
             }
@@ -2391,7 +2391,7 @@ sub maybe_grab_accumulation_date {
   my $boundary_date;
   while (<LOG>)
   {
-    if (/^(\d\d\d\d-\d\d-\d\d\s+\d\d:\d\d)/)
+    if (/^(\d\d\d\d-\d\d-\d\d\s+(\w+\s+)?\d\d:\d\d)/)
     {
       $boundary_date = "$1";
       last;
