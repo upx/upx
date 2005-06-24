@@ -114,6 +114,7 @@ PackLinuxElf32ppc::getCompressionMethods(int method, int level) const
 
     /*return Packer::getDefaultCompressionMethods_le32(method, level);*/
     // 2005-04-23 FIXME: stub/l_lx_elfppc32.S hardwires ppc_d_nrv2e.S
+UNUSED(method); UNUSED(level); UNUSED(m_nrv2b);
     return m_nrv2e;
 }
 
