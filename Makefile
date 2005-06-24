@@ -34,5 +34,5 @@ ChangeLog.cvsps:
 
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
-.PHONY: dist cvs-admin-ko ChangeLog
+.PHONY: dist cvs-admin-ko ChangeLog ChangeLog.cvs
 
