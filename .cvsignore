@@ -1,7 +1,10 @@
 .bzr
+.git
 _darcs
 B
 ChangeLog.cvs*
+GNUmakefile
+MMakefile
 TODO.*
 build*
 doxygen
