@@ -2,6 +2,7 @@
 # UPX Makefile - needs GNU make 3.80 or better
 #
 
+SHELL = /bin/sh
 .SUFFIXES:
 MAKEFLAGS += -rR
 override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
@@ -9,7 +10,7 @@ override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
 srcdir ?= $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 ifneq ($(srcdir),./)
 srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
-##$(warning Info: using VPATH . $(srcdir))
+##$(info Info: using VPATH . $(srcdir))
 VPATH := . $(srcdir)
 endif
 
