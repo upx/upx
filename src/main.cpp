@@ -1073,27 +1073,34 @@ void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
 #if 1
-    const unsigned char dd[4] = { 0xff, 0xfe, 0xfd, 0xfc };
-    assert(upx_adler32(dd, 4) == 0x09f003f7);
-    assert(upx_adler32(dd, 4, 0) == 0x09ec03f6);
-    assert(upx_adler32(dd, 4, 1) == 0x09f003f7);
+    const unsigned char da[4] = { 0xff, 0xfe, 0xfd, 0xfc };
+    assert(upx_adler32(da, 4) == 0x09f003f7);
+    assert(upx_adler32(da, 4, 0) == 0x09ec03f6);
+    assert(upx_adler32(da, 4, 1) == 0x09f003f7);
 
-    assert(get_be16(dd) == 0xfffe);
-    assert(get_be16_signed(dd) == -2);
-    assert(get_be24(dd) == 0xfffefd);
-    assert(get_be24_signed(dd) == -259);
-    assert(get_be32(dd) == 0xfffefdfc);
-    assert(get_be32_signed(dd) == -66052);
-    assert(get_le16(dd) == 0xfeff);
-    assert(get_le16_signed(dd) == -257);
-    assert(get_le24(dd) == 0xfdfeff);
-    assert(get_le24_signed(dd) == -131329);
-    assert(get_le32(dd) == 0xfcfdfeff);
-    assert(get_le32_signed(dd) == -50462977);
-    assert(find_be16(dd, sizeof(dd), 0xfffe) == 0);
-    assert(find_le16(dd, sizeof(dd), 0xfeff) == 0);
-    assert(find_be32(dd, sizeof(dd), 0xfffefdfc) == 0);
-    assert(find_le32(dd, sizeof(dd), 0xfcfdfeff) == 0);
+    assert(get_be16(da) == 0xfffe);
+    assert(get_be16_signed(da) == -2);
+    assert(get_be24(da) == 0xfffefd);
+    assert(get_be24_signed(da) == -259);
+    assert(get_be32(da) == 0xfffefdfc);
+    assert(get_be32_signed(da) == -66052);
+    assert(get_le16(da) == 0xfeff);
+    assert(get_le16_signed(da) == -257);
+    assert(get_le24(da) == 0xfdfeff);
+    assert(get_le24_signed(da) == -131329);
+    assert(get_le32(da) == 0xfcfdfeff);
+    assert(get_le32_signed(da) == -50462977);
+    assert(find_be16(da, sizeof(da), 0xfffe) == 0);
+    assert(find_le16(da, sizeof(da), 0xfeff) == 0);
+    assert(find_be32(da, sizeof(da), 0xfffefdfc) == 0);
+    assert(find_le32(da, sizeof(da), 0xfcfdfeff) == 0);
+#endif
+
+#if 1
+    const unsigned char db[4] = { 0x7f, 0x7e, 0x7d, 0x7c };
+    assert(get_be16_signed(db) == 32638);
+    assert(get_be24_signed(db) == 8355453);
+    assert(get_be32_signed(db) == 2138996092);
 #endif
 }
 
@@ -1113,11 +1120,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
 #if 0 && defined(__DJGPP__)
     // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
     putenv("LFN=y");
-#endif
-#if defined(__MINT__)
-    __binmode(1);
-    __set_binmode(stdout, 0);
-    __set_binmode(stderr, 0);
 #endif
     acc_wildargv(&argc, &argv);
 
