@@ -170,8 +170,8 @@ inline void set_le32(void *bb, unsigned v)
 
 inline int sign_extend(int v, int bits)
 {
-    const int sign_bit = 1 << (bits - 1);
-    v |= -(v & sign_bit);
+    const unsigned sign_bit = 1u << (bits - 1);
+    v |= 0u - (v & sign_bit);
     return v;
 }
 
