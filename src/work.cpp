@@ -68,7 +68,7 @@ void do_one_file(const char *iname, char *oname)
 #else
     int r = stat(iname,&st);
 #endif
-    bool need_chmod = true;
+    bool need_chmod = true; UNUSED(need_chmod);
 
     if (r == -1)
         throw FileNotFoundException(iname);
@@ -220,6 +220,7 @@ void do_one_file(const char *iname, char *oname)
     {
         oname[0] = 0;
         const char *name = opt->output_name ? opt->output_name : iname;
+        UNUSED(name);
 #if defined(USE_UTIME)
         // copy time stamp
         struct utimbuf u;
