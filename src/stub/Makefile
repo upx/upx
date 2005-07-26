@@ -111,7 +111,8 @@ CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
 # gcc 3.4.3 (fold_*86.bin: 1624 / 931 / 1544 / 1207)
-CC_LINUX_I386_GCC34  = gcc-3.4.3
+# gcc 3.4.4 (fold_*86.bin: 1627 / 931 / 1547 / 1207)
+CC_LINUX_I386_GCC34  = gcc-3.4.4
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
