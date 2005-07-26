@@ -1,11 +1,13 @@
-.bzr
+.bzr*
+.darcs*
 .git
+.hg*
 _darcs
 B
+build*
+doxygen
+maint
 ChangeLog.cvs*
 GNUmakefile
 MMakefile
 TODO.*
-build*
-doxygen
-maint
