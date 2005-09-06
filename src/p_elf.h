@@ -55,22 +55,22 @@ struct Ehdr
     TT16 e_shnum;               /* Section header table entry count */
     TT16 e_shstrndx;            /* Section header string table index */
 
-    enum { // e_ident
+    enum { // e_ident[]
         EI_CLASS      = 4,
-        EI_DATA       = 5,
+        EI_DATA       = 5,      /* Data encoding */
         EI_VERSION    = 6,
         EI_OSABI      = 7,
         EI_ABIVERSION = 8,
     };
-    enum { // EI_CLASS
+    enum { // e_ident[EI_CLASS]
         ELFCLASS32 = 1,         /* 32-bit objects */
         ELFCLASS64 = 2,         /* 64-bit objects */
     };
-    enum { // EI_DATA
+    enum { // e_ident[EI_DATA]
         ELFDATA2LSB = 1,        /* 2's complement, little endian */
         ELFDATA2MSB = 2         /* 2's complement, big endian */
     };
-    enum { // EI_OSABI
+    enum { // e_ident[EI_OSABI]
         ELFOSABI_LINUX = 3
     };
     enum { // e_type
@@ -81,8 +81,11 @@ struct Ehdr
         ET_CORE = 4,            /* Core file */
     };
     enum { // e_machine
-        EM_386 = 3,
-        EM_PPC = 20,
+        EM_386    = 3,
+        EM_PPC    = 20,
+        EM_PPC64  = 21,
+        EM_ARM    = 40,
+        EM_X86_64 = 62,
     };
     enum { // e_version
         EV_CURRENT = 1,
@@ -153,7 +156,7 @@ struct Shdr
         SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
         SHT_GROUP = 17,         /* Section group */
         SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
-        SHT_NUM = 19,           /* Number of defined types.  */
+        SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
     };
 
     enum { // sh_flags
@@ -200,6 +203,17 @@ typedef TT_Elf32::Ehdr<unsigned short,unsigned int,void> Elf32_Ehdr;
 typedef TT_Elf32::Phdr<unsigned short,unsigned int,void> Elf32_Phdr;
 typedef TT_Elf32::Shdr<unsigned short,unsigned int,void> Elf32_Shdr;
 typedef TT_Elf32::Dyn <unsigned short,unsigned int,void> Elf32_Dyn;
+
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Ehdr) == 52)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Phdr) == 32)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Shdr) == 40)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Dyn)  ==  8)
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Ehdr) == 52)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr) == 32)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr) == 40)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)  ==  8)
 
 
 #endif /* already included */
