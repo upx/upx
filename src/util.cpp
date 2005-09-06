@@ -36,8 +36,9 @@
 #  pragma warning(disable: 4201 4214 4514)
 #endif
 #define ACC_WANT_ACC_INCI_H 1
-#define ACC_WANT_ACCLIB_MISC 1
 #define ACC_WANT_ACCLIB_HSREAD 1
+#define ACC_WANT_ACCLIB_MISC 1
+#define ACC_WANT_ACCLIB_UA 1
 #define ACC_WANT_ACCLIB_WILDARGV 1
 #include "miniacc.h"
 

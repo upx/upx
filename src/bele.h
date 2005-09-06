@@ -36,130 +36,109 @@
 
 inline unsigned get_be16(const void *bb)
 {
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[1] <<  0;
-    v |= (unsigned) b[0] <<  8;
-    return v;
+#if defined(ACC_UA_GET_BE16)
+    return ACC_UA_GET_BE16(bb);
+#else
+    return acc_ua_get_be16(bb);
+#endif
 }
 
 inline void set_be16(void *bb, unsigned v)
 {
-    unsigned char* b = (unsigned char*) bb;
-    b[1] = (unsigned char) (v >>  0);
-    b[0] = (unsigned char) (v >>  8);
+#if defined(ACC_UA_SET_BE16)
+    ACC_UA_SET_BE16(bb, v);
+#else
+    acc_ua_set_be16(bb, v);
+#endif
 }
-
 
 inline unsigned get_be24(const void *bb)
 {
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[2] <<  0;
-    v |= (unsigned) b[1] <<  8;
-    v |= (unsigned) b[0] << 16;
-    return v;
+#if defined(ACC_UA_GET_BE24)
+    return ACC_UA_GET_BE24(bb);
+#else
+    return acc_ua_get_be24(bb);
+#endif
 }
 
 inline void set_be24(void *bb, unsigned v)
 {
-    unsigned char* b = (unsigned char*) bb;
-    b[2] = (unsigned char) (v >>  0);
-    b[1] = (unsigned char) (v >>  8);
-    b[0] = (unsigned char) (v >> 16);
+#if defined(ACC_UA_SET_BE24)
+    ACC_UA_SET_BE24(bb, v);
+#else
+    acc_ua_set_be24(bb, v);
+#endif
 }
-
 
 inline unsigned get_be32(const void *bb)
 {
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[3] <<  0;
-    v |= (unsigned) b[2] <<  8;
-    v |= (unsigned) b[1] << 16;
-    v |= (unsigned) b[0] << 24;
-    return v;
+#if defined(ACC_UA_GET_BE32)
+    return ACC_UA_GET_BE32(bb);
+#else
+    return acc_ua_get_be32(bb);
+#endif
 }
 
 inline void set_be32(void *bb, unsigned v)
 {
-    unsigned char* b = (unsigned char*) bb;
-    b[3] = (unsigned char) (v >>  0);
-    b[2] = (unsigned char) (v >>  8);
-    b[1] = (unsigned char) (v >> 16);
-    b[0] = (unsigned char) (v >> 24);
+#if defined(ACC_UA_SET_BE32)
+    ACC_UA_SET_BE32(bb, v);
+#else
+    acc_ua_set_be32(bb, v);
+#endif
 }
-
 
 inline unsigned get_le16(const void *bb)
 {
-#if defined(ACC_GET_LE16)
-    return ACC_GET_LE16(bb);
+#if defined(ACC_UA_GET_LE16)
+    return ACC_UA_GET_LE16(bb);
 #else
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[0] <<  0;
-    v |= (unsigned) b[1] <<  8;
-    return v;
+    return acc_ua_get_le16(bb);
 #endif
 }
 
 inline void set_le16(void *bb, unsigned v)
 {
-#if defined(ACC_SET_LE16)
-    ACC_SET_LE16(bb, v);
+#if defined(ACC_UA_SET_LE16)
+    ACC_UA_SET_LE16(bb, v);
 #else
-    unsigned char* b = (unsigned char*) bb;
-    b[0] = (unsigned char) (v >>  0);
-    b[1] = (unsigned char) (v >>  8);
+    acc_ua_set_le16(bb, v);
 #endif
 }
 
-
 inline unsigned get_le24(const void *bb)
 {
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[0] <<  0;
-    v |= (unsigned) b[1] <<  8;
-    v |= (unsigned) b[2] << 16;
-    return v;
+#if defined(ACC_UA_GET_LE24)
+    return ACC_UA_GET_LE24(bb);
+#else
+    return acc_ua_get_le24(bb);
+#endif
 }
 
 inline void set_le24(void *bb, unsigned v)
 {
-    unsigned char* b = (unsigned char*) bb;
-    b[0] = (unsigned char) (v >>  0);
-    b[1] = (unsigned char) (v >>  8);
-    b[2] = (unsigned char) (v >> 16);
+#if defined(ACC_UA_SET_LE24)
+    ACC_UA_SET_LE24(bb, v);
+#else
+    acc_ua_set_le24(bb, v);
+#endif
 }
-
 
 inline unsigned get_le32(const void *bb)
 {
-#if defined(ACC_GET_LE32)
-    return ACC_GET_LE32(bb);
+#if defined(ACC_UA_GET_LE32)
+    return ACC_UA_GET_LE32(bb);
 #else
-    const unsigned char* b = (const unsigned char*) bb;
-    unsigned v;
-    v  = (unsigned) b[0] <<  0;
-    v |= (unsigned) b[1] <<  8;
-    v |= (unsigned) b[2] << 16;
-    v |= (unsigned) b[3] << 24;
-    return v;
+    return acc_ua_get_le32(bb);
 #endif
 }
 
 inline void set_le32(void *bb, unsigned v)
 {
-#if defined(ACC_SET_LE32)
-    ACC_SET_LE32(bb, v);
+#if defined(ACC_UA_SET_LE32)
+    ACC_UA_SET_LE32(bb, v);
 #else
-    unsigned char* b = (unsigned char*) bb;
-    b[0] = (unsigned char) (v >>  0);
-    b[1] = (unsigned char) (v >>  8);
-    b[2] = (unsigned char) (v >> 16);
-    b[3] = (unsigned char) (v >> 24);
+    acc_ua_set_le32(bb, v);
 #endif
 }
 
@@ -227,8 +206,10 @@ struct BE16
     BE16& operator =  (unsigned v) { set_be16(d, v); return *this; }
     BE16& operator += (unsigned v) { set_be16(d, get_be16(d) + v); return *this; }
     BE16& operator -= (unsigned v) { set_be16(d, get_be16(d) - v); return *this; }
+    BE16& operator *= (unsigned v) { set_be16(d, get_be16(d) * v); return *this; }
     BE16& operator &= (unsigned v) { set_be16(d, get_be16(d) & v); return *this; }
     BE16& operator |= (unsigned v) { set_be16(d, get_be16(d) | v); return *this; }
+    BE16& operator ^= (unsigned v) { set_be16(d, get_be16(d) ^ v); return *this; }
 
     operator unsigned () const  { return get_be16(d); }
 }
@@ -242,8 +223,10 @@ struct BE32
     BE32& operator =  (unsigned v) { set_be32(d, v); return *this; }
     BE32& operator += (unsigned v) { set_be32(d, get_be32(d) + v); return *this; }
     BE32& operator -= (unsigned v) { set_be32(d, get_be32(d) - v); return *this; }
+    BE32& operator *= (unsigned v) { set_be32(d, get_be32(d) * v); return *this; }
     BE32& operator &= (unsigned v) { set_be32(d, get_be32(d) & v); return *this; }
     BE32& operator |= (unsigned v) { set_be32(d, get_be32(d) | v); return *this; }
+    BE32& operator ^= (unsigned v) { set_be32(d, get_be32(d) ^ v); return *this; }
 
     operator unsigned () const  { return get_be32(d); }
 }
@@ -257,8 +240,10 @@ struct LE16
     LE16& operator =  (unsigned v) { set_le16(d, v); return *this; }
     LE16& operator += (unsigned v) { set_le16(d, get_le16(d) + v); return *this; }
     LE16& operator -= (unsigned v) { set_le16(d, get_le16(d) - v); return *this; }
+    LE16& operator *= (unsigned v) { set_le16(d, get_le16(d) * v); return *this; }
     LE16& operator &= (unsigned v) { set_le16(d, get_le16(d) & v); return *this; }
     LE16& operator |= (unsigned v) { set_le16(d, get_le16(d) | v); return *this; }
+    LE16& operator ^= (unsigned v) { set_le16(d, get_le16(d) ^ v); return *this; }
 
     operator unsigned () const  { return get_le16(d); }
 }
@@ -272,8 +257,10 @@ struct LE32
     LE32& operator =  (unsigned v) { set_le32(d, v); return *this; }
     LE32& operator += (unsigned v) { set_le32(d, get_le32(d) + v); return *this; }
     LE32& operator -= (unsigned v) { set_le32(d, get_le32(d) - v); return *this; }
+    LE32& operator *= (unsigned v) { set_le32(d, get_le32(d) * v); return *this; }
     LE32& operator &= (unsigned v) { set_le32(d, get_le32(d) & v); return *this; }
     LE32& operator |= (unsigned v) { set_le32(d, get_le32(d) | v); return *this; }
+    LE32& operator ^= (unsigned v) { set_le32(d, get_le32(d) ^ v); return *this; }
 
     operator unsigned () const  { return get_le32(d); }
 }
@@ -284,24 +271,17 @@ __attribute_packed;
 // global operators
 **************************************************************************/
 
-inline bool operator < (const BE16& v1, const BE16& v2)
-{
-    return (unsigned)v1 < (unsigned)v2;
+inline bool operator < (const BE16& v1, const BE16& v2) {
+    return (unsigned) v1 < (unsigned) v2;
 }
-
-inline bool operator < (const BE32& v1, const BE32& v2)
-{
-    return (unsigned)v1 < (unsigned)v2;
+inline bool operator < (const BE32& v1, const BE32& v2) {
+    return (unsigned) v1 < (unsigned) v2;
 }
-
-inline bool operator < (const LE16& v1, const LE16& v2)
-{
-    return (unsigned)v1 < (unsigned)v2;
+inline bool operator < (const LE16& v1, const LE16& v2) {
+    return (unsigned) v1 < (unsigned) v2;
 }
-
-inline bool operator < (const LE32& v1, const LE32& v2)
-{
-    return (unsigned)v1 < (unsigned)v2;
+inline bool operator < (const LE32& v1, const LE32& v2) {
+    return (unsigned) v1 < (unsigned) v2;
 }
 
 
@@ -354,6 +334,7 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
+#if !defined(ACC_CFG_NO_UNALIGNED)
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
    typedef acc_uint16e_t LE16_unaligned __attribute__((__aligned__(1)));
    typedef acc_uint32e_t LE32_unaligned __attribute__((__aligned__(1)));
@@ -372,6 +353,7 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
 #  define LE16      LE16_unaligned
 #  define LE32      LE32_unaligned
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
+#endif
 #endif
 
 
