@@ -61,6 +61,13 @@ int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2)
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
+int __acc_cdecl_qsort be64(const void *e1, const void *e2)
+{
+    const acc_uint64l_t d1 = get_be64(e1);
+    const acc_uint64l_t d2 = get_be64(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
 int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le16(e1);
@@ -72,6 +79,13 @@ int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le32(e1);
     const unsigned d2 = get_le32(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
+int __acc_cdecl_qsort le64(const void *e1, const void *e2)
+{
+    const acc_uint64l_t d1 = get_le64(e1);
+    const acc_uint64l_t d2 = get_le64(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -90,6 +104,13 @@ int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2)
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
+int __acc_cdecl_qsort be64_compare_signed(const void *e1, const void *e2)
+{
+    const acc_int64l_t d1 = get_be64_signed(e1);
+    const acc_int64l_t d2 = get_be64_signed(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
 int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le16_signed(e1);
@@ -101,6 +122,13 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le32_signed(e1);
     const int d2 = get_le32_signed(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
+int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2)
+{
+    const acc_int64l_t d1 = get_le64_signed(e1);
+    const acc_int64l_t d2 = get_le64_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -143,6 +171,14 @@ int find_be32(const void *b, int blen, unsigned what)
 }
 
 
+int find_be64(const void *b, int blen, acc_uint64l_t what)
+{
+    unsigned char w[8];
+    set_be64(w, what);
+    return find(b, blen, w, 8);
+}
+
+
 int find_le16(const void *b, int blen, unsigned what)
 {
     unsigned char w[2];
@@ -156,6 +192,14 @@ int find_le32(const void *b, int blen, unsigned what)
     unsigned char w[4];
     set_le32(w, what);
     return find(b, blen, w, 4);
+}
+
+
+int find_le64(const void *b, int blen, acc_uint64l_t what)
+{
+    unsigned char w[8];
+    set_le64(w, what);
+    return find(b, blen, w, 8);
 }
 
 

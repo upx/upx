@@ -88,6 +88,24 @@ inline void set_be32(void *bb, unsigned v)
 #endif
 }
 
+inline acc_uint64l_t get_be64(const void *bb)
+{
+#if defined(ACC_UA_GET_BE64)
+    return ACC_UA_GET_BE64(bb);
+#else
+    return acc_ua_get_be64(bb);
+#endif
+}
+
+inline void set_be64(void *bb, acc_uint64l_t v)
+{
+#if defined(ACC_UA_SET_BE64)
+    ACC_UA_SET_BE64(bb, v);
+#else
+    acc_ua_set_be64(bb, v);
+#endif
+}
+
 inline unsigned get_le16(const void *bb)
 {
 #if defined(ACC_UA_GET_LE16)
@@ -142,6 +160,24 @@ inline void set_le32(void *bb, unsigned v)
 #endif
 }
 
+inline acc_uint64l_t get_le64(const void *bb)
+{
+#if defined(ACC_UA_GET_LE64)
+    return ACC_UA_GET_LE64(bb);
+#else
+    return acc_ua_get_le64(bb);
+#endif
+}
+
+inline void set_le64(void *bb, acc_uint64l_t v)
+{
+#if defined(ACC_UA_SET_LE64)
+    ACC_UA_SET_LE64(bb, v);
+#else
+    acc_ua_set_le64(bb, v);
+#endif
+}
+
 
 /*************************************************************************
 // get signed values, i.e. sign-extend
@@ -151,6 +187,13 @@ inline int sign_extend(int v, int bits)
 {
     const unsigned sign_bit = 1u << (bits - 1);
     v |= 0u - (v & sign_bit);
+    return v;
+}
+
+inline acc_int64l_t sign_extend(acc_int64l_t v, int bits)
+{
+    const acc_uint64l_t sign_bit = ACC_UINT64_C(1) << (bits - 1);
+    v |= ACC_UINT64_C(0) - (v & sign_bit);
     return v;
 }
 
@@ -172,6 +215,12 @@ inline int get_be32_signed(const void *bb)
     return sign_extend(v, 32);
 }
 
+inline acc_int64l_t get_be64_signed(const void *bb)
+{
+    acc_int64l_t v = get_be64(bb);
+    return sign_extend(v, 64);
+}
+
 inline int get_le16_signed(const void *bb)
 {
     int v = get_le16(bb);
@@ -188,6 +237,12 @@ inline int get_le32_signed(const void *bb)
 {
     int v = get_le32(bb);
     return sign_extend(v, 32);
+}
+
+inline int get_le64_signed(const void *bb)
+{
+    acc_int64l_t v = get_le64(bb);
+    return sign_extend(v, 64);
 }
 
 
@@ -233,6 +288,23 @@ struct BE32
 __attribute_packed;
 
 
+struct BE64
+{
+    unsigned char d[8];
+
+    BE64& operator =  (acc_uint64l_t v) { set_be64(d, v); return *this; }
+    BE64& operator += (acc_uint64l_t v) { set_be64(d, get_be64(d) + v); return *this; }
+    BE64& operator -= (acc_uint64l_t v) { set_be64(d, get_be64(d) - v); return *this; }
+    BE64& operator *= (acc_uint64l_t v) { set_be64(d, get_be64(d) * v); return *this; }
+    BE64& operator &= (acc_uint64l_t v) { set_be64(d, get_be64(d) & v); return *this; }
+    BE64& operator |= (acc_uint64l_t v) { set_be64(d, get_be64(d) | v); return *this; }
+    BE64& operator ^= (acc_uint64l_t v) { set_be64(d, get_be64(d) ^ v); return *this; }
+
+    operator acc_uint64l_t () const  { return get_be64(d); }
+}
+__attribute_packed;
+
+
 struct LE16
 {
     unsigned char d[2];
@@ -267,6 +339,23 @@ struct LE32
 __attribute_packed;
 
 
+struct LE64
+{
+    unsigned char d[8];
+
+    LE64& operator =  (acc_uint64l_t v) { set_le64(d, v); return *this; }
+    LE64& operator += (acc_uint64l_t v) { set_le64(d, get_le64(d) + v); return *this; }
+    LE64& operator -= (acc_uint64l_t v) { set_le64(d, get_le64(d) - v); return *this; }
+    LE64& operator *= (acc_uint64l_t v) { set_le64(d, get_le64(d) * v); return *this; }
+    LE64& operator &= (acc_uint64l_t v) { set_le64(d, get_le64(d) & v); return *this; }
+    LE64& operator |= (acc_uint64l_t v) { set_le64(d, get_le64(d) | v); return *this; }
+    LE64& operator ^= (acc_uint64l_t v) { set_le64(d, get_le64(d) ^ v); return *this; }
+
+    operator acc_uint64l_t () const  { return get_le64(d); }
+}
+__attribute_packed;
+
+
 /*************************************************************************
 // global operators
 **************************************************************************/
@@ -277,11 +366,17 @@ inline bool operator < (const BE16& v1, const BE16& v2) {
 inline bool operator < (const BE32& v1, const BE32& v2) {
     return (unsigned) v1 < (unsigned) v2;
 }
+inline bool operator < (const BE64& v1, const BE64& v2) {
+    return (acc_uint64l_t) v1 < (acc_uint64l_t) v2;
+}
 inline bool operator < (const LE16& v1, const LE16& v2) {
     return (unsigned) v1 < (unsigned) v2;
 }
 inline bool operator < (const LE32& v1, const LE32& v2) {
     return (unsigned) v1 < (unsigned) v2;
+}
+inline bool operator < (const LE64& v1, const LE64& v2) {
+    return (acc_uint64l_t) v1 < (acc_uint64l_t) v2;
 }
 
 
@@ -299,6 +394,11 @@ inline T* operator + (const BE32& v, T* ptr) { return ptr + (unsigned) v; }
 template <class T>
 inline T* operator - (T* ptr, const BE32& v) { return ptr - (unsigned) v; }
 
+// these are not implemented on purpose and will cause link-time errors
+template <class T> T* operator + (T* ptr, const BE64& v);
+template <class T> T* operator + (const BE64& v, T* ptr);
+template <class T> T* operator - (T* ptr, const BE64& v);
+
 template <class T>
 inline T* operator + (T* ptr, const LE16& v) { return ptr + (unsigned) v; }
 template <class T>
@@ -313,6 +413,11 @@ inline T* operator + (const LE32& v, T* ptr) { return ptr + (unsigned) v; }
 template <class T>
 inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 
+// these are not implemented on purpose and will cause link-time errors
+template <class T> T* operator + (T* ptr, const LE64& v);
+template <class T> T* operator + (const LE64& v, T* ptr);
+template <class T> T* operator - (T* ptr, const LE64& v);
+
 
 /*************************************************************************
 // misc
@@ -322,15 +427,19 @@ inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 int __acc_cdecl_qsort be16_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort be24_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort be64_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort le24_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2);
+int __acc_cdecl_qsort le64_compare(const void *e1, const void *e2);
 int __acc_cdecl_qsort be16_compare_signed(const void *e1, const void *e2);
 int __acc_cdecl_qsort be24_compare_signed(const void *e1, const void *e2);
 int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort be64_compare_signed(const void *e1, const void *e2);
 int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2);
 int __acc_cdecl_qsort le24_compare_signed(const void *e1, const void *e2);
 int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2);
 
 
 // just for testing...
