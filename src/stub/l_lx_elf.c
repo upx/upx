@@ -224,7 +224,7 @@ upx_bzero(char *p, size_t len)
 
 static void
 __attribute__((regparm(3), stdcall))
-auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
+auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 {
     if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
     for (;; ++av) {

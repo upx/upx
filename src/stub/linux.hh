@@ -43,7 +43,10 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef int int32_t;
 typedef unsigned uint32_t;
-#if defined(_WIN32) && !defined(__GNUC__)
+#if defined(__GNUC__)
+__extension__ typedef long long int64_t;
+__extension__ typedef unsigned long long uint64_t;
+#elif defined(_WIN32)
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #else
@@ -73,11 +76,14 @@ struct timespec {
 
 // misc constants
 
+#if defined(__amd64__) || defined(__powerpc64__)
+#elif defined(__i386__) || defined(__powerpc__)
+#define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
+#define PAGE_SIZE       ( 1ul<<12)
+#endif
+
 #define SEEK_SET        0
 #define SEEK_CUR        1
-
-#define PAGE_MASK       (~0u<<12)   // discards the offset, keeps the page
-#define PAGE_SIZE       ( 1u<<12)
 
 #define O_RDONLY        00
 #define O_WRONLY        01
@@ -94,11 +100,9 @@ struct timespec {
 #define F_SETFD         2
 #define FD_CLOEXEC      1
 
-
 // <errno.h>
 #define ENOENT          2
 #define EINTR           4
-
 
 // <sys/mman.h>
 #define PROT_READ       0x1
@@ -112,7 +116,8 @@ struct timespec {
 #define MAP_ANONYMOUS   0x20
 
 
-#ifdef __i386__  /*{*/
+#if defined(__i386__)  /*{*/
+
 // <asm/unistd.h>
 #define __NR_exit                 1
 #define __NR_fork                 2
@@ -328,6 +333,7 @@ static inline _syscall1(int,unlink,const char *,file)
 #undef Z1
 
 #else  /*}{ generic */
+
 extern void *brk(void *);
 extern int close(int);
 extern void *mmap(void *, size_t, int, int, int, off_t);
@@ -335,7 +341,10 @@ extern int munmap(void *, size_t);
 extern int mprotect(void const *, size_t, int);
 extern int open(char const *, unsigned, unsigned);
 extern size_t read(int, void *, size_t);
+
 #endif  /*}*/
+
+
 /*************************************************************************
 // <elf.h>
 **************************************************************************/
@@ -394,11 +403,9 @@ typedef struct
 
 typedef struct
 {
-  int a_type;
+  uint32_t a_type;
   union {
-      long a_val;
-      void *a_ptr;
-      void (*a_fcn) (void);
+      uint32_t a_val;
   } a_un;
 } Elf32_auxv_t;
 
