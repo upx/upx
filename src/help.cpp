@@ -245,6 +245,7 @@ void show_help(int x)
     con_fprintf(f,"This version supports:\n");
     fg = con_fg(f,fg);
     con_fprintf(f,"   "
+                " arm/pe,"
                 " atari/tos,"
                 " bvmlinuz/386,"
                 " djgpp2/coff,"

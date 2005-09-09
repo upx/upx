@@ -6,6 +6,7 @@ User visible changes for UPX
 
 Changes in 1.94 beta (XX XXX 2005):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * arm/pe: new executable format (ARM executables running on WinCE)
 
 Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels
