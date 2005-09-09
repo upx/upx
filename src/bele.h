@@ -34,147 +34,147 @@
 // core
 **************************************************************************/
 
-inline unsigned get_be16(const void *bb)
+inline unsigned get_be16(const void *p)
 {
 #if defined(ACC_UA_GET_BE16)
-    return ACC_UA_GET_BE16(bb);
+    return ACC_UA_GET_BE16(p);
 #else
-    return acc_ua_get_be16(bb);
+    return acc_ua_get_be16(p);
 #endif
 }
 
-inline void set_be16(void *bb, unsigned v)
+inline void set_be16(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_BE16)
-    ACC_UA_SET_BE16(bb, v);
+    ACC_UA_SET_BE16(p, v);
 #else
-    acc_ua_set_be16(bb, v);
+    acc_ua_set_be16(p, v);
 #endif
 }
 
-inline unsigned get_be24(const void *bb)
+inline unsigned get_be24(const void *p)
 {
 #if defined(ACC_UA_GET_BE24)
-    return ACC_UA_GET_BE24(bb);
+    return ACC_UA_GET_BE24(p);
 #else
-    return acc_ua_get_be24(bb);
+    return acc_ua_get_be24(p);
 #endif
 }
 
-inline void set_be24(void *bb, unsigned v)
+inline void set_be24(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_BE24)
-    ACC_UA_SET_BE24(bb, v);
+    ACC_UA_SET_BE24(p, v);
 #else
-    acc_ua_set_be24(bb, v);
+    acc_ua_set_be24(p, v);
 #endif
 }
 
-inline unsigned get_be32(const void *bb)
+inline unsigned get_be32(const void *p)
 {
 #if defined(ACC_UA_GET_BE32)
-    return ACC_UA_GET_BE32(bb);
+    return ACC_UA_GET_BE32(p);
 #else
-    return acc_ua_get_be32(bb);
+    return acc_ua_get_be32(p);
 #endif
 }
 
-inline void set_be32(void *bb, unsigned v)
+inline void set_be32(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_BE32)
-    ACC_UA_SET_BE32(bb, v);
+    ACC_UA_SET_BE32(p, v);
 #else
-    acc_ua_set_be32(bb, v);
+    acc_ua_set_be32(p, v);
 #endif
 }
 
-inline acc_uint64l_t get_be64(const void *bb)
+inline acc_uint64l_t get_be64(const void *p)
 {
 #if defined(ACC_UA_GET_BE64)
-    return ACC_UA_GET_BE64(bb);
+    return ACC_UA_GET_BE64(p);
 #else
-    return acc_ua_get_be64(bb);
+    return acc_ua_get_be64(p);
 #endif
 }
 
-inline void set_be64(void *bb, acc_uint64l_t v)
+inline void set_be64(void *p, acc_uint64l_t v)
 {
 #if defined(ACC_UA_SET_BE64)
-    ACC_UA_SET_BE64(bb, v);
+    ACC_UA_SET_BE64(p, v);
 #else
-    acc_ua_set_be64(bb, v);
+    acc_ua_set_be64(p, v);
 #endif
 }
 
-inline unsigned get_le16(const void *bb)
+inline unsigned get_le16(const void *p)
 {
 #if defined(ACC_UA_GET_LE16)
-    return ACC_UA_GET_LE16(bb);
+    return ACC_UA_GET_LE16(p);
 #else
-    return acc_ua_get_le16(bb);
+    return acc_ua_get_le16(p);
 #endif
 }
 
-inline void set_le16(void *bb, unsigned v)
+inline void set_le16(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_LE16)
-    ACC_UA_SET_LE16(bb, v);
+    ACC_UA_SET_LE16(p, v);
 #else
-    acc_ua_set_le16(bb, v);
+    acc_ua_set_le16(p, v);
 #endif
 }
 
-inline unsigned get_le24(const void *bb)
+inline unsigned get_le24(const void *p)
 {
 #if defined(ACC_UA_GET_LE24)
-    return ACC_UA_GET_LE24(bb);
+    return ACC_UA_GET_LE24(p);
 #else
-    return acc_ua_get_le24(bb);
+    return acc_ua_get_le24(p);
 #endif
 }
 
-inline void set_le24(void *bb, unsigned v)
+inline void set_le24(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_LE24)
-    ACC_UA_SET_LE24(bb, v);
+    ACC_UA_SET_LE24(p, v);
 #else
-    acc_ua_set_le24(bb, v);
+    acc_ua_set_le24(p, v);
 #endif
 }
 
-inline unsigned get_le32(const void *bb)
+inline unsigned get_le32(const void *p)
 {
 #if defined(ACC_UA_GET_LE32)
-    return ACC_UA_GET_LE32(bb);
+    return ACC_UA_GET_LE32(p);
 #else
-    return acc_ua_get_le32(bb);
+    return acc_ua_get_le32(p);
 #endif
 }
 
-inline void set_le32(void *bb, unsigned v)
+inline void set_le32(void *p, unsigned v)
 {
 #if defined(ACC_UA_SET_LE32)
-    ACC_UA_SET_LE32(bb, v);
+    ACC_UA_SET_LE32(p, v);
 #else
-    acc_ua_set_le32(bb, v);
+    acc_ua_set_le32(p, v);
 #endif
 }
 
-inline acc_uint64l_t get_le64(const void *bb)
+inline acc_uint64l_t get_le64(const void *p)
 {
 #if defined(ACC_UA_GET_LE64)
-    return ACC_UA_GET_LE64(bb);
+    return ACC_UA_GET_LE64(p);
 #else
-    return acc_ua_get_le64(bb);
+    return acc_ua_get_le64(p);
 #endif
 }
 
-inline void set_le64(void *bb, acc_uint64l_t v)
+inline void set_le64(void *p, acc_uint64l_t v)
 {
 #if defined(ACC_UA_SET_LE64)
-    ACC_UA_SET_LE64(bb, v);
+    ACC_UA_SET_LE64(p, v);
 #else
-    acc_ua_set_le64(bb, v);
+    acc_ua_set_le64(p, v);
 #endif
 }
 
@@ -197,51 +197,51 @@ inline acc_int64l_t sign_extend(acc_int64l_t v, int bits)
     return v;
 }
 
-inline int get_be16_signed(const void *bb)
+inline int get_be16_signed(const void *p)
 {
-    int v = get_be16(bb);
+    int v = get_be16(p);
     return sign_extend(v, 16);
 }
 
-inline int get_be24_signed(const void *bb)
+inline int get_be24_signed(const void *p)
 {
-    int v = get_be24(bb);
+    int v = get_be24(p);
     return sign_extend(v, 24);
 }
 
-inline int get_be32_signed(const void *bb)
+inline int get_be32_signed(const void *p)
 {
-    int v = get_be32(bb);
+    int v = get_be32(p);
     return sign_extend(v, 32);
 }
 
-inline acc_int64l_t get_be64_signed(const void *bb)
+inline acc_int64l_t get_be64_signed(const void *p)
 {
-    acc_int64l_t v = get_be64(bb);
+    acc_int64l_t v = get_be64(p);
     return sign_extend(v, 64);
 }
 
-inline int get_le16_signed(const void *bb)
+inline int get_le16_signed(const void *p)
 {
-    int v = get_le16(bb);
+    int v = get_le16(p);
     return sign_extend(v, 16);
 }
 
-inline int get_le24_signed(const void *bb)
+inline int get_le24_signed(const void *p)
 {
-    int v = get_le24(bb);
+    int v = get_le24(p);
     return sign_extend(v, 24);
 }
 
-inline int get_le32_signed(const void *bb)
+inline int get_le32_signed(const void *p)
 {
-    int v = get_le32(bb);
+    int v = get_le32(p);
     return sign_extend(v, 32);
 }
 
-inline int get_le64_signed(const void *bb)
+inline int get_le64_signed(const void *p)
 {
-    acc_int64l_t v = get_le64(bb);
+    acc_int64l_t v = get_le64(p);
     return sign_extend(v, 64);
 }
 
@@ -424,22 +424,22 @@ template <class T> T* operator - (T* ptr, const LE64& v);
 **************************************************************************/
 
 // for use with qsort()
-int __acc_cdecl_qsort be16_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort be24_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort be64_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort le24_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort le64_compare(const void *e1, const void *e2);
-int __acc_cdecl_qsort be16_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort be24_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort be64_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort le24_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2);
-int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2);
+int __acc_cdecl_qsort be16_compare(const void *a, const void *b);
+int __acc_cdecl_qsort be24_compare(const void *a, const void *b);
+int __acc_cdecl_qsort be32_compare(const void *a, const void *b);
+int __acc_cdecl_qsort be64_compare(const void *a, const void *b);
+int __acc_cdecl_qsort le16_compare(const void *a, const void *b);
+int __acc_cdecl_qsort le24_compare(const void *a, const void *b);
+int __acc_cdecl_qsort le32_compare(const void *a, const void *b);
+int __acc_cdecl_qsort le64_compare(const void *a, const void *b);
+int __acc_cdecl_qsort be16_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort be24_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort be32_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort be64_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort le16_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort le24_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort le32_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort le64_compare_signed(const void *a, const void *b);
 
 
 // just for testing...
