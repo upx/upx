@@ -66,7 +66,7 @@ static const
 #  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
 #endif
 
-#if 1
+#if 0
 static unsigned my_strlen(const char *s)
 {
     size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
@@ -179,6 +179,7 @@ PackArmPe::~PackArmPe()
 const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
     static const int m_nrv2e[] = { M_NRV2E_8, -1 };
+    UNUSED(method); UNUSED(level);
     return m_nrv2e;
 }
 
@@ -1536,6 +1537,7 @@ bool PackArmPe::canPack()
 
 int PackArmPe::buildLoader(const Filter *ft)
 {
+    UNUSED(ft);
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader), -1, 2);
     addLoader("ARMWPE00,ARMWPE99,"

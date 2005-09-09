@@ -61,7 +61,7 @@ public:
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
-        {  return false; }
+        {  UNUSED(version); return false; }
 
 protected:
     virtual int readFileHeader();
