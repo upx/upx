@@ -42,8 +42,6 @@ More formats:
  - freebsd/386 (generic), freebsd/elf386 (specialized).
    Probably could share most of the linux code.
 
- - Windows CE
-
  - add support for self-extracting HTML pages using a Javascript stub
    (like the AlgART HTML Packer "AHP")
 

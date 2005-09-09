@@ -30,4 +30,5 @@ The main news since 1.25 are:
     shell-to-memory decompression ("linux/sh386")
   - support for playstation exes ("ps1/exe")
   - lots of new bugs ;-) take care
+  - support for arm/WinCE ("arm/pe") exes
 

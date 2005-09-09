@@ -46,7 +46,8 @@ STUBS = \
 	l_lx_pti86.h  fold_pti86.h \
 	l_lx_elfppc32.h fold_elfppc32.h \
 	l_mac_ppc32.h fold_machppc32.h \
-	l_vmlinz.h l_vmlinx.h
+	l_vmlinz.h l_vmlinx.h \
+	l_armpe.h
 
 # experimental:
 ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
@@ -178,6 +179,15 @@ ifneq ($(wildcard $d),)
 endif
 
 
+###
+### ARM-PE-WINCE
+###
+
+GCC_WINCE	:=  arm-wince-pe-gcc -Os
+LD_WINCE	:=  arm-wince-pe-ld
+OBJCOPY_WINCE	:=  arm-wince-pe-objcopy
+BIN2H_WINCE	:=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
+
 # /***********************************************************************
 # // main targets
 # ************************************************************************/
@@ -275,7 +285,6 @@ l_wcle.h: l_wcle.asx
 l_w32pe.h: l_w32pe.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
-
 
 # /***********************************************************************
 # // atari/tos rules
@@ -477,6 +486,14 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
+l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c
+	$(GCC_WINCE) -c l_armpe_s.S l_armpe_c.c
+	$(LD_WINCE) -nostdlib -o l_armpe_.out l_armpe_s.o l_armpe_c.o
+	$(OBJCOPY_WINCE) --only-section .text -O binary l_armpe_.out l_armpe_.bin
+	$(BIN2H_WINCE) <l_armpe_.bin >l_armpe_.ah
+	$(NASM) -f bin -o $T.bin $<
+	$(BIN2H) $T.bin nrv_loader $@
+
 
 # /***********************************************************************
 # // dependencies
@@ -506,6 +523,7 @@ l_vmlinx.h:     $(DEPS2) $(DEPS3)
 l_vxd.h:        $(DEPS2) $(DEPS3)
 l_wcle.h:       $(DEPS2) $(DEPS3)
 l_w32pe.h:      $(DEPS2) $(DEPS3)
+l_armpe.h:      $(DEPS2) $(DEPS3)
 
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)

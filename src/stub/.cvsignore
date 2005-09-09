@@ -12,3 +12,5 @@ stamp-h
 stubify.exe
 upxb
 upxd
+*.out
+*.ah

@@ -53,6 +53,7 @@
 #include "p_vmlinx.h"
 #include "p_ps1.h"
 #include "p_mach.h"
+#include "p_armpe.h"
 
 
 /*************************************************************************
@@ -169,6 +170,8 @@ static Packer* try_packers(InputFile *f, try_function func)
             return p;
 #endif
         if ((p = func(new PackW16Ne(f),f)) != NULL)
+            return p;
+        if ((p = func(new PackArmPe(f),f)) != NULL)
             return p;
         if ((p = func(new PackW32Pe(f),f)) != NULL)
             return p;
