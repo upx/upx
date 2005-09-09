@@ -61,7 +61,7 @@ int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2)
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __acc_cdecl_qsort be64(const void *e1, const void *e2)
+int __acc_cdecl_qsort be64_compare(const void *e1, const void *e2)
 {
     const acc_uint64l_t d1 = get_be64(e1);
     const acc_uint64l_t d2 = get_be64(e2);
@@ -82,7 +82,7 @@ int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2)
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
-int __acc_cdecl_qsort le64(const void *e1, const void *e2)
+int __acc_cdecl_qsort le64_compare(const void *e1, const void *e2)
 {
     const acc_uint64l_t d1 = get_le64(e1);
     const acc_uint64l_t d2 = get_le64(e2);
