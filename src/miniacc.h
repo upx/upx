@@ -36,7 +36,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20050906L
+#define ACC_VERSION     20050912L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -2397,6 +2397,8 @@ typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
+#  if defined(ACC_CFG_NO_ACC_UA_H)
+#  else
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
 #elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul)) && defined(__cplusplus)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER < 700))
@@ -2496,6 +2498,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE32(void* pp, unsigned long v) {
 #  define ACC_UA_COPY64(d,s)    ACC_UA_SET64(d, ACC_UA_GET64(s))
 #endif
 #endif
+#  endif
 #endif
 #endif
 #if defined(ACC_WANT_ACC_TYPE_H)
@@ -2754,6 +2757,7 @@ typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
+#  if !defined(ACC_CFG_NO_ACC_UA_H)
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
 #elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul)) && defined(__cplusplus)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER < 700))
@@ -2853,6 +2857,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE32(void* pp, unsigned long v) {
 #  define ACC_UA_COPY64(d,s)    ACC_UA_SET64(d, ACC_UA_GET64(s))
 #endif
 #endif
+#  endif
 #endif
 #if defined(ACC_WANT_ACC_INCD_H)
 #  undef ACC_WANT_ACC_INCD_H
@@ -5402,6 +5407,4 @@ ACCLIB_PUBLIC(void, acc_wildargv) (int* argc, char*** argv)
 #endif
 #endif
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 et: */
