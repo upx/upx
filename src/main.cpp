@@ -1037,6 +1037,25 @@ static void first_options(int argc, char **argv)
 // assert a sane architecture and compiler
 **************************************************************************/
 
+template <class T> struct TestBELE {
+static int test(void)
+{
+    T allbits; allbits = 0; allbits -= 1;
+    T v1; v1 = 1; v1 *= 2; v1 -= 1;
+    T v2; v2 = 1;
+    assert( (v1 == v2)); assert(!(v1 != v2));
+    assert( (v1 <= v2)); assert( (v1 >= v2));
+    assert(!(v1 <  v2)); assert(!(v1 >  v2));
+    v2 ^= allbits;
+    assert(!(v1 == v2)); assert( (v1 != v2));
+    assert( (v1 <= v2)); assert(!(v1 >= v2));
+    assert( (v1 <  v2)); assert(!(v1 >  v2));
+    v2 += 2;
+    assert(v1 == 1); assert(v2 == 0);
+    return (v1 ^ v2) == 1;
+}};
+
+
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
 #include "miniacc.h"
@@ -1077,34 +1096,46 @@ void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_STRING4, UPX_VERSION_STRING, 4) == 0);
 
 #if 1
-    const unsigned char da[4] = { 0xff, 0xfe, 0xfd, 0xfc };
-    assert(upx_adler32(da, 4) == 0x09f003f7);
-    assert(upx_adler32(da, 4, 0) == 0x09ec03f6);
-    assert(upx_adler32(da, 4, 1) == 0x09f003f7);
-
-    assert(get_be16(da) == 0xfffe);
-    assert(get_be16_signed(da) == -2);
-    assert(get_be24(da) == 0xfffefd);
-    assert(get_be24_signed(da) == -259);
-    assert(get_be32(da) == 0xfffefdfc);
-    assert(get_be32_signed(da) == -66052);
-    assert(get_le16(da) == 0xfeff);
-    assert(get_le16_signed(da) == -257);
-    assert(get_le24(da) == 0xfdfeff);
-    assert(get_le24_signed(da) == -131329);
-    assert(get_le32(da) == 0xfcfdfeff);
-    assert(get_le32_signed(da) == -50462977);
-    assert(find_be16(da, sizeof(da), 0xfffe) == 0);
-    assert(find_le16(da, sizeof(da), 0xfeff) == 0);
-    assert(find_be32(da, sizeof(da), 0xfffefdfc) == 0);
-    assert(find_le32(da, sizeof(da), 0xfcfdfeff) == 0);
-#endif
-
-#if 1
-    const unsigned char db[4] = { 0x7f, 0x7e, 0x7d, 0x7c };
-    assert(get_be16_signed(db) == 32638);
-    assert(get_be24_signed(db) == 8355453);
-    assert(get_be32_signed(db) == 2138996092);
+#  if 1
+    assert(TestBELE<LE16>::test());
+    assert(TestBELE<LE32>::test());
+    assert(TestBELE<LE64>::test());
+    assert(TestBELE<BE16>::test());
+    assert(TestBELE<BE32>::test());
+    assert(TestBELE<BE64>::test());
+#  endif
+    {
+    static const unsigned char dd[32] = { 0, 0, 0, 0, 0, 0, 0,
+         0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8,
+         0, 0, 0, 0,
+         0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78,
+    0, 0, 0, 0, 0 };
+    const unsigned char *d;
+    d = dd + 7;
+    assert(upx_adler32(d, 4) == 0x09f003f7);
+    assert(upx_adler32(d, 4, 0) == 0x09ec03f6);
+    assert(upx_adler32(d, 4, 1) == 0x09f003f7);
+    assert(get_be16(d) == 0xfffe);
+    assert(get_be16_signed(d) == -2);
+    assert(get_be24(d) == 0xfffefd);
+    assert(get_be24_signed(d) == -259);
+    assert(get_be32(d) == 0xfffefdfc);
+    assert(get_be32_signed(d) == -66052);
+    assert(get_le16(d) == 0xfeff);
+    assert(get_le16_signed(d) == -257);
+    assert(get_le24(d) == 0xfdfeff);
+    assert(get_le24_signed(d) == -131329);
+    assert(get_le32(d) == 0xfcfdfeff);
+    assert(get_le32_signed(d) == -50462977);
+    assert(find_be16(d, 2, 0xfffe) == 0);
+    assert(find_le16(d, 2, 0xfeff) == 0);
+    assert(find_be32(d, 4, 0xfffefdfc) == 0);
+    assert(find_le32(d, 4, 0xfcfdfeff) == 0);
+    d += 12;
+    assert(get_be16_signed(d) == 32638);
+    assert(get_be24_signed(d) == 8355453);
+    assert(get_be32_signed(d) == 2138996092);
+    }
 #endif
 }
 
