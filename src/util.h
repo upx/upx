@@ -58,14 +58,6 @@ int find_le16(const void *b, int blen, unsigned what);
 int find_le32(const void *b, int blen, unsigned what);
 int find_le64(const void *b, int blen, acc_uint64l_t what);
 
-#if (UPX_VERSION_HEX < 0x019000)
-upx_bytep pfind(const void *b, int blen, const void *what, int wlen);
-upx_bytep pfind_be16(const void *b, int blen, unsigned what);
-upx_bytep pfind_be32(const void *b, int blen, unsigned what);
-upx_bytep pfind_le16(const void *b, int blen, unsigned what);
-upx_bytep pfind_le32(const void *b, int blen, unsigned what);
-#endif
-
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
 #elif (ACC_CC_DMC && (__DMC__ < 0x830))

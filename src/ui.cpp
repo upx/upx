@@ -144,8 +144,8 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
                           const char *format_name, const char *filename,
                           bool decompress=false)
 {
-    static char buf[2000];
-    char r[7+1] = "";
+    static char buf[2048];
+    char r[7+1];
     char fn[13+1];
     const char *f;
 

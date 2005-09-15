@@ -33,16 +33,13 @@
 #include "ui.h"
 
 
-#define ALWAYS_CHMOD 1
 #if defined(__DJGPP__)
 #  define USE_FTIME 1
-#  undef ALWAYS_CHMOD
 #elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
 #  include <utime.h>
 #  define USE_UTIME 1
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define USE__FUTIME 1
-#  undef ALWAYS_CHMOD
 #elif defined(HAVE_UTIME)
 #  define USE_UTIME 1
 #endif
@@ -68,9 +65,8 @@ void do_one_file(const char *iname, char *oname)
 #else
     int r = stat(iname,&st);
 #endif
-    bool need_chmod = true; UNUSED(need_chmod);
 
-    if (r == -1)
+    if (r != 0)
         throw FileNotFoundException(iname);
     if (!(S_ISREG(st.st_mode)))
         throwIOException("not a regular file -- skipped");
@@ -141,28 +137,17 @@ void do_one_file(const char *iname, char *oname)
             flags |= O_TRUNC;
             shmode = O_DENYRW;
 #endif
-#if !defined(ALWAYS_CHMOD)
-            // we can avoid the chmod() call below
-            int omode = st.st_mode;
-            fo.sopen(tname,flags,shmode,omode);
-            need_chmod = false;
-#else
             // cannot rely on open() because of umask
             //int omode = st.st_mode | 0600;
             int omode = 0600;
             fo.sopen(tname,flags,shmode,omode);
-#endif
             // open succeeded - now set oname[]
             strcpy(oname,tname);
         }
     }
 
     // handle command
-#if (UPX_VERSION_HEX >= 0x019000)
     PackMaster pm(&fi, opt);
-#else
-    PackMaster pm(&fi);
-#endif
     if (opt->cmd == CMD_COMPRESS)
         pm.pack(&fo);
     else if (opt->cmd == CMD_DECOMPRESS)
@@ -230,8 +215,7 @@ void do_one_file(const char *iname, char *oname)
 #endif
 #if defined(HAVE_CHMOD)
         // copy permissions
-        if (need_chmod)
-            (void) ::chmod(name, st.st_mode);
+        (void) ::chmod(name, st.st_mode);
 #endif
 #if defined(HAVE_CHOWN)
         // copy the ownership

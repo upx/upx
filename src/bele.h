@@ -360,26 +360,6 @@ __attribute_packed;
 // global operators
 **************************************************************************/
 
-inline bool operator < (const BE16& v1, const BE16& v2) {
-    return (unsigned) v1 < (unsigned) v2;
-}
-inline bool operator < (const BE32& v1, const BE32& v2) {
-    return (unsigned) v1 < (unsigned) v2;
-}
-inline bool operator < (const BE64& v1, const BE64& v2) {
-    return (acc_uint64l_t) v1 < (acc_uint64l_t) v2;
-}
-inline bool operator < (const LE16& v1, const LE16& v2) {
-    return (unsigned) v1 < (unsigned) v2;
-}
-inline bool operator < (const LE32& v1, const LE32& v2) {
-    return (unsigned) v1 < (unsigned) v2;
-}
-inline bool operator < (const LE64& v1, const LE64& v2) {
-    return (acc_uint64l_t) v1 < (acc_uint64l_t) v2;
-}
-
-
 template <class T>
 inline T* operator + (T* ptr, const BE16& v) { return ptr + (unsigned) v; }
 template <class T>
@@ -424,22 +404,22 @@ template <class T> T* operator - (T* ptr, const LE64& v);
 **************************************************************************/
 
 // for use with qsort()
-int __acc_cdecl_qsort be16_compare(const void *a, const void *b);
-int __acc_cdecl_qsort be24_compare(const void *a, const void *b);
-int __acc_cdecl_qsort be32_compare(const void *a, const void *b);
-int __acc_cdecl_qsort be64_compare(const void *a, const void *b);
-int __acc_cdecl_qsort le16_compare(const void *a, const void *b);
-int __acc_cdecl_qsort le24_compare(const void *a, const void *b);
-int __acc_cdecl_qsort le32_compare(const void *a, const void *b);
-int __acc_cdecl_qsort le64_compare(const void *a, const void *b);
-int __acc_cdecl_qsort be16_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort be24_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort be32_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort be64_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort le16_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort le24_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort le32_compare_signed(const void *a, const void *b);
-int __acc_cdecl_qsort le64_compare_signed(const void *a, const void *b);
+int __acc_cdecl_qsort be16_compare(const void *, const void *);
+int __acc_cdecl_qsort be24_compare(const void *, const void *);
+int __acc_cdecl_qsort be32_compare(const void *, const void *);
+int __acc_cdecl_qsort be64_compare(const void *, const void *);
+int __acc_cdecl_qsort le16_compare(const void *, const void *);
+int __acc_cdecl_qsort le24_compare(const void *, const void *);
+int __acc_cdecl_qsort le32_compare(const void *, const void *);
+int __acc_cdecl_qsort le64_compare(const void *, const void *);
+int __acc_cdecl_qsort be16_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be24_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be32_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort be64_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le16_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le24_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le32_compare_signed(const void *, const void *);
+int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 
 
 // just for testing...
@@ -447,20 +427,32 @@ int __acc_cdecl_qsort le64_compare_signed(const void *a, const void *b);
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
    typedef acc_uint16e_t LE16_unaligned __attribute__((__aligned__(1)));
    typedef acc_uint32e_t LE32_unaligned __attribute__((__aligned__(1)));
-#  define LE16      LE16_unaligned
-#  define LE32      LE32_unaligned
+#  ifndef LE16
+#    define LE16    LE16_unaligned
+#  endif
+#  ifndef LE16
+#    define LE32    LE32_unaligned
+#  endif
 #endif
 #if 0 && (ACC_ARCH_I386) && (ACC_CC_INTELC)
    typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
    typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
-#  define LE16      LE16_unaligned
-#  define LE32      LE32_unaligned
+#  ifndef LE16
+#    define LE16    LE16_unaligned
+#  endif
+#  ifndef LE16
+#    define LE32    LE32_unaligned
+#  endif
 #endif
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
    typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
    typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
-#  define LE16      LE16_unaligned
-#  define LE32      LE32_unaligned
+#  ifndef LE16
+#    define LE16    LE16_unaligned
+#  endif
+#  ifndef LE16
+#    define LE32    LE32_unaligned
+#  endif
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
 #endif
 #endif

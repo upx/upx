@@ -131,7 +131,6 @@ public:
 
     off_t getBytesWritten() const { return bytes_written; }
 
-#if (UPX_VERSION_HEX >= 0x019000)
     // FIXME - these won't work when using the `--stdout' option
     virtual void seek(off_t off, int whence)
     {
@@ -144,7 +143,6 @@ public:
         write(buf, len);
         bytes_written -= len;       // restore
     }
-#endif
 
     // util
     static void dump(const char *name, const void *buf, int len, int flags=-1);

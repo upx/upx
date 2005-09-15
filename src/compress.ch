@@ -91,7 +91,7 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
     conf.bb_size = 0;
     if (method >= M_NRV2B_LE32 && method <= M_CL1B_LE16)
     {
-        static unsigned char sizes[3]={32,8,16};
+        static const unsigned char sizes[3]={32,8,16};
         conf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];
     }
     else

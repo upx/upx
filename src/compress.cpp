@@ -32,14 +32,12 @@
 #if defined(WITH_NRV)
 #  include "compress_nrv.ch"
 #elif defined(WITH_UCL)
+#  define ALG_NRV2E
 #  define upx_adler32       upx_adler32
 //#  define upx_crc32         upx_crc32
 #  define upx_compress      upx_compress
 #  define upx_decompress    upx_decompress
-#  if (UPX_VERSION_HEX >= 0x019000)
-#    define ALG_NRV2E
-#    define upx_test_overlap  upx_test_overlap
-#  endif
+#  define upx_test_overlap  upx_test_overlap
 #  include "compress.ch"
 #else
 #  error
