@@ -26,6 +26,20 @@
  */
 
 
+#if 1 && defined(UCL_USE_ASM)
+#  include <ucl/ucl_asm.h>
+#  define ucl_nrv2b_decompress_safe_8       ucl_nrv2b_decompress_asm_safe_8
+#  define ucl_nrv2b_decompress_safe_le16    ucl_nrv2b_decompress_asm_safe_le16
+#  define ucl_nrv2b_decompress_safe_le32    ucl_nrv2b_decompress_asm_safe_le32
+#  define ucl_nrv2d_decompress_safe_8       ucl_nrv2d_decompress_asm_safe_8
+#  define ucl_nrv2d_decompress_safe_le16    ucl_nrv2d_decompress_asm_safe_le16
+#  define ucl_nrv2d_decompress_safe_le32    ucl_nrv2d_decompress_asm_safe_le32
+#  define ucl_nrv2e_decompress_safe_8       ucl_nrv2e_decompress_asm_safe_8
+#  define ucl_nrv2e_decompress_safe_le16    ucl_nrv2e_decompress_asm_safe_le16
+#  define ucl_nrv2e_decompress_safe_le32    ucl_nrv2e_decompress_asm_safe_le32
+#endif
+
+
 /*************************************************************************
 //
 **************************************************************************/
