@@ -293,7 +293,9 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
         {
             addr = get_le32(relocs+4*i);
             //printf ("%x\n",es*16+di);
-            if (addr - es*16 > 0xfffe)
+            if ((addr - es*16 > 0xfffe)
+                || (i == nrelocs - 1 && addr - es * 16 > 0xff00)
+               )
             {
                 // segment change
                 t = 1+(0xffff-di)/254;
