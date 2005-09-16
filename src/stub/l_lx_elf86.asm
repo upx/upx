@@ -45,7 +45,7 @@
 GLOBAL _start
 ;__LEXEC000__
 _start:
-;;;;    int3
+    int3
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
 ;; Invoke gdb, and give a 'run' command.  Define a single-step macro such as
@@ -133,41 +133,47 @@ decompress:
 %define PROT_WRITE     2
 %define PROT_EXEC      4
 %define __NR_mmap     90
+%define szElf32_Ehdr 0x34
+%define p_memsz  5*4
 
 ; Decompress the rest of this loader, and jump to it
 unfold:
-        pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
-        cld
-        lodsd
-        push eax  ; sz_uncompressed  (junk, actually)
-        push esp  ; &sz_uncompressed
-        mov eax, 0x1000000
-        push eax  ; &destination
+        pop esi  ; &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
 
-                ; mmap a page to hold the decompressed program
-        xor ecx, ecx
-        push ecx
-        push ecx
-        mov ch, PAGE_SIZE >> 8
+        lea eax, [ebp - (4+ decompress - _start)]  ; 4: sizeof(int)
+        sub eax, [eax]  ; %eax= &Elf32_Ehdr of this program
+        mov edx, eax    ; %edx= &Elf32_Ehdr of this program
+        add eax, [p_memsz + szElf32_Ehdr + eax]  ; page after .text
+        push eax  ; destination for 'ret'
+
+                ; mmap a page to hold the decompressed fold_elf86
+        xor ecx, ecx  ; %ecx= 0
+        ; MAP_ANONYMOUS ==>offset is ignored, so do not push!
+        ; push ecx  ; offset
+        push ecx  ; fd must be in valid range, but then ignored
         push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
+        mov ch, PAGE_SIZE >> 8  ; %ecx= PAGE_SIZE
         push byte PROT_READ | PROT_WRITE | PROT_EXEC
         push ecx  ; length
         push eax  ; destination
         mov ebx, esp  ; address of parameter vector for __NR_mmap
         push byte __NR_mmap
         pop eax
-        int 0x80
-        xchg eax, ebx
-        mov bh, PAGE_SIZE>>8  ; ebx= 0x1001000
-        add esp, byte 6*4  ; discard args to mmap
+        int 0x80  ; changes only %eax; %edx is live
+        xchg eax, edx  ; %edx= page after .text; %eax= &Elf32_Ehdr of this program
+        xchg eax, ebx  ; %ebx= &Elf32_Ehdr of this program
 
+        cld
+        lodsd
+        push eax  ; sz_uncompressed  (junk, actually)
+        push esp  ; &dstlen
+        push edx  ; &dst
         lodsd
         push eax  ; sz_compressed
-        lodsd  ; junk cto8, algo, unused[2]
+        lodsd     ; last 4 bytes of b_info
         push esi  ; &compressed_data
         call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        pop eax  ; discard &compressed_data
-        pop eax  ; discard sz_compressed
+        add esp, byte (4+1 + 6-1)*4  ; (4+1) args to decompress, (6-1) args to mmap
         ret      ; &destination
 main:
         pop ebp  ; &decompress

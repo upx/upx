@@ -171,6 +171,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append pack header
 
     virtual void patchLoader();
 
@@ -178,6 +179,16 @@ protected:
     Elf32_Phdr *phdri; // for  input file
     unsigned sz_phdrs;  // sizeof Phdr[]
 
+            char       *file_image;       // if ET_DYN investigation
+    Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
+    unsigned int const *hashtab;  // from DT_HASH
+            char const *dynstr;   // from DT_STRTAB
+    Elf32_Sym    const *dynsym;   // from DT_SYMTAB
+
+    static unsigned elf_hash(char const *) /*const*/;
+    virtual void const *elf_find_dynamic(unsigned) const;
+    virtual Elf32_Sym const *elf_lookup(char const *) const;
+    virtual unsigned elf_get_offset_from_address(unsigned) const;
 };
 
 

@@ -38,8 +38,8 @@ PHDRS
 }
 SECTIONS
 {
-  /*  0x01001000: l_lx_elf86.asm assumes 1 page up from 64KB boundary */
-  . = 0x01001000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+  /*  0x00c00000: 12MB */
+  . = 0x00c00000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
   .text : {
     *(.text)
     *(.data)

@@ -35,6 +35,7 @@
 %define PAGE_SIZE ( 1<<12)
 %define szElf32_Ehdr 0x34
 %define szElf32_Phdr 8*4
+%define e_type    16
 %define e_entry  (16 + 2*2 + 4)
 %define p_memsz  5*4
 %define szb_info 12
@@ -54,9 +55,6 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
         ;   dword sz_uncompressed, sz_compressed
         ;   byte  compressed_data...
 
-        pop eax  ; discard &sz_uncompressed
-        pop eax  ; discard  sz_uncompressed
-
 ; ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance.
 ; Move argc,argv,envp down to make room for Elf_auxv table.
 ; Linux kernel 2.4.2 and earlier give only AT_HWCAP and AT_PLATFORM
@@ -74,6 +72,8 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
 %define AT_PHNUM  5
 %define AT_PAGESZ 6
 %define AT_ENTRY  9
+
+%define ET_DYN    3
 
         sub ecx, ecx
         mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
@@ -96,21 +96,34 @@ L50:
 %define OVERHEAD 2048
 %define MAX_ELF_HDR 512
 
+        sub esp, dword MAX_ELF_HDR + OVERHEAD  ; alloca
+        mov edx, esp  ; %edx= &tmp
         push ebx  ; save &Elf32_Ehdr of this stub
-        sub esp, dword MAX_ELF_HDR + OVERHEAD
+        xor ecx, ecx  ; 0
+        push ecx ; assume not ET_DYN
         lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  ; 1st &b_info
         mov esi, [e_entry + ebx]  ; beyond compressed data
+        cmp word [e_type + ebx], byte ET_DYN
+        jne L53
+        pop ecx  ; is ET_DYN: discard false assumption
+        add esi, ebx  ; relocate e_entry
+        mov ch, PAGE_SIZE>>8  ; %ecx= PAGE_SIZE
+        add ebx, [p_memsz + szElf32_Ehdr + ebx]
+        add ebx, ecx
+        push ebx  ; dynbase
+L53:
         sub esi, eax  ; length of compressed data
         mov ebx, [   eax]  ; length of uncompressed ELF headers
-        mov edx, esp  ;
         mov ecx, [4+ eax]  ; length of   compressed ELF headers
         add ecx, byte szb_info
         pusha  ; (AT_table, sz_cpr, f_expand, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
         inc edi  ; swap with above 'pusha' to inhibit auxv_up for PT_INTERP
 EXTERN upx_main
         call upx_main  ; returns entry address
-        add esp, dword 8*4 + MAX_ELF_HDR + OVERHEAD  ; remove 8 params, temp space
+        add esp, byte 8*4  ; remove 8 params from pusha
+        pop ecx  ; dynbase
         pop ebx  ; &Elf32_Ehdr of this stub
+        add esp, dword MAX_ELF_HDR + OVERHEAD  ; un-alloca
         push eax  ; save entry address
 
         dec edi  ; auxv table
@@ -127,9 +140,9 @@ L60:
 ; See bug libc/1165 at  http://bugs.gnu.org/cgi-bin/gnatsweb.pl
 ; Found 1999-06-16 glibc-2.1.1
 ; Fixed 1999-12-29 glibc-2.1.2
-
-%define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
-%define  N_STKCLR 8
+;
+;%define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
+;%define  N_STKCLR 8
 ;       lea edi, [esp - 4*N_STKCLR]
 ;       pusha  ; values will be zeroed
 ;       mov esi,esp  ; save
@@ -138,7 +151,6 @@ L60:
 ;       ; xor eax,eax  ; eax already 0 from L60
 ;       rep stosd
 ;       mov esp,esi  ; restore
-        ; xor ecx, ecx  ; ecx already 0 from "rep stosd"
 
         push eax
         push eax
@@ -148,13 +160,9 @@ L60:
         push eax
         push eax
         push eax  ; 32 bytes of zeroes now on stack
-        push eax
-        pop ecx  ; 0
 
+        sub ecx, ebx  ; length to unmap
         mov al, __NR_munmap  ; eax was 0 from L60
-        mov ch, PAGE_SIZE>>8  ; 0x1000
-        add ecx, [p_memsz + szElf32_Ehdr + ebx]  ; length to unmap
-        mov bh, 0  ; from 0x401000 to 0x400000
         jmp [edi]  ; unmap ourselves via escape hatch, then goto entry
 
 ; called twice:

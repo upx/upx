@@ -83,7 +83,7 @@ xread(struct Extent *x, char *buf, size_t count)
 #else  //}{  save debugging time
 #define ERR_LAB
 static void
-err_exit(int a)
+err_exit(int a) __attribute__ ((__noreturn__));
 {
     (void)a;  // debugging convenience
     exit(127);
@@ -156,8 +156,8 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len;
-            int const j = (*f_decompress)(xi->buf, h.sz_cpr, xo->buf, &out_len,
-                h.b_method);
+            int const j = (*f_decompress)((unsigned char *)xi->buf, h.sz_cpr,
+                (unsigned char *)xo->buf, &out_len, h.b_method );
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             // Skip Ehdr+Phdrs: separate 1st block, not filtered
@@ -165,7 +165,7 @@ ERR_LAB
             &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
             ) {
-                (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
+                (*f_unf)((unsigned char *)xo->buf, out_len, h.b_cto8, h.b_ftid);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
@@ -179,9 +179,9 @@ ERR_LAB
 }
 
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
-// Called by do_xmap to create it, and by assembler code to find it.
+// Called by do_xmap to create it; remembered in AT_NULL.d_val
 static void *
-make_hatch(Elf32_Phdr const *const phdr)
+make_hatch(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
@@ -194,11 +194,11 @@ make_hatch(Elf32_Phdr const *const phdr)
         // and the action is the same when either test succeeds.
 
         // Try page fragmentation just beyond .text .
-        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr)),
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  4<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Try Elf32_Ehdr.e_ident[12..15] .  warning: 'const' cast away
-        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr)->e_ident[12])),
+        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[12])),
                 (phdr->p_offset==0) ) ) {
             // Omitting 'const' saves repeated literal in gcc.
             unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
@@ -274,7 +274,8 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = do_mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    addr = do_mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC,
+        mflags, 0, 0 );
     *p_brk = hi + addr;  // the logical value of brk(0)
     munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
     return (unsigned long)addr - lo;
@@ -282,13 +283,13 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
-    Elf32_auxv_t *const av)
+    Elf32_auxv_t *const av, unsigned *p_reloc)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (char const *)ehdr);
     char *v_brk;
-    unsigned long const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
+    unsigned const reloc = xfind_pages(
+        ((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
@@ -298,13 +299,11 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         struct Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
-        char *haddr =           phdr->p_memsz +                  addr;
+        char  *addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
+        char *haddr =           phdr->p_memsz + addr;
         size_t frag  = (int)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
-        addr  += reloc;
-        haddr += reloc;
 
         // Decompressor can overrun the destination by 3 bytes.
         if (addr != do_mmap(addr, mlen + (xi ? 3 : 0), PROT_READ | PROT_WRITE,
@@ -320,7 +319,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
         if (xi) {
-            void *const hatch = make_hatch(phdr);
+            void *const hatch = make_hatch(phdr, reloc);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
@@ -355,6 +354,9 @@ ERR_LAB
             do_brk(v_brk);
         }
     }
+    if (0!=p_reloc) {
+        *p_reloc = reloc;
+    }
     return ehdr->e_entry + reloc;
 }
 
@@ -369,22 +371,28 @@ void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    Elf32_Ehdr *const ehdr,
+    int junk,  // %esp from 'pusha'
     struct Extent xo,
-    struct Extent xi
+    struct Extent xi,
+    unsigned const volatile dynbase
 ) __asm__("upx_main");
 
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    Elf32_Ehdr *const ehdr,  // temp char[MAX_ELF_HDR+OVERHEAD]
+    int junk,  // %esp from 'pusha'
     struct Extent xo,  // {sz_unc, ehdr}    for ELF headers
-    struct Extent xi   // {sz_cpr, &b_info} for ELF headers
+    struct Extent xi,  // {sz_cpr, &b_info} for ELF headers
+    unsigned const volatile dynbase  // value+result: compiler must not change
 )
 {
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
+    Elf32_Addr reloc;
     Elf32_Addr entry;
+
+    (void)junk;
 
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_pckhdrs = xi.size;
@@ -396,19 +404,22 @@ void *upx_main(
     xi.buf  -= sz_pckhdrs;
     xi.size  = sz_compressed;
 
-    // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, AT_PHDR  , (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
-    auxv_up(av, AT_PHENT , ehdr->e_phentsize);
-    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
+    // Some kernels omit AT_PHNUM,AT_PHENT,AT_PHDR because this stub has no PT_INTERP.
+    // That is "too much" optimization.  Linux 2.6.x seems to give all AT_*.
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
-    auxv_up(av, AT_ENTRY , (unsigned)ehdr->e_entry);
-    entry = do_xmap((int)f_decompress, ehdr, &xi, av);
+    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
+    auxv_up(av, AT_PHENT , ehdr->e_phentsize);
+    auxv_up(av, AT_PHDR  , dynbase + (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
+    // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
+    // This is necessary for ET_DYN if|when we override a prelink address.
+
+    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc);
+    auxv_up(av, AT_ENTRY , entry);  // might not be necessary?
 
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = (char const *)phdr->p_vaddr;
-        int const fdi = open(iname, O_RDONLY, 0);
+        int const fdi = open(reloc + (char const *)phdr->p_vaddr, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
         }
@@ -416,7 +427,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, 0);
+        entry = do_xmap(fdi, ehdr, 0, 0, 0);
         break;
     }
   }

@@ -418,13 +418,14 @@ int PackLinuxI386::checkEhdr(const Elf32_Ehdr *ehdr) const
         return -1;
 
     // now check the ELF header
-    if (!memcmp(buf+8, "FreeBSD", 7))                   // branded
+    if (!memcmp(buf+8, "FreeBSD", 7))                  // branded
         return 1;
-    if (ehdr->e_type != 2)                              // executable
+    if (ehdr->e_type != Elf32_Ehdr::ET_EXEC
+    &&  ehdr->e_type != Elf32_Ehdr::ET_DYN )           // executable
         return 2;
-    if (ehdr->e_machine != 3)                           // Intel 80386
+    if (ehdr->e_machine != Elf32_Ehdr::EM_386)         // Intel 80386
         return 3;
-    if (ehdr->e_version != 1)                           // version
+    if (ehdr->e_version != Elf32_Ehdr::EV_CURRENT)     // version
         return 4;
     if (ehdr->e_phnum < 1)
         return 5;

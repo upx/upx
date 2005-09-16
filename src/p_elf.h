@@ -181,8 +181,55 @@ struct Dyn
     enum { // d_tag
         DT_NULL     =  0,       /* End flag */
         DT_NEEDED   =  1,       /* Name of needed library */
+        DT_HASH     =  4,       /* Hash table of symbol names */
         DT_STRTAB   =  5,       /* String table */
+        DT_SYMTAB   =  6,       /* Symbol table */
         DT_STRSZ    = 10,       /* Sizeof string table */
+    };
+}
+__attribute_packed;
+
+template <class TT16, class TT32, class TT64>
+struct Sym
+{
+    TT32 st_name;               /* symbol name (index into string table) */
+    TT32 st_value;              /* symbol value */
+    TT32 st_size;               /* symbol size */
+    unsigned char st_info;      /* symbol type and binding */
+    unsigned char st_other;     /* symbol visibility */
+    TT16 st_shndx;              /* section index */
+
+    unsigned int st_bind(unsigned int x) const { return 0xf & (x>>4); }
+    unsigned int st_type(unsigned int x) const { return 0xf &  x    ; }
+    unsigned char St_info(unsigned bind, unsigned type) const { return (bind<<4) + (0xf & type); }
+
+    enum { // st_bind (high 4 bits of st_info)
+        STB_LOCAL   =   0,      /* Local symbol */
+        STB_GLOBAL  =   1,      /* Global symbol */
+        STB_WEAK    =   2,      /* Weak symbol */
+    };
+
+    enum { // st_type (low 4 bits of st_info)
+        STT_NOTYPE  =   0,      /* Symbol type is unspecified */
+        STT_OBJECT  =   1,      /* Symbol is a data object */
+        STT_FUNC    =   2,      /* Symbol is a code object */
+        STT_SECTION =   3,      /* Symbol associated with a section */
+        STT_FILE    =   4,      /* Symbol's name is file name */
+        STT_COMMON  =   5,      /* Symbol is a common data object */
+        STT_TLS     =   6,      /* Symbol is thread-local data object*/
+    };
+
+    enum { // st_other (visibility)
+        STV_DEFAULT  =  0,      /* Default symbol visibility rules */
+        STV_INTERNAL =  1,      /* Processor specific hidden class */
+        STV_HIDDEN   =  2,      /* Sym unavailable in other modules */
+        STV_PROTECTED=  3,      /* Not preemptible, not exported */
+    };
+
+    enum { // st_shndx
+        SHN_UNDEF   =   0,      /* Undefined section */
+        SHN_ABS     =   0xfff1, /* Associated symbol is absolute */
+        SHN_COMMON  =   0xfff2, /* Associated symbol is common */
     };
 }
 __attribute_packed;
@@ -198,22 +245,26 @@ typedef TT_Elf32::Ehdr<LE16,LE32,void> Elf_LE32_Ehdr;
 typedef TT_Elf32::Phdr<LE16,LE32,void> Elf_LE32_Phdr;
 typedef TT_Elf32::Shdr<LE16,LE32,void> Elf_LE32_Shdr;
 typedef TT_Elf32::Dyn <LE16,LE32,void> Elf_LE32_Dyn;
+typedef TT_Elf32::Sym <LE16,LE32,void> Elf_LE32_Sym;
 
 typedef TT_Elf32::Ehdr<unsigned short,unsigned int,void> Elf32_Ehdr;
 typedef TT_Elf32::Phdr<unsigned short,unsigned int,void> Elf32_Phdr;
 typedef TT_Elf32::Shdr<unsigned short,unsigned int,void> Elf32_Shdr;
 typedef TT_Elf32::Dyn <unsigned short,unsigned int,void> Elf32_Dyn;
+typedef TT_Elf32::Sym <unsigned short,unsigned int,void> Elf32_Sym;
 
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Ehdr) == 52)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Phdr) == 32)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Shdr) == 40)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Dyn)  ==  8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Sym)  == 16)
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Ehdr) == 52)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr) == 32)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr) == 40)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)  ==  8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Sym)  == 16)
 
 
 #endif /* already included */
