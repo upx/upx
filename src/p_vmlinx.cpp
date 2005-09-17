@@ -487,37 +487,37 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //-----
 //
 //----- arch/i386/boot/compressed/upx-head.S
-//		.text
+//      .text
 //startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
-//		#cli  # this must be true already
+//      #cli  # this must be true already
 //
-//		/* The only facts about segments here, that are true for all kernels:
-//		 * %cs is a valid "flat" code segment; no other segment reg is valid;
-//		 * the next segment after %cs is a valid "flat" data segment, but
-//		 * no segment register designates it yet.
-//		 */
-//		movl %cs,%eax; addl $1<<3,%eax  # the next segment after %cs
-//		movl %eax,%ds
-//		movl %eax,%es
-//		leal 0x9000(%esi),%ecx  # 0x99000 typical
-//		movl %ecx,-8(%ecx)  # 32-bit offset for stack pointer
-//		movl %eax,-4(%ecx)  # segment for stack pointer
-//		lss -8(%ecx),%esp  # %ss:%esp= %ds:0x99000
-//		    /* Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
-//		       0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
-//		       just below the command line at offset 0x9000].
+//      /* The only facts about segments here, that are true for all kernels:
+//       * %cs is a valid "flat" code segment; no other segment reg is valid;
+//       * the next segment after %cs is a valid "flat" data segment, but
+//       * no segment register designates it yet.
+//       */
+//      movl %cs,%eax; addl $1<<3,%eax  # the next segment after %cs
+//      movl %eax,%ds
+//      movl %eax,%es
+//      leal 0x9000(%esi),%ecx  # 0x99000 typical
+//      movl %ecx,-8(%ecx)  # 32-bit offset for stack pointer
+//      movl %eax,-4(%ecx)  # segment for stack pointer
+//      lss -8(%ecx),%esp  # %ss:%esp= %ds:0x99000
+//          /* Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
+//             0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
+//             just below the command line at offset 0x9000].
 //
-//		       arch/i386/boot/compressed/head.S "Do the decompression ..." says
-//		       %esi contains the "real mode pointer" [as a 32-bit addr].
+//             arch/i386/boot/compressed/head.S "Do the decompression ..." says
+//             %esi contains the "real mode pointer" [as a 32-bit addr].
 //
-//		       In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
-//		       boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
-//		    */
+//             In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
+//             boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
+//          */
 //
-//		pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
+//      pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 //
-//		movl $ 0x100000,%eax  # destination of uncompression (and entry point)
-//		push %cs
+//      movl $ 0x100000,%eax  # destination of uncompression (and entry point)
+//      push %cs
 /* Fall into .text of upx-compressed vmlinux. */
 //-----
 
@@ -550,17 +550,17 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //all: vmlinux
 //
 //vmlinux: upx-piggy.o $(OBJECTS)
-//	$(LD) $(ZLINKFLAGS) -o vmlinux $(OBJECTS) upx-piggy.o
+//  $(LD) $(ZLINKFLAGS) -o vmlinux $(OBJECTS) upx-piggy.o
 //
 //bvmlinux: upx-piggy.o $(OBJECTS)
-//	$(LD) $(BZLINKFLAGS) -o bvmlinux $(OBJECTS) upx-piggy.o
+//  $(LD) $(BZLINKFLAGS) -o bvmlinux $(OBJECTS) upx-piggy.o
 //
-//upx-piggy.o:	$(SYSTEM)
-//	$(RM) -f $@
-//	upx --best -o $@ $<
+//upx-piggy.o:  $(SYSTEM)
+//  $(RM) -f $@
+//  upx --best -o $@ $<
 //
 //clean:
-//	rm -f vmlinux bvmlinux _tmp_*
+//  rm -f vmlinux bvmlinux _tmp_*
 //-----
 
 //
