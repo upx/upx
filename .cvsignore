@@ -1,6 +1,6 @@
 .bzr*
 .darcs*
-.git
+.git*
 .hg*
 _darcs
 B

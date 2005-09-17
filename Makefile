@@ -18,10 +18,16 @@ all mostlyclean clean distclean maintainer-clean:
 dist: distclean
 	false
 
+
+CVS_ROOT := $(shell cat CVS/Root)
+CVS_REPO := $(shell cat CVS/Repository)
+
+cvs-info:
+	@echo 'CVS info: $(CVS_ROOT) $(CVS_REPO)'; false
+
 cvs-admin-ko:
 	cvs admin -ko .
-	cvs update -P -d
-
+	cvs -q -z6 update -P -d
 
 # automatically generate ChangeLog from CVS
 ChangeLog: ChangeLog.cvs
@@ -29,10 +35,7 @@ ChangeLog: ChangeLog.cvs
 ChangeLog.cvs:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
-ChangeLog.cvsps:
-	cvsps > $@
-
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
-.PHONY: dist cvs-admin-ko ChangeLog ChangeLog.cvs
+.PHONY: dist cvs-info cvs-admin-ko ChangeLog ChangeLog.cvs
 
