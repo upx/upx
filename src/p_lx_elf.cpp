@@ -752,6 +752,7 @@ bool PackLinuxI386elf::canPack()
     // then the file is a position-independent executable main program
     // (that depends on libc.so.6) and is eligible to be compressed.
     // Otherwise (no __libc_start_main as global undefined): skip it.
+    // Also allow  __uClibc_main  and  __uClibc_start_main .
 
     if (Elf32_Ehdr::ET_DYN==ehdr->e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
@@ -771,12 +772,21 @@ bool PackLinuxI386elf::canPack()
         hashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
         dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
-        // elf_lookup() returns 0 if any required table is missing.
-        Elf32_Sym const *const lsm = elf_lookup("__libc_start_main");
+
+        char const *const run_start[]= {
+            "__libc_start_main", "__uClibc_main", "__uClibc_start_main",
+        };
+        for (j=0; j<3; ++j) {
+            // elf_lookup() returns 0 if any required table is missing.
+            Elf32_Sym const *const lsm = elf_lookup(run_start[j]);
+            if (lsm && lsm->st_shndx==Elf32_Sym::SHN_UNDEF
+            && lsm->st_info==lsm->Elf32_Sym::St_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
+            && lsm->st_other==Elf32_Sym::STV_DEFAULT ) {
+                break;
+            }
+        }
         phdri = 0;  // done "borrowing" this member
-        if (0==lsm || lsm->st_shndx!=Elf32_Sym::SHN_UNDEF
-        || lsm->st_info!=lsm->Elf32_Sym::St_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
-        || lsm->st_other!=Elf32_Sym::STV_DEFAULT ) {
+        if (3<=j) {
             return false;
         }
     }
