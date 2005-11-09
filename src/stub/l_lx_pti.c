@@ -116,7 +116,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, nrv_uint *
+          nrv_byte *, nrv_uint *, int method
 );
 
 static void
@@ -156,11 +156,12 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len;
-            int const j = (*get_fexp(h.b_method))(xi->buf, h.sz_cpr, xo->buf, &out_len);
+            int const j = (*get_fexp(h.b_method))((unsigned char *)xi->buf, h.sz_cpr,
+                (unsigned char *)xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             if (h.b_ftid!=0) {
-                (*get_funf(h.b_ftid))(xo->buf, out_len, h.b_cto8);
+                (*get_funf(h.b_ftid))((unsigned char *)xo->buf, out_len, h.b_cto8);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;

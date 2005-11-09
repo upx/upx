@@ -184,7 +184,7 @@ ERR_LAB
         if (h.sz_cpr < h.sz_unc) {
             // in-place decompression
             nrv_uint out_len;
-            j = (*f_decompress)(xo->buf+j, h.sz_cpr, xo->buf, &out_len);
+            j = (*f_decompress)(xo->buf+j, h.sz_cpr, xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             // j == 0 now

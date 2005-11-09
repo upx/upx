@@ -127,12 +127,12 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 }
 
 
-static char *
+static unsigned char *
 __attribute_cdecl
 do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
     (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return (char *) mmap((void *)&addr);
+    return (unsigned char *) mmap((void *)&addr);
 }
 
 
@@ -213,7 +213,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *src, nrv_uint  src_len,
-          nrv_byte *dst, nrv_uint *dst_len );
+          nrv_byte *dst, nrv_uint *dst_len, int method );
 
 
 /*************************************************************************
@@ -418,7 +418,7 @@ void upx_main(
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block.
             nrv_uint out_len;
-            i = (*f_decompress)(xi.buf, h.sz_cpr, buf, &out_len);
+            i = (*f_decompress)((unsigned char *)xi.buf, h.sz_cpr, buf, &out_len, h.b_method);
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
             // Right now, unfilter is combined with decompression.
