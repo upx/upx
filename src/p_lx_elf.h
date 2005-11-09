@@ -31,15 +31,51 @@
 #define __UPX_P_LX_ELF_H
 
 
-class PackLinuxElf32 : public PackUnix
+class PackLinuxElf : public PackUnix
 {
     typedef PackUnix super;
 public:
-    PackLinuxElf32(InputFile *f);
-    virtual ~PackLinuxElf32();
+    PackLinuxElf(InputFile *f);
+    virtual ~PackLinuxElf();
     /*virtual int buildLoader(const Filter *);*/
     virtual bool canUnpackVersion(int version) const { return (version >= 11); }
 
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+
+    // All other virtual functions in this class must be pure virtual
+    // because they depend on Elf32 or Elf64 data structures, which differ.
+
+    virtual void pack1(OutputFile *, Filter &) = 0;  // generate executable header
+    virtual void pack2(OutputFile *, Filter &) = 0;  // append compressed data
+    //virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
+
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    ) = 0;
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    ) = 0;
+    virtual void unpack(OutputFile *fo) = 0;
+
+protected:
+    unsigned sz_phdrs;  // sizeof Phdr[]
+    unsigned sz_elf_hdrs;  // all Elf headers
+};
+
+class PackLinuxElf32 : public PackLinuxElf
+{
+    typedef PackLinuxElf super;
+public:
+    PackLinuxElf32(InputFile *f);
+    virtual ~PackLinuxElf32();
 protected:
     virtual int checkEhdr(
         Elf32_Ehdr const *ehdr,
@@ -47,35 +83,24 @@ protected:
         unsigned char ei_class,
         unsigned char ei_data) const;
 
-    virtual const int *getCompressionMethods(int method, int level) const;
-
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
     //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
+    virtual void unpack(OutputFile *fo);
 
-    virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
         unsigned const brka
     );
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    );
+    virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
     virtual void patchLoader();
     virtual void updateLoader(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
-    unsigned sz_phdrs;  // sizeof Phdr[]
-    unsigned sz_elf_hdrs;  // all Elf headers
 
     struct cprElfHdr1 {
         Elf32_Ehdr ehdr;
@@ -101,16 +126,123 @@ protected:
     cprElfHdr3 elfout;
 };
 
+
+class PackLinuxElf64 : public PackLinuxElf
+{
+    typedef PackLinuxElf super;
+public:
+    PackLinuxElf64(InputFile *f);
+    virtual ~PackLinuxElf64();
+    /*virtual int buildLoader(const Filter *);*/
+
+protected:
+    virtual int checkEhdr(
+        Elf64_Ehdr const *ehdr,
+        unsigned char e_machine,
+        unsigned char ei_class,
+        unsigned char ei_data) const;
+
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append pack header
+    virtual void unpack(OutputFile *fo);
+
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
+    virtual off_t getbrk(const Elf64_Phdr *phdr, int e_phnum) const;
+    virtual void patchLoader();
+    virtual void updateLoader(OutputFile *fo);
+
+protected:
+    Elf64_Ehdr  ehdri; // from input file
+    Elf64_Phdr *phdri; // for  input file
+
+    struct cprElfHdr1 {
+        Elf64_Ehdr ehdr;
+        Elf64_Phdr phdr[1];
+        l_info linfo;
+    }
+    __attribute_packed;
+
+    struct cprElfHdr2 {
+        Elf64_Ehdr ehdr;
+        Elf64_Phdr phdr[2];
+        l_info linfo;
+    }
+    __attribute_packed;
+
+    struct cprElfHdr3 {
+        Elf64_Ehdr ehdr;
+        Elf64_Phdr phdr[3];
+        l_info linfo;
+    }
+    __attribute_packed;
+
+    cprElfHdr3 elfout;
+};
+
 class PackLinuxElf32Be : public PackLinuxElf32
 {
     typedef PackLinuxElf32 super;
 protected:
     PackLinuxElf32Be(InputFile *f) : super(f) { }
 
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
     virtual unsigned get_native32(const void *b) const { return get_be32(b); }
     virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
     virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
     virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
+};
+
+class PackLinuxElf64Le : public PackLinuxElf64
+{
+    typedef PackLinuxElf64 super;
+protected:
+    PackLinuxElf64Le(InputFile *f) : super(f) { }
+
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
+    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
+    virtual void set_native64(void *b, unsigned long long v) const { set_le64(b, v); }
+    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
+};
+
+/*************************************************************************
+// linux/elf64amd
+**************************************************************************/
+
+class PackLinuxElf64amd : public PackLinuxElf64Le
+{
+    typedef PackLinuxElf64Le super;
+public:
+    PackLinuxElf64amd(InputFile *f);
+    virtual ~PackLinuxElf64amd();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF64_AMD; }
+    virtual const char *getName() const { return "linux/ElfAMD"; }
+    virtual const int *getFilters() const;
+    virtual bool canPack();
+protected:
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    );
+    virtual int buildLoader(const Filter *);
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
 };
 
 /*************************************************************************
