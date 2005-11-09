@@ -77,6 +77,8 @@ struct timespec {
 // misc constants
 
 #if defined(__amd64__) || defined(__powerpc64__)
+#define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
+#define PAGE_SIZE       ( 1ul<<12)
 #elif defined(__i386__) || defined(__powerpc__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
@@ -391,6 +393,24 @@ typedef struct
 
 typedef struct
 {
+  unsigned char e_ident[EI_NIDENT];
+  Elf64_Half    e_type;
+  Elf64_Half    e_machine;
+  Elf64_Word    e_version;
+  Elf64_Addr    e_entry;
+  Elf64_Off     e_phoff;
+  Elf64_Off     e_shoff;
+  Elf64_Word    e_flags;
+  Elf64_Half    e_ehsize;
+  Elf64_Half    e_phentsize;
+  Elf64_Half    e_phnum;
+  Elf64_Half    e_shentsize;
+  Elf64_Half    e_shnum;
+  Elf64_Half    e_shstrndx;
+} Elf64_Ehdr;
+
+typedef struct
+{
   Elf32_Word    p_type;
   Elf32_Off     p_offset;
   Elf32_Addr    p_vaddr;
@@ -403,12 +423,32 @@ typedef struct
 
 typedef struct
 {
+  Elf64_Word    p_type;
+  Elf64_Word    p_flags;
+  Elf64_Off     p_offset;
+  Elf64_Addr    p_vaddr;
+  Elf64_Addr    p_paddr;
+  Elf64_Xword   p_filesz;
+  Elf64_Xword   p_memsz;
+  Elf64_Xword   p_align;
+} Elf64_Phdr;
+
+typedef struct
+{
   uint32_t a_type;
   union {
       uint32_t a_val;
   } a_un;
 } Elf32_auxv_t;
 
+typedef struct
+{
+  uint64_t a_type;
+  union
+    {
+      uint64_t a_val;
+    } a_un;
+} Elf64_auxv_t;
 
 #define AT_NULL         0
 #define AT_IGNORE       1
