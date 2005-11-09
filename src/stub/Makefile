@@ -45,6 +45,7 @@ STUBS = \
 	l_lx_sh86.h   fold_sh86.h \
 	l_lx_pti86.h  fold_pti86.h \
 	l_lx_elfppc32.h fold_elfppc32.h \
+	l_lx_elf64amd.h fold_elf64amd.h \
 	l_mac_ppc32.h fold_machppc32.h \
 	l_vmlinz.h l_vmlinx.h \
 	l_armpe.h
@@ -178,6 +179,21 @@ ifneq ($(wildcard $d),)
   OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
 
+###
+### AMD x86_64
+###
+
+GCC_AMD64     := false
+LD_AMD64      := false
+OBJCOPY_AMD64 := $false
+OBJSTRIP_AMD64 = $(OBJCOPY_AMD64) -R .comment -R .note
+
+d = /home2/crosstool/gcc-4.0.1-glibc-2.3.5/x86_64-unknown-linux-gnu/bin
+ifneq ($(wildcard $d),)
+  GCC_AMD64     := $d/x86_64-unknown-linux-gnu-gcc -m64 -nostdinc -MMD
+  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld
+  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy
+endif
 
 ###
 ### ARM-PE-WINCE
@@ -380,6 +396,11 @@ l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
 	$(LD_PPC32) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elfppc32_loader $@
 
+l_lx_elf64amd.h: l_lx_elf64amd.S amd_d_nrv2e.S
+	$(GCC_AMD64) -c $T.S
+	$(LD_AMD64) -o $T.bin --oformat binary $T.o
+	$(BIN2H) $T.bin linux_elf64amd_loader $@
+ 
 l_lx_elf.o: l_lx_elf.c linux.hh
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
@@ -415,14 +436,26 @@ m_lx_elfppc32.o: m_lx_elfppc32.c
 	$(GCC_PPC32) -Os -c $<
 	$(OBJSTRIP_PPC32) $@
 
+a_lx_elf64amd.o: a_lx_elf64.c
+	$(GCC_AMD64) -c -Os -o $@ $<
+
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S
 	$(GCC_PPC32) -c $<
 	$(OBJSTRIP_PPC32) $@
+
+fold_elf64amd.o: fold_elf64amd.S amd_bxx.S
+	$(GCC_AMD64) -c -O $T.S
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
 		fold_elfppc32.o m_lx_elfppc32.o
 	$(BIN2H) $T.bin linux_elfppc32_fold $@
+
+fold_elf64amd.h: a_lx_elf64amd.o fold_elf64amd.o l_lx_elf64amd.lds amd_bxx.S
+	$(LD_AMD64) -T $(srcdir)/l_lx_elf64amd.lds -Map $T.map -o $T.bin --strip-all \
+		fold_elf64amd.o a_lx_elf64amd.o
+	$(STRIPELF_LINUX_I386) $T.bin
+	$(BIN2H) $T.bin linux_elf64amd_fold $@
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
