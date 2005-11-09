@@ -66,8 +66,10 @@ protected:
 
     // in order too share as much code as possible we introduce
     // an endian abstraction here
+    virtual acc_uint64l_t get_native64(const void *) const = 0;
     virtual unsigned get_native32(const void *) const = 0;
     virtual unsigned get_native16(const void *) const = 0;
+    virtual void set_native64(void *, acc_uint64l_t) const = 0;
     virtual void set_native32(void *, unsigned) const = 0;
     virtual void set_native16(void *, unsigned) const = 0;
 
@@ -139,8 +141,10 @@ class PackUnixBe32 : public PackUnix
     typedef PackUnix super;
 protected:
     PackUnixBe32(InputFile *f) : super(f) { }
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
     virtual unsigned get_native32(const void *b) const { return get_be32(b); }
     virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
     virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
     virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
 
@@ -178,8 +182,10 @@ class PackUnixLe32 : public PackUnix
     typedef PackUnix super;
 protected:
     PackUnixLe32(InputFile *f) : super(f) { }
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
     virtual unsigned get_native32(const void *b) const { return get_le32(b); }
     virtual unsigned get_native16(const void *b) const { return get_le16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
     virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
     virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
 

@@ -34,26 +34,26 @@
 // Some ELF type definitinons
 **************************************************************************/
 
-namespace TT_Elf32 {
+namespace TT_Elf {
 
 // The ELF file header. This appears at the start of every ELF file.
-template <class TT16, class TT32, class TT64>
+template <class Word, class Addr, class Off, class Half>
 struct Ehdr
 {
     unsigned char e_ident[16];  /* Magic number and other info */
-    TT16 e_type;                /* Object file type */
-    TT16 e_machine;             /* Architecture */
-    TT32 e_version;             /* Object file version */
-    TT32 e_entry;               /* Entry point virtual address */
-    TT32 e_phoff;               /* Program header table file offset */
-    TT32 e_shoff;               /* Section header table file offset */
-    TT32 e_flags;               /* Processor-specific flags */
-    TT16 e_ehsize;              /* ELF header size in bytes */
-    TT16 e_phentsize;           /* Program header table entry size */
-    TT16 e_phnum;               /* Program header table entry count */
-    TT16 e_shentsize;           /* Section header table entry size */
-    TT16 e_shnum;               /* Section header table entry count */
-    TT16 e_shstrndx;            /* Section header string table index */
+    Half e_type;                /* Object file type */
+    Half e_machine;             /* Architecture */
+    Word e_version;             /* Object file version */
+    Addr e_entry;               /* Entry point virtual address */
+    Off  e_phoff;               /* Program header table file offset */
+    Off  e_shoff;               /* Section header table file offset */
+    Word e_flags;               /* Processor-specific flags */
+    Half e_ehsize;              /* ELF header size in bytes */
+    Half e_phentsize;           /* Program header table entry size */
+    Half e_phnum;               /* Program header table entry count */
+    Half e_shentsize;           /* Section header table entry size */
+    Half e_shnum;               /* Section header table entry count */
+    Half e_shstrndx;            /* Section header string table index */
 
     enum { // e_ident[]
         EI_CLASS      = 4,
@@ -94,18 +94,40 @@ struct Ehdr
 __attribute_packed;
 
 
+template <class Word, class Addr>
+struct Dyn
+{
+    Word d_tag;
+    Addr d_val;
+
+    enum { // d_tag
+        DT_NULL     =  0,       /* End flag */
+        DT_NEEDED   =  1,       /* Name of needed library */
+        DT_HASH     =  4,       /* Hash table of symbol names */
+        DT_STRTAB   =  5,       /* String table */
+        DT_SYMTAB   =  6,       /* Symbol table */
+        DT_STRSZ    = 10,       /* Sizeof string table */
+    };
+}
+__attribute_packed;
+
+} // namespace TT_Elf
+
+
+namespace TT_Elf32 {
+
 // Program segment header.
-template <class TT16, class TT32, class TT64>
+template <class Word, class Addr, class Off>
 struct Phdr
 {
-    TT32 p_type;                /* Segment type */
-    TT32 p_offset;              /* Segment file offset */
-    TT32 p_vaddr;               /* Segment virtual address */
-    TT32 p_paddr;               /* Segment physical address */
-    TT32 p_filesz;              /* Segment size in file */
-    TT32 p_memsz;               /* Segment size in memory */
-    TT32 p_flags;               /* Segment flags */
-    TT32 p_align;               /* Segment alignment */
+    Word p_type;                /* Segment type */
+    Off  p_offset;              /* Segment file offset */
+    Addr p_vaddr;               /* Segment virtual address */
+    Addr p_paddr;               /* Segment physical address */
+    Word p_filesz;              /* Segment size in file */
+    Word p_memsz;               /* Segment size in memory */
+    Word p_flags;               /* Segment flags */
+    Word p_align;               /* Segment alignment */
 
     enum { // p_type
         PT_LOAD    = 1,         /* Loadable program segment */
@@ -122,20 +144,19 @@ struct Phdr
 }
 __attribute_packed;
 
-
-template <class TT16, class TT32, class TT64>
+template <class Word, class Addr, class Off>
 struct Shdr
 {
-    TT32 sh_name;               /* Section name (string tbl index) */
-    TT32 sh_type;               /* Section type */
-    TT32 sh_flags;              /* Section flags */
-    TT32 sh_addr;               /* Section virtual addr at execution */
-    TT32 sh_offset;             /* Section file offset */
-    TT32 sh_size;               /* Section size in bytes */
-    TT32 sh_link;               /* Link to another section */
-    TT32 sh_info;               /* Additional section information */
-    TT32 sh_addralign;          /* Section alignment */
-    TT32 sh_entsize;            /* Entry size if section holds table */
+    Word sh_name;               /* Section name (string tbl index) */
+    Word sh_type;               /* Section type */
+    Word sh_flags;              /* Section flags */
+    Addr sh_addr;               /* Section virtual addr at execution */
+    Off  sh_offset;             /* Section file offset */
+    Word sh_size;               /* Section size in bytes */
+    Word sh_link;               /* Link to another section */
+    Word sh_info;               /* Additional section information */
+    Word sh_addralign;          /* Section alignment */
+    Word sh_entsize;            /* Entry size if section holds table */
 
     enum { // sh_type
         SHT_NULL = 0,           /* Section header table entry unused */
@@ -167,24 +188,6 @@ struct Shdr
         SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
         SHF_INFO_LINK  = (1 << 6),  /* `sh_info' contains SHT index */
         SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
-    };
-}
-__attribute_packed;
-
-
-template <class TT16, class TT32, class TT64>
-struct Dyn
-{
-    TT32 d_tag;
-    TT32 d_val;
-
-    enum { // d_tag
-        DT_NULL     =  0,       /* End flag */
-        DT_NEEDED   =  1,       /* Name of needed library */
-        DT_HASH     =  4,       /* Hash table of symbol names */
-        DT_STRTAB   =  5,       /* String table */
-        DT_SYMTAB   =  6,       /* Symbol table */
-        DT_STRSZ    = 10,       /* Sizeof string table */
     };
 }
 __attribute_packed;
@@ -234,25 +237,93 @@ struct Sym
 }
 __attribute_packed;
 
-} // namespace
+} // namespace TT_Elf32
 
+namespace TT_Elf64 {
+
+// Program segment header.
+template <class Word, class Xword, class Addr, class Off>
+struct Phdr
+{
+    Word  p_type;               /* Segment type */
+    Word  p_flags;              /* Segment flags */
+    Off   p_offset;             /* Segment file offset */
+    Addr  p_vaddr;              /* Segment virtual address */
+    Addr  p_paddr;              /* Segment physical address */
+    Xword p_filesz;             /* Segment size in file */
+    Xword p_memsz;              /* Segment size in memory */
+    Xword p_align;              /* Segment alignment */
+
+    enum { // p_type
+        PT_LOAD    = 1,         /* Loadable program segment */
+        PT_DYNAMIC = 2,         /* Dynamic linking information */
+        PT_INTERP  = 3,         /* Name of program interpreter */
+        PT_PHDR    = 6,         /* Entry for header table itself */
+    };
+
+    enum { // p_flags
+        PF_X = 1,               /* Segment is executable */
+        PF_W = 2,               /* Segment is writable */
+        PF_R = 4,               /* Segment is readable */
+    };
+}
+__attribute_packed;
+
+template <class Word, class Xword, class Addr, class Off>
+struct Shdr
+{
+    Word  sh_name;              /* Section name (string tbl index) */
+    Word  sh_type;              /* Section type */
+    Xword sh_flags;             /* Section flags */
+    Addr  sh_addr;              /* Section virtual addr at execution */
+    Off   sh_offset;            /* Section file offset */
+    Xword sh_size;              /* Section size in bytes */
+    Word  sh_link;              /* Link to another section */
+    Word  sh_info;              /* Additional section information */
+    Xword sh_addralign;         /* Section alignment */
+    Xword sh_entsize;           /* Entry size if section holds table */
+
+    enum { // sh_type
+        SHT_NULL = 0,           /* Section header table entry unused */
+        SHT_PROGBITS = 1,       /* Program data */
+        SHT_SYMTAB = 2,         /* Symbol table */
+        SHT_STRTAB = 3,         /* String table */
+        SHT_RELA = 4,           /* Relocation entries with addends */
+        SHT_HASH = 5,           /* Symbol hash table */
+        SHT_DYNAMIC = 6,        /* Dynamic linking information */
+        SHT_NOTE = 7,           /* Notes */
+        SHT_NOBITS = 8,         /* Program space with no data (bss) */
+        SHT_REL = 9,            /* Relocation entries, no addends */
+        SHT_SHLIB = 10,         /* Reserved */
+        SHT_DYNSYM = 11,        /* Dynamic linker symbol table */
+            /* 12, 13  hole */
+        SHT_INIT_ARRAY = 14,    /* Array of constructors */
+        SHT_FINI_ARRAY = 15,    /* Array of destructors */
+        SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
+        SHT_GROUP = 17,         /* Section group */
+        SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
+        SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
+    };
+}
+__attribute_packed;
+
+} // namespace TT_Elf64
 
 /*************************************************************************
 // now for the actual types
 **************************************************************************/
 
-typedef TT_Elf32::Ehdr<LE16,LE32,void> Elf_LE32_Ehdr;
-typedef TT_Elf32::Phdr<LE16,LE32,void> Elf_LE32_Phdr;
-typedef TT_Elf32::Shdr<LE16,LE32,void> Elf_LE32_Shdr;
-typedef TT_Elf32::Dyn <LE16,LE32,void> Elf_LE32_Dyn;
+typedef TT_Elf  ::Ehdr<LE32,LE32,LE32,LE16> Elf_LE32_Ehdr;
+typedef TT_Elf32::Phdr<LE32,LE32,LE32>      Elf_LE32_Phdr;
+typedef TT_Elf32::Shdr<LE32,LE32,LE32>      Elf_LE32_Shdr;
+typedef TT_Elf  ::Dyn <LE32,LE32>           Elf_LE32_Dyn;
 typedef TT_Elf32::Sym <LE16,LE32,void> Elf_LE32_Sym;
 
-typedef TT_Elf32::Ehdr<unsigned short,unsigned int,void> Elf32_Ehdr;
-typedef TT_Elf32::Phdr<unsigned short,unsigned int,void> Elf32_Phdr;
-typedef TT_Elf32::Shdr<unsigned short,unsigned int,void> Elf32_Shdr;
-typedef TT_Elf32::Dyn <unsigned short,unsigned int,void> Elf32_Dyn;
+typedef TT_Elf  ::Ehdr<unsigned int,unsigned int,unsigned int,unsigned short> Elf32_Ehdr;
+typedef TT_Elf32::Phdr<unsigned int,unsigned int,unsigned int> Elf32_Phdr;
+typedef TT_Elf32::Shdr<unsigned int,unsigned int,unsigned int> Elf32_Shdr;
+typedef TT_Elf  ::Dyn <unsigned int,unsigned int>              Elf32_Dyn;
 typedef TT_Elf32::Sym <unsigned short,unsigned int,void> Elf32_Sym;
-
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Ehdr) == 52)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Phdr) == 32)
@@ -265,6 +336,31 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr) == 32)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr) == 40)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)  ==  8)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Sym)  == 16)
+
+
+typedef TT_Elf  ::Ehdr<LE32,LE64,LE64,LE16> Elf_LE64_Ehdr;
+typedef TT_Elf64::Phdr<LE32,LE64,LE64,LE64> Elf_LE64_Phdr;
+typedef TT_Elf64::Shdr<LE32,LE64,LE64,LE64> Elf_LE64_Shdr;
+typedef TT_Elf  ::Dyn <LE64,LE64>           Elf_LE64_Dyn;
+
+typedef TT_Elf  ::Ehdr<unsigned int,unsigned long long,
+                        unsigned long long,unsigned short>     Elf64_Ehdr;
+typedef TT_Elf64::Phdr<unsigned int,unsigned long long,
+                        unsigned long long,unsigned long long> Elf64_Phdr;
+typedef TT_Elf64::Shdr<unsigned int,unsigned long long,
+                        unsigned long long,unsigned long long> Elf64_Shdr;
+typedef TT_Elf  ::Dyn <unsigned long long,unsigned long long>  Elf64_Dyn;
+
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Ehdr) == 64)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Phdr) == 56)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Shdr) == 64)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Dyn)  == 16)
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Ehdr) == 64)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Phdr) == 56)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Shdr) == 64)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Dyn)  == 16)
 
 
 #endif /* already included */
