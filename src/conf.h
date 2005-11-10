@@ -503,9 +503,9 @@ void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
 #if defined(__GNUC__)
 void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
-        __attribute__((__format__(printf,2,3)));
+        __attribute__((__format__(__printf__,2,3)));
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
-        __attribute__((__format__(printf,2,3)));
+        __attribute__((__format__(__printf__,2,3)));
 #else
 void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
@@ -513,11 +513,11 @@ void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
 
 #if defined(__GNUC__)
 void __acc_cdecl_va infoWarning(const char *format, ...)
-        __attribute__((__format__(printf,1,2)));
+        __attribute__((__format__(__printf__,1,2)));
 void __acc_cdecl_va infoHeader(const char *format, ...)
-        __attribute__((__format__(printf,1,2)));
+        __attribute__((__format__(__printf__,1,2)));
 void __acc_cdecl_va info(const char *format, ...)
-        __attribute__((__format__(printf,1,2)));
+        __attribute__((__format__(__printf__,1,2)));
 #else
 void __acc_cdecl_va infoWarning(const char *format, ...);
 void __acc_cdecl_va infoHeader(const char *format, ...);
