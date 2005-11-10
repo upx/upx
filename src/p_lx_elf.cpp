@@ -273,8 +273,13 @@ PackLinuxElf32ppc::buildLinuxLoader(
     Filter const */*ft*/
 )
 {
-    int eof_empty = -1;
-    initLoader(&eof_empty, 4096, 0, 0);
+    {
+        int const MAX_LOADER_LEN = 4096;
+        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
+        eof_empty[0] = -1;
+        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
+        delete[] eof_empty;
+    }
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -325,8 +330,13 @@ PackLinuxElf64amd::buildLinuxLoader(
     Filter const */*ft*/
 )
 {
-    int eof_empty = -1;
-    initLoader(&eof_empty, 9000, 0, 0);
+    {
+        int const MAX_LOADER_LEN = 8000;
+        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
+        eof_empty[0] = -1;
+        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
+        delete[] eof_empty;
+    }
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
