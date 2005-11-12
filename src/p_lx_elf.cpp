@@ -885,33 +885,67 @@ void PackLinuxElf32ppc::pack3(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 {
-    char zero[-(~0<<4)];
+    char zero[8];
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned const len0 = fo->getBytesWritten();
     unsigned len = len0;
-    unsigned const frag = ~(~0<<4) & -len; // align to 0 mod 16
+    unsigned const frag = 7 & -len; // align to 0 mod 8
     memset(zero, 0, sizeof(zero));
     fo->write(&zero, frag);
     len += frag;
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    acc_uint64l_t const brk = getbrk(phdri, ehdri.e_phnum);
     upx_byte *const p = const_cast<upx_byte *>(getLoader());
     lsize = getLoaderSize();
+    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
+    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
+    acc_uint64l_t adrc;
+    acc_uint64l_t adrm;
+    acc_uint64l_t adru;
+    acc_uint64l_t adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
+    if (is_big) {
+        elfout.ehdr.e_entry += lo_va_user - lo_va_stub;
+        elfout.phdr[0].p_vaddr = lo_va_user;
+        elfout.phdr[0].p_paddr = lo_va_user;
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, ehdri.e_phnum);
+        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = PAGE_SIZE + len;
+        lenu = PAGE_SIZE + len;
+        cntc = len >> 3;
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = PAGE_SIZE;
+        lenu = PAGE_SIZE + len;
+        cntc = 0;
+    }
+    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+
     // patch in order of descending address
-
-        // compressed input for eXpansion
     patch_le32(p,lsize,"LENX", len0 - hlen);
-    patch_le32(p,lsize,"ADRX", elfout.phdr[0].p_vaddr + hlen);
+    patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
 
-    patch_le32(p,lsize,"CNTC", 0>>3);  // count  for copy
-    patch_le32(p,lsize,"LENU", PAGE_SIZE + len);  // len  for unmap
-    patch_le32(p,lsize,"ADRC", PAGE_MASK & (~PAGE_MASK + brk));  // addr for copy
-    patch_le32(p,lsize,"ADRU", elfout.phdr[0].p_vaddr);  // addr for unmap
-    patch_le32(p,lsize,"JMPU", 12+0x400000);  // XXX trampoline for unmap
-    patch_le32(p,lsize,"LENM", PAGE_SIZE);  // len  for map
-    patch_le32(p,lsize,"ADRM", PAGE_MASK & (~PAGE_MASK + brk));  // addr for map
+    patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
+    patch_le32(p,lsize,"LENU", lenu);  // len  for unmap
+    patch_le32(p,lsize,"ADRC", adrc);  // addr for copy
+    patch_le32(p,lsize,"ADRU", adru);  // addr for unmap
+    patch_le32(p,lsize,"JMPU", 12 + lo_va_user);  // trampoline for unmap
+    patch_le32(p,lsize,"LENM", lenm);  // len  for map
+    patch_le32(p,lsize,"ADRM", adrm);  // addr for map
+#undef PAGE_SIZE
 #undef PAGE_MASK
 
     super::pack3(fo, ft);
