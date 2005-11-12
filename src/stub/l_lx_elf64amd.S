@@ -29,13 +29,10 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-/*__LEXEC000__*/
-_start: .globl _start
-/* The following 'call' must be at _start; fold_begin knows this,
-   and so does PackLinuxElf64amd::pack3() .
-*/
-        call main  # push address of decompressor
-#include "amd_d_nrv2e.S"
+sz_l_info= 12
+  l_lsize= 8
+
+sz_p_info= 12
 
 sz_b_info= 12
   sz_unc= 0
@@ -56,6 +53,14 @@ PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
+/*__LEXEC000__*/
+_start: .globl _start
+/* The following 'call' must be at _start; fold_begin knows this,
+   and so does PackLinuxElf64amd::pack3() .
+*/
+        call main  # push &decompress
+#include "amd_d_nrv2e.S"
+
 #include "amd_regs.h"
 
 /* Decompress the rest of this loader, and jump to it.
@@ -65,39 +70,48 @@ PAGE_SIZE= -PAGE_MASK
    highest address.  [I regard this as a bug, and it makes the kernel's
    fs/binfmt_elf.c complicated, buggy, and insecure.]  For us, that is the 2nd
    PT_LOAD, which is the only way that linux allows to set the brk() for the
-   uncompressed program.  [This is a signicant kernel misfeature.]
+   uncompressed program.  [This is a significant kernel misfeature.]
 */
 unfold:
-        pop %rdi  # &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
-            subl %arg2l,%arg2l  # %arg2= 0
-        push %rdi  # remember &b_info
-            lea PROT_READ | PROT_WRITE | PROT_EXEC(%arg2),%arg3l
-        addl sz_cpr(%rdi),%arg1l  # n.b.: %rdi===%arg1;   XXX: 4GB
-            lea MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS(%arg2),%sys4l
-        addl $-1+ sz_b_info,%arg1l  # XXX: 4GB
-            movl $ PAGE_MASK,%ecx
-        subl %ecx,%arg1l  # XXX: 4GB
-            lea SYS_mmap(%arg2),%eax
-        andl %ecx,%arg1l  # next page boundary after fold;  XXX: 4GB
-            subl %ecx,%arg2l  # %arg2l= PAGE_SIZE
-                push %rcx
-            subl %arg5l,%arg5l; subl %arg6l,%arg6l
-        syscall  # trashes %rcx
-                pop %rcx
-        cmpl %ecx,%eax; jb 0f; hlt; 0:  # XXX: 4GB
+        pop %rbx  # &b_info
 
-        pop %rsi  # %arg2= &b_info
+        .byte 7+0xB8; .ascii "ADRM"  # movl $'ADRM',%edi
+        push $ PROT_READ | PROT_WRITE | PROT_EXEC; pop %arg3
+        .byte 6+0xB8; .ascii "LENM"  # movl $'LENM',%esi
+        push $ MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS; pop %sys4
+        subl %arg5l,%arg5l  #; subl %arg6l,%arg6l  # MAP_ANON ==> ignore offset
+        push $ SYS_mmap; pop %rax
+        syscall  # %rax= result; trashes %rcx,%r11 only
+        cmpl %eax,%edi; je 0f; hlt; 0:  # XXX: 4GB
+
+        .byte   0x68; .ascii "JMPU"  # push $'JMPU'  # for unmap in fold
+        .byte   0x68; .ascii "ADRU"  # push $'ADRU'  # for unmap in fold
+        .byte 6+0xB8; .ascii "ADRC"  # movl $'ADRC',%esi
+        .byte   0x68; .ascii "LENU"  # push $'LENU'  # for unmap in fold
+        .byte 1+0xB8; .ascii "CNTC"  # movl $'CNTC',%ecx
+        .byte   0x68; .ascii "ADRX"  # push $'ADRX'  # for upx_main
+        .byte   0x68; .ascii "LENX"  # push $'LENX'  # for upx_main
+
+        movl %edi,%edx
+        subl %esi,%edx  # relocation amount
+        addl      %edx,%ebp  # update &decompress
+        addl      %edx,%ebx  # update &b_info
+
+        rep; movsq
+        xchgl %eax,%edi
+
+        movl %ebx,%esi  # %arg2l= &b_info (relocated)
         push %rax  # ret_addr after decompression
-        .byte 0x92  # xchg %eax,%arg3l  # %arg3= dst for unfolding  XXX: 4GB
-        lodsl; movl %arg2l,%arg4l  # &len_dst ==> &do_not_care  XXX: 4GB
-        lodsl; .byte 0x97  # xchg %rax,%arg1l  # sz_cpr  XXX: 4GB
+               xchgl %eax,%arg3l  # %arg3= dst for unfolding  XXX: 4GB
+        lodsl; movl  %esi,%arg4l  # &len_dst ==> &do_not_care  XXX: 4GB
+        lodsl; xchgl %eax,%arg1l  # sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  # b_method
-        xchg %arg1l,%arg2l  # XXX: 4GB
+              xchg %arg1l,%arg2l  # XXX: 4GB
         jmp *%rbp  # goto decompress; return to unfolded loader
 main:
         # int3  # uncomment for debugging
-        pop %rbp  # &dcompress
-        call unfold
+        pop %rbp  # &decompress
+        call unfold  # push &b_info
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 eof:

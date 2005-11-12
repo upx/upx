@@ -190,13 +190,11 @@ int const *
 PackLinuxElf64amd::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
-    static const int m_nrv2e[] = { M_NRV2E_LE32, -1 };
-    static const int m_nrv2b[] = { M_NRV2B_LE32, -1 };
+    static const int l_method[] = { M_NRV2E_LE32, M_NRV2B_LE32, -1 };
 
     /*return Packer::getDefaultCompressionMethods_le32(method, level);*/
-    // 2005-04-23 FIXME: stub/l_lx_elfppc32.S hardwires ppc_d_nrv2e.S
-    UNUSED(method); UNUSED(level); UNUSED(m_nrv2b);
-    return m_nrv2e;
+    UNUSED(method); UNUSED(level);
+    return l_method;
 }
 
 int const *
@@ -887,16 +885,34 @@ void PackLinuxElf32ppc::pack3(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 {
-    unsigned disp;  // 32 bits wide
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len) + sizeof(disp);
+    char zero[-(~0<<4)];
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+    unsigned const len0 = fo->getBytesWritten();
+    unsigned len = len0;
+    unsigned const frag = ~(~0<<4) & -len; // align to 0 mod 16
+    memset(zero, 0, sizeof(zero));
+    fo->write(&zero, frag);
+    len += frag;
 
-    // 5: sizeof(CALL instruction at _start which precedes f_decompress
-    set_native32(&disp, 5+ len - sz_elf_hdrs);
+#define PAGE_MASK (~0u<<12)
+#define PAGE_SIZE (-PAGE_MASK)
+    acc_uint64l_t const brk = getbrk(phdri, ehdri.e_phnum);
+    upx_byte *const p = const_cast<upx_byte *>(getLoader());
+    lsize = getLoaderSize();
+    // patch in order of descending address
 
-    fo->write(&disp, sizeof(disp));
+        // compressed input for eXpansion
+    patch_le32(p,lsize,"LENX", len0 - hlen);
+    patch_le32(p,lsize,"ADRX", elfout.phdr[0].p_vaddr + hlen);
+
+    patch_le32(p,lsize,"CNTC", 0>>3);  // count  for copy
+    patch_le32(p,lsize,"LENU", PAGE_SIZE + len);  // len  for unmap
+    patch_le32(p,lsize,"ADRC", PAGE_MASK & (~PAGE_MASK + brk));  // addr for copy
+    patch_le32(p,lsize,"ADRU", elfout.phdr[0].p_vaddr);  // addr for unmap
+    patch_le32(p,lsize,"JMPU", 12+0x400000);  // XXX trampoline for unmap
+    patch_le32(p,lsize,"LENM", PAGE_SIZE);  // len  for map
+    patch_le32(p,lsize,"ADRM", PAGE_MASK & (~PAGE_MASK + brk));  // addr for map
+#undef PAGE_MASK
 
     super::pack3(fo, ft);
 }

@@ -41,46 +41,6 @@ sz_p_info= 12
 OVERHEAD=2048
 MAX_ELF_HDR=1024
 
-__NR_munmap=  91
-
-/* In:
-    %rbp= &decompress; also 9+ (char *)&(offset to {l_info; p_info; b_info})
-    %rsp= &{argc,argv...,0,env...,0,auxv...,strings}
-*/
-fold_begin:  
-        call L90  # ret_addr is &f_unfilter
-#include "amd_bxx.S"
-
-zfind:
-        lodsq; testq %rax,%rax; jnz zfind
-        ret
-L90:
-        pop %arg6  # &amdbxx: f_unfilter
-        movq %rsp,%rsi  # stack pointer at execve
-        call zfind  # %rsi= &env
-        call zfind  # %rsi= &Elf64_auxv
-        subq $ OVERHEAD,%rsp
-        movq %rsp,%arg3  # &ELf64_Ehdr temporary space
-        push %rsi  # arg7
-        movq $ PAGE_MASK,%rcx  # sign extend 32 bits to 64 bits
-        movl -9(%rbp),%arg2l  # total size - offset to {l_info; p_info; b_info}
-        movq %arg6,%r15; andq %rcx,%r15  # %r15= &this_page
-        movq %rbp,%arg5  # &decompress: f_expand
-        movq %rbp,%arg1; subq %arg2,%arg1  # &l_info
-        movq %arg1,%r14; andq %rcx,%r14  # %r14= our_Elf64_Ehdr
-        movl sz_unc+sz_p_info+sz_l_info(%arg1),%arg4l  # sz_elf_headers
-        call upx_main  # Out: %rax= entry
-/* entry= upx_main(l_info *arg1, total_size arg2, Elf64_Ehdr *arg3, sz_ehdr arg4,
-        f_decompr arg5, f_unfilter arg6, Elf32_Auxv_t *arg7 )
-*/
-        addq $8+OVERHEAD,%rsp
-        push %rax  # save &entry
-        movq %r14,%arg1  # &our_Elf64_Ehdr
-        movq %r15,%arg2
-        subq %r14,%arg2  # size
-        call munmap  # unmap compressed program; /proc/self/exe disappears
-        ret
-
 /* 64-bit mode only! */
 __NR_read=  0
 __NR_open=  2
@@ -93,9 +53,51 @@ __NR_brk=      12
 
 __NR_exit= 60
 
+/* In:
+    %rbp= &decompress
+    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
+*/
+fold_begin:  
+        call L90  # push &f_unfilter
+#include "amd_bxx.S"
+L90:
+        lea (1+5+1)*8(%rsp),%rsi  # &argv[0]
+0:
+        lodsq; testq %rax,%rax; jnz 0b  # %rsi= &env;
+0:
+        lodsq; testq %rax,%rax; jnz 0b  # %rsi= &Elf64_auxv
+
+        pop %arg6  # &amdbxx: f_unfilter
+        movq %rsi,%arg4  # &Elf64_auxv
+        pop %arg2  # LENX
+        pop %arg1  # ADRX
+
+        subq $ OVERHEAD,%rsp
+        movq %rsp,%arg3  # &ELf64_Ehdr temporary space
+        movq %rbp,%arg5  # &decompress: f_expand
+        call upx_main  # Out: %rax= entry
+/* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3, 
+                Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6 )
+*/
+        addq $OVERHEAD,%rsp
+        pop %arg2  # LENU
+        pop %arg1  # ADRU
+        pop %rcx   # JMPU
+        push %rax  # &entry
+        push $ __NR_munmap; pop %rax
+        jmp *%rcx  # goto: syscall; ret
+
+munmap: .globl munmap
+        movb $ __NR_munmap,%al; jmp sysgo
+mprotect: .globl mprotect
+        movb $ __NR_mprotect,%al; jmp sysgo
+brk: .globl brk
+        movb $ __NR_brk,%al; jmp sysgo
+
 mmap: .globl mmap
-        movq %arg4,%sys4
         movb $ __NR_mmap,%al
+sysarg4:
+        movq %arg4,%sys4
 sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
         movzbl %al,%eax
         syscall
@@ -110,13 +112,6 @@ open: .globl open
         movb $ __NR_open,%al; jmp sysgo
 close: .globl close
         movb $ __NR_close,%al; jmp sysgo
-
-mprotect: .globl mprotect
-        movb $ __NR_mprotect,%al; jmp sysgo
-munmap: .globl munmap
-        movb $ __NR_munmap,%al; jmp sysgo
-brk: .globl brk
-        movb $ __NR_brk,%al; jmp sysgo
 
 exit: .globl exit
         movb $ __NR_exit,%al; jmp sysgo

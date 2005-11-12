@@ -34,7 +34,7 @@
 M_NRV2B_LE32=2  # ../conf.h
 M_NRV2E_LE32=8
 
-SZ_DLINE=128  # size of data cache line in Apple G5
+#define ALIGN(n)  .align n
 
 /* Returns 0 on success; non-zero on failure. */
 decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint method)
@@ -49,6 +49,7 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
 #define len  %ecx  /* XXX: 2GB */
+#define lenq %rcx
 #define bits %ebx
 #define disp %rbp
 
@@ -57,11 +58,12 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
 	push dst
         addq src,lsrc; push lsrc  # &input_eof
 
-	movq src,%rsi  # hardware src
-	movl $1<<31,%ebx  # force refill
-	movq dst,%rdi  # hardware dst
+	movq src,%rsi  # hardware src for movsb, lodsb
+	movq dst,%rdi  # hardware dst for movsb
+	subl bits,bits  # empty; force refill
+	subl len,len  # create loop invariant
 	orq $~0,disp  # -1: initial displacement
-	call setup_rdx_n2e
+	call setup_rdx
 ra_setup_rdx:
 
 /* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
@@ -74,24 +76,23 @@ ra_setup_rdx:
 /* rotate next bit into bottom bit of reg */
 #define getnextb(reg) call *%rdx; adcl reg,reg
 
-	/*.align 1<<4  # not effective unless upx pays attention */
-get_refill_n2e:  # In: 1==Carry
-	movl (%rsi),bits; leaq 4(%rsi),%rsi  # next 32 bits
+	ALIGN(1<<3)
+getbit:
+	addl bits,bits; jz refill  # Carry= next bit
+	ret
+refill:
+	movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
 	adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
 	ret
-getbit:
-	addl bits,bits; jz get_refill_n2e  # Carry= next bit
-	ret
 
+	ALIGN(1<<3)
 lit_n2e:
 	movsb  # *%rdi++ = *%rsi++;
 top_n2e:
-	call *%rdx
-	jc lit_n2e
-        movl $1,off
+	jnextb1y lit_n2e
+	lea 1(lenq),off  # [len= 0] off= 1
         jmp getoff_n2e
 
-	/*.align 1<<4  # not effective unless upx pays attention */
 off_n2e:
         dec off
         getnextb(off)
@@ -99,20 +100,20 @@ getoff_n2e:
         getnextb(off)
         jnextb0n off_n2e
 
-	xorl len,len  # len= 0
+	/*xorl len,len  # len= 0*/
 	subl $3,off; jc offprev_n2e
 	shll $8,off
 	lodsb  # requires off===%eax
 	xorl $~0,off; jz eof_n2e
 	sarl off  # Carry= original low bit
-	movslq off,disp
+	movslq off,disp  # XXX: 2GB
 	jc lenlast_n2e
 	jmp lenmore_n2e
 
 offprev_n2e:
         jnextb1y lenlast_n2e
 lenmore_n2e:
-        movl $1,len
+        incl len  # len= 1
         jnextb1y lenlast_n2e
 len_n2e:
         getnextb(len)
@@ -127,22 +128,58 @@ gotlen_n2e:
         adcl $2,len  # len += 2+ (disp < -0x500);
 	push %rsi
 	leaq (%rdi,disp),%rsi
-	rep; movsb
+	rep; movsb  # len
 	pop %rsi
-bot_n2e:
-	movb 2*SZ_DLINE(%rdi),%al  # prefetch for store
+bot_n2e:  # In: 0==len
+	prefetch 0x7f(%rdi)  # em64t has no prefetchw
         jmp top_n2e
 
-setup_rdx_n2e:
-	pop %rdx; addq $ getbit - ra_setup_rdx,%rdx
-	cmpl $ M_NRV2E_LE32,meth; jne eof_n2e
-        jmp bot_n2e
 
+	ALIGN(1<<3)
+lit_n2b:
+	movsb  # *%rdi++ = %rsi++;
+top_n2b:
+	jnextb1y lit_n2b
+	lea 1(lenq),off  # [len= 0] off= 1
+offmore_n2b:
+	getnextb(off)
+	jnextb0n offmore_n2b
+
+	subl $3,off; jc len_n2b  # use previous offset
+	shll $8,off
+	lodsb  # requires off===%eax
+	xorl $~0,off; jz eof_n2b
+	movslq off,disp  # XXX: 2GB
+len_n2b:
+	lea 1(lenq),off  # [len= 0] off= 1
+	getnextb(len); getnextb(len)  # two bits; cc set on result
+	jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+	movl off,len  # len= 1, the msb
+	addl $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+	getnextb(len)
+	jnextb0n lenmore_n2b
+gotlen_n2b:
+	cmpq $-0xd00,disp
+	adcl off,len  # len += off + (disp < -0xd00)
+	push %rsi
+	leaq (%rdi,disp),%rsi
+	rep; movsb  # len
+	pop %rsi
+bot_n2b:  # In: 0==len
+	prefetch 0x7f(%rdi)  # em64t has no prefetchw
+        jmp top_n2b
+
+setup_rdx:
+	pop %rdx; addq $ getbit - ra_setup_rdx,%rdx  # %rdx= &getbit
+	cmpl $ M_NRV2E_LE32,meth; je bot_n2e
+	cmpl $ M_NRV2B_LE32,meth; je bot_n2b
 eof_n2e:
+eof_n2b:
 	pop %rcx  # &input_eof
 	movq %rsi,%rax; subq %rcx,%rax  # src -= eof;  // return 0: good; else: bad
-	pop %rdx; subq %rdx,%rdi  # dst -= original dst
-	pop %rcx;      movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
+	pop %rdx;       subq %rdx,%rdi  # dst -= original dst
+	pop %rcx;            movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
 	pop %rbx; pop %rbp
 	ret
 

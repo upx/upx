@@ -161,14 +161,7 @@ ERR_LAB
     }
 }
 
-// Create (or find) an escape hatch to use when munmapping ourselves the stub.
-// Called by do_xmap to create it, and by assembler code to find it.
-static void *
-make_hatch(Elf64_Phdr const *const phdr)
-{
-    return 0;
-}
-
+#if 0  /*{*/
 static void
 upx_bzero(char *p, size_t len)
 {
@@ -177,12 +170,12 @@ upx_bzero(char *p, size_t len)
     } while (--len);
 }
 #define bzero upx_bzero
-
+#endif  /*}*/
 
 static void
 auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
 {
-    if (av && 0==(1&(uint64_t)av))  /* PT_INTERP usually inhibits, except for hatch */
+    if (av)
     for (;; ++av) {
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
@@ -259,13 +252,11 @@ do_xmap(
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
+        char  *addr = xo.buf  =         reloc + (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz +                  addr;
         size_t frag  = (long)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
-        addr  += reloc;
-        haddr += reloc;
 
         if (addr != mmap(addr, mlen, PROT_READ | PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
@@ -278,6 +269,10 @@ do_xmap(
         bzero(addr, frag);  // fragment at lo end
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         bzero(mlen+addr, frag);  // fragment at hi end
+        if (xi && 0==phdr->p_offset) {
+            Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
+            *(int *)&ehdr->e_ident[12] = 0x90c3050f;  // syscall; ret; nop
+        }
         if (0!=mprotect(addr, mlen, prot)) {
             err_exit(10);
 ERR_LAB
@@ -308,27 +303,25 @@ ERR_LAB
 
 void *
 upx_main(  // returns entry address
-    struct l_info const *const li,
+    struct b_info const *const bi,  // 1st block header
     size_t const sz_compressed,  // total length
     Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    size_t const sz_ehdr,
+    Elf64_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf,
-    Elf64_auxv_t *const av
+    f_unfilter *const f_unf
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
     Elf64_Addr entry;
 
-    Extent xi, xo, xi0;
-    xi.buf  = (char *)(1+ (struct p_info const *)(1+ li));  // &b_info
-    xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
+    Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
-    xo.size = ((struct b_info const *)xi.buf)->sz_unc;
-    xi0 = xi;
+    xo.size = bi->sz_unc;
+    xi2.buf = (char *)bi; xi2.size = sz_compressed;
+    xi1.buf = (char *)bi; xi1.size = sz_compressed;
 
     // ehdr = Uncompress Ehdr and Phdrs
-    unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
+    unpackExtent(&xi2, &xo, f_decompress, 0);  // never filtered?
 
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     auxv_up(av, AT_PHDR  , (unsigned long)(1+(Elf64_Ehdr *)phdr->p_vaddr));
@@ -337,7 +330,7 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf);
+    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf);  // "rewind"
 
   { // Map PT_INTERP program interpreter
     int j;
