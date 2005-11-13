@@ -171,6 +171,7 @@ bot_n2b:  # In: 0==len
         jmp top_n2b
 
 setup_rdx:
+	cld
 	pop %rdx; addq $ getbit - ra_setup_rdx,%rdx  # %rdx= &getbit
 	cmpl $ M_NRV2E_LE32,meth; je bot_n2e
 	cmpl $ M_NRV2B_LE32,meth; je bot_n2b

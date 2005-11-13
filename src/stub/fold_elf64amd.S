@@ -54,6 +54,7 @@ __NR_brk=      12
 __NR_exit= 60
 
 /* In:
+    cld
     %rbp= &decompress
     %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
 */

@@ -55,9 +55,6 @@ PAGE_SIZE= -PAGE_MASK
 
 /*__LEXEC000__*/
 _start: .globl _start
-/* The following 'call' must be at _start; fold_begin knows this,
-   and so does PackLinuxElf64amd::pack3() .
-*/
         call main  # push &decompress
 #include "amd_d_nrv2e.S"
 
@@ -75,15 +72,27 @@ _start: .globl _start
 unfold:
         pop %rbx  # &b_info
 
-        .byte 7+0xB8; .ascii "ADRM"  # movl $'ADRM',%edi
+/* Get some pages.  If small, then get 1 page located just after the end
+   of the first PT_LOAD of the compressed program.  This will still be below
+   all of the uncompressed program.  If large (>=3MB compressed), then get enough
+   to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
+   the brk() of the _un_compressed program.  The address and length are pre-
+   calculated by PackLinuxElf64amd::pack3(), and patched in at compress time.
+*/
+        .byte 7+0xB8; .ascii "ADRM"  # movl $'ADRM',%edi  XXX: 4GB
         push $ PROT_READ | PROT_WRITE | PROT_EXEC; pop %arg3
-        .byte 6+0xB8; .ascii "LENM"  # movl $'LENM',%esi
+        .byte 6+0xB8; .ascii "LENM"  # movl $'LENM',%esi  XXX: 4GB
         push $ MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS; pop %sys4
         subl %arg5l,%arg5l  #; subl %arg6l,%arg6l  # MAP_ANON ==> ignore offset
         push $ SYS_mmap; pop %rax
         syscall  # %rax= result; trashes %rcx,%r11 only
         cmpl %eax,%edi; je 0f; hlt; 0:  # XXX: 4GB
 
+/* Load the addresses and lengths that ::pack3() patched in.
+   XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
+   XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
+   If desired, then use an temporary register to extend the 2GB PUSH to 4GB.
+*/
         .byte   0x68; .ascii "JMPU"  # push $'JMPU'  # for unmap in fold
         .byte   0x68; .ascii "ADRU"  # push $'ADRU'  # for unmap in fold
         .byte 6+0xB8; .ascii "ADRC"  # movl $'ADRC',%esi
@@ -92,14 +101,19 @@ unfold:
         .byte   0x68; .ascii "ADRX"  # push $'ADRX'  # for upx_main
         .byte   0x68; .ascii "LENX"  # push $'LENX'  # for upx_main
 
-        movl %edi,%edx
-        subl %esi,%edx  # relocation amount
+/* Move and relocate if compressed overlaps uncompressed.
+   Move by 0 when total compressed executable is < 3MB.
+*/
+        movl %edi,%edx  #  ADRM
+        subl %esi,%edx  # (ADRM - ADRC) == relocation amount
         addl      %edx,%ebp  # update &decompress
         addl      %edx,%ebx  # update &b_info
 
+        cld
         rep; movsq
         xchgl %eax,%edi
 
+/* Decompress the folded part of this stub, then execute it. */
         movl %ebx,%esi  # %arg2l= &b_info (relocated)
         push %rax  # ret_addr after decompression
                xchgl %eax,%arg3l  # %arg3= dst for unfolding  XXX: 4GB
@@ -108,6 +122,7 @@ unfold:
         lodsl; movzbl %al,%arg5l  # b_method
               xchg %arg1l,%arg2l  # XXX: 4GB
         jmp *%rbp  # goto decompress; return to unfolded loader
+
 main:
         # int3  # uncomment for debugging
         pop %rbp  # &decompress
