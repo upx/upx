@@ -60,34 +60,35 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
 
 	movq src,%rsi  # hardware src for movsb, lodsb
 	movq dst,%rdi  # hardware dst for movsb
-	subl bits,bits  # empty; force refill
-	subl len,len  # create loop invariant
+	xorl bits,bits  # empty; force refill
+	xorl len,len  # create loop invariant
 	orq $~0,disp  # -1: initial displacement
 	call setup_rdx
 ra_setup_rdx:
 
 /* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
 /* Prediction omitted for now. */
-#define jnextb0n call *%rdx; jnc
-#define jnextb0y call *%rdx; jnc
-#define jnextb1n call *%rdx; jc
-#define jnextb1y call *%rdx; jc
+#define jnextb0n jnextb0y
+#define jnextb0y addl bits,bits; jnz 0f; call refill; 0: jnc
+#define jnextb1n jnextb1y
+#define jnextb1y addl bits,bits; jnz 0f; call refill; 0: jc
 
 /* rotate next bit into bottom bit of reg */
-#define getnextb(reg) call *%rdx; adcl reg,reg
+#define getnextb(reg) addl bits,bits; jnz 0f; call refill; 0: adcl reg,reg
 
 	ALIGN(1<<3)
 getbit:
 	addl bits,bits; jz refill  # Carry= next bit
-	ret
+	rep; ret
 refill:
 	movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
 	adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
-	ret
+	rep; ret
 
 	ALIGN(1<<3)
 lit_n2e:
-	movsb  # *%rdi++ = *%rsi++;
+	movb (%rsi),%al; addq $1,%rsi
+	movb %al,(%rdi); addq $1,%rdi
 top_n2e:
 	jnextb1y lit_n2e
 	lea 1(lenq),off  # [len= 0] off= 1
@@ -137,7 +138,8 @@ bot_n2e:  # In: 0==len
 
 	ALIGN(1<<3)
 lit_n2b:
-	movsb  # *%rdi++ = %rsi++;
+	movb (%rsi),%al; addq $1,%rsi
+	movb %al,(%rdi); addq $1,%rdi
 top_n2b:
 	jnextb1y lit_n2b
 	lea 1(lenq),off  # [len= 0] off= 1
