@@ -29,6 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+#include "amd_regs.h"
+
 sz_l_info= 12
   l_lsize= 8
 
@@ -53,12 +55,92 @@ PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
+M_NRV2B_LE32=2  # ../conf.h
+M_NRV2E_LE32=8
+
+#define ALIGN(n)  .align n
+
 /*__LEXEC000__*/
 _start: .globl _start
         call main  # push &decompress
-#include "amd_d_nrv2e.S"
 
-#include "amd_regs.h"
+/* Returns 0 on success; non-zero on failure. */
+decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+
+/* Arguments according to calling convention */
+#define src  %arg1
+#define lsrc %arg2
+#define dst  %arg3
+#define ldst %arg4  /* Out: actually a reference: &len_dst */
+#define meth %arg5l
+
+/* Working registers */
+#define off  %eax  /* XXX: 2GB */
+#define len  %ecx  /* XXX: 2GB */
+#define lenq %rcx
+#define bits %ebx
+#define disp %rbp
+
+	push %rbp; push %rbx  # C callable
+	push ldst
+	push dst
+        addq src,lsrc; push lsrc  # &input_eof
+
+	movq src,%rsi  # hardware src for movsb, lodsb
+	movq dst,%rdi  # hardware dst for movsb
+	xorl bits,bits  # empty; force refill
+	xorl len,len  # create loop invariant
+	orq $~0,disp  # -1: initial displacement
+	jmp setup
+
+/* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
+/* Prediction omitted for now. */
+#define jnextb0n jnextb0y
+#define jnextb0y addl bits,bits; jnz 0f; call refill; 0: jnc
+#define jnextb1n jnextb1y
+#define jnextb1y addl bits,bits; jnz 0f; call refill; 0: jc
+
+/* rotate next bit into bottom bit of reg */
+#define getnextb(reg) addl bits,bits; jnz 0f; call refill; 0: adcl reg,reg
+
+	ALIGN(1<<3)
+getbit:
+	addl bits,bits; jz refill  # Carry= next bit
+	rep; ret
+refill:
+	movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
+	adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
+	rep; ret
+
+copy:  # In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
+	leaq (%rdi,disp),%rdx
+	cmpl $ 3,len;  jbe copy1  # perhaps extend this to length 5 or less?
+	cmpq $-4,disp; ja  copy1  # 4-byte chunks would overlap
+	subl $4,len  # adjust for termination cases
+copy4:
+	movl (%rdx),%eax; leaq 4(%rdx),%rdx; subl $4,len
+	movl %eax,(%rdi); leaq 4(%rdi),%rdi; jnc copy4
+	addl $4,len; jz copy0
+copy1:
+	movb (%rdx), %al; leaq 1(%rdx),%rdx; subl $1,len
+	movb  %al,(%rdi); leaq 1(%rdi),%rdi; jnz copy1
+copy0:
+	rep; ret
+
+#include "amd_d_nrv2e.S"
+#include "amd_d_nrv2b.S"
+
+setup:
+	cld
+	cmpl $ M_NRV2E_LE32,meth; je bot_n2e
+	cmpl $ M_NRV2B_LE32,meth; je top_n2b
+eof:
+	pop %rcx  # &input_eof
+	movq %rsi,%rax; subq %rcx,%rax  # src -= eof;  // return 0: good; else: bad
+	pop %rdx;       subq %rdx,%rdi  # dst -= original dst
+	pop %rcx;            movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
+	pop %rbx; pop %rbp
+	ret
 
 /* Decompress the rest of this loader, and jump to it.
    Map a page to hold the decompressed bytes.  Logically this could
@@ -91,7 +173,7 @@ unfold:
 /* Load the addresses and lengths that ::pack3() patched in.
    XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
    XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
-   If desired, then use an temporary register to extend the 2GB PUSH to 4GB.
+   (Use an temporary register to obtain 4GB range on PUSH constant.)
 */
         .byte   0x68; .ascii "JMPU"  # push $'JMPU'  # for unmap in fold
         .byte   0x68; .ascii "ADRU"  # push $'ADRU'  # for unmap in fold
@@ -129,7 +211,6 @@ main:
         call unfold  # push &b_info
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
-eof:
 /*__XTHEENDX__*/
 
 /*

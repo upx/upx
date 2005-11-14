@@ -56,9 +56,9 @@ ckmark:
 ckstart:
 	subq $4,%rcx
 	movb (%rdi),%al; addq $1,%rdi
-	loop ckloop2  # prefix cannot overlap previous displacement
-	jrcxz ckend
+	decq %rcx; jnz ckloop2  # prefix cannot overlap previous displacement
+	jmp ckend
 ckcount:
-	loop ckloop3
+	decq %rcx; jnz ckloop3
 ckend:
 	ret

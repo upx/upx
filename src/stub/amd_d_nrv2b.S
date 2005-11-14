@@ -1,4 +1,4 @@
-/* amd_d_nrv2e.S -- AMD64 decompressor for NRV2E
+/* amd_d_nrv2b.S -- AMD64 decompressor for NRV2B
 
    This file is part of the UPX executable compressor.
 
@@ -30,47 +30,34 @@
 */
 
 	ALIGN(1<<3)
-lit_n2e:
+lit_n2b:
 	movb (%rsi),%al; addq $1,%rsi
 	movb %al,(%rdi); addq $1,%rdi
-top_n2e:
-	jnextb1y lit_n2e
+top_n2b:
+	jnextb1y lit_n2b
 	lea 1(lenq),off  # [len= 0] off= 1
-        jmp getoff_n2e
+offmore_n2b:
+	getnextb(off)
+	jnextb0n offmore_n2b
 
-off_n2e:
-        dec off
-        getnextb(off)
-getoff_n2e:
-        getnextb(off)
-        jnextb0n off_n2e
-
-	movzbl (%rsi),%edx  #; xorl len,len  # len= 0
-	subl $ 3,off; jc offprev_n2e
+	movzbl (%rsi),%edx
+	subl $ 3,off; jc len_n2b  # use previous offset
 	shll $ 8,off
 	orl %edx,off; incq %rsi
 	xorl $~0,off; jz eof
-	sarl off  # Carry= original low bit
 	movslq off,disp  # XXX: 2GB
-	jc lenlast_n2e
-	jmp lenmore_n2e
-
-offprev_n2e:
-        jnextb1y lenlast_n2e
-lenmore_n2e:
-        incl len  # len= 1
-        jnextb1y lenlast_n2e
-len_n2e:
-        getnextb(len)
-        jnextb0n len_n2e
-        addl $6-2-2,len
-        jmp gotlen_n2e
-
-lenlast_n2e:
-        getnextb(len)  # 0,1,2,3
-gotlen_n2e:
-	cmpq $-0x500,disp
-        adcl $2,len  # len += 2+ (disp < -0x500);
+len_n2b:
+	lea 1(lenq),off  # [len= 0] off= 1
+	getnextb(len); getnextb(len)  # two bits; cc set on result
+	jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+	movl off,len  # len= 1, the msb
+	addl $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+	getnextb(len)
+	jnextb0n lenmore_n2b
+gotlen_n2b:
+	cmpq $-0xd00,disp
+	adcl off,len  # len += off + (disp < -0xd00)
 	call copy
-bot_n2e:  # In: 0==len
-        jmp top_n2e
+bot_n2b:  # In: 0==len
+        jmp top_n2b
