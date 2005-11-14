@@ -81,17 +81,17 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint metho
 #define bits %ebx
 #define disp %rbp
 
-	push %rbp; push %rbx  # C callable
-	push ldst
-	push dst
+        push %rbp; push %rbx  # C callable
+        push ldst
+        push dst
         addq src,lsrc; push lsrc  # &input_eof
 
-	movq src,%rsi  # hardware src for movsb, lodsb
-	movq dst,%rdi  # hardware dst for movsb
-	xorl bits,bits  # empty; force refill
-	xorl len,len  # create loop invariant
-	orq $~0,disp  # -1: initial displacement
-	jmp setup
+        movq src,%rsi  # hardware src for movsb, lodsb
+        movq dst,%rdi  # hardware dst for movsb
+        xorl bits,bits  # empty; force refill
+        xorl len,len  # create loop invariant
+        orq $~0,disp  # -1: initial displacement
+        jmp setup
 
 /* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
 /* Prediction omitted for now. */
@@ -103,44 +103,46 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint metho
 /* rotate next bit into bottom bit of reg */
 #define getnextb(reg) addl bits,bits; jnz 0f; call refill; 0: adcl reg,reg
 
-	ALIGN(1<<3)
+        ALIGN(1<<3)
 getbit:
-	addl bits,bits; jz refill  # Carry= next bit
-	rep; ret
+        addl bits,bits; jz refill  # Carry= next bit
+        rep; ret
 refill:
-	movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
-	adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
-	rep; ret
+        movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
+        adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
+        movzbl (%rsi),%edx  # speculate: literal, or bottom 8 bits of offset
+        rep; ret
 
 copy:  # In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
-	leaq (%rdi,disp),%rdx
-	cmpl $ 3,len;  jbe copy1  # perhaps extend this to length 5 or less?
-	cmpq $-4,disp; ja  copy1  # 4-byte chunks would overlap
-	subl $4,len  # adjust for termination cases
+        leaq (%rdi,disp),%rax; movb (%rax),%dl
+        cmpl $ 3,len;  jbe copy1  # perhaps extend this to length 5 or less?
+        cmpq $-4,disp; ja  copy1  # 4-byte chunks would overlap
+        subl $4,len  # adjust for termination cases
 copy4:
-	movl (%rdx),%eax; leaq 4(%rdx),%rdx; subl $4,len
-	movl %eax,(%rdi); leaq 4(%rdi),%rdi; jnc copy4
-	addl $4,len; jz copy0
+        movl (%rax),%edx; addq $4,      %rax; subl $4,len
+        movl %edx,(%rdi); leaq  4(%rdi),%rdi; jnc copy4
+        addl $4,len; movb (%rax),%dl; jz copy0
 copy1:
-	movb (%rdx), %al; leaq 1(%rdx),%rdx; subl $1,len
-	movb  %al,(%rdi); leaq 1(%rdi),%rdi; jnz copy1
+        incq %rax; movb %dl,(%rdi); subl $1,len
+                   movb (%rax),%dl
+        leaq 1(%rdi),%rdi;          jnz copy1
 copy0:
-	rep; ret
+        rep; ret
 
 #include "amd_d_nrv2e.S"
 #include "amd_d_nrv2b.S"
 
 setup:
-	cld
-	cmpl $ M_NRV2E_LE32,meth; je bot_n2e
-	cmpl $ M_NRV2B_LE32,meth; je top_n2b
+        cld
+        cmpl $ M_NRV2E_LE32,meth; je bot_n2e
+        cmpl $ M_NRV2B_LE32,meth; je top_n2b
 eof:
-	pop %rcx  # &input_eof
-	movq %rsi,%rax; subq %rcx,%rax  # src -= eof;  // return 0: good; else: bad
-	pop %rdx;       subq %rdx,%rdi  # dst -= original dst
-	pop %rcx;            movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
-	pop %rbx; pop %rbp
-	ret
+        pop %rcx  # &input_eof
+        movq %rsi,%rax; subq %rcx,%rax  # src -= eof;  // return 0: good; else: bad
+        pop %rdx;       subq %rdx,%rdi  # dst -= original dst
+        pop %rcx;            movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
+        pop %rbx; pop %rbp
+        ret
 
 /* Decompress the rest of this loader, and jump to it.
    Map a page to hold the decompressed bytes.  Logically this could

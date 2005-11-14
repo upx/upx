@@ -29,13 +29,14 @@
    <jreiser@users.sourceforge.net>
 */
 
-	ALIGN(1<<3)
+        ALIGN(1<<3)
 lit_n2e:
-	movb (%rsi),%al; addq $1,%rsi
-	movb %al,(%rdi); addq $1,%rdi
+        incq %rsi; movb %dl,(%rdi)
+        incq %rdi
 top_n2e:
-	jnextb1y lit_n2e
-	lea 1(lenq),off  # [len= 0] off= 1
+        movzbl (%rsi),%edx  # speculate: literal, or bottom 8 bits of offset
+        jnextb1y lit_n2e
+        lea 1(lenq),off  # [len= 0] off= 1
         jmp getoff_n2e
 
 off_n2e:
@@ -45,15 +46,14 @@ getoff_n2e:
         getnextb(off)
         jnextb0n off_n2e
 
-	movzbl (%rsi),%edx  #; xorl len,len  # len= 0
-	subl $ 3,off; jc offprev_n2e
-	shll $ 8,off
-	orl %edx,off; incq %rsi
-	xorl $~0,off; jz eof
-	sarl off  # Carry= original low bit
-	movslq off,disp  # XXX: 2GB
-	jc lenlast_n2e
-	jmp lenmore_n2e
+        subl $ 3,off; jc offprev_n2e
+        shll $ 8,off
+        orl %edx,off; incq %rsi
+        xorl $~0,off; jz eof
+        sarl off  # Carry= original low bit
+        movslq off,disp  # XXX: 2GB
+        jc lenlast_n2e
+        jmp lenmore_n2e
 
 offprev_n2e:
         jnextb1y lenlast_n2e
@@ -69,8 +69,13 @@ len_n2e:
 lenlast_n2e:
         getnextb(len)  # 0,1,2,3
 gotlen_n2e:
-	cmpq $-0x500,disp
+        cmpq $-0x500,disp
         adcl $2,len  # len += 2+ (disp < -0x500);
-	call copy
+        call copy
 bot_n2e:  # In: 0==len
         jmp top_n2e
+
+/*
+vi:ts=8:et:nowrap
+*/
+
