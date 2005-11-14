@@ -34,7 +34,7 @@ lit_n2e:
         incq %rsi; movb %dl,(%rdi)
         incq %rdi
 top_n2e:
-        movzbl (%rsi),%edx  # speculate: literal, or bottom 8 bits of offset
+        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
         jnextb1y lit_n2e
         lea 1(lenq),off  # [len= 0] off= 1
         jmp getoff_n2e
@@ -47,7 +47,7 @@ getoff_n2e:
         jnextb0n off_n2e
 
         subl $ 3,off; jc offprev_n2e
-        shll $ 8,off
+        shll $ 8,off; movzbl %dl,%edx
         orl %edx,off; incq %rsi
         xorl $~0,off; jz eof
         sarl off  # Carry= original low bit

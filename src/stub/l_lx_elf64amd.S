@@ -91,17 +91,29 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint metho
         xorl bits,bits  # empty; force refill
         xorl len,len  # create loop invariant
         orq $~0,disp  # -1: initial displacement
-        jmp setup
+        call setup  # push &getbit [TUNED]
+ra_setup:
 
+/* AMD64 branch prediction is much worse if there are more than 3 branches
+   per 16-byte block.  The jnextb would suffer unless inlined.  getnextb is OK
+   using closed subroutine to save space, and should be OK on cycles because
+   CALL+RET should be predicted.  getnextb could partially expand, using closed
+   subroutine only for refill.
+*/
 /* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
 /* Prediction omitted for now. */
 #define jnextb0n jnextb0y
-#define jnextb0y addl bits,bits; jnz 0f; call refill; 0: jnc
+#define jnextb0y GETBIT; jnc
 #define jnextb1n jnextb1y
-#define jnextb1y addl bits,bits; jnz 0f; call refill; 0: jc
+#define jnextb1y GETBIT; jc
+#define GETBIT \
+        addl bits,bits; jnz 0f; \
+        movl (%rsi),bits; subq $-4,%rsi; \
+        adcl bits,bits; movb (%rsi),%dl; \
+0:
 
 /* rotate next bit into bottom bit of reg */
-#define getnextb(reg) addl bits,bits; jnz 0f; call refill; 0: adcl reg,reg
+#define getnextb(reg) call *%r11; adcl reg,reg
 
         ALIGN(1<<3)
 getbit:
@@ -110,13 +122,13 @@ getbit:
 refill:
         movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
         adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
-        movzbl (%rsi),%edx  # speculate: literal, or bottom 8 bits of offset
+        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
         rep; ret
 
 copy:  # In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
-        leaq (%rdi,disp),%rax; movb (%rax),%dl
-        cmpl $ 3,len;  jbe copy1  # perhaps extend this to length 5 or less?
-        cmpq $-4,disp; ja  copy1  # 4-byte chunks would overlap
+        leaq (%rdi,disp),%rax; cmpl $5,len  # <=3 is forced
+        movb (%rax),%dl; jbe copy1  # <=5 for better branch predict
+        cmpq $-4,disp;   ja  copy1  # 4-byte chunks would overlap
         subl $4,len  # adjust for termination cases
 copy4:
         movl (%rax),%edx; addq $4,      %rax; subl $4,len
@@ -134,7 +146,8 @@ copy0:
 
 setup:
         cld
-        cmpl $ M_NRV2E_LE32,meth; je bot_n2e
+        pop %r11  # addq $ getbit - ra_setup,%r11  # &getbit
+        cmpl $ M_NRV2E_LE32,meth; je top_n2e
         cmpl $ M_NRV2B_LE32,meth; je top_n2b
 eof:
         pop %rcx  # &input_eof
