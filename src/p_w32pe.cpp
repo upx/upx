@@ -152,12 +152,14 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     otls = NULL;
     oresources = NULL;
     oxrelocs = NULL;
+    oloadconf = NULL;
     icondir_offset = 0;
     icondir_count = 0;
     importbyordinal = false;
     kernel32ordinal = false;
     tlsindex = 0;
     big_relocs = 0;
+    soloadconf = 0;
 }
 
 
@@ -171,6 +173,7 @@ PackW32Pe::~PackW32Pe()
     delete [] otls;
     delete [] oresources;
     delete [] oxrelocs;
+    delete [] oloadconf;
     //delete res;
 }
 
@@ -1475,6 +1478,30 @@ void PackW32Pe::processResources(Resource *res)
     info("Resources: compressed %u (%u bytes), not compressed %u (%u bytes)",cnum,csize,unum,usize);
 }
 
+/*************************************************************************
+// Load Configuration handling
+**************************************************************************/
+
+void PackW32Pe::processLoadConf()
+{
+    if (IDSIZE(PEDIR_LOADCONF) == 0)
+        return;
+
+    const upx_byte * const loadconf = ibuf + IDADDR(PEDIR_LOADCONF);
+    soloadconf = get_le32(loadconf);
+    if (soloadconf == 0)
+        return;
+    if (soloadconf > 256)
+        throwCantPack("size of Load Configuration directory unexpected");
+
+    if (IDSIZE(PEDIR_RELOC))
+        throwCantPack("LoadConf + relocations yet not supported");
+
+    oloadconf = new upx_byte[soloadconf];
+    memcpy(oloadconf, loadconf, soloadconf);
+}
+
+//
 
 unsigned PackW32Pe::virta2objnum(unsigned addr,pe_section_t *sect,unsigned objs)
 {
@@ -1633,9 +1660,11 @@ void PackW32Pe::pack(OutputFile *fo)
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files (win32/net) are not yet supported");
 
+#if 0
     // Structured Exception Handling
     if (!opt->win32_pe.strip_loadconf && IDSIZE(PEDIR_LOADCONF))
         throwCantPack("Structured Exception Handling present (try --strip-loadconf)");
+#endif
 
     if (isdll)
         opt->win32_pe.strip_relocs = false;
@@ -1915,11 +1944,13 @@ void PackW32Pe::pack(OutputFile *fo)
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
+#if 0
     if (opt->win32_pe.strip_loadconf)
     {
         ODADDR(PEDIR_LOADCONF) = 0;
         ODSIZE(PEDIR_LOADCONF) = 0;
     }
+#endif
 
     // tls is put into section 1
 
@@ -1937,10 +1968,12 @@ void PackW32Pe::pack(OutputFile *fo)
     ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
     ODSIZE(PEDIR_RESOURCE) = soresources;
     ic += soresources;
+
     processImports(ic);
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
+
     processExports(&xport,ic);
     ODADDR(PEDIR_EXPORT) = soexport ? ic : 0;
     ODSIZE(PEDIR_EXPORT) = soexport;
@@ -1950,13 +1983,20 @@ void PackW32Pe::pack(OutputFile *fo)
         ODSIZE(PEDIR_EXPORT) = IDSIZE(PEDIR_EXPORT);
     }
     ic += soexport;
+
+    processLoadConf();
+    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
+    ODSIZE(PEDIR_LOADCONF) = soloadconf;
+    ic += soloadconf;
+
     processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;
 
     // this is computed here, because soxrelocs changes some lines above
-    const unsigned ncsize = soresources + soimpdlls + soexport + soxrelocs;
+    const unsigned ncsize = soresources + soimpdlls + soexport + soloadconf
+        + soxrelocs;
     ic = oh.filealign - 1;
 
     // this one is tricky: it seems windoze touches 4 bytes after
@@ -2038,6 +2078,7 @@ void PackW32Pe::pack(OutputFile *fo)
     fo->write(oresources,soresources);
     fo->write(oimpdlls,soimpdlls);
     fo->write(oexport,soexport);
+    fo->write(oloadconf, soloadconf);
     fo->write(oxrelocs,soxrelocs);
 
     if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
@@ -2054,6 +2095,7 @@ void PackW32Pe::pack(OutputFile *fo)
     printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
     printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
     printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
+    printf("%-13s: loadconf     : %8ld bytes\n", getName(), (long) soloadconf);
 #endif
 
     // verify

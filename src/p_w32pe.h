@@ -119,6 +119,10 @@ protected:
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
 
+    void processLoadConf();
+    upx_byte *oloadconf;
+    unsigned soloadconf;
+
     struct pe_header_t
     {
         // 0x0
