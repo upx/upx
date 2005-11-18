@@ -35,11 +35,11 @@ lit_n2b:
         incq %rdi
 top_n2b:
         movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
-        jnextb1y lit_n2b
+        jnextb1yp lit_n2b
         lea 1(lenq),off  # [len= 0] off= 1
 offmore_n2b:
-        getnextb(off)
-        jnextb0n offmore_n2b
+        getnextbp(off)
+        jnextb0np offmore_n2b
 
         subl $ 3,off; jc len_n2b  # use previous offset
         shll $ 8,off; movzbl %dl,%edx

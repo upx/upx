@@ -102,6 +102,17 @@ ra_setup:
 */
 /* jump on next bit {0,1} with prediction {y==>likely, n==>unlikely} */
 /* Prediction omitted for now. */
+/* On refill: prefetch next byte, for latency reduction on literals and offsets. */
+#define jnextb0np jnextb0yp
+#define jnextb0yp GETBITp; jnc
+#define jnextb1np jnextb1yp
+#define jnextb1yp GETBITp; jc
+#define GETBITp \
+        addl bits,bits; jnz 0f; \
+        movl (%rsi),bits; subq $-4,%rsi; \
+        adcl bits,bits; movb (%rsi),%dl; \
+0:
+/* Same, but without prefetch (not useful for length of match.) */
 #define jnextb0n jnextb0y
 #define jnextb0y GETBIT; jnc
 #define jnextb1n jnextb1y
@@ -109,11 +120,12 @@ ra_setup:
 #define GETBIT \
         addl bits,bits; jnz 0f; \
         movl (%rsi),bits; subq $-4,%rsi; \
-        adcl bits,bits; movb (%rsi),%dl; \
+        adcl bits,bits; \
 0:
 
 /* rotate next bit into bottom bit of reg */
-#define getnextb(reg) call *%r11; adcl reg,reg
+#define getnextbp(reg) call *%r11; adcl reg,reg
+#define getnextb(reg)  getnextbp(reg)
 
         ALIGN(1<<3)
 getbit:

@@ -35,16 +35,16 @@ lit_n2e:
         incq %rdi
 top_n2e:
         movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
-        jnextb1y lit_n2e
+        jnextb1yp lit_n2e
         lea 1(lenq),off  # [len= 0] off= 1
         jmp getoff_n2e
 
 off_n2e:
         dec off
-        getnextb(off)
+        getnextbp(off)
 getoff_n2e:
-        getnextb(off)
-        jnextb0n off_n2e
+        getnextbp(off)
+        jnextb0np off_n2e
 
         subl $ 3,off; jc offprev_n2e
         shll $ 8,off; movzbl %dl,%edx
