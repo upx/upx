@@ -208,7 +208,7 @@ protected:
     virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
     virtual unsigned get_native32(const void *b) const { return get_le32(b); }
     virtual unsigned get_native16(const void *b) const { return get_le16(b); }
-    virtual void set_native64(void *b, unsigned long long v) const { set_le64(b, v); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
     virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
     virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
 };
