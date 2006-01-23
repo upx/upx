@@ -13,7 +13,7 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 =head1 ABSTRACT
 
             The Ultimate Packer for eXecutables
-  Copyright (c) 1996-2005 Markus Oberhumer & Laszlo Molnar
+  Copyright (c) 1996-2006 Markus Oberhumer & Laszlo Molnar
                http://upx.sourceforge.net
 
 
@@ -77,6 +77,10 @@ B<UPX> is a versatile executable packer with the following features:
       * vmlinuz/386     [bootable Linux kernel]
       * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
       * win32/pe
+      * arm/pe
+      * linux/elfamd64
+      * linux/elfppc32
+      * mach/elfppc32
 
   - portable: UPX is written in portable endian-neutral C++
 
@@ -730,7 +734,7 @@ Extra options available for this executable format:
 
 
 
-=head2 NOTES FOR RTM32/PE
+=head2 NOTES FOR RTM32/PE and ARM/PE
 
 Same as win32/pe.
 

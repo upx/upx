@@ -8,7 +8,7 @@
 
 
                     The Ultimate Packer for eXecutables
-          Copyright (c) 1996-2005 Markus Oberhumer & Laszlo Molnar
+          Copyright (c) 1996-2006 Markus Oberhumer & Laszlo Molnar
                        http://upx.sourceforge.net
 
 
@@ -32,6 +32,10 @@ The main news since 1.25 are:
     shell-to-memory decompression ("linux/sh386")
   - support for playstation exes ("ps1/exe")
   - lots of new bugs ;-) take care
+  - support for arm/WinCE ("arm/pe") exes
+  - support for mach/ppc32
+  - support for Linux elf/ppc32
+  - support for Linux elf/amd64
 
 
 WELCOME
@@ -129,8 +133,8 @@ THE FUTURE
 COPYRIGHT
 =========
 
-Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-Copyright (C) 1996-2005 Laszlo Molnar
+Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2006 Laszlo Molnar
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

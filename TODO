@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2005-02-08.
+UPX TODO list. Last updated 2006-01-21.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -9,8 +9,6 @@ IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
 
 
 OTHER:
-
-- rewrite linker.cpp to allow arbitrary length section names
 
 - check all <const_cast> to make sure they are not invalid
 
@@ -109,8 +107,6 @@ FORMAT WIN32/PE
 
 2 - easy - mfx + ml) new switch(es) : do not compress resource types x,y,z
     or resource names a,b,c
-
-3 - medium - ml) rebuild exports
 
 3 - difficult) don't compress the BSS section and other holes.
 

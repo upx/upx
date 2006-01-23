@@ -110,6 +110,12 @@ If you want to modify the stub sources you'll also need
 
   - Linux (for the linux/386 stubs)
 
+  - Other cross compilers targeted at the following architectures:
+       - powerpc-750-linux-gnu
+       - x86_64-unknown-linux-gnu
+       - arm-wince-pe
+
+  - ASM5900 - a MIPS R3000 assembler
 
 Misc. notes
 -----------

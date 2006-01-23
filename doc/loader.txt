@@ -11,7 +11,7 @@ loads of cryptic comments like `__PERELOC2__'.
 
 If you look at the C++ source files, however you can notice that these
 comment strings (without the leading and trailing underscores) are used
-in the following way (they are all 8 character length strings):
+in the following way:
 
     addLoader("PEMAIN20",
               ih.entry ? "PEDOJUMP" : "PERETURN",
