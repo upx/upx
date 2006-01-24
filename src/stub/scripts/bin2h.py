@@ -6,8 +6,9 @@
 #
 #  This file is part of the UPX executable compressor.
 #
-#  Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-#  Copyright (C) 1996-2005 Laszlo Molnar
+#  Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+#  Copyright (C) 1996-2006 Laszlo Molnar
+#  Copyright (C) 2000-2006 John F. Reiser
 #  All Rights Reserved.
 #
 #  UPX and the UCL library are free software; you can redistribute them
@@ -38,8 +39,9 @@ def w_header(w, ifile, ofile, n):
     w("""\n\
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 2000-2006 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -63,6 +65,7 @@ def w_header(w, ifile, ofile, n):
 
 
 def w_checksum(w, s, data):
+    w("#define %s_SIZE    %d\n"     % (s, len(data)))
     w("#define %s_ADLER32 0x%08x\n" % (s, 0xffffffffL & zlib.adler32(data)))
     w("#define %s_CRC32   0x%08x\n" % (s, 0xffffffffL & zlib.crc32(data)))
     w("\n")

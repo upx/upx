@@ -4,8 +4,9 @@
 #
 #  This file is part of the UPX executable compressor.
 #
-#  Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-#  Copyright (C) 1996-2005 Laszlo Molnar
+#  Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+#  Copyright (C) 1996-2006 Laszlo Molnar
+#  Copyright (C) 2000-2006 John F. Reiser
 #  All Rights Reserved.
 #
 #  UPX and the UCL library are free software; you can redistribute them
@@ -80,8 +81,9 @@ print <<"EOF";
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 2000-2006 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -109,6 +111,7 @@ EOF
 
 $s = $ident;
 $s =~ tr/a-z/A-Z/;
+printf("#define %s_SIZE    %d\n", $s, $n);
 printf("#define %s_ADLER32 0x%08x\n", $s, &adler32($data));
 printf("#define %s_CRC32   0x%08x\n", $s, &crc32($data));
 printf("\n");
