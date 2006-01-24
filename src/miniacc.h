@@ -2,6 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
@@ -36,7 +37,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20051212L
+#define ACC_VERSION     20060122L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -65,6 +66,11 @@
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && !defined(__MWERKS__)
 #  if (_MSC_VER >= 1300)
 #    pragma warning(disable: 4668)
+#  endif
+#endif
+#if defined(__POCC__) && defined(_WIN32)
+#  if (__POCC__ >= 400)
+#    pragma warn(disable: 2216)
 #  endif
 #endif
 #if 0 && defined(__WATCOMC__)
@@ -1241,7 +1247,7 @@ extern "C" {
 #elif !defined(ACC_ABI_BIG_ENDIAN) && !defined(ACC_ABI_LITTLE_ENDIAN)
 #if (ACC_ARCH_ALPHA) && (ACC_ARCH_CRAY_MPP)
 #  define ACC_ABI_BIG_ENDIAN        1
-#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_CRIS || ACC_ARCH_IA64 || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430)
+#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430)
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_M68K || ACC_ARCH_S390)
 #  define ACC_ABI_BIG_ENDIAN        1
@@ -5326,7 +5332,7 @@ static int acc_pclock_read_gettimeofday(acc_pclock_handle_p h, acc_pclock_p c)
     c->tv_sec_high = 0;
     c->tv_sec_low = tv.tv_sec;
 #endif
-    c->tv_nsec = tv.tv_usec * 1000;
+    c->tv_nsec = (acc_uint32l_t) (tv.tv_usec * 1000u);
     ACC_UNUSED(h); return 0;
 }
 #endif
@@ -5402,7 +5408,7 @@ static int acc_pclock_read_getprocesstimes(acc_pclock_handle_p h, acc_pclock_p c
     else
         ticks -= h->ticks_base;
     c->tv_sec = ticks / 10000000ul;
-    c->tv_nsec = (acc_uint32l_t)(ticks % 10000000ul) * 100;
+    c->tv_nsec = (acc_uint32l_t)(ticks % 10000000ul) * 100u;
     ACC_UNUSED(h); return 0;
 }
 #endif
@@ -5421,7 +5427,7 @@ static int acc_pclock_read_getrusage(acc_pclock_handle_p h, acc_pclock_p c)
     c->tv_sec_high = 0;
     c->tv_sec_low = ru.ru_utime.tv_sec;
 #endif
-    c->tv_nsec = ru.ru_utime.tv_usec * 1000;
+    c->tv_nsec = (acc_uint32l_t) (ru.ru_utime.tv_usec * 1000u);
     ACC_UNUSED(h); return 0;
 }
 #endif
