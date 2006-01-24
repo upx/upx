@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -48,7 +48,7 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                     Ultimate Packer for eXecutables\n"
-                "  Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005\n"
+                "   Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006\n"
                 "UPX %-12s Markus Oberhumer, Laszlo Molnar & John Reiser %14s\n\n",
 #if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
@@ -245,6 +245,10 @@ void show_help(int x)
     con_fprintf(f,"This version supports:\n");
     fg = con_fg(f,fg);
     con_fprintf(f,"   "
+// TODO:
+// support for mach/ppc32
+// support for linux elf/ppc32
+// support for linux elf/amd64
                 " arm/pe,"
                 " atari/tos,"
                 " bvmlinuz/386,"
@@ -267,7 +271,7 @@ void show_help(int x)
                 //" win16/ne,"
                 " win32/pe"
                 "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
-                //"\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
+//                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
                 "");
 
 
@@ -349,10 +353,10 @@ void show_version(int x)
 #if defined(WITH_UCL)
     fprintf(f,"UCL data compression library %s\n", ucl_version_string());
 #endif
-    fprintf(f,"Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(f,"Copyright (C) 1996-2005 Laszlo Molnar\n");
-    fprintf(f,"Copyright (C) 2000-2005 John F. Reiser\n");
-    fprintf(f,"Copyright (C) 2002-2005 Jens Medoch\n");
+    fprintf(f,"Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(f,"Copyright (C) 1996-2006 Laszlo Molnar\n");
+    fprintf(f,"Copyright (C) 2000-2006 John F. Reiser\n");
+    fprintf(f,"Copyright (C) 2002-2006 Jens Medoch\n");
     fprintf(f,"UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
 }
 
