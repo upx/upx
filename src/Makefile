@@ -2,9 +2,9 @@
 # UPX Makefile - needs GNU make 3.80 or better
 #
 
-SHELL = /bin/sh
-.SUFFIXES:
 MAKEFLAGS += -rR
+.SUFFIXES:
+export SHELL = /bin/sh
 override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
 
 srcdir ?= $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))

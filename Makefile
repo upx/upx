@@ -1,6 +1,8 @@
 # Toplevel Makefile for UPX
 
-SHELL = /bin/sh
+MAKEFLAGS += -rR
+.SUFFIXES:
+export SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = .
@@ -19,20 +21,20 @@ dist: distclean
 	false
 
 
+ifneq ($(wildcard CVS/R*),)
 CVS_ROOT := $(shell cat CVS/Root)
 CVS_REPO := $(shell cat CVS/Repository)
+endif
 
 cvs-info:
-	@echo 'CVS info: $(CVS_ROOT) $(CVS_REPO)'; false
+	@echo 'CVS info: $(CVS_ROOT) $(CVS_REPO)'
 
 cvs-admin-ko:
 	cvs admin -ko .
 	cvs -q -z6 update -P -d
 
 # automatically generate ChangeLog from CVS
-ChangeLog: ChangeLog.cvs
-
-ChangeLog.cvs:
+ChangeLog ChangeLog.cvs:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
 
