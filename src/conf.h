@@ -333,10 +333,10 @@
    }
 #endif
 
-#if defined(acc_alignof)
+#if defined(__acc_alignof)
 #  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
      __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) \
-     COMPILE_TIME_ASSERT(acc_alignof(a) == sizeof(b))
+     COMPILE_TIME_ASSERT(__acc_alignof(a) == sizeof(b))
 #else
 #  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
      __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b)

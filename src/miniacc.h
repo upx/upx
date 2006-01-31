@@ -37,7 +37,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20060122L
+#define ACC_VERSION     20060131L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -522,6 +522,11 @@
 #  define ACC_CC_INTELC         1
 #  define ACC_INFO_CC           "Intel C"
 #  define ACC_INFO_CCVER        ACC_CPP_MACRO_EXPAND(__INTEL_COMPILER)
+#  if defined(_WIN32) || defined(_WIN64)
+#    define ACC_CC_SYNTAX_MSC 1
+#  else
+#    define ACC_CC_SYNTAX_GNUC 1
+#  endif
 #elif defined(__POCC__) && defined(_WIN32)
 #  define ACC_CC_PELLESC        1
 #  define ACC_INFO_CC           "Pelles C"
@@ -1335,13 +1340,13 @@ extern "C" {
 #else
 #  define __acc_gnuc_extension__
 #endif
-#if !defined(acc_alignof)
+#if !defined(__acc_alignof)
 #if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
-#  define acc_alignof(e)        __alignof__(e)
+#  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
-#  define acc_alignof(e)        __alignof__(e)
+#  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
-#  define acc_alignof(e)        __alignof(e)
+#  define __acc_alignof(e)      __alignof(e)
 #endif
 #endif
 #if !defined(__acc_inline)
@@ -1367,9 +1372,9 @@ extern "C" {
 #if !defined(__acc_forceinline)
 #if (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && (ACC_OS_WIN32 || ACC_OS_WIN64))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
 #  define __acc_forceinline     __forceinline
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
@@ -1378,13 +1383,13 @@ extern "C" {
 #endif
 #endif
 #if !defined(__acc_noinline)
-#if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul)
+#if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040100ul)
 #  define __acc_noinline        __attribute__((__noinline__,__used__))
 #elif (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && (ACC_OS_WIN32 || ACC_OS_WIN64))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_MSC)
 #  define __acc_noinline        __declspec(noinline)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_noinline        __attribute__((__noinline__))
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noinline        __attribute__((__noinline__))
@@ -1403,9 +1408,9 @@ extern "C" {
 #if !defined(__acc_noreturn)
 #if (ACC_CC_GNUC >= 0x020700ul)
 #  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && (ACC_OS_WIN32 || ACC_OS_WIN64))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
 #  define __acc_noreturn        __declspec(noreturn)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && (ACC_OS_POSIX))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_noreturn        __attribute__((__noreturn__))
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noreturn        __attribute__((__noreturn__))
@@ -1416,9 +1421,9 @@ extern "C" {
 #if !defined(__acc_nothrow)
 #if (ACC_CC_GNUC >= 0x030300ul)
 #  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && (ACC_OS_WIN32 || ACC_OS_WIN64)) && defined(__cplusplus)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
 #  define __acc_nothrow         __declspec(nothrow)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && (ACC_OS_POSIX))
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_nothrow         __attribute__((__nothrow__))
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_nothrow         __attribute__((__nothrow__))
@@ -1447,9 +1452,21 @@ extern "C" {
 #if defined(__acc_destructor) && !defined(__acc_constructor)
 #  error "this should not happen"
 #endif
+#if !defined(__acc_restrict)
+#if (ACC_CC_GNUC >= 0x030400ul)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_LLVM)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_MSC && (_MSC_VER >= 1400))
+#  define __acc_restrict        __restrict
+#endif
+#endif
 #if !defined(__acc_ua_volatile)
 #  define __acc_ua_volatile     volatile
 #endif
+#if !defined(__acc_likely) && !defined(__acc_unlikely)
 #if (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
@@ -1459,8 +1476,12 @@ extern "C" {
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
-#else
+#endif
+#endif
+#if !defined(__acc_likely)
 #  define __acc_likely(e)       (e)
+#endif
+#if !defined(__acc_unlikely)
 #  define __acc_unlikely(e)     (e)
 #endif
 #if !defined(ACC_UNUSED)
@@ -4078,17 +4099,17 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
     ACCCHK_ASSERT(sizeof('\0') == sizeof(int))
 #  endif
 #endif
-#if defined(acc_alignof)
-    ACCCHK_ASSERT(acc_alignof(char) == 1)
-    ACCCHK_ASSERT(acc_alignof(signed char) == 1)
-    ACCCHK_ASSERT(acc_alignof(unsigned char) == 1)
+#if defined(__acc_alignof)
+    ACCCHK_ASSERT(__acc_alignof(char) == 1)
+    ACCCHK_ASSERT(__acc_alignof(signed char) == 1)
+    ACCCHK_ASSERT(__acc_alignof(unsigned char) == 1)
 #if defined(acc_int16e_t)
-    ACCCHK_ASSERT(acc_alignof(acc_int16e_t) >= 1)
-    ACCCHK_ASSERT(acc_alignof(acc_int16e_t) <= 2)
+    ACCCHK_ASSERT(__acc_alignof(acc_int16e_t) >= 1)
+    ACCCHK_ASSERT(__acc_alignof(acc_int16e_t) <= 2)
 #endif
 #if defined(acc_int32e_t)
-    ACCCHK_ASSERT(acc_alignof(acc_int32e_t) >= 1)
-    ACCCHK_ASSERT(acc_alignof(acc_int32e_t) <= 4)
+    ACCCHK_ASSERT(__acc_alignof(acc_int32e_t) >= 1)
+    ACCCHK_ASSERT(__acc_alignof(acc_int32e_t) <= 4)
 #endif
 #endif
     ACCCHK_ASSERT_IS_SIGNED_T(short)
@@ -5506,6 +5527,10 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
 #     endif
         break;
     case ACC_PCLOCK_REALTIME:
+#     if defined(acc_pclock_read_gettimeofday)
+        h->gettime = acc_pclock_read_gettimeofday;
+        h->name = "gettimeofday";
+#     endif
         break;
     case ACC_PCLOCK_MONOTONIC_HR:
 #     if defined(acc_pclock_read_uclock)
