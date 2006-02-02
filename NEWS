@@ -10,7 +10,7 @@ Changes in 1.94 beta (XX XXX 2006):
   * support for mach/ppc32
   * support for linux elf/ppc32
   * support for linux elf/amd64
-  * win32/pe: hopefully working "load config" support for .exes
+  * win32/pe: hopefully working "load config" support
 
 Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels

@@ -119,7 +119,8 @@ protected:
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
 
-    void processLoadConf();
+    void processLoadConf(PackW32Pe_Reloc *, const PackW32Pe_Interval *, unsigned);
+    void processLoadConf(PackW32Pe_Interval *);
     upx_byte *oloadconf;
     unsigned soloadconf;
 

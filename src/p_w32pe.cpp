@@ -1482,23 +1482,45 @@ void PackW32Pe::processResources(Resource *res)
 // Load Configuration handling
 **************************************************************************/
 
-void PackW32Pe::processLoadConf()
+void PackW32Pe::processLoadConf(Interval *iv) // pass 1
 {
     if (IDSIZE(PEDIR_LOADCONF) == 0)
         return;
 
-    const upx_byte * const loadconf = ibuf + IDADDR(PEDIR_LOADCONF);
+    const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+    const upx_byte * const loadconf = ibuf + lcaddr;
     soloadconf = get_le32(loadconf);
     if (soloadconf == 0)
         return;
     if (soloadconf > 256)
         throwCantPack("size of Load Configuration directory unexpected");
 
-    if (IDSIZE(PEDIR_RELOC))
-        throwCantPack("LoadConf + relocations yet not supported");
+    // if there were relocation entries referring to the load config table
+    // then we need them for the copy of the table too
+    unsigned pos,type;
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC));
+    while (rel.next(pos, type))
+        if (pos >= lcaddr && pos < lcaddr + soloadconf)
+        {
+            iv->add(pos - lcaddr, type);
+            // printf("loadconf reloc detected: %x\n", pos);
+        }
 
     oloadconf = new upx_byte[soloadconf];
     memcpy(oloadconf, loadconf, soloadconf);
+}
+
+void PackW32Pe::processLoadConf(Reloc *rel, const Interval *iv,
+                                unsigned newaddr) // pass2
+{
+    // now we have the address of the new load config table
+    // so we can create the new relocation entries
+    for (unsigned ic = 0; ic < iv->ivnum; ic++)
+    {
+        rel->add(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+        //printf("loadconf reloc added: %x %d\n",
+        //       iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+    }
 }
 
 //
@@ -1751,12 +1773,14 @@ void PackW32Pe::pack(OutputFile *fo)
 
     Resource res;
     Interval tlsiv(ibuf);
+    Interval loadconfiv(ibuf);
     Export xport((char*)(unsigned char*)ibuf);
 
     const unsigned dllstrings = processImports();
     processTls(&tlsiv); // call before processRelocs!!
     processResources(&res);
     processExports(&xport);
+    processLoadConf(&loadconfiv);
     processRelocs();
 
     //OutputFile::dump("x1", ibuf, usize);
@@ -1984,7 +2008,7 @@ void PackW32Pe::pack(OutputFile *fo)
     }
     ic += soexport;
 
-    processLoadConf();
+    processLoadConf(&rel, &loadconfiv, ic);
     ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
     ODSIZE(PEDIR_LOADCONF) = soloadconf;
     ic += soloadconf;
