@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -812,7 +812,10 @@ int Packer::patchVersion(void *b, int blen)
     checkPatch(b, blen, boff, 14);
 
     unsigned char *p = (unsigned char *)b + boff + 9;
-    memcpy(p, UPX_VERSION_STRING4, 4);
+    if (opt->fake_stub_version[0])
+        memcpy(p, opt->fake_stub_version, 4);
+    else
+        memcpy(p, UPX_VERSION_STRING4, 4);
 
     return boff;
 }
@@ -974,23 +977,58 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
 // loader util
 **************************************************************************/
 
+static void str_replace(char *s, int size, const char *o, const char *n, int xlen)
+{
+    int off;
+    for (off = 0; off + xlen <= size; off += xlen)
+    {
+        off = find(s + off, size - off, o, xlen);
+        if (off < 0)
+            break;
+        memcpy(s + off, n, xlen);
+    }
+}
+
+
 char const *Packer::getIdentstr(unsigned *size, int small)
 {
-    static const char identbig[] =
+    static char identbig[] =
         "\n\0"
         "$Info: "
         "This file is packed with the UPX executable packer http://upx.sf.net $"
         "\n\0"
         "$Id: UPX "
         UPX_VERSION_STRING4
-        " Copyright (C) 1996-2005 the UPX Team. All Rights Reserved. $"
+        " Copyright (C) 1996-2006 the UPX Team. All Rights Reserved. $"
         "\n";
-    static const char identsmall[] =
+    static char identsmall[] =
         "\n"
         "$Id: UPX "
-        "(C) 1996-2005 the UPX Team. All Rights Reserved. http://upx.sf.net $"
+        "(C) 1996-2006 the UPX Team. All Rights Reserved. http://upx.sf.net $"
         "\n";
-    static const char identtiny[] = UPX_VERSION_STRING4;
+    static char identtiny[] = UPX_VERSION_STRING4;
+
+    static int done;
+    if (!done && (opt->fake_stub_version[0] || opt->fake_stub_year[0]))
+    {
+        struct strinfo_t { char *s; int size; };
+        static const strinfo_t strlist[] = {
+            { identbig,   (int)sizeof(identbig) },
+            { identsmall, (int)sizeof(identsmall) },
+            { identtiny,  (int)sizeof(identtiny) },
+        { NULL, 0 } };
+        const strinfo_t* iter;
+
+        for (iter = strlist; iter->s; ++iter)
+        {
+            if (opt->fake_stub_version[0])
+                str_replace(iter->s, iter->size, UPX_VERSION_STRING4, opt->fake_stub_version, 4);
+            if (opt->fake_stub_year[0])
+                str_replace(iter->s, iter->size, "2006", opt->fake_stub_year, 4);
+        }
+        done = 1;
+    }
+
 
     if (small < 0)
         small = opt->small;

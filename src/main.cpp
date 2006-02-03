@@ -551,6 +551,16 @@ static int do_option(int optc, const char *arg)
     case 516:
         opt->no_progress = true;
         break;
+    case 542:
+        if (!mfx_optarg || strlen(mfx_optarg) != 4)
+            e_optarg(arg);
+        memcpy(opt->fake_stub_version, mfx_optarg, 4);
+        break;
+    case 543:
+        if (!mfx_optarg || strlen(mfx_optarg) != 4)
+            e_optarg(arg);
+        memcpy(opt->fake_stub_year, mfx_optarg, 4);
+        break;
     case 519:
         opt->no_env = true;
         break;
@@ -758,6 +768,8 @@ static const struct mfx_option longopts[] =
 
     // options
     {"debug",            0x10, 0, 'D'},
+    {"fake-stub-version",0x31, 0, 542},     // for internal debugging
+    {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
     {"force",               0, 0, 'f'},     // force overwrite of output files
     {"force-compress",      0, 0, 'f'},     //   and compression of suspicious files
     {"info",                0, 0, 'i'},     // info mode

@@ -57,6 +57,8 @@ struct options_t {
     int backup;
     int console;
     int debug;
+    char fake_stub_version[4+1];    // for internal debugging
+    char fake_stub_year[4+1];       // for internal debugging
     int force;
     int info_mode;
     bool ignorewarn;
