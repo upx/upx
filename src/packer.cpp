@@ -977,19 +977,6 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
 // loader util
 **************************************************************************/
 
-static void str_replace(char *s, int size, const char *o, const char *n, int xlen)
-{
-    int off;
-    for (off = 0; off + xlen <= size; off += xlen)
-    {
-        off = find(s + off, size - off, o, xlen);
-        if (off < 0)
-            break;
-        memcpy(s + off, n, xlen);
-    }
-}
-
-
 char const *Packer::getIdentstr(unsigned *size, int small)
 {
     static char identbig[] =
@@ -1022,9 +1009,9 @@ char const *Packer::getIdentstr(unsigned *size, int small)
         for (iter = strlist; iter->s; ++iter)
         {
             if (opt->fake_stub_version[0])
-                str_replace(iter->s, iter->size, UPX_VERSION_STRING4, opt->fake_stub_version, 4);
+                mem_replace(iter->s, iter->size, UPX_VERSION_STRING4, 4, opt->fake_stub_version);
             if (opt->fake_stub_year[0])
-                str_replace(iter->s, iter->size, "2006", opt->fake_stub_year, 4);
+                mem_replace(iter->s, iter->size, "2006", 4, opt->fake_stub_year);
         }
         done = 1;
     }

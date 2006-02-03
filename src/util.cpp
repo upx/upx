@@ -203,6 +203,26 @@ int find_le64(const void *b, int blen, acc_uint64l_t what)
 }
 
 
+int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r)
+{
+    unsigned char *b = (unsigned char *) bb;
+    int boff = 0;
+    int n = 0;
+
+    while (blen - boff >= wlen)
+    {
+        int off = find(b + boff, blen - boff, what, wlen);
+        if (off < 0)
+            break;
+        boff += off;
+        memcpy(b + boff, r, wlen);
+        boff += wlen;
+        n++;
+    }
+    return n;
+}
+
+
 /*************************************************************************
 // filename util
 **************************************************************************/

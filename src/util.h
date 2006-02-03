@@ -58,6 +58,8 @@ int find_le16(const void *b, int blen, unsigned what);
 int find_le32(const void *b, int blen, unsigned what);
 int find_le64(const void *b, int blen, acc_uint64l_t what);
 
+int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
+
 
 #if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
 #elif (ACC_CC_DMC && (__DMC__ < 0x830))
