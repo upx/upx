@@ -124,6 +124,8 @@ protected:
     upx_byte *oloadconf;
     unsigned soloadconf;
 
+    bool use_dep_hack;
+
     struct pe_header_t
     {
         // 0x0

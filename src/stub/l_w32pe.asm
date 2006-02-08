@@ -2,8 +2,8 @@
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-;  Copyright (C) 1996-2004 Laszlo Molnar
+;  Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2006 Laszlo Molnar
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them
@@ -200,6 +200,24 @@ relhi0:
 %endif; __PERELHIZ__
 
 ; =============
+%ifdef  __PEDEPHAK__
+                mov     ebp, [esi + 'VPRO'] ; VirtualProtect
+                mov     ebx, 0x1000
+                lea     edi, [esi + 'IMGB']
+                push    byte 0
+                push    byte 4
+                push    ebx
+                push    edi
+                call    ebp
+
+                and     byte [edi + 'SWRI'], 0x7f
+
+                push    byte 0
+                push    byte 2
+                push    ebx
+                push    edi
+                call    ebp
+%endif; __PEDEPHAX__
 
 ;       __PEMAIN20__
                 popad

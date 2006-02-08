@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -160,6 +160,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     tlsindex = 0;
     big_relocs = 0;
     soloadconf = 0;
+    use_dep_hack = false;
 }
 
 
@@ -547,7 +548,9 @@ void PackW32Pe::processImports(unsigned myimport) // pass 2
 unsigned PackW32Pe::processImports() // pass 1
 {
     static const unsigned char kernel32dll[] = "KERNEL32.DLL";
-    static const char llgpa[] = "\x0\x0""LoadLibraryA\x0\x0""GetProcAddress\x0\x0";
+    static const char llgpa[] = "\x0\x0""LoadLibraryA\x0\x0"
+                                "GetProcAddress\x0\x0"
+                                "VirtualProtect\x0\x0";
     static const char exitp[] = "ExitProcess\x0\x0\x0";
 
     unsigned dllnum = 0;
@@ -651,7 +654,7 @@ unsigned PackW32Pe::processImports() // pass 1
     im = (import_desc*) oimpdlls;
 
     LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 3 + k32o + (isdll ? 0 : 1);
+    LE32 *lookuptable = ordinals + 4 + k32o + (isdll ? 0 : 1);
     upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
     upx_byte *importednames = dllnames + (dllnamelen &~ 1);
 
@@ -663,10 +666,11 @@ unsigned PackW32Pe::processImports() // pass 1
     strcpy(dllnames,kernel32dll);
     im->dllname = k32namepos;
     im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;
+    *ordinals++ = ptr_diff(importednames,oimpdlls); // LoadLibraryA
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14; // GetProcAddress
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16; // VirtualProtect
     if (!isdll)
-        *ordinals++ = ptr_diff(importednames,oimpdlls) + sizeof(llgpa) - 3;
+        *ordinals++ = ptr_diff(importednames,oimpdlls) + sizeof(llgpa) - 3; // ExitProcess
     dllnames += sizeof(kernel32dll);
     importednames += sizeof(llgpa) - 2 + (isdll ? 0 : sizeof(exitp) - 1);
 
@@ -1640,6 +1644,8 @@ int PackW32Pe::buildLoader(const Filter *ft)
                   NULL
                  );
     }
+    if (use_dep_hack)
+        addLoader("PEDEPHAK", NULL);
     addLoader("PEMAIN20",
               ih.entry ? "PEDOJUMP" : "PERETURN",
               "IDENTSTR,UPX1HEAD",
@@ -1903,6 +1909,17 @@ void PackW32Pe::pack(OutputFile *fo)
         unsigned jmp_pos = find_le32(loader,codesize + 4,get_le32("JMPO"));
         patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
     }
+    if (use_dep_hack)
+    {
+        // this works around a lame "protection" introduced in MSVCRT80
+        // rva of the most significant byte of member "flags" in section "UPX0"
+        const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
+        if (swri >= 0x1000)
+            throwCantPack("swri >= 0x1000! Send a bug report please!");
+        patch_le32(loader, codesize, "SWRI", swri);
+        patch_le32(loader, codesize, "IMGB", 0u - rvamin);
+        patch_le32(loader, codesize, "VPRO", myimport + get_le32(oimpdlls + 16) + 8);
+    }
     if (big_relocs & 6)
         patch_le32(loader,codesize,"DELT", 0u - (unsigned) ih.imagebase - rvamin);
     if (sorelocs && (soimport == 0 || soimport + cimports != crelocs))
@@ -1910,7 +1927,7 @@ void PackW32Pe::pack(OutputFile *fo)
     if (soimport)
     {
         if (!isdll)
-            patch_le32(loader,codesize,"EXIT",myimport + get_le32(oimpdlls + 16) + 8);
+            patch_le32(loader,codesize,"EXIT",myimport + get_le32(oimpdlls + 16) + 12);
         patch_le32(loader,codesize,"GETP",myimport + get_le32(oimpdlls + 16) + 4);
         if (kernel32ordinal)
             patch_le32(loader,codesize,"K32O",myimport);
