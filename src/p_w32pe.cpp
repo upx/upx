@@ -160,7 +160,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     tlsindex = 0;
     big_relocs = 0;
     soloadconf = 0;
-    use_dep_hack = false;
+    use_dep_hack = true;
 }
 
 
