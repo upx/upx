@@ -1,3 +1,5 @@
+.*-stamp
+*.ah
 *.asx
 *.asy
 *.bin
@@ -5,12 +7,12 @@
 *.i
 *.lst
 *.map
+*.out
 *.o
+*.tmp
 GNUmakefile
 MMakefile
 stamp-h
 stubify.exe
 upxb
 upxd
-*.out
-*.ah

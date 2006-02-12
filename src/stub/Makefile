@@ -5,6 +5,9 @@
 # for required build tools
 #
 
+MAKEFLAGS += -rR
+SHELL = /bin/sh
+
 ifeq ($(strip $(UCLDIR)),)
 # change this to reflect where the UCL library is
 UCLDIR = $(HOME)/local/src/ucl-1.03
@@ -13,7 +16,7 @@ ifeq ($(wildcard $(UCLDIR)/upx),)
 $(error Please set UCLDIR in Makefile or environment)
 endif
 
-# update path for build tools
+# update path for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
 endif
@@ -23,14 +26,13 @@ endif
 # You should not have to change anything below this line.
 # -------------------------------------------------------
 
-SHELL = /bin/sh
-
 srcdir = .
 top_srcdir = ../..
 
 
 # These are the files we want to create.
 STUBS = \
+	l_armpe.h \
 	l_com.h \
 	l_djgpp2.h stubify.h \
 	l_exe.h \
@@ -47,8 +49,7 @@ STUBS = \
 	l_lx_elfppc32.h fold_elfppc32.h \
 	l_lx_elf64amd.h fold_elf64amd.h \
 	l_mac_ppc32.h fold_machppc32.h \
-	l_vmlinz.h l_vmlinx.h \
-	l_armpe.h
+	l_vmlinz.h l_vmlinx.h
 
 # experimental:
 ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
@@ -58,6 +59,10 @@ endif
 
 # util var for use in the rules - basename of the current target
 override T = $(basename $@)
+
+ifneq ($(strip $(USE_MAKEFILE_DEPS)),)
+MAKEFILE_DEPS = $(MAKEFILE_LIST)
+endif
 
 
 # /***********************************************************************
@@ -93,12 +98,12 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 
 
 ###
-### i386
+### i386-linux
 ###
 
-LD_LINUX_I386 = ld-2.13.2
-LD_LINUX_I386 = ld
-OBJCOPY_LINUX_I386 = objcopy
+LD_LINUX_I386 = ld-2.13.2 -m elf_i386
+LD_LINUX_I386 = ld -m elf_i386
+OBJCOPY_LINUX_I386 = objcopy -F elf32-i386
 OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
 STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
 
@@ -112,9 +117,8 @@ CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
-# gcc 3.4.3 (fold_*86.bin: 1624 / 931 / 1544 / 1207)
-# gcc 3.4.4 (fold_*86.bin: 1627 / 931 / 1547 / 1207)
-CC_LINUX_I386_GCC34  = gcc-3.4.4
+# gcc 3.4.5 (fold_*86.bin: 1670 / 947 / 1552 / 1212)
+CC_LINUX_I386_GCC34  = gcc-3.4.5
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
@@ -179,21 +183,29 @@ ifneq ($(wildcard $d),)
   OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
 
+
 ###
 ### AMD x86_64
 ###
 
 GCC_AMD64     := false
 LD_AMD64      := false
-OBJCOPY_AMD64 := $false
+OBJCOPY_AMD64 := false
 OBJSTRIP_AMD64 = $(OBJCOPY_AMD64) -R .comment -R .note
 
 d = /home2/crosstool/gcc-4.0.1-glibc-2.3.5/x86_64-unknown-linux-gnu/bin
 ifneq ($(wildcard $d),)
   GCC_AMD64     := $d/x86_64-unknown-linux-gnu-gcc -m64 -nostdinc -MMD
-  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld
-  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy
+  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld -m elf_x86_64
+  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy -F elf64-x86-64
 endif
+d = /opt/cc-i386-linux/crosstool/x86_64-unknown-linux-gnu/gcc-3.4.3.20050507-glibc-2.3.5/bin
+ifneq ($(wildcard $d),)
+  GCC_AMD64     := $d/x86_64-unknown-linux-gnu-gcc -m64 -nostdinc -MMD
+  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld -m elf_x86_64
+  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy -F elf64-x86-64
+endif
+
 
 ###
 ### ARM-PE-WINCE
@@ -203,6 +215,7 @@ GCC_WINCE	:=  arm-wince-pe-gcc -Os
 LD_WINCE	:=  arm-wince-pe-ld
 OBJCOPY_WINCE	:=  arm-wince-pe-objcopy
 BIN2H_WINCE	:=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
+
 
 # /***********************************************************************
 # // main targets
@@ -400,24 +413,24 @@ l_lx_elf64amd.h: l_lx_elf64amd.S amd_d_nrv2e.S
 	$(GCC_AMD64) -c $T.S
 	$(LD_AMD64) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elf64amd_loader $@
- 
-l_lx_elf.o: l_lx_elf.c linux.hh
+
+l_lx_elf.o: l_lx_elf.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
 
-l_lx_exec.o: l_lx_exec.c linux.hh
+l_lx_exec.o: l_lx_exec.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
 
-l_lx_sep.o: l_lx_sep.c linux.hh
+l_lx_sep.o: l_lx_sep.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
 
-l_lx_sh.o: l_lx_sh.c linux.hh
+l_lx_sh.o: l_lx_sh.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
 
-l_lx_pti.o: l_lx_pti.c linux.hh
+l_lx_pti.o: l_lx_pti.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 
 fold_elf86.o: fold_elf86.asm
@@ -432,18 +445,18 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(BRANDELF) $T.bin
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
-m_lx_elfppc32.o: m_lx_elfppc32.c
+m_lx_elfppc32.o: m_lx_elfppc32.c $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -Os -c $<
 	$(OBJSTRIP_PPC32) $@
 
-a_lx_elf64amd.o: a_lx_elf64.c
+a_lx_elf64amd.o: a_lx_elf64.c $(MAKEFILE_DEPS)
 	$(GCC_AMD64) -c -Os -o $@ $<
 
-fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S
+fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -c $<
 	$(OBJSTRIP_PPC32) $@
 
-fold_elf64amd.o: fold_elf64amd.S amd_bxx.S
+fold_elf64amd.o: fold_elf64amd.S amd_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_AMD64) -c -O $T.S
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
@@ -497,11 +510,11 @@ fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
 	chmod a-x $T.bin
 	$(BIN2H) $T.bin fold_machppc32 $@
 
-m_mac_mach32.o: m_mac_mach32.c
+m_mac_mach32.o: m_mac_mach32.c $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -Os -c $<
 	$(OBJSTRIP_PPC32) $@
 
-fold_machppc32.o: fold_machppc32.S ppc_bxx.S
+fold_machppc32.o: fold_machppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -c $<
 	$(OBJSTRIP_PPC32) $@
 
@@ -540,6 +553,7 @@ DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy cl1_d32.asy
 
 $(STUBS):       $(srcdir)/scripts/bin2h.pl
 
+l_armpe.h:      $(DEPS2) $(DEPS3)
 l_com.h:        n2b_d16.asy  $(DEPS2)
 l_djgpp2.h:     $(DEPS2) $(DEPS3)
 l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  n2e_d8e.asy  $(DEPS2)
@@ -556,7 +570,6 @@ l_vmlinx.h:     $(DEPS2) $(DEPS3)
 l_vxd.h:        $(DEPS2) $(DEPS3)
 l_wcle.h:       $(DEPS2) $(DEPS3)
 l_w32pe.h:      $(DEPS2) $(DEPS3)
-l_armpe.h:      $(DEPS2) $(DEPS3)
 
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
