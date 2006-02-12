@@ -232,5 +232,7 @@ memset_unaligned:
 ;       __PS1EOASM__
 eof:
 ;               section .data
-                DW      -1
-                DH      eof
+                DW_UNALIGNED    -1
+                DH_UNALIGNED    eof
+
+; vi:ts=8:et:nowrap

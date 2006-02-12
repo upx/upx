@@ -93,7 +93,7 @@ for $line (@lines)
     if ($line =~ /__([A-Z0-9]{8})__/)
     {
         print OU "S$1$ilabel:\n";
-        push @{ $test[++$#test] }, "\t\tDB\t\"$1\"\n\t\tDW\tS$1$ilabel\n";
+        push @{ $test[++$#test] }, "\t\tDB\t\t\"$1\",0\n\t\tDW_UNALIGNED\tS$1$ilabel\n";
 
         $cs = $1;
     }
