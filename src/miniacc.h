@@ -37,7 +37,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20060131L
+#define ACC_VERSION     20060212L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1421,7 +1421,7 @@ extern "C" {
 #if !defined(__acc_nothrow)
 #if (ACC_CC_GNUC >= 0x030300ul)
 #  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC) && defined(__cplusplus)
 #  define __acc_nothrow         __declspec(nothrow)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_nothrow         __attribute__((__nothrow__))
@@ -1803,6 +1803,7 @@ extern "C" {
 #  endif
 #  if (ACC_LIBC_DIETLIBC || ACC_LIBC_GLIBC || ACC_LIBC_UCLIBC)
 #    define HAVE_STRINGS_H 1
+#    define HAVE_SYS_MMAN_H 1
 #    define HAVE_SYS_RESOURCE_H 1
 #    define HAVE_SYS_WAIT_H 1
 #  endif
@@ -2076,6 +2077,10 @@ extern "C" {
 #  endif
 #  if (ACC_LIBC_DIETLIBC || ACC_LIBC_GLIBC || ACC_LIBC_UCLIBC)
 #    define HAVE_GETRUSAGE 1
+#    define HAVE_GETPAGESIZE 1
+#    define HAVE_MMAP 1
+#    define HAVE_MPROTECT 1
+#    define HAVE_MUNMAP 1
 #  endif
 #elif (ACC_OS_CYGWIN)
 #  if (ACC_CC_GNUC < 0x025a00ul)
@@ -3352,6 +3357,9 @@ typedef unsigned short wchar_t;
 #    include <i86.h>
 #  endif
 #endif
+#if defined(HAVE_SYS_MMAN_H)
+#  include <sys/mman.h>
+#endif
 #if defined(HAVE_SYS_RESOURCE_H)
 #  include <sys/resource.h>
 #endif
@@ -4056,32 +4064,43 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #  endif
 #endif
     ACCCHK_ASSERT(1 == 1)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1U,2) == 3)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1U,8) == 255)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,2) == 3)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,8) == 255)
 #if (SIZEOF_INT >= 2)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1,15) == 32767)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1U,16) == 0xffffU)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,16) == 0xffffU)
 #else
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,16) == 0xffffUL)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1ul,16) == 0xffffUL)
 #endif
 #if (SIZEOF_INT >= 4)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1,31) == 2147483647)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1U,32) == 0xffffffffU)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,32) == 0xffffffffU)
 #endif
 #if (SIZEOF_LONG >= 4)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,32) == 0xffffffffUL)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1ul,32) == 0xffffffffUL)
 #endif
 #if (SIZEOF_LONG >= 8)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,64) == 0xffffffffffffffffUL)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1ul,64) == 0xffffffffffffffffUL)
 #endif
 #if !defined(ACC_BROKEN_INTEGRAL_PROMOTION)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1U,SIZEOF_INT*8) == ~(0u))
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1UL,SIZEOF_LONG*8) == ~(0ul))
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,SIZEOF_INT*8) == ~0u)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1ul,SIZEOF_LONG*8) == ~0ul)
 #endif
 #if !defined(ACC_BROKEN_SIGNED_RIGHT_SHIFT)
     ACCCHK_ASSERT(((-1) >> 7) == -1)
 #endif
     ACCCHK_ASSERT(((1)  >> 7) == 0)
+    ACCCHK_ASSERT((~0l  & ~0)  == ~0l)
+    ACCCHK_ASSERT((~0l  & ~0u) == ~0u)
+    ACCCHK_ASSERT((~0ul & ~0)  == ~0ul)
+    ACCCHK_ASSERT((~0ul & ~0u) == ~0u)
+#if (SIZEOF_INT == 2)
+    ACCCHK_ASSERT((~0l  & ~0u) == 0xffffU)
+    ACCCHK_ASSERT((~0ul & ~0u) == 0xffffU)
+#elif (SIZEOF_INT == 4)
+    ACCCHK_ASSERT((~0l  & ~0u) == 0xffffffffU)
+    ACCCHK_ASSERT((~0ul & ~0u) == 0xffffffffU)
+#endif
     ACCCHK_ASSERT_IS_SIGNED_T(signed char)
     ACCCHK_ASSERT_IS_UNSIGNED_T(unsigned char)
     ACCCHK_ASSERT(sizeof(signed char) == sizeof(char))
@@ -4311,6 +4330,20 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
     ACCCHK_ASSERT(sizeof(ACC_UINT64_C(0)) >= 8)
 #endif
     ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) >> 63) == 1)
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0)  == ACC_UINT64_C(0xffffffffffffffff))
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0l) == ACC_UINT64_C(0xffffffffffffffff))
+#if (SIZEOF_INT == 4)
+# if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+# else
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0u) == 0xffffffffu)
+# endif
+#endif
+#if (SIZEOF_LONG == 4)
+# if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
+# else
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0ul) == 0xfffffffful)
+# endif
+#endif
 #endif
 #if (ACC_MM_TINY || ACC_MM_SMALL || ACC_MM_MEDIUM)
     ACCCHK_ASSERT(sizeof(void*) == 2)
@@ -4376,7 +4409,7 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
-#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)
+#elif (ACC_ARCH_AMD64)
     ACCCHK_ASSERT(sizeof(size_t) == 8)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
