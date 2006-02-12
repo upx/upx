@@ -29,10 +29,14 @@
 ; ------------- COPYRIGHT -------------
 
                 db      10,0
-                db      '$Info: This file is packed with the UPX executable packer http://upx.sf.net $'
+                db      '$Info: '
+                db      'This file is packed with the UPX executable packer '
+                db      'http://upx.sf.net $'
                 db      10,0
                 db      '$Id: UPX '
                 db      'UPXV'
                 db      ' Copyright (C) 1996-2006 the UPX Team. All Rights Reserved. $'
                 db      10,0
 
+
+; vi:ts=8:et:nowrap

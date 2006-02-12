@@ -33,3 +33,5 @@
 %else;  __IDENTBIG__
 %include        "ident_n.ash"
 %endif; __IDENTEND__
+
+; vi:ts=8:et:nowrap
