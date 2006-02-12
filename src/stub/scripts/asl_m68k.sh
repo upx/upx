@@ -4,8 +4,8 @@
 #
 #  This file is part of the UPX executable compressor.
 #
-#  Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-#  Copyright (C) 1996-2004 Laszlo Molnar
+#  Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+#  Copyright (C) 1996-2006 Laszlo Molnar
 #  All Rights Reserved.
 #
 #  UPX and the UCL library are free software; you can redistribute them
@@ -29,7 +29,7 @@
 
 set -e
 
-# wrapper for the ASL cross-assembler (version 1.42bld9)
+# wrapper for the ASL cross-assembler (version 1.42bld43)
 #   http://john.ccac.rwth-aachen.de:8000/as/
 #   http://john.ccac.rwth-aachen.de:8000/ftp/as/source/c_version/
 
