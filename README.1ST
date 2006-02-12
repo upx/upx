@@ -29,8 +29,8 @@ The main news since 1.25 are:
   - direct Linux ELF-to-memory decompression ("linux/elf386") and
     shell-to-memory decompression ("linux/sh386")
   - support for playstation exes ("ps1/exe")
-  - lots of new bugs ;-) take care
   - support for arm/WinCE ("arm/pe") exes
   - support for mach/ppc32
   - support for Linux elf/ppc32
   - support for Linux elf/amd64
+  - lots of new bugs ;-) take care
