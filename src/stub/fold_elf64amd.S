@@ -58,7 +58,7 @@ __NR_exit= 60
     %rbp= &decompress
     %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
 */
-fold_begin:  
+fold_begin:
         call L90  # push &f_unfilter
 #include "amd_bxx.S"
 L90:
@@ -77,7 +77,7 @@ L90:
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         movq %rbp,%arg5  # &decompress: f_expand
         call upx_main  # Out: %rax= entry
-/* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3, 
+/* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6 )
 */
         addq $OVERHEAD,%rsp
