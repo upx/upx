@@ -894,6 +894,8 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     fo->write(&zero, frag);
     len += frag;
 
+#undef PAGE_MASK
+#undef PAGE_SIZE
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
     upx_byte *const p = const_cast<upx_byte *>(getLoader());

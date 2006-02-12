@@ -231,6 +231,8 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
     segcmdo.filesize = fo->getBytesWritten();
 }
 
+#undef PAGE_MASK
+#undef PAGE_SIZE
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE -PAGE_MASK
 void

@@ -129,12 +129,13 @@ void PackLinuxI386interp::pack2(OutputFile *fo, Filter &ft)
     super::pack2(fo, ft);
 }
 
+#undef PAGE_MASK
 #define PAGE_MASK (~0u<<12)
 
 void PackLinuxI386interp::pack3(OutputFile *fo, Filter &/*ft*/)
 {
-    unsigned long base = getbase(phdri, ehdri.e_phnum);
-    unsigned long sz = PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
+    unsigned base = getbase(phdri, ehdri.e_phnum);
+    unsigned sz = PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
     if (base < (0x11000 + sz)) {
         base =  0x11000 + sz;
     }
