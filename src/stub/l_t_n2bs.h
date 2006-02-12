@@ -2,8 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 2000-2006 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -26,6 +27,7 @@
  */
 
 
+#define NRV2B_LOADER_SMALL_SIZE    530
 #define NRV2B_LOADER_SMALL_ADLER32 0xdbbdb30f
 #define NRV2B_LOADER_SMALL_CRC32   0xa0c13a80
 

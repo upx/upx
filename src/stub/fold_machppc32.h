@@ -2,8 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2005 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 2000-2006 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -26,6 +27,7 @@
  */
 
 
+#define FOLD_MACHPPC32_SIZE    1544
 #define FOLD_MACHPPC32_ADLER32 0xa57805a9
 #define FOLD_MACHPPC32_CRC32   0x2fb8902f
 
