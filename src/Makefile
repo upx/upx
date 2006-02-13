@@ -16,6 +16,8 @@ endif
 
 ifeq ($(CXX),)
 CXX = g++
+endif
+ifeq ($(CXX),g++)
 CXXFLAGS += -O2 -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
@@ -39,7 +41,9 @@ upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 all: upx$(exeext)
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
+	$($(notdir $@).PRE_LINK_STEP)
 	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
+	$($(notdir $@).POST_LINK_STEP)
 
 %.o : %.cpp
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
