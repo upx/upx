@@ -4,7 +4,7 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
-Changes in 1.94 beta (13 Feb 2006):
+Changes in 1.94 beta (13 Mar 2006):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
   * arm/pe: new executable format (ARM executables running on WinCE)
   * support for mach/ppc32

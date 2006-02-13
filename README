@@ -25,17 +25,17 @@ will be called version 2.00.
 
 The main news since 1.25 are:
   - slightly better compression using the new NRV2E algorithm
-  - new options for compression tuining (e.g. `--brute')
+  - new options for compression tuning (e.g. `--brute')
   - support for bootable Linux kernels ("vmlinuz/386")
   - support for Linux kernel building  ("vmlinux/386")
   - direct Linux ELF-to-memory decompression ("linux/elf386") and
     shell-to-memory decompression ("linux/sh386")
-  - support for playstation exes ("ps1/exe")
-  - lots of new bugs ;-) take care
   - support for arm/WinCE ("arm/pe") exes
   - support for mach/ppc32
   - support for Linux elf/ppc32
   - support for Linux elf/amd64
+  - support for playstation exes ("ps1/exe")
+  - lots of new bugs ;-) take care
 
 
 WELCOME
