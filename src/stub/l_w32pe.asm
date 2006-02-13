@@ -201,22 +201,29 @@ relhi0:
 
 ; =============
 %ifdef  __PEDEPHAK__
-                mov     ebp, [esi + 'VPRO'] ; VirtualProtect
+                push    edx
+                mov     edx, esp                ; provide 4 bytes for lpflOldProtect
+
+                mov     ebp, [esi + 'VPRO']     ; VirtualProtect
                 mov     ebx, 0x1000
                 lea     edi, [esi + 'IMGB']
-                push    byte 0
+                push    edx
                 push    byte 4
                 push    ebx
                 push    edi
                 call    ebp
 
+; FIXME: does VirtualProtect clobber any registers ???
+
                 and     byte [edi + 'SWRI'], 0x7f
 
-                push    byte 0
+                push    edx
                 push    byte 2
                 push    ebx
                 push    edi
                 call    ebp
+
+                pop     edx                     ; restore stack
 %endif; __PEDEPHAX__
 
 ;       __PEMAIN20__
