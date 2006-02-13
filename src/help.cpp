@@ -229,8 +229,6 @@ void show_help(int x)
                     "  --compress-icons=1      compress all but the first icon\n"
                     "  --compress-icons=2      compress all but the first icon directory [default]\n"
                     "  --compress-resources=0  do not compress any resources at all\n"
-                    "  --strip-loadconf=0      do not strip SEH load config [default]\n"
-                    "  --strip-loadconf=1      strip SEH load config [DANGEROUS]\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "  --all-methods           try all available compression methods\n"

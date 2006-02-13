@@ -71,7 +71,6 @@ void init_options(struct options_t *o)
     for (unsigned i = 0; i < TABLESIZE(o->win32_pe.compress_rt); i++)
         o->win32_pe.compress_rt[i] = -1;
     o->win32_pe.compress_rt[24] = false;    // 24 == RT_MANIFEST
-    o->win32_pe.strip_loadconf = -1;
     o->win32_pe.strip_relocs = -1;
 }
 
@@ -688,10 +687,7 @@ static int do_option(int optc, const char *arg)
         //printf("compress_resources: %d\n", opt->win32_pe.compress_resources);
         break;
     case 633:
-        opt->win32_pe.strip_loadconf = 1;
-        if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->win32_pe.strip_loadconf = 0;
-        //printf("strip_loadconf: %d\n", opt->win32_pe.strip_loadconf);
+        // opt->win32_pe.strip_loadconf - OBSOLETE - IGNORED
         break;
     case 634:
         opt->win32_pe.strip_relocs = 1;
@@ -851,7 +847,7 @@ static const struct mfx_option longopts[] =
     {"compress-exports",    2, 0, 630},
     {"compress-icons",      2, 0, 631},
     {"compress-resources",  2, 0, 632},
-    {"strip-loadconf",   0x12, 0, 633},
+    {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
     {"strip-relocs",     0x12, 0, 634},
     // ps1/exe
     {"boot-only",        0x10, 0, 670},
@@ -933,7 +929,7 @@ static const struct mfx_option longopts[] =
     {"compress-exports",    2, 0, 630},
     {"compress-icons",      2, 0, 631},
     {"compress-resources",  2, 0, 632},
-    {"strip-loadconf",   0x12, 0, 633},
+    {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
     {"strip-relocs",     0x12, 0, 634},
 
     { NULL, 0, NULL, 0 }

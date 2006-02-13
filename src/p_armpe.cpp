@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -1550,9 +1550,6 @@ int PackArmPe::buildLoader(const Filter *ft)
 
 void PackArmPe::pack(OutputFile *fo)
 {
-    if (opt->win32_pe.strip_loadconf < 0)
-        opt->win32_pe.strip_loadconf = false;
-
     const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
@@ -1588,10 +1585,6 @@ void PackArmPe::pack(OutputFile *fo)
 #endif
     if (IDSIZE(PEDIR_RELOC))
         throwCantPack("relocations not yet supported");
-
-    // Structured Exception Handling
-    if (!opt->win32_pe.strip_loadconf && IDSIZE(PEDIR_LOADCONF))
-        throwCantPack("Structured Exception Handling present (try --strip-loadconf)");
 
     if (isdll)
         opt->win32_pe.strip_relocs = false;
@@ -1882,12 +1875,6 @@ void PackArmPe::pack(OutputFile *fo)
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
-    if (opt->win32_pe.strip_loadconf)
-    {
-        ODADDR(PEDIR_LOADCONF) = 0;
-        ODSIZE(PEDIR_LOADCONF) = 0;
-    }
-
     // tls is put into section 1
 
     ic = s1addr + s1size - sotls;
@@ -2047,7 +2034,8 @@ int PackArmPe::canUnpack()
 }
 
 void PackArmPe::unpack(OutputFile *)
-{}
+{
+}
 
 /*
 vi:ts=4:et

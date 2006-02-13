@@ -1657,9 +1657,6 @@ int PackW32Pe::buildLoader(const Filter *ft)
 
 void PackW32Pe::pack(OutputFile *fo)
 {
-    if (opt->win32_pe.strip_loadconf < 0)
-        opt->win32_pe.strip_loadconf = false;
-
     const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
@@ -1687,12 +1684,6 @@ void PackW32Pe::pack(OutputFile *fo)
         throwCantPack("compressing certificate info is not supported");
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files (win32/net) are not yet supported");
-
-#if 0
-    // Structured Exception Handling
-    if (!opt->win32_pe.strip_loadconf && IDSIZE(PEDIR_LOADCONF))
-        throwCantPack("Structured Exception Handling present (try --strip-loadconf)");
-#endif
 
     if (isdll)
         opt->win32_pe.strip_relocs = false;
@@ -1984,14 +1975,6 @@ void PackW32Pe::pack(OutputFile *fo)
     ODSIZE(PEDIR_IAT) = 0;
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
-
-#if 0
-    if (opt->win32_pe.strip_loadconf)
-    {
-        ODADDR(PEDIR_LOADCONF) = 0;
-        ODSIZE(PEDIR_LOADCONF) = 0;
-    }
-#endif
 
     // tls is put into section 1
 
