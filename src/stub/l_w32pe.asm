@@ -208,7 +208,7 @@ relhi0:
                 mov     ebx, 0x1000
                 lea     edi, [esi + 'IMGB']
                 push    edx
-                push    byte 4
+                push    byte 4                  ; PAGE_READWRITE
                 push    ebx
                 push    edi
                 call    ebp
@@ -218,7 +218,7 @@ relhi0:
                 and     byte [edi + 'SWRI'], 0x7f
 
                 push    edx
-                push    byte 2
+                push    byte 2                  ; PAGE_READONLY
                 push    ebx
                 push    edi
                 call    ebp
