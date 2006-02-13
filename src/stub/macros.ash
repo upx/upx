@@ -284,8 +284,6 @@ reloc_endx:
 %macro          ctojr32 0
 %push ctojr32
 
-                CPU     486     ; FIXME: ctojr32 uses bswap
-
 ;; I got confused by the syntactic sugar of the fake %ifdefs.
 ;; I can read the section name more easily when it is at the left margin.
 ;; Also, some of the logic to select the sections is not that simple,
@@ -379,7 +377,9 @@ lxunf:  ; in: Carry set iff we should apply mru and 0!=n_mru
 
 ;__LXUNF486__  >=486
         mov al, byte 0
+        CPU     486
         bswap eax  ; preserve Carry (2-byte instruction)
+        CPU     386
 ;__LXUNF487__  0!=n_mru && >=486
         jnc unf_store  ; do not apply mru
 
@@ -579,8 +579,6 @@ unfcount:
         push eax
         push edx
         ret
-
-        CPU     386
 %pop
 %endmacro
 
