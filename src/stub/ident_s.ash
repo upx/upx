@@ -29,7 +29,7 @@
 ; ------------- COPYRIGHT -------------
 
                 db      10
-                db      '$Id: UPX (C) 1996-2006 the UPX Team. '
+                db      '$Id: UPX (C) 1996-UPXY the UPX Team. '
                 db      'All Rights Reserved. http://upx.sf.net $'
                 db      10,0
 

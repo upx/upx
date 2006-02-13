@@ -233,6 +233,7 @@ protected:
     int patch_le32(void *b, int blen, unsigned old, unsigned new_);
     int patch_le32(void *b, int blen, const void * old, unsigned new_);
     int patchVersion(void *b, int blen);
+    int patchVersionYear(void *b, int blen);
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util

@@ -821,6 +821,22 @@ int Packer::patchVersion(void *b, int blen)
 }
 
 
+// patch year into stub/ident_[ns].ash
+int Packer::patchVersionYear(void *b, int blen)
+{
+    int boff = find(b, blen, " 1996-UPXY ", 11);
+    checkPatch(b, blen, boff, 11);
+
+    unsigned char *p = (unsigned char *)b + boff + 6;
+    if (opt->fake_stub_year[0])
+        memcpy(p, opt->fake_stub_year, 4);
+    else
+        memcpy(p, UPX_VERSION_YEAR, 4);
+
+    return boff;
+}
+
+
 /*************************************************************************
 // relocation util
 **************************************************************************/
@@ -986,12 +1002,12 @@ char const *Packer::getIdentstr(unsigned *size, int small)
         "\n\0"
         "$Id: UPX "
         UPX_VERSION_STRING4
-        " Copyright (C) 1996-2006 the UPX Team. All Rights Reserved. $"
+        " Copyright (C) 1996-" UPX_VERSION_YEAR " the UPX Team. All Rights Reserved. $"
         "\n";
     static char identsmall[] =
         "\n"
         "$Id: UPX "
-        "(C) 1996-2006 the UPX Team. All Rights Reserved. http://upx.sf.net $"
+        "(C) 1996-" UPX_VERSION_YEAR " the UPX Team. All Rights Reserved. http://upx.sf.net $"
         "\n";
     static char identtiny[] = UPX_VERSION_STRING4;
 
@@ -1011,7 +1027,7 @@ char const *Packer::getIdentstr(unsigned *size, int small)
             if (opt->fake_stub_version[0])
                 mem_replace(iter->s, iter->size, UPX_VERSION_STRING4, 4, opt->fake_stub_version);
             if (opt->fake_stub_year[0])
-                mem_replace(iter->s, iter->size, "2006", 4, opt->fake_stub_year);
+                mem_replace(iter->s, iter->size, UPX_VERSION_YEAR, 4, opt->fake_stub_year);
         }
         done = 1;
     }

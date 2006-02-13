@@ -35,7 +35,7 @@
                 db      10,0
                 db      '$Id: UPX '
                 db      'UPXV'
-                db      ' Copyright (C) 1996-2006 the UPX Team. All Rights Reserved. $'
+                db      ' Copyright (C) 1996-UPXY the UPX Team. All Rights Reserved. $'
                 db      10,0
 
 

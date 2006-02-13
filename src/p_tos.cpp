@@ -547,6 +547,7 @@ void PackTos::pack(OutputFile *fo)
     // patch loader
     int tmp = patchPackHeader(loader, o_text);
     assert(tmp + 32 == (int)o_text); UNUSED(tmp);
+    patchVersionYear(loader, o_text);
     if (!opt->small)
         patchVersion(loader, o_text);
     //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
