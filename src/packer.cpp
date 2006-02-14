@@ -1072,21 +1072,17 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 }
 
 
-void Packer::addLoader(const char *s)
-{
-    if (*s)
-        linker->addSection(s);
-}
-
 void __acc_cdecl_va Packer::addLoader(const char *s, ...)
 {
     va_list ap;
 
     va_start(ap, s);
-    do {
+    while (s != NULL)
+    {
         if (*s)
             linker->addSection(s);
-    } while ((s = va_arg(ap, const char *)) != NULL);
+        s = va_arg(ap, const char *);
+    }
     va_end(ap);
 }
 

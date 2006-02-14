@@ -208,7 +208,6 @@ protected:
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
-    virtual void addLoader(const char *s);
     virtual void __acc_cdecl_va addLoader(const char *s, ...);
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;

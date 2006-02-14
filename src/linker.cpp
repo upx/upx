@@ -128,6 +128,8 @@ static int hex(char c)
 
 int Linker::addSection(const char *psect)
 {
+    if (psect[0] == 0)
+        return olen;
     char *begin = strdup(psect);
     char *end = begin + strlen(begin);
     for (char *sect = begin; sect < end; )
