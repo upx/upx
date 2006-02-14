@@ -1906,27 +1906,34 @@ void PackW32Pe::pack(OutputFile *fo)
     }
     if (use_dep_hack)
     {
-        // this works around a "protection" introduced in MSVCRT80
-        // the protection works like this:
-        // when the compiler detects that it would link in some code from its
-        // c runtime library which references some data in a read only
+        // This works around a "protection" introduced in MSVCRT80, which
+        // works like this:
+        // When the compiler detects that it would link in some code from its
+        // C runtime library which references some data in a read only
         // section then it compiles in a runtime check whether that data is
         // still in a read only section by looking at the pe header of the
-        // file. if this check fails the runtime does "interesting" things:
+        // file. If this check fails the runtime does "interesting" things
         // like not running the floating point initialization code - the result
         // is an R6002 runtime error.
-        // these supposed to be read only addresses are covered by the section
+        // These supposed to be read only addresses are covered by the section
         // UPX0 in the compressed files, so we have to patch the PE header
-        // in the memory. the page on which the PE header is stored is read
-        // only so we must make it rw, fix the flag up (this is
-        // PEFL_WRITE of osection[0].flags), make it ro again
+        // in the memory. And the page on which the PE header is stored is read
+        // only so we must make it rw, fix the flag (i.e. clear
+        // PEFL_WRITE of osection[0].flags), and make it ro again.
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
+#if 0
         if (swri >= 0x1000)
             throwCantPack("swri >= 0x1000! Send a bug report please!");
         patch_le32(loader, codesize, "SWRI", swri);
         patch_le32(loader, codesize, "IMGB", 0u - rvamin);
+#else
+        // make sure we only touch exactly one page
+        const unsigned addr = 0u - rvamin + swri;
+        patch_le32(loader, codesize, "SWRI", addr &  0xfff);    // page offset
+        patch_le32(loader, codesize, "IMGB", addr &~ 0xfff);    // page mask
+#endif
         patch_le32(loader, codesize, "VPRO", myimport + get_le32(oimpdlls + 16) + 8);
     }
     if (big_relocs & 6)
