@@ -161,6 +161,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     big_relocs = 0;
     soloadconf = 0;
     use_dep_hack = true;
+    use_clear_dirty_stack = true;
 }
 
 
@@ -765,7 +766,7 @@ unsigned PackW32Pe::processImports() // pass 1
         soimport = 0;
 
     //OutputFile::dump("x0.imp", oimport, soimport);
-    //OutputFile::dump("x1.imp", oimpdlls, soimpdlss);
+    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
 
     unsigned ilen = 0;
     names.flatten();
@@ -1646,8 +1647,11 @@ int PackW32Pe::buildLoader(const Filter *ft)
     }
     if (use_dep_hack)
         addLoader("PEDEPHAK", NULL);
-    addLoader("PEMAIN20",
-              ih.entry ? "PEDOJUMP" : "PERETURN",
+    addLoader("PEMAIN20", NULL);
+    if (use_clear_dirty_stack)
+        addLoader(ih.entry ? "PEDOJUMP_CLEARSTACK" : "PERETURN_CLEARSTACK", NULL);
+    addLoader("PEMAIN21", NULL);
+    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN",
               "IDENTSTR,UPX1HEAD",
               NULL
              );
@@ -2094,6 +2098,7 @@ void PackW32Pe::pack(OutputFile *fo)
     fo->write(obuf,clen);
     infoWriting("compressed data", clen);
     fo->write(loader,codesize);
+    //OutputFile::dump("loader.dat", loader, codesize);
     if ((ic = fo->getBytesWritten() & 3) != 0)
         fo->write(ibuf,4 - ic);
     fo->write(otls,sotls);

@@ -52,7 +52,7 @@ $ilabel =~ s/\W//g;
 for $line (@lines)
 {
     $labels{$1} = "$cs" if ($line =~ /^(\w+):/ && $cs);
-    if ($line =~ /__([A-Z0-9]+)__/) {
+    if ($line =~ /__([A-Z][A-Z0-9_]+)__/) {
         $cs = $1;
         # verify the line
         if ($line =~ /^[\%\;]ifdef/) {
@@ -66,7 +66,7 @@ for $line (@lines)
 
     if ($line =~ /^[\%\;](if|el|endi)/)
     {
-        if ($line =~ /__([A-Z0-9]+)__/)
+        if ($line =~ /__([A-Z][A-Z0-9_]+)__/)
         {
             $line=";$line" unless ($line =~ /^\;/);
         }
@@ -108,7 +108,7 @@ for $line (@lines)
     $line = ";$line" if ($line =~ /^\s+align\s/);
 
     print OU $line;
-    if ($line =~ /__([A-Z0-9]+)__/)
+    if ($line =~ /__([A-Z][A-Z0-9_]+)__/)
     {
         print OU "S$1$ilabel:\n";
         print OU "\t\tsection\t.data\n\t\tdb\t\'$1\',0\n\t\tdd\tS$1$ilabel\n";

@@ -233,7 +233,33 @@ relhi0:
 
 ;       __PEMAIN20__
                 popad
+
+
+; clear the dirty stack
+%macro          clearstack128  1
+                lea     %1, [esp - 128]
+%%clearst0:
+                push    byte 0
+                cmp     esp, %1
+                jnz     %%clearst0
+                sub     esp, byte -128
+%endmacro
+
+%ifdef  __PERETURN_CLEARSTACK__
+                clearstack128 eax
+%endif; __PERETURN_CLEARSTACK9__
+%ifdef  __PEDOJUMP_CLEARSTACK__
+                push    eax             ; FIXME - do we really need to preserve eax ??
+                clearstack128 eax
+                pop     eax
+                push    byte 0
+                add     esp, 4
+%endif; __PEDOJUMP_CLEARSTACK9__
+
+
+;       __PEMAIN21__
 reloc_end_jmp:
+
 %ifdef  __PERETURN__
                 xor     eax, eax
                 inc     eax

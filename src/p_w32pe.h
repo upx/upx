@@ -125,6 +125,7 @@ protected:
     unsigned soloadconf;
 
     bool use_dep_hack;
+    bool use_clear_dirty_stack;
 
     struct pe_header_t
     {
