@@ -1918,7 +1918,8 @@ void PackW32Pe::pack(OutputFile *fo)
         // these supposed to be read only addresses are covered by the section
         // UPX0 in the compressed files, so we have to patch the PE header
         // in the memory. the page on which the PE header is stored is read
-        // only so we must make it rw, fix the flag up, make it ro again
+        // only so we must make it rw, fix the flag up (this is
+        // PEFL_WRITE of osection[0].flags), make it ro again
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
