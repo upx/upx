@@ -1906,7 +1906,20 @@ void PackW32Pe::pack(OutputFile *fo)
     }
     if (use_dep_hack)
     {
-        // this works around a lame "protection" introduced in MSVCRT80
+        // this works around a "protection" introduced in MSVCRT80
+        // the protection works like this:
+        // when the compiler detects that it would link in some code from its
+        // c runtime library which references some data in a read only
+        // section then it compiles in a runtime check whether that data is
+        // still in a read only section by looking at the pe header of the
+        // file. if this check fails the runtime does "interesting" things:
+        // like not running the floating point initialization code - the result
+        // is an R6002 runtime error.
+        // these supposed to be read only addresses are covered by the section
+        // UPX0 in the compressed files, so we have to patch the PE header
+        // in the memory. the page on which the PE header is stored is read
+        // only so we must make it rw, fix the flag up, make it ro again
+
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
         if (swri >= 0x1000)
