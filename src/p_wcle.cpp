@@ -48,8 +48,8 @@ static const
 #define LE_STUB_EDI     (1)
 
 #ifdef TESTING
-# define dputc(x,y)     do { if (opt->debug) putc(x,y); } while (0)
-# define Opt_debug      opt->debug
+# define dputc(x,y)     do { if (opt->debug.debug_level) putc(x,y); } while (0)
+# define Opt_debug      opt->debug.debug_level
 #else
 # define dputc(x,y)     ((void)0)
 # define Opt_debug      0

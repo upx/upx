@@ -812,8 +812,8 @@ int Packer::patchVersion(void *b, int blen)
     checkPatch(b, blen, boff, 14);
 
     unsigned char *p = (unsigned char *)b + boff + 9;
-    if (opt->fake_stub_version[0])
-        memcpy(p, opt->fake_stub_version, 4);
+    if (opt->debug.fake_stub_version[0])
+        memcpy(p, opt->debug.fake_stub_version, 4);
     else
         memcpy(p, UPX_VERSION_STRING4, 4);
 
@@ -828,8 +828,8 @@ int Packer::patchVersionYear(void *b, int blen)
     checkPatch(b, blen, boff, 11);
 
     unsigned char *p = (unsigned char *)b + boff + 6;
-    if (opt->fake_stub_year[0])
-        memcpy(p, opt->fake_stub_year, 4);
+    if (opt->debug.fake_stub_year[0])
+        memcpy(p, opt->debug.fake_stub_year, 4);
     else
         memcpy(p, UPX_VERSION_YEAR, 4);
 
@@ -1012,7 +1012,7 @@ char const *Packer::getIdentstr(unsigned *size, int small)
     static char identtiny[] = UPX_VERSION_STRING4;
 
     static int done;
-    if (!done && (opt->fake_stub_version[0] || opt->fake_stub_year[0]))
+    if (!done && (opt->debug.fake_stub_version[0] || opt->debug.fake_stub_year[0]))
     {
         struct strinfo_t { char *s; int size; };
         static const strinfo_t strlist[] = {
@@ -1024,10 +1024,10 @@ char const *Packer::getIdentstr(unsigned *size, int small)
 
         for (iter = strlist; iter->s; ++iter)
         {
-            if (opt->fake_stub_version[0])
-                mem_replace(iter->s, iter->size, UPX_VERSION_STRING4, 4, opt->fake_stub_version);
-            if (opt->fake_stub_year[0])
-                mem_replace(iter->s, iter->size, UPX_VERSION_YEAR, 4, opt->fake_stub_year);
+            if (opt->debug.fake_stub_version[0])
+                mem_replace(iter->s, iter->size, UPX_VERSION_STRING4, 4, opt->debug.fake_stub_version);
+            if (opt->debug.fake_stub_year[0])
+                mem_replace(iter->s, iter->size, UPX_VERSION_YEAR, 4, opt->debug.fake_stub_year);
         }
         done = 1;
     }

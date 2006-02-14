@@ -411,7 +411,7 @@ void PackExe::pack(OutputFile *fo)
         throwCantPack("decompressor limit exceeded, send a bugreport");
 
 #ifdef TESTING
-    if (opt->debug)
+    if (opt->debug.debug_level)
     {
         printf("image+relocs %d -> %d\n",ih_imagesize+relocsize,ph.c_len);
         printf("offsets: %d - %d\nmatches: %d - %d\nruns: %d - %d\n",
@@ -527,7 +527,7 @@ void PackExe::pack(OutputFile *fo)
 
     // write header + write loader + compressed file
 #ifdef TESTING
-    if (opt->debug)
+    if (opt->debug.debug_level)
         printf("\n%d %d %d %d\n",(int)sizeof(oh),e_len,packedsize,d_len);
 #endif
     fo->write(&oh,sizeof(oh));

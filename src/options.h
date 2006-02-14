@@ -56,9 +56,6 @@ struct options_t {
     // other options
     int backup;
     int console;
-    int debug;
-    char fake_stub_version[4+1];    // for internal debugging
-    char fake_stub_year[4+1];       // for internal debugging
     int force;
     int info_mode;
     bool ignorewarn;
@@ -68,6 +65,14 @@ struct options_t {
     int small;
     int verbose;
     bool to_stdout;
+
+    // debug options
+    struct {
+        int debug_level;
+        const char *dump_stub_loader;
+        char fake_stub_version[4+1];    // for internal debugging
+        char fake_stub_year[4+1];       // for internal debugging
+    } debug;
 
     // overlay handling
     enum {

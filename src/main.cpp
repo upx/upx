@@ -443,7 +443,7 @@ static int do_option(int optc, const char *arg)
         set_cmd(CMD_DECOMPRESS);
         break;
     case 'D':
-        opt->debug++;
+        opt->debug.debug_level++;
         break;
     case 'f':
         opt->force++;
@@ -537,6 +537,23 @@ static int do_option(int optc, const char *arg)
             e_method(opt->method, 10);
         break;
 
+    // debug
+    case 542:
+        if (!mfx_optarg || strlen(mfx_optarg) != 4)
+            e_optarg(arg);
+        memcpy(opt->debug.fake_stub_version, mfx_optarg, 4);
+        break;
+    case 543:
+        if (!mfx_optarg || strlen(mfx_optarg) != 4)
+            e_optarg(arg);
+        memcpy(opt->debug.fake_stub_year, mfx_optarg, 4);
+        break;
+    case 544:
+        if (!mfx_optarg || !mfx_optarg[0])
+            e_optarg(arg);
+        opt->debug.dump_stub_loader = mfx_optarg;
+        break;
+
     // misc
     case 512:
         opt->console = CON_FILE;
@@ -549,16 +566,6 @@ static int do_option(int optc, const char *arg)
         break;
     case 516:
         opt->no_progress = true;
-        break;
-    case 542:
-        if (!mfx_optarg || strlen(mfx_optarg) != 4)
-            e_optarg(arg);
-        memcpy(opt->fake_stub_version, mfx_optarg, 4);
-        break;
-    case 543:
-        if (!mfx_optarg || strlen(mfx_optarg) != 4)
-            e_optarg(arg);
-        memcpy(opt->fake_stub_year, mfx_optarg, 4);
         break;
     case 519:
         opt->no_env = true;
@@ -763,9 +770,6 @@ static const struct mfx_option longopts[] =
     {"version",             0, 0, 'V'+256}, // display version number
 
     // options
-    {"debug",            0x10, 0, 'D'},
-    {"fake-stub-version",0x31, 0, 542},     // for internal debugging
-    {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
     {"force",               0, 0, 'f'},     // force overwrite of output files
     {"force-compress",      0, 0, 'f'},     //   and compression of suspicious files
     {"info",                0, 0, 'i'},     // info mode
@@ -780,6 +784,12 @@ static const struct mfx_option longopts[] =
     {"to-stdout",        0x10, 0, 517},     // write output on standard output
 #endif
     {"verbose",             0, 0, 'v'},     // verbose mode
+
+    // debug options
+    {"debug",            0x10, 0, 'D'},
+    {"dump-stub-loader" ,0x31, 0, 544},     // for internal debugging
+    {"fake-stub-version",0x31, 0, 542},     // for internal debugging
+    {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
 
     // backup options
     {"backup",              0, 0, 'k'},

@@ -2098,7 +2098,8 @@ void PackW32Pe::pack(OutputFile *fo)
     fo->write(obuf,clen);
     infoWriting("compressed data", clen);
     fo->write(loader,codesize);
-    //OutputFile::dump("loader.dat", loader, codesize);
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
     if ((ic = fo->getBytesWritten() & 3) != 0)
         fo->write(ibuf,4 - ic);
     fo->write(otls,sotls);
