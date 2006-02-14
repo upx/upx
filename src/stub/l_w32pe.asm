@@ -215,7 +215,7 @@ relhi0:
 
                 and     byte [edi + 'SWRI'], 0x7f
 
-  %if 1
+  %if 0
                 push    esp
                 push    byte 2                  ; PAGE_READONLY
   %else
