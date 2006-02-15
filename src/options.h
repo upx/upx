@@ -142,7 +142,7 @@ struct options_t {
     } win32_pe;
 };
 
-extern struct options_t * volatile opt;
+extern struct options_t *opt;
 
 
 #endif /* already included */

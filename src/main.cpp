@@ -75,7 +75,7 @@ void init_options(struct options_t *o)
 }
 
 static struct options_t global_options;
-struct options_t * volatile opt = &global_options;
+struct options_t *opt = &global_options;
 
 static int done_output_name = 0;
 static int done_script_name = 0;
