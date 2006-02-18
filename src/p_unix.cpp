@@ -304,9 +304,16 @@ void PackUnix::packExtent(
     unsigned &total_in,
     unsigned &total_out,
     Filter *ft,
-    OutputFile *fo
+    OutputFile *fo,
+    unsigned hdr_ulen
 )
 {
+    MemBuffer hdr_ibuf;
+    if (hdr_ulen) {
+        hdr_ibuf.alloc(hdr_ulen);
+        fi->seek(0, SEEK_SET);
+        int l = fi->readx(hdr_ibuf, hdr_ulen);
+    }
     fi->seek(x.offset, SEEK_SET);
     for (off_t rest = x.size; 0 != rest; ) {
         int const strategy = getStrategy(*ft);
@@ -336,7 +343,9 @@ void PackUnix::packExtent(
             ft->id = 0;
             ft->cto = 0;
 
-            compressWithFilters(ft, OVERHEAD, strategy);
+            compressWithFilters(ft, OVERHEAD, strategy,
+                NULL, 0, 0, 0, 0, // those 5 args are the defaults
+                hdr_ibuf, hdr_ulen);
         }
         else {
             (void) compress(ibuf, obuf);    // ignore return value
@@ -358,6 +367,24 @@ void PackUnix::packExtent(
 
         // write block sizes
         b_info tmp;
+        if (hdr_ulen) {
+            unsigned hdr_clen;
+            MemBuffer hdr_obuf;
+            unsigned result[16];
+            upx_compress_config_t conf;
+            memset(&conf, 0xff, sizeof(conf));
+            hdr_obuf.allocForCompression(hdr_ulen);
+            int r = upx_compress(hdr_ibuf, hdr_ulen, hdr_obuf, &hdr_clen, 0,
+                ph.method, 10, &conf, result);
+            memset(&tmp, 0, sizeof(tmp));
+            set_native32(&tmp.sz_unc, hdr_ulen);
+            set_native32(&tmp.sz_cpr, hdr_clen);
+            tmp.b_method = (unsigned char) ph.method;
+            fo->write(&tmp, sizeof(tmp));
+            b_len += sizeof(b_info);
+            fo->write(hdr_obuf, hdr_clen);
+            hdr_ulen = 0;  // compress hdr one time only
+        }
         memset(&tmp, 0, sizeof(tmp));
         set_native32(&tmp.sz_unc, ph.u_len);
         set_native32(&tmp.sz_cpr, ph.c_len);

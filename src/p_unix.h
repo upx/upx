@@ -81,7 +81,8 @@ protected:
         off_t size;
     };
     virtual void packExtent(const Extent &x,
-        unsigned &total_in, unsigned &total_out, Filter *, OutputFile *);
+        unsigned &total_in, unsigned &total_out, Filter *, OutputFile *,
+        unsigned hdr_len = 0);
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
         unsigned &c_adler, unsigned &u_adler,

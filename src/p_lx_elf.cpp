@@ -738,14 +738,7 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    ui_pass = -1;  // Compressing Elf headers is invisible to UI.
-    x.offset = 0;
-    x.size = sizeof(Elf32_Ehdr) + sz_phdrs;
-    {
-        int const old_level = ph.level; ph.level = 10;
-        packExtent(x, total_in, total_out, 0, fo);
-        ph.level = old_level;
-    }
+    unsigned hdr_ulen = sizeof(Elf32_Ehdr) + sz_phdrs;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -770,7 +763,8 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         // sometimes marks as PF_X anyway.  So filter only first segment.
         packExtent(x, total_in, total_out,
             ((0==nx && (Elf32_Phdr::PF_X & get_native32(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo );
+                ? &ft : 0 ), fo, hdr_ulen);
+        hdr_ulen = 0;
         ++nx;
     }
     if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
@@ -819,14 +813,7 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    ui_pass = -1;  // Compressing Elf headers is invisible to UI.
-    x.offset = 0;
-    x.size = sizeof(Elf64_Ehdr) + sz_phdrs;
-    {
-        int const old_level = ph.level; ph.level = 10;
-        packExtent(x, total_in, total_out, 0, fo);
-        ph.level = old_level;
-    }
+    unsigned hdr_ulen = sizeof(Elf64_Ehdr) + sz_phdrs;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -851,7 +838,8 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         // sometimes marks as PF_X anyway.  So filter only first segment.
         packExtent(x, total_in, total_out,
             ((0==nx && (Elf64_Phdr::PF_X & get_native64(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo );
+                ? &ft : 0 ), fo, hdr_ulen);
+        hdr_ulen = 0;
         ++nx;
     }
     if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
@@ -1513,14 +1501,7 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    ui_pass = -1;  // Compressing Elf headers is invisible to UI.
-    x.offset = 0;
-    x.size = sizeof(Elf32_Ehdr) + sz_phdrs;
-    {
-        int const old_level = ph.level; ph.level = 10;
-        packExtent(x, total_in, total_out, 0, fo);
-        ph.level = old_level;
-    }
+    unsigned hdr_ulen = sizeof(Elf32_Ehdr) + sz_phdrs;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -1542,7 +1523,8 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
         }
         packExtent(x, total_in, total_out,
             ((Elf32_Phdr::PF_X & phdri[k].p_flags)
-                ? &ft : 0 ), fo );
+                ? &ft : 0 ), fo, hdr_ulen);
+        hdr_ulen = 0;
         ++nx;
     }
     if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?

@@ -172,7 +172,9 @@ protected:
                              const int *filters = NULL,
                              unsigned max_offset = 0, unsigned max_match = 0,
                              unsigned filter_buf_off = 0,
-                             unsigned compress_buf_off = 0);
+                             unsigned compress_buf_off = 0,
+                             unsigned char *header_buffer = 0,
+                             unsigned header_length = 0);
 
     // util for verifying overlapping decompresion
     //   non-destructive test

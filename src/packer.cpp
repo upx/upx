@@ -1258,13 +1258,32 @@ const char *Packer::getDecompressor() const
 // executable formats.
 //
 // It will replace the tryFilters() / compress() call sequence.
+
+// 2006-02-15: hdr_buf and hdr_u_len are default empty input "header" array
+// to fix a 2-pass problem with Elf headers.  As of today there can be
+// only one decompression method per executable output file, and that method
+// is the one that gives best compression for .text and loader.  However,
+// the Elf headers precede .text in the output file, and are written first.
+// "--brute" compression often compressed the Elf headers using nrv2b
+// but the .text (and loader) with nrv2e.  This often resulted in SIGSEGV
+// during decompression.
+// The workaround is for hdr_buf and hdr_u_len to describe the Elf headers
+// (typically less than 512 bytes) when .text is passed in, and include
+// them in the calculation of shortest output.  Then the result
+// this->ph.method  will say which [single] method to use for everthing.
+// The Elf headers are never filtered.  They are short enough (< 512 bytes)
+// that compressing them more than once per method (once here when choosing,
+// once again just before writing [because compressWithFilters discards])
+// is OK because of the simplicity of not having two output arrays.
 **************************************************************************/
 
 void Packer::compressWithFilters(Filter *parm_ft,
                                  const unsigned overlap_range,
                                  int strategy, const int *parm_filters,
                                  unsigned max_offset, unsigned max_match,
-                                 unsigned filter_off, unsigned compress_buf_off)
+                                 unsigned filter_off, unsigned compress_buf_off,
+                                 unsigned char *hdr_buf,
+                                 unsigned hdr_u_len)
 {
     const int *f;
     //
@@ -1280,6 +1299,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     best_ph.c_len = orig_ph.u_len;
     best_ph.overlap_overhead = 0;
     unsigned best_ph_lsize = 0;
+    unsigned best_hdr_clen = 0;
 
     // preconditions
     assert(orig_ph.filter == 0);
@@ -1373,6 +1393,14 @@ void Packer::compressWithFilters(Filter *parm_ft,
     int nfilters_success = 0;
     for (int m = 0; m < nmethods; m++)          // for all methods
     {
+        unsigned hdr_clen = 0;
+        if (hdr_buf && hdr_u_len) {
+            unsigned result[16];
+            upx_compress_config_t conf;
+            memset(&conf, 0xff, sizeof(conf));
+            int r = upx_compress(hdr_buf, hdr_u_len, obuf, &hdr_clen,
+                0, methods[m], 10, &conf, result);
+        }
         for (int i = 0; i < nfilters; i++)          // for all filters
         {
             ibuf.checkState();
@@ -1428,19 +1456,19 @@ void Packer::compressWithFilters(Filter *parm_ft,
                     lsize = buildLoader(&ft);
                 }
 #if 0
-                printf("\n%2d %02x: %d +%4d = %d  (best: %d +%4d = %d)\n", ph.method, ph.filter,
-                       ph.c_len, lsize, ph.c_len + lsize,
-                       best_ph.c_len, best_ph_lsize, best_ph.c_len + best_ph_lsize);
+                printf("\n%2d %02x: %d +%4d +%3d = %d  (best: %d +%4d +%3d = %d)\n", ph.method, ph.filter,
+                       ph.c_len, lsize, hdr_clen, ph.c_len + lsize + hdr_clen,
+                       best_ph.c_len, best_ph_lsize, best_hdr_clen, best_ph.c_len + best_ph_lsize + best_hdr_clen);
 #endif
                 bool update = false;
-                if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+                if (ph.c_len + lsize + hdr_clen < best_ph.c_len + best_ph_lsize + best_hdr_clen)
                     update = true;
-                else if (ph.c_len + lsize == best_ph.c_len + best_ph_lsize)
+                else if (ph.c_len + lsize + hdr_clen == best_ph.c_len + best_ph_lsize + best_hdr_clen)
                 {
                     // prefer smaller loaders
-                    if (lsize < best_ph_lsize)
+                    if (lsize  + hdr_clen < best_ph_lsize + best_hdr_clen)
                         update = true;
-                    else if (lsize == best_ph_lsize)
+                    else if (lsize + hdr_clen == best_ph_lsize + best_hdr_clen)
                     {
                         // prefer less overlap_overhead
                         if (ph.overlap_overhead < best_ph.overlap_overhead)
@@ -1455,6 +1483,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
                     // save compression results
                     best_ph = ph;
                     best_ph_lsize = lsize;
+                    best_hdr_clen = hdr_clen;
                     best_ft = ft;
                 }
             }
