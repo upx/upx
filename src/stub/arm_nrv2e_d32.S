@@ -1,0 +1,131 @@
+/* arm_nrv2e_d32.S -- ARM decompressor for NRV2E
+
+   This file is part of the UPX executable compressor.
+
+   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 2000-2006 John F. Reiser
+   All Rights Reserved.
+
+   UPX and the UCL library are free software; you can redistribute them
+   and/or modify them under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of
+   the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation, Inc.,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
+*/
+
+#define src  r0
+#define len  r1
+#define dst  r2
+#define tmp  r3
+#define bits r4
+#define off  r5
+#define lr2  r6
+#define g32  r7
+
+ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32
+                @ ARM mode (char *src, int len_src, char *dst, int *plen_dst)
+	add r1,len,src  @ r1= eof_src;
+	stmfd sp!,{r1,r2,r3, r4,r5,r6,r7,lr}
+	mov bits,#1<<31
+	blx hitch_n2e
+hitch_n2e_r:
+	ldmfd sp!,{r4,r5,r6,r7,pc}
+
+get32:  @ ARM mode; In: Carry set (unchanged until final adc)
+	ldrb bits,[src],#1
+	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #1*8
+	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #2*8
+	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #3*8
+	adc bits,bits,bits
+	bx lr
+
+#define GETBIT \
+   add bits,bits; beq 1f; 0: \
+   .subsection 1; \
+1: blx g32; b 0b; \
+   .subsection 0
+
+#define getnextb(reg) GETBIT; adc reg,reg
+#define   jnextb0     GETBIT; bcc
+#define   jnextb1     GETBIT; bcs
+
+	.code 16  @ THUMB mode
+eof_n2e:
+	pop {r1,r3,r4}  @ r1= eof_src; r3= orig_dst; r4= plen_dst
+	sub src,r1  @ 0 if src length OK
+	sub dst,r3  @ actual dst length
+	str dst,[r4]
+	sub g32,#get32 - hitch_n2e_r  @ g32= &hitch_n2e_r
+	bx g32
+hitch_n2e:
+	mov g32,lr
+	add g32,#get32 - hitch_n2e_r  @ g32= &get32
+	b top
+
+lit_n2e:
+	ldrb tmp,[src]; add src,#1
+	strb tmp,[dst]; add dst,#1
+top_n2e:
+        jnextb1 lit_n2e
+        mov off,#1; b getoff_n2e
+
+off_n2e:
+        sub off,#1
+        getnextb(off)
+getoff_n2e:
+        getnextb(off)
+        jnextb0 off_n2e
+
+        sub off,#3; bcs offprev_n2e
+        ldrb tmp,[src]; add src,#1
+        lsl off,#8
+        orr off,tmp
+        mvn off,off; beq eof_n2e  @ off= ~off
+        asr off,#1; bcs lenlast_n2e
+        b lenmore_n2e
+
+offprev_n2e:
+        jnextb1 lenlast_n2e
+lenmore_n2e:
+        mov len,#1
+        jnextb1 lenlast_n2e
+len_n2e:
+        getnextb(len)
+        jnextb0 len_n2e
+        add len,#6-2-2
+        b gotlen_n2e
+
+lenlast_n2e:
+        getnextb(len)  @ 0,1,2,3
+gotlen_n2e:
+        mov tmp,#5; lsl tmp,#8  @ 0x500
+        cmn off,tmp  @ off - (-tmp)
+        mov tmp,#2  @ does not change Carry
+        adc len,tmp  @ len += 2+ (off < -0x500);
+	ldrb tmp,[dst]  @ force cacheline allocate
+copy_n2e:
+	ldrb tmp,[dst,off]
+	strb tmp,[dst]; add dst,#1
+	sub len,#1; bne copy_n2e
+	b top_n2e
+
+/*
+vi:ts=8:et:nowrap
+ */
+
