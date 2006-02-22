@@ -30,29 +30,30 @@
 */
 
 #define src  r0
-#define len  r1
+#define len  r1  /* overlaps 'cnt' */
 #define dst  r2
 #define tmp  r3
 #define bits r4
 #define off  r5
-#define lr2  r6
-#define g32  r7
+#define g32  r6
+#define wrnk r7  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
 
-ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32
-                @ ARM mode (char *src, int len_src, char *dst, int *plen_dst)
+#define cnt  r1  /* overlaps 'len' while reading an offset */
+
+ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  @ ARM mode
+/* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
 	add r1,len,src  @ r1= eof_src;
 	stmfd sp!,{r1,r2,r3, r4,r5,r6,r7,lr}
-	mov bits,#1<<31
 	blx hitch_n2e
 hitch_n2e_r:
 	ldmfd sp!,{r4,r5,r6,r7,pc}
 
-get32:  @ ARM mode; In: Carry set (unchanged until final adc)
+get32:  @ ARM mode; In: Carry set (unchanged until final adcs)
 	ldrb bits,[src],#1
 	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #1*8
 	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #2*8
 	ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #3*8
-	adc bits,bits,bits
+	adcs bits,bits,bits  @ Set Carry out
 	bx lr
 
 #define GETBIT \
@@ -68,33 +69,40 @@ get32:  @ ARM mode; In: Carry set (unchanged until final adc)
 	.code 16  @ THUMB mode
 eof_n2e:
 	pop {r1,r3,r4}  @ r1= eof_src; r3= orig_dst; r4= plen_dst
-	sub src,r1  @ 0 if src length OK
+	sub src,r1  @ 0 if actual src length equals expected length
 	sub dst,r3  @ actual dst length
 	str dst,[r4]
 	sub g32,#get32 - hitch_n2e_r  @ g32= &hitch_n2e_r
 	bx g32
+
 hitch_n2e:
-	mov g32,lr
+	mov g32,lr  @ return address
 	add g32,#get32 - hitch_n2e_r  @ g32= &get32
-	b top
+	mov bits,#1; neg off,bits  @ off= -1 initial condition
+        lsl bits,#31  @ 1<<31; refill next time
+        mov wrnk,#5
+        lsl wrnk,#8  @ 0x500
+	b top_n2e
 
 lit_n2e:
 	ldrb tmp,[src]; add src,#1
 	strb tmp,[dst]; add dst,#1
 top_n2e:
         jnextb1 lit_n2e
-        mov off,#1; b getoff_n2e
+        mov cnt,#1; b getoff_n2e
 
 off_n2e:
-        sub off,#1
-        getnextb(off)
+        sub cnt,#1
+        getnextb(cnt)
 getoff_n2e:
-        getnextb(off)
+        getnextb(cnt)
         jnextb0 off_n2e
 
-        sub off,#3; bcs offprev_n2e
+        sub tmp,cnt,#3  @ set Carry
+        mov len,#0  @ Carry unaffected
+        blo offprev_n2e  @ cnt was 2; tests Carry only
+        lsl off,tmp,#8
         ldrb tmp,[src]; add src,#1
-        lsl off,#8
         orr off,tmp
         mvn off,off; beq eof_n2e  @ off= ~off
         asr off,#1; bcs lenlast_n2e
@@ -108,16 +116,16 @@ lenmore_n2e:
 len_n2e:
         getnextb(len)
         jnextb0 len_n2e
-        add len,#6-2-2
+        add len,#6-2
         b gotlen_n2e
 
 lenlast_n2e:
         getnextb(len)  @ 0,1,2,3
-gotlen_n2e:
-        mov tmp,#5; lsl tmp,#8  @ 0x500
-        cmn off,tmp  @ off - (-tmp)
-        mov tmp,#2  @ does not change Carry
-        adc len,tmp  @ len += 2+ (off < -0x500);
+        add len,#2
+gotlen_n2e:  @ 'cmn': add the inputs, set condition codes, discard the sum
+        cmn off,wrnk; bcs near_n2e  @ within M2_MAX_OFFSET
+        add len,#1  @ too far away, so minimum match length is 3
+near_n2e:
 	ldrb tmp,[dst]  @ force cacheline allocate
 copy_n2e:
 	ldrb tmp,[dst,off]
