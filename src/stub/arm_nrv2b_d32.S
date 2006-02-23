@@ -35,16 +35,12 @@
 #define tmp  r3
 #define bits r4
 #define off  r5
-#define g32  r6
+#define g1b  r6
 #define wrnk r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
 
 /* r12 ("ip") is assumed to be a scratch register. */
 
-#define GETBIT \
-   add bits,bits; beq 1f; 0: \
-   .subsection 1; \
-1: blx g32; b 0b; \
-   .subsection 0
+#define GETBIT blx g1b
 
 #define getnextb(reg) GETBIT; adc reg,reg
 #define   jnextb0     GETBIT; bcc
@@ -53,16 +49,18 @@
 ucl_nrv2b_decompress_32: .globl ucl_nrv2b_decompress_32  @ ARM mode
         .type ucl_nrv2b_decompress_32, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
-        adr r12,1+thumb_nrv2b_d32; bx r12  @ enter THUMB mode
+        adr r12,1+go_thumb_n2b  @ load pc-relative address
+        bx  r12  @ enter THUMB mode
+
         .code 16  @ THUMB mode
-thumb_nrv2b_d32:
+go_thumb_n2b:
         add r1,len,src  @ r1= eof_src;
         push {r1,r2,r3, r4,r5,r6,r7, lr}
         mov bits,#1; neg off,bits  @ off= -1 initial condition
         lsl bits,#31  @ 1<<31: refill next time
         mov wrnk,#0xd
         lsl wrnk,#8  @ 0xd00
-        adr g32,get32  @ load pc-relative address
+        adr g1b,get1b  @ load pc-relative address
         b top_n2b
 
 eof_n2b:
@@ -78,7 +76,11 @@ lit_n2b:
 top_n2b:
         jnextb1 lit_n2b
 
-        bl ss11  @ len= encoded offset [2..)
+        mov len,#1  @ the msb
+getoff_n2b:  @ ss11 len= [2..)
+        getnextb(len)
+        jnextb0 getoff_n2b
+
         sub tmp,len,#3  @ set Carry
         mov len,#0  @ Carry unaffected
         blo offprev_n2b  @ ss11 returned 2
@@ -88,7 +90,12 @@ top_n2b:
         mvn  off,off; beq eof_n2b  @ off= ~off
 offprev_n2b:  @ In: 0==len
         getnextb(len); getnextb(len); bne plus1_n2b  @ two bits; 1,2,3 ==> 2,3,4
-        bl ss11  @ len= encoded length [2..)
+
+        mov len,#1  @ the msb
+getlen_n2b:  @ ss11 len= [2..)
+        getnextb(len)
+        jnextb0 getlen_n2b
+
         add len,#2  @ [2..) ==> [4..);
 plus1_n2b:
         add len,#1  @ 1,2,3 ==> 2,3,4; [4..) ==> [5..)
@@ -103,21 +110,16 @@ copy_n2b:
         sub len,#1; bne copy_n2b
         b top_n2b
 
-ss11:
-        mov len,#1  @ the msb
-        mov r12,lr  @ return address; alternate: "push {lr}"
-ss11a:
-        getnextb(len)
-        jnextb0 ss11a
-        mov pc,r12  @ return;         alternate: "pop {pc}"
-
-        .code 32  @ ARM mode for ease of Carry manipulation
-get32:  @ In: Carry set (unchanged until final adcs)
+        .code 32  @ ARM mode
+get1b:  @ Out: Carry= next_bit
+        adds bits,bits,bits  @ shift up, set Carry
+        bxne lr  @ return if reload is not needed
+/* In: Carry set (unchanged until final adcs) */
         ldrb bits,[src],#1
         ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #1*8
         ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #2*8
         ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #3*8
-        adcs bits,bits,bits  @ Set Carry out
+        adcs bits,bits,bits  @ Carry= next_bit; set bit0 flag from CarryIn
         bx lr
 
         .size ucl_nrv2b_decompress_32, .-ucl_nrv2b_decompress_32
