@@ -411,8 +411,8 @@ void PackUnix::packExtent(
         // write compressed data
         if (ph.c_len < ph.u_len) {
             fo->write(obuf, ph.c_len);
-            // Checks ph.u_adler after decompression but before unfiltering
-            verifyOverlappingDecompression();
+            // Checks ph.u_adler after decompression, after unfiltering
+            verifyOverlappingDecompression(ft);
         }
         else {
             fo->write(ibuf, ph.u_len);

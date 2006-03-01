@@ -295,7 +295,7 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
 **************************************************************************/
 
 void Packer::decompress(const upx_bytep in, upx_bytep out,
-                        bool verify_checksum)
+                        bool verify_checksum, Filter *fp)
 {
     unsigned adler;
 
@@ -316,6 +316,9 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
     // verify checksum of decompressed data
     if (verify_checksum)
     {
+        if (fp) {
+            fp->unfilter(out, ph.u_len);
+        }
         adler = upx_adler32(out, ph.u_len, ph.saved_u_adler);
         if (adler != ph.u_adler)
             throwChecksumError();
@@ -355,7 +358,7 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
 }
 
 
-void Packer::verifyOverlappingDecompression()
+void Packer::verifyOverlappingDecompression(Filter *fp)
 {
     assert(ph.c_len < ph.u_len);
     assert((int)ph.overlap_overhead > 0);
@@ -381,7 +384,7 @@ void Packer::verifyOverlappingDecompression()
     if (offset + ph.c_len > obuf.getSize())
         return;
     memmove(obuf + offset, obuf, ph.c_len);
-    decompress(obuf + offset, obuf, true);
+    decompress(obuf + offset, obuf, true, fp);
     obuf.checkState();
 #endif /* !UNUPX */
 }

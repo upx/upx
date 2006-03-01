@@ -160,8 +160,8 @@ protected:
     // main compression drivers
     virtual bool compress(upx_bytep in, upx_bytep out,
                           unsigned max_offset = 0, unsigned max_match = 0);
-    virtual void decompress(const upx_bytep in,
-                            upx_bytep out, bool verify_checksum=true);
+    virtual void decompress(const upx_bytep in, upx_bytep out,
+                            bool verify_checksum = true, Filter *fp = 0);
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkFinalCompressionRatio(const OutputFile *fo) const;
 
@@ -185,7 +185,7 @@ protected:
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
-    virtual void verifyOverlappingDecompression();
+    virtual void verifyOverlappingDecompression(Filter *fp = 0);
 
 
     // packheader handling
