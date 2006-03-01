@@ -308,6 +308,8 @@ void PackUnix::packExtent(
     unsigned hdr_ulen
 )
 {
+    unsigned const init_u_adler = ph.u_adler;
+    unsigned const init_c_adler = ph.c_adler;
     MemBuffer hdr_ibuf;
     if (hdr_ulen) {
         hdr_ibuf.alloc(hdr_ulen);
@@ -361,6 +363,7 @@ void PackUnix::packExtent(
         if (ph.c_len >= ph.u_len) {
             // block is not compressible
             ph.c_len = ph.u_len;
+            memcpy(obuf, ibuf, ph.c_len);
             // must update checksum of compressed data
             ph.c_adler = upx_adler32(ibuf, ph.u_len, ph.saved_c_adler);
         }
@@ -376,6 +379,11 @@ void PackUnix::packExtent(
             hdr_obuf.allocForCompression(hdr_ulen);
             int r = upx_compress(hdr_ibuf, hdr_ulen, hdr_obuf, &hdr_clen, 0,
                 ph.method, 10, &conf, result);
+            ph.saved_u_adler = upx_adler32(hdr_ibuf, hdr_ulen, init_u_adler);
+            ph.saved_c_adler = upx_adler32(hdr_obuf, hdr_clen, init_c_adler);
+            ph.u_adler = upx_adler32(ibuf, ph.u_len, ph.saved_u_adler);
+            ph.c_adler = upx_adler32(obuf, ph.c_len, ph.saved_c_adler);
+            end_u_adler = ph.u_adler;
             memset(&tmp, 0, sizeof(tmp));
             set_native32(&tmp.sz_unc, hdr_ulen);
             set_native32(&tmp.sz_cpr, hdr_clen);
@@ -383,6 +391,8 @@ void PackUnix::packExtent(
             fo->write(&tmp, sizeof(tmp));
             b_len += sizeof(b_info);
             fo->write(hdr_obuf, hdr_clen);
+            total_out += hdr_clen;
+            total_in  += hdr_ulen;
             hdr_ulen = 0;  // compress hdr one time only
         }
         memset(&tmp, 0, sizeof(tmp));
