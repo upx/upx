@@ -190,11 +190,16 @@ int const *
 PackLinuxElf64amd::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
-    static const int l_method[] = { M_NRV2E_LE32, M_NRV2B_LE32, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2E_LE32, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, -1 };
 
-    /*return Packer::getDefaultCompressionMethods_le32(method, level);*/
-    UNUSED(method); UNUSED(level);
-    return l_method;
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
+    if (1==level)
+        return m_nrv2b;
+    return m_nrv2e;
 }
 
 int const *
