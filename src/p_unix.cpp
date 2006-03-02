@@ -315,6 +315,7 @@ void PackUnix::packExtent(
         hdr_ibuf.alloc(hdr_ulen);
         fi->seek(0, SEEK_SET);
         int l = fi->readx(hdr_ibuf, hdr_ulen);
+        (void)l;
     }
     fi->seek(x.offset, SEEK_SET);
     for (off_t rest = x.size; 0 != rest; ) {
@@ -379,6 +380,7 @@ void PackUnix::packExtent(
             hdr_obuf.allocForCompression(hdr_ulen);
             int r = upx_compress(hdr_ibuf, hdr_ulen, hdr_obuf, &hdr_clen, 0,
                 ph.method, 10, &conf, result);
+            (void)r;
             ph.saved_u_adler = upx_adler32(hdr_ibuf, hdr_ulen, init_u_adler);
             ph.saved_c_adler = upx_adler32(hdr_obuf, hdr_clen, init_c_adler);
             ph.u_adler = upx_adler32(ibuf, ph.u_len, ph.saved_u_adler);
