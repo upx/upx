@@ -342,9 +342,9 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
         return false;
 
     assert((int)overlap_overhead >= 0);
-    // Because we are not using the asm_fast decompressor here
-    // we must account for extra 3 bytes or else we may fail
-    // at runtime decompression.
+    // Because upx_test_overlap() does not use the asm_fast decompressor
+    // we must account for extra 3 bytes that asm_fast does use,
+    // or else we may fail at runtime decompression.
     if (overlap_overhead <= 4 + 3)  // don't waste time here
         return false;
     overlap_overhead -= 3;
@@ -1401,8 +1401,13 @@ void Packer::compressWithFilters(Filter *parm_ft,
             unsigned result[16];
             upx_compress_config_t conf;
             memset(&conf, 0xff, sizeof(conf));
-            int r = upx_compress(hdr_buf, hdr_u_len, obuf, &hdr_clen,
+            if (0 < m && otemp == &obuf) { // do not overwrite obuf
+                otemp_buf.allocForCompression(compress_buf_len);
+                otemp = &otemp_buf;
+            }
+            int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_clen,
                 0, methods[m], 10, &conf, result);
+            (void)r;
         }
         for (int i = 0; i < nfilters; i++)          // for all filters
         {
