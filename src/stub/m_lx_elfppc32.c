@@ -47,6 +47,8 @@
 // "file" util
 **************************************************************************/
 
+extern void exit (int __status) __attribute__ ((__nothrow__)) __attribute__ ((__noreturn__));
+
 typedef struct {
     size_t size;  // must be first to match size[0] uncompressed size
     char *buf;
@@ -155,14 +157,6 @@ ERR_LAB
     }
 }
 
-// Create (or find) an escape hatch to use when munmapping ourselves the stub.
-// Called by do_xmap to create it, and by assembler code to find it.
-static void *
-make_hatch(Elf32_Phdr const *const phdr)
-{
-    return 0;
-}
-
 static void
 upx_bzero(char *p, size_t len)
 {
@@ -176,7 +170,7 @@ upx_bzero(char *p, size_t len)
 static void
 auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
 {
-    if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
+    if (av)
     for (;; ++av) {
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
@@ -203,13 +197,13 @@ auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
 static unsigned long  // returns relocation constant
-xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
+xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, int fdi,
     char **const p_brk
 )
 {
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
-    mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
+    mflags += MAP_PRIVATE | MAP_ANONYMOUS | MAP_DENYWRITE;  // '+' can optimize better than '|'
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
@@ -223,9 +217,9 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, fdi, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
-    munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
+    mprotect(szlo + addr, hi - szlo, PROT_NONE);  // but keep the frames!
     return (unsigned long)addr - lo;
 }
 
@@ -243,7 +237,7 @@ do_xmap(
         (char const *)ehdr);
     char *v_brk;
     unsigned long const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
+        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, fdi, &v_brk);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -261,7 +255,7 @@ do_xmap(
         addr  += reloc;
         haddr += reloc;
 
-        if (addr != mmap(addr, mlen, PROT_READ | PROT_WRITE,
+        if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 fdi, phdr->p_offset - frag) ) {
             err_exit(8);
@@ -269,19 +263,18 @@ do_xmap(
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
-        bzero(addr, frag);  // fragment at lo end
-        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        bzero(mlen+addr, frag);  // fragment at hi end
-        if (xi) {
-            void *const hatch = make_hatch(phdr);
-            if (0!=hatch) {
-                /* always update AT_NULL, especially for compressed PT_INTERP */
-                auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
-            }
+        if (xi || (PROT_WRITE & prot)) {
+            bzero(addr, frag);  // fragment at lo end
         }
-        if (0!=mprotect(addr, mlen, prot)) {
-            err_exit(10);
+        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
+        if (xi || (PROT_WRITE & prot)) {
+            bzero(mlen+addr, frag);  // fragment at hi end
+        }
+        if (xi) {
+            if (0!=mprotect(addr, mlen, prot)) {
+                err_exit(10);
 ERR_LAB
+            }
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
@@ -289,12 +282,6 @@ ERR_LAB
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
                 err_exit(9);
             }
-        }
-    }
-    if (xi) { // 1st call (main); also have (0!=av) here
-        if (ET_DYN!=ehdr->e_type) {
-            // Needed only if compressed shell script invokes compressed shell.
-            brk(v_brk);
         }
     }
     return ehdr->e_entry + reloc;
