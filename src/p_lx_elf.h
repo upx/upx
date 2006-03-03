@@ -97,6 +97,8 @@ protected:
     virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
     virtual void patchLoader();
     virtual void updateLoader(OutputFile *fo);
+    virtual unsigned find_LOAD_gap(Elf32_Phdr const *const phdri, unsigned const k,
+        unsigned const e_phnum);
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -156,6 +158,8 @@ protected:
     virtual off_t getbrk(const Elf64_Phdr *phdr, int e_phnum) const;
     virtual void patchLoader();
     virtual void updateLoader(OutputFile *fo);
+    virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
+        unsigned const e_phnum);
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
@@ -321,6 +325,8 @@ protected:
     virtual void const *elf_find_dynamic(unsigned) const;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
+    virtual unsigned find_LOAD_gap(Elf32_Phdr const *const phdri, unsigned const k,
+        unsigned const e_phnum);
 };
 
 

@@ -713,6 +713,44 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter &/*ft*/)
     generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, e_phnum) );
 }
 
+// Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
+// which follows in the file (or end-of-file).  Optimize for common case
+// where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
+
+unsigned PackLinuxElf32::find_LOAD_gap(
+    Elf32_Phdr const *const phdri,
+    unsigned const k,
+    unsigned const e_phnum
+)
+{
+    if (PT_LOAD32!=get_native32(&phdri[k].p_type)) {
+        return 0;
+    }
+    unsigned const hi = get_native32(&phdri[k].p_offset) +
+                        get_native32(&phdri[k].p_filesz);
+    unsigned lo = ph.u_file_size;
+    unsigned j = k;
+    for (;;) { // circular search, optimize for adjacent ascending
+        ++j;
+        if (e_phnum==j) {
+            j = 0;
+        }
+        if (k==j) {
+            break;
+        }
+        if (PT_LOAD32==get_native32(&phdri[j].p_type)) {
+            unsigned const t = get_native32(&phdri[j].p_offset);
+            if ((t - hi) < (lo - hi)) {
+                lo = t;
+                if (hi==lo) {
+                    break;
+                }
+            }
+        }
+    }
+    return lo - hi;
+}
+
 void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
@@ -720,24 +758,15 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     // count passes, set ptload vars
     ui_total_passes = 0;
-    off_t ptload0hi = 0, ptload1lo = 0, ptload1sz = 0;
     unsigned const e_phnum = get_native16(&ehdri.e_phnum);
     for (k = 0; k < e_phnum; ++k) {
         if (PT_LOAD32 == get_native32(&phdri[k].p_type)) {
-            x.offset = get_native32(&phdri[k].p_offset);
-            x.size   = get_native32(&phdri[k].p_filesz);
-            if (0 == ptload0hi) {
-                ptload0hi = x.offset + x.size;
-            }
-            else if (0 == ptload1lo) {
-                ptload1lo = x.offset;
-                ptload1sz = x.size;
-            }
             ui_total_passes++;
+            if (find_LOAD_gap(phdri, k, e_phnum)) {
+                ui_total_passes++;
+            }
         }
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo)
-        ui_total_passes++;
 
     // compress extents
     unsigned total_in = 0;
@@ -772,20 +801,56 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         hdr_ulen = 0;
         ++nx;
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
-        x.offset = ptload0hi;
-        x.size   = ptload1lo - ptload0hi;
-        packExtent(x, total_in, total_out, 0, fo);
-    }
-    if ((off_t)total_in < file_size) {  // non-PT_LOAD32 stuff
-        x.offset = total_in;
-        x.size = file_size - total_in;
-        packExtent(x, total_in, total_out, 0, fo);
+    for (k = 0; k < e_phnum; ++k) {
+        x.size = find_LOAD_gap(phdri, k, e_phnum);
+        if (x.size) {
+            x.offset = get_native32(&phdri[k].p_offset) +
+                       get_native32(&phdri[k].p_filesz);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
     }
 
     if ((off_t)total_in != file_size)
         throwEOFException();
     set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
+}
+
+// Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
+// which follows in the file (or end-of-file).  Optimize for common case
+// where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
+
+unsigned PackLinuxElf64::find_LOAD_gap(
+    Elf64_Phdr const *const phdri,
+    unsigned const k,
+    unsigned const e_phnum
+)
+{
+    if (PT_LOAD64!=get_native32(&phdri[k].p_type)) {
+        return 0;
+    }
+    unsigned const hi = get_native64(&phdri[k].p_offset) +
+                        get_native64(&phdri[k].p_filesz);
+    unsigned lo = ph.u_file_size;
+    unsigned j = k;
+    for (;;) { // circular search, optimize for adjacent ascending
+        ++j;
+        if (e_phnum==j) {
+            j = 0;
+        }
+        if (k==j) {
+            break;
+        }
+        if (PT_LOAD64==get_native32(&phdri[j].p_type)) {
+            unsigned const t = get_native64(&phdri[j].p_offset);
+            if ((t - hi) < (lo - hi)) {
+                lo = t;
+                if (hi==lo) {
+                    break;
+                }
+            }
+        }
+    }
+    return lo - hi;
 }
 
 void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
@@ -795,24 +860,15 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     // count passes, set ptload vars
     ui_total_passes = 0;
-    off_t ptload0hi = 0, ptload1lo = 0, ptload1sz = 0;
     unsigned const e_phnum = get_native16(&ehdri.e_phnum);
     for (k = 0; k < e_phnum; ++k) {
-        if (PT_LOAD64 == get_native32(&phdri[k].p_type)) {
-            x.offset = get_native64(&phdri[k].p_offset);
-            x.size   = get_native64(&phdri[k].p_filesz);
-            if (0 == ptload0hi) {
-                ptload0hi = x.offset + x.size;
-            }
-            else if (0 == ptload1lo) {
-                ptload1lo = x.offset;
-                ptload1sz = x.size;
-            }
+        if (PT_LOAD64==get_native32(&phdri[k].p_type)) {
             ui_total_passes++;
+            if (find_LOAD_gap(phdri, k, e_phnum)) {
+                ui_total_passes++;
+            }
         }
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo)
-        ui_total_passes++;
 
     // compress extents
     unsigned total_in = 0;
@@ -847,15 +903,13 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         hdr_ulen = 0;
         ++nx;
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
-        x.offset = ptload0hi;
-        x.size   = ptload1lo - ptload0hi;
-        packExtent(x, total_in, total_out, 0, fo);
-    }
-    if ((off_t)total_in < file_size) {  // non-PT_LOAD64 stuff
-        x.offset = total_in;
-        x.size = file_size - total_in;
-        packExtent(x, total_in, total_out, 0, fo);
+    for (k = 0; k < e_phnum; ++k) {
+        x.size = find_LOAD_gap(phdri, k, e_phnum);
+        if (x.size) {
+            x.offset = get_native64(&phdri[k].p_offset) +
+                       get_native64(&phdri[k].p_filesz);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
     }
 
     if ((off_t)total_in != file_size)
@@ -1043,7 +1097,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
-    off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD32
     bool first_PF_X = true;
@@ -1053,13 +1106,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         if (PT_LOAD32==get_native32(&phdr->p_type)) {
             unsigned const filesz = get_native32(&phdr->p_filesz);
             unsigned const offset = get_native32(&phdr->p_offset);
-            if (0==ptload0hi) {
-                ptload0hi = filesz + offset;
-            }
-            else if (0==ptload1lo) {
-                ptload1lo = offset;
-                ptload1sz = filesz;
-            }
             if (fo)
                 fo->seek(offset, SEEK_SET);
             if (Elf32_Phdr::PF_X & get_native32(&phdr->p_flags)) {
@@ -1074,17 +1120,17 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         }
     }
 
-    if (0!=ptload1sz && ptload0hi < ptload1lo) {  // alignment hole?
-        if (fo)
-            fo->seek(ptload0hi, SEEK_SET);
-        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
-    }
-    if (total_out != orig_file_size) {  // non-PT_LOAD32 stuff
-        if (fo)
-            fo->seek(0, SEEK_END);
-        unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
+    phdr = (Elf32_Phdr *)(1+ehdr);
+    for (unsigned j = 0; j < phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, phnum);
+        if (size) {
+            unsigned const where = get_native32(&phdr[j].p_offset) +
+                                   get_native32(&phdr[j].p_filesz);
+            if (fo)
+                fo->seek(where, SEEK_SET);
+            unpackExtent(size, fo, total_in, total_out,
+                c_adler, u_adler, false, szb_info);
+        }
     }
 
     // check for end-of-file
@@ -1117,7 +1163,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 
 void PackLinuxElf64::unpack(OutputFile *fo)
 {
-#define MAX_ELF_HDR 512
+#define MAX_ELF_HDR 1024
     char bufehdr[MAX_ELF_HDR];
     Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)bufehdr;
     Elf64_Phdr const *phdr = (Elf64_Phdr *)(1+ehdr);
@@ -1156,7 +1202,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
-    off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD32
     bool first_PF_X = true;
@@ -1166,13 +1211,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         if (PT_LOAD32==get_native32(&phdr->p_type)) {
             acc_uint64l_t const filesz = get_native64(&phdr->p_filesz);
             acc_uint64l_t const offset = get_native64(&phdr->p_offset);
-            if (0==ptload0hi) {
-                ptload0hi = filesz + offset;
-            }
-            else if (0==ptload1lo) {
-                ptload1lo = offset;
-                ptload1sz = filesz;
-            }
             if (fo)
                 fo->seek(offset, SEEK_SET);
             if (Elf64_Phdr::PF_X & get_native32(&phdr->p_flags)) {
@@ -1187,17 +1225,17 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
 
-    if (0!=ptload1sz && ptload0hi < ptload1lo) {  // alignment hole?
-        if (fo)
-            fo->seek(ptload0hi, SEEK_SET);
-        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
-    }
-    if (total_out != orig_file_size) {  // non-PT_LOAD32 stuff
-        if (fo)
-            fo->seek(0, SEEK_END);
-        unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
+    phdr = (Elf64_Phdr *)(1+ehdr);
+    for (unsigned j = 0; j < phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, phnum);
+        if (size) {
+            unsigned const where = get_native64(&phdr[j].p_offset) +
+                                   get_native64(&phdr[j].p_filesz);
+            if (fo)
+                fo->seek(where, SEEK_SET);
+            unpackExtent(size, fo, total_in, total_out,
+                c_adler, u_adler, false, szb_info);
+        }
     }
 
     // check for end-of-file
@@ -1324,7 +1362,7 @@ bool PackLinuxI386elf::canPack()
     for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
         if (j >= 14)  // 512 bytes holds Elf32_Ehdr + Elf32_Phdr[0..13]
             return false;
-        if (phdr->PT_LOAD32 == phdr->p_type) {
+        if (phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
             if (phdr->p_offset != 0) {
                 throwCantPack("invalid Phdr p_offset; try `--force-execve'");
                 return false;
@@ -1366,8 +1404,8 @@ bool PackLinuxI386elf::canPack()
 
         int j= ehdr->e_phnum;
         phdr= phdri;
-        for (; --j>=0; ++phdr) if (Elf32_Phdr::PT_DYNAMIC==phdr->p_type) {
-            dynseg= (Elf32_Dyn const *)(phdr->p_offset + file_image);
+        for (; --j>=0; ++phdr) if (Elf32_Phdr::PT_DYNAMIC==get_native32(&phdr->p_type)) {
+            dynseg= (Elf32_Dyn const *)(get_native32(&phdr->p_offset) + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -1406,10 +1444,10 @@ PackLinuxI386elf::elf_get_offset_from_address(unsigned const addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = ehdri.e_phnum;
-    for (; --j>=0; ++phdr) if (PT_LOAD32 == phdr->p_type) {
-        unsigned const t = addr - phdr->p_vaddr;
-        if (t < phdr->p_filesz) {
-            return t + phdr->p_offset;
+    for (; --j>=0; ++phdr) if (PT_LOAD32 == get_native32(&phdr->p_type)) {
+        unsigned const t = addr - get_native32(&phdr->p_vaddr);
+        if (t < get_native32(&phdr->p_filesz)) {
+            return t + get_native32(&phdr->p_offset);
         }
     }
     return 0;
@@ -1477,6 +1515,40 @@ void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
+unsigned PackLinuxI386elf::find_LOAD_gap(
+    Elf32_Phdr const *const phdri,
+    unsigned const k,
+    unsigned const e_phnum
+)
+{
+    if (PT_LOAD32!=get_native32(&phdri[k].p_type)) {
+        return 0;
+    }
+    unsigned const hi = get_native32(&phdri[k].p_offset) +
+                        get_native32(&phdri[k].p_filesz);
+    unsigned lo = ph.u_file_size;
+    unsigned j = k;
+    for (;;) { // circular search, optimize for adjacent ascending
+        ++j;
+        if (e_phnum==j) {
+            j = 0;
+        }
+        if (k==j) {
+            break;
+        }
+        if (PT_LOAD32==get_native32(&phdri[j].p_type)) {
+            unsigned const t = get_native32(&phdri[j].p_offset);
+            if ((t - hi) < (lo - hi)) {
+                lo = t;
+                if (hi==lo) {
+                    break;
+                }
+            }
+        }
+    }
+    return lo - hi;
+}
+
 void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
@@ -1484,23 +1556,15 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
 
     // count passes, set ptload vars
     ui_total_passes = 0;
-    off_t ptload0hi = 0, ptload1lo = 0, ptload1sz = 0;
-    for (k = 0; k < ehdri.e_phnum; ++k) {
-        if (PT_LOAD32 == phdri[k].p_type) {
-            x.offset = phdri[k].p_offset;
-            x.size   = phdri[k].p_filesz;
-            if (0 == ptload0hi) {
-                ptload0hi = x.offset + x.size;
-            }
-            else if (0 == ptload1lo) {
-                ptload1lo = x.offset;
-                ptload1sz = x.size;
-            }
+    unsigned const e_phnum = get_native16(&ehdri.e_phnum);
+    for (k = 0; k < e_phnum; ++k) {
+        if (PT_LOAD32 == get_native32(&phdri[k].p_type)) {
             ui_total_passes++;
+            if (find_LOAD_gap(phdri, k, e_phnum)) {
+                ui_total_passes++;
+            }
         }
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo)
-        ui_total_passes++;
 
     // compress extents
     unsigned total_in = 0;
@@ -1512,12 +1576,12 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
     ft.addvalue = 0;
 
     int nx = 0;
-    for (k = 0; k < ehdri.e_phnum; ++k) if (PT_LOAD32==phdri[k].p_type) {
+    for (k = 0; k < e_phnum; ++k) if (PT_LOAD32==get_native32(&phdri[k].p_type)) {
         if (ft.id < 0x40) {
             // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
         }
-        x.offset = phdri[k].p_offset;
-        x.size   = phdri[k].p_filesz;
+        x.offset = get_native32(&phdri[k].p_offset);
+        x.size   = get_native32(&phdri[k].p_filesz);
         if (0 == nx) { // 1st PT_LOAD32 must cover Ehdr at 0==p_offset
             unsigned const delta = sizeof(Elf32_Ehdr) + sz_phdrs;
             if (ft.id < 0x40) {
@@ -1532,20 +1596,18 @@ void PackLinuxI386elf::pack2(OutputFile *fo, Filter &ft)
         hdr_ulen = 0;
         ++nx;
     }
-    if (0!=ptload1sz && ptload0hi < ptload1lo) { // alignment hole?
-        x.offset = ptload0hi;
-        x.size   = ptload1lo - ptload0hi;
-        packExtent(x, total_in, total_out, 0, fo);
-    }
-    if ((off_t)total_in < file_size) {  // non-PT_LOAD32 stuff
-        x.offset = total_in;
-        x.size = file_size - total_in;
-        packExtent(x, total_in, total_out, 0, fo);
+    for (k = 0; k < e_phnum; ++k) {
+        x.size = find_LOAD_gap(phdri, k, e_phnum);
+        if (x.size) {
+            x.offset = get_native32(&phdri[k].p_offset) +
+                       get_native32(&phdri[k].p_filesz);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
     }
 
     if ((off_t)total_in != file_size)
         throwEOFException();
-    elfout.phdr[0].p_filesz = fo->getBytesWritten();
+    set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
 }
 
 void PackLinuxI386elf::pack3(OutputFile *fo, Filter &ft)
@@ -1648,45 +1710,38 @@ void PackLinuxI386elf::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
-    off_t ptload0hi=0, ptload1lo=0, ptload1sz=0;
 
     // decompress PT_LOAD32
     bool first_PF_X = true;
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
-    for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
-        if (PT_LOAD32==phdr->p_type) {
-            if (0==ptload0hi) {
-                ptload0hi = phdr->p_filesz + phdr->p_offset;
-            }
-            else if (0==ptload1lo) {
-                ptload1lo = phdr->p_offset;
-                ptload1sz = phdr->p_filesz;
-            }
+    unsigned const phnum = get_native16(&ehdr->e_phnum);
+    for (unsigned j=0; j < phnum; ++phdr, ++j) {
+        if (PT_LOAD32==get_native32(&phdr->p_type)) {
             if (fo)
-                fo->seek(phdr->p_offset, SEEK_SET);
+                fo->seek(get_native32(&phdr->p_offset), SEEK_SET);
             if (Elf32_Phdr::PF_X & phdr->p_flags) {
-                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                unpackExtent(get_native32(&phdr->p_filesz), fo, total_in, total_out,
                     c_adler, u_adler, first_PF_X, szb_info);
                 first_PF_X = false;
             }
             else {
-                unpackExtent(phdr->p_filesz, fo, total_in, total_out,
+                unpackExtent(get_native32(&phdr->p_filesz), fo, total_in, total_out,
                     c_adler, u_adler, false, szb_info);
             }
         }
     }
 
-    if (0!=ptload1sz && ptload0hi < ptload1lo) {  // alignment hole?
-        if (fo)
-            fo->seek(ptload0hi, SEEK_SET);
-        unpackExtent(ptload1lo - ptload0hi, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
-    }
-    if (total_out != orig_file_size) {  // non-PT_LOAD32 stuff
-        if (fo)
-            fo->seek(0, SEEK_END);
-        unpackExtent(orig_file_size - total_out, fo, total_in, total_out,
-            c_adler, u_adler, false, szb_info);
+    phdr = (Elf32_Phdr *)(1+ehdr);
+    for (unsigned j = 0; j < phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, phnum);
+        if (size) {
+            unsigned const where = get_native32(&phdr[j].p_offset) +
+                                   get_native32(&phdr[j].p_filesz);
+            if (fo)
+                fo->seek(where, SEEK_SET);
+            unpackExtent(size, fo, total_in, total_out,
+                c_adler, u_adler, false, szb_info);
+        }
     }
 
     // check for end-of-file
