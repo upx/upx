@@ -116,6 +116,7 @@ struct timespec {
 #define MAP_PRIVATE     0x02
 #define MAP_FIXED       0x10
 #define MAP_ANONYMOUS   0x20
+#define MAP_DENYWRITE 0x0800  /* ETXTBSY */
 
 
 #if defined(__i386__)  /*{*/
