@@ -263,11 +263,11 @@ do_xmap(
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
-        if (xi || (PROT_WRITE & prot)) {
+        if (PROT_WRITE & prot) {
             bzero(addr, frag);  // fragment at lo end
         }
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        if (xi || (PROT_WRITE & prot)) {
+        if (PROT_WRITE & prot) {
             bzero(mlen+addr, frag);  // fragment at hi end
         }
         if (xi) {
