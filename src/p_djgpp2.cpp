@@ -53,7 +53,7 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
     COMPILE_TIME_ASSERT(STUBIFY_STUB_ADLER32 == 0xbf689ba8);
     COMPILE_TIME_ASSERT(STUBIFY_STUB_CRC32   == 0x2ae982b2);
     //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
-    assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
+    //assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
 }
 
 
