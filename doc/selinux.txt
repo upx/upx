@@ -1,0 +1,43 @@
+			UPX and SELinux
+			March 6, 2006
+
+
+When a program that has been compressed by UPX is run, the decompressor
+must create and write new memory pages of executable instructions.
+SELinux (Security Enhanced Linux) directly controls the conditions
+under which generating and/or executing new instructions is allowed,
+so the configuration settings of SELinux affect the running of programs
+that have been compressed by UPX.
+
+In SELinux "strict enforcing" mode (the most restrictive), generating
+new instructions at runtime is not allowed at all: any page with
+PROT_EXEC permission must be mapped from a file in a mounted filesystem
+that has 'x' [eXecute] permission, and the generation of such files is
+also tightly controlled.  A program that was compressed by UPX will not
+run in SELinux strict enforcing mode.  Attempts will fail with exit
+code 127, and a record will be added to the history file
+/var/log/audit/audit.log.
+
+In "targeted enforcing" mode, SELinux pays close attention mostly to
+designated processes that run with elevated privileges: web server,
+print server, login server, etc.  Ordinary user excutables receive
+much less scrutiny.  However, one of the eventual goals of SELinux is to
+eradicate runtime generation of instructions because of the possibility
+for exploitation by malware (virus, trojan, key logger, privilege
+elevation exploit, etc.)  Thus targeted enforcing mode notices and
+logs the use of "execmem" capability that is used by a program which
+was compressed by UPX.  In keeping with the goal of eventual prohibition,
+SELinux ordinarily would deny execmem.  However, most current SELinux
+systems, including Fedora Core 5 [set for release March 15, 2006],
+override this with "allow_exemem=1" in /etc/selinux/targeted/booleans.
+Thus a program compressed by UPX will run in the default installed
+configuration (targeted enforcing, allow_execmem=1) of SELinux under
+Fedora Core 5.  Each invocation will add a few lines to the log file
+/var/log/audit/audit.log, one line for each use of execmem.  If the
+SELinux policy becomes more restrictive in the future, then a special
+SELinux class or other mechanism must be created for compressed programs,
+or else UPX-compressed executables will not run then.
+
+In its "permissive" modes, SELinux just logs the potential problems,
+but otherwise does not interfere.  A program compressed by UPX will run
+in any permissive mode.
