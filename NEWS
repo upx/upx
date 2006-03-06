@@ -6,12 +6,13 @@ User visible changes for UPX
 
 Changes in 1.94 beta (13 Mar 2006):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
-  * arm/pe: new executable format (ARM executables running on WinCE)
-  * support for mach/ppc32
-  * support for linux elf/ppc32
-  * support for linux elf/amd64
+  * new format: added support for arm/pe (ARM executables running on WinCE)
+  * new format: added support for linux elf/amd64
+  * new format: added support for linux elf/ppc32
+  * new format: added support for mach/ppc32 (Apple Mac OS X)
   * win32/pe: hopefully working "load config" support
   * win32/pe: R6002 runtime errors worked around
+  * win32/pe: the stub now clears the dirty stack
 
 Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels
