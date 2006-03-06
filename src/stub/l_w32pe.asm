@@ -213,6 +213,11 @@ relhi0:
                 push    edi
                 call    ebp
 
+  %if 0
+                or      eax, eax
+                jz      pedep9                  ; VirtualProtect failed
+  %endif
+
                 and     byte [edi + 'SWRI'], 0x7f
 
   %if 0
@@ -228,6 +233,7 @@ relhi0:
                 push    edi
                 call    ebp
 
+pedep9:
                 pop     eax                     ; restore stack
 %endif; __PEDEPHAX__
 
@@ -249,11 +255,7 @@ relhi0:
                 clearstack128 eax
 %endif; __PERETURN_CLEARSTACK9__
 %ifdef  __PEDOJUMP_CLEARSTACK__
-                push    eax             ; FIXME - do we really need to preserve eax ??
                 clearstack128 eax
-                pop     eax
-                push    byte 0
-                add     esp, 4
 %endif; __PEDOJUMP_CLEARSTACK9__
 
 
