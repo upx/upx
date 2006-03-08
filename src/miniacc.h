@@ -37,7 +37,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20060212L
+#define ACC_VERSION     20060307L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -4670,10 +4670,12 @@ ACCLIB_PUBLIC(void, acc_ua_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 #  define ACCLIB_PUBLIC(r,f)                r __ACCLIB_FUNCNAME(f)
 #endif
 #if !defined(ACCLIB_PUBLIC_NOINLINE)
-#  if defined(__acc_noinline)
-#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
-#  else
+#  if !defined(__acc_noinline)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     r __ACCLIB_FUNCNAME(f)
+#  elif (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
+#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline __attribute__((__used__)) r __ACCLIB_FUNCNAME(f)
+#  else
+#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
 #  endif
 #endif
 #if (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
@@ -4683,8 +4685,8 @@ void* volatile __attribute__((__used__)) __acc_vget_ptr = (void *) 0;
 extern void* volatile __acc_vget_ptr;
 void* volatile __acc_vget_ptr = (void *) 0;
 #endif
-#ifndef __ACC_VGET_BODY
-#define __ACC_VGET_BODY(T) \
+#ifndef __ACCLIB_VGET_BODY
+#define __ACCLIB_VGET_BODY(T) \
     if __acc_unlikely(__acc_vget_ptr) { \
         * (T *) __acc_vget_ptr = v; \
         * (int *) __acc_vget_ptr = expr; \
@@ -4694,52 +4696,52 @@ void* volatile __acc_vget_ptr = (void *) 0;
 #endif
 ACCLIB_PUBLIC_NOINLINE(short, acc_vget_short) (short v, int expr)
 {
-    __ACC_VGET_BODY(short)
+    __ACCLIB_VGET_BODY(short)
 }
 ACCLIB_PUBLIC_NOINLINE(int, acc_vget_int) (int v, int expr)
 {
-    __ACC_VGET_BODY(int)
+    __ACCLIB_VGET_BODY(int)
 }
 ACCLIB_PUBLIC_NOINLINE(long, acc_vget_long) (long v, int expr)
 {
-    __ACC_VGET_BODY(long)
+    __ACCLIB_VGET_BODY(long)
 }
 #if defined(acc_int64l_t)
 ACCLIB_PUBLIC_NOINLINE(acc_int64l_t, acc_vget_acc_int64l_t) (acc_int64l_t v, int expr)
 {
-    __ACC_VGET_BODY(acc_int64l_t)
+    __ACCLIB_VGET_BODY(acc_int64l_t)
 }
 #endif
 ACCLIB_PUBLIC_NOINLINE(acc_hsize_t, acc_vget_acc_hsize_t) (acc_hsize_t v, int expr)
 {
-    __ACC_VGET_BODY(acc_hsize_t)
+    __ACCLIB_VGET_BODY(acc_hsize_t)
 }
 #if !defined(ACC_CFG_NO_FLOAT)
 ACCLIB_PUBLIC_NOINLINE(float, acc_vget_float) (float v, int expr)
 {
-    __ACC_VGET_BODY(float)
+    __ACCLIB_VGET_BODY(float)
 }
 #endif
 #if !defined(ACC_CFG_NO_DOUBLE)
 ACCLIB_PUBLIC_NOINLINE(double, acc_vget_double) (double v, int expr)
 {
-    __ACC_VGET_BODY(double)
+    __ACCLIB_VGET_BODY(double)
 }
 #endif
 ACCLIB_PUBLIC_NOINLINE(acc_hvoid_p, acc_vget_acc_hvoid_p) (acc_hvoid_p v, int expr)
 {
-    __ACC_VGET_BODY(acc_hvoid_p)
+    __ACCLIB_VGET_BODY(acc_hvoid_p)
 }
 #if (ACC_ARCH_I086 && ACC_CC_TURBOC && (__TURBOC__ == 0x0295)) && !defined(__cplusplus)
 ACCLIB_PUBLIC_NOINLINE(acc_hvoid_p, acc_vget_acc_hvoid_cp) (const acc_hvoid_p vv, int expr)
 {
     acc_hvoid_p v = (acc_hvoid_p) vv;
-    __ACC_VGET_BODY(acc_hvoid_p)
+    __ACCLIB_VGET_BODY(acc_hvoid_p)
 }
 #else
 ACCLIB_PUBLIC_NOINLINE(const acc_hvoid_p, acc_vget_acc_hvoid_cp) (const acc_hvoid_p v, int expr)
 {
-    __ACC_VGET_BODY(const acc_hvoid_p)
+    __ACCLIB_VGET_BODY(const acc_hvoid_p)
 }
 #endif
 #endif
@@ -5963,10 +5965,12 @@ ACCLIB_PUBLIC(int, acc_uclock_flush_cpu_cache) (acc_uclock_handle_p h, unsigned 
 #  define ACCLIB_PUBLIC(r,f)                r __ACCLIB_FUNCNAME(f)
 #endif
 #if !defined(ACCLIB_PUBLIC_NOINLINE)
-#  if defined(__acc_noinline)
-#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
-#  else
+#  if !defined(__acc_noinline)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     r __ACCLIB_FUNCNAME(f)
+#  elif (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
+#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline __attribute__((__used__)) r __ACCLIB_FUNCNAME(f)
+#  else
+#    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
 #  endif
 #endif
 ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
