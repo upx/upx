@@ -1,5 +1,5 @@
-			UPX and SELinux
-			March 6, 2006
+                        UPX and SELinux
+                        March 6, 2006
 
 
 When a program that has been compressed by UPX is run, the decompressor
