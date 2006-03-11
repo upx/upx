@@ -4,8 +4,10 @@ User visible changes for UPX
 
 [ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
 
-Changes in 1.94 beta (11 Mar 2006):
+Changes in 1.95 beta (XX XXX 2006):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+
+Changes in 1.94 beta (11 Mar 2006):
   * new format: added support for arm/pe (ARM executables running on WinCE)
   * new format: added support for linux elf/amd64
   * new format: added support for linux elf/ppc32
