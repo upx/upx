@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2006-03-08.
+UPX TODO list. Last updated 2006-03-11.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -7,6 +7,8 @@ IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
 
 
 OTHER:
+
+- docs: convert docs from upx.pod to use AsciiDoc
 
 - check all <const_cast> to make sure they are not invalid
 
