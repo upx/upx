@@ -106,8 +106,8 @@ PackMachPPC32::buildMachLoader(
 
     linker->addSection("MACOS000", proto, szproto);
 
-    addLoader("MACOS000", 0);
-    addLoader("FOLDEXEC", 0);
+    addLoader("MACOS000", NULL);
+    addLoader("FOLDEXEC", NULL);
     return getLoaderSize();
 }
 

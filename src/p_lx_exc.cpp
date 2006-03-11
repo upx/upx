@@ -291,71 +291,71 @@ PackLinuxI386::buildLinuxLoader(
             // compressed data
         b_len + ph.c_len );
             // entry to stub
-    addLoader("LEXEC000", 0);
+    addLoader("LEXEC000", NULL);
 
     if (ft->id) {
         if (ph.format==UPX_F_LINUX_ELF_i386) { // decompr, unfilter are separate
-            addLoader("LXUNF000", 0);
-            addLoader("LXUNF002", 0);
+            addLoader("LXUNF000", NULL);
+            addLoader("LXUNF002", NULL);
                 if (0x80==(ft->id & 0xF0)) {
                     if (256==n_mru) {
-                        addLoader("MRUBYTE0", 0);
+                        addLoader("MRUBYTE0", NULL);
                     }
                     else if (n_mru) {
-                        addLoader("LXMRU005", 0);
+                        addLoader("LXMRU005", NULL);
                     }
                     if (n_mru) {
-                        addLoader("LXMRU006", 0);
+                        addLoader("LXMRU006", NULL);
                     }
                     else {
-                        addLoader("LXMRU007", 0);
+                        addLoader("LXMRU007", NULL);
                     }
             }
             else if (0x40==(ft->id & 0xF0)) {
-                addLoader("LXUNF008", 0);
+                addLoader("LXUNF008", NULL);
             }
-            addLoader("LXUNF010", 0);
+            addLoader("LXUNF010", NULL);
         }
         if (n_mru) {
-            addLoader("LEXEC009", 0);
+            addLoader("LEXEC009", NULL);
         }
     }
-    addLoader("LEXEC010", 0);
-    addLoader(getDecompressor(), 0);
-    addLoader("LEXEC015", 0);
+    addLoader("LEXEC010", NULL);
+    addLoader(getDecompressor(), NULL);
+    addLoader("LEXEC015", NULL);
     if (ft->id) {
         if (ph.format==UPX_F_LINUX_ELF_i386) {  // decompr, unfilter are separate
             if (0x80!=(ft->id & 0xF0)) {
-                addLoader("LXUNF042", 0);
+                addLoader("LXUNF042", NULL);
             }
         }
         else {  // decompr, unfilter not separate
             if (0x80==(ft->id & 0xF0)) {
-                addLoader("LEXEC110", 0);
+                addLoader("LEXEC110", NULL);
                 if (n_mru) {
-                    addLoader("LEXEC100", 0);
+                    addLoader("LEXEC100", NULL);
                 }
                 // bug in APP: jmp and label must be in same .asx/.asy
-                addLoader("LEXEC016", 0);
+                addLoader("LEXEC016", NULL);
             }
         }
         addFilter32(ft->id);
         if (ph.format==UPX_F_LINUX_ELF_i386) { // decompr, unfilter are separate
             if (0x80==(ft->id & 0xF0)) {
                 if (0==n_mru) {
-                    addLoader("LXMRU058", 0);
+                    addLoader("LXMRU058", NULL);
                 }
             }
-            addLoader("LXUNF035", 0);
+            addLoader("LXUNF035", NULL);
         }
         else {  // decompr always unfilters
-            addLoader("LEXEC017", 0);
+            addLoader("LEXEC017", NULL);
         }
     }
 
-    addLoader("IDENTSTR", 0);
-    addLoader("LEXEC020", 0);
-    addLoader("FOLDEXEC", 0);
+    addLoader("IDENTSTR", NULL);
+    addLoader("LEXEC020", NULL);
+    addLoader("FOLDEXEC", NULL);
 
     char *ptr_cto = (char *)const_cast<unsigned char *>(getLoader());
     int sz_cto = getLoaderSize();

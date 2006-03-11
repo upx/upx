@@ -147,38 +147,38 @@ void PackLinuxI386interp::pack3(OutputFile *fo, Filter &/*ft*/)
         initLoader(linux_i386pti_loader, sizeof(linux_i386pti_loader));
         linker->addSection("FOLDEXEC", linux_i386pti_fold, sizeof(linux_i386pti_fold));
 
-        addLoader("LXPTI000", 0);
+        addLoader("LXPTI000", NULL);
 
-        addLoader("LXPTI040", 0);
-        ph.method = M_NRV2B_LE32; addLoader(getDecompressor(), 0);
-        addLoader("LXPTI090", 0);
+        addLoader("LXPTI040", NULL);
+        ph.method = M_NRV2B_LE32; addLoader(getDecompressor(), NULL);
+        addLoader("LXPTI090", NULL);
 
-        addLoader("LXPTI041", 0);
-        ph.method = M_NRV2D_LE32; addLoader(getDecompressor(), 0);
-        addLoader("LXPTI090", 0);
+        addLoader("LXPTI041", NULL);
+        ph.method = M_NRV2D_LE32; addLoader(getDecompressor(), NULL);
+        addLoader("LXPTI090", NULL);
 
-        addLoader("LXPTI042", 0);
-        ph.method = M_NRV2E_LE32; addLoader(getDecompressor(), 0);
-        addLoader("LXPTI090", 0);
+        addLoader("LXPTI042", NULL);
+        ph.method = M_NRV2E_LE32; addLoader(getDecompressor(), NULL);
+        addLoader("LXPTI090", NULL);
 
-        addLoader("LXPTI043", 0);
-        ph.method = M_CL1B_LE32;  addLoader(getDecompressor(), 0);
-        addLoader("LXPTI090", 0);
+        addLoader("LXPTI043", NULL);
+        ph.method = M_CL1B_LE32;  addLoader(getDecompressor(), NULL);
+        addLoader("LXPTI090", NULL);
 
-        addLoader("LXPTI091", 0);
+        addLoader("LXPTI091", NULL);
 
-        addLoader("LXPTI140", 0);
+        addLoader("LXPTI140", NULL);
 
-        addLoader("LXUNF002,LXUNF008,LXUNF010", 0);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", NULL);
         addFilter32(0x46);
-        addLoader("LXUNF042,LXUNF035", 0);
+        addLoader("LXUNF042,LXUNF035", NULL);
 
-        addLoader("LXUNF002,LXUNF008,LXUNF010", 0);
+        addLoader("LXUNF002,LXUNF008,LXUNF010", NULL);
         addFilter32(0x49);
-        addLoader("LXUNF042,LXUNF035", 0);
+        addLoader("LXUNF042,LXUNF035", NULL);
 
-        addLoader("LXPTI200", 0);
-        addLoader("FOLDEXEC", 0);
+        addLoader("LXPTI200", NULL);
+        addLoader("FOLDEXEC", NULL);
         upx_byte const *p = getLoader();
         lsize = getLoaderSize();
         updateLoader(fo);

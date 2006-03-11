@@ -319,8 +319,8 @@ PackLinuxElf32ppc::buildLinuxLoader(
 
     linker->addSection("ELFPPC32", proto, szproto);
 
-    addLoader("ELFPPC32", 0);
-    addLoader("FOLDEXEC", 0);
+    addLoader("ELFPPC32", NULL);
+    addLoader("FOLDEXEC", NULL);
     return getLoaderSize();
 }
 
@@ -373,8 +373,8 @@ PackLinuxElf64amd::buildLinuxLoader(
 
     linker->addSection("ELF64AMD", proto, szproto);
 
-    addLoader("ELF64AMD", 0);
-    addLoader("FOLDEXEC", 0);
+    addLoader("ELF64AMD", NULL);
+    addLoader("FOLDEXEC", NULL);
     return getLoaderSize();
 }
 
