@@ -118,6 +118,10 @@ CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
 # gcc 3.4.5 (fold_*86.bin: 1670 / 947 / 1552 / 1212)
+# gcc 3.4.6 (fold_*86.bin: 1670 / 947 / 1552 / 1212) [unchanged from 3.4.5]
+# gcc 4.0.3 (fold_*86.bin: 1741 / 995 / 1639 / 1202)
+# gcc 4.1.0 (fold_*86.bin: 1644 / 947 / 1524 / 1144)
+## ==> TODO: upgrade to 4.1.0
 CC_LINUX_I386_GCC34  = gcc-3.4.5
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
