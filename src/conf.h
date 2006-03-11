@@ -298,7 +298,7 @@
 #  if (1 && (ACC_ARCH_I386))
 #    define __attribute_packed
 #  else
-#    define __attribute_packed    __attribute__((__packed__,__aligned__(1)))
+#    define __attribute_packed      __attribute__((__packed__,__aligned__(1)))
 #  endif
 #else
 #  define __attribute_packed
@@ -489,7 +489,7 @@ inline void operator delete[](void *p)
 extern const char *progname;
 void init_options(struct options_t *o);
 bool set_ec(int ec);
-#if defined(__GNUC__)
+#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void e_exit(int ec) __attribute__((__noreturn__));
 #else
 void e_exit(int ec);
@@ -501,7 +501,7 @@ void printSetNl(int need_nl);
 void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
-#if defined(__GNUC__)
+#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
         __attribute__((__format__(__printf__,2,3)));
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
@@ -511,7 +511,7 @@ void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
 #endif
 
-#if defined(__GNUC__)
+#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void __acc_cdecl_va infoWarning(const char *format, ...)
         __attribute__((__format__(__printf__,1,2)));
 void __acc_cdecl_va infoHeader(const char *format, ...)
