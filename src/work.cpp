@@ -266,7 +266,7 @@ void do_files(int i, int argc, char *argv[])
             do_one_file(iname,oname);
         } catch (const Exception &e) {
             unlink_ofile(oname);
-            if (opt->verbose >= 2 || (opt->verbose >= 1 && !e.isWarning()))
+            if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
                 printErr(iname,&e);
             set_ec(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
         } catch (const Error &e) {
