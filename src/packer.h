@@ -210,7 +210,7 @@ protected:
     virtual const upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
-#if 1 && (ACC_CC_GNUC >= 0x040100) && (ACC_OS_POSIX_LINUX)
+#if 1 && (ACC_CC_GNUC >= 0x040100)
     virtual void __acc_cdecl_va addLoader(const char *s, ...) __attribute__((__sentinel__));
 #else
     virtual void __acc_cdecl_va addLoader(const char *s, ...);
