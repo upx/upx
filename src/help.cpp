@@ -47,9 +47,9 @@ void show_head(void)
 #define V(x)    (strcmp(UPX_VERSION_STRING, UPX_VERSION_STRING4) ? UPX_VERSION_STRING : UPX_VERSION_STRING x)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
-                "                     Ultimate Packer for eXecutables\n"
-                "   Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006\n"
-                "UPX %-12s Markus Oberhumer, Laszlo Molnar & John Reiser %14s\n\n",
+                "                       Ultimate Packer for eXecutables\n"
+                "    Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006\n"
+                "UPX %-10s  Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
 #if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
 #elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
