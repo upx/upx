@@ -50,6 +50,7 @@ reg_mq  = 38*4
 reg_vrsave = 39*4
 
 
+_start: .globl _start  # ignored, but silence "cannot find entry symbol _start" from ld
 /* In:
    r31= &decompress; also 8+ (char *)&(offset to {l_info; p_info; b_info})
 */
