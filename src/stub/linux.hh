@@ -31,6 +31,17 @@
 //   section is now completely freestanding
 
 
+#if defined(__GNUC__)
+#  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#  elif defined(__GNUC_MINOR__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#  else
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
+#  endif
+#endif
+
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -43,7 +54,7 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef int int32_t;
 typedef unsigned uint32_t;
-#if defined(__GNUC__) && (__GNUC__ >= 3)
+#if (ACC_CC_GNUC >= 0x020800ul)
 __extension__ typedef long long int64_t;
 __extension__ typedef unsigned long long uint64_t;
 #elif defined(_WIN32)
@@ -548,16 +559,6 @@ struct p_info       // 12-byte packed program header follows stub loader
 #define CONST_CAST(type, var) \
     ((type) ((uintptr_t) (var)))
 
-
-#if defined(__GNUC__)
-#  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
-#  elif defined(__GNUC_MINOR__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
-#  else
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
-#  endif
-#endif
 
 #if (ACC_CC_GNUC >= 0x030300)
 #  define __attribute_cdecl     __attribute__((__cdecl__, __used__))
