@@ -392,10 +392,10 @@ void *upx_main(
     Elf32_Addr reloc;
     Elf32_Addr entry;
 
-    (void)junk;
-
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_pckhdrs = xi.size;
+
+    (void)junk;
 
     // Uncompress Ehdr and Phdrs.
     unpackExtent(&xi, &xo, f_decompress, 0);
