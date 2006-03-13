@@ -214,6 +214,27 @@ type name(type1 arg1) \
     return (type) __res; \
 }
 
+#define _syscall1nr(name,type1,arg1) \
+void __attribute__((__noreturn__)) name(type1 arg1) \
+{ \
+    if (Z1(__NR_##name)) { \
+        if (Z0(arg1)) { \
+            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %0; popl %%eax; int $0x80" \
+              : : "g" (__NR_##name) ); \
+        } else if (Z1(arg1)) { \
+            __asm__ __volatile__ ("push %1; popl %%ebx; push %0; popl %%eax; int $0x80" \
+              : : "g" (__NR_##name),"g" ((long)(arg1)) ); \
+        } else { \
+            __asm__ __volatile__ ("push %0; popl %%eax; int $0x80" \
+              : : "g" (__NR_##name),"b" ((long)(arg1))); \
+        } \
+    } else { \
+        __asm__ __volatile__ ("int $0x80" \
+            : : "a" (__NR_##name),"b" ((long)(arg1))); \
+    } \
+    for(;;) ; \
+}
+
 // special for mmap; somehow Z0(arg1) and Z1(arg1) do not work
 #define _syscall1m(type,name,type1,arg1) \
 type name(type1 arg1) \
@@ -310,7 +331,7 @@ static inline _syscall1(int,adjtimex,struct timex *,ntx)
 static inline _syscall1(void *,brk,void *,high)
 static inline _syscall1(int,close,int,fd)
 static inline _syscall3(int,execve,const char *,file,char **,argv,char **,envp)
-static inline _syscall1(int,_exit,int,exitcode)
+static inline _syscall1nr(_exit,int,exitcode)
 static inline _syscall3(int,fcntl,int,fd,int,cmd,long,arg)
 static inline _syscall2(int,ftruncate,int,fd,size_t,len)
 static inline _syscall0(pid_t,fork)
