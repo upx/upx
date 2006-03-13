@@ -508,6 +508,7 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 
 fold_pti86.o: fold_pti86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -o $@ $<
+	$(OBJSTRIP_LINUX_I386) $@
 
 fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_pti86.lds -Map $T.map -o $T.bin $T.o l_lx_pti.o
@@ -532,6 +533,7 @@ fold_machppc32.o: fold_machppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 
 upxb: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
+	$(OBJSTRIP_LINUX_I386) $T.o
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
 	$(STRIPELF_LINUX_I386) $@
@@ -539,6 +541,7 @@ upxb: l_lx_sep.o l_lx_sep86.asm
 
 upxd: l_lx_sep.o l_lx_sep86.asm
 	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
+	$(OBJSTRIP_LINUX_I386) $T.o
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
 	$(STRIPELF_LINUX_I386) $@
