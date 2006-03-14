@@ -96,14 +96,8 @@ do_brk(void *addr)
     return brk(addr);
 }
 
-static char *
-__attribute_cdecl
-do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-    (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return mmap((void *)&addr);
-}
-
+extern char *mmap(void *addr, size_t len,
+    int prot, int flags, int fd, off_t offset);
 
 /*************************************************************************
 // UPX & NRV stuff
@@ -270,7 +264,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = do_mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
     munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
     return (unsigned long)addr - lo;
@@ -310,7 +304,7 @@ do_xmap(
         haddr += reloc;
 
         // Decompressor can overrun the destination by 3 bytes.
-        if (addr != do_mmap(addr, mlen + (xi ? 3 : 0), PROT_READ | PROT_WRITE,
+        if (addr != mmap(addr, mlen + (xi ? 3 : 0), PROT_READ | PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 fdi, phdr->p_offset - frag) ) {
             err_exit(8);
@@ -334,7 +328,7 @@ ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
-            if (addr != do_mmap(addr, haddr - addr, prot,
+            if (addr != mmap(addr, haddr - addr, prot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
                 err_exit(9);
             }

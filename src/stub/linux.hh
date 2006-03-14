@@ -351,7 +351,6 @@ static inline _syscall0(pid_t,getpid)
 static inline _syscall2(int,getrusage,int,who,struct rusage *,usage);
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
-static inline _syscall1m(caddr_t,mmap,const int *,args)
 static inline _syscall3(int,mprotect,void *,addr,size_t,len,int,prot)
 static inline _syscall3(int,msync,const void *,start,size_t,length,int,flags)
 static inline _syscall2(int,munmap,void *,start,size_t,length)

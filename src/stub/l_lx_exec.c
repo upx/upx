@@ -127,14 +127,8 @@ static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 }
 
 
-static unsigned char *
-__attribute_cdecl
-do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-    (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return (unsigned char *) mmap((void *)&addr);
-}
-
+extern char *mmap(void *addr, size_t len,
+    int prot, int flags, int fd, off_t offset);
 
 #if defined(__i386__)
 #  define SET2(p, c0, c1) \
@@ -359,7 +353,7 @@ void upx_main(
 
 #if defined(USE_MMAP_FO)
     // FIXME: packer could set length
-    buf = do_mmap(0, header.p_filesize,
+    buf = (unsigned char *)mmap(0, header.p_filesize,
         PROT_READ | PROT_WRITE, MAP_SHARED, fdo, 0);
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
@@ -367,13 +361,13 @@ void upx_main(
     // Decompressor can overrun the output by 3 bytes.
     // Defend against SIGSEGV by using a scratch page.
     // FIXME: packer could set address delta
-    do_mmap(buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK)),
+    mmap(buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK)),
         -PAGE_MASK, PROT_READ | PROT_WRITE,
         MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
 #else
     // Temporary decompression buffer.
     // FIXME: packer could set length
-    buf = do_mmap(0, (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK,
+    buf = mmap(0, (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK,
         PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;

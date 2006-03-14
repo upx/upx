@@ -115,5 +115,17 @@ EXTERN pti_main
         sub edi,edi
         ret  ; goto entry point
 
+%define __NR_mmap 90
+
+        global mmap
+mmap:
+        push ebx
+        lea ebx, [2*4 + esp]
+        push byte __NR_mmap
+        pop eax
+        int 0x80
+        pop ebx
+        ret
+
 ; vi:ts=8:et:nowrap
 

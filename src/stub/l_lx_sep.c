@@ -111,15 +111,6 @@ do_brk(void *addr)
     return brk(addr);
 }
 
-static char *
-__attribute_cdecl
-do_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-    (void)len; (void)prot; (void)flags; (void)fd; (void)offset;
-    return mmap((int *)&addr);
-}
-
-
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
@@ -264,7 +255,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
             do_brk(haddr+OVERHEAD);  // Also takes care of whole pages of .bss
         }
         // Decompressor can overrun the destination by 3 bytes.
-        if (addr != do_mmap(addr, mlen + (f_decompress ? 3 : 0), PROT_READ | PROT_WRITE,
+        if (addr != mmap(addr, mlen + (f_decompress ? 3 : 0), PROT_READ | PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE | (f_decompress ? MAP_ANONYMOUS : 0),
                 fdi, phdr->p_offset - frag) ) {
             err_exit(8);
@@ -286,7 +277,7 @@ do_xmap(int fdi, Elf32_Ehdr const *const ehdr, f_expand *const f_decompress,
                 addr += frag + mlen;
                 mlen = haddr - addr;
                 if (0 < (int)mlen) { // need more pages, too
-                    if (addr != do_mmap(addr, mlen, PROT_READ | PROT_WRITE,
+                    if (addr != mmap(addr, mlen, PROT_READ | PROT_WRITE,
                             MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
                         err_exit(9);
 ERR_LAB
