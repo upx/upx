@@ -77,7 +77,7 @@ static const
 
 PackPs1::PackPs1(InputFile *f) :
     super(f),
-    isCon(true^opt->ps1_exe.boot_only), is32Bit(true^opt->ps1_exe.do_8bit),
+    isCon(!opt->ps1_exe.boot_only), is32Bit(!opt->ps1_exe.do_8bit),
     overlap(0), sa_cnt(0)
 {
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
