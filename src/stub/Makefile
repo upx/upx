@@ -101,24 +101,23 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ### i386-linux
 ###
 
-LD_LINUX_I386 = ld-2.13.2 -m elf_i386
 LD_LINUX_I386 = ld -m elf_i386
 OBJCOPY_LINUX_I386 = objcopy -F elf32-i386
 OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
 STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
 
-# gcc 2.7.2.3 (fold_*86.bin: 1905 / 1011 / 1791 / 1406)
+# gcc 2.7.2.3 (fold_*86.bin: 1900 / 1011 / 1786 / 1401)
 CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
 CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
-# gcc 2.95.3 (fold_*86.bin: 1773 / 995 / 1664 / 1317)
+# gcc 2.95.3 (fold_*86.bin: 1770 / 995 / 1661 / 1314)
 CC_LINUX_I386_GCC295  = gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
-# gcc 3.4.5 (fold_*86.bin: 1651 / 947 / 1537 / 1190)
-CC_LINUX_I386_GCC34  = gcc-3.4.5
+# gcc 3.4.6 (fold_*86.bin: 1651 / 947 / 1537 / 1190)
+CC_LINUX_I386_GCC34  = gcc-3.4.6
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
@@ -127,7 +126,7 @@ CC_LINUX_I386_GCC34 += -mpreferred-stack-boundary=2
 CC_LINUX_I386_GCC34 += -fweb
 CC_LINUX_I386_GCC34 += -Werror
 
-# gcc 4.1.0 (fold_*86.bin: 1638 / 931 / 1514 / 1137)
+# gcc 4.1.0 (fold_*86.bin: 1725 / 963 / 1620 / 1202)
 # gcc 4.0.3 (fold_*86.bin: 1731 / 995 / 1625 / 1195)
 CC_LINUX_I386_GCC41  = gcc-4.1.0
 CC_LINUX_I386_GCC41 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
@@ -140,8 +139,8 @@ CC_LINUX_I386_GCC41 += -Werror
 
 CC_LINUX_I386  = $(CC_LINUX_I386_GCC272)
 CC_LINUX_I386  = $(CC_LINUX_I386_GCC295)
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC34)
 CC_LINUX_I386  = $(CC_LINUX_I386_GCC41)
+CC_LINUX_I386  = $(CC_LINUX_I386_GCC34)
 CC_LINUX_I386 += -nostdinc
 CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
 CC_LINUX_I386 += -funsigned-char
@@ -272,10 +271,10 @@ strings: all
 # // rules
 # ************************************************************************/
 
-%.asx : %.asm $(srcdir)/scripts/app_*.pl
+%.asx : %.asm $(srcdir)/scripts/app_i386.pl
 	$(APP_I386) $< $@
 
-%.asy : %.ash $(srcdir)/scripts/app_*.pl
+%.asy : %.ash $(srcdir)/scripts/app_i386.pl
 	$(APP_I386) $< $@
 
 
@@ -326,6 +325,7 @@ l_wcle.h: l_wcle.asx
 l_w32pe.h: l_w32pe.asx
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
+
 
 # /***********************************************************************
 # // atari/tos rules
