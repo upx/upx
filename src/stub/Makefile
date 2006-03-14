@@ -272,10 +272,10 @@ strings: all
 # // rules
 # ************************************************************************/
 
-%.asx : %.asm $(APP_I386)
+%.asx : %.asm $(srcdir)/scripts/app_*.pl
 	$(APP_I386) $< $@
 
-%.asy : %.ash $(APP_I386)
+%.asy : %.ash $(srcdir)/scripts/app_*.pl
 	$(APP_I386) $< $@
 
 
