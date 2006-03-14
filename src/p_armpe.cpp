@@ -1564,11 +1564,12 @@ void PackArmPe::pack(OutputFile *fo)
     // check the PE header
     // FIXME: add more checks
     if (!opt->force && (
-           ih.opthdrsize != 0xE0
-        || (ih.flags & EXECUTABLE) == 0
-        || ih.subsystem != 9
+           (ih.cpu != 0x1c0)
+        || (ih.opthdrsize != 0xe0)
+        || ((ih.flags & EXECUTABLE) == 0)
+        || (ih.subsystem != 9)
         || (ih.entry == 0 && !isdll)
-        || ih.ddirsentries != 16
+        || (ih.ddirsentries != 16)
 //        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
 //        || IDSIZE(PEDIR_COPYRIGHT)
        ))
