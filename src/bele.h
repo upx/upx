@@ -430,7 +430,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif
-#  ifndef LE16
+#  ifndef LE32
 #    define LE32    LE32_unaligned
 #  endif
 #endif
@@ -440,7 +440,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif
-#  ifndef LE16
+#  ifndef LE32
 #    define LE32    LE32_unaligned
 #  endif
 #endif
@@ -450,7 +450,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif
-#  ifndef LE16
+#  ifndef LE32
 #    define LE32    LE32_unaligned
 #  endif
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
