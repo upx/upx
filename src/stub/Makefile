@@ -422,7 +422,8 @@ l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
 	$(BIN2H) $T.bin linux_elfppc32_loader $@
 
 l_lx_elf64amd.h: l_lx_elf64amd.S amd_d_nrv2e.S
-	$(GCC_AMD64) -c $T.S
+	$(GCC_AMD64) -c $<
+	$(OBJSTRIP_AMD64) $T.o
 	$(LD_AMD64) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elf64amd_loader $@
 
@@ -444,6 +445,7 @@ l_lx_sh.o: l_lx_sh.c linux.hh $(MAKEFILE_DEPS)
 
 l_lx_pti.o: l_lx_pti.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
+	$(OBJSTRIP_LINUX_I386) $@
 
 fold_elf86.o: fold_elf86.asm
 	$(NASM) -f elf -o $@ $<
@@ -458,18 +460,20 @@ fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
 	$(BIN2H) $T.bin linux_i386elf_fold $@
 
 m_lx_elfppc32.o: m_lx_elfppc32.c $(MAKEFILE_DEPS)
-	$(GCC_PPC32) -Os -c $<
+	$(GCC_PPC32) -c -Os $<
 	$(OBJSTRIP_PPC32) $@
 
 a_lx_elf64amd.o: a_lx_elf64.c $(MAKEFILE_DEPS)
 	$(GCC_AMD64) -c -Os -o $@ $<
+	$(OBJSTRIP_AMD64) $@
 
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -c $<
 	$(OBJSTRIP_PPC32) $@
 
 fold_elf64amd.o: fold_elf64amd.S amd_bxx.S $(MAKEFILE_DEPS)
-	$(GCC_AMD64) -c -O $T.S
+	$(GCC_AMD64) -c $<
+	$(OBJSTRIP_AMD64) $@
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
@@ -507,7 +511,7 @@ fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
 	$(BIN2H) $T.bin linux_i386sh_fold $@
 
 fold_pti86.o: fold_pti86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -o $@ $<
+	$(NASM) -f elf -i$(UCL_I386)/ -o $@ $<
 	$(OBJSTRIP_LINUX_I386) $@
 
 fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
@@ -532,7 +536,7 @@ fold_machppc32.o: fold_machppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 	$(OBJSTRIP_PPC32) $@
 
 upxb: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2B -o $T.o l_lx_sep86.asm
+	$(NASM) -f elf -i$(UCL_I386)/ -dNRV2B -o $T.o l_lx_sep86.asm
 	$(OBJSTRIP_LINUX_I386) $T.o
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
@@ -540,7 +544,7 @@ upxb: l_lx_sep.o l_lx_sep86.asm
 	$(BRANDELF) $@
 
 upxd: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -i$(UCL_I386)/ -f elf -dNRV2D -o $T.o l_lx_sep86.asm
+	$(NASM) -f elf -i$(UCL_I386)/ -dNRV2D -o $T.o l_lx_sep86.asm
 	$(OBJSTRIP_LINUX_I386) $T.o
 	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
 	$(OBJSTRIP_LINUX_I386) $@
