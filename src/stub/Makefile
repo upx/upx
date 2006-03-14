@@ -592,6 +592,7 @@ l_w32pe.h:      $(DEPS2) $(DEPS3)
 
 l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
+l_lx_pti86.h:   l_lx_pti86.asm  macros.ash macros.asy $(DEPS3)
 l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
 
 
