@@ -158,6 +158,7 @@ PackArmPe::PackArmPe(InputFile *f) : super(f)
     kernel32ordinal = false;
     tlsindex = 0;
     big_relocs = 0;
+    sorelocs = 0;
     soxrelocs = 0;
 }
 
@@ -583,6 +584,7 @@ unsigned PackArmPe::processImports() // pass 1
         }
     }
     __attribute_packed;
+    COMPILE_TIME_ASSERT(sizeof(udll) == 32);
 
     // +1 for dllnum=0
     Array(struct udll, dlls, dllnum+1);
@@ -611,7 +613,6 @@ unsigned PackArmPe::processImports() // pass 1
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
-
                 //if (dlls[ic].isk32)
                 //    kernel32ordinal = true,k32o++;
             }
@@ -658,8 +659,8 @@ unsigned PackArmPe::processImports() // pass 1
     strcpy(dllnames,kernel32dll);
     im->dllname = k32namepos;
     im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;
+    *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryW
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddressA
     dllnames += sizeof(kernel32dll);
     importednames += sizeof(llgpa);
 
@@ -672,7 +673,7 @@ unsigned PackArmPe::processImports() // pass 1
             if (idlls[ic]->ordinal)
                 for (LE32 *tarr = idlls[ic]->lookupt; *tarr; tarr++)
                     if (*tarr & 0x80000000)
-                    *ordinals++ = *tarr;
+                        *ordinals++ = *tarr;
             */
         }
         else if (ic && strcasecmp(idlls[ic-1]->name,idlls[ic]->name) == 0)
@@ -702,6 +703,7 @@ unsigned PackArmPe::processImports() // pass 1
 
     Interval names(ibuf),iats(ibuf),lookups(ibuf);
     // create the preprocessed data
+    //ordinals -= k32o;
     upx_byte *ppi = oimport;  // preprocessed imports
     for (ic = 0; ic < dllnum; ic++)
     {
@@ -1562,14 +1564,14 @@ void PackArmPe::pack(OutputFile *fo)
     // check the PE header
     // FIXME: add more checks
     if (!opt->force && (
-        ih.opthdrsize != 0xE0
+           ih.opthdrsize != 0xE0
         || (ih.flags & EXECUTABLE) == 0
         || ih.subsystem != 9
         || (ih.entry == 0 && !isdll)
         || ih.ddirsentries != 16
-      /*|| IDSIZE(PEDIR_EXCEPTION*/) // is this used on i386?
+//        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
 //        || IDSIZE(PEDIR_COPYRIGHT)
-       )
+       ))
         throwCantPack("unexpected value in PE header (try --force)");
 
     if (IDSIZE(PEDIR_SEC))
@@ -1891,10 +1893,12 @@ void PackArmPe::pack(OutputFile *fo)
     ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
     ODSIZE(PEDIR_RESOURCE) = soresources;
     ic += soresources;
+
     processImports(ic);
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
+
     //processExports(&xport,ic);
     ODADDR(PEDIR_EXPORT) = soexport ? ic : 0;
     ODSIZE(PEDIR_EXPORT) = soexport;
@@ -1904,6 +1908,7 @@ void PackArmPe::pack(OutputFile *fo)
         ODSIZE(PEDIR_EXPORT) = IDSIZE(PEDIR_EXPORT);
     }
     ic += soexport;
+
     //processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
@@ -1986,6 +1991,8 @@ void PackArmPe::pack(OutputFile *fo)
     fo->write(obuf,clen);
     infoWriting("compressed data", clen);
     fo->write(loader,codesize);
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
     if ((ic = fo->getBytesWritten() & 3) != 0)
         fo->write(ibuf,4 - ic);
     fo->write(otls,sotls);
@@ -2037,6 +2044,8 @@ void PackArmPe::unpack(OutputFile *)
 {
 }
 
+
 /*
 vi:ts=4:et
 */
+

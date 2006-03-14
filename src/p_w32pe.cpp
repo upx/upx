@@ -159,6 +159,8 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     kernel32ordinal = false;
     tlsindex = 0;
     big_relocs = 0;
+    sorelocs = 0;
+    soxrelocs = 0;
     soloadconf = 0;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
@@ -591,6 +593,7 @@ unsigned PackW32Pe::processImports() // pass 1
         }
     }
     __attribute_packed;
+    COMPILE_TIME_ASSERT(sizeof(udll) == 32);
 
     // +1 for dllnum=0
     Array(struct udll, dlls, dllnum+1);
@@ -661,15 +664,15 @@ unsigned PackW32Pe::processImports() // pass 1
 
     unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
 
-    memcpy(importednames,llgpa,sizeof(llgpa));
+    memcpy(importednames, llgpa, sizeof(llgpa));
     if (!isdll)
-        memcpy(importednames + sizeof(llgpa) - 1,exitp,sizeof(exitp));
+        memcpy(importednames + sizeof(llgpa) - 1, exitp, sizeof(exitp));
     strcpy(dllnames,kernel32dll);
     im->dllname = k32namepos;
     im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls); // LoadLibraryA
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14; // GetProcAddress
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16; // VirtualProtect
+    *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryA
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddress
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16;   // VirtualProtect
     if (!isdll)
         *ordinals++ = ptr_diff(importednames,oimpdlls) + sizeof(llgpa) - 3; // ExitProcess
     dllnames += sizeof(kernel32dll);
