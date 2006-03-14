@@ -159,7 +159,7 @@ EXTERN upx_main
 ; ourselves the stub.  We would need a place to put the escape hatch
 ; "int $0x80; popa; ret", and some kernels do not allow execution
 ; on the stack.  So, we would have to dirty a page of the shell
-; or of /lib/ld-linux.so.  It's simpler just to omit the unapping.
+; or of /lib/ld-linux.so.  It's simpler just to omit the unmapping.
         popa
         ret
 
