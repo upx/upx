@@ -272,10 +272,10 @@ strings: all
 # // rules
 # ************************************************************************/
 
-%.asx : %.asm
+%.asx : %.asm $(APP_I386)
 	$(APP_I386) $< $@
 
-%.asy : %.ash
+%.asy : %.ash $(APP_I386)
 	$(APP_I386) $< $@
 
 
@@ -603,6 +603,5 @@ start-interp.o: start-interp.S
 	gcc -c $<
 interp.o: interp.c
 	gcc -c -g $<
-
 
 # vi:nowrap
