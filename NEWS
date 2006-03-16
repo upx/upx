@@ -6,6 +6,7 @@ User visible changes for UPX
 
 Changes in 1.95 beta (XX XXX 2006):
   * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+  * win32/pe: really worked around R6002 runtime errors
 
 Changes in 1.94 beta (11 Mar 2006):
   * new format: added support for arm/pe (ARM executables running on WinCE)
