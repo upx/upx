@@ -1,10 +1,12 @@
+MAKEFLAGS += -rR
+.SUFFIXES:
 SHELL = /bin/sh
 
 top_srcdir = ..
 
-PACKAGE      = upx
-VERSION_DATE = 12 Mar 2006
-VERSION     := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
+PACKAGE       = upx
+VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
+VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
 TRIMSPACE = cat
 TRIMSPACE = sed -e 's/ *$$//'
@@ -63,6 +65,4 @@ maintainer-clean: distclean
 ###
 
 $(BUILT_SOURCES): $(top_srcdir)/src/version.h Makefile
-
-.NOEXPORT:
 
