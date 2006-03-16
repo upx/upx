@@ -64,5 +64,5 @@ maintainer-clean: distclean
 ### dependencies
 ###
 
-$(BUILT_SOURCES): $(top_srcdir)/src/version.h Makefile
+$(BUILT_SOURCES): $(top_srcdir)/src/version.h $(MAKEFILE_LIST)
 
