@@ -218,7 +218,9 @@ relhi0:
                 jz      pedep9                  ; VirtualProtect failed
   %endif
 
-                and     byte [edi + 'SWRI'], 0x7f
+                lea     eax, [edi + 'SWRI']
+                and     byte [eax], 0x7f        ; marks UPX0 non writeable
+                and     byte [eax + 0x28], 0x7f ; marks UPX1 non writeable
 
   %if 0
                 push    esp

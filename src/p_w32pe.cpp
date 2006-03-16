@@ -1918,11 +1918,11 @@ void PackW32Pe::pack(OutputFile *fo)
         // file. If this check fails the runtime does "interesting" things
         // like not running the floating point initialization code - the result
         // is an R6002 runtime error.
-        // These supposed to be read only addresses are covered by the section
-        // UPX0 in the compressed files, so we have to patch the PE header
+        // These supposed to be read only addresses are covered by the sections
+        // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
         // in the memory. And the page on which the PE header is stored is read
-        // only so we must make it rw, fix the flag (i.e. clear
-        // PEFL_WRITE of osection[0].flags), and make it ro again.
+        // only so we must make it rw, fix the flags (i.e. clear
+        // PEFL_WRITE of osection[x].flags), and make it ro again.
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
@@ -1936,6 +1936,12 @@ void PackW32Pe::pack(OutputFile *fo)
         const unsigned addr = 0u - rvamin + swri;
         patch_le32(loader, codesize, "SWRI", addr &  0xfff);    // page offset
         patch_le32(loader, codesize, "IMGB", addr &~ 0xfff);    // page mask
+
+        // check whether osection[0].flags and osection[1].flags
+        // are on the same page
+        if ((swri & ~0xfff) != ((swri + sizeof(pe_section_t)) & ~0xfff))
+            throwCantPack("DEPHAK: page crossing problem! "
+                          "Send a bug report please!");
 #endif
         patch_le32(loader, codesize, "VPRO", myimport + get_le32(oimpdlls + 16) + 8);
     }
