@@ -12,9 +12,9 @@ B<upx> S<[ I<command> ]> S<[ I<options> ]> I<filename>...
 
 =head1 ABSTRACT
 
-            The Ultimate Packer for eXecutables
-  Copyright (c) 1996-2006 Markus Oberhumer & Laszlo Molnar
-               http://upx.sourceforge.net
+                    The Ultimate Packer for eXecutables
+   Copyright (c) 1996-2006 Markus Oberhumer, Laszlo Molnar & John Reiser
+                        http://upx.sourceforge.net
 
 
 B<UPX> is a portable, extendable, high-performance executable packer for
