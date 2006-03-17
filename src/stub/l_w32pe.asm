@@ -203,7 +203,7 @@ relhi0:
 %ifdef  __PEDEPHAK__
                 mov     ebp, [esi + 'VPRO']     ; VirtualProtect
                 lea     edi, [esi + 'IMGB']
-                mov     ebx, 0x1000
+                mov     ebx, 'IMGL'             ; 0x1000 or 0x2000
 
                 push    eax                     ; provide 4 bytes stack
 
