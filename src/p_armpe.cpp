@@ -566,7 +566,6 @@ unsigned PackArmPe::processImports() // pass 1
         LE32       *lookupt;
         unsigned   npos;
         bool       isk32;
-        unsigned   _;           // padding to 32
 
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
         {
@@ -582,9 +581,7 @@ unsigned PackArmPe::processImports() // pass 1
             if (!u2->shname) return -1;
             return strlen(u1->shname) - strlen(u2->shname);
         }
-    }
-    __attribute_packed;
-    COMPILE_TIME_ASSERT(sizeof(udll) == 32);
+    };
 
     // +1 for dllnum=0
     Array(struct udll, dlls, dllnum+1);
