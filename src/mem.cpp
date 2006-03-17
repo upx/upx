@@ -60,6 +60,8 @@ static int mcheck_init()
 MemBuffer::MemBuffer() :
     b(NULL), b_size(0)
 {
+    if (use_mcheck < 0)
+        mcheck_init();
 }
 
 MemBuffer::MemBuffer(unsigned size) :
@@ -87,7 +89,7 @@ void MemBuffer::dealloc()
             set_be32(b + b_size, 0);
             set_be32(b + b_size + 4, 0);
             //
-            ::free(b - 8);
+            ::free(b - 16);
         }
         else
             ::free(b);
@@ -173,7 +175,7 @@ void MemBuffer::alloc(unsigned size)
     assert(b_size == 0);
     //
     assert((int)size > 0);
-    unsigned total = use_mcheck ? size + 16 : size;
+    unsigned total = use_mcheck ? size + 32 : size;
     assert((int)total > 0);
     unsigned char *p = (unsigned char *) malloc(total);
     if (!p)
@@ -185,7 +187,7 @@ void MemBuffer::alloc(unsigned size)
     b_size = size;
     if (use_mcheck)
     {
-        b = p + 8;
+        b = p + 16;
         // store magic constants to detect buffer overruns
         set_be32(b - 8, b_size);
         set_be32(b - 4, MAGIC1(b));
