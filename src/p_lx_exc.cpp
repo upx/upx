@@ -108,12 +108,22 @@ PackLinuxI386::generateElfHdr(
 
     // Info for OS kernel to set the brk()
     if (brka) {
+#define PAGE_MASK (~0ul<<12)
+        // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
+        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
         h2->phdr[1].p_type = PT_LOAD;  // be sure
-        h2->phdr[1].p_offset = 0xfff&brka;
-        h2->phdr[1].p_vaddr = brka;
-        h2->phdr[1].p_paddr = brka;
+        h2->phdr[1].p_offset = ~PAGE_MASK & brkb;
+        h2->phdr[1].p_vaddr = brkb;
+        h2->phdr[1].p_paddr = brkb;
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+        if (0==h2->phdr[1].p_flags) {
+            h2->phdr[1].p_flags = Elf32_Phdr::PF_R|Elf32_Phdr::PF_W;
+        }
+        if (0==h2->phdr[1].p_align) {
+            h2->phdr[1].p_align = 0x1000;
+        }
+#undef PAGE_MASK
     }
 
     if (ph.format==UPX_F_LINUX_i386 ) {
@@ -128,7 +138,7 @@ PackLinuxI386::generateElfHdr(
     }
     else if (ph.format==UPX_F_LINUX_SH_i386) {
         assert(h2->ehdr.e_phnum==1);
-        h2->ehdr.e_phnum = 2;
+        h2->ehdr.e_phnum = 1;
         memset(&h2->linfo, 0, sizeof(h2->linfo));
         fo->write(h2, sizeof(*h2));
     }

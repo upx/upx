@@ -587,12 +587,16 @@ PackLinuxElf32::generateElfHdr(
 
     // Info for OS kernel to set the brk()
     if (brka) {
+#define PAGE_MASK (~0u<<12)
+        // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
+        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
         set_native32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
-        set_native32(&h2->phdr[1].p_offset, 0xfff&brka);
-        set_native32(&h2->phdr[1].p_vaddr, brka);
-        set_native32(&h2->phdr[1].p_paddr, brka);
+        set_native32(&h2->phdr[1].p_offset, ~PAGE_MASK & brkb);
+        set_native32(&h2->phdr[1].p_vaddr, brkb);
+        set_native32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+#undef PAGE_MASK
     }
 }
 
@@ -625,12 +629,16 @@ PackLinuxElf64::generateElfHdr(
 
     // Info for OS kernel to set the brk()
     if (brka) {
+#define PAGE_MASK (~0ul<<12)
+        // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
+        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
         set_native32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
-        set_native64(&h2->phdr[1].p_offset, 0xfff&brka);
-        set_native64(&h2->phdr[1].p_vaddr, brka);
-        set_native64(&h2->phdr[1].p_paddr, brka);
+        set_native64(&h2->phdr[1].p_offset, ~PAGE_MASK & brkb);
+        set_native64(&h2->phdr[1].p_vaddr, brkb);
+        set_native64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+#undef PAGE_MASK
     }
 }
 
