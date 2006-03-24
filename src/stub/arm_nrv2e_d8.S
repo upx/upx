@@ -28,6 +28,7 @@
    John F. Reiser
    <jreiser@users.sourceforge.net>
 */
+#define SAFE 0  /* 1 for src+dst bounds checking: cost 40 bytes */
 
 #define src  r0
 #define len  r1  /* overlaps 'cnt' */
@@ -35,12 +36,40 @@
 #define tmp  r3
 #define bits r4
 #define off  r5
-#define g1b  r6
-#define wrnk r7  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
+#define wrnk r6  /* 0x500  M2_MAX_OFFSET before "wrinkle" */
+#define srclim r7
+#if 1==SAFE  /*{*/
+#define dstlim r12
+#endif  /*}*/
 
 #define cnt  r1  /* overlaps 'len' while reading an offset */
 
-#define GETBIT  blx g1b
+#if 1==SAFE  /*{*/
+#define CHECK_SRC  cmp src,srclim; bhs bad_src_n2e
+#define CHECK_DST  cmp dst,dstlim; bhs bad_dst_n2e
+#else  /*}{*/
+#define CHECK_SRC  /*empty*/
+#define CHECK_DST  /*empty*/
+#endif  /*}*/
+
+#if 0  /*{ DEBUG only: check newly-decompressed against original dst */
+#define CHECK_BYTE \
+   push {wrnk}; \
+   ldrb  wrnk,[dst]; \
+   cmp   wrnk,tmp; beq 0f; bkpt; \
+0: pop  {wrnk}
+#else  /*}{*/
+#define CHECK_BYTE  /*empty*/
+#endif  /*}*/
+
+/* Putting get1_n2e in a register [r6:wrnk] inhibits branch prediction,
+   and saves only 14 bytes (9 calls, but 2 Thumb instr to setup).
+   'bl' takes 4 bytes and 2 cycles.  It is tempting to inline
+   "add bits,bits; beq <reload>" instead, but branching back costs
+   9*4 bytes with 4-byte alignment (adr tmp,<aligned_back>; b fetch8), or
+   9*6 bytes without alignment (bl fetch8; b <back>).
+*/
+#define GETBIT  bl get1_n2e
 
 #define getnextb(reg) GETBIT; adc reg,reg
 #define   jnextb0     GETBIT; bcc
@@ -48,39 +77,44 @@
 
 ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  @ ARM mode
         .type ucl_nrv2e_decompress_8, %function
-/* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
+/* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
+   Actual decompressed length is stored through plen_dst.
+   For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
+*/
         adr r12,1+thumb_nrv2e_d8; bx r12  @ enter THUMB mode
         .code 16  @ THUMB mode
 thumb_nrv2e_d8:
-        add r1,len,src  @ r1= eof_src;
-        push {r1,r2,r3, r4,r5,r6,r7, lr}
+        push {r2,r3, r4,r5,r6,r7, lr}
+#define sp_DST0 0  /* stack offset of original dst */
+        add srclim,len,src  @ srclim= eof_src;
+#if 1==SAFE  /*{*/
+        ldr tmp,[r3]  @ len_dst
+        add tmp,dst
+        mov dstlim,tmp
+#endif  /*}*/
         mov bits,#1; neg off,bits  @ off= -1 initial condition
         lsl bits,#31  @ 1<<31; refill next time
         mov wrnk,#5
-        lsl wrnk,#8  @ 0x500
-        adr g1b,get1_n2e  @ load pc-relative address
-        add g1b,#1  @ force THUMB mode
+        lsl wrnk,#8  @ 0x500  @ nrv2e M2_MAX_OFFSET
         b top_n2e
+
+#if 1==SAFE  /*{*/
+bad_dst_n2e:  # return value will be 2
+        add src,srclim,#1
+bad_src_n2e:  # return value will be 1
+        add src,#1
+#endif  /*}*/
 eof_n2e:
-        pop {r1,r3,r4}  @ r1= eof_src; r3= orig_dst; r4= plen_dst
-        sub src,r1  @ 0 if actual src length equals expected length
+        pop {r3,r4}  @ r3= orig_dst; r4= plen_dst
+        sub src,srclim  @ 0 if actual src length equals expected length
         sub dst,r3  @ actual dst length
         str dst,[r4]
         pop {r4,r5,r6,r7, pc}  @ return
 
-        .align 2  @ 1<<2  for benefit of loading address with 'adr' above
-get1_n2e:
-        adc bits,bits; bne get1r_n2e  @ CarryOut has data bit
-          ldrb bits,[src]  @ zero-extend next byte
-        adc bits,bits  @ double and insert CarryIn as low bit
-          add src,#1
-        lsl bits,#24  @ move to top byte, and set CarryOut from old bit 8
-get1r_n2e:
-        bx lr
-
 lit_n2e:
-        ldrb tmp,[src]; add src,#1
-        strb tmp,[dst]; add dst,#1
+        CHECK_SRC; ldrb tmp,[src]; add src,#1
+        CHECK_BYTE
+        CHECK_DST; strb tmp,[dst]; add dst,#1
 top_n2e:
         jnextb1 lit_n2e
         mov cnt,#1; b getoff_n2e
@@ -96,7 +130,7 @@ getoff_n2e:
         mov len,#0  @ Carry unaffected
         blo offprev_n2e  @ cnt was 2; tests Carry only
         lsl tmp,#8
-        ldrb off,[src]; add src,#1  @ low 7+1 bits
+        CHECK_SRC; ldrb off,[src]; add src,#1  @ low 7+1 bits
         orr  off,tmp
         mvn  off,off; beq eof_n2e  @ off= ~off
         asr  off,#1; bcs lenlast_n2e
@@ -117,17 +151,36 @@ lenlast_n2e:
         getnextb(len)  @ 0,1,2,3
         add len,#2
 gotlen_n2e:  @ 'cmn': add the inputs, set condition codes, discard the sum
-        cmn off,wrnk; bcs near_n2e  @ within M2_MAX_OFFSET
+        cmn wrnk,off; bcs near_n2e  @ within M2_MAX_OFFSET
         add len,#1  @ too far away, so minimum match length is 3
 near_n2e:
+#if 1==SAFE  /*{*/
+        ldr tmp,[sp,#sp_DST0]
+        sub tmp,dst
+        sub tmp,off; bcc bad_dst_n2e  @ reaching back too far
+
+        add tmp,dst,cnt
+        cmp tmp,dstlim; bhi bad_dst_n2e  @ too much output
+#endif  /*}*/
         ldrb tmp,[dst]  @ force cacheline allocate
 copy_n2e:
         ldrb tmp,[dst,off]
+        CHECK_BYTE
         strb tmp,[dst]; add dst,#1
         sub len,#1; bne copy_n2e
         b top_n2e
-
         .size ucl_nrv2e_decompress_8, .-ucl_nrv2e_decompress_8
+
+get1_n2e: .type get1_n2e, %function
+        add bits,bits; bne get1r_n2e  @ CarryOut has data bit
+          ldrb bits,[src]  @ zero-extend next byte
+        adc bits,bits  @ double and insert CarryIn as low bit
+          CHECK_SRC
+          add src,#1
+        lsl bits,#24  @ move to top byte, and set CarryOut from old bit 8
+get1r_n2e:
+        bx lr
+        .size get1_n2e, .-get1_n2e
 
 /*
 vi:ts=8:et:nowrap
