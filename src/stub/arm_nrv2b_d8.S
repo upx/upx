@@ -74,7 +74,7 @@ eof_n2b:
 
         .align 2  @ 1<<2  for benefit of loading address with 'adr' above
 get1_n2b:
-        adc bits,bits; bne get1r_n2b  @ CarryOut has data bit
+        add bits,bits; bne get1r_n2b  @ CarryOut has data bit
           ldrb bits,[src]  @ zero-extend next byte
         adc bits,bits  @ double and insert CarryIn as low bit
           add src,#1
