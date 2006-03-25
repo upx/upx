@@ -62,14 +62,8 @@
 #define CHECK_BYTE  /*empty*/
 #endif  /*}*/
 
-/* Putting get1_n2e in a register [r6:wrnk] inhibits branch prediction,
-   and saves only 14 bytes (9 calls, but 2 Thumb instr to setup).
-   'bl' takes 4 bytes and 2 cycles.  It is tempting to inline
-   "add bits,bits; beq <reload>" instead, but branching back costs
-   9*4 bytes with 4-byte alignment (adr tmp,<aligned_back>; b fetch8), or
-   9*6 bytes without alignment (bl fetch8; b <back>).
-*/
-#define GETBIT  bl get1_n2e
+/* "mov lr,pc; bxx ..." implements conditional subroutine call */
+#define GETBIT  add bits,bits; mov lr,pc; beq get1_n2e
 
 #define getnextb(reg) GETBIT; adc reg,reg
 #define   jnextb0     GETBIT; bcc
@@ -109,7 +103,16 @@ eof_n2e:
         sub src,srclim  @ 0 if actual src length equals expected length
         sub dst,r3  @ actual dst length
         str dst,[r4]
-        pop {r4,r5,r6,r7, pc}  @ return
+        pop {r4,r5,r6,r7 /*,pc*/}
+        pop {r1}; bx r1  @ "pop {,pc}" fails return to ARM mode on ARMv4T
+
+get1_n2e:  @ In: Carry set [from adding 0x80000000 (1<<31) to itself]
+          ldrb bits,[src]  @ zero-extend next byte
+        adc bits,bits  @ double and insert CarryIn as low bit
+          CHECK_SRC
+          add src,#1
+        lsl bits,#24  @ move to top byte, and set CarryOut from old bit 8
+        mov pc,lr  @ return, stay in current (THUMB) mode
 
 lit_n2e:
         CHECK_SRC; ldrb tmp,[src]; add src,#1
@@ -170,17 +173,6 @@ copy_n2e:
         sub len,#1; bne copy_n2e
         b top_n2e
         .size ucl_nrv2e_decompress_8, .-ucl_nrv2e_decompress_8
-
-get1_n2e: .type get1_n2e, %function
-        add bits,bits; bne get1r_n2e  @ CarryOut has data bit
-          ldrb bits,[src]  @ zero-extend next byte
-        adc bits,bits  @ double and insert CarryIn as low bit
-          CHECK_SRC
-          add src,#1
-        lsl bits,#24  @ move to top byte, and set CarryOut from old bit 8
-get1r_n2e:
-        bx lr
-        .size get1_n2e, .-get1_n2e
 
 /*
 vi:ts=8:et:nowrap
