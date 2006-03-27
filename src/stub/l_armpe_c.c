@@ -35,7 +35,7 @@ int thumb_nrv2e_d8(const unsigned char * src, unsigned src_len,
 
 void *LoadLibraryW(const unsigned short *);
 void *GetProcAddressA(const void *, const void *);
-void *get_le32(const unsigned char *p);
+void *get_le32(const void *);
 
 static void handle_imports(const unsigned char *imp, unsigned name_offset,
                            unsigned iat_offset)

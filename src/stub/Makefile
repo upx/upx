@@ -554,7 +554,7 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
-l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S
+l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S $(MAKEFILE_LIST)
 	$(GCC_ARM) -mthumb-interwork -c l_armpe_s.S arm_nrv2e_d8.S
 	$(GCC_ARM) -mthumb -mthumb-interwork -Os -c l_armpe_c.c
 	$(LD_ARM)  -o l_armpe_.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
