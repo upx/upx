@@ -292,6 +292,9 @@
 #define index               upx_index
 #define outp                upx_outp
 
+#undef PAGE_MASK
+#undef PAGE_SIZE
+
 
 #undef __attribute_packed
 #if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
