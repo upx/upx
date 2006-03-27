@@ -193,6 +193,7 @@ ifneq ($(wildcard $d),)
   LD_PPC32      := $d/powerpc-750-linux-gnu-ld
   OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
+GCC_PPC32     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 
 ###
@@ -216,16 +217,18 @@ ifneq ($(wildcard $d),)
   LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld -m elf_x86_64
   OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy -F elf64-x86-64
 endif
+GCC_AMD64     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 
 ###
 ### ARM-PE-WINCE
 ###
 
-GCC_ARM		:=  arm-9tdmi-linux-gnu-gcc -Os -march=armv4t
-LD_ARM		:=  arm-9tdmi-linux-gnu-ld
-OBJCOPY_ARM	:=  arm-9tdmi-linux-gnu-objcopy
-BIN2H_WINCE	:=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
+GCC_ARM       :=  arm-9tdmi-linux-gnu-gcc -march=armv4t -nostdinc -MMD
+GCC_ARM       += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+LD_ARM        :=  arm-9tdmi-linux-gnu-ld
+OBJCOPY_ARM   :=  arm-9tdmi-linux-gnu-objcopy
+BIN2H_WINCE   :=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
 
 
 # /***********************************************************************
@@ -552,8 +555,8 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(BRANDELF) $@
 
 l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S
-	$(GCC_ARM) -c -mthumb-interwork l_armpe_s.S arm_nrv2e_d8.S
-	$(GCC_ARM) -c -mthumb -mthumb-interwork l_armpe_c.c
+	$(GCC_ARM) -mthumb-interwork -c l_armpe_s.S arm_nrv2e_d8.S
+	$(GCC_ARM) -mthumb -mthumb-interwork -Os -c l_armpe_c.c
 	$(LD_ARM)  -o l_armpe_.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
 	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_.out l_armpe_.bin
 	$(BIN2H_WINCE) <l_armpe_.bin >l_armpe_.ah
