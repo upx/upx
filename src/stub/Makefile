@@ -222,9 +222,9 @@ endif
 ### ARM-PE-WINCE
 ###
 
-GCC_WINCE	:=  arm-wince-pe-gcc -Os
-LD_WINCE	:=  arm-wince-pe-ld
-OBJCOPY_WINCE	:=  arm-wince-pe-objcopy
+GCC_ARM		:=  arm-9tdmi-linux-gnu-gcc -Os -march=armv5t
+LD_ARM		:=  arm-9tdmi-linux-gnu-ld
+OBJCOPY_ARM	:=  arm-9tdmi-linux-gnu-objcopy
 BIN2H_WINCE	:=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
 
 
@@ -551,10 +551,11 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
-l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c
-	$(GCC_WINCE) -c l_armpe_s.S l_armpe_c.c
-	$(LD_WINCE) -nostdlib -o l_armpe_.out l_armpe_s.o l_armpe_c.o
-	$(OBJCOPY_WINCE) --only-section .text -O binary l_armpe_.out l_armpe_.bin
+l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S
+	$(GCC_ARM) -c -mthumb-interwork l_armpe_s.S arm_nrv2e_d8.S
+	$(GCC_ARM) -c -mthumb -mthumb-interwork l_armpe_c.c
+	$(LD_ARM)  -o l_armpe_.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
+	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_.out l_armpe_.bin
 	$(BIN2H_WINCE) <l_armpe_.bin >l_armpe_.ah
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@

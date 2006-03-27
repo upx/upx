@@ -77,6 +77,8 @@ ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  @ ARM mode
 */
         adr r12,1+thumb_nrv2e_d8; bx r12  @ enter THUMB mode
         .code 16  @ THUMB mode
+        .globl thumb_nrv2e_d8
+        .thumb_func
 thumb_nrv2e_d8:
         push {r2,r3, r4,r5,r6,r7, lr}
 #define sp_DST0 0  /* stack offset of original dst */

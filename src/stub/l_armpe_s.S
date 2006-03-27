@@ -31,18 +31,118 @@
 
         .text
         .align  0
-        .global _mainCRTStartup
+        .globl  upx_main
+        .globl  _start
 
-_mainCRTStartup:
+_start:
         stmfd   sp!, {r0 - r3, lr}
-	mov	r0, #L2 - L0 - 8
-L0:
-        add     r0, pc, r0
-	bl	_upx_main
+
+        @ touch all pages in ARM mode - this seems to be required
+        @ otherwise the THUMB mode stuff fails
+
+        adr     r0, SRC0
+        ldmia   r0, {r1, r2, r3}        @ r1 - src, r2 - slen, r3 - dst
+        add     r1, r1, r2
+L01:
+        ldr     r2, [r3]
+        add     r3, r3, #4096
+        cmp     r3, r1
+        bls     L01
+
+        blx     upx_main                @ call thumb
         ldmfd   sp!, {r0 - r3, lr}
-	ldr	pc, L21
+        ldr     pc, ENTR                @ original entry
+
+@@@@@@@@@@@@@@@@
+
+        .code   16
+        .global GetProcAddressA
+        .thumb_func
+
+GetProcAddressA:
+        ldr     r3, GETP
+t_callr3:
+        ldr     r3, [r3]
+        bx      r3
+
+@@@@@@@@@@@@@@@@
+
+        .global LoadLibraryW
+        .thumb_func
+
+LoadLibraryW:
+        ldr     r3, LLIB
+        b       t_callr3
+
+@@@@@@@@@@@@@@@@
+
+#if 0
+
+// debugging stuff - helpers for dumping memory to a file or deleting a file
+
+// !!!!! check the lines with "system dependent" below before trying
+
+        .global CFwrap
+        .thumb_func
+CFwrap:
+        push    {r3}
+        ldr     r3, createfilew
+        mov     ip, r3
+        pop     {r3}
+        bx      ip
+
+        .global WFwrap
+        .thumb_func
+WFwrap:
+        push    {r3}
+        ldr     r3, writefile
+        mov     ip, r3
+        pop     {r3}
+        bx      ip
+
+        .global CHwrap
+        .thumb_func
+CHwrap:
+        push    {r3}
+        ldr     r3, closehandle
+        mov     ip, r3
+        pop     {r3}
+        bx      ip
+
+        .global DelFile
+        .thumb_func
+DelFile:
+        adr     r1, filename
+        strb    r0, [r1, #2]
+        mov     r0, r1
+        ldr     r3, deleteffilew
+        mov     ip, r3
+        bx      ip
+
+        .code   32
+createfilew:
+        .word   0x1f7927c               @ system dependent
+closehandle:
+        .word   0x1f71594               @ system dependent
+deleteffilew:
+        .word   0x1f7b920               @ system dependent
+writefile:
+        .word   0x1f79434               @ system dependent
+filename:
+        .byte   '\\', 0, 'r', 0, 0, 0
+
+#endif
+
+@@@@@@@@@@@@@@@@ paramater area for UPX
+
+        .code   32
+        .align  2
         .ascii  "XxxX"
-L2:
-        .ascii  "SRC0DST0BIMPONAMGETPLOAD"
-L21:
-	.ascii  "ENTRSRCLDSTL"
+SRC0:   .ascii  "SRC0"
+SRCL:   .ascii  "SRCL"
+DST0:   .ascii  "DST0"
+        .ascii  "DSTL"
+        .ascii  "BIMPONAM"
+GETP:   .ascii  "GETP"
+LLIB:   .ascii  "LOAD"
+ENTR:   .ascii  "ENTR"

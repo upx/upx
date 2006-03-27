@@ -1794,15 +1794,14 @@ void PackArmPe::pack(OutputFile *fo)
     const unsigned myimport = ncsection + soresources - rvamin;
 
     // patch loader
-    patch_le32(loader, codesize, "DSTL", ph.u_len);
-    patch_le32(loader, codesize, "SRCL", ph.c_len);
-
     patch_le32(loader, codesize, "ENTR", ih.entry + ih.imagebase);
     patch_le32(loader, codesize, "LOAD", ih.imagebase + rvamin + myimport + get_le32(oimpdlls + 16));
     patch_le32(loader, codesize, "GETP", ih.imagebase + rvamin + myimport + get_le32(oimpdlls + 16) + 4);
     patch_le32(loader, codesize, "ONAM", ih.imagebase + myimport + rvamin);
     patch_le32(loader, codesize, "BIMP", ih.imagebase + rvamin + cimports);
+    patch_le32(loader, codesize, "DSTL", ph.u_len);
     patch_le32(loader, codesize, "DST0", ih.imagebase + rvamin);
+    patch_le32(loader, codesize, "SRCL", ph.c_len);
     patch_le32(loader, codesize, "SRC0", ih.imagebase + s1addr + ic);
 #if 0
     if (ih.entry)
