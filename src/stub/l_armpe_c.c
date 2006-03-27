@@ -41,10 +41,11 @@ static void *get_le32(const unsigned char *p)
     //return (void *) (p[0] + p[1] * 0x100 + p[2] * 0x10000 + p[3] * 0x1000000);
 
     // the code below is 4 bytes shorter than the above when compiled
-    unsigned ret;
-    int ic;
-    for (ic = 3; ic >= 0; ic--)
+    unsigned ret = 0;
+    int ic = 3;
+    do {
         ret = ret * 0x100 + p[ic];
+    } while (--ic >= 0);
     return (void *) ret;
 }
 
@@ -108,7 +109,8 @@ void CHWrap(int);
 
 void upx_main(const unsigned *info)
 {
-    int dlen = 0;
+    unsigned dlen = 0;
+#if 0
     unsigned src0 = *info++;
     unsigned srcl = *info++;
     unsigned dst0 = *info++;
@@ -118,6 +120,17 @@ void upx_main(const unsigned *info)
     unsigned getp = *info++;
     unsigned load = *info++;
     unsigned entr = *info++;
+#else
+    unsigned src0 = info[0];
+    unsigned srcl = info[1];
+    unsigned dst0 = info[2];
+//    unsigned dstl = info[3];
+    unsigned bimp = info[4];
+    unsigned onam = info[5];
+//    unsigned getp = info[6];
+//    unsigned load = info[7];
+//    unsigned entr = info[8];
+#endif
 
     //WRITEFILE2('0', (void*) 0x11000, load + 256 - 0x11000);
     ucl_nrv2e_decompress_8((void *) src0, srcl, (void *) dst0, &dlen);

@@ -168,7 +168,7 @@ upx_bzero(char *p, size_t len)
 
 
 static void
-auxv_up(Elf32_auxv_t *av, int const type, unsigned const value)
+auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
 {
     if (av)
     for (;; ++av) {
@@ -306,11 +306,13 @@ void *upx_main(
     Elf32_Addr entry;
 
     Extent xi, xo, xi0;
-    xi.buf  = (char *)(1+ (struct p_info const *)(1+ li));  // &b_info
+    xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
     xo.buf  = (char *)ehdr;
     xo.size = ((struct b_info const *)xi.buf)->sz_unc;
     xi0 = xi;
+
+    ACC_UNUSED(sz_ehdr);
 
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?

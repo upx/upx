@@ -29,8 +29,10 @@
    <jreiser@users.sourceforge.net>
 */
 
-typedef unsigned int size_t;
-typedef unsigned long long off_t;
+typedef long ssize_t;
+typedef unsigned long size_t;
+typedef size_t uintptr_t;
+__extension__ typedef unsigned long long off_t;
 typedef unsigned char nrv_byte;
 typedef unsigned int nrv_uint;
 
@@ -39,7 +41,15 @@ typedef unsigned int nrv_uint;
 #define PAGE_SIZE -PAGE_MASK
 #define O_RDONLY 0
 
-/*extern int exit(int) __attribute__ ((__noreturn__));*/
+int close(int);
+void exit(int) __attribute__((__noreturn__));
+int mprotect(void *, size_t, int);
+int open(char const *, unsigned, unsigned);
+ssize_t read(int, void *, size_t);
+
+#define CONST_CAST(type, var) \
+    ((type) ((uintptr_t) (var)))
+
 
 /*************************************************************************
 // configuration section
@@ -318,7 +328,7 @@ do_xmap(
 {
     Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
     Mach_ppc_thread_state const *entry = 0;
-    int j;
+    unsigned j;
 
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
@@ -387,7 +397,7 @@ upx_main(
 {
     Mach_ppc_thread_state const *entry;
     Extent xi, xo, xi0;
-    xi.buf  = (char *)(1+ (struct p_info const *)(1+ li));  // &b_info
+    xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
     xo.buf  = (char *)mhdr;
     xo.size = ((struct b_info const *)xi.buf)->sz_unc;
@@ -400,7 +410,7 @@ upx_main(
 
   { // Map dyld dynamic loader
     Mach_load_command const *lc = (Mach_load_command const *)(1+ mhdr);
-    int j;
+    unsigned j;
 
     for (j=0; j < mhdr->ncmds; ++j,
         (lc = (Mach_load_command const *)(lc->cmdsize + (char const *)lc))
@@ -411,7 +421,7 @@ upx_main(
         if (0 > fdi) {
             err_exit(18);
         }
-        if (sz_mhdr!=read(fdi, (void *)mhdr, sz_mhdr)) {
+        if ((ssize_t)sz_mhdr!=read(fdi, (void *)mhdr, sz_mhdr)) {
 ERR_LAB
             err_exit(19);
         }

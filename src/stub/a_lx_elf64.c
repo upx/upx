@@ -170,6 +170,8 @@ upx_bzero(char *p, size_t len)
     } while (--len);
 }
 #define bzero upx_bzero
+#else
+#define bzero(a,b)  __builtin_memset(a,0,b)
 #endif  /*}*/
 
 static void
@@ -317,8 +319,8 @@ upx_main(  // returns entry address
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
     xo.size = bi->sz_unc;
-    xi2.buf = (char *)bi; xi2.size = sz_compressed;
-    xi1.buf = (char *)bi; xi1.size = sz_compressed;
+    xi2.buf = CONST_CAST(char *, bi); xi2.size = sz_compressed;
+    xi1.buf = CONST_CAST(char *, bi); xi1.size = sz_compressed;
 
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xi2, &xo, f_decompress, 0);  // never filtered?
