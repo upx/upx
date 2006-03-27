@@ -89,6 +89,19 @@ call_upxmain:
 
 @@@@@@@@@@@@@@@@
 
+        .global get_le32
+        .thumb_func
+get_le32:                               @ optimized for size
+        mov     r1, #3
+g0:
+        ldrb    r3, [r0, r1]
+        lsl     r2, r2, #8
+        add     r2, r2, r3
+        sub     r1, #1
+        bpl     g0
+        mov     r0, r2
+        bx      lr
+
 #if 0
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file

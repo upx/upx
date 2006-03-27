@@ -35,19 +35,7 @@ int thumb_nrv2e_d8(const unsigned char * src, unsigned src_len,
 
 void *LoadLibraryW(const unsigned short *);
 void *GetProcAddressA(const void *, const void *);
-
-static void *get_le32(const unsigned char *p)
-{
-    //return (void *) (p[0] + p[1] * 0x100 + p[2] * 0x10000 + p[3] * 0x1000000);
-
-    // the code below is 4 bytes shorter than the above when compiled
-    unsigned ret = 0;
-    int ic = 3;
-    do {
-        ret = ret * 0x100 + p[ic];
-    } while (--ic >= 0);
-    return (void *) ret;
-}
+void *get_le32(const unsigned char *p);
 
 static void handle_imports(const unsigned char *imp, unsigned name_offset,
                            unsigned iat_offset)
