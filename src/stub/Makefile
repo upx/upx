@@ -222,7 +222,7 @@ endif
 ### ARM-PE-WINCE
 ###
 
-GCC_ARM		:=  arm-9tdmi-linux-gnu-gcc -Os -march=armv5t
+GCC_ARM		:=  arm-9tdmi-linux-gnu-gcc -Os -march=armv4t
 LD_ARM		:=  arm-9tdmi-linux-gnu-ld
 OBJCOPY_ARM	:=  arm-9tdmi-linux-gnu-objcopy
 BIN2H_WINCE	:=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'

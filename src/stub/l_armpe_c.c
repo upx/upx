@@ -38,7 +38,14 @@ void *GetProcAddressA(const void *, const void *);
 
 static void *get_le32(const unsigned char *p)
 {
-    return (void *) (p[0] + p[1] * 0x100 + p[2] * 0x10000 + p[3] * 0x1000000);
+    //return (void *) (p[0] + p[1] * 0x100 + p[2] * 0x10000 + p[3] * 0x1000000);
+
+    // the code below is 4 bytes shorter than the above when compiled
+    unsigned ret;
+    int ic;
+    for (ic = 3; ic >= 0; ic--)
+        ret = ret * 0x100 + p[ic];
+    return (void *) ret;
 }
 
 static void handle_imports(const unsigned char *imp, unsigned name_offset,
@@ -80,7 +87,7 @@ static void handle_imports(const unsigned char *imp, unsigned name_offset,
                 *iat++ = (unsigned) GetProcAddressA(dll, (void *) ord);
                 break;
             default:
-                *(int*) 1 = 0;
+                // *(int*) 1 = 0;
                 break;
             }
         }
@@ -98,7 +105,6 @@ void CHWrap(int);
     int l; WFwrap(h, buf, len, &l, 0); \
     CHwrap(h); \
     } while (0)
-
 
 void upx_main(const unsigned *info)
 {

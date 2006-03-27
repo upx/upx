@@ -49,9 +49,19 @@ L01:
         cmp     r3, r1
         bls     L01
 
-        blx     upx_main                @ call thumb
+#ifdef __ARM_ARCH_4T__
+        adr     lr, armret
+        adr     ip, call_upxmain + 1
+        bx      ip
+armret:
+        ldmfd   sp!, {r0 - r3, lr}
+        ldr     ip, ENTR
+        bx      ip
+#else
+        blx     upx_main                @ call thumb armv5t style
         ldmfd   sp!, {r0 - r3, lr}
         ldr     pc, ENTR                @ original entry
+#endif
 
 @@@@@@@@@@@@@@@@
 
@@ -73,6 +83,9 @@ t_callr3:
 LoadLibraryW:
         ldr     r3, LLIB
         b       t_callr3
+
+call_upxmain:
+        b       upx_main
 
 @@@@@@@@@@@@@@@@
 
@@ -137,7 +150,6 @@ filename:
 
         .code   32
         .align  2
-        .ascii  "XxxX"
 SRC0:   .ascii  "SRC0"
 SRCL:   .ascii  "SRCL"
 DST0:   .ascii  "DST0"
