@@ -48,6 +48,7 @@
 
 // <stddef.h>
 typedef long ptrdiff_t;
+typedef long ssize_t;
 typedef unsigned long size_t;
 // <stdint.h>
 typedef unsigned char uint8_t;
@@ -130,6 +131,16 @@ struct timespec {
 #define MAP_DENYWRITE 0x0800  /* ETXTBSY */
 
 
+/*************************************************************************
+// i386 syscalls
+//
+// Because of different <asm/unistd.h> versions and subtle bugs
+// in both gcc and egcs we define all syscalls manually.
+//
+// Also, errno conversion is not necessary in our case, and we
+// use optimized assembly statements to further decrease the size.
+**************************************************************************/
+
 #if defined(__i386__)  /*{*/
 
 // <asm/unistd.h>
@@ -158,17 +169,6 @@ struct timespec {
 #define __NR_msync              144
 #define __NR_nanosleep          162
 #define __NR_getcwd             183
-
-
-/*************************************************************************
-// syscalls
-//
-// Because of different <asm/unistd.h> versions and subtle bugs
-// in both gcc and egcs we define all syscalls manually.
-//
-// Also, errno conversion is not necessary in our case, and we
-// use optimized assembly statements to further decrease the size.
-**************************************************************************/
 
 #undef _syscall0
 #undef _syscall1
@@ -357,24 +357,23 @@ static inline _syscall2(int,munmap,void *,start,size_t,length)
 static inline _syscall2(int,nanosleep,const struct timespec *,rqtp,struct timespec *,rmtp)
 static inline _syscall3(int,open,const char *,file,int,flag,int,mode)
 static inline _syscall1(int,personality,unsigned long,persona)
-static inline _syscall3(int,read,int,fd,char *,buf,off_t,count)
+static inline _syscall3(ssize_t,read,int,fd,void *,buf,size_t,count)
 static inline _syscall3(pid_t,waitpid,pid_t,pid,int *,wait_stat,int,options)
-static inline _syscall3(int,write,int,fd,const char *,buf,off_t,count)
+static inline _syscall3(ssize_t,write,int,fd,const void *,buf,size_t,count)
 static inline _syscall1(int,unlink,const char *,file)
-
 
 #undef Z0
 #undef Z1
 
 #else  /*}{ generic */
 
-extern void *brk(void *);
-extern int close(int);
-extern void *mmap(void *, size_t, int, int, int, off_t);
-extern int munmap(void *, size_t);
-extern int mprotect(void const *, size_t, int);
-extern int open(char const *, unsigned, unsigned);
-extern size_t read(int, void *, size_t);
+void *brk(void *);
+int close(int);
+void *mmap(void *, size_t, int, int, int, off_t);
+int munmap(void *, size_t);
+int mprotect(void const *, size_t, int);
+int open(char const *, unsigned, unsigned);
+ssize_t read(int, void *, size_t);
 
 #endif  /*}*/
 
@@ -530,8 +529,8 @@ typedef unsigned int nrv_uint32;
 
 // From ../p_unix.h
 struct b_info {     // 12-byte header before each compressed block
-    unsigned sz_unc;            // uncompressed_size
-    unsigned sz_cpr;            // compressed_size
+    uint32_t sz_unc;            // uncompressed_size
+    uint32_t sz_cpr;            // compressed_size
     unsigned char b_method;     // compression algorithm
     unsigned char b_ftid;       // filter id
     unsigned char b_cto8;       // filter parameter
