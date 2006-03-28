@@ -162,7 +162,7 @@ near_n2e:
 #if 1==SAFE  /*{*/
         ldr tmp,[sp,#sp_DST0]
         sub tmp,dst
-        sub tmp,off; bcc bad_dst_n2e  @ reaching back too far
+        sub tmp,off; bhi bad_dst_n2e  @ reaching back too far
 
         add tmp,dst,cnt
         cmp tmp,dstlim; bhi bad_dst_n2e  @ too much output
