@@ -177,6 +177,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
+    virtual unsigned find_SEGMENT_gap(unsigned const k);
 
 protected:
     virtual int buildLoader(const Filter *ft);

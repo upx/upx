@@ -180,26 +180,67 @@ PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
 }
 
+// Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
+// which follows in the file (or end-of-file).  Optimize for common case
+// where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
+
+unsigned PackMachPPC32::find_SEGMENT_gap(
+    unsigned const k
+)
+{
+    if (Mach_segment_command::LC_SEGMENT!=msegcmd[k].cmd
+    ||  0==msegcmd[k].filesize ) {
+        return 0;
+    }
+    unsigned const hi = get_native32(&msegcmd[k].fileoff) +
+                        get_native32(&msegcmd[k].filesize);
+    unsigned lo = ph.u_file_size;
+    unsigned j = k;
+    for (;;) { // circular search, optimize for adjacent ascending
+        ++j;
+        if (n_segment==j) {
+            j = 0;
+        }
+        if (k==j) {
+            break;
+        }
+        if (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd
+        &&  0!=msegcmd[j].filesize ) {
+            unsigned const t = get_native32(&msegcmd[j].fileoff);
+            if ((t - hi) < (lo - hi)) {
+                lo = t;
+                if (hi==lo) {
+                    break;
+                }
+            }
+        }
+    }
+    return lo - hi;
+}
+
 void
 PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
     Extent x;
     unsigned k;
 
-    ui_total_passes = n_segment;
+    // count passes, set ptload vars
+    ui_total_passes = 0;
+    for (k = 0; k < n_segment; ++k) {
+        if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
+        &&  0!=msegcmd[k].filesize ) {
+            ui_total_passes++;
+            if (find_SEGMENT_gap(k)) {
+                ui_total_passes++;
+            }
+        }
+    }
 
     // compress extents
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    ui_pass = -1;  // Compressing Mach headers is invisible to UI.
-    x.offset = 0;
-    x.size = mhdri.sizeofcmds;
-    {
-        int const old_level = ph.level; ph.level = 10;
-        packExtent(x, total_in, total_out, 0, fo);
-        ph.level = old_level;
-    }
+    unsigned hdr_ulen = mhdri.sizeofcmds;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -217,13 +258,17 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
         }
         packExtent(x, total_in, total_out,
             ((Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
-                ? &ft : 0 ), fo );
+                ? &ft : 0 ), fo, hdr_ulen );
+        hdr_ulen = 0;
         ++nx;
     }
-    if ((off_t)total_in < file_size) {  // non-LC_SEGMENT stuff
-        x.offset = total_in;
-        x.size = file_size - total_in;
-        packExtent(x, total_in, total_out, 0, fo);
+    for (k = 0; k < n_segment; ++k) {
+        x.size = find_SEGMENT_gap(k);
+        if (x.size) {
+            x.offset = get_native32(&msegcmd[k].fileoff) +
+                       get_native32(&msegcmd[k].filesize);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
     }
 
     if ((off_t)total_in != file_size)
@@ -296,6 +341,21 @@ PackMachPPC32::unpack(OutputFile *fo)
     fi->readx(ibuf, ph.c_len);
     Mach_header *const mhdr = (Mach_header *)new upx_byte[ph.u_len];
     decompress(ibuf, (upx_byte *)mhdr, false);
+    unsigned const ncmds = mhdr->ncmds;
+
+    msegcmd = new Mach_segment_command[ncmds];
+    unsigned char *ptr = (unsigned char *)(1+mhdr);
+    for (unsigned j= 0; j < ncmds; ++j) {
+        msegcmd[j] = *(Mach_segment_command *)ptr;
+        ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
+    }
+
+    // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
+    qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
+    n_segment = 0;
+    for (unsigned j= 0; j < ncmds; ++j) {
+        n_segment += (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd);
+    }
 
     unsigned total_in = 0;
     unsigned total_out = 0;
@@ -307,7 +367,7 @@ PackMachPPC32::unpack(OutputFile *fo)
     fi->seek(- (off_t)(sizeof(bhdr) + ph.c_len), SEEK_CUR);
     for (
         k = 0;
-        k < mhdr->ncmds;
+        k < ncmds;
         (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
     ) {
         if (Mach_segment_command::LC_SEGMENT==sc->cmd
@@ -316,11 +376,16 @@ PackMachPPC32::unpack(OutputFile *fo)
             unpackExtent(filesize, fo, total_in, total_out, c_adler, u_adler, false, sizeof(bhdr));
         }
     }
-    unsigned const rest = orig_file_size - total_out;
-    if (0!=rest) {  // non-LC_SEGMENT stuff
-        if (fo)
-            fo->seek(0, SEEK_END);
-        unpackExtent(rest, fo, total_in, total_out, c_adler, u_adler, false, sizeof(bhdr));
+    for (unsigned j = 0; j < ncmds; ++j) {
+        unsigned const size = find_SEGMENT_gap(j);
+        if (size) {
+            unsigned const where = get_native32(&msegcmd[k].fileoff) +
+                                   get_native32(&msegcmd[k].filesize);
+            if (fo)
+                fo->seek(where, SEEK_SET);
+            unpackExtent(size, fo, total_in, total_out,
+                c_adler, u_adler, false, sizeof(bhdr));
+        }
     }
 }
 
