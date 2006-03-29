@@ -35,7 +35,7 @@
 #define tmp  r3
 #define bits r4
 #define off  r5
-#define g1b  r6
+/*           r6  UNUSED */
 #define wrnk r7  /* 0xd00  M2_MAX_OFFSET before "wrinkle" */
 
 /* r12 ("ip") is assumed to be a scratch register. */
@@ -68,7 +68,8 @@ eof_n2b:
         sub src,r1  @ 0 if actual src length equals expected length
         sub dst,r3  @ actual dst length
         str dst,[r4]
-        pop {r4,r5,r6,r7, pc}  @ return
+        pop {r4,r5,r6,r7 /*,pc*/}
+        pop {r1}; bx r1  @ "pop {,pc}" fails return to ARM mode on ARMv4T
 
 get1_n2b:
         ldrb bits,[src]  @ zero-extend next byte
@@ -81,7 +82,6 @@ lit_n2b:
         ldrb tmp,[src]; add src,#1
         strb tmp,[dst]; add dst,#1
 top_n2b:
-
         jnextb1 lit_n2b
         mov len,#1  @ the msb
 getoff_n2b:  @ ss11 len= [2..)
