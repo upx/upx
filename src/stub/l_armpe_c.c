@@ -29,9 +29,16 @@
    <jreiser@users.sourceforge.net>
 */
 
+#ifdef NRV2E
 int thumb_nrv2e_d8(const unsigned char * src, unsigned src_len,
                    unsigned char * dst, unsigned * dst_len);
-#define ucl_nrv2e_decompress_8 thumb_nrv2e_d8
+#define ucl_decompress thumb_nrv2e_d8
+#elif defined(NRV2B)
+int go_thumb_n2b(const unsigned char * src, unsigned src_len,
+                 unsigned char * dst, unsigned * dst_len);
+#define ucl_decompress go_thumb_n2b
+#endif
+
 
 void *LoadLibraryW(const unsigned short *);
 void *GetProcAddressA(const void *, const void *);
@@ -85,9 +92,9 @@ static void handle_imports(const unsigned char *imp, unsigned name_offset,
 }
 
 // debugging stuff
-int CFWrap(short *, int, int, int, int, int, int);
+int CFwrap(short *, int, int, int, int, int, int);
 void WFwrap(int, const void *, int, int *, int);
-void CHWrap(int);
+void CHwrap(int);
 #define WRITEFILE2(name0, buf, len) \
     do { short b[3]; b[0] = '\\'; b[1] = name0; b[2] = 0; \
     int h = CFwrap(b, 0x40000000L, 3, 0, 2, 0x80, 0);\
@@ -120,8 +127,11 @@ void upx_main(const unsigned *info)
 //    unsigned entr = info[8];
 #endif
 
+#ifdef SAFE
+    dlen = info[3];
+#endif
     //WRITEFILE2('0', (void*) 0x11000, load + 256 - 0x11000);
-    ucl_nrv2e_decompress_8((void *) src0, srcl, (void *) dst0, &dlen);
+    ucl_decompress((void *) src0, srcl, (void *) dst0, &dlen);
     //WRITEFILE2('1', (void*) 0x11000, load + 256 - 0x11000);
     handle_imports((void *) bimp, onam, dst0);
     //WRITEFILE2('2', (void*) 0x11000, load + 256 - 0x11000);

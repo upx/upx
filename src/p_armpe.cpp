@@ -179,8 +179,14 @@ PackArmPe::~PackArmPe()
 
 const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2e[] = { M_NRV2E_8, -1 };
-    UNUSED(method); UNUSED(level);
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, -1 };
+    UNUSED(level);
+
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
     return m_nrv2e;
 }
 
@@ -1528,7 +1534,7 @@ unsigned PackArmPe::stripDebug(unsigned overlaystart)
 
 bool PackArmPe::canPack()
 {
-    if (!readFileHeader() || ih.cpu != 0x1c0)
+    if (!readFileHeader() || (ih.cpu != 0x1c0 && ih.cpu != 0x1c2))
         return false;
     return true;
 }
@@ -1539,10 +1545,11 @@ int PackArmPe::buildLoader(const Filter *ft)
     UNUSED(ft);
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader), -1, 2);
-    addLoader("ARMWPE00,ARMWPE99,"
-              "IDENTSTR,UPX1HEAD",
-              NULL
-             );
+    if (ph.method == M_NRV2E_8)
+        addLoader("ARMWPE2E", NULL);
+    else if (ph.method == M_NRV2B_8)
+        addLoader("ARMWPE2B", NULL);
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
     return getLoaderSize();
 }
 
@@ -1561,7 +1568,7 @@ void PackArmPe::pack(OutputFile *fo)
     // check the PE header
     // FIXME: add more checks
     if (!opt->force && (
-           (ih.cpu != 0x1c0)
+           (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
         || (ih.opthdrsize != 0xe0)
         || ((ih.flags & EXECUTABLE) == 0)
         || (ih.subsystem != 9)
@@ -1573,7 +1580,9 @@ void PackArmPe::pack(OutputFile *fo)
         throwCantPack("unexpected value in PE header (try --force)");
 
     if (IDSIZE(PEDIR_SEC))
-        throwCantPack("compressing certificate info is not supported");
+        IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
+    //    throwCantPack("compressing certificate info is not supported");
+
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files (win32/net) are not yet supported");
 #if 1

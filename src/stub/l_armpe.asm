@@ -39,9 +39,12 @@
 ; ============= ENTRY POINT
 ; =============
 
-;       __ARMWPE00__
+;       __ARMWPE2E__
 start:
-%include        "l_armpe_.ah"
+%include        "l_armpe2e.ah"
+;       __ARMWPE2B__
+%include        "l_armpe2b.ah"
+;       __ARMWPEHE__
 %include        "header.ash"
 eof:
 ;       __ARMWPE99__

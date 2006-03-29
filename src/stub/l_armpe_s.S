@@ -84,8 +84,10 @@ LoadLibraryW:
         ldr     r3, LLIB
         b       t_callr3
 
+#ifdef __ARM_ARCH_4T__
 call_upxmain:
         b       upx_main
+#endif
 
 @@@@@@@@@@@@@@@@
 

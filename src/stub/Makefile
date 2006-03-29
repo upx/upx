@@ -554,12 +554,16 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
-l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S $(MAKEFILE_LIST)
-	$(GCC_ARM) -mthumb-interwork -c l_armpe_s.S arm_nrv2e_d8.S
-	$(GCC_ARM) -mthumb -mthumb-interwork -Os -c l_armpe_c.c
-	$(LD_ARM)  -o l_armpe_.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_.out l_armpe_.bin
-	$(BIN2H_WINCE) <l_armpe_.bin >l_armpe_.ah
+l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_LIST)
+	$(GCC_ARM) -mthumb-interwork -c l_armpe_s.S arm_nrv2e_d8.S arm_nrv2b_d8.S
+	$(GCC_ARM) -mthumb -mthumb-interwork -Os -c l_armpe_c.c -DNRV2E
+	$(LD_ARM)  -o l_armpe2e.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
+	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe2e.out l_armpe2e.bin
+	$(BIN2H_WINCE) <l_armpe2e.bin >l_armpe2e.ah
+	$(GCC_ARM) -mthumb -mthumb-interwork -Os -c l_armpe_c.c -DNRV2B
+	$(LD_ARM)  -o l_armpe2b.out l_armpe_s.o l_armpe_c.o arm_nrv2b_d8.o
+	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe2b.out l_armpe2b.bin
+	$(BIN2H_WINCE) <l_armpe2b.bin >l_armpe2b.ah
 	$(NASM) -f bin -o $T.bin $<
 	$(BIN2H) $T.bin nrv_loader $@
 

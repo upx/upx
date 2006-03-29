@@ -40,7 +40,7 @@
 
 /* r12 ("ip") is assumed to be a scratch register. */
 
-#define GETBIT blx g1b
+#define GETBIT  add bits,bits; mov lr,pc; beq get1_n2b
 
 #define getnextb(reg) GETBIT; adc reg,reg
 #define   jnextb0     GETBIT; bcc
@@ -53,15 +53,14 @@ ucl_nrv2b_decompress_8: .globl ucl_nrv2b_decompress_8  @ ARM mode
         bx  r12  @ enter THUMB mode
 
         .code 16  @ THUMB mode
-go_thumb_n2b:
+        .thumb_func
+go_thumb_n2b: .globl go_thumb_n2b
         add r1,len,src  @ r1= eof_src;
         push {r1,r2,r3, r4,r5,r6,r7, lr}
         mov bits,#1; neg off,bits  @ off= -1 initial condition
         lsl bits,#31  @ 1<<31: refill next time
         mov wrnk,#0xd
         lsl wrnk,#8  @ 0xd00
-        adr g1b,get1_n2b  @ load pc-relative address
-        add g1b,#1  @ force THUMB mode
         b top_n2b
 
 eof_n2b:
@@ -71,23 +70,19 @@ eof_n2b:
         str dst,[r4]
         pop {r4,r5,r6,r7, pc}  @ return
 
-
-        .align 2  @ 1<<2  for benefit of loading address with 'adr' above
 get1_n2b:
-        add bits,bits; bne get1r_n2b  @ CarryOut has data bit
-          ldrb bits,[src]  @ zero-extend next byte
+        ldrb bits,[src]  @ zero-extend next byte
         adc bits,bits  @ double and insert CarryIn as low bit
-          add src,#1
+        add src,#1
         lsl bits,#24  @ move to top byte, and set CarryOut from old bit 8
-get1r_n2b:
-        bx lr
+        mov pc,lr
 
 lit_n2b:
         ldrb tmp,[src]; add src,#1
         strb tmp,[dst]; add dst,#1
 top_n2b:
-        jnextb1 lit_n2b
 
+        jnextb1 lit_n2b
         mov len,#1  @ the msb
 getoff_n2b:  @ ss11 len= [2..)
         getnextb(len)
