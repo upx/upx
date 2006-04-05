@@ -42,6 +42,10 @@
 ;       __ARMWPE2E__
 start:
 %include        "l_armpe2e.ah"
+;       __ARMWPE2EV4__
+%include        "l_armpe2e_v4.ah"
+;       __ARMWPE2EV4DLL__
+%include        "l_armpe2e_v4dll.ah"
 ;       __ARMWPE2B__
 %include        "l_armpe2b.ah"
 ;       __ARMWPEHE__

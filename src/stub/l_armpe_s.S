@@ -29,11 +29,18 @@
    <jreiser@users.sourceforge.net>
 */
 
+
+#undef STUB_IN_THUMB_MODE
+#if defined(__ARM_ARCH_4T__) || defined(__ARM_ARCH_5T__)
+# define STUB_IN_THUMB_MODE
+#endif
+
         .text
         .align  0
         .globl  upx_main
         .globl  _start
 
+#ifdef STUB_IN_THUMB_MODE
 _start:
         stmfd   sp!, {r0 - r3, lr}
 
@@ -41,27 +48,28 @@ _start:
         @ otherwise the THUMB mode stuff fails
 
         adr     r0, SRC0
+
         ldmia   r0, {r1, r2, r3}        @ r1 - src, r2 - slen, r3 - dst
         add     r1, r1, r2
-L01:
+.L01:
         ldr     r2, [r3]
         add     r3, r3, #4096
         cmp     r3, r1
-        bls     L01
+        bls     .L01
 
-#ifdef __ARM_ARCH_4T__
-        adr     lr, armret
+# ifdef __ARM_ARCH_4T__
+        adr     lr, .Larmret
         adr     ip, call_upxmain + 1
         bx      ip
-armret:
+.Larmret:
         ldmfd   sp!, {r0 - r3, lr}
         ldr     ip, ENTR
         bx      ip
-#else
+# else
         blx     upx_main                @ call thumb armv5t style
         ldmfd   sp!, {r0 - r3, lr}
         ldr     pc, ENTR                @ original entry
-#endif
+# endif
 
 @@@@@@@@@@@@@@@@
 
@@ -71,7 +79,7 @@ armret:
 
 GetProcAddressA:
         ldr     r3, GETP
-t_callr3:
+.Lcallr3:
         ldr     r3, [r3]
         bx      r3
 
@@ -82,12 +90,12 @@ t_callr3:
 
 LoadLibraryW:
         ldr     r3, LLIB
-        b       t_callr3
+        b       .Lcallr3
 
-#ifdef __ARM_ARCH_4T__
+# ifdef __ARM_ARCH_4T__
 call_upxmain:
         b       upx_main
-#endif
+# endif
 
 @@@@@@@@@@@@@@@@
 
@@ -95,16 +103,16 @@ call_upxmain:
         .thumb_func
 get_le32:                               @ optimized for size
         mov     r1, #3
-g0:
+.Lg0:
         ldrb    r3, [r0, r1]
         lsl     r2, r2, #8
         add     r2, r2, r3
         sub     r1, #1
-        bpl     g0
+        bpl     .Lg0
         mov     r0, r2
         bx      lr
 
-#if 0
+# if 0
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file
 
@@ -159,7 +167,122 @@ writefile:
 filename:
         .byte   '\\', 0, 'r', 0, 0, 0
 
+# endif
+
+#else // stub in ARM mode
+
+_start:
+# ifdef STUB_FOR_DLL
+        cmp     r1, #1
+        bne     .Lstart_orig
+# endif
+        stmfd   sp!, {r0 - r3, lr}
+        adr     r0, SRC0
+	bl	upx_main
+        ldmfd   sp!, {r0 - r3, lr}
+.Lstart_orig:
+	ldr	pc, ENTR
+
+        .global LoadLibraryW
+LoadLibraryW:
+        ldr     r3, LLIB
+        ldr     pc, [r3]
+
+        .global GetProcAddressA
+GetProcAddressA:
+        ldr     r3, GETP
+        ldr     pc, [r3]
+
+        .global get_le32
+get_le32:                               @ optimized for size
+        mov     r2, #3
+.Lg0:
+        ldrb    r3, [r0, r2]
+        subs    r2, r2, #1
+        add     r1, r3, r1, asl #8
+        bpl     .Lg0
+        mov     r0, r1
+gret:
+        mov     pc, lr
+
+# ifdef STUB_FOR_DLL
+        .global reloc_main
+        buffer  .req r0
+        dest    .req r1
+        addval  .req r2
+
+reloc_main:
+        ldr     buffer, BREL
+        ldr     addval, DST0
+        sub     dest, addval, #4
+
+.Lreloc_loop:
+        ldrb    r3, [buffer], #1
+        cmp     r3, #0
+        beq     gret
+        cmp     r3, #0xf0
+
+        bichs   ip, r3, #0xf0
+        ldrhsb  r3, [buffer, #1]        @ get_le16
+        addhs   ip, r3, ip, lsl #8
+        ldrhsb  r3, [buffer], #2
+        addhs   r3, r3, ip, lsl #8
+
+        add     dest, dest, r3
+        ldrb    r3, [dest]              @ get_be32
+        add     ip, r3, ip, lsl #8
+        ldrb    r3, [dest, #1]
+        add     ip, r3, ip, lsl #8
+        ldrb    r3, [dest, #2]
+        add     ip, r3, ip, lsl #8
+        ldrb    r3, [dest, #3]
+        add     ip, r3, ip, lsl #8
+        add     ip, ip, addval
+        str     ip, [dest]
+        b       .Lreloc_loop
+# endif
+
+# if 0
+
+// debugging stuff - helpers for dumping memory to a file or deleting a file
+
+// !!!!! check the lines with "system dependent" below before trying
+
+        .global CFwrap
+CFwrap:
+        ldr     pc, createfilew
+
+        .global WFwrap
+WFwrap:
+        ldr     pc, writefile
+
+        .global CHwrap
+CHwrap:
+        ldr     pc, closehandle
+
+        .global DelFile
+DelFile:
+        adr     r1, filename
+        strb    r0, [r1, #2]
+        mov     r0, r1
+        ldr     pc, deleteffilew
+
+        .code   32
+createfilew:
+        .word   0x1f7927c               @ system dependent
+closehandle:
+        .word   0x1f71594               @ system dependent
+deleteffilew:
+        .word   0x1f7b920               @ system dependent
+writefile:
+        .word   0x1f79434               @ system dependent
+filename:
+        .byte   '\\', 0, 'r', 0, 0, 0
+
+# endif
+
 #endif
+
 
 @@@@@@@@@@@@@@@@ paramater area for UPX
 
@@ -173,3 +296,8 @@ DST0:   .ascii  "DST0"
 GETP:   .ascii  "GETP"
 LLIB:   .ascii  "LOAD"
 ENTR:   .ascii  "ENTR"
+BREL:   .ascii  "BREL"
+
+#ifndef STUB_IN_THUMB_MODE
+# include "l_armpe_c.s"
+#endif

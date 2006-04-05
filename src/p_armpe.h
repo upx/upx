@@ -37,7 +37,7 @@ class PackArmPe_Export;
 
 
 /*************************************************************************
-// w32/pe
+// arm/pe
 **************************************************************************/
 
 class PackArmPe : public Packer
@@ -61,7 +61,7 @@ public:
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
-        {  UNUSED(version); return false; }
+        {  return version == 13; }
 
 protected:
     virtual int readFileHeader();
@@ -117,6 +117,8 @@ protected:
     unsigned cimports;              // rva of preprocessed imports
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
+
+    bool use_thumb_stub;
 
     struct pe_header_t
     {

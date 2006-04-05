@@ -29,20 +29,17 @@
    <jreiser@users.sourceforge.net>
 */
 
-#ifdef NRV2E
-int thumb_nrv2e_d8(const unsigned char * src, unsigned src_len,
-                   unsigned char * dst, unsigned * dst_len);
-#define ucl_decompress thumb_nrv2e_d8
-#elif defined(NRV2B)
-int go_thumb_n2b(const unsigned char * src, unsigned src_len,
-                 unsigned char * dst, unsigned * dst_len);
-#define ucl_decompress go_thumb_n2b
+#ifndef UCL_DECOMPRESS
+# error please define UCL_DECOMPRESS
 #endif
 
+int UCL_DECOMPRESS(const unsigned char * src, unsigned src_len,
+                   unsigned char * dst, unsigned * dst_len);
 
 void *LoadLibraryW(const unsigned short *);
 void *GetProcAddressA(const void *, const void *);
 void *get_le32(const void *);
+void reloc_main();
 
 static void handle_imports(const unsigned char *imp, unsigned name_offset,
                            unsigned iat_offset)
@@ -130,9 +127,13 @@ void upx_main(const unsigned *info)
 #ifdef SAFE
     dlen = info[3];
 #endif
-    //WRITEFILE2('0', (void*) 0x11000, load + 256 - 0x11000);
-    ucl_decompress((void *) src0, srcl, (void *) dst0, &dlen);
-    //WRITEFILE2('1', (void*) 0x11000, load + 256 - 0x11000);
+    //WRITEFILE2('0', (void*) dst0, info[7] + 256 - dst0);
+    UCL_DECOMPRESS((void *) src0, srcl, (void *) dst0, &dlen);
+    //WRITEFILE2('1', (void*) dst0, info[7] + 256 - dst0);
     handle_imports((void *) bimp, onam, dst0);
-    //WRITEFILE2('2', (void*) 0x11000, load + 256 - 0x11000);
+    //WRITEFILE2('2', (void*) dst0, info[7] + 256 - dst0);
+#ifdef STUB_FOR_DLL
+    reloc_main();
+    //WRITEFILE2('3', (void*) dst0, info[7] + 256 - dst0);
+#endif
 }
