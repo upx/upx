@@ -9,10 +9,10 @@
 #define r30 30
 #define r31 31
 
-	/* Stack pointer */
+/* Stack pointer */
 #define sp 1
 
-	/* Subroutine arguments; not saved by callee */
+/* Subroutine arguments; not saved by callee */
 #define a0 3
 #define a1 4
 #define a2 5
@@ -22,7 +22,7 @@
 #define a6 9
 #define a7 10
 
-	/* Scratch (temporary) registers; not saved by callee */
+/* Scratch (temporary) registers; not saved by callee */
 #define t0  2
 #define t1 11
 #define t2 12
@@ -38,3 +38,9 @@
 #define movr mr
 
 #endif  /*} __PPC_REGS__ */
+
+
+/*
+vi:ts=4:et:nowrap
+*/
+
