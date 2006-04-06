@@ -812,6 +812,7 @@ unsigned PackArmPe::processImports() // pass 1
 /*************************************************************************
 // export handling
 **************************************************************************/
+
 class Export
 {
     struct export_dir_t
@@ -1088,6 +1089,7 @@ void PackArmPe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
     tlsp->dataend = newaddr + sotls + ih.imagebase;
     tlsp->callbacks = 0; // note: TLS callbacks are not implemented in Windows 95/98/ME
 }
+
 
 /*************************************************************************
 // resource handling
