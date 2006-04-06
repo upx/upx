@@ -1483,6 +1483,7 @@ void PackW32Pe::processResources(Resource *res)
     info("Resources: compressed %u (%u bytes), not compressed %u (%u bytes)",cnum,csize,unum,usize);
 }
 
+
 /*************************************************************************
 // Load Configuration handling
 **************************************************************************/
