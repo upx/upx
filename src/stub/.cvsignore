@@ -7,8 +7,8 @@
 *.i
 *.lst
 *.map
-*.out
 *.o
+*.out
 *.tmp
 GNUmakefile
 MMakefile
