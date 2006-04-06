@@ -249,7 +249,7 @@ stubs: $(STUBS)
 
 mostlyclean:
 	-rm -f *.bin *.bkp *.d *.i *.lst *.map stubify.exe
-	-rm -f *.ah *.asx *.asy *.out
+	-rm -f *.ah *.asx *.asy *.o *.out
 
 clean: mostlyclean
 ifneq ($(strip $(wildcard stamp-h)),)
