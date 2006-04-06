@@ -1543,7 +1543,7 @@ bool PackArmPe::canPack()
 {
     if (!readFileHeader() || (ih.cpu != 0x1c0 && ih.cpu != 0x1c2))
         return false;
-    use_thumb_stub |= ih.cpu == 0x1c2;
+    use_thumb_stub |= ih.cpu == 0x1c2 || (ih.entry & 1) == 1;
     return true;
 }
 
@@ -1553,19 +1553,14 @@ int PackArmPe::buildLoader(const Filter *ft)
     UNUSED(ft);
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader), -1, 2);
-    if (use_thumb_stub)
-    {
-        if (ph.method == M_NRV2E_8)
-            addLoader("ARMWPE2E", NULL);
-        else if (ph.method == M_NRV2B_8)
-            addLoader("ARMWPE2B", NULL);
-    }
-    else if (!isdll)
-        addLoader("ARMWPE2EV4", NULL); // FIXME this when we have v4 mode nrv2b
-    else
-        addLoader("ARMWPE2EV4DLL", NULL);
 
-    addLoader("IDENTSTR,UPX1HEAD", NULL);
+    char stubname[20];
+    strcpy(stubname, "ARMPE");
+    strcat(stubname, use_thumb_stub ? "T" : "A");
+    strcat(stubname, isdll ? "D" : "X");
+    strcat(stubname, ph.method == M_NRV2E_8 ? "E" : "B");
+
+    addLoader(stubname, "IDENTSTR,UPX1HEAD", NULL);
     return getLoaderSize();
 }
 
@@ -1915,6 +1910,7 @@ void PackArmPe::pack(OutputFile *fo)
 
     ic = ncsection;
 
+    // wince wants relocation data at the beginning of a section
     processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;

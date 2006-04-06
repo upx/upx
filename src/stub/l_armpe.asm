@@ -39,19 +39,22 @@
 ; ============= ENTRY POINT
 ; =============
 
-;       __ARMWPE2E__
-start:
-%include        "l_armpe2e.ah"
-;       __ARMWPE2EV4__
-%include        "l_armpe2e_v4.ah"
-;       __ARMWPE2EV4DLL__
-%include        "l_armpe2e_v4dll.ah"
-;       __ARMWPE2B__
-%include        "l_armpe2b.ah"
-;       __ARMWPEHE__
+;       __ARMPEAXE__
+%include        "l_armpe_axe.ah"
+;       __ARMPEADE__
+%include        "l_armpe_ade.ah"
+;       __ARMPETXE__
+%include        "l_armpe_txe.ah"
+;       __ARMPETDE__
+%include        "l_armpe_tde.ah"
+;       __ARMPETXB__
+%include        "l_armpe_txb.ah"
+;       __ARMPETDB__
+%include        "l_armpe_tdb.ah"
+;       __ARMPEHEAD__
 %include        "header.ash"
 eof:
-;       __ARMWPE99__
+;       __ARMPEEOF__
                 section .data
                 dd      -1
                 dw      eof

@@ -35,13 +35,21 @@
 # define STUB_IN_THUMB_MODE
 #endif
 
+#ifdef STUB_FOR_DLL
+#define START _start: cmp r1, #1; bne     .Lstart_orig
+#else
+#define START _start:
+#endif
+
+
         .text
         .align  0
         .globl  upx_main
         .globl  _start
 
 #ifdef STUB_IN_THUMB_MODE
-_start:
+
+        START
         stmfd   sp!, {r0 - r3, lr}
 
         @ touch all pages in ARM mode - this seems to be required
@@ -63,11 +71,13 @@ _start:
         bx      ip
 .Larmret:
         ldmfd   sp!, {r0 - r3, lr}
+.Lstart_orig:
         ldr     ip, ENTR
         bx      ip
 # else
         blx     upx_main                @ call thumb armv5t style
         ldmfd   sp!, {r0 - r3, lr}
+.Lstart_orig:
         ldr     pc, ENTR                @ original entry
 # endif
 
@@ -112,11 +122,64 @@ get_le32:                               @ optimized for size
         mov     r0, r2
         bx      lr
 
+# ifdef STUB_FOR_DLL
+        .global reloc_main
+        .thumb_func
+        buffer  .req r0
+        dest    .req r1
+        addval  .req r2
+
+reloc_main:
+        push    {r4, r5}
+        ldr     buffer, BREL
+        ldr     addval, DST0
+        sub     dest, addval, #4
+
+.Lreloc_loop:
+        ldrb    r3, [buffer]
+        add     buffer, #1
+        cmp     r3, #0
+        beq     .Lreloc_end
+        cmp     r3, #0xf0
+        blo     .Lreloc_add
+
+        mov     r4, #0x0f
+        and     r4, r3
+        ldrb    r3, [buffer, #1]        @ get_le16
+        lsl     r4, #8
+        add     r4, r3
+        ldrb    r3, [buffer]
+        add     buffer, #2
+        lsl     r4, #8
+        add     r3, r4
+
+.Lreloc_add:
+        add     dest, r3
+        mov     r5, #0
+
+.Lread_be32:
+        ldrb    r3, [dest, r5]
+        lsl     r4, #8
+        add     r4, r3
+        add     r5, #1
+        cmp     r5, #4
+        bne     .Lread_be32
+
+        add     r4, addval
+        str     r4, [dest]
+        b       .Lreloc_loop
+
+.Lreloc_end:
+        pop     {r4, r5}
+        bx      lr
+
+# endif
+
 # if 0
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file
 
-// !!!!! check the lines with "system dependent" below before trying
+// !!!!! check the lines with "system dependent" below before calling
 
         .global CFwrap
         .thumb_func
@@ -171,11 +234,8 @@ filename:
 
 #else // stub in ARM mode
 
-_start:
-# ifdef STUB_FOR_DLL
-        cmp     r1, #1
-        bne     .Lstart_orig
-# endif
+        START
+
         stmfd   sp!, {r0 - r3, lr}
         adr     r0, SRC0
 	bl	upx_main
@@ -246,7 +306,7 @@ reloc_main:
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file
 
-// !!!!! check the lines with "system dependent" below before trying
+// !!!!! check the lines with "system dependent" below before calling
 
         .global CFwrap
 CFwrap:
@@ -297,7 +357,3 @@ GETP:   .ascii  "GETP"
 LLIB:   .ascii  "LOAD"
 ENTR:   .ascii  "ENTR"
 BREL:   .ascii  "BREL"
-
-#ifndef STUB_IN_THUMB_MODE
-# include "l_armpe_c.s"
-#endif
