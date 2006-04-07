@@ -59,6 +59,15 @@ PackLinuxI386sh::~PackLinuxI386sh()
 {
 }
 
+static unsigned
+umax(unsigned a, unsigned b)
+{
+    if (a <= b) {
+        return b;
+    }
+    return a;
+}
+
 int
 PackLinuxI386sh::buildLoader(Filter const *ft)
 {
@@ -78,7 +87,13 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
 
     // filter
     optimizeFilter(&fold_ft, buf, sz_fold);
-    bool success = fold_ft.filter(buf + sizeof(cprElfHdr2), sz_fold - sizeof(cprElfHdr2));
+    unsigned fold_hdrlen = sizeof(l_info) + sizeof(Elf32_Ehdr) +
+        sizeof(Elf32_Phdr) * get_native32(&((Elf32_Ehdr const *)(void *)buf)->e_phnum);
+    if (0==*(int *)(fold_hdrlen + buf)) {
+        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
+        fold_hdrlen = umax(0x80, fold_hdrlen);
+    }
+    bool success = fold_ft.filter(buf + fold_hdrlen, sz_fold - fold_hdrlen);
     UNUSED(success);
 
     return buildLinuxLoader(

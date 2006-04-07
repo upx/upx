@@ -260,8 +260,12 @@ PackLinuxI386::buildLinuxLoader(
     unsigned fold_hdrlen = 0;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
-        hf->ehdr.e_phentsize * hf->ehdr.e_phnum + sizeof(l_info) );
+    fold_hdrlen = sizeof(hf->ehdr) + hf->ehdr.e_phentsize * hf->ehdr.e_phnum +
+         sizeof(l_info);
+    if (0==*(int *)(fold_hdrlen + fold)) {
+        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
+        fold_hdrlen = umax(0x80, fold_hdrlen);
+    }
     h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
     h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
@@ -362,6 +366,9 @@ PackLinuxI386::buildLinuxLoader(
             addLoader("LEXEC017", NULL);
         }
     }
+    else {
+        addLoader("LEXEC017", NULL);
+    }
 
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
@@ -402,7 +409,14 @@ PackLinuxI386::buildLoader(Filter const *ft)
 
     // filter
     optimizeFilter(&fold_ft, buf, sz_fold);
-    bool success = fold_ft.filter(buf + sizeof(cprElfHdr2), sz_fold - sizeof(cprElfHdr2));
+
+    unsigned fold_hdrlen = sizeof(l_info) + sizeof(Elf32_Ehdr) +
+        sizeof(Elf32_Phdr) * get_native32(&((Elf32_Ehdr const *)(void *)buf)->e_phnum);
+    if (0==*(int *)(fold_hdrlen + buf)) {
+        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
+        fold_hdrlen = umax(0x80, fold_hdrlen);
+    }
+    bool success = fold_ft.filter(buf + fold_hdrlen, sz_fold - fold_hdrlen);
     (void)success;
 
     return buildLinuxLoader(
@@ -410,6 +424,7 @@ PackLinuxI386::buildLoader(Filter const *ft)
         buf, sz_fold, ft );
 }
 
+// FIXME: getLoaderPrefixSize is unused?
 int PackLinuxI386::getLoaderPrefixSize() const
 {
     return 116;

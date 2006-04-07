@@ -107,6 +107,7 @@ decompress:
                 mov     [edx], edi
 
                 mov [7*4 + esp], eax
+;__LEXEC017__
                 popa
                 ret
 
