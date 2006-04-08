@@ -262,9 +262,12 @@ struct BE16
     BE16& operator += (unsigned v) { set_be16(d, get_be16(d) + v); return *this; }
     BE16& operator -= (unsigned v) { set_be16(d, get_be16(d) - v); return *this; }
     BE16& operator *= (unsigned v) { set_be16(d, get_be16(d) * v); return *this; }
+    BE16& operator /= (unsigned v) { set_be16(d, get_be16(d) / v); return *this; }
     BE16& operator &= (unsigned v) { set_be16(d, get_be16(d) & v); return *this; }
     BE16& operator |= (unsigned v) { set_be16(d, get_be16(d) | v); return *this; }
     BE16& operator ^= (unsigned v) { set_be16(d, get_be16(d) ^ v); return *this; }
+    BE16& operator <<= (unsigned v) { set_be16(d, get_be16(d) << v); return *this; }
+    BE16& operator >>= (unsigned v) { set_be16(d, get_be16(d) >> v); return *this; }
 
     operator unsigned () const  { return get_be16(d); }
 }
@@ -279,9 +282,12 @@ struct BE32
     BE32& operator += (unsigned v) { set_be32(d, get_be32(d) + v); return *this; }
     BE32& operator -= (unsigned v) { set_be32(d, get_be32(d) - v); return *this; }
     BE32& operator *= (unsigned v) { set_be32(d, get_be32(d) * v); return *this; }
+    BE32& operator /= (unsigned v) { set_be32(d, get_be32(d) / v); return *this; }
     BE32& operator &= (unsigned v) { set_be32(d, get_be32(d) & v); return *this; }
     BE32& operator |= (unsigned v) { set_be32(d, get_be32(d) | v); return *this; }
     BE32& operator ^= (unsigned v) { set_be32(d, get_be32(d) ^ v); return *this; }
+    BE32& operator <<= (unsigned v) { set_be32(d, get_be32(d) << v); return *this; }
+    BE32& operator >>= (unsigned v) { set_be32(d, get_be32(d) >> v); return *this; }
 
     operator unsigned () const  { return get_be32(d); }
 }
@@ -296,9 +302,12 @@ struct BE64
     BE64& operator += (acc_uint64l_t v) { set_be64(d, get_be64(d) + v); return *this; }
     BE64& operator -= (acc_uint64l_t v) { set_be64(d, get_be64(d) - v); return *this; }
     BE64& operator *= (acc_uint64l_t v) { set_be64(d, get_be64(d) * v); return *this; }
+    BE64& operator /= (acc_uint64l_t v) { set_be64(d, get_be64(d) / v); return *this; }
     BE64& operator &= (acc_uint64l_t v) { set_be64(d, get_be64(d) & v); return *this; }
     BE64& operator |= (acc_uint64l_t v) { set_be64(d, get_be64(d) | v); return *this; }
     BE64& operator ^= (acc_uint64l_t v) { set_be64(d, get_be64(d) ^ v); return *this; }
+    BE64& operator <<= (unsigned v) { set_be64(d, get_be64(d) << v); return *this; }
+    BE64& operator >>= (unsigned v) { set_be64(d, get_be64(d) >> v); return *this; }
 
     operator acc_uint64l_t () const  { return get_be64(d); }
 }
@@ -313,9 +322,12 @@ struct LE16
     LE16& operator += (unsigned v) { set_le16(d, get_le16(d) + v); return *this; }
     LE16& operator -= (unsigned v) { set_le16(d, get_le16(d) - v); return *this; }
     LE16& operator *= (unsigned v) { set_le16(d, get_le16(d) * v); return *this; }
+    LE16& operator /= (unsigned v) { set_le16(d, get_le16(d) / v); return *this; }
     LE16& operator &= (unsigned v) { set_le16(d, get_le16(d) & v); return *this; }
     LE16& operator |= (unsigned v) { set_le16(d, get_le16(d) | v); return *this; }
     LE16& operator ^= (unsigned v) { set_le16(d, get_le16(d) ^ v); return *this; }
+    LE16& operator <<= (unsigned v) { set_le16(d, get_le16(d) << v); return *this; }
+    LE16& operator >>= (unsigned v) { set_le16(d, get_le16(d) >> v); return *this; }
 
     operator unsigned () const  { return get_le16(d); }
 }
@@ -330,9 +342,12 @@ struct LE32
     LE32& operator += (unsigned v) { set_le32(d, get_le32(d) + v); return *this; }
     LE32& operator -= (unsigned v) { set_le32(d, get_le32(d) - v); return *this; }
     LE32& operator *= (unsigned v) { set_le32(d, get_le32(d) * v); return *this; }
+    LE32& operator /= (unsigned v) { set_le32(d, get_le32(d) / v); return *this; }
     LE32& operator &= (unsigned v) { set_le32(d, get_le32(d) & v); return *this; }
     LE32& operator |= (unsigned v) { set_le32(d, get_le32(d) | v); return *this; }
     LE32& operator ^= (unsigned v) { set_le32(d, get_le32(d) ^ v); return *this; }
+    LE32& operator <<= (unsigned v) { set_le32(d, get_le32(d) << v); return *this; }
+    LE32& operator >>= (unsigned v) { set_le32(d, get_le32(d) >> v); return *this; }
 
     operator unsigned () const  { return get_le32(d); }
 }
@@ -347,9 +362,12 @@ struct LE64
     LE64& operator += (acc_uint64l_t v) { set_le64(d, get_le64(d) + v); return *this; }
     LE64& operator -= (acc_uint64l_t v) { set_le64(d, get_le64(d) - v); return *this; }
     LE64& operator *= (acc_uint64l_t v) { set_le64(d, get_le64(d) * v); return *this; }
+    LE64& operator /= (acc_uint64l_t v) { set_le64(d, get_le64(d) / v); return *this; }
     LE64& operator &= (acc_uint64l_t v) { set_le64(d, get_le64(d) & v); return *this; }
     LE64& operator |= (acc_uint64l_t v) { set_le64(d, get_le64(d) | v); return *this; }
     LE64& operator ^= (acc_uint64l_t v) { set_le64(d, get_le64(d) ^ v); return *this; }
+    LE64& operator <<= (unsigned v) { set_le64(d, get_le64(d) << v); return *this; }
+    LE64& operator >>= (unsigned v) { set_le64(d, get_le64(d) >> v); return *this; }
 
     operator acc_uint64l_t () const  { return get_le64(d); }
 }

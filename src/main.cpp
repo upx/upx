@@ -1070,6 +1070,8 @@ static int test(void)
     assert( (v1 <  v2)); assert(!(v1 >  v2));
     v2 += 2;
     assert(v1 == 1); assert(v2 == 0);
+    v1 <<= 1; v1 |= v2; v1 >>= 1; v2 &= v1; v2 /= v1; v2 *= v1;
+    assert(v1 == 1); assert(v2 == 0);
     return (v1 ^ v2) == 1;
 }};
 
