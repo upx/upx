@@ -2,14 +2,11 @@
 User visible changes for UPX
 ==================================================================
 
-[ UNSTABLE BETA VERSION - please see README.1ST for some more info ]
-
-Changes in 1.95 beta (XX XXX 2006):
-  * UNSTABLE BETA VERSION - DO NOT USE EXCEPT FOR TESTING
+Changes in 1.95 beta (09 Apr 2006):
+  * arm/pe: added DLL support
+  * arm/pe: added thumb mode stub support
+  * arm/pe: added unpacking support
   * win32/pe: really worked around R6002 runtime errors
-  * arm/pe: dll support
-  * arm/pe: thumb mode stub support
-  * arm/pe: unpacking support
 
 Changes in 1.94 beta (11 Mar 2006):
   * new format: added support for arm/pe (ARM executables running on WinCE)

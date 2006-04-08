@@ -16,10 +16,6 @@
 WARNING - UNSTABLE BETA VERSION
 ===============================
 
-All versions 1.9x are unstable beta releases - use them only for testing,
-and never distribute a program that is packed with them !
-There will be hidden bugs. Really.
-
 The current stable release is 1.25, and the next stable release
 will be called version 2.00.
 
@@ -31,8 +27,8 @@ The main news since 1.25 are:
   - direct Linux ELF-to-memory decompression ("linux/elf386") and
     shell-to-memory decompression ("linux/sh386")
   - support for arm/WinCE ("arm/pe") exes
-  - support for mach/ppc32
-  - support for Linux elf/ppc32
   - support for Linux elf/amd64
+  - support for Linux elf/ppc32
+  - support for mach/ppc32
   - support for playstation exes ("ps1/exe")
-  - lots of new bugs ;-) take care
+
