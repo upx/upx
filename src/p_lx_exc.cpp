@@ -262,7 +262,7 @@ PackLinuxI386::buildLinuxLoader(
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = sizeof(hf->ehdr) + hf->ehdr.e_phentsize * hf->ehdr.e_phnum +
          sizeof(l_info);
-    if (0==*(const int *)(fold_hdrlen + fold)) {
+    if (0 == get_le32(fold_hdrlen + fold)) {
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }
@@ -412,7 +412,7 @@ PackLinuxI386::buildLoader(Filter const *ft)
 
     unsigned fold_hdrlen = sizeof(l_info) + sizeof(Elf32_Ehdr) +
         sizeof(Elf32_Phdr) * get_native32(&((Elf32_Ehdr const *)(void *)buf)->e_phnum);
-    if (0==*(int *)(fold_hdrlen + buf)) {
+    if (0 == get_le32(fold_hdrlen + buf)) {
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }
