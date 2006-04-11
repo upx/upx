@@ -1702,7 +1702,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     if (memcmp(isection[0].name,"UPX",3) == 0)
         throwAlreadyPackedByUPX();
-    if (!opt->force && (IDSIZE(15) || ih.entry > isection[1].vaddr))
+    if (!opt->force && IDSIZE(15))
         throwCantPack("file is possibly packed/protected (try --force)");
     if (ih.entry && ih.entry < rvamin)
         throwCantPack("run a virus scanner on this file!");
