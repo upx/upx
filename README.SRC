@@ -113,7 +113,7 @@ If you want to modify the stub sources you'll also need
   - Other cross compilers targeted at the following architectures:
        - powerpc-750-linux-gnu
        - x86_64-unknown-linux-gnu
-       - arm-wince-pe
+       - arm-9tdmi-linux-gnu
 
   - ASM5900 - a MIPS R3000 assembler
 
@@ -130,8 +130,7 @@ Misc. notes
   - Use gcc extensions and other compiler specific stuff only through
     macros.
   - Keep in mind that it should be possible to build UPX on braindead
-    file systems (FAT). Don't use long file names or other things
-    that break building under plain DOS.
+    case insensitive file systems (FAT).
 
 ***
 

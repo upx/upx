@@ -75,9 +75,10 @@ B<UPX> is a versatile executable packer with the following features:
       * rtm32/pe
       * tmt/adam
       * vmlinuz/386     [bootable Linux kernel]
+      * vmlinux/386
       * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
-      * win32/pe
-      * arm/pe
+      * win32/pe (exe and dll)
+      * arm/pe (exe and dll)
       * linux/elfamd64
       * linux/elfppc32
       * mach/elfppc32
@@ -840,11 +841,18 @@ smaller, but it's still there.
 If you're running executables from network, then compressed programs
 will load faster, and require less bandwidth during execution.
 
-DLLs are supported.
+DLLs are supported. But UPX compressed DLLs can not share common data and
+code when they got used by multiple applications. So compressing msvcrt.dll
+is a waste of memory, but compressing the dll plugins of a particular
+application may be a better idea.
 
 Screensavers are supported, with the restriction that the filename
 must end with ".scr" (as screensavers are handled slightly different
 than normal exe files).
+
+UPX compressed PE files has some minor memory overhead (usually in the
+10 - 30 kbytes range) which can be seen by specifying the "-i" command
+line switch during compression.
 
 Extra options available for this executable format:
 

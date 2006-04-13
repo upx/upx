@@ -62,7 +62,7 @@ and run exactly as before, with no runtime or memory penalty for most
 of the supported formats.
 
 UPX supports a number of different executable formats, including
-Windows 95/98/ME/NT/2000/XP programs and DLLs, DOS programs,
+Windows 95/98/ME/NT/2000/XP/CE programs and DLLs, DOS programs,
 and Linux executables and kernels.
 
 UPX is free software distributed under the term of the GNU General
