@@ -40,6 +40,8 @@ void *LoadLibraryW(const unsigned short *);
 void *GetProcAddressA(const void *, const void *);
 void *get_le32(const void *);
 void reloc_main();
+void Unfilter_0x50();
+void CacheSync(unsigned);
 
 static void handle_imports(const unsigned char *imp, unsigned name_offset,
                            unsigned iat_offset)
@@ -127,13 +129,16 @@ void upx_main(const unsigned *info)
 #ifdef SAFE
     dlen = info[3];
 #endif
-    //WRITEFILE2('0', (void*) dst0, info[7] + 256 - dst0);
+    //WRITEFILE2('l', (void*) dst0, info[7] + 256 - dst0);
     UCL_DECOMPRESS((void *) src0, srcl, (void *) dst0, &dlen);
-    //WRITEFILE2('1', (void*) dst0, info[7] + 256 - dst0);
+//    WRITEFILE2('c', (void*) dst0, info[7] + 256 - dst0);
+    Unfilter_0x50();
+    //WRITEFILE2('f', (void*) dst0, info[7] + 256 - dst0);
     handle_imports((void *) bimp, onam, dst0);
-    //WRITEFILE2('2', (void*) dst0, info[7] + 256 - dst0);
+    //WRITEFILE2('i', (void*) dst0, info[7] + 256 - dst0);
 #ifdef STUB_FOR_DLL
     reloc_main();
-    //WRITEFILE2('3', (void*) dst0, info[7] + 256 - dst0);
+    //WRITEFILE2('r', (void*) dst0, info[7] + 256 - dst0);
 #endif
+    CacheSync(4); // CACHE_SYNC_WRITEBACK
 }

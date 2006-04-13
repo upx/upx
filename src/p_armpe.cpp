@@ -199,7 +199,8 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
 
 const int *PackArmPe::getFilters() const
 {
-    return 0;
+    static const int filters[] = { 0x50, -1 };
+    return filters;
 }
 
 
@@ -556,7 +557,9 @@ void PackArmPe::processImports(unsigned myimport) // pass 2
 unsigned PackArmPe::processImports() // pass 1
 {
     static const unsigned char kernel32dll[] = "COREDLL.dll";
-    static const char llgpa[] = "\x0\x0""LoadLibraryW\x0\x0""GetProcAddressA";
+    static const char llgpa[] = "\x0\x0""LoadLibraryW\x0\x0"
+                                "GetProcAddressA\x0\x0\x0"
+                                "CacheSync";
     //static const char exitp[] = "ExitProcess\x0\x0\x0";
 
     unsigned dllnum = 0;
@@ -658,7 +661,7 @@ unsigned PackArmPe::processImports() // pass 1
     im = (import_desc*) oimpdlls;
 
     LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 3;// + k32o + (isdll ? 0 : 1);
+    LE32 *lookuptable = ordinals + 4;// + k32o + (isdll ? 0 : 1);
     upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
     upx_byte *importednames = dllnames + (dllnamelen &~ 1);
 
@@ -670,6 +673,7 @@ unsigned PackArmPe::processImports() // pass 1
     im->iat = ptr_diff(ordinals,oimpdlls);
     *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryW
     *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddressA
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 18;   // CacheSync
     dllnames += sizeof(kernel32dll);
     importednames += sizeof(llgpa);
 
@@ -1806,12 +1810,15 @@ void PackArmPe::pack(OutputFile *fo)
     const unsigned upxsection = s1addr + ic + clen;
 
     // FIXME
-    const unsigned assumed_soxrelocs = isdll ? 0x18 : 0;
+    const unsigned assumed_soxrelocs = isdll ? 0x20 : 0;
     const unsigned myimport = ncsection + assumed_soxrelocs + soresources - rvamin;
 
     const int src0_offset = find(loader, lsize, "SRC0", 4);
 
     // patch loader
+    patch_le32(loader, codesize, "CSYN", ih.imagebase + rvamin + myimport + get_le32(oimpdlls + 16) + 8);
+    patch_le32(loader, codesize, "FIBE", ih.imagebase + ih.codebase + (ft.id ? ih.codesize : 0));
+    patch_le32(loader, codesize, "FIBS", ih.imagebase + ih.codebase);
     patch_le32(loader, codesize, "BREL", crelocs + rvamin + ih.imagebase);
     patch_le32(loader, codesize, "ENTR", ih.entry + ih.imagebase);
     patch_le32(loader, codesize, "LOAD", ih.imagebase + rvamin + myimport + get_le32(oimpdlls + 16));
@@ -1882,6 +1889,9 @@ void PackArmPe::pack(OutputFile *fo)
     rel.add(upxsection + src0_offset + 28, 3);
     rel.add(upxsection + src0_offset + 32, 3);
     rel.add(upxsection + src0_offset + 36, 3);
+    rel.add(upxsection + src0_offset + 40, 3);
+    rel.add(upxsection + src0_offset + 44, 3);
+    rel.add(upxsection + src0_offset + 48, 3);
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));

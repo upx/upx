@@ -29,6 +29,7 @@
    <jreiser@users.sourceforge.net>
 */
 
+#define DEBUG 0
 
 #undef STUB_IN_THUMB_MODE
 #if defined(__ARM_ARCH_4T__) || defined(__ARM_ARCH_5T__)
@@ -66,10 +67,9 @@
         bls     .L01
 
 # ifdef __ARM_ARCH_4T__
-        adr     lr, .Larmret
         adr     ip, call_upxmain + 1
+        mov     lr, pc
         bx      ip
-.Larmret:
         ldmfd   sp!, {r0 - r3, lr}
 .Lstart_orig:
         ldr     ip, ENTR
@@ -81,7 +81,7 @@
         ldr     pc, ENTR                @ original entry
 # endif
 
-@@@@@@@@@@@@@@@@
+
 
         .code   16
         .global GetProcAddressA
@@ -93,8 +93,6 @@ GetProcAddressA:
         ldr     r3, [r3]
         bx      r3
 
-@@@@@@@@@@@@@@@@
-
         .global LoadLibraryW
         .thumb_func
 
@@ -102,12 +100,63 @@ LoadLibraryW:
         ldr     r3, LLIB
         b       .Lcallr3
 
+        .global CacheSync
+        .thumb_func
+CacheSync:
+        ldr     r3, CSYN
+        b       .Lcallr3
+
 # ifdef __ARM_ARCH_4T__
 call_upxmain:
         b       upx_main
 # endif
 
-@@@@@@@@@@@@@@@@
+
+
+        .global Unfilter_0x50
+        .thumb_func
+
+        buffer  .req r0
+        addval  .req r2
+        bufend  .req r4
+
+Unfilter_0x50:
+        push    {r4 - r7, lr}
+        ldr     buffer, FIBS
+        mov     addval, #0
+        ldr     bufend, FIBE
+        mov     r5, #0x0f
+        mov     r6, #0xff
+        lsl     r6, #24
+        mvn     r7, r6
+.Luf50_0:
+        cmp     buffer, bufend
+        beq     .Luf50_ret
+
+        ldrb    r3, [buffer, #3]
+        and     r3, r5
+        cmp     r3, #0x0b
+        bne     .Luf50_1
+        ldr     r3, [buffer]
+        mov     r1, r3
+        and     r1, r6
+        sub     r3, addval
+        and     r3, r7
+        orr     r3, r1
+        str     r3, [buffer]
+
+.Luf50_1:
+        add     buffer, #4
+        add     addval, #1
+        b       .Luf50_0
+.Luf50_ret:
+        pop     {r4 - r7, pc}
+
+        .unreq  buffer
+        .unreq  addval
+        .unreq  bufend
+
+
 
         .global get_le32
         .thumb_func
@@ -122,6 +171,8 @@ get_le32:                               @ optimized for size
         mov     r0, r2
         bx      lr
 
+
+
 # ifdef STUB_FOR_DLL
         .global reloc_main
         .thumb_func
@@ -130,7 +181,7 @@ get_le32:                               @ optimized for size
         addval  .req r2
 
 reloc_main:
-        push    {r4, r5}
+        push    {r4, r5, lr}
         ldr     buffer, BREL
         ldr     addval, DST0
         sub     dest, addval, #4
@@ -170,12 +221,11 @@ reloc_main:
         b       .Lreloc_loop
 
 .Lreloc_end:
-        pop     {r4, r5}
-        bx      lr
+        pop     {r4, r5, pc}
 
 # endif
 
-# if 0
+# if DEBUG
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file
 
@@ -241,7 +291,9 @@ filename:
 	bl	upx_main
         ldmfd   sp!, {r0 - r3, lr}
 .Lstart_orig:
-	ldr	pc, ENTR
+        ldr	pc, ENTR
+
+
 
         .global LoadLibraryW
 LoadLibraryW:
@@ -253,6 +305,49 @@ GetProcAddressA:
         ldr     r3, GETP
         ldr     pc, [r3]
 
+        .global CacheSync
+CacheSync:
+        ldr     r3, CSYN
+        ldr     pc, [r3]
+
+
+
+        .global Unfilter_0x50
+        buffer  .req r0
+        addval  .req r2
+        bufend  .req ip
+
+Unfilter_0x50:
+        ldr     buffer, FIBS
+        mov     addval, #0
+        ldr     bufend, FIBE
+.Luf50_0:
+        cmp     buffer, bufend
+
+        moveq   pc, lr
+
+        ldrb    r3, [buffer, #3]
+        and     r3, r3, #0x0f
+        cmp     r3, #0x0b
+        bne     .Luf50_1
+        ldr     r3, [buffer]
+        and     r1, r3, #0xff000000
+        sub     r3, r3, addval
+        and     r3, r3, #0x00ffffff
+        orr     r3, r3, r1
+        str     r3, [buffer]
+
+.Luf50_1:
+        add     buffer, buffer, #4
+        add     addval, addval, #1
+        b       .Luf50_0
+
+        .unreq  buffer
+        .unreq  addval
+        .unreq  bufend
+
+
+
         .global get_le32
 get_le32:                               @ optimized for size
         mov     r2, #3
@@ -262,8 +357,9 @@ get_le32:                               @ optimized for size
         add     r1, r3, r1, asl #8
         bpl     .Lg0
         mov     r0, r1
-gret:
         mov     pc, lr
+
+
 
 # ifdef STUB_FOR_DLL
         .global reloc_main
@@ -279,7 +375,7 @@ reloc_main:
 .Lreloc_loop:
         ldrb    r3, [buffer], #1
         cmp     r3, #0
-        beq     gret
+        moveq   pc, lr
         cmp     r3, #0xf0
 
         bichs   ip, r3, #0xf0
@@ -300,9 +396,13 @@ reloc_main:
         add     ip, ip, addval
         str     ip, [dest]
         b       .Lreloc_loop
+
+        .unreq  buffer
+        .unreq  addval
+        .unreq  dest
 # endif
 
-# if 0
+# if DEBUG
 
 // debugging stuff - helpers for dumping memory to a file or deleting a file
 
@@ -348,12 +448,16 @@ filename:
 
         .code   32
         .align  2
-SRC0:   .ascii  "SRC0"
-SRCL:   .ascii  "SRCL"
-DST0:   .ascii  "DST0"
-        .ascii  "DSTL"
-        .ascii  "BIMPONAM"
-GETP:   .ascii  "GETP"
-LLIB:   .ascii  "LOAD"
-ENTR:   .ascii  "ENTR"
-BREL:   .ascii  "BREL"
+SRC0:   .ascii  "SRC0"                  @ start of compressed data
+SRCL:   .ascii  "SRCL"                  @ compressed length
+DST0:   .ascii  "DST0"                  @ start of uncompressed data
+        .ascii  "DSTL"                  @ uncompressed length
+        .ascii  "BIMPONAM"              @ start of import data & dll names
+GETP:   .ascii  "GETP"                  @ pointer to GetProcAddressA
+LLIB:   .ascii  "LOAD"                  @ pointer to LoadLibraryW
+ENTR:   .ascii  "ENTR"                  @ original entry point
+BREL:   .ascii  "BREL"                  @ start of reloc info
+FIBS:   .ascii  "FIBS"                  @ buffer start for filter
+FIBE:   .ascii  "FIBE"                  @ buffer end for filter
+CSYN:   .ascii  "CSYN"                  @ pointer to CacheSync
+
