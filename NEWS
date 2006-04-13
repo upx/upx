@@ -3,11 +3,13 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 2.00 (XX XXX 2006):
+  * linux/386: work around a problem where certain Linux kernels
+    clobber the %ebx register during a syscall
 
 Changes in 1.96 beta (13 Apr 2006):
   * arm/pe: added filter support
   * win32/pe: removed an unnecessary check so that Delphi 2006 and
-    Digital Mars C++ programs finally work
+    Digital Mars C++ programs finally are supported
 
 Changes in 1.95 beta (09 Apr 2006):
   * arm/pe: added DLL support
@@ -28,8 +30,8 @@ Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels
 
 Changes in 1.92 beta (20 Jul 2004):
-  * win32/pe: added option `--strip-loadconf' to strip the SEH
-    load config section
+  * win32/pe: added option `--strip-loadconf' to strip the SEH load
+    config section [NOTE: this option is obsolete since UPX 1.94]
   * win32/pe: try to detect .NET (win32/net) files [not yet supported by UPX]
   * vmlinux/386: new format that directly supports building Linux kernels
   * source code: now compiles cleanly under Win64
@@ -49,7 +51,7 @@ Changes in 1.91 beta (30 Jun 2004):
 
 Changes in 1.90 beta (11 Nov 2002):
   * implemented several new options for finer compression control:
-      `--all-methods', `--all-filters' and `--brute'
+    `--all-methods', `--all-filters' and `--brute'
   * ps1/exe: new format - UPX now supports PlayStation One programs
   * linux/386: added the option `--force-execve'
   * vmlinuz/386: better kernel detection and sanity checks
