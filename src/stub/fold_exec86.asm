@@ -50,11 +50,11 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
                 pop     eax                 ; Pop the argument count
                 mov     ecx, esp            ; argv starts just at the current stack top
                 lea     edx, [esp+eax*4+4]  ; envp = &argv[argc + 1]
-                mov esi, [e_entry + ebx]
-                add ebx, szElf32_Ehdr + szElf32_Phdr + szl_info
-                sub esi, ebx  ; length
-                lea edi, [2 + ebp]  ; f_unfilter, maybe
-                pusha  ; (f_unf, cprLen, f_decpr, xx, cprSrc, envp, argv, argc)
+                mov edi, [ebx + e_entry]
+                lea esi, [ebx + szElf32_Ehdr + szElf32_Phdr + szl_info]
+                sub edi, esi  ; length
+                lea ebx, [2 + ebp]  ; f_unfilter, maybe
+                pusha  ; (cprLen, cprSrc, f_decpr, xx, f_unf, envp, argv, argc)
 EXTERN upx_main
                 call    upx_main            ; Call the UPX main function
                 hlt                         ; Crash if somehow upx_main does return

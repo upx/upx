@@ -217,21 +217,19 @@ typedef int f_expand(
 **************************************************************************/
 
 void upx_main(
-    f_unfilter *const f_unf,
-    unsigned cprLen,
+    struct Extent xi,
     f_expand *const f_decompress,
     int junk2,
-    char /*const*/ *cprSrc,
+    f_unfilter *const f_unf,
     char *envp[],
     char *argv[],
     int argc
 ) __asm__("upx_main");
 void upx_main(
-    f_unfilter *const f_unf,
-    unsigned cprLen,
+    struct Extent xi,
     f_expand *const f_decompress,
     int junk,
-    char /*const*/ *cprSrc,
+    f_unfilter *const f_unf,
     char *envp[],
     char *argv[],
     int argc
@@ -244,10 +242,6 @@ void upx_main(
     unsigned char *buf;
 
     char *tmpname;
-
-    struct Extent xi = { cprLen, cprSrc };
-
-    char *next_unmap = (char *)(PAGE_MASK & (unsigned)xi.buf);
     struct p_info header;
 
     // temporary file name
@@ -380,7 +374,6 @@ void upx_main(
     for (;;)
     {
         struct b_info h;
-        int i;
 
         // Read and check block sizes.
         {
@@ -412,7 +405,7 @@ void upx_main(
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block.
             nrv_uint out_len;
-            i = (*f_decompress)((unsigned char *)xi.buf, h.sz_cpr, buf, &out_len, h.b_method);
+            int i = (*f_decompress)((unsigned char *)xi.buf, h.sz_cpr, buf, &out_len, h.b_method);
             if (i != 0 || out_len != (nrv_uint)h.sz_unc)
                 goto error;
             // Right now, unfilter is combined with decompression.
@@ -457,13 +450,7 @@ void upx_main(
             for (;;)
                 (void) exit(127);
         }
-
-        // We will never touch these pages again.
-        i = (PAGE_MASK & (unsigned)xi.buf) - (unsigned)next_unmap;
-        munmap(next_unmap, i);
-        next_unmap += i;
     }
-
 
     //
     // ----- Step 5: release resources -----
