@@ -383,6 +383,46 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 
 #undef CT32
 
+/*************************************************************************
+// 24-bit ARM calltrick ("naive")
+**************************************************************************/
+
+#define CT24ARM(f, cond, addvalue, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 4; \
+    do { \
+        if (cond) \
+        { \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b) + (addvalue)); \
+            f->calls++; \
+        } \
+        b += 4; \
+    } while (b < b_end); \
+    if (f->lastcall) f->lastcall += 4; \
+    return 0;
+
+
+#define ARMCT_COND (((b[3] & 0x0f) == 0x0b))
+
+static int f_ct24arm_le(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND, a / 4 + f->addvalue, get_le24, set_le24)
+}
+
+static int u_ct24arm_le(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND, 0 - a / 4 - f->addvalue, get_le24, set_le24)
+}
+
+static int s_ct24arm_le(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND, a + f->addvalue, get_le24, set_dummy)
+}
+
+#undef CT24ARM
+#undef ARMCT_COND
 
 /*
 vi:ts=4:et:nowrap
