@@ -17,3 +17,4 @@ MMakefile
 compress_nrv.*
 upx
 version1*.h
+version2*.h
