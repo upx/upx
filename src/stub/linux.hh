@@ -188,13 +188,13 @@ type name(void) \
 { \
     long __res; \
     if (Z1(__NR_##name)) { \
-        __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
+        __asm__ __volatile__ ("push %[sysN]; popl %0; int $0x80" \
             : "=a" (__res) \
-            : "g" (__NR_##name)); \
+            : [sysN] "g" (__NR_##name)); \
     } else { \
         __asm__ __volatile__ ("int $0x80" \
             : "=a" (__res) \
-            : "a" (__NR_##name)); \
+            : [sysN] "a" (__NR_##name)); \
     } \
     return (type) __res; \
 }
@@ -202,26 +202,26 @@ type name(void) \
 #define _syscall1(type,name,type1,arg1) \
 type name(type1 arg1) \
 { \
-    long __res; \
+    long __res, junk; \
     if (Z1(__NR_##name)) { \
         if (Z0(arg1)) { \
-            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name) \
+                : [sysN] "g" (__NR_##name) \
                 : "ebx"); \
         } else if (Z1(arg1)) { \
-            __asm__ __volatile__ ("push %2; popl %%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("push %[a1]; popl %%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name),"g" ((long)(arg1)) \
+                : [sysN] "g" (__NR_##name), [a1] "g" ((long)(arg1)) \
                 : "ebx"); \
         } else { \
-            __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"b" ((long)(arg1))); \
+            __asm__ __volatile__ ("push %[sysN]; popl %0; int $0x80" \
+                : "=a" (__res), "=b" (junk) \
+                : [sysN] "g" (__NR_##name),"b" ((long)(arg1))); \
         } \
     } else { \
         __asm__ __volatile__ ("int $0x80" \
-            : "=a" (__res) \
+            : "=a" (__res), "=b" (junk) \
             : "a" (__NR_##name),"b" ((long)(arg1))); \
     } \
     return (type) __res; \
@@ -235,8 +235,8 @@ void __attribute__((__noreturn__)) name(type1 arg1) \
             __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %0; popl %%eax; int $0x80" \
               : : "g" (__NR_##name) ); \
         } else if (Z1(arg1)) { \
-            __asm__ __volatile__ ("push %1; popl %%ebx; push %0; popl %%eax; int $0x80" \
-              : : "g" (__NR_##name),"g" ((long)(arg1)) ); \
+            __asm__ __volatile__ ("push %[a1]; popl %%ebx; push %[sysN]; popl %%eax; int $0x80" \
+              : : [sysN] "g" (__NR_##name), [a1] "g" ((long)(arg1)) ); \
         } else { \
             __asm__ __volatile__ ("push %0; popl %%eax; int $0x80" \
               : : "g" (__NR_##name),"b" ((long)(arg1))); \
@@ -248,71 +248,60 @@ void __attribute__((__noreturn__)) name(type1 arg1) \
     for(;;) ; \
 }
 
-// special for mmap; somehow Z0(arg1) and Z1(arg1) do not work
-#define _syscall1m(type,name,type1,arg1) \
-type name(type1 arg1) \
-{ \
-    long __res; \
-            __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"b" ((long)(arg1))); \
-    return (type) __res; \
-}
-
 #define _syscall2(type,name,type1,arg1,type2,arg2) \
 type name(type1 arg1,type2 arg2) \
 { \
-    long __res; \
+    long __res, junkb, junkc; \
     if (Z1(__NR_##name)) { \
         if (Z0(arg1) && Z0(arg2)) { \
-            __asm__ __volatile__ ("xorl %%ecx,%%ecx; xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ecx,%%ecx; xorl %%ebx,%%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name) \
+                : [sysN] "g" (__NR_##name) \
                 : "ebx", "ecx"); \
         } else if (Z0(arg1) && Z1(arg2)) { \
-            __asm__ __volatile__ ("push %2; popl %%ecx; xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("push %[a2]; popl %%ecx; xorl %%ebx,%%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name),"g" ((long)(arg2)) \
+                : [sysN] "g" (__NR_##name), [a2] "g" ((long)(arg2)) \
                 : "ebx", "ecx"); \
         } else if (Z1(arg1) && Z0(arg2)) { \
-            __asm__ __volatile__ ("xorl %%ecx,%%ecx; push %2; popl %%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("xorl %%ecx,%%ecx; push %[a1]; popl %%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name),"g" ((long)(arg1)) \
+                : [sysN] "g" (__NR_##name), [a1] "g" ((long)(arg1)) \
                 : "ebx", "ecx"); \
         } else if (Z1(arg1) && Z1(arg2)) { \
-            __asm__ __volatile__ ("push %3; popl %%ecx; push %2; popl %%ebx; push %1; popl %0; int $0x80" \
+            __asm__ __volatile__ ("push %[a2]; popl %%ecx; push %[a1]; popl %%ebx; push %[sysN]; popl %0; int $0x80" \
                 : "=a" (__res) \
-                : "g" (__NR_##name),"g" ((long)(arg1)),"g" ((long)(arg2)) \
+                : [sysN] "g" (__NR_##name), [a1] "g" ((long)(arg1)), [a2] "g" ((long)(arg2)) \
                 : "ebx", "ecx"); \
         } else if (Z0(arg1)) { \
-            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %1; popl %0; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"c" ((long)(arg2)) \
+            __asm__ __volatile__ ("xorl %%ebx,%%ebx; push %[sysN]; popl %0; int $0x80" \
+                : "=a" (__res), "=c" (junkc) \
+                : [sysN] "g" (__NR_##name),"c" ((long)(arg2)) \
                 : "ebx"); \
         } else if (Z0(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; xorl %%ecx,%%ecx; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"b" ((long)(arg1)) \
+            __asm__ __volatile__ ("push %[sysN]; popl %0; xorl %%ecx,%%ecx; int $0x80" \
+                : "=a" (__res), "=b" (junkb) \
+                : [sysN] "g" (__NR_##name),"b" ((long)(arg1)) \
                 : "ecx"); \
         } else if (Z1(arg1)) { \
-            __asm__ __volatile__ ("push %1; popl %0; push %2; popl %%ebx; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"g" ((long)(arg1)),"c" ((long)(arg2)) \
+            __asm__ __volatile__ ("push %[sysN]; popl %0; push %[a1]; popl %%ebx; int $0x80" \
+                : "=a" (__res), "=c" (junkc) \
+                : [sysN] "g" (__NR_##name), [a1] "g" ((long)(arg1)),"c" ((long)(arg2)) \
                 : "ebx"); \
         } else if (Z1(arg2)) { \
-            __asm__ __volatile__ ("push %1; popl %0; push %3; popl %%ecx; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"b" ((long)(arg1)),"g" ((long)(arg2)) \
+            __asm__ __volatile__ ("push %[sysN]; popl %0; push %[a2]; popl %%ecx; int $0x80" \
+                : "=a" (__res), "=b" (junkb) \
+                : [sysN] "g" (__NR_##name),"b" ((long)(arg1)), [a2] "g" ((long)(arg2)) \
                 : "ecx"); \
         } else { \
-            __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
-                : "=a" (__res) \
-                : "g" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2))); \
+            __asm__ __volatile__ ("push %[sysN]; popl %0; int $0x80" \
+                : "=a" (__res), "=b" (junkb), "=c" (junkc) \
+                : [sysN] "g" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2))); \
         } \
     } else { \
         __asm__ __volatile__ ("int $0x80" \
-            : "=a" (__res) \
-            : "a" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2))); \
+            : "=a" (__res), "=b" (junkb), "=c" (junkc) \
+            : [sysN] "a" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2))); \
     } \
     return (type) __res; \
 }
@@ -320,16 +309,16 @@ type name(type1 arg1,type2 arg2) \
 #define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3) \
 type name(type1 arg1,type2 arg2,type3 arg3) \
 { \
-    long __res; \
+    long __res, junkb, junkc, junkd; \
     if (Z1(__NR_##name)) { \
-        __asm__ __volatile__ ("push %1; popl %0; int $0x80" \
-            : "=a" (__res) \
-            : "g" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
+        __asm__ __volatile__ ("push %[sysN]; popl %0; int $0x80" \
+            : "=a" (__res), "=b" (junkb), "=c" (junkc), "=d" (junkd) \
+            : [sysN] "g" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
                                 "d" ((long)(arg3))); \
     } else { \
         __asm__ __volatile__ ("int $0x80" \
-            : "=a" (__res) \
-            : "a" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
+            : "=a" (__res), "=b" (junkb), "=c" (junkc), "=d" (junkd) \
+            : [sysN] "a" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
                                 "d" ((long)(arg3))); \
     } \
     return (type) __res; \
