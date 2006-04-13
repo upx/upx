@@ -2110,6 +2110,9 @@ void PackW32Pe::pack(OutputFile *fo)
     //    set_le32(ibuf + ic,get_le32("UPX "));
     ibuf.clear(0, oh.filealign);
 
+    info("Image size change: %u -> %u kBytes",
+         ih.imagesize / 1024, oh.imagesize / 1024);
+
     infoHeader("[Writing compressed file]");
 
     // write loader + compressed file
