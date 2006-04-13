@@ -4,6 +4,11 @@ User visible changes for UPX
 
 Changes in 2.00 (XX XXX 2006):
 
+Changes in 1.96 beta (13 Apr 2006):
+  * arm/pe: added filter support
+  * win32/pe: removed an unnecessary check so that Delphi 2006 and
+    Digital Mars C++ programs finally work
+
 Changes in 1.95 beta (09 Apr 2006):
   * arm/pe: added DLL support
   * arm/pe: added thumb mode stub support
