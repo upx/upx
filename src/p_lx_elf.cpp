@@ -508,14 +508,6 @@ PackLinuxElf64amd::canPack()
             //    throwCantPack("invalid Phdr p_offset; try `--force-execve'");
             //    return false;
             //}
-
-            // detect possible conflict upon invocation
-            acc_uint64l_t const p_vaddr = get_native64(&phdr->p_vaddr);
-            if (p_vaddr < (unsigned)(0x100000 + file_size)
-            ||  p_vaddr < (unsigned)(0x100000 + file_size) ) {
-                throwAlreadyPackedByUPX();  // not necessarily, but mostly true
-                return false;
-            }
             exetype = 1;
             break;
         }
