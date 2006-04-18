@@ -90,6 +90,8 @@ err_exit(int a) __attribute__ ((__noreturn__));
 }
 #endif  //}
 
+extern void die_SELinux();
+
 static void *
 do_brk(void *addr)
 {
@@ -268,8 +270,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC,
-        mflags, 0, 0 );
+    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0 );  // just reserve address space
     *p_brk = hi + addr;  // the logical value of brk(0)
     munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
     return (unsigned long)addr - lo;
@@ -320,13 +321,14 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
             }
         }
         if (0!=mprotect(addr, mlen, prot)) {
+            die_SELinux();
             err_exit(10);
 ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
             }
         }

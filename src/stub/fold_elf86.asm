@@ -97,32 +97,31 @@ L50:
 %define MAX_ELF_HDR 512
 
         sub esp, dword MAX_ELF_HDR + OVERHEAD  ; alloca
-        mov edx, esp  ; %edx= &tmp
-        push ebx  ; save &Elf32_Ehdr of this stub
-        xor ecx, ecx  ; 0
-        push ecx ; assume not ET_DYN
-        lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  ; 1st &b_info
-        mov esi, [e_entry + ebx]  ; beyond compressed data
+        push ebx  ; start of unmap region (&Elf32_Ehdr of this stub)
+        mov edx, [p_memsz + szElf32_Ehdr + ebx]  ; phdr[0].p_memsz, pre-rounded up
+        lea edx, [PAGE_SIZE + edx + ebx]  ; 1 page in l_lx_elf86asm for unfold
+        push edx  ; end of unmap region
+        sub eax, eax  ; 0
         cmp word [e_type + ebx], byte ET_DYN
         jne L53
-        pop ecx  ; is ET_DYN: discard false assumption
-        add esi, ebx  ; relocate e_entry
-        mov ch, PAGE_SIZE>>8  ; %ecx= PAGE_SIZE
-        add ebx, [p_memsz + szElf32_Ehdr + ebx]
-        add ebx, ecx
-        push ebx  ; dynbase
+        xchg eax, edx  ; dynbase for ET_DYN; assumes mmap(0, ...) is placed after us!
 L53:
+        push eax  ; dynbase
+
+        mov esi, [e_entry + ebx]  ; end of compressed data
+        lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  ; 1st &b_info
         sub esi, eax  ; length of compressed data
         mov ebx, [   eax]  ; length of uncompressed ELF headers
         mov ecx, [4+ eax]  ; length of   compressed ELF headers
         add ecx, byte szb_info
+        lea edx, [3*4 + esp]  ; &tmp
         pusha  ; (AT_table, sz_cpr, f_expand, &tmp_ehdr, {sz_unc, &tmp}, {sz_cpr, &b1st_info} )
         inc edi  ; swap with above 'pusha' to inhibit auxv_up for PT_INTERP
 EXTERN upx_main
         call upx_main  ; returns entry address
-        add esp, byte 8*4  ; remove 8 params from pusha
-        pop ecx  ; dynbase
-        pop ebx  ; &Elf32_Ehdr of this stub
+        add esp, byte (8 +1)*4  ; remove 8 params from pusha, also dynbase
+        pop ecx  ; end of unmap region
+        pop ebx  ; start of unmap region (&Elf32_Ehdr of this stub)
         add esp, dword MAX_ELF_HDR + OVERHEAD  ; un-alloca
         push eax  ; save entry address
 
@@ -135,23 +134,6 @@ L60:
         jne L60  ; not AT_NULL
 ; edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
 
-; _dl_start and company (ld-linux.so.2) once assumed that it had virgin stack,
-; and did not initialize all its stack local variables to zero.
-; See bug libc/1165 at  http://bugs.gnu.org/cgi-bin/gnatsweb.pl
-; Found 1999-06-16 glibc-2.1.1
-; Fixed 1999-12-29 glibc-2.1.2
-;
-;%define  N_STKCLR (0x100 + MAX_ELF_HDR + OVERHEAD)/4
-;%define  N_STKCLR 8
-;       lea edi, [esp - 4*N_STKCLR]
-;       pusha  ; values will be zeroed
-;       mov esi,esp  ; save
-;       mov esp,edi  ; Linux does not grow stack below esp
-;       mov ecx, N_STKCLR
-;       ; xor eax,eax  ; eax already 0 from L60
-;       rep stosd
-;       mov esp,esi  ; restore
-
         push eax
         push eax
         push eax
@@ -159,7 +141,7 @@ L60:
         push eax
         push eax
         push eax
-        push eax  ; 32 bytes of zeroes now on stack
+        push eax  ; 32 bytes of zeroes now on stack, ready for 'popa'
 
         sub ecx, ebx  ; length to unmap
         mov al, __NR_munmap  ; eax was 0 from L60
@@ -221,5 +203,24 @@ mmap:
         pop ebx
         ret
 
+        global die_SELinux
+die_SELinux:
+        push ebx
+        push byte L71 - L70
+        pop edx
+        call L71
+L70:
+        db "SELinux enforcing mode inhibits execution.",10
+L71:
+        pop ecx
+        push byte 2
+        pop ebx
+%define __NR_write 4
+        push byte __NR_write
+        pop eax
+        int 0x80
+        pop ebx
+        ret
+        
 ; vi:ts=8:et:nowrap
 
