@@ -5,6 +5,8 @@ User visible changes for UPX
 Changes in 2.00 (27 Apr 2006):
   * linux/386: the stub now prints an error message if some strict
     SELinux mode does prevent runtime decompression and execution
+    (for a fully SELinux-compatible but otherwise inferior compression
+    format you can use the '--force-execve' option)
   * linux/386: worked around a problem where certain Linux kernels
     clobber the %ebx register during a syscall
   * win32/pe: disable filters for files with broken PE headers
@@ -33,7 +35,7 @@ Changes in 1.93 beta (07 Feb 2005):
   * vmlinuz/386: fixes to support more kernels
 
 Changes in 1.92 beta (20 Jul 2004):
-  * win32/pe: added option `--strip-loadconf' to strip the SEH load
+  * win32/pe: added option '--strip-loadconf' to strip the SEH load
     config section [NOTE: this option is obsolete since UPX 1.94]
   * win32/pe: try to detect .NET (win32/net) files [not yet supported by UPX]
   * vmlinux/386: new format that directly supports building Linux kernels
@@ -45,7 +47,7 @@ Changes in 1.91 beta (30 Jun 2004):
   * vmlinuz/386: added support for recent kernels
   * watcom/le: don't crash on files without relocations
   * win32/pe: stricter checks of some PE values
-  * option `--brute' now implies `--crp-ms=999999'.
+  * option '--brute' now implies '--crp-ms=999999'.
   * source code: much improved portability using ACC, the
     Automatic Compiler Configuration
   * source code: compile fixes for strict ISO C++ compilers
@@ -54,9 +56,9 @@ Changes in 1.91 beta (30 Jun 2004):
 
 Changes in 1.90 beta (11 Nov 2002):
   * implemented several new options for finer compression control:
-    `--all-methods', `--all-filters' and `--brute'
+    '--all-methods', '--all-filters' and '--brute'
   * ps1/exe: new format - UPX now supports PlayStation One programs
-  * linux/386: added the option `--force-execve'
+  * linux/386: added the option '--force-execve'
   * vmlinuz/386: better kernel detection and sanity checks
   * re-synced with upx 1.24 branch
   * documentation updates
@@ -101,9 +103,9 @@ Changes in 1.22 (27 Jun 2002)
     Digital Mars C++ and Watcom C++
 
 Changes in 1.21 (01 Jun 2002)
-  * New option `--crp-ms=' for slightly better compression at the cost
+  * New option '--crp-ms=' for slightly better compression at the cost
     of higher memory requirements during compression.
-    Try `upx --best --crp-ms=100000'. See the docs for more info.
+    Try 'upx --best --crp-ms=100000'. See the docs for more info.
   * source code: portability fixes
   * source code: compile fixes for g++ 3.0 and g++ 3.1
 
@@ -141,7 +143,7 @@ Changes in 1.05 (24 Jan 2001)
       at the unstable UPX 1.1x beta versions for that)
 
 Changes in 1.04 (19 Dec 2000)
-  * dos/exe: fixed an internal error when using `--no-reloc'
+  * dos/exe: fixed an internal error when using '--no-reloc'
   * win32/pe: fixed a rare bug in the relocation handling code
   * some tunings for the default compression level
 
@@ -149,7 +151,7 @@ Changes in 1.03 (30 Nov 2000)
   * linked with a new version of the NRV compression library:
       - improved compression ratio a little bit
       - overall significantly faster compression
-      - much faster when using high compression levels like `-9' or `--best'
+      - much faster when using high compression levels like '-9' or '--best'
       - much faster with large files
   * atari/tos: added support for FreeMiNT
   * the 32-bit DOS version now uses the new CWSDSTUB extender
@@ -157,7 +159,7 @@ Changes in 1.03 (30 Nov 2000)
 Changes in 1.02 (13 Sep 2000)
   * watcom/le: fixed a problem with the Causeway extender
   * win32/pe: don't automatically strip relocs if they seem needed
-  * support multiple backup generations when using `-k'
+  * support multiple backup generations when using '-k'
   * updated the console screen driver
 
 Changes in 1.01 (09 Apr 2000)
@@ -185,7 +187,7 @@ Changes in 0.99.1 (29 Feb 2000)
 
 Changes in 0.99 (25 Feb 2000)
   * FULL SOURCE CODE RELEASED UNDER THE TERMS OF THE GNU GPL
-  * win32/pe: changed default to `--strip-relocs=1'
+  * win32/pe: changed default to '--strip-relocs=1'
   * dos/com and dos/sys: fixed a bad decompressor problem
   * linux/386: the counter for the progress indicator was off by one
 
@@ -208,7 +210,7 @@ Changes in 0.91 (13 Nov 1999)
   * dos/exe: correctly restore cs when uncompressing
 
 Changes in 0.90 (10 Nov 1999)
-  * all formats: `--overlay=copy' now is the default overlay mode
+  * all formats: '--overlay=copy' now is the default overlay mode
   * improved compression ratio for most files
   * win32/pe: uncompression is finally supported
   * win32/pe: never compress REGISTRY resources
@@ -218,7 +220,7 @@ Changes in 0.90 (10 Nov 1999)
   * win32/pe: somewhat less memory is required during compression
   * linux/386: fixed compression of scripts which was broken since 0.71
   * linux/386: more FreeBSD compatibility issues
-  * changed option: `-i' now prints some more details during compression
+  * changed option: '-i' now prints some more details during compression
     (not finished yet)
 
 Changes in 0.84 (04 Oct 1999)
@@ -234,7 +236,7 @@ Changes in 0.83 (17 Sep 1999)
 Changes in 0.82 (16 Aug 1999)
   * dos/exe: fixed a decompressor bug which could cause crash on some files
   * linux/386: section headers are now stripped from the stub so that
-    `strip' won't ruin a compressed file any longer
+    'strip' won't ruin a compressed file any longer
   * wc/le: support for stack not in the last object disabled again
   * win32/pe: removed some unneeded data
 
@@ -243,32 +245,32 @@ Changes in 0.81 (04 Aug 1999)
   * dos/com: fixed an internal error that could happen with very small files
 
 Changes in 0.80 (03 Aug 1999)
-  * you can set some default options in the environment var `UPX'
+  * you can set some default options in the environment var 'UPX'
   * dos/com: the decompressor stub now checks for enough free memory
   * dos/exe: decompressor rewritten, some bugs are fixed
-  * dos/exe: new option `--no-reloc': no relocation data is put into
+  * dos/exe: new option '--no-reloc': no relocation data is put into
     the DOS header
   * tmt/adam: added support for more stubs, detect already packed files
-  * tmt/adam: new option `--copy-overlay'
+  * tmt/adam: new option '--copy-overlay'
   * wc/le: reduced memory requirement during uncompression
   * wc/le: support files which do not contain their stack in the last object
   * wc/le: fixed a bug which could cause a crash, improved relocation
     handling
-  * wc/le: new option `--copy-overlay'
-  * win32/pe: `--compress-icons=2' is now the default
+  * wc/le: new option '--copy-overlay'
+  * win32/pe: '--compress-icons=2' is now the default
   * win32/pe: even better TLS support
   * win32/pe: versioninfo works on NT
   * win32/pe: import by ordinal from kernel32.dll works
   * win32/pe: other import improvements: importing a nonexistant DLL
     results in a usual Windows message, importing a nonexistant function
     results in program exit (instead of crash ;-)
-  * win32/pe: new option: `--compress-resources=0'
+  * win32/pe: new option: '--compress-resources=0'
   * win32/pe: reduced memory requirement during uncompression, some
     files might even require LESS memory when they're compressed
   * win32/pe: TYPELIBs should work now
   * win32/pe: improved relocation handling, 16-bit relocations should work
-  * win32/pe: new option `--strip-relocs' (only if you know what you are doing)
-  * win32/pe: new option `--copy-overlay'
+  * win32/pe: new option '--strip-relocs' (only if you know what you are doing)
+  * win32/pe: new option '--copy-overlay'
   * important internal changes: now the stubs are built at runtime
 
 Changes in 0.72 (12 May 1999)
@@ -282,20 +284,20 @@ Changes in 0.72 (12 May 1999)
   * linux/386: minor decompressor stub updates, nicer progress bar
 
 Changes in 0.71 (19 Apr 1999)
-  * dos/exe: added option `--no-overlay'
+  * dos/exe: added option '--no-overlay'
   * linux/386: various improvements in the stub, most notably the
     overhead for an extra cleanup process has been removed
   * win32/pe: added support for export forwarders
   * win32/pe: added support for DLLs without entry point or imports
   * win32/pe: yet another .bss fix
-  * win32/pe: new option `--compress-icons=2': compress all icons
+  * win32/pe: new option '--compress-icons=2': compress all icons
     which are not in the first icon directory
   * win32/pe: rearranged stub to avoid false alerts from some virus scanners
 
 Changes in 0.70 (30 Mar 1999)
   * added support for linux/386 executables
   * improved compression ratio quite a bit
-  * added new compression level `--best' to squeeze out even some more bytes
+  * added new compression level '--best' to squeeze out even some more bytes
   * win32/pe: TLS support is much better now
   * win32/pe: --compress-icons=0 should now work as well
   * the usual minor fixes for win32/pe
