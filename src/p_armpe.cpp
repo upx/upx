@@ -1764,12 +1764,14 @@ void PackArmPe::pack(OutputFile *fo)
     ft.addvalue = ih.codebase - rvamin;
     // compress
     int strategy = allow_filter ? 0 : -3;
+
     // disable filters for files with broken headers
     if (ih.codebase + ih.codesize > ph.u_len)
     {
         ft.buf_len = 1;
         strategy = -3;
     }
+
     compressWithFilters(&ft, 2048, strategy,
                         NULL, 0, 0, ih.codebase, rvamin);
 // info: see buildLoader()
