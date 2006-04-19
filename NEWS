@@ -2,9 +2,12 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 2.00 (XX XXX 2006):
+Changes in 2.00 (27 Apr 2006):
+  * linux/386: the stub now prints an error message if some strict
+    SELinux mode does prevent runtime decompression and exectution
   * linux/386: work around a problem where certain Linux kernels
     clobber the %ebx register during a syscall
+  * win32/pe: disable filters for files with broken PE headers
 
 Changes in 1.96 beta (13 Apr 2006):
   * arm/pe: added filter support
