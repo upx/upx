@@ -1120,7 +1120,7 @@ void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_DATE + strlen(UPX_VERSION_DATE) - 4, UPX_VERSION_YEAR, 4) == 0);
 
 #if 1
-#  if 1
+#  if 1 && !defined(UPX_OFFICIAL_BUILD)
     assert(TestBELE<LE16>::test());
     assert(TestBELE<LE32>::test());
     assert(TestBELE<LE64>::test());
