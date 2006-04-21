@@ -33,7 +33,7 @@ OUTPUT_ARCH(i386:x86-64)
 /*ENTRY(_start)*/
 PHDRS
 {
-    text PT_LOAD FILEHDR PHDRS ;
+    text PT_LOAD FILEHDR PHDRS FLAGS ( 5 ) ;  /* r-x (no -w-) */
     data PT_LOAD ;  /* for setting brk(0) */
 }
 SECTIONS

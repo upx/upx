@@ -224,9 +224,9 @@ xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
-    munmap(szlo + addr, hi - szlo);  // desirable if PT_LOAD non-contiguous
+    //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
     return (unsigned long)addr - lo;
 }
 
@@ -260,29 +260,36 @@ do_xmap(
         mlen += frag;
         addr -= frag;
 
-        if (addr != mmap(addr, mlen, PROT_READ | PROT_WRITE,
+        if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
-                fdi, phdr->p_offset - frag) ) {
+                (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
-        bzero(addr, frag);  // fragment at lo end
+        // Linux does not fixup the low end, so neither do we.
+        //if (PROT_WRITE & prot) {
+        //    bzero(addr, frag);  // fragment at lo end
+        //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        bzero(mlen+addr, frag);  // fragment at hi end
-        if (xi && 0==phdr->p_offset) {
-            Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
-            *(int *)&ehdr->e_ident[12] = 0x90c3050f;  // syscall; ret; nop
+        if (PROT_WRITE & prot) { // note: read-only .bss not supported here
+            bzero(mlen+addr, frag);  // fragment at hi end
         }
-        if (0!=mprotect(addr, mlen, prot)) {
-            err_exit(10);
+        if (xi) {
+            if (0==phdr->p_offset) {
+                Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
+                *(int *)&ehdr->e_ident[12] = 0x90c3050f;  // syscall; ret; nop
+            }
+            if (0!=mprotect(addr, mlen, prot)) {
+                err_exit(10);
 ERR_LAB
+            }
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
             }
         }

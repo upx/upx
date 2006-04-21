@@ -667,7 +667,7 @@ PackLinuxElf64amd::generateElfHdr(
     if (ph.format==UPX_F_LINUX_ELF64_AMD) {
         cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
         assert(2==get_native16(&h2->ehdr.e_phnum));
-        set_native32(&h2->phdr[0].p_flags, Elf64_Phdr::PF_W | get_native32(&h2->phdr[0].p_flags));
+        set_native32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
         memset(&h2->linfo, 0, sizeof(h2->linfo));
         fo->write(h2, sizeof(*h2));
     }
@@ -1510,6 +1510,7 @@ void PackLinuxI386elf::pack1(OutputFile *fo, Filter &)
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
+    progid = getRandomId();
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 

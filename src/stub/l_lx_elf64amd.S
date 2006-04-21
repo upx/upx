@@ -169,6 +169,26 @@ eof:
         pop %rbx; pop %rbp
         ret
 
+
+/* These from /usr/include/asm-x86_64/unistd.h */
+__NR_write =  1
+__NR_exit  = 60
+
+msg_SELinux:
+        push $ L71 - L70; pop %arg3  # length
+        call L71
+L70:
+        .asciz "SELinux denied execmem.\n"
+L71:
+        pop %arg2  # message text
+        push $2; pop %arg1  # fd stderr
+        push $ __NR_write; pop %rax
+        syscall
+die:
+        push $127; pop %arg1
+        push $ __NR_exit; pop %rax
+        syscall
+
 /* Decompress the rest of this loader, and jump to it.
    Map a page to hold the decompressed bytes.  Logically this could
    be done by setting .p_memsz for our first PT_LOAD.  But as of 2005-11-09,
@@ -195,7 +215,7 @@ unfold:
         subl %arg5l,%arg5l  #; subl %arg6l,%arg6l  # MAP_ANON ==> ignore offset
         push $ SYS_mmap; pop %rax
         syscall  # %rax= result; trashes %rcx,%r11 only
-        cmpl %eax,%edi; je 0f; hlt; 0:  # XXX: 4GB
+        cmpl %eax,%edi; jne msg_SELinux  # XXX: 4GB
 
 /* Load the addresses and lengths that ::pack3() patched in.
    XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
@@ -226,11 +246,14 @@ unfold:
         movl %ebx,%esi  # %arg2l= &b_info (relocated)
         push %rax  # ret_addr after decompression
                xchgl %eax,%arg3l  # %arg3= dst for unfolding  XXX: 4GB
-        lodsl; movl  %esi,%arg4l  # &len_dst ==> &do_not_care  XXX: 4GB
+        lodsl; push %rax          # allocate slot on stack
+               movq  %rsp,%arg4   # &len_dst ==> &do_not_care
         lodsl; xchgl %eax,%arg1l  # sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  # b_method
               xchg %arg1l,%arg2l  # XXX: 4GB
-        jmp *%rbp  # goto decompress; return to unfolded loader
+        call *%rbp  # decompress
+               pop %rcx  # discard len_dst
+        ret
 
 main:
         # int3  # uncomment for debugging
