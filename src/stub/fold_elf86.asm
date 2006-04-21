@@ -203,24 +203,5 @@ mmap:
         pop ebx
         ret
 
-        global die_SELinux
-die_SELinux:
-        push ebx
-        push byte L71 - L70
-        pop edx
-        call L71
-L70:
-        db "SELinux enforcing mode inhibits execution.",10
-L71:
-        pop ecx
-        push byte 2
-        pop ebx
-%define __NR_write 4
-        push byte __NR_write
-        pop eax
-        int 0x80
-        pop ebx
-        ret
-        
 ; vi:ts=8:et:nowrap
 

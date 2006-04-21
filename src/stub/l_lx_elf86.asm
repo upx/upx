@@ -136,6 +136,28 @@ decompress:
 %define szElf32_Ehdr 0x34
 %define p_memsz  5*4
 
+%define __NR_write 4
+%define __NR_exit  1
+
+msg_SELinux:
+        push byte L71 - L70
+        pop edx  ; length
+        call L71
+L70:
+        db "SELinux denied execmem.",10
+L71:
+        pop ecx  ; message text
+        push byte 2  ; fd stderr
+        pop ebx
+        push byte __NR_write
+        pop eax
+        int 0x80
+die:
+        mov bl, byte 127  ; only low 7 bits matter!
+        push byte __NR_exit
+        pop eax  ; write to stderr could fail, leaving eax as -EBADF etc.
+        int 0x80
+
 ; Decompress the rest of this loader, and jump to it
 unfold:
         pop esi  ; &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
@@ -150,7 +172,7 @@ unfold:
         xor ecx, ecx  ; %ecx= 0
         ; MAP_ANONYMOUS ==>offset is ignored, so do not push!
         ; push ecx  ; offset
-        push ecx  ; fd must be in valid range, but then ignored
+        push byte -1  ; *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
         push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         mov ch, PAGE_SIZE >> 8  ; %ecx= PAGE_SIZE
         push byte PROT_READ | PROT_WRITE | PROT_EXEC
@@ -160,6 +182,8 @@ unfold:
         push byte __NR_mmap
         pop eax
         int 0x80  ; changes only %eax; %edx is live
+        test eax,eax
+        js msg_SELinux
         xchg eax, edx  ; %edx= page after .text; %eax= &Elf32_Ehdr of this program
         xchg eax, ebx  ; %ebx= &Elf32_Ehdr of this program
 
@@ -178,7 +202,7 @@ unfold:
 main:
         pop ebp  ; &decompress
         call unfold
-
+            ; compressed fold_elf86 follows
 eof:
 ;       __XTHEENDX__
         section .data

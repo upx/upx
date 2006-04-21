@@ -38,8 +38,8 @@ PHDRS
 }
 SECTIONS
 {
-  /*  0x00c00000: 12MB */
-  . = 0x00c00000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+  /*  0x00c01000: 12MB+4KB for Fedora Core 5 vDSO at 0xc00000 */
+  . = 0x00c01000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
   .text : {
     *(.text)
     *(.data)
