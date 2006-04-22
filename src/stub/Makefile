@@ -189,7 +189,7 @@ ifneq ($(wildcard $d),)
 endif
 d = /opt/cc-i386-linux/crosstool/powerpc-750-linux-gnu/gcc-3.4.3.20050210-glibc-2.2.5/bin
 ifneq ($(wildcard $d),)
-  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD
+  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD -fno-exceptions -fno-asynchronous-unwind-tables
   LD_PPC32      := $d/powerpc-750-linux-gnu-ld
   OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
 endif
@@ -468,7 +468,7 @@ m_lx_elfppc32.o: m_lx_elfppc32.c $(MAKEFILE_DEPS)
 	$(OBJSTRIP_PPC32) $@
 
 a_lx_elf64amd.o: a_lx_elf64.c $(MAKEFILE_DEPS)
-	$(GCC_AMD64) -c -Os -o $@ $<
+	$(GCC_AMD64) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables -o $@ $<
 	$(OBJSTRIP_AMD64) $@
 
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
