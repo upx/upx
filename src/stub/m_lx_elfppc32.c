@@ -197,7 +197,7 @@ auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
 static unsigned long  // returns relocation constant
-xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, int fdi,
+xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
 )
 {
@@ -217,9 +217,9 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum, int fdi,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, fdi, 0);
+    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
-    mprotect(szlo + addr, hi - szlo, PROT_NONE);  // but keep the frames!
+    //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // but keep the frames!
     return (unsigned long)addr - lo;
 }
 
@@ -237,7 +237,7 @@ do_xmap(
         (char const *)ehdr);
     char *v_brk;
     unsigned long const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, fdi, &v_brk);
+        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -257,15 +257,16 @@ do_xmap(
 
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
-                fdi, phdr->p_offset - frag) ) {
+                (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
-        if (PROT_WRITE & prot) {
-            bzero(addr, frag);  // fragment at lo end
-        }
+        // Linux does not fixup the low end, so neither do we.
+        //if (PROT_WRITE & prot) {
+        //    bzero(addr, frag);  // fragment at lo end
+        //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         if (PROT_WRITE & prot) {
             bzero(mlen+addr, frag);  // fragment at hi end
@@ -279,7 +280,7 @@ ERR_LAB
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
             }
         }

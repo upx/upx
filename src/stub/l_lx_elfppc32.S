@@ -49,27 +49,44 @@ MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
-SYS_mmap= 90
+__NR_mmap= 90
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
+
+/* /usr/include/asm-ppc/unistd.h */
+__NR_write = 4
+__NR_exit  = 1
+
+msg_SELinux:
+        call L71
+L70:
+        .asciz "SELinux denied execmem.\n"
+        .align 2  # (1<<2)
+L71:
+        li   a2,L71 - L70  # length
+        mflr a1    # message text
+        li   a0,2  # fd stderr
+        li 0,__NR_write; sc
+die:
+        li a0,127
+        li 0,__NR_exit; sc
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
         mflr r30  # &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
         li a5,0  # off_t
-        li a4,0  # fd; ignored, but must be in range?
+        li a4,-1  # fd; cater to *BSD for MAP_ANON
           lwz  a0,sz_cpr(r30)
         li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         li a2,PROT_READ | PROT_WRITE | PROT_EXEC
         li a1,PAGE_SIZE
           add  a0,a0,r30
-        li 0,SYS_mmap
+        li 0,__NR_mmap
           addi a0,a0,sz_b_info+PAGE_SIZE-1
         rlwinm a0,a0,0,0,31-PAGE_SHIFT  # next page boundary after fold
-        sc
-        bns+ 0f; trap  # Branch if NoSummary[Overflow] (no failure)
+        sc; bso- msg_SELinux  # Branch if SummaryOverflow (failure)
 0:
         mtctr r31
         lbz meth,b_method(r30)
