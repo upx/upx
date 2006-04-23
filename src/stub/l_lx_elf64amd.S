@@ -169,6 +169,8 @@ eof:
         pop %rbx; pop %rbp
         ret
 
+/* Temporary until we get the buildLoader stuff working ... */
+        .asciz "\n$Id$\n"
 
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1

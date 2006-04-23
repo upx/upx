@@ -54,6 +54,10 @@ __NR_mmap= 90
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
+/* Temporary until we get the buildLoader stuff working ... */
+        .asciz "\n$Id$\n"
+        .align 2  # (1<<2)
+
 /* /usr/include/asm-ppc/unistd.h */
 __NR_write = 4
 __NR_exit  = 1

@@ -33,6 +33,10 @@ _start: .globl _start
         call main  # must be exactly 1 instruction; link_register= &decompress
 #include "ppc_d_nrv2e.S"
 
+/* Temporary until we get the buildLoader stuff working ... */
+        .asciz "\n$Id$\n"
+        .align 2  # (1<<2)
+
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
