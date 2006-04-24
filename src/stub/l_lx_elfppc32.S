@@ -55,8 +55,9 @@ PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 /* Temporary until we get the buildLoader stuff working ... */
-        .asciz "\n$Id$\n"
-        .align 2  # (1<<2)
+        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
+        .asciz "All Rights Reserved. http://upx.sf.net $\n"
+        .p2align 2  # (1<<2)
 
 /* /usr/include/asm-ppc/unistd.h */
 __NR_write = 4
@@ -66,7 +67,7 @@ msg_SELinux:
         call L71
 L70:
         .asciz "SELinux denied execmem.\n"
-        .align 2  # (1<<2)
+        .p2align 2  # (1<<2)
 L71:
         li   a2,L71 - L70  # length
         mflr a1    # message text

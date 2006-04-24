@@ -44,7 +44,7 @@
 
 
         .text
-        .align  0
+        .balign 0
         .globl  upx_main
         .globl  _start
 
@@ -447,7 +447,7 @@ filename:
 @@@@@@@@@@@@@@@@ paramater area for UPX
 
         .code   32
-        .align  2
+        .p2align 2
 SRC0:   .ascii  "SRC0"                  @ start of compressed data
 SRCL:   .ascii  "SRCL"                  @ compressed length
 DST0:   .ascii  "DST0"                  @ start of uncompressed data

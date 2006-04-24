@@ -58,7 +58,6 @@ PAGE_SIZE= -PAGE_MASK
 M_NRV2B_LE32=2  # ../conf.h
 M_NRV2E_LE32=8
 
-#define ALIGN(n)  .align n
 
 /*__LEXEC000__*/
 _start: .globl _start
@@ -127,7 +126,7 @@ ra_setup:
 #define getnextbp(reg) call *%r11; adcl reg,reg
 #define getnextb(reg)  getnextbp(reg)
 
-        ALIGN(1<<3)
+        .p2align 3
 getbit:
         addl bits,bits; jz refill  # Carry= next bit
         rep; ret
@@ -170,7 +169,8 @@ eof:
         ret
 
 /* Temporary until we get the buildLoader stuff working ... */
-        .asciz "\n$Id$\n"
+        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
+        .asciz "All Rights Reserved. http://upx.sf.net $\n"
 
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1

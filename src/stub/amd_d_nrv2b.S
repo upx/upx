@@ -29,7 +29,7 @@
    <jreiser@users.sourceforge.net>
 */
 
-        ALIGN(1<<3)
+        .p2align 3
 lit_n2b:
         incq %rsi; movb %dl,(%rdi)
         incq %rdi
