@@ -13,31 +13,6 @@
 
 
 
-WARNING - UNSTABLE BETA VERSION
-===============================
-
-All versions 1.9x are unstable beta releases - use them only for testing,
-and never distribute a program that is packed with them !
-There will be hidden bugs. Really.
-
-The current stable release is 1.25, and the next stable release
-will be called version 2.00.
-
-The main news since 1.25 are:
-  - slightly better compression using the new NRV2E algorithm
-  - new options for compression tuning (e.g. `--brute')
-  - support for bootable Linux kernels ("vmlinuz/386")
-  - support for Linux kernel building  ("vmlinux/386")
-  - direct Linux ELF-to-memory decompression ("linux/elf386") and
-    shell-to-memory decompression ("linux/sh386")
-  - support for arm/WinCE ("arm/pe") exes
-  - support for mach/ppc32
-  - support for Linux elf/ppc32
-  - support for Linux elf/amd64
-  - support for playstation exes ("ps1/exe")
-  - lots of new bugs ;-) take care
-
-
 WELCOME
 =======
 
@@ -47,6 +22,25 @@ Please don't forget to read the file LICENSE - UPX is distributed
 under the GNU General Public License (GPL) with special exceptions
 allowing the distribution of all compressed executables, including
 commercial programs.
+
+
+MAJOR NEWS IN UPX 2
+===================
+
+The main news since 1.25 are:
+
+  * new format: added support for arm/pe (ARM executables running on WinCE)
+  * new format: added support for linux elf/amd64
+  * new format: added support for linux elf/ppc32
+  * new format: added support for mach/ppc32 (Apple Mac OS X)
+  * new format: added support for bootable Linux kernels ("vmlinuz/386")
+  * new format: added support for Playstation exes ("ps1/exe")
+
+  * slightly better compression using the new NRV2E algorithm
+  * new options for compression tuning (e.g. '--brute')
+  * improved win32/pe compatibility
+  * direct ELF-to-memory decompression
+  * various minor bug fixes
 
 
 INTRODUCTION
@@ -80,8 +74,8 @@ UPX aims to be Commercial Quality Freeware.
 SHORT DOCUMENTATION
 ===================
 
-`upx program.exe' will compress a program or DLL. For best compression
-results try `upx --best program.exe'.
+'upx program.exe' will compress a program or DLL. For best compression
+results try 'upx --brute program.exe'.
 
 Please see the file UPX.DOC for the full documentation. The files
 NEWS and BUGS also contain various tidbits of information.
@@ -95,7 +89,7 @@ UPX comes with ABSOLUTELY NO WARRANTY; for details see the file LICENSE.
 Having said that, we think that UPX is quite stable now. Indeed we
 have compressed lots of files without any problems. Also, the
 current version has undergone several months of beta testing -
-actually it's more than 4 years since our first public beta.
+actually it's almost 8 years since our first public beta.
 
 This is the first production quality release, and we plan that future
 releases will be backward compatible with this version.
