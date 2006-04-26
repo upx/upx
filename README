@@ -24,25 +24,6 @@ allowing the distribution of all compressed executables, including
 commercial programs.
 
 
-MAJOR NEWS IN UPX 2
-===================
-
-The main news since 1.25 are:
-
-  * new format: added support for arm/pe (ARM executables running on WinCE)
-  * new format: added support for linux elf/amd64
-  * new format: added support for linux elf/ppc32
-  * new format: added support for mach/ppc32 (Apple Mac OS X)
-  * new format: added support for bootable Linux kernels ("vmlinuz/386")
-  * new format: added support for Playstation exes ("ps1/exe")
-
-  * slightly better compression using the new NRV2E algorithm
-  * new options for compression tuning (e.g. '--brute')
-  * improved win32/pe compatibility
-  * direct ELF-to-memory decompression
-  * various minor bug fixes
-
-
 INTRODUCTION
 ============
 
