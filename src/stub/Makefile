@@ -101,23 +101,23 @@ O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
 ### i386-linux
 ###
 
-LD_LINUX_I386 = ld -m elf_i386
-OBJCOPY_LINUX_I386 = objcopy -F elf32-i386
+LD_LINUX_I386 = i386-linux-ld-2.16.1 -m elf_i386
+OBJCOPY_LINUX_I386 = i386-linux-objcopy-2.16.1 -F elf32-i386
 OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
 STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
 
 # gcc 2.7.2.3 (fold_*86.bin: 1900 / 1011 / 1786 / 1401)
-CC_LINUX_I386_GCC272  = gcc-2.72 -m386 -O2 -MMD
+CC_LINUX_I386_GCC272  = i386-linux-gcc-2.72 -m386 -O2 -MMD
 CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
 # gcc 2.95.3 (fold_*86.bin: 1770 / 995 / 1661 / 1314)
-CC_LINUX_I386_GCC295  = gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
+CC_LINUX_I386_GCC295  = i386-linux-gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
 # gcc 3.4.6 (fold_*86.bin: 1651 / 947 / 1537 / 1190)
-CC_LINUX_I386_GCC34  = gcc-3.4.6
+CC_LINUX_I386_GCC34  = i386-linux-gcc-3.4.6
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
@@ -128,7 +128,7 @@ CC_LINUX_I386_GCC34 += -Werror
 
 # gcc 4.1.0 (fold_*86.bin: 1725 / 963 / 1620 / 1202)
 # gcc 4.0.3 (fold_*86.bin: 1731 / 995 / 1625 / 1195)
-CC_LINUX_I386_GCC41  = gcc-4.1.0
+CC_LINUX_I386_GCC41  = i386-linux-gcc-4.1.0
 CC_LINUX_I386_GCC41 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC41 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC41 += -momit-leaf-frame-pointer
@@ -150,7 +150,7 @@ CC_LINUX_I386 += -funsigned-char
 ### MIPS R3000
 ###
 
-CPP_MR3K = gcc-2.95.3 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+CPP_MR3K = i386-linux-gcc-2.95.3 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
 ASM_MR3K = asm5900 --nologo -q
 
