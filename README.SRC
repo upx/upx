@@ -69,11 +69,7 @@ Tools needed to build/modify the UPX sources
   - A C++ compiler supporting inner classes, templates, exceptions
     and RTTI.
 
-  - GNU make 3.80 for Win32
-    http://www.cygwin.com/
-
-  - GNU make 3.80 for DOS
-    http://www.delorie.com/djgpp/
+  - GNU make 3.80 or better
 
 
 To compile the packer sources
@@ -96,26 +92,31 @@ To compile the packer sources
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
 
-  - Nasm 0.98.38 - the Netwide Assembler
-    http://upx.sourceforge.net/download/tools/
-    http://sourceforge.net/projects/nasm/
-
   - A68K - a 68000 macro assembler
+    http://upx.sourceforge.net/download/tools/
+
+  - ASM5900 - a MIPS R3000 assembler
     http://upx.sourceforge.net/download/tools/
 
   - djasm - an assembler for the djgpp stub
     http://upx.sourceforge.net/download/tools/
 
-  - Perl 5.6 or better
+  - nasm 0.98.39 - the Netwide Assembler
+    http://upx.sourceforge.net/download/tools/
+    http://sourceforge.net/projects/nasm/
 
-  - Linux (for the linux/386 stubs)
+  - Perl & Python
+
+  - Certain versions of some i386-linux tools:
+       - gcc-2.95.3
+       - gcc-3.4.6
+       - binutils-2.16.1
 
   - Other cross compilers targeted at the following architectures:
+       - arm-9tdmi-linux-gnu
        - powerpc-750-linux-gnu
        - x86_64-unknown-linux-gnu
-       - arm-9tdmi-linux-gnu
 
-  - ASM5900 - a MIPS R3000 assembler
 
 Misc. notes
 -----------
