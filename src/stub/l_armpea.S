@@ -29,6 +29,32 @@
    <jreiser@users.sourceforge.net>
 */
 
+// DEBUG == 0 -> none
+// DEBUG == 1 -> for armpe_tester
+// DEBUG == 2 -> wince - dumps memory
+// DEBUG == 3 -> wince - removes files
+
+#define DEBUG 0
+#if DEBUG == 0
+# define DINIT
+# define DDUMP(x)
+# define DDONE
+#else
+ #define DDUMP(x)   stmfd sp!, {r0 - r3}; mov  r0, x; mov lr, pc; mov pc, r8; ldmia sp!, {r0 - r3}
+ #if DEBUG == 1
+ #define DINIT      mov  r8, r0
+ #define DDONE      mov  pc, lr
+ #elif DEBUG == 2
+ #define DINIT      adr  r8, writefile
+ #define DDONE
+ #elif DEBUG == 3
+ #define DINIT      adr  r8, DelFile
+ #define DDONE
+ #endif
+#endif
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 // magic for the UPX linker
 #define SECT(n)  .text 1; .asciz #n; .long n - _start; .text 0; n
 
@@ -36,7 +62,7 @@
         .text 1; .long 0, bl##t - _start; .asciz #t; .long 0; \
         .text 0;  .byte 0, 0, 0; bl##t: .byte 0xeb
 
-#define DEBUG 0
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         .text
         .balign  0
@@ -52,16 +78,19 @@ SECT(DllStart):
 
 SECT(ExeStart):
         stmfd   sp!, {r0 - r9, lr}
+        DINIT
         adr     r3, SRC0
         ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
         mov     dst0, r2
+        DDUMP   (#'0')
 
         bl      ProcessAll
         mov     r0, #4
-	bl	CacheSync
+        bl      CacheSync
         ldmia   sp!, {r0 - r9, lr}
+        DDONE
 .Lstart_orig:
-        ldr	pc, ENTR
+        ldr     pc, ENTR
 
 CacheSync:
         ldr     r3, CSYN
@@ -73,6 +102,69 @@ DST0:   .ascii  "DST0"                  @ start of uncompressed data
 DSTL:   .ascii  "DSTL"                  @ uncompressed length
 ENTR:   .ascii  "ENTR"                  @ original entry point
 CSYN:   .ascii  "CSYN"                  @ pointer to CacheSync
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+#if DEBUG == 2
+writefile:
+        stmfd   sp!, {r4, r5, r6, r7, lr}
+        mov     r1, dst0
+        sub     r2, r8, r1
+        mov     r3, #2
+        sub     sp, sp, #24
+        mov     r4, #0
+        strh    r0, [sp, #18]
+        str     r3, [sp, #0]
+        mov     r0, #128
+        mov     r3, #92
+        str     r0, [sp, #4]
+        mov     r6, r1
+        mov     r7, r2
+        strh     r3, [sp, #16]
+        strh     r4, [sp, #20]
+        mov     r3, r4
+        str     r4, [sp, #8]
+        mov     r1, #1073741824
+        mov     r2, #3
+        add     r0, sp, #16
+        ldr     ip, .L3
+        mov     lr, pc
+        mov     pc, ip
+        add     r3, sp, #12
+        mov     r5, r0
+        str     r4, [sp, #0]
+        mov     r1, r6
+        mov     r2, r7
+        ldr     ip, .L3+4
+        mov     lr, pc
+        mov     pc, ip
+        mov     r0, r5
+        ldr     r3, .L3+8
+        mov     lr, pc
+        mov     pc, r3
+        add     sp, sp, #24
+        ldmfd   sp!, {r4, r5, r6, r7, pc}
+.L3:
+        .word   33135704
+        .word   33135968
+        .word   33137392
+#endif
+
+#if DEBUG == 3
+DelFile:
+        adr     r1, filename
+        strb    r0, [r1, #2]
+        mov     r0, r1
+        ldr     pc, deleteffilew
+
+deleteffilew:
+        .word   0x1f99bc8
+filename:
+        .byte   '\\', 0, 'r', 0, 0, 0
+        .align  2
+#endif
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 ProcessAll:
         stmfd   sp!, {lr}
@@ -121,6 +213,7 @@ FIBS:   .ascii  "FIBS"                  @ buffer start for filter
 FIBE:   .ascii  "FIBE"                  @ buffer end for filter
 
 .Luf_end:
+        DDUMP   (#'F')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -164,6 +257,7 @@ BREL:   .ascii  "BREL"                  @ start of reloc info
         .unreq  dest
 
 .Lreloc_end:
+        DDUMP   (#'R')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -251,6 +345,7 @@ LLIB:   .ascii  "LOAD"                  @ pointer to LoadLibraryW
 
 .Lhi_end:
         add     sp, sp, #bufsize
+        DDUMP   (#'I')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -260,6 +355,7 @@ SECT(ucl_nrv2e_decompress_8):
 
 SECT(Call2E):
         BL      (ucl_nrv2e_decompress_8)
+        DDUMP   (#'C')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
