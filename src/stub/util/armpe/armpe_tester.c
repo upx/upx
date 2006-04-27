@@ -29,17 +29,26 @@
    <jreiser@users.sourceforge.net>
 */
 
-// arm-9tdmi-linux-gnu-gcc -Wl,--section-start,.interp=0x1000 armpe_tester.c
+// arm-9tdmi-linux-gnu-gcc -Wl,--section-start,.interp=0x1000
+// arm-wince-pe-gcc -Wl,--image-base,0x400000
 
 #include <stdio.h>
-#include <sys/mman.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 
 #ifdef i386
 # define UPX_MMAP_ADDRESS 0x20000000
 #else
 # define UPX_MMAP_ADDRESS 0x10000
+#endif
+
+#ifdef linux
+# include <sys/mman.h>
+#else
+void *VirtualAlloc(void *address, unsigned size, unsigned type, unsigned protect);
+# define MEM_COMMIT 0x1000
+# define PAGE_EXECUTE_READWRITE 0x0040
 #endif
 
 typedef unsigned short LE16;
@@ -144,6 +153,19 @@ static struct pe_header_t ih;
 static struct pe_section_t isections[3];
 static FILE *f;
 static void *vaddr;
+static FILE *out;
+
+static int print(const char *format, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, format);
+    ret = fprintf(out, format, ap);
+    fflush(out);
+    va_end(ap);
+    return ret;
+}
 
 static int load(const char *file)
 {
@@ -152,13 +174,13 @@ static int load(const char *file)
     unsigned pe_offset = 0;
 
     if ((f = fopen(file, "rb")) == NULL)
-        return printf("can not open file: %s\n", file);
+        return print("can not open file: %s\n", file);
 
     for (ic = 0; ic < 20; ic++)
     {
         if (fseek(f, pe_offset, SEEK_SET)
             || fread(&h, sizeof(h), 1, f) != 1)
-            return printf("read error at %u\n", pe_offset);
+            return print("read error at %u\n", pe_offset);
 
         if (h.mz == 'M' + 'Z'*256) // dos exe
         {
@@ -170,19 +192,19 @@ static int load(const char *file)
         else if (get_le32(&h) == 'P' + 'E'*256)
             break;
         else
-            return printf("bad header at %u\n", pe_offset);
+            return print("bad header at %u\n", pe_offset);
     }
     if (ic == 20)
-        return printf("pe header not found\n");
+        return print("pe header not found\n");
     if (fseek(f, pe_offset, SEEK_SET)
         || fread(&ih, sizeof(ih), 1, f) != 1)
-        return printf("can not load pe header\n");
+        return print("can not load pe header\n");
 
     if (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
-        return printf("unsupported processor type: %x\n", ih.cpu);
+        return print("unsupported processor type: %x\n", ih.cpu);
 
     if (ih.objects != 3 || fread(isections, sizeof(isections), 1, f) != 1)
-        return printf("error reading section descriptors\n");
+        return print("error reading section descriptors\n");
 
     return 0;
 }
@@ -190,24 +212,40 @@ static int load(const char *file)
 static int read(void)
 {
     unsigned ic;
+#ifdef linux
     vaddr = mmap((void *) UPX_MMAP_ADDRESS, ih.imagesize,
                  PROT_WRITE | PROT_READ | PROT_EXEC,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
-    if (((int) vaddr) ==  -1)
-        return printf("mmap() failed: %d\n", errno);
+    if (((int) vaddr) == -1)
+        return print("mmap() failed: %d\n", errno);
+#else
+    for (ic = 0x10000; ic < 0x80000; ic += 0x10000)
+    {
+        if ((vaddr = VirtualAlloc((void *) ic, 0x10000,
+                                  MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
+            return print("VirtualAlloc() %x failed\n", ic);
+        print("VirtualAlloc() & memset ok %x\n", ic);
+        print("%p %p %p\n", &ic, read, &out);
+    }
+    vaddr = (void *) UPX_MMAP_ADDRESS;
+#endif
 
     for (ic = 1; ic <= 2; ic++)
         if (fseek(f, isections[ic].rawdataptr, SEEK_SET)
             || fread(vaddr + isections[ic].vaddr,
                      isections[ic].vsize, 1, f) != 1)
-            return printf("error reading section %u\n", ic);
+            return print("error reading section %u\n", ic);
     return 0;
 }
 
 static void dump(char n)
 {
     char buf[100];
+#ifdef linux
     snprintf(buf, sizeof(buf), "/tmp/a.dump%c", n);
+#else
+    snprintf(buf, sizeof(buf), "/a.dump%c", n);
+#endif
     FILE *f2 = fopen(buf, "wb");
     fwrite(vaddr + 0x1000, ih.imagesize - 0x1000, 1, f2);
     fclose(f2);
@@ -223,24 +261,24 @@ static int getprocaddressa(unsigned h, const char *proc)
     unsigned p = (unsigned) proc;
     if (p < 0x10000)
     {
-        printf("getprocaddressa called %c%c%c, ordinal %u\n",
+        print("getprocaddressa called %c%c%c, ordinal %u\n",
                h, h >> 8, h >> 16, p);
         return h + p * 0x10000;
     }
-    printf("getprocaddressa called %c%c%c, name %s\n",
+    print("getprocaddressa called %c%c%c, name %s\n",
            h, h >> 8, h >> 16, proc);
     return h + proc[0] * 0x10000 + proc[1] * 0x1000000;
 }
 
 static void cachesync(unsigned v)
 {
-    printf("cachesync called %u\n", v);
+    print("cachesync called %u\n", v);
 }
 
 static int import(void)
 {
     if (ih.ddirs[PEDIR_IMPORT].vaddr == 0)
-        return printf("no imports?\n");
+        return print("no imports?\n");
     void *imports = vaddr + ih.ddirs[PEDIR_IMPORT].vaddr;
     void *coredll_imports = vaddr + get_le32(imports);
     set_le32(coredll_imports, (unsigned) loadlibraryw);
@@ -257,7 +295,7 @@ static int reloc(void)
     void *page = vaddr + get_le32(relocs);
     unsigned size = get_le32(relocs + 4);
     if (size != ih.ddirs[PEDIR_RELOC].size)
-        return printf("only 1 page can be relocated\n");
+        return print("only 1 page can be relocated\n");
     unsigned num =  (size - 8) / 2;
     while (num--)
     {
@@ -265,7 +303,7 @@ static int reloc(void)
         if (pos == 0)
             continue;
         if ((pos & 0xF000) != 0x3000)
-            return printf("unknown relocation type: %x\n", pos);
+            return print("unknown relocation type: %x\n", pos);
 
         void *r = page + (pos & 0xFFF);
         set_le32(r, get_le32(r) - ih.imagebase + (unsigned) vaddr);
@@ -273,24 +311,30 @@ static int reloc(void)
     return 0;
 }
 
+static void dump2(int c)
+{
+    print("dump2 %c\n", c);
+    dump(c);
+}
+
 static void call(void)
 {
 #ifndef i386
-    void (*entry)(unsigned, unsigned) = vaddr + ih.entry;
-    entry(0, 1);
-    dump('c');
+    void (*entry)(void (*)(int), unsigned) = vaddr + ih.entry;
+    entry(dump2, 1);
+    dump('z');
 #endif
 }
 
-int main(int argc, char **argv)
+static int main2(int argc, char **argv)
 {
     if (argc != 2)
-        return printf("usage: %s arm_pe_file\n", argv[0]), 1;
+        return print("usage: %s arm_pe_file\n", argv[0]), 1;
     if (load(argv[1]))
         return 2;
     if (read())
         return 3;
-    dump('0');
+    dump('o');
     if (import())
         return 4;
     dump('i');
@@ -299,6 +343,17 @@ int main(int argc, char **argv)
     dump('r');
 
     call();
-    printf("ok.\n");
+    print("ok.\n");
     return 0;
+}
+
+int main(int argc, char **argv)
+{
+    out = stdout;
+#ifndef linux
+    out = fopen("/wtest.log", "wt");
+#endif
+    int ret = main2(argc, argv);
+    fclose(out);
+    return ret;
 }
