@@ -1055,6 +1055,14 @@ char const *Packer::getIdentstr(unsigned *size, int small)
     }
 }
 
+void Packer::createLinker(const void *pdata, int plen, int pinfo)
+{
+    if (getFormat() < 128)
+        linker = new Linker(pdata, plen, pinfo);    // little endian
+    else
+        linker = new BeLinker(pdata, plen, pinfo);  // big endian
+}
+
 void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 {
     if (pinfo < 0)
@@ -1064,10 +1072,7 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
     }
 
     delete linker; linker = NULL;
-    if (getFormat() < 128)
-        linker = new Linker(pdata, plen, pinfo);    // little endian
-    else
-        linker = new BeLinker(pdata, plen, pinfo);  // big endian
+    createLinker(pdata, plen, pinfo);
 
     unsigned size;
     char const * const ident = getIdentstr(&size, small);

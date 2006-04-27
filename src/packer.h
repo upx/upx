@@ -271,6 +271,7 @@ protected:
 protected:
     // linker
     Linker *linker;
+    virtual void createLinker(const void *pdata, int plen, int pinfo);
 
 private:
     // private to checkPatch()
