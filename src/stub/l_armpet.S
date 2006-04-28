@@ -36,7 +36,7 @@
         .text 1; .long 0, bl##t - _start; .asciz #t; .long 0; \
         .text 0;  .byte 0, 0, 0; bl##t: .byte 0xf8
 
-#define DEBUG 0
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         .text
         .balign  0
@@ -58,7 +58,7 @@ SECT(ExeStart):
 
         adr     r3, SRC0
         ldmia   r3, {r5, r6, r7}       @ r5=src0, r6=slen, r7=dst0, r3=addr src0
-        add     r5, r5, r6
+        add     r5, pc, #4096
 .L01:
         ldr     r6, [r7]
         add     r7, r7, #4096
