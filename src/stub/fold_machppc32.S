@@ -96,6 +96,7 @@ SYS_write =4
 SYS_open  =5
 SYS_close =6
 
+SYS_pread =153
 SYS_mmap    =197
 SYS_mprotect= 74
 
@@ -103,6 +104,9 @@ SYS_mprotect= 74
    in wrong registers.  So change C interface to use size_t (32-bits) instead
    of off_t (64 bits), and convert here.
 */
+pread: .globl pread
+	movr a4,a3; li a3,0  # zero extend 4th arg size_t to off_t
+	li 0,SYS_pread; b sysgo
 mmap: .globl mmap
 	movr a6,a5; li a5,0  # zero extend 6th arg size_t to off_t
 	li 0,SYS_mmap

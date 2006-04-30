@@ -45,7 +45,7 @@ int close(int);
 void exit(int) __attribute__((__noreturn__));
 int mprotect(void *, size_t, int);
 int open(char const *, unsigned, unsigned);
-ssize_t read(int, void *, size_t);
+ssize_t pread(int, void *, size_t, unsigned);
 
 #define CONST_CAST(type, var) \
     ((type) ((uintptr_t) (var)))
@@ -217,6 +217,25 @@ upx_bzero(char *p, size_t len)
 
 typedef struct {
     unsigned magic;
+    unsigned nfat_arch;
+} Fat_header;
+typedef struct {
+    unsigned cputype;
+    unsigned cpusubtype;
+    unsigned offset;
+    unsigned size;
+    unsigned align;  /* power of 2 */
+} Fat_arch;
+    enum e8 {
+        FAT_MAGIC = 0xcafebabe
+    };
+    enum e9 {
+        CPU_TYPE_POWERPC   = 0x00000012,
+        CPU_TYPE_POWERPC64 = 0x01000012
+    };
+
+typedef struct {
+    unsigned magic;
     unsigned cputype;
     unsigned cpysubtype;
     unsigned filetype;
@@ -226,9 +245,6 @@ typedef struct {
 } Mach_header;
         enum e0 {
             MH_MAGIC = 0xfeedface
-        };
-        enum e1 {
-            CPU_TYPE_POWERPC = 18
         };
         enum e2 {
             MH_EXECUTE = 2
@@ -319,6 +335,7 @@ extern char *mmap(char *, size_t, unsigned, unsigned, int, /*off_t*/size_t);
 static Mach_ppc_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
+    unsigned const fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -344,7 +361,7 @@ do_xmap(
         if (0!=mlen && addr != mmap(addr, mlen, VM_PROT_READ | VM_PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE |
                     ((xi || 0==sc->filesize) ? MAP_ANON : 0),
-                ((0==sc->filesize) ? -1 : fdi), sc->fileoff) ) {
+                ((0==sc->filesize) ? -1 : fdi), sc->fileoff + fat_offset) ) {
             err_exit(8);
         }
         if (xi && 0!=sc->filesize) {
@@ -396,6 +413,7 @@ upx_main(
 )
 {
     Mach_ppc_thread_state const *entry;
+    unsigned fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
@@ -406,7 +424,7 @@ upx_main(
     // Uncompress Macho headers
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
 
-    entry = do_xmap(mhdr, &xi0, -1, mhdrpp, f_decompress, f_unf);
+    entry = do_xmap(mhdr, fat_offset, &xi0, -1, mhdrpp, f_decompress, f_unf);
 
   { // Map dyld dynamic loader
     Mach_load_command const *lc = (Mach_load_command const *)(1+ mhdr);
@@ -421,12 +439,28 @@ upx_main(
         if (0 > fdi) {
             err_exit(18);
         }
-        if ((ssize_t)sz_mhdr!=read(fdi, (void *)mhdr, sz_mhdr)) {
+fat:
+        if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(mhdr, 0, fdi, 0, 0, 0);
+        switch (mhdr->magic) {
+        case MH_MAGIC: break;
+        case FAT_MAGIC: {
+            // stupid Apple: waste code and a page fault on EVERY execve
+            Fat_header const *const fh = (Fat_header const *)mhdr;
+            Fat_arch const *fa = (Fat_arch const *)(1+ fh);
+            for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
+                if (CPU_TYPE_POWERPC==fa->cputype) {
+                    fat_offset= fa->offset;
+                    goto fat;
+                }
+            }
+        } break;
+        } // switch
+        entry = do_xmap(mhdr, fat_offset, 0, fdi, 0, 0, 0);
         close(fdi);
+        break;
     }
   }
 
