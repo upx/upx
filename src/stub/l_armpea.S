@@ -77,31 +77,30 @@ SECT(DllStart):
         bne     .Lstart_orig
 
 SECT(ExeStart):
-        stmfd   sp!, {r0 - r9, lr}
+        stmfd   sp!, {r0 - r11, lr}
         DINIT
         adr     r3, SRC0
         ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
+        ldmia   r3, {r4, r10, r11}      @ r10=LoadLibraryW, r11=GetProcAddressA
         mov     dst0, r2
-        DDUMP   (#'0')
 
         bl      ProcessAll
         mov     r0, #4
         bl      CacheSync
-        ldmia   sp!, {r0 - r9, lr}
+        ldmia   sp!, {r0 - r11, lr}
         DDONE
 .Lstart_orig:
         ldr     pc, ENTR
 
 CacheSync:
-        ldr     r3, CSYN
-        ldr     pc, [r3]
+        ldr     pc, IATT + 8
 
 SRC0:   .ascii  "SRC0"                  @ start of compressed data
 SRCL:   .ascii  "SRCL"                  @ compressed length
 DST0:   .ascii  "DST0"                  @ start of uncompressed data
 DSTL:   .ascii  "DSTL"                  @ uncompressed length
+IATT:   .ascii  "IATT"; .long 0, 0, 0   @ import address table
 ENTR:   .ascii  "ENTR"                  @ original entry point
-CSYN:   .ascii  "CSYN"                  @ pointer to CacheSync
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -110,6 +109,7 @@ writefile:
         stmfd   sp!, {r4, r5, r6, r7, lr}
         mov     r1, dst0
         sub     r2, r8, r1
+        add     r2, r2, #4096+2048
         mov     r3, #2
         sub     sp, sp, #24
         mov     r4, #0
@@ -331,17 +331,13 @@ get_le32:                               @ optimized for size
         mov     pc, lr
 
 LoadLibraryW:
-        ldr     r3, LLIB
-        ldr     pc, [r3]
+        mov     pc, r10
 
 GetProcAddressA:
-        ldr     r3, GETP
-        ldr     pc, [r3]
+        mov     pc, r11
 
 BIMP:   .ascii  "BIMP"                  @ start of import data
 ONAM:   .ascii  "ONAM"                  @ start of dll names
-GETP:   .ascii  "GETP"                  @ pointer to GetProcAddressA
-LLIB:   .ascii  "LOAD"                  @ pointer to LoadLibraryW
 
 .Lhi_end:
         add     sp, sp, #bufsize

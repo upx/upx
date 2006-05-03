@@ -29,6 +29,8 @@
    <jreiser@users.sourceforge.net>
 */
 
+#define DEBUG 0
+
 // magic for the UPX linker
 #define SECT(n)  .text 1; .asciz #n; .long n - _start; .text 0; n
 
@@ -51,25 +53,25 @@ SECT(DllStart):
         bne     .Lstart_orig
 
 SECT(ExeStart):
-        stmfd   sp!, {r0 - r9, lr}
+        stmfd   sp!, {r0 - r11, lr}
 
-        @ touch all pages in ARM mode - this seems to be required
+        @ access all pages in ARM mode - this seems to be required
         @ otherwise the THUMB mode stuff fails
 
         adr     r3, SRC0
-        ldmia   r3, {r5, r6, r7}       @ r5=src0, r6=slen, r7=dst0, r3=addr src0
-        add     r5, pc, #4096
-.L01:
+        ldmia   r3, {r5, r6, r7, r9, r10, r11, ip}  @ r5=src0, r7=dst0
+        add     r5, pc, #4096           @ r3=addr src0, r10=LoadLibraryW
+.L01:                                   @ r11=GetProcAddressA, ip=CacheSync
         ldr     r6, [r7]
         add     r7, r7, #4096
         cmp     r7, r5
         bls     .L01
 
-        adr     ip, ProcessAll + 1
+        adr     r4, ProcessAll + 1
         mov     lr, pc
-        bx      ip
+        bx      r4
 
-        ldmfd   sp!, {r0 - r9, lr}
+        ldmfd   sp!, {r0 - r11, lr}
 .Lstart_orig:
         ldr     ip, ENTR
         bx      ip
@@ -78,18 +80,16 @@ SRC0:   .ascii  "SRC0"                  @ start of compressed data
 SRCL:   .ascii  "SRCL"                  @ compressed length
 DST0:   .ascii  "DST0"                  @ start of uncompressed data
 DSTL:   .ascii  "DSTL"                  @ uncompressed length
+IATT:   .ascii  "IATT"; .long 0, 0, 0   @ import address table
 ENTR:   .ascii  "ENTR"                  @ original entry point
-CSYN:   .ascii  "CSYN"                  @ pointer to CacheSync
 
         .thumb
 
 ProcessAll:
-        ldmia   r3!, {r0, r1, r2, r5, r6, r7} @ r0=src0, r1=slen, r2=dst0, r7=csyn
-        sub     r3, #12
+        ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
         mov     dst0, r2
-        ldr     r7, [r7]
-        mov     r6, #4                  @ parameter of CacheSync
-        push    {r6, r7, lr}
+        mov     r4, ip                  @ CacheSync
+        push    {r4, lr}
         .align  2
 
         @@ uncompress/unfilter/imports/relocs are copied here by the upx linker
@@ -223,7 +223,6 @@ SECT(Imports):
 
         mov     r0, sp
         bl      LoadLibraryW
-
         mov     dll, r0
         add     r0, imp, #4
         bl      get_le32
@@ -275,21 +274,15 @@ get_le32:                               @ optimized for size
         mov     r0, r2                  @ sets the Z flag if zero
         bx      lr
 
-GetProcAddressA:
-        ldr     r3, GETP
-.Lcallr3:
-        ldr     r3, [r3]
-        bx      r3
-
 LoadLibraryW:
-        ldr     r3, LLIB
-        b       .Lcallr3
+        bx      r10
+
+GetProcAddressA:
+        bx      r11
 
         .align  2
 BIMP:   .ascii  "BIMP"                  @ start of import data
 ONAM:   .ascii  "ONAM"                  @ start of dll names
-GETP:   .ascii  "GETP"                  @ pointer to GetProcAddressA
-LLIB:   .ascii  "LOAD"                  @ pointer to LoadLibraryW
 
 .Lhi_end:
         mov     sp, r7
@@ -297,9 +290,10 @@ LLIB:   .ascii  "LOAD"                  @ pointer to LoadLibraryW
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 SECT(ProcessEnd):
-        pop     {r0, r1, r2}            @ r0=4, r1=csyn, r2=lr
+        pop     {r1, r2}                @ r1=CacheSync, r2=lr
+        mov     r0, #4                  @ parameter of CacheSync
         mov     lr, r2
-        bx      r1                      @ jump to CacheSync
+        bx      r1
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 

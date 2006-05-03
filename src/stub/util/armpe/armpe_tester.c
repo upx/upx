@@ -280,7 +280,7 @@ static int import(void)
     if (ih.ddirs[PEDIR_IMPORT].vaddr == 0)
         return print("no imports?\n");
     void *imports = vaddr + ih.ddirs[PEDIR_IMPORT].vaddr;
-    void *coredll_imports = vaddr + get_le32(imports);
+    void *coredll_imports = vaddr + get_le32(imports + 16);
     set_le32(coredll_imports, (unsigned) loadlibraryw);
     set_le32(coredll_imports + 4, (unsigned) getprocaddressa);
     set_le32(coredll_imports + 8, (unsigned) cachesync);

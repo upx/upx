@@ -32,7 +32,7 @@ top_srcdir = ../..
 
 # These are the files we want to create.
 STUBS = \
-	l_armpe.h \
+	l_armpea.h l_armpet.h \
 	l_com.h \
 	l_djgpp2.h stubify.h \
 	l_exe.h \
@@ -226,10 +226,8 @@ GCC_AMD64     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 GCC_ARM       :=  arm-9tdmi-linux-gnu-gcc -march=armv4 -nostdinc -MMD
 GCC_ARM       += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-GCC_ARM_T     :=  $(GCC_ARM) -march=armv4t -mthumb-interwork -mthumb
-LD_ARM        :=  arm-9tdmi-linux-gnu-ld
+GCC_ARM_T     :=  $(GCC_ARM) -march=armv4t
 OBJCOPY_ARM   :=  arm-9tdmi-linux-gnu-objcopy
-BIN2H_WINCE   :=  perl -ne 'print "db\t", join(",", map { sprintf "%\#02x", $$_ } unpack("C*", $$_)), "\n"'
 
 
 # /***********************************************************************
@@ -555,37 +553,15 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
-l_armpe.h: l_armpe.asx l_armpe_s.S l_armpe_c.c arm_nrv2e_d8.S arm_nrv2b_d8.S armv4_n2e_d8.S $(MAKEFILE_LIST)
-	$(GCC_ARM_T) -c l_armpe_s.S arm_nrv2e_d8.S arm_nrv2b_d8.S
-	$(GCC_ARM_T) -Os -c l_armpe_c.c -DUCL_DECOMPRESS=thumb_nrv2e_d8
-	$(LD_ARM)  -o l_armpe_txe.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_txe.out l_armpe_txe.bin
-	$(BIN2H_WINCE) <l_armpe_txe.bin >l_armpe_txe.ah
-	$(GCC_ARM_T) -Os -c l_armpe_c.c -DUCL_DECOMPRESS=go_thumb_n2b
-	$(LD_ARM)  -o l_armpe_txb.out l_armpe_s.o l_armpe_c.o arm_nrv2b_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_txb.out l_armpe_txb.bin
-	$(BIN2H_WINCE) <l_armpe_txb.bin >l_armpe_txb.ah
-	$(GCC_ARM_T) -DSTUB_FOR_DLL -c l_armpe_s.S
-	$(GCC_ARM_T) -DSTUB_FOR_DLL -Os -c l_armpe_c.c -DUCL_DECOMPRESS=thumb_nrv2e_d8
-	$(LD_ARM)  -o l_armpe_tde.out l_armpe_s.o l_armpe_c.o arm_nrv2e_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_tde.out l_armpe_tde.bin
-	$(BIN2H_WINCE) <l_armpe_tde.bin >l_armpe_tde.ah
-	$(GCC_ARM_T) -DSTUB_FOR_DLL -Os -c l_armpe_c.c -DUCL_DECOMPRESS=go_thumb_n2b
-	$(LD_ARM)  -o l_armpe_tdb.out l_armpe_s.o l_armpe_c.o arm_nrv2b_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_tdb.out l_armpe_tdb.bin
-	$(BIN2H_WINCE) <l_armpe_tdb.bin >l_armpe_tdb.ah
-	$(GCC_ARM) -Os -c l_armpe_c.c -DUCL_DECOMPRESS=ucl_nrv2e_decompress_8
-	$(GCC_ARM) -c armv4_n2e_d8.S l_armpe_s.S
-	$(LD_ARM)  -o l_armpe_axe.out l_armpe_s.o l_armpe_c.o armv4_n2e_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_axe.out l_armpe_axe.bin
-	$(BIN2H_WINCE) <l_armpe_axe.bin >l_armpe_axe.ah
-	$(GCC_ARM) -DSTUB_FOR_DLL -Os -c l_armpe_c.c -DUCL_DECOMPRESS=ucl_nrv2e_decompress_8
-	$(GCC_ARM) -DSTUB_FOR_DLL -c l_armpe_s.S
-	$(LD_ARM)  -o l_armpe_ade.out l_armpe_s.o l_armpe_c.o armv4_n2e_d8.o
-	$(OBJCOPY_ARM) --only-section .text -O binary l_armpe_ade.out l_armpe_ade.bin
-	$(BIN2H_WINCE) <l_armpe_ade.bin >l_armpe_ade.ah
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
+l_armpea.h: l_armpea.S armv4_n2e_d8.S $(MAKEFILE_LIST)
+	$(GCC_ARM) $T.S -o $T.out -nostdlib
+	$(OBJCOPY_ARM) --only-section .text -O binary $T.out $T.bin
+	$(BIN2H) $T.bin nrv_loader_arm $@
+
+l_armpet.h: l_armpet.S arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_LIST)
+	$(GCC_ARM_T) $T.S -o $T.out -nostdlib
+	$(OBJCOPY_ARM) --only-section .text -O binary $T.out $T.bin
+	$(BIN2H) $T.bin nrv_loader_thumb $@
 
 # /***********************************************************************
 # // dependencies
