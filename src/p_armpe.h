@@ -72,7 +72,7 @@ protected:
     unsigned pe_offset;
 
     unsigned processImports();
-    void processImports(unsigned);
+    void processImports(unsigned, unsigned);
     void rebuildImports(upx_byte *&);
     upx_byte *oimport;
     unsigned soimport;
@@ -119,6 +119,10 @@ protected:
     int big_relocs;
 
     bool use_thumb_stub;
+
+    void createLinker(const void *pdata, int plen, int pinfo);
+    int rpatch_le32(void *b, int blen, const void *old, unsigned new_,
+                    PackArmPe_Reloc &, unsigned);
 
     struct pe_header_t
     {
