@@ -59,7 +59,7 @@ SECT(ExeStart):
         @ otherwise the THUMB mode stuff fails
 
         adr     r3, SRC0
-        ldmia   r3, {r5, r6, r7, r9, r10, r11, ip}  @ r5=src0, r7=dst0
+        ldmia   r3, {r5, r6, r7, r9, r10, r11, ip}  @ r7=dst0
         add     r5, pc, #4096           @ r3=addr src0, r10=LoadLibraryW
 .L01:                                   @ r11=GetProcAddressA, ip=CacheSync
         ldr     r6, [r7]
@@ -255,8 +255,7 @@ SECT(Imports):
 .Lhi_call_gpa:
         mov     r0, dll
         bl      GetProcAddressA
-        str     r0, [iat]
-        add     iat, #4
+        stmia   iat!, {r0}
         b       .Lhi_gpa_loop
 
         .unreq  iat
