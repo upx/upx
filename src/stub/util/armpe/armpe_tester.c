@@ -219,15 +219,10 @@ static int read(void)
     if (((int) vaddr) == -1)
         return print("mmap() failed: %d\n", errno);
 #else
-    for (ic = 0x10000; ic < 0x80000; ic += 0x10000)
-    {
-        if ((vaddr = VirtualAlloc((void *) ic, 0x10000,
-                                  MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
-            return print("VirtualAlloc() %x failed\n", ic);
-        print("VirtualAlloc() & memset ok %x\n", ic);
-        print("%p %p %p\n", &ic, read, &out);
-    }
-    vaddr = (void *) UPX_MMAP_ADDRESS;
+    if ((vaddr = VirtualAlloc(0, ih.imagesize,
+                              MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
+        return print("VirtualAlloc() failed\n");
+    print("VirtualAlloc() ok %x\n", vaddr);
 #endif
 
     for (ic = 1; ic <= 2; ic++)
@@ -334,13 +329,13 @@ static int main2(int argc, char **argv)
         return 2;
     if (read())
         return 3;
-    dump('o');
+    dump('0');
     if (import())
         return 4;
-    dump('i');
+    dump('1');
     if (reloc())
         return 5;
-    dump('r');
+    dump('2');
 
     call();
     print("ok.\n");
