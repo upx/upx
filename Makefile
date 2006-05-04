@@ -12,8 +12,11 @@ default:
 	@echo "UPX info: please choose a target for 'make'"
 
 all mostlyclean clean distclean maintainer-clean:
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
+	# these need special build tools
 	$(MAKE) -C src/stub/util/sstrip $@
 	$(MAKE) -C src/stub $@
+endif
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
 
@@ -38,6 +41,6 @@ ChangeLog ChangeLog.cvs:
 	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
 
 
-.PHONY: all mostlyclean clean distclean maintainer-clean
+.PHONY: default all mostlyclean clean distclean maintainer-clean
 .PHONY: dist cvs-info cvs-admin-ko ChangeLog ChangeLog.cvs
 
