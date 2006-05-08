@@ -694,7 +694,7 @@ unsigned PackArmPe::processImports() // pass 1
     im = (import_desc*) oimpdlls;
 
     LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 4 + 4;// + k32o + (isdll ? 0 : 1);
+    LE32 *lookuptable = ordinals + 4;// + k32o + (isdll ? 0 : 1);
     upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
     upx_byte *importednames = dllnames + (dllnamelen &~ 1);
 
