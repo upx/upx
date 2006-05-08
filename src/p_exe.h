@@ -98,6 +98,7 @@ protected:
     unsigned relocsize;
 
     bool has_9a;
+    bool device_driver;
 
     enum {
         NORELOC = 1,

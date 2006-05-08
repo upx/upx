@@ -80,7 +80,6 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     memset(&oh,0,sizeof(oh));
     oh.ident = 'M' + 'Z' * 256;
     oh.headsize16 = 2;
-    oh.ip = 0;
 
     oh.sp = ih.sp > 0x200 ? (unsigned) ih.sp : 0x200;
 
@@ -108,7 +107,11 @@ int PackExe::buildLoader(const Filter *)
 
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
+    if (device_driver)
+        addLoader("DEVICEENTRY", NULL);
     addLoader("EXEENTRY",
+              device_driver ? "DEVICESUB" : "EXESUB",
+              "JNCDOCOPY",
               relocsize ? "EXERELPU" : "",
               "EXEMAIN4,+G5DXXXX,UPX1HEAD,EXECUTPO",
               NULL
@@ -162,6 +165,7 @@ int PackExe::buildLoader(const Filter *)
                   NULL
                  );
     addLoader("EXEMAIN8",
+              device_driver ? "DEVICEEND" : "",
               (flag & SS) ? "EXESTACK" : "",
               (flag & SP) ? "EXESTASP" : "",
               (flag & USEJUMP) ? "EXEJUMPF" : "",
@@ -367,6 +371,8 @@ void PackExe::pack(OutputFile *fo)
 
     checkAlreadyPacked(ibuf, UPX_MIN(ih_imagesize, 127u));
 
+    device_driver = get_le32(ibuf) == 0xffffffffu;
+
     // relocations
     has_9a = false;
     upx_byte *w = ibuf + ih_imagesize;
@@ -523,6 +529,19 @@ void PackExe::pack(OutputFile *fo)
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
+    oh.ip = 0;
+    if (device_driver)
+    {
+        patch_le16(loader, e_len, "OP", oh.sp);
+        patch_le16(loader, e_len, "OS", oh.ss);
+        // copy .sys header
+        memcpy(loader + 4, ibuf + 4, 2);
+        memcpy(loader + 8, ibuf + 8, 2);
+        // copy original strategy
+        memcpy(loader + 10, ibuf + 6, 2);
+        oh.ip = getLoaderSection("EXEENTRY") - 3;
+    }
+
 //fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
 
     // write header + write loader + compressed file
@@ -567,7 +586,7 @@ int PackExe::canUnpack()
         return false;
     const off_t off = ih.headsize16 * 16;
     fi->seek(off, SEEK_SET);
-    bool b = readPackHeader(128);
+    bool b = readPackHeader(256);
     return b && (off + (off_t) ph.c_len <= file_size);
 }
 

@@ -340,9 +340,6 @@ Extra options available for this executable format:
 
 =head2 NOTES FOR DOS/SYS
 
-You can only compress plain sys files, sys/exe (two in one)
-combos are not supported.
-
 Compressed programs only work on a 286+.
 
 Packed programs will be byte-identical to the original after uncompression.

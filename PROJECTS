@@ -56,8 +56,6 @@ Existing formats:
 
  - dos/exe: implement filter support
 
- - dos/sys: add support for sys/exe combos
-
  - linux/i386:
      - use the new assembly preprocessor stuff (ie. process the file
        headers internally)
