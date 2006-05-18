@@ -64,11 +64,10 @@ strategy:
                 push    bp
                 push    ds
                 push    es
-                mov     ax, 1
-                db      0xa9
+                db      0x72            ; "jc 0xf9" but flag C is 0 => nop
 exe_as_device_entry:
-                xor     ax, ax
-                push    ax
+                stc                     ; flag C is 1
+                pushf
 
 ; =============
 ; ============= ENTRY POINT
@@ -83,7 +82,8 @@ exe_entry:
 do_copy:
                 mov     ch, 0x80        ; 64 kbyte
                 mov     ax, cs
-                add     ax, 'DS'
+addaxds:
+                add     ax, 'DS'        ; MSB is referenced by the "sub" below
                 mov     ds, ax
                 add     ax, 'ES'
                 mov     es, ax
@@ -93,9 +93,9 @@ do_copy:
                 movsw
                 cld
 ;       __DEVICESUB__
-                sub     [byte cs:si+do_copy+6+2], byte 0x10
+                sub     [byte cs:si + addaxds + 4], byte 0x10
 ;       __EXESUB__
-                sub     [byte cs:si+do_copy-exe_entry+6+2], byte 0x10
+                sub     [byte cs:si + addaxds - exe_entry + 4], byte 0x10
 ;       __JNCDOCOPY__
                 jnc     do_copy
                 xchg    ax, dx
@@ -193,9 +193,8 @@ reloc_5:
                 pop     ds
 
 ;       __DEVICEEND__
-                pop     ax
-                dec     ax
-                jnz     loaded_as_exe
+                popf
+                jc      loaded_as_exe
                 pop     es
                 pop     ds
                 pop     bp
@@ -203,8 +202,8 @@ reloc_5:
                 pop     si
                 pop     bx              ; get original device SS:SP
                 pop     ax
-                mov     ss,ax           ; switch to device driver stack
-                mov     sp,bx
+                mov     ss, ax          ; switch to device driver stack
+                mov     sp, bx
                 pop     dx
                 pop     cx
                 pop     bx

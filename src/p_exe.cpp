@@ -539,7 +539,7 @@ void PackExe::pack(OutputFile *fo)
         memcpy(loader + 8, ibuf + 8, 2);
         // copy original strategy
         memcpy(loader + 10, ibuf + 6, 2);
-        oh.ip = getLoaderSection("EXEENTRY") - 3;
+        oh.ip = getLoaderSection("EXEENTRY") - 2;
     }
 
 //fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
