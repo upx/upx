@@ -1298,12 +1298,14 @@ upx_byte *Resource::build()
 void Resource::destroy(upx_rnode *node,unsigned level)
 {
     delete [] node->name; node->name = NULL;
-    if (level == 3)
-        return;
-    upx_rbranch * const branch = (upx_rbranch *) node;
-    for (int ic = branch->nc; --ic >= 0; )
-        destroy(branch->children[ic],level + 1);
-    delete [] branch->children; branch->children = NULL;
+    if (level != 3)
+    {
+        upx_rbranch * const branch = (upx_rbranch *) node;
+        for (int ic = branch->nc; --ic >= 0; )
+            destroy(branch->children[ic],level + 1);
+        delete [] branch->children; branch->children = NULL;
+    }
+    delete node;
 }
 
 static void lame_print_unicode(const upx_byte *p)
