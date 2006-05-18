@@ -1892,13 +1892,10 @@ void PackArmPe::pack(OutputFile *fo)
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
     const unsigned upxsection = s1addr + ic + clen;
 
-    const unsigned assumed_soxrelocs = !isdll ? 0 :
-        ALIGN_UP(8 + 2 * (3 + (ft.id ? 2 : 0) + (sorelocs ? 1 : 0) + 2), 4);
-    const unsigned myimport = ncsection + assumed_soxrelocs + soresources - rvamin;
-
     Reloc rel(1024); // new relocations are put here
     // patch loader
-    rpatch_le32(loader, codesize, "ONAM", ih.imagebase + myimport + rvamin, rel, upxsection);
+    // the exact value of "ONAM" can not be computed here, so we set it later
+    int onam_offset = rpatch_le32(loader, codesize, "ONAM", 0, rel, upxsection);
     rpatch_le32(loader, codesize, "BIMP", ih.imagebase + rvamin + cimports, rel, upxsection);
 
     if (sorelocs)
@@ -1971,8 +1968,8 @@ void PackArmPe::pack(OutputFile *fo)
     }
     ic += soexport;
 
-    if (isdll && soxrelocs != assumed_soxrelocs)
-        throwInternalError("FIXME: soxrelocs != assumed_soxrelocs");
+    const unsigned onam = ncsection + soxrelocs + soresources + ih.imagebase;
+    set_le32(loader + onam_offset, onam);
 
     // this is computed here, because soxrelocs changes some lines above
     const unsigned ncsize = soxrelocs + soresources + soimpdlls + soexport;
