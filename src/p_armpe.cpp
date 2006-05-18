@@ -1350,6 +1350,7 @@ void Resource::destroy(upx_rnode *node,unsigned level)
             destroy(branch->children[ic],level + 1);
         delete [] branch->children; branch->children = NULL;
     }
+    delete node;
 }
 
 static void lame_print_unicode(const upx_byte *p)
