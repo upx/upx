@@ -23,24 +23,11 @@ endif
 dist: distclean
 	false
 
-
-ifneq ($(wildcard CVS/R*),)
-CVS_ROOT := $(shell cat CVS/Root)
-CVS_REPO := $(shell cat CVS/Repository)
-endif
-
-cvs-info:
-	@echo 'CVS info: $(CVS_ROOT) $(CVS_REPO)'
-
-cvs-admin-ko:
-	cvs admin -ko .
-	cvs -q -z6 update -P -d
-
-# automatically generate ChangeLog from CVS
-ChangeLog ChangeLog.cvs:
-	perl $(srcdir)/scripts/cvs2cl.pl --utc -f ChangeLog.cvs
+# automatically generate ChangeLog from hg
+ChangeLog:
+	hg log --style=changelog > $@
 
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
-.PHONY: dist cvs-info cvs-admin-ko ChangeLog ChangeLog.cvs
+.PHONY: dist ChangeLog
 
