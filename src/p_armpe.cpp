@@ -1218,10 +1218,10 @@ public:
     bool clear();
 
     void dump() const { dump(root,0); }
-/*
     unsigned iname()  const {return current->parent->id;}
     const upx_byte *nname() const {return current->parent->name;}
 
+/*
     unsigned ilang()  const {return current->id;}
     const upx_byte *nlang() const {return current->name;}
 */
@@ -1420,6 +1420,52 @@ void PackArmPe::processResources(Resource *res,unsigned newaddr)
     delete [] p;
 }
 
+static bool match(unsigned itype, const unsigned char *ntype,
+                  unsigned iname, const unsigned char *nname,
+                  const char *keep)
+{
+    // format of string keep: type1[/name1],type2[/name2], ....
+    // typex and namex can be string or number
+    // hopefully resource names do not have '/' or ',' characters inside
+
+    struct helper
+    {
+        static bool match(unsigned num, const unsigned char *unistr,
+                          const char *keep)
+        {
+            if (!unistr)
+                return (unsigned) atoi(keep) == num;
+
+            unsigned ic;
+            for (ic = 0; ic < get_le16(unistr); ic++)
+                if (unistr[2 + ic * 2] != (unsigned char) keep[ic])
+                    return false;
+            return keep[ic] == 0 || keep[ic] == ',' || keep[ic] == '/';
+        };
+    };
+
+    // FIXME this comparison is not too exact
+    while (1)
+    {
+        char *delim1 = strchr(keep, '/');
+        char *delim2 = strchr(keep, ',');
+        if (helper::match(itype, ntype, keep))
+        {
+            if (!delim1)
+                return true;
+            if (delim2 && delim2 < delim1)
+                return true;
+            if (helper::match(iname, nname, delim1 + 1))
+                return true;
+        }
+
+        if (delim2 == NULL)
+            break;
+        keep = delim2 + 1;
+    }
+    return false;
+}
+
 void PackArmPe::processResources(Resource *res)
 {
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
@@ -1487,6 +1533,10 @@ void PackArmPe::processResources(Resource *res)
             else if (ustrsame(t, "\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0"))
                 do_compress = false;        // u"REGISTRY"
         }
+
+        if (do_compress && opt->win32_pe.keep_resource[0])
+            do_compress ^= match(res->itype(), res->ntype(), res->iname(),
+                                 res->nname(), opt->win32_pe.keep_resource);
 
         if (do_compress)
         {

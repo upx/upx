@@ -105,9 +105,6 @@ FORMAT WIN32/PE
 
 - decrease runtime memory overhead
 
-2 - easy - mfx + ml) new switch(es) : do not compress resource types x,y,z
-    or resource names a,b,c
-
 3 - difficult) don't compress the BSS section and other holes.
 
 4 - medium - ml) fix when objectalign < 0x1000

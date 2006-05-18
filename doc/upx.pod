@@ -870,6 +870,22 @@ Extra options available for this executable format:
 
   --compress-resources=0  Don't compress any resources at all.
 
+  --keep-resource=list Don't compress resources specified by the list.
+                      The members of the list are separated by commas.
+                      A list member has the following format: I<type[/name]>.
+                      I<Type> is the type of the resource. Standard types
+                      must be specified as decimal numbers, user types can be
+                      specified by decimal IDs or strings. I<Name> is the
+                      identifier of the resource. It can be a decimal number
+                      or a string. For example:
+
+                      --keep-resource=2/MYBITMAP,5,6/12345
+
+                      UPX won't compress the named bitmap resource "MYBITMAP",
+                      it leaves every dialog (5) resource uncompressed, and
+                      it won't touch the string table resource with identifier
+                      12345.
+
   --force             Force compression even when there is an
                       unexpected value in a header field.
                       Use with care.

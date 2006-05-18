@@ -72,6 +72,7 @@ void init_options(struct options_t *o)
         o->win32_pe.compress_rt[i] = -1;
     o->win32_pe.compress_rt[24] = false;    // 24 == RT_MANIFEST
     o->win32_pe.strip_relocs = -1;
+    o->win32_pe.keep_resource = "";
 }
 
 static struct options_t global_options;
@@ -702,6 +703,11 @@ static int do_option(int optc, const char *arg)
             opt->win32_pe.strip_relocs = 0;
         //printf("strip_relocs: %d\n", opt->win32_pe.strip_relocs);
         break;
+    case 635:
+        if (!mfx_optarg || !mfx_optarg[0])
+            e_optarg(arg);
+        opt->win32_pe.keep_resource = mfx_optarg;
+        break;
     case 650:
         opt->atari_tos.split_segments = true;
         break;
@@ -859,6 +865,7 @@ static const struct mfx_option longopts[] =
     {"compress-resources",  2, 0, 632},
     {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
     {"strip-relocs",     0x12, 0, 634},
+    {"keep-resource",    0x31, 0, 635},
     // ps1/exe
     {"boot-only",        0x10, 0, 670},
     {"no-align",         0x10, 0, 671},
@@ -941,6 +948,7 @@ static const struct mfx_option longopts[] =
     {"compress-resources",  2, 0, 632},
     {"strip-loadconf",   0x12, 0, 633},     // OBSOLETE - IGNORED
     {"strip-relocs",     0x12, 0, 634},
+    {"keep-resource",    0x31, 0, 635},
 
     { NULL, 0, NULL, 0 }
 };

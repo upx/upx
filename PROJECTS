@@ -66,8 +66,7 @@ Existing formats:
 
  - win32/pe: display a nice dialog box in the stub in case
      of problems (like importing a DLL or function fails)
- - win32/pe: finer control over resource compression, per section
-     compression
+ - win32/pe: per section compression
 
 
 Compression ratio:

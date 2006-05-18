@@ -139,6 +139,7 @@ struct options_t {
         int compress_resources;
         signed char compress_rt[25];    // 25 == RT_LAST
         int strip_relocs;
+        const char *keep_resource;
     } win32_pe;
 };
 
