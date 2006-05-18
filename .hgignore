@@ -4,20 +4,36 @@ syntax: regexp
 
 syntax: glob
 
+*.a
 *.d
+*.dll
 *.exe
+*.lib
 *.map
 *.o
 *.out
+*.py[cdo]
+*.so
 *.res
 *.ttp
 
+doc/*.1
+doc/*.doc
+doc/*.html
+
+src/MMakefile
+src/compress_nrv*
+src/*.rc
+
+stub/MMakefile
+stub/stamp-h
 stub/*.ash
 stub/*.asx
 stub/*.asy
 stub/*.bin
-stub/GNUmakefile
-stub/stamp-h
+
+stub/util/armpe/armpe_tester
 
 stub/util/sstrip/amd64-linux-sstrip
 stub/util/sstrip/i386-linux-sstrip
+stub/util/sstrip/sstrip
