@@ -43,6 +43,8 @@ John S. Fine <johnfine@erols.com>
   for the new version of the dos/exe decompressor
 Lukundoo <Lukundoo@softhome.net>
   for beta testing
+Michael Devore
+  for initial dos/exe device driver support
 Oleg V. Volkov <rover@lglobus.ru>
   for various FreeBSD specific informations
 The Owl & G-RoM
