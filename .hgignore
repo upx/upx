@@ -1,6 +1,7 @@
 syntax: regexp
 
 ^build.*
+^ChangeLog
 
 syntax: glob
 
