@@ -1,0 +1,23 @@
+syntax: regexp
+
+^build.*
+
+syntax: glob
+
+*.d
+*.exe
+*.map
+*.o
+*.out
+*.res
+*.ttp
+
+stub/*.ash
+stub/*.asx
+stub/*.asy
+stub/*.bin
+stub/GNUmakefile
+stub/stamp-h
+
+stub/util/sstrip/amd64-linux-sstrip
+stub/util/sstrip/i386-linux-sstrip
