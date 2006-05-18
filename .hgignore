@@ -1,6 +1,6 @@
 syntax: regexp
 
-^build.*
+^build
 ^ChangeLog
 
 syntax: glob
@@ -27,11 +27,13 @@ src/compress_nrv*
 src/*.rc
 
 stub/MMakefile
+stub/l_t_*.i
 stub/stamp-h
 stub/*.ash
 stub/*.asx
 stub/*.asy
 stub/*.bin
+stub/*.lst
 
 stub/util/armpe/armpe_tester
 
