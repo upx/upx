@@ -229,6 +229,7 @@ void show_help(int x)
                     "  --compress-icons=1      compress all but the first icon\n"
                     "  --compress-icons=2      compress all but the first icon directory [default]\n"
                     "  --compress-resources=0  do not compress any resources at all\n"
+                    "  --keep-resource=list    do not compress resources specified by list\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "  --all-methods           try all available compression methods\n"

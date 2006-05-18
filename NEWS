@@ -5,6 +5,8 @@ User visible changes for UPX
 Changes in 2.01 (27 May 2006):
   * arm/pe: better DLL support
   * dos/exe: device driver support added (thanks Michael Devore)
+  * arm/pe & win32/pe: new option for excluding certain resources from
+    getting compressed ('--keep-resource')
 
 Changes in 2.00 (27 Apr 2006):
   * linux/386: the stub now prints an error message if some strict
