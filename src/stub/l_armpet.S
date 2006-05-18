@@ -113,11 +113,11 @@ SECT(Unfilter_0x50):
         cmp     buffer, bufend
         beq     .Luf50_ret
 
-        ldrb    r3, [buffer, #3]
-        and     r3, r5
-        cmp     r3, #0x0b
-        bne     .Luf50_1
         ldr     r3, [buffer]
+        lsr     r1, r3, #24
+        and     r1, r5
+        cmp     r1, #0x0b
+        bne     .Luf50_1
         mov     r1, r3
         and     r1, r6
         sub     r3, addval
