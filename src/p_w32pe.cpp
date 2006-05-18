@@ -482,37 +482,42 @@ void PackW32Pe::processRelocs() // pass1
     for (; ic; ic--)
         fix[ic] = new LE32 [counts[ic]];
 
+    unsigned xcounts[4];
+    memset(xcounts, 0, sizeof(xcounts));
+
     // prepare sorting
     unsigned pos,type;
     while (rel.next(pos,type))
     {
+        if (pos >= ih.imagesize)
+            continue;           // skip out-of-bounds record
         if (type == 3)
             set_le32(ibuf + pos,get_le32(ibuf + pos) - ih.imagebase - rvamin);
         if (type < 4)
-            *fix[type]++ = pos - rvamin;
+            fix[type][xcounts[type]++] = pos - rvamin;
     }
-    fix[3] -= counts[3];
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
-    sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3],counts[3],orelocs,ibuf + rvamin,1,&big_relocs),orelocs);
+    sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
+                                        orelocs, ibuf + rvamin,1, &big_relocs),
+                        orelocs);
+    delete [] fix[3];
 
     // append relocs type "LOW" then "HIGH"
     for (ic = 2; ic ; ic--)
     {
-        fix[ic] -= counts[ic];
-        memcpy(orelocs + sorelocs,fix[ic],4 * counts[ic]);
-        sorelocs += 4 * counts[ic];
+        memcpy(orelocs + sorelocs,fix[ic],4 * xcounts[ic]);
+        sorelocs += 4 * xcounts[ic];
         delete [] fix[ic];
 
         set_le32(orelocs + sorelocs,0);
-        if (counts[ic])
+        if (xcounts[ic])
         {
             sorelocs += 4;
             big_relocs |= 2 * ic;
         }
     }
-    delete [] fix[3];
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 
