@@ -1402,7 +1402,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
     for (int m = 0; m < nmethods; m++)          // for all methods
     {
         unsigned hdr_clen = 0;
-        if (hdr_buf && hdr_u_len) {
+        if (hdr_buf && hdr_u_len)
+        {
             unsigned result[16];
             upx_compress_config_t conf;
             memset(&conf, 0xff, sizeof(conf));
@@ -1412,7 +1413,10 @@ void Packer::compressWithFilters(Filter *parm_ft,
             }
             int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_clen,
                 0, methods[m], 10, &conf, result);
-            (void)r;
+            if (r != UPX_E_OK)
+                throwInternalError("header compression failed");
+            if (hdr_clen >= hdr_u_len)
+                throwInternalError("header compression size increase");
         }
         for (int i = 0; i < nfilters; i++)          // for all filters
         {
