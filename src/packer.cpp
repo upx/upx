@@ -1307,7 +1307,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     best_ph.c_len = orig_ph.u_len;
     best_ph.overlap_overhead = 0;
     unsigned best_ph_lsize = 0;
-    unsigned best_hdr_clen = 0;
+    unsigned best_hdr_c_len = 0;
 
     // preconditions
     assert(orig_ph.filter == 0);
@@ -1401,7 +1401,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     int nfilters_success = 0;
     for (int m = 0; m < nmethods; m++)          // for all methods
     {
-        unsigned hdr_clen = 0;
+        unsigned hdr_c_len = 0;
         if (hdr_buf && hdr_u_len)
         {
             unsigned result[16];
@@ -1411,11 +1411,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 otemp_buf.allocForCompression(compress_buf_len);
                 otemp = &otemp_buf;
             }
-            int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_clen,
+            int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_c_len,
                 0, methods[m], 10, &conf, result);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
-            if (hdr_clen >= hdr_u_len)
+            if (hdr_c_len >= hdr_u_len)
                 throwInternalError("header compression size increase");
         }
         for (int i = 0; i < nfilters; i++)          // for all filters
@@ -1467,7 +1467,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             if (compress(ibuf + compress_buf_off, *otemp, max_offset, max_match))
             {
                 unsigned lsize = 0;
-                if (ph.c_len + lsize + hdr_clen <= best_ph.c_len + best_ph_lsize + best_hdr_clen)
+                if (ph.c_len + lsize + hdr_c_len <= best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                 {
                     // get results
                     ph.overlap_overhead = findOverlapOverhead(*otemp, overlap_range);
@@ -1476,18 +1476,18 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 }
 #if 0
                 printf("\n%2d %02x: %d +%4d +%3d = %d  (best: %d +%4d +%3d = %d)\n", ph.method, ph.filter,
-                       ph.c_len, lsize, hdr_clen, ph.c_len + lsize + hdr_clen,
-                       best_ph.c_len, best_ph_lsize, best_hdr_clen, best_ph.c_len + best_ph_lsize + best_hdr_clen);
+                       ph.c_len, lsize, hdr_c_len, ph.c_len + lsize + hdr_c_len,
+                       best_ph.c_len, best_ph_lsize, best_hdr_c_len, best_ph.c_len + best_ph_lsize + best_hdr_c_len);
 #endif
                 bool update = false;
-                if (ph.c_len + lsize + hdr_clen < best_ph.c_len + best_ph_lsize + best_hdr_clen)
+                if (ph.c_len + lsize + hdr_c_len < best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                     update = true;
-                else if (ph.c_len + lsize + hdr_clen == best_ph.c_len + best_ph_lsize + best_hdr_clen)
+                else if (ph.c_len + lsize + hdr_c_len == best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                 {
                     // prefer smaller loaders
-                    if (lsize  + hdr_clen < best_ph_lsize + best_hdr_clen)
+                    if (lsize  + hdr_c_len < best_ph_lsize + best_hdr_c_len)
                         update = true;
-                    else if (lsize + hdr_clen == best_ph_lsize + best_hdr_clen)
+                    else if (lsize + hdr_c_len == best_ph_lsize + best_hdr_c_len)
                     {
                         // prefer less overlap_overhead
                         if (ph.overlap_overhead < best_ph.overlap_overhead)
@@ -1503,7 +1503,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
                     // save compression results
                     best_ph = ph;
                     best_ph_lsize = lsize;
-                    best_hdr_clen = hdr_clen;
+                    best_hdr_c_len = hdr_c_len;
                     best_ft = ft;
                 }
             }
