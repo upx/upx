@@ -1422,6 +1422,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             ph = orig_ph;
             ph.method = methods[m];
             ph.filter = filters[i];
+            ph.overlap_overhead = 0;
             // get fresh filter
             Filter ft = orig_ft;
             ft.init(ph.filter, orig_ft.addvalue);
@@ -1462,11 +1463,12 @@ void Packer::compressWithFilters(Filter *parm_ft,
             if (compress(ibuf + compress_buf_off, *otemp, max_offset, max_match))
             {
                 unsigned lsize = 0;
-                if (ph.c_len + lsize < best_ph.c_len + best_ph_lsize)
+                if (ph.c_len + lsize + hdr_clen <= best_ph.c_len + best_ph_lsize + best_hdr_clen)
                 {
                     // get results
                     ph.overlap_overhead = findOverlapOverhead(*otemp, overlap_range);
                     lsize = buildLoader(&ft);
+                    assert(lsize > 0);
                 }
 #if 0
                 printf("\n%2d %02x: %d +%4d +%3d = %d  (best: %d +%4d +%3d = %d)\n", ph.method, ph.filter,
@@ -1490,6 +1492,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 }
                 if (update)
                 {
+                    assert((int)ph.overlap_overhead > 0);
                     // update obuf[] with best version
                     if (otemp != &obuf)
                         memcpy(obuf, *otemp, ph.c_len);
