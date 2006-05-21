@@ -143,54 +143,10 @@ decompress:
 
 ;__LEXEC020__
 
-%define PAGE_SIZE ( 1<<12)
-
-%define MAP_FIXED     0x10
-%define MAP_PRIVATE   0x02
-%define MAP_ANONYMOUS 0x20
-%define PROT_READ      1
-%define PROT_WRITE     2
-%define PROT_EXEC      4
-%define __NR_mmap     90
-
-; Decompress the rest of this loader, and jump to it
-unfold:
-        pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
-        cld
-        lodsd
-        push eax  ; sz_uncompressed  (junk, actually)
-        push esp  ; &sz_uncompressed
-        mov eax, 0x400000
-        push eax  ; &destination
-
-                ; mmap a page to hold the decompressed program
-        xor ecx, ecx
-        push ecx
-        push ecx
-        mov ch, PAGE_SIZE >> 8
-        push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push byte PROT_READ | PROT_WRITE | PROT_EXEC
-        push ecx  ; length
-        push eax  ; destination
-        mov ebx, esp  ; address of parameter vector for __NR_mmap
-        push byte __NR_mmap
-        pop eax
-        int 0x80
-        xchg eax, ebx
-        mov bh, PAGE_SIZE>>8  ; ebx= 0x401000
-        add esp, byte 6*4  ; discard args to mmap
-
-        lodsd
-        push eax  ; sz_compressed
-        lodsd  ; junk cto8, algo, unused[2]
-        push esi  ; &compressed_data
-        call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        pop eax  ; discard &compressed_data
-        pop eax  ; discard sz_compressed
-        ret      ; &destination
 main:
         pop ebp  ; &decompress
-        call unfold
+        mov ebx, 0x401000  ; &Elf32_Ehdr of this program
+;; fall into fold_begin
 
 eof:
 ;       __XTHEENDX__

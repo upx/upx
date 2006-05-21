@@ -59,13 +59,6 @@ protected:
         void const *proto,
         unsigned const brka
     ) = 0;
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    ) = 0;
     virtual void unpack(OutputFile *fo) = 0;
 
 protected:
@@ -102,6 +95,7 @@ protected:
     virtual void updateLoader(OutputFile *fo);
     virtual unsigned find_LOAD_gap(Elf32_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
+    virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -206,6 +200,20 @@ protected:
     virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
 };
 
+class PackLinuxElf32Le : public PackLinuxElf32
+{
+    typedef PackLinuxElf32 super;
+protected:
+    PackLinuxElf32Le(InputFile *f) : super(f) { }
+
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
+    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
+    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
+};
+
 class PackLinuxElf64Le : public PackLinuxElf64
 {
     typedef PackLinuxElf64 super;
@@ -237,6 +245,7 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
+    virtual int buildLoader(const Filter *);
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
@@ -244,7 +253,6 @@ protected:
         unsigned const szfold,
         Filter const *ft
     );
-    virtual int buildLoader(const Filter *);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
@@ -269,6 +277,7 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
+    virtual int buildLoader(const Filter *);
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
@@ -276,7 +285,6 @@ protected:
         unsigned const szfold,
         Filter const *ft
     );
-    virtual int buildLoader(const Filter *);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
@@ -288,17 +296,16 @@ protected:
 // linux/elf386
 **************************************************************************/
 
-class PackLinuxI386elf : public PackLinuxI386
+class PackLinuxElf32x86 : public PackLinuxElf32Le
 {
-    typedef PackLinuxI386 super;
+    typedef PackLinuxElf32Le super;
 public:
-    PackLinuxI386elf(InputFile *f);
-    virtual ~PackLinuxI386elf();
+    PackLinuxElf32x86(InputFile *f);
+    virtual ~PackLinuxElf32x86();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_ELF_i386; }
     virtual const char *getName() const { return "linux/elf386"; }
     virtual const int *getFilters() const;
-    virtual int buildLoader(const Filter *);
 
     virtual void unpack(OutputFile *fo);
 
@@ -313,6 +320,19 @@ protected:
     virtual void pack4(OutputFile *, Filter &);  // append pack header
 
     virtual void patchLoader();
+    virtual int buildLoader(const Filter *);
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    );
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
 
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file

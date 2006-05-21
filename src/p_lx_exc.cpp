@@ -134,11 +134,6 @@ PackLinuxI386::generateElfHdr(
         memset(&h1->linfo, 0, sizeof(h1->linfo));
         fo->write(h1, sizeof(*h1));
     }
-    else if (ph.format==UPX_F_LINUX_ELF_i386) {
-        assert(h2->ehdr.e_phnum==2);
-        memset(&h2->linfo, 0, sizeof(h2->linfo));
-        fo->write(h2, sizeof(*h2));
-    }
     else if (ph.format==UPX_F_LINUX_SH_i386) {
         assert(h2->ehdr.e_phnum==1);
         h2->ehdr.e_phnum = 1;
@@ -228,11 +223,19 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
     fo->write(shstrtab, sizeof(shstrtab));
 #endif  // }
 
+
+    // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
+    // tries to make .bss, which requires PF_W.
+    // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
+#if 0  /*{*/
 #undef PAGE_MASK
 #define PAGE_MASK (~0u<<12)
     // pre-calculate for benefit of runtime disappearing act via munmap()
     elfout.phdr[0].p_memsz =  PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
 #undef PAGE_MASK
+#else  /*}{*/
+    elfout.phdr[0].p_memsz =  elfout.phdr[0].p_filesz;
+#endif  /*}*/
 
     // rewrite Elf header
     fo->seek(0, SEEK_SET);
@@ -276,19 +279,14 @@ PackLinuxI386::buildLinuxLoader(
   }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
+    unsigned char *const cprLoader = new unsigned char[h.sz_unc];
   if (0 < szfold) {
-    unsigned sz_cpr;
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
-        NULL, ph.method, 10, NULL, NULL );
+    unsigned sz_cpr = h.sz_unc;
+    memcpy(cprLoader, uncLoader, sz_cpr);
     h.sz_cpr = sz_cpr;
-    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
-        throwInternalError("loader compression failed");
   }
-    memcpy(cprLoader, &h, sizeof(h));
-
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, h.sz_cpr);
     delete [] cprLoader;
 
     n_mru = ft->n_mru;
@@ -311,28 +309,6 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("LEXEC000", NULL);
 
     if (ft->id) {
-        if (ph.format==UPX_F_LINUX_ELF_i386) { // decompr, unfilter are separate
-            addLoader("LXUNF000", NULL);
-            addLoader("LXUNF002", NULL);
-                if (0x80==(ft->id & 0xF0)) {
-                    if (256==n_mru) {
-                        addLoader("MRUBYTE0", NULL);
-                    }
-                    else if (n_mru) {
-                        addLoader("LXMRU005", NULL);
-                    }
-                    if (n_mru) {
-                        addLoader("LXMRU006", NULL);
-                    }
-                    else {
-                        addLoader("LXMRU007", NULL);
-                    }
-            }
-            else if (0x40==(ft->id & 0xF0)) {
-                addLoader("LXUNF008", NULL);
-            }
-            addLoader("LXUNF010", NULL);
-        }
         if (n_mru) {
             addLoader("LEXEC009", NULL);
         }
@@ -341,12 +317,7 @@ PackLinuxI386::buildLinuxLoader(
     addLoader(getDecompressor(), NULL);
     addLoader("LEXEC015", NULL);
     if (ft->id) {
-        if (ph.format==UPX_F_LINUX_ELF_i386) {  // decompr, unfilter are separate
-            if (0x80!=(ft->id & 0xF0)) {
-                addLoader("LXUNF042", NULL);
-            }
-        }
-        else {  // decompr, unfilter not separate
+        {  // decompr, unfilter not separate
             if (0x80==(ft->id & 0xF0)) {
                 addLoader("LEXEC110", NULL);
                 if (n_mru) {
@@ -357,15 +328,7 @@ PackLinuxI386::buildLinuxLoader(
             }
         }
         addFilter32(ft->id);
-        if (ph.format==UPX_F_LINUX_ELF_i386) { // decompr, unfilter are separate
-            if (0x80==(ft->id & 0xF0)) {
-                if (0==n_mru) {
-                    addLoader("LXMRU058", NULL);
-                }
-            }
-            addLoader("LXUNF035", NULL);
-        }
-        else {  // decompr always unfilters
+        {  // decompr always unfilters
             addLoader("LEXEC017", NULL);
         }
     }
@@ -403,24 +366,6 @@ PackLinuxI386::buildLoader(Filter const *ft)
     patch_le32(buf,sz_fold,"UPX4",exetype > 0 ? 3 : 15);   // sleep time
     patch_le32(buf,sz_fold,"UPX3",progid);
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
-
-    // get fresh filter
-    Filter fold_ft = *ft;
-    fold_ft.init(ft->id, ft->addvalue);
-    int preferred_ctos[2] = {ft->cto, -1};
-    fold_ft.preferred_ctos = preferred_ctos;
-
-    // filter
-    optimizeFilter(&fold_ft, buf, sz_fold);
-
-    unsigned fold_hdrlen = sizeof(l_info) + sizeof(Elf32_Ehdr) +
-        sizeof(Elf32_Phdr) * get_native32(&((Elf32_Ehdr const *)(void *)buf)->e_phnum);
-    if (0 == get_le32(fold_hdrlen + buf)) {
-        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
-        fold_hdrlen = umax(0x80, fold_hdrlen);
-    }
-    bool success = fold_ft.filter(buf + fold_hdrlen, sz_fold - fold_hdrlen);
-    (void)success;
 
     return buildLinuxLoader(
         linux_i386exec_loader, sizeof(linux_i386exec_loader),
@@ -478,34 +423,6 @@ int PackLinuxI386::checkEhdr(const Elf32_Ehdr *ehdr) const
     return 0;
 }
 
-
-off_t PackLinuxI386::getbrk(const Elf32_Phdr *phdr, int e_phnum) const
-{
-    off_t brka = 0;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_LOAD == phdr->p_type) {
-            off_t b = phdr->p_vaddr + phdr->p_memsz;
-            if (b > brka)
-                brka = b;
-        }
-    }
-    return brka;
-}
-
-off_t PackLinuxI386::getbase(const Elf32_Phdr *phdr, int e_phnum) const
-{
-    off_t base = ~0u;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_LOAD == phdr->p_type) {
-            if (phdr->p_vaddr < (unsigned) base)
-                base = phdr->p_vaddr;
-        }
-    }
-    if (0!=base) {
-        return base;
-    }
-    return 0x12000;
-}
 
 
 /*************************************************************************

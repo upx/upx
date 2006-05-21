@@ -98,8 +98,13 @@ L50:
 
         sub esp, dword MAX_ELF_HDR + OVERHEAD  ; alloca
         push ebx  ; start of unmap region (&Elf32_Ehdr of this stub)
-        mov edx, [p_memsz + szElf32_Ehdr + ebx]  ; phdr[0].p_memsz, pre-rounded up
-        lea edx, [PAGE_SIZE + edx + ebx]  ; 1 page in l_lx_elf86asm for unfold
+
+; Cannot pre-round .p_memsz because kernel requires PF_W to setup .bss,
+; but strict SELinux (or PaX, grsecurity) prohibits PF_W with PF_X.
+        mov edx, [p_memsz + szElf32_Ehdr + ebx]  ; phdr[0].p_memsz
+        lea edx, [-1 + 2*PAGE_SIZE + edx + ebx]  ; 1 page for round, 1 for unfold
+        and edx, -PAGE_SIZE
+
         push edx  ; end of unmap region
         sub eax, eax  ; 0
         cmp word [e_type + ebx], byte ET_DYN

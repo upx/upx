@@ -66,7 +66,7 @@ __NR_exit  = 1
 msg_SELinux:
         call L71
 L70:
-        .asciz "SELinux denied execmem.\n"
+        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
         .p2align 2  # (1<<2)
 L71:
         li   a2,L71 - L70  # length

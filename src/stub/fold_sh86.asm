@@ -38,7 +38,6 @@
 %define szElf32_Ehdr 0x34
 %define szElf32_Phdr 8*4
 %define e_entry  (16 + 2*2 + 4)
-%define p_memsz  5*4
 %define szl_info 12
 %define szp_info 12
 %define a_type 0
@@ -60,8 +59,9 @@ fold_begin:     ; enter: %ebx= uncDst
 %define AT_NULL   0
 %define AT_IGNORE 1
 %define AT_PHDR   3
-%define AT_NUMBER (5+ 23)
+%define AT_NUMBER (5+ 37)
 ; 2002-11-09  glibc-2.2.90  AT_IGNOREPPC==22  plus 5 for future growth
+; 2006-05-15  glibc-2.4-4   AT_L3_CACHESHAPE==37
 
         mov esi, esp
         sub esp, sz_auxv * AT_NUMBER  ; more than 128 bytes
@@ -98,6 +98,8 @@ L30:  ; distribute existing Elf32_auxv into new table
         xchg eax,ecx  ; edx is busy, do not use
         lodsd
         je L40
+        cmp ecx, byte AT_NUMBER
+        jae L30
         mov [a_type + sz_auxv*(ecx -1) + edi], ecx
         mov [a_val  + sz_auxv*(ecx -1) + edi], eax
         jmp L30

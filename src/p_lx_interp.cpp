@@ -55,16 +55,16 @@ static const
 static const
 #include "stub/fold_pti86.h"
 
-PackLinuxI386interp::PackLinuxI386interp(InputFile *f) :
+PackLinuxElf32x86interp::PackLinuxElf32x86interp(InputFile *f) :
     super(f)
 {
 }
 
-PackLinuxI386interp::~PackLinuxI386interp()
+PackLinuxElf32x86interp::~PackLinuxElf32x86interp()
 {
 }
 
-bool PackLinuxI386interp::canPack()
+bool PackLinuxElf32x86interp::canPack()
 {
     if (opt->o_unix.make_ptinterp) {
         return true;
@@ -75,7 +75,7 @@ bool PackLinuxI386interp::canPack()
     return super::canPack();
 }
 
-void PackLinuxI386interp::pack1(OutputFile *fo, Filter &)
+void PackLinuxElf32x86interp::pack1(OutputFile *fo, Filter &)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -124,7 +124,7 @@ void PackLinuxI386interp::pack1(OutputFile *fo, Filter &)
 #undef E
 }
 
-void PackLinuxI386interp::pack2(OutputFile *fo, Filter &ft)
+void PackLinuxElf32x86interp::pack2(OutputFile *fo, Filter &ft)
 {
     if (opt->o_unix.make_ptinterp) {
         return;  // ignore current input file!
@@ -135,7 +135,7 @@ void PackLinuxI386interp::pack2(OutputFile *fo, Filter &ft)
 #undef PAGE_MASK
 #define PAGE_MASK (~0u<<12)
 
-void PackLinuxI386interp::pack3(OutputFile *fo, Filter &/*ft*/)
+void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
 {
     unsigned base = getbase(phdri, ehdri.e_phnum);
     unsigned sz = PAGE_MASK & (~PAGE_MASK + elfout.phdr[0].p_filesz);
@@ -194,7 +194,7 @@ void PackLinuxI386interp::pack3(OutputFile *fo, Filter &/*ft*/)
 }
 
 
-void PackLinuxI386interp::unpack(OutputFile *fo)
+void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 {
 #define MAX_INTERP_HDR 512
     char bufehdr[MAX_INTERP_HDR];

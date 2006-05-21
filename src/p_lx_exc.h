@@ -21,8 +21,11 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@users.sourceforge.net
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -75,8 +78,6 @@ protected:
 
     // ELF util
     virtual int checkEhdr(const Elf32_Ehdr *ehdr) const;
-    virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
-    virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"

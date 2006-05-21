@@ -44,8 +44,6 @@
 %define szp_info 12
 
 fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
-        pop eax  ; discard &dstlen
-        pop eax  ; discard  dstlen
 
                 pop     eax                 ; Pop the argument count
                 mov     ecx, esp            ; argv starts just at the current stack top

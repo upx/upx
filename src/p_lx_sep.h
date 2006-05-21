@@ -38,9 +38,9 @@
 // linux/sep386
 **************************************************************************/
 
-class PackLinuxI386sep : public PackLinuxI386elf
+class PackLinuxI386sep : public PackLinuxI386
 {
-    typedef PackLinuxI386elf super;
+    typedef PackLinuxI386 super;
 public:
     PackLinuxI386sep(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_LINUX_SEP_i386; }

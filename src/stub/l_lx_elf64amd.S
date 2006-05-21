@@ -180,7 +180,7 @@ msg_SELinux:
         push $ L71 - L70; pop %arg3  # length
         call L71
 L70:
-        .asciz "SELinux denied execmem.\n"
+        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
         pop %arg2  # message text
         push $2; pop %arg1  # fd stderr

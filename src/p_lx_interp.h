@@ -38,12 +38,12 @@
 // linux/interp386
 **************************************************************************/
 
-class PackLinuxI386interp : public PackLinuxI386elf
+class PackLinuxElf32x86interp : public PackLinuxElf32x86
 {
-    typedef PackLinuxI386elf super;
+    typedef PackLinuxElf32x86 super;
 public:
-    PackLinuxI386interp(InputFile *f);
-    virtual ~PackLinuxI386interp();
+    PackLinuxElf32x86interp(InputFile *f);
+    virtual ~PackLinuxElf32x86interp();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_ELFI_i386; }
     virtual const char *getName() const { return "linux/elfi386"; }

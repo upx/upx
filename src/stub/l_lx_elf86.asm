@@ -144,7 +144,7 @@ msg_SELinux:
         pop edx  ; length
         call L71
 L70:
-        db "SELinux denied execmem.",10
+        db "PROT_EXEC|PROT_WRITE failed.",10
 L71:
         pop ecx  ; message text
         push byte 2  ; fd stderr
@@ -165,7 +165,15 @@ unfold:
         lea eax, [ebp - (4+ decompress - _start)]  ; 4: sizeof(int)
         sub eax, [eax]  ; %eax= &Elf32_Ehdr of this program
         mov edx, eax    ; %edx= &Elf32_Ehdr of this program
-        add eax, [p_memsz + szElf32_Ehdr + eax]  ; page after .text
+
+; Linux requires PF_W in order to create .bss (implied by .p_filesz!=.p_memsz),
+; but strict SELinux (or PaX, grSecurity) forbids PF_W with PF_X.
+; So first PT_LOAD must be PF_R|PF_X only, and .p_memsz==.p_filesz.
+; So we must round up here, instead of pre-rounding .p_memsz.
+        add eax, [p_memsz + szElf32_Ehdr + eax]  ; address after .text
+        add eax,  PAGE_SIZE -1
+        and eax, -PAGE_SIZE
+
         push eax  ; destination for 'ret'
 
                 ; mmap a page to hold the decompressed fold_elf86
