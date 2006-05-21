@@ -149,7 +149,7 @@ unfold:
         add ecx, 1+ 3+ (3 -1)+ PAGE_SIZE  ; '\0' + "-c" + decompr_overrun + stub
 
         push eax  ; offset (ignored when MAP_ANONYMOUS)
-        push eax  ; fd     (ignored when MAP_ANONYMOUS)
+        push byte -1  ; fd [required by *BSD for MAP_ANONYMOUS]
         push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         push byte PROT_READ | PROT_WRITE | PROT_EXEC
         push ecx  ; length

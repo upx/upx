@@ -209,7 +209,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum)
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, 0, 0);
+    addr = mmap((void *)lo, hi, PROT_READ|PROT_WRITE|PROT_EXEC, mflags, -1, 0);
 
     // Doing this may destroy the brk() that we set so carefully above.
     // The munmap() is "needed" only for discontiguous PT_LOAD,
@@ -266,7 +266,7 @@ ERR_LAB
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
             }
         }

@@ -357,12 +357,12 @@ void upx_main(
     // FIXME: packer could set address delta
     mmap(buf + (PAGE_MASK & (header.p_filesize + ~PAGE_MASK)),
         -PAGE_MASK, PROT_READ | PROT_WRITE,
-        MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
+        MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
 #else
     // Temporary decompression buffer.
     // FIXME: packer could set length
     buf = mmap(0, (header.p_blocksize + OVERHEAD + ~PAGE_MASK) & PAGE_MASK,
-        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0 );
+        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 );
     if ((unsigned long) buf >= (unsigned long) -4095)
         goto error;
 #endif
