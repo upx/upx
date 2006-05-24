@@ -1244,10 +1244,7 @@ void Resource::check(const res_dir *node,unsigned level)
 {
     int ic = node->identr + node->namedentr;
     if (ic == 0)
-    {
-        //throwCantPack("unsupported resource structure");
-        throwCantPack("empty resource sections are not supported");
-    }
+        return;
     for (const res_dir_entry *rde = node->entries; --ic >= 0; rde++)
         if (((rde->child & 0x80000000) == 0) ^ (level == 2))
             throwCantPack("unsupported resource structure");
@@ -1273,10 +1270,14 @@ Resource::upx_rnode *Resource::convert(const void *rnode,upx_rnode *parent,unsig
     }
 
     const res_dir *node = (const res_dir *) rnode;
+    int ic = node->identr + node->namedentr;
+    if (ic == 0)
+        return NULL;
+
     upx_rbranch *branch = new upx_rbranch;
     branch->name = NULL;
     branch->parent = parent;
-    int ic = branch->nc = node->identr + node->namedentr;
+    branch->nc = ic;
     branch->children = new upx_rnode*[ic];
     branch->data = *node;
 
@@ -2401,7 +2402,7 @@ void PackArmPe::rebuildTls()
 
 void PackArmPe::rebuildResources(upx_byte *& extrainfo)
 {
-    if (ODSIZE(PEDIR_RESOURCE) == 0)
+    if (ODSIZE(PEDIR_RESOURCE) == 0 || IDSIZE(PEDIR_RESOURCE) == 0)
         return;
 
     icondir_count = get_le16(extrainfo);
