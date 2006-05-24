@@ -1178,11 +1178,10 @@ public:
     bool clear();
 
     void dump() const { dump(root,0); }
-
-    unsigned iname()  const {return current->parent->id;}
+    unsigned iname() const {return current->parent->id;}
     const upx_byte *nname() const {return current->parent->name;}
 /*
-    unsigned ilang()  const {return current->id;}
+    unsigned ilang() const {return current->id;}
     const upx_byte *nlang() const {return current->name;}
 */
 };

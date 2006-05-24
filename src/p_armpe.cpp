@@ -35,6 +35,7 @@
 
 static const
 #include "stub/l_armpea.h"
+static const
 #include "stub/l_armpet.h"
 
 #define IDSIZE(x)       ih.ddirs[x].size
@@ -244,6 +245,7 @@ void PackArmPe::createLinker(const void *pdata, int plen, int pinfo)
     else
         linker = new ArmLinker(pdata, plen, pinfo);
 }
+
 
 /*************************************************************************
 // util
@@ -1218,11 +1220,10 @@ public:
     bool clear();
 
     void dump() const { dump(root,0); }
-    unsigned iname()  const {return current->parent->id;}
+    unsigned iname() const {return current->parent->id;}
     const upx_byte *nname() const {return current->parent->name;}
-
 /*
-    unsigned ilang()  const {return current->id;}
+    unsigned ilang() const {return current->id;}
     const upx_byte *nlang() const {return current->name;}
 */
 };
