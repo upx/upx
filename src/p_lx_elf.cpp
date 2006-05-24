@@ -1858,9 +1858,10 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
         fi->seek(0, SEEK_SET);
         fi->readx(bufehdr, MAX_ELF_HDR);
         unsigned const e_entry = get_native32(&ehdr->e_entry);
-        if (e_entry < 0x401180
-        &&  e_entry >=0x100000  // beware ET_DYN.e_entry==0x10f0 or so
-        ) { /* old style, 8-byte b_info */
+        unsigned const e_type = get_native16(&ehdr->e_type);
+        if (e_entry < 0x401180 && Elf32_Ehdr::ET_EXEC==e_type) {
+            // beware ET_DYN.e_entry==0x10f0 or so
+            /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
         }
     }
