@@ -150,13 +150,15 @@ PackLinuxElf::~PackLinuxElf()
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL)
+    : super(f), phdri(NULL),
+    file_image(NULL), dynseg(NULL), hashtab(NULL), dynstr(NULL), dynsym(NULL)
 {
 }
 
 PackLinuxElf32::~PackLinuxElf32()
 {
     delete[] phdri;
+    delete[] file_image;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
@@ -202,6 +204,14 @@ PackLinuxElf64amd::getCompressionMethods(int method, int level) const
         return m_nrv2e;
     if (1==level)
         return m_nrv2b;
+    return m_nrv2e;
+}
+
+int const *
+PackLinuxElf32arm::getCompressionMethods(int /*method*/, int /*level*/) const
+{
+    static const int m_nrv2e[] = { M_NRV2E_8, -1 };
+
     return m_nrv2e;
 }
 
@@ -399,7 +409,7 @@ PackLinuxElf32x86::buildLinuxLoader(
 }
 
 int
-PackLinuxElf32ppc::buildLinuxLoader(
+PackLinuxElf32::buildLinuxLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
     upx_byte const *const fold,
@@ -448,15 +458,15 @@ PackLinuxElf32ppc::buildLinuxLoader(
     //int const GAP = 128;  // must match stub/l_mac_ppc.S
     //segcmdo.vmsize += sz_unc - sz_cpr + GAP + 64;
 
-    linker->addSection("ELF32PPC", proto, szproto);
+    linker->addSection("ELFMAINX", proto, szproto);
 
-    addLoader("ELF32PPC", NULL);
+    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     return getLoaderSize();
 }
 
 int
-PackLinuxElf64amd::buildLinuxLoader(
+PackLinuxElf64::buildLinuxLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
     upx_byte const *const fold,
@@ -502,16 +512,56 @@ PackLinuxElf64amd::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
-    linker->addSection("ELF64AMD", proto, szproto);
+    linker->addSection("ELFMAINX", proto, szproto);
 
-    addLoader("ELF64AMD", NULL);
+    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     return getLoaderSize();
 }
 
 static const
-#include "stub/l_lx_elfppc32.h"
+#include "stub/l_lx_elf86.h"
+static const
+#include "stub/fold_elf86.h"
 
+int
+PackLinuxElf32x86::buildLoader(const Filter *ft)
+{
+    unsigned char tmp[sizeof(linux_i386elf_fold)];
+    memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
+    checkPatch(NULL, 0, 0, 0);  // reset
+    if (opt->o_unix.is_ptinterp) {
+        unsigned j;
+        for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
+            if (0x60==tmp[  j]
+            &&  0x47==tmp[1+j] ) {
+                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
+                tmp[  j] = 0x47;
+                tmp[1+j] = 0x60;
+                break;
+            }
+        }
+    }
+    return buildLinuxLoader(
+        linux_i386elf_loader, sizeof(linux_i386elf_loader),
+        tmp,                  sizeof(linux_i386elf_fold),  ft );
+}
+
+static const
+#include "stub/l_lx_elf32arm.h"
+static const
+#include "stub/fold_elf32arm.h"
+
+int
+PackLinuxElf32arm::buildLoader(const Filter *ft)
+{
+    return buildLinuxLoader(
+        linux_elf32arm_loader, sizeof(linux_elf32arm_loader),
+        linux_elf32arm_fold,   sizeof(linux_elf32arm_fold),  ft );
+}
+
+static const
+#include "stub/l_lx_elfppc32.h"
 static const
 #include "stub/fold_elfppc32.h"
 
@@ -525,7 +575,6 @@ PackLinuxElf32ppc::buildLoader(const Filter *ft)
 
 static const
 #include "stub/l_lx_elf64amd.h"
-
 static const
 #include "stub/fold_elf64amd.h"
 
@@ -699,7 +748,7 @@ PackLinuxElf64::getbrk(const Elf64_Phdr *phdr, int e_phnum) const
 
 void
 PackLinuxElf32::generateElfHdr(
-    OutputFile */*fo*/,
+    OutputFile *fo,
     void const *proto,
     unsigned const brka
 )
@@ -737,11 +786,21 @@ PackLinuxElf32::generateElfHdr(
         h2->phdr[1].p_memsz =  0;
 #undef PAGE_MASK
     }
+    if (ph.format==getFormat()) {
+        cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
+        assert(2==get_native16(&h2->ehdr.e_phnum));
+        set_native32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
+        memset(&h2->linfo, 0, sizeof(h2->linfo));
+        fo->write(h2, sizeof(*h2));
+    }
+    else {
+        assert(false);  // unknown ph.format, PackLinuxElf32
+    }
 }
 
 void
 PackLinuxElf64::generateElfHdr(
-    OutputFile */*fo*/,
+    OutputFile *fo,
     void const *proto,
     unsigned const brka
 )
@@ -779,60 +838,7 @@ PackLinuxElf64::generateElfHdr(
         h2->phdr[1].p_memsz =  0;
 #undef PAGE_MASK
     }
-}
-
-void
-PackLinuxElf32x86::generateElfHdr(
-    OutputFile *fo,
-    void const *proto,
-    unsigned const brka
-)
-{
-    super::generateElfHdr(fo, proto, brka);
-
-    if (ph.format==UPX_F_LINUX_ELF_i386) {
-        cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
-        assert(2==get_native16(&h2->ehdr.e_phnum));
-        set_native32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
-        memset(&h2->linfo, 0, sizeof(h2->linfo));
-        fo->write(h2, sizeof(*h2));
-    }
-    else {
-        assert(false);  // unknown ph.format, PackLinuxElf32x86::generateElfHdr
-    }
-}
-
-void
-PackLinuxElf32ppc::generateElfHdr(
-    OutputFile *fo,
-    void const *proto,
-    unsigned const brka
-)
-{
-    super::generateElfHdr(fo, proto, brka);
-
-    if (ph.format==UPX_F_LINUX_ELFPPC32) {
-        cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
-        assert(2==get_native16(&h2->ehdr.e_phnum));
-        set_native32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
-        memset(&h2->linfo, 0, sizeof(h2->linfo));
-        fo->write(h2, sizeof(*h2));
-    }
-    else {
-        assert(false);  // unknown ph.format, PackLinuxElf32ppc::generateElfHdr
-    }
-}
-
-void
-PackLinuxElf64amd::generateElfHdr(
-    OutputFile *fo,
-    void const *proto,
-    unsigned const brka
-)
-{
-    super::generateElfHdr(fo, proto, brka);
-
-    if (ph.format==UPX_F_LINUX_ELF64_AMD) {
+    if (ph.format==getFormat()) {
         cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
         assert(2==get_native16(&h2->ehdr.e_phnum));
         set_native32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
@@ -840,16 +846,11 @@ PackLinuxElf64amd::generateElfHdr(
         fo->write(h2, sizeof(*h2));
     }
     else {
-        assert(false);  // unknown ph.format, PackLinuxElf64amd::generateElfHdr
+        assert(false);  // unknown ph.format, PackLinuxElf64
     }
 }
 
-static const
-#include "stub/l_lx_elf86.h"
-static const
-#include "stub/fold_elf86.h"
-
-void PackLinuxElf32::pack1(OutputFile *fo, Filter &/*ft*/)
+void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -862,10 +863,28 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter &/*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    generateElfHdr(fo, linux_elfppc32_fold, getbrk(phdri, e_phnum) );
+    progid = getRandomId();
 }
 
-void PackLinuxElf64::pack1(OutputFile *fo, Filter &/*ft*/)
+void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
+}
+
+void PackLinuxElf32arm::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    generateElfHdr(fo, linux_elf32arm_fold, getbrk(phdri, ehdri.e_phnum) );
+}
+
+void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    generateElfHdr(fo, linux_elfppc32_fold, getbrk(phdri, ehdri.e_phnum) );
+}
+
+void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -878,7 +897,13 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter &/*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, e_phnum) );
+    progid = getRandomId();
+}
+
+void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
 // Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
@@ -1085,14 +1110,14 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     set_native64(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
 }
 
-void PackLinuxElf32ppc::pack3(OutputFile *fo, Filter &ft)
+void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len) + sizeof(disp);
-    set_native32(&disp, 4+ len - sz_elf_hdrs);  // 4: sizeof(instruction)
+    len += (3& -len);
+    set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
     fo->write(&disp, sizeof(disp));
 
     super::pack3(fo, ft);
@@ -1166,6 +1191,76 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     super::pack3(fo, ft);
 }
 
+void PackLinuxElf32arm::pack3(OutputFile *fo, Filter &ft)
+{
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+    unsigned const len0 = fo->getBytesWritten();
+    unsigned len = len0;
+    unsigned const zero = 0;
+    fo->write(&zero, 3& -len);  // align to 0 mod 4
+    len += (3& -len);
+
+#define PAGE_MASK (~0u<<12)
+#define PAGE_SIZE (-PAGE_MASK)
+    upx_byte *const p = const_cast<upx_byte *>(getLoader());
+    lsize = getLoaderSize();
+    unsigned const lo_va_user = 0x8000;  // XXX
+    unsigned lo_va_stub = elfout.phdr[0].p_vaddr;
+    unsigned adrc;
+    unsigned adrm;
+    unsigned adru;
+    unsigned adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+
+    len += lsize;
+    bool const is_big = true;
+    if (is_big) {
+        elfout.ehdr.e_entry += lo_va_user - lo_va_stub;
+        elfout.phdr[0].p_vaddr = lo_va_user;
+        elfout.phdr[0].p_paddr = lo_va_user;
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, ehdri.e_phnum);
+        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = PAGE_SIZE + len;
+        lenu = PAGE_SIZE + len;
+        cntc = len >> 5;
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = PAGE_SIZE;
+        lenu = PAGE_SIZE + len;
+        cntc = 0;
+    }
+    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+
+    // patch in order of descending address
+    patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
+    patch_le32(p,lsize,"LENX", len0 - hlen);
+
+    patch_le32(p,lsize,"JMPU", 8 + lo_va_user);  // trampoline for unmap
+    patch_le32(p,lsize,"LENU", lenu);  // len  for unmap
+    patch_le32(p,lsize,"ADRU", adru);  // addr for unmap
+
+    patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
+    patch_le32(p,lsize,"ADRC", adrc);  // addr for copy
+
+    patch_le32(p,lsize,"LENM", lenm);  // len  for map
+    patch_le32(p,lsize,"ADRM", adrm);  // addr for map
+
+#undef PAGE_SIZE
+#undef PAGE_MASK
+
+    super::pack3(fo, ft);
+}
+
 void PackLinuxElf::pack4(OutputFile *fo, Filter &ft)
 {
     super::pack4(fo, ft);
@@ -1201,7 +1296,8 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         elfout.ehdr.e_entry    -= base;
         elfout.phdr[0].p_vaddr -= base;
         elfout.phdr[0].p_paddr -= base;
-        elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
+        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
+        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
     }
     fo->seek(0, SEEK_SET);
     fo->rewrite(&elfout, sz_elf_hdrs);
@@ -1450,16 +1546,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 **************************************************************************/
 
 
-PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) :
-    super(f), phdri(NULL),
-    file_image(NULL), dynseg(NULL), hashtab(NULL), dynstr(NULL), dynsym(NULL)
+PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
 {
 }
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
 {
-    delete[] file_image;
-    delete[] phdri;
 }
 
 int const *
@@ -1484,33 +1576,6 @@ PackLinuxElf32x86::getFilters() const
     -1 };
     return filters;
 }
-
-int
-PackLinuxElf32x86::buildLoader(const Filter *ft)
-{
-    unsigned char tmp[sizeof(linux_i386elf_fold)];
-    memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
-    checkPatch(NULL, 0, 0, 0);  // reset
-    if (opt->o_unix.is_ptinterp) {
-        unsigned j;
-        for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
-            if (0x60==tmp[  j]
-            &&  0x47==tmp[1+j] ) {
-                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
-                tmp[  j] = 0x47;
-                tmp[1+j] = 0x60;
-                break;
-            }
-        }
-    }
-    return buildLinuxLoader(
-        linux_i386elf_loader, sizeof(linux_i386elf_loader),
-        tmp,                  sizeof(linux_i386elf_fold),  ft );
-}
-
-
-void PackLinuxElf32x86::patchLoader() { }
-
 
 bool PackLinuxElf32x86::canPack()
 {
@@ -1620,8 +1685,131 @@ bool PackLinuxElf32x86::canPack()
     return true;
 }
 
+PackLinuxElf32arm::PackLinuxElf32arm(InputFile *f) : super(f)
+{
+}
+
+PackLinuxElf32arm::~PackLinuxElf32arm()
+{
+}
+
+const int *
+PackLinuxElf32arm::getFilters() const
+{
+    static const int filters[] = { 0x50, -1 };
+    return filters;
+}
+
+bool PackLinuxElf32arm::canPack()
+{
+    unsigned char buf[sizeof(Elf32_Ehdr) + 14*sizeof(Elf32_Phdr)];
+    COMPILE_TIME_ASSERT(sizeof(buf) <= 512);
+
+    exetype = 0;
+
+    fi->readx(buf, sizeof(buf));
+    fi->seek(0, SEEK_SET);
+    Elf32_Ehdr const *const ehdr = (Elf32_Ehdr const *)buf;
+
+    // now check the ELF header
+    if (checkEhdr(ehdr, Elf32_Ehdr::EM_ARM,
+        Elf32_Ehdr::ELFCLASS32, Elf32_Ehdr::ELFDATA2LSB) != 0)
+        return false;
+
+    // additional requirements for linux/elfarm
+    if (ehdr->e_ehsize != sizeof(*ehdr)) {
+        throwCantPack("invalid Ehdr e_ehsize; try `--force-execve'");
+        return false;
+    }
+    if (ehdr->e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
+        throwCantPack("non-contiguous Ehdr/Phdr; try `--force-execve'");
+        return false;
+    }
+
+    // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
+    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(buf + ehdr->e_phoff);
+    for (unsigned j=0; j < ehdr->e_phnum; ++phdr, ++j) {
+        if (j >= 14)  // 512 bytes holds Elf32_Ehdr + Elf32_Phdr[0..13]
+            return false;
+        if (phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
+            if (phdr->p_offset != 0) {
+                throwCantPack("invalid Phdr p_offset; try `--force-execve'");
+                return false;
+            }
+
+            // detect possible conflict upon invocation
+            //if (ehdr->e_type!=Elf32_Ehdr::ET_DYN
+            //&&  (phdr->p_vaddr < (unsigned)(0x4000 + file_size)
+            //  || phdr->p_paddr < (unsigned)(0x4000 + file_size) ) ) {
+            //    throwAlreadyPackedByUPX();  // not necessarily, but mostly true
+            //    return false;
+            //}
+            exetype = 1;
+            break;
+        }
+    }
+
+    // We want to compress position-independent executable (gcc -pie)
+    // main programs, but compressing a shared library must be avoided
+    // because the result is no longer usable.  In theory, there is no way
+    // to tell them apart: both are just ET_DYN.  Also in theory,
+    // neither the presence nor the absence of any particular symbol name
+    // can be used to tell them apart; there are counterexamples.
+    // However, we will use the following heuristic suggested by
+    // Peter S. Mazinger <ps.m@gmx.net> September 2005:
+    // If a ET_DYN has __libc_start_main as a global undefined symbol,
+    // then the file is a position-independent executable main program
+    // (that depends on libc.so.6) and is eligible to be compressed.
+    // Otherwise (no __libc_start_main as global undefined): skip it.
+    // Also allow  __uClibc_main  and  __uClibc_start_main .
+
+    if (Elf32_Ehdr::ET_DYN==ehdr->e_type) {
+        // The DT_STRTAB has no designated length.  Read the whole file.
+        file_image = new char[file_size];
+        fi->seek(0, SEEK_SET);
+        fi->readx(file_image, file_size);
+        ehdri= *ehdr;
+        phdri= (Elf32_Phdr *)(ehdr->e_phoff + file_image);  // do not free() !!
+
+        int j= ehdr->e_phnum;
+        phdr= phdri;
+        for (; --j>=0; ++phdr) if (Elf32_Phdr::PT_DYNAMIC==get_native32(&phdr->p_type)) {
+            dynseg= (Elf32_Dyn const *)(get_native32(&phdr->p_offset) + file_image);
+            break;
+        }
+        // elf_find_dynamic() returns 0 if 0==dynseg.
+        hashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
+        dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
+        dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
+
+        char const *const run_start[]= {
+            "__libc_start_main", "__uClibc_main", "__uClibc_start_main",
+        };
+        for (j=0; j<3; ++j) {
+            // elf_lookup() returns 0 if any required table is missing.
+            Elf32_Sym const *const lsm = elf_lookup(run_start[j]);
+            if (lsm && lsm->st_shndx==Elf32_Sym::SHN_UNDEF
+            && lsm->st_info==lsm->Elf32_Sym::St_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
+            && lsm->st_other==Elf32_Sym::STV_DEFAULT ) {
+                break;
+            }
+        }
+        phdri = 0;  // done "borrowing" this member
+        if (3<=j) {
+            return false;
+        }
+    }
+    if (!super::canPack())
+        return false;
+    assert(exetype == 1);
+
+    // set options
+    opt->o_unix.blocksize = blocksize = file_size;
+    return true;
+}
+
 unsigned
-PackLinuxElf32x86::elf_get_offset_from_address(unsigned const addr) const
+PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = ehdri.e_phnum;
@@ -1635,7 +1823,7 @@ PackLinuxElf32x86::elf_get_offset_from_address(unsigned const addr) const
 }
 
 void const *
-PackLinuxElf32x86::elf_find_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -1649,7 +1837,7 @@ PackLinuxElf32x86::elf_find_dynamic(unsigned int const key) const
     return 0;
 }
 
-unsigned PackLinuxElf32x86::elf_hash(char const *p)
+unsigned PackLinuxElf32::elf_hash(char const *p)
 {
     unsigned h;
     for (h= 0; 0!=*p; ++p) {
@@ -1663,7 +1851,7 @@ unsigned PackLinuxElf32x86::elf_hash(char const *p)
     return h;
 }
 
-Elf32_Sym const *PackLinuxElf32x86::elf_lookup(char const *name) const
+Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
 {
     if (hashtab && dynsym && dynstr) {
         unsigned const nbucket = hashtab[0];
@@ -1680,170 +1868,6 @@ Elf32_Sym const *PackLinuxElf32x86::elf_lookup(char const *name) const
     }
     return 0;
 
-}
-
-void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &)
-{
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-    assert(ehdri.e_phoff == sizeof(Elf32_Ehdr));  // checked by canPack()
-    sz_phdrs = ehdri.e_phnum * ehdri.e_phentsize;
-
-    phdri = new Elf32_Phdr[(unsigned)ehdri.e_phnum];
-    fi->seek(ehdri.e_phoff, SEEK_SET);
-    fi->readx(phdri, sz_phdrs);
-
-    progid = getRandomId();
-    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
-}
-
-unsigned PackLinuxElf32x86::find_LOAD_gap(
-    Elf32_Phdr const *const phdri,
-    unsigned const k,
-    unsigned const e_phnum
-)
-{
-    if (PT_LOAD32!=get_native32(&phdri[k].p_type)) {
-        return 0;
-    }
-    unsigned const hi = get_native32(&phdri[k].p_offset) +
-                        get_native32(&phdri[k].p_filesz);
-    unsigned lo = ph.u_file_size;
-    unsigned j = k;
-    for (;;) { // circular search, optimize for adjacent ascending
-        ++j;
-        if (e_phnum==j) {
-            j = 0;
-        }
-        if (k==j) {
-            break;
-        }
-        if (PT_LOAD32==get_native32(&phdri[j].p_type)) {
-            unsigned const t = get_native32(&phdri[j].p_offset);
-            if ((t - hi) < (lo - hi)) {
-                lo = t;
-                if (hi==lo) {
-                    break;
-                }
-            }
-        }
-    }
-    return lo - hi;
-}
-
-void PackLinuxElf32x86::pack2(OutputFile *fo, Filter &ft)
-{
-    Extent x;
-    unsigned k;
-
-    // count passes, set ptload vars
-    ui_total_passes = 0;
-    unsigned const e_phnum = get_native16(&ehdri.e_phnum);
-    for (k = 0; k < e_phnum; ++k) {
-        if (PT_LOAD32 == get_native32(&phdri[k].p_type)) {
-            ui_total_passes++;
-            if (find_LOAD_gap(phdri, k, e_phnum)) {
-                ui_total_passes++;
-            }
-        }
-    }
-
-    // compress extents
-    unsigned total_in = 0;
-    unsigned total_out = 0;
-
-    unsigned hdr_ulen = sizeof(Elf32_Ehdr) + sz_phdrs;
-
-    ui_pass = 0;
-    ft.addvalue = 0;
-
-    int nx = 0;
-    for (k = 0; k < e_phnum; ++k) if (PT_LOAD32==get_native32(&phdri[k].p_type)) {
-        if (ft.id < 0x40) {
-            // FIXME: ??    ft.addvalue = phdri[k].p_vaddr;
-        }
-        x.offset = get_native32(&phdri[k].p_offset);
-        x.size   = get_native32(&phdri[k].p_filesz);
-        if (0 == nx) { // 1st PT_LOAD32 must cover Ehdr at 0==p_offset
-            unsigned const delta = sizeof(Elf32_Ehdr) + sz_phdrs;
-            if (ft.id < 0x40) {
-                // FIXME: ??     ft.addvalue += delta;
-            }
-            x.offset    += delta;
-            x.size      -= delta;
-        }
-        packExtent(x, total_in, total_out,
-            ((Elf32_Phdr::PF_X & phdri[k].p_flags)
-                ? &ft : 0 ), fo, hdr_ulen);
-        hdr_ulen = 0;
-        ++nx;
-    }
-    for (k = 0; k < e_phnum; ++k) {
-        x.size = find_LOAD_gap(phdri, k, e_phnum);
-        if (x.size) {
-            x.offset = get_native32(&phdri[k].p_offset) +
-                       get_native32(&phdri[k].p_filesz);
-            packExtent(x, total_in, total_out, 0, fo);
-        }
-    }
-
-    if ((off_t)total_in != file_size)
-        throwEOFException();
-    set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
-}
-
-void PackLinuxElf32x86::pack3(OutputFile *fo, Filter &ft)
-{
-    unsigned disp;
-    unsigned len = fo->getBytesWritten();
-    unsigned const zero = 0;
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len);
-    set_native32(&disp, len);
-    fo->write(&disp, sizeof(disp));
-
-    // We have packed multiple blocks, so PackLinuxElfxx::buildLinuxLoader
-    // needs an adjusted ph.c_len in order to get alignment correct.
-    unsigned const save_c_len = ph.c_len;
-    ph.c_len = sizeof(disp) + len - (
-            // Elf32_Edhr
-        sizeof(elfout.ehdr) +
-            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
-        (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
-            // checksum UPX! lsize version format
-        sizeof(l_info) +
-            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0u) +
-            // p_progid, p_filesize, p_blocksize
-        sizeof(p_info) +
-            // compressed data
-        b_len );
-    buildLoader(&ft);  /* redo for final .align constraints */
-    ph.c_len = save_c_len;
-
-    super::pack3(fo, ft);
-}
-
-void PackLinuxElf32x86::pack4(OutputFile *fo, Filter &ft)
-{
-    super::pack4(fo, ft);  // write PackHeader and overlay_offset
-
-    // rewrite Elf header
-    if (Elf32_Ehdr::ET_DYN==ehdri.e_type) {
-        // File being compressed was -pie.
-        // Turn the stub into -pie, too.
-        unsigned const base= elfout.phdr[0].p_vaddr;
-        elfout.ehdr.e_type= Elf32_Ehdr::ET_DYN;
-        elfout.ehdr.e_phnum= 1;
-        elfout.ehdr.e_entry    -= base;
-        elfout.phdr[0].p_vaddr -= base;
-        elfout.phdr[0].p_paddr -= base;
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
-    }
-    fo->seek(0, SEEK_SET);
-    fo->rewrite(&elfout, sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr));
-    //fo->rewrite(&linfo, sizeof(linfo));
 }
 
 void PackLinuxElf32x86::unpack(OutputFile *fo)

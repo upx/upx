@@ -459,6 +459,7 @@ inline void operator delete[](void *p)
 #define UPX_F_LINUX_ELFI_i386   20
 #define UPX_F_WINCE_ARM_PE      21
 #define UPX_F_LINUX_ELF64_AMD   22
+#define UPX_F_LINUX_ELF32_ARM   23
 
 #define UPX_F_PLAIN_TEXT        127
 
