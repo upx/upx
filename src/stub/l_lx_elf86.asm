@@ -45,7 +45,7 @@
 GLOBAL _start
 ;__LEXEC000__
 _start:
-;;;;    int3
+    int3
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
 ;; Invoke gdb, and give a 'run' command.  Define a single-step macro such as
