@@ -69,6 +69,8 @@ fold_begin:
         mov r8,sp  @ xo.ptr
         ldr r7,[r10,#sz_unc]  @ xo.size
         adr r6,f_unfilter
+        add r9,r9,#sz_b_info  @ for unpackExtent
+        mov r11,#0  @ dynbase for ET_EXEC;  FIXME for ET_DYN
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11}
         ldmia sp!,{r0,r1,r2,r3}
         bl upx_main
