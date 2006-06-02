@@ -338,7 +338,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
 #elif defined(__arm__)  /*}{*/
             if (0==phdr->p_offset) {
                 Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)addr;
-                *(int *)(void *)&ehdr->e_ident[ 8] = 0x0090005b;  // syscall __NR_unmap
+                *(int *)(void *)&ehdr->e_ident[ 8] = 0xef90005b;  // syscall __NR_unmap
                 *(int *)(void *)&ehdr->e_ident[12] = 0xe1a0f002;  // mov pc,r2
             }
 #endif  /*}*/
