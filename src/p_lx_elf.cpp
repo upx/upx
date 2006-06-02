@@ -1208,11 +1208,9 @@ void PackLinuxElf32arm::pack3(OutputFile *fo, Filter &ft)
     unsigned lo_va_stub = elfout.phdr[0].p_vaddr;
     unsigned adrc;
     unsigned adrm;
-    unsigned adru;
     unsigned adrx;
     unsigned cntc;
     unsigned lenm;
-    unsigned lenu;
 
     len += lsize;
     bool const is_big = true;
@@ -1223,19 +1221,15 @@ void PackLinuxElf32arm::pack3(OutputFile *fo, Filter &ft)
                lo_va_stub      = lo_va_user;
         adrc = lo_va_stub;
         adrm = getbrk(phdri, ehdri.e_phnum);
-        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-        adrx = adru + hlen;
+        adrx = hlen + (PAGE_MASK & (~PAGE_MASK + adrm));  // round up to page boundary
         lenm = PAGE_SIZE + len;
-        lenu = PAGE_SIZE + len;
         cntc = len >> 5;
     }
     else {
         adrm = lo_va_stub + len;
         adrc = adrm;
-        adru = lo_va_stub;
         adrx = lo_va_stub + hlen;
         lenm = PAGE_SIZE;
-        lenu = PAGE_SIZE + len;
         cntc = 0;
     }
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
@@ -1244,10 +1238,6 @@ void PackLinuxElf32arm::pack3(OutputFile *fo, Filter &ft)
     // patch in order of descending address
     patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
     patch_le32(p,lsize,"LENX", len0 - hlen);
-
-    patch_le32(p,lsize,"JMPU", 8 + lo_va_user);  // trampoline for unmap
-    patch_le32(p,lsize,"LENU", lenu);  // len  for unmap
-    patch_le32(p,lsize,"ADRU", adru);  // addr for unmap
 
     patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
     patch_le32(p,lsize,"ADRC", adrc);  // addr for copy

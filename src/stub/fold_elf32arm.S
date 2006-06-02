@@ -46,23 +46,24 @@ fold_begin:
 /* In:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
-    r8= JMPU
-    r7= LENU
-    r6= ADRU
     r5= f_decompress
-    sp/ sz_unc_fold,argc,argv...
+    sp/ ADRU,LENU,sz_unc,argc,argv...
 */
-        ldr r3,[sp,#4]  @ argc; sz_unc was pushed
-        add sp,sp,#4  @ discard sz_unc
+        ldr r3,[sp,#3*4]  @ argc
         add r3,sp,r3,lsl #2  @ skip argv
-        add r3,r3,#4+4  @ skip argc, env_end
+        add r3,r3,#3*4 +4 +4  @ skip ADRU,LENU,sz_unc, argc, env_end
 .Lenv:
         ldr r0,[r3],#4  @ skip env
         cmp r0,#0
         bne .Lenv
                 /* r3= &Elf32_auxv_t */
+        mov r2,r3
+.Laux:
+        ldr r0,[r2],#2*4  @ .a_type
+        cmp r0,#0
+        bne .Laux
+        str r2,[sp,#2*4]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
 
-        stmdb sp!,{r6,r7,r8}  @ ADRU,LENU,JMPU
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
         mov r4,r9  @ total size of compressed data
         ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
@@ -74,10 +75,11 @@ fold_begin:
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11}
         ldmia sp!,{r0,r1,r2,r3}
         bl upx_main
+        mov lr,r0  @ entry address
         add sp,sp,#(9-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
-        mov r2,r0  @ entry address
-        ldmia sp!,{r0,r1,pc}  @ goto [sys $__NR_munmap; mov pc,r2]
+        ldmia sp!,{r0,r1,r2}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type]
+        ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0

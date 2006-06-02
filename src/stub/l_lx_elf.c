@@ -176,7 +176,7 @@ ERR_LAB
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
 static void *
-make_hatch(Elf32_Phdr const *const phdr, unsigned const reloc)
+make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
@@ -201,6 +201,35 @@ make_hatch(Elf32_Phdr const *const phdr, unsigned const reloc)
             if (* (volatile unsigned*) hatch != escape) {
                 * hatch  = escape;
             }
+        }
+    }
+    return hatch;
+}
+#elif defined(__arm__)  /*}{*/
+static void *
+make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
+{
+    unsigned *hatch = 0;
+
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // The format of the 'if' is
+        //  if ( ( (hatch = loc1), test_loc1 )
+        //  ||   ( (hatch = loc2), test_loc2 ) ) {
+        //      action
+        //  }
+        // which uses the comma to save bytes when test_locj involves locj
+        // and the action is the same when either test succeeds.
+
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  8<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
+        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
+        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+                (phdr->p_offset==0) ) )
+        {
+            hatch[0]= 0xef90005b;  // syscall __NR_unmap
+            hatch[1]= 0xe1a0f00e;  // mov pc,lr
         }
     }
     return hatch;
@@ -330,16 +359,15 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         }
         if (xi) {
 #if defined(__i386__)  /*{*/
-            void *const hatch = make_hatch(phdr, reloc);
+            void *const hatch = make_hatch_x86(phdr, reloc);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
 #elif defined(__arm__)  /*}{*/
-            if (0==phdr->p_offset) {
-                Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)addr;
-                *(int *)(void *)&ehdr->e_ident[ 8] = 0xef90005b;  // syscall __NR_unmap
-                *(int *)(void *)&ehdr->e_ident[12] = 0xe1a0f002;  // mov pc,r2
+            void *const hatch = make_hatch_arm(phdr, reloc);
+            if (0!=hatch) {
+                auxv_up((Elf32_auxv_t *)(void *)av, AT_NULL, (unsigned)hatch);
             }
 #endif  /*}*/
             if (0!=mprotect(addr, mlen, prot)) {

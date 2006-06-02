@@ -64,6 +64,7 @@ _start: .globl _start
 */
         adr r12,start_params
         ldmia r12!,{r0,r1, r8,r10}  @ ADRM,LENM, ADRC,CNTC
+        stmdb  sp!,{r0,r1,r2}  @ ADRU,LENU,space for sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         mvn r4,#0  @ -1; cater to *BSD for fd when MAP_ANON
@@ -77,11 +78,10 @@ copy:
 
         mov lr,r9  @ dst for unfolded code
         sub r11,r9,r8  @ relocation amount
-        ldmia r12!,{r6,r7,r8, r9,r10}  @ ADRU,LENU,JMPU, LENX,ADRX
+        ldmia r12!,{r9,r10}  @ LENX,ADRX
 
-        sub sp,sp,#4  @ space for sz_unc
-        /*ldrb r4,b_method+cpr0*/
-        mov r3,sp  @ &sz_unc
+        ldrb r4,b_method+cpr0
+        add r3,sp,#2*4  @ &sz_unc
         mov r2,lr  @ dst
         ldr r1,sz_cpr    +cpr0
         adr r0,sz_b_info +cpr0
@@ -94,10 +94,6 @@ start_params:
 
         .ascii "ADRC"  @ src  for copy
         .ascii "CNTC"  @ cnt  for copy: number of 32-byte blocks
-
-        .ascii "ADRU"  @ addr for unmap; same as ADRM
-        .ascii "LENU"  @ len  for unmap; same as LENM
-        .ascii "JMPU"  @ trampoline for unmap
 
         .ascii "LENX"  @ total size of compressed data
         .ascii "ADRX"  @ &b_info of 1st compressed block (after moving)
