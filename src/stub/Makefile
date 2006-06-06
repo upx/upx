@@ -61,9 +61,7 @@ endif
 # util var for use in the rules - basename of the current target
 override T = $(basename $@)
 
-ifneq ($(strip $(USE_MAKEFILE_DEPS)),)
 MAKEFILE_DEPS = $(MAKEFILE_LIST)
-endif
 
 
 # /***********************************************************************
@@ -107,17 +105,17 @@ OBJCOPY_LINUX_I386 = i386-linux-objcopy-2.16.1 -F elf32-i386
 OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
 STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
 
-# gcc 2.7.2.3 (fold_*86.bin: 1900 / 1011 / 1786 / 1401)
+# gcc 2.7.2.3
 CC_LINUX_I386_GCC272  = i386-linux-gcc-2.72 -m386 -O2 -MMD
 CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 
-# gcc 2.95.3 (fold_*86.bin: 1770 / 995 / 1661 / 1314)
+# gcc 2.95.3
 CC_LINUX_I386_GCC295  = i386-linux-gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
 CC_LINUX_I386_GCC295 += -Werror
 
-# gcc 3.4.6 (fold_*86.bin: 1651 / 947 / 1537 / 1190)
+# gcc 3.4.6 (fold_*86.bin: 1622 / 899 / 1531 / 1201)
 CC_LINUX_I386_GCC34  = i386-linux-gcc-3.4.6
 CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
@@ -127,9 +125,9 @@ CC_LINUX_I386_GCC34 += -mpreferred-stack-boundary=2
 CC_LINUX_I386_GCC34 += -fweb
 CC_LINUX_I386_GCC34 += -Werror
 
-# gcc 4.1.0 (fold_*86.bin: 1725 / 963 / 1620 / 1202)
-# gcc 4.0.3 (fold_*86.bin: 1731 / 995 / 1625 / 1195)
-CC_LINUX_I386_GCC41  = i386-linux-gcc-4.1.0
+# gcc 4.1.1 (fold_*86.bin: 1651 / 931 / 1633 / 1215)
+# gcc 4.0.3 (fold_*86.bin: 1699 / 963 / 1631 / 1208)
+CC_LINUX_I386_GCC41  = i386-linux-gcc-4.1.1
 CC_LINUX_I386_GCC41 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
 CC_LINUX_I386_GCC41 += -Os -fno-omit-frame-pointer
 CC_LINUX_I386_GCC41 += -momit-leaf-frame-pointer
@@ -231,6 +229,7 @@ GCC_ARM_T     :=  $(GCC_ARM) -march=armv4t
 LD_ARM        :=  arm-9tdmi-linux-gnu-ld
 OBJCOPY_LINUX_ARM   :=  arm-9tdmi-linux-gnu-objcopy
 OBJSTRIP_LINUX_ARM  := $(OBJCOPY_LINUX_ARM) -R .comment -R .note
+
 
 # /***********************************************************************
 # // main targets
@@ -576,15 +575,16 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 	$(STRIPELF_LINUX_I386) $@
 	$(BRANDELF) $@
 
-l_armpea.h: l_armpea.S armv4_n2e_d8.S $(MAKEFILE_LIST)
+l_armpea.h: l_armpea.S armv4_n2e_d8.S $(MAKEFILE_DEPS)
 	$(GCC_ARM) $T.S -o $T.out -nostdlib
 	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
 	$(BIN2H) $T.bin nrv_loader_arm $@
 
-l_armpet.h: l_armpet.S arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_LIST)
+l_armpet.h: l_armpet.S arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_DEPS)
 	$(GCC_ARM_T) $T.S -o $T.out -nostdlib
 	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
 	$(BIN2H) $T.bin nrv_loader_thumb $@
+
 
 # /***********************************************************************
 # // dependencies
