@@ -93,7 +93,7 @@ struct timespec {
 #if defined(__amd64__) || defined(__powerpc64__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
-#elif defined(__i386__) || defined(__powerpc__)
+#elif defined(__i386__) || defined(__powerpc__) || defined(__arm__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
 #endif
@@ -365,6 +365,7 @@ int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
 int open(char const *, unsigned, unsigned);
 ssize_t read(int, void *, size_t);
+void exit(int) __attribute__((noreturn));
 
 #endif  /*}*/
 

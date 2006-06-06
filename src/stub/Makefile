@@ -48,6 +48,7 @@ STUBS = \
 	l_lx_pti86.h  fold_pti86.h \
 	l_lx_elfppc32.h fold_elfppc32.h \
 	l_lx_elf64amd.h fold_elf64amd.h \
+	l_lx_elf32arm.h fold_elf32arm.h \
 	l_mac_ppc32.h fold_machppc32.h \
 	l_vmlinz.h l_vmlinx.h
 
@@ -227,8 +228,9 @@ GCC_AMD64     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 GCC_ARM       :=  arm-9tdmi-linux-gnu-gcc -march=armv4 -nostdinc -MMD
 GCC_ARM       += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 GCC_ARM_T     :=  $(GCC_ARM) -march=armv4t
-OBJCOPY_ARM   :=  arm-9tdmi-linux-gnu-objcopy
-
+LD_ARM        :=  arm-9tdmi-linux-gnu-ld
+OBJCOPY_LINUX_ARM   :=  arm-9tdmi-linux-gnu-objcopy
+OBJSTRIP_LINUX_ARM  := $(OBJCOPY_LINUX_ARM) -R .comment -R .note
 
 # /***********************************************************************
 # // main targets
@@ -429,6 +431,13 @@ l_lx_elf64amd.h: l_lx_elf64amd.S amd_d_nrv2e.S
 	$(LD_AMD64) -o $T.bin --oformat binary $T.o
 	$(BIN2H) $T.bin linux_elf64amd_loader $@
 
+l_lx_elf32arm.h: l_lx_elf32arm.S arm_nrv2e_d32.S
+	$(GCC_ARM) -c $<
+	$(OBJSTRIP_LINUX_ARM) $T.o
+	$(LD_ARM) -o $T.out $T.o
+	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
+	$(BIN2H) $T.bin linux_elf32arm_loader $@
+
 l_lx_elf.o: l_lx_elf.c linux.hh $(MAKEFILE_DEPS)
 	$(CC_LINUX_I386) -c $<
 	$(OBJSTRIP_LINUX_I386) $@
@@ -469,6 +478,10 @@ a_lx_elf64amd.o: a_lx_elf64.c $(MAKEFILE_DEPS)
 	$(GCC_AMD64) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables -o $@ $<
 	$(OBJSTRIP_AMD64) $@
 
+a_lx_elf32arm.o: l_lx_elf.c $(MAKEFILE_DEPS)
+	$(GCC_ARM) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables -o $@ $<
+	$(OBJSTRIP_LINUX_ARM) $@
+
 fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_PPC32) -c $<
 	$(OBJSTRIP_PPC32) $@
@@ -476,6 +489,10 @@ fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
 fold_elf64amd.o: fold_elf64amd.S amd_bxx.S $(MAKEFILE_DEPS)
 	$(GCC_AMD64) -c $<
 	$(OBJSTRIP_AMD64) $@
+
+fold_elf32arm.o: fold_elf32arm.S $(MAKEFILE_DEPS)
+	$(GCC_ARM) -c $<
+	$(OBJSTRIP_LINUX_ARM) $@
 
 fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
 	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
@@ -487,6 +504,12 @@ fold_elf64amd.h: a_lx_elf64amd.o fold_elf64amd.o l_lx_elf64amd.lds amd_bxx.S
 		fold_elf64amd.o a_lx_elf64amd.o
 	$(STRIPELF_LINUX_I386) $T.bin
 	$(BIN2H) $T.bin linux_elf64amd_fold $@
+
+fold_elf32arm.h: a_lx_elf32arm.o fold_elf32arm.o l_lx_elf32arm.lds amd_bxx.S
+	$(LD_ARM) -T $(srcdir)/l_lx_elf32arm.lds -Map $T.map -o $T.bin --strip-all \
+		fold_elf32arm.o a_lx_elf32arm.o
+	$(STRIPELF_LINUX_I386) $T.bin
+	$(BIN2H) $T.bin linux_elf32arm_fold $@
 
 fold_exec86.o: fold_exec86.asm
 	$(NASM) -f elf -o $@ $<
@@ -555,12 +578,12 @@ upxd: l_lx_sep.o l_lx_sep86.asm
 
 l_armpea.h: l_armpea.S armv4_n2e_d8.S $(MAKEFILE_LIST)
 	$(GCC_ARM) $T.S -o $T.out -nostdlib
-	$(OBJCOPY_ARM) --only-section .text -O binary $T.out $T.bin
+	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
 	$(BIN2H) $T.bin nrv_loader_arm $@
 
 l_armpet.h: l_armpet.S arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_LIST)
 	$(GCC_ARM_T) $T.S -o $T.out -nostdlib
-	$(OBJCOPY_ARM) --only-section .text -O binary $T.out $T.bin
+	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
 	$(BIN2H) $T.bin nrv_loader_thumb $@
 
 # /***********************************************************************

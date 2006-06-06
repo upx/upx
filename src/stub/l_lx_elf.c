@@ -55,9 +55,9 @@ struct Extent {
 
 
 static void
-#if (ACC_CC_GNUC >= 0x030300)
+#if (ACC_CC_GNUC >= 0x030300) && defined(__i386__)  /*{*/
 __attribute__((__noinline__, __used__, regparm(3), stdcall))
-#endif
+#endif  /*}*/
 xread(struct Extent *x, char *buf, size_t count)
 {
     char *p=x->buf, *q=buf;
@@ -96,7 +96,7 @@ do_brk(void *addr)
     return brk(addr);
 }
 
-extern char *mmap(void *addr, size_t len,
+extern void *mmap(void *addr, size_t len,
     int prot, int flags, int fd, off_t offset);
 
 /*************************************************************************
@@ -172,10 +172,11 @@ ERR_LAB
     }
 }
 
+#if defined(__i386__)  /*{*/
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
 // Called by do_xmap to create it; remembered in AT_NULL.d_val
 static void *
-make_hatch(Elf32_Phdr const *const phdr, unsigned const reloc)
+make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
@@ -204,9 +205,41 @@ make_hatch(Elf32_Phdr const *const phdr, unsigned const reloc)
     }
     return hatch;
 }
+#elif defined(__arm__)  /*}{*/
+static void *
+make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
+{
+    unsigned *hatch = 0;
+
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // The format of the 'if' is
+        //  if ( ( (hatch = loc1), test_loc1 )
+        //  ||   ( (hatch = loc2), test_loc2 ) ) {
+        //      action
+        //  }
+        // which uses the comma to save bytes when test_locj involves locj
+        // and the action is the same when either test succeeds.
+
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  8<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
+        // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
+        ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
+                (phdr->p_offset==0) ) )
+        {
+            hatch[0]= 0xef90005b;  // syscall __NR_unmap
+            hatch[1]= 0xe1a0f00e;  // mov pc,lr
+        }
+    }
+    return hatch;
+}
+#endif  /*}*/
 
 static void
+#if defined(__i386__)  /*{*/
 __attribute__((regparm(2), stdcall))
+#endif  /*}*/
 upx_bzero(char *p, size_t len)
 {
     if (len) do {
@@ -217,7 +250,9 @@ upx_bzero(char *p, size_t len)
 
 
 static void
+#if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
+#endif  /*}*/
 auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 {
     if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
@@ -247,7 +282,9 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
 static unsigned long  // returns relocation constant
+#if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
+#endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
 )
@@ -276,10 +313,10 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *p_reloc)
+    Elf32_auxv_t *const av, unsigned *p_reloc, f_unfilter *const f_unf)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
-        (char const *)ehdr);
+        (void const *)ehdr);
     char *v_brk;
     unsigned const reloc = xfind_pages(
         ((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
@@ -298,15 +335,19 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         mlen += frag;
         addr -= frag;
 
-        // Decompressor can overrun the destination by 3 bytes.
-        if (addr != mmap(addr, mlen + (xi ? 3 : 0), prot | (xi ? PROT_WRITE : 0),
+        if (addr != mmap(addr, mlen
+#if defined(__i386__)  /*{*/
+            // Decompressor can overrun the destination by 3 bytes.
+            + (xi ? 3 : 0)
+#endif  /*}*/
+                , prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
         if (xi) {
             unpackExtent(xi, &xo, (f_expand *)fdi,
-                ((PROT_EXEC & prot) ? (f_unfilter *)(2+ fdi) : 0));
+                ((PROT_EXEC & prot) ? f_unf : 0) );
         }
         // Linux does not fixup the low end, so neither do we.
         //if (PROT_WRITE & prot) {
@@ -317,11 +358,18 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
             bzero(mlen+addr, frag);  // fragment at hi end
         }
         if (xi) {
-            void *const hatch = make_hatch(phdr, reloc);
+#if defined(__i386__)  /*{*/
+            void *const hatch = make_hatch_x86(phdr, reloc);
             if (0!=hatch) {
                 /* always update AT_NULL, especially for compressed PT_INTERP */
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
+#elif defined(__arm__)  /*}{*/
+            void *const hatch = make_hatch_arm(phdr, reloc);
+            if (0!=hatch) {
+                auxv_up((Elf32_auxv_t *)(void *)av, AT_NULL, (unsigned)hatch);
+            }
+#endif  /*}*/
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
@@ -334,12 +382,14 @@ ERR_LAB
                 err_exit(9);
             }
         }
+#if defined(__i386__)  /*{*/
         else if (xi) { // cleanup if decompressor overrun crosses page boundary
             mlen = ~PAGE_MASK & (3+ mlen);
             if (mlen<=3) { // page fragment was overrun buffer only
                 munmap(addr, mlen);
             }
         }
+#endif  /*}*/
     }
     if (!xi) { // 2nd call (PT_INTERP); close()+check is smaller here
         if (0!=close(fdi)) {
@@ -369,7 +419,7 @@ void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    int junk,  // %esp from 'pusha'
+    f_unfilter */*const*/ f_unfilter,
     struct Extent xo,
     struct Extent xi,
     unsigned const volatile dynbase
@@ -379,13 +429,13 @@ void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
     f_expand *const f_decompress,
-    int junk,  // %esp from 'pusha'
+    f_unfilter */*const*/ f_unf,
     struct Extent xo,  // {sz_unc, ehdr}    for ELF headers
     struct Extent xi,  // {sz_cpr, &b_info} for ELF headers
     unsigned const volatile dynbase  // value+result: compiler must not change
 )
 {
-    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
     Elf32_Addr reloc;
     Elf32_Addr entry;
@@ -393,7 +443,9 @@ void *upx_main(
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_pckhdrs = xi.size;
 
-    (void)junk;
+#if defined(__i386__)  /*{*/
+    f_unf = (f_unfilter *)(2+ (long)f_decompress);
+#endif  /*}*/
 
     // Uncompress Ehdr and Phdrs.
     unpackExtent(&xi, &xo, f_decompress, 0);
@@ -411,7 +463,7 @@ void *upx_main(
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     // This is necessary for ET_DYN if|when we override a prelink address.
 
-    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc);
+    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
     auxv_up(av, AT_ENTRY , entry);  // might not be necessary?
 
   { // Map PT_INTERP program interpreter
@@ -425,7 +477,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, 0, 0);
+        entry = do_xmap(fdi, ehdr, 0, 0, 0, 0);
         break;
     }
   }

@@ -81,7 +81,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
 
@@ -90,6 +90,13 @@ protected:
         void const *proto,
         unsigned const brka
     );
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
+    );
     virtual off_t getbrk(const Elf32_Phdr *phdr, int e_phnum) const;
     virtual void patchLoader();
     virtual void updateLoader(OutputFile *fo);
@@ -97,9 +104,21 @@ protected:
         unsigned const e_phnum);
     virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
+    static unsigned elf_hash(char const *) /*const*/;
+    virtual void const *elf_find_dynamic(unsigned) const;
+    virtual Elf32_Sym const *elf_lookup(char const *) const;
+    virtual unsigned elf_get_offset_from_address(unsigned) const;
+
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
+    unsigned sz_phdrs;  // sizeof Phdr[]
+
+            char       *file_image;       // if ET_DYN investigation
+    Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
+    unsigned int const *hashtab;  // from DT_HASH
+            char const *dynstr;   // from DT_STRTAB
+    Elf32_Sym    const *dynsym;   // from DT_SYMTAB
 
     struct cprElfHdr1 {
         Elf32_Ehdr ehdr;
@@ -151,6 +170,13 @@ protected:
         OutputFile *,
         void const *proto,
         unsigned const brka
+    );
+    virtual int buildLinuxLoader(
+        upx_byte const *const proto,  // assembly-only sections
+        unsigned const szproto,
+        upx_byte const *const fold,  // linked assembly + C section
+        unsigned const szfold,
+        Filter const *ft
     );
     virtual off_t getbrk(const Elf64_Phdr *phdr, int e_phnum) const;
     virtual void patchLoader();
@@ -243,21 +269,10 @@ public:
     virtual const int *getFilters() const;
     virtual bool canPack();
 protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    );
-    virtual void generateElfHdr(
-        OutputFile *,
-        void const *proto,
-        unsigned const brka
-    );
 };
 
 /*************************************************************************
@@ -275,21 +290,9 @@ public:
     virtual const int *getFilters() const;
     virtual bool canPack();
 protected:
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    );
-    virtual void generateElfHdr(
-        OutputFile *,
-        void const *proto,
-        unsigned const brka
-    );
 };
 
 /*************************************************************************
@@ -310,16 +313,9 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual bool canUnpackVersion(int version) const
-        { return (version >= 11); }
-
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append pack header
 
-    virtual void patchLoader();
     virtual int buildLoader(const Filter *);
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
@@ -328,30 +324,30 @@ protected:
         unsigned const szfold,
         Filter const *ft
     );
-    virtual void generateElfHdr(
-        OutputFile *,
-        void const *proto,
-        unsigned const brka
-    );
-
-    Elf32_Ehdr  ehdri; // from input file
-    Elf32_Phdr *phdri; // for  input file
-    unsigned sz_phdrs;  // sizeof Phdr[]
-
-            char       *file_image;       // if ET_DYN investigation
-    Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
-    unsigned int const *hashtab;  // from DT_HASH
-            char const *dynstr;   // from DT_STRTAB
-    Elf32_Sym    const *dynsym;   // from DT_SYMTAB
-
-    static unsigned elf_hash(char const *) /*const*/;
-    virtual void const *elf_find_dynamic(unsigned) const;
-    virtual Elf32_Sym const *elf_lookup(char const *) const;
-    virtual unsigned elf_get_offset_from_address(unsigned) const;
-    virtual unsigned find_LOAD_gap(Elf32_Phdr const *const phdri, unsigned const k,
-        unsigned const e_phnum);
 };
 
+/*************************************************************************
+// linux/elfarm
+**************************************************************************/
+
+class PackLinuxElf32arm : public PackLinuxElf32Le
+{
+    typedef PackLinuxElf32Le super;
+public:
+    PackLinuxElf32arm(InputFile *f);
+    virtual ~PackLinuxElf32arm();
+    virtual int getVersion() const { return 13; }
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARM; }
+    virtual const char *getName() const { return "linux/arm"; }
+    virtual const int *getFilters() const;
+    virtual int const *getCompressionMethods(int method, int level) const;
+
+    virtual bool canPack();
+protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual int buildLoader(const Filter *);
+};
 
 #endif /*} already included */
 
