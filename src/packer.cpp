@@ -942,7 +942,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 bool Packer::isValidCompressionMethod(int method)
 {
-    return (method >= M_NRV2B_LE32 && method <= M_CL1B_LE16);
+    return (method >= M_NRV2B_LE32 && method <= M_LZMA);
 }
 
 
@@ -952,6 +952,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
     static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, -1 };
     static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, -1 };
     static const int m_cl1b[]  = { M_CL1B_8, -1 };
+    static const int m_lzma[]  = { M_LZMA, -1 };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -963,6 +964,8 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
         return m_nrv2e;
     if (M_IS_CL1B(method))
         return m_cl1b;
+    if (M_IS_LZMA(method))
+        return m_lzma;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -975,6 +978,7 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
     static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, -1 };
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, -1 };
     static const int m_cl1b[]  = { M_CL1B_LE32, -1 };
+    static const int m_lzma[]  = { M_LZMA, -1 };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -986,6 +990,8 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
         return m_nrv2e;
     if (M_IS_CL1B(method))
         return m_cl1b;
+    if (M_IS_LZMA(method))
+        return m_lzma;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -1224,6 +1230,10 @@ const char *Packer::getDecompressor() const
         "CL1LEN01,CL1FAS1B,"
         "CL1LEN02,"
         "CL1COPY0";
+    static const char lzma_fast[] =
+        "LZMA_SMALL";   // FIXME
+    static const char lzma_small[] =
+        "LZMA_SMALL";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
@@ -1233,6 +1243,8 @@ const char *Packer::getDecompressor() const
         return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
     if (ph.method == M_CL1B_LE32)
         return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
+    if (ph.method == M_LZMA)
+        return opt->small ? lzma_small  : lzma_fast;
     throwInternalError("bad decompressor");
     return NULL;
 }

@@ -29,10 +29,13 @@
 #include "conf.h"
 
 
+#if defined(WITH_LZMA)
+#  define ALG_LZMA 1
+#endif
 #if defined(WITH_NRV)
 #  include "compress_nrv.ch"
 #elif defined(WITH_UCL)
-#  define ALG_NRV2E
+#  define ALG_NRV2E 1
 #  define upx_adler32       upx_adler32
 //#  define upx_crc32         upx_crc32
 #  define upx_compress      upx_compress

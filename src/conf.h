@@ -173,6 +173,9 @@
 #if defined(WITH_NRV)
 #  include <nrv/nrvconf.h>
 #endif
+#if 1 && !defined(WITH_LZMA)
+#  define WITH_LZMA 1
+#endif
 #if !defined(__UPX_CHECKER)
 #  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
 #    define __UPX_CHECKER
@@ -429,11 +432,13 @@ inline void operator delete[](void *p)
 #define M_CL1B_LE32     11
 #define M_CL1B_8        12
 #define M_CL1B_LE16     13
+#define M_LZMA          14
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
 #define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
 #define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
+#define M_IS_LZMA(x)    ((x) == M_LZMA)
 
 
 // Executable formats. Note: big endian types are >= 128.

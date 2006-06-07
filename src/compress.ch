@@ -70,6 +70,184 @@ unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
 //
 **************************************************************************/
 
+#if defined(ALG_LZMA)
+
+#undef MSDOS
+#undef OS2
+#undef _WIN32
+#undef _WIN32_WCE
+#include "lzma/MyInitGuid.h"
+//#include "lzma/LZMADecoder.h"
+#include "lzma/LZMAEncoder.h"
+#undef RC_NORMALIZE
+
+
+struct CInStreamRam: public ISequentialInStream, public CMyUnknownImp
+{
+    MY_UNKNOWN_IMP
+    const Byte *Data; size_t Size; size_t Pos;
+    void Init(const Byte *data, size_t size) {
+        Data = data; Size = size; Pos = 0;
+    }
+    STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
+};
+
+STDMETHODIMP CInStreamRam::Read(void *data, UInt32 size, UInt32 *processedSize)
+{
+    UInt32 remain = Size - Pos;
+    if (size > remain) size = remain;
+    memmove(data, Data + Pos, size);
+    Pos += size;
+    if (processedSize != NULL) *processedSize = size;
+    return S_OK;
+}
+
+struct COutStreamRam : public ISequentialOutStream, public CMyUnknownImp
+{
+    MY_UNKNOWN_IMP
+    Byte *Data; size_t Size; size_t Pos; bool Overflow;
+    void Init(Byte *data, size_t size) {
+        Data = data; Size = size; Pos = 0; Overflow = false;
+    }
+    HRESULT WriteByte(Byte b) {
+        if (Pos >= Size) { Overflow = true; return E_FAIL; }
+        Data[Pos++] = b;
+        return S_OK;
+    }
+    STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
+};
+
+STDMETHODIMP COutStreamRam::Write(const void *data, UInt32 size, UInt32 *processedSize)
+{
+    UInt32 i;
+    for (i = 0; i < size && Pos < Size; i++)
+        Data[Pos++] = ((const Byte *)data)[i];
+    if (processedSize != NULL) *processedSize = i;
+    if (i != size) { Overflow = true; return E_FAIL; }
+    return S_OK;
+}
+
+
+static
+int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
+                                   upx_bytep dst, upx_uintp dst_len,
+                                   upx_progress_callback_t *cb,
+                                   int level,
+                             const struct upx_compress_config_t *conf_parm,
+                                   upx_uintp result )
+{
+    UNUSED(cb); UNUSED(level);
+    UNUSED(conf_parm); UNUSED(result);
+
+    int r = UPX_E_ERROR;
+    HRESULT rh;
+
+    CInStreamRam* isp = new CInStreamRam;
+    CInStreamRam& is = *isp;
+    COutStreamRam* osp = new COutStreamRam;
+    COutStreamRam& os = *osp;
+    is.Init(src, src_len);
+//    os.Init(dst, *dst_len);
+    os.Init(dst, src_len);
+
+#ifndef _NO_EXCEPTIONS
+    try {
+#endif
+
+    NCompress::NLZMA::CEncoder enc;
+    PROPID propIDs[] = {
+        NCoderPropID::kAlgorithm,
+        NCoderPropID::kDictionarySize,
+        NCoderPropID::kNumFastBytes,
+    };
+    const int kNumProps = sizeof(propIDs) / sizeof(propIDs[0]);
+    PROPVARIANT properties[kNumProps];
+    properties[0].vt = VT_UI4;
+    properties[1].vt = VT_UI4;
+    properties[2].vt = VT_UI4;
+    properties[0].ulVal = (UInt32)2;
+//  properties[1].ulVal = (UInt32)dictionarySize;
+    properties[1].ulVal = (UInt32)1024 * 1024;  // FIXME
+    properties[2].ulVal = (UInt32)64;
+
+    if (enc.SetCoderProperties(propIDs, properties, kNumProps) != S_OK)
+        goto error;
+    if (enc.WriteCoderProperties(&os) != S_OK)
+        goto error;
+    if (os.Pos != 5)
+        goto error;
+
+    rh = enc.Code(&is, &os, 0, 0, 0);
+    if (rh == E_OUTOFMEMORY)
+        r = UPX_E_OUT_OF_MEMORY;
+#if 0
+    else if (os.Overflow)
+        r = UPX_E_OUPUT_OVERRUN; // FIXME - not compressible
+#endif
+    else if (rh == S_OK)
+        r = UPX_E_OK;
+error:
+    *dst_len = os.Pos;
+    return r;
+
+#ifndef _NO_EXCEPTIONS
+    } catch(...) { return UPX_E_OUT_OF_MEMORY; }
+#endif
+}
+
+
+#include "lzma/Alloc.cpp"
+#include "lzma/CRC.cpp"
+//#include "lzma/LZMADecoder.cpp"
+#include "lzma/LZMAEncoder.cpp"
+#include "lzma/LZInWindow.cpp"
+#include "lzma/OutBuffer.cpp"
+#include "lzma/RangeCoderBit.cpp"
+#include "lzma/StreamUtils.cpp"
+
+
+
+#undef _LZMA_IN_CB
+#undef _LZMA_OUT_READ
+#undef _LZMA_PROB32
+#undef _LZMA_LOC_OPT
+#include "lzma/LzmaDecode.cpp"
+
+static
+int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
+                                   upx_bytep dst, upx_uintp dst_len )
+{
+    CLzmaDecoderState s;
+    SizeT src_out = 0, dst_out = 0;
+    int r;
+
+    s.Probs = NULL;
+#if defined(LzmaDecoderInit)
+    LzmaDecoderInit(&s);
+#endif
+    r = LzmaDecodeProperties(&s.Properties, src, src_len);
+    if (r != 0)
+        goto error;
+    src += LZMA_PROPERTIES_SIZE; src_len -= LZMA_PROPERTIES_SIZE;
+    s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
+    if (!s.Probs)
+        r = UPX_E_OUT_OF_MEMORY;
+    else
+        r = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
+error:
+    *dst_len = dst_out;
+    free(s.Probs);
+    return r;
+}
+
+
+#endif
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
 #if defined(upx_compress)
 
 int upx_compress           ( const upx_bytep src, upx_uint  src_len,
@@ -133,6 +311,11 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
         r = cl1b_compress(src, src_len, dst, dst_len,
                                   cb, level, &conf, result);
 #endif  /*}*/
+#if defined(ALG_LZMA)
+    else if M_IS_LZMA(method)
+        r = upx_lzma_compress(src, src_len, dst, dst_len,
+                              cb, level, &conf, result);
+#endif
     else
         throwInternalError("unknown compression method");
 
@@ -196,6 +379,11 @@ int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
         r = cl1b_decompress_safe_le32(src,src_len,dst,dst_len,NULL);
         break;
 #endif  /*}*/
+#if defined(ALG_LZMA)
+    case M_LZMA:
+        r = upx_lzma_decompress(src,src_len,dst,dst_len);
+        break;
+#endif
     default:
         throwInternalError("unknown decompression method");
         break;
@@ -261,6 +449,13 @@ int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
         r = cl1b_test_overlap_le32(buf,src_off,src_len,dst_len,NULL);
         break;
 #endif  /*}*/
+#if defined(ALG_LZMA)
+    case M_LZMA:
+        /* FIXME */
+        if (src_off >= 256)
+            r = UPX_E_OK;
+        break;
+#endif
     default:
         throwInternalError("unknown decompression method");
         break;

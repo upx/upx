@@ -511,6 +511,10 @@ static int do_option(int optc, const char *arg)
         if (!set_method(M_NRV2E_LE32, -1))
             e_method(M_NRV2E_LE32, opt->level);
         break;
+    case 721:
+        if (!set_method(M_LZMA, -1))
+            e_method(M_LZMA, opt->level);
+        break;
 
     // compression level
     case '1':
@@ -824,6 +828,7 @@ static const struct mfx_option longopts[] =
     {"nrv2b",            0x10, 0, 702},     // --nrv2b
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
+    {"lzma",             0x10, 0, 721},     // --lzma
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},

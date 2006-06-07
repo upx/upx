@@ -1,5 +1,6 @@
 syntax: regexp
 
+^\.bzr
 ^ChangeLog
 ^build
 ^maint
