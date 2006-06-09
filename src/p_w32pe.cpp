@@ -2600,16 +2600,20 @@ void PackW32Pe::unpack(OutputFile *fo)
     // write decompressed file
     if (fo)
     {
+        unsigned ic;
+        for (ic = 0; ic < objs && osection[ic].rawdataptr == 0; ic++)
+            ;
+
         ibuf.dealloc();
-        ibuf.alloc(osection[0].rawdataptr);
+        ibuf.alloc(osection[ic].rawdataptr);
         ibuf.clear();
         infoHeader("[Writing uncompressed file]");
 
         // write loader + compressed file
         fo->write(&oh,sizeof(oh));
         fo->write(osection,objs * sizeof(pe_section_t));
-        fo->write(ibuf,osection[0].rawdataptr - fo->getBytesWritten());
-        for(unsigned ic = 0; ic < objs; ic++)
+        fo->write(ibuf,osection[ic].rawdataptr - fo->getBytesWritten());
+        for (ic = 0; ic < objs; ic++)
             if (osection[ic].rawdataptr)
                 fo->write(obuf + osection[ic].vaddr - rvamin,ALIGN_UP(osection[ic].size,oh.filealign));
         copyOverlay(fo, overlay, &obuf);
