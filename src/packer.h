@@ -137,6 +137,9 @@ protected:
     // unpacker tests - these may throw exceptions
     virtual bool testUnpackVersion(int version) const;
     virtual bool testUnpackFormat(int format) const;
+    //
+    virtual bool skipVerify(int method, int level) const;
+    virtual bool skipVerify() const;
 
 protected:
     // implementation

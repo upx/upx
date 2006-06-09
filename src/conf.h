@@ -144,6 +144,9 @@
 #  undef __unix
 #endif
 
+#if 1 && !defined(WITH_LZMA)
+#  define WITH_LZMA 1
+#endif
 #if !defined(WITH_UCL)
 #  define WITH_UCL 1
 #endif
@@ -181,7 +184,6 @@
 #endif
 
 struct upx_callback_t;
-typedef struct upx_callback_t upx_callback_t;
 #define upx_callback_p upx_callback_t *
 typedef upx_voidp (__UPX_CDECL *upx_alloc_func_t)
     (upx_callback_p self, upx_uint items, upx_uint size);
@@ -200,10 +202,20 @@ struct upx_callback_t
     upx_uint user3;
 };
 
+struct lzma_compress_config_t
+{
+    unsigned pos_bits;
+    unsigned lit_pos_bits;
+    unsigned lit_context_bits;
+    unsigned dict_size;
+    unsigned mf_passes;
+};
+
 #define upx_compress_config_p upx_compress_config_t *
 struct upx_compress_config_t
 {
-    ucl_compress_config_t conf_ucl;
+    lzma_compress_config_t  conf_lzma;
+    ucl_compress_config_t   conf_ucl;
 };
 
 
@@ -441,6 +453,8 @@ inline void operator delete[](void *p)
 
 
 // compression methods - DO NOT CHANGE
+#define M_SKIP          (-2)
+#define M_END           (-1)
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8       3
 #define M_NRV2B_LE16    4

@@ -512,6 +512,7 @@ static int do_option(int optc, const char *arg)
             e_method(M_NRV2E_LE32, opt->level);
         break;
     case 721:
+        opt->all_methods_use_lzma = true;
         if (!set_method(M_LZMA, -1))
             e_method(M_LZMA, opt->level);
         break;
@@ -532,6 +533,7 @@ static int do_option(int optc, const char *arg)
 
     case 901:                               // --brute
         opt->all_methods = true;
+        opt->all_methods_use_lzma = true;
         opt->method = -1;
         opt->all_filters = true;
         opt->filter = -1;

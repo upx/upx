@@ -138,6 +138,21 @@ bool Packer::testUnpackFormat(int format) const
 }
 
 
+bool Packer::skipVerify(int method, int level) const
+{
+    if (method == M_LZMA)
+        return false;
+    if (level > 1)
+        return false;
+    return true;
+}
+
+bool Packer::skipVerify() const
+{
+    return skipVerify(ph.method, ph.level);
+}
+
+
 /*************************************************************************
 // compress
 **************************************************************************/
@@ -228,7 +243,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // update checksum of compressed data
     ph.c_adler = upx_adler32(out, ph.c_len, ph.c_adler);
     // Decompress and verify. Skip this when using the fastest level.
-    if (ph.level > 1)
+    if (!skipVerify())
     {
         // decompress
         unsigned new_len = ph.u_len;
@@ -332,12 +347,16 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
         return false;
 
     assert((int)overlap_overhead >= 0);
+
     // Because upx_test_overlap() does not use the asm_fast decompressor
     // we must account for extra 3 bytes that asm_fast does use,
     // or else we may fail at runtime decompression.
-    if (overlap_overhead <= 4 + 3)  // don't waste time here
+    unsigned extra = 0;
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+        extra = 3;
+    if (overlap_overhead <= 4 + extra)  // don't waste time here
         return false;
-    overlap_overhead -= 3;
+    overlap_overhead -= extra;
 
     unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
     unsigned new_len = ph.u_len;
@@ -366,7 +385,7 @@ void Packer::verifyOverlappingDecompression(Filter *ft)
     // See also:
     //   Filter::verifyUnfilter()
 
-    if (ph.level == 1)
+    if (skipVerify())
         return;
     unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
     if (offset + ph.c_len > obuf.getSize())
@@ -407,7 +426,9 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
         assert(m >= low); assert(m <= high);
         assert(m < overhead || overhead == 0);
         nr++;
-        if (testOverlappingDecompression(buf, m))
+        bool success = testOverlappingDecompression(buf, m);
+        //printf("testOverlapOverhead: %d %d -> %d\n", nr, m, (int)success);
+        if (success)
         {
             overhead = m;
             // Succeed early if m lies in [low .. low+range-1], i.e. if
@@ -920,17 +941,22 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 bool Packer::isValidCompressionMethod(int method)
 {
+#if !defined(WITH_LZMA)
+    if (method == M_LZMA) {
+        assert(0 && "Internal error - LZMA not compiled in");
+    }
+#endif
     return (method >= M_NRV2B_LE32 && method <= M_LZMA);
 }
 
 
 const int *Packer::getDefaultCompressionMethods_8(int method, int level, int small) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, -1 };
-    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, -1 };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, -1 };
-    static const int m_cl1b[]  = { M_CL1B_8, -1 };
-    static const int m_lzma[]  = { M_LZMA, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_LZMA, M_END };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, M_LZMA, M_END };
+    static const int m_cl1b[]  = { M_CL1B_8, M_END };
+    static const int m_lzma[]  = { M_LZMA, M_END };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -944,6 +970,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
         return m_cl1b;
     if (M_IS_LZMA(method))
         return m_lzma;
+    assert(method == -1); // --all-methods
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -952,11 +979,11 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
 
 const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int small) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, -1 };
-    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, -1 };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, -1 };
-    static const int m_cl1b[]  = { M_CL1B_LE32, -1 };
-    static const int m_lzma[]  = { M_LZMA, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, M_LZMA, M_END };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, M_LZMA, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, M_LZMA, M_END };
+    static const int m_cl1b[]  = { M_CL1B_LE32, M_END };
+    static const int m_lzma[]  = { M_LZMA, M_END };
 
     if (small < 0)
         small = file_size <= 512*1024;
@@ -970,6 +997,7 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
         return m_cl1b;
     if (M_IS_LZMA(method))
         return m_lzma;
+    assert(method == -1); // --all-methods
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -1363,16 +1391,20 @@ void Packer::compressWithFilters(Filter *parm_ft,
     filters[nfilters] = -1;
 
     // methods
-    int tmp_methods[] = { ph.method, -1 };
+    int tmp_methods[] = { ph.method, M_END };
     const int *methods = NULL;
     if (opt->all_methods)
         methods = getCompressionMethods(-1, ph.level);
     if (methods == NULL)
         methods = tmp_methods;
     int nmethods = 0;
-    while (methods[nmethods] >= 0)
+    for (int mm = 0; methods[mm] != M_END; ++mm)
     {
-        assert(isValidCompressionMethod(methods[nmethods]));
+        if (methods[mm] == M_SKIP)
+            continue;
+        if (opt->all_methods && !opt->all_methods_use_lzma && methods[mm] == M_LZMA)
+            continue;
+        assert(isValidCompressionMethod(methods[mm]));
         nmethods++;
     }
     assert(nmethods > 0);
@@ -1389,17 +1421,23 @@ void Packer::compressWithFilters(Filter *parm_ft,
 
     // compress
     int nfilters_success = 0;
-    for (int m = 0; m < nmethods; m++)          // for all methods
+    for (int mm = 0; methods[mm] != M_END; ++mm) // for all methods
     {
+        if (methods[mm] == M_SKIP)
+            continue;
+        if (opt->all_methods && !opt->all_methods_use_lzma && methods[mm] == M_LZMA)
+            continue;
         unsigned hdr_c_len = 0;
         if (hdr_buf && hdr_u_len)
         {
-            if (0 < m && otemp == &obuf) { // do not overwrite obuf
+            if (nfilters_success != 0 && otemp == &obuf)
+            {
+                // do not overwrite obuf
                 otemp_buf.allocForCompression(compress_buf_len);
                 otemp = &otemp_buf;
             }
             int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_c_len,
-                                 NULL, methods[m], 10, NULL, NULL);
+                                 NULL, methods[mm], 10, NULL, NULL);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
             if (hdr_c_len >= hdr_u_len)
@@ -1411,7 +1449,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             obuf.checkState();
             // get fresh packheader
             ph = orig_ph;
-            ph.method = methods[m];
+            ph.method = methods[mm];
             ph.filter = filters[i];
             ph.overlap_overhead = 0;
             // get fresh filter
@@ -1442,7 +1480,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             printf("filter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
                    ft.id, ft.buf_len, ft.calls, ft.noncalls, ft.wrongcalls, ft.firstcall, ft.lastcall, ft.cto);
 #endif
-            if (nfilters_success > 0 && otemp == &obuf)
+            if (nfilters_success != 0 && otemp == &obuf)
             {
                 otemp_buf.allocForCompression(compress_buf_len);
                 otemp = &otemp_buf;

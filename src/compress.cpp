@@ -87,6 +87,7 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
     result[5] = src_len;        // max_run_found
     result[6] = 1;              // first_offset_found
     //result[7] = 999999;         // same_match_offsets_found - NOT USED
+    result[8] = 0;
 
 #if defined(WITH_LZMA)
     if (M_IS_LZMA(method))
@@ -146,6 +147,10 @@ int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
                                    int method )
 {
     int r = UPX_E_ERROR;
+
+    assert(src_len < *dst_len); // must be compressed
+    unsigned overlap_overhead = src_off + src_len - *dst_len;
+    assert((int)overlap_overhead > 0);
 
 #if defined(WITH_LZMA)
     if (M_IS_LZMA(method))

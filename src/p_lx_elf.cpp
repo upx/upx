@@ -195,8 +195,8 @@ int const *
 PackLinuxElf64amd::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2E_LE32, -1 };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2E_LE32, M_LZMA, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_LZMA, -1 };
     static const int m_lzma[]  = { M_LZMA,-1 };
 
     if (M_IS_NRV2B(method))
@@ -1534,10 +1534,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         throwChecksumError();
 #undef MAX_ELF_HDR
 }
+
+
 /*************************************************************************
 //
 **************************************************************************/
-
 
 PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
 {

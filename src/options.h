@@ -47,11 +47,12 @@ struct options_t {
 
     // compression options
     int method;
-    int level;          // compression level 1..10
-    int filter;         // preferred filter from Packer::getFilters()
-    bool all_methods;   // try all available compression methods ?
-    bool all_filters;   // try all available filters ?
-    bool no_filter;     // force no filter
+    int level;              // compression level 1..10
+    int filter;             // preferred filter from Packer::getFilters()
+    bool all_methods;       // try all available compression methods ?
+    bool all_methods_use_lzma;
+    bool all_filters;       // try all available filters ?
+    bool no_filter;         // force no filter
 
     // other options
     int backup;
