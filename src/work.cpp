@@ -231,8 +231,6 @@ void do_one_file(const char *iname, char *oname)
 // process all files from the commandline
 **************************************************************************/
 
-#if !defined(WITH_GUI)
-
 static void unlink_ofile(char *oname)
 {
     if (oname && oname[0])
@@ -309,8 +307,6 @@ void do_files(int i, int argc, char *argv[])
     else if (opt->cmd == CMD_FILEINFO)
         UiPacker::uiFileInfoTotal();
 }
-
-#endif /* !defined(WITH_GUI) */
 
 
 /*

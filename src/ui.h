@@ -34,10 +34,6 @@ class OutputFile;
 class Packer;
 class UiPacker;
 
-#if defined(WITH_GUI)
-class CMainDlg;
-#endif
-
 
 /*************************************************************************
 //
@@ -73,16 +69,14 @@ public:
     virtual void uiFileInfoEnd();
 
     // callback
-    typedef upx_progress_callback_t cb_t;
     virtual void startCallback(unsigned u_len, unsigned step,
                                int pass, int total_passes);
     virtual void firstCallback();
     virtual void finalCallback(unsigned u_len, unsigned c_len);
     virtual void endCallback();
-    virtual cb_t *getCallback() { return &cb; }
+    virtual upx_callback_t *getCallback() { return &cb; }
 protected:
-    static void __UPX_CDECL callback(upx_uint isize, upx_uint osize,
-                                     int, void *);
+    static void __UPX_CDECL progress_callback(upx_callback_p cb, upx_uint, upx_uint, int);
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
@@ -97,7 +91,7 @@ protected:
     const Packer *p;
 
     // callback
-    cb_t cb;
+    upx_callback_t cb;
 
     // internal state
     UiPacker__State *s;
@@ -113,10 +107,6 @@ protected:
     static long update_u_len;
     static long update_fc_len;
     static long update_fu_len;
-
-#if defined(WITH_GUI)
-    CMainDlg* pMain;
-#endif
 };
 
 

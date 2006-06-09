@@ -265,11 +265,11 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
     }
 
 #if (ACC_CC_MSC && (_MSC_VER == 1300))
-    cb.callback = &UiPacker::callback;
+    cb.nprogress = &UiPacker::progress_callback;
 #else
-    cb.callback = callback;
+    cb.nprogress = progress_callback;
 #endif
-    cb.user = this;
+    cb.user1 = this;
 
     if (s->mode == M_CB_TERM)
     {
@@ -398,15 +398,12 @@ void UiPacker::endCallback()
 // the callback
 **************************************************************************/
 
-void __UPX_CDECL UiPacker::callback(upx_uint isize, upx_uint osize, int state, void *user)
+void __UPX_CDECL UiPacker::progress_callback(upx_callback_p cb, upx_uint isize, upx_uint osize, int state)
 {
     //printf("%6d %6d %d\n", isize, osize, state);
-    if (state != -1 && state != 3) return;
-    if (user)
-    {
-        UiPacker *uip = (UiPacker *) user;
-        uip->doCallback(isize, osize);
-    }
+    UiPacker *uip = (UiPacker *) cb->user1;
+    uip->doCallback(isize, osize);
+    UNUSED(state);
 }
 
 

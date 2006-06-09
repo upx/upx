@@ -144,37 +144,18 @@
 #  undef __unix
 #endif
 
-
 #if !defined(WITH_UCL)
 #  define WITH_UCL 1
-#endif
-#if defined(WITH_UCL)
-#  include <ucl/uclconf.h>
-#  include <ucl/ucl.h>
-#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010200L)
-#    error "please upgrade your UCL installation"
-#  endif
-#  if !defined(UPX_UINT_MAX)
-#    define UPX_UINT_MAX  UCL_UINT_MAX
-#    define upx_uint      ucl_uint
-#    define upx_voidp     ucl_voidp
-#    define upx_uintp     ucl_uintp
-#    define upx_byte      ucl_byte
-#    define upx_bytep     ucl_bytep
-#    define upx_bool      ucl_bool
-#    define upx_compress_config_t   ucl_compress_config_t
-#    define upx_progress_callback_t ucl_progress_callback_t
-#    define UPX_E_OK      UCL_E_OK
-#    define UPX_E_ERROR   UCL_E_ERROR
-#    define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
-#    define __UPX_CDECL   __UCL_CDECL
-#  endif
 #endif
 #if defined(WITH_NRV)
 #  include <nrv/nrvconf.h>
 #endif
-#if 1 && !defined(WITH_LZMA)
-#  define WITH_LZMA 1
+#if defined(WITH_UCL)
+#  include <ucl/uclconf.h>
+#  include <ucl/ucl.h>
+#  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010300L)
+#    error "please upgrade your UCL installation"
+#  endif
 #endif
 #if !defined(__UPX_CHECKER)
 #  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
@@ -184,6 +165,46 @@
 #if !defined(UINT_MAX) || (UINT_MAX < 0xffffffffL)
 #  error "UINT_MAX"
 #endif
+
+#if !defined(UPX_UINT_MAX)
+#  define UPX_UINT_MAX  UCL_UINT_MAX
+#  define upx_uint      ucl_uint
+#  define upx_voidp     ucl_voidp
+#  define upx_uintp     ucl_uintp
+#  define upx_byte      ucl_byte
+#  define upx_bytep     ucl_bytep
+#  define upx_bool      ucl_bool
+#  define UPX_E_OK      UCL_E_OK
+#  define UPX_E_ERROR   UCL_E_ERROR
+#  define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
+#  define __UPX_CDECL   __UCL_CDECL
+#endif
+
+struct upx_callback_t;
+typedef struct upx_callback_t upx_callback_t;
+#define upx_callback_p upx_callback_t *
+typedef upx_voidp (__UPX_CDECL *upx_alloc_func_t)
+    (upx_callback_p self, upx_uint items, upx_uint size);
+typedef void      (__UPX_CDECL *upx_free_func_t)
+    (upx_callback_p self, upx_voidp ptr);
+typedef void (__UPX_CDECL *upx_progress_func_t)
+    (upx_callback_p, upx_uint, upx_uint, int);
+
+struct upx_callback_t
+{
+    upx_alloc_func_t nalloc;
+    upx_free_func_t nfree;
+    upx_progress_func_t nprogress;
+    upx_voidp user1;
+    upx_uint user2;
+    upx_uint user3;
+};
+
+#define upx_compress_config_p upx_compress_config_t *
+struct upx_compress_config_t
+{
+    ucl_compress_config_t conf_ucl;
+};
 
 
 /*************************************************************************
@@ -555,7 +576,7 @@ unsigned upx_crc32(const void *buf, unsigned len, unsigned crc=0);
 
 int upx_compress           ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   upx_progress_callback_t *cb,
+                                   upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
                                    upx_uintp result );

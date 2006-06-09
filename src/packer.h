@@ -192,7 +192,7 @@ protected:
     virtual int patchPackHeader(void *b, int blen);
     virtual bool getPackHeader(void *b, int blen);
     virtual bool readPackHeader(int len);
-    virtual void checkAlreadyPacked(void *b, int blen);
+    virtual void checkAlreadyPacked(const void *b, int blen);
 
     // filter handling [see packerf.cpp]
     virtual bool isValidFilter(int filter_id) const;

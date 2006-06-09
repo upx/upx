@@ -94,7 +94,6 @@ static Packer* try_pack(Packer *p, InputFile *f)
 {
     if (p == NULL)
         return NULL;
-#if !defined(UNUPX)
     try {
         p->initPackHeader();
         f->seek(0,SEEK_SET);
@@ -110,7 +109,6 @@ static Packer* try_pack(Packer *p, InputFile *f)
         delete p;
         throw;
     }
-#endif /* UNUPX */
     delete p;
     return NULL;
 }

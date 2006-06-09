@@ -104,9 +104,6 @@ int PackHeader::getPackHeaderSize() const
 
 void PackHeader::putPackHeader(upx_bytep p)
 {
-#if defined(UNUPX)
-    throwBadLoader();
-#else
     assert(get_le32(p) == UPX_MAGIC_LE32);
     if (get_le32(p+4) != UPX_MAGIC2_LE32)
     {
@@ -189,7 +186,6 @@ void PackHeader::putPackHeader(upx_bytep p)
     }
     // store new header_checksum
     p[size - 1] = get_packheader_checksum(p, size - 1);
-#endif /* UNUPX */
 }
 
 

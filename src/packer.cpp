@@ -145,10 +145,6 @@ bool Packer::testUnpackFormat(int format) const
 bool Packer::compress(upx_bytep in, upx_bytep out,
                       unsigned max_offset, unsigned max_match)
 {
-#if defined(UNUPX)
-    throwInternalError("compression failed");
-    return false;
-#else
     ph.c_len = 0;
     assert(ph.level >= 1); assert(ph.level <= 10);
 
@@ -160,28 +156,28 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 
     // set compression paramters
     upx_compress_config_t conf;
-    memset(&conf, 0xff, sizeof(conf));
+    memset(&conf.conf_ucl, 0xff, sizeof(conf.conf_ucl));
     // arguments
     if (max_offset != 0)
-        conf.max_offset = max_offset;
+        conf.conf_ucl.max_offset = max_offset;
     if (max_match != 0)
-        conf.max_match = max_match;
+        conf.conf_ucl.max_match = max_match;
     // options
     if (opt->crp.c_flags != -1)
-        conf.c_flags = opt->crp.c_flags;
+        conf.conf_ucl.c_flags = opt->crp.c_flags;
 #if 0
     else
         // this is based on experimentation
-        conf.c_flags = (ph.level >= 7) ? 0 : 1 | 2;
+        conf.conf_ucl.c_flags = (ph.level >= 7) ? 0 : 1 | 2;
 #endif
     if (opt->crp.p_level != -1)
-        conf.p_level = opt->crp.p_level;
+        conf.conf_ucl.p_level = opt->crp.p_level;
     if (opt->crp.h_level != -1)
-        conf.h_level = opt->crp.h_level;
-    if (opt->crp.max_offset != UPX_UINT_MAX && opt->crp.max_offset < conf.max_offset)
-        conf.max_offset = opt->crp.max_offset;
-    if (opt->crp.max_match != UPX_UINT_MAX && opt->crp.max_match < conf.max_match)
-        conf.max_match = opt->crp.max_match;
+        conf.conf_ucl.h_level = opt->crp.h_level;
+    if (opt->crp.max_offset != UPX_UINT_MAX && opt->crp.max_offset < conf.conf_ucl.max_offset)
+        conf.conf_ucl.max_offset = opt->crp.max_offset;
+    if (opt->crp.max_match != UPX_UINT_MAX && opt->crp.max_match < conf.conf_ucl.max_match)
+        conf.conf_ucl.max_match = opt->crp.max_match;
 
     // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
     unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
@@ -248,7 +244,6 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
             throwInternalError("decompression failed (checksum error)");
     }
     return true;
-#endif /* UNUPX */
 }
 
 
@@ -333,11 +328,6 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 bool Packer::testOverlappingDecompression(const upx_bytep buf,
                                           unsigned overlap_overhead) const
 {
-#if defined(UNUPX)
-    UNUSED(buf);
-    UNUSED(overlap_overhead);
-    return false;
-#else
     if (ph.c_len >= ph.u_len)
         return false;
 
@@ -354,7 +344,6 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
     int r = upx_test_overlap(buf - src_off, src_off,
                              ph.c_len, &new_len, ph.method);
     return (r == UPX_E_OK && new_len == ph.u_len);
-#endif /* UNUPX */
 }
 
 
@@ -362,7 +351,6 @@ void Packer::verifyOverlappingDecompression(Filter *ft)
 {
     assert(ph.c_len < ph.u_len);
     assert((int)ph.overlap_overhead > 0);
-#if 1 && !defined(UNUPX)
     // Idea:
     //   obuf[] was allocated with MemBuffer::allocForCompression(), and
     //   its contents are no longer needed, i.e. the compressed data
@@ -386,7 +374,6 @@ void Packer::verifyOverlappingDecompression(Filter *ft)
     memmove(obuf + offset, obuf, ph.c_len);
     decompress(obuf + offset, obuf, true, ft);
     obuf.checkState();
-#endif /* !UNUPX */
 }
 
 
@@ -404,10 +391,6 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
                                      unsigned range,
                                      unsigned upper_limit) const
 {
-#if defined(UNUPX)
-    throwInternalError("not implemented");
-    return 0;
-#else
     assert((int) range >= 0);
 
     // prepare to deal with very pessimistic values
@@ -445,7 +428,6 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
 
     UNUSED(nr);
     return overhead;
-#endif /* UNUPX */
 }
 
 
@@ -657,7 +639,7 @@ bool Packer::readPackHeader(int len)
 }
 
 
-void Packer::checkAlreadyPacked(void *b, int blen)
+void Packer::checkAlreadyPacked(const void *b, int blen)
 {
     int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     if (boff < 0)
@@ -848,9 +830,6 @@ upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum,
                                   upx_byte *out, upx_byte *image,
                                   int bswap, int *big)
 {
-#if defined(UNUPX)
-    return out;
-#else
     *big = 0;
     if (relocnum == 0)
         return out;
@@ -890,7 +869,6 @@ upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum,
     }
     *fix++ = 0;
     return fix;
-#endif /* UNUPX */
 }
 
 
@@ -1416,15 +1394,12 @@ void Packer::compressWithFilters(Filter *parm_ft,
         unsigned hdr_c_len = 0;
         if (hdr_buf && hdr_u_len)
         {
-            unsigned result[16];
-            upx_compress_config_t conf;
-            memset(&conf, 0xff, sizeof(conf));
             if (0 < m && otemp == &obuf) { // do not overwrite obuf
                 otemp_buf.allocForCompression(compress_buf_len);
                 otemp = &otemp_buf;
             }
             int r = upx_compress(hdr_buf, hdr_u_len, *otemp, &hdr_c_len,
-                0, methods[m], 10, &conf, result);
+                                 NULL, methods[m], 10, NULL, NULL);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
             if (hdr_c_len >= hdr_u_len)

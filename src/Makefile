@@ -15,9 +15,10 @@ VPATH := . $(srcdir)
 endif
 
 ifeq ($(CXX),)
+USE_GNUC = 1
 CXX = g++
 endif
-ifeq ($(CXX),g++)
+ifneq ($(USE_GNUC),)
 CXXFLAGS += -O2 -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
@@ -33,6 +34,9 @@ ifneq ($(wildcard $(UCLDIR)/include/ucl/ucl.h),)
 INCLUDES += -I$(UCLDIR)/include
 LIBS += $(addprefix -L,$(dir $(wildcard $(UCLDIR)/libucl$(libext) $(UCLDIR)/src/.libs/libucl$(libext))))
 endif
+ifneq ($(wildcard $(LZMADIR)/include/ucl/ucl.h),)
+INCLUDES += -I$(LZMADIR)
+endif
 LIBS += -lucl -lz
 
 upx_SOURCES := $(wildcard $(srcdir)/*.cpp)
@@ -47,6 +51,10 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 
 %.o : %.cpp
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
+
+ifneq ($(USE_GNUC),)
+compress.o : CXXFLAGS += -Wno-non-virtual-dtor
+endif
 
 mostlyclean clean distclean maintainer-clean:
 	rm -f *.d *.map *.o *.obj *.res upx.exe upx.out upx.ttp upx$(exeext)
