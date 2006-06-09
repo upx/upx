@@ -87,7 +87,8 @@ f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         cto  .req r2  @ unused
         fid  .req r3
 
-        tmp  .req fid  @ disjoint lifetimes
+        t1   .req r2
+        t2   .req r3
 
         and fid,fid,#0xff
         cmp fid,#0x50  @ last use of fid
@@ -98,17 +99,17 @@ f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         moveq pc,lr  @ no-op if either len or ptr is 0
 
 top_unf:
-        subs len,len,#1  @ condition code holds until tst_unf
-        ldr r3,[ptr,len,lsl #2]
-        and tmp,r3,#0x0f<<24
-        cmp tmp,   #0x0b<<24
-        bne tst_unf
-        and tmp,r3,#0xff<<24
-        sub r3,r3,len  @ convert to word-relative
-        bic r3,r3, #0xff<<24
-        orr r3,r3,tmp
-        str r3,[ptr,len,lsl #2]
+        sub len,len,#1
+        ldr t1,[ptr,len,lsl #2]
+        and t2,t1,#0x0f<<24
+        cmp t2,   #0x0b<<24; bne tst_unf  @ not 'bl' subroutine call
+        and t2,t1,#0xff<<24  @ all the non-displacement bits
+        sub t1,t1,len  @ convert to word-relative displacement
+        bic t1,t1,#0xff<<24  @ restrict to displacement field
+        orr t1,t1,t2  @ re-combine
+        str t1,[ptr,len,lsl #2]
 tst_unf:
+        cmp len,#0
         bne top_unf
         mov pc,lr
 
