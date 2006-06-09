@@ -15,10 +15,12 @@ VPATH := . $(srcdir)
 endif
 
 ifeq ($(CXX),)
-USE_GNUC = 1
 CXX = g++
 endif
-ifneq ($(USE_GNUC),)
+ifeq ($(firstword $(CXX)),g++)
+USE_GNUC ?= 1
+endif
+ifeq ($(USE_GNUC),1)
 CXXFLAGS += -O2 -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
@@ -29,15 +31,17 @@ exeext ?= .out
 libext ?= .a
 objext ?= .o
 
-# we need UCL and zlib - you can set envvar UCLDIR
-ifneq ($(wildcard $(UCLDIR)/include/ucl/ucl.h),)
-INCLUDES += -I$(UCLDIR)/include
-LIBS += $(addprefix -L,$(dir $(wildcard $(UCLDIR)/libucl$(libext) $(UCLDIR)/src/.libs/libucl$(libext))))
-endif
-ifneq ($(wildcard $(LZMADIR)/include/ucl/ucl.h),)
-INCLUDES += -I$(LZMADIR)
+# we need UCL and zlib - you can set envvar UPX_UCLDIR
+ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
+INCLUDES += -I$(UPX_UCLDIR)/include
+LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
+# you should set envvar UPX_LZMADIR to point to your unpacked lzma443.tar.bz2
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip),)
+DEFS += -DWITH_LZMA
+INCLUDES += -I$(LZMADIR)
+endif
 
 upx_SOURCES := $(wildcard $(srcdir)/*.cpp)
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
@@ -52,8 +56,11 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 %.o : %.cpp
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
-ifneq ($(USE_GNUC),)
-compress.o : CXXFLAGS += -Wno-non-virtual-dtor
+ifeq ($(USE_GNUC),1)
+compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-cast-qual
+compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-non-virtual-dtor
+compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-unused
+##compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-error
 endif
 
 mostlyclean clean distclean maintainer-clean:

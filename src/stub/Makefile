@@ -8,12 +8,12 @@
 MAKEFLAGS += -rR
 SHELL = /bin/sh
 
-ifeq ($(strip $(UCLDIR)),)
+ifeq ($(strip $(UPX_UCLDIR)),)
 # change this to reflect where the UCL library is
-UCLDIR = $(HOME)/local/src/ucl-1.03
+UPX_UCLDIR = $(HOME)/local/src/ucl-1.03
 endif
-ifeq ($(wildcard $(UCLDIR)/upx),)
-$(error Please set UCLDIR in Makefile or environment)
+ifeq ($(wildcard $(UPX_UCLDIR)/upx),)
+$(error Please set UPX_UCLDIR in Makefile or environment)
 endif
 
 # update path for our special stub build tools
@@ -68,10 +68,10 @@ MAKEFILE_DEPS = $(MAKEFILE_LIST)
 # // source directories
 # ************************************************************************/
 
-UCL_UPX  = $(UCLDIR)/upx
-UCL_I386 = $(UCLDIR)/upx/i386
-UCL_M68K = $(UCLDIR)/upx/m68k
-UCL_MR3K = $(UCLDIR)/upx/mr3k
+UCL_UPX  = $(UPX_UCLDIR)/upx
+UCL_I386 = $(UPX_UCLDIR)/upx/i386
+UCL_M68K = $(UPX_UCLDIR)/upx/m68k
+UCL_MR3K = $(UPX_UCLDIR)/upx/mr3k
 
 .SUFFIXES:
 .SUFFIXES: .asm .ash .asx .asy .bin .c .h .s
