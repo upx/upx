@@ -79,14 +79,26 @@ copy:
         mov lr,r9  @ dst for unfolded code
         sub r11,r9,r8  @ relocation amount
         ldmia r12!,{r9,r10}  @ LENX,ADRX
+        add r5,r12,r11  @ relocated f_decompress
 
-        ldrb r4,b_method+cpr0
+/* linux/include/asm-arm/unistd.h */
+#define __NR_SYSCALL_BASE       0x900000
+#define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
+#define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
+
+        mov r0,r5
+        adr r1,end_decompress
+        sub r1,r1,r12  @ len(f_decompress)
+        add r1,r1,r0  @ relocated end_decompress
+        mov r2,#0
+        swi __ARM_NR_cacheflush  @ relocated decompressor
+
+        ldrb r4,b_method +cpr0
         add r3,sp,#2*4  @ &sz_unc
         mov r2,lr  @ dst
         ldr r1,sz_cpr    +cpr0
         adr r0,sz_b_info +cpr0
-        add r5,r12,r11  @ relocated f_decompress
-        add pc,r12,r11  @ goto there; return to unfolded code
+        mov pc,r5  @ decompress folded code; go there (lr)
 
 start_params:
         .ascii "ADRM"  @ dst  for map
@@ -98,7 +110,9 @@ start_params:
         .ascii "LENX"  @ total size of compressed data
         .ascii "ADRX"  @ &b_info of 1st compressed block (after moving)
 f_decompress:
+#define LINUX_ARM_CACHEFLUSH 1
 #include "armv4_n2e_d8.S"
+end_decompress:
 
         .subsection 2
 msg_SELinux:
