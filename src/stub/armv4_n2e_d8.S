@@ -107,6 +107,20 @@ eof_n2e:
         SUB2(src,srclim)  @ 0 if actual src length equals expected length
         SUB2(dst,r3)  @ actual dst length
         str dst,[r4]
+
+#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
+/* linux/include/asm-arm/unistd.h */
+#define __NR_SYSCALL_BASE       0x900000
+#define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
+#define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
+        mov r4,r0  @ save result value
+        mov r0,r3  @ orig_dst
+        add r1,r3,dst  @ orig_dst + dst_len
+        mov r2,#0
+        swi __ARM_NR_cacheflush  @ decompressed region
+        mov r0,r4  @ result value
+#endif  /*}*/
+
         POP {r4,r5,r6,r7 ,pc}
 
 get8_n2e:  @ In: Carry set [from adding 0x80000000 (1<<31) to itself]

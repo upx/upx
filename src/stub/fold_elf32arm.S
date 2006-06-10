@@ -126,6 +126,10 @@ exit:
 read:
         swi 0x00900003; mov pc,lr
 
+        .globl write
+write:
+        swi 0x00900004; mov pc,lr
+
         .globl open
 open:
         swi 0x00900005; mov pc,lr
@@ -155,6 +159,62 @@ mmap:
         ldr r4,[sp],#4
         ldr r5,[sp],#4
         mov pc,lr
+
+#if 0  /*{ "gcc-3.4 -fPIC" botches string constants when code moves! */
+        .globl STR_0x
+STR_0x:
+        mov r0,pc; mov pc,lr
+        .asciz "0x"
+        .balign 4
+
+        .globl STR_hex
+STR_hex:
+        mov r0,pc; mov pc,lr
+        .asciz "0123456789abcdef"
+        .balign 4
+        
+        .globl STR_xread
+STR_xread:
+        mov r0,pc; mov pc,lr
+        .asciz "xread %p(%x %p) %p %x\n"
+        .balign 4
+
+        .globl STR_unpackExtent
+STR_unpackExtent:
+        mov r0,pc; mov pc,lr
+        .asciz "unpackExtent in=%p(%x %p)  out=%p(%x %p)  %p %p\n"
+        .balign 4
+
+        .globl STR_make_hatch_arm
+STR_make_hatch_arm:
+        mov r0,pc; mov pc,lr
+        .asciz "make_hatch_arm %p %x\n"
+        .balign 4
+
+        .globl STR_auxv_up
+STR_auxv_up:
+        mov r0,pc; mov pc,lr
+        .asciz "auxv_up  %p %x %x\n"
+        .balign 4
+
+        .globl STR_xfind_pages
+STR_xfind_pages:
+        mov r0,pc; mov pc,lr
+        .asciz "xfind_pages  %x  %p  %d  %p\n"
+        .balign 4
+
+        .globl STR_do_xmap
+STR_do_xmap:
+        mov r0,pc; mov pc,lr
+        .asciz "do_xmap  fdi=%x  ehdr=%p  xi=%p(%x %p)  av=%p  p_reloc=%p  f_unf=%p\n"
+        .balign 4
+
+        .globl STR_upx_main
+STR_upx_main:
+        mov r0,pc; mov pc,lr
+        .asciz "upx_main av=%p  szc=%x  f_dec=%p  f_unf=%p  xo=%p(%x %p)  xi=%p(%x %p)  dynbase=%x\n",
+        .balign 4
+#endif  /*}*/
 
 @ vi:ts=8:et:nowrap
 

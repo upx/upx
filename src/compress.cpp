@@ -87,7 +87,7 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
     result[5] = src_len;        // max_run_found
     result[6] = 1;              // first_offset_found
     //result[7] = 999999;         // same_match_offsets_found - NOT USED
-    result[8] = 0;
+    result[8] = 0;              // LzmaGetNumProbs()
 
 #if defined(WITH_LZMA)
     if (M_IS_LZMA(method))

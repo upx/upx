@@ -41,6 +41,89 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
+#if 1  /*{*/
+#define DPRINTF(a) /* empty: no debug drivel */
+#else  /*}{*/
+#include "stdarg.h"
+
+static int
+unsimal(unsigned x, char *ptr, int n)
+{
+    if (10<=x) {
+        n = unsimal(x/10, ptr, n);
+        x %= 10;
+    }
+    ptr[n] = '0' + x;
+    return 1+ n;
+}
+
+static int
+decimal(int x, char *ptr, int n)
+{
+    if (x < 0) {
+        *ptr++ = '-'; ++n;
+        x = -x;
+    }
+    return unsimal(x, ptr, n);
+}
+
+extern char const *STR_hex();
+
+static int
+heximal(unsigned x, char *ptr, int n)
+{
+    if (16<=x) {
+        n = heximal(x>>4, ptr, n);
+        x &= 0xf;
+    }
+    ptr[n] = STR_hex()[x];
+    return 1+ n;
+}
+
+
+#define DPRINTF(a) dprintf a
+extern char const *STR_0x();
+extern char const *STR_xread();
+extern char const *STR_unpackExtent();
+extern char const *STR_make_hatch_arm();
+extern char const *STR_auxv_up();
+extern char const *STR_xfind_pages();
+extern char const *STR_do_xmap();
+extern char const *STR_upx_main();
+
+extern int write(int fd, char const *buf, size_t n);
+
+static int
+dprintf(char const *fmt, ...)
+{
+    char c;
+    int n= 0;
+    char *ptr;
+    char buf[20];
+    va_list va; va_start(va, fmt);
+    ptr= &buf[0];
+    while (0!=(c= *fmt++)) if ('%'!=c) n+= write(2, fmt-1, 1);
+    else switch (c= *fmt++) {
+    default: {
+        n+= write(2, fmt-1, 1);
+    } break;
+    case 0: goto done;  /* early */
+    case 'd': {
+        n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
+    } break;
+    case 'p': {
+        n+= write(2, STR_0x(), 2);
+    } /* fall through into 'x' */
+    case 'x': {
+        n+= write(2, buf, heximal(va_arg(va, int), buf, 0));
+    } break;
+    }
+done:
+    va_end(va);
+    return n;
+}
+#endif  /*}*/
+
 #define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
 
 
@@ -62,6 +145,7 @@ xread(struct Extent *x, char *buf, size_t count)
 {
     char *p=x->buf, *q=buf;
     size_t j;
+    DPRINTF((STR_xread(), x, x->size, x->buf, buf, count));
     if (x->size < count) {
         exit(127);
     }
@@ -121,6 +205,8 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
+    DPRINTF((STR_unpackExtent(),
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf));
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -210,7 +296,7 @@ static void *
 make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
-
+    DPRINTF((STR_make_hatch_arm(),phdr,reloc));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -255,7 +341,12 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 {
-    if (av && 0==(1&(int)av))  /* PT_INTERP usually inhibits, except for hatch */
+    DPRINTF((STR_auxv_up(),av,type,value));
+    if (av
+#if defined(__i386__)  /*{*/
+    && 0==(1&(int)av)  /* PT_INTERP usually inhibits, except for hatch */
+#endif  /*}*/
+    )
     for (;; ++av) {
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
@@ -291,6 +382,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 {
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
+    DPRINTF((STR_xfind_pages(), mflags, phdr, phnum, p_brk));
     mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
         if (phdr->p_vaddr < lo) {
@@ -321,6 +413,8 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
     unsigned const reloc = xfind_pages(
         ((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
     int j;
+    DPRINTF((STR_do_xmap(),
+        fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
@@ -443,6 +537,9 @@ void *upx_main(
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_pckhdrs = xi.size;
 
+    DPRINTF((STR_upx_main(),
+        av, sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        &xi, xi.size, xi.buf, dynbase));
 #if defined(__i386__)  /*{*/
     f_unf = (f_unfilter *)(2+ (long)f_decompress);
 #endif  /*}*/
