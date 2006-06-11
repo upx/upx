@@ -23,9 +23,13 @@ endif
 dist: distclean
 	false
 
-# automatically generate ChangeLog from hg
+# automatically generate ChangeLog from Mercurial repo
 ChangeLog:
+ifneq ($(wildcard .hg/data),)
 	hg log --style=changelog > $@
+else
+	@echo "UPX info: no hg repo found"
+endif
 
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
