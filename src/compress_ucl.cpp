@@ -76,7 +76,7 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb_parm,
                                    int method, int level,
                              const struct upx_compress_config_t *conf_parm,
-                                   upx_uintp result )
+                                   struct upx_compress_result_t *result )
 {
     int r = UPX_E_ERROR;
     assert(level > 0); assert(result != NULL);
@@ -93,6 +93,8 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
     memset(&conf, 0xff, sizeof(conf));
     if (conf_parm)
         conf = conf_parm->conf_ucl; // struct copy
+
+    ucl_uint *res = result->result_ucl.result;
 
     // prepare bit-buffer settings
     conf.bb_endian = 0;
@@ -113,13 +115,13 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
 
     if M_IS_NRV2B(method)
         r = ucl_nrv2b_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, result);
+                                  &cb, level, &conf, res);
     else if M_IS_NRV2D(method)
         r = ucl_nrv2d_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, result);
+                                  &cb, level, &conf, res);
     else if M_IS_NRV2E(method)
         r = ucl_nrv2e_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, result);
+                                  &cb, level, &conf, res);
     else
         throwInternalError("unknown compression method");
 

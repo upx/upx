@@ -40,7 +40,7 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
-                                   upx_uintp result );
+                                   struct upx_compress_result_t *result );
 int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
                                    int method );
@@ -56,7 +56,7 @@ int upx_nrv_compress       ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
-                                   upx_uintp result );
+                                   struct upx_compress_result_t *result );
 int upx_nrv_decompress     ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
                                    int method );
@@ -72,7 +72,7 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
-                                   upx_uintp result );
+                                   struct upx_compress_result_t *result );
 int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
                                    int method );

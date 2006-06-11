@@ -117,14 +117,16 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf_parm,
-                                   upx_uintp result )
+                                   struct upx_compress_result_t *result )
 {
     assert(method == M_LZMA);
+    assert(level > 0); assert(result != NULL);
     UNUSED(cb); UNUSED(method); UNUSED(level);
     UNUSED(conf_parm); UNUSED(result);
 
     int r = UPX_E_ERROR;
     HRESULT rh;
+    lzma_compress_result_t *res = &result->result_lzma;
 
     MyLzma::InStreamRam is; is.AddRef();
     MyLzma::OutStreamRam os; os.AddRef();
@@ -150,9 +152,8 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
         NCoderPropID::kMatchFinderCycles    // 6
     };
     PROPVARIANT pr[7];
-    pr[0].vt = pr[1].vt = pr[2].vt = VT_UI4;
-    pr[3].vt = pr[4].vt = pr[5].vt = VT_UI4;
-    pr[6].vt = VT_UI4;
+    pr[0].vt = pr[1].vt = pr[2].vt = VT_UI4; pr[3].vt = VT_UI4;
+    pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
 
     // setup defaults
     pr[0].uintVal = 2;
@@ -188,9 +189,9 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     else if (rh == S_OK)
         r = UPX_E_OK;
 
-    //result[8] = LzmaGetNumProbs(&s.Properties));
-    //result[8] = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
-    result[8] = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
+    //res->num_probs = LzmaGetNumProbs(&s.Properties));
+    //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
+    res->num_probs = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
 
 error:
     *dst_len = os.Pos;

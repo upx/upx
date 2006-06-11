@@ -202,6 +202,7 @@ struct upx_callback_t
     upx_uint user3;
 };
 
+
 struct lzma_compress_config_t
 {
     unsigned pos_bits;
@@ -216,6 +217,26 @@ struct upx_compress_config_t
 {
     lzma_compress_config_t  conf_lzma;
     ucl_compress_config_t   conf_ucl;
+};
+
+
+struct lzma_compress_result_t
+{
+    unsigned pos_bits;
+    unsigned lit_pos_bits;
+    unsigned lit_context_bits;
+    unsigned num_probs;
+};
+
+struct ucl_compress_result_t
+{
+    upx_uint result[16];
+};
+
+struct upx_compress_result_t
+{
+    lzma_compress_result_t  result_lzma;
+    ucl_compress_result_t   result_ucl;
 };
 
 
@@ -593,7 +614,7 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
-                                   upx_uintp result );
+                                   struct upx_compress_result_t *result );
 int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
                                    int method );

@@ -374,13 +374,13 @@ void PackUnix::packExtent(
         if (hdr_ulen) {
             unsigned hdr_clen;
             MemBuffer hdr_obuf;
-            unsigned result[16];
-            upx_compress_config_t conf;
-            memset(&conf, 0xff, sizeof(conf));
             hdr_obuf.allocForCompression(hdr_ulen);
             int r = upx_compress(hdr_ibuf, hdr_ulen, hdr_obuf, &hdr_clen, 0,
-                ph.method, 10, &conf, result);
-            (void)r;
+                ph.method, 10, NULL, NULL);
+            if (r != UPX_E_OK)
+                throwInternalError("header compression failed");
+            if (hdr_clen >= hdr_ulen)
+                throwInternalError("header compression size increase");
             ph.saved_u_adler = upx_adler32(hdr_ibuf, hdr_ulen, init_u_adler);
             ph.saved_c_adler = upx_adler32(hdr_obuf, hdr_clen, init_c_adler);
             ph.u_adler = upx_adler32(ibuf, ph.u_len, ph.saved_u_adler);

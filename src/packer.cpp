@@ -208,11 +208,10 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     //OutputFile::dump("data.raw", in, ph.u_len);
 
     // compress
-    unsigned result[16];
-    memset(result, 0, sizeof(result));
+    upx_compress_result_t result;
     int r = upx_compress(in, ph.u_len, out, &ph.c_len,
                          uip->getCallback(),
-                         ph.method, ph.level, &conf, result);
+                         ph.method, ph.level, &conf, &result);
 
     //uip->finalCallback(ph.u_len, ph.c_len);
     uip->endCallback();
@@ -222,14 +221,14 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
-    //ph.min_offset_found = result[0];
-    ph.max_offset_found = result[1];
-    //ph.min_match_found = result[2];
-    ph.max_match_found = result[3];
-    //ph.min_run_found = result[4];
-    ph.max_run_found = result[5];
-    ph.first_offset_found = result[6];
-    //ph.same_match_offsets_found = result[7];
+    //ph.min_offset_found = result.result_ucl.result[0];
+    ph.max_offset_found = result.result_ucl.result[1];
+    //ph.min_match_found = result.result_ucl.result[2];
+    ph.max_match_found = result.result_ucl.result[3];
+    //ph.min_run_found = result.result_ucl.result[4];
+    ph.max_run_found = result.result_ucl.result[5];
+    ph.first_offset_found = result.result_ucl.result[6];
+    //ph.same_match_offsets_found = result.result_ucl.result[7];
     assert(max_offset == 0 || max_offset >= ph.max_offset_found);
     assert(max_match == 0 || max_match >= ph.max_match_found);
 
