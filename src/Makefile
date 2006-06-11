@@ -59,6 +59,7 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 ifeq ($(USE_GNUC),1)
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-cast-qual
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-non-virtual-dtor
+compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-shadow
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-unused
 ##compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-error
 endif

@@ -1391,16 +1391,16 @@ static bool match(unsigned itype, const unsigned char *ntype,
     struct helper
     {
         static bool match(unsigned num, const unsigned char *unistr,
-                          const char *keep)
+                          const char *mkeep)
         {
             if (!unistr)
-                return (unsigned) atoi(keep) == num;
+                return (unsigned) atoi(mkeep) == num;
 
             unsigned ic;
             for (ic = 0; ic < get_le16(unistr); ic++)
-                if (unistr[2 + ic * 2] != (unsigned char) keep[ic])
+                if (unistr[2 + ic * 2] != (unsigned char) mkeep[ic])
                     return false;
-            return keep[ic] == 0 || keep[ic] == ',' || keep[ic] == '/';
+            return mkeep[ic] == 0 || mkeep[ic] == ',' || mkeep[ic] == '/';
         };
     };
 

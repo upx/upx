@@ -790,7 +790,6 @@ PackLinuxElf32::generateElfHdr(
 #undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
-        cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
         assert(2==get_native16(&h2->ehdr.e_phnum));
         set_native32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
         memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -842,7 +841,6 @@ PackLinuxElf64::generateElfHdr(
 #undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
-        cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
         assert(2==get_native16(&h2->ehdr.e_phnum));
         set_native32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
         memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -909,21 +907,21 @@ void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
-// Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
+// Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
 // which follows in the file (or end-of-file).  Optimize for common case
 // where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
 
 unsigned PackLinuxElf32::find_LOAD_gap(
-    Elf32_Phdr const *const phdri,
+    Elf32_Phdr const *const phdr,
     unsigned const k,
     unsigned const e_phnum
 )
 {
-    if (PT_LOAD32!=get_native32(&phdri[k].p_type)) {
+    if (PT_LOAD32!=get_native32(&phdr[k].p_type)) {
         return 0;
     }
-    unsigned const hi = get_native32(&phdri[k].p_offset) +
-                        get_native32(&phdri[k].p_filesz);
+    unsigned const hi = get_native32(&phdr[k].p_offset) +
+                        get_native32(&phdr[k].p_filesz);
     unsigned lo = ph.u_file_size;
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
@@ -934,8 +932,8 @@ unsigned PackLinuxElf32::find_LOAD_gap(
         if (k==j) {
             break;
         }
-        if (PT_LOAD32==get_native32(&phdri[j].p_type)) {
-            unsigned const t = get_native32(&phdri[j].p_offset);
+        if (PT_LOAD32==get_native32(&phdr[j].p_type)) {
+            unsigned const t = get_native32(&phdr[j].p_offset);
             if ((t - hi) < (lo - hi)) {
                 lo = t;
                 if (hi==lo) {
@@ -1011,21 +1009,21 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
 }
 
-// Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
+// Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
 // which follows in the file (or end-of-file).  Optimize for common case
 // where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
 
 unsigned PackLinuxElf64::find_LOAD_gap(
-    Elf64_Phdr const *const phdri,
+    Elf64_Phdr const *const phdr,
     unsigned const k,
     unsigned const e_phnum
 )
 {
-    if (PT_LOAD64!=get_native32(&phdri[k].p_type)) {
+    if (PT_LOAD64!=get_native32(&phdr[k].p_type)) {
         return 0;
     }
-    unsigned const hi = get_native64(&phdri[k].p_offset) +
-                        get_native64(&phdri[k].p_filesz);
+    unsigned const hi = get_native64(&phdr[k].p_offset) +
+                        get_native64(&phdr[k].p_filesz);
     unsigned lo = ph.u_file_size;
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
@@ -1036,8 +1034,8 @@ unsigned PackLinuxElf64::find_LOAD_gap(
         if (k==j) {
             break;
         }
-        if (PT_LOAD64==get_native32(&phdri[j].p_type)) {
-            unsigned const t = get_native64(&phdri[j].p_offset);
+        if (PT_LOAD64==get_native32(&phdr[j].p_type)) {
+            unsigned const t = get_native64(&phdr[j].p_offset);
             if ((t - hi) < (lo - hi)) {
                 lo = t;
                 if (hi==lo) {
