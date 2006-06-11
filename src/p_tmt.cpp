@@ -249,7 +249,7 @@ void PackTmt::pack(OutputFile *fo)
     patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);
     patch_le32(loader,e_len,"EDI0",ph.u_len+ph.overlap_overhead+d_len-1);
     patch_le32(loader,e_len,"ESI0",ph.c_len+e_len+d_len-1);
-    //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  clen=%x \n\n",
+    //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  c_len=%x \n\n",
     //                e_len,d_len,copy_len,copy_to,ph.overlap_overhead,jmp_pos,ph.u_len,ph.c_len);
 
     memcpy(&oh,&ih,sizeof(oh));

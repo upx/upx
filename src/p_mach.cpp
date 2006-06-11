@@ -240,7 +240,7 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    unsigned hdr_ulen = mhdri.sizeofcmds;
+    unsigned hdr_u_len = mhdri.sizeofcmds;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -258,8 +258,8 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
         }
         packExtent(x, total_in, total_out,
             ((Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
-                ? &ft : 0 ), fo, hdr_ulen );
-        hdr_ulen = 0;
+                ? &ft : 0 ), fo, hdr_u_len );
+        hdr_u_len = 0;
         ++nx;
     }
     for (k = 0; k < n_segment; ++k) {

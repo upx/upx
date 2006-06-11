@@ -968,7 +968,7 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    unsigned hdr_ulen = sizeof(Elf32_Ehdr) + sz_phdrs;
+    unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -993,8 +993,8 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         // sometimes marks as PF_X anyway.  So filter only first segment.
         packExtent(x, total_in, total_out,
             ((0==nx && (Elf32_Phdr::PF_X & get_native32(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo, hdr_ulen);
-        hdr_ulen = 0;
+                ? &ft : 0 ), fo, hdr_u_len);
+        hdr_u_len = 0;
         ++nx;
     }
     for (k = 0; k < e_phnum; ++k) {
@@ -1070,7 +1070,7 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    unsigned hdr_ulen = sizeof(Elf64_Ehdr) + sz_phdrs;
+    unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
 
     ui_pass = 0;
     ft.addvalue = 0;
@@ -1095,8 +1095,8 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         // sometimes marks as PF_X anyway.  So filter only first segment.
         packExtent(x, total_in, total_out,
             ((0==nx && (Elf64_Phdr::PF_X & get_native64(&phdri[k].p_flags)))
-                ? &ft : 0 ), fo, hdr_ulen);
-        hdr_ulen = 0;
+                ? &ft : 0 ), fo, hdr_u_len);
+        hdr_u_len = 0;
         ++nx;
     }
     for (k = 0; k < e_phnum; ++k) {

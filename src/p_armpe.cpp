@@ -1942,14 +1942,14 @@ void PackArmPe::pack(OutputFile *fo)
         identsplit = ALIGN_GAP(identsplit, 0x200);
     ic = identsize - identsplit;
 
-    const unsigned clen = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
-    obuf.clear(ph.c_len, clen - ph.c_len);
+    const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
+    obuf.clear(ph.c_len, c_len - ph.c_len);
 
-    const unsigned s1size = ALIGN_UP(ic + clen + codesize,4) + sotls;
-    const unsigned s1addr = (newvsize - (ic + clen) + oam1) &~ oam1;
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4) + sotls;
+    const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
 
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
-    const unsigned upxsection = s1addr + ic + clen;
+    const unsigned upxsection = s1addr + ic + c_len;
 
     Reloc rel(1024); // new relocations are put here
     // patch loader
@@ -2101,8 +2101,8 @@ void PackArmPe::pack(OutputFile *fo)
     }
     fo->write(loader + codesize,identsize);
     infoWriting("loader", fo->getBytesWritten());
-    fo->write(obuf,clen);
-    infoWriting("compressed data", clen);
+    fo->write(obuf,c_len);
+    infoWriting("compressed data", c_len);
     fo->write(loader,codesize);
     if (opt->debug.dump_stub_loader)
         OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
@@ -2123,7 +2123,7 @@ void PackArmPe::pack(OutputFile *fo)
     printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
     printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
     printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
-    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
     printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
     printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);

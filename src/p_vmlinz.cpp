@@ -354,9 +354,9 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     compressWithFilters(&ft, 512);
 
     // align everything to dword boundary - it is easier to handle
-    unsigned clen = ph.c_len;
-    memset(obuf + clen, 0, 4);
-    clen = ALIGN_UP(clen, 4);
+    unsigned c_len = ph.c_len;
+    memset(obuf + c_len, 0, 4);
+    c_len = ALIGN_UP(c_len, 4);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -370,14 +370,14 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
     const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16);
-    const unsigned copy_size = clen + d_len4;
+    const unsigned copy_size = c_len + d_len4;
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
-    const unsigned esi = ALIGN_UP(clen + lsize, 4) - 4;     // copy from
+    const unsigned esi = ALIGN_UP(c_len + lsize, 4) - 4;     // copy from
 
     unsigned jpos = find_le32(loader, e_len, get_le32("JMPD"));
     patch_le32(loader, e_len, "JMPD", decompr_pos - jpos - 4);
 
-    patch_le32(loader, e_len, "ESI1", bzimage_offset + decompr_pos - clen);
+    patch_le32(loader, e_len, "ESI1", bzimage_offset + decompr_pos - c_len);
     patch_le32(loader, e_len, "ECX0", copy_size / 4);
     patch_le32(loader, e_len, "EDI0", bzimage_offset + edi);
     patch_le32(loader, e_len, "ESI0", bzimage_offset + esi);
@@ -389,16 +389,16 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patch_le32(loader, e_len, "STAK", stack_offset_during_uncompression);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = (ALIGN_UP(lsize + clen, 16) / 16) & 0xffff;
+    bs->sys_size = (ALIGN_UP(lsize + c_len, 16) / 16) & 0xffff;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, e_len);
-    fo->write(obuf, clen);
+    fo->write(obuf, c_len);
     fo->write(loader + e_len, lsize - e_len);
 #if 0
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
     printf("%-13s: entry        : %8ld bytes\n", getName(), (long) e_len);
-    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) clen);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) (lsize - e_len));
 #endif
 

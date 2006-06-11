@@ -542,7 +542,7 @@ void PackExe::pack(OutputFile *fo)
         oh.ip = getLoaderSection("EXEENTRY") - 2;
     }
 
-//fprintf(stderr,"\ne_len=%x d_len=%x clen=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
+//fprintf(stderr,"\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
 
     // write header + write loader + compressed file
 #ifdef TESTING

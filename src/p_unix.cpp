@@ -305,16 +305,16 @@ void PackUnix::packExtent(
     unsigned &total_out,
     Filter *ft,
     OutputFile *fo,
-    unsigned hdr_ulen
+    unsigned hdr_u_len
 )
 {
     unsigned const init_u_adler = ph.u_adler;
     unsigned const init_c_adler = ph.c_adler;
     MemBuffer hdr_ibuf;
-    if (hdr_ulen) {
-        hdr_ibuf.alloc(hdr_ulen);
+    if (hdr_u_len) {
+        hdr_ibuf.alloc(hdr_u_len);
         fi->seek(0, SEEK_SET);
-        int l = fi->readx(hdr_ibuf, hdr_ulen);
+        int l = fi->readx(hdr_ibuf, hdr_u_len);
         (void)l;
     }
     fi->seek(x.offset, SEEK_SET);
@@ -348,7 +348,7 @@ void PackUnix::packExtent(
 
             compressWithFilters(ft, OVERHEAD, strategy,
                 NULL, 0, 0, 0, 0, // those 5 args are the defaults
-                hdr_ibuf, hdr_ulen);
+                hdr_ibuf, hdr_u_len);
         }
         else {
             (void) compress(ibuf, obuf);    // ignore return value
@@ -371,31 +371,31 @@ void PackUnix::packExtent(
 
         // write block sizes
         b_info tmp;
-        if (hdr_ulen) {
-            unsigned hdr_clen;
+        if (hdr_u_len) {
+            unsigned hdr_c_len;
             MemBuffer hdr_obuf;
-            hdr_obuf.allocForCompression(hdr_ulen);
-            int r = upx_compress(hdr_ibuf, hdr_ulen, hdr_obuf, &hdr_clen, 0,
+            hdr_obuf.allocForCompression(hdr_u_len);
+            int r = upx_compress(hdr_ibuf, hdr_u_len, hdr_obuf, &hdr_c_len, 0,
                 ph.method, 10, NULL, NULL);
             if (r != UPX_E_OK)
                 throwInternalError("header compression failed");
-            if (hdr_clen >= hdr_ulen)
+            if (hdr_c_len >= hdr_u_len)
                 throwInternalError("header compression size increase");
-            ph.saved_u_adler = upx_adler32(hdr_ibuf, hdr_ulen, init_u_adler);
-            ph.saved_c_adler = upx_adler32(hdr_obuf, hdr_clen, init_c_adler);
+            ph.saved_u_adler = upx_adler32(hdr_ibuf, hdr_u_len, init_u_adler);
+            ph.saved_c_adler = upx_adler32(hdr_obuf, hdr_c_len, init_c_adler);
             ph.u_adler = upx_adler32(ibuf, ph.u_len, ph.saved_u_adler);
             ph.c_adler = upx_adler32(obuf, ph.c_len, ph.saved_c_adler);
             end_u_adler = ph.u_adler;
             memset(&tmp, 0, sizeof(tmp));
-            set_native32(&tmp.sz_unc, hdr_ulen);
-            set_native32(&tmp.sz_cpr, hdr_clen);
+            set_native32(&tmp.sz_unc, hdr_u_len);
+            set_native32(&tmp.sz_cpr, hdr_c_len);
             tmp.b_method = (unsigned char) ph.method;
             fo->write(&tmp, sizeof(tmp));
             b_len += sizeof(b_info);
-            fo->write(hdr_obuf, hdr_clen);
-            total_out += hdr_clen;
-            total_in  += hdr_ulen;
-            hdr_ulen = 0;  // compress hdr one time only
+            fo->write(hdr_obuf, hdr_c_len);
+            total_out += hdr_c_len;
+            total_in  += hdr_u_len;
+            hdr_u_len = 0;  // compress hdr one time only
         }
         memset(&tmp, 0, sizeof(tmp));
         set_native32(&tmp.sz_unc, ph.u_len);
