@@ -205,11 +205,15 @@ struct upx_callback_t
 
 struct lzma_compress_config_t
 {
+#if 0
     unsigned pos_bits;
     unsigned lit_pos_bits;
     unsigned lit_context_bits;
     unsigned dict_size;
     unsigned mf_passes;
+#else
+    unsigned dummy;
+#endif
 };
 
 #define upx_compress_config_p upx_compress_config_t *
@@ -225,12 +229,13 @@ struct lzma_compress_result_t
     unsigned pos_bits;
     unsigned lit_pos_bits;
     unsigned lit_context_bits;
+    unsigned dict_size;
     unsigned num_probs;
 };
 
 struct ucl_compress_result_t
 {
-    upx_uint result[16];
+    ucl_uint result[16];
 };
 
 struct upx_compress_result_t

@@ -101,16 +101,15 @@ void MemBuffer::dealloc()
 }
 
 
-void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra)
+unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra)
 {
     assert((int)uncompressed_size > 0);
     assert((int)extra >= 0);
     unsigned size = uncompressed_size + uncompressed_size/8 + 256 + extra;
-    alloc(size);
+    return size;
 }
 
-
-void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra)
+unsigned MemBuffer::getSizeForUncompression(unsigned uncompressed_size, unsigned extra)
 {
     assert((int)uncompressed_size > 0);
     assert((int)extra >= 0);
@@ -120,6 +119,20 @@ void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra
 #if (ACC_ARCH_I386)
     size += 3;
 #endif
+    return size;
+}
+
+
+void MemBuffer::allocForCompression(unsigned uncompressed_size, unsigned extra)
+{
+    unsigned size = getSizeForCompression(uncompressed_size, extra);
+    alloc(size);
+}
+
+
+void MemBuffer::allocForUncompression(unsigned uncompressed_size, unsigned extra)
+{
+    unsigned size = getSizeForUncompression(uncompressed_size, extra);
     alloc(size);
 }
 

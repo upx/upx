@@ -28,6 +28,7 @@
 
 #include "conf.h"
 #include "compress.h"
+#include "mem.h"
 
 
 /*************************************************************************
@@ -75,12 +76,16 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
     upx_compress_result_t result_buffer;
 
     assert(level > 0);
+
+    // set available bytes in dst
+    if (*dst_len == 0)
+        *dst_len = MemBuffer::getSizeForCompression(src_len);
+
     if (!result)
         result = &result_buffer;
-
     memset(result, 0, sizeof(*result));
     // assume no info available - fill in worst case results
-    upx_uint *res = result->result_ucl.result;
+    ucl_uint *res = result->result_ucl.result;
     //res[0] = 1;                 // min_offset_found - NOT USED
     res[1] = src_len - 1;       // max_offset_found
     //res[2] = 2;                 // min_match_found - NOT USED

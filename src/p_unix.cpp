@@ -372,7 +372,7 @@ void PackUnix::packExtent(
         // write block sizes
         b_info tmp;
         if (hdr_u_len) {
-            unsigned hdr_c_len;
+            unsigned hdr_c_len = 0;
             MemBuffer hdr_obuf;
             hdr_obuf.allocForCompression(hdr_u_len);
             int r = upx_compress(hdr_ibuf, hdr_u_len, hdr_obuf, &hdr_c_len, 0,

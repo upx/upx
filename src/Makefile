@@ -57,6 +57,7 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
 ifeq ($(USE_GNUC),1)
+##compress_lzma$(objext) : EXTRA_CXXFLAGS += -O3 -fomit-frame-pointer
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-cast-qual
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-non-virtual-dtor
 compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-shadow

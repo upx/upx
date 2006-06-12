@@ -88,7 +88,7 @@ PackMachPPC32::buildMachLoader(
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
   if (0 < szfold) {
-    unsigned sz_cpr;
+    unsigned sz_cpr = 0;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     h.sz_cpr = sz_cpr;

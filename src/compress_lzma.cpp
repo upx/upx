@@ -43,8 +43,9 @@ int compress_lzma_dummy = 0;
 #undef _WIN32
 #undef _WIN32_WCE
 #undef COMPRESS_MF_MT
+#undef _NO_EXCEPTIONS
 #include "C/Common/MyInitGuid.h"
-#include "C/7zip/Compress/LZMA/LZMADecoder.h"
+//#include "C/7zip/Compress/LZMA/LZMADecoder.h"
 #include "C/7zip/Compress/LZMA/LZMAEncoder.h"
 
 namespace MyLzma {
@@ -131,14 +132,15 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     MyLzma::InStreamRam is; is.AddRef();
     MyLzma::OutStreamRam os; os.AddRef();
     is.Init(src, src_len);
-//    os.Init(dst, *dst_len);
-    os.Init(dst, src_len);
+    os.Init(dst, *dst_len);
 
     MyLzma::ProgressInfo progress; progress.AddRef();
     progress.cb = cb;
 
 #ifndef _NO_EXCEPTIONS
     try {
+#else
+#error
 #endif
 
     NCompress::NLZMA::CEncoder enc;
@@ -159,12 +161,42 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     pr[0].uintVal = 2;
     pr[1].uintVal = 0;
     pr[2].uintVal = 3;
-    pr[3].uintVal = src_len;
+    pr[3].uintVal = 1024 * 1024;
     pr[4].uintVal = 2;
     pr[5].uintVal = 64;
     pr[6].uintVal = 0;
 
-    // FIXME: tune these according to level
+    // FIXME: tune these settings according to level
+    switch (level)
+    {
+    case 1:
+        pr[3].uintVal = 256 * 1024;
+        pr[4].uintVal = 0;
+        break;
+    case 2:
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    case 9:
+        pr[3].uintVal = 8 * 1024 * 1024;
+        break;
+    case 10:
+        pr[3].uintVal = src_len;
+        break;
+    default:
+        goto error;
+    }
+
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
 
@@ -189,6 +221,10 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     else if (rh == S_OK)
         r = UPX_E_OK;
 
+    res->pos_bits = pr[0].uintVal;
+    res->lit_pos_bits = pr[1].uintVal;
+    res->lit_context_bits = pr[2].uintVal;
+    res->dict_size = pr[3].uintVal;
     //res->num_probs = LzmaGetNumProbs(&s.Properties));
     //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
     res->num_probs = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));

@@ -41,6 +41,9 @@ public:
     MemBuffer(unsigned size);
     ~MemBuffer();
 
+    static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra=0);
+    static unsigned getSizeForUncompression(unsigned uncompressed_size, unsigned extra=0);
+
     void alloc(unsigned size);
     void allocForCompression(unsigned uncompressed_size, unsigned extra=0);
     void allocForUncompression(unsigned uncompressed_size, unsigned extra=0);

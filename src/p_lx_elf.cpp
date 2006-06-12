@@ -313,7 +313,7 @@ PackLinuxElf32x86::buildLinuxLoader(
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
   if (0 < szfold) {
-    unsigned sz_cpr;
+    unsigned sz_cpr = 0;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
@@ -446,6 +446,7 @@ PackLinuxElf32::buildLinuxLoader(
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + sz_unc];
   if (0 < szfold) {
+    sz_cpr = 0;
     int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     set_native32(&h.sz_cpr, sz_cpr);
@@ -503,6 +504,7 @@ PackLinuxElf64::buildLinuxLoader(
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + sz_unc];
   if (0 < szfold) {
+    sz_cpr = 0;
     int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     set_native32(&h.sz_cpr, sz_cpr);
