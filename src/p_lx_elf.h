@@ -336,7 +336,7 @@ public:
     PackLinuxElf32armLe(InputFile *f);
     virtual ~PackLinuxElf32armLe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMLE; }
-    virtual const char *getName() const { return "linux/ElfArmLE"; }
+    virtual const char *getName() const { return "linux/armLE"; }
     virtual const int *getFilters() const;
     virtual int const *getCompressionMethods(int method, int level) const;
 
@@ -354,7 +354,7 @@ public:
     PackLinuxElf32armBe(InputFile *f);
     virtual ~PackLinuxElf32armBe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMBE; }
-    virtual const char *getName() const { return "linux/ElfArmBL"; }
+    virtual const char *getName() const { return "linux/armBE"; }
     virtual const int *getFilters() const;
     virtual int const *getCompressionMethods(int method, int level) const;
 
