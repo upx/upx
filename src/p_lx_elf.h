@@ -305,7 +305,6 @@ class PackLinuxElf32x86 : public PackLinuxElf32Le
 public:
     PackLinuxElf32x86(InputFile *f);
     virtual ~PackLinuxElf32x86();
-    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_ELF_i386; }
     virtual const char *getName() const { return "linux/elf386"; }
     virtual const int *getFilters() const;
@@ -336,9 +335,26 @@ class PackLinuxElf32armLe : public PackLinuxElf32Le
 public:
     PackLinuxElf32armLe(InputFile *f);
     virtual ~PackLinuxElf32armLe();
-    virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARM; }
-    virtual const char *getName() const { return "linux/arm"; }
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMLE; }
+    virtual const char *getName() const { return "linux/ElfArmLE"; }
+    virtual const int *getFilters() const;
+    virtual int const *getCompressionMethods(int method, int level) const;
+
+    virtual bool canPack();
+protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual int buildLoader(const Filter *);
+};
+
+class PackLinuxElf32armBe : public PackLinuxElf32Be
+{
+    typedef PackLinuxElf32Be super;
+public:
+    PackLinuxElf32armBe(InputFile *f);
+    virtual ~PackLinuxElf32armBe();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMBE; }
+    virtual const char *getName() const { return "linux/ElfArmBL"; }
     virtual const int *getFilters() const;
     virtual int const *getCompressionMethods(int method, int level) const;
 
