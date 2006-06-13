@@ -879,7 +879,7 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    progid = getRandomId();
+    progid = 0;  // getRandomId();  not useful, so do not clutter
 }
 
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
@@ -919,7 +919,7 @@ void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
-    progid = getRandomId();
+    progid = 0;  // getRandomId();  not useful, so do not clutter
 }
 
 void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
