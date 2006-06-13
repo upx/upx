@@ -208,7 +208,7 @@ PackLinuxElf64amd::getCompressionMethods(int method, int level) const
 }
 
 int const *
-PackLinuxElf32arm::getCompressionMethods(int /*method*/, int /*level*/) const
+PackLinuxElf32armLe::getCompressionMethods(int /*method*/, int /*level*/) const
 {
     static const int m_nrv2e[] = { M_NRV2E_8, -1 };
 
@@ -553,7 +553,7 @@ static const
 #include "stub/fold_elf32arm.h"
 
 int
-PackLinuxElf32arm::buildLoader(const Filter *ft)
+PackLinuxElf32armLe::buildLoader(const Filter *ft)
 {
     return buildLinuxLoader(
         linux_elf32arm_loader, sizeof(linux_elf32arm_loader),
@@ -872,7 +872,7 @@ void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
-void PackLinuxElf32arm::pack1(OutputFile *fo, Filter &ft)
+void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
     generateElfHdr(fo, linux_elf32arm_fold, getbrk(phdri, ehdri.e_phnum) );
@@ -1191,7 +1191,7 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     super::pack3(fo, ft);
 }
 
-void PackLinuxElf32arm::pack3(OutputFile *fo, Filter &ft)
+void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned const len0 = fo->getBytesWritten();
@@ -1675,22 +1675,22 @@ bool PackLinuxElf32x86::canPack()
     return true;
 }
 
-PackLinuxElf32arm::PackLinuxElf32arm(InputFile *f) : super(f)
+PackLinuxElf32armLe::PackLinuxElf32armLe(InputFile *f) : super(f)
 {
 }
 
-PackLinuxElf32arm::~PackLinuxElf32arm()
+PackLinuxElf32armLe::~PackLinuxElf32armLe()
 {
 }
 
 const int *
-PackLinuxElf32arm::getFilters() const
+PackLinuxElf32armLe::getFilters() const
 {
     static const int filters[] = { 0x50, -1 };
     return filters;
 }
 
-bool PackLinuxElf32arm::canPack()
+bool PackLinuxElf32armLe::canPack()
 {
     unsigned char buf[sizeof(Elf32_Ehdr) + 14*sizeof(Elf32_Phdr)];
     COMPILE_TIME_ASSERT(sizeof(buf) <= 512);

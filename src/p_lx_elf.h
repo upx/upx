@@ -330,12 +330,12 @@ protected:
 // linux/elfarm
 **************************************************************************/
 
-class PackLinuxElf32arm : public PackLinuxElf32Le
+class PackLinuxElf32armLe : public PackLinuxElf32Le
 {
     typedef PackLinuxElf32Le super;
 public:
-    PackLinuxElf32arm(InputFile *f);
-    virtual ~PackLinuxElf32arm();
+    PackLinuxElf32armLe(InputFile *f);
+    virtual ~PackLinuxElf32armLe();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARM; }
     virtual const char *getName() const { return "linux/arm"; }
