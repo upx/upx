@@ -313,17 +313,23 @@ __attribute_packed;
 // now for the actual types
 **************************************************************************/
 
-typedef TT_Elf  ::Ehdr<LE32,LE32,LE32,LE16> Elf_LE32_Ehdr;
-typedef TT_Elf32::Phdr<LE32,LE32,LE32>      Elf_LE32_Phdr;
-typedef TT_Elf32::Shdr<LE32,LE32,LE32>      Elf_LE32_Shdr;
-typedef TT_Elf  ::Dyn <LE32,LE32>           Elf_LE32_Dyn;
-typedef TT_Elf32::Sym <LE16,LE32,void> Elf_LE32_Sym;
-
 typedef TT_Elf  ::Ehdr<unsigned int,unsigned int,unsigned int,unsigned short> Elf32_Ehdr;
 typedef TT_Elf32::Phdr<unsigned int,unsigned int,unsigned int> Elf32_Phdr;
 typedef TT_Elf32::Shdr<unsigned int,unsigned int,unsigned int> Elf32_Shdr;
 typedef TT_Elf  ::Dyn <unsigned int,unsigned int>              Elf32_Dyn;
 typedef TT_Elf32::Sym <unsigned short,unsigned int,void> Elf32_Sym;
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Ehdr) == 52)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr) == 32)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr) == 40)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)  ==  8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Sym)  == 16)
+
+typedef TT_Elf  ::Ehdr<LE32,LE32,LE32,LE16> Elf_LE32_Ehdr;
+typedef TT_Elf32::Phdr<LE32,LE32,LE32>      Elf_LE32_Phdr;
+typedef TT_Elf32::Shdr<LE32,LE32,LE32>      Elf_LE32_Shdr;
+typedef TT_Elf  ::Dyn <LE32,LE32>           Elf_LE32_Dyn;
+typedef TT_Elf32::Sym <LE16,LE32,void> Elf_LE32_Sym;
 
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Ehdr) == 52)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Phdr) == 32)
@@ -331,11 +337,17 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Shdr) == 40)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Dyn)  ==  8)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Sym)  == 16)
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Ehdr) == 52)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr) == 32)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr) == 40)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)  ==  8)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Sym)  == 16)
+typedef TT_Elf  ::Ehdr<BE32,BE32,BE32,LE16> Elf_BE32_Ehdr;
+typedef TT_Elf32::Phdr<BE32,BE32,BE32>      Elf_BE32_Phdr;
+typedef TT_Elf32::Shdr<BE32,BE32,BE32>      Elf_BE32_Shdr;
+typedef TT_Elf  ::Dyn <BE32,BE32>           Elf_BE32_Dyn;
+typedef TT_Elf32::Sym <LE16,BE32,void> Elf_BE32_Sym;
+
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Ehdr) == 52)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Phdr) == 32)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Shdr) == 40)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Dyn)  ==  8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Sym)  == 16)
 
 
 typedef TT_Elf  ::Ehdr<LE32,LE64,LE64,LE16> Elf_LE64_Ehdr;
