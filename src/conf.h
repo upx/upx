@@ -144,11 +144,16 @@
 #  undef __unix
 #endif
 
-#if 1 && !defined(WITH_LZMA)
-#  define WITH_LZMA 1
-#endif
 #if !defined(WITH_UCL)
 #  define WITH_UCL 1
+#endif
+#if 0 && !defined(WITH_LZMA)
+#  define WITH_LZMA 1
+#endif
+#if defined(UPX_OFFICIAL_BUILD)
+#  if !defined(WITH_LZMA) || !defined(WITH_NRV) || !defined(WITH_UCL)
+#    error
+#  endif
 #endif
 #if defined(WITH_NRV)
 #  include <nrv/nrvconf.h>

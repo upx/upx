@@ -40,7 +40,7 @@ LIBS += -lucl -lz
 # you should set envvar UPX_LZMADIR to point to your unpacked lzma443.tar.bz2
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip),)
 DEFS += -DWITH_LZMA
-INCLUDES += -I$(LZMADIR)
+INCLUDES += -I$(UPX_LZMADIR)
 endif
 
 upx_SOURCES := $(wildcard $(srcdir)/*.cpp)
