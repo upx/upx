@@ -611,7 +611,24 @@ PackLinuxElf32armBe::buildLoader(const Filter *ft)  // FIXME
     unsigned const sz_fold   = sizeof(linux_elf32arm_fold);
     MemBuffer brev_loader(sz_loader);
     MemBuffer brev_fold  (sz_fold);
-    brev(brev_loader, linux_elf32arm_loader, sz_loader);
+
+    // linux_elf32arm_loader[] is all instructions, except for two strings
+    // at the end: the copyright message, and the SELinux message.
+    // The copyright message begins and ends with '\n', and the SELinux
+    // message ends with '\n'.  So copy back to the third '\n' from the end,
+    // and apply brev() only before that point.
+    int nl = 0;
+    int j;
+    for (j= sz_loader; --j>=0; ) {
+        unsigned char const c = linux_elf32arm_loader[j];
+        brev_loader[j] = c;
+        if ('\n'==c) {
+            if (3==++nl) {
+                break;
+            }
+        }
+    }
+    brev(brev_loader, linux_elf32arm_loader, j);
     brev(brev_fold,   linux_elf32arm_fold,   sz_fold);
     ehdr_bele((Elf_BE32_Ehdr *)brev_fold.getVoidPtr(), (Elf_LE32_Ehdr const *)linux_elf32arm_fold);
     return buildLinuxLoader(brev_loader, sz_loader, brev_fold, sz_fold, ft);

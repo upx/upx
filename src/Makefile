@@ -18,7 +18,8 @@ ifeq ($(CXX),)
 CXX = g++
 endif
 ifeq ($(CXX),g++)
-CXXFLAGS += -O2 -MMD
+#CXXFLAGS += -O2 -MMD
+CXXFLAGS += -g -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
