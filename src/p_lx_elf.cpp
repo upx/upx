@@ -135,6 +135,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     sz_phdrs(0), sz_elf_hdrs(0),
     e_machine(0), ei_class(0), ei_data(0)
 {
+    delete[] file_image;
 }
 
 PackLinuxElf::~PackLinuxElf()
@@ -150,7 +151,6 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 PackLinuxElf32::~PackLinuxElf32()
 {
     delete[] phdri;
-    delete[] file_image;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
