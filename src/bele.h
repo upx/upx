@@ -239,7 +239,7 @@ inline int get_le32_signed(const void *p)
     return sign_extend(v, 32);
 }
 
-inline int get_le64_signed(const void *p)
+inline acc_int64l_t get_le64_signed(const void *p)
 {
     acc_int64l_t v = get_le64(p);
     return sign_extend(v, 64);
@@ -474,6 +474,168 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
 #endif
 #endif
+
+
+/*************************************************************************
+// 
+**************************************************************************/
+
+namespace NBELE {
+
+struct BEPolicy
+{
+    enum { isBE = 1, isLE = 0 };
+
+    typedef BE16 U16;
+    typedef BE32 U32;
+    typedef BE64 U64;
+
+    static inline unsigned get16(const void *p)
+        { return get_be16(p); }
+    static inline unsigned get24(const void *p)
+        { return get_be24(p); }
+    static inline unsigned get32(const void *p)
+        { return get_be32(p); }
+    static inline acc_uint64l_t get64(const void *p)
+        { return get_be64(p); }
+
+    static inline void set16(void *p, unsigned v)
+        { set_be16(p, v); }
+    static inline void set24(void *p, unsigned v)
+        { set_be24(p, v); }
+    static inline void set32(void *p, unsigned v)
+        { set_be32(p, v); }
+    static inline void set64(void *p, acc_uint64l_t v)
+        { set_be64(p, v); }
+
+    static inline unsigned get16_signed(const void *p)
+        { return get_be16_signed(p); }
+    static inline unsigned get24_signed(const void *p)
+        { return get_be24_signed(p); }
+    static inline unsigned get32_signed(const void *p)
+        { return get_be32_signed(p); }
+    static inline acc_uint64l_t get64_signed(const void *p)
+        { return get_be64_signed(p); }
+
+    static int __acc_cdecl_qsort u16_compare(const void *a, const void *b)
+        { return be16_compare(a, b); }
+    static int __acc_cdecl_qsort u24_compare(const void *a, const void *b)
+        { return be24_compare(a, b); }
+    static int __acc_cdecl_qsort u32_compare(const void *a, const void *b)
+        { return be32_compare(a, b); }
+    static int __acc_cdecl_qsort u64_compare(const void *a, const void *b)
+        { return be64_compare(a, b); }
+
+    static int __acc_cdecl_qsort u16_compare_signed(const void *a, const void *b)
+        { return be16_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u24_compare_signed(const void *a, const void *b)
+        { return be24_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u32_compare_signed(const void *a, const void *b)
+        { return be32_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u64_compare_signed(const void *a, const void *b)
+        { return be64_compare_signed(a, b); }
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(U16) == 2)
+        COMPILE_TIME_ASSERT(sizeof(U32) == 4)
+        COMPILE_TIME_ASSERT(sizeof(U64) == 8)
+        COMPILE_TIME_ASSERT_ALIGNOF(U16, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
+    }
+};
+
+
+struct LEPolicy
+{
+    enum { isBE = 0, isLE = 1 };
+
+    typedef LE16 U16;
+    typedef LE32 U32;
+    typedef LE64 U64;
+
+    static inline unsigned get16(const void *p)
+        { return get_le16(p); }
+    static inline unsigned get24(const void *p)
+        { return get_le24(p); }
+    static inline unsigned get32(const void *p)
+        { return get_le32(p); }
+    static inline acc_uint64l_t get64(const void *p)
+        { return get_le64(p); }
+
+    static inline void set16(void *p, unsigned v)
+        { set_le16(p, v); }
+    static inline void set24(void *p, unsigned v)
+        { set_le24(p, v); }
+    static inline void set32(void *p, unsigned v)
+        { set_le32(p, v); }
+    static inline void set64(void *p, acc_uint64l_t v)
+        { set_le64(p, v); }
+
+    static inline unsigned get16_signed(const void *p)
+        { return get_le16_signed(p); }
+    static inline unsigned get24_signed(const void *p)
+        { return get_le24_signed(p); }
+    static inline unsigned get32_signed(const void *p)
+        { return get_le32_signed(p); }
+    static inline acc_uint64l_t get64_signed(const void *p)
+        { return get_le64_signed(p); }
+
+    static int __acc_cdecl_qsort u16_compare(const void *a, const void *b)
+        { return le16_compare(a, b); }
+    static int __acc_cdecl_qsort u24_compare(const void *a, const void *b)
+        { return le24_compare(a, b); }
+    static int __acc_cdecl_qsort u32_compare(const void *a, const void *b)
+        { return le32_compare(a, b); }
+    static int __acc_cdecl_qsort u64_compare(const void *a, const void *b)
+        { return le64_compare(a, b); }
+
+    static int __acc_cdecl_qsort u16_compare_signed(const void *a, const void *b)
+        { return le16_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u24_compare_signed(const void *a, const void *b)
+        { return le24_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u32_compare_signed(const void *a, const void *b)
+        { return le32_compare_signed(a, b); }
+    static int __acc_cdecl_qsort u64_compare_signed(const void *a, const void *b)
+        { return le64_compare_signed(a, b); }
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(U16) == 2)
+        COMPILE_TIME_ASSERT(sizeof(U32) == 4)
+        COMPILE_TIME_ASSERT(sizeof(U64) == 8)
+        COMPILE_TIME_ASSERT_ALIGNOF(U16, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
+    }
+};
+
+
+#if (ACC_ABI_BIG_ENDIAN)
+typedef BEPolicy HostPolicy;
+#elif (ACC_ABI_LITTLE_ENDIAN)
+typedef LEPolicy HostPolicy;
+#else
+#  error "ACC_ABI_ENDIAN"
+#endif
+
+
+struct HostAlignedPolicy
+{
+    enum { isBE = HostPolicy::isBE, isLE = HostPolicy::isLE };
+
+    typedef acc_uint16e_t U16;
+    typedef acc_uint32e_t U32;
+    typedef acc_uint64l_t U64;
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(U16) == 2)
+        COMPILE_TIME_ASSERT(sizeof(U32) == 4)
+        COMPILE_TIME_ASSERT(sizeof(U64) == 8)
+    }
+};
+
+
+} // namespace NBELE
 
 
 #endif /* already included */
