@@ -217,7 +217,9 @@ static Packer* try_packers(InputFile *f, try_function func)
             return p;
         if ((p = func(new PackLinuxElf64amd(f),f)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf32arm(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf32armLe(f),f)) != NULL)
+            return p;
+        if ((p = func(new PackLinuxElf32armBe(f),f)) != NULL)
             return p;
         if ((p = func(new PackLinuxElf32ppc(f),f)) != NULL)
             return p;

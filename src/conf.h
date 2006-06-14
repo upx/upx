@@ -530,7 +530,7 @@ inline void operator delete[](void *p)
 #define UPX_F_LINUX_ELFI_i386   20
 #define UPX_F_WINCE_ARM_PE      21
 #define UPX_F_LINUX_ELF64_AMD   22
-#define UPX_F_LINUX_ELF32_ARM   23
+#define UPX_F_LINUX_ELF32_ARMLE 23
 
 #define UPX_F_PLAIN_TEXT        127
 
@@ -538,6 +538,7 @@ inline void operator delete[](void *p)
 #define UPX_F_SOLARIS_SPARC     130
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
+#define UPX_F_LINUX_ELF32_ARMBE 133
 
 
 #define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */

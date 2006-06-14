@@ -102,20 +102,24 @@ dprintf(char const *fmt, ...)
     char buf[20];
     va_list va; va_start(va, fmt);
     ptr= &buf[0];
-    while (0!=(c= *fmt++)) if ('%'!=c) n+= write(2, fmt-1, 1);
+    while (0!=(c= *fmt++)) if ('%'!=c) goto literal;
     else switch (c= *fmt++) {
     default: {
+literal:
         n+= write(2, fmt-1, 1);
     } break;
     case 0: goto done;  /* early */
+    case 'u': {
+        n+= write(2, buf, unsimal(va_arg(va, unsigned), buf, 0));
+    } break;
     case 'd': {
         n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
     } break;
-    case 'p': {
-        n+= write(2, STR_0x(), 2);
-    } /* fall through into 'x' */
+    case 'p':  /* same as 'x'; relies on sizeof(int)==sizeof(void *) */
     case 'x': {
-        n+= write(2, buf, heximal(va_arg(va, int), buf, 0));
+        buf[0] = '0';
+        buf[1] = 'x';
+        n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
     } break;
     }
 done:
