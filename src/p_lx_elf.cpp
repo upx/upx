@@ -1375,7 +1375,10 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     super::pack3(fo, ft);
 }
 
-void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
+#include "bele.h"
+using namespace NBELE;
+
+void PackLinuxElf32::ARM_pack3(OutputFile *fo, Filter &ft, bool isBE)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned const len0 = fo->getBytesWritten();
@@ -1420,81 +1423,49 @@ void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-    // patch in order of descending address
-    patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
-    patch_le32(p,lsize,"LENX", len0 - hlen);
+    // Patch in order of descending address.
+    //
+    // Because Packer::patch_be32 is overloaded, it is impossible
+    // to choose the right one to initialize a pointer to function.
+    // Therefore, write either patch_be32 or patch_le32 literally.
+    //
+    // ::ARM_buildLoader() put the stub into native order.
+    // util.c::find() uses host order.
+    int const swap = (HostPolicy::isBE ^ isBE);
+    if (isBE) {
+        patch_be32(p,lsize, 4*swap + "ADRXXRDA", adrx); // compressed input for eXpansion
+        patch_be32(p,lsize, 4*swap + "LENXXNEL", len0 - hlen);
 
-    patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
-    patch_le32(p,lsize,"ADRC", adrc);  // addr for copy
+        patch_be32(p,lsize, 4*swap + "CNTCCTNC", cntc);  // count  for copy
+        patch_be32(p,lsize, 4*swap + "ADRCCRDA", adrc);  // addr for copy
 
-    patch_le32(p,lsize,"LENM", lenm);  // len  for map
-    patch_le32(p,lsize,"ADRM", adrm);  // addr for map
+        patch_be32(p,lsize, 4*swap + "LENMMNEL", lenm);  // len  for map
+        patch_be32(p,lsize, 4*swap + "ADRMMRDA", adrm);  // addr for map
+    }
+    else {
+        patch_le32(p,lsize, 4*swap + "ADRXXRDA", adrx); // compressed input for eXpansion
+        patch_le32(p,lsize, 4*swap + "LENXXNEL", len0 - hlen);
 
+        patch_le32(p,lsize, 4*swap + "CNTCCTNC", cntc);  // count  for copy
+        patch_le32(p,lsize, 4*swap + "ADRCCRDA", adrc);  // addr for copy
+
+        patch_le32(p,lsize, 4*swap + "LENMMNEL", lenm);  // len  for map
+        patch_le32(p,lsize, 4*swap + "ADRMMRDA", adrm);  // addr for map
+    }
 #undef PAGE_SIZE
 #undef PAGE_MASK
 
     super::pack3(fo, ft);
 }
 
+void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
+{
+    ARM_pack3(fo, ft, false);
+}
+
 void PackLinuxElf32armBe::pack3(OutputFile *fo, Filter &ft)
 {
-    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned const len0 = fo->getBytesWritten();
-    unsigned len = len0;
-    unsigned const zero = 0;
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len);
-
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = const_cast<upx_byte *>(getLoader());
-    lsize = getLoaderSize();
-    unsigned const lo_va_user = 0x8000;  // XXX
-    unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);
-    unsigned adrc;
-    unsigned adrm;
-    unsigned adrx;
-    unsigned cntc;
-    unsigned lenm;
-
-    len += lsize;
-    bool const is_big = true;
-    if (is_big) {
-        set_native32(    &elfout.ehdr.e_entry,
-            get_native32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
-        set_native32(&elfout.phdr[0].p_vaddr, lo_va_user);
-        set_native32(&elfout.phdr[0].p_paddr, lo_va_user);
-                              lo_va_stub    = lo_va_user;
-        adrc = lo_va_stub;
-        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
-        adrx = hlen + (PAGE_MASK & (~PAGE_MASK + adrm));  // round up to page boundary
-        lenm = PAGE_SIZE + len;
-        cntc = len >> 5;
-    }
-    else {
-        adrm = lo_va_stub + len;
-        adrc = adrm;
-        adrx = lo_va_stub + hlen;
-        lenm = PAGE_SIZE;
-        cntc = 0;
-    }
-    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
-
-    // patch in order of descending address
-    patch_be32(p,lsize,"XRDA", adrx); // compressed input for eXpansion
-    patch_be32(p,lsize,"XNEL", len0 - hlen);
-
-    patch_be32(p,lsize,"CTNC", cntc);  // count  for copy
-    patch_be32(p,lsize,"CRDA", adrc);  // addr for copy
-
-    patch_be32(p,lsize,"MNEL", lenm);  // len  for map
-    patch_be32(p,lsize,"MRDA", adrm);  // addr for map
-
-#undef PAGE_SIZE
-#undef PAGE_MASK
-
-    super::pack3(fo, ft);
+    ARM_pack3(fo, ft, true);
 }
 
 void PackLinuxElf::pack4(OutputFile *fo, Filter &ft)
