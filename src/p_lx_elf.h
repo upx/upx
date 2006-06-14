@@ -81,6 +81,9 @@ public:
     virtual ~PackLinuxElf32();
 protected:
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
+    virtual bool canPack();
+    virtual int ARM_buildLoader(Filter const *ft,
+        void (*fix_ehdr)(void *, void const *) );
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
@@ -284,7 +287,6 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_ELFPPC32; }
     virtual const char *getName() const { return "linux/ElfPPC"; }
     virtual const int *getFilters() const;
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual const int *getCompressionMethods(int method, int level) const;
@@ -307,7 +309,6 @@ public:
 
     virtual void unpack(OutputFile *fo);
 
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
@@ -336,7 +337,6 @@ public:
     virtual const int *getFilters() const;
     virtual int const *getCompressionMethods(int method, int level) const;
 
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack3(OutputFile *, Filter &);  // append loader
@@ -354,7 +354,6 @@ public:
     virtual const int *getFilters() const;
     virtual int const *getCompressionMethods(int method, int level) const;
 
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack3(OutputFile *, Filter &);  // append loader
