@@ -111,7 +111,7 @@ tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
-tc.default.stripelf   = i386-linux-sstrip
+tc.default.stripelf   = sstrip
 
 # some common settings for $(tc_list)
 tc.i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
