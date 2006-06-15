@@ -572,12 +572,16 @@ static void brev(
 )
 {
     assert(0==(3 & len));
-    assert(!((src -4)<=dst && dst < (len + src)));
+    // Detect overlap which over-writes src before it is used.
+    assert(!((4+ src)<=dst && dst < (len + src)));
     for (unsigned j = 0; j < len; j += 4) {
-            dst[0+ j] = src[3+ j];
-            dst[1+ j] = src[2+ j];
-            dst[2+ j] = src[1+ j];
-            dst[3+ j] = src[0+ j];
+        // Simple way (and somewhat slow) to allow in-place brev().
+        unsigned char tmp[4];
+        memcpy(tmp, j + src, 4);
+        dst[0+ j] = tmp[3];
+        dst[1+ j] = tmp[2];
+        dst[2+ j] = tmp[1];
+        dst[3+ j] = tmp[0];
     }
 }
 
