@@ -35,7 +35,7 @@
 #include <zlib.h>
 
 static const
-#include "stub/l_vmlinz.h"
+#include "stub/i386-linux.kernel.vmlinuz.h"
 
 static const unsigned kernel_entry = 0x100000;
 static const unsigned stack_offset_during_uncompression = 0x9000;

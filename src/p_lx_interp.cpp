@@ -51,9 +51,9 @@
 **************************************************************************/
 
 static const
-#include "stub/l_lx_pti86.h"
+#include "stub/i386-linux.elf.interp-entry.h"
 static const
-#include "stub/fold_pti86.h"
+#include "stub/i386-linux.elf.interp-fold.h"
 
 PackLinuxElf32x86interp::PackLinuxElf32x86interp(InputFile *f) :
     super(f)

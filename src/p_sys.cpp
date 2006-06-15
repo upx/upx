@@ -34,7 +34,7 @@
 #include "p_sys.h"
 
 static const
-#include "stub/l_sys.h"
+#include "stub/i086-dos16.sys.h"
 
 
 /*************************************************************************

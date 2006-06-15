@@ -33,7 +33,7 @@
 #include "p_tmt.h"
 
 static const
-#include "stub/l_tmt.h"
+#include "stub/i386-dos32.tmt.h"
 
 #define EXTRA_INFO      4       // original entry point
 

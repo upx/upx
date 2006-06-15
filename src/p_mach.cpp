@@ -34,10 +34,9 @@
 #include "p_mach.h"
 
 static const
-#include "stub/l_mac_ppc32.h"
-
+#include "stub/powerpc-darwin.macho-entry.h"
 static const
-#include "stub/fold_machppc32.h"
+#include "stub/powerpc-darwin.macho-fold.h"
 
 PackMachPPC32::PackMachPPC32(InputFile *f) :
     super(f), n_segment(0), rawmseg(0), msegcmd(0)

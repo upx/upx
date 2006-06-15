@@ -33,9 +33,9 @@
 #include "p_djgpp2.h"
 
 static const
-#include "stub/l_djgpp2.h"
+#include "stub/i386-dos32.djgpp2.h"
 static const
-#include "stub/stubify.h"
+#include "stub/i386-dos32.djgpp2-stubify.h"
 
 
 /*************************************************************************

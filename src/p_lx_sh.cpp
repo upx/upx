@@ -48,9 +48,9 @@
 **************************************************************************/
 
 static const
-#include "stub/l_lx_sh86.h"
+#include "stub/i386-linux.elf.shell-entry.h"
 static const
-#include "stub/fold_sh86.h"
+#include "stub/i386-linux.elf.shell-fold.h"
 
 
 PackLinuxI386sh::PackLinuxI386sh(InputFile *f) :
