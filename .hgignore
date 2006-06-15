@@ -32,8 +32,8 @@ stub/MMakefile
 stub/tmp
 stub/.*stamp
 
-stub/util/armpe/armpe_tester
+stub/tools/armpe/armpe_tester
 
-stub/util/sstrip/amd64-linux-sstrip
-stub/util/sstrip/i386-linux-sstrip
-stub/util/sstrip/sstrip
+stub/tools/sstrip/amd64-linux-sstrip
+stub/tools/sstrip/i386-linux-sstrip
+stub/tools/sstrip/sstrip
