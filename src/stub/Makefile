@@ -1,8 +1,10 @@
 #
-# UPX stub Makefile (needs GNU make 3.81 or better)
+# UPX stub Makefile - needs GNU make 3.81 or better
 #
 # see http://upx.sourceforge.net/download/tools/
 # for required build tools
+#
+# also please read README.SRC
 #
 
 MAKEFLAGS += -rR
@@ -11,6 +13,11 @@ export SHELL = /bin/sh
 
 # GNU make 3.81
 .SECONDEXPANSION:
+
+# update $PATH for our special stub build tools
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
+export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
+endif
 
 
 # /***********************************************************************
@@ -94,11 +101,6 @@ override T = $(basename $(notdir $@))
 # /***********************************************************************
 # // setup toolchain globals
 # ************************************************************************/
-
-# update path for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
-export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
-endif
 
 # default settings for $(tc_list)
 tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
