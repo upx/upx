@@ -75,10 +75,10 @@ Tools needed to build/modify the UPX sources
 To compile the packer sources
 -----------------------------
 
-  set the environment variable UCLDIR to point to your UCL installation, e.g.
+  set the environment variable UPX_UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-1.03                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-1.03           (Unix)
+     set UPX_UCLDIR=c:\src\ucl-1.03                   (DOS / Windows)
+     export UPX_UCLDIR=$HOME/local/src/ucl-1.03       (Unix)
 
   then type
 
@@ -91,6 +91,9 @@ To compile the packer sources
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
+
+  - GNU make 3.81 or better
+    http://savannah.gnu.org/projects/make/
 
   - A68K - a 68000 macro assembler
     http://upx.sourceforge.net/download/tools/
