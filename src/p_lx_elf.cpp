@@ -1024,20 +1024,18 @@ void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
-void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
+void PackLinuxElf32::ARM_pack1(OutputFile *fo, void (*fix_ehdr)(void *, void const *))
 {
-    super::pack1(fo, ft);
-
     Elf32_Ehdr const *const fold = (Elf32_Ehdr const *)&linux_elf32arm_fold;
     cprElfHdr3 h3;
     // We need Elf32_Ehdr and Elf32_Phdr with the correct byte gender.
     // The stub may have been compiled differently.
     if (this->ei_data==fold->e_ident[Elf32_Ehdr::EI_DATA]) {
-        memcpy(&h3, (Elf_BE32_Ehdr const *)linux_elf32arm_fold,
+        memcpy(&h3, (void const *)linux_elf32arm_fold,
             sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr) );
     }
     else {
-        ehdr_lebe((Elf_LE32_Ehdr *)&h3.ehdr, (Elf_BE32_Ehdr const *)linux_elf32arm_fold);
+        fix_ehdr((void *)&h3.ehdr, (void const *)linux_elf32arm_fold);
         brev((unsigned char *)&h3.phdr[0],
             sizeof(Elf32_Ehdr) + (unsigned char const *)&linux_elf32arm_fold,
             3*sizeof(Elf32_Phdr) );
@@ -1045,25 +1043,16 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, &h3, getbrk(phdri, ehdri.e_phnum) );
 }
 
+void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    ARM_pack1(fo, (void (*)(void *, void const *))ehdr_lebe);
+}
+
 void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)  // FIXME
 {
     super::pack1(fo, ft);
-
-    Elf32_Ehdr const *const fold = (Elf32_Ehdr const *)&linux_elf32arm_fold;
-    cprElfHdr3 h3;
-    // We need Elf32_Ehdr and Elf32_Phdr with the correct byte gender.
-    // The stub may have been compiled differently.
-    if (this->ei_data==fold->e_ident[Elf32_Ehdr::EI_DATA]) {
-        memcpy(&h3, (Elf_BE32_Ehdr const *)linux_elf32arm_fold,
-            sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr) );
-    }
-    else {
-        ehdr_bele((Elf_BE32_Ehdr *)&h3.ehdr, (Elf_LE32_Ehdr const *)linux_elf32arm_fold);
-        brev((unsigned char *)&h3.phdr[0],
-            sizeof(Elf32_Ehdr) + (unsigned char const *)&linux_elf32arm_fold,
-            3*sizeof(Elf32_Phdr) );
-    }
-    generateElfHdr(fo, &h3, getbrk(phdri, ehdri.e_phnum) );
+    ARM_pack1(fo, (void (*)(void *, void const *))ehdr_bele);
 }
 
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)

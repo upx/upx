@@ -88,6 +88,7 @@ protected:
     virtual int ARM_buildLoader(Filter const *ft,
         void (*fix_ehdr)(void *, void const *) );
     virtual void ARM_pack3(OutputFile *, Filter &, bool);
+    virtual void ARM_pack1(OutputFile *, void (*)(void *, void const *));
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
