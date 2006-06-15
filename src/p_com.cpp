@@ -33,7 +33,7 @@
 #include "p_com.h"
 
 static const
-#include "stub/l_com.h"
+#include "stub/i086-dos16.com.h"
 
 //#define TESTING
 

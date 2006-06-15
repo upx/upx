@@ -69,28 +69,29 @@ Tools needed to build/modify the UPX sources
   - A C++ compiler supporting inner classes, templates, exceptions
     and RTTI.
 
-  - GNU make 3.80 or better
+  - GNU make 3.80 or better (GNU make 3.81 recommened).
 
 
 To compile the packer sources
 -----------------------------
 
-  set the environment variable UCLDIR to point to your UCL installation, e.g.
+  set the environment variable UPX_UCLDIR to point to your UCL installation, e.g.
 
-     set UCLDIR=c:\src\ucl-1.03                       (DOS / Windows)
-     export UCLDIR=$HOME/local/src/ucl-1.03           (Unix)
+     set UPX_UCLDIR=c:\src\ucl-1.03                   (DOS / Windows)
+     export UPX_UCLDIR=$HOME/local/src/ucl-1.03       (Unix)
 
   then type
 
-     make target=linux              # linux
-     make target=djgpp2             # dos32 - djgpp2
-     make target=cygwin             # win32 - cygwin 1.3.x
-     make target=mingw32            # win32 - mingw32
-     make target=no-cygwin          # win32 - mingw32 as included in cygwin
+     make
 
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
+
+  - GNU make 3.81 or better
+    http://savannah.gnu.org/projects/make/
+
+  - Perl & Python
 
   - A68K - a 68000 macro assembler
     http://upx.sourceforge.net/download/tools/
@@ -102,20 +103,44 @@ If you want to modify the stub sources you'll also need
     http://upx.sourceforge.net/download/tools/
 
   - nasm 0.98.39 - the Netwide Assembler
-    http://upx.sourceforge.net/download/tools/
     http://sourceforge.net/projects/nasm/
-
-  - Perl & Python
 
   - Certain versions of some i386-linux tools:
        - gcc-2.95.3
        - gcc-3.4.6
        - binutils-2.16.1
 
-  - Other cross compilers targeted at the following architectures:
+  - Other cross compilers targeted at the following architectures.
        - arm-9tdmi-linux-gnu
        - powerpc-750-linux-gnu
        - x86_64-unknown-linux-gnu
+    See http://upx.sourceforge.net/download/tools/ for pre-compiled
+    toolchains.
+
+  - SUMMARY:
+
+    You will need GNU make 3.81 and the following files/symlinks in your
+    ~/local/bin/bin-upx/ directory (this directory will get added to
+   your $PATH automatically by src/stub/Makefile):
+
+      bin-upx/a68k
+      bin-upx/arm-9tdmi-linux-gnu-gcc-3.4.5
+      bin-upx/arm-9tdmi-linux-gnu-ld
+      bin-upx/arm-9tdmi-linux-gnu-objcopy
+      bin-upx/asm5900
+      bin-upx/djasm
+      bin-upx/i386-linux-gcc-2.95.3
+      bin-upx/i386-linux-gcc-3.4.6
+      bin-upx/i386-linux-ld-2.16.1
+      bin-upx/i386-linux-objcopy-2.16.1
+      bin-upx/nasm
+      bin-upx/powerpc-750-linux-gnu-gcc-3.4.4
+      bin-upx/powerpc-750-linux-gnu-ld
+      bin-upx/powerpc-750-linux-gnu-objcopy
+      bin-upx/sstrip                                [ from src/stub/util ]
+      bin-upx/x86_64-unknown-linux-gnu-gcc-3.4.4
+      bin-upx/x86_64-unknown-linux-gnu-ld
+      bin-upx/x86_64-unknown-linux-gnu-objcopy
 
 
 Misc. notes
@@ -130,8 +155,6 @@ Misc. notes
     stream.
   - Use gcc extensions and other compiler specific stuff only through
     macros.
-  - Keep in mind that it should be possible to build UPX on braindead
-    case insensitive file systems (FAT).
 
 ***
 
@@ -156,3 +179,5 @@ Patches/Contributions
 
       diff -uNr olddirectory newdirectory
 
+
+# vi:ts=4:et

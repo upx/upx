@@ -1,10 +1,10 @@
-/* p_lx_sep.h --
+/* amd_d_nrv2b.S -- AMD64 decompressor for NRV2B
 
    This file is part of the UPX executable compressor.
 
    Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 1996-2004 Laszlo Molnar
-   Copyright (C) 2000-2004 John F. Reiser
+   Copyright (C) 2000-2005 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -27,38 +27,42 @@
 
    John F. Reiser
    <jreiser@users.sourceforge.net>
- */
+*/
 
+        .p2align 3
+lit_n2b:
+        incq %rsi; movb %dl,(%rdi)
+        incq %rdi
+top_n2b:
+        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
+        jnextb1yp lit_n2b
+        lea 1(lenq),off  # [len= 0] off= 1
+offmore_n2b:
+        getnextbp(off)
+        jnextb0np offmore_n2b
 
-#ifndef __UPX_P_LX_SEP_H  //{
-#define __UPX_P_LX_SEP_H
-
-
-/*************************************************************************
-// linux/sep386
-**************************************************************************/
-
-class PackLinuxI386sep : public PackLinuxI386
-{
-    typedef PackLinuxI386 super;
-public:
-    PackLinuxI386sep(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_LINUX_SEP_i386; }
-    virtual const char *getName() const { return "linux/sep386"; }
-
-protected:
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
-    virtual int getLoaderPrefixSize() const;
-
-    virtual void patchLoader();
-    virtual void updateLoader(OutputFile *) {}
-};
-
-
-#endif /*} already included */
+        subl $ 3,off; jc len_n2b  # use previous offset
+        shll $ 8,off; movzbl %dl,%edx
+        orl %edx,off; incq %rsi
+        xorl $~0,off; jz eof
+        movslq off,disp  # XXX: 2GB
+len_n2b:
+        lea 1(lenq),off  # [len= 0] off= 1
+        getnextb(len); getnextb(len)  # two bits; cc set on result
+        jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
+        movl off,len  # len= 1, the msb
+        addl $3-1,off  # raw 2.. ==> 5..
+lenmore_n2b:
+        getnextb(len)
+        jnextb0n lenmore_n2b
+gotlen_n2b:
+        cmpq $-0xd00,disp
+        adcl off,len  # len += off + (disp < -0xd00)
+        call copy
+bot_n2b:  # In: 0==len
+        jmp top_n2b
 
 /*
-vi:ts=4:et
+vi:ts=8:et:nowrap
 */
 

@@ -55,9 +55,9 @@
 **************************************************************************/
 
 static const
-#include "stub/l_lx_exec86.h"
+#include "stub/i386-linux.elf.execve-entry.h"
 static const
-#include "stub/fold_exec86.h"
+#include "stub/i386-linux.elf.execve-fold.h"
 
 
 const int *PackLinuxI386::getCompressionMethods(int method, int level) const

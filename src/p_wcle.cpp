@@ -34,7 +34,7 @@
 #include "p_wcle.h"
 
 static const
-#include "stub/l_wcle.h"
+#include "stub/i386-dos32.watcom.le.h"
 
 #define LEOF_READ       (1<<0)
 #define LEOF_WRITE      (1<<1)

@@ -38,7 +38,7 @@
 #include "p_vmlinx.h"
 
 static const
-#include "stub/l_vmlinx.h"
+#include "stub/i386-linux.kernel.vmlinux.h"
 
 /*************************************************************************
 //

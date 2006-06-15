@@ -34,9 +34,9 @@
 #include "linker.h"
 
 static const
-#include "stub/l_armpea.h"
+#include "stub/arm.v4a-wince.pe.h"
 static const
-#include "stub/l_armpet.h"
+#include "stub/arm.v4t-wince.pe.h"
 
 #define IDSIZE(x)       ih.ddirs[x].size
 #define IDADDR(x)       ih.ddirs[x].vaddr

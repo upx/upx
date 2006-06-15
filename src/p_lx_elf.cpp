@@ -531,9 +531,9 @@ PackLinuxElf64::buildLinuxLoader(
 }
 
 static const
-#include "stub/l_lx_elf86.h"
+#include "stub/i386-linux.elf-entry.h"
 static const
-#include "stub/fold_elf86.h"
+#include "stub/i386-linux.elf-fold.h"
 
 int
 PackLinuxElf32x86::buildLoader(const Filter *ft)
@@ -559,9 +559,9 @@ PackLinuxElf32x86::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/l_lx_elf32arm.h"
+#include "stub/arm-linux.elf-entry.h"
 static const
-#include "stub/fold_elf32arm.h"
+#include "stub/arm-linux.elf-fold.h"
 
 #include "mem.h"
 
@@ -675,9 +675,9 @@ PackLinuxElf32armLe::buildLoader(Filter const *ft)
 }
 
 static const
-#include "stub/l_lx_elfppc32.h"
+#include "stub/powerpc-linux.elf-entry.h"
 static const
-#include "stub/fold_elfppc32.h"
+#include "stub/powerpc-linux.elf-fold.h"
 
 int
 PackLinuxElf32ppc::buildLoader(const Filter *ft)
@@ -688,9 +688,9 @@ PackLinuxElf32ppc::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/l_lx_elf64amd.h"
+#include "stub/amd64-linux.elf-entry.h"
 static const
-#include "stub/fold_elf64amd.h"
+#include "stub/amd64-linux.elf-fold.h"
 
 int
 PackLinuxElf64amd::buildLoader(const Filter *ft)

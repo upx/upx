@@ -1,633 +1,632 @@
 #
-# UPX stub Makefile (GNU make)
+# UPX stub Makefile - needs GNU make 3.81 or better
 #
 # see http://upx.sourceforge.net/download/tools/
 # for required build tools
 #
+# also please read README.SRC
+#
 
 MAKEFLAGS += -rR
-SHELL = /bin/sh
+.SUFFIXES:
+export SHELL = /bin/sh
 
-ifeq ($(strip $(UPX_UCLDIR)),)
-# change this to reflect where the UCL library is
-UPX_UCLDIR = $(HOME)/local/src/ucl-1.03
-endif
-ifeq ($(wildcard $(UPX_UCLDIR)/upx),)
-$(error Please set UPX_UCLDIR in Makefile or environment)
-endif
+# GNU make 3.81
+.SECONDEXPANSION:
 
-# update path for our special stub build tools
+# update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
 endif
 
 
-# -------------------------------------------------------
-# You should not have to change anything below this line.
-# -------------------------------------------------------
+# /***********************************************************************
+# //
+# ************************************************************************/
 
 srcdir = .
 top_srcdir = ../..
 
+STUBS += amd64-linux.elf-entry.h
+STUBS += amd64-linux.elf-fold.h
+STUBS += arm-linux.elf-entry.h
+STUBS += arm-linux.elf-fold.h
+STUBS += arm.v4a-wince.pe.h
+STUBS += arm.v4t-wince.pe.h
+STUBS += i086-dos16.com.h
+STUBS += i086-dos16.exe.h
+STUBS += i086-dos16.sys.h
+STUBS += i386-dos32.djgpp2.h
+STUBS += i386-dos32.djgpp2-stubify.h
+STUBS += i386-dos32.tmt.h
+STUBS += i386-dos32.watcom.le.h
+STUBS += i386-linux.elf-entry.h
+STUBS += i386-linux.elf-fold.h
+STUBS += i386-linux.elf.execve-entry.h
+STUBS += i386-linux.elf.execve-fold.h
+STUBS += i386-linux.elf.interp-entry.h
+STUBS += i386-linux.elf.interp-fold.h
+STUBS += i386-linux.elf.shell-entry.h
+STUBS += i386-linux.elf.shell-fold.h
+STUBS += i386-linux.kernel.vmlinux.h
+STUBS += i386-linux.kernel.vmlinuz.h
+STUBS += i386-win32.pe.h
+STUBS += m68k-atari.tos-nrv2b.h
+STUBS += m68k-atari.tos-nrv2b.small.h
+STUBS += m68k-atari.tos-nrv2d.h
+STUBS += m68k-atari.tos-nrv2d.small.h
+STUBS += m68k-atari.tos-nrv2e.h
+STUBS += m68k-atari.tos-nrv2e.small.h
+STUBS += mipsel.r3000-ps1-boot.h
+STUBS += mipsel.r3000-ps1-console.h
+STUBS += powerpc-darwin.macho-entry.h
+STUBS += powerpc-darwin.macho-fold.h
+STUBS += powerpc-linux.elf-entry.h
+STUBS += powerpc-linux.elf-fold.h
 
-# These are the files we want to create.
-STUBS = \
-	l_armpea.h l_armpet.h \
-	l_com.h \
-	l_djgpp2.h stubify.h \
-	l_exe.h \
-	l_ps1b.h l_ps1c.h \
-	l_sys.h \
-	l_t_n2b.h l_t_n2bs.h l_t_n2d.h l_t_n2ds.h l_t_n2e.h l_t_n2es.h \
-	l_tmt.h \
-	l_wcle.h \
-	l_w32pe.h \
-	l_lx_exec86.h fold_exec86.h \
-	l_lx_elf86.h  fold_elf86.h \
-	l_lx_sh86.h   fold_sh86.h \
-	l_lx_pti86.h  fold_pti86.h \
-	l_lx_elfppc32.h fold_elfppc32.h \
-	l_lx_elf64amd.h fold_elf64amd.h \
-	l_lx_elf32arm.h fold_elf32arm.h \
-	l_mac_ppc32.h fold_machppc32.h \
-	l_vmlinz.h l_vmlinx.h
 
-# experimental:
-ifneq ($(strip $(wildcard $(srcdir)/l_ext2.asm)),)
-STUBS += l_ext2.h
+ifeq ($(wildcard .all-stamp),)
+default:
+	@echo "UPX info: type 'make all' if you have all the required build tools."
+else
+default: all
 endif
+
+all: tmp/.tmp-stamp .all-stamp
+tmp/.tmp-stamp:
+	@mkdir -p tmp
+	@echo "timestamp" > $@
+.all-stamp: $(STUBS)
+	@echo "timestamp" > $@
+
+ifeq ($(wildcard .all-stamp),)
+mostlyclean clean: distclean
+else
+mostlyclean clean: maintainer-clean
+endif
+distclean:
+	rm -f .*-stamp
+	rm -rf tmp
+maintainer-clean:
+	rm -f *.h
+	rm -rf tmp
+
+.PHONY: default all mostlyclean clean distclean maintainer-clean
 
 
 # util var for use in the rules - basename of the current target
-override T = $(basename $@)
-
-MAKEFILE_DEPS = $(MAKEFILE_LIST)
+override T = $(basename $(notdir $@))
 
 
 # /***********************************************************************
-# // source directories
+# // setup toolchain globals
 # ************************************************************************/
 
-UCL_UPX  = $(UPX_UCLDIR)/upx
-UCL_I386 = $(UPX_UCLDIR)/upx/i386
-UCL_M68K = $(UPX_UCLDIR)/upx/m68k
-UCL_MR3K = $(UPX_UCLDIR)/upx/mr3k
+# default settings for $(tc_list)
+tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
+tc.default.brandelf   = perl -w $(srcdir)/scripts/brandelf.pl
+tc.default.djasm      = djasm
+tc.default.gpp_inc    = python $(srcdir)/scripts/gpp_inc.py
+tc.default.o2bin      = perl $(srcdir)/scripts/o2bin.pl
+tc.default.nasm       = nasm
+tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
+tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
+tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
+tc.default.stripelf   = sstrip
 
-.SUFFIXES:
-.SUFFIXES: .asm .ash .asx .asy .bin .c .h .s
+# some common settings for $(tc_list)
+tc.i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
+tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 
-vpath %.ash $(UCL_I386)
-vpath %.ash $(UCL_M68K)
-vpath %.ash $(UCL_MR3K)
+
+# slightly tricky make stuff follows
+
+# error sentinel for missing commands
+__tc_FALSE   = false tc_FALSE: '$@' '$<'
+# enumerate all variables that will get tested (from basename and $tc_list)
+__tc_varlist = tc.$(basename $(notdir $@)).$1 $(foreach __tc_tmp,$(tc_list),tc.$(__tc_tmp).$1)
+# return the _name_ of the first variable that is not empty
+__tc_varname = $(firstword $(foreach __tc_vn,$2,$(if $($(__tc_vn)),$(__tc_vn),)) __tc_FALSE)
+# expand the first variable that is not empty
+tc           = $($(call __tc_varname,$1,$(call __tc_varlist,$1)))
+
+
+# clear some vars, just in case
+CPPFLAGS =
+CPLAGS =
+PP_FLAGS =
+IDENT_NAME =
+IDENT_PREFIX =
+IDENT_SUFFIX =
 
 
 # /***********************************************************************
-# // tools
+# // amd64-linux.elf
 # ************************************************************************/
 
-NASM     = nasm -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
-NASM    += -I$(srcdir)/
+amd64-linux.elf% : tc_list = amd64-linux.elf default
 
-APP_I386 = perl -w $(srcdir)/scripts/app_i386.pl
-BIN2H    = perl -w $(srcdir)/scripts/bin2h.pl
-##BIN2H    = python  $(srcdir)/scripts/bin2h.py
-BRANDELF = perl -w $(srcdir)/scripts/brandelf.pl
-O2BIN    = perl -w $(srcdir)/scripts/o2bin.pl
-##STRIPELF = perl -w $(srcdir)/scripts/stripelf.pl
+tc.amd64-linux.elf.gcc      = x86_64-unknown-linux-gnu-gcc-3.4.4 -m64 -nostdinc -MMD
+tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
+tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
+tc.amd64-linux.elf.objstrip = $(tc.amd64-linux.elf.objcopy) -R .comment -R .note
 
+amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elf64amd_loader tmp/$T.bin $@
 
-###
-### i386-linux
-###
+amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elf64amd_fold tmp/$T.bin $@
 
-LD_LINUX_I386 = i386-linux-ld-2.16.1 -m elf_i386
-OBJCOPY_LINUX_I386 = i386-linux-objcopy-2.16.1 -F elf32-i386
-OBJSTRIP_LINUX_I386 = $(OBJCOPY_LINUX_I386) -R .comment -R .note
-STRIPELF_LINUX_I386 = ./util/sstrip/i386-linux-sstrip
+tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
 
-# gcc 2.7.2.3
-CC_LINUX_I386_GCC272  = i386-linux-gcc-2.72 -m386 -O2 -MMD
-CC_LINUX_I386_GCC272 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
-
-# gcc 2.95.3
-CC_LINUX_I386_GCC295  = i386-linux-gcc-2.95.3 -march=i386 -mcpu=k6 -fno-exceptions -MMD
-CC_LINUX_I386_GCC295 += -Os -fno-omit-frame-pointer
-CC_LINUX_I386_GCC295 += -malign-functions=0 -malign-jumps=0 -malign-loops=0
-CC_LINUX_I386_GCC295 += -Werror
-
-# gcc 3.4.6 (fold_*86.bin: 1622 / 899 / 1531 / 1201)
-CC_LINUX_I386_GCC34  = i386-linux-gcc-3.4.6
-CC_LINUX_I386_GCC34 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
-CC_LINUX_I386_GCC34 += -Os -fno-omit-frame-pointer
-CC_LINUX_I386_GCC34 += -momit-leaf-frame-pointer
-CC_LINUX_I386_GCC34 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-CC_LINUX_I386_GCC34 += -mpreferred-stack-boundary=2
-CC_LINUX_I386_GCC34 += -fweb
-CC_LINUX_I386_GCC34 += -Werror
-
-# gcc 4.1.1 (fold_*86.bin: 1651 / 931 / 1633 / 1215)
-# gcc 4.0.3 (fold_*86.bin: 1699 / 963 / 1631 / 1208)
-CC_LINUX_I386_GCC41  = i386-linux-gcc-4.1.1
-CC_LINUX_I386_GCC41 += -m32 -march=i386 -mtune=k6 -fno-exceptions -MMD
-CC_LINUX_I386_GCC41 += -Os -fno-omit-frame-pointer
-CC_LINUX_I386_GCC41 += -momit-leaf-frame-pointer
-CC_LINUX_I386_GCC41 += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-CC_LINUX_I386_GCC41 += -mpreferred-stack-boundary=2
-CC_LINUX_I386_GCC41 += -fweb
-CC_LINUX_I386_GCC41 += -Werror
-
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC272)
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC295)
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC41)
-CC_LINUX_I386  = $(CC_LINUX_I386_GCC34)
-CC_LINUX_I386 += -nostdinc
-CC_LINUX_I386 += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings
-CC_LINUX_I386 += -funsigned-char
-
-
-###
-### MIPS R3000
-###
-
-CPP_MR3K = i386-linux-gcc-2.95.3 -nostdinc -I$(UCL_UPX) -I$(srcdir) -E -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
-APP_MR3K = perl -w $(srcdir)/scripts/app_mr3k.pl
-ASM_MR3K = asm5900 --nologo -q
-
-
-###
-### Motorola 68000
-###
-
-CPP_M68K  = $(CPP_MR3K)
-APP_M68K  = perl -w $(srcdir)/scripts/app_m68k.pl
-ifeq (1,1)
-  # a68k 68000-assembler
-  CPP_M68K += -D__A68K__
-  ASM_M68K  = a68k -q -x
-else
-  # asl 68000-assembler
-  CPP_M68K += -D__ASL__
-  ASM_M68K  = sh $(srcdir)/scripts/asl_m68k.sh
-endif
-
-
-###
-### PowerPC 32
-###
-
-GCC_PPC32     := false
-LD_PPC32      := false
-OBJCOPY_PPC32 := false
-OBJSTRIP_PPC32 = $(OBJCOPY_PPC32) -R .comment -R .note
-
-d = /home2/crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827/bin
-ifneq ($(wildcard $d),)
-  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD
-  LD_PPC32      := $d/powerpc-750-linux-gnu-ld
-  OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
-endif
-d = /opt/cc-i386-linux/crosstool/powerpc-750-linux-gnu/gcc-3.4.3.20050210-glibc-2.2.5/bin
-ifneq ($(wildcard $d),)
-  GCC_PPC32     := $d/powerpc-750-linux-gnu-gcc -m32 -nostdinc -MMD -fno-exceptions -fno-asynchronous-unwind-tables
-  LD_PPC32      := $d/powerpc-750-linux-gnu-ld
-  OBJCOPY_PPC32 := $d/powerpc-750-linux-gnu-objcopy
-endif
-GCC_PPC32     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-
-
-###
-### AMD x86_64
-###
-
-GCC_AMD64     := false
-LD_AMD64      := false
-OBJCOPY_AMD64 := false
-OBJSTRIP_AMD64 = $(OBJCOPY_AMD64) -R .comment -R .note
-
-d = /home2/crosstool/gcc-4.0.1-glibc-2.3.5/x86_64-unknown-linux-gnu/bin
-ifneq ($(wildcard $d),)
-  GCC_AMD64     := $d/x86_64-unknown-linux-gnu-gcc -m64 -nostdinc -MMD
-  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld -m elf_x86_64
-  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy -F elf64-x86-64
-endif
-d = /opt/cc-i386-linux/crosstool/x86_64-unknown-linux-gnu/gcc-3.4.3.20050507-glibc-2.3.5/bin
-ifneq ($(wildcard $d),)
-  GCC_AMD64     := $d/x86_64-unknown-linux-gnu-gcc -m64 -nostdinc -MMD
-  LD_AMD64      := $d/x86_64-unknown-linux-gnu-ld -m elf_x86_64
-  OBJCOPY_AMD64 := $d/x86_64-unknown-linux-gnu-objcopy -F elf64-x86-64
-endif
-GCC_AMD64     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-
-
-###
-### ARM-PE-WINCE
-###
-
-GCC_ARM       :=  arm-9tdmi-linux-gnu-gcc -march=armv4 -nostdinc -MMD
-GCC_ARM       += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-GCC_ARM_T     :=  $(GCC_ARM) -march=armv4t
-LD_ARM        :=  arm-9tdmi-linux-gnu-ld
-OBJCOPY_LINUX_ARM   :=  arm-9tdmi-linux-gnu-objcopy
-OBJSTRIP_LINUX_ARM  := $(OBJCOPY_LINUX_ARM) -R .comment -R .note
+tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,objstrip) $@
 
 
 # /***********************************************************************
-# // main targets
+# // arm-linux.elf
 # ************************************************************************/
 
-.PHONY: default all stubs mostlyclean clean distclean maintainer-clean ident strings
+arm-linux.elf% : tc_list = arm-linux.elf default
 
-default:
-	@echo "UPX info: type 'make all' if you have all the required build tools."
+tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
+tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
+tc.arm-linux.elf.objstrip = $(tc.arm-linux.elf.objcopy) -R .comment -R .note
 
-all: stubs ## upxb upxd
-	@echo "timestamp" > stamp-h
+arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -nostdlib $< -o tmp/$T.out
+	$(call tc,objcopy) --only-section .text -O binary tmp/$T.out tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
 
-stubs: $(STUBS)
+arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
 
+tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
 
-mostlyclean:
-	-rm -f *.bin *.bkp *.d *.i *.lst *.map stubify.exe
-	-rm -f *.ah *.asx *.asy *.o *.out
-
-clean: mostlyclean
-ifneq ($(strip $(wildcard stamp-h)),)
-	-rm -f l_*.h $(STUBS)
-endif
-
-distclean: mostlyclean
-	@-rm -f stamp-h
-
-maintainer-clean: mostlyclean
-	-rm -f l_*.h $(STUBS)
-	@-rm -f stamp-h
-
-
-ident: all
-	ident *.bin
-
-strings: all
-	strings *.bin
+tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,objstrip) $@
 
 
 # /***********************************************************************
-# // rules
+# // arm.v4a-wince.pe
+# // arm.v4t-wince.pe
 # ************************************************************************/
 
-%.asx : %.asm $(srcdir)/scripts/app_i386.pl
-	$(APP_I386) $< $@
+arm.v4a-wince.pe% : tc_list = arm.v4a-wince.pe arm-wince.pe default
+arm.v4t-wince.pe% : tc_list = arm.v4t-wince.pe arm-wince.pe default
 
-%.asy : %.ash $(srcdir)/scripts/app_i386.pl
-	$(APP_I386) $< $@
+tc.arm-wince.pe.gcc     = arm-9tdmi-linux-gnu-gcc-3.4.5 -nostdinc -MMD
+tc.arm-wince.pe.gcc    += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.arm-wince.pe.objcopy = arm-9tdmi-linux-gnu-objcopy
 
+arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4 -nostdlib $< -o tmp/$T.out
+	$(call tc,objcopy) --only-section .text -O binary tmp/$T.out tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader_arm tmp/$T.bin $@
 
-stubify.h: stub.asm
-	djasm --gmtime=1070220810 --iname=stub.asm --oname=stub.h $< stubify.exe
-	$(BIN2H) stubify.exe stubify_stub $@ -q
-
-l_com.h: l_com.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv2b_loader $@
-
-l_djgpp2.h: l_djgpp2.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_exe.h: l_exe.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_sys.h: l_sys.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv2b_loader $@
-
-l_tmt.h: l_tmt.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_ext2.h: l_ext2.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_vmlinz.h: l_vmlinz.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_vmlinx.h: l_vmlinx.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_vxd.h: l_vxd.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_wcle.h: l_wcle.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
-
-l_w32pe.h: l_w32pe.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin nrv_loader $@
+arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4t -nostdlib $< -o tmp/$T.out
+	$(call tc,objcopy) --only-section .text -O binary tmp/$T.out tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader_thumb tmp/$T.bin $@
 
 
 # /***********************************************************************
-# // atari/tos rules
+# // i086-dos16.com
 # ************************************************************************/
 
-l_t_n2b.h: l_tos.s
-	$(CPP_M68K) -DNRV2B -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader $@
+i086-dos16.com% : tc_list = i086 default
 
-l_t_n2bs.h: l_tos.s
-	$(CPP_M68K) -DNRV2B -DSMALL -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2b_loader_small $@
-
-l_t_n2d.h: l_tos.s
-	$(CPP_M68K) -DNRV2D -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader $@
-
-l_t_n2ds.h: l_tos.s
-	$(CPP_M68K) -DNRV2D -DSMALL -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2d_loader_small $@
-
-l_t_n2e.h: l_tos.s
-	$(CPP_M68K) -DNRV2E -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2e_loader $@
-
-l_t_n2es.h: l_tos.s
-	$(CPP_M68K) -DNRV2E -DSMALL -o $T.i $<
-	$(ASM_M68K) $T.i
-	$(O2BIN) $T.o $T.bin 'UPX1' 'UPX9'
-	$(BIN2H) $T.bin nrv2e_loader_small $@
+i086-dos16.com.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
 # /***********************************************************************
-# // ps1/exe
+# // i086-dos16.exe
 # ************************************************************************/
 
-l_ps1b.h: l_ps1.asm
-	$(CPP_MR3K) -DCDBOOT -o $T.asx $<
-	$(APP_MR3K) $T.asx $T.asy
-	$(ASM_MR3K) $T.asy -o$T.bin -l$T.lst
-	$(BIN2H) $T.bin nrv_boot_loader $@
+i086-dos16.exe% : tc_list = i086 default
 
-l_ps1c.h: l_ps1.asm
-	$(CPP_MR3K) -o $T.asx $<
-	$(APP_MR3K) $T.asx $T.asy
-	$(ASM_MR3K) $T.asy -o$T.bin -l$T.lst
-	$(BIN2H) $T.bin nrv_con_loader $@
+i086-dos16.exe.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
 # /***********************************************************************
-# // linux rules (exec, elf, sh, sep)
+# // i086-dos16.sys
 # ************************************************************************/
 
-upx_itoa.o: upx_itoa.asm
-	$(NASM) -f elf -o $@ $<
-	$(OBJSTRIP_LINUX_I386) $@
+i086-dos16.sys% : tc_list = i086 default
 
-l_lx_elf86.h: l_lx_elf86.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin linux_i386elf_loader $@
+i086-dos16.sys.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
-l_lx_exec86.h: l_lx_exec86.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin linux_i386exec_loader $@
 
-l_lx_sh86.h: l_lx_sh86.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin linux_i386sh_loader $@
+# /***********************************************************************
+# // i386-dos32.djgpp2
+# ************************************************************************/
 
-l_lx_pti86.h: l_lx_pti86.asx
-	$(NASM) -f bin -o $T.bin $<
-	$(BIN2H) $T.bin linux_i386pti_loader $@
+i386-dos32.djgpp2% : tc_list = i386 default
 
-l_mac_ppc32.h: l_mac_ppc32.S ppc_d_nrv2e.S
-	$(GCC_PPC32) -c $<
-	$(OBJSTRIP_PPC32) $T.o
-	$(LD_PPC32) -o $T.bin --oformat binary $T.o
-	$(BIN2H) $T.bin l_mac_ppc32_loader $@
+i386-dos32.djgpp2.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
-l_lx_elfppc32.h: l_lx_elfppc32.S ppc_d_nrv2e.S
-	$(GCC_PPC32) -c $<
-	$(OBJSTRIP_PPC32) $T.o
-	$(LD_PPC32) -o $T.bin --oformat binary $T.o
-	$(BIN2H) $T.bin linux_elfppc32_loader $@
+i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
+	$(call tc,djasm) --outtype=exe --gmtime=1070220810 --inname=stub.asm --outname=stub.h $< tmp/$T.bin
+	$(call tc,bin2h) --ident=stubify_stub -q tmp/$T.bin $@
 
-l_lx_elf64amd.h: l_lx_elf64amd.S amd_d_nrv2e.S
-	$(GCC_AMD64) -c $<
-	$(OBJSTRIP_AMD64) $T.o
-	$(LD_AMD64) -o $T.bin --oformat binary $T.o
-	$(BIN2H) $T.bin linux_elf64amd_loader $@
 
-l_lx_elf32arm.h: l_lx_elf32arm.S arm_nrv2e_d32.S
-	$(GCC_ARM) -c $<
-	$(OBJSTRIP_LINUX_ARM) $T.o
-	$(LD_ARM) -o $T.out $T.o
-	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
-	$(BIN2H) $T.bin linux_elf32arm_loader $@
+# /***********************************************************************
+# // i386-dos32.tmt
+# ************************************************************************/
 
-l_lx_elf.o: l_lx_elf.c linux.hh $(MAKEFILE_DEPS)
-	$(CC_LINUX_I386) -c $<
-	$(OBJSTRIP_LINUX_I386) $@
+i386-dos32.tmt% : tc_list = i386 default
 
-l_lx_exec.o: l_lx_exec.c linux.hh $(MAKEFILE_DEPS)
-	$(CC_LINUX_I386) -c $<
-	$(OBJSTRIP_LINUX_I386) $@
+i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
-l_lx_sep.o: l_lx_sep.c linux.hh $(MAKEFILE_DEPS)
-	$(CC_LINUX_I386) -c $<
-	$(OBJSTRIP_LINUX_I386) $@
 
-l_lx_sh.o: l_lx_sh.c linux.hh $(MAKEFILE_DEPS)
-	$(CC_LINUX_I386) -c $<
-	$(OBJSTRIP_LINUX_I386) $@
+# /***********************************************************************
+# // i386-dos32.watcom.le
+# ************************************************************************/
 
-l_lx_pti.o: l_lx_pti.c linux.hh $(MAKEFILE_DEPS)
-	$(CC_LINUX_I386) -c $<
-	$(OBJSTRIP_LINUX_I386) $@
+i386-dos32.watcom.le% : tc_list = i386 default
 
-fold_elf86.o: fold_elf86.asm
-	$(NASM) -f elf -o $@ $<
-	$(OBJSTRIP_LINUX_I386) $@
+i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
-fold_elf86.h: l_lx_elf.o fold_elf86.o l_lx_elf86.lds
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_elf86.lds -Map $T.map -o $T.bin $T.o l_lx_elf.o
-	chmod a-x $T.bin
-	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386elf_fold $@
 
-m_lx_elfppc32.o: m_lx_elfppc32.c $(MAKEFILE_DEPS)
-	$(GCC_PPC32) -c -Os $<
-	$(OBJSTRIP_PPC32) $@
+# /***********************************************************************
+# // i386-linux.elf
+# ************************************************************************/
 
-a_lx_elf64amd.o: a_lx_elf64.c $(MAKEFILE_DEPS)
-	$(GCC_AMD64) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables -o $@ $<
-	$(OBJSTRIP_AMD64) $@
+i386-linux.elf% : tc_list = i386-linux.elf i386 default
 
-a_lx_elf32arm.o: l_lx_elf.c $(MAKEFILE_DEPS)
-	$(GCC_ARM) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables -o $@ $<
-	$(OBJSTRIP_LINUX_ARM) $@
+tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -nostdinc -MMD
+tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.i386-linux.elf.gcc     += -march=i386 -mtune=k6
+tc.i386-linux.elf.gcc     += -Os -fno-omit-frame-pointer
+tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
+tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
+tc.i386-linux.elf.gcc     += -fweb
+tc.i386-linux.elf.ld       = i386-linux-ld-2.16.1
+tc.i386-linux.elf.objcopy  = i386-linux-objcopy-2.16.1
+tc.i386-linux.elf.objstrip = $(tc.i386-linux.elf.objcopy) -R .comment -R .note
 
-fold_elfppc32.o: fold_elfppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
-	$(GCC_PPC32) -c $<
-	$(OBJSTRIP_PPC32) $@
+i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
 
-fold_elf64amd.o: fold_elf64amd.S amd_bxx.S $(MAKEFILE_DEPS)
-	$(GCC_AMD64) -c $<
-	$(OBJSTRIP_AMD64) $@
+i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
-fold_elf32arm.o: fold_elf32arm.S $(MAKEFILE_DEPS)
-	$(GCC_ARM) -c $<
-	$(OBJSTRIP_LINUX_ARM) $@
+tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,objstrip) $@
 
-fold_elfppc32.h: m_lx_elfppc32.o fold_elfppc32.o l_lx_elfppc32.lds
-	$(LD_PPC32) -T $(srcdir)/l_lx_elfppc32.lds -Map $T.map -o $T.bin --strip-all \
-		fold_elfppc32.o m_lx_elfppc32.o
-	$(BIN2H) $T.bin linux_elfppc32_fold $@
+tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
 
-fold_elf64amd.h: a_lx_elf64amd.o fold_elf64amd.o l_lx_elf64amd.lds amd_bxx.S
-	$(LD_AMD64) -T $(srcdir)/l_lx_elf64amd.lds -Map $T.map -o $T.bin --strip-all \
-		fold_elf64amd.o a_lx_elf64amd.o
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BIN2H) $T.bin linux_elf64amd_fold $@
 
-fold_elf32arm.h: a_lx_elf32arm.o fold_elf32arm.o l_lx_elf32arm.lds amd_bxx.S
-	$(LD_ARM) -T $(srcdir)/l_lx_elf32arm.lds -Map $T.map -o $T.bin --strip-all \
-		fold_elf32arm.o a_lx_elf32arm.o
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BIN2H) $T.bin linux_elf32arm_fold $@
+# /***********************************************************************
+# // i386-linux.elf.execve
+# ************************************************************************/
 
-fold_exec86.o: fold_exec86.asm
-	$(NASM) -f elf -o $@ $<
-	$(OBJSTRIP_LINUX_I386) $@
+# tc settings are shared with i386-linux.elf
 
-fold_exec86.h: l_lx_exec.o upx_itoa.o fold_exec86.o l_lx_exec86.lds
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_exec86.lds -Map $T.map -o $T.bin $T.o l_lx_exec.o upx_itoa.o
-	chmod a-x $T.bin
-	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386exec_fold $@
+i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
 
-fold_sh86.o: fold_sh86.asm
-	$(NASM) -f elf -o $@ $<
-	$(OBJSTRIP_LINUX_I386) $@
+i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
-fold_sh86.h: l_lx_sh.o fold_sh86.o l_lx_sh86.lds
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sh86.lds -Map $T.map -o $T.bin $T.o l_lx_sh.o
-	chmod a-x $T.bin
-	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386sh_fold $@
+tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,objstrip) $@
 
-fold_pti86.o: fold_pti86.asm
-	$(NASM) -f elf -i$(UCL_I386)/ -o $@ $<
-	$(OBJSTRIP_LINUX_I386) $@
+tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
 
-fold_pti86.h: l_lx_pti.o fold_pti86.o l_lx_pti86.lds
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_pti86.lds -Map $T.map -o $T.bin $T.o l_lx_pti.o
-	chmod a-x $T.bin
-	$(OBJSTRIP_LINUX_I386) $T.bin
-	$(STRIPELF_LINUX_I386) $T.bin
-	$(BRANDELF) $T.bin
-	$(BIN2H) $T.bin linux_i386pti_fold $@
+tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,objstrip) $@
 
-fold_machppc32.h: m_mac_mach32.o fold_machppc32.o
-	$(LD_PPC32) -Map $T.map -o $T.bin --oformat binary fold_machppc32.o m_mac_mach32.o
-	chmod a-x $T.bin
-	$(BIN2H) $T.bin fold_machppc32 $@
 
-m_mac_mach32.o: m_mac_mach32.c $(MAKEFILE_DEPS)
-	$(GCC_PPC32) -Os -c $<
-	$(OBJSTRIP_PPC32) $@
+# /***********************************************************************
+# // i386-linux.elf.interp
+# ************************************************************************/
 
-fold_machppc32.o: fold_machppc32.S ppc_bxx.S $(MAKEFILE_DEPS)
-	$(GCC_PPC32) -c $<
-	$(OBJSTRIP_PPC32) $@
+# tc settings are shared with i386-linux.elf
 
-upxb: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -f elf -i$(UCL_I386)/ -dNRV2B -o $T.o l_lx_sep86.asm
-	$(OBJSTRIP_LINUX_I386) $T.o
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	$(OBJSTRIP_LINUX_I386) $@
-	$(STRIPELF_LINUX_I386) $@
-	$(BRANDELF) $@
+i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
 
-upxd: l_lx_sep.o l_lx_sep86.asm
-	$(NASM) -f elf -i$(UCL_I386)/ -dNRV2D -o $T.o l_lx_sep86.asm
-	$(OBJSTRIP_LINUX_I386) $T.o
-	$(LD_LINUX_I386) -T $(srcdir)/l_lx_sep86.lds -Map $T.map -o $@ $T.o l_lx_sep.o
-	$(OBJSTRIP_LINUX_I386) $@
-	$(STRIPELF_LINUX_I386) $@
-	$(BRANDELF) $@
+i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
-l_armpea.h: l_armpea.S armv4_n2e_d8.S $(MAKEFILE_DEPS)
-	$(GCC_ARM) $T.S -o $T.out -nostdlib
-	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
-	$(BIN2H) $T.bin nrv_loader_arm $@
+tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,objstrip) $@
 
-l_armpet.h: l_armpet.S arm_nrv2e_d8.S arm_nrv2b_d8.S $(MAKEFILE_DEPS)
-	$(GCC_ARM_T) $T.S -o $T.out -nostdlib
-	$(OBJCOPY_LINUX_ARM) --only-section .text -O binary $T.out $T.bin
-	$(BIN2H) $T.bin nrv_loader_thumb $@
+tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+
+# /***********************************************************************
+# // i386-linux.elf.shell
+# ************************************************************************/
+
+# tc settings are shared with i386-linux.elf
+
+i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
+
+i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
+
+tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+
+# /***********************************************************************
+# // i386-linux.kernel.vmlinux
+# // i386-linux.kernel.vmlinuz
+# ************************************************************************/
+
+i386-linux.kernel.vmlin% : tc_list = i386 default
+
+i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // i386-win32.pe
+# ************************************************************************/
+
+i386-win32.pe% : tc_list = i386 default
+
+i386-win32.pe.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // m68k-atari.tos
+# ************************************************************************/
+
+m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
+
+tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
+tc.m68k-atari.tos.asm-a68k  = a68k
+
+m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
+	# call gpp_inc to generate .d file
+	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
+	$(call tc,pp-asm) -D__A68K__ $(PP_FLAGS) $< -o tmp/$T.i
+	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
+	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
+	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
+
+m68k-atari.tos-nrv2b% :        PP_FLAGS     = -DNRV2B
+m68k-atari.tos-nrv2d% :        PP_FLAGS     = -DNRV2D
+m68k-atari.tos-nrv2e% :        PP_FLAGS     = -DNRV2E
+m68k-atari.tos-nrv2%.small.h : PP_FLAGS    += -DSMALL
+m68k-atari.tos-nrv2b% :        IDENT_PREFIX = nrv2b_
+m68k-atari.tos-nrv2d% :        IDENT_PREFIX = nrv2d_
+m68k-atari.tos-nrv2e% :        IDENT_PREFIX = nrv2e_
+m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
+
+
+# /***********************************************************************
+# // mipsel.r3000-ps1-boot
+# // mipsel.r3000-ps1-console
+# ************************************************************************/
+
+mipsel.r3000-ps1-%.h : tc_list = mipsel.r3000-ps1 default
+
+tc.mipsel.r3000-ps1.app-asm5900 = perl -w $(srcdir)/src/arch/mips/mipsel.r3000/app-asm5900.pl
+tc.mipsel.r3000-ps1.asm5900     = asm5900
+
+mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
+	# call gpp_inc to generate .d file
+	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
+	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
+	$(call tc,app-asm5900) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,asm5900) --nologo -q -ltmp/$T.bin.lst tmp/$T.tmp2 -otmp/$T.bin
+	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
+
+mipsel.r3000-ps1-boot.h:    PP_FLAGS  += -DCDBOOT
+mipsel.r3000-ps1-boot.h:    IDENT_NAME = nrv_boot_loader
+mipsel.r3000-ps1-console.h: IDENT_NAME = nrv_con_loader
+
+
+# /***********************************************************************
+# // powerpc-linux.elf
+# ************************************************************************/
+
+powerpc-linux.elf% : tc_list = powerpc-linux.elf default
+
+tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
+tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
+tc.powerpc-linux.elf.objstrip = $(tc.powerpc-linux.elf.objcopy) -R .comment -R .note
+
+powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elfppc32_loader tmp/$T.bin $@
+
+powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+##	$(call tc,stripelf) tmp/$T.bin ## FIXME / TODO
+	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
+
+tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,objstrip) $@
+
+
+# /***********************************************************************
+# // powerpc-darwin.macho
+# ************************************************************************/
+
+powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
+
+powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
+	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
+
+powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
+	$(call tc,ld) --oformat binary -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+##	$(call tc,stripelf) tmp/$T.bin ## FIXME / TODO
+	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
+
+tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,objstrip) $@
 
 
 # /***********************************************************************
 # // dependencies
 # ************************************************************************/
 
--include *.d
-
-DEPS1 = header.ash macros.ash ident.ash ident_n.ash ident_s.ash
-DEPS2 = header.asy macros.asy
-DEPS3 = n2b_d32.asy n2d_d32.asy n2e_d32.asy cl1_d32.asy
-
-$(STUBS):       $(srcdir)/scripts/bin2h.pl
-
-l_armpe.h:      $(DEPS2) $(DEPS3)
-l_com.h:        n2b_d16.asy  $(DEPS2)
-l_djgpp2.h:     $(DEPS2) $(DEPS3)
-l_exe.h:        n2b_d8e.asy  n2d_d8e.asy  n2e_d8e.asy  $(DEPS2)
-l_sys.h:        n2b_d16.asy  $(DEPS2)
-l_t_n2b.h:      n2b_d.ash    bits.ash  $(DEPS1) ../version.h
-l_t_n2bs.h:     n2b_d.ash    bits.ash  $(DEPS1) ../version.h
-l_t_n2d.h:      n2d_d.ash    bits.ash  $(DEPS1) ../version.h
-l_t_n2ds.h:     n2d_d.ash    bits.ash  $(DEPS1) ../version.h
-l_t_n2e.h:      n2e_d.ash    bits.ash  $(DEPS1) ../version.h
-l_t_n2es.h:     n2e_d.ash    bits.ash  $(DEPS1) ../version.h
-l_tmt.h:        $(DEPS2) $(DEPS3)
-l_vmlinz.h:     $(DEPS2) $(DEPS3)
-l_vmlinx.h:     $(DEPS2) $(DEPS3)
-l_vxd.h:        $(DEPS2) $(DEPS3)
-l_wcle.h:       $(DEPS2) $(DEPS3)
-l_w32pe.h:      $(DEPS2) $(DEPS3)
-
-l_lx_elf86.h:   l_lx_elf86.asm  macros.ash macros.asy $(DEPS3)
-l_lx_exec86.h:  l_lx_exec86.asm macros.ash macros.asy $(DEPS3)
-l_lx_pti86.h:   l_lx_pti86.asm  macros.ash macros.asy $(DEPS3)
-l_lx_sh86.h:    l_lx_sh86.asm   macros.ash macros.asy $(DEPS3)
+# FIXME: we want a dependency-only-prerequisite here
+##$(STUBS): | tmp/.tmp-stamp
+##$(STUBS): $(MAKEFILE_LIST)
+-include tmp/*.d
 
 
-# FIXME: what is this ???
-upxrun: start-interp.o interp.o
-	gcc -nostartfiles -nostdlib -o $@ -Ttext=0x10000 $^
-start-interp.o: start-interp.S
-	gcc -c $<
-interp.o: interp.c
-	gcc -c -g $<
+# /***********************************************************************
+# // debug
+# ************************************************************************/
+
+define debug-diff
+	-diff $(HOME)/p/compress/upx/680c27309177-upx.hg/src/stub/$2 $1
+endef
+
+debug-diff: $(STUBS)
+	$(call debug-diff,amd64-linux.elf-entry.h,l_lx_elf64amd.h)
+	$(call debug-diff,amd64-linux.elf-fold.h,fold_elf64amd.h)
+	$(call debug-diff,arm-linux.elf-entry.h,l_lx_elf32arm.h)
+	$(call debug-diff,arm-linux.elf-fold.h,fold_elf32arm.h)
+	$(call debug-diff,arm.v4a-wince.pe.h,l_armpea.h)
+	$(call debug-diff,arm.v4t-wince.pe.h,l_armpet.h)
+	$(call debug-diff,i086-dos16.com.h,l_com.h)
+	$(call debug-diff,i086-dos16.exe.h,l_exe.h)
+	$(call debug-diff,i086-dos16.sys.h,l_sys.h)
+	$(call debug-diff,i386-dos32.djgpp2.h,l_djgpp2.h)
+	$(call debug-diff,i386-dos32.djgpp2-stubify.h,stubify.h)
+	$(call debug-diff,i386-dos32.tmt.h,l_tmt.h)
+	$(call debug-diff,i386-dos32.watcom.le.h,l_wcle.h)
+	$(call debug-diff,i386-linux.elf-entry.h,l_lx_elf86.h)
+	$(call debug-diff,i386-linux.elf-fold.h,fold_elf86.h)
+	$(call debug-diff,i386-linux.elf.execve-entry.h,l_lx_exec86.h)
+	$(call debug-diff,i386-linux.elf.execve-fold.h,fold_exec86.h)
+	$(call debug-diff,i386-linux.elf.interp-entry.h,l_lx_pti86.h)
+	$(call debug-diff,i386-linux.elf.interp-fold.h,fold_pti86.h)
+	$(call debug-diff,i386-linux.elf.shell-entry.h,l_lx_sh86.h)
+	$(call debug-diff,i386-linux.elf.shell-fold.h,fold_sh86.h)
+	$(call debug-diff,i386-linux.kernel.vmlinux.h,l_vmlinx.h)
+	$(call debug-diff,i386-linux.kernel.vmlinuz.h,l_vmlinz.h)
+	$(call debug-diff,i386-win32.pe.h,l_w32pe.h)
+	$(call debug-diff,m68k-atari.tos-nrv2b.h,l_t_n2b.h)
+	$(call debug-diff,m68k-atari.tos-nrv2b.small.h,l_t_n2bs.h)
+	$(call debug-diff,m68k-atari.tos-nrv2d.h,l_t_n2d.h)
+	$(call debug-diff,m68k-atari.tos-nrv2d.small.h,l_t_n2ds.h)
+	$(call debug-diff,m68k-atari.tos-nrv2e.h,l_t_n2e.h)
+	$(call debug-diff,m68k-atari.tos-nrv2e.small.h,l_t_n2es.h)
+	$(call debug-diff,mipsel.r3000-ps1-boot.h,l_ps1b.h)
+	$(call debug-diff,mipsel.r3000-ps1-console.h,l_ps1c.h)
+	$(call debug-diff,powerpc-darwin.macho-entry.h,l_mac_ppc32.h)
+	$(call debug-diff,powerpc-darwin.macho-fold.h,fold_machppc32.h)
+	$(call debug-diff,powerpc-linux.elf-entry.h,l_lx_elfppc32.h)
+	$(call debug-diff,powerpc-linux.elf-fold.h,fold_elfppc32.h)
+
 
 # vi:nowrap

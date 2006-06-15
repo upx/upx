@@ -37,9 +37,9 @@
 #include "p_ps1.h"
 
 static const
-#include "stub/l_ps1b.h"
+#include "stub/mipsel.r3000-ps1-boot.h"
 static const
-#include "stub/l_ps1c.h"
+#include "stub/mipsel.r3000-ps1-console.h"
 
 
 #define MIPS_HI(a)          ((a) >> 16)

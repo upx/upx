@@ -34,17 +34,17 @@
 #include "p_tos.h"
 
 static const
-#include "stub/l_t_n2b.h"
+#include "stub/m68k-atari.tos-nrv2b.h"
 static const
-#include "stub/l_t_n2bs.h"
+#include "stub/m68k-atari.tos-nrv2b.small.h"
 static const
-#include "stub/l_t_n2d.h"
+#include "stub/m68k-atari.tos-nrv2d.h"
 static const
-#include "stub/l_t_n2ds.h"
+#include "stub/m68k-atari.tos-nrv2d.small.h"
 static const
-#include "stub/l_t_n2e.h"
+#include "stub/m68k-atari.tos-nrv2e.h"
 static const
-#include "stub/l_t_n2es.h"
+#include "stub/m68k-atari.tos-nrv2e.small.h"
 
 // #define TESTING
 

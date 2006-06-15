@@ -1,14 +1,11 @@
 #! /usr/bin/env python
-# -*- coding: iso-8859-1 -*-
-# vi:ts=4:et
+## vim:set ts=4 sw=4 et: -*- coding: utf-8 -*-
 #
 #  bin2h.py --
 #
 #  This file is part of the UPX executable compressor.
 #
 #  Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
-#  Copyright (C) 1996-2006 Laszlo Molnar
-#  Copyright (C) 2000-2006 John F. Reiser
 #  All Rights Reserved.
 #
 #  UPX and the UCL library are free software; you can redistribute them
@@ -31,7 +28,13 @@
 #
 
 
-import os, sys, zlib
+import getopt, os, re, sys, zlib
+
+
+class opts:
+    dry_run = 0
+    ident = None
+    verbose = 0
 
 
 def w_header(w, ifile, ofile, n):
@@ -91,11 +94,19 @@ def w_data(w, data):
 
 
 def main(argv):
-    ifile = argv[1]
-    ident = argv[2]
-    ofile = argv[3]
+    shortopts, longopts = "qv", ["dry-run", "ident=", "quiet", "verbose"]
+    xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
+    for opt, optarg in xopts:
+        if 0: pass
+        elif opt in ["-q", "--quiet"]: opts.verbose = opts.verbose - 1
+        elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
+        elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
+        elif opt in ["--ident"]: opts.ident = optarg
+        else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
 
-    opt_q = len(argv) >= 5
+    assert len(args) == 2
+    ifile = args[0]
+    ofile = args[1]
 
     # check file size
     st = os.stat(ifile)
@@ -117,12 +128,14 @@ def main(argv):
     # write ofile
     fp = open(ofile, "wb")
     w = fp.write
-    if not opt_q:
+    if opts.verbose >= 0:
         w_header(w, ifile, ofile, len(data))
-    w_checksum(w, ident.upper(), data)
-    w("unsigned char %s[%d] = {\n" % (ident, len(data)))
+    if opts.ident:
+        w_checksum(w, opts.ident.upper(), data)
+        w("unsigned char %s[%d] = {\n" % (opts.ident, len(data)))
     w_data(w, data)
-    w("};\n")
+    if opts.ident:
+        w("};\n")
     fp.close()
 
 

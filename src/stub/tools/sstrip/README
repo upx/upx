@@ -1,0 +1,40 @@
+sstrip is a small utility that removes the contents at the end of an
+ELF file that are not part of the program's memory image.
+
+Most ELF executables are built with both a program header table and a
+section header table. However, only the former is required in order
+for the OS to load, link and execute a program. sstrip attempts to
+extract the ELF header, the program header table, and its contents,
+leaving everything else in the bit bucket. It can only remove parts of
+the file that occur at the end, after the parts to be saved. However,
+this almost always includes the section header table, and occasionally
+a few random sections that are not used when running a program.
+
+It should be noted that the GNU bfd library is (understandably)
+dependent on the section header table as an index to the file's
+contents. Thus, an executable file that has no section header table
+cannot be used with gdb, objdump, or any other program based upon the
+bfd library, at all. In fact, the program will not even recognize the
+file as a valid executable. (This limitation is noted in the source
+code comments for bfd, and is marked "FIXME", so this may change at
+some future date. However, I would imagine that it is a pretty
+low-priority item, as executables without a section header table are
+rare in the extreme.) This probably also explains why strip doesn't
+offer the option to do this.
+
+Shared library files may also have their section header table removed.
+Such a library will still function; however, it will no longer be
+possible for a compiler to link a new program against it.
+
+As an added bonus, sstrip also tries to removes trailing zero bytes
+from the end of the file. (This normally cannot be done with an
+executable that has a section header table.)
+
+sstrip is a very simplistic program. It depends upon the common
+practice of putting the parts of the file that contribute to the
+memory image at the front, and the remaining material at the end. This
+permits it to discard the latter material without affecting file
+offsets and memory addresses in what remains. Of course, the ELF
+standard permits files to be organized in almost any order, so if a
+pathological linker decided to put its section headers at the top,
+sstrip would be useless on such executables.

@@ -33,7 +33,7 @@
 #include "p_exe.h"
 
 static const
-#include "stub/l_exe.h"
+#include "stub/i086-dos16.exe.h"
 
 #define RSFCRI          4096    // Reserved Space For Compressed Relocation Info
 #define MAXMATCH        0x2000

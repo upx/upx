@@ -39,7 +39,7 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
-#include "p_lx_sep.h"
+//#include "p_lx_sep.h"
 #include "p_lx_sh.h"
 #include "p_lx_interp.h"
 #include "p_sys.h"

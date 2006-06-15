@@ -1,0 +1,73 @@
+This distribution is a collection of programs that are generally
+unrelated, except in that they all deal with the ELF file format.
+
+The main purpose of these programs is to be illustrative and
+educational -- to help fellow programmers understand the ELF file
+format and something of how it works under the Linux platform. For the
+most part, these programs have limited real-world utility. (Although I
+myself have found some of these programs quite useful while writing
+the others.)
+
+Each program is independent. There is no shared code between them, and
+in fact they all take slightly different approaches to handling ELF
+files.
+
+The table of contents:
+
+sstrip/
+  sstrip is a small utility that removes everything from an ELF file
+  that is not part of the file's memory image.
+
+rebind/
+  rebind is another small utility that alters the binding of selected
+  exported symbols in an ELF object file.
+
+elfls/
+  elfls is a utility that displays an ELF file's program and/or
+  section header tables, which serve as a kind of global roadmap to
+  the file's contents.
+
+elftoc/
+  elftoc takes an ELF file and generates C code that defines a
+  structure with the same memory image, using the structures and
+  preprocessor symbols defined in <linux/elf.h>.
+
+ebfc/
+  ebfc is a compiler for a tiny programming language. The compiler can
+  generate ELF executables, object files, and shared libraries.
+
+tiny/
+  This directory contains a collection of very small ELF executables.
+
+See the README in each directory for more details.
+
+The ELF standard is necessary reading if you wish to fully understand
+how all of the programs work. You can download a copy as a Postscript
+document from ftp://tsx.mit.edu/pub/linux/packages/GCC/ELF.doc.tar.gz.
+Alternately, you can obtain a flat-text transcription of this document
+from http://www.muppetlabs.com/~breadbox/software/ELF.txt.
+
+    These programs are Copyright (C) 1999-2001 by Brian Raiter.
+
+    These programs are all free software; you can redistribute and/or
+    modify them under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of the
+    License, or (at your option) any later version.
+
+    These programs are distributed in the hope that they will be
+    interesting, but without any warranty; without even the implied
+    warranty of merchantability or fitness for a particular purpose.
+    See the GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program, in the file COPYING. If not, write to the
+    Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+    Boston, MA 02111-1307 USA.
+
+Bug reports and general feedback should be directed to the author at
+breadbox@muppetlabs.com.
+
+Share and enjoy.
+
+Brian Raiter
+breadbox@muppetlabs.com

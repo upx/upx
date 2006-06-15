@@ -33,7 +33,7 @@
 #include "p_w32pe.h"
 
 static const
-#include "stub/l_w32pe.h"
+#include "stub/i386-win32.pe.h"
 
 #define IDSIZE(x)       ih.ddirs[x].size
 #define IDADDR(x)       ih.ddirs[x].vaddr
