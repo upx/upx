@@ -37,9 +37,26 @@ class opts:
     fatal = 1
     includes = []
     mode = "c"
+    target_mf = None
+    target_mmd = None
 
 
-included_files = {}
+files_md = []
+files_mmd = []
+files_st = {}
+
+def add_dep(state, fn, mode):
+    if mode:
+        files = files_md
+    else:
+        files = files_mmd
+    fn = os.path.normpath(fn)
+    fn = os.path.normcase(fn)
+    if fn in files:
+        return
+    # FIXME: could use samestat() etc.
+    files.append(fn)
+    files_st[fn] = os.stat(fn)
 
 
 def not_found(l, s, state):
@@ -53,18 +70,20 @@ def handle_inc_c(l, state, ofp):
     if not m:
         return l
     s = m.group(1).strip()
-    if len(s) < 3 or s[0] != s[-1]:
+    # FIXME: strip comments ?
+    if len(s) < 3:
         return not_found(l, s, state)
-    if s[0] == '<':
+    if s[0] == '<' and s[-1] == '>':
         dirs = opts.includes
-    elif s[0] == '"':
+    elif s[0] == '"' and s[-1] == '"':
         dirs = [state[1]] + opts.includes
     else:
-        assert 0
+        raise Exception, "syntax error: include line " + l
     inc = s[1:-1]
     for dir in dirs:
         fn = os.path.join(dir, inc)
         if os.path.isfile(fn):
+            add_dep(state, fn, s[0] == '<')
             handle_file(fn, ofp, state)
             return None
     return not_found(l, s, state)
@@ -75,13 +94,21 @@ def handle_inc_nasm(l, state, ofp):
     if not m:
         return l
     s = m.group(1).strip()
-    if len(s) < 3 or s[0] != s[-1]:
+    # FIXME: strip comments ?
+    if len(s) < 3:
         return not_found(l, s, state)
+    if s[0] == '<' and s[-1] == '>':
+        pass
+    elif s[0] == '"' and s[-1] == '"':
+        pass
+    else:
+        raise Exception, "syntax error: include line " + l
     inc = s[1:-1]
     # info: nasm simply does concat the includes
     for prefix in opts.includes + [""]:
         fn = prefix + inc
         if os.path.isfile(fn):
+            add_dep(state, fn, False)
             handle_file(fn, ofp, state)
             return None
     return not_found(l, s, state)
@@ -103,7 +130,7 @@ def handle_file(ifn, ofp, parent_state=None):
 
 def main(argv):
     ofile = None
-    shortopts, longopts = "qvI::o::", ["dry-run", "mode=", "quiet", "verbose"]
+    shortopts, longopts = "qvI:o:", ["dry-run", "MF=", "MMD=", "mode=", "quiet", "verbose"]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
     for opt, optarg in xopts:
         if 0: pass
@@ -113,6 +140,8 @@ def main(argv):
         elif opt in ["-I"]: opts.includes.append(optarg)
         elif opt in ["-o"]: ofile = optarg
         elif opt in ["--mode"]: opts.mode = optarg.lower()
+        elif opt in ["--MF"]: opts.target_mf = optarg
+        elif opt in ["--MMD"]: opts.target_mmd = optarg
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
 
     if ofile is None:
@@ -126,6 +155,23 @@ def main(argv):
     assert os.path.isfile(ifile)
     ofp = open(ofile, "wb")
     handle_file(ifile, ofp)
+    ofp.close()
+
+    if opts.target_mmd:
+        fn = ofile + ".d"
+        if opts.target_mf:
+            fn = opts.target_mf
+        if os.path.isfile(fn):
+            os.unlink(fn)
+        if files_mmd:
+            fp = open(fn, "wb")
+            fp.write("%s : \\\n" % opts.target_mmd)
+            for i, f in enumerate(files_mmd):
+                if i < len(files_mmd) - 1:
+                    fp.write("  %s \\\n" % f)
+                else:
+                    fp.write("  %s\n" % f)
+            fp.close()
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ src/compress_nrv*
 src/*.rc
 
 stub/MMakefile
-stub/tmp
+stub/tmp*
 stub/.*stamp
 
 stub/tools/armpe/armpe_tester

@@ -234,7 +234,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 i086-dos16.com% : tc_list = i086 default
 
 i086-dos16.com.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
@@ -247,7 +247,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.asm
 i086-dos16.exe% : tc_list = i086 default
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -260,7 +260,7 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 i086-dos16.sys% : tc_list = i086 default
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
@@ -273,7 +273,7 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 i386-dos32.djgpp2% : tc_list = i386 default
 
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -290,7 +290,7 @@ i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 i386-dos32.tmt% : tc_list = i386 default
 
 i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -303,7 +303,7 @@ i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
 i386-dos32.watcom.le% : tc_list = i386 default
 
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -356,7 +356,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 # tc settings are shared with i386-linux.elf
 
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
@@ -388,7 +388,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
 # tc settings are shared with i386-linux.elf
 
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
@@ -416,7 +416,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 # tc settings are shared with i386-linux.elf
 
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
@@ -445,7 +445,7 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 i386-linux.kernel.vmlin% : tc_list = i386 default
 
 i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -458,7 +458,7 @@ i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
 i386-win32.pe% : tc_list = i386 default
 
 i386-win32.pe.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
@@ -474,6 +474,8 @@ tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
 tc.m68k-atari.tos.asm-a68k  = a68k
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
+	# call gpp_inc to generate .d file
+	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-asm) -D__A68K__ $(PP_FLAGS) $< -o tmp/$T.i
 	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
 	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
@@ -500,6 +502,8 @@ tc.mipsel.r3000-ps1.app-asm5900 = perl -w $(srcdir)/src/arch/mips/mipsel.r3000/a
 tc.mipsel.r3000-ps1.asm5900     = asm5900
 
 mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
+	# call gpp_inc to generate .d file
+	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,app-asm5900) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,asm5900) --nologo -q -ltmp/$T.bin.lst tmp/$T.tmp2 -otmp/$T.bin
@@ -574,7 +578,7 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 
 ##$(STUBS): tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
--include *.d tmp/*.d
+-include tmp/*.d
 
 
 # /***********************************************************************
