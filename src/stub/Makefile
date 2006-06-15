@@ -79,19 +79,19 @@ tmp/.tmp-stamp:
 .all-stamp: $(STUBS)
 	@echo "timestamp" > $@
 
+ifeq ($(wildcard .all-stamp),)
+mostlyclean clean: distclean
+else
+mostlyclean clean: maintainer-clean
+endif
 distclean:
 	rm -f .*-stamp
 	rm -rf tmp
 maintainer-clean:
 	rm -f *.h
 	rm -rf tmp
-ifeq ($(wildcard .all-stamp),)
-mostlyclean clean: distclean
-else
-mostlyclean clean: maintainer-clean
-endif
 
-.PHONY: default all stubs mostlyclean clean distclean maintainer-clean
+.PHONY: default all mostlyclean clean distclean maintainer-clean
 
 
 # util var for use in the rules - basename of the current target
@@ -125,7 +125,7 @@ tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 # error sentinel for missing commands
 __tc_FALSE   = false tc_FALSE: '$@' '$<'
 # enumerate all variables that will get tested (from basename and $tc_list)
-__tc_varlist = tc.$(basename $@).$1 $(foreach __tc_tmp,$(tc_list),tc.$(__tc_tmp).$1)
+__tc_varlist = tc.$(basename $(notdir $@)).$1 $(foreach __tc_tmp,$(tc_list),tc.$(__tc_tmp).$1)
 # return the _name_ of the first variable that is not empty
 __tc_varname = $(firstword $(foreach __tc_vn,$2,$(if $($(__tc_vn)),$(__tc_vn),)) __tc_FALSE)
 # expand the first variable that is not empty
@@ -576,7 +576,8 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 # // dependencies
 # ************************************************************************/
 
-##$(STUBS): tmp/.tmp-stamp
+# FIXME: we want a dependency-only-prerequisite here
+##$(STUBS): | tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
 -include tmp/*.d
 
