@@ -15,6 +15,11 @@ all mostlyclean clean distclean maintainer-clean:
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
 	# this needs special build tools
 	$(MAKE) -C src/stub $@
+else
+ifneq ($(wildcard $(HOME)/bin/bin-upx),)
+	# this needs special build tools
+	$(MAKE) -C src/stub $@
+endif
 endif
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
