@@ -9,10 +9,12 @@
 
 MAKEFLAGS += -rR
 .SUFFIXES:
+.SECONDEXPANSION:
 export SHELL = /bin/sh
 
-# GNU make 3.81
-.SECONDEXPANSION:
+ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
+$(error GNU make 3.81 or better is required)
+endif
 
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
@@ -125,14 +127,14 @@ tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 
 # slightly tricky make stuff follows
 
+# enumerate the names of all variables that will get tested (from basename and $(tc_list))
+__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach __tc_varlist_tmp,$(tc_list),tc.$(__tc_varlist_tmp).$1)
+# return the name of the first variable that is not empty
+__tc_varsearch = $(firstword $(foreach __tc_varsearch_tmp,$1,$(if $($(__tc_varsearch_tmp)),$(__tc_varsearch_tmp),)))
 # error sentinel for missing commands
 __tc_FALSE     = false tc_FALSE: '$1' '$@' '$<'
-# enumerate all variables that will get tested (from basename and $(tc_list))
-__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach __tc_varlist_tmp,$(tc_list),tc.$(__tc_varlist_tmp).$1)
-# return the _name_ of the first variable that is not empty
-__tc_varsearch = $(firstword $(foreach __tc_varsearch_tmp,$2,$(if $($(__tc_varsearch_tmp)),$(__tc_varsearch_tmp),)) $3)
 # expand the first variable that is not empty
-tc             = $($(call __tc_varsearch,$1,$(call __tc_varlist,$1),__tc_FALSE))
+tc             = $($(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE))
 
 
 # clear some vars, just in case
@@ -523,7 +525,7 @@ mipsel.r3000-ps1-console.h: IDENT_NAME = nrv_con_loader
 
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 
-tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -mcpu=750 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -mcpu=405 -nostdinc -MMD
 tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
@@ -538,7 +540,7 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-##	$(call tc,sstrip) tmp/$T.bin ## FIXME / TODO
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
 
 tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -554,6 +556,7 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // powerpc-darwin.macho
 # ************************************************************************/
 
+# info: we use the tc settings from powerpc-linux.elf
 powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
 
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
@@ -564,7 +567,6 @@ powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
 	$(call tc,ld) --oformat binary -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-##	$(call tc,sstrip) tmp/$T.bin ## FIXME / TODO
 	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
 
 tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
@@ -584,53 +586,6 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 ##$(STUBS): | tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
 -include tmp/*.d
-
-
-# /***********************************************************************
-# // debug
-# ************************************************************************/
-
-define debug-diff
-	-diff $(HOME)/p/compress/upx/680c27309177-upx.hg/src/stub/$2 $1
-endef
-
-debug-diff: all
-	$(call debug-diff,amd64-linux.elf-entry.h,l_lx_elf64amd.h)
-	$(call debug-diff,amd64-linux.elf-fold.h,fold_elf64amd.h)
-	$(call debug-diff,arm-linux.elf-entry.h,l_lx_elf32arm.h)
-	$(call debug-diff,arm-linux.elf-fold.h,fold_elf32arm.h)
-	$(call debug-diff,arm.v4a-wince.pe.h,l_armpea.h)
-	$(call debug-diff,arm.v4t-wince.pe.h,l_armpet.h)
-	$(call debug-diff,i086-dos16.com.h,l_com.h)
-	$(call debug-diff,i086-dos16.exe.h,l_exe.h)
-	$(call debug-diff,i086-dos16.sys.h,l_sys.h)
-	$(call debug-diff,i386-dos32.djgpp2.h,l_djgpp2.h)
-	$(call debug-diff,i386-dos32.djgpp2-stubify.h,stubify.h)
-	$(call debug-diff,i386-dos32.tmt.h,l_tmt.h)
-	$(call debug-diff,i386-dos32.watcom.le.h,l_wcle.h)
-	$(call debug-diff,i386-linux.elf-entry.h,l_lx_elf86.h)
-	$(call debug-diff,i386-linux.elf-fold.h,fold_elf86.h)
-	$(call debug-diff,i386-linux.elf.execve-entry.h,l_lx_exec86.h)
-	$(call debug-diff,i386-linux.elf.execve-fold.h,fold_exec86.h)
-	$(call debug-diff,i386-linux.elf.interp-entry.h,l_lx_pti86.h)
-	$(call debug-diff,i386-linux.elf.interp-fold.h,fold_pti86.h)
-	$(call debug-diff,i386-linux.elf.shell-entry.h,l_lx_sh86.h)
-	$(call debug-diff,i386-linux.elf.shell-fold.h,fold_sh86.h)
-	$(call debug-diff,i386-linux.kernel.vmlinux.h,l_vmlinx.h)
-	$(call debug-diff,i386-linux.kernel.vmlinuz.h,l_vmlinz.h)
-	$(call debug-diff,i386-win32.pe.h,l_w32pe.h)
-	$(call debug-diff,m68k-atari.tos-nrv2b.h,l_t_n2b.h)
-	$(call debug-diff,m68k-atari.tos-nrv2b.small.h,l_t_n2bs.h)
-	$(call debug-diff,m68k-atari.tos-nrv2d.h,l_t_n2d.h)
-	$(call debug-diff,m68k-atari.tos-nrv2d.small.h,l_t_n2ds.h)
-	$(call debug-diff,m68k-atari.tos-nrv2e.h,l_t_n2e.h)
-	$(call debug-diff,m68k-atari.tos-nrv2e.small.h,l_t_n2es.h)
-	$(call debug-diff,mipsel.r3000-ps1-boot.h,l_ps1b.h)
-	$(call debug-diff,mipsel.r3000-ps1-console.h,l_ps1c.h)
-	$(call debug-diff,powerpc-darwin.macho-entry.h,l_mac_ppc32.h)
-	$(call debug-diff,powerpc-darwin.macho-fold.h,fold_machppc32.h)
-	$(call debug-diff,powerpc-linux.elf-entry.h,l_lx_elfppc32.h)
-	$(call debug-diff,powerpc-linux.elf-fold.h,fold_elfppc32.h)
 
 
 # vi:ts=8:nowrap
