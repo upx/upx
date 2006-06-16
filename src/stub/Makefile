@@ -29,8 +29,10 @@ endif
 # //
 # ************************************************************************/
 
-srcdir = .
-top_srcdir = ../..
+ifndef srcdir
+srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+endif
 
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
