@@ -13,8 +13,7 @@ default:
 
 all mostlyclean clean distclean maintainer-clean:
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
-	# these need special build tools
-	$(MAKE) -C src/stub/util/sstrip $@
+	# this needs special build tools
 	$(MAKE) -C src/stub $@
 endif
 	$(MAKE) -C src $@
