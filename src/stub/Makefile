@@ -128,9 +128,9 @@ tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 # slightly tricky make stuff follows
 
 # enumerate the names of all variables that will get tested (from basename and $(tc_list))
-__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach __tc_varlist_tmp,$(tc_list),tc.$(__tc_varlist_tmp).$1)
+__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach v,$(tc_list),tc.$v.$1)
 # return the name of the first variable that is not empty
-__tc_varsearch = $(firstword $(foreach __tc_varsearch_tmp,$1,$(if $($(__tc_varsearch_tmp)),$(__tc_varsearch_tmp),)))
+__tc_varsearch = $(firstword $(foreach v,$1,$(if $($v),$v,)))
 # error sentinel for missing commands
 __tc_FALSE     = false tc_FALSE: '$1' '$@' '$<'
 # expand the first variable that is not empty
@@ -157,7 +157,7 @@ tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
 tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
-tc.amd64-linux.elf.objstrip = $(tc.amd64-linux.elf.objcopy) -R .comment -R .note
+tc.amd64-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.o
@@ -190,7 +190,7 @@ tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
 tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
-tc.arm-linux.elf.objstrip = $(tc.arm-linux.elf.objcopy) -R .comment -R .note
+tc.arm-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -nostdlib $< -o tmp/$T.out
@@ -330,7 +330,7 @@ tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
 tc.i386-linux.elf.ld       = i386-linux-ld-2.16.1
 tc.i386-linux.elf.objcopy  = i386-linux-objcopy-2.16.1
-tc.i386-linux.elf.objstrip = $(tc.i386-linux.elf.objcopy) -R .comment -R .note
+tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
@@ -530,7 +530,7 @@ tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
 tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
-tc.powerpc-linux.elf.objstrip = $(tc.powerpc-linux.elf.objcopy) -R .comment -R .note
+tc.powerpc-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.o
