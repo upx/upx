@@ -21,7 +21,8 @@ ifeq ($(firstword $(CXX)),g++)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
-CXXFLAGS += -O2 -MMD
+#CXXFLAGS += -O2 -MMD
+CXXFLAGS += -g -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
