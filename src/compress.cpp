@@ -29,6 +29,7 @@
 #include "conf.h"
 #include "compress.h"
 #include "mem.h"
+#include <zlib.h>
 
 
 /*************************************************************************
@@ -40,25 +41,31 @@ unsigned upx_adler32(const void *buf, unsigned len, unsigned adler)
     if (len == 0)
         return adler;
     assert(buf != NULL);
-#if defined(WITH_UCL)
-    return ucl_adler32(adler, (const ucl_bytep)buf, len);
+#if 0
+    return adler32(adler, (const Bytef *) buf, len); // zlib
+#elif defined(WITH_UCL)
+    return ucl_adler32(adler, (const ucl_bytep) buf, len);
 #else
 #  error
 #endif
 }
 
 
+#if 0 /* UNUSED */
 unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
 {
     if (len == 0)
         return crc;
     assert(buf != NULL);
-#if defined(WITH_UCL)
-    return ucl_crc32(crc, (const ucl_bytep)buf, len);
+#if 0
+    return crc32(crc, (const Bytef *) buf, len); // zlib
+#elif defined(WITH_UCL)
+    return ucl_crc32(crc, (const ucl_bytep) buf, len);
 #else
 #  error
 #endif
 }
+#endif /* UNUSED */
 
 
 /*************************************************************************
