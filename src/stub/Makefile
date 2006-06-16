@@ -9,14 +9,19 @@
 
 MAKEFLAGS += -rR
 .SUFFIXES:
+.SECONDEXPANSION:
 export SHELL = /bin/sh
 
-# GNU make 3.81
-.SECONDEXPANSION:
+ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
+$(error GNU make 3.81 or better is required)
+endif
 
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
+endif
+ifneq ($(wildcard $(HOME)/bin/bin-upx),)
+export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 
 
@@ -74,7 +79,7 @@ endif
 
 all: tmp/.tmp-stamp .all-stamp
 tmp/.tmp-stamp:
-	@mkdir -p tmp
+	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
 .all-stamp: $(STUBS)
 	@echo "timestamp" > $@
@@ -113,7 +118,7 @@ tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
-tc.default.stripelf   = sstrip
+tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
 tc.i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
@@ -122,14 +127,14 @@ tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 
 # slightly tricky make stuff follows
 
+# enumerate the names of all variables that will get tested (from basename and $(tc_list))
+__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach __tc_varlist_tmp,$(tc_list),tc.$(__tc_varlist_tmp).$1)
+# return the name of the first variable that is not empty
+__tc_varsearch = $(firstword $(foreach __tc_varsearch_tmp,$1,$(if $($(__tc_varsearch_tmp)),$(__tc_varsearch_tmp),)))
 # error sentinel for missing commands
-__tc_FALSE   = false tc_FALSE: '$@' '$<'
-# enumerate all variables that will get tested (from basename and $tc_list)
-__tc_varlist = tc.$(basename $(notdir $@)).$1 $(foreach __tc_tmp,$(tc_list),tc.$(__tc_tmp).$1)
-# return the _name_ of the first variable that is not empty
-__tc_varname = $(firstword $(foreach __tc_vn,$2,$(if $($(__tc_vn)),$(__tc_vn),)) __tc_FALSE)
+__tc_FALSE     = false tc_FALSE: '$1' '$@' '$<'
 # expand the first variable that is not empty
-tc           = $($(call __tc_varname,$1,$(call __tc_varlist,$1)))
+tc             = $($(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE))
 
 
 # clear some vars, just in case
@@ -148,6 +153,7 @@ IDENT_SUFFIX =
 amd64-linux.elf% : tc_list = amd64-linux.elf default
 
 tc.amd64-linux.elf.gcc      = x86_64-unknown-linux-gnu-gcc-3.4.4 -m64 -nostdinc -MMD
+tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
 tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
@@ -161,7 +167,7 @@ amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf64amd_fold tmp/$T.bin $@
 
 tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -169,7 +175,7 @@ tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,objstrip) $@
 
 tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,objstrip) $@
 
 
@@ -180,6 +186,7 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 
 tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
 tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
@@ -192,7 +199,7 @@ arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
 
 tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -200,7 +207,7 @@ tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,objstrip) $@
 
 tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,objstrip) $@
 
 
@@ -209,12 +216,9 @@ tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // arm.v4t-wince.pe
 # ************************************************************************/
 
-arm.v4a-wince.pe% : tc_list = arm.v4a-wince.pe arm-wince.pe default
-arm.v4t-wince.pe% : tc_list = arm.v4t-wince.pe arm-wince.pe default
-
-tc.arm-wince.pe.gcc     = arm-9tdmi-linux-gnu-gcc-3.4.5 -nostdinc -MMD
-tc.arm-wince.pe.gcc    += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.arm-wince.pe.objcopy = arm-9tdmi-linux-gnu-objcopy
+# info: we use the tc settings from arm-linux.elf
+arm.v4a-wince.pe% : tc_list = arm-linux.elf default
+arm.v4t-wince.pe% : tc_list = arm-linux.elf default
 
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -nostdlib $< -o tmp/$T.out
@@ -316,6 +320,7 @@ i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 i386-linux.elf% : tc_list = i386-linux.elf i386 default
 
 tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -nostdinc -MMD
+tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.i386-linux.elf.gcc     += -march=i386 -mtune=k6
 tc.i386-linux.elf.gcc     += -Os -fno-omit-frame-pointer
@@ -336,7 +341,7 @@ i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
@@ -353,7 +358,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.elf.execve
 # ************************************************************************/
 
-# tc settings are shared with i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf
 
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -364,7 +369,7 @@ i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
 i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
@@ -385,7 +390,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
 # // i386-linux.elf.interp
 # ************************************************************************/
 
-# tc settings are shared with i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf
 
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -396,7 +401,7 @@ i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
 i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
@@ -413,7 +418,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.elf.shell
 # ************************************************************************/
 
-# tc settings are shared with i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf
 
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -424,7 +429,7 @@ i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
 i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
-	$(call tc,stripelf) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
 
@@ -520,7 +525,8 @@ mipsel.r3000-ps1-console.h: IDENT_NAME = nrv_con_loader
 
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 
-tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -mcpu=405 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
 tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
@@ -534,7 +540,7 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-##	$(call tc,stripelf) tmp/$T.bin ## FIXME / TODO
+	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
 
 tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
@@ -542,7 +548,7 @@ tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,objstrip) $@
 
 tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,objstrip) $@
 
 
@@ -550,6 +556,7 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // powerpc-darwin.macho
 # ************************************************************************/
 
+# info: we use the tc settings from powerpc-linux.elf
 powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
 
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
@@ -560,7 +567,6 @@ powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
 	$(call tc,ld) --oformat binary -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-##	$(call tc,stripelf) tmp/$T.bin ## FIXME / TODO
 	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
 
 tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
@@ -568,7 +574,7 @@ tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,objstrip) $@
 
 tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os -fno-exceptions -fno-asynchronous-unwind-tables $< -o $@
+	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,objstrip) $@
 
 
@@ -582,51 +588,4 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 -include tmp/*.d
 
 
-# /***********************************************************************
-# // debug
-# ************************************************************************/
-
-define debug-diff
-	-diff $(HOME)/p/compress/upx/680c27309177-upx.hg/src/stub/$2 $1
-endef
-
-debug-diff: $(STUBS)
-	$(call debug-diff,amd64-linux.elf-entry.h,l_lx_elf64amd.h)
-	$(call debug-diff,amd64-linux.elf-fold.h,fold_elf64amd.h)
-	$(call debug-diff,arm-linux.elf-entry.h,l_lx_elf32arm.h)
-	$(call debug-diff,arm-linux.elf-fold.h,fold_elf32arm.h)
-	$(call debug-diff,arm.v4a-wince.pe.h,l_armpea.h)
-	$(call debug-diff,arm.v4t-wince.pe.h,l_armpet.h)
-	$(call debug-diff,i086-dos16.com.h,l_com.h)
-	$(call debug-diff,i086-dos16.exe.h,l_exe.h)
-	$(call debug-diff,i086-dos16.sys.h,l_sys.h)
-	$(call debug-diff,i386-dos32.djgpp2.h,l_djgpp2.h)
-	$(call debug-diff,i386-dos32.djgpp2-stubify.h,stubify.h)
-	$(call debug-diff,i386-dos32.tmt.h,l_tmt.h)
-	$(call debug-diff,i386-dos32.watcom.le.h,l_wcle.h)
-	$(call debug-diff,i386-linux.elf-entry.h,l_lx_elf86.h)
-	$(call debug-diff,i386-linux.elf-fold.h,fold_elf86.h)
-	$(call debug-diff,i386-linux.elf.execve-entry.h,l_lx_exec86.h)
-	$(call debug-diff,i386-linux.elf.execve-fold.h,fold_exec86.h)
-	$(call debug-diff,i386-linux.elf.interp-entry.h,l_lx_pti86.h)
-	$(call debug-diff,i386-linux.elf.interp-fold.h,fold_pti86.h)
-	$(call debug-diff,i386-linux.elf.shell-entry.h,l_lx_sh86.h)
-	$(call debug-diff,i386-linux.elf.shell-fold.h,fold_sh86.h)
-	$(call debug-diff,i386-linux.kernel.vmlinux.h,l_vmlinx.h)
-	$(call debug-diff,i386-linux.kernel.vmlinuz.h,l_vmlinz.h)
-	$(call debug-diff,i386-win32.pe.h,l_w32pe.h)
-	$(call debug-diff,m68k-atari.tos-nrv2b.h,l_t_n2b.h)
-	$(call debug-diff,m68k-atari.tos-nrv2b.small.h,l_t_n2bs.h)
-	$(call debug-diff,m68k-atari.tos-nrv2d.h,l_t_n2d.h)
-	$(call debug-diff,m68k-atari.tos-nrv2d.small.h,l_t_n2ds.h)
-	$(call debug-diff,m68k-atari.tos-nrv2e.h,l_t_n2e.h)
-	$(call debug-diff,m68k-atari.tos-nrv2e.small.h,l_t_n2es.h)
-	$(call debug-diff,mipsel.r3000-ps1-boot.h,l_ps1b.h)
-	$(call debug-diff,mipsel.r3000-ps1-console.h,l_ps1c.h)
-	$(call debug-diff,powerpc-darwin.macho-entry.h,l_mac_ppc32.h)
-	$(call debug-diff,powerpc-darwin.macho-fold.h,fold_machppc32.h)
-	$(call debug-diff,powerpc-linux.elf-entry.h,l_lx_elfppc32.h)
-	$(call debug-diff,powerpc-linux.elf-fold.h,fold_elfppc32.h)
-
-
-# vi:nowrap
+# vi:ts=8:nowrap

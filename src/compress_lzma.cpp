@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2004 Laszlo Molnar
+   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2006 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -200,7 +200,7 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
 
-    if (enc.SetCoderProperties(propIDs, pr, 3) != S_OK)
+    if (enc.SetCoderProperties(propIDs, pr, 7) != S_OK)
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
         goto error;
@@ -227,7 +227,7 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     res->dict_size = pr[3].uintVal;
     //res->num_probs = LzmaGetNumProbs(&s.Properties));
     //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
-    res->num_probs = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
+    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
 
 error:
     *dst_len = os.Pos;
@@ -260,6 +260,7 @@ error:
 #undef _LZMA_OUT_READ
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
+#include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
 int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
@@ -267,6 +268,9 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
                                    int method )
 {
     assert(method == M_LZMA);
+    // see res->num_probs above
+    COMPILE_TIME_ASSERT(LZMA_BASE_SIZE == 1846);
+    COMPILE_TIME_ASSERT(LZMA_LIT_SIZE == 768);
 
     CLzmaDecoderState s;
     SizeT src_out = 0, dst_out = 0;
@@ -306,7 +310,9 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
 {
     assert(method == M_LZMA);
 
-    /* FIXME */
+    // FIXME - implement this
+    // Note that Packer::verifyOverlappingDecompression() will
+    // verify the final result in any case.
     UNUSED(buf);
 
     unsigned overlap_overhead = src_off + src_len - *dst_len;
