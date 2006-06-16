@@ -404,21 +404,38 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
     return 0;
 
 
-#define ARMCT_COND (((b[3] & 0x0f) == 0x0b))
+#define ARMCT_COND_le (((b[3] & 0x0f) == 0x0b))
 
 static int f_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND, a / 4 + f->addvalue, get_le24, set_le24)
+    CT24ARM(f, ARMCT_COND_le, a / 4 + f->addvalue, get_le24, set_le24)
 }
 
 static int u_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND, 0 - a / 4 - f->addvalue, get_le24, set_le24)
+    CT24ARM(f, ARMCT_COND_le, 0 - a / 4 - f->addvalue, get_le24, set_le24)
 }
 
 static int s_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND, a + f->addvalue, get_le24, set_dummy)
+    CT24ARM(f, ARMCT_COND_le, a + f->addvalue, get_le24, set_dummy)
+}
+
+#define ARMCT_COND_be (((b[0] & 0x0f) == 0x0b))
+
+static int f_ct24arm_be(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND_be, a / 4 + f->addvalue, get_be24, set_be24)
+}
+
+static int u_ct24arm_be(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND_be, 0 - a / 4 - f->addvalue, get_be24, set_be24)
+}
+
+static int s_ct24arm_be(Filter *f)
+{
+    CT24ARM(f, ARMCT_COND_be, a + f->addvalue, get_be24, set_dummy)
 }
 
 #undef CT24ARM

@@ -626,52 +626,15 @@ ehdr_lebe(Elf_LE32_Ehdr *const ehdr_le, Elf_BE32_Ehdr const *const ehdr_be)
 }
 
 int
-PackLinuxElf32::ARM_buildLoader(const Filter *ft, void (*fix_ehdr)(void *, void const *))
-{
-    unsigned const sz_loader = sizeof(linux_elf32arm_loader);
-    unsigned const sz_fold   = sizeof(linux_elf32arm_fold);
-
-    if (this->ei_data
-    == ((Elf32_Ehdr const *)linux_elf32arm_fold)->e_ident[Elf32_Ehdr::EI_DATA] ) {
-        return buildLinuxLoader(linux_elf32arm_loader, sz_loader,
-            linux_elf32arm_fold, sz_fold, ft );
-    }
-    else {
-        // linux_elf32arm_loader[] is all instructions, except for two strings
-        // at the end: the copyright message, and the SELinux message.
-        // The copyright message begins and ends with '\n', and the SELinux
-        // message ends with '\n'.  So copy back to the third '\n' from the end,
-        // and apply brev() only before that point.
-        MemBuffer brev_loader(sz_loader);
-        MemBuffer brev_fold  (sz_fold);
-        int nl = 0;
-        int j;
-        for (j= sz_loader; --j>=0; ) {
-            unsigned char const c = linux_elf32arm_loader[j];
-            brev_loader[j] = c;
-            if ('\n'==c) {
-                if (3==++nl) {
-                    break;
-                }
-            }
-        }
-        brev(brev_loader, linux_elf32arm_loader, j);
-        brev(brev_fold,   linux_elf32arm_fold,   sz_fold);
-        fix_ehdr(brev_fold.getVoidPtr(), (void const *)linux_elf32arm_fold);
-        return buildLinuxLoader(brev_loader, sz_loader, brev_fold, sz_fold, ft);
-    }
-}
-
-int
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
-    return ARM_buildLoader(ft, (void (*)(void*, const void*))ehdr_bele);
+    return ARM_buildLoader(ft, true);
 }
 
 int
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
-    return ARM_buildLoader(ft, (void (*)(void*, const void*))ehdr_lebe);
+    return ARM_buildLoader(ft, false);
 }
 
 static const
@@ -1024,18 +987,20 @@ void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
 }
 
-void PackLinuxElf32::ARM_pack1(OutputFile *fo, void (*fix_ehdr)(void *, void const *))
+void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)
 {
     Elf32_Ehdr const *const fold = (Elf32_Ehdr const *)&linux_elf32arm_fold;
     cprElfHdr3 h3;
-    // We need Elf32_Ehdr and Elf32_Phdr with the correct byte gender.
+    // We need Elf32_Ehdr and Elf32_Phdr with byte gender of target.
     // The stub may have been compiled differently.
     if (this->ei_data==fold->e_ident[Elf32_Ehdr::EI_DATA]) {
         memcpy(&h3, (void const *)linux_elf32arm_fold,
             sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr) );
     }
     else {
-        fix_ehdr((void *)&h3.ehdr, (void const *)linux_elf32arm_fold);
+        (isBE ? (void (*)(void *, void const *))ehdr_bele
+              : (void (*)(void *, void const *))ehdr_lebe)
+                ((void *)&h3.ehdr, (void const *)linux_elf32arm_fold);
         brev((unsigned char *)&h3.phdr[0],
             sizeof(Elf32_Ehdr) + (unsigned char const *)&linux_elf32arm_fold,
             3*sizeof(Elf32_Phdr) );
@@ -1046,13 +1011,13 @@ void PackLinuxElf32::ARM_pack1(OutputFile *fo, void (*fix_ehdr)(void *, void con
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    ARM_pack1(fo, (void (*)(void *, void const *))ehdr_lebe);
+    ARM_pack1(fo, false);
 }
 
 void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)  // FIXME
 {
     super::pack1(fo, ft);
-    ARM_pack1(fo, (void (*)(void *, void const *))ehdr_bele);
+    ARM_pack1(fo, true);
 }
 
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
@@ -1370,6 +1335,85 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 
 #include "bele.h"
 using namespace NBELE;
+
+// Filter 0x50, 0x51 assume HostPolicy::isLE 
+static const int *
+ARM_getFilters(bool const isBE)
+{
+    static const int f50[] = { 0x50, -1 };
+    static const int f51[] = { 0x51, -1 };
+    if (HostPolicy::isBE ^ isBE)
+        return f51;
+    return f50;
+}
+
+const int *
+PackLinuxElf32armBe::getFilters() const
+{
+    return ARM_getFilters(true);
+}
+
+const int *
+PackLinuxElf32armLe::getFilters() const
+{
+    return ARM_getFilters(false);
+}
+
+int
+PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
+{
+    unsigned const sz_loader = sizeof(linux_elf32arm_loader);
+    unsigned const sz_fold   = sizeof(linux_elf32arm_fold);
+
+    // Was ARM code assembled for same endianness as the target?
+    bool const asm_brev = (this->ei_data
+        != ((Elf32_Ehdr const *)linux_elf32arm_fold)->e_ident[Elf32_Ehdr::EI_DATA] );
+
+    MemBuffer tmp_fold(sz_fold);
+    memcpy(tmp_fold, linux_elf32arm_fold, sz_fold);
+
+    // 0xe3530050  is  "cmp fid,#0x50" with fid .req r3
+    if (HostPolicy::isBE ^ isBE) { // change filter 0x50 to filter 0x51
+        if (HostPolicy::isBE ^ isBE ^ asm_brev) {  // find 0xe3530050 big-endian
+            checkPatch(NULL,0,0,0);  // reset
+            patch_be32(tmp_fold, sz_fold, "\xe3\x53\x00\x50", 0xe3530051);
+            checkPatch(NULL,0,0,0);  // reset
+        }
+        else { // find 0xe3530050 little-endian
+            checkPatch(NULL,0,0,0);  // reset
+            patch_le32(tmp_fold, sz_fold, "\x50\x00\x53\xe3", 0xe3530051);
+            checkPatch(NULL,0,0,0);  // reset
+        }
+    }
+    if (!asm_brev) { // was assembled to match target
+        return buildLinuxLoader(linux_elf32arm_loader, sz_loader,
+            tmp_fold, sz_fold, ft );
+    }
+    else { // was assembled brev() from target
+        // linux_elf32arm_loader[] is all instructions, except for two strings
+        // at the end: the copyright message, and the SELinux message.
+        // The copyright message begins and ends with '\n', and the SELinux
+        // message ends with '\n'.  So copy back to the third '\n' from the end,
+        // and apply brev() only before that point.
+        MemBuffer brev_loader(sz_loader);
+        int nl = 0;
+        int j;
+        for (j= sz_loader; --j>=0; ) {
+            unsigned char const c = linux_elf32arm_loader[j];
+            brev_loader[j] = c;
+            if ('\n'==c) {
+                if (3==++nl) {
+                    break;
+                }
+            }
+        }
+        brev(brev_loader, linux_elf32arm_loader, j);
+        (isBE ? (void (*)(void *, void const *))ehdr_bele
+              : (void (*)(void *, void const *))ehdr_lebe)
+                (tmp_fold.getVoidPtr(), (void const *)linux_elf32arm_fold);
+        return buildLinuxLoader(brev_loader, sz_loader, tmp_fold, sz_fold, ft);
+    }
+}
 
 void PackLinuxElf32::ARM_pack3(OutputFile *fo, Filter &ft, bool isBE)
 {
@@ -1801,20 +1845,6 @@ PackLinuxElf32armBe::PackLinuxElf32armBe(InputFile *f) : super(f)
 
 PackLinuxElf32armBe::~PackLinuxElf32armBe()
 {
-}
-
-const int *
-PackLinuxElf32armLe::getFilters() const
-{
-    static const int filters[] = { 0x50, -1 };
-    return filters;
-}
-
-const int *
-PackLinuxElf32armBe::getFilters() const
-{
-    static const int filters[] = { 0x50, -1 };
-    return filters;
 }
 
 unsigned
