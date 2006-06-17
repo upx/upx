@@ -18,19 +18,24 @@ syntax: glob
 *.py[cdo]
 *.so
 *.res
+*.swp
 *.ttp
 
 doc/*.1
 doc/*.doc
 doc/*.html
+doc/*.man
+doc/*.ps
+doc/*.tex
 
 src/MMakefile
 src/compress_nrv*
 src/*.rc
 
 stub/MMakefile
+stub/**.*stamp
 stub/tmp*
-stub/.*stamp
+stub/**/tmp*
 
 stub/tools/armpe/armpe_tester
 

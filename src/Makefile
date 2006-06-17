@@ -21,8 +21,8 @@ ifeq ($(firstword $(CXX)),g++)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
-#CXXFLAGS += -O2 -MMD
-CXXFLAGS += -g -MMD
+CXXFLAGS += -O2 -MMD
+##CXXFLAGS += -O0 -g -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 endif
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
@@ -39,7 +39,7 @@ LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLD
 endif
 LIBS += -lucl -lz
 # you should set envvar UPX_LZMADIR to point to your unpacked lzma443.tar.bz2
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip),)
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 DEFS += -DWITH_LZMA
 INCLUDES += -I$(UPX_LZMADIR)
 endif

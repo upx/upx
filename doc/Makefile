@@ -8,29 +8,21 @@ PACKAGE       = upx
 VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
-TRIMSPACE = cat
-TRIMSPACE = sed -e 's/ *$$//'
+TRIMSPACE = sed -e 's/[ 	]*$$//'
+DETAB2    = sed -e 's/	/  /g'
 
 BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
 BUILT_SOURCES = upx.1 upx.doc upx.html
 
 
 ###
-###
+### targets
 ###
 
 all: $(BUILT_SOURCES)
 
-mostlyclean:
-	-rm -f $(BUILT_SOURCES) pod2htm*
-
-clean: mostlyclean
-
-distclean: clean
-
-maintainer-clean: distclean
-
-.SUFFIXES: .1 .doc .html .man .pod .ps .tex .texi
+mostlyclean clean distclean maintainer-clean:
+	rm -f $(BUILT_SOURCES) pod2htm*
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 
@@ -39,25 +31,26 @@ maintainer-clean: distclean
 ### rules
 ###
 
-.pod.1:
+.SUFFIXES: .1 .doc .html .man .pod .ps .tex
+
+%.1 : %.pod
 	pod2man --center=" " --release="$(PACKAGE) $(VERSION)" --date="$(VERSION_DATE)" $< | $(TRIMSPACE) > $@
 
-.pod.html:
-###	pod2html $< | $(TRIMSPACE) > $@
-	pod2html --noindex $< | $(TRIMSPACE) > $@
-	@-rm -f pod2htm*
-
-.pod.tex:
-	pod2latex $<
-
-.pod.doc:
+%.doc : %.pod
 	pod2text < $< | $(TRIMSPACE) > $@
 
-.1.man:
+%.html : %.pod
+	pod2html --noindex $< | $(TRIMSPACE) | $(DETAB2) > $@
+	@rm -f pod2htm*
+
+%.man : %.1
 	nroff -man $< | $(TRIMSPACE) > $@
 
-.1.ps:
+%.ps : %.1
 	groff -man $< | $(TRIMSPACE) > $@
+
+%.tex : %.pod
+	pod2latex $<
 
 
 ###

@@ -34,10 +34,11 @@ import getopt, os, re, sys, zlib
 class opts:
     dry_run = 0
     ident = None
+    mode = "c"
     verbose = 0
 
 
-def w_header(w, ifile, ofile, n):
+def w_header_c(w, ifile, ofile, n):
     w("/* %s -- created from %s, %d (0x%x) bytes\n" % (os.path.basename(ofile), os.path.basename(ifile), n, n))
     w("""\n\
    This file is part of the UPX executable compressor.
@@ -67,14 +68,14 @@ def w_header(w, ifile, ofile, n):
  */\n\n\n""")
 
 
-def w_checksum(w, s, data):
+def w_checksum_c(w, s, data):
     w("#define %s_SIZE    %d\n"     % (s, len(data)))
     w("#define %s_ADLER32 0x%08x\n" % (s, 0xffffffffL & zlib.adler32(data)))
     w("#define %s_CRC32   0x%08x\n" % (s, 0xffffffffL & zlib.crc32(data)))
     w("\n")
 
 
-def w_data(w, data):
+def w_data_c(w, data):
     def w_eol(w, i):
         if i > 0:
             w("   /* 0x%4x */" % (i - 16))
@@ -93,8 +94,29 @@ def w_data(w, data):
     w_eol(w, i)
 
 
+def w_data_nasm(w, data):
+    def w_eol(w, i):
+        if i > 0:
+            w("   ; 0x%04x" % (i - 16))
+            w("\n")
+
+    n = len(data)
+    for i in range(n):
+        if i % 16 == 0:
+            w_eol(w, i)
+            w("db ")
+        else:
+            w(",")
+        w("%3d" % ord(data[i]))
+    i = n
+    while i % 16 != 0:
+        i += 1
+        w("    ")
+    w_eol(w, i)
+
+
 def main(argv):
-    shortopts, longopts = "qv", ["dry-run", "ident=", "quiet", "verbose"]
+    shortopts, longopts = "qv", ["dry-run", "ident=", "mode=", "quiet", "verbose"]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
     for opt, optarg in xopts:
         if 0: pass
@@ -102,6 +124,7 @@ def main(argv):
         elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
         elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
         elif opt in ["--ident"]: opts.ident = optarg
+        elif opt in ["--mode"]: opts.mode = optarg.lower()
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
 
     assert len(args) == 2
@@ -129,13 +152,19 @@ def main(argv):
     fp = open(ofile, "wb")
     w = fp.write
     if opts.verbose >= 0:
-        w_header(w, ifile, ofile, len(data))
+        if opts.mode == "c":
+            w_header_c(w, ifile, ofile, len(data))
     if opts.ident:
-        w_checksum(w, opts.ident.upper(), data)
-        w("unsigned char %s[%d] = {\n" % (opts.ident, len(data)))
-    w_data(w, data)
+        if opts.mode == "c":
+            w_checksum_c(w, opts.ident.upper(), data)
+            w("unsigned char %s[%d] = {\n" % (opts.ident, len(data)))
+    if opts.mode == "c":
+        w_data_c(w, data)
+    elif opts.mode == "nasm":
+        w_data_nasm(w, data)
     if opts.ident:
-        w("};\n")
+        if opts.mode == "c":
+            w("};\n")
     fp.close()
 
 

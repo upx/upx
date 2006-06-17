@@ -17,10 +17,10 @@ $(error GNU make 3.81 or better is required)
 endif
 
 # update $PATH for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
 endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx),)
+ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 
@@ -72,14 +72,19 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 
 
+ifndef default.targets
 ifeq ($(wildcard .all-stamp),)
-default:
+default.targets =
+default: $(default.targets)
 	@echo "UPX info: type 'make all' if you have all the required build tools."
 else
-default: all
+default.targets = all
+default: $(default.targets)
+endif
 endif
 
-all: tmp/.tmp-stamp .all-stamp
+all.targets ?= tmp/.tmp-stamp .all-stamp
+all: $(all.targets)
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
@@ -120,6 +125,7 @@ tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
+tc.default.readelf    = readelf
 tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
@@ -242,7 +248,7 @@ i086-dos16.com% : tc_list = i086 default
 i086-dos16.com.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -255,7 +261,7 @@ i086-dos16.exe% : tc_list = i086 default
 i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -268,7 +274,7 @@ i086-dos16.sys% : tc_list = i086 default
 i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -281,7 +287,7 @@ i386-dos32.djgpp2% : tc_list = i386 default
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
@@ -298,7 +304,7 @@ i386-dos32.tmt% : tc_list = i386 default
 i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -311,7 +317,7 @@ i386-dos32.watcom.le% : tc_list = i386 default
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -337,7 +343,7 @@ tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
 
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o
@@ -348,7 +354,7 @@ i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o
 	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
 tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
@@ -365,7 +371,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
 
 i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o
@@ -376,7 +382,7 @@ i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i3
 	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
 tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
@@ -384,7 +390,7 @@ tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,objstrip) $@
 
 tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
 
@@ -397,7 +403,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
 
 i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o
@@ -408,7 +414,7 @@ i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o
 	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
 tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
@@ -425,7 +431,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
 
 i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o
@@ -436,7 +442,7 @@ i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o
 	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf $< -o $@
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
 tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
@@ -454,7 +460,7 @@ i386-linux.kernel.vmlin% : tc_list = i386 default
 i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -467,7 +473,7 @@ i386-win32.pe% : tc_list = i386 default
 i386-win32.pe.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -482,7 +488,7 @@ tc.m68k-atari.tos.asm-a68k  = a68k
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
 	# call gpp_inc to generate .d file
-	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
+	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-asm) -D__A68K__ $(PP_FLAGS) $< -o tmp/$T.i
 	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
 	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
@@ -510,7 +516,7 @@ tc.mipsel.r3000-ps1.asm5900     = asm5900
 
 mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	# call gpp_inc to generate .d file
-	$(call tc,gpp_inc) --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
+	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,app-asm5900) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,asm5900) --nologo -q -ltmp/$T.bin.lst tmp/$T.tmp2 -otmp/$T.bin
