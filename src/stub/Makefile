@@ -34,6 +34,7 @@ srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
 endif
 
+ifndef STUBS
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += arm-linux.elf-entry.h
@@ -70,6 +71,7 @@ STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
+endif
 
 
 ifndef default.targets
@@ -100,7 +102,7 @@ distclean:
 	rm -f .*-stamp
 	rm -rf tmp
 maintainer-clean:
-	rm -f *.h
+	rm -f $(STUBS)
 	rm -rf tmp
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean

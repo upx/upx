@@ -135,7 +135,8 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
 
 int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method )
+                                   int method,
+                             const struct upx_compress_result_t *result )
 {
     int r = UPX_E_ERROR;
 
@@ -173,6 +174,7 @@ int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
         break;
     }
 
+    UNUSED(result);
     return r;
 }
 
@@ -183,7 +185,8 @@ int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
 
 int upx_ucl_test_overlap   ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method )
+                                   int method,
+                             const struct upx_compress_result_t *result )
 {
     int r = UPX_E_ERROR;
 
@@ -221,6 +224,7 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, upx_uint src_off,
         break;
     }
 
+    UNUSED(result);
     return r;
 }
 

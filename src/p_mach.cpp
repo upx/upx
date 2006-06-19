@@ -107,6 +107,7 @@ PackMachPPC32::buildMachLoader(
 
     addLoader("MACOS000", NULL);
     addLoader("FOLDEXEC", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -123,7 +124,7 @@ void PackMachPPC32::updateLoader(OutputFile *) {}
 void
 PackMachPPC32::patchLoaderChecksum()
 {
-    unsigned char *const ptr = const_cast<unsigned char *>(getLoader());
+    unsigned char *const ptr = getLoader();
     l_info *const lp = &linfo;
     // checksum for loader; also some PackHeader info
     lp->l_checksum = 0;

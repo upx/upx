@@ -43,10 +43,12 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
                                    struct upx_compress_result_t *result );
 int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 #endif
 
 
@@ -59,10 +61,12 @@ int upx_nrv_compress       ( const upx_bytep src, upx_uint  src_len,
                                    struct upx_compress_result_t *result );
 int upx_nrv_decompress     ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 int upx_nrv_test_overlap   ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 #endif
 
 
@@ -75,10 +79,12 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
                                    struct upx_compress_result_t *result );
 int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 int upx_ucl_test_overlap   ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 #endif
 
 

@@ -245,6 +245,11 @@ struct ucl_compress_result_t
 
 struct upx_compress_result_t
 {
+#if 1
+    // debug
+    int method, level;
+    unsigned u_len, c_len;
+#endif
     lzma_compress_result_t  result_lzma;
     ucl_compress_result_t   result_ucl;
 };
@@ -628,10 +633,12 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
                                    struct upx_compress_result_t *result );
 int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method );
+                                   int method,
+                             const struct upx_compress_result_t *result );
 
 
 #endif /* __cplusplus */

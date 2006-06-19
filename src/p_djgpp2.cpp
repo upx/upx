@@ -89,7 +89,7 @@ int PackDjgpp2::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,DJ2MAIN1",
               ft->id ? "DJCALLT1" : "",
               "DJ2MAIN2",
-              getDecompressor(),
+              getDecompressorSections(),
               "DJ2BSS00",
               NULL
              );
@@ -100,6 +100,7 @@ int PackDjgpp2::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("DJRETURN,+40DXXXX,UPX1HEAD", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -314,6 +315,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     patch_le32(loader, lsize, "ENTR", coff_hdr.a_entry);
     patchFilter32(loader, lsize, &ft);
     patch_le32(loader, lsize, "BSSL", ph.overlap_overhead / 4);
+    patchDecompressor(loader, lsize);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     patch_le32(loader, lsize, "OUTP", text->vaddr - hdrsize);
     patch_le32(loader, lsize, "INPP", data->vaddr);
@@ -336,6 +338,8 @@ void PackDjgpp2::pack(OutputFile *fo)
     // write coff header, loader and compressed file
     fo->write(&coff_hdr, sizeof(coff_hdr));
     fo->write(loader, lsize);
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, lsize);
     fo->write(obuf, data->size);
 #if 0
     printf("%-13s: coff hdr   : %8ld bytes\n", getName(), (long) sizeof(coff_hdr));

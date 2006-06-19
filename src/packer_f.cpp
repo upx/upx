@@ -1,4 +1,4 @@
-/* packerf.cpp -- packer filter handling
+/* packer_f.cpp -- Packer filter handling
 
    This file is part of the UPX executable compressor.
 

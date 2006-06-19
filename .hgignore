@@ -32,7 +32,7 @@ src/MMakefile
 src/compress_nrv*
 src/*.rc
 
-stub/MMakefile
+stub/**MMakefile
 stub/**.*stamp
 stub/tmp*
 stub/**/tmp*

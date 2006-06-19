@@ -67,6 +67,7 @@ int PackW16Ne::buildLoader(const Filter *ft)
 //        addLoader("...");
     }
 //
+    freezeLoader();
     return getLoaderSize();
 }
 

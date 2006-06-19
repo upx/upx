@@ -86,7 +86,7 @@ int PackWcle::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
     addLoader("IDENTSTR,WCLEMAIN,UPX1HEAD,WCLECUTP,+0000000",
-              getDecompressor(),
+              getDecompressorSections(),
               "WCLEMAI2",
               NULL
              );
@@ -110,6 +110,7 @@ int PackWcle::buildLoader(const Filter *ft)
               "WCLEMAI4",
               NULL
              );
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -530,6 +531,7 @@ void PackWcle::pack(OutputFile *fo)
         patch_le32(p, d_len, "TEXV", text_vaddr);
     patch_le32(p,d_len,"RELO",mps*pages);
 
+    patchDecompressor(p, d_len);
     patchPackHeader(oimage,e_len);
 
     unsigned jpos = find_le32(oimage,e_len,get_le32("JMPD"));

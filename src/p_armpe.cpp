@@ -217,22 +217,18 @@ bool PackArmPe::testUnpackVersion(int version) const
 }
 
 
-void PackArmPe::createLinker(const void *pdata, int plen, int pinfo)
+Linker* PackArmPe::newLinker() const
 {
-    struct ArmLinker : public Linker
+    struct ArmLinker : public DefaultLELinker
     {
-        ArmLinker(const void *d, int l, int i) : Linker(d, l, i) {}
-
         virtual void set32(void *b, unsigned v) const
         {
             set_le32(b, (v - 5) / 4);
         }
     };
 
-    struct ThumbLinker : public Linker
+    struct ThumbLinker : public DefaultLELinker
     {
-        ThumbLinker(const void *d, int l, int i) : Linker(d, l, i) {}
-
         virtual void set32(void *b, unsigned v) const
         {
             assert(v < 0x200);
@@ -241,9 +237,9 @@ void PackArmPe::createLinker(const void *pdata, int plen, int pinfo)
     };
 
     if (use_thumb_stub)
-        linker = new ThumbLinker(pdata, plen, pinfo);
+        return new ThumbLinker;
     else
-        linker = new ArmLinker(pdata, plen, pinfo);
+        return new ArmLinker;
 }
 
 
@@ -1692,6 +1688,7 @@ int PackArmPe::buildLoader(const Filter *ft)
     }
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 

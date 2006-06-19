@@ -1,0 +1,39 @@
+MAKEFLAGS += -rR
+.SUFFIXES:
+.SECONDEXPANSION:
+export SHELL = /bin/sh
+
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+
+STUBS += lzma_d_cf.ash lzma_d_cs.ash
+
+default.targets = all
+all.targets = tmp/.tmp-stamp $(STUBS)
+include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../Makefile
+
+
+# /***********************************************************************
+# // i386-lzma
+# ************************************************************************/
+
+lzma_d_cf.ash : tc_list = i386-lzma i386-linux.elf i386 default
+lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf i386 default
+
+tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
+tc.i386-lzma.gcc     += -ffunction-sections
+tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
+
+lzma_d_c%.ash : lzma_d_c.c
+	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,objcopy) --only-section .text.LzmaDecode -O binary tmp/$T.o tmp/$T.bin
+	head -c-1 tmp/$T.bin > tmp/$T.out
+	$(call tc,bin2h) --mode=nasm tmp/$T.out $@
+
+lzma_d_cf.ash : PP_FLAGS = -DFAST
+lzma_d_cs.ash : PP_FLAGS = -DSMALL
+
+lzma_d_cf.ash : $(MAKEFILE_LIST)
+lzma_d_cs.ash : $(MAKEFILE_LIST)
+
+endif

@@ -122,8 +122,7 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
 {
     assert(method == M_LZMA);
     assert(level > 0); assert(result != NULL);
-    UNUSED(cb); UNUSED(method); UNUSED(level);
-    UNUSED(conf_parm); UNUSED(result);
+    UNUSED(conf_parm);
 
     int r = UPX_E_ERROR;
     HRESULT rh;
@@ -265,19 +264,21 @@ error:
 
 int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
                                    upx_bytep dst, upx_uintp dst_len,
-                                   int method )
+                                   int method,
+                             const struct upx_compress_result_t *result )
 {
     assert(method == M_LZMA);
     // see res->num_probs above
-    COMPILE_TIME_ASSERT(LZMA_BASE_SIZE == 1846);
-    COMPILE_TIME_ASSERT(LZMA_LIT_SIZE == 768);
+    COMPILE_TIME_ASSERT(sizeof(CProb) == 2)
+    COMPILE_TIME_ASSERT(LZMA_BASE_SIZE == 1846)
+    COMPILE_TIME_ASSERT(LZMA_LIT_SIZE == 768)
 
-    CLzmaDecoderState s;
+    CLzmaDecoderState s; memset(&s, 0, sizeof(s));
     SizeT src_out = 0, dst_out = 0;
-    int r;
+    int r = UPX_E_ERROR;
 
-    s.Probs = NULL;
 #if defined(LzmaDecoderInit)
+# error
     LzmaDecoderInit(&s);
 #endif
     r = LzmaDecodeProperties(&s.Properties, src, src_len);
@@ -288,6 +289,10 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
 #else
     src += 1; src_len -= 1;
 #endif
+    if (result) {
+        assert(result->method == method);
+        assert(result->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
+    }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
     if (!s.Probs)
         r = UPX_E_OUT_OF_MEMORY;
@@ -296,6 +301,8 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
 error:
     *dst_len = dst_out;
     free(s.Probs);
+
+    UNUSED(result);
     return r;
 }
 
@@ -306,7 +313,8 @@ error:
 
 int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
                                    upx_uint  src_len, upx_uintp dst_len,
-                                   int method )
+                                   int method,
+                             const struct upx_compress_result_t *result )
 {
     assert(method == M_LZMA);
 
@@ -320,6 +328,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
     if ((int)overlap_overhead >= 256)
         return UPX_E_OK;
 
+    UNUSED(result);
     return UPX_E_ERROR;
 }
 

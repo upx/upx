@@ -176,6 +176,7 @@ int PackExe::buildLoader(const Filter *)
                   "EXERETIP",
                   NULL
                  );
+    freezeLoader();
     return getLoaderSize();
 }
 

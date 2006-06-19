@@ -29,52 +29,73 @@
 #include "conf.h"
 #include "linker.h"
 
-class LinkerLabel
+static int hex(char c)
 {
-    enum { LINKER_MAX_LABEL_LEN = 32 };
-    char label[LINKER_MAX_LABEL_LEN + 1];
+    return (c & 0xf) + (c > '9' ? 9 : 0);
+}
 
+
+/*************************************************************************
+//
+**************************************************************************/
+
+#define NJUMPS      200
+#define NSECTIONS   550
+
+struct DefaultLinker::Label
+{
+    char label[31 + 1];
 public:
-    unsigned set(const char *l)
+    unsigned set(const char *s)
     {
-        strncpy(label, l, sizeof(label));
-        return strlen(label) + 1;
+        size_t len = strlen(s);
+        assert(len > 0); assert(len <= 31);
+        strcpy(label, s);
+        return len + 1;
     }
+    unsigned set(const unsigned char *s) { return set((const char *)s); }
     operator const char *() const { return label; }
 };
 
 
-struct Linker::section
-{
-    int         istart;
-    int         ostart;
-    int         len;
-    LinkerLabel name;
-};
-
-struct Linker::jump
+struct DefaultLinker::Jump
 {
     int         pos;
     int         len;
     int         toffs;
-    LinkerLabel tsect;
+    DefaultLinker::Label tsect;
 };
 
-Linker::Linker(const void *pdata, int plen, int pinfo)
+struct DefaultLinker::Section
 {
-    iloader = new char[(ilen = plen) + 8192];
-    memcpy(iloader,pdata,plen);
-    oloader = new char[plen];
+    int         istart;
+    int         ostart;
+    int         len;
+    DefaultLinker::Label name;
+};
+
+
+DefaultLinker::DefaultLinker() :
+    iloader(NULL), oloader(NULL), jumps(NULL), sections(NULL)
+{
+}
+
+void DefaultLinker::init(const void *pdata, int plen, int pinfo)
+{
+    assert(!frozen);
+    ilen = plen;
+    iloader = new unsigned char[plen + 8192];
+    memcpy(iloader, pdata, plen);
+    oloader = new unsigned char[plen];
     olen = 0;
     align_hack = 0;
     align_offset = 0;
     info = pinfo;
     njumps = nsections = frozen = 0;
-    jumps = new jump[200];
-#define NSECTIONS 550
-    sections = new section[NSECTIONS];
+    jumps = new Jump[NJUMPS];
+    sections = new Section[NSECTIONS];
 
-    char *p = iloader + info;
+    unsigned char *p = iloader + info;
     while (get32(p) != (unsigned)(-1))
     {
         if (get32(p))
@@ -96,7 +117,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
             p += 8 + jumps[njumps].tsect.set(p + 8);
             jumps[njumps++].toffs = get32(p);
             p += 4;
-            assert(njumps < 200);
+            assert(njumps < NJUMPS);
         }
     }
 
@@ -107,7 +128,7 @@ Linker::Linker(const void *pdata, int plen, int pinfo)
 }
 
 
-Linker::~Linker()
+DefaultLinker::~DefaultLinker()
 {
     delete [] iloader;
     delete [] oloader;
@@ -116,21 +137,19 @@ Linker::~Linker()
 }
 
 
-void Linker::setLoaderAlignOffset(int offset)
+void DefaultLinker::setLoaderAlignOffset(int offset)
 {
+    assert(!frozen);
     align_offset = offset;
 }
 
-static int hex(char c)
-{
-    return (c & 0xf) + (c > '9' ? 9 : 0);
-}
 
-int Linker::addSection(const char *psect)
+int DefaultLinker::addSection(const char *sname)
 {
-    if (psect[0] == 0)
+    assert(!frozen);
+    if (sname[0] == 0)
         return olen;
-    char *begin = strdup(psect);
+    char *begin = strdup(sname);
     char *end = begin + strlen(begin);
     for (char *sect = begin; sect < end; )
     {
@@ -164,9 +183,10 @@ int Linker::addSection(const char *psect)
                     olen += sections[ic].len;
                     break;
                 }
-            if (ic == nsections)
+            if (ic == nsections) {
                 printf("%s", sect);
-            assert(ic != nsections);
+                assert(ic != nsections);
+            }
         }
         sect += strlen(sect) + 1;
     }
@@ -175,68 +195,153 @@ int Linker::addSection(const char *psect)
 }
 
 
-void Linker::addSection(const char *sname, const void *sdata, unsigned len)
+void DefaultLinker::addSection(const char *sname, const void *sdata, int slen)
 {
+    assert(!frozen);
     // add a new section - can be used for adding stuff like ident or header
     sections[nsections].name.set(sname);
     sections[nsections].istart = ilen;
-    sections[nsections].len = len;
+    sections[nsections].len = slen;
     sections[nsections++].ostart = olen;
     assert(nsections < NSECTIONS);
-    memcpy(iloader+ilen,sdata,len);
-    ilen += len;
+    memcpy(iloader+ilen, sdata, slen);
+    ilen += slen;
 }
 
 
-const char *Linker::getLoader(int *llen)
+void DefaultLinker::freeze()
 {
-    if (!frozen)
+    if (frozen)
+        return;
+
+    int ic,jc,kc;
+    for (ic = 0; ic < njumps; ic++)
     {
-        int ic,jc,kc;
-        for (ic = 0; ic < njumps; ic++)
-        {
-            for (jc = 0; jc < nsections-1; jc++)
-                if (jumps[ic].pos >= sections[jc].istart
-                    && jumps[ic].pos < sections[jc+1].istart)
-                    break;
-            assert(jc!=nsections-1);
-            if (sections[jc].ostart < 0)
-                continue;
+        for (jc = 0; jc < nsections-1; jc++)
+            if (jumps[ic].pos >= sections[jc].istart
+                && jumps[ic].pos < sections[jc+1].istart)
+                break;
+        assert(jc!=nsections-1);
+        if (sections[jc].ostart < 0)
+            continue;
 
-            for (kc = 0; kc < nsections-1; kc++)
-                if (strcmp(jumps[ic].tsect,sections[kc].name) == 0)
-                    break;
-            assert(kc!=nsections-1);
+        for (kc = 0; kc < nsections-1; kc++)
+            if (strcmp(jumps[ic].tsect,sections[kc].name) == 0)
+                break;
+        assert(kc!=nsections-1);
 
-            int offs = sections[kc].ostart+jumps[ic].toffs -
-                (jumps[ic].pos+jumps[ic].len -
-                 sections[jc].istart+sections[jc].ostart);
+        int offs = sections[kc].ostart+jumps[ic].toffs -
+            (jumps[ic].pos+jumps[ic].len -
+             sections[jc].istart+sections[jc].ostart);
 
-            if (jumps[ic].len == 1)
-                assert(-128 <= offs && offs <= 127);
+        if (jumps[ic].len == 1)
+            assert(-128 <= offs && offs <= 127);
 
-            set32(&offs,offs);
-            memcpy(oloader+sections[jc].ostart+jumps[ic].pos-sections[jc].istart,&offs,jumps[ic].len);
-        }
-        frozen=1;
+        set32(&offs,offs);
+        memcpy(oloader+sections[jc].ostart+jumps[ic].pos-sections[jc].istart,&offs,jumps[ic].len);
     }
-    if (llen) *llen = olen;
-    return oloader;
+
+    frozen = true;
 }
 
 
-int Linker::getSection(const char *name, int *slen) const
+int DefaultLinker::getSection(const char *sname, int *slen)
 {
-    if (!frozen)
-        return -1;
+    assert(frozen);
+
     for (int ic = 0; ic < nsections; ic++)
-        if (strcmp(name, sections[ic].name) == 0)
+        if (strcmp(sname, sections[ic].name) == 0)
         {
             if (slen)
                 *slen = sections[ic].len;
             return sections[ic].ostart;
         }
     return -1;
+}
+
+
+unsigned char *DefaultLinker::getLoader(int *llen)
+{
+    assert(frozen);
+
+    if (llen)
+        *llen = olen;
+    return oloader;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+SimpleLinker::SimpleLinker() :
+    oloader(NULL)
+{
+}
+
+
+void SimpleLinker::init(const void *pdata, int plen, int pinfo)
+{
+    assert(!frozen);
+    UNUSED(pinfo);
+    oloader = new unsigned char[plen];
+    olen = plen;
+    memcpy(oloader, pdata, plen);
+}
+
+
+SimpleLinker::~SimpleLinker()
+{
+    delete [] oloader;
+}
+
+
+void SimpleLinker::setLoaderAlignOffset(int offset)
+{
+    assert(!frozen);
+    UNUSED(offset);
+    assert(0);
+}
+
+
+int SimpleLinker::addSection(const char *sname)
+{
+    assert(!frozen);
+    UNUSED(sname);
+    assert(0);
+    return -1;
+}
+
+
+void SimpleLinker::addSection(const char *sname, const void *sdata, int slen)
+{
+    assert(!frozen);
+    UNUSED(sname); UNUSED(sdata); UNUSED(slen);
+    assert(0);
+}
+
+
+void SimpleLinker::freeze()
+{
+    frozen = true;
+}
+
+
+int SimpleLinker::getSection(const char *sname, int *slen)
+{
+    assert(frozen);
+    UNUSED(sname); UNUSED(slen);
+    assert(0);
+    return -1;
+}
+
+
+unsigned char *SimpleLinker::getLoader(int *llen)
+{
+    assert(frozen);
+    if (llen)
+        *llen = olen;
+    return oloader;
 }
 
 

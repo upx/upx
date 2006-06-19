@@ -379,7 +379,7 @@ PackLinuxElf32x86::buildLinuxLoader(
         }
     }
     addLoader("LEXEC010", NULL);
-    addLoader(getDecompressor(), NULL);
+    addLoader(getDecompressorSections(), NULL);
     addLoader("LEXEC015", NULL);
     if (ft->id) {
         {  // decompr, unfilter are separate
@@ -405,7 +405,7 @@ PackLinuxElf32x86::buildLinuxLoader(
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
 
-    char *ptr_cto = (char *)const_cast<unsigned char *>(getLoader());
+    upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
@@ -414,6 +414,7 @@ PackLinuxElf32x86::buildLinuxLoader(
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
 
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -472,6 +473,7 @@ PackLinuxElf32::buildLinuxLoader(
 
     addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -527,6 +529,7 @@ PackLinuxElf64::buildLinuxLoader(
 
     addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -1278,7 +1281,7 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = const_cast<upx_byte *>(getLoader());
+    upx_byte *const p = getLoader();
     lsize = getLoaderSize();
     acc_uint64l_t const lo_va_user = 0x400000;  // XXX
     acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
@@ -1336,7 +1339,7 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 #include "bele.h"
 using namespace NBELE;
 
-// Filter 0x50, 0x51 assume HostPolicy::isLE 
+// Filter 0x50, 0x51 assume HostPolicy::isLE
 static const int *
 ARM_getFilters(bool const isBE)
 {
@@ -1426,7 +1429,7 @@ void PackLinuxElf32::ARM_pack3(OutputFile *fo, Filter &ft, bool isBE)
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = const_cast<upx_byte *>(getLoader());
+    upx_byte *const p = getLoader();
     lsize = getLoaderSize();
     unsigned const lo_va_user = 0x8000;  // XXX
     unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);

@@ -125,6 +125,7 @@ int PackSys::buildLoader(const Filter *ft)
               "SYSJUMP1",
               NULL
              );
+    freezeLoader();
     return getLoaderSize();
 }
 

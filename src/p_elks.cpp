@@ -100,6 +100,7 @@ int PackElks8086::buildLoader(const Filter *ft)
     initLoader(nrv_loader, sizeof(nrv_loader));
     // FIXME
     UNUSED(ft);
+    freezeLoader();
     return getLoaderSize();
 }
 

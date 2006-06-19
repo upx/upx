@@ -54,8 +54,8 @@ public:
     virtual void fileInfo();
 
 protected:
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
+    virtual Linker* newLinker() const;
+    virtual int buildLoader(const Filter *ft);
 
     virtual int readFileHeader();
     virtual bool checkFileHeader();

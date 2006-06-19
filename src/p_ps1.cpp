@@ -268,6 +268,7 @@ int PackPs1::buildLoader(const Filter *)
               isCon ? "PS1SREGS" : "",
               NULL);
 
+    freezeLoader();
     return getLoaderSize();
 }
 

@@ -120,7 +120,7 @@ protected:
 
     bool use_thumb_stub;
 
-    void createLinker(const void *pdata, int plen, int pinfo);
+    virtual Linker* newLinker() const;
     int rpatch_le32(void *b, int blen, const void *old, unsigned new_,
                     PackArmPe_Reloc &, unsigned);
 

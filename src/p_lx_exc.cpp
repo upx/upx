@@ -314,7 +314,7 @@ PackLinuxI386::buildLinuxLoader(
         }
     }
     addLoader("LEXEC010", NULL);
-    addLoader(getDecompressor(), NULL);
+    addLoader(getDecompressorSections(), NULL);
     addLoader("LEXEC015", NULL);
     if (ft->id) {
         {  // decompr, unfilter not separate
@@ -339,8 +339,9 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
+    freezeLoader();
 
-    char *ptr_cto = (char *)const_cast<unsigned char *>(getLoader());
+    upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
@@ -477,7 +478,7 @@ void PackLinuxI386::patchLoader() { }
 
 void PackLinuxI386::patchLoaderChecksum()
 {
-    unsigned char *const ptr = const_cast<unsigned char *>(getLoader());
+    unsigned char *const ptr = getLoader();
     l_info *const lp = (l_info *)(sizeof(elfout.ehdr) +
         (elfout.ehdr.e_phnum * elfout.ehdr.e_phentsize) + (char *)&elfout );
     // checksum for loader + p_info

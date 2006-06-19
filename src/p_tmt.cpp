@@ -81,7 +81,7 @@ int PackTmt::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,TMTMAIN1",
               ft->id ? "TMTCALT1" : "",
               "TMTMAIN2,UPX1HEAD,TMTCUTPO,+0XXXXXX",
-              getDecompressor(),
+              getDecompressorSections(),
               "TMTMAIN5",
               NULL
              );
@@ -96,6 +96,7 @@ int PackTmt::buildLoader(const Filter *ft)
               "RELOC32J,TMTJUMP1",
               NULL
              );
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -241,6 +242,7 @@ void PackTmt::pack(OutputFile *fo)
     // patch loader
     patch_le32(loader,lsize,"JMPO",ih.entry-(ph.u_len+ph.overlap_overhead+d_len));
     patchFilter32(loader, lsize, &ft);
+    patchDecompressor(loader, lsize);
     patchPackHeader(loader,e_len);
 
     const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));

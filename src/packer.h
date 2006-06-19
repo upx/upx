@@ -84,6 +84,7 @@ public:
     long buf_offset;
 
     // info fields set by Packer::compress()
+    upx_compress_result_t compress_result;
     //unsigned min_offset_found;
     unsigned max_offset_found;
     //unsigned min_match_found;
@@ -100,6 +101,8 @@ public:
 
 /*************************************************************************
 // abstract base class for packers
+//
+// FIXME: this class is way too fat and badly needs a decomposition
 **************************************************************************/
 
 class Packer
@@ -190,14 +193,40 @@ protected:
     //   destructive decompress + verify
     virtual void verifyOverlappingDecompression(Filter *ft = NULL);
 
-
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
     virtual bool getPackHeader(void *b, int blen);
     virtual bool readPackHeader(int len);
     virtual void checkAlreadyPacked(const void *b, int blen);
 
-    // filter handling [see packerf.cpp]
+    // loader core
+    virtual int buildLoader(const Filter *ft) = 0;
+    // loader util for any linker
+    virtual void freezeLoader();
+    virtual upx_byte *getLoader() const;
+    virtual int getLoaderSize() const;
+    // loader util when using DefaultLinker
+    virtual Linker* newLinker() const;
+    virtual const char *getIdentstr(unsigned *size, int small=-1) const;
+    virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
+#if 1 && (ACC_CC_GNUC >= 0x040100)
+    virtual void __acc_cdecl_va addLoader(const char *s, ...) __attribute__((__sentinel__));
+#else
+    virtual void __acc_cdecl_va addLoader(const char *s, ...);
+#endif
+    virtual int getLoaderSection(const char *name, int *slen=NULL) const;
+    virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
+
+    // compression handling [see packer_c.cpp]
+public:
+    static bool isValidCompressionMethod(int method);
+protected:
+    const int *getDefaultCompressionMethods_8(int method, int level, int small=-1) const;
+    const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
+    virtual const char *getDecompressorSections() const;
+    virtual void patchDecompressor(void *, int);
+
+    // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;
     virtual void tryFilters(Filter *ft, upx_byte *buf, unsigned buf_len,
                             unsigned addvalue=0) const;
@@ -207,21 +236,6 @@ protected:
         { }
     virtual void addFilter32(int filter_id);
     virtual bool patchFilter32(void *, int, const Filter *ft);
-
-    // loader util
-    virtual int buildLoader(const Filter *) { return getLoaderSize(); }
-    virtual const upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
-    virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
-#if 1 && (ACC_CC_GNUC >= 0x040100)
-    virtual void __acc_cdecl_va addLoader(const char *s, ...) __attribute__((__sentinel__));
-#else
-    virtual void __acc_cdecl_va addLoader(const char *s, ...);
-#endif
-    virtual int getLoaderSection(const char *name, int *slen=NULL) const;
-    virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
-    virtual const char *getDecompressor() const;
-    virtual const char *getIdentstr(unsigned *size, int small=-1);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);
@@ -246,14 +260,8 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
-    virtual upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
-    virtual unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
-
-    // compression method util
-    const int *getDefaultCompressionMethods_8(int method, int level, int small=-1) const;
-    const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
-public:
-    static bool isValidCompressionMethod(int method);
+    static upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
+    static unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
 protected:
     InputFile *fi;
@@ -271,10 +279,8 @@ protected:
     int ui_pass;
     int ui_total_passes;
 
-protected:
     // linker
     Linker *linker;
-    virtual void createLinker(const void *pdata, int plen, int pinfo);
 
 private:
     // private to checkPatch()

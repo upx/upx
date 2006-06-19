@@ -225,7 +225,7 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
 void
 PackUnix::patchLoaderChecksum()
 {
-    unsigned char *const ptr = const_cast<unsigned char *>(getLoader());
+    unsigned char *const ptr = getLoader();
     l_info *const lp = &linfo;
     // checksum for loader; also some PackHeader info
     lp->l_magic = UPX_MAGIC_LE32;  // LE32 always
@@ -238,9 +238,10 @@ PackUnix::patchLoaderChecksum()
 
 void PackUnix::pack3(OutputFile *fo, Filter &ft)
 {
-    upx_byte const *p = getLoader();
+    upx_byte *p = getLoader();
     lsize = getLoaderSize();
-    patchFilter32(const_cast<upx_byte *>(p), lsize, &ft);
+    patchFilter32(p, lsize, &ft);
+    patchDecompressor(p, lsize);
     updateLoader(fo);
     patchLoaderChecksum();
     fo->write(p, lsize);

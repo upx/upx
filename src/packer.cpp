@@ -208,10 +208,9 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     //OutputFile::dump("data.raw", in, ph.u_len);
 
     // compress
-    upx_compress_result_t result;
     int r = upx_compress(in, ph.u_len, out, &ph.c_len,
                          uip->getCallback(),
-                         ph.method, ph.level, &conf, &result);
+                         ph.method, ph.level, &conf, &ph.compress_result);
 
     //uip->finalCallback(ph.u_len, ph.c_len);
     uip->endCallback();
@@ -221,14 +220,15 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
-    //ph.min_offset_found = result.result_ucl.result[0];
-    ph.max_offset_found = result.result_ucl.result[1];
-    //ph.min_match_found = result.result_ucl.result[2];
-    ph.max_match_found = result.result_ucl.result[3];
-    //ph.min_run_found = result.result_ucl.result[4];
-    ph.max_run_found = result.result_ucl.result[5];
-    ph.first_offset_found = result.result_ucl.result[6];
-    //ph.same_match_offsets_found = result.result_ucl.result[7];
+    ucl_uint *res = ph.compress_result.result_ucl.result;
+    //ph.min_offset_found = res[0];
+    ph.max_offset_found = res[1];
+    //ph.min_match_found = res[2];
+    ph.max_match_found = res[3];
+    //ph.min_run_found = res[4];
+    ph.max_run_found = res[5];
+    ph.first_offset_found = res[6];
+    //ph.same_match_offsets_found = res[7];
     assert(max_offset == 0 || max_offset >= ph.max_offset_found);
     assert(max_match == 0 || max_match >= ph.max_match_found);
 
@@ -246,7 +246,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     {
         // decompress
         unsigned new_len = ph.u_len;
-        r = upx_decompress(out, ph.c_len, in, &new_len, ph.method);
+        r = upx_decompress(out, ph.c_len, in, &new_len, ph.method, &ph.compress_result);
         //printf("%d %d: %d %d %d\n", ph.method, r, ph.c_len, ph.u_len, new_len);
         if (r != UPX_E_OK)
             throwInternalError("decompression failed");
@@ -318,7 +318,7 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 
     // decompress
     unsigned new_len = ph.u_len;
-    int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method);
+    int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method, &ph.compress_result);
     if (r != UPX_E_OK || new_len != ph.u_len)
         throwCompressedDataViolation();
 
@@ -360,7 +360,7 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
     unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
     unsigned new_len = ph.u_len;
     int r = upx_test_overlap(buf - src_off, src_off,
-                             ph.c_len, &new_len, ph.method);
+                             ph.c_len, &new_len, ph.method, &ph.compress_result);
     return (r == UPX_E_OK && new_len == ph.u_len);
 }
 
@@ -935,71 +935,32 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 
 /*************************************************************************
-// compression method util
+// loader util
 **************************************************************************/
 
-bool Packer::isValidCompressionMethod(int method)
+void Packer::freezeLoader()
 {
-#if !defined(WITH_LZMA)
-    if (method == M_LZMA) {
-        assert(0 && "Internal error - LZMA not compiled in");
-    }
-#endif
-    return (method >= M_NRV2B_LE32 && method <= M_LZMA);
+    linker->freeze();
 }
 
 
-const int *Packer::getDefaultCompressionMethods_8(int method, int level, int small) const
+upx_byte *Packer::getLoader() const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_LZMA, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, M_LZMA, M_END };
-    static const int m_cl1b[]  = { M_CL1B_8, M_END };
-    static const int m_lzma[]  = { M_LZMA, M_END };
-
-    if (small < 0)
-        small = file_size <= 512*1024;
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
-    if (M_IS_NRV2D(method))
-        return m_nrv2d;
-    if (M_IS_NRV2E(method))
-        return m_nrv2e;
-    if (M_IS_CL1B(method))
-        return m_cl1b;
-    if (M_IS_LZMA(method))
-        return m_lzma;
-    assert(method == -1); // --all-methods
-    if (level == 1 || small)
-        return m_nrv2b;
-    return m_nrv2e;
+    int size = -1;
+    upx_byte *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size <= 0)
+        throwBadLoader();
+    return oloader;
 }
 
 
-const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int small) const
+int Packer::getLoaderSize() const
 {
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2D_LE32, M_NRV2E_LE32, M_LZMA, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_LE32, M_NRV2B_LE32, M_NRV2E_LE32, M_LZMA, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_NRV2D_LE32, M_LZMA, M_END };
-    static const int m_cl1b[]  = { M_CL1B_LE32, M_END };
-    static const int m_lzma[]  = { M_LZMA, M_END };
-
-    if (small < 0)
-        small = file_size <= 512*1024;
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
-    if (M_IS_NRV2D(method))
-        return m_nrv2d;
-    if (M_IS_NRV2E(method))
-        return m_nrv2e;
-    if (M_IS_CL1B(method))
-        return m_cl1b;
-    if (M_IS_LZMA(method))
-        return m_lzma;
-    assert(method == -1); // --all-methods
-    if (level == 1 || small)
-        return m_nrv2b;
-    return m_nrv2e;
+    int size = -1;
+    upx_byte *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size <= 0)
+        throwBadLoader();
+    return size;
 }
 
 
@@ -1007,7 +968,16 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
 // loader util
 **************************************************************************/
 
-char const *Packer::getIdentstr(unsigned *size, int small)
+Linker* Packer::newLinker() const
+{
+    if (getFormat() < 128)
+        return new DefaultLELinker;
+    else
+        return new DefaultBELinker;
+}
+
+
+char const *Packer::getIdentstr(unsigned *size, int small) const
 {
     static char identbig[] =
         "\n\0"
@@ -1066,13 +1036,6 @@ char const *Packer::getIdentstr(unsigned *size, int small)
     }
 }
 
-void Packer::createLinker(const void *pdata, int plen, int pinfo)
-{
-    if (getFormat() < 128)
-        linker = new Linker(pdata, plen, pinfo);    // little endian
-    else
-        linker = new BeLinker(pdata, plen, pinfo);  // big endian
-}
 
 void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 {
@@ -1082,8 +1045,9 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
         pinfo =  (pinfo + 3) &~ 3;
     }
 
-    delete linker; linker = NULL;
-    createLinker(pdata, plen, pinfo);
+    delete linker;
+    linker = newLinker();
+    linker->init(pdata, plen, pinfo);
 
     unsigned size;
     char const * const ident = getIdentstr(&size, small);
@@ -1128,130 +1092,6 @@ int Packer::getLoaderSectionStart(const char *name, int *slen) const
     if (slen)
         *slen = size;
     return ostart;
-}
-
-
-const upx_byte *Packer::getLoader() const
-{
-    int size = -1;
-    const char *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
-        throwBadLoader();
-    return (const upx_byte *) oloader;
-}
-
-
-int Packer::getLoaderSize() const
-{
-    int size = -1;
-    const char *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
-        throwBadLoader();
-    return size;
-}
-
-
-const char *Packer::getDecompressor() const
-{
-    static const char nrv2b_le32_small[] =
-        "N2BSMA10,N2BDEC10,N2BSMA20,N2BDEC20,N2BSMA30,"
-        "N2BDEC30,N2BSMA40,N2BSMA50,N2BDEC50,N2BSMA60,"
-        "N2BDEC60";
-    static const char nrv2b_le32_fast[] =
-        "N2BFAS10,+80CXXXX,N2BFAS11,N2BDEC10,N2BFAS20,"
-        "N2BDEC20,N2BFAS30,N2BDEC30,N2BFAS40,N2BFAS50,"
-        "N2BDEC50,N2BFAS60,+40CXXXX,N2BFAS61,N2BDEC60";
-    static const char nrv2d_le32_small[] =
-        "N2DSMA10,N2DDEC10,N2DSMA20,N2DDEC20,N2DSMA30,"
-        "N2DDEC30,N2DSMA40,N2DSMA50,N2DDEC50,N2DSMA60,"
-        "N2DDEC60";
-    static const char nrv2d_le32_fast[] =
-        "N2DFAS10,+80CXXXX,N2DFAS11,N2DDEC10,N2DFAS20,"
-        "N2DDEC20,N2DFAS30,N2DDEC30,N2DFAS40,N2DFAS50,"
-        "N2DDEC50,N2DFAS60,+40CXXXX,N2DFAS61,N2DDEC60";
-    static const char nrv2e_le32_small[] =
-        "N2ESMA10,N2EDEC10,N2ESMA20,N2EDEC20,N2ESMA30,"
-        "N2EDEC30,N2ESMA40,N2ESMA50,N2EDEC50,N2ESMA60,"
-        "N2EDEC60";
-    static const char nrv2e_le32_fast[] =
-        "N2EFAS10,+80CXXXX,N2EFAS11,N2EDEC10,N2EFAS20,"
-        "N2EDEC20,N2EFAS30,N2EDEC30,N2EFAS40,N2EFAS50,"
-        "N2EDEC50,N2EFAS60,+40CXXXX,N2EFAS61,N2EDEC60";
-    static const char cl1b_le32_small[] =
-        "CL1ENTER,CL1SMA10,CL1RLOAD,"
-        "CL1WID01,CL1SMA1B,"
-        "CL1WID02,CL1SMA1B,"
-        "CL1WID03,CL1SMA1B,"
-        "CL1WID04,CL1SMA1B,"
-        "CL1WID05,CL1SMA1B,"
-        "CL1WID06,CL1SMA1B,"
-        "CL1WID07,CL1SMA1B,"
-        "CL1WID08,CL1SMA1B,"
-        "CL1WID09,CL1SMA1B,"
-        "CL1WID10,"
-        "CL1START,"
-        "CL1TOP00,CL1SMA1B,"
-        "CL1TOP01,CL1SMA1B,"
-        "CL1TOP02,CL1SMA1B,"
-        "CL1TOP03,CL1SMA1B,"
-        "CL1TOP04,CL1SMA1B,"
-        "CL1TOP05,CL1SMA1B,"
-        "CL1TOP06,CL1SMA1B,"
-        "CL1TOP07,CL1SMA1B,"
-        "CL1OFF01,CL1SMA1B,"
-        "CL1OFF02,CL1SMA1B,"
-        "CL1OFF03,CL1SMA1B,"
-        "CL1OFF04,"
-        "CL1LEN00,CL1SMA1B,"
-        "CL1LEN01,CL1SMA1B,"
-        "CL1LEN02,"
-        "CL1COPY0";
-    static const char cl1b_le32_fast[] =
-        "CL1ENTER,"          "CL1RLOAD,"
-        "CL1WID01,CL1FAS1B,"
-        "CL1WID02,CL1FAS1B,"
-        "CL1WID03,CL1FAS1B,"
-        "CL1WID04,CL1FAS1B,"
-        "CL1WID05,CL1FAS1B,"
-        "CL1WID06,CL1FAS1B,"
-        "CL1WID07,CL1FAS1B,"
-        "CL1WID08,CL1FAS1B,"
-        "CL1WID09,CL1FAS1B,"
-        "CL1WID10,"
-        "CL1START,"
-        "CL1TOP00,CL1FAS1B,"
-        "CL1TOP01,CL1FAS1B,"
-        "CL1TOP02,CL1FAS1B,"
-        "CL1TOP03,CL1FAS1B,"
-        "CL1TOP04,CL1FAS1B,"
-        "CL1TOP05,CL1FAS1B,"
-        "CL1TOP06,CL1FAS1B,"
-        "CL1TOP07,CL1FAS1B,"
-        "CL1OFF01,CL1FAS1B,"
-        "CL1OFF02,CL1FAS1B,"
-        "CL1OFF03,CL1FAS1B,"
-        "CL1OFF04,"
-        "CL1LEN00,CL1FAS1B,"
-        "CL1LEN01,CL1FAS1B,"
-        "CL1LEN02,"
-        "CL1COPY0";
-    static const char lzma_fast[] =
-        "LZMA_SMALL";   // FIXME
-    static const char lzma_small[] =
-        "LZMA_SMALL";
-
-    if (ph.method == M_NRV2B_LE32)
-        return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
-    if (ph.method == M_NRV2D_LE32)
-        return opt->small ? nrv2d_le32_small : nrv2d_le32_fast;
-    if (ph.method == M_NRV2E_LE32)
-        return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
-    if (ph.method == M_CL1B_LE32)
-        return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
-    if (ph.method == M_LZMA)
-        return opt->small ? lzma_small  : lzma_fast;
-    throwInternalError("bad decompressor");
-    return NULL;
 }
 
 

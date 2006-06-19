@@ -158,6 +158,7 @@ int PackCom::buildLoader(const Filter *ft)
         assert(ft->calls > 0);
         addFilter16(ft->id);
     }
+    freezeLoader();
     return getLoaderSize();
 }
 

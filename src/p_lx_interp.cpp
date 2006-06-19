@@ -153,19 +153,19 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
         addLoader("LXPTI000", NULL);
 
         addLoader("LXPTI040", NULL);
-        ph.method = M_NRV2B_LE32; addLoader(getDecompressor(), NULL);
+        ph.method = M_NRV2B_LE32; addLoader(getDecompressorSections(), NULL);
         addLoader("LXPTI090", NULL);
 
         addLoader("LXPTI041", NULL);
-        ph.method = M_NRV2D_LE32; addLoader(getDecompressor(), NULL);
+        ph.method = M_NRV2D_LE32; addLoader(getDecompressorSections(), NULL);
         addLoader("LXPTI090", NULL);
 
         addLoader("LXPTI042", NULL);
-        ph.method = M_NRV2E_LE32; addLoader(getDecompressor(), NULL);
+        ph.method = M_NRV2E_LE32; addLoader(getDecompressorSections(), NULL);
         addLoader("LXPTI090", NULL);
 
         addLoader("LXPTI043", NULL);
-        ph.method = M_CL1B_LE32;  addLoader(getDecompressor(), NULL);
+        ph.method = M_CL1B_LE32;  addLoader(getDecompressorSections(), NULL);
         addLoader("LXPTI090", NULL);
 
         addLoader("LXPTI091", NULL);
@@ -182,6 +182,7 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
 
         addLoader("LXPTI200", NULL);
         addLoader("FOLDEXEC", NULL);
+        freezeLoader();
         upx_byte const *p = getLoader();
         lsize = getLoaderSize();
         updateLoader(fo);

@@ -160,7 +160,7 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
     addLoader("LINUX000",
               (0x40==(0xf0 & ft->id)) ? "LXCKLLT1" : (ft->id ? "LXCALLT1" : ""),
               "LXMOVEUP",
-              getDecompressor(),
+              getDecompressorSections(),
               NULL
              );
     if (ft->id)
@@ -175,6 +175,7 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUX990,IDENTSTR,UPX1HEAD", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -226,6 +227,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     memcpy(loader, getLoader(), lsize);
 
     patchPackHeader(loader, lsize);
+    patchDecompressor(loader, lsize);
     patch_le32(loader, lsize, "ULEN", ph.u_len);
     patchFilter32(loader, lsize, &ft);
 

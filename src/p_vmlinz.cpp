@@ -253,7 +253,7 @@ int PackVmlinuzI386::buildLoader(const Filter *ft)
     addLoader("LINUZ000",
               ft->id ? "LZCALLT1" : "",
               "LZIMAGE0",
-              getDecompressor(),
+              getDecompressorSections(),
               NULL
              );
     if (ft->id)
@@ -263,6 +263,7 @@ int PackVmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUZ990,IDENTSTR,UPX1HEAD", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -284,6 +285,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 
     patchPackHeader(loader, lsize);
     patchFilter32(loader, lsize, &ft);
+    patchDecompressor(loader, lsize);
     patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_offset_during_uncompression);
@@ -323,7 +325,7 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
               "+40D++++", // align the stuff to 4 byte boundary
               "UPX1HEAD", // 32 byte
               "LZCUTPOI,+0000000",
-              getDecompressor(),
+              getDecompressorSections(),
               NULL
              );
     if (ft->id)

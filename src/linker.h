@@ -30,62 +30,134 @@
 #define __UPX_LINKER_H
 
 
+/*************************************************************************
+//
+**************************************************************************/
+
 class Linker
 {
+protected:
+    Linker() : frozen(false) { }
 public:
-    Linker(const void *pdata, int plen, int pinfo);
-    virtual ~Linker();
-    int addSection(const char *sect);
-    void addSection(const char *sname, const void *sdata, unsigned len);
-    const char *getLoader(int *llen);
-    int getSection(const char *name, int *slen) const;
-    int getLoaderSize() const { return olen; }
-    void setLoaderAlignOffset(int phase);
+    virtual ~Linker() { }
+    // endian abstraction
+    virtual unsigned get32(const void *b) const = 0;
+    virtual void set32(void *b, unsigned v) const = 0;
+    //
+    virtual bool isFrozen() const { return frozen; }
+    //
+    virtual void init(const void *pdata, int plen, int pinfo) = 0;
+    virtual void setLoaderAlignOffset(int phase) = 0;
+    virtual int addSection(const char *sname) = 0;
+    virtual void addSection(const char *sname, const void *sdata, int slen) = 0;
+    virtual void freeze() = 0;
+    virtual int getSection(const char *sname, int *slen=NULL) = 0;
+    virtual unsigned char *getLoader(int *llen=NULL) = 0;
 
 protected:
-    // little endian
-    virtual unsigned get32(const void *b) const { return get_le32(b); }
-    virtual void set32(void *b, unsigned v) const { set_le32(b, v); }
+    bool     frozen;
+};
+
+
+/*************************************************************************
+// DefaultLinker
+**************************************************************************/
+
+class DefaultLinker : public Linker
+{
+protected:
+    DefaultLinker();
+public:
+    virtual ~DefaultLinker();
+    //
+    virtual void init(const void *pdata, int plen, int pinfo);
+    virtual void setLoaderAlignOffset(int phase);
+    virtual int addSection(const char *sname);
+    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void freeze();
+    virtual int getSection(const char *sname, int *slen=NULL);
+    virtual unsigned char *getLoader(int *llen=NULL);
 
 private:
-    struct section;
-    struct jump;
+    struct Label;
+    struct Jump;
+    struct Section;
 
-    char     *iloader, *oloader;
+    unsigned char *iloader, *oloader;
     int      ilen, olen;
     int      info;
-    jump     *jumps;
+    Jump     *jumps;
     int      njumps;
-    section  *sections;
+    Section  *sections;
     int      nsections;
-    int      frozen;
     int      align_hack;
-    int     align_offset;
+    int      align_offset;
 
 private:
     // disable copy and assignment
-    Linker(const Linker &); // {}
-    Linker& operator= (const Linker &); // { return *this; }
+    DefaultLinker(const DefaultLinker &); // {}
+    DefaultLinker& operator= (const DefaultLinker &); // { return *this; }
 };
 
 
-class BeLinker : public Linker
+template <class T>
+class TDefaultLinker : public DefaultLinker
 {
-    typedef Linker super;
 public:
-    BeLinker(const void *pdata, int plen, int pinfo) :
-        super(pdata, plen, pinfo) { }
-
-protected:
-    // big endian
-    virtual unsigned get32(const void *b) const { return get_be32(b); }
-    virtual void set32(void *b, unsigned v) const { set_be32(b, v); }
-
+    TDefaultLinker() : DefaultLinker() { }
+    virtual unsigned get32(const void *b) const { return T::get32(b); }
+    virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
 private:
     // disable copy and assignment
-    BeLinker(const BeLinker &); // {}
-    BeLinker& operator= (const BeLinker &); // { return *this; }
+    TDefaultLinker(const TDefaultLinker &); // {}
+    TDefaultLinker& operator= (const TDefaultLinker &); // { return *this; }
 };
+
+
+typedef TDefaultLinker<NBELE::BEPolicy> DefaultBELinker;
+typedef TDefaultLinker<NBELE::LEPolicy> DefaultLELinker;
+
+
+/*************************************************************************
+// SimpleLinker
+**************************************************************************/
+
+class SimpleLinker : public Linker
+{
+protected:
+    SimpleLinker();
+public:
+    virtual ~SimpleLinker();
+    //
+    virtual void init(const void *pdata, int plen, int pinfo);
+    virtual void setLoaderAlignOffset(int phase);
+    virtual int addSection(const char *sname);
+    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void freeze();
+    virtual int getSection(const char *sname, int *slen=NULL);
+    virtual unsigned char *getLoader(int *llen=NULL);
+private:
+    unsigned char *oloader;
+    int      olen;
+};
+
+
+template <class T>
+class TSimpleLinker : public SimpleLinker
+{
+public:
+    TSimpleLinker() : SimpleLinker() { }
+    virtual unsigned get32(const void *b) const { return T::get32(b); }
+    virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
+private:
+    // disable copy and assignment
+    TSimpleLinker(const TSimpleLinker &); // {}
+    TSimpleLinker& operator= (const TSimpleLinker &); // { return *this; }
+};
+
+
+typedef TSimpleLinker<NBELE::BEPolicy> SimpleBELinker;
+typedef TSimpleLinker<NBELE::LEPolicy> SimpleLELinker;
 
 
 #endif /* already included */

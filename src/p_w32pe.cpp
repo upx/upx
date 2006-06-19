@@ -1666,7 +1666,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
               tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
-              getDecompressor(),
+              getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",
               NULL
@@ -1713,6 +1713,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
               "IDENTSTR,UPX1HEAD",
               NULL
              );
+    freezeLoader();
     return getLoaderSize();
 }
 
@@ -2031,6 +2032,7 @@ void PackW32Pe::pack(OutputFile *fo)
         if (texv)
             patch_le32(loader, codesize, "TEXV", texv);
     }
+    patchDecompressor(loader, codesize);
     if (tlsindex)
     {
         // in case of overlapping decompression, this hack is needed,
