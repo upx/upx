@@ -127,20 +127,24 @@ If you want to modify the stub sources you'll also need
       bin-upx/arm-9tdmi-linux-gnu-gcc-3.4.5
       bin-upx/arm-9tdmi-linux-gnu-ld
       bin-upx/arm-9tdmi-linux-gnu-objcopy
+      bin-upx/arm-9tdmi-linux-gnu-objdump
       bin-upx/asm5900
       bin-upx/djasm
       bin-upx/i386-linux-gcc-2.95.3
       bin-upx/i386-linux-gcc-3.4.6
       bin-upx/i386-linux-ld-2.16.1
       bin-upx/i386-linux-objcopy-2.16.1
+      bin-upx/i386-linux-objdump
       bin-upx/nasm
       bin-upx/powerpc-750-linux-gnu-gcc-3.4.4
       bin-upx/powerpc-750-linux-gnu-ld
       bin-upx/powerpc-750-linux-gnu-objcopy
+      bin-upx/powerpc-750-linux-gnu-objdump
       bin-upx/sstrip                                [ from src/stub/util ]
       bin-upx/x86_64-unknown-linux-gnu-gcc-3.4.4
       bin-upx/x86_64-unknown-linux-gnu-ld
       bin-upx/x86_64-unknown-linux-gnu-objcopy
+      bin-upx/x86_64-unknown-linux-gnu-objdump
 
 
 Misc. notes

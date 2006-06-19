@@ -22,7 +22,6 @@ lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf i386 default
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
 tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.i386-lzma.objdump  = objdump
 
 lzma_d_c%.ash : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

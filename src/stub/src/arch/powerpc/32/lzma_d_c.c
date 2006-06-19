@@ -31,7 +31,7 @@
 
 #define ACC_LIBC_NAKED
 #define ACC_OS_FREESTANDING
-#include "../../../../miniacc.h"
+#include "../../../../../miniacc.h"
 
 #undef _LZMA_IN_CB
 #undef _LZMA_OUT_READ

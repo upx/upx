@@ -167,6 +167,7 @@ tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
 tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
+tc.amd64-linux.elf.objdump  = x86_64-unknown-linux-gnu-objdump
 tc.amd64-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -200,6 +201,7 @@ tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
 tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
+tc.arm-linux.elf.objdump  = arm-9tdmi-linux-gnu-objdump
 tc.arm-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -340,6 +342,7 @@ tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
 tc.i386-linux.elf.ld       = i386-linux-ld-2.16.1
 tc.i386-linux.elf.objcopy  = i386-linux-objcopy-2.16.1
+tc.i386-linux.elf.objdump  = i386-linux-objdump
 tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
@@ -540,6 +543,7 @@ tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
 tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
+tc.powerpc-linux.elf.objdump  = powerpc-750-linux-gnu-objdump
 tc.powerpc-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S

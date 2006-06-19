@@ -9,27 +9,28 @@ STUBS += lzma_d_cf.S lzma_d_cs.S
 
 default.targets = all
 all.targets = tmp/.tmp-stamp $(STUBS)
-include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../Makefile
+include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../../Makefile
 
 
 # /***********************************************************************
-# // amd64-lzma
+# // powerpc-lzma
 # ************************************************************************/
 
-lzma_d_cf.S : tc_list = amd64-lzma amd64-linux.elf default
-lzma_d_cs.S : tc_list = amd64-lzma amd64-linux.elf default
+lzma_d_cf.S : tc_list = powerpc-lzma powerpc-linux.elf default
+lzma_d_cs.S : tc_list = powerpc-lzma powerpc-linux.elf default
 
-tc.amd64-lzma.gcc      = $(tc.amd64-linux.elf.gcc)
-tc.amd64-lzma.gcc     += -ffunction-sections
-tc.amd64-lzma.gcc     += -Os
-tc.amd64-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.powerpc-lzma.gcc      = $(tc.powerpc-linux.elf.gcc)
+tc.powerpc-lzma.gcc     += -mcpu=405 -fPIC
+tc.powerpc-lzma.gcc     += -Os
+tc.powerpc-lzma.gcc     += -ffunction-sections
+tc.powerpc-lzma.gcc     += -I$(UPX_LZMADIR)
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
 	$(call tc,objstrip) tmp/$T.o
 	$(call tc,objcopy) --only-section .text.LzmaDecode -O binary tmp/$T.o tmp/$T.bin
-	head -c-1 tmp/$T.bin > tmp/$T.out
-	$(call tc,objdump) -b binary -m i386:x86-64 -D tmp/$T.out > tmp/$T.out.lst
+	head -c-0 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m powerpc -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
 lzma_d_cf.S : PP_FLAGS = -DFAST
