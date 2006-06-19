@@ -1,0 +1,41 @@
+MAKEFLAGS += -rR
+.SUFFIXES:
+.SECONDEXPANSION:
+export SHELL = /bin/sh
+
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+
+STUBS += lzma_d_cf.ash lzma_d_cs.ash
+
+default.targets = all
+all.targets = tmp/.tmp-stamp $(STUBS)
+include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../Makefile
+
+
+# /***********************************************************************
+# // i386-lzma
+# ************************************************************************/
+
+lzma_d_cf.ash : tc_list = amd64-lzma amd64-linux.elf default
+lzma_d_cs.ash : tc_list = amd64-lzma amd64-linux.elf default
+
+tc.amd64-lzma.gcc      = $(tc.i386-linux.elf.gcc)
+tc.amd64-lzma.gcc     += -ffunction-sections
+tc.amd64-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.amd64-lzma.objdump  = objdump
+
+lzma_d_c%.ash : lzma_d_c.c
+	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,objcopy) --only-section .text.LzmaDecode -O binary tmp/$T.o tmp/$T.bin
+	head -c-1 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m i386:x86-64 -D tmp/$T.out > tmp/$T.out.lst
+	$(call tc,bin2h) --mode=gas tmp/$T.out $@
+
+lzma_d_cf.ash : PP_FLAGS = -DFAST
+lzma_d_cs.ash : PP_FLAGS = -DSMALL
+
+lzma_d_cf.ash : $(MAKEFILE_LIST)
+lzma_d_cs.ash : $(MAKEFILE_LIST)
+
+endif

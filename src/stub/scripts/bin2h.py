@@ -94,6 +94,27 @@ def w_data_c(w, data):
     w_eol(w, i)
 
 
+def w_data_gas(w, data):
+    def w_eol(w, i):
+        if i > 0:
+            w("   /* 0x%04x */" % (i - 16))
+            w("\n")
+
+    n = len(data)
+    for i in range(n):
+        if i % 16 == 0:
+            w_eol(w, i)
+            w(".byte ")
+        else:
+            w(",")
+        w("%3d" % ord(data[i]))
+    i = n
+    while i % 16 != 0:
+        i += 1
+        w("    ")
+    w_eol(w, i)
+
+
 def w_data_nasm(w, data):
     def w_eol(w, i):
         if i > 0:
@@ -160,8 +181,12 @@ def main(argv):
             w("unsigned char %s[%d] = {\n" % (opts.ident, len(data)))
     if opts.mode == "c":
         w_data_c(w, data)
+    elif opts.mode == "gas":
+        w_data_gas(w, data)
     elif opts.mode == "nasm":
         w_data_nasm(w, data)
+    else:
+        assert 0, opts.mode
     if opts.ident:
         if opts.mode == "c":
             w("};\n")
