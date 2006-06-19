@@ -52,7 +52,7 @@
 ; init
 ; __LZMA_DEC00__
 ;
-        
+
         mov     ebp, esp                ; save stack
 
         lea     ecx, [esp + 'UPXa']
@@ -62,22 +62,20 @@
         cmp     esp, ecx
         jnz     .clearstack1
 
+        inc     esi
 
-        ; LzmaDecodeProperties()
-        inc esi
-        lea     edx, [ecx + 8]
-        mov     dword [edx], 'UPXb'     ; lc, lp, pb, dummy
-        lea     eax, [ecx + 16]
-        mov     dword [edx+4], eax      ; Probs
-
-        push    ecx                     ; outSizeProcessed *
-        push    'UPXc'                  ; outSize
+        push    ecx                     ; &outSizeProcessed
+        push    'UPXb'                  ; outSize
         push    edi                     ; out
-        lea     eax, [ecx + 4]
-        push    eax                     ; inSizeProcessed *
-        push    'UPXd'                  ; inSize
+        add     ecx, 4
+        push    ecx                     ; &inSizeProcessed
+        push    'UPXc'                  ; inSize
         push    esi                     ; in
-        push    edx                     ; CLzmaDecoderState *
+        add     ecx, 4
+        push    ecx                     ; &CLzmaDecoderState
+        push    eax                     ; dummy for call
+
+        mov     dword [ecx], 'UPXd'     ; lc, lp, pb, dummy
 
 
 ; __LZMA_DEC10__
@@ -92,19 +90,18 @@
 ; __LZMA_DEC30__
 ;
 
-        add     esi, [esp + 12]
-        add     edi, [esp + 24]
-
-        mov     esp, ebp                ; restore stack
+        add     esi, [esp + 32 + 4]
+        add     edi, [esp + 32 + 0]
         xor     eax, eax
 
         lea     ecx, [esp - 1024]
+        mov     esp, ebp                ; restore stack
 .clearstack2:
         push    eax
         cmp     esp, ecx
         jnz     .clearstack2
-        mov     esp, ebp                ; restore stack
 
+        mov     esp, ebp                ; restore stack
         xor     ecx, ecx
 
 

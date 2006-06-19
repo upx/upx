@@ -22,12 +22,14 @@ lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf i386 default
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
 tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.i386-lzma.objdump  = objdump
 
 lzma_d_c%.ash : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
 	$(call tc,objstrip) tmp/$T.o
 	$(call tc,objcopy) --only-section .text.LzmaDecode -O binary tmp/$T.o tmp/$T.bin
 	head -c-1 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=nasm tmp/$T.out $@
 
 lzma_d_cf.ash : PP_FLAGS = -DFAST

@@ -375,6 +375,8 @@ bool set_method_name(char *buf, size_t size, int method, int level)
         alg = "NRV2D";
     else if (M_IS_NRV2E(method))
         alg = "NRV2E";
+    else if (M_IS_LZMA(method))
+        alg = "LZMA";
     else
     {
         alg = "???";

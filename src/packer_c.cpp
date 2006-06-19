@@ -214,14 +214,14 @@ void Packer::patchDecompressor(void *loader, int lsize)
     {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         // FIXME - this is for i386 only
-        patch_le32(loader, lsize, "UPXd", ph.c_len - 1);
-        patch_le32(loader, lsize, "UPXc", ph.u_len);
-        unsigned p = // lc, lp, pb, dummy
+        unsigned properties = // lc, lp, pb, dummy
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
-        patch_le32(loader, lsize, "UPXb", p);
-        unsigned stack = 8 + 8 + 2 * res->num_probs;
+        patch_le32(loader, lsize, "UPXd", properties);
+        patch_le32(loader, lsize, "UPXc", ph.c_len - 1);
+        patch_le32(loader, lsize, "UPXb", ph.u_len);
+        unsigned stack = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4);
         stack = ALIGN_UP(stack, 16);
         patch_le32(loader, lsize, "UPXa", 0u - stack);
     }

@@ -53,9 +53,10 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
 #undef LzmaDecode
 typedef struct {
     struct { unsigned char lc, lp, pb, dummy; } Properties;
-    CProb *Probs;
+    CProb Probs[];
+//    CProb *Probs;
 } CLzmaDecoderState;
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 8)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 4)
 #define CLzmaDecoderState   const CLzmaDecoderState
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
