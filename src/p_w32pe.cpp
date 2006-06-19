@@ -558,7 +558,9 @@ unsigned PackW32Pe::processImports() // pass 1
     static const unsigned char kernel32dll[] = "KERNEL32.DLL";
     static const char llgpa[] = "\x0\x0""LoadLibraryA\x0\x0"
                                 "GetProcAddress\x0\x0"
-                                "VirtualProtect\x0\x0";
+                                "VirtualProtect\x0\x0"
+                                "VirtualAlloc\x0\x0"
+                                "VirtualFree\x0\x0\x0";
     static const char exitp[] = "ExitProcess\x0\x0\x0";
 
     unsigned dllnum = 0;
@@ -660,7 +662,7 @@ unsigned PackW32Pe::processImports() // pass 1
     im = (import_desc*) oimpdlls;
 
     LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 4 + k32o + (isdll ? 0 : 1);
+    LE32 *lookuptable = ordinals + 6 + k32o + (isdll ? 0 : 1);
     upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
     upx_byte *importednames = dllnames + (dllnamelen &~ 1);
 
@@ -675,6 +677,8 @@ unsigned PackW32Pe::processImports() // pass 1
     *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryA
     *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddress
     *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16;   // VirtualProtect
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16 + 16;   // VirtualAlloc
+    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16 + 16 + 14;   // VirtualFree
     if (!isdll)
         *ordinals++ = ptr_diff(importednames,oimpdlls) + sizeof(llgpa) - 3; // ExitProcess
     dllnames += sizeof(kernel32dll);
@@ -2016,7 +2020,7 @@ void PackW32Pe::pack(OutputFile *fo)
     if (soimport)
     {
         if (!isdll)
-            patch_le32(loader,codesize,"EXIT",myimport + get_le32(oimpdlls + 16) + 12);
+            patch_le32(loader,codesize,"EXIT",myimport + get_le32(oimpdlls + 16) + 20);
         patch_le32(loader,codesize,"GETP",myimport + get_le32(oimpdlls + 16) + 4);
         if (kernel32ordinal)
             patch_le32(loader,codesize,"K32O",myimport);
@@ -2024,6 +2028,11 @@ void PackW32Pe::pack(OutputFile *fo)
         patch_le32(loader,codesize,"IMPS",myimport);
         patch_le32(loader,codesize,"BIMP",cimports);
     }
+
+#if 0
+    patch_le32(loader, codesize, "VALL", myimport + get_le32(oimpdlls + 16) + 12);
+    patch_le32(loader, codesize, "VFRE", myimport + get_le32(oimpdlls + 16) + 16);
+#endif
 
     if (patchFilter32(loader, codesize, &ft))
     {
