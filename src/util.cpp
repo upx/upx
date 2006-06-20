@@ -541,7 +541,7 @@ int _is_executable(const char *, int, const char *)
 }
 
 // FIXME: something wants to link in ctime.o
-time_t mktime(struct tm *)
+time_t XXX_mktime(struct tm *)
 {
     return 0;
 }
