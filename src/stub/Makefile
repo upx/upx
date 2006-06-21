@@ -125,6 +125,7 @@ tc.default.o2bin      = perl $(srcdir)/scripts/o2bin.pl
 tc.default.nasm       = nasm
 tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
+tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.readelf    = readelf
