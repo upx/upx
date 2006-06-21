@@ -387,7 +387,7 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 // 24-bit ARM calltrick ("naive")
 **************************************************************************/
 
-#define CT24ARM(f, cond, addvalue, get, set) \
+#define CT24ARM_LE(f, cond, addvalue, get, set) \
     upx_byte *b = f->buf; \
     upx_byte *b_end = b + f->buf_len - 4; \
     do { \
@@ -408,37 +408,55 @@ static int s_ct32_e8e9_bswap_be(Filter *f)
 
 static int f_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_le, a / 4 + f->addvalue, get_le24, set_le24)
+    CT24ARM_LE(f, ARMCT_COND_le, a / 4 + f->addvalue, get_le24, set_le24)
 }
 
 static int u_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_le, 0 - a / 4 - f->addvalue, get_le24, set_le24)
+    CT24ARM_LE(f, ARMCT_COND_le, 0 - a / 4 - f->addvalue, get_le24, set_le24)
 }
 
 static int s_ct24arm_le(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_le, a + f->addvalue, get_le24, set_dummy)
+    CT24ARM_LE(f, ARMCT_COND_le, a + f->addvalue, get_le24, set_dummy)
 }
+
+#undef CT24ARM_LE
+
+#define CT24ARM_BE(f, cond, addvalue, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 4; \
+    do { \
+        if (cond) \
+        { \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(1+b, get(1+b) + (addvalue)); \
+            f->calls++; \
+        } \
+        b += 4; \
+    } while (b < b_end); \
+    if (f->lastcall) f->lastcall += 4; \
+    return 0;
 
 #define ARMCT_COND_be (((b[0] & 0x0f) == 0x0b))
 
 static int f_ct24arm_be(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_be, a / 4 + f->addvalue, get_be24, set_be24)
+    CT24ARM_BE(f, ARMCT_COND_be, a / 4 + f->addvalue, get_be24, set_be24)
 }
 
 static int u_ct24arm_be(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_be, 0 - a / 4 - f->addvalue, get_be24, set_be24)
+    CT24ARM_BE(f, ARMCT_COND_be, 0 - a / 4 - f->addvalue, get_be24, set_be24)
 }
 
 static int s_ct24arm_be(Filter *f)
 {
-    CT24ARM(f, ARMCT_COND_be, a + f->addvalue, get_be24, set_dummy)
+    CT24ARM_BE(f, ARMCT_COND_be, a + f->addvalue, get_be24, set_dummy)
 }
 
-#undef CT24ARM
+#undef CT24ARM_BE
 #undef ARMCT_COND
 
 /*
