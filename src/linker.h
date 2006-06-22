@@ -56,6 +56,11 @@ public:
 
 protected:
     bool     frozen;
+
+private:
+    // disable copy and assignment
+    Linker(const Linker &); // {}
+    Linker& operator= (const Linker &); // { return *this; }
 };
 
 
@@ -92,27 +97,15 @@ private:
     int      nsections;
     int      align_hack;
     int      align_offset;
-
-private:
-    // disable copy and assignment
-    DefaultLinker(const DefaultLinker &); // {}
-    DefaultLinker& operator= (const DefaultLinker &); // { return *this; }
 };
 
 
 template <class T>
-class TDefaultLinker : public DefaultLinker
+struct TDefaultLinker : public DefaultLinker
 {
-public:
-    TDefaultLinker() : DefaultLinker() { }
     virtual unsigned get32(const void *b) const { return T::get32(b); }
     virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
-private:
-    // disable copy and assignment
-    TDefaultLinker(const TDefaultLinker &); // {}
-    TDefaultLinker& operator= (const TDefaultLinker &); // { return *this; }
 };
-
 
 typedef TDefaultLinker<NBELE::BEPolicy> DefaultBELinker;
 typedef TDefaultLinker<NBELE::LEPolicy> DefaultLELinker;
@@ -143,18 +136,11 @@ private:
 
 
 template <class T>
-class TSimpleLinker : public SimpleLinker
+struct TSimpleLinker : public SimpleLinker
 {
-public:
-    TSimpleLinker() : SimpleLinker() { }
     virtual unsigned get32(const void *b) const { return T::get32(b); }
     virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
-private:
-    // disable copy and assignment
-    TSimpleLinker(const TSimpleLinker &); // {}
-    TSimpleLinker& operator= (const TSimpleLinker &); // { return *this; }
 };
-
 
 typedef TSimpleLinker<NBELE::BEPolicy> SimpleBELinker;
 typedef TSimpleLinker<NBELE::LEPolicy> SimpleLELinker;
