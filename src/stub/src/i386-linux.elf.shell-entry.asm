@@ -86,6 +86,7 @@ decompress:
 %include      "arch/i386/nrv2d_d32.ash"
 %include      "arch/i386/nrv2e_d32.ash"
 %include      "arch/i386/cl1_d32.ash"
+%include      "arch/i386/lzma_d.ash"
 %include      "arch/i386/macros.ash"
                 cjt32 0
 
