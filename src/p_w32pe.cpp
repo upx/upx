@@ -2388,6 +2388,7 @@ void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
                 const unsigned ilen = strlen(++p) + 1;
                 if (inamespos)
                 {
+                    assert(oimpdlls != NULL); // FIXME
                     if (ptr_diff(importednames,oimpdlls) & 1)
                         importednames -= 1;
                     omemcpy(importednames + 2, p, ilen);

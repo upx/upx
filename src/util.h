@@ -69,6 +69,7 @@ template <class T>
 inline int ptr_diff(const T *p1, const T *p2)
 {
     COMPILE_TIME_ASSERT(sizeof(T) == 1)
+    assert(p1 != NULL); assert(p2 != NULL);
     ptrdiff_t d = (const char*) p1 - (const char*) p2;
     assert((int)d == d);
     return (int) d;
@@ -76,6 +77,7 @@ inline int ptr_diff(const T *p1, const T *p2)
 #endif
 inline int ptr_diff(const void *p1, const void *p2)
 {
+    assert(p1 != NULL); assert(p2 != NULL);
     ptrdiff_t d = (const char*) p1 - (const char*) p2;
     assert((int)d == d);
     return (int) d;
