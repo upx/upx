@@ -42,7 +42,7 @@ static int hex(char c)
 #define NJUMPS      200
 #define NSECTIONS   550
 
-struct DefaultLinker::Label
+class DefaultLinker::Label
 {
     char label[31 + 1];
 public:
@@ -79,6 +79,7 @@ DefaultLinker::DefaultLinker() :
     iloader(NULL), oloader(NULL), jumps(NULL), sections(NULL)
 {
 }
+
 
 void DefaultLinker::init(const void *pdata, int plen, int pinfo)
 {
