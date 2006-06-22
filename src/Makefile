@@ -21,8 +21,12 @@ ifeq ($(firstword $(CXX)),g++)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
-##CXXFLAGS += -O2 -MMD
-CXXFLAGS += -O0 -g -MMD
+CXXFLAGS += -MMD
+ifeq ($(DEBUG),1)
+CXXFLAGS += -O0 -g
+else
+CXXFLAGS += -O2
+endif
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 ##CXXFLAGS += -Wshadow
 endif
@@ -76,18 +80,18 @@ $(upx_OBJECTS_LUA) : lua_%.o : $(UPX_LUADIR)/src/%.c
 
 
 ifeq ($(USE_GNUC),1)
-##compress_lzma$(objext) : EXTRA_CXXFLAGS += -O3 -fomit-frame-pointer
-compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-cast-qual
-compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-non-virtual-dtor
-compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-shadow
-compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-unused
-##compress_lzma$(objext) : EXTRA_CXXFLAGS += -Wno-error
+##compress_lzma$(objext) : CXXFLAGS += -O3 -fomit-frame-pointer
+compress_lzma$(objext) : CXXFLAGS += -Wno-cast-qual
+compress_lzma$(objext) : CXXFLAGS += -Wno-non-virtual-dtor
+compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
+compress_lzma$(objext) : CXXFLAGS += -Wno-unused
+##compress_lzma$(objext) : CXXFLAGS += -Wno-error
 endif
 
 ifeq ($(USE_GNUC),1)
-$(upx_OBJECTS_LUA)     : EXTRA_CXXFLAGS += -Wno-cast-align
-$(upx_OBJECTS_LUA)     : EXTRA_CXXFLAGS += -Wno-cast-qual
-$(upx_OBJECTS_LUA)     : EXTRA_CXXFLAGS += -Wno-error
+$(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-cast-align
+$(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-cast-qual
+$(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-error
 endif
 
 
