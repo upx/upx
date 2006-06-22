@@ -53,6 +53,12 @@ start:
                 or      ebp, byte -1
 
 ;       __LZMA_INIT_STACK__
+
+; as this stub gets loaded from 0x000000a8, we have some scratch
+; memory starting from 0x00000000 to store ss:esp
+; note: NULL page protection is only activated by the
+; uncompressed application later
+
                 xor     eax, eax
                 mov     [eax], ss
                 mov     [eax + 4], esp
@@ -70,7 +76,7 @@ start:
 %include      "arch/i386/lzma_d.ash"
 
 ;       __LZMA_DONE_STACK__
-                mov     ss, [eax]
+                mov     ss, [eax]               ; eax is always 0 here
                 mov     esp, [eax + 4]
 
 ; =============
