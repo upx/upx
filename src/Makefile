@@ -21,8 +21,8 @@ ifeq ($(firstword $(CXX)),g++)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
-CXXFLAGS += -O2 -MMD
-##CXXFLAGS += -O0 -g -MMD
+##CXXFLAGS += -O2 -MMD
+CXXFLAGS += -O0 -g -MMD
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wwrite-strings -Werror
 ##CXXFLAGS += -Wshadow
 endif

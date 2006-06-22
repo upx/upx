@@ -405,6 +405,7 @@ PackLinuxElf32x86::buildLinuxLoader(
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
 
+    freezeLoader();
     upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
@@ -414,7 +415,6 @@ PackLinuxElf32x86::buildLinuxLoader(
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
 
-    freezeLoader();
     return getLoaderSize();
 }
 
