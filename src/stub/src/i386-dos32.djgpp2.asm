@@ -52,6 +52,14 @@ start:
 ;               cld                             ; the stub sets this
                 or      ebp, byte -1
 
+;       __LZMA_INIT_STACK__
+                xor     eax, eax
+                mov     [eax], ss
+                mov     [eax + 4], esp
+                mov     eax, ds
+                mov     ss, eax
+                mov     esp, 'ESP0'
+
 ; =============
 ; ============= DECOMPRESSION
 ; =============
@@ -60,6 +68,10 @@ start:
 %include      "arch/i386/nrv2d_d32.ash"
 %include      "arch/i386/nrv2e_d32.ash"
 %include      "arch/i386/lzma_d.ash"
+
+;       __LZMA_DONE_STACK__
+                mov     ss, [eax]
+                mov     esp, [eax + 4]
 
 ; =============
 

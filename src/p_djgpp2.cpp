@@ -89,7 +89,9 @@ int PackDjgpp2::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,DJ2MAIN1",
               ft->id ? "DJCALLT1" : "",
               "DJ2MAIN2",
+              ph.method == M_LZMA ? "LZMA_INIT_STACK" : "",
               getDecompressorSections(),
+              ph.method == M_LZMA ? "LZMA_DONE_STACK" : "",
               "DJ2BSS00",
               NULL
              );
@@ -300,6 +302,8 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     if (bss->size < ph.overlap_overhead)  // give it a .bss
         bss->size = ph.overlap_overhead;
+    if (ph.method == M_LZMA && bss->size < 0x4000)
+        bss->size = 0x4000;
 
     text->scnptr = sizeof(coff_hdr);
     data->scnptr = text->scnptr + text->size;
@@ -317,6 +321,8 @@ void PackDjgpp2::pack(OutputFile *fo)
     patch_le32(loader, lsize, "BSSL", ph.overlap_overhead / 4);
     patchDecompressor(loader, lsize);
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
+    if (ph.method == M_LZMA)
+        patch_le32(loader, lsize, "ESP0", bss->vaddr + bss->size);
     patch_le32(loader, lsize, "OUTP", text->vaddr - hdrsize);
     patch_le32(loader, lsize, "INPP", data->vaddr);
 
