@@ -342,21 +342,23 @@ void show_version(int x)
     FILE *f = stdout;
     UNUSED(x);
 
-#if (0 && ACC_CC_GNUC)
-    fprintf(f,"upx %s (gcc 0x%06lx)\n", UPX_VERSION_STRING, ACC_CC_GNUC);
-#else
     fprintf(f,"upx %s\n", UPX_VERSION_STRING);
-#endif
 #if defined(WITH_NRV)
     fprintf(f,"NRV data compression library %s\n", nrv_version_string());
 #endif
 #if defined(WITH_UCL)
     fprintf(f,"UCL data compression library %s\n", ucl_version_string());
 #endif
+#if 0 && defined(WITH_LZMA)
+    fprintf(f,"LZMA SDK version ???\n");
+#endif
     fprintf(f,"Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer\n");
     fprintf(f,"Copyright (C) 1996-2006 Laszlo Molnar\n");
     fprintf(f,"Copyright (C) 2000-2006 John F. Reiser\n");
     fprintf(f,"Copyright (C) 2002-2006 Jens Medoch\n");
+#if defined(WITH_LZMA)
+    fprintf(f,"Copyright (C) 1999-2006 Igor Pavlov\n");
+#endif
     fprintf(f,"UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
 }
 

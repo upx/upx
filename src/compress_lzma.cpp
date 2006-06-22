@@ -34,6 +34,44 @@ int compress_lzma_dummy = 0;
 #else
 
 
+// INFO: the LZMA SDK is covered by by a permissive license which allows
+//   using unmodified LZMA source code in UPX and the UPX stubs.
+//   See SPECIAL EXCEPTION below.
+//
+// Quoting from lzma-4.43/lzma.txt:
+//
+//   LICENSE
+//   -------
+//
+//   LZMA SDK is available under any of the following licenses:
+//
+//   1) GNU Lesser General Public License (GNU LGPL)
+//   2) Common Public License (CPL)
+//   3) Simplified license for unmodified code (read SPECIAL EXCEPTION)
+//   4) Proprietary license
+//
+//   It means that you can select one of these four options and follow rules
+//   of that license.
+//
+//   1,2) GNU LGPL and CPL licenses are pretty similar and both these
+//   licenses are classified as
+//    - "Free software licenses" at http://www.gnu.org/
+//    - "OSI-approved" at http://www.opensource.org/
+//
+//   3) SPECIAL EXCEPTION
+//
+//   Igor Pavlov, as the author of this code, expressly permits you
+//   to statically or dynamically link your code (or bind by name)
+//   to the files from LZMA SDK without subjecting your linked
+//   code to the terms of the CPL or GNU LGPL.
+//   Any modifications or additions to files from LZMA SDK, however,
+//   are subject to the GNU LGPL or CPL terms.
+//
+//   SPECIAL EXCEPTION allows you to use LZMA SDK in applications with closed code,
+//   while you keep LZMA SDK code unmodified.
+
+
+
 /*************************************************************************
 // cruft because of pseudo-COM layer
 **************************************************************************/
@@ -252,7 +290,7 @@ error:
 
 
 /*************************************************************************
-// LZMA decompress
+// decompress
 **************************************************************************/
 
 #undef _LZMA_IN_CB
@@ -308,7 +346,7 @@ error:
 
 
 /*************************************************************************
-//
+// test_overlap
 **************************************************************************/
 
 int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
