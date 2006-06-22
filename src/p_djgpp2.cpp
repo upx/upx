@@ -300,10 +300,11 @@ void PackDjgpp2::pack(OutputFile *fo)
     text->size = lsize;                   // new size of .text
     data->size = ph.c_len;                // new size of .data
 
-    if (bss->size < ph.overlap_overhead)  // give it a .bss
-        bss->size = ph.overlap_overhead;
-    if (ph.method == M_LZMA && bss->size < 0x4000)
-        bss->size = 0x4000;
+    unsigned stack = 1024 + ph.overlap_overhead +
+                     patchDecompressorGetExtraStacksize();
+    stack = ALIGN_UP(stack, 16);
+    if (bss->size < stack)  // give it a .bss
+        bss->size = stack;
 
     text->scnptr = sizeof(coff_hdr);
     data->scnptr = text->scnptr + text->size;

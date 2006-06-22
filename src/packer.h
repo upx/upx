@@ -225,6 +225,7 @@ protected:
     const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
     virtual const char *getDecompressorSections() const;
     virtual void patchDecompressor(void *, int);
+    virtual unsigned patchDecompressorGetExtraStacksize();
 
     // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;
