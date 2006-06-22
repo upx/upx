@@ -211,9 +211,9 @@ struct upx_callback_t
 struct lzma_compress_config_t
 {
 #if 0
-    unsigned pos_bits;
-    unsigned lit_pos_bits;
-    unsigned lit_context_bits;
+    unsigned pos_bits;              // pb
+    unsigned lit_pos_bits;          // lp
+    unsigned lit_context_bits;      // lc
     unsigned dict_size;
     unsigned mf_passes;
 #else
@@ -231,9 +231,9 @@ struct upx_compress_config_t
 
 struct lzma_compress_result_t
 {
-    unsigned pos_bits;
-    unsigned lit_pos_bits;
-    unsigned lit_context_bits;
+    unsigned pos_bits;              // pb
+    unsigned lit_pos_bits;          // lp
+    unsigned lit_context_bits;      // lc
     unsigned dict_size;
     unsigned num_probs;
 };

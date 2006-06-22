@@ -81,6 +81,7 @@ none:
 %define M_NRV2D_LE32    5
 %define M_NRV2E_LE32    8
 %define M_CL1B_LE32     11
+%define M_LZMA          14
 
 L200:
         call L300  ; push address of get_fexp
@@ -128,6 +129,7 @@ cl1b:
 %include      "arch/i386/nrv2d_d32.ash"
 %include      "arch/i386/nrv2e_d32.ash"
 %include      "arch/i386/cl1_d32.ash"
+%include      "arch/i386/lzma_d.ash"
 ;__LXPTI090__
                 jmpn exp_done
 ;__LXPTI091__
