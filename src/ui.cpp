@@ -47,7 +47,7 @@ enum {
 };
 
 
-struct UiPacker__State
+struct UiPacker::State
 {
     int mode;
 
@@ -184,7 +184,7 @@ UiPacker::UiPacker(const Packer *p_) :
 
     clear_cb();
 
-    s = new UiPacker__State;
+    s = new State;
     memset(s,0,sizeof(*s));
     s->msg_buf[0] = '\r';
 

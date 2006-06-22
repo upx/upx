@@ -39,8 +39,6 @@ class UiPacker;
 //
 **************************************************************************/
 
-struct UiPacker__State;
-
 class UiPacker
 {
 public:
@@ -94,7 +92,8 @@ protected:
     upx_callback_t cb;
 
     // internal state
-    UiPacker__State *s;
+    struct State;
+    State *s;
 
     // totals
     static long total_files;
