@@ -219,7 +219,7 @@ void PackWcle::encodeObjectTable()
     // object #2: stack
     OOT(1,base_address) = (OOT(0,base_address)
                                       +OOT(0,virtual_size)+mps-1) & ~(mps-1);
-    OOT(1,virtual_size) = mps;
+    OOT(1,virtual_size) = mps + getDecompressorWrkmemSize();
     OOT(1,flags) = LEOF_READ|LEOF_HUGE32|LEOF_WRITE;
     OOT(1,pagemap_index) = 1;
 
@@ -448,7 +448,7 @@ void PackWcle::pack(OutputFile *fo)
         || ih.module_directives_entries
         || ih.imported_modules_count
         || ih.object_table_entries > 255)
-        throwCantPack("unexpected value in header");
+        throwCantPack("watcom/le: unexpected value in header");
 
     readObjectTable();
     readPageMap();
