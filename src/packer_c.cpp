@@ -208,17 +208,18 @@ const char *Packer::getDecompressorSections() const
 }
 
 
-unsigned Packer::patchDecompressorGetExtraStacksize()
+unsigned Packer::getDecompressorWrkmemSize() const
 {
-    unsigned stack = 0;
+    unsigned size = 0;
     if (ph.method == M_LZMA)
     {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         // FIXME - this is for i386 only
-        stack = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4);
-        stack = ALIGN_UP(stack, 16);
+        size = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4);
+        size = ALIGN_UP(size, 16);
     }
-    return stack;
+    assert((int)size >= 0);
+    return size;
 }
 
 
@@ -235,7 +236,7 @@ void Packer::patchDecompressor(void *loader, int lsize)
         patch_le32(loader, lsize, "UPXd", properties);
         patch_le32(loader, lsize, "UPXc", ph.c_len - 1);
         patch_le32(loader, lsize, "UPXb", ph.u_len);
-        unsigned stack = patchDecompressorGetExtraStacksize();
+        unsigned stack = getDecompressorWrkmemSize();
         patch_le32(loader, lsize, "UPXa", 0u - stack);
     }
 }

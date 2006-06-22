@@ -300,8 +300,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     text->size = lsize;                   // new size of .text
     data->size = ph.c_len;                // new size of .data
 
-    unsigned stack = 1024 + ph.overlap_overhead +
-                     patchDecompressorGetExtraStacksize();
+    unsigned stack = 1024 + ph.overlap_overhead + getDecompressorWrkmemSize();
     stack = ALIGN_UP(stack, 16);
     if (bss->size < stack)  // give it a .bss
         bss->size = stack;
