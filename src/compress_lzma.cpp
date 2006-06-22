@@ -34,7 +34,7 @@ int compress_lzma_dummy = 0;
 #else
 
 
-// INFO: the LZMA SDK is covered by by a permissive license which allows
+// INFO: the LZMA SDK is covered by a permissive license which allows
 //   using unmodified LZMA source code in UPX and the UPX stubs.
 //   See SPECIAL EXCEPTION below.
 //
@@ -191,7 +191,7 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
         NCoderPropID::kMatchFinderCycles    // 6
     };
     PROPVARIANT pr[7];
-    pr[0].vt = pr[1].vt = pr[2].vt = VT_UI4; pr[3].vt = VT_UI4;
+    pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
 
     // setup defaults
