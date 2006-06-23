@@ -45,7 +45,7 @@ int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
 void init_options(struct options_t *o)
 {
     memset(o, 0, sizeof(*o));
-    memset(&o->crp, 0xff, sizeof(o->crp));
+    o->crp.reset();
 
     o->cmd = CMD_NONE;
     o->method = -1;
@@ -537,7 +537,7 @@ static int do_option(int optc, const char *arg)
         opt->method = -1;
         opt->all_filters = true;
         opt->filter = -1;
-        opt->crp.m_size = 999999;
+        opt->crp.crp_ucl.m_size = 999999;
         /* fallthrough */
     case 900:                               // --best
         if (!set_method(-1, 10))
@@ -600,27 +600,27 @@ static int do_option(int optc, const char *arg)
         opt->all_methods = true;
         opt->method = -1;
         break;
-    // compression parms
+    // compression runtime parameters
     case 531:
-        getoptvar(&opt->crp.c_flags, 0, 3);
+        getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3);
         break;
     case 532:
-        getoptvar(&opt->crp.s_level, 0, 2);
+        getoptvar(&opt->crp.crp_ucl.s_level, 0, 2);
         break;
     case 533:
-        getoptvar(&opt->crp.h_level, 0, 1);
+        getoptvar(&opt->crp.crp_ucl.h_level, 0, 1);
         break;
     case 534:
-        getoptvar(&opt->crp.p_level, 0, 7);
+        getoptvar(&opt->crp.crp_ucl.p_level, 0, 7);
         break;
     case 535:
-        getoptvar(&opt->crp.max_offset, 256u, ~0u);
+        getoptvar(&opt->crp.crp_ucl.max_offset, 256u, ~0u);
         break;
     case 536:
-        getoptvar(&opt->crp.max_match, 16u, ~0u);
+        getoptvar(&opt->crp.crp_ucl.max_match, 16u, ~0u);
         break;
     case 537:
-        if (getoptvar(&opt->crp.m_size, 10000u, 999999u) != 0)
+        if (getoptvar(&opt->crp.crp_ucl.m_size, 10000u, 999999u) != 0)
             e_optval("--crp-ms=");
         break;
     // backup

@@ -171,23 +171,23 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 
     // set compression paramters
     upx_compress_config_t conf;
-    memset(&conf.conf_ucl, 0xff, sizeof(conf.conf_ucl));
+    conf.reset();
     // arguments
     if (max_offset != 0)
         conf.conf_ucl.max_offset = max_offset;
     if (max_match != 0)
         conf.conf_ucl.max_match = max_match;
     // options
-    if (opt->crp.c_flags != -1)
-        conf.conf_ucl.c_flags = opt->crp.c_flags;
-    if (opt->crp.p_level != -1)
-        conf.conf_ucl.p_level = opt->crp.p_level;
-    if (opt->crp.h_level != -1)
-        conf.conf_ucl.h_level = opt->crp.h_level;
-    if (opt->crp.max_offset != UINT_MAX && opt->crp.max_offset < conf.conf_ucl.max_offset)
-        conf.conf_ucl.max_offset = opt->crp.max_offset;
-    if (opt->crp.max_match != UINT_MAX && opt->crp.max_match < conf.conf_ucl.max_match)
-        conf.conf_ucl.max_match = opt->crp.max_match;
+    if (opt->crp.crp_ucl.c_flags != -1)
+        conf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
+    if (opt->crp.crp_ucl.p_level != -1)
+        conf.conf_ucl.p_level = opt->crp.crp_ucl.p_level;
+    if (opt->crp.crp_ucl.h_level != -1)
+        conf.conf_ucl.h_level = opt->crp.crp_ucl.h_level;
+    if (opt->crp.crp_ucl.max_offset != UINT_MAX && opt->crp.crp_ucl.max_offset < conf.conf_ucl.max_offset)
+        conf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
+    if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < conf.conf_ucl.max_match)
+        conf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
 
     // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
     unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;

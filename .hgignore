@@ -14,6 +14,7 @@ syntax: glob
 *.lib
 *.map
 *.o
+*.obj
 *.out
 *.py[cdo]
 *.so
@@ -28,6 +29,7 @@ doc/*.man
 doc/*.ps
 doc/*.tex
 
+src/GNUmakefile
 src/MMakefile
 src/compress_nrv*
 src/*.rc

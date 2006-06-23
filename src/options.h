@@ -84,7 +84,11 @@ struct options_t {
     int overlay;
 
     // compression runtime parameters - see struct ucl_compress_config_t
-    struct {
+    struct crp_lzma_t {
+        int dummy;
+        void reset() { memset(this, 0, sizeof(*this)); }
+    };
+    struct crp_ucl_t {
         unsigned max_offset;
         unsigned max_match;
         int s_level;
@@ -92,7 +96,14 @@ struct options_t {
         int p_level;
         int c_flags;
         unsigned m_size;
-    } crp;
+        void reset() { memset(this, 0xff, sizeof(*this)); }
+    };
+    struct crp_t {
+        crp_lzma_t  crp_lzma;
+        crp_ucl_t   crp_ucl;
+        void reset() { crp_lzma.reset(); crp_ucl.reset(); }
+    };
+    crp_t crp;
 
     // CPU
     enum {

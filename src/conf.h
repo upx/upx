@@ -217,8 +217,9 @@ struct lzma_compress_config_t
     unsigned dict_size;
     unsigned mf_passes;
 #else
-    unsigned dummy;
+    int dummy;
 #endif
+    void reset() { memset(this, 0, sizeof(*this)); }
 };
 
 #define upx_compress_config_p upx_compress_config_t *
@@ -226,6 +227,10 @@ struct upx_compress_config_t
 {
     lzma_compress_config_t  conf_lzma;
     ucl_compress_config_t   conf_ucl;
+    void reset() {
+        conf_lzma.reset();
+        memset(&conf_ucl, 0xff, sizeof(conf_ucl));
+    }
 };
 
 
