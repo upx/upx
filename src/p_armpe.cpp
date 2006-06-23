@@ -2247,6 +2247,7 @@ void PackArmPe::rebuildImports(upx_byte *& extrainfo)
     import_desc *im = im0;
     upx_byte *dllnames = Obuf + inamespos;
     upx_byte *importednames = dllnames + sdllnames;
+    upx_byte * const importednames_start = importednames;
 
     for (p = idata; get_le32(p) != 0; ++p)
     {
@@ -2282,7 +2283,7 @@ void PackArmPe::rebuildImports(upx_byte *& extrainfo)
                 const unsigned ilen = strlen(++p) + 1;
                 if (inamespos)
                 {
-                    if (ptr_diff(importednames,oimpdlls) & 1)
+                    if (ptr_diff(importednames, importednames_start) & 1)
                         importednames -= 1;
                     omemcpy(importednames + 2, p, ilen);
                     //;;;printf(" %s",importednames+2);
