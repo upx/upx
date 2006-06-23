@@ -319,17 +319,20 @@ PackLinuxElf32x86::buildLinuxLoader(
 
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
   if (0 < szfold) {
+    h.sz_cpr = h.sz_unc;
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+#if 1
     if (M_LZMA==ph.method) {  // FIXME: debugging only
-        ucl_uint tmp_len = 0;
-        unsigned char *tmp = new unsigned char[h.sz_unc];
-        memset(tmp, 0, h.sz_unc);
+        upx_uint tmp_len = h.sz_unc;
+        unsigned char *tmp = new unsigned char[tmp_len];
+        memset(tmp, 0, tmp_len);
         r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
-        printf("%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
+        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
     }
+#endif
   }
     memcpy(cprLoader, &h, sizeof(h));
 
