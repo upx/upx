@@ -243,20 +243,21 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
         goto error;
     if (os.Overflow || os.Pos != 5)
         goto error;
-#if 0 // defined(_LZMA_OUT_READ)
-#else
     os.Pos -= 4; // do not encode dict_size
-#endif
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
     if (rh == E_OUTOFMEMORY)
         r = UPX_E_OUT_OF_MEMORY;
-#if 0
     else if (os.Overflow)
-        r = UPX_E_OUPUT_OVERRUN; // FIXME - not compressible
-#endif
+    {
+        assert(os.Pos == *dst_len);
+        //r = UPX_E_OUTPUT_OVERFLOW;
+    }
     else if (rh == S_OK)
+    {
+        assert(is.Pos == src_len);
         r = UPX_E_OK;
+    }
 
     res->pos_bits = pr[0].uintVal;
     res->lit_pos_bits = pr[1].uintVal;
@@ -315,6 +316,9 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
     SizeT src_out = 0, dst_out = 0;
     int r = UPX_E_ERROR;
 
+    if (src_len < 2)
+        goto error;
+
 #if defined(LzmaDecoderInit)
 # error
     LzmaDecoderInit(&s);
@@ -327,15 +331,26 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
 #else
     src += 1; src_len -= 1;
 #endif
-    if (result) {
+    if (result)
+    {
         assert(result->method == method);
         assert(result->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
     }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
     if (!s.Probs)
+    {
         r = UPX_E_OUT_OF_MEMORY;
-    else
-        r = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
+        goto error;
+    }
+    r = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
+    assert(src_out <=  src_len);
+    assert(dst_out <= *dst_len);
+    if (r == 0)
+    {
+        if (src_out != src_len)
+            r = UPX_E_ERROR;    // UPX_E_INPUT_NOT_CONSUMED;
+    }
+
 error:
     *dst_len = dst_out;
     free(s.Probs);
