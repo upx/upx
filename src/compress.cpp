@@ -149,6 +149,9 @@ int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
 {
     int r = UPX_E_ERROR;
 
+    assert(*dst_len > 0);
+    assert(src_len < *dst_len); // must be compressed
+
     if (result && result->method == 0)
         result = NULL;
 
@@ -188,6 +191,7 @@ int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
     if (result && result->method == 0)
         result = NULL;
 
+    assert(*dst_len > 0);
     assert(src_len < *dst_len); // must be compressed
     unsigned overlap_overhead = src_off + src_len - *dst_len;
     assert((int)overlap_overhead > 0);
