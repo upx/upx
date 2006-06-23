@@ -62,7 +62,29 @@ int compress_ucl_dummy = 0;
 //
 **************************************************************************/
 
-static void wrap_ucl_nprogress(ucl_uint a, ucl_uint b, int state, ucl_voidp user)
+static int convert_errno_from_ucl(int r)
+{
+    switch (r)
+    {
+    case UCL_E_OK:                  return UPX_E_OK;
+    case UCL_E_ERROR:               return UPX_E_ERROR;
+    case UCL_E_OUT_OF_MEMORY:       return UPX_E_OUT_OF_MEMORY;
+    case UCL_E_NOT_COMPRESSIBLE:    return UPX_E_NOT_COMPRESSIBLE;
+    case UCL_E_INPUT_OVERRUN:       return UPX_E_INPUT_OVERRUN;
+    case UCL_E_OUTPUT_OVERRUN:      return UPX_E_OUTPUT_OVERRUN;
+    case UCL_E_LOOKBEHIND_OVERRUN:  return UPX_E_LOOKBEHIND_OVERRUN;
+    case UCL_E_EOF_NOT_FOUND:       return UPX_E_EOF_NOT_FOUND;
+    case UCL_E_INPUT_NOT_CONSUMED:  return UPX_E_INPUT_NOT_CONSUMED;
+//  case UCL_E_NOT_YET_IMPLEMENTED: return UPX_E_NOT_YET_IMPLEMENTED;
+    case UCL_E_INVALID_ARGUMENT:    return UPX_E_INVALID_ARGUMENT;
+    // UCL extra:
+    case UCL_E_OVERLAP_OVERRUN:     return UPX_E_ERROR;
+    }
+    return UPX_E_ERROR;
+}
+
+
+static void wrap_nprogress_ucl(ucl_uint a, ucl_uint b, int state, ucl_voidp user)
 {
     if (state != -1 && state != 3) return;
     upx_callback_p cb = (upx_callback_p) user;
@@ -71,6 +93,10 @@ static void wrap_ucl_nprogress(ucl_uint a, ucl_uint b, int state, ucl_voidp user
 }
 
 
+/*************************************************************************
+//
+**************************************************************************/
+
 int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb_parm,
@@ -78,14 +104,14 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
                              const struct upx_compress_config_t *conf_parm,
                                    struct upx_compress_result_t *result )
 {
-    int r = UPX_E_ERROR;
+    int r;
     assert(level > 0); assert(result != NULL);
 
     ucl_progress_callback_t cb;
     cb.callback = 0;
     cb.user = NULL;
     if (cb_parm && cb_parm->nprogress) {
-        cb.callback = wrap_ucl_nprogress;
+        cb.callback = wrap_nprogress_ucl;
         cb.user = cb_parm;
     }
 
@@ -104,8 +130,10 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
         static const unsigned char sizes[3]={32,8,16};
         conf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];
     }
-    else
+    else {
         throwInternalError("unknown compression method");
+        return UPX_E_ERROR;
+    }
 
     // optimize compression parms
     if (level <= 3 && conf.max_offset == UCL_UINT_MAX)
@@ -122,10 +150,12 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
     else if M_IS_NRV2E(method)
         r = ucl_nrv2e_99_compress(src, src_len, dst, dst_len,
                                   &cb, level, &conf, res);
-    else
+    else {
         throwInternalError("unknown compression method");
+        return UPX_E_ERROR;
+    }
 
-    return r;
+    return convert_errno_from_ucl(r);
 }
 
 
@@ -138,7 +168,7 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {
-    int r = UPX_E_ERROR;
+    int r;
 
     switch (method)
     {
@@ -171,11 +201,11 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
         break;
     default:
         throwInternalError("unknown decompression method");
-        break;
+        return UPX_E_ERROR;
     }
 
     UNUSED(result);
-    return r;
+    return convert_errno_from_ucl(r);
 }
 
 
@@ -188,7 +218,7 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
                                    int method,
                              const struct upx_compress_result_t *result )
 {
-    int r = UPX_E_ERROR;
+    int r;
 
     switch (method)
     {
@@ -221,11 +251,11 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
         break;
     default:
         throwInternalError("unknown decompression method");
-        break;
+        return UPX_E_ERROR;
     }
 
     UNUSED(result);
-    return r;
+    return convert_errno_from_ucl(r);
 }
 
 

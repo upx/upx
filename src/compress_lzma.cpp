@@ -143,7 +143,7 @@ struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
 STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outSize)
 {
     if (cb && cb->nprogress)
-        cb->nprogress(cb, (size_t) *inSize, (size_t) *outSize);
+        cb->nprogress(cb, (unsigned) *inSize, (unsigned) *outSize);
     return S_OK;
 }
 
@@ -176,7 +176,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 #ifndef _NO_EXCEPTIONS
     try {
 #else
-#error
+#  error
 #endif
 
     NCompress::NLZMA::CEncoder enc;
@@ -240,8 +240,12 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
         goto error;
-    if (os.Overflow || os.Pos != 5)
+    if (os.Overflow) {
+        //r = UPX_E_OUTPUT_OVERRUN;
+        r = UPX_E_NOT_COMPRESSIBLE;
         goto error;
+    }
+    assert(os.Pos == 5);
     os.Pos -= 4; // do not encode dict_size
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
@@ -252,7 +256,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     else if (os.Overflow)
     {
         assert(os.Pos == *dst_len);
-        //r = UPX_E_OUTPUT_OVERFLOW;
+        //r = UPX_E_OUTPUT_OVERRUN;
+        r = UPX_E_NOT_COMPRESSIBLE;
     }
     else if (rh == S_OK)
     {
@@ -322,7 +327,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
         goto error;
 
     rh = LzmaDecodeProperties(&s.Properties, src, src_len);
-    if (r != 0)
+    if (rh != 0)
         goto error;
     src += 1; src_len -= 1;
     if (result)
@@ -343,7 +348,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     {
         r = UPX_E_OK;
         if (src_out != src_len)
-            r = UPX_E_ERROR;    // UPX_E_INPUT_NOT_CONSUMED;
+            r = UPX_E_INPUT_NOT_CONSUMED;
     }
 
 error:
