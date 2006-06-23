@@ -133,7 +133,6 @@ STDMETHODIMP OutStreamRam::Write(const void *data, UInt32 size, UInt32 *processe
     return S_OK;
 }
 
-
 struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
 {
     MY_UNKNOWN_IMP
@@ -144,15 +143,15 @@ struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
 STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outSize)
 {
     if (cb && cb->nprogress)
-        cb->nprogress(cb, (upx_uint) *inSize, (upx_uint) *outSize, 3);
+        cb->nprogress(cb, (size_t) *inSize, (size_t) *outSize);
     return S_OK;
 }
 
 } // namespace
 
 
-int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf_parm,
@@ -246,6 +245,8 @@ int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
     os.Pos -= 4; // do not encode dict_size
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
+    assert(is.Pos <=  src_len);
+    assert(os.Pos <= *dst_len);
     if (rh == E_OUTOFMEMORY)
         r = UPX_E_OUT_OF_MEMORY;
     else if (os.Overflow)
@@ -301,8 +302,8 @@ error:
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
-int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {
@@ -315,22 +316,15 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
     CLzmaDecoderState s; memset(&s, 0, sizeof(s));
     SizeT src_out = 0, dst_out = 0;
     int r = UPX_E_ERROR;
+    int rh;
 
     if (src_len < 2)
         goto error;
 
-#if defined(LzmaDecoderInit)
-# error
-    LzmaDecoderInit(&s);
-#endif
-    r = LzmaDecodeProperties(&s.Properties, src, src_len);
+    rh = LzmaDecodeProperties(&s.Properties, src, src_len);
     if (r != 0)
         goto error;
-#if 0 // defined(_LZMA_OUT_READ)
-    src += LZMA_PROPERTIES_SIZE; src_len -= LZMA_PROPERTIES_SIZE;
-#else
     src += 1; src_len -= 1;
-#endif
     if (result)
     {
         assert(result->method == method);
@@ -342,11 +336,12 @@ int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
         r = UPX_E_OUT_OF_MEMORY;
         goto error;
     }
-    r = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
+    rh = LzmaDecode(&s, src, src_len, &src_out, dst, *dst_len, &dst_out);
     assert(src_out <=  src_len);
     assert(dst_out <= *dst_len);
-    if (r == 0)
+    if (rh == 0)
     {
+        r = UPX_E_OK;
         if (src_out != src_len)
             r = UPX_E_ERROR;    // UPX_E_INPUT_NOT_CONSUMED;
     }
@@ -364,8 +359,8 @@ error:
 // test_overlap
 **************************************************************************/
 
-int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {

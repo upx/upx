@@ -67,12 +67,12 @@ static void wrap_ucl_nprogress(ucl_uint a, ucl_uint b, int state, ucl_voidp user
     if (state != -1 && state != 3) return;
     upx_callback_p cb = (upx_callback_p) user;
     if (cb && cb->nprogress)
-        cb->nprogress(cb, a, b, state);
+        cb->nprogress(cb, a, b);
 }
 
 
-int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb_parm,
                                    int method, int level,
                              const struct upx_compress_config_t *conf_parm,
@@ -108,9 +108,9 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
         throwInternalError("unknown compression method");
 
     // optimize compression parms
-    if (level <= 3 && conf.max_offset == UPX_UINT_MAX)
+    if (level <= 3 && conf.max_offset == UCL_UINT_MAX)
         conf.max_offset = 8*1024-1;
-    else if (level == 4 && conf.max_offset == UPX_UINT_MAX)
+    else if (level == 4 && conf.max_offset == UCL_UINT_MAX)
         conf.max_offset = 32*1024-1;
 
     if M_IS_NRV2B(method)
@@ -133,8 +133,8 @@ int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
 //
 **************************************************************************/
 
-int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {
@@ -183,8 +183,8 @@ int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
 //
 **************************************************************************/
 
-int upx_ucl_test_overlap   ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {

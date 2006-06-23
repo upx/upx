@@ -85,13 +85,13 @@ struct options_t {
 
     // compression runtime parameters - see struct ucl_compress_config_t
     struct {
-        upx_uint max_offset;
-        upx_uint max_match;
+        unsigned max_offset;
+        unsigned max_match;
         int s_level;
         int h_level;
         int p_level;
         int c_flags;
-        upx_uint m_size;
+        unsigned m_size;
     } crp;
 
     // CPU

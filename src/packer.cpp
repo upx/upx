@@ -180,18 +180,13 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // options
     if (opt->crp.c_flags != -1)
         conf.conf_ucl.c_flags = opt->crp.c_flags;
-#if 0
-    else
-        // this is based on experimentation
-        conf.conf_ucl.c_flags = (ph.level >= 7) ? 0 : 1 | 2;
-#endif
     if (opt->crp.p_level != -1)
         conf.conf_ucl.p_level = opt->crp.p_level;
     if (opt->crp.h_level != -1)
         conf.conf_ucl.h_level = opt->crp.h_level;
-    if (opt->crp.max_offset != UPX_UINT_MAX && opt->crp.max_offset < conf.conf_ucl.max_offset)
+    if (opt->crp.max_offset != UINT_MAX && opt->crp.max_offset < conf.conf_ucl.max_offset)
         conf.conf_ucl.max_offset = opt->crp.max_offset;
-    if (opt->crp.max_match != UPX_UINT_MAX && opt->crp.max_match < conf.conf_ucl.max_match)
+    if (opt->crp.max_match != UINT_MAX && opt->crp.max_match < conf.conf_ucl.max_match)
         conf.conf_ucl.max_match = opt->crp.max_match;
 
     // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.

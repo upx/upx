@@ -35,54 +35,54 @@
 **************************************************************************/
 
 #if defined(WITH_LZMA)
-int upx_lzma_compress      ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
                                    struct upx_compress_result_t *result );
-int upx_lzma_decompress    ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
-int upx_lzma_test_overlap  ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
 #endif
 
 
 #if defined(WITH_NRV)
-int upx_nrv_compress       ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_nrv_compress       ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
                                    struct upx_compress_result_t *result );
-int upx_nrv_decompress     ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_nrv_decompress     ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
-int upx_nrv_test_overlap   ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_nrv_test_overlap   ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
 #endif
 
 
 #if defined(WITH_UCL)
-int upx_ucl_compress       ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
                                    struct upx_compress_result_t *result );
-int upx_ucl_decompress     ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
-int upx_ucl_test_overlap   ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
 #endif

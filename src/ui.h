@@ -74,7 +74,7 @@ public:
     virtual void endCallback();
     virtual upx_callback_t *getCallback() { return &cb; }
 protected:
-    static void __UPX_CDECL progress_callback(upx_callback_p cb, upx_uint, upx_uint, int);
+    static void __acc_cdecl progress_callback(upx_callback_p cb, unsigned, unsigned);
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:

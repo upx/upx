@@ -124,7 +124,7 @@ static int set_fg(FILE *f, int fg)
 }
 
 
-static upx_bool intro(FILE *f)
+static bool intro(FILE *f)
 {
     if (con == me)
         init(f,-1,-1);

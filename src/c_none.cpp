@@ -58,7 +58,7 @@ static void print0(FILE *f, const char *s)
 }
 
 
-static upx_bool intro(FILE *f)
+static bool intro(FILE *f)
 {
     UNUSED(f);
     return 0;

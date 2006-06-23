@@ -174,37 +174,37 @@
 #  error "UINT_MAX"
 #endif
 
-#if !defined(UPX_UINT_MAX)
-#  define UPX_UINT_MAX  UCL_UINT_MAX
-#  define upx_uint      ucl_uint
-#  define upx_voidp     ucl_voidp
-#  define upx_uintp     ucl_uintp
-#  define upx_byte      ucl_byte
-#  define upx_bytep     ucl_bytep
-#  define upx_bool      ucl_bool
-#  define UPX_E_OK      UCL_E_OK
-#  define UPX_E_ERROR   UCL_E_ERROR
-#  define UPX_E_OUT_OF_MEMORY UCL_E_OUT_OF_MEMORY
-#  define __UPX_CDECL   __UCL_CDECL
-#endif
+#define upx_byte                    unsigned char
+#define upx_bytep                   upx_byte *
+#define UPX_E_OK                    (0)
+#define UPX_E_ERROR                 (-1)
+#define UPX_E_OUT_OF_MEMORY         (-2)
+#define UPX_E_NOT_COMPRESSIBLE      (-3)
+#define UPX_E_INPUT_OVERRUN         (-4)
+#define UPX_E_OUTPUT_OVERRUN        (-5)
+#define UPX_E_LOOKBEHIND_OVERRUN    (-6)
+#define UPX_E_EOF_NOT_FOUND         (-7)
+#define UPX_E_INPUT_NOT_CONSUMED    (-8)
+#define UPX_E_NOT_YET_IMPLEMENTED   (-9)
+#define UPX_E_INVALID_ARGUMENT      (-10)
 
 struct upx_callback_t;
 #define upx_callback_p upx_callback_t *
-typedef upx_voidp (__UPX_CDECL *upx_alloc_func_t)
-    (upx_callback_p self, upx_uint items, upx_uint size);
-typedef void      (__UPX_CDECL *upx_free_func_t)
-    (upx_callback_p self, upx_voidp ptr);
-typedef void (__UPX_CDECL *upx_progress_func_t)
-    (upx_callback_p, upx_uint, upx_uint, int);
+typedef void* (__acc_cdecl *upx_alloc_func_t)
+    (upx_callback_p self, unsigned items, unsigned size);
+typedef void      (__acc_cdecl *upx_free_func_t)
+    (upx_callback_p self, void* ptr);
+typedef void (__acc_cdecl *upx_progress_func_t)
+    (upx_callback_p, unsigned, unsigned);
 
 struct upx_callback_t
 {
     upx_alloc_func_t nalloc;
     upx_free_func_t nfree;
     upx_progress_func_t nprogress;
-    upx_voidp user1;
-    upx_uint user2;
-    upx_uint user3;
+    void * user1;
+    unsigned user2;
+    unsigned user3;
 };
 
 
@@ -625,18 +625,18 @@ void show_version(int);
 unsigned upx_adler32(const void *buf, unsigned len, unsigned adler=1);
 unsigned upx_crc32(const void *buf, unsigned len, unsigned crc=0);
 
-int upx_compress           ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_compress           ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
                                    struct upx_compress_result_t *result );
-int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_decompress         ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
-int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result );
 

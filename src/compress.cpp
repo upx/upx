@@ -72,8 +72,8 @@ unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
 //
 **************************************************************************/
 
-int upx_compress           ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_compress           ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
                              const struct upx_compress_config_t *conf,
@@ -142,8 +142,8 @@ int upx_compress           ( const upx_bytep src, upx_uint  src_len,
 //
 **************************************************************************/
 
-int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
-                                   upx_bytep dst, upx_uintp dst_len,
+int upx_decompress         ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {
@@ -181,8 +181,8 @@ int upx_decompress         ( const upx_bytep src, upx_uint  src_len,
 //
 **************************************************************************/
 
-int upx_test_overlap       ( const upx_bytep buf, upx_uint src_off,
-                                   upx_uint  src_len, upx_uintp dst_len,
+int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const struct upx_compress_result_t *result )
 {

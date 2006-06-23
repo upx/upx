@@ -117,7 +117,7 @@ typedef struct
     int (*init)(FILE *f, int, int);
     int (*set_fg)(FILE *f, int fg);
     void (*print0)(FILE *f, const char *s);
-    upx_bool (*intro)(FILE *f);
+    bool (*intro)(FILE *f);
 }
 console_t;
 

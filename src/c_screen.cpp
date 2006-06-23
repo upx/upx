@@ -295,7 +295,7 @@ static void print0(FILE *f, const char *ss)
 }
 
 
-static upx_bool intro(FILE *f)
+static bool intro(FILE *f)
 {
     UNUSED(f);
 #if defined(USE_FRAMES)

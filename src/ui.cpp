@@ -398,12 +398,11 @@ void UiPacker::endCallback()
 // the callback
 **************************************************************************/
 
-void __UPX_CDECL UiPacker::progress_callback(upx_callback_p cb, upx_uint isize, upx_uint osize, int state)
+void __acc_cdecl UiPacker::progress_callback(upx_callback_p cb, unsigned isize, unsigned osize)
 {
     //printf("%6d %6d %d\n", isize, osize, state);
     UiPacker *uip = (UiPacker *) cb->user1;
     uip->doCallback(isize, osize);
-    UNUSED(state);
 }
 
 
