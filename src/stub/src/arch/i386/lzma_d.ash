@@ -81,6 +81,48 @@
         mov     dword [ebx], 'UPXd'     ; lc, lp, pb, dummy
 
 
+; __LZMA_ELF00__
+;
+%ifndef O_OUTS  ; ELF defines them, others do not care
+%define O_OUTS 0
+%define O_INS  0
+%endif
+
+        mov     ebp, esp                ; save stack
+        lea     ebx, [esp -0x4000]  ; 16KB enough?
+        xor     eax, eax
+.elf_clearstack1:
+        push    eax
+        cmp     esp, ebx
+        jne     .elf_clearstack1
+
+
+        lodsb  ; al= 1 byte for LzmaDecodeProperties()
+
+        push    ebx                     ; &outSizeProcessed
+        add     ebx, 4
+        mov     ecx,[O_OUTS + ebp]      ; &outSize
+        push    dword [ecx]             ; outSize
+        push    edi                     ; out
+        push    ebx                     ; &inSizeProcessed
+        add     ebx, 4
+        mov     ecx,[O_INS + ebp]
+        dec     ecx                     ; 1 byte for LzmaDecodeProperties()
+        push    ecx                     ; inSize
+        push    esi                     ; in
+        push    ebx                     ; &CLzmaDecoderState
+        push    eax                     ; return address slot (dummy CALL)
+
+        mov cl,9
+        div cl  ; (ah:rem, al:quo)= ax / cl
+        mov [0+ ebx],ah  ; store lit_context_bits  (remainder)
+
+        movzx eax,al  ; param / 9
+        mov cl,5
+        div cl
+        mov [1+ ebx],ah  ; store lit_pos_bits  (remainder)
+        mov [2+ ebx],al  ; store pos_bits  (quotient)
+
 ; __LZMA_DEC10__
 %include "arch/i386/lzma_d_cs.ash"
 

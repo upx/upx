@@ -192,6 +192,10 @@ const char *Packer::getDecompressorSections() const
         "LZMA_DEC00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_fast[] =
         "LZMA_DEC00,LZMA_DEC20,LZMA_DEC30";
+    static const char lzma_elf_small[] =
+        "LZMA_ELF00,LZMA_DEC10,LZMA_DEC30";
+    static const char lzma_elf_fast[] =
+        "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
@@ -201,8 +205,17 @@ const char *Packer::getDecompressorSections() const
         return opt->small ? nrv2e_le32_small : nrv2e_le32_fast;
     if (ph.method == M_CL1B_LE32)
         return opt->small ? cl1b_le32_small  : cl1b_le32_fast;
-    if (ph.method == M_LZMA)
+    if (ph.method == M_LZMA) {
+        if (UPX_F_LINUX_ELF_i386   ==ph.format
+        ||  UPX_F_LINUX_ELFI_i386  ==ph.format
+        ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
+        ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
+        ||  UPX_F_LINUX_ELFPPC32   ==ph.format
+        ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
+            return opt->small ? lzma_elf_small  : lzma_elf_fast;
+        }
         return opt->small ? lzma_small  : lzma_fast;
+    }
     throwInternalError("bad decompressor");
     return NULL;
 }
@@ -225,6 +238,15 @@ unsigned Packer::getDecompressorWrkmemSize() const
 
 void Packer::patchDecompressor(void *loader, int lsize)
 {
+    if (UPX_F_LINUX_ELF_i386   ==ph.format
+    ||  UPX_F_LINUX_ELFI_i386  ==ph.format
+    ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
+    ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
+    ||  UPX_F_LINUX_ELFPPC32   ==ph.format
+    ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
+        // ELF calls the decompressor many times; the parameters change!
+        return;
+    }
     if (ph.method == M_LZMA)
     {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
