@@ -93,24 +93,22 @@ LZMA_LIT_SIZE  equ  768
 
         mov     ebp, esp                ; save stack
 
-        xor eax,eax  ; 0
+        xor eax,eax     ; 0
         lodsb           ; al= 1 byte for LzmaDecodeProperties()
         mov dl,9
         div dl          ; (ah:rem, al:quo)= ax / dl
         mov cl,ah       ; cl = lit_context_bits
-        movzx eax,al    ; 1st_byte / 9
+        mov ah,0        ; ax= 1st_byte / 9
         mov dl,5
         div dl          ; ah= lit_pos_bits; al= pos_bits
-        mov ch,cl       ; ch  = lit_context_bits
+        mov ch,cl       ; ch = lit_context_bits
 
         add cl,ah       ; cl = lit_context_bits + lit_pos_bits;
         mov ebx, -LZMA_LIT_SIZE
         sal ebx, cl
-        add ebx, -LZMA_BASE_SIZE
-
 ; /* inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState */
-        lea ebx,[-(2*4 +4) + 2*ebx + esp]
-        and ebx, byte (~0<<4)  ; 16-byte align
+        lea ebx,[-(2*4 +4) + 2*(-LZMA_BASE_SIZE + ebx) + esp]
+        and ebx, byte (~0<<5)  ; 32-byte align
 .elf_clearstack1:
         push byte 0
         cmp esp,ebx
