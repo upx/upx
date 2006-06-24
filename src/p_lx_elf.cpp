@@ -317,9 +317,9 @@ PackLinuxElf32x86::buildLinuxLoader(
   }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_unc];
+    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc);
+    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
   if (0 < szfold) {
-    h.sz_cpr = h.sz_unc;  // amount that the compressor may use
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
