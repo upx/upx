@@ -173,12 +173,6 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     MyLzma::ProgressInfo progress; progress.AddRef();
     progress.cb = cb;
 
-#ifndef _NO_EXCEPTIONS
-    try {
-#else
-#  error
-#endif
-
     NCompress::NLZMA::CEncoder enc;
     const PROPID propIDs[7] = {
         NCoderPropID::kPosStateBits,        // 0  pb  _posStateBits(2)
@@ -236,6 +230,12 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
 
+#ifndef _NO_EXCEPTIONS
+    try {
+#else
+#  error
+#endif
+
     if (enc.SetCoderProperties(propIDs, pr, 7) != S_OK)
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
@@ -249,6 +249,11 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     os.Pos -= 4; // do not encode dict_size
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
+
+#ifndef _NO_EXCEPTIONS
+    } catch(...) { return UPX_E_OUT_OF_MEMORY; }
+#endif
+
     assert(is.Pos <=  src_len);
     assert(os.Pos <= *dst_len);
     if (rh == E_OUTOFMEMORY)
@@ -276,10 +281,6 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 error:
     *dst_len = os.Pos;
     return r;
-
-#ifndef _NO_EXCEPTIONS
-    } catch(...) { return UPX_E_OUT_OF_MEMORY; }
-#endif
 }
 
 
