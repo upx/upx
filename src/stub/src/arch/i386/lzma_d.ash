@@ -83,45 +83,56 @@
 
 ; __LZMA_ELF00__
 ;
+LZMA_BASE_SIZE equ 1846
+LZMA_LIT_SIZE  equ  768
+
 %ifndef O_OUTS  ; ELF defines them, others do not care
 %define O_OUTS 0
 %define O_INS  0
 %endif
 
         mov     ebp, esp                ; save stack
-        lea     ebx, [esp -0x4000]  ; 16KB enough?
-        xor     eax, eax
+
+        xor eax,eax  ; 0
+        lodsb           ; al= 1 byte for LzmaDecodeProperties()
+        mov dl,9
+        div dl          ; (ah:rem, al:quo)= ax / dl
+        mov cl,ah       ; cl = lit_context_bits
+        movzx eax,al    ; 1st_byte / 9
+        mov dl,5
+        div dl          ; ah= lit_pos_bits; al= pos_bits
+        mov ch,cl       ; ch  = lit_context_bits
+
+        add cl,ah       ; cl = lit_context_bits + lit_pos_bits;
+        mov ebx, -LZMA_LIT_SIZE
+        sal ebx, cl
+        add ebx, -LZMA_BASE_SIZE
+
+; /* inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState */
+        lea ebx,[-(2*4 +4) + 2*ebx + esp]
+        and ebx, byte (~0<<4)  ; 16-byte align
 .elf_clearstack1:
-        push    eax
-        cmp     esp, ebx
-        jne     .elf_clearstack1
-
-
-        lodsb  ; al= 1 byte for LzmaDecodeProperties()
-
+        push byte 0
+        cmp esp,ebx
+        jne .elf_clearstack1
+        
         push    ebx                     ; &outSizeProcessed
         add     ebx, 4
-        mov     ecx,[O_OUTS + ebp]      ; &outSize
-        push    dword [ecx]             ; outSize
+        mov     edx,[O_OUTS + ebp]      ; &outSize
+        push    dword [edx]             ; outSize
         push    edi                     ; out
         push    ebx                     ; &inSizeProcessed
         add     ebx, 4
-        mov     ecx,[O_INS + ebp]
-        dec     ecx                     ; 1 byte for LzmaDecodeProperties()
-        push    ecx                     ; inSize
+        mov     edx,[O_INS + ebp]
+        dec     edx                     ; 1 byte for LzmaDecodeProperties()
+        push    edx                     ; inSize
         push    esi                     ; in
         push    ebx                     ; &CLzmaDecoderState
         push    eax                     ; return address slot (dummy CALL)
 
-        mov cl,9
-        div cl  ; (ah:rem, al:quo)= ax / cl
-        mov [0+ ebx],ah  ; store lit_context_bits  (remainder)
-
-        movzx eax,al  ; param / 9
-        mov cl,5
-        div cl
-        mov [1+ ebx],ah  ; store lit_pos_bits  (remainder)
-        mov [2+ ebx],al  ; store pos_bits  (quotient)
+        mov [   ebx],ch  ; store lit_context_bits
+        mov [1+ ebx],ah  ; store lit_pos_bits
+        mov [2+ ebx],al  ; store pos_bits
 
 ; __LZMA_DEC10__
 %include "arch/i386/lzma_d_cs.ash"
