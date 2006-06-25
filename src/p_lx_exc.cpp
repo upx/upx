@@ -261,7 +261,6 @@ PackLinuxI386::buildLinuxLoader(
 {
     initLoader(proto, szproto);
 
-    struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
@@ -271,23 +270,10 @@ PackLinuxI386::buildLinuxLoader(
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }
-    h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
-    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
-    h.b_ftid = (unsigned char) ph.filter;
-    h.b_cto8 = (unsigned char) ph.filter_cto;
-  }
-    unsigned char const *const uncLoader = fold_hdrlen + fold;
-
-    unsigned char *const cprLoader = new unsigned char[h.sz_unc];
-  if (0 < szfold) {
-    unsigned sz_cpr = h.sz_unc;
-    memcpy(cprLoader, uncLoader, sz_cpr);
-    h.sz_cpr = sz_cpr;
   }
     // This adds the definition to the "library", to be used later.
     // NOTE: the stub is NOT compressed!  The savings is not worth it.
-    linker->addSection("FOLDEXEC", cprLoader, h.sz_cpr);
-    delete [] cprLoader;
+    linker->addSection("FOLDEXEC", fold + fold_hdrlen, szfold - fold_hdrlen);
 
     n_mru = ft->n_mru;
 
