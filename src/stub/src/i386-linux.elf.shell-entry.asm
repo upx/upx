@@ -133,46 +133,28 @@ decompress:
 %define p_filesize 4
 
 ; Decompress the rest of this loader, and jump to it
-unfold:
-        pop esi  ; &{ sz_uncompressed, sz_compressed, compressed_data...}
-        cld
-        lodsd
-        push eax  ; sz_uncompressed of folded stub (junk, actually)
-        push esp  ; &sz_uncompressed
-        mov edx, 0x01400000  ; origin of this program
-        mov eax, [p_memsz + szElf32_Ehdr + edx]  ; length of loaded pages
-        add eax, edx
-        add edx, szElf32_Ehdr + 2*szElf32_Phdr  ; convenient ptr
-        push eax  ; &destination
+main:
+        pop ebp  ; &decompress
+        mov eax,0x1400000  ; &Elf32_Ehdr of this stub
+        lea edx,[0x80 + szp_info + eax]  ; &cprScript
+        add eax,[p_memsz + szElf32_Ehdr + eax]  ; after .text
+        add eax,PAGE_SIZE -1
+        and eax, -PAGE_SIZE  ; round up to next page
 
-                ; mmap space for unfolded stub, and uncompressed script
-        mov ecx, [szl_info + p_filesize + edx]  ; script size
-        add ecx, 1+ 3+ (3 -1)+ PAGE_SIZE  ; '\0' + "-c" + decompr_overrun + stub
-
-        push eax  ; offset (ignored when MAP_ANONYMOUS)
-        push byte -1  ; fd [required by *BSD for MAP_ANONYMOUS]
+        push byte 0
+        push byte -1
         push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push byte PROT_READ | PROT_WRITE | PROT_EXEC
-        push ecx  ; length
-        push eax  ; destination
-        mov ebx, esp  ; address of parameter vector for __NR_mmap
+        push byte PROT_READ | PROT_WRITE
+        push dword [edx]  ; sz_unc  length
+        push eax  ; address
+        mov ebx,esp
         push byte __NR_mmap
         pop eax
         int 0x80
-        lea ebx, [3+ PAGE_SIZE + eax]  ; place for uncompressed script
-        add esp, byte 6*4  ; discard args to mmap
+        add esp, byte 6*4  ; remove arguments
 
-        lodsd
-        push eax  ; sz_compressed of folded stub
-        lodsd  ; junk cto8, algo, unused[2]
-        push esi  ; &compressed_data
-        call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        pop eax  ; discard &compressed_data
-        pop eax  ; discard sz_compressed
-        ret      ; &destination
-main:
-        pop ebp  ; &decompress
-        call unfold
+        lea ebx,[3+ eax]  ; space for "-c"
+; fall into fold [not compressed!]
 
 eof:
 ;       __XTHEENDX__

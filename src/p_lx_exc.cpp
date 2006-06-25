@@ -166,8 +166,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
         sizeof(l_info) +
         ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
-    unsigned len = fo->getBytesWritten();
-    set_native32(&elfout.phdr[0].p_filesz, len);
+    elfout.phdr[0].p_filesz = fo->getBytesWritten();
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
 
@@ -186,38 +185,38 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
 
     // Supply a "linking view" that covers everything,
     // so that 'strip' does not omit everything.
-    Elf32_Shdr shdr;
+    Elf_LE32_Shdr shdr;
     // The section header string table.
     char const shstrtab[] = "\0.\0.shstrtab";
 
     unsigned eod = elfout.phdr[0].p_filesz;
-    set_native32(&elfout.ehdr.e_shoff, eod);
-    set_native16(&elfout.ehdr.e_shentsize, sizeof(shdr));
-    set_native16(&elfout.ehdr.e_shnum, 3);
-    set_native16(&elfout.ehdr.e_shstrndx, 2);
+    elfout.ehdr.e_shoff = eod;
+    elfout.ehdr.e_shentsize = sizeof(shdr);
+    elfout.ehdr.e_shnum = 3;
+    elfout.ehdr.e_shstrndx = 2;
 
     // An empty Elf32_Shdr for space as a null index.
     memset(&shdr, 0, sizeof(shdr));
-    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_NULL);
+    shdr.sh_type = Elf32_Shdr::SHT_NULL;
     fo->write(&shdr, sizeof(shdr));
 
     // Cover all the bits we need at runtime.
     memset(&shdr, 0, sizeof(shdr));
-    set_native32(&shdr.sh_name, 1);
-    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_PROGBITS);
-    set_native32(&shdr.sh_flags, Elf32_Shdr::SHF_ALLOC);
-    set_native32(&shdr.sh_addr, elfout.phdr[0].p_vaddr);
-    set_native32(&shdr.sh_offset, overlay_offset);
-    set_native32(&shdr.sh_size, eod - overlay_offset);
-    set_native32(&shdr.sh_addralign, 4096);
+    shdr.sh_name = 1;
+    shdr.sh_type = Elf32_Shdr::SHT_PROGBITS;
+    shdr.sh_flags = Elf32_Shdr::SHF_ALLOC;
+    shdr.sh_addr = elfout.phdr[0].p_vaddr;
+    shdr.sh_offset = overlay_offset;
+    shdr.sh_size = eod - overlay_offset;
+    shdr.sh_addralign = 4096;
     fo->write(&shdr, sizeof(shdr));
 
     // A section header for the section header string table.
     memset(&shdr, 0, sizeof(shdr));
-    set_native32(&shdr.sh_name, 3);
-    set_native32(&shdr.sh_type, Elf32_Shdr::SHT_STRTAB);
-    set_native32(&shdr.sh_offset, 3*sizeof(shdr) + eod);
-    set_native32(&shdr.sh_size, sizeof(shstrtab));
+    shdr.sh_name = 3;
+    shdr.sh_type = Elf32_Shdr::SHT_STRTAB;
+    shdr.sh_offset = 3*sizeof(shdr) + eod;
+    shdr.sh_size = sizeof(shstrtab);
     fo->write(&shdr, sizeof(shdr));
 
     fo->write(shstrtab, sizeof(shstrtab));
@@ -273,7 +272,7 @@ PackLinuxI386::buildLinuxLoader(
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }
     h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
-    h.b_method = (unsigned char) ph.method;
+    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
@@ -286,6 +285,7 @@ PackLinuxI386::buildLinuxLoader(
     h.sz_cpr = sz_cpr;
   }
     // This adds the definition to the "library", to be used later.
+    // NOTE: the stub is NOT compressed!  The savings is not worth it.
     linker->addSection("FOLDEXEC", cprLoader, h.sz_cpr);
     delete [] cprLoader;
 
