@@ -82,11 +82,16 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
     int r = UPX_E_ERROR;
     upx_compress_result_t result_buffer;
 
-    assert(level > 0);
+    assert(method > 0); assert(level > 0);
 
+#if 1
     // set available bytes in dst
     if (*dst_len == 0)
         *dst_len = MemBuffer::getSizeForCompression(src_len);
+#else
+    // force users to provide *dst_len
+    assert(*dst_len != 0);
+#endif
     // for UPX, we always require a reasonably sized outbut buffer
     assert(*dst_len >= MemBuffer::getSizeForCompression(src_len));
 
