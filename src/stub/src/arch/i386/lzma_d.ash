@@ -64,7 +64,8 @@
         jnz     .clearstack1
 
 
-        inc     esi                     ; skip 1 byte for LzmaDecodeProperties()
+        inc     esi                     ; skip 2 bytes for properties
+        inc     esi
 
         push    ebx                     ; &outSizeProcessed
         push    'UPXb'                  ; outSize
@@ -86,10 +87,10 @@
 LZMA_BASE_SIZE equ 1846
 LZMA_LIT_SIZE  equ  768
 
-%ifndef O_OUTS  ; ELF defines them, others do not care
-%define O_OUTS 0
-%define O_INS  0
-%endif
+  %ifndef O_OUTS  ; ELF defines them, others do not care
+  %define O_OUTS 0
+  %define O_INS  0
+  %endif
 
         mov     ebp, esp                ; save stack
 
@@ -113,7 +114,7 @@ LZMA_LIT_SIZE  equ  768
         push byte 0
         cmp esp,ebx
         jne .elf_clearstack1
-        
+
         push    ebx                     ; &outSizeProcessed
         add     ebx, 4
         mov     edx,[O_OUTS + ebp]      ; &outSize
@@ -131,6 +132,7 @@ LZMA_LIT_SIZE  equ  768
         mov [   ebx],ch  ; store lit_context_bits
         mov [1+ ebx],ah  ; store lit_pos_bits
         mov [2+ ebx],al  ; store pos_bits
+
 
 ; __LZMA_DEC10__
 %include "arch/i386/lzma_d_cs.ash"

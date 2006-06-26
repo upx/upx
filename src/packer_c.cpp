@@ -256,7 +256,8 @@ void Packer::patchDecompressor(void *loader, int lsize)
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
         patch_le32(loader, lsize, "UPXd", properties);
-        patch_le32(loader, lsize, "UPXc", ph.c_len - 1);
+        // -2 for properties
+        patch_le32(loader, lsize, "UPXc", ph.c_len - 2);
         patch_le32(loader, lsize, "UPXb", ph.u_len);
         unsigned stack = getDecompressorWrkmemSize();
         patch_le32(loader, lsize, "UPXa", 0u - stack);

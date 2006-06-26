@@ -71,10 +71,11 @@ int compress_lzma_dummy = 0;
 //   while you keep LZMA SDK code unmodified.
 
 
-
 /*************************************************************************
 // cruft because of pseudo-COM layer
 **************************************************************************/
+
+#undef USE_LZMA_PROPERTIES
 
 #undef MSDOS
 #undef OS2
@@ -230,6 +231,14 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
 
+    res->pos_bits = pr[0].uintVal;
+    res->lit_pos_bits = pr[1].uintVal;
+    res->lit_context_bits = pr[2].uintVal;
+    res->dict_size = pr[3].uintVal;
+    //res->num_probs = LzmaGetNumProbs(&s.Properties));
+    //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
+    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+
 #ifndef _NO_EXCEPTIONS
     try {
 #else
@@ -246,7 +255,15 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     }
     assert(os.Pos == 5);
-    os.Pos -= 4; // do not encode dict_size
+#if defined(USE_LZMA_PROPERTIES)
+    os.Pos = 1;
+#else
+    os.Pos = 0;
+    // extra stuff in first byte: 5 high bits convenience for stub decompressor
+    unsigned t = res->lit_context_bits + res->lit_pos_bits;
+    os.WriteByte((t << 3) | res->pos_bits);
+    os.WriteByte((res->lit_pos_bits << 4) | (res->lit_context_bits));
+#endif
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
 
@@ -269,14 +286,6 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         assert(is.Pos == src_len);
         r = UPX_E_OK;
     }
-
-    res->pos_bits = pr[0].uintVal;
-    res->lit_pos_bits = pr[1].uintVal;
-    res->lit_context_bits = pr[2].uintVal;
-    res->dict_size = pr[3].uintVal;
-    //res->num_probs = LzmaGetNumProbs(&s.Properties));
-    //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
-    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
 
 error:
     *dst_len = os.Pos;
@@ -324,16 +333,33 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     int r = UPX_E_ERROR;
     int rh;
 
+#if defined(USE_LZMA_PROPERTIES)
     if (src_len < 2)
         goto error;
-
     rh = LzmaDecodeProperties(&s.Properties, src, src_len);
     if (rh != 0)
         goto error;
     src += 1; src_len -= 1;
+#else
+    if (src_len < 3)
+        goto error;
+    s.Properties.pb = src[0] & 7;
+    s.Properties.lp = (src[1] >> 4);
+    s.Properties.lc = src[1] & 15;
+    if (s.Properties.pb >= 5) goto error;
+    if (s.Properties.lp >= 5) goto error;
+    if (s.Properties.lc >= 9) goto error;
+    // extra
+    if ((src[0] >> 3) != s.Properties.lc + s.Properties.lp) goto error;
+    src += 2; src_len -= 2;
+#endif
+
     if (result)
     {
         assert(result->method == method);
+        assert(result->result_lzma.pos_bits == (unsigned) s.Properties.pb);
+        assert(result->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
+        assert(result->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
         assert(result->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
     }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
