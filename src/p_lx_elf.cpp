@@ -311,7 +311,7 @@ PackLinuxElf32x86::buildLinuxLoader(
         fold_hdrlen = umax(0x80, fold_hdrlen);
     }
     h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
-    h.b_method = (unsigned char) ph.method;
+    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
@@ -324,8 +324,8 @@ PackLinuxElf32x86::buildLinuxLoader(
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
-#if 1  //{
-    if (M_LZMA==ph.method) {  // FIXME: debugging only
+#if 0  //{  debugging only
+    if (M_LZMA==ph.method) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
         unsigned char *tmp = new unsigned char[tmp_len];
         memset(tmp, 0, tmp_len);
@@ -338,10 +338,13 @@ PackLinuxElf32x86::buildLinuxLoader(
     }
 #endif  //}
   }
+    unsigned const sz_cpr = h.sz_cpr;
+    set_native32(&h.sz_cpr, h.sz_cpr);
+    set_native32(&h.sz_unc, h.sz_unc);
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
@@ -449,29 +452,29 @@ PackLinuxElf32::buildLinuxLoader(
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
-    unsigned sz_unc=0, sz_cpr;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
         get_native16(&hf->ehdr.e_phentsize) * get_native16(&hf->ehdr.e_phnum) +
             sizeof(l_info) );
-    sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
-    set_native32(&h.sz_unc, ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen)));
-    h.b_method = (unsigned char) ph.method;
+    h.sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
+    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + sz_unc];
+    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc);
+    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
   if (0 < szfold) {
-    sz_cpr = 0;
-    int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
+    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
-    set_native32(&h.sz_cpr, sz_cpr);
-    if (r != UPX_E_OK || sz_cpr >= sz_unc)
+    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
   }
+    unsigned const sz_cpr = h.sz_cpr;
+    set_native32(&h.sz_cpr, h.sz_cpr);
+    set_native32(&h.sz_unc, h.sz_unc);
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
@@ -508,29 +511,29 @@ PackLinuxElf64::buildLinuxLoader(
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
-    unsigned sz_unc=0, sz_cpr;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
         get_native16(&hf->ehdr.e_phentsize) * get_native16(&hf->ehdr.e_phnum) +
             sizeof(l_info) );
-    sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
-    set_native32(&h.sz_unc, ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen)));
-    h.b_method = (unsigned char) ph.method;
+    h.sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
+    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + sz_unc];
+    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc);
+    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
   if (0 < szfold) {
-    sz_cpr = 0;
-    int r = upx_compress(uncLoader, sz_unc, sizeof(h) + cprLoader, &sz_cpr,
+    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
-    set_native32(&h.sz_cpr, sz_cpr);
-    if (r != UPX_E_OK || sz_cpr >= sz_unc)
+    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
   }
+    unsigned const sz_cpr = h.sz_cpr;
+    set_native32(&h.sz_cpr, h.sz_cpr);
+    set_native32(&h.sz_unc, h.sz_unc);
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.

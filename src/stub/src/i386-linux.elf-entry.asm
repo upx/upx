@@ -69,10 +69,18 @@ decompress:
 ; // C callable decompressor
 ; **************************************************************************/
 
-%define         INP     dword [esp+8*4+8]
-%define         INS     dword [esp+8*4+12]
-%define         OUTP    dword [esp+8*4+16]
-%define         OUTS    dword [esp+8*4+20]
+; /* Offsets to parameters, allowing for {push + pusha + call} */
+%define         O_INP   (4+ 8*4 +1*4)
+%define         O_INS   (4+ 8*4 +2*4)
+%define         O_OUTP  (4+ 8*4 +3*4)
+%define         O_OUTS  (4+ 8*4 +4*4)
+%define         O_PARAM (4+ 8*4 +5*4)
+
+%define         INP     dword [esp+O_INP]
+%define         INS     dword [esp+O_INS]
+%define         OUTP    dword [esp+O_OUTP]
+%define         OUTS    dword [esp+O_OUTS]
+%define         PARM    dword [esp+O_PARAM]
 
 ;__LEXEC009__
         ;;  empty section for commonality with l_lx_exec86.asm
@@ -198,15 +206,18 @@ unfold:
 
         cld
         lodsd
-        push eax  ; sz_uncompressed  (junk, actually)
-        push esp  ; &dstlen
+        push eax  ; sz_uncompressed  (maximum dstlen for lzma)
+        mov ecx,esp  ; save &dstlen
+        push eax  ; space for 5th param
+        push ecx  ; &dstlen
         push edx  ; &dst
         lodsd
-        push eax  ; sz_compressed
+        push eax  ; sz_compressed  (srclen)
         lodsd     ; last 4 bytes of b_info
+        mov [4*3 + esp],eax
         push esi  ; &compressed_data
-        call ebp  ; decompress(&src, srclen, &dst, &dstlen)
-        add esp, byte (4+1 + 6-1)*4  ; (4+1) args to decompress, (6-1) args to mmap
+        call ebp  ; decompress(&src, srclen, &dst, &dstlen, b_info.misc)
+        add esp, byte (5+1 + 6-1)*4  ; (5+1) args to decompress, (6-1) args to mmap
         ret      ; &destination
 main:
         pop ebp  ; &decompress

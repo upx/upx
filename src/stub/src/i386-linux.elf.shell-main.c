@@ -139,9 +139,9 @@ ERR_LAB
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
-            nrv_uint out_len;
+            nrv_uint out_len = h.sz_unc;  // EOF for lzma
             int const j = (*f_decompress)((unsigned char *)xi->buf, h.sz_cpr,
-                (unsigned char *)xo->buf, &out_len, h.b_method );
+                (unsigned char *)xo->buf, &out_len, *(int *)(void *)&h.b_method );
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             xi->buf  += h.sz_cpr;

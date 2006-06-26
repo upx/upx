@@ -44,10 +44,7 @@
 %define a_val  4
 %define sz_auxv 8
 
-fold_begin:     ; enter: %ebx= uncDst
-                ; also edx= szElf32_Ehdr + 2*szElf32_Phdr + &Elf32_Ehdr
-        pop eax  ; discard &sz_uncompressed
-        pop eax  ; discard  sz_uncompressed
+fold_begin:     ; In: %ebx= uncDst; edx= &b_info cprSrc; ebp = &decompress
 
 ; Move argc,argv,envp down to make room for complete Elf_auxv table.
 ; Linux kernel 2.4.2 and earlier give only AT_HWCAP and AT_PLATFORM
@@ -111,7 +108,6 @@ L40:
         sub esp, dword MAX_ELF_HDR + OVERHEAD
 
         xchg eax, ebx  ; eax= uncDst
-        lea edx, [szl_info + szp_info + edx]  ; cprSrc
         mov ecx, [   edx]  ; sz_unc
         mov ebx, [4+ edx]  ; sz_cpr
         mov esi, eax  ; extra copy of uncDst
