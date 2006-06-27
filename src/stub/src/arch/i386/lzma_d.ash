@@ -92,7 +92,6 @@ LZMA_LIT_SIZE  equ  768
   %define O_INS  0
   %endif
 
-  int3
         mov     ebp, esp                ; save stack
 
         lodsb           ; first byte, replaces LzmaDecodeProperties()
