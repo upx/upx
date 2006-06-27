@@ -93,8 +93,10 @@ LZMA_LIT_SIZE  equ  768
   %endif
 
         mov     ebp, esp                ; save stack
+        mov     edx,[O_INS + ebp]       ; inSize
 
         lodsb           ; first byte, replaces LzmaDecodeProperties()
+        dec edx
         mov cl,al       ; cl= ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
         and al,7        ; al= pos_bits
         shr cl,3        ; cl= lit_context_bits + lit_pos_bits
@@ -111,23 +113,21 @@ LZMA_LIT_SIZE  equ  768
 
         push    ebx                     ; &outSizeProcessed
         add     ebx, 4
-        mov     edx,[O_OUTS + ebp]      ; &outSize
-        push    dword [edx]             ; outSize
+        mov     ecx,[O_OUTS + ebp]      ; &outSize
+        push    dword [ecx]             ; outSize
         push    edi                     ; out
         push    ebx                     ; &inSizeProcessed
         add     ebx, 4
-        mov     edx,[O_INS + ebp]       ; inSize
 
         mov [2+ ebx],al  ; store pos_bits
         lodsb           ; second byte, replaces LzmaDecodeProperties()
+        dec edx
         mov cl,al       ; cl= (lit_pos_bits<<4) | lit_context_bits
         and al,0xf
         mov [   ebx],al  ; store lit_context_bits
         shr cl,4
         mov [1+ ebx],cl  ; store lit_pos_bits
         
-        dec     edx                     ; 2 bytes replace LzmaDecodeProperties()
-        dec     edx
         push    edx                     ; inSize -2
         push    esi                     ; in
         push    ebx                     ; &CLzmaDecoderState
