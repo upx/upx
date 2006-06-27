@@ -304,7 +304,8 @@ PackLinuxElf32x86::buildLinuxLoader(
     unsigned fold_hdrlen = 0;
   if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = sizeof(hf->ehdr) + hf->ehdr.e_phentsize * hf->ehdr.e_phnum +
+    fold_hdrlen = sizeof(hf->ehdr) +
+        get_native16(&hf->ehdr.e_phentsize) * get_native16(&hf->ehdr.e_phnum) +
          sizeof(l_info);
     if (0 == get_le32(fold_hdrlen + fold)) {
         // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
@@ -354,11 +355,13 @@ PackLinuxElf32x86::buildLinuxLoader(
             // Elf32_Edhr
         sizeof(elfout.ehdr) +
             // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
-        (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
+        (get_native16(&elfout.ehdr.e_phentsize) * get_native16(&elfout.ehdr.e_phnum)) +
             // checksum UPX! lsize version format
         sizeof(l_info) +
             // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) +
+        ((get_native16(&elfout.ehdr.e_phnum)==3)
+            ? (unsigned) get_native32(&elfout.phdr[2].p_memsz)
+            : 0) +
             // p_progid, p_filesize, p_blocksize
         sizeof(p_info) +
             // compressed data
@@ -1002,7 +1005,7 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, ehdri.e_phnum) );
+    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)
@@ -1023,7 +1026,7 @@ void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)
             sizeof(Elf32_Ehdr) + (unsigned char const *)&linux_elf32arm_fold,
             3*sizeof(Elf32_Phdr) );
     }
-    generateElfHdr(fo, &h3, getbrk(phdri, ehdri.e_phnum) );
+    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
@@ -1041,7 +1044,7 @@ void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)  // FIXME
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    generateElfHdr(fo, linux_elfppc32_fold, getbrk(phdri, ehdri.e_phnum) );
+    generateElfHdr(fo, linux_elfppc32_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
@@ -1063,7 +1066,7 @@ void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, ehdri.e_phnum) );
+    generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
@@ -1310,12 +1313,13 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     len += (7&-lsize) + lsize;
     bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
     if (is_big) {
-        elfout.ehdr.e_entry += lo_va_user - lo_va_stub;
-        elfout.phdr[0].p_vaddr = lo_va_user;
-        elfout.phdr[0].p_paddr = lo_va_user;
+        set_native64(    &elfout.ehdr.e_entry,
+            get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_native64(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_native64(&elfout.phdr[0].p_paddr, lo_va_user);
                lo_va_stub      = lo_va_user;
         adrc = lo_va_stub;
-        adrm = getbrk(phdri, ehdri.e_phnum);
+        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
         adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
         adrx = adru + hlen;
         lenm = PAGE_SIZE + len;
@@ -1551,13 +1555,14 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 #endif  /*}*/
 
     // rewrite Elf header
-    if (Elf32_Ehdr::ET_DYN==ehdri.e_type) {
-        unsigned const base= elfout.phdr[0].p_vaddr;
-        elfout.ehdr.e_type= Elf32_Ehdr::ET_DYN;
-        elfout.ehdr.e_phnum= 1;
-        elfout.ehdr.e_entry    -= base;
-        elfout.phdr[0].p_vaddr -= base;
-        elfout.phdr[0].p_paddr -= base;
+    if (Elf32_Ehdr::ET_DYN==get_native16(&ehdri.e_type)) {
+        unsigned const base= get_native32(&elfout.phdr[0].p_vaddr);
+        set_native16(&elfout.ehdr.e_type, Elf32_Ehdr::ET_DYN);
+        set_native16(&elfout.ehdr.e_phnum, 1);
+        set_native32(    &elfout.ehdr.e_entry,
+            get_native32(&elfout.ehdr.e_entry) -  base);
+        set_native32(&elfout.phdr[0].p_vaddr, get_native32(&elfout.phdr[0].p_vaddr) - base);
+        set_native32(&elfout.phdr[0].p_paddr, get_native32(&elfout.phdr[0].p_paddr) - base);
         // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
         //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
     }
@@ -1869,7 +1874,7 @@ unsigned
 PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
 {
     Elf32_Phdr const *phdr = phdri;
-    int j = ehdri.e_phnum;
+    int j = get_native16(&ehdri.e_phnum);
     for (; --j>=0; ++phdr) if (PT_LOAD32 == get_native32(&phdr->p_type)) {
         unsigned const t = addr - get_native32(&phdr->p_vaddr);
         if (t < get_native32(&phdr->p_filesz)) {
