@@ -1,3 +1,4 @@
+/*
 ;  n2d_d8e.ash -- ucl_nrv2d_decompress_8 in 16-bit assembly (dos/exe)
 ;
 ;  This file is part of the UCL data compression library.
@@ -35,19 +36,11 @@
 ; cx = 0
 ; bx = 0x800F
 ; bp = 1
+*/
 
+                CPU     8086
 
-    %ifndef jmps
-    %define jmps    jmp short
-    %endif
-    %ifndef jmpn
-    %define jmpn    jmp near
-    %endif
-
-    CPU 8086
-
-
-;       __NRV2D16S__
+section         NRV2D16S
 literal_n2d:
                 movsb
 decompr_start_n2d:
@@ -58,14 +51,14 @@ dec1_n2d:
                 jc      literal_n2d
                 inc     cx
                 mov     ax, es
-%ifdef  __N2D64K01__
+section         N2D64K01
                 add     di, di
                 jnc     di_ok_n2d
                 add     ah, 8
                 mov     es, ax
 di_ok_n2d:
                 shr     di, 1
-%endif; __NRV2DEX1__
+section         NRV2DEX1
 offset_loop_n2d:
                 call    getbit_cx_n2d
                 jc      offset_loopend_n2d
@@ -78,16 +71,16 @@ offset_loop_n2d:
 offset_loopend_n2d:
                 dec     cx
                 dec     cx
-                jz      offset_ok_n2d
-%ifdef  __N2DX8601__
+                jzs     offset_ok_n2d
+section         N2DX8601
                 add     cx, cx
                 add     cx, cx
                 add     cx, cx
-%else;  __N2D28601__
-    CPU 286
+section         N2D28601
+                CPU     286
                 shl     cx, 3
-    CPU 8086
-%endif; __NRV2DEX2__
+                CPU     8086
+section         NRV2DEX2
                 mov     bp, cx
                 mov     bl, [si]
                 inc     si
@@ -109,8 +102,8 @@ length_loop_n2d:
                 inc     cx
                 inc     cx
 copy_match_n2d:
-                cmp     bp, byte 0x51
-                sbb     cx, byte -2
+                cmp     bp, 0x51
+                sbb     cx, -2
 
                 sub     ax, bp
                 jb      handle_underflow_n2d
@@ -125,7 +118,7 @@ ds_ok_n2d:
                 mov     ds, dx
                 jmps    decompr_start_n2d
 handle_underflow_n2d:
-%ifdef  __N2DX8602__
+section         N2DX8602
                 shl     ax, 1
                 shl     ax, 1
                 shl     ax, 1
@@ -134,13 +127,13 @@ handle_underflow_n2d:
                 xor     ax, ax
                 mov     ds, ax
                 pop     ax
-%else;  __N2D28602__
-    CPU 286
+section         N2D28602
+                CPU     286
                 shl     ax, 4
-                push    byte 0
+                push    0
                 pop     ds
-    CPU 8086
-%endif; __NRV2DEX3__
+                CPU     8086
+section         NRV2DEX3
                 add     ax, bx
                 add     ax, di
                 jmps    ds_ok_n2d
@@ -152,26 +145,22 @@ gb2_n2d:
                 adc     cx, cx
 getbit_n2d:
                 add     bh, bh
-                jnz     f2_n2d
+                jnzs    f2_n2d
 reloadbh_n2d:
                 mov     bh, [si]
-%ifdef  __N2D64K02__
+section         N2D64K02
                 adc     si, si
                 jnc     si_ok_n2d
                 add     dh, 8
                 mov     ds, dx
 si_ok_n2d:
                 shr     si, 1
-%endif; __NRV2DEX9__
+section         NRV2DEX9
                 inc     si
                 adc     bh, bh
 f2_n2d:
                 ret
 decomp_done_n2d:
-;       __NRV2D16E__
 
-
-    CPU 8086
-
-; vi:ts=8:et
+/* vi:ts=8:et */
 

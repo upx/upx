@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_exe.h"
+#include "linker.h"
 
 static const
 #include "stub/i086-dos16.exe.h"
@@ -125,7 +126,7 @@ int PackExe::buildLoader(const Filter *)
                   opt->cpu == opt->CPU_8086 ? "N2BX8602" : "N2B28602",
                   "NRV2BEX3",
                   ph.c_len > 0xffff ? "N2B64K02" : "",
-                  "NRV2BEX9,NRV2B16E",
+                  "NRV2BEX9",
                   NULL
                  );
     else if (ph.method == M_NRV2D_8)
@@ -137,7 +138,7 @@ int PackExe::buildLoader(const Filter *)
                   opt->cpu == opt->CPU_8086 ? "N2DX8602" : "N2D28602",
                   "NRV2DEX3",
                   ph.c_len > 0xffff ? "N2D64K02" : "",
-                  "NRV2DEX9,NRV2D16E",
+                  "NRV2DEX9",
                   NULL
                  );
     else if (ph.method == M_NRV2E_8)
@@ -149,7 +150,7 @@ int PackExe::buildLoader(const Filter *)
                   opt->cpu == opt->CPU_8086 ? "N2EX8602" : "N2E28602",
                   "NRV2EEX3",
                   ph.c_len > 0xffff ? "N2E64K02" : "",
-                  "NRV2EEX9,NRV2E16E",
+                  "NRV2EEX9",
                   NULL
                  );
     else
@@ -481,67 +482,55 @@ void PackExe::pack(OutputFile *fo)
     }
     extra_info[eisize++] = (unsigned char) flag;
 
+    linker->defineSymbol("original_cs", ih.cs);
+    linker->defineSymbol("original_ip", ih.ip);
+    linker->defineSymbol("original_sp", ih.sp);
+    linker->defineSymbol("original_ss", ih.ss);
+    linker->defineSymbol("reloc_size",
+                         (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff)
+                          >= relocsize ? 0 : MAXRELOCS) - relocsize);
+    linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
+    linker->defineSymbol("decompressor_entry", (packedsize & 15) + 1);
+
     // patch loader
     if (flag & USEJUMP)
     {
         // I use a relocation entry to set the original cs
-        unsigned n = find_le32(loader,lsize,get_le32("IPCS"));
-        patch_le32(loader,lsize,get_le32("IPCS"), ih.cs*0x10000 + ih.ip);
+        unsigned n = getLoaderSectionStart("EXEJUMPF") + 1;
         n += packedsize + 2;
         oh.relocs = 1;
-        oh.firstreloc = (n&0xf) + ((n>>4)<<16);
+        oh.firstreloc = (n & 0xf) + ((n >> 4) << 16);
     }
     else
     {
-        patch_le16(loader,lsize,"IP",ih.ip);
-        if (ih.cs)
-            patch_le16(loader,lsize,"CS",ih.cs);
         oh.relocs = 0;
-        oh.firstreloc = ih.cs*0x10000 + ih.ip;
+        oh.firstreloc = ih.cs * 0x10000 + ih.ip;
     }
 
     // g++ 3.1 does not like the following line...
 //    oh.relocoffs = offsetof(exe_header_t, firstreloc);
     oh.relocoffs = ptr_diff(&oh.firstreloc, &oh);
 
-    if (flag & SP)
-        patch_le16(loader,lsize,"SP",ih.sp);
-    if (flag & SS)
-        patch_le16(loader,lsize,"SS",ih.ss);
-    if (relocsize)
-        patch_le16(loader,lsize,"RS",(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? 0 : MAXRELOCS) - relocsize);
+    linker->defineSymbol("destination_segment", oh.ss - ph.c_len / 16 - e_len / 16);
+    linker->defineSymbol("source_segment", e_len / 16 + (copysize - firstcopy) / 16);
+    linker->defineSymbol("copy_offset", firstcopy - 2);
+    linker->defineSymbol("words_to_copy",firstcopy / 2);
 
-    patchPackHeader(loader,e_len);
-
-    patch_le16(loader,e_len,"BX",0x800F + 0x10*((packedsize&15)+1) - 0x10);
-    patch_le16(loader,e_len,"BP",(packedsize&15)+1);
-
-    unsigned destpara = oh.ss - ph.c_len/16;
-    patch_le16(loader,e_len,"ES",destpara-e_len/16);
-    patch_le16(loader,e_len,"DS",e_len/16+(copysize-firstcopy)/16);
-    patch_le16(loader,e_len,"SI",firstcopy-2);
-    patch_le16(loader,e_len,"CX",firstcopy/2);
-
-    // finish --stub support
-    //if (ih.relocoffs >= 0x40 && memcmp(&ih.relocoffs,">TIPPACH",8))
-    //    throwCantPack("FIXME");
+    linker->defineSymbol("exe_stack_sp", oh.sp);
+    linker->defineSymbol("exe_stack_ss", oh.ss);
+    linker->defineSymbol("interrupt", get_le16(ibuf + 8));
+    linker->defineSymbol("attribute", get_le16(ibuf + 4));
+    linker->defineSymbol("orig_strategy", get_le16(ibuf + 6));
 
     const unsigned outputlen = sizeof(oh)+lsize+packedsize+eisize;
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
-    oh.ip = 0;
-    if (device_driver)
-    {
-        patch_le16(loader, e_len, "OP", oh.sp);
-        patch_le16(loader, e_len, "OS", oh.ss);
-        // copy .sys header
-        memcpy(loader + 4, ibuf + 4, 2);
-        memcpy(loader + 8, ibuf + 8, 2);
-        // copy original strategy
-        memcpy(loader + 10, ibuf + 6, 2);
-        oh.ip = getLoaderSection("EXEENTRY") - 2;
-    }
+    oh.ip = device_driver ? getLoaderSection("EXEENTRY") - 2 : 0;
+
+    linker->relocate();
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader,e_len);
 
 //fprintf(stderr,"\ne_len=%x d_len=%x c_len=%x oo=%x ulen=%x destp=%x copys=%x images=%x",e_len,d_len,packedsize,ph.overlap_overhead,ph.u_len,destpara,copysize,ih_imagesize);
 
@@ -714,6 +703,12 @@ void PackExe::unpack(OutputFile *fo)
 
     // copy the overlay
     copyOverlay(fo, ih_overlay, &obuf);
+}
+
+
+Linker* PackExe::newLinker() const
+{
+    return new ElfLinker();
 }
 
 

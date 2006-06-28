@@ -44,7 +44,7 @@ section         UPX1HEAD
                 dw      0               # 18  compressed len
                 db      0               # 20  filter
                 db      45              # 21  header checksum
-#elif EXE
+#elif defined(EXE)
                 db      0,0,0           # 16  uncompressed len
                 db      0,0,0           # 19  compressed len
                 db      0,0,0           # 22  original file size

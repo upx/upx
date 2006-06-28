@@ -1,3 +1,4 @@
+/*
 ;  l_exe.asm -- loader & decompressor for the dos/exe format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,133 +25,121 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
 
+#define         EXE
+#include        "arch/i086/macros.ash"
 
-%define         EXE
-%define         jmps    jmp short
-%define         jmpn    jmp near
-
-                BITS    16
-                ORG     0
-                SECTION .text
                 CPU     8086
 
-;       __DEVICEENTRY__
+section         DEVICEENTRY
 
-                dd      -1
-                dw      0
-                dw      strategy        ; .sys header
-                dw      0               ; opendos wants this field untouched
+                .long   -1
+                .short  attribute
+                .short  strategy        /* .sys header */
+                .short  interrupt       /* opendos wants this field untouched */
 original_strategy:
-                dw      'ST'
+                .short  orig_strategy
 strategy:
                 push    cs
-                push    word [cs:original_strategy]
+                push    [cs:original_strategy]
                 push    ax
                 push    bx
                 push    cx
                 push    dx
                 mov     ax, cs
-                add     ax, 'OS'        ; calculate normal EXE stack
-                mov     bx, 'OP'
+                add     ax, offset exe_stack_ss
+                mov     bx, offset exe_stack_sp
                 mov     cx, ss
                 mov     dx, sp
-                mov     ss, ax          ; switch to stack EXE normally has
+                mov     ss, ax          /* switch to stack EXE normally has */
                 mov     sp, bx
-                push    cx              ; save device stack on EXE stack
+                push    cx              /* save device stack on EXE stack */
                 push    dx
                 push    si
                 push    di
                 push    bp
                 push    ds
                 push    es
-                db      0x72            ; "jc 0xf9" but flag C is 0 => nop
+                .byte   0x72            /* "jc 0xf9" but flag C is 0 => nop */
 exe_as_device_entry:
-                stc                     ; flag C is 1
+                stc                     /* flag C is 1 */
                 pushf
 
-; =============
-; ============= ENTRY POINT
-; =============
-;       __EXEENTRY__
+/* ============= */
+
+section         EXEENTRY
 exe_entry:
-                mov     cx, 'CX'        ; first_copy_len/2
-                mov     si, 'SI'        ; cx*2-2
+                mov     cx, offset words_to_copy
+                mov     si, offset copy_offset
                 mov     di, si
                 push    ds
-                db      0xa9
+                .byte   0xa9
 do_copy:
-                mov     ch, 0x80        ; 64 kbyte
+                mov     ch, 0x80        /* 64 kbyte */
                 mov     ax, cs
 addaxds:
-                add     ax, 'DS'        ; MSB is referenced by the "sub" below
+                add     ax, offset source_segment /* MSB is referenced by the "sub" below */
                 mov     ds, ax
-                add     ax, 'ES'
+                add     ax, offset destination_segment
                 mov     es, ax
 
                 std
                 rep
                 movsw
                 cld
-;       __DEVICESUB__
-                sub     [byte cs:si + addaxds + 4], byte 0x10
-;       __EXESUB__
-                sub     [byte cs:si + addaxds - exe_entry + 4], byte 0x10
-;       __JNCDOCOPY__
-                jnc     do_copy
+section         DEVICESUB
+                subb    [cs:si + addaxds + 4], 0x10
+section         EXESUB
+                subb    [cs:si + addaxds - exe_entry + 4], 0x10
+section         JNCDOCOPY
+                jncs    do_copy
                 xchg    ax, dx
                 scasw
                 lodsw
-%ifdef  __EXERELPU__
+section         EXERELPU
                 push    cs
-%endif; __EXEMAIN4__
+section         EXEMAIN4
                 push    cs
                 push    cs
                 push    es
                 pop     ds
                 pop     es
                 push    ss
-                mov     bp, 'BP'        ; entry point [0x1,0x10]
-                mov     bx, 'BX'        ; 0x800F + 0x10*bp - 0x10
+                mov     bp, offset decompressor_entry
+                mov     bx, offset bx_magic     /* 0x800F + 0x10*bp - 0x10 */
                 push    bp
-                retf
+                lret
 
-%include        "include/header.ash"
+#include        "include/header2.ash"
 
-;       __EXECUTPO__
+section         EXECUTPO
 
-; =============
-; ============= DECOMPRESSION
-; =============
+#include        "arch/i086/nrv2b_d8.ash"
+#include        "arch/i086/nrv2d_d8.ash"
+#include        "arch/i086/nrv2e_d8.ash"
 
-                CPU     286
-%include        "arch/i086/nrv2b_d8.ash"
-%include        "arch/i086/nrv2d_d8.ash"
-%include        "arch/i086/nrv2e_d8.ash"
-                CPU     8086
-
-; =============
-; ============= RELOCATION
-; =============
-;       __EXEMAIN5__
+section         EXEMAIN5
                 pop     bp
-%ifdef  __EXERELOC__
-%ifdef  __EXEADJUS__
+
+/* RELOCATION */
+
+section         EXEADJUS
                 mov     ax, es
-                sub     ah, 0x6        ; MAXRELOCS >> 12
+                sub     ah, 0x6        /* MAXRELOCS >> 12 */
                 mov     ds, ax
-%else;  __EXENOADJ__
+section         EXENOADJ
                 push    es
                 pop     ds
-%endif; __EXERELO1__
-                lea     si, [di+'RS']
+section         EXERELO1
+                lea     si, [di + reloc_size]
                 lodsw
 
                 pop     bx
 
-                xchg    ax, cx          ; number of 0x01 bytes (not exactly)
+                xchg    ax, cx          /* number of 0x01 bytes (not exactly) */
                 lodsw
-                xchg    ax, dx          ; seg_hi
+                xchg    ax, dx          /* seg_hi */
 reloc_0:
                 lodsw
                 xchg    ax, di
@@ -164,35 +153,35 @@ reloc_1:
 reloc_2:
                 lodsb
                 dec     ax
-                jz      reloc_5
+                jzs     reloc_5
                 inc     ax
                 jnz     reloc_1
-%ifdef  __EXEREL9A__
+section         EXEREL9A
                 inc     di
 reloc_4:
                 inc     di
-                cmp     byte [es:di], 0x9a
+                cmpb    [es:di], 0x9a
                 jne     reloc_4
                 cmp     [es:di+3], dx
                 ja      reloc_4
                 mov     al, 3
                 jmps    reloc_1
-%endif; __EXERELO2__
+section         EXERELO2
 reloc_5:
                 add     di, 0xfe
-%ifdef  __EXEREBIG__
-                jc      reloc_0
-%endif; __EXERELO3__
+section         EXEREBIG
+                jcs     reloc_0
+section         EXERELO3
                 loop    reloc_2
-%endif; __EXEMAIN8__
 
-; =============
+/* POSTPROCESSING */
 
+section         EXEMAIN8
                 pop     es
                 push    es
                 pop     ds
 
-;       __DEVICEEND__
+section         DEVICEEND
                 popf
                 jc      loaded_as_exe
                 pop     es
@@ -200,43 +189,33 @@ reloc_5:
                 pop     bp
                 pop     di
                 pop     si
-                pop     bx              ; get original device SS:SP
+                pop     bx              /* get original device SS:SP */
                 pop     ax
-                mov     ss, ax          ; switch to device driver stack
+                mov     ss, ax          /* switch to device driver stack */
                 mov     sp, bx
                 pop     dx
                 pop     cx
                 pop     bx
                 pop     ax
-                retf                    ; return to original strategy
-
+                lret                    /* return to original strategy */
 loaded_as_exe:
-%ifdef  __EXESTACK__
-                lea     ax, ['SS'+bp]
+
+section         EXESTACK
+                lea     ax, [original_ss + bp]
                 mov     ss, ax
-%endif; __EXEDUMMS__
-%ifdef  __EXESTASP__
-                mov     sp, 'SP'
-%endif; __EXEDUMMP__
+section         EXESTASP
+                mov     sp, offset original_sp
 
-; =============
+section         EXEJUMPF
+                .byte   0xea            /* jmpf cs:ip */
+                .word   original_ip, original_cs
 
-%ifdef  __EXEJUMPF__
-                jmp     'CS':'IP'
-%else;  __EXERETUR__
-%ifdef  __EXERCSPO__
-                add     bp, 'CS'
-%endif; __EXERETIP__
+section         EXERCSPO
+                add     bp, offset original_cs
+section         EXERETIP
                 push    bp
-                mov     ax, 'IP'
+                mov     ax, offset original_ip
                 push    ax
-                retf
-%endif; __EXEDUMMZ__
-eof:
-;       __EXETHEND__
-                section .data
-                dd      -1
-                dw      eof
+                lret
 
-
-; vi:ts=8:et:nowrap
+/* vi:ts=8:et:nowrap */

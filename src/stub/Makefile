@@ -263,9 +263,8 @@ i086-dos16.com.h : $(srcdir)/src/$$T.asm
 i086-dos16.exe% : tc_list = i086 default
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
-	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
+	gcc -c -x assembler-with-cpp $< -o tmp/$T.bin
+	objdump -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
