@@ -197,7 +197,7 @@ class ElfLinker : public Linker
     int           outputlen;
 
     Section     sections[550];
-    Symbol      symbols[100];
+    Symbol      symbols[1000];
     Relocation  relocations[2000];
 
     unsigned    nsections;
