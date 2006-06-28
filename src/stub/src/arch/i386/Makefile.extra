@@ -16,8 +16,8 @@ include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../Makefi
 # // i386-lzma
 # ************************************************************************/
 
-lzma_d_cf.ash : tc_list = i386-lzma i386-linux.elf i386 default
-lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf i386 default
+lzma_d_cf.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
 
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
