@@ -1,3 +1,4 @@
+/*
 ;  l_com.asm -- loader & decompressor for the dos/com format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,32 +25,28 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
 
+#define         COM     1
+#define         CJT16   1
+#include        "arch/i086/macros.ash"
 
-%define         COM     1
-%define         CJT16   1
-%define         jmps    jmp short
-%define         jmpn    jmp near
-%include        "arch/i086/macros.ash"
-
-                BITS    16
-                ORG     0
-                SECTION .text
                 CPU     8086
 
+/*
 ; =============
 ; ============= ENTRY POINT
 ; =============
+*/
 
-;       __COMMAIN1__
-start:
-                cmp     sp, 'SP'
+section         COMMAIN1
+                cmp     sp, offset sp_limit
                 ja      mem_ok
                 int     0x20
 mem_ok:
-                mov     cx, 'CX'        ; size of decomp + sizeof (data) + 1
-                mov     si, 'SI'        ; cx + 0x100
-                mov     di, 'DI'
+                mov     cx, offset bytes_to_copy  /* size of decomp + sizeof (data) + 1 */
+                mov     si, offset copy_source    /* cx + 0x100 */
+                mov     di, offset copy_destination
                 mov     bx, 0x8000
 
                 std
@@ -58,45 +55,25 @@ mem_ok:
                 cld
 
                 xchg    si, di
-                sub     si, byte start - cutpoint
-;       __COMSUBSI__
-;       __COMSBBBP__
+                .byte   0x83, 0xc6, COMCUTPO /* add si, xxx */
+section         COMSBBBP
                 sbb     bp, bp
-;       __COMPSHDI__
+section         COMPSHDI
                 push    di
-%ifdef  __COMCALLT__
+section         COMCALLT
                 push    di
-%endif; __COMMAIN2__
-                jmpn    .1+'JM'
-.1:
-%include        "include/header.ash"
+section         COMMAIN2
+                .byte   0xe9
+                .word   decompressor /* FIXME decomp_start_n2b */
 
-cutpoint:
-;       __COMCUTPO__
+#include        "include/header2.ash"
 
+section         COMCUTPO
 
-; =============
-; ============= DECOMPRESSION
-; =============
+#include        "arch/i086/nrv2b_d16.ash"  /* decompressor & calltrick */
 
-                CPU     286
-%include        "arch/i086/nrv2b_d16.ash"
-                CPU     8086
-
-; =============
-; ============= CALLTRICK
-; =============
-
-
-; =============
-
-;       __CORETURN__
+section         CORETURN
                 ret
-eof:
-;       __COMTHEND__
-                section .data
-                dd      -1
-                dw      eof
-
-
+/*
 ; vi:ts=8:et:nowrap
+*/

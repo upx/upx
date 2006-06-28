@@ -346,6 +346,290 @@ unsigned char *SimpleLinker::getLoader(int *llen)
 }
 
 
+void ElfLinker::preprocessSections(char *start, const char *end)
+{
+    nsections = 0;
+    while (start < end)
+    {
+        char name[1024];
+        unsigned offset, size;
+
+        char *nextl = strchr(start, '\n');
+        assert(nextl != NULL);
+
+        if (sscanf(start, "%*d %1023s %x %*d %*d %x",
+                   name, &size, &offset) == 3)
+        {
+            char *n = strstr(start, name);
+            n[strlen(name)] = 0;
+            addSection(n, input + offset, size);
+
+            printf("section %s preprocessed\n", n);
+        }
+        start = nextl + 1;
+    }
+    addSection("*ABS*", NULL, 0);
+    addSection("*UND*", NULL, 0);
+}
+
+void ElfLinker::preprocessSymbols(char *start, const char *end)
+{
+    nsymbols = 0;
+    while (start < end)
+    {
+        char section[1024];
+        char symbol[1024];
+        unsigned offset;
+
+        char *nextl = strchr(start, '\n');
+        assert(nextl != NULL);
+
+        if (sscanf(start, "%x%*8c %1024s %*x %1023s",
+                   &offset, section, symbol) == 3)
+        {
+            char *s = strstr(start, symbol);
+            s[strlen(symbol)] = 0;
+
+            assert(nsymbols < TABLESIZE(symbols));
+            symbols[nsymbols++] = Symbol(s, findSection(section), offset);
+
+            printf("symbol %s preprocessed\n", s);
+        }
+
+        start = nextl + 1;
+    }
+}
+
+void ElfLinker::preprocessRelocations(char *start, const char *end)
+{
+    char sect[1024];
+    Section *section = NULL;
+
+    nrelocations = 0;
+    while (start < end)
+    {
+        if (sscanf(start, "RELOCATION RECORDS FOR [%[^]]", sect) == 1)
+            section = findSection(sect);
+
+        unsigned offset;
+        char type[100];
+        char symbol[1024];
+
+        char *nextl = strchr(start, '\n');
+        assert(nextl != NULL);
+
+        if (sscanf(start, "%x %99s %1023s",
+                   &offset, type, symbol) == 3)
+        {
+            char *t = strstr(start, type);
+            t[strlen(type)] = 0;
+
+            assert(nrelocations < TABLESIZE(relocations));
+            relocations[nrelocations++] = Relocation(section, offset, t,
+                                                     findSymbol(symbol));
+
+            printf("relocation %s %x preprocessed\n", section->name, offset);
+        }
+
+        start = nextl + 1;
+    }
+}
+
+ElfLinker::Section *ElfLinker::findSection(const char *name)
+{
+    for (unsigned ic = 0; ic < nsections; ic++)
+        if (strcmp(sections[ic].name, name) == 0)
+            return sections + ic;
+
+    printf("unknown section %s\n", name);
+    abort();
+    return NULL;
+}
+
+ElfLinker::Symbol *ElfLinker::findSymbol(const char *name)
+{
+    for (unsigned ic = 0; ic < nsymbols; ic++)
+        if (strcmp(symbols[ic].name, name) == 0)
+            return symbols + ic;
+
+    printf("unknown symbol %s\n", name);
+    abort();
+    return NULL;
+}
+
+ElfLinker::ElfLinker() : input(NULL), output(NULL)
+{}
+
+ElfLinker::~ElfLinker()
+{
+    delete [] input;
+    delete [] output;
+}
+
+void ElfLinker::init(const void *pdata, int plen, int)
+{
+    unsigned char *i = new unsigned char[plen];
+    memcpy(i, pdata, plen);
+    input = i;
+    inputlen = plen;
+
+    output = new unsigned char[plen];
+    outputlen = 0;
+
+    int pos = find(input, plen, "Sections:", 9);
+    assert(pos != -1);
+    char *psections = pos + (char *) input;
+
+    char *psymbols = strstr(psections, "SYMBOL TABLE:");
+    assert(psymbols != NULL);
+
+    char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR");
+    assert(prelocs != NULL);
+
+    preprocessSections(psections, psymbols);
+    preprocessSymbols(psymbols, prelocs);
+    preprocessRelocations(prelocs, (char*) input + inputlen);
+}
+
+void ElfLinker::setLoaderAlignOffset(int phase)
+{
+    assert(phase & 0);
+}
+
+int ElfLinker::addSection(const char *sname)
+{
+    assert(!frozen);
+    if (sname[0] == 0)
+        return outputlen;
+
+    char *begin = strdup(sname);
+    char *end = begin + strlen(begin);
+    for (char *sect = begin; sect < end; )
+    {
+        for (char *tokend = sect; *tokend; tokend++)
+            if (*tokend == ' ' || *tokend == ',')
+            {
+                *tokend = 0;
+                break;
+            }
+
+        if (*sect == '+') // alignment
+            printf("alignment skipped %s\n", sect);
+        else
+        {
+            Section *section = findSection(sect);
+            memcpy(output + outputlen, section->input, section->size);
+            section->output = output + outputlen;
+            outputlen += section->size;
+            printf("section added: %s\n", sect);
+        }
+        sect += strlen(sect) + 1;
+    }
+    free(begin);
+    return outputlen;
+}
+
+void ElfLinker::addSection(const char *sname, const void *sdata, int slen)
+{
+    assert(nsections < TABLESIZE(sections));
+    sections[nsections++] = Section(sname, sdata, slen);
+}
+
+void ElfLinker::freeze()
+{
+    if (frozen)
+        return;
+
+    addSection("*UND*");
+    findSection("*UND*")->output = output;
+
+    frozen = true;
+}
+
+int ElfLinker::getSection(const char *sname, int *slen)
+{
+    assert(frozen);
+    Section *section = findSection(sname);
+    if (slen)
+        *slen = section->size;
+    return section->output - output;
+}
+
+unsigned char *ElfLinker::getLoader(int *llen)
+{
+    assert(frozen);
+
+    if (llen)
+        *llen = outputlen;
+    return output;
+}
+
+void ElfLinker::relocate()
+{
+    for (unsigned ic = 0; ic < nrelocations; ic++)
+    {
+        Relocation *rel = relocations + ic;
+        if (rel->section->output == NULL)
+            continue;
+        if (rel->value->section->output == NULL)
+        {
+            printf("can not apply reloc '%s:%x' without section '%s'\n",
+                   rel->section->name, rel->offset,
+                   rel->value->section->name);
+            //abort();
+            continue;
+        }
+
+        if (strcmp(rel->value->section->name, "*UND*") == 0 &&
+            rel->value->offset == 0)
+        {
+            printf("undefined symbol '%s' referenced\n", rel->value->name);
+            abort();
+        }
+        unsigned value = rel->value->section->output + rel->value->offset
+                         - output;
+
+        unsigned char *location = rel->section->output + rel->offset;
+
+        if (strcmp(rel->type, "R_386_PC8") == 0)
+        {
+            value -= location - output;
+            *location += value;
+        }
+        else if (strcmp(rel->type, "R_386_PC16") == 0)
+        {
+            value -= location - output;
+            set_le16(location, get_le16(location) + value);
+        }
+        else if (strcmp(rel->type, "R_386_32") == 0)
+        {
+            set_le32(location, get_le32(location) + value);
+        }
+        else if (strcmp(rel->type, "R_386_16") == 0)
+        {
+            set_le16(location, get_le16(location) + value);
+        }
+        else if (strcmp(rel->type, "R_386_8") == 0)
+        {
+            *location += value;
+        }
+        else
+        {
+            printf("unknown relocation type '%s\n", rel->type);
+            abort();
+        }
+    }
+}
+
+void ElfLinker::defineSymbol(const char *name, unsigned value)
+{
+    Symbol *symbol = findSymbol(name);
+    if (strcmp(symbol->section->name, "*UND*") == 0)
+        symbol->offset = value;
+    else
+        printf("symbol '%s' already defined\n", name);
+}
+
 /*
 vi:ts=4:et
 */

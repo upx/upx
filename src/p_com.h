@@ -53,6 +53,7 @@ public:
 
 protected:
     virtual unsigned getCallTrickOffset() const { return 0x100; }
+    virtual Linker* newLinker() const;
 
 protected:
     virtual int buildLoader(const Filter *ft);

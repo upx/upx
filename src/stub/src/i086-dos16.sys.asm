@@ -1,3 +1,4 @@
+/*
 ;  l_sys.asm -- loader & decompressor for the dos/sys format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,36 +25,34 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
 
 
-%define         SYS     1
-%define         COM     0
-%define         CJT16   1
-%define         jmps    jmp short
-%define         jmpn    jmp near
-%include        "arch/i086/macros.ash"
+#define         SYS     1
+#define         COM     0
+#define         CJT16   1
+#include        "arch/i086/macros.ash"
 
-                BITS    16
-                ORG     0
-                SECTION .text
                 CPU     8086
 
+/*
 ; =============
 ; ============= ENTRY POINT
 ; =============
+*/
 
-;       __SYSMAIN1__
+section         SYSMAIN1
 start:
-                dd      -1
-                dw      0
-                dw      strategy        ; .sys header
-                dw      0               ; opendos wants this field untouched
+                .long   next
+                .short  attribute
+                .short  strategy        /* .sys header */
+                .short  interrupt       /* opendos wants this field untouched */
 strategy:
-%ifdef  __SYSI2861__
+section         SYSI2861
                 CPU     286
                 pusha
                 CPU     8086
-%else;  __SYSI0861__
+section         SYSI0861
                 push    ax
                 push    bx
                 push    cx
@@ -61,11 +60,11 @@ strategy:
                 push    si
                 push    di
                 push    bp
-%endif; __SYSMAIN2__
-                mov     si, 'SI'
-                mov     di, 'DI'
+section         SYSMAIN2
+                mov     si, offset copy_source
+                mov     di, offset copy_destination
 
-                mov     cx, si          ; at the end of the copy si will be 0
+                mov     cx, si          /* at the end of the copy si will be 0 */
 
                 push    es
                 push    ds
@@ -79,42 +78,27 @@ strategy:
                 mov     bx, 0x8000
 
                 xchg    si, di
-                sub     si, byte start - cutpoint
-;       __SYSSUBSI__
-;       __SYSSBBBP__
+                .byte   0x83, 0xc6, SYSCUTPO /* add si, xxx */
+section         SYSSBBBP
                 sbb     bp, bp
-%ifdef  __SYSCALLT__
+section         SYSCALLT
                 push    di
-%endif; __SYSMAIN3__
-                jmpn    .1+'JM'         ; jump to the decompressor
-.1:
-%include        "include/header.ash"
+section         SYSMAIN3
+                jmp     decompressor /* FIXME decomp_start_n2b */
 
-cutpoint:
-;       __SYSCUTPO__
+#include        "include/header2.ash"
 
-; =============
-; ============= DECOMPRESSION
-; =============
+section         SYSCUTPO
 
-                CPU     286
-%include        "arch/i086/nrv2b_d16.ash"
-                CPU     8086
+#include        "arch/i086/nrv2b_d16.ash"
 
-; =============
-; ============= CALLTRICK
-; =============
-
-
-; =============
-
-;       __SYSMAIN5__
+section         SYSMAIN5
                 pop     es
-%ifdef  __SYSI2862__
+section         SYSI2862
                 CPU     286
                 popa
                 CPU     8086
-%else;  __SYSI0862__
+section         SYSI0862
                 pop     bp
                 pop     di
                 pop     si
@@ -122,13 +106,10 @@ cutpoint:
                 pop     cx
                 pop     bx
                 pop     ax
-%endif; __SYSJUMP1__
-                jmpn    eof+'JO'
-eof:
-;       __SYSTHEND__
-                section .data
-                dd      -1
-                dw      eof
+section         SYSJUMP1
+                .byte   0xe9
+                .word   sys_entry /* FIXME */
 
-
+/*
 ; vi:ts=8:et:nowrap
+*/

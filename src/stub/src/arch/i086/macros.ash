@@ -1,3 +1,4 @@
+/*
 ;  macros.ash --
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,69 +25,162 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
+
+                .intel_syntax noprefix
+
+.macro          section name
+                .section \name
+                .code16
+.endm
 
 
+.macro          CPU     id
+                .ifc    \id, 8086
+                .arch   i8086, nojumps
+                .endif
+                .ifc    \id, 286
+                .arch   i286, nojumps
+                .endif
+.endm
+
+.macro          jmps    target
+                .byte   0xeb, \target - . - 1
+.endm
+
+.macro          jos     target
+                .byte   0x70, \target - . - 1
+.endm
+
+.macro          jnos    target
+                .byte   0x71, \target - . - 1
+.endm
+
+.macro          jcs     target
+                .byte   0x72, \target - . - 1
+.endm
+
+.macro          jncs    target
+                .byte   0x73, \target - . - 1
+.endm
+
+.macro          jzs     target
+                .byte   0x74, \target - . - 1
+.endm
+
+.macro          jnzs    target
+                .byte   0x75, \target - . - 1
+.endm
+
+.macro          jnas    target
+                .byte   0x76, \target - . - 1
+.endm
+
+.macro          jas     target
+                .byte   0x77, \target - . - 1
+.endm
+
+.macro          jss     target
+                .byte   0x78, \target - . - 1
+.endm
+
+.macro          jnss    target
+                .byte   0x79, \target - . - 1
+.endm
+
+.macro          jps     target
+                .byte   0x7a, \target - . - 1
+.endm
+
+.macro          jnps    target
+                .byte   0x7b, \target - . - 1
+.endm
+
+.macro          jls     target
+                .byte   0x7c, \target - . - 1
+.endm
+
+.macro          jnls    target
+                .byte   0x7d, \target - . - 1
+.endm
+
+.macro          jngs    target
+                .byte   0x7e, \target - . - 1
+.endm
+
+.macro          jgs     target
+                .byte   0x7f, \target - . - 1
+.endm
+
+#define         jes     jzs
+#define         jnes    jnzs
+
+/*
 ; =============
 ; ============= 16-BIT CALLTRICK & JUMPTRICK
 ; =============
+*/
 
-
-%macro          cjt16   1
-%ifdef  __CALLTR16__
+.macro          cjt16   ct_end
+section         CALLTR16
                 pop     si
-                mov     cx, 'CT'
+                mov     cx, offset calltrick_calls
 cjt16_L1:
                 lodsb
                 sub     al, 0xe8
                 cmp     al, 1
-                ja      cjt16_L1
+                jas     cjt16_L1
 
-%ifdef  __CT16I286__
-                rol     word [si], 8
-;       __CT16SUB0__
+section         CT16I286
+                CPU     286
+                rolw    [si], 8
+                CPU     8086
+section         CT16SUB0
                 sub     [si], si
-%else;  __CT16I086__
+section         CT16I086
                 mov     bx, [si]
                 xchg    bl, bh
                 sub     bx, si
                 mov     [si], bx
-%endif; __CALLTRI2__
+section         CALLTRI2
                 lodsw
                 loop    cjt16_L1
-%endif; __CT16DUM1__
 
+/*
 ; =============
+*/
 
-%ifdef  __CT16E800__
+section         CT16E800
                 mov     al, 0xe8
-%else;  __CT16E900__
+section         CT16E900
                 mov     al, 0xe9
-%endif; __CALLTRI5__
+section         CALLTRI5
                 pop     di
-                mov     cx, 'CT'
+                mov     cx, offset calltrick_calls
 cjt16_L11:
                 repne
                 scasb
-%ifdef  __CT16JEND__
-                jnz     %1              ; FIXME: this doesn't get relocated
-%else;  __CT16JUL2__
-                jnz     cjt16_L2
-%endif; __CT16DUM2__
-
-%ifdef  __CT16I287__
-                rol     word [di], 8
-;       __CT16SUB1__
+section         CT16JEND
+                jnzs    \ct_end
+section         CT16JUL2
+                jnzs    cjt16_L2
+section         CT16I287
+                CPU     286
+                rolw    [di], 8
+                CPU     8086
+section         CT16SUB1
                 sub     [di], di
-%else;  __CT16I087__
+section         CT16I087
                 mov     bx, [di]
                 xchg    bl, bh
                 sub     bx, di
                 mov     [di], bx
-%endif; __CALLTRI6__
+section         CALLTRI6
                 scasw
                 jmps    cjt16_L11
 cjt16_L2:
-;       __CT16DUMM3__
-%endmacro
+.endm
 
+/*
 ; vi:ts=8:et:nowrap
+*/

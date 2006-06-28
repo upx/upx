@@ -54,6 +54,9 @@ public:
     virtual int getSection(const char *sname, int *slen=NULL) = 0;
     virtual unsigned char *getLoader(int *llen=NULL) = 0;
 
+    virtual void defineSymbol(const char *, unsigned) {}
+    virtual void relocate() {}
+
 protected:
     bool     frozen;
 
@@ -144,6 +147,88 @@ struct TSimpleLinker : public SimpleLinker
 
 typedef TSimpleLinker<NBELE::BEPolicy> SimpleBELinker;
 typedef TSimpleLinker<NBELE::LEPolicy> SimpleLELinker;
+
+
+class ElfLinker : public Linker
+{
+    typedef Linker super;
+
+    struct Section
+    {
+        const char *name;
+        const void *input;
+        unsigned char *output;
+        unsigned size;
+
+        Section(){}
+        Section(const char *n, const void *i, unsigned s) :
+            name(n), input(i), output(NULL), size(s)
+        {}
+    };
+
+    struct Symbol
+    {
+        const char *name;
+        Section *section;
+        unsigned offset;
+
+        Symbol(){}
+        Symbol(const char *n, Section *s, unsigned o) :
+            name(n), section(s), offset(o)
+        {}
+    };
+
+    struct Relocation
+    {
+        Section *section;
+        unsigned offset;
+        const char *type;
+        Symbol *value;
+
+        Relocation(){}
+        Relocation(Section *s, unsigned o, const char *t, Symbol *v) :
+            section(s), offset(o), type(t), value(v)
+        {}
+    };
+
+    unsigned char *input;
+    int           inputlen;
+    unsigned char *output;
+    int           outputlen;
+
+    Section     sections[550];
+    Symbol      symbols[100];
+    Relocation  relocations[2000];
+
+    unsigned    nsections;
+    unsigned    nsymbols;
+    unsigned    nrelocations;
+
+    void preprocessSections(char *start, const char *end);
+    void preprocessSymbols(char *start, const char *end);
+    void preprocessRelocations(char *start, const char *end);
+    Section *findSection(const char *name);
+    Symbol *findSymbol(const char *name);
+
+public:
+    ElfLinker();
+
+protected:
+    virtual ~ElfLinker();
+
+    virtual void init(const void *pdata, int plen, int);
+    virtual void setLoaderAlignOffset(int phase);
+    virtual int addSection(const char *sname);
+    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void freeze();
+    virtual int getSection(const char *sname, int *slen=NULL);
+    virtual unsigned char *getLoader(int *llen=NULL);
+    virtual void relocate();
+    virtual void defineSymbol(const char *name, unsigned value);
+
+    virtual unsigned get32(const void *) const { return 0; }
+    virtual void set32(void *, unsigned) const {}
+};
 
 
 #endif /* already included */

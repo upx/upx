@@ -1,3 +1,4 @@
+/*
 ;  n2b_d16.ash -- ucl_nrv2b_decompress_le16 in 16-bit assembly
 ;
 ;  This file is part of the UCL data compression library.
@@ -34,35 +35,25 @@
 ; si - source
 ; di - dest
 ; bp - -1
+*/
 
-
-    %ifndef jmps
-    %define jmps    jmp short
-    %endif
-    %ifndef jmpn
-    %define jmpn    jmp near
-    %endif
-
-    CPU 8086
-
-
-;       __NRV2B160__
+section         NRV2B160
 literal_n2b:
                 movsb
 decomp_start_n2b:
                 call    getbit_n2b
-                jc      literal_n2b
+                jcs     literal_n2b
 
                 inc     cx
 loop1_n2b:
                 call    getbit_cx_n2b
-%ifdef  __NRVDDONE__
+section         NRVDDONE
                 jcxz    decomp_done_n2b
-%else;  __NRVDRETU__
+section         NRVDRETU
                 jcxz    decomp_ret_n2b
-%endif; __NRVDECO1__
+section         NRVDECO1
                 jnb     loop1_n2b
-                sub     cx, byte 3
+                sub     cx, 3
                 jb      axbp_n2b
                 mov     ah, cl
                 lodsb
@@ -80,12 +71,12 @@ loop2_n2b:
                 inc     cx
                 inc     cx
 copy_match_n2b:
-%ifdef  __NRVLED00__
+section         NRVLED00
                 inc     cx
-%else;  __NRVGTD00__
+section         NRVGTD00
                 cmp     bp, -0xd00
-                adc     cx, byte 1
-%endif; __NRVDECO2__
+                adc     cx, 1
+section         NRVDECO2
                 lea     ax, [di+bp]
                 xchg    ax, si
                 rep
@@ -104,81 +95,18 @@ getbit_n2b:
 decomp_ret_n2b:
                 ret
 decomp_done_n2b:
-;       __NRV2B169__
+section         NRV2B169
 
 
 
+/*
 ; =============
 ; ============= 16-BIT CALLTRICK & JUMPTRICK
 ; =============
+*/
 
+                cjt16   decomp_ret_n2b
 
-    %ifdef CJT16
-
-%ifdef  __CALLTR16__
-                pop     si
-                mov     cx, 'CT'
-cjt16_L1:
-                lodsb
-                sub     al, 0xe8
-                cmp     al, 1
-                ja      cjt16_L1
-
-%ifdef  __CT16I286__
-    CPU 286
-                rol     word [si], 8
-    CPU 8086
-;       __CT16SUB0__
-                sub     [si], si
-%else;  __CT16I086__
-                mov     bx, [si]
-                xchg    bl, bh
-                sub     bx, si
-                mov     [si], bx
-%endif; __CALLTRI2__
-                lodsw
-                loop    cjt16_L1
-%endif; __CT16DUM1__
-
-; =============
-
-%ifdef  __CT16E800__
-                mov     al, 0xe8
-%else;  __CT16E900__
-                mov     al, 0xe9
-%endif; __CALLTRI5__
-                pop     di
-                mov     cx, 'CT'
-cjt16_L11:
-                repne
-                scasb
-%ifdef  __CT16JEND__
-                jnz     decomp_ret_n2b
-%else;  __CT16JUL2__
-                jnz     cjt16_L2
-%endif; __CT16DUM2__
-
-%ifdef  __CT16I287__
-    CPU 286
-                rol     word [di], 8
-    CPU 8086
-;       __CT16SUB1__
-                sub     [di], di
-%else;  __CT16I087__
-                mov     bx, [di]
-                xchg    bl, bh
-                sub     bx, di
-                mov     [di], bx
-%endif; __CALLTRI6__
-                scasw
-                jmps    cjt16_L11
-cjt16_L2:
-;       __CT16DUMM3__
-
-    %endif ; CJT16
-
-
-    CPU 8086
-
+/*
 ; vi:ts=8:et
-
+*/

@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_com.h"
+#include "linker.h"
 
 static const
 #include "stub/i086-dos16.com.h"
@@ -98,7 +99,6 @@ void PackCom::patchLoader(OutputFile *fo,
                           upx_byte *loader, int lsize,
                           unsigned calls)
 {
-    const int filter_id = ph.filter;
     const int e_len = getLoaderSectionStart("COMCUTPO");
     const int d_len = lsize - e_len;
     assert(e_len > 0 && e_len < 256);
@@ -111,22 +111,21 @@ void PackCom::patchLoader(OutputFile *fo,
     if (upper_end + stacksize > 0xfffe)
         throwCantPack("file is too big for dos/com");
 
-    if (filter_id)
-    {
-        assert(calls > 0);
-        patch_le16(loader,lsize,"CT",calls);
-    }
+    linker->defineSymbol("calltrick_calls", calls);
+    linker->defineSymbol("sp_limit", upper_end + stacksize);
+    linker->defineSymbol("bytes_to_copy", ph.c_len + lsize);
+    linker->defineSymbol("copy_source", ph.c_len + lsize + 0x100);
+    linker->defineSymbol("copy_destination", upper_end);
 
+    // FIXME: Depends on: decompr_start == cutpoint+1 !!!
+    linker->defineSymbol("decompressor", upper_end - 0xff -
+                            d_len - getLoaderSection("UPX1HEAD"));
+
+    linker->relocate();
+    loader = getLoader();
+
+    // some day we could use the relocation stuff for patchPackHeader too
     patchPackHeader(loader,e_len);
-
-    // NOTE: Depends on: decompr_start == cutpoint+1 !!!
-    patch_le16(loader,e_len,"JM",upper_end - 0xff - d_len - getLoaderSection("UPX1HEAD"));
-    loader[getLoaderSectionStart("COMSUBSI") - 1] = (upx_byte) -e_len;
-    patch_le16(loader,e_len,"DI",upper_end);
-    patch_le16(loader,e_len,"SI",ph.c_len + lsize + 0x100);
-    patch_le16(loader,e_len,"CX",ph.c_len + lsize);
-    patch_le16(loader,e_len,"SP",upper_end + stacksize);
-
     // write loader + compressed file
     fo->write(loader,e_len);            // entry
     fo->write(obuf,ph.c_len);
@@ -142,7 +141,7 @@ void PackCom::patchLoader(OutputFile *fo,
 int PackCom::buildLoader(const Filter *ft)
 {
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
-    addLoader("COMMAIN1,COMSUBSI",
+    addLoader("COMMAIN1",
               ph.first_offset_found == 1 ? "COMSBBBP" : "",
               "COMPSHDI",
               ft->id ? "COMCALLT" : "",
@@ -268,6 +267,12 @@ void PackCom::unpack(OutputFile *fo)
     // write decompressed file
     if (fo)
         fo->write(obuf,ph.u_len);
+}
+
+
+Linker* PackCom::newLinker() const
+{
+    return new ElfLinker();
 }
 
 
