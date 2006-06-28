@@ -391,9 +391,11 @@ void ElfLinker::preprocessSymbols(char *start, const char *end)
             s[strlen(symbol)] = 0;
 
             assert(nsymbols < TABLESIZE(symbols));
+            if (strcmp(section, "*UND*") == 0)
+                offset = 0xdeaddead;
             symbols[nsymbols++] = Symbol(s, findSection(section), offset);
 
-            printf("symbol %s preprocessed\n", s);
+            printf("symbol %s preprocessed o=%x\n", s, offset);
         }
 
         start = nextl + 1;
@@ -581,7 +583,7 @@ void ElfLinker::relocate()
         }
 
         if (strcmp(rel->value->section->name, "*UND*") == 0 &&
-            rel->value->offset == 0)
+            rel->value->offset == 0xdeaddead)
         {
             printf("undefined symbol '%s' referenced\n", rel->value->name);
             abort();
