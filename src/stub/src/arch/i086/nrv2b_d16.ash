@@ -77,7 +77,7 @@ section         NRVGTD00
                 cmp     bp, -0xd00
                 adc     cx, 1
 section         NRVDECO2
-                lea     ax, [di+bp]
+                lea     ax, [bp+di]
                 xchg    ax, si
                 rep
                 movsb
