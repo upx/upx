@@ -77,7 +77,6 @@ void PackSys::patchLoader(OutputFile *fo,
         throwNotCompressible();
 
     // use some fields of the original file
-    linker->defineSymbol("next", get_le32(ibuf));
     linker->defineSymbol("attribute", get_le16(ibuf + 4));
     linker->defineSymbol("interrupt", get_le16(ibuf + 8));
 

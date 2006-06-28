@@ -43,7 +43,7 @@
 
 section         SYSMAIN1
 start:
-                .long   next
+                .long   -1
                 .short  attribute
                 .short  strategy        /* .sys header */
                 .short  interrupt       /* opendos wants this field untouched */
