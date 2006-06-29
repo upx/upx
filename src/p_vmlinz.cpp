@@ -285,6 +285,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 #endif  //}
     compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
+    freezeLoader();
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
@@ -346,6 +347,7 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUZ990", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 
