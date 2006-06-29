@@ -54,7 +54,7 @@ mem_ok:
                 movsb
                 cld
 
-                xchg    si, di
+                xchg    di, si
                 .byte   0x83, 0xc6, COMCUTPO /* add si, xxx */
 section         COMSBBBP
                 sbb     bp, bp

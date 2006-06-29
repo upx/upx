@@ -77,7 +77,7 @@ section         SYSMAIN2
 
                 mov     bx, 0x8000
 
-                xchg    si, di
+                xchg    di, si
                 .byte   0x83, 0xc6, SYSCUTPO /* add si, xxx */
 section         SYSSBBBP
                 sbb     bp, bp
