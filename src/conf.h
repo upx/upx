@@ -210,15 +210,7 @@ struct upx_callback_t
 
 struct lzma_compress_config_t
 {
-#if 0
-    unsigned pos_bits;              // pb
-    unsigned lit_pos_bits;          // lp
-    unsigned lit_context_bits;      // lc
-    unsigned dict_size;
-    unsigned mf_passes;
-#else
-    int dummy;
-#endif
+    unsigned max_num_probs;
     void reset() { memset(this, 0, sizeof(*this)); }
 };
 

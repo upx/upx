@@ -160,7 +160,6 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 {
     assert(method == M_LZMA);
     assert(level > 0); assert(result != NULL);
-    UNUSED(conf_parm);
 
     int r = UPX_E_ERROR;
     HRESULT rh;
@@ -189,13 +188,20 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
 
     // setup defaults
-    pr[0].uintVal = 2;
-    pr[1].uintVal = 0;
-    pr[2].uintVal = 3;
+    pr[0].uintVal = 2;              // 0..4
+    pr[1].uintVal = 0;              // 0..4
+    pr[2].uintVal = 3;              // 0..8
     pr[3].uintVal = 1024 * 1024;
     pr[4].uintVal = 2;
-    pr[5].uintVal = 64;
+    pr[5].uintVal = 64;             // 5..
     pr[6].uintVal = 0;
+#if 1
+    // DEBUG - set sizes so that we use a maxmimum amount of stack
+    //  these settings cause res->num_probs == 3147574, i.e. we will
+    //  need about 6 MB of stack
+    pr[1].uintVal = 4;
+    pr[2].uintVal = 8;
+#endif
 
     // FIXME: tune these settings according to level
     switch (level)
@@ -228,8 +234,32 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     }
 
+    // limit dictionary size
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
+
+    // limit num_probs
+    if (conf_parm && conf_parm->conf_lzma.max_num_probs)
+    {
+        for (;;)
+        {
+            unsigned n = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
+            if (n <= conf_parm->conf_lzma.max_num_probs)
+                break;
+            if (pr[1].uintVal > pr[2].uintVal)
+            {
+                if (pr[1].uintVal == 0)
+                    goto error;
+                pr[1].uintVal -= 1;
+            }
+            else
+            {
+                if (pr[2].uintVal == 0)
+                    goto error;
+                pr[2].uintVal -= 1;
+            }
+        }
+    }
 
     res->pos_bits = pr[0].uintVal;
     res->lit_pos_bits = pr[1].uintVal;
