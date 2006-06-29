@@ -127,7 +127,7 @@ LZMA_LIT_SIZE  equ  768
         mov [   ebx],al  ; store lit_context_bits
         shr cl,4
         mov [1+ ebx],cl  ; store lit_pos_bits
-        
+
         push    edx                     ; inSize -2
         push    esi                     ; in
         push    ebx                     ; &CLzmaDecoderState
