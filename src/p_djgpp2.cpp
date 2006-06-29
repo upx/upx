@@ -293,7 +293,12 @@ void PackDjgpp2::pack(OutputFile *fo)
     ft.buf_len = usize - data->size;
     ft.addvalue = text->vaddr - hdrsize;
     // compress
-    compressWithFilters(&ft, 512);
+    upx_compress_config_t cconf; cconf.reset();
+#if 1
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ~28 kB stack
+#endif
+    compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     // patch coff header #2
     const unsigned lsize = getLoaderSize();

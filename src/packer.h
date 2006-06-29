@@ -165,7 +165,7 @@ public:
 protected:
     // main compression drivers
     virtual bool compress(upx_bytep in, upx_bytep out,
-                          unsigned max_offset = 0, unsigned max_match = 0);
+                          const upx_compress_config_t *cconf = NULL);
     virtual void decompress(const upx_bytep in, upx_bytep out,
                             bool verify_checksum = true, Filter *ft = NULL);
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
@@ -176,7 +176,7 @@ protected:
                              const unsigned overlap_range,
                              int strategy = 0,
                              const int *filters = NULL,
-                             unsigned max_offset = 0, unsigned max_match = 0,
+                             const upx_compress_config_t *cconf = NULL,
                              unsigned filter_buf_off = 0,
                              unsigned compress_buf_off = 0,
                              unsigned char *header_buffer = 0,

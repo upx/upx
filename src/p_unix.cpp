@@ -348,7 +348,7 @@ void PackUnix::packExtent(
             ft->cto = 0;
 
             compressWithFilters(ft, OVERHEAD, strategy,
-                NULL, 0, 0, 0, 0, // those 5 args are the defaults
+                NULL, NULL, 0, 0, // those 4 args are the defaults
                 hdr_ibuf, hdr_u_len);
         }
         else {

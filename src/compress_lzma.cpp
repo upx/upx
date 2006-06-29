@@ -155,16 +155,15 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
-                             const struct upx_compress_config_t *conf_parm,
-                                   struct upx_compress_result_t *result )
+                             const upx_compress_config_t *cconf_parm,
+                                   upx_compress_result_t *cresult )
 {
     assert(method == M_LZMA);
-    assert(level > 0); assert(result != NULL);
-    UNUSED(conf_parm);
+    assert(level > 0); assert(cresult != NULL);
 
     int r = UPX_E_ERROR;
     HRESULT rh;
-    lzma_compress_result_t *res = &result->result_lzma;
+    lzma_compress_result_t *res = &cresult->result_lzma;
 
     MyLzma::InStreamRam is; is.AddRef();
     MyLzma::OutStreamRam os; os.AddRef();
@@ -189,13 +188,20 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
 
     // setup defaults
-    pr[0].uintVal = 2;
-    pr[1].uintVal = 0;
-    pr[2].uintVal = 3;
+    pr[0].uintVal = 2;              // 0..4
+    pr[1].uintVal = 0;              // 0..4
+    pr[2].uintVal = 3;              // 0..8
     pr[3].uintVal = 1024 * 1024;
     pr[4].uintVal = 2;
-    pr[5].uintVal = 64;
+    pr[5].uintVal = 64;             // 5..
     pr[6].uintVal = 0;
+#if 0
+    // DEBUG - set sizes so that we use a maxmimum amount of stack.
+    //  These settings cause res->num_probs == 3147574, i.e. we will
+    //  need about 6 MB of stack during runtime decompression.
+    pr[1].uintVal = 4;
+    pr[2].uintVal = 8;
+#endif
 
     // FIXME: tune these settings according to level
     switch (level)
@@ -228,8 +234,32 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     }
 
+    // limit dictionary size
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
+
+    // limit num_probs
+    if (cconf_parm && cconf_parm->conf_lzma.max_num_probs)
+    {
+        for (;;)
+        {
+            unsigned n = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
+            if (n <= cconf_parm->conf_lzma.max_num_probs)
+                break;
+            if (pr[1].uintVal > pr[2].uintVal)
+            {
+                if (pr[1].uintVal == 0)
+                    goto error;
+                pr[1].uintVal -= 1;
+            }
+            else
+            {
+                if (pr[2].uintVal == 0)
+                    goto error;
+                pr[2].uintVal -= 1;
+            }
+        }
+    }
 
     res->pos_bits = pr[0].uintVal;
     res->lit_pos_bits = pr[1].uintVal;
@@ -320,7 +350,7 @@ error:
 int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     assert(method == M_LZMA);
     // see res->num_probs above
@@ -354,13 +384,13 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     src += 2; src_len -= 2;
 #endif
 
-    if (result)
+    if (cresult)
     {
-        assert(result->method == method);
-        assert(result->result_lzma.pos_bits == (unsigned) s.Properties.pb);
-        assert(result->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
-        assert(result->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
-        assert(result->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
+        assert(cresult->method == method);
+        assert(cresult->result_lzma.pos_bits == (unsigned) s.Properties.pb);
+        assert(cresult->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
+        assert(cresult->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
+        assert(cresult->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
     }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
     if (!s.Probs)
@@ -382,7 +412,7 @@ error:
     *dst_len = dst_out;
     free(s.Probs);
 
-    UNUSED(result);
+    UNUSED(cresult);
     return r;
 }
 
@@ -394,7 +424,7 @@ error:
 int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     assert(method == M_LZMA);
 
@@ -408,7 +438,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
     if ((int)overlap_overhead >= 256)
         return UPX_E_OK;
 
-    UNUSED(result);
+    UNUSED(cresult);
     return UPX_E_ERROR;
 }
 
