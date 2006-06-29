@@ -76,11 +76,11 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
-                             const struct upx_compress_config_t *conf,
-                                   struct upx_compress_result_t *result )
+                             const upx_compress_config_t *cconf,
+                                   upx_compress_result_t *cresult )
 {
     int r = UPX_E_ERROR;
-    upx_compress_result_t result_buffer;
+    upx_compress_result_t cresult_buffer;
 
     assert(method > 0); assert(level > 0);
 
@@ -95,43 +95,33 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
     // for UPX, we always require a reasonably sized outbut buffer
     assert(*dst_len >= MemBuffer::getSizeForCompression(src_len));
 
-    if (!result)
-        result = &result_buffer;
-    memset(result, 0, sizeof(*result));
+    if (!cresult)
+        cresult = &cresult_buffer;
+    memset(cresult, 0, sizeof(*cresult));
 #if 1
     // debug
-    result->method = method;
-    result->level = level;
-    result->u_len = src_len;
-    result->c_len = 0;
+    cresult->method = method;
+    cresult->level = level;
+    cresult->u_len = src_len;
+    cresult->c_len = 0;
 #endif
-    // assume no info available - fill in worst case results
-    ucl_uint *res = result->result_ucl.result;
-    //res[0] = 1;                 // min_offset_found - NOT USED
-    res[1] = src_len - 1;       // max_offset_found
-    //res[2] = 2;                 // min_match_found - NOT USED
-    res[3] = src_len - 1;       // max_match_found
-    //res[4] = 1;                 // min_run_found - NOT USED
-    res[5] = src_len;           // max_run_found
-    res[6] = 1;                 // first_offset_found
-    //res[7] = 999999;            // same_match_offsets_found - NOT USED
 
     if (method < 0) {
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
         r = upx_lzma_compress(src, src_len, dst, dst_len,
-                              cb, method, level, conf, result);
+                              cb, method, level, cconf, cresult);
 #endif
 #if defined(WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_nrv_compress(src, src_len, dst, dst_len,
-                             cb, method, level, conf, result);
+                             cb, method, level, cconf, cresult);
 #endif
 #if defined(WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_compress(src, src_len, dst, dst_len,
-                             cb, method, level, conf, result);
+                             cb, method, level, cconf, cresult);
 #endif
     else {
         throwInternalError("unknown compression method");
@@ -139,7 +129,7 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
 
 #if 1
     // debug
-    result->c_len = *dst_len;
+    cresult->c_len = *dst_len;
 #endif
     return r;
 }
@@ -152,29 +142,29 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
 int upx_decompress         ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     int r = UPX_E_ERROR;
 
     assert(*dst_len > 0);
     assert(src_len < *dst_len); // must be compressed
 
-    if (result && result->method == 0)
-        result = NULL;
+    if (cresult && cresult->method == 0)
+        cresult = NULL;
 
     if (method < 0) {
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
-        r = upx_lzma_decompress(src, src_len, dst, dst_len, method, result);
+        r = upx_lzma_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
 #if defined(WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_nrv_decompress(src, src_len, dst, dst_len, method, result);
+        r = upx_nrv_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
 #if defined(WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_ucl_decompress(src, src_len, dst, dst_len, method, result);
+        r = upx_ucl_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
     else {
         throwInternalError("unknown decompression method");
@@ -191,12 +181,12 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
 int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     int r = UPX_E_ERROR;
 
-    if (result && result->method == 0)
-        result = NULL;
+    if (cresult && cresult->method == 0)
+        cresult = NULL;
 
     assert(*dst_len > 0);
     assert(src_len < *dst_len); // must be compressed
@@ -207,15 +197,15 @@ int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
-        r = upx_lzma_test_overlap(buf, src_off, src_len, dst_len, method, result);
+        r = upx_lzma_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
 #endif
 #if defined(WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_nrv_test_overlap(buf, src_off, src_len, dst_len, method, result);
+        r = upx_nrv_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
 #endif
 #if defined(WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_ucl_test_overlap(buf, src_off, src_len, dst_len, method, result);
+        r = upx_ucl_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
 #endif
     else {
         throwInternalError("unknown decompression method");

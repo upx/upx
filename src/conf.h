@@ -199,25 +199,28 @@ typedef void (__acc_cdecl *upx_progress_func_t)
 
 struct upx_callback_t
 {
+#if 0
     upx_alloc_func_t nalloc;
     upx_free_func_t nfree;
+#endif
     upx_progress_func_t nprogress;
     void * user1;
+#if 0
     unsigned user2;
     unsigned user3;
+#endif
 };
 
 
 struct lzma_compress_config_t
 {
+    unsigned max_num_probs;
 #if 0
     unsigned pos_bits;              // pb
     unsigned lit_pos_bits;          // lp
     unsigned lit_context_bits;      // lc
     unsigned dict_size;
     unsigned mf_passes;
-#else
-    int dummy;
 #endif
     void reset() { memset(this, 0, sizeof(*this)); }
 };
@@ -634,16 +637,16 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
                                    int method, int level,
-                             const struct upx_compress_config_t *conf,
-                                   struct upx_compress_result_t *result );
+                             const upx_compress_config_t *cconf,
+                                   upx_compress_result_t *cresult );
 int upx_decompress         ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result );
+                             const upx_compress_result_t *cresult );
 int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result );
+                             const upx_compress_result_t *cresult );
 
 
 #endif /* __cplusplus */

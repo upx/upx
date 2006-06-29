@@ -1,28 +1,36 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
-export SHELL = /bin/sh
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-
-STUBS += lzma_d_cf.S lzma_d_cs.S
+ifndef top_srcdir
+__dir_list   = . .. ../.. ../../.. ../../../.. ../../../../..
+__dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
+__dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
+top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
+endif
 
 default.targets = all
-all.targets = tmp/.tmp-stamp $(STUBS)
-include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../Makefile
+STUBS = NO_STUBS
+include $(top_srcdir)/src/stub/Makefile
+STUBS =
 
 
 # /***********************************************************************
 # // amd64-lzma
 # ************************************************************************/
 
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+
+STUBS += lzma_d_cf.S lzma_d_cs.S
+
 lzma_d_cf.S : tc_list = amd64-lzma amd64-linux.elf default
 lzma_d_cs.S : tc_list = amd64-lzma amd64-linux.elf default
 
 tc.amd64-lzma.gcc      = $(tc.amd64-linux.elf.gcc)
-tc.amd64-lzma.gcc     += -ffunction-sections
 tc.amd64-lzma.gcc     += -Os
+tc.amd64-lzma.gcc     += -ffunction-sections
 tc.amd64-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.amd64-lzma.gcc     += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
@@ -32,10 +40,7 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,objdump) -b binary -m i386:x86-64 -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
-lzma_d_cf.S : PP_FLAGS = -DFAST
-lzma_d_cs.S : PP_FLAGS = -DSMALL
-
-lzma_d_cf.S : $(MAKEFILE_LIST)
-lzma_d_cs.S : $(MAKEFILE_LIST)
+lzma_d_cf.% : PP_FLAGS = -DFAST
+lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 endif

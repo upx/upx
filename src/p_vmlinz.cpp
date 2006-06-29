@@ -276,8 +276,14 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
+
     // compress
-    compressWithFilters(&ft, 1 << 20);
+    upx_compress_config_t cconf; cconf.reset();
+#if 1  //{
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+#endif  //}
+    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -352,8 +358,13 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
-    // compress
-    compressWithFilters(&ft, 512);
+
+    upx_compress_config_t cconf; cconf.reset();
+#if 1  //{
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+#endif  //}
+    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
     // align everything to dword boundary - it is easier to handle
     unsigned c_len = ph.c_len;

@@ -60,12 +60,12 @@ protected:
 
     int n_ptload;
     unsigned sz_ptload;
-    Elf32_Phdr *phdri; // from  input file
-    Elf32_Shdr *shdri; // from input file
-    Elf32_Shdr *p_text;
-    Elf32_Shdr *p_note0;
-    Elf32_Shdr *p_note1;
-    Elf32_Ehdr ehdri; // from input file
+    Elf_LE32_Phdr *phdri; // from  input file
+    Elf_LE32_Shdr *shdri; // from input file
+    Elf_LE32_Shdr *p_text;
+    Elf_LE32_Shdr *p_note0;
+    Elf_LE32_Shdr *p_note1;
+    Elf_LE32_Ehdr ehdri; // from input file
 };
 
 

@@ -101,11 +101,11 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb_parm,
                                    int method, int level,
-                             const struct upx_compress_config_t *conf_parm,
-                                   struct upx_compress_result_t *result )
+                             const upx_compress_config_t *cconf_parm,
+                                   upx_compress_result_t *cresult )
 {
     int r;
-    assert(level > 0); assert(result != NULL);
+    assert(level > 0); assert(cresult != NULL);
 
     ucl_progress_callback_t cb;
     cb.callback = 0;
@@ -115,20 +115,29 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
         cb.user = cb_parm;
     }
 
-    ucl_compress_config_t conf;
-    memset(&conf, 0xff, sizeof(conf));
-    if (conf_parm)
-        conf = conf_parm->conf_ucl; // struct copy
+    ucl_compress_config_t cconf;
+    memset(&cconf, 0xff, sizeof(cconf));
+    if (cconf_parm)
+        cconf = cconf_parm->conf_ucl; // struct copy
 
-    ucl_uint *res = result->result_ucl.result;
+    ucl_uint *res = cresult->result_ucl.result;
+    // assume no info available - fill in worst case results
+    //res[0] = 1;                 // min_offset_found - NOT USED
+    res[1] = src_len - 1;       // max_offset_found
+    //res[2] = 2;                 // min_match_found - NOT USED
+    res[3] = src_len - 1;       // max_match_found
+    //res[4] = 1;                 // min_run_found - NOT USED
+    res[5] = src_len;           // max_run_found
+    res[6] = 1;                 // first_offset_found
+    //res[7] = 999999;            // same_match_offsets_found - NOT USED
 
     // prepare bit-buffer settings
-    conf.bb_endian = 0;
-    conf.bb_size = 0;
+    cconf.bb_endian = 0;
+    cconf.bb_size = 0;
     if (method >= M_NRV2B_LE32 && method <= M_CL1B_LE16)
     {
-        static const unsigned char sizes[3]={32,8,16};
-        conf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];
+        static const unsigned char sizes[3] = {32, 8, 16};
+        cconf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];
     }
     else {
         throwInternalError("unknown compression method");
@@ -136,20 +145,20 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
     }
 
     // optimize compression parms
-    if (level <= 3 && conf.max_offset == UCL_UINT_MAX)
-        conf.max_offset = 8*1024-1;
-    else if (level == 4 && conf.max_offset == UCL_UINT_MAX)
-        conf.max_offset = 32*1024-1;
+    if (level <= 3 && cconf.max_offset == UCL_UINT_MAX)
+        cconf.max_offset = 8*1024-1;
+    else if (level == 4 && cconf.max_offset == UCL_UINT_MAX)
+        cconf.max_offset = 32*1024-1;
 
     if M_IS_NRV2B(method)
         r = ucl_nrv2b_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, res);
+                                  &cb, level, &cconf, res);
     else if M_IS_NRV2D(method)
         r = ucl_nrv2d_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, res);
+                                  &cb, level, &cconf, res);
     else if M_IS_NRV2E(method)
         r = ucl_nrv2e_99_compress(src, src_len, dst, dst_len,
-                                  &cb, level, &conf, res);
+                                  &cb, level, &cconf, res);
     else {
         throwInternalError("unknown compression method");
         return UPX_E_ERROR;
@@ -166,7 +175,7 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
 int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     int r;
 
@@ -204,7 +213,7 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
         return UPX_E_ERROR;
     }
 
-    UNUSED(result);
+    UNUSED(cresult);
     return convert_errno_from_ucl(r);
 }
 
@@ -216,7 +225,7 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
 int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
-                             const struct upx_compress_result_t *result )
+                             const upx_compress_result_t *cresult )
 {
     int r;
 
@@ -254,7 +263,7 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
         return UPX_E_ERROR;
     }
 
-    UNUSED(result);
+    UNUSED(cresult);
     return convert_errno_from_ucl(r);
 }
 

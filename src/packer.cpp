@@ -154,14 +154,17 @@ bool Packer::skipVerify() const
 
 
 /*************************************************************************
-// compress
+// compress - wrap call to low-level upx_compress()
 **************************************************************************/
 
 bool Packer::compress(upx_bytep in, upx_bytep out,
-                      unsigned max_offset, unsigned max_match)
+                      const upx_compress_config_t *cconf_parm)
 {
     ph.c_len = 0;
     assert(ph.level >= 1); assert(ph.level <= 10);
+
+    // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
+    unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
 
     // save current checksums
     ph.saved_u_adler = ph.u_adler;
@@ -170,31 +173,27 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     ph.u_adler = upx_adler32(in, ph.u_len, ph.u_adler);
 
     // set compression paramters
-    upx_compress_config_t conf;
-    conf.reset();
-    // arguments
-    if (max_offset != 0)
-        conf.conf_ucl.max_offset = max_offset;
-    if (max_match != 0)
-        conf.conf_ucl.max_match = max_match;
-    // options
-    if (opt->crp.crp_ucl.c_flags != -1)
-        conf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
-    if (opt->crp.crp_ucl.p_level != -1)
-        conf.conf_ucl.p_level = opt->crp.crp_ucl.p_level;
-    if (opt->crp.crp_ucl.h_level != -1)
-        conf.conf_ucl.h_level = opt->crp.crp_ucl.h_level;
-    if (opt->crp.crp_ucl.max_offset != UINT_MAX && opt->crp.crp_ucl.max_offset < conf.conf_ucl.max_offset)
-        conf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
-    if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < conf.conf_ucl.max_match)
-        conf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
-
-    // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
-    unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
+    upx_compress_config_t cconf; cconf.reset();
+    if (cconf_parm)
+        cconf = *cconf_parm;
+    // cconf options
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+    {
+        if (opt->crp.crp_ucl.c_flags != -1)
+            cconf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
+        if (opt->crp.crp_ucl.p_level != -1)
+            cconf.conf_ucl.p_level = opt->crp.crp_ucl.p_level;
+        if (opt->crp.crp_ucl.h_level != -1)
+            cconf.conf_ucl.h_level = opt->crp.crp_ucl.h_level;
+        if (opt->crp.crp_ucl.max_offset != UINT_MAX && opt->crp.crp_ucl.max_offset < cconf.conf_ucl.max_offset)
+            cconf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
+        if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < cconf.conf_ucl.max_match)
+            cconf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
 #if defined(WITH_NRV)
-    if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
-        step = 0;
+        if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
+            step = 0;
 #endif
+    }
     if (ui_pass >= 0)
         ui_pass++;
     uip->startCallback(ph.u_len, step, ui_pass, ui_total_passes);
@@ -205,7 +204,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // compress
     int r = upx_compress(in, ph.u_len, out, &ph.c_len,
                          uip->getCallback(),
-                         ph.method, ph.level, &conf, &ph.compress_result);
+                         ph.method, ph.level, &cconf, &ph.compress_result);
 
     //uip->finalCallback(ph.u_len, ph.c_len);
     uip->endCallback();
@@ -215,17 +214,23 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
-    ucl_uint *res = ph.compress_result.result_ucl.result;
-    //ph.min_offset_found = res[0];
-    ph.max_offset_found = res[1];
-    //ph.min_match_found = res[2];
-    ph.max_match_found = res[3];
-    //ph.min_run_found = res[4];
-    ph.max_run_found = res[5];
-    ph.first_offset_found = res[6];
-    //ph.same_match_offsets_found = res[7];
-    assert(max_offset == 0 || max_offset >= ph.max_offset_found);
-    assert(max_match == 0 || max_match >= ph.max_match_found);
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+    {
+        ucl_uint *res = ph.compress_result.result_ucl.result;
+        //ph.min_offset_found = res[0];
+        ph.max_offset_found = res[1];
+        //ph.min_match_found = res[2];
+        ph.max_match_found = res[3];
+        //ph.min_run_found = res[4];
+        ph.max_run_found = res[5];
+        ph.first_offset_found = res[6];
+        //ph.same_match_offsets_found = res[7];
+        if (cconf_parm)
+        {
+            assert(cconf.conf_ucl.max_offset == 0 || cconf.conf_ucl.max_offset >= ph.max_offset_found);
+            assert(cconf.conf_ucl.max_match == 0 || cconf.conf_ucl.max_match >= ph.max_match_found);
+        }
+    }
 
     //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
     if (!checkCompressionRatio(ph.u_len, ph.c_len))
@@ -1140,7 +1145,7 @@ int Packer::getLoaderSectionStart(const char *name, int *slen) const
 void Packer::compressWithFilters(Filter *parm_ft,
                                  const unsigned overlap_range,
                                  int strategy, const int *parm_filters,
-                                 unsigned max_offset, unsigned max_match,
+                                 const upx_compress_config_t *cconf,
                                  unsigned filter_off, unsigned compress_buf_off,
                                  unsigned char *hdr_buf,
                                  unsigned hdr_u_len)
@@ -1323,7 +1328,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
             ph.filter_cto = ft.cto;
             ph.n_mru = ft.n_mru;
             // compress
-            if (compress(ibuf + compress_buf_off, *otemp, max_offset, max_match))
+            if (compress(ibuf + compress_buf_off, *otemp, cconf))
             {
                 unsigned lsize = 0;
                 if (ph.c_len + lsize + hdr_c_len <= best_ph.c_len + best_ph_lsize + best_hdr_c_len)

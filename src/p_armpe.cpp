@@ -1904,7 +1904,7 @@ void PackArmPe::pack(OutputFile *fo)
     }
 
     compressWithFilters(&ft, 2048, strategy,
-                        NULL, 0, 0, ih.codebase, rvamin);
+                        NULL, NULL, ih.codebase, rvamin);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)

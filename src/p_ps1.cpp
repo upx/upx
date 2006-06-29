@@ -302,7 +302,9 @@ void PackPs1::pack(OutputFile *fo)
     Filter ft(ph.level);
 
     // compress (max_match = 65535)
-    compressWithFilters(&ft, 512, 0, NULL, 0, 65535);
+    upx_compress_config_t cconf; cconf.reset();
+    cconf.conf_ucl.max_match = 65535;
+    compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     if (ph.overlap_overhead > sa_cnt)
     {

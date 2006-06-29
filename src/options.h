@@ -86,6 +86,13 @@ struct options_t {
     // compression runtime parameters - see struct ucl_compress_config_t
     struct crp_lzma_t {
         int dummy;
+#if 0
+        unsigned pos_bits;              // pb
+        unsigned lit_pos_bits;          // lp
+        unsigned lit_context_bits;      // lc
+        unsigned dict_size;
+        unsigned mf_passes;
+#endif
         void reset() { memset(this, 0, sizeof(*this)); }
     };
     struct crp_ucl_t {
