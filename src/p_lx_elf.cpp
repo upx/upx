@@ -40,6 +40,7 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
+#include "ui.h"
 
 #define PT_LOAD32   Elf32_Phdr::PT_LOAD
 #define PT_LOAD64   Elf64_Phdr::PT_LOAD
@@ -1113,13 +1114,13 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     unsigned k;
 
     // count passes, set ptload vars
-    ui_total_passes = 0;
+    uip->ui_total_passes = 0;
     unsigned const e_phnum = get_native16(&ehdri.e_phnum);
     for (k = 0; k < e_phnum; ++k) {
         if (PT_LOAD32 == get_native32(&phdri[k].p_type)) {
-            ui_total_passes++;
+            uip->ui_total_passes++;
             if (find_LOAD_gap(phdri, k, e_phnum)) {
-                ui_total_passes++;
+                uip->ui_total_passes++;
             }
         }
     }
@@ -1130,7 +1131,7 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
 
-    ui_pass = 0;
+    uip->ui_pass = 0;
     ft.addvalue = 0;
 
     int nx = 0;
@@ -1215,13 +1216,13 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     unsigned k;
 
     // count passes, set ptload vars
-    ui_total_passes = 0;
+    uip->ui_total_passes = 0;
     unsigned const e_phnum = get_native16(&ehdri.e_phnum);
     for (k = 0; k < e_phnum; ++k) {
         if (PT_LOAD64==get_native32(&phdri[k].p_type)) {
-            ui_total_passes++;
+            uip->ui_total_passes++;
             if (find_LOAD_gap(phdri, k, e_phnum)) {
-                ui_total_passes++;
+                uip->ui_total_passes++;
             }
         }
     }
@@ -1232,7 +1233,7 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
 
-    ui_pass = 0;
+    uip->ui_pass = 0;
     ft.addvalue = 0;
 
     int nx = 0;

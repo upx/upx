@@ -178,7 +178,7 @@ static const char *mkline(unsigned long fu_len, unsigned long fc_len,
 **************************************************************************/
 
 UiPacker::UiPacker(const Packer *p_) :
-    p(p_), s(NULL)
+    ui_pass(0), ui_total_passes(0), p(p_), s(NULL)
 {
     init_global_constants();
 

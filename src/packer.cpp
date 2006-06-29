@@ -41,7 +41,7 @@
 
 Packer::Packer(InputFile *f) :
     fi(f), file_size(-1), ph_format(-1), ph_version(-1),
-    uip(NULL), ui_pass(0), ui_total_passes(0), linker(NULL),
+    uip(NULL), linker(NULL),
     last_patch(NULL), last_patch_len(0), last_patch_off(0)
 {
     file_size = f->st.st_size;
@@ -189,9 +189,9 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
             step = 0;
 #endif
     }
-    if (ui_pass >= 0)
-        ui_pass++;
-    uip->startCallback(ph.u_len, step, ui_pass, ui_total_passes);
+    if (uip->ui_pass >= 0)
+        uip->ui_pass++;
+    uip->startCallback(ph.u_len, step, uip->ui_pass, uip->ui_total_passes);
     uip->firstCallback();
 
     //OutputFile::dump("data.raw", in, ph.u_len);
@@ -1268,9 +1268,9 @@ void Packer::compressWithFilters(Filter *parm_ft,
 
     // update total_passes; previous (0 < ui_total_passes) means incremental
     if (strategy < 0)
-        ui_total_passes += 1 * nmethods - (0 < ui_total_passes);
+        uip->ui_total_passes += 1 * nmethods - (0 < uip->ui_total_passes);
     else
-        ui_total_passes += nfilters * nmethods - (0 < ui_total_passes);
+        uip->ui_total_passes += nfilters * nmethods - (0 < uip->ui_total_passes);
 
     // Working buffer for compressed data. Don't waste memory.
     MemBuffer *otemp = &obuf;
@@ -1327,8 +1327,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 if (strategy > 0)
                 {
                     // adjust passes
-                    if (ui_pass >= 0)
-                        ui_pass++;
+                    if (uip->ui_pass >= 0)
+                        uip->ui_pass++;
                 }
                 continue;
             }

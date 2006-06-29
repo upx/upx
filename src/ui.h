@@ -84,6 +84,9 @@ public:
     static void uiHeader();
     static void uiFooter(const char *n);
 
+    int ui_pass;
+    int ui_total_passes;
+
 protected:
     virtual void printInfo(int nl=0);
     const Packer *p;

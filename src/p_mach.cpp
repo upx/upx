@@ -32,6 +32,7 @@
 #include "linker.h"
 #include "packer.h"
 #include "p_mach.h"
+#include "ui.h"
 
 static const
 #include "stub/powerpc-darwin.macho-entry.h"
@@ -225,13 +226,13 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
     unsigned k;
 
     // count passes, set ptload vars
-    ui_total_passes = 0;
+    uip->ui_total_passes = 0;
     for (k = 0; k < n_segment; ++k) {
         if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
         &&  0!=msegcmd[k].filesize ) {
-            ui_total_passes++;
+            uip->ui_total_passes++;
             if (find_SEGMENT_gap(k)) {
-                ui_total_passes++;
+                uip->ui_total_passes++;
             }
         }
     }
@@ -242,7 +243,7 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 
     unsigned hdr_u_len = mhdri.sizeofcmds;
 
-    ui_pass = 0;
+    uip->ui_pass = 0;
     ft.addvalue = 0;
 
     int nx = 0;

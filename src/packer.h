@@ -281,8 +281,6 @@ protected:
 
     // UI handler
     UiPacker *uip;
-    int ui_pass;
-    int ui_total_passes;
 
     // linker
     Linker *linker;
