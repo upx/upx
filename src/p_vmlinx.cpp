@@ -220,7 +220,12 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ft.buf_len = ph.u_len;
     ft.addvalue = 0;  // we are independent of actual runtime address; see ckt32
 
-    compressWithFilters(&ft, 1 << 20);
+    upx_compress_config_t cconf; cconf.reset();
+#if 1  //{
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+#endif  //}
+    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
