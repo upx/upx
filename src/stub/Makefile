@@ -265,6 +265,9 @@ i086-dos16.com% : tc_list = arch-i086 default
 
 i086-dos16.com.h : $(srcdir)/src/$$T.asm
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
@@ -277,6 +280,9 @@ i086-dos16.exe% : tc_list = arch-i086 default
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
@@ -289,6 +295,9 @@ i086-dos16.sys% : tc_list = arch-i086 default
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
