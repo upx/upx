@@ -495,6 +495,7 @@ void ElfLinker::init(const void *pdata, int plen, int)
 
 void ElfLinker::setLoaderAlignOffset(int phase)
 {
+    // FIXME: do not use this yet
     assert(phase & 0);
 }
 
@@ -516,7 +517,7 @@ int ElfLinker::addSection(const char *sname)
             }
 
         if (*sect == '+') // alignment
-            printf("alignment skipped %s\n", sect);
+            align(hex(sect[1]), hex(sect[2]));
         else
         {
             Section *section = findSection(sect);
@@ -593,33 +594,7 @@ void ElfLinker::relocate()
 
         unsigned char *location = rel->section->output + rel->offset;
 
-        if (strcmp(rel->type, "R_386_PC8") == 0)
-        {
-            value -= location - output;
-            *location += value;
-        }
-        else if (strcmp(rel->type, "R_386_PC16") == 0)
-        {
-            value -= location - output;
-            set_le16(location, get_le16(location) + value);
-        }
-        else if (strcmp(rel->type, "R_386_32") == 0)
-        {
-            set_le32(location, get_le32(location) + value);
-        }
-        else if (strcmp(rel->type, "R_386_16") == 0)
-        {
-            set_le16(location, get_le16(location) + value);
-        }
-        else if (strcmp(rel->type, "R_386_8") == 0)
-        {
-            *location += value;
-        }
-        else
-        {
-            printf("unknown relocation type '%s\n", rel->type);
-            abort();
-        }
+        relocate1(rel, location, value, rel->type);
     }
 }
 
@@ -630,6 +605,65 @@ void ElfLinker::defineSymbol(const char *name, unsigned value)
         symbol->offset = value;
     else
         printf("symbol '%s' already defined\n", name);
+}
+
+void ElfLinker::alignWithByte(unsigned modulus, unsigned remainder,
+                              unsigned char b)
+{
+    unsigned l = (remainder - outputlen) % modulus;
+    memset(output + outputlen, b, l);
+    outputlen += l;
+}
+
+void ElfLinker::align(unsigned modulus, unsigned remainder)
+{
+    alignWithByte(modulus, remainder, 0);
+}
+
+void ElfLinker::relocate1(Relocation *rel, unsigned char *,
+                          unsigned, const char *)
+{
+    printf("unknown relocation type '%s\n", rel->type);
+    abort();
+}
+
+void ElfLinkerX86::align(unsigned modulus, unsigned remainder)
+{
+    alignWithByte(modulus, remainder, 0x90);
+}
+
+void ElfLinkerX86::relocate1(Relocation *rel, unsigned char *location,
+                             unsigned value, const char *type)
+{
+    if (strcmp(rel->type, "R_386_PC8") == 0)
+    {
+        value -= location - output;
+        *location += value;
+    }
+    else if (strcmp(rel->type, "R_386_PC16") == 0)
+    {
+        value -= location - output;
+        set_le16(location, get_le16(location) + value);
+    }
+    else if (strcmp(rel->type, "R_386_PC32") == 0)
+    {
+        value -= location - output;
+        set_le32(location, get_le32(location) + value);
+    }
+    else if (strcmp(rel->type, "R_386_32") == 0)
+    {
+        set_le32(location, get_le32(location) + value);
+    }
+    else if (strcmp(rel->type, "R_386_16") == 0)
+    {
+        set_le16(location, get_le16(location) + value);
+    }
+    else if (strcmp(rel->type, "R_386_8") == 0)
+    {
+        *location += value;
+    }
+    else
+        super::relocate1(rel, location, value, type);
 }
 
 /*

@@ -89,7 +89,8 @@ addaxds:
                 movsw
                 cld
 section         DEVICESUB
-                subb    [cs:si + addaxds + 4], 0x10
+                /* subb    [cs:si + addaxds + 4], 0x10 */
+                .byte   0x2e, 0x80, 0x6c, addaxds + 4, 0x10
 section         EXESUB
                 subb    [cs:si + addaxds - exe_entry + 4], 0x10
 section         JNCDOCOPY

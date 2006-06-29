@@ -153,6 +153,7 @@ class ElfLinker : public Linker
 {
     typedef Linker super;
 
+protected:
     struct Section
     {
         const char *name;
@@ -228,6 +229,23 @@ protected:
 
     virtual unsigned get32(const void *) const { return 0; }
     virtual void set32(void *, unsigned) const {}
+
+    //
+
+    void alignWithByte(unsigned modulus, unsigned remainder, unsigned char b);
+    virtual void align(unsigned modulus, unsigned remainder);
+    virtual void relocate1(Relocation *, unsigned char *location,
+                           unsigned value, const char *type);
+};
+
+class ElfLinkerX86 : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void align(unsigned modulus, unsigned remainder);
+    virtual void relocate1(Relocation *, unsigned char *location,
+                           unsigned value, const char *type);
 };
 
 
