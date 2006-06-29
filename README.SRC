@@ -118,7 +118,6 @@ If you want to modify the stub sources you'll also need
   - Certain versions of some i386-linux tools:
        - gcc-2.95.3
        - gcc-3.4.6
-       - binutils-2.16.1
 
   - Other cross compilers targeted at the following architectures.
        - arm-9tdmi-linux-gnu
@@ -135,16 +134,10 @@ If you want to modify the stub sources you'll also need
 
       bin-upx/a68k
       bin-upx/arm-9tdmi-linux-gnu-gcc-3.4.5
-      bin-upx/arm-9tdmi-linux-gnu-ld
-      bin-upx/arm-9tdmi-linux-gnu-objcopy
-      bin-upx/arm-9tdmi-linux-gnu-objdump
       bin-upx/asm5900
       bin-upx/djasm
       bin-upx/i386-linux-gcc-2.95.3
       bin-upx/i386-linux-gcc-3.4.6
-      bin-upx/i386-linux-ld-2.16.1
-      bin-upx/i386-linux-objcopy-2.16.1
-      bin-upx/i386-linux-objdump
       bin-upx/multiarch-addr2line-2.17
       bin-upx/multiarch-ar-2.17
       bin-upx/multiarch-as-2.17
@@ -165,14 +158,8 @@ If you want to modify the stub sources you'll also need
       bin-upx/multiarch-sysdump-2.17
       bin-upx/nasm
       bin-upx/powerpc-750-linux-gnu-gcc-3.4.4
-      bin-upx/powerpc-750-linux-gnu-ld
-      bin-upx/powerpc-750-linux-gnu-objcopy
-      bin-upx/powerpc-750-linux-gnu-objdump
       bin-upx/sstrip                                [ from src/stub/util ]
       bin-upx/x86_64-unknown-linux-gnu-gcc-3.4.4
-      bin-upx/x86_64-unknown-linux-gnu-ld
-      bin-upx/x86_64-unknown-linux-gnu-objcopy
-      bin-upx/x86_64-unknown-linux-gnu-objdump
 
 
 Misc. notes

@@ -11,6 +11,7 @@ MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
 export SHELL = /bin/sh
+export LC_ALL = C
 
 ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
@@ -77,20 +78,20 @@ endif
 ifndef default.targets
 ifeq ($(wildcard .all-stamp),)
 default.targets =
-default: $(default.targets)
+default: $$(default.targets)
 	@echo "UPX info: type 'make all' if you have all the required build tools."
 else
 default.targets = all
-default: $(default.targets)
+default: $$(default.targets)
 endif
 endif
 
 all.targets ?= tmp/.tmp-stamp .all-stamp
-all: $(all.targets)
+all: $$(all.targets)
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
-.all-stamp: $(STUBS)
+.all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
 
 ifeq ($(wildcard .all-stamp),)
@@ -121,19 +122,25 @@ tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
 tc.default.brandelf   = perl -w $(srcdir)/scripts/brandelf.pl
 tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(srcdir)/scripts/gpp_inc.py
-tc.default.o2bin      = perl $(srcdir)/scripts/o2bin.pl
+tc.default.m-objcopy  = multiarch-objcopy-2.17
+tc.default.m-objdump  = multiarch-objdump-2.17
+tc.default.m-ld       = multiarch-ld-2.17
+tc.default.m-nm       = multiarch-nm-2.17
+tc.default.m-readelf  = multiarch-readelf-2.17
 tc.default.nasm       = nasm
 tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
+tc.default.o2bin      = perl $(srcdir)/scripts/o2bin.pl
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
-tc.default.readelf    = readelf
 tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
-tc.i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
-tc.i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
+tc.arch-i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
+tc.arch-i086.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.arch-i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
+tc.arch-i386.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
 
 
 # slightly tricky make stuff follows
@@ -143,7 +150,7 @@ __tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach v,$(tc_list),tc.$v.$1)
 # return the name of the first variable that is not empty
 __tc_varsearch = $(firstword $(foreach v,$1,$(if $($v),$v,)))
 # error sentinel for missing commands
-__tc_FALSE     = false tc_FALSE: '$1' '$@' '$<'
+__tc_FALSE     = false tc_FALSE: '$1' '$@' '$<' '$(tc_list)'
 # expand the first variable that is not empty
 tc             = $($(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE))
 
@@ -166,9 +173,12 @@ amd64-linux.elf% : tc_list = amd64-linux.elf default
 tc.amd64-linux.elf.gcc      = x86_64-unknown-linux-gnu-gcc-3.4.4 -m64 -nostdinc -MMD
 tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
-tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
-tc.amd64-linux.elf.objdump  = x86_64-unknown-linux-gnu-objdump
+##tc.amd64-linux.elf.ld       = x86_64-unknown-linux-gnu-ld -m elf_x86_64
+##tc.amd64-linux.elf.objcopy  = x86_64-unknown-linux-gnu-objcopy
+##tc.amd64-linux.elf.objdump  = x86_64-unknown-linux-gnu-objdump
+tc.amd64-linux.elf.ld       = $(call tc,m-ld) -b elf64-x86-64
+tc.amd64-linux.elf.objcopy  = $(call tc,m-objcopy) -I elf64-x86-64
+tc.amd64-linux.elf.objdump  = $(call tc,m-objdump) -b elf64-x86-64
 tc.amd64-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -200,9 +210,12 @@ arm-linux.elf% : tc_list = arm-linux.elf default
 tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
 tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
-tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
-tc.arm-linux.elf.objdump  = arm-9tdmi-linux-gnu-objdump
+##tc.arm-linux.elf.ld       = arm-9tdmi-linux-gnu-ld
+##tc.arm-linux.elf.objcopy  = arm-9tdmi-linux-gnu-objcopy
+##tc.arm-linux.elf.objdump  = arm-9tdmi-linux-gnu-objdump
+tc.arm-linux.elf.ld       = $(call tc,m-ld) -b elf32-littlearm
+tc.arm-linux.elf.objcopy  = $(call tc,m-objcopy) -I elf32-littlearm
+tc.arm-linux.elf.objdump  = $(call tc,m-objdump) -b elf32-littlearm
 tc.arm-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -248,11 +261,11 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 # // i086-dos16.com
 # ************************************************************************/
 
-i086-dos16.com% : tc_list = i086 default
+i086-dos16.com% : tc_list = arch-i086 default
 
 i086-dos16.com.h : $(srcdir)/src/$$T.asm
-	gcc -c -x assembler-with-cpp $< -o tmp/$T.bin
-	objdump -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -260,7 +273,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.asm
 # // i086-dos16.exe
 # ************************************************************************/
 
-i086-dos16.exe% : tc_list = i086 default
+i086-dos16.exe% : tc_list = arch-i086 default
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -273,11 +286,11 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 # // i086-dos16.sys
 # ************************************************************************/
 
-i086-dos16.sys% : tc_list = i086 default
+i086-dos16.sys% : tc_list = arch-i086 default
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.asm
-	gcc -c -x assembler-with-cpp $< -o tmp/$T.bin
-	objdump -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -285,7 +298,7 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 # // i386-dos32.djgpp2
 # ************************************************************************/
 
-i386-dos32.djgpp2% : tc_list = i386 default
+i386-dos32.djgpp2% : tc_list = arch-i386 default
 
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -302,7 +315,7 @@ i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 # // i386-dos32.tmt
 # ************************************************************************/
 
-i386-dos32.tmt% : tc_list = i386 default
+i386-dos32.tmt% : tc_list = arch-i386 default
 
 i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -315,7 +328,7 @@ i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
 # // i386-dos32.watcom.le
 # ************************************************************************/
 
-i386-dos32.watcom.le% : tc_list = i386 default
+i386-dos32.watcom.le% : tc_list = arch-i386 default
 
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -328,9 +341,9 @@ i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 # // i386-linux.elf
 # ************************************************************************/
 
-i386-linux.elf% : tc_list = i386-linux.elf i386 default
+i386-linux.elf% : tc_list = i386-linux.elf arch-i386 default
 
-tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -nostdinc -MMD
+tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
 tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.i386-linux.elf.gcc     += -march=i386 -mtune=k6
@@ -339,9 +352,12 @@ tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
 tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
 tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
-tc.i386-linux.elf.ld       = i386-linux-ld-2.16.1
-tc.i386-linux.elf.objcopy  = i386-linux-objcopy-2.16.1
-tc.i386-linux.elf.objdump  = i386-linux-objdump
+##tc.i386-linux.elf.ld       = i386-linux-ld-2.16.1
+##tc.i386-linux.elf.objcopy  = i386-linux-objcopy-2.16.1
+##tc.i386-linux.elf.objdump  = i386-linux-objdump
+tc.i386-linux.elf.ld       = $(call tc,m-ld) -b elf32-i386
+tc.i386-linux.elf.objcopy  = $(call tc,m-objcopy) -I elf32-i386
+tc.i386-linux.elf.objdump  = $(call tc,m-objdump) -b elf32-i386
 tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
@@ -459,7 +475,7 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.kernel.vmlinuz
 # ************************************************************************/
 
-i386-linux.kernel.vmlin% : tc_list = i386 default
+i386-linux.kernel.vmlin% : tc_list = arch-i386 default
 
 i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -472,7 +488,7 @@ i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
 # // i386-win32.pe
 # ************************************************************************/
 
-i386-win32.pe% : tc_list = i386 default
+i386-win32.pe% : tc_list = arch-i386 default
 
 i386-win32.pe.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
@@ -540,9 +556,12 @@ powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -mcpu=405 -nostdinc -MMD
 tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
-tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
-tc.powerpc-linux.elf.objdump  = powerpc-750-linux-gnu-objdump
+##tc.powerpc-linux.elf.ld       = powerpc-750-linux-gnu-ld
+##tc.powerpc-linux.elf.objcopy  = powerpc-750-linux-gnu-objcopy
+##tc.powerpc-linux.elf.objdump  = powerpc-750-linux-gnu-objdump
+tc.powerpc-linux.elf.ld       = $(call tc,m-ld) -b elf32-powerpc
+tc.powerpc-linux.elf.objcopy  = $(call tc,m-objcopy) -I elf32-powerpc
+tc.powerpc-linux.elf.objdump  = $(call tc,m-objdump) -b elf32-powerpc
 tc.powerpc-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -595,9 +614,11 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 # // dependencies
 # ************************************************************************/
 
+ifneq ($(STUBS),)
 # FIXME: we want a dependency-only-prerequisite here
 ##$(STUBS): | tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
+endif
 -include tmp/*.d
 
 
