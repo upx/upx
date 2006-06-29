@@ -138,18 +138,13 @@ bool Packer::testUnpackFormat(int format) const
 }
 
 
-bool Packer::skipVerify(int method, int level) const
+bool ph_skipVerify(const PackHeader &ph)
 {
-    if (method == M_LZMA)
+    if (ph.method == M_LZMA)
         return false;
-    if (level > 1)
+    if (ph.level > 1)
         return false;
     return true;
-}
-
-bool Packer::skipVerify() const
-{
-    return skipVerify(ph.method, ph.level);
 }
 
 
@@ -233,7 +228,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     }
 
     //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
-    if (!checkCompressionRatio(ph.u_len, ph.c_len))
+    if (checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
     if (ph.c_len >= ph.u_len)
@@ -242,7 +237,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     // update checksum of compressed data
     ph.c_adler = upx_adler32(out, ph.c_len, ph.c_adler);
     // Decompress and verify. Skip this when using the fastest level.
-    if (!skipVerify())
+    if (!ph_skipVerify(ph))
     {
         // decompress
         unsigned new_len = ph.u_len;
@@ -259,6 +254,15 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     }
     return true;
 }
+
+
+#if 0
+bool Packer::compress(upx_bytep in, upx_bytep out,
+                      const upx_compress_config_t *cconf)
+{
+    return ph_compress(ph, in, out, cconf);
+}
+#endif
 
 
 bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
@@ -303,8 +307,8 @@ bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
 // decompress
 **************************************************************************/
 
-void Packer::decompress(const upx_bytep in, upx_bytep out,
-                        bool verify_checksum, Filter *ft)
+void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out,
+                   bool verify_checksum, Filter *ft)
 {
     unsigned adler;
 
@@ -335,12 +339,19 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 }
 
 
+void Packer::decompress(const upx_bytep in, upx_bytep out,
+                        bool verify_checksum, Filter *ft)
+{
+    ph_decompress(ph, in, out, verify_checksum, ft);
+}
+
+
 /*************************************************************************
 // overlapping decompression
 **************************************************************************/
 
-bool Packer::testOverlappingDecompression(const upx_bytep buf,
-                                          unsigned overlap_overhead) const
+bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
+                                     unsigned overlap_overhead)
 {
     if (ph.c_len >= ph.u_len)
         return false;
@@ -365,6 +376,13 @@ bool Packer::testOverlappingDecompression(const upx_bytep buf,
 }
 
 
+bool Packer::testOverlappingDecompression(const upx_bytep buf,
+                                          unsigned overlap_overhead) const
+{
+    return ph_testOverlappingDecompression(ph, buf, overlap_overhead);
+}
+
+
 void Packer::verifyOverlappingDecompression(Filter *ft)
 {
     assert(ph.c_len < ph.u_len);
@@ -384,7 +402,7 @@ void Packer::verifyOverlappingDecompression(Filter *ft)
     // See also:
     //   Filter::verifyUnfilter()
 
-    if (skipVerify())
+    if (ph_skipVerify(ph))
         return;
     unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
     if (offset + ph.c_len > obuf.getSize())

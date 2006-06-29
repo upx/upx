@@ -99,6 +99,13 @@ public:
 };
 
 
+bool ph_skipVerify(const PackHeader &ph);
+void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out,
+                   bool verify_checksum, Filter *ft);
+bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
+                                     unsigned overlap_overhead);
+
+
 /*************************************************************************
 // abstract base class for packers
 //
@@ -140,9 +147,6 @@ protected:
     // unpacker tests - these may throw exceptions
     virtual bool testUnpackVersion(int version) const;
     virtual bool testUnpackFormat(int format) const;
-    //
-    virtual bool skipVerify(int method, int level) const;
-    virtual bool skipVerify() const;
 
 protected:
     // implementation
