@@ -710,7 +710,7 @@ void PackExe::unpack(OutputFile *fo)
 
 Linker* PackExe::newLinker() const
 {
-    return new ElfLinker();
+    return new ElfLinkerX86();
 }
 
 

@@ -283,6 +283,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
+    freezeLoader();
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
@@ -344,6 +345,7 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUZ990", NULL);
+    freezeLoader();
     return getLoaderSize();
 }
 

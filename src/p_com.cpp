@@ -272,7 +272,7 @@ void PackCom::unpack(OutputFile *fo)
 
 Linker* PackCom::newLinker() const
 {
-    return new ElfLinker();
+    return new ElfLinkerX86();
 }
 
 

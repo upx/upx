@@ -481,6 +481,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //targets := vmlinux upx-head.o upx-piggy.o
 //
 //LDFLAGS_vmlinux := -Ttext $(IMAGE_OFFSET) -e startup_32
+//EXTRA_AFLAGS += -DIMAGE_OFFSET=$(IMAGE_OFFSET)
 //
 //$(obj)/vmlinux: $(obj)/upx-head.o $(obj)/upx-piggy.o FORCE
 //	$(call if_changed,ld)
@@ -522,7 +523,10 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //
 //	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 //
-//	movl $ 0x100000,%eax  # destination of uncompression (and entry point)
+//#ifndef IMAGE_OFFSET  /*{*/
+//#define IMAGE_OFFSET 0x100000
+//#endif  /*}*/
+//	movl $ IMAGE_OFFSET,%eax  # destination of uncompression (and entry point)
 //	push %cs
 /* Fall into .text of upx-compressed vmlinux. */
 //-----
