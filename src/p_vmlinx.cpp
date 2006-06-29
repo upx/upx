@@ -221,10 +221,8 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ft.addvalue = 0;  // we are independent of actual runtime address; see ckt32
 
     upx_compress_config_t cconf; cconf.reset();
-#if 1  //{
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-#endif  //}
     compressWithFilters(&ft, 512, 0, NULL, &cconf); 
 
     const unsigned lsize = getLoaderSize();
@@ -285,7 +283,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
             ph.level = 1;
         }
     }
-    compress(ibuf, obuf);
+    compress(ibuf, obuf, &cconf);
     ph.level = old_level;
 
     // while (0!=*p++) ;  // name is the same
