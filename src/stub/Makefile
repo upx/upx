@@ -11,6 +11,7 @@ MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
 export SHELL = /bin/sh
+export LC_ALL = C
 
 ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
@@ -77,20 +78,20 @@ endif
 ifndef default.targets
 ifeq ($(wildcard .all-stamp),)
 default.targets =
-default: $(default.targets)
+default: $$(default.targets)
 	@echo "UPX info: type 'make all' if you have all the required build tools."
 else
 default.targets = all
-default: $(default.targets)
+default: $$(default.targets)
 endif
 endif
 
 all.targets ?= tmp/.tmp-stamp .all-stamp
-all: $(all.targets)
+all: $$(all.targets)
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
-.all-stamp: $(STUBS)
+.all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
 
 ifeq ($(wildcard .all-stamp),)
@@ -613,9 +614,11 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 # // dependencies
 # ************************************************************************/
 
+ifneq ($(STUBS),)
 # FIXME: we want a dependency-only-prerequisite here
 ##$(STUBS): | tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
+endif
 -include tmp/*.d
 
 

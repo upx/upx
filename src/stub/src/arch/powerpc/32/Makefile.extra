@@ -1,20 +1,27 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
-export SHELL = /bin/sh
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-
-STUBS += lzma_d_cf.S lzma_d_cs.S
+ifndef top_srcdir
+__dir_list   = . .. ../.. ../../.. ../../../.. ../../../../..
+__dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
+__dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
+top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
+endif
 
 default.targets = all
-all.targets = tmp/.tmp-stamp $(STUBS)
-include $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))../../../../Makefile
+STUBS = NO_STUBS
+include $(top_srcdir)/src/stub/Makefile
+STUBS =
 
 
 # /***********************************************************************
 # // powerpc-lzma
 # ************************************************************************/
+
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+
+STUBS += lzma_d_cf.S lzma_d_cs.S
 
 lzma_d_cf.S : tc_list = powerpc-lzma powerpc-linux.elf default
 lzma_d_cs.S : tc_list = powerpc-lzma powerpc-linux.elf default
@@ -24,6 +31,7 @@ tc.powerpc-lzma.gcc     += -mcpu=405 -fPIC
 tc.powerpc-lzma.gcc     += -Os
 tc.powerpc-lzma.gcc     += -ffunction-sections
 tc.powerpc-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.powerpc-lzma.gcc     += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
@@ -33,10 +41,7 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,objdump) -b binary -m powerpc -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
-lzma_d_cf.S : PP_FLAGS = -DFAST
-lzma_d_cs.S : PP_FLAGS = -DSMALL
-
-lzma_d_cf.S : $(MAKEFILE_LIST)
-lzma_d_cs.S : $(MAKEFILE_LIST)
+lzma_d_cf.% : PP_FLAGS = -DFAST
+lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 endif
