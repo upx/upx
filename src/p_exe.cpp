@@ -412,8 +412,10 @@ void PackExe::pack(OutputFile *fo)
     ph.u_len = ih_imagesize + relocsize;
     // prepare filter
     Filter ft(ph.level);
-    // compress
-    compressWithFilters(&ft, 32, 0, NULL, 0, MAXMATCH);
+    // compress (max_match = 8192)
+    upx_compress_config_t cconf; cconf.reset();
+    cconf.conf_ucl.max_match = MAXMATCH;
+    compressWithFilters(&ft, 32, 0, NULL, &cconf);
     if (ph.max_run_found + ph.max_match_found > 0x8000)
         throwCantPack("decompressor limit exceeded, send a bugreport");
 
