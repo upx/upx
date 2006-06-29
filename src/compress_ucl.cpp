@@ -121,6 +121,15 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
         cconf = cconf_parm->conf_ucl; // struct copy
 
     ucl_uint *res = cresult->result_ucl.result;
+    // assume no info available - fill in worst case results
+    //res[0] = 1;                 // min_offset_found - NOT USED
+    res[1] = src_len - 1;       // max_offset_found
+    //res[2] = 2;                 // min_match_found - NOT USED
+    res[3] = src_len - 1;       // max_match_found
+    //res[4] = 1;                 // min_run_found - NOT USED
+    res[5] = src_len;           // max_run_found
+    res[6] = 1;                 // first_offset_found
+    //res[7] = 999999;            // same_match_offsets_found - NOT USED
 
     // prepare bit-buffer settings
     cconf.bb_endian = 0;

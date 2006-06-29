@@ -154,7 +154,7 @@ bool Packer::skipVerify() const
 
 
 /*************************************************************************
-// compress
+// compress - wrap call to low-level upx_compress()
 **************************************************************************/
 
 bool Packer::compress(upx_bytep in, upx_bytep out,
@@ -162,6 +162,9 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 {
     ph.c_len = 0;
     assert(ph.level >= 1); assert(ph.level <= 10);
+
+    // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
+    unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
 
     // save current checksums
     ph.saved_u_adler = ph.u_adler;
@@ -173,24 +176,24 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     upx_compress_config_t cconf; cconf.reset();
     if (cconf_parm)
         cconf = *cconf_parm;
-    // options
-    if (opt->crp.crp_ucl.c_flags != -1)
-        cconf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
-    if (opt->crp.crp_ucl.p_level != -1)
-        cconf.conf_ucl.p_level = opt->crp.crp_ucl.p_level;
-    if (opt->crp.crp_ucl.h_level != -1)
-        cconf.conf_ucl.h_level = opt->crp.crp_ucl.h_level;
-    if (opt->crp.crp_ucl.max_offset != UINT_MAX && opt->crp.crp_ucl.max_offset < cconf.conf_ucl.max_offset)
-        cconf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
-    if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < cconf.conf_ucl.max_match)
-        cconf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
-
-    // Avoid too many progress bar updates. 64 is s->bar_len in ui.cpp.
-    unsigned step = (ph.u_len < 64*1024) ? 0 : ph.u_len / 64;
+    // cconf options
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+    {
+        if (opt->crp.crp_ucl.c_flags != -1)
+            cconf.conf_ucl.c_flags = opt->crp.crp_ucl.c_flags;
+        if (opt->crp.crp_ucl.p_level != -1)
+            cconf.conf_ucl.p_level = opt->crp.crp_ucl.p_level;
+        if (opt->crp.crp_ucl.h_level != -1)
+            cconf.conf_ucl.h_level = opt->crp.crp_ucl.h_level;
+        if (opt->crp.crp_ucl.max_offset != UINT_MAX && opt->crp.crp_ucl.max_offset < cconf.conf_ucl.max_offset)
+            cconf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
+        if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < cconf.conf_ucl.max_match)
+            cconf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
 #if defined(WITH_NRV)
-    if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
-        step = 0;
+        if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
+            step = 0;
 #endif
+    }
     if (ui_pass >= 0)
         ui_pass++;
     uip->startCallback(ph.u_len, step, ui_pass, ui_total_passes);
@@ -211,19 +214,22 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
-    ucl_uint *res = ph.compress_result.result_ucl.result;
-    //ph.min_offset_found = res[0];
-    ph.max_offset_found = res[1];
-    //ph.min_match_found = res[2];
-    ph.max_match_found = res[3];
-    //ph.min_run_found = res[4];
-    ph.max_run_found = res[5];
-    ph.first_offset_found = res[6];
-    //ph.same_match_offsets_found = res[7];
-    if (cconf_parm)
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
     {
-        assert(cconf.conf_ucl.max_offset == 0 || cconf.conf_ucl.max_offset >= ph.max_offset_found);
-        assert(cconf.conf_ucl.max_match == 0 || cconf.conf_ucl.max_match >= ph.max_match_found);
+        ucl_uint *res = ph.compress_result.result_ucl.result;
+        //ph.min_offset_found = res[0];
+        ph.max_offset_found = res[1];
+        //ph.min_match_found = res[2];
+        ph.max_match_found = res[3];
+        //ph.min_run_found = res[4];
+        ph.max_run_found = res[5];
+        ph.first_offset_found = res[6];
+        //ph.same_match_offsets_found = res[7];
+        if (cconf_parm)
+        {
+            assert(cconf.conf_ucl.max_offset == 0 || cconf.conf_ucl.max_offset >= ph.max_offset_found);
+            assert(cconf.conf_ucl.max_match == 0 || cconf.conf_ucl.max_match >= ph.max_match_found);
+        }
     }
 
     //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
