@@ -373,8 +373,9 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    patchFilter32(loader, lsize, &ft);
     patchPackHeader(loader, lsize);
+    patchFilter32(loader, lsize, &ft);
+    patchDecompressor(loader, lsize);
 
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
