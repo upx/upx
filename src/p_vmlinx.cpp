@@ -486,6 +486,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //$(obj)/upx-piggy.o: vmlinux FORCE
 //      rm -f $@
 //      upx --best -o $@ $<
+//      touch $@
 //-----
 //
 //----- arch/i386/boot/compressed/upx-head.S
@@ -560,6 +561,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //upx-piggy.o:  $(SYSTEM)
 //  $(RM) -f $@
 //  upx --best -o $@ $<
+//  touch $@
 //
 //clean:
 //  rm -f vmlinux bvmlinux _tmp_*
