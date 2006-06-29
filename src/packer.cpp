@@ -228,7 +228,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     }
 
     //printf("\nPacker::compress: %d/%d: %7d -> %7d\n", ph.method, ph.level, ph.u_len, ph.c_len);
-    if (checkCompressionRatio(ph.u_len, ph.c_len))
+    if (!checkCompressionRatio(ph.u_len, ph.c_len))
         return false;
     // return in any case if not compressible
     if (ph.c_len >= ph.u_len)
