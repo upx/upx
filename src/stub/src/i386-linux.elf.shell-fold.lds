@@ -31,9 +31,10 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 /*ENTRY(_start)*/
-PHDRS  /* force exactly 1 ELF32_Phdr: in particular, no PT_GNU_STACK */
+PHDRS
 {
-  phdr0 PT_LOAD FILEHDR PHDRS FLAGS(5);
+  phdr0 PT_LOAD FILEHDR PHDRS FLAGS(5);  /* no PF_W: strict SELinux, PaX, grSecurity */
+  phdr1 PT_LOAD;  /* kernel-2.6.12-2.3.legacy_FC3 bug: SIGSEGV if no PF_W for ".bss" */
 }
 
 SECTIONS

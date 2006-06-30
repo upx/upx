@@ -84,6 +84,27 @@ const int *PackLinuxI386::getFilters() const
     return filters;
 }
 
+static void
+set_stub_brk(Elf_LE32_Phdr *const phdr1, unsigned brka)
+{
+#define PAGE_MASK (~0ul<<12)
+        // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
+        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
+        phdr1->p_type = PT_LOAD;  // be sure
+        phdr1->p_offset = ~PAGE_MASK & brkb;
+        phdr1->p_vaddr = brkb;
+        phdr1->p_paddr = brkb;
+        phdr1->p_filesz = 0;
+        phdr1->p_memsz =  0;
+        if (0==phdr1->p_flags) {
+            phdr1->p_flags = Elf32_Phdr::PF_R|Elf32_Phdr::PF_W;
+        }
+        if (0==phdr1->p_align) {
+            phdr1->p_align = 0x1000;
+        }
+#undef PAGE_MASK
+}
+
 void
 PackLinuxI386::generateElfHdr(
     OutputFile *fo,
@@ -91,7 +112,6 @@ PackLinuxI386::generateElfHdr(
     unsigned const brka
 )
 {
-    cprElfHdr1 *const h1 = (cprElfHdr1 *)&elfout;
     cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
@@ -111,32 +131,17 @@ PackLinuxI386::generateElfHdr(
 
     // Info for OS kernel to set the brk()
     if (brka) {
-#define PAGE_MASK (~0ul<<12)
-        // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
-        h2->phdr[1].p_type = PT_LOAD;  // be sure
-        h2->phdr[1].p_offset = ~PAGE_MASK & brkb;
-        h2->phdr[1].p_vaddr = brkb;
-        h2->phdr[1].p_paddr = brkb;
-        h2->phdr[1].p_filesz = 0;
-        h2->phdr[1].p_memsz =  0;
-        if (0==h2->phdr[1].p_flags) {
-            h2->phdr[1].p_flags = Elf32_Phdr::PF_R|Elf32_Phdr::PF_W;
-        }
-        if (0==h2->phdr[1].p_align) {
-            h2->phdr[1].p_align = 0x1000;
-        }
-#undef PAGE_MASK
+        set_stub_brk(&h2->phdr[1], brka);
     }
 
-    if (ph.format==UPX_F_LINUX_i386 ) {
-        assert(h1->ehdr.e_phnum==1);
-        memset(&h1->linfo, 0, sizeof(h1->linfo));
-        fo->write(h1, sizeof(*h1));
-    }
-    else if (ph.format==UPX_F_LINUX_SH_i386) {
-        assert(h2->ehdr.e_phnum==1);
-        h2->ehdr.e_phnum = 1;
+    if (ph.format==UPX_F_LINUX_i386
+    ||  ph.format==UPX_F_LINUX_SH_i386 ) {
+        // SELinux, PAx, grSecurity demand no PF_W if PF_X.
+        // kernel-2.6.12-2.3.legacy_FC3 has a bug which demands
+        // a PT_LOAD with PF_W, else SIGSEGV when clearing page fragment
+        // on low page of ".bss", which is the high page of .text.
+        // So the minimum number of PT_LOAD is 2.
+        assert(h2->ehdr.e_phnum==2);
         memset(&h2->linfo, 0, sizeof(h2->linfo));
         fo->write(h2, sizeof(*h2));
     }
@@ -166,9 +171,11 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
         sizeof(l_info) +
         ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
-    elfout.phdr[0].p_filesz = fo->getBytesWritten();
+    unsigned nw = fo->getBytesWritten();
+    elfout.phdr[0].p_filesz = nw;
+    nw = -(-elfout.phdr[0].p_align & -nw);  // ALIGN_UP
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
-
+    set_stub_brk(&elfout.phdr[1], nw + elfout.phdr[0].p_vaddr);
 
 #if 0  // {
     // /usr/bin/strip from RedHat 8.0 (binutils-2.13.90.0.2-2)
