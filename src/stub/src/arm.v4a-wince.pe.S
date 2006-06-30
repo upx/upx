@@ -53,30 +53,18 @@
  #endif
 #endif
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-// magic for the UPX linker
-#define SECT(n)  .text 1; .asciz #n; .long n - _start; .text 0; n
-
-#define BL(t) \
-        .text 1; .long 0, bl##t - _start; .asciz #t; .long 0; \
-        .text 0;  .byte 0, 0, 0; bl##t: .byte 0xeb
+#define section .section
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-        .text
-        .balign  0
-        .globl  _start
         .arm
-_start:
-
         dst0    .req r9                 @ global register
 
-SECT(DllStart):
+section DllStart
         cmp     r1, #1
         bne     .Lstart_orig
 
-SECT(ExeStart):
+section ExeStart
         stmfd   sp!, {r0 - r11, lr}
         DINIT
         adr     r3, SRC0
@@ -95,12 +83,12 @@ SECT(ExeStart):
 CacheSync:
         ldr     pc, IATT + 8
 
-SRC0:   .ascii  "SRC0"                  @ start of compressed data
-SRCL:   .ascii  "SRCL"                  @ compressed length
-DST0:   .ascii  "DST0"                  @ start of uncompressed data
-DSTL:   .ascii  "DSTL"                  @ uncompressed length
-IATT:   .ascii  "IATT"; .long 0, 0, 0   @ import address table
-ENTR:   .ascii  "ENTR"                  @ original entry point
+SRC0:   .long   start_of_compressed
+SRCL:   .long   compressed_length
+DST0:   .long   start_of_uncompressed
+DSTL:   .long   uncompressed_length
+IATT:   .long   import_address_table; .long 0, 0, 0
+ENTR:   .long   original_entry
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -171,13 +159,13 @@ ProcessAll:
 
         @@ uncompress/unfilter/imports/relocs are copied here by the upx linker
 
-SECT(ProcessEnd):
+section ProcessEnd
         ldmia   sp!, {pc}
 
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Unfilter_0x50):
+section Unfilter_0x50
         buffer  .req r0
         addval  .req r2
         bufend  .req ip
@@ -208,15 +196,15 @@ SECT(Unfilter_0x50):
         .unreq  addval
         .unreq  bufend
 
-FIBS:   .ascii  "FIBS"                  @ buffer start for filter
-FIBE:   .ascii  "FIBE"                  @ buffer end for filter
+FIBS:   .long   filter_buffer_start
+FIBE:   .long   filter_buffer_end
 
 .Luf_end:
         DDUMP   (#'F')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Relocs):
+section Relocs
         dest    .req r0
         buffer  .req r1
         addval  .req dst0
@@ -249,7 +237,7 @@ SECT(Relocs):
         str     ip, [dest]
         b       .Lreloc_loop
 
-BREL:   .ascii  "BREL"                  @ start of reloc info
+BREL:   .long   start_of_relocs
 
         .unreq  buffer
         .unreq  addval
@@ -260,7 +248,7 @@ BREL:   .ascii  "BREL"                  @ start of reloc info
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Imports):
+section Imports
         imp     .req r4
         iat     .req r5
         dll     .req r6
@@ -335,8 +323,8 @@ LoadLibraryW:
 GetProcAddressA:
         mov     pc, r11
 
-BIMP:   .ascii  "BIMP"                  @ start of import data
-ONAM:   .ascii  "ONAM"                  @ start of dll names
+BIMP:   .long   start_of_imports
+ONAM:   .long   start_of_dll_names
 
 .Lhi_end:
         add     sp, sp, #bufsize
@@ -344,31 +332,15 @@ ONAM:   .ascii  "ONAM"                  @ start of dll names
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(ucl_nrv2e_decompress_8):
+section Sucl_nrv2e_decompress_8
 
 #include "arch/arm/v4a/nrv2e_d8.S"
 
-SECT(Call2E):
-        BL      (ucl_nrv2e_decompress_8)
+section Call2E
+        bl      ucl_nrv2e_decompress_8
         DDUMP   (#'C')
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(UPX1HEAD):
-        .byte   85,80,88,33     @  0  UPX_MAGIC_LE32
-        .byte   161,216,208,213 @  4  UPX_MAGIC2_LE32
-        .long   0               @  8  uncompressed adler32
-        .long   0               @ 12  compressed adler32
-        .long   0               @ 16  uncompressed len
-        .long   0               @ 20  compressed len
-        .long   0               @ 24  original file size
-        .byte   0               @ 28  filter id
-        .byte   0               @ 29  filter cto
-        .byte   0               @  unused
-        .byte   45              @ 31  header checksum
+#include "include/header2.ash"
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-SECT(eof):
-        .text   1
-        .long   -1; .short eof - _start

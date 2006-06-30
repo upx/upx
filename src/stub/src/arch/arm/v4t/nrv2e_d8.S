@@ -69,17 +69,18 @@
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs
 
+#ifndef PURE_THUMB
 ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  @ ARM mode
         .type ucl_nrv2e_decompress_8, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
 */
-        adr r12,1+thumb_nrv2e_d8; bx r12  @ enter THUMB mode
+        adr r12,1+.thumb_nrv2e_d8; bx r12  @ enter THUMB mode
         .code 16  @ THUMB mode
-        .globl thumb_nrv2e_d8
         .thumb_func
-thumb_nrv2e_d8:
+#endif
+.thumb_nrv2e_d8:
         push {r2,r3, r4,r5,r6,r7, lr}
 #define sp_DST0 0  /* stack offset of original dst */
         add srclim,len,src  @ srclim= eof_src;

@@ -219,27 +219,7 @@ bool PackArmPe::testUnpackVersion(int version) const
 
 Linker* PackArmPe::newLinker() const
 {
-    struct ArmLinker : public DefaultLELinker
-    {
-        virtual void set32(void *b, unsigned v) const
-        {
-            set_le32(b, (v - 5) / 4);
-        }
-    };
-
-    struct ThumbLinker : public DefaultLELinker
-    {
-        virtual void set32(void *b, unsigned v) const
-        {
-            assert(v < 0x200);
-            set_le32(b, 0xF000 + ((v - 1) / 2) * 0x10000);
-        }
-    };
-
-    if (use_thumb_stub)
-        return new ThumbLinker;
-    else
-        return new ArmLinker;
+    return new ElfLinkerArmLE;
 }
 
 
@@ -1677,7 +1657,7 @@ int PackArmPe::buildLoader(const Filter *ft)
     if (!use_thumb_stub)
     {
         if (ph.method == M_NRV2E_8)
-            addLoader("ucl_nrv2e_decompress_8", NULL);
+            addLoader("Sucl_nrv2e_decompress_8", NULL);
     }
     else
     {
@@ -1699,6 +1679,14 @@ int PackArmPe::rpatch_le32(void *b, int blen, const void *old, unsigned new_,
     int o = patch_le32(b, blen, old, new_);
     rel.add(off + o, 3);
     return o;
+}
+
+int PackArmPe::rdefSymbol(const char *s, unsigned v,
+                          PackArmPe_Reloc &rel, unsigned off)
+{
+    linker->defineSymbol(s, v);
+    rel.add(off, 3);
+    return 0;
 }
 
 

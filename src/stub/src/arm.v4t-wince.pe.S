@@ -31,28 +31,17 @@
 
 #define DEBUG 0
 
-// magic for the UPX linker
-#define SECT(n)  .text 1; .asciz #n; .long n - _start; .text 0; n
+#define section .section
 
-#define BL(t) \
-        .text 1; .long 0, bl##t - _start; .asciz #t; .long 0; \
-        .text 0;  .byte 0, 0, 0; bl##t: .byte 0xf8
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-        .text
-        .balign  0
-        .globl  _start
         .arm
-_start:
 
         dst0    .req r9                 @ global register
 
-SECT(DllStart):
+section DllStart
         cmp     r1, #1
         bne     .Lstart_orig
 
-SECT(ExeStart):
+section ExeStart
         stmfd   sp!, {r0 - r11, lr}
 
         @ access all pages in ARM mode - this seems to be required
@@ -76,12 +65,12 @@ SECT(ExeStart):
         ldr     ip, ENTR
         bx      ip
 
-SRC0:   .ascii  "SRC0"                  @ start of compressed data
-SRCL:   .ascii  "SRCL"                  @ compressed length
-DST0:   .ascii  "DST0"                  @ start of uncompressed data
-DSTL:   .ascii  "DSTL"                  @ uncompressed length
-IATT:   .ascii  "IATT"; .long 0, 0, 0   @ import address table
-ENTR:   .ascii  "ENTR"                  @ original entry point
+SRC0:   .long   start_of_compressed
+SRCL:   .long   compressed_length
+DST0:   .long   start_of_uncompressed
+DSTL:   .long   uncompressed_length
+IATT:   .long   import_address_table; .long 0, 0, 0
+ENTR:   .long   original_entry
 
         .thumb
 
@@ -96,7 +85,7 @@ ProcessAll:
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Unfilter_0x50):
+section Unfilter_0x50
         .align  2
         buffer  .req r0
         addval  .req r2
@@ -135,14 +124,14 @@ SECT(Unfilter_0x50):
         .unreq  bufend
 
         .align  2
-FIBS:   .ascii  "FIBS"                  @ buffer start for filter
-FIBE:   .ascii  "FIBE"                  @ buffer end for filter
+FIBS:   .long   filter_buffer_start
+FIBE:   .long   filter_buffer_end
 
 .Luf50_ret:
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Relocs):
+section Relocs
         .align  2
         buffer  .req r0
         dest    .req r1
@@ -187,18 +176,19 @@ SECT(Relocs):
         b       .Lreloc_loop
 
         .align  2
-BREL:   .ascii  "BREL"                  @ start of reloc info
+BREL:   .long   start_of_relocs
 
 .Lreloc_end:
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(Imports):
+section Imports
         .align  2
         imp     .req r4
         iat     .req r5
         dll     .req r6
 
+.real_start_ofImports:          // suppress silly warnings
         mov     r7, sp
         sub     sp, #508
         sub     sp, #508
@@ -280,15 +270,15 @@ GetProcAddressA:
         bx      r11
 
         .align  2
-BIMP:   .ascii  "BIMP"                  @ start of import data
-ONAM:   .ascii  "ONAM"                  @ start of dll names
+BIMP:   .long   start_of_imports
+ONAM:   .long   start_of_dll_names
 
 .Lhi_end:
         mov     sp, r7
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(ProcessEnd):
+section ProcessEnd
         pop     {r1, r2}                @ r1=CacheSync, r2=lr
         mov     r0, #4                  @ parameter of CacheSync
         mov     lr, r2
@@ -296,50 +286,24 @@ SECT(ProcessEnd):
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-#define XSECT(n)  .text 1; .asciz #n; .long n - _start; .text 0
+#define PURE_THUMB 1
 
-SECT(dummy0):
-        .align  2
-        .arm
+section .ucl_nrv2b_decompress_8
 #include "arch/arm/v4t/nrv2b_d8.S"
 
-        XSECT   (go_thumb_n2b)
-
-SECT(Call2B):
-        BL      (go_thumb_n2b)
+section Call2B
+        bl      .go_thumb_n2b
 
 #undef wrnk
 #undef GETBIT
 
-SECT(dummy1):
-        .align  2
-        .arm
+section .ucl_nrv2e_decompress_8
 #include "arch/arm/v4t/nrv2e_d8.S"
 
-        XSECT   (thumb_nrv2e_d8)
-
-SECT(Call2E):
-        BL      (thumb_nrv2e_d8)
+section Call2E
+        bl      .thumb_nrv2e_d8
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-SECT(UPX1HEAD):
-        .byte   85,80,88,33     @  0  UPX_MAGIC_LE32
-        .byte   161,216,208,213 @  4  UPX_MAGIC2_LE32
-        .long   0               @  8  uncompressed adler32
-        .long   0               @ 12  compressed adler32
-        .long   0               @ 16  uncompressed len
-        .long   0               @ 20  compressed len
-        .long   0               @ 24  original file size
-        .byte   0               @ 28  filter id
-        .byte   0               @ 29  filter cto
-        .byte   0               @  unused
-        .byte   45              @ 31  header checksum
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-        .arm
-SECT(eof):
-        .text   1
-        .long -1; .short eof - _start
+#include "include/header2.ash"
 
