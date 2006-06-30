@@ -187,7 +187,7 @@ amd64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf64amd_loader tmp/$T.bin $@
 
-amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o
+amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf64amd_fold tmp/$T.bin $@
@@ -223,7 +223,7 @@ arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,objcopy) --only-section .text -O binary tmp/$T.out tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
 
-arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o
+arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
@@ -374,7 +374,7 @@ i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
 
-i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o
+i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -402,7 +402,7 @@ i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
 
-i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o
+i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -434,7 +434,7 @@ i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
 
-i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o
+i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -462,7 +462,7 @@ i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
 
-i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o
+i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -578,7 +578,7 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_loader tmp/$T.bin $@
 
-powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o
+powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
