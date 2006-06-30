@@ -54,8 +54,10 @@ public:
     virtual int getSection(const char *sname, int *slen=NULL) = 0;
     virtual unsigned char *getLoader(int *llen=NULL) = 0;
 
+    // for ElfLinker descendants
     virtual void defineSymbol(const char *, unsigned) {}
     virtual void relocate() {}
+    virtual unsigned getSymbolOffset(const char *) const { return 0; }
 
 protected:
     bool     frozen;
@@ -158,12 +160,14 @@ protected:
     {
         const char *name;
         const void *input;
-        unsigned char *output;
+        upx_byte   *output;
         unsigned size;
+        unsigned offset;
+        Section *next;
 
         Section(){}
         Section(const char *n, const void *i, unsigned s) :
-            name(n), input(i), output(NULL), size(s)
+            name(n), input(i), output(NULL), size(s), offset(0), next(NULL)
         {}
     };
 
@@ -192,10 +196,13 @@ protected:
         {}
     };
 
-    unsigned char *input;
-    int           inputlen;
-    unsigned char *output;
-    int           outputlen;
+    upx_byte    *input;
+    int         inputlen;
+    upx_byte    *output;
+    int         outputlen;
+
+    Section     *head;
+    Section     *tail;
 
     Section     sections[550];
     Symbol      symbols[1000];
@@ -223,18 +230,19 @@ protected:
     virtual void addSection(const char *sname, const void *sdata, int slen);
     virtual void freeze();
     virtual int getSection(const char *sname, int *slen=NULL);
-    virtual unsigned char *getLoader(int *llen=NULL);
+    virtual upx_byte *getLoader(int *llen=NULL);
     virtual void relocate();
     virtual void defineSymbol(const char *name, unsigned value);
+    virtual unsigned getSymbolOffset(const char *) const;
 
     virtual unsigned get32(const void *) const { return 0; }
     virtual void set32(void *, unsigned) const {}
 
     //
 
-    void alignWithByte(unsigned modulus, unsigned remainder, unsigned char b);
-    virtual void align(unsigned modulus, unsigned remainder);
-    virtual void relocate1(Relocation *, unsigned char *location,
+    void alignWithByte(unsigned len, upx_byte b);
+    virtual void align(unsigned len);
+    virtual void relocate1(Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
 
@@ -243,8 +251,17 @@ class ElfLinkerX86 : public ElfLinker
     typedef ElfLinker super;
 
 protected:
-    virtual void align(unsigned modulus, unsigned remainder);
-    virtual void relocate1(Relocation *, unsigned char *location,
+    virtual void align(unsigned len);
+    virtual void relocate1(Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
+class ElfLinkerArmLE : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void relocate1(Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
 

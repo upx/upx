@@ -364,7 +364,7 @@ void ElfLinker::preprocessSections(char *start, const char *end)
             n[strlen(name)] = 0;
             addSection(n, input + offset, size);
 
-            printf("section %s preprocessed\n", n);
+            //printf("section %s preprocessed\n", n);
         }
         start = nextl + 1;
     }
@@ -395,7 +395,7 @@ void ElfLinker::preprocessSymbols(char *start, const char *end)
                 offset = 0xdeaddead;
             symbols[nsymbols++] = Symbol(s, findSection(section), offset);
 
-            printf("symbol %s preprocessed o=%x\n", s, offset);
+            //printf("symbol %s preprocessed o=%x\n", s, offset);
         }
 
         start = nextl + 1;
@@ -430,7 +430,7 @@ void ElfLinker::preprocessRelocations(char *start, const char *end)
             relocations[nrelocations++] = Relocation(section, offset, t,
                                                      findSymbol(symbol));
 
-            printf("relocation %s %x preprocessed\n", section->name, offset);
+            //printf("relocation %s %x preprocessed\n", section->name, offset);
         }
 
         start = nextl + 1;
@@ -459,7 +459,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name)
     return NULL;
 }
 
-ElfLinker::ElfLinker() : input(NULL), output(NULL)
+ElfLinker::ElfLinker() : input(NULL), output(NULL), head(NULL), tail(NULL)
 {}
 
 ElfLinker::~ElfLinker()
@@ -470,12 +470,12 @@ ElfLinker::~ElfLinker()
 
 void ElfLinker::init(const void *pdata, int plen, int)
 {
-    unsigned char *i = new unsigned char[plen];
+    upx_byte *i = new upx_byte[plen];
     memcpy(i, pdata, plen);
     input = i;
     inputlen = plen;
 
-    output = new unsigned char[plen];
+    output = new upx_byte[plen];
     outputlen = 0;
 
     int pos = find(input, plen, "Sections:", 9);
@@ -491,6 +491,7 @@ void ElfLinker::init(const void *pdata, int plen, int)
     preprocessSections(psections, psymbols);
     preprocessSymbols(psymbols, prelocs);
     preprocessRelocations(prelocs, (char*) input + inputlen);
+    addSection("*UND*");
 }
 
 void ElfLinker::setLoaderAlignOffset(int phase)
@@ -517,14 +518,32 @@ int ElfLinker::addSection(const char *sname)
             }
 
         if (*sect == '+') // alignment
-            align(hex(sect[1]), hex(sect[2]));
+        {
+            assert(tail);
+            if (unsigned l = (hex(sect[1]) - tail->offset - tail->size)
+                % hex(sect[2]))
+            {
+                align(l);
+                tail->size += l;
+                outputlen += l;
+            }
+        }
         else
         {
             Section *section = findSection(sect);
             memcpy(output + outputlen, section->input, section->size);
             section->output = output + outputlen;
             outputlen += section->size;
-            printf("section added: %s\n", sect);
+            //printf("section added: %s\n", sect);
+
+            if (head)
+            {
+                tail->next = section;
+                section->offset = tail->offset + tail->size;
+            }
+            else
+                head = section;
+            tail = section;
         }
         sect += strlen(sect) + 1;
     }
@@ -534,6 +553,7 @@ int ElfLinker::addSection(const char *sname)
 
 void ElfLinker::addSection(const char *sname, const void *sdata, int slen)
 {
+    assert(!frozen);
     assert(nsections < TABLESIZE(sections));
     sections[nsections++] = Section(sname, sdata, slen);
 }
@@ -542,9 +562,6 @@ void ElfLinker::freeze()
 {
     if (frozen)
         return;
-
-    addSection("*UND*");
-    findSection("*UND*")->output = output;
 
     frozen = true;
 }
@@ -558,7 +575,7 @@ int ElfLinker::getSection(const char *sname, int *slen)
     return section->output - output;
 }
 
-unsigned char *ElfLinker::getLoader(int *llen)
+upx_byte *ElfLinker::getLoader(int *llen)
 {
     assert(frozen);
 
@@ -569,6 +586,8 @@ unsigned char *ElfLinker::getLoader(int *llen)
 
 void ElfLinker::relocate()
 {
+    assert(frozen);
+
     for (unsigned ic = 0; ic < nrelocations; ic++)
     {
         Relocation *rel = relocations + ic;
@@ -579,8 +598,7 @@ void ElfLinker::relocate()
             printf("can not apply reloc '%s:%x' without section '%s'\n",
                    rel->section->name, rel->offset,
                    rel->value->section->name);
-            //abort();
-            continue;
+            abort();
         }
 
         if (strcmp(rel->value->section->name, "*UND*") == 0 &&
@@ -589,10 +607,8 @@ void ElfLinker::relocate()
             printf("undefined symbol '%s' referenced\n", rel->value->name);
             abort();
         }
-        unsigned value = rel->value->section->output + rel->value->offset
-                         - output;
-
-        unsigned char *location = rel->section->output + rel->offset;
+        unsigned value = rel->value->section->offset + rel->value->offset;
+        upx_byte *location = rel->section->output + rel->offset;
 
         relocate1(rel, location, value, rel->type);
     }
@@ -601,70 +617,104 @@ void ElfLinker::relocate()
 void ElfLinker::defineSymbol(const char *name, unsigned value)
 {
     Symbol *symbol = findSymbol(name);
-    if (strcmp(symbol->section->name, "*UND*") == 0)
+    if (strcmp(symbol->section->name, "*UND*") == 0) // for undefined symbols
         symbol->offset = value;
+    else if (strcmp(symbol->section->name, name) == 0) // for sections
+    {
+        for (Section *section = symbol->section; section; section = section->next)
+        {
+            assert(section->offset < value);
+            section->offset = value;
+            value += section->size;
+        }
+    }
     else
+    {
         printf("symbol '%s' already defined\n", name);
+        abort();
+    }
 }
 
-void ElfLinker::alignWithByte(unsigned modulus, unsigned remainder,
-                              unsigned char b)
+unsigned ElfLinker::getSymbolOffset(const char *name) const
 {
-    unsigned l = (remainder - outputlen) % modulus;
-    memset(output + outputlen, b, l);
-    outputlen += l;
+    assert(frozen);
+    Symbol *symbol = const_cast<ElfLinker *>(this)->findSymbol(name);
+    return symbol->section->offset + symbol->offset;
 }
 
-void ElfLinker::align(unsigned modulus, unsigned remainder)
+void ElfLinker::alignWithByte(unsigned len, upx_byte b)
 {
-    alignWithByte(modulus, remainder, 0);
+    memset(output + outputlen, b, len);
 }
 
-void ElfLinker::relocate1(Relocation *rel, unsigned char *,
+void ElfLinker::align(unsigned len)
+{
+    alignWithByte(len, 0);
+}
+
+void ElfLinker::relocate1(Relocation *rel, upx_byte *,
                           unsigned, const char *)
 {
     printf("unknown relocation type '%s\n", rel->type);
     abort();
 }
 
-void ElfLinkerX86::align(unsigned modulus, unsigned remainder)
+void ElfLinkerX86::align(unsigned len)
 {
-    alignWithByte(modulus, remainder, 0x90);
+    alignWithByte(len, 0x90);
 }
 
-void ElfLinkerX86::relocate1(Relocation *rel, unsigned char *location,
+void ElfLinkerX86::relocate1(Relocation *rel, upx_byte *location,
                              unsigned value, const char *type)
 {
-    if (strcmp(rel->type, "R_386_PC8") == 0)
+    if (strncmp(type, "R_386_", 6))
+        return super::relocate1(rel, location, value, type);
+    type += 6;
+
+    if (strncmp(type, "PC", 2) == 0)
     {
-        value -= location - output;
+        value -= rel->section->offset + rel->offset;
+        type += 2;
+    }
+
+    if (strcmp(type, "8") == 0)
         *location += value;
-    }
-    else if (strcmp(rel->type, "R_386_PC16") == 0)
-    {
-        value -= location - output;
+    else if (strcmp(type, "16") == 0)
         set_le16(location, get_le16(location) + value);
-    }
-    else if (strcmp(rel->type, "R_386_PC32") == 0)
+    else if (strcmp(type, "32") == 0)
+        set_le32(location, get_le32(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerArmLE::relocate1(Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+{
+    if (strcmp(type, "R_ARM_PC24") == 0)
     {
         value -= location - output;
+        set_le32(location, get_le32(location) + value / 4);
+    }
+    else if (strcmp(type, "R_ARM_ABS32") == 0)
+    {
         set_le32(location, get_le32(location) + value);
     }
-    else if (strcmp(rel->type, "R_386_32") == 0)
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
     {
-        set_le32(location, get_le32(location) + value);
-    }
-    else if (strcmp(rel->type, "R_386_16") == 0)
-    {
-        set_le16(location, get_le16(location) + value);
-    }
-    else if (strcmp(rel->type, "R_386_8") == 0)
-    {
-        *location += value;
+        value -= location - output;
+        value += ((get_le16(location) & 0x7ff) << 12);
+        value += (get_le16(location + 2) & 0x7ff) << 1;
+
+        set_le16(location, 0xf000 + (value) >> 12);
+        set_le16(location + 2, 0xf800 + (value) >> 1);
+
+        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
+        //set_le32(location, get_le32(location) + value / 4);
     }
     else
         super::relocate1(rel, location, value, type);
 }
+
 
 /*
 vi:ts=4:et
