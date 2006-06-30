@@ -34,30 +34,30 @@
 
 section         UPX1HEAD
 
-                db      85,80,88,33     #  0  UPX_MAGIC_LE32
-                db      161,216,208,213 #     UPX_MAGIC2_LE32
-                dd      0               #  8  uncompressed adler32
-                dd      0               # 12  compressed adler32
+                db      85,80,88,33     //  0  UPX_MAGIC_LE32
+                db      161,216,208,213 //     UPX_MAGIC2_LE32
+                dd      0               //  8  uncompressed adler32
+                dd      0               // 12  compressed adler32
 
 #ifdef COM
-                dw      0               # 16  uncompressed len
-                dw      0               # 18  compressed len
-                db      0               # 20  filter
-                db      45              # 21  header checksum
+                dw      0               // 16  uncompressed len
+                dw      0               // 18  compressed len
+                db      0               // 20  filter
+                db      45              // 21  header checksum
 #elif defined(EXE)
-                db      0,0,0           # 16  uncompressed len
-                db      0,0,0           # 19  compressed len
-                db      0,0,0           # 22  original file size
-                db      0               # 25  filter
-                db      45              # 26  header checksum
+                db      0,0,0           // 16  uncompressed len
+                db      0,0,0           // 19  compressed len
+                db      0,0,0           // 22  original file size
+                db      0               // 25  filter
+                db      45              // 26  header checksum
 #else
-                dd      0               # 16  uncompressed len
-                dd      0               # 20  compressed len
-                dd      0               # 24  original file size
-                db      0               # 28  filter id
-                db      0               # 29  filter cto
-                db      0               #  unused
-                db      45              # 31  header checksum
+                dd      0               // 16  uncompressed len
+                dd      0               // 20  compressed len
+                dd      0               // 24  original file size
+                db      0               // 28  filter id
+                db      0               // 29  filter cto
+                db      0               //  unused
+                db      45              // 31  header checksum
 #endif
 
 
