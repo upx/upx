@@ -95,8 +95,6 @@ getbit_n2b:
 decomp_ret_n2b:
                 ret
 decomp_done_n2b:
-section         NRV2B169
-
 
 
 /*

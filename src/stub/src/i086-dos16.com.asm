@@ -63,8 +63,7 @@ section         COMPSHDI
 section         COMCALLT
                 push    di
 section         COMMAIN2
-                .byte   0xe9
-                .word   decompressor /* FIXME decomp_start_n2b */
+                jmp     decomp_start_n2b
 
 #include        "include/header2.ash"
 

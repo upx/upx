@@ -82,11 +82,11 @@ void PackSys::patchLoader(OutputFile *fo,
 
     unsigned copy_to = ph.u_len + d_len + ph.overlap_overhead;
 
-    linker->defineSymbol("sys_entry", get_le16(ibuf + 6) - copy_to - 1);
     linker->defineSymbol("calltrick_calls", calls);
-    linker->defineSymbol("copy_source", ph.c_len + lsize -1);
+    linker->defineSymbol("copy_source", ph.c_len + lsize - 1);
     linker->defineSymbol("copy_destination", copy_to);
-    linker->defineSymbol("decompressor", ph.u_len + ph.overlap_overhead + 2);
+    linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead + 1);
+    linker->defineSymbol("original_strategy", get_le16(ibuf + 6));
 
     linker->relocate();
     loader = getLoader();
@@ -109,7 +109,7 @@ int PackSys::buildLoader(const Filter *ft)
               ft->id ? "SYSCALLT" : "",
               "SYSMAIN3,UPX1HEAD,SYSCUTPO,NRV2B160,NRVDDONE,NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
-              "NRVDECO2,NRV2B169",
+              "NRVDECO2",
               NULL
              );
     if (ft->id)

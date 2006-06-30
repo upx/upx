@@ -116,10 +116,7 @@ void PackCom::patchLoader(OutputFile *fo,
     linker->defineSymbol("bytes_to_copy", ph.c_len + lsize);
     linker->defineSymbol("copy_source", ph.c_len + lsize + 0x100);
     linker->defineSymbol("copy_destination", upper_end);
-
-    // FIXME: Depends on: decompr_start == cutpoint+1 !!!
-    linker->defineSymbol("decompressor", upper_end - 0xff -
-                            d_len - getLoaderSection("UPX1HEAD"));
+    linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead);
 
     linker->relocate();
     loader = getLoader();
@@ -149,7 +146,7 @@ int PackCom::buildLoader(const Filter *ft)
               ft->id ? "NRVDDONE" : "NRVDRETU",
               "NRVDECO1",
               ph.max_offset_found <= 0xd00 ? "NRVLED00" : "NRVGTD00",
-              "NRVDECO2,NRV2B169",
+              "NRVDECO2",
               NULL
              );
     if (ft->id)

@@ -84,7 +84,7 @@ section         SYSSBBBP
 section         SYSCALLT
                 push    di
 section         SYSMAIN3
-                jmp     decompressor /* FIXME decomp_start_n2b */
+                jmp     decomp_start_n2b
 
 #include        "include/header2.ash"
 
@@ -107,8 +107,7 @@ section         SYSI0862
                 pop     bx
                 pop     ax
 section         SYSJUMP1
-                .byte   0xe9
-                .word   sys_entry /* FIXME */
+                jmp     original_strategy
 
 /*
 ; vi:ts=8:et:nowrap
