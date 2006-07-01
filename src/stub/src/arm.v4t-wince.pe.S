@@ -69,7 +69,7 @@ SRC0:   .long   start_of_compressed
 SRCL:   .long   compressed_length
 DST0:   .long   start_of_uncompressed
 DSTL:   .long   uncompressed_length
-IATT:   .long   import_address_table; .long 0, 0, 0
+IATT:   .long   0, 0, 0, 0
 ENTR:   .long   original_entry
 
         .thumb
@@ -79,14 +79,12 @@ ProcessAll:
         mov     dst0, r2
         mov     r4, ip                  @ CacheSync
         push    {r4, lr}
-        .align  2
 
         @@ uncompress/unfilter/imports/relocs are copied here by the upx linker
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 section Unfilter_0x50
-        .align  2
         buffer  .req r0
         addval  .req r2
         bufend  .req r4
@@ -132,7 +130,6 @@ FIBE:   .long   filter_buffer_end
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 section Relocs
-        .align  2
         buffer  .req r0
         dest    .req r1
         addval  .req r2
@@ -183,7 +180,6 @@ BREL:   .long   start_of_relocs
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 section Imports
-        .align  2
         imp     .req r4
         iat     .req r5
         dll     .req r6
@@ -269,7 +265,6 @@ LoadLibraryW:
 GetProcAddressA:
         bx      r11
 
-        .align  2
 BIMP:   .long   start_of_imports
 ONAM:   .long   start_of_dll_names
 

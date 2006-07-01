@@ -87,7 +87,7 @@ SRC0:   .long   start_of_compressed
 SRCL:   .long   compressed_length
 DST0:   .long   start_of_uncompressed
 DSTL:   .long   uncompressed_length
-IATT:   .long   import_address_table; .long 0, 0, 0
+IATT:   .long   0, 0, 0, 0
 ENTR:   .long   original_entry
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -332,7 +332,7 @@ ONAM:   .long   start_of_dll_names
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-section Sucl_nrv2e_decompress_8
+section .ucl_nrv2e_decompress_8
 
 #include "arch/arm/v4a/nrv2e_d8.S"
 

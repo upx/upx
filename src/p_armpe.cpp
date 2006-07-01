@@ -1626,14 +1626,10 @@ bool PackArmPe::canPack()
 int PackArmPe::buildLoader(const Filter *ft)
 {
     const unsigned char *loader = use_thumb_stub ? nrv_loader_thumb : nrv_loader_arm;
-
-    // ignore possible garbage aligment data at the end of the loader
     unsigned size = use_thumb_stub ? sizeof(nrv_loader_thumb) : sizeof(nrv_loader_arm);
-    while (loader[size - 1] == 0)
-        size--;
 
     // prepare loader
-    initLoader(loader, size, -1, 2);
+    initLoader(loader, size);
 
     if (isdll)
         addLoader("DllStart", NULL);
@@ -1646,47 +1642,30 @@ int PackArmPe::buildLoader(const Filter *ft)
 
 
     if (ft->id == 0x50)
-        addLoader("Unfilter_0x50", NULL);
+        addLoader("+40C,Unfilter_0x50", NULL);
 
     if (sorelocs)
-        addLoader("Relocs", NULL);
+        addLoader("+40C,Relocs", NULL);
 
-    addLoader("Imports", NULL);
+    addLoader("+40C,Imports", NULL);
     addLoader("ProcessEnd", NULL);
 
     if (!use_thumb_stub)
     {
         if (ph.method == M_NRV2E_8)
-            addLoader("Sucl_nrv2e_decompress_8", NULL);
+            addLoader(".ucl_nrv2e_decompress_8", NULL);
     }
     else
     {
         if (ph.method == M_NRV2E_8)
-            addLoader("thumb_nrv2e_d8", NULL);
+            addLoader(".ucl_nrv2e_decompress_8", NULL);
         else if (ph.method == M_NRV2B_8)
-            addLoader("go_thumb_n2b", NULL);
+            addLoader(".ucl_nrv2b_decompress_8", NULL);
     }
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);
     freezeLoader();
     return getLoaderSize();
-}
-
-
-int PackArmPe::rpatch_le32(void *b, int blen, const void *old, unsigned new_,
-                           Reloc &rel, unsigned off)
-{
-    int o = patch_le32(b, blen, old, new_);
-    rel.add(off + o, 3);
-    return o;
-}
-
-int PackArmPe::rdefSymbol(const char *s, unsigned v,
-                          PackArmPe_Reloc &rel, unsigned off)
-{
-    linker->defineSymbol(s, v);
-    rel.add(off, 3);
-    return 0;
 }
 
 
@@ -1899,9 +1878,6 @@ void PackArmPe::pack(OutputFile *fo)
         tlsindex = 0;
 
     const unsigned lsize = getLoaderSize();
-    MemBuffer loader(lsize);
-    memcpy(loader,getLoader(),lsize);
-    patchPackHeader(loader, lsize);
 
     int identsize = 0;
     const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
@@ -1937,24 +1913,15 @@ void PackArmPe::pack(OutputFile *fo)
     const unsigned upxsection = s1addr + ic + c_len;
 
     Reloc rel(1024); // new relocations are put here
-    // patch loader
-    // the exact value of "ONAM" can not be computed here, so we set it later
-    int onam_offset = rpatch_le32(loader, codesize, "ONAM", 0, rel, upxsection);
-    rpatch_le32(loader, codesize, "BIMP", ih.imagebase + rvamin + cimports, rel, upxsection);
-
-    if (sorelocs)
-        rpatch_le32(loader, codesize, "BREL", crelocs + rvamin + ih.imagebase, rel, upxsection);
-    if (ft.id)
+    static const char* symbols_to_relocate[] = {
+        "ONAM", "BIMP", "BREL", "FIBE", "FIBS", "ENTR", "DST0", "SRC0"
+    };
+    for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++)
     {
-        rpatch_le32(loader, codesize, "FIBE", ih.imagebase + ih.codebase + (ft.id ? ih.codesize : 0), rel, upxsection);
-        rpatch_le32(loader, codesize, "FIBS", ih.imagebase + ih.codebase, rel, upxsection);
+        unsigned off = linker->getSymbolOffset(symbols_to_relocate[s2r]);
+        if (off != 0xdeaddead)
+            rel.add(off + upxsection, 3);
     }
-    rpatch_le32(loader, codesize, "ENTR", ih.entry + ih.imagebase, rel, upxsection);
-    unsigned iat_offset = patch_le32(loader, codesize, "IATT", 0);
-    patch_le32(loader, codesize, "DSTL", ph.u_len);
-    rpatch_le32(loader, codesize, "DST0", ih.imagebase + rvamin, rel, upxsection);
-    patch_le32(loader, codesize, "SRCL", ph.c_len);
-    rpatch_le32(loader, codesize, "SRC0", ih.imagebase + s1addr + identsize - identsplit, rel, upxsection);
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));
@@ -1997,7 +1964,7 @@ void PackArmPe::pack(OutputFile *fo)
     ODSIZE(PEDIR_RESOURCE) = soresources;
     ic += soresources;
 
-    processImports(ic, iat_offset + upxsection);
+    processImports(ic, linker->getSymbolOffset("IATT") + upxsection);
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
@@ -2013,7 +1980,21 @@ void PackArmPe::pack(OutputFile *fo)
     ic += soexport;
 
     const unsigned onam = ncsection + soxrelocs + soresources + ih.imagebase;
-    set_le32(loader + onam_offset, onam);
+    linker->defineSymbol("start_of_dll_names", onam);
+    linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);
+    linker->defineSymbol("start_of_relocs", crelocs + rvamin + ih.imagebase);
+    linker->defineSymbol("filter_buffer_end", ih.imagebase + ih.codebase + ih.codesize);
+    linker->defineSymbol("filter_buffer_start", ih.imagebase + ih.codebase);
+    linker->defineSymbol("original_entry", ih.entry + ih.imagebase);
+    linker->defineSymbol("uncompressed_length", ph.u_len);
+    linker->defineSymbol("start_of_uncompressed", ih.imagebase + rvamin);
+    linker->defineSymbol("compressed_length", ph.c_len);
+    linker->defineSymbol("start_of_compressed", ih.imagebase + s1addr + identsize - identsplit);
+    linker->relocate();
+
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader, lsize);
 
     // this is computed here, because soxrelocs changes some lines above
     const unsigned ncsize = soxrelocs + soresources + soimpdlls + soexport;

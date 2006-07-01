@@ -248,11 +248,15 @@ arm.v4t-wince.pe% : tc_list = arm-linux.elf default
 
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader_arm tmp/$T.bin $@
 
 arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader_thumb tmp/$T.bin $@
 

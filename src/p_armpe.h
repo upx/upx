@@ -121,9 +121,6 @@ protected:
     bool use_thumb_stub;
 
     virtual Linker* newLinker() const;
-    int rpatch_le32(void *b, int blen, const void *old, unsigned new_,
-                    PackArmPe_Reloc &, unsigned);
-    int rdefSymbol(const char *, unsigned, PackArmPe_Reloc &, unsigned);
 
     struct pe_header_t
     {
