@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_djgpp2.h"
+#include "linker.h"
 
 static const
 #include "stub/i386-dos32.djgpp2.h"
@@ -82,6 +83,12 @@ unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf,
 }
 
 
+Linker* PackDjgpp2::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 int PackDjgpp2::buildLoader(const Filter *ft)
 {
     // prepare loader
@@ -101,7 +108,7 @@ int PackDjgpp2::buildLoader(const Filter *ft)
         addLoader("DJCALLT2", NULL);
         addFilter32(ft->id);
     }
-    addLoader("DJRETURN,+40DXXXX,UPX1HEAD", NULL);
+    addLoader("DJRETURN,+40C,UPX1HEAD", NULL);
     freezeLoader();
     return getLoaderSize();
 }
@@ -228,6 +235,29 @@ void PackDjgpp2::stripDebug()
 }
 
 
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
+
+#if 0
+    if (0x80==(ft->id & 0xF0)) {
+        int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
+        if (mru && mru!=256) {
+            unsigned const is_pwr2 = (0==((mru -1) & mru));
+            patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
+        }
+    }
+#endif
+    return true;
+}
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -300,6 +330,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     // patch coff header #2
     const unsigned lsize = getLoaderSize();
+    assert(lsize % 4 == 0);
     text->size = lsize;                   // new size of .text
     data->size = ph.c_len;                // new size of .data
 
@@ -313,21 +344,14 @@ void PackDjgpp2::pack(OutputFile *fo)
     data->vaddr = bss->vaddr + ((data->scnptr + data->size) & 0x1ff) - data->size + ph.overlap_overhead - 0x200;
     coff_hdr.f_nscns = 3;
 
-    // prepare loader
-    MemBuffer loader(lsize);
-    memcpy(loader, getLoader(), lsize);
-
-    // patch loader
-    patchPackHeader(loader, lsize);
-    patch_le32(loader, lsize, "ENTR", coff_hdr.a_entry);
-    patchFilter32(loader, lsize, &ft);
-    patch_le32(loader, lsize, "BSSL", ph.overlap_overhead / 4);
-    patchDecompressor(loader, lsize);
+    linker->defineSymbol("original_entry", coff_hdr.a_entry);
+    linker->defineSymbol("length_of_bss", ph.overlap_overhead / 4);
+    //patchDecompressor(loader, lsize); // FIXME
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
-    if (ph.method == M_LZMA)
-        patch_le32(loader, lsize, "ESP0", bss->vaddr + bss->size);
-    patch_le32(loader, lsize, "OUTP", text->vaddr - hdrsize);
-    patch_le32(loader, lsize, "INPP", data->vaddr);
+    linker->defineSymbol("stack_for_lzma", bss->vaddr + bss->size);
+    linker->defineSymbol("start_of_uncompressed", text->vaddr - hdrsize);
+    linker->defineSymbol("start_of_compressed", data->vaddr);
+    defineFilterSymbols(linker, &ft);
 
     // we should not overwrite our decompressor during unpacking
     // the original coff header (which is put just before the
@@ -343,6 +367,14 @@ void PackDjgpp2::pack(OutputFile *fo)
     // because of a feature (bug?) in stub.asm we need some padding
     memcpy(obuf+data->size, "UPX", 3);
     data->size = ALIGN_UP(data->size, 4);
+
+    linker->defineSymbol("DJ2MAIN1", coff_hdr.a_entry);
+    linker->relocate();
+
+    // prepare loader
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader, lsize);
 
     // write coff header, loader and compressed file
     fo->write(&coff_hdr, sizeof(coff_hdr));
