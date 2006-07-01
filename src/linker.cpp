@@ -520,8 +520,8 @@ int ElfLinker::addSection(const char *sname)
         if (*sect == '+') // alignment
         {
             assert(tail);
-            if (unsigned l = (hex(sect[1]) - tail->offset - tail->size)
-                % hex(sect[2]))
+            if (unsigned l = (hex(sect[2]) - tail->offset - tail->size)
+                % hex(sect[1]))
             {
                 align(l);
                 tail->size += l;
