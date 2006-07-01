@@ -639,6 +639,8 @@ unsigned ElfLinker::getSymbolOffset(const char *name) const
 {
     assert(frozen);
     Symbol *symbol = const_cast<ElfLinker *>(this)->findSymbol(name);
+    if (symbol->section->output == NULL)
+        return 0xdeaddead;
     return symbol->section->offset + symbol->offset;
 }
 
@@ -692,8 +694,8 @@ void ElfLinkerArmLE::relocate1(Relocation *rel, upx_byte *location,
 {
     if (strcmp(type, "R_ARM_PC24") == 0)
     {
-        value -= location - output;
-        set_le32(location, get_le32(location) + value / 4);
+        value -= rel->section->offset + rel->offset;
+        set_le24(location, get_le24(location) + value / 4);
     }
     else if (strcmp(type, "R_ARM_ABS32") == 0)
     {
@@ -701,12 +703,12 @@ void ElfLinkerArmLE::relocate1(Relocation *rel, upx_byte *location,
     }
     else if (strcmp(type, "R_ARM_THM_CALL") == 0)
     {
-        value -= location - output;
+        value -= rel->section->offset + rel->offset;
         value += ((get_le16(location) & 0x7ff) << 12);
         value += (get_le16(location + 2) & 0x7ff) << 1;
 
-        set_le16(location, 0xf000 + (value) >> 12);
-        set_le16(location + 2, 0xf800 + (value) >> 1);
+        set_le16(location, 0xf000 + ((value >> 12) & 0x7ff));
+        set_le16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
 
         //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
         //set_le32(location, get_le32(location) + value / 4);
