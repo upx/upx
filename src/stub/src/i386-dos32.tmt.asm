@@ -1,3 +1,4 @@
+/*
 ;  l_tmt.asm -- loader & decompressor for the tmt/adam format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,28 +25,23 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
 
+#include        "arch/i386/macros2.ash"
 
-%define         jmps    jmp short
-%define         jmpn    jmp near
-%include        "arch/i386/macros.ash"
-
-                BITS    32
-                SECTION .text
-                ORG     0
                 CPU     386
 
-; =============
-; ============= ENTRY POINT
-; =============
+// =============
+// ============= ENTRY POINT
+// =============
 
 start:
-;       __TMTMAIN1__
-                mov     edi, 0          ; relocation offset
+section         TMTMAIN1
+                mov     edi, 0          // relocated
                 push    edi
-                lea     esi, [edi + 'ESI0']
-                lea     edi, [edi + 'EDI0']
-                mov     ecx, 'ECX0'
+                lea     esi, [edi + copy_source]
+                lea     edi, [edi + copy_dest]
+                mov     ecx, offset bytes_to_copy
 
                 std
                 rep
@@ -54,57 +50,49 @@ start:
 
                 lea     esi, [edi + 1]
                 pop     edi
-                or      ebp, byte -1
+                or      ebp, -1
                 push    edi
-%ifdef  __TMTCALT1__
+section         TMTCALT1
                 push    edi
-%endif; __TMTMAIN2__
-                jmpn    .1+'JMPD'
-.1:
-%include        "include/header.ash"
+section         TMTMAIN2
+                jmp     decompressor
 
-cutpoint:
-;       __TMTCUTPO__
+#include        "include/header2.ash"
 
-; =============
-; ============= DECOMPRESSION
-; =============
+section TMTCUTPO
+decompressor:
 
-%include      "arch/i386/nrv2b_d32.ash"
-%include      "arch/i386/nrv2d_d32.ash"
-%include      "arch/i386/nrv2e_d32.ash"
-%include      "arch/i386/lzma_d.ash"
+// =============
+// ============= DECOMPRESSION
+// =============
 
-;       __TMTMAIN5__
+//#include      "arch/i386/nrv2b_d32.ash"
+//#include      "arch/i386/nrv2d_d32.ash"
+#include        "arch/i386/nrv2e_d32_2.ash"
+//#include      "arch/i386/lzma_d.ash"
+
+section         TMTMAIN5
                 pop     ebp
                 mov     esi, edi
                 sub     esi, [edi - 4]
 
-; =============
-; ============= CALLTRICK
-; =============
+// =============
+// ============= CALLTRICK
+// =============
 
-%ifdef  __TMTCALT2__
+section         TMTCALT2
                 pop     edi
                 cjt32   ebp
-%endif; __TMTRELOC__
 
-; =============
-; ============= RELOCATION
-; =============
+// =============
+// ============= RELOCATION
+// =============
 
+section         TMTRELOC
                 lea     edi, [ebp - 4]
                 reloc32 esi, edi, ebp
 
-; =============
-;       __TMTJUMP1__
-                jmpn    .1+'JMPO'
-.1:
-eof:
-;       __TMTHEEND__
-                section .data
-                dd      -1
-                dw      eof
+section         TMTJUMP1
+                jmp     original_entry
 
-
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap

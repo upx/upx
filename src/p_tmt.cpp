@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_tmt.h"
+#include "linker.h"
 
 static const
 #include "stub/i386-dos32.tmt.h"
@@ -74,17 +75,25 @@ unsigned PackTmt::findOverlapOverhead(const upx_bytep buf,
 }
 
 
+Linker* PackTmt::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 int PackTmt::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
     addLoader("IDENTSTR,TMTMAIN1",
               ft->id ? "TMTCALT1" : "",
-              "TMTMAIN2,UPX1HEAD,TMTCUTPO,+0XXXXXX",
-              getDecompressorSections(),
-              "TMTMAIN5",
-              NULL
-             );
+              "TMTMAIN2,UPX1HEAD,TMTCUTPO",
+              NULL);
+
+    // fake alignment for the start of the decompressor
+    linker->defineSymbol("TMTCUTPO", 0x1000);
+
+    addLoader(getDecompressorSections(), "TMTMAIN5", NULL);
     if (ft->id)
     {
         assert(ft->calls > 0);
@@ -176,6 +185,19 @@ bool PackTmt::canPack()
 }
 
 
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
+    return true;
+}
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -231,31 +253,31 @@ void PackTmt::pack(OutputFile *fo)
     compressWithFilters(&ft, 512);
 
     const unsigned lsize = getLoaderSize();
-    MemBuffer loader(lsize);
-    memcpy(loader,getLoader(),lsize);
-
     const unsigned s_point = getLoaderSection("TMTMAIN1");
     int e_len = getLoaderSectionStart("TMTCUTPO");
     const unsigned d_len = lsize - e_len;
     assert(e_len > 0  && s_point > 0);
 
     // patch loader
-    patch_le32(loader,lsize,"JMPO",ih.entry-(ph.u_len+ph.overlap_overhead+d_len));
-    patchFilter32(loader, lsize, &ft);
-    patchDecompressor(loader, lsize);
-    patchPackHeader(loader,e_len);
+    linker->defineSymbol("original_entry", ih.entry);
+    defineFilterSymbols(linker, &ft);
+    // FIXME patchDecompressor(loader, lsize);
 
-    const unsigned jmp_pos = find_le32(loader,e_len,get_le32("JMPD"));
-    patch_le32(loader,e_len,"JMPD",ph.u_len+ph.overlap_overhead-jmp_pos-4);
-
-    patch_le32(loader,e_len,"ECX0",ph.c_len+d_len);
-    patch_le32(loader,e_len,"EDI0",ph.u_len+ph.overlap_overhead+d_len-1);
-    patch_le32(loader,e_len,"ESI0",ph.c_len+e_len+d_len-1);
+    linker->defineSymbol("bytes_to_copy", ph.c_len + d_len);
+    linker->defineSymbol("copy_dest", ph.u_len + ph.overlap_overhead + d_len - 1);
+    linker->defineSymbol("copy_source", ph.c_len + lsize - 1);
     //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  c_len=%x \n\n",
     //                e_len,d_len,copy_len,copy_to,ph.overlap_overhead,jmp_pos,ph.u_len,ph.c_len);
 
+    linker->defineSymbol("TMTCUTPO", ph.u_len + ph.overlap_overhead);
+    linker->relocate();
+
+    MemBuffer loader(lsize);
+    memcpy(loader,getLoader(),lsize);
+    patchPackHeader(loader,e_len);
+
     memcpy(&oh,&ih,sizeof(oh));
-    oh.imagesize = ph.c_len+e_len+d_len; // new size
+    oh.imagesize = ph.c_len + lsize; // new size
     oh.entry = s_point; // new entry point
     oh.relocsize = 4;
 

@@ -332,9 +332,11 @@ i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 i386-dos32.tmt% : tc_list = arch-i386 default
 
 i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) --MMD=$@ $< -o tmp/$T.tmp1
-	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 

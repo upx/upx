@@ -58,6 +58,7 @@ protected:
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 
     unsigned adam_offset;
     int big_relocs;
