@@ -160,17 +160,13 @@ struct timespec {
 #define __NR_access              33
 #define __NR_brk                 45
 #define __NR_fcntl               55
-#define __NR_getrusage           77
 #define __NR_gettimeofday        78
 #define __NR_mmap                90
 #define __NR_munmap              91
 #define __NR_ftruncate           93
 #define __NR_adjtimex           124
 #define __NR_mprotect           125
-#define __NR_personality        136
-#define __NR_msync              144
 #define __NR_nanosleep          162
-#define __NR_getcwd             183
 
 #undef _syscall0
 #undef _syscall1
@@ -337,17 +333,13 @@ static inline _syscall1nr(_exit,int,exitcode)
 static inline _syscall3(int,fcntl,int,fd,int,cmd,long,arg)
 static inline _syscall2(int,ftruncate,int,fd,size_t,len)
 static inline _syscall0(pid_t,fork)
-static inline _syscall2(int,getcwd,char *,buf,unsigned long,size);
 static inline _syscall0(pid_t,getpid)
-static inline _syscall2(int,getrusage,int,who,struct rusage *,usage);
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
 static inline _syscall3(int,mprotect,void *,addr,size_t,len,int,prot)
-static inline _syscall3(int,msync,const void *,start,size_t,length,int,flags)
 static inline _syscall2(int,munmap,void *,start,size_t,length)
 static inline _syscall2(int,nanosleep,const struct timespec *,rqtp,struct timespec *,rmtp)
 static inline _syscall3(int,open,const char *,file,int,flag,int,mode)
-static inline _syscall1(int,personality,unsigned long,persona)
 static inline _syscall3(ssize_t,read,int,fd,void *,buf,size_t,count)
 static inline _syscall3(pid_t,waitpid,pid_t,pid,int *,wait_stat,int,options)
 static inline _syscall3(ssize_t,write,int,fd,const void *,buf,size_t,count)
