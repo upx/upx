@@ -150,7 +150,7 @@ section         CALLTR02
                 sub     eax, edi
                 sub     bl, 0xE8
 
-                .if     \addvalue
+                .ifnc   \addvalue, 0
                 add     eax, \addvalue
                 .endif
 
@@ -187,7 +187,7 @@ section         CTBSWA11
 section         CALLTR13
                 sub     eax, edi
 
-                .if     \addvalue
+                .ifnc   \addvalue, 0
                 add     eax, \addvalue
                 .endif
 
@@ -256,51 +256,52 @@ ckcount:
                 jg      ckloop3
 ckend:
 %endmacro
+#endif
 
-;; =============
-;; ============= 32-BIT RELOCATIONS
-;; =============
+// =============
+// ============= 32-BIT RELOCATIONS
+// =============
 
-%macro          reloc32 3
-section RELOC320
+.macro          reloc32 buffer, destination, addvalue
+section         RELOC320
 reloc_main:
                 xor     eax, eax
-                mov     al, [%1]
-                inc     %1
+                mov     al, [\buffer]
+                inc     \buffer
                 or      eax, eax
-                jz      reloc_endx
+                jzs     reloc_endx
                 cmp     al, 0xEF
                 ja      reloc_fx
 reloc_add:
-                add     %2, eax
- %if 1
-                mov     eax, [%2]
+                add     \destination, eax
+#if 1
+                mov     eax, [\destination]
                 xchg    ah, al
                 rol     eax, 16
                 xchg    ah, al
-                add     eax, %3
-                mov     [%2], eax
- %else
-                add     [%2], %3
- %endif
+                add     eax, \addvalue
+                mov     [\destination], eax
+#else
+                add     [\destination], \addvalue
+#endif
                 jmps    reloc_main
 reloc_fx:
                 and     al, 0x0F
                 shl     eax, 16
-                mov     ax, [%1]
-                add     %1, byte 2
-section REL32BIG
+                mov     ax, [\buffer]
+                add     \buffer, 2
+section         REL32BIG
                 or      eax, eax
-                jnz     reloc_add
-                mov     eax, [%1]
-                add     %1, byte 4
-section RELOC32J
+                jnzs    reloc_add
+                mov     eax, [\buffer]
+                add     \buffer, 4
+section         RELOC32J
                 jmps    reloc_add
 reloc_endx:
-section REL32END
-%endmacro
+section         REL32END
+.endm
 
-
+#if 0
 ;; =============
 ;; ============= 32-BIT CALL TRICK UNFILTER WITH MostRecentlyUsed BUFFER
 ;; =============
