@@ -125,7 +125,7 @@ bool PackVmlinuxI386::canPack()
         return false;
     }
 
-    phdri = new Elf32_Phdr[(unsigned) ehdri.e_phnum];
+    phdri = new Elf_LE32_Phdr[(unsigned) ehdri.e_phnum];
     fi->seek(ehdri.e_phoff, SEEK_SET);
     fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
 
@@ -223,7 +223,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
+    compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
@@ -360,8 +360,8 @@ int PackVmlinuxI386::canUnpack()
 
     // find the .shstrtab section
     char shstrtab[40];
-    Elf32_Shdr *p, *p_shstrtab=0;
-    shdri = new Elf32_Shdr[(unsigned) ehdri.e_shnum];
+    Elf_LE32_Shdr *p, *p_shstrtab=0;
+    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
     fi->seek(ehdri.e_shoff, SEEK_SET);
     fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
     int j;
