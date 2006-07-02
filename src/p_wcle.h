@@ -55,6 +55,7 @@ protected:
     virtual void handleStub(OutputFile *fo);
 
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 
     virtual void readObjectTable();
     virtual void encodeObjectTable();

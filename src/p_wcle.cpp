@@ -32,6 +32,7 @@
 #include "packer.h"
 #include "lefile.h"
 #include "p_wcle.h"
+#include "linker.h"
 
 static const
 #include "stub/i386-dos32.watcom.le.h"
@@ -81,15 +82,22 @@ const int *PackWcle::getFilters() const
 }
 
 
+Linker* PackWcle::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 int PackWcle::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
-    addLoader("IDENTSTR,WCLEMAIN,UPX1HEAD,WCLECUTP,+0000000",
-              getDecompressorSections(),
-              "WCLEMAI2",
-              NULL
-             );
+    addLoader("IDENTSTR,WCLEMAIN,UPX1HEAD,WCLECUTP", NULL);
+
+    // fake alignment for the start of the decompressor
+    linker->defineSymbol("WCLECUTP", 0x1000);
+
+    addLoader(getDecompressorSections(), "WCLEMAI2", NULL);
     if (ft->id)
     {
         assert(ft->calls > 0);
@@ -130,6 +138,20 @@ bool PackWcle::canPack()
 {
     if (!LeFile::readFileHeader())
         return false;
+    return true;
+}
+
+
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
     return true;
 }
 
@@ -497,16 +519,10 @@ void PackWcle::pack(OutputFile *fo)
     neweip = getLoaderSection("WCLEMAIN");
     int e_len = getLoaderSectionStart("WCLECUTP");
     const unsigned d_len = lsize - e_len;
-    assert(e_len > 0);
+    assert(e_len > 0 && e_len < RESERVED);
 
-    getLoader();
-
-    memcpy(oimage,getLoader(),e_len);
     memmove(oimage+e_len,oimage+RESERVED,soimage);
-    soimage = (soimage + e_len);
-
-    memcpy(oimage+soimage,getLoader() + e_len,d_len);
-    soimage += d_len;
+    soimage += lsize;
 
     opages = (soimage+mps-1)/mps;
     oh.bytes_on_last_page = soimage%mps;
@@ -524,23 +540,29 @@ void PackWcle::pack(OutputFile *fo)
     ic = (OOT(0,virtual_size) - d_len) &~ 15;
     assert(ic > ((ph.u_len + ph.overlap_overhead + 31) &~ 15));
 
-    upx_byte * const p = oimage + soimage - d_len;
-    patch_le32(p,d_len,"JMPO",ih.init_eip_offset+text_vaddr-(ic+d_len));
-    patch_le32(p,d_len,"ESP0",ih.init_esp_offset+IOT(ih.init_ss_object-1,my_base_address));
-    if (patchFilter32(p, d_len, &ft) && text_vaddr)
-        patch_le32(p, d_len, "TEXV", text_vaddr);
-    patch_le32(p,d_len,"RELO",mps*pages);
+    linker->defineSymbol("WCLECUTP", ic);
 
-    patchDecompressor(p, d_len);
-    patchPackHeader(oimage,e_len);
+    linker->defineSymbol("original_entry", ih.init_eip_offset + text_vaddr);
+    linker->defineSymbol("original_stack", ih.init_esp_offset +
+                         IOT(ih.init_ss_object - 1, my_base_address));
+    linker->defineSymbol("start_of_relocs", mps*pages);
+    defineFilterSymbols(linker, &ft);
+    linker->defineSymbol("filter_buffer_start", text_vaddr);
+    // FIXME patchDecompressor(loader, lsize);
 
-    unsigned jpos = find_le32(oimage,e_len,get_le32("JMPD"));
-    patch_le32(oimage,e_len,"JMPD",ic-jpos-4);
+    unsigned jpos = (((ph.c_len + 3) &~ 3) + d_len + 3) / 4;
+    linker->defineSymbol("words_to_copy", jpos);
+    linker->defineSymbol("copy_dest", ((ic + d_len + 3) &~ 3) - 4);
+    linker->defineSymbol("copy_source", e_len + jpos * 4 - 4);
 
-    jpos = (((ph.c_len+3)&~3) + d_len+3)/4;
-    patch_le32(oimage,e_len,"ECX0",jpos);
-    patch_le32(oimage,e_len,"EDI0",((ic+d_len+3)&~3)-4);
-    patch_le32(oimage,e_len,"ESI0",e_len+jpos*4-4);
+    linker->relocate();
+
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader, lsize);
+
+    memcpy(oimage, loader, e_len);
+    memcpy(oimage + soimage - d_len, loader + e_len, d_len);
 
     writeFile(fo, opt->watcom_le.le);
 

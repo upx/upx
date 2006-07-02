@@ -1,3 +1,4 @@
+/*
 ;  l_wcle.asm -- loader & decompressor for the watcom/le format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -24,39 +25,31 @@
 ;  Markus F.X.J. Oberhumer              Laszlo Molnar
 ;  <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 ;
+*/
 
+#include        "arch/i386/macros2.ash"
 
-%define         jmps    jmp short
-%define         jmpn    jmp near
-%include        "arch/i386/macros.ash"
-
-                BITS    32
-                SECTION .text
-                ORG     0
                 CPU     386
 
-; =============
-; ============= ENTRY POINT
-; =============
-
-start:
-;       __WCLEMAIN__
-                mov     edi, 'alib'     ; address of obj#1:0 (filled by a fixup record)
-
+section         WCLEMAIN
+                .byte   0xbf            // mov edi, 'alib'
+                .ascii  "alib"          // address of obj#1:0 (filled by a fixup record)
+/*
 ; The following hack fools the lame protection of dos4g/w, which expects the
 ; 'WATCOM' string somewhere in the first 18 bytes after the entry point
 ; I use this imul thingy, because it's 1 byte shorter than a jump ;-)
 ; ... and "alibiWATCOM" looks cool
-                db      'iWATCOM'       ; imul edx,[edi+0x41],'TCOM'
+*/
+                .ascii  "iWATCOM"       // imul edx,[edi+0x41],'TCOM'
 
                 push    es
                 push    ds
                 pop     es
                 push    edi
 
-                lea     esi, [edi + 'ESI0']
-                lea     edi, [edi + 'EDI0']
-                mov     ecx, 'ECX0'
+                lea     esi, [edi + copy_source]
+                lea     edi, [edi + copy_dest]
+                mov     ecx, offset words_to_copy
 
                 std
                 rep
@@ -65,80 +58,65 @@ start:
 
                 lea     esi, [edi + 4]
                 pop     edi
-                or      ebp, byte -1
+                or      ebp, -1
                 push    edi
-                jmpn    .1+'JMPD'
-.1:
-%include        "include/header.ash"
+                jmp     decompressor
 
-cutpoint:
-;       __WCLECUTP__
+#include        "include/header2.ash"
 
-; =============
-; ============= DECOMPRESSION
-; =============
+section         WCLECUTP
+decompressor:
 
-%include      "arch/i386/nrv2b_d32.ash"
-%include      "arch/i386/nrv2d_d32.ash"
-%include      "arch/i386/nrv2e_d32.ash"
-%include      "arch/i386/lzma_d.ash"
+// =============
+// ============= DECOMPRESSION
+// =============
 
-; =============
+//#include      "arch/i386/nrv2b_d32.ash"
+//#include      "arch/i386/nrv2d_d32.ash"
+#include      "arch/i386/nrv2e_d32_2.ash"
+//#include      "arch/i386/lzma_d.ash"
 
-;       __WCLEMAI2__
+// =============
+
+section WCLEMAI2
                 pop     ebp
                 push    esi
-                lea     esi, [ebp + 'RELO']
+                lea     esi, [ebp + start_of_relocs]
                 push    esi
 
-; =============
-; ============= CALLTRICK
-; =============
+// =============
+// ============= CALLTRICK
+// =============
 
-%ifdef  __WCALLTRI__
-%ifdef  __WCCTTPOS__
-                lea     edi, [ebp + 'TEXV']
-%else;  __WCCTTNUL__
+section WCCTTPOS
+                lea     edi, [ebp + filter_buffer_start]
+section WCCTTNUL
                 mov     edi, ebp
-%endif; __WCALLTR1__
+section WCALLTR1
                 cjt32   ebp
-%endif; __WCDUMMY1__
 
-; =============
-; ============= RELOCATION
-; =============
+// =============
+// ============= RELOCATION
+// =============
 
-%ifdef  __WCRELOC1__
+section WCRELOC1
                 lea     edi, [ebp - 4]
                 reloc32 esi, edi, ebp
-;               eax = 0
-%endif; __WCDUMMY2__
+//               eax = 0
 
-%ifdef  __WCRELSEL__
-                call    esi             ; selector fixup code (modifies bx)
-%endif; __WCLEMAI4__
+section WCRELSEL
+                call    esi             // selector fixup code (modifies bx)
 
-; =============
-
+section WCLEMAI4
                 pop     edi
                 pop     ecx
                 sub     ecx, edi
                 shr     ecx, 2
                 rep
-                stosd                   ; clear dirty memory
+                stosd                   // clear dirty memory
                 pop     es
-                lea     esp, [ebp + 'ESP0']
+                lea     esp, [ebp + original_stack]
 
-                jmpn    .1+'JMPO'
-.1:
+                jmp     original_entry
 
-; =============
-
-eof:
-;       __WCTHEEND__
-                section .data
-                dd      -1
-                dw      eof
-
-
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap
