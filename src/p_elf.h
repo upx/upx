@@ -71,7 +71,10 @@ struct Ehdr
         ELFDATA2MSB = 2         /* 2's complement, big endian */
     };
     enum { // e_ident[EI_OSABI]
-        ELFOSABI_LINUX = 3
+        ELFOSABI_NONE = 0,
+        ELFOSABI_LINUX = 3,
+        ELFOSABI_FREEBSD = 9,
+        ELFOSABI_ARM = 97
     };
     enum { // e_type
         ET_NONE = 0,            /* No file type */

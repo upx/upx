@@ -71,6 +71,7 @@ protected:
     unsigned short e_machine;
     unsigned char ei_class;
     unsigned char ei_data;
+    unsigned char ei_osabi;
 };
 
 class PackLinuxElf32 : public PackLinuxElf
@@ -324,6 +325,21 @@ protected:
         unsigned const szfold,
         Filter const *ft
     );
+};
+
+class PackBSDElf32x86 : public PackLinuxElf32x86
+{
+    typedef PackLinuxElf32x86 super;
+public:
+    PackBSDElf32x86(InputFile *f);
+    virtual ~PackBSDElf32x86();
+    virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
+    virtual const char *getName() const { return "BSD/elf386"; }
+
+protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+
+    virtual int buildLoader(const Filter *);
 };
 
 /*************************************************************************

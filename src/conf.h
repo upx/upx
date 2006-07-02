@@ -545,6 +545,10 @@ inline void operator delete[](void *p)
 #define UPX_F_LINUX_ELF64_AMD   22
 #define UPX_F_LINUX_ELF32_ARMLE 23
 
+#define UPX_F_BSD_i386          24
+#define UPX_F_BSD_ELF_i386      25
+#define UPX_F_BSD_SH_i386       26
+
 #define UPX_F_PLAIN_TEXT        127
 
 #define UPX_F_ATARI_TOS         129

@@ -213,6 +213,8 @@ static Packer* try_packers(InputFile *f, try_function func)
             if ((p = func(new PackLinuxElf32x86interp(f),f)) != NULL)
                 return p;
         }
+        if ((p = func(new PackBSDElf32x86(f),f)) != NULL)
+            return p;
         if ((p = func(new PackLinuxElf32x86(f),f)) != NULL)
             return p;
         if ((p = func(new PackLinuxElf64amd(f),f)) != NULL)

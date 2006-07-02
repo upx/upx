@@ -53,7 +53,9 @@ PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 
     if (0!=memcmp(buf, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
     ||  buf[Elf32_Ehdr::EI_CLASS]!=ei_class
-    ||  buf[Elf32_Ehdr::EI_DATA] !=ei_data ) {
+    ||  buf[Elf32_Ehdr::EI_DATA] !=ei_data
+    ||  buf[Elf32_Ehdr::EI_OSABI] !=ei_osabi
+    ) {
         return -1;
     }
     if (!memcmp(buf+8, "FreeBSD", 7))                   // branded
@@ -96,7 +98,9 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 
     if (0!=memcmp(buf, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
     ||  buf[Elf64_Ehdr::EI_CLASS]!=ei_class
-    ||  buf[Elf64_Ehdr::EI_DATA] !=ei_data ) {
+    ||  buf[Elf64_Ehdr::EI_DATA] !=ei_data
+    ||  buf[Elf64_Ehdr::EI_OSABI] !=ei_osabi
+    ) {
         return -1;
     }
     if (!memcmp(buf+8, "FreeBSD", 7))                   // branded
@@ -134,7 +138,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), file_image(NULL), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0),
-    e_machine(0), ei_class(0), ei_data(0)
+    e_machine(0), ei_class(0), ei_data(0), ei_osabi(0)
 {
     delete[] file_image;
 }
@@ -263,6 +267,7 @@ PackLinuxElf32ppc::PackLinuxElf32ppc(InputFile *f)
     e_machine = Elf32_Ehdr::EM_PPC;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2MSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
 }
 
 PackLinuxElf32ppc::~PackLinuxElf32ppc()
@@ -275,6 +280,7 @@ PackLinuxElf64amd::PackLinuxElf64amd(InputFile *f)
     e_machine = Elf64_Ehdr::EM_X86_64;
     ei_class = Elf64_Ehdr::ELFCLASS64;
     ei_data = Elf64_Ehdr::ELFDATA2LSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
 }
 
 PackLinuxElf64amd::~PackLinuxElf64amd()
@@ -578,6 +584,36 @@ PackLinuxElf32x86::buildLoader(const Filter *ft)
     return buildLinuxLoader(
         linux_i386elf_loader, sizeof(linux_i386elf_loader),
         tmp,                  sizeof(linux_i386elf_fold),  ft );
+}
+
+static const
+#include "stub/i386-BSD.elf-entry.h"
+static const
+#include "stub/i386-BSD.elf-fold.h"
+
+int
+PackBSDElf32x86::buildLoader(const Filter *ft)
+{
+    unsigned char tmp[sizeof(BSD_i386elf_fold)];
+    memcpy(tmp, BSD_i386elf_fold, sizeof(BSD_i386elf_fold));
+    ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_ABIVERSION] = 0;
+    checkPatch(NULL, 0, 0, 0);  // reset
+    if (opt->o_unix.is_ptinterp) {
+        unsigned j;
+        for (j = 0; j < sizeof(BSD_i386elf_fold)-1; ++j) {
+            if (0x60==tmp[  j]
+            &&  0x47==tmp[1+j] ) {
+                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
+                tmp[  j] = 0x47;
+                tmp[1+j] = 0x60;
+                break;
+            }
+        }
+    }
+    return buildLinuxLoader(
+        BSD_i386elf_loader, sizeof(BSD_i386elf_loader),
+        tmp,                sizeof(BSD_i386elf_fold),  ft );
 }
 
 static const
@@ -1005,8 +1041,14 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
-    super::pack1(fo, ft);
+    PackLinuxElf32::pack1(fo, ft);
     generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+}
+
+void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
+{
+    PackLinuxElf32::pack1(fo, ft);
+    generateElfHdr(fo, BSD_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)
@@ -1820,9 +1862,22 @@ PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
     e_machine = Elf32_Ehdr::EM_386;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2LSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;  // ELFOSABI_LINUX
 }
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
+{
+}
+
+PackBSDElf32x86::PackBSDElf32x86(InputFile *f) : super(f)
+{
+    e_machine = Elf32_Ehdr::EM_386;
+    ei_class  = Elf32_Ehdr::ELFCLASS32;
+    ei_data   = Elf32_Ehdr::ELFDATA2LSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_FREEBSD;
+}
+
+PackBSDElf32x86::~PackBSDElf32x86()
 {
 }
 
@@ -1854,6 +1909,7 @@ PackLinuxElf32armLe::PackLinuxElf32armLe(InputFile *f) : super(f)
     e_machine = Elf32_Ehdr::EM_ARM;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2LSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_ARM;
 }
 
 PackLinuxElf32armLe::~PackLinuxElf32armLe()
@@ -1865,6 +1921,7 @@ PackLinuxElf32armBe::PackLinuxElf32armBe(InputFile *f) : super(f)
     e_machine = Elf32_Ehdr::EM_ARM;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2MSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_ARM;
 }
 
 PackLinuxElf32armBe::~PackLinuxElf32armBe()
