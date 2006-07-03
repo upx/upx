@@ -1,4 +1,4 @@
-/* i386-BSD.elf-entry.h -- created from i386-BSD.elf-entry.bin, 10972 (0x2adc) bytes
+/* i386-bsd.elf-entry.h -- created from i386-bsd.elf-entry.bin, 10972 (0x2adc) bytes
 
    This file is part of the UPX executable compressor.
 
