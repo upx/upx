@@ -739,7 +739,7 @@ static int do_option(int optc, const char *arg)
         opt->o_unix.make_ptinterp = true;
         break;
     case 666:  // Linux
-        opt->o_unix.osabi0 = 0;  // Elf32_Ehdr::ELFOSABI_LINUX
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
         break;
     case 667:  // FreeBSD
         opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_FREEBSD;
@@ -904,6 +904,7 @@ static const struct mfx_option longopts[] =
     prepare_shortopts(buf,"123456789hH?V",longopts),
     mfx_optind = 0;
     mfx_opterr = 1;
+    opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
     while ((optc = mfx_getopt_long(argc, argv, buf, longopts, &longind)) >= 0)
     {
         if (do_option(optc, argv[mfx_optind-1]) != 0)
