@@ -51,8 +51,8 @@ STUBS += i386-dos32.tmt.h
 STUBS += i386-dos32.watcom.le.h
 STUBS += i386-linux.elf-entry.h
 STUBS += i386-linux.elf-fold.h
-STUBS += i386-BSD.elf-entry.h
-STUBS += i386-BSD.elf-fold.h
+STUBS += i386-bsd.elf-entry.h
+STUBS += i386-bsd.elf-fold.h
 STUBS += i386-linux.elf.execve-entry.h
 STUBS += i386-linux.elf.execve-fold.h
 STUBS += i386-linux.elf.interp-entry.h
@@ -122,7 +122,7 @@ override T = $(basename $(notdir $@))
 # default settings for $(tc_list)
 tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
 tc.default.brandelf   = perl -w $(srcdir)/scripts/brandelf.pl
-tc.default.brandBSD   = perl -w $(srcdir)/scripts/brandBSD.pl
+tc.default.brandbsd   = perl -w $(srcdir)/scripts/brandbsd.pl
 tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(srcdir)/scripts/gpp_inc.py
 tc.default.m-objcopy  = multiarch-objcopy-2.17
@@ -349,46 +349,46 @@ i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 
 
 # /***********************************************************************
-# // i386-BSD.elf
+# // i386-bsd.elf
 # ************************************************************************/
 
-i386-BSD.elf% : tc_list = i386-BSD.elf arch-i386 default
+i386-bsd.elf% : tc_list = i386-bsd.elf arch-i386 default
 
-tc.i386-BSD.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.i386-BSD.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.i386-BSD.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.i386-BSD.elf.gcc     += -march=i386 -mtune=k6
-tc.i386-BSD.elf.gcc     += -Os -fno-omit-frame-pointer
-tc.i386-BSD.elf.gcc     += -momit-leaf-frame-pointer
-tc.i386-BSD.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-tc.i386-BSD.elf.gcc     += -mpreferred-stack-boundary=2
-tc.i386-BSD.elf.gcc     += -fweb
-##tc.i386-BSD.elf.ld       = i386-linux-ld-2.16.1
-##tc.i386-BSD.elf.objcopy  = i386-linux-objcopy-2.16.1
-##tc.i386-BSD.elf.objdump  = i386-linux-objdump
-tc.i386-BSD.elf.ld       = $(call tc,m-ld) -b elf32-i386
-tc.i386-BSD.elf.objcopy  = $(call tc,m-objcopy) -I elf32-i386
-tc.i386-BSD.elf.objdump  = $(call tc,m-objdump) -b elf32-i386
-tc.i386-BSD.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+tc.i386-bsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.i386-bsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.i386-bsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.i386-bsd.elf.gcc     += -march=i386 -mtune=k6
+tc.i386-bsd.elf.gcc     += -Os -fno-omit-frame-pointer
+tc.i386-bsd.elf.gcc     += -momit-leaf-frame-pointer
+tc.i386-bsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+tc.i386-bsd.elf.gcc     += -mpreferred-stack-boundary=2
+tc.i386-bsd.elf.gcc     += -fweb
+##tc.i386-bsd.elf.ld       = i386-linux-ld-2.16.1
+##tc.i386-bsd.elf.objcopy  = i386-linux-objcopy-2.16.1
+##tc.i386-bsd.elf.objdump  = i386-linux-objdump
+tc.i386-bsd.elf.ld       = $(call tc,m-ld) -b elf32-i386
+tc.i386-bsd.elf.objcopy  = $(call tc,m-objcopy) -I elf32-i386
+tc.i386-bsd.elf.objdump  = $(call tc,m-objdump) -b elf32-i386
+tc.i386-bsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
-i386-BSD.elf-entry.h : $(srcdir)/src/$$T.asm
+i386-bsd.elf-entry.h : $(srcdir)/src/$$T.asm
 	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
 	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
 	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
-	$(call tc,bin2h) --ident=BSD_i386elf_loader tmp/$T.bin $@
+	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
 
-i386-BSD.elf-fold.h : tmp/$$T.o tmp/i386-BSD.elf-main.o $(srcdir)/src/$$T.lds
+i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandBSD) tmp/$T.bin
-	$(call tc,bin2h) --ident=BSD_i386elf_fold tmp/$T.bin $@
+	$(call tc,brandbsd) tmp/$T.bin
+	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
 
-tmp/i386-BSD.elf-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
 	$(call tc,nasm) -f elf -l $@.lst $< -o $@
 	$(call tc,objstrip) $@
 
-tmp/i386-BSD.elf-main.o : $(srcdir)/src/$$T.c
+tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,objstrip) $@
 

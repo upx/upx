@@ -587,21 +587,21 @@ PackLinuxElf32x86::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/i386-BSD.elf-entry.h"
+#include "stub/i386-bsd.elf-entry.h"
 static const
-#include "stub/i386-BSD.elf-fold.h"
+#include "stub/i386-bsd.elf-fold.h"
 
 int
 PackBSDElf32x86::buildLoader(const Filter *ft)
 {
-    unsigned char tmp[sizeof(BSD_i386elf_fold)];
-    memcpy(tmp, BSD_i386elf_fold, sizeof(BSD_i386elf_fold));
+    unsigned char tmp[sizeof(bsd_i386elf_fold)];
+    memcpy(tmp, bsd_i386elf_fold, sizeof(bsd_i386elf_fold));
     ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
     ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_ABIVERSION] = 0;
     checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->o_unix.is_ptinterp) {
         unsigned j;
-        for (j = 0; j < sizeof(BSD_i386elf_fold)-1; ++j) {
+        for (j = 0; j < sizeof(bsd_i386elf_fold)-1; ++j) {
             if (0x60==tmp[  j]
             &&  0x47==tmp[1+j] ) {
                 /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
@@ -612,8 +612,8 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
         }
     }
     return buildLinuxLoader(
-        BSD_i386elf_loader, sizeof(BSD_i386elf_loader),
-        tmp,                sizeof(BSD_i386elf_fold),  ft );
+        bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
+        tmp,                sizeof(bsd_i386elf_fold),  ft );
 }
 
 static const
@@ -1048,7 +1048,7 @@ void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     PackLinuxElf32::pack1(fo, ft);
-    generateElfHdr(fo, BSD_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+    generateElfHdr(fo, bsd_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)

@@ -1,4 +1,4 @@
-/* i386-BSD.elf-fold.h -- created from i386-BSD.elf-fold.bin, 1702 (0x6a6) bytes
+/* i386-bsd.elf-fold.h -- created from i386-bsd.elf-fold.bin, 1702 (0x6a6) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,7 +31,7 @@
 #define BSD_I386ELF_FOLD_ADLER32 0xd3fbf52c
 #define BSD_I386ELF_FOLD_CRC32   0x627f021f
 
-unsigned char BSD_i386elf_fold[1702] = {
+unsigned char bsd_i386elf_fold[1702] = {
 127, 69, 76, 70,  1,  1,  1,  9,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0,  3,  0,  1,  0,  0,  0,128, 16,192,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */

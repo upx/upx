@@ -31,7 +31,7 @@
 #define BSD_I386ELF_LOADER_ADLER32 0xf87da5ea
 #define BSD_I386ELF_LOADER_CRC32   0x5c4c2f5c
 
-unsigned char BSD_i386elf_loader[10972] = {
+unsigned char bsd_i386elf_loader[10972] = {
 232,  0,  0,  0,  0, 96,106, 63,139,116, 36, 40,139,124, 36, 48,   /* 0x   0 */
 131,205,255,235,  0,164,235,  0,138,  6, 70,136,  7, 71,  1,219,   /* 0x  10 */
 117,  7,139, 30,131,238,252, 17,219,114,  0, 49,192, 64,138,  7,   /* 0x  20 */
