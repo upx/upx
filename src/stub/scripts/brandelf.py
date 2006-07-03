@@ -56,9 +56,6 @@ def do_file(fn):
     elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
         fp.seek(8, 0)
         fp.write("Linux\x00\x00\x00")
-    elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
-        fp.seek(8, 0)
-        fp.write("Linux\x00\x00\x00")
     else:
         raise Exception, ("error: invalid args", opts.__dict__)
     fp.close()

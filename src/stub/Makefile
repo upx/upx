@@ -1,10 +1,9 @@
 #
 # UPX stub Makefile - needs GNU make 3.81 or better
 #
-# see http://upx.sourceforge.net/download/tools/
-# for required build tools
-#
-# also please read README.SRC
+# You also will need a number of special build tools like various
+# cross-assemblers and cross-compilers - please see README.SRC
+# for details.
 #
 
 MAKEFLAGS += -rR
@@ -33,6 +32,9 @@ endif
 ifndef srcdir
 srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+endif
+ifndef top_srcdir
+top_srcdir := $(srcdir)/../..
 endif
 
 ifndef STUBS
@@ -120,10 +122,10 @@ override T = $(basename $(notdir $@))
 # ************************************************************************/
 
 # default settings for $(tc_list)
-tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
-tc.default.brandelf   = python $(srcdir)/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
+tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
+tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.djasm      = djasm
-tc.default.gpp_inc    = python $(srcdir)/scripts/gpp_inc.py
+tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
 tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
@@ -133,7 +135,7 @@ tc.default.nasm       = nasm
 tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
-tc.default.o2bin      = perl $(srcdir)/scripts/o2bin.pl
+tc.default.o2bin      = perl $(top_srcdir)/src/stub/scripts/o2bin.pl
 tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.sstrip     = sstrip
@@ -339,7 +341,7 @@ i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) --elfos=freebsd tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=freebsd tmp/$T.bin
 	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
 
 tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
@@ -431,7 +433,7 @@ i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.ld
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) --elfos=linux tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.asm
@@ -459,7 +461,7 @@ i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i3
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) --elfos=linux tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.asm
@@ -491,7 +493,7 @@ i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcd
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) --elfos=linux tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.asm
@@ -519,7 +521,7 @@ i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) --elfos=linux tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.asm
