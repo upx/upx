@@ -72,8 +72,10 @@ struct Ehdr
     };
     enum { // e_ident[EI_OSABI]
         ELFOSABI_NONE = 0,
+        ELFOSABI_NETBSD = 2,
         ELFOSABI_LINUX = 3,
         ELFOSABI_FREEBSD = 9,
+        ELFOSABI_OPENBSD = 12,
         ELFOSABI_ARM = 97
     };
     enum { // e_type

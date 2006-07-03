@@ -50,11 +50,15 @@ int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
+    unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
+    if (0==osabi0) {
+        osabi0 = opt->o_unix.osabi0;
+    }
 
     if (0!=memcmp(buf, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
     ||  buf[Elf32_Ehdr::EI_CLASS]!=ei_class
     ||  buf[Elf32_Ehdr::EI_DATA] !=ei_data
-    ||  buf[Elf32_Ehdr::EI_OSABI] !=ei_osabi
+    ||                     osabi0!=ei_osabi
     ) {
         return -1;
     }
@@ -1874,10 +1878,36 @@ PackBSDElf32x86::PackBSDElf32x86(InputFile *f) : super(f)
     e_machine = Elf32_Ehdr::EM_386;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_FREEBSD;
 }
 
 PackBSDElf32x86::~PackBSDElf32x86()
+{
+}
+
+PackFreeBSDElf32x86::PackFreeBSDElf32x86(InputFile *f) : super(f)
+{
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_FREEBSD;
+}
+
+PackFreeBSDElf32x86::~PackFreeBSDElf32x86()
+{
+}
+
+PackNetBSDElf32x86::PackNetBSDElf32x86(InputFile *f) : super(f)
+{
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_NETBSD;
+}
+
+PackNetBSDElf32x86::~PackNetBSDElf32x86()
+{
+}
+
+PackOpenBSDElf32x86::PackOpenBSDElf32x86(InputFile *f) : super(f)
+{
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_OPENBSD;
+}
+
+PackOpenBSDElf32x86::~PackOpenBSDElf32x86()
 {
 }
 

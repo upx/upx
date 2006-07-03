@@ -342,6 +342,30 @@ protected:
     virtual int buildLoader(const Filter *);
 };
 
+class PackFreeBSDElf32x86 : public PackBSDElf32x86
+{
+    typedef PackBSDElf32x86 super;
+public:
+    PackFreeBSDElf32x86(InputFile *f);
+    virtual ~PackFreeBSDElf32x86();
+};
+
+class PackNetBSDElf32x86 : public PackBSDElf32x86
+{
+    typedef PackBSDElf32x86 super;
+public:
+    PackNetBSDElf32x86(InputFile *f);
+    virtual ~PackNetBSDElf32x86();
+};
+
+class PackOpenBSDElf32x86 : public PackBSDElf32x86
+{
+    typedef PackBSDElf32x86 super;
+public:
+    PackOpenBSDElf32x86(InputFile *f);
+    virtual ~PackOpenBSDElf32x86();
+};
+
 /*************************************************************************
 // linux/elfarm
 **************************************************************************/

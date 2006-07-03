@@ -30,6 +30,7 @@
 #include "mygetopt.h"
 #include "file.h"
 #include "packer.h"
+#include "p_elf.h"
 
 
 #if 1 && defined(__DJGPP__)
@@ -737,6 +738,18 @@ static int do_option(int optc, const char *arg)
     case 665:
         opt->o_unix.make_ptinterp = true;
         break;
+    case 666:  // Linux
+        opt->o_unix.osabi0 = 0;  // Elf32_Ehdr::ELFOSABI_LINUX
+        break;
+    case 667:  // FreeBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_FREEBSD;
+        break;
+    case 668:  // NetBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_NETBSD;
+        break;
+    case 669:  // OpenBSD
+        opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_OPENBSD;
+        break;
     case 670:
         opt->ps1_exe.boot_only = true;
         break;
@@ -864,6 +877,10 @@ static const struct mfx_option longopts[] =
     {"is_ptinterp",         0, 0, 663},     // linux/elf386 PT_INTERP program
     {"use_ptinterp",        0, 0, 664},     // linux/elf386 PT_INTERP program
     {"make_ptinterp",       0, 0, 665},     // linux/elf386 PT_INTERP program
+    {"Linux",               0, 0, 666},
+    {"FreeBSD",             0, 0, 667},
+    {"NetBSD",              0, 0, 668},
+    {"OpenBSD",             0, 0, 669},
     // watcom/le
     {"le",                  0, 0, 620},     // produce LE output
     // win32/pe
