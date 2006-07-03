@@ -146,6 +146,7 @@ struct options_t {
         bool is_ptinterp;           // is PT_INTERP, so don't adjust auxv_t
         bool use_ptinterp;          // use PT_INTERP /opt/upx/run
         bool make_ptinterp;         // make PT_INTERP [ignore current file!]
+        unsigned char osabi0;       // replacement if 0==.e_ident[EI_OSABI]
         enum { SCRIPT_MAX = 32 };
         const char *script_name;
     } o_unix;
