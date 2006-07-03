@@ -68,6 +68,7 @@ protected:
     virtual bool testUnpackVersion(int version) const;
 
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 
     unsigned pe_offset;
     bool isrtm;

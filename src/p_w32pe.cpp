@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_w32pe.h"
+#include "linker.h"
 
 static const
 #include "stub/i386-win32.pe.h"
@@ -198,6 +199,12 @@ const int *PackW32Pe::getFilters() const
 }
 
 
+Linker* PackW32Pe::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 bool PackW32Pe::testUnpackVersion(int version) const
 {
     if (version != ph_version && ph_version != -1)
@@ -256,6 +263,20 @@ int PackW32Pe::readFileHeader()
     fi->readx(&h,6);
     isrtm = memcmp(&h,"32STUB",6) == 0;
     return UPX_F_WIN32_PE;
+}
+
+
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
+    return true;
 }
 
 
@@ -1711,7 +1732,7 @@ int PackW32Pe::buildLoader(const Filter *ft)
         addLoader("PEDEPHAK", NULL);
     addLoader("PEMAIN20", NULL);
     if (use_clear_dirty_stack)
-        addLoader(ih.entry ? "PEDOJUMP_CLEARSTACK" : "PERETURN_CLEARSTACK", NULL);
+        addLoader("CLEARSTACK", NULL);
     addLoader("PEMAIN21", NULL);
     addLoader(ih.entry ? "PEDOJUMP" : "PERETURN",
               "IDENTSTR,UPX1HEAD",
@@ -1930,11 +1951,6 @@ void PackW32Pe::pack(OutputFile *fo)
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
         tlsindex = 0;
 
-    const unsigned lsize = getLoaderSize();
-    MemBuffer loader(lsize);
-    memcpy(loader,getLoader(),lsize);
-    patchPackHeader(loader, lsize);
-
     int identsize = 0;
     const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
     assert(identsize > 0);
@@ -1970,11 +1986,7 @@ void PackW32Pe::pack(OutputFile *fo)
     const unsigned myimport = ncsection + soresources - rvamin;
 
     // patch loader
-    if (ih.entry)
-    {
-        unsigned jmp_pos = find_le32(loader,codesize + 4,get_le32("JMPO"));
-        patch_le32(loader,codesize + 4,"JMPO",ih.entry - upxsection - jmp_pos - 4);
-    }
+    linker->defineSymbol("original_entry", ih.entry);
     if (use_dep_hack)
     {
         // This works around a "protection" introduced in MSVCRT80, which
@@ -2003,70 +2015,58 @@ void PackW32Pe::pack(OutputFile *fo)
 #else
         // make sure we only touch the minimum number of pages
         const unsigned addr = 0u - rvamin + swri;
-        patch_le32(loader, codesize, "SWRI", addr &  0xfff);    // page offset
+        linker->defineSymbol("swri", addr &  0xfff);    // page offset
         // check whether osection[0].flags and osection[1].flags
         // are on the same page
-        if ((addr & 0xfff) + 0x28 >= 0x1000)
-            patch_le32(loader, codesize, "IMGL", 0x2000);       // two pages
-        else
-            patch_le32(loader, codesize, "IMGL", 0x1000);       // one page
-        patch_le32(loader, codesize, "IMGB", addr &~ 0xfff);    // page mask
+        linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
+                             0x2000 : 0x1000);          // 2 pages or 1 page
+        linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
 #endif
-        patch_le32(loader, codesize, "VPRO", myimport + get_le32(oimpdlls + 16) + 8);
+        linker->defineSymbol("VirtualProtect", myimport + get_le32(oimpdlls + 16) + 8);
     }
-    if (big_relocs & 6)
-        patch_le32(loader,codesize,"DELT", 0u - (unsigned) ih.imagebase - rvamin);
-    if (sorelocs && (soimport == 0 || soimport + cimports != crelocs))
-        patch_le32(loader,codesize,"BREL",crelocs);
-    if (soimport)
-    {
-        if (!isdll)
-            patch_le32(loader,codesize,"EXIT",myimport + get_le32(oimpdlls + 16) + 20);
-        patch_le32(loader,codesize,"GETP",myimport + get_le32(oimpdlls + 16) + 4);
-        if (kernel32ordinal)
-            patch_le32(loader,codesize,"K32O",myimport);
-        patch_le32(loader,codesize,"LOAD",myimport + get_le32(oimpdlls + 16));
-        patch_le32(loader,codesize,"IMPS",myimport);
-        patch_le32(loader,codesize,"BIMP",cimports);
-    }
+    linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
+    linker->defineSymbol("start_of_relocs", crelocs);
+    linker->defineSymbol("ExitProcess", myimport + get_le32(oimpdlls + 16) + 20);
+    linker->defineSymbol("GetProcAddress", myimport + get_le32(oimpdlls + 16) + 4);
+    linker->defineSymbol("kernel32_ordinals", myimport);
+    linker->defineSymbol("LoadLibraryA", myimport + get_le32(oimpdlls + 16));
+    linker->defineSymbol("start_of_imports", myimport);
+    linker->defineSymbol("compressed_imports", cimports);
 
 #if 0
     patch_le32(loader, codesize, "VALL", myimport + get_le32(oimpdlls + 16) + 12);
     patch_le32(loader, codesize, "VFRE", myimport + get_le32(oimpdlls + 16) + 16);
 #endif
 
-    if (patchFilter32(loader, codesize, &ft))
-    {
-        const unsigned texv = ih.codebase - rvamin;
-        if (texv)
-            patch_le32(loader, codesize, "TEXV", texv);
-    }
-    patchDecompressor(loader, codesize);
-    if (tlsindex)
-    {
-        // in case of overlapping decompression, this hack is needed,
-        // because windoze zeroes the word pointed by tlsindex before
-        // it starts programs
-        if (tlsindex + 4 > s1addr)
-            patch_le32(loader,codesize,"TLSV",get_le32(obuf + tlsindex - s1addr - ic));
-        else
-            patch_le32(loader,codesize,"TLSV",0); // bad guess
-        patch_le32(loader,codesize,"TLSA",tlsindex - rvamin);
-    }
-    if (icondir_count > 1)
-    {
-        if (icondir_count > 2)
-            patch_le16(loader,codesize,"DR",icondir_count - 1);
-        patch_le32(loader,codesize,"ICON",ncsection + icondir_offset - rvamin);
-    }
+    defineFilterSymbols(linker, &ft);
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
+    // FIXME    patchDecompressor(loader, codesize);
+
+
+    // in case of overlapping decompression, this hack is needed,
+    // because windoze zeroes the word pointed by tlsindex before
+    // it starts programs
+    linker->defineSymbol("tls_value", (tlsindex + 4 > s1addr) ?
+                         get_le32(obuf + tlsindex - s1addr - ic) : 0);
+    linker->defineSymbol("tls_address", tlsindex - rvamin);
+
+    linker->defineSymbol("icon_delta", icondir_count - 1);
+    linker->defineSymbol("icon_offset", ncsection + icondir_offset - rvamin);
 
     const unsigned esi0 = s1addr + ic;
-    patch_le32(loader,codesize,"EDI0", 0u - esi0 + rvamin);
-    patch_le32(loader,codesize,"ESI0", esi0 + ih.imagebase);
-    ic = getLoaderSection("PEMAIN01") + 2 + upxsection;
+    linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
+    linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
+
+    linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
+    linker->relocate();
+
+    const unsigned lsize = getLoaderSize();
+    MemBuffer loader(lsize);
+    memcpy(loader,getLoader(),lsize);
+    patchPackHeader(loader, lsize);
 
     Reloc rel(1024); // new relocations are put here
-    rel.add(ic,3);
+    rel.add(linker->getSymbolOffset("PEMAIN01") + 2, 3);
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));
