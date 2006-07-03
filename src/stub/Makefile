@@ -49,6 +49,7 @@ STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
 STUBS += i386-bsd.elf-entry.h
 STUBS += i386-bsd.elf-fold.h
+STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
 STUBS += i386-dos32.tmt.h
@@ -349,6 +350,41 @@ tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
 	$(call tc,objstrip) $@
 
 tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+i386-openbsd.elf% : tc_list = i386-openbsd.elf arch-i386 default
+i386-openbsd.elf% : tc_bfdname = elf32-i386
+
+tc.i386-openbsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.i386-openbsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.i386-openbsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.i386-openbsd.elf.gcc     += -march=i386 -mtune=k6
+tc.i386-openbsd.elf.gcc     += -Os -fno-omit-frame-pointer
+tc.i386-openbsd.elf.gcc     += -momit-leaf-frame-pointer
+tc.i386-openbsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+tc.i386-openbsd.elf.gcc     += -mpreferred-stack-boundary=2
+tc.i386-openbsd.elf.gcc     += -fweb
+tc.i386-openbsd.elf.ld       = $(call tc,m-ld)
+tc.i386-openbsd.elf.objcopy  = $(call tc,m-objcopy)
+tc.i386-openbsd.elf.objdump  = $(call tc,m-objdump)
+tc.i386-openbsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+
+# Note the re-use of i386-bsd.elf-entry.h as output (no separate i386-openbsd.elf-entry.h).
+# Note the re-use of i386-bsd.elf-fold.lds as input (no separate i386-openbsd.elf-fold.lds).
+
+i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o $(srcdir)/src/i386-bsd.elf-fold.lds
+	$(call tc,ld) -T $(srcdir)/src/i386-bsd.elf-fold.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=openbsd tmp/$T.bin
+	$(call tc,bin2h) --ident=openbsd_i386elf_fold tmp/$T.bin $@
+
+tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,objstrip) $@
 

@@ -53,6 +53,9 @@ def do_file(fn):
     if opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
         fp.seek(7, 0)
         fp.write("\x09")
+    elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
+        fp.seek(7, 0)
+        fp.write("\x0c")
     elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
         fp.seek(8, 0)
         fp.write("Linux\x00\x00\x00")

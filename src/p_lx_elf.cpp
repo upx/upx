@@ -622,6 +622,36 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
         tmp,                sizeof(bsd_i386elf_fold),  ft );
 }
 
+#if 0  //{  re-use for OpenBSD, too
+static const
+#include "stub/i386-bsd.elf-entry.h"
+#endif  //}
+static const
+#include "stub/i386-openbsd.elf-fold.h"
+
+int
+PackOpenBSDElf32x86::buildLoader(const Filter *ft)
+{
+    unsigned char tmp[sizeof(openbsd_i386elf_fold)];
+    memcpy(tmp, openbsd_i386elf_fold, sizeof(openbsd_i386elf_fold));
+    checkPatch(NULL, 0, 0, 0);  // reset
+    if (opt->o_unix.is_ptinterp) {
+        unsigned j;
+        for (j = 0; j < sizeof(openbsd_i386elf_fold)-1; ++j) {
+            if (0x60==tmp[  j]
+            &&  0x47==tmp[1+j] ) {
+                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
+                tmp[  j] = 0x47;
+                tmp[1+j] = 0x60;
+                break;
+            }
+        }
+    }
+    return buildLinuxLoader(
+        bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
+        tmp,                sizeof(openbsd_i386elf_fold),  ft );
+}
+
 static const
 #include "stub/arm-linux.elf-entry.h"
 static const
@@ -966,6 +996,7 @@ PackLinuxElf32::generateElfHdr(
         set_native32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+        set_native32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
 #undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
@@ -973,6 +1004,72 @@ PackLinuxElf32::generateElfHdr(
         set_native32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_native32(&h2->phdr[0].p_flags));
         memset(&h2->linfo, 0, sizeof(h2->linfo));
         fo->write(h2, sizeof(*h2));
+    }
+    else {
+        assert(false);  // unknown ph.format, PackLinuxElf32
+    }
+}
+
+void
+PackOpenBSDElf32x86::generateElfHdr(
+    OutputFile *fo,
+    void const *proto,
+    unsigned const brka
+)
+{
+    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
+    memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    assert(2==get_native16(&h3->ehdr.e_phnum));
+    set_native16(&h3->ehdr.e_phnum, 3);
+
+    assert(get_native32(&h3->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
+                         h3->ehdr.e_shoff = 0;
+    assert(get_native16(&h3->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
+    assert(get_native16(&h3->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
+                         h3->ehdr.e_shentsize = 0;
+                         h3->ehdr.e_shnum = 0;
+                         h3->ehdr.e_shstrndx = 0;
+
+#if 0  //{
+    unsigned identsize;
+    char const *const ident = getIdentstr(&identsize);
+#endif  //}
+    sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
+    unsigned const note_offset = sz_elf_hdrs;
+    set_native32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
+                  h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
+
+#define PAGE_MASK (~0u<<12)
+    unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
+    set_native32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
+    set_native32(&h3->phdr[1].p_offset, ~PAGE_MASK & brkb);
+    set_native32(&h3->phdr[1].p_vaddr, brkb);
+    set_native32(&h3->phdr[1].p_paddr, brkb);
+    h3->phdr[1].p_filesz = 0;
+    h3->phdr[1].p_memsz =  0;
+    set_native32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
+#undef PAGE_MASK
+
+    set_native32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
+    set_native32(&h3->phdr[2].p_offset, note_offset);
+    set_native32(&h3->phdr[2].p_vaddr, note_offset);
+    set_native32(&h3->phdr[2].p_paddr, note_offset);
+    set_native32(&h3->phdr[2].p_filesz, sizeof(elfnote));
+    set_native32(&h3->phdr[2].p_memsz,  sizeof(elfnote));
+    set_native32(&h3->phdr[2].p_flags, Elf32_Phdr::PF_R);
+
+    set_native32(&elfnote.namesz, 8);
+    set_native32(&elfnote.descsz, 4);
+    set_native32(&elfnote.type,   1);
+    strcpy(elfnote.text, "OpenBSD");
+                  elfnote.end   = 0;
+    
+    if (ph.format==getFormat()) {
+        memset(&h3->linfo, 0, sizeof(h3->linfo));
+        fo->write(h3, sizeof(*h3) - sizeof(h3->linfo));
+        fo->write(&elfnote, sizeof(elfnote));
+        fo->write(&h3->linfo, sizeof(h3->linfo));
     }
     else {
         assert(false);  // unknown ph.format, PackLinuxElf32
@@ -1618,7 +1715,18 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
     }
     fo->seek(0, SEEK_SET);
-    fo->rewrite(&elfout, sz_elf_hdrs);
+    if (Elf32_Phdr::PT_NOTE==get_native32(&elfout.phdr[2].p_type)) {
+        unsigned const reloc = get_native32(&elfout.phdr[0].p_vaddr);
+        set_native32(            &elfout.phdr[2].p_vaddr,
+            reloc + get_native32(&elfout.phdr[2].p_vaddr));
+        set_native32(            &elfout.phdr[2].p_paddr,
+            reloc + get_native32(&elfout.phdr[2].p_paddr));
+        fo->rewrite(&elfout, sz_elf_hdrs);
+        fo->rewrite(&elfnote, sizeof(elfnote));
+    }
+    else {
+        fo->rewrite(&elfout, sz_elf_hdrs);
+    }
     fo->rewrite(&linfo, sizeof(linfo));
 }
 

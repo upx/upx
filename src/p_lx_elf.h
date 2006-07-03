@@ -150,6 +150,14 @@ protected:
     __attribute_packed;
 
     cprElfHdr3 elfout;
+
+    struct Elf32_Note {
+        unsigned namesz;  // 8
+        unsigned descsz;  // 4
+        unsigned type;    // 1
+        char text[0x18 - 4*4];  // "OpenBSD"
+        unsigned end;     // 0
+    } elfnote;
 };
 
 
@@ -364,6 +372,14 @@ class PackOpenBSDElf32x86 : public PackBSDElf32x86
 public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
+
+    virtual int buildLoader(const Filter *ft);
+protected:
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
 };
 
 /*************************************************************************

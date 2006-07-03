@@ -138,6 +138,7 @@ struct Phdr
         PT_LOAD    = 1,         /* Loadable program segment */
         PT_DYNAMIC = 2,         /* Dynamic linking information */
         PT_INTERP  = 3,         /* Name of program interpreter */
+        PT_NOTE    = 4,         /* Auxiliary information (esp. OpenBSD) */
         PT_PHDR    = 6,         /* Entry for header table itself */
     };
 
