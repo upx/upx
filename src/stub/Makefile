@@ -45,14 +45,14 @@ STUBS += arm.v4t-wince.pe.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
+STUBS += i386-bsd.elf-entry.h
+STUBS += i386-bsd.elf-fold.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
 STUBS += i386-dos32.tmt.h
 STUBS += i386-dos32.watcom.le.h
 STUBS += i386-linux.elf-entry.h
 STUBS += i386-linux.elf-fold.h
-STUBS += i386-bsd.elf-entry.h
-STUBS += i386-bsd.elf-fold.h
 STUBS += i386-linux.elf.execve-entry.h
 STUBS += i386-linux.elf.execve-fold.h
 STUBS += i386-linux.elf.interp-entry.h
@@ -121,8 +121,7 @@ override T = $(basename $(notdir $@))
 
 # default settings for $(tc_list)
 tc.default.bin2h      = python $(srcdir)/scripts/bin2h.py
-tc.default.brandelf   = perl -w $(srcdir)/scripts/brandelf.pl
-tc.default.brandbsd   = perl -w $(srcdir)/scripts/brandbsd.pl
+tc.default.brandelf   = python $(srcdir)/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(srcdir)/scripts/gpp_inc.py
 tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
@@ -310,6 +309,49 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 
 
 # /***********************************************************************
+# // i386-bsd.elf
+# ************************************************************************/
+
+i386-bsd.elf% : tc_list = i386-bsd.elf arch-i386 default
+i386-bsd.elf% : tc_bfdname = elf32-i386
+
+tc.i386-bsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.i386-bsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.i386-bsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.i386-bsd.elf.gcc     += -march=i386 -mtune=k6
+tc.i386-bsd.elf.gcc     += -Os -fno-omit-frame-pointer
+tc.i386-bsd.elf.gcc     += -momit-leaf-frame-pointer
+tc.i386-bsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
+tc.i386-bsd.elf.gcc     += -mpreferred-stack-boundary=2
+tc.i386-bsd.elf.gcc     += -fweb
+tc.i386-bsd.elf.ld       = $(call tc,m-ld)
+tc.i386-bsd.elf.objcopy  = $(call tc,m-objcopy)
+tc.i386-bsd.elf.objdump  = $(call tc,m-objdump)
+tc.i386-bsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+
+i386-bsd.elf-entry.h : $(srcdir)/src/$$T.asm
+	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
+	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
+	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
+
+i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
+	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,brandelf) --elfos=freebsd tmp/$T.bin
+	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
+
+tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
+	$(call tc,nasm) -f elf -l $@.lst $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+
+# /***********************************************************************
 # // i386-dos32.djgpp2
 # ************************************************************************/
 
@@ -359,48 +401,6 @@ i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
 
 
 # /***********************************************************************
-# // i386-bsd.elf
-# ************************************************************************/
-
-i386-bsd.elf% : tc_list = i386-bsd.elf arch-i386 default
-i386-bsd.elf% : tc_bfdname = elf32-i386
-
-tc.i386-bsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.i386-bsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.i386-bsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.i386-bsd.elf.gcc     += -march=i386 -mtune=k6
-tc.i386-bsd.elf.gcc     += -Os -fno-omit-frame-pointer
-tc.i386-bsd.elf.gcc     += -momit-leaf-frame-pointer
-tc.i386-bsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-tc.i386-bsd.elf.gcc     += -mpreferred-stack-boundary=2
-tc.i386-bsd.elf.gcc     += -fweb
-tc.i386-bsd.elf.ld       = $(call tc,m-ld)
-tc.i386-bsd.elf.objcopy  = $(call tc,m-objcopy)
-tc.i386-bsd.elf.objdump  = $(call tc,m-objdump)
-tc.i386-bsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
-
-i386-bsd.elf-entry.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
-	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
-	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
-
-i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-	$(call tc,objstrip) tmp/$T.bin
-	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandbsd) tmp/$T.bin
-	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
-
-tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf -l $@.lst $< -o $@
-	$(call tc,objstrip) $@
-
-tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,objstrip) $@
-
-# /***********************************************************************
 # // i386-linux.elf
 # ************************************************************************/
 
@@ -431,7 +431,7 @@ i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.ld
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,brandelf) --elfos=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.asm
@@ -459,7 +459,7 @@ i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i3
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,brandelf) --elfos=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.asm
@@ -491,7 +491,7 @@ i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcd
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,brandelf) --elfos=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.asm
@@ -519,7 +519,7 @@ i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,brandelf) tmp/$T.bin
+	$(call tc,brandelf) --elfos=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
 
 tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.asm
