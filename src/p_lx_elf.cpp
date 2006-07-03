@@ -99,11 +99,15 @@ int
 PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
+    unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
+    if (0==osabi0) {
+        osabi0 = opt->o_unix.osabi0;
+    }
 
     if (0!=memcmp(buf, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
     ||  buf[Elf64_Ehdr::EI_CLASS]!=ei_class
     ||  buf[Elf64_Ehdr::EI_DATA] !=ei_data
-    ||  buf[Elf64_Ehdr::EI_OSABI] !=ei_osabi
+    ||                     osabi0!=ei_osabi
     ) {
         return -1;
     }
@@ -600,8 +604,6 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
 {
     unsigned char tmp[sizeof(bsd_i386elf_fold)];
     memcpy(tmp, bsd_i386elf_fold, sizeof(bsd_i386elf_fold));
-    ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
-    ((Elf32_Ehdr *)tmp)->e_ident[Elf32_Ehdr::EI_ABIVERSION] = 0;
     checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->o_unix.is_ptinterp) {
         unsigned j;
@@ -935,6 +937,7 @@ PackLinuxElf32::generateElfHdr(
     cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
 
     assert(get_native32(&h2->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
                          h2->ehdr.e_shoff = 0;
@@ -986,6 +989,7 @@ PackLinuxElf64::generateElfHdr(
     cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
 
     assert(get_native32(&h2->ehdr.e_phoff)     == sizeof(Elf64_Ehdr));
                          h2->ehdr.e_shoff = 0;
@@ -1866,7 +1870,7 @@ PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
     e_machine = Elf32_Ehdr::EM_386;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;  // ELFOSABI_LINUX
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
