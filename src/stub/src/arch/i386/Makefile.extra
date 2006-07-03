@@ -23,8 +23,8 @@ ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 
 STUBS += lzma_d_cf.ash lzma_d_cs.ash
 
-lzma_d_cf.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
-lzma_d_cs.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_c%.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_c%.ash : tc_bfdname = elf32-i386
 
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
@@ -34,7 +34,7 @@ tc.i386-lzma.gcc     += -I$(top_srcdir)/src
 lzma_d_c%.ash : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
 	$(call tc,objstrip) tmp/$T.o
-	$(call tc,objcopy) --only-section .text.LzmaDecode -O binary tmp/$T.o tmp/$T.bin
+	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
 	head -c-1 tmp/$T.bin > tmp/$T.out
 	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=nasm tmp/$T.out $@
