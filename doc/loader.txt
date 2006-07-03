@@ -2,16 +2,8 @@ This documentation is written for those brave souls who want to
 understand and/or modify the UPX assembly stubs - the small snippets
 that do the runtime decompression when a compressed program is started.
 
-So, how the runtime stub/loader generation works?
-
-You might have already noticed that for some file formats the loaders
-are quite simple (linux/i386 & tos) while in the other cases the
-loaders look very suspicious: they're full of `%ifdef's and contain
-loads of cryptic comments like `__PERELOC2__'.
-
-If you look at the C++ source files, however you can notice that these
-comment strings (without the leading and trailing underscores) are used
-in the following way:
+If you look at the C++ source files, you can find code fragments like
+this:
 
     addLoader("PEMAIN20",
               ih.entry ? "PEDOJUMP" : "PERETURN",
@@ -19,71 +11,40 @@ in the following way:
               NULL
              );
 
-Basically that's all you have to know: when you want to add a section
-of assembly code to the runtime loader, you just write
+    linker->defineSymbol("original_entry", ih.entry);
 
-l_foo.asm
----------
-    ;__FOOBAR00__
+and in the assembly files fragments like this:
 
-    xor eax, eax
-    label1:
-    jmps label1
+    section         PEISDLL1
+                    cmpb    [esp + 8], 1
+                    jnz     reloc_end_jmp
 
-    ;__FOOBARZZ__
+    section         PEMAIN21
+    reloc_end_jmp:
 
-p_foo.cpp
----------
+    section         PERETURN
+                    xor     eax, eax
+                    inc     eax
+                    ret     0x0C
+    section         PEDOJUMP
+                    jmp    original_entry
 
-    addLoader("FOOBAR00", NULL);
-
-This will add the assembly section starting from __FOOBAR00__ and ending
-before __FOOBARZZ__ to the loader. You can add an %ifdef - %endif pair
-before these comments if you wish - but these conditionals will NOT be
-seen by the assembler, they are just syntactic sugar to make the code a
-little bit more readable and understandable. (Note however, that only
-%ifdefs which are started on the 1st column are removed by the upx
-assembly preprocessor program, so you can still use preprocessor
-conditionals if you wish - just write them starting from the 2nd
-column.)
+Everything works as you would expect. If you want to add the code
+fragment which is in `section PERETURN' to the runtime stub, then
+simply use `addLoader("PERETURN")' in the C++ source.
 
 That's nice, you could say, but how cross section jumps and calls are
 handled? Well, that is the nicest part of this stuff - they are handled
 automatically. All you have to do is to add the required sections to the
 loader using `addLoader()' and the rest is done by upx. It will resolve
-every conditional or unconditional jumps or subrutine calls for you.
+every conditional or unconditional jumps or subroutine calls for you.
 
-This functionality (we could say it's a simple linker) is achived by the
-assembly preprocessor (src/stub/scripts/app.pl) and a little C++ module
-(src/linker.cpp). And of course NASM - the Netwide Assembler. You can
-see what's going on behind the scenes - just do:
+You can also use (undefined) symbols in the assembly for values that
+can only be computed during compression time (like `original_entry').
+These symbols can be defined later in C++ using
 
-    cd src/stubs
-    make maintainer-clean
-    make all
+        linker->defineSymbol("xx", yy)
 
-This will rebuild all the loaders - and keep the temporary files (*.as[xy])
-which are seen by the assembler.
-
-Currently this loader/stub building method only works with ix86
-assembly - both app.pl and linker.cpp heavily rely on this when dealing
-with cross section references.
-
-And finally some important features/requirements you should be aware of:
-
- - as previously stated - preprocessor conditionals starting on the 1st
-   column are removed by app.pl
- - sections are separated by comments in the form `;__X1234567__'
- - jumps are recognized by searching for a word which starts with `j'
-   and followed by a label - this also means that `jmp short label1'
-   will NOT be recognized (but you can use a macro called `jmps' for it
-   by adding `%define jmps jmp short' to the beginning of the file)
- - at the end of the file you need something like this
-
-    eof:
-    ;       __XTHEENDX__
-            section .data
-            dd      -1
-            dw      eof
-
-That's all for now.
+This functionality (we could say it's a simple linker) is achived by
+compiling the assembly into an ELF object file which a little C++
+module (src/linker.cpp) can interpret and work with.
