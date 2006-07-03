@@ -281,7 +281,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
+    compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     freezeLoader();
     const unsigned lsize = getLoaderSize();
@@ -362,7 +362,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, 0, NULL, &cconf); 
+    compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     // align everything to dword boundary - it is easier to handle
     unsigned c_len = ph.c_len;
