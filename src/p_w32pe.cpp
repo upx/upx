@@ -512,10 +512,29 @@ void PackW32Pe::processRelocs() // pass1
     {
         if (pos >= ih.imagesize)
             continue;           // skip out-of-bounds record
-        if (type == 3)
-            set_le32(ibuf + pos,get_le32(ibuf + pos) - ih.imagebase - rvamin);
         if (type < 4)
             fix[type][xcounts[type]++] = pos - rvamin;
+    }
+
+    // remove duplicated records
+    for (ic = 1; ic <= 3; ic++)
+    {
+        qsort(fix[ic], xcounts[ic], 4, le32_compare);
+        unsigned prev = ~0;
+        unsigned jc = 0;
+        for (unsigned kc = 0; kc < xcounts[ic]; kc++)
+            if (fix[ic][kc] != prev)
+                prev = fix[ic][jc++] = fix[ic][kc];
+
+        //printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        xcounts[ic] = jc;
+    }
+
+    // preprocess "type 3" relocation records
+    for (ic = 0; ic < xcounts[3]; ic++)
+    {
+        pos = fix[3][ic] + rvamin;
+        set_le32(ibuf + pos, get_le32(ibuf + pos) - ih.imagebase - rvamin);
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
