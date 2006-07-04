@@ -1,4 +1,4 @@
-;  fold_elf86.asm -- linkage to C code to process Elf binary
+;  i386-bsd.elf-fold.asm -- linkage to C code to process Elf binary
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -128,29 +128,33 @@ EXTERN upx_main
         pop ecx  ; end of unmap region
         pop ebx  ; start of unmap region (&Elf32_Ehdr of this stub)
         add esp, dword MAX_ELF_HDR + OVERHEAD  ; un-alloca
-        push eax  ; save entry address
+
+        push eax  ; save entry address as ret.addr
+        push byte 0  ; 'leave' uses this to clear ebp
+        mov ebp,esp  ; frame
+
+        sub ecx, ebx
+        sub eax,eax  ; 0, also AT_NULL
+        push ecx  ; length to unmap
+        push ebx  ; start of unmap region (&Elf32_Ehdr of this stub)
+        push eax  ; fake ret.addr
 
         dec edi  ; auxv table
-        sub eax,eax  ; 0, also AT_NULL
         db 0x3c  ; "cmpb al, byte ..." like "jmp 1+L60" but 1 byte shorter
 L60:
         scasd  ; a_un.a_val etc.
         scasd  ; a_type
         jne L60  ; not AT_NULL
 ; edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
+        push dword [edi]  ; &escape hatch
 
-        push eax
-        push eax
-        push eax
-        push eax
-        push eax
-        push eax
-        push eax
-        push eax  ; 32 bytes of zeroes now on stack, ready for 'popa'
-
-        sub ecx, ebx  ; length to unmap
+        xor edi,edi
+        xor esi,esi
+        xor edx,edx
+        xor ecx,ecx
+        xor ebx,ebx
         mov al, __NR_munmap  ; eax was 0 from L60
-        jmp [edi]  ; unmap ourselves via escape hatch, then goto entry
+        ret  ; goto escape hatch: int 0x80; leave; ret
 
 ; called twice:
 ;  1st with esi==edi, ecx=0, edx= bitmap of slots needed: just update edx.

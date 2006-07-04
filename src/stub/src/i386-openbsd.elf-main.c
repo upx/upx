@@ -281,7 +281,7 @@ make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[12])),
                 (phdr->p_offset==0) ) ) {
             // Omitting 'const' saves repeated literal in gcc.
-            unsigned /*const*/ escape = 0xc36180cd;  // "int $0x80; popa; ret"
+            unsigned /*const*/ escape = 0xc3c980cd;  // "int $0x80; leave; ret"
             // Don't store into read-only page if value is already there.
             if (* (volatile unsigned*) hatch != escape) {
                 * hatch  = escape;
