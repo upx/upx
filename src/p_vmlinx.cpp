@@ -36,6 +36,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_vmlinx.h"
+#include "linker.h"
 
 static const
 #include "stub/i386-linux.kernel.vmlinux.h"
@@ -153,6 +154,13 @@ bool PackVmlinuxI386::canPack()
     return 0 < n_ptload;
 }
 
+
+Linker* PackVmlinuxI386::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 int PackVmlinuxI386::buildLoader(const Filter *ft)
 {
     // prepare loader
@@ -177,6 +185,20 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
     addLoader("LINUX990,IDENTSTR,UPX1HEAD", NULL);
     freezeLoader();
     return getLoaderSize();
+}
+
+
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
+    return true;
 }
 
 
@@ -226,13 +248,18 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     const unsigned lsize = getLoaderSize();
+
+    defineFilterSymbols(linker, &ft);
+    if (0x40==(0xf0 & ft.id)) {
+        linker->defineSymbol("filter_length", ph.u_len); // redefine
+    }
+    linker->relocate();
+
+    // FIXME patchDecompressor(loader, lsize);
+
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
-
     patchPackHeader(loader, lsize);
-    patchDecompressor(loader, lsize);
-    patch_le32(loader, lsize, "ULEN", ph.u_len);
-    patchFilter32(loader, lsize, &ft);
 
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
