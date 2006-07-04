@@ -335,16 +335,16 @@ lxunfilter:
         pusha  // save C-convention ebx, ebp, esi, edi; also eax, edx
 
 // at most one of the next 2
-section MRUBYTE0  256==n_mru
+section MRUBYTE0 // 256==n_mru
         xor ebx, ebx  // zero
-section LXMRU005  0!=n_mru
-        mov ebx, offxset NMRU  // modified N_MRU or N_MRU -1
+section LXMRU005 // 0!=n_mru
+        mov ebx, offset NMRU  // modified N_MRU or N_MRU -1
 
-section LXMRU006 0!=n_mru
+section LXMRU006 // 0!=n_mru
         push 0x0f  // prefix of 6-byte Jcc <d32>
         pop eax
         mov ah, [esp + 8*4]  // cto8
-section LXMRU007  0==n_mru
+section LXMRU007 //  0==n_mru
         push 0x0f  // prefix of 6-byte Jcc <d32>
         pop ebx
         mov bh, [esp + 8*4]  // cto8
@@ -353,7 +353,7 @@ section LXUNF008
         mov dl, [esp + 8*4]  // cto8
 
 section LXUNF010
-        jmpn lxunf0
+        jmp lxunf0
 decompr0:
 
 // These #define are only if 0!=n_mru;
@@ -372,20 +372,20 @@ decompr0:
 
 section LXJCC010
 lxunf2:  // have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
-        movzx ebp, word [edi]  // 2 bytes, zero-extended
+        movzxw ebp, [edi]  // 2 bytes, zero-extended
 
-section LXMRU045  0!=n_mru
+section LXMRU045 // 0!=n_mru
         sub ebp, __cto8_0f
-section LXMRU046  0==n_mru
+section LXMRU046 // 0==n_mru
         sub ebp, ebx
 
-section LXJCC020  0==n_mru, or Jcc excluded ('sub' of equals clears Carry)
+section LXJCC020 // 0==n_mru, or Jcc excluded ('sub' of equals clears Carry)
         jne unfcount
-section LXJCC021  0!=n_mru and Jcc participates// must set Carry
+section LXJCC021 // 0!=n_mru and Jcc participates// must set Carry
         sub ebp, 1  // set Carry iff in range
         jnb unfcount
 
-section LXJCC023  found Jcc// re-swap 0x8Y opcode and 0x0f prefix
+section LXJCC023 // found Jcc// re-swap 0x8Y opcode and 0x0f prefix
         mov [edi -1], bl  // 0x0f prefix
         dec ecx  // preserve Carry
         mov [edi], al  // Jcc opcode
@@ -397,25 +397,25 @@ section LXUNF037
 lxunf:  // in: Carry set iff we should apply mru and 0!=n_mru
         mov eax, [edi]  // BE32 displacement with cto8 in low 8 bits
 
-section LXUNF386  0!=n_mru && 386
+section LXUNF386 // 0!=n_mru && 386
         pushf
-section LXUNF387  ==386
+section LXUNF387 // ==386
         shr ax, 8
         rol eax, 16
         xchg ah, al
-section LXUNF388  0!=n_mru && 386
+section LXUNF388 // 0!=n_mru && 386
         popf
-        jnc unf_store  // do not apply mru
+        jncs unf_store  // do not apply mru
 
-section LXUNF486  >=486
+section LXUNF486 // >=486
         mov al, 0
         CPU     486
         bswap eax  // preserve Carry (2-byte instruction)
         CPU     386
-section LXUNF487  0!=n_mru && >=486
-        jnc unf_store  // do not apply mru
+section LXUNF487 // 0!=n_mru && >=486
+        jncs unf_store  // do not apply mru
 
-section LXMRU065  0!=n_mru
+section LXMRU065 // 0!=n_mru
         shr __jc, 1  // eax= jc, or mru index
         jnc mru4  // not 1st time for this jc
 section MRUBYTE3
@@ -460,7 +460,7 @@ section LXMRU090
 
         mov __tmp, [esp + 4*__hand]  // tmp = mru[hand]
         test __tmp,__tmp
-        jnz mru8
+        jnzs mru8
 
           push __jc  // ran out of registers
         mov eax, __tail
@@ -490,9 +490,9 @@ unf_store:
         sub ecx, 4
 
 // one of the next2
-section LXMRU110  0!=n_mru
+section LXMRU110 // 0!=n_mru
         add eax, __addvalue
-section LXMRU111  0==n_mru
+section LXMRU111 // 0==n_mru
         add eax, esi  // addvalue (same as initial pointer)
 
 section LXUNF041
@@ -501,27 +501,27 @@ section LXUNF041
         jmps unfcount
 section LXUNF042
 lxunf0:           // continuation of entry prolog for unfilter
-section LEXEC016  bug in APP: jmp and label must be in same .asx/.asy
+section LEXEC016 // bug in APP: jmp and label must be in same .asx/.asy
         jmp lxunf0  // this instr does not really go here!
 
-section LXMRU010 0!=n_mru
+section LXMRU010 // 0!=n_mru
         push eax  // cto8_0f
-section LXJMPA00  only JMP, and not CALL, is filtered
+section LXJMPA00 // only JMP, and not CALL, is filtered
         mov al, 0xE9
-section LXCALLB0  only CALL, or both CALL and JMP are filtered
+section LXCALLB0 // only CALL, or both CALL and JMP are filtered
         mov al, 0xE8
-section LXUNF021  common tail
+section LXUNF021 // common tail
         push eax  // cto8_e8e9
         push 0  // tail
         push ebx  // n_mru or n_mru1
         mov esi, esp  // flat model "[esi]" saves a byte over "[ebp]"
 
-section LXMRU022  0==n_mru
+section LXMRU022 // 0==n_mru
         pop esi  // addvalue
         mov edx, ebx  // dh= cto8
-section LXJMPA01  only JMP, and not CALL, is filtered
+section LXJMPA01 // only JMP, and not CALL, is filtered
         mov dl, 0xE9
-section LXCALLB1  only CALL, or both CALL and JMP are filtered
+section LXCALLB1 // only CALL, or both CALL and JMP are filtered
         mov dl, 0xE8
 
 
@@ -537,23 +537,23 @@ section MRUBYTE1
 section MRUARB10
         dec __hand
 
-section LXMRU040  0!=n_mru
-        jnz lxunf1  // leaves 0=='hand'
+section LXMRU040 // 0!=n_mru
+        jnzs lxunf1  // leaves 0=='hand'
 
 section LXUNF030
 lxctloop:
-        movzx eax, word [edi]  // 2 bytes, zero extended
+        movzxw eax, [edi]  // 2 bytes, zero extended
         add edi, 1
 section LXJCC000
         cmp al, 0x80  // lo of Jcc <d32>
         jb lxct1
         cmp al, 0x8f  // hi of Jcc <d32>
-        jbe lxunf2
+        jbes lxunf2
 lxct1:
 
-section LXCJ0MRU  0==n_mru
+section LXCJ0MRU // 0==n_mru
         sub eax, edx
-section LXCJ1MRU  0!=n_mru
+section LXCJ1MRU // 0!=n_mru
         sub eax, __cto8_e8e9
 
 // both CALL and JMP are filtered
@@ -561,22 +561,22 @@ section LXCALJMP
         sub eax, 1+ (0xE9 - 0xE8)  // set Carry iff in range (result: -2, -1)
 
 // only CALL, or only JMP, is filtered
-section LXCALL00  0==n_mru
+section LXCALL00 // 0==n_mru
         je lxunf
-section LXCALL01  0!=n_rmu
+section LXCALL01 // 0!=n_rmu
         sub eax, 1  // set Carry iff in range
 
-section LXCJ2MRU  0==n_mru, or apply mru to all that are filtered here
+section LXCJ2MRU // 0==n_mru, or apply mru to all that are filtered here
         jb lxunf  // only Carry (Borrow) matters
-section LXCJ4MRU  0!=n_mru, but apply mru only to subset of filtered here
+section LXCJ4MRU // 0!=n_mru, but apply mru only to subset of filtered here
         jnb unfcount  // was not filtered anyway: do not unfilter
 
 //we will unfilter, and 0!=n_mru, but should we apply mru?
-section LXCJ6MRU  apply mru to JMP  only (0xFF==al)
+section LXCJ6MRU // apply mru to JMP  only (0xFF==al)
         jpe lxct3  // jump if even number of 1 bits in al
-section LXCJ7MRU  apply mru to CALL only (0xFE==al)
+section LXCJ7MRU // apply mru to CALL only (0xFE==al)
         jpo lxct3  // jump if odd  number of 1 bits in al
-section LXCJ8MRU  do not apply mru to one or both
+section LXCJ8MRU // do not apply mru to one or both
         clc
 lxct3:
         jmps lxunf
@@ -584,7 +584,7 @@ lxct3:
 section LXUNF034
 unfcount:
         sub ecx, 1
-        jg lxctloop
+        jgs lxctloop
 
 section LXMRU055
         mov edi, esp // clear mru[] portion of stack
@@ -602,7 +602,7 @@ section LXMRU057
         stosd
         mov esp, edi
 
-section LXMRU058  0==n_mru
+section LXMRU058 // 0==n_mru
         push esi
 section LXUNF035
         popa
