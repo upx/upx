@@ -194,69 +194,67 @@ section         CALLTR13
                 stosd
                 jmps    ctloop1
 ctend:
-section CTTHEEND
 .endm
 
-#if 0
-
+/*
 ;;  call/jump/jcc trick; also used more than once (and/or optionally), so
 ;;  ecx has byte count (not count of applied instances), and
 ;;  edi points to buffer.
-%macro          ckt32   2
-; 1st param: effective addvalue (typically 0 or edi; any rvalue)
-; 2nd param: where is cto8 (dl, bl, or literal)
+*/
+.macro          ckt32   addvalue, cto8
+// 1st param: effective addvalue (typically 0 or edi; any rvalue)
+// 2nd param: where is cto8 (dl, bl, or literal)
 
-section CKLLTR00
- %ifnidn %1,0
-                mov     esi, %1
- %endif
+section         CKLLTR00
+        .ifnc   \addvalue, 0
+                mov     esi, \addvalue
+        .endif
                 jmps    ckstart
 ckloop3:
                 mov     al, [edi]
-                add     edi, byte 1
-section CKLLTR10  Jcc only
-                cmp     al, 0x80  ; lo of 6-byte Jcc
+                add     edi, 1
+section         CKLLTR10                // Jcc only
+                cmp     al, 0x80        // lo of 6-byte Jcc
                 jb      ckloop2
-                cmp     al, 0x8f  ; hi of 6-byte Jcc
+                cmp     al, 0x8f        // hi of 6-byte Jcc
                 ja      ckloop2
-                cmp     byte [edi -2], 0x0F  ; prefix of 6-byte Jcc
-                je      ckmark
+                cmpb    [edi -2], 0x0F  // prefix of 6-byte Jcc
+                jes     ckmark
 ckloop2:
-section CKLLTR20
+section         CKLLTR20
                 sub     al, 0xE8
                 cmp     al, 0xE9 - 0xE8
-                ja      ckcount
+                jas     ckcount
 ckmark:
-                cmp     byte [edi], %2  ; cto8
-                jnz     ckcount
+                cmp     [edi], \cto8
+                jnzs    ckcount
                 mov     eax, [edi]
 
                 shr     ax, 8
                 rol     eax, 16
                 xchg    ah, al
-; above 3 instr are equivalent to the following 2 instr:
-;               mov     al, 0   ; clear cto8  [setup partial-write stall]
-;               bswap   eax     ; not on 386: need 486 and up
+// above 3 instr are equivalent to the following 2 instr:
+//               mov     al, 0   ; clear cto8  [setup partial-write stall]
+//               bswap   eax     ; not on 386: need 486 and up
 
                 sub     eax, edi
- %ifnidn %1,0
+        .ifnc   \addvalue, 0
                 add     eax, esi
- %endif
+        .endif
                 mov     [edi], eax
-                add     edi, byte 4
+                add     edi, 4
 ckstart:
-                sub     ecx, byte 4
-section CKLLTR30  Jcc only
+                sub     ecx, 4
+section         CKLLTR30   // Jcc only
                 mov     al, [edi]
-                add     edi, byte 1
-                loop    ckloop2  ; prefix cannot overlap previous displacement
-section CKLLTR40
+                add     edi, 1
+                loop    ckloop2  // prefix cannot overlap previous displacement
+section         CKLLTR40
 ckcount:
-                sub     ecx, byte 1
-                jg      ckloop3
+                sub     ecx, 1
+                jgs     ckloop3
 ckend:
-%endmacro
-#endif
+.endm
 
 // =============
 // ============= 32-BIT RELOCATIONS
@@ -301,7 +299,7 @@ reloc_endx:
 section         REL32END
 .endm
 
-#if 0
+/*
 ;; =============
 ;; ============= 32-BIT CALL TRICK UNFILTER WITH MostRecentlyUsed BUFFER
 ;; =============
@@ -312,90 +310,92 @@ section         REL32END
 ;; MRUARBnn  arbitrary number of entries in wheel
 ;; MRUBITSn  power of 2          entries in wheel (smaller code)
 ;; MRUBYTEn  256                 entries in wheel (smallest code)
+*/
 
-%macro          ctojr32 0
-%push ctojr32
-
+/*
 ;; I got confused by the syntactic sugar of the fake %ifdefs.
 ;; I can read the section name more easily when it is at the left margin.
 ;; Also, some of the logic to select the sections is not that simple,
 ;; and any mismatch between the logic and the %ifdefs is very confusing.
 ;; Instead, I use comments after the section name, and blank lines for grouping.
+*/
 
-section LXUNF000  enter at +0 for decompression; +2 for unfiltering
+.macro  ctojr32
+
+section LXUNF000        // enter at +0 for decompression; +2 for unfiltering
         jmps decompr0
 section LXUNF002
-  ;; 2+ address of decompress subroutine
-  ;; unfilter(upx_byte *, length, cto8)
+  // 2+ address of decompress subroutine
+  // unfilter(upx_byte *, length, cto8)
 lxunfilter:
-        pop edx  ; return address
-        pop eax  ; upx_byte *, same as addvalue
-        pop ecx  ; length
-        xchg eax, edi  ; edi= pointer; eax= saved_edi
-        pusha  ; save C-convention ebx, ebp, esi, edi; also eax, edx
+        pop edx  // return address
+        pop eax  // upx_byte *, same as addvalue
+        pop ecx  // length
+        xchg eax, edi  // edi= pointer; eax= saved_edi
+        pusha  // save C-convention ebx, ebp, esi, edi; also eax, edx
 
-; at most one of the next 2
+// at most one of the next 2
 section MRUBYTE0  256==n_mru
-        xor ebx, ebx  ; zero
+        xor ebx, ebx  // zero
 section LXMRU005  0!=n_mru
-        mov ebx, 'NMRU'  ; modified N_MRU or N_MRU -1
+        mov ebx, offxset NMRU  // modified N_MRU or N_MRU -1
 
 section LXMRU006 0!=n_mru
-        push byte 0x0f  ; prefix of 6-byte Jcc <d32>
+        push 0x0f  // prefix of 6-byte Jcc <d32>
         pop eax
-        mov ah, [esp + 8*4]  ; cto8
+        mov ah, [esp + 8*4]  // cto8
 section LXMRU007  0==n_mru
-        push byte 0x0f  ; prefix of 6-byte Jcc <d32>
+        push 0x0f  // prefix of 6-byte Jcc <d32>
         pop ebx
-        mov bh, [esp + 8*4]  ; cto8
+        mov bh, [esp + 8*4]  // cto8
 
 section LXUNF008
-        mov dl, [esp + 8*4]  ; cto8
+        mov dl, [esp + 8*4]  // cto8
 
 section LXUNF010
         jmpn lxunf0
 decompr0:
 
-;; These %define are only if 0!=n_mru;
-;; else 0x0F==bl && cto8==bh==dh && 0xE8==dl && addvalue==esi .
-%define %$n_mru      [esi]
-%define %$n_mru1     [esi]
-%define %$tail       [esi + 4*1]
-%define %$cto8_e8e9  [esi + 4*2]
-%define %$cto8_0f    [esi + 4*3]
-%define %$addvalue   [esi + 4*4]
-%define %$tmp        ebp
-%define %$hand       ebx
-%define %$hand_l      bl
-%define %$kh         edx
-%define %$kh_l        dl
+// These #define are only if 0!=n_mru;
+// else 0x0F==bl && cto8==bh==dh && 0xE8==dl && addvalue==esi .
+#define __n_mru      [esi]
+#define __n_mru1     [esi]
+#define __tail       [esi + 4*1]
+#define __cto8_e8e9  [esi + 4*2]
+#define __cto8_0f    [esi + 4*3]
+#define __addvalue   [esi + 4*4]
+#define __tmp        ebp
+#define __hand       ebx
+#define __hand_l      bl
+#define __kh         edx
+#define __kh_l        dl
 
 section LXJCC010
-lxunf2:  ; have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
-        movzx ebp, word [edi]  ; 2 bytes, zero-extended
+lxunf2:  // have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
+        movzx ebp, word [edi]  // 2 bytes, zero-extended
 
 section LXMRU045  0!=n_mru
-        sub ebp, %$cto8_0f
+        sub ebp, __cto8_0f
 section LXMRU046  0==n_mru
         sub ebp, ebx
 
 section LXJCC020  0==n_mru, or Jcc excluded ('sub' of equals clears Carry)
         jne unfcount
-section LXJCC021  0!=n_mru and Jcc participates; must set Carry
-        sub ebp, byte 1  ; set Carry iff in range
+section LXJCC021  0!=n_mru and Jcc participates// must set Carry
+        sub ebp, 1  // set Carry iff in range
         jnb unfcount
 
-section LXJCC023  found Jcc; re-swap 0x8Y opcode and 0x0f prefix
-        mov byte [edi -1], bl  ; 0x0f prefix
-        dec ecx  ; preserve Carry
-        mov byte [edi], al  ; Jcc opcode
-        inc edi  ; preserve Carry
+section LXJCC023  found Jcc// re-swap 0x8Y opcode and 0x0f prefix
+        mov [edi -1], bl  // 0x0f prefix
+        dec ecx  // preserve Carry
+        mov [edi], al  // Jcc opcode
+        inc edi  // preserve Carry
 
 section LXUNF037
-%define %$jc     eax
+#define __jc     eax
 
-lxunf:  ; in: Carry set iff we should apply mru and 0!=n_mru
-        mov eax, [edi]  ; BE32 displacement with cto8 in low 8 bits
+lxunf:  // in: Carry set iff we should apply mru and 0!=n_mru
+        mov eax, [edi]  // BE32 displacement with cto8 in low 8 bits
 
 section LXUNF386  0!=n_mru && 386
         pushf
@@ -405,120 +405,120 @@ section LXUNF387  ==386
         xchg ah, al
 section LXUNF388  0!=n_mru && 386
         popf
-        jnc unf_store  ; do not apply mru
+        jnc unf_store  // do not apply mru
 
 section LXUNF486  >=486
-        mov al, byte 0
+        mov al, 0
         CPU     486
-        bswap eax  ; preserve Carry (2-byte instruction)
+        bswap eax  // preserve Carry (2-byte instruction)
         CPU     386
 section LXUNF487  0!=n_mru && >=486
-        jnc unf_store  ; do not apply mru
+        jnc unf_store  // do not apply mru
 
 section LXMRU065  0!=n_mru
-        shr %$jc, 1  ; eax= jc, or mru index
-        jnc mru4  ; not 1st time for this jc
+        shr __jc, 1  // eax= jc, or mru index
+        jnc mru4  // not 1st time for this jc
 section MRUBYTE3
-        dec %$hand_l
+        dec __hand_l
 section MRUARB30
-        dec %$hand
+        dec __hand
 section MRUBITS3
-        and %$hand, %$n_mru1
+        and __hand, __n_mru1
 section MRUARB40
         jge mru3
-        add %$hand, %$n_mru
+        add __hand, __n_mru
 mru3:
 section LXMRU070
 
-        mov [esp + 4*%$hand], %$jc  ; 1st time: mru[hand] = jc
+        mov [esp + 4*__hand], __jc  // 1st time: mru[hand] = jc
         jmps unf_store
 
-mru4:  ; not 1st time for this jc
-        lea %$kh, [%$jc + %$hand]  ; kh = jc + hand
+mru4:  // not 1st time for this jc
+        lea __kh, [__jc + __hand]  // kh = jc + hand
 section MRUBYTE4
-        movzx %$kh, %$kh_l
+        movzx __kh, __kh_l
 section MRUBITS4
-        and %$kh, %$n_mru1
+        and __kh, __n_mru1
 section MRUARB50
-        cmp %$kh, %$n_mru
+        cmp __kh, __n_mru
         jb mru5
-        sub %$kh, %$n_mru
+        sub __kh, __n_mru
 mru5:
 section LXMRU080
-        mov %$jc, [esp + 4*%$kh]  ; jc = mru[kh]
+        mov __jc, [esp + 4*__kh]  // jc = mru[kh]
 section MRUBYTE5
-        dec %$hand_l
+        dec __hand_l
 section MRUARB60
-        dec %$hand
+        dec __hand
 section MRUBITS5
-        and %$hand, %$n_mru1
+        and __hand, __n_mru1
 section MRUARB70
         jge mru6
-        add %$hand, %$n_mru
+        add __hand, __n_mru
 mru6:
 section LXMRU090
 
-        mov %$tmp, [esp + 4*%$hand]  ; tmp = mru[hand]
-        test %$tmp,%$tmp
+        mov __tmp, [esp + 4*__hand]  // tmp = mru[hand]
+        test __tmp,__tmp
         jnz mru8
 
-          push %$jc  ; ran out of registers
-        mov eax, %$tail
+          push __jc  // ran out of registers
+        mov eax, __tail
 
 section MRUBYTE6
         dec al
 section MRUARB80
         dec eax
 section MRUBITS6
-        and eax, %$n_mru1
+        and eax, __n_mru1
 section MRUARB90
         jge mru7
-        add eax, %$n_mru
+        add eax, __n_mru
 mru7:
 section LXMRU100
 
-        xor %$tmp,%$tmp
-        mov %$tail, eax
-        xchg [4+ esp + 4*eax], %$tmp  ; tmp = mru[tail]; mru[tail] = 0
-          pop %$jc
+        xor __tmp,__tmp
+        mov __tail, eax
+        xchg [4+ esp + 4*eax], __tmp  // tmp = mru[tail]; mru[tail] = 0
+          pop __jc
 mru8:
-        mov [esp + 4*%$kh  ], %$tmp  ; mru[kh] = tmp
-        mov [esp + 4*%$hand], %$jc   ; mru[hand] = jc
+        mov [esp + 4*__kh  ], __tmp  // mru[kh] = tmp
+        mov [esp + 4*__hand], __jc   // mru[hand] = jc
 section LXUNF040
 unf_store:
         sub eax, edi
-        sub ecx, byte 4
+        sub ecx, 4
 
-; one of the next2
+// one of the next2
 section LXMRU110  0!=n_mru
-        add eax, %$addvalue
+        add eax, __addvalue
 section LXMRU111  0==n_mru
-        add eax, esi  ; addvalue (same as initial pointer)
+        add eax, esi  // addvalue (same as initial pointer)
 
 section LXUNF041
         mov [edi], eax
-        add edi, byte 4
+        add edi, 4
         jmps unfcount
 section LXUNF042
-lxunf0:           ;; continuation of entry prolog for unfilter
+lxunf0:           // continuation of entry prolog for unfilter
 section LEXEC016  bug in APP: jmp and label must be in same .asx/.asy
-        jmp lxunf0  ; this instr does not really go here!
+        jmp lxunf0  // this instr does not really go here!
 
 section LXMRU010 0!=n_mru
-        push eax  ; cto8_0f
+        push eax  // cto8_0f
 section LXJMPA00  only JMP, and not CALL, is filtered
         mov al, 0xE9
 section LXCALLB0  only CALL, or both CALL and JMP are filtered
         mov al, 0xE8
 section LXUNF021  common tail
-        push eax  ; cto8_e8e9
-        push byte 0  ; tail
-        push ebx  ; n_mru or n_mru1
-        mov esi, esp  ; flat model "[esi]" saves a byte over "[ebp]"
+        push eax  // cto8_e8e9
+        push 0  // tail
+        push ebx  // n_mru or n_mru1
+        mov esi, esp  // flat model "[esi]" saves a byte over "[ebp]"
 
 section LXMRU022  0==n_mru
-        pop esi  ; addvalue
-        mov edx, ebx  ; dh= cto8
+        pop esi  // addvalue
+        mov edx, ebx  // dh= cto8
 section LXJMPA01  only JMP, and not CALL, is filtered
         mov dl, 0xE9
 section LXCALLB1  only CALL, or both CALL and JMP are filtered
@@ -526,56 +526,56 @@ section LXCALLB1  only CALL, or both CALL and JMP are filtered
 
 
 section MRUBITS1
-        inc %$hand  ; n_mru1 ==> n_mru
+        inc __hand  // n_mru1 ==> n_mru
 section LXMRU030
-lxunf1:  ; allocate and clear mru[]
-        push byte 0
+lxunf1:  // allocate and clear mru[]
+        push 0
 
-; one of the next 2, if n_mru
+// one of the next 2, if n_mru
 section MRUBYTE1
-        dec %$hand_l
+        dec __hand_l
 section MRUARB10
-        dec %$hand
+        dec __hand
 
 section LXMRU040  0!=n_mru
-        jnz lxunf1  ; leaves 0=='hand'
+        jnz lxunf1  // leaves 0=='hand'
 
 section LXUNF030
 lxctloop:
-        movzx eax, word [edi]  ; 2 bytes, zero extended
-        add edi, byte 1
+        movzx eax, word [edi]  // 2 bytes, zero extended
+        add edi, 1
 section LXJCC000
-        cmp al, 0x80  ; lo of Jcc <d32>
+        cmp al, 0x80  // lo of Jcc <d32>
         jb lxct1
-        cmp al, 0x8f  ; hi of Jcc <d32>
+        cmp al, 0x8f  // hi of Jcc <d32>
         jbe lxunf2
 lxct1:
 
 section LXCJ0MRU  0==n_mru
         sub eax, edx
 section LXCJ1MRU  0!=n_mru
-        sub eax, %$cto8_e8e9
+        sub eax, __cto8_e8e9
 
-; both CALL and JMP are filtered
+// both CALL and JMP are filtered
 section LXCALJMP
-        sub eax, byte 1+ (0xE9 - 0xE8)  ; set Carry iff in range (result: -2, -1)
+        sub eax, 1+ (0xE9 - 0xE8)  // set Carry iff in range (result: -2, -1)
 
-; only CALL, or only JMP, is filtered
+// only CALL, or only JMP, is filtered
 section LXCALL00  0==n_mru
         je lxunf
 section LXCALL01  0!=n_rmu
-        sub eax, byte 1  ; set Carry iff in range
+        sub eax, 1  // set Carry iff in range
 
 section LXCJ2MRU  0==n_mru, or apply mru to all that are filtered here
-        jb lxunf  ; only Carry (Borrow) matters
+        jb lxunf  // only Carry (Borrow) matters
 section LXCJ4MRU  0!=n_mru, but apply mru only to subset of filtered here
-        jnb unfcount  ; was not filtered anyway: do not unfilter
+        jnb unfcount  // was not filtered anyway: do not unfilter
 
-;we will unfilter, and 0!=n_mru, but should we apply mru?
+//we will unfilter, and 0!=n_mru, but should we apply mru?
 section LXCJ6MRU  apply mru to JMP  only (0xFF==al)
-        jpe lxct3  ; jump if even number of 1 bits in al
+        jpe lxct3  // jump if even number of 1 bits in al
 section LXCJ7MRU  apply mru to CALL only (0xFE==al)
-        jpo lxct3  ; jump if odd  number of 1 bits in al
+        jpo lxct3  // jump if odd  number of 1 bits in al
 section LXCJ8MRU  do not apply mru to one or both
         clc
 lxct3:
@@ -583,19 +583,19 @@ lxct3:
 
 section LXUNF034
 unfcount:
-        sub ecx, byte 1
+        sub ecx, 1
         jg lxctloop
 
 section LXMRU055
-        mov edi, esp ; clear mru[] portion of stack
+        mov edi, esp // clear mru[] portion of stack
 section MRUBYTE2
-        mov ecx, 4+ 256  ; unused, tail, cto8_e8e9, cto8_0f
+        mov ecx, 4+ 256  // unused, tail, cto8_e8e9, cto8_0f
 section MRUBITS2
-        mov ecx, %$n_mru1
-        add ecx, byte 1+ 4  ; n_mru1, tail, cto8_e8e9, cto8_0f
+        mov ecx, __n_mru1
+        add ecx, 1+ 4  // n_mru1, tail, cto8_e8e9, cto8_0f
 section MRUARB20
-        mov ecx, %$n_mru
-        add ecx, byte 4  ; n_mru, tail, cto8_e8e9, cto8_0f
+        mov ecx, __n_mru
+        add ecx, 4  // n_mru, tail, cto8_e8e9, cto8_0f
 section LXMRU057
         xor eax, eax
         rep
@@ -611,8 +611,6 @@ section LXUNF035
         push eax
         push edx
         ret
-%pop
-%endmacro
-#endif
+.endm
 
 // vi:ts=8:et:nowrap

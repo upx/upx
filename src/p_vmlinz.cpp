@@ -32,6 +32,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_vmlinz.h"
+#include "linker.h"
 #include <zlib.h>
 
 static const
@@ -242,6 +243,12 @@ void PackVmlinuzI386::readKernel()
 }
 
 
+Linker* PackVmlinuzI386::newLinker() const
+{
+    return new ElfLinkerX86;
+}
+
+
 /*************************************************************************
 // vmlinuz specific
 **************************************************************************/
@@ -268,6 +275,19 @@ int PackVmlinuzI386::buildLoader(const Filter *ft)
 }
 
 
+static bool defineFilterSymbols(Linker *linker, const Filter *ft)
+{
+    if (ft->id == 0)
+        return false;
+    assert(ft->calls > 0);
+
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
+    return true;
+}
+
 void PackVmlinuzI386::pack(OutputFile *fo)
 {
     readKernel();
@@ -283,17 +303,18 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
-    freezeLoader();
     const unsigned lsize = getLoaderSize();
+
+    defineFilterSymbols(linker, &ft);
+    // FIXME patchDecompressor(loader, lsize);
+    linker->defineSymbol("src_for_decompressor", zimage_offset + lsize);
+    linker->defineSymbol("original_entry", kernel_entry);
+    linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
+    linker->relocate();
+
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
-
     patchPackHeader(loader, lsize);
-    patchFilter32(loader, lsize, &ft);
-    patchDecompressor(loader, lsize);
-    patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
-    patch_le32(loader, lsize, "KEIP", kernel_entry);
-    patch_le32(loader, lsize, "STAK", stack_offset_during_uncompression);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16) / 16;
@@ -327,10 +348,15 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
     addLoader("LINUZ000",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
-              "+40D++++", // align the stuff to 4 byte boundary
+              "+40", // align the stuff to 4 byte boundary
               "UPX1HEAD", // 32 byte
-              "LZCUTPOI,+0000000",
-              getDecompressorSections(),
+              "LZCUTPOI",
+              NULL);
+
+    // fake alignment for the start of the decompressor
+    linker->defineSymbol("LZCUTPOI", 0x1000);
+
+    addLoader(getDecompressorSections(),
               NULL
              );
     if (ft->id)
@@ -370,12 +396,8 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     c_len = ALIGN_UP(c_len, 4);
 
     const unsigned lsize = getLoaderSize();
-    MemBuffer loader(lsize);
-    memcpy(loader, getLoader(), lsize);
 
-    patchPackHeader(loader, lsize);
-    patchFilter32(loader, lsize, &ft);
-    patchDecompressor(loader, lsize);
+    // FIXME patchDecompressor(loader, lsize);
 
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
@@ -386,19 +408,24 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
     const unsigned esi = ALIGN_UP(c_len + lsize, 4) - 4;     // copy from
 
-    unsigned jpos = find_le32(loader, e_len, get_le32("JMPD"));
-    patch_le32(loader, e_len, "JMPD", decompr_pos - jpos - 4);
+    linker->defineSymbol("decompressor", decompr_pos);
+    linker->defineSymbol("src_for_decompressor", bzimage_offset + decompr_pos - c_len);
+    linker->defineSymbol("words_to_copy", copy_size / 4);
+    linker->defineSymbol("copy_dest", bzimage_offset + edi);
+    linker->defineSymbol("copy_source", bzimage_offset + esi);
 
-    patch_le32(loader, e_len, "ESI1", bzimage_offset + decompr_pos - c_len);
-    patch_le32(loader, e_len, "ECX0", copy_size / 4);
-    patch_le32(loader, e_len, "EDI0", bzimage_offset + edi);
-    patch_le32(loader, e_len, "ESI0", bzimage_offset + esi);
-
+    defineFilterSymbols(linker, &ft);
     if (0x40==(0xf0 & ft.id)) {
-        patch_le32(loader, e_len, "ULEN", ph.u_len);
+        linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
-    patch_le32(loader, e_len, "KEIP", kernel_entry);
-    patch_le32(loader, e_len, "STAK", stack_offset_during_uncompression);
+    // FIXME patchDecompressor(loader, lsize);
+    linker->defineSymbol("original_entry", kernel_entry);
+    linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
+    linker->relocate();
+
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader, lsize);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = (ALIGN_UP(lsize + c_len, 16) / 16) & 0xffff;

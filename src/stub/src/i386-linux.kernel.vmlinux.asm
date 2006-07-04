@@ -1,3 +1,4 @@
+/*
 ;  l_vmlinx.asm -- loader & decompressor for the vmlinux/i386 format
 ;
 ;  This file is part of the UPX executable compressor.
@@ -27,122 +28,108 @@
 ;
 ;  John Reiser
 ;  <jreiser@users.sourceforge.net>
+*/
 
+#include        "arch/i386/macros2.ash"
 
-%define         jmps    jmp short
-%define         jmpn    jmp near
-%include        "arch/i386/macros.ash"
-
-                BITS    32
-                SECTION .text
-                ORG     0
-
+/*
 ; =============
 ; ============= ENTRY POINT
 ; =============
 
-start:
 ;  In:
-;       %eax= &uncompressed [and final entry]; %ds= %es= __BOOT_DS
-;       %esp: &compressed; __BOOT_CS
-;       __LINUX000__
-                pop     edx  ; &compressed; length at -4(%edx)
+;       #eax= &uncompressed [and final entry]; #ds= #es= __BOOT_DS
+;       #esp: &compressed; __BOOT_CS
+*/
+section         LINUX000
+                pop     edx     // &compressed; length at -4(#edx)
 
-                push    eax     ; MATCH00(1/2)  entry address; __BOOT_CS
-                push    edi     ; MATCH01  save
-                push    esi     ; MATCH02  save
+                push    eax     // MATCH00(1/2)  entry address; __BOOT_CS
+                push    edi     // MATCH01  save
+                push    esi     // MATCH02  save
 
-%ifdef  __LXCALLT1__
-                push    eax     ; MATCH03  src unfilter
-%endif; __LXDUMMY0__
-%ifdef  __LXCKLLT1__
-                push    eax     ; MATCH03  src unfilter
-                push    byte '?'  ; MATCH04  cto unfilter
-%endif; __LXMOVEUP__
-                push    'ULEN'  ; MATCH05  uncompressed length
-                call move_up    ; MATCH06
+section         LXCALLT1
+                push    eax     // MATCH03  src unfilter
+section         LXCKLLT1
+                push    eax     // MATCH03  src unfilter
+                //push   offset filter_cto // MATCH04  cto unfilter
+                .byte   0x6a, filter_cto   // MATCH04  cto unfilter
+section         LXMOVEUP
+                push    offset filter_length // MATCH05  uncompressed length
+                call move_up    // MATCH06
 
-; =============
-; ============= DECOMPRESSION
-; =============
+// =============
+// ============= DECOMPRESSION
+// =============
 
-%include      "arch/i386/nrv2b_d32.ash"
-%include      "arch/i386/nrv2d_d32.ash"
-%include      "arch/i386/nrv2e_d32.ash"
-%include      "arch/i386/lzma_d.ash"
+//#include      "arch/i386/nrv2b_d32.ash"
+//#include      "arch/i386/nrv2d_d32.ash"
+//#include      "arch/i386/nrv2e_d32.ash"
+#include        "arch/i386/nrv2e_d32_2.ash"
+//#include      "arch/i386/lzma_d.ash"
 
-; =============
-; ============= UNFILTER
-; =============
+// =============
+// ============= UNFILTER
+// =============
 
-%ifdef  __LXCKLLT9__
-                pop     ecx     ; MATCH05  len
-                pop     edx     ; MATCH04  cto
-                pop     edi     ; MATCH03  src
+section         LXCKLLT9
+                pop     ecx     // MATCH05  len
+                pop     edx     // MATCH04  cto
+                pop     edi     // MATCH03  src
 
-                ckt32   edi, dl ; dl has cto8
+                ckt32   edi, dl // dl has cto8
+/*
         ;edi: adjust for the difference between 0 origin of buffer at filter,
         ;and actual origin of destination at unfilter.
         ;Filter.addvalue is 0: destination origin is unknown at filter time.
         ;The input data is still relocatable, and address is assigned later
         ;[as of 2004-12-15 it is 'always' 0x100000].
+*/
 
-%endif; __LXDUMMY2__
-%ifdef  __LXCALLT9__
-                pop     ecx     ; MATCH05  len
-                pop     edi     ; MATCH03  src
+section         LXCALLT9
+                pop     ecx     // MATCH05  len
+                pop     edi     // MATCH03  src
                 cjt32   0
-%endif; __LINUX990__
-                pop     esi     ; MATCH02  restore
-                pop     edi     ; MATCH01  restore
-                xor     ebx, ebx        ; booting the 1st cpu
-                retf    ; MATCH00  set cs
+section         LINUX990
+                pop     esi     // MATCH02  restore
+                pop     edi     // MATCH01  restore
+                xor     ebx, ebx        // booting the 1st cpu
+                lret    // MATCH00  set cs
 
-%define UNLAP 0x10
-%define ALIGN (~0<<4)
-        ; must have 0==(UNLAP &~ ALIGN)
+#define UNLAP 0x10
+#define ALIGN (~0<<4)
+        // must have 0==(UNLAP &~ ALIGN)
 
 move_up:
-                pop esi           ; MATCH06  &decompressor
-                mov ecx,[-4+ esi] ; length of decompressor+unfilter
-                mov ebp,eax       ; &uncompressed
-                add eax,[esp]     ; MATCH05  ULEN + base; entry to decompressor
-                add eax, byte ~ALIGN + UNLAP
-                and eax, byte  ALIGN
+                pop esi           // MATCH06  &decompressor
+                mov ecx,[-4+ esi] // length of decompressor+unfilter
+                mov ebp,eax       // &uncompressed
+                add eax,[esp]     // MATCH05  ULEN + base; entry to decompressor
+                add eax, ~ALIGN + UNLAP
+                and eax, ALIGN
 
                 std
-        ; copy decompressor
-                lea esi,[-1+ ecx + esi]  ; unmoved top -1 of decompressor
-                lea edi,[-1+ ecx + eax]  ;   moved top -1 of decompressor
+        // copy decompressor
+                lea esi,[-1+ ecx + esi]  // unmoved top -1 of decompressor
+                lea edi,[-1+ ecx + eax]  //   moved top -1 of decompressor
                 rep
                 movsb
 
-                mov ecx,[-4+ edx]  ; length of compressed data
-                add ecx, byte  3
-                shr ecx,2          ; count of .long
-        ; copy compressed data
-                lea esi,[-4+ 4*ecx + edx] ; unmoved top -4 of compressed data
-                lea edi,[-4+         eax] ;   moved top -4 of compressed data
+                mov ecx,[-4+ edx]  // length of compressed data
+                add ecx, 3
+                shr ecx,2          // count of .long
+        // copy compressed data
+                lea esi,[-4+ 4*ecx + edx] // unmoved top -4 of compressed data
+                lea edi,[-4+         eax] //   moved top -4 of compressed data
                 rep
                 movsd
 
                 cld
-                lea esi,[4+ edi]   ;   &compressed [after move]
-                mov edi,ebp        ; &uncompressed
-                or  ebp, byte -1   ; decompressor assumption
-                jmp eax            ; enter moved decompressor
+                lea esi,[4+ edi]   //   &compressed [after move]
+                mov edi,ebp        // &uncompressed
+                or  ebp, -1        // decompressor assumption
+                jmp eax            // enter moved decompressor
 
-; =============
-; ============= CUT HERE
-; =============
+#include        "include/header2.ash"
 
-%include        "include/header.ash"
-
-eof:
-;       __LITHEEND__
-                section .data
-                dd      -1
-                dw      eof
-
-
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap

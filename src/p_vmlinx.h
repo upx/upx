@@ -55,6 +55,7 @@ public:
 
 protected:
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
