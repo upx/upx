@@ -1058,6 +1058,7 @@ PackOpenBSDElf32x86::generateElfHdr(
     set_native32(&h3->phdr[2].p_filesz, sizeof(elfnote));
     set_native32(&h3->phdr[2].p_memsz,  sizeof(elfnote));
     set_native32(&h3->phdr[2].p_flags, Elf32_Phdr::PF_R);
+    set_native32(&h3->phdr[2].p_align, 4);
 
     set_native32(&elfnote.namesz, 8);
     set_native32(&elfnote.descsz, 4);

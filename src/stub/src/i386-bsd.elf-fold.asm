@@ -71,12 +71,13 @@ fold_begin:  ; enter: %ebx= &Elf32_Ehdr of this program
 %define AT_PHENT  4
 %define AT_PHNUM  5
 %define AT_PAGESZ 6
+%define AT_BASE   7
 %define AT_ENTRY  9
 
 %define ET_DYN    3
 
         sub ecx, ecx
-        mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
+        mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_BASE) | (1<<AT_ENTRY)
         mov esi, esp
         mov edi, esp
         call do_auxv  ; clear bits in edx according to existing auxv slots

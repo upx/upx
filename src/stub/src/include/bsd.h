@@ -262,6 +262,7 @@ typedef struct
 #define AT_PHENT        4
 #define AT_PHNUM        5
 #define AT_PAGESZ       6
+#define AT_BASE         7
 #define AT_ENTRY        9
 
 #define ET_EXEC         2

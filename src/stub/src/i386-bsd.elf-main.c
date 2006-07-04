@@ -416,7 +416,9 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
-        auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
+        if (xi) {
+            auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
+        }
     }
     else if (PT_LOAD==phdr->p_type) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
@@ -552,7 +554,7 @@ void *upx_main(
 
     // Some kernels omit AT_PHNUM,AT_PHENT,AT_PHDR because this stub has no PT_INTERP.
     // That is "too much" optimization.  Linux 2.6.x seems to give all AT_*.
-    //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
+    auxv_up(av, AT_PAGESZ, PAGE_SIZE);
     auxv_up(av, AT_PHNUM , ehdr->e_phnum);
     auxv_up(av, AT_PHENT , ehdr->e_phentsize);
     auxv_up(av, AT_PHDR  , dynbase + (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
@@ -573,7 +575,8 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, 0, 0, 0);
+        entry = do_xmap(fdi, ehdr, 0, 0, &reloc, 0);
+        auxv_up(av, AT_BASE, reloc);
         break;
     }
   }
