@@ -176,12 +176,6 @@ err_exit(int a) __attribute__ ((__noreturn__));
 }
 #endif  //}
 
-static void *
-do_brk(void *addr)
-{
-    return brk(addr);
-}
-
 /*************************************************************************
 // UPX & NRV stuff
 **************************************************************************/
@@ -368,53 +362,80 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
-// Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
-// and mmap that much, to be sure that a kernel using exec-shield-randomize
-// won't place the first piece in a way that leaves no room for the rest.
+static unsigned
+umax(unsigned a, unsigned b)
+{
+    return ((a<=b) ? b : a);
+}
+
+// OpenBSD 3.9 wants all .text from all modules together, then (above that)
+// all .data from all modules together, in order to maximize the effectiveness
+// of lowering the segment limit on %cs as an implementation of "no-execute
+// .data".  Thus OpenBSD 3.9 puts a gap of 0x20000000 (512MB) between the
+// origins of .text and .data in each module.  So, mapping ET_DYN must "level"
+// the excursion in .text and .data of anything which preceeded it,
+// then add the new PT_LOAD.
+
 static unsigned long  // returns relocation constant
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
-xfind_pages(Elf32_Phdr const *phdr, int phnum, char **const p_brk)
+xfind_pages(unsigned const e_type, Elf32_Phdr const *phdr, int phnum,
+    Elf32_Addr old_hi[2])
 {
-    size_t lo= ~0, hi= 0, szlo= 0;
-    char *addr;
-    unsigned const mflags = MAP_PRIVATE | MAP_ANONYMOUS;
+    size_t sz[2]= { 0u,  0u};  // [0] is .data;  [1] is .text
+    size_t hi[2]= { 0u,  0u};
+    size_t lo[2]= {~0u, ~0u};
+    char *addr[2];
+    unsigned level= 0;
+    int j;
+
     DPRINTF((STR_xfind_pages(), mflags, phdr, phnum, p_brk));
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
-        if (phdr->p_vaddr < lo) {
-            lo = phdr->p_vaddr;
-            szlo = phdr->p_filesz;
+        unsigned const td = PF_X & phdr->p_flags;  // requires 1==PF_X
+        if (lo[td] > phdr->p_vaddr) {
+            lo[td] = phdr->p_vaddr;
+            sz[td] = phdr->p_filesz;
         }
-        if (hi < (phdr->p_memsz + phdr->p_vaddr)) {
-            hi =  phdr->p_memsz + phdr->p_vaddr;
+        if (hi[td] < (phdr->p_memsz + phdr->p_vaddr)) {
+            hi[td] =  phdr->p_memsz + phdr->p_vaddr;
         }
     }
-    szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
-    lo   -= ~PAGE_MASK & lo;  // round down to page boundary
-    hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
-    szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
-    *p_brk = hi + addr;  // the logical value of brk(0)
-    //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
-    return (unsigned long)addr - lo;
+    if ((ET_EXEC!=e_type) && 0x20000000u<=hi[0]) { // is split
+        level=  (0xfc000000u & old_hi[1]) +  // "segment base" of old .text
+            umax(0x03ffffffu & old_hi[1],
+                 0x03ffffffu & old_hi[0] );
+        level= PAGE_MASK & (level - PAGE_MASK -1);  // ALIGN_UP
+    }
+    for (j=0; j<=1; ++j) {
+        sz[j] += ~PAGE_MASK & lo[j];  // page fragment on lo edge
+        lo[j] -= ~PAGE_MASK & lo[j];  // round down to page boundary
+        old_hi[j] = level + hi[j];
+        hi[j]  =  PAGE_MASK & (hi[j] - lo[j] - PAGE_MASK -1);  // page length
+        sz[j]  =  PAGE_MASK & (sz[j]         - PAGE_MASK -1);  // page length
+        addr[j] = mmap((void *)(level + lo[j]), hi[j], PROT_NONE,
+            MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    }
+    return (unsigned long)addr[0] - lo[0];
 }
 
 static Elf32_Addr  // entry address
-do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
+do_xmap(int const fdi, Elf32_Ehdr const *const ehdr,
+    Elf32_Addr old_hi[2], struct Extent *const xi,
     Elf32_auxv_t *const av, unsigned *p_reloc, f_unfilter *const f_unf)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
-    char *v_brk;
-    unsigned const reloc = (ET_EXEC==ehdr->e_type) ?
-        0 : xfind_pages(phdr, ehdr->e_phnum, &v_brk);
+    unsigned const reloc = xfind_pages(ehdr->e_type, phdr, ehdr->e_phnum, old_hi);
     int j;
+
     DPRINTF((STR_do_xmap(),
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (PT_PHDR==phdr->p_type) {
-        auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
+        if (xi) {
+            auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
+        }
     }
     else if (PT_LOAD==phdr->p_type) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
@@ -487,12 +508,6 @@ ERR_LAB
             err_exit(11);
         }
     }
-    else { // 1st call (main); also have (0!=av) here
-        if (ET_DYN!=ehdr->e_type) {
-            // Needed only if compressed shell script invokes compressed shell.
-            do_brk(v_brk);
-        }
-    }
     if (0!=p_reloc) {
         *p_reloc = reloc;
     }
@@ -528,6 +543,7 @@ void *upx_main(
 {
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
+    Elf32_Addr old_hi[2]= {0u, 0u};
     Elf32_Addr reloc;
     Elf32_Addr entry;
 
@@ -550,14 +566,14 @@ void *upx_main(
 
     // Some kernels omit AT_PHNUM,AT_PHENT,AT_PHDR because this stub has no PT_INTERP.
     // That is "too much" optimization.  Linux 2.6.x seems to give all AT_*.
-    //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
+    auxv_up(av, AT_PAGESZ, PAGE_SIZE);
     auxv_up(av, AT_PHNUM , ehdr->e_phnum);
     auxv_up(av, AT_PHENT , ehdr->e_phentsize);
     auxv_up(av, AT_PHDR  , dynbase + (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     // This is necessary for ET_DYN if|when we override a prelink address.
 
-    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
+    entry = do_xmap((int)f_decompress, ehdr, old_hi, &xi, av, &reloc, f_unf);
     auxv_up(av, AT_ENTRY , entry);  // might not be necessary?
 
   { // Map PT_INTERP program interpreter
@@ -571,7 +587,8 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, 0, 0, 0);
+        entry = do_xmap(fdi, ehdr, old_hi, 0, 0, &reloc, 0);
+        auxv_up(av, AT_BASE, reloc);
         break;
     }
   }
