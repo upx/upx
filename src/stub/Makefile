@@ -635,21 +635,18 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 
 mipsel.r3000-ps1-%.h : tc_list = mipsel.r3000-ps1 default
 
-tc.mipsel.r3000-ps1.app-asm5900 = perl -w $(srcdir)/src/arch/mips/mipsel.r3000/app-asm5900.pl
-tc.mipsel.r3000-ps1.asm5900     = asm5900
-tc.mipsel.r3000-ps1.gas         = asm5900
+tc.mipsel.r3000-ps1.as          = mipsel-unknown-linux-gnu-as -O2 -mips2 -mno-pdr
+tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
 
 mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
-	#$(call tc,app-asm5900) tmp/$T.tmp1 tmp/$T.tmp2
-	#$(call tc,asm5900) --nologo -q -ltmp/$T.bin.lst tmp/$T.tmp2 -otmp/$T.bin
-
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
+	$(call tc,m-objcopy) -F elf32-littlemips --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -F elf32-littlemips -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -F elf32-littlemips -R .note -R .comment -R .reginfo tmp/$T.bin
+	$(call tc,m-objdump) -b elf32-littlemips -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
 
 mipsel.r3000-ps1-boot.h:    PP_FLAGS  += -DCDBOOT

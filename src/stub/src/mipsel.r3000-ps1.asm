@@ -31,11 +31,7 @@
 ;
 */
 
-
 #include "arch/mips/mipsel.r3000/macros.ash"
-
-#define HI(a)   (a >> 16)
-#define LO(a)   (a & 0xffff)
 
 #define  SZ_REG  4
 
@@ -83,19 +79,18 @@ ENDIF
 // for cd-boot only
 
 section         PS1START
-                li      t0, PSVR  // prepare to compute value
+                la      t0, PSVR        // prepare to compute value
                 subu    t0,s0,t0        // get stored header offset in mem
                 jr      t0
-                subiu   sp, REG_SZ         // adjust stack
-cutpoint:
+                subiu   sp, REG_SZ      // adjust stack
 section         PS1ENTRY
                 regs    sw,0            // push used regs
-                li      a0, CPDO  // load COMPDATA offset
-//               li      a1,'CDSZ'       // compressed data size - disabled!
+                la      a0, CPDO        // load COMPDATA offset
+//               li      a1,'CDSZ'      // compressed data size - disabled!
 section         PS1CONHL
-                li      a2, DECO
+                la      a2, DECO
 section         PS1CONHI
-                lui     a2,HI( DECO)
+                lui     a2, %hi(DECO)
 
 
 #else //CONSOLE
@@ -105,14 +100,13 @@ section         PS1CONHI
 // for console- / cd-boot
 
 section         PS1START
-                addiu   at,zero, LS // size of decomp. routine
+                addiu   at,zero, LS     // size of decomp. routine
                 subu    sp,at           // adjust the stack with this size
                 regs    sw,0            // push used regs
                 subiu   a2,at,REG_SZ    // a2 = counter copyloop
                 addiu   a3,sp,REG_SZ    // get offset for decomp. routine
                 move    a1,a3
-                lui     a0, DCRT    // load decompression routine's offset
-//                ori     a0, LO(DCRT)    // load decompression routine's offset
+                la      a0, DCRT        // load decompression routine's offset
 copyloop:
                 lw      at,0(a0)        // memcpy *a0 -> at -> *a1
                 addiu   a2,-4
@@ -122,15 +116,13 @@ copyloop:
                 addiu   a1,4
 
 section         PS1PADCD
-                addiu   a0, PC    // a0 = pointer compressed data
+                addiu   a0, PC          // a0 = pointer compressed data
 section         PS1CONHL
-                lui     a2,HI( DECO)  // load DECOMPDATA HI offset
+                la      a2, DECO        // load DECOMPDATA HI offset
                 jr      a3
-                ori     a2,LO( DECO)  // load DECOMPDATA LO offset
 section         PS1CONHI
                 jr      a3
-                lui     a2,HI( DECO)  // same for HI only !(offset&0xffff)
-cutpoint:
+                lui     a2, %hi(DECO)   // same for HI only !(offset&0xffff)
 section         PS1ENTRY
 
 #endif //CDBOOT
@@ -180,10 +172,10 @@ section         PS1N2E32
 // =============
 
 section         PS1MSETS
-                ori     a0,zero, SC // amount of removed zeros at eof
+                ori     a0,zero, SC     // amount of removed zeros at eof
 section         PS1MSETB
-                ori     a0,zero, SC // amount of removed zeros at eof
-                sll     a0,3              // (cd mode 2 data sector alignment)
+                ori     a0,zero, SC     // amount of removed zeros at eof
+                sll     a0,3            // (cd mode 2 data sector alignment)
 section         PS1MSETA
 memset_aligned:
                 sw      zero,0(a2)
@@ -204,7 +196,7 @@ section         PS1EXITC
                 li      t2,160          // flushes
                 jalr    ra,t2           // instruction
                 li      t1,68           // cache
-                regs    lw, JPEP // marker for the entry jump
+                regs    lw, JPEP        // marker for the entry jump
 
 // =============
 

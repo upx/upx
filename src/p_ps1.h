@@ -58,6 +58,7 @@ public:
 protected:
     virtual void patch_mips_le(void *b, int blen, const void *old, unsigned new_);
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 
     virtual int readFileHeader();
     virtual bool checkFileHeader();

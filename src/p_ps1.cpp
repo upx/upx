@@ -35,6 +35,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_ps1.h"
+#include "linker.h"
 
 static const
 #include "stub/mipsel.r3000-ps1-boot.h"
@@ -83,7 +84,7 @@ PackPs1::PackPs1(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
-#if 1 || defined(WITH_NRV)
+#if 0 // 1 || defined(WITH_NRV)
     COMPILE_TIME_ASSERT(sizeof(nrv_boot_loader) == 3935);
     COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0x0ac25782);
     COMPILE_TIME_ASSERT(sizeof(nrv_con_loader) == 2829);
@@ -107,6 +108,29 @@ const int *PackPs1::getFilters() const
     return NULL;
 }
 
+
+Linker* PackPs1::newLinker() const
+{
+    class ElfLinkerMipsLE : public ElfLinker
+    {
+        typedef ElfLinker super;
+
+        virtual void relocate1(Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+        {
+            if (strcmp(type, "R_MIPS_LO16") == 0)
+                set_le16(location, get_le16(location) + value);
+            else if (strcmp(type, "R_MIPS_HI16") == 0)
+                set_le16(location, get_le16(location) + (value >> 16));
+            else if (strcmp(type, "R_MIPS_32") == 0)
+                set_le32(location, get_le32(location) + value);
+            else
+                super::relocate1(rel, location, value, type);
+        }
+    };
+
+    return new ElfLinkerMipsLE;
+}
 
 /*************************************************************************
 // util
@@ -264,7 +288,7 @@ int PackPs1::buildLoader(const Filter *)
                   ih.tx_len & 3 ? "PS1MSETU" : "PS1MSETA",
                   NULL);
 
-    addLoader("PS1EXITC", "IDENTSTR", "PS1PAHDR",
+    addLoader("PS1EXITC", "IDENTSTR", "UPX1HEAD",
               isCon ? "PS1SREGS" : "",
               NULL);
 
@@ -337,8 +361,6 @@ void PackPs1::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    patchPackHeader(loader,lsize);
-
     unsigned pad = 0;
     unsigned filelen = ALIGN_UP(ih.tx_len, 4);
     unsigned pad_code = TIL_ALIGNED(ph.c_len, 4);
@@ -347,7 +369,6 @@ void PackPs1::pack(OutputFile *fo)
     const unsigned comp_data_start = ((decomp_data_start + filelen + overlap) - ph.c_len);
 
     const int h_len = lsize - getLoaderSectionStart("IDENTSTR");
-    const int c_len = lsize - h_len;
     int d_len = 0;
     int e_len = 0;
 
@@ -362,14 +383,10 @@ void PackPs1::pack(OutputFile *fo)
         e_len = (lsize - d_len) - h_len;
     }
 
-    patch_mips_le(loader,c_len,"JPEP",MIPS_JP(ih.epc));
-    if (sa_cnt)
-        patch_mips_le(loader,c_len,"SC",
-                      MIPS_LO(sa_cnt > (0x10000 << 2) ? sa_cnt >> 5 : sa_cnt >> 2));
-    if (ih.tx_ptr & 0xffff)
-        patch_mips_le(loader,c_len,"DECO",decomp_data_start);
-    else
-        patch_mips_le(loader,c_len,"DE",MIPS_HI(decomp_data_start));
+    linker->defineSymbol("JPEP", MIPS_JP(ih.epc));
+    linker->defineSymbol("SC", MIPS_LO(sa_cnt > (0x10000 << 2) ?
+                                       sa_cnt >> 5 : sa_cnt >> 2));
+    linker->defineSymbol("DECO",decomp_data_start);
 
     const unsigned entry = comp_data_start - e_len - pad_code;
     oh.tx_ptr = entry;
@@ -389,11 +406,14 @@ void PackPs1::pack(OutputFile *fo)
 
     if (isCon)
     {
-        if (pad_code)
-            patch_mips_le(loader, c_len, "PC", pad_code);
-        patch_mips_le(loader, c_len, "DCRT", entry + (e_len - d_len));
-        patch_mips_le(loader, c_len, "LS",
-                      d_len + get_le32(&loader[getLoaderSectionStart("PS1SREGS")]));
+        linker->defineSymbol("PC", pad_code);
+        linker->defineSymbol("DCRT", entry + (e_len - d_len));
+        linker->defineSymbol("LS",
+                             d_len + get_le32(&loader[getLoaderSectionStart("PS1SREGS")]));
+
+        linker->relocate();
+        memcpy(loader, getLoader(), lsize);
+        patchPackHeader(loader,lsize);
 
         // ps1_exe_t structure 188 bytes
         fo->write(&oh,sizeof(oh));
@@ -402,8 +422,12 @@ void PackPs1::pack(OutputFile *fo)
     }
     else
     {
-        patch_mips_le(loader, c_len, "CPDO", comp_data_start);
-        patch_mips_le(loader, e_len, "PSVR", FIX_PSVR);
+        linker->defineSymbol("CPDO", comp_data_start);
+        linker->defineSymbol("PSVR", FIX_PSVR);
+
+        linker->relocate();
+        memcpy(loader, getLoader(), lsize);
+        patchPackHeader(loader,lsize);
 
         // ps1_exe_t structure 188 bytes
         fo->write(&oh,sizeof(oh));

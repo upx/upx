@@ -50,6 +50,7 @@
 #define t5      $13
 #define t6      $14
 #define t7      $15
+#define s0      $16
 #define sp      $29
 #define ra      $31
 
@@ -60,36 +61,8 @@
 #define DW      .long
 #define DB      .byte
 
-// Load Address macro
-
-.macro  la      reg,addr
-        lui     \reg,(\addr >> 16)+((\addr >> 15)&1)
-        addiu   \reg,\reg,((\addr & 0xFFFF))
-.endm
-
-// Load Immidiate macro
-
-#if 0
-.macro  li      reg,imm
-IF (\imm == -1)
-        addiu    \reg, zero, -1
-ELSE
-        IF ((\imm>>16)!=0)
-                lui     \reg,\imm >> 16
-                ori     \reg,\reg,(\imm & 0xFFFF)
-        ELSE
-                IF ((\imm&0xffff)>0x8000)
-                        ori     \reg,zero,(\imm & 0xFFFF)
-                ELSE
-                        addiu   \reg,zero,(\imm & 0xFFFF)
-                ENDIF
-        ENDIF
-ENDIF
-.endm
-#endif
-
 .macro  subiu   reg, p1, p2
-        .if p2
+        .ifnb p2
         addiu   \reg, p1, -p2
         .else
         addiu   \reg, -p1
