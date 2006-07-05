@@ -1,3 +1,4 @@
+/*
 ;  n2e_d.ash -- NRV2E decompressor in Mips R3000 assembly
 ;
 ;  This file is part of the UCL data compression library.
@@ -24,11 +25,13 @@
 ;  <markus@oberhumer.com>               <jssg@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
+*/
 
+small = 0
 #if (NRV_BB==8)
 #   ifdef SMALL
         IF (!small)
-            DEFINE  small
+            small = 1
         ENDIF
 #       define  UCL_DECOMPRESSOR    ucl_nrv2e_decompress_8_small
 #       define  GETBIT              gbit_call gbit_sub,NRV_BB
@@ -42,7 +45,7 @@
 #       define  GETBIT              gbit_call gbit_sub,NRV_BB
 #   else
         IF (small)
-            UNDEF  small
+            small = 0
         ENDIF
 #       define  UCL_DECOMPRESSOR    ucl_nrv2e_decompress_32
 #       define  GETBIT              gbit_le32
@@ -51,20 +54,23 @@
 #   error "define NRV_BB first!"
 #endif
 
-
 #include "bits.ash"
 
+/*
 ; ------------- DECOMPRESSION -------------
 ; On entry:
 ;   a0  src pointer
 ;   a2  dest pointer
+*/
 
 
-UCL_DECOMPRESSOR    PROC
+.macro  UCL_DECOMPRESSOR
+        local   n2e_18, n2e_4C, n2e_E4, n2e_124, n2e_150, n2e_184
+        local   n2e_1E0, n2e_244, gbit_sub, n2e_decomp_done
         init    NRV_BB
 n2e_18:
         GETBIT
-        beqz    var,n2e_4C
+        beqz    var, n2e_4C
         li      m_off,1
         lbu     var,0(src_ilen)
         addiu   src_ilen,1
@@ -139,7 +145,8 @@ gbit_sub:
 #endif
 
 n2e_decomp_done:
-UCL_DECOMPRESSOR    ENDP
+.endm
+        UCL_DECOMPRESSOR
 
 #undef  UCL_DECOMPRESSOR
 #undef  GETBIT

@@ -1,3 +1,4 @@
+/*
 ;  l_ps1.asm -- ps1/exe program entry & decompressor
 ;
 ;  This file is part of the UPX executable compressor.
@@ -28,6 +29,7 @@
 ;  Jens Medoch
 ;  <jssg@users.sourceforge.net>
 ;
+*/
 
 
 #include "arch/mips/mipsel.r3000/macros.ash"
@@ -38,105 +40,103 @@
 #define  SZ_REG  4
 
 #if CDBOOT
-regs            MACRO   _w, marker
-                _w      a0,SZ_REG*0(sp)
-                _w      a1,SZ_REG*1(sp)
-                _w      a2,SZ_REG*2(sp)
-                _w      a3,SZ_REG*3(sp)
-                _w      v0,SZ_REG*4(sp)
-                _w      v1,SZ_REG*5(sp)
-IF (marker != 0)
-                DW      marker
+.macro          regs    _w, marker
+                \_w     a0,SZ_REG*0(sp)
+                \_w     a1,SZ_REG*1(sp)
+                \_w     a2,SZ_REG*2(sp)
+                \_w     a3,SZ_REG*3(sp)
+                \_w     v0,SZ_REG*4(sp)
+                \_w     v1,SZ_REG*5(sp)
+IF (\marker != 0)
+                DW      \marker
 ENDIF
-                _w      ra,SZ_REG*6(sp)
-regs            ENDM
+                \_w     ra,SZ_REG*6(sp)
+.endm
 
 #define  REG_SZ (7*SZ_REG)
 
 #else //console
 
-regs            MACRO   _w, marker
-                _w      at,SZ_REG*0(sp)
-                _w      a0,SZ_REG*1(sp)
-                _w      a1,SZ_REG*2(sp)
-                _w      a2,SZ_REG*3(sp)
-                _w      a3,SZ_REG*4(sp)
-                _w      v0,SZ_REG*5(sp)
-                _w      v1,SZ_REG*6(sp)
-                _w      ra,SZ_REG*7(sp)
-IF (marker != 0)
-                DW      marker
+.macro          regs    _w, marker
+                \_w     at,SZ_REG*0(sp)
+                \_w     a0,SZ_REG*1(sp)
+                \_w     a1,SZ_REG*2(sp)
+                \_w     a2,SZ_REG*3(sp)
+                \_w     a3,SZ_REG*4(sp)
+                \_w     v0,SZ_REG*5(sp)
+                \_w     v1,SZ_REG*6(sp)
+                \_w     ra,SZ_REG*7(sp)
+IF (\marker != 0)
+                DW      \marker
                 addu    sp,at
 ENDIF
-regs            ENDM
+.endm
 
 #define  REG_SZ (8*SZ_REG)
 
 #endif //CDBOOT
 
-                ORG      0
-start:
-
 #if CDBOOT
-; =============
-; ============= ENTRY POINT
-; =============
-; for cd-boot only
+// =============
+// ============= ENTRY POINT
+// =============
+// for cd-boot only
 
-;       __PS1START__
-                li      t0,'PSVR'       ; prepare to compute value
-                subu    t0,s0,t0        ; get stored header offset in mem
+section         PS1START
+                li      t0, PSVR  // prepare to compute value
+                subu    t0,s0,t0        // get stored header offset in mem
                 jr      t0
-                subiu   sp,REG_SZ       ; adjust stack
+                subiu   sp, REG_SZ         // adjust stack
 cutpoint:
-;       __PS1ENTRY__
-                regs    sw,0            ; push used regs
-                li      a0,'CPDO'       ; load COMPDATA offset
-;               li      a1,'CDSZ'       ; compressed data size - disabled!
-;       __PS1CONHL__
-                li      a2,'DECO'
-;       __PS1CONHI__
-                lui     a2,HI('DECO')
+section         PS1ENTRY
+                regs    sw,0            // push used regs
+                li      a0, CPDO  // load COMPDATA offset
+//               li      a1,'CDSZ'       // compressed data size - disabled!
+section         PS1CONHL
+                li      a2, DECO
+section         PS1CONHI
+                lui     a2,HI( DECO)
 
 
 #else //CONSOLE
-; =============
-; ============= ENTRY POINT
-; =============
-; for console- / cd-boot
+// =============
+// ============= ENTRY POINT
+// =============
+// for console- / cd-boot
 
-;       __PS1START__
-                addiu   at,zero,'LS'    ; size of decomp. routine
-                subu    sp,at           ; adjust the stack with this size
-                regs    sw,0            ; push used regs
-                subiu   a2,at,REG_SZ    ; a2 = counter copyloop
-                addiu   a3,sp,REG_SZ    ; get offset for decomp. routine
+section         PS1START
+                addiu   at,zero, LS // size of decomp. routine
+                subu    sp,at           // adjust the stack with this size
+                regs    sw,0            // push used regs
+                subiu   a2,at,REG_SZ    // a2 = counter copyloop
+                addiu   a3,sp,REG_SZ    // get offset for decomp. routine
                 move    a1,a3
-                li      a0,'DCRT'       ; load decompression routine's offset
+                lui     a0, DCRT    // load decompression routine's offset
+//                ori     a0, LO(DCRT)    // load decompression routine's offset
 copyloop:
-                lw      at,0(a0)        ; memcpy *a0 -> at -> *a1
+                lw      at,0(a0)        // memcpy *a0 -> at -> *a1
                 addiu   a2,-4
                 sw      at,0(a1)
                 addiu   a0,4
                 bnez    a2,copyloop
                 addiu   a1,4
 
-;       __PS1PADCD__
-                addiu   a0,'PC'         ; a0 = pointer compressed data
-;       __PS1CONHL__
-                lui     a2,HI('DECO')   ; load DECOMPDATA HI offset
+section         PS1PADCD
+                addiu   a0, PC    // a0 = pointer compressed data
+section         PS1CONHL
+                lui     a2,HI( DECO)  // load DECOMPDATA HI offset
                 jr      a3
-                ori     a2,LO('DECO')   ; load DECOMPDATA LO offset
-;       __PS1CONHI__
+                ori     a2,LO( DECO)  // load DECOMPDATA LO offset
+section         PS1CONHI
                 jr      a3
-                lui     a2,HI('DECO')   ; same for HI only !(offset&0xffff)
+                lui     a2,HI( DECO)  // same for HI only !(offset&0xffff)
 cutpoint:
-;       __PS1ENTRY__
+section         PS1ENTRY
 
 #endif //CDBOOT
-; =============
-; ============= DECOMPRESSION
-; =============
+// =============
+// ============= DECOMPRESSION
+// =============
 
 #ifndef FAST
 #   define FAST
@@ -157,11 +157,11 @@ cutpoint:
 #endif
 #define NRV_BB 8
 
-;       __PS1N2B08__
-#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
-;       __PS1N2D08__
-#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
-;       __PS1N2E08__
+section         PS1N2B08
+//#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
+section         PS1N2D08
+//#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
+section         PS1N2E08
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
 
 #ifdef NRV_BB
@@ -169,28 +169,28 @@ cutpoint:
 #endif
 #define NRV_BB 32
 
-;       __PS1N2B32__
-#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
-;       __PS1N2D32__
-#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
-;       __PS1N2E32__
+section         PS1N2B32
+//#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
+section         PS1N2D32
+//#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
+section         PS1N2E32
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
 
 
-; =============
+// =============
 
-;       __PS1MSETS__
-                ori     a0,zero,'SC'    ; amount of removed zeros at eof
-;       __PS1MSETB__
-                ori     a0,zero,'SC'    ; amount of removed zeros at eof
-                sll     a0,3            ; (cd mode 2 data sector alignment)
-;       __PS1MSETA__
+section         PS1MSETS
+                ori     a0,zero, SC // amount of removed zeros at eof
+section         PS1MSETB
+                ori     a0,zero, SC // amount of removed zeros at eof
+                sll     a0,3              // (cd mode 2 data sector alignment)
+section         PS1MSETA
 memset_aligned:
                 sw      zero,0(a2)
                 addiu   a0,-1
                 bnez    a0,memset_aligned
                 addiu   a2,4
-;       __PS1MSETU__
+section         PS1MSETU
 memset_unaligned:
                 swl     zero,3(a2)
                 swr     zero,0(a2)
@@ -198,41 +198,23 @@ memset_unaligned:
                 bnez    a0,memset_unaligned
                 addiu   a2,4
 
-; =============
+// =============
 
-;       __PS1EXITC__
-                li      t2,160          ; flushes
-                jalr    ra,t2           ; instruction
-                li      t1,68           ; cache
-                regs    lw, 'JPEP'      ; marker for the entry jump
+section         PS1EXITC
+                li      t2,160          // flushes
+                jalr    ra,t2           // instruction
+                li      t1,68           // cache
+                regs    lw, JPEP // marker for the entry jump
 
-; =============
+// =============
 
-;       __PS1PAHDR__
-                DB      85,80,88,33     ;  0  UPX_MAGIC_LE32
-        ; another magic for PackHeader::putPackHeader
-                DB      161,216,208,213 ;     UPX_MAGIC2_LE32
-                DW      0               ;  8  uncompressed adler32
-                DW      0               ; 12  compressed adler32
-                DW      0               ; 16  uncompressed len
-                DW      0               ; 20  compressed len
-                DW      0               ; 24  original file size
-                DB      0               ; 28  filter id
-                DB      0               ; 29  filter cto
-                DB      0               ;  unsused
-                DB      45              ; 31  header checksum
+#include        "include/header2.ash"
 
-; =============
+// =============
 
 #if !CDBOOT
-;       __PS1SREGS__
+section         PS1SREGS
                 DW      REG_SZ
 #endif //CDBOOT
 
-;       __PS1EOASM__
-eof:
-;               section .data
-                DW_UNALIGNED    -1
-                DH_UNALIGNED    eof
-
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap

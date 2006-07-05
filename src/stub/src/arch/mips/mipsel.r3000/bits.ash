@@ -1,3 +1,4 @@
+/*
 ;  bits.ash -- bit access for decompression
 ;
 ;  This file is part of the UCL data compression library.
@@ -24,14 +25,15 @@
 ;  <markus@oberhumer.com>               <jssg@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
+*/
 
 #ifndef _MR3K_STD_CONF_
 #define _MR3K_STD_CONF_
 
 
-;//////////////////////////////////////
-;// register defines
-;//////////////////////////////////////
+//////////////////////////////////////
+// register defines
+//////////////////////////////////////
 
 #define src         a0
 #define dst         a2
@@ -48,40 +50,41 @@
 #define m_pos       v1
 
 
-;//////////////////////////////////////
-;// optimized branch macros
-;//////////////////////////////////////
+//////////////////////////////////////
+// optimized branch macros
+//////////////////////////////////////
 
-beqz2gb     MACRO   reg,label,nrv_bb
-    IF (!small) && (nrv_bb == 8)
-            beqz    reg,label+4
+.macro     beqz2gb  reg,label,nrv_bb
+    IF (!small) && (\nrv_bb == 8)
+            beqz    \reg,\label+4
             andi    var,bb,0x007F
     ELSE
-            beqz    reg,label
+            beqz    \reg,\label
             nop
     ENDIF
-beqz2gb     ENDM
+.endm
 
-b2gb        MACRO   label,nrv_bb
+.macro      b2gb    label,nrv_bb
     IF (!small)
-            b       label+4
-        IF (nrv_bb == 8)
+            b       \label+4
+        IF (\nrv_bb == 8)
             andi    var,bb,0x007F
-        ELSE ;(nrv_bb == 32)
+        ELSE // ;(nrv_bb == 32)
             addiu   bc,-1
         ENDIF
     ELSE
-            b       label
+            b       \label
             nop
     ENDIF
-b2gb        ENDM
+.endm
 
 
-;//////////////////////////////////////
-;// ucl memcpy
-;//////////////////////////////////////
+//////////////////////////////////////
+// ucl memcpy
+//////////////////////////////////////
 
-uclmcpy     MACRO   retoffset,nrv_bb
+.macro      uclmcpy retoffset,nrv_bb
+            local   wordchk, prepbytecpy, bytecopy
 #   ifdef FAST
             slti    var,m_off,4
             bnez    var,prepbytecpy
@@ -98,7 +101,7 @@ wordchk:
             addiu   m_pos,4
             bnez    m_len,wordchk
             addiu   dst,4
-            b2gb    retoffset,nrv_bb
+            b2gb    \retoffset,\nrv_bb
 prepbytecpy:
 #   else
             addiu   m_len,1
@@ -111,82 +114,90 @@ bytecopy:
             addiu   m_pos,1
             bnez    m_len,bytecopy
             addiu   dst,1
-            b2gb    retoffset,nrv_bb
-uclmcpy     ENDM
+            b2gb    \retoffset,\nrv_bb
+.endm
 
 
-;//////////////////////////////////////
-;// init decompressor
-;//////////////////////////////////////
+//////////////////////////////////////
+// init decompressor
+//////////////////////////////////////
 
-init        MACRO   nrv_bb
+.macro      init    nrv_bb
             move    bb,zero
-    IF (nrv_bb == 32)
+    IF (\nrv_bb == 32)
             move    bc,bb
     ENDIF
             li      last_m_off,1
             move    src_ilen,src
-init        ENDM
+.endm
+
+#ifndef LOCLABELHACK
+# define LOCLABELHACK 0
+#else
+# undef __LL
+#
+#endif
 
 
-;//////////////////////////////////////
-;// 32bit getbit macro
-;//////////////////////////////////////
+//////////////////////////////////////
+// 32bit getbit macro
+//////////////////////////////////////
 
-gbit_le32   MACRO
+.macro      gbit_le32
+local .L1
     IF (!small)
             addiu   bc,-1
     ENDIF
-            bgez    bc,\@z
+            bgez    bc,.L1
             srlv    var,bb,bc
             li      bc,31
             lwr     bb,0(src_ilen)
             lwl     bb,3(src_ilen)
             addiu   src_ilen,4
             srlv    var,bb,bc
-\@z:
+.L1:
     IF (small)
             jr      ra
     ENDIF
             andi    var,0x0001
-gbit_le32   ENDM
+.endm
 
 
-;//////////////////////////////////////
-;// 8bit getbit macro
-;//////////////////////////////////////
+//////////////////////////////////////
+// 8bit getbit macro
+//////////////////////////////////////
 
-gbit_8      MACRO
+.macro      gbit_8
+local .L2
     IF (!small)
             andi    var,bb,0x007F
     ENDIF
-            bnez    var,\@x
+            bnez    var,.L2
             sll     bb,1
             lbu     var,0(src_ilen)
             addiu   src_ilen,1
             sll     var,1
             addiu   bb,var,1
-\@x:
+.L2:
             srl     var,bb,8
     IF (small)
             jr      ra
     ENDIF
             andi    var,0x0001
-gbit_8      ENDM
+.endm
 
+//////////////////////////////////////
+// getbit call macro for small version
+//////////////////////////////////////
 
-;//////////////////////////////////////
-;// getbit call macro for small version
-;//////////////////////////////////////
-
-gbit_call   MACRO   subroutine,nrv_bb
-            bal     subroutine
-    IF (nrv_bb == 8)
+.macro      gbit_call subroutine,nrv_bb
+            bal     \subroutine
+    IF (\nrv_bb == 8)
             andi    var,bb,0x007F
     ELSE
             addiu   bc,-1
     ENDIF
-gbit_call   ENDM
+.endm
 
 
 #endif  //_MR3K_STD_CONF_
