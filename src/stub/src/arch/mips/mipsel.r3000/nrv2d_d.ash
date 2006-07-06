@@ -1,3 +1,4 @@
+/*
 ;  n2d_d.ash -- NRV2D decompressor in Mips R3000 assembly
 ;
 ;  This file is part of the UCL data compression library.
@@ -24,11 +25,13 @@
 ;  <markus@oberhumer.com>               <jssg@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
+*/
 
+small = 0
 #if (NRV_BB==8)
 #   ifdef SMALL
         IF (!small)
-            DEFINE  small
+            small = 1
         ENDIF
 #       define  UCL_DECOMPRESSOR    ucl_nrv2d_decompress_8_small
 #       define  GETBIT              gbit_call gbit_sub,NRV_BB
@@ -42,7 +45,7 @@
 #       define  GETBIT              gbit_call gbit_sub,NRV_BB
 #   else
         IF (small)
-            UNDEF  small
+            small = 0
         ENDIF
 #       define  UCL_DECOMPRESSOR    ucl_nrv2d_decompress_32
 #       define  GETBIT              gbit_le32
@@ -54,13 +57,17 @@
 
 #include "bits.ash"
 
+/*
 ; ------------- DECOMPRESSION -------------
 ; On entry:
 ;   a0  src pointer
 ;   a2  dest pointer
+*/
 
 
-UCL_DECOMPRESSOR    PROC
+.macro  UCL_DECOMPRESSOR
+        local   n2d_18, n2d_74, n2d_124, n2d_168, n2d_198
+        local   n2d_1E4, n2d_25C, gbit_sub, n2d_decomp_done
         init    NRV_BB
 n2d_18:
         GETBIT
@@ -134,7 +141,8 @@ gbit_sub:
 #endif
 
 n2d_decomp_done:
-UCL_DECOMPRESSOR    ENDP
+.endm
+        UCL_DECOMPRESSOR
 
 #undef  UCL_DECOMPRESSOR
 #undef  GETBIT

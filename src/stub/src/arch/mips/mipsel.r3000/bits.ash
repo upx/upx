@@ -131,14 +131,6 @@ bytecopy:
             move    src_ilen,src
 .endm
 
-#ifndef LOCLABELHACK
-# define LOCLABELHACK 0
-#else
-# undef __LL
-#
-#endif
-
-
 //////////////////////////////////////
 // 32bit getbit macro
 //////////////////////////////////////

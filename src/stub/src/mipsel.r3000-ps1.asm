@@ -150,9 +150,9 @@ section         PS1ENTRY
 #define NRV_BB 8
 
 section         PS1N2B08
-//#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
+#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
 section         PS1N2D08
-//#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
+#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
 section         PS1N2E08
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
 
@@ -162,9 +162,9 @@ section         PS1N2E08
 #define NRV_BB 32
 
 section         PS1N2B32
-//#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
+#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
 section         PS1N2D32
-//#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
+#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
 section         PS1N2E32
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
 
