@@ -326,7 +326,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[4].sh_name = ptr_diff(p, shstrtab);
     shdro[4].sh_type = Elf32_Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
-    shdro[4].sh_size = 1+ sizeof(shstrtab);  // 1+: terminating '\0'
+    shdro[4].sh_size = sizeof(shstrtab);  // already includes terminating '\0'
     shdro[4].sh_addralign = 1;
     fo->write(shstrtab, shdro[4].sh_size); fo_off += shdro[4].sh_size;
 
