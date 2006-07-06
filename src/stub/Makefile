@@ -608,14 +608,21 @@ i386-win32.pe.h : $(srcdir)/src/$$T.asm
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 
 tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
-tc.m68k-atari.tos.asm-a68k  = a68k
+#tc.m68k-atari.tos.asm-a68k  = a68k
+tc.m68k-atari.tos.pp-asm    = gcc -E -nostdinc -x assembler-with-cpp -Wall
+tc.m68k-atari.tos.asm-a68k  = m68k-unknown-linux-gnu-as --register-prefix-optional
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
-	$(call tc,pp-asm) -D__A68K__ $(PP_FLAGS) $< -o tmp/$T.i
-	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
-	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
+	$(call tc,pp-asm) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
+##	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
+	$(call tc,asm-a68k) tmp/$T.i -o tmp/$T.bin
+##	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
 
 m68k-atari.tos-nrv2b% :        PP_FLAGS     = -DNRV2B

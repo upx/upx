@@ -1,3 +1,4 @@
+/*
 ;  bits.ash -- bit access for decompression
 ;
 ;  This file is part of the UCL data compression library.
@@ -24,15 +25,15 @@
 ;  <markus@oberhumer.com>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
+*/
 
-
-; ------------- ADDBITS -------------
+// ------------- ADDBITS -------------
 
 macro(ADDBITS)
 #if (NRV_BB == 8)
-                add.b   d0,d0           ; sets Z, C and X       ;  4
+                add.b   d0,d0           // sets Z, C and X       //  4
 #elif (NRV_BB == 32)
-                add.l   d0,d0           ; sets Z, C and X       ;  6
+                add.l   d0,d0           // sets Z, C and X       //  6
 #endif
         endm
 
@@ -40,95 +41,95 @@ macro(ADDBITS)
 #if 0
 macro(ADDXBITS)
 #if (NRV_BB == 8)
-                addx.b   d0,d0          ; sets C and X          ;  4
+                addx.b   d0,d0          // sets C and X          //  4
 #elif (NRV_BB == 32)
-                addx.l   d0,d0          ; sets C and X          ;  8
+                addx.l   d0,d0          // sets C and X          //  8
 #endif
         endm
 #endif
 
 
-; ------------- FILLBYTES_xx -------------
+// ------------- FILLBYTES_xx -------------
 
-; get 1 byte; then get 1 bit into both C and X
+// get 1 byte// then get 1 bit into both C and X
 macro(FILLBYTES_8)
-        ; note: we shift the X flag through -> must init d0.b with $80
-                move.b  (a0)+,d0                                ;  8
-                addx.b  d0,d0           ; sets C and X          ;  4
+        // note: we shift the X flag through -> must init d0.b with $80
+                move.b  (a0)+,d0                                //  8
+                addx.b  d0,d0           // sets C and X          //  4
         endm
 
 
-; get 32 bits in little endian format; then get 1 bit into both C and X
+// get 32 bits in little endian format// then get 1 bit into both C and X
 macro(FILLBYTES_LE32)
 #if 0
-                move.b  (a0)+,d0                                ;  8
-                ror.l   #8,d0                                   ; 24
-                move.b  (a0)+,d0                                ;  8
-                ror.l   #8,d0                                   ; 24
-                move.b  (a0)+,d0                                ;  8
-                ror.l   #8,d0                                   ; 24
-                move.b  (a0)+,d0                                ;  8
-                ror.l   #8,d0                                   ; 24
-                add.l   d0,d0           ; sets C and X          ;  6
-                bset    #0,d0           ; only changes Z        ; 12
-                                                           ;    -----
-                                                           ;     146
+                move.b  (a0)+,d0                                //  8
+                ror.l   #8,d0                                   // 24
+                move.b  (a0)+,d0                                //  8
+                ror.l   #8,d0                                   // 24
+                move.b  (a0)+,d0                                //  8
+                ror.l   #8,d0                                   // 24
+                move.b  (a0)+,d0                                //  8
+                ror.l   #8,d0                                   // 24
+                add.l   d0,d0           // sets C and X          //  6
+                bset    #0,d0           // only changes Z        // 12
+                                                           //    -----
+                                                           //     146
 #elif 1
-                move.b  3(a0),d0                                ; 12
-                lsl.w   #8,d0                                   ; 22
-                move.b  2(a0),d0                                ; 12
-                swap    d0                                      ;  4
-                move.b  1(a0),d0                                ; 12
-                lsl.w   #8,d0                                   ; 22
-                move.b  (a0),d0                                 ;  8
-                addq.l  #4,a0           ; does not affect flags ;  8
-                add.l   d0,d0           ; sets C and X          ;  6
-                bset    #0,d0           ; only changes Z        ; 12
-                                                           ;    -----
-                                                           ;     118
+                move.b  3(a0),d0                                // 12
+                lsl.w   #8,d0                                   // 22
+                move.b  2(a0),d0                                // 12
+                swap    d0                                      //  4
+                move.b  1(a0),d0                                // 12
+                lsl.w   #8,d0                                   // 22
+                move.b  (a0),d0                                 //  8
+                addq.l  #4,a0           // does not affect flags //  8
+                add.l   d0,d0           // sets C and X          //  6
+                bset    #0,d0           // only changes Z        // 12
+                                                           //    -----
+                                                           //     118
 #elif 1
-        ; note: we shift the X flag through -> must init d0.l with $80000000
-        ; note: rol/ror do not change X flag (but asl/asr/lsl/lsr do)
-                move.b  3(a0),d0                                ; 12
-                ror.w   #8,d0                                   ; 22
-                move.b  2(a0),d0                                ; 12
-                swap    d0                                      ;  4
-                move.b  1(a0),d0                                ; 12
-                ror.w   #8,d0                                   ; 22
-                move.b  (a0),d0                                 ;  8
-                addq.l  #4,a0           ; does not affect flags ;  8
-                addx.l  d0,d0           ; sets C and X          ;  8
-                                                           ;    -----
-                                                           ;     108
+        // note: we shift the X flag through -> must init d0.l with $80000000
+        // note: rol/ror do not change X flag (but asl/asr/lsl/lsr do)
+                move.b  3(a0),d0                                // 12
+                ror.w   #8,d0                                   // 22
+                move.b  2(a0),d0                                // 12
+                swap    d0                                      //  4
+                move.b  1(a0),d0                                // 12
+                ror.w   #8,d0                                   // 22
+                move.b  (a0),d0                                 //  8
+                addq.l  #4,a0           // does not affect flags //  8
+                addx.l  d0,d0           // sets C and X          //  8
+                                                           //    -----
+                                                           //     108
 #else
-        ; IMPORTANT: movep is not implemented on the 68060
+        // IMPORTANT: movep is not implemented on the 68060
 #  error "do not use movep"
-        ; note: we shift the X flag through -> must init d0.l with $80000000
-        ; note: must use dc.l because of a bug in the pasm assembler
-        ; note: may access past the end of the input; this is ok for UPX
-                dc.l    $01080003       ; movep.w 3(a0),d0      ; 16
-                move.b  2(a0),d0                                ; 12
-                swap    d0                                      ;  4
-                dc.l    $01080001       ; movep.w 1(a0),d0      ; 16
-                move.b  (a0),d0                                 ;  8
-                addq.l  #4,a0           ; does not affect flags ;  8
-                addx.l  d0,d0           ; sets C and X          ;  8
-                                                           ;    -----
-                                                           ;      72
+        // note: we shift the X flag through -> must init d0.l with $80000000
+        // note: must use dc.l because of a bug in the pasm assembler
+        // note: may access past the end of the input// this is ok for UPX
+                dc.l    $01080003       // movep.w 3(a0),d0      // 16
+                move.b  2(a0),d0                                // 12
+                swap    d0                                      //  4
+                dc.l    $01080001       // movep.w 1(a0),d0      // 16
+                move.b  (a0),d0                                 //  8
+                addq.l  #4,a0           // does not affect flags //  8
+                addx.l  d0,d0           // sets C and X          //  8
+                                                           //    -----
+                                                           //      72
 #endif
         endm
 
 
-; ------------- FILLBITS -------------
+// ------------- FILLBITS -------------
 
 macro(FILLBITS)
 #if (NRV_BB == 8)
-                ; no need for a subroutine
+                // no need for a subroutine
                 FILLBYTES_8
 #elif (NRV_BB == 32)
 # ifdef SMALL
 #  define FILLBYTES_SR FILLBYTES_LE32
-                bsr     fillbytes_sr                            ; 18
+                bsr     fillbytes_sr                            // 18
 # else
                 FILLBYTES_LE32
 # endif
@@ -136,24 +137,24 @@ macro(FILLBITS)
         endm
 
 
-; ------------- GETBIT -------------
+// ------------- GETBIT -------------
 
-; get one bit into both the Carry and eXtended flag
+// get one bit into both the Carry and eXtended flag
 macro(GETBIT)
 #if defined(__A68K__)
-                ADDBITS                                         ;  4 / 6
-                bne     \@                                      ; 10 (if jump)
+                ADDBITS                                         //  4 / 6
+                bne     \@                                      // 10 (if jump)
                 FILLBITS
 \@:
 #elif defined(__ASL__)
-                ADDBITS                                         ;  4 / 6
-                bne     done                                    ; 10 (if jump)
+                ADDBITS                                         //  4 / 6
+                bne     done                                    // 10 (if jump)
                 FILLBITS
 done:
 #else
 LOCAL done
-                ADDBITS                                         ;  4 / 6
-                bne     done                                    ; 10 (if jump)
+                ADDBITS                                         //  4 / 6
+                bne     done                                    // 10 (if jump)
                 FILLBITS
 done:
 #endif
@@ -161,5 +162,5 @@ done:
 
 
 
-; vi:ts=8:et
+// vi:ts=8:et
 
