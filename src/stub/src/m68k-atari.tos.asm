@@ -475,7 +475,7 @@ clear_bss_end:
 // relocations and the original fileheader).
 **************************************************************************/
 
-cutpoint:
+section         CUTPOINT
 
 // ------------- decompress (from a3 to a4)
 
@@ -536,7 +536,7 @@ L(loopx2):      move.b  (a0)+,d3
 
 reloc_end:
 
-
+section         jmpastack
 // ------------- clear dirty bss & start program
 
 // We are currently running in the dirty bss.

@@ -78,7 +78,34 @@ const int *PackTos::getFilters() const
 
 Linker* PackTos::newLinker() const
 {
-    return new SimpleBELinker;
+    class ElfLinkerM68k : public ElfLinker
+    {
+        typedef ElfLinker super;
+
+        virtual void relocate1(Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+        {
+            if (strncmp(type, "R_68K_", 6))
+                return super::relocate1(rel, location, value, type);
+            type += 6;
+
+            if (strncmp(type, "PC", 2) == 0)
+            {
+                value -= rel->section->offset + rel->offset;
+                type += 2;
+            }
+            if (strcmp(type, "8") == 0)
+                *location += value;
+            if (strcmp(type, "16") == 0)
+                set_be16(location, get_be16(location) + value);
+            else if (strcmp(type, "32") == 0)
+                set_be32(location, get_be32(location) + value);
+            else
+                super::relocate1(rel, location, value, type);
+        }
+    };
+
+    return new ElfLinkerM68k;
 }
 
 
@@ -101,10 +128,20 @@ int PackTos::buildLoader(const Filter *ft)
         p = opt->small ? nrv2e_loader_small : nrv2e_loader;
         l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
     }
+    initLoader(p, l);
 
-    delete linker;
-    linker = newLinker();
-    linker->init(p, l, -1);
+    addLoader("tos0",
+              true ? "subql_1d0" : "subqw_1d0",
+              "s_bneloop0",
+              true ? "subql_1d6" : "subqw_1d6",
+              "s_bneloop3",
+              "IDENTSTR,+40,UP1HEAD",
+              "CUTPOINT",
+              true ? "reloc" : "",
+              "jmpastack",
+              NULL
+             );
+
     freezeLoader();
     return getLoaderSize();
 }
