@@ -426,9 +426,16 @@ void ElfLinker::preprocessRelocations(char *start, const char *end)
             char *t = strstr(start, type);
             t[strlen(type)] = 0;
 
+            unsigned add = 0;
+            if (char *p = strstr(symbol, "+0x"))
+            {
+                *p = 0;
+                sscanf(p + 3, "%x", &add);
+            }
+
             assert(nrelocations < TABLESIZE(relocations));
             relocations[nrelocations++] = Relocation(section, offset, t,
-                                                     findSymbol(symbol));
+                                                     findSymbol(symbol), add);
 
             //printf("relocation %s %x preprocessed\n", section->name, offset);
         }
@@ -607,7 +614,8 @@ void ElfLinker::relocate()
             printf("undefined symbol '%s' referenced\n", rel->value->name);
             abort();
         }
-        unsigned value = rel->value->section->offset + rel->value->offset;
+        unsigned value = rel->value->section->offset +
+                         rel->value->offset + rel->add;
         upx_byte *location = rel->section->output + rel->offset;
 
         relocate1(rel, location, value, rel->type);

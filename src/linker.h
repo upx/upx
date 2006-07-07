@@ -189,10 +189,12 @@ protected:
         unsigned offset;
         const char *type;
         Symbol *value;
+        unsigned add;           // used in .rela relocations
 
         Relocation(){}
-        Relocation(Section *s, unsigned o, const char *t, Symbol *v) :
-            section(s), offset(o), type(t), value(v)
+        Relocation(Section *s, unsigned o, const char *t,
+                   Symbol *v, unsigned a) :
+            section(s), offset(o), type(t), value(v), add(a)
         {}
     };
 
