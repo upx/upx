@@ -96,7 +96,7 @@ Linker* PackTos::newLinker() const
             }
             if (strcmp(type, "8") == 0)
                 *location += value;
-            if (strcmp(type, "16") == 0)
+            else if (strcmp(type, "16") == 0)
                 set_be16(location, get_be16(location) + value);
             else if (strcmp(type, "32") == 0)
                 set_be32(location, get_be32(location) + value);
@@ -135,7 +135,7 @@ int PackTos::buildLoader(const Filter *ft)
               "s_bneloop0",
               true ? "subql_1d6" : "subqw_1d6",
               "s_bneloop3",
-              "IDENTSTR,+40,UP1HEAD",
+              "IDENTSTR,+40,UPX1HEAD",
               "CUTPOINT",
               true ? "reloc" : "",
               "jmpastack",
@@ -236,6 +236,7 @@ bool PackTos::checkFileHeader()
 // some 68000 opcodes for patching
 **************************************************************************/
 
+#if 0
 enum m68k_reg_t {
     REG_D0, REG_D1, REG_D2, REG_D3, REG_D4, REG_D5, REG_D6, REG_D7,
     REG_A0, REG_A1, REG_A2, REG_A3, REG_A4, REG_A5, REG_A6, REG_A7
@@ -284,7 +285,6 @@ static unsigned OP_SUBQ_W(int value, int d_reg)
     assert(d_reg >= REG_D0 && d_reg <= REG_D7);
     return 0x5140 | ((value & 7) << 9) | (d_reg & 7);
 }
-
 
 /*************************************************************************
 //
@@ -347,7 +347,7 @@ unsigned PackTos::patch_d_loop(void *b, int blen,
     set_be32(p, d_value);
     return d_value;
 }
-
+#endif
 
 /*************************************************************************
 // relocs
@@ -532,10 +532,10 @@ void PackTos::pack(OutputFile *fo)
 
     // get loader
     const unsigned lsize = getLoaderSize();
-    const unsigned e_len = get_be16(getLoader()+lsize-6);
-    const unsigned d_len = get_be16(getLoader()+lsize-4);
-    const unsigned decomp_offset = get_be16(getLoader()+lsize-2);
-    assert(e_len + d_len == lsize - 6);
+    const unsigned e_len = getLoaderSectionStart("CUTPOINT");
+    const unsigned d_len = lsize - e_len;
+    const unsigned decomp_offset = linker->getSymbolOffset("decompr_start") - e_len;
+    assert(decomp_offset != 0xdeaddead);
     assert((e_len & 3) == 0 && (d_len & 1) == 0);
 
     // The decompressed data will now get placed at this offset:
@@ -556,7 +556,6 @@ void PackTos::pack(OutputFile *fo)
 
     // append decompressor (part 2 of loader)
     const unsigned d_off = o_data;
-    memcpy(obuf+d_off, getLoader()+e_len, d_len);
     o_data += d_len;
 
     // dword align the len of the final data segment
@@ -588,22 +587,12 @@ void PackTos::pack(OutputFile *fo)
     while (o_bss & 3)
         o_bss++;
 
-    // prepare loader
-    MemBuffer loader(o_text);
-    memcpy(loader, getLoader(), o_text);
-
-    // patch loader
-    int tmp = patchPackHeader(loader, o_text);
-    assert(tmp + 32 == (int)o_text); UNUSED(tmp);
-    patchVersionYear(loader, o_text);
-    if (!opt->small)
-        patchVersion(loader, o_text);
     //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
-    const unsigned dirty_bss_d6 =
-        patch_d_subq(loader, o_text, REG_D6, dirty_bss / dirty_bss_align, "u4");
-    patch_be32(loader, o_text, "up31", d_off + offset + decomp_offset);
+    const unsigned dirty_bss_d6 = dirty_bss / dirty_bss_align;
+        // FIXME patch_d_subq(loader, o_text, REG_D6, dirty_bss / dirty_bss_align, "u4");
+    linker->defineSymbol("up31", d_off + offset + decomp_offset);
     if (opt->small)
-        patch_d_loop(loader, o_text, REG_D0, o_data/4, "up22", "u1");
+        ; // patch_d_loop(loader, o_text, REG_D0, o_data/4, "up22", "u1");
     else
     {
         if (o_data <= 160)
@@ -615,19 +604,26 @@ void PackTos::pack(OutputFile *fo)
             loop1--;
             loop2 = 160;
         }
-        patch_be16(loader, o_text, "u2", OP_MOVEQ(loop2/4-1, REG_D0)); // moveq.l #X,d0
-        patch_d_loop(loader, o_text, REG_D0, loop1, "up22", "u1");
+        linker->defineSymbol("copy_remain", loop2 / 4 - 1);
+        //patch_be16(loader, o_text, "u2", OP_MOVEQ(loop2/4-1, REG_D0)); // moveq.l #X,d0
+        //patch_d_loop(loader, o_text, REG_D0, loop1, "up22", "u1");
     }
-    patch_be32(loader,o_text,"up21",o_data + offset);
-    patch_be32(loader,o_text,"up13",i_bss);               // p_blen
-    patch_be32(loader,o_text,"up12",i_data);              // p_dlen
-    patch_be32(loader,o_text,"up11",i_text);              // p_tlen
+    linker->defineSymbol("up22", opt->small ? o_data / 4 : (o_data - 1) / 160);
+    linker->defineSymbol("up21", o_data + offset);
+    linker->defineSymbol("up13", i_bss);                // p_blen
+    linker->defineSymbol("up12", i_data);               // p_dlen
+    linker->defineSymbol("up11", i_text);               // p_tlen
+
+    const unsigned clear_size = linker->getSymbolOffset("clear_bss_end") -
+                                linker->getSymbolOffset("clear_bss");
+    linker->defineSymbol("copy_to_stack_len", clear_size / 2 - 1);
+    linker->defineSymbol("clear_bss_size_p4", clear_size + 4);
 
     // patch decompressor
-    upx_byte *p = obuf + d_off;
+    //upx_byte *p = obuf + d_off;
     //   patch "moveq.l #1,d5" or "jmp (ASTACK)"
-    patch_be16(p, d_len, "u3", (nrelocs > 0) ? OP_MOVEQ(1, REG_D5) : OP_JMP(REG_A7));
-    patch_be32(p, d_len, "up41", dirty_bss_d6);
+    //patch_be16(p, d_len, "u3", (nrelocs > 0) ? OP_MOVEQ(1, REG_D5) : OP_JMP(REG_A7));
+    linker->defineSymbol("up41", dirty_bss_d6);
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);
@@ -655,6 +651,19 @@ void PackTos::pack(OutputFile *fo)
            i_text, i_data, i_bss, relocsize, overlay);
     printf("new text: %6d, data: %6d, bss: %6d, dirty_bss: %d, flag=0x%x\n",
            o_text, o_data, o_bss, dirty_bss, (int)oh.fh_flag);
+#endif
+
+    linker->relocate();
+    // prepare loader
+    MemBuffer loader(o_text);
+    memcpy(loader, getLoader(), o_text);
+    memcpy(obuf+d_off, getLoader() + e_len, d_len);
+
+    patchPackHeader(loader, o_text);
+#if 0
+    patchVersionYear(loader, o_text);
+    if (!opt->small)
+        patchVersion(loader, o_text);
 #endif
 
     // write new file header, loader and compressed file

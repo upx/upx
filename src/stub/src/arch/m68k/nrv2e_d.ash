@@ -63,8 +63,8 @@
 
 #if !defined(NRV_NO_INIT)
 
-                ////move.l  #-0x500,d6             // 0xfffffb00
-                moveq.l #-0x50,d6                //   0xffffffb0
+                //move.l  #-0x500,d6            // 0xfffffb00
+                moveq.l #-0x50,d6               //   0xffffffb0
                 lsl.w   #4,d6                   //   << 4
 
                 moveq.l #0,d7
@@ -72,10 +72,10 @@
 
                 // init d0 with high bit set
 #if (NRV_BB == 8)
-                ////move.b  #0x80,d0                 // init d0.b for FILLBYTES
+                //move.b  #0x80,d0              // init d0.b for FILLBYTES
                 moveq.l #-128,d0                // d0.b = 0x80
 #elif (NRV_BB == 32)
-                ////move.l  #0x80000000,d0           // init d0.l for FILLBYTES
+                //move.l  #0x80000000,d0        // init d0.l for FILLBYTES
                 moveq.l #1,d0
                 ror.l   #1,d0                   // d0.l = 0x80000000
 #endif
@@ -93,13 +93,13 @@ fillbytes_sr:   FILLBYTES_SR
 #endif
 
 
-
 // ------------- DECOMPRESSION -------------
 
 
 decompr_literal:
                 move.b  (a0)+,(a1)+
 
+.globl decompr_start
 decompr_start:
 decompr_loop:
 #ifdef SMALL
@@ -107,17 +107,17 @@ decompr_loop:
         //   cost match:     4 + 10 +  8
         //   cost fillbits:  4 +  8
                 GETBIT
-                bcs     decompr_literal
+                bcss    decompr_literal
 #else
         // optimization: carry is clear -> we know that bits are available
         //   cost literal:   4 +  8 + 10
         //   cost match:     4 + 10
         //   cost fillbits:  4 +  8 +  8
                 ADDBITS
-                bcc     decompr_match
-                bne     decompr_literal
+                bccs    decompr_match
+                bnes    decompr_literal
                 FILLBITS
-                bcs     decompr_literal
+                bcss    decompr_literal
 #endif
 
 
@@ -133,45 +133,45 @@ decompr_l1:
         //   cost loop break:     4 + 10 + 10
         //   cost fillbits:       4 +  8
                 GETBIT
-                bcs     decompr_break1
+                bcss    decompr_break1
 #else
         // optimization: carry is clear -> we know that bits are available
         //   cost loop continue:  4 + 10
         //   cost loop break:     4 +  8 + 10
         //   cost fillbits:       4 +  8 +  8
                 ADDBITS
-                bcc     L(continue)
-                bne     decompr_break1
+                bccs    L(continue)
+                bnes    decompr_break1
                 FILLBITS
-                bcs     decompr_break1
+                bcss    decompr_break1
 L(continue):
 #endif
                 subq.w  #1,d1
                 GETBIT
                 addx.w  d1,d1
-                bpl     decompr_l1
-                bra     decompr_end
+                bpls    decompr_l1
+                bras    decompr_end
 decompr_break1:
                 subq.w  #3,d1
-                bcs     decompr_prev_dist       // last m_off
+                bcss    decompr_prev_dist       // last m_off
                 lsl.l   #8,d1
                 move.b  (a0)+,d1
                 not.l   d1
                 asr.l   #1,d1
-                bcc     decompr_get_mlen2
+                bccs    decompr_get_mlen2
 
 decompr_get_mlen1:
                 GETBIT
                 addx.w  d2,d2
-                bra     decompr_got_mlen
+                bras    decompr_got_mlen
 decompr_prev_dist:
                 move.l  d5,d1
                 GETBIT
-                bcs     decompr_get_mlen1
+                bcss    decompr_get_mlen1
 decompr_get_mlen2:
                 addq.w  #1,d2
                 GETBIT
-                bcs     decompr_get_mlen1
+                bcss    decompr_get_mlen1
 
 decompr_l2:     GETBIT
                 addx.w  d2,d2
@@ -180,17 +180,17 @@ decompr_l2:     GETBIT
         //   cost loop break:     4 + 10 +  8
         //   cost fillbits:       4 +  8
                 GETBIT
-                bcc     decompr_l2
+                bccs    decompr_l2
 #else
         // optimization: carry is clear -> we know that bits are available
         //   cost loop continue:  4 + 10
         //   cost loop break:     4 +  8 + 10
         //   cost fillbits:       4 +  8 +  8
                 ADDBITS
-                bcc     decompr_l2
-                bne     L(break)
+                bccs    decompr_l2
+                bnes    L(break)
                 FILLBITS
-                bcc     decompr_l2
+                bccs    decompr_l2
 L(break):
 #endif
                 addq.w  #2,d2
@@ -219,7 +219,7 @@ L(copy):        move.b  (a3)+,(a1)+                             // 12
         //   cost for odd m_len:   28 + 34 * (m_len / 2) + 4
         //     56, 66, 90, 100, 124, 134, 158, 168, 192, 202
                 lsr.w   #1,d2                                   //  8
-                bcc     L(copy)                                 // 10 /  8
+                bccs    L(copy)                                 // 10 /  8
                 move.b  (a3)+,(a1)+                             // 12
 L(copy):        move.b  (a3)+,(a1)+                             // 12
                 move.b  (a3)+,(a1)+                             // 12

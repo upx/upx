@@ -143,18 +143,18 @@ macro(FILLBITS)
 macro(GETBIT)
 #if defined(__A68K__)
                 ADDBITS                                         //  4 / 6
-                bne     \@                                      // 10 (if jump)
+                bnes    \@                                      // 10 (if jump)
                 FILLBITS
 \@:
 #elif defined(__ASL__)
                 ADDBITS                                         //  4 / 6
-                bne     done                                    // 10 (if jump)
+                bnes    done                                    // 10 (if jump)
                 FILLBITS
 done:
 #else
 LOCAL done
                 ADDBITS                                         //  4 / 6
-                bne     done                                    // 10 (if jump)
+                bnes    done                                    // 10 (if jump)
                 FILLBITS
 done:
 #endif

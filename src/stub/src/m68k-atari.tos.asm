@@ -124,7 +124,7 @@ macro(SUPEXEC_FLUSH_CACHE)
                 move.w  #0x0026,-(sp)    // Supexec (38)
                 trap    #14             // XBIOS
                 addq.l  #6,sp
-                bra     done
+                bras    done
 
 
 // exception handler
@@ -145,19 +145,19 @@ super:          move.l  (0x10),-(sp)
                 nop                     // flush write pipeline
 
         // try 68040 / 68060
-                lea     1(pc),a0
+                lea     fc1(pc),a0
                 dc.w    0xf4f8          // cpusha bc
-                bra     ret
-1:
+                bras    ret
+fc1:
         // try 68030
-                lea     2(pc),a0
+                lea     fc2(pc),a0
                 movec.l cacr,d0
                 move.l  d0,d1
                 or.w    #0x0808,d1
                 movec.l d1,cacr
                 movec.l d0,cacr
 //;;                bra     \@ret
-2:
+fc2:
 
 ret:            move.l  (sp)+,(0xf4)
                 move.l  (sp)+,(0x2c)
@@ -173,7 +173,7 @@ done:
 macro(BOTH_FLUSH_CACHE)
                 MINT_FLUSH_CACHE
                 tst.l   d0
-                beq     done2
+                beqs    done2
                 SUPEXEC_FLUSH_CACHE
 done2:
         endm
@@ -210,9 +210,9 @@ section         tos0
 
 start:
                 move.l  a0,d0           // a0 is basepage if accessory
-                beq     L(l_app)
+                beqs    L(l_app)
                 move.l  4(a0),sp        // accessory - get stack
-                bra     L(start)
+                bras    L(start)
 
 L(l_app):       move.l  4(sp),d0        // application - get basepage
 L(start):       movem.l d1-d7/a0-a6,-(sp)
@@ -226,14 +226,14 @@ L(start):       movem.l d1-d7/a0-a6,-(sp)
                 addq.l  #p_tbase,a2
                 move.l  (a2)+,a6
                 move.l  a6,d4                   // d4 = p_tbase
-                move.l  up11,(a2)       // p_tlen
+                move.l  #up11,(a2)      // p_tlen
                 add.l   (a2)+,a6
                 move.l  a6,(a2)+        // p_dbase
-                move.l  up12,(a2)       // p_dlen
+                move.l  #up12,(a2)      // p_dlen
                 add.l   (a2)+,a6                // a6 = decompressed p_bbase
                 move.l  (a2),a4                 // a4 = compressed p_bbase
                 move.l  a6,(a2)+        // p_bbase
-                move.l  up13,(a2)       // p_blen
+                move.l  #up13,(a2)      // p_blen
 
 
 // ------------- copy data segment (from a4 to a3, downwards)
@@ -241,24 +241,24 @@ L(start):       movem.l d1-d7/a0-a6,-(sp)
                 // a4 (top of compressed data) already initialized above
 
                 move.l  d4,a3
-                add.l   up21,a3         // top of data segment + offset
+                add.l   #up21,a3        // top of data segment + offset
 
 #if defined(SMALL)
 
-                move.l  up22,d0         // (len / 4)
+                move.l  #up22,d0        // (len / 4)
 
         // copy 4 bytes per loop
 L(loop):        move.l  -(a4),-(a3)
 section         subql_1d0
-                subq.l #1,d0
+                subq.l  #1,d0
 section         subqw_1d0
-                subq.w #1,d0
+                subq.w  #1,d0
 section         s_bneloop0
-                bne     L(loop)
+                bnes    L(loop)
 
 #else
 
-                move.l  up22,d0         // (len / 160)
+                move.l  #up22,d0        // (len / 160)
 
         // loop1 - use 10 registers to copy 4*10*4 = 160 bytes per loop
 L(loop1):
@@ -272,11 +272,11 @@ L(loop1):
                 movem.l (a4),d1-d3/d5-d7/a0-a2/a5
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
 section         subql_1d0
-                subq.l #1,d0
+                subq.l  #1,d0
 section         subqw_1d0
-                subq.w #1,d0
+                subq.w  #1,d0
 section         s_bneloop0
-                bne     L(loop1)
+                bnes    L(loop1)
 
         // loop2 - copy the remaining 4..160 bytes
                 //;moveq.l #xx,d0          ; ((len % 160) / 4) - 1
@@ -301,18 +301,18 @@ L(loop2):       move.l  -(a4),-(a3)
 
 copy_to_stack:
 
-                lea.l   clear_bss_end(pc),a2
+                lea.l   clear_bss_end:b(pc),a2
                 move.l  d4,-(ASTACK)    // entry point for final jmp
 
 //                moveq.l #((clear_bss_end-clear_bss)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
 L(loop6):       move.w  -(a2),-(ASTACK)
                 subq.l  #1,d5
-                bcc     L(loop6)
+                bccs    L(loop6)
 
 #ifdef FLUSH_CACHE
                 // patch code: on the stack, the `rts' becomes a `nop'
-                move.w #0x4e71,flush_cache_rts-clear_bss(ASTACK)
+                move.w #0x4e71,flush_cache_rts-clear_bss:b(ASTACK)
 #endif
 
         // note: d5.l is now -1 (needed for decompressor)
@@ -321,7 +321,7 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 // -------------
 
 #ifdef FLUSH_CACHE
-                bsr     flush_cache
+                bsrs    flush_cache
 #endif
 
 
@@ -364,6 +364,7 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 // ------------- clear dirty bss
 
+.globl clear_bss
 clear_bss:
 
         // on entry:
@@ -376,11 +377,11 @@ clear_bss:
 #if defined(SMALL)
 L(loop3):       move.l  d3,(a6)+
 section         subql_1d6
-                subq.l #1,d6
+                subq.l  #1,d6
 section         subqw_1d6
-                subq.w #1,d6
+                subq.w  #1,d6
 section         s_bneloop3
-                bne     L(loop3)
+                bnes    L(loop3)
 #else
         // the dirty bss is usually not too large, so we don't
         // bother making movem optimizations here
@@ -389,11 +390,11 @@ L(loop3):       move.l  d3,(a6)+
                 move.l  d3,(a6)+
                 move.l  d3,(a6)+
 section         subql_1d6
-                subq.l #1,d6
+                subq.l  #1,d6
 section         subqw_1d6
-                subq.w #1,d6
+                subq.w  #1,d6
 section         s_bneloop3
-                bne     L(loop3)
+                bnes    L(loop3)
 #endif
 
 
@@ -415,7 +416,7 @@ flush_cache_rts:
 
 // ------------- restore ASTACK
 
-                lea     clear_bss_size+4(ASTACK),sp
+                lea     clear_bss_size_p4:b(ASTACK),sp
 
         //; assert sp == clear_bss_end(pc)+4
 
@@ -442,10 +443,11 @@ L(loop):        move.l  d3,-(a0)
 
                 movem.l (sp)+,d1-d7/a0-a6
                 move.l  a0,d0
-                beq     L(l_app1)
+                beqs    L(l_app1)
                 sub.l   sp,sp           // accessory: no stack
 L(l_app1):      dc.w    0x4ef9          // jmp $xxxxxxxx - jmp to text segment
 
+.globl clear_bss_end
 clear_bss_end:
 
 
@@ -485,9 +487,9 @@ section         CUTPOINT
 #define d2 D3
 
 #if defined(NRV2B)
-//#  include "arch/m68k/nrv2b_d.ash"
+#  include "arch/m68k/nrv2b_d.ash"
 #elif defined(NRV2D)
-//#  include "arch/m68k/nrv2d_d.ash"
+#  include "arch/m68k/nrv2d_d.ash"
 #elif defined(NRV2E)
 #  include "arch/m68k/nrv2e_d.ash"
 #else
@@ -528,11 +530,11 @@ section         reloc
 L(loopx1):      add.l   d3,a1           // increase fixup
                 add.l   d4,(a1)         // reloc one address
 L(loopx2):      move.b  (a0)+,d3
-                beq     reloc_end
+                beqs    reloc_end
                 cmp.b   d5,d3           // note: d5.b is #1 from above
-                bne     L(loopx1)
+                bnes    L(loopx1)
                 lea     254(a1),a1      // d3 == 1 -> add 254, don't reloc
-                bra     L(loopx2)
+                bras    L(loopx2)
 
 reloc_end:
 
