@@ -477,7 +477,7 @@ ElfLinker::~ElfLinker()
 
 void ElfLinker::init(const void *pdata, int plen, int)
 {
-    upx_byte *i = new upx_byte[plen];
+    upx_byte *i = new upx_byte[plen + 1];
     memcpy(i, pdata, plen);
     input = i;
     inputlen = plen;
@@ -494,6 +494,7 @@ void ElfLinker::init(const void *pdata, int plen, int)
 
     char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR");
     assert(prelocs != NULL);
+    input[plen] = 0;
 
     preprocessSections(psections, psymbols);
     preprocessSymbols(psymbols, prelocs);
