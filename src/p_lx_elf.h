@@ -41,6 +41,7 @@ public:
     PackLinuxElf(InputFile *f);
     virtual ~PackLinuxElf();
     /*virtual int buildLoader(const Filter *);*/
+    virtual Linker* newLinker() const;
     virtual bool canUnpackVersion(int version) const { return (version >= 11); }
 
 protected:
@@ -285,6 +286,7 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
 };
 
 /*************************************************************************

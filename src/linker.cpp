@@ -675,12 +675,40 @@ void ElfLinkerX86::align(unsigned len)
     alignWithByte(len, 0x90);
 }
 
+void ElfLinkerAMD64::align(unsigned len)
+{
+    alignWithByte(len, 0x90);
+}
+
 void ElfLinkerX86::relocate1(Relocation *rel, upx_byte *location,
                              unsigned value, const char *type)
 {
     if (strncmp(type, "R_386_", 6))
         return super::relocate1(rel, location, value, type);
     type += 6;
+
+    if (strncmp(type, "PC", 2) == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        type += 2;
+    }
+
+    if (strcmp(type, "8") == 0)
+        *location += value;
+    else if (strcmp(type, "16") == 0)
+        set_le16(location, get_le16(location) + value);
+    else if (strcmp(type, "32") == 0)
+        set_le32(location, get_le32(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
+                             unsigned value, const char *type)
+{
+    if (strncmp(type, "R_X86_64_", 9))
+        return super::relocate1(rel, location, value, type);
+    type += 9;
 
     if (strncmp(type, "PC", 2) == 0)
     {

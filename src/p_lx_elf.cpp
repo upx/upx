@@ -148,11 +148,21 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     sz_phdrs(0), sz_elf_hdrs(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0)
 {
-    delete[] file_image;
+}
+
+Linker *PackLinuxElf::newLinker() const
+{
+    return new ElfLinker;
 }
 
 PackLinuxElf::~PackLinuxElf()
 {
+    delete[] file_image;
+}
+
+Linker* PackLinuxElf64amd::newLinker() const
+{
+    return new ElfLinkerAMD64;
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
