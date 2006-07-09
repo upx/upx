@@ -504,8 +504,8 @@ void ElfLinker::init(const void *pdata, int plen, int)
 
 void ElfLinker::setLoaderAlignOffset(int phase)
 {
-    // FIXME: do not use this yet
-    assert(phase & 0);
+    //assert(phase & 0);
+    printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
 }
 
 int ElfLinker::addSection(const char *sname)

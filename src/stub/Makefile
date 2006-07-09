@@ -462,9 +462,11 @@ tc.i386-linux.elf.objdump  = $(call tc,m-objdump)
 tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
-	$(call tc,pp-nasm) $< -o tmp/$T.tmp1
-	$(call tc,app-nasm) tmp/$T.tmp1 tmp/$T.tmp2
-	$(call tc,nasm) -f bin -l tmp/$T.bin.lst tmp/$T.tmp2 -o tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
 
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
