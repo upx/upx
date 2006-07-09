@@ -60,6 +60,7 @@ protected:
         void const *proto,
         unsigned const brka
     ) = 0;
+    virtual void addStubEntrySections(upx_byte const *, unsigned);
     virtual void unpack(OutputFile *fo) = 0;
 
 protected:
@@ -286,6 +287,7 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(upx_byte const *, unsigned);
     virtual Linker* newLinker() const;
 };
 

@@ -150,19 +150,24 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
 {
 }
 
-Linker *PackLinuxElf::newLinker() const
-{
-    return new ElfLinker;
-}
-
 PackLinuxElf::~PackLinuxElf()
 {
     delete[] file_image;
 }
 
-Linker* PackLinuxElf64amd::newLinker() const
+Linker *PackLinuxElf::newLinker() const
 {
-    return new ElfLinkerAMD64;
+    return new ElfLinker;
+}
+
+void
+PackLinuxElf::addStubEntrySections(
+    upx_byte const *const proto,
+    unsigned const szproto
+)
+{
+    linker->addSection("ELFMAINX", proto, szproto);
+    addLoader("ELFMAINX", NULL);
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
@@ -184,6 +189,11 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 PackLinuxElf64::~PackLinuxElf64()
 {
     delete[] phdri;
+}
+
+Linker* PackLinuxElf64amd::newLinker() const
+{
+    return new ElfLinkerAMD64;
 }
 
 int const *
@@ -512,9 +522,8 @@ PackLinuxElf32::buildLinuxLoader(
     //int const GAP = 128;  // must match stub/l_mac_ppc.S
     //segcmdo.vmsize += sz_unc - sz_cpr + GAP + 64;
 
-    linker->addSection("ELFMAINX", proto, szproto);
+    addStubEntrySections(proto, szproto);
 
-    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
     return getLoaderSize();
@@ -568,12 +577,20 @@ PackLinuxElf64::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
-    linker->addSection("ELFMAINX", proto, szproto);
+    addStubEntrySections(proto, szproto);
 
-    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
     return getLoaderSize();
+}
+
+void
+PackLinuxElf64amd::addStubEntrySections(
+    upx_byte const *const /*proto*/,
+    unsigned const /*szproto*/
+)
+{
+    // FIXME
 }
 
 static const
