@@ -468,7 +468,9 @@ PackLinuxElf32x86::buildLinuxLoader(
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
 
-    return getLoaderSize();
+    unsigned const lsize = getLoaderSize();
+    linker->relocate();
+    return lsize;
 }
 
 int
@@ -2011,6 +2013,11 @@ PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
 {
+}
+
+Linker* PackLinuxElf32x86::newLinker() const
+{
+    return new ElfLinkerX86;
 }
 
 PackBSDElf32x86::PackBSDElf32x86(InputFile *f) : super(f)

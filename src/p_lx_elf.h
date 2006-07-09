@@ -41,7 +41,6 @@ public:
     PackLinuxElf(InputFile *f);
     virtual ~PackLinuxElf();
     /*virtual int buildLoader(const Filter *);*/
-    virtual Linker* newLinker() const;
     virtual bool canUnpackVersion(int version) const { return (version >= 11); }
 
 protected:
@@ -55,6 +54,7 @@ protected:
     //virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
+    virtual Linker* newLinker() const;
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
@@ -287,8 +287,8 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
-    virtual void addStubEntrySections(upx_byte const *, unsigned);
     virtual Linker* newLinker() const;
+    virtual void addStubEntrySections(upx_byte const *, unsigned);
 };
 
 /*************************************************************************
@@ -330,6 +330,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
     virtual int buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
