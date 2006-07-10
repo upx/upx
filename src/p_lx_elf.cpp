@@ -381,7 +381,7 @@ PackLinuxElf32x86::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
-    delete [] cprLoader;
+    // FIXME: memory leak    delete [] cprLoader;
 
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 

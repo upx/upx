@@ -41,7 +41,7 @@
         .globl _start
 section LEXEC000
 _start:
-    int3
+////    int3
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
