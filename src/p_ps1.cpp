@@ -38,21 +38,26 @@
 #include "linker.h"
 
 static const
-#include "stub/mipsel.r3000-ps1-boot.h"
-static const
-#include "stub/mipsel.r3000-ps1-console.h"
+#include "stub/mipsel.r3000-ps1.h"
 
 
-#define MIPS_HI(a)          ((a) >> 16)
+#if 0
+// lui / ori
+#   define MIPS_HI(a)       ((a) >> 16)
+#else
+// lui / addiu
+#   define MIPS_HI(a)       (((a) >> 16) + (((a) & 0x8000) >> 15))
+#endif
 #define MIPS_LO(a)          ((a) & 0xffff)
 #define MIPS_JP(a)          ((0x08 << 24) | (((a) & 0x0fffffff) >> 2))
+#define MIPS_PC16(a)        ((a) >> 2)
 #define TIL_ALIGNED(a,b)    (((b) - ((a) & ((b) - 1))) & (b) - 1)
 
 #define CD_SEC              2048
 #define PS_HDR_SIZE         CD_SEC
-#define PS_RAM_SIZE         0x200000
+#define PS_RAM_SIZE         ram_size
 #define PS_MIN_SIZE         (PS_HDR_SIZE*3)
-#define PS_MAX_SIZE         0x1e8000
+#define PS_MAX_SIZE         ((PS_RAM_SIZE*95) / 100)
 
 #define SZ_IH_BKUP          (10 * sizeof(LE32))
 #define HD_CODE_OFS         (sizeof(ps1_exe_t))
@@ -85,12 +90,11 @@ PackPs1::PackPs1(InputFile *f) :
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
 #if 0 // 1 || defined(WITH_NRV)
-    COMPILE_TIME_ASSERT(sizeof(nrv_boot_loader) == 3935);
-    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0x0ac25782);
-    COMPILE_TIME_ASSERT(sizeof(nrv_con_loader) == 2829);
-    COMPILE_TIME_ASSERT(NRV_CON_LOADER_CRC32 == 0x923b55c4);
+    COMPILE_TIME_ASSERT(sizeof(nrv_loader) == 14812);
+    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0x0);
 #endif
     fdata_size = file_size - PS_HDR_SIZE;
+    ram_size = !opt->ps1_exe.do_8mb ? 0x200000 : 0x800000;
 }
 
 
@@ -118,10 +122,15 @@ Linker* PackPs1::newLinker() const
         virtual void relocate1(Relocation *rel, upx_byte *location,
                                unsigned value, const char *type)
         {
-            if (strcmp(type, "R_MIPS_LO16") == 0)
-                set_le16(location, get_le16(location) + value);
-            else if (strcmp(type, "R_MIPS_HI16") == 0)
-                set_le16(location, get_le16(location) + (value >> 16));
+            if (strcmp(type, "R_MIPS_HI16") == 0)
+                set_le16(location, get_le16(location) + MIPS_HI(value));
+            else if (strcmp(type, "R_MIPS_LO16") == 0)
+                set_le16(location, get_le16(location) + MIPS_LO(value));
+            else if (strcmp(type, "R_MIPS_PC16") == 0)
+            {
+                value -= rel->section->offset + rel->offset;
+                set_le16(location, get_le16(location) + MIPS_PC16(value));
+            }
             else if (strcmp(type, "R_MIPS_32") == 0)
                 set_le32(location, get_le32(location) + value);
             else
@@ -182,41 +191,6 @@ bool PackPs1::checkFileHeader()
 
 
 /*************************************************************************
-// patch util
-**************************************************************************/
-
-void PackPs1::patch_mips_le(void *b, int blen, const void *old, unsigned new_)
-{
-    size_t patch_len = strlen((const char*)old);
-
-    if (patch_len == 2)
-    {
-        unsigned char w[2];
-
-        set_le16(w, get_be16(old));
-        patch_le16(b, blen, w, MIPS_LO(new_));
-    }
-    else if (patch_len == 4)
-    {
-        unsigned char w[4];
-
-        set_le32(w, get_be32(old));
-        int boff = find(b, blen, w, 4);
-
-        if (boff == -1)
-        {
-            patch_le16(b, blen, &w[0], MIPS_LO(new_));
-            patch_le16(b, blen, &w[2], MIPS_HI(new_));
-        }
-        else
-            patch_le32((unsigned char *)b + boff, (blen-boff), &w, new_);
-    }
-    else
-        throwInternalError("bad marker length");
-}
-
-
-/*************************************************************************
 //
 **************************************************************************/
 
@@ -245,7 +219,7 @@ bool PackPs1::canPack()
         throwCantPack("unsupported header flags (try --force)");
     if (!opt->force && file_size < PS_MIN_SIZE)
         throwCantPack("file is too small (try --force)");
-    if (!opt->force && file_size > PS_MAX_SIZE)
+    if (!opt->force && file_size > (off_t) PS_MAX_SIZE)
         throwCantPack("file is too big (try --force)");
     return true;
 }
@@ -257,40 +231,52 @@ bool PackPs1::canPack()
 
 int PackPs1::buildLoader(const Filter *)
 {
-    if (isCon)
-        initLoader(nrv_con_loader,sizeof(nrv_con_loader));
-    else
-        initLoader(nrv_boot_loader,sizeof(nrv_boot_loader));
+    initLoader(nrv_loader,sizeof(nrv_loader));
 
-    addLoader("PS1START",
-              isCon ? ph.c_len & 3 ? "PS1PADCD" : "" : "PS1ENTRY",
-              ih.tx_ptr & 0xffff ?  "PS1CONHL" : "PS1CONHI",
-              isCon ? "PS1ENTRY" : "",
-              NULL);
+    if (isCon)
+        addLoader("ps1.con.start", ph.c_len & 3 ? "ps1.con.padcd" : "",
+                  ih.tx_ptr & 0xffff ?  "ps1.con.nrv.ptr" : "ps1.con.nrv.ptr.hi",
+                  "ps1.con.entry",
+                  NULL);
+    else
+        addLoader("ps1.cdb.start", "ps1.cdb.entry",
+                  ih.tx_ptr & 0xffff ?  "ps1.cdb.nrv.ptr" : "ps1.cdb.nrv.ptr.hi",
+                  NULL);
 
     if (ph.method == M_NRV2B_8)
-        addLoader("PS1N2B08", NULL);
+        addLoader(isCon ? "ps1.small.nrv2b" :
+                          "ps1.cdb.nrv2b.8bit", NULL);
     else if (ph.method == M_NRV2D_8)
-        addLoader("PS1N2D08", NULL);
+        addLoader(isCon ? "ps1.small.nrv2d" :
+                          "ps1.cdb.nrv2d.8bit", NULL);
     else if (ph.method == M_NRV2E_8)
-        addLoader("PS1N2E08", NULL);
+        addLoader(isCon ? "ps1.small.nrv2e" :
+                          "ps1.cdb.nrv2e.8bit", NULL);
     else if (ph.method == M_NRV2B_LE32)
-        addLoader("PS1N2B32", NULL);
+        addLoader(isCon ? "ps1.small.nrv2b" :
+                          "ps1.cdb.nrv2b.32bit", NULL);
     else if (ph.method == M_NRV2D_LE32)
-        addLoader("PS1N2D32", NULL);
+        addLoader(isCon ? "ps1.small.nrv2d" :
+                          "ps1.cdb.nrv2d.32bit", NULL);
     else if (ph.method == M_NRV2E_LE32)
-        addLoader("PS1N2E32", NULL);
+        addLoader(isCon ? "ps1.small.nrv2e" :
+                          "ps1.cdb.nrv2e.32bit", NULL);
     else
         throwInternalError("unknown compression method");
 
+    if (isCon)
+        addLoader(is32Bit ? "ps1.getbit.32bit.sub" : "ps1.getbit.8bit.sub", NULL);
+
     if (sa_cnt)
-        addLoader(sa_cnt > (0x10000 << 2) ? "PS1MSETB" : "PS1MSETS",
-                  ih.tx_len & 3 ? "PS1MSETU" : "PS1MSETA",
+        addLoader(sa_cnt > (0x10000 << 2) ? "ps1.mset.long" : "ps1.mset.short",
+                  ih.tx_len & 3 ? "ps1.mset.unaligned" : "ps1.mset.aligned",
                   NULL);
 
-    addLoader("PS1EXITC", "IDENTSTR", "UPX1HEAD",
-              isCon ? "PS1SREGS" : "",
-              NULL);
+    addLoader(isCon ? "ps1.con.exit" : "ps1.cdb.exit", "IDENTSTR", "UPX1HEAD", NULL);
+
+    if (isCon)
+        addLoader("ps1.con.regs",
+                  is32Bit ? "ps1.getbit.32bit.size" : "ps1.getbit.8bit.size", NULL);
 
     freezeLoader();
     return getLoaderSize();
@@ -375,11 +361,11 @@ void PackPs1::pack(OutputFile *fo)
     if (isCon)
     {
         e_len = lsize - h_len;
-        d_len = e_len - getLoaderSectionStart("PS1ENTRY");
+        d_len = e_len - getLoaderSectionStart("ps1.con.entry");
     }
     else
     {
-        d_len = (lsize - h_len) - getLoaderSectionStart("PS1ENTRY");
+        d_len = (lsize - h_len) - getLoaderSectionStart("ps1.cdb.entry");
         e_len = (lsize - d_len) - h_len;
     }
 
@@ -406,19 +392,26 @@ void PackPs1::pack(OutputFile *fo)
 
     if (isCon)
     {
+        const char *p = is32Bit ? "ps1.getbit.32bit.sub" : "ps1.getbit.8bit.sub";
+        unsigned decomp_done = getLoaderSectionStart(p);
+
+        p = is32Bit ? "ps1.getbit.32bit.size" : "ps1.getbit.8bit.size";
+        decomp_done += get_le32(&loader[getLoaderSectionStart(p)]);
+
+
         linker->defineSymbol("PC", pad_code);
         linker->defineSymbol("DCRT", entry + (e_len - d_len));
         linker->defineSymbol("LS",
-                             d_len + get_le32(&loader[getLoaderSectionStart("PS1SREGS")]));
-
+                             d_len + get_le32(&loader[getLoaderSectionStart("ps1.con.regs")]));
+        linker->defineSymbol("decomp_done", decomp_done);
         linker->relocate();
         memcpy(loader, getLoader(), lsize);
-        patchPackHeader(loader,lsize);
+        patchPackHeader(loader, lsize);
 
         // ps1_exe_t structure 188 bytes
         fo->write(&oh,sizeof(oh));
         // id & upx header
-        fo->write(loader + e_len,h_len);
+        fo->write(loader + e_len, h_len);
     }
     else
     {
@@ -532,4 +525,3 @@ void PackPs1::unpack(OutputFile *fo)
 /*
 vi:ts=4:et:nowrap
 */
-

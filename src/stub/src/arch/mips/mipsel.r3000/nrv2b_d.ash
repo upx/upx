@@ -1,5 +1,5 @@
 /*
-;  n2b_d.ash -- NRV2B decompressor in Mips R3000 assembly
+;  nrv2b_d.ash -- NRV2B decompressor in Mips R3000 assembly
 ;
 ;  This file is part of the UCL data compression library.
 ;
@@ -27,112 +27,77 @@
 ;
 */
 
-small = 0
-#if (NRV_BB==8)
-#   ifdef SMALL
-        IF (!small)
-            small = 1
-        ENDIF
-#       define  UCL_DECOMPRESSOR    ucl_nrv2b_decompress_8_small
-#       define  GETBIT              gbit_call gbit_sub,NRV_BB
-#   else
-#       define  UCL_DECOMPRESSOR    ucl_nrv2b_decompress_8
-#       define  GETBIT              gbit_8
-#   endif
-#elif (NRV_BB==32)
-#   ifdef SMALL
-#       define  UCL_DECOMPRESSOR    ucl_nrv2b_decompress_32_small
-#       define  GETBIT              gbit_call gbit_sub,NRV_BB
-#   else
-        IF (small)
-            small = 0
-        ENDIF
-#       define  UCL_DECOMPRESSOR    ucl_nrv2b_decompress_32
-#       define  GETBIT              gbit_le32
-#   endif
-#else
-#   error "define NRV_BB first!"
-#endif
-
-
-#include "bits.ash"
 
 /*
 ; ------------- DECOMPRESSION -------------
-; On entry:
-;   a0  src pointer
-;   a2  dest pointer
+; On entry: (regs are defined)
+;   src compressed data pointer
+;   dst store uncompressed data pointer
 */
 
-.macro  UCL_DECOMPRESSOR
-        local   n2b_18, n2b_78, n2b_FC, n2b_120,
-        local   n2b_190, n2b_208, gbit_sub, n2b_decomp_done
-        init    NRV_BB
-n2b_18:
-        GETBIT
-        beqz    var,n2b_78
-        li      m_off,1
-        lbu     var,0(src_ilen)
-        addiu   src_ilen,1
-        sb      var,0(dst)
-        b       n2b_18
-        addiu   dst,1
-n2b_78:
-        GETBIT
-        sll     m_off,1
-        addu    m_off,var
-        GETBIT
-        beqz2gb var,n2b_78,NRV_BB
-        li      var,2
-        bne     m_off,var,n2b_FC
-        addiu   m_off,-3
-        b       n2b_120
-        move    m_off,last_m_off
-n2b_FC:
-        lbu     var,0(src_ilen)
-        addiu   src_ilen,1
-        sll     m_off,8         // *256
-        addu    m_off,var       // +scr[ilen++]
-        li      var,-1
-        beq     m_off,var,n2b_decomp_done
-        addiu   m_off,1
-        move    last_m_off,m_off
-n2b_120:
-        GETBIT
-        move    m_len,var
-        sll     m_len,1
-        GETBIT
-        addu    m_len,var
-        bnez    m_len,n2b_208
-        sltiu   var,m_off,0x0D01
-        li      m_len,1
-n2b_190:
-        GETBIT
-        sll     m_len,1
-        addu    m_len,var
-        GETBIT
-        beqz2gb var,n2b_190,NRV_BB
-        addiu   m_len,2
-        sltiu   var,m_off,0x0D01
-n2b_208:
-        xori    var,0x0001
-        addu    m_len,var
-        uclmcpy n2b_18,NRV_BB
+.macro  nrv2b done
 
-#ifdef SMALL
-gbit_sub:
-#   if (NRV_BB == 8)
-        gbit_8
-#   elif (NRV_BB == 32)
-        gbit_le32
-#   else
-#       error "define NRV_BB first!"
-#   endif
-#endif
+            local   n2b_1, n2b_2, n2b_3, 
+            local   n2b_4, n2b_5, n2b_6
 
-n2b_decomp_done:
+            init
+n2b_1:
+            GETBIT
+            li      m_off,1
+            beqz    var,n2b_2
+            lbu     var,0(src_ilen)
+            addiu   src_ilen,1
+            sb      var,0(dst)
+            b       n2b_1
+            addiu   dst,1
+n2b_2:
+            GETBIT
+            sll     m_off,1
+        .if (UCL_SMALL == 1)
+            GETBIT
+            addu    m_off,var
+        .else
+            addu    m_off,var
+            GETBIT
+        .endif
+            beqz    var,n2b_2
+            li      var,2
+            bne     m_off,var,n2b_3
+            addiu   m_off,-3
+            b       n2b_4
+            move    m_off,last_m_off
+n2b_3:
+            lbu     var,0(src_ilen)
+            sll     m_off,8
+            addu    m_off,var
+            addiu   m_off,1
+            beqz    m_off,\done
+            addiu   src_ilen,1
+            move    last_m_off,m_off
+n2b_4:
+            GETBIT  1
+            move    m_len,var
+            GETBIT
+            sll     m_len,1
+            addu    m_len,var
+            bnez    m_len,n2b_6
+            addiu   m_len,2-4
+            li      m_len,1
+n2b_5:
+            GETBIT
+            sll     m_len,1
+        .if (UCL_SMALL == 1)
+            GETBIT
+            addu    m_len,var
+        .else
+            addu    m_len,var
+            GETBIT
+        .endif
+            beqz    var,n2b_5
+n2b_6:
+            sltiu   var,m_off,0x0D01
+            addiu   m_len,4
+            subu    m_len,var
+            uclmcpy n2b_1
+
 .endm
-        UCL_DECOMPRESSOR
-
-#undef  UCL_DECOMPRESSOR
-#undef  GETBIT

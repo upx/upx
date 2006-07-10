@@ -31,182 +31,241 @@
 ;
 */
 
+            .set    mips1
+            .altmacro
+            .set    noreorder
+            .set    noat
+
+
 #include "arch/mips/mipsel.r3000/macros.ash"
+#include "arch/mips/mipsel.r3000/bits.ash"
 
-#define  SZ_REG  4
+/*
+=============
+============= none
+=============
+*/
 
-#if CDBOOT
-.macro          regs    _w, marker
-                \_w     a0,SZ_REG*0(sp)
-                \_w     a1,SZ_REG*1(sp)
-                \_w     a2,SZ_REG*2(sp)
-                \_w     a3,SZ_REG*3(sp)
-                \_w     v0,SZ_REG*4(sp)
-                \_w     v1,SZ_REG*5(sp)
-IF (\marker != 0)
-                DW      \marker
-ENDIF
-                \_w     ra,SZ_REG*6(sp)
+.macro  SysFlushCache
+
+    .if (PS1)
+            PRINT ("SYSCALL PS1")
+            li      t2,160
+            jalr    ra,t2
+            li      t1,68
+    .else
+            PRINT ("SYSCALL PS2")
+            move    a0, zero
+            li      v1, 100
+            syscall
+    .endif
+
 .endm
 
-#define  REG_SZ (7*SZ_REG)
+.macro  regs    _w, marker
 
-#else //console
+.if (PS1)
+    SZ_REG = 4
+.else
+    SZ_REG = 8
+.endif
 
-.macro          regs    _w, marker
-                \_w     at,SZ_REG*0(sp)
-                \_w     a0,SZ_REG*1(sp)
-                \_w     a1,SZ_REG*2(sp)
-                \_w     a2,SZ_REG*3(sp)
-                \_w     a3,SZ_REG*4(sp)
-                \_w     v0,SZ_REG*5(sp)
-                \_w     v1,SZ_REG*6(sp)
-                \_w     ra,SZ_REG*7(sp)
-IF (\marker != 0)
-                DW      \marker
-                addu    sp,at
-ENDIF
+.if (CDBOOT == 1)
+    REG_SZ = (4*SZ_REG)
+.else
+    REG_SZ = (5*SZ_REG)
+.endif
+
+             \_w     src,SZ_REG*0(sp)
+             \_w     dst,SZ_REG*1(sp)
+             \_w     pc,SZ_REG*2(sp)
+             \_w     ra,SZ_REG*3(sp)
+    .if (CDBOOT == 0)
+             \_w     tmp,SZ_REG*4(sp)
+    .endif
+    .if (\marker != 0)
+             DW      \marker
+        .if (CDBOOT == 0)
+             addu    sp,tmp
+        .else
+             addiu   sp,REG_SZ
+        .endif
+    .endif
+
 .endm
 
-#define  REG_SZ (8*SZ_REG)
+.macro  push    jmp
 
-#endif //CDBOOT
+    .if (PS1)
+             regs    sw,\jmp
+    .else
+             regs    sd,\jmp
+    .endif
 
-#if CDBOOT
+.endm
+
+.macro  pop     jmp
+
+    .if (PS1)
+             regs    lw,\jmp
+    .else
+             regs    ld,\jmp
+    .endif
+
+.endm
+
+
+/*
+=============
+============= ENTRY POINT cd-boot
+=============
+*/
+            CDBOOT = 1
+
+section     ps1.cdb.start
+            la      t0,PSVR         // prepare to compute value
+            subu    t0,s0,t0        // get stored header offset in mem
+            jr      t0
+            subiu   sp,REG_SZ       // prep to adjust stack
+
+section     ps1.cdb.entry
+            push    0               // push used regs
+            la      src,CPDO        // load compressed data offset
+
+section     ps1.cdb.nrv.ptr
+            la      dst,DECO        // load decompressed data offset
+
+section     ps1.cdb.nrv.ptr.hi
+            lui     dst,%hi(DECO)
+
+section     ps1.cdb.exit
+            SysFlushCache
+            pop     JPEP             // pop used regs with marker for entry
+
+
+/*
+=============
+============= ENTRY POINT console
+=============
+*/
+
+            CDBOOT = 0
+
+section     ps1.con.start
+            li      tmp,%lo(LS)      // size of decomp. routine
+            subu    sp,tmp           // adjust the stack with this size
+            push    0                // push used regs
+            subiu   cnt,tmp,REG_SZ   // cnt = counter copyloop
+            addiu   pc,sp,REG_SZ     // get offset for decomp. routine
+            move    dst,pc
+            la      src,DCRT         // load decompression routine's offset
+1:
+            lw      tmp,0(src)       // memcpy *a0 -> tmp -> *a1
+            subiu   cnt,4
+            sw      tmp,0(dst)
+            addiu   src,4
+            bnez    cnt,1b
+            addiu   dst,4
+
+section     ps1.con.padcd
+            addiu   src,PC           // a0 = pointer compressed data
+
+section     ps1.con.nrv.ptr
+            lui     dst,%hi(DECO)    // load DECOMPDATA HI offset
+            jr      pc
+            addiu   dst,%lo(DECO)    // load DECOMPDATA LO offset
+
+section     ps1.con.nrv.ptr.hi
+            jr      pc
+            lui     dst,%hi(DECO)    // same for HI only !(offset&0xffff)
+
+section     ps1.con.entry
+
+section     ps1.con.exit
+            SysFlushCache
+            pop     JPEP             // pop used regs with marker for entry
+
+section     ps1.con.regs
+            DW      REG_SZ
+
+
 // =============
-// ============= ENTRY POINT
-// =============
-// for cd-boot only
 
-section         PS1START
-                la      t0, PSVR        // prepare to compute value
-                subu    t0,s0,t0        // get stored header offset in mem
-                jr      t0
-                subiu   sp, REG_SZ      // adjust stack
-section         PS1ENTRY
-                regs    sw,0            // push used regs
-                la      a0, CPDO        // load COMPDATA offset
-//               li      a1,'CDSZ'      // compressed data size - disabled!
-section         PS1CONHL
-                la      a2, DECO
-section         PS1CONHI
-                lui     a2, %hi(DECO)
+section     ps1.mset.short
+            li      cnt,%lo(SC)          // amount of removed zero's at eof
+
+section     ps1.mset.long
+            li      cnt,%lo(SC)          // amount of removed zero's at eof
+            sll     cnt,3           // (cd mode 2 data sector alignment)
+
+section     ps1.mset.aligned
+1:
+            sw      zero,0(dst)
+            subiu   cnt,1
+            bnez    cnt,1b
+            addiu   dst,4
+
+section     ps1.mset.unaligned
+1:
+            swl     zero,3(dst)
+            swr     zero,0(dst)
+            subiu   cnt,1
+            bnez    cnt,1b
+            addiu   dst,4
 
 
-#else //CONSOLE
-// =============
-// ============= ENTRY POINT
-// =============
-// for console- / cd-boot
+/*
+=============
+============= DECOMPRESSION
+=============
+*/
 
-section         PS1START
-                addiu   at,zero, LS     // size of decomp. routine
-                subu    sp,at           // adjust the stack with this size
-                regs    sw,0            // push used regs
-                subiu   a2,at,REG_SZ    // a2 = counter copyloop
-                addiu   a3,sp,REG_SZ    // get offset for decomp. routine
-                move    a1,a3
-                la      a0, DCRT        // load decompression routine's offset
-copyloop:
-                lw      at,0(a0)        // memcpy *a0 -> at -> *a1
-                addiu   a2,-4
-                sw      at,0(a1)
-                addiu   a0,4
-                bnez    a2,copyloop
-                addiu   a1,4
-
-section         PS1PADCD
-                addiu   a0, PC          // a0 = pointer compressed data
-section         PS1CONHL
-                la      a2, DECO        // load DECOMPDATA HI offset
-                jr      a3
-section         PS1CONHI
-                jr      a3
-                lui     a2, %hi(DECO)   // same for HI only !(offset&0xffff)
-section         PS1ENTRY
-
-#endif //CDBOOT
-// =============
-// ============= DECOMPRESSION
-// =============
-
-#ifndef FAST
-#   define FAST
-#endif
-
-#if CDBOOT
-#   ifdef SMALL
-#       undef   SMALL
-#   endif
-#else //CONSOLE
-#   ifndef SMALL
-#       define  SMALL
-#   endif
-#endif //CDBOOT
-
-#ifdef NRV_BB
-#   undef NRV_BB
-#endif
-#define NRV_BB 8
-
-section         PS1N2B08
 #include "arch/mips/mipsel.r3000/nrv2b_d.ash"
-section         PS1N2D08
 #include "arch/mips/mipsel.r3000/nrv2d_d.ash"
-section         PS1N2E08
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
 
-#ifdef NRV_BB
-#   undef NRV_BB
-#endif
-#define NRV_BB 32
 
-section         PS1N2B32
-#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
-section         PS1N2D32
-#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
-section         PS1N2E32
-#include "arch/mips/mipsel.r3000/nrv2e_d.ash"
+// ========== cd-boot
+
+            UCL_init    8,0,1
+section     ps1.cdb.nrv2b.8bit
+            build full, nrv2b
+section     ps1.cdb.nrv2d.8bit
+            build full, nrv2d
+section     ps1.cdb.nrv2e.8bit
+            build full, nrv2e
+
+            UCL_init    32,0,1
+section     ps1.cdb.nrv2b.32bit
+            build full, nrv2b
+section     ps1.cdb.nrv2d.32bit
+            build full, nrv2d
+section     ps1.cdb.nrv2e.32bit
+            build full, nrv2e
+
+// ========== console-run
+
+            UCL_init    8,1,0
+section     ps1.getbit.8bit.sub
+            build sub_only
+section     ps1.getbit.8bit.size
+            DW  sub_size
+
+            UCL_init    32,1,0
+section     ps1.getbit.32bit.sub
+            build sub_only
+section     ps1.getbit.32bit.size
+            DW  sub_size
+
+section     ps1.small.nrv2b
+            build without_sub, nrv2b
+section     ps1.small.nrv2d
+            build without_sub, nrv2d
+section     ps1.small.nrv2e
+            build without_sub, nrv2e
 
 
-// =============
+#include    "include/header2.ash"
 
-section         PS1MSETS
-                ori     a0,zero, SC     // amount of removed zeros at eof
-section         PS1MSETB
-                ori     a0,zero, SC     // amount of removed zeros at eof
-                sll     a0,3            // (cd mode 2 data sector alignment)
-section         PS1MSETA
-memset_aligned:
-                sw      zero,0(a2)
-                addiu   a0,-1
-                bnez    a0,memset_aligned
-                addiu   a2,4
-section         PS1MSETU
-memset_unaligned:
-                swl     zero,3(a2)
-                swr     zero,0(a2)
-                addiu   a0,-1
-                bnez    a0,memset_unaligned
-                addiu   a2,4
-
-// =============
-
-section         PS1EXITC
-                li      t2,160          // flushes
-                jalr    ra,t2           // instruction
-                li      t1,68           // cache
-                regs    lw, JPEP        // marker for the entry jump
-
-// =============
-
-#include        "include/header2.ash"
-
-// =============
-
-#if !CDBOOT
-section         PS1SREGS
-                DW      REG_SZ
-#endif //CDBOOT
 
 // vi:ts=8:et:nowrap
