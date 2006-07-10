@@ -94,10 +94,9 @@ section LEXEC010
 //              align   8
 
 #include      "arch/i386/nrv2b_d32_2.ash"
-//#include      "arch/i386/nrv2d_d32.ash"
+#include      "arch/i386/nrv2d_d32_2.ash"
 #include      "arch/i386/nrv2e_d32_2.ash"
-//#include      "arch/i386/lzma_d.ash"
-//#include      "arch/i386/macros.ash"
+//#include      "arch/i386/lzma_d_2.ash"
                 cjt32 0
 
 section LEXEC015
