@@ -21,18 +21,15 @@
 ;  If not, write to the Free Software Foundation, Inc.,
 ;  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ;
-;  Markus F.X.J. Oberhumer              Jens Medoch
-;  <markus@oberhumer.com>               <jssg@users.sourceforge.net>
+;  Markus F.X.J. Oberhumer      Jens Medoch
+;  <markus@oberhumer.com>       <jssg@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
 */
 
 .macro  section name
-        .section \name
+    .section \name
 .endm
-
-.set    noat
-.altmacro
 
 #define zero    $0
 #define at      $1
@@ -58,14 +55,21 @@
 #define ELSE    .else
 #define ENDIF   .endif
 
-#define DW      .long
-#define DB      .byte
+#define DW  .word
+#define DB  .byte
 
 .macro  subiu   reg, p1, p2
-        .ifnb p2
+ 
+    .ifnb p2
         addiu   \reg, p1, -p2
-        .else
+    .else
         addiu   \reg, -p1
-        .endif
+    .endif
+
 .endm
 
+#ifndef DEBUG
+#   define PRINT(str)   
+#else
+#   define PRINT(str)  .print str
+#endif

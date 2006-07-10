@@ -56,7 +56,6 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual void patch_mips_le(void *b, int blen, const void *old, unsigned new_);
     virtual int buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
@@ -100,6 +99,7 @@ protected:
 
     bool isCon;
     bool is32Bit;
+    unsigned ram_size;
     unsigned overlap;
     unsigned sa_cnt;
 

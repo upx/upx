@@ -196,7 +196,8 @@ void show_help(int x)
         con_fprintf(f,
                     "  --all-methods       try all available compression methods\n"
                     "  --8-bit             uses 8 bit size compression [default: 32 bit]\n"
-                    "  --console-run       enables client/host transfer compatibility\n"
+                    "  --8mb-ram           8 megabyte memory limit [default: 2 mb]\n"
+                    "  --boot-only         disables client/host transfer compatibility\n"
                     "  --no-align          don't align to 2048 bytes [enables: --console-run]\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);

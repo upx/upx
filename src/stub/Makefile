@@ -71,8 +71,7 @@ STUBS += m68k-atari.tos-nrv2d.h
 STUBS += m68k-atari.tos-nrv2d.small.h
 STUBS += m68k-atari.tos-nrv2e.h
 STUBS += m68k-atari.tos-nrv2e.small.h
-STUBS += mipsel.r3000-ps1-boot.h
-STUBS += mipsel.r3000-ps1-console.h
+STUBS += mipsel.r3000-ps1.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
@@ -636,16 +635,15 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 
 
 # /***********************************************************************
-# // mipsel.r3000-ps1-boot
-# // mipsel.r3000-ps1-console
+# // mipsel.r3000-ps1.exe
 # ************************************************************************/
 
-mipsel.r3000-ps1-%.h : tc_list = mipsel.r3000-ps1 default
+mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 
-tc.mipsel.r3000-ps1.as          = mipsel-unknown-linux-gnu-as -O2 -mips2 -mno-pdr
+tc.mipsel.r3000-ps1.as          = mipsel-elf-as -O2 -mno-pdr
 tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
 
-mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
+mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
@@ -656,9 +654,8 @@ mipsel.r3000-ps1-%.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	$(call tc,m-objdump) -b elf32-littlemips -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
 
-mipsel.r3000-ps1-boot.h:    PP_FLAGS  += -DCDBOOT
-mipsel.r3000-ps1-boot.h:    IDENT_NAME = nrv_boot_loader
-mipsel.r3000-ps1-console.h: IDENT_NAME = nrv_con_loader
+mipsel.r3000-ps1.h:    PP_FLAGS  += -DPS1
+mipsel.r3000-ps1.h:    IDENT_NAME = nrv_loader
 
 
 # /***********************************************************************

@@ -139,6 +139,7 @@ struct options_t {
         bool boot_only;
         bool no_align;
         bool do_8bit;
+        bool do_8mb;
     } ps1_exe;
     struct {
         unsigned blocksize;

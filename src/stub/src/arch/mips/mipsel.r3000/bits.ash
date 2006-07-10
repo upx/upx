@@ -31,68 +31,218 @@
 #define _MR3K_STD_CONF_
 
 
-//////////////////////////////////////
-// register defines
-//////////////////////////////////////
+;//////////////////////////////////////
+;// register defines
+;//////////////////////////////////////
+
+#define tmp         at
 
 #define src         a0
-#define dst         a2
+#define dst         a1
 
-#define src_ilen    t0
-#define bb          t1
-#define ilen        t2
-#define last_m_off  t3
-#define m_len       t4
-#define bc          t5
+#define pc          a2
+#define cnt         t0
 
-#define var         v0
-#define m_off       v1
-#define m_pos       v1
+#define src_ilen    src
+#define bb          t0
+#define ilen        t1
+#define last_m_off  t2
+#define m_len       t3
+#define bc          t4
+
+#define var         t5
+#define m_off       t6
+#define m_pos       t6
 
 
-//////////////////////////////////////
-// optimized branch macros
-//////////////////////////////////////
+;//////////////////////////////////////
+;// init bitaccess
+;//////////////////////////////////////
 
-.macro     beqz2gb  reg,label,nrv_bb
-    IF (!small) && (\nrv_bb == 8)
-            beqz    \reg,\label+4
-            andi    var,bb,0x007F
-    ELSE
-            beqz    \reg,\label
-            nop
-    ENDIF
+.macro  UCL_init    bsz,opt,fmcpy
+
+            UCL_NRV_BB = \bsz
+            UCL_SMALL = \opt
+            UCL_FAST = \fmcpy
+
+            .if ((\bsz != 32) && (\bsz != 8))
+                .error "UCL_NRV_BB must be 8 or 32 and not \bsz")
+            .else
+                PRINT ("\bsz bit, small = \opt, fast memcpy = \fmcpy")
+            .endif
+            .if (PS1)
+                 PRINT ("R3000 code")
+            .else
+                 PRINT ("R5900 code")
+            .endif
+
 .endm
 
-.macro      b2gb    label,nrv_bb
-    IF (!small)
-            b       \label+4
-        IF (\nrv_bb == 8)
-            andi    var,bb,0x007F
-        ELSE // ;(nrv_bb == 32)
+
+;//////////////////////////////////////
+;// init decompressor
+;//////////////////////////////////////
+
+.macro  init
+
+            move    bc,zero
+            li      last_m_off,1
+    .if (src != src_ilen)
+            move    src_ilen,src
+    .endif
+
+.endm
+
+
+;//////////////////////////////////////
+;// getbit macro
+;//////////////////////////////////////
+
+.macro  ADDBITS done
+
+    .if (UCL_SMALL == 1)
+            addiu   bc, -1
+            bgez    bc, \done
+            srlv    var, bb, bc
+    .else
+            bgtz    bc, \done
+            addiu   bc, -1
+    .endif
+
+.endm
+
+.macro  ADDBITS_DONE done
+
+    .if (UCL_SMALL == 1)
+            srlv    var,bb,bc
+\done:
+            jr      ra
+    .else
+\done:
+            srlv    var,bb,bc
+    .endif
+            andi    var,0x0001
+
+.endm
+
+.macro  FILLBYTES_8
+
+            li      bc,7
+            lbu     bb,0(src_ilen)
+            addiu   src_ilen,1
+
+.endm
+
+.macro  FILLBYTES_32
+
+            li      bc,31
+            lwr     bb,0(src_ilen)
+            lwl     bb,3(src_ilen)
+            addiu   src_ilen,4
+
+.endm
+
+.macro  FILLBYTES
+
+    .if (UCL_NRV_BB == 8)
+            FILLBYTES_8
+    .else // (UCL_NRV_BB == 32)
+            FILLBYTES_32
+    .endif
+
+.endm
+
+.macro  GBIT
+
+            local d
+
+            ADDBITS d
+            FILLBYTES
+            ADDBITS_DONE d
+
+.endm
+
+
+;//////////////////////////////////////
+;// getbit call macro for SMALL version
+;//////////////////////////////////////
+
+.macro      GETBIT  p1
+
+    .if (UCL_SMALL == 1)
+        .ifb   p1
+            bal     1f      // gb_sub
+        .else
+            bal     1f+4    // gb_sub+4
             addiu   bc,-1
-        ENDIF
-    ELSE
-            b       \label
-            nop
-    ENDIF
+        .endif
+    .else
+            GBIT
+    .endif
+
 .endm
 
 
-//////////////////////////////////////
-// ucl memcpy
-//////////////////////////////////////
+;//////////////////////////////////////
+;// getbit call macro for SMALL version
+;//////////////////////////////////////
 
-.macro      uclmcpy retoffset,nrv_bb
-            local   wordchk, prepbytecpy, bytecopy
-#   ifdef FAST
+.macro  build   option, type, label
+
+            local   done
+
+.ifc "\option", "full"
+.ifnb label
+\label:
+.endif
+            \type   done
+.if (UCL_SMALL == 1)
+1:
+            GBIT
+.endif
+done:
+.else
+.ifc "\option", "sub_only"
+            sub_size = .
+            GBIT
+            sub_size = . - sub_size
+.else
+.ifc "\option", "without_sub"
+    .if (UCL_SMALL == 1)
+        PRINT ("[WARNING] building \type with UCL_SMALL = 1 without subroutine")
+        .if (sub_size != 0)
+            \type   decomp_done
+1:
+        .else
+            .error "\"with_no_sub\" cannot build if \"build_sub\" must be used first"
+        .endif
+    .else
+        .error "\"without_sub\" cannot build if UCL_SMALL = 0"
+    .endif
+.else
+    .error "use \"full\", \"sub\" or \"without_sub\" for build"
+.endif
+.endif
+.endif
+.endm
+
+
+;//////////////////////////////////////
+;// ucl memcpy
+;//////////////////////////////////////
+
+.macro   uclmcpy     ret
+
+            local   wordchk, prepbcpy
+            local   bcopy, skip
+
+    .if (UCL_FAST == 1)
             slti    var,m_off,4
-            bnez    var,prepbytecpy
-            addiu   m_len,1
+            bnez    var,prepbcpy
             subu    m_pos,dst,m_off
 wordchk:
             slti    var,m_len,4
-            bnez    var,bytecopy+4
+            bnez    var,skip
             lwr     var,0(m_pos)
             lwl     var,3(m_pos)
             addiu   m_len,-4
@@ -101,95 +251,23 @@ wordchk:
             addiu   m_pos,4
             bnez    m_len,wordchk
             addiu   dst,4
-            b2gb    \retoffset,\nrv_bb
-prepbytecpy:
-#   else
-            addiu   m_len,1
-#   endif
+            b       \ret
+            nop
+prepbcpy:
+    .else
             subu    m_pos,dst,m_off
-bytecopy:
+    .endif
+bcopy:
             lbu     var,0(m_pos)
+skip:
             addiu   m_len,-1
             sb      var,0(dst)
             addiu   m_pos,1
-            bnez    m_len,bytecopy
+            bnez    m_len,bcopy
             addiu   dst,1
-            b2gb    \retoffset,\nrv_bb
+            b       \ret
+            nop
+
 .endm
-
-
-//////////////////////////////////////
-// init decompressor
-//////////////////////////////////////
-
-.macro      init    nrv_bb
-            move    bb,zero
-    IF (\nrv_bb == 32)
-            move    bc,bb
-    ENDIF
-            li      last_m_off,1
-            move    src_ilen,src
-.endm
-
-//////////////////////////////////////
-// 32bit getbit macro
-//////////////////////////////////////
-
-.macro      gbit_le32
-local .L1
-    IF (!small)
-            addiu   bc,-1
-    ENDIF
-            bgez    bc,.L1
-            srlv    var,bb,bc
-            li      bc,31
-            lwr     bb,0(src_ilen)
-            lwl     bb,3(src_ilen)
-            addiu   src_ilen,4
-            srlv    var,bb,bc
-.L1:
-    IF (small)
-            jr      ra
-    ENDIF
-            andi    var,0x0001
-.endm
-
-
-//////////////////////////////////////
-// 8bit getbit macro
-//////////////////////////////////////
-
-.macro      gbit_8
-local .L2
-    IF (!small)
-            andi    var,bb,0x007F
-    ENDIF
-            bnez    var,.L2
-            sll     bb,1
-            lbu     var,0(src_ilen)
-            addiu   src_ilen,1
-            sll     var,1
-            addiu   bb,var,1
-.L2:
-            srl     var,bb,8
-    IF (small)
-            jr      ra
-    ENDIF
-            andi    var,0x0001
-.endm
-
-//////////////////////////////////////
-// getbit call macro for small version
-//////////////////////////////////////
-
-.macro      gbit_call subroutine,nrv_bb
-            bal     \subroutine
-    IF (\nrv_bb == 8)
-            andi    var,bb,0x007F
-    ELSE
-            addiu   bc,-1
-    ENDIF
-.endm
-
 
 #endif  //_MR3K_STD_CONF_
