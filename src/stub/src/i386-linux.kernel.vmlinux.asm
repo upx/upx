@@ -40,8 +40,13 @@
 ;  In:
 ;       #eax= &uncompressed [and final entry]; #ds= #es= __BOOT_DS
 ;       #esp: &compressed; __BOOT_CS
+
+  How to debug: run under qemu (http://fabrice.bellard.free.fr/qemu/)
+  after un-commenting the 0xf1 opcode below.  That opcode forces qemu
+  to stop in gdb.  You'll have to "set $pc+=1" by hand.
 */
 section         LINUX000
+////    .byte 0xf1  // qemu In-Circuit-Emulator breakpoint
                 pop     edx     // &compressed; length at -4(#edx)
 
                 push    eax     // MATCH00(1/2)  entry address; __BOOT_CS
