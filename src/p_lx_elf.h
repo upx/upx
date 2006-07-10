@@ -288,7 +288,6 @@ protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
     virtual Linker* newLinker() const;
-    virtual void addStubEntrySections(upx_byte const *, unsigned);
 };
 
 /*************************************************************************
@@ -308,6 +307,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
 };
 
 /*************************************************************************

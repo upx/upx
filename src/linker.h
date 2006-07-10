@@ -268,6 +268,16 @@ protected:
                            unsigned value, const char *type);
 };
 
+class ElfLinkerPpc32 : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void align(unsigned len);
+    virtual void relocate1(Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
 class ElfLinkerArmLE : public ElfLinker
 {
     typedef ElfLinker super;

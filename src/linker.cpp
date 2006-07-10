@@ -680,6 +680,11 @@ void ElfLinkerAMD64::align(unsigned len)
     alignWithByte(len, 0x90);
 }
 
+void ElfLinkerPpc32::align(unsigned len)
+{
+    alignWithByte(len, 0);
+}
+
 void ElfLinkerX86::relocate1(Relocation *rel, upx_byte *location,
                              unsigned value, const char *type)
 {
@@ -715,6 +720,31 @@ void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
         value -= rel->section->offset + rel->offset;
         type += 2;
     }
+
+    if (strcmp(type, "8") == 0)
+        *location += value;
+    else if (strcmp(type, "16") == 0)
+        set_le16(location, get_le16(location) + value);
+    else if (strcmp(type, "32") == 0)
+        set_le32(location, get_le32(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
+                             unsigned value, const char *type)
+{
+    if (strncmp(type, "R_PPC_", 6))
+        return super::relocate1(rel, location, value, type);
+    type += 6;
+
+    if (strncmp(type, "REL", 3) == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        type += 3;
+    }
+
+    // FIXME: more relocs
 
     if (strcmp(type, "8") == 0)
         *location += value;

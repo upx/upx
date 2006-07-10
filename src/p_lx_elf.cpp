@@ -302,6 +302,11 @@ PackLinuxElf32ppc::~PackLinuxElf32ppc()
 {
 }
 
+Linker* PackLinuxElf32ppc::newLinker() const
+{
+    return new ElfLinkerPpc32;
+}
+
 PackLinuxElf64amd::PackLinuxElf64amd(InputFile *f)
     : super(f)
 {
@@ -528,6 +533,7 @@ PackLinuxElf32::buildLinuxLoader(
 
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    linker->relocate();
     return getLoaderSize();
 }
 
@@ -583,16 +589,8 @@ PackLinuxElf64::buildLinuxLoader(
 
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    linker->relocate();
     return getLoaderSize();
-}
-
-void
-PackLinuxElf64amd::addStubEntrySections(
-    upx_byte const *const /*proto*/,
-    unsigned const /*szproto*/
-)
-{
-    // FIXME
 }
 
 static const
