@@ -148,11 +148,26 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     sz_phdrs(0), sz_elf_hdrs(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0)
 {
-    delete[] file_image;
 }
 
 PackLinuxElf::~PackLinuxElf()
 {
+    delete[] file_image;
+}
+
+Linker *PackLinuxElf::newLinker() const
+{
+    return new ElfLinker;
+}
+
+void
+PackLinuxElf::addStubEntrySections(
+    upx_byte const *const proto,
+    unsigned const szproto
+)
+{
+    linker->addSection("ELFMAINX", proto, szproto);
+    addLoader("ELFMAINX", NULL);
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
@@ -174,6 +189,11 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 PackLinuxElf64::~PackLinuxElf64()
 {
     delete[] phdri;
+}
+
+Linker* PackLinuxElf64amd::newLinker() const
+{
+    return new ElfLinkerAMD64;
 }
 
 int const *
@@ -361,7 +381,7 @@ PackLinuxElf32x86::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
-    delete [] cprLoader;
+    // FIXME: memory leak    delete [] cprLoader;
 
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
@@ -448,7 +468,9 @@ PackLinuxElf32x86::buildLinuxLoader(
     // PackHeader and overlay_offset at the end of the output file,
     // after the compressed data.
 
-    return getLoaderSize();
+    unsigned const lsize = getLoaderSize();
+    linker->relocate();
+    return lsize;
 }
 
 int
@@ -502,9 +524,8 @@ PackLinuxElf32::buildLinuxLoader(
     //int const GAP = 128;  // must match stub/l_mac_ppc.S
     //segcmdo.vmsize += sz_unc - sz_cpr + GAP + 64;
 
-    linker->addSection("ELFMAINX", proto, szproto);
+    addStubEntrySections(proto, szproto);
 
-    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
     return getLoaderSize();
@@ -558,12 +579,20 @@ PackLinuxElf64::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
-    linker->addSection("ELFMAINX", proto, szproto);
+    addStubEntrySections(proto, szproto);
 
-    addLoader("ELFMAINX", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
     return getLoaderSize();
+}
+
+void
+PackLinuxElf64amd::addStubEntrySections(
+    upx_byte const *const /*proto*/,
+    unsigned const /*szproto*/
+)
+{
+    // FIXME
 }
 
 static const
@@ -1984,6 +2013,11 @@ PackLinuxElf32x86::PackLinuxElf32x86(InputFile *f) : super(f)
 
 PackLinuxElf32x86::~PackLinuxElf32x86()
 {
+}
+
+Linker* PackLinuxElf32x86::newLinker() const
+{
+    return new ElfLinkerX86;
 }
 
 PackBSDElf32x86::PackBSDElf32x86(InputFile *f) : super(f)

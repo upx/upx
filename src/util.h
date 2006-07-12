@@ -124,6 +124,14 @@ int upx_tolower(int c);
 #endif
 
 
+class nocopy
+{
+    nocopy(const nocopy &); // undefined
+    nocopy& operator=(const nocopy &); // undefined
+public:
+    inline nocopy() {}
+};
+
 #endif /* already included */
 
 

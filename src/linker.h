@@ -151,52 +151,18 @@ typedef TSimpleLinker<NBELE::BEPolicy> SimpleBELinker;
 typedef TSimpleLinker<NBELE::LEPolicy> SimpleLELinker;
 
 
-class ElfLinker : public Linker
+/*************************************************************************
+// ElfLinker
+**************************************************************************/
+
+class ElfLinker : public Linker, private nocopy
 {
     typedef Linker super;
 
 protected:
-    struct Section
-    {
-        const char *name;
-        const void *input;
-        upx_byte   *output;
-        unsigned size;
-        unsigned offset;
-        Section *next;
-
-        Section(){}
-        Section(const char *n, const void *i, unsigned s) :
-            name(n), input(i), output(NULL), size(s), offset(0), next(NULL)
-        {}
-    };
-
-    struct Symbol
-    {
-        const char *name;
-        Section *section;
-        unsigned offset;
-
-        Symbol(){}
-        Symbol(const char *n, Section *s, unsigned o) :
-            name(n), section(s), offset(o)
-        {}
-    };
-
-    struct Relocation
-    {
-        Section *section;
-        unsigned offset;
-        const char *type;
-        Symbol *value;
-        unsigned add;           // used in .rela relocations
-
-        Relocation(){}
-        Relocation(Section *s, unsigned o, const char *t,
-                   Symbol *v, unsigned a) :
-            section(s), offset(o), type(t), value(v), add(a)
-        {}
-    };
+    struct      Section;
+    struct      Symbol;
+    struct      Relocation;
 
     upx_byte    *input;
     int         inputlen;
@@ -206,9 +172,9 @@ protected:
     Section     *head;
     Section     *tail;
 
-    Section     sections[550];
-    Symbol      symbols[1000];
-    Relocation  relocations[2000];
+    Section     **sections;
+    Symbol      **symbols;
+    Relocation  **relocations;
 
     unsigned    nsections;
     unsigned    nsymbols;
@@ -219,6 +185,10 @@ protected:
     void preprocessRelocations(char *start, const char *end);
     Section *findSection(const char *name);
     Symbol *findSymbol(const char *name);
+
+    void addSymbol(const char *name, const char *section, unsigned offset);
+    void addRelocation(const char *section, unsigned off, const char *type,
+                       const char *symbol, unsigned add);
 
 public:
     ElfLinker();
@@ -248,7 +218,63 @@ protected:
                            unsigned value, const char *type);
 };
 
+struct ElfLinker::Section : private nocopy
+{
+    char *name;
+    void *input;
+    upx_byte *output;
+    unsigned size;
+    unsigned offset;
+    Section *next;
+
+    Section(const char *n, const void *i, unsigned s);
+    ~Section();
+};
+
+struct ElfLinker::Symbol : private nocopy
+{
+    char *name;
+    Section *section;
+    unsigned offset;
+
+    Symbol(const char *n, Section *s, unsigned o);
+    ~Symbol();
+};
+
+struct ElfLinker::Relocation : private nocopy
+{
+    Section *section;
+    unsigned offset;
+    const char *type;
+    Symbol *value;
+    unsigned add;           // used in .rela relocations
+
+    Relocation(Section *s, unsigned o, const char *t,
+               Symbol *v, unsigned a);
+};
+
+
 class ElfLinkerX86 : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void align(unsigned len);
+    virtual void relocate1(Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
+class ElfLinkerAMD64 : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void align(unsigned len);
+    virtual void relocate1(Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
+class ElfLinkerPpc32 : public ElfLinker
 {
     typedef ElfLinker super;
 

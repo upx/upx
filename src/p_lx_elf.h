@@ -54,11 +54,13 @@ protected:
     //virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
+    virtual Linker* newLinker() const;
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
         unsigned const brka
     ) = 0;
+    virtual void addStubEntrySections(upx_byte const *, unsigned);
     virtual void unpack(OutputFile *fo) = 0;
 
 protected:
@@ -285,6 +287,8 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
+    virtual void addStubEntrySections(upx_byte const *, unsigned);
 };
 
 /*************************************************************************
@@ -326,6 +330,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
     virtual int buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,

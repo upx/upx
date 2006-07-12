@@ -28,7 +28,7 @@
 */
 
 #define         UPX102  1
-#include        "arch/i386/macros2.ash"
+#include "arch/i386/macros2.ash"
 
                 CPU     386
 
@@ -57,11 +57,11 @@ section         PEMAIN02
 // ============= DECOMPRESSION
 // =============
 
-//#include      "arch/i386/nrv2b_d32.ash"
-//#include      "arch/i386/nrv2d_d32.ash"
-//#include      "arch/i386/nrv2e_d32.ash"
-#include      "arch/i386/nrv2e_d32_2.ash"
-//#include      "arch/i386/lzma_d.ash"
+#include "arch/i386/nrv2b_d32_2.ash"
+#include "arch/i386/nrv2d_d32_2.ash"
+#include "arch/i386/nrv2e_d32_2.ash"
+#define db .byte
+#include "arch/i386/lzma_d_2.ash"
 
 // =============
 section         PEMAIN10
