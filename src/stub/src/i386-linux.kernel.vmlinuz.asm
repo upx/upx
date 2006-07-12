@@ -34,7 +34,13 @@
 // ============= ENTRY POINT
 // =============
 
+/*
+  How to debug: run under qemu (http://fabrice.bellard.free.fr/qemu/)
+  after un-commenting the 0xf1 opcode below.  That opcode forces qemu
+  to stop in gdb.  You'll have to "set $pc+=1" by hand.
+*/
 section         LINUZ000
+////    .byte 0xf1  // qemu In-Circuit-Emulator breakpoint
                 //cli    // this must be true already
 
 /*
