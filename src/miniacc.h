@@ -1303,6 +1303,8 @@ extern "C" {
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif 1 && (ACC_ARCH_MIPS) && defined(__MIPSEL__) && !defined(__MIPSEB__)
 #  define ACC_ABI_LITTLE_ENDIAN     1
+#elif 1 && defined(__pe__)
+#  define ACC_ABI_LITTLE_ENDIAN     1
 #endif
 #endif
 #if defined(ACC_ABI_BIG_ENDIAN) && defined(ACC_ABI_LITTLE_ENDIAN)
