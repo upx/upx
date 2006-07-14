@@ -149,8 +149,10 @@ section LEXEC020
 #define __NR_write 4
 #define __NR_exit  1
 
+#define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate*/
+
 msg_SELinux:
-        push offset (L71 - L70)
+        pushsbli L71 - L70
         pop edx  // length
         call L71
 L70:
