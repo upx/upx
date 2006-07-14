@@ -150,7 +150,7 @@ section LEXEC020
 #define __NR_exit  1
 
 msg_SELinux:
-        push L71 - L70
+        push offset (L71 - L70)
         pop edx  // length
         call L71
 L70:

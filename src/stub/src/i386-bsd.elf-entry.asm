@@ -150,7 +150,7 @@ section LEXEC020
 #define __NR_exit  1
 
 fail_mmap:
-        push L71 - L70
+        push offset (L71 - L70)
         call L71
 L70:
         .ascii "PROT_EXEC|PROT_WRITE failed.\n"
