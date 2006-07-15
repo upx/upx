@@ -313,7 +313,7 @@ PackLinuxElf64amd::PackLinuxElf64amd(InputFile *f)
     e_machine = Elf64_Ehdr::EM_X86_64;
     ei_class = Elf64_Ehdr::ELFCLASS64;
     ei_data = Elf64_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf64amd::~PackLinuxElf64amd()
@@ -386,7 +386,7 @@ PackLinuxElf32x86::buildLinuxLoader(
 
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
-    // FIXME: memory leak    delete [] cprLoader;
+    delete [] cprLoader;
 
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
@@ -487,6 +487,7 @@ PackLinuxElf32::buildLinuxLoader(
     Filter const */*ft*/
 )
 {
+    initLoader(proto, szproto);
     {
         int const MAX_LOADER_LEN = 8000;
         int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
@@ -546,13 +547,7 @@ PackLinuxElf64::buildLinuxLoader(
     Filter const */*ft*/
 )
 {
-    {
-        int const MAX_LOADER_LEN = 8000;
-        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
-        eof_empty[0] = -1;
-        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
-        delete[] eof_empty;
-    }
+    initLoader(proto, szproto);
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -584,8 +579,6 @@ PackLinuxElf64::buildLinuxLoader(
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
-
-    addStubEntrySections(proto, szproto);
 
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
@@ -1484,7 +1477,6 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = getLoader();
     lsize = getLoaderSize();
     acc_uint64l_t const lo_va_user = 0x400000;  // XXX
     acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
@@ -1523,17 +1515,16 @@ void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-    // patch in order of descending address
-    patch_le32(p,lsize,"LENX", len0 - hlen);
-    patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
+    linker->defineSymbol("LENX", len0 - hlen);
+    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
 
-    patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
-    patch_le32(p,lsize,"LENU", lenu);  // len  for unmap
-    patch_le32(p,lsize,"ADRC", adrc);  // addr for copy
-    patch_le32(p,lsize,"ADRU", adru);  // addr for unmap
-    patch_le32(p,lsize,"JMPU", 12 + lo_va_user);  // trampoline for unmap
-    patch_le32(p,lsize,"LENM", lenm);  // len  for map
-    patch_le32(p,lsize,"ADRM", adrm);  // addr for map
+    linker->defineSymbol("CNTC", cntc);  // count  for copy
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    linker->defineSymbol("ADRU", adru);  // addr for unmap
+    linker->defineSymbol("JMPU", 12 + lo_va_user);  // trampoline for unmap
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
 #undef PAGE_SIZE
 #undef PAGE_MASK
 

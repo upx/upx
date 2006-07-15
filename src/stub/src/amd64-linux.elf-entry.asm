@@ -154,9 +154,15 @@ copy1:
 copy0:
         rep; ret
 
+.section NRV2E
 #include "arch/amd64/nrv2e_d.S"
+.section NRV2B
 #include "arch/amd64/nrv2b_d.S"
 
+//.section LZMA
+//#include "arch/amd64/lzma_d.S"
+
+.section LEXEC050
 setup:
         cld
         pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
@@ -260,7 +266,7 @@ unfold:
         ret
 
 main:
-        // int3  # uncomment for debugging
+        int3  # uncomment for debugging
         pop %rbp  // &decompress
         call unfold  // push &b_info
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
