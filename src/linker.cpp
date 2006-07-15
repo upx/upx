@@ -464,8 +464,17 @@ void ElfLinker::preprocessRelocations(char *start, const char *end)
             unsigned add = 0;
             if (char *p = strstr(symbol, "+0x"))
             {
-                *p = 0;
-                sscanf(p + 3, "%x", &add);
+// Beware: sscanf("0xfffffffffffffffc", "%x", &add) ==> -1 == add
+// because conversion stops after 32 bits for a non-long.
+// Also, glibc-2.3.5 has a bug: even using "%lx" still gives -1 instead of -4.
+                long addend;
+                *p = 0;  // terminate the symbol name
+                p+=3;
+                if ('f'==p[0] && 0==strncmp(p, "ffffffff", 8)) {
+                    p+=8;  // workaround a bug in glibc-2.3.5
+                }
+                sscanf(p, "%lx", &addend);
+                add = (unsigned)addend;
             }
 
             addRelocation(section->name, offset, t, symbol, add);

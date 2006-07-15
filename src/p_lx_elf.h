@@ -51,8 +51,8 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &) = 0;  // generate executable header
     virtual void pack2(OutputFile *, Filter &) = 0;  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
-    virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
+    virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
     virtual Linker* newLinker() const;
     virtual void generateElfHdr(
@@ -60,6 +60,7 @@ protected:
         void const *proto,
         unsigned const brka
     ) = 0;
+    virtual void addLinkerSymbols();
     virtual void addStubEntrySections(upx_byte const *, unsigned);
     virtual void unpack(OutputFile *fo) = 0;
 
@@ -69,6 +70,7 @@ protected:
 
     unsigned sz_phdrs;  // sizeof Phdr[]
     unsigned sz_elf_hdrs;  // all Elf headers
+    unsigned sz_pack2;  // after pack2(), before loader
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -176,7 +178,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
 
@@ -284,11 +286,11 @@ public:
     virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
     virtual Linker* newLinker() const;
-    virtual void addStubEntrySections(upx_byte const *, unsigned);
+    virtual void addLinkerSymbols();
 };
 
 /*************************************************************************

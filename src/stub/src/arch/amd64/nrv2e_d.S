@@ -29,6 +29,7 @@
    <jreiser@users.sourceforge.net>
 */
 
+        cmpb $ M_NRV2E_LE32,methb; je top_n2e; jmp not_n2e
         .p2align 3
 lit_n2e:
         incq %rsi; movb %dl,(%rdi)
@@ -74,6 +75,8 @@ gotlen_n2e:
         call copy
 bot_n2e:  # In: 0==len
         jmp top_n2e
+
+not_n2e:
 
 /*
 vi:ts=8:et:nowrap

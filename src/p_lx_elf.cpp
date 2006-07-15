@@ -160,6 +160,32 @@ Linker *PackLinuxElf::newLinker() const
     return new ElfLinker;
 }
 
+void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
+{
+    unsigned disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& -len);  // ALIGN_UP
+    len += (3& -len);
+    set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
+    fo->write(&disp, sizeof(disp));
+    sz_pack2 = 4+ len;
+
+    super::pack3(fo, ft);
+}
+
+void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
+{
+    super::pack3(fo, ft);
+    set_native32(&elfout.phdr[0].p_filesz, sz_pack2);
+}
+
+void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
+{
+    super::pack3(fo, ft);
+    set_native64(&elfout.phdr[0].p_filesz, sz_pack2);
+}
+
 void
 PackLinuxElf::addStubEntrySections(
     upx_byte const *const proto,
@@ -168,6 +194,12 @@ PackLinuxElf::addStubEntrySections(
 {
     linker->addSection("ELFMAINX", proto, szproto);
     addLoader("ELFMAINX", NULL);
+}
+
+void
+PackLinuxElf::addLinkerSymbols()
+{
+    // empty
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
@@ -580,19 +612,78 @@ PackLinuxElf64::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
+    addLoader("ELFMAINX", NULL);
+    addLoader("NRV2E", NULL);   //addLoader(getDecompressorSections(), NULL);
+    addLoader("ELFMAINY", NULL);
+    addLoader("IDENTSTR", NULL);
+    addLoader("ELFMAINZ", NULL);
     addLoader("FOLDEXEC", NULL);
+
     freezeLoader();
+    addLinkerSymbols();
     linker->relocate();
     return getLoaderSize();
 }
 
 void
-PackLinuxElf64amd::addStubEntrySections(
-    upx_byte const *const /*proto*/,
-    unsigned const /*szproto*/
-)
+PackLinuxElf64amd::addLinkerSymbols()
 {
-    // FIXME
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+    unsigned len = sz_pack2;
+
+#define PAGE_MASK (~0u<<12)
+#define PAGE_SIZE (-PAGE_MASK)
+    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity 
+    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
+    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
+    acc_uint64l_t adrc;
+    acc_uint64l_t adrm;
+    acc_uint64l_t adru;
+    acc_uint64l_t adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
+    if (is_big) {
+        set_native64(    &elfout.ehdr.e_entry,
+            get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_native64(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_native64(&elfout.phdr[0].p_paddr, lo_va_user);
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
+        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = PAGE_SIZE + len;
+        lenu = PAGE_SIZE + len;
+        cntc = len >> 3;
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = PAGE_SIZE;
+        lenu = PAGE_SIZE + len;
+        cntc = 0;
+    }
+    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+
+    //avoid circularity  linker->defineSymbol("LENX", sz_pack2 - hlen);
+    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+
+    linker->defineSymbol("CNTC", cntc);  // count  for copy
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    linker->defineSymbol("ADRU", adru);  // addr for unmap
+    linker->defineSymbol("JMPU", 12 + lo_va_user);  // trampoline for unmap
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
+#undef PAGE_SIZE
+#undef PAGE_MASK
+
 }
 
 static const
@@ -1346,7 +1437,6 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     if ((off_t)total_in != file_size)
         throwEOFException();
-    set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
@@ -1448,87 +1538,6 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     if ((off_t)total_in != file_size)
         throwEOFException();
-    set_native64(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
-}
-
-void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
-{
-    unsigned disp;
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len);
-    set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
-    fo->write(&disp, sizeof(disp));
-
-    super::pack3(fo, ft);
-}
-
-void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
-{
-    char zero[8];
-    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned const len0 = fo->getBytesWritten();
-    unsigned len = len0;
-    unsigned const frag = 7 & -len; // align to 0 mod 8
-    memset(zero, 0, sizeof(zero));
-    fo->write(&zero, frag);
-    len += frag;
-
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (-PAGE_MASK)
-    lsize = getLoaderSize();
-    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
-    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
-    acc_uint64l_t adrc;
-    acc_uint64l_t adrm;
-    acc_uint64l_t adru;
-    acc_uint64l_t adrx;
-    unsigned cntc;
-    unsigned lenm;
-    unsigned lenu;
-    len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
-    if (is_big) {
-        set_native64(    &elfout.ehdr.e_entry,
-            get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
-        set_native64(&elfout.phdr[0].p_vaddr, lo_va_user);
-        set_native64(&elfout.phdr[0].p_paddr, lo_va_user);
-               lo_va_stub      = lo_va_user;
-        adrc = lo_va_stub;
-        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
-        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-        adrx = adru + hlen;
-        lenm = PAGE_SIZE + len;
-        lenu = PAGE_SIZE + len;
-        cntc = len >> 3;
-    }
-    else {
-        adrm = lo_va_stub + len;
-        adrc = adrm;
-        adru = lo_va_stub;
-        adrx = lo_va_stub + hlen;
-        lenm = PAGE_SIZE;
-        lenu = PAGE_SIZE + len;
-        cntc = 0;
-    }
-    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
-
-    linker->defineSymbol("LENX", len0 - hlen);
-    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-
-    linker->defineSymbol("CNTC", cntc);  // count  for copy
-    linker->defineSymbol("LENU", lenu);  // len  for unmap
-    linker->defineSymbol("ADRC", adrc);  // addr for copy
-    linker->defineSymbol("ADRU", adru);  // addr for unmap
-    linker->defineSymbol("JMPU", 12 + lo_va_user);  // trampoline for unmap
-    linker->defineSymbol("LENM", lenm);  // len  for map
-    linker->defineSymbol("ADRM", adrm);  // addr for map
-#undef PAGE_SIZE
-#undef PAGE_MASK
-
-    super::pack3(fo, ft);
 }
 
 #include "bele.h"
@@ -1701,11 +1710,6 @@ void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
 void PackLinuxElf32armBe::pack3(OutputFile *fo, Filter &ft)
 {
     ARM_pack3(fo, ft, true);
-}
-
-void PackLinuxElf::pack4(OutputFile *fo, Filter &ft)
-{
-    super::pack4(fo, ft);
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)

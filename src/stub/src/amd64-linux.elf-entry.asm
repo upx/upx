@@ -33,6 +33,9 @@
 
 #include "arch/amd64/regs.h"
 
+sz_Ehdr= 64
+sz_Phdr= 56
+
 sz_l_info= 12
   l_lsize= 8
 
@@ -61,9 +64,10 @@ M_NRV2B_LE32=2  // ../conf.h
 M_NRV2E_LE32=8
 
 
-.section LEXEC000
+.section ELFMAINX
 _start: .globl _start
         call main  // push &decompress
+ret_main:
 
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
@@ -74,6 +78,7 @@ decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint meth
 #define dst  %arg3
 #define ldst %arg4  /* Out: actually a reference: &len_dst */
 #define meth %arg5l
+#define methb %arg5b
 
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -154,20 +159,21 @@ copy1:
 copy0:
         rep; ret
 
+setup:
+        cld
+        pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
+
 .section NRV2E
 #include "arch/amd64/nrv2e_d.S"
 .section NRV2B
 #include "arch/amd64/nrv2b_d.S"
 
+// Bug in assembler: next line looks like ". .section LZMA"
+//  which is a syntax error because of the extra dot ". " at the beginning.
 //.section LZMA
 //#include "arch/amd64/lzma_d.S"
 
-.section LEXEC050
-setup:
-        cld
-        pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
-        cmpl $ M_NRV2E_LE32,meth; je top_n2e
-        cmpl $ M_NRV2B_LE32,meth; je top_n2b
+.section ELFMAINY
 eof:
         pop %rcx  // &input_eof
         movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
@@ -176,20 +182,20 @@ eof:
         pop %rbx; pop %rbp
         ret
 
-/* Temporary until we get the buildLoader stuff working ... */
-        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
-        .asciz "All Rights Reserved. http://upx.sf.net $\n"
-
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1
 __NR_exit  = 60
 
 msg_SELinux:
         push $ L71 - L70; pop %arg3  // length
-        call L71
+        call L72
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
+        // IDENTSTR goes here
+
+.section ELFMAINZ
+L72:
         pop %arg2  // message text
         push $2; pop %arg1  // fd stderr
         push $ __NR_write; pop %rax
@@ -238,7 +244,7 @@ unfold:
         push $ LENU  // for unmap in fold
         movl $ CNTC,%ecx
         push $ ADRX  //# for upx_main
-        push $ LENX  // for upx_main
+        push %r15  // LENX for upx_main
 
 /* Move and relocate if compressed overlaps uncompressed.
    Move by 0 when total compressed executable is < 3MB.
@@ -268,12 +274,14 @@ unfold:
 main:
         int3  # uncomment for debugging
         pop %rbp  // &decompress
+        movl -4-(ret_main - _start)(%rbp),%r15d  // length which precedes stub
+        subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d
         call unfold  // push &b_info
-        /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+        // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/
 
 /*
 vi:ts=8:et:nowrap
-*/
+ */
 
