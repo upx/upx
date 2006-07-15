@@ -25,67 +25,42 @@
 ;  <markus@oberhumer.com>
 ;  http://www.oberhumer.com/opensource/upx/
 ;
-
-
-; ------------- DECOMPRESSION -------------
-
-; Input:
-;   %rsi - source
-;   %rdi - dest
-;   cld
-
-; Output:
-;   %rax - 0
-;   %rcx - 0
 */
 
 #define section .section
 
-//
-// init
-section LZMA_DEC00
-
-// %rbx = alloca('UPXa');
-
-        mov %rsp,%rbp  // save stack
-
-        lea UPXa(%rsp),%rbx
-        xor %rax, %rax
-1:
-        push %rax
-        cmp %rbx,%rsp
-        jne 1b
-
-
-        addq $2,%rsi  // skip 2 bytes for properties
-
-        pushq %rbx; addq $4,%rbx  // &outSizeProcessed
-        pushq $ UPXb  // outSize  XXX: 2GB
-        pushq %rdi  // out
-        pushq %rbx; addq $4,%rbx  // &inSizeProcessed
-        pushq $ UPXc  // inSize  XXX: 2GB
-        pushq %rsi  // in
-        pushq %rbx  // &CLzmaDecoderState
-        pushq %rax  // fake return address for call
-
-        // hardwired LzmaDecodeProperties()
-        movl $ UPXd,(%rbx)  // lc, lp, pb, dummy
-
-
 section LZMA_ELF00
+//decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+/* Arguments according to calling convention */
+#define src  %arg1  /* %rdi */
+#define lsrc %arg2  /* %rsi */
+#define dst  %arg3  /* %rdx */
+#define ldst %arg4  /* %rcx */ /* Out: actually a reference: &len_dst */
+#define meth %arg5l /* %r8  */
+#define methb %arg5b
+
+#define M_LZMA          14
+        cmpb $ M_LZMA,methb; jne not_lzma
+                // C calling convention
+        pushq %rbp; movq %rsp,%rbp
+        pushq %rbx
+
+//LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
+//      %arg1= &CLzmaDecoderState,
+//      %arg2= in,  %arg3l= inSize, %arg4= &inSizeProcessed,
+//      %arg5= out, %arg6l= outSize, 8+%esp/ &outSizeProcessed
+//)
 
 #define LZMA_BASE_SIZE 1846
 #define LZMA_LIT_SIZE   768
+#define szSizeT 8
 
-#ifndef O_OUTS  // ELF defines them, others do not care
-#define O_OUTS 0
-#define O_INS  0
-#endif
+        movq dst,%arg5  // outp
+        movq lsrc,%arg3  // inSize
+        movq  src,%arg2  // in
+        movq ldst,%r10
 
-        movq %rsp,%rbp  // save stack
-        movl O_INS(%rbp),%edx  // inSize  XXX: 4GB
-
-        lodsb; subl $1,%edx  // first byte, replaces LzmaDecodeProperties()
+        lodsb; decl %arg3l  // first byte, replaces LzmaDecodeProperties()
         movb %al,%cl  // cl= ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
         andb $6,%al  // al= pos_bits
         shrb $3,%cl  // cl= lit_context_bits + lit_pos_bits
@@ -93,28 +68,24 @@ section LZMA_ELF00
         movq $-LZMA_LIT_SIZE,%rbx
         shlq %cl,%rbx
 // inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState
-        leaq -(2*4 +4) - 2*LZMA_BASE_SIZE(%rsp,%rbx,2), %rbx
+        leaq -(2*szSizeT +4) - 2*LZMA_BASE_SIZE(%rsp,%rbx,2), %rbx
         andq $~0<<6,%rbx  // 64-byte align
-.elf_clearstack1:
+1:
         pushq $0
         cmpq %rbx,%rsp
-        jne .elf_clearstack1
+        jne 1b
 
-        pushq %rbx; addq $8,%rbx  // &outSizeProcessed
-        movl O_OUTS(%rbp),%ecx  // &outSize  XXX: 2GB
-        pushq (%rcx)  // outSize
-        pushq %rdi  // out
-        pushq %rbx; addq $8,%rbx  // &inSizeProcessed
+        pushq %rbx; addq $ szSizeT,%rbx  // &outSizeProcessed
+        movl (%r10),%arg6l  // &outSize  XXX: 4GB
+        movq %rbx,%arg4; addq $ szSizeT,%rbx  // &inSizeProcessed
 
         movb %al,2(%rbx)  // store pos_bits
-        lodsb; subl $1,%edx  // second byte, replaces LzmaDecodeProperties()
+        lodsb; decl %arg3l  // second byte, replaces LzmaDecodeProperties()
         movb %al,%cl  // cl= (lit_pos_bits<<4) | lit_context_bits
         andb $0xf,%al; movb %al, (%rbx)  // store lit_context_bits
         shrb  $4, %cl; movb %cl,1(%rbx)  // store lit_pos_bits
 
-        pushq %rdx  // inSize -2
-        pushq %rsi  // in
-        pushq %rbx  // &CLzmaDecoderState
+        movq %rbx,%arg1  // &CLzmaDecoderState
         pushq %rax  // return address slot (dummy CALL)
 
 section LZMA_DEC10
@@ -128,8 +99,8 @@ section LZMA_DEC20
 // cleanup
 section LZMA_DEC30
 
-        addq -1*8(%rbx),%rsi  // inSizeProcessed
-        addq -2*8(%rbx),%rdi  // outSizeProcessed
+        movl -1*szSizeT(%rbx),%eax; addq %rax,%rsi  // inSizeProcessed
+        movl -2*szSizeT(%rbx),%eax; addq %rax,%rdi  // outSizeProcessed
         xorq %rax,%rax
 
         leaq -256(%rsp),%rcx
@@ -139,9 +110,10 @@ section LZMA_DEC30
         cmpq %rcx,%rsp
         jne 1b
 
-        movq %rbp,%rsp  // restore stack
+        movq -8(%rbp),%rbx
         xorq %rcx,%rcx
-
+        leave
+not_lzma:
 
 // vi:ts=8:et
 

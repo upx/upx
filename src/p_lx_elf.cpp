@@ -613,11 +613,14 @@ PackLinuxElf64::buildLinuxLoader(
     delete [] cprLoader;
 
     addLoader("ELFMAINX", NULL);
-    addLoader("NRV2E", NULL);   //addLoader(getDecompressorSections(), NULL);
-    addLoader("ELFMAINY", NULL);
-    addLoader("IDENTSTR", NULL);
-    addLoader("ELFMAINZ", NULL);
-    addLoader("FOLDEXEC", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
+        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
+        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
 
     freezeLoader();
     addLinkerSymbols();

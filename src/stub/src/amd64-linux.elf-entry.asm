@@ -32,6 +32,7 @@
 //#include        "arch/i386/macros2.ash"
 
 #include "arch/amd64/regs.h"
+#define section  .section
 
 sz_Ehdr= 64
 sz_Phdr= 56
@@ -64,7 +65,7 @@ M_NRV2B_LE32=2  // ../conf.h
 M_NRV2E_LE32=8
 
 
-.section ELFMAINX
+  section ELFMAINX
 _start: .globl _start
         call main  // push &decompress
 ret_main:
@@ -72,6 +73,7 @@ ret_main:
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 
+  section NRV_COMMON
 /* Arguments according to calling convention */
 #define src  %arg1
 #define lsrc %arg2
@@ -163,17 +165,15 @@ setup:
         cld
         pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
 
-.section NRV2E
+  section NRV2E
 #include "arch/amd64/nrv2e_d.S"
-.section NRV2B
+
+  section NRV2B
 #include "arch/amd64/nrv2b_d.S"
 
-// Bug in assembler: next line looks like ". .section LZMA"
-//  which is a syntax error because of the extra dot ". " at the beginning.
-//.section LZMA
-//#include "arch/amd64/lzma_d.S"
+#include "arch/amd64/lzma_d.S"
 
-.section ELFMAINY
+  section ELFMAINY
 eof:
         pop %rcx  // &input_eof
         movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
@@ -194,7 +194,7 @@ L70:
 L71:
         // IDENTSTR goes here
 
-.section ELFMAINZ
+  section ELFMAINZ
 L72:
         pop %arg2  // message text
         push $2; pop %arg1  // fd stderr
@@ -263,7 +263,7 @@ unfold:
         push %rax  // ret_addr after decompression
                xchgl %eax,%arg3l  // %arg3= dst for unfolding  XXX: 4GB
         lodsl; push %rax          // allocate slot on stack
-               movq  %rsp,%arg4   // &len_dst ==> &do_not_care
+               movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
         lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  // b_method
               xchg %arg1l,%arg2l  // XXX: 4GB
