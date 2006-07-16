@@ -73,7 +73,6 @@ ret_main:
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 
-  section NRV_COMMON
 /* Arguments according to calling convention */
 #define src  %arg1
 #define lsrc %arg2
@@ -82,17 +81,19 @@ decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint meth
 #define meth %arg5l
 #define methb %arg5b
 
+        push %rbp; push %rbx  // C callable
+        push ldst
+        push dst
+        addq src,lsrc; push lsrc  // &input_eof
+
+  section NRV_COMMON
+
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
 #define len  %ecx  /* XXX: 2GB */
 #define lenq %rcx
 #define bits %ebx
 #define disp %rbp
-
-        push %rbp; push %rbx  // C callable
-        push ldst
-        push dst
-        addq src,lsrc; push lsrc  // &input_eof
 
         movq src,%rsi  // hardware src for movsb, lodsb
         movq dst,%rdi  // hardware dst for movsb
@@ -272,7 +273,7 @@ unfold:
         ret
 
 main:
-        int3  # uncomment for debugging
+////    int3  # uncomment for debugging
         pop %rbp  // &decompress
         movl -4-(ret_main - _start)(%rbp),%r15d  // length which precedes stub
         subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d
