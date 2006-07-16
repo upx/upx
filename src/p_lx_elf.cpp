@@ -187,17 +187,13 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 }
 
 void
-PackLinuxElf::addStubEntrySections(
-    upx_byte const *const proto,
-    unsigned const szproto
-)
+PackLinuxElf::addStubEntrySections(Filter const *)
 {
-    linker->addSection("ELFMAINX", proto, szproto);
     addLoader("ELFMAINX", NULL);
 }
 
 void
-PackLinuxElf::addLinkerSymbols()
+PackLinuxElf::addLinkerSymbols(Filter const *)
 {
     // empty
 }
@@ -226,6 +222,19 @@ PackLinuxElf64::~PackLinuxElf64()
 Linker* PackLinuxElf64amd::newLinker() const
 {
     return new ElfLinkerAMD64;
+}
+
+void PackLinuxElf64amd::addStubEntrySections(Filter const *)
+{
+    addLoader("ELFMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
+        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
+        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
 }
 
 int const *
@@ -327,7 +336,7 @@ PackLinuxElf32ppc::PackLinuxElf32ppc(InputFile *f)
     e_machine = Elf32_Ehdr::EM_PPC;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2MSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf32ppc::~PackLinuxElf32ppc()
@@ -361,65 +370,8 @@ umax(unsigned a, unsigned b)
     return a;
 }
 
-int
-PackLinuxElf32x86::buildLinuxLoader(
-    upx_byte const *const proto,
-    unsigned        const szproto,
-    upx_byte const *const fold,
-    unsigned        const szfold,
-    Filter const *ft
-)
+void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 {
-    initLoader(proto, szproto);
-
-    struct b_info h; memset(&h, 0, sizeof(h));
-    unsigned fold_hdrlen = 0;
-  if (0 < szfold) {
-    cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = sizeof(hf->ehdr) +
-        get_native16(&hf->ehdr.e_phentsize) * get_native16(&hf->ehdr.e_phnum) +
-         sizeof(l_info);
-    if (0 == get_le32(fold_hdrlen + fold)) {
-        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
-        fold_hdrlen = umax(0x80, fold_hdrlen);
-    }
-    h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
-    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
-    h.b_ftid = (unsigned char) ph.filter;
-    h.b_cto8 = (unsigned char) ph.filter_cto;
-  }
-    unsigned char const *const uncLoader = fold_hdrlen + fold;
-
-    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc);
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
-  if (0 < szfold) {
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
-        NULL, ph.method, 10, NULL, NULL );
-    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
-        throwInternalError("loader compression failed");
-#if 0  //{  debugging only
-    if (M_LZMA==ph.method) {
-        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        unsigned char *tmp = new unsigned char[tmp_len];
-        memset(tmp, 0, tmp_len);
-        r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
-        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
-        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
-            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
-        }
-        delete[] tmp;
-    }
-#endif  //}
-  }
-    unsigned const sz_cpr = h.sz_cpr;
-    set_native32(&h.sz_cpr, h.sz_cpr);
-    set_native32(&h.sz_unc, h.sz_unc);
-    memcpy(cprLoader, &h, sizeof(h));
-
-    // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
-    delete [] cprLoader;
-
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
     // Here is a quick summary of the format of the output file:
@@ -494,20 +446,16 @@ PackLinuxElf32x86::buildLinuxLoader(
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
+}
 
-    freezeLoader();
+void PackLinuxElf32x86::addLinkerSymbols(Filter const *ft)
+{
     upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
         checkPatch(NULL, 0, 0, 0);  // reset
     }
-    // PackHeader and overlay_offset at the end of the output file,
-    // after the compressed data.
-
-    unsigned const lsize = getLoaderSize();
-    linker->relocate();
-    return lsize;
 }
 
 int
@@ -516,17 +464,10 @@ PackLinuxElf32::buildLinuxLoader(
     unsigned        const szproto,
     upx_byte const *const fold,
     unsigned        const szfold,
-    Filter const */*ft*/
+    Filter const *ft
 )
 {
     initLoader(proto, szproto);
-    {
-        int const MAX_LOADER_LEN = 8000;
-        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
-        eof_empty[0] = -1;
-        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
-        delete[] eof_empty;
-    }
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -549,6 +490,19 @@ PackLinuxElf32::buildLinuxLoader(
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+#if 0  //{  debugging only
+    if (M_LZMA==ph.method) {
+        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
+        unsigned char *tmp = new unsigned char[tmp_len];
+        memset(tmp, 0, tmp_len);
+        r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
+        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
+        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
+            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
+        }
+        delete[] tmp;
+    }
+#endif  //}
   }
     unsigned const sz_cpr = h.sz_cpr;
     set_native32(&h.sz_cpr, h.sz_cpr);
@@ -559,13 +513,10 @@ PackLinuxElf32::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
-    //int const GAP = 128;  // must match stub/l_mac_ppc.S
-    //segcmdo.vmsize += sz_unc - sz_cpr + GAP + 64;
+    addStubEntrySections(ft);
 
-    addStubEntrySections(proto, szproto);
-
-    addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    addLinkerSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
@@ -576,7 +527,7 @@ PackLinuxElf64::buildLinuxLoader(
     unsigned        const szproto,
     upx_byte const *const fold,
     unsigned        const szfold,
-    Filter const */*ft*/
+    Filter const *ft
 )
 {
     initLoader(proto, szproto);
@@ -612,24 +563,16 @@ PackLinuxElf64::buildLinuxLoader(
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
     delete [] cprLoader;
 
-    addLoader("ELFMAINX", NULL);
-   //addLoader(getDecompressorSections(), NULL);
-    addLoader(
-        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
-        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
-        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
-        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
-    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
+    addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols();
+    addLinkerSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
 
 void
-PackLinuxElf64amd::addLinkerSymbols()
+PackLinuxElf64amd::addLinkerSymbols(Filter const *)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned len = sz_pack2;
@@ -865,6 +808,18 @@ PackLinuxElf32ppc::buildLoader(const Filter *ft)
     return buildLinuxLoader(
         linux_elfppc32_loader, sizeof(linux_elfppc32_loader),
         linux_elfppc32_fold,   sizeof(linux_elfppc32_fold),  ft );
+}
+
+void
+PackLinuxElf32ppc::addStubEntrySections(Filter const *)
+{
+    addLoader("ELFMAINX", NULL);
+}
+
+void
+PackLinuxElf32ppc::addLinkerSymbols(Filter const *)
+{
+    // empty
 }
 
 static const

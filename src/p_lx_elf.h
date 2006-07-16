@@ -60,8 +60,8 @@ protected:
         void const *proto,
         unsigned const brka
     ) = 0;
-    virtual void addLinkerSymbols();
-    virtual void addStubEntrySections(upx_byte const *, unsigned);
+    virtual void addLinkerSymbols(Filter const *);
+    virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo) = 0;
 
 protected:
@@ -289,8 +289,9 @@ protected:
     //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
-    virtual void addLinkerSymbols();
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 /*************************************************************************
@@ -310,7 +311,9 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 /*************************************************************************
@@ -333,14 +336,9 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    );
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 class PackBSDElf32x86 : public PackLinuxElf32x86
@@ -381,8 +379,8 @@ public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
 
-    virtual int buildLoader(const Filter *ft);
 protected:
+    virtual int buildLoader(const Filter *ft);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
