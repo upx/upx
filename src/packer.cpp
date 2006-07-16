@@ -1069,7 +1069,7 @@ void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
 
     unsigned size;
     char const * const ident = getIdentstr(&size, small);
-    linker->addSection("IDENTSTR", ident, size);
+    linker->addSection("IDENTSTR", ident, size, 0);
 }
 
 

@@ -71,6 +71,7 @@ struct DefaultLinker::Section
     int         istart;
     int         ostart;
     int         len;
+    unsigned char align;
     DefaultLinker::Label name;
 };
 
@@ -196,13 +197,14 @@ int DefaultLinker::addSection(const char *sname)
 }
 
 
-void DefaultLinker::addSection(const char *sname, const void *sdata, int slen)
+void DefaultLinker::addSection(const char *sname, const void *sdata, int slen, int align)
 {
     assert(!frozen);
     // add a new section - can be used for adding stuff like ident or header
     sections[nsections].name.set(sname);
     sections[nsections].istart = ilen;
     sections[nsections].len = slen;
+    sections[nsections].align = align;
     sections[nsections++].ostart = olen;
     assert(nsections < NSECTIONS);
     memcpy(iloader+ilen, sdata, slen);
@@ -314,10 +316,10 @@ int SimpleLinker::addSection(const char *sname)
 }
 
 
-void SimpleLinker::addSection(const char *sname, const void *sdata, int slen)
+void SimpleLinker::addSection(const char *sname, const void *sdata, int slen, int align)
 {
     assert(!frozen);
-    UNUSED(sname); UNUSED(sdata); UNUSED(slen);
+    UNUSED(sname); UNUSED(sdata); UNUSED(slen); UNUSED(align);
     assert(0);
 }
 
@@ -350,8 +352,8 @@ unsigned char *SimpleLinker::getLoader(int *llen)
 //
 **************************************************************************/
 
-ElfLinker::Section::Section(const char *n, const void *i, unsigned s) :
-    name(strdup(n)), output(NULL), size(s), offset(0), next(NULL)
+ElfLinker::Section::Section(const char *n, const void *i, unsigned s, unsigned a) :
+    name(strdup(n)), output(NULL), size(s), offset(0), align(a), next(NULL)
 {
     assert(name);
     input = malloc(s + 1);
@@ -388,24 +390,24 @@ void ElfLinker::preprocessSections(char *start, const char *end)
     while (start < end)
     {
         char name[1024];
-        unsigned offset, size;
+        unsigned offset, size, align;
 
         char *nextl = strchr(start, '\n');
         assert(nextl != NULL);
 
-        if (sscanf(start, "%*d %1023s %x %*d %*d %x",
-                   name, &size, &offset) == 3)
+        if (sscanf(start, "%*d %1023s %x %*d %*d %x 2**%d",
+                   name, &size, &offset, &align) == 4)
         {
             char *n = strstr(start, name);
             n[strlen(name)] = 0;
-            addSection(n, input + offset, size);
+            addSection(n, input + offset, size, align);
 
             //printf("section %s preprocessed\n", n);
         }
         start = nextl + 1;
     }
-    addSection("*ABS*", NULL, 0);
-    addSection("*UND*", NULL, 0);
+    addSection("*ABS*", NULL, 0, 0);
+    addSection("*UND*", NULL, 0, 0);
 }
 
 void ElfLinker::preprocessSymbols(char *start, const char *end)
@@ -614,6 +616,15 @@ int ElfLinker::addSection(const char *sname)
         else
         {
             Section *section = findSection(sect);
+            if (section->align) {
+                unsigned const v = ~0u << section->align;
+                assert(tail);
+                if (unsigned const l = ~v & -(tail->offset + tail->size)) {
+                    align(l);
+                    tail->size += l;
+                    outputlen += l;
+                }
+            }
             memcpy(output + outputlen, section->input, section->size);
             section->output = output + outputlen;
             outputlen += section->size;
@@ -634,13 +645,13 @@ int ElfLinker::addSection(const char *sname)
     return outputlen;
 }
 
-void ElfLinker::addSection(const char *sname, const void *sdata, int slen)
+void ElfLinker::addSection(const char *sname, const void *sdata, int slen, int align)
 {
     assert(!frozen);
     sections = static_cast<Section **>(realloc(sections, (nsections + 1)
                                                * sizeof(Section *)));
     assert(sections);
-    sections[nsections++] = new Section(sname, sdata, slen);
+    sections[nsections++] = new Section(sname, sdata, slen, align);
 }
 
 void ElfLinker::freeze()
@@ -823,12 +834,25 @@ void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
 
     // FIXME: more relocs
 
-    if (strcmp(type, "8") == 0)
-        *location += value;
-    else if (strcmp(type, "16") == 0)
-        set_le16(location, get_le16(location) + value);
-    else if (strcmp(type, "32") == 0)
-        set_le32(location, get_le32(location) + value);
+    // Note that original (*location).displ is ignored.
+    if (strcmp(type, "24") == 0) {
+        if (3& value) {
+            printf("unaligned word diplacement");
+            abort();
+        }
+        // FIXME: displacment overflow?
+        set_be32(location, (0xfc000003 & get_be32(location)) +
+            (0x03fffffc & (rel->add + value)));
+    }
+    else if (strcmp(type, "14") == 0) {
+        if (3& value) {
+            printf("unaligned word diplacement");
+            abort();
+        }
+        // FIXME: displacment overflow?
+        set_be32(location, (0xffff0003 & get_be32(location)) +
+            (0x0000fffc & (rel->add + value)));
+    }
     else
         super::relocate1(rel, location, value, type);
 }

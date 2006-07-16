@@ -29,26 +29,10 @@
    <jreiser@users.sourceforge.net>
 */
 
-#include "regs.h"
-
-SZ_DLINE=128  # size of data cache line in Apple G5
-
-/* Returns 0 on success; non-zero on failure. */
-decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint method)
-
-/* PowerPC has no 'cmplis': compare logical [unsigned] immediate shifted [by 16] */
-#define  hibit r0  /* holds 0x80000000 during decompress */
-
-#define src  a0
-#define lsrc a1
-#define dst  a2
-#define ldst a3  /* Out: actually a reference: &len_dst */
-#define meth a4
-
-#define off  a4
-#define len  a5
-#define bits a6
-#define disp a7
+#define M_NRV2E_LE32    8
+	rlwinm r0,meth,8,25,31  // .b_method (hi byte of meth)
+	cmpli cr0,r0,M_NRV2E_LE32
+	bne   cr0,not_nrv2e
 
         dcbtst 0,dst  # prime dcache for store
 
@@ -64,6 +48,10 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
         mflr t3  # return address
         b bot_n2e
 
+#undef  jnextb0y
+#undef  jnextb0n
+#undef  jnextb1y
+#undef  jnextb1n
 /* jump on next bit, with branch prediction: y==>likely; n==>unlikely
    cr0 is set by the cmpl ["compare logical"==>unsigned]:
     lt  next bit is 0
@@ -77,31 +65,32 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint me
 #define jnextb1y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt+
 #define jnextb1n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt-
 
+#undef  getnextb
 /* rotate next bit into bottom bit of reg */
 #define getnextb(reg)              addc. bits,bits,bits; beql- get32; adde reg,reg,reg
 
 get32:
-                # fetch 4 bytes unaligned and LITTLE ENDIAN
+                // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
-        lbz bits,1(src)  # lo8
+        lbz bits,1(src)  // lo8
         lbz   t0,2(src); rlwimi bits,t0, 8,16,23
         lbz   t0,3(src); rlwimi bits,t0,16, 8,15
         lbzu  t0,4(src); rlwimi bits,t0,24, 0, 7
 #else  /*}{ pray for no unalignment trap or slowdown */
-        li bits,1  # compensate for 'lbzu'
-        lwbrx bits,bits,src  # bits= fetch_le32(bits+src)
+        li bits,1  // compensate for 'lbzu'
+        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
         addi src,src,4
 #endif  /*}*/
 
-        cmpl    0,bits,hibit  # cr0  for   jnextb
-        addc bits,bits,bits  # CArry for getnextb
-        ori  bits,bits,1  # the flag bit
+        cmpl    0,bits,hibit  // cr0  for   jnextb
+        addc bits,bits,bits  // CArry for getnextb
+        ori  bits,bits,1  // the flag bit
         ret
 
 lit_n2e:
 #define tmp len
-        lbzu tmp,1(src)  # tmp= *++src;
-        stbu tmp,1(dst)  # *++dst= tmp;
+        lbzu tmp,1(src)  // tmp= *++src;
+        stbu tmp,1(dst)  // *++dst= tmp;
 #undef tmp
 top_n2e:
         jnextb1y lit_n2e
@@ -116,21 +105,21 @@ getoff_n2e:
         jnextb0n off_n2e
 
         li len,0
-        addic. off,off,-3  # CArry set [and ignored], but no 'addi.'
-        rlwinm off,off,8,0,31-8  # off<<=8;
+        addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
+        rlwinm off,off,8,0,31-8  // off<<=8;
         blt- offprev_n2e
         lbzu t0,1(src)
-        nor. disp,off,t0  # disp = -(1+ (off|t0));
-        srawi disp,disp,1  # shift off low bit (sets CArry; ignored)
-        beq- eof_n2e
-        andi. t0,t0,1  # complement of low bit of unshifted disp
-        beq+ lenlast_n2e # low bit was 1
-        b lenmore_n2e    # low bit was 0
+        nor. disp,off,t0  // disp = -(1+ (off|t0));
+        srawi disp,disp,1  // shift off low bit (sets CArry; ignored)
+        beq- eof_nrv
+        andi. t0,t0,1  // complement of low bit of unshifted disp
+        beq+ lenlast_n2e // low bit was 1
+        b lenmore_n2e    // low bit was 0
 
 offprev_n2e:
         jnextb1y lenlast_n2e
 lenmore_n2e:
-        li len,1  # 1: "the msb"
+        li len,1  // 1: "the msb"
         jnextb1y lenlast_n2e
 len_n2e:
         getnextb(len)
@@ -139,16 +128,16 @@ len_n2e:
         b gotlen_n2e
 
 lenlast_n2e:
-        getnextb(len)  # 0,1,2,3
+        getnextb(len)  // 0,1,2,3
 gotlen_n2e:
 #define tmp off
-        subfic tmp,disp,(~0)+(-0x500)  # want CArry only
+        subfic tmp,disp,(~0)+(-0x500)  // want CArry only
 #undef tmp
         addi  len,len,2
-        addze len,len  # len += (disp < -0x500);
+        addze len,len  // len += (disp < -0x500);
 
 #define back off
-        add back,disp,dst  # point back to match in dst
+        add back,disp,dst  // point back to match in dst
         mtctr len
 short_n2e:
 #define tmp len
@@ -164,21 +153,10 @@ bot_n2e:
    pace the dcbtst optimally; but that takes 7 or 8 instructions of space.
 */
         li back,2*SZ_DLINE
-        dcbtst back,dst  # 2 lines ahead [-1 for stbu]
-        dcbt   back,src  # jump start auto prefetch at page boundary
+        dcbtst back,dst  // 2 lines ahead [-1 for stbu]
+        dcbt   back,src  // jump start auto prefetch at page boundary
 /* Auto prefetch for Read quits at page boundary; needs 2 misses to restart. */
         b top_n2e
 #undef back
 
-eof_n2e:
-#define tmp r0  /* hibit is dead */
-        lwz tmp,0(ldst)  # original dst
-        mtlr t3  # return address
-        addi dst,dst,1  # uncorrect for 'stbu'
-        addi src,src,1  # uncorrect for 'lbzu'
-        subf dst,tmp,dst  # dst -= tmp;  // dst length
-#undef tmp
-        subf a0,lsrc,src  # src -= eof;  // return 0: good; else: bad
-        stw dst,0(ldst)
-        ret
-
+not_nrv2e:

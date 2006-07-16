@@ -390,6 +390,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
         sizeof(p_info) +
             // compressed data
         b_len + ph.c_len );
+
             // entry to stub
     addLoader("LEXEC000", NULL);
 
@@ -510,7 +511,7 @@ PackLinuxElf32::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
 
     addStubEntrySections(ft);
@@ -560,7 +561,7 @@ PackLinuxElf64::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
 
     addStubEntrySections(ft);
@@ -814,6 +815,14 @@ void
 PackLinuxElf32ppc::addStubEntrySections(Filter const *)
 {
     addLoader("ELFMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
+        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
+        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
 }
 
 void

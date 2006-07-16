@@ -98,13 +98,13 @@ PackMachPPC32::buildMachLoader(
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + h.sz_cpr, 0);
     delete [] cprLoader;
 
     int const GAP = 128;  // must match stub/l_mac_ppc.S
     segcmdo.vmsize += h.sz_unc - h.sz_cpr + GAP + 64;
 
-    linker->addSection("MACOS000", proto, szproto);
+    linker->addSection("MACOS000", proto, szproto, 0);
 
     addLoader("MACOS000", NULL);
     addLoader("FOLDEXEC", NULL);

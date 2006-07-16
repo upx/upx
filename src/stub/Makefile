@@ -686,9 +686,11 @@ tc.powerpc-linux.elf.objdump  = $(call tc,m-objdump)
 tc.powerpc-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.o
-	$(call tc,objstrip) tmp/$T.o
-	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_loader tmp/$T.bin $@
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
