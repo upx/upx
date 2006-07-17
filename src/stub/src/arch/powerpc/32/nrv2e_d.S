@@ -36,14 +36,14 @@
 	cmpli cr0,meth,M_NRV2E_LE32
 	bne   cr0,not_nrv2e
 
-        stw dst,0(ldst)  # original dst
-        add lsrc,lsrc,src  # input eof
+        stw dst,0(ldst)  // original dst
+        add lsrc,lsrc,src  // input eof
 
-        lis hibit,0x8000  # 0x80000000 for detecting next bit
-        lis  bits,0x8000 # prepare for first load
-        addi src,src,-1  # prepare for 'lbzu'
-        addi dst,dst,-1  # prepare for 'stbu'
-        li disp,-1  # initial displacement
+        lis hibit,0x8000  // 0x80000000 for detecting next bit
+        lis  bits,0x8000 // prepare for first load
+        addi src,src,-1  // prepare for 'lbzu'
+        addi dst,dst,-1  // prepare for 'stbu'
+        li disp,-1  // initial displacement
         b bot_n2e
 
 #undef  jnextb0y

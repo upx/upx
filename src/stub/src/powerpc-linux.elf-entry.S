@@ -87,7 +87,7 @@ SZ_DLINE=128  # size of data cache line in Apple G5
         .balign 4
 #include "arch/powerpc/32/nrv2b_d.S"
 
-//  #include "arch/powerpc/32/lzma_d.S"
+#include "arch/powerpc/32/lzma_d.S"
 
   section ELFMAINY
         .balign 4
@@ -149,7 +149,7 @@ unfold:
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
 main:
-////    teq r0,r0  // debugging
+////  teq r0,r0  // debugging
         stwu r1,-32*4(sp)  // allocate space (keeping 0 mod 16), save r1
         stmw r2,4(sp) // save registers r2 thru r31
         mflr r31  // &decompress
