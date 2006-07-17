@@ -61,18 +61,18 @@ section LZMA_DEC00
         inc     esi
 
         push    ebx                     // &outSizeProcessed
-        push    UPXb                    // outSize
+        push    offset UPXb             // outSize
         push    edi                     // out
         add     ebx, 4
         push    ebx                     // &inSizeProcessed
-        push    UPXc                    // inSize
+        push    offset UPXc             // inSize
         push    esi                     // in
         add     ebx, 4
         push    ebx                     // &CLzmaDecoderState
         push    eax                     // dummy for call
 
         // hardwired LzmaDecodeProperties()
-        movw    [ebx], offset UPXd       // lc, lp, pb, dummy
+        mov     dword ptr [ebx], offset UPXd       // lc, lp, pb, dummy
 
 
 section LZMA_ELF00
