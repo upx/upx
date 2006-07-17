@@ -40,12 +40,11 @@
 ;   ecx - 0
 */
 
-
 //              CPU 386
 
 
 .macro          getbit_n2d one
-        .ifc \one, 1
+        .ifc    \one, 1
                 add     ebx, ebx
                 jnz     1f
         .endif
@@ -54,6 +53,7 @@
                 adc     ebx, ebx
 1:
 .endm
+
 #undef getbit
 #define getbit  getbit_n2d
 
@@ -85,9 +85,9 @@ section N2DSMA20
                 xor     eax, eax
                 inc     eax
 section N2DFAS20
-#ifndef UPX102
-                mov al, [edi]  // force data cache allocate (PentiumPlain or MMX)
-#endif
+    #ifndef UPX102
+        mov al, [edi]  // force data cache allocate (PentiumPlain or MMX)
+    #endif
                 jc      decompr_literalb_n2d
                 mov     eax, 1
 section N2DDEC20
@@ -118,7 +118,7 @@ loopend1_n2d:
                 inc     esi
                 xor     eax, -1
                 jz      decompr_end_n2d
-                sar     eax, 1          // shift low-bit into carry
+                sar     eax, 1                  // shift low-bit into carry
                 mov     ebp, eax
                 jmps    decompr_ebpeax_n2d
 decompr_prev_dist_n2d:
@@ -153,26 +153,26 @@ decompr_got_mlen_n2d:
                 cmp     ebp, -0x500
                 adc     ecx, 1
 section N2DSMA60
-#ifndef UPX102
+    #ifndef UPX102
                 push    esi
-#else
+    #else
                 mov     edx, esi
-#endif
+    #endif
                 lea     esi, [edi+ebp]
                 rep
                 movsb
-#ifndef UPX102
+    #ifndef UPX102
                 pop     esi
-#else
+    #else
                 mov     esi, edx
-#endif
+    #endif
                 jmp    decompr_loop_n2d
 section N2DFAS60
                 lea     edx, [edi+ebp]
                 cmp     ebp, -4
-#ifndef UPX102
-                mov al, [edi+ecx]  // force data cache allocate (PentiumPlain or MMX)
-#endif
+    #ifndef UPX102
+        mov al, [edi+ecx]  // force data cache allocate (PentiumPlain or MMX)
+    #endif
                 jbe     decompr_copy4_n2d
 loop3_n2d:
                 mov     al, [edx]

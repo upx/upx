@@ -30,11 +30,11 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+#include      "arch/i386/macros2.ash"
 
 //                CPU     386
 
-#include        "arch/i386/macros2.ash"
-
+//              CPU     386
 
 /*************************************************************************
 // program entry point
@@ -65,11 +65,11 @@ _start: .globl _start
         call main  // push address of decompress subroutine
 decompress:
 
-; /*************************************************************************
-; // C callable decompressor
-; **************************************************************************/
+// /*************************************************************************
+// // C callable decompressor
+// **************************************************************************/
 
-; /* Offsets to parameters, allowing for {push + pusha + call} */
+// /* Offsets to parameters, allowing for {push + pusha + call} */
 #define         O_INP   (4+ 8*4 +1*4)
 #define         O_INS   (4+ 8*4 +2*4)
 #define         O_OUTP  (4+ 8*4 +3*4)
@@ -93,12 +93,13 @@ section LEXEC010
                 mov     edi, OUTP
 
                 or      ebp, -1
-////             align   8
+//              align   8
 
 #include      "arch/i386/nrv2b_d32_2.ash"
 #include      "arch/i386/nrv2d_d32_2.ash"
 #include      "arch/i386/nrv2e_d32_2.ash"
-//#include      "arch/i386/lzma_d.ash"  // FIXME
+#define db .byte
+#include      "arch/i386/lzma_d_2.ash"
                 cjt32 0
 
 section LEXEC015
@@ -148,11 +149,13 @@ section LEXEC020
 #define __NR_write 4
 #define __NR_exit  1
 
+#define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate */
+
 fail_mmap:
-        push L71 - L70
+        pushsbli L71 - L70
         call L71
 L70:
-         .ascii "PROT_EXEC|PROT_WRITE failed\n"
+        .ascii "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
         push 2  // fd stderr
         push eax  // fake ret.addr
@@ -179,7 +182,7 @@ unfold:
 // So first PT_LOAD must be PF_R|PF_X only, and .p_memsz==.p_filesz.
 // So we must round up here, instead of pre-rounding .p_memsz.
         add eax, [p_memsz + szElf32_Ehdr + eax]  // address after .text
-        add eax,  PAGE_SIZE -1
+        add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
         push eax  // destination for 'ret'

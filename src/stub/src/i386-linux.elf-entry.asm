@@ -30,17 +30,20 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+#include "arch/i386/macros2.ash"
 
-#include        "arch/i386/macros2.ash"
+//              CPU     386
 
-; /*************************************************************************
-; // program entry point
-; // see glibc/sysdeps/i386/elf/start.S
-; **************************************************************************/
+#define         jmps    jmp short
+#define         jmpn    jmp near
 
-        .globl _start
+/*************************************************************************
+// program entry point
+// see glibc/sysdeps/i386/elf/start.S
+**************************************************************************/
+
 section LEXEC000
-_start:
+_start: .globl _start
 ////    int3
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
@@ -63,11 +66,11 @@ _start:
         call main  // push address of decompress subroutine
 decompress:
 
-//
-// C callable decompressor
-//
+// /*************************************************************************
+// // C callable decompressor
+// **************************************************************************/
 
-/* Offsets to parameters, allowing for {push + pusha + call} */
+// /* Offsets to parameters, allowing for {push + pusha + call} */
 #define         O_INP   (4+ 8*4 +1*4)
 #define         O_INS   (4+ 8*4 +2*4)
 #define         O_OUTP  (4+ 8*4 +3*4)
@@ -84,19 +87,20 @@ section LEXEC009
         //;  empty section for commonality with l_lx_exec86.asm
 section LEXEC010
                 pusha
-                push  /*byte*/  '?'  // cto8 (sign extension does not matter)
+                push '?'  // cto8 (sign extension does not matter)
                 // cld
 
                 mov     esi, INP
                 mov     edi, OUTP
 
                 or      ebp, byte -1
-//              align   8
+//;;             align   8
 
-#include      "arch/i386/nrv2b_d32_2.ash"
-#include      "arch/i386/nrv2d_d32_2.ash"
-#include      "arch/i386/nrv2e_d32_2.ash"
-//#include      "arch/i386/lzma_d_2.ash"
+#include "arch/i386/nrv2b_d32_2.ash"
+#include "arch/i386/nrv2d_d32_2.ash"
+#include "arch/i386/nrv2e_d32_2.ash"
+#define db .byte
+#include "arch/i386/lzma_d_2.ash"
                 cjt32 0
 
 section LEXEC015
@@ -145,22 +149,24 @@ section LEXEC020
 #define __NR_write 4
 #define __NR_exit  1
 
+#define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate*/
+
 msg_SELinux:
-        push /*byte*/ L71 - L70
+        pushsbli L71 - L70
         pop edx  // length
         call L71
 L70:
         .ascii "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
         pop ecx  // message text
-        push /*byte*/ 2  // fd stderr
+        push 2  // fd stderr
         pop ebx
-        push /*byte*/ __NR_write
+        push __NR_write
         pop eax
         int 0x80
 die:
-        mov bl, /*byte*/ 127  // only low 7 bits matter!
-        push /*byte*/ __NR_exit
+        mov bl, 127  // only low 7 bits matter!
+        push __NR_exit
         pop eax  // write to stderr could fail, leaving eax as -EBADF etc.
         int 0x80
 
@@ -177,7 +183,7 @@ unfold:
 // So first PT_LOAD must be PF_R|PF_X only, and .p_memsz==.p_filesz.
 // So we must round up here, instead of pre-rounding .p_memsz.
         add eax, [p_memsz + szElf32_Ehdr + eax]  // address after .text
-        add eax,  PAGE_SIZE -1
+        add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
         push eax  // destination for 'ret'
@@ -186,14 +192,14 @@ unfold:
         xor ecx, ecx  // %ecx= 0
         // MAP_ANONYMOUS ==>offset is ignored, so do not push!
         // push ecx  ; offset
-        push /*byte*/ -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
-        push /*byte*/ MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
+        push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
+        push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         mov ch, PAGE_SIZE >> 8  // %ecx= PAGE_SIZE
-        push /*byte*/ PROT_READ | PROT_WRITE | PROT_EXEC
+        push PROT_READ | PROT_WRITE | PROT_EXEC
         push ecx  // length
         push eax  // destination
         mov ebx, esp  // address of parameter vector for __NR_mmap
-        push /*byte*/ __NR_mmap
+        push __NR_mmap
         pop eax
         int 0x80  // changes only %eax; %edx is live
         test eax,eax
@@ -214,7 +220,7 @@ unfold:
         mov [4*3 + esp],eax
         push esi  // &compressed_data
         call ebp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
-        add esp, /*byte*/ (5+1 + 6-1)*4  // (5+1) args to decompress, (6-1) args to mmap
+        add esp, 0+(5+1 + 6-1)*4  // (5+1) args to decompress, (6-1) args to mmap
         ret      // &destination
 main:
         pop ebp  // &decompress

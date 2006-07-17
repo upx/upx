@@ -11,5 +11,6 @@
 #define sys4l  r10d
 #define arg5  r8
 #define arg5l  r8d
+#define arg5b  r8b
 #define arg6  r9
 #define arg6l  r9d

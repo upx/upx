@@ -29,12 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/powerpc/32/regs.h"
-
-/*__MACOS000__*/
-_start: .globl _start
-        call main  # must be exactly 1 instruction; link_register= &decompress
-#include "arch/powerpc/32/nrv2e_d.S"
+#include "arch/powerpc/32/ppc_regs.h"
+#define section .section
 
 sz_b_info= 12
   sz_unc= 0
@@ -49,29 +45,77 @@ MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
-__NR_mmap= 90
-
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
-
-/* Temporary until we get the buildLoader stuff working ... */
-        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
-        .asciz "All Rights Reserved. http://upx.sf.net $\n"
-        .p2align 2  # (1<<2)
 
 /* /usr/include/asm-ppc/unistd.h */
 __NR_write = 4
 __NR_exit  = 1
+__NR_mmap  = 90
+
+  section ELFMAINX
+        .balign 4
+_start: .globl _start
+        call main  // must be exactly 1 instruction; link_register= &decompress
+
+/* Returns 0 on success; non-zero on failure. */
+decompress:  // (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint method)
+
+  section NRV_COMMON
+        .balign 4
+SZ_DLINE=128  # size of data cache line in Apple G5
+
+/* PowerPC has no 'cmplis': compare logical [unsigned] immediate shifted [by 16] */
+#define  hibit r0  /* holds 0x80000000 during decompress */
+
+#define src  a0
+#define lsrc a1
+#define dst  a2
+#define ldst a3  /* Out: actually a reference: &len_dst */
+#define meth a4
+
+#define off  a4
+#define len  a5
+#define bits a6
+#define disp a7
+
+  section NRV2E
+        .balign 4
+#include "arch/powerpc/32/nrv2e_d.S"
+
+  section NRV2B
+        .balign 4
+#include "arch/powerpc/32/nrv2b_d.S"
+
+#include "arch/powerpc/32/lzma_d.S"
+
+  section ELFMAINY
+        .balign 4
+eof_nrv:
+#define tmp r0  /* hibit is dead */
+        lwz tmp,0(ldst)  // original dst
+        mtlr t3  // return address
+        addi dst,dst,1  // uncorrect for 'stbu'
+        addi src,src,1  // uncorrect for 'lbzu'
+        subf dst,tmp,dst  // dst -= tmp;  // dst length
+#undef tmp
+        subf a0,lsrc,src  // src -= eof;  // return 0: good; else: bad
+        stw dst,0(ldst)
+        ret
 
 msg_SELinux:
-        call L71
+        call L72
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-        .p2align 2  # (1<<2)
 L71:
-        li   a2,L71 - L70  # length
-        mflr a1    # message text
-        li   a0,2  # fd stderr
+        // IDENTSTR goes here
+
+  section ELFMAINZ
+        .balign 4
+L72:
+        li   a2,L71 - L70  // length
+        mflr a1    // message text
+        li   a0,2  // fd stderr
         li 0,__NR_write; sc
 die:
         li a0,127
@@ -79,10 +123,10 @@ die:
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr r30  # &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
-        li a5,0  # off_t
-        li a4,-1  # fd; cater to *BSD for MAP_ANON
+        li a5,0  // off_t
+        li a4,-1  // fd; cater to *BSD for MAP_ANON
           lwz  a0,sz_cpr(r30)
         li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         li a2,PROT_READ | PROT_WRITE | PROT_EXEC
@@ -90,27 +134,27 @@ unfold:
           add  a0,a0,r30
         li 0,__NR_mmap
           addi a0,a0,sz_b_info+PAGE_SIZE-1
-        rlwinm a0,a0,0,0,31-PAGE_SHIFT  # next page boundary after fold
-        sc; bso- msg_SELinux  # Branch if SummaryOverflow (failure)
+        rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
+        sc; bso- msg_SELinux  // Branch if SummaryOverflow (failure)
 0:
         mtctr r31
+        lwz r0,sz_unc(r30)
         lbz meth,b_method(r30)
-        la ldst,31*4(sp)  # &do_not_care
+        la ldst,31*4(sp)  // &slot on stack
+        stw  r0,31*4(sp)  // lzma uses for EOF
         mr dst,a0
-        mtlr   a0  # &continuation
+        mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)
         addi src,r30,sz_b_info
-        bctr  # goto decomrpess; return to link register (mmap'ed page)
+        bctr  // goto decomrpess; return to link register (mmap'ed page)
 
 main:
-        stwu r1,-32*4(sp)  # allocate space (keeping 0 mod 16), save r1
-        stmw r2,4(sp) # save registers r2 thru r31
-        mflr r31  # &decompress
+////  teq r0,r0  // debugging
+        stwu r1,-32*4(sp)  // allocate space (keeping 0 mod 16), save r1
+        stmw r2,4(sp) // save registers r2 thru r31
+        mflr r31  // &decompress
         call unfold
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
-
-eof:
-/*__XTHEENDX__*/
 
 /*
 vi:ts=8:et:nowrap

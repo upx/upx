@@ -160,14 +160,42 @@ Linker *PackLinuxElf::newLinker() const
     return new ElfLinker;
 }
 
-void
-PackLinuxElf::addStubEntrySections(
-    upx_byte const *const proto,
-    unsigned const szproto
-)
+void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
-    linker->addSection("ELFMAINX", proto, szproto);
+    unsigned disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& -len);  // ALIGN_UP
+    len += (3& -len);
+    set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
+    fo->write(&disp, sizeof(disp));
+    sz_pack2 = 4+ len;
+
+    super::pack3(fo, ft);
+}
+
+void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
+{
+    super::pack3(fo, ft);
+    set_native32(&elfout.phdr[0].p_filesz, sz_pack2);
+}
+
+void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
+{
+    super::pack3(fo, ft);
+    set_native64(&elfout.phdr[0].p_filesz, sz_pack2);
+}
+
+void
+PackLinuxElf::addStubEntrySections(Filter const *)
+{
     addLoader("ELFMAINX", NULL);
+}
+
+void
+PackLinuxElf::addLinkerSymbols(Filter const *)
+{
+    // empty
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
@@ -196,6 +224,19 @@ Linker* PackLinuxElf64amd::newLinker() const
     return new ElfLinkerAMD64;
 }
 
+void PackLinuxElf64amd::addStubEntrySections(Filter const *)
+{
+    addLoader("ELFMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
+        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
+        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
+}
+
 int const *
 PackLinuxElf::getCompressionMethods(int method, int level) const
 {
@@ -207,12 +248,18 @@ int const *
 PackLinuxElf32ppc::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
-    static const int m_nrv2e[] = { M_NRV2E_LE32, -1 };
-    static const int m_nrv2b[] = { M_NRV2B_LE32, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2E_LE32, M_LZMA, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_LZMA, -1 };
+    static const int m_lzma[]  = { M_LZMA,-1 };
 
-    /*return Packer::getDefaultCompressionMethods_le32(method, level);*/
-    // 2005-04-23 FIXME: stub/l_lx_elfppc32.S hardwires ppc_d_nrv2e.S
-UNUSED(method); UNUSED(level); UNUSED(m_nrv2b);
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
+    if (M_IS_LZMA(method))
+        return m_lzma;
+    if (1==level)
+        return m_nrv2b;
     return m_nrv2e;
 }
 
@@ -295,7 +342,7 @@ PackLinuxElf32ppc::PackLinuxElf32ppc(InputFile *f)
     e_machine = Elf32_Ehdr::EM_PPC;
     ei_class  = Elf32_Ehdr::ELFCLASS32;
     ei_data   = Elf32_Ehdr::ELFDATA2MSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf32ppc::~PackLinuxElf32ppc()
@@ -313,7 +360,7 @@ PackLinuxElf64amd::PackLinuxElf64amd(InputFile *f)
     e_machine = Elf64_Ehdr::EM_X86_64;
     ei_class = Elf64_Ehdr::ELFCLASS64;
     ei_data = Elf64_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_NONE;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf64amd::~PackLinuxElf64amd()
@@ -329,65 +376,8 @@ umax(unsigned a, unsigned b)
     return a;
 }
 
-int
-PackLinuxElf32x86::buildLinuxLoader(
-    upx_byte const *const proto,
-    unsigned        const szproto,
-    upx_byte const *const fold,
-    unsigned        const szfold,
-    Filter const *ft
-)
+void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 {
-    initLoader(proto, szproto);
-
-    struct b_info h; memset(&h, 0, sizeof(h));
-    unsigned fold_hdrlen = 0;
-  if (0 < szfold) {
-    cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
-    fold_hdrlen = sizeof(hf->ehdr) +
-        get_native16(&hf->ehdr.e_phentsize) * get_native16(&hf->ehdr.e_phnum) +
-         sizeof(l_info);
-    if (0 == get_le32(fold_hdrlen + fold)) {
-        // inconsistent SIZEOF_HEADERS in *.lds (ld, binutils)
-        fold_hdrlen = umax(0x80, fold_hdrlen);
-    }
-    h.sz_unc = (szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen);
-    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
-    h.b_ftid = (unsigned char) ph.filter;
-    h.b_cto8 = (unsigned char) ph.filter_cto;
-  }
-    unsigned char const *const uncLoader = fold_hdrlen + fold;
-
-    h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc);
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
-  if (0 < szfold) {
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
-        NULL, ph.method, 10, NULL, NULL );
-    if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
-        throwInternalError("loader compression failed");
-#if 0  //{  debugging only
-    if (M_LZMA==ph.method) {
-        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        unsigned char *tmp = new unsigned char[tmp_len];
-        memset(tmp, 0, tmp_len);
-        r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
-        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
-        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
-            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
-        }
-        delete[] tmp;
-    }
-#endif  //}
-  }
-    unsigned const sz_cpr = h.sz_cpr;
-    set_native32(&h.sz_cpr, h.sz_cpr);
-    set_native32(&h.sz_unc, h.sz_unc);
-    memcpy(cprLoader, &h, sizeof(h));
-
-    // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
-    // FIXME: memory leak    delete [] cprLoader;
-
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
     // Here is a quick summary of the format of the output file:
@@ -406,6 +396,7 @@ PackLinuxElf32x86::buildLinuxLoader(
         sizeof(p_info) +
             // compressed data
         b_len + ph.c_len );
+
             // entry to stub
     addLoader("LEXEC000", NULL);
 
@@ -462,20 +453,16 @@ PackLinuxElf32x86::buildLinuxLoader(
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
+}
 
-    freezeLoader();
+void PackLinuxElf32x86::addLinkerSymbols(Filter const *ft)
+{
     upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
     if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
         patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
         checkPatch(NULL, 0, 0, 0);  // reset
     }
-    // PackHeader and overlay_offset at the end of the output file,
-    // after the compressed data.
-
-    unsigned const lsize = getLoaderSize();
-    linker->relocate();
-    return lsize;
 }
 
 int
@@ -484,16 +471,10 @@ PackLinuxElf32::buildLinuxLoader(
     unsigned        const szproto,
     upx_byte const *const fold,
     unsigned        const szfold,
-    Filter const */*ft*/
+    Filter const *ft
 )
 {
-    {
-        int const MAX_LOADER_LEN = 8000;
-        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
-        eof_empty[0] = -1;
-        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
-        delete[] eof_empty;
-    }
+    initLoader(proto, szproto);
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -516,6 +497,19 @@ PackLinuxElf32::buildLinuxLoader(
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+#if 0  //{  debugging only
+    if (M_LZMA==ph.method) {
+        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
+        unsigned char *tmp = new unsigned char[tmp_len];
+        memset(tmp, 0, tmp_len);
+        r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
+        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
+        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
+            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
+        }
+        delete[] tmp;
+    }
+#endif  //}
   }
     unsigned const sz_cpr = h.sz_cpr;
     set_native32(&h.sz_cpr, h.sz_cpr);
@@ -523,16 +517,13 @@ PackLinuxElf32::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
 
-    //int const GAP = 128;  // must match stub/l_mac_ppc.S
-    //segcmdo.vmsize += sz_unc - sz_cpr + GAP + 64;
+    addStubEntrySections(ft);
 
-    addStubEntrySections(proto, szproto);
-
-    addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    addLinkerSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
@@ -543,16 +534,10 @@ PackLinuxElf64::buildLinuxLoader(
     unsigned        const szproto,
     upx_byte const *const fold,
     unsigned        const szfold,
-    Filter const */*ft*/
+    Filter const *ft
 )
 {
-    {
-        int const MAX_LOADER_LEN = 8000;
-        int *const eof_empty = new int[MAX_LOADER_LEN/sizeof(int)];
-        eof_empty[0] = -1;
-        initLoader(eof_empty, MAX_LOADER_LEN, 0, 0);
-        delete[] eof_empty;
-    }
+    initLoader(proto, szproto);
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -582,15 +567,76 @@ PackLinuxElf64::buildLinuxLoader(
     memcpy(cprLoader, &h, sizeof(h));
 
     // This adds the definition to the "library", to be used later.
-    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr);
+    linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
 
-    addStubEntrySections(proto, szproto);
+    addStubEntrySections(ft);
 
-    addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    addLinkerSymbols(ft);
     linker->relocate();
     return getLoaderSize();
+}
+
+void
+PackLinuxElf64amd::addLinkerSymbols(Filter const *)
+{
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+    unsigned len = sz_pack2;
+
+#define PAGE_MASK (~0u<<12)
+#define PAGE_SIZE (-PAGE_MASK)
+    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity 
+    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
+    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
+    acc_uint64l_t adrc;
+    acc_uint64l_t adrm;
+    acc_uint64l_t adru;
+    acc_uint64l_t adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
+    if (is_big) {
+        set_native64(    &elfout.ehdr.e_entry,
+            get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_native64(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_native64(&elfout.phdr[0].p_paddr, lo_va_user);
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
+        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = PAGE_SIZE + len;
+        lenu = PAGE_SIZE + len;
+        cntc = len >> 3;
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = PAGE_SIZE;
+        lenu = PAGE_SIZE + len;
+        cntc = 0;
+    }
+    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+
+    //avoid circularity  linker->defineSymbol("LENX", sz_pack2 - hlen);
+    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+
+    linker->defineSymbol("CNTC", cntc);  // count  for copy
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    linker->defineSymbol("ADRU", adru);  // addr for unmap
+    linker->defineSymbol("JMPU", 12 + lo_va_user);  // trampoline for unmap
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
+#undef PAGE_SIZE
+#undef PAGE_MASK
+
 }
 
 static const
@@ -769,6 +815,26 @@ PackLinuxElf32ppc::buildLoader(const Filter *ft)
     return buildLinuxLoader(
         linux_elfppc32_loader, sizeof(linux_elfppc32_loader),
         linux_elfppc32_fold,   sizeof(linux_elfppc32_fold),  ft );
+}
+
+void
+PackLinuxElf32ppc::addStubEntrySections(Filter const *)
+{
+    addLoader("ELFMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
+        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
+        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
+}
+
+void
+PackLinuxElf32ppc::addLinkerSymbols(Filter const *)
+{
+    // empty
 }
 
 static const
@@ -1344,7 +1410,6 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     if ((off_t)total_in != file_size)
         throwEOFException();
-    set_native32(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
@@ -1446,89 +1511,6 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     if ((off_t)total_in != file_size)
         throwEOFException();
-    set_native64(&elfout.phdr[0].p_filesz, fo->getBytesWritten());
-}
-
-void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
-{
-    unsigned disp;
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len);
-    set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
-    fo->write(&disp, sizeof(disp));
-
-    super::pack3(fo, ft);
-}
-
-void PackLinuxElf64amd::pack3(OutputFile *fo, Filter &ft)
-{
-    char zero[8];
-    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned const len0 = fo->getBytesWritten();
-    unsigned len = len0;
-    unsigned const frag = 7 & -len; // align to 0 mod 8
-    memset(zero, 0, sizeof(zero));
-    fo->write(&zero, frag);
-    len += frag;
-
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = getLoader();
-    lsize = getLoaderSize();
-    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
-    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
-    acc_uint64l_t adrc;
-    acc_uint64l_t adrm;
-    acc_uint64l_t adru;
-    acc_uint64l_t adrx;
-    unsigned cntc;
-    unsigned lenm;
-    unsigned lenu;
-    len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
-    if (is_big) {
-        set_native64(    &elfout.ehdr.e_entry,
-            get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
-        set_native64(&elfout.phdr[0].p_vaddr, lo_va_user);
-        set_native64(&elfout.phdr[0].p_paddr, lo_va_user);
-               lo_va_stub      = lo_va_user;
-        adrc = lo_va_stub;
-        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
-        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-        adrx = adru + hlen;
-        lenm = PAGE_SIZE + len;
-        lenu = PAGE_SIZE + len;
-        cntc = len >> 3;
-    }
-    else {
-        adrm = lo_va_stub + len;
-        adrc = adrm;
-        adru = lo_va_stub;
-        adrx = lo_va_stub + hlen;
-        lenm = PAGE_SIZE;
-        lenu = PAGE_SIZE + len;
-        cntc = 0;
-    }
-    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
-
-    // patch in order of descending address
-    patch_le32(p,lsize,"LENX", len0 - hlen);
-    patch_le32(p,lsize,"ADRX", adrx); // compressed input for eXpansion
-
-    patch_le32(p,lsize,"CNTC", cntc);  // count  for copy
-    patch_le32(p,lsize,"LENU", lenu);  // len  for unmap
-    patch_le32(p,lsize,"ADRC", adrc);  // addr for copy
-    patch_le32(p,lsize,"ADRU", adru);  // addr for unmap
-    patch_le32(p,lsize,"JMPU", 12 + lo_va_user);  // trampoline for unmap
-    patch_le32(p,lsize,"LENM", lenm);  // len  for map
-    patch_le32(p,lsize,"ADRM", adrm);  // addr for map
-#undef PAGE_SIZE
-#undef PAGE_MASK
-
-    super::pack3(fo, ft);
 }
 
 #include "bele.h"
@@ -1701,11 +1683,6 @@ void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
 void PackLinuxElf32armBe::pack3(OutputFile *fo, Filter &ft)
 {
     ARM_pack3(fo, ft, true);
-}
-
-void PackLinuxElf::pack4(OutputFile *fo, Filter &ft)
-{
-    super::pack4(fo, ft);
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)

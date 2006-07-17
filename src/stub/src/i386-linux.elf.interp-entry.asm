@@ -1,3 +1,4 @@
+/*
 ;  l_lx_pti86.asm -- Linux separate ELF PT_INTERP
 ;
 ;  This file is part of the UPX executable compressor.
@@ -28,24 +29,20 @@
 ;  John F. Reiser
 ;  <jreiser@users.sourceforge.net>
 ;
+*/
+#include "arch/i386/macros2.ash"
 
+//              CPU     386
 
-                BITS    32
-                SECTION .text
-                CPU     386
+/*************************************************************************
+// program entry point
+// see glibc/sysdeps/i386/elf/start.S
+**************************************************************************/
 
-%define         jmps    jmp short
-%define         jmpn    jmp near
-
-; /*************************************************************************
-; // program entry point
-; // see glibc/sysdeps/i386/elf/start.S
-; **************************************************************************/
-
-GLOBAL _start
-;__LXPTI000__
-_start:
-;;;;    int3
+section LXPTI000
+_start: .globl _start
+////    int3
+/*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
 ;; Invoke gdb, and give a 'run' command.  Define a single-step macro such as
@@ -62,12 +59,13 @@ _start:
 ;;      end
 ;; Step through the code; remember that <Enter> repeats the previous command.
 ;;
-        call L200  ; push address of get_funf
+*/
+        call L200  // push address of get_funf
 get_funf:
-        cmp eax, byte 0x46
+        cmp eax, 0x46
         mov ecx, unf46
         je L110
-        cmp eax, byte 0x49
+        cmp eax, 0x49
         mov ecx, unf49
         je L110
 L120:
@@ -77,66 +75,67 @@ L110:
 none:
         ret
 
-%define M_NRV2B_LE32    2
-%define M_NRV2D_LE32    5
-%define M_NRV2E_LE32    8
-%define M_CL1B_LE32     11
-%define M_LZMA          14
+#define M_NRV2B_LE32    2
+#define M_NRV2D_LE32    5
+#define M_NRV2E_LE32    8
+#define M_CL1B_LE32     11
+#define M_LZMA          14
 
 L200:
-        call L300  ; push address of get_fexp
+        call L300  // push address of get_fexp
 get_fexp:
-        cmp eax, byte M_NRV2B_LE32
+        cmp eax, M_NRV2B_LE32
         mov ecx, nrv2b
         je L110
-        cmp eax, byte M_NRV2D_LE32
+        cmp eax, M_NRV2D_LE32
         mov ecx, nrv2d
         je L110
-        cmp eax, byte M_NRV2E_LE32
+        cmp eax, M_NRV2E_LE32
         mov ecx, nrv2e
         je L110
-        cmp eax, byte M_CL1B_LE32
+        cmp eax, M_CL1B_LE32
         mov ecx, cl1b
         je L110
-        jmpn L120
+        jmp L120
 
-; /*************************************************************************
-; // C callable decompressor
-; **************************************************************************/
-;__LXPTI040__
+/*************************************************************************
+// C callable decompressor
+**************************************************************************/
+section LXPTI040
 nrv2b:
-;__LXPTI041__
+section LXPTI041
 nrv2d:
-;__LXPTI042__
+section LXPTI042
 nrv2e:
-;__LXPTI043__
+section LXPTI043
 cl1b:
 
-%define         INP     dword [esp+8*4+1*4]
-%define         INS     dword [esp+8*4+2*4]
-%define         OUTP    dword [esp+8*4+3*4]
-%define         OUTS    dword [esp+8*4+4*4]
+#define         INP     dword [esp+8*4+1*4]
+#define         INS     dword [esp+8*4+2*4]
+#define         OUTP    dword [esp+8*4+3*4]
+#define         OUTS    dword [esp+8*4+4*4]
 
-;__LXPTI050__
+section LXPTI050
                 pusha
-                ; cld
-                or      ebp, byte -1
+                // cld
+                or      ebp, -1
                 mov     esi, INP
                 mov     edi, OUTP
-;;;             align   8
+//              align   8
 
-%include      "arch/i386/nrv2b_d32.ash"
-%include      "arch/i386/nrv2d_d32.ash"
-%include      "arch/i386/nrv2e_d32.ash"
-%include      "arch/i386/cl1_d32.ash"
-%include      "arch/i386/lzma_d.ash"
-;__LXPTI090__
-                jmpn exp_done
-;__LXPTI091__
-                ; eax is 0 from decompressor code
-                ;xor     eax, eax               ; return code
+#include      "arch/i386/nrv2b_d32_2.ash"
+#include      "arch/i386/nrv2d_d32_2.ash"
+#include      "arch/i386/nrv2e_d32_2.ash"
+#include      "arch/i386/cl1_d32_2.ash"
+#define db .byte
+#include      "arch/i386/lzma_d_2.ash"
+section LXPTI090
+                jmp exp_done
+section LXPTI091
+                // eax is 0 from decompressor code
+                //xor     eax, eax               ; return code
 exp_done:
-; check compressed size
+// check compressed size
                 mov     edx, INP
                 add     edx, INS
                 cmp     esi, edx
@@ -144,7 +143,7 @@ exp_done:
                 dec     eax
 .ok:
 
-; write back the uncompressed size
+// write back the uncompressed size
                 sub     edi, OUTP
                 mov     edx, OUTS
                 mov     [edx], edi
@@ -153,18 +152,17 @@ exp_done:
                 popa
                 ret
 
-%include      "arch/i386/macros.ash"
                 cjt32 0
                 ctojr32
 
-;__LXPTI140__
+section LXPTI140
 unf46:
-;__LXPTI141__
+section LXPTI141
 unf49:
 
-%define         CTO8    dword [esp+8*4+3*4]
+#define         CTO8    dword ptr [esp+8*4+3*4]
 
-;__LXPTI150__
+section LXPTI150
                 pusha
                 mov edi,INP
                 mov ecx,INS
@@ -172,18 +170,14 @@ unf49:
 
                 ckt32   edi, dl
 
-;__LXPTI160__
+section LXPTI160
                 popa
                 ret
 
-;__LXPTI200__
+section LXPTI200
 L300:
 
 eof:
-;       __XTHEENDX__
-        section .data
-        dd      -1
-        dw      eof
 
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap
 

@@ -63,10 +63,11 @@ section         LZMA_INIT_STACK
 ; =============
 */
 
-//include      "arch/i386/nrv2b_d32.ash"
-//#include      "arch/i386/nrv2d_d32.ash"
-#include      "arch/i386/nrv2e_d32_2.ash"
-//#include      "arch/i386/lzma_d.ash"
+#include "arch/i386/nrv2b_d32_2.ash"
+#include "arch/i386/nrv2d_d32_2.ash"
+#include "arch/i386/nrv2e_d32_2.ash"
+#define db .byte
+#include "arch/i386/lzma_d_2.ash"
 
 section LZMA_DONE_STACK
                 mov     ss, [eax]               // eax is always 0 here

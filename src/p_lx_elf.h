@@ -51,8 +51,8 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &) = 0;  // generate executable header
     virtual void pack2(OutputFile *, Filter &) = 0;  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
-    virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
+    virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
     virtual Linker* newLinker() const;
     virtual void generateElfHdr(
@@ -60,7 +60,8 @@ protected:
         void const *proto,
         unsigned const brka
     ) = 0;
-    virtual void addStubEntrySections(upx_byte const *, unsigned);
+    virtual void addLinkerSymbols(Filter const *);
+    virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo) = 0;
 
 protected:
@@ -69,6 +70,7 @@ protected:
 
     unsigned sz_phdrs;  // sizeof Phdr[]
     unsigned sz_elf_hdrs;  // all Elf headers
+    unsigned sz_pack2;  // after pack2(), before loader
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -176,7 +178,7 @@ protected:
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
 
@@ -284,10 +286,12 @@ public:
     virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack3(OutputFile *, Filter &);  // append loader
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 /*************************************************************************
@@ -307,7 +311,9 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 /*************************************************************************
@@ -330,14 +336,9 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
     virtual int buildLoader(const Filter *);
+    virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
-    virtual int buildLinuxLoader(
-        upx_byte const *const proto,  // assembly-only sections
-        unsigned const szproto,
-        upx_byte const *const fold,  // linked assembly + C section
-        unsigned const szfold,
-        Filter const *ft
-    );
+    virtual void addLinkerSymbols(Filter const *);
 };
 
 class PackBSDElf32x86 : public PackLinuxElf32x86
@@ -378,8 +379,8 @@ public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
 
-    virtual int buildLoader(const Filter *ft);
 protected:
+    virtual int buildLoader(const Filter *ft);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,

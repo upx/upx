@@ -1,3 +1,4 @@
+/*
 ;  l_lx_sh86.asm -- Linux program entry point & decompressor (shell script)
 ;
 ;  This file is part of the UPX executable compressor.
@@ -28,21 +29,21 @@
 ;  John F. Reiser
 ;  <jreiser@users.sourceforge.net>
 ;
+*/
+#include "arch/i386/macros2.ash"
 
 
-                BITS    32
-                SECTION .text
-                CPU     386
+//              CPU     386
 
-; /*************************************************************************
-; // program entry point
-; // see glibc/sysdeps/i386/elf/start.S
-; **************************************************************************/
+/*************************************************************************
+// program entry point
+// see glibc/sysdeps/i386/elf/start.S
+**************************************************************************/
 
-GLOBAL _start
-;__LEXEC000__
-_start:
-;;;;    int3
+section LEXEC000
+_start: .globl _start
+////    int3
+/*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
 ;; Invoke gdb, and give a 'run' command.  Define a single-step macro such as
@@ -59,42 +60,43 @@ _start:
 ;;      end
 ;; Step through the code; remember that <Enter> repeats the previous command.
 ;;
+*/
 
-        call main  ; push address of decompress subroutine
+        call main  // push address of decompress subroutine
 decompress:
 
-; /*************************************************************************
-; // C callable decompressor
-; **************************************************************************/
+/*************************************************************************
+// C callable decompressor
+**************************************************************************/
 
-%define         INP     dword [esp+8*4+4]
-%define         INS     dword [esp+8*4+8]
-%define         OUTP    dword [esp+8*4+12]
-%define         OUTS    dword [esp+8*4+16]
+#define         INP     dword [esp+8*4+4]
+#define         INS     dword [esp+8*4+8]
+#define         OUTP    dword [esp+8*4+12]
+#define         OUTS    dword [esp+8*4+16]
 
-;__LEXEC010__
+section LEXEC010
                 pusha
                 ; cld
 
                 mov     esi, INP
                 mov     edi, OUTP
 
-                or      ebp, byte -1
-;;;             align   8
+                or      ebp, -1
+//              .balign   8
 
-%include      "arch/i386/nrv2b_d32.ash"
-%include      "arch/i386/nrv2d_d32.ash"
-%include      "arch/i386/nrv2e_d32.ash"
-%include      "arch/i386/cl1_d32.ash"
-%include      "arch/i386/lzma_d.ash"
-%include      "arch/i386/macros.ash"
+#include      "arch/i386/nrv2b_d32_2.ash"
+#include      "arch/i386/nrv2d_d32_2.ash"
+#include      "arch/i386/nrv2e_d32_2.ash"
+#include      "arch/i386/cl1_d32_2.ash"
+#define db .byte
+#include      "arch/i386/lzma_d_2.ash"
                 cjt32 0
 
-;__LEXEC015__
-                ; eax is 0 from decompressor code
-                ;xor     eax, eax               ; return code
+section LEXEC015
+                // eax is 0 from decompressor code
+                //xor     eax, eax               ; return code
 
-; check compressed size
+// check compressed size
                 mov     edx, INP
                 add     edx, INS
                 cmp     esi, edx
@@ -102,65 +104,61 @@ decompress:
                 dec     eax
 .ok:
 
-; write back the uncompressed size
+// write back the uncompressed size
                 sub     edi, OUTP
                 mov     edx, OUTS
                 mov     [edx], edi
 
                 mov [7*4 + esp], eax
-;__LEXEC017__
+section LEXEC017
                 popa
                 ret
 
-;__LEXEC020__
+section LEXEC020
 
-%define PAGE_SIZE ( 1<<12)
+#define PAGE_SIZE ( 1<<12)
 
-%define MAP_FIXED     0x10
-%define MAP_PRIVATE   0x02
-%define MAP_ANONYMOUS 0x20
-%define PROT_READ      1
-%define PROT_WRITE     2
-%define PROT_EXEC      4
-%define __NR_mmap     90
+#define MAP_FIXED     0x10
+#define MAP_PRIVATE   0x02
+#define MAP_ANONYMOUS 0x20
+#define PROT_READ      1
+#define PROT_WRITE     2
+#define PROT_EXEC      4
+#define __NR_mmap     90
 
-%define szElf32_Ehdr 0x34
-%define szElf32_Phdr 8*4
-%define e_entry  (16 + 2*2 + 4)
-%define p_memsz  5*4
-%define szl_info 12
-%define szp_info 12
-%define p_filesize 4
+#define szElf32_Ehdr 0x34
+#define szElf32_Phdr 8*4
+#define e_entry  (16 + 2*2 + 4)
+#define p_memsz  5*4
+#define szl_info 12
+#define szp_info 12
+#define p_filesize 4
 
-; Decompress the rest of this loader, and jump to it
+// Decompress the rest of this loader, and jump to it
 main:
-        pop ebp  ; &decompress
-        mov eax,0x1400000  ; &Elf32_Ehdr of this stub
-        lea edx,[0x80 + szp_info + eax]  ; &cprScript
-        add eax,[p_memsz + szElf32_Ehdr + eax]  ; after .text
+        pop ebp  // &decompress
+        mov eax,0x1400000  // &Elf32_Ehdr of this stub
+        lea edx,[0x80 + szp_info + eax]  // &cprScript
+        add eax,[p_memsz + szElf32_Ehdr + eax]  // after .text
         add eax,PAGE_SIZE -1
-        and eax, -PAGE_SIZE  ; round up to next page
+        and eax, 0-PAGE_SIZE  // round up to next page
 
-        push byte 0
-        push byte -1
-        push byte MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push byte PROT_READ | PROT_WRITE
-        push dword [edx]  ; sz_unc  length
-        push eax  ; address
+        push 0
+        push -1
+        push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
+        push PROT_READ | PROT_WRITE
+        push dword ptr [edx]  // sz_unc  length
+        push eax  // address
         mov ebx,esp
-        push byte __NR_mmap
+        push __NR_mmap
         pop eax
         int 0x80
-        add esp, byte 6*4  ; remove arguments
+        add esp, 6*4  // remove arguments
 
-        lea ebx,[3+ eax]  ; space for "-c"
-; fall into fold [not compressed!]
+        lea ebx,[3+ eax]  // space for "-c"
+// fall into fold [not compressed!]
 
 eof:
-;       __XTHEENDX__
-        section .data
-        dd      -1
-        dw      eof
 
-; vi:ts=8:et:nowrap
+// vi:ts=8:et:nowrap
 

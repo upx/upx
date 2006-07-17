@@ -24,7 +24,7 @@
    <jreiser@users.sourceforge.net>
 */
 
-#include "regs.h"
+#include "ppc_regs.h"
 
 ppcbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #define W_CTO 4  /* must match filteri/ppcbxx.h */

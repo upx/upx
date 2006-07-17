@@ -280,7 +280,7 @@ PackLinuxI386::buildLinuxLoader(
   }
     // This adds the definition to the "library", to be used later.
     // NOTE: the stub is NOT compressed!  The savings is not worth it.
-    linker->addSection("FOLDEXEC", fold + fold_hdrlen, szfold - fold_hdrlen);
+    linker->addSection("FOLDEXEC", fold + fold_hdrlen, szfold - fold_hdrlen, 0);
 
     n_mru = ft->n_mru;
 

@@ -49,7 +49,7 @@ public:
     virtual void init(const void *pdata, int plen, int pinfo) = 0;
     virtual void setLoaderAlignOffset(int phase) = 0;
     virtual int addSection(const char *sname) = 0;
-    virtual void addSection(const char *sname, const void *sdata, int slen) = 0;
+    virtual void addSection(const char *sname, const void *sdata, int slen, int align) = 0;
     virtual void freeze() = 0;
     virtual int getSection(const char *sname, int *slen=NULL) = 0;
     virtual unsigned char *getLoader(int *llen=NULL) = 0;
@@ -83,7 +83,7 @@ public:
     virtual void init(const void *pdata, int plen, int pinfo);
     virtual void setLoaderAlignOffset(int phase);
     virtual int addSection(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
     virtual void freeze();
     virtual int getSection(const char *sname, int *slen=NULL);
     virtual unsigned char *getLoader(int *llen=NULL);
@@ -130,7 +130,7 @@ public:
     virtual void init(const void *pdata, int plen, int pinfo);
     virtual void setLoaderAlignOffset(int phase);
     virtual int addSection(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
     virtual void freeze();
     virtual int getSection(const char *sname, int *slen=NULL);
     virtual unsigned char *getLoader(int *llen=NULL);
@@ -199,7 +199,7 @@ protected:
     virtual void init(const void *pdata, int plen, int);
     virtual void setLoaderAlignOffset(int phase);
     virtual int addSection(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen);
+    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
     virtual void freeze();
     virtual int getSection(const char *sname, int *slen=NULL);
     virtual upx_byte *getLoader(int *llen=NULL);
@@ -225,9 +225,10 @@ struct ElfLinker::Section : private nocopy
     upx_byte *output;
     unsigned size;
     unsigned offset;
+    unsigned char align;  // log2
     Section *next;
 
-    Section(const char *n, const void *i, unsigned s);
+    Section(const char *n, const void *i, unsigned s, unsigned a=0);
     ~Section();
 };
 
