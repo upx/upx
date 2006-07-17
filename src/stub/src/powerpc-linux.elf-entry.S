@@ -54,15 +54,13 @@ __NR_exit  = 1
 __NR_mmap  = 90
 
   section ELFMAINX
-        .balign 4
 _start: .globl _start
         call main  // must be exactly 1 instruction; link_register= &decompress
 
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, size_t &ldst, uint method)
 
-  section NRV_COMMON
-        .balign 4
+  section NRV_HEAD
 SZ_DLINE=128  # size of data cache line in Apple G5
 
 /* PowerPC has no 'cmplis': compare logical [unsigned] immediate shifted [by 16] */
@@ -80,17 +78,14 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #define disp a7
 
   section NRV2E
-        .balign 4
 #include "arch/powerpc/32/nrv2e_d.S"
 
   section NRV2B
-        .balign 4
 #include "arch/powerpc/32/nrv2b_d.S"
 
 #include "arch/powerpc/32/lzma_d.S"
 
-  section ELFMAINY
-        .balign 4
+  section NRV_TAIL
 eof_nrv:
 #define tmp r0  /* hibit is dead */
         lwz tmp,0(ldst)  // original dst
@@ -103,6 +98,7 @@ eof_nrv:
         stw dst,0(ldst)
         ret
 
+  section ELFMAINY
 msg_SELinux:
         call L72
 L70:
@@ -111,7 +107,6 @@ L71:
         // IDENTSTR goes here
 
   section ELFMAINZ
-        .balign 4
 L72:
         li   a2,L71 - L70  // length
         mflr a1    // message text
