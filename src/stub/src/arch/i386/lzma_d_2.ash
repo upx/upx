@@ -72,7 +72,7 @@ section LZMA_DEC00
         push    eax                     // dummy for call
 
         // hardwired LzmaDecodeProperties()
-        mov     dword ptr [ebx], offset UPXd       // lc, lp, pb, dummy
+        movw    [ebx], offset UPXd       // lc, lp, pb, dummy
 
 
 section LZMA_ELF00
@@ -107,7 +107,7 @@ section LZMA_ELF00
         push    ebx                     // &outSizeProcessed
         add     ebx, 4
         mov     ecx,[O_OUTS + ebp]      // &outSize
-        push    dword [ecx]             // outSize
+        push    [ecx]                   // outSize
         push    edi                     // out
         push    ebx                     // &inSizeProcessed
         add     ebx, 4
