@@ -230,6 +230,7 @@ protected:
     virtual const char *getDecompressorSections() const;
     virtual unsigned getDecompressorWrkmemSize() const;
     virtual void patchDecompressor(void *, int);
+    virtual void defineDecompressorSymbols();
 
     // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;

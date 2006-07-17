@@ -28,6 +28,7 @@
 
 #include "conf.h"
 #include "packer.h"
+#include "linker.h"
 //#include "filter.h"
 
 
@@ -261,6 +262,35 @@ void Packer::patchDecompressor(void *loader, int lsize)
         patch_le32(loader, lsize, "UPXb", ph.u_len);
         unsigned stack = getDecompressorWrkmemSize();
         patch_le32(loader, lsize, "UPXa", 0u - stack);
+    }
+}
+
+void Packer::defineDecompressorSymbols()
+{
+    if (UPX_F_LINUX_ELF_i386   ==ph.format
+    ||  UPX_F_LINUX_ELFI_i386  ==ph.format
+    ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
+    ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
+    ||  UPX_F_LINUX_ELFPPC32   ==ph.format
+    ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
+        // ELF calls the decompressor many times; the parameters change!
+        return;
+    }
+    if (ph.method == M_LZMA)
+    {
+        const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
+        // FIXME - this is for i386 only
+        unsigned properties = // lc, lp, pb, dummy
+            (res->lit_context_bits << 0) |
+            (res->lit_pos_bits << 8) |
+            (res->pos_bits << 16);
+
+        linker->defineSymbol("UPXd", properties);
+        // -2 for properties
+        linker->defineSymbol("UPXc", ph.c_len - 2);
+        linker->defineSymbol("UPXb", ph.u_len);
+        unsigned stack = getDecompressorWrkmemSize();
+        linker->defineSymbol("UPXa", 0u - stack);
     }
 }
 
