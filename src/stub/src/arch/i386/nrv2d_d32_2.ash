@@ -58,53 +58,51 @@
 #define getbit  getbit_n2d
 
 
-section N2DSMA10
+section         N2DSMA10
                 jmps    dcl1_n2d
 decompr_literals_n2d:
                 movsb
-section N2DFAS10
+section         N2DFAS10
                 jmps    dcl1_n2d
-                .balign   8
-section N2DFAS11
+section         N2DFAS11
 decompr_literalb_n2d:
                 mov     al, [esi]
                 inc     esi
                 mov     [edi], al
                 inc     edi
-section N2DDEC10
 
-
+section         N2DDEC10
 decompr_loop_n2d:
                 add     ebx, ebx
                 jnz     dcl2_n2d
 dcl1_n2d:
                 getbit  32
 dcl2_n2d:
-section N2DSMA20
-                jc      decompr_literals_n2d
+section         N2DSMA20
+                jcs     decompr_literals_n2d
                 xor     eax, eax
                 inc     eax
-section N2DFAS20
+section         N2DFAS20
     #ifndef UPX102
         mov al, [edi]  // force data cache allocate (PentiumPlain or MMX)
     #endif
-                jc      decompr_literalb_n2d
+                jcs     decompr_literalb_n2d
                 mov     eax, 1
-section N2DDEC20
+section         N2DDEC20
 loop1_n2d:
                 getbit  1
                 adc     eax, eax
-section N2DSMA30
+section         N2DSMA30
                 getbit  1
-                jc      loopend1_n2d
-section N2DFAS30
+                jcs     loopend1_n2d
+section         N2DFAS30
                 add     ebx, ebx
                 jnc     loopcontinue1_n2d
-                jnz     loopend1_n2d
+                jnzs    loopend1_n2d
                 getbit  32
-                jc      loopend1_n2d
+                jcs     loopend1_n2d
 loopcontinue1_n2d:
-section N2DDEC30
+section         N2DDEC30
                 dec     eax
                 getbit  1
                 adc     eax, eax
@@ -117,7 +115,7 @@ loopend1_n2d:
                 mov     al, [esi]
                 inc     esi
                 xor     eax, -1
-                jz      decompr_end_n2d
+                jzs     decompr_end_n2d
                 sar     eax, 1                  // shift low-bit into carry
                 mov     ebp, eax
                 jmps    decompr_ebpeax_n2d
@@ -127,32 +125,31 @@ decompr_ebpeax_n2d:
                 adc     ecx, ecx
                 getbit  1
                 adc     ecx, ecx
-                jnz     decompr_got_mlen_n2d
+                jnzs    decompr_got_mlen_n2d
                 inc     ecx
 loop2_n2d:
                 getbit  1
                 adc     ecx, ecx
-section N2DSMA40
+section         N2DSMA40
                 getbit  1
-                jnc     loop2_n2d
-section N2DFAS40
+                jncs    loop2_n2d
+section         N2DFAS40
                 add     ebx, ebx
-                jnc     loop2_n2d
+                jncs    loop2_n2d
                 jnz     loopend2_n2d
                 getbit  32
-                jnc     loop2_n2d
+                jncs    loop2_n2d
 loopend2_n2d:
-section N2DDUMM1
-section N2DSMA50
+section         N2DSMA50
                 inc     ecx
                 inc     ecx
-section N2DFAS50
+section         N2DFAS50
                 add     ecx, 2
-section N2DDEC50
+section         N2DDEC50
 decompr_got_mlen_n2d:
                 cmp     ebp, -0x500
                 adc     ecx, 1
-section N2DSMA60
+section         N2DSMA60
     #ifndef UPX102
                 push    esi
     #else
@@ -166,14 +163,14 @@ section N2DSMA60
     #else
                 mov     esi, edx
     #endif
-                jmp    decompr_loop_n2d
-section N2DFAS60
+                jmp     decompr_loop_n2d
+section         N2DFAS60
                 lea     edx, [edi+ebp]
                 cmp     ebp, -4
     #ifndef UPX102
         mov al, [edi+ecx]  // force data cache allocate (PentiumPlain or MMX)
     #endif
-                jbe     decompr_copy4_n2d
+                jbes    decompr_copy4_n2d
 loop3_n2d:
                 mov     al, [edx]
                 inc     edx
@@ -181,9 +178,8 @@ loop3_n2d:
                 inc     edi
                 dec     ecx
                 jnz     loop3_n2d
-                jmp    decompr_loop_n2d
-section N2DFAS61
-                .balign   4
+                jmp     decompr_loop_n2d
+section         N2DFAS61
 decompr_copy4_n2d:
                 mov     eax, [edx]
                 add     edx, 4
@@ -192,10 +188,9 @@ decompr_copy4_n2d:
                 sub     ecx, 4
                 ja      decompr_copy4_n2d
                 add     edi, ecx
-                jmp    decompr_loop_n2d
-section N2DDEC60
+                jmp     decompr_loop_n2d
+section         N2DDEC60
 decompr_end_n2d:
-section NRV2DEND
 
 // vi:ts=8:et
 
