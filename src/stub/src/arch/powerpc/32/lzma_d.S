@@ -1,5 +1,5 @@
 /*
-;  lzma_d.S -- 64-bit PowerPC assembly
+;  lzma_d.S -- 32-bit PowerPC assembly
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -40,14 +40,9 @@
 #define ldst a3  /* Out: actually a reference: &len_dst */
 #define meth a4
 
-// ELFMAINX has already done this for us:
-//      pushq %rbp; push %rbx  // C callable
-//      pushq ldst
-//      pushq dst
-//      addq src,lsrc; push lsrc  // &input_eof
+////  teq r0,r0  // debugging
 
 #define M_LZMA          14
-    teq r0,r0  // debugging
         cmpli cr0,meth,M_LZMA
         bne   cr0,not_lzma
         mflr r0
@@ -57,6 +52,7 @@
 //      a1= inp,  a2= inSize,  a3= &inSizeProcessed,
 //      a4= outp, a5= outSize, a6= &outSizeProcessed
 //)
+        mr    a6,ldst  // &outSizeProcessed
         lwz   a5,0(ldst)  // outSize
         mr    a4,dst  // outp
 
@@ -74,14 +70,15 @@
 
         li   a0,-2*LZMA_LIT_SIZE
         slw  a0,a0,t1  // -2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
-        addi a0,a0,-2*4 -(2*szSizeT +4) - 2*LZMA_BASE_SIZE
-// alloca{sp,ra, inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState}
+        addi a0,a0,-2*4 -(szSizeT +4) - 2*LZMA_BASE_SIZE
+// alloca{sp,ra, inSizeProcessed,*_bits, CLzmaDecoderState}
         mr a3,sp
         add sp,sp,a0
         rlwinm sp,sp,0,0,32-6  // (1<<6) byte align
 
-        mr a0,a3  // old sp
         li r0,0
+        mr a0,a3  // old sp
+        stw r0,0(a6)  // outSizeProcessed= 0;
 1:
         stwu r0,-4(a0)  // clear CLZmaDecoderState on stack
         cmpl cr0,sp,a0  // compare logical ==> compare unsigned
@@ -89,9 +86,8 @@
         stw a3,0(sp)  // frame chain
 
         lbz r0,-1(a1)  // second byte, replaces LzmaDecodeProperties()
-        la a6,2*4          (sp)  // &outSizeProcessed
-        la a3,2*4+1*szSizeT(sp)  // &inSizeProcessed
-        la a0,2*4+2*szSizeT(sp)  // &CLzmaDecoderState
+        la a3,2*4        (sp)  // &inSizeProcessed
+        la a0,2*4+szSizeT(sp)  // &CLzmaDecoderState
         rlwinm t1,r0,32-4,4,31  // t1= (r0>>4)==lit_pos_bits
         rlwinm r0,r0,0,32-4,31  // r0= (0xf& r0)==lit_context_bits
         stb t0,2(a0)  // pos_bits
@@ -108,6 +104,8 @@
         lwz sp,0(sp)  // old sp
         lwz r0,4(sp)  // ret.addr
         mtlr r0
+        blr
+
 not_lzma:
 
 // vi:ts=8:et

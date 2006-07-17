@@ -823,12 +823,12 @@ PackLinuxElf32ppc::addStubEntrySections(Filter const *)
     addLoader("ELFMAINX", NULL);
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
-        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
-        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
-        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
         : NULL), NULL);
-    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
+    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
 }
 
 void
