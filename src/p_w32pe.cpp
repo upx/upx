@@ -2059,8 +2059,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     defineFilterSymbols(linker, &ft);
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
-    // FIXME    patchDecompressor(loader, codesize);
-
+    defineDecompressorSymbols();
 
     // in case of overlapping decompression, this hack is needed,
     // because windoze zeroes the word pointed by tlsindex before
