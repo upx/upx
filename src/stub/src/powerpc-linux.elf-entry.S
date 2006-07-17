@@ -138,8 +138,10 @@ unfold:
         sc; bso- msg_SELinux  // Branch if SummaryOverflow (failure)
 0:
         mtctr r31
+        lwz r0,sz_unc(r30)
         lbz meth,b_method(r30)
-        la ldst,31*4(sp)  // &do_not_care
+        la ldst,31*4(sp)  // &slot on stack
+        stw  r0,31*4(sp)  // lzma uses for EOF
         mr dst,a0
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)
@@ -147,6 +149,7 @@ unfold:
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
 main:
+////    teq r0,r0  // debugging
         stwu r1,-32*4(sp)  // allocate space (keeping 0 mod 16), save r1
         stmw r2,4(sp) // save registers r2 thru r31
         mflr r31  // &decompress

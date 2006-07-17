@@ -28,7 +28,7 @@
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>
 */
-#include "arch/powerpc/32/regs.h"
+#include "arch/powerpc/32/ppc_regs.h"
 
 sz_b_info= 12
   sz_unc= 0

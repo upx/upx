@@ -842,7 +842,7 @@ void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
         }
         // FIXME: displacment overflow?
         set_be32(location, (0xfc000003 & get_be32(location)) +
-            (0x03fffffc & (rel->add + value)));
+            (0x03fffffc & value));
     }
     else if (strcmp(type, "14") == 0) {
         if (3& value) {
@@ -851,7 +851,7 @@ void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
         }
         // FIXME: displacment overflow?
         set_be32(location, (0xffff0003 & get_be32(location)) +
-            (0x0000fffc & (rel->add + value)));
+            (0x0000fffc & value));
     }
     else
         super::relocate1(rel, location, value, type);

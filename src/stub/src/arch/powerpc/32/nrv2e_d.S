@@ -30,11 +30,11 @@
 */
 
 #define M_NRV2E_LE32    8
-	rlwinm r0,meth,8,25,31  // .b_method (hi byte of meth)
-	cmpli cr0,r0,M_NRV2E_LE32
-	bne   cr0,not_nrv2e
+        dcbtst 0,dst  // prime dcache for store
+        mflr t3  // return address
 
-        dcbtst 0,dst  # prime dcache for store
+	cmpli cr0,meth,M_NRV2E_LE32
+	bne   cr0,not_nrv2e
 
         stw dst,0(ldst)  # original dst
         add lsrc,lsrc,src  # input eof
@@ -44,8 +44,6 @@
         addi src,src,-1  # prepare for 'lbzu'
         addi dst,dst,-1  # prepare for 'stbu'
         li disp,-1  # initial displacement
-
-        mflr t3  # return address
         b bot_n2e
 
 #undef  jnextb0y
