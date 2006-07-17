@@ -287,7 +287,6 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     //virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
     virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
@@ -309,7 +308,6 @@ public:
     virtual const int *getFilters() const;
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual int buildLoader(const Filter *);
     virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;

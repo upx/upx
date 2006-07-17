@@ -1,4 +1,4 @@
-/* amd_d_nrv2b.S -- AMD64 decompressor for NRV2B
+/* nrv2d_d.S -- AMD64 decompressor for NRV2D
 
    This file is part of the UPX executable compressor.
 
@@ -29,41 +29,49 @@
    <jreiser@users.sourceforge.net>
 */
 
-        cmpb $ M_NRV2B_LE32,methb; je top_n2b; jmp not_n2b
+        cmpb $ M_NRV2D_LE32,methb; je top_n2d; jmp not_n2d
 
-lit_n2b:
+lit_n2d:
         incq %rsi; movb %dl,(%rdi)
         incq %rdi
-top_n2b:
-        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
-        jnextb1yp lit_n2b
-        lea 1(lenq),off  # [len= 0] off= 1
-offmore_n2b:
-        getnextbp(off)
-        jnextb0np offmore_n2b
+top_n2d:
+        movb (%rsi),%dl  // speculate: literal, or bottom 8 bits of offset
+        jnextb1yp lit_n2d
+        lea 1(lenq),off  // [len= 0] off= 1
+        jmp getoff_n2d
 
-        subl $ 3,off; jc len_n2b  # use previous offset
+off_n2d:
+        dec off
+        getnextbp(off)
+getoff_n2d:
+        getnextbp(off)
+        jnextb0np off_n2d
+
+        subl $ 3,off; jc offprev_n2d
         shll $ 8,off; movzbl %dl,%edx
         orl %edx,off; incq %rsi
         xorl $~0,off; jz eof
-        movslq off,disp  # XXX: 2GB
-len_n2b:
-        lea 1(lenq),off  # [len= 0] off= 1
-        getnextb(len); getnextb(len)  # two bits; cc set on result
-        jnz gotlen_n2b  # raw 1,2,3 ==> 2,3,4
-        movl off,len  # len= 1, the msb
-        addl $3-1,off  # raw 2.. ==> 5..
-lenmore_n2b:
+        sarl     off  // Carry= original low bit
+        movslq   off,disp  // XXX: 2GB
+        jmp len_n2d-2  // CHEAT: assume tail of getnextb is "adcl len,len"
+offprev_n2d:
         getnextb(len)
-        jnextb0n lenmore_n2b
-gotlen_n2b:
-        cmpq $-0xd00,disp
-        adcl off,len  # len += off + (disp < -0xd00)
+len_n2d:
+        getnextb(len); jne gotlen_n2d
+        inc len  // len= 1
+lenmore_n2d:
+        getnextb(len)
+        jnextb0n lenmore_n2d
+        addl $2,len
+gotlen_n2d:
+        cmpq $-0x500,disp
+        adcl $1,len  // len += 1+ (disp < -0x500);
         call copy
-bot_n2b:  # In: 0==len
-        jmp top_n2b
+bot_n2d:  // In: 0==len
+        jmp top_n2d
 
-not_n2b:
+not_n2d:
+
 /*
 vi:ts=8:et:nowrap
 */

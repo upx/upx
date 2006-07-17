@@ -1,4 +1,4 @@
-/* amd_d_nrv2e.S -- AMD64 decompressor for NRV2E
+/* nrv2e_d.S -- AMD64 decompressor for NRV2E
 
    This file is part of the UPX executable compressor.
 
@@ -30,7 +30,7 @@
 */
 
         cmpb $ M_NRV2E_LE32,methb; je top_n2e; jmp not_n2e
-        .p2align 3
+
 lit_n2e:
         incq %rsi; movb %dl,(%rdi)
         incq %rdi

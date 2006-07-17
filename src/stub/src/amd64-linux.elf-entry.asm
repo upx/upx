@@ -62,6 +62,7 @@ PAGE_MASK= (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
 M_NRV2B_LE32=2  // ../conf.h
+M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
 
@@ -136,7 +137,7 @@ ra_setup:
 #define getnextbp(reg) call *%r11; adcl reg,reg
 #define getnextb(reg)  getnextbp(reg)
 
-        .p2align 3
+
 getbit:
         addl bits,bits; jz refill  // Carry= next bit
         rep; ret
@@ -168,6 +169,9 @@ setup:
 
   section NRV2E
 #include "arch/amd64/nrv2e_d.S"
+
+  section NRV2D
+#include "arch/amd64/nrv2d_d.S"
 
   section NRV2B
 #include "arch/amd64/nrv2b_d.S"
