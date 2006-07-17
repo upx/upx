@@ -787,7 +787,16 @@ void ElfLinkerX86::relocate1(Relocation *rel, upx_byte *location,
     }
 
     if (strcmp(type, "8") == 0)
+    {
+        int displ = (char) *location + (int) value;
+        if (displ < -127 || displ > 128)
+        {
+            printf("target out of range (%d) in reloc %s:%x\n",
+                   displ, rel->section->name, rel->offset);
+            abort();
+        }
         *location += value;
+    }
     else if (strcmp(type, "16") == 0)
         set_le16(location, get_le16(location) + value);
     else if (strcmp(type, "32") == 0)
@@ -810,7 +819,16 @@ void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
     }
 
     if (strcmp(type, "8") == 0)
+    {
+        int displ = (char) *location + (int) value;
+        if (displ < -127 || displ > 128)
+        {
+            printf("target out of range (%d) in reloc %s:%x\n",
+                   displ, rel->section->name, rel->offset);
+            abort();
+        }
         *location += value;
+    }
     else if (strcmp(type, "16") == 0)
         set_le16(location, get_le16(location) + value);
     else if (strcmp(type, "32") == 0)
