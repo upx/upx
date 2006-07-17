@@ -80,6 +80,9 @@ SZ_DLINE=128  # size of data cache line in Apple G5
   section NRV2E
 #include "arch/powerpc/32/nrv2e_d.S"
 
+  section NRV2D
+#include "arch/powerpc/32/nrv2d_d.S"
+
   section NRV2B
 #include "arch/powerpc/32/nrv2b_d.S"
 

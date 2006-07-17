@@ -248,19 +248,7 @@ int const *
 PackLinuxElf32ppc::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_NRV2E_LE32, M_LZMA, -1 };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_NRV2B_LE32, M_LZMA, -1 };
-    static const int m_lzma[]  = { M_LZMA,-1 };
-
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
-    if (M_IS_NRV2E(method))
-        return m_nrv2e;
-    if (M_IS_LZMA(method))
-        return m_lzma;
-    if (1==level)
-        return m_nrv2b;
-    return m_nrv2e;
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 int const *
