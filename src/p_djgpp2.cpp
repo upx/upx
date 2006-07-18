@@ -346,7 +346,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     linker->defineSymbol("original_entry", coff_hdr.a_entry);
     linker->defineSymbol("length_of_bss", ph.overlap_overhead / 4);
-    //patchDecompressor(loader, lsize); // FIXME
+    defineDecompressorSymbols();
     assert(bss->vaddr == ((size + 0x1ff) &~ 0x1ff) + (text->vaddr &~ 0x1ff));
     linker->defineSymbol("stack_for_lzma", bss->vaddr + bss->size);
     linker->defineSymbol("start_of_uncompressed", text->vaddr - hdrsize);

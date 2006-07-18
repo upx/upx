@@ -306,7 +306,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     const unsigned lsize = getLoaderSize();
 
     defineFilterSymbols(linker, &ft);
-    // FIXME patchDecompressor(loader, lsize);
+    defineDecompressorSymbols();
     linker->defineSymbol("src_for_decompressor", zimage_offset + lsize);
     linker->defineSymbol("original_entry", kernel_entry);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
@@ -418,7 +418,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     if (0x40==(0xf0 & ft.id)) {
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
-    // FIXME patchDecompressor(loader, lsize);
+    defineDecompressorSymbols();
     linker->defineSymbol("original_entry", kernel_entry);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
     linker->relocate();

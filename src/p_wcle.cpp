@@ -548,7 +548,7 @@ void PackWcle::pack(OutputFile *fo)
     linker->defineSymbol("start_of_relocs", mps*pages);
     defineFilterSymbols(linker, &ft);
     linker->defineSymbol("filter_buffer_start", text_vaddr);
-    // FIXME patchDecompressor(loader, lsize);
+    defineDecompressorSymbols();
 
     unsigned jpos = (((ph.c_len + 3) &~ 3) + d_len + 3) / 4;
     linker->defineSymbol("words_to_copy", jpos);

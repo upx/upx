@@ -253,9 +253,8 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     if (0x40==(0xf0 & ft.id)) {
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
+    defineDecompressorSymbols();
     linker->relocate();
-
-    // FIXME patchDecompressor(loader, lsize);
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);

@@ -261,7 +261,7 @@ void PackTmt::pack(OutputFile *fo)
     // patch loader
     linker->defineSymbol("original_entry", ih.entry);
     defineFilterSymbols(linker, &ft);
-    // FIXME patchDecompressor(loader, lsize);
+    defineDecompressorSymbols();
 
     linker->defineSymbol("bytes_to_copy", ph.c_len + d_len);
     linker->defineSymbol("copy_dest", ph.u_len + ph.overlap_overhead + d_len - 1);
