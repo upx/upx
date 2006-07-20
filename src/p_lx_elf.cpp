@@ -190,10 +190,18 @@ void
 PackLinuxElf::addStubEntrySections(Filter const *)
 {
     addLoader("ELFMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
 }
 
-void
-PackLinuxElf::addLinkerSymbols(Filter const *)
+
+void PackLinuxElf::addLinkerSymbols(Filter const *)
 {
     // empty
 }
@@ -224,40 +232,11 @@ Linker* PackLinuxElf64amd::newLinker() const
     return new ElfLinkerAMD64;
 }
 
-void PackLinuxElf64amd::addStubEntrySections(Filter const *)
-{
-    addLoader("ELFMAINX", NULL);
-   //addLoader(getDecompressorSections(), NULL);
-    addLoader(
-        ( M_IS_NRV2E(ph.method) ? "NRV_COMMON,NRV2E"
-        : M_IS_NRV2D(ph.method) ? "NRV_COMMON,NRV2D"
-        : M_IS_NRV2B(ph.method) ? "NRV_COMMON,NRV2B"
-        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
-    addLoader("ELFMAINY,IDENTSTR,ELFMAINZ,FOLDEXEC", NULL);
-}
-
 int const *
 PackLinuxElf::getCompressionMethods(int method, int level) const
 {
     // No real dependency on LE32.
     return Packer::getDefaultCompressionMethods_le32(method, level);
-}
-
-int const *
-PackLinuxElf32armLe::getCompressionMethods(int /*method*/, int /*level*/) const
-{
-    static const int m_nrv2e[] = { M_NRV2E_8, -1 };
-
-    return m_nrv2e;
-}
-
-int const *
-PackLinuxElf32armBe::getCompressionMethods(int /*method*/, int /*level*/) const
-{
-    static const int m_nrv2e[] = { M_NRV2E_8, -1 };
-
-    return m_nrv2e;
 }
 
 int const *
@@ -777,26 +756,6 @@ PackLinuxElf32ppc::buildLoader(const Filter *ft)
     return buildLinuxLoader(
         linux_elfppc32_loader, sizeof(linux_elfppc32_loader),
         linux_elfppc32_fold,   sizeof(linux_elfppc32_fold),  ft );
-}
-
-void
-PackLinuxElf32ppc::addStubEntrySections(Filter const *)
-{
-    addLoader("ELFMAINX", NULL);
-   //addLoader(getDecompressorSections(), NULL);
-    addLoader(
-        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
-        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
-        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
-        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
-        : NULL), NULL);
-    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
-}
-
-void
-PackLinuxElf32ppc::addLinkerSymbols(Filter const *)
-{
-    // empty
 }
 
 static const
@@ -1557,19 +1516,15 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
     }
 }
 
-void PackLinuxElf32::ARM_pack3(OutputFile *fo, Filter &ft, bool isBE)
+void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned const len0 = fo->getBytesWritten();
+    unsigned const len0 = sz_pack2;
     unsigned len = len0;
-    unsigned const zero = 0;
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += (3& -len);
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    upx_byte *const p = getLoader();
-    lsize = getLoaderSize();
+    lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
     unsigned const lo_va_user = 0x8000;  // XXX
     unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);
     unsigned adrc;
@@ -1602,49 +1557,26 @@ void PackLinuxElf32::ARM_pack3(OutputFile *fo, Filter &ft, bool isBE)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-    // Patch in order of descending address.
-    //
-    // Because Packer::patch_be32 is overloaded, it is impossible
-    // to choose the right one to initialize a pointer to function.
-    // Therefore, write either patch_be32 or patch_le32 literally.
-    //
-    // ::ARM_buildLoader() put the stub into native order.
-    // util.c::find() uses host order.
-    int const swap = (HostPolicy::isBE ^ isBE);
-    if (isBE) {
-        patch_be32(p,lsize, 4*swap + "ADRXXRDA", adrx); // compressed input for eXpansion
-        patch_be32(p,lsize, 4*swap + "LENXXNEL", len0 - hlen);
+   linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+   linker->defineSymbol("LENX", len0 - hlen);
 
-        patch_be32(p,lsize, 4*swap + "CNTCCTNC", cntc);  // count  for copy
-        patch_be32(p,lsize, 4*swap + "ADRCCRDA", adrc);  // addr for copy
+   linker->defineSymbol("CNTC", cntc);  // count  for copy
+   linker->defineSymbol("ADRC", adrc);  // addr for copy
 
-        patch_be32(p,lsize, 4*swap + "LENMMNEL", lenm);  // len  for map
-        patch_be32(p,lsize, 4*swap + "ADRMMRDA", adrm);  // addr for map
-    }
-    else {
-        patch_le32(p,lsize, 4*swap + "ADRXXRDA", adrx); // compressed input for eXpansion
-        patch_le32(p,lsize, 4*swap + "LENXXNEL", len0 - hlen);
-
-        patch_le32(p,lsize, 4*swap + "CNTCCTNC", cntc);  // count  for copy
-        patch_le32(p,lsize, 4*swap + "ADRCCRDA", adrc);  // addr for copy
-
-        patch_le32(p,lsize, 4*swap + "LENMMNEL", lenm);  // len  for map
-        patch_le32(p,lsize, 4*swap + "ADRMMRDA", adrm);  // addr for map
-    }
+   linker->defineSymbol("LENM", lenm);  // len  for map
+   linker->defineSymbol("ADRM", adrm);  // addr for map
 #undef PAGE_SIZE
 #undef PAGE_MASK
-
-    super::pack3(fo, ft);
 }
 
-void PackLinuxElf32armLe::pack3(OutputFile *fo, Filter &ft)
+void PackLinuxElf32armLe::addLinkerSymbols(Filter const *ft)
 {
-    ARM_pack3(fo, ft, false);
+    ARM_addLinkerSymbols(ft);
 }
 
-void PackLinuxElf32armBe::pack3(OutputFile *fo, Filter &ft)
+void PackLinuxElf32armBe::addLinkerSymbols(Filter const *ft)
 {
-    ARM_pack3(fo, ft, true);
+    ARM_addLinkerSymbols(ft);
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)

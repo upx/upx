@@ -92,7 +92,7 @@ lit_n2d:
 #undef tmp
 top_n2d:
         jnextb1y lit_n2d
-        li off,1
+        li off,1  // start ss12
         b getoff_n2d
 
 off_n2d:
@@ -115,11 +115,11 @@ offprev_n2d:
         getnextb(len)
 len_n2d:
         getnextb(len); bne gotlen_n2d  // need getnextb() to set Condition Register
-        addi len,len,1
+        li len,1  // begin ss11
 lenmore_n2d:
         getnextb(len)
         jnextb0n lenmore_n2d
-        addi len,len,2
+        addi len,len,2  // 2.. ==> 4..
 gotlen_n2d:
 
 #define tmp off

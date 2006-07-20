@@ -28,6 +28,7 @@
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>
 */
+#define section .section
 
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
@@ -48,14 +49,7 @@ MAP_ANONYMOUS= 0x20
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
-// magic for the UPX linker
-#define SECT(n)  .text 1; .asciz #n; .long n - _start; .text 0; n
-
-#define BL(t) \
-        .text 1; .long 0, bl##t - _start; .asciz #t; .long 0; \
-        .text 0;  .byte 0, 0, 0; bl##t: .byte 0xeb
-
-/*__ARMOS000__*/
+  section ELFMAINX
 _start: .globl _start
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
@@ -63,23 +57,23 @@ _start: .globl _start
    calculated by PackLinuxElf32arm::pack3(), and patched in at compress time.
 */
         adr r12,start_params
-        ldmia r12!,{r0,r1, r8,r10}  @ ADRM,LENM, ADRC,CNTC
-        stmdb  sp!,{r0,r1,r2}  @ ADRU,LENU,space for sz_unc
+        ldmia r12!,{r0,r1, r8,r10}  // ADRM,LENM, ADRC,CNTC
+        stmdb  sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        mvn r4,#0  @ -1; cater to *BSD for fd when MAP_ANON
-        swi 0x009000c0  @ mmap64
+        mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
+        swi 0x009000c0  // mmap64
         cmn r0,#4096
         bcs msg_SELinux
-        mov r9,r0  @ destination for copy
+        mov r9,r0  // destination for copy
 copy:
         ldmia r8!,{r0,r1,r2,r3,r4,r5,r6,r7}; subs r10,r10,#1
         stmia r9!,{r0,r1,r2,r3,r4,r5,r6,r7}; bne copy
 
-        mov lr,r9  @ dst for unfolded code
-        sub r11,r9,r8  @ relocation amount
-        ldmia r12!,{r9,r10}  @ LENX,ADRX
-        add r5,r12,r11  @ relocated f_decompress
+        mov lr,r9  // dst for unfolded code
+        sub r11,r9,r8  // relocation amount
+        ldmia r12!,{r1,r4,r9,r10}  // len_f,cpr0,LENX,ADRX
+        add r5,r12,r11  // relocated f_decompress
 
 /* linux/include/asm-arm/unistd.h */
 #define __NR_SYSCALL_BASE       0x900000
@@ -87,57 +81,61 @@ copy:
 #define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
 
         mov r0,r5
-        adr r1,end_decompress
-        sub r1,r1,r12  @ len(f_decompress)
-        add r1,r1,r0  @ relocated end_decompress
+        add r1,r1,r0  // relocated end_decompress
         mov r2,#0
-        swi __ARM_NR_cacheflush  @ relocated decompressor
+        swi __ARM_NR_cacheflush  // relocated decompressor
 
-        ldrb r4,b_method +cpr0
-        add r3,sp,#2*4  @ &sz_unc
-        mov r2,lr  @ dst
-        ldr r1,sz_cpr    +cpr0
-        adr r0,sz_b_info +cpr0
-        mov pc,r5  @ decompress folded code; go there (lr)
+        add  r0, r4,# sz_b_info
+        ldr  r1,[r4,# sz_cpr ]
+        mov  r2,lr  // dst
+        add  r3,sp,#2*4  // &sz_unc
+        ldrb r4,[r4,# b_method ]
+        mov pc,r5  // decompress folded code; go there (lr)
 
 start_params:
-        .ascii "ADRM"  @ dst  for map
-        .ascii "LENM"  @ len  for map
+        .long ADRM  // dst  for map
+        .long LENM  // len  for map
 
-        .ascii "ADRC"  @ src  for copy
-        .ascii "CNTC"  @ cnt  for copy: number of 32-byte blocks
+        .long ADRC  // src  for copy
+        .long CNTC  // cnt  for copy: number of 32-byte blocks
 
-        .ascii "LENX"  @ total size of compressed data
-        .ascii "ADRX"  @ &b_info of 1st compressed block (after moving)
+        .long len_f  // length of decompressor code
+        .long cpr0
+
+        .long LENX  // total size of compressed data
+        .long ADRX  // &b_info of 1st compressed block (after moving)
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
+
+  section NRV2E
 #include "arch/arm/v4a/nrv2e_d8.S"
+
+  section NRV2D
+#include "arch/arm/v4a/nrv2d_d8.S"
+
+#include "arch/arm/v4a/lzma_d.S"
+
+  section ELFMAINY
 end_decompress:
 
-        .subsection 2
 msg_SELinux:
-        mov r2,#L71 - L70  @ length
-        adr r1,L70  @ message text
-        mov r0,#2  @ fd stderr
-        swi 0x00900004  @ write
+        mov r2,#L71 - L70  // length
+        adr r1,L70  // message text
+        mov r0,#2  // fd stderr
+        swi 0x00900004  // write
 die:
         mov r0,#127
-        swi 0x00900001  @ exit
-        b die
-
-/* Temporary until we get the buildLoader stuff working ... */
-        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
-        .asciz "All Rights Reserved. http://upx.sf.net $\n"
-
+        swi 0x00900001  // exit
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
-        .balign 4
+        /* IDENTSTR goes here */
+
+  section ELFMAINZ
 cpr0:
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 eof:
-/*__XTHEENDX__*/
 
 /*
 vi:ts=8:et:nowrap

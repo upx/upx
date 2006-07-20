@@ -223,8 +223,10 @@ tc.arm-linux.elf.objdump  = $(call tc,m-objdump)
 tc.arm-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -nostdlib $< -o tmp/$T.out
-	$(call tc,objcopy) --only-section .text -O binary tmp/$T.out tmp/$T.bin
+	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
