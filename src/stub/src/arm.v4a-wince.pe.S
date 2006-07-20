@@ -340,6 +340,14 @@ section Call2E
         bl      ucl_nrv2e_decompress_8
         DDUMP   (#'C')
 
+section .ucl_nrv2d_decompress_8
+
+#include "arch/arm/v4a/nrv2d_d8.S"
+
+section Call2D
+        bl      ucl_nrv2d_decompress_8
+        DDUMP   (#'C')
+
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 #include "include/header2.ash"

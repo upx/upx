@@ -185,12 +185,13 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
     static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, -1 };
     static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, -1 };
-    static const int m_nrv2e_v4[] = { M_NRV2E_8, -1 };
+    static const int m_nrv2d_v4[] = { M_NRV2D_8, M_NRV2E_8, -1 };
+    static const int m_nrv2e_v4[] = { M_NRV2E_8, M_NRV2D_8, -1 };
     UNUSED(level);
 
     // FIXME this when we have v4 mode nrv2b
     if (!use_thumb_stub)
-        return m_nrv2e_v4;
+        return M_IS_NRV2E(method) ? m_nrv2e_v4 : m_nrv2d_v4;
 
     if (M_IS_NRV2B(method))
         return m_nrv2b;
@@ -1658,6 +1659,8 @@ int PackArmPe::buildLoader(const Filter *ft)
         addLoader("Call2E", NULL);
     else if (ph.method == M_NRV2B_8)
         addLoader("Call2B", NULL);
+    else if (ph.method == M_NRV2D_8)
+        addLoader("Call2D", NULL);
 
 
     if (ft->id == 0x50)
@@ -1673,6 +1676,8 @@ int PackArmPe::buildLoader(const Filter *ft)
     {
         if (ph.method == M_NRV2E_8)
             addLoader(".ucl_nrv2e_decompress_8", NULL);
+        else if (ph.method == M_NRV2D_8)
+            addLoader(".ucl_nrv2d_decompress_8", NULL);
     }
     else
     {
