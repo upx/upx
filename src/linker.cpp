@@ -903,6 +903,34 @@ void ElfLinkerArmLE::relocate1(Relocation *rel, upx_byte *location,
         super::relocate1(rel, location, value, type);
 }
 
+void ElfLinkerArmBE::relocate1(Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+{
+    if (strcmp(type, "R_ARM_PC24") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        set_be24(1+ location, get_be24(1+ location) + value / 4);
+    }
+    else if (strcmp(type, "R_ARM_ABS32") == 0)
+    {
+        set_be32(location, get_be32(location) + value);
+    }
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        value += ((get_be16(location) & 0x7ff) << 12);
+        value += (get_be16(location + 2) & 0x7ff) << 1;
+
+        set_be16(location, 0xf000 + ((value >> 12) & 0x7ff));
+        set_be16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
+
+        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
+        //set_be32(location, get_be32(location) + value / 4);
+    }
+    else
+        super::relocate1(rel, location, value, type);
+}
+
 
 /*
 vi:ts=4:et

@@ -169,7 +169,7 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     len += (3& -len);
     set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
     fo->write(&disp, sizeof(disp));
-    sz_pack2 = 4+ len;
+    sz_pack2 = sizeof(disp) + len;
 
     super::pack3(fo, ft);
 }
@@ -240,6 +240,18 @@ PackLinuxElf::getCompressionMethods(int method, int level) const
 }
 
 int const *
+PackLinuxElf32armLe::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
+int const *
+PackLinuxElf32armBe::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
+int const *
 PackLinuxElf32ppc::getFilters() const
 {
     static const int filters[] = {
@@ -263,6 +275,23 @@ void PackLinuxElf32::patchLoader()
 
 void PackLinuxElf64::patchLoader()
 {
+}
+
+void PackLinuxElf32::ARM_updateLoader(OutputFile *fo)
+{
+    set_native32(&elfout.ehdr.e_entry, fo->getBytesWritten() +
+        linker->getSymbolOffset("_start") +
+        get_native32(&elfout.phdr[0].p_vaddr));
+}
+
+void PackLinuxElf32armLe::updateLoader(OutputFile *fo)
+{
+    ARM_updateLoader(fo);
+}
+
+void PackLinuxElf32armBe::updateLoader(OutputFile *fo)
+{
+    ARM_updateLoader(fo);
 }
 
 void PackLinuxElf32::updateLoader(OutputFile *fo)
@@ -1536,7 +1565,7 @@ void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
     len += lsize;
     bool const is_big = true;
     if (is_big) {
-        set_native32(    &elfout.ehdr.e_entry,
+        set_native32(    &elfout.ehdr.e_entry, linker->getSymbolOffset("_start") +
             get_native32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
         set_native32(&elfout.phdr[0].p_vaddr, lo_va_user);
         set_native32(&elfout.phdr[0].p_paddr, lo_va_user);
@@ -1557,14 +1586,12 @@ void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-   linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-   linker->defineSymbol("LENX", len0 - hlen);
+    linker->defineSymbol("CPR0", linker->getSymbolOffset("cpr0") -
+        linker->getSymbolOffset("_start"));
+    linker->defineSymbol("LENF", linker->getSymbolOffset("end_decompress") -
+        linker->getSymbolOffset("_start"));
 
-   linker->defineSymbol("CNTC", cntc);  // count  for copy
-   linker->defineSymbol("ADRC", adrc);  // addr for copy
-
-   linker->defineSymbol("LENM", lenm);  // len  for map
-   linker->defineSymbol("ADRM", adrm);  // addr for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
 #undef PAGE_SIZE
 #undef PAGE_MASK
 }
@@ -1962,6 +1989,11 @@ PackLinuxElf32armLe::~PackLinuxElf32armLe()
 {
 }
 
+Linker* PackLinuxElf32armLe::newLinker() const
+{
+    return new ElfLinkerArmLE();
+}
+
 PackLinuxElf32armBe::PackLinuxElf32armBe(InputFile *f) : super(f)
 {
     e_machine = Elf32_Ehdr::EM_ARM;
@@ -1972,6 +2004,11 @@ PackLinuxElf32armBe::PackLinuxElf32armBe(InputFile *f) : super(f)
 
 PackLinuxElf32armBe::~PackLinuxElf32armBe()
 {
+}
+
+Linker* PackLinuxElf32armBe::newLinker() const
+{
+    return new ElfLinkerArmBE();
 }
 
 unsigned

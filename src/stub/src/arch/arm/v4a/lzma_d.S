@@ -46,7 +46,6 @@
         ldrb ip,meth; cmp ip,#M_LZMA; bne not_lzma
 
 	PUSH {fp,lr}
-        mov fp,sp
 
 #define a0 r0
 #define a1 r1
@@ -71,8 +70,8 @@
         mov fp,fp,LSR #3  // lit_context_bits + lit_pos_bits
         mov ip,ip,LSL fp  // 2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
         mov fp,sp
-        add ip,ip,#      ((4*4 + 2*LZMA_BASE_SIZE)>>8)<<8
-        add ip,ip,#0xff & (4*4 + 2*LZMA_BASE_SIZE)
+        add ip,ip,#      ((State + 2*LZMA_BASE_SIZE)>>8)<<8
+        add ip,ip,#0xff & (State + 2*LZMA_BASE_SIZE)
         sub sp,sp,ip
 
         ldr ip,[ldst]
@@ -101,6 +100,10 @@
         strb ip,[sp,#0 + State]
 
         add a0,sp,#State
+        bl 1f  // the call
+        mov sp,fp
+        POP {fp,pc}
+1:
 
   section LZMA_DEC10
 #include "lzma_d_cs.S"
@@ -109,8 +112,6 @@
 #include "lzma_d_cf.S"
 
   section LZMA_DEC30
-        mov sp,fp
-        POP {fp,pc}
 
 not_lzma:
 

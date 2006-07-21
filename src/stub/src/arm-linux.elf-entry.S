@@ -30,6 +30,7 @@
 */
 #define section .section
 
+#define bkpt .long 0xe1200070
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
 
@@ -49,16 +50,26 @@ MAP_ANONYMOUS= 0x20
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
+        //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
+start_params:
+        .long ADRM  // dst  for map
+        .long LENF  // end_decompress - _start
+        .long CPR0  //           cpr0 - _start
 _start: .globl _start
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
-   the brk() of the _un_compressed program.  The address and length are pre-
-   calculated by PackLinuxElf32arm::pack3(), and patched in at compress time.
+   the brk() of the _un_compressed program.  The address is pre-calculated
+   calculated by PackLinuxElf32arm::addLinkerSymbols().
 */
-        adr r12,start_params
-        ldmia r12!,{r0,r1, r8,r10}  // ADRM,LENM, ADRC,CNTC
-        stmdb  sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
+        adr r12,start_params -4
+        ldmia r12!,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
+        add r10,r10,r12  // end_decompress
+        add r11,r11,r12  // cpr0
+        mov r0,r2
+        sub r8,r12,r1  // 4*4+ (char *)&our_Elf32_Ehdr
+        add r1,r1,# PAGE_SIZE
+        stmdb sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
@@ -66,14 +77,15 @@ _start: .globl _start
         cmn r0,#4096
         bcs msg_SELinux
         mov r9,r0  // destination for copy
+        bic r8,r8,#0xff  // round down to page boundary
 copy:
-        ldmia r8!,{r0,r1,r2,r3,r4,r5,r6,r7}; subs r10,r10,#1
-        stmia r9!,{r0,r1,r2,r3,r4,r5,r6,r7}; bne copy
+        ldmia r8!,{r0,r1,r2,r3,r4,r5,r6,r7}; cmp r8,r10
+        stmia r9!,{r0,r1,r2,r3,r4,r5,r6,r7}; blo copy
 
         mov lr,r9  // dst for unfolded code
         sub r11,r9,r8  // relocation amount
-        ldmia r12!,{r1,r4,r9,r10}  // len_f,cpr0,LENX,ADRX
-        add r5,r12,r11  // relocated f_decompress
+        add r12,r12,# f_decompress - _start
+        add r5,r11,r12  // relocated f_decompress
 
 /* linux/include/asm-arm/unistd.h */
 #define __NR_SYSCALL_BASE       0x900000
@@ -81,7 +93,7 @@ copy:
 #define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
 
         mov r0,r5
-        add r1,r1,r0  // relocated end_decompress
+        mov r1,r10  // relocated end_decompress
         mov r2,#0
         swi __ARM_NR_cacheflush  // relocated decompressor
 
@@ -92,26 +104,22 @@ copy:
         ldrb r4,[r4,# b_method ]
         mov pc,r5  // decompress folded code; go there (lr)
 
-start_params:
-        .long ADRM  // dst  for map
-        .long LENM  // len  for map
-
-        .long ADRC  // src  for copy
-        .long CNTC  // cnt  for copy: number of 32-byte blocks
-
-        .long len_f  // length of decompressor code
-        .long cpr0
-
-        .long LENX  // total size of compressed data
-        .long ADRX  // &b_info of 1st compressed block (after moving)
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
+
+  section NRV_HEAD
+        // empty
+  section NRV_TAIL
+        // empty
 
   section NRV2E
 #include "arch/arm/v4a/nrv2e_d8.S"
 
   section NRV2D
 #include "arch/arm/v4a/nrv2d_d8.S"
+
+  section NRV2B
+#include "arch/arm/v4a/nrv2b_d8.S"
 
 #include "arch/arm/v4a/lzma_d.S"
 
