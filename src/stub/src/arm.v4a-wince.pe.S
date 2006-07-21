@@ -348,6 +348,46 @@ section Call2D
         bl      ucl_nrv2d_decompress_8
         DDUMP   (#'C')
 
+////////////////////////////////////////
+
+section LZMA_0
+
+        // r0=src0, r1=slen, r2=dst0, r3=addr dstl
+
+        adr     r8, .LUPXa
+        ldmia   r8, {r4, r5, r6, r7}    // load params
+
+        mov     r8, sp                  // save stack
+        add     r4, r4, sp
+        mov     ip, #0
+.Lclearstack:
+        stmfd   sp!, {ip}
+        cmp     sp, r4
+        bne     .Lclearstack
+
+        stmfd   sp!, {r4, r5}           // &outSizeProcessed, outSize,
+        stmfd   sp!, {r2}               // out
+        add     r3, r4, #4              // &inSizeProcessed
+        mov     r2, r6                  // inSize
+        add     r1, r0, #2              // in
+        add     r0, r4, #8              // &CLzmaDecoderState
+        str     r7, [r0]                // lc, lp, pb, dummy
+        bl      LZMA_DECODE
+        b       .LLZMA_end
+
+.LUPXa: .long   UPXa
+.LUPXb: .long   UPXb
+.LUPXc: .long   UPXc
+.LUPXd: .long   UPXd
+
+.LLZMA_end:
+        mov     sp, r8
+
+section LZMA_DECODE
+
+section LZMA_DEC10
+#include "arch/arm/v4a/lzma_d_cs.S"
+
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 #include "include/header2.ash"

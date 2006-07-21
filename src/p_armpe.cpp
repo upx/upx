@@ -183,15 +183,25 @@ PackArmPe::~PackArmPe()
 
 const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, -1 };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, -1 };
-    static const int m_nrv2d_v4[] = { M_NRV2D_8, M_NRV2E_8, -1 };
-    static const int m_nrv2e_v4[] = { M_NRV2E_8, M_NRV2D_8, -1 };
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_END };
+    static const int m_nrv2d_v4[] = { M_NRV2D_8, M_NRV2E_8, M_LZMA, M_END };
+    static const int m_nrv2e_v4[] = { M_NRV2E_8, M_NRV2D_8, M_LZMA, M_END };
+    static const int m_lzma_v4[]  = { M_LZMA, M_END };
+
     UNUSED(level);
 
     // FIXME this when we have v4 mode nrv2b
     if (!use_thumb_stub)
-        return M_IS_NRV2E(method) ? m_nrv2e_v4 : m_nrv2d_v4;
+    {
+        if (M_IS_NRV2E(method))
+            return m_nrv2e_v4 ;
+        if (M_IS_NRV2D(method))
+            return m_nrv2d_v4;
+        if (M_IS_LZMA(method))
+            return m_lzma_v4;
+        return m_nrv2e_v4;
+    }
 
     if (M_IS_NRV2B(method))
         return m_nrv2b;
@@ -1661,6 +1671,8 @@ int PackArmPe::buildLoader(const Filter *ft)
         addLoader("Call2B", NULL);
     else if (ph.method == M_NRV2D_8)
         addLoader("Call2D", NULL);
+    else if (M_IS_LZMA(ph.method))
+        addLoader("LZMA_0", NULL);
 
 
     if (ft->id == 0x50)
@@ -1678,6 +1690,8 @@ int PackArmPe::buildLoader(const Filter *ft)
             addLoader(".ucl_nrv2e_decompress_8", NULL);
         else if (ph.method == M_NRV2D_8)
             addLoader(".ucl_nrv2d_decompress_8", NULL);
+        else if (M_IS_LZMA(ph.method))
+            addLoader("LZMA_DECODE", "LZMA_DEC10", NULL);
     }
     else
     {
@@ -1894,8 +1908,11 @@ void PackArmPe::pack(OutputFile *fo)
         strategy = -3;
     }
 
+    // limit stack size needed for runtime decompression
+    upx_compress_config_t cconf; cconf.reset();
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 2048, strategy,
-                        NULL, NULL, ih.codebase, rvamin);
+                        NULL, &cconf, ih.codebase, rvamin);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
@@ -2014,6 +2031,7 @@ void PackArmPe::pack(OutputFile *fo)
     linker->defineSymbol("start_of_uncompressed", ih.imagebase + rvamin);
     linker->defineSymbol("compressed_length", ph.c_len);
     linker->defineSymbol("start_of_compressed", ih.imagebase + s1addr + identsize - identsplit);
+    defineDecompressorSymbols();
     linker->relocate();
 
     MemBuffer loader(lsize);
