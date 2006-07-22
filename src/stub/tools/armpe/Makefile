@@ -8,6 +8,10 @@ ifneq ($(wildcard $(HOME)/local/bin/bin-upx),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
 endif
 
+ifneq ($(wildcard $(HOME)/bin/bin-upx),)
+export PATH := $(HOME)/bin/bin-upx:$(PATH)
+endif
+
 
 all: armpe_tester wtest.exe
 

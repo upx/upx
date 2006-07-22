@@ -332,6 +332,8 @@ ONAM:   .long   start_of_dll_names
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+#include "include/header2.ash"
+
 section .ucl_nrv2e_decompress_8
 
 #include "arch/arm/v4a/nrv2e_d8.S"
@@ -351,44 +353,43 @@ section Call2D
 ////////////////////////////////////////
 
 section LZMA_0
-
         // r0=src0, r1=slen, r2=dst0, r3=addr dstl
 
-        adr     r8, .LUPXa
-        ldmia   r8, {r4, r5, r6, r7}    // load params
+        parb    .req r3
+        para    .req r4
+        parc    .req r5
+        pard    .req r6
 
-        mov     r8, sp                  // save stack
-        add     r4, r4, sp
+        adr     r7, .LzmaParams
+        ldmia   r7, {parb, para, parc, pard}    // load params
+
+        mov     r7, sp                  // save stack
+        add     para, para, sp
         mov     ip, #0
 .Lclearstack:
         stmfd   sp!, {ip}
-        cmp     sp, r4
+        cmp     sp, para
         bne     .Lclearstack
 
-        stmfd   sp!, {r4, r5}           // &outSizeProcessed, outSize,
-        stmfd   sp!, {r2}               // out
-        add     r3, r4, #4              // &inSizeProcessed
-        mov     r2, r6                  // inSize
+        stmfd   sp!, {r2, parb, para}   // &outSizeProcessed, outSize, out
+        add     r3, para, #4            // &inSizeProcessed
+        mov     r2, parc                // inSize
         add     r1, r0, #2              // in
-        add     r0, r4, #8              // &CLzmaDecoderState
-        str     r7, [r0]                // lc, lp, pb, dummy
+        add     r0, para, #8            // &CLzmaDecoderState
+        str     pard, [r0]              // lc, lp, pb, dummy
         bl      LZMA_DECODE
         b       .LLZMA_end
 
-.LUPXa: .long   UPXa
-.LUPXb: .long   UPXb
-.LUPXc: .long   UPXc
-.LUPXd: .long   UPXd
+.LzmaParams:
+        .long   UPXb, UPXa, UPXc, UPXd
 
 .LLZMA_end:
-        mov     sp, r8
+        mov     sp, r7
 
 section LZMA_DECODE
 
-section LZMA_DEC10
+#undef section
 #include "arch/arm/v4a/lzma_d_cs.S"
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-#include "include/header2.ash"
 
