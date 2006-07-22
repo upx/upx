@@ -28,7 +28,7 @@ lzma_d_c%.S : tc_bfdname = elf32-littlearm
 
 tc.arm-lzma.gcc      = $(tc.arm-linux.elf.gcc)
 tc.arm-lzma.gcc     += -march=armv4 -fPIC
-tc.arm-lzma.gcc     += -Os
+#tc.arm-lzma.gcc     += -Os
 tc.arm-lzma.gcc     += -ffunction-sections
 tc.arm-lzma.gcc     += -I$(UPX_LZMADIR)
 tc.arm-lzma.gcc     += -I$(top_srcdir)/src

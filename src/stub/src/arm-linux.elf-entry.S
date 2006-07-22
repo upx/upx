@@ -102,14 +102,17 @@ copy:
         sub r10,r12,r9  // &b_info
         add r10,r10,r4  // relocated &b_info
 
+        ldrb r0,[r11,# b_method ]  // 5th param
+        stmdb sp!,{r0,lr}
         ldr  r3,[r11,# sz_unc]
         add  r0, r11,# sz_b_info
         ldr  r1,[r11,# sz_cpr ]
         mov  r2,lr  // dst
         str  r3,[sp,#2*4]  // sz_unc; lzma needs for EOF
         add  r3, sp,#2*4  // &sz_unc
-        ldrb r4,[r11,# b_method ]
-        mov pc,r5  // decompress folded code; go there (lr)
+        mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
+        add sp,sp,#4  // discard 5th param
+        ldmia sp!,{pc}
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1

@@ -45,7 +45,11 @@
 #define M_LZMA          14
         ldrb ip,meth; cmp ip,#M_LZMA; bne not_lzma
 
-	PUSH {fp,lr}
+#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
+	PUSH {dst,ldst, fp,lr}  // dst,ldst for cache flush
+#else  /*}{*/
+	PUSH {          fp,lr}
+#endif  /*}*/
 
 #define a0 r0
 #define a1 r1
@@ -70,8 +74,8 @@
         mov fp,fp,LSR #3  // lit_context_bits + lit_pos_bits
         mov ip,ip,LSL fp  // 2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
         mov fp,sp
-        add ip,ip,#      ((State + 2*LZMA_BASE_SIZE)>>8)<<8
-        add ip,ip,#0xff & (State + 2*LZMA_BASE_SIZE)
+#define W 4  /* even #bits to round up so that 8 bits span all the 1's */
+        add ip,ip,#((~(~0<<W) + State + 2*LZMA_BASE_SIZE)>>W)<<W
         sub sp,sp,ip
 
         ldr ip,[ldst]
@@ -102,6 +106,21 @@
         add a0,sp,#State
         bl 1f  // the call
         mov sp,fp
+
+#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
+/* linux/include/asm-arm/unistd.h */
+#define __NR_SYSCALL_BASE       0x900000
+#define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
+#define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
+        mov r4,r0  // save result value
+        POP {r0,r1}  // dst, ldst
+        ldr r1,[r1]  // ldst by reference
+        add r1,r1,r0  // just beyond what was written
+        mov r2,#0
+        swi __ARM_NR_cacheflush  // decompressed region
+        mov r0,r4  // result value
+#endif  /*}*/
+
         POP {fp,pc}
 1:
 
