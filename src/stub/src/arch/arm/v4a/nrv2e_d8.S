@@ -179,7 +179,8 @@ near_n2e:
         add tmp,dst,cnt
         cmp tmp,dstlim; bhi bad_dst_n2e  // too much output
 #endif  /*}*/
-        ldrb tmp,[dst]  // force cacheline allocate
+        add tmp,dst,len
+        ldrb tmp,[tmp,#-1]  // force cacheline allocate
 copy_n2e:
         ldrb tmp,[dst,off]
         CHECK_BYTE
