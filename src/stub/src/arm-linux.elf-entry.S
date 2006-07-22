@@ -38,6 +38,8 @@ sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
   b_method= 8
+sz_l_info= 12
+sz_p_info= 12
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -54,20 +56,20 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
   section ELFMAINX
 start_params:
         .long ADRM  // dst  for map
-        .long LENF  // end_decompress - _start
-        .long CPR0  //           cpr0 - _start
+        .long LENF  // end_decompress - (start_params -4)
+        .long CPR0  //           cpr0 - (start_params -4)
 _start: .globl _start
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
    calculated by PackLinuxElf32arm::addLinkerSymbols().
 */
-        adr r12,start_params -4
-        ldmia r12!,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
+        adr r12,start_params -4  // &sz_pack2
+        ldmia r12,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
         add r10,r10,r12  // end_decompress
         add r11,r11,r12  // cpr0
-        mov r0,r2
-        sub r8,r12,r1  // 4*4+ (char *)&our_Elf32_Ehdr
+        mov r0,r2  // ADRM
+        sub r9,r12,r1  // &our_Elf32_Ehdr
         add r1,r1,# PAGE_SIZE
         stmdb sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
@@ -76,16 +78,14 @@ _start: .globl _start
         swi 0x009000c0  // mmap64
         cmn r0,#4096
         bcs msg_SELinux
-        mov r9,r0  // destination for copy
-        bic r8,r8,#0xff  // round down to page boundary
 copy:
-        ldmia r8!,{r0,r1,r2,r3,r4,r5,r6,r7}; cmp r8,r10
-        stmia r9!,{r0,r1,r2,r3,r4,r5,r6,r7}; blo copy
+        ldmia r9!,{r1,r2,r3,r4,r5,r6,r7,r8}; cmp r9,r10  // upto end-decompress
+        stmia r0!,{r1,r2,r3,r4,r5,r6,r7,r8}; blo copy
 
-        mov lr,r9  // dst for unfolded code
-        sub r11,r9,r8  // relocation amount
-        add r12,r12,# f_decompress - _start
-        add r5,r11,r12  // relocated f_decompress
+        sub r4,r0,r9  // relocation amount
+        adr r5,f_decompress
+        mov lr,r0  // dst for unfolded code
+        add r5,r5,r4  // relocated f_decompress
 
 /* linux/include/asm-arm/unistd.h */
 #define __NR_SYSCALL_BASE       0x900000
@@ -93,15 +93,22 @@ copy:
 #define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
 
         mov r0,r5
-        mov r1,r10  // relocated end_decompress
+        add r1,r9,r4  // relocated end_decompress
         mov r2,#0
         swi __ARM_NR_cacheflush  // relocated decompressor
 
-        add  r0, r4,# sz_b_info
-        ldr  r1,[r4,# sz_cpr ]
+        ldr r9,[r12]  // sz_pack2
+        sub r9,r9,#sz_Elf32_Ehdr + 2*sz_Elf32_Phdr + sz_l_info + sz_p_info
+        sub r10,r12,r9  // &b_info
+        add r10,r10,r4  // relocated &b_info
+
+        ldr  r3,[r11,# sz_unc]
+        add  r0, r11,# sz_b_info
+        ldr  r1,[r11,# sz_cpr ]
         mov  r2,lr  // dst
-        add  r3,sp,#2*4  // &sz_unc
-        ldrb r4,[r4,# b_method ]
+        str  r3,[sp,#2*4]  // sz_unc; lzma needs for EOF
+        add  r3, sp,#2*4  // &sz_unc
+        ldrb r4,[r11,# b_method ]
         mov pc,r5  // decompress folded code; go there (lr)
 
 f_decompress:
@@ -142,8 +149,6 @@ L71:
   section ELFMAINZ
 cpr0:
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
-
-eof:
 
 /*
 vi:ts=8:et:nowrap

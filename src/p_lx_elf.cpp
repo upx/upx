@@ -1586,10 +1586,8 @@ void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-    linker->defineSymbol("CPR0", linker->getSymbolOffset("cpr0") -
-        linker->getSymbolOffset("_start"));
-    linker->defineSymbol("LENF", linker->getSymbolOffset("end_decompress") -
-        linker->getSymbolOffset("_start"));
+    linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
+    linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
 
     linker->defineSymbol("ADRM", adrm);  // addr for map
 #undef PAGE_SIZE
