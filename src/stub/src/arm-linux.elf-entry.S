@@ -111,8 +111,7 @@ copy:
         str  r3,[sp,#2*4]  // sz_unc; lzma needs for EOF
         add  r3, sp,#2*4  // &sz_unc
         mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
-        add sp,sp,#4  // discard 5th param
-        ldmia sp!,{pc}
+        ldmia sp!,{r1, pc}  // discard 5th param; return
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1

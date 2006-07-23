@@ -112,13 +112,13 @@
 #define __NR_SYSCALL_BASE       0x900000
 #define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
 #define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
-        mov r4,r0  // save result value
+        mov r3,r0  // save result value
         POP {r0,r1}  // dst, ldst
         ldr r1,[r1]  // ldst by reference
         add r1,r1,r0  // just beyond what was written
         mov r2,#0
         swi __ARM_NR_cacheflush  // decompressed region
-        mov r0,r4  // result value
+        mov r0,r3  // result value
 #endif  /*}*/
 
         POP {fp,pc}
