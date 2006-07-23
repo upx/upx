@@ -1,65 +1,3 @@
-	.code	16
-	.file	"lzma_d_c.c"
-	.section	.text.LzmaDecodeProperties,"ax",%progbits
-	.align	2
-	.global	LzmaDecodeProperties
-	.code 16
-	.thumb_func
-	.type	LzmaDecodeProperties, %function
-LzmaDecodeProperties:
-	push	{lr}
-	cmp	r2, #4
-	ble	.L18
-	ldrb	r1, [r1]
-	cmp	r1, #224
-	bls	.L3
-.L18:
-	mov	r0, #1
-	b	.L1
-.L3:
-	mov	r3, #0
-	str	r3, [r0, #8]
-	cmp	r1, #44
-	bls	.L13
-	mov	r2, #0
-.L7:
-	mov	r3, r1
-	sub	r3, r3, #45
-	lsl	r3, r3, #24
-	lsr	r1, r3, #24
-	add	r2, r2, #1
-	cmp	r1, #44
-	bhi	.L7
-	str	r2, [r0, #8]
-.L13:
-	mov	r3, #0
-	str	r3, [r0, #4]
-	cmp	r1, #8
-	bls	.L15
-	mov	r2, #0
-.L11:
-	mov	r3, r1
-	sub	r3, r3, #9
-	lsl	r3, r3, #24
-	lsr	r1, r3, #24
-	add	r2, r2, #1
-	cmp	r1, #8
-	bhi	.L11
-	str	r2, [r0, #4]
-.L15:
-	str	r1, [r0]
-	mov	r0, #0
-.L1:
-	@ sp needed for prologue
-	pop	{pc}
-	.size	LzmaDecodeProperties, .-LzmaDecodeProperties
-	.section	.text.LzmaDecode,"ax",%progbits
-	.align	2
-	.global	LzmaDecode
-	.code 16
-	.thumb_func
-	.type	LzmaDecode, %function
-LzmaDecode:
 	push	{r4, r5, r6, r7, lr}
 	sub	sp, sp, #128
 	str	r1, [sp, #124]
@@ -101,21 +39,21 @@ LzmaDecode:
 	add	r2, r1, r2
 	lsl	r3, r3, #2
 	lsl	r3, r3, r2
-	ldr	r2, .L157
+	ldr	r2, .Ls157
 	add	r4, r3, r2
 	mov	r0, #0
 	cmp	r4, #0
-	bls	.L133
+	bls	.Ls133
 	ldr	r2, [sp, #116]
-.L23:
+.Ls23:
 	mov	r3, #128
 	lsl	r3, r3, #3
 	add	r0, r0, #1
 	strh	r3, [r2]
 	add	r2, r2, #2
 	cmp	r0, r4
-	bcc	.L23
-.L133:
+	bcc	.Ls23
+.Ls133:
 	ldr	r0, [sp, #124]
 	add	r5, r0, r5
 	str	r5, [sp, #68]
@@ -123,25 +61,25 @@ LzmaDecode:
 	mov	r6, #0
 	neg	r5, r5
 	mov	r2, #0
-.L28:
+.Ls28:
 	ldr	r3, [sp, #68]
 	cmp	r0, r3
-	bne	.LCB157
-	b	.L156	@long jump
-.LCB157:
+	bne	.LsCB157
+	b	.Ls156	@long jump
+.LsCB157:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	add	r2, r2, #1
 	orr	r6, r6, r3
 	add	r0, r0, #1
 	cmp	r2, #4
-	ble	.L28
+	ble	.Ls28
 	ldr	r4, [sp, #152]
 	cmp	r4, #0
-	bhi	.LCB172
-	b	.L30	@long jump
-.LCB172:
-.L129:
+	bhi	.LsCB172
+	b	.Ls30	@long jump
+.LsCB172:
+.Ls129:
 	ldr	r1, [sp, #104]
 	ldr	r7, [sp, #112]
 	ldr	r2, [sp, #92]
@@ -149,23 +87,23 @@ LzmaDecode:
 	lsl	r3, r2, #4
 	add	r3, r3, r7
 	str	r7, [sp, #64]
-	ldr	r1, .L157+4
+	ldr	r1, .Ls157+4
 	ldr	r7, [sp, #116]
 	lsl	r3, r3, #1
 	add	r4, r3, r7
 	cmp	r5, r1
-	bhi	.L31
+	bhi	.Ls31
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	bne	.LCB191
-	b	.L156	@long jump
-.LCB191:
+	bne	.LsCB191
+	b	.Ls156	@long jump
+.LsCB191:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L31:
+.Ls31:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r7, r1, #16
@@ -175,9 +113,9 @@ LzmaDecode:
 	mul	r7, r7, r3
 	mov	r3, r7
 	cmp	r6, r3
-	bcc	.LCB209
-	b	.L33	@long jump
-.LCB209:
+	bcc	.LsCB209
+	b	.Ls33	@long jump
+.LsCB209:
 	mov	r5, r3
 	mov	r3, #128
 	mov	r1, ip
@@ -201,19 +139,19 @@ LzmaDecode:
 	ldr	r2, [sp, #116]
 	lsl	r3, r3, #9
 	add	r3, r2, r3
-	ldr	r1, .L157+8
+	ldr	r1, .Ls157+8
 	ldr	r2, [sp, #92]
 	mov	r7, #1
 	add	r4, r3, r1
 	cmp	r2, #6
-	ble	.L50
+	ble	.Ls50
 	ldr	r1, [sp, #112]
 	ldr	r2, [sp, #88]
 	sub	r3, r1, r2
 	ldr	r1, [sp, #148]
 	ldrb	r3, [r1, r3]
 	str	r3, [sp, #60]
-.L35:
+.Ls35:
 	ldr	r2, [sp, #60]
 	mov	r3, #128
 	lsl	r2, r2, #1
@@ -228,22 +166,22 @@ LzmaDecode:
 	add	r3, r3, r7
 	lsl	r2, r2, #2
 	add	r2, r3, r2
-	ldr	r3, .L157+4
+	ldr	r3, .Ls157+4
 	str	r7, [sp, #52]
 	str	r2, [sp, #56]
 	cmp	r5, r3
-	bhi	.L38
+	bhi	.Ls38
 	ldr	r3, [sp, #68]
 	cmp	r0, r3
-	bne	.LCB271
-	b	.L156	@long jump
-.LCB271:
+	bne	.LsCB271
+	b	.Ls156	@long jump
+.LsCB271:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L38:
+.Ls38:
 	ldr	r7, [sp, #56]
 	ldrh	r2, [r7]
 	lsl	r7, r2, #16
@@ -251,7 +189,7 @@ LzmaDecode:
 	lsr	r1, r7, #16
 	mul	r3, r3, r1
 	cmp	r6, r3
-	bcs	.L40
+	bcs	.Ls40
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -263,9 +201,9 @@ LzmaDecode:
 	strh	r3, [r1]
 	ldr	r7, [sp, #52]
 	cmp	r2, #0
-	beq	.L37
-	b	.L34
-.L40:
+	beq	.Ls37
+	b	.Ls34
+.Ls40:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r7, #21
@@ -276,33 +214,33 @@ LzmaDecode:
 	mov	r1, ip
 	add	r7, r7, #1
 	cmp	r1, #0
-	beq	.L34
-.L37:
+	beq	.Ls34
+.Ls37:
 	cmp	r7, #255
-	ble	.L35
-	b	.L138
-.L34:
+	ble	.Ls35
+	b	.Ls138
+.Ls34:
 	cmp	r7, #255
-	bgt	.L138
-.L50:
+	bgt	.Ls138
+.Ls50:
 	lsl	r7, r7, #1
-	ldr	r3, .L157+4
+	ldr	r3, .Ls157+4
 	str	r7, [sp, #48]
 	add	r7, r7, r4
 	mov	ip, r7
 	cmp	r5, r3
-	bhi	.L46
+	bhi	.Ls46
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	bne	.LCB338
-	b	.L156	@long jump
-.LCB338:
+	bne	.LsCB338
+	b	.Ls156	@long jump
+.LsCB338:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L46:
+.Ls46:
 	mov	r7, ip
 	ldrh	r2, [r7]
 	lsl	r1, r2, #16
@@ -310,7 +248,7 @@ LzmaDecode:
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L48
+	bcs	.Ls48
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -320,8 +258,8 @@ LzmaDecode:
 	add	r3, r3, r2
 	mov	r1, ip
 	strh	r3, [r1]
-	b	.L34
-.L48:
+	b	.Ls34
+.Ls48:
 	ldr	r7, [sp, #48]
 	sub	r5, r5, r3
 	sub	r6, r6, r3
@@ -330,8 +268,8 @@ LzmaDecode:
 	add	r7, r7, #1
 	mov	r2, ip
 	strh	r3, [r2]
-	b	.L34
-.L138:
+	b	.Ls34
+.Ls138:
 	ldr	r4, [sp, #112]
 	lsl	r3, r7, #24
 	ldr	r7, [sp, #148]
@@ -342,23 +280,23 @@ LzmaDecode:
 	add	r4, r4, #1
 	str	r4, [sp, #112]
 	cmp	r7, #3
-	bgt	.L51
+	bgt	.Ls51
 	mov	r1, #0
 	str	r1, [sp, #92]
-	b	.L29
-.L51:
+	b	.Ls29
+.Ls51:
 	ldr	r2, [sp, #92]
 	cmp	r2, #9
-	bgt	.L53
+	bgt	.Ls53
 	sub	r2, r2, #3
 	str	r2, [sp, #92]
-	b	.L29
-.L53:
+	b	.Ls29
+.Ls53:
 	ldr	r3, [sp, #92]
 	sub	r3, r3, #6
 	str	r3, [sp, #92]
-	b	.L29
-.L33:
+	b	.Ls29
+.Ls33:
 	lsr	r3, r1, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
@@ -369,30 +307,30 @@ LzmaDecode:
 	lsl	r3, r4, #1
 	add	r7, r7, r3
 	mov	r4, #192
-	ldr	r1, .L157+4
+	ldr	r1, .Ls157+4
 	mov	ip, r7
 	lsl	r4, r4, #1
 	add	r4, r4, ip
 	cmp	r5, r1
-	bhi	.L56
+	bhi	.Ls56
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	bne	.LCB436
-	b	.L156	@long jump
-.LCB436:
+	bne	.LsCB436
+	b	.Ls156	@long jump
+.LsCB436:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L56:
+.Ls56:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L58
+	bcs	.Ls58
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -408,47 +346,47 @@ LzmaDecode:
 	str	r4, [sp, #80]
 	str	r7, [sp, #84]
 	cmp	r1, #6
-	bgt	.L59
+	bgt	.Ls59
 	mov	r3, #0
-	b	.L60
-.L59:
+	b	.Ls60
+.Ls59:
 	mov	r3, #3
-.L60:
+.Ls60:
 	str	r3, [sp, #92]
 	ldr	r2, [sp, #116]
-	ldr	r3, .L157+12
+	ldr	r3, .Ls157+12
 	add	r4, r2, r3
-	b	.L61
-.L58:
+	b	.Ls61
+.Ls58:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
-	ldr	r7, .L157+4
+	ldr	r7, .Ls157+4
 	mov	r4, #204
 	lsl	r4, r4, #1
 	add	r4, r4, ip
 	cmp	r5, r7
-	bhi	.L62
+	bhi	.Ls62
 	ldr	r1, [sp, #68]
 	cmp	r0, r1
-	bne	.LCB498
-	b	.L156	@long jump
-.LCB498:
+	bne	.LsCB498
+	b	.Ls156	@long jump
+.LsCB498:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L62:
+.Ls62:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L64
+	bcs	.Ls64
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r1, r3, #4
@@ -464,30 +402,30 @@ LzmaDecode:
 	lsl	r2, r7, #1
 	add	r3, r3, r2
 	mov	ip, r1
-	ldr	r2, .L157+4
+	ldr	r2, .Ls157+4
 	mov	r1, #240
 	lsl	r1, r1, #1
 	add	r4, r3, r1
 	cmp	r5, r2
-	bhi	.L65
+	bhi	.Ls65
 	ldr	r3, [sp, #68]
 	cmp	r0, r3
-	bne	.LCB538
-	b	.L156	@long jump
-.LCB538:
+	bne	.LsCB538
+	b	.Ls156	@long jump
+.LsCB538:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L65:
+.Ls65:
 	ldrh	r2, [r4]
 	lsl	r7, r2, #16
 	lsr	r3, r5, #11
 	lsr	r1, r7, #16
 	mul	r3, r3, r1
 	cmp	r6, r3
-	bcs	.L67
+	bcs	.Ls67
 	mov	r7, ip
 	mov	r5, r3
 	sub	r3, r7, r1
@@ -496,17 +434,17 @@ LzmaDecode:
 	add	r3, r3, r2
 	strh	r3, [r4]
 	cmp	r1, #0
-	bne	.LCB563
-	b	.L156	@long jump
-.LCB563:
+	bne	.LsCB563
+	b	.Ls156	@long jump
+.LsCB563:
 	ldr	r2, [sp, #92]
 	cmp	r2, #6
-	bgt	.L69
+	bgt	.Ls69
 	mov	r3, #9
-	b	.L70
-.L69:
+	b	.Ls70
+.Ls69:
 	mov	r3, #11
-.L70:
+.Ls70:
 	ldr	r4, [sp, #112]
 	ldr	r7, [sp, #88]
 	str	r3, [sp, #92]
@@ -517,44 +455,44 @@ LzmaDecode:
 	strb	r3, [r4, r1]
 	add	r4, r4, #1
 	str	r4, [sp, #112]
-	b	.L29
-.L67:
+	b	.Ls29
+.Ls67:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r7, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
-	b	.L72
-.L64:
+	b	.Ls72
+.Ls64:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
 	mov	r4, #216
-	ldr	r3, .L157+4
+	ldr	r3, .Ls157+4
 	lsl	r4, r4, #1
 	add	r4, r4, ip
 	cmp	r5, r3
-	bhi	.L73
+	bhi	.Ls73
 	ldr	r7, [sp, #68]
 	cmp	r0, r7
-	bne	.LCB614
-	b	.L156	@long jump
-.LCB614:
+	bne	.LsCB614
+	b	.Ls156	@long jump
+.LsCB614:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L73:
+.Ls73:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L75
+	bcs	.Ls75
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -564,44 +502,44 @@ LzmaDecode:
 	add	r3, r3, r2
 	mov	ip, r1
 	strh	r3, [r4]
-	b	.L76
-.L158:
+	b	.Ls76
+.Ls158:
 	.align	2
-.L157:
+.Ls157:
 	.word	1846
 	.word	16777215
 	.word	3692
 	.word	1636
-.L75:
+.Ls75:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
-	ldr	r2, .L159
+	ldr	r2, .Ls159
 	mov	r4, #228
 	lsl	r4, r4, #1
 	add	r4, r4, ip
 	cmp	r5, r2
-	bhi	.L77
+	bhi	.Ls77
 	ldr	r3, [sp, #68]
 	cmp	r0, r3
-	bne	.LCB666
-	b	.L156	@long jump
-.LCB666:
+	bne	.LsCB666
+	b	.Ls156	@long jump
+.LsCB666:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L77:
+.Ls77:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L79
+	bcs	.Ls79
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -611,8 +549,8 @@ LzmaDecode:
 	strh	r3, [r4]
 	ldr	r4, [sp, #80]
 	mov	ip, r4
-	b	.L80
-.L79:
+	b	.Ls80
+.Ls79:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
@@ -622,50 +560,50 @@ LzmaDecode:
 	strh	r3, [r4]
 	str	r1, [sp, #76]
 	mov	ip, r7
-.L80:
+.Ls80:
 	ldr	r2, [sp, #84]
 	str	r2, [sp, #80]
-.L76:
+.Ls76:
 	ldr	r3, [sp, #88]
 	mov	r4, ip
 	str	r3, [sp, #84]
 	str	r4, [sp, #88]
-.L72:
+.Ls72:
 	ldr	r7, [sp, #92]
 	cmp	r7, #6
-	bgt	.L81
+	bgt	.Ls81
 	mov	r3, #8
-	b	.L82
-.L81:
+	b	.Ls82
+.Ls81:
 	mov	r3, #11
-.L82:
+.Ls82:
 	ldr	r1, [sp, #116]
-	ldr	r2, .L159+4
+	ldr	r2, .Ls159+4
 	str	r3, [sp, #92]
 	add	r4, r1, r2
-.L61:
-	ldr	r3, .L159
+.Ls61:
+	ldr	r3, .Ls159
 	mov	ip, r3
 	cmp	r5, ip
-	bhi	.L83
+	bhi	.Ls83
 	ldr	r7, [sp, #68]
 	cmp	r0, r7
-	bne	.LCB740
-	b	.L156	@long jump
-.LCB740:
+	bne	.LsCB740
+	b	.Ls156	@long jump
+.LsCB740:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L83:
+.Ls83:
 	ldrh	r2, [r4]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L85
+	bcs	.Ls85
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -682,33 +620,33 @@ LzmaDecode:
 	mov	r3, #3
 	str	r2, [sp, #40]
 	str	r3, [sp, #44]
-	b	.L86
-.L85:
+	b	.Ls86
+.Ls85:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
 	sub	r3, r2, r3
 	strh	r3, [r4]
 	cmp	r5, ip
-	bhi	.L87
+	bhi	.Ls87
 	ldr	r7, [sp, #68]
 	cmp	r0, r7
-	bne	.LCB786
-	b	.L156	@long jump
-.LCB786:
+	bne	.LsCB786
+	b	.Ls156	@long jump
+.LsCB786:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L87:
+.Ls87:
 	ldrh	r2, [r4, #2]
 	lsl	r1, r2, #16
 	lsr	r3, r5, #11
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L89
+	bcs	.Ls89
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -727,8 +665,8 @@ LzmaDecode:
 	str	r2, [sp, #36]
 	str	r3, [sp, #40]
 	str	r4, [sp, #44]
-	b	.L86
-.L89:
+	b	.Ls86
+.Ls89:
 	mov	r7, #129
 	sub	r5, r5, r3
 	sub	r6, r6, r3
@@ -742,38 +680,38 @@ LzmaDecode:
 	str	r7, [sp, #36]
 	str	r1, [sp, #40]
 	str	r2, [sp, #44]
-.L86:
+.Ls86:
 	ldr	r3, [sp, #44]
 	mov	r4, #1
 	str	r3, [sp, #32]
 	str	r4, [sp, #72]
-.L91:
+.Ls91:
 	ldr	r7, [sp, #72]
 	ldr	r1, [sp, #36]
 	lsl	r7, r7, #1
-	ldr	r3, .L159
+	ldr	r3, .Ls159
 	mov	ip, r7
 	add	r1, r1, ip
 	cmp	r5, r3
-	bhi	.L94
+	bhi	.Ls94
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	bne	.LCB857
-	b	.L156	@long jump
-.LCB857:
+	bne	.LsCB857
+	b	.Ls156	@long jump
+.LsCB857:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L94:
+.Ls94:
 	ldrh	r4, [r1]
 	lsl	r2, r4, #16
 	lsr	r3, r5, #11
 	lsr	r7, r2, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L96
+	bcs	.Ls96
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -783,8 +721,8 @@ LzmaDecode:
 	strh	r3, [r1]
 	mov	r3, ip
 	str	r3, [sp, #72]
-	b	.L93
-.L96:
+	b	.Ls93
+.Ls96:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r2, #21
@@ -793,12 +731,12 @@ LzmaDecode:
 	add	r4, r4, #1
 	strh	r3, [r1]
 	str	r4, [sp, #72]
-.L93:
+.Ls93:
 	ldr	r7, [sp, #32]
 	sub	r7, r7, #1
 	str	r7, [sp, #32]
 	cmp	r7, #0
-	bne	.L91
+	bne	.Ls91
 	ldr	r1, [sp, #44]
 	ldr	r2, [sp, #72]
 	mov	r3, #1
@@ -809,16 +747,16 @@ LzmaDecode:
 	add	r2, r2, r3
 	str	r2, [sp, #72]
 	cmp	r4, #3
-	ble	.LCB914
-	b	.L98	@long jump
-.LCB914:
+	ble	.LsCB914
+	b	.Ls98	@long jump
+.LsCB914:
 	add	r4, r4, #7
 	str	r4, [sp, #92]
 	mov	r3, r2
 	cmp	r2, #3
-	ble	.L99
+	ble	.Ls99
 	mov	r3, #3
-.L99:
+.Ls99:
 	ldr	r7, [sp, #116]
 	lsl	r3, r3, #7
 	mov	r1, #216
@@ -828,25 +766,25 @@ LzmaDecode:
 	str	r2, [sp, #28]
 	add	r4, r3, r1
 	mov	r2, #1
-.L100:
+.Ls100:
 	lsl	r2, r2, #1
-	ldr	r3, .L159
+	ldr	r3, .Ls159
 	str	r2, [sp, #24]
 	add	r2, r2, r4
 	mov	ip, r2
 	cmp	r5, r3
-	bhi	.L103
+	bhi	.Ls103
 	ldr	r3, [sp, #68]
 	cmp	r0, r3
-	bne	.LCB944
-	b	.L156	@long jump
-.LCB944:
+	bne	.LsCB944
+	b	.Ls156	@long jump
+.LsCB944:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L103:
+.Ls103:
 	mov	r7, ip
 	ldrh	r2, [r7]
 	lsl	r1, r2, #16
@@ -854,7 +792,7 @@ LzmaDecode:
 	lsr	r7, r1, #16
 	mul	r3, r3, r7
 	cmp	r6, r3
-	bcs	.L105
+	bcs	.Ls105
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -864,8 +802,8 @@ LzmaDecode:
 	ldr	r2, [sp, #24]
 	mov	r1, ip
 	strh	r3, [r1]
-	b	.L102
-.L105:
+	b	.Ls102
+.Ls105:
 	sub	r5, r5, r3
 	sub	r6, r6, r3
 	lsr	r3, r1, #21
@@ -874,17 +812,17 @@ LzmaDecode:
 	strh	r3, [r2]
 	ldr	r2, [sp, #24]
 	add	r2, r2, #1
-.L102:
+.Ls102:
 	ldr	r3, [sp, #28]
 	sub	r3, r3, #1
 	str	r3, [sp, #28]
 	cmp	r3, #0
-	bne	.L100
+	bne	.Ls100
 	sub	r2, r2, #64
 	cmp	r2, #3
-	bgt	.LCB994
-	b	.L107	@long jump
-.LCB994:
+	bgt	.LsCB994
+	b	.Ls107	@long jump
+.LsCB994:
 	mov	r1, #1
 	and	r1, r1, r2
 	mov	r3, #2
@@ -893,76 +831,76 @@ LzmaDecode:
 	sub	r7, r4, #1
 	str	r1, [sp, #88]
 	cmp	r2, #13
-	bgt	.L108
+	bgt	.Ls108
 	lsl	r1, r1, r7
 	ldr	r4, [sp, #116]
 	lsl	r3, r1, #1
 	add	r3, r4, r3
 	str	r1, [sp, #88]
 	lsl	r2, r2, #1
-	ldr	r1, .L159+8
+	ldr	r1, .Ls159+8
 	sub	r3, r3, r2
 	add	r4, r3, r1
-	b	.L109
-.L108:
+	b	.Ls109
+.Ls108:
 	sub	r7, r4, #5
-.L110:
-	ldr	r3, .L159
+.Ls110:
+	ldr	r3, .Ls159
 	cmp	r5, r3
-	bhi	.L113
+	bhi	.Ls113
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	bne	.LCB1026
-	b	.L156	@long jump
-.LCB1026:
+	bne	.LsCB1026
+	b	.Ls156	@long jump
+.LsCB1026:
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L113:
+.Ls113:
 	ldr	r3, [sp, #88]
 	lsr	r5, r5, #1
 	lsl	r3, r3, #1
 	str	r3, [sp, #88]
 	cmp	r6, r5
-	bcc	.L112
+	bcc	.Ls112
 	ldr	r4, [sp, #88]
 	mov	r3, #1
 	orr	r4, r4, r3
 	str	r4, [sp, #88]
 	sub	r6, r6, r5
-.L112:
+.Ls112:
 	sub	r7, r7, #1
 	cmp	r7, #0
-	bne	.L110
+	bne	.Ls110
 	ldr	r2, [sp, #88]
 	ldr	r7, [sp, #116]
-	ldr	r1, .L159+12
+	ldr	r1, .Ls159+12
 	lsl	r2, r2, #4
 	str	r2, [sp, #88]
 	add	r4, r7, r1
 	mov	r7, #4
-.L109:
+.Ls109:
 	mov	r3, #1
 	str	r3, [sp, #20]
-.L116:
+.Ls116:
 	lsl	r3, r3, #1
 	add	r1, r4, r3
 	str	r3, [sp, #12]
-	ldr	r3, .L159
+	ldr	r3, .Ls159
 	str	r1, [sp, #16]
 	cmp	r5, r3
-	bhi	.L119
+	bhi	.Ls119
 	ldr	r2, [sp, #68]
 	cmp	r0, r2
-	beq	.L156
+	beq	.Ls156
 	ldrb	r3, [r0]
 	lsl	r6, r6, #8
 	lsl	r5, r5, #8
 	orr	r6, r6, r3
 	add	r0, r0, #1
-.L119:
+.Ls119:
 	ldr	r1, [sp, #16]
 	ldrh	r2, [r1]
 	mov	r1, sp
@@ -979,7 +917,7 @@ LzmaDecode:
 	mov	r3, r1
 	mul	r3, r3, r2
 	cmp	r6, r3
-	bcs	.L121
+	bcs	.Ls121
 	mov	r5, r3
 	mov	r3, #128
 	lsl	r3, r3, #4
@@ -991,8 +929,8 @@ LzmaDecode:
 	add	r3, r3, r1
 	strh	r3, [r2]
 	ldr	r3, [sp, #12]
-	b	.L122
-.L121:
+	b	.Ls122
+.Ls121:
 	mov	r2, sp
 	mov	r1, ip
 	ldrh	r2, [r2]
@@ -1008,41 +946,41 @@ LzmaDecode:
 	orr	r2, r2, r1
 	str	r2, [sp, #88]
 	add	r3, r3, #1
-.L122:
+.Ls122:
 	ldr	r2, [sp, #20]
 	sub	r7, r7, #1
 	lsl	r2, r2, #1
 	str	r2, [sp, #20]
 	cmp	r7, #0
-	bne	.L116
-	b	.L123
-.L160:
+	bne	.Ls116
+	b	.Ls123
+.Ls160:
 	.align	2
-.L159:
+.Ls159:
 	.word	16777215
 	.word	2664
 	.word	1374
 	.word	1604
-.L107:
+.Ls107:
 	str	r2, [sp, #88]
-.L123:
+.Ls123:
 	ldr	r3, [sp, #88]
 	add	r3, r3, #1
 	str	r3, [sp, #88]
 	cmp	r3, #0
-	beq	.L30
-.L98:
+	beq	.Ls30
+.Ls98:
 	ldr	r4, [sp, #72]
 	ldr	r7, [sp, #88]
 	ldr	r1, [sp, #112]
 	add	r4, r4, #2
 	str	r4, [sp, #72]
 	cmp	r7, r1
-	bhi	.L156
+	bhi	.Ls156
 	ldr	r2, [sp, #148]
 	sub	r3, r2, r7
 	add	r2, r1, r3
-.L126:
+.Ls126:
 	ldrb	r3, [r2]
 	lsl	r3, r3, #24
 	lsr	r3, r3, #24
@@ -1059,31 +997,31 @@ LzmaDecode:
 	add	r2, r2, #1
 	str	r4, [sp, #112]
 	cmp	r3, #0
-	beq	.L29
+	beq	.Ls29
 	ldr	r3, [sp, #152]
 	cmp	r4, r3
-	bcc	.L126
-	b	.L30
-.L29:
+	bcc	.Ls126
+	b	.Ls30
+.Ls29:
 	ldr	r4, [sp, #112]
 	ldr	r7, [sp, #152]
 	cmp	r4, r7
-	bcs	.LCB1211
-	b	.L129	@long jump
-.LCB1211:
-.L30:
-	ldr	r3, .L161
+	bcs	.LsCB1211
+	b	.Ls129	@long jump
+.LsCB1211:
+.Ls30:
+	ldr	r3, .Ls161
 	cmp	r5, r3
-	bhi	.L130
+	bhi	.Ls130
 	ldr	r1, [sp, #68]
 	cmp	r0, r1
-	bne	.L131
-.L156:
+	bne	.Ls131
+.Ls156:
 	mov	r0, #1
-	b	.L19
-.L131:
+	b	.Ls19
+.Ls131:
 	add	r0, r0, #1
-.L130:
+.Ls130:
 	ldr	r2, [sp, #124]
 	ldr	r4, [sp, #120]
 	ldr	r7, [sp, #112]
@@ -1092,13 +1030,11 @@ LzmaDecode:
 	str	r3, [r4]
 	str	r7, [r1]
 	mov	r0, #0
-.L19:
+.Ls19:
 	add	sp, sp, #128
 	@ sp needed for prologue
 	pop	{r4, r5, r6, r7, pc}
-.L162:
+.Ls162:
 	.align	2
-.L161:
+.Ls161:
 	.word	16777215
-	.size	LzmaDecode, .-LzmaDecode
-	.ident	"GCC: (GNU) 3.4.5"

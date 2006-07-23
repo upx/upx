@@ -294,6 +294,15 @@ protected:
                            unsigned value, const char *type);
 };
 
+class ElfLinkerArmBE : public ElfLinker
+{
+    typedef ElfLinker super;
+
+protected:
+    virtual void relocate1(Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
 
 #endif /* already included */
 

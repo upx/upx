@@ -340,6 +340,6 @@ section CallLZMA
 section LZMA_DECODE
 .real_start_ofLZMA_DECODE:              // suppress silly warnings
 
-#undef section
+section LZMA_DEC10
 #include "arch/arm/v4t/lzma_d_cs.S"
 

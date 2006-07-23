@@ -388,7 +388,7 @@ section CallLZMA
 
 section LZMA_DECODE
 
-#undef section
+section LZMA_DEC10
 #include "arch/arm/v4a/lzma_d_cs.S"
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

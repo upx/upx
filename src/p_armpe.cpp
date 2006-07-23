@@ -1691,7 +1691,7 @@ int PackArmPe::buildLoader(const Filter *ft)
         else if (ph.method == M_NRV2D_8)
             addLoader(".ucl_nrv2d_decompress_8", NULL);
         else if (M_IS_LZMA(ph.method))
-            addLoader("LZMA_DECODE", ".text.LzmaDecode", NULL);
+            addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
     }
     else
     {
@@ -1700,7 +1700,7 @@ int PackArmPe::buildLoader(const Filter *ft)
         else if (ph.method == M_NRV2B_8)
             addLoader(".ucl_nrv2b_decompress_8", NULL);
         else if (M_IS_LZMA(ph.method))
-            addLoader("+40C,LZMA_DECODE,.text.LzmaDecode", NULL);
+            addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
     }
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);

@@ -214,7 +214,8 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
+#tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc      = arm-unknown-linux-gnu-gcc-4.1.0 -march=armv4 -nostdinc -MMD
 tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.arm-linux.elf.ld       = $(call tc,m-ld)

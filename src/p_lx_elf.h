@@ -92,6 +92,7 @@ protected:
     // but the class hierarchy splits after this class.
     virtual int ARM_buildLoader(Filter const *ft, bool isBE);
     virtual void ARM_addLinkerSymbols(Filter const *ft);
+    virtual void ARM_updateLoader(OutputFile *);
     virtual void ARM_pack1(OutputFile *, bool isBE);
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -398,8 +399,11 @@ public:
     virtual const int *getFilters() const;
 
 protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual Linker* newLinker() const;
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int buildLoader(const Filter *);
+    virtual void updateLoader(OutputFile *);
     virtual void addLinkerSymbols(Filter const *);
 };
 
@@ -414,8 +418,11 @@ public:
     virtual const int *getFilters() const;
 
 protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual Linker* newLinker() const;
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int buildLoader(const Filter *);
+    virtual void updateLoader(OutputFile *);
     virtual void addLinkerSymbols(Filter const *);
 };
 
