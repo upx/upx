@@ -185,28 +185,17 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
     static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
     static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_LZMA, M_END };
-    static const int m_nrv2d_v4[] = { M_NRV2D_8, M_NRV2E_8, M_LZMA, M_END };
-    static const int m_nrv2e_v4[] = { M_NRV2E_8, M_NRV2D_8, M_LZMA, M_END };
     static const int m_lzma[]  = { M_LZMA, M_END };
 
-    UNUSED(level);
-
-    if (M_IS_LZMA(method))
-        return m_lzma;
-    // FIXME this when we have v4 mode nrv2b
     if (!use_thumb_stub)
-    {
-        if (M_IS_NRV2E(method))
-            return m_nrv2e_v4 ;
-        if (M_IS_NRV2D(method))
-            return m_nrv2d_v4;
-        return m_nrv2e_v4;
-    }
+        return getDefaultCompressionMethods_8(method, level);
 
     if (M_IS_NRV2B(method))
         return m_nrv2b;
     if (M_IS_NRV2E(method))
         return m_nrv2e;
+    if (M_IS_LZMA(method))
+        return m_lzma;
     return m_nrv2e;
 }
 
@@ -1684,24 +1673,14 @@ int PackArmPe::buildLoader(const Filter *ft)
     addLoader("+40C,Imports", NULL);
     addLoader("ProcessEnd", NULL);
 
-    if (!use_thumb_stub)
-    {
-        if (ph.method == M_NRV2E_8)
-            addLoader(".ucl_nrv2e_decompress_8", NULL);
-        else if (ph.method == M_NRV2D_8)
-            addLoader(".ucl_nrv2d_decompress_8", NULL);
-        else if (M_IS_LZMA(ph.method))
-            addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
-    }
-    else
-    {
-        if (ph.method == M_NRV2E_8)
-            addLoader(".ucl_nrv2e_decompress_8", NULL);
-        else if (ph.method == M_NRV2B_8)
-            addLoader(".ucl_nrv2b_decompress_8", NULL);
-        else if (M_IS_LZMA(ph.method))
-            addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
-    }
+    if (ph.method == M_NRV2E_8)
+        addLoader(".ucl_nrv2e_decompress_8", NULL);
+    else if (ph.method == M_NRV2B_8)
+        addLoader(".ucl_nrv2b_decompress_8", NULL);
+    else if (ph.method == M_NRV2D_8)
+        addLoader(".ucl_nrv2d_decompress_8", NULL);
+    else if (M_IS_LZMA(ph.method))
+        addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);
     freezeLoader();
