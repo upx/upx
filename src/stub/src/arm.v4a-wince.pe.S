@@ -352,7 +352,7 @@ section Call2D
 
 ////////////////////////////////////////
 
-section LZMA_0
+section CallLZMA
         // r0=src0, r1=slen, r2=dst0, r3=addr dstl
 
         parb    .req r3
@@ -371,20 +371,20 @@ section LZMA_0
         cmp     sp, para
         bne     .Lclearstack
 
-        stmfd   sp!, {r2, parb, para}   // &outSizeProcessed, outSize, out
+        stmfd   sp!, {r2, parb, para}   // out, outSize, &outSizeProcessed
         add     r3, para, #4            // &inSizeProcessed
         mov     r2, parc                // inSize
         add     r1, r0, #2              // in
         add     r0, para, #8            // &CLzmaDecoderState
         str     pard, [r0]              // lc, lp, pb, dummy
         bl      LZMA_DECODE
+        mov     sp, r7
         b       .LLZMA_end
 
 .LzmaParams:
         .long   UPXb, UPXa, UPXc, UPXd
 
 .LLZMA_end:
-        mov     sp, r7
 
 section LZMA_DECODE
 

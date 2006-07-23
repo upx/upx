@@ -183,14 +183,16 @@ PackArmPe::~PackArmPe()
 
 const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_END };
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_LZMA, M_END };
     static const int m_nrv2d_v4[] = { M_NRV2D_8, M_NRV2E_8, M_LZMA, M_END };
     static const int m_nrv2e_v4[] = { M_NRV2E_8, M_NRV2D_8, M_LZMA, M_END };
-    static const int m_lzma_v4[]  = { M_LZMA, M_END };
+    static const int m_lzma[]  = { M_LZMA, M_END };
 
     UNUSED(level);
 
+    if (M_IS_LZMA(method))
+        return m_lzma;
     // FIXME this when we have v4 mode nrv2b
     if (!use_thumb_stub)
     {
@@ -198,8 +200,6 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
             return m_nrv2e_v4 ;
         if (M_IS_NRV2D(method))
             return m_nrv2d_v4;
-        if (M_IS_LZMA(method))
-            return m_lzma_v4;
         return m_nrv2e_v4;
     }
 
@@ -1672,7 +1672,7 @@ int PackArmPe::buildLoader(const Filter *ft)
     else if (ph.method == M_NRV2D_8)
         addLoader("Call2D", NULL);
     else if (M_IS_LZMA(ph.method))
-        addLoader("LZMA_0", NULL);
+        addLoader("+40C,CallLZMA", NULL);
 
 
     if (ft->id == 0x50)
@@ -1699,6 +1699,8 @@ int PackArmPe::buildLoader(const Filter *ft)
             addLoader(".ucl_nrv2e_decompress_8", NULL);
         else if (ph.method == M_NRV2B_8)
             addLoader(".ucl_nrv2b_decompress_8", NULL);
+        else if (M_IS_LZMA(ph.method))
+            addLoader("+40C,LZMA_DECODE,.text.LzmaDecode", NULL);
     }
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);

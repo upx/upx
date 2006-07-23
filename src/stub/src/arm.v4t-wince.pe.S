@@ -281,6 +281,8 @@ section ProcessEnd
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+#include "include/header2.ash"
+
 #define PURE_THUMB 1
 
 section .ucl_nrv2b_decompress_8
@@ -298,7 +300,46 @@ section .ucl_nrv2e_decompress_8
 section Call2E
         bl      .thumb_nrv2e_d8
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+////////////////////////////////////////
 
-#include "include/header2.ash"
+section CallLZMA
+        // r0=src0, r1=slen, r2=dst0, r3=addr dstl
+
+        parb    .req r3
+        para    .req r4
+        parc    .req r5
+        pard    .req r6
+
+        adr     r7, .LzmaParams
+        ldmia   r7!, {parb, para, parc, pard}    // load params
+
+        mov     r7, sp                  // save stack
+        add     para, sp
+        mov     r1, #0
+.Lclearstack:
+        push    {r1}
+        cmp     sp, para
+        bne     .Lclearstack
+
+        push    {r2, parb, para}        // out, outSize, &outSizeProcessed
+        add     r3, para, #4            // &inSizeProcessed
+        mov     r2, parc                // inSize
+        add     r1, r0, #2              // in
+        add     r0, r3, #4              // &CLzmaDecoderState
+        str     pard, [r0]              // lc, lp, pb, dummy
+        bl      LZMA_DECODE
+        mov     sp, r7
+        b       .LLZMA_end
+
+        .align  2
+.LzmaParams:
+        .long   UPXb, UPXa, UPXc, UPXd
+
+.LLZMA_end:
+
+section LZMA_DECODE
+.real_start_ofLZMA_DECODE:              // suppress silly warnings
+
+#undef section
+#include "arch/arm/v4t/lzma_d_cs.S"
 

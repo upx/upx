@@ -1,119 +1,1104 @@
-.byte 240,181,160,176, 31,145, 21, 28,  1, 29,  0, 34, 30,147, 29,145   /* 0x0000 */
-.byte  28,146, 27,146,  1, 34,131,120, 20, 28,156, 64, 35, 28,  1, 59   /* 0x0010 */
-.byte  26,147, 67,120,154, 64,  1, 58, 25,146,  7,120, 30,156, 24,151   /* 0x0020 */
-.byte  39,159,  1, 34,  0, 35,  0, 33, 35, 96, 23,145, 59, 96, 22,146   /* 0x0030 */
-.byte  21,146, 20,146, 19,146, 24,153, 66,120,192, 35,138, 24,155,  0   /* 0x0040 */
-.byte 147, 64,212, 74,156, 24,  0, 32,  0, 44,  7,217, 29,154,128, 35   /* 0x0050 */
-.byte 219,  0,  1, 48, 19,128,  2, 50,160, 66,248,211, 31,152, 69, 25   /* 0x0060 */
-.byte  17,149,  1, 37,  0, 38,109, 66,  0, 34, 17,155,152, 66,  0,209   /* 0x0070 */
-.byte 100,227,  3,120, 54,  2,  1, 50, 30, 67,  1, 48,  4, 42,244,221   /* 0x0080 */
-.byte  38,156,  0, 44,  0,216, 83,227, 26,153, 28,159, 23,154, 15, 64   /* 0x0090 */
-.byte  19,  1,219, 25, 16,151,192, 73, 29,159, 91,  0,220, 25,141, 66   /* 0x00a0 */
-.byte   8,216, 17,154,144, 66,  0,209, 72,227,  3,120, 54,  2, 45,  2   /* 0x00b0 */
-.byte  30, 67,  1, 48, 34,136, 17,  4, 15, 12,235, 10,188, 70,103, 70   /* 0x00c0 */
-.byte  95, 67, 59, 28,158, 66,  0,211,166,224, 29, 28,128, 35, 97, 70   /* 0x00d0 */
-.byte  27,  1, 91, 26, 91, 17,155, 24, 35,128, 28,154, 25,155, 24,156   /* 0x00e0 */
-.byte  26, 64, 27,153,  8, 35, 27, 27, 25, 65,162, 64, 82, 24, 83,  0   /* 0x00f0 */
-.byte 155, 24, 29,154, 91,  2,211, 24,168, 73, 23,154,  1, 39, 92, 24   /* 0x0100 */
-.byte   6, 42, 70,221, 28,153, 22,154,139, 26, 37,153,203, 92, 15,147   /* 0x0110 */
-.byte  15,154,128, 35, 82,  0, 89,  0, 15,146, 10, 64, 83,  0,127,  0   /* 0x0120 */
-.byte 148, 70,227, 24,128, 34,219, 25,146,  0,154, 24,154, 75, 13,151   /* 0x0130 */
-.byte  14,146,157, 66,  8,216, 17,155,152, 66,  0,209,254,226,  3,120   /* 0x0140 */
-.byte  54,  2, 45,  2, 30, 67,  1, 48, 14,159, 58,136, 23,  4,235, 10   /* 0x0150 */
-.byte  57, 12, 75, 67,158, 66, 12,210, 29, 28,128, 35, 27,  1, 91, 26   /* 0x0160 */
-.byte  91, 17, 14,153,155, 24, 98, 70, 11,128, 13,159,  0, 42, 11,208   /* 0x0170 */
-.byte  13,224,237, 26,246, 26,123, 13, 14,159,211, 26, 59,128, 13,159   /* 0x0180 */
-.byte  97, 70,  1, 55,  0, 41,  2,208,255, 47,193,221, 44,224,255, 47   /* 0x0190 */
-.byte  42,220,127,  0,128, 75, 12,151, 63, 25,188, 70,157, 66,  8,216   /* 0x01a0 */
-.byte  17,154,144, 66,  0,209,201,226,  3,120, 54,  2, 45,  2, 30, 67   /* 0x01b0 */
-.byte   1, 48,103, 70, 58,136, 17,  4,235, 10, 15, 12,123, 67,158, 66   /* 0x01c0 */
-.byte   9,210, 29, 28,128, 35, 27,  1,219, 27, 91, 17, 12,159,155, 24   /* 0x01d0 */
-.byte  97, 70, 11,128,219,231, 12,159,237, 26,246, 26, 75, 13,211, 26   /* 0x01e0 */
-.byte   1, 55, 98, 70, 19,128,210,231, 28,156, 59,  6, 37,159, 27, 14   /* 0x01f0 */
-.byte  27,147,227, 85, 23,159,  1, 52, 28,148,  3, 47,  2,220,  0, 33   /* 0x0200 */
-.byte  23,145,144,226, 23,154,  9, 42,  2,220,  3, 58, 23,146,138,226   /* 0x0210 */
-.byte  23,155,  6, 59, 23,147,134,226, 75, 13,211, 26, 35,128, 23,156   /* 0x0220 */
-.byte 237, 27,246, 27, 29,159, 99,  0,255, 24,192, 36, 90, 73,188, 70   /* 0x0230 */
-.byte 100,  0,100, 68,141, 66,  8,216, 17,154,144, 66,  0,209,125,226   /* 0x0240 */
-.byte   3,120, 54,  2, 45,  2, 30, 67,  1, 48, 34,136, 17,  4,235, 10   /* 0x0250 */
-.byte  15, 12,123, 67,158, 66, 23,210, 29, 28,128, 35, 27,  1,219, 27   /* 0x0260 */
-.byte  91, 17,155, 24, 35,128, 22,159, 20,155, 21,156, 23,153, 19,147   /* 0x0270 */
-.byte  20,148, 21,151,  6, 41,  1,220,  0, 35,  0,224,  3, 35, 23,147   /* 0x0280 */
-.byte  29,154, 71, 75,212, 24,203,224,237, 26,246, 26, 75, 13,211, 26   /* 0x0290 */
-.byte  35,128, 65, 79,204, 36,100,  0,100, 68,189, 66,  8,216, 17,153   /* 0x02a0 */
-.byte 136, 66,  0,209, 74,226,  3,120, 54,  2, 45,  2, 30, 67,  1, 48   /* 0x02b0 */
-.byte  34,136, 17,  4,235, 10, 15, 12,123, 67,158, 66, 69,210, 29, 28   /* 0x02c0 */
-.byte 128, 35, 25,  1,203, 27, 91, 17,155, 24, 23,154, 35,128, 16,159   /* 0x02d0 */
-.byte  29,156, 83,  1,227, 24,122,  0,155, 24,140, 70, 46, 74,240, 33   /* 0x02e0 */
-.byte  73,  0, 92, 24,149, 66,  8,216, 17,155,152, 66,  0,209, 37,226   /* 0x02f0 */
-.byte   3,120, 54,  2, 45,  2, 30, 67,  1, 48, 34,136, 23,  4,235, 10   /* 0x0300 */
-.byte  57, 12, 75, 67,158, 66, 26,210,103, 70, 29, 28,123, 26, 91, 17   /* 0x0310 */
-.byte  28,153,155, 24, 35,128,  0, 41,  0,209, 15,226, 23,154,  6, 42   /* 0x0320 */
-.byte   1,220,  9, 35,  0,224, 11, 35, 28,156, 22,159, 23,147, 37,153   /* 0x0330 */
-.byte 227, 27,203, 92, 27,147, 99, 84,  1, 52, 28,148,243,225,237, 26   /* 0x0340 */
-.byte 246, 26,123, 13,211, 26, 35,128, 96,224,237, 26,246, 26, 75, 13   /* 0x0350 */
-.byte 211, 26, 35,128,216, 36, 16, 75,100,  0,100, 68,157, 66,  8,216   /* 0x0360 */
-.byte  17,159,184, 66,  0,209,233,225,  3,120, 54,  2, 45,  2, 30, 67   /* 0x0370 */
-.byte   1, 48, 34,136, 17,  4,235, 10, 15, 12,123, 67,158, 66, 17,210   /* 0x0380 */
-.byte  29, 28,128, 35, 27,  1,219, 27, 21,153, 91, 17,155, 24,140, 70   /* 0x0390 */
-.byte  35,128, 55,224, 54,  7,  0,  0,255,255,255,  0,108, 14,  0,  0   /* 0x03a0 */
-.byte 100,  6,  0,  0,237, 26,246, 26, 75, 13,211, 26, 35,128,199, 74   /* 0x03b0 */
-.byte 228, 36,100,  0,100, 68,149, 66,  8,216, 17,155,152, 66,  0,209   /* 0x03c0 */
-.byte 188,225,  3,120, 54,  2, 45,  2, 30, 67,  1, 48, 34,136, 17,  4   /* 0x03d0 */
-.byte 235, 10, 15, 12,123, 67,158, 66,  9,210, 29, 28,128, 35, 27,  1   /* 0x03e0 */
-.byte 219, 27, 91, 17,155, 24, 35,128, 20,156,164, 70,  8,224,237, 26   /* 0x03f0 */
-.byte 246, 26, 75, 13, 20,153, 19,159,211, 26, 35,128, 19,145,188, 70   /* 0x0400 */
-.byte  21,154, 20,146, 22,155,100, 70, 21,147, 22,148, 23,159,  6, 47   /* 0x0410 */
-.byte   1,220,  8, 35,  0,224, 11, 35, 29,153,173, 74, 23,147,140, 24   /* 0x0420 */
-.byte 170, 75,156, 70,101, 69,  8,216, 17,159,184, 66,  0,209,133,225   /* 0x0430 */
-.byte   3,120, 54,  2, 45,  2, 30, 67,  1, 48, 34,136, 17,  4,235, 10   /* 0x0440 */
-.byte  15, 12,123, 67,158, 66, 16,210, 29, 28,128, 35, 27,  1,219, 27   /* 0x0450 */
-.byte  91, 17, 16,153,155, 24, 35,128, 11,  1,227, 24,  4, 51,  9,147   /* 0x0460 */
-.byte   0, 34,  3, 35, 10,146, 11,147, 54,224,237, 26,246, 26, 75, 13   /* 0x0470 */
-.byte 211, 26, 35,128,101, 69,  8,216, 17,159,184, 66,  0,209, 93,225   /* 0x0480 */
-.byte   3,120, 54,  2, 45,  2, 30, 67,  1, 48, 98,136, 17,  4,235, 10   /* 0x0490 */
-.byte  15, 12,123, 67,158, 66, 18,210, 29, 28,128, 35, 27,  1,219, 27   /* 0x04a0 */
-.byte  91, 17, 16,153,155, 24, 99,128,130, 34, 11,  1,227, 24, 82,  0   /* 0x04b0 */
-.byte 154, 24,  3, 36,  8, 35,  9,146, 10,147, 11,148, 12,224,129, 39   /* 0x04c0 */
-.byte 237, 26,246, 26,191,  0, 75, 13,211, 26,231, 25, 16, 33,  8, 34   /* 0x04d0 */
-.byte  99,128,  9,151, 10,145, 11,146, 11,155,  1, 36,  8,147, 18,148   /* 0x04e0 */
-.byte  18,159,  9,153,127,  0,121, 75,188, 70, 97, 68,157, 66,  8,216   /* 0x04f0 */
-.byte  17,154,144, 66,  0,209, 33,225,  3,120, 54,  2, 45,  2, 30, 67   /* 0x0500 */
-.byte   1, 48, 12,136, 34,  4,235, 10, 23, 12,123, 67,158, 66,  9,210   /* 0x0510 */
-.byte  29, 28,128, 35, 27,  1,219, 27, 91, 17, 27, 25, 11,128, 99, 70   /* 0x0520 */
-.byte  18,147,  7,224,237, 26,246, 26, 83, 13,227, 26,100, 70,  1, 52   /* 0x0530 */
-.byte  11,128, 18,148,  8,159,  1, 63,  8,151,  0, 47,208,209, 11,153   /* 0x0540 */
-.byte  18,154,  1, 35,139, 64,210, 26, 10,155, 23,156,210, 24, 18,146   /* 0x0550 */
-.byte   3, 44,  0,221,200,224,  7, 52, 23,148, 19, 28,  3, 42,  0,221   /* 0x0560 */
-.byte   3, 35, 29,159,219,  1,216, 33,  6, 34,251, 24,137,  0,  7,146   /* 0x0570 */
-.byte  92, 24,  1, 34, 82,  0, 85, 75,  6,146, 18, 25,148, 70,157, 66   /* 0x0580 */
-.byte   8,216, 17,155,152, 66,  0,209,216,224,  3,120, 54,  2, 45,  2   /* 0x0590 */
-.byte  30, 67,  1, 48,103, 70, 58,136, 17,  4,235, 10, 15, 12,123, 67   /* 0x05a0 */
-.byte 158, 66,  9,210, 29, 28,128, 35, 27,  1,219, 27, 91, 17,155, 24   /* 0x05b0 */
-.byte   6,154, 97, 70, 11,128,  7,224,237, 26,246, 26, 75, 13,211, 26   /* 0x05c0 */
-.byte  98, 70, 19,128,  6,154,  1, 50,  7,155,  1, 59,  7,147,  0, 43   /* 0x05d0 */
-.byte 208,209, 64, 58,  3, 42,  0,220,128,224,  1, 33, 17, 64,  2, 35   /* 0x05e0 */
-.byte  84, 16, 25, 67,103, 30, 22,145, 13, 42,  9,220,185, 64, 29,156   /* 0x05f0 */
-.byte  75,  0,227, 24, 22,145, 82,  0, 54, 73,155, 26, 92, 24, 33,224   /* 0x0600 */
-.byte 103, 31, 50, 75,157, 66,  8,216, 17,154,144, 66,  0,209,149,224   /* 0x0610 */
-.byte   3,120, 54,  2, 45,  2, 30, 67,  1, 48, 22,155,109,  8, 91,  0   /* 0x0620 */
-.byte  22,147,174, 66,  4,211, 22,156,  1, 35, 28, 67, 22,148,118, 27   /* 0x0630 */
-.byte   1, 63,  0, 47,229,209, 22,154, 29,159, 39, 73, 18,  1, 22,146   /* 0x0640 */
-.byte 124, 24,  4, 39,  1, 35,  5,147, 91,  0,225, 24,  3,147, 31, 75   /* 0x0650 */
-.byte   4,145,157, 66,  7,216, 17,154,144, 66,111,208,  3,120, 54,  2   /* 0x0660 */
-.byte  45,  2, 30, 67,  1, 48,  4,153, 10,136,105, 70, 10,128,235, 10   /* 0x0670 */
-.byte   2,147, 11,136, 27,  4,156, 70,  2,153, 27, 12, 26, 28,  1,147   /* 0x0680 */
-.byte  11, 28, 83, 67,158, 66, 11,210, 29, 28,128, 35, 27,  1,105, 70   /* 0x0690 */
-.byte 155, 26,  9,136, 91, 17,  4,154, 91, 24, 19,128,  3,155, 14,224   /* 0x06a0 */
-.byte 106, 70, 97, 70, 18,136,237, 26,246, 26, 75, 13,  4,153,211, 26   /* 0x06b0 */
-.byte  11,128, 22,154,  5,153,  3,155, 10, 67, 22,146,  1, 51,  5,154   /* 0x06c0 */
-.byte   1, 63, 82,  0,  5,146,  0, 47,190,209,  8,224,255,255,255,  0   /* 0x06d0 */
-.byte 104, 10,  0,  0, 94,  5,  0,  0, 68,  6,  0,  0, 22,146, 22,155   /* 0x06e0 */
-.byte   1, 51, 22,147,  0, 43, 35,208, 18,156, 22,159, 28,153,  2, 52   /* 0x06f0 */
-.byte  18,148,143, 66, 34,216, 37,154,211, 27,202, 24, 19,120, 27,  6   /* 0x0700 */
-.byte  27, 14, 27,147, 27,172, 18,155, 33,120, 37,159, 28,156,  1, 59   /* 0x0710 */
-.byte  18,147,225, 85,  1, 52,  1, 50, 28,148,  0, 43,  3,208, 38,155   /* 0x0720 */
-.byte 156, 66,235,211,  4,224, 28,156, 38,159,188, 66,  0,210,171,228   /* 0x0730 */
-.byte   9, 75,157, 66,  5,216, 17,153,136, 66,  1,209,  1, 32,  8,224   /* 0x0740 */
-.byte   1, 48, 31,154, 30,156, 28,159, 39,153,131, 26, 35, 96, 15, 96   /* 0x0750 */
-.byte   0, 32, 32,176,240,189,  0,  0,255,255,255,  0                   /* 0x0760 */
+	.code	16
+	.file	"lzma_d_c.c"
+	.section	.text.LzmaDecodeProperties,"ax",%progbits
+	.align	2
+	.global	LzmaDecodeProperties
+	.code 16
+	.thumb_func
+	.type	LzmaDecodeProperties, %function
+LzmaDecodeProperties:
+	push	{lr}
+	cmp	r2, #4
+	ble	.L18
+	ldrb	r1, [r1]
+	cmp	r1, #224
+	bls	.L3
+.L18:
+	mov	r0, #1
+	b	.L1
+.L3:
+	mov	r3, #0
+	str	r3, [r0, #8]
+	cmp	r1, #44
+	bls	.L13
+	mov	r2, #0
+.L7:
+	mov	r3, r1
+	sub	r3, r3, #45
+	lsl	r3, r3, #24
+	lsr	r1, r3, #24
+	add	r2, r2, #1
+	cmp	r1, #44
+	bhi	.L7
+	str	r2, [r0, #8]
+.L13:
+	mov	r3, #0
+	str	r3, [r0, #4]
+	cmp	r1, #8
+	bls	.L15
+	mov	r2, #0
+.L11:
+	mov	r3, r1
+	sub	r3, r3, #9
+	lsl	r3, r3, #24
+	lsr	r1, r3, #24
+	add	r2, r2, #1
+	cmp	r1, #8
+	bhi	.L11
+	str	r2, [r0, #4]
+.L15:
+	str	r1, [r0]
+	mov	r0, #0
+.L1:
+	@ sp needed for prologue
+	pop	{pc}
+	.size	LzmaDecodeProperties, .-LzmaDecodeProperties
+	.section	.text.LzmaDecode,"ax",%progbits
+	.align	2
+	.global	LzmaDecode
+	.code 16
+	.thumb_func
+	.type	LzmaDecode, %function
+LzmaDecode:
+	push	{r4, r5, r6, r7, lr}
+	sub	sp, sp, #128
+	str	r1, [sp, #124]
+	mov	r5, r2
+	add	r1, r0, #4
+	mov	r2, #0
+	str	r3, [sp, #120]
+	str	r1, [sp, #116]
+	str	r2, [sp, #112]
+	str	r2, [sp, #108]
+	mov	r2, #1
+	ldrb	r3, [r0, #2]
+	mov	r4, r2
+	lsl	r4, r4, r3
+	mov	r3, r4
+	sub	r3, r3, #1
+	str	r3, [sp, #104]
+	ldrb	r3, [r0, #1]
+	lsl	r2, r2, r3
+	sub	r2, r2, #1
+	str	r2, [sp, #100]
+	ldrb	r7, [r0]
+	ldr	r4, [sp, #120]
+	str	r7, [sp, #96]
+	ldr	r7, [sp, #156]
+	mov	r2, #1
+	mov	r3, #0
+	mov	r1, #0
+	str	r3, [r4]
+	str	r1, [sp, #92]
+	str	r3, [r7]
+	str	r2, [sp, #88]
+	str	r2, [sp, #84]
+	str	r2, [sp, #80]
+	str	r2, [sp, #76]
+	ldr	r1, [sp, #96]
+	ldrb	r2, [r0, #1]
+	mov	r3, #192
+	add	r2, r1, r2
+	lsl	r3, r3, #2
+	lsl	r3, r3, r2
+	ldr	r2, .L157
+	add	r4, r3, r2
+	mov	r0, #0
+	cmp	r4, #0
+	bls	.L133
+	ldr	r2, [sp, #116]
+.L23:
+	mov	r3, #128
+	lsl	r3, r3, #3
+	add	r0, r0, #1
+	strh	r3, [r2]
+	add	r2, r2, #2
+	cmp	r0, r4
+	bcc	.L23
+.L133:
+	ldr	r0, [sp, #124]
+	add	r5, r0, r5
+	str	r5, [sp, #68]
+	mov	r5, #1
+	mov	r6, #0
+	neg	r5, r5
+	mov	r2, #0
+.L28:
+	ldr	r3, [sp, #68]
+	cmp	r0, r3
+	bne	.LCB157
+	b	.L156	@long jump
+.LCB157:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	add	r2, r2, #1
+	orr	r6, r6, r3
+	add	r0, r0, #1
+	cmp	r2, #4
+	ble	.L28
+	ldr	r4, [sp, #152]
+	cmp	r4, #0
+	bhi	.LCB172
+	b	.L30	@long jump
+.LCB172:
+.L129:
+	ldr	r1, [sp, #104]
+	ldr	r7, [sp, #112]
+	ldr	r2, [sp, #92]
+	and	r7, r7, r1
+	lsl	r3, r2, #4
+	add	r3, r3, r7
+	str	r7, [sp, #64]
+	ldr	r1, .L157+4
+	ldr	r7, [sp, #116]
+	lsl	r3, r3, #1
+	add	r4, r3, r7
+	cmp	r5, r1
+	bhi	.L31
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	bne	.LCB191
+	b	.L156	@long jump
+.LCB191:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L31:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r7, r1, #16
+	lsr	r3, r5, #11
+	mov	ip, r7
+	mov	r7, ip
+	mul	r7, r7, r3
+	mov	r3, r7
+	cmp	r6, r3
+	bcc	.LCB209
+	b	.L33	@long jump
+.LCB209:
+	mov	r5, r3
+	mov	r3, #128
+	mov	r1, ip
+	lsl	r3, r3, #4
+	sub	r3, r3, r1
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	strh	r3, [r4]
+	ldr	r2, [sp, #112]
+	ldr	r3, [sp, #100]
+	ldr	r4, [sp, #96]
+	and	r2, r2, r3
+	ldr	r1, [sp, #108]
+	mov	r3, #8
+	sub	r3, r3, r4
+	asr	r1, r1, r3
+	lsl	r2, r2, r4
+	add	r2, r2, r1
+	lsl	r3, r2, #1
+	add	r3, r3, r2
+	ldr	r2, [sp, #116]
+	lsl	r3, r3, #9
+	add	r3, r2, r3
+	ldr	r1, .L157+8
+	ldr	r2, [sp, #92]
+	mov	r7, #1
+	add	r4, r3, r1
+	cmp	r2, #6
+	ble	.L50
+	ldr	r1, [sp, #112]
+	ldr	r2, [sp, #88]
+	sub	r3, r1, r2
+	ldr	r1, [sp, #148]
+	ldrb	r3, [r1, r3]
+	str	r3, [sp, #60]
+.L35:
+	ldr	r2, [sp, #60]
+	mov	r3, #128
+	lsl	r2, r2, #1
+	lsl	r1, r3, #1
+	str	r2, [sp, #60]
+	and	r2, r2, r1
+	lsl	r3, r2, #1
+	lsl	r7, r7, #1
+	mov	ip, r2
+	add	r3, r4, r3
+	mov	r2, #128
+	add	r3, r3, r7
+	lsl	r2, r2, #2
+	add	r2, r3, r2
+	ldr	r3, .L157+4
+	str	r7, [sp, #52]
+	str	r2, [sp, #56]
+	cmp	r5, r3
+	bhi	.L38
+	ldr	r3, [sp, #68]
+	cmp	r0, r3
+	bne	.LCB271
+	b	.L156	@long jump
+.LCB271:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L38:
+	ldr	r7, [sp, #56]
+	ldrh	r2, [r7]
+	lsl	r7, r2, #16
+	lsr	r3, r5, #11
+	lsr	r1, r7, #16
+	mul	r3, r3, r1
+	cmp	r6, r3
+	bcs	.L40
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r1
+	asr	r3, r3, #5
+	ldr	r1, [sp, #56]
+	add	r3, r3, r2
+	mov	r2, ip
+	strh	r3, [r1]
+	ldr	r7, [sp, #52]
+	cmp	r2, #0
+	beq	.L37
+	b	.L34
+.L40:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r7, #21
+	ldr	r7, [sp, #56]
+	sub	r3, r2, r3
+	strh	r3, [r7]
+	ldr	r7, [sp, #52]
+	mov	r1, ip
+	add	r7, r7, #1
+	cmp	r1, #0
+	beq	.L34
+.L37:
+	cmp	r7, #255
+	ble	.L35
+	b	.L138
+.L34:
+	cmp	r7, #255
+	bgt	.L138
+.L50:
+	lsl	r7, r7, #1
+	ldr	r3, .L157+4
+	str	r7, [sp, #48]
+	add	r7, r7, r4
+	mov	ip, r7
+	cmp	r5, r3
+	bhi	.L46
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	bne	.LCB338
+	b	.L156	@long jump
+.LCB338:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L46:
+	mov	r7, ip
+	ldrh	r2, [r7]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L48
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	ldr	r7, [sp, #48]
+	add	r3, r3, r2
+	mov	r1, ip
+	strh	r3, [r1]
+	b	.L34
+.L48:
+	ldr	r7, [sp, #48]
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	add	r7, r7, #1
+	mov	r2, ip
+	strh	r3, [r2]
+	b	.L34
+.L138:
+	ldr	r4, [sp, #112]
+	lsl	r3, r7, #24
+	ldr	r7, [sp, #148]
+	lsr	r3, r3, #24
+	str	r3, [sp, #108]
+	strb	r3, [r4, r7]
+	ldr	r7, [sp, #92]
+	add	r4, r4, #1
+	str	r4, [sp, #112]
+	cmp	r7, #3
+	bgt	.L51
+	mov	r1, #0
+	str	r1, [sp, #92]
+	b	.L29
+.L51:
+	ldr	r2, [sp, #92]
+	cmp	r2, #9
+	bgt	.L53
+	sub	r2, r2, #3
+	str	r2, [sp, #92]
+	b	.L29
+.L53:
+	ldr	r3, [sp, #92]
+	sub	r3, r3, #6
+	str	r3, [sp, #92]
+	b	.L29
+.L33:
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r4, [sp, #92]
+	sub	r5, r5, r7
+	sub	r6, r6, r7
+	ldr	r7, [sp, #116]
+	lsl	r3, r4, #1
+	add	r7, r7, r3
+	mov	r4, #192
+	ldr	r1, .L157+4
+	mov	ip, r7
+	lsl	r4, r4, #1
+	add	r4, r4, ip
+	cmp	r5, r1
+	bhi	.L56
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	bne	.LCB436
+	b	.L156	@long jump
+.LCB436:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L56:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L58
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	strh	r3, [r4]
+	ldr	r7, [sp, #88]
+	ldr	r3, [sp, #80]
+	ldr	r4, [sp, #84]
+	ldr	r1, [sp, #92]
+	str	r3, [sp, #76]
+	str	r4, [sp, #80]
+	str	r7, [sp, #84]
+	cmp	r1, #6
+	bgt	.L59
+	mov	r3, #0
+	b	.L60
+.L59:
+	mov	r3, #3
+.L60:
+	str	r3, [sp, #92]
+	ldr	r2, [sp, #116]
+	ldr	r3, .L157+12
+	add	r4, r2, r3
+	b	.L61
+.L58:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r7, .L157+4
+	mov	r4, #204
+	lsl	r4, r4, #1
+	add	r4, r4, ip
+	cmp	r5, r7
+	bhi	.L62
+	ldr	r1, [sp, #68]
+	cmp	r0, r1
+	bne	.LCB498
+	b	.L156	@long jump
+.LCB498:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L62:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L64
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r1, r3, #4
+	sub	r3, r1, r7
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	ldr	r2, [sp, #92]
+	strh	r3, [r4]
+	ldr	r7, [sp, #64]
+	ldr	r4, [sp, #116]
+	lsl	r3, r2, #5
+	add	r3, r4, r3
+	lsl	r2, r7, #1
+	add	r3, r3, r2
+	mov	ip, r1
+	ldr	r2, .L157+4
+	mov	r1, #240
+	lsl	r1, r1, #1
+	add	r4, r3, r1
+	cmp	r5, r2
+	bhi	.L65
+	ldr	r3, [sp, #68]
+	cmp	r0, r3
+	bne	.LCB538
+	b	.L156	@long jump
+.LCB538:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L65:
+	ldrh	r2, [r4]
+	lsl	r7, r2, #16
+	lsr	r3, r5, #11
+	lsr	r1, r7, #16
+	mul	r3, r3, r1
+	cmp	r6, r3
+	bcs	.L67
+	mov	r7, ip
+	mov	r5, r3
+	sub	r3, r7, r1
+	asr	r3, r3, #5
+	ldr	r1, [sp, #112]
+	add	r3, r3, r2
+	strh	r3, [r4]
+	cmp	r1, #0
+	bne	.LCB563
+	b	.L156	@long jump
+.LCB563:
+	ldr	r2, [sp, #92]
+	cmp	r2, #6
+	bgt	.L69
+	mov	r3, #9
+	b	.L70
+.L69:
+	mov	r3, #11
+.L70:
+	ldr	r4, [sp, #112]
+	ldr	r7, [sp, #88]
+	str	r3, [sp, #92]
+	ldr	r1, [sp, #148]
+	sub	r3, r4, r7
+	ldrb	r3, [r1, r3]
+	str	r3, [sp, #108]
+	strb	r3, [r4, r1]
+	add	r4, r4, #1
+	str	r4, [sp, #112]
+	b	.L29
+.L67:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r7, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	b	.L72
+.L64:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	mov	r4, #216
+	ldr	r3, .L157+4
+	lsl	r4, r4, #1
+	add	r4, r4, ip
+	cmp	r5, r3
+	bhi	.L73
+	ldr	r7, [sp, #68]
+	cmp	r0, r7
+	bne	.LCB614
+	b	.L156	@long jump
+.LCB614:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L73:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L75
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	ldr	r1, [sp, #84]
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	mov	ip, r1
+	strh	r3, [r4]
+	b	.L76
+.L158:
+	.align	2
+.L157:
+	.word	1846
+	.word	16777215
+	.word	3692
+	.word	1636
+.L75:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r2, .L159
+	mov	r4, #228
+	lsl	r4, r4, #1
+	add	r4, r4, ip
+	cmp	r5, r2
+	bhi	.L77
+	ldr	r3, [sp, #68]
+	cmp	r0, r3
+	bne	.LCB666
+	b	.L156	@long jump
+.LCB666:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L77:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L79
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	strh	r3, [r4]
+	ldr	r4, [sp, #80]
+	mov	ip, r4
+	b	.L80
+.L79:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	ldr	r1, [sp, #80]
+	ldr	r7, [sp, #76]
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	str	r1, [sp, #76]
+	mov	ip, r7
+.L80:
+	ldr	r2, [sp, #84]
+	str	r2, [sp, #80]
+.L76:
+	ldr	r3, [sp, #88]
+	mov	r4, ip
+	str	r3, [sp, #84]
+	str	r4, [sp, #88]
+.L72:
+	ldr	r7, [sp, #92]
+	cmp	r7, #6
+	bgt	.L81
+	mov	r3, #8
+	b	.L82
+.L81:
+	mov	r3, #11
+.L82:
+	ldr	r1, [sp, #116]
+	ldr	r2, .L159+4
+	str	r3, [sp, #92]
+	add	r4, r1, r2
+.L61:
+	ldr	r3, .L159
+	mov	ip, r3
+	cmp	r5, ip
+	bhi	.L83
+	ldr	r7, [sp, #68]
+	cmp	r0, r7
+	bne	.LCB740
+	b	.L156	@long jump
+.LCB740:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L83:
+	ldrh	r2, [r4]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L85
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	ldr	r1, [sp, #64]
+	add	r3, r3, r2
+	strh	r3, [r4]
+	lsl	r3, r1, #4
+	add	r3, r4, r3
+	add	r3, r3, #4
+	str	r3, [sp, #36]
+	mov	r2, #0
+	mov	r3, #3
+	str	r2, [sp, #40]
+	str	r3, [sp, #44]
+	b	.L86
+.L85:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	cmp	r5, ip
+	bhi	.L87
+	ldr	r7, [sp, #68]
+	cmp	r0, r7
+	bne	.LCB786
+	b	.L156	@long jump
+.LCB786:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L87:
+	ldrh	r2, [r4, #2]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L89
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	ldr	r1, [sp, #64]
+	add	r3, r3, r2
+	strh	r3, [r4, #2]
+	mov	r2, #130
+	lsl	r3, r1, #4
+	add	r3, r4, r3
+	lsl	r2, r2, #1
+	add	r2, r3, r2
+	mov	r4, #3
+	mov	r3, #8
+	str	r2, [sp, #36]
+	str	r3, [sp, #40]
+	str	r4, [sp, #44]
+	b	.L86
+.L89:
+	mov	r7, #129
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsl	r7, r7, #2
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	add	r7, r4, r7
+	mov	r1, #16
+	mov	r2, #8
+	strh	r3, [r4, #2]
+	str	r7, [sp, #36]
+	str	r1, [sp, #40]
+	str	r2, [sp, #44]
+.L86:
+	ldr	r3, [sp, #44]
+	mov	r4, #1
+	str	r3, [sp, #32]
+	str	r4, [sp, #72]
+.L91:
+	ldr	r7, [sp, #72]
+	ldr	r1, [sp, #36]
+	lsl	r7, r7, #1
+	ldr	r3, .L159
+	mov	ip, r7
+	add	r1, r1, ip
+	cmp	r5, r3
+	bhi	.L94
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	bne	.LCB857
+	b	.L156	@long jump
+.LCB857:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L94:
+	ldrh	r4, [r1]
+	lsl	r2, r4, #16
+	lsr	r3, r5, #11
+	lsr	r7, r2, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L96
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	add	r3, r3, r4
+	strh	r3, [r1]
+	mov	r3, ip
+	str	r3, [sp, #72]
+	b	.L93
+.L96:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r2, #21
+	sub	r3, r4, r3
+	mov	r4, ip
+	add	r4, r4, #1
+	strh	r3, [r1]
+	str	r4, [sp, #72]
+.L93:
+	ldr	r7, [sp, #32]
+	sub	r7, r7, #1
+	str	r7, [sp, #32]
+	cmp	r7, #0
+	bne	.L91
+	ldr	r1, [sp, #44]
+	ldr	r2, [sp, #72]
+	mov	r3, #1
+	lsl	r3, r3, r1
+	sub	r2, r2, r3
+	ldr	r3, [sp, #40]
+	ldr	r4, [sp, #92]
+	add	r2, r2, r3
+	str	r2, [sp, #72]
+	cmp	r4, #3
+	ble	.LCB914
+	b	.L98	@long jump
+.LCB914:
+	add	r4, r4, #7
+	str	r4, [sp, #92]
+	mov	r3, r2
+	cmp	r2, #3
+	ble	.L99
+	mov	r3, #3
+.L99:
+	ldr	r7, [sp, #116]
+	lsl	r3, r3, #7
+	mov	r1, #216
+	mov	r2, #6
+	add	r3, r7, r3
+	lsl	r1, r1, #2
+	str	r2, [sp, #28]
+	add	r4, r3, r1
+	mov	r2, #1
+.L100:
+	lsl	r2, r2, #1
+	ldr	r3, .L159
+	str	r2, [sp, #24]
+	add	r2, r2, r4
+	mov	ip, r2
+	cmp	r5, r3
+	bhi	.L103
+	ldr	r3, [sp, #68]
+	cmp	r0, r3
+	bne	.LCB944
+	b	.L156	@long jump
+.LCB944:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L103:
+	mov	r7, ip
+	ldrh	r2, [r7]
+	lsl	r1, r2, #16
+	lsr	r3, r5, #11
+	lsr	r7, r1, #16
+	mul	r3, r3, r7
+	cmp	r6, r3
+	bcs	.L105
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r7
+	asr	r3, r3, #5
+	add	r3, r3, r2
+	ldr	r2, [sp, #24]
+	mov	r1, ip
+	strh	r3, [r1]
+	b	.L102
+.L105:
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	sub	r3, r2, r3
+	mov	r2, ip
+	strh	r3, [r2]
+	ldr	r2, [sp, #24]
+	add	r2, r2, #1
+.L102:
+	ldr	r3, [sp, #28]
+	sub	r3, r3, #1
+	str	r3, [sp, #28]
+	cmp	r3, #0
+	bne	.L100
+	sub	r2, r2, #64
+	cmp	r2, #3
+	bgt	.LCB994
+	b	.L107	@long jump
+.LCB994:
+	mov	r1, #1
+	and	r1, r1, r2
+	mov	r3, #2
+	asr	r4, r2, #1
+	orr	r1, r1, r3
+	sub	r7, r4, #1
+	str	r1, [sp, #88]
+	cmp	r2, #13
+	bgt	.L108
+	lsl	r1, r1, r7
+	ldr	r4, [sp, #116]
+	lsl	r3, r1, #1
+	add	r3, r4, r3
+	str	r1, [sp, #88]
+	lsl	r2, r2, #1
+	ldr	r1, .L159+8
+	sub	r3, r3, r2
+	add	r4, r3, r1
+	b	.L109
+.L108:
+	sub	r7, r4, #5
+.L110:
+	ldr	r3, .L159
+	cmp	r5, r3
+	bhi	.L113
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	bne	.LCB1026
+	b	.L156	@long jump
+.LCB1026:
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L113:
+	ldr	r3, [sp, #88]
+	lsr	r5, r5, #1
+	lsl	r3, r3, #1
+	str	r3, [sp, #88]
+	cmp	r6, r5
+	bcc	.L112
+	ldr	r4, [sp, #88]
+	mov	r3, #1
+	orr	r4, r4, r3
+	str	r4, [sp, #88]
+	sub	r6, r6, r5
+.L112:
+	sub	r7, r7, #1
+	cmp	r7, #0
+	bne	.L110
+	ldr	r2, [sp, #88]
+	ldr	r7, [sp, #116]
+	ldr	r1, .L159+12
+	lsl	r2, r2, #4
+	str	r2, [sp, #88]
+	add	r4, r7, r1
+	mov	r7, #4
+.L109:
+	mov	r3, #1
+	str	r3, [sp, #20]
+.L116:
+	lsl	r3, r3, #1
+	add	r1, r4, r3
+	str	r3, [sp, #12]
+	ldr	r3, .L159
+	str	r1, [sp, #16]
+	cmp	r5, r3
+	bhi	.L119
+	ldr	r2, [sp, #68]
+	cmp	r0, r2
+	beq	.L156
+	ldrb	r3, [r0]
+	lsl	r6, r6, #8
+	lsl	r5, r5, #8
+	orr	r6, r6, r3
+	add	r0, r0, #1
+.L119:
+	ldr	r1, [sp, #16]
+	ldrh	r2, [r1]
+	mov	r1, sp
+	strh	r2, [r1]
+	lsr	r3, r5, #11
+	str	r3, [sp, #8]
+	ldrh	r3, [r1]
+	lsl	r3, r3, #16
+	mov	ip, r3
+	ldr	r1, [sp, #8]
+	lsr	r3, r3, #16
+	mov	r2, r3
+	str	r3, [sp, #4]
+	mov	r3, r1
+	mul	r3, r3, r2
+	cmp	r6, r3
+	bcs	.L121
+	mov	r5, r3
+	mov	r3, #128
+	lsl	r3, r3, #4
+	mov	r1, sp
+	sub	r3, r3, r2
+	ldrh	r1, [r1]
+	asr	r3, r3, #5
+	ldr	r2, [sp, #16]
+	add	r3, r3, r1
+	strh	r3, [r2]
+	ldr	r3, [sp, #12]
+	b	.L122
+.L121:
+	mov	r2, sp
+	mov	r1, ip
+	ldrh	r2, [r2]
+	sub	r5, r5, r3
+	sub	r6, r6, r3
+	lsr	r3, r1, #21
+	ldr	r1, [sp, #16]
+	sub	r3, r2, r3
+	strh	r3, [r1]
+	ldr	r2, [sp, #88]
+	ldr	r1, [sp, #20]
+	ldr	r3, [sp, #12]
+	orr	r2, r2, r1
+	str	r2, [sp, #88]
+	add	r3, r3, #1
+.L122:
+	ldr	r2, [sp, #20]
+	sub	r7, r7, #1
+	lsl	r2, r2, #1
+	str	r2, [sp, #20]
+	cmp	r7, #0
+	bne	.L116
+	b	.L123
+.L160:
+	.align	2
+.L159:
+	.word	16777215
+	.word	2664
+	.word	1374
+	.word	1604
+.L107:
+	str	r2, [sp, #88]
+.L123:
+	ldr	r3, [sp, #88]
+	add	r3, r3, #1
+	str	r3, [sp, #88]
+	cmp	r3, #0
+	beq	.L30
+.L98:
+	ldr	r4, [sp, #72]
+	ldr	r7, [sp, #88]
+	ldr	r1, [sp, #112]
+	add	r4, r4, #2
+	str	r4, [sp, #72]
+	cmp	r7, r1
+	bhi	.L156
+	ldr	r2, [sp, #148]
+	sub	r3, r2, r7
+	add	r2, r1, r3
+.L126:
+	ldrb	r3, [r2]
+	lsl	r3, r3, #24
+	lsr	r3, r3, #24
+	str	r3, [sp, #108]
+	add	r4, sp, #108
+	ldr	r3, [sp, #72]
+	ldrb	r1, [r4]
+	ldr	r7, [sp, #148]
+	ldr	r4, [sp, #112]
+	sub	r3, r3, #1
+	str	r3, [sp, #72]
+	strb	r1, [r4, r7]
+	add	r4, r4, #1
+	add	r2, r2, #1
+	str	r4, [sp, #112]
+	cmp	r3, #0
+	beq	.L29
+	ldr	r3, [sp, #152]
+	cmp	r4, r3
+	bcc	.L126
+	b	.L30
+.L29:
+	ldr	r4, [sp, #112]
+	ldr	r7, [sp, #152]
+	cmp	r4, r7
+	bcs	.LCB1211
+	b	.L129	@long jump
+.LCB1211:
+.L30:
+	ldr	r3, .L161
+	cmp	r5, r3
+	bhi	.L130
+	ldr	r1, [sp, #68]
+	cmp	r0, r1
+	bne	.L131
+.L156:
+	mov	r0, #1
+	b	.L19
+.L131:
+	add	r0, r0, #1
+.L130:
+	ldr	r2, [sp, #124]
+	ldr	r4, [sp, #120]
+	ldr	r7, [sp, #112]
+	ldr	r1, [sp, #156]
+	sub	r3, r0, r2
+	str	r3, [r4]
+	str	r7, [r1]
+	mov	r0, #0
+.L19:
+	add	sp, sp, #128
+	@ sp needed for prologue
+	pop	{r4, r5, r6, r7, pc}
+.L162:
+	.align	2
+.L161:
+	.word	16777215
+	.size	LzmaDecode, .-LzmaDecode
+	.ident	"GCC: (GNU) 3.4.5"
