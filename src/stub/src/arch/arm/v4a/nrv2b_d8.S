@@ -49,7 +49,7 @@
 #define STRB3(reg,pdst,incr) strb reg,pdst,incr
 
 #undef  GETBIT
-#define GETBIT  ADD2S(bits,bits); bleq get8_n2b
+#define GETBIT  bl get1_n2b
 
 #define getnextb(reg) GETBIT; ADC2S(reg,reg) /* Set Condition Codes on result */
 #define   jnextb0     GETBIT; bcc
@@ -85,11 +85,22 @@ eof_n2b:
 
         POP {r4,r5, pc}  // return
 
+get1_n2b:
+        ADD2S(bits,bits)  // shift left 1 bit, set condition codes
+        movne pc,lr  // conditionally return CarryOut if rest is non-empty
 get8_n2b:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
         LDRB3(bits,[src],#1)  // zero-extend next byte
-        adc  bits,bits,bits  // double and insert CarryIn as low bit
+        ADC2(bits,bits)  // double and insert CarryIn as low bit
         movs bits,bits,lsl #24  // move to top byte, and set CarryOut from old bit 8
         mov pc,lr
+
+ss11_n2b:  // return len= [2..)
+        mov len,#1  // the msb
+        mov ip,lr  // outer ret.addr
+1:
+        getnextb(len)
+        jnextb0 1b
+        mov pc,ip  // outer ret
 
 lit_n2b:
         LDRB3(tmp,[src],#1)
@@ -97,11 +108,7 @@ lit_n2b:
 top_n2b:
         jnextb1 lit_n2b
 
-        mov len,#1  // the msb
-getoff_n2b:  // ss11 len= [2..)
-        getnextb(len)
-        jnextb0 getoff_n2b
-
+        bl ss11_n2b  // len= [2..)
         subs tmp,len,#3  // set Carry
         mov len,#0  // Carry unaffected
         blo offprev_n2b  // ss11 returned 2
@@ -109,27 +116,17 @@ getoff_n2b:  // ss11 len= [2..)
         orr  off,off,tmp,lsl #8
         mvns off,off; beq eof_n2b  // off= ~off
 offprev_n2b:  // In: 0==len
-        getnextb(len); getnextb(len); bne plus1_n2b  // two bits; 1,2,3 ==> 2,3,4
-
-        mov len,#1  // the msb
-getlen_n2b:  // ss11 len= [2..)
-        getnextb(len)
-        jnextb0 getlen_n2b
+        getnextb(len); getnextb(len); bne 1f  // two bits; 1,2,3 ==> 2,3,4
+        bl ss11_n2b  // len= [2..)
         ADD2(len,#2)  // [2..) ==> [4..);
-plus1_n2b:
-        ADD2(len,#1)  // 1,2,3 ==> 2,3,4; [4..) ==> [5..)
+1:
 /* 'cmn': add the inputs, set condition codes, discard the sum */
         cmn off,#0xd<<8  // within M2_MAX_OFFSET
         addcc len,len,#1  // too far away, so minimum match length is 3
-
-        add tmp,dst,len
-        ldrb tmp,[tmp,#-1]  // force cacheline allocate
-
-copy_n2b:
-        ldrb tmp,[dst,off]
-        STRB3(tmp,[dst],#1)
-        SUB2S(len,#1); bne copy_n2b
-        b top_n2b
+copy_n2b:  // copy 1+len bytes
+        ldrb  tmp,[dst,off]; SUB2S(len,#1)
+        STRB3(tmp,[dst],#1); bhs copy_n2b
+        b top_n2b  // exit with -1==len
 
         .size ucl_nrv2b_decompress_8, .-ucl_nrv2b_decompress_8
 /*
