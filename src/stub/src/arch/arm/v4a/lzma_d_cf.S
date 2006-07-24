@@ -29,32 +29,32 @@
 	str	r3, [sp, #12]
 	str	lr, [sp, #16]
 	str	r0, [sp, #8]
-	b	f.L14
-f.L15:
+	b	.Lf14
+.Lf15:
 	ldr	r0, [sp, #8]
 	mov	r1, #1024	@ movhi
 	strh	r1, [r3, r0]	@ movhi
-f.L14:
+.Lf14:
 	cmp	r4, ip
 	mov	r3, r4, asl #1
 	add	r4, r4, #1
-	bne	f.L15
+	bne	.Lf15
 	ldr	r3, [sp, #4]
 	mov	r6, #0
 	add	r9, r3, r2
 	mov	lr, r3
 	mov	r2, r6
-f.L17:
+.Lf17:
 	ldr	r5, [sp, #4]
 	rsb	r3, r5, r9
 	cmp	r2, r3
 	add	lr, lr, #1
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [r2, r5]	@ zero_extendqisi2
 	add	r2, r2, #1
 	cmp	r2, #5
 	orr	r6, r3, r6, asl #8
-	bne	f.L17
+	bne	.Lf17
 	mov	fp, #0
 	mov	ip, #1
 	mov	r7, fp
@@ -64,17 +64,17 @@ f.L17:
 	str	ip, [sp, #28]
 	str	ip, [sp, #32]
 	str	ip, [sp, #36]
-	b	f.L172
-f.L22:
+	b	.Lf172
+.Lf22:
 	mvn	r8, #-16777216
 	cmp	r0, r8
-	bhi	f.L23
+	bhi	.Lf23
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r0, r0, asl #8
 	orr	r6, r3, r6, asl #8
-f.L23:
+.Lf23:
 	ldr	r1, [sp, #12]
 	ldr	r2, [sp, #24]
 	and	sl, fp, r1
@@ -86,7 +86,7 @@ f.L23:
 	mov	r3, r0, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L26
+	bcs	.Lf26
 	ldr	r0, [sp, #20]
 	rsb	r3, r0, #8
 	mov	r3, r7, asr r3
@@ -105,14 +105,14 @@ f.L23:
 	add	r8, r8, #12
 	movle	r0, r4
 	movle	r1, #1
-	ble	f.L171
+	ble	.Lf171
 	ldr	r2, [sp, #44]
 	ldr	r5, [sp, #84]
 	rsb	r3, r2, fp
 	ldrb	r7, [r5, r3]	@ zero_extendqisi2
 	mov	r0, r4
 	mov	r1, #1
-f.L31:
+.Lf31:
 	mov	r7, r7, asl #1
 	and	r5, r7, #256
 	mov	sl, r1, asl #1
@@ -121,13 +121,13 @@ f.L31:
 	cmp	r0, #16777216
 	add	r4, r3, #512
 	add	ip, r1, #1
-	bcs	f.L32
+	bcs	.Lf32
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L32:
+.Lf32:
 	ldrh	r3, [r4, #0]
 	mov	r2, r0, lsr #11
 	add	r1, r1, ip
@@ -136,34 +136,34 @@ f.L32:
 	cmp	r6, ip
 	add	r2, r3, r2, asr #5
 	sub	r3, r3, r3, lsr #5
-	bcs	f.L35
+	bcs	.Lf35
 	cmp	r5, #0
 	mov	r0, ip
 	strh	r2, [r4, #0]	@ movhi
 	mov	r1, sl
-	beq	f.L39
+	beq	.Lf39
 	mov	r0, ip
-	b	f.L171
-f.L35:
+	b	.Lf171
+.Lf35:
 	cmp	r5, #0
 	strh	r3, [r4, #0]	@ movhi
 	rsb	r6, ip, r6
 	rsb	r0, ip, r0
-	beq	f.L171
-f.L39:
+	beq	.Lf171
+.Lf39:
 	cmp	r1, #255
-	bgt	f.L46
-	b	f.L31
-f.L40:
+	bgt	.Lf46
+	b	.Lf31
+.Lf40:
 	cmp	r0, #16777216
 	add	r1, r1, r3
-	bcs	f.L41
+	bcs	.Lf41
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L41:
+.Lf41:
 	ldrh	r3, [r8, r4]
 	mov	r2, r0, lsr #11
 	mul	ip, r3, r2
@@ -177,12 +177,12 @@ f.L41:
 	movcc	r1, r4
 	movcc	r0, ip
 	rsbcs	r6, ip, r6
-f.L171:
+.Lf171:
 	cmp	r1, #255
 	mov	r4, r1, asl #1
 	add	r3, r1, #1
-	ble	f.L40
-f.L46:
+	ble	.Lf40
+.Lf46:
 	ldr	ip, [sp, #24]
 	and	r7, r1, #255
 	cmp	ip, #3
@@ -191,7 +191,7 @@ f.L46:
 	strb	r7, [r1, fp]
 	add	fp, fp, #1
 	strle	r2, [sp, #24]
-	ble	f.L172
+	ble	.Lf172
 	ldr	r3, [sp, #24]
 	cmp	r3, #9
 	ldrgt	r5, [sp, #24]
@@ -199,21 +199,21 @@ f.L46:
 	subgt	r5, r5, #6
 	strle	r3, [sp, #24]
 	strgt	r5, [sp, #24]
-	b	f.L172
-f.L26:
+	b	.Lf172
+.Lf26:
 	sub	r3, ip, ip, lsr #5
 	rsb	r2, r4, r0
 	ldr	ip, [sp, #8]
 	cmp	r2, r8
 	strh	r3, [ip, r5]	@ movhi
 	rsb	r6, r4, r6
-	bhi	f.L51
+	bhi	.Lf51
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r2, r2, asl #8
 	orr	r6, r3, r6, asl #8
-f.L51:
+.Lf51:
 	ldr	r0, [sp, #8]
 	ldr	r3, [sp, #24]
 	add	r7, r0, r3, asl #1
@@ -222,7 +222,7 @@ f.L51:
 	mov	r3, r2, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L54
+	bcs	.Lf54
 	ldr	r2, [sp, #24]
 	ldr	r5, [sp, #8]
 	cmp	r2, #6
@@ -241,37 +241,37 @@ f.L51:
 	str	ip, [sp, #32]
 	str	r2, [sp, #28]
 	strh	r3, [r0, #0]	@ movhi
-	b	f.L59
-f.L54:
+	b	.Lf59
+.Lf54:
 	rsb	r2, r4, r2
 	sub	r3, ip, ip, lsr #5
 	cmp	r2, r8
 	strh	r3, [r0, #0]	@ movhi
 	rsb	r6, r4, r6
-	bhi	f.L60
+	bhi	.Lf60
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r2, r2, asl #8
 	orr	r6, r3, r6, asl #8
-f.L60:
+.Lf60:
 	add	r5, r7, #408
 	ldrh	ip, [r5, #0]
 	mov	r3, r2, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L63
+	bcs	.Lf63
 	rsb	r3, ip, #2048
 	add	r3, ip, r3, asr #5
 	cmp	r4, r8
 	strh	r3, [r5, #0]	@ movhi
-	bhi	f.L67
+	bhi	.Lf67
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r4, r4, asl #8
 	orr	r6, r3, r6, asl #8
-f.L67:
+.Lf67:
 	ldr	r5, [sp, #8]
 	add	r3, r5, r1, asl #1
 	add	r3, r3, sl, asl #1
@@ -283,12 +283,12 @@ f.L67:
 	rsbcs	r6, r2, r6
 	subcs	r3, ip, ip, lsr #5
 	rsbcs	r5, r2, r4
-	bcs	f.L169
+	bcs	.Lf169
 	rsb	r3, ip, #2048
 	add	r3, ip, r3, asr #5
 	cmp	fp, #0
 	strh	r3, [r1, #0]	@ movhi
-	beq	f.L18
+	beq	.Lf18
 	ldr	ip, [sp, #44]
 	ldr	r1, [sp, #24]
 	ldr	r0, [sp, #84]
@@ -301,56 +301,56 @@ f.L67:
 	strb	r7, [r0, fp]
 	mov	r0, r2
 	add	fp, fp, #1
-	b	f.L172
-f.L63:
+	b	.Lf172
+.Lf63:
 	rsb	r2, r4, r2
 	sub	r3, ip, ip, lsr #5
 	cmp	r2, r8
 	strh	r3, [r5, #0]	@ movhi
 	rsb	r6, r4, r6
-	bhi	f.L76
+	bhi	.Lf76
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r2, r2, asl #8
 	orr	r6, r3, r6, asl #8
-f.L76:
+.Lf76:
 	add	r1, r7, #432
 	ldrh	ip, [r1, #0]
 	mov	r3, r2, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L79
+	bcs	.Lf79
 	ldr	r5, [sp, #44]
 	rsb	r3, ip, #2048
 	ldr	r2, [sp, #28]
 	add	r3, ip, r3, asr #5
 	str	r5, [sp, #28]
 	mov	r5, r4
-f.L170:
+.Lf170:
 	str	r2, [sp, #44]
-f.L169:
+.Lf169:
 	strh	r3, [r1, #0]	@ movhi
-	b	f.L75
-f.L79:
+	b	.Lf75
+.Lf79:
 	rsb	r2, r4, r2
 	sub	r3, ip, ip, lsr #5
 	cmp	r2, r8
 	strh	r3, [r1, #0]	@ movhi
 	rsb	r6, r4, r6
-	bhi	f.L81
+	bhi	.Lf81
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r2, r2, asl #8
 	orr	r6, r3, r6, asl #8
-f.L81:
+.Lf81:
 	add	r1, r7, #456
 	ldrh	ip, [r1, #0]
 	mov	r3, r2, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L84
+	bcs	.Lf84
 	rsb	r3, ip, #2048
 	ldr	r2, [sp, #32]
 	add	r3, ip, r3, asr #5
@@ -359,8 +359,8 @@ f.L81:
 	mov	r5, r4
 	str	ip, [sp, #32]
 	str	r0, [sp, #28]
-	b	f.L170
-f.L84:
+	b	.Lf170
+.Lf84:
 	sub	r3, ip, ip, lsr #5
 	strh	r3, [r1, #0]	@ movhi
 	ldr	ip, [sp, #44]
@@ -373,7 +373,7 @@ f.L84:
 	str	ip, [sp, #28]
 	str	r3, [sp, #44]
 	rsb	r6, r4, r6
-f.L75:
+.Lf75:
 	ldr	r2, [sp, #24]
 	ldr	r0, [sp, #8]
 	cmp	r2, #6
@@ -382,21 +382,21 @@ f.L75:
 	add	r1, r0, #2656
 	str	r2, [sp, #24]
 	add	r1, r1, #8
-f.L59:
+.Lf59:
 	mvn	r7, #-16777216
 	cmp	r5, r7
-	bhi	f.L89
+	bhi	.Lf89
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r5, r5, asl #8
 	orr	r6, r3, r6, asl #8
-f.L89:
+.Lf89:
 	ldrh	ip, [r1, #0]
 	mov	r3, r5, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L92
+	bcs	.Lf92
 	add	r2, r1, sl, asl #4
 	rsb	r3, ip, #2048
 	add	r3, ip, r3, asr #5
@@ -405,25 +405,25 @@ f.L89:
 	mov	sl, #3
 	mov	r8, #0
 	strh	r3, [r1, #0]	@ movhi
-	b	f.L94
-f.L92:
+	b	.Lf94
+.Lf92:
 	rsb	r2, r4, r5
 	sub	r3, ip, ip, lsr #5
 	cmp	r2, r7
 	rsb	r6, r4, r6
 	strh	r3, [r1, #0]	@ movhi
-	bhi	f.L95
+	bhi	.Lf95
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	mov	r2, r2, asl #8
 	orr	r6, r3, r6, asl #8
-f.L95:
+.Lf95:
 	ldrh	ip, [r1, #2]
 	mov	r3, r2, lsr #11
 	mul	r4, ip, r3
 	cmp	r6, r4
-	bcs	f.L98
+	bcs	.Lf98
 	add	r2, r1, sl, asl #4
 	rsb	r3, ip, #2048
 	add	r3, ip, r3, asr #5
@@ -432,8 +432,8 @@ f.L95:
 	mov	sl, #3
 	mov	r8, #8
 	strh	r3, [r1, #2]	@ movhi
-	b	f.L94
-f.L98:
+	b	.Lf94
+.Lf98:
 	sub	r3, ip, ip, lsr #5
 	strh	r3, [r1, #2]	@ movhi
 	rsb	r6, r4, r6
@@ -441,21 +441,21 @@ f.L98:
 	add	r5, r1, #516
 	mov	sl, #8
 	mov	r8, #16
-f.L94:
+.Lf94:
 	mov	r7, sl
 	mov	r1, #1
-f.L100:
+.Lf100:
 	add	r3, r1, #1
 	cmp	r0, #16777216
 	mov	r4, r1, asl #1
 	add	r1, r1, r3
-	bcs	f.L101
+	bcs	.Lf101
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L101:
+.Lf101:
 	ldrh	r3, [r5, r4]
 	mov	r2, r0, lsr #11
 	mul	ip, r3, r2
@@ -470,14 +470,14 @@ f.L101:
 	rsbcs	r6, ip, r6
 	strcsh	r3, [r5, r4]	@ movhi
 	subs	r7, r7, #1
-	bne	f.L100
+	bne	.Lf100
 	mov	r2, #1
 	sub	r3, r1, r2, asl sl
 	ldr	r5, [sp, #24]
 	add	r3, r3, r8
 	cmp	r5, #3
 	str	r3, [sp, #40]
-	bgt	f.L108
+	bgt	.Lf108
 	ldr	ip, [sp, #8]
 	cmp	r3, #3
 	movge	r3, #3
@@ -485,18 +485,18 @@ f.L101:
 	add	r5, r3, #864
 	mov	r7, r2
 	mov	r8, #6
-f.L110:
+.Lf110:
 	add	r3, r7, #1
 	cmp	r0, #16777216
 	mov	r4, r7, asl #1
 	add	r7, r7, r3
-	bcs	f.L111
+	bcs	.Lf111
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L111:
+.Lf111:
 	ldrh	r3, [r5, r4]
 	mov	r2, r0, lsr #11
 	mul	ip, r3, r2
@@ -511,11 +511,11 @@ f.L111:
 	rsbcs	r6, ip, r6
 	strcsh	r3, [r5, r4]	@ movhi
 	subs	r8, r8, #1
-	bne	f.L110
+	bne	.Lf110
 	sub	r2, r7, #64
 	cmp	r2, #3
 	movle	r5, r2
-	ble	f.L137
+	ble	.Lf137
 	mov	r4, r2, asr #1
 	cmp	r2, #13
 	and	r3, r2, #1
@@ -523,50 +523,50 @@ f.L111:
 	orr	ip, r3, #2
 	subgt	r4, r4, #5
 	movgt	r2, r8
-	bgt	f.L123
+	bgt	.Lf123
 	mov	r5, ip, asl r7
 	ldr	r1, [sp, #8]
 	add	r3, r1, r5, asl #1
 	sub	r3, r3, r2, asl #1
 	add	r4, r3, #1360
 	add	r4, r4, #14
-	b	f.L122
-f.L123:
+	b	.Lf122
+.Lf123:
 	cmp	r0, #16777216
 	add	r2, r2, #1
-	bcs	f.L124
+	bcs	.Lf124
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L124:
+.Lf124:
 	mov	r0, r0, lsr #1
 	cmp	r6, r0
 	mov	ip, ip, asl #1
 	rsbcs	r6, r0, r6
 	orrcs	ip, ip, #1
 	cmp	r2, r4
-	bne	f.L123
+	bne	.Lf123
 	ldr	r2, [sp, #8]
 	add	r4, r2, #1600
 	add	r4, r4, #4
 	mov	r5, ip, asl #4
 	mov	r7, #4
-f.L122:
+.Lf122:
 	mov	sl, #1
 	mov	r8, sl
-f.L130:
+.Lf130:
 	cmp	r0, #16777216
 	mov	r1, r8, asl #1
 	add	ip, r8, #1
-	bcs	f.L131
+	bcs	.Lf131
 	cmp	lr, r9
 	mov	r0, r0, asl #8
-	beq	f.L18
+	beq	.Lf18
 	ldrb	r3, [lr], #1	@ zero_extendqisi2
 	orr	r6, r3, r6, asl #8
-f.L131:
+.Lf131:
 	ldrh	r3, [r4, r1]
 	mov	r2, r0, lsr #11
 	add	r8, r8, ip
@@ -584,25 +584,25 @@ f.L131:
 	rsbcs	r0, ip, r0
 	subs	r7, r7, #1
 	mov	sl, sl, asl #1
-	bne	f.L130
-f.L137:
+	bne	.Lf130
+.Lf137:
 	adds	r5, r5, #1
 	str	r5, [sp, #44]
-	beq	f.L139
+	beq	.Lf139
 	ldr	r3, [sp, #24]
 	add	r3, r3, #7
 	str	r3, [sp, #24]
-f.L108:
+.Lf108:
 	ldr	r5, [sp, #44]
 	cmp	r5, fp
-	bhi	f.L18
+	bhi	.Lf18
 	ldr	ip, [sp, #40]
 	ldr	r1, [sp, #84]
 	rsb	r3, r5, fp
 	add	r2, ip, #2
 	add	r4, r1, r3
 	add	ip, r1, fp
-f.L142:
+.Lf142:
 	subs	r2, r2, #1
 	ldr	r5, [sp, #88]
 	moveq	r3, #0
@@ -614,18 +614,18 @@ f.L142:
 	ldrb	r7, [r4], #1	@ zero_extendqisi2
 	cmp	r3, #0
 	strb	r7, [ip], #1
-	bne	f.L142
-f.L172:
+	bne	.Lf142
+.Lf172:
 	ldr	ip, [sp, #88]
 	cmp	fp, ip
-	bcc	f.L22
-f.L139:
+	bcc	.Lf22
+.Lf139:
 	cmp	r0, #16777216
-	bcs	f.L143
+	bcs	.Lf143
 	cmp	lr, r9
-	beq	f.L18
+	beq	.Lf18
 	add	lr, lr, #1
-f.L143:
+.Lf143:
 	ldr	r0, [sp, #4]
 	ldr	r1, [sp, #0]
 	ldr	r2, [sp, #92]
@@ -633,9 +633,9 @@ f.L143:
 	mov	r0, #0
 	str	r3, [r1, #0]
 	str	fp, [r2, #0]
-	b	f.L146
-f.L18:
+	b	.Lf146
+.Lf18:
 	mov	r0, #1
-f.L146:
+.Lf146:
 	add	sp, sp, #48
 	ldmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
