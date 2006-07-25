@@ -31,6 +31,7 @@
 #include "packmast.h"
 #include "packer.h"
 #include "lefile.h"
+#include "pefile.h"
 #include "p_elf.h"
 
 #include "p_com.h"
