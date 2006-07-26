@@ -205,7 +205,7 @@ int PeFile::readFileHeader()
     fi->readx(&ih,sizeof(ih));
     fi->seek(0x200,SEEK_SET);
     fi->readx(&h,6);
-    return -1; // should be set overridden in the descendant class
+    return getFormat();
 }
 
 

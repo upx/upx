@@ -29,227 +29,46 @@
 #ifndef __UPX_P_W32PE_H
 #define __UPX_P_W32PE_H
 
-
-class PackW32Pe_Interval;
-class PackW32Pe_Reloc;
-class PackW32Pe_Resource;
-class PackW32Pe_Export;
-
-
 /*************************************************************************
 // w32/pe
 **************************************************************************/
 
-class PackW32Pe : public Packer
+class PackW32Pe : public PeFile
 {
-    typedef Packer super;
+    typedef PeFile super;;
 
 public:
     PackW32Pe(InputFile *f);
     ~PackW32Pe();
-    virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WIN32_PE; }
     virtual const char *getName() const { return isrtm ? "rtm32/pe" : "win32/pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
     virtual int canUnpack();
 
-    // unpacker capabilities
-    virtual bool canUnpackVersion(int version) const
-        {  return (version >= 12 && version <= 13); }
-
 protected:
     virtual int readFileHeader();
-    virtual bool testUnpackVersion(int version) const;
 
     virtual int buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    unsigned pe_offset;
     bool isrtm;
 
-    unsigned processImports();
-    void processImports(unsigned);
-    void rebuildImports(upx_byte *&);
-    upx_byte *oimport;
-    unsigned soimport;
-    upx_byte *oimpdlls;
-    unsigned soimpdlls;
+    virtual unsigned processImports();
+    virtual void processImports(unsigned, unsigned);
+    virtual void rebuildImports(upx_byte *&);
 
-    void processRelocs();
-    void processRelocs(PackW32Pe_Reloc *);
-    void rebuildRelocs(upx_byte *&);
-    upx_byte *orelocs;
-    unsigned sorelocs;
-    upx_byte *oxrelocs;
-    unsigned soxrelocs;
-
-    void processExports(PackW32Pe_Export *);
-    void processExports(PackW32Pe_Export *,unsigned);
-    void rebuildExports();
-    upx_byte *oexport;
-    unsigned soexport;
-
-    void processResources(PackW32Pe_Resource *);
-    void processResources(PackW32Pe_Resource *, unsigned);
-    void rebuildResources(upx_byte *&);
-    upx_byte *oresources;
-    unsigned soresources;
-
-    void processTls(PackW32Pe_Interval *);
-    void processTls(PackW32Pe_Reloc *,const PackW32Pe_Interval *,unsigned);
-    void rebuildTls();
-    upx_byte *otls;
-    unsigned sotls;
-
-    unsigned stripDebug(unsigned);
-
-    unsigned icondir_offset;
-    int icondir_count;
-
-    bool importbyordinal;
-    bool kernel32ordinal;
-    unsigned tlsindex;
-    unsigned rvamin;
-    unsigned cimports;              // rva of preprocessed imports
-    unsigned crelocs;               // rva of preprocessed fixups
-    int big_relocs;
-
-    void processLoadConf(PackW32Pe_Reloc *, const PackW32Pe_Interval *, unsigned);
-    void processLoadConf(PackW32Pe_Interval *);
+    void processLoadConf(Reloc *, const Interval *, unsigned);
+    void processLoadConf(Interval *);
     upx_byte *oloadconf;
     unsigned soloadconf;
 
     bool use_dep_hack;
     bool use_clear_dirty_stack;
-
-    struct pe_header_t
-    {
-        // 0x0
-        char    _[4];               // pemagic
-        LE16    cpu;
-        LE16    objects;
-        char    __[12];             // timestamp + reserved
-        LE16    opthdrsize;
-        LE16    flags;
-        // optional header
-        char    ___[4];             // coffmagic + linkerversion
-        LE32    codesize;
-        // 0x20
-        LE32    datasize;
-        LE32    bsssize;
-        LE32    entry;
-        LE32    codebase;
-        // 0x30
-        LE32    database;
-        // nt specific fields
-        LE32    imagebase;
-        LE32    objectalign;
-        LE32    filealign;          // should set to 0x200 ?
-        // 0x40
-        char    ____[16];           // versions
-        // 0x50
-        LE32    imagesize;
-        LE32    headersize;
-        LE32    chksum;             // should set to 0
-        LE16    subsystem;
-        LE16    dllflags;
-        // 0x60
-        char    _____[20];          // stack + heap sizes
-        // 0x74
-        LE32    ddirsentries;       // usually 16
-
-        struct ddirs_t
-        {
-            LE32    vaddr;
-            LE32    size;
-        }
-        __attribute_packed;
-
-        struct ddirs_t ddirs[16];
-    }
-    __attribute_packed;
-
-    struct pe_section_t
-    {
-        char    name[8];
-        LE32    vsize;
-        LE32    vaddr;
-        LE32    size;
-        LE32    rawdataptr;
-        char    _[12];
-        LE32    flags;
-    }
-    __attribute_packed;
-
-    pe_header_t ih, oh;
-    pe_section_t *isection;
-
-    static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);
-    unsigned tryremove (unsigned, unsigned);
-
-    enum {
-        PEDIR_EXPORT    = 0,
-        PEDIR_IMPORT    = 1,
-        PEDIR_RESOURCE  = 2,
-        PEDIR_EXCEPTION = 3,            // Exception table
-        PEDIR_SEC       = 4,            // Certificate table (file pointer)
-        PEDIR_RELOC     = 5,
-        PEDIR_DEBUG     = 6,
-        PEDIR_COPYRIGHT = 7,            // Architecture-specific data
-        PEDIR_GLOBALPTR = 8,            // Global pointer
-        PEDIR_TLS       = 9,
-        PEDIR_LOADCONF  = 10,           // Load Config Table
-        PEDIR_BOUNDIM   = 11,
-        PEDIR_IAT       = 12,
-        PEDIR_DELAYIMP  = 13,           // Delay Import Descriptor
-        PEDIR_COMRT     = 14            // Com+ Runtime Header
-    };
-
-    enum {
-        PEFL_CODE       = 0x20,
-        PEFL_DATA       = 0x40,
-        PEFL_BSS        = 0x80,
-        PEFL_INFO       = 0x200,
-        PEFL_EXTRELS    = 0x01000000,   // extended relocations
-        PEFL_DISCARD    = 0x02000000,
-        PEFL_NOCACHE    = 0x04000000,
-        PEFL_NOPAGE     = 0x08000000,
-        PEFL_SHARED     = 0x10000000,
-        PEFL_EXEC       = 0x20000000,
-        PEFL_READ       = 0x40000000,
-        PEFL_WRITE      = 0x80000000
-    };
-
-    enum {
-        RELOCS_STRIPPED = 0x0001,
-        EXECUTABLE      = 0x0002,
-        LNUM_STRIPPED   = 0x0004,
-        LSYMS_STRIPPED  = 0x0008,
-        AGGRESSIVE_TRIM = 0x0010,
-        TWO_GIGS_AWARE  = 0x0020,
-        FLITTLE_ENDIAN  = 0x0080,
-        BITS_32_MACHINE = 0x0100,
-        DEBUG_STRIPPED  = 0x0200,
-        REMOVABLE_SWAP  = 0x0400,
-        SYSTEM_PROGRAM  = 0x1000,
-        DLL_FLAG        = 0x2000,
-        FBIG_ENDIAN     = 0x8000
-    };
-
-    // predefined resource types
-    enum {
-        RT_CURSOR = 1, RT_BITMAP, RT_ICON, RT_MENU, RT_DIALOG, RT_STRING,
-        RT_FONTDIR, RT_FONT, RT_ACCELERATOR, RT_RCDATA, RT_MESSAGETABLE,
-        RT_GROUP_CURSOR, RT_GROUP_ICON = 14, RT_VERSION = 16, RT_DLGINCLUDE,
-        RT_PLUGPLAY = 19, RT_VXD, RT_ANICURSOR, RT_ANIICON, RT_HTML,
-        RT_MANIFEST, RT_LAST
-    };
 };
 
 

@@ -51,8 +51,8 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual int readFileHeader();
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 
     virtual unsigned processImports();
     virtual void processImports(unsigned, unsigned);
@@ -61,8 +61,6 @@ protected:
     virtual void processTls(Interval *);
 
     bool use_thumb_stub;
-
-    virtual Linker* newLinker() const;
 };
 
 
