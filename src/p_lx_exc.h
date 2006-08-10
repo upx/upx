@@ -62,6 +62,7 @@ protected:
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
 
     // loader util
+    virtual Linker* newLinker() const;
     virtual int getLoaderPrefixSize() const;
     virtual int buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections

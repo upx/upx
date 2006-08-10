@@ -1,1040 +1,1036 @@
 	push	{r4, r5, r6, r7, lr}
-	sub	sp, sp, #128
-	str	r1, [sp, #124]
-	mov	r5, r2
+	sub	sp, sp, #124
+	str	r1, [sp, #16]
 	add	r1, r0, #4
-	mov	r2, #0
-	str	r3, [sp, #120]
-	str	r1, [sp, #116]
-	str	r2, [sp, #112]
-	str	r2, [sp, #108]
-	mov	r2, #1
+	str	r1, [sp, #24]
+	str	r3, [sp, #12]
+	mov	r5, r2
 	ldrb	r3, [r0, #2]
-	mov	r4, r2
-	lsl	r4, r4, r3
-	mov	r3, r4
+	mov	r2, #1
+	mov	r1, r2
+	lsl	r1, r1, r3
+	mov	r3, r1
 	sub	r3, r3, #1
-	str	r3, [sp, #104]
+	str	r3, [sp, #32]
 	ldrb	r3, [r0, #1]
 	lsl	r2, r2, r3
 	sub	r2, r2, #1
-	str	r2, [sp, #100]
-	ldrb	r7, [r0]
-	ldr	r4, [sp, #120]
-	str	r7, [sp, #96]
-	ldr	r7, [sp, #156]
-	mov	r2, #1
+	str	r2, [sp, #36]
+	ldrb	r2, [r0]
+	ldr	r1, [sp, #12]
+	str	r2, [sp, #40]
+	ldr	r2, [sp, #152]
 	mov	r3, #0
-	mov	r1, #0
-	str	r3, [r4]
-	str	r1, [sp, #92]
-	str	r3, [r7]
-	str	r2, [sp, #88]
-	str	r2, [sp, #84]
-	str	r2, [sp, #80]
-	str	r2, [sp, #76]
-	ldr	r1, [sp, #96]
+	str	r3, [r1]
+	str	r3, [r2]
+	ldr	r3, [sp, #40]
 	ldrb	r2, [r0, #1]
+	add	r2, r3, r2
 	mov	r3, #192
-	add	r2, r1, r2
+	ldr	r0, .Lf171
 	lsl	r3, r3, #2
 	lsl	r3, r3, r2
-	ldr	r2, .Lf157
-	add	r4, r3, r2
+	ldr	r2, [sp, #24]
+	add	r4, r3, r0
 	mov	r0, #0
-	cmp	r4, #0
-	bls	.Lf133
-	ldr	r2, [sp, #116]
-.Lf23:
+	b	.Lf14
+.Lf15:
 	mov	r3, #128
 	lsl	r3, r3, #3
-	add	r0, r0, #1
 	strh	r3, [r2]
+	add	r0, r0, #1
 	add	r2, r2, #2
+.Lf14:
 	cmp	r0, r4
-	bcc	.Lf23
-.Lf133:
-	ldr	r0, [sp, #124]
-	add	r5, r0, r5
-	str	r5, [sp, #68]
-	mov	r5, #1
-	mov	r6, #0
-	neg	r5, r5
-	mov	r2, #0
-.Lf28:
-	ldr	r3, [sp, #68]
+	bne	.Lf15
+	ldr	r1, [sp, #16]
+	add	r5, r1, r5
+	str	r5, [sp, #64]
+	mov	r7, #0
+	mov	r5, r1
+	mov	r0, #0
+.Lf17:
+	ldr	r2, [sp, #64]
+	ldr	r1, [sp, #16]
+	sub	r3, r2, r1
 	cmp	r0, r3
-	bne	.LfCB157
-	b	.Lf156	@long jump
-.LfCB157:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	add	r2, r2, #1
-	orr	r6, r6, r3
+	bne	.LfCB158
+	b	.Lf18	@long jump
+.LfCB158:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
 	add	r0, r0, #1
-	cmp	r2, #4
-	ble	.Lf28
-	ldr	r4, [sp, #152]
-	cmp	r4, #0
-	bhi	.LfCB172
-	b	.Lf30	@long jump
-.LfCB172:
-.Lf129:
-	ldr	r1, [sp, #104]
-	ldr	r7, [sp, #112]
-	ldr	r2, [sp, #92]
-	and	r7, r7, r1
-	lsl	r3, r2, #4
-	add	r3, r3, r7
-	str	r7, [sp, #64]
-	ldr	r1, .Lf157+4
-	ldr	r7, [sp, #116]
-	lsl	r3, r3, #1
-	add	r4, r3, r7
-	cmp	r5, r1
-	bhi	.Lf31
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	bne	.LfCB191
-	b	.Lf156	@long jump
-.LfCB191:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf31:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r7, r1, #16
-	lsr	r3, r5, #11
-	mov	ip, r7
-	mov	r7, ip
-	mul	r7, r7, r3
-	mov	r3, r7
-	cmp	r6, r3
-	bcc	.LfCB209
-	b	.Lf33	@long jump
-.LfCB209:
-	mov	r5, r3
-	mov	r3, #128
-	mov	r1, ip
-	lsl	r3, r3, #4
-	sub	r3, r3, r1
-	asr	r3, r3, #5
+	orr	r7, r7, r3
+	add	r5, r5, #1
+	cmp	r0, #5
+	bne	.Lf17
+	mov	r2, #0
+	mov	r1, #1
+	mov	r3, #1
+	mov	ip, r2
+	neg	r1, r1
+	str	r2, [sp, #28]
+	str	r2, [sp, #44]
+	str	r3, [sp, #120]
+	str	r3, [sp, #48]
+	str	r3, [sp, #52]
+	str	r3, [sp, #56]
+	b	.Lf21
+.Lf22:
+	ldr	r0, .Lf171+4
+	cmp	r1, r0
+	bhi	.Lf23
+	ldr	r2, [sp, #64]
+	cmp	r5, r2
+	bne	.LfCB190
+	b	.Lf18	@long jump
+.LfCB190:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf23:
+	ldr	r0, [sp, #32]
+	ldr	r3, [sp, #28]
+	ldr	r2, [sp, #44]
+	and	r3, r3, r0
+	lsl	r2, r2, #4
+	str	r3, [sp, #68]
+	ldr	r0, [sp, #24]
 	add	r3, r3, r2
+	lsl	r3, r3, #1
+	add	r4, r0, r3
+	str	r2, [sp, #20]
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r6, r2
+	mul	r6, r3
+	cmp	r7, r6
+	bcc	.LfCB214
+	b	.Lf26	@long jump
+.LfCB214:
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	ldr	r1, [sp, #36]
+	ldr	r2, [sp, #28]
 	strh	r3, [r4]
-	ldr	r2, [sp, #112]
-	ldr	r3, [sp, #100]
-	ldr	r4, [sp, #96]
-	and	r2, r2, r3
-	ldr	r1, [sp, #108]
+	ldr	r3, [sp, #40]
+	and	r2, r2, r1
+	ldr	r0, [sp, #40]
+	lsl	r2, r2, r3
 	mov	r3, #8
-	sub	r3, r3, r4
+	sub	r3, r3, r0
+	mov	r1, ip
 	asr	r1, r1, r3
-	lsl	r2, r2, r4
 	add	r2, r2, r1
 	lsl	r3, r2, #1
 	add	r3, r3, r2
-	ldr	r2, [sp, #116]
+	ldr	r2, [sp, #24]
 	lsl	r3, r3, #9
+	ldr	r0, .Lf171+8
 	add	r3, r2, r3
-	ldr	r1, .Lf157+8
-	ldr	r2, [sp, #92]
-	mov	r7, #1
-	add	r4, r3, r1
-	cmp	r2, #6
-	ble	.Lf50
-	ldr	r1, [sp, #112]
-	ldr	r2, [sp, #88]
-	sub	r3, r1, r2
-	ldr	r1, [sp, #148]
-	ldrb	r3, [r1, r3]
-	str	r3, [sp, #60]
-.Lf35:
-	ldr	r2, [sp, #60]
+	ldr	r1, [sp, #44]
+	add	r0, r3, r0
+	str	r0, [sp, #112]
+	cmp	r1, #6
+	bgt	.Lf28
+	mov	r2, #1
+	mov	r1, r6
+	str	r2, [sp, #72]
+	b	.Lf166
+.Lf28:
+	ldr	r1, [sp, #120]
+	ldr	r0, [sp, #28]
+	ldr	r2, [sp, #144]
+	sub	r3, r0, r1
+	ldrb	r3, [r2, r3]
+	str	r3, [sp, #76]
+	mov	r3, #1
+	str	r3, [sp, #72]
+	mov	r1, r6
+.Lf31:
+	ldr	r3, .Lf171+4
+	cmp	r1, r3
+	bhi	.Lf32
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB267
+	b	.Lf18	@long jump
+.LfCB267:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf32:
+	ldr	r2, [sp, #76]
 	mov	r3, #128
 	lsl	r2, r2, #1
-	lsl	r1, r3, #1
-	str	r2, [sp, #60]
-	and	r2, r2, r1
-	lsl	r3, r2, #1
-	lsl	r7, r7, #1
-	mov	ip, r2
-	add	r3, r4, r3
-	mov	r2, #128
-	add	r3, r3, r7
-	lsl	r2, r2, #2
-	add	r2, r3, r2
-	ldr	r3, .Lf157+4
-	str	r7, [sp, #52]
-	str	r2, [sp, #56]
-	cmp	r5, r3
-	bhi	.Lf38
-	ldr	r3, [sp, #68]
-	cmp	r0, r3
-	bne	.LfCB271
-	b	.Lf156	@long jump
-.LfCB271:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf38:
-	ldr	r7, [sp, #56]
-	ldrh	r2, [r7]
-	lsl	r7, r2, #16
-	lsr	r3, r5, #11
-	lsr	r1, r7, #16
-	mul	r3, r3, r1
-	cmp	r6, r3
-	bcs	.Lf40
-	mov	r5, r3
+	lsl	r3, r3, #1
+	mov	r6, r2
+	ldr	r0, [sp, #112]
+	str	r2, [sp, #76]
+	and	r6, r6, r3
+	ldr	r2, [sp, #72]
+	lsl	r3, r6, #1
+	lsl	r2, r2, #1
+	add	r3, r0, r3
+	mov	r0, #128
+	add	r3, r3, r2
+	lsl	r0, r0, #2
+	add	r4, r3, r0
+	str	r2, [sp, #4]
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf35
 	mov	r3, #128
 	lsl	r3, r3, #4
-	sub	r3, r3, r1
+	sub	r3, r3, r2
 	asr	r3, r3, #5
-	ldr	r1, [sp, #56]
-	add	r3, r3, r2
-	mov	r2, ip
-	strh	r3, [r1]
-	ldr	r7, [sp, #52]
-	cmp	r2, #0
-	beq	.Lf37
-	b	.Lf34
+	ldr	r1, [sp, #4]
+	add	r3, r2, r3
+	strh	r3, [r4]
+	str	r1, [sp, #72]
+	cmp	r6, #0
+	bne	.Lf167
+	mov	r1, r0
+	b	.Lf39
+.Lf35:
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r3, [sp, #72]
+	ldr	r2, [sp, #72]
+	add	r3, r3, #1
+	add	r2, r2, r3
+	sub	r1, r1, r0
+	sub	r7, r7, r0
+	str	r2, [sp, #72]
+	cmp	r6, #0
+	beq	.Lf166
+.Lf39:
+	ldr	r3, [sp, #72]
+	cmp	r3, #255
+	bgt	.Lf46
+	b	.Lf31
 .Lf40:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r7, #21
-	ldr	r7, [sp, #56]
+	ldr	r3, .Lf171+4
+	cmp	r1, r3
+	bhi	.Lf41
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB340
+	b	.Lf18	@long jump
+.LfCB340:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf41:
+	ldr	r2, [sp, #72]
+	ldr	r3, [sp, #112]
+	lsl	r6, r2, #1
+	add	r4, r3, r6
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf44
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	strh	r3, [r4]
+	str	r6, [sp, #72]
+.Lf167:
+	mov	r1, r0
+	b	.Lf166
+.Lf44:
+	lsr	r3, r2, #5
 	sub	r3, r2, r3
-	strh	r3, [r7]
-	ldr	r7, [sp, #52]
-	mov	r1, ip
-	add	r7, r7, #1
-	cmp	r1, #0
-	beq	.Lf34
-.Lf37:
-	cmp	r7, #255
-	ble	.Lf35
-	b	.Lf138
-.Lf34:
-	cmp	r7, #255
-	bgt	.Lf138
-.Lf50:
-	lsl	r7, r7, #1
-	ldr	r3, .Lf157+4
-	str	r7, [sp, #48]
-	add	r7, r7, r4
-	mov	ip, r7
-	cmp	r5, r3
-	bhi	.Lf46
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	bne	.LfCB338
-	b	.Lf156	@long jump
-.LfCB338:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
+	strh	r3, [r4]
+	ldr	r3, [sp, #72]
+	sub	r1, r1, r0
+	sub	r7, r7, r0
+	ldr	r0, [sp, #72]
+	add	r3, r3, #1
+	add	r0, r0, r3
+	str	r0, [sp, #72]
+.Lf166:
+	ldr	r2, [sp, #72]
+	cmp	r2, #255
+	ble	.Lf40
 .Lf46:
-	mov	r7, ip
-	ldrh	r2, [r7]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf48
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	asr	r3, r3, #5
-	ldr	r7, [sp, #48]
-	add	r3, r3, r2
-	mov	r1, ip
-	strh	r3, [r1]
-	b	.Lf34
-.Lf48:
-	ldr	r7, [sp, #48]
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	add	r7, r7, #1
-	mov	r2, ip
-	strh	r3, [r2]
-	b	.Lf34
-.Lf138:
-	ldr	r4, [sp, #112]
-	lsl	r3, r7, #24
-	ldr	r7, [sp, #148]
+	ldr	r0, [sp, #72]
+	lsl	r3, r0, #24
 	lsr	r3, r3, #24
-	str	r3, [sp, #108]
-	strb	r3, [r4, r7]
-	ldr	r7, [sp, #92]
-	add	r4, r4, #1
-	str	r4, [sp, #112]
-	cmp	r7, #3
-	bgt	.Lf51
-	mov	r1, #0
-	str	r1, [sp, #92]
-	b	.Lf29
-.Lf51:
-	ldr	r2, [sp, #92]
-	cmp	r2, #9
-	bgt	.Lf53
-	sub	r2, r2, #3
-	str	r2, [sp, #92]
-	b	.Lf29
-.Lf53:
-	ldr	r3, [sp, #92]
-	sub	r3, r3, #6
-	str	r3, [sp, #92]
-	b	.Lf29
-.Lf33:
-	lsr	r3, r1, #21
+	add	r0, r3, #0
+	ldr	r2, [sp, #144]
+	mov	ip, r3
+	ldr	r3, [sp, #28]
+	strb	r0, [r2, r3]
+	mov	r2, r3
+	ldr	r3, [sp, #44]
+	add	r2, r2, #1
+	cmp	r3, #3
+	bgt	.Lf47
+	mov	r0, #0
+	b	.Lf170
+.Lf47:
+	ldr	r3, [sp, #44]
+	cmp	r3, #9
+	bgt	.Lf50
+	sub	r3, r3, #3
+	str	r3, [sp, #44]
+	b	.Lf49
+.Lf50:
+	ldr	r0, [sp, #44]
+	sub	r0, r0, #6
+.Lf170:
+	str	r0, [sp, #44]
+	b	.Lf49
+.Lf26:
+	sub	r0, r1, r6
+	lsr	r3, r2, #5
+	ldr	r1, .Lf171+4
 	sub	r3, r2, r3
+	sub	r7, r7, r6
 	strh	r3, [r4]
-	ldr	r4, [sp, #92]
-	sub	r5, r5, r7
-	sub	r6, r6, r7
-	ldr	r7, [sp, #116]
-	lsl	r3, r4, #1
-	add	r7, r7, r3
-	mov	r4, #192
-	ldr	r1, .Lf157+4
-	mov	ip, r7
-	lsl	r4, r4, #1
-	add	r4, r4, ip
-	cmp	r5, r1
-	bhi	.Lf56
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	bne	.LfCB436
-	b	.Lf156	@long jump
-.LfCB436:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf56:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf58
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	asr	r3, r3, #5
-	add	r3, r3, r2
-	strh	r3, [r4]
-	ldr	r7, [sp, #88]
-	ldr	r3, [sp, #80]
-	ldr	r4, [sp, #84]
-	ldr	r1, [sp, #92]
-	str	r3, [sp, #76]
-	str	r4, [sp, #80]
-	str	r7, [sp, #84]
-	cmp	r1, #6
-	bgt	.Lf59
-	mov	r3, #0
-	b	.Lf60
-.Lf59:
-	mov	r3, #3
-.Lf60:
-	str	r3, [sp, #92]
-	ldr	r2, [sp, #116]
-	ldr	r3, .Lf157+12
-	add	r4, r2, r3
-	b	.Lf61
-.Lf58:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	strh	r3, [r4]
-	ldr	r7, .Lf157+4
-	mov	r4, #204
-	lsl	r4, r4, #1
-	add	r4, r4, ip
-	cmp	r5, r7
-	bhi	.Lf62
-	ldr	r1, [sp, #68]
 	cmp	r0, r1
-	bne	.LfCB498
-	b	.Lf156	@long jump
-.LfCB498:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf62:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf64
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r1, r3, #4
-	sub	r3, r1, r7
-	asr	r3, r3, #5
-	add	r3, r3, r2
-	ldr	r2, [sp, #92]
-	strh	r3, [r4]
-	ldr	r7, [sp, #64]
-	ldr	r4, [sp, #116]
-	lsl	r3, r2, #5
-	add	r3, r4, r3
-	lsl	r2, r7, #1
-	add	r3, r3, r2
-	mov	ip, r1
-	ldr	r2, .Lf157+4
-	mov	r1, #240
-	lsl	r1, r1, #1
-	add	r4, r3, r1
+	bhi	.Lf52
+	ldr	r2, [sp, #64]
 	cmp	r5, r2
-	bhi	.Lf65
-	ldr	r3, [sp, #68]
-	cmp	r0, r3
-	bne	.LfCB538
-	b	.Lf156	@long jump
-.LfCB538:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf65:
-	ldrh	r2, [r4]
-	lsl	r7, r2, #16
-	lsr	r3, r5, #11
-	lsr	r1, r7, #16
-	mul	r3, r3, r1
-	cmp	r6, r3
-	bcs	.Lf67
-	mov	r7, ip
-	mov	r5, r3
-	sub	r3, r7, r1
-	asr	r3, r3, #5
-	ldr	r1, [sp, #112]
-	add	r3, r3, r2
-	strh	r3, [r4]
-	cmp	r1, #0
-	bne	.LfCB563
-	b	.Lf156	@long jump
-.LfCB563:
-	ldr	r2, [sp, #92]
-	cmp	r2, #6
-	bgt	.Lf69
-	mov	r3, #9
-	b	.Lf70
-.Lf69:
-	mov	r3, #11
-.Lf70:
-	ldr	r4, [sp, #112]
-	ldr	r7, [sp, #88]
-	str	r3, [sp, #92]
-	ldr	r1, [sp, #148]
-	sub	r3, r4, r7
-	ldrb	r3, [r1, r3]
-	str	r3, [sp, #108]
-	strb	r3, [r4, r1]
-	add	r4, r4, #1
-	str	r4, [sp, #112]
-	b	.Lf29
-.Lf67:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r7, #21
-	sub	r3, r2, r3
-	strh	r3, [r4]
-	b	.Lf72
-.Lf64:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	strh	r3, [r4]
-	mov	r4, #216
-	ldr	r3, .Lf157+4
-	lsl	r4, r4, #1
-	add	r4, r4, ip
-	cmp	r5, r3
-	bhi	.Lf73
-	ldr	r7, [sp, #68]
-	cmp	r0, r7
-	bne	.LfCB614
-	b	.Lf156	@long jump
-.LfCB614:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf73:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf75
-	mov	r5, r3
+	bne	.LfCB435
+	b	.Lf18	@long jump
+.LfCB435:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r0, r0, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf52:
+	ldr	r1, [sp, #44]
+	ldr	r2, [sp, #24]
+	lsl	r3, r1, #1
+	add	r2, r2, r3
+	mov	r6, #192
+	mov	ip, r2
+	lsl	r6, r6, #1
+	add	r6, r6, ip
+	ldrh	r2, [r6]
+	lsr	r3, r0, #11
+	mov	r1, r2
+	mul	r1, r3
+	cmp	r7, r1
+	bcs	.Lf55
 	mov	r3, #128
 	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	ldr	r1, [sp, #84]
+	sub	r3, r3, r2
 	asr	r3, r3, #5
+	add	r3, r2, r3
+	strh	r3, [r6]
+	ldr	r3, [sp, #44]
+	cmp	r3, #6
+	bgt	.Lf57
+	mov	r0, #0
+	str	r0, [sp, #44]
+	b	.Lf59
+.Lf57:
+	mov	r2, #3
+	str	r2, [sp, #44]
+.Lf59:
+	ldr	r3, [sp, #24]
+	ldr	r0, .Lf171+12
+	add	r6, r3, r0
+	ldr	r0, [sp, #120]
+	ldr	r2, [sp, #52]
+	ldr	r3, [sp, #48]
+	str	r0, [sp, #48]
+	mov	r0, r1
+	str	r2, [sp, #56]
+	str	r3, [sp, #52]
+	b	.Lf60
+.Lf55:
+	sub	r4, r0, r1
+	sub	r7, r7, r1
+	lsr	r3, r2, #5
+	ldr	r1, .Lf171+4
+	sub	r3, r2, r3
+	strh	r3, [r6]
+	cmp	r4, r1
+	bhi	.Lf61
+	ldr	r2, [sp, #64]
+	cmp	r5, r2
+	bne	.LfCB500
+	b	.Lf18	@long jump
+.LfCB500:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r4, r4, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf61:
+	mov	r6, #204
+	lsl	r6, r6, #1
+	add	r6, r6, ip
+	ldrh	r0, [r6]
+	lsr	r3, r4, #11
+	mov	r2, r0
+	mul	r2, r3
+	cmp	r7, r2
+	bcs	.Lf64
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r0
+	asr	r3, r3, #5
+	add	r3, r0, r3
+	strh	r3, [r6]
+	ldr	r3, .Lf171+4
+	cmp	r2, r3
+	bls	.Lf66
+	mov	r0, r2
+	b	.Lf68
+.Lf66:
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB533
+	b	.Lf18	@long jump
+.LfCB533:
+	ldrb	r3, [r5]
+	lsl	r0, r2, #8
+	lsl	r2, r7, #8
+	mov	r7, r2
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf68:
+	ldr	r1, [sp, #20]
+	ldr	r2, [sp, #24]
+	lsl	r3, r1, #1
+	ldr	r1, [sp, #68]
+	add	r3, r2, r3
+	lsl	r2, r1, #1
 	add	r3, r3, r2
-	mov	ip, r1
+	mov	r2, #240
+	lsl	r2, r2, #1
+	add	r4, r3, r2
+	ldrh	r2, [r4]
+	lsr	r3, r0, #11
+	mov	r6, r2
+	mul	r6, r3
+	cmp	r7, r6
+	bcs	.Lf70
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r3, [sp, #28]
+	cmp	r3, #0
+	bne	.LfCB565
+	b	.Lf18	@long jump
+.LfCB565:
+	ldr	r0, [sp, #44]
+	cmp	r0, #6
+	bgt	.Lf73
+	mov	r1, #9
+	str	r1, [sp, #44]
+	b	.Lf75
+.Lf73:
+	mov	r2, #11
+	str	r2, [sp, #44]
+.Lf75:
+	ldr	r0, [sp, #28]
+	ldr	r1, [sp, #120]
+	ldr	r2, [sp, #144]
+	sub	r3, r0, r1
+	ldrb	r3, [r2, r3]
+	strb	r3, [r2, r0]
+	mov	r2, r0
+	mov	ip, r3
+	add	r2, r2, #1
+	mov	r1, r6
+	b	.Lf49
+.Lf70:
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	sub	r0, r0, r6
+	sub	r7, r7, r6
 	strh	r3, [r4]
 	b	.Lf76
-.Lf158:
+.Lf172:
 	.align	2
-.Lf157:
+.Lf171:
 	.word	1846
 	.word	16777215
 	.word	3692
 	.word	1636
-.Lf75:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	strh	r3, [r4]
-	ldr	r2, .Lf159
-	mov	r4, #228
-	lsl	r4, r4, #1
-	add	r4, r4, ip
-	cmp	r5, r2
+.Lf64:
+	lsr	r3, r0, #5
+	sub	r3, r0, r3
+	ldr	r0, .Lf173
+	sub	r4, r4, r2
+	sub	r7, r7, r2
+	strh	r3, [r6]
+	cmp	r4, r0
 	bhi	.Lf77
-	ldr	r3, [sp, #68]
-	cmp	r0, r3
-	bne	.LfCB666
-	b	.Lf156	@long jump
-.LfCB666:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
+	ldr	r1, [sp, #64]
+	cmp	r5, r1
+	bne	.LfCB621
+	b	.Lf18	@long jump
+.LfCB621:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r4, r4, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
 .Lf77:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf79
-	mov	r5, r3
+	mov	r6, #216
+	lsl	r6, r6, #1
+	add	r6, r6, ip
+	ldrh	r2, [r6]
+	lsr	r3, r4, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf80
 	mov	r3, #128
 	lsl	r3, r3, #4
-	sub	r3, r3, r7
+	sub	r3, r3, r2
 	asr	r3, r3, #5
-	add	r3, r3, r2
-	strh	r3, [r4]
-	ldr	r4, [sp, #80]
-	mov	ip, r4
-	b	.Lf80
-.Lf79:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	ldr	r1, [sp, #80]
-	ldr	r7, [sp, #76]
-	sub	r3, r2, r3
-	strh	r3, [r4]
-	str	r1, [sp, #76]
-	mov	ip, r7
+	add	r3, r2, r3
+	strh	r3, [r6]
+	ldr	r2, [sp, #48]
+	ldr	r3, [sp, #120]
+	str	r3, [sp, #48]
+	b	.Lf168
 .Lf80:
-	ldr	r2, [sp, #84]
-	str	r2, [sp, #80]
-.Lf76:
-	ldr	r3, [sp, #88]
-	mov	r4, ip
-	str	r3, [sp, #84]
-	str	r4, [sp, #88]
-.Lf72:
-	ldr	r7, [sp, #92]
-	cmp	r7, #6
-	bgt	.Lf81
-	mov	r3, #8
-	b	.Lf82
-.Lf81:
-	mov	r3, #11
-.Lf82:
-	ldr	r1, [sp, #116]
-	ldr	r2, .Lf159+4
-	str	r3, [sp, #92]
-	add	r4, r1, r2
-.Lf61:
-	ldr	r3, .Lf159
-	mov	ip, r3
-	cmp	r5, ip
-	bhi	.Lf83
-	ldr	r7, [sp, #68]
-	cmp	r0, r7
-	bne	.LfCB740
-	b	.Lf156	@long jump
-.LfCB740:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf83:
-	ldrh	r2, [r4]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf85
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	asr	r3, r3, #5
-	ldr	r1, [sp, #64]
-	add	r3, r3, r2
-	strh	r3, [r4]
-	lsl	r3, r1, #4
-	add	r3, r4, r3
-	add	r3, r3, #4
-	str	r3, [sp, #36]
-	mov	r2, #0
-	mov	r3, #3
-	str	r2, [sp, #40]
-	str	r3, [sp, #44]
-	b	.Lf86
-.Lf85:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
+	sub	r1, r4, r0
+	sub	r7, r7, r0
+	lsr	r3, r2, #5
+	ldr	r0, .Lf173
 	sub	r3, r2, r3
-	strh	r3, [r4]
-	cmp	r5, ip
-	bhi	.Lf87
-	ldr	r7, [sp, #68]
-	cmp	r0, r7
-	bne	.LfCB786
-	b	.Lf156	@long jump
-.LfCB786:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf87:
-	ldrh	r2, [r4, #2]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf89
-	mov	r5, r3
+	strh	r3, [r6]
+	cmp	r1, r0
+	bhi	.Lf82
+	ldr	r2, [sp, #64]
+	cmp	r5, r2
+	bne	.LfCB661
+	b	.Lf18	@long jump
+.LfCB661:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf82:
+	mov	r6, #228
+	lsl	r6, r6, #1
+	add	r6, r6, ip
+	ldrh	r2, [r6]
+	lsr	r3, r1, #11
+	mov	r4, r2
+	mul	r4, r3
+	cmp	r7, r4
+	bcs	.Lf85
 	mov	r3, #128
 	lsl	r3, r3, #4
-	sub	r3, r3, r7
+	sub	r3, r3, r2
 	asr	r3, r3, #5
-	ldr	r1, [sp, #64]
-	add	r3, r3, r2
-	strh	r3, [r4, #2]
+	add	r3, r2, r3
+	ldr	r0, [sp, #120]
+	ldr	r2, [sp, #52]
+	strh	r3, [r6]
+	ldr	r3, [sp, #48]
+	str	r0, [sp, #48]
+	mov	r0, r4
+	str	r3, [sp, #52]
+	str	r2, [sp, #120]
+	b	.Lf76
+.Lf85:
+	lsr	r3, r2, #5
+	sub	r0, r1, r4
+	ldr	r1, [sp, #52]
+	sub	r3, r2, r3
+	strh	r3, [r6]
+	ldr	r2, [sp, #56]
+	ldr	r3, [sp, #48]
+	str	r1, [sp, #56]
+	ldr	r1, [sp, #120]
+	str	r3, [sp, #52]
+	str	r1, [sp, #48]
+	sub	r7, r7, r4
+.Lf168:
+	str	r2, [sp, #120]
+.Lf76:
+	ldr	r2, [sp, #44]
+	cmp	r2, #6
+	bgt	.Lf87
+	mov	r3, #8
+	str	r3, [sp, #44]
+	b	.Lf89
+.Lf87:
+	mov	r1, #11
+	str	r1, [sp, #44]
+.Lf89:
+	ldr	r2, [sp, #24]
+	ldr	r3, .Lf173+4
+	add	r6, r2, r3
+.Lf60:
+	ldr	r1, .Lf173
+	mov	ip, r1
+	cmp	r0, ip
+	bhi	.Lf90
+	ldr	r2, [sp, #64]
+	cmp	r5, r2
+	bne	.LfCB736
+	b	.Lf18	@long jump
+.LfCB736:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r0, r0, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf90:
+	ldrh	r2, [r6]
+	lsr	r3, r0, #11
+	mov	r1, r2
+	mul	r1, r3
+	cmp	r7, r1
+	bcs	.Lf93
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	ldr	r0, [sp, #68]
+	add	r3, r2, r3
+	strh	r3, [r6]
+	lsl	r3, r0, #4
+	add	r3, r6, r3
+	add	r3, r3, #4
+	str	r3, [sp, #88]
+	mov	r2, #3
+	mov	r3, #0
+	str	r2, [sp, #80]
+	str	r3, [sp, #84]
+	b	.Lf95
+.Lf93:
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	sub	r4, r0, r1
+	sub	r7, r7, r1
+	strh	r3, [r6]
+	cmp	r4, ip
+	bhi	.Lf96
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB778
+	b	.Lf18	@long jump
+.LfCB778:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r4, r4, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf96:
+	ldrh	r2, [r6, #2]
+	lsr	r3, r4, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf99
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	ldr	r1, [sp, #68]
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	strh	r3, [r6, #2]
 	mov	r2, #130
 	lsl	r3, r1, #4
-	add	r3, r4, r3
+	add	r3, r6, r3
 	lsl	r2, r2, #1
 	add	r2, r3, r2
-	mov	r4, #3
-	mov	r3, #8
-	str	r2, [sp, #36]
-	str	r3, [sp, #40]
-	str	r4, [sp, #44]
-	b	.Lf86
-.Lf89:
-	mov	r7, #129
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsl	r7, r7, #2
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	add	r7, r4, r7
-	mov	r1, #16
-	mov	r2, #8
-	strh	r3, [r4, #2]
-	str	r7, [sp, #36]
-	str	r1, [sp, #40]
-	str	r2, [sp, #44]
-.Lf86:
-	ldr	r3, [sp, #44]
-	mov	r4, #1
-	str	r3, [sp, #32]
-	str	r4, [sp, #72]
-.Lf91:
-	ldr	r7, [sp, #72]
-	ldr	r1, [sp, #36]
-	lsl	r7, r7, #1
-	ldr	r3, .Lf159
-	mov	ip, r7
-	add	r1, r1, ip
-	cmp	r5, r3
-	bhi	.Lf94
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	bne	.LfCB857
-	b	.Lf156	@long jump
-.LfCB857:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf94:
-	ldrh	r4, [r1]
-	lsl	r2, r4, #16
-	lsr	r3, r5, #11
-	lsr	r7, r2, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf96
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	asr	r3, r3, #5
-	add	r3, r3, r4
-	strh	r3, [r1]
-	mov	r3, ip
-	str	r3, [sp, #72]
-	b	.Lf93
-.Lf96:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r2, #21
-	sub	r3, r4, r3
-	mov	r4, ip
-	add	r4, r4, #1
-	strh	r3, [r1]
-	str	r4, [sp, #72]
-.Lf93:
-	ldr	r7, [sp, #32]
-	sub	r7, r7, #1
-	str	r7, [sp, #32]
-	cmp	r7, #0
-	bne	.Lf91
-	ldr	r1, [sp, #44]
-	ldr	r2, [sp, #72]
-	mov	r3, #1
-	lsl	r3, r3, r1
-	sub	r2, r2, r3
-	ldr	r3, [sp, #40]
-	ldr	r4, [sp, #92]
-	add	r2, r2, r3
-	str	r2, [sp, #72]
-	cmp	r4, #3
-	ble	.LfCB914
-	b	.Lf98	@long jump
-.LfCB914:
-	add	r4, r4, #7
-	str	r4, [sp, #92]
-	mov	r3, r2
-	cmp	r2, #3
-	ble	.Lf99
+	mov	r1, r0
 	mov	r3, #3
+	mov	r0, #8
+	str	r2, [sp, #88]
+	str	r3, [sp, #80]
+	b	.Lf169
 .Lf99:
-	ldr	r7, [sp, #116]
-	lsl	r3, r3, #7
-	mov	r1, #216
-	mov	r2, #6
-	add	r3, r7, r3
-	lsl	r1, r1, #2
-	str	r2, [sp, #28]
-	add	r4, r3, r1
-	mov	r2, #1
-.Lf100:
-	lsl	r2, r2, #1
-	ldr	r3, .Lf159
-	str	r2, [sp, #24]
-	add	r2, r2, r4
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	mov	r2, #129
+	lsl	r2, r2, #2
+	strh	r3, [r6, #2]
+	add	r2, r6, r2
+	mov	r3, #8
+	str	r2, [sp, #88]
+	str	r3, [sp, #80]
+	sub	r1, r4, r0
+	sub	r7, r7, r0
+	mov	r0, #16
+.Lf169:
+	str	r0, [sp, #84]
+.Lf95:
+	ldr	r2, [sp, #80]
+	mov	r3, #1
+	str	r3, [sp, #60]
 	mov	ip, r2
-	cmp	r5, r3
-	bhi	.Lf103
-	ldr	r3, [sp, #68]
-	cmp	r0, r3
-	bne	.LfCB944
-	b	.Lf156	@long jump
-.LfCB944:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf103:
-	mov	r7, ip
-	ldrh	r2, [r7]
-	lsl	r1, r2, #16
-	lsr	r3, r5, #11
-	lsr	r7, r1, #16
-	mul	r3, r3, r7
-	cmp	r6, r3
-	bcs	.Lf105
-	mov	r5, r3
-	mov	r3, #128
-	lsl	r3, r3, #4
-	sub	r3, r3, r7
-	asr	r3, r3, #5
-	add	r3, r3, r2
-	ldr	r2, [sp, #24]
-	mov	r1, ip
-	strh	r3, [r1]
-	b	.Lf102
-.Lf105:
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	sub	r3, r2, r3
-	mov	r2, ip
-	strh	r3, [r2]
-	ldr	r2, [sp, #24]
-	add	r2, r2, #1
+.Lf101:
+	ldr	r3, .Lf173
+	cmp	r1, r3
+	bhi	.Lf102
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB842
+	b	.Lf18	@long jump
+.LfCB842:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
 .Lf102:
-	ldr	r3, [sp, #28]
-	sub	r3, r3, #1
-	str	r3, [sp, #28]
-	cmp	r3, #0
-	bne	.Lf100
-	sub	r2, r2, #64
-	cmp	r2, #3
-	bgt	.LfCB994
-	b	.Lf107	@long jump
-.LfCB994:
-	mov	r1, #1
-	and	r1, r1, r2
-	mov	r3, #2
-	asr	r4, r2, #1
-	orr	r1, r1, r3
-	sub	r7, r4, #1
-	str	r1, [sp, #88]
-	cmp	r2, #13
-	bgt	.Lf108
-	lsl	r1, r1, r7
-	ldr	r4, [sp, #116]
-	lsl	r3, r1, #1
-	add	r3, r4, r3
-	str	r1, [sp, #88]
-	lsl	r2, r2, #1
-	ldr	r1, .Lf159+8
-	sub	r3, r3, r2
-	add	r4, r3, r1
-	b	.Lf109
-.Lf108:
-	sub	r7, r4, #5
-.Lf110:
-	ldr	r3, .Lf159
-	cmp	r5, r3
-	bhi	.Lf113
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	bne	.LfCB1026
-	b	.Lf156	@long jump
-.LfCB1026:
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf113:
+	ldr	r2, [sp, #60]
 	ldr	r3, [sp, #88]
-	lsr	r5, r5, #1
-	lsl	r3, r3, #1
-	str	r3, [sp, #88]
-	cmp	r6, r5
-	bcc	.Lf112
-	ldr	r4, [sp, #88]
-	mov	r3, #1
-	orr	r4, r4, r3
-	str	r4, [sp, #88]
-	sub	r6, r6, r5
-.Lf112:
-	sub	r7, r7, #1
-	cmp	r7, #0
-	bne	.Lf110
-	ldr	r2, [sp, #88]
-	ldr	r7, [sp, #116]
-	ldr	r1, .Lf159+12
-	lsl	r2, r2, #4
-	str	r2, [sp, #88]
-	add	r4, r7, r1
-	mov	r7, #4
-.Lf109:
-	mov	r3, #1
-	str	r3, [sp, #20]
-.Lf116:
-	lsl	r3, r3, #1
-	add	r1, r4, r3
-	str	r3, [sp, #12]
-	ldr	r3, .Lf159
-	str	r1, [sp, #16]
-	cmp	r5, r3
-	bhi	.Lf119
-	ldr	r2, [sp, #68]
-	cmp	r0, r2
-	beq	.Lf156
-	ldrb	r3, [r0]
-	lsl	r6, r6, #8
-	lsl	r5, r5, #8
-	orr	r6, r6, r3
-	add	r0, r0, #1
-.Lf119:
-	ldr	r1, [sp, #16]
-	ldrh	r2, [r1]
-	mov	r1, sp
-	strh	r2, [r1]
-	lsr	r3, r5, #11
-	str	r3, [sp, #8]
-	ldrh	r3, [r1]
-	lsl	r3, r3, #16
-	mov	ip, r3
-	ldr	r1, [sp, #8]
-	lsr	r3, r3, #16
-	mov	r2, r3
-	str	r3, [sp, #4]
-	mov	r3, r1
-	mul	r3, r3, r2
-	cmp	r6, r3
-	bcs	.Lf121
-	mov	r5, r3
+	lsl	r6, r2, #1
+	add	r4, r3, r6
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf105
 	mov	r3, #128
 	lsl	r3, r3, #4
-	mov	r1, sp
 	sub	r3, r3, r2
-	ldrh	r1, [r1]
 	asr	r3, r3, #5
-	ldr	r2, [sp, #16]
-	add	r3, r3, r1
-	strh	r3, [r2]
-	ldr	r3, [sp, #12]
-	b	.Lf122
-.Lf121:
-	mov	r2, sp
-	mov	r1, ip
-	ldrh	r2, [r2]
-	sub	r5, r5, r3
-	sub	r6, r6, r3
-	lsr	r3, r1, #21
-	ldr	r1, [sp, #16]
+	add	r3, r2, r3
+	mov	r1, r0
+	strh	r3, [r4]
+	str	r6, [sp, #60]
+	b	.Lf107
+.Lf105:
+	lsr	r3, r2, #5
 	sub	r3, r2, r3
-	strh	r3, [r1]
-	ldr	r2, [sp, #88]
-	ldr	r1, [sp, #20]
-	ldr	r3, [sp, #12]
-	orr	r2, r2, r1
-	str	r2, [sp, #88]
+	strh	r3, [r4]
+	ldr	r3, [sp, #60]
+	sub	r1, r1, r0
+	sub	r7, r7, r0
+	ldr	r0, [sp, #60]
 	add	r3, r3, #1
+	add	r0, r0, r3
+	str	r0, [sp, #60]
+.Lf107:
+	mov	r2, #1
+	neg	r2, r2
+	add	ip, ip, r2
+	mov	r3, ip
+	cmp	r3, #0
+	bne	.Lf101
+	ldr	r0, [sp, #80]
+	ldr	r2, [sp, #60]
+	mov	r3, #1
+	lsl	r3, r3, r0
+	ldr	r0, [sp, #84]
+	sub	r3, r2, r3
+	ldr	r2, [sp, #44]
+	add	r3, r3, r0
+	str	r3, [sp, #116]
+	cmp	r2, #3
+	ble	.LfCB901
+	b	.Lf109	@long jump
+.LfCB901:
+	cmp	r3, #3
+	ble	.Lf111
+	mov	r3, #3
+.Lf111:
+	ldr	r0, [sp, #24]
+	lsl	r3, r3, #7
+	mov	r2, #216
+	add	r3, r0, r3
+	lsl	r2, r2, #2
+	add	r2, r3, r2
+	mov	r3, #6
+	str	r2, [sp, #108]
+	str	r3, [sp, #92]
+	mov	r6, #1
+.Lf112:
+	ldr	r3, .Lf173
+	cmp	r1, r3
+	bhi	.Lf113
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	bne	.LfCB925
+	b	.Lf18	@long jump
+.LfCB925:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf113:
+	lsl	r2, r6, #1
+	ldr	r4, [sp, #108]
+	mov	ip, r2
+	add	r4, r4, ip
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf116
+	mov	r3, #128
+	lsl	r3, r3, #4
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	mov	r6, ip
+	mov	r1, r0
+	strh	r3, [r4]
+	b	.Lf118
+.Lf116:
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	add	r3, r6, #1
+	sub	r1, r1, r0
+	sub	r7, r7, r0
+	add	r6, r6, r3
+.Lf118:
+	ldr	r3, [sp, #92]
+	sub	r3, r3, #1
+	str	r3, [sp, #92]
+	cmp	r3, #0
+	bne	.Lf112
+	mov	r0, r6
+	sub	r0, r0, #64
+	cmp	r0, #3
+	ble	.Lf120
+	asr	r6, r0, #1
+	sub	r2, r6, #1
+	mov	r3, #1
+	mov	ip, r2
+	mov	r2, r0
+	and	r2, r2, r3
+	mov	r4, r2
+	mov	r3, #2
+	orr	r4, r4, r3
+	cmp	r0, #13
+	bgt	.Lf122
+	mov	r3, ip
+	mov	r6, r4
+	ldr	r2, [sp, #24]
+	lsl	r6, r6, r3
+	lsl	r3, r6, #1
+	add	r3, r2, r3
+	lsl	r2, r0, #1
+	ldr	r0, .Lf173+8
+	sub	r3, r3, r2
+	add	r0, r3, r0
+	str	r0, [sp, #104]
+	b	.Lf124
 .Lf122:
-	ldr	r2, [sp, #20]
-	sub	r7, r7, #1
+	sub	r6, r6, #5
+	mov	r0, #0
+.Lf125:
+	ldr	r3, .Lf173
+	cmp	r1, r3
+	bhi	.Lf126
+	ldr	r2, [sp, #64]
+	cmp	r5, r2
+	bne	.LfCB1010
+	b	.Lf18	@long jump
+.LfCB1010:
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf126:
+	lsr	r1, r1, #1
+	lsl	r4, r4, #1
+	cmp	r7, r1
+	bcc	.Lf129
+	mov	r3, #1
+	sub	r7, r7, r1
+	orr	r4, r4, r3
+.Lf129:
+	add	r0, r0, #1
+	cmp	r0, r6
+	bne	.Lf125
+	ldr	r0, .Lf173+12
+	ldr	r3, [sp, #24]
+	add	r0, r3, r0
+	mov	r2, #4
+	str	r0, [sp, #104]
+	lsl	r6, r4, #4
+	mov	ip, r2
+.Lf124:
+	mov	r3, #1
+	str	r3, [sp, #96]
+	str	r3, [sp, #100]
+.Lf132:
+	ldr	r3, .Lf173
+	cmp	r1, r3
+	bhi	.Lf133
+	ldr	r0, [sp, #64]
+	cmp	r5, r0
+	beq	.Lf18
+	ldrb	r3, [r5]
+	lsl	r2, r7, #8
+	mov	r7, r2
+	lsl	r1, r1, #8
+	orr	r7, r7, r3
+	add	r5, r5, #1
+.Lf133:
+	ldr	r2, [sp, #100]
+	ldr	r3, [sp, #104]
 	lsl	r2, r2, #1
-	str	r2, [sp, #20]
-	cmp	r7, #0
-	bne	.Lf116
-	b	.Lf123
-.Lf160:
+	add	r4, r3, r2
+	str	r2, [sp, #8]
+	ldrh	r2, [r4]
+	lsr	r3, r1, #11
+	mov	r0, r2
+	mul	r0, r3
+	cmp	r7, r0
+	bcs	.Lf136
+	mov	r3, #128
+	lsl	r3, r3, #4
+	ldr	r1, [sp, #8]
+	sub	r3, r3, r2
+	asr	r3, r3, #5
+	add	r3, r2, r3
+	str	r1, [sp, #100]
+	mov	r1, r0
+	strh	r3, [r4]
+	b	.Lf138
+.Lf136:
+	lsr	r3, r2, #5
+	sub	r3, r2, r3
+	strh	r3, [r4]
+	ldr	r3, [sp, #100]
+	ldr	r2, [sp, #100]
+	add	r3, r3, #1
+	add	r2, r2, r3
+	ldr	r3, [sp, #96]
+	str	r2, [sp, #100]
+	sub	r1, r1, r0
+	sub	r7, r7, r0
+	orr	r6, r6, r3
+.Lf138:
+	mov	r0, #1
+	neg	r0, r0
+	add	ip, ip, r0
+	mov	r2, ip
+	cmp	r2, #0
+	beq	.Lf139
+	ldr	r3, [sp, #96]
+	lsl	r3, r3, #1
+	str	r3, [sp, #96]
+	b	.Lf132
+.Lf174:
 	.align	2
-.Lf159:
+.Lf173:
 	.word	16777215
 	.word	2664
 	.word	1374
 	.word	1604
-.Lf107:
-	str	r2, [sp, #88]
-.Lf123:
-	ldr	r3, [sp, #88]
-	add	r3, r3, #1
-	str	r3, [sp, #88]
-	cmp	r3, #0
-	beq	.Lf30
-.Lf98:
-	ldr	r4, [sp, #72]
-	ldr	r7, [sp, #88]
-	ldr	r1, [sp, #112]
-	add	r4, r4, #2
-	str	r4, [sp, #72]
-	cmp	r7, r1
-	bhi	.Lf156
-	ldr	r2, [sp, #148]
-	sub	r3, r2, r7
-	add	r2, r1, r3
-.Lf126:
-	ldrb	r3, [r2]
-	lsl	r3, r3, #24
-	lsr	r3, r3, #24
-	str	r3, [sp, #108]
-	add	r4, sp, #108
-	ldr	r3, [sp, #72]
-	ldrb	r1, [r4]
-	ldr	r7, [sp, #148]
-	ldr	r4, [sp, #112]
-	sub	r3, r3, #1
-	str	r3, [sp, #72]
-	strb	r1, [r4, r7]
-	add	r4, r4, #1
+.Lf120:
+	mov	r6, r0
+.Lf139:
+	add	r6, r6, #1
+	str	r6, [sp, #120]
+	cmp	r6, #0
+	beq	.Lf141
+	ldr	r0, [sp, #44]
+	add	r0, r0, #7
+	str	r0, [sp, #44]
+.Lf109:
+	ldr	r2, [sp, #120]
+	ldr	r3, [sp, #28]
+	cmp	r2, r3
+	bhi	.Lf18
+	sub	r3, r3, r2
+	ldr	r0, [sp, #144]
+	ldr	r6, [sp, #116]
+	ldr	r2, [sp, #28]
+	add	r4, r0, r3
+	add	r6, r6, #2
+	add	r0, r0, r2
+.Lf144:
+	ldrb	r3, [r4]
+	strb	r3, [r0]
+	mov	ip, r3
+	ldr	r3, [sp, #28]
 	add	r2, r2, #1
-	str	r4, [sp, #112]
-	cmp	r3, #0
-	beq	.Lf29
-	ldr	r3, [sp, #152]
-	cmp	r4, r3
-	bcc	.Lf126
-	b	.Lf30
-.Lf29:
-	ldr	r4, [sp, #112]
-	ldr	r7, [sp, #152]
-	cmp	r4, r7
-	bcs	.LfCB1211
-	b	.Lf129	@long jump
-.LfCB1211:
-.Lf30:
-	ldr	r3, .Lf161
-	cmp	r5, r3
-	bhi	.Lf130
-	ldr	r1, [sp, #68]
-	cmp	r0, r1
-	bne	.Lf131
-.Lf156:
-	mov	r0, #1
-	b	.Lf19
-.Lf131:
+	add	r3, r3, r6
+	str	r3, [sp]
+	cmp	r2, r3
+	beq	.Lf49
+	ldr	r3, [sp, #148]
+	add	r4, r4, #1
 	add	r0, r0, #1
-.Lf130:
-	ldr	r2, [sp, #124]
-	ldr	r4, [sp, #120]
-	ldr	r7, [sp, #112]
-	ldr	r1, [sp, #156]
-	sub	r3, r0, r2
-	str	r3, [r4]
-	str	r7, [r1]
+	cmp	r2, r3
+	bne	.Lf144
+.Lf49:
+	str	r2, [sp, #28]
+.Lf21:
+	ldr	r0, [sp, #28]
+	ldr	r2, [sp, #148]
+	cmp	r0, r2
+	bcs	.LfCB1171
+	b	.Lf22	@long jump
+.LfCB1171:
+.Lf141:
+	ldr	r3, .Lf175
+	cmp	r1, r3
+	bhi	.Lf146
+	ldr	r3, [sp, #64]
+	cmp	r5, r3
+	beq	.Lf18
+	add	r5, r5, #1
+.Lf146:
+	ldr	r0, [sp, #16]
+	ldr	r1, [sp, #12]
+	sub	r3, r5, r0
+	str	r3, [r1]
+	ldr	r2, [sp, #28]
+	ldr	r3, [sp, #152]
 	mov	r0, #0
-.Lf19:
-	add	sp, sp, #128
+	str	r2, [r3]
+	b	.Lf149
+.Lf18:
+	mov	r0, #1
+.Lf149:
+	add	sp, sp, #124
 	@ sp needed for prologue
 	pop	{r4, r5, r6, r7, pc}
-.Lf162:
+.Lf176:
 	.align	2
-.Lf161:
+.Lf175:
 	.word	16777215

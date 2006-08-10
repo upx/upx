@@ -257,6 +257,11 @@ umax(unsigned a, unsigned b)
     return a;
 }
 
+Linker *PackLinuxI386::newLinker() const
+{
+    return new ElfLinker;
+}
+
 int
 PackLinuxI386::buildLinuxLoader(
     upx_byte const *const proto,
