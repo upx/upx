@@ -2,6 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 2.90 (xx Aug 2006):
+  * vmlinuz/386: fixed zlib uncompression problem on dos
+
 Changes in 2.01 (06 Jun 2006):
   * arm/pe: better DLL support
   * dos/exe: device driver support added

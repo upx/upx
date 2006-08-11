@@ -165,7 +165,7 @@ int PackVmlinuzI386::decompressKernel()
             fd = dup(fi->getFd());
             if (fd < 0)
                 break;
-            gzFile zf = gzdopen(fd, "r");
+            gzFile zf = gzdopen(fd, "rb");
             if (zf == NULL)
                 break;
             // estimate gzip-decompressed kernel size & alloc buffer
