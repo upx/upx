@@ -259,7 +259,7 @@ umax(unsigned a, unsigned b)
 
 Linker *PackLinuxI386::newLinker() const
 {
-    return new ElfLinker;
+    return new ElfLinkerX86;
 }
 
 int
@@ -338,6 +338,8 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    //addLinkerSymbols(ft);
+    linker->relocate();
 
     upx_byte *ptr_cto = getLoader();
     int sz_cto = getLoaderSize();
