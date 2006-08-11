@@ -505,6 +505,10 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name)
         if (strcmp(symbols[ic]->name, name) == 0)
             return symbols[ic];
 
+    if ('*'==name[0]) { // *ABS*
+        addSymbol(name, name, 0);
+        return symbols[nsymbols -1];
+    }
     printf("unknown symbol %s\n", name);
     abort();
     return NULL;
