@@ -29,6 +29,7 @@
 
 .macro  section name
     .section \name
+    .align  0
 .endm
 
 #define zero    $0
@@ -48,7 +49,22 @@
 #define t6      $14
 #define t7      $15
 #define s0      $16
+#define s1      $17
+#define s2      $18
+#define s3      $19
+#define s4      $20
+#define s5      $21
+#define s6      $22
+#define s7      $23
+#define t8      $24
+#define t9      $25
+#define jp      $25
+#define k0      $26
+#define k1      $27
+#define gp      $28
 #define sp      $29
+#define fp      $30
+#define s8      $30
 #define ra      $31
 
 #define IF      .if
@@ -59,7 +75,7 @@
 #define DB  .byte
 
 .macro  subiu   reg, p1, p2
- 
+
     .ifnb p2
         addiu   \reg, p1, -p2
     .else
@@ -69,7 +85,7 @@
 .endm
 
 #ifndef DEBUG
-#   define PRINT(str)   
+#   define PRINT(str)
 #else
 #   define PRINT(str)  .print str
 #endif

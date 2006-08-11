@@ -37,22 +37,22 @@
 
 #define tmp         at
 
-#define src         a0
-#define dst         a1
+#define dst         t0
+#define src         a1
 
-#define pc          a2
-#define cnt         t0
+#define pc          a0
+#define cnt         a2
 
 #define src_ilen    src
-#define bb          t0
-#define ilen        t1
-#define last_m_off  t2
-#define m_len       t3
-#define bc          t4
+#define bb          t1
+#define ilen        t2
+#define last_m_off  t3
+#define m_len       t4
+#define bc          t5
 
-#define var         t5
-#define m_off       t6
-#define m_pos       t6
+#define var         t6
+#define m_off       t7
+#define m_pos       t7
 
 
 ;//////////////////////////////////////

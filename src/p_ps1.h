@@ -56,6 +56,8 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual bool readBkupHeader();
+    virtual void buildPS1Loader(const Filter *ft=0);
     virtual int buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
@@ -84,25 +86,31 @@ protected:
         LE32 sp, fp, gp0, ra, k0;
         // origin Jap/USA/Europe
         char origin[60];
-
-        // some safety space after that
-        char pad[8];
         // backup of the original header (epc - is_len)
-        LE32 ih_bkup[10];
-        // plus checksum for the backup
-        LE32 ih_csum;
-        // id & the upx header.
+        // id & the upx header ...
     }
     __attribute_packed;
 
+    struct ps1_exe_cp_t
+    {
+        LE32 ih_bkup[10];
+        // plus checksum for the backup
+        LE32 ih_csum;
+    }
+    __attribute_packed;
+
+    // unpack_only
+    ps1_exe_cp_t bh;
+
     ps1_exe_t ih, oh;
 
+    bool build_Loader;
     bool isCon;
     bool is32Bit;
     unsigned ram_size;
-    unsigned overlap;
-    unsigned sa_cnt;
-
+    unsigned sa_cnt, overlap;
+    unsigned sz_unc, sz_cpr;
+    unsigned pad_code;
     // filesize-PS_HDR_SIZE
     unsigned fdata_size;
 };

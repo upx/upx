@@ -41,18 +41,6 @@ static const
 #include "stub/mipsel.r3000-ps1.h"
 
 
-#if 0
-// lui / ori
-#   define MIPS_HI(a)       ((a) >> 16)
-#else
-// lui / addiu
-#   define MIPS_HI(a)       (((a) >> 16) + (((a) & 0x8000) >> 15))
-#endif
-#define MIPS_LO(a)          ((a) & 0xffff)
-#define MIPS_JP(a)          ((0x08 << 24) | (((a) & 0x0fffffff) >> 2))
-#define MIPS_PC16(a)        ((a) >> 2)
-#define TIL_ALIGNED(a,b)    (((b) - ((a) & ((b) - 1))) & (b) - 1)
-
 #define CD_SEC              2048
 #define PS_HDR_SIZE         CD_SEC
 #define PS_RAM_SIZE         ram_size
@@ -61,6 +49,18 @@ static const
 
 #define SZ_IH_BKUP          (10 * sizeof(LE32))
 #define HD_CODE_OFS         (sizeof(ps1_exe_t))
+
+#if 0
+// lui / ori
+#   define MIPS_HI(a)       ((a) >> 16)
+#else
+// lui / addiu
+#   define MIPS_HI(a)       (((a) >> 16) + (((a) & 0x8000) >> 15))
+#endif
+#define MIPS_LO(a)          ((a) & 0xffff)
+//#define MIPS_JP(a)          ((0x08 << 24) | (((a) & 0x0fffffff) >> 2))
+#define MIPS_PC16(a)        ((a) >> 2)
+#define MIPS_PC26(a)        (((a) & 0x0fffffff) >> 2)
 
 #define K0_BS               (0x80000000)
 #define K1_BS               (0xa0000000)
@@ -83,10 +83,12 @@ static const
 
 PackPs1::PackPs1(InputFile *f) :
     super(f),
-    isCon(!opt->ps1_exe.boot_only), is32Bit(!opt->ps1_exe.do_8bit),
-    overlap(0), sa_cnt(0)
+    build_Loader(0), isCon(!opt->ps1_exe.boot_only), is32Bit(!opt->ps1_exe.do_8bit),
+    sa_cnt(0), overlap(0), sz_unc(0), sz_cpr(0), pad_code(0)
 {
-    COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 188);
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 136);
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_cp_t) == 44);
+
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
 #if 0 // 1 || defined(WITH_NRV)
@@ -131,6 +133,8 @@ Linker* PackPs1::newLinker() const
                 value -= rel->section->offset + rel->offset;
                 set_le16(location, get_le16(location) + MIPS_PC16(value));
             }
+            else if (strcmp(type, "R_MIPS_26") == 0)
+                set_le32(location, get_le32(location) + MIPS_PC26(value));
             else if (strcmp(type, "R_MIPS_32") == 0)
                 set_le32(location, get_le32(location) + value);
             else
@@ -159,6 +163,21 @@ int PackPs1::readFileHeader()
     return UPX_F_PS1_EXE;
 }
 
+bool PackPs1::readBkupHeader()
+{
+    fi->seek(sizeof(ps1_exe_t), SEEK_SET);
+    fi->readx(&bh, sizeof(bh));
+
+    if (bh.ih_csum != upx_adler32(&bh, SZ_IH_BKUP))
+    {
+        // Compatibility
+        fi->seek(sizeof(ps1_exe_t)+8, SEEK_SET);
+        fi->readx(&bh, sizeof(bh));
+        if (bh.ih_csum != upx_adler32(&bh, SZ_IH_BKUP))
+            return false;
+    }
+    return true;
+}
 
 bool PackPs1::checkFileHeader()
 {
@@ -229,54 +248,109 @@ bool PackPs1::canPack()
 //
 **************************************************************************/
 
-int PackPs1::buildLoader(const Filter *)
+void PackPs1::buildPS1Loader(const Filter *)
 {
-    initLoader(nrv_loader,sizeof(nrv_loader));
-
-    if (isCon)
-        addLoader("ps1.con.start", ph.c_len & 3 ? "ps1.con.padcd" : "",
-                  ih.tx_ptr & 0xffff ?  "ps1.con.nrv.ptr" : "ps1.con.nrv.ptr.hi",
-                  "ps1.con.entry",
-                  NULL);
-    else
-        addLoader("ps1.cdb.start", "ps1.cdb.entry",
-                  ih.tx_ptr & 0xffff ?  "ps1.cdb.nrv.ptr" : "ps1.cdb.nrv.ptr.hi",
-                  NULL);
+    const char *p = NULL;
+    unsigned gap = 0;
 
     if (ph.method == M_NRV2B_8)
-        addLoader(isCon ? "ps1.small.nrv2b" :
-                          "ps1.cdb.nrv2b.8bit", NULL);
+        p = isCon ? "nrv2b.small,gb.8bit.sub,nrv.small.done" :
+                    "nrv2b.8bit";
     else if (ph.method == M_NRV2D_8)
-        addLoader(isCon ? "ps1.small.nrv2d" :
-                          "ps1.cdb.nrv2d.8bit", NULL);
+        p = isCon ? "nrv2d.small,gb.8bit.sub,nrv.small.done" :
+                    "nrv2d.8bit";
     else if (ph.method == M_NRV2E_8)
-        addLoader(isCon ? "ps1.small.nrv2e" :
-                          "ps1.cdb.nrv2e.8bit", NULL);
+        p = isCon ? "nrv2e.small,gb.8bit.sub,nrv.small.done" :
+                    "nrv2e.8bit";
     else if (ph.method == M_NRV2B_LE32)
-        addLoader(isCon ? "ps1.small.nrv2b" :
-                          "ps1.cdb.nrv2b.32bit", NULL);
+        p = isCon ? "nrv2b.small,gb.32bit.sub,nrv.small.done" :
+                    "nrv2b.32bit";
     else if (ph.method == M_NRV2D_LE32)
-        addLoader(isCon ? "ps1.small.nrv2d" :
-                          "ps1.cdb.nrv2d.32bit", NULL);
+        p = isCon ? "nrv2d.small,gb.32bit.sub,nrv.small.done" :
+                    "nrv2d.32bit";
     else if (ph.method == M_NRV2E_LE32)
-        addLoader(isCon ? "ps1.small.nrv2e" :
-                          "ps1.cdb.nrv2e.32bit", NULL);
+        p = isCon ? "nrv2e.small,gb.32bit.sub,nrv.small.done" :
+                    "nrv2e.32bit";
+    else if (ph.method == M_LZMA)
+        p = "nrv2b.small,gb.8bit.sub,nrv.small.done,lzma.prep";
     else
         throwInternalError("unknown compression method");
 
-    if (isCon)
-        addLoader(is32Bit ? "ps1.getbit.32bit.sub" : "ps1.getbit.8bit.sub", NULL);
+    if ((gap = ALIGN_GAP((ph.c_len + (isCon ? sz_cpr : 0)),4)))
+        pad_code = gap;
+    else
+        pad_code = 0;
+    linker->addSection("pad.code", &pad_code, gap, 0);
 
-    if (sa_cnt)
-        addLoader(sa_cnt > (0x10000 << 2) ? "ps1.mset.long" : "ps1.mset.short",
-                  ih.tx_len & 3 ? "ps1.mset.unaligned" : "ps1.mset.aligned",
-                  NULL);
-
-    addLoader(isCon ? "ps1.con.exit" : "ps1.cdb.exit", "IDENTSTR", "UPX1HEAD", NULL);
 
     if (isCon)
-        addLoader("ps1.con.regs",
-                  is32Bit ? "ps1.getbit.32bit.size" : "ps1.getbit.8bit.size", NULL);
+        if (ph.method == M_LZMA)
+            addLoader("con.start", p,
+                      ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
+                      "con.entry", "pad.code", "lzma.exec", NULL);
+        else
+            addLoader("con.start", "con.mcpy",
+                      ph.c_len & 3 ? "con.padcd" : "",
+                      ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
+                      "con.entry", p,
+                      sa_cnt ? sa_cnt > (0x10000 << 2) ? "memset.long" : "memset.short" : "",
+                      "con.exit", "pad.code", NULL);
+    else
+        if (ph.method == M_LZMA)
+            addLoader("cdb.start.lzma", "pad.code", "cdb.entry.lzma", p, "cdb.lzma.cpr",
+                      ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
+                      "lzma.exec", NULL);
+        else
+            addLoader("cdb.start", "pad.code", "cdb.entry",
+                      ih.tx_ptr & 0xffff ?  "cdb.dec.ptr" : "cdb.dec.ptr.hi",
+                      p,
+                      sa_cnt ? sa_cnt > (0x10000 << 2) ? "memset.long" : "memset.short" : "",
+                      "cdb.exit", "pad.code", NULL);
+
+    addLoader("UPX1HEAD", "IDENTSTR", NULL);
+}
+
+int PackPs1::buildLoader(const Filter *)
+{
+    unsigned sa_tmp = sa_cnt;
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method) || ph.method == M_LZMA)
+    {
+        if (ph.overlap_overhead > sa_cnt)
+        {
+            if (!opt->force)
+            {
+                infoWarning("not in-place decompressible");
+                throwCantPack("packed data overlap (try --force)");
+            }
+            else
+                sa_tmp += overlap = ALIGN_UP((ph.overlap_overhead-sa_tmp),4);
+        }
+        if (ph.method == M_LZMA && !build_Loader)
+        {
+            initLoader(nrv_loader,sizeof(nrv_loader));
+            addLoader("LZMA_DEC10", "lzma.init", NULL);
+            addLoader(sa_tmp > (0x10000 << 2) ? "memset.long" : "memset.short",
+                      "con.exit", NULL);
+        }
+        else if (ph.method == M_LZMA && build_Loader)
+        {
+            unsigned char *cprLoader = new unsigned char[MemBuffer::getSizeForCompression(sz_unc)];
+            int r = upx_compress(getLoader(), sz_unc, cprLoader, &sz_cpr, NULL, M_NRV2B_8, 10, NULL, NULL );
+            if (r != UPX_E_OK || sz_cpr >= sz_unc)
+                throwInternalError("loader compression failed");
+            initLoader(nrv_loader,sizeof(nrv_loader), 0, (ph.method != M_LZMA || isCon) ? 0 : 1);
+            linker->addSection("lzma.exec", cprLoader, sz_cpr, 0);
+            delete [] cprLoader;
+            buildPS1Loader();
+        }
+        else
+        {
+            initLoader(nrv_loader,sizeof(nrv_loader), 0, (ph.method != M_LZMA || isCon) ? 0 : 1);
+            buildPS1Loader();
+        }
+    }
+    else
+        throwInternalError("unknown compression method");
 
     freezeLoader();
     return getLoaderSize();
@@ -314,26 +388,37 @@ void PackPs1::pack(OutputFile *fo)
     // compress (max_match = 65535)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = 65535;
-    compressWithFilters(&ft, 512, 0, NULL, &cconf);
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    compressWithFilters(&ft, sa_cnt, 0, NULL, &cconf);
 
-    if (ph.overlap_overhead > sa_cnt)
+    if (overlap)
     {
-        if (!opt->force)
-        {
-            infoWarning("not in-place decompressible");
-            throwCantPack("packed data overlap (try --force)");
-        }
-        else
-        {
-            overlap = ALIGN_UP((ph.overlap_overhead-sa_cnt),4);
-            opt->info_mode += !opt->info_mode ? 1 : 0;
-            infoWarning("%s: memory overlap %d bytes",fi->getName(),overlap);
-        }
+        opt->info_mode += !opt->info_mode ? 1 : 0;
+        infoWarning("%s: memory overlap %d bytes",fi->getName(),overlap);
+        sa_cnt += overlap;
+    }
+
+    unsigned lzma_init = 0;
+
+    if (ph.method == M_LZMA)
+    {
+        sz_unc = getLoaderSize();
+
+        lzma_init = 0u-(sz_unc-linker->getSymbolOffset("lzma.init"));
+        defineDecompressorSymbols();
+        linker->defineSymbol("lzma_decoder", linker->getSymbolOffset("LZMA_DEC10"));
+        linker->defineSymbol("entry", ih.epc);
+        linker->defineSymbol("SC",
+                             sa_cnt > (0x10000 << 2) ? sa_cnt >> 5 : sa_cnt >> 2);
+        linker->relocate();
+
+        build_Loader = 1;
+        buildLoader(&ft);
     }
 
     memcpy(&oh, &ih, sizeof(ih));
-    memcpy(&oh.ih_bkup, &ih.epc, SZ_IH_BKUP);
-    oh.ih_csum = upx_adler32(&ih.epc, SZ_IH_BKUP);
+    memcpy(&bh, &ih.epc, SZ_IH_BKUP);
+    bh.ih_csum = upx_adler32(&ih.epc, SZ_IH_BKUP);
 
     if (ih.is_ptr == 0)
         oh.is_ptr = PS_RAM_SIZE-0x10;
@@ -347,37 +432,38 @@ void PackPs1::pack(OutputFile *fo)
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
 
-    unsigned pad = 0;
     unsigned filelen = ALIGN_UP(ih.tx_len, 4);
-    unsigned pad_code = TIL_ALIGNED(ph.c_len, 4);
 
     const unsigned decomp_data_start = ih.tx_ptr;
-    const unsigned comp_data_start = ((decomp_data_start + filelen + overlap) - ph.c_len);
+    const unsigned comp_data_start = (decomp_data_start + filelen + overlap) - ph.c_len;
 
-    const int h_len = lsize - getLoaderSectionStart("IDENTSTR");
+    const int h_len = lsize - getLoaderSectionStart("UPX1HEAD");
     int d_len = 0;
     int e_len = 0;
 
     if (isCon)
     {
         e_len = lsize - h_len;
-        d_len = e_len - getLoaderSectionStart("ps1.con.entry");
+        d_len = e_len - getLoaderSectionStart("con.entry");
     }
     else
     {
-        d_len = (lsize - h_len) - getLoaderSectionStart("ps1.cdb.entry");
+        d_len = (lsize - h_len) - getLoaderSectionStart((ph.method == M_LZMA) ? "cdb.entry.lzma" : "cdb.entry");
         e_len = (lsize - d_len) - h_len;
     }
 
-    linker->defineSymbol("JPEP", MIPS_JP(ih.epc));
+    linker->defineSymbol("entry", ih.epc);
     linker->defineSymbol("SC", MIPS_LO(sa_cnt > (0x10000 << 2) ?
                                        sa_cnt >> 5 : sa_cnt >> 2));
     linker->defineSymbol("DECO",decomp_data_start);
 
-    const unsigned entry = comp_data_start - e_len - pad_code;
-    oh.tx_ptr = entry;
-    oh.tx_len = ph.c_len + e_len + pad_code;
-    oh.epc = comp_data_start - e_len - pad_code;
+    linker->defineSymbol("LS", (ph.method == M_LZMA ? sz_unc+16 : (d_len-pad_code)));
+
+    const unsigned entry = comp_data_start - e_len;
+    oh.epc = oh.tx_ptr = entry;
+    oh.tx_len = ph.c_len + e_len;
+
+    unsigned pad = 0;
 
     if (!opt->ps1_exe.no_align)
     {
@@ -390,57 +476,52 @@ void PackPs1::pack(OutputFile *fo)
     ibuf.clear(0,fdata_size);
     upx_bytep paddata = ibuf;
 
+    if (ph.method == M_LZMA)
+    {
+        linker->defineSymbol("lzma_init_off", lzma_init);
+        defineDecompressorSymbols();
+    }
     if (isCon)
     {
-        const char *p = is32Bit ? "ps1.getbit.32bit.sub" : "ps1.getbit.8bit.sub";
-        unsigned decomp_done = getLoaderSectionStart(p);
-
-        p = is32Bit ? "ps1.getbit.32bit.size" : "ps1.getbit.8bit.size";
-        decomp_done += get_le32(&loader[getLoaderSectionStart(p)]);
-
-
-        linker->defineSymbol("PC", pad_code);
-        linker->defineSymbol("DCRT", entry + (e_len - d_len));
-        linker->defineSymbol("LS",
-                             d_len + get_le32(&loader[getLoaderSectionStart("ps1.con.regs")]));
-        linker->defineSymbol("decomp_done", decomp_done);
+        linker->defineSymbol("PAD", pad_code);
+        if (ph.method == M_LZMA)
+            linker->defineSymbol("DCRT", (entry + getLoaderSectionStart("lzma.exec")));
+        else
+            linker->defineSymbol("DCRT", (entry + (e_len - d_len)));
         linker->relocate();
         memcpy(loader, getLoader(), lsize);
         patchPackHeader(loader, lsize);
 
-        // ps1_exe_t structure 188 bytes
+        // ps1_exe_t structure
         fo->write(&oh,sizeof(oh));
+        fo->write(&bh,sizeof(bh));
         // id & upx header
         fo->write(loader + e_len, h_len);
     }
     else
     {
-        linker->defineSymbol("CPDO", comp_data_start);
         linker->defineSymbol("PSVR", FIX_PSVR);
+        linker->defineSymbol("CPDO", comp_data_start);
+        if (ph.method == M_LZMA)
+            linker->defineSymbol("lzma_cpr", getLoaderSectionStart("lzma.exec")
+                                             - getLoaderSectionStart("cdb.entry.lzma"));
 
         linker->relocate();
         memcpy(loader, getLoader(), lsize);
         patchPackHeader(loader,lsize);
 
-        // ps1_exe_t structure 188 bytes
+        // ps1_exe_t structure
         fo->write(&oh,sizeof(oh));
+        fo->write(&bh,sizeof(bh));
         // decompressor
-        fo->write(loader + e_len, d_len);
-        // id & upx header
-        fo->write(loader + e_len + d_len, h_len);
+        fo->write(loader + e_len, d_len + h_len);
     }
 
-    // header size is 2048 bytes
-    fo->write(paddata, PS_HDR_SIZE - fo->getBytesWritten());
-    // sector alignment
-    if (pad)
-        fo->write(paddata, pad);
+    // header size is 2048 bytes + sector alignment
+    fo->write(paddata, (pad + PS_HDR_SIZE) - fo->getBytesWritten());
     // entry
     fo->write(loader, e_len);
-    // code must be aligned to 4!
-    if (pad_code)
-        fo->write(paddata, pad_code);
-    // compressed binary / data
+    // compressed body
     fo->write(obuf, ph.c_len);
 
     verifyOverlappingDecompression();
@@ -458,7 +539,7 @@ void PackPs1::pack(OutputFile *fo)
     char method_name[32+1]; set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
     printf("%-13s: compressor   : %s\n", getName(), method_name);
 #endif
-}
+ }
 
 
 /*************************************************************************
@@ -469,11 +550,10 @@ int PackPs1::canUnpack()
 {
     if (!readFileHeader())
         return false;
-    if (!readPackHeader(1024))
+    if (!readPackHeader(CD_SEC))
         return false;
     // check header as set by packer
-    if (ih.ih_csum != upx_adler32(&ih.ih_bkup, SZ_IH_BKUP) &&
-       (ph.c_len >= fdata_size))
+    if (!readBkupHeader() || ph.c_len >= fdata_size)
         throwCantUnpack("header damaged");
     // generic check
     if (!checkFileHeader())
@@ -490,7 +570,7 @@ void PackPs1::unpack(OutputFile *fo)
 {
     // restore orig exec hdr
     memcpy(&oh, &ih, sizeof(ih));
-    memcpy(&oh.epc, &ih.ih_bkup, SZ_IH_BKUP);
+    memcpy(&oh.epc, &bh, SZ_IH_BKUP);
 
     // check for removed sector alignment
     assert(oh.tx_len >= ph.u_len);
@@ -502,9 +582,6 @@ void PackPs1::unpack(OutputFile *fo)
     fi->seek(PS_HDR_SIZE, SEEK_SET);
     fi->readx(ibuf, fdata_size);
 
-    // clear backup and checksum of header
-    memset(&oh.ih_bkup, 0, SZ_IH_BKUP+4);
-
     // decompress
     decompress(ibuf + (fdata_size - ph.c_len), obuf);
 
@@ -515,8 +592,8 @@ void PackPs1::unpack(OutputFile *fo)
         fo->write(&oh, sizeof(oh));
         // align the ps exe header (mode 2 sector data size)
         ibuf.clear();
+        fo->write(ibuf, PS_HDR_SIZE - fo->getBytesWritten());
         // write uncompressed data + pad
-        fo->write(ibuf, PS_HDR_SIZE - sizeof(oh));
         obuf.clear(ph.u_len, pad);
         fo->write(obuf, ph.u_len + pad);
     }

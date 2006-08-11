@@ -1,5 +1,5 @@
 /*
-;  l_ps1.asm -- ps1/exe program entry & decompressor
+;  mipsel.r3000-ps1.asm -- ps1/exe program entry & decompressor
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -46,8 +46,52 @@
 =============
 */
 
-.macro  SysFlushCache
+.if (PS1)
+    SZ_REG = 4
+.else
+    SZ_REG = 8
+.endif
 
+.macro mCDBOOT s
+    .if (\s == 1)
+        REG_SZ = (5*SZ_REG)
+        CDBOOT = 1
+    .else
+        REG_SZ = (6*SZ_REG)
+        CDBOOT = 0
+    .endif
+.endm
+
+.macro  regs    _w, ok
+             \_w     pc,SZ_REG*0(sp)
+             \_w     src,SZ_REG*1(sp)
+             \_w     cnt,SZ_REG*2(sp)
+             \_w     a3,SZ_REG*3(sp)
+             \_w     ra,SZ_REG*4(sp)
+            REG_SZ = (5*SZ_REG)
+    .if (\ok == 1)
+             \_w     tmp,SZ_REG*5(sp)
+            REG_SZ = (6*SZ_REG)
+    .endif
+.endm
+
+.macro  push    ok = 0
+    .if (PS1)
+             regs    sw,\ok
+    .else
+             regs    sd,\ok
+    .endif
+.endm
+
+.macro  pop     ok = 0
+    .if (PS1)
+             regs    lw,\ok
+    .else
+             regs    ld,\ok
+    .endif
+.endm
+
+.macro  SysFlushCache
     .if (PS1)
             PRINT ("SYSCALL PS1")
             li      t2,160
@@ -59,88 +103,67 @@
             li      v1, 100
             syscall
     .endif
-
 .endm
 
-.macro  regs    _w, marker
 
-.if (PS1)
-    SZ_REG = 4
-.else
-    SZ_REG = 8
-.endif
+#define CLzmaDecoderState   a0   /* CLzmaDecoderState */
+#define inStream            a1
+#define inSize              a2
+#define pinSizeprocessed    a3  /*   inSizeprocessed */
 
-.if (CDBOOT == 1)
-    REG_SZ = (4*SZ_REG)
-.else
-    REG_SZ = (5*SZ_REG)
-.endif
+#define outStream           t0
+#define outSize             t1
+#define poutSizeProcessed   t2
 
-             \_w     src,SZ_REG*0(sp)
-             \_w     dst,SZ_REG*1(sp)
-             \_w     pc,SZ_REG*2(sp)
-             \_w     ra,SZ_REG*3(sp)
-    .if (CDBOOT == 0)
-             \_w     tmp,SZ_REG*4(sp)
-    .endif
-    .if (\marker != 0)
-             DW      \marker
-        .if (CDBOOT == 0)
-             addu    sp,tmp
-        .else
-             addiu   sp,REG_SZ
-        .endif
-    .endif
+#define dst_save            0*SZ_REG
+#define outSizeProcessed    1*SZ_REG
+#define inSizeProcessed     2*SZ_REG
 
-.endm
-
-.macro  push    jmp
-
-    .if (PS1)
-             regs    sw,\jmp
-    .else
-             regs    sd,\jmp
-    .endif
-
-.endm
-
-.macro  pop     jmp
-
-    .if (PS1)
-             regs    lw,\jmp
-    .else
-             regs    ld,\jmp
-    .endif
-
-.endm
-
+            lzma_args_sz =  4*SZ_REG
 
 /*
 =============
 ============= ENTRY POINT cd-boot
 =============
 */
-            CDBOOT = 1
+            mCDBOOT 1
 
-section     ps1.cdb.start
+section     cdb.start
             la      t0,PSVR         // prepare to compute value
             subu    t0,s0,t0        // get stored header offset in mem
             jr      t0
             subiu   sp,REG_SZ       // prep to adjust stack
 
-section     ps1.cdb.entry
-            push    0               // push used regs
+section     cdb.entry
+            push                    // push used regs
             la      src,CPDO        // load compressed data offset
 
-section     ps1.cdb.nrv.ptr
-            la      dst,DECO        // load decompressed data offset
+section     cdb.start.lzma
+            la      t0,PSVR         // prepare to compute value
+            subu    t0,s0,t0        // get stored header offset in mem
+            li      tmp,%lo(LS+REG_SZ)      // size of decomp. routine
+            jr      t0
+            subu    sp,tmp          // adjust the stack with this size
 
-section     ps1.cdb.nrv.ptr.hi
+section     cdb.entry.lzma
+            push    1               // push used regs
+            addiu   src,t0,lzma_cpr // load compressed data offset
+            addiu   dst,sp,REG_SZ
+
+section     cdb.lzma.cpr
+            la      src,CPDO        // load compressed data offset
+
+section     cdb.dec.ptr
+            la      dst,DECO        // load decompress data offset
+
+section     cdb.dec.ptr.hi
             lui     dst,%hi(DECO)
 
-section     ps1.cdb.exit
+section     cdb.exit
             SysFlushCache
-            pop     JPEP             // pop used regs with marker for entry
+            pop                     // pop used regs with marker for entry
+            j       entry
+            addiu   sp,REG_SZ
 
 
 /*
@@ -149,66 +172,62 @@ section     ps1.cdb.exit
 =============
 */
 
-            CDBOOT = 0
+            mCDBOOT 0
 
-section     ps1.con.start
-            li      tmp,%lo(LS)      // size of decomp. routine
-            subu    sp,tmp           // adjust the stack with this size
-            push    0                // push used regs
+section     con.start
+            li      tmp,%lo(LS+REG_SZ)      // size of decomp. routine
+            subu    sp,tmp                  // adjust the stack with this size
+            push    1                // push used regs
             subiu   cnt,tmp,REG_SZ   // cnt = counter copyloop
             addiu   pc,sp,REG_SZ     // get offset for decomp. routine
             move    dst,pc
             la      src,DCRT         // load decompression routine's offset
-1:
-            lw      tmp,0(src)       // memcpy *a0 -> tmp -> *a1
+
+section     con.mcpy
+1:          lw      var,0(src)       // memcpy
             subiu   cnt,4
-            sw      tmp,0(dst)
+            sw      var,0(dst)
             addiu   src,4
             bnez    cnt,1b
             addiu   dst,4
 
-section     ps1.con.padcd
-            addiu   src,PC           // a0 = pointer compressed data
+section     lzma.prep
+            addiu   pc,dst,%lo(lzma_init_off)
 
-section     ps1.con.nrv.ptr
-            lui     dst,%hi(DECO)    // load DECOMPDATA HI offset
+section     con.padcd
+            addiu   src,%lo(PAD)     // pointer compressed data
+
+section     dec.ptr
+            lui     dst,%hi(DECO)    // load decompress data offset
             jr      pc
-            addiu   dst,%lo(DECO)    // load DECOMPDATA LO offset
+            addiu   dst,%lo(DECO)
 
-section     ps1.con.nrv.ptr.hi
+section     dec.ptr.hi
             jr      pc
-            lui     dst,%hi(DECO)    // same for HI only !(offset&0xffff)
+            lui     dst,%hi(DECO)
 
-section     ps1.con.entry
+section     con.entry
 
-section     ps1.con.exit
+section     con.exit
             SysFlushCache
-            pop     JPEP             // pop used regs with marker for entry
-
-section     ps1.con.regs
-            DW      REG_SZ
+            pop     1                // pop used regs with marker for entry
+            j       entry
+            addu    sp,tmp
 
 
 // =============
 
-section     ps1.mset.short
-            li      cnt,%lo(SC)          // amount of removed zero's at eof
-
-section     ps1.mset.long
-            li      cnt,%lo(SC)          // amount of removed zero's at eof
-            sll     cnt,3           // (cd mode 2 data sector alignment)
-
-section     ps1.mset.aligned
-1:
-            sw      zero,0(dst)
+section     memset.short
+            li      cnt,%lo(SC)      // amount of removed zero's at eof
+1:          sw      zero,0(dst)
             subiu   cnt,1
             bnez    cnt,1b
             addiu   dst,4
 
-section     ps1.mset.unaligned
-1:
-            swl     zero,3(dst)
-            swr     zero,0(dst)
+section     memset.long
+            li      cnt,%lo(SC)      // amount of removed zero's at eof
+            sll     cnt,3            // (cd mode 2 data sector alignment)
+1:          sw      zero,0(dst)
             subiu   cnt,1
             bnez    cnt,1b
             addiu   dst,4
@@ -228,42 +247,42 @@ section     ps1.mset.unaligned
 // ========== cd-boot
 
             UCL_init    8,0,1
-section     ps1.cdb.nrv2b.8bit
+section     nrv2b.8bit
             build full, nrv2b
-section     ps1.cdb.nrv2d.8bit
+section     nrv2d.8bit
             build full, nrv2d
-section     ps1.cdb.nrv2e.8bit
+section     nrv2e.8bit
             build full, nrv2e
 
             UCL_init    32,0,1
-section     ps1.cdb.nrv2b.32bit
+section     nrv2b.32bit
             build full, nrv2b
-section     ps1.cdb.nrv2d.32bit
+section     nrv2d.32bit
             build full, nrv2d
-section     ps1.cdb.nrv2e.32bit
+section     nrv2e.32bit
             build full, nrv2e
 
 // ========== console-run
 
             UCL_init    8,1,0
-section     ps1.getbit.8bit.sub
+section     gb.8bit.sub
             build sub_only
-section     ps1.getbit.8bit.size
-            DW  sub_size
 
             UCL_init    32,1,0
-section     ps1.getbit.32bit.sub
+section     gb.32bit.sub
             build sub_only
-section     ps1.getbit.32bit.size
-            DW  sub_size
 
-section     ps1.small.nrv2b
+section     nrv2b.small
             build without_sub, nrv2b
-section     ps1.small.nrv2d
+section     nrv2d.small
             build without_sub, nrv2d
-section     ps1.small.nrv2e
+section     nrv2e.small
             build without_sub, nrv2e
 
+section     nrv.small.done
+decomp_done:
+
+#include    "arch/mips/mipsel.r3000/lzma_d.S"
 
 #include    "include/header2.ash"
 

@@ -657,6 +657,7 @@ mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 
 tc.mipsel.r3000-ps1.as          = mipsel-elf-as -O2 -mno-pdr
 tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
+tc.mipsel.r3000-ps1.gcc         = mipsel-elf-gcc
 
 mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	# call gpp_inc to generate .d file
