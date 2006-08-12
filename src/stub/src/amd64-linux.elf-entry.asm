@@ -179,6 +179,9 @@ setup:
 #include "arch/amd64/lzma_d.S"
 
   section NRV_TAIL
+        // empty
+
+  section ELFMAINY
 eof:
         pop %rcx  // &input_eof
         movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
@@ -187,7 +190,6 @@ eof:
         pop %rbx; pop %rbp
         ret
 
-  section ELFMAINY
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1
 __NR_exit  = 60
