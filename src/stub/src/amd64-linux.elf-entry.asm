@@ -87,7 +87,7 @@ decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint meth
         push dst
         addq src,lsrc; push lsrc  // &input_eof
 
-  section NRV_COMMON
+  section NRV_HEAD
 
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -178,7 +178,7 @@ setup:
 
 #include "arch/amd64/lzma_d.S"
 
-  section ELFMAINY
+  section NRV_TAIL
 eof:
         pop %rcx  // &input_eof
         movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
@@ -187,6 +187,7 @@ eof:
         pop %rbx; pop %rbp
         ret
 
+  section ELFMAINY
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1
 __NR_exit  = 60
