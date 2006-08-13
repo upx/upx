@@ -4,6 +4,11 @@ User visible changes for UPX
 
 Changes in 2.90 (xx Aug 2006):
   * vmlinuz/386: fixed zlib uncompression problem on dos
+  * new executable format BSD/elf386 supports FreeBSD, NetBSD, OpenBSD [how?]
+  * lzma algorithm support (--lzma; --brute [?])
+
+Changes in 2.02 (xx Aug 2006):
+  * work around Linux kernel bug (".bss" requires PF_W)
 
 Changes in 2.01 (06 Jun 2006):
   * arm/pe: better DLL support
