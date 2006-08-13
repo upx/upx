@@ -112,8 +112,8 @@ struct TDefaultLinker : public DefaultLinker
     virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
 };
 
-typedef TDefaultLinker<NBELE::BEPolicy> DefaultBELinker;
-typedef TDefaultLinker<NBELE::LEPolicy> DefaultLELinker;
+typedef TDefaultLinker<N_BELE_CTP::BEPolicy> DefaultBELinker;
+typedef TDefaultLinker<N_BELE_CTP::LEPolicy> DefaultLELinker;
 
 
 /*************************************************************************
@@ -147,8 +147,8 @@ struct TSimpleLinker : public SimpleLinker
     virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
 };
 
-typedef TSimpleLinker<NBELE::BEPolicy> SimpleBELinker;
-typedef TSimpleLinker<NBELE::LEPolicy> SimpleLELinker;
+typedef TSimpleLinker<N_BELE_CTP::BEPolicy> SimpleBELinker;
+typedef TSimpleLinker<N_BELE_CTP::LEPolicy> SimpleLELinker;
 
 
 /*************************************************************************

@@ -34,7 +34,7 @@
 // Some ELF type definitinons
 **************************************************************************/
 
-namespace TT_Elf {
+namespace N_Elf {
 
 // The ELF file header. This appears at the start of every ELF file.
 template <class Word, class Addr, class Off, class Half>
@@ -116,10 +116,10 @@ struct Dyn
 }
 __attribute_packed;
 
-} // namespace TT_Elf
+} // namespace N_Elf
 
 
-namespace TT_Elf32 {
+namespace N_Elf32 {
 
 // Program segment header.
 template <class Word, class Addr, class Off>
@@ -243,10 +243,10 @@ struct Sym
 }
 __attribute_packed;
 
-} // namespace TT_Elf32
+} // namespace N_Elf32
 
 
-namespace TT_Elf64 {
+namespace N_Elf64 {
 
 // Program segment header.
 template <class Word, class Xword, class Addr, class Off>
@@ -314,56 +314,56 @@ struct Shdr
 }
 __attribute_packed;
 
-} // namespace TT_Elf64
+} // namespace N_Elf64
 
 
 /*************************************************************************
 // now for the actual types
 **************************************************************************/
 
-#define P NBELE::HostPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf32_Ehdr;
-typedef TT_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf32_Phdr;
-typedef TT_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf32_Shdr;
-typedef TT_Elf  ::Dyn <P::U32,P::U32>               Elf32_Dyn;
-typedef TT_Elf32::Sym <P::U16,P::U32>               Elf32_Sym;
+#define P N_BELE_CTP::HostPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf32_Ehdr;
+typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf32_Phdr;
+typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf32_Shdr;
+typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf32_Dyn;
+typedef N_Elf32::Sym <P::U16,P::U32>               Elf32_Sym;
 #undef P
 
-#define P NBELE::BEPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_BE32_Ehdr;
-typedef TT_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_BE32_Phdr;
-typedef TT_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_BE32_Shdr;
-typedef TT_Elf  ::Dyn <P::U32,P::U32>               Elf_BE32_Dyn;
-typedef TT_Elf32::Sym <P::U16,P::U32>               Elf_BE32_Sym;
+#define P N_BELE_CTP::BEPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_BE32_Ehdr;
+typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_BE32_Phdr;
+typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_BE32_Shdr;
+typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf_BE32_Dyn;
+typedef N_Elf32::Sym <P::U16,P::U32>               Elf_BE32_Sym;
 #undef P
 
-#define P NBELE::LEPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_LE32_Ehdr;
-typedef TT_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_LE32_Phdr;
-typedef TT_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_LE32_Shdr;
-typedef TT_Elf  ::Dyn <P::U32,P::U32>               Elf_LE32_Dyn;
-typedef TT_Elf32::Sym <P::U16,P::U32>               Elf_LE32_Sym;
+#define P N_BELE_CTP::LEPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_LE32_Ehdr;
+typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_LE32_Phdr;
+typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_LE32_Shdr;
+typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf_LE32_Dyn;
+typedef N_Elf32::Sym <P::U16,P::U32>               Elf_LE32_Sym;
 #undef P
 
-#define P NBELE::HostPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf64_Ehdr;
-typedef TT_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf64_Phdr;
-typedef TT_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf64_Shdr;
-typedef TT_Elf  ::Dyn <P::U64,P::U64>               Elf64_Dyn;
+#define P N_BELE_CTP::HostPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf64_Ehdr;
+typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf64_Phdr;
+typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf64_Shdr;
+typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf64_Dyn;
 #undef P
 
-#define P NBELE::BEPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_BE64_Ehdr;
-typedef TT_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Phdr;
-typedef TT_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Shdr;
-typedef TT_Elf  ::Dyn <P::U64,P::U64>               Elf_BE64_Dyn;
+#define P N_BELE_CTP::BEPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_BE64_Ehdr;
+typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Phdr;
+typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Shdr;
+typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_BE64_Dyn;
 #undef P
 
-#define P NBELE::LEPolicy
-typedef TT_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_LE64_Ehdr;
-typedef TT_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Phdr;
-typedef TT_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Shdr;
-typedef TT_Elf  ::Dyn <P::U64,P::U64>               Elf_LE64_Dyn;
+#define P N_BELE_CTP::LEPolicy
+typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_LE64_Ehdr;
+typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Phdr;
+typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Shdr;
+typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_LE64_Dyn;
 #undef P
 
 
