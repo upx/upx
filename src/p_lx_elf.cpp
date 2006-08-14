@@ -50,15 +50,10 @@ int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
-    unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
-    if (0==osabi0) {
-        osabi0 = opt->o_unix.osabi0;
-    }
 
     if (0!=memcmp(buf, "\x7f\x45\x4c\x46", 4)  // "\177ELF"
     ||  buf[Elf32_Ehdr::EI_CLASS]!=ei_class
     ||  buf[Elf32_Ehdr::EI_DATA] !=ei_data
-    ||                     osabi0!=ei_osabi
     ) {
         return -1;
     }
@@ -146,7 +141,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), file_image(NULL), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0),
-    e_machine(0), ei_class(0), ei_data(0), ei_osabi(0)
+    e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), pt_note(NULL)
 {
 }
 
@@ -825,20 +820,43 @@ bool PackLinuxElf32::canPack()
         return false;
     }
 
+    unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
     unsigned const e_phnum = get_native16(&ehdr->e_phnum);
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(buf + e_phoff);
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
-            return false;
-        if (phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
+                return false;
+        if (1!=exetype && phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
             if (phdr->p_offset != 0) {
                 throwCantPack("invalid Phdr p_offset; try `--force-execve'");
                 return false;
             }
             exetype = 1;
-            break;
         }
+        if (Elf32_Ehdr::ELFOSABI_NONE==osabi0  // Still seems to be generic.
+        && phdr->PT_NOTE == get_native32(&phdr->p_type)) {
+            unsigned const offset = get_native32(&phdr->p_offset);
+            struct Elf32_Note note; memset(&note, 0, sizeof(note));
+            fi->seek(offset, SEEK_SET);
+            fi->readx(&note, sizeof(note));
+            fi->seek(0, SEEK_SET);
+            if (4==get_native32(&note.descsz)
+            &&  1==get_native32(&note.type)
+            &&  0==note.end
+            &&  NULL!=pt_note
+            &&  (1+ strlen(pt_note))==get_native32(&note.namesz)
+            &&  0==strcmp(pt_note, (char const *)&note.text)
+            ) {
+                osabi0 = ei_osabi;  // Specified by PT_NOTE.
+            }
+        }
+    }
+    if (Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // No EI_OSBAI, no PT_NOTE.
+        osabi0 = opt->o_unix.osabi0;  // Possibly specified by command-line.
+    }
+    if (osabi0!=ei_osabi) {
+        return false;
     }
 
     // We want to compress position-independent executable (gcc -pie)
@@ -1937,6 +1955,7 @@ PackFreeBSDElf32x86::~PackFreeBSDElf32x86()
 PackNetBSDElf32x86::PackNetBSDElf32x86(InputFile *f) : super(f)
 {
     ei_osabi  = Elf32_Ehdr::ELFOSABI_NETBSD;
+    pt_note = "NetBSD";
 }
 
 PackNetBSDElf32x86::~PackNetBSDElf32x86()
@@ -1946,6 +1965,7 @@ PackNetBSDElf32x86::~PackNetBSDElf32x86()
 PackOpenBSDElf32x86::PackOpenBSDElf32x86(InputFile *f) : super(f)
 {
     ei_osabi  = Elf32_Ehdr::ELFOSABI_OPENBSD;
+    pt_note = "OpenBSD";
 }
 
 PackOpenBSDElf32x86::~PackOpenBSDElf32x86()
