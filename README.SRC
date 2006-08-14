@@ -121,6 +121,8 @@ If you want to modify the stub sources you'll also need
 
   - Other cross compilers targeted at the following architectures.
        - arm-9tdmi-linux-gnu
+       - arm-unknown-linux-gnu-gcc-4.1.0
+         [via crosstool-0.42 using gcc-4.1.0-glibc-2.3.2.dat]
        - powerpc-750-linux-gnu
        - x86_64-unknown-linux-gnu
     See http://upx.sourceforge.net/download/tools/ for pre-compiled
