@@ -551,7 +551,7 @@ PackLinuxElf64amd::addLinkerSymbols(Filter const *)
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
-    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity 
+    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
     acc_uint64l_t const lo_va_user = 0x400000;  // XXX
     acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
     acc_uint64l_t adrc;
@@ -1125,7 +1125,7 @@ PackOpenBSDElf32x86::generateElfHdr(
     set_native32(&elfnote.type,   1);
     strcpy(elfnote.text, "OpenBSD");
                   elfnote.end   = 0;
-    
+
     if (ph.format==getFormat()) {
         memset(&h3->linfo, 0, sizeof(h3->linfo));
         fo->write(h3, sizeof(*h3) - sizeof(h3->linfo));
@@ -1481,7 +1481,7 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 }
 
 #include "bele.h"
-using namespace NBELE;
+using namespace N_BELE_CTP;
 
 // Filter 0x50, 0x51 assume HostPolicy::isLE
 static const int *

@@ -56,6 +56,8 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
+    virtual bool getBkupHeader(unsigned char *src, unsigned char * dst);
     virtual bool readBkupHeader();
     virtual void buildPS1Loader(const Filter *ft=0);
     virtual int buildLoader(const Filter *ft);
@@ -91,7 +93,8 @@ protected:
     }
     __attribute_packed;
 
-    struct ps1_exe_cp_t
+    // for unpack
+    struct ps1_exe_hb_t
     {
         LE32 ih_bkup[10];
         // plus checksum for the backup
@@ -99,17 +102,24 @@ protected:
     }
     __attribute_packed;
 
-    // unpack_only
-    ps1_exe_cp_t bh;
+    struct ps1_exe_chb_t
+    {
+        unsigned char id;
+        unsigned char len;
+        LE16          ih_csum;
+        unsigned char ih_bkup;
+    }
+    __attribute_packed;
 
     ps1_exe_t ih, oh;
+    ps1_exe_hb_t bh;
 
-    bool build_Loader;
     bool isCon;
     bool is32Bit;
+    bool build_Loader;
     unsigned ram_size;
     unsigned sa_cnt, overlap;
-    unsigned sz_unc, sz_cpr;
+    unsigned sz_lunc, sz_lcpr;
     unsigned pad_code;
     // filesize-PS_HDR_SIZE
     unsigned fdata_size;
@@ -122,5 +132,3 @@ protected:
 /*
 vi:ts=4:et
 */
-
-
