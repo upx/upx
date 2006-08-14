@@ -355,7 +355,7 @@ tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
-	tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
+tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,objstrip) $@
 
