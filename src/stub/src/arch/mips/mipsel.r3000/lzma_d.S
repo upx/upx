@@ -54,10 +54,10 @@ section     lzma.init
             bal     lzma_decoder
             sw      tmp,0(CLzmaDecoderState)
             lw      dst,dst_save(sp)
+            lw      outSize,outSizeProcessed(sp)
             li      tmp,%lo(UPXa-lzma_args_sz)
-            addu    dst,t3
+            addu    dst,outSize
             subu    sp,tmp
-
 
 section     LZMA_DEC10
 #include    "lzma_d_cs.S"

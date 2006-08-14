@@ -40,7 +40,6 @@
 static const
 #include "stub/mipsel.r3000-ps1.h"
 
-
 #define CD_SEC              2048
 #define PS_HDR_SIZE         CD_SEC
 #define PS_RAM_SIZE         ram_size
@@ -48,24 +47,17 @@ static const
 #define PS_MAX_SIZE         ((PS_RAM_SIZE*95) / 100)
 
 #define SZ_IH_BKUP          (10 * sizeof(LE32))
-#define HD_CODE_OFS         (sizeof(ps1_exe_t))
-
-#if 0
-// lui / ori
-#   define MIPS_HI(a)       ((a) >> 16)
-#else
-// lui / addiu
-#   define MIPS_HI(a)       (((a) >> 16) + (((a) & 0x8000) >> 15))
-#endif
-#define MIPS_LO(a)          ((a) & 0xffff)
-//#define MIPS_JP(a)          ((0x08 << 24) | (((a) & 0x0fffffff) >> 2))
-#define MIPS_PC16(a)        ((a) >> 2)
-#define MIPS_PC26(a)        (((a) & 0x0fffffff) >> 2)
+#define HD_CODE_OFS         (sizeof(ps1_exe_t) + sz_cbh)
 
 #define K0_BS               (0x80000000)
 #define K1_BS               (0xa0000000)
 #define FIX_PSVR            (K1_BS - (ih.epc & K0_BS)) + (PS_HDR_SIZE - HD_CODE_OFS)
 
+// lui / addiu
+#define MIPS_HI(a)          (((a) >> 16) + (((a) & 0x8000) >> 15))
+#define MIPS_LO(a)          ((a) & 0xffff)
+#define MIPS_PC16(a)        ((a) >> 2)
+#define MIPS_PC26(a)        (((a) & 0x0fffffff) >> 2)
 
 /*************************************************************************
 // ps1 exe looks like this:
@@ -83,11 +75,12 @@ static const
 
 PackPs1::PackPs1(InputFile *f) :
     super(f),
-    build_Loader(0), isCon(!opt->ps1_exe.boot_only), is32Bit(!opt->ps1_exe.do_8bit),
-    sa_cnt(0), overlap(0), sz_unc(0), sz_cpr(0), pad_code(0)
+    isCon(!opt->ps1_exe.boot_only), is32Bit(!opt->ps1_exe.do_8bit),
+    build_Loader(0), sa_cnt(0), overlap(0), sz_lunc(0), sz_lcpr(0), pad_code(0)
 {
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 136);
-    COMPILE_TIME_ASSERT(sizeof(ps1_exe_cp_t) == 44);
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_hb_t) == 44);
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_chb_t) == 5);
 
     COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
@@ -99,7 +92,6 @@ PackPs1::PackPs1(InputFile *f) :
     ram_size = !opt->ps1_exe.do_8mb ? 0x200000 : 0x800000;
 }
 
-
 const int *PackPs1::getCompressionMethods(int method, int level) const
 {
     if (is32Bit)
@@ -108,12 +100,10 @@ const int *PackPs1::getCompressionMethods(int method, int level) const
         return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
-
 const int *PackPs1::getFilters() const
 {
     return NULL;
 }
-
 
 Linker* PackPs1::newLinker() const
 {
@@ -141,7 +131,6 @@ Linker* PackPs1::newLinker() const
                 super::relocate1(rel, location, value, type);
         }
     };
-
     return new ElfLinkerMipsLE;
 }
 
@@ -155,8 +144,8 @@ int PackPs1::readFileHeader()
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ih, sizeof(ih));
-    if (memcmp(&ih.id,"PS-X EXE",8) != 0 &&
-        memcmp(&ih.id,"EXE X-SP",8) != 0)
+    if (memcmp(&ih.id, "PS-X EXE", 8) != 0 &&
+        memcmp(&ih.id, "EXE X-SP", 8) != 0)
         return 0;
     if (ih.text != 0 || ih.data != 0)
         return 0;
@@ -165,17 +154,73 @@ int PackPs1::readFileHeader()
 
 bool PackPs1::readBkupHeader()
 {
-    fi->seek(sizeof(ps1_exe_t), SEEK_SET);
+    fi->seek(sizeof(ps1_exe_t)+8, SEEK_SET);
     fi->readx(&bh, sizeof(bh));
 
     if (bh.ih_csum != upx_adler32(&bh, SZ_IH_BKUP))
     {
-        // Compatibility
-        fi->seek(sizeof(ps1_exe_t)+8, SEEK_SET);
-        fi->readx(&bh, sizeof(bh));
-        if (bh.ih_csum != upx_adler32(&bh, SZ_IH_BKUP))
+        unsigned char buf[sizeof(bh)];
+        fi->seek(sizeof(ps1_exe_t), SEEK_SET);
+        fi->readx(buf, sizeof(bh));
+        if (!getBkupHeader(buf, (unsigned char *)&bh))
             return false;
     }
+    return true;
+}
+
+#define INIT_BH_BKUP(p, l)  {(p)->id = '1'; (p)->len = l;}
+#define ADLER16(a)          ((a) >> 16 ^ ((a) & 0xffff))
+
+void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len)
+{
+    unsigned sz_cbh;
+
+    if (src && dst)
+    {
+        unsigned char *cpr_bh = new unsigned char[MemBuffer::getSizeForCompression(SZ_IH_BKUP)];
+
+        ps1_exe_chb_t * p = (ps1_exe_chb_t * )cpr_bh;
+
+        int r = upx_compress(src, SZ_IH_BKUP,
+                             &p->ih_bkup, &sz_cbh, NULL, M_NRV2E_8, 10, NULL, NULL );
+        if (r != UPX_E_OK || sz_cbh >= SZ_IH_BKUP)
+            throwInternalError("header compression failed");
+        INIT_BH_BKUP(p, sz_cbh);
+        *len = ALIGN_UP(sz_cbh + sizeof(ps1_exe_chb_t) - 1, 4);
+        p->ih_csum = ADLER16(upx_adler32(&ih.epc, SZ_IH_BKUP));
+        memcpy(dst, cpr_bh, SZ_IH_BKUP);
+        delete [] cpr_bh;    
+    }
+    else
+        throwInternalError("failed to create backup header");
+}
+
+#define ADLER16_HI(a,b)     ((((a) & 0xffff) ^ (b)) << 16) 
+#define ADLER16_LO(a,b)     (((a) >> 16) ^ (b))
+#define RE_ADLER16(a,b)     (ADLER16_HI(a,b) | ADLER16_LO(a,b))
+
+bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
+{
+    ps1_exe_chb_t *src = (ps1_exe_chb_t*)p;
+
+    if (src && src->id == '1' && dst)
+    {
+        unsigned char *unc_bh = new unsigned char[MemBuffer::getSizeForUncompression(SZ_IH_BKUP)];
+        
+        unsigned sz_bh = SZ_IH_BKUP;
+        int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
+                               unc_bh, &sz_bh, M_NRV2E_8, NULL );
+        if (r != UPX_E_OK || sz_bh != SZ_IH_BKUP)
+            throwInternalError("header decompression failed");
+        unsigned ad = upx_adler32(unc_bh, SZ_IH_BKUP);
+        unsigned ch = src->ih_csum;
+        if (ad != RE_ADLER16(ad,ch))
+            throwInternalError("backup header damaged");
+        memcpy(dst, unc_bh, SZ_IH_BKUP);
+        delete [] unc_bh;
+    }
+    else
+        return false;
     return true;
 }
 
@@ -215,7 +260,7 @@ bool PackPs1::checkFileHeader()
 
 bool PackPs1::canPack()
 {
-    unsigned char buf[PS_HDR_SIZE-HD_CODE_OFS];
+    unsigned char buf[PS_HDR_SIZE - sizeof(ps1_exe_t)];
 
     if (!readFileHeader())
         return false;
@@ -276,7 +321,7 @@ void PackPs1::buildPS1Loader(const Filter *)
     else
         throwInternalError("unknown compression method");
 
-    if ((gap = ALIGN_GAP((ph.c_len + (isCon ? sz_cpr : 0)),4)))
+    if ((gap = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)),4)))
         pad_code = gap;
     else
         pad_code = 0;
@@ -328,24 +373,27 @@ int PackPs1::buildLoader(const Filter *)
         if (ph.method == M_LZMA && !build_Loader)
         {
             initLoader(nrv_loader,sizeof(nrv_loader));
-            addLoader("LZMA_DEC10", "lzma.init", NULL);
+            addLoader(isCon ? "LZMA_DEC20" : "LZMA_DEC10", "lzma.init", NULL);
             addLoader(sa_tmp > (0x10000 << 2) ? "memset.long" : "memset.short",
                       "con.exit", NULL);
         }
         else if (ph.method == M_LZMA && build_Loader)
         {
-            unsigned char *cprLoader = new unsigned char[MemBuffer::getSizeForCompression(sz_unc)];
-            int r = upx_compress(getLoader(), sz_unc, cprLoader, &sz_cpr, NULL, M_NRV2B_8, 10, NULL, NULL );
-            if (r != UPX_E_OK || sz_cpr >= sz_unc)
+            unsigned char *cprLoader = new unsigned char[MemBuffer::getSizeForCompression(sz_lunc)];
+            int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr,
+                                 NULL, M_NRV2B_8, 10, NULL, NULL );
+            if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
-            initLoader(nrv_loader,sizeof(nrv_loader), 0, (ph.method != M_LZMA || isCon) ? 0 : 1);
-            linker->addSection("lzma.exec", cprLoader, sz_cpr, 0);
+            initLoader(nrv_loader,sizeof(nrv_loader), 0,
+                      (ph.method != M_LZMA || isCon) ? 0 : 1);
+            linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
             delete [] cprLoader;
             buildPS1Loader();
         }
         else
         {
-            initLoader(nrv_loader,sizeof(nrv_loader), 0, (ph.method != M_LZMA || isCon) ? 0 : 1);
+            initLoader(nrv_loader,sizeof(nrv_loader), 0,
+                      (ph.method != M_LZMA || isCon) ? 0 : 1);
             buildPS1Loader();
         }
     }
@@ -394,7 +442,7 @@ void PackPs1::pack(OutputFile *fo)
     if (overlap)
     {
         opt->info_mode += !opt->info_mode ? 1 : 0;
-        infoWarning("%s: memory overlap %d bytes",fi->getName(),overlap);
+        infoWarning("%s: memory overlap %d bytes", fi->getName(), overlap);
         sa_cnt += overlap;
     }
 
@@ -402,11 +450,11 @@ void PackPs1::pack(OutputFile *fo)
 
     if (ph.method == M_LZMA)
     {
-        sz_unc = getLoaderSize();
+        sz_lunc = getLoaderSize();
 
-        lzma_init = 0u-(sz_unc-linker->getSymbolOffset("lzma.init"));
+        lzma_init = 0u - (sz_lunc - linker->getSymbolOffset("lzma.init"));
         defineDecompressorSymbols();
-        linker->defineSymbol("lzma_decoder", linker->getSymbolOffset("LZMA_DEC10"));
+        linker->defineSymbol("lzma_decoder", linker->getSymbolOffset(isCon ? "LZMA_DEC20" : "LZMA_DEC10"));
         linker->defineSymbol("entry", ih.epc);
         linker->defineSymbol("SC",
                              sa_cnt > (0x10000 << 2) ? sa_cnt >> 5 : sa_cnt >> 2);
@@ -417,8 +465,9 @@ void PackPs1::pack(OutputFile *fo)
     }
 
     memcpy(&oh, &ih, sizeof(ih));
-    memcpy(&bh, &ih.epc, SZ_IH_BKUP);
-    bh.ih_csum = upx_adler32(&ih.epc, SZ_IH_BKUP);
+    
+    unsigned sz_cbh;
+    putBkupHeader((const unsigned char *)&ih.epc, (unsigned char *)&bh, &sz_cbh);
 
     if (ih.is_ptr == 0)
         oh.is_ptr = PS_RAM_SIZE-0x10;
@@ -457,7 +506,7 @@ void PackPs1::pack(OutputFile *fo)
                                        sa_cnt >> 5 : sa_cnt >> 2));
     linker->defineSymbol("DECO",decomp_data_start);
 
-    linker->defineSymbol("LS", (ph.method == M_LZMA ? sz_unc+16 : (d_len-pad_code)));
+    linker->defineSymbol("LS", (ph.method == M_LZMA ? sz_lunc + 16 : (d_len-pad_code)));
 
     const unsigned entry = comp_data_start - e_len;
     oh.epc = oh.tx_ptr = entry;
@@ -491,12 +540,6 @@ void PackPs1::pack(OutputFile *fo)
         linker->relocate();
         memcpy(loader, getLoader(), lsize);
         patchPackHeader(loader, lsize);
-
-        // ps1_exe_t structure
-        fo->write(&oh,sizeof(oh));
-        fo->write(&bh,sizeof(bh));
-        // id & upx header
-        fo->write(loader + e_len, h_len);
     }
     else
     {
@@ -509,13 +552,13 @@ void PackPs1::pack(OutputFile *fo)
         linker->relocate();
         memcpy(loader, getLoader(), lsize);
         patchPackHeader(loader,lsize);
-
-        // ps1_exe_t structure
-        fo->write(&oh,sizeof(oh));
-        fo->write(&bh,sizeof(bh));
-        // decompressor
-        fo->write(loader + e_len, d_len + h_len);
     }
+
+    // ps1_exe_t structure
+    fo->write(&oh, sizeof(oh));
+    fo->write(&bh, sz_cbh);
+    // decompressor
+    fo->write(loader + e_len, isCon ? h_len : (d_len + h_len));
 
     // header size is 2048 bytes + sector alignment
     fo->write(paddata, (pad + PS_HDR_SIZE) - fo->getBytesWritten());
@@ -532,6 +575,7 @@ void PackPs1::pack(OutputFile *fo)
     printf("%-13s: uncompressed : %8ld bytes\n", getName(), (long) ph.u_len);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) lsize - h_len);
+    printf("%-13s: header comp  : %8ld bytes\n", getName(), (long) sz_cbh);
     printf("%-13s: code entry   : %08X bytes\n", getName(), (unsigned int) oh.epc);
     printf("%-13s: load address : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr);
     printf("%-13s: eof in mem IF: %08X bytes\n", getName(), (unsigned int) ih.tx_ptr+ih.tx_len);
