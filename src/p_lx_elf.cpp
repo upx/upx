@@ -141,7 +141,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), file_image(NULL), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0),
-    e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), pt_note(NULL)
+    e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL)
 {
 }
 
@@ -835,7 +835,7 @@ bool PackLinuxElf32::canPack()
             exetype = 1;
         }
         if (Elf32_Ehdr::ELFOSABI_NONE==osabi0  // Still seems to be generic.
-        && phdr->PT_NOTE == get_native32(&phdr->p_type)) {
+        && NULL!=osabi_note && phdr->PT_NOTE == get_native32(&phdr->p_type)) {
             unsigned const offset = get_native32(&phdr->p_offset);
             struct Elf32_Note note; memset(&note, 0, sizeof(note));
             fi->seek(offset, SEEK_SET);
@@ -844,9 +844,8 @@ bool PackLinuxElf32::canPack()
             if (4==get_native32(&note.descsz)
             &&  1==get_native32(&note.type)
             &&  0==note.end
-            &&  NULL!=pt_note
-            &&  (1+ strlen(pt_note))==get_native32(&note.namesz)
-            &&  0==strcmp(pt_note, (char const *)&note.text)
+            &&  (1+ strlen(osabi_note))==get_native32(&note.namesz)
+            &&  0==strcmp(osabi_note, (char const *)&note.text)
             ) {
                 osabi0 = ei_osabi;  // Specified by PT_NOTE.
             }
@@ -1955,7 +1954,7 @@ PackFreeBSDElf32x86::~PackFreeBSDElf32x86()
 PackNetBSDElf32x86::PackNetBSDElf32x86(InputFile *f) : super(f)
 {
     ei_osabi  = Elf32_Ehdr::ELFOSABI_NETBSD;
-    pt_note = "NetBSD";
+    osabi_note = "NetBSD";
 }
 
 PackNetBSDElf32x86::~PackNetBSDElf32x86()
@@ -1965,7 +1964,7 @@ PackNetBSDElf32x86::~PackNetBSDElf32x86()
 PackOpenBSDElf32x86::PackOpenBSDElf32x86(InputFile *f) : super(f)
 {
     ei_osabi  = Elf32_Ehdr::ELFOSABI_OPENBSD;
-    pt_note = "OpenBSD";
+    osabi_note = "OpenBSD";
 }
 
 PackOpenBSDElf32x86::~PackOpenBSDElf32x86()

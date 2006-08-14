@@ -76,7 +76,7 @@ protected:
     unsigned char ei_class;
     unsigned char ei_data;
     unsigned char ei_osabi;
-    char const *pt_note;
+    char const *osabi_note;
 };
 
 class PackLinuxElf32 : public PackLinuxElf
