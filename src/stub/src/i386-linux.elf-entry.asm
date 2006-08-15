@@ -77,11 +77,11 @@ decompress:
 #define         O_OUTS  (4+ 8*4 +4*4)
 #define         O_PARAM (4+ 8*4 +5*4)
 
-#define         INP     dword [esp+O_INP]
-#define         INS     dword [esp+O_INS]
-#define         OUTP    dword [esp+O_OUTP]
-#define         OUTS    dword [esp+O_OUTS]
-#define         PARM    dword [esp+O_PARAM]
+#define         INP     [esp+O_INP]
+#define         INS     [esp+O_INS]
+#define         OUTP    [esp+O_OUTP]
+#define         OUTS    [esp+O_OUTS]
+#define         PARM    [esp+O_PARAM]
 
 section LEXEC009
         //;  empty section for commonality with l_lx_exec86.asm
@@ -93,7 +93,7 @@ section LEXEC010
                 mov     esi, INP
                 mov     edi, OUTP
 
-                or      ebp, byte -1
+                or      ebp, -1
 //;;             align   8
 
 #include "arch/i386/nrv2b_d32_2.ash"
