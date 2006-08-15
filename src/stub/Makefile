@@ -134,21 +134,13 @@ tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdnam
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-readelf  = multiarch-readelf-2.17
-##tc.default.nasm       = nasm
-##tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
-##tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
-##tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
 tc.default.o2bin      = perl $(top_srcdir)/src/stub/scripts/o2bin.pl
-##tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
-tc.default.pp-asm     = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
-##tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
+tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
-##tc.arch-i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
-tc.arch-i086.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-##tc.arch-i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
-tc.arch-i386.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
 
 
 # slightly tricky make stuff follows
@@ -218,7 +210,6 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-#tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
 tc.arm-linux.elf.gcc      = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD
 tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
@@ -362,6 +353,7 @@ tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
 tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,objstrip) $@
+
 
 i386-openbsd.elf% : tc_list = i386-openbsd.elf arch-i386 default
 i386-openbsd.elf% : tc_bfdname = elf32-i386
@@ -626,18 +618,13 @@ i386-win32.pe.h : $(srcdir)/src/$$T.asm
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
-##tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
-##tc.m68k-atari.tos.asm-a68k  = a68k
-##tc.m68k-atari.tos.pp-asm    = gcc -E -nostdinc -x assembler-with-cpp -Wall
-tc.m68k-atari.tos.asm-gas   = m68k-linux-as-20060406 --register-prefix-optional
+tc.m68k-atari.tos.asm-as = m68k-linux-as-20060406 --register-prefix-optional
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
-	$(call tc,pp-asm) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
-##	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
-	$(call tc,asm-gas) tmp/$T.i -o tmp/$T.bin
-##	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
+	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
+	$(call tc,asm-as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
@@ -661,14 +648,12 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
-tc.mipsel.r3000-ps1.as          = mipsel-elf-as-20060406 -O2 -mno-pdr
-##tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
-tc.mipsel.r3000-ps1.gcc         = mipsel-elf-gcc
+tc.mipsel.r3000-ps1.as  = mipsel-elf-as-20060406 -O2 -mno-pdr
 
-mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
+mipsel.r3000-ps1.h : $(srcdir)/src/$$T.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
-	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
+	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -677,8 +662,8 @@ mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
 
-mipsel.r3000-ps1.h:    PP_FLAGS  += -DPS1
-mipsel.r3000-ps1.h:    IDENT_NAME = nrv_loader
+mipsel.r3000-ps1.h: PP_FLAGS  += -DPS1
+mipsel.r3000-ps1.h: IDENT_NAME = nrv_loader
 
 
 # /***********************************************************************
