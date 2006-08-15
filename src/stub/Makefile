@@ -90,13 +90,15 @@ default: $$(default.targets)
 endif
 endif
 
-all.targets ?= tmp/.tmp-stamp .all-stamp
+all.targets ?= upx-stubtools-check-version tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
 .all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
+upx-stubtools-check-version:
+	@upx-stubtools-check-version 20060815
 
 ifeq ($(wildcard .all-stamp),)
 mostlyclean clean: distclean
@@ -111,6 +113,7 @@ maintainer-clean:
 	rm -rf tmp
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
+.PHONY: upx-stubtools-check-version
 
 
 # util var for use in the rules - basename of the current target
@@ -136,7 +139,8 @@ tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
 tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
 tc.default.o2bin      = perl $(top_srcdir)/src/stub/scripts/o2bin.pl
-tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+##tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
+tc.default.pp-asm     = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.sstrip     = sstrip
 
@@ -177,7 +181,7 @@ tc_list =
 amd64-linux.elf% : tc_list = amd64-linux.elf default
 amd64-linux.elf% : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc      = x86_64-unknown-linux-gnu-gcc-3.4.4 -m64 -nostdinc -MMD
+tc.amd64-linux.elf.gcc      = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD
 tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.amd64-linux.elf.ld       = $(call tc,m-ld)
@@ -215,7 +219,7 @@ arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
 #tc.arm-linux.elf.gcc      = arm-9tdmi-linux-gnu-gcc-3.4.5 -march=armv4 -nostdinc -MMD
-tc.arm-linux.elf.gcc      = arm-unknown-linux-gnu-gcc-4.1.0 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc      = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD
 tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.arm-linux.elf.ld       = $(call tc,m-ld)
@@ -624,8 +628,8 @@ m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
 ##tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
 ##tc.m68k-atari.tos.asm-a68k  = a68k
-tc.m68k-atari.tos.pp-asm    = gcc -E -nostdinc -x assembler-with-cpp -Wall
-tc.m68k-atari.tos.asm-gas   = m68k-unknown-linux-gnu-as --register-prefix-optional
+##tc.m68k-atari.tos.pp-asm    = gcc -E -nostdinc -x assembler-with-cpp -Wall
+tc.m68k-atari.tos.asm-gas   = m68k-linux-as-20060406 --register-prefix-optional
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
 	# call gpp_inc to generate .d file
@@ -657,8 +661,8 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
-tc.mipsel.r3000-ps1.as          = mipsel-elf-as -O2 -mno-pdr
-tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
+tc.mipsel.r3000-ps1.as          = mipsel-elf-as-20060406 -O2 -mno-pdr
+##tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
 tc.mipsel.r3000-ps1.gcc         = mipsel-elf-gcc
 
 mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
@@ -684,7 +688,7 @@ mipsel.r3000-ps1.h:    IDENT_NAME = nrv_loader
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 powerpc-linux.elf% : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc      = powerpc-750-linux-gnu-gcc-3.4.4 -mcpu=405 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc      = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD
 tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.powerpc-linux.elf.ld       = $(call tc,m-ld)
