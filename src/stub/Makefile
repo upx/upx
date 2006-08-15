@@ -141,9 +141,9 @@ tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdi
 tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
-tc.arch-i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
+##tc.arch-i086.app-nasm  = perl -w $(srcdir)/src/arch/i086/app-nasm.pl
 tc.arch-i086.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.arch-i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
+##tc.arch-i386.app-nasm  = perl -w $(srcdir)/src/arch/i386/app-nasm.pl
 tc.arch-i386.gcc       = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
 
 
@@ -620,18 +620,19 @@ i386-win32.pe.h : $(srcdir)/src/$$T.asm
 # ************************************************************************/
 
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
+m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
-tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
-#tc.m68k-atari.tos.asm-a68k  = a68k
+##tc.m68k-atari.tos.app-a68k  = perl -w $(srcdir)/src/arch/m68k/app-a68k.pl
+##tc.m68k-atari.tos.asm-a68k  = a68k
 tc.m68k-atari.tos.pp-asm    = gcc -E -nostdinc -x assembler-with-cpp -Wall
-tc.m68k-atari.tos.asm-a68k  = m68k-unknown-linux-gnu-as --register-prefix-optional
+tc.m68k-atari.tos.asm-gas   = m68k-unknown-linux-gnu-as --register-prefix-optional
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-asm) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
 ##	$(call tc,asm-a68k) -q -ltmp/$T.o.lst tmp/$T.i -otmp/$T.o
-	$(call tc,asm-a68k) tmp/$T.i -o tmp/$T.bin
+	$(call tc,asm-gas) tmp/$T.i -o tmp/$T.bin
 ##	$(call tc,o2bin) tmp/$T.o tmp/$T.bin 'UPX1' 'UPX9'
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -654,6 +655,7 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 # ************************************************************************/
 
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
+mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
 tc.mipsel.r3000-ps1.as          = mipsel-elf-as -O2 -mno-pdr
 tc.mipsel.r3000-ps1.pp-asm      = gcc -E -nostdinc -x assembler-with-cpp -Wall
@@ -664,10 +666,11 @@ mipsel.r3000-ps1.h : $(srcdir)/src/mipsel.r3000-ps1.asm
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-asm) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
-	$(call tc,m-objcopy) -F elf32-littlemips --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -F elf32-littlemips -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -F elf32-littlemips -R .note -R .comment -R .reginfo tmp/$T.bin
-	$(call tc,m-objdump) -b elf32-littlemips -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objcopy) -R .reginfo tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
 
 mipsel.r3000-ps1.h:    PP_FLAGS  += -DPS1
