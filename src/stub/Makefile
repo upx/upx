@@ -720,9 +720,11 @@ powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
 powerpc-darwin.macho% : tc_bfdname = elf32-powerpc
 
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.o
-	$(call tc,objstrip) tmp/$T.o
-	$(call tc,ld)  --oformat binary tmp/$T.o -o tmp/$T.bin
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
