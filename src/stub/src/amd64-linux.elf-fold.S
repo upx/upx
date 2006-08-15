@@ -26,6 +26,8 @@
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>
 */
+
+        .code64
 #include "arch/amd64/regs.h"
 
 PAGE_SHIFT= 12

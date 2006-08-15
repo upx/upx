@@ -27,6 +27,7 @@
 ;
 */
 
+                .code16
                 .intel_syntax noprefix
 
 .macro          section name
