@@ -134,14 +134,14 @@ tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdnam
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-readelf  = multiarch-readelf-2.17
-tc.default.nasm       = nasm
-tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
-tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
-tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
+##tc.default.nasm       = nasm
+##tc.default.nasm      += -I$(srcdir)/ -I$(srcdir)/src/
+##tc.default.nasm      += -O99 -w+macro-params -w+macro-selfref -w+number-overflow -w+orphan-labels
+##tc.default.nasm      += -Dstub_$(subst .,_,$(subst -,_,$(basename $(notdir $@))))=1
 tc.default.o2bin      = perl $(top_srcdir)/src/stub/scripts/o2bin.pl
 ##tc.default.pp-asm     = i386-linux-gcc-2.95.3 -E -nostdinc -x assembler-with-cpp -Wall -Wp,-P,-C,-traditional
 tc.default.pp-asm     = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
-tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
+##tc.default.pp-nasm    = $(tc.default.gpp_inc) --mode=nasm -I$(srcdir)/ -I$(srcdir)/src/
 tc.default.sstrip     = sstrip
 
 # some common settings for $(tc_list)
@@ -522,8 +522,8 @@ tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,objstrip) $@
 
-tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.asm
-	$(call tc,nasm) -f elf -l $@.lst $< -o $@
+tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,objstrip) $@
 
 
