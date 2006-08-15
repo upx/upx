@@ -1,5 +1,5 @@
 /*
-;  upx_itoa.asm -- decimal print; smaller than gcc, and no relocations
+;  upx_itoa.S -- decimal print; smaller than gcc, and no relocations
 ;
 ;  This file is part of the UPX executable compressor.
 ;
