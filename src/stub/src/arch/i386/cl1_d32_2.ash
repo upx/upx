@@ -38,7 +38,6 @@
 ;   eax - 0
 ;   ecx - 0
 */
-#include "macros2.ash"
 
 
 // One of these two is instantiated many times by buildLoader
