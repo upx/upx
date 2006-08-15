@@ -98,8 +98,8 @@ L30:  // distribute existing Elf32_auxv into new table
         je L40
         cmp ecx, AT_NUMBER
         jae L30
-        mov [a_type + sz_auxv*(ecx -1) + edi], ecx
-        mov [a_val  + sz_auxv*(ecx -1) + edi], eax
+        mov [a_type - sz_auxv + edi + 8*ecx], ecx
+        mov [a_val  - sz_auxv + edi + 8*ecx], eax
         jmp L30
 L40:
 
