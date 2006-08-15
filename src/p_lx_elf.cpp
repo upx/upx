@@ -345,22 +345,23 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 {
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
-    // Here is a quick summary of the format of the output file:
-    linker->setLoaderAlignOffset(
-            // Elf32_Edhr
-        sizeof(elfout.ehdr) +
-            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
-        (get_native16(&elfout.ehdr.e_phentsize) * get_native16(&elfout.ehdr.e_phnum)) +
-            // checksum UPX! lsize version format
-        sizeof(l_info) +
-            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((get_native16(&elfout.ehdr.e_phnum)==3)
-            ? (unsigned) get_native32(&elfout.phdr[2].p_memsz)
-            : 0) +
-            // p_progid, p_filesize, p_blocksize
-        sizeof(p_info) +
-            // compressed data
-        b_len + ph.c_len );
+// Rely on "+80CXXXX" [etc] in getDecompressorSections() packer_c.cpp */
+//    // Here is a quick summary of the format of the output file:
+//    linker->setLoaderAlignOffset(
+//            // Elf32_Edhr
+//        sizeof(elfout.ehdr) +
+//            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
+//        (get_native16(&elfout.ehdr.e_phentsize) * get_native16(&elfout.ehdr.e_phnum)) +
+//            // checksum UPX! lsize version format
+//        sizeof(l_info) +
+//            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
+//        ((get_native16(&elfout.ehdr.e_phnum)==3)
+//            ? (unsigned) get_native32(&elfout.phdr[2].p_memsz)
+//            : 0) +
+//            // p_progid, p_filesize, p_blocksize
+//        sizeof(p_info) +
+//            // compressed data
+//        b_len + ph.c_len );
 
             // entry to stub
     addLoader("LEXEC000", NULL);
