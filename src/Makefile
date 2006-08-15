@@ -53,13 +53,13 @@ INCLUDES += -I$(UPX_LZMADIR)
 endif
 # you should set envvar UPX_LUADIR to point to your unpacked lua-5.1.1.tar.gz
 ifneq ($(wildcard $(UPX_LUADIR)/src/lua.h),)
-DEFS += -DWITH_LUA
-upx_SOURCES_LUA := $(wildcard $(UPX_LUADIR)/src/*.c)
-upx_SOURCES_LUA := $(filter-out %lua.c, $(upx_SOURCES_LUA))
-upx_SOURCES_LUA := $(filter-out %luac.c, $(upx_SOURCES_LUA))
-upx_OBJECTS_LUA := $(notdir $(upx_SOURCES_LUA:.c=$(objext)))
-upx_OBJECTS_LUA := $(addprefix lua_,$(upx_OBJECTS_LUA))
-upx_OBJECTS     += $(upx_OBJECTS_LUA)
+##DEFS += -DWITH_LUA
+##upx_SOURCES_LUA := $(wildcard $(UPX_LUADIR)/src/*.c)
+##upx_SOURCES_LUA := $(filter-out %lua.c, $(upx_SOURCES_LUA))
+##upx_SOURCES_LUA := $(filter-out %luac.c, $(upx_SOURCES_LUA))
+##upx_OBJECTS_LUA := $(notdir $(upx_SOURCES_LUA:.c=$(objext)))
+##upx_OBJECTS_LUA := $(addprefix lua_,$(upx_OBJECTS_LUA))
+##upx_OBJECTS     += $(upx_OBJECTS_LUA)
 else
 ##$(error please set UPX_LUADIR)
 endif
@@ -89,9 +89,11 @@ compress_lzma$(objext) : CXXFLAGS += -Wno-unused
 endif
 
 ifeq ($(USE_GNUC),1)
+ifneq ($(strip $(upx_OBJECTS_LUA)),)
 $(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-cast-align
 $(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-cast-qual
 $(upx_OBJECTS_LUA)     : CXXFLAGS += -Wno-error
+endif
 endif
 
 
