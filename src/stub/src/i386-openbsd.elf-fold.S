@@ -1,5 +1,5 @@
 /*
-;  i386-openbsd.elf-fold.asm -- linkage to C code to process Elf binary
+;  i386-openbsd.elf-fold.S -- linkage to C code to process Elf binary
 ;
 ;  This file is part of the UPX executable compressor.
 ;

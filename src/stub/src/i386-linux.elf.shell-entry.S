@@ -1,5 +1,5 @@
 /*
-;  l_lx_sh86.asm -- Linux program entry point & decompressor (shell script)
+;  i386-linux.elf.shell-entry.S -- Linux program entry point & decompressor (shell script)
 ;
 ;  This file is part of the UPX executable compressor.
 ;

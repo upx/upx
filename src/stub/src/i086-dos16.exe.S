@@ -1,5 +1,5 @@
 /*
-;  l_exe.asm -- loader & decompressor for the dos/exe format
+;  i086-dos16.exe.S -- loader & decompressor for the dos/exe format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

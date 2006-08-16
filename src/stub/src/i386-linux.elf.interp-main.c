@@ -1,4 +1,4 @@
-/* l_lx_pti.c -- stub loader for Linux x86 separate PT_INTERP
+/* i386-linux.elf.interp-main.c -- stub loader for Linux x86 separate PT_INTERP
 
    This file is part of the UPX executable compressor.
 

@@ -1,4 +1,4 @@
-/*  l_lx_elf64amd.asm -- Linux program entry point & decompressor (Elf binary)
+/*  amd64-linux.elf-entry.S -- Linux program entry point & decompressor (Elf binary)
 *
 *  This file is part of the UPX executable compressor.
 *

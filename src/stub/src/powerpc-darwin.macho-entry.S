@@ -1,5 +1,5 @@
 /*
- *  l_mac_ppc32.S -- program entry point & decompressor (PowerPC32 Mach-o)
+ *  powerpc-darwin.macho-entry.S -- program entry point & decompressor (PowerPC32 Mach-o)
  *
  *  This file is part of the UPX executable compressor.
  *

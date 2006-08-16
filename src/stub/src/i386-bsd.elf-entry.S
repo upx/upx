@@ -1,5 +1,5 @@
 /*
-;  i386-BSD.elf-entry.asm -- BSD program entry point & decompressor (Elf binary)
+;  i386-bsd.elf-entry.S -- BSD program entry point & decompressor (Elf binary)
 ;
 ;  This file is part of the UPX executable compressor.
 ;

@@ -1,4 +1,4 @@
-/* m_mach_ppc32.c -- loader stub for Mach-o PowerPC32
+/* powerpc-darwin.macho-main.c -- loader stub for Mach-o PowerPC32
 
    This file is part of the UPX executable compressor.
 

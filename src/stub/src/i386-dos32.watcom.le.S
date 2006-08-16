@@ -1,5 +1,5 @@
 /*
-;  l_wcle.asm -- loader & decompressor for the watcom/le format
+;  i386-dos32.watcom.le.S -- loader & decompressor for the watcom/le format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

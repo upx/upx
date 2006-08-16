@@ -1,5 +1,5 @@
 /*
-;  l_tmt.asm -- loader & decompressor for the tmt/adam format
+;  i386-dos32.tmt.S -- loader & decompressor for the tmt/adam format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

@@ -1,5 +1,5 @@
 /*
-;  l_sys.asm -- loader & decompressor for the dos/sys format
+;  i086-dos16.sys.S -- loader & decompressor for the dos/sys format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

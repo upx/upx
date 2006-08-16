@@ -1,5 +1,5 @@
 /*
-;  l_vmlinz.asm -- loader & decompressor for the vmlinuz/i386 format
+;  i386-linux.kernel.vmlinuz.S -- loader & decompressor for the vmlinuz/i386 format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

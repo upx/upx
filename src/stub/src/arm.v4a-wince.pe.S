@@ -1,4 +1,4 @@
-/* l_armpea.S -- ARM/PE decompressor assembly startup (arm mode)
+/* arm.v4a-wince.pe.S -- ARM/PE decompressor assembly startup (arm mode)
 
    This file is part of the UPX executable compressor.
 

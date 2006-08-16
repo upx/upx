@@ -1,5 +1,5 @@
 /*
-;  fold_pti86.asm -- linkage to C code to act as ELF PT_INTERP
+;  i386-linux.elf.interp-fold.S -- linkage to C code to act as ELF PT_INTERP
 ;
 ;  This file is part of the UPX executable compressor.
 ;

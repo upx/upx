@@ -1,4 +1,4 @@
-/*  l_lx_elf32arm.S -- Linux program entry point & decompressor (Elf binary)
+/*  arm-linux.elf-entry.S -- Linux program entry point & decompressor (Elf binary)
 *
 *  This file is part of the UPX executable compressor.
 *

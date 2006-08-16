@@ -1,5 +1,5 @@
 /*
-;  l_djgpp2.asm -- loader & decompressor for the djgpp2/coff format
+;  i386-dos32.djgpp2.S -- loader & decompressor for the djgpp2/coff format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

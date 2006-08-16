@@ -1,5 +1,5 @@
 /*
-;  l_tos.s -- loader & decompressor for the atari/tos format
+;  m68k-atari.tos.S -- loader & decompressor for the atari/tos format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

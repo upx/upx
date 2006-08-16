@@ -1,5 +1,5 @@
 /*
-;  fold_sh86.asm -- Linux program entry point & decompressor (shell script)
+;  i386-linux.elf.shell-fold.S -- Linux program entry point & decompressor (shell script)
 ;
 ;  This file is part of the UPX executable compressor.
 ;

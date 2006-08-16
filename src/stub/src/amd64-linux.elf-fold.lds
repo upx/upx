@@ -1,4 +1,4 @@
-/* l_lx_elf64amd.lds -- static linker script to build l_lx_elf64amd.bin
+/* amd64-linux.elf-fold.lds -- static linker script to build amd64-linux.elf-fold.bin
 
    This file is part of the UPX executable compressor.
 

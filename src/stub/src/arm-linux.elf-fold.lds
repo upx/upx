@@ -1,4 +1,4 @@
-/* l_lx_elf32arm.lds --
+/* arm-linux.elf-fold.lds --
 
    This file is part of the UPX executable compressor.
 

@@ -1,5 +1,5 @@
 /*
-;  mipsel.r3000-ps1.asm -- ps1/exe program entry & decompressor
+;  mipsel.r3000-ps1.S -- ps1/exe program entry & decompressor
 ;
 ;  This file is part of the UPX executable compressor.
 ;

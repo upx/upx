@@ -1,5 +1,5 @@
 /*
-;  l_com.asm -- loader & decompressor for the dos/com format
+;  i086-dos16.com.S -- loader & decompressor for the dos/com format
 ;
 ;  This file is part of the UPX executable compressor.
 ;

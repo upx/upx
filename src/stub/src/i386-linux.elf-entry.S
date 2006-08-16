@@ -1,5 +1,5 @@
 /*
-;  l_lx_elf86.asm -- Linux program entry point & decompressor (Elf binary)
+;  i386-linux.elf-entry.S -- Linux program entry point & decompressor (Elf binary)
 ;
 ;  This file is part of the UPX executable compressor.
 ;

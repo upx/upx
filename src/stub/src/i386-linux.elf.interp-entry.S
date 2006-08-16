@@ -1,5 +1,5 @@
 /*
-;  l_lx_pti86.asm -- Linux separate ELF PT_INTERP
+;  i386-linux.elf.interp-entry.S -- Linux separate ELF PT_INTERP
 ;
 ;  This file is part of the UPX executable compressor.
 ;

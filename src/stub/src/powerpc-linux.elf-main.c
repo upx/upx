@@ -1,4 +1,4 @@
-/* m_lx_elfppc32.c -- stub loader for Linux ELF PowerPC32 executable
+/* powerpc-linux.elf-main.c -- stub loader for Linux ELF PowerPC32 executable
 
    This file is part of the UPX executable compressor.
 

@@ -1,5 +1,5 @@
 /*
-;  l_w32pe.asm -- loader & decompressor for the w32/pe format
+;  i386-win32.pe.S -- loader & decompressor for the w32/pe format
 ;
 ;  This file is part of the UPX executable compressor.
 ;
