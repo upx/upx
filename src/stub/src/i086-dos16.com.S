@@ -29,7 +29,7 @@
 
 #define         COM     1
 #define         CJT16   1
-#include        "arch/i086/macros.ash"
+#include        "arch/i086/macros.S"
 
                 CPU     8086
 
@@ -69,7 +69,7 @@ section         COMMAIN2
 
 section         COMCUTPO
 
-#include        "arch/i086/nrv2b_d16.ash"  /* decompressor & calltrick */
+#include        "arch/i086/nrv2b_d16.S"  /* decompressor & calltrick */
 
 section         CORETURN
                 ret

@@ -27,8 +27,8 @@
 ;
 */
 
-#define         EXE
-#include        "arch/i086/macros.ash"
+#define         EXE     1
+#include        "arch/i086/macros.S"
 
                 CPU     8086
 
@@ -116,9 +116,9 @@ section         EXEMAIN4
 
 section         EXECUTPO
 
-#include        "arch/i086/nrv2b_d8.ash"
-#include        "arch/i086/nrv2d_d8.ash"
-#include        "arch/i086/nrv2e_d8.ash"
+#include        "arch/i086/nrv2b_d8.S"
+#include        "arch/i086/nrv2d_d8.S"
+#include        "arch/i086/nrv2e_d8.S"
 
 section         EXEMAIN5
                 pop     bp

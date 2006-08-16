@@ -27,11 +27,10 @@
 ;
 */
 
-
 #define         SYS     1
 #define         COM     0
 #define         CJT16   1
-#include        "arch/i086/macros.ash"
+#include        "arch/i086/macros.S"
 
                 CPU     8086
 
@@ -90,7 +89,7 @@ section         SYSMAIN3
 
 section         SYSCUTPO
 
-#include        "arch/i086/nrv2b_d16.ash"
+#include        "arch/i086/nrv2b_d16.S"
 
 section         SYSMAIN5
                 pop     es

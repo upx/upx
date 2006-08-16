@@ -71,17 +71,12 @@
 #define ELSE    .else
 #define ENDIF   .endif
 
-#define DW  .word
-#define DB  .byte
-
 .macro  subiu   reg, p1, p2
-
     .ifnb p2
         addiu   \reg, p1, -p2
     .else
         addiu   \reg, -p1
     .endif
-
 .endm
 
 #ifndef DEBUG
