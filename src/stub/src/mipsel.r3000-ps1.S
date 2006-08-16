@@ -284,7 +284,7 @@ decomp_done:
 
 #include    "arch/mips/mipsel.r3000/lzma_d.S"
 
-#include    "include/header2.ash"
+#include    "include/header.S"
 
 
 // vi:ts=8:et:nowrap

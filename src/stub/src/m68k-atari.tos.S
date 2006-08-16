@@ -457,15 +457,15 @@ clear_bss_end:
 
 #if 0
 #if defined(SMALL)
-#  include "include/ident_s.ash"
+//#  include "include/ident_s.ash"
 #else
-#  include "include/ident_n.ash"
+//#  include "include/ident_n.ash"
 #endif
 #endif
 
 //                align4
 
-#include "include/header2.ash"
+#include "include/header.S"
 
 
         // end of text segment - size is a multiple of 4

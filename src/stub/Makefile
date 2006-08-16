@@ -180,7 +180,7 @@ tc.amd64-linux.elf.objcopy  = $(call tc,m-objcopy)
 tc.amd64-linux.elf.objdump  = $(call tc,m-objdump)
 tc.amd64-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
-amd64-linux.elf-entry.h: $(srcdir)/src/$$T.asm
+amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -714,6 +714,10 @@ ifneq ($(STUBS),)
 ##$(STUBS): $(MAKEFILE_LIST)
 endif
 -include tmp/*.d
+
+# debug
+hg-diff:
+	hg diff -r 5cca9ba74f3a $(STUBS)
 
 
 # vi:ts=8:nowrap

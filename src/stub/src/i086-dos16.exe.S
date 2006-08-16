@@ -112,7 +112,7 @@ section         EXEMAIN4
                 push    bp
                 lret
 
-#include        "include/header2.ash"
+#include        "include/header.S"
 
 section         EXECUTPO
 
@@ -219,4 +219,6 @@ section         EXERETIP
                 push    ax
                 lret
 
-/* vi:ts=8:et:nowrap */
+/*
+vi:ts=8:et:nowrap
+*/

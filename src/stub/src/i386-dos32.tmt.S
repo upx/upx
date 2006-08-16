@@ -27,7 +27,7 @@
 ;
 */
 
-#include        "arch/i386/macros2.ash"
+#include        "arch/i386/macros.S"
 
                 CPU     386
 
@@ -57,7 +57,7 @@ section         TMTCALT1
 section         TMTMAIN2
                 jmp     decompressor
 
-#include        "include/header2.ash"
+#include        "include/header.S"
 
 section TMTCUTPO
 decompressor:
@@ -66,10 +66,10 @@ decompressor:
 // ============= DECOMPRESSION
 // =============
 
-#include "arch/i386/nrv2b_d32_2.ash"
-#include "arch/i386/nrv2d_d32_2.ash"
-#include "arch/i386/nrv2e_d32_2.ash"
-#include "arch/i386/lzma_d_2.ash"
+#include "arch/i386/nrv2b_d32.S"
+#include "arch/i386/nrv2d_d32.S"
+#include "arch/i386/nrv2e_d32.S"
+#include "arch/i386/lzma_d.S"
 
 section         TMTMAIN5
                 pop     ebp

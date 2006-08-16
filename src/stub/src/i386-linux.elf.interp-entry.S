@@ -30,7 +30,7 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
-#include "arch/i386/macros2.ash"
+#include "arch/i386/macros.S"
 
 //              CPU     386
 
@@ -123,12 +123,11 @@ section LXPTI050
                 mov     edi, OUTP
 //              align   8
 
-#include      "arch/i386/nrv2b_d32_2.ash"
-#include      "arch/i386/nrv2d_d32_2.ash"
-#include      "arch/i386/nrv2e_d32_2.ash"
-#include      "arch/i386/cl1_d32_2.ash"
-#define db .byte
-#include      "arch/i386/lzma_d_2.ash"
+#include      "arch/i386/nrv2b_d32.S"
+#include      "arch/i386/nrv2d_d32.S"
+#include      "arch/i386/nrv2e_d32.S"
+#include      "arch/i386/cl1_d32.S"
+#include      "arch/i386/lzma_d.S"
 section LXPTI090
                 jmp exp_done
 section LXPTI091

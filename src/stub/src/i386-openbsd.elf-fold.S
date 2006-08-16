@@ -28,7 +28,7 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
-#include "arch/i386/macros2.ash"
+#include "arch/i386/macros.S"
 
 #define PAGE_SIZE ( 1<<12)
 #define szElf32_Ehdr 0x34

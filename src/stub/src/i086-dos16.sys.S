@@ -86,7 +86,7 @@ section         SYSCALLT
 section         SYSMAIN3
                 jmp     decomp_start_n2b
 
-#include        "include/header2.ash"
+#include        "include/header.S"
 
 section         SYSCUTPO
 

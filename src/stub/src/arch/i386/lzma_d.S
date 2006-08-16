@@ -129,10 +129,10 @@ section LZMA_ELF00
 
 
 section LZMA_DEC10
-#include "lzma_d_cs_2.ash"
+#include "lzma_d_cs.S"
 
 section LZMA_DEC20
-#include "lzma_d_cf_2.ash"
+#include "lzma_d_cf.S"
 
 
 //

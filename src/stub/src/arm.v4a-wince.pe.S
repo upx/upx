@@ -332,7 +332,7 @@ ONAM:   .long   start_of_dll_names
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-#include "include/header2.ash"
+#include "include/header.S"
 
 section .ucl_nrv2e_decompress_8
 

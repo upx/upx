@@ -28,7 +28,7 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
-#include "arch/i386/macros2.ash"
+#include "arch/i386/macros.S"
 
 
 //              CPU     386
