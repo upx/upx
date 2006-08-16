@@ -30,12 +30,10 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+
 #include "arch/i386/macros.S"
+//                CPU     386
 
-//              CPU     386
-
-#define         jmps    jmp short
-#define         jmpn    jmp near
 
 /*************************************************************************
 // program entry point
