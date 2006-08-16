@@ -715,9 +715,5 @@ ifneq ($(STUBS),)
 endif
 -include tmp/*.d
 
-# debug
-hg-diff:
-	hg diff -r 5cca9ba74f3a $(STUBS)
-
 
 # vi:ts=8:nowrap
