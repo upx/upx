@@ -134,7 +134,6 @@ tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdnam
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-readelf  = multiarch-readelf-2.17
-tc.default.o2bin      = perl $(top_srcdir)/src/stub/scripts/o2bin.pl
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
 
@@ -271,7 +270,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 
 i086-dos16.com% : tc_list = arch-i086 default
 
-i086-dos16.com.h : $(srcdir)/src/$$T.asm
+i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -286,7 +285,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.asm
 
 i086-dos16.exe% : tc_list = arch-i086 default
 
-i086-dos16.exe.h : $(srcdir)/src/$$T.asm
+i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -301,7 +300,7 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.asm
 
 i086-dos16.sys% : tc_list = arch-i086 default
 
-i086-dos16.sys.h : $(srcdir)/src/$$T.asm
+i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -314,24 +313,11 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.asm
 # // i386-bsd.elf
 # ************************************************************************/
 
-i386-bsd.elf% : tc_list = i386-bsd.elf arch-i386 default
+# info: we use the tc settings from i386-linux.elf
+i386-bsd.elf% : tc_list = i386-linux.elf arch-i386 default
 i386-bsd.elf% : tc_bfdname = elf32-i386
 
-tc.i386-bsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.i386-bsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.i386-bsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.i386-bsd.elf.gcc     += -march=i386 -mtune=k6
-tc.i386-bsd.elf.gcc     += -Os -fno-omit-frame-pointer
-tc.i386-bsd.elf.gcc     += -momit-leaf-frame-pointer
-tc.i386-bsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-tc.i386-bsd.elf.gcc     += -mpreferred-stack-boundary=2
-tc.i386-bsd.elf.gcc     += -fweb
-tc.i386-bsd.elf.ld       = $(call tc,m-ld)
-tc.i386-bsd.elf.objcopy  = $(call tc,m-objcopy)
-tc.i386-bsd.elf.objdump  = $(call tc,m-objdump)
-tc.i386-bsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
-
-i386-bsd.elf-entry.h : $(srcdir)/src/$$T.asm
+i386-bsd.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -346,7 +332,7 @@ i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,brandelf) --elfosabi=freebsd tmp/$T.bin
 	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
 
-tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -355,26 +341,12 @@ tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,objstrip) $@
 
 
-i386-openbsd.elf% : tc_list = i386-openbsd.elf arch-i386 default
+# info: we use the tc settings from i386-linux.elf
+i386-openbsd.elf% : tc_list = i386-linux.elf arch-i386 default
 i386-openbsd.elf% : tc_bfdname = elf32-i386
-
-tc.i386-openbsd.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.i386-openbsd.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.i386-openbsd.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.i386-openbsd.elf.gcc     += -march=i386 -mtune=k6
-tc.i386-openbsd.elf.gcc     += -Os -fno-omit-frame-pointer
-tc.i386-openbsd.elf.gcc     += -momit-leaf-frame-pointer
-tc.i386-openbsd.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
-tc.i386-openbsd.elf.gcc     += -mpreferred-stack-boundary=2
-tc.i386-openbsd.elf.gcc     += -fweb
-tc.i386-openbsd.elf.ld       = $(call tc,m-ld)
-tc.i386-openbsd.elf.objcopy  = $(call tc,m-objcopy)
-tc.i386-openbsd.elf.objdump  = $(call tc,m-objdump)
-tc.i386-openbsd.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 # Note the re-use of i386-bsd.elf-entry.h as output (no separate i386-openbsd.elf-entry.h).
 # Note the re-use of i386-bsd.elf-fold.lds as input (no separate i386-openbsd.elf-fold.lds).
-
 i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o $(srcdir)/src/i386-bsd.elf-fold.lds
 	$(call tc,ld) -T $(srcdir)/src/i386-bsd.elf-fold.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
@@ -382,7 +354,7 @@ i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o $(srcdir)/src/i3
 	$(call tc,brandelf) --elfosabi=openbsd tmp/$T.bin
 	$(call tc,bin2h) --ident=openbsd_i386elf_fold tmp/$T.bin $@
 
-tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -397,7 +369,7 @@ tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 
 i386-dos32.djgpp2% : tc_list = arch-i386 default
 
-i386-dos32.djgpp2.h : $(srcdir)/src/$$T.asm
+i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -416,7 +388,7 @@ i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 
 i386-dos32.tmt% : tc_list = arch-i386 default
 
-i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
+i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -431,7 +403,7 @@ i386-dos32.tmt.h : $(srcdir)/src/$$T.asm
 
 i386-dos32.watcom.le% : tc_list = arch-i386 default
 
-i386-dos32.watcom.le.h : $(srcdir)/src/$$T.asm
+i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -461,7 +433,7 @@ tc.i386-linux.elf.objcopy  = $(call tc,m-objcopy)
 tc.i386-linux.elf.objdump  = $(call tc,m-objdump)
 tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
-i386-linux.elf-entry.h : $(srcdir)/src/$$T.asm
+i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -476,7 +448,7 @@ i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.ld
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
 
-tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -491,7 +463,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 # note: tc_list settings are inherited from i386-linux.elf
 
-i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.asm
+i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -506,7 +478,7 @@ i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i3
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
 
-tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -525,7 +497,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
 
 # note: tc_list settings are inherited from i386-linux.elf
 
-i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.asm
+i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -540,7 +512,7 @@ i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcd
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
 
-tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -555,7 +527,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 
 # note: tc_list settings are inherited from i386-linux.elf
 
-i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.asm
+i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -570,7 +542,7 @@ i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
 
-tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.asm
+tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objstrip) $@
 
@@ -586,7 +558,7 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 
 i386-linux.kernel.vmlin% : tc_list = arch-i386 default
 
-i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
+i386-linux.kernel%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -602,7 +574,7 @@ i386-linux.kernel%.h : $(srcdir)/src/$$T.asm
 i386-win32.pe% : tc_list = arch-i386 default
 i386-win32.pe% : tc_bfdname = elf32-i386
 
-i386-win32.pe.h : $(srcdir)/src/$$T.asm
+i386-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -620,7 +592,7 @@ m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
 tc.m68k-atari.tos.asm-as = m68k-linux-as-20060406 --register-prefix-optional
 
-m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.asm
+m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
@@ -650,7 +622,7 @@ mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
 tc.mipsel.r3000-ps1.as  = mipsel-elf-as-20060406 -O2 -mno-pdr
 
-mipsel.r3000-ps1.h : $(srcdir)/src/$$T.asm
+mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
