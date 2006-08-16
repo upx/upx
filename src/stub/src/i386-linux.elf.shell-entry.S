@@ -69,10 +69,10 @@ decompress:
 // C callable decompressor
 **************************************************************************/
 
-#define         INP     dword [esp+8*4+4]
-#define         INS     dword [esp+8*4+8]
-#define         OUTP    dword [esp+8*4+12]
-#define         OUTS    dword [esp+8*4+16]
+#define         INP     dword ptr [esp+8*4+4]
+#define         INS     dword ptr [esp+8*4+8]
+#define         OUTP    dword ptr [esp+8*4+12]
+#define         OUTS    dword ptr [esp+8*4+16]
 
 section LEXEC010
                 pusha

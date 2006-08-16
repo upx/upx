@@ -110,10 +110,10 @@ nrv2e:
 section LXPTI043
 cl1b:
 
-#define         INP     dword [esp+8*4+1*4]
-#define         INS     dword [esp+8*4+2*4]
-#define         OUTP    dword [esp+8*4+3*4]
-#define         OUTS    dword [esp+8*4+4*4]
+#define         INP     dword ptr [esp+8*4+1*4]
+#define         INS     dword ptr [esp+8*4+2*4]
+#define         OUTP    dword ptr [esp+8*4+3*4]
+#define         OUTS    dword ptr [esp+8*4+4*4]
 
 section LXPTI050
                 pusha

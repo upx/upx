@@ -75,11 +75,11 @@ decompress:
 #define         O_OUTS  (4+ 8*4 +4*4)
 #define         O_PARAM (4+ 8*4 +5*4)
 
-#define         INP     [esp+O_INP]
-#define         INS     [esp+O_INS]
-#define         OUTP    [esp+O_OUTP]
-#define         OUTS    [esp+O_OUTS]
-#define         PARM    [esp+O_PARAM]
+#define         INP     dword ptr [esp+O_INP]
+#define         INS     dword ptr [esp+O_INS]
+#define         OUTP    dword ptr [esp+O_OUTP]
+#define         OUTS    dword ptr [esp+O_OUTS]
+#define         PARM    dword ptr [esp+O_PARAM]
 
 section LEXEC009
         //;  empty section for commonality with l_lx_exec86.asm
