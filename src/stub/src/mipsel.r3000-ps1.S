@@ -31,8 +31,8 @@
 ;
 */
 
-            .set    mips1
             .altmacro
+            .set    mips1
             .set    noreorder
             .set    noat
 

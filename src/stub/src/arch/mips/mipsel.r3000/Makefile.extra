@@ -27,8 +27,9 @@ lzma_d_c%.S : tc_list = mipsel-lzma mipsel.r3000-ps1 default
 lzma_d_c%.S : tc_bfdname = elf32-littlemips
 
 tc.mipsel-lzma.gcc      = $(tc.mipsel.r3000-ps1.gcc)
-tc.mipsel-lzma.gcc     += -march=r3000 -pie -fomit-frame-pointer
-tc.mipsel-lzma.gcc     += -G0 -fPIC -mabi=eabi
+tc.mipsel-lzma.gcc     += -pie
+tc.mipsel-lzma.gcc     += -Os -fomit-frame-pointer
+tc.mipsel-lzma.gcc     += -fPIC -mabi=eabi -mno-abicalls
 tc.mipsel-lzma.gcc     += -ffunction-sections
 tc.mipsel-lzma.gcc     += -I$(UPX_LZMADIR)
 tc.mipsel-lzma.gcc     += -I$(top_srcdir)/src
@@ -41,7 +42,7 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,m-objdump) -b binary -m mips:3000 -D tmp/$T.out > tmp/$T.out.lst
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
-lzma_d_cf.% : PP_FLAGS = -DFAST  -Os
-lzma_d_cs.% : PP_FLAGS = -DSMALL -O3
+lzma_d_cf.% : PP_FLAGS = -DFAST
+lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 endif
