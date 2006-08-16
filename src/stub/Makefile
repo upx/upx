@@ -98,7 +98,7 @@ tmp/.tmp-stamp:
 .all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
 upx-stubtools-check-version:
-	@upx-stubtools-check-version 20060815
+	@upx-stubtools-check-version 20060816
 
 ifeq ($(wildcard .all-stamp),)
 mostlyclean clean: distclean
@@ -129,13 +129,22 @@ tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
-tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
-tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
-tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
-tc.default.m-readelf  = multiarch-readelf-2.17
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
+
+# default multiarch-binutils
+tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
+tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-readelf  = multiarch-readelf-2.17
+
+# default binutils
+tc.default.ld         = $(call tc,m-ld)
+tc.default.nm         = $(call tc,m-nm)
+tc.default.objcopy    = $(call tc,m-objcopy)
+tc.default.objdump    = $(call tc,m-objdump)
+tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
 # some common settings for $(tc_list)
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
@@ -172,13 +181,9 @@ tc_list =
 amd64-linux.elf% : tc_list = amd64-linux.elf default
 amd64-linux.elf% : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc      = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD
-tc.amd64-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.amd64-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.amd64-linux.elf.ld       = $(call tc,m-ld)
-tc.amd64-linux.elf.objcopy  = $(call tc,m-objcopy)
-tc.amd64-linux.elf.objdump  = $(call tc,m-objdump)
-tc.amd64-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD
+tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -209,13 +214,9 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc      = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD
-tc.arm-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.arm-linux.elf.ld       = $(call tc,m-ld)
-tc.arm-linux.elf.objcopy  = $(call tc,m-objcopy)
-tc.arm-linux.elf.objdump  = $(call tc,m-objdump)
-tc.arm-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
@@ -428,10 +429,6 @@ tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
 tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
 tc.i386-linux.elf.gcc     += -mpreferred-stack-boundary=2
 tc.i386-linux.elf.gcc     += -fweb
-tc.i386-linux.elf.ld       = $(call tc,m-ld)
-tc.i386-linux.elf.objcopy  = $(call tc,m-objcopy)
-tc.i386-linux.elf.objdump  = $(call tc,m-objdump)
-tc.i386-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -590,13 +587,20 @@ i386-win32.pe.h : $(srcdir)/src/$$T.S
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
-tc.m68k-atari.tos.asm-as = m68k-linux-as-20060406 --register-prefix-optional
+tc.m68k-atari.tos.as   = m68k-linux-as-20060406 --register-prefix-optional
+tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -nostdinc -MMD
+tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
+ifeq (1,2)
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
-	$(call tc,asm-as) tmp/$T.i -o tmp/$T.bin
+	$(call tc,as) tmp/$T.i -o tmp/$T.bin
+else
+	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
+endif
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
@@ -620,13 +624,21 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
-tc.mipsel.r3000-ps1.as  = mipsel-elf-as-20060406 -O2 -mno-pdr
+tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O2 -mno-pdr
+tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -G0 -nostdinc -MMD
+tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
+ifeq (1,1)
 	# call gpp_inc to generate .d file
 	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
+else
+	## FIXME - this does not work ???
+	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O2 -Wa,-mno-pdr $< -o tmp/$T.bin
+endif
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
@@ -645,13 +657,9 @@ mipsel.r3000-ps1.h: IDENT_NAME = nrv_loader
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 powerpc-linux.elf% : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc      = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD
-tc.powerpc-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.powerpc-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.powerpc-linux.elf.ld       = $(call tc,m-ld)
-tc.powerpc-linux.elf.objcopy  = $(call tc,m-objcopy)
-tc.powerpc-linux.elf.objdump  = $(call tc,m-objdump)
-tc.powerpc-linux.elf.objstrip = $(call tc,objcopy) -R .comment -R .note
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
