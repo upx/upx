@@ -21,17 +21,17 @@ STUBS =
 
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 
-STUBS += lzma_d_cf.ash lzma_d_cs.ash
+STUBS += lzma_d_cf.S lzma_d_cs.S
 
-lzma_d_c%.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
-lzma_d_c%.ash : tc_bfdname = elf32-i386
+lzma_d_c%.S : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_c%.S : tc_bfdname = elf32-i386
 
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
 tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
 tc.i386-lzma.gcc     += -I$(top_srcdir)/src
 
-lzma_d_c%.ash : lzma_d_c.c
+lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
 	$(call tc,objstrip) tmp/$T.o
 	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
