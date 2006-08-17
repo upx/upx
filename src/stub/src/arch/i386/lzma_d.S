@@ -76,6 +76,7 @@ section LZMA_DEC00
 
 
 section LZMA_ELF00
+// Preceded by LEXEC010 which tunes for NRV, including "pusha; push $cto"
 
 #define LZMA_BASE_SIZE 1846
 #define LZMA_LIT_SIZE   768
@@ -96,13 +97,14 @@ section LZMA_ELF00
 
         mov ebx, -LZMA_LIT_SIZE
         shl ebx,cl
-// inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState
-        lea ebx,[0 -(2*4 +4) - 2*LZMA_BASE_SIZE + 2*ebx + esp]
-        and ebx, (~0<<5)  // 32-byte align
-.elf_clearstack1:
-        push 0
-        cmp esp,ebx
-        jne .elf_clearstack1
+
+                // CLzmaDecoderState:{*_bits, CProb[LZMA_BASE_SIZE + (LZMA_LIT_SIZE<<%cl)]}
+        lea esp,[0 -4 - 2*LZMA_BASE_SIZE + 2*ebx + esp]
+        and esp, (~0<<5)  // 32-byte align
+
+        push 0  //  inSizeProcessed
+        push 0  // outSizeProcessed
+        mov ebx,esp
 
         push    ebx                     // &outSizeProcessed
         add     ebx, 4
@@ -139,10 +141,14 @@ section LZMA_DEC20
 // cleanup
 section LZMA_DEC30
 
+// These are needed only because followed by LEXEC015.  LzmaDecode() has set
+// *O_OUTS, and returned %eax=0 for success, %eax=1 for failure.  Therefore
+// "neg eax" would be enough (followed by clearing %ecx to agree with NRV.)
         add     esi, [ebx - 4]          // inSizeProcessed
         add     edi, [ebx - 8]          // outSizeProcessed
-        xor     eax, eax
 
+// Partially clear exposed stack (only because of paranoia.)
+        xor     eax, eax
         lea     ecx, [esp - 256]
         mov     esp, ebp                // restore stack
 .clearstack2:
@@ -151,7 +157,7 @@ section LZMA_DEC30
         jnz     .clearstack2
 
         mov     esp, ebp                // restore stack
-        xor     ecx, ecx
+        xor     ecx, ecx                // NRV protocol
 
 
 // vi:ts=8:et
