@@ -38,6 +38,10 @@ class opts:
     verbose = 0
 
 
+# /***********************************************************************
+# // write header
+# ************************************************************************/
+
 def w_header_c(w, ifile, ofile, n):
     w("/* %s -- created from %s, %d (0x%x) bytes\n" % (os.path.basename(ofile), os.path.basename(ifile), n, n))
     w("""\n\
@@ -68,6 +72,10 @@ def w_header_c(w, ifile, ofile, n):
  */\n\n\n""")
 
 
+# /***********************************************************************
+# // write data
+# ************************************************************************/
+
 def w_checksum_c(w, s, data):
     w("#define %s_SIZE    %d\n"     % (s, len(data)))
     w("#define %s_ADLER32 0x%08x\n" % (s, 0xffffffffL & zlib.adler32(data)))
@@ -89,8 +97,8 @@ def w_data_c(w, data):
         w(", " [i == n - 1])
     i = n
     while i % 16 != 0:
-        i += 1
         w("    ")
+        i += 1
     w_eol(w, i)
 
 
@@ -110,8 +118,8 @@ def w_data_gas(w, data):
         w("%3d" % ord(data[i]))
     i = n
     while i % 16 != 0:
-        i += 1
         w("    ")
+        i += 1
     w_eol(w, i)
 
 
@@ -131,10 +139,14 @@ def w_data_nasm(w, data):
         w("%3d" % ord(data[i]))
     i = n
     while i % 16 != 0:
-        i += 1
         w("    ")
+        i += 1
     w_eol(w, i)
 
+
+# /***********************************************************************
+# // main
+# ************************************************************************/
 
 def main(argv):
     shortopts, longopts = "qv", ["dry-run", "ident=", "mode=", "quiet", "verbose"]
@@ -159,8 +171,6 @@ def main(argv):
         sys.exit(1)
     if 1 and st.st_size > 64*1024:
         print >> sys.stderr, "%s: ERROR: file is too big (%d bytes)" % (ifile, st.st_size)
-        if re.search(r"^fold", ifile):
-            print >> sys.stderr, "  (please upgrade your binutils to 2.12.90.0.15 or better)"
         sys.exit(1)
 
     # read ifile
@@ -191,7 +201,6 @@ def main(argv):
         if opts.mode == "c":
             w("};\n")
     fp.close()
-
 
 
 if __name__ == "__main__":

@@ -82,7 +82,7 @@ endif
 ifndef default.targets
 ifeq ($(wildcard .all-stamp),)
 default.targets =
-default: $$(default.targets)
+default:
 	@echo "UPX info: type 'make all' if you have all the required build tools."
 else
 default.targets = all
@@ -423,7 +423,7 @@ i386-linux.elf% : tc_bfdname = elf32-i386
 tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
 tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-tc.i386-linux.elf.gcc     += -march=i386 -mtune=k6
+tc.i386-linux.elf.gcc     += -mtune=k6
 tc.i386-linux.elf.gcc     += -Os -fno-omit-frame-pointer
 tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
 tc.i386-linux.elf.gcc     += -fno-align-functions -fno-align-jumps -fno-align-labels -fno-align-loops
@@ -553,9 +553,9 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.kernel.vmlinuz
 # ************************************************************************/
 
-i386-linux.kernel.vmlin% : tc_list = arch-i386 default
+i386-linux.kernel.vmlinu% : tc_list = arch-i386 default
 
-i386-linux.kernel%.h : $(srcdir)/src/$$T.S
+i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
@@ -618,7 +618,7 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 
 
 # /***********************************************************************
-# // mipsel.r3000-ps1.exe
+# // mipsel.r3000-ps1
 # ************************************************************************/
 
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
@@ -648,6 +648,35 @@ endif
 
 mipsel.r3000-ps1.h: PP_FLAGS  += -DPS1
 mipsel.r3000-ps1.h: IDENT_NAME = nrv_loader
+
+
+# /***********************************************************************
+# // powerpc-darwin.macho
+# ************************************************************************/
+
+# info: we use the tc settings from powerpc-linux.elf
+powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
+powerpc-darwin.macho% : tc_bfdname = elf32-powerpc
+
+powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
+
+powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
+	$(call tc,ld) --oformat binary -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
+
+tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,objstrip) $@
 
 
 # /***********************************************************************
@@ -684,40 +713,11 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 
 # /***********************************************************************
-# // powerpc-darwin.macho
-# ************************************************************************/
-
-# info: we use the tc settings from powerpc-linux.elf
-powerpc-darwin.macho% : tc_list = powerpc-linux.elf default
-powerpc-darwin.macho% : tc_bfdname = elf32-powerpc
-
-powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
-	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
-
-powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
-	$(call tc,ld) --oformat binary -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
-	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
-
-tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,objstrip) $@
-
-tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
-	$(call tc,objstrip) $@
-
-
-# /***********************************************************************
 # // dependencies
 # ************************************************************************/
 
 ifneq ($(STUBS),)
-# FIXME: we want a dependency-only-prerequisite here
+# FIXME: we want a dependency-only prerequisite here
 ##$(STUBS): | tmp/.tmp-stamp
 ##$(STUBS): $(MAKEFILE_LIST)
 endif
