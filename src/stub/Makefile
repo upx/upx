@@ -49,6 +49,8 @@ STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
 STUBS += i386-bsd.elf-entry.h
 STUBS += i386-bsd.elf-fold.h
+STUBS += i386-bsd.elf.execve-entry.h
+STUBS += i386-bsd.elf.execve-fold.h
 STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
@@ -326,7 +328,7 @@ i386-bsd.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
 	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
 
-i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
+i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o tmp/i386-bsd.syscall.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) -T $(srcdir)/src/$T.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -335,6 +337,10 @@ i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o $(srcdir)/src/$$T.lds
 
 tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objstrip) $@
+
+tmp/i386-bsd.syscall.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,objstrip) $@
 
 tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
@@ -348,7 +354,7 @@ i386-openbsd.elf% : tc_bfdname = elf32-i386
 
 # Note the re-use of i386-bsd.elf-entry.h as output (no separate i386-openbsd.elf-entry.h).
 # Note the re-use of i386-bsd.elf-fold.lds as input (no separate i386-openbsd.elf-fold.lds).
-i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o $(srcdir)/src/i386-bsd.elf-fold.lds
+i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o tmp/i386-bsd.syscall.o $(srcdir)/src/i386-bsd.elf-fold.lds
 	$(call tc,ld) -T $(srcdir)/src/i386-bsd.elf-fold.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
 	$(call tc,objstrip) tmp/$T.bin
 	$(call tc,sstrip) tmp/$T.bin
@@ -361,6 +367,40 @@ tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.S
 
 tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+
+# /***********************************************************************
+# // i386-bsd.elf.execve
+# ************************************************************************/
+
+# note: tc_list settings are inherited from i386-bsd.elf
+
+i386-bsd.elf.execve-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
+	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
+	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
+	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,bin2h) --ident=bsd_i386exec_loader tmp/$T.bin $@
+
+i386-bsd.elf.execve-fold.h : tmp/$$T.o tmp/i386-bsd.elf.execve-main.o tmp/i386-bsd.syscall.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/i386-linux.elf.execve-fold.lds
+	$(call tc,ld) -T $(srcdir)/src/i386-linux.elf.execve-fold.lds -Map tmp/$T.map -o tmp/$T.bin --strip-all $(filter %.o,$^)
+	$(call tc,objstrip) tmp/$T.bin
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=freebsd tmp/$T.bin
+	$(call tc,bin2h) --ident=bsd_i386exec_fold tmp/$T.bin $@
+
+tmp/i386-bsd.elf.execve-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objstrip) $@
+
+tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,objstrip) $@
+
+tmp/i386-bsd.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,objstrip) $@
 
 

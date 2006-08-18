@@ -41,7 +41,7 @@ class PackLinuxI386 : public PackUnixLe32
 {
     typedef PackUnixLe32 super;
 public:
-    PackLinuxI386(InputFile *f) : super(f) { }
+    PackLinuxI386(InputFile *f);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
@@ -109,9 +109,32 @@ protected:
 
     cprElfHdr3 elfout;
 
+    struct Elf32_Note {
+        unsigned namesz;  // 8
+        unsigned descsz;  // 4
+        unsigned type;    // 1
+        char text[0x18 - 4*4];  // "OpenBSD"
+        unsigned end;     // 0
+    } elfnote;
+
+    unsigned char ei_osabi;
+    char const *osabi_note;
 };
 
 
+class PackBSDI386 : public PackLinuxI386
+{
+    typedef PackLinuxI386 super;
+public:
+    PackBSDI386(InputFile *f);
+    virtual int getFormat() const { return UPX_F_BSD_i386; }
+    virtual const char *getName() const { return "*BSD/386"; }
+
+protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+
+    virtual int buildLoader(const Filter *);
+};
 #endif /* already included */
 
 

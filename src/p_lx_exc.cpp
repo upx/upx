@@ -54,10 +54,24 @@
 // linux/386 (generic "execve" format)
 **************************************************************************/
 
+PackLinuxI386::PackLinuxI386(InputFile *f) : super(f),
+    ei_osabi(0), osabi_note(NULL)
+{
+}
+
+PackBSDI386::PackBSDI386(InputFile *f) : super(f)
+{
+}
+
 static const
 #include "stub/i386-linux.elf.execve-entry.h"
 static const
 #include "stub/i386-linux.elf.execve-fold.h"
+
+static const
+#include "stub/i386-bsd.elf.execve-entry.h"
+static const
+#include "stub/i386-bsd.elf.execve-fold.h"
 
 
 const int *PackLinuxI386::getCompressionMethods(int method, int level) const
@@ -135,7 +149,9 @@ PackLinuxI386::generateElfHdr(
     }
 
     if (ph.format==UPX_F_LINUX_i386
-    ||  ph.format==UPX_F_LINUX_SH_i386 ) {
+    ||  ph.format==UPX_F_LINUX_SH_i386 
+    ||  ph.format==UPX_F_BSD_i386
+    ) {
         // SELinux, PAx, grSecurity demand no PF_W if PF_X.
         // kernel-2.6.12-2.3.legacy_FC3 has a bug which demands
         // a PT_LOAD with PF_W, else SIGSEGV when clearing page fragment
@@ -162,6 +178,15 @@ PackLinuxI386::pack1(OutputFile *fo, Filter &)
     progid = getRandomId();
 
     generateElfHdr(fo, linux_i386exec_fold, 0);
+}
+
+void
+PackBSDI386::pack1(OutputFile *fo, Filter &)
+{
+    // create a pseudo-unique program id for our paranoid stub
+    progid = getRandomId();
+
+    generateElfHdr(fo, bsd_i386exec_fold, 0);
 }
 
 void
@@ -289,21 +314,22 @@ PackLinuxI386::buildLinuxLoader(
 
     n_mru = ft->n_mru;
 
-    // Here is a quick summary of the format of the output file:
-    linker->setLoaderAlignOffset(
-            // Elf32_Edhr
-        sizeof(elfout.ehdr) +
-            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
-        (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
-            // checksum UPX! lsize version format
-        sizeof(l_info) +
-            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) +
-            // p_progid, p_filesize, p_blocksize
-        sizeof(p_info) +
-            // compressed data
-        b_len + ph.c_len );
-            // entry to stub
+// Rely on "+80CXXXX" [etc] in getDecompressorSections() packer_c.cpp */
+//    // Here is a quick summary of the format of the output file:
+//    linker->setLoaderAlignOffset(
+//            // Elf32_Edhr
+//        sizeof(elfout.ehdr) +
+//            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
+//        (elfout.ehdr.e_phentsize * elfout.ehdr.e_phnum) +
+//            // checksum UPX! lsize version format
+//        sizeof(l_info) +
+//            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
+//        ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) +
+//            // p_progid, p_filesize, p_blocksize
+//        sizeof(p_info) +
+//            // compressed data
+//        b_len + ph.c_len );
+//            // entry to stub
     addLoader("LEXEC000", NULL);
 
     if (ft->id) {
@@ -373,6 +399,26 @@ PackLinuxI386::buildLoader(Filter const *ft)
         buf, sz_fold, ft );
 }
 
+int
+PackBSDI386::buildLoader(Filter const *ft)
+{
+    unsigned const sz_fold = sizeof(bsd_i386exec_fold);
+    MemBuffer buf(sz_fold);
+    memcpy(buf, bsd_i386exec_fold, sz_fold);
+
+    // patch loader
+    // note: we only can use /proc/<pid>/fd when exetype > 0.
+    //   also, we sleep much longer when compressing a script.
+    checkPatch(NULL, 0, 0, 0);  // reset
+    patch_le32(buf,sz_fold,"UPX4",exetype > 0 ? 3 : 15);   // sleep time
+    patch_le32(buf,sz_fold,"UPX3",progid);
+    patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
+
+    return buildLinuxLoader(
+        bsd_i386exec_loader, sizeof(bsd_i386exec_loader),
+        buf, sz_fold, ft );
+}
+
 // FIXME: getLoaderPrefixSize is unused?
 int PackLinuxI386::getLoaderPrefixSize() const
 {
@@ -438,6 +484,7 @@ bool PackLinuxI386::canPack()
     Elf32_Ehdr ehdr;
     unsigned char *buf = ehdr.e_ident;
 
+    fi->seek(0, SEEK_SET);
     fi->readx(&ehdr, sizeof(ehdr));
     fi->seek(0, SEEK_SET);
 
@@ -445,12 +492,58 @@ bool PackLinuxI386::canPack()
     const unsigned l = get_le32(buf);
 
     int elf = checkEhdr(&ehdr);
-    if (elf >= 0)
-    {
+    if (elf >= 0) {
         // NOTE: ELF executables are now handled by p_lx_elf.cpp,
         //   so we only handle them here if force_execve
-        if (elf == 0 && opt->o_unix.force_execve)
+        if (elf == 0 && opt->o_unix.force_execve) {
             exetype = 1;
+
+            unsigned osabi0 = ehdr.e_ident[Elf32_Ehdr::EI_OSABI];
+            switch (osabi0) {
+            case Elf32_Ehdr::ELFOSABI_LINUX:
+            case Elf32_Ehdr::ELFOSABI_FREEBSD:
+            case Elf32_Ehdr::ELFOSABI_NETBSD:
+            case Elf32_Ehdr::ELFOSABI_OPENBSD:
+                ei_osabi = osabi0;  // Proudly declares its osabi in Ehdr.
+                break;
+            default:
+            unsigned const e_phnum = get_native16(&ehdr.e_phnum);
+            if (e_phnum<=(512/sizeof(Elf32_Phdr))) {
+                char buf2[512];
+                fi->seek(get_native32(&ehdr.e_phoff), SEEK_SET);
+                fi->readx(buf2, sizeof(buf2));
+                fi->seek(0, SEEK_SET);
+                Elf32_Phdr const *phdr = (Elf32_Phdr const *)buf2;
+                for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+                    if (phdr->PT_NOTE == get_native32(&phdr->p_type)) {
+                        unsigned const offset = get_native32(&phdr->p_offset);
+                        struct Elf32_Note note; memset(&note, 0, sizeof(note));
+                        fi->seek(offset, SEEK_SET);
+                        fi->readx(&note, sizeof(note));
+                        fi->seek(0, SEEK_SET);
+                        if (4==get_native32(&note.descsz)
+                        &&  1==get_native32(&note.type)
+                        &&  0==note.end ) {
+                            if (0==strcmp("NetBSD", (char const *)&note.text)) {
+                                ei_osabi = Elf32_Ehdr::ELFOSABI_NETBSD;
+                                break;
+                            }
+                            if (0==strcmp("OpenBSD", (char const *)&note.text)) {
+                                ei_osabi = Elf32_Ehdr::ELFOSABI_OPENBSD;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            }
+        }
+        if (UPX_F_BSD_i386==getFormat()
+        && !(Elf32_Ehdr::ELFOSABI_FREEBSD==ei_osabi
+          || Elf32_Ehdr::ELFOSABI_NETBSD ==ei_osabi
+          || Elf32_Ehdr::ELFOSABI_OPENBSD==ei_osabi )) {
+            return false;
+        }
     }
     else if (l == 0x00640107 || l == 0x00640108 || l == 0x0064010b || l == 0x006400cc)
     {
