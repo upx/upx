@@ -98,6 +98,8 @@ section LZMA_ELF00
         mov ebx, -LZMA_LIT_SIZE
         shl ebx,cl
 
+#if 1
+// alloca() via lea
                 // CLzmaDecoderState:{*_bits, CProb[LZMA_BASE_SIZE + (LZMA_LIT_SIZE<<%cl)]}
         lea esp,[0 -4 - 2*LZMA_BASE_SIZE + 2*ebx + esp]
         and esp, (~0<<5)  // 32-byte align
@@ -105,6 +107,16 @@ section LZMA_ELF00
         push 0  //  inSizeProcessed
         push 0  // outSizeProcessed
         mov ebx,esp
+#else
+// alloca() via push 0
+                // inSizeProcessed, outSizeProcessed, *_bits, CLzmaDecoderState
+        lea ebx,[0 -(2*4 +4) - 2*LZMA_BASE_SIZE + 2*ebx + esp]
+        and ebx, (~0<<5)  // 32-byte align
+.elf_clearstack1:
+        push 0
+        cmp esp,ebx
+        jne .elf_clearstack1
+#endif
 
         push    ebx                     // &outSizeProcessed
         add     ebx, 4
