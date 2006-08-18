@@ -154,7 +154,7 @@ define tc.default.embed_objinfo
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
 	$(call tc,m-objdump) -trwh $2 > $2.dump
-        cat $2.dump >> $2
+	sed -e 's/[ 	]*$$//' < $2.dump >> $2
 endef
 
 # some common settings for $(tc_list)
