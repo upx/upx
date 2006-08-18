@@ -131,6 +131,7 @@ tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
+tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
 
@@ -149,8 +150,8 @@ tc.default.objdump    = $(call tc,m-objdump)
 tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
 # some common settings for $(tc_list)
-tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
-tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
+tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 
 
 # slightly tricky make stuff follows
@@ -183,7 +184,7 @@ tc_list =
 amd64-linux.elf% : tc_list = amd64-linux.elf default
 amd64-linux.elf% : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD
+tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -216,7 +217,7 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD
+tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
 tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -460,7 +461,7 @@ i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 i386-linux.elf% : tc_list = i386-linux.elf arch-i386 default
 i386-linux.elf% : tc_bfdname = elf32-i386
 
-tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD
+tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 tc.i386-linux.elf.gcc     += -mtune=k6
@@ -628,16 +629,15 @@ m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
 tc.m68k-atari.tos.as   = m68k-linux-as-20060406 --register-prefix-optional
-tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -nostdinc -MMD
+tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
 ifeq (1,2)
-	# call gpp_inc to generate .d file
-	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.i.d $< -o /dev/null
 	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
 endif
@@ -665,16 +665,15 @@ mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
 tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O2 -mno-pdr
-tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -G0 -nostdinc -MMD
+tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -G0 -nostdinc -MMD -MT $@
 tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
-	# call gpp_inc to generate .d file
-	$(call tc,gpp_inc) --mode=c --MMD=$@ --MF=tmp/$T.tmp1.d $< -o /dev/null
 	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
 	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	## FIXME - this does not work ???
 	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O2 -Wa,-mno-pdr $< -o tmp/$T.bin
@@ -726,7 +725,7 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 powerpc-linux.elf% : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD -MT $@
 tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
