@@ -149,6 +149,14 @@ tc.default.objcopy    = $(call tc,m-objcopy)
 tc.default.objdump    = $(call tc,m-objdump)
 tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
+define tc.default.embed_objinfo
+	$(call tc,m-objcopy) --strip-unneeded $2
+	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
+	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
+	$(call tc,m-objdump) -trwh $2 > $2.dump
+        cat $2.dump >> $2
+endef
+
 # some common settings for $(tc_list)
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
@@ -190,10 +198,7 @@ tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Wer
 
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_elf64amd_loader tmp/$T.bin $@
 
 amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
@@ -223,9 +228,14 @@ tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werro
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+ifeq (1,1)
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+else
+	# FIXME: can we use --strip-unneeded on arm ??
+	$(call tc,embed_objinfo,tmp/$T.bin)
+endif
 	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
@@ -255,16 +265,26 @@ arm.v4t-wince.pe% : tc_bfdname = elf32-littlearm
 
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+ifeq (1,1)
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+else
+	# FIXME: can we use --strip-unneeded on arm ??
+	$(call tc,embed_objinfo,tmp/$T.bin)
+endif
 	$(call tc,bin2h) --ident=nrv_loader_arm tmp/$T.bin $@
 
 arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
+ifeq (1,1)
 	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
 	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
 	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+else
+	# FIXME: can we use --strip-unneeded on arm ??
+	$(call tc,embed_objinfo,tmp/$T.bin)
+endif
 	$(call tc,bin2h) --ident=nrv_loader_thumb tmp/$T.bin $@
 
 
@@ -276,10 +296,7 @@ i086-dos16.com% : tc_list = arch-i086 default
 
 i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -291,10 +308,7 @@ i086-dos16.exe% : tc_list = arch-i086 default
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -306,10 +320,7 @@ i086-dos16.sys% : tc_list = arch-i086 default
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
 
 
@@ -323,10 +334,7 @@ i386-bsd.elf% : tc_bfdname = elf32-i386
 
 i386-bsd.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
 
 i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o tmp/i386-bsd.syscall.o $(srcdir)/src/$$T.lds
@@ -379,10 +387,7 @@ tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 
 i386-bsd.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=bsd_i386exec_loader tmp/$T.bin $@
 
 i386-bsd.elf.execve-fold.h : tmp/$$T.o tmp/i386-bsd.elf.execve-main.o tmp/i386-bsd.syscall.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/i386-linux.elf.execve-fold.lds
@@ -413,10 +418,7 @@ i386-dos32.djgpp2% : tc_list = arch-i386 default
 
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
@@ -432,10 +434,7 @@ i386-dos32.tmt% : tc_list = arch-i386 default
 
 i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -447,10 +446,7 @@ i386-dos32.watcom.le% : tc_list = arch-i386 default
 
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -473,10 +469,7 @@ tc.i386-linux.elf.gcc     += -fweb
 
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
 
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
@@ -503,10 +496,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
 
 i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/$$T.lds
@@ -537,10 +527,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
 
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
 
 i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcdir)/src/$$T.lds
@@ -567,10 +554,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
 
 i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir)/src/$$T.lds
@@ -598,10 +582,7 @@ i386-linux.kernel.vmlinu% : tc_list = arch-i386 default
 
 i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -614,10 +595,7 @@ i386-win32.pe% : tc_bfdname = elf32-i386
 
 i386-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
@@ -641,10 +619,7 @@ ifeq (1,2)
 else
 	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
 endif
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
 
 m68k-atari.tos-nrv2b% :        PP_FLAGS     = -DNRV2B
@@ -678,11 +653,7 @@ else
 	## FIXME - this does not work ???
 	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O2 -Wa,-mno-pdr $< -o tmp/$T.bin
 endif
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objcopy) -R .reginfo tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
 
 mipsel.r3000-ps1.h: PP_FLAGS  += -DPS1
@@ -699,10 +670,7 @@ powerpc-darwin.macho% : tc_bfdname = elf32-powerpc
 
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
@@ -731,10 +699,7 @@ tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -W
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,m-objcopy) --strip-unneeded tmp/$T.bin
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=linux_elfppc32_loader tmp/$T.bin $@
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
