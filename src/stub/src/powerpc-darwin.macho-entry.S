@@ -81,6 +81,7 @@ eof_nrv:
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
+  b_method= 8
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
@@ -88,6 +89,7 @@ unfold:
 
         lwz lsrc,4+sz_cpr(t0); mtctr lsrc  # length to copy (and decompress)
         lwz ldst,4+sz_unc(t0)
+        lbz meth,4+b_method(t0)
         add  dst,lsrc,t0; addi dst,dst,4+sz_b_info
         add  src,ldst,t0; addi src,src,GAP+64  # defend against prefetch and overlap
 movup:  # descending copy moves folded_loader to higher address
@@ -97,10 +99,12 @@ movup:  # descending copy moves folded_loader to higher address
 
         mtctr r31  # &decompress
         addi dst,t0,GAP  # &unfolded result
-        la  ldst,-4(sp)  # &sz_result [will be ignored]
+        stw ldst,-4(sp)  # LZMA needs for EOF
+        la  ldst,-4(sp)  # &sz_result
         bctr  # call decompress: branch to counter register, return to link register
 
 main:
+    teq r0,r0  // debugging
         mflr r31  # r31= &decompress
         call unfold
 L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
