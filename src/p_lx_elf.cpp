@@ -150,11 +150,6 @@ PackLinuxElf::~PackLinuxElf()
     delete[] file_image;
 }
 
-Linker *PackLinuxElf::newLinker() const
-{
-    return new ElfLinker;
-}
-
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned disp;

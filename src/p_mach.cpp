@@ -66,7 +66,7 @@ const int *PackMachPPC32::getFilters() const
 
 Linker *PackMachPPC32::newLinker() const
 {
-    return new ElfLinker;
+    return new ElfLinkerPpc32;
 }
 
 int

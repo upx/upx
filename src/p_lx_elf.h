@@ -54,7 +54,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
-    virtual Linker* newLinker() const;
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
