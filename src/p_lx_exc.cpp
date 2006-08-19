@@ -149,7 +149,7 @@ PackLinuxI386::generateElfHdr(
     }
 
     if (ph.format==UPX_F_LINUX_i386
-    ||  ph.format==UPX_F_LINUX_SH_i386 
+    ||  ph.format==UPX_F_LINUX_SH_i386
     ||  ph.format==UPX_F_BSD_i386
     ) {
         // SELinux, PAx, grSecurity demand no PF_W if PF_X.

@@ -189,13 +189,13 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
         *len = ALIGN_UP(sz_cbh + sizeof(ps1_exe_chb_t) - 1, 4);
         p->ih_csum = ADLER16(upx_adler32(&ih.epc, SZ_IH_BKUP));
         memcpy(dst, cpr_bh, SZ_IH_BKUP);
-        delete [] cpr_bh;    
+        delete [] cpr_bh;
     }
     else
         throwInternalError("failed to create backup header");
 }
 
-#define ADLER16_HI(a,b)     ((((a) & 0xffff) ^ (b)) << 16) 
+#define ADLER16_HI(a,b)     ((((a) & 0xffff) ^ (b)) << 16)
 #define ADLER16_LO(a,b)     (((a) >> 16) ^ (b))
 #define RE_ADLER16(a,b)     (ADLER16_HI(a,b) | ADLER16_LO(a,b))
 
@@ -206,7 +206,7 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
     if (src && src->id == '1' && dst)
     {
         unsigned char *unc_bh = new unsigned char[MemBuffer::getSizeForUncompression(SZ_IH_BKUP)];
-        
+
         unsigned sz_bh = SZ_IH_BKUP;
         int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
                                unc_bh, &sz_bh, M_NRV2E_8, NULL );
@@ -465,7 +465,7 @@ void PackPs1::pack(OutputFile *fo)
     }
 
     memcpy(&oh, &ih, sizeof(ih));
-    
+
     unsigned sz_cbh;
     putBkupHeader((const unsigned char *)&ih.epc, (unsigned char *)&bh, &sz_cbh);
 
