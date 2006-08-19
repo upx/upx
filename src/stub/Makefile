@@ -92,15 +92,16 @@ default: $$(default.targets)
 endif
 endif
 
-all.targets ?= upx-stubtools-check-version tmp/.tmp-stamp .all-stamp
+all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
 .all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
-upx-stubtools-check-version:
-	@upx-stubtools-check-version 20060816
+.upx-stubtools-stamp: $(MAKEFILE_LIST)
+	upx-stubtools-check-version 20060816
+	@echo "timestamp" > $@
 
 ifeq ($(wildcard .all-stamp),)
 mostlyclean clean: distclean
@@ -115,7 +116,6 @@ maintainer-clean:
 	rm -rf tmp
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
-.PHONY: upx-stubtools-check-version
 
 
 # util var for use in the rules - basename of the current target
@@ -639,8 +639,9 @@ m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
 mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
 mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
-tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O2 -mno-pdr
-tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -G0 -nostdinc -MMD -MT $@
+tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O -mno-pdr
+##tc.mipsel.r3000-ps1.as   = mipsel-linux-as-2.16.1 -O -mno-pdr
+tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
 tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -650,8 +651,8 @@ ifeq (1,1)
 	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
-	## FIXME - this does not work ???
-	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O2 -Wa,-mno-pdr $< -o tmp/$T.bin
+	## FIXME - as-2.16.1 does not work ???
+	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
