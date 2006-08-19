@@ -31,135 +31,14 @@
 
 
 /*************************************************************************
-//
-**************************************************************************/
-
-class Linker
-{
-protected:
-    Linker() : frozen(false) { }
-public:
-    virtual ~Linker() { }
-    // endian abstraction
-    virtual unsigned get32(const void *b) const = 0;
-    virtual void set32(void *b, unsigned v) const = 0;
-    //
-    virtual bool isFrozen() const { return frozen; }
-    //
-    virtual void init(const void *pdata, int plen, int pinfo) = 0;
-    virtual void setLoaderAlignOffset(int phase) = 0;
-    virtual int addSection(const char *sname) = 0;
-    virtual void addSection(const char *sname, const void *sdata, int slen, int align) = 0;
-    virtual void freeze() = 0;
-    virtual int getSection(const char *sname, int *slen=NULL) = 0;
-    virtual unsigned char *getLoader(int *llen=NULL) = 0;
-
-    // for ElfLinker descendants
-    virtual void defineSymbol(const char *, unsigned) {}
-    virtual void relocate() {}
-    virtual unsigned getSymbolOffset(const char *) const { return 0; }
-
-protected:
-    bool     frozen;
-
-private:
-    // disable copy and assignment
-    Linker(const Linker &); // {}
-    Linker& operator= (const Linker &); // { return *this; }
-};
-
-
-/*************************************************************************
-// DefaultLinker
-**************************************************************************/
-
-class DefaultLinker : public Linker
-{
-protected:
-    DefaultLinker();
-public:
-    virtual ~DefaultLinker();
-    //
-    virtual void init(const void *pdata, int plen, int pinfo);
-    virtual void setLoaderAlignOffset(int phase);
-    virtual int addSection(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
-    virtual void freeze();
-    virtual int getSection(const char *sname, int *slen=NULL);
-    virtual unsigned char *getLoader(int *llen=NULL);
-
-private:
-    struct Label;
-    struct Jump;
-    struct Section;
-
-    unsigned char *iloader, *oloader;
-    int      ilen, olen;
-    int      info;
-    Jump     *jumps;
-    int      njumps;
-    Section  *sections;
-    int      nsections;
-    int      align_hack;
-    int      align_offset;
-};
-
-
-template <class T>
-struct TDefaultLinker : public DefaultLinker
-{
-    virtual unsigned get32(const void *b) const { return T::get32(b); }
-    virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
-};
-
-typedef TDefaultLinker<N_BELE_CTP::BEPolicy> DefaultBELinker;
-typedef TDefaultLinker<N_BELE_CTP::LEPolicy> DefaultLELinker;
-
-
-/*************************************************************************
-// SimpleLinker
-**************************************************************************/
-
-class SimpleLinker : public Linker
-{
-protected:
-    SimpleLinker();
-public:
-    virtual ~SimpleLinker();
-    //
-    virtual void init(const void *pdata, int plen, int pinfo);
-    virtual void setLoaderAlignOffset(int phase);
-    virtual int addSection(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
-    virtual void freeze();
-    virtual int getSection(const char *sname, int *slen=NULL);
-    virtual unsigned char *getLoader(int *llen=NULL);
-private:
-    unsigned char *oloader;
-    int      olen;
-};
-
-
-template <class T>
-struct TSimpleLinker : public SimpleLinker
-{
-    virtual unsigned get32(const void *b) const { return T::get32(b); }
-    virtual void set32(void *b, unsigned v) const { T::set32(b, v); }
-};
-
-typedef TSimpleLinker<N_BELE_CTP::BEPolicy> SimpleBELinker;
-typedef TSimpleLinker<N_BELE_CTP::LEPolicy> SimpleLELinker;
-
-
-/*************************************************************************
 // ElfLinker
 **************************************************************************/
 
-class ElfLinker : public Linker, private nocopy
+class ElfLinker : private nocopy
 {
-    typedef Linker super;
-
 protected:
+    bool        frozen;         // FIXME: can we remove this ?
+
     struct      Section;
     struct      Symbol;
     struct      Relocation;
@@ -192,8 +71,6 @@ protected:
 
 public:
     ElfLinker();
-
-protected:
     virtual ~ElfLinker();
 
     virtual void init(const void *pdata, int plen, int);
@@ -207,16 +84,12 @@ protected:
     virtual void defineSymbol(const char *name, unsigned value);
     virtual unsigned getSymbolOffset(const char *) const;
 
-    virtual unsigned get32(const void *) const { return 0; }
-    virtual void set32(void *, unsigned) const {}
-
-    //
-
     void alignWithByte(unsigned len, upx_byte b);
     virtual void align(unsigned len);
     virtual void relocate1(Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
+
 
 struct ElfLinker::Section : private nocopy
 {
@@ -232,6 +105,7 @@ struct ElfLinker::Section : private nocopy
     ~Section();
 };
 
+
 struct ElfLinker::Symbol : private nocopy
 {
     char *name;
@@ -241,6 +115,7 @@ struct ElfLinker::Symbol : private nocopy
     Symbol(const char *n, Section *s, unsigned o);
     ~Symbol();
 };
+
 
 struct ElfLinker::Relocation : private nocopy
 {
@@ -265,6 +140,7 @@ protected:
                            unsigned value, const char *type);
 };
 
+
 class ElfLinkerAMD64 : public ElfLinker
 {
     typedef ElfLinker super;
@@ -274,6 +150,7 @@ protected:
     virtual void relocate1(Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
+
 
 class ElfLinkerPpc32 : public ElfLinker
 {
@@ -285,6 +162,7 @@ protected:
                            unsigned value, const char *type);
 };
 
+
 class ElfLinkerArmLE : public ElfLinker
 {
     typedef ElfLinker super;
@@ -293,6 +171,7 @@ protected:
     virtual void relocate1(Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
+
 
 class ElfLinkerArmBE : public ElfLinker
 {

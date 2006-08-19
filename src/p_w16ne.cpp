@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "p_w16ne.h"
+#include "linker.h"
 
 
 /*************************************************************************
@@ -69,6 +70,12 @@ int PackW16Ne::buildLoader(const Filter *ft)
 //
     freezeLoader();
     return getLoaderSize();
+}
+
+
+Linker* PackW16Ne::newLinker() const
+{
+    return new ElfLinkerX86;
 }
 
 

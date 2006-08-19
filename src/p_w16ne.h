@@ -55,6 +55,7 @@ protected:
     virtual int readFileHeader(void);
 
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
 };
 
 

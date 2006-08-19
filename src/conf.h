@@ -578,6 +578,11 @@ inline void operator delete[](void *p)
 #include "console.h"
 
 
+// classes
+class ElfLinker;
+typedef ElfLinker Linker;
+
+
 // main.cpp
 extern const char *progname;
 void init_options(struct options_t *o);

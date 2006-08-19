@@ -64,6 +64,11 @@ const int *PackMachPPC32::getFilters() const
     return filters;
 }
 
+Linker *PackMachPPC32::newLinker() const
+{
+    return new ElfLinker;
+}
+
 int
 PackMachPPC32::buildMachLoader(
     upx_byte const *const proto,

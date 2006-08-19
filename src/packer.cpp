@@ -986,15 +986,6 @@ int Packer::getLoaderSize() const
 // loader util
 **************************************************************************/
 
-Linker* Packer::newLinker() const
-{
-    if (getFormat() < 128)
-        return new DefaultLELinker;
-    else
-        return new DefaultBELinker;
-}
-
-
 char const *Packer::getIdentstr(unsigned *size, int small) const
 {
     static char identbig[] =
@@ -1141,7 +1132,7 @@ int Packer::getLoaderSectionStart(const char *name, int *slen) const
 // executable formats.
 //
 // It will replace the tryFilters() / compress() call sequence.
-
+//
 // 2006-02-15: hdr_buf and hdr_u_len are default empty input "header" array
 // to fix a 2-pass problem with Elf headers.  As of today there can be
 // only one decompression method per executable output file, and that method

@@ -181,6 +181,7 @@ public:
 
 protected:
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);

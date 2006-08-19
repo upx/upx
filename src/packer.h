@@ -36,7 +36,6 @@ class OutputFile;
 class Packer;
 class PackMaster;
 class UiPacker;
-class Linker;
 class Filter;
 
 
@@ -205,12 +204,11 @@ protected:
 
     // loader core
     virtual int buildLoader(const Filter *ft) = 0;
-    // loader util for any linker
+    virtual Linker* newLinker() const = 0;
+    // loader util for linker
     virtual void freezeLoader();
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
-    // loader util when using DefaultLinker
-    virtual Linker* newLinker() const;
     virtual const char *getIdentstr(unsigned *size, int small=-1) const;
     virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
 #if 1 && (ACC_CC_GNUC >= 0x040100)
