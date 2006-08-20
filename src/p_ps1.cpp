@@ -59,6 +59,7 @@ static const
 #define MIPS_PC16(a)        ((a) >> 2)
 #define MIPS_PC26(a)        (((a) & 0x0fffffff) >> 2)
 
+
 /*************************************************************************
 // ps1 exe looks like this:
 // 1. <header>  2048 bytes
@@ -133,6 +134,7 @@ Linker* PackPs1::newLinker() const
     };
     return new ElfLinkerMipsLE;
 }
+
 
 /*************************************************************************
 // util
@@ -379,12 +381,13 @@ int PackPs1::buildLoader(const Filter *)
         }
         else if (ph.method == M_LZMA && build_Loader)
         {
-            unsigned char *cprLoader = new unsigned char[MemBuffer::getSizeForCompression(sz_lunc)];
+            sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
+            unsigned char *cprLoader = new unsigned char[sz_lcpr];
             int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr,
                                  NULL, M_NRV2B_8, 10, NULL, NULL );
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
-            initLoader(nrv_loader,sizeof(nrv_loader), 0,
+            initLoader(nrv_loader, sizeof(nrv_loader),
                       (ph.method != M_LZMA || isCon) ? 0 : 1);
             linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
             delete [] cprLoader;
@@ -392,7 +395,7 @@ int PackPs1::buildLoader(const Filter *)
         }
         else
         {
-            initLoader(nrv_loader,sizeof(nrv_loader), 0,
+            initLoader(nrv_loader, sizeof(nrv_loader),
                       (ph.method != M_LZMA || isCon) ? 0 : 1);
             buildPS1Loader();
         }
@@ -583,7 +586,7 @@ void PackPs1::pack(OutputFile *fo)
     char method_name[32+1]; set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
     printf("%-13s: compressor   : %s\n", getName(), method_name);
 #endif
- }
+}
 
 
 /*************************************************************************
@@ -642,6 +645,7 @@ void PackPs1::unpack(OutputFile *fo)
         fo->write(obuf, ph.u_len + pad);
     }
 }
+
 
 /*
 vi:ts=4:et:nowrap
