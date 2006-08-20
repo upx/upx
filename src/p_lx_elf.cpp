@@ -416,14 +416,8 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     addLoader("FOLDEXEC", NULL);
 }
 
-void PackLinuxElf32x86::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32x86::addLinkerSymbols(Filter const */*ft*/)
 {
-    upx_byte *ptr_cto = getLoader();
-    int sz_cto = getLoaderSize();
-    if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
-        patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
-        checkPatch(NULL, 0, 0, 0);  // reset
-    }
 }
 
 int
