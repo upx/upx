@@ -1046,17 +1046,11 @@ char const *Packer::getIdentstr(unsigned *size, int small) const
 }
 
 
-void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
+void Packer::initLoader(const void *pdata, int plen, int small)
 {
-    if (pinfo < 0)
-    {
-        pinfo =  get_le16((const unsigned char *)pdata + plen - 2);
-        pinfo =  (pinfo + 3) &~ 3;
-    }
-
     delete linker;
     linker = newLinker();
-    linker->init(pdata, plen, pinfo);
+    linker->init(pdata, plen);
 
     unsigned size;
     char const * const ident = getIdentstr(&size, small);
