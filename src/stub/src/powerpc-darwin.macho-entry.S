@@ -104,7 +104,7 @@ movup:  # descending copy moves folded_loader to higher address
         bctr  # call decompress: branch to counter register, return to link register
 
 main:
-    teq r0,r0  // debugging
+////    teq r0,r0  // debugging
         mflr r31  # r31= &decompress
         call unfold
 L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
