@@ -633,11 +633,6 @@ void PackTos::pack(OutputFile *fo)
     memcpy(obuf+d_off, getLoader() + e_len, d_len);
 
     patchPackHeader(loader, o_text);
-#if 0
-    patchVersionYear(loader, o_text);
-    if (!opt->small)
-        patchVersion(loader, o_text);
-#endif
 
     // write new file header, loader and compressed file
     fo->write(&oh, FH_SIZE);

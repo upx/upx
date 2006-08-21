@@ -828,38 +828,6 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 }
 
 
-// patch version into stub/ident_n.ash
-int Packer::patchVersion(void *b, int blen)
-{
-    int boff = find(b, blen, "$Id: UPX UPXV ", 14);
-    checkPatch(b, blen, boff, 14);
-
-    unsigned char *p = (unsigned char *)b + boff + 9;
-    if (opt->debug.fake_stub_version[0])
-        memcpy(p, opt->debug.fake_stub_version, 4);
-    else
-        memcpy(p, UPX_VERSION_STRING4, 4);
-
-    return boff;
-}
-
-
-// patch year into stub/ident_[ns].ash
-int Packer::patchVersionYear(void *b, int blen)
-{
-    int boff = find(b, blen, " 1996-UPXY ", 11);
-    checkPatch(b, blen, boff, 11);
-
-    unsigned char *p = (unsigned char *)b + boff + 6;
-    if (opt->debug.fake_stub_year[0])
-        memcpy(p, opt->debug.fake_stub_year, 4);
-    else
-        memcpy(p, UPX_VERSION_YEAR, 4);
-
-    return boff;
-}
-
-
 /*************************************************************************
 // relocation util
 **************************************************************************/
