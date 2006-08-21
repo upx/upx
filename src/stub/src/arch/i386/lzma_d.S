@@ -76,7 +76,7 @@ section LZMA_DEC00
 
 
 section LZMA_ELF00
-// Preceded by LEXEC010 which tunes for NRV, including "pusha; push $cto"
+// Preceded by LEXEC010 which tunes for NRV, including 'pusha'
 
 #define LZMA_BASE_SIZE 1846
 #define LZMA_LIT_SIZE   768

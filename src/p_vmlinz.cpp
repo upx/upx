@@ -397,7 +397,19 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     const unsigned lsize = getLoaderSize();
 
-    // FIXME patchDecompressor(loader, lsize);
+    if (ph.method == M_LZMA) {
+        const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
+        unsigned const properties = // lc, lp, pb, dummy
+            (res->lit_context_bits << 0) |
+            (res->lit_pos_bits << 8) |
+            (res->pos_bits << 16);
+        linker->defineSymbol("UPXd", properties);
+        // -2 for properties
+        linker->defineSymbol("UPXc", ph.c_len - 2);
+        linker->defineSymbol("UPXb", ph.u_len);
+        unsigned const stack = getDecompressorWrkmemSize();
+        linker->defineSymbol("UPXa", 0u - stack);
+    }
 
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
