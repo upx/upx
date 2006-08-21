@@ -1066,7 +1066,7 @@ void __acc_cdecl_va Packer::addLoader(const char *s, ...)
     while (s != NULL)
     {
         if (*s)
-            linker->addSection(s);
+            linker->addLoader(s);
         s = va_arg(ap, const char *);
     }
     va_end(ap);

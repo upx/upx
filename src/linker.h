@@ -78,7 +78,7 @@ public:
 
     virtual void init(const void *pdata, int plen);
     virtual void setLoaderAlignOffset(int phase);
-    virtual int addSection(const char *sname);
+    virtual int addLoader(const char *sname);
     virtual void addSection(const char *sname, const void *sdata, int slen, int align);
     virtual void freeze();
     virtual int getSection(const char *sname, int *slen=NULL);
