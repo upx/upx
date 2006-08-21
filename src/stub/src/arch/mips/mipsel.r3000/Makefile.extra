@@ -38,7 +38,7 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,objstrip) tmp/$T.o
 	$(call tc,m-objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
 	head -c-0 tmp/$T.bin > tmp/$T.out
-	$(call tc,m-objdump) -b binary -m mips:3000 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.lst
+	$(call tc,m-objdump) -b binary -m mips:3000 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
 lzma_d_cf.% : PP_FLAGS = -DFAST

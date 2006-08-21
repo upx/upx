@@ -141,7 +141,7 @@ tc.default.sstrip     = sstrip
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
 tc.default.m-readelf  = multiarch-readelf-2.17
 
 # default binutils
@@ -152,6 +152,7 @@ tc.default.objdump    = $(call tc,m-objdump)
 tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
 define tc.default.embed_objinfo
+	$(call tc,m-objdump) -D $2 | $(RTRIM) > $2.disasm
 	$(call tc,m-objcopy) --strip-unneeded $2
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
@@ -183,6 +184,7 @@ PP_FLAGS =
 IDENT_NAME =
 IDENT_PREFIX =
 IDENT_SUFFIX =
+tc_bfdarch =
 tc_bfdname =
 tc_list =
 
@@ -281,6 +283,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.com% : tc_list = arch-i086 default
+i086-dos16.com% : tc_bfdarch = i8086
 
 i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -293,6 +296,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.exe% : tc_list = arch-i086 default
+i086-dos16.exe% : tc_bfdarch = i8086
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -305,6 +309,7 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.sys% : tc_list = arch-i086 default
+i086-dos16.sys% : tc_bfdarch = i8086
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
