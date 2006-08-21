@@ -55,6 +55,18 @@
 
 #define section .section
 
+// p_armpe.cpp uses the following symbols, so they should be global
+
+        .globl SRC0
+        .globl DST0
+        .globl IATT
+        .globl ENTR
+        .globl FIBS
+        .globl FIBE
+        .globl BREL
+        .globl BIMP
+        .globl ONAM
+
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
         .arm
