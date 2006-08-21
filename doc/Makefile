@@ -8,8 +8,8 @@ PACKAGE       = upx
 VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
-TRIMSPACE = sed -e 's/[ 	]*$$//'
-DETAB2    = sed -e 's/	/  /g'
+RTRIM  := sed -e 's/[ 	]*$$//'
+DETAB2 := sed -e 's/	/  /g'
 
 BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
 BUILT_SOURCES = upx.1 upx.doc upx.html
@@ -34,20 +34,20 @@ mostlyclean clean distclean maintainer-clean:
 .SUFFIXES: .1 .doc .html .man .pod .ps .tex
 
 %.1 : %.pod
-	pod2man --center=" " --release="$(PACKAGE) $(VERSION)" --date="$(VERSION_DATE)" $< | $(TRIMSPACE) > $@
+	pod2man --center=" " --release="$(PACKAGE) $(VERSION)" --date="$(VERSION_DATE)" $< | $(RTRIM) > $@
 
 %.doc : %.pod
-	pod2text < $< | $(TRIMSPACE) > $@
+	pod2text < $< | $(RTRIM) > $@
 
 %.html : %.pod
-	pod2html --noindex $< | $(TRIMSPACE) | $(DETAB2) > $@
+	pod2html --noindex $< | $(RTRIM) | $(DETAB2) > $@
 	@rm -f pod2htm*
 
 %.man : %.1
-	nroff -man $< | $(TRIMSPACE) > $@
+	nroff -man $< | $(RTRIM) > $@
 
 %.ps : %.1
-	groff -man $< | $(TRIMSPACE) > $@
+	groff -man $< | $(RTRIM) > $@
 
 %.tex : %.pod
 	pod2latex $<

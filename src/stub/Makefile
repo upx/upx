@@ -126,6 +126,8 @@ override T = $(basename $(notdir $@))
 # // setup toolchain globals
 # ************************************************************************/
 
+RTRIM := sed -e 's/[ 	]*$$//'
+
 # default settings for $(tc_list)
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
@@ -153,7 +155,7 @@ define tc.default.embed_objinfo
 	$(call tc,m-objcopy) --strip-unneeded $2
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
-	$(call tc,m-objdump) -trwh $2 | sed -e 's/[ 	]*$$//' > $2.dump
+	$(call tc,m-objdump) -trwh $2 | $(RTRIM) > $2.dump
 	cat $2.dump >> $2
 endef
 
@@ -222,7 +224,7 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
+tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -mlittle-endian -march=armv4 -nostdinc -MMD -MT $@
 tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -592,19 +594,12 @@ i386-win32.pe.h : $(srcdir)/src/$$T.S
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
-tc.m68k-atari.tos.as   = m68k-linux-as-20060406 --register-prefix-optional
-tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -nostdinc -MMD -MT $@
+tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -m68000 -malign-int -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
-ifeq (1,2)
-	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.bin
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
-else
 	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
-endif
 	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
 
@@ -633,8 +628,8 @@ tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -We
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
-	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
-	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
+	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.i
+	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	## FIXME - as-2.16.1 does not work ???
@@ -680,7 +675,7 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 powerpc-linux.elf% : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD -MT $@
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mcpu=405 -nostdinc -MMD -MT $@
 tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
