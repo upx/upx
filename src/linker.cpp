@@ -634,17 +634,18 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
         return super::relocate1(rel, location, value, type);
     type += 6;
 
+    int range_check = 0;
     if (strncmp(type, "PC", 2) == 0)
     {
         value -= rel->section->offset + rel->offset;
         type += 2;
+        range_check = 1;
     }
 
     if (strcmp(type, "8") == 0)
     {
         int displ = (signed char) *location + (int) value;
-        if (displ < -127 || displ > 128)
-        {
+        if (range_check && (displ < -127 || displ > 128)) {
             printf("target out of range (%d) in reloc %s:%x\n",
                    displ, rel->section->name, rel->offset);
             abort();
