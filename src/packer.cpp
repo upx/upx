@@ -986,7 +986,7 @@ int Packer::getLoaderSize() const
 // loader util
 **************************************************************************/
 
-char const *Packer::getIdentstr(unsigned *size, int small) const
+static const char *getIdentstr(unsigned *size, int small)
 {
     static char identbig[] =
         "\n\0"

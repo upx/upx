@@ -1027,10 +1027,6 @@ PackLinuxElf32::generateElfHdr(
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
     set_native32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
@@ -1081,10 +1077,6 @@ PackOpenBSDElf32x86::generateElfHdr(
                          h3->ehdr.e_shnum = 0;
                          h3->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
     unsigned const note_offset = sz_elf_hdrs;
     set_native32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
@@ -1147,10 +1139,6 @@ PackLinuxElf64::generateElfHdr(
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
     set_native64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
