@@ -30,11 +30,15 @@
 */
 
 // p_armpe.cpp uses some symbols, so they should be global
-// in thumb mode we need this S() macro hack to export a symbol which
-// is used in an ldr statement
-#define S(sym) .globl sym; sym: .L##sym
 
-#define DEBUG 0
+        .globl SRC0
+        .globl DST0
+        .globl IATT
+        .globl ENTR
+
+// in thumb mode we need this S() macro hack to export a symbol which
+// is used in a ldr statement
+#define S(sym) .globl sym; sym: .L##sym
 
 #define section .section
 
@@ -70,12 +74,12 @@ section ExeStart
         ldr     ip, ENTR
         bx      ip
 
-S(SRC0):.long   start_of_compressed
+SRC0:   .long   start_of_compressed
 SRCL:   .long   compressed_length
-S(DST0):.long   start_of_uncompressed
+DST0:   .long   start_of_uncompressed
 DSTL:   .long   uncompressed_length
-S(IATT):.long   0, 0, 0, 0
-S(ENTR):.long   original_entry
+IATT:   .long   0, 0, 0, 0
+ENTR:   .long   original_entry
 
         .thumb
 
