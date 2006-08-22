@@ -152,10 +152,11 @@ tc.default.objdump    = $(call tc,m-objdump)
 tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
 define tc.default.embed_objinfo
-	$(call tc,m-objdump) -D $2 | $(RTRIM) > $2.disasm
+	chmod a-x $2
 	$(call tc,m-objcopy) --strip-unneeded $2
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
+	$(call tc,m-objdump) -D $2 | $(RTRIM) > $2.disasm
 	$(call tc,m-objdump) -trwh $2 | $(RTRIM) > $2.dump
 	cat $2.dump >> $2
 endef
