@@ -197,6 +197,83 @@ section         CALLTR13
 ctend:
 .endm
 
+// cit32 is same as cjt32 except esi captures 'addvalue' at the beginning
+.macro          cit32   addvalue
+section         CALLTR00
+                mov     ecx, offset filter_length
+                .ifnc   \addvalue, 0
+                mov     esi, \addvalue
+                .endif
+calltrickloop:
+                mov     al, [edi]
+                inc     edi
+                sub     al, 0xE8
+ct1:
+                cmp     al, 1
+                ja      calltrickloop
+section         CTCLEVE1
+                cmpb    [edi], offset filter_cto
+                jnzs    calltrickloop
+section         CALLTR01
+                mov     eax, [edi]
+                mov     bl, [edi + 4]
+section         CTBSHR01
+                shr     ax, 8
+section         CTBROR01
+                xchg    ah, al
+section         CTBSWA01
+                rol     eax, 16
+                xchg    ah, al
+section         CALLTR02
+                sub     eax, edi
+                sub     bl, 0xE8
+
+                .ifnc   \addvalue, 0
+                add     eax, esi
+                .endif
+
+                mov     [edi], eax
+                add     edi, 5
+                mov     al, bl
+                loop    ct1
+
+section         CALLTR10
+//;; 32-bit call XOR jump trick
+                mov     ecx, offset filter_length
+ctloop1:
+section         CALLTRE8
+                mov     al,0xE8
+section         CALLTRE9
+                mov     al,0xE9
+section         CALLTR11
+ctloop2:
+                repnz
+                scasb
+                jnzs    ctend
+section         CTCLEVE2
+                cmpb    [edi], offset filter_cto
+                jnzs    ctloop2
+section         CALLTR12
+                mov     eax, [edi]
+section         CTBSHR11
+                shr     ax, 8
+section         CTBROR11
+                xchg    ah, al
+section         CTBSWA11
+                rol     eax, 16
+                xchg    ah, al
+section         CALLTR13
+                sub     eax, edi
+
+                .ifnc   \addvalue, 0
+                add     eax, esi
+                .endif
+
+                stosd
+                jmps    ctloop1
+ctend:
+.endm
+
 /*
 ;;  call/jump/jcc trick; also used more than once (and/or optionally), so
 ;;  ecx has byte count (not count of applied instances), and
@@ -227,7 +304,7 @@ section         CKLLTR20
                 cmp     al, 0xE9 - 0xE8
                 jas     ckcount
 ckmark:
-                cmp     [edi], \cto8
+                cmpb    [edi], \cto8
                 jnzs    ckcount
                 mov     eax, [edi]
 

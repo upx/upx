@@ -85,7 +85,6 @@ section LEXEC009
         //  empty section for commonality with l_lx_exec86.asm
 section LEXEC010
                 pusha
-                push    '?'  // cto8 (sign extension does not matter)
                 // cld
 
                 mov     esi, INP
@@ -98,7 +97,6 @@ section LEXEC010
 #include      "arch/i386/nrv2d_d32.S"
 #include      "arch/i386/nrv2e_d32.S"
 #include      "arch/i386/lzma_d.S"
-                cjt32 0
 
 section LEXEC015
                 // eax is 0 from decompressor code
@@ -117,14 +115,13 @@ section LEXEC015
                 mov     edx, OUTS
                 mov     [edx], edi
 
-                pop edx  // cto8
-
                 mov [7*4 + esp], eax
                 popa
                 ret
 
                 ctojr32
                 ckt32   edi, dl
+                cit32   edi
 section LEXEC017
                 popa
                 ret

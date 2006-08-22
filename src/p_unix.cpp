@@ -241,7 +241,6 @@ void PackUnix::pack3(OutputFile *fo, Filter &ft)
     upx_byte *p = getLoader();
     lsize = getLoaderSize();
     patchFilter32(p, lsize, &ft);
-    patchDecompressor(p, lsize);
     updateLoader(fo);
     patchLoaderChecksum();
     fo->write(p, lsize);

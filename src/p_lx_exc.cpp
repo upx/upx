@@ -83,14 +83,9 @@ const int *PackLinuxI386::getFilters() const
 {
     static const int filters[] = {
         0x49, 0x46,
-// FIXME 2002-11-11: We use stub/fold_exec86.asm, which calls the
-// decompressor multiple times, and unfilter is independent of decompress.
-// Currently only filters 0x49, 0x46, 0x80..0x87 can handle this;
-// and 0x80..0x87 are regarded as "untested".
-#if 0
         0x26, 0x24, 0x11, 0x14, 0x13, 0x16, 0x25, 0x15, 0x12,
-#endif
 #if 0
+// 0x80..0x87 are regarded as "untested".
         0x83, 0x86, 0x80, 0x84, 0x87, 0x81, 0x82, 0x85,
         0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
 #endif
@@ -136,6 +131,10 @@ PackLinuxI386::generateElfHdr(
     assert(h2->ehdr.e_phentsize == sizeof(Elf32_Phdr));
     assert(h2->ehdr.e_shnum     == 0);
 
+#if 0  //{
+    unsigned identsize;
+    char const *const ident = getIdentstr(&identsize);
+#endif  //}
     h2->phdr[0].p_filesz = sizeof(*h2);  // + identsize;
     h2->phdr[0].p_memsz  = h2->phdr[0].p_filesz;
 
@@ -334,6 +333,10 @@ PackLinuxI386::buildLinuxLoader(
         }
     }
     addLoader("LEXEC010", NULL);
+    linker->defineSymbol("filter_cto", ft->cto);
+    linker->defineSymbol("filter_length",
+                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                         ft->lastcall - ft->calls * 4);
     addLoader(getDecompressorSections(), NULL);
     addLoader("LEXEC015", NULL);
     if (ft->id) {
@@ -360,18 +363,20 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
     freezeLoader();
-    //addLinkerSymbols(ft);
-    linker->relocate();
-
-    upx_byte *ptr_cto = getLoader();
-    int sz_cto = getLoaderSize();
-    if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
-        patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
-        checkPatch(NULL, 0, 0, 0);  // reset
+    if (ph.method == M_LZMA) {
+        const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
+        unsigned const properties = // lc, lp, pb, dummy
+            (res->lit_context_bits << 0) |
+            (res->lit_pos_bits << 8) |
+            (res->pos_bits << 16);
+        linker->defineSymbol("UPXd", properties);
+        // -2 for properties
+        linker->defineSymbol("UPXc", ph.c_len - 2);
+        linker->defineSymbol("UPXb", ph.u_len);
+        unsigned const stack = getDecompressorWrkmemSize();
+        linker->defineSymbol("UPXa", 0u - stack);
     }
-    // PackHeader and overlay_offset at the end of the output file,
-    // after the compressed data.
-
+    linker->relocate();
     return getLoaderSize();
 }
 
