@@ -1154,6 +1154,7 @@ PackLinuxElf64::generateElfHdr(
         set_native64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+        set_native64(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
 #undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
