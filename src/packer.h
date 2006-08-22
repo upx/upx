@@ -226,7 +226,6 @@ protected:
     const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
     virtual const char *getDecompressorSections() const;
     virtual unsigned getDecompressorWrkmemSize() const;
-    virtual void patchDecompressor(void *, int);
     virtual void defineDecompressorSymbols();
 
     // filter handling [see packer_f.cpp]
