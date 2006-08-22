@@ -8,19 +8,11 @@ syntax: regexp
 syntax: glob
 
 *.a
-*.d
 *.dll
-*.exe
 *.lib
-*.map
-*.o
-*.obj
-*.out
 *.py[cdo]
 *.so
-*.res
 *.swp
-*.ttp
 
 doc/*.1
 doc/*.doc
@@ -34,10 +26,19 @@ src/MMakefile
 src/compress_nrv*
 src/*.rc
 
+src/*.d
+src/*.exe
+src/*.map
+src/*.o
+src/*.obj
+src/*.out
+src/*.res
+src/*.ttp
+
 stub/**MMakefile
 stub/**.*-stamp
-stub/tmp*
-stub/**/tmp*
+stub/tmp*/*
+stub/**/tmp*/*
 
 stub/tools/armpe/armpe_tester
 
