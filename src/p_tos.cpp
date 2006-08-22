@@ -637,6 +637,8 @@ void PackTos::pack(OutputFile *fo)
     // write new file header, loader and compressed file
     fo->write(&oh, FH_SIZE);
     fo->write(loader, o_text);  // entry
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, o_text);
     fo->write(obuf, o_data);    // compressed + decompressor
 
     // write empty relocation fixup
