@@ -285,7 +285,7 @@ void ElfLinker::init(const void *pdata, int plen)
     preprocessSections(psections, psymbols);
     preprocessSymbols(psymbols, prelocs);
     preprocessRelocations(prelocs, (char*) input + inputlen);
-    addSection("*UND*");
+    addLoader("*UND*");
 }
 
 void ElfLinker::setLoaderAlignOffset(int phase)
@@ -294,7 +294,7 @@ void ElfLinker::setLoaderAlignOffset(int phase)
     printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
 }
 
-int ElfLinker::addSection(const char *sname)
+int ElfLinker::addLoader(const char *sname)
 {
     assert(!frozen);
     if (sname[0] == 0)

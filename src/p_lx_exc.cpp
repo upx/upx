@@ -136,10 +136,6 @@ PackLinuxI386::generateElfHdr(
     assert(h2->ehdr.e_phentsize == sizeof(Elf32_Phdr));
     assert(h2->ehdr.e_shnum     == 0);
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     h2->phdr[0].p_filesz = sizeof(*h2);  // + identsize;
     h2->phdr[0].p_memsz  = h2->phdr[0].p_filesz;
 

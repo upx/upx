@@ -209,7 +209,6 @@ protected:
     virtual void freezeLoader();
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
-    virtual const char *getIdentstr(unsigned *size, int small=-1) const;
     virtual void initLoader(const void *pdata, int plen, int small=-1);
 #if 1 && (ACC_CC_GNUC >= 0x040100)
     virtual void __acc_cdecl_va addLoader(const char *s, ...) __attribute__((__sentinel__));
@@ -259,8 +258,6 @@ protected:
     int patch_le16(void *b, int blen, const void * old, unsigned new_);
     int patch_le32(void *b, int blen, unsigned old, unsigned new_);
     int patch_le32(void *b, int blen, const void * old, unsigned new_);
-    int patchVersion(void *b, int blen);
-    int patchVersionYear(void *b, int blen);
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util

@@ -35,7 +35,7 @@ tc.arm-lzma.gcc     += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -S $< -o tmp/$T.s
-	sed -e '1,/LzmaDecode:/d' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' < tmp/$T.s > $@
+	sed -e '1,/LzmaDecode:/d' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' tmp/$T.s | $(RTRIM) > $@
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL

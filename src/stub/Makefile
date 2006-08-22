@@ -126,6 +126,8 @@ override T = $(basename $(notdir $@))
 # // setup toolchain globals
 # ************************************************************************/
 
+RTRIM := sed -e 's/[ 	]*$$//'
+
 # default settings for $(tc_list)
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
@@ -139,7 +141,7 @@ tc.default.sstrip     = sstrip
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
 tc.default.m-readelf  = multiarch-readelf-2.17
 
 # default binutils
@@ -150,10 +152,11 @@ tc.default.objdump    = $(call tc,m-objdump)
 tc.default.objstrip   = $(call tc,objcopy) -R .comment -R .note -R .reginfo
 
 define tc.default.embed_objinfo
+	$(call tc,m-objdump) -D $2 | $(RTRIM) > $2.disasm
 	$(call tc,m-objcopy) --strip-unneeded $2
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
-	$(call tc,m-objdump) -trwh $2 | sed -e 's/[ 	]*$$//' > $2.dump
+	$(call tc,m-objdump) -trwh $2 | $(RTRIM) > $2.dump
 	cat $2.dump >> $2
 endef
 
@@ -181,6 +184,7 @@ PP_FLAGS =
 IDENT_NAME =
 IDENT_PREFIX =
 IDENT_SUFFIX =
+tc_bfdarch =
 tc_bfdname =
 tc_list =
 
@@ -222,7 +226,7 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf% : tc_list = arm-linux.elf default
 arm-linux.elf% : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
+tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -mlittle-endian -march=armv4 -nostdinc -MMD -MT $@
 tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -265,26 +269,12 @@ arm.v4t-wince.pe% : tc_bfdname = elf32-littlearm
 
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
-ifeq (1,1)
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
-else
-	# FIXME: can we use --strip-unneeded on arm ??
 	$(call tc,embed_objinfo,tmp/$T.bin)
-endif
 	$(call tc,bin2h) --ident=nrv_loader_arm tmp/$T.bin $@
 
 arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
-ifeq (1,1)
-	$(call tc,m-objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,m-objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,m-objdump) -trwh tmp/$T.bin >> tmp/$T.bin
-else
-	# FIXME: can we use --strip-unneeded on arm ??
 	$(call tc,embed_objinfo,tmp/$T.bin)
-endif
 	$(call tc,bin2h) --ident=nrv_loader_thumb tmp/$T.bin $@
 
 
@@ -293,6 +283,7 @@ endif
 # ************************************************************************/
 
 i086-dos16.com% : tc_list = arch-i086 default
+i086-dos16.com% : tc_bfdarch = i8086
 
 i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -305,6 +296,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.exe% : tc_list = arch-i086 default
+i086-dos16.exe% : tc_bfdarch = i8086
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -317,6 +309,7 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.sys% : tc_list = arch-i086 default
+i086-dos16.sys% : tc_bfdarch = i8086
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -606,19 +599,12 @@ i386-win32.pe.h : $(srcdir)/src/$$T.S
 m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
 m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
 
-tc.m68k-atari.tos.as   = m68k-linux-as-20060406 --register-prefix-optional
-tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -nostdinc -MMD -MT $@
+tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -m68000 -malign-int -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
-ifeq (1,2)
-	$(call tc,pp-as) -D__GAS__ $(PP_FLAGS) $< -o tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.bin
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
-else
 	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
-endif
 	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
 
@@ -647,8 +633,8 @@ tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -We
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
-	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.tmp1
-	$(call tc,as) tmp/$T.tmp1 -o tmp/$T.bin
+	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.i
+	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	## FIXME - as-2.16.1 does not work ???
@@ -694,7 +680,7 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 powerpc-linux.elf% : tc_list = powerpc-linux.elf default
 powerpc-linux.elf% : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -mcpu=405 -nostdinc -MMD -MT $@
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mcpu=405 -nostdinc -MMD -MT $@
 tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
