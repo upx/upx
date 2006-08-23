@@ -94,13 +94,13 @@ endif
 
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
+.upx-stubtools-stamp: $(MAKEFILE_LIST)
+	upx-stubtools-check-version 20060823
+	@echo "timestamp" > $@
 tmp/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
 .all-stamp: $$(STUBS)
-	@echo "timestamp" > $@
-.upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20060816
 	@echo "timestamp" > $@
 
 ifeq ($(wildcard .all-stamp),)
@@ -112,8 +112,9 @@ distclean:
 	rm -f .*-stamp
 	rm -rf tmp
 maintainer-clean:
-	rm -f $(STUBS)
+	rm -f .upx-stubtools-stamp
 	rm -rf tmp
+	rm -f $(STUBS)
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
 
@@ -628,7 +629,7 @@ mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
 
 tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O -mno-pdr
 ##tc.mipsel.r3000-ps1.as   = mipsel-linux-as-2.16.1 -O -mno-pdr
-tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
 tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
