@@ -376,6 +376,13 @@ PackLinuxI386::buildLinuxLoader(
         unsigned const stack = getDecompressorWrkmemSize();
         linker->defineSymbol("UPXa", 0u - stack);
     }
+    if (0x80==(ft->id & 0xF0)) {
+        int const mru = ft->n_mru ? 1+ ft->n_mru : 0;
+        if (mru && mru!=256) {
+            unsigned const is_pwr2 = (0==((mru -1) & mru));
+            linker->defineSymbol("NMRU", mru - is_pwr2);
+        }
+    }
     linker->relocate();
     return getLoaderSize();
 }

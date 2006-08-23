@@ -360,27 +360,6 @@ void Packer::addFilter32(int filter_id)
 #undef MRUFLT
 
 
-/*************************************************************************
-// patchFilter32
-**************************************************************************/
-
-bool Packer::patchFilter32(void *loader, int lsize, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    if (0x80==(ft->id & 0xF0)) {
-        int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
-        if (mru && mru!=256) {
-            unsigned const is_pwr2 = (0==((mru -1) & mru));
-            patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
-        }
-    }
-    return true;
-}
-
-
 /*
 vi:ts=4:et:nowrap
 */

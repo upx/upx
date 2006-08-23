@@ -236,11 +236,10 @@ PackUnix::patchLoaderChecksum()
     lp->l_checksum = upx_adler32(ptr, lsize);
 }
 
-void PackUnix::pack3(OutputFile *fo, Filter &ft)
+void PackUnix::pack3(OutputFile *fo, Filter &/*ft*/)
 {
     upx_byte *p = getLoader();
     lsize = getLoaderSize();
-    patchFilter32(p, lsize, &ft);
     updateLoader(fo);
     patchLoaderChecksum();
     fo->write(p, lsize);

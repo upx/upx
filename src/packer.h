@@ -237,7 +237,6 @@ protected:
     virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
         { }
     virtual void addFilter32(int filter_id);
-    virtual bool patchFilter32(void *, int, const Filter *ft);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);
