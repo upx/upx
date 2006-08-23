@@ -8,20 +8,24 @@ __dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
 __dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
 top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
 endif
+vpath %.c $(top_srcdir)/src/stub/src/c
+
+STUBS =
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+STUBS += lzma_d_cf.S lzma_d_cs.S
+endif
 
 default.targets = all
+ifeq ($(strip $(STUBS)),)
 STUBS = NO_STUBS
+all.targets =
+endif
 include $(top_srcdir)/src/stub/Makefile
-STUBS =
 
 
 # /***********************************************************************
 # // m68k-lzma
 # ************************************************************************/
-
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-
-STUBS += lzma_d_cf.S lzma_d_cs.S
 
 lzma_d_c%.S : tc_list = m68k-lzma default
 lzma_d_c%.S : tc_bfdname = elf32-m68k
@@ -44,5 +48,3 @@ lzma_d_c%.S : lzma_d_c.c
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
-
-endif
