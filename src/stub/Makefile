@@ -718,4 +718,33 @@ endif
 -include tmp/*.d
 
 
+# /***********************************************************************
+# // extra-all
+# // extra-clean
+# ************************************************************************/
+
+MAKEFILE_EXTRA_SUBDIRS := $(shell find src/arch -name Makefile.extra -printf "%h\n" 2>/dev/null | LC_ALL=C sort -u)
+
+ifneq ($(strip $(MAKEFILE_EXTRA_SUBDIRS)),)
+
+MAKEFILE_EXTRA_SUBDIRS-all   := $(addsuffix ~all,$(MAKEFILE_EXTRA_SUBDIRS))
+MAKEFILE_EXTRA_SUBDIRS-clean := $(addsuffix ~clean,$(MAKEFILE_EXTRA_SUBDIRS))
+
+$(MAKEFILE_EXTRA_SUBDIRS-all):
+	$(MAKE) -C $(@:%~all=%) -f Makefile.extra all
+$(MAKEFILE_EXTRA_SUBDIRS-clean):
+	$(MAKE) -C $(@:%~clean=%) -f Makefile.extra clean
+
+extra-all:   MAKEFLAGS += --no-print-directory
+extra-clean: MAKEFLAGS += --no-print-directory
+extra-all:   $(MAKEFILE_EXTRA_SUBDIRS-all)
+extra-clean: $(MAKEFILE_EXTRA_SUBDIRS-clean)
+
+.PHONY: extra-all extra-clean
+.PHONY: $(MAKEFILE_EXTRA_SUBDIRS-all)
+.PHONY: $(MAKEFILE_EXTRA_SUBDIRS-clean)
+
+endif
+
+
 # vi:ts=8:noet:nowrap
