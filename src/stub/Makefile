@@ -127,6 +127,7 @@ override T = $(basename $(notdir $@))
 # // setup toolchain globals
 # ************************************************************************/
 
+# strip trailing whitespace
 RTRIM := sed -e 's/[ 	]*$$//'
 
 # default settings for $(tc_list)
@@ -321,6 +322,7 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.S
 
 # /***********************************************************************
 # // i386-bsd.elf
+# // i386-openbsd.elf
 # ************************************************************************/
 
 # info: we use the tc settings from i386-linux.elf
@@ -709,12 +711,11 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // dependencies
 # ************************************************************************/
 
-ifneq ($(STUBS),)
+ifneq ($(strip $(STUBS)),)
 # FIXME: we want a dependency-only prerequisite here
-##$(STUBS): | tmp/.tmp-stamp
-##$(STUBS): $(MAKEFILE_LIST)
+$(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
 endif
 -include tmp/*.d
 
 
-# vi:ts=8:nowrap
+# vi:ts=8:noet:nowrap
