@@ -155,11 +155,15 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     unsigned disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // ALIGN_UP
-    len += (3& -len);
+    fo->write(&zero, 3& -len);  // ALIGN_UP 0 mod 4
+    len += (3& -len); // 0 mod 4
+    if (0==(4 & len)) {
+        fo->write(&zero, 4);
+        len += 4;
+    } // 4 mod 8
     set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
     fo->write(&disp, sizeof(disp));
-    sz_pack2 = sizeof(disp) + len;
+    sz_pack2 = sizeof(disp) + len;  // 0 mod 8
 
     super::pack3(fo, ft);
 }
