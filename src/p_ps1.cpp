@@ -112,7 +112,7 @@ Linker* PackPs1::newLinker() const
     {
         typedef ElfLinker super;
 
-        virtual void relocate1(Relocation *rel, upx_byte *location,
+        virtual void relocate1(const Relocation *rel, upx_byte *location,
                                unsigned value, const char *type)
         {
             if (strcmp(type, "R_MIPS_HI16") == 0)
