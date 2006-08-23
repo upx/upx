@@ -1,0 +1,48 @@
+MAKEFLAGS += -rR
+.SUFFIXES:
+.SECONDEXPANSION:
+
+ifndef top_srcdir
+__dir_list   = . .. ../.. ../../.. ../../../.. ../../../../..
+__dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
+__dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
+top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
+endif
+
+default.targets = all
+STUBS = NO_STUBS
+include $(top_srcdir)/src/stub/Makefile
+STUBS =
+
+
+# /***********************************************************************
+# // m68k-lzma
+# ************************************************************************/
+
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+
+STUBS += lzma_d_cf.S lzma_d_cs.S
+
+lzma_d_c%.S : tc_list = m68k-lzma default
+lzma_d_c%.S : tc_bfdname = elf32-m68k
+
+tc.m68k-lzma.gcc      = $(tc.m68k-atari.tos.gcc)
+# FIXME / TODO: we still generate references to __mulsi3
+##tc.m68k-lzma.gcc     += -m68020
+tc.m68k-lzma.gcc     += -Os -fomit-frame-pointer
+tc.m68k-lzma.gcc     += -ffunction-sections
+tc.m68k-lzma.gcc     += -I$(UPX_LZMADIR)
+tc.m68k-lzma.gcc     += -I$(top_srcdir)/src
+
+lzma_d_c%.S : lzma_d_c.c
+	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
+	$(call tc,objstrip) tmp/$T.o
+	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
+	head -c-2 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m m68k -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	$(call tc,bin2h) --mode=gas tmp/$T.out $@
+
+lzma_d_cf.% : PP_FLAGS = -DFAST
+lzma_d_cs.% : PP_FLAGS = -DSMALL
+
+endif
