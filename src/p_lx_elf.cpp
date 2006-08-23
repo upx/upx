@@ -195,7 +195,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
 }
 
 
-void PackLinuxElf::addLinkerSymbols(Filter const *)
+void PackLinuxElf::defineSymbols(Filter const *)
 {
     // empty
 }
@@ -420,7 +420,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     addLoader("FOLDEXEC", NULL);
 }
 
-void PackLinuxElf32x86::addLinkerSymbols(Filter const *const ft)
+void PackLinuxElf32x86::defineSymbols(Filter const *const ft)
 {
     if (0x80==(ft->id & 0xF0)) {
         int const mru = ft->n_mru ? 1+ ft->n_mru : 0;
@@ -489,7 +489,7 @@ PackLinuxElf32::buildLinuxLoader(
     addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols(ft);
+    defineSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
@@ -539,13 +539,13 @@ PackLinuxElf64::buildLinuxLoader(
     addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols(ft);
+    defineSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
 
 void
-PackLinuxElf64amd::addLinkerSymbols(Filter const *)
+PackLinuxElf64amd::defineSymbols(Filter const *)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned len = sz_pack2;
@@ -1552,7 +1552,7 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
     }
 }
 
-void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
+void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned const len0 = sz_pack2;
@@ -1601,14 +1601,14 @@ void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
 #undef PAGE_MASK
 }
 
-void PackLinuxElf32armLe::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
 {
-    ARM_addLinkerSymbols(ft);
+    ARM_defineSymbols(ft);
 }
 
-void PackLinuxElf32armBe::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 {
-    ARM_addLinkerSymbols(ft);
+    ARM_defineSymbols(ft);
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)

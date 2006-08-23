@@ -84,7 +84,7 @@ PackMachPPC32::addStubEntrySections(Filter const *)
 }
 
 
-void PackMachPPC32::addLinkerSymbols(Filter const *)
+void PackMachPPC32::defineSymbols(Filter const *)
 {
     // empty
 }
@@ -132,7 +132,7 @@ PackMachPPC32::buildMachLoader(
     addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols(ft);
+    defineSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }

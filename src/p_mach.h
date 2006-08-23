@@ -191,7 +191,7 @@ protected:
         upx_byte const *const fold,
         unsigned        const szfold,
         Filter const *ft );
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
 
     unsigned  n_segment;
