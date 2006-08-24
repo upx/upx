@@ -159,7 +159,7 @@ define tc.default.embed_objinfo
 	$(call tc,m-objcopy) -R .text -R .data -R .bss $2
 	$(call tc,m-objcopy) -R .comment -R .note -R .reginfo $2
 	$(call tc,m-objdump) -Dr $2 | $(RTRIM) > $2.disasm
-	$(call tc,m-objdump) -trwh $2 | $(RTRIM) > $2.dump
+	$(call tc,m-objdump) -htr -w $2 | $(RTRIM) > $2.dump
 	cat $2.dump >> $2
 endef
 
@@ -608,7 +608,7 @@ tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
-	$(call tc,gcc) -c -D__GAS__ $(PP_FLAGS) -x assembler-with-cpp -Wa,--register-prefix-optional $< -o tmp/$T.bin
+	$(call tc,gcc) -c $(PP_FLAGS) -x assembler-with-cpp -Wa,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
 	$(call tc,embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
 

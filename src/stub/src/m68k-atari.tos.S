@@ -27,6 +27,7 @@
 ;
 */
 
+.altmacro
 #define NRV_BB  8
 
 
@@ -48,11 +49,9 @@
 */
 
 #define L(label)      .L##label
-#define macro(name)   .macro  name
+#define macro(name)   .macro name
 #define endm          .endm
 #define section       .section
-
-.altmacro
 
 /*
 ; basepage offsets
@@ -73,7 +72,6 @@ p_env           equ     $2c     ; .l    pointer to environment string
 p_tbase = 8
 
 /*
-;
 ; long living registers:
 ;   d4  p_tbase - start of text segment
 ;   a6  p_bbase - start of decompressed bss segment, this also is the
@@ -81,8 +79,8 @@ p_tbase = 8
 ;                     - start of decompressed relocations
 ;                     - start of dirty bss
 ;   ASTACK (a7) - final startup code copied below stack
-;
 */
+
 
 /*************************************************************************
 // flush cache macros
@@ -91,8 +89,7 @@ p_tbase = 8
 /*
 ; note:
 ;   GEMDOS/XBIOS trashes d0, d1, d2, a0, a1, a2
-
-
+;
 ; long Ssystem(S_FLUSHCACHE, base, length) - inside the kernel this
 ; is called `cpush(base, length)'.
 ;   returns: d0.l should be either 0 or -32 (== ENOSYS == EINVFN)
@@ -156,7 +153,7 @@ fc1:
                 or.w    #0x0808,d1
                 movec.l d1,cacr
                 movec.l d0,cacr
-//;;                bra     \@ret
+//                bra     \@ret
 fc2:
 
 ret:            move.l  (sp)+,(0xf4)
@@ -200,13 +197,7 @@ done2:
 //       are contiguous in memory
 **************************************************************************/
 
-#if defined(__ASL__)
-                padding off
-#endif
-
-section         tos0
-                //text
-                //dc.b    'UPX1'          // marker for o2bin.pl
+section tos0
 
 start:
                 move.l  a0,d0           // a0 is basepage if accessory
@@ -249,12 +240,14 @@ L(start):       movem.l d1-d7/a0-a6,-(sp)
 
         // copy 4 bytes per loop
 L(loop):        move.l  -(a4),-(a3)
-section         subql_1d0
+section subql_1d0
                 subq.l  #1,d0
-section         subqw_1d0
+section subqw_1d0
                 subq.w  #1,d0
-section         s_bneloop0
+section s_bneloop0
                 bnes    L(loop)
+
+section copy_loop2
 
 #else
 
@@ -271,15 +264,17 @@ L(loop1):
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
                 movem.l (a4),d1-d3/d5-d7/a0-a2/a5
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
-section         subql_1d0
+section subql_1d0
                 subq.l  #1,d0
-section         subqw_1d0
+section subqw_1d0
                 subq.w  #1,d0
-section         s_bneloop0
+section s_bneloop0
                 bnes    L(loop1)
 
+section copy_loop2
+
         // loop2 - copy the remaining 4..160 bytes
-                //;moveq.l #xx,d0          ; ((len % 160) / 4) - 1
+                //moveq.l #xx,d0          // ((len % 160) / 4) - 1
 #if 0
                 dc.b    'u2'            // moveq.l #xx,d0
 #else
@@ -296,6 +291,8 @@ L(loop2):       move.l  -(a4),-(a3)
 
 // ------------- copy code to stack and setup ASTACK
 
+section s_copy_to_stack
+
 // Copy the final startup code below the stack. This will get
 // called via "jmp (ASTACK)" after decompression and relocation.
 
@@ -304,7 +301,7 @@ copy_to_stack:
                 lea.l   clear_bss_end:b(pc),a2
                 move.l  d4,-(ASTACK)    // entry point for final jmp
 
-//                moveq.l #((clear_bss_end-clear_bss)/2-1),d5
+                //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
 L(loop6):       move.w  -(a2),-(ASTACK)
                 subq.l  #1,d5
@@ -312,7 +309,7 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 #ifdef FLUSH_CACHE
                 // patch code: on the stack, the `rts' becomes a `nop'
-                move.w #0x4e71,flush_cache_rts-clear_bss:b(ASTACK)
+                move.w  #0x4e71,flush_cache_rts-clear_bss:b(ASTACK)
 #endif
 
         // note: d5.l is now -1 (needed for decompressor)
@@ -332,7 +329,7 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 #define NRV_NO_INIT
 
-                //;moveq.l #-1,d5        ; last_off = -1
+                //moveq.l #-1,d5          // last_off = -1
                 moveq.l #-128,d0        // d0.b = $80
 #if defined(NRV2B)
                 moveq.l #-1,d7
@@ -376,11 +373,11 @@ clear_bss:
 
 #if defined(SMALL)
 L(loop3):       move.l  d3,(a6)+
-section         subql_1d6
+section subql_1d6
                 subq.l  #1,d6
-section         subqw_1d6
+section subqw_1d6
                 subq.w  #1,d6
-section         s_bneloop3
+section s_bneloop3
                 bnes    L(loop3)
 #else
         // the dirty bss is usually not too large, so we don't
@@ -389,11 +386,11 @@ L(loop3):       move.l  d3,(a6)+
                 move.l  d3,(a6)+
                 move.l  d3,(a6)+
                 move.l  d3,(a6)+
-section         subql_1d6
+section subql_1d6
                 subq.l  #1,d6
-section         subqw_1d6
+section subqw_1d6
                 subq.w  #1,d6
-section         s_bneloop3
+section s_bneloop3
                 bnes    L(loop3)
 #endif
 
@@ -418,7 +415,7 @@ flush_cache_rts:
 
                 lea     clear_bss_size_p4:b(ASTACK),sp
 
-        //; assert sp == clear_bss_end(pc)+4
+        // assert sp == clear_bss_end(pc)+4
 
 
 // ------------- clear the dirty stack
@@ -455,15 +452,9 @@ clear_bss_end:
 // UPX ident & packheader
 **************************************************************************/
 
-#if 0
-#if defined(SMALL)
-//#  include "include/ident_s.ash"
-#else
-//#  include "include/ident_n.ash"
-#endif
-#endif
+// IDENTSTR
 
-//                align4
+// align4
 
 #include "include/header.S"
 
@@ -477,7 +468,7 @@ clear_bss_end:
 // relocations and the original fileheader).
 **************************************************************************/
 
-section         CUTPOINT
+section CUTPOINT
 
 // ------------- decompress (from a3 to a4)
 
@@ -513,7 +504,7 @@ section         CUTPOINT
 #endif
 
 
-section         reloc
+section reloc
 
                 moveq.l #1,d5
 
@@ -538,8 +529,9 @@ L(loopx2):      move.b  (a0)+,d3
 
 reloc_end:
 
-section         jmpastack
 // ------------- clear dirty bss & start program
+
+section jmpastack
 
 // We are currently running in the dirty bss.
 // Jump to the code we copied below the stack.
