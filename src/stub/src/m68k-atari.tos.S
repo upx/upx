@@ -48,7 +48,7 @@
 ;
 */
 
-#define L(label)      .L##label
+#define L(label)      .L ## label
 #define macro(name)   .macro name
 #define endm          .endm
 #define section       .section
@@ -143,17 +143,17 @@ super:          move.l  (0x10),-(sp)
 
         // try 68040 / 68060
                 lea     fc1(pc),a0
-                dc.w    0xf4f8          // cpusha bc
+                dc.w    0xf4f8          // cpusha bc            // [m68040]
                 bras    ret
 fc1:
         // try 68030
                 lea     fc2(pc),a0
-                movec.l cacr,d0
+                dc.w    0x4e7a, 0x0002  // movec.l cacr,d0      // [m68020]
                 move.l  d0,d1
                 or.w    #0x0808,d1
-                movec.l d1,cacr
-                movec.l d0,cacr
-//                bra     \@ret
+                dc.w    0x4e7b, 0x1002  // movec.l d1,cacr      // [m68020]
+                dc.w    0x4e7b, 0x0002  // movec.l d0,cacr      // [m68020]
+//                bras    ret
 fc2:
 
 ret:            move.l  (sp)+,(0xf4)
@@ -234,27 +234,37 @@ L(start):       movem.l d1-d7/a0-a6,-(sp)
                 move.l  d4,a3
                 add.l   #up21,a3        // top of data segment + offset
 
-#if defined(SMALL)
 
-                move.l  #up22,d0        // (len / 4)
+                // number of loops
+section loop1_set_count.b
+                moveq.l #loop1_count,d0
+section loop1_set_count.w
+                move.w  #loop1_count,d0
+section loop1_set_count.l
+                move.l  #loop1_count,d0
 
-        // copy 4 bytes per loop
-L(loop):        move.l  -(a4),-(a3)
-section subql_1d0
-                subq.l  #1,d0
-section subqw_1d0
-                subq.w  #1,d0
-section s_bneloop0
-                bnes    L(loop)
-
-section copy_loop2
-
-#else
-
-                move.l  #up22,d0        // (len / 160)
-
-        // loop1 - use 10 registers to copy 4*10*4 = 160 bytes per loop
+section loop1_label
 L(loop1):
+
+
+section loop1.small
+        // copy 4 bytes per loop
+                move.l  -(a4),-(a3)
+section loop1_subql
+                subq.l  #1,d0
+                bnes    L(loop1)
+section loop1_subqw
+                subq.w  #1,d0
+                bnes    L(loop1)
+section loop1_dbra
+                dbra    d0,L(loop1)
+
+section loop2.small
+        // loop2 - EMPTY section
+
+
+section loop1.fast
+        // loop1 - use 10 registers to copy 4*10*4 = 160 bytes per loop
                 lea.l   -160(a4),a4
                 movem.l 120(a4),d1-d3/d5-d7/a0-a2/a5
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
@@ -264,41 +274,25 @@ L(loop1):
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
                 movem.l (a4),d1-d3/d5-d7/a0-a2/a5
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
-section subql_1d0
-                subq.l  #1,d0
-section subqw_1d0
-                subq.w  #1,d0
-section s_bneloop0
-                bnes    L(loop1)
 
-section copy_loop2
-
+section loop2.fast
         // loop2 - copy the remaining 4..160 bytes
-                //moveq.l #xx,d0          // ((len % 160) / 4) - 1
-#if 0
-                dc.b    'u2'            // moveq.l #xx,d0
-#else
-                moveq.l  #copy_remain,d0
-#endif
-
+                moveq.l  #loop2_count,d0
 L(loop2):       move.l  -(a4),-(a3)
                 dbra    d0,L(loop2)
 
-#endif
 
         // a3 now points to the start of the compressed block
 
 
 // ------------- copy code to stack and setup ASTACK
 
-section s_copy_to_stack
+section copy_to_stack
 
 // Copy the final startup code below the stack. This will get
 // called via "jmp (ASTACK)" after decompression and relocation.
 
-copy_to_stack:
-
-                lea.l   clear_bss_end:b(pc),a2
+                lea.l   clear_bss_end:w(pc),a2
                 move.l  d4,-(ASTACK)    // entry point for final jmp
 
                 //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
@@ -309,7 +303,8 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 #ifdef FLUSH_CACHE
                 // patch code: on the stack, the `rts' becomes a `nop'
-                move.w  #0x4e71,flush_cache_rts-clear_bss:b(ASTACK)
+                //move.w  #0x4e71,(flush_cache_rts-clear_bss):w(ASTACK)
+                move.w  #0x4e71,flush_cache_rts_offset:w(ASTACK)
 #endif
 
         // note: d5.l is now -1 (needed for decompressor)
@@ -324,31 +319,33 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 // ------------- prepare decompressor
 
-        // a3 still points to the start of the compressed block
-                move.l  d4,a4           // dest. for decompressing
-
 #define NRV_NO_INIT
 
+section nrv2b.init
                 //moveq.l #-1,d5          // last_off = -1
                 moveq.l #-128,d0        // d0.b = $80
-#if defined(NRV2B)
                 moveq.l #-1,d7
                 moveq.l #-0x68,d6       // 0xffffff98
                 lsl.w   #5,d6           // 0xfffff300 == -0xd00
-#elif defined(NRV2D)
+section nrv2d.init
+                //moveq.l #-1,d5          // last_off = -1
+                moveq.l #-128,d0        // d0.b = $80
                 moveq.l #-1,d7
                 moveq.l #-0x50,d6       // 0xffffffb0
                 lsl.w   #4,d6           // 0xfffffb00 == -0x500
-#elif defined(NRV2E)
+section nrv2e.init
+                //moveq.l #-1,d5          // last_off = -1
+                moveq.l #-128,d0        // d0.b = $80
                 moveq.l #0,d7
                 moveq.l #-0x50,d6       // 0xffffffb0
                 lsl.w   #4,d6           // 0xfffffb00 == -0x500
-#else
-#  error
-#endif
 
 
 // ------------- jump to copied decompressor
+
+section jmp_decompressor
+        // a3 still points to the start of the compressed block
+                move.l  d4,a4           // dest. for decompressing
 
                 move.l  d4,a2
                 add.l   #up31,a2
@@ -361,8 +358,7 @@ L(loop6):       move.w  -(a2),-(ASTACK)
 
 // ------------- clear dirty bss
 
-.globl clear_bss
-clear_bss:
+section clear_bss
 
         // on entry:
         //   ASTACK      == pc == clear_bss (on stack)
@@ -371,28 +367,25 @@ clear_bss:
         //   d3.l        0
 
 
-#if defined(SMALL)
-L(loop3):       move.l  d3,(a6)+
-section subql_1d6
-                subq.l  #1,d6
-section subqw_1d6
-                subq.w  #1,d6
-section s_bneloop3
-                bnes    L(loop3)
-#else
+section loop3_label:
+L(loop3):
+section loop3.small:
+                move.l  d3,(a6)+
+section loop3.fast:
         // the dirty bss is usually not too large, so we don't
         // bother making movem optimizations here
-L(loop3):       move.l  d3,(a6)+
                 move.l  d3,(a6)+
                 move.l  d3,(a6)+
                 move.l  d3,(a6)+
-section subql_1d6
+                move.l  d3,(a6)+
+section loop3_subql
                 subq.l  #1,d6
-section subqw_1d6
-                subq.w  #1,d6
-section s_bneloop3
                 bnes    L(loop3)
-#endif
+section loop3_subqw
+                subq.w  #1,d6
+                bnes    L(loop3)
+section loop3_dbra
+                dbra    d6,L(loop3)
 
 
 // ------------- flush the cache
@@ -403,7 +396,7 @@ section s_bneloop3
 //  This is also called as a subroutine (before decompression, NOT running
 //  in the stack). When running in the stack the `rts' is replaced by a `nop'.
 
-flush_cache:
+section flush_cache
                 FLUSH_CACHE
 flush_cache_rts:
                 rts
@@ -413,30 +406,26 @@ flush_cache_rts:
 
 // ------------- restore ASTACK
 
-                lea     clear_bss_size_p4:b(ASTACK),sp
+                lea     clear_bss_size_p4:w(ASTACK),sp
 
         // assert sp == clear_bss_end(pc)+4
 
 
 // ------------- clear the dirty stack
 
-#if 0
-
-// better don't do this - we are currently running in the stack
-// and don't want to make yet another instruction-cache-line dirty
-
-clear_dirty_stack:
+section clear_dirty_stack
 
                 // clear down to clear_bss(pc) + 32 extra longs
-                moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
+                //moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
+                moveq.l #clear_dirty_bss_len,d0
                 lea     L(loop)(pc),a0
 L(loop):        move.l  d3,-(a0)
                 dbra    d0,L(loop)
 
-#endif
-
 
 // ------------- start program
+
+section start_program
 
                 movem.l (sp)+,d1-d7/a0-a6
                 move.l  a0,d0
@@ -477,15 +466,50 @@ section CUTPOINT
 #define a3 A2
 #define d2 D3
 
-#if defined(NRV2B)
+
+#undef SMALL
+
+section nrv2b.fast
+#  define N(x)  nrv2b_fast_ ## x ## _8
+#  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2b_d.ash"
-#elif defined(NRV2D)
+#  undef N
+
+section nrv2d.fast
+#  define N(x)  nrv2d_fast_ ## x ## _8
+#  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2d_d.ash"
-#elif defined(NRV2E)
+#  undef N
+
+section nrv2e.fast
+#  define N(x)  nrv2e_fast_ ## x ## _8
+#  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2e_d.ash"
-#else
-#  error
-#endif
+#  undef N
+
+
+#define SMALL 1
+
+section nrv2b.small
+#  define N(x)  nrv2b_small_ ## x ## _8
+#  include "arch/m68k/rename.ash"
+#  include "arch/m68k/nrv2b_d.ash"
+#  undef N
+
+section nrv2d.small
+#  define N(x)  nrv2d_small_ ## x ## _8
+#  include "arch/m68k/rename.ash"
+#  include "arch/m68k/nrv2d_d.ash"
+#  undef N
+
+section nrv2e.small
+#  define N(x)  nrv2e_small_ ## x ## _8
+#  include "arch/m68k/rename.ash"
+#  include "arch/m68k/nrv2e_d.ash"
+#  undef N
+
+
+#include "arch/m68k/rename.ash"
 
 #undef a0
 #undef a1
@@ -495,24 +519,16 @@ section CUTPOINT
         // note: d3.l is 0 from decompressor above
 
 
-// ------------- prepare d6 for clearing the dirty bss
-
-#if defined(SMALL)
-                move.l  #up41,d6        // dirty_bss / 4
-#else
-                move.l  #up41,d6        // dirty_bss / 16
-#endif
-
+// ------------- reloc
 
 section reloc
-
-                moveq.l #1,d5
 
 // The decompressed relocations now are just after the decompressed
 // data segment, i.e. at the beginning of the (dirty) bss.
 
         // note: d3.l is still 0
 
+                moveq.l #1,d5
                 move.l  a6,a0           // a0 = start of relocations
 
                 move.l  d4,a1
@@ -521,24 +537,33 @@ section reloc
 L(loopx1):      add.l   d3,a1           // increase fixup
                 add.l   d4,(a1)         // reloc one address
 L(loopx2):      move.b  (a0)+,d3
-                beqs    reloc_end
+                beqs    L(reloc_end)
                 cmp.b   d5,d3           // note: d5.b is #1 from above
                 bnes    L(loopx1)
                 lea     254(a1),a1      // d3 == 1 -> add 254, don't reloc
                 bras    L(loopx2)
 
-reloc_end:
+L(reloc_end):
+
 
 // ------------- clear dirty bss & start program
+
+                // number of loops
+section loop3_set_count.b
+                moveq.l #loop3_count,d6
+section loop3_set_count.w
+                move.w  #loop3_count,d6
+section loop3_set_count.l
+                move.l  #loop3_count,d6
+
 
 section jmpastack
 
 // We are currently running in the dirty bss.
 // Jump to the code we copied below the stack.
 
-        // note: d3.l is still 0
-
                 jmp     (ASTACK)        // jmp clear_bss (on stack)
+
 
 // vi:ts=8:et:nowrap
 

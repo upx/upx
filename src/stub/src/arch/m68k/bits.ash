@@ -52,6 +52,8 @@ macro(ADDXBITS)
 
 // ------------- FILLBYTES_xx -------------
 
+#undef FILLBYTES_SR
+
 // get 1 byte// then get 1 bit into both C and X
 macro(FILLBYTES_8)
         // note: we shift the X flag through -> must init d0.b with $80

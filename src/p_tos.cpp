@@ -35,17 +35,7 @@
 #include "linker.h"
 
 static const
-#include "stub/m68k-atari.tos-nrv2b.h"
-static const
-#include "stub/m68k-atari.tos-nrv2b.small.h"
-static const
-#include "stub/m68k-atari.tos-nrv2d.h"
-static const
-#include "stub/m68k-atari.tos-nrv2d.small.h"
-static const
-#include "stub/m68k-atari.tos-nrv2e.h"
-static const
-#include "stub/m68k-atari.tos-nrv2e.small.h"
+#include "stub/m68k-atari.tos.h"
 
 // #define TESTING
 
@@ -89,17 +79,18 @@ int PackTos::buildLoader(const Filter *ft)
     const unsigned char *p = NULL;
     size_t l = 0;
 
+    p = nrv_loader;
     if (M_IS_NRV2B(ph.method)) {
-        p = opt->small ? nrv2b_loader_small : nrv2b_loader;
-        l = opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
+//        p = opt->small ? nrv2b_loader_small : nrv2b_loader;
+//        l = opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
     }
     if (M_IS_NRV2D(ph.method)) {
-        p = opt->small ? nrv2d_loader_small : nrv2d_loader;
-        l = opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
+//        p = opt->small ? nrv2d_loader_small : nrv2d_loader;
+//        l = opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
     }
     if (M_IS_NRV2E(ph.method)) {
-        p = opt->small ? nrv2e_loader_small : nrv2e_loader;
-        l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
+//        p = opt->small ? nrv2e_loader_small : nrv2e_loader;
+//        l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
     }
     initLoader(p, l);
 

@@ -67,12 +67,7 @@ STUBS += i386-linux.elf.shell-fold.h
 STUBS += i386-linux.kernel.vmlinux.h
 STUBS += i386-linux.kernel.vmlinuz.h
 STUBS += i386-win32.pe.h
-STUBS += m68k-atari.tos-nrv2b.h
-STUBS += m68k-atari.tos-nrv2b.small.h
-STUBS += m68k-atari.tos-nrv2d.h
-STUBS += m68k-atari.tos-nrv2d.small.h
-STUBS += m68k-atari.tos-nrv2e.h
-STUBS += m68k-atari.tos-nrv2e.small.h
+STUBS += m68k-atari.tos.h
 STUBS += mipsel.r3000-ps1.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
@@ -596,26 +591,17 @@ i386-win32.pe.h : $(srcdir)/src/$$T.S
 # // m68k-atari.tos
 # ************************************************************************/
 
-m68k-atari.tos-%.h : tc_list = m68k-atari.tos default
-m68k-atari.tos-%.h : tc_bfdname = elf32-m68k
+m68k-atari.tos.h : tc_list = m68k-atari.tos default
+m68k-atari.tos.h : tc_bfdname = elf32-m68k
 
 tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -m68000 -malign-int -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
-m68k-atari.tos-nrv%.h : $(srcdir)/src/m68k-atari.tos.S
-	$(call tc,gcc) -c $(PP_FLAGS) -x assembler-with-cpp -Wa,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
+m68k-atari.tos.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68040,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
 	$(call tc,embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=$(IDENT_PREFIX)loader$(IDENT_SUFFIX) tmp/$T.bin $@
-
-m68k-atari.tos-nrv2b% :        PP_FLAGS     = -DNRV2B
-m68k-atari.tos-nrv2d% :        PP_FLAGS     = -DNRV2D
-m68k-atari.tos-nrv2e% :        PP_FLAGS     = -DNRV2E
-m68k-atari.tos-nrv2%.small.h : PP_FLAGS    += -DSMALL
-m68k-atari.tos-nrv2b% :        IDENT_PREFIX = nrv2b_
-m68k-atari.tos-nrv2d% :        IDENT_PREFIX = nrv2d_
-m68k-atari.tos-nrv2e% :        IDENT_PREFIX = nrv2e_
-m68k-atari.tos-nrv2%.small.h : IDENT_SUFFIX = _small
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -633,18 +619,15 @@ tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -We
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
-	$(call tc,pp-as) $(PP_FLAGS) $< -o tmp/$T.i
+	$(call tc,pp-as) -DPS1 $< -o tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	## FIXME - as-2.16.1 does not work ???
-	$(call tc,gcc) -c $(PP_FLAGS) -Wa,-O,-mno-pdr $< -o tmp/$T.bin
+	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=$(IDENT_NAME) tmp/$T.bin $@
-
-mipsel.r3000-ps1.h: PP_FLAGS  += -DPS1
-mipsel.r3000-ps1.h: IDENT_NAME = nrv_loader
+	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 
 # /***********************************************************************
