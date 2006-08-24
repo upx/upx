@@ -127,6 +127,15 @@ override T = $(basename $(notdir $@))
 # // setup toolchain globals
 # ************************************************************************/
 
+# enumerate the names of all variables that will get tested (from basename and $(tc_list))
+__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach v,$(tc_list),tc.$v.$1)
+# return the name of the first variable that is not empty
+__tc_varsearch = $(firstword $(foreach v,$1,$(if $($v),$v,)))
+# error sentinel for missing commands
+__tc_FALSE     = false tc_FALSE: '$1' '$@' '$<' '$(tc_list)'
+# expand the first variable that is not empty
+tc             = $($(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE))
+
 # strip trailing whitespace
 RTRIM := sed -e 's/[ 	]*$$//'
 
@@ -166,19 +175,6 @@ endef
 # some common settings for $(tc_list)
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
-
-
-# slightly tricky make stuff follows
-
-# enumerate the names of all variables that will get tested (from basename and $(tc_list))
-__tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach v,$(tc_list),tc.$v.$1)
-# return the name of the first variable that is not empty
-__tc_varsearch = $(firstword $(foreach v,$1,$(if $($v),$v,)))
-# error sentinel for missing commands
-__tc_FALSE     = false tc_FALSE: '$1' '$@' '$<' '$(tc_list)'
-# expand the first variable that is not empty
-tc             = $($(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE))
-
 
 # clear some vars, just in case
 CPPFLAGS =
@@ -723,7 +719,7 @@ endif
 # // extra-clean
 # ************************************************************************/
 
-MAKEFILE_EXTRA_SUBDIRS := $(shell find src/arch -name Makefile.extra -printf "%h\n" 2>/dev/null | LC_ALL=C sort -u)
+MAKEFILE_EXTRA_SUBDIRS := $(shell find src/arch -name Makefile.extra -printf '%h\n' 2>/dev/null | LC_ALL=C sort -u)
 
 ifneq ($(strip $(MAKEFILE_EXTRA_SUBDIRS)),)
 
@@ -731,7 +727,7 @@ MAKEFILE_EXTRA_SUBDIRS-all   := $(addsuffix ~all,$(MAKEFILE_EXTRA_SUBDIRS))
 MAKEFILE_EXTRA_SUBDIRS-clean := $(addsuffix ~clean,$(MAKEFILE_EXTRA_SUBDIRS))
 
 $(MAKEFILE_EXTRA_SUBDIRS-all):
-	$(MAKE) -C $(@:%~all=%) -f Makefile.extra all
+	$(MAKE) -C $(@:%~all=%)   -f Makefile.extra all
 $(MAKEFILE_EXTRA_SUBDIRS-clean):
 	$(MAKE) -C $(@:%~clean=%) -f Makefile.extra clean
 
