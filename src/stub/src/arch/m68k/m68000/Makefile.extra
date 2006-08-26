@@ -34,6 +34,7 @@ tc.m68k-lzma.gcc      = $(tc.m68k-atari.tos.gcc)
 # FIXME / TODO: we still generate references to __mulsi3
 ##tc.m68k-lzma.gcc     += -m68020
 tc.m68k-lzma.gcc     += -Os -fomit-frame-pointer
+tc.m68k-lzma.gcc     += -fwrapv
 tc.m68k-lzma.gcc     += -ffunction-sections
 tc.m68k-lzma.gcc     += -I$(UPX_LZMADIR)
 tc.m68k-lzma.gcc     += -I$(top_srcdir)/src
