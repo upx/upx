@@ -33,6 +33,7 @@ lzma_d_c%.S : tc_bfdname = elf32-m68k
 tc.m68k-lzma.gcc      = $(tc.m68k-atari.tos.gcc)
 # FIXME / TODO: we still generate references to __mulsi3
 ##tc.m68k-lzma.gcc     += -m68020
+##tc.m68k-lzma.gcc     += -mshort -D_LZMA_UINT32_IS_ULONG
 tc.m68k-lzma.gcc     += -Os -fomit-frame-pointer
 tc.m68k-lzma.gcc     += -fwrapv
 tc.m68k-lzma.gcc     += -ffunction-sections

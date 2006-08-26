@@ -28,7 +28,6 @@
 */
 
 .altmacro
-#define NRV_BB  8
 
 
 /*
@@ -148,11 +147,11 @@ super:          move.l  (0x10),-(sp)
 fc1:
         // try 68030
                 lea     fc2(pc),a0
-                dc.w    0x4e7a, 0x0002  // movec.l cacr,d0      // [m68020]
+                dc.w    0x4e7a, 0x0002  // movec.l cacr,d0      // [m68030]
                 move.l  d0,d1
                 or.w    #0x0808,d1
-                dc.w    0x4e7b, 0x1002  // movec.l d1,cacr      // [m68020]
-                dc.w    0x4e7b, 0x0002  // movec.l d0,cacr      // [m68020]
+                dc.w    0x4e7b, 0x1002  // movec.l d1,cacr      // [m68030]
+                dc.w    0x4e7b, 0x0002  // movec.l d0,cacr      // [m68030]
 //                bras    ret
 fc2:
 
@@ -467,22 +466,23 @@ section CUTPOINT
 #define d2 D3
 
 
+#define NRV_BB  8
 #undef SMALL
 
-section nrv2b.fast
-#  define N(x)  nrv2b_fast_ ## x ## _8
+section nrv2b_8.fast
+#  define N(x)  nrv2b_8_fast_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2b_d.ash"
 #  undef N
 
-section nrv2d.fast
-#  define N(x)  nrv2d_fast_ ## x ## _8
+section nrv2d_8.fast
+#  define N(x)  nrv2d_8_fast_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2d_d.ash"
 #  undef N
 
-section nrv2e.fast
-#  define N(x)  nrv2e_fast_ ## x ## _8
+section nrv2e_8.fast
+#  define N(x)  nrv2e_8_fast_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2e_d.ash"
 #  undef N
@@ -490,26 +490,28 @@ section nrv2e.fast
 
 #define SMALL 1
 
-section nrv2b.small
-#  define N(x)  nrv2b_small_ ## x ## _8
+section nrv2b_8.small
+#  define N(x)  nrv2b_8_small_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2b_d.ash"
 #  undef N
 
-section nrv2d.small
-#  define N(x)  nrv2d_small_ ## x ## _8
+section nrv2d_8.small
+#  define N(x)  nrv2d_8_small_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2d_d.ash"
 #  undef N
 
-section nrv2e.small
-#  define N(x)  nrv2e_small_ ## x ## _8
+section nrv2e_8.small
+#  define N(x)  nrv2e_8_small_ ## x
 #  include "arch/m68k/rename.ash"
 #  include "arch/m68k/nrv2e_d.ash"
 #  undef N
 
 
 #include "arch/m68k/rename.ash"
+#undef NRV_BB
+#undef SMALL
 
 #undef a0
 #undef a1
@@ -517,6 +519,42 @@ section nrv2e.small
 #undef d2
 
         // note: d3.l is 0 from decompressor above
+
+
+// ------------- support
+
+section __mulsi3
+#if 0
+                // compute high-word
+                move.w  4(sp),d1                // 12
+                move.w  6(sp),d0                // 12
+                mulu.w  8(sp),d0                // 78
+                mulu.w  10(sp),d1               // 78
+                add.w   d1,d0                   //  4
+                swap    d0                      //  4
+                clr.w   d0                      //  4
+                // add low-word
+                move.w  6(sp),d1                // 12
+                mulu.w  10(sp),d1               // 78
+                add.l   d1,d0                   //  6
+                rts                             // 16
+#else
+    // smaller and faster
+                // compute high-word
+                lea     4(sp),a0                //  8
+                move.w  (a0)+,d1                //  8
+                move.w  (a0)+,d0                //  8
+                mulu.w  (a0)+,d0                // 74
+                mulu.w  (a0),d1                 // 74
+                add.w   d1,d0                   //  4
+                swap    d0                      //  4
+                clr.w   d0                      //  4
+                // add low-word
+                move.w  6(sp),d1                // 12
+                mulu.w  (a0),d1                 // 74
+                add.l   d1,d0                   //  6
+                rts                             // 16
+#endif
 
 
 // ------------- reloc
@@ -528,8 +566,8 @@ section reloc
 
         // note: d3.l is still 0
 
-                moveq.l #1,d5
                 move.l  a6,a0           // a0 = start of relocations
+                moveq.l #1,d5
 
                 move.l  d4,a1
                 add.l   (a0)+,a1        // get initial fixup

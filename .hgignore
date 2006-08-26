@@ -24,6 +24,7 @@ doc/*.tex
 src/GNUmakefile
 src/MMakefile
 src/compress_nrv*
+src/*.mft
 src/*.rc
 
 src/*.d
