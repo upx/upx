@@ -99,7 +99,7 @@ fillbytes_sr:   FILLBYTES_SR
 decompr_literal:
                 move.b  (a0)+,(a1)+
 
-.globl decompr_start
+//.globl decompr_start
 decompr_start:
 decompr_loop:
 #ifdef SMALL

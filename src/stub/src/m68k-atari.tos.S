@@ -47,7 +47,6 @@
 ;
 */
 
-#define L(label)      .L ## label
 #define macro(name)   .macro name
 #define endm          .endm
 #define section       .section
@@ -116,8 +115,10 @@ macro(MINT_FLUSH_CACHE)
 // the cache control register (68030).
 
 macro(SUPEXEC_FLUSH_CACHE)
+                local   exception, super, fc1, fc2, ret, done
+
                 pea     super(pc)
-                move.w  #0x0026,-(sp)    // Supexec (38)
+                move.w  #0x0026,-(sp)   // Supexec (38)
                 trap    #14             // XBIOS
                 addq.l  #6,sp
                 bras    done
@@ -167,11 +168,12 @@ done:
 
 
 macro(BOTH_FLUSH_CACHE)
+                local   done
                 MINT_FLUSH_CACHE
                 tst.l   d0
-                beqs    done2
+                beqs    done
                 SUPEXEC_FLUSH_CACHE
-done2:
+done:
         endm
 
 
@@ -200,12 +202,12 @@ section tos0
 
 start:
                 move.l  a0,d0           // a0 is basepage if accessory
-                beqs    L(l_app)
+                beqs    1f
                 move.l  4(a0),sp        // accessory - get stack
-                bras    L(start)
+                bras    2f
 
-L(l_app):       move.l  4(sp),d0        // application - get basepage
-L(start):       movem.l d1-d7/a0-a6,-(sp)
+1:              move.l  4(sp),d0        // application - get basepage
+2:              movem.l d1-d7/a0-a6,-(sp)
 
 
 // ------------- restore original basepage
@@ -243,7 +245,7 @@ section loop1_set_count.l
                 move.l  #loop1_count,d0
 
 section loop1_label
-L(loop1):
+loop1:
 
 
 section loop1.small
@@ -251,12 +253,12 @@ section loop1.small
                 move.l  -(a4),-(a3)
 section loop1_subql
                 subq.l  #1,d0
-                bnes    L(loop1)
+                bnes    loop1
 section loop1_subqw
                 subq.w  #1,d0
-                bnes    L(loop1)
+                bnes    loop1
 section loop1_dbra
-                dbra    d0,L(loop1)
+                dbra    d0,loop1
 
 section loop2.small
         // loop2 - EMPTY section
@@ -277,8 +279,8 @@ section loop1.fast
 section loop2.fast
         // loop2 - copy the remaining 4..160 bytes
                 moveq.l  #loop2_count,d0
-L(loop2):       move.l  -(a4),-(a3)
-                dbra    d0,L(loop2)
+loop2:          move.l  -(a4),-(a3)
+                dbra    d0,loop2
 
 
         // a3 now points to the start of the compressed block
@@ -296,9 +298,9 @@ section copy_to_stack
 
                 //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
-L(loop6):       move.w  -(a2),-(ASTACK)
+loop6:          move.w  -(a2),-(ASTACK)
                 subq.l  #1,d5
-                bccs    L(loop6)
+                bccs    loop6
 
 #ifdef FLUSH_CACHE
                 // patch code: on the stack, the `rts' becomes a `nop'
@@ -367,7 +369,7 @@ section clear_bss
 
 
 section loop3_label:
-L(loop3):
+loop3:
 section loop3.small:
                 move.l  d3,(a6)+
 section loop3.fast:
@@ -379,12 +381,12 @@ section loop3.fast:
                 move.l  d3,(a6)+
 section loop3_subql
                 subq.l  #1,d6
-                bnes    L(loop3)
+                bnes    loop3
 section loop3_subqw
                 subq.w  #1,d6
-                bnes    L(loop3)
+                bnes    loop3
 section loop3_dbra
-                dbra    d6,L(loop3)
+                dbra    d6,loop3
 
 
 // ------------- flush the cache
@@ -416,10 +418,10 @@ section clear_dirty_stack
 
                 // clear down to clear_bss(pc) + 32 extra longs
                 //moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
-                moveq.l #clear_dirty_bss_len,d0
-                lea     L(loop)(pc),a0
-L(loop):        move.l  d3,-(a0)
-                dbra    d0,L(loop)
+                moveq.l #clear_dirty_stack_len,d0
+                lea     1f(pc),a0
+1:              move.l  d3,-(a0)
+                dbra    d0,1b
 
 
 // ------------- start program
@@ -428,11 +430,12 @@ section start_program
 
                 movem.l (sp)+,d1-d7/a0-a6
                 move.l  a0,d0
-                beqs    L(l_app1)
+                beqs    1f
                 sub.l   sp,sp           // accessory: no stack
-L(l_app1):      dc.w    0x4ef9          // jmp $xxxxxxxx - jmp to text segment
+1:              dc.w    0x4ef9          // jmp $xxxxxxxx - jmp to text segment
 
-.globl clear_bss_end
+
+.globl clear_bss_end    // for clear_dirty_stack_len
 clear_bss_end:
 
 
@@ -466,6 +469,7 @@ section CUTPOINT
 #define d2 D3
 
 
+#define L(label)      .L ## label
 #define NRV_BB  8
 #undef SMALL
 
@@ -510,6 +514,7 @@ section nrv2e_8.small
 
 
 #include "arch/m68k/rename.ash"
+#undef L
 #undef NRV_BB
 #undef SMALL
 
@@ -517,6 +522,7 @@ section nrv2e_8.small
 #undef a1
 #undef a3
 #undef d2
+
 
         // note: d3.l is 0 from decompressor above
 
@@ -572,16 +578,15 @@ section reloc
                 move.l  d4,a1
                 add.l   (a0)+,a1        // get initial fixup
 
-L(loopx1):      add.l   d3,a1           // increase fixup
+1:              add.l   d3,a1           // increase fixup
                 add.l   d4,(a1)         // reloc one address
-L(loopx2):      move.b  (a0)+,d3
-                beqs    L(reloc_end)
+2:              move.b  (a0)+,d3
+                beqs    3f
                 cmp.b   d5,d3           // note: d5.b is #1 from above
-                bnes    L(loopx1)
+                bnes    1b
                 lea     254(a1),a1      // d3 == 1 -> add 254, don't reloc
-                bras    L(loopx2)
-
-L(reloc_end):
+                bras    2b
+3:            
 
 
 // ------------- clear dirty bss & start program
@@ -595,12 +600,34 @@ section loop3_set_count.l
                 move.l  #loop3_count,d6
 
 
-section jmpastack
+section jmpstack
 
 // We are currently running in the dirty bss.
 // Jump to the code we copied below the stack.
 
                 jmp     (ASTACK)        // jmp clear_bss (on stack)
+
+
+// ------------- absolute symbols ("*ABS*")
+
+section abs_symbols
+
+#define N(a,b) \
+    .globl a##_##b##_start_offset; \
+     a##_##b##_start_offset = a##_##b##_decompr_start - a.b
+N(nrv2b_8,fast)
+N(nrv2d_8,fast)
+N(nrv2e_8,fast)
+N(nrv2b_8,small)
+N(nrv2d_8,small)
+N(nrv2e_8,small)
+#undef N
+
+#define N(a,b) \
+    .globl a##_##b##_start_offset; a##_##b##_start_offset = 0
+N(lzma,fast)
+N(lzma,small)
+#undef N
 
 
 // vi:ts=8:et:nowrap
