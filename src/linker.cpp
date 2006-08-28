@@ -561,6 +561,14 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location,
 }
 
 
+void ElfLinkerM68k::alignCode(unsigned len)
+{
+    assert((len & 1) == 0);
+    assert((outputlen & 1) == 0);
+    for (unsigned i = 0; i < len; i += 2)
+        set_be16(output + outputlen + i, 0x4e71); // "nop"
+}
+
 void ElfLinkerM68k::relocate1(const Relocation *rel, upx_byte *location,
                               unsigned value, const char *type)
 {

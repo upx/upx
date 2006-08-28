@@ -171,6 +171,7 @@ class ElfLinkerM68k : public ElfLinker
 {
     typedef ElfLinker super;
 protected:
+    virtual void alignCode(unsigned len);
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
