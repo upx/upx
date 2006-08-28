@@ -88,7 +88,9 @@ public:
     virtual unsigned getSymbolOffset(const char *) const;
 
     void alignWithByte(unsigned len, upx_byte b);
-    virtual void align(unsigned len);
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
+    virtual void alignData(unsigned len) { alignWithByte(len, 0); }
+
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
@@ -141,7 +143,7 @@ class ElfLinkerAMD64 : public ElfLinker
 {
     typedef ElfLinker super;
 protected:
-    virtual void align(unsigned len) { alignWithByte(len, 0x90); }
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0x90); }
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
@@ -187,7 +189,7 @@ class ElfLinkerX86 : public ElfLinker
 {
     typedef ElfLinker super;
 protected:
-    virtual void align(unsigned len) { alignWithByte(len, 0x90); }
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0x90); }
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };

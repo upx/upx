@@ -317,7 +317,7 @@ int ElfLinker::addLoader(const char *sname)
             if (unsigned l = (hex(sect[2]) - tail->offset - tail->size)
                 % hex(sect[1]))
             {
-                align(l);
+                alignCode(l);
                 tail->size += l;
                 outputlen += l;
             }
@@ -329,7 +329,7 @@ int ElfLinker::addLoader(const char *sname)
                 unsigned const v = ~0u << section->align;
                 assert(tail);
                 if (unsigned const l = ~v & -(tail->offset + tail->size)) {
-                    align(l);
+                    alignCode(l);
                     tail->size += l;
                     outputlen += l;
                 }
@@ -457,11 +457,6 @@ void ElfLinker::alignWithByte(unsigned len, upx_byte b)
     memset(output + outputlen, b, len);
 }
 
-void ElfLinker::align(unsigned len)
-{
-    alignWithByte(len, 0);
-}
-
 void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
                           unsigned, const char *)
 {
@@ -472,6 +467,7 @@ void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
 
 /*************************************************************************
 // ElfLinker arch subclasses
+// FIXME: add more displacment overflow checks
 **************************************************************************/
 
 void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
@@ -490,7 +486,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
     if (strcmp(type, "8") == 0)
     {
         int displ = (signed char) *location + (int) value;
-        if (displ < -127 || displ > 128)
+        if (displ < -128 || displ > 127)
         {
             printf("target out of range (%d) in reloc %s:%x\n",
                    displ, rel->section->name, rel->offset);
@@ -645,7 +641,7 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
     if (strcmp(type, "8") == 0)
     {
         int displ = (signed char) *location + (int) value;
-        if (range_check && (displ < -127 || displ > 128)) {
+        if (range_check && (displ < -128 || displ > 127)) {
             printf("target out of range (%d) in reloc %s:%x\n",
                    displ, rel->section->name, rel->offset);
             abort();
