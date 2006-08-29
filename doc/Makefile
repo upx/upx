@@ -1,6 +1,16 @@
+#
+# UPX doc Makefile - needs GNU make 3.80 or better
+#
+
 MAKEFLAGS += -rR
 .SUFFIXES:
 SHELL = /bin/sh
+
+# internal make variables
+comma := ,
+empty :=
+space := $(empty) $(empty)
+tab   := $(empty)	$(empty)
 
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
@@ -10,14 +20,19 @@ ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 
+
+# /***********************************************************************
+# //
+# ************************************************************************/
+
 top_srcdir = ..
 
 PACKAGE       = upx
 VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 VERSION      := $(shell sed -n 's/^.*UPX_VERSION_STRING .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
 
-RTRIM  := sed -e 's/[ 	]*$$//'
-DETAB2 := sed -e 's/	/  /g'
+RTRIM  := sed -e 's/[ $(tab)]*$$//'
+DETAB2 := sed -e 's/$(tab)/  /g'
 
 BUILT_SOURCES = upx.1 upx.doc upx.html upx.man upx.ps upx.tex
 BUILT_SOURCES = upx.1 upx.doc upx.html

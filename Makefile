@@ -1,4 +1,6 @@
-# Toplevel Makefile for UPX
+#
+# UPX toplevel Makefile - needs GNU make 3.80 or better
+#
 
 MAKEFLAGS += -rR
 .SUFFIXES:

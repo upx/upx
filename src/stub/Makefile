@@ -12,6 +12,12 @@ MAKEFLAGS += -rR
 export SHELL = /bin/sh
 export LC_ALL = C
 
+# internal make variables
+comma := ,
+empty :=
+space := $(empty) $(empty)
+tab   := $(empty)	$(empty)
+
 ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
 endif
@@ -118,7 +124,7 @@ maintainer-clean:
 override T = $(basename $(notdir $@))
 
 # trim (strip) trailing whitespace
-RTRIM := sed -e 's/[ 	]*$$//'
+RTRIM := sed -e 's/[ $(tab)]*$$//'
 
 # clear some vars, just in case
 LABEL_PREFIX =
@@ -712,14 +718,15 @@ endif
 ifndef EXTRA_MAKEFILES
 EXTRA_MAKEFILES :=
 ifneq ($(filter extra-%,$(MAKECMDGOALS)),)
-EXTRA_MAKEFILES += $(shell find src/arch -name Makefile.extra 2>/dev/null | LC_ALL=C sort -u)
+EXTRA_MAKEFILES += $(wildcard src/arch/*/Makefile.extra src/arch/*/*/Makefile.extra src/arch/*/*/*/Makefile.extra)
+##EXTRA_MAKEFILES += $(shell find src/arch -name Makefile.extra 2>/dev/null)
 endif
 endif
 
 ifneq ($(strip $(EXTRA_MAKEFILES)),)
 EXTRA_MAKEFILES.targets :=
-EXTRA_MAKEFILES.targets += $(addsuffix .~all,$(EXTRA_MAKEFILES))
-EXTRA_MAKEFILES.targets += $(addsuffix .~clean,$(EXTRA_MAKEFILES))
+EXTRA_MAKEFILES.targets += $(addsuffix .~all,$(sort $(EXTRA_MAKEFILES)))
+EXTRA_MAKEFILES.targets += $(addsuffix .~clean,$(sort $(EXTRA_MAKEFILES)))
 
 $(EXTRA_MAKEFILES.targets): MAKEFLAGS += --no-print-directory
 $(EXTRA_MAKEFILES.targets): $$(basename $$@)
