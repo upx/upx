@@ -21,15 +21,18 @@
 ;  If not, write to the Free Software Foundation, Inc.,
 ;  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ;
-;  Markus F.X.J. Oberhumer      Jens Medoch
-;  <markus@oberhumer.com>       <jssg@users.sourceforge.net>
+;  Markus F.X.J. Oberhumer
+;  <mfx@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
-*/
+;  Jens Medoch
+;  <jssg@users.sourceforge.net>
+;
+ */
 
 .macro  section name
-    .section \name
-    .align  0
+        .section \name
+        .align  0
 .endm
 
 #define zero    $0

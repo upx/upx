@@ -21,11 +21,15 @@
 ;  If not, write to the Free Software Foundation, Inc.,
 ;  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ;
-;  Markus F.X.J. Oberhumer              Jens Medoch
-;  <markus@oberhumer.com>               <jssg@users.sourceforge.net>
+;  Markus F.X.J. Oberhumer
+;  <mfx@users.sourceforge.net>
 ;  http://www.oberhumer.com/opensource/ucl/
 ;
-*/
+;  Jens Medoch
+;  <jssg@users.sourceforge.net>
+;
+ */
+
 
 #ifndef _MR3K_STD_CONF_
 #define _MR3K_STD_CONF_
@@ -195,12 +199,11 @@
 .ifnb label
 \label:
 .endif
-            \type   done
+            \type   decomp_done
 .if (UCL_SMALL == 1)
 1:
             GBIT
 .endif
-done:
 .else
 .ifc "\option", "sub_only"
             sub_size = .

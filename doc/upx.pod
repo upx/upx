@@ -699,19 +699,19 @@ nostalgic feelings of one of the authors.
 Packed programs will be byte-identical to the original after uncompression,
 until further notice.
 
-Maximum uncompressed size: ~1998848 bytes.
+Maximum uncompressed size: ~1.89 / ~7.60 Mbytes.
 
 Notes:
 
-  - UPX creates as default a 'CD-Rom only' PS1/PS2 compatible executable.
-    For transfer between client/target use options below.
+  - UPX creates as default a console transfer compatible executable.
+    For CD-Mastering use option "--boot-only" as descriped below.
 
   - Normally the packed files use the same memory areas like the uncompressed
     versions, so they will not override other memory areas while unpacking.
     If this isn't possible UPX will abort showing a 'packed data overlap'
-    error. With the "--force" option UPX will set a few 'bytes higher' loading
-    offset for the packed file, but this isn't a real problem if it is a
-    single or boot-only executable.
+    error. With the "--force" option UPX will relocate the loading address
+    for the packed file, but this isn't a real problem if it is a single or 
+    the main executable.
 
 Extra options available for this executable format:
 
@@ -720,15 +720,19 @@ Extra options available for this executable format:
                       the compression ratio in some cases, but usually
                       the default method gives the best results anyway.
 
-  --boot-only         The format will only run from a CD and may slightly
-                      improves the compression ratio. The decompression
-                      routines are faster than default ones.
-                      But it cannot be used for host/client transfer !
+  --8-bit             Uses 8 bit size compression [default: 32 bit]
+
+  --8mb-ram           PSone has 8 MB ram available [default: 2 MB]
+
+  --boot-only         This format is for main exes and CD-Mastering only !
+                      It may slightly improve the compression ratio,
+                      decompression routines are faster than default ones.
+                      But it cannot be used for console transfer !
 
   --no-align          This option disables CD mode 2 data sector format
                       alignment. May slightly improves the compression ratio,
                       but the compressed executable will not boot from a CD.
-                      Use it for client/target transfer only !
+                      Use it for console transfer only !
 
 
 

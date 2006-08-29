@@ -29,12 +29,12 @@
 ;  Jens Medoch
 ;  <jssg@users.sourceforge.net>
 ;
-*/
+ */
 
             .set    mips1
-            .altmacro
             .set    noreorder
             .set    noat
+            .altmacro
 
 
 #include "arch/mips/mipsel.r3000/macros.ash"
@@ -62,32 +62,32 @@
     .endif
 .endm
 
-.macro  regs    _w, ok
-             \_w     pc,SZ_REG*0(sp)
-             \_w     src,SZ_REG*1(sp)
-             \_w     cnt,SZ_REG*2(sp)
-             \_w     a3,SZ_REG*3(sp)
-             \_w     ra,SZ_REG*4(sp)
+.macro  regs    _w, sz, reg
+             \_w     pc,SZ_REG*0(\reg)
+             \_w     src,SZ_REG*1(\reg)
+             \_w     cnt,SZ_REG*2(\reg)
+             \_w     a3,SZ_REG*3(\reg)
+             \_w     ra,SZ_REG*4(\reg)
             REG_SZ = (5*SZ_REG)
-    .if (\ok == 1)
-             \_w     tmp,SZ_REG*5(sp)
+    .if (\sz == 1)
+             \_w     tmp,SZ_REG*5(\reg)
             REG_SZ = (6*SZ_REG)
     .endif
 .endm
 
-.macro  push    ok = 0
+.macro  push    sz = 0, reg = sp
     .if (PS1)
-             regs    sw,\ok
+             regs    sw,\sz,\reg
     .else
-             regs    sd,\ok
+             regs    sd,\sz,\reg
     .endif
 .endm
 
-.macro  pop     ok = 0
+.macro  pop     ok = 0, reg = sp
     .if (PS1)
-             regs    lw,\ok
+             regs    lw,\ok,\reg
     .else
-             regs    ld,\ok
+             regs    ld,\ok,\reg
     .endif
 .endm
 
@@ -105,11 +105,23 @@
     .endif
 .endm
 
+/*
+.macro  EnterCriticalSection
+            li      a0, 1
+            syscall
+.endm
+
+
+.macro  ExitCriticalSection
+            li      a0, 2
+            syscall
+.endm
+*/
 
 #define CLzmaDecoderState   a0   /* CLzmaDecoderState */
 #define inStream            a1
 #define inSize              a2
-#define pinSizeprocessed    a3  /*   inSizeprocessed */
+#define pinSizeprocessed    a3  /*  *inSizeprocessed */
 
 #define outStream           t0
 #define outSize             t1
@@ -141,7 +153,7 @@ section     cdb.entry
 section     cdb.start.lzma
             la      t0,PSVR         // prepare to compute value
             subu    t0,s0,t0        // get stored header offset in mem
-            li      tmp,%lo(LS+REG_SZ)      // size of decomp. routine
+            ori     tmp,zero,%lo(ldr_sz+REG_SZ)  // size of decomp. routine
             jr      t0
             subu    sp,tmp          // adjust the stack with this size
 
@@ -175,16 +187,16 @@ section     cdb.exit
             mCDBOOT 0
 
 section     con.start
-            li      tmp,%lo(LS+REG_SZ)      // size of decomp. routine
-            subu    sp,tmp                  // adjust the stack with this size
-            push    1                // push used regs
-            subiu   cnt,tmp,REG_SZ   // cnt = counter copyloop
-            addiu   pc,sp,REG_SZ     // get offset for decomp. routine
+            li      tmp,%lo(ldr_sz+REG_SZ)  // size of decomp. routine
+            subu    sp,tmp          // adjust the stack with this size
+            push    1               // push used regs
+            addiu   pc,sp,REG_SZ    // get offset for decomp. routine
             move    dst,pc
-            la      src,DCRT         // load decompression routine's offset
+            la      src,DCRT        // load decompression routine's offset
 
 section     con.mcpy
-1:          lw      var,0(src)       // memcpy
+            ori     cnt,zero,%lo(ldr_sz)    // amount of removed zero's at eof
+1:          lw      var,0(src)      // memcpy
             subiu   cnt,4
             sw      var,0(dst)
             addiu   src,4
@@ -215,17 +227,53 @@ section     con.exit
             addu    sp,tmp
 
 
+/*
+=============
+============= ENTRY POINT bss
+=============
+*/
+            mCDBOOT 0
+
+section     bss.cdb.start.lzma
+            la      t0,PSVR          // prepare to compute value
+            subu    t0,s0,t0         // get stored header offset in mem
+            lui     var,%hi(wrkmem-REG_SZ)  // size of decomp. routine
+            jr      t0
+            addiu   var,%lo(wrkmem-REG_SZ)  // adjust the stack with this size
+
+section     bss.cdb.entry.lzma
+            move    tmp,sp
+            push    1,var            // push used regs
+            addiu   src,t0,lzma_cpr  // compressed lzma decoder offset
+            addiu   dst,sp,REG_SZ
+
+section     bss.con.start
+            la      var,wrkmem-REG_SZ
+            move    tmp,sp
+            push    1,var            // push used regs
+            move    sp,var
+            addiu   pc,sp,REG_SZ     // get offset for decomp. routine
+            move    dst,pc
+            la      src,DCRT         // load decompression routine's offset
+
+section     bss.exit
+            SysFlushCache
+            pop     1                // pop used regs with marker for entry
+            j       entry
+            move    sp,tmp
+
+
 // =============
 
 section     memset.short
-            li      cnt,%lo(SC)      // amount of removed zero's at eof
+            ori     cnt,zero,%lo(SC) // amount of removed zero's at eof
 1:          sw      zero,0(dst)
             subiu   cnt,1
             bnez    cnt,1b
             addiu   dst,4
 
 section     memset.long
-            li      cnt,%lo(SC)      // amount of removed zero's at eof
+            ori     cnt,zero,%lo(SC) // amount of removed zero's at eof
             sll     cnt,3            // (cd mode 2 data sector alignment)
 1:          sw      zero,0(dst)
             subiu   cnt,1
@@ -279,8 +327,11 @@ section     nrv2d.small
 section     nrv2e.small
             build without_sub, nrv2e
 
-section     nrv.small.done
+section     nrv.done
 decomp_done:
+
+section     decompressor.start
+decompressor:
 
 #include    "arch/mips/mipsel.r3000/lzma_d.S"
 

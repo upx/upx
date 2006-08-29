@@ -28,7 +28,7 @@
 
    John F. Reiser                       Jens Medoch
    <jreiser@users.sourceforge.net>      <jssg@users.sourceforge.net>
-*/
+ */
 
 section     lzma.init
             li      tmp,%lo(UPXa-lzma_args_sz)
