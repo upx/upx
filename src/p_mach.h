@@ -181,6 +181,7 @@ public:
 
 protected:
     virtual int buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);
@@ -190,6 +191,8 @@ protected:
         upx_byte const *const fold,
         unsigned        const szfold,
         Filter const *ft );
+    virtual void defineSymbols(Filter const *);
+    virtual void addStubEntrySections(Filter const *);
 
     unsigned  n_segment;
     unsigned sz_segment;

@@ -123,7 +123,8 @@ void PackElks8086::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 #if 0
     // FIXME
-    patchFilter32(loader, lsize, &ft);
+    defineFilterSymbols();
+    defineDecompressorSymbols();
     patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
     patch_le32(loader, lsize, "KEIP", kernel_entry);
     patch_le32(loader, lsize, "STAK", stack_during_uncompression);

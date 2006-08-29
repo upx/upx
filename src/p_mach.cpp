@@ -64,17 +64,42 @@ const int *PackMachPPC32::getFilters() const
     return filters;
 }
 
+Linker *PackMachPPC32::newLinker() const
+{
+    return new ElfLinkerPpc32;
+}
+
+void
+PackMachPPC32::addStubEntrySections(Filter const *)
+{
+    addLoader("MACOS000", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
+}
+
+
+void PackMachPPC32::defineSymbols(Filter const *)
+{
+    // empty
+}
+
+
 int
 PackMachPPC32::buildMachLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
     upx_byte const *const fold,
     unsigned        const szfold,
-    Filter const */*ft*/
+    Filter const *ft
 )
 {
-    int eof_empty = -1;
-    initLoader(&eof_empty, 4096, 0, 0);
+    initLoader(proto, szproto);
 
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
@@ -104,11 +129,11 @@ PackMachPPC32::buildMachLoader(
     int const GAP = 128;  // must match stub/l_mac_ppc.S
     segcmdo.vmsize += h.sz_unc - h.sz_cpr + GAP + 64;
 
-    linker->addSection("MACOS000", proto, szproto, 0);
+    addStubEntrySections(ft);
 
-    addLoader("MACOS000", NULL);
-    addLoader("FOLDEXEC", NULL);
     freezeLoader();
+    defineSymbols(ft);
+    linker->relocate();
     return getLoaderSize();
 }
 

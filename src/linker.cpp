@@ -29,324 +29,21 @@
 #include "conf.h"
 #include "linker.h"
 
-static int hex(char c)
+static int hex(unsigned char c)
 {
     return (c & 0xf) + (c > '9' ? 9 : 0);
 }
 
-
-/*************************************************************************
-//
-**************************************************************************/
-
-#define NJUMPS      200
-#define NSECTIONS   550
-
-class DefaultLinker::Label
+static bool update_capacity(unsigned size, unsigned *capacity)
 {
-    char label[31 + 1];
-public:
-    unsigned set(const char *s)
-    {
-        size_t len = strlen(s);
-        assert(len > 0); assert(len <= 31);
-        strcpy(label, s);
-        return len + 1;
-    }
-    unsigned set(const unsigned char *s) { return set((const char *)s); }
-    operator const char *() const { return label; }
-};
-
-
-struct DefaultLinker::Jump
-{
-    int         pos;
-    int         len;
-    int         toffs;
-    DefaultLinker::Label tsect;
-};
-
-struct DefaultLinker::Section
-{
-    int         istart;
-    int         ostart;
-    int         len;
-    unsigned char align;
-    DefaultLinker::Label name;
-};
-
-
-DefaultLinker::DefaultLinker() :
-    iloader(NULL), oloader(NULL), jumps(NULL), sections(NULL)
-{
+    if (size < *capacity)
+        return false;
+    if (*capacity == 0)
+        *capacity = 16;
+    while (size >= *capacity)
+        *capacity *= 2;
+    return true;
 }
-
-
-void DefaultLinker::init(const void *pdata, int plen, int pinfo)
-{
-    assert(!frozen);
-    ilen = plen;
-    iloader = new unsigned char[plen + 8192];
-    memcpy(iloader, pdata, plen);
-    oloader = new unsigned char[plen];
-    olen = 0;
-    align_hack = 0;
-    align_offset = 0;
-    info = pinfo;
-    njumps = nsections = frozen = 0;
-    jumps = new Jump[NJUMPS];
-    sections = new Section[NSECTIONS];
-
-    unsigned char *p = iloader + info;
-    while (get32(p) != (unsigned)(-1))
-    {
-        if (get32(p))
-        {
-            p += sections[nsections].name.set(p);
-            sections[nsections].istart = get32(p);
-            sections[nsections++].ostart = -1;
-            p += 4;
-            assert(nsections < NSECTIONS);
-        }
-        else
-        {
-            int l;
-            for (l = get32(p+4) - 1; iloader[l] == 0; l--)
-                ;
-
-            jumps[njumps].pos = l+1;
-            jumps[njumps].len = get32(p+4)-jumps[njumps].pos;
-            p += 8 + jumps[njumps].tsect.set(p + 8);
-            jumps[njumps++].toffs = get32(p);
-            p += 4;
-            assert(njumps < NJUMPS);
-        }
-    }
-
-    int ic;
-    for (ic = 0; ic < nsections - 1; ic++)
-        sections[ic].len = sections[ic+1].istart - sections[ic].istart;
-    sections[ic].len = 0;
-}
-
-
-DefaultLinker::~DefaultLinker()
-{
-    delete [] iloader;
-    delete [] oloader;
-    delete [] jumps;
-    delete [] sections;
-}
-
-
-void DefaultLinker::setLoaderAlignOffset(int offset)
-{
-    assert(!frozen);
-    align_offset = offset;
-}
-
-
-int DefaultLinker::addSection(const char *sname)
-{
-    assert(!frozen);
-    if (sname[0] == 0)
-        return olen;
-    char *begin = strdup(sname);
-    char *end = begin + strlen(begin);
-    for (char *sect = begin; sect < end; )
-    {
-        for (char *tokend = sect; *tokend; tokend++)
-            if (*tokend == ' ' || *tokend == ',')
-            {
-                *tokend = 0;
-                break;
-            }
-
-        if (*sect == '+') // alignment
-        {
-            if (sect[1] == '0')
-                align_hack = olen + align_offset;
-            else
-            {
-                unsigned j =  hex(sect[1]);
-                j = (hex(sect[2]) - ((olen + align_offset) - align_hack) ) % j;
-                memset(oloader+olen, (sect[3] == 'C' ? 0x90 : 0), j);
-                olen += j;
-            }
-        }
-        else
-        {
-            int ic;
-            for (ic = 0; ic < nsections; ic++)
-                if (strcmp(sect, sections[ic].name) == 0)
-                {
-                    memcpy(oloader+olen,iloader+sections[ic].istart,sections[ic].len);
-                    sections[ic].ostart = olen;
-                    olen += sections[ic].len;
-                    break;
-                }
-            if (ic == nsections) {
-                printf("%s", sect);
-                assert(ic != nsections);
-            }
-        }
-        sect += strlen(sect) + 1;
-    }
-    free(begin);
-    return olen;
-}
-
-
-void DefaultLinker::addSection(const char *sname, const void *sdata, int slen, int align)
-{
-    assert(!frozen);
-    // add a new section - can be used for adding stuff like ident or header
-    sections[nsections].name.set(sname);
-    sections[nsections].istart = ilen;
-    sections[nsections].len = slen;
-    sections[nsections].align = align;
-    sections[nsections++].ostart = olen;
-    assert(nsections < NSECTIONS);
-    memcpy(iloader+ilen, sdata, slen);
-    ilen += slen;
-}
-
-
-void DefaultLinker::freeze()
-{
-    if (frozen)
-        return;
-
-    int ic,jc,kc;
-    for (ic = 0; ic < njumps; ic++)
-    {
-        for (jc = 0; jc < nsections-1; jc++)
-            if (jumps[ic].pos >= sections[jc].istart
-                && jumps[ic].pos < sections[jc+1].istart)
-                break;
-        assert(jc!=nsections-1);
-        if (sections[jc].ostart < 0)
-            continue;
-
-        for (kc = 0; kc < nsections-1; kc++)
-            if (strcmp(jumps[ic].tsect,sections[kc].name) == 0)
-                break;
-        assert(kc!=nsections-1);
-
-        int offs = sections[kc].ostart+jumps[ic].toffs -
-            (jumps[ic].pos+jumps[ic].len -
-             sections[jc].istart+sections[jc].ostart);
-
-        if (jumps[ic].len == 1)
-            assert(-128 <= offs && offs <= 127);
-
-        set32(&offs,offs);
-        memcpy(oloader+sections[jc].ostart+jumps[ic].pos-sections[jc].istart,&offs,jumps[ic].len);
-    }
-
-    frozen = true;
-}
-
-
-int DefaultLinker::getSection(const char *sname, int *slen)
-{
-    assert(frozen);
-
-    for (int ic = 0; ic < nsections; ic++)
-        if (strcmp(sname, sections[ic].name) == 0)
-        {
-            if (slen)
-                *slen = sections[ic].len;
-            return sections[ic].ostart;
-        }
-    return -1;
-}
-
-
-unsigned char *DefaultLinker::getLoader(int *llen)
-{
-    assert(frozen);
-
-    if (llen)
-        *llen = olen;
-    return oloader;
-}
-
-
-/*************************************************************************
-//
-**************************************************************************/
-
-SimpleLinker::SimpleLinker() :
-    oloader(NULL)
-{
-}
-
-
-void SimpleLinker::init(const void *pdata, int plen, int pinfo)
-{
-    assert(!frozen);
-    UNUSED(pinfo);
-    oloader = new unsigned char[plen];
-    olen = plen;
-    memcpy(oloader, pdata, plen);
-}
-
-
-SimpleLinker::~SimpleLinker()
-{
-    delete [] oloader;
-}
-
-
-void SimpleLinker::setLoaderAlignOffset(int offset)
-{
-    assert(!frozen);
-    UNUSED(offset);
-    assert(0);
-}
-
-
-int SimpleLinker::addSection(const char *sname)
-{
-    assert(!frozen);
-    UNUSED(sname);
-    assert(0);
-    return -1;
-}
-
-
-void SimpleLinker::addSection(const char *sname, const void *sdata, int slen, int align)
-{
-    assert(!frozen);
-    UNUSED(sname); UNUSED(sdata); UNUSED(slen); UNUSED(align);
-    assert(0);
-}
-
-
-void SimpleLinker::freeze()
-{
-    frozen = true;
-}
-
-
-int SimpleLinker::getSection(const char *sname, int *slen)
-{
-    assert(frozen);
-    UNUSED(sname); UNUSED(slen);
-    assert(0);
-    return -1;
-}
-
-
-unsigned char *SimpleLinker::getLoader(int *llen)
-{
-    assert(frozen);
-    if (llen)
-        *llen = olen;
-    return oloader;
-}
-
 
 /*************************************************************************
 //
@@ -378,8 +75,8 @@ ElfLinker::Symbol::~Symbol()
     free(name);
 }
 
-ElfLinker::Relocation::Relocation(Section *s, unsigned o, const char *t,
-                                  Symbol *v, unsigned a) :
+ElfLinker::Relocation::Relocation(const Section *s, unsigned o, const char *t,
+                                  const Symbol *v, unsigned a) :
     section(s), offset(o), type(t), value(v), add(a)
 {}
 
@@ -488,7 +185,7 @@ void ElfLinker::preprocessRelocations(char *start, const char *end)
     }
 }
 
-ElfLinker::Section *ElfLinker::findSection(const char *name)
+ElfLinker::Section *ElfLinker::findSection(const char *name) const
 {
     for (unsigned ic = 0; ic < nsections; ic++)
         if (strcmp(sections[ic]->name, name) == 0)
@@ -499,45 +196,53 @@ ElfLinker::Section *ElfLinker::findSection(const char *name)
     return NULL;
 }
 
-ElfLinker::Symbol *ElfLinker::findSymbol(const char *name)
+ElfLinker::Symbol *ElfLinker::findSymbol(const char *name) /*const*/
 {
     for (unsigned ic = 0; ic < nsymbols; ic++)
         if (strcmp(symbols[ic]->name, name) == 0)
             return symbols[ic];
 
-    if ('*'==name[0]) { // *ABS*
-        addSymbol(name, name, 0);
-        return symbols[nsymbols -1];
-    }
+    // FIXME: this should be a const method !
+    if ('*' == name[0]) // *ABS*
+        return addSymbol(name, name, 0);
+
     printf("unknown symbol %s\n", name);
     abort();
     return NULL;
 }
 
-void ElfLinker::addSymbol(const char *name, const char *section,
+ElfLinker::Symbol *ElfLinker::addSymbol(const char *name, const char *section,
                           unsigned offset)
 {
-    symbols = static_cast<Symbol **>(realloc(symbols, (nsymbols + 1)
-                                             * sizeof(Symbol *)));
-    assert(symbols);
-    symbols[nsymbols++] = new Symbol(name, findSection(section), offset);
+    if (update_capacity(nsymbols, &nsymbols_capacity))
+        symbols = static_cast<Symbol **>(realloc(symbols, nsymbols_capacity * sizeof(Symbol *)));
+    assert(symbols != NULL);
+    Symbol *sym = new Symbol(name, findSection(section), offset);
+    symbols[nsymbols++] = sym;
+    return sym;
 }
 
-void ElfLinker::addRelocation(const char *section, unsigned off,
-                              const char *type, const char *symbol,
-                              unsigned add)
+ElfLinker::Relocation *ElfLinker::addRelocation(const char *section, unsigned off,
+                                                const char *type, const char *symbol,
+                                                unsigned add)
 {
-    relocations = static_cast<Relocation **>(realloc(relocations,
-                                                     (nrelocations + 1)
-                                                     * sizeof(Relocation *)));
-    assert(relocations);
-    relocations[nrelocations++] = new Relocation(findSection(section), off,
-                                                 type, findSymbol(symbol), add);
+    if (update_capacity(nrelocations, &nrelocations_capacity))
+        relocations = static_cast<Relocation **>(realloc(relocations, (nrelocations_capacity) * sizeof(Relocation *)));
+    assert(relocations != NULL);
+    Relocation *rel = new Relocation(findSection(section), off,
+                                     type, findSymbol(symbol), add);
+    relocations[nrelocations++] = rel;
+    return rel;
 }
 
-ElfLinker::ElfLinker() : input(NULL), output(NULL), head(NULL), tail(NULL),
-    sections(NULL), symbols(NULL), relocations(NULL)
-{}
+ElfLinker::ElfLinker() :
+    frozen(false), input(NULL), output(NULL), head(NULL), tail(NULL),
+    sections(NULL), symbols(NULL), relocations(NULL),
+    nsections(0), nsections_capacity(0),
+    nsymbols(0), nsymbols_capacity(0),
+    nrelocations(0), nrelocations_capacity(0)
+{
+}
 
 ElfLinker::~ElfLinker()
 {
@@ -556,7 +261,7 @@ ElfLinker::~ElfLinker()
     free(relocations);
 }
 
-void ElfLinker::init(const void *pdata, int plen, int)
+void ElfLinker::init(const void *pdata, int plen)
 {
     upx_byte *i = new upx_byte[plen + 1];
     memcpy(i, pdata, plen);
@@ -580,7 +285,7 @@ void ElfLinker::init(const void *pdata, int plen, int)
     preprocessSections(psections, psymbols);
     preprocessSymbols(psymbols, prelocs);
     preprocessRelocations(prelocs, (char*) input + inputlen);
-    addSection("*UND*");
+    addLoader("*UND*");
 }
 
 void ElfLinker::setLoaderAlignOffset(int phase)
@@ -589,7 +294,7 @@ void ElfLinker::setLoaderAlignOffset(int phase)
     printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
 }
 
-int ElfLinker::addSection(const char *sname)
+int ElfLinker::addLoader(const char *sname)
 {
     assert(!frozen);
     if (sname[0] == 0)
@@ -612,7 +317,7 @@ int ElfLinker::addSection(const char *sname)
             if (unsigned l = (hex(sect[2]) - tail->offset - tail->size)
                 % hex(sect[1]))
             {
-                align(l);
+                alignCode(l);
                 tail->size += l;
                 outputlen += l;
             }
@@ -624,7 +329,7 @@ int ElfLinker::addSection(const char *sname)
                 unsigned const v = ~0u << section->align;
                 assert(tail);
                 if (unsigned const l = ~v & -(tail->offset + tail->size)) {
-                    align(l);
+                    alignCode(l);
                     tail->size += l;
                     outputlen += l;
                 }
@@ -652,10 +357,12 @@ int ElfLinker::addSection(const char *sname)
 void ElfLinker::addSection(const char *sname, const void *sdata, int slen, int align)
 {
     assert(!frozen);
-    sections = static_cast<Section **>(realloc(sections, (nsections + 1)
-                                               * sizeof(Section *)));
+    if (update_capacity(nsections, &nsections_capacity))
+        sections = static_cast<Section **>(realloc(sections, nsections_capacity * sizeof(Section *)));
     assert(sections);
-    sections[nsections++] = new Section(sname, sdata, slen, align);
+    Section *sec = new Section(sname, sdata, slen, align);
+    sections[nsections++] = sec;
+    //return sec;
 }
 
 void ElfLinker::freeze()
@@ -750,67 +457,21 @@ void ElfLinker::alignWithByte(unsigned len, upx_byte b)
     memset(output + outputlen, b, len);
 }
 
-void ElfLinker::align(unsigned len)
-{
-    alignWithByte(len, 0);
-}
-
-void ElfLinker::relocate1(Relocation *rel, upx_byte *,
+void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
                           unsigned, const char *)
 {
     printf("unknown relocation type '%s\n", rel->type);
     abort();
 }
 
-void ElfLinkerX86::align(unsigned len)
-{
-    alignWithByte(len, 0x90);
-}
 
-void ElfLinkerAMD64::align(unsigned len)
-{
-    alignWithByte(len, 0x90);
-}
+/*************************************************************************
+// ElfLinker arch subclasses
+// FIXME: add more displacment overflow checks
+**************************************************************************/
 
-void ElfLinkerPpc32::align(unsigned len)
-{
-    alignWithByte(len, 0);
-}
-
-void ElfLinkerX86::relocate1(Relocation *rel, upx_byte *location,
-                             unsigned value, const char *type)
-{
-    if (strncmp(type, "R_386_", 6))
-        return super::relocate1(rel, location, value, type);
-    type += 6;
-
-    if (strncmp(type, "PC", 2) == 0)
-    {
-        value -= rel->section->offset + rel->offset;
-        type += 2;
-    }
-
-    if (strcmp(type, "8") == 0)
-    {
-        int displ = (char) *location + (int) value;
-        if (displ < -127 || displ > 128)
-        {
-            printf("target out of range (%d) in reloc %s:%x\n",
-                   displ, rel->section->name, rel->offset);
-            abort();
-        }
-        *location += value;
-    }
-    else if (strcmp(type, "16") == 0)
-        set_le16(location, get_le16(location) + value);
-    else if (strcmp(type, "32") == 0)
-        set_le32(location, get_le32(location) + value);
-    else
-        super::relocate1(rel, location, value, type);
-}
-
-void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
-                             unsigned value, const char *type)
+void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
 {
     if (strncmp(type, "R_X86_64_", 9))
         return super::relocate1(rel, location, value, type);
@@ -824,8 +485,8 @@ void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-        int displ = (char) *location + (int) value;
-        if (displ < -127 || displ > 128)
+        int displ = (signed char) *location + (int) value;
+        if (displ < -128 || displ > 127)
         {
             printf("target out of range (%d) in reloc %s:%x\n",
                    displ, rel->section->name, rel->offset);
@@ -841,8 +502,98 @@ void ElfLinkerAMD64::relocate1(Relocation *rel, upx_byte *location,
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
-                             unsigned value, const char *type)
+
+void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+{
+    if (strcmp(type, "R_ARM_PC24") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        set_be24(1+ location, get_be24(1+ location) + value / 4);
+    }
+    else if (strcmp(type, "R_ARM_ABS32") == 0)
+    {
+        set_be32(location, get_be32(location) + value);
+    }
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        value += ((get_be16(location) & 0x7ff) << 12);
+        value += (get_be16(location + 2) & 0x7ff) << 1;
+
+        set_be16(location, 0xf000 + ((value >> 12) & 0x7ff));
+        set_be16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
+
+        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
+        //set_be32(location, get_be32(location) + value / 4);
+    }
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+
+void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
+{
+    if (strcmp(type, "R_ARM_PC24") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        set_le24(location, get_le24(location) + value / 4);
+    }
+    else if (strcmp(type, "R_ARM_ABS32") == 0)
+    {
+        set_le32(location, get_le32(location) + value);
+    }
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        value += ((get_le16(location) & 0x7ff) << 12);
+        value += (get_le16(location + 2) & 0x7ff) << 1;
+
+        set_le16(location, 0xf000 + ((value >> 12) & 0x7ff));
+        set_le16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
+
+        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
+        //set_le32(location, get_le32(location) + value / 4);
+    }
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+
+void ElfLinkerM68k::alignCode(unsigned len)
+{
+    assert((len & 1) == 0);
+    assert((outputlen & 1) == 0);
+    for (unsigned i = 0; i < len; i += 2)
+        set_be16(output + outputlen + i, 0x4e71); // "nop"
+}
+
+void ElfLinkerM68k::relocate1(const Relocation *rel, upx_byte *location,
+                              unsigned value, const char *type)
+{
+    if (strncmp(type, "R_68K_", 6))
+        return super::relocate1(rel, location, value, type);
+    type += 6;
+
+    if (strncmp(type, "PC", 2) == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        type += 2;
+    }
+    if (strcmp(type, "8") == 0)
+        *location += value;
+    else if (strcmp(type, "16") == 0)
+        set_be16(location, get_be16(location) + value);
+    else if (strcmp(type, "32") == 0)
+        set_be32(location, get_be32(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+
+void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location,
+                               unsigned value, const char *type)
 {
     if (strncmp(type, "R_PPC_", 6))
         return super::relocate1(rel, location, value, type);
@@ -879,58 +630,36 @@ void ElfLinkerPpc32::relocate1(Relocation *rel, upx_byte *location,
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerArmLE::relocate1(Relocation *rel, upx_byte *location,
-                               unsigned value, const char *type)
+
+void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
+                             unsigned value, const char *type)
 {
-    if (strcmp(type, "R_ARM_PC24") == 0)
+    if (strncmp(type, "R_386_", 6))
+        return super::relocate1(rel, location, value, type);
+    type += 6;
+
+    int range_check = 0;
+    if (strncmp(type, "PC", 2) == 0)
     {
         value -= rel->section->offset + rel->offset;
-        set_le24(location, get_le24(location) + value / 4);
+        type += 2;
+        range_check = 1;
     }
-    else if (strcmp(type, "R_ARM_ABS32") == 0)
+
+    if (strcmp(type, "8") == 0)
     {
+        int displ = (signed char) *location + (int) value;
+        if (range_check && (displ < -128 || displ > 127)) {
+            printf("target out of range (%d) in reloc %s:%x\n",
+                   displ, rel->section->name, rel->offset);
+            abort();
+        }
+        *location += value;
+    }
+    else if (strcmp(type, "16") == 0)
+        set_le16(location, get_le16(location) + value);
+    else if (strcmp(type, "32") == 0)
         set_le32(location, get_le32(location) + value);
-    }
-    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
-    {
-        value -= rel->section->offset + rel->offset;
-        value += ((get_le16(location) & 0x7ff) << 12);
-        value += (get_le16(location + 2) & 0x7ff) << 1;
-
-        set_le16(location, 0xf000 + ((value >> 12) & 0x7ff));
-        set_le16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
-
-        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
-        //set_le32(location, get_le32(location) + value / 4);
-    }
-    else
-        super::relocate1(rel, location, value, type);
-}
-
-void ElfLinkerArmBE::relocate1(Relocation *rel, upx_byte *location,
-                               unsigned value, const char *type)
-{
-    if (strcmp(type, "R_ARM_PC24") == 0)
-    {
-        value -= rel->section->offset + rel->offset;
-        set_be24(1+ location, get_be24(1+ location) + value / 4);
-    }
-    else if (strcmp(type, "R_ARM_ABS32") == 0)
-    {
-        set_be32(location, get_be32(location) + value);
-    }
-    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
-    {
-        value -= rel->section->offset + rel->offset;
-        value += ((get_be16(location) & 0x7ff) << 12);
-        value += (get_be16(location + 2) & 0x7ff) << 1;
-
-        set_be16(location, 0xf000 + ((value >> 12) & 0x7ff));
-        set_be16(location + 2, 0xf800 + ((value >> 1)  & 0x7ff));
-
-        //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
-        //set_be32(location, get_be32(location) + value / 4);
-    }
     else
         super::relocate1(rel, location, value, type);
 }

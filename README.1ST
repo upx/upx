@@ -13,21 +13,19 @@
 
 
 
-MAJOR NEWS IN UPX 2
+WARNING - UNSTABLE BETA VERSION
+===============================
+
+The current stable release is 2.02, and the next stable release
+will be called version 3.00.
+
+
+MAJOR NEWS IN UPX 3
 ===================
 
-The main news since 1.25 are:
+The main news since UPX 2 are:
 
-  * new format: added support for arm/pe (ARM executables running on WinCE)
-  * new format: added support for linux elf/amd64
-  * new format: added support for linux elf/ppc32
-  * new format: added support for mach/ppc32 (Apple Mac OS X)
-  * new format: added support for bootable Linux kernels ("vmlinuz/386")
-  * new format: added support for Playstation exes ("ps1/exe")
+  * new format: added support for linux elf/arm
 
-  * slightly better compression using the new NRV2E algorithm
-  * new options for compression tuning (e.g. '--brute')
-  * improved win32/pe compatibility
-  * direct ELF-to-memory decompression
-  * various bug fixes
+  * better compression using the LZMA algorithm (option '--lzma')
 

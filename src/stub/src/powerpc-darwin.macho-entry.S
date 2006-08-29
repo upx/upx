@@ -1,5 +1,5 @@
 /*
- *  l_mac_ppc32.S -- program entry point & decompressor (PowerPC32 Mach-o)
+ *  powerpc-darwin.macho-entry.S -- program entry point & decompressor (PowerPC32 Mach-o)
  *
  *  This file is part of the UPX executable compressor.
  *
@@ -26,21 +26,62 @@
  *
  */
 
-#include "arch/powerpc/32/regs.h"
+#include "arch/powerpc/32/ppc_regs.h"
+#define section .section
 
-/*__MACOS000__*/
+  section MACOS000
 _start: .globl _start
         call main  # must be exactly 1 instruction; link_register= &decompress
+
+  section NRV_HEAD
+SZ_DLINE=128  # size of data cache line in Apple G5
+
+/* PowerPC has no 'cmplis': compare logical [unsigned] immediate shifted [by 16] */
+#define  hibit r0  /* holds 0x80000000 during decompress */
+
+#define src  a0
+#define lsrc a1
+#define dst  a2
+#define ldst a3  /* Out: actually a reference: &len_dst */
+#define meth a4
+
+#define off  a4
+#define len  a5
+#define bits a6
+#define disp a7
+
+  section NRV2E
 #include "arch/powerpc/32/nrv2e_d.S"
 
-/* Temporary until we get the buildLoader stuff working ... */
-        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
-        .asciz "All Rights Reserved. http://upx.sf.net $\n"
-        .p2align 2  # (1<<2)
+  section NRV2D
+#include "arch/powerpc/32/nrv2d_d.S"
 
+  section NRV2B
+#include "arch/powerpc/32/nrv2b_d.S"
+
+#include "arch/powerpc/32/lzma_d.S"
+
+  section NRV_TAIL
+eof_nrv:
+#define tmp r0  /* hibit is dead */
+        lwz tmp,0(ldst)  // original dst
+        mtlr t3  // return address
+        addi dst,dst,1  // uncorrect for 'stbu'
+        addi src,src,1  // uncorrect for 'lbzu'
+        subf dst,tmp,dst  // dst -= tmp;  // dst length
+#undef tmp
+        subf a0,lsrc,src  // src -= eof;  // return 0: good; else: bad
+        stw dst,0(ldst)
+        ret
+
+  section ELFMAINY
+        // IDENTSTR goes here
+
+  section ELFMAINZ
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
+  b_method= 8
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
@@ -48,6 +89,7 @@ unfold:
 
         lwz lsrc,4+sz_cpr(t0); mtctr lsrc  # length to copy (and decompress)
         lwz ldst,4+sz_unc(t0)
+        lbz meth,4+b_method(t0)
         add  dst,lsrc,t0; addi dst,dst,4+sz_b_info
         add  src,ldst,t0; addi src,src,GAP+64  # defend against prefetch and overlap
 movup:  # descending copy moves folded_loader to higher address
@@ -57,18 +99,17 @@ movup:  # descending copy moves folded_loader to higher address
 
         mtctr r31  # &decompress
         addi dst,t0,GAP  # &unfolded result
-        la  ldst,-4(sp)  # &sz_result [will be ignored]
+        stw ldst,-4(sp)  # LZMA needs for EOF
+        la  ldst,-4(sp)  # &sz_result
         bctr  # call decompress: branch to counter register, return to link register
 
 main:
+////    teq r0,r0  // debugging
         mflr r31  # r31= &decompress
         call unfold
 L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
         b GAP+L100  # 'isync' has trouble on Macintosh G4?
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
-
-eof:
-/*__XTHEENDX__*/
 
 /*
 vi:ts=8:et:nowrap

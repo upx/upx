@@ -8,38 +8,40 @@ __dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
 __dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
 top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
 endif
+vpath %.c $(top_srcdir)/src/stub/src/c
+
+STUBS =
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+STUBS += lzma_d_cf.S lzma_d_cs.S
+endif
 
 default.targets = all
+ifeq ($(strip $(STUBS)),)
 STUBS = NO_STUBS
+all.targets =
+endif
 include $(top_srcdir)/src/stub/Makefile
-STUBS =
 
 
 # /***********************************************************************
 # // i386-lzma
 # ************************************************************************/
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-
-STUBS += lzma_d_cf.ash lzma_d_cs.ash
-
-lzma_d_c%.ash : tc_list = i386-lzma i386-linux.elf arch-i386 default
-lzma_d_c%.ash : tc_bfdname = elf32-i386
+lzma_d_c%.S : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_c%.S : tc_bfdname = elf32-i386
 
 tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
 tc.i386-lzma.gcc     += -ffunction-sections
 tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
 tc.i386-lzma.gcc     += -I$(top_srcdir)/src
 
-lzma_d_c%.ash : lzma_d_c.c
+lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
-	$(call tc,objstrip) tmp/$T.o
+	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
 	head -c-1 tmp/$T.bin > tmp/$T.out
-	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out > tmp/$T.out.lst
-	$(call tc,bin2h) --mode=nasm tmp/$T.out $@
+	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
-
-endif

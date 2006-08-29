@@ -1,4 +1,4 @@
-/* l_lx_sh86.lds --
+/* i386-linux.elf.shell-fold.lds --
 
    This file is part of the UPX executable compressor.
 

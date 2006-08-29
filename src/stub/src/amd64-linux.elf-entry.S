@@ -1,4 +1,4 @@
-/*  l_lx_elf64amd.S -- Linux program entry point & decompressor (Elf binary)
+/*  amd64-linux.elf-entry.S -- Linux program entry point & decompressor (Elf binary)
 *
 *  This file is part of the UPX executable compressor.
 *
@@ -29,7 +29,13 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+//#include        "arch/i386/macros2.ash"
+
 #include "arch/amd64/regs.h"
+#define section  .section
+
+sz_Ehdr= 64
+sz_Phdr= 56
 
 sz_l_info= 12
   l_lsize= 8
@@ -49,22 +55,24 @@ MAP_PRIVATE= 2
 MAP_FIXED=     0x10
 MAP_ANONYMOUS= 0x20
 
-SYS_mmap= 9  # 64-bit mode only!
+SYS_mmap= 9  // 64-bit mode only!
 
 PAGE_SHIFT= 12
 PAGE_MASK= (~0<<PAGE_SHIFT)
 PAGE_SIZE= -PAGE_MASK
 
-M_NRV2B_LE32=2  # ../conf.h
+M_NRV2B_LE32=2  // ../conf.h
+M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
 
-/*__LEXEC000__*/
+  section ELFMAINX
 _start: .globl _start
-        call main  # push &decompress
+        call main  // push &decompress
+ret_main:
 
 /* Returns 0 on success; non-zero on failure. */
-decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 
 /* Arguments according to calling convention */
 #define src  %arg1
@@ -72,6 +80,14 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint metho
 #define dst  %arg3
 #define ldst %arg4  /* Out: actually a reference: &len_dst */
 #define meth %arg5l
+#define methb %arg5b
+
+        push %rbp; push %rbx  // C callable
+        push ldst
+        push dst
+        addq src,lsrc; push lsrc  // &input_eof
+
+  section NRV_HEAD
 
 /* Working registers */
 #define off  %eax  /* XXX: 2GB */
@@ -80,17 +96,12 @@ decompress:  # (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint metho
 #define bits %ebx
 #define disp %rbp
 
-        push %rbp; push %rbx  # C callable
-        push ldst
-        push dst
-        addq src,lsrc; push lsrc  # &input_eof
-
-        movq src,%rsi  # hardware src for movsb, lodsb
-        movq dst,%rdi  # hardware dst for movsb
-        xorl bits,bits  # empty; force refill
-        xorl len,len  # create loop invariant
-        orq $~0,disp  # -1: initial displacement
-        call setup  # push &getbit [TUNED]
+        movq src,%rsi  // hardware src for movsb, lodsb
+        movq dst,%rdi  // hardware dst for movsb
+        xor bits,bits  // empty; force refill
+        xor len,len  // create loop invariant
+        orq $(~0),disp  // -1: initial displacement
+        call setup  // push &getbit [TUNED]
 ra_setup:
 
 /* AMD64 branch prediction is much worse if there are more than 3 branches
@@ -126,21 +137,21 @@ ra_setup:
 #define getnextbp(reg) call *%r11; adcl reg,reg
 #define getnextb(reg)  getnextbp(reg)
 
-        .p2align 3
+
 getbit:
-        addl bits,bits; jz refill  # Carry= next bit
+        addl bits,bits; jz refill  // Carry= next bit
         rep; ret
 refill:
-        movl (%rsi),bits; subq $-4,%rsi  # next 32 bits; set Carry
-        adcl bits,bits  # LSB= 1 (CarryIn); CarryOut= next bit
-        movb (%rsi),%dl  # speculate: literal, or bottom 8 bits of offset
+        movl (%rsi),bits; subq $-4,%rsi  // next 32 bits; set Carry
+        adcl bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
+        movb (%rsi),%dl  // speculate: literal, or bottom 8 bits of offset
         rep; ret
 
-copy:  # In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
-        leaq (%rdi,disp),%rax; cmpl $5,len  # <=3 is forced
-        movb (%rax),%dl; jbe copy1  # <=5 for better branch predict
-        cmpq $-4,disp;   ja  copy1  # 4-byte chunks would overlap
-        subl $4,len  # adjust for termination cases
+copy:  // In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
+        leaq (%rdi,disp),%rax; cmpl $5,len  // <=3 is forced
+        movb (%rax),%dl; jbe copy1  // <=5 for better branch predict
+        cmpq $-4,disp;   ja  copy1  // 4-byte chunks would overlap
+        subl $4,len  // adjust for termination cases
 copy4:
         movl (%rax),%edx; addq $4,      %rax; subl $4,len
         movl %edx,(%rdi); leaq  4(%rdi),%rdi; jnc copy4
@@ -152,38 +163,49 @@ copy1:
 copy0:
         rep; ret
 
-#include "arch/amd64/nrv2e_d.S"
-#include "arch/amd64/nrv2b_d.S"
-
 setup:
         cld
-        pop %r11  # addq $ getbit - ra_setup,%r11  # &getbit
-        cmpl $ M_NRV2E_LE32,meth; je top_n2e
-        cmpl $ M_NRV2B_LE32,meth; je top_n2b
+        pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
+
+  section NRV2E
+#include "arch/amd64/nrv2e_d.S"
+
+  section NRV2D
+#include "arch/amd64/nrv2d_d.S"
+
+  section NRV2B
+#include "arch/amd64/nrv2b_d.S"
+
+#include "arch/amd64/lzma_d.S"
+
+  section NRV_TAIL
+        // empty
+
+  section ELFMAINY
 eof:
-        pop %rcx  # &input_eof
-        movq %rsi,%rax; subq %rcx,%rax  # src -= eof;  // return 0: good; else: bad
-        pop %rdx;       subq %rdx,%rdi  # dst -= original dst
-        pop %rcx;            movl %edi,(%rcx)  # actual length used at dst  XXX: 4GB
+        pop %rcx  // &input_eof
+        movq %rsi,%rax; subq %rcx,%rax  // src -= eof;  // return 0: good; else: bad
+        pop %rdx;       subq %rdx,%rdi  // dst -= original dst
+        pop %rcx;            movl %edi,(%rcx)  // actual length used at dst  XXX: 4GB
         pop %rbx; pop %rbp
         ret
-
-/* Temporary until we get the buildLoader stuff working ... */
-        .ascii "\n$Id: UPX (C) 1996-2006 the UPX Team. "
-        .asciz "All Rights Reserved. http://upx.sf.net $\n"
 
 /* These from /usr/include/asm-x86_64/unistd.h */
 __NR_write =  1
 __NR_exit  = 60
 
 msg_SELinux:
-        push $ L71 - L70; pop %arg3  # length
-        call L71
+        push $ L71 - L70; pop %arg3  // length
+        call L72
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
-        pop %arg2  # message text
-        push $2; pop %arg1  # fd stderr
+        // IDENTSTR goes here
+
+  section ELFMAINZ
+L72:
+        pop %arg2  // message text
+        push $2; pop %arg1  // fd stderr
         push $ __NR_write; pop %rax
         syscall
 die:
@@ -201,7 +223,7 @@ die:
    uncompressed program.  [This is a significant kernel misfeature.]
 */
 unfold:
-        pop %rbx  # &b_info
+        pop %rbx  // &b_info
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
@@ -210,62 +232,64 @@ unfold:
    the brk() of the _un_compressed program.  The address and length are pre-
    calculated by PackLinuxElf64amd::pack3(), and patched in at compress time.
 */
-        .byte 7+0xB8; .ascii "ADRM"  # movl $'ADRM',%edi  XXX: 4GB
+        movl $ ADRM,%edi  // XXX: 4GB
         push $ PROT_READ | PROT_WRITE | PROT_EXEC; pop %arg3
-        .byte 6+0xB8; .ascii "LENM"  # movl $'LENM',%esi  XXX: 4GB
+        movl $ LENM,%esi  // XXX: 4GB
         push $ MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS; pop %sys4
-        subl %arg5l,%arg5l  #; subl %arg6l,%arg6l  # MAP_ANON ==> ignore offset
+        subl %arg5l,%arg5l  //; subl %arg6l,%arg6l  // MAP_ANON ==> ignore offset
         push $ SYS_mmap; pop %rax
-        syscall  # %rax= result; trashes %rcx,%r11 only
-        cmpl %eax,%edi; jne msg_SELinux  # XXX: 4GB
+        syscall  // %rax= result; trashes %rcx,%r11 only
+        cmpl %eax,%edi; jne msg_SELinux  // XXX: 4GB
 
 /* Load the addresses and lengths that ::pack3() patched in.
    XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
    XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
    (Use an temporary register to obtain 4GB range on PUSH constant.)
 */
-        .byte   0x68; .ascii "JMPU"  # push $'JMPU'  # for unmap in fold
-        .byte   0x68; .ascii "ADRU"  # push $'ADRU'  # for unmap in fold
-        .byte 6+0xB8; .ascii "ADRC"  # movl $'ADRC',%esi
-        .byte   0x68; .ascii "LENU"  # push $'LENU'  # for unmap in fold
-        .byte 1+0xB8; .ascii "CNTC"  # movl $'CNTC',%ecx
-        .byte   0x68; .ascii "ADRX"  # push $'ADRX'  # for upx_main
-        .byte   0x68; .ascii "LENX"  # push $'LENX'  # for upx_main
+        push $ JMPU  // for unmap in fold
+        push $ ADRU  // for unmap in fold
+        movl $ ADRC,%esi
+        push $ LENU  // for unmap in fold
+        movl $ CNTC,%ecx
+        push $ ADRX  //# for upx_main
+        push %r15  // LENX for upx_main
 
 /* Move and relocate if compressed overlaps uncompressed.
    Move by 0 when total compressed executable is < 3MB.
 */
-        movl %edi,%edx  #  ADRM
-        subl %esi,%edx  # (ADRM - ADRC) == relocation amount
-        addl      %edx,%ebp  # update &decompress
-        addl      %edx,%ebx  # update &b_info
+        movl %edi,%edx  //  ADRM
+        subl %esi,%edx  // (ADRM - ADRC) == relocation amount
+        addl      %edx,%ebp  // update &decompress
+        addl      %edx,%ebx  // update &b_info
 
         cld
         rep; movsq
         xchgl %eax,%edi
 
 /* Decompress the folded part of this stub, then execute it. */
-        movl %ebx,%esi  # %arg2l= &b_info (relocated)
-        push %rax  # ret_addr after decompression
-               xchgl %eax,%arg3l  # %arg3= dst for unfolding  XXX: 4GB
-        lodsl; push %rax          # allocate slot on stack
-               movq  %rsp,%arg4   # &len_dst ==> &do_not_care
-        lodsl; xchgl %eax,%arg1l  # sz_cpr  XXX: 4GB
-        lodsl; movzbl %al,%arg5l  # b_method
-              xchg %arg1l,%arg2l  # XXX: 4GB
-        call *%rbp  # decompress
-               pop %rcx  # discard len_dst
+        movl %ebx,%esi  // %arg2l= &b_info (relocated)
+        push %rax  // ret_addr after decompression
+               xchgl %eax,%arg3l  // %arg3= dst for unfolding  XXX: 4GB
+        lodsl; push %rax          // allocate slot on stack
+               movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
+        lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
+        lodsl; movzbl %al,%arg5l  // b_method
+              xchg %arg1l,%arg2l  // XXX: 4GB
+        call *%rbp  // decompress
+               pop %rcx  // discard len_dst
         ret
 
 main:
-        # int3  # uncomment for debugging
-        pop %rbp  # &decompress
-        call unfold  # push &b_info
-        /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+////    int3  # uncomment for debugging
+        pop %rbp  // &decompress
+        movl -4-(ret_main - _start)(%rbp),%r15d  // length which precedes stub
+        subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d
+        call unfold  // push &b_info
+        // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/
 
 /*
 vi:ts=8:et:nowrap
-*/
+ */
 

@@ -1,4 +1,4 @@
-/* a_lx_elf64.c -- stub loader for Linux 64-bit ELF executable
+/* amd64-linux.elf-main.c -- stub loader for Linux 64-bit ELF executable
 
    This file is part of the UPX executable compressor.
 

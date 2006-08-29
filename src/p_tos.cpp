@@ -35,17 +35,7 @@
 #include "linker.h"
 
 static const
-#include "stub/m68k-atari.tos-nrv2b.h"
-static const
-#include "stub/m68k-atari.tos-nrv2b.small.h"
-static const
-#include "stub/m68k-atari.tos-nrv2d.h"
-static const
-#include "stub/m68k-atari.tos-nrv2d.small.h"
-static const
-#include "stub/m68k-atari.tos-nrv2e.h"
-static const
-#include "stub/m68k-atari.tos-nrv2e.small.h"
+#include "stub/m68k-atari.tos.h"
 
 // #define TESTING
 
@@ -78,33 +68,6 @@ const int *PackTos::getFilters() const
 
 Linker* PackTos::newLinker() const
 {
-    class ElfLinkerM68k : public ElfLinker
-    {
-        typedef ElfLinker super;
-
-        virtual void relocate1(Relocation *rel, upx_byte *location,
-                               unsigned value, const char *type)
-        {
-            if (strncmp(type, "R_68K_", 6))
-                return super::relocate1(rel, location, value, type);
-            type += 6;
-
-            if (strncmp(type, "PC", 2) == 0)
-            {
-                value -= rel->section->offset + rel->offset;
-                type += 2;
-            }
-            if (strcmp(type, "8") == 0)
-                *location += value;
-            else if (strcmp(type, "16") == 0)
-                set_be16(location, get_be16(location) + value);
-            else if (strcmp(type, "32") == 0)
-                set_be32(location, get_be32(location) + value);
-            else
-                super::relocate1(rel, location, value, type);
-        }
-    };
-
     return new ElfLinkerM68k;
 }
 
@@ -116,17 +79,18 @@ int PackTos::buildLoader(const Filter *ft)
     const unsigned char *p = NULL;
     size_t l = 0;
 
+    p = nrv_loader;
     if (M_IS_NRV2B(ph.method)) {
-        p = opt->small ? nrv2b_loader_small : nrv2b_loader;
-        l = opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
+//        p = opt->small ? nrv2b_loader_small : nrv2b_loader;
+//        l = opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
     }
     if (M_IS_NRV2D(ph.method)) {
-        p = opt->small ? nrv2d_loader_small : nrv2d_loader;
-        l = opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
+//        p = opt->small ? nrv2d_loader_small : nrv2d_loader;
+//        l = opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
     }
     if (M_IS_NRV2E(ph.method)) {
-        p = opt->small ? nrv2e_loader_small : nrv2e_loader;
-        l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
+//        p = opt->small ? nrv2e_loader_small : nrv2e_loader;
+//        l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
     }
     initLoader(p, l);
 
@@ -660,15 +624,12 @@ void PackTos::pack(OutputFile *fo)
     memcpy(obuf+d_off, getLoader() + e_len, d_len);
 
     patchPackHeader(loader, o_text);
-#if 0
-    patchVersionYear(loader, o_text);
-    if (!opt->small)
-        patchVersion(loader, o_text);
-#endif
 
     // write new file header, loader and compressed file
     fo->write(&oh, FH_SIZE);
     fo->write(loader, o_text);  // entry
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, o_text);
     fo->write(obuf, o_data);    // compressed + decompressor
 
     // write empty relocation fixup

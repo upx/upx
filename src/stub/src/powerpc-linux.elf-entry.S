@@ -1,4 +1,4 @@
-/*  l_lx_elfppc.S -- Linux program entry point & decompressor (Elf binary)
+/*  powerpc-linux.elf-entry.S -- Linux program entry point & decompressor (Elf binary)
 *
 *  This file is part of the UPX executable compressor.
 *

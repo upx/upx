@@ -1,4 +1,4 @@
-/*  fold_elf64amd.S -- linkage to C code to process Elf binary
+/*  amd64-linux.elf-fold.S -- linkage to C code to process Elf binary
 *
 *  This file is part of the UPX executable compressor.
 *
@@ -26,6 +26,8 @@
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>
 */
+
+        .code64
 #include "arch/amd64/regs.h"
 
 PAGE_SHIFT= 12

@@ -114,7 +114,7 @@ Linker* PackPs1::newLinker() const
     {
         typedef ElfLinker super;
 
-        virtual void relocate1(Relocation *rel, upx_byte *location,
+        virtual void relocate1(const Relocation *rel, upx_byte *location,
                                unsigned value, const char *type)
         {
             if (strcmp(type, "R_MIPS_HI16") == 0)
@@ -136,6 +136,7 @@ Linker* PackPs1::newLinker() const
     };
     return new ElfLinkerMipsLE;
 }
+
 
 /*************************************************************************
 // util
@@ -352,22 +353,23 @@ int PackPs1::buildLoader(const Filter *)
     {
         if (ph.method == M_LZMA && buildPart2)
         {
-            unsigned char *cprLoader = new unsigned char[MemBuffer::getSizeForCompression(sz_lunc)];
+            sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
+            unsigned char *cprLoader = new unsigned char[sz_lcpr];
             int r = upx_compress(getLoader(), sz_lunc, cprLoader, &sz_lcpr,
                                  NULL, M_NRV2B_8, 10, NULL, NULL );
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
-            initLoader(nrv_loader, sizeof(nrv_loader), 0,
-                       (ph.method != M_LZMA || isCon) ? 0 : 1);
+            initLoader(nrv_loader, sizeof(nrv_loader),
+                      (ph.method != M_LZMA || isCon) ? 0 : 1);
             linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
             delete [] cprLoader;
         }
         else
         {
-            initLoader(nrv_loader, sizeof(nrv_loader), 0,
+            initLoader(nrv_loader, sizeof(nrv_loader),
                        (ph.method != M_LZMA || isCon) ? 0 : 1);
         }
-    
+
         pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4);
         linker->addSection("pad.code", &pad_code, pad_code, 0);
 
@@ -585,7 +587,7 @@ void PackPs1::pack(OutputFile *fo)
 
     if (foundBss)
         if (ph.method == M_LZMA)
-            linker->defineSymbol("wrkmem", bss_end - 160 - getDecompressorWrkmemSize() 
+            linker->defineSymbol("wrkmem", bss_end - 160 - getDecompressorWrkmemSize()
                                            - (sz_lunc + 16));
         else
             linker->defineSymbol("wrkmem", bss_end - 16 - (d_len - pad_code));
@@ -729,6 +731,7 @@ void PackPs1::unpack(OutputFile *fo)
         fo->write(obuf, ph.u_len + pad);
     }
 }
+
 
 /*
 vi:ts=4:et:nowrap

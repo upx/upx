@@ -27,13 +27,14 @@
 ;
 */
 
+
 // ------------- ADDBITS -------------
 
 macro(ADDBITS)
 #if (NRV_BB == 8)
-                add.b   d0,d0           // sets Z, C and X       //  4
+                add.b   d0,d0           // sets Z, C and X      //  4
 #elif (NRV_BB == 32)
-                add.l   d0,d0           // sets Z, C and X       //  6
+                add.l   d0,d0           // sets Z, C and X      //  6
 #endif
         endm
 
@@ -41,9 +42,9 @@ macro(ADDBITS)
 #if 0
 macro(ADDXBITS)
 #if (NRV_BB == 8)
-                addx.b   d0,d0          // sets C and X          //  4
+                addx.b   d0,d0          // sets C and X         //  4
 #elif (NRV_BB == 32)
-                addx.l   d0,d0          // sets C and X          //  8
+                addx.l   d0,d0          // sets C and X         //  8
 #endif
         endm
 #endif
@@ -51,11 +52,13 @@ macro(ADDXBITS)
 
 // ------------- FILLBYTES_xx -------------
 
+#undef FILLBYTES_SR
+
 // get 1 byte// then get 1 bit into both C and X
 macro(FILLBYTES_8)
         // note: we shift the X flag through -> must init d0.b with $80
                 move.b  (a0)+,d0                                //  8
-                addx.b  d0,d0           // sets C and X          //  4
+                addx.b  d0,d0           // sets C and X         //  4
         endm
 
 
@@ -70,8 +73,8 @@ macro(FILLBYTES_LE32)
                 ror.l   #8,d0                                   // 24
                 move.b  (a0)+,d0                                //  8
                 ror.l   #8,d0                                   // 24
-                add.l   d0,d0           // sets C and X          //  6
-                bset    #0,d0           // only changes Z        // 12
+                add.l   d0,d0           // sets C and X         //  6
+                bset    #0,d0           // only changes Z       // 12
                                                            //    -----
                                                            //     146
 #elif 1
@@ -82,9 +85,9 @@ macro(FILLBYTES_LE32)
                 move.b  1(a0),d0                                // 12
                 lsl.w   #8,d0                                   // 22
                 move.b  (a0),d0                                 //  8
-                addq.l  #4,a0           // does not affect flags //  8
-                add.l   d0,d0           // sets C and X          //  6
-                bset    #0,d0           // only changes Z        // 12
+                addq.l  #4,a0           // does not affect flags//  8
+                add.l   d0,d0           // sets C and X         //  6
+                bset    #0,d0           // only changes Z       // 12
                                                            //    -----
                                                            //     118
 #elif 1
@@ -97,8 +100,8 @@ macro(FILLBYTES_LE32)
                 move.b  1(a0),d0                                // 12
                 ror.w   #8,d0                                   // 22
                 move.b  (a0),d0                                 //  8
-                addq.l  #4,a0           // does not affect flags //  8
-                addx.l  d0,d0           // sets C and X          //  8
+                addq.l  #4,a0           // does not affect flags//  8
+                addx.l  d0,d0           // sets C and X         //  8
                                                            //    -----
                                                            //     108
 #else
@@ -107,13 +110,13 @@ macro(FILLBYTES_LE32)
         // note: we shift the X flag through -> must init d0.l with $80000000
         // note: must use dc.l because of a bug in the pasm assembler
         // note: may access past the end of the input// this is ok for UPX
-                dc.l    $01080003       // movep.w 3(a0),d0      // 16
+                dc.l    $01080003       // movep.w 3(a0),d0     // 16
                 move.b  2(a0),d0                                // 12
                 swap    d0                                      //  4
-                dc.l    $01080001       // movep.w 1(a0),d0      // 16
+                dc.l    $01080001       // movep.w 1(a0),d0     // 16
                 move.b  (a0),d0                                 //  8
-                addq.l  #4,a0           // does not affect flags //  8
-                addx.l  d0,d0           // sets C and X          //  8
+                addq.l  #4,a0           // does not affect flags//  8
+                addx.l  d0,d0           // sets C and X         //  8
                                                            //    -----
                                                            //      72
 #endif

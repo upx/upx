@@ -192,11 +192,11 @@ const char *Packer::getDecompressorSections() const
     static const char lzma_small[] =
         "LZMA_DEC00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_fast[] =
-        "LZMA_DEC00,LZMA_DEC20,LZMA_DEC30";
+        "LZMA_DEC00,+80C,LZMA_DEC20,LZMA_DEC30";
     static const char lzma_elf_small[] =
         "LZMA_ELF00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_elf_fast[] =
-        "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
+        "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
@@ -236,35 +236,6 @@ unsigned Packer::getDecompressorWrkmemSize() const
     return size;
 }
 
-
-void Packer::patchDecompressor(void *loader, int lsize)
-{
-    if (UPX_F_LINUX_ELF_i386   ==ph.format
-    ||  UPX_F_LINUX_ELFI_i386  ==ph.format
-    ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
-    ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
-    ||  UPX_F_LINUX_ELFPPC32   ==ph.format
-    ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
-        // ELF calls the decompressor many times; the parameters change!
-        return;
-    }
-    if (ph.method == M_LZMA)
-    {
-        const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
-        // FIXME - this is for i386 only
-        unsigned properties = // lc, lp, pb, dummy
-            (res->lit_context_bits << 0) |
-            (res->lit_pos_bits << 8) |
-            (res->pos_bits << 16);
-        patch_le32(loader, lsize, "UPXd", properties);
-        // -2 for properties
-        patch_le32(loader, lsize, "UPXc", ph.c_len - 2);
-        patch_le32(loader, lsize, "UPXb", ph.u_len);
-        unsigned stack = getDecompressorWrkmemSize();
-        patch_le32(loader, lsize, "UPXa", 0u - stack);
-    }
-}
-
 void Packer::defineDecompressorSymbols()
 {
     if (UPX_F_LINUX_ELF_i386   ==ph.format
@@ -272,7 +243,9 @@ void Packer::defineDecompressorSymbols()
     ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
     ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
     ||  UPX_F_LINUX_ELFPPC32   ==ph.format
-    ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
+    ||  UPX_F_LINUX_ELF32_ARMBE==ph.format
+    ||  UPX_F_BSD_ELF_i386     ==ph.format
+    ) {
         // ELF calls the decompressor many times; the parameters change!
         return;
     }

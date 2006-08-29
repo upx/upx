@@ -1,4 +1,4 @@
-/* m_mach_ppc32.c -- loader stub for Mach-o PowerPC32
+/* powerpc-darwin.macho-main.c -- loader stub for Mach-o PowerPC32
 
    This file is part of the UPX executable compressor.
 
@@ -175,8 +175,8 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_decompress)(xi->buf, h.sz_cpr, xo->buf, &out_len,
-                *(int *)(void *)&h.b_method);
+            int const j = (*f_decompress)(xi->buf, h.sz_cpr,
+                xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
             if (h.b_ftid!=0 && f_unf) {  // have filter

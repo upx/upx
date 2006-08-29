@@ -1,4 +1,4 @@
-/* l_lx_sh.c -- stub loader for Linux x86 shell script executable
+/* i386-linux.elf.shell-main.c -- stub loader for Linux x86 shell script executable
 
    This file is part of the UPX executable compressor.
 

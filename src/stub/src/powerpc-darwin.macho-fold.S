@@ -1,4 +1,4 @@
-/*  fold_machppc32.S -- linkage to C code to process Mach-o binary
+/*  powerpc-darwin.macho-fold.S -- linkage to C code to process Mach-o binary
 *
 *  This file is part of the UPX executable compressor.
 *

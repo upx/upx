@@ -828,38 +828,6 @@ int Packer::patch_le32(void *b, int blen, const void *old, unsigned new_)
 }
 
 
-// patch version into stub/ident_n.ash
-int Packer::patchVersion(void *b, int blen)
-{
-    int boff = find(b, blen, "$Id: UPX UPXV ", 14);
-    checkPatch(b, blen, boff, 14);
-
-    unsigned char *p = (unsigned char *)b + boff + 9;
-    if (opt->debug.fake_stub_version[0])
-        memcpy(p, opt->debug.fake_stub_version, 4);
-    else
-        memcpy(p, UPX_VERSION_STRING4, 4);
-
-    return boff;
-}
-
-
-// patch year into stub/ident_[ns].ash
-int Packer::patchVersionYear(void *b, int blen)
-{
-    int boff = find(b, blen, " 1996-UPXY ", 11);
-    checkPatch(b, blen, boff, 11);
-
-    unsigned char *p = (unsigned char *)b + boff + 6;
-    if (opt->debug.fake_stub_year[0])
-        memcpy(p, opt->debug.fake_stub_year, 4);
-    else
-        memcpy(p, UPX_VERSION_YEAR, 4);
-
-    return boff;
-}
-
-
 /*************************************************************************
 // relocation util
 **************************************************************************/
@@ -986,16 +954,7 @@ int Packer::getLoaderSize() const
 // loader util
 **************************************************************************/
 
-Linker* Packer::newLinker() const
-{
-    if (getFormat() < 128)
-        return new DefaultLELinker;
-    else
-        return new DefaultBELinker;
-}
-
-
-char const *Packer::getIdentstr(unsigned *size, int small) const
+static const char *getIdentstr(unsigned *size, int small)
 {
     static char identbig[] =
         "\n\0"
@@ -1055,17 +1014,11 @@ char const *Packer::getIdentstr(unsigned *size, int small) const
 }
 
 
-void Packer::initLoader(const void *pdata, int plen, int pinfo, int small)
+void Packer::initLoader(const void *pdata, int plen, int small)
 {
-    if (pinfo < 0)
-    {
-        pinfo =  get_le16((const unsigned char *)pdata + plen - 2);
-        pinfo =  (pinfo + 3) &~ 3;
-    }
-
     delete linker;
     linker = newLinker();
-    linker->init(pdata, plen, pinfo);
+    linker->init(pdata, plen);
 
     unsigned size;
     char const * const ident = getIdentstr(&size, small);
@@ -1081,7 +1034,7 @@ void __acc_cdecl_va Packer::addLoader(const char *s, ...)
     while (s != NULL)
     {
         if (*s)
-            linker->addSection(s);
+            linker->addLoader(s);
         s = va_arg(ap, const char *);
     }
     va_end(ap);
@@ -1141,7 +1094,7 @@ int Packer::getLoaderSectionStart(const char *name, int *slen) const
 // executable formats.
 //
 // It will replace the tryFilters() / compress() call sequence.
-
+//
 // 2006-02-15: hdr_buf and hdr_u_len are default empty input "header" array
 // to fix a 2-pass problem with Elf headers.  As of today there can be
 // only one decompression method per executable output file, and that method

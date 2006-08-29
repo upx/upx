@@ -1,4 +1,4 @@
-/* l_lx_pti86.lds --
+/* i386-linux.elf.interp-fold.lds --
 
    This file is part of the UPX executable compressor.
 

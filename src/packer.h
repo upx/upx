@@ -36,7 +36,6 @@ class OutputFile;
 class Packer;
 class PackMaster;
 class UiPacker;
-class Linker;
 class Filter;
 
 
@@ -205,14 +204,12 @@ protected:
 
     // loader core
     virtual int buildLoader(const Filter *ft) = 0;
-    // loader util for any linker
+    virtual Linker* newLinker() const = 0;
+    // loader util for linker
     virtual void freezeLoader();
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
-    // loader util when using DefaultLinker
-    virtual Linker* newLinker() const;
-    virtual const char *getIdentstr(unsigned *size, int small=-1) const;
-    virtual void initLoader(const void *pdata, int plen, int pinfo=-1, int small=-1);
+    virtual void initLoader(const void *pdata, int plen, int small=-1);
 #if 1 && (ACC_CC_GNUC >= 0x040100)
     virtual void __acc_cdecl_va addLoader(const char *s, ...) __attribute__((__sentinel__));
 #else
@@ -229,7 +226,6 @@ protected:
     const int *getDefaultCompressionMethods_le32(int method, int level, int small=-1) const;
     virtual const char *getDecompressorSections() const;
     virtual unsigned getDecompressorWrkmemSize() const;
-    virtual void patchDecompressor(void *, int);
     virtual void defineDecompressorSymbols();
 
     // filter handling [see packer_f.cpp]
@@ -241,7 +237,6 @@ protected:
     virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
         { }
     virtual void addFilter32(int filter_id);
-    virtual bool patchFilter32(void *, int, const Filter *ft);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);
@@ -261,8 +256,6 @@ protected:
     int patch_le16(void *b, int blen, const void * old, unsigned new_);
     int patch_le32(void *b, int blen, unsigned old, unsigned new_);
     int patch_le32(void *b, int blen, const void * old, unsigned new_);
-    int patchVersion(void *b, int blen);
-    int patchVersionYear(void *b, int blen);
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util

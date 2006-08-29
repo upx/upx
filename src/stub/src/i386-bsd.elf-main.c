@@ -1,4 +1,4 @@
-/* l_lx_elf.c -- stub loader for Linux x86 ELF executable
+/* i386-bsd.elf-main.c -- stub loader for Linux x86 ELF executable
 
    This file is part of the UPX executable compressor.
 

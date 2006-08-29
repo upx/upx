@@ -100,7 +100,7 @@ fillbytes_sr:   FILLBYTES_SR
 decompr_literal:
                 move.b  (a0)+,(a1)+
 
-.globl decompr_start
+//.globl decompr_start
 decompr_start:
 decompr_loop:
 #ifdef SMALL
@@ -198,7 +198,7 @@ decompr_got_mlen:
                 sub.l   d6,d1
                 addx.w  d7,d2
 
-// TODO: partly unroll this loop// could use some magic with d7 for address
+// TODO: partly unroll this loop; could use some magic with d7 for address
 //       computations, then compute a nice `jmp yyy(pc,dx.w)'
 
 #if 1

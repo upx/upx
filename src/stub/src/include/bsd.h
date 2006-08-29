@@ -153,6 +153,17 @@ extern ssize_t read(int, void *, size_t);
 extern ssize_t write(int, char const *, size_t);
 void exit(int) __attribute__((noreturn));
 
+extern int access(char const *,int);
+extern int execve(char const *,char const *const *,char const *const *);
+extern int fcntl(int,int,long);
+extern int ftruncate(int,size_t);
+extern pid_t fork(void);
+extern pid_t getpid(void);
+extern int gettimeofday(struct timeval *,void *);
+extern int nanosleep(struct timespec const *,struct timespec *);
+extern pid_t waitpid(pid_t,int *,int);
+extern int unlink(char const *);
+
 /*************************************************************************
 // <elf.h>
 **************************************************************************/

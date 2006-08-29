@@ -1,4 +1,4 @@
-/* l_armpea.S -- ARM/PE decompressor assembly startup (arm mode)
+/* arm.v4a-wince.pe.S -- ARM/PE decompressor assembly startup (arm mode)
 
    This file is part of the UPX executable compressor.
 
@@ -54,6 +54,18 @@
 #endif
 
 #define section .section
+
+// p_armpe.cpp uses the following symbols, so they should be global
+
+        .globl SRC0
+        .globl DST0
+        .globl IATT
+        .globl ENTR
+        .globl FIBS
+        .globl FIBE
+        .globl BREL
+        .globl BIMP
+        .globl ONAM
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -332,7 +344,7 @@ ONAM:   .long   start_of_dll_names
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-#include "include/header2.ash"
+#include "include/header.S"
 
 section .ucl_nrv2e_decompress_8
 

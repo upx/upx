@@ -1,4 +1,4 @@
-/* l_armpet.S -- ARM/PE decompressor assembly startup (thumb mode)
+/* arm.v4t-wince.pe.S -- ARM/PE decompressor assembly startup (thumb mode)
 
    This file is part of the UPX executable compressor.
 
@@ -29,7 +29,16 @@
    <jreiser@users.sourceforge.net>
 */
 
-#define DEBUG 0
+// p_armpe.cpp uses some symbols, so they should be global
+
+        .globl SRC0
+        .globl DST0
+        .globl IATT
+        .globl ENTR
+
+// in thumb mode we need this S() macro hack to export a symbol which
+// is used in a ldr statement
+#define S(sym) .globl sym; sym: .L##sym
 
 #define section .section
 
@@ -89,9 +98,9 @@ section Unfilter_0x50
         addval  .req r2
         bufend  .req r4
 
-        ldr     buffer, FIBS
+        ldr     buffer, .LFIBS
         mov     addval, #0
-        ldr     bufend, FIBE
+        ldr     bufend, .LFIBE
         mov     r5, #0x0f
         mov     r6, #0xff
         lsl     r6, #24
@@ -122,8 +131,8 @@ section Unfilter_0x50
         .unreq  bufend
 
         .align  2
-FIBS:   .long   filter_buffer_start
-FIBE:   .long   filter_buffer_end
+S(FIBS):.long   filter_buffer_start
+S(FIBE):.long   filter_buffer_end
 
 .Luf50_ret:
 
@@ -134,7 +143,7 @@ section Relocs
         dest    .req r1
         addval  .req r2
 
-        ldr     buffer, BREL
+        ldr     buffer, .LBREL
         mov     addval, dst0
         sub     dest, addval, #4
 
@@ -173,7 +182,7 @@ section Relocs
         b       .Lreloc_loop
 
         .align  2
-BREL:   .long   start_of_relocs
+S(BREL):.long   start_of_relocs
 
 .Lreloc_end:
 
@@ -190,13 +199,13 @@ section Imports
         sub     sp, #508
         sub     sp, #508
         sub     sp, #508
-        ldr     imp, BIMP
+        ldr     imp, .LBIMP
 .Lhi_loop1:
         mov     r0, imp
         bl      get_le32
         beq     .Lhi_end
 
-        ldr     r1, ONAM
+        ldr     r1, .LONAM
         add     r0, r1
         mov     r1, sp
 .Lhi_copyname:
@@ -265,8 +274,8 @@ LoadLibraryW:
 GetProcAddressA:
         bx      r11
 
-BIMP:   .long   start_of_imports
-ONAM:   .long   start_of_dll_names
+S(BIMP):.long   start_of_imports
+S(ONAM):.long   start_of_dll_names
 
 .Lhi_end:
         mov     sp, r7
@@ -281,7 +290,7 @@ section ProcessEnd
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-#include "include/header2.ash"
+#include "include/header.S"
 
 #define PURE_THUMB 1
 

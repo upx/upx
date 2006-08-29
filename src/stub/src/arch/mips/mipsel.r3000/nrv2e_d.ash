@@ -40,7 +40,7 @@
 
 .macro  nrv2e done
 
-            local   n2e_1, n2e_2, n2e_3, n2e_4,
+            local   n2e_1, n2e_2, n2e_3, n2e_4
             local   n2e_5, n2e_6, n2e_7
 
             init

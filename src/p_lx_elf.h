@@ -54,13 +54,12 @@ protected:
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
-    virtual Linker* newLinker() const;
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
         unsigned const brka
     ) = 0;
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo) = 0;
 
@@ -92,7 +91,7 @@ protected:
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
     virtual int ARM_buildLoader(Filter const *ft, bool isBE);
-    virtual void ARM_addLinkerSymbols(Filter const *ft);
+    virtual void ARM_defineSymbols(Filter const *ft);
     virtual void ARM_updateLoader(OutputFile *);
     virtual void ARM_pack1(OutputFile *, bool isBE);
 
@@ -291,7 +290,7 @@ protected:
     //virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual int buildLoader(const Filter *);
     virtual Linker* newLinker() const;
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
 };
 
 /*************************************************************************
@@ -335,7 +334,7 @@ protected:
     virtual int buildLoader(const Filter *);
     virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
 };
 
 class PackBSDElf32x86 : public PackLinuxElf32x86
@@ -405,7 +404,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int buildLoader(const Filter *);
     virtual void updateLoader(OutputFile *);
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
 };
 
 class PackLinuxElf32armBe : public PackLinuxElf32Be
@@ -424,7 +423,7 @@ protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int buildLoader(const Filter *);
     virtual void updateLoader(OutputFile *);
-    virtual void addLinkerSymbols(Filter const *);
+    virtual void defineSymbols(Filter const *);
 };
 
 #endif /*} already included */

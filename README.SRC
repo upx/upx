@@ -94,74 +94,9 @@ If you want to modify the stub sources you'll also need
 
   - Perl & Python
 
-  - A68K - a 68000 macro assembler
-    http://upx.sourceforge.net/download/tools/
-
-  - mipsel-unknown-linux-gnu-as - a MIPS R3000 assembler
-    http://upx.sourceforge.net/download/tools/
-
-  - binutils-multiarch-2.17
-    http://ftp.gnu.org/gnu/binutils/binutils-2.17.tar.bz2
-
-      You have to configure binutils with something like:
-        --enable-64-bit-bfd --enable-targets=all --disable-nls \
-        --disable-shared \
-        --program-prefix=multiarch- --program-suffix=-2.17 \
-        --prefix=/home/local/packages/binutils-multiarch-2.17-upx
-
-  - djasm - an assembler for the djgpp stub
-    http://upx.sourceforge.net/download/tools/
-
-  - nasm 0.98.39 - the Netwide Assembler
-    http://sourceforge.net/projects/nasm/
-
-  - Certain versions of some i386-linux tools:
-       - gcc-2.95.3
-       - gcc-3.4.6
-
-  - Other cross compilers targeted at the following architectures.
-       - arm-9tdmi-linux-gnu
-       - arm-unknown-linux-gnu-gcc-4.1.0
-         [via crosstool-0.42 using gcc-4.1.0-glibc-2.3.2.dat]
-       - powerpc-750-linux-gnu
-       - x86_64-unknown-linux-gnu
-    See http://upx.sourceforge.net/download/tools/ for pre-compiled
-    toolchains.
-
-  - SUMMARY:
-
-    You will need GNU make 3.81 and the following files/symlinks in your
-    ~/local/bin/bin-upx/ directory (this directory will get added to
-   your $PATH automatically by src/stub/Makefile):
-
-      bin-upx/a68k
-      bin-upx/arm-9tdmi-linux-gnu-gcc-3.4.5
-      bin-upx/djasm
-      bin-upx/i386-linux-gcc-2.95.3
-      bin-upx/i386-linux-gcc-3.4.6
-      bin-upx/mipsel-unknown-linux-gnu-as
-      bin-upx/multiarch-addr2line-2.17
-      bin-upx/multiarch-ar-2.17
-      bin-upx/multiarch-as-2.17
-      bin-upx/multiarch-c++filt-2.17
-      bin-upx/multiarch-coffdump-2.17
-      bin-upx/multiarch-gprof-2.17
-      bin-upx/multiarch-ld-2.17
-      bin-upx/multiarch-nlmconv-2.17
-      bin-upx/multiarch-nm-2.17
-      bin-upx/multiarch-objcopy-2.17
-      bin-upx/multiarch-objdump-2.17
-      bin-upx/multiarch-ranlib-2.17
-      bin-upx/multiarch-readelf-2.17
-      bin-upx/multiarch-size-2.17
-      bin-upx/multiarch-srconv-2.17
-      bin-upx/multiarch-strings-2.17
-      bin-upx/multiarch-strip-2.17
-      bin-upx/multiarch-sysdump-2.17
-      bin-upx/nasm
-      bin-upx/powerpc-750-linux-gnu-gcc-3.4.4
-      bin-upx/sstrip                                [ from src/stub/util ]
-      bin-upx/x86_64-unknown-linux-gnu-gcc-3.4.4
+  - A number of cross-assemblers and cross-compilers - precompiled
+    binaries for i386-linux hosts are available from
+    http://sourceforge.net/project/showfiles.php?group_id=2331
 
 
 Misc. notes

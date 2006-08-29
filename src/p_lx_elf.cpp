@@ -150,21 +150,20 @@ PackLinuxElf::~PackLinuxElf()
     delete[] file_image;
 }
 
-Linker *PackLinuxElf::newLinker() const
-{
-    return new ElfLinker;
-}
-
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
     unsigned disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // ALIGN_UP
-    len += (3& -len);
+    fo->write(&zero, 3& -len);  // ALIGN_UP 0 mod 4
+    len += (3& -len); // 0 mod 4
+    if (0==(4 & len)) {
+        fo->write(&zero, 4);
+        len += 4;
+    } // 4 mod 8
     set_native32(&disp, len);  // FIXME?  -(sz_elf_hdrs+sizeof(l_info)+sizeof(p_info))
     fo->write(&disp, sizeof(disp));
-    sz_pack2 = sizeof(disp) + len;
+    sz_pack2 = sizeof(disp) + len;  // 0 mod 8
 
     super::pack3(fo, ft);
 }
@@ -190,13 +189,13 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
         : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
-        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30"
         : NULL), NULL);
     addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
 }
 
 
-void PackLinuxElf::addLinkerSymbols(Filter const *)
+void PackLinuxElf::defineSymbols(Filter const *)
 {
     // empty
 }
@@ -345,22 +344,23 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 {
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
-    // Here is a quick summary of the format of the output file:
-    linker->setLoaderAlignOffset(
-            // Elf32_Edhr
-        sizeof(elfout.ehdr) +
-            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
-        (get_native16(&elfout.ehdr.e_phentsize) * get_native16(&elfout.ehdr.e_phnum)) +
-            // checksum UPX! lsize version format
-        sizeof(l_info) +
-            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
-        ((get_native16(&elfout.ehdr.e_phnum)==3)
-            ? (unsigned) get_native32(&elfout.phdr[2].p_memsz)
-            : 0) +
-            // p_progid, p_filesize, p_blocksize
-        sizeof(p_info) +
-            // compressed data
-        b_len + ph.c_len );
+// Rely on "+80CXXXX" [etc] in getDecompressorSections() packer_c.cpp */
+//    // Here is a quick summary of the format of the output file:
+//    linker->setLoaderAlignOffset(
+//            // Elf32_Edhr
+//        sizeof(elfout.ehdr) +
+//            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
+//        (get_native16(&elfout.ehdr.e_phentsize) * get_native16(&elfout.ehdr.e_phnum)) +
+//            // checksum UPX! lsize version format
+//        sizeof(l_info) +
+//            // PT_DYNAMIC with DT_NEEDED "forwarded" from original file
+//        ((get_native16(&elfout.ehdr.e_phnum)==3)
+//            ? (unsigned) get_native32(&elfout.phdr[2].p_memsz)
+//            : 0) +
+//            // p_progid, p_filesize, p_blocksize
+//        sizeof(p_info) +
+//            // compressed data
+//        b_len + ph.c_len );
 
             // entry to stub
     addLoader("LEXEC000", NULL);
@@ -420,13 +420,14 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     addLoader("FOLDEXEC", NULL);
 }
 
-void PackLinuxElf32x86::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32x86::defineSymbols(Filter const *const ft)
 {
-    upx_byte *ptr_cto = getLoader();
-    int sz_cto = getLoaderSize();
-    if (0x20==(ft->id & 0xF0) || 0x30==(ft->id & 0xF0)) {  // push byte '?'  ; cto8
-        patch_le16(ptr_cto, sz_cto, "\x6a?", 0x6a + (ft->cto << 8));
-        checkPatch(NULL, 0, 0, 0);  // reset
+    if (0x80==(ft->id & 0xF0)) {
+        int const mru = ft->n_mru ? 1+ ft->n_mru : 0;
+        if (mru && mru!=256) {
+            unsigned const is_pwr2 = (0==((mru -1) & mru));
+            linker->defineSymbol("NMRU", mru - is_pwr2);
+        }
     }
 }
 
@@ -488,7 +489,7 @@ PackLinuxElf32::buildLinuxLoader(
     addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols(ft);
+    defineSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
@@ -538,13 +539,13 @@ PackLinuxElf64::buildLinuxLoader(
     addStubEntrySections(ft);
 
     freezeLoader();
-    addLinkerSymbols(ft);
+    defineSymbols(ft);
     linker->relocate();
     return getLoaderSize();
 }
 
 void
-PackLinuxElf64amd::addLinkerSymbols(Filter const *)
+PackLinuxElf64amd::defineSymbols(Filter const *)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned len = sz_pack2;
@@ -1037,10 +1038,6 @@ PackLinuxElf32::generateElfHdr(
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
     set_native32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
@@ -1091,10 +1088,6 @@ PackOpenBSDElf32x86::generateElfHdr(
                          h3->ehdr.e_shnum = 0;
                          h3->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
     unsigned const note_offset = sz_elf_hdrs;
     set_native32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
@@ -1157,10 +1150,6 @@ PackLinuxElf64::generateElfHdr(
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
-#if 0  //{
-    unsigned identsize;
-    char const *const ident = getIdentstr(&identsize);
-#endif  //}
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
     set_native64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
@@ -1176,6 +1165,7 @@ PackLinuxElf64::generateElfHdr(
         set_native64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+        set_native64(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
 #undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
@@ -1562,7 +1552,7 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
     }
 }
 
-void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
+void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
     unsigned const len0 = sz_pack2;
@@ -1611,14 +1601,14 @@ void PackLinuxElf32::ARM_addLinkerSymbols(Filter const * /*ft*/)
 #undef PAGE_MASK
 }
 
-void PackLinuxElf32armLe::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
 {
-    ARM_addLinkerSymbols(ft);
+    ARM_defineSymbols(ft);
 }
 
-void PackLinuxElf32armBe::addLinkerSymbols(Filter const *ft)
+void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 {
-    ARM_addLinkerSymbols(ft);
+    ARM_defineSymbols(ft);
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
