@@ -28,8 +28,8 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
-	.code32
-	.intel_syntax noprefix
+        .code32
+        .intel_syntax noprefix
 
 #define SYS_mmap    197
 #define SYS_syscall 198
@@ -103,3 +103,6 @@ SYS(gettimeofday)
 SYS(nanosleep)
 SYS(unlink)
 SYS(waitpid)
+
+// vi:ts=8:et:nowrap
+
