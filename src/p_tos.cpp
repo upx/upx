@@ -419,6 +419,8 @@ void PackTos::pack(OutputFile *fo)
     const unsigned i_sym = ih.fh_sym;
     const unsigned i_bss = ih.fh_bss;
 
+    symbols.reset();
+
     // read file
     const unsigned isize = file_size - i_sym;
     ibuf.alloc(isize);
