@@ -1,0 +1,209 @@
+
+tmp/m68k-atari.tos.bin:     file format elf32-m68k
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn  Flags
+  0 tos0          0000003e  00000000  00000000  00000034  2**0  CONTENTS, RELOC, READONLY
+  1 loop1_set_count.b 00000002  00000000  00000000  00000072  2**0  CONTENTS, RELOC, READONLY
+  2 loop1_set_count.w 00000004  00000000  00000000  00000074  2**0  CONTENTS, RELOC, READONLY
+  3 loop1_set_count.l 00000006  00000000  00000000  00000078  2**0  CONTENTS, RELOC, READONLY
+  4 loop1_label   00000000  00000000  00000000  0000007e  2**0  CONTENTS, READONLY
+  5 loop1.small   00000002  00000000  00000000  0000007e  2**0  CONTENTS, READONLY
+  6 loop1_subql   00000004  00000000  00000000  00000080  2**0  CONTENTS, RELOC, READONLY
+  7 loop1_subqw   00000004  00000000  00000000  00000084  2**0  CONTENTS, RELOC, READONLY
+  8 loop1_dbra    00000004  00000000  00000000  00000088  2**0  CONTENTS, RELOC, READONLY
+  9 loop2.small   00000000  00000000  00000000  0000008c  2**0  CONTENTS, READONLY
+ 10 loop1.fast    0000002a  00000000  00000000  0000008c  2**0  CONTENTS, READONLY
+ 11 loop2.fast    00000008  00000000  00000000  000000b6  2**0  CONTENTS, RELOC, READONLY
+ 12 copy_to_stack 00000016  00000000  00000000  000000be  2**0  CONTENTS, RELOC, READONLY
+ 13 nrv2b.init    00000008  00000000  00000000  000000d4  2**0  CONTENTS, READONLY
+ 14 nrv2d.init    00000008  00000000  00000000  000000dc  2**0  CONTENTS, READONLY
+ 15 nrv2e.init    00000008  00000000  00000000  000000e4  2**0  CONTENTS, READONLY
+ 16 jmp_decompressor 0000000c  00000000  00000000  000000ec  2**0  CONTENTS, RELOC, READONLY
+ 17 clear_bss     00000000  00000000  00000000  000000f8  2**0  CONTENTS, READONLY
+ 18 loop3_label:  00000000  00000000  00000000  000000f8  2**0  CONTENTS, READONLY
+ 19 loop3.small:  00000002  00000000  00000000  000000f8  2**0  CONTENTS, READONLY
+ 20 loop3.fast:   00000008  00000000  00000000  000000fa  2**0  CONTENTS, READONLY
+ 21 loop3_subql   00000004  00000000  00000000  00000102  2**0  CONTENTS, RELOC, READONLY
+ 22 loop3_subqw   00000004  00000000  00000000  00000106  2**0  CONTENTS, RELOC, READONLY
+ 23 loop3_dbra    00000004  00000000  00000000  0000010a  2**0  CONTENTS, RELOC, READONLY
+ 24 flush_cache   0000007c  00000000  00000000  0000010e  2**0  CONTENTS, RELOC, READONLY
+ 25 clear_dirty_stack 0000000c  00000000  00000000  0000018a  2**0  CONTENTS, RELOC, READONLY
+ 26 start_program 0000000c  00000000  00000000  00000196  2**0  CONTENTS, READONLY
+ 27 UPX1HEAD      00000020  00000000  00000000  000001a2  2**0  CONTENTS, READONLY
+ 28 CUTPOINT      00000000  00000000  00000000  000001c2  2**0  CONTENTS, READONLY
+ 29 nrv2b_8.fast  0000007c  00000000  00000000  000001c2  2**0  CONTENTS, READONLY
+ 30 nrv2d_8.fast  00000090  00000000  00000000  0000023e  2**0  CONTENTS, READONLY
+ 31 nrv2e_8.fast  00000098  00000000  00000000  000002ce  2**0  CONTENTS, READONLY
+ 32 nrv2b_8.small 00000076  00000000  00000000  00000366  2**0  CONTENTS, READONLY
+ 33 nrv2d_8.small 0000008a  00000000  00000000  000003dc  2**0  CONTENTS, READONLY
+ 34 nrv2e_8.small 00000092  00000000  00000000  00000466  2**0  CONTENTS, READONLY
+ 35 __mulsi3      0000001c  00000000  00000000  000004f8  2**0  CONTENTS, READONLY
+ 36 reloc         0000001a  00000000  00000000  00000514  2**0  CONTENTS, READONLY
+ 37 loop3_set_count.b 00000002  00000000  00000000  0000052e  2**0  CONTENTS, RELOC, READONLY
+ 38 loop3_set_count.w 00000004  00000000  00000000  00000530  2**0  CONTENTS, RELOC, READONLY
+ 39 loop3_set_count.l 00000006  00000000  00000000  00000534  2**0  CONTENTS, RELOC, READONLY
+ 40 jmpstack      00000002  00000000  00000000  0000053a  2**0  CONTENTS, READONLY
+ 41 abs_symbols   00000000  00000000  00000000  0000053c  2**0  CONTENTS, READONLY
+SYMBOL TABLE:
+00000000 l    d  loop1_label	00000000 loop1_label
+00000000 l    d  flush_cache	00000000 flush_cache
+00000000 l    d  loop3_label:	00000000 loop3_label:
+00000000 l    d  tos0	00000000 tos0
+00000000 l    d  loop1_set_count.b	00000000 loop1_set_count.b
+00000000 l    d  loop1_set_count.w	00000000 loop1_set_count.w
+00000000 l    d  loop1_set_count.l	00000000 loop1_set_count.l
+00000000 l    d  loop1.small	00000000 loop1.small
+00000000 l    d  loop1_subql	00000000 loop1_subql
+00000000 l    d  loop1_subqw	00000000 loop1_subqw
+00000000 l    d  loop1_dbra	00000000 loop1_dbra
+00000000 l    d  loop2.small	00000000 loop2.small
+00000000 l    d  loop1.fast	00000000 loop1.fast
+00000000 l    d  loop2.fast	00000000 loop2.fast
+00000000 l    d  copy_to_stack	00000000 copy_to_stack
+00000000 l    d  nrv2b.init	00000000 nrv2b.init
+00000000 l    d  nrv2d.init	00000000 nrv2d.init
+00000000 l    d  nrv2e.init	00000000 nrv2e.init
+00000000 l    d  jmp_decompressor	00000000 jmp_decompressor
+00000000 l    d  clear_bss	00000000 clear_bss
+00000000 l    d  loop3.small:	00000000 loop3.small:
+00000000 l    d  loop3.fast:	00000000 loop3.fast:
+00000000 l    d  loop3_subql	00000000 loop3_subql
+00000000 l    d  loop3_subqw	00000000 loop3_subqw
+00000000 l    d  loop3_dbra	00000000 loop3_dbra
+00000000 l    d  clear_dirty_stack	00000000 clear_dirty_stack
+00000000 l    d  start_program	00000000 start_program
+00000000 l    d  UPX1HEAD	00000000 UPX1HEAD
+00000000 l    d  CUTPOINT	00000000 CUTPOINT
+00000000 l    d  nrv2b_8.fast	00000000 nrv2b_8.fast
+00000000 l    d  nrv2d_8.fast	00000000 nrv2d_8.fast
+00000000 l    d  nrv2e_8.fast	00000000 nrv2e_8.fast
+00000000 l    d  nrv2b_8.small	00000000 nrv2b_8.small
+00000000 l    d  nrv2d_8.small	00000000 nrv2d_8.small
+00000000 l    d  nrv2e_8.small	00000000 nrv2e_8.small
+00000000 l    d  __mulsi3	00000000 __mulsi3
+00000000 l    d  reloc	00000000 reloc
+00000000 l    d  loop3_set_count.b	00000000 loop3_set_count.b
+00000000 l    d  loop3_set_count.w	00000000 loop3_set_count.w
+00000000 l    d  loop3_set_count.l	00000000 loop3_set_count.l
+00000000 l    d  jmpstack	00000000 jmpstack
+00000000 l    d  abs_symbols	00000000 abs_symbols
+00000000         *UND*	00000000 up11
+00000000         *UND*	00000000 up12
+00000000         *UND*	00000000 up13
+00000000         *UND*	00000000 up21
+00000000         *UND*	00000000 loop1_count
+00000000         *UND*	00000000 loop2_count
+0000000c g       start_program	00000000 clear_bss_end
+00000000         *UND*	00000000 copy_to_stack_len
+00000000         *UND*	00000000 flush_cache_rts_offset
+00000000         *UND*	00000000 up31
+00000000         *UND*	00000000 clear_bss_size_p4
+00000000         *UND*	00000000 clear_dirty_stack_len
+00000000         *UND*	00000000 loop3_count
+00000002 g       *ABS*	00000000 nrv2b_8_fast_start_offset
+00000002 g       *ABS*	00000000 nrv2d_8_fast_start_offset
+00000002 g       *ABS*	00000000 nrv2e_8_fast_start_offset
+00000002 g       *ABS*	00000000 nrv2b_8_small_start_offset
+00000002 g       *ABS*	00000000 nrv2d_8_small_start_offset
+00000002 g       *ABS*	00000000 nrv2e_8_small_start_offset
+00000000 g       *ABS*	00000000 lzma_fast_start_offset
+00000000 g       *ABS*	00000000 lzma_small_start_offset
+
+
+RELOCATION RECORDS FOR [tos0]:
+OFFSET   TYPE              VALUE
+0000001c R_68K_32          up11
+00000026 R_68K_32          up12
+00000032 R_68K_32          up13
+0000003a R_68K_32          up21
+
+
+RELOCATION RECORDS FOR [loop1_set_count.b]:
+OFFSET   TYPE              VALUE
+00000001 R_68K_8           loop1_count
+
+
+RELOCATION RECORDS FOR [loop1_set_count.w]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_16          loop1_count
+
+
+RELOCATION RECORDS FOR [loop1_set_count.l]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_32          loop1_count
+
+
+RELOCATION RECORDS FOR [loop1_subql]:
+OFFSET   TYPE              VALUE
+00000003 R_68K_PC8         loop1_label+0xffffffff
+
+
+RELOCATION RECORDS FOR [loop1_subqw]:
+OFFSET   TYPE              VALUE
+00000003 R_68K_PC8         loop1_label+0xffffffff
+
+
+RELOCATION RECORDS FOR [loop1_dbra]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_PC16        loop1_label
+
+
+RELOCATION RECORDS FOR [loop2.fast]:
+OFFSET   TYPE              VALUE
+00000001 R_68K_8           loop2_count
+
+
+RELOCATION RECORDS FOR [copy_to_stack]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_PC16        clear_bss_end
+00000007 R_68K_8           copy_to_stack_len
+00000012 R_68K_16          flush_cache_rts_offset
+00000015 R_68K_PC8         flush_cache+0xffffffff
+
+
+RELOCATION RECORDS FOR [jmp_decompressor]:
+OFFSET   TYPE              VALUE
+00000006 R_68K_32          up31
+
+
+RELOCATION RECORDS FOR [loop3_subql]:
+OFFSET   TYPE              VALUE
+00000003 R_68K_PC8         loop3_label:+0xffffffff
+
+
+RELOCATION RECORDS FOR [loop3_subqw]:
+OFFSET   TYPE              VALUE
+00000003 R_68K_PC8         loop3_label:+0xffffffff
+
+
+RELOCATION RECORDS FOR [loop3_dbra]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_PC16        loop3_label:
+
+
+RELOCATION RECORDS FOR [flush_cache]:
+OFFSET   TYPE              VALUE
+0000007a R_68K_16          clear_bss_size_p4
+
+
+RELOCATION RECORDS FOR [clear_dirty_stack]:
+OFFSET   TYPE              VALUE
+00000001 R_68K_8           clear_dirty_stack_len
+
+
+RELOCATION RECORDS FOR [loop3_set_count.b]:
+OFFSET   TYPE              VALUE
+00000001 R_68K_8           loop3_count
+
+
+RELOCATION RECORDS FOR [loop3_set_count.w]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_16          loop3_count
+
+
+RELOCATION RECORDS FOR [loop3_set_count.l]:
+OFFSET   TYPE              VALUE
+00000002 R_68K_32          loop3_count
+
+
