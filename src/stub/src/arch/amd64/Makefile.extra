@@ -38,7 +38,7 @@ tc.amd64-lzma.gcc     += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
-	$(call tc,objstrip) tmp/$T.o
+	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
 	head -c-1 tmp/$T.bin > tmp/$T.out
 	$(call tc,objdump) -b binary -m i386:x86-64 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
