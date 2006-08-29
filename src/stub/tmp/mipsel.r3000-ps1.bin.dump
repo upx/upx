@@ -93,10 +93,10 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 PAD
 00000000         *UND*	00000000 wrkmem
 00000000         *UND*	00000000 SC
-00000000         *UND*	00000000 UPXa
-00000000         *UND*	00000000 UPXc
-00000000         *UND*	00000000 UPXb
-00000000         *UND*	00000000 UPXd
+00000000         *UND*	00000000 lzma_stack_adjust
+00000000         *UND*	00000000 lzma_c_len
+00000000         *UND*	00000000 lzma_u_len
+00000000         *UND*	00000000 lzma_properties
 00000000         *UND*	00000000 lzma_decoder
 
 
@@ -267,14 +267,14 @@ OFFSET   TYPE              VALUE
 
 RELOCATION RECORDS FOR [lzma.init]:
 OFFSET   TYPE              VALUE
-00000000 R_MIPS_LO16       UPXa
-0000000c R_MIPS_HI16       UPXc
-00000010 R_MIPS_LO16       UPXc
-00000014 R_MIPS_HI16       UPXb
-00000018 R_MIPS_LO16       UPXb
-00000024 R_MIPS_HI16       UPXd
-00000028 R_MIPS_LO16       UPXd
+00000000 R_MIPS_LO16       lzma_stack_adjust
+0000000c R_MIPS_HI16       lzma_c_len
+00000010 R_MIPS_LO16       lzma_c_len
+00000014 R_MIPS_HI16       lzma_u_len
+00000018 R_MIPS_LO16       lzma_u_len
+00000024 R_MIPS_HI16       lzma_properties
+00000028 R_MIPS_LO16       lzma_properties
 00000034 R_MIPS_PC16       lzma_decoder
-00000044 R_MIPS_LO16       UPXa
+00000044 R_MIPS_LO16       lzma_stack_adjust
 
 

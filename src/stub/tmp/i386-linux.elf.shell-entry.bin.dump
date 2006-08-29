@@ -241,10 +241,10 @@ SYMBOL TABLE:
 00000000 l    d  LEXEC015	00000000 LEXEC015
 00000000 l    d  LEXEC017	00000000 LEXEC017
 00000000 g       LEXEC000	00000000 _start
-00000000         *UND*	00000000 UPXa
-00000000         *UND*	00000000 UPXb
-00000000         *UND*	00000000 UPXc
-00000000         *UND*	00000000 UPXd
+00000000         *UND*	00000000 lzma_stack_adjust
+00000000         *UND*	00000000 lzma_u_len
+00000000         *UND*	00000000 lzma_c_len
+00000000         *UND*	00000000 lzma_properties
 00000000         *UND*	00000000 filter_length
 00000000         *UND*	00000000 filter_cto
 
@@ -535,10 +535,10 @@ OFFSET   TYPE              VALUE
 
 RELOCATION RECORDS FOR [LZMA_DEC00]:
 OFFSET   TYPE              VALUE
-00000005 R_386_32          UPXa
-00000014 R_386_32          UPXb
-0000001e R_386_32          UPXc
-0000002a R_386_32          UPXd
+00000005 R_386_32          lzma_stack_adjust
+00000014 R_386_32          lzma_u_len
+0000001e R_386_32          lzma_c_len
+0000002a R_386_32          lzma_properties
 
 
 RELOCATION RECORDS FOR [CALLTR00]:

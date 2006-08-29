@@ -402,7 +402,7 @@ section CallLZMA
         b       .LLZMA_end
 
 .LzmaParams:
-        .long   UPXb, UPXa, UPXc, UPXd
+        .long   lzma_u_len, lzma_stack_adjust, lzma_c_len, lzma_properties
 
 .LLZMA_end:
 

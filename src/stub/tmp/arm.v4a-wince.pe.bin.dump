@@ -58,10 +58,10 @@ SYMBOL TABLE:
 00000000 g     F .ucl_nrv2e_decompress_8	00000114 ucl_nrv2e_decompress_8
 00000000 g     F .ucl_nrv2d_decompress_8	00000100 ucl_nrv2d_decompress_8
 00000000 g     F .ucl_nrv2b_decompress_8	000000c4 ucl_nrv2b_decompress_8
-00000000         *UND*	00000000 UPXb
-00000000         *UND*	00000000 UPXa
-00000000         *UND*	00000000 UPXc
-00000000         *UND*	00000000 UPXd
+00000000         *UND*	00000000 lzma_u_len
+00000000         *UND*	00000000 lzma_stack_adjust
+00000000         *UND*	00000000 lzma_c_len
+00000000         *UND*	00000000 lzma_properties
 
 
 RELOCATION RECORDS FOR [DllStart]:
@@ -203,10 +203,10 @@ OFFSET   TYPE              VALUE
 0000001c R_ARM_PC24        CallLZMA
 00000038 R_ARM_PC24        LZMA_DECODE
 00000040 R_ARM_PC24        CallLZMA
-00000044 R_ARM_ABS32       UPXb
-00000048 R_ARM_ABS32       UPXa
-0000004c R_ARM_ABS32       UPXc
-00000050 R_ARM_ABS32       UPXd
+00000044 R_ARM_ABS32       lzma_u_len
+00000048 R_ARM_ABS32       lzma_stack_adjust
+0000004c R_ARM_ABS32       lzma_c_len
+00000050 R_ARM_ABS32       lzma_properties
 
 
 RELOCATION RECORDS FOR [LZMA_DEC10]:

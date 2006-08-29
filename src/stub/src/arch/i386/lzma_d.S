@@ -45,11 +45,11 @@
 // init
 section LZMA_DEC00
 
-// ebx = alloca('UPXa');
+// ebx = alloca(lzma_stack_adjust);
 
         mov     ebp, esp                // save stack
 
-        lea     ebx, [esp + UPXa]
+        lea     ebx, [esp + lzma_stack_adjust]
         xor     eax, eax
 .clearstack1:
         push    eax
@@ -61,18 +61,18 @@ section LZMA_DEC00
         inc     esi
 
         push    ebx                     // &outSizeProcessed
-        push    offset UPXb             // outSize
+        push    offset lzma_u_len       // outSize
         push    edi                     // out
         add     ebx, 4
         push    ebx                     // &inSizeProcessed
-        push    offset UPXc             // inSize
+        push    offset lzma_c_len       // inSize
         push    esi                     // in
         add     ebx, 4
         push    ebx                     // &CLzmaDecoderState
         push    eax                     // dummy for call
 
         // hardwired LzmaDecodeProperties()
-        mov     dword ptr [ebx], offset UPXd       // lc, lp, pb, dummy
+        mov     dword ptr [ebx], offset lzma_properties // lc, lp, pb, dummy
 
 
 section LZMA_ELF00

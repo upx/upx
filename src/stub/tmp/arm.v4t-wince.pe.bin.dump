@@ -53,10 +53,10 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 start_of_imports
 0000007c g       Imports	00000000 ONAM
 00000000         *UND*	00000000 start_of_dll_names
-00000000         *UND*	00000000 UPXb
-00000000         *UND*	00000000 UPXa
-00000000         *UND*	00000000 UPXc
-00000000         *UND*	00000000 UPXd
+00000000         *UND*	00000000 lzma_u_len
+00000000         *UND*	00000000 lzma_stack_adjust
+00000000         *UND*	00000000 lzma_c_len
+00000000         *UND*	00000000 lzma_properties
 
 
 RELOCATION RECORDS FOR [DllStart]:
@@ -108,9 +108,9 @@ OFFSET   TYPE              VALUE
 RELOCATION RECORDS FOR [CallLZMA]:
 OFFSET   TYPE              VALUE
 0000001c R_ARM_THM_CALL    .real_start_ofLZMA_DECODE
-00000024 R_ARM_ABS32       UPXb
-00000028 R_ARM_ABS32       UPXa
-0000002c R_ARM_ABS32       UPXc
-00000030 R_ARM_ABS32       UPXd
+00000024 R_ARM_ABS32       lzma_u_len
+00000028 R_ARM_ABS32       lzma_stack_adjust
+0000002c R_ARM_ABS32       lzma_c_len
+00000030 R_ARM_ABS32       lzma_properties
 
 

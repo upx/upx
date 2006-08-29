@@ -369,12 +369,12 @@ PackLinuxI386::buildLinuxLoader(
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
-        linker->defineSymbol("UPXd", properties);
+        linker->defineSymbol("lzma_properties", properties);
         // -2 for properties
-        linker->defineSymbol("UPXc", ph.c_len - 2);
-        linker->defineSymbol("UPXb", ph.u_len);
+        linker->defineSymbol("lzma_c_len", ph.c_len - 2);
+        linker->defineSymbol("lzma_u_len", ph.u_len);
         unsigned const stack = getDecompressorWrkmemSize();
-        linker->defineSymbol("UPXa", 0u - stack);
+        linker->defineSymbol("lzma_stack_adjust", 0u - stack);
     }
     if (0x80==(ft->id & 0xF0)) {
         int const mru = ft->n_mru ? 1+ ft->n_mru : 0;
