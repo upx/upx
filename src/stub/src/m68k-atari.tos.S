@@ -586,7 +586,7 @@ section reloc
                 bnes    1b
                 lea     254(a1),a1      // d3 == 1 -> add 254, don't reloc
                 bras    2b
-3:            
+3:
 
 
 // ------------- clear dirty bss & start program
