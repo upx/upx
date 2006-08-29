@@ -117,13 +117,20 @@ maintainer-clean:
 # util var for use in the rules - basename of the current target
 override T = $(basename $(notdir $@))
 
+# trim (strip) trailing whitespace
+RTRIM := sed -e 's/[ 	]*$$//'
+
+# clear some vars, just in case
+LABEL_PREFIX =
+PP_FLAGS =
+tc_bfdarch =
+tc_bfdname =
+tc_list =
+
 
 # /***********************************************************************
 # // setup toolchain globals
 # ************************************************************************/
-
-# strip trailing whitespace
-RTRIM := sed -e 's/[ 	]*$$//'
 
 # enumerate the names of all variables that will get tested (from basename and $(tc_list))
 __tc_varlist   = tc.$(basename $(notdir $@)).$1 $(foreach v,$(tc_list),tc.$v.$1)
@@ -141,7 +148,6 @@ endef
 # default tools
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
-tc.default.djasm      = djasm
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
@@ -179,17 +185,7 @@ endef
 # some common arch settings
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
-
-# clear some vars, just in case
-CPPFLAGS =
-CPLAGS =
-PP_FLAGS =
-IDENT_NAME =
-IDENT_PREFIX =
-IDENT_SUFFIX =
-tc_bfdarch =
-tc_bfdname =
-tc_list =
+tc.arch-i386.djasm    = djasm
 
 
 # /***********************************************************************
@@ -716,25 +712,23 @@ endif
 ifndef EXTRA_MAKEFILES
 EXTRA_MAKEFILES :=
 ifneq ($(filter extra-%,$(MAKECMDGOALS)),)
-EXTRA_MAKEFILES := $(shell find src/arch -name Makefile.extra 2>/dev/null | LC_ALL=C sort -u)
+EXTRA_MAKEFILES += $(shell find src/arch -name Makefile.extra 2>/dev/null | LC_ALL=C sort -u)
 endif
 endif
 
 ifneq ($(strip $(EXTRA_MAKEFILES)),)
-
 EXTRA_MAKEFILES.targets :=
 EXTRA_MAKEFILES.targets += $(addsuffix .~all,$(EXTRA_MAKEFILES))
 EXTRA_MAKEFILES.targets += $(addsuffix .~clean,$(EXTRA_MAKEFILES))
 
 $(EXTRA_MAKEFILES.targets): MAKEFLAGS += --no-print-directory
-$(EXTRA_MAKEFILES.targets):
+$(EXTRA_MAKEFILES.targets): $$(basename $$@)
 	$(MAKE) -C $(dir $@) -f $(basename $(notdir $@)) $(subst .~,,$(suffix $@))
 
-extra-all:   $(filter %.~all,$(EXTRA_MAKEFILES.targets))
-extra-clean: $(filter %.~clean,$(EXTRA_MAKEFILES.targets))
+extra-all:   $$(filter %.~all,$$(EXTRA_MAKEFILES.targets))
+extra-clean: $$(filter %.~clean,$$(EXTRA_MAKEFILES.targets))
 
 .PHONY: extra-all extra-clean $(EXTRA_MAKEFILES.targets)
-
 endif
 
 
