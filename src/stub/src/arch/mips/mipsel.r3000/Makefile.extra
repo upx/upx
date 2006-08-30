@@ -31,7 +31,7 @@ lzma_d_c%.S : tc_list = mipsel-lzma mipsel.r3000-ps1 default
 lzma_d_c%.S : tc_bfdname = elf32-littlemips
 
 tc.mipsel-lzma.gcc      = $(tc.mipsel.r3000-ps1.gcc)
-tc.mipsel-lzma.gcc     += -pie -fPIC
+tc.mipsel-lzma.gcc     += -pie -fPIC -mabi=eabi
 tc.mipsel-lzma.gcc     += -Os -fomit-frame-pointer
 tc.mipsel-lzma.gcc     += -ffunction-sections
 tc.mipsel-lzma.gcc     += -I$(UPX_LZMADIR)

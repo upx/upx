@@ -44,6 +44,7 @@ Idx Name          Size      VMA       LMA       File off  Algn  Flags
  38 UPX1HEAD      00000020  00000000  00000000  00002688  2**0  CONTENTS, READONLY
 SYMBOL TABLE:
 00000000 l    d  nrv.done	00000000 nrv.done
+00000000 l    d  decompressor.start	00000000 decompressor.start
 00000000 l    d  cdb.start	00000000 cdb.start
 00000000 l    d  cdb.entry	00000000 cdb.entry
 00000000 l    d  cdb.start.lzma	00000000 cdb.start.lzma
@@ -77,7 +78,6 @@ SYMBOL TABLE:
 00000000 l    d  nrv2b.small	00000000 nrv2b.small
 00000000 l    d  nrv2d.small	00000000 nrv2d.small
 00000000 l    d  nrv2e.small	00000000 nrv2e.small
-00000000 l    d  decompressor.start	00000000 decompressor.start
 00000000 l    d  lzma.init	00000000 lzma.init
 00000000 l    d  LZMA_DEC10	00000000 LZMA_DEC10
 00000000 l    d  LZMA_DEC20	00000000 LZMA_DEC20
@@ -97,7 +97,6 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 lzma_c_len
 00000000         *UND*	00000000 lzma_u_len
 00000000         *UND*	00000000 lzma_properties
-00000000         *UND*	00000000 lzma_decoder
 
 
 RELOCATION RECORDS FOR [cdb.start]:
@@ -274,7 +273,7 @@ OFFSET   TYPE              VALUE
 00000018 R_MIPS_LO16       lzma_u_len
 00000024 R_MIPS_HI16       lzma_properties
 00000028 R_MIPS_LO16       lzma_properties
-00000034 R_MIPS_PC16       lzma_decoder
+00000034 R_MIPS_PC16       decompressor.start
 00000044 R_MIPS_LO16       lzma_stack_adjust
 
 

@@ -51,7 +51,7 @@ section     lzma.init
             la      tmp,lzma_properties
             sw      dst,dst_save(sp)
             addiu   CLzmaDecoderState,sp,lzma_args_sz
-            bal     lzma_decoder
+            bal     decompressor
             sw      tmp,0(CLzmaDecoderState)
             lw      dst,dst_save(sp)
             lw      outSize,outSizeProcessed(sp)
