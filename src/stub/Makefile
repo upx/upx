@@ -178,14 +178,14 @@ define tc.default.f-embed_objinfo
 	chmod a-x $1
 	$(call tc,objcopy) --strip-unneeded $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
-	$(call tc,objcopy) -R .comment -R .note -R .reginfo $1
+	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(RTRIM) > $1.dump
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
 	chmod a-x $1
-	$(call tc,objcopy) -R .comment -R .note -R .reginfo $1
+	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 endef
 
 # some common arch settings
