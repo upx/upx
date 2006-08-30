@@ -423,6 +423,7 @@ i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 	$(call tc,djasm) --outtype=exe --gmtime=1070220810 --inname=stub.asm --outname=stub.h $< tmp/$T.bin
+	$(call tc,objdump) -b binary -m i8086 -D --start-address=0x254 tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasm
 	$(call tc,bin2h) --ident=stubify_stub -q tmp/$T.bin $@
 
 
