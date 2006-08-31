@@ -1,3 +1,4 @@
+.arm
 	@ args = 12, pretend = 0, frame = 48
 	@ frame_needed = 0, uses_anonymous_args = 0
 	stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}

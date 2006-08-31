@@ -39,7 +39,12 @@ tc.arm-lzma.gcc     += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -S $< -o tmp/$T.s
-	sed -e '1,/LzmaDecode:/d' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' tmp/$T.s | $(RTRIM) > $@
+	sed -e '1,/LzmaDecode:/c.thumb' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' tmp/$T.s | $(RTRIM) > $@
+	$(call tc,gcc) -c -MF /dev/null $@ -o tmp/$T.o
+	$(call tc,f-objstrip,tmp/$T.o)
+	$(call tc,objcopy) -O binary tmp/$T.o tmp/$T.bin
+	head -c-0 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m armv4t -M force-thumb -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL

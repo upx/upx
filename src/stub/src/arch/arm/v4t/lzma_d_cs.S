@@ -1,3 +1,4 @@
+.thumb
 	push	{r4, r5, r6, r7, lr}
 	sub	sp, sp, #124
 	str	r1, [sp, #16]
