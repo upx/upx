@@ -710,7 +710,7 @@ Notes:
     versions, so they will not override other memory areas while unpacking.
     If this isn't possible UPX will abort showing a 'packed data overlap'
     error. With the "--force" option UPX will relocate the loading address
-    for the packed file, but this isn't a real problem if it is a single or 
+    for the packed file, but this isn't a real problem if it is a single or
     the main executable.
 
 Extra options available for this executable format:
