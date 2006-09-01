@@ -239,15 +239,7 @@ tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werro
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
-ifeq (1,1)
-	$(call tc,objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,objcopy) -R .comment -R .note tmp/$T.bin
-	$(call tc,objdump) -htr -w tmp/$T.bin | $(RTRIM) | $(SQUEEZE) > tmp/$T.bin.dump
-	cat tmp/$T.bin.dump >> tmp/$T.bin
-else
-	# FIXME: can we use --strip-unneeded on arm ??
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-endif
 	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
