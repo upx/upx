@@ -125,6 +125,8 @@ override T = $(basename $(notdir $@))
 
 # trim (strip) trailing whitespace
 RTRIM := sed -e 's/[ $(tab)]*$$//'
+# squeeze duplicate blank lines, remove empty first & last line
+SQUEEZE := cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
 
 # clear some vars, just in case
 LABEL_PREFIX =
@@ -180,7 +182,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $1 | $(RTRIM) > $1.disasm
-	$(call tc,objdump) -htr -w $1 | $(RTRIM) > $1.dump
+	$(call tc,objdump) -htr -w $1 | $(RTRIM) | $(SQUEEZE) > $1.dump
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
@@ -239,8 +241,9 @@ arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 ifeq (1,1)
 	$(call tc,objcopy) -R .text -R .data -R .bss tmp/$T.bin
-	$(call tc,objcopy) -R .note -R .comment tmp/$T.bin
-	$(call tc,objdump) -trwh tmp/$T.bin >> tmp/$T.bin
+	$(call tc,objcopy) -R .comment -R .note tmp/$T.bin
+	$(call tc,objdump) -htr -w tmp/$T.bin | $(RTRIM) | $(SQUEEZE) > tmp/$T.bin.dump
+	cat tmp/$T.bin.dump >> tmp/$T.bin
 else
 	# FIXME: can we use --strip-unneeded on arm ??
 	$(call tc,f-embed_objinfo,tmp/$T.bin)

@@ -1,4 +1,3 @@
-
 tmp/mipsel.r3000-ps1.bin:     file format elf32-littlemips
 
 Sections:
@@ -98,18 +97,15 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 lzma_u_len
 00000000         *UND*	00000000 lzma_properties
 
-
 RELOCATION RECORDS FOR [cdb.start]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_HI16       PSVR
 00000004 R_MIPS_LO16       PSVR
 
-
 RELOCATION RECORDS FOR [cdb.entry]:
 OFFSET   TYPE              VALUE
 00000014 R_MIPS_HI16       CPDO
 00000018 R_MIPS_LO16       CPDO
-
 
 RELOCATION RECORDS FOR [cdb.start.lzma]:
 OFFSET   TYPE              VALUE
@@ -117,33 +113,27 @@ OFFSET   TYPE              VALUE
 00000004 R_MIPS_LO16       PSVR
 0000000c R_MIPS_LO16       ldr_sz
 
-
 RELOCATION RECORDS FOR [cdb.entry.lzma]:
 OFFSET   TYPE              VALUE
 00000018 R_MIPS_LO16       lzma_cpr
-
 
 RELOCATION RECORDS FOR [cdb.lzma.cpr]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_HI16       CPDO
 00000004 R_MIPS_LO16       CPDO
 
-
 RELOCATION RECORDS FOR [cdb.dec.ptr]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_HI16       DECO
 00000004 R_MIPS_LO16       DECO
 
-
 RELOCATION RECORDS FOR [cdb.dec.ptr.hi]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_HI16       DECO
 
-
 RELOCATION RECORDS FOR [cdb.exit]:
 OFFSET   TYPE              VALUE
 00000020 R_MIPS_26         entry
-
 
 RELOCATION RECORDS FOR [con.start]:
 OFFSET   TYPE              VALUE
@@ -151,37 +141,30 @@ OFFSET   TYPE              VALUE
 00000028 R_MIPS_HI16       DCRT
 0000002c R_MIPS_LO16       DCRT
 
-
 RELOCATION RECORDS FOR [con.mcpy]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_LO16       ldr_sz
-
 
 RELOCATION RECORDS FOR [lzma.prep]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_LO16       lzma_init_off
 
-
 RELOCATION RECORDS FOR [con.padcd]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_LO16       PAD
-
 
 RELOCATION RECORDS FOR [dec.ptr]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_HI16       DECO
 00000008 R_MIPS_LO16       DECO
 
-
 RELOCATION RECORDS FOR [dec.ptr.hi]:
 OFFSET   TYPE              VALUE
 00000004 R_MIPS_HI16       DECO
 
-
 RELOCATION RECORDS FOR [con.exit]:
 OFFSET   TYPE              VALUE
 00000024 R_MIPS_26         entry
-
 
 RELOCATION RECORDS FOR [bss.cdb.start.lzma]:
 OFFSET   TYPE              VALUE
@@ -190,11 +173,9 @@ OFFSET   TYPE              VALUE
 0000000c R_MIPS_HI16       wrkmem
 00000014 R_MIPS_LO16       wrkmem
 
-
 RELOCATION RECORDS FOR [bss.cdb.entry.lzma]:
 OFFSET   TYPE              VALUE
 0000001c R_MIPS_LO16       lzma_cpr
-
 
 RELOCATION RECORDS FOR [bss.con.start]:
 OFFSET   TYPE              VALUE
@@ -203,66 +184,53 @@ OFFSET   TYPE              VALUE
 00000030 R_MIPS_HI16       DCRT
 00000034 R_MIPS_LO16       DCRT
 
-
 RELOCATION RECORDS FOR [bss.exit]:
 OFFSET   TYPE              VALUE
 00000024 R_MIPS_26         entry
-
 
 RELOCATION RECORDS FOR [memset.short]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_LO16       SC
 
-
 RELOCATION RECORDS FOR [memset.long]:
 OFFSET   TYPE              VALUE
 00000000 R_MIPS_LO16       SC
-
 
 RELOCATION RECORDS FOR [nrv2b.8bit]:
 OFFSET   TYPE              VALUE
 000000a8 R_MIPS_PC16       nrv.done
 
-
 RELOCATION RECORDS FOR [nrv2d.8bit]:
 OFFSET   TYPE              VALUE
 000000f0 R_MIPS_PC16       nrv.done
-
 
 RELOCATION RECORDS FOR [nrv2e.8bit]:
 OFFSET   TYPE              VALUE
 000000f0 R_MIPS_PC16       nrv.done
 
-
 RELOCATION RECORDS FOR [nrv2b.32bit]:
 OFFSET   TYPE              VALUE
 000000b4 R_MIPS_PC16       nrv.done
-
 
 RELOCATION RECORDS FOR [nrv2d.32bit]:
 OFFSET   TYPE              VALUE
 00000104 R_MIPS_PC16       nrv.done
 
-
 RELOCATION RECORDS FOR [nrv2e.32bit]:
 OFFSET   TYPE              VALUE
 00000104 R_MIPS_PC16       nrv.done
-
 
 RELOCATION RECORDS FOR [nrv2b.small]:
 OFFSET   TYPE              VALUE
 00000060 R_MIPS_PC16       nrv.done
 
-
 RELOCATION RECORDS FOR [nrv2d.small]:
 OFFSET   TYPE              VALUE
 00000078 R_MIPS_PC16       nrv.done
 
-
 RELOCATION RECORDS FOR [nrv2e.small]:
 OFFSET   TYPE              VALUE
 00000078 R_MIPS_PC16       nrv.done
-
 
 RELOCATION RECORDS FOR [lzma.init]:
 OFFSET   TYPE              VALUE
@@ -275,5 +243,3 @@ OFFSET   TYPE              VALUE
 00000028 R_MIPS_LO16       lzma_properties
 00000034 R_MIPS_PC16       decompressor.start
 00000044 R_MIPS_LO16       lzma_stack_adjust
-
-

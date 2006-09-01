@@ -1,4 +1,3 @@
-
 tmp/m68k-atari.tos.bin:     file format elf32-m68k
 
 Sections:
@@ -110,7 +109,6 @@ SYMBOL TABLE:
 00000000 g       *ABS*	00000000 lzma_fast_start_offset
 00000000 g       *ABS*	00000000 lzma_small_start_offset
 
-
 RELOCATION RECORDS FOR [tos0]:
 OFFSET   TYPE              VALUE
 0000001c R_68K_32          up11
@@ -118,41 +116,33 @@ OFFSET   TYPE              VALUE
 00000032 R_68K_32          up13
 0000003a R_68K_32          up21
 
-
 RELOCATION RECORDS FOR [loop1_set_count.b]:
 OFFSET   TYPE              VALUE
 00000001 R_68K_8           loop1_count
-
 
 RELOCATION RECORDS FOR [loop1_set_count.w]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_16          loop1_count
 
-
 RELOCATION RECORDS FOR [loop1_set_count.l]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_32          loop1_count
-
 
 RELOCATION RECORDS FOR [loop1_subql]:
 OFFSET   TYPE              VALUE
 00000003 R_68K_PC8         loop1_label+0xffffffff
 
-
 RELOCATION RECORDS FOR [loop1_subqw]:
 OFFSET   TYPE              VALUE
 00000003 R_68K_PC8         loop1_label+0xffffffff
-
 
 RELOCATION RECORDS FOR [loop1_dbra]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_PC16        loop1_label
 
-
 RELOCATION RECORDS FOR [loop2.fast]:
 OFFSET   TYPE              VALUE
 00000001 R_68K_8           loop2_count
-
 
 RELOCATION RECORDS FOR [copy_to_stack]:
 OFFSET   TYPE              VALUE
@@ -161,49 +151,38 @@ OFFSET   TYPE              VALUE
 00000012 R_68K_16          flush_cache_rts_offset
 00000015 R_68K_PC8         flush_cache+0xffffffff
 
-
 RELOCATION RECORDS FOR [jmp_decompressor]:
 OFFSET   TYPE              VALUE
 00000006 R_68K_32          up31
-
 
 RELOCATION RECORDS FOR [loop3_subql]:
 OFFSET   TYPE              VALUE
 00000003 R_68K_PC8         loop3_label:+0xffffffff
 
-
 RELOCATION RECORDS FOR [loop3_subqw]:
 OFFSET   TYPE              VALUE
 00000003 R_68K_PC8         loop3_label:+0xffffffff
-
 
 RELOCATION RECORDS FOR [loop3_dbra]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_PC16        loop3_label:
 
-
 RELOCATION RECORDS FOR [flush_cache]:
 OFFSET   TYPE              VALUE
 0000007a R_68K_16          clear_bss_size_p4
-
 
 RELOCATION RECORDS FOR [clear_dirty_stack]:
 OFFSET   TYPE              VALUE
 00000001 R_68K_8           clear_dirty_stack_len
 
-
 RELOCATION RECORDS FOR [loop3_set_count.b]:
 OFFSET   TYPE              VALUE
 00000001 R_68K_8           loop3_count
-
 
 RELOCATION RECORDS FOR [loop3_set_count.w]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_16          loop3_count
 
-
 RELOCATION RECORDS FOR [loop3_set_count.l]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_32          loop3_count
-
-

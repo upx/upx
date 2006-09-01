@@ -1,4 +1,3 @@
-
 tmp/arm.v4t-wince.pe.bin:     file format elf32-littlearm
 
 Sections:
@@ -58,11 +57,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 lzma_c_len
 00000000         *UND*	00000000 lzma_properties
 
-
 RELOCATION RECORDS FOR [DllStart]:
 OFFSET   TYPE              VALUE
 00000004 R_ARM_PC24        ExeStart
-
 
 RELOCATION RECORDS FOR [ExeStart]:
 OFFSET   TYPE              VALUE
@@ -73,17 +70,14 @@ OFFSET   TYPE              VALUE
 00000044 R_ARM_ABS32       uncompressed_length
 00000058 R_ARM_ABS32       original_entry
 
-
 RELOCATION RECORDS FOR [Unfilter_0x50]:
 OFFSET   TYPE              VALUE
 00000030 R_ARM_ABS32       filter_buffer_start
 00000034 R_ARM_ABS32       filter_buffer_end
 
-
 RELOCATION RECORDS FOR [Relocs]:
 OFFSET   TYPE              VALUE
 0000003c R_ARM_ABS32       start_of_relocs
-
 
 RELOCATION RECORDS FOR [Imports]:
 OFFSET   TYPE              VALUE
@@ -94,16 +88,13 @@ OFFSET   TYPE              VALUE
 00000078 R_ARM_ABS32       start_of_imports
 0000007c R_ARM_ABS32       start_of_dll_names
 
-
 RELOCATION RECORDS FOR [Call2B]:
 OFFSET   TYPE              VALUE
 00000000 R_ARM_THM_CALL    .ucl_nrv2b_decompress_8
 
-
 RELOCATION RECORDS FOR [Call2E]:
 OFFSET   TYPE              VALUE
 00000000 R_ARM_THM_CALL    .ucl_nrv2e_decompress_8
-
 
 RELOCATION RECORDS FOR [CallLZMA]:
 OFFSET   TYPE              VALUE
@@ -112,5 +103,3 @@ OFFSET   TYPE              VALUE
 00000028 R_ARM_ABS32       lzma_stack_adjust
 0000002c R_ARM_ABS32       lzma_c_len
 00000030 R_ARM_ABS32       lzma_properties
-
-

@@ -1,4 +1,3 @@
-
 tmp/arm.v4a-wince.pe.bin:     file format elf32-littlearm
 
 Sections:
@@ -63,11 +62,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 lzma_c_len
 00000000         *UND*	00000000 lzma_properties
 
-
 RELOCATION RECORDS FOR [DllStart]:
 OFFSET   TYPE              VALUE
 00000004 R_ARM_PC24        ExeStart
-
 
 RELOCATION RECORDS FOR [ExeStart]:
 OFFSET   TYPE              VALUE
@@ -79,7 +76,6 @@ OFFSET   TYPE              VALUE
 00000038 R_ARM_ABS32       uncompressed_length
 0000004c R_ARM_ABS32       original_entry
 
-
 RELOCATION RECORDS FOR [Unfilter_0x50]:
 OFFSET   TYPE              VALUE
 00000010 R_ARM_PC24        Unfilter_0x50
@@ -88,13 +84,11 @@ OFFSET   TYPE              VALUE
 00000044 R_ARM_ABS32       filter_buffer_start
 00000048 R_ARM_ABS32       filter_buffer_end
 
-
 RELOCATION RECORDS FOR [Relocs]:
 OFFSET   TYPE              VALUE
 00000010 R_ARM_PC24        Relocs
 00000058 R_ARM_PC24        Relocs
 0000005c R_ARM_ABS32       start_of_relocs
-
 
 RELOCATION RECORDS FOR [Imports]:
 OFFSET   TYPE              VALUE
@@ -112,7 +106,6 @@ OFFSET   TYPE              VALUE
 0000009c R_ARM_PC24        Imports
 000000b0 R_ARM_ABS32       start_of_imports
 000000b4 R_ARM_ABS32       start_of_dll_names
-
 
 RELOCATION RECORDS FOR [.ucl_nrv2e_decompress_8]:
 OFFSET   TYPE              VALUE
@@ -140,11 +133,9 @@ OFFSET   TYPE              VALUE
 0000010c R_ARM_PC24        .ucl_nrv2e_decompress_8
 00000110 R_ARM_PC24        .ucl_nrv2e_decompress_8
 
-
 RELOCATION RECORDS FOR [Call2E]:
 OFFSET   TYPE              VALUE
 00000000 R_ARM_PC24        ucl_nrv2e_decompress_8
-
 
 RELOCATION RECORDS FOR [.ucl_nrv2d_decompress_8]:
 OFFSET   TYPE              VALUE
@@ -168,11 +159,9 @@ OFFSET   TYPE              VALUE
 000000f8 R_ARM_PC24        .ucl_nrv2d_decompress_8
 000000fc R_ARM_PC24        .ucl_nrv2d_decompress_8
 
-
 RELOCATION RECORDS FOR [Call2D]:
 OFFSET   TYPE              VALUE
 00000000 R_ARM_PC24        ucl_nrv2d_decompress_8
-
 
 RELOCATION RECORDS FOR [.ucl_nrv2b_decompress_8]:
 OFFSET   TYPE              VALUE
@@ -192,11 +181,9 @@ OFFSET   TYPE              VALUE
 000000bc R_ARM_PC24        .ucl_nrv2b_decompress_8
 000000c0 R_ARM_PC24        .ucl_nrv2b_decompress_8
 
-
 RELOCATION RECORDS FOR [Call2B]:
 OFFSET   TYPE              VALUE
 00000000 R_ARM_PC24        ucl_nrv2b_decompress_8
-
 
 RELOCATION RECORDS FOR [CallLZMA]:
 OFFSET   TYPE              VALUE
@@ -207,7 +194,6 @@ OFFSET   TYPE              VALUE
 00000048 R_ARM_ABS32       lzma_stack_adjust
 0000004c R_ARM_ABS32       lzma_c_len
 00000050 R_ARM_ABS32       lzma_properties
-
 
 RELOCATION RECORDS FOR [LZMA_DEC10]:
 OFFSET   TYPE              VALUE
@@ -284,5 +270,3 @@ OFFSET   TYPE              VALUE
 000008fc R_ARM_PC24        LZMA_DEC10
 00000904 R_ARM_PC24        LZMA_DEC10
 00000928 R_ARM_PC24        LZMA_DEC10
-
-
