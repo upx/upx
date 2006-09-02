@@ -713,10 +713,10 @@ endif
 
 ifndef EXTRA_MAKEFILES
 EXTRA_MAKEFILES :=
-ifneq ($(filter extra-%,$(MAKECMDGOALS)),)
+##ifneq ($(filter extra-%,$(MAKECMDGOALS)),)
 EXTRA_MAKEFILES += $(wildcard src/arch/*/Makefile.extra src/arch/*/*/Makefile.extra src/arch/*/*/*/Makefile.extra)
-##EXTRA_MAKEFILES += $(shell find src/arch -name Makefile.extra 2>/dev/null)
-endif
+####EXTRA_MAKEFILES += $(shell find src/arch -name Makefile.extra 2>/dev/null)
+##endif
 endif
 
 ifneq ($(strip $(EXTRA_MAKEFILES)),)

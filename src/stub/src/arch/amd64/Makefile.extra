@@ -24,17 +24,20 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // amd64-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = amd64-lzma amd64-linux.elf default
+lzma_d_c%.S : tc_list = method-lzma amd64-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf64-x86-64
 
-tc.amd64-lzma.gcc      = $(tc.amd64-linux.elf.gcc)
-tc.amd64-lzma.gcc     += -Os
-tc.amd64-lzma.gcc     += -ffunction-sections
-tc.amd64-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.amd64-lzma.gcc     += -I$(top_srcdir)/src
+c := tc.method-lzma.gcc
+$c  = $(tc.amd64-linux.elf.gcc)
+$c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

@@ -1004,9 +1004,9 @@
 	ldr	r0, [sp, #28]
 	ldr	r2, [sp, #148]
 	cmp	r0, r2
-	bcs	.LfCB1171
+	bcs	.LfCB1173
 	b	.Lf22	@long jump
-.LfCB1171:
+.LfCB1173:
 .Lf141:
 	ldr	r3, .Lf175
 	cmp	r1, r3

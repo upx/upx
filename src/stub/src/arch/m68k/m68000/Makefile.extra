@@ -24,21 +24,23 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // m68k-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = m68k-lzma default
+lzma_d_c%.S : tc_list = method-lzma default
 lzma_d_c%.S : tc_bfdname = elf32-m68k
 
-tc.m68k-lzma.gcc      = $(tc.m68k-atari.tos.gcc)
+c := tc.method-lzma.gcc
+$c  = $(tc.m68k-atari.tos.gcc)
 # FIXME / TODO: we still generate references to __mulsi3
-##tc.m68k-lzma.gcc     += -m68020
-##tc.m68k-lzma.gcc     += -mshort -D_LZMA_UINT32_IS_ULONG
-tc.m68k-lzma.gcc     += -Os -fomit-frame-pointer
-tc.m68k-lzma.gcc     += -fwrapv
-tc.m68k-lzma.gcc     += -ffunction-sections
-tc.m68k-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.m68k-lzma.gcc     += -I$(top_srcdir)/src
+##$c += -m68020
+##$c += -mshort -D_LZMA_UINT32_IS_ULONG
+$c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

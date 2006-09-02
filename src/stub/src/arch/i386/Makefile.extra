@@ -24,16 +24,19 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // i386-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = i386-lzma i386-linux.elf arch-i386 default
+lzma_d_c%.S : tc_list = method-lzma i386-linux.elf arch-i386 default
 lzma_d_c%.S : tc_bfdname = elf32-i386
 
-tc.i386-lzma.gcc      = $(tc.i386-linux.elf.gcc)
-tc.i386-lzma.gcc     += -ffunction-sections
-tc.i386-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.i386-lzma.gcc     += -I$(top_srcdir)/src
+c := tc.method-lzma.gcc
+$c  = $(tc.i386-linux.elf.gcc)
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

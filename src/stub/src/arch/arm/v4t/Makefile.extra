@@ -24,18 +24,21 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // arm-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = arm-lzma arm-linux.elf default
+lzma_d_c%.S : tc_list = method-lzma arm-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf32-littlearm
 
-tc.arm-lzma.gcc      = $(tc.arm-linux.elf.gcc)
-tc.arm-lzma.gcc     += -march=armv4t -mthumb
-tc.arm-lzma.gcc     += -Os
-tc.arm-lzma.gcc     += -ffunction-sections
-tc.arm-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.arm-lzma.gcc     += -I$(top_srcdir)/src
+c := tc.method-lzma.gcc
+$c  = $(tc.arm-linux.elf.gcc)
+$c += -march=armv4t -mthumb
+$c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -S $< -o tmp/$T.s

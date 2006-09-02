@@ -24,18 +24,21 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // mipsel.r3000-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = mipsel-lzma mipsel.r3000-ps1 default
+lzma_d_c%.S : tc_list = method-lzma mipsel.r3000-ps1 default
 lzma_d_c%.S : tc_bfdname = elf32-littlemips
 
-tc.mipsel-lzma.gcc      = $(tc.mipsel.r3000-ps1.gcc)
-tc.mipsel-lzma.gcc     += -pie -fPIC -mabi=eabi
-tc.mipsel-lzma.gcc     += -Os -fomit-frame-pointer
-tc.mipsel-lzma.gcc     += -ffunction-sections
-tc.mipsel-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.mipsel-lzma.gcc     += -I$(top_srcdir)/src
+c := tc.method-lzma.gcc
+$c  = $(tc.mipsel.r3000-ps1.gcc)
+$c += -pie -fPIC
+$c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+##$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

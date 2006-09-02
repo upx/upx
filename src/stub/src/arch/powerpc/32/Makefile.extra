@@ -24,18 +24,21 @@ include $(top_srcdir)/src/stub/Makefile
 
 
 # /***********************************************************************
-# // powerpc-lzma
+# // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = powerpc-lzma powerpc-linux.elf default
+lzma_d_c%.S : tc_list = method-lzma powerpc-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf32-powerpc
 
-tc.powerpc-lzma.gcc      = $(tc.powerpc-linux.elf.gcc)
-tc.powerpc-lzma.gcc     += -mcpu=405 -fPIC
-tc.powerpc-lzma.gcc     += -Os
-tc.powerpc-lzma.gcc     += -ffunction-sections
-tc.powerpc-lzma.gcc     += -I$(UPX_LZMADIR)
-tc.powerpc-lzma.gcc     += -I$(top_srcdir)/src
+c := tc.method-lzma.gcc
+$c  = $(tc.powerpc-linux.elf.gcc)
+$c += -mcpu=405 -fPIC
+$c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
