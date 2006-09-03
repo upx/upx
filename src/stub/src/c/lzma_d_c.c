@@ -29,20 +29,25 @@
 //
 **************************************************************************/
 
-#define ACC_LIBC_NAKED
-#define ACC_OS_FREESTANDING
+#define ACC_LIBC_NAKED 1
+#define ACC_OS_FREESTANDING 1
 #include "miniacc.h"
 
+#if 0
 #undef _LZMA_IN_CB
 #undef _LZMA_OUT_READ
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
+#endif
 
 #if 0
 
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#if (ACC_ABI_LP64)
+#else
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
+#endif
+#include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
 #else
 
@@ -53,10 +58,14 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
 #undef LzmaDecode
 typedef struct {
     struct { unsigned char lc, lp, pb, dummy; } Properties;
-    CProb Probs[6];
-//    CProb *Probs;
+#ifdef _LZMA_PROB32
+    CProb Probs[8191];
+#else
+    CProb Probs[16382];
+#endif
 } CLzmaDecoderState;
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768)
+
 #define CLzmaDecoderState   const CLzmaDecoderState
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
