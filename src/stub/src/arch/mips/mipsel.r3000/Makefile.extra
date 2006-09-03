@@ -35,7 +35,14 @@ $c  = $(tc.mipsel.r3000-ps1.gcc)
 $c += -pie -fPIC
 $c += -Os -fomit-frame-pointer
 $c += -mtune=r4000
+ifeq (1,1)
+# Important note: these settings are tuned so that the resulting
+#   code can get compressed efficiently with NRV2B.
+$c += -fno-regmove
 $c += -fno-sched-spec
+$c += -fno-schedule-insns
+$c += -fno-schedule-insns2
+endif
 $c += -fno-unit-at-a-time
 $c += -ffunction-sections
 $c += -fwrapv
