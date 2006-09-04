@@ -34,18 +34,32 @@ c := tc.method-lzma.gcc
 $c  = $(tc.mipsel.r3000-ps1.gcc)
 $c += -pie -fPIC
 $c += -Os -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+# Important note: these settings are tuned for size so that the
+#   resulting code can get compressed efficiently with NRV2B.
+# Also see test-stub-compression below.
+ifneq ($(findstring -gcc-3.4.4,$(firstword $($c))),)
+$c += -mtune=r3000
+$c += -fno-schedule-insns
+$c += -fno-schedule-insns2
+else ifneq ($(findstring -gcc-4.1.1,$(firstword $($c))),)
 $c += -mtune=r4000
-ifeq (1,1)
-# Important note: these settings are tuned so that the resulting
-#   code can get compressed efficiently with NRV2B.
 $c += -fno-regmove
 $c += -fno-sched-spec
 $c += -fno-schedule-insns
 $c += -fno-schedule-insns2
+else ifneq ($(findstring -gcc-4.2.0,$(firstword $($c))),)
+# gcc-4.2.0-20060826
+$c += -fno-wrapv
+$c += -mtune=r4000
+$c += -fno-sched-spec
+$c += -fno-schedule-insns
+$c += -ffixed-30
+else
+$(error unknown gcc version: $(firstword $($c)))
 endif
-$c += -fno-unit-at-a-time
-$c += -ffunction-sections
-$c += -fwrapv
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
@@ -59,3 +73,21 @@ lzma_d_c%.S : lzma_d_c.c
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
+
+
+# /***********************************************************************
+# // test-stub-compression
+# ************************************************************************/
+
+test-stub-compression: tc_list = mipsel.r3000-ps1 default
+test-stub-compression: lzma_d_cf.S lzma_d_cs.S
+	@md5sum tmp/lzma_d_cs.bin
+	$(call tc,readelf) -S tmp/lzma_d_cs.o | egrep 'LzmaDecode '
+	@rm -f tmp/lzma_d_cs.bin.c.*
+	@bzip2 -c -9 < tmp/lzma_d_cs.bin > tmp/lzma_d_cs.bin.c.bz2
+	@gzip -c -9mn < tmp/lzma_d_cs.bin > tmp/lzma_d_cs.bin.c.gz
+ifdef UPX_UCLPACK
+	@$(UPX_UCLPACK) --nrv2b --10 tmp/lzma_d_cs.bin tmp/lzma_d_cs.bin.c.uclpack-nrv2b | egrep ' into '
+endif
+	@ls -l tmp/lzma_d_cs.bin.c.*
+.PHONY: test-stub-compression
