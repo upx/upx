@@ -156,6 +156,45 @@
 
 .endm
 
+// This alternate for UCL_SMALL is 1 cycle faster for most getbit
+// at a cost of 1 cycle (32 bits) or 3 cycles (8 bits) during refill.
+// [Refill could save 1 cycle if MIPS had "set CarryIn" for ADD or SHIFT.]
+// Call 'getbit'; it returns the next bit (0 or 1), in register 'var'.
+// Register 'bb' is the bit buffer; register 'bc' contains the 'empty' value.
+// The cases for widths 8 and 32 are not as similar as before,
+// and 64-bit registers would require other code.
+// But it is 1 cycle faster 31/32 of the time.
+// [Indentation after control transfer emphasizes delay slot.]
+//
+//init:
+//	lui bc,1<<(31 - 16)  # 1<<31  the flag bit
+//	lui bb,1<<(31 - 16)  # 1<<31  empty
+//--
+//  .if (8==UCL_NRV_BB)
+//refill:
+//	lbu bb,0(src_ilen)
+//	addiu src_len,1
+//	sll bb,1
+//	ori bb,1  # the flag bit
+//	sll bb,24-1  # left-justify in register
+//	// falling through the 'beq' below saves 3 words of space
+//  .endif
+//getbit:
+//	beq bc,bb,refill  # detect flag bit [empty]
+//	  srl var,bb,31  # var= most significant bit of bb
+//	jr ra
+//	  sll bb,1
+//  .if (32==UCL_NRV_BB)
+//refill:
+//	lwr bb,0(src_ilen)
+//	lwl bb,3(src_ilen)
+//	addiu src_ilen,4
+//	srl var,bb,31  # var= most significant bit of bb
+//	sll bb,1
+//	jr ra
+//	  ori bb,1  # the flag bit
+//  .endif
+
 .macro  GBIT
 
             local d
