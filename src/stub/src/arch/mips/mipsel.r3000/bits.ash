@@ -195,6 +195,23 @@
 //	  ori bb,1  # the flag bit
 //  .endif
 
+// 2006-09-06  Faster by 3 cycles for inline expansion:
+//	beq bc,bb,7f  # detect flag bit [empty]
+//	  srl var,bb,31  # var= most significant bit of bb
+//	sll bb,1
+//6:
+//	.subsection 1  # somewhere out-of-line
+//7:
+//	b refill
+//	  addi ra,r_bd_base,6b - bd_base  # return past the 'sll' above
+//	.subsection 0  # return to main in-line code
+//
+// which is 3 cycles usually, +2 cycles for entering refill,
+// +8 bytes (2 instructions) per getbit [7 in nrv2b, 9 in nrv2e]
+// and requires another register r_bd_base which holds a handy
+// address within +/- 32KB of the returns from refill.
+//
+
 .macro  GBIT
 
             local d
