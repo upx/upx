@@ -409,6 +409,7 @@ void PackTos::fileInfo()
 
 void PackTos::pack(OutputFile *fo)
 {
+    throwInternalError("atari/tos is currenty broken; this will get fixed in UPX 2.91");
     unsigned t;
     unsigned nrelocs = 0;
     unsigned relocsize = 0;
