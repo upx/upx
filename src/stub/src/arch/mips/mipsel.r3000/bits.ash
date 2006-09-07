@@ -102,28 +102,23 @@
 ;// getbit macro
 ;//////////////////////////////////////
 
-.macro  ADDBITS done
+.macro  ADDBITS
 
     .if (UCL_SMALL == 1)
             addiu   bc, -1
-            bgez    bc, \done
-            srlv    var, bb, bc
+            bltz    bc, 2b
     .else
-            bgtz    bc, \done
+            bgtz    bc, 2f
             addiu   bc, -1
     .endif
 
 .endm
 
-.macro  ADDBITS_DONE done
+.macro  ADDBITS_DONE
 
+            srlv    var,bb,bc
     .if (UCL_SMALL == 1)
-            srlv    var,bb,bc
-\done:
             jr      ra
-    .else
-\done:
-            srlv    var,bb,bc
     .endif
             andi    var,0x0001
 
@@ -131,7 +126,11 @@
 
 .macro  FILLBYTES_8
 
+    .if (UCL_SMALL == 1)
+            li      bc,8
+    .else
             li      bc,7
+    .endif
             lbu     bb,0(src_ilen)
             addiu   src_ilen,1
 
@@ -139,7 +138,11 @@
 
 .macro  FILLBYTES_32
 
+    .if (UCL_SMALL == 1)
+            li      bc,32
+    .else
             li      bc,31
+    .endif
             lwr     bb,0(src_ilen)
             lwl     bb,3(src_ilen)
             addiu   src_ilen,4
@@ -214,14 +217,20 @@
 
 .macro  GBIT
 
-            local d
-
-            ADDBITS d
+    .if (UCL_SMALL == 1)
+2:
             FILLBYTES
-            ADDBITS_DONE d
-
+1:
+            ADDBITS
+            ADDBITS_DONE
+    .else
+            ADDBITS
+            FILLBYTES
+2:
+            ADDBITS_DONE 
+    .endif
+        
 .endm
-
 
 ;//////////////////////////////////////
 ;// getbit call macro for SMALL version
@@ -230,10 +239,15 @@
 .macro      GETBIT  p1
 
     .if (UCL_SMALL == 1)
-        .ifb   p1
-            bal     1f      // gb_sub
+        .if (WITHOUT_SUB == 1)
+            t = gb_e
         .else
-            bal     1f+4    // gb_sub+4
+            t = 1f
+        .endif
+        .ifb   p1
+            bal     t      // gb_sub
+        .else
+            bal     t+4    // gb_sub+4
             addiu   bc,-1
         .endif
     .else
@@ -252,31 +266,34 @@
             local   done
 
 .ifc "\option", "full"
-.ifnb label
+    .ifnb label
 \label:
-.endif
+    .endif
             \type   decomp_done
-.if (UCL_SMALL == 1)
-1:
+    .if (UCL_SMALL == 1)
+            WITHOUT_SUB = 0
             GBIT
-.endif
+    .endif
 .else
 .ifc "\option", "sub_only"
-            sub_size = .
-            GBIT
-            sub_size = . - sub_size
+    
+2:
+            FILLBYTES
+    .ifnb label
+            .global \label
+\label:
+    .endif
+            ADDBITS
+            ADDBITS_DONE
 .else
 .ifc "\option", "without_sub"
     .if (UCL_SMALL == 1)
         PRINT ("[WARNING] building \type with UCL_SMALL = 1 without subroutine")
-        .if (sub_size != 0)
+            WITHOUT_SUB = 1
             \type   decomp_done
-1:
-        .else
-            .error "\"with_no_sub\" cannot build if \"build_sub\" must be used first"
-        .endif
+            WITHOUT_SUB = 0
     .else
-        .error "\"without_sub\" cannot build if UCL_SMALL = 0"
+        .error "cannot build \"without_sub\" if UCL_SMALL = 0"
     .endif
 .else
     .error "use \"full\", \"sub\" or \"without_sub\" for build"
@@ -292,12 +309,12 @@
 
 .macro   uclmcpy     ret
 
-            local   wordchk, prepbcpy
-            local   bcopy, skip
+            local   wordchk, bcpy
+            local   bcpy_chk, skip
 
     .if (UCL_FAST == 1)
             slti    var,m_off,4
-            bnez    var,prepbcpy
+            bnez    var,bcpy
             subu    m_pos,dst,m_off
 wordchk:
             slti    var,m_len,4
@@ -312,20 +329,19 @@ wordchk:
             addiu   dst,4
             b       \ret
             nop
-prepbcpy:
     .else
             subu    m_pos,dst,m_off
     .endif
-bcopy:
+bcpy_chk:
+            beqz    m_len,\ret
+bcpy:
             lbu     var,0(m_pos)
 skip:
             addiu   m_len,-1
             sb      var,0(dst)
             addiu   m_pos,1
-            bnez    m_len,bcopy
+            b       bcpy_chk
             addiu   dst,1
-            b       \ret
-            nop
 
 .endm
 

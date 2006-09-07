@@ -305,25 +305,25 @@ int PackPs1::buildLoader(const Filter *)
     const char *method = NULL;
 
     if (ph.method == M_NRV2B_8)
-        method = isCon ? "nrv2b.small,gb.8bit.sub,nrv.done" :
+        method = isCon ? "nrv2b.small,8bit.sub,nrv.done" :
                     "nrv2b.8bit,nrv.done";
     else if (ph.method == M_NRV2D_8)
-        method = isCon ? "nrv2d.small,gb.8bit.sub,nrv.done" :
+        method = isCon ? "nrv2d.small,8bit.sub,nrv.done" :
                     "nrv2d.8bit,nrv.done";
     else if (ph.method == M_NRV2E_8)
-        method = isCon ? "nrv2e.small,gb.8bit.sub,nrv.done" :
+        method = isCon ? "nrv2e.small,8bit.sub,nrv.done" :
                     "nrv2e.8bit,nrv.done";
     else if (ph.method == M_NRV2B_LE32)
-        method = isCon ? "nrv2b.small,gb.32bit.sub,nrv.done" :
+        method = isCon ? "nrv2b.small,32bit.sub,nrv.done" :
                     "nrv2b.32bit,nrv.done";
     else if (ph.method == M_NRV2D_LE32)
-        method = isCon ? "nrv2d.small,gb.32bit.sub,nrv.done" :
+        method = isCon ? "nrv2d.small,32bit.sub,nrv.done" :
                     "nrv2d.32bit,nrv.done";
     else if (ph.method == M_NRV2E_LE32)
-        method = isCon ? "nrv2e.small,gb.32bit.sub,nrv.done" :
+        method = isCon ? "nrv2e.small,32bit.sub,nrv.done" :
                     "nrv2e.32bit,nrv.done";
     else if (ph.method == M_LZMA)
-        method = "nrv2b.small,gb.8bit.sub,nrv.done,lzma.prep";
+        method = "nrv2b.small,8bit.sub,nrv.done,lzma.prep";
     else
         throwInternalError("unknown compression method");
 
@@ -365,10 +365,7 @@ int PackPs1::buildLoader(const Filter *)
             delete [] cprLoader;
         }
         else
-        {
-            initLoader(nrv_loader, sizeof(nrv_loader),
-                       (ph.method != M_LZMA || isCon) ? 0 : 1);
-        }
+            initLoader(nrv_loader, sizeof(nrv_loader));
 
         pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4);
         linker->addSection("pad.code", &pad_code, pad_code, 0);
@@ -428,13 +425,18 @@ int PackPs1::buildLoader(const Filter *)
 #define IS_ADDIU(a)   ((OPTYPE(a) == REGIMM && OPCODE(a) == ADDIU))
 #define IS_SW_ZERO(a) ((OPTYPE(a) == STORE && OPCODE(a) == SW) && REG2(a) == 0)
 
+#define BSS_CHK_LIMIT (18)
+
 bool PackPs1::findBssSection()
 {
     unsigned char reg;
     LE32 *p1 = (LE32 *)(ibuf + (ih.epc - ih.tx_ptr));
 
+    if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4)) > fdata_size)
+        return false;
+
     // check 18 opcodes for sw zero,0(x)
-    for (signed i = 18; i >= 0; i--)
+    for (signed i = BSS_CHK_LIMIT; i >= 0; i--)
     {
         unsigned short op = p1[i] >> 16;
         if (IS_SW_ZERO(op))
@@ -613,8 +615,12 @@ void PackPs1::pack(OutputFile *fo)
     if (ph.method == M_LZMA)
     {
         linker->defineSymbol("lzma_init_off", lzma_init);
-        defineDecompressorSymbols();
+        linker->defineSymbol("gb_e", linker->getSymbolOffset("gb8_e"));
     }
+    else
+        if (isCon)
+            linker->defineSymbol("gb_e", linker->getSymbolOffset(is32Bit ? "gb32_e" : "gb8_e"));
+    
     if (isCon)
     {
         linker->defineSymbol("PAD", pad_code);
@@ -635,6 +641,9 @@ void PackPs1::pack(OutputFile *fo)
     linker->relocate();
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, lsize);
+
+    if (!isCon && ph.method == M_LZMA && (HD_CODE_OFS + d_len + h_len) > CD_SEC)
+        throwInternalError("lzma --boot-only loader > 2048");
 
     // ps1_exe_t structure
     fo->write(&oh, sizeof(oh));

@@ -313,12 +313,12 @@ section     nrv2e.32bit
 // ========== console-run
 
             UCL_init    8,1,0
-section     gb.8bit.sub
-            build sub_only
+section     8bit.sub
+            build sub_only, 0, gb8_e
 
             UCL_init    32,1,0
-section     gb.32bit.sub
-            build sub_only
+section     32bit.sub
+            build sub_only, 0, gb32_e
 
 section     nrv2b.small
             build without_sub, nrv2b
