@@ -703,8 +703,9 @@ Maximum uncompressed size: ~1.89 / ~7.60 Mbytes.
 
 Notes:
 
-  - UPX creates as default a console transfer compatible executable.
-    For CD-Mastering use option "--boot-only" as descriped below.
+  - UPX creates as default a suitable executable for CD-Mastering
+    and console transfer. For a CD-Master main executable you could also try
+    the special option "--boot-only" as descriped below.
 
   - Normally the packed files use the same memory areas like the uncompressed
     versions, so they will not override other memory areas while unpacking.
