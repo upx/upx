@@ -84,18 +84,20 @@ lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 
 # /***********************************************************************
-# // test-stub-compression
+# // test-stub-compression (needs UPX_UCLPACK)
 # ************************************************************************/
+
+define __test_stub_compression
+	@md5sum $1
+	$(if $2,$(call tc,readelf) -S $2 | egrep 'LzmaDecode ')
+	@rm -f $1.tmp.*
+	@bzip2 -9  < $1 > $1.tmp.bz2
+	@gzip -9mn < $1 > $1.tmp.gz
+	$(if $(UPX_UCLPACK),@$(UPX_UCLPACK) --nrv2b --10 $1 $1.tmp.uclpack-nrv2b | egrep ' into ')
+	@ls -l $1.tmp.*
+endef
 
 test-stub-compression: tc_list = mipsel.r3000-ps1 default
 test-stub-compression: lzma_d_cf.S lzma_d_cs.S
-	@md5sum tmp/lzma_d_cs.bin
-	$(call tc,readelf) -S tmp/lzma_d_cs.o | egrep 'LzmaDecode '
-	@rm -f tmp/lzma_d_cs.bin.c.*
-	@bzip2 -c -9 < tmp/lzma_d_cs.bin > tmp/lzma_d_cs.bin.c.bz2
-	@gzip -c -9mn < tmp/lzma_d_cs.bin > tmp/lzma_d_cs.bin.c.gz
-ifdef UPX_UCLPACK
-	@$(UPX_UCLPACK) --nrv2b --10 tmp/lzma_d_cs.bin tmp/lzma_d_cs.bin.c.uclpack-nrv2b | egrep ' into '
-endif
-	@ls -l tmp/lzma_d_cs.bin.c.*
+	$(call __test_stub_compression,tmp/lzma_d_cs.out,tmp/lzma_d_cs.o)
 .PHONY: test-stub-compression
