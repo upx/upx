@@ -227,9 +227,9 @@
             ADDBITS
             FILLBYTES
 2:
-            ADDBITS_DONE 
+            ADDBITS_DONE
     .endif
-        
+
 .endm
 
 ;//////////////////////////////////////
@@ -276,7 +276,7 @@
     .endif
 .else
 .ifc "\option", "sub_only"
-    
+
 2:
             FILLBYTES
     .ifnb label

@@ -620,7 +620,7 @@ void PackPs1::pack(OutputFile *fo)
     else
         if (isCon)
             linker->defineSymbol("gb_e", linker->getSymbolOffset(is32Bit ? "gb32_e" : "gb8_e"));
-    
+
     if (isCon)
     {
         linker->defineSymbol("PAD", pad_code);
