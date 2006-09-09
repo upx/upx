@@ -55,10 +55,10 @@ $c += -fmodulo-sched
 $c += -floop-optimize2
 $c += -ffixed-30
 else ifneq ($(findstring -gcc-4.2.0,$(firstword $($c))),)
-# gcc-4.2.0-20060826
+# gcc-4.2.0-20060826 snapshot
+$c += -fno-wrapv
 $c += -mtune=r4000
 $c += -fno-regmove
-$c += -fno-wrapv
 $c += -fno-sched-spec
 $c += -fno-schedule-insns
 $c += -fno-schedule-insns2
