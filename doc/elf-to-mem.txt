@@ -17,7 +17,7 @@ program itself.  So, the decompressor program (which contains the
 compressed version of the original executable) must have the same
 brk() as the original executable.  So, the second PT_LOAD
 ELF "segment" of the compressed program is used only to set the brk(0).
-See src/p_lx_elf.cpp, function PackLinuxI386elf::patchLoader().
+See src/p_lx_elf.cpp, function PackLinuxElf32::generateElfHdr.
 All of the decompressor's code, and all of the compressed image
 of the original executable, reside in the first PT_LOAD of the
 decompressor program.
@@ -63,3 +63,14 @@ clear the free portion of the stack (to compensate for ld-linux.so.2
 assuming that its automatic stack variables are initialized to zero),
 and remove (all but 4 bytes of) the decompression program (and
 compressed executable) from the address space.
+
+Because the UPX runtime stub removes all traces of the compressed file
+from the address space, then the Linux kernel erases the symlink
+/proc/self/exe.  Linux stores the pathname argument that was specified
+to execve() immediately after the '\0' which terminates the character
+string of the last environment variable [as of execve()].  This is true
+for at least all Linux 2.6, 2.4, and 2.2 kernels.  The pathname is not
+"bound" to the file as strongly as /proc/self/exe (the file may be changed
+without affecting the pathname), but the pathname does provide some
+information.  The pathname may be relative to the working directory,
+so look before any chdir().
