@@ -55,12 +55,13 @@
 **************************************************************************/
 
 PackLinuxI386::PackLinuxI386(InputFile *f) : super(f),
-    ei_osabi(0), osabi_note(NULL)
+    ei_osabi(Elf32_Ehdr::ELFOSABI_LINUX), osabi_note(NULL)
 {
 }
 
 PackBSDI386::PackBSDI386(InputFile *f) : super(f)
 {
+    ei_osabi = 0;  // not ELFOSABI_LINUX
 }
 
 static const
@@ -560,15 +561,17 @@ bool PackLinuxI386::canPack()
         // FIXME: N_TRSIZE, N_DRSIZE
         // FIXME: check for aout shared libraries
     }
-#if defined(__linux__)
-    // only compress scripts when running under Linux
-    else if (!memcmp(buf, "#!/", 3))                    // #!/bin/sh
-        exetype = -1;
-    else if (!memcmp(buf, "#! /", 4))                   // #! /bin/sh
-        exetype = -1;
-    else if (!memcmp(buf, "\xca\xfe\xba\xbe", 4))       // Java bytecode
-        exetype = -2;
-#endif
+    else { // shell scripts and other interpreters
+        if (Elf32_Ehdr::ELFOSABI_LINUX!=ei_osabi) {
+            return false;  // so far, only Linux has runtime stub for shell
+        }
+        else if (!memcmp(buf, "#!/", 3))                    // #!/bin/sh
+            exetype = -1;
+        else if (!memcmp(buf, "#! /", 4))                   // #! /bin/sh
+            exetype = -1;
+        else if (!memcmp(buf, "\xca\xfe\xba\xbe", 4))       // Java bytecode
+            exetype = -2;
+    }
 
     return super::canPack();
 }
