@@ -61,7 +61,16 @@ PackLinuxI386::PackLinuxI386(InputFile *f) : super(f),
 
 PackBSDI386::PackBSDI386(InputFile *f) : super(f)
 {
-    ei_osabi = 0;  // not ELFOSABI_LINUX
+    // Shell scripts need help specifying the target operating system.
+    // Elf input will override this with .e_ident[EI_OSABI] or PT_NOTE.
+    // [2006-09-27: Today's only runtime stub for shell is for linux.]
+    if (Elf32_Ehdr::ELFOSABI_LINUX==opt->o_unix.osabi0) {
+        // Disallow an incompatibility.
+        ei_osabi = Elf32_Ehdr::ELFOSABI_NONE;
+    }
+    else {
+        ei_osabi = opt->o_unix.osabi0;  // might be ELFOSABI_NONE
+    }
 }
 
 static const
