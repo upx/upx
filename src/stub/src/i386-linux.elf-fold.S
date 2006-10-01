@@ -46,12 +46,13 @@
 #define a_val  4
 #define sz_auxv 8
 
+#define __NR_readlink 85
 #define __NR_munmap   91
 
 // control just falls through, after this part and compiled C code
 // are uncompressed.
 
-fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program
+fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program; %ebp= f_expand
         // patchLoader will modify to be
         //   dword sz_uncompressed, sz_compressed
         //   byte  compressed_data...
@@ -76,11 +77,14 @@ fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program
 
 #define ET_DYN    3
 
+        push ebx  // save &Elf32_Ehdr
         sub ecx, ecx
         mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
         mov esi, esp
         mov edi, esp
+        sub ebx, ebx  // 0
         call do_auxv  // clear bits in edx according to existing auxv slots
+        lea ebx,[4+ ecx]  // 4 for new envp[0]
 
         mov esi, esp
 L50:
@@ -91,8 +95,26 @@ L50:
         test edx,edx
         jne L50
 
+        sub esp, 4+ 4+ 4096  // new envp[0], "   =", buffer
         mov edi, esp
         call do_auxv  // move; fill new auxv slots with AT_IGNORE
+
+        mov dword ptr [esi], ('='<<24)|(' '<<16)|(' '<<8)|(' '<<0)  // "   ="
+        mov [ebx],esi  // additional envp[0]
+        mov edx,4096  // length
+        lea ecx,[4+ esi]  // buf
+        call L52
+        .asciz "/proc/self/exe"
+L52:
+        pop ebx  // path
+        push __NR_readlink
+        pop eax
+        int 0x80
+        test eax,eax
+        js L55
+        mov byte ptr [ecx + eax], 0  // NUL terminate the link text
+L55:
+        pop ebx  // recover &Elf32_Ehdr
 
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
@@ -157,7 +179,7 @@ L60:
 //  1st with esi==edi, ecx=0, edx= bitmap of slots needed: just update edx.
 //  2nd with esi!=edi, ecx= slot_count: move, then append AT_IGNORE slots
 // entry: esi= src = &argc; edi= dst; ecx= # slots wanted; edx= bits wanted
-// exit:  edi= &auxtab; edx= bits still needed
+// exit:  edi= &auxtab; edx= bits still needed; ecx= 0; ebx= &envp[0]; esi= &auxv[N]
 do_auxv:
         // cld
 
@@ -167,6 +189,8 @@ L10:  // move argc+argv
         test eax,eax
         jne L10
 
+        xchg edi, ebx  // ebx= &envp[0]
+        add edi, ebx  // insert extra space
 L20:  // move envp
         lodsd
         stosd
@@ -193,6 +217,7 @@ L32:
         dec eax  // convert AT_IGNORE to AT_NULL
         stosd  // re-terminate with AT_NULL
         stosd
+        mov esi,edi  // &auxv[N]
 
         pop edi  // &auxtab
         ret

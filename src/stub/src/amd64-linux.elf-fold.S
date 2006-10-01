@@ -54,6 +54,7 @@ __NR_munmap=   11
 __NR_brk=      12
 
 __NR_exit= 60
+__NR_readlink= 89
 
 /* In:
     cld
@@ -61,17 +62,37 @@ __NR_exit= 60
     %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
-        call L90  # push &f_unfilter
+        call L90  # push &L90a
+L90a:
+        .asciz "/proc/self/exe"
+L90b:
 #include "arch/amd64/bxx.S"
 L90:
-        lea (1+5+1)*8(%rsp),%rsi  # &argv[0]
+        pop %arg6  # L90a; later, &amdbxx: f_unfilter
+        movq %rsp,%rsi
+        leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
+        movq %rdi,%rsp
 0:
-        lodsq; testq %rax,%rax; jnz 0b  # %rsi= &env;
+        cmpq $0,(%rsi); movsq; jne 0b  # move past argv
+        movq %rdi,%arg3  # remember &new_env[0]
+        stosq  # space for new_env[0]
 0:
-        lodsq; testq %rax,%rax; jnz 0b  # %rsi= &Elf64_auxv
+        cmpq $0,(%rsi); movsq; jne 0b  # move past env
+        pushq %rdi  # &Elf64_auxv
+0:
+        cmpq $0,(%rsi); movsq; movsq; jne 0b  # move past auxv
 
-        pop %arg6  # &amdbxx: f_unfilter
-        movq %rsi,%arg4  # &Elf64_auxv
+        movq %rdi,(%arg3)  # new_env[0]
+        movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),%eax  # "   ="
+        stosl
+        movl $4096,%arg3l # buflen
+        movq  %rdi,%arg2  # buffer
+        movq %arg6,%arg1  # "/proc/self/exe"
+        push $ __NR_readlink; pop %eax
+        syscall; testl %eax,%eax; js 0f; movb $0,(%arg2,%rax)
+0:
+        addq $ L90b - L90a,%arg6  # &amdbxx: f_unfilter
+        pop %arg4  # &Elf64_auxv
         pop %arg2  # LENX
         pop %arg1  # ADRX
 
