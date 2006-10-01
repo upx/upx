@@ -88,7 +88,7 @@ L90:
         movl $4096,%arg3l # buflen
         movq  %rdi,%arg2  # buffer
         movq %arg6,%arg1  # "/proc/self/exe"
-        push $ __NR_readlink; pop %eax
+        push $ __NR_readlink; pop %rax
         syscall; testl %eax,%eax; js 0f; movb $0,(%arg2,%rax)
 0:
         addq $ L90b - L90a,%arg6  # &amdbxx: f_unfilter
