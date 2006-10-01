@@ -230,6 +230,7 @@ typedef struct {
         FAT_MAGIC = 0xcafebabe
     };
     enum e9 {
+        CPU_TYPE_I386      =          7,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012
     };
