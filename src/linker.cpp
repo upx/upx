@@ -451,7 +451,7 @@ void ElfLinker::dumpSymbols(FILE *fp) const
     for (unsigned ic = 0; ic < nsymbols; ic++)
     {
         Symbol *symbol = symbols[ic];
-        fprintf(fp, "%-20s 0x%08lx | %-20s 0x%08lx\n",
+        fprintf(fp, "%-20s 0x%08x | %-20s 0x%08x\n",
             symbol->name, symbol->offset, symbol->section->name, symbol->section->offset);
     }
 }
