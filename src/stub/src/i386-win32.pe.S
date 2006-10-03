@@ -48,7 +48,7 @@ section         PEICONS1
 section         PEICONS2
                 addw    [edi + icon_offset], offset icon_delta
 section         PETLSHAK
-                movw    [edi + tls_address], offset tls_value
+                mov     dword ptr [edi + tls_address], offset tls_value
 section         PEMAIN02
                 push    edi
                 or      ebp, -1
