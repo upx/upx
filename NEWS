@@ -4,7 +4,9 @@ User visible changes for UPX
 
 Changes in 2.90 (xx Oct 2006):
   * vmlinuz/386: fixed zlib uncompression problem on dos
-  * new executable format BSD/elf386 supports FreeBSD, NetBSD, OpenBSD [how?]
+  * new executable format BSD/elf386 supports FreeBSD, NetBSD, OpenBSD
+    via auto-detection of PT_NOTE or EI_OSABI
+  * linux/elf386, linux/ElfAMD remember /proc/self/exe in environment
   * lzma algorithm support (--lzma; --brute [?]) for most of the
     32-bit and 64-bit file formats
   * arm/pe: all the NRV compression methods are supported

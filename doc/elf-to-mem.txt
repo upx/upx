@@ -74,3 +74,8 @@ for at least all Linux 2.6, 2.4, and 2.2 kernels.  The pathname is not
 without affecting the pathname), but the pathname does provide some
 information.  The pathname may be relative to the working directory,
 so look before any chdir().
+
+The Elf formats for Linux add an environment variable named "   " [three
+spaces] which saves the results of readlink("/proc/self/exe",,) before
+the runtime stub unmaps all its pages.  As of 2006-10-03 this works
+for linux/elf386 and linux/ElfAMD.
