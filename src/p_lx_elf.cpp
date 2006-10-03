@@ -603,6 +603,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
 #undef PAGE_SIZE
 #undef PAGE_MASK
 
+    linker->dumpSymbols();
 }
 
 static const

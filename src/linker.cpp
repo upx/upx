@@ -443,6 +443,19 @@ void ElfLinker::defineSymbol(const char *name, unsigned value)
     }
 }
 
+// debugging support
+void ElfLinker::dumpSymbols(FILE *fp) const
+{
+    if (fp == NULL)
+        fp = stdout;
+    for (unsigned ic = 0; ic < nsymbols; ic++)
+    {
+        Symbol *symbol = symbols[ic];
+        fprintf(fp, "%-20s 0x%08lx | %-20s 0x%08lx\n",
+            symbol->name, symbol->offset, symbol->section->name, symbol->section->offset);
+    }
+}
+
 unsigned ElfLinker::getSymbolOffset(const char *name) const
 {
     assert(frozen);
