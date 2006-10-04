@@ -548,12 +548,25 @@ void
 PackLinuxElf64amd::defineSymbols(Filter const *)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned len = sz_pack2;
 
+    // We want to know if compressed data, plus stub, plus a couple pages,
+    // will fit below the uncompressed program in memory.  But we don't
+    // know the final total compressed size yet, so use the uncompressed
+    // size (total over all PT_LOAD64) as an upper bound.
+    unsigned len = 0;
+    acc_uint64l_t lo_va_user = ~0ul;  // infinity
+    for (int j= get_native16(&ehdri.e_phnum); --j>=0; ) {
+        if (PT_LOAD64 == get_native32(&phdri[j].p_type)) {
+            len += (unsigned)get_native64(&phdri[j].p_filesz);
+            acc_uint64l_t const va = get_native64(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
     lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
-    acc_uint64l_t const lo_va_user = 0x400000;  // XXX
     acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
     acc_uint64l_t adrc;
     acc_uint64l_t adrm;
