@@ -2,17 +2,17 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 2.90 (xx Oct 2006):
-  * vmlinuz/386: fixed zlib uncompression problem on dos
-  * new executable format BSD/elf386 supports FreeBSD, NetBSD, OpenBSD
+Changes in 2.90 (08 Oct 2006):
+  * LZMA algorithm support for most of the 32-bit and 64-bit file formats;
+    use new option '--lzma' to enable
+  * new format: BSD/elf386 supporting FreeBSD, NetBSD and OpenBSD
     via auto-detection of PT_NOTE or EI_OSABI
-  * linux/elf386, linux/ElfAMD remember /proc/self/exe in environment
-  * lzma algorithm support (--lzma; --brute [?]) for most of the
-    32-bit and 64-bit file formats
-  * arm/pe: all the NRV compression methods are supported
+  * arm/pe: all the NRV compression methods are now supported
     (only NRV2D is missing in thumb mode)
-  * major internal change: all the runtime decompression stubs are now built
-    from ELF object files using cross gcc and gas
+  * linux/elf386, linux/ElfAMD remember /proc/self/exe in environment
+  * vmlinuz/386: fixed zlib uncompression problem on dos
+  * major source code change: the runtime decompression stubs are now
+    built from internal ELF objects
 
 Changes in 2.02 (13 Aug 2006):
   * linux/386: work around Linux kernel bug (".bss" requires PF_W)
