@@ -140,7 +140,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), file_image(NULL), dynstr(NULL),
-    sz_phdrs(0), sz_elf_hdrs(0),
+    sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL)
 {
 }
