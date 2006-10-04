@@ -1556,8 +1556,6 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
 void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-    unsigned const len0 = sz_pack2;
-    unsigned len = len0;
 
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
@@ -1567,10 +1565,7 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
     unsigned adrc;
     unsigned adrm;
     unsigned adrx;
-    unsigned cntc;
-    unsigned lenm;
 
-    len += lsize;
     bool const is_big = true;
     if (is_big) {
         set_native32(    &elfout.ehdr.e_entry, linker->getSymbolOffset("_start") +
@@ -1581,15 +1576,6 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
         adrc = lo_va_stub;
         adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
         adrx = hlen + (PAGE_MASK & (~PAGE_MASK + adrm));  // round up to page boundary
-        lenm = PAGE_SIZE + len;
-        cntc = len >> 5;
-    }
-    else {
-        adrm = lo_va_stub + len;
-        adrc = adrm;
-        adrx = lo_va_stub + hlen;
-        lenm = PAGE_SIZE;
-        cntc = 0;
     }
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
