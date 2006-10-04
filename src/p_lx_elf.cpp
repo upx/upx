@@ -589,7 +589,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
         adrx = adru + hlen;
         lenm = PAGE_SIZE + len;
         lenu = PAGE_SIZE + len;
-        cntc = len >> 3;
+        cntc = len >> 3;  // over-estimate; corrected at runtime
     }
     else {
         adrm = lo_va_stub + len;
@@ -603,14 +603,19 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
     adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
 
-    //avoid circularity  linker->defineSymbol("LENX", sz_pack2 - hlen);
     linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
 
-    linker->defineSymbol("CNTC", cntc);  // count  for copy
+    // For actual moving, we need the true count, which depends on sz_pack2
+    // and is not yet known.  So the runtime stub detects "no move"
+    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
+    //linker->defineSymbol("CNTC", cntc);  // count  for copy
+
     linker->defineSymbol("LENU", lenu);  // len  for unmap
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     linker->defineSymbol("ADRU", adru);  // addr for unmap
-    linker->defineSymbol("JMPU", 12 + lo_va_user);  // trampoline for unmap
+#define EI_NIDENT 16  /* <elf.h> */
+    linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
+#undef EI_NIDENT
     linker->defineSymbol("LENM", lenm);  // len  for map
     linker->defineSymbol("ADRM", adrm);  // addr for map
 #undef PAGE_SIZE

@@ -227,10 +227,10 @@ unfold:
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
-   all of the uncompressed program.  If large (>=3MB compressed), then get enough
+   all of the uncompressed program.  If large (>=3MB uncompressed), then enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address and length are pre-
-   calculated by PackLinuxElf64amd::pack3(), and patched in at compress time.
+   calculated by PackLinuxElf64amd::defineSymbols().
 */
         movl $ ADRM,%edi  // XXX: 4GB
         push $ PROT_READ | PROT_WRITE | PROT_EXEC; pop %arg3
@@ -241,7 +241,7 @@ unfold:
         syscall  // %rax= result; trashes %rcx,%r11 only
         cmpl %eax,%edi; jne msg_SELinux  // XXX: 4GB
 
-/* Load the addresses and lengths that ::pack3() patched in.
+/* Load the addresses and lengths.
    XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
    XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
    (Use an temporary register to obtain 4GB range on PUSH constant.)
@@ -250,20 +250,20 @@ unfold:
         push $ ADRU  // for unmap in fold
         movl $ ADRC,%esi
         push $ LENU  // for unmap in fold
-        movl $ CNTC,%ecx
-        push $ ADRX  //# for upx_main
+        push $ ADRX  // for upx_main
         push %r15  // LENX for upx_main
 
-/* Move and relocate if compressed overlaps uncompressed.
-   Move by 0 when total compressed executable is < 3MB.
-*/
+        subl %ecx,%ecx  // assume small, thus no copy
         movl %edi,%edx  //  ADRM
         subl %esi,%edx  // (ADRM - ADRC) == relocation amount
+        je L80  // no copy
         addl      %edx,%ebp  // update &decompress
         addl      %edx,%ebx  // update &b_info
-
+        movl %r15d,%ecx  // LENX
+        shrl $3,%ecx  // qwords to copy
         cld
         rep; movsq
+L80:
         xchgl %eax,%edi
 
 /* Decompress the folded part of this stub, then execute it. */
@@ -282,8 +282,8 @@ unfold:
 main:
 ////    int3  # uncomment for debugging
         pop %rbp  // &decompress
-        movl -4-(ret_main - _start)(%rbp),%r15d  // length which precedes stub
-        subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d
+        movl -4-(ret_main - _start)(%rbp),%r15d  // sz_pack2: length before stub
+        subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d  // XXX: 4GB
         call unfold  // push &b_info
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
