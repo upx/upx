@@ -554,7 +554,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     // know the final total compressed size yet, so use the uncompressed
     // size (total over all PT_LOAD64) as an upper bound.
     unsigned len = 0;
-    acc_uint64l_t lo_va_user = ~0ul;  // infinity
+    acc_uint64l_t lo_va_user = ~0ull;  // infinity
     for (int j= get_native16(&ehdri.e_phnum); --j>=0; ) {
         if (PT_LOAD64 == get_native32(&phdri[j].p_type)) {
             len += (unsigned)get_native64(&phdri[j].p_filesz);
