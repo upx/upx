@@ -177,11 +177,11 @@ bool PackPs1::readBkupHeader()
 
 void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len)
 {
-    unsigned sz_cbh;
+    unsigned sz_cbh = MemBuffer::getSizeForCompression(SZ_IH_BKUP);
 
     if (src && dst)
     {
-        unsigned char *cpr_bh = new unsigned char[MemBuffer::getSizeForCompression(SZ_IH_BKUP)];
+        unsigned char *cpr_bh = new unsigned char[sz_cbh];
 
         memset(cpr_bh, 0, sizeof(bh));
         ps1_exe_chb_t * p = (ps1_exe_chb_t * )cpr_bh;
