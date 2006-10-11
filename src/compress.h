@@ -35,6 +35,7 @@
 **************************************************************************/
 
 #if defined(WITH_LZMA)
+const char *upx_lzma_version_string(void);
 int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
@@ -53,6 +54,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
 
 
 #if defined(WITH_NRV)
+const char *upx_nrv_version_string(void);
 int upx_nrv_compress       ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
@@ -71,6 +73,7 @@ int upx_nrv_test_overlap   ( const upx_bytep buf, unsigned src_off,
 
 
 #if defined(WITH_UCL)
+const char *upx_ucl_version_string(void);
 int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
@@ -85,6 +88,10 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
+#endif
+
+#if defined(WITH_ZLIB)
+const char *upx_zlib_version_string(void);
 #endif
 
 

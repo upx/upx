@@ -268,6 +268,16 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
 }
 
 
+/*************************************************************************
+// misc
+**************************************************************************/
+
+const char *upx_ucl_version_string(void)
+{
+    return ucl_version_string();
+}
+
+
 #endif /* WITH_UCL */
 /*
 vi:ts=4:et:nowrap

@@ -27,6 +27,7 @@
 
 
 #include "conf.h"
+#include "compress.h"
 
 
 /*************************************************************************
@@ -340,27 +341,43 @@ void show_license(void)
 
 void show_version(int x)
 {
-    FILE *f = stdout;
+    FILE *fp = stdout;
+    const char *v;
     UNUSED(x);
+    UNUSED(v);
 
-    fprintf(f,"upx %s\n", UPX_VERSION_STRING);
+    fprintf(fp, "upx %s\n", UPX_VERSION_STRING);
 #if defined(WITH_NRV)
-    fprintf(f,"NRV data compression library %s\n", nrv_version_string());
+    v = upx_nrv_version_string();
+    if (v != NULL && v[0])
+        fprintf(fp, "NRV data compression library %s\n", v);
 #endif
 #if defined(WITH_UCL)
-    fprintf(f,"UCL data compression library %s\n", ucl_version_string());
+    v = upx_ucl_version_string();
+    if (v != NULL && v[0])
+        fprintf(fp, "UCL data compression library %s\n", v);
 #endif
-#if 0 && defined(WITH_LZMA)
-    fprintf(f,"LZMA SDK version ???\n");
+#if defined(WITH_ZLIB)
+    v = upx_zlib_version_string();
+    if (v != NULL && v[0])
+        fprintf(fp, "zlib data compression library %s\n", v);
 #endif
-    fprintf(f,"Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(f,"Copyright (C) 1996-2006 Laszlo Molnar\n");
-    fprintf(f,"Copyright (C) 2000-2006 John F. Reiser\n");
-    fprintf(f,"Copyright (C) 2002-2006 Jens Medoch\n");
 #if defined(WITH_LZMA)
-    fprintf(f,"Copyright (C) 1999-2006 Igor Pavlov\n");
+    v = upx_lzma_version_string();
+    if (v != NULL && v[0])
+        fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
-    fprintf(f,"UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
+    fprintf(fp, "Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(fp, "Copyright (C) 1996-2006 Laszlo Molnar\n");
+    fprintf(fp, "Copyright (C) 2000-2006 John F. Reiser\n");
+    fprintf(fp, "Copyright (C) 2002-2006 Jens Medoch\n");
+#if defined(WITH_ZLIB)
+    fprintf(fp, "Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler\n");
+#endif
+#if defined(WITH_LZMA)
+    fprintf(fp, "Copyright (C) 1999-2006 Igor Pavlov\n");
+#endif
+    fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
 }
 
 

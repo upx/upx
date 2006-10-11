@@ -443,6 +443,18 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
 }
 
 
+/*************************************************************************
+// misc
+**************************************************************************/
+
+const char *upx_lzma_version_string(void)
+{
+    // FIXME
+//    return NULL;
+    return "4.43";
+}
+
+
 #endif /* WITH_LZMA */
 /*
 vi:ts=4:et:nowrap

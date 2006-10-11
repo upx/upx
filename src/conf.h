@@ -512,12 +512,14 @@ inline void operator delete[](void *p)
 #define M_CL1B_8        12
 #define M_CL1B_LE16     13
 #define M_LZMA          14
+#define M_DEFLATE       15      /* zlib */
 
 #define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
 #define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
 #define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
 #define M_IS_LZMA(x)    ((x) == M_LZMA)
+#define M_IS_DEFLATE(x) ((x) == M_DEFLATE)
 
 
 // Executable formats. Note: big endian types are >= 128.
