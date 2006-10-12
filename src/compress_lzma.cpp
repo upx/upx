@@ -234,6 +234,17 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     }
 
+    // cconf overrides
+    if (cconf_parm)
+    {
+        if (cconf_parm->conf_lzma.pos_bits.is_set)
+            pr[0].uintVal = cconf_parm->conf_lzma.pos_bits;
+        if (cconf_parm->conf_lzma.lit_pos_bits.is_set)
+            pr[1].uintVal = cconf_parm->conf_lzma.lit_pos_bits;
+        if (cconf_parm->conf_lzma.lit_context_bits.is_set)
+            pr[2].uintVal = cconf_parm->conf_lzma.lit_context_bits;
+    }
+
     // limit dictionary size
     if (pr[3].uintVal > src_len)
         pr[3].uintVal = src_len;
@@ -268,6 +279,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     //res->num_probs = LzmaGetNumProbs(&s.Properties));
     //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
     res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+
+    printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
 
 #ifndef _NO_EXCEPTIONS
     try {
@@ -391,6 +404,9 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
         assert(cresult->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
         assert(cresult->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
         assert(cresult->result_lzma.num_probs == (unsigned) LzmaGetNumProbs(&s.Properties));
+        const lzma_compress_result_t *res = &cresult->result_lzma;
+        UNUSED(res);
+        printf("\nlzma_decompress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
     }
     s.Probs = (CProb *) malloc(sizeof(CProb) * LzmaGetNumProbs(&s.Properties));
     if (!s.Probs)

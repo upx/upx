@@ -43,8 +43,9 @@ int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
 // options
 **************************************************************************/
 
-void init_options(struct options_t *o)
+void options_t::reset()
 {
+    options_t *o = this;
     memset(o, 0, sizeof(*o));
     o->crp.reset();
 
@@ -405,26 +406,44 @@ char* prepare_shortopts(char *buf, const char *n,
 
 
 template <class T>
-int getoptvar(T *var, const T minval, const T maxval)
+int getoptvar(T *var, const T minval, const T maxval, const char *arg_fatal=NULL)
 {
     const char *p = mfx_optarg;
     char *endptr;
+    int r = 0;
+    long n;
+    T v;
 
     if (!p || !p[0])
-        return -1;
+        { r = -1; goto error; }
     // avoid interpretation as octal value
     while (p[0] == '0' && isdigit(p[1]))
         p++;
-    long n = strtol(p, &endptr, 0);
+    n = strtol(p, &endptr, 0);
     if (*endptr != '\0')
-        return -2;
-    T v = (T) n;
+        { r = -2; goto error; }
+    v = (T) n;
     if (v < minval)
-        return -3;
+        { r = -3; goto error; }
     if (v > maxval)
-        return -4;
+        { r = -4; goto error; }
     *var = v;
-    return 0;
+    goto done;
+error:
+    if (arg_fatal != NULL)
+        e_optval(arg_fatal);
+done:
+    return r;
+}
+
+template <class T, T default_value, T min_value, T max_value>
+int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal=NULL)
+{
+    T v = default_value;
+    int r = getoptvar(&v, min_value, max_value, arg_fatal);
+    if (r == 0)
+        *var = v;
+    return r;
 }
 
 
@@ -602,27 +621,35 @@ static int do_option(int optc, const char *arg)
         opt->method = -1;
         break;
     // compression runtime parameters
-    case 531:
+    case 801:
         getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3);
         break;
-    case 532:
+    case 802:
         getoptvar(&opt->crp.crp_ucl.s_level, 0, 2);
         break;
-    case 533:
+    case 803:
         getoptvar(&opt->crp.crp_ucl.h_level, 0, 1);
         break;
-    case 534:
+    case 804:
         getoptvar(&opt->crp.crp_ucl.p_level, 0, 7);
         break;
-    case 535:
+    case 805:
         getoptvar(&opt->crp.crp_ucl.max_offset, 256u, ~0u);
         break;
-    case 536:
+    case 806:
         getoptvar(&opt->crp.crp_ucl.max_match, 16u, ~0u);
         break;
-    case 537:
-        if (getoptvar(&opt->crp.crp_ucl.m_size, 10000u, 999999u) != 0)
-            e_optval("--crp-ms=");
+    case 807:
+        getoptvar(&opt->crp.crp_ucl.m_size, 10000u, 999999u, arg);
+        break;
+    case 811:
+        getoptvar(&opt->crp.crp_lzma.pos_bits, arg);
+        break;
+    case 812:
+        getoptvar(&opt->crp.crp_lzma.lit_pos_bits, arg);
+        break;
+    case 813:
+        getoptvar(&opt->crp.crp_lzma.lit_context_bits, arg);
         break;
     // backup
     case 'k':
@@ -854,13 +881,23 @@ static const struct mfx_option longopts[] =
     {"no-filter",        0x10, 0, 522},
     {"small",            0x10, 0, 520},
     // compression runtime parameters
-    {"crp-cf",           0x31, 0, 531},
-    {"crp-sl",           0x31, 0, 532},
-    {"crp-hl",           0x31, 0, 533},
-    {"crp-pl",           0x31, 0, 534},
-    {"crp-mo",           0x31, 0, 535},
-    {"crp-mm",           0x31, 0, 536},
-    {"crp-ms",           0x31, 0, 537},
+    {"crp-nrv-cf",       0x31, 0, 801},
+    {"crp-nrv-sl",       0x31, 0, 802},
+    {"crp-nrv-hl",       0x31, 0, 803},
+    {"crp-nrv-pl",       0x31, 0, 804},
+    {"crp-nrv-mo",       0x31, 0, 805},
+    {"crp-nrv-mm",       0x31, 0, 806},
+    {"crp-nrv-ms",       0x31, 0, 807},
+    {"crp-ucl-cf",       0x31, 0, 801},
+    {"crp-ucl-sl",       0x31, 0, 802},
+    {"crp-ucl-hl",       0x31, 0, 803},
+    {"crp-ucl-pl",       0x31, 0, 804},
+    {"crp-ucl-mo",       0x31, 0, 805},
+    {"crp-ucl-mm",       0x31, 0, 806},
+    {"crp-ucl-ms",       0x31, 0, 807},
+    {"crp-lzma-pb",      0x31, 0, 811},
+    {"crp-lzma-lp",      0x31, 0, 812},
+    {"crp-lzma-lc",      0x31, 0, 813},
 
     // atari/tos
     {"split-segments",   0x10, 0, 650},
@@ -963,13 +1000,6 @@ static const struct mfx_option longopts[] =
     {"color",               0, 0, 514},
 
     // compression runtime parameters
-    {"crp-cf",           0x31, 0, 531},
-    {"crp-sl",           0x31, 0, 532},
-    {"crp-hl",           0x31, 0, 533},
-    {"crp-pl",           0x31, 0, 534},
-    {"crp-mo",           0x31, 0, 535},
-    {"crp-mm",           0x31, 0, 536},
-    {"crp-ms",           0x31, 0, 537},
 
     // win32/pe
     {"compress-exports",    2, 0, 630},
@@ -1220,7 +1250,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     acc_wildargv(&argc, &argv);
 
     upx_sanity_check();
-    init_options(opt);
+    opt->reset();
 
     if (!argv[0] || !argv[0][0])
         argv[0] = default_argv0;

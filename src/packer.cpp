@@ -189,6 +189,13 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
             step = 0;
 #endif
     }
+    if (M_IS_LZMA(ph.method))
+    {
+        // info: these are optional assignments which query OptVar::is_set
+        cconf.conf_lzma.pos_bits = opt->crp.crp_lzma.pos_bits;
+        cconf.conf_lzma.lit_pos_bits = opt->crp.crp_lzma.lit_pos_bits;
+        cconf.conf_lzma.lit_context_bits = opt->crp.crp_lzma.lit_context_bits;
+    }
     if (uip->ui_pass >= 0)
         uip->ui_pass++;
     uip->startCallback(ph.u_len, step, uip->ui_pass, uip->ui_total_passes);

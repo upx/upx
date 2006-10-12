@@ -83,17 +83,20 @@ struct options_t {
     };
     int overlay;
 
-    // compression runtime parameters - see struct ucl_compress_config_t
+    // compression runtime parameters - see struct XXX_compress_config_t
     struct crp_lzma_t {
-        int dummy;
+        typedef lzma_compress_config_t TT;
+        TT::pos_bits_t          pos_bits;           // pb
+        TT::lit_pos_bits_t      lit_pos_bits;       // lp
+        TT::lit_context_bits_t  lit_context_bits;   // lc
 #if 0
-        unsigned pos_bits;              // pb
-        unsigned lit_pos_bits;          // lp
-        unsigned lit_context_bits;      // lc
         unsigned dict_size;
         unsigned mf_passes;
 #endif
-        void reset() { memset(this, 0, sizeof(*this)); }
+        void reset() {
+            memset(this, 0, sizeof(*this));
+            pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
+        }
     };
     struct crp_ucl_t {
         unsigned max_offset;
@@ -162,6 +165,8 @@ struct options_t {
         int strip_relocs;
         const char *keep_resource;
     } win32_pe;
+
+    void reset();
 };
 
 extern struct options_t *opt;

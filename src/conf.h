@@ -212,18 +212,51 @@ struct upx_callback_t
 };
 
 
+
+/*************************************************************************
+//
+**************************************************************************/
+
+template <class T, T default_value, T min_value, T max_value>
+struct OptVar
+{
+    OptVar() : v(default_value), is_set(0) { }
+    OptVar& operator= (const OptVar& other) {
+        if (other.is_set) { v = other.v; is_set += 1; }
+        return *this;
+    }
+    OptVar& operator= (const T other) {
+        v = other; is_set += 1; return *this;
+    }
+
+    void reset() { v = default_value; is_set = 0; }
+    operator T () const { return v; }
+
+    T v;
+    unsigned is_set;
+};
+
+
 struct lzma_compress_config_t
 {
-    unsigned max_num_probs;
+    typedef OptVar<unsigned, 2u, 0u, 4u> pos_bits_t;            // pb
+    typedef OptVar<unsigned, 0u, 0u, 4u> lit_pos_bits_t;        // lb
+    typedef OptVar<unsigned, 3u, 0u, 8u> lit_context_bits_t;    // lc
+
+    unsigned            max_num_probs;
+    pos_bits_t          pos_bits;           // pb
+    lit_pos_bits_t      lit_pos_bits;       // lp
+    lit_context_bits_t  lit_context_bits;   // lc
 #if 0
-    unsigned pos_bits;              // pb
-    unsigned lit_pos_bits;          // lp
-    unsigned lit_context_bits;      // lc
     unsigned dict_size;
     unsigned mf_passes;
 #endif
-    void reset() { memset(this, 0, sizeof(*this)); }
+    void reset() {
+        memset(this, 0, sizeof(*this));
+        pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
+    }
 };
+
 
 #define upx_compress_config_p upx_compress_config_t *
 struct upx_compress_config_t
