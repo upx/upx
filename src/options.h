@@ -89,6 +89,7 @@ struct options_t {
         TT::pos_bits_t          pos_bits;           // pb
         TT::lit_pos_bits_t      lit_pos_bits;       // lp
         TT::lit_context_bits_t  lit_context_bits;   // lc
+        TT::num_fast_bytes_t    num_fast_bytes;
 #if 0
         unsigned dict_size;
         unsigned mf_passes;
@@ -96,6 +97,7 @@ struct options_t {
         void reset() {
             memset(this, 0, sizeof(*this));
             pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
+            num_fast_bytes.reset();
         }
     };
     struct crp_ucl_t {

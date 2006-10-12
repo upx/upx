@@ -651,6 +651,9 @@ static int do_option(int optc, const char *arg)
     case 813:
         getoptvar(&opt->crp.crp_lzma.lit_context_bits, arg);
         break;
+    case 816:
+        getoptvar(&opt->crp.crp_lzma.num_fast_bytes, arg);
+        break;
     // backup
     case 'k':
         opt->backup = 1;
@@ -898,6 +901,7 @@ static const struct mfx_option longopts[] =
     {"crp-lzma-pb",      0x31, 0, 811},
     {"crp-lzma-lp",      0x31, 0, 812},
     {"crp-lzma-lc",      0x31, 0, 813},
+    {"crp-lzma-fb",      0x31, 0, 816},
 
     // atari/tos
     {"split-segments",   0x10, 0, 650},

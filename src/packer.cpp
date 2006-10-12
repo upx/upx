@@ -195,6 +195,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         cconf.conf_lzma.pos_bits = opt->crp.crp_lzma.pos_bits;
         cconf.conf_lzma.lit_pos_bits = opt->crp.crp_lzma.lit_pos_bits;
         cconf.conf_lzma.lit_context_bits = opt->crp.crp_lzma.lit_context_bits;
+        cconf.conf_lzma.num_fast_bytes = opt->crp.crp_lzma.num_fast_bytes;
     }
     if (uip->ui_pass >= 0)
         uip->ui_pass++;

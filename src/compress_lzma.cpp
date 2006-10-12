@@ -193,7 +193,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[2].uintVal = 3;              // 0..8
     pr[3].uintVal = 1024 * 1024;
     pr[4].uintVal = 2;
-    pr[5].uintVal = 64;             // 5..
+    pr[5].uintVal = 64;             // 5..273
     pr[6].uintVal = 0;
 #if 0
     // DEBUG - set sizes so that we use a maxmimum amount of stack.
@@ -209,8 +209,11 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     case 1:
         pr[3].uintVal = 256 * 1024;
         pr[4].uintVal = 0;
+        pr[5].uintVal = 8;
         break;
     case 2:
+        pr[3].uintVal = 256 * 1024;
+        pr[4].uintVal = 0;
         break;
     case 3:
         break;
@@ -243,6 +246,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
             pr[1].uintVal = cconf_parm->conf_lzma.lit_pos_bits;
         if (cconf_parm->conf_lzma.lit_context_bits.is_set)
             pr[2].uintVal = cconf_parm->conf_lzma.lit_context_bits;
+        if (cconf_parm->conf_lzma.num_fast_bytes.is_set)
+            pr[5].uintVal = cconf_parm->conf_lzma.num_fast_bytes;
     }
 
     // limit dictionary size
@@ -276,6 +281,9 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     res->lit_pos_bits = pr[1].uintVal;
     res->lit_context_bits = pr[2].uintVal;
     res->dict_size = pr[3].uintVal;
+    res->fast_mode = pr[4].uintVal;
+    res->num_fast_bytes = pr[5].uintVal;
+    res->match_finder_cycles = pr[6].uintVal;
     //res->num_probs = LzmaGetNumProbs(&s.Properties));
     //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
     res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));

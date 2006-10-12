@@ -239,14 +239,16 @@ struct OptVar
 
 struct lzma_compress_config_t
 {
-    typedef OptVar<unsigned, 2u, 0u, 4u> pos_bits_t;            // pb
-    typedef OptVar<unsigned, 0u, 0u, 4u> lit_pos_bits_t;        // lb
-    typedef OptVar<unsigned, 3u, 0u, 8u> lit_context_bits_t;    // lc
+    typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
+    typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lb
+    typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
+    typedef OptVar<unsigned, 64u, 5u, 273u> num_fast_bytes_t;
 
     unsigned            max_num_probs;
     pos_bits_t          pos_bits;           // pb
     lit_pos_bits_t      lit_pos_bits;       // lp
     lit_context_bits_t  lit_context_bits;   // lc
+    num_fast_bytes_t    num_fast_bytes;
 #if 0
     unsigned dict_size;
     unsigned mf_passes;
@@ -254,6 +256,7 @@ struct lzma_compress_config_t
     void reset() {
         memset(this, 0, sizeof(*this));
         pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
+        num_fast_bytes.reset();
     }
 };
 
@@ -276,7 +279,10 @@ struct lzma_compress_result_t
     unsigned lit_pos_bits;          // lp
     unsigned lit_context_bits;      // lc
     unsigned dict_size;
-    unsigned num_probs;
+    unsigned fast_mode;
+    unsigned num_fast_bytes;
+    unsigned match_finder_cycles;
+    unsigned num_probs;             // (computed result)
 };
 
 struct ucl_compress_result_t
