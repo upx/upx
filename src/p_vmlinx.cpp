@@ -65,9 +65,20 @@ const int *PackVmlinuxI386::getCompressionMethods(int method, int level) const
 const int *PackVmlinuxI386::getFilters() const
 {
     static const int filters[] = {
-        0x49,
+        0x49, 0x46,
     -1 };
     return filters;
+}
+
+// copied from PackUnix 2006-10-13.
+int PackVmlinuxI386::getStrategy(Filter &/*ft*/)
+{
+    // Called just before reading and compressing each block.
+    // Might want to adjust blocksize, etc.
+
+    // If user specified the filter, then use it (-2==strategy).
+    // Else try the first two filters, and pick the better (2==strategy).
+    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
 static int __acc_cdecl_qsort
@@ -102,6 +113,12 @@ compare_Phdr(void const *aa, void const *bb)
 //  LOAD           0x249000 0x02348000 0x02348000 0x81800 0xcb0fc RWE 0x1000
 //  STACK          0x000000 0x00000000 0x00000000 0x00000 0x00000 RWE 0x4
 //
+//----- kernel-2.6.18-1.2778 Fedora Core 6 test 3
+//Program Headers(3)
+//  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+//  LOAD           0x001000 0xc0400000 0x00400000 0x279820 0x279820 R E 0x1000
+//  LOAD           0x27b000 0xc067a000 0x0067a000 0x10ee64 0x1b07e8 RWE 0x1000
+//  NOTE           0x000000 0x00000000 0x00000000 0x00000 0x00000 R   0x4
 
 bool PackVmlinuxI386::canPack()
 {
@@ -121,7 +138,7 @@ bool PackVmlinuxI386::canPack()
     ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
     ||  ehdri.e_phentsize!=sizeof(Elf32_Phdr)
     ||  ehdri.e_type!=Elf32_Ehdr::ET_EXEC
-    ||  0x00100000!=(0x001fffff & ehdri.e_entry) // entry not an odd 1MB
+    ||  0!=(0x000fffff & ehdri.e_entry) // entry not on whole 1MB
     ) {
         return false;
     }
@@ -190,8 +207,10 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
 
 static bool defineFilterSymbols(Linker *linker, const Filter *ft)
 {
-    if (ft->id == 0)
+    if (ft->id == 0) {
+        linker->defineSymbol("filter_length", 0);
         return false;
+    }
     assert(ft->calls > 0);
 
     linker->defineSymbol("filter_cto", ft->cto);
@@ -245,7 +264,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, 0, NULL, &cconf);
+    compressWithFilters(&ft, 512, getStrategy(ft), getFilters(), &cconf);
 
     const unsigned lsize = getLoaderSize();
 
@@ -268,11 +287,23 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[1].sh_size = 1+ 4+ ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
-    unsigned char const call = 0xE8;  // opcode for CALL d32
-    fo->write(&call, 1); fo_off+=1;
-    tmp_le32 = ph.c_len; fo->write(&tmp_le32, 4); fo_off += 4;
-    fo->write(obuf, ph.c_len); fo_off += ph.c_len;
-    fo->write(loader, lsize); fo_off += lsize;
+    {
+        static const
+#include "stub/i386-linux.kernel.head-vmlinux.h"
+
+        // ENTRY_POINT
+        fo->write(&head_stack[0], sizeof(head_stack)-2*(1+ 4) +1);
+        tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
+
+        // COMPRESSED_LENGTH
+        fo->write(&head_stack[sizeof(head_stack)-(1+ 4)], 1);
+        tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
+
+        fo_off += sizeof(head_stack);
+
+        fo->write(obuf, ph.c_len); fo_off += ph.c_len;
+        fo->write(loader, lsize); fo_off += lsize;
+    }
 
 #if 0
     printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
@@ -495,7 +526,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 }
 
 //
-// Example usage within build system of Linux kernel-2.6.7:
+// Example usage within build system of Linux kernel-2.6.18:
 //
 //----- arch/i386/boot/compressed/Makefile
 //#
@@ -507,7 +538,6 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //targets := vmlinux upx-head.o upx-piggy.o
 //
 //LDFLAGS_vmlinux := -Ttext $(IMAGE_OFFSET) -e startup_32
-//EXTRA_AFLAGS += -DIMAGE_OFFSET=$(IMAGE_OFFSET)
 //
 //$(obj)/vmlinux: $(obj)/upx-head.o $(obj)/upx-piggy.o FORCE
 //	$(call if_changed,ld)
@@ -517,44 +547,42 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //	rm -f $@
 //	upx --best -o $@ $<
 //	touch $@
+//
+//#
+//# The ORIGINAL build sequence using gzip is:
+//#                   vmlinux         Elf executable at top level in tree
+//#                                     (in same directory as MAINTAINERS)
+//#   In arch/i386:
+//#   boot/compressed/vmlinux.bin     by objcopy -O binary
+//#   boot/compressed/vmlinux.bin.gz  by gzip
+//#   boot/compressed/piggy.o         by ld --format binary --oformat elf32-i386
+//#
+//#                                   The 3 steps above create a linkable
+//#                                   compressed blob.
+//#   In arch/i386:
+//#   boot/compressed/vmlinux         by ld head.o misc.o piggy.o
+//#              boot/vmlinux.bin     by objcopy
+//#              boot/bzImage         by arch/i386/boot/tools/build with
+//#                                     bootsect and setup
+//#
+//#
+//# The MODIFIED build sequence using upx is:
+//#                   vmlinux         Elf executable at top level in tree
+//#                                     (in same directory as MAINTAINERS)
+//#   In arch/i386:
+//#   boot/compressed/upx-piggy.o     by upx format vmlinux/386
+//#
+//#   In arch/i386/boot:
+//#   boot/compressed/vmlinux         by ld upx-head.o upx-piggy.o
+//#              boot/vmlinux.bin     by objcopy
+//#              boot/bzImage         by arch/i386/boot/tools/build with
+//#                                     bootsect and setup
+//#
 //-----
 //
 //----- arch/i386/boot/compressed/upx-head.S
-//	.text
 //startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
-//	#cli  # this must be true already
-//
-//	/* The only facts about segments here, that are true for all kernels:
-//	 * %cs is a valid "flat" code segment; no other segment reg is valid;
-//	 * the next segment after %cs is a valid "flat" data segment, but
-//	 * no segment register designates it yet.
-//	 */
-//	movl %cs,%eax; addl $1<<3,%eax  # the next segment after %cs
-//	movl %eax,%ds
-//	movl %eax,%es
-//	leal 0x9000(%esi),%ecx  # 0x99000 typical
-//	movl %ecx,-8(%ecx)  # 32-bit offset for stack pointer
-//	movl %eax,-4(%ecx)  # segment for stack pointer
-//	lss -8(%ecx),%esp  # %ss:%esp= %ds:0x99000
-//	    /* Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
-//		 0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
-//		 just below the command line at offset 0x9000].
-//
-//		 arch/i386/boot/compressed/head.S "Do the decompression ..." says
-//		 %esi contains the "real mode pointer" [as a 32-bit addr].
-//
-//		 In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
-//		 boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
-//	    */
-//
-//	pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
-//
-//#ifndef IMAGE_OFFSET  /*{*/
-//#define IMAGE_OFFSET 0x100000
-//#endif  /*}*/
-//	movl $ IMAGE_OFFSET,%eax  # destination of uncompression (and entry point)
-//	push %cs
-/* Fall into .text of upx-compressed vmlinux. */
+//  /* All code is in stub/src/i386-linux.kernel.head-vmlinux.S */
 //-----
 
 // Approximate translation for Linux 2.4.x:

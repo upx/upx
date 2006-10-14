@@ -70,7 +70,7 @@ STUBS += i386-linux.elf.interp-entry.h
 STUBS += i386-linux.elf.interp-fold.h
 STUBS += i386-linux.elf.shell-entry.h
 STUBS += i386-linux.elf.shell-fold.h
-STUBS += i386-linux.kernel.vmlinux.h
+STUBS += i386-linux.kernel.vmlinux.h i386-linux.kernel.head-vmlinux.h
 STUBS += i386-linux.kernel.vmlinuz.h
 STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
@@ -580,6 +580,13 @@ i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+
+i386-linux.kernel.head-vmlinux.h : tc_list = arch-i386 default
+
+i386-linux.kernel.head-vmlinux.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.tmp
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.tmp tmp/$T.bin
+	$(call tc,bin2h) --ident=head_stack tmp/$T.bin $@
 
 
 # /***********************************************************************

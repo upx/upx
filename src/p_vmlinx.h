@@ -46,6 +46,7 @@ public:
     virtual const char *getName() const { return "vmlinux/386"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
+    virtual int getStrategy(Filter &);
 
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
