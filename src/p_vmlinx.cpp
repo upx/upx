@@ -46,12 +46,13 @@ static const
 **************************************************************************/
 
 PackVmlinuxI386::PackVmlinuxI386(InputFile *f) :
-    super(f), n_ptload(0), phdri(NULL), shdri(NULL)
+    super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
 {
 }
 
 PackVmlinuxI386::~PackVmlinuxI386()
 {
+    delete [] shstrtab;
     delete [] phdri;
     delete [] shdri;
 }
@@ -79,6 +80,34 @@ int PackVmlinuxI386::getStrategy(Filter &/*ft*/)
     // If user specified the filter, then use it (-2==strategy).
     // Else try the first two filters, and pick the better (2==strategy).
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
+}
+
+
+Elf_LE32_Shdr const *
+PackVmlinuxI386::getElfSections()
+{
+    Elf_LE32_Shdr const *p, *shstrsec=0;
+    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
+    fi->seek(ehdri.e_shoff, SEEK_SET);
+    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
+    int j;
+    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+        if (Elf32_Shdr::SHT_STRTAB==p->sh_type
+        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
+        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
+        ) {
+            delete [] shstrtab;
+            shstrtab = new char[1+ p->sh_size];
+            fi->seek(p->sh_offset, SEEK_SET);
+            fi->readx(shstrtab, p->sh_size);
+            shstrtab[p->sh_size] = '\0';
+            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
+                shstrsec = p;
+                break;
+            }
+        }
+    }
+    return shstrsec;
 }
 
 static int __acc_cdecl_qsort
@@ -140,6 +169,22 @@ bool PackVmlinuxI386::canPack()
     ||  ehdri.e_type!=Elf32_Ehdr::ET_EXEC
     ||  0!=(0x000fffff & ehdri.e_entry) // entry not on whole 1MB
     ) {
+        return false;
+    }
+
+    // A Linux kernel must have a __ksymtab section. [??]
+    Elf_LE32_Shdr const *p, *const shstrsec = getElfSections();
+    if (0==shstrsec) {
+        return false;
+    }
+    int j;
+    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+        if (Elf32_Shdr::SHT_PROGBITS==p->sh_type
+        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
+            break;
+        }
+    }
+    if (j < 0) {
         return false;
     }
 
@@ -220,6 +265,8 @@ static bool defineFilterSymbols(Linker *linker, const Filter *ft)
     return true;
 }
 
+static const
+#include "stub/i386-linux.kernel.head-vmlinux.h"
 
 void PackVmlinuxI386::pack(OutputFile *fo)
 {
@@ -284,26 +331,21 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = 1+ 4+ ph.c_len + lsize;
+    shdro[1].sh_size = sizeof(head_stack) + ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
-    {
-        static const
-#include "stub/i386-linux.kernel.head-vmlinux.h"
+    // ENTRY_POINT
+    fo->write(&head_stack[0], sizeof(head_stack)-2*(1+ 4) +1);
+    tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
 
-        // ENTRY_POINT
-        fo->write(&head_stack[0], sizeof(head_stack)-2*(1+ 4) +1);
-        tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
+    // COMPRESSED_LENGTH
+    fo->write(&head_stack[sizeof(head_stack)-(1+ 4)], 1);
+    tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
 
-        // COMPRESSED_LENGTH
-        fo->write(&head_stack[sizeof(head_stack)-(1+ 4)], 1);
-        tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
+    fo_off += sizeof(head_stack);
 
-        fo_off += sizeof(head_stack);
-
-        fo->write(obuf, ph.c_len); fo_off += ph.c_len;
-        fo->write(loader, lsize); fo_off += lsize;
-    }
+    fo->write(obuf, ph.c_len); fo_off += ph.c_len;
+    fo->write(loader, lsize); fo_off += lsize;
 
 #if 0
     printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
@@ -416,35 +458,18 @@ int PackVmlinuxI386::canUnpack()
         return false;
 
     // find the .shstrtab section
-    char shstrtab[40];
-    Elf_LE32_Shdr *p, *p_shstrtab=0;
-    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
-    fi->seek(ehdri.e_shoff, SEEK_SET);
-    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf32_Shdr::SHT_STRTAB==p->sh_type
-        &&  p->sh_size <= sizeof(shstrtab)
-        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
-        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
-        ) {
-            fi->seek(p->sh_offset, SEEK_SET);
-            fi->readx(shstrtab, p->sh_size);
-            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
-                p_shstrtab = p;
-                break;
-            }
-        }
-    }
-    if (0==p_shstrtab) {
+    Elf_LE32_Shdr const *const shstrsec = getElfSections();
+    if (0==shstrsec) {
         return false;
     }
 
     // check for .text .note .note  and sane (.sh_size + .sh_offset)
     p_note0 = p_note1 = p_text = 0;
+    int j;
+    Elf_LE32_Shdr *p;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if ((unsigned)file_size < (p->sh_size + p->sh_offset)
-        ||  p_shstrtab->sh_size < (5+ p->sh_name) ) {
+        ||  shstrsec->sh_size < (5+ p->sh_name) ) {
             continue;
         }
         if (0==strcmp(".text", shstrtab + p->sh_name)) {
@@ -491,7 +516,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
     ibuf.dealloc();
 
     ph = ph_tmp;
-    fi->seek(p_text->sh_offset, SEEK_SET);
+    fi->seek(p_text->sh_offset + sizeof(head_stack) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
     if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
     {

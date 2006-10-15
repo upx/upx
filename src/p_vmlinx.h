@@ -55,6 +55,7 @@ public:
     virtual int canUnpack();
 
 protected:
+    virtual Elf_LE32_Shdr const *getElfSections();
     virtual int buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 //    virtual const upx_byte *getLoader() const;
@@ -62,8 +63,9 @@ protected:
 
     int n_ptload;
     unsigned sz_ptload;
-    Elf_LE32_Phdr *phdri; // from  input file
+    Elf_LE32_Phdr *phdri; // from input file
     Elf_LE32_Shdr *shdri; // from input file
+    char *shstrtab; // from input file
     Elf_LE32_Shdr *p_text;
     Elf_LE32_Shdr *p_note0;
     Elf_LE32_Shdr *p_note1;
