@@ -266,7 +266,7 @@ static bool defineFilterSymbols(Linker *linker, const Filter *ft)
 }
 
 static const
-#include "stub/i386-linux.kernel.head-vmlinux.h"
+#include "stub/i386-linux.kernel.vmlinux-head.h"
 
 void PackVmlinuxI386::pack(OutputFile *fo)
 {
