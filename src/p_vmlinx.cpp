@@ -607,7 +607,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 //
 //----- arch/i386/boot/compressed/upx-head.S
 //startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
-//  /* All code is in stub/src/i386-linux.kernel.head-vmlinux.S */
+//  /* All code is in stub/src/i386-linux.kernel.vmlinux-head.S */
 //-----
 
 // Approximate translation for Linux 2.4.x:
