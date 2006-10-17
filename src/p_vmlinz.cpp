@@ -38,7 +38,6 @@
 static const
 #include "stub/i386-linux.kernel.vmlinuz.h"
 
-static const unsigned kernel_entry = 0x100000;
 static const unsigned stack_offset_during_uncompression = 0x9000;
 // add to "real mode pointer" in %esi; total 0x99000 is typical
 
@@ -52,7 +51,7 @@ static const unsigned bzimage_offset = 0x100000;
 **************************************************************************/
 
 PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
-    super(f)
+    super(f), physical_start(0x100000)
 {
     COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x218);
 }
@@ -132,6 +131,16 @@ int PackVmlinuzI386::decompressKernel()
     obuf.alloc(file_size);
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
+
+    // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
+    // See startup_32: in linux/arch/i386/boot/compressed/head.S
+    char const *p = (char const *)&obuf[setup_size];
+    for (int j= 0; j < 0x200; ++j, ++p)
+    if (0==strncmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
+        /* whole megabyte < 16MB */
+        physical_start = get_le32(1+ p);
+        break;
+    }
 
     checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024));
 
@@ -295,7 +304,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
+    ft.addvalue = physical_start;  // saves 4 bytes in unfilter code
 
     // compress
     upx_compress_config_t cconf; cconf.reset();
@@ -308,7 +317,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     defineFilterSymbols(linker, &ft);
     defineDecompressorSymbols();
     linker->defineSymbol("src_for_decompressor", zimage_offset + lsize);
-    linker->defineSymbol("original_entry", kernel_entry);
+    linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
     linker->relocate();
 
@@ -383,7 +392,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = kernel_entry;  // saves 4 bytes in unfilter code
+    ft.addvalue = physical_start;  // saves 4 bytes in unfilter code
 
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
@@ -420,10 +429,10 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
     const unsigned esi = ALIGN_UP(c_len + lsize, 4) - 4;     // copy from
 
-    linker->defineSymbol("decompressor", decompr_pos);
-    linker->defineSymbol("src_for_decompressor", bzimage_offset + decompr_pos - c_len);
+    linker->defineSymbol("decompressor", decompr_pos - bzimage_offset + physical_start);
+    linker->defineSymbol("src_for_decompressor", physical_start + decompr_pos - c_len);
     linker->defineSymbol("words_to_copy", copy_size / 4);
-    linker->defineSymbol("copy_dest", bzimage_offset + edi);
+    linker->defineSymbol("copy_dest", physical_start + edi);
     linker->defineSymbol("copy_source", bzimage_offset + esi);
 
     defineFilterSymbols(linker, &ft);
@@ -431,7 +440,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
     defineDecompressorSymbols();
-    linker->defineSymbol("original_entry", kernel_entry);
+    linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
     linker->relocate();
 
@@ -493,7 +502,7 @@ void PackVmlinuzI386::unpack(OutputFile *fo)
 
     // unfilter
     Filter ft(ph.level);
-    ft.init(ph.filter, kernel_entry);
+    ft.init(ph.filter, physical_start);
     ft.cto = (unsigned char) ph.filter_cto;
     ft.unfilter(obuf, ph.u_len);
 
