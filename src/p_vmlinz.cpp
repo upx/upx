@@ -218,6 +218,13 @@ int PackVmlinuzI386::decompressKernel()
         if (memcmp(ibuf, "\xFC\x0F\x01", 3) == 0) goto head_ok;
         // 2.6.x+grsecurity+strongswan+openwall+trustix: ljmp $0x10,...
         if (ibuf[0] == 0xEA && memcmp(ibuf+5, "\x10\x00", 2) == 0) goto head_ok;
+        // x86_64 2.6.x
+        if (0xB8==ibuf[0]  // mov $...,%eax
+        &&  0x8E==ibuf[5] && 0xD8==ibuf[6]  // mov %eax,%ds
+        &&  0x0F==ibuf[7] && 0x01==ibuf[8] && 020==(070 & ibuf[9]) // lgdtl
+        &&  0xB8==ibuf[14]  // mov $...,%eax
+        &&  0x0F==ibuf[19] && 0xA2==ibuf[20]  // cpuid
+        ) goto head_ok;
 
         throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
     head_ok:
