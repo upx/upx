@@ -240,7 +240,7 @@ static int modifyheaders ## CLASS (Elf ## CLASS ## _Ehdr *ehdr, \
     if (EGET(ehdr->e_shoff) >= newsize) { \
         ESET(ehdr->e_shoff,0); \
         ESET(ehdr->e_shnum,0); \
-        ESET(ehdr->e_shentsize,0); \
+        ESET(ehdr->e_shentsize,sizeof(Elf ## CLASS ## _Shdr)); \
         ESET(ehdr->e_shstrndx,0); \
     } \
  \

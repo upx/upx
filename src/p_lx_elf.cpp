@@ -1053,7 +1053,7 @@ PackLinuxElf32::generateElfHdr(
                          h2->ehdr.e_shoff = 0;
     assert(get_native16(&h2->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
     assert(get_native16(&h2->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
-                         h2->ehdr.e_shentsize = 0;
+                         h2->ehdr.e_shentsize = sizeof(Elf32_Shdr);
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
@@ -1103,7 +1103,7 @@ PackOpenBSDElf32x86::generateElfHdr(
                          h3->ehdr.e_shoff = 0;
     assert(get_native16(&h3->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
     assert(get_native16(&h3->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
-                         h3->ehdr.e_shentsize = 0;
+                         h3->ehdr.e_shentsize = sizeof(Elf32_Shdr);
                          h3->ehdr.e_shnum = 0;
                          h3->ehdr.e_shstrndx = 0;
 
@@ -1165,7 +1165,7 @@ PackLinuxElf64::generateElfHdr(
                          h2->ehdr.e_shoff = 0;
     assert(get_native16(&h2->ehdr.e_ehsize)    == sizeof(Elf64_Ehdr));
     assert(get_native16(&h2->ehdr.e_phentsize) == sizeof(Elf64_Phdr));
-                         h2->ehdr.e_shentsize = 0;
+                         h2->ehdr.e_shentsize = sizeof(Elf64_Shdr);
                          h2->ehdr.e_shnum = 0;
                          h2->ehdr.e_shstrndx = 0;
 
