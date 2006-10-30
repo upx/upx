@@ -134,6 +134,7 @@ LABEL_PREFIX =
 PP_FLAGS =
 tc_bfdarch =
 tc_bfdname =
+tc_objdump_disasm_options =
 tc_list =
 
 
@@ -182,7 +183,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) --strip-unneeded $1
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
-	$(call tc,objdump) -Dr $1 | $(RTRIM) > $1.disasm
+	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(RTRIM) | $(SQUEEZE) > $1.dump
 	cat $1.dump >> $1
 endef
@@ -267,6 +268,7 @@ arm.v4a-wince.pe.h : tc_list = arm-linux.elf default
 arm.v4t-wince.pe.h : tc_list = arm-linux.elf default
 arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
 arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
