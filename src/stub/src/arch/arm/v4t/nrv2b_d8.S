@@ -50,12 +50,13 @@
 ucl_nrv2b_decompress_8: .globl ucl_nrv2b_decompress_8  @ ARM mode
         .type ucl_nrv2b_decompress_8, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
-        adr r12,1+.go_thumb_n2b  @ load pc-relative address
+        adr r12,1+.thumb_nrv2b_d8  @ load pc-relative address
         bx  r12  @ enter THUMB mode
         .code 16  @ THUMB mode
         .thumb_func
 #endif
-.go_thumb_n2b:
+
+.thumb_nrv2b_d8:
         add r1,len,src  @ r1= eof_src;
         push {r1,r2,r3, r4,r5,r6,r7, lr}
         mov bits,#1; neg off,bits  @ off= -1 initial condition
@@ -118,7 +119,10 @@ copy_n2b:
         sub len,#1; bne copy_n2b
         b top_n2b
 
+#ifndef PURE_THUMB
         .size ucl_nrv2b_decompress_8, .-ucl_nrv2b_decompress_8
+#endif
+
 /*
 vi:ts=8:et:nowrap
  */

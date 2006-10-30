@@ -46,14 +46,17 @@
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs
 
+#ifndef PURE_THUMB
 ucl_nrv2b_decompress_32: .globl ucl_nrv2b_decompress_32  @ ARM mode
         .type ucl_nrv2b_decompress_32, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
-        adr r12,1+go_thumb_n2b  @ load pc-relative address
+        adr r12,1+.thumb_nrv2b_d32  @ load pc-relative address
         bx  r12  @ enter THUMB mode
-
         .code 16  @ THUMB mode
-go_thumb_n2b:
+        .thumb_func
+#endif
+
+.thumb_nrv2b_d32:
         add r1,len,src  @ r1= eof_src;
         push {r1,r2,r3, r4,r5,r6,r7, lr}
         mov bits,#1; neg off,bits  @ off= -1 initial condition
@@ -121,8 +124,12 @@ get1b:  @ Out: Carry= next_bit
         ldrb tmp, [src],#1; orr bits,bits,tmp,lsl #3*8
         adcs bits,bits,bits  @ Carry= next_bit; set bit0 flag from CarryIn
         bx lr
+        .code 16  @ THUMB mode
 
+#ifndef PURE_THUMB
         .size ucl_nrv2b_decompress_32, .-ucl_nrv2b_decompress_32
+#endif
+
 /*
 vi:ts=8:et:nowrap
  */

@@ -296,18 +296,36 @@ section ProcessEnd
 
 section .ucl_nrv2b_decompress_8
 #include "arch/arm/v4t/nrv2b_d8.S"
+#undef GETBIT
+#undef wrnk
 
 section Call2B
-        bl      .go_thumb_n2b
+        bl      .thumb_nrv2b_d8
 
-#undef wrnk
-#undef GETBIT
 
 section .ucl_nrv2e_decompress_8
 #include "arch/arm/v4t/nrv2e_d8.S"
+#undef GETBIT
+#undef wrnk
 
 section Call2E
         bl      .thumb_nrv2e_d8
+
+
+#if 0
+section .ucl_nrv2b_decompress_32
+#include "arch/arm/v4t/nrv2b_d32.S"
+#undef GETBIT
+#undef wrnk
+#endif
+
+
+#if 0
+section .ucl_nrv2e_decompress_32
+#include "arch/arm/v4t/nrv2e_d32.S"
+#undef GETBIT
+#undef wrnk
+#endif
 
 ////////////////////////////////////////
 

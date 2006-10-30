@@ -80,6 +80,7 @@ ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  @ ARM mode
         .code 16  @ THUMB mode
         .thumb_func
 #endif
+
 .thumb_nrv2e_d8:
         push {r2,r3, r4,r5,r6,r7, lr}
 #define sp_DST0 0  /* stack offset of original dst */
@@ -90,7 +91,7 @@ ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  @ ARM mode
         mov dstlim,tmp
 #endif  /*}*/
         mov bits,#1; neg off,bits  @ off= -1 initial condition
-        lsl bits,#31  @ 1<<31; refill next time
+        lsl bits,#31  @ 1<<31: refill next time
         mov wrnk,#5
         lsl wrnk,#8  @ 0x500  @ nrv2e M2_MAX_OFFSET
         b top_n2e
@@ -175,7 +176,10 @@ copy_n2e:
         strb tmp,[dst]; add dst,#1
         sub len,#1; bne copy_n2e
         b top_n2e
+
+#ifndef PURE_THUMB
         .size ucl_nrv2e_decompress_8, .-ucl_nrv2e_decompress_8
+#endif
 
 /*
 vi:ts=8:et:nowrap
