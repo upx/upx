@@ -116,7 +116,8 @@ void PackCom::patchLoader(OutputFile *fo,
     linker->defineSymbol("bytes_to_copy", ph.c_len + lsize);
     linker->defineSymbol("copy_source", ph.c_len + lsize + 0x100);
     linker->defineSymbol("copy_destination", upper_end);
-    linker->defineSymbol("COMCUTPO", ph.u_len + ph.overlap_overhead);
+    // should not redefine COMCUTPO here
+    linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead);
 
     linker->relocate();
     loader = getLoader();
