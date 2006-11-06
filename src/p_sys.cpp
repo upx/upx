@@ -70,7 +70,7 @@ void PackSys::patchLoader(OutputFile *fo,
 {
     const int e_len = getLoaderSectionStart("SYSCUTPO");
     const int d_len = lsize - e_len;
-    assert(e_len > 0 && e_len < 256);
+    assert(e_len > 0 && e_len < 128);
     assert(d_len > 0 && d_len < 256);
 
     if (ph.u_len + d_len + ph.overlap_overhead > 0xfffe)
@@ -85,6 +85,7 @@ void PackSys::patchLoader(OutputFile *fo,
     linker->defineSymbol("calltrick_calls", calls);
     linker->defineSymbol("copy_source", ph.c_len + lsize - 1);
     linker->defineSymbol("copy_destination", copy_to);
+    linker->defineSymbol("neg_e_len", 0 - e_len);
     linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead + 1);
     linker->defineSymbol("original_strategy", get_le16(ibuf + 6));
 

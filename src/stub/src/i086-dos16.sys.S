@@ -77,7 +77,7 @@ section         SYSMAIN2
                 mov     bx, 0x8000
 
                 xchg    di, si
-                .byte   0x83, 0xc6, SYSCUTPO /* add si, xxx */
+                .byte   0x83, 0xee, neg_e_len /* sub si, xxx -- sets bit C for sbb below */
 section         SYSSBBBP
                 sbb     bp, bp
 section         SYSCALLT

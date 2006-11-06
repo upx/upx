@@ -55,7 +55,7 @@ mem_ok:
                 cld
 
                 xchg    di, si
-                .byte   0x83, 0xc6, COMCUTPO /* add si, xxx */
+                .byte   0x83, 0xee, neg_e_len /* sub si, xxx -- sets bit C for sbb below */
 section         COMSBBBP
                 sbb     bp, bp
 section         COMPSHDI

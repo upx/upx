@@ -101,7 +101,7 @@ void PackCom::patchLoader(OutputFile *fo,
 {
     const int e_len = getLoaderSectionStart("COMCUTPO");
     const int d_len = lsize - e_len;
-    assert(e_len > 0 && e_len < 256);
+    assert(e_len > 0 && e_len < 128);
     assert(d_len > 0 && d_len < 256);
 
     const unsigned upper_end = ph.u_len + ph.overlap_overhead + d_len + 0x100;
@@ -116,7 +116,7 @@ void PackCom::patchLoader(OutputFile *fo,
     linker->defineSymbol("bytes_to_copy", ph.c_len + lsize);
     linker->defineSymbol("copy_source", ph.c_len + lsize + 0x100);
     linker->defineSymbol("copy_destination", upper_end);
-    // should not redefine COMCUTPO here
+    linker->defineSymbol("neg_e_len", 0 - e_len);
     linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead);
 
     linker->relocate();
