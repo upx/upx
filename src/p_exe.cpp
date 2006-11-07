@@ -57,8 +57,20 @@ PackExe::PackExe(InputFile *f) :
 
 const int *PackExe::getCompressionMethods(int method, int level) const
 {
+    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_END };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, M_END };
+
     bool small = ih_imagesize <= 256*1024;
-    return Packer::getDefaultCompressionMethods_8(method, level, small);
+    if (M_IS_NRV2B(method))
+        return m_nrv2b;
+    if (M_IS_NRV2D(method))
+        return m_nrv2d;
+    if (M_IS_NRV2E(method))
+        return m_nrv2e;
+    if (level == 1 || small)
+        return m_nrv2b;
+    return m_nrv2e;
 }
 
 
