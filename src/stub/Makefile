@@ -134,8 +134,8 @@ LABEL_PREFIX =
 PP_FLAGS =
 tc_bfdarch =
 tc_bfdname =
-tc_objdump_disasm_options =
 tc_list =
+tc_objdump_disasm_options =
 
 
 # /***********************************************************************
