@@ -28,6 +28,24 @@
 
 #include "conf.h"
 #include "compress.h"
+
+
+void lzma_compress_config_t::reset()
+{
+    memset(this, 0, sizeof(*this));
+
+    pos_bits.reset();
+    lit_pos_bits.reset();
+    lit_context_bits.reset();
+    dict_size = 1024 * 1024;
+    fast_mode = 2;
+    num_fast_bytes.reset();
+    match_finder_cycles = 0;
+
+    max_num_probs = 0;
+}
+
+
 #if !defined(WITH_LZMA)
 extern int compress_lzma_dummy;
 int compress_lzma_dummy = 0;
@@ -195,6 +213,12 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[4].uintVal = 2;
     pr[5].uintVal = 64;             // 5..273
     pr[6].uintVal = 0;
+#if 1
+    pr[0].uintVal = lzma_compress_config_t::pos_bits_t::default_value_c;
+    pr[1].uintVal = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
+    pr[2].uintVal = lzma_compress_config_t::lit_context_bits_t::default_value_c;
+    pr[5].uintVal = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
+#endif
 #if 0
     // DEBUG - set sizes so that we use a maxmimum amount of stack.
     //  These settings cause res->num_probs == 3147574, i.e. we will

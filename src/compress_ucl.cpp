@@ -115,8 +115,7 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
         cb.user = cb_parm;
     }
 
-    ucl_compress_config_t cconf;
-    memset(&cconf, 0xff, sizeof(cconf));
+    ucl_compress_config_t cconf; cconf.reset();
     if (cconf_parm)
         cconf = cconf_parm->conf_ucl; // struct copy
 

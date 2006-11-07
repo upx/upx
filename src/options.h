@@ -84,35 +84,9 @@ struct options_t {
     int overlay;
 
     // compression runtime parameters - see struct XXX_compress_config_t
-    struct crp_lzma_t {
-        typedef lzma_compress_config_t TT;
-        TT::pos_bits_t          pos_bits;           // pb
-        TT::lit_pos_bits_t      lit_pos_bits;       // lp
-        TT::lit_context_bits_t  lit_context_bits;   // lc
-        TT::num_fast_bytes_t    num_fast_bytes;
-#if 0
-        unsigned dict_size;
-        unsigned mf_passes;
-#endif
-        void reset() {
-            memset(this, 0, sizeof(*this));
-            pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
-            num_fast_bytes.reset();
-        }
-    };
-    struct crp_ucl_t {
-        unsigned max_offset;
-        unsigned max_match;
-        int s_level;
-        int h_level;
-        int p_level;
-        int c_flags;
-        unsigned m_size;
-        void reset() { memset(this, 0xff, sizeof(*this)); }
-    };
     struct crp_t {
-        crp_lzma_t  crp_lzma;
-        crp_ucl_t   crp_ucl;
+        lzma_compress_config_t  crp_lzma;
+        ucl_compress_config_t   crp_ucl;
         void reset() { crp_lzma.reset(); crp_ucl.reset(); }
     };
     crp_t crp;

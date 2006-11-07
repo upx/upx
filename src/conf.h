@@ -159,11 +159,14 @@
 #  include <nrv/nrvconf.h>
 #endif
 #if defined(WITH_UCL)
+#  define ucl_compress_config_t REAL_ucl_compress_config_t
 #  include <ucl/uclconf.h>
 #  include <ucl/ucl.h>
 #  if !defined(UCL_VERSION) || (UCL_VERSION < 0x010300L)
 #    error "please upgrade your UCL installation"
 #  endif
+#  undef ucl_compress_config_t
+#  undef ucl_compress_config_p
 #endif
 #if !defined(__UPX_CHECKER)
 #  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
@@ -209,96 +212,6 @@ struct upx_callback_t
     unsigned user2;
     unsigned user3;
 #endif
-};
-
-
-
-/*************************************************************************
-//
-**************************************************************************/
-
-template <class T, T default_value, T min_value, T max_value>
-struct OptVar
-{
-    OptVar() : v(default_value), is_set(0) { }
-    OptVar& operator= (const OptVar& other) {
-        if (other.is_set) { v = other.v; is_set += 1; }
-        return *this;
-    }
-    OptVar& operator= (const T other) {
-        v = other; is_set += 1; return *this;
-    }
-
-    void reset() { v = default_value; is_set = 0; }
-    operator T () const { return v; }
-
-    T v;
-    unsigned is_set;
-};
-
-
-struct lzma_compress_config_t
-{
-    typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
-    typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lb
-    typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
-    typedef OptVar<unsigned, 64u, 5u, 273u> num_fast_bytes_t;
-
-    unsigned            max_num_probs;
-    pos_bits_t          pos_bits;           // pb
-    lit_pos_bits_t      lit_pos_bits;       // lp
-    lit_context_bits_t  lit_context_bits;   // lc
-    num_fast_bytes_t    num_fast_bytes;
-#if 0
-    unsigned dict_size;
-    unsigned mf_passes;
-#endif
-    void reset() {
-        memset(this, 0, sizeof(*this));
-        pos_bits.reset(); lit_pos_bits.reset(); lit_context_bits.reset();
-        num_fast_bytes.reset();
-    }
-};
-
-
-#define upx_compress_config_p upx_compress_config_t *
-struct upx_compress_config_t
-{
-    lzma_compress_config_t  conf_lzma;
-    ucl_compress_config_t   conf_ucl;
-    void reset() {
-        conf_lzma.reset();
-        memset(&conf_ucl, 0xff, sizeof(conf_ucl));
-    }
-};
-
-
-struct lzma_compress_result_t
-{
-    unsigned pos_bits;              // pb
-    unsigned lit_pos_bits;          // lp
-    unsigned lit_context_bits;      // lc
-    unsigned dict_size;
-    unsigned fast_mode;
-    unsigned num_fast_bytes;
-    unsigned match_finder_cycles;
-    unsigned num_probs;             // (computed result)
-};
-
-struct ucl_compress_result_t
-{
-    ucl_uint result[16];
-};
-
-struct upx_compress_result_t
-{
-#if 1
-    // debug
-    int method, level;
-    unsigned u_len, c_len;
-#endif
-    lzma_compress_result_t  result_lzma;
-    ucl_compress_result_t   result_ucl;
 };
 
 
@@ -601,6 +514,118 @@ inline void operator delete[](void *p)
 
 #define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */
 #define UPX_MAGIC2_LE32     0xD5D0D8A1
+
+
+/*************************************************************************
+// compression - config_t
+**************************************************************************/
+
+template <class T, T default_value, T min_value, T max_value>
+struct OptVar
+{
+    static const T default_value_c = default_value;
+    static const T min_value_c = min_value;
+    static const T max_value_c = max_value;
+
+    OptVar() : v(default_value), is_set(0) { }
+    OptVar& operator= (const OptVar& other) {
+        if (other.is_set) { v = other.v; is_set += 1; }
+        // FIXME: this generates annoying warnings "unsigned >= 0 is always true"
+        //assert((v >= min_value) && (v <= max_value));
+        return *this;
+    }
+    OptVar& operator= (const T other) {
+        v = other; is_set += 1;
+        // FIXME: this generates annoying warnings "unsigned >= 0 is always true"
+        //assert((v >= min_value) && (v <= max_value));
+        return *this;
+    }
+
+    void reset() { v = default_value; is_set = 0; }
+    operator T () const { return v; }
+
+    T v;
+    unsigned is_set;
+};
+
+
+struct lzma_compress_config_t
+{
+    typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
+    typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lb
+    typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
+    typedef OptVar<unsigned, 64u, 5u, 273u> num_fast_bytes_t;
+
+    pos_bits_t          pos_bits;           // pb
+    lit_pos_bits_t      lit_pos_bits;       // lp
+    lit_context_bits_t  lit_context_bits;   // lc
+    unsigned            dict_size;
+    unsigned            fast_mode;
+    num_fast_bytes_t    num_fast_bytes;
+    unsigned            match_finder_cycles;
+
+    unsigned            max_num_probs;
+
+    void reset();
+};
+
+
+struct ucl_compress_config_t : public REAL_ucl_compress_config_t
+{
+    void reset() { memset(this, 0xff, sizeof(*this)); }
+};
+
+
+struct upx_compress_config_t
+{
+    lzma_compress_config_t  conf_lzma;
+    ucl_compress_config_t   conf_ucl;
+    void reset() { conf_lzma.reset(); conf_ucl.reset(); }
+};
+
+
+/*************************************************************************
+// compression - result_t
+**************************************************************************/
+
+struct lzma_compress_result_t
+{
+    unsigned pos_bits;              // pb
+    unsigned lit_pos_bits;          // lp
+    unsigned lit_context_bits;      // lc
+    unsigned dict_size;
+    unsigned fast_mode;
+    unsigned num_fast_bytes;
+    unsigned match_finder_cycles;
+    unsigned num_probs;             // (computed result)
+
+    void reset() { memset(this, 0, sizeof(*this)); }
+};
+
+
+struct ucl_compress_result_t
+{
+    ucl_uint result[16];
+
+    void reset() { memset(this, 0, sizeof(*this)); }
+};
+
+
+struct upx_compress_result_t
+{
+#if 1
+    // debug
+    int method, level;
+    unsigned u_len, c_len;
+#endif
+    lzma_compress_result_t  result_lzma;
+    ucl_compress_result_t   result_ucl;
+
+    void reset() {
+        memset(this, 0, sizeof(*this));
+        result_lzma.reset(); result_ucl.reset();
+    }
+};
 
 
 /*************************************************************************

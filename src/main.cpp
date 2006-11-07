@@ -406,7 +406,7 @@ char* prepare_shortopts(char *buf, const char *n,
 
 
 template <class T>
-int getoptvar(T *var, const T minval, const T maxval, const char *arg_fatal=NULL)
+int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal)
 {
     const char *p = mfx_optarg;
     char *endptr;
@@ -423,9 +423,9 @@ int getoptvar(T *var, const T minval, const T maxval, const char *arg_fatal=NULL
     if (*endptr != '\0')
         { r = -2; goto error; }
     v = (T) n;
-    if (v < minval)
+    if (v < min_value)
         { r = -3; goto error; }
-    if (v > maxval)
+    if (v > max_value)
         { r = -4; goto error; }
     *var = v;
     goto done;
@@ -437,7 +437,7 @@ done:
 }
 
 template <class T, T default_value, T min_value, T max_value>
-int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal=NULL)
+int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal)
 {
     T v = default_value;
     int r = getoptvar(&v, min_value, max_value, arg_fatal);
@@ -604,7 +604,7 @@ static int do_option(int optc, const char *arg)
         opt->small++;
         break;
     case 521:                               // --filter=
-        getoptvar(&opt->filter, 0, 255);
+        getoptvar(&opt->filter, 0, 255, arg);
         opt->all_filters = false;
         break;
     case 522:                               // --no-filter
@@ -622,22 +622,22 @@ static int do_option(int optc, const char *arg)
         break;
     // compression runtime parameters
     case 801:
-        getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3);
+        getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3, arg);
         break;
     case 802:
-        getoptvar(&opt->crp.crp_ucl.s_level, 0, 2);
+        getoptvar(&opt->crp.crp_ucl.s_level, 0, 2, arg);
         break;
     case 803:
-        getoptvar(&opt->crp.crp_ucl.h_level, 0, 1);
+        getoptvar(&opt->crp.crp_ucl.h_level, 0, 1, arg);
         break;
     case 804:
-        getoptvar(&opt->crp.crp_ucl.p_level, 0, 7);
+        getoptvar(&opt->crp.crp_ucl.p_level, 0, 7, arg);
         break;
     case 805:
-        getoptvar(&opt->crp.crp_ucl.max_offset, 256u, ~0u);
+        getoptvar(&opt->crp.crp_ucl.max_offset, 256u, ~0u, arg);
         break;
     case 806:
-        getoptvar(&opt->crp.crp_ucl.max_match, 16u, ~0u);
+        getoptvar(&opt->crp.crp_ucl.max_match, 16u, ~0u, arg);
         break;
     case 807:
         getoptvar(&opt->crp.crp_ucl.m_size, 10000u, 999999u, arg);
@@ -717,18 +717,20 @@ static int do_option(int optc, const char *arg)
         break;
     case 630:
         opt->win32_pe.compress_exports = 1;
-        getoptvar(&opt->win32_pe.compress_exports, 0, 1);
+        if (mfx_optarg && mfx_optarg[0])
+            getoptvar(&opt->win32_pe.compress_exports, 0, 1, arg);
         //printf("compress_exports: %d\n", opt->win32_pe.compress_exports);
         break;
     case 631:
         opt->win32_pe.compress_icons = 1;
-        getoptvar(&opt->win32_pe.compress_icons, 0, 2);
+        if (mfx_optarg && mfx_optarg[0])
+            getoptvar(&opt->win32_pe.compress_icons, 0, 2, arg);
         //printf("compress_icons: %d\n", opt->win32_pe.compress_icons);
         break;
     case 632:
-        opt->win32_pe.compress_resources = true;
-        if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->win32_pe.compress_resources = false;
+        opt->win32_pe.compress_resources = 1;
+        if (mfx_optarg && mfx_optarg[0])
+            getoptvar(&opt->win32_pe.compress_resources, 0, 1, arg);
         //printf("compress_resources: %d\n", opt->win32_pe.compress_resources);
         break;
     case 633:
@@ -736,8 +738,8 @@ static int do_option(int optc, const char *arg)
         break;
     case 634:
         opt->win32_pe.strip_relocs = 1;
-        if (mfx_optarg && strcmp(mfx_optarg,"0") == 0)
-            opt->win32_pe.strip_relocs = 0;
+        if (mfx_optarg && mfx_optarg[0])
+            getoptvar(&opt->win32_pe.strip_relocs, 0, 1, arg);
         //printf("strip_relocs: %d\n", opt->win32_pe.strip_relocs);
         break;
     case 635:
@@ -749,7 +751,7 @@ static int do_option(int optc, const char *arg)
         opt->atari_tos.split_segments = true;
         break;
     case 660:
-        getoptvar(&opt->o_unix.blocksize, 8192u, ~0u);
+        getoptvar(&opt->o_unix.blocksize, 8192u, ~0u, arg);
         break;
     case 661:
         opt->o_unix.force_execve = true;
@@ -757,7 +759,7 @@ static int do_option(int optc, const char *arg)
     case 662:
         opt->o_unix.script_name = "/usr/local/lib/upx/upxX";
         if (mfx_optarg && mfx_optarg[0])
-            set_script_name(mfx_optarg,1);
+            set_script_name(mfx_optarg, 1);
         break;
     case 663:
         opt->o_unix.is_ptinterp = true;
@@ -799,7 +801,7 @@ static int do_option(int optc, const char *arg)
     case ':':
         return -2;
     default:
-        fprintf(stderr,"%s: internal error in getopt (%d)\n",argv0,optc);
+        fprintf(stderr,"%s: internal error in getopt (%d)\n", argv0, optc);
         return -3;
     }
 
@@ -1360,7 +1362,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
         // invalidate compression options
         opt->method = 0;
         opt->level = 0;
-        memset(&opt->crp, 0xff, sizeof(opt->crp));
+        opt->crp.reset();
     }
 
     /* check options */
