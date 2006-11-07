@@ -18,6 +18,10 @@ Changes in 2.90 beta (08 Oct 2006):
 
 ==================================================================
 
+Changes in 2.03 (07 Nov 2006):
+  * bvmlinuz/386: fix for kernels not at 0x100000; also allow x86_64
+  * linux/elf386: work around Linux kernel bug (0-length .bss needs PF_W)
+
 Changes in 2.02 (13 Aug 2006):
   * linux/386: work around Linux kernel bug (".bss" requires PF_W)
   * linux/ppc32, mach/ppc32: compressed programs now work on a 405 CPU
