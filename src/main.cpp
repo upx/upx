@@ -904,6 +904,8 @@ static const struct mfx_option longopts[] =
     {"crp-lzma-lp",      0x31, 0, 812},
     {"crp-lzma-lc",      0x31, 0, 813},
     {"crp-lzma-fb",      0x31, 0, 816},
+    // [deprecated - only for compatibility with UPX 2.0x]
+    {"crp-ms",           0x31, 0, 807},
 
     // atari/tos
     {"split-segments",   0x10, 0, 650},
