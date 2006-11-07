@@ -140,7 +140,7 @@ section         CT16SUB0
                 sub     [si], si
 section         CT16I086
                 mov     bx, [si]
-                xchg    bl, bh
+                xchg    bh, bl
                 sub     bx, si
                 mov     [si], bx
 section         CALLTRI2
@@ -173,7 +173,7 @@ section         CT16SUB1
                 sub     [di], di
 section         CT16I087
                 mov     bx, [di]
-                xchg    bl, bh
+                xchg    bh, bl
                 sub     bx, di
                 mov     [di], bx
 section         CALLTRI6
