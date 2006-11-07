@@ -3,6 +3,7 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 2.91 beta (XX XXX 2006):
+  * assorted bug fixes
 
 Changes in 2.90 beta (08 Oct 2006):
   * LZMA algorithm support for most of the 32-bit and 64-bit file formats;
