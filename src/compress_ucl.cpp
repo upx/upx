@@ -107,6 +107,8 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
     int r;
     assert(level > 0); assert(cresult != NULL);
 
+    COMPILE_TIME_ASSERT(sizeof(ucl_compress_config_t) == sizeof(REAL_ucl_compress_config_t))
+
     ucl_progress_callback_t cb;
     cb.callback = 0;
     cb.user = NULL;

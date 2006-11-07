@@ -219,7 +219,7 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 
     if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
     {
-        ucl_uint *res = ph.compress_result.result_ucl.result;
+        const ucl_uint *res = ph.compress_result.result_ucl.result;
         //ph.min_offset_found = res[0];
         ph.max_offset_found = res[1];
         //ph.min_match_found = res[2];
