@@ -586,8 +586,8 @@ i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 
 i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.tmp
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.tmp tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) --ident=head_stack tmp/$T.bin $@
 
 
@@ -641,7 +641,7 @@ ifeq (1,1)
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
-	# info: as-2.16.1 does not work
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
 	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)

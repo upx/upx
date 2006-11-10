@@ -89,7 +89,7 @@ void show_usage(void)
 //
 **************************************************************************/
 
-void show_help(int x)
+void show_help(int x/*verbose*/)
 {
     FILE *f = con_term;
     int fg;

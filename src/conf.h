@@ -202,16 +202,8 @@ typedef void (__acc_cdecl *upx_progress_func_t)
 
 struct upx_callback_t
 {
-#if 0
-    upx_alloc_func_t nalloc;
-    upx_free_func_t nfree;
-#endif
     upx_progress_func_t nprogress;
     void * user1;
-#if 0
-    unsigned user2;
-    unsigned user3;
-#endif
 };
 
 
@@ -222,18 +214,6 @@ struct upx_callback_t
 // malloc debuggers
 #if defined(WITH_VALGRIND)
 #  include <valgrind/memcheck.h>
-#elif defined(WITH_DMALLOC)
-#  define DMALLOC_FUNC_CHECK
-#  include <dmalloc.h>
-#elif defined(WITH_GC)
-#  define GC_DEBUG
-#  include <gc/gc.h>
-#  undef malloc
-#  undef realloc
-#  undef free
-#  define malloc            GC_MALLOC
-#  define realloc           GC_REALLOC
-#  define free              GC_FREE
 #endif
 
 #if !defined(VALGRIND_MAKE_WRITABLE)
@@ -251,6 +231,7 @@ struct upx_callback_t
 #endif
 
 
+// unconditionally turn on assertions
 #undef NDEBUG
 #include <assert.h>
 
@@ -385,39 +366,6 @@ struct upx_callback_t
 
 #define UPX_MAX(a,b)        ((a) >= (b) ? (a) : (b))
 #define UPX_MIN(a,b)        ((a) <= (b) ? (a) : (b))
-#define UPX_MAX3(a,b,c)     ((a) >= (b) ? UPX_MAX(a,c) : UPX_MAX(b,c))
-#define UPX_MIN3(a,b,c)     ((a) <= (b) ? UPX_MIN(a,c) : UPX_MIN(b,c))
-
-
-#if 0 && defined(__cplusplus) && !defined(new) && !defined(delete)
-// global operators - debug
-inline void *operator new(size_t l)
-{
-    void *p = malloc(l);
-    printf("new   %6ld %p\n",(long)l,p);
-    fflush(stdout);
-    return p;
-}
-inline void *operator new[](size_t l)
-{
-    void *p = malloc(l);
-    printf("new[] %6ld %p\n",(long)l,p);
-    fflush(stdout);
-    return p;
-}
-inline void operator delete(void *p)
-{
-    printf("delete       %p\n",p);
-    fflush(stdout);
-    if (p) free(p);
-}
-inline void operator delete[](void *p)
-{
-    printf("delete[]     %p\n",p);
-    fflush(stdout);
-    if (p) free(p);
-}
-#endif
 
 
 // An Array allocates memory on the heap, but automatically
@@ -498,7 +446,6 @@ inline void operator delete[](void *p)
 #define UPX_F_WINCE_ARM_PE      21
 #define UPX_F_LINUX_ELF64_AMD   22
 #define UPX_F_LINUX_ELF32_ARMLE 23
-
 #define UPX_F_BSD_i386          24
 #define UPX_F_BSD_ELF_i386      25
 #define UPX_F_BSD_SH_i386       26
@@ -613,11 +560,10 @@ struct ucl_compress_result_t
 
 struct upx_compress_result_t
 {
-#if 1
     // debug
     int method, level;
     unsigned u_len, c_len;
-#endif
+
     lzma_compress_result_t  result_lzma;
     ucl_compress_result_t   result_ucl;
 
@@ -698,7 +644,7 @@ void do_files(int i, int argc, char *argv[]);
 
 // help.cpp
 void show_head(void);
-void show_help(int x = 0);
+void show_help(int verbose=0);
 void show_license(void);
 void show_usage(void);
 void show_version(int);
