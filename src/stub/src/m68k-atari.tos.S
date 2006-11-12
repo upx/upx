@@ -198,9 +198,7 @@ done:
 //       are contiguous in memory
 **************************************************************************/
 
-section tos0
-
-start:
+section entry
                 move.l  a0,d0           // a0 is basepage if accessory
                 beqs    1f
                 move.l  4(a0),sp        // accessory - get stack
@@ -245,24 +243,6 @@ section loop1_set_count.l
                 move.l  #loop1_count,d0
 
 section loop1_label
-loop1:
-
-
-section loop1.small
-        // copy 4 bytes per loop
-                move.l  -(a4),-(a3)
-section loop1_subql
-                subq.l  #1,d0
-                bnes    loop1
-section loop1_subqw
-                subq.w  #1,d0
-                bnes    loop1
-section loop1_dbra
-                dbra    d0,loop1
-
-section loop2.small
-        // loop2 - EMPTY section
-
 
 section loop1.fast
         // loop1 - use 10 registers to copy 4*10*4 = 160 bytes per loop
@@ -276,11 +256,28 @@ section loop1.fast
                 movem.l (a4),d1-d3/d5-d7/a0-a2/a5
                 movem.l d1-d3/d5-d7/a0-a2/a5,-(a3)
 
+section loop1.small
+        // loop1 - copy 4 bytes per loop
+                move.l  -(a4),-(a3)
+
+section loop1_subql
+                subq.l  #1,d0
+                bnes    loop1_label
+section loop1_subqw
+                subq.w  #1,d0
+                bnes    loop1_label
+section loop1_dbra
+                dbra    d0,loop1_label
+
+
 section loop2.fast
         // loop2 - copy the remaining 4..160 bytes
                 moveq.l  #loop2_count,d0
 loop2:          move.l  -(a4),-(a3)
                 dbra    d0,loop2
+
+section loop2.small
+        // loop2 - EMPTY section
 
 
         // a3 now points to the start of the compressed block
@@ -340,6 +337,7 @@ section nrv2e.init
                 moveq.l #0,d7
                 moveq.l #-0x50,d6       // 0xffffffb0
                 lsl.w   #4,d6           // 0xfffffb00 == -0x500
+section lzma.init
 
 
 // ------------- jump to copied decompressor
@@ -368,11 +366,10 @@ section clear_bss
         //   d3.l        0
 
 
-section loop3_label:
-loop3:
-section loop3.small:
+section loop3_label
+section loop3.small
                 move.l  d3,(a6)+
-section loop3.fast:
+section loop3.fast
         // the dirty bss is usually not too large, so we don't
         // bother making movem optimizations here
                 move.l  d3,(a6)+
@@ -381,12 +378,12 @@ section loop3.fast:
                 move.l  d3,(a6)+
 section loop3_subql
                 subq.l  #1,d6
-                bnes    loop3
+                bnes    loop3_label
 section loop3_subqw
                 subq.w  #1,d6
-                bnes    loop3
+                bnes    loop3_label
 section loop3_dbra
-                dbra    d6,loop3
+                dbra    d6,loop3_label
 
 
 // ------------- flush the cache
@@ -407,14 +404,14 @@ flush_cache_rts:
 
 // ------------- restore ASTACK
 
+section clear_dirty_stack
+
                 lea     clear_bss_size_p4:w(ASTACK),sp
 
         // assert sp == clear_bss_end(pc)+4
 
 
 // ------------- clear the dirty stack
-
-section clear_dirty_stack
 
                 // clear down to clear_bss(pc) + 32 extra longs
                 //moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
@@ -524,6 +521,15 @@ section nrv2e_8.small
 #undef d2
 
 
+section lzma.fast
+#include "arch/m68k/m68000/lzma_d_cf.S"
+                moveq.l #0,d3
+
+section lzma.small
+#include "arch/m68k/m68000/lzma_d_cs.S"
+                moveq.l #0,d3
+
+
         // note: d3.l is 0 from decompressor above
 
 
@@ -608,10 +614,19 @@ section jmpstack
                 jmp     (ASTACK)        // jmp clear_bss (on stack)
 
 
-// ------------- absolute symbols ("*ABS*")
+/*************************************************************************
+// absolute symbols ("*ABS*")
+**************************************************************************/
 
 section abs_symbols
 
+//.globl copy_to_stack_len
+//copy_to_stack_len = (clear_bss_end-clear_bss)/2-1
+
+.globl flush_cache_rts_offset
+flush_cache_rts_offset = flush_cache_rts - flush_cache
+
+#if 0
 #define N(a,b) \
     .globl a##_##b##_start_offset; \
      a##_##b##_start_offset = a##_##b##_decompr_start - a.b
@@ -628,6 +643,7 @@ N(nrv2e_8,small)
 N(lzma,fast)
 N(lzma,small)
 #undef N
+#endif
 
 
 // vi:ts=8:et:nowrap

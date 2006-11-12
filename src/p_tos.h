@@ -75,27 +75,34 @@ protected:
 
     tos_header_t ih, oh;
 
+    // symbols for buildLoader()
     struct LinkerSymbols
     {
-        enum { LOOP_UNKNOWN, LOOP_SUBQ_L, LOOP_SUBQ_W, LOOP_DBRA };
+        // "constant"
+        bool need_reloc;
+
+        // these are updated by buildLoader()
+        enum { LOOP_NONE, LOOP_SUBQ_L, LOOP_SUBQ_W, LOOP_DBRA };
+        struct LoopInfo {
+            unsigned mode; unsigned count; unsigned value;
+            void init(unsigned count, bool allow_dbra=true);
+        };
+        LoopInfo loop1;
+        LoopInfo loop2;
+        LoopInfo loop3;
+        unsigned decompr_offset;
         // before linker->relocate()
-        unsigned loop1_count; int loop1_mode;
-        unsigned loop2_count; int loop2_mode;
-        unsigned loop3_count; int loop3_mode;
         // after linker->relocate()
         unsigned copy_to_stack_len;
         unsigned flush_cache_rts_offset;
         unsigned clear_bss_size_p4;
         unsigned clear_dirty_stack_len;
         // FIXME: up11 etc.
+//        const char *decompr_start;
 
         void reset() { memset(this, 0, sizeof(*this)); }
     };
     LinkerSymbols symbols;
-
-protected:
-    unsigned patch_d_subq(void *l, int llen, int, unsigned, const char*);
-    unsigned patch_d_loop(void *l, int llen, int, unsigned, const char*, const char*);
 };
 
 

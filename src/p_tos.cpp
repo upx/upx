@@ -72,39 +72,134 @@ Linker* PackTos::newLinker() const
 }
 
 
+void PackTos::LinkerSymbols::LoopInfo::init(unsigned count_, bool allow_dbra)
+{
+    count = value = count_;
+    if (count == 0)
+        mode = LOOP_NONE;
+    else if (count <= 65536 && allow_dbra)
+    {
+        mode = LOOP_DBRA;
+        value -= 1;
+        value &= 0xffff;
+    }
+    else if (count <= 65536)
+    {
+        mode = LOOP_SUBQ_W;
+        value &= 0xffff;
+    }
+    else
+        mode = LOOP_SUBQ_L;
+}
+
+
 int PackTos::buildLoader(const Filter *ft)
 {
     assert(ft->id == 0);
 
-    const unsigned char *p = NULL;
-    size_t l = 0;
+    initLoader(nrv_loader, sizeof(nrv_loader));
+    //linker->dumpSymbols();
 
-    p = nrv_loader;
+    addLoader("entry", NULL);
+
+    assert(symbols.loop1.count || symbols.loop2.count);
+    if (symbols.loop1.count)
+    {
+        if (symbols.loop1.value <= 127)
+            addLoader("loop1_set_count.b", NULL);
+        else if (symbols.loop1.value <= 65535)
+            addLoader("loop1_set_count.w", NULL);
+        else
+            addLoader("loop1_set_count.l", NULL);
+        addLoader("loop1_label", NULL);
+        if (opt->small)
+            addLoader("loop1.small", NULL);
+        else
+            addLoader("loop1.fast", NULL);
+        if (symbols.loop1.mode == symbols.LOOP_SUBQ_L)
+            addLoader("loop1_subql", NULL);
+        else if (symbols.loop1.mode == symbols.LOOP_SUBQ_W)
+            addLoader("loop1_subqw", NULL);
+        else if (symbols.loop1.mode == symbols.LOOP_DBRA)
+            addLoader("loop1_dbra", NULL);
+        else
+            throwBadLoader();
+    }
+    if (symbols.loop2.count)
+    {
+        if (opt->small)
+            addLoader("loop2.small", NULL);
+        else
+            addLoader("loop2.fast", NULL);
+    }
+
+    addLoader("copy_to_stack", NULL);
+
+    if (M_IS_NRV2B(ph.method))
+        addLoader("nrv2b.init", NULL);
+    else if (M_IS_NRV2D(ph.method))
+        addLoader("nrv2d.init", NULL);
+    else if (M_IS_NRV2E(ph.method))
+        addLoader("nrv2e.init", NULL);
+    else if (M_IS_LZMA(ph.method))
+        addLoader("lzma.init", NULL);
+    else
+        throwBadLoader();
+
+    addLoader("jmp_decompressor", NULL);
+
+    addLoader("clear_bss", NULL);
+
+    addLoader("loop3_label", NULL);
+    if (opt->small)
+        addLoader("loop3.small", NULL);
+    else
+        addLoader("loop3.fast", NULL);
+    if (symbols.loop3.mode == symbols.LOOP_SUBQ_L)
+        addLoader("loop3_subql", NULL);
+    else if (symbols.loop3.mode == symbols.LOOP_SUBQ_W)
+        addLoader("loop3_subqw", NULL);
+    else if (symbols.loop3.mode == symbols.LOOP_DBRA)
+        addLoader("loop3_dbra", NULL);
+    else
+        throwBadLoader();
+
+    addLoader("flush_cache", NULL);
+    addLoader("clear_dirty_stack", NULL);
+    addLoader("start_program", NULL);
+
+    addLoader("IDENTSTR,+40D,UPX1HEAD,CUTPOINT", NULL);
+
+    // FIXME: symbols.decompr_offset should not be hardcoded
     if (M_IS_NRV2B(ph.method)) {
-//        p = opt->small ? nrv2b_loader_small : nrv2b_loader;
-//        l = opt->small ? sizeof(nrv2b_loader_small) : sizeof(nrv2b_loader);
+        addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast", NULL);
+        symbols.decompr_offset = 2;
+    } else if (M_IS_NRV2D(ph.method)) {
+        addLoader(opt->small ? "nrv2d_8.small" : "nrv2d_8.fast", NULL);
+        symbols.decompr_offset = 2;
+    } else if (M_IS_NRV2E(ph.method)) {
+        addLoader(opt->small ? "nrv2e_8.small" : "nrv2e_8.fast", NULL);
+        symbols.decompr_offset = 2;
+    } else if (M_IS_LZMA(ph.method)) {
+        addLoader("__mulsi3", NULL);
+        addLoader(opt->small ? "lzma.small" : "lzma.fast", NULL);
+        symbols.decompr_offset = linker->getSectionSize("__mulsi3");
     }
-    if (M_IS_NRV2D(ph.method)) {
-//        p = opt->small ? nrv2d_loader_small : nrv2d_loader;
-//        l = opt->small ? sizeof(nrv2d_loader_small) : sizeof(nrv2d_loader);
-    }
-    if (M_IS_NRV2E(ph.method)) {
-//        p = opt->small ? nrv2e_loader_small : nrv2e_loader;
-//        l = opt->small ? sizeof(nrv2e_loader_small) : sizeof(nrv2e_loader);
-    }
-    initLoader(p, l);
+    else
+        throwBadLoader();
 
-    addLoader("tos0",
-              true ? "subql_1d0" : "subqw_1d0",
-              "s_bneloop0",
-              true ? "subql_1d6" : "subqw_1d6",
-              "s_bneloop3",
-              "IDENTSTR,+40,UPX1HEAD",
-              "CUTPOINT",
-              true ? "reloc" : "",
-              "jmpastack",
-              NULL
-             );
+    if (symbols.need_reloc)
+        addLoader("reloc", NULL);
+
+    assert(symbols.loop3.count);
+    if (symbols.loop3.value <= 127)
+        addLoader("loop3_set_count.b", NULL);
+    else if (symbols.loop3.value <= 65535)
+        addLoader("loop3_set_count.w", NULL);
+    else
+        addLoader("loop3_set_count.l", NULL);
+
+    addLoader("jmpstack", NULL);
 
     freezeLoader();
     return getLoaderSize();
@@ -197,123 +292,6 @@ bool PackTos::checkFileHeader()
 
 
 /*************************************************************************
-// some 68000 opcodes for patching
-**************************************************************************/
-
-#if 0
-enum m68k_reg_t {
-    REG_D0, REG_D1, REG_D2, REG_D3, REG_D4, REG_D5, REG_D6, REG_D7,
-    REG_A0, REG_A1, REG_A2, REG_A3, REG_A4, REG_A5, REG_A6, REG_A7
-};
-
-static unsigned OP_DBRA(int d_reg)
-{
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    return 0x51c8 | (d_reg & 7);
-}
-
-static unsigned OP_JMP(int a_reg)
-{
-    // jmp (a0)
-    assert(a_reg >= REG_A0 && a_reg <= REG_A7);
-    return 0x4ed0 | (a_reg & 7);
-}
-
-static unsigned OP_MOVEI_L(int d_reg)
-{
-    // movei.l #XXXXXXXX,d0
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    return 0x203c | ((d_reg & 7) << 9);
-}
-
-static unsigned OP_MOVEQ(int value, int d_reg)
-{
-    // moveq.l #0,d0
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    assert(value >= -128 && value <= 127);
-    return 0x7000 | ((d_reg & 7) << 9) | (value & 0xff);
-}
-
-static unsigned OP_SUBQ_L(int value, int d_reg)
-{
-    // subq.l #X,d0
-    assert(value >= 1 && value <= 8);
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    return 0x5180 | ((value & 7) << 9) | (d_reg & 7);
-}
-
-static unsigned OP_SUBQ_W(int value, int d_reg)
-{
-    // subq.w #X,d0
-    assert(value >= 1 && value <= 8);
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    return 0x5140 | ((value & 7) << 9) | (d_reg & 7);
-}
-
-/*************************************************************************
-//
-**************************************************************************/
-
-unsigned PackTos::patch_d_subq(void *b, int blen,
-                               int d_reg, unsigned d_value,
-                               const char *subq_marker)
-{
-    // patch a "subq.l #1,d0" or "subq.w #1,d0".
-    // also convert into "dbra" if possible
-    assert(d_reg >= REG_D0 && d_reg <= REG_D7);
-    assert((int)d_value > 0);
-
-    int boff =  find_be16(b, blen, get_be16(subq_marker));
-    if (boff < 0)
-        throwBadLoader();
-
-    upx_byte *p = (upx_byte *)b + boff;
-    if (p[2] == 0x66)                           // bne.b XXX
-        checkPatch(b, blen, boff, 4);
-    else
-        checkPatch(b, blen, boff, 2);
-
-    if (d_value > 65536)
-    {
-        set_be16(p, OP_SUBQ_L(1, d_reg));       // subq.l #1,d0
-    }
-    else
-    {
-        if (p[2] == 0x66)                       // bne.b XXX
-        {
-            set_be16(p, OP_DBRA(d_reg));        // dbra d0,XXX
-            // adjust and extend branch from 8 to 16 bits
-            int branch = (signed char) p[3];
-            set_be16(p+2, branch+2);
-            // adjust d0
-            d_value -= 1;
-        }
-        else
-        {
-            set_be16(p, OP_SUBQ_W(1, d_reg));   // subq.w #1,d0
-        }
-        d_value &= 0xffff;
-    }
-    return d_value;
-}
-
-
-unsigned PackTos::patch_d_loop(void *b, int blen,
-                               int d_reg, unsigned d_value,
-                               const char *d_marker, const char *subq_marker)
-{
-    d_value = patch_d_subq(b, blen, d_reg, d_value, subq_marker);
-
-    int boff = find_be32(b, blen, get_be32(d_marker));
-    checkPatch(b, blen, boff, 4);
-    upx_byte *p = (upx_byte *)b + boff;
-    assert(get_be16(p - 2) == OP_MOVEI_L(d_reg));    // move.l #XXXXXXXX,d0
-    set_be32(p, d_value);
-    return d_value;
-}
-#endif
-
-/*************************************************************************
 // relocs
 **************************************************************************/
 
@@ -366,18 +344,6 @@ static int check_relocs(const upx_byte *relocs, unsigned rsize, unsigned isize,
 
 bool PackTos::canPack()
 {
-#if 0 // debug
-# define p(x)    printf("%-30s 0x%04x\n", #x, x)
-    p(OP_DBRA(REG_D0));
-    p(OP_MOVEI_L(REG_D0));
-    p(OP_MOVEQ(-1, REG_D0));
-    p(OP_MOVEQ(1, REG_D2));
-    p(OP_MOVEQ(1, REG_D3));
-    p(OP_SUBQ_W(1, REG_D0));
-    p(OP_SUBQ_L(1, REG_D0));
-# undef p
-#endif
-
     if (!readFileHeader())
         return false;
 
@@ -409,7 +375,6 @@ void PackTos::fileInfo()
 
 void PackTos::pack(OutputFile *fo)
 {
-    throwInternalError("atari/tos is currenty broken; this will get fixed in UPX 2.91");
     unsigned t;
     unsigned nrelocs = 0;
     unsigned relocsize = 0;
@@ -443,7 +408,7 @@ void PackTos::pack(OutputFile *fo)
 
     // Check relocs (see load_and_reloc() in freemint/sys/memory.c).
     // Must work around TOS bugs and lots of broken programs.
-    int r = 0;
+    symbols.need_reloc = false;
     if (overlay < 4)
     {
         // Bug workaround: Whatever this is, silently keep it in
@@ -459,15 +424,17 @@ void PackTos::pack(OutputFile *fo)
     }
     else if (ih.fh_reloc != 0)
         relocsize = 0;
-    else
-        r = check_relocs(ibuf+t, overlay, t, &nrelocs, &relocsize, &overlay);
+    else {
+        int r = check_relocs(ibuf+t, overlay, t, &nrelocs, &relocsize, &overlay);
+        if (r != 0)
+            throwCantPack("bad relocation table");
+        symbols.need_reloc = true;
+    }
 
 #if 0 || defined(TESTING)
     printf("xx2: %d relocs: %d, overlay: %d, t: %d\n", nrelocs, relocsize, overlay, t);
 #endif
 
-    if (r != 0)
-        throwCantPack("bad relocation table");
     checkOverlay(overlay);
 
     // Append original fileheader.
@@ -488,6 +455,11 @@ void PackTos::pack(OutputFile *fo)
     // alloc buffer (2048 is for decompressor and the various alignments)
     obuf.allocForCompression(t, 2048);
 
+    // prepare symbols for buildLoader() - worst case
+    symbols.loop1.init(0x08000000);
+    symbols.loop2.init(0x08000000);
+    symbols.loop3.init(0x08000000);
+
     // prepare packheader
     ph.u_len = t;
     // prepare filter
@@ -497,100 +469,126 @@ void PackTos::pack(OutputFile *fo)
     cconf.conf_ucl.max_match = 65535;
     compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
-    // get loader
-    const unsigned lsize = getLoaderSize();
-    const unsigned e_len = getLoaderSectionStart("CUTPOINT");
-    const unsigned d_len = lsize - e_len;
-    const unsigned decomp_offset = linker->getSymbolOffset("decompr_start") - e_len;
-    assert(decomp_offset != 0xdeaddead);
-    assert((e_len & 3) == 0 && (d_len & 1) == 0);
+    //
+    // multipass buildLoader()
+    //
 
-    // The decompressed data will now get placed at this offset:
-    unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
+    // save initial loader
+    const unsigned initial_lsize = getLoaderSize();
+    unsigned last_lsize = initial_lsize;
+    MemBuffer last_loader(last_lsize);
+    memcpy(last_loader, getLoader(), last_lsize);
 
-    // compute addresses
     unsigned o_text, o_data, o_bss;
-    o_text = e_len;
-    o_data = ph.c_len;
-    o_bss = i_bss;
-
-    // word align len of compressed data
-    while (o_data & 1)
+    unsigned e_len, d_len, d_off;
+    unsigned offset;
+    for (;;)
     {
-        obuf[o_data++] = 0;
-        offset++;
-    }
+        // The decompressed data will now get placed at this offset:
+        offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
 
-    // append decompressor (part 2 of loader)
-    const unsigned d_off = o_data;
-    o_data += d_len;
+        // get loader
+        const unsigned lsize = getLoaderSize();
+        e_len = getLoaderSectionStart("CUTPOINT");
+        d_len = lsize - e_len;
+        assert((e_len & 3) == 0 && (d_len & 1) == 0);
 
-    // dword align the len of the final data segment
-    while (o_data & 3)
-    {
-        obuf[o_data++] = 0;
-        offset++;
-    }
-    // dword align offset
-    while (offset & 3)
-        offset++;
+        // compute addresses
+        o_text = e_len;
+        o_data = ph.c_len;
+        o_bss = i_bss;
 
-    // new bss
-    if (i_text + i_data + i_bss > o_text + o_data + o_bss)
-        o_bss = (i_text + i_data + i_bss) - (o_text + o_data);
-
-    // dirty bss
-    unsigned dirty_bss = (o_data + offset) - (i_text + i_data);
-    //printf("real dirty_bss: %d\n", dirty_bss);
-    // dword align (or 16 - for speedup when clearing the dirty bss)
-    const unsigned dirty_bss_align = opt->small ? 4 : 16;
-    while (dirty_bss & (dirty_bss_align - 1))
-        dirty_bss++;
-    // adjust bss, assert room for some stack
-    if (dirty_bss + 512 > o_bss)
-        o_bss = dirty_bss + 512;
-
-    // dword align the len of the final bss segment
-    while (o_bss & 3)
-        o_bss++;
-
-    //   patch "subq.l #1,d6" or "subq.w #1,d6" - see "up41" below
-    const unsigned dirty_bss_d6 = dirty_bss / dirty_bss_align;
-        // FIXME patch_d_subq(loader, o_text, REG_D6, dirty_bss / dirty_bss_align, "u4");
-    linker->defineSymbol("up31", d_off + offset + decomp_offset);
-    if (opt->small)
-        ; // patch_d_loop(loader, o_text, REG_D0, o_data/4, "up22", "u1");
-    else
-    {
-        if (o_data <= 160)
-            throwNotCompressible();
-        unsigned loop1 = o_data / 160;
-        unsigned loop2 = o_data % 160;
-        if (loop2 == 0)
+        // word align len of compressed data
+        while (o_data & 1)
         {
-            loop1--;
-            loop2 = 160;
+            obuf[o_data++] = 0;
+            offset++;
         }
-        linker->defineSymbol("copy_remain", loop2 / 4 - 1);
-        //patch_be16(loader, o_text, "u2", OP_MOVEQ(loop2/4-1, REG_D0)); // moveq.l #X,d0
-        //patch_d_loop(loader, o_text, REG_D0, loop1, "up22", "u1");
+
+        // append decompressor (part 2 of loader)
+        d_off = o_data;
+        o_data += d_len;
+
+        // dword align the len of the final data segment
+        while (o_data & 3)
+        {
+            obuf[o_data++] = 0;
+            offset++;
+        }
+        // dword align offset
+        while (offset & 3)
+            offset++;
+
+        // new bss
+        if (i_text + i_data + i_bss > o_text + o_data + o_bss)
+            o_bss = (i_text + i_data + i_bss) - (o_text + o_data);
+
+        // dirty bss
+        unsigned dirty_bss = (o_data + offset) - (i_text + i_data);
+        //printf("real dirty_bss: %d\n", dirty_bss);
+        // dword align (or 16 - for speedup when clearing the dirty bss)
+        const unsigned dirty_bss_align = opt->small ? 4 : 16;
+        while (dirty_bss & (dirty_bss_align - 1))
+            dirty_bss++;
+        // adjust bss, assert room for some stack
+        if (dirty_bss + 512 > o_bss)
+            o_bss = dirty_bss + 512;
+
+        // dword align the len of the final bss segment
+        while (o_bss & 3)
+            o_bss++;
+
+        // update symbols for buildLoader()
+        if (opt->small)
+        {
+            symbols.loop1.init(o_data / 4);
+            symbols.loop2.init(0);
+        }
+        else
+        {
+            symbols.loop1.init(o_data / 160);
+            symbols.loop2.init((o_data % 160) / 4);
+        }
+
+        symbols.loop3.init(dirty_bss / dirty_bss_align);
+
+        // now re-build loader
+        buildLoader(&ft);
+        unsigned new_lsize = getLoaderSize();
+        assert(new_lsize <= initial_lsize);
+        if (new_lsize == last_lsize && memcmp(getLoader(), getLoader(), last_lsize) == 0)
+            break;
+        last_lsize = new_lsize;
+        memcpy(last_loader, getLoader(), last_lsize);
     }
-    linker->defineSymbol("up22", opt->small ? o_data / 4 : (o_data - 1) / 160);
-    linker->defineSymbol("up21", o_data + offset);
-    linker->defineSymbol("up13", i_bss);                // p_blen
-    linker->defineSymbol("up12", i_data);               // p_dlen
+
+    //
+    // define symbols and reloc
+    //
+
+    linker->defineSymbol("loop1_count", symbols.loop1.value);
+    linker->defineSymbol("loop2_count", symbols.loop2.value);
+    linker->defineSymbol("loop3_count", symbols.loop3.value);
+
     linker->defineSymbol("up11", i_text);               // p_tlen
+    linker->defineSymbol("up12", i_data);               // p_dlen
+    linker->defineSymbol("up13", i_bss);                // p_blen
+    linker->defineSymbol("up21", o_data + offset);
+    linker->defineSymbol("up31", d_off + offset + symbols.decompr_offset);
 
     const unsigned clear_size = linker->getSymbolOffset("clear_bss_end") -
                                 linker->getSymbolOffset("clear_bss");
     linker->defineSymbol("copy_to_stack_len", clear_size / 2 - 1);
     linker->defineSymbol("clear_bss_size_p4", clear_size + 4);
+    // FIXME
+    linker->defineSymbol("clear_dirty_stack_len", (128 + 3) / 4 + 32 - 1);
 
-    // patch decompressor
-    //upx_byte *p = obuf + d_off;
-    //   patch "moveq.l #1,d5" or "jmp (ASTACK)"
-    //patch_be16(p, d_len, "u3", (nrelocs > 0) ? OP_MOVEQ(1, REG_D5) : OP_JMP(REG_A7));
-    linker->defineSymbol("up41", dirty_bss_d6);
+    linker->relocate();
+    //linker->dumpSymbols();
+
+    //
+    // write
+    //
 
     // set new file_hdr
     memcpy(&oh, &ih, FH_SIZE);
@@ -621,6 +619,7 @@ void PackTos::pack(OutputFile *fo)
 #endif
 
     linker->relocate();
+
     // prepare loader
     MemBuffer loader(o_text);
     memcpy(loader, getLoader(), o_text);
@@ -636,7 +635,7 @@ void PackTos::pack(OutputFile *fo)
     fo->write(obuf, o_data);    // compressed + decompressor
 
     // write empty relocation fixup
-    fo->write("\x00\x00\x00\x00",4);
+    fo->write("\x00\x00\x00\x00", 4);
 
     // verify
     verifyOverlappingDecompression();
