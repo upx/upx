@@ -300,8 +300,14 @@ static bool set_method(int m, int l)
     {
         if (!Packer::isValidCompressionMethod(m))
             return false;
-        opt->method = m;
-        opt->all_methods = false;
+#if 1
+        // something like "--brute --lzma" should not disable "--brute"
+        if (!opt->all_methods)
+#endif
+        {
+            opt->method = m;
+            opt->all_methods = false;
+        }
     }
     if (l > 0)
         opt->level = l;
@@ -535,6 +541,11 @@ static int do_option(int optc, const char *arg)
         opt->all_methods_use_lzma = true;
         if (!set_method(M_LZMA, -1))
             e_method(M_LZMA, opt->level);
+        break;
+    case 722:
+        opt->all_methods_use_lzma = false;
+        if (opt->method == M_LZMA)
+            opt->method = -1;
         break;
 
     // compression level
@@ -852,16 +863,16 @@ static const struct mfx_option longopts[] =
     {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
 
     // backup options
-    {"backup",              0, 0, 'k'},
-    {"keep",                0, 0, 'k'},
-    {"no-backup",           0, 0, 541},
+    {"backup",           0x10, 0, 'k'},
+    {"keep",             0x10, 0, 'k'},
+    {"no-backup",        0x10, 0, 541},
 
     // overlay options
     {"overlay",          0x31, 0, 551},     // --overlay=
-    {"skip-overlay",        0, 0, 552},
-    {"no-overlay",          0, 0, 552},     // old name
-    {"copy-overlay",        0, 0, 553},
-    {"strip-overlay",       0, 0, 554},
+    {"skip-overlay",     0x10, 0, 552},
+    {"no-overlay",       0x10, 0, 552},     // old name
+    {"copy-overlay",     0x10, 0, 553},
+    {"strip-overlay",    0x10, 0, 554},
 
     // CPU options
     {"cpu",              0x31, 0, 560},     // --cpu=
@@ -870,15 +881,16 @@ static const struct mfx_option longopts[] =
     {"486",              0x10, 0, 564},
 
     // color options
-    {"no-color",            0, 0, 512},
-    {"mono",                0, 0, 513},
-    {"color",               0, 0, 514},
+    {"no-color",         0x10, 0, 512},
+    {"mono",             0x10, 0, 513},
+    {"color",            0x10, 0, 514},
 
     // compression method
     {"nrv2b",            0x10, 0, 702},     // --nrv2b
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
     {"lzma",             0x10, 0, 721},     // --lzma
+    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},
@@ -910,7 +922,7 @@ static const struct mfx_option longopts[] =
     // atari/tos
     {"split-segments",   0x10, 0, 650},
     // djgpp2/coff
-    {"coff",                0, 0, 610},     // produce COFF output
+    {"coff",             0x10, 0, 610},     // produce COFF output
     // dos/com
     // dos/exe
     //{"force-stub",             0x10, 0, 600},
@@ -922,15 +934,19 @@ static const struct mfx_option longopts[] =
 #if 0
     {"script",           0x31, 0, 662},     // --script=
 #endif
-    {"is_ptinterp",         0, 0, 663},     // linux/elf386 PT_INTERP program
-    {"use_ptinterp",        0, 0, 664},     // linux/elf386 PT_INTERP program
-    {"make_ptinterp",       0, 0, 665},     // linux/elf386 PT_INTERP program
-    {"Linux",               0, 0, 666},
-    {"FreeBSD",             0, 0, 667},
-    {"NetBSD",              0, 0, 668},
-    {"OpenBSD",             0, 0, 669},
+    {"is_ptinterp",      0x10, 0, 663},     // linux/elf386 PT_INTERP program
+    {"use_ptinterp",     0x10, 0, 664},     // linux/elf386 PT_INTERP program
+    {"make_ptinterp",    0x10, 0, 665},     // linux/elf386 PT_INTERP program
+    {"Linux",            0x10, 0, 666},
+    {"linux",            0x10, 0, 666},
+    {"FreeBSD",          0x10, 0, 667},
+    {"freebsd",          0x10, 0, 667},
+    {"NetBSD",           0x10, 0, 668},
+    {"netbsd",           0x10, 0, 668},
+    {"OpenBSD",          0x10, 0, 669},
+    {"openbsd",          0x10, 0, 669},
     // watcom/le
-    {"le",                  0, 0, 620},     // produce LE output
+    {"le",               0x10, 0, 620},     // produce LE output
     // win32/pe
     {"compress-exports",    2, 0, 630},
     {"compress-icons",      2, 0, 631},
@@ -985,16 +1001,16 @@ static const struct mfx_option longopts[] =
     {"verbose",             0, 0, 'v'},     // verbose mode
 
     // backup options
-    {"backup",              0, 0, 'k'},
-    {"keep",                0, 0, 'k'},
+    {"backup",           0x10, 0, 'k'},
+    {"keep",             0x10, 0, 'k'},
     {"no-backup",        0x10, 0, 541},
 
     // overlay options
     {"overlay",          0x31, 0, 551},     // --overlay=
-    {"skip-overlay",        0, 0, 552},
-    {"no-overlay",          0, 0, 552},     // old name
-    {"copy-overlay",        0, 0, 553},
-    {"strip-overlay",       0, 0, 554},
+    {"skip-overlay",     0x10, 0, 552},
+    {"no-overlay",       0x10, 0, 552},     // old name
+    {"copy-overlay",     0x10, 0, 553},
+    {"strip-overlay",    0x10, 0, 554},
 
     // CPU options
     {"cpu",              0x31, 0, 560},     // --cpu=
@@ -1003,9 +1019,9 @@ static const struct mfx_option longopts[] =
     {"486",              0x10, 0, 564},
 
     // color options
-    {"no-color",            0, 0, 512},
-    {"mono",                0, 0, 513},
-    {"color",               0, 0, 514},
+    {"no-color",         0x10, 0, 512},
+    {"mono",             0x10, 0, 513},
+    {"color",            0x10, 0, 514},
 
     // compression runtime parameters
 
