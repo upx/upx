@@ -257,6 +257,9 @@ void Packer::defineDecompressorSymbols()
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
+        // big endian - bswap32
+        if (getFormat() >= 128)
+            set_be32(&properties, properties);
 
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties
