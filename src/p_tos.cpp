@@ -184,6 +184,7 @@ int PackTos::buildLoader(const Filter *ft)
         addLoader("__mulsi3", NULL);
         addLoader(opt->small ? "lzma.small" : "lzma.fast", NULL);
         symbols.decompr_offset = linker->getSectionSize("__mulsi3");
+        addLoader("lzma.finish", NULL);
     }
     else
         throwBadLoader();
@@ -386,6 +387,11 @@ void PackTos::pack(OutputFile *fo)
     const unsigned i_bss = ih.fh_bss;
 
     symbols.reset();
+    symbols.need_reloc = false;
+    // prepare symbols for buildLoader() - worst case
+    symbols.loop1.init(0x08abcdef);
+    symbols.loop2.init(0x08abcdef);
+    symbols.loop3.init(0x08abcdef);
 
     // read file
     const unsigned isize = file_size - i_sym;
@@ -408,7 +414,6 @@ void PackTos::pack(OutputFile *fo)
 
     // Check relocs (see load_and_reloc() in freemint/sys/memory.c).
     // Must work around TOS bugs and lots of broken programs.
-    symbols.need_reloc = false;
     if (overlay < 4)
     {
         // Bug workaround: Whatever this is, silently keep it in
@@ -452,13 +457,8 @@ void PackTos::pack(OutputFile *fo)
     // After compression this will become the first part of the
     // data segement. The second part will be the decompressor.
 
-    // alloc buffer (2048 is for decompressor and the various alignments)
-    obuf.allocForCompression(t, 2048);
-
-    // prepare symbols for buildLoader() - worst case
-    symbols.loop1.init(0x08000000);
-    symbols.loop2.init(0x08000000);
-    symbols.loop3.init(0x08000000);
+    // alloc buffer (4096 is for decompressor and the various alignments)
+    obuf.allocForCompression(t, 4096);
 
     // prepare packheader
     ph.u_len = t;
@@ -467,6 +467,7 @@ void PackTos::pack(OutputFile *fo)
     // compress (max_match = 65535)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = 65535;
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 512, 0, NULL, &cconf);
 
     //
@@ -531,8 +532,9 @@ void PackTos::pack(OutputFile *fo)
         while (dirty_bss & (dirty_bss_align - 1))
             dirty_bss++;
         // adjust bss, assert room for some stack
-        if (dirty_bss + 512 > o_bss)
-            o_bss = dirty_bss + 512;
+        unsigned stack = 512 + getDecompressorWrkmemSize();
+        if (dirty_bss + stack > o_bss)
+            o_bss = dirty_bss + stack;
 
         // dword align the len of the final bss segment
         while (o_bss & 3)
@@ -551,6 +553,14 @@ void PackTos::pack(OutputFile *fo)
         }
         symbols.loop3.init(dirty_bss / dirty_bss_align);
 
+        unsigned d;
+        d = linker->getSymbolOffset("flush_cache_rts") - linker->getSymbolOffset("clear_bss");
+        symbols.flush_cache_rts_offset = d;
+        d = linker->getSymbolOffset("clear_dirty_stack_loop") - linker->getSymbolOffset("clear_bss");
+        symbols.clear_dirty_stack_len = (d + 3) / 4 + 32 - 1;
+        d = linker->getSymbolOffset("clear_bss_end") - linker->getSymbolOffset("clear_bss");
+        symbols.copy_to_stack_len = d / 2 - 1;
+
         // now re-build loader
         buildLoader(&ft);
         unsigned new_lsize = getLoaderSize();
@@ -566,6 +576,8 @@ void PackTos::pack(OutputFile *fo)
     // define symbols and reloc
     //
 
+    defineDecompressorSymbols();
+
     linker->defineSymbol("loop1_count", symbols.loop1.value);
     linker->defineSymbol("loop2_count", symbols.loop2.value);
     linker->defineSymbol("loop3_count", symbols.loop3.value);
@@ -576,13 +588,9 @@ void PackTos::pack(OutputFile *fo)
     linker->defineSymbol("up21", o_data + offset);
     linker->defineSymbol("up31", d_off + offset + symbols.decompr_offset);
 
-    const unsigned clear_size = linker->getSymbolOffset("clear_bss_end") -
-                                linker->getSymbolOffset("clear_bss");
-    linker->defineSymbol("copy_to_stack_len", clear_size / 2 - 1);
-    linker->defineSymbol("clear_bss_size_p4", clear_size + 4);
-    // FIXME (we have at least 512 bytes of .bss)
-    unsigned clear_dirty_stack_size = 256;
-    linker->defineSymbol("clear_dirty_stack_len", (clear_dirty_stack_size + 3) / 4 - 1);
+    linker->defineSymbol("flush_cache_rts_offset", symbols.flush_cache_rts_offset);
+    linker->defineSymbol("copy_to_stack_len", symbols.copy_to_stack_len);
+    linker->defineSymbol("clear_dirty_stack_len", symbols.clear_dirty_stack_len);
 
     linker->relocate();
 
@@ -622,9 +630,8 @@ void PackTos::pack(OutputFile *fo)
     // prepare loader
     MemBuffer loader(o_text);
     memcpy(loader, getLoader(), o_text);
-    memcpy(obuf+d_off, getLoader() + e_len, d_len);
-
     patchPackHeader(loader, o_text);
+    memcpy(obuf+d_off, getLoader() + e_len, d_len);
 
     // write new file header, loader and compressed file
     fo->write(&oh, FH_SIZE);

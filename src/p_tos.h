@@ -80,7 +80,6 @@ protected:
     {
         // "constant"
         bool need_reloc;
-
         // these are updated by buildLoader()
         enum { LOOP_NONE, LOOP_SUBQ_L, LOOP_SUBQ_W, LOOP_DBRA };
         struct LoopInfo {
@@ -91,14 +90,10 @@ protected:
         LoopInfo loop2;
         LoopInfo loop3;
         unsigned decompr_offset;
-        // before linker->relocate()
-        // after linker->relocate()
-        unsigned copy_to_stack_len;
+        //
         unsigned flush_cache_rts_offset;
-        unsigned clear_bss_size_p4;
         unsigned clear_dirty_stack_len;
-        // FIXME: up11 etc.
-//        const char *decompr_start;
+        unsigned copy_to_stack_len;
 
         void reset() { memset(this, 0, sizeof(*this)); }
     };

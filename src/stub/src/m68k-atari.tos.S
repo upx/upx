@@ -38,18 +38,15 @@
 ;   freemint/sys/memory.c           (load_region, load_and_reloc)
 ;   freemint/sys/arch/cpu.S         (cpush)
 ;
-
-;
-; This file is first preprocessed by cpp, then the a68k assembler
-; is run and finally the generated object file is translated to a .h file
-; by a simple perl script. We also maintain compatiblity with the pasm
-; assembler (which must be started in the emulator window).
-;
 */
 
 #define macro(name)   .macro name
 #define endm          .endm
 #define section       .section
+
+// global label for cross-section addressing
+#define GL(l) .globl l; l:
+
 
 /*
 ; basepage offsets
@@ -299,25 +296,20 @@ loop6:          move.w  -(a2),-(ASTACK)
                 subq.l  #1,d5
                 bccs    loop6
 
-#ifdef FLUSH_CACHE
-                // patch code: on the stack, the `rts' becomes a `nop'
-                //move.w  #0x4e71,(flush_cache_rts-clear_bss):w(ASTACK)
-                move.w  #0x4e71,flush_cache_rts_offset:w(ASTACK)
-#endif
-
         // note: d5.l is now -1 (needed for decompressor)
 
-
-// -------------
-
 #ifdef FLUSH_CACHE
+                // patch code: on the stack, the 'rts' becomes a 'nop'
+                //move.w  #0x4e71,(flush_cache_rts-clear_bss):w(ASTACK)
+                move.w  #0x4e71,flush_cache_rts_offset:w(ASTACK)
+
                 bsrs    flush_cache
 #endif
 
 
 // ------------- prepare decompressor
 
-#define NRV_NO_INIT
+#define NRV_NO_INIT 1
 
 section nrv2b.init
                 //moveq.l #-1,d5          // last_off = -1
@@ -325,30 +317,34 @@ section nrv2b.init
                 moveq.l #-1,d7
                 moveq.l #-0x68,d6       // 0xffffff98
                 lsl.w   #5,d6           // 0xfffff300 == -0xd00
+        // a3 still points to the start of the compressed block
+                move.l  d4,a4           // dest. for decompressing
+
 section nrv2d.init
                 //moveq.l #-1,d5          // last_off = -1
                 moveq.l #-128,d0        // d0.b = $80
                 moveq.l #-1,d7
                 moveq.l #-0x50,d6       // 0xffffffb0
                 lsl.w   #4,d6           // 0xfffffb00 == -0x500
+        // a3 still points to the start of the compressed block
+                move.l  d4,a4           // dest. for decompressing
+
 section nrv2e.init
                 //moveq.l #-1,d5          // last_off = -1
                 moveq.l #-128,d0        // d0.b = $80
                 moveq.l #0,d7
                 moveq.l #-0x50,d6       // 0xffffffb0
                 lsl.w   #4,d6           // 0xfffffb00 == -0x500
-section lzma.init
+        // a3 still points to the start of the compressed block
+                move.l  d4,a4           // dest. for decompressing
 
 
 // ------------- jump to copied decompressor
 
 section jmp_decompressor
-        // a3 still points to the start of the compressed block
-                move.l  d4,a4           // dest. for decompressing
-
-                move.l  d4,a2
-                add.l   #up31,a2
-                jmp     (a2)            // jmp decompr_start
+                move.l  d4,a0
+                add.l   #up31,a0
+                jmp     (a0)            // jmp decompr_start
 
 
 /*************************************************************************
@@ -396,7 +392,7 @@ section loop3_dbra
 
 section flush_cache
                 FLUSH_CACHE
-flush_cache_rts:
+GL(flush_cache_rts) // for flush_cache_rts_offset
                 rts
 
 #endif
@@ -406,7 +402,8 @@ flush_cache_rts:
 
 section clear_dirty_stack
 
-                lea     clear_bss_size_p4:w(ASTACK),sp
+                //lea     clear_bss_size+4:w(ASTACK),sp
+                lea     clear_bss_end+4:w(pc),sp
 
         // assert sp == clear_bss_end(pc)+4
 
@@ -417,6 +414,7 @@ section clear_dirty_stack
                 //moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
                 moveq.l #clear_dirty_stack_len,d0
                 lea     1f(pc),a0
+GL(clear_dirty_stack_loop) // for clear_dirty_stack_len
 1:              move.l  d3,-(a0)
                 dbra    d0,1b
 
@@ -432,8 +430,7 @@ section start_program
 1:              dc.w    0x4ef9          // jmp $xxxxxxxx - jmp to text segment
 
 
-.globl clear_bss_end    // for clear_dirty_stack_len
-clear_bss_end:
+GL(clear_bss_end) // for copy_to_stack_len
 
 
 /*************************************************************************
@@ -521,13 +518,7 @@ section nrv2e_8.small
 #undef d2
 
 
-section lzma.fast
-#include "arch/m68k/m68000/lzma_d_cf.S"
-                moveq.l #0,d3
-
-section lzma.small
-#include "arch/m68k/m68000/lzma_d_cs.S"
-                moveq.l #0,d3
+#include "arch/m68k/lzma_d.S"
 
 
         // note: d3.l is 0 from decompressor above
@@ -598,7 +589,7 @@ section __mulsi3
                 add.l   d1,d0                   //  6
                 rts                             // 16
 #else
-    // smaller and faster
+    // slightly smaller and faster
                 // compute high-word
                 lea     4(sp),a0                //  8
                 move.w  (a0)+,d1                //  8
@@ -620,12 +611,10 @@ section __mulsi3
 // absolute symbols ("*ABS*")
 **************************************************************************/
 
+#if 0
+
 section abs_symbols
 
-.globl flush_cache_rts_offset
-flush_cache_rts_offset = flush_cache_rts - flush_cache
-
-#if 0
 #define N(a,b) \
     .globl a##_##b##_start_offset; \
      a##_##b##_start_offset = a##_##b##_decompr_start - a.b
@@ -642,6 +631,7 @@ N(nrv2e_8,small)
 N(lzma,fast)
 N(lzma,small)
 #undef N
+
 #endif
 
 
