@@ -372,6 +372,7 @@ int ElfLinker::addLoader(const char *sname)
             Section *section = findSection(sect);
             if (section->p2align) {
                 assert(tail);
+                assert(tail != section);
                 unsigned const v = ~0u << section->p2align;
                 if (unsigned const l = ~v & -(tail->offset + tail->size)) {
                     alignCode(l);
@@ -452,6 +453,7 @@ void ElfLinker::relocate()
             value = rel->value->section->offset +
                     rel->value->offset + rel->add;
         }
+        //printf("%-28s %-28s %-10s 0x%08x 0x%08x\n", rel->section->name, rel->value->name, rel->type, value, value - rel->section->offset - rel->offset);
         upx_byte *location = rel->section->output + rel->offset;
         relocate1(rel, location, value, rel->type);
     }
@@ -484,17 +486,36 @@ void ElfLinker::defineSymbol(const char *name, unsigned value)
 }
 
 // debugging support
+void ElfLinker::dumpSymbol(const Symbol *symbol, unsigned flags, FILE *fp) const
+{
+    if ((flags & 1) && symbol->section->output == NULL)
+        return;
+    fprintf(fp, "%-28s 0x%08x | %-28s 0x%08x\n",
+            symbol->name, symbol->offset, symbol->section->name, symbol->section->offset);
+}
 void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
 {
     if (fp == NULL)
         fp = stdout;
-    for (unsigned ic = 0; ic < nsymbols; ic++)
+    if ((flags & 2) == 0)
     {
-        const Symbol *symbol = symbols[ic];
-        if ((flags & 1) && symbol->section->output == NULL)
-            continue;
-        fprintf(fp, "%-28s 0x%08x | %-28s 0x%08x\n",
-            symbol->name, symbol->offset, symbol->section->name, symbol->section->offset);
+        // default: dump symbols in used section order
+        for (const Section *section = head; section; section = section->next)
+        {
+            fprintf(fp, "%-42s%-28s 0x%08x\n", "", section->name, section->offset);
+            for (unsigned ic = 0; ic < nsymbols; ic++)
+            {
+                const Symbol *symbol = symbols[ic];
+                if (symbol->section == section && strcmp(symbol->name, section->name) != 0)
+                    dumpSymbol(symbol, flags, fp);
+            }
+        }
+    }
+    else
+    {
+        // dump all symbols
+        for (unsigned ic = 0; ic < nsymbols; ic++)
+            dumpSymbol(symbols[ic], flags, fp);
     }
 }
 
@@ -654,12 +675,15 @@ void ElfLinkerM68k::relocate1(const Relocation *rel, upx_byte *location,
         value -= rel->section->offset + rel->offset;
         type += 2;
     }
-    if (strcmp(type, "8") == 0)
+    if (strcmp(type, "8") == 0) {
         *location += value;
-    else if (strcmp(type, "16") == 0)
+    }
+    else if (strcmp(type, "16") == 0) {
         set_be16(location, get_be16(location) + value);
-    else if (strcmp(type, "32") == 0)
+    }
+    else if (strcmp(type, "32") == 0) {
         set_be32(location, get_be32(location) + value);
+    }
     else
         super::relocate1(rel, location, value, type);
 }

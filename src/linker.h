@@ -86,6 +86,8 @@ public:
     virtual void relocate();
     virtual void defineSymbol(const char *name, unsigned value);
     virtual unsigned getSymbolOffset(const char *) const;
+
+    virtual void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
     virtual void dumpSymbols(unsigned flags=0, FILE *fp=NULL) const;
 
     void alignWithByte(unsigned len, unsigned char b);
