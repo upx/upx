@@ -244,22 +244,26 @@ void ElfLinker::preprocessRelocations(char *start, const char *end)
             unsigned add = 0;
             if (char *p = strstr(symbol, "+0x"))
             {
-// Beware: sscanf("0xfffffffffffffffc", "%x", &add) ==> -1 == add
-// because conversion stops after 32 bits for a non-long.
-// Also, glibc-2.3.5 has a bug: even using "%lx" still gives -1 instead of -4.
-                long addend;
                 *p = 0;  // terminate the symbol name
-                p+=3;
-                if ('f'==p[0] && 0==strncmp(p, "ffffffff", 8)) {
-                    p+=8;  // workaround a bug in glibc-2.3.5
+                p += 3;
+
+                if (strlen(p) == 16) {
+                    // skip 8 leading chars if sign of char 9 matches
+                    if (memcmp(p, "000000000", 9))
+                        p += 8;
+                    else if (memcmp(p, "fffffffff", 9))
+                        p += 8;
                 }
-                sscanf(p, "%lx", &addend);
-                add = (unsigned)addend;
+                assert(strlen(p) == 8);
+                char *endptr = NULL;
+                unsigned long ul = strtoul(p, &endptr, 16);
+                add = (unsigned) ul;
+                assert(add == ul);
+                assert(endptr && *endptr == '\0');
             }
 
             addRelocation(section->name, offset, t, symbol, add);
-
-            //printf("relocation %s %x preprocessed\n", section->name, offset);
+            //printf("relocation %s %s %x %d preprocessed\n", section->name, symbol, offset, add);
         }
 
         start = nextl + 1;
@@ -453,8 +457,9 @@ void ElfLinker::relocate()
             value = rel->value->section->offset +
                     rel->value->offset + rel->add;
         }
-        //printf("%-28s %-28s %-10s 0x%08x 0x%08x\n", rel->section->name, rel->value->name, rel->type, value, value - rel->section->offset - rel->offset);
         upx_byte *location = rel->section->output + rel->offset;
+        //printf("%-28s %-28s %-10s 0x%08x 0x%08x\n", rel->section->name, rel->value->name, rel->type, value, value - rel->section->offset - rel->offset);
+        //printf("  %d %d %d %d %d : %d\n", value, rel->value->section->offset, rel->value->offset, rel->offset, rel->add, *location);
         relocate1(rel, location, value, rel->type);
     }
 }
