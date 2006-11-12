@@ -932,12 +932,6 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 // loader util
 **************************************************************************/
 
-void Packer::freezeLoader()
-{
-    linker->freeze();
-}
-
-
 upx_byte *Packer::getLoader() const
 {
     int size = -1;
@@ -1033,6 +1027,12 @@ void Packer::initLoader(const void *pdata, int plen, int small)
     linker->addSection("IDENTSTR", ident, size, 0);
 }
 
+
+void Packer::addLoader(const char *s)
+{
+    if (s && *s)
+        linker->addLoader(s);
+}
 
 void __acc_cdecl_va Packer::addLoader(const char *s, ...)
 {

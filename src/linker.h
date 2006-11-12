@@ -41,8 +41,6 @@ protected:
     struct      Symbol;
     struct      Relocation;
 
-    bool        frozen;         // FIXME: can we remove this ?
-
     upx_byte    *input;
     int         inputlen;
     upx_byte    *output;
@@ -62,11 +60,13 @@ protected:
     unsigned    nrelocations;
     unsigned    nrelocations_capacity;
 
+    bool        reloc_done;
+
     void preprocessSections(char *start, const char *end);
     void preprocessSymbols(char *start, const char *end);
     void preprocessRelocations(char *start, const char *end);
-    Section *findSection(const char *name) const;
-    Symbol *findSymbol(const char *name) /*const*/;
+    Section *findSection(const char *name, bool fatal=true) const;
+    Symbol *findSymbol(const char *name, bool fatal=true) const;
 
     Symbol *addSymbol(const char *name, const char *section, unsigned offset);
     Relocation *addRelocation(const char *section, unsigned off, const char *type,
@@ -79,16 +79,16 @@ public:
     virtual void init(const void *pdata, int plen);
     virtual void setLoaderAlignOffset(int phase);
     virtual int addLoader(const char *sname);
-    virtual void addSection(const char *sname, const void *sdata, int slen, int align);
-    virtual void freeze();
-    virtual int getSection(const char *sname, int *slen=NULL);
-    virtual upx_byte *getLoader(int *llen=NULL);
+    virtual Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
+    virtual int getSection(const char *sname, int *slen=NULL) const;
+    virtual int getSectionSize(const char *sname) const;
+    virtual upx_byte *getLoader(int *llen=NULL) const;
     virtual void relocate();
     virtual void defineSymbol(const char *name, unsigned value);
     virtual unsigned getSymbolOffset(const char *) const;
-    virtual void dumpSymbols(FILE *fp=NULL) const;
+    virtual void dumpSymbols(unsigned flags=0, FILE *fp=NULL) const;
 
-    void alignWithByte(unsigned len, upx_byte b);
+    void alignWithByte(unsigned len, unsigned char b);
     virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
     virtual void alignData(unsigned len) { alignWithByte(len, 0); }
 
@@ -104,7 +104,7 @@ struct ElfLinker::Section : private nocopy
     upx_byte *output;
     unsigned size;
     unsigned offset;
-    unsigned char align;  // log2
+    unsigned p2align;   // log2
     Section *next;
 
     Section(const char *n, const void *i, unsigned s, unsigned a=0);
