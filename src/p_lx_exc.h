@@ -51,7 +51,7 @@ public:
     virtual const char *getName() const { return "linux/386"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
 
     virtual bool canPack();
 
@@ -64,7 +64,7 @@ protected:
     // loader util
     virtual Linker* newLinker() const;
     virtual int getLoaderPrefixSize() const;
-    virtual int buildLinuxLoader(
+    virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
         upx_byte const *const fold,  // linked assembly + C section
@@ -133,7 +133,7 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
 };
 #endif /* already included */
 

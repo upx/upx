@@ -71,7 +71,7 @@ umax(unsigned a, unsigned b)
     return a;
 }
 
-int
+void
 PackLinuxI386sh::buildLoader(Filter const *ft)
 {
     unsigned const sz_fold = sizeof(linux_i386sh_fold);
@@ -99,7 +99,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     bool success = fold_ft.filter(buf + fold_hdrlen, sz_fold - fold_hdrlen);
     UNUSED(success);
 
-    return buildLinuxLoader(
+    buildLinuxLoader(
         linux_i386sh_loader, sizeof(linux_i386sh_loader),
         buf, sz_fold, ft );
 }

@@ -180,12 +180,12 @@ public:
     virtual unsigned find_SEGMENT_gap(unsigned const k);
 
 protected:
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);
-    virtual int buildMachLoader(
+    virtual void buildMachLoader(
         upx_byte const *const proto,
         unsigned        const szproto,
         upx_byte const *const fold,

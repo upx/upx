@@ -56,7 +56,7 @@ protected:
     virtual int decompressKernel();
     virtual void readKernel();
 
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
 //    virtual const upx_byte *getLoader() const;
@@ -105,7 +105,7 @@ public:
     virtual void pack(OutputFile *fo);
 
 protected:
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
 };
 
 
@@ -132,7 +132,7 @@ protected:
     virtual int decompressKernel();
     virtual void readKernel();
 
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
 };
 
 

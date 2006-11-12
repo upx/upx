@@ -40,7 +40,7 @@ class PackLinuxElf : public PackUnix
 public:
     PackLinuxElf(InputFile *f);
     virtual ~PackLinuxElf();
-    /*virtual int buildLoader(const Filter *);*/
+    /*virtual void buildLoader(const Filter *);*/
     virtual bool canUnpackVersion(int version) const { return (version >= 11); }
 
 protected:
@@ -90,7 +90,7 @@ protected:
 
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
-    virtual int ARM_buildLoader(Filter const *ft, bool isBE);
+    virtual void ARM_buildLoader(Filter const *ft, bool isBE);
     virtual void ARM_defineSymbols(Filter const *ft);
     virtual void ARM_updateLoader(OutputFile *);
     virtual void ARM_pack1(OutputFile *, bool isBE);
@@ -106,7 +106,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
-    virtual int buildLinuxLoader(
+    virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
         upx_byte const *const fold,  // linked assembly + C section
@@ -172,7 +172,7 @@ class PackLinuxElf64 : public PackLinuxElf
 public:
     PackLinuxElf64(InputFile *f);
     virtual ~PackLinuxElf64();
-    /*virtual int buildLoader(const Filter *);*/
+    /*virtual void buildLoader(const Filter *);*/
 
 protected:
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
@@ -188,7 +188,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
-    virtual int buildLinuxLoader(
+    virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
         upx_byte const *const fold,  // linked assembly + C section
@@ -288,7 +288,7 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     //virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;
     virtual void defineSymbols(Filter const *);
 };
@@ -308,7 +308,7 @@ public:
     virtual const int *getFilters() const;
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;
 };
 
@@ -331,7 +331,7 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
     virtual void addStubEntrySections(Filter const *);
     virtual Linker* newLinker() const;
     virtual void defineSymbols(Filter const *);
@@ -349,7 +349,7 @@ public:
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
 
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
 };
 
 class PackFreeBSDElf32x86 : public PackBSDElf32x86
@@ -376,7 +376,7 @@ public:
     virtual ~PackOpenBSDElf32x86();
 
 protected:
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual void generateElfHdr(
         OutputFile *,
         void const *proto,
@@ -402,7 +402,7 @@ protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual Linker* newLinker() const;
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
     virtual void updateLoader(OutputFile *);
     virtual void defineSymbols(Filter const *);
 };
@@ -421,7 +421,7 @@ protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual Linker* newLinker() const;
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual int buildLoader(const Filter *);
+    virtual void buildLoader(const Filter *);
     virtual void updateLoader(OutputFile *);
     virtual void defineSymbols(Filter const *);
 };

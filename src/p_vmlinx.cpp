@@ -223,7 +223,7 @@ Linker* PackVmlinuxI386::newLinker() const
 }
 
 
-int PackVmlinuxI386::buildLoader(const Filter *ft)
+void PackVmlinuxI386::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
@@ -245,8 +245,6 @@ int PackVmlinuxI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUX990,IDENTSTR,UPX1HEAD", NULL);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

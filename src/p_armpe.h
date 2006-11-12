@@ -51,7 +51,7 @@ public:
     virtual int canUnpack();
 
 protected:
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
     virtual unsigned processImports();

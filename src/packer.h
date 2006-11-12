@@ -203,18 +203,17 @@ protected:
     virtual void checkAlreadyPacked(const void *b, int blen);
 
     // loader core
-    virtual int buildLoader(const Filter *ft) = 0;
+    virtual void buildLoader(const Filter *ft) = 0;
     virtual Linker* newLinker() const = 0;
     // loader util for linker
-    void freezeLoader() { }
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int small=-1);
 #if 1 && (ACC_CC_GNUC >= 0x040100)
-    virtual void addLoader(const char *);
+    //virtual void addLoader(const char *);
     virtual void __acc_cdecl_va addLoader(const char *, ...) __attribute__((__sentinel__));
 #else
-    virtual void addLoader(const char *);
+    //virtual void addLoader(const char *);
     virtual void __acc_cdecl_va addLoader(const char *, ...);
 #endif
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;

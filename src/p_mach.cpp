@@ -90,7 +90,7 @@ void PackMachPPC32::defineSymbols(Filter const *)
 }
 
 
-int
+void
 PackMachPPC32::buildMachLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
@@ -131,16 +131,14 @@ PackMachPPC32::buildMachLoader(
 
     addStubEntrySections(ft);
 
-    freezeLoader();
     defineSymbols(ft);
     linker->relocate();
-    return getLoaderSize();
 }
 
-int
+void
 PackMachPPC32::buildLoader(const Filter *ft)
 {
-    return buildMachLoader(
+    buildMachLoader(
         l_mac_ppc32_loader, sizeof(l_mac_ppc32_loader),
         fold_machppc32,     sizeof(fold_machppc32),  ft );
 }

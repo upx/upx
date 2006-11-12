@@ -89,7 +89,7 @@ Linker* PackDjgpp2::newLinker() const
 }
 
 
-int PackDjgpp2::buildLoader(const Filter *ft)
+void PackDjgpp2::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
@@ -109,8 +109,6 @@ int PackDjgpp2::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("DJRETURN,+40C,UPX1HEAD", NULL);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

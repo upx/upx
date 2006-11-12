@@ -300,7 +300,7 @@ bool PackPs1::canPack()
 //
 **************************************************************************/
 
-int PackPs1::buildLoader(const Filter *)
+void PackPs1::buildLoader(const Filter *)
 {
     const char *method = NULL;
 
@@ -402,8 +402,6 @@ int PackPs1::buildLoader(const Filter *)
         }
         addLoader("UPX1HEAD", "IDENTSTR", NULL);
     }
-    freezeLoader();
-    return getLoaderSize();
 }
 
 #define OPTYPE(x)     (((x) >> 13) & 0x7)

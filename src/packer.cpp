@@ -1028,11 +1028,13 @@ void Packer::initLoader(const void *pdata, int plen, int small)
 }
 
 
+#if 0
 void Packer::addLoader(const char *s)
 {
     if (s && *s)
         linker->addLoader(s);
 }
+#endif
 
 void __acc_cdecl_va Packer::addLoader(const char *s, ...)
 {
@@ -1314,7 +1316,8 @@ void Packer::compressWithFilters(Filter *parm_ft,
                 {
                     // get results
                     ph.overlap_overhead = findOverlapOverhead(*otemp, overlap_range);
-                    lsize = buildLoader(&ft);
+                    buildLoader(&ft);
+                    lsize = getLoaderSize();
                     assert(lsize > 0);
                 }
 #if 0

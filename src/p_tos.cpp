@@ -93,7 +93,7 @@ void PackTos::LinkerSymbols::LoopInfo::init(unsigned count_, bool allow_dbra)
 }
 
 
-int PackTos::buildLoader(const Filter *ft)
+void PackTos::buildLoader(const Filter *ft)
 {
     assert(ft->id == 0);
 
@@ -201,9 +201,6 @@ int PackTos::buildLoader(const Filter *ft)
         addLoader("loop3_set_count.l", NULL);
 
     addLoader("jmpstack", NULL);
-
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

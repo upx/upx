@@ -431,7 +431,7 @@ void PackLinuxElf32x86::defineSymbols(Filter const *const ft)
     }
 }
 
-int
+void
 PackLinuxElf32::buildLinuxLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
@@ -488,13 +488,11 @@ PackLinuxElf32::buildLinuxLoader(
 
     addStubEntrySections(ft);
 
-    freezeLoader();
     defineSymbols(ft);
     linker->relocate();
-    return getLoaderSize();
 }
 
-int
+void
 PackLinuxElf64::buildLinuxLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
@@ -538,10 +536,8 @@ PackLinuxElf64::buildLinuxLoader(
 
     addStubEntrySections(ft);
 
-    freezeLoader();
     defineSymbols(ft);
     linker->relocate();
-    return getLoaderSize();
 }
 
 void
@@ -629,7 +625,7 @@ static const
 static const
 #include "stub/i386-linux.elf-fold.h"
 
-int
+void
 PackLinuxElf32x86::buildLoader(const Filter *ft)
 {
     unsigned char tmp[sizeof(linux_i386elf_fold)];
@@ -647,7 +643,7 @@ PackLinuxElf32x86::buildLoader(const Filter *ft)
             }
         }
     }
-    return buildLinuxLoader(
+    buildLinuxLoader(
         linux_i386elf_loader, sizeof(linux_i386elf_loader),
         tmp,                  sizeof(linux_i386elf_fold),  ft );
 }
@@ -657,7 +653,7 @@ static const
 static const
 #include "stub/i386-bsd.elf-fold.h"
 
-int
+void
 PackBSDElf32x86::buildLoader(const Filter *ft)
 {
     unsigned char tmp[sizeof(bsd_i386elf_fold)];
@@ -675,7 +671,7 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
             }
         }
     }
-    return buildLinuxLoader(
+    buildLinuxLoader(
         bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
         tmp,                sizeof(bsd_i386elf_fold),  ft );
 }
@@ -687,7 +683,7 @@ static const
 static const
 #include "stub/i386-openbsd.elf-fold.h"
 
-int
+void
 PackOpenBSDElf32x86::buildLoader(const Filter *ft)
 {
     unsigned char tmp[sizeof(openbsd_i386elf_fold)];
@@ -705,7 +701,7 @@ PackOpenBSDElf32x86::buildLoader(const Filter *ft)
             }
         }
     }
-    return buildLinuxLoader(
+    buildLinuxLoader(
         bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
         tmp,                sizeof(openbsd_i386elf_fold),  ft );
 }
@@ -777,16 +773,16 @@ ehdr_lebe(Elf_LE32_Ehdr *const ehdr_le, Elf_BE32_Ehdr const *const ehdr_be)
     ehdr_le->e_shstrndx  = ehdr_be->e_shstrndx;
 }
 
-int
+void
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
-    return ARM_buildLoader(ft, true);
+    ARM_buildLoader(ft, true);
 }
 
-int
+void
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
-    return ARM_buildLoader(ft, false);
+    ARM_buildLoader(ft, false);
 }
 
 static const
@@ -794,10 +790,10 @@ static const
 static const
 #include "stub/powerpc-linux.elf-fold.h"
 
-int
+void
 PackLinuxElf32ppc::buildLoader(const Filter *ft)
 {
-    return buildLinuxLoader(
+    buildLinuxLoader(
         linux_elfppc32_loader, sizeof(linux_elfppc32_loader),
         linux_elfppc32_fold,   sizeof(linux_elfppc32_fold),  ft );
 }
@@ -807,10 +803,10 @@ static const
 static const
 #include "stub/amd64-linux.elf-fold.h"
 
-int
+void
 PackLinuxElf64amd::buildLoader(const Filter *ft)
 {
-    return buildLinuxLoader(
+    buildLinuxLoader(
         linux_elf64amd_loader, sizeof(linux_elf64amd_loader),
         linux_elf64amd_fold,   sizeof(linux_elf64amd_fold),  ft );
 }
@@ -1515,7 +1511,7 @@ PackLinuxElf32armLe::getFilters() const
     return ARM_getFilters(false);
 }
 
-int
+void
 PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
 {
     unsigned const sz_loader = sizeof(linux_elf32arm_loader);
@@ -1542,7 +1538,7 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
         }
     }
     if (!asm_brev) { // was assembled to match target
-        return buildLinuxLoader(linux_elf32arm_loader, sz_loader,
+        buildLinuxLoader(linux_elf32arm_loader, sz_loader,
             tmp_fold, sz_fold, ft );
     }
     else { // was assembled brev() from target
@@ -1567,7 +1563,7 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
         (isBE ? (void (*)(void *, void const *))ehdr_bele
               : (void (*)(void *, void const *))ehdr_lebe)
                 (tmp_fold.getVoidPtr(), (void const *)linux_elf32arm_fold);
-        return buildLinuxLoader(brev_loader, sz_loader, tmp_fold, sz_fold, ft);
+        buildLinuxLoader(brev_loader, sz_loader, tmp_fold, sz_fold, ft);
     }
 }
 

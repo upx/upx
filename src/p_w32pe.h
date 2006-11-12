@@ -53,7 +53,7 @@ public:
 protected:
     virtual int readFileHeader();
 
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
     bool isrtm;

@@ -94,14 +94,12 @@ void PackElks8086::readKernel()
 //
 **************************************************************************/
 
-int PackElks8086::buildLoader(const Filter *ft)
+void PackElks8086::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
     // FIXME
     UNUSED(ft);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

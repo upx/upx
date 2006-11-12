@@ -68,7 +68,7 @@ protected:
     virtual int readFileHeader(void);
 
     virtual int fillExeHeader(struct exe_header_t *) const;
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
     struct exe_header_t

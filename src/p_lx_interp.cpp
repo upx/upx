@@ -182,7 +182,6 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
 
         addLoader("LXPTI200", NULL);
         addLoader("FOLDEXEC", NULL);
-        freezeLoader();
         upx_byte const *p = getLoader();
         lsize = getLoaderSize();
         updateLoader(fo);

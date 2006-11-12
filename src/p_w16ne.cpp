@@ -57,7 +57,7 @@ const int *PackW16Ne::getFilters() const
 }
 
 
-int PackW16Ne::buildLoader(const Filter *ft)
+void PackW16Ne::buildLoader(const Filter *ft)
 {
     // prepare loader
 //    initLoader(nrv_loader,sizeof(nrv_loader));
@@ -68,8 +68,6 @@ int PackW16Ne::buildLoader(const Filter *ft)
 //        addLoader("...");
     }
 //
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

@@ -113,7 +113,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 }
 
 
-int PackExe::buildLoader(const Filter *)
+void PackExe::buildLoader(const Filter *)
 {
     struct exe_header_t tmp_oh;
     int flag = fillExeHeader(&tmp_oh);
@@ -189,8 +189,6 @@ int PackExe::buildLoader(const Filter *)
                   "EXERETIP",
                   NULL
                  );
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

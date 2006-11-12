@@ -88,7 +88,7 @@ Linker* PackWcle::newLinker() const
 }
 
 
-int PackWcle::buildLoader(const Filter *ft)
+void PackWcle::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
@@ -118,8 +118,6 @@ int PackWcle::buildLoader(const Filter *ft)
               "WCLEMAI4",
               NULL
              );
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

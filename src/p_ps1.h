@@ -59,7 +59,7 @@ protected:
     virtual void putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len);
     virtual bool getBkupHeader(unsigned char *src, unsigned char * dst);
     virtual bool readBkupHeader();
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual bool findBssSection();
     virtual Linker* newLinker() const;
 

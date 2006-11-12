@@ -269,7 +269,7 @@ Linker* PackVmlinuzI386::newLinker() const
 // vmlinuz specific
 **************************************************************************/
 
-int PackVmlinuzI386::buildLoader(const Filter *ft)
+void PackVmlinuzI386::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
@@ -286,8 +286,6 @@ int PackVmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUZ990,IDENTSTR,UPX1HEAD", NULL);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 
@@ -357,7 +355,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 // bvmlinuz specific
 **************************************************************************/
 
-int PackBvmlinuzI386::buildLoader(const Filter *ft)
+void PackBvmlinuzI386::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader, sizeof(nrv_loader));
@@ -387,8 +385,6 @@ int PackBvmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUZ990", NULL);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

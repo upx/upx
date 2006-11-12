@@ -59,7 +59,7 @@ protected:
     virtual unsigned findOverlapOverhead(const upx_bytep buf,
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
     long coff_offset;

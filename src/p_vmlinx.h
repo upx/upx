@@ -56,7 +56,7 @@ public:
 
 protected:
     virtual Elf_LE32_Shdr const *getElfSections();
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 //    virtual const upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;

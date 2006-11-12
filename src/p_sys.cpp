@@ -100,7 +100,7 @@ void PackSys::patchLoader(OutputFile *fo,
 }
 
 
-int PackSys::buildLoader(const Filter *ft)
+void PackSys::buildLoader(const Filter *ft)
 {
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("SYSMAIN1",
@@ -123,8 +123,6 @@ int PackSys::buildLoader(const Filter *ft)
               "SYSJUMP1",
               NULL
              );
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

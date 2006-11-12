@@ -49,7 +49,7 @@ protected:
     virtual unsigned getCallTrickOffset() const { return 0; }
 
 protected:
-    virtual int buildLoader(const Filter *ft);
+    virtual void buildLoader(const Filter *ft);
     virtual void patchLoader(OutputFile *fo, upx_byte *, int, unsigned);
 };
 

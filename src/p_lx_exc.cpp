@@ -292,7 +292,7 @@ Linker *PackLinuxI386::newLinker() const
     return new ElfLinkerX86;
 }
 
-int
+void
 PackLinuxI386::buildLinuxLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
@@ -372,7 +372,6 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
-    freezeLoader();
     if (ph.method == M_LZMA) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         unsigned const properties = // lc, lp, pb, dummy
@@ -394,10 +393,9 @@ PackLinuxI386::buildLinuxLoader(
         }
     }
     linker->relocate();
-    return getLoaderSize();
 }
 
-int
+void
 PackLinuxI386::buildLoader(Filter const *ft)
 {
     unsigned const sz_fold = sizeof(linux_i386exec_fold);
@@ -412,12 +410,12 @@ PackLinuxI386::buildLoader(Filter const *ft)
     patch_le32(buf,sz_fold,"UPX3",progid);
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
 
-    return buildLinuxLoader(
+    buildLinuxLoader(
         linux_i386exec_loader, sizeof(linux_i386exec_loader),
         buf, sz_fold, ft );
 }
 
-int
+void
 PackBSDI386::buildLoader(Filter const *ft)
 {
     unsigned const sz_fold = sizeof(bsd_i386exec_fold);
@@ -432,7 +430,7 @@ PackBSDI386::buildLoader(Filter const *ft)
     patch_le32(buf,sz_fold,"UPX3",progid);
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
 
-    return buildLinuxLoader(
+    buildLinuxLoader(
         bsd_i386exec_loader, sizeof(bsd_i386exec_loader),
         buf, sz_fold, ft );
 }

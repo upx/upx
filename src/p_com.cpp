@@ -136,7 +136,7 @@ void PackCom::patchLoader(OutputFile *fo,
 }
 
 
-int PackCom::buildLoader(const Filter *ft)
+void PackCom::buildLoader(const Filter *ft)
 {
     initLoader(nrv2b_loader,sizeof(nrv2b_loader));
     addLoader("COMMAIN1",
@@ -155,8 +155,6 @@ int PackCom::buildLoader(const Filter *ft)
         assert(ft->calls > 0);
         addFilter16(ft->id);
     }
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

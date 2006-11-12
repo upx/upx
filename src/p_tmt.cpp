@@ -81,7 +81,7 @@ Linker* PackTmt::newLinker() const
 }
 
 
-int PackTmt::buildLoader(const Filter *ft)
+void PackTmt::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(nrv_loader,sizeof(nrv_loader));
@@ -105,8 +105,6 @@ int PackTmt::buildLoader(const Filter *ft)
               "RELOC32J,TMTJUMP1",
               NULL
              );
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

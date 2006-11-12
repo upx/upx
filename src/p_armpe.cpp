@@ -462,7 +462,7 @@ bool PackArmPe::canPack()
 }
 
 
-int PackArmPe::buildLoader(const Filter *ft)
+void PackArmPe::buildLoader(const Filter *ft)
 {
     const unsigned char *loader = use_thumb_stub ? nrv_loader_thumb : nrv_loader_arm;
     unsigned size = use_thumb_stub ? sizeof(nrv_loader_thumb) : sizeof(nrv_loader_arm);
@@ -503,8 +503,6 @@ int PackArmPe::buildLoader(const Filter *ft)
         addLoader("+40C,LZMA_DECODE,LZMA_DEC10", NULL);
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);
-    freezeLoader();
-    return getLoaderSize();
 }
 
 

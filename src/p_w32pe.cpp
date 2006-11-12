@@ -535,7 +535,7 @@ bool PackW32Pe::canPack()
 }
 
 
-int PackW32Pe::buildLoader(const Filter *ft)
+void PackW32Pe::buildLoader(const Filter *ft)
 {
     // recompute tlsindex (see pack() below)
     unsigned tmp_tlsindex = tlsindex;
@@ -598,8 +598,6 @@ int PackW32Pe::buildLoader(const Filter *ft)
               "IDENTSTR,UPX1HEAD",
               NULL
              );
-    freezeLoader();
-    return getLoaderSize();
 }
 
 
