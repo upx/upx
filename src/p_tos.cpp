@@ -37,7 +37,7 @@
 static const
 #include "stub/m68k-atari.tos.h"
 
-// #define TESTING
+//#define TESTING 1
 
 
 /*************************************************************************
@@ -549,14 +549,14 @@ void PackTos::pack(OutputFile *fo)
             symbols.loop1.init(o_data / 160);
             symbols.loop2.init((o_data % 160) / 4);
         }
-
         symbols.loop3.init(dirty_bss / dirty_bss_align);
 
         // now re-build loader
         buildLoader(&ft);
         unsigned new_lsize = getLoaderSize();
+        //printf("buildLoader %d %d\n", new_lsize, initial_lsize);
         assert(new_lsize <= initial_lsize);
-        if (new_lsize == last_lsize && memcmp(getLoader(), getLoader(), last_lsize) == 0)
+        if (new_lsize == last_lsize && memcmp(getLoader(), last_loader, last_lsize) == 0)
             break;
         last_lsize = new_lsize;
         memcpy(last_loader, getLoader(), last_lsize);
@@ -580,11 +580,11 @@ void PackTos::pack(OutputFile *fo)
                                 linker->getSymbolOffset("clear_bss");
     linker->defineSymbol("copy_to_stack_len", clear_size / 2 - 1);
     linker->defineSymbol("clear_bss_size_p4", clear_size + 4);
-    // FIXME
-    linker->defineSymbol("clear_dirty_stack_len", (128 + 3) / 4 + 32 - 1);
+    // FIXME (we have at least 512 bytes of .bss)
+    unsigned clear_dirty_stack_size = 256;
+    linker->defineSymbol("clear_dirty_stack_len", (clear_dirty_stack_size + 3) / 4 - 1);
 
     linker->relocate();
-    //linker->dumpSymbols();
 
     //
     // write
@@ -614,11 +614,10 @@ void PackTos::pack(OutputFile *fo)
 #if 0 || defined(TESTING)
     printf("old text: %6d, data: %6d, bss: %6d, reloc: %d, overlay: %d\n",
            i_text, i_data, i_bss, relocsize, overlay);
-    printf("new text: %6d, data: %6d, bss: %6d, dirty_bss: %d, flag=0x%x\n",
-           o_text, o_data, o_bss, dirty_bss, (int)oh.fh_flag);
+    printf("new text: %6d, data: %6d, bss: %6d, flag=0x%x\n",
+           o_text, o_data, o_bss, (int)oh.fh_flag);
+    linker->dumpSymbols();
 #endif
-
-    linker->relocate();
 
     // prepare loader
     MemBuffer loader(o_text);

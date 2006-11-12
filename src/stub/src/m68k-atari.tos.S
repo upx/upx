@@ -533,42 +533,6 @@ section lzma.small
         // note: d3.l is 0 from decompressor above
 
 
-// ------------- support
-
-section __mulsi3
-#if 0
-                // compute high-word
-                move.w  4(sp),d1                // 12
-                move.w  6(sp),d0                // 12
-                mulu.w  8(sp),d0                // 78
-                mulu.w  10(sp),d1               // 78
-                add.w   d1,d0                   //  4
-                swap    d0                      //  4
-                clr.w   d0                      //  4
-                // add low-word
-                move.w  6(sp),d1                // 12
-                mulu.w  10(sp),d1               // 78
-                add.l   d1,d0                   //  6
-                rts                             // 16
-#else
-    // smaller and faster
-                // compute high-word
-                lea     4(sp),a0                //  8
-                move.w  (a0)+,d1                //  8
-                move.w  (a0)+,d0                //  8
-                mulu.w  (a0)+,d0                // 74
-                mulu.w  (a0),d1                 // 74
-                add.w   d1,d0                   //  4
-                swap    d0                      //  4
-                clr.w   d0                      //  4
-                // add low-word
-                move.w  6(sp),d1                // 12
-                mulu.w  (a0),d1                 // 74
-                add.l   d1,d0                   //  6
-                rts                             // 16
-#endif
-
-
 // ------------- reloc
 
 section reloc
@@ -615,13 +579,48 @@ section jmpstack
 
 
 /*************************************************************************
+// support
+**************************************************************************/
+
+section __mulsi3
+#if 0
+                // compute high-word
+                move.w  4(sp),d1                // 12
+                move.w  6(sp),d0                // 12
+                mulu.w  8(sp),d0                // 78
+                mulu.w  10(sp),d1               // 78
+                add.w   d1,d0                   //  4
+                swap    d0                      //  4
+                clr.w   d0                      //  4
+                // add low-word
+                move.w  6(sp),d1                // 12
+                mulu.w  10(sp),d1               // 78
+                add.l   d1,d0                   //  6
+                rts                             // 16
+#else
+    // smaller and faster
+                // compute high-word
+                lea     4(sp),a0                //  8
+                move.w  (a0)+,d1                //  8
+                move.w  (a0)+,d0                //  8
+                mulu.w  (a0)+,d0                // 74
+                mulu.w  (a0),d1                 // 74
+                add.w   d1,d0                   //  4
+                swap    d0                      //  4
+                clr.w   d0                      //  4
+                // add low-word
+                move.w  6(sp),d1                // 12
+                mulu.w  (a0),d1                 // 74
+                add.l   d1,d0                   //  6
+                rts                             // 16
+#endif
+
+
+/*************************************************************************
 // absolute symbols ("*ABS*")
 **************************************************************************/
 
 section abs_symbols
-
-//.globl copy_to_stack_len
-//copy_to_stack_len = (clear_bss_end-clear_bss)/2-1
 
 .globl flush_cache_rts_offset
 flush_cache_rts_offset = flush_cache_rts - flush_cache

@@ -38,19 +38,20 @@ Idx Name          Size      VMA       LMA       File off  Algn  Flags
  33 nrv2b_8.small 00000076  00000000  00000000  00000366  2**0  CONTENTS, READONLY
  34 nrv2d_8.small 0000008a  00000000  00000000  000003dc  2**0  CONTENTS, READONLY
  35 nrv2e_8.small 00000092  00000000  00000000  00000466  2**0  CONTENTS, READONLY
- 36 lzma.fast     000008ac  00000000  00000000  000004f8  2**0  CONTENTS, READONLY
- 37 lzma.small    000008ac  00000000  00000000  00000da4  2**0  CONTENTS, READONLY
- 38 __mulsi3      0000001c  00000000  00000000  00001650  2**0  CONTENTS, READONLY
- 39 reloc         0000001a  00000000  00000000  0000166c  2**0  CONTENTS, READONLY
- 40 loop3_set_count.b 00000002  00000000  00000000  00001686  2**0  CONTENTS, RELOC, READONLY
- 41 loop3_set_count.w 00000004  00000000  00000000  00001688  2**0  CONTENTS, RELOC, READONLY
- 42 loop3_set_count.l 00000006  00000000  00000000  0000168c  2**0  CONTENTS, RELOC, READONLY
- 43 jmpstack      00000002  00000000  00000000  00001692  2**0  CONTENTS, READONLY
- 44 abs_symbols   00000000  00000000  00000000  00001694  2**0  CONTENTS, READONLY
+ 36 lzma.fast     000008cc  00000000  00000000  000004f8  2**0  CONTENTS, RELOC, READONLY
+ 37 lzma.small    000008cc  00000000  00000000  00000dc4  2**0  CONTENTS, RELOC, READONLY
+ 38 reloc         0000001a  00000000  00000000  00001690  2**0  CONTENTS, READONLY
+ 39 loop3_set_count.b 00000002  00000000  00000000  000016aa  2**0  CONTENTS, RELOC, READONLY
+ 40 loop3_set_count.w 00000004  00000000  00000000  000016ac  2**0  CONTENTS, RELOC, READONLY
+ 41 loop3_set_count.l 00000006  00000000  00000000  000016b0  2**0  CONTENTS, RELOC, READONLY
+ 42 jmpstack      00000002  00000000  00000000  000016b6  2**0  CONTENTS, READONLY
+ 43 __mulsi3      0000001c  00000000  00000000  000016b8  2**0  CONTENTS, READONLY
+ 44 abs_symbols   00000000  00000000  00000000  000016d4  2**0  CONTENTS, READONLY
 SYMBOL TABLE:
 00000000 l    d  loop1_label	00000000 loop1_label
 00000000 l    d  flush_cache	00000000 flush_cache
 00000000 l    d  loop3_label	00000000 loop3_label
+00000000 l    d  __mulsi3	00000000 __mulsi3
 00000000 l    d  entry	00000000 entry
 00000000 l    d  loop1_set_count.b	00000000 loop1_set_count.b
 00000000 l    d  loop1_set_count.w	00000000 loop1_set_count.w
@@ -86,7 +87,6 @@ SYMBOL TABLE:
 00000000 l    d  nrv2e_8.small	00000000 nrv2e_8.small
 00000000 l    d  lzma.fast	00000000 lzma.fast
 00000000 l    d  lzma.small	00000000 lzma.small
-00000000 l    d  __mulsi3	00000000 __mulsi3
 00000000 l    d  reloc	00000000 reloc
 00000000 l    d  loop3_set_count.b	00000000 loop3_set_count.b
 00000000 l    d  loop3_set_count.w	00000000 loop3_set_count.w
@@ -175,6 +175,38 @@ RELOCATION RECORDS FOR [clear_dirty_stack]:
 OFFSET   TYPE              VALUE
 00000002 R_68K_16          clear_bss_size_p4
 00000005 R_68K_8           clear_dirty_stack_len
+
+RELOCATION RECORDS FOR [lzma.fast]:
+OFFSET   TYPE              VALUE
+00000108 R_68K_PC16        __mulsi3
+000001ca R_68K_PC16        __mulsi3
+00000242 R_68K_PC16        __mulsi3
+000002fe R_68K_PC16        __mulsi3
+00000382 R_68K_PC16        __mulsi3
+000003de R_68K_PC16        __mulsi3
+00000482 R_68K_PC16        __mulsi3
+000004da R_68K_PC16        __mulsi3
+00000578 R_68K_PC16        __mulsi3
+000005e0 R_68K_PC16        __mulsi3
+0000066c R_68K_PC16        __mulsi3
+00000708 R_68K_PC16        __mulsi3
+000007f8 R_68K_PC16        __mulsi3
+
+RELOCATION RECORDS FOR [lzma.small]:
+OFFSET   TYPE              VALUE
+00000108 R_68K_PC16        __mulsi3
+000001ca R_68K_PC16        __mulsi3
+00000242 R_68K_PC16        __mulsi3
+000002fe R_68K_PC16        __mulsi3
+00000382 R_68K_PC16        __mulsi3
+000003de R_68K_PC16        __mulsi3
+00000482 R_68K_PC16        __mulsi3
+000004da R_68K_PC16        __mulsi3
+00000578 R_68K_PC16        __mulsi3
+000005e0 R_68K_PC16        __mulsi3
+0000066c R_68K_PC16        __mulsi3
+00000708 R_68K_PC16        __mulsi3
+000007f8 R_68K_PC16        __mulsi3
 
 RELOCATION RECORDS FOR [loop3_set_count.b]:
 OFFSET   TYPE              VALUE
