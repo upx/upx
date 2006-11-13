@@ -64,7 +64,6 @@ p_flags         equ     $28     ; .l    memory usage flags
 p_env           equ     $2c     ; .l    pointer to environment string
 */
 
-p_tbase = 8
 
 /*
 ; long living registers:
@@ -210,7 +209,7 @@ section entry
         // we also setup d4 and a6 here, and we prepare a4
 
                 move.l  d0,a2           // a2 = basepage
-                addq.l  #p_tbase,a2
+                addq.l  #8,a2
                 move.l  (a2)+,a6
                 move.l  a6,d4                   // d4 = p_tbase
                 move.l  #up11,(a2)      // p_tlen
@@ -270,8 +269,8 @@ section loop1_dbra
 section loop2.fast
         // loop2 - copy the remaining 4..160 bytes
                 moveq.l  #loop2_count,d0
-loop2:          move.l  -(a4),-(a3)
-                dbra    d0,loop2
+1:              move.l  -(a4),-(a3)
+                dbra    d0,1b
 
 section loop2.small
         // loop2 - EMPTY section
@@ -292,9 +291,9 @@ section copy_to_stack
 
                 //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
-loop6:          move.w  -(a2),-(ASTACK)
+1:              move.w  -(a2),-(ASTACK)
                 subq.l  #1,d5
-                bccs    loop6
+                bccs    1b
 
         // note: d5.l is now -1 (needed for decompressor)
 
@@ -411,7 +410,7 @@ section clear_dirty_stack
 // ------------- clear the dirty stack
 
                 // clear down to clear_bss(pc) + 32 extra longs
-                //moveq.l #((L(loop)-clear_bss+3)/4+32-1),d0
+                ////moveq.l #((clear_dirty_stack_loop-clear_bss+3)/4+32-1),d0
                 moveq.l #clear_dirty_stack_len,d0
                 lea     1f(pc),a0
 GL(clear_dirty_stack_loop) // for clear_dirty_stack_len

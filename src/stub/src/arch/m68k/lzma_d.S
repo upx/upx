@@ -48,17 +48,15 @@ section lzma.init
 
         move.l  sp,a2
 
-//        move.l  (a2)+,-(sp)             // &outSizeProcessed
-        pea     (a2)              // &outSizeProcessed
+        // push 32 bytes on stack
+        pea     (a2)                    // &outSizeProcessed
         move.l  #lzma_u_len,-(sp)       // outSize
         move.l  d4,-(sp)                // out
-//        move.l  (a2)+,-(sp)             // &inSizeProcessed
-        pea     4(a2)             // &inSizeProcessed
+        pea     4(a2)                   // &inSizeProcessed
         move.l  #lzma_c_len,-(sp)       // inSize
         move.l  a3,-(sp)                // in
-//        move.l  (a2),-(sp)              // &CLzmaDecoderState
         pea     8(a2)                   // &CLzmaDecoderState
-        move.l  d0,-(sp)                // dummy for call
+        move.l  d0,-(sp)                // dummy return address (instead of call)
 
         // hardwired LzmaDecodeProperties()
         move.l  #lzma_properties,8(a2)   // lc, lp, pb, dummy
@@ -75,14 +73,21 @@ section lzma.small
 section lzma.finish
         moveq.l #0,d3
 
-//      add.l   4(a2),XX                // inSizeProcessed
-//      add.l   (a2),XX                 // outSizeProcessed
+        //add.l   4(a2),a3                // inSizeProcessed
+        //add.l   (a2),d4                 // outSizeProcessed
 
 #if 0
         move.l  d7,sp                   // restore stack
 #else
-// Partially clear exposed stack (only because of paranoia.)
-        lea     -256(a2),sp
+
+// Clear dirty stack (also see m68000/tmp/lzma_d_c[fs].out.disasm)
+//     32 bytes pushed above
+//     68 bytes local stack in LzmaDecode
+//     40 bytes for saving 10 registers in LzmaDecode
+//     12 bytes for calling __mulsi3
+//    152 *TOTAL* (round up by 16 to 160)
+
+        lea     -160(a2),sp
 .clearstack2:
         move.l  d3,(sp)+
         move.l  d3,(sp)+

@@ -170,16 +170,15 @@ void PackTos::buildLoader(const Filter *ft)
 
     addLoader("IDENTSTR,+40D,UPX1HEAD,CUTPOINT", NULL);
 
-    // FIXME: symbols.decompr_offset should not be hardcoded
     if (M_IS_NRV2B(ph.method)) {
         addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast", NULL);
-        symbols.decompr_offset = 2;
+        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2D(ph.method)) {
         addLoader(opt->small ? "nrv2d_8.small" : "nrv2d_8.fast", NULL);
-        symbols.decompr_offset = 2;
+        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2E(ph.method)) {
         addLoader(opt->small ? "nrv2e_8.small" : "nrv2e_8.fast", NULL);
-        symbols.decompr_offset = 2;
+        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_LZMA(ph.method)) {
         addLoader("__mulsi3", NULL);
         addLoader(opt->small ? "lzma.small" : "lzma.fast", NULL);

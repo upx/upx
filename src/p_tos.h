@@ -78,19 +78,19 @@ protected:
     // symbols for buildLoader()
     struct LinkerSymbols
     {
-        // "constant"
-        bool need_reloc;
-        // these are updated by buildLoader()
         enum { LOOP_NONE, LOOP_SUBQ_L, LOOP_SUBQ_W, LOOP_DBRA };
         struct LoopInfo {
             unsigned mode; unsigned count; unsigned value;
             void init(unsigned count, bool allow_dbra=true);
         };
+        // buildLoader() input
+        bool need_reloc;
         LoopInfo loop1;
         LoopInfo loop2;
         LoopInfo loop3;
+        // buildLoader() output
         unsigned decompr_offset;
-        //
+        // currently not used by buildLoader()
         unsigned flush_cache_rts_offset;
         unsigned clear_dirty_stack_len;
         unsigned copy_to_stack_len;
