@@ -344,7 +344,8 @@ void ElfLinker::setLoaderAlignOffset(int phase)
 
 int ElfLinker::addLoader(const char *sname)
 {
-    if (sname[0] == 0)
+    assert(sname != NULL);
+    if (!sname[0])
         return outputlen;
 
     char *begin = strdup(sname);

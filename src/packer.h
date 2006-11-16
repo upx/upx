@@ -209,12 +209,11 @@ protected:
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int small=-1);
+    void addLoader(const char *);
 #if 1 && (ACC_CC_GNUC >= 0x040100)
-    //virtual void addLoader(const char *);
-    virtual void __acc_cdecl_va addLoader(const char *, ...) __attribute__((__sentinel__));
+    template <class T> void __acc_cdecl_va addLoader(const T *, ...) __attribute__((__sentinel__));
 #else
-    //virtual void addLoader(const char *);
-    virtual void __acc_cdecl_va addLoader(const char *, ...);
+    template <class T> void __acc_cdecl_va addLoader(const T *, ...);
 #endif
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
@@ -291,6 +290,10 @@ private:
     Packer(const Packer &); // {}
     Packer& operator= (const Packer &); // { return *this; }
 };
+
+
+template <>
+void __acc_cdecl_va Packer::addLoader<char>(const char *s, ...);
 
 
 #endif /* already included */

@@ -929,31 +929,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
 
 
 /*************************************************************************
-// loader util
-**************************************************************************/
-
-upx_byte *Packer::getLoader() const
-{
-    int size = -1;
-    upx_byte *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
-        throwBadLoader();
-    return oloader;
-}
-
-
-int Packer::getLoaderSize() const
-{
-    int size = -1;
-    upx_byte *oloader = linker->getLoader(&size);
-    if (oloader == NULL || size <= 0)
-        throwBadLoader();
-    return size;
-}
-
-
-/*************************************************************************
-// loader util
+// loader util (interface to linker)
 **************************************************************************/
 
 static const char *getIdentstr(unsigned *size, int small)
@@ -1027,27 +1003,43 @@ void Packer::initLoader(const void *pdata, int plen, int small)
     linker->addSection("IDENTSTR", ident, size, 0);
 }
 
-
-#if 0
 void Packer::addLoader(const char *s)
 {
-    if (s && *s)
+    if (s)
         linker->addLoader(s);
 }
-#endif
 
-void __acc_cdecl_va Packer::addLoader(const char *s, ...)
+// provide specialization for [T = char]
+template <>
+void __acc_cdecl_va Packer::addLoader<char>(const char *s, ...)
 {
     va_list ap;
 
     va_start(ap, s);
     while (s != NULL)
     {
-        if (*s)
-            linker->addLoader(s);
+        linker->addLoader(s);
         s = va_arg(ap, const char *);
     }
     va_end(ap);
+}
+
+upx_byte *Packer::getLoader() const
+{
+    int size = -1;
+    upx_byte *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size <= 0)
+        throwBadLoader();
+    return oloader;
+}
+
+int Packer::getLoaderSize() const
+{
+    int size = -1;
+    upx_byte *oloader = linker->getLoader(&size);
+    if (oloader == NULL || size <= 0)
+        throwBadLoader();
+    return size;
 }
 
 
@@ -1061,7 +1053,6 @@ int Packer::getLoaderSection(const char *name, int *slen) const
         *slen = size;
     return ostart;
 }
-
 
 // same, but the size of the section may be == 0
 int Packer::getLoaderSectionStart(const char *name, int *slen) const
