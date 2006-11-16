@@ -177,6 +177,7 @@ bool PackVmlinuxI386::canPack()
     if (0==shstrsec) {
         return false;
     }
+    {
     int j;
     for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if (Elf32_Shdr::SHT_PROGBITS==p->sh_type
@@ -184,7 +185,7 @@ bool PackVmlinuxI386::canPack()
             break;
         }
     }
-    if (j < 0) {
+    if (j < 0)
         return false;
     }
 
@@ -277,8 +278,6 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     // .shstrtab /* .symtab .strtab */
     Elf32_Shdr shdro[1+3+1/*+2*/];
     memset(shdro, 0, sizeof(shdro));
-    char const shstrtab[]= "\0.text\0.note\0.shstrtab\0.symtab\0.strtab";
-    char const *p = shstrtab;
 
     ibuf.alloc(file_size);
     obuf.allocForCompression(file_size);
@@ -324,6 +323,9 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, lsize);
 
+#define shstrtab local_shstrtab // avoid -Wshadow warning
+    char const shstrtab[]= "\0.text\0.note\0.shstrtab\0.symtab\0.strtab";
+    char const *p = shstrtab;
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
@@ -432,6 +434,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
+#undef shstrtab
 }
 
 
