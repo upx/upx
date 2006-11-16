@@ -714,6 +714,10 @@ $(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
 endif
 -include tmp/*.d
 
+ifneq ($(strip $(STUBS)),)
+.DELETE_ON_ERROR: $(STUBS)
+endif
+
 
 # /***********************************************************************
 # // extra-all

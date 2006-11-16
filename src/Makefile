@@ -54,6 +54,7 @@ endif
 
 
 all: upx$(exeext)
+.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS)
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
