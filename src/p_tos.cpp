@@ -100,106 +100,97 @@ void PackTos::buildLoader(const Filter *ft)
     initLoader(nrv_loader, sizeof(nrv_loader));
     //linker->dumpSymbols();
 
-    addLoader("entry", NULL);
+    addLoader("entry");
 
     assert(symbols.loop1.count || symbols.loop2.count);
     if (symbols.loop1.count)
     {
         if (symbols.loop1.value <= 127)
-            addLoader("loop1_set_count.b", NULL);
+            addLoader("loop1_set_count.b");
         else if (symbols.loop1.value <= 65535)
-            addLoader("loop1_set_count.w", NULL);
+            addLoader("loop1_set_count.w");
         else
-            addLoader("loop1_set_count.l", NULL);
-        addLoader("loop1_label", NULL);
-        if (opt->small)
-            addLoader("loop1.small", NULL);
-        else
-            addLoader("loop1.fast", NULL);
+            addLoader("loop1_set_count.l");
+        addLoader("loop1_label");
+        addLoader(opt->small ? "loop1.small" : "loop1.fast");
         if (symbols.loop1.mode == symbols.LOOP_SUBQ_L)
-            addLoader("loop1_subql", NULL);
+            addLoader("loop1_subql");
         else if (symbols.loop1.mode == symbols.LOOP_SUBQ_W)
-            addLoader("loop1_subqw", NULL);
+            addLoader("loop1_subqw");
         else if (symbols.loop1.mode == symbols.LOOP_DBRA)
-            addLoader("loop1_dbra", NULL);
+            addLoader("loop1_dbra");
         else
             throwBadLoader();
     }
     if (symbols.loop2.count)
     {
-        if (opt->small)
-            addLoader("loop2.small", NULL);
-        else
-            addLoader("loop2.fast", NULL);
+        addLoader(opt->small ? "loop2.small" : "loop2.fast");
     }
 
-    addLoader("copy_to_stack", NULL);
+    addLoader("copy_to_stack");
 
     if (M_IS_NRV2B(ph.method))
-        addLoader("nrv2b.init", NULL);
+        addLoader("nrv2b.init");
     else if (M_IS_NRV2D(ph.method))
-        addLoader("nrv2d.init", NULL);
+        addLoader("nrv2d.init");
     else if (M_IS_NRV2E(ph.method))
-        addLoader("nrv2e.init", NULL);
+        addLoader("nrv2e.init");
     else if (M_IS_LZMA(ph.method))
-        addLoader("lzma.init", NULL);
+        addLoader("lzma.init");
     else
         throwBadLoader();
 
-    addLoader("jmp_decompressor", NULL);
+    addLoader("jmp_decompressor");
 
-    addLoader("clear_bss", NULL);
+    addLoader("clear_bss");
 
-    addLoader("loop3_label", NULL);
-    if (opt->small)
-        addLoader("loop3.small", NULL);
-    else
-        addLoader("loop3.fast", NULL);
+    addLoader("loop3_label");
+    addLoader(opt->small ? "loop3.small" : "loop3.fast");
     if (symbols.loop3.mode == symbols.LOOP_SUBQ_L)
-        addLoader("loop3_subql", NULL);
+        addLoader("loop3_subql");
     else if (symbols.loop3.mode == symbols.LOOP_SUBQ_W)
-        addLoader("loop3_subqw", NULL);
+        addLoader("loop3_subqw");
     else if (symbols.loop3.mode == symbols.LOOP_DBRA)
-        addLoader("loop3_dbra", NULL);
+        addLoader("loop3_dbra");
     else
         throwBadLoader();
 
-    addLoader("flush_cache", NULL);
-    addLoader("clear_dirty_stack", NULL);
-    addLoader("start_program", NULL);
+    addLoader("flush_cache");
+    addLoader("clear_dirty_stack");
+    addLoader("start_program");
 
-    addLoader("IDENTSTR,+40D,UPX1HEAD,CUTPOINT", NULL);
+    addLoader("IDENTSTR,+40D,UPX1HEAD,CUTPOINT");
 
     if (M_IS_NRV2B(ph.method)) {
-        addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast", NULL);
+        addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast");
         symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2D(ph.method)) {
-        addLoader(opt->small ? "nrv2d_8.small" : "nrv2d_8.fast", NULL);
+        addLoader(opt->small ? "nrv2d_8.small" : "nrv2d_8.fast");
         symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2E(ph.method)) {
-        addLoader(opt->small ? "nrv2e_8.small" : "nrv2e_8.fast", NULL);
+        addLoader(opt->small ? "nrv2e_8.small" : "nrv2e_8.fast");
         symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_LZMA(ph.method)) {
-        addLoader("__mulsi3", NULL);
-        addLoader(opt->small ? "lzma.small" : "lzma.fast", NULL);
+        addLoader("__mulsi3");
+        addLoader(opt->small ? "lzma.small" : "lzma.fast");
         symbols.decompr_offset = linker->getSectionSize("__mulsi3");
-        addLoader("lzma.finish", NULL);
+        addLoader("lzma.finish");
     }
     else
         throwBadLoader();
 
     if (symbols.need_reloc)
-        addLoader("reloc", NULL);
+        addLoader("reloc");
 
     assert(symbols.loop3.count);
     if (symbols.loop3.value <= 127)
-        addLoader("loop3_set_count.b", NULL);
+        addLoader("loop3_set_count.b");
     else if (symbols.loop3.value <= 65535)
-        addLoader("loop3_set_count.w", NULL);
+        addLoader("loop3_set_count.w");
     else
-        addLoader("loop3_set_count.l", NULL);
+        addLoader("loop3_set_count.l");
 
-    addLoader("jmpstack", NULL);
+    addLoader("jmpstack");
 }
 
 
