@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+#include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
-#define section .section
 
 sz_b_info= 12
   sz_unc= 0

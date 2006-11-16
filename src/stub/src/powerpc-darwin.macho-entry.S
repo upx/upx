@@ -26,8 +26,8 @@
  *
  */
 
+#include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
-#define section .section
 
   section MACOS000
 _start: .globl _start

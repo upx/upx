@@ -28,7 +28,8 @@
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>
 */
-#define section .section
+
+#include "arch/arm/v4a/macros.S"
 
 #define bkpt .long 0xe1200070
 sz_Elf32_Ehdr = 13*4

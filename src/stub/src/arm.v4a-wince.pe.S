@@ -29,6 +29,8 @@
    <jreiser@users.sourceforge.net>
 */
 
+#include "arch/arm/v4a/macros.S"
+
 // DEBUG == 0 -> none
 // DEBUG == 1 -> for armpe_tester
 // DEBUG == 2 -> wince - dumps memory
@@ -52,8 +54,6 @@
  #define DDONE
  #endif
 #endif
-
-#define section .section
 
 // p_armpe.cpp uses the following symbols, so they should be global
 

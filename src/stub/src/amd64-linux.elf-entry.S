@@ -29,10 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-//#include        "arch/i386/macros2.ash"
-
+#include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
-#define section  .section
 
 sz_Ehdr= 64
 sz_Phdr= 56

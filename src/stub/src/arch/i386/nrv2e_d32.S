@@ -40,17 +40,16 @@
 ;   ecx - 0
 */
 
-//                CPU     386
-
 .macro          getbit_n2e one
-                .ifc    \one, 1
+                local   l1
+        .ifc    \one, 1
                 add     ebx, ebx
-                jnz     1f
-                .endif
+                jnzs    l1
+        .endif
                 mov     ebx, [esi]
                 sub     esi, -4
                 adc     ebx, ebx
-1:
+l1:
 .endm
 
 #undef  getbit

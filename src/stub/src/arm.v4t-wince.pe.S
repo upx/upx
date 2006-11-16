@@ -29,18 +29,14 @@
    <jreiser@users.sourceforge.net>
 */
 
+#include "arch/arm/v4t/macros.S"
+
 // p_armpe.cpp uses some symbols, so they should be global
 
         .globl SRC0
         .globl DST0
         .globl IATT
         .globl ENTR
-
-// in thumb mode we need this S() macro hack to export a symbol which
-// is used in a ldr statement
-#define S(sym) .globl sym; sym: .L##sym
-
-#define section .section
 
         .arm
 

@@ -223,11 +223,12 @@ section         PEMAIN20
 
 // clear the dirty stack
 .macro          clearstack128  tmp_reg
+                local   loop
                 lea     \tmp_reg, [esp - 128]
-c1:
+loop:
                 push    0
                 cmp     esp, \tmp_reg
-                jnzs    c1
+                jnzs    loop
                 sub     esp, -128
 .endm
 

@@ -1,5 +1,5 @@
 /*
-;  macros.ash --
+;  macros.S --
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -27,8 +27,9 @@
 ;
 */
 
-                .code32
+                .altmacro
                 .intel_syntax noprefix
+                .code32
 
 .macro          section name
                 .section \name
@@ -125,6 +126,7 @@
 */
 
 .macro          cjt32   addvalue
+                local   calltrickloop
 section         CALLTR00
                 mov     ecx, offset filter_length
 calltrickloop:

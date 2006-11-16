@@ -39,9 +39,6 @@
 ;   ecx - 0
 */
 
-//      CPU 386
-
-//
 // init
 section LZMA_DEC00
 
@@ -140,6 +137,8 @@ section LZMA_ELF00
         push    ebx                     // &CLzmaDecoderState
         push    eax                     // return address slot (dummy CALL)
 
+//#undef O_OUTS
+//#undef O_INS
 
 
 section LZMA_DEC10

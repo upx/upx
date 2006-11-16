@@ -27,6 +27,8 @@
 @  <jreiser@users.sourceforge.net>
 @
 
+#include "arch/arm/v4a/macros.S"
+
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
 sz_l_info = 12

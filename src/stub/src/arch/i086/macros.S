@@ -1,5 +1,5 @@
 /*
-;  macros.ash --
+;  macros.S --
 ;
 ;  This file is part of the UPX executable compressor.
 ;
@@ -27,8 +27,9 @@
 ;
 */
 
-                .code16
+                .altmacro
                 .intel_syntax noprefix
+                .code16
 
 .macro          section name
                 .section \name

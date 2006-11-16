@@ -27,7 +27,7 @@
 ;
 */
 
-.altmacro
+#include "arch/m68k/macros.S"
 
 
 /*
@@ -42,7 +42,6 @@
 
 #define macro(name)   .macro name
 #define endm          .endm
-#define section       .section
 
 // global label for cross-section addressing
 #define GL(l) .globl l; l:
