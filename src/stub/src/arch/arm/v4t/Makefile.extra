@@ -42,7 +42,8 @@ $c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -S $< -o tmp/$T.s
-	sed -e '1,/LzmaDecode:/c.thumb' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' tmp/$T.s | $(RTRIM) > $@
+	cat tmp/$T.s | $(BLDEL) | sed -e '1,/LzmaDecode:/c.thumb' -e '/\.size/d' -e '/\.ident/d' -e 's/\.L/$(LABEL_PREFIX)/g' | $(BLDEL) > $@
+	# the following stuff is for debugging only
 	$(call tc,gcc) -c -MF /dev/null $@ -o tmp/$T.o
 	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objcopy) -O binary tmp/$T.o tmp/$T.bin

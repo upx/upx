@@ -25,7 +25,7 @@ endif
 # //
 # ************************************************************************/
 
-top_srcdir = ..
+top_srcdir ?= ..
 
 PACKAGE       = upx
 VERSION_DATE := $(shell sed -n 's/^.*UPX_VERSION_DATE_ISO .*"\(.*\)".*/\1/p' $(top_srcdir)/src/version.h)
@@ -81,4 +81,5 @@ mostlyclean clean distclean maintainer-clean:
 ###
 
 $(BUILT_SOURCES): $(top_srcdir)/src/version.h $(MAKEFILE_LIST)
+.DELETE_ON_ERROR: $(BUILT_SOURCES)
 

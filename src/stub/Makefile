@@ -125,9 +125,11 @@ maintainer-clean:
 override T = $(basename $(notdir $@))
 
 # trim (strip) trailing whitespace
-RTRIM := sed -e 's/[ $(tab)]*$$//'
-# squeeze duplicate blank lines, remove empty first & last line
-SQUEEZE := cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
+RTRIM     := sed -e 's/[ $(tab)]*$$//'
+# squeeze duplicate blank lines, delete empty first & last line
+BLSQUEEZE := $(RTRIM) | cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
+# delete blank lines
+BLDEL     := $(RTRIM) | sed -e '/^$$/d'
 
 # clear some vars, just in case
 LABEL_PREFIX =
@@ -184,7 +186,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
-	$(call tc,objdump) -htr -w $1 | $(RTRIM) | $(SQUEEZE) > $1.dump
+	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
@@ -714,6 +716,7 @@ $(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
 endif
 -include tmp/*.d
 
+.DELETE_ON_ERROR: %.h %.o
 ifneq ($(strip $(STUBS)),)
 .DELETE_ON_ERROR: $(STUBS)
 endif
