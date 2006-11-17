@@ -43,40 +43,50 @@ class opts:
 # ************************************************************************/
 
 def do_file(fn):
-    fp = open(fn, "r+b")
+    done = 1
+    if opts.dry_run:
+        fp = open(fn, "rb")
+    else:
+        fp = open(fn, "r+b")
     fp.seek(0, 0)
     e_ident = fp.read(16)
     fp.seek(0, 0)
-    if e_ident[:4] != "\x7f\x45\x4c\x46":
-        raise Exception, "%s is not %s" % (fn, "ELF")
-    if opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
-        if e_ident[4:7] != "\x01\x01\x01":
-            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+
+    def write(s):
+        if not opts.dry_run:
+            fp.write(s)
+
+    if opts.bfdname[:3] == "elf":
+        if e_ident[:4] != "\x7f\x45\x4c\x46":
+            raise Exception, "%s is not %s" % (fn, "ELF")
         fp.seek(7, 0)
-        fp.write("\x09")
-    elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
-        if e_ident[4:7] != "\x01\x01\x01":
-            raise Exception, "%s is not %s" % (fn, opts.bfdname)
-        fp.seek(8, 0)
-        fp.write("Linux\x00\x00\x00")
-    elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
-        if e_ident[4:7] != "\x01\x01\x01":
-            raise Exception, "%s is not %s" % (fn, opts.bfdname)
-        fp.seek(7, 0)
-        fp.write("\x0c")
-    elif opts.bfdname == "elf32-powerpc" and opts.elfosabi == "linux":
-        if e_ident[4:7] != "\x01\x02\x01":
-            raise Exception, "%s is not %s" % (fn, opts.bfdname)
-        fp.seek(8, 0)
-        fp.write("Linux\x00\x00\x00")
-    elif opts.bfdname == "elf64-x86_64" and opts.elfosabi == "linux":
-        if e_ident[4:7] != "\x02\x01\x01":
-            raise Exception, "%s is not %s" % (fn, opts.bfdname)
-        fp.seek(8, 0)
-        fp.write("Linux\x00\x00\x00")
+        if opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
+            if e_ident[4:7] != "\x01\x01\x01":
+                raise Exception, "%s is not %s" % (fn, opts.bfdname)
+            write("\x09")
+        elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
+            if e_ident[4:7] != "\x01\x01\x01":
+                raise Exception, "%s is not %s" % (fn, opts.bfdname)
+            write("\x00Linux\x00\x00\x00")
+        elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
+            if e_ident[4:7] != "\x01\x01\x01":
+                raise Exception, "%s is not %s" % (fn, opts.bfdname)
+            write("\x0c")
+        elif opts.bfdname == "elf32-powerpc" and opts.elfosabi == "linux":
+            if e_ident[4:7] != "\x01\x02\x01":
+                raise Exception, "%s is not %s" % (fn, opts.bfdname)
+            write("\x00Linux\x00\x00\x00")
+        elif opts.bfdname == "elf64-x86_64" and opts.elfosabi == "linux":
+            if e_ident[4:7] != "\x02\x01\x01":
+                raise Exception, "%s is not %s" % (fn, opts.bfdname)
+            write("\x00Linux\x00\x00\x00")
+        else:
+            done = 0
     else:
-        raise Exception, ("error: invalid args", opts.__dict__)
+        done = 0
     fp.close()
+    if not done:
+        raise Exception, ("error: invalid args", opts.__dict__)
 
 
 def main(argv):
