@@ -218,6 +218,7 @@ amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 
 amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf64amd_fold tmp/$T.bin $@
 
@@ -248,6 +249,7 @@ arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
 
@@ -665,6 +667,7 @@ powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
 	$(call tc,ld) --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
 
 tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
@@ -694,6 +697,7 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
 
