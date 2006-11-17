@@ -93,6 +93,23 @@ void PackTos::LinkerSymbols::LoopInfo::init(unsigned count_, bool allow_dbra)
 }
 
 
+unsigned PackTos::getDecomprOffset(int method, int small) const
+{
+    UNUSED(small);
+    if (M_IS_NRV2B(method))
+        return 2;   // FIXME: do not hardcode this value
+    else if (M_IS_NRV2D(method))
+        return 2;   // FIXME: do not hardcode this value
+    else if (M_IS_NRV2E(method))
+        return 2;   // FIXME: do not hardcode this value
+    else if (M_IS_LZMA(method))
+        return linker->getSectionSize("__mulsi3");
+    else
+        throwBadLoader();
+    return 0;
+}
+
+
 void PackTos::buildLoader(const Filter *ft)
 {
     assert(ft->id == 0);
@@ -101,6 +118,13 @@ void PackTos::buildLoader(const Filter *ft)
     //linker->dumpSymbols();
 
     addLoader("entry");
+
+    if (symbols.up21_a6 > 0 && symbols.up21_a6 <= 32767)
+        addLoader("set_up21_a6.w");
+    else if (symbols.up21_d4 <= 32767)
+        addLoader("set_up21_d4.w");
+    else
+        addLoader("set_up21_d4.l");
 
     assert(symbols.loop1.count || symbols.loop2.count);
     if (symbols.loop1.count)
@@ -124,6 +148,7 @@ void PackTos::buildLoader(const Filter *ft)
     }
     if (symbols.loop2.count)
     {
+        assert(symbols.loop2.mode == symbols.LOOP_DBRA);
         addLoader(opt->small ? "loop2.small" : "loop2.fast");
     }
 
@@ -140,7 +165,16 @@ void PackTos::buildLoader(const Filter *ft)
     else
         throwBadLoader();
 
-    addLoader("jmp_decompressor");
+    symbols.up31_d4 = symbols.up31_base_d4 + getDecomprOffset(ph.method, opt->small);
+    symbols.up31_a6 = symbols.up31_base_a6 + getDecomprOffset(ph.method, opt->small);
+    if (symbols.up31_a6 > 0 && symbols.up31_a6 <= 32767)
+        addLoader("jmp_decompressor_a6.w");
+    else if (symbols.up31_d4 <= 32767)
+        addLoader("jmp_decompressor_d4.w");
+    else if (symbols.up31_a6 >= 32768 && symbols.up31_a6 <= 65534)
+        addLoader("jmp_decompressor_a6.w2");
+    else
+        addLoader("jmp_decompressor_d4.l");
 
     addLoader("clear_bss");
 
@@ -163,17 +197,13 @@ void PackTos::buildLoader(const Filter *ft)
 
     if (M_IS_NRV2B(ph.method)) {
         addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast");
-        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2D(ph.method)) {
         addLoader(opt->small ? "nrv2d_8.small" : "nrv2d_8.fast");
-        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_NRV2E(ph.method)) {
         addLoader(opt->small ? "nrv2e_8.small" : "nrv2e_8.fast");
-        symbols.decompr_offset = 2; // FIXME: do not hardcode this value
     } else if (M_IS_LZMA(ph.method)) {
         addLoader("__mulsi3");
         addLoader(opt->small ? "lzma.small" : "lzma.fast");
-        symbols.decompr_offset = linker->getSectionSize("__mulsi3");
         addLoader("lzma.finish");
     }
     else
@@ -190,7 +220,7 @@ void PackTos::buildLoader(const Filter *ft)
     else
         addLoader("loop3_set_count.l");
 
-    addLoader("jmpstack");
+    addLoader("jmp_stack");
 }
 
 
@@ -376,9 +406,13 @@ void PackTos::pack(OutputFile *fo)
     symbols.reset();
     symbols.need_reloc = false;
     // prepare symbols for buildLoader() - worst case
-    symbols.loop1.init(0x08abcdef);
-    symbols.loop2.init(0x08abcdef);
-    symbols.loop3.init(0x08abcdef);
+    symbols.loop1.init(65536 + 1);
+    symbols.loop2.init((160 - 1) / 4);
+    symbols.loop3.init(65536 + 1);
+    symbols.up21_d4 = 65536 + 1;
+    symbols.up21_a6 = 65536 + 1;
+    symbols.up31_base_d4 = 65536 + 1;
+    symbols.up31_base_a6 = 65536 + 1;
 
     // read file
     const unsigned isize = file_size - i_sym;
@@ -469,11 +503,10 @@ void PackTos::pack(OutputFile *fo)
 
     unsigned o_text, o_data, o_bss;
     unsigned e_len, d_len, d_off;
-    unsigned offset;
     for (;;)
     {
         // The decompressed data will now get placed at this offset:
-        offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
+        unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
 
         // get loader
         const unsigned lsize = getLoaderSize();
@@ -540,6 +573,11 @@ void PackTos::pack(OutputFile *fo)
         }
         symbols.loop3.init(dirty_bss / dirty_bss_align);
 
+        symbols.up21_d4 = o_data + offset;
+        symbols.up31_base_d4 = d_off + offset;
+        symbols.up21_a6 = symbols.up21_d4 - (i_text + i_data);
+        symbols.up31_base_a6 = symbols.up31_base_d4 - (i_text + i_data);
+
         unsigned d;
         d = linker->getSymbolOffset("flush_cache_rts") - linker->getSymbolOffset("clear_bss");
         symbols.flush_cache_rts_offset = d;
@@ -569,11 +607,30 @@ void PackTos::pack(OutputFile *fo)
     linker->defineSymbol("loop2_count", symbols.loop2.value);
     linker->defineSymbol("loop3_count", symbols.loop3.value);
 
-    linker->defineSymbol("up11", i_text);               // p_tlen
-    linker->defineSymbol("up12", i_data);               // p_dlen
-    linker->defineSymbol("up13", i_bss);                // p_blen
-    linker->defineSymbol("up21", o_data + offset);
-    linker->defineSymbol("up31", d_off + offset + symbols.decompr_offset);
+    linker->defineSymbol("orig_p_tlen", i_text);
+    linker->defineSymbol("orig_p_dlen", i_data);
+    linker->defineSymbol("orig_p_blen", i_bss);
+
+    if (symbols.up21_a6 > 0 && symbols.up21_a6 <= 32767)
+        linker->defineSymbol("up21_a6", symbols.up21_a6);
+    else
+        linker->defineSymbol("up21_d4", symbols.up21_d4);
+
+    if (symbols.up31_a6 > 0 && symbols.up31_a6 <= 32767)
+        linker->defineSymbol("up31_a6", symbols.up31_a6);
+    else if (symbols.up31_d4 <= 32767)
+        linker->defineSymbol("up31_d4", symbols.up31_d4);
+    else if (symbols.up31_a6 >= 32768 && symbols.up31_a6 <= 65534)
+        linker->defineSymbol("up31_a6", symbols.up31_a6 - 32767);
+    else
+        linker->defineSymbol("up31_d4", symbols.up31_d4);
+#if 0
+    printf("relocsize = %d\n", relocsize);
+    printf("upx21(d4) = %d\n", symbols.up21_d4);
+    printf("upx21(a6) = %d\n", symbols.up21_a6);
+    printf("upx31(d4) = %d\n", symbols.up31_d4);
+    printf("upx31(a6) = %d\n", symbols.up31_a6);
+#endif
 
     linker->defineSymbol("flush_cache_rts_offset", symbols.flush_cache_rts_offset);
     linker->defineSymbol("copy_to_stack_len", symbols.copy_to_stack_len);

@@ -56,6 +56,7 @@ public:
 protected:
     virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);
+    unsigned getDecomprOffset(int method, int small) const;
 
     virtual int readFileHeader();
     virtual bool checkFileHeader();
@@ -88,8 +89,13 @@ protected:
         LoopInfo loop1;
         LoopInfo loop2;
         LoopInfo loop3;
+        unsigned up21_d4;
+        unsigned up21_a6;
+        unsigned up31_base_d4;
+        unsigned up31_base_a6;
         // buildLoader() output
-        unsigned decompr_offset;
+        unsigned up31_d4;
+        unsigned up31_a6;
         // currently not used by buildLoader()
         unsigned flush_cache_rts_offset;
         unsigned clear_dirty_stack_len;

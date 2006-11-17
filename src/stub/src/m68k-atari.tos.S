@@ -198,8 +198,8 @@ section entry
                 beqs    1f
                 move.l  4(a0),sp        // accessory - get stack
                 bras    2f
-
 1:              move.l  4(sp),d0        // application - get basepage
+
 2:              movem.l d1-d7/a0-a6,-(sp)
 
 
@@ -207,26 +207,35 @@ section entry
 
         // we also setup d4 and a6 here, and we prepare a4
 
-                move.l  d0,a2           // a2 = basepage
-                addq.l  #8,a2
-                move.l  (a2)+,a6
-                move.l  a6,d4                   // d4 = p_tbase
-                move.l  #up11,(a2)      // p_tlen
-                add.l   (a2)+,a6
-                move.l  a6,(a2)+        // p_dbase
-                move.l  #up12,(a2)      // p_dlen
-                add.l   (a2)+,a6                // a6 = decompressed p_bbase
-                move.l  (a2),a4                 // a4 = compressed p_bbase
-                move.l  a6,(a2)+        // p_bbase
-                move.l  #up13,(a2)      // p_blen
+                move.l  d0,a0                   // a0 = basepage
+                addq.l  #8,a0
+                move.l  (a0)+,a6                // p_tbase
+                move.l  a6,d4                   //   d4 = p_tbase
+                move.l  #orig_p_tlen,(a0)
+                add.l   (a0)+,a6
+                move.l  a6,(a0)+                // p_dbase
+                move.l  #orig_p_dlen,(a0)
+                add.l   (a0)+,a6                //   a6 = decompressed p_bbase
+                move.l  (a0),a4                 //   a4 = compressed p_bbase
+                move.l  a6,(a0)+                // p_bbase
+                move.l  #orig_p_blen,(a0)
+
+        // a4 == d4 + compressed_p_tlen + compressed_p_dlen
+        // a6 == d4 + orig_p_tlen + orig_p_dlen
 
 
 // ------------- copy data segment (from a4 to a3, downwards)
 
                 // a4 (top of compressed data) already initialized above
 
+section set_up21_a6.w
+                lea.l   up21_a6:w(a6),a3    // top of data segment + offset
+section set_up21_d4.w
                 move.l  d4,a3
-                add.l   #up21,a3        // top of data segment + offset
+                add.w   #up21_d4,a3         // top of data segment + offset
+section set_up21_d4.l
+                move.l  d4,a3
+                add.l   #up21_d4,a3         // top of data segment + offset
 
 
                 // number of loops
@@ -285,12 +294,12 @@ section copy_to_stack
 // Copy the final startup code below the stack. This will get
 // called via "jmp (ASTACK)" after decompression and relocation.
 
-                lea.l   clear_bss_end:w(pc),a2
+                lea.l   clear_bss_end:w(pc),a0
                 move.l  d4,-(ASTACK)    // entry point for final jmp
 
                 //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
-1:              move.w  -(a2),-(ASTACK)
+1:              move.w  -(a0),-(ASTACK)
                 subq.l  #1,d5
                 bccs    1b
 
@@ -339,9 +348,17 @@ section nrv2e.init
 
 // ------------- jump to copied decompressor
 
-section jmp_decompressor
+section jmp_decompressor_a6.w
+                jmp     up31_a6:w(a6)   // jmp decompr_start
+section jmp_decompressor_d4.w
                 move.l  d4,a0
-                add.l   #up31,a0
+                jmp     up31_d4:w(a0)   // jmp decompr_start
+section jmp_decompressor_a6.w2
+                lea.l   32767(a6),a0
+                jmp     up31_a6:w(a0)   // jmp decompr_start
+section jmp_decompressor_d4.l
+                move.l  d4,a0
+                add.l   #up31_d4,a0
                 jmp     (a0)            // jmp decompr_start
 
 
@@ -559,7 +576,7 @@ section loop3_set_count.l
                 move.l  #loop3_count,d6
 
 
-section jmpstack
+section jmp_stack
 
 // We are currently running in the dirty bss.
 // Jump to the code we copied below the stack.
@@ -633,5 +650,5 @@ N(lzma,small)
 #endif
 
 
-// vi:ts=8:et:nowrap
+// vi:ts=4:et:nowrap
 
