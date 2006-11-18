@@ -61,7 +61,10 @@ protected:
     unsigned    nrelocations_capacity;
 
     bool        reloc_done;
+public:
+    const N_BELE_RTP::AbstractPolicy *bele_policy;
 
+protected:
     void preprocessSections(char *start, const char *end);
     void preprocessSymbols(char *start, const char *end);
     void preprocessRelocations(char *start, const char *end);
@@ -155,6 +158,8 @@ protected:
 class ElfLinkerArmBE : public ElfLinker
 {
     typedef ElfLinker super;
+public:
+    ElfLinkerArmBE() { bele_policy = &N_BELE_RTP::be_policy; }
 protected:
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
@@ -173,8 +178,19 @@ protected:
 class ElfLinkerM68k : public ElfLinker
 {
     typedef ElfLinker super;
+public:
+    ElfLinkerM68k() { bele_policy = &N_BELE_RTP::be_policy; }
 protected:
     virtual void alignCode(unsigned len);
+    virtual void relocate1(const Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
+
+class ElfLinkerMipsLE : public ElfLinker
+{
+    typedef ElfLinker super;
+protected:
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };
@@ -183,6 +199,8 @@ protected:
 class ElfLinkerPpc32 : public ElfLinker
 {
     typedef ElfLinker super;
+public:
+    ElfLinkerPpc32() { bele_policy = &N_BELE_RTP::be_policy; }
 protected:
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);

@@ -879,7 +879,7 @@ upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum,
         }
         pc += oc;
         if (bswap)
-            set_be32(image+pc,get_le32(image+pc));
+            acc_ua_swab32s(image + pc);
     }
     *fix++ = 0;
     return fix;
@@ -920,7 +920,7 @@ unsigned Packer::unoptimizeReloc32(upx_byte **in, upx_byte *image,
         }
         *relocs++ = jc;
         if (bswap && image)
-            set_be32(image+jc,get_le32(image+jc));
+            acc_ua_swab32s(image + jc);
     }
     //fprintf(stderr,"relocnum=%x\n",relocn);
     *in = p+1;
