@@ -111,9 +111,9 @@ protected:
     }
     __attribute_packed;
     struct l_info { // 12-byte trailer in header for loader
-        unsigned l_checksum;
-        unsigned l_magic;
-        unsigned short l_lsize;
+        LE32 l_checksum;
+        LE32 l_magic;
+        LE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
     }
