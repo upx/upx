@@ -470,6 +470,7 @@ struct upx_callback_t
 template <class T, T default_value, T min_value, T max_value>
 struct OptVar
 {
+    typedef T Type;
     static const T default_value_c = default_value;
     static const T min_value_c = min_value;
     static const T max_value_c = max_value;

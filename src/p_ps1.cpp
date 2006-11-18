@@ -61,6 +61,7 @@ static const
 #define MIPS_PC16(a)    ((a) >> 2)
 #define MIPS_PC26(a)    (((a) & 0x0fffffff) >> 2)
 
+
 /*************************************************************************
 // ps1 exe looks like this:
 // 1. <header>  2048 bytes
@@ -110,30 +111,6 @@ const int *PackPs1::getFilters() const
 
 Linker* PackPs1::newLinker() const
 {
-    class ElfLinkerMipsLE : public ElfLinker
-    {
-        typedef ElfLinker super;
-
-        virtual void relocate1(const Relocation *rel, upx_byte *location,
-                               unsigned value, const char *type)
-        {
-            if (strcmp(type, "R_MIPS_HI16") == 0)
-                set_le16(location, get_le16(location) + MIPS_HI(value));
-            else if (strcmp(type, "R_MIPS_LO16") == 0)
-                set_le16(location, get_le16(location) + MIPS_LO(value));
-            else if (strcmp(type, "R_MIPS_PC16") == 0)
-            {
-                value -= rel->section->offset + rel->offset;
-                set_le16(location, get_le16(location) + MIPS_PC16(value));
-            }
-            else if (strcmp(type, "R_MIPS_26") == 0)
-                set_le32(location, get_le32(location) + MIPS_PC26(value));
-            else if (strcmp(type, "R_MIPS_32") == 0)
-                set_le32(location, get_le32(location) + value);
-            else
-                super::relocate1(rel, location, value, type);
-        }
-    };
     return new ElfLinkerMipsLE;
 }
 

@@ -442,6 +442,7 @@ done:
     return r;
 }
 
+#if 1 && (ACC_CC_GNUC >= 0x030300)
 template <class T, T default_value, T min_value, T max_value>
 int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal)
 {
@@ -451,6 +452,17 @@ int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_
         *var = v;
     return r;
 }
+#else
+template <class T>
+int getoptvar(T *var, const char *arg_fatal)
+{
+    typename T::Type v = T::default_value_c;
+    int r = getoptvar(&v, T::min_value_c, T::max_value_c, arg_fatal);
+    if (r == 0)
+        *var = v;
+    return r;
+}
+#endif
 
 
 static int do_option(int optc, const char *arg)
