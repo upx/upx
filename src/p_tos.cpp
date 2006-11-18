@@ -117,9 +117,13 @@ void PackTos::buildLoader(const Filter *ft)
     initLoader(nrv_loader, sizeof(nrv_loader));
     //linker->dumpSymbols();
 
+    //
+    // part 1a
+    //
+
     addLoader("entry");
 
-    if (symbols.up21_a6 > 0 && symbols.up21_a6 <= 32767)
+    if (symbols.up21_a6 <= 32767)
         addLoader("set_up21_a6.w");
     else if (symbols.up21_d4 <= 32767)
         addLoader("set_up21_d4.w");
@@ -167,17 +171,22 @@ void PackTos::buildLoader(const Filter *ft)
 
     symbols.up31_d4 = symbols.up31_base_d4 + getDecomprOffset(ph.method, opt->small);
     symbols.up31_a6 = symbols.up31_base_a6 + getDecomprOffset(ph.method, opt->small);
-    if (symbols.up31_a6 > 0 && symbols.up31_a6 <= 32767)
+    if (symbols.up31_a6 <= 32767)
         addLoader("jmp_decompressor_a6.w");
     else if (symbols.up31_d4 <= 32767)
         addLoader("jmp_decompressor_d4.w");
-    else if (symbols.up31_a6 >= 32768 && symbols.up31_a6 <= 65534)
+    else if (symbols.up31_a6 <= 65534)
         addLoader("jmp_decompressor_a6.w2");
     else
         addLoader("jmp_decompressor_d4.l");
 
-    addLoader("clear_bss");
+    //
+    // part 1b
+    //
 
+    addLoader("code_on_stack");
+
+    addLoader("clear_dirty_bss");
     addLoader("loop3_label");
     addLoader(opt->small ? "loop3.small" : "loop3.fast");
     if (symbols.loop3.mode == symbols.LOOP_SUBQ_L)
@@ -190,10 +199,17 @@ void PackTos::buildLoader(const Filter *ft)
         throwBadLoader();
 
     addLoader("flush_cache");
+    addLoader("restore_stack");
+#if 0
     addLoader("clear_dirty_stack");
+#endif
     addLoader("start_program");
 
     addLoader("IDENTSTR,+40D,UPX1HEAD,CUTPOINT");
+
+    //
+    // part 2
+    //
 
     if (M_IS_NRV2B(ph.method)) {
         addLoader(opt->small ? "nrv2b_8.small" : "nrv2b_8.fast");
@@ -514,7 +530,7 @@ void PackTos::pack(OutputFile *fo)
         d_len = lsize - e_len;
         assert((e_len & 3) == 0 && (d_len & 1) == 0);
 
-        // compute addresses
+        // compute section sizes
         o_text = e_len;
         o_data = ph.c_len;
         o_bss = i_bss;
@@ -528,6 +544,7 @@ void PackTos::pack(OutputFile *fo)
 
         // append decompressor (part 2 of loader)
         d_off = o_data;
+        ////memcpy(obuf + d_off, getLoader() + e_len, d_len); // must be done after relocation
         o_data += d_len;
 
         // dword align the len of the final data segment
@@ -577,13 +594,16 @@ void PackTos::pack(OutputFile *fo)
         symbols.up31_base_d4 = d_off + offset;
         symbols.up21_a6 = symbols.up21_d4 - (i_text + i_data);
         symbols.up31_base_a6 = symbols.up31_base_d4 - (i_text + i_data);
+        assert((int)symbols.up21_a6 > 0);
+        assert((int)symbols.up31_base_a6 > 0);
 
+        const unsigned c = linker->getSymbolOffset("code_on_stack");
         unsigned d;
-        d = linker->getSymbolOffset("flush_cache_rts") - linker->getSymbolOffset("clear_bss");
+        d = linker->getSymbolOffset("flush_cache_rts") - c;
         symbols.flush_cache_rts_offset = d;
-        d = linker->getSymbolOffset("clear_dirty_stack_loop") - linker->getSymbolOffset("clear_bss");
+        d = linker->getSymbolOffset("clear_dirty_stack_loop") - c;
         symbols.clear_dirty_stack_len = (d + 3) / 4 + 32 - 1;
-        d = linker->getSymbolOffset("clear_bss_end") - linker->getSymbolOffset("clear_bss");
+        d = linker->getSymbolOffset("code_on_stack_end") - c;
         symbols.copy_to_stack_len = d / 2 - 1;
 
         // now re-build loader
@@ -611,16 +631,16 @@ void PackTos::pack(OutputFile *fo)
     linker->defineSymbol("orig_p_dlen", i_data);
     linker->defineSymbol("orig_p_blen", i_bss);
 
-    if (symbols.up21_a6 > 0 && symbols.up21_a6 <= 32767)
+    if (symbols.up21_a6 <= 32767)
         linker->defineSymbol("up21_a6", symbols.up21_a6);
     else
         linker->defineSymbol("up21_d4", symbols.up21_d4);
 
-    if (symbols.up31_a6 > 0 && symbols.up31_a6 <= 32767)
+    if (symbols.up31_a6 <= 32767)
         linker->defineSymbol("up31_a6", symbols.up31_a6);
     else if (symbols.up31_d4 <= 32767)
         linker->defineSymbol("up31_d4", symbols.up31_d4);
-    else if (symbols.up31_a6 >= 32768 && symbols.up31_a6 <= 65534)
+    else if (symbols.up31_a6 <= 65534)
         linker->defineSymbol("up31_a6", symbols.up31_a6 - 32767);
     else
         linker->defineSymbol("up31_d4", symbols.up31_d4);
@@ -675,13 +695,13 @@ void PackTos::pack(OutputFile *fo)
     MemBuffer loader(o_text);
     memcpy(loader, getLoader(), o_text);
     patchPackHeader(loader, o_text);
-    memcpy(obuf+d_off, getLoader() + e_len, d_len);
 
     // write new file header, loader and compressed file
     fo->write(&oh, FH_SIZE);
     fo->write(loader, o_text);  // entry
     if (opt->debug.dump_stub_loader)
         OutputFile::dump(opt->debug.dump_stub_loader, loader, o_text);
+    memcpy(obuf + d_off, getLoader() + e_len, d_len); // copy decompressor
     fo->write(obuf, o_data);    // compressed + decompressor
 
     // write empty relocation fixup

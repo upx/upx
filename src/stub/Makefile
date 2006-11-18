@@ -620,7 +620,7 @@ tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
 m68k-atari.tos.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68040,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
+	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68000,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
 

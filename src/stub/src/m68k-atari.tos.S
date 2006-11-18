@@ -294,10 +294,10 @@ section copy_to_stack
 // Copy the final startup code below the stack. This will get
 // called via "jmp (ASTACK)" after decompression and relocation.
 
-                lea.l   clear_bss_end:w(pc),a0
+                lea.l   code_on_stack_end:w(pc),a0
                 move.l  d4,-(ASTACK)    // entry point for final jmp
 
-                //moveq.l #((clear_bss_end-clear_bss)/2-1),d5
+                ////moveq.l #((code_on_stack_end-code_on_stack)/2-1),d5
                 moveq.l #copy_to_stack_len,d5
 1:              move.w  -(a0),-(ASTACK)
                 subq.l  #1,d5
@@ -307,7 +307,7 @@ section copy_to_stack
 
 #ifdef FLUSH_CACHE
                 // patch code: on the stack, the 'rts' becomes a 'nop'
-                //move.w  #0x4e71,(flush_cache_rts-clear_bss):w(ASTACK)
+                ////move.w  #0x4e71,(flush_cache_rts-code_on_stack):w(ASTACK)
                 move.w  #0x4e71,flush_cache_rts_offset:w(ASTACK)
 
                 bsrs    flush_cache
@@ -366,17 +366,18 @@ section jmp_decompressor_d4.l
 // this is the final part of the startup code which runs in the stack
 **************************************************************************/
 
-// ------------- clear dirty bss
-
-section clear_bss
+section code_on_stack
 
         // on entry:
-        //   ASTACK      == pc == clear_bss (on stack)
+        //   ASTACK      == pc == code_on_stack (on stack)
         //   a6          start of dirty bss [long living register]
-        //   d6.l        number of clr loops
+        //   d6          number of clr loops for clear_dirty_bss
         //   d3.l        0
 
 
+// ------------- clear dirty bss
+
+section clear_dirty_bss
 section loop3_label
 section loop3.small
                 move.l  d3,(a6)+
@@ -413,20 +414,19 @@ GL(flush_cache_rts) // for flush_cache_rts_offset
 #endif
 
 
-// ------------- restore ASTACK
+// ------------- restore stack
 
-section clear_dirty_stack
+section restore_stack
 
-                //lea     clear_bss_size+4:w(ASTACK),sp
-                lea     clear_bss_end+4:w(pc),sp
-
-        // assert sp == clear_bss_end(pc)+4
+                lea     code_on_stack_end+4:w(pc),sp
 
 
 // ------------- clear the dirty stack
 
-                // clear down to clear_bss(pc) + 32 extra longs
-                ////moveq.l #((clear_dirty_stack_loop-clear_bss+3)/4+32-1),d0
+section clear_dirty_stack
+
+                // clear down to code_on_stack(pc) + 32 extra longs
+                ////moveq.l #((clear_dirty_stack_loop-code_on_stack+3)/4+32-1),d0
                 moveq.l #clear_dirty_stack_len,d0
                 lea     1f(pc),a0
 GL(clear_dirty_stack_loop) // for clear_dirty_stack_len
@@ -445,7 +445,7 @@ section start_program
 1:              dc.w    0x4ef9          // jmp $xxxxxxxx - jmp to text segment
 
 
-GL(clear_bss_end) // for copy_to_stack_len
+GL(code_on_stack_end) // for copy_to_stack_len
 
 
 /*************************************************************************
@@ -549,7 +549,7 @@ section reloc
         // note: d3.l is still 0
 
                 move.l  a6,a0           // a0 = start of relocations
-                moveq.l #1,d5
+                moveq.l #1,d1
 
                 move.l  d4,a1
                 add.l   (a0)+,a1        // get initial fixup
@@ -558,11 +558,13 @@ section reloc
                 add.l   d4,(a1)         // reloc one address
 2:              move.b  (a0)+,d3
                 beqs    3f
-                cmp.b   d5,d3           // note: d5.b is #1 from above
+                cmp.b   d1,d3           // note: d1.b is #1 from above
                 bnes    1b
                 lea     254(a1),a1      // d3 == 1 -> add 254, don't reloc
                 bras    2b
 3:
+
+        // note: d3.l is still 0
 
 
 // ------------- clear dirty bss & start program
@@ -581,7 +583,7 @@ section jmp_stack
 // We are currently running in the dirty bss.
 // Jump to the code we copied below the stack.
 
-                jmp     (ASTACK)        // jmp clear_bss (on stack)
+                jmp     (ASTACK)        // jmp code_on_stack (on stack)
 
 
 /*************************************************************************
