@@ -345,7 +345,9 @@ void PackPs1::buildLoader(const Filter *)
             initLoader(nrv_loader, sizeof(nrv_loader));
 
         pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4);
-        linker->addSection("pad.code", &pad_code, pad_code, 0);
+        assert(pad_code < 4);
+        static const unsigned char pad_buffer[4] = { 0, 0, 0, 0 };
+        linker->addSection("pad.code", pad_buffer, pad_code, 0);
 
         if (isCon)
         {
@@ -533,8 +535,6 @@ void PackPs1::pack(OutputFile *fo)
         oh.bs_ptr = oh.bs_len = 0;
 
     const int lsize = getLoaderSize();
-    MemBuffer loader(lsize);
-    memcpy(loader, getLoader(), lsize);
 
     unsigned filelen = ALIGN_UP(ih.tx_len, 4);
 
@@ -614,6 +614,9 @@ void PackPs1::pack(OutputFile *fo)
     }
 
     linker->relocate();
+    //linker->dumpSymbols();
+    MemBuffer loader(lsize);
+    assert(lsize == getLoaderSize());
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, lsize);
 
