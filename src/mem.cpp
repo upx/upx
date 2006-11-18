@@ -209,6 +209,8 @@ void MemBuffer::alloc(unsigned size)
     }
     else
         b = p ;
+
+    //fill(0, b_size, (rand() & 0xff) | 1); // debug
 }
 
 
