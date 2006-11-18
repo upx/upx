@@ -374,10 +374,12 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("FOLDEXEC", NULL);
     if (ph.method == M_LZMA) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
-        unsigned const properties = // lc, lp, pb, dummy
+        acc_uint32e_t properties = // lc, lp, pb, dummy
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
+        if (linker->bele_policy->isBE()) // big endian - bswap32
+            acc_swab32s(&properties);
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties
         linker->defineSymbol("lzma_c_len", ph.c_len - 2);

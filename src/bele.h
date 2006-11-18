@@ -247,6 +247,58 @@ inline acc_int64l_t get_le64_signed(const void *p)
 
 
 /*************************************************************************
+// swab (bswap)
+**************************************************************************/
+
+inline unsigned acc_swab16(unsigned v)
+{
+    return ((v & 0x00ff) << 8) |
+           ((v & 0xff00) >> 8);
+}
+
+inline unsigned acc_swab32(unsigned v)
+{
+    return ((v & 0x000000ff) << 24) |
+           ((v & 0x0000ff00) <<  8) |
+           ((v & 0x00ff0000) >>  8) |
+           ((v & 0xff000000) >> 24);
+}
+
+
+inline unsigned acc_swab16p(const acc_uint16e_t *p)
+{
+    return acc_swab16(*p);
+}
+
+inline unsigned acc_swap32p(const acc_uint32e_t *p)
+{
+    return acc_swab32(*p);
+}
+
+
+inline void acc_swab16s(acc_uint16e_t *p)
+{
+    *p = acc_swab16(*p);
+}
+
+inline void acc_swab32s(acc_uint32e_t *p)
+{
+    *p = acc_swab32(*p);
+}
+
+
+inline void acc_ua_swab16s(void *p)
+{
+    set_be16(p, get_le16(p));
+}
+
+inline void acc_ua_swab32s(void *p)
+{
+    set_be32(p, get_le32(p));
+}
+
+
+/*************************************************************************
 // classes for portable unaligned access
 //
 // Important: these classes must be PODs (Plain Old Data), i.e. no
@@ -496,12 +548,16 @@ namespace N_BELE_CTP {
 #define BELE_CTP 1
 #include "bele_policy.h"
 #undef BELE_CTP
+extern const BEPolicy be_policy;
+extern const LEPolicy le_policy;
 }
 
 namespace N_BELE_RTP {
 #define BELE_RTP 1
 #include "bele_policy.h"
 #undef BELE_RTP
+extern const BEPolicy be_policy;
+extern const LEPolicy le_policy;
 }
 
 

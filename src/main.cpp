@@ -1273,6 +1273,10 @@ void upx_sanity_check(void)
 
 #if !defined(WITH_GUI)
 
+#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
+extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
+#endif
+
 int __acc_cdecl_main main(int argc, char *argv[])
 {
     int i;

@@ -44,6 +44,21 @@
 
 
 /*************************************************************************
+// bele.h
+**************************************************************************/
+
+namespace N_BELE_CTP {
+const BEPolicy be_policy;
+const LEPolicy le_policy;
+}
+
+namespace N_BELE_RTP {
+const BEPolicy be_policy;
+const LEPolicy le_policy;
+}
+
+
+/*************************************************************************
 // qsort() util
 **************************************************************************/
 
@@ -51,6 +66,13 @@ int __acc_cdecl_qsort be16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_be16(e1);
     const unsigned d2 = get_be16(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
+int __acc_cdecl_qsort be24_compare(const void *e1, const void *e2)
+{
+    const unsigned d1 = get_be24(e1);
+    const unsigned d2 = get_be24(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -72,6 +94,13 @@ int __acc_cdecl_qsort le16_compare(const void *e1, const void *e2)
 {
     const unsigned d1 = get_le16(e1);
     const unsigned d2 = get_le16(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
+int __acc_cdecl_qsort le24_compare(const void *e1, const void *e2)
+{
+    const unsigned d1 = get_le24(e1);
+    const unsigned d2 = get_le24(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -97,6 +126,13 @@ int __acc_cdecl_qsort be16_compare_signed(const void *e1, const void *e2)
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
+int __acc_cdecl_qsort be24_compare_signed(const void *e1, const void *e2)
+{
+    const int d1 = get_be24_signed(e1);
+    const int d2 = get_be24_signed(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
 int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_be32_signed(e1);
@@ -115,6 +151,13 @@ int __acc_cdecl_qsort le16_compare_signed(const void *e1, const void *e2)
 {
     const int d1 = get_le16_signed(e1);
     const int d2 = get_le16_signed(e2);
+    return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
+}
+
+int __acc_cdecl_qsort le24_compare_signed(const void *e1, const void *e2)
+{
+    const int d1 = get_le24_signed(e1);
+    const int d2 = get_le24_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 

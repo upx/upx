@@ -108,7 +108,7 @@ ElfLinker::ElfLinker() :
     nsections(0), nsections_capacity(0),
     nsymbols(0), nsymbols_capacity(0),
     nrelocations(0), nrelocations_capacity(0),
-    reloc_done(false)
+    reloc_done(false), bele_policy(&N_BELE_RTP::le_policy)
 {
 }
 
