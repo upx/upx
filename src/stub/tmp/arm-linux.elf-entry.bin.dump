@@ -34,6 +34,8 @@ SYMBOL TABLE:
 00000000 g     F NRV2E	0000012c ucl_nrv2e_decompress_8
 00000000 g     F NRV2D	00000118 ucl_nrv2d_decompress_8
 00000000 g     F NRV2B	000000dc ucl_nrv2b_decompress_8
+00000000 g       ELFMAINY	00000000 end_decompress
+00000000 g       ELFMAINZ	00000000 cpr0
 
 RELOCATION RECORDS FOR [ELFMAINX]:
 OFFSET   TYPE              VALUE

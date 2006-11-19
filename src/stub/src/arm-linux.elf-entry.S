@@ -134,7 +134,7 @@ f_decompress:
 #include "arch/arm/v4a/lzma_d.S"
 
   section ELFMAINY
-end_decompress:
+end_decompress: .globl end_decompress
 
 msg_SELinux:
         mov r2,#L71 - L70  // length
@@ -150,7 +150,7 @@ L71:
         /* IDENTSTR goes here */
 
   section ELFMAINZ
-cpr0:
+cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /*
