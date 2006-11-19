@@ -450,7 +450,9 @@ void PackWcle::encodeImage(const Filter *ft)
     buildLoader(ft);
 
     ibuf.dealloc();
-    soimage = (ph.c_len + 3) &~ 3;
+    soimage = ph.c_len;
+    while (soimage & 3)
+        oimage[RESERVED + soimage++] = 0;
 }
 
 

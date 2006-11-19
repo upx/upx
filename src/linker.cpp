@@ -386,8 +386,8 @@ int ElfLinker::addLoader(const char *sname)
             }
             memcpy(output + outputlen, section->input, section->size);
             section->output = output + outputlen;
+            //printf("section added: 0x%04x %3d %s\n", outputlen, section->size, section->name);
             outputlen += section->size;
-            //printf("section added: %s\n", sect);
 
             if (head)
             {
