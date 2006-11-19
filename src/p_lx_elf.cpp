@@ -563,7 +563,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE (-PAGE_MASK)
     lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
-    acc_uint64l_t       lo_va_stub = elfout.phdr[0].p_vaddr;
+    acc_uint64l_t       lo_va_stub = get_native64(&elfout.phdr[0].p_vaddr);
     acc_uint64l_t adrc;
     acc_uint64l_t adrm;
     acc_uint64l_t adru;
