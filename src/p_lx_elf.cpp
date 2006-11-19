@@ -1494,7 +1494,7 @@ ARM_getFilters(bool const isBE)
 {
     static const int f50[] = { 0x50, -1 };
     static const int f51[] = { 0x51, -1 };
-    if (HostPolicy::isBE ^ isBE)
+    if (isBE)
         return f51;
     return f50;
 }
@@ -1517,7 +1517,7 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
     unsigned const sz_loader = sizeof(linux_elf32arm_loader);
     unsigned const sz_fold   = sizeof(linux_elf32arm_fold);
 
-    // Was ARM code assembled for same endianness as the target?
+    // Was ARM stub assembled for same endianness as the target?
     bool const asm_brev = (this->ei_data
         != ((Elf32_Ehdr const *)linux_elf32arm_fold)->e_ident[Elf32_Ehdr::EI_DATA] );
 
@@ -1525,17 +1525,15 @@ PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
     memcpy(tmp_fold, linux_elf32arm_fold, sz_fold);
 
     // 0xe3530050  is  "cmp fid,#0x50" with fid .req r3
-    if (HostPolicy::isBE ^ isBE) { // change filter 0x50 to filter 0x51
-        if (HostPolicy::isBE ^ isBE ^ asm_brev) {  // find 0xe3530050 big-endian
-            checkPatch(NULL,0,0,0);  // reset
+    if (isBE) { // change filter 0x50 to filter 0x51
+        checkPatch(NULL,0,0,0);  // reset
+        if (!asm_brev) {  // find 0xe3530050 big-endian
             patch_be32(tmp_fold, sz_fold, "\xe3\x53\x00\x50", 0xe3530051);
-            checkPatch(NULL,0,0,0);  // reset
         }
         else { // find 0xe3530050 little-endian
-            checkPatch(NULL,0,0,0);  // reset
             patch_le32(tmp_fold, sz_fold, "\x50\x00\x53\xe3", 0xe3530051);
-            checkPatch(NULL,0,0,0);  // reset
         }
+        checkPatch(NULL,0,0,0);  // reset
     }
     if (!asm_brev) { // was assembled to match target
         buildLinuxLoader(linux_elf32arm_loader, sz_loader,
