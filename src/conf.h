@@ -502,12 +502,13 @@ struct lzma_compress_config_t
     typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
     typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lb
     typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
+    typedef OptVar<unsigned, (1u<<22), 1u, (1u<<30) > dict_size_t;
     typedef OptVar<unsigned, 64u, 5u, 273u> num_fast_bytes_t;
 
     pos_bits_t          pos_bits;           // pb
     lit_pos_bits_t      lit_pos_bits;       // lp
     lit_context_bits_t  lit_context_bits;   // lc
-    unsigned            dict_size;
+    dict_size_t         dict_size;
     unsigned            fast_mode;
     num_fast_bytes_t    num_fast_bytes;
     unsigned            match_finder_cycles;

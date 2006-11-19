@@ -191,10 +191,11 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
     }
     if (M_IS_LZMA(ph.method))
     {
-        // info: these are optional assignments which query OptVar::is_set
+        // NOTE: these are _optional_ assignments which query OptVar::is_set !
         cconf.conf_lzma.pos_bits = opt->crp.crp_lzma.pos_bits;
         cconf.conf_lzma.lit_pos_bits = opt->crp.crp_lzma.lit_pos_bits;
         cconf.conf_lzma.lit_context_bits = opt->crp.crp_lzma.lit_context_bits;
+        cconf.conf_lzma.dict_size = opt->crp.crp_lzma.dict_size;
         cconf.conf_lzma.num_fast_bytes = opt->crp.crp_lzma.num_fast_bytes;
     }
     if (uip->ui_pass >= 0)
