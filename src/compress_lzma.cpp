@@ -37,7 +37,7 @@ void lzma_compress_config_t::reset()
     pos_bits.reset();
     lit_pos_bits.reset();
     lit_context_bits.reset();
-    dict_size = 1024 * 1024;
+    dict_size.reset();
     fast_mode = 2;
     num_fast_bytes.reset();
     match_finder_cycles = 0;
@@ -169,6 +169,19 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 } // namespace
 
 
+#include "C/Common/Alloc.cpp"
+#include "C/Common/CRC.cpp"
+//#include "C/7zip/Common/InBuffer.cpp"
+#include "C/7zip/Common/OutBuffer.cpp"
+#include "C/7zip/Common/StreamUtils.cpp"
+#include "C/7zip/Compress/LZ/LZInWindow.cpp"
+//#include "C/7zip/Compress/LZ/LZOutWindow.cpp"
+//#include "C/7zip/Compress/LZMA/LZMADecoder.cpp"
+#include "C/7zip/Compress/LZMA/LZMAEncoder.cpp"
+#include "C/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
+#undef RC_NORMALIZE
+
+
 int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    upx_callback_p cb,
@@ -192,31 +205,39 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     progress.cb = cb;
 
     NCompress::NLZMA::CEncoder enc;
-    const PROPID propIDs[7] = {
-        NCoderPropID::kPosStateBits,        // 0  pb  _posStateBits(2)
-        NCoderPropID::kLitPosBits,          // 1  lp  _numLiteralPosStateBits(0)
-        NCoderPropID::kLitContextBits,      // 2  lc  _numLiteralContextBits(3)
-        NCoderPropID::kDictionarySize,      // 3
-        NCoderPropID::kAlgorithm,           // 4      _fastmode
-        NCoderPropID::kNumFastBytes,        // 5
-        NCoderPropID::kMatchFinderCycles    // 6
+    const PROPID propIDs[8] = {
+        NCoderPropID::kPosStateBits,        // 0  pb    _posStateBits(2)
+        NCoderPropID::kLitPosBits,          // 1  lp    _numLiteralPosStateBits(0)
+        NCoderPropID::kLitContextBits,      // 2  lc    _numLiteralContextBits(3)
+        NCoderPropID::kDictionarySize,      // 3  ds
+        NCoderPropID::kAlgorithm,           // 4  fm    _fastmode
+        NCoderPropID::kNumFastBytes,        // 5  fb
+        NCoderPropID::kMatchFinderCycles,   // 6  mfc   _matchFinderCycles, _cutValue
+        NCoderPropID::kMatchFinder          // 7  mf
     };
-    PROPVARIANT pr[7];
+    PROPVARIANT pr[8];
     pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
+    pr[7].vt = VT_BSTR;
 
     // setup defaults
-    pr[0].uintVal = 2;              // 0..4
-    pr[1].uintVal = 0;              // 0..4
-    pr[2].uintVal = 3;              // 0..8
-    pr[3].uintVal = 1024 * 1024;
+    pr[0].uintVal = 2;                  // 0 .. 4
+    pr[1].uintVal = 0;                  // 0 .. 4
+    pr[2].uintVal = 3;                  // 0 .. 8
+    pr[3].uintVal = 4 * 1024 * 1024;    // 1 .. 2**30
     pr[4].uintVal = 2;
-    pr[5].uintVal = 64;             // 5..273
+    pr[5].uintVal = 64;                 // 5 .. 273
     pr[6].uintVal = 0;
+#ifdef COMPRESS_MF_BT4
+    static wchar_t matchfinder[] = L"BT4";
+#endif
+    assert(NCompress::NLZMA::FindMatchFinder(matchfinder) >= 0);
+    pr[7].bstrVal = matchfinder;
 #if 1
     pr[0].uintVal = lzma_compress_config_t::pos_bits_t::default_value_c;
     pr[1].uintVal = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
     pr[2].uintVal = lzma_compress_config_t::lit_context_bits_t::default_value_c;
+    pr[3].uintVal = lzma_compress_config_t::dict_size_t::default_value_c;
     pr[5].uintVal = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
 #endif
 #if 0
@@ -270,6 +291,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
             pr[1].uintVal = cconf_parm->conf_lzma.lit_pos_bits;
         if (cconf_parm->conf_lzma.lit_context_bits.is_set)
             pr[2].uintVal = cconf_parm->conf_lzma.lit_context_bits;
+        if (cconf_parm->conf_lzma.dict_size.is_set)
+            pr[3].uintVal = cconf_parm->conf_lzma.dict_size;
         if (cconf_parm->conf_lzma.num_fast_bytes.is_set)
             pr[5].uintVal = cconf_parm->conf_lzma.num_fast_bytes;
     }
@@ -319,7 +342,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 #  error
 #endif
 
-    if (enc.SetCoderProperties(propIDs, pr, 7) != S_OK)
+    if (enc.SetCoderProperties(propIDs, pr, 8) != S_OK)
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
         goto error;
@@ -365,19 +388,6 @@ error:
     *dst_len = os.Pos;
     return r;
 }
-
-
-#include "C/Common/Alloc.cpp"
-#include "C/Common/CRC.cpp"
-//#include "C/7zip/Common/InBuffer.cpp"
-#include "C/7zip/Common/OutBuffer.cpp"
-#include "C/7zip/Common/StreamUtils.cpp"
-#include "C/7zip/Compress/LZ/LZInWindow.cpp"
-//#include "C/7zip/Compress/LZ/LZOutWindow.cpp"
-//#include "C/7zip/Compress/LZMA/LZMADecoder.cpp"
-#include "C/7zip/Compress/LZMA/LZMAEncoder.cpp"
-#include "C/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
-#undef RC_NORMALIZE
 
 
 /*************************************************************************
