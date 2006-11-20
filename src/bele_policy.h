@@ -53,7 +53,7 @@
 #if defined(BELE_RTP)
 struct AbstractPolicy
 {
-    AbstractPolicy() {}
+    explicit AbstractPolicy() {}
     virtual inline ~AbstractPolicy() {}
     V bool isBE() C = 0;
     V bool isLE() C = 0;
@@ -82,6 +82,9 @@ struct AbstractPolicy
     S u24_compare_signed(const void *a, const void *b) C = 0;
     S u32_compare_signed(const void *a, const void *b) C = 0;
     S u64_compare_signed(const void *a, const void *b) C = 0;
+
+    // disable dynamic allocation
+    DISABLE_NEW_DELETE
 };
 #endif
 
@@ -91,7 +94,7 @@ struct BEPolicy
     : public AbstractPolicy
 #endif
 {
-    BEPolicy() {}
+    explicit BEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
     enum { isBE = 1, isLE = 0 };
@@ -158,6 +161,9 @@ struct BEPolicy
         COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
         COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
     }
+
+    // disable dynamic allocation
+    DISABLE_NEW_DELETE
 };
 
 
@@ -166,7 +172,7 @@ struct LEPolicy
     : public AbstractPolicy
 #endif
 {
-    LEPolicy() {}
+    explicit LEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
     enum { isBE = 0, isLE = 1 };
@@ -233,6 +239,9 @@ struct LEPolicy
         COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
         COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
     }
+
+    // disable dynamic allocation
+    DISABLE_NEW_DELETE
 };
 
 
