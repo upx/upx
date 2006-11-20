@@ -395,7 +395,7 @@ PackLinuxI386::buildLinuxLoader(
             linker->defineSymbol("NMRU", mru - is_pwr2);
         }
     }
-    linker->relocate();
+    relocateLoader();
 }
 
 void

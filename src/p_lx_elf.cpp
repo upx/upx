@@ -489,7 +489,7 @@ PackLinuxElf32::buildLinuxLoader(
     addStubEntrySections(ft);
 
     defineSymbols(ft);
-    linker->relocate();
+    relocateLoader();
 }
 
 void
@@ -537,7 +537,7 @@ PackLinuxElf64::buildLinuxLoader(
     addStubEntrySections(ft);
 
     defineSymbols(ft);
-    linker->relocate();
+    relocateLoader();
 }
 
 void

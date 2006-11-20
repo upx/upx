@@ -541,7 +541,7 @@ void PackExe::pack(OutputFile *fo)
 
     oh.ip = device_driver ? getLoaderSection("EXEENTRY") - 2 : 0;
 
-    linker->relocate();
+    relocateLoader();
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader,e_len);
 

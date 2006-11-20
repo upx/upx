@@ -207,6 +207,7 @@ protected:
     // loader core
     virtual void buildLoader(const Filter *ft) = 0;
     virtual Linker* newLinker() const = 0;
+    virtual void relocateLoader();
     // loader util for linker
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;

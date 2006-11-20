@@ -657,7 +657,7 @@ void PackTos::pack(OutputFile *fo)
     linker->defineSymbol("copy_to_stack_len", symbols.copy_to_stack_len);
     linker->defineSymbol("clear_dirty_stack_len", symbols.clear_dirty_stack_len);
 
-    linker->relocate();
+    relocateLoader();
 
     //
     // write

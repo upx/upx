@@ -318,7 +318,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
     defineDecompressorSymbols();
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);

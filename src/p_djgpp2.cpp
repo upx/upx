@@ -368,7 +368,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     data->size = ALIGN_UP(data->size, 4);
 
     linker->defineSymbol("DJ2MAIN1", coff_hdr.a_entry);
-    linker->relocate();
+    relocateLoader();
 
     // prepare loader
     MemBuffer loader(lsize);

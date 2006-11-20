@@ -915,7 +915,7 @@ void PackW32Pe::pack(OutputFile *fo)
     linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
 
     linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
-    linker->relocate();
+    relocateLoader();
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);

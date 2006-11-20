@@ -516,7 +516,7 @@ void PackPs1::pack(OutputFile *fo)
         linker->defineSymbol("entry", ih.epc);
         linker->defineSymbol("SC",
                              sa_cnt > (0x10000 << 2) ? sa_cnt >> 5 : sa_cnt >> 2);
-        linker->relocate();
+        relocateLoader();
 
         buildPart2 = true;
         buildLoader(&ft);
@@ -614,7 +614,7 @@ void PackPs1::pack(OutputFile *fo)
                                              - getLoaderSectionStart("cdb.entry.lzma"));
     }
 
-    linker->relocate();
+    relocateLoader();
     //linker->dumpSymbols();
     MemBuffer loader(lsize);
     assert(lsize == getLoaderSize());

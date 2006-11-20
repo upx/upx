@@ -269,7 +269,7 @@ void PackTmt::pack(OutputFile *fo)
     //                e_len,d_len,copy_len,copy_to,ph.overlap_overhead,jmp_pos,ph.u_len,ph.c_len);
 
     linker->defineSymbol("TMTCUTPO", ph.u_len + ph.overlap_overhead);
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader,getLoader(),lsize);

@@ -555,7 +555,7 @@ void PackWcle::pack(OutputFile *fo)
     linker->defineSymbol("copy_dest", ((ic + d_len + 3) &~ 3) - 4);
     linker->defineSymbol("copy_source", e_len + jpos * 4 - 4);
 
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);

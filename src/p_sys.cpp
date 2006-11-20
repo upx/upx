@@ -89,7 +89,7 @@ void PackSys::patchLoader(OutputFile *fo,
     linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead + 1);
     linker->defineSymbol("original_strategy", get_le16(ibuf + 6));
 
-    linker->relocate();
+    relocateLoader();
     loader = getLoader();
 
     patchPackHeader(loader,e_len);

@@ -833,7 +833,7 @@ void PackArmPe::pack(OutputFile *fo)
     linker->defineSymbol("compressed_length", ph.c_len);
     linker->defineSymbol("start_of_compressed", ih.imagebase + s1addr + identsize - identsplit);
     defineDecompressorSymbols();
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);

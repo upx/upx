@@ -132,7 +132,7 @@ PackMachPPC32::buildMachLoader(
     addStubEntrySections(ft);
 
     defineSymbols(ft);
-    linker->relocate();
+    relocateLoader();
 }
 
 void

@@ -36,6 +36,7 @@
 
 class ElfLinker : private nocopy
 {
+    friend class Packer;
 public:
     const N_BELE_RTP::AbstractPolicy *bele;
 protected:
@@ -86,7 +87,6 @@ public:
     virtual int getSection(const char *sname, int *slen=NULL) const;
     virtual int getSectionSize(const char *sname) const;
     virtual upx_byte *getLoader(int *llen=NULL) const;
-    virtual void relocate();
     virtual void defineSymbol(const char *name, unsigned value);
     virtual unsigned getSymbolOffset(const char *) const;
 
@@ -97,6 +97,8 @@ public:
     virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
     virtual void alignData(unsigned len) { alignWithByte(len, 0); }
 
+protected:
+    virtual void relocate();
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
 };

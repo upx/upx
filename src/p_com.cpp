@@ -119,7 +119,7 @@ void PackCom::patchLoader(OutputFile *fo,
     linker->defineSymbol("neg_e_len", 0 - e_len);
     linker->defineSymbol("NRV2B160", ph.u_len + ph.overlap_overhead);
 
-    linker->relocate();
+    relocateLoader();
     loader = getLoader();
 
     // some day we could use the relocation stuff for patchPackHeader too

@@ -325,7 +325,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     linker->defineSymbol("src_for_decompressor", zimage_offset + lsize);
     linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);
@@ -448,7 +448,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     defineDecompressorSymbols();
     linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
-    linker->relocate();
+    relocateLoader();
 
     MemBuffer loader(lsize);
     memcpy(loader, getLoader(), lsize);

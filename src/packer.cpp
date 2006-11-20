@@ -642,11 +642,15 @@ void Packer::updatePackHeader()
 }
 
 
+// FIXME: remove patchPackHeader() and fold into relocateLoader();
+//   then make linker->relocate() private (friend Packer)
 int Packer::patchPackHeader(void *b, int blen)
 {
-    const int size = ph.getPackHeaderSize();
     assert(isValidFilter(ph.filter));
 
+    const int size = ph.getPackHeaderSize();
+    if (linker->findSection("UPX1HEAD", false))
+        assert(size == linker->getSectionSize("UPX1HEAD"));
     int boff = find_le32(b, blen, UPX_MAGIC_LE32);
     checkPatch(b, blen, boff, size);
 
@@ -1086,6 +1090,26 @@ int Packer::getLoaderSectionStart(const char *name, int *slen) const
     if (slen)
         *slen = size;
     return ostart;
+}
+
+
+void Packer::relocateLoader()
+{
+    linker->relocate();
+
+#if 0
+    // "relocate" packheader
+    if (linker->findSection("UPX1HEAD", false))
+    {
+        int lsize = -1;
+        int loff = getLoaderSectionStart("UPX1HEAD", &lsize);
+        assert(lsize == ph.getPackHeaderSize());
+        unsigned char *p = getLoader() + loff;
+        assert(get_le32(p) == UPX_MAGIC_LE32);
+        //patchPackHeader(p, lsize);
+        ph.putPackHeader(p);
+    }
+#endif
 }
 
 
