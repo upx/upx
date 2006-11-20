@@ -38,7 +38,7 @@ class PackCom : public Packer
 {
     typedef Packer super;
 public:
-    PackCom(InputFile *f) : super(f) { }
+    PackCom(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_DOS_COM; }
     virtual const char *getName() const { return "dos/com"; }

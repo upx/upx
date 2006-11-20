@@ -53,6 +53,7 @@ static const unsigned bzimage_offset = 0x100000;
 PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     super(f), physical_start(0x100000)
 {
+    bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x218);
 }
 
@@ -415,7 +416,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);
-        if (linker->bele_policy->isBE()) // big endian - bswap32
+        if (linker->bele->isBE()) // big endian - bswap32
             acc_swab32s(&properties);
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties

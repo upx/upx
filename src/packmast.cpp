@@ -55,6 +55,7 @@
 #include "p_ps1.h"
 #include "p_mach.h"
 #include "p_armpe.h"
+#include "linker.h"
 
 
 /*************************************************************************
@@ -96,6 +97,7 @@ static Packer* try_pack(Packer *p, InputFile *f)
 {
     if (p == NULL)
         return NULL;
+    p->assertPacker();
     try {
         p->initPackHeader();
         f->seek(0,SEEK_SET);
@@ -120,6 +122,7 @@ static Packer* try_unpack(Packer *p, InputFile *f)
 {
     if (p == NULL)
         return NULL;
+    p->assertPacker();
     try {
         p->initPackHeader();
         f->seek(0,SEEK_SET);
@@ -279,16 +282,6 @@ static Packer *getUnpacker(InputFile *f)
 }
 
 
-static void assertPacker(const Packer *p)
-{
-    assert(p->getFormat() > 0);
-    assert(p->getFormat() <= 255);
-    assert(p->getVersion() >= 11);
-    assert(p->getVersion() <= 14);
-    assert(strlen(p->getName()) <= 13);
-}
-
-
 /*************************************************************************
 // delegation
 **************************************************************************/
@@ -296,7 +289,7 @@ static void assertPacker(const Packer *p)
 void PackMaster::pack(OutputFile *fo)
 {
     p = getPacker(fi);
-    assertPacker(p);
+    p->assertPacker();
     fi = NULL;
     p->doPack(fo);
 }
@@ -305,7 +298,7 @@ void PackMaster::pack(OutputFile *fo)
 void PackMaster::unpack(OutputFile *fo)
 {
     p = getUnpacker(fi);
-    assertPacker(p);
+    p->assertPacker();
     fi = NULL;
     p->doUnpack(fo);
 }
@@ -314,7 +307,7 @@ void PackMaster::unpack(OutputFile *fo)
 void PackMaster::test()
 {
     p = getUnpacker(fi);
-    assertPacker(p);
+    p->assertPacker();
     fi = NULL;
     p->doTest();
 }
@@ -323,7 +316,7 @@ void PackMaster::test()
 void PackMaster::list()
 {
     p = getUnpacker(fi);
-    assertPacker(p);
+    p->assertPacker();
     fi = NULL;
     p->doList();
 }
@@ -336,7 +329,7 @@ void PackMaster::fileInfo()
         p = try_packers(fi, try_pack);
     if (!p)
         throwUnknownExecutableFormat(NULL, 1);    // make a warning here
-    assertPacker(p);
+    p->assertPacker();
     fi = NULL;
     p->doFileInfo();
 }

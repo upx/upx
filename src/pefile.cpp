@@ -109,6 +109,7 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 
 PeFile::PeFile(InputFile *f) : super(f)
 {
+    bele = &N_BELE_RTP::le_policy;
     //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);

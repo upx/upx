@@ -41,6 +41,7 @@
 PackW16Ne::PackW16Ne(InputFile *f) :
     super(f)
 {
+    bele = &N_BELE_RTP::le_policy;
 }
 
 

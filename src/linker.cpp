@@ -103,12 +103,13 @@ ElfLinker::Relocation::Relocation(const Section *s, unsigned o, const char *t,
 **************************************************************************/
 
 ElfLinker::ElfLinker() :
+    bele(&N_BELE_RTP::le_policy),
     input(NULL), output(NULL), head(NULL), tail(NULL),
     sections(NULL), symbols(NULL), relocations(NULL),
     nsections(0), nsections_capacity(0),
     nsymbols(0), nsymbols_capacity(0),
     nrelocations(0), nrelocations_capacity(0),
-    reloc_done(false), bele_policy(&N_BELE_RTP::le_policy)
+    reloc_done(false)
 {
 }
 

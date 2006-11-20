@@ -40,6 +40,7 @@
 **************************************************************************/
 
 Packer::Packer(InputFile *f) :
+    bele(NULL),
     fi(f), file_size(-1), ph_format(-1), ph_version(-1),
     uip(NULL), linker(NULL),
     last_patch(NULL), last_patch_len(0), last_patch_off(0)
@@ -54,6 +55,29 @@ Packer::~Packer()
 {
     delete uip; uip = NULL;
     delete linker; linker = NULL;
+#if 0
+    initLoader(NULL, 0);
+    delete linker; linker = NULL;
+#endif
+}
+
+
+// for PackMaster
+void Packer::assertPacker()
+{
+    assert(getFormat() > 0);
+    assert(getFormat() <= 255);
+    assert(getVersion() >= 11);
+    assert(getVersion() <= 14);
+    assert(strlen(getName()) <= 13);
+    if (bele == NULL) fprintf(stderr, "%s\n", getName());
+    assert(bele != NULL);
+#if 1
+    Linker *l = newLinker();
+    if (bele != l->bele) fprintf(stderr, "%s\n", getName());
+    assert(bele == l->bele);
+    delete l;
+#endif
 }
 
 
@@ -993,6 +1017,7 @@ void Packer::initLoader(const void *pdata, int plen, int small)
 {
     delete linker;
     linker = newLinker();
+    assert(bele == linker->bele);
     linker->init(pdata, plen);
 
     unsigned size;

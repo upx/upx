@@ -233,7 +233,7 @@ class PackLinuxElf32Be : public PackLinuxElf32
 {
     typedef PackLinuxElf32 super;
 protected:
-    PackLinuxElf32Be(InputFile *f) : super(f) { }
+    PackLinuxElf32Be(InputFile *f) : super(f) { bele = &N_BELE_RTP::be_policy; }
 
     virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
     virtual unsigned get_native32(const void *b) const { return get_be32(b); }
@@ -247,7 +247,7 @@ class PackLinuxElf32Le : public PackLinuxElf32
 {
     typedef PackLinuxElf32 super;
 protected:
-    PackLinuxElf32Le(InputFile *f) : super(f) { }
+    PackLinuxElf32Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
 
     virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
     virtual unsigned get_native32(const void *b) const { return get_le32(b); }
@@ -261,7 +261,7 @@ class PackLinuxElf64Le : public PackLinuxElf64
 {
     typedef PackLinuxElf64 super;
 protected:
-    PackLinuxElf64Le(InputFile *f) : super(f) { }
+    PackLinuxElf64Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
 
     virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
     virtual unsigned get_native32(const void *b) const { return get_le32(b); }

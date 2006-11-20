@@ -38,7 +38,7 @@ class PackWcle : public Packer, public LeFile
 {
     typedef Packer super;
 public:
-    PackWcle(InputFile *f) : super(f), LeFile(f){};
+    PackWcle(InputFile *f) : super(f), LeFile(f) { bele = &N_BELE_RTP::le_policy; }
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WATCOM_LE; }
     virtual const char *getName() const { return "watcom/le"; }

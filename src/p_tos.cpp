@@ -49,6 +49,7 @@ static const
 PackTos::PackTos(InputFile *f) :
     super(f)
 {
+    bele = &N_BELE_RTP::be_policy;
     COMPILE_TIME_ASSERT(FH_SIZE == 28);
 }
 

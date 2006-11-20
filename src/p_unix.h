@@ -141,7 +141,7 @@ class PackUnixBe32 : public PackUnix
 {
     typedef PackUnix super;
 protected:
-    PackUnixBe32(InputFile *f) : super(f) { }
+    PackUnixBe32(InputFile *f) : super(f) { bele = &N_BELE_RTP::be_policy; }
     virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
     virtual unsigned get_native32(const void *b) const { return get_be32(b); }
     virtual unsigned get_native16(const void *b) const { return get_be16(b); }
@@ -182,7 +182,7 @@ class PackUnixLe32 : public PackUnix
 {
     typedef PackUnix super;
 protected:
-    PackUnixLe32(InputFile *f) : super(f) { }
+    PackUnixLe32(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
     virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
     virtual unsigned get_native32(const void *b) const { return get_le32(b); }
     virtual unsigned get_native16(const void *b) const { return get_le16(b); }

@@ -119,6 +119,7 @@ protected:
     Packer(InputFile *f);
 public:
     virtual ~Packer();
+    virtual void assertPacker();
 
     virtual int getVersion() const = 0;
     // A unique integer ID for this executable format. See conf.h.
@@ -264,6 +265,7 @@ protected:
     static unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
 protected:
+    const N_BELE_RTP::AbstractPolicy *bele;
     InputFile *fi;
     off_t file_size;        // will get set by constructor
     PackHeader ph;          // must be filled by canUnpack()

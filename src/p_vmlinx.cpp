@@ -48,6 +48,7 @@ static const
 PackVmlinuxI386::PackVmlinuxI386(InputFile *f) :
     super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
 {
+    bele = &N_BELE_RTP::le_policy;
 }
 
 PackVmlinuxI386::~PackVmlinuxI386()

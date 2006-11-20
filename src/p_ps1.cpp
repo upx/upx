@@ -82,6 +82,7 @@ PackPs1::PackPs1(InputFile *f) :
     buildPart2(0), foundBss(0), sa_cnt(0), overlap(0), sz_lunc(0), sz_lcpr(0),
     pad_code(0), bss_start(0), bss_end(0)
 {
+    bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 136);
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_hb_t) == 44);
     COMPILE_TIME_ASSERT(sizeof(ps1_exe_chb_t) == 5);
