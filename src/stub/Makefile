@@ -697,7 +697,7 @@ powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
-	$(call tc,ld) --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
 
