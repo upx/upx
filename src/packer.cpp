@@ -305,12 +305,12 @@ bool Packer::checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const
         return false;
     unsigned gain = u_len - c_len;
 
-    if (gain < 512)                     // need at least 512 bytes gain
+    if (gain < 512)             // need at least 512 bytes gain
         return false;
 #if 1
-    if (gain >= 4096)                   // ok if we have 4096 bytes gain
+    if (gain >= 4096)           // ok if we have 4096 bytes gain
         return true;
-    if (c_len >= u_len - u_len / 8)     // ok if we have 12.5% gain
+    if (gain >= u_len / 16)     // ok if we have 6.25% gain
         return true;
     return false;
 #else
