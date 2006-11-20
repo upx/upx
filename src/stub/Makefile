@@ -276,13 +276,13 @@ tc.armeb-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
 armeb-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
+	$(call tc,bin2h) --ident=linux_elf32armeb_loader tmp/$T.bin $@
 
 armeb-linux.elf-fold.h : tmp/$$T.o tmp/armeb-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
+	$(call tc,bin2h) --ident=linux_elf32armeb_fold tmp/$T.bin $@
 
 tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@

@@ -711,78 +711,27 @@ static const
 static const
 #include "stub/arm-linux.elf-fold.h"
 
+static const
+#include "stub/armeb-linux.elf-entry.h"
+static const
+#include "stub/armeb-linux.elf-fold.h"
+
 #include "mem.h"
-
-static void brev(
-    unsigned char       *const dst,
-    unsigned char const *const src,
-    unsigned len
-)
-{
-    assert(0==(3 & len));
-    // Detect overlap which over-writes src before it is used.
-    assert(!((4+ src)<=dst && dst < (len + src)));
-    for (unsigned j = 0; j < len; j += 4) {
-        // Simple way (and somewhat slow) to allow in-place brev().
-        unsigned char tmp[4];
-        memcpy(tmp, j + src, 4);
-        dst[0+ j] = tmp[3];
-        dst[1+ j] = tmp[2];
-        dst[2+ j] = tmp[1];
-        dst[3+ j] = tmp[0];
-    }
-}
-
-static void
-ehdr_bele(Elf_BE32_Ehdr *const ehdr_be, Elf_LE32_Ehdr const *const ehdr_le)
-{
-    memcpy(&ehdr_be->e_ident, &ehdr_le->e_ident, sizeof(ehdr_be->e_ident));
-    ehdr_be->e_ident[Elf32_Ehdr::EI_DATA] = Elf32_Ehdr::ELFDATA2MSB;
-    ehdr_be->e_type      = ehdr_le->e_type;
-    ehdr_be->e_machine   = ehdr_le->e_machine;
-    ehdr_be->e_version   = ehdr_le->e_version;
-    ehdr_be->e_entry     = ehdr_le->e_entry;
-    ehdr_be->e_phoff     = ehdr_le->e_phoff;
-    ehdr_be->e_shoff     = ehdr_le->e_shoff;
-    ehdr_be->e_flags     = ehdr_le->e_flags;
-    ehdr_be->e_ehsize    = ehdr_le->e_ehsize;
-    ehdr_be->e_phentsize = ehdr_le->e_phentsize;
-    ehdr_be->e_phnum     = ehdr_le->e_phnum;
-    ehdr_be->e_shentsize = ehdr_le->e_shentsize;
-    ehdr_be->e_shnum     = ehdr_le->e_shnum;
-    ehdr_be->e_shstrndx  = ehdr_le->e_shstrndx;
-}
-
-static void
-ehdr_lebe(Elf_LE32_Ehdr *const ehdr_le, Elf_BE32_Ehdr const *const ehdr_be)
-{
-    memcpy(&ehdr_le->e_ident, &ehdr_be->e_ident, sizeof(ehdr_le->e_ident));
-    ehdr_le->e_ident[Elf32_Ehdr::EI_DATA] = Elf32_Ehdr::ELFDATA2LSB;
-    ehdr_le->e_type      = ehdr_be->e_type;
-    ehdr_le->e_machine   = ehdr_be->e_machine;
-    ehdr_le->e_version   = ehdr_be->e_version;
-    ehdr_le->e_entry     = ehdr_be->e_entry;
-    ehdr_le->e_phoff     = ehdr_be->e_phoff;
-    ehdr_le->e_shoff     = ehdr_be->e_shoff;
-    ehdr_le->e_flags     = ehdr_be->e_flags;
-    ehdr_le->e_ehsize    = ehdr_be->e_ehsize;
-    ehdr_le->e_phentsize = ehdr_be->e_phentsize;
-    ehdr_le->e_phnum     = ehdr_be->e_phnum;
-    ehdr_le->e_shentsize = ehdr_be->e_shentsize;
-    ehdr_le->e_shnum     = ehdr_be->e_shnum;
-    ehdr_le->e_shstrndx  = ehdr_be->e_shstrndx;
-}
 
 void
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
-    ARM_buildLoader(ft, true);
+    buildLinuxLoader(
+        linux_elf32armeb_loader, sizeof(linux_elf32armeb_loader),
+        linux_elf32armeb_fold,   sizeof(linux_elf32armeb_fold), ft);
 }
 
 void
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
-    ARM_buildLoader(ft, false);
+    buildLinuxLoader(
+        linux_elf32arm_loader, sizeof(linux_elf32arm_loader),
+        linux_elf32arm_fold,    sizeof(linux_elf32arm_fold), ft);
 }
 
 static const
@@ -1222,37 +1171,20 @@ void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, bsd_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
-void PackLinuxElf32::ARM_pack1(OutputFile *fo, bool const isBE)
-{
-    Elf32_Ehdr const *const fold = (Elf32_Ehdr const *)&linux_elf32arm_fold;
-    cprElfHdr3 h3;
-    // We need Elf32_Ehdr and Elf32_Phdr with byte gender of target.
-    // The stub may have been compiled differently.
-    if (this->ei_data==fold->e_ident[Elf32_Ehdr::EI_DATA]) {
-        memcpy(&h3, (void const *)linux_elf32arm_fold,
-            sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr) );
-    }
-    else {
-        (isBE ? (void (*)(void *, void const *))ehdr_bele
-              : (void (*)(void *, void const *))ehdr_lebe)
-                ((void *)&h3.ehdr, (void const *)linux_elf32arm_fold);
-        brev((unsigned char *)&h3.phdr[0],
-            sizeof(Elf32_Ehdr) + (unsigned char const *)&linux_elf32arm_fold,
-            3*sizeof(Elf32_Phdr) );
-    }
-    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
-}
-
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    ARM_pack1(fo, false);
+    cprElfHdr3 h3;
+    memcpy(&h3, linux_elf32arm_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
-void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)  // FIXME
+void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    ARM_pack1(fo, true);
+    cprElfHdr3 h3;
+    memcpy(&h3, linux_elf32armeb_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
@@ -1509,60 +1441,6 @@ const int *
 PackLinuxElf32armLe::getFilters() const
 {
     return ARM_getFilters(false);
-}
-
-void
-PackLinuxElf32::ARM_buildLoader(const Filter *ft, bool const isBE)
-{
-    unsigned const sz_loader = sizeof(linux_elf32arm_loader);
-    unsigned const sz_fold   = sizeof(linux_elf32arm_fold);
-
-    // Was ARM stub assembled for same endianness as the target?
-    bool const asm_brev = (this->ei_data
-        != ((Elf32_Ehdr const *)linux_elf32arm_fold)->e_ident[Elf32_Ehdr::EI_DATA] );
-
-    MemBuffer tmp_fold(sz_fold);
-    memcpy(tmp_fold, linux_elf32arm_fold, sz_fold);
-
-    // 0xe3530050  is  "cmp fid,#0x50" with fid .req r3
-    if (isBE) { // change filter 0x50 to filter 0x51
-        checkPatch(NULL,0,0,0);  // reset
-        if (!asm_brev) {  // find 0xe3530050 big-endian
-            patch_be32(tmp_fold, sz_fold, "\xe3\x53\x00\x50", 0xe3530051);
-        }
-        else { // find 0xe3530050 little-endian
-            patch_le32(tmp_fold, sz_fold, "\x50\x00\x53\xe3", 0xe3530051);
-        }
-        checkPatch(NULL,0,0,0);  // reset
-    }
-    if (!asm_brev) { // was assembled to match target
-        buildLinuxLoader(linux_elf32arm_loader, sz_loader,
-            tmp_fold, sz_fold, ft );
-    }
-    else { // was assembled brev() from target
-        // linux_elf32arm_loader[] is all instructions, except for two strings
-        // at the end: the copyright message, and the SELinux message.
-        // The copyright message begins and ends with '\n', and the SELinux
-        // message ends with '\n'.  So copy back to the third '\n' from the end,
-        // and apply brev() only before that point.
-        MemBuffer brev_loader(sz_loader);
-        int nl = 0;
-        int j;
-        for (j= sz_loader; --j>=0; ) {
-            unsigned char const c = linux_elf32arm_loader[j];
-            brev_loader[j] = c;
-            if ('\n'==c) {
-                if (3==++nl) {
-                    break;
-                }
-            }
-        }
-        brev(brev_loader, linux_elf32arm_loader, j);
-        (isBE ? (void (*)(void *, void const *))ehdr_bele
-              : (void (*)(void *, void const *))ehdr_lebe)
-                (tmp_fold.getVoidPtr(), (void const *)linux_elf32arm_fold);
-        buildLinuxLoader(brev_loader, sz_loader, tmp_fold, sz_fold, ft);
-    }
 }
 
 void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)

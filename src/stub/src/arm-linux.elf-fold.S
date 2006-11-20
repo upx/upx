@@ -92,8 +92,11 @@ f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         t1   .req r2
         t2   .req r3
 
+#ifndef FILTER_ID  /*{*/
+#define FILTER_ID 0x50  /* little-endian */
+#endif  /*}*/
         and fid,fid,#0xff
-        cmp fid,#0x50  @ last use of fid
+        cmp fid,#FILTER_ID  @ last use of fid
         movne pc,lr  @ no-op if not filter 0x50
 
         movs  len,len,lsr #2  @ word count

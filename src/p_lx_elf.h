@@ -90,10 +90,8 @@ protected:
 
     // These ARM routines are essentially common to big/little endian,
     // but the class hierarchy splits after this class.
-    virtual void ARM_buildLoader(Filter const *ft, bool isBE);
     virtual void ARM_defineSymbols(Filter const *ft);
     virtual void ARM_updateLoader(OutputFile *);
-    virtual void ARM_pack1(OutputFile *, bool isBE);
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data

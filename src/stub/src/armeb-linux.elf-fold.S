@@ -27,8 +27,8 @@
 @  <jreiser@users.sourceforge.net>
 @
 
-
+#define FILTER_ID 0x51  /* big-endian */
 #include "arm-linux.elf-fold.S"
-
+#undef FILTER_ID
 
 @ vi:ts=8:et:nowrap
