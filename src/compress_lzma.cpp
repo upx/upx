@@ -194,6 +194,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 
     int r = UPX_E_ERROR;
     HRESULT rh;
+    const lzma_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_lzma : NULL;
     lzma_compress_result_t *res = &cresult->result_lzma;
 
     MyLzma::InStreamRam is; is.AddRef();
@@ -283,18 +284,13 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     }
 
     // cconf overrides
-    if (cconf_parm)
+    if (lcconf)
     {
-        if (cconf_parm->conf_lzma.pos_bits.is_set)
-            pr[0].uintVal = cconf_parm->conf_lzma.pos_bits;
-        if (cconf_parm->conf_lzma.lit_pos_bits.is_set)
-            pr[1].uintVal = cconf_parm->conf_lzma.lit_pos_bits;
-        if (cconf_parm->conf_lzma.lit_context_bits.is_set)
-            pr[2].uintVal = cconf_parm->conf_lzma.lit_context_bits;
-        if (cconf_parm->conf_lzma.dict_size.is_set)
-            pr[3].uintVal = cconf_parm->conf_lzma.dict_size;
-        if (cconf_parm->conf_lzma.num_fast_bytes.is_set)
-            pr[5].uintVal = cconf_parm->conf_lzma.num_fast_bytes;
+        oassign(pr[0].uintVal, lcconf->pos_bits);
+        oassign(pr[1].uintVal, lcconf->lit_pos_bits);
+        oassign(pr[2].uintVal, lcconf->lit_context_bits);
+        oassign(pr[3].uintVal, lcconf->dict_size);
+        oassign(pr[5].uintVal, lcconf->num_fast_bytes);
     }
 
     // limit dictionary size
@@ -302,12 +298,12 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         pr[3].uintVal = src_len;
 
     // limit num_probs
-    if (cconf_parm && cconf_parm->conf_lzma.max_num_probs)
+    if (lcconf && lcconf->max_num_probs)
     {
         for (;;)
         {
             unsigned n = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
-            if (n <= cconf_parm->conf_lzma.max_num_probs)
+            if (n <= lcconf->max_num_probs)
                 break;
             if (pr[1].uintVal > pr[2].uintVal)
             {

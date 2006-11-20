@@ -377,6 +377,14 @@ struct upx_callback_t
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 
+struct nocopy
+{
+    inline nocopy() {}
+private:
+    nocopy(const nocopy &); // undefined
+    nocopy& operator=(const nocopy &); // undefined
+};
+
 
 /*************************************************************************
 // constants
@@ -475,19 +483,26 @@ struct OptVar
     static const T min_value_c = min_value;
     static const T max_value_c = max_value;
 
-    OptVar() : v(default_value), is_set(0) { }
-    OptVar& operator= (const OptVar& other) {
-        if (other.is_set) { v = other.v; is_set += 1; }
+    void assertValue() {
         // FIXME: this generates annoying warnings "unsigned >= 0 is always true"
         //assert((v >= min_value) && (v <= max_value));
-        return *this;
     }
+
+    OptVar() : v(default_value), is_set(0) { }
     OptVar& operator= (const T other) {
         v = other; is_set += 1;
-        // FIXME: this generates annoying warnings "unsigned >= 0 is always true"
-        //assert((v >= min_value) && (v <= max_value));
+        assertValue();
         return *this;
     }
+#if 0
+#error
+    // there is too much implicit magic in this copy operator;
+    // better introduce an explicit "oassign" function.
+    OptVar& operator= (const OptVar& other) {
+        if (other.is_set) { v = other.v; is_set += 1; }
+        assertValue(); return *this;
+    }
+#endif
 
     void reset() { v = default_value; is_set = 0; }
     operator T () const { return v; }
@@ -495,6 +510,21 @@ struct OptVar
     T v;
     unsigned is_set;
 };
+
+
+// optional assignments
+template <class T> void oassign(T& self, const T& other) {
+    if (other.is_set) { self.v = other.v; self.is_set += 1; }
+}
+#if 0
+template <class V, class T> void oassign(V& v, const T& other) {
+    if (other.is_set) { v = other.v; }
+}
+#else
+template <class T> void oassign(unsigned& v, const T& other) {
+    if (other.is_set) { v = other.v; }
+}
+#endif
 
 
 struct lzma_compress_config_t
