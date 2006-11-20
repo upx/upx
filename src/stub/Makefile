@@ -48,6 +48,8 @@ STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
+STUBS += armeb-linux.elf-entry.h
+STUBS += armeb-linux.elf-fold.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
 STUBS += i086-dos16.com.h
@@ -238,7 +240,7 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 arm-linux.elf%.h : tc_list = arm-linux.elf default
 arm-linux.elf%.h : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -mlittle-endian -march=armv4 -nostdinc -MMD -MT $@
+tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
 tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
 
@@ -258,6 +260,35 @@ tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+
+# /***********************************************************************
+# // armeb-linux.elf
+# ************************************************************************/
+
+armeb-linux.elf%.h : tc_list = armeb-linux.elf default
+armeb-linux.elf%.h : tc_bfdname = elf32-bigarm
+
+tc.armeb-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
+
+armeb-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
+
+armeb-linux.elf-fold.h : tmp/$$T.o tmp/armeb-linux.elf-main.o $(srcdir)/src/$$T.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
+
+tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
