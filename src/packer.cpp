@@ -274,41 +274,38 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
 #endif
 
 
-bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
+bool Packer::checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const
 {
     assert((int)u_len > 0);
     assert((int)c_len > 0);
-
-#if 1
-    if (c_len + 512 >= u_len)           // min. 512 bytes gain
-        return false;
-    if (c_len >= u_len - u_len / 8)     // min. 12.5% gain
-        return false;
-#else
     if (c_len >= u_len)
         return false;
-#endif
+    unsigned gain = u_len - c_len;
+
+    if (gain < 512)                     // need at least 512 bytes gain
+        return false;
+#if 1
+    if (gain >= 4096)                   // ok if we have 4096 bytes gain
+        return true;
+    if (c_len >= u_len - u_len / 8)     // ok if we have 12.5% gain
+        return true;
+    return false;
+#else
     return true;
+#endif
 }
 
+
+bool Packer::checkCompressionRatio(unsigned u_len, unsigned c_len) const
+{
+    return checkDefaultCompressionRatio(u_len, c_len);
+}
 
 bool Packer::checkFinalCompressionRatio(const OutputFile *fo) const
 {
     const unsigned u_len = file_size;
     const unsigned c_len = fo->getBytesWritten();
-
-    assert((int)u_len > 0);
-    assert((int)c_len > 0);
-
-    if (c_len + 4096 <= u_len)          // ok if we have 4096 bytes gain
-        return true;
-
-    if (c_len + 512 >= u_len)           // min. 512 bytes gain
-        return false;
-    if (c_len >= u_len - u_len / 8)     // min. 12.5% gain
-        return false;
-
-    return true;
+    return checkDefaultCompressionRatio(u_len, c_len);
 }
 
 

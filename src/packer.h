@@ -171,6 +171,7 @@ protected:
                           const upx_compress_config_t *cconf = NULL);
     virtual void decompress(const upx_bytep in, upx_bytep out,
                             bool verify_checksum = true, Filter *ft = NULL);
+    virtual bool checkDefaultCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkCompressionRatio(unsigned u_len, unsigned c_len) const;
     virtual bool checkFinalCompressionRatio(const OutputFile *fo) const;
 
