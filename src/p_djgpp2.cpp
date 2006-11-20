@@ -250,7 +250,7 @@ static bool defineFilterSymbols(Linker *linker, const Filter *ft)
         int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
         if (mru && mru!=256) {
             unsigned const is_pwr2 = (0==((mru -1) & mru));
-            patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
+            //patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
         }
     }
 #endif

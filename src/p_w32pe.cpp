@@ -864,13 +864,6 @@ void PackW32Pe::pack(OutputFile *fo)
 
         // rva of the most significant byte of member "flags" in section "UPX0"
         const unsigned swri = pe_offset + sizeof(oh) + sizeof(pe_section_t) - 1;
-#if 0
-        if (swri >= 0x1000)
-            throwCantPack("swri >= 0x1000! Send a bug report please!");
-        patch_le32(loader, codesize, "SWRI", swri);
-        patch_le32(loader, codesize, "IMGL", 0x1000);           // one page
-        patch_le32(loader, codesize, "IMGB", 0u - rvamin);
-#else
         // make sure we only touch the minimum number of pages
         const unsigned addr = 0u - rvamin + swri;
         linker->defineSymbol("swri", addr &  0xfff);    // page offset
@@ -879,7 +872,6 @@ void PackW32Pe::pack(OutputFile *fo)
         linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
                              0x2000 : 0x1000);          // 2 pages or 1 page
         linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
-#endif
         linker->defineSymbol("VirtualProtect", myimport + get_le32(oimpdlls + 16) + 8);
     }
     linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
@@ -890,10 +882,9 @@ void PackW32Pe::pack(OutputFile *fo)
     linker->defineSymbol("LoadLibraryA", myimport + get_le32(oimpdlls + 16));
     linker->defineSymbol("start_of_imports", myimport);
     linker->defineSymbol("compressed_imports", cimports);
-
 #if 0
-    patch_le32(loader, codesize, "VALL", myimport + get_le32(oimpdlls + 16) + 12);
-    patch_le32(loader, codesize, "VFRE", myimport + get_le32(oimpdlls + 16) + 16);
+    linker->defineSymbol("VirtualAlloc", myimport + get_le32(oimpdlls + 16) + 12);
+    linker->defineSymbol("VirtualFree", myimport + get_le32(oimpdlls + 16) + 16);
 #endif
 
     defineFilterSymbols(linker, &ft);

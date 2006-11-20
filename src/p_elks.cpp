@@ -123,9 +123,9 @@ void PackElks8086::pack(OutputFile *fo)
     // FIXME
     defineFilterSymbols();
     defineDecompressorSymbols();
-    patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
-    patch_le32(loader, lsize, "KEIP", kernel_entry);
-    patch_le32(loader, lsize, "STAK", stack_during_uncompression);
+    //patch_le32(loader, lsize, "ESI1", zimage_offset + lsize);
+    //patch_le32(loader, lsize, "KEIP", kernel_entry);
+    //patch_le32(loader, lsize, "STAK", stack_during_uncompression);
 #endif
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
