@@ -100,7 +100,7 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
     z_stream s;
     s.zalloc = (alloc_func) 0;
     s.zfree = (free_func) 0;
-    s.next_in = (Bytef*) (acc_uintptr_t) src; // UNCONST
+    s.next_in = const_cast<upx_bytep>(src); // UNCONST
     s.avail_in = src_len;
     s.next_out = dst;
     s.avail_out = *dst_len;
