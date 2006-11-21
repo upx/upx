@@ -78,7 +78,7 @@ protected:
     virtual void updateLoader(OutputFile *);
 
     // ELF util
-    virtual int checkEhdr(const Elf32_Ehdr *ehdr) const;
+    virtual int checkEhdr(const Elf_LE32_Ehdr *ehdr) const;
 
     enum {
         UPX_ELF_MAGIC = 0x5850557f          // "\x7fUPX"

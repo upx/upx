@@ -450,7 +450,7 @@ int PackLinuxI386::getLoaderPrefixSize() const
 **************************************************************************/
 
 // basic check of an Linux ELF Ehdr
-int PackLinuxI386::checkEhdr(const Elf32_Ehdr *ehdr) const
+int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
 
@@ -500,7 +500,7 @@ bool PackLinuxI386::canPack()
     if (exetype != 0)
         return super::canPack();
 
-    Elf32_Ehdr ehdr;
+    Elf_LE32_Ehdr ehdr;
     unsigned char *buf = ehdr.e_ident;
 
     fi->seek(0, SEEK_SET);
