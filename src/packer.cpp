@@ -871,6 +871,9 @@ upx_byte *Packer::optimizeReloc32(upx_byte *in, unsigned relocnum,
                                   upx_byte *out, upx_byte *image,
                                   int bswap, int *big)
 {
+    if (opt->exact)
+        throwCantPackExact();
+
     *big = 0;
     if (relocnum == 0)
         return out;

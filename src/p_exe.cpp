@@ -248,6 +248,9 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
                          const upx_byte *relocs, const unsigned nrelocs,
                          upx_byte *crel, bool *has_9a)
 {
+    if (opt->exact)
+        throwCantPackExact();
+
     upx_byte * const crel_save = crel;
     unsigned i;
     unsigned seg_high = 0;
