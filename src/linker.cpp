@@ -133,29 +133,27 @@ ElfLinker::~ElfLinker()
 void ElfLinker::init(const void *pdata_v, int plen)
 {
     const upx_byte *pdata = (const upx_byte *) pdata_v;
-    // decompress
     if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0)
     {
-        int method = -1;
-        unsigned u_len = 0, c_len = 0;
-        if (pdata[4] == M_DEFLATE)
+        // decompress pre-compressed stub-loader
+        int method;
+        unsigned u_len, c_len;
+        if (pdata[4])
         {
-            method = M_DEFLATE;
+            method = pdata[4];
             u_len = get_le16(pdata + 5);
             c_len = get_le16(pdata + 7);
             pdata += 9;
             assert(9 + c_len == (unsigned) plen);
         }
-        else if (pdata[4] == 0 && pdata[5] == M_DEFLATE)
+        else
         {
-            method = M_DEFLATE;
+            method = pdata[5];
             u_len = get_le32(pdata + 6);
             c_len = get_le32(pdata + 10);
             pdata += 14;
             assert(14 + c_len == (unsigned) plen);
         }
-        else
-            throwBadLoader();
         assert((unsigned) plen < u_len);
         inputlen = u_len;
         input = new upx_byte[inputlen + 1];

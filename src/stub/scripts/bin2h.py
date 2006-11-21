@@ -210,6 +210,19 @@ def main(argv):
         # encode upx stub header
         M_DEFLATE = 15
         odata = encode_compressed_stub_header(M_DEFLATE, idata, odata) + odata
+    elif opts.compress in ["upx-stub-lzma"]:
+        import pylzma
+        odata = pylzma.compress(idata, eos=0)
+        ## FIXME: internal pylzma-0.3.0 error
+        ##assert pylzma.decompress(odata, maxlength=len(idata)) == idata
+        # strip lzma-header
+        prop = ord(odata[0])
+        pb = (prop / 9) / 5; lp = (prop / 9) % 5; lc = prop % 9
+        h = chr(((lc + lp) << 3) | pb) + chr((lp << 4) | lc)
+        odata = h + odata[5:]
+        # encode upx stub header
+        M_LZMA = 14
+        odata = encode_compressed_stub_header(M_LZMA, idata, odata) + odata
     else:
         raise Exception, ("invalid --compress=", opts.compress)
     assert len(odata) <= len(idata), "compression failed"
