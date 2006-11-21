@@ -575,6 +575,8 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
 // Create a pseudo-unique program id.
 unsigned Packer::getRandomId() const
 {
+    if (opt->debug.disable_random_id)
+        return 0x01020304;
     unsigned id = 0;
 #if 0 && defined(__unix__)
     // Don't consume precious bytes from /dev/urandom.

@@ -603,6 +603,9 @@ static int do_option(int optc, const char *arg)
             e_optarg(arg);
         opt->debug.dump_stub_loader = mfx_optarg;
         break;
+    case 545:
+        opt->debug.disable_random_id = true;
+        break;
 
     // misc
     case 512:
@@ -888,6 +891,7 @@ static const struct mfx_option longopts[] =
     {"dump-stub-loader" ,0x31, 0, 544},     // for internal debugging
     {"fake-stub-version",0x31, 0, 542},     // for internal debugging
     {"fake-stub-year"   ,0x31, 0, 543},     // for internal debugging
+    {"disable-random-id",0x10, 0, 545},     // for internal debugging
 
     // backup options
     {"backup",           0x10, 0, 'k'},
@@ -1031,6 +1035,9 @@ static const struct mfx_option longopts[] =
     {"quiet",               0, 0, 'q'},     // quiet mode
     {"silent",              0, 0, 'q'},     // quiet mode
     {"verbose",             0, 0, 'v'},     // verbose mode
+
+    // debug options
+    {"disable-random-id",0x10, 0, 545},     // for internal debugging
 
     // backup options
     {"backup",           0x10, 0, 'k'},

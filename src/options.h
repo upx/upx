@@ -71,6 +71,7 @@ struct options_t {
     // debug options
     struct {
         int debug_level;
+        bool disable_random_id;         // for Packer::getRandomId()
         const char *dump_stub_loader;
         char fake_stub_version[4+1];    // for internal debugging
         char fake_stub_year[4+1];       // for internal debugging
