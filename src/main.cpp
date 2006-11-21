@@ -643,6 +643,9 @@ static int do_option(int optc, const char *arg)
         opt->all_methods = true;
         opt->method = -1;
         break;
+    case 525:                               // --exact
+        opt->exact = true;
+        break;
     // compression runtime parameters
     case 801:
         getoptvar(&opt->crp.crp_ucl.c_flags, 0, 3, arg);
@@ -918,6 +921,7 @@ static const struct mfx_option longopts[] =
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},
+    {"exact",            0x10, 0, 525},     // user requires byte-identical decompression
     {"filter",           0x31, 0, 521},     // --filter=
     {"no-filter",        0x10, 0, 522},
     {"small",            0x10, 0, 520},
@@ -1050,6 +1054,9 @@ static const struct mfx_option longopts[] =
     {"no-color",         0x10, 0, 512},
     {"mono",             0x10, 0, 513},
     {"color",            0x10, 0, 514},
+
+    // compression settings
+    {"exact",            0x10, 0, 525},     // user requires byte-identical decompression
 
     // compression runtime parameters
 
@@ -1412,6 +1419,8 @@ int __acc_cdecl_main main(int argc, char *argv[])
         // invalidate compression options
         opt->method = 0;
         opt->level = 0;
+        opt->exact = 0;
+        opt->small = 0;
         opt->crp.reset();
     }
 

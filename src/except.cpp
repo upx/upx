@@ -85,6 +85,11 @@ void throwCantPack(const char *msg)
         throw CantUnpackException(msg);
 }
 
+void throwCantPackExact()
+{
+    throwCantPack("option '--exact' does not work with this file");
+}
+
 void throwFilterException()
 {
     throwCantPack("filter problem");

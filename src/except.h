@@ -208,6 +208,7 @@ public:
 #endif
 
 void throwCantPack(const char *msg) NORET;
+void throwCantPackExact() NORET;
 void throwUnknownExecutableFormat(const char *msg = NULL, bool warn = false) NORET;
 void throwNotCompressible(const char *msg = NULL) NORET;
 void throwAlreadyPacked(const char *msg = NULL) NORET;

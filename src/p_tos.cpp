@@ -439,6 +439,8 @@ void PackTos::pack(OutputFile *fo)
     t = i_text + i_data;
     fi->readx(ibuf,t);
     // skip symbols
+    if (i_sym && opt->exact)
+        throwCantPackExact();
     fi->seek(i_sym,SEEK_CUR);
     // read relocations + overlay
     overlay = file_size - (FH_SIZE + i_text + i_data + i_sym);
