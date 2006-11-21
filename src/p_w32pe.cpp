@@ -545,7 +545,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
         tmp_tlsindex = 0;
 
     // prepare loader
-    initLoader(nrv_loader, sizeof(nrv_loader), 2);
+    initLoader(stub_i386_win32_pe, sizeof(stub_i386_win32_pe), 2);
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",

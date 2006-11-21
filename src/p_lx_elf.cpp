@@ -628,12 +628,12 @@ static const
 void
 PackLinuxElf32x86::buildLoader(const Filter *ft)
 {
-    unsigned char tmp[sizeof(linux_i386elf_fold)];
-    memcpy(tmp, linux_i386elf_fold, sizeof(linux_i386elf_fold));
+    unsigned char tmp[sizeof(stub_i386_linux_elf_fold)];
+    memcpy(tmp, stub_i386_linux_elf_fold, sizeof(stub_i386_linux_elf_fold));
     checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->o_unix.is_ptinterp) {
         unsigned j;
-        for (j = 0; j < sizeof(linux_i386elf_fold)-1; ++j) {
+        for (j = 0; j < sizeof(stub_i386_linux_elf_fold)-1; ++j) {
             if (0x60==tmp[  j]
             &&  0x47==tmp[1+j] ) {
                 /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
@@ -644,8 +644,8 @@ PackLinuxElf32x86::buildLoader(const Filter *ft)
         }
     }
     buildLinuxLoader(
-        linux_i386elf_loader, sizeof(linux_i386elf_loader),
-        tmp,                  sizeof(linux_i386elf_fold),  ft );
+        stub_i386_linux_elf_entry, sizeof(stub_i386_linux_elf_entry),
+        tmp,                       sizeof(stub_i386_linux_elf_fold),  ft );
 }
 
 static const
@@ -656,12 +656,12 @@ static const
 void
 PackBSDElf32x86::buildLoader(const Filter *ft)
 {
-    unsigned char tmp[sizeof(bsd_i386elf_fold)];
-    memcpy(tmp, bsd_i386elf_fold, sizeof(bsd_i386elf_fold));
+    unsigned char tmp[sizeof(stub_i386_bsd_elf_fold)];
+    memcpy(tmp, stub_i386_bsd_elf_fold, sizeof(stub_i386_bsd_elf_fold));
     checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->o_unix.is_ptinterp) {
         unsigned j;
-        for (j = 0; j < sizeof(bsd_i386elf_fold)-1; ++j) {
+        for (j = 0; j < sizeof(stub_i386_bsd_elf_fold)-1; ++j) {
             if (0x60==tmp[  j]
             &&  0x47==tmp[1+j] ) {
                 /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
@@ -672,8 +672,8 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
         }
     }
     buildLinuxLoader(
-        bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
-        tmp,                sizeof(bsd_i386elf_fold),  ft );
+        stub_i386_bsd_elf_entry, sizeof(stub_i386_bsd_elf_entry),
+        tmp,                     sizeof(stub_i386_bsd_elf_fold), ft);
 }
 
 #if 0  //{  re-use for OpenBSD, too
@@ -686,12 +686,12 @@ static const
 void
 PackOpenBSDElf32x86::buildLoader(const Filter *ft)
 {
-    unsigned char tmp[sizeof(openbsd_i386elf_fold)];
-    memcpy(tmp, openbsd_i386elf_fold, sizeof(openbsd_i386elf_fold));
+    unsigned char tmp[sizeof(stub_i386_openbsd_elf_fold)];
+    memcpy(tmp, stub_i386_openbsd_elf_fold, sizeof(stub_i386_openbsd_elf_fold));
     checkPatch(NULL, 0, 0, 0);  // reset
     if (opt->o_unix.is_ptinterp) {
         unsigned j;
-        for (j = 0; j < sizeof(openbsd_i386elf_fold)-1; ++j) {
+        for (j = 0; j < sizeof(stub_i386_openbsd_elf_fold)-1; ++j) {
             if (0x60==tmp[  j]
             &&  0x47==tmp[1+j] ) {
                 /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
@@ -702,8 +702,8 @@ PackOpenBSDElf32x86::buildLoader(const Filter *ft)
         }
     }
     buildLinuxLoader(
-        bsd_i386elf_loader, sizeof(bsd_i386elf_loader),
-        tmp,                sizeof(openbsd_i386elf_fold),  ft );
+        stub_i386_bsd_elf_entry, sizeof(stub_i386_bsd_elf_entry),
+        tmp,                     sizeof(stub_i386_openbsd_elf_fold), ft);
 }
 
 static const
@@ -722,16 +722,16 @@ void
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
     buildLinuxLoader(
-        linux_elf32armeb_loader, sizeof(linux_elf32armeb_loader),
-        linux_elf32armeb_fold,   sizeof(linux_elf32armeb_fold), ft);
+        stub_armeb_linux_elf_entry, sizeof(stub_armeb_linux_elf_entry),
+        stub_armeb_linux_elf_fold,  sizeof(stub_armeb_linux_elf_fold), ft);
 }
 
 void
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
     buildLinuxLoader(
-        linux_elf32arm_loader, sizeof(linux_elf32arm_loader),
-        linux_elf32arm_fold,    sizeof(linux_elf32arm_fold), ft);
+        stub_arm_linux_elf_entry, sizeof(stub_arm_linux_elf_entry),
+        stub_arm_linux_elf_fold,  sizeof(stub_arm_linux_elf_fold), ft);
 }
 
 static const
@@ -743,8 +743,8 @@ void
 PackLinuxElf32ppc::buildLoader(const Filter *ft)
 {
     buildLinuxLoader(
-        linux_elfppc32_loader, sizeof(linux_elfppc32_loader),
-        linux_elfppc32_fold,   sizeof(linux_elfppc32_fold),  ft );
+        stub_powerpc_linux_elf_entry, sizeof(stub_powerpc_linux_elf_entry),
+        stub_powerpc_linux_elf_fold,  sizeof(stub_powerpc_linux_elf_fold), ft);
 }
 
 static const
@@ -756,8 +756,8 @@ void
 PackLinuxElf64amd::buildLoader(const Filter *ft)
 {
     buildLinuxLoader(
-        linux_elf64amd_loader, sizeof(linux_elf64amd_loader),
-        linux_elf64amd_fold,   sizeof(linux_elf64amd_fold),  ft );
+        stub_amd64_linux_elf_entry, sizeof(stub_amd64_linux_elf_entry),
+        stub_amd64_linux_elf_fold,  sizeof(stub_amd64_linux_elf_fold), ft);
 }
 
 bool PackLinuxElf32::canPack()
@@ -1162,20 +1162,20 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     PackLinuxElf32::pack1(fo, ft);
-    generateElfHdr(fo, linux_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+    generateElfHdr(fo, stub_i386_linux_elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     PackLinuxElf32::pack1(fo, ft);
-    generateElfHdr(fo, bsd_i386elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+    generateElfHdr(fo, stub_i386_bsd_elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
     cprElfHdr3 h3;
-    memcpy(&h3, linux_elf32arm_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    memcpy(&h3, stub_arm_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
@@ -1183,14 +1183,14 @@ void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
     cprElfHdr3 h3;
-    memcpy(&h3, linux_elf32armeb_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    memcpy(&h3, stub_armeb_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    generateElfHdr(fo, linux_elfppc32_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+    generateElfHdr(fo, stub_powerpc_linux_elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
@@ -1212,7 +1212,7 @@ void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
 void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    generateElfHdr(fo, linux_elf64amd_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+    generateElfHdr(fo, stub_amd64_linux_elf_fold, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD

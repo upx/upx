@@ -74,9 +74,9 @@ umax(unsigned a, unsigned b)
 void
 PackLinuxI386sh::buildLoader(Filter const *ft)
 {
-    unsigned const sz_fold = sizeof(linux_i386sh_fold);
+    unsigned const sz_fold = sizeof(stub_i386_linux_elf_shell_fold);
     MemBuffer buf(sz_fold);
-    memcpy(buf, linux_i386sh_fold, sz_fold);
+    memcpy(buf, stub_i386_linux_elf_shell_fold, sz_fold);
 
     checkPatch(NULL, 0, 0, 0);  // reset
     patch_le32(buf,sz_fold,"UPX3",l_shname);
@@ -100,7 +100,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     UNUSED(success);
 
     buildLinuxLoader(
-        linux_i386sh_loader, sizeof(linux_i386sh_loader),
+        stub_i386_linux_elf_shell_entry, sizeof(stub_i386_linux_elf_shell_entry),
         buf, sz_fold, ft );
 }
 
@@ -158,7 +158,7 @@ bool PackLinuxI386sh::canPack()
 void
 PackLinuxI386sh::pack1(OutputFile *fo, Filter &)
 {
-    generateElfHdr(fo, linux_i386sh_fold, 0x08048000);
+    generateElfHdr(fo, stub_i386_linux_elf_shell_fold, 0x08048000);
 }
 
 void

@@ -228,7 +228,7 @@ Linker* PackVmlinuxI386::newLinker() const
 void PackVmlinuxI386::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader, sizeof(nrv_loader));
+    initLoader(stub_i386_linux_kernel_vmlinux, sizeof(stub_i386_linux_kernel_vmlinux));
     addLoader("LINUX000",
               (0x40==(0xf0 & ft->id)) ? "LXCKLLT1" : (ft->id ? "LXCALLT1" : ""),
               "LXMOVEUP",
@@ -332,18 +332,18 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = sizeof(head_stack) + ph.c_len + lsize;
+    shdro[1].sh_size = sizeof(stub_i386_linux_kernel_vmlinux_head) + ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
     // ENTRY_POINT
-    fo->write(&head_stack[0], sizeof(head_stack)-2*(1+ 4) +1);
+    fo->write(&stub_i386_linux_kernel_vmlinux_head[0], sizeof(stub_i386_linux_kernel_vmlinux_head)-2*(1+ 4) +1);
     tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
 
     // COMPRESSED_LENGTH
-    fo->write(&head_stack[sizeof(head_stack)-(1+ 4)], 1);
+    fo->write(&stub_i386_linux_kernel_vmlinux_head[sizeof(stub_i386_linux_kernel_vmlinux_head)-(1+ 4)], 1);
     tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
 
-    fo_off += sizeof(head_stack);
+    fo_off += sizeof(stub_i386_linux_kernel_vmlinux_head);
 
     fo->write(obuf, ph.c_len); fo_off += ph.c_len;
     fo->write(loader, lsize); fo_off += lsize;
@@ -518,7 +518,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
     ibuf.dealloc();
 
     ph = ph_tmp;
-    fi->seek(p_text->sh_offset + sizeof(head_stack) -5, SEEK_SET);
+    fi->seek(p_text->sh_offset + sizeof(stub_i386_linux_kernel_vmlinux_head) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
     if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
     {

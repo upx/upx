@@ -120,7 +120,7 @@ void PackExe::buildLoader(const Filter *)
     int flag = fillExeHeader(&tmp_oh);
 
     // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
+    initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
     if (device_driver)
         addLoader("DEVICEENTRY", NULL);
     addLoader("EXEENTRY",

@@ -147,8 +147,8 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
     }
     elfout.phdr[0].p_paddr = elfout.phdr[0].p_vaddr = base - sz;
     if (opt->o_unix.make_ptinterp) {
-        initLoader(linux_i386pti_loader, sizeof(linux_i386pti_loader));
-        linker->addSection("FOLDEXEC", linux_i386pti_fold, sizeof(linux_i386pti_fold), 0);
+        initLoader(stub_i386_linux_elf_interp_entry, sizeof(stub_i386_linux_elf_interp_entry));
+        linker->addSection("FOLDEXEC", stub_i386_linux_elf_interp_fold, sizeof(stub_i386_linux_elf_interp_fold), 0);
 
         addLoader("LXPTI000", NULL);
 

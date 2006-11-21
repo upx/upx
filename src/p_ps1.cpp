@@ -321,7 +321,7 @@ void PackPs1::buildLoader(const Filter *)
 
     if (ph.method == M_LZMA && !buildPart2)
     {
-        initLoader(nrv_loader, sizeof(nrv_loader));
+        initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
         addLoader("decompressor.start",
                   isCon ? "LZMA_DEC20" : "LZMA_DEC10", "lzma.init", NULL);
         addLoader(sa_tmp > (0x10000 << 2) ? "memset.long" : "memset.short",
@@ -337,13 +337,13 @@ void PackPs1::buildLoader(const Filter *)
                                  NULL, M_NRV2B_8, 10, NULL, NULL );
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
-            initLoader(nrv_loader, sizeof(nrv_loader),
+            initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1),
                       (ph.method != M_LZMA || isCon) ? 0 : 1);
             linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
             delete [] cprLoader;
         }
         else
-            initLoader(nrv_loader, sizeof(nrv_loader));
+            initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
 
         pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4);
         assert(pad_code < 4);

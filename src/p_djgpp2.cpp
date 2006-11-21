@@ -49,11 +49,11 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(external_scnhdr_t) == 40);
     COMPILE_TIME_ASSERT(sizeof(coff_header_t) == 0xa8);
-    COMPILE_TIME_ASSERT(sizeof(stubify_stub) == 2048);
+    COMPILE_TIME_ASSERT(sizeof(stub_i386_dos32_djgpp2_stubify) == 2048);
     COMPILE_TIME_ASSERT_ALIGNOF(external_scnhdr_t, char)
     COMPILE_TIME_ASSERT_ALIGNOF(coff_header_t, char)
-    COMPILE_TIME_ASSERT(STUBIFY_STUB_ADLER32 == 0xbf689ba8);
-    COMPILE_TIME_ASSERT(STUBIFY_STUB_CRC32   == 0x2ae982b2);
+    COMPILE_TIME_ASSERT(STUB_I386_DOS32_DJGPP2_STUBIFY_ADLER32 == 0xbf689ba8)
+    COMPILE_TIME_ASSERT(STUB_I386_DOS32_DJGPP2_STUBIFY_CRC32   == 0x2ae982b2)
     //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
     //assert(upx_adler32(stubify_stub, sizeof(stubify_stub)) == STUBIFY_STUB_ADLER32);
 }
@@ -93,7 +93,7 @@ Linker* PackDjgpp2::newLinker() const
 void PackDjgpp2::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader, sizeof(nrv_loader));
+    initLoader(stub_i386_dos32_djgpp2, sizeof(stub_i386_dos32_djgpp2));
     addLoader("IDENTSTR,DJ2MAIN1",
               ft->id ? "DJCALLT1" : "",
               "DJ2MAIN2",
@@ -129,8 +129,8 @@ void PackDjgpp2::handleStub(OutputFile *fo)
         else
         {
             // "stubify" stub
-            info("Adding stub: %ld bytes", (long)sizeof(stubify_stub));
-            fo->write(stubify_stub, sizeof(stubify_stub));
+            info("Adding stub: %ld bytes", (long)sizeof(stub_i386_dos32_djgpp2_stubify));
+            fo->write(stub_i386_dos32_djgpp2_stubify, sizeof(stub_i386_dos32_djgpp2_stubify));
         }
     }
 }

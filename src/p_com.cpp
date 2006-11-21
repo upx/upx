@@ -138,7 +138,7 @@ void PackCom::patchLoader(OutputFile *fo,
 
 void PackCom::buildLoader(const Filter *ft)
 {
-    initLoader(nrv2b_loader,sizeof(nrv2b_loader));
+    initLoader(stub_i086_dos16_com, sizeof(stub_i086_dos16_com));
     addLoader("COMMAIN1",
               ph.first_offset_found == 1 ? "COMSBBBP" : "",
               "COMPSHDI",

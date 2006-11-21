@@ -115,7 +115,7 @@ void PackTos::buildLoader(const Filter *ft)
 {
     assert(ft->id == 0);
 
-    initLoader(nrv_loader, sizeof(nrv_loader));
+    initLoader(stub_m68k_atari_tos, sizeof(stub_m68k_atari_tos));
     //linker->dumpSymbols();
 
     //

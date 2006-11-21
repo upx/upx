@@ -139,8 +139,8 @@ void
 PackMachPPC32::buildLoader(const Filter *ft)
 {
     buildMachLoader(
-        l_mac_ppc32_loader, sizeof(l_mac_ppc32_loader),
-        fold_machppc32,     sizeof(fold_machppc32),  ft );
+        stub_powerpc_darwin_macho_entry, sizeof(stub_powerpc_darwin_macho_entry),
+        stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
 }
 void PackMachPPC32::patchLoader() { }
 void PackMachPPC32::updateLoader(OutputFile *) {}

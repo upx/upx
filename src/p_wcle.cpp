@@ -91,7 +91,7 @@ Linker* PackWcle::newLinker() const
 void PackWcle::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
+    initLoader(stub_i386_dos32_watcom_le, sizeof(stub_i386_dos32_watcom_le));
     addLoader("IDENTSTR,WCLEMAIN,UPX1HEAD,WCLECUTP", NULL);
 
     // fake alignment for the start of the decompressor

@@ -183,7 +183,7 @@ PackLinuxI386::pack1(OutputFile *fo, Filter &)
     // create a pseudo-unique program id for our paranoid stub
     progid = getRandomId();
 
-    generateElfHdr(fo, linux_i386exec_fold, 0);
+    generateElfHdr(fo, stub_i386_linux_elf_execve_fold, 0);
 }
 
 void
@@ -192,7 +192,7 @@ PackBSDI386::pack1(OutputFile *fo, Filter &)
     // create a pseudo-unique program id for our paranoid stub
     progid = getRandomId();
 
-    generateElfHdr(fo, bsd_i386exec_fold, 0);
+    generateElfHdr(fo, stub_i386_bsd_elf_execve_fold, 0);
 }
 
 void
@@ -401,9 +401,9 @@ PackLinuxI386::buildLinuxLoader(
 void
 PackLinuxI386::buildLoader(Filter const *ft)
 {
-    unsigned const sz_fold = sizeof(linux_i386exec_fold);
+    unsigned const sz_fold = sizeof(stub_i386_linux_elf_execve_fold);
     MemBuffer buf(sz_fold);
-    memcpy(buf, linux_i386exec_fold, sz_fold);
+    memcpy(buf, stub_i386_linux_elf_execve_fold, sz_fold);
 
     // patch loader
     // note: we only can use /proc/<pid>/fd when exetype > 0.
@@ -414,16 +414,16 @@ PackLinuxI386::buildLoader(Filter const *ft)
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
 
     buildLinuxLoader(
-        linux_i386exec_loader, sizeof(linux_i386exec_loader),
+        stub_i386_linux_elf_execve_entry, sizeof(stub_i386_linux_elf_execve_entry),
         buf, sz_fold, ft );
 }
 
 void
 PackBSDI386::buildLoader(Filter const *ft)
 {
-    unsigned const sz_fold = sizeof(bsd_i386exec_fold);
+    unsigned const sz_fold = sizeof(stub_i386_bsd_elf_execve_fold);
     MemBuffer buf(sz_fold);
-    memcpy(buf, bsd_i386exec_fold, sz_fold);
+    memcpy(buf, stub_i386_bsd_elf_execve_fold, sz_fold);
 
     // patch loader
     // note: we only can use /proc/<pid>/fd when exetype > 0.
@@ -434,7 +434,7 @@ PackBSDI386::buildLoader(Filter const *ft)
     patch_le32(buf,sz_fold,"UPX2",exetype > 0 ? 0 : 0x7fffffff);
 
     buildLinuxLoader(
-        bsd_i386exec_loader, sizeof(bsd_i386exec_loader),
+        stub_i386_bsd_elf_execve_entry, sizeof(stub_i386_bsd_elf_execve_entry),
         buf, sz_fold, ft );
 }
 

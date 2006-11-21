@@ -102,7 +102,7 @@ void PackSys::patchLoader(OutputFile *fo,
 
 void PackSys::buildLoader(const Filter *ft)
 {
-    initLoader(nrv2b_loader,sizeof(nrv2b_loader));
+    initLoader(stub_i086_dos16_sys, sizeof(stub_i086_dos16_sys));
     addLoader("SYSMAIN1",
               opt->cpu == opt->CPU_8086 ? "SYSI0861" : "SYSI2861",
               "SYSMAIN2",

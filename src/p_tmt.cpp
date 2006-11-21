@@ -85,7 +85,7 @@ Linker* PackTmt::newLinker() const
 void PackTmt::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader,sizeof(nrv_loader));
+    initLoader(stub_i386_dos32_tmt, sizeof(stub_i386_dos32_tmt));
     addLoader("IDENTSTR,TMTMAIN1",
               ft->id ? "TMTCALT1" : "",
               "TMTMAIN2,UPX1HEAD,TMTCUTPO",

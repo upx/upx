@@ -464,8 +464,8 @@ bool PackArmPe::canPack()
 
 void PackArmPe::buildLoader(const Filter *ft)
 {
-    const unsigned char *loader = use_thumb_stub ? nrv_loader_thumb : nrv_loader_arm;
-    unsigned size = use_thumb_stub ? sizeof(nrv_loader_thumb) : sizeof(nrv_loader_arm);
+    const unsigned char *loader = use_thumb_stub ? stub_arm_v4t_wince_pe : stub_arm_v4a_wince_pe;
+    unsigned size = use_thumb_stub ? sizeof(stub_arm_v4t_wince_pe) : sizeof(stub_arm_v4a_wince_pe);
 
     // prepare loader
     initLoader(loader, size);

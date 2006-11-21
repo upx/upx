@@ -273,7 +273,7 @@ Linker* PackVmlinuzI386::newLinker() const
 void PackVmlinuzI386::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader, sizeof(nrv_loader));
+    initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     addLoader("LINUZ000",
               ft->id ? "LZCALLT1" : "",
               "LZIMAGE0",
@@ -359,7 +359,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 void PackBvmlinuzI386::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(nrv_loader, sizeof(nrv_loader));
+    initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     addLoader("LINUZ000",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
