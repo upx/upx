@@ -1630,7 +1630,7 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
     extrainfo += 2;
 
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
-    const upx_byte *r = ibuf - isection[2].vaddr;
+    const upx_byte *r = ibuf - isection[ih.objects - 1].vaddr;
     Resource res(r + vaddr);
     while (res.next())
         if (res.offs() > vaddr)
@@ -1657,7 +1657,10 @@ void PeFile::unpack(OutputFile *fo)
 
     handleStub(fi,fo,pe_offset);
 
-    const unsigned overlay = file_size - ALIGN_UP(isection[2].rawdataptr + isection[2].size,ih.filealign);
+    const unsigned iobjs = ih.objects;
+    const unsigned overlay = file_size - ALIGN_UP(isection[iobjs - 1].rawdataptr
+                                                  + isection[iobjs - 1].size,
+                                                  ih.filealign);
     checkOverlay(overlay);
 
     ibuf.alloc(ph.c_len);
@@ -1698,6 +1701,16 @@ void PeFile::unpack(OutputFile *fo)
     rebuildRelocs(extrainfo);
     rebuildTls();
     rebuildExports();
+
+    if (iobjs == 4)
+    {
+        // read the resource section if present
+        ibuf.dealloc();
+        ibuf.alloc(isection[3].size);
+        fi->seek(isection[3].rawdataptr,SEEK_SET);
+        fi->readx(ibuf,isection[3].size);
+    }
+
     rebuildResources(extrainfo);
 
     //FIXME: this does bad things if the relocation section got removed

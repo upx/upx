@@ -727,13 +727,11 @@ void PackArmPe::pack(OutputFile *fo)
     getLoaderSection("UPX1HEAD",(int*)&ic);
     identsize += ic;
 
-    pe_section_t osection[3];
+    pe_section_t osection[4];
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls
     //         2 : not compressed data
-
-    // section 2 should start with the resource data, because lots of lame
-    // windoze codes assume that resources starts on the beginning of a section
+    //         3 : resource data -- wince 5 needs a new section for this
 
     // identsplit - number of ident + (upx header) bytes to put into the PE header
     int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
@@ -771,7 +769,7 @@ void PackArmPe::pack(OutputFile *fo)
     memset(osection,0,sizeof(osection));
 
     oh.entry = upxsection;
-    oh.objects = 3;
+    oh.objects = 4;
     oh.chksum = 0;
 
     // fill the data directory
@@ -800,12 +798,6 @@ void PackArmPe::pack(OutputFile *fo)
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;
 
-    if (soresources)
-        processResources(&res,ic);
-    ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
-    ODSIZE(PEDIR_RESOURCE) = soresources;
-    ic += soresources;
-
     processImports(ic, linker->getSymbolOffset("IATT") + upxsection);
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
@@ -821,7 +813,15 @@ void PackArmPe::pack(OutputFile *fo)
     }
     ic += soexport;
 
-    const unsigned onam = ncsection + soxrelocs + soresources + ih.imagebase;
+    ic = (ic + oam1) &~ oam1;
+    const unsigned res_start = ic;
+    if (soresources)
+        processResources(&res,ic);
+    ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
+    ODSIZE(PEDIR_RESOURCE) = soresources;
+    ic += soresources;
+
+    const unsigned onam = ncsection + soxrelocs + ih.imagebase;
     linker->defineSymbol("start_of_dll_names", onam);
     linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);
     linker->defineSymbol("start_of_relocs", crelocs + rvamin + ih.imagebase);
@@ -840,47 +840,45 @@ void PackArmPe::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 
     // this is computed here, because soxrelocs changes some lines above
-    const unsigned ncsize = soxrelocs + soresources + soimpdlls + soexport;
+    const unsigned ncsize = soxrelocs + soimpdlls + soexport;
     const unsigned fam1 = oh.filealign - 1;
 
     // fill the sections
     strcpy(osection[0].name,"UPX0");
     strcpy(osection[1].name,"UPX1");
-    // after some windoze debugging I found that the name of the sections
-    // DOES matter :( .rsrc is used by oleaut32.dll (TYPELIBS)
-    // and because of this lame dll, the resource stuff must be the
-    // first in the 3rd section - the author of this dll seems to be
-    // too idiot to use the data directories... M$ suxx 4 ever!
-    // ... even worse: exploder.exe in NiceTry also depends on this to
-    // locate version info
-
-    strcpy(osection[2].name,soresources ? ".rsrc" : "UPX2");
+    strcpy(osection[2].name, "UPX2");
+    strcpy(osection[3].name, ".rsrc");
 
     osection[0].vaddr = rvamin;
     osection[1].vaddr = s1addr;
     osection[2].vaddr = ncsection;
+    osection[3].vaddr = res_start;
 
     osection[0].size = 0;
     osection[1].size = (s1size + fam1) &~ fam1;
     osection[2].size = (ncsize + fam1) &~ fam1;
+    osection[3].size = (soresources + fam1) &~ fam1;
 
     osection[0].vsize = osection[1].vaddr - osection[0].vaddr;
     //osection[1].vsize = (osection[1].size + oam1) &~ oam1;
     //osection[2].vsize = (osection[2].size + oam1) &~ oam1;
     osection[1].vsize = osection[1].size;
     osection[2].vsize = osection[2].size;
+    osection[3].vsize = osection[3].size;
 
     osection[0].rawdataptr = 0;
     osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
     osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
+    osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
 
     osection[0].flags = (unsigned) (PEFL_BSS|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
     osection[1].flags = (unsigned) (PEFL_DATA|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
     osection[2].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+    osection[3].flags = (unsigned) (PEFL_DATA|PEFL_READ);
 
-    oh.imagesize = (osection[2].vaddr + osection[2].vsize + oam1) &~ oam1;
+    oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
     oh.bsssize  = osection[0].vsize;
-    oh.datasize = osection[2].vsize;
+    oh.datasize = osection[2].vsize + osection[3].vsize;
     oh.database = osection[2].vaddr;
     oh.codesize = osection[1].vsize;
     oh.codebase = osection[1].vaddr;
@@ -898,6 +896,11 @@ void PackArmPe::pack(OutputFile *fo)
 
     infoHeader("[Writing compressed file]");
 
+    if (soresources == 0)
+    {
+        oh.objects = 3;
+        memset(&osection[3], 0, sizeof(osection[3]));
+    }
     // write loader + compressed file
     fo->write(&oh,sizeof(oh));
     fo->write(osection,sizeof(osection));
@@ -918,14 +921,17 @@ void PackArmPe::pack(OutputFile *fo)
     if ((ic = fo->getBytesWritten() & 3) != 0)
         fo->write(ibuf,4 - ic);
     fo->write(otls,sotls);
-    if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
         fo->write(ibuf,oh.filealign - ic);
     fo->write(oxrelocs,soxrelocs);
-    fo->write(oresources,soresources);
     fo->write(oimpdlls,soimpdlls);
     fo->write(oexport,soexport);
 
-    if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
+        fo->write(ibuf,oh.filealign - ic);
+
+    fo->write(oresources,soresources);
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
         fo->write(ibuf,oh.filealign - ic);
 
 #if 0
@@ -968,7 +974,7 @@ int PackArmPe::canUnpack()
     fi->readx(isection,sizeof(pe_section_t)*objs);
     if (ih.objects < 3)
         return -1;
-    bool is_packed = (ih.objects == 3 &&
+    bool is_packed = ((ih.objects == 3 || ih.objects == 4) &&
                       (IDSIZE(15) || ih.entry > isection[1].vaddr));
     bool found_ph = false;
     if (memcmp(isection[0].name,"UPX",3) == 0)
