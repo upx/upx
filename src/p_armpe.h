@@ -39,7 +39,7 @@ class PackArmPe : public PeFile
 
 public:
     PackArmPe(InputFile *f);
-    ~PackArmPe();
+    virtual ~PackArmPe();
     virtual int getFormat() const { return UPX_F_WINCE_ARM_PE; }
     virtual const char *getName() const { return "arm/pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;

@@ -219,7 +219,7 @@ int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
 
 const char *upx_zlib_version_string(void)
 {
-    return zlib_version;
+    return zlibVersion();
 }
 
 

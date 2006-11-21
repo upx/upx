@@ -53,7 +53,7 @@
 #if defined(BELE_RTP)
 struct AbstractPolicy
 {
-    explicit AbstractPolicy() {}
+    AbstractPolicy() {}
     virtual inline ~AbstractPolicy() {}
     V bool isBE() C = 0;
     V bool isLE() C = 0;
@@ -94,7 +94,7 @@ struct BEPolicy
     : public AbstractPolicy
 #endif
 {
-    explicit BEPolicy() {}
+    BEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
     enum { isBE = 1, isLE = 0 };
@@ -172,7 +172,7 @@ struct LEPolicy
     : public AbstractPolicy
 #endif
 {
-    explicit LEPolicy() {}
+    LEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
     enum { isBE = 0, isLE = 1 };

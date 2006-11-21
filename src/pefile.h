@@ -43,7 +43,7 @@ protected:
     class Export;
 
     PeFile(InputFile *f);
-    ~PeFile();
+    virtual ~PeFile();
     virtual int getVersion() const { return 13; }
 
     virtual void unpack(OutputFile *fo);

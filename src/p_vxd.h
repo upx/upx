@@ -39,7 +39,7 @@ class PackVxd : public PackWcle
     typedef PackWcle super;
 public:
     PackVxd(InputFile *f);
-    ~PackVxd();
+    virtual ~PackVxd();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VXD_LE; }
     virtual const char *getName() const { return "vxd/le"; }

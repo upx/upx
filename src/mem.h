@@ -38,7 +38,7 @@ class MemBuffer
 {
 public:
     MemBuffer();
-    MemBuffer(unsigned size);
+    explicit MemBuffer(unsigned size);
     ~MemBuffer();
 
     static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra=0);

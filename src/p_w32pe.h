@@ -39,7 +39,7 @@ class PackW32Pe : public PeFile
 
 public:
     PackW32Pe(InputFile *f);
-    ~PackW32Pe();
+    virtual ~PackW32Pe();
     virtual int getFormat() const { return UPX_F_WIN32_PE; }
     virtual const char *getName() const { return isrtm ? "rtm32/pe" : "win32/pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
