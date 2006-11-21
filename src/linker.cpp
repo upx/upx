@@ -137,7 +137,7 @@ void ElfLinker::init(const void *pdata_v, int plen)
     if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0)
     {
         int method = -1;
-        unsigned u_len, c_len;
+        unsigned u_len = 0, c_len = 0;
         if (pdata[4] == M_DEFLATE)
         {
             method = M_DEFLATE;
