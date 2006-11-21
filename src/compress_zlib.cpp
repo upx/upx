@@ -36,6 +36,18 @@ int compress_zlib_dummy = 0;
 #include <zlib.h>
 
 
+static int convert_errno_from_zlib(int zr)
+{
+    switch (zr)
+    {
+    case Z_OK:                  return UPX_E_OK;
+    case Z_DATA_ERROR:          return UPX_E_ERROR;
+    case Z_NEED_DICT:           return UPX_E_ERROR;
+    }
+    return UPX_E_ERROR;
+}
+
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -49,6 +61,15 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
 {
     assert(method == M_DEFLATE);
     assert(level > 0); assert(cresult != NULL);
+
+    z_stream s;
+    s.zalloc = (alloc_func) 0;
+    s.zfree = (free_func) 0;
+
+    s.next_in = (Bytef*) (acc_uintptr_t) src; // UNCONST
+    s.avail_in = src_len;
+    s.next_out = dst;
+    s.avail_out = *dst_len;
 
     UNUSED(src); UNUSED(src_len);
     UNUSED(dst); UNUSED(dst_len);
@@ -71,14 +92,46 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
                              const upx_compress_result_t *cresult )
 {
     assert(method == M_DEFLATE);
-    UNUSED(cresult);
-
-    UNUSED(src); UNUSED(src_len);
-    UNUSED(dst); UNUSED(dst_len);
     UNUSED(method);
     UNUSED(cresult);
+    int r = UPX_E_ERROR;
+    int zr;
 
-    return UPX_E_ERROR;
+    z_stream s;
+    s.zalloc = (alloc_func) 0;
+    s.zfree = (free_func) 0;
+    s.next_in = (Bytef*) (acc_uintptr_t) src; // UNCONST
+    s.avail_in = src_len;
+    s.next_out = dst;
+    s.avail_out = *dst_len;
+    s.total_in = s.total_out = 0;
+
+    zr = inflateInit2(&s, -15);
+    if (zr != Z_OK)
+        goto error;
+    zr = inflate(&s, Z_FINISH);
+    if (zr != Z_STREAM_END)
+        goto error;
+    zr = inflateEnd(&s);
+    if (zr != Z_OK)
+        goto error;
+    r = UPX_E_OK;
+    goto done;
+error:
+    (void) inflateEnd(&s);
+    r = convert_errno_from_zlib(zr);
+    if (r == UPX_E_OK)
+        r = UPX_E_ERROR;
+done:
+    if (r == UPX_E_OK)
+    {
+        if (s.avail_in != 0 || s.total_in != src_len)
+            r = UPX_E_INPUT_NOT_CONSUMED;
+    }
+    assert(s.total_in  <=  src_len);
+    assert(s.total_out <= *dst_len);
+    *dst_len = s.total_out;
+    return r;
 }
 
 
