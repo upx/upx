@@ -106,7 +106,7 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
     cresult->c_len = 0;
 #endif
 
-    if (method < 0) {
+    if (0) {
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
@@ -152,7 +152,7 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
     if (cresult && cresult->method == 0)
         cresult = NULL;
 
-    if (method < 0) {
+    if (0) {
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
@@ -165,6 +165,10 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
 #if defined(WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_decompress(src, src_len, dst, dst_len, method, cresult);
+#endif
+#if defined(WITH_ZLIB)
+    else if (M_IS_DEFLATE(method))
+        r = upx_zlib_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
     else {
         throwInternalError("unknown decompression method");
@@ -193,7 +197,7 @@ int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
     unsigned overlap_overhead = src_off + src_len - *dst_len;
     assert((int)overlap_overhead > 0);
 
-    if (method < 0) {
+    if (0) {
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))

@@ -130,18 +130,52 @@ ElfLinker::~ElfLinker()
     free(relocations);
 }
 
-void ElfLinker::init(const void *pdata, int plen)
+void ElfLinker::init(const void *pdata_v, int plen)
 {
-    upx_byte *i = new upx_byte[plen + 1];
-    memcpy(i, pdata, plen);
-    input = i;
-    inputlen = plen;
-    input[plen] = 0;
+    const upx_byte *pdata = (const upx_byte *) pdata_v;
+    // decompress
+    if (plen >= 16 && memcmp(pdata, "UPX#", 4) == 0)
+    {
+        int method = -1;
+        unsigned u_len, c_len;
+        if (pdata[4] == M_DEFLATE)
+        {
+            method = M_DEFLATE;
+            u_len = get_le16(pdata + 5);
+            c_len = get_le16(pdata + 7);
+            pdata += 9;
+            assert(9 + c_len == (unsigned) plen);
+        }
+        else if (pdata[4] == 0 && pdata[5] == M_DEFLATE)
+        {
+            method = M_DEFLATE;
+            u_len = get_le32(pdata + 6);
+            c_len = get_le32(pdata + 10);
+            pdata += 14;
+            assert(14 + c_len == (unsigned) plen);
+        }
+        else
+            throwBadLoader();
+        assert((unsigned) plen < u_len);
+        inputlen = u_len;
+        input = new upx_byte[inputlen + 1];
+        unsigned new_len = u_len;
+        int r = upx_decompress(pdata, c_len, input, &new_len, method, NULL);
+        if (r != 0 || new_len != u_len)
+            throwBadLoader();
+    }
+    else
+    {
+        inputlen = plen;
+        input = new upx_byte[inputlen + 1];
+        memcpy(input, pdata, inputlen);
+    }
+    input[inputlen] = 0; // NUL terminate
 
-    output = new upx_byte[plen];
+    output = new upx_byte[inputlen];
     outputlen = 0;
 
-    int pos = find(input, plen, "Sections:", 9);
+    int pos = find(input, inputlen, "Sections:", 9);
     assert(pos != -1);
     char *psections = (char *) input + pos;
 
