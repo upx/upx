@@ -55,10 +55,6 @@ Packer::~Packer()
 {
     delete uip; uip = NULL;
     delete linker; linker = NULL;
-#if 0
-    initLoader(NULL, 0);
-    delete linker; linker = NULL;
-#endif
 }
 
 
