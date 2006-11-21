@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_THUMB_SIZE    9992
-#define NRV_LOADER_THUMB_ADLER32 0xfeadf935
-#define NRV_LOADER_THUMB_CRC32   0x7cc8eae9
+#define STUB_ARM_V4T_WINCE_PE_SIZE    9992
+#define STUB_ARM_V4T_WINCE_PE_ADLER32 0xfeadf935
+#define STUB_ARM_V4T_WINCE_PE_CRC32   0x7cc8eae9
 
-unsigned char nrv_loader_thumb[9992] = {
+unsigned char stub_arm_v4t_wince_pe[9992] = {
 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 132, 11,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

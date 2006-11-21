@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    19030
-#define NRV_LOADER_ADLER32 0x34b52b4b
-#define NRV_LOADER_CRC32   0x49113ddc
+#define STUB_I086_DOS16_EXE_SIZE    19030
+#define STUB_I086_DOS16_EXE_ADLER32 0x34b52b4b
+#define STUB_I086_DOS16_EXE_CRC32   0x49113ddc
 
-unsigned char nrv_loader[19030] = {
+unsigned char stub_i086_dos16_exe[19030] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 152,  5,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

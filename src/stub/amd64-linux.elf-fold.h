@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELF64AMD_FOLD_SIZE    1775
-#define LINUX_ELF64AMD_FOLD_ADLER32 0x8871a9cc
-#define LINUX_ELF64AMD_FOLD_CRC32   0x5856b332
+#define STUB_AMD64_LINUX_ELF_FOLD_SIZE    1775
+#define STUB_AMD64_LINUX_ELF_FOLD_ADLER32 0x8871a9cc
+#define STUB_AMD64_LINUX_ELF_FOLD_CRC32   0x5856b332
 
-unsigned char linux_elf64amd_fold[1775] = {
+unsigned char stub_amd64_linux_elf_fold[1775] = {
 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0, 62,  0,  1,  0,  0,  0,188,  0, 16,  0,  0,  0,  0,  0,   /* 0x  10 */
  64,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  20 */

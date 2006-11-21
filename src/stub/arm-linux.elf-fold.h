@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELF32ARM_FOLD_SIZE    2108
-#define LINUX_ELF32ARM_FOLD_ADLER32 0x3e40608e
-#define LINUX_ELF32ARM_FOLD_CRC32   0xb5be5c29
+#define STUB_ARM_LINUX_ELF_FOLD_SIZE    2108
+#define STUB_ARM_LINUX_ELF_FOLD_ADLER32 0x3e40608e
+#define STUB_ARM_LINUX_ELF_FOLD_CRC32   0xb5be5c29
 
-unsigned char linux_elf32arm_fold[2108] = {
+unsigned char stub_arm_linux_elf_fold[2108] = {
 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0, 40,  0,  1,  0,  0,  0,128,128,  0,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  2,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */

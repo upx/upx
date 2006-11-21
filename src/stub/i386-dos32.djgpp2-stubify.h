@@ -1,8 +1,8 @@
-#define STUBIFY_STUB_SIZE    2048
-#define STUBIFY_STUB_ADLER32 0xbf689ba8
-#define STUBIFY_STUB_CRC32   0x2ae982b2
+#define STUB_I386_DOS32_DJGPP2_STUBIFY_SIZE    2048
+#define STUB_I386_DOS32_DJGPP2_STUBIFY_ADLER32 0xbf689ba8
+#define STUB_I386_DOS32_DJGPP2_STUBIFY_CRC32   0x2ae982b2
 
-unsigned char stubify_stub[2048] = {
+unsigned char stub_i386_dos32_djgpp2_stubify[2048] = {
  77, 90,  0,  0,  4,  0,  0,  0, 32,  0, 39,  0,255,255,  0,  0,   /* 0x   0 */
  96,  7,  0,  0, 84,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  20 */

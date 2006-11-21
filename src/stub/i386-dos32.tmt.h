@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    34553
-#define NRV_LOADER_ADLER32 0x709962c8
-#define NRV_LOADER_CRC32   0xbb6e5cc6
+#define STUB_I386_DOS32_TMT_SIZE    34553
+#define STUB_I386_DOS32_TMT_ADLER32 0x709962c8
+#define STUB_I386_DOS32_TMT_CRC32   0xbb6e5cc6
 
-unsigned char nrv_loader[34553] = {
+unsigned char stub_i386_dos32_tmt[34553] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 228, 29,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

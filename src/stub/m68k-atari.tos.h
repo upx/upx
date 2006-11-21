@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    25878
-#define NRV_LOADER_ADLER32 0x97ff2b81
-#define NRV_LOADER_CRC32   0xec5b1712
+#define STUB_M68K_ATARI_TOS_SIZE    25878
+#define STUB_M68K_ATARI_TOS_ADLER32 0x97ff2b81
+#define STUB_M68K_ATARI_TOS_CRC32   0xec5b1712
 
-unsigned char nrv_loader[25878] = {
+unsigned char stub_m68k_atari_tos[25878] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  1,  0,  4,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0, 26,152,  1,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */

@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELFPPC32_FOLD_SIZE    1944
-#define LINUX_ELFPPC32_FOLD_ADLER32 0x727175e2
-#define LINUX_ELFPPC32_FOLD_CRC32   0xe344893c
+#define STUB_POWERPC_LINUX_ELF_FOLD_SIZE    1944
+#define STUB_POWERPC_LINUX_ELF_FOLD_ADLER32 0x727175e2
+#define STUB_POWERPC_LINUX_ELF_FOLD_CRC32   0xe344893c
 
-unsigned char linux_elfppc32_fold[1944] = {
+unsigned char stub_powerpc_linux_elf_fold[1944] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  2,  0, 20,  0,  0,  0,  1,  0, 16,  0,128,  0,  0,  0, 52,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,   /* 0x  20 */

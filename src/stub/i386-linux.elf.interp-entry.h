@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_I386PTI_LOADER_SIZE    64126
-#define LINUX_I386PTI_LOADER_ADLER32 0xba05b47c
-#define LINUX_I386PTI_LOADER_CRC32   0x8e143c0a
+#define STUB_I386_LINUX_ELF_INTERP_ENTRY_SIZE    64126
+#define STUB_I386_LINUX_ELF_INTERP_ENTRY_ADLER32 0xba05b47c
+#define STUB_I386_LINUX_ELF_INTERP_ENTRY_CRC32   0x8e143c0a
 
-unsigned char linux_i386pti_loader[64126] = {
+unsigned char stub_i386_linux_elf_interp_entry[64126] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 216, 36,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

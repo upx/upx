@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_I386SH_LOADER_SIZE    41479
-#define LINUX_I386SH_LOADER_ADLER32 0xf8daf11e
-#define LINUX_I386SH_LOADER_CRC32   0x85a73706
+#define STUB_I386_LINUX_ELF_SHELL_ENTRY_SIZE    41479
+#define STUB_I386_LINUX_ELF_SHELL_ENTRY_ADLER32 0xf8daf11e
+#define STUB_I386_LINUX_ELF_SHELL_ENTRY_CRC32   0x85a73706
 
-unsigned char linux_i386sh_loader[41479] = {
+unsigned char stub_i386_linux_elf_shell_entry[41479] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 228, 31,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

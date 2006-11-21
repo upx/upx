@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELF32ARM_LOADER_SIZE    19530
-#define LINUX_ELF32ARM_LOADER_ADLER32 0x3faa45c9
-#define LINUX_ELF32ARM_LOADER_CRC32   0x784aaa8d
+#define STUB_ARM_LINUX_ELF_ENTRY_SIZE    19530
+#define STUB_ARM_LINUX_ELF_ENTRY_ADLER32 0x3faa45c9
+#define STUB_ARM_LINUX_ELF_ENTRY_CRC32   0x784aaa8d
 
-unsigned char linux_elf32arm_loader[19530] = {
+unsigned char stub_arm_linux_elf_entry[19530] = {
 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 244, 23,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

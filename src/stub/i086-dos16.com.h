@@ -27,11 +27,11 @@
  */
 
 
-#define NRV2B_LOADER_SIZE    9078
-#define NRV2B_LOADER_ADLER32 0x2d8ff59a
-#define NRV2B_LOADER_CRC32   0x56792cc8
+#define STUB_I086_DOS16_COM_SIZE    9078
+#define STUB_I086_DOS16_COM_ADLER32 0x2d8ff59a
+#define STUB_I086_DOS16_COM_CRC32   0x56792cc8
 
-unsigned char nrv2b_loader[9078] = {
+unsigned char stub_i086_dos16_com[9078] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
  72,  2,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

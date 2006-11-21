@@ -9,8 +9,8 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
-export SHELL = /bin/sh
 export LC_ALL = C
+export SHELL = /bin/sh
 
 # internal make variables
 comma := ,
@@ -160,7 +160,7 @@ define tc
 endef
 
 # default tools
-tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py
+tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
@@ -216,13 +216,13 @@ tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Wer
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_elf64amd_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_elf64amd_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -247,13 +247,13 @@ tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werro
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_elf32arm_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_elf32arm_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -276,13 +276,13 @@ tc.armeb-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
 armeb-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_elf32armeb_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 armeb-linux.elf-fold.h : tmp/$$T.o tmp/armeb-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_elf32armeb_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -308,12 +308,12 @@ arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader_arm tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader_thumb tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -326,7 +326,7 @@ i086-dos16.com.h : tc_bfdarch = i8086
 i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -339,7 +339,7 @@ i086-dos16.exe.h : tc_bfdarch = i8086
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -352,7 +352,7 @@ i086-dos16.sys.h : tc_bfdarch = i8086
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv2b_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -367,14 +367,14 @@ i386-bsd.elf%.h : tc_bfdname = elf32-i386
 i386-bsd.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=bsd_i386elf_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-bsd.elf-fold.h : tmp/$$T.o tmp/i386-bsd.elf-main.o tmp/i386-bsd.syscall.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=freebsd tmp/$T.bin
-	$(call tc,bin2h) --ident=bsd_i386elf_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -400,7 +400,7 @@ i386-openbsd.elf-fold.h : tmp/$$T.o tmp/i386-openbsd.elf-main.o tmp/i386-bsd.sys
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=openbsd tmp/$T.bin
-	$(call tc,bin2h) --ident=openbsd_i386elf_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -420,7 +420,7 @@ tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 i386-bsd.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=bsd_i386exec_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 # Note the re-use of i386-linux.elf.execve-fold.lds as input (no separate i386-bsd.elf.execve-fold.lds).
 i386-bsd.elf.execve-fold.h : tmp/$$T.o tmp/i386-bsd.elf.execve-main.o tmp/i386-bsd.syscall.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/i386-linux.elf.execve-fold.lds
@@ -428,7 +428,7 @@ i386-bsd.elf.execve-fold.h : tmp/$$T.o tmp/i386-bsd.elf.execve-main.o tmp/i386-b
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=freebsd tmp/$T.bin
-	$(call tc,bin2h) --ident=bsd_i386exec_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-bsd.elf.execve-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -452,12 +452,12 @@ i386-dos32.djgpp2% : tc_list = arch-i386 default
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 	$(call tc,djasm) --outtype=exe --gmtime=1070220810 --inname=stub.asm --outname=stub.h $< tmp/$T.bin
 	$(call tc,objdump) -b binary -m i8086 -D --start-address=0x254 tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasm
-	$(call tc,bin2h) --ident=stubify_stub -q tmp/$T.bin $@
+	$(call tc,bin2h) -q tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -469,7 +469,7 @@ i386-dos32.tmt.h : tc_list = arch-i386 default
 i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -481,7 +481,7 @@ i386-dos32.watcom.le.h : tc_list = arch-i386 default
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -504,14 +504,14 @@ tc.i386-linux.elf.gcc     += -fweb
 i386-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_i386elf_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.elf-fold.h : tmp/$$T.o tmp/i386-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_i386elf_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -531,14 +531,14 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_i386exec_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.elf.execve-fold.h : tmp/$$T.o tmp/i386-linux.elf.execve-main.o tmp/i386-linux.elf.execve-upx_itoa.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_i386exec_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -562,14 +562,14 @@ tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_i386pti_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.elf.interp-fold.h : tmp/$$T.o tmp/i386-linux.elf.interp-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_i386pti_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -589,14 +589,14 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_i386sh_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.elf.shell-fold.h : tmp/$$T.o tmp/i386-linux.elf.shell-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,brandelf) --elfosabi=linux tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_i386sh_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
@@ -618,12 +618,12 @@ i386-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
 i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) --ident=head_stack tmp/$T.bin $@
+	$(call tc,bin2h) --compress=none tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -636,7 +636,7 @@ i386-win32.pe.h : tc_bfdname = elf32-i386
 i386-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -653,7 +653,7 @@ tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werr
 m68k-atari.tos.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68000,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -680,7 +680,7 @@ else
 	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=nrv_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -694,12 +694,12 @@ powerpc-darwin.macho%.h : tc_bfdname = elf32-powerpc
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=l_mac_ppc32_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
-	$(call tc,bin2h) --ident=fold_machppc32 tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -724,13 +724,13 @@ tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -W
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) --ident=linux_elfppc32_loader tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) --ident=linux_elfppc32_fold tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
@@ -748,6 +748,7 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 ifneq ($(strip $(STUBS)),)
 # FIXME: we want a dependency-only prerequisite here
 $(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
+$(STUBS): $(top_srcdir)/src/stub/scripts/bin2h.py
 endif
 -include tmp/*.d
 

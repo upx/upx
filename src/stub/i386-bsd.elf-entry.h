@@ -27,11 +27,11 @@
  */
 
 
-#define BSD_I386ELF_LOADER_SIZE    52750
-#define BSD_I386ELF_LOADER_ADLER32 0x275072d6
-#define BSD_I386ELF_LOADER_CRC32   0xc0d1d060
+#define STUB_I386_BSD_ELF_ENTRY_SIZE    52750
+#define STUB_I386_BSD_ELF_ENTRY_ADLER32 0x275072d6
+#define STUB_I386_BSD_ELF_ENTRY_CRC32   0xc0d1d060
 
-unsigned char bsd_i386elf_loader[52750] = {
+unsigned char stub_i386_bsd_elf_entry[52750] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 108, 34,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    33548
-#define NRV_LOADER_ADLER32 0xa9e9bdee
-#define NRV_LOADER_CRC32   0x06765d67
+#define STUB_I386_DOS32_DJGPP2_SIZE    33548
+#define STUB_I386_DOS32_DJGPP2_ADLER32 0xa9e9bdee
+#define STUB_I386_DOS32_DJGPP2_CRC32   0x06765d67
 
-unsigned char nrv_loader[33548] = {
+unsigned char stub_i386_dos32_djgpp2[33548] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 136, 29,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

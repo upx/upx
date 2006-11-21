@@ -27,11 +27,11 @@
  */
 
 
-#define BSD_I386ELF_FOLD_SIZE    1789
-#define BSD_I386ELF_FOLD_ADLER32 0x627bfe0b
-#define BSD_I386ELF_FOLD_CRC32   0x9ea4486f
+#define STUB_I386_BSD_ELF_FOLD_SIZE    1789
+#define STUB_I386_BSD_ELF_FOLD_ADLER32 0x627bfe0b
+#define STUB_I386_BSD_ELF_FOLD_CRC32   0x9ea4486f
 
-unsigned char bsd_i386elf_fold[1789] = {
+unsigned char stub_i386_bsd_elf_fold[1789] = {
 127, 69, 76, 70,  1,  1,  1,  9,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0,  3,  0,  1,  0,  0,  0,128, 16,192,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */

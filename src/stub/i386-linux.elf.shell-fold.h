@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_I386SH_FOLD_SIZE    1194
-#define LINUX_I386SH_FOLD_ADLER32 0x63b3f90a
-#define LINUX_I386SH_FOLD_CRC32   0xe2bc019d
+#define STUB_I386_LINUX_ELF_SHELL_FOLD_SIZE    1194
+#define STUB_I386_LINUX_ELF_SHELL_FOLD_ADLER32 0x63b3f90a
+#define STUB_I386_LINUX_ELF_SHELL_FOLD_CRC32   0xe2bc019d
 
-unsigned char linux_i386sh_fold[1194] = {
+unsigned char stub_i386_linux_elf_shell_fold[1194] = {
 127, 69, 76, 70,  1,  1,  1,  0, 76,105,110,117,120,  0,  0,  0,   /* 0x   0 */
   2,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */

@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    35988
-#define NRV_LOADER_ADLER32 0x149f8b43
-#define NRV_LOADER_CRC32   0x8eb24e37
+#define STUB_I386_LINUX_KERNEL_VMLINUZ_SIZE    35988
+#define STUB_I386_LINUX_KERNEL_VMLINUZ_ADLER32 0x149f8b43
+#define STUB_I386_LINUX_KERNEL_VMLINUZ_CRC32   0x8eb24e37
 
-unsigned char nrv_loader[35988] = {
+unsigned char stub_i386_linux_kernel_vmlinuz[35988] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
  56, 30,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

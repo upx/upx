@@ -27,11 +27,11 @@
  */
 
 
-#define OPENBSD_I386ELF_FOLD_SIZE    2025
-#define OPENBSD_I386ELF_FOLD_ADLER32 0x4b605db7
-#define OPENBSD_I386ELF_FOLD_CRC32   0x59c73b6b
+#define STUB_I386_OPENBSD_ELF_FOLD_SIZE    2025
+#define STUB_I386_OPENBSD_ELF_FOLD_ADLER32 0x4b605db7
+#define STUB_I386_OPENBSD_ELF_FOLD_CRC32   0x59c73b6b
 
-unsigned char openbsd_i386elf_fold[2025] = {
+unsigned char stub_i386_openbsd_elf_fold[2025] = {
 127, 69, 76, 70,  1,  1,  1, 12,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0,  3,  0,  1,  0,  0,  0,128, 16,192,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */

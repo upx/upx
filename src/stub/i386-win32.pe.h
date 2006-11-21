@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    42482
-#define NRV_LOADER_ADLER32 0x579122a4
-#define NRV_LOADER_CRC32   0xaf0e084b
+#define STUB_I386_WIN32_PE_SIZE    42482
+#define STUB_I386_WIN32_PE_ADLER32 0x579122a4
+#define STUB_I386_WIN32_PE_CRC32   0xaf0e084b
 
-unsigned char nrv_loader[42482] = {
+unsigned char stub_i386_win32_pe[42482] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 172, 31,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

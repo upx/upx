@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_I386ELF_LOADER_SIZE    52744
-#define LINUX_I386ELF_LOADER_ADLER32 0xd3836661
-#define LINUX_I386ELF_LOADER_CRC32   0x90dd48b4
+#define STUB_I386_LINUX_ELF_ENTRY_SIZE    52744
+#define STUB_I386_LINUX_ELF_ENTRY_ADLER32 0xd3836661
+#define STUB_I386_LINUX_ELF_ENTRY_CRC32   0x90dd48b4
 
-unsigned char linux_i386elf_loader[52744] = {
+unsigned char stub_i386_linux_elf_entry[52744] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
 100, 34,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

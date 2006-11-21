@@ -27,11 +27,11 @@
  */
 
 
-#define L_MAC_PPC32_LOADER_SIZE    9698
-#define L_MAC_PPC32_LOADER_ADLER32 0x57dbe1c2
-#define L_MAC_PPC32_LOADER_CRC32   0x5a4d8013
+#define STUB_POWERPC_DARWIN_MACHO_ENTRY_SIZE    9698
+#define STUB_POWERPC_DARWIN_MACHO_ENTRY_ADLER32 0x57dbe1c2
+#define STUB_POWERPC_DARWIN_MACHO_ENTRY_CRC32   0x5a4d8013
 
-unsigned char l_mac_ppc32_loader[9698] = {
+unsigned char stub_powerpc_darwin_macho_entry[9698] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  1,  0, 20,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0, 24,120,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */

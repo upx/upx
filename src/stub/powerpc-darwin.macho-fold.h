@@ -27,11 +27,11 @@
  */
 
 
-#define FOLD_MACHPPC32_SIZE    1660
-#define FOLD_MACHPPC32_ADLER32 0xfc8b272c
-#define FOLD_MACHPPC32_CRC32   0x62ce0ae3
+#define STUB_POWERPC_DARWIN_MACHO_FOLD_SIZE    1660
+#define STUB_POWERPC_DARWIN_MACHO_FOLD_ADLER32 0xfc8b272c
+#define STUB_POWERPC_DARWIN_MACHO_FOLD_CRC32   0x62ce0ae3
 
-unsigned char fold_machppc32[1660] = {
+unsigned char stub_powerpc_darwin_macho_fold[1660] = {
  72,  0,  0,105, 40,  6,  0,208, 76,130,  0, 32, 84,132,240,191,   /* 0x   0 */
  77,130,  0, 32, 60,  0,  0, 16,124,  4,  0, 64, 65,128,  0,  8,   /* 0x  10 */
 124,  4,  3,120, 56,165,  1, 32,124,103, 27,120, 56, 99,255,252,   /* 0x  20 */

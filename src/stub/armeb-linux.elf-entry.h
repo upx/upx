@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELF32ARMEB_LOADER_SIZE    19529
-#define LINUX_ELF32ARMEB_LOADER_ADLER32 0xa7d64535
-#define LINUX_ELF32ARMEB_LOADER_CRC32   0x70f522be
+#define STUB_ARMEB_LINUX_ELF_ENTRY_SIZE    19529
+#define STUB_ARMEB_LINUX_ELF_ENTRY_ADLER32 0xa7d64535
+#define STUB_ARMEB_LINUX_ELF_ENTRY_CRC32   0x70f522be
 
-unsigned char linux_elf32armeb_loader[19529] = {
+unsigned char stub_armeb_linux_elf_entry[19529] = {
 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  1,  0, 40,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0, 23,244,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */

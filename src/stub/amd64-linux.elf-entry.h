@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELF64AMD_LOADER_SIZE    12687
-#define LINUX_ELF64AMD_LOADER_ADLER32 0xfad48a76
-#define LINUX_ELF64AMD_LOADER_CRC32   0x4e575312
+#define STUB_AMD64_LINUX_ELF_ENTRY_SIZE    12687
+#define STUB_AMD64_LINUX_ELF_ENTRY_ADLER32 0xfad48a76
+#define STUB_AMD64_LINUX_ELF_ENTRY_CRC32   0x4e575312
 
-unsigned char linux_elf64amd_loader[12687] = {
+unsigned char stub_amd64_linux_elf_entry[12687] = {
 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0, 62,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0,112, 24,  0,  0,  0,  0,  0,  0,   /* 0x  20 */

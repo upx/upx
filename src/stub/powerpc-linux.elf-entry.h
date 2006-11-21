@@ -27,11 +27,11 @@
  */
 
 
-#define LINUX_ELFPPC32_LOADER_SIZE    10127
-#define LINUX_ELFPPC32_LOADER_ADLER32 0x9dde2c46
-#define LINUX_ELFPPC32_LOADER_CRC32   0xb7957c12
+#define STUB_POWERPC_LINUX_ELF_ENTRY_SIZE    10127
+#define STUB_POWERPC_LINUX_ELF_ENTRY_ADLER32 0x9dde2c46
+#define STUB_POWERPC_LINUX_ELF_ENTRY_CRC32   0xb7957c12
 
-unsigned char linux_elfppc32_loader[10127] = {
+unsigned char stub_powerpc_linux_elf_entry[10127] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  1,  0, 20,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
   0,  0, 24,224,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */

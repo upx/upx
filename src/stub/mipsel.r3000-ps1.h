@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    26795
-#define NRV_LOADER_ADLER32 0xa9c7e09e
-#define NRV_LOADER_CRC32   0x18b357f8
+#define STUB_MIPSEL_R3000_PS1_SIZE    26795
+#define STUB_MIPSEL_R3000_PS1_ADLER32 0xa9c7e09e
+#define STUB_MIPSEL_R3000_PS1_CRC32   0x18b357f8
 
-unsigned char nrv_loader[26795] = {
+unsigned char stub_mipsel_r3000_ps1[26795] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  8,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
  36, 41,  0,  0,  1,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */

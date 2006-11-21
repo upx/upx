@@ -27,11 +27,11 @@
  */
 
 
-#define NRV_LOADER_SIZE    35309
-#define NRV_LOADER_ADLER32 0x16df069a
-#define NRV_LOADER_CRC32   0xf4e0df8a
+#define STUB_I386_DOS32_WATCOM_LE_SIZE    35309
+#define STUB_I386_DOS32_WATCOM_LE_ADLER32 0x16df069a
+#define STUB_I386_DOS32_WATCOM_LE_CRC32   0xf4e0df8a
 
-unsigned char nrv_loader[35309] = {
+unsigned char stub_i386_dos32_watcom_le[35309] = {
 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
  24, 30,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,   /* 0x  20 */
