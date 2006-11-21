@@ -205,7 +205,7 @@ def main(argv):
     elif opts.compress in ["upx-stub-deflate"]:
         odata = zlib.compress(idata, 9)
         # strip zlib-header and zlib-trailer (adler32)
-        odata = odata[2:] + odata[-4:]
+        odata = odata[2:-4]
         assert zlib.decompress(odata, -15) == idata
         # encode upx stub header
         M_DEFLATE = 15

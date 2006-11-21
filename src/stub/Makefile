@@ -161,6 +161,8 @@ endef
 
 # default tools
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
+##tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-deflate
+tc.default.bin2h-c    = $(call tc,bin2h) --compress=none
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
@@ -308,12 +310,12 @@ arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -326,7 +328,7 @@ i086-dos16.com.h : tc_bfdarch = i8086
 i086-dos16.com.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -339,7 +341,7 @@ i086-dos16.exe.h : tc_bfdarch = i8086
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -352,7 +354,7 @@ i086-dos16.sys.h : tc_bfdarch = i8086
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -452,7 +454,7 @@ i386-dos32.djgpp2% : tc_list = arch-i386 default
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 	$(call tc,djasm) --outtype=exe --gmtime=1070220810 --inname=stub.asm --outname=stub.h $< tmp/$T.bin
@@ -469,7 +471,7 @@ i386-dos32.tmt.h : tc_list = arch-i386 default
 i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -481,7 +483,7 @@ i386-dos32.watcom.le.h : tc_list = arch-i386 default
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -618,12 +620,12 @@ i386-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
 i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) --compress=none tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -636,7 +638,7 @@ i386-win32.pe.h : tc_bfdname = elf32-i386
 i386-win32.pe.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -653,7 +655,7 @@ tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werr
 m68k-atari.tos.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68000,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -680,7 +682,7 @@ else
 	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
