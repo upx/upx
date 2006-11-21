@@ -92,8 +92,18 @@ int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
 
 #if defined(WITH_ZLIB)
 const char *upx_zlib_version_string(void);
+int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_callback_p cb,
+                                   int method, int level,
+                             const upx_compress_config_t *cconf,
+                                   upx_compress_result_t *cresult );
 int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult );
+int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
+                                   unsigned  src_len, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif

@@ -28,6 +28,18 @@
 
 #include "conf.h"
 #include "compress.h"
+
+
+void zlib_compress_config_t::reset()
+{
+    memset(this, 0, sizeof(*this));
+
+    mem_level.reset();
+    window_bits.reset();
+    strategy.reset();
+}
+
+
 #if !defined(WITH_ZLIB)
 extern int compress_zlib_dummy;
 int compress_zlib_dummy = 0;
@@ -61,24 +73,64 @@ int upx_zlib_compress      ( const upx_bytep src, unsigned  src_len,
 {
     assert(method == M_DEFLATE);
     assert(level > 0); assert(cresult != NULL);
+    UNUSED(cb_parm);
+    int r = UPX_E_ERROR;
+    int zr;
+    const zlib_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_zlib : NULL;
+    zlib_compress_result_t *res = &cresult->result_zlib;
+
+    if (level == 10)
+        level = 9;
+
+    zlib_compress_config_t::mem_level_t mem_level;
+    zlib_compress_config_t::window_bits_t window_bits;
+    zlib_compress_config_t::strategy_t strategy;
+    // cconf overrides
+    if (lcconf)
+    {
+        oassign(mem_level, lcconf->mem_level);
+        oassign(window_bits, lcconf->window_bits);
+        oassign(strategy, lcconf->strategy);
+    }
+
+    res->dummy = 0;
 
     z_stream s;
     s.zalloc = (alloc_func) 0;
     s.zfree = (free_func) 0;
-
-    s.next_in = (Bytef*) (acc_uintptr_t) src; // UNCONST
+    s.next_in = const_cast<upx_bytep>(src); // UNCONST
     s.avail_in = src_len;
     s.next_out = dst;
     s.avail_out = *dst_len;
+    s.total_in = s.total_out = 0;
 
-    UNUSED(src); UNUSED(src_len);
-    UNUSED(dst); UNUSED(dst_len);
-    UNUSED(cb_parm);
-    UNUSED(method); UNUSED(level);
-    UNUSED(cconf_parm);
-    UNUSED(cresult);
-
-    return UPX_E_ERROR;
+    zr = deflateInit2(&s, level, Z_DEFLATED, 0 - (int)window_bits,
+                      mem_level, strategy);
+    if (zr != Z_OK)
+        goto error;
+    zr = deflate(&s, Z_FINISH);
+    if (zr != Z_STREAM_END)
+        goto error;
+    zr = deflateEnd(&s);
+    if (zr != Z_OK)
+        goto error;
+    r = UPX_E_OK;
+    goto done;
+error:
+    (void) deflateEnd(&s);
+    r = convert_errno_from_zlib(zr);
+    if (r == UPX_E_OK)
+        r = UPX_E_ERROR;
+done:
+    if (r == UPX_E_OK)
+    {
+        if (s.avail_in != 0 || s.total_in != src_len)
+            r = UPX_E_ERROR;
+    }
+    assert(s.total_in  <=  src_len);
+    assert(s.total_out <= *dst_len);
+    *dst_len = s.total_out;
+    return r;
 }
 
 
@@ -136,7 +188,7 @@ done:
 
 
 /*************************************************************************
-//
+// test_overlap
 **************************************************************************/
 
 int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
@@ -145,13 +197,18 @@ int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
                              const upx_compress_result_t *cresult )
 {
     assert(method == M_DEFLATE);
-    UNUSED(cresult);
 
-    UNUSED(buf); UNUSED(src_off);
-    UNUSED(src_len); UNUSED(dst_len);
-    UNUSED(method);
-    UNUSED(cresult);
+    // FIXME - implement this
+    // Note that Packer::verifyOverlappingDecompression() will
+    // verify the final result in any case.
+    UNUSED(buf);
 
+    unsigned overlap_overhead = src_off + src_len - *dst_len;
+    //printf("upx_zlib_test_overlap: %d\n", overlap_overhead);
+    if ((int)overlap_overhead >= 256)
+        return UPX_E_OK;
+
+    UNUSED(cresult);
     return UPX_E_ERROR;
 }
 

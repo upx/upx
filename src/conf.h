@@ -555,11 +555,26 @@ struct ucl_compress_config_t : public REAL_ucl_compress_config_t
 };
 
 
+struct zlib_compress_config_t
+{
+    typedef OptVar<unsigned,  8u, 1u,   9u> mem_level_t;            // ml
+    typedef OptVar<unsigned, 15u, 9u,  15u> window_bits_t;          // wb
+    typedef OptVar<unsigned,  0u, 0u,   4u> strategy_t;             // st
+
+    mem_level_t         mem_level;          // ml
+    window_bits_t       window_bits;        // wb
+    strategy_t          strategy;           // st
+
+    void reset();
+};
+
+
 struct upx_compress_config_t
 {
     lzma_compress_config_t  conf_lzma;
     ucl_compress_config_t   conf_ucl;
-    void reset() { conf_lzma.reset(); conf_ucl.reset(); }
+    zlib_compress_config_t  conf_zlib;
+    void reset() { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); }
 };
 
 
@@ -590,6 +605,14 @@ struct ucl_compress_result_t
 };
 
 
+struct zlib_compress_result_t
+{
+    unsigned dummy;
+
+    void reset() { memset(this, 0, sizeof(*this)); }
+};
+
+
 struct upx_compress_result_t
 {
     // debug
@@ -598,10 +621,11 @@ struct upx_compress_result_t
 
     lzma_compress_result_t  result_lzma;
     ucl_compress_result_t   result_ucl;
+    zlib_compress_result_t  result_zlib;
 
     void reset() {
         memset(this, 0, sizeof(*this));
-        result_lzma.reset(); result_ucl.reset();
+        result_lzma.reset(); result_ucl.reset(); result_zlib.reset();
     }
 };
 

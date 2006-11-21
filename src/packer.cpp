@@ -217,6 +217,12 @@ bool Packer::compress(upx_bytep in, upx_bytep out,
         oassign(cconf.conf_lzma.dict_size, opt->crp.crp_lzma.dict_size);
         oassign(cconf.conf_lzma.num_fast_bytes, opt->crp.crp_lzma.num_fast_bytes);
     }
+    if (M_IS_DEFLATE(ph.method))
+    {
+        oassign(cconf.conf_zlib.mem_level, opt->crp.crp_zlib.mem_level);
+        oassign(cconf.conf_zlib.window_bits, opt->crp.crp_zlib.window_bits);
+        oassign(cconf.conf_zlib.strategy, opt->crp.crp_zlib.strategy);
+    }
     if (uip->ui_pass >= 0)
         uip->ui_pass++;
     uip->startCallback(ph.u_len, step, uip->ui_pass, uip->ui_total_passes);

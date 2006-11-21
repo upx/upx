@@ -680,6 +680,15 @@ static int do_option(int optc, const char *arg)
     case 816:
         getoptvar(&opt->crp.crp_lzma.num_fast_bytes, arg);
         break;
+    case 821:
+        getoptvar(&opt->crp.crp_zlib.mem_level, arg);
+        break;
+    case 822:
+        getoptvar(&opt->crp.crp_zlib.window_bits, arg);
+        break;
+    case 823:
+        getoptvar(&opt->crp.crp_zlib.strategy, arg);
+        break;
     // backup
     case 'k':
         opt->backup = 1;
@@ -932,6 +941,9 @@ static const struct mfx_option longopts[] =
     {"crp-lzma-lc",      0x31, 0, 813},
     {"crp-lzma-ds",      0x31, 0, 814},
     {"crp-lzma-fb",      0x31, 0, 816},
+    {"crp-zlib-ml",      0x31, 0, 821},
+    {"crp-zlib-wb",      0x31, 0, 822},
+    {"crp-zlib-st",      0x31, 0, 823},
     // [deprecated - only for compatibility with UPX 2.0x]
     {"crp-ms",           0x31, 0, 807},
 

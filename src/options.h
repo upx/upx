@@ -87,7 +87,8 @@ struct options_t {
     struct crp_t {
         lzma_compress_config_t  crp_lzma;
         ucl_compress_config_t   crp_ucl;
-        void reset() { crp_lzma.reset(); crp_ucl.reset(); }
+        zlib_compress_config_t  crp_zlib;
+        void reset() { crp_lzma.reset(); crp_ucl.reset(); crp_zlib.reset(); }
     };
     crp_t crp;
 
