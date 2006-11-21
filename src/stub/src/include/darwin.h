@@ -104,11 +104,16 @@ typedef unsigned int nrv_uint;
     ((type) ((uintptr_t) (var)))
 
 
-#if (ACC_CC_GNUC >= 0x030300)
-#  define __attribute_cdecl     __attribute__((__cdecl__, __used__))
-#elif (ACC_CC_GNUC >= 0x020700)
-#  define __attribute_cdecl     __attribute__((__cdecl__))
-#else
+#if !defined(__attribute_cdecl)
+#if defined(__i386__)
+#  if (ACC_CC_GNUC >= 0x030300)
+#    define __attribute_cdecl   __attribute__((__cdecl__, __used__))
+#  elif (ACC_CC_GNUC >= 0x020700)
+#    define __attribute_cdecl   __attribute__((__cdecl__))
+#  endif
+#endif
+#endif
+#if !defined(__attribute_cdecl)
 #  define __attribute_cdecl
 #endif
 

@@ -223,7 +223,7 @@ type name(type1 arg1) \
     return (type) __res; \
 }
 
-#define _syscall1nr(name,type1,arg1) \
+#define _syscall1noreturn(name,type1,arg1) \
 void __attribute__((__noreturn__,__nothrow__)) name(type1 arg1) \
 { \
     if (Z1(__NR_##name)) { \
@@ -329,7 +329,7 @@ static inline _syscall1(int,adjtimex,struct timex *,ntx)
 static inline _syscall1(void *,brk,void *,high)
 static inline _syscall1(int,close,int,fd)
 static inline _syscall3(int,execve,const char *,file,char **,argv,char **,envp)
-static inline _syscall1nr(_exit,int,exitcode)
+static inline _syscall1noreturn(_exit,int,exitcode)
 static inline _syscall3(int,fcntl,int,fd,int,cmd,long,arg)
 static inline _syscall0(pid_t,fork)
 static inline _syscall2(int,ftruncate,int,fd,size_t,len)
@@ -554,11 +554,16 @@ struct p_info       // 12-byte packed program header follows stub loader
     ((type) ((uintptr_t) (var)))
 
 
-#if (ACC_CC_GNUC >= 0x030300)
-#  define __attribute_cdecl     __attribute__((__cdecl__, __used__))
-#elif (ACC_CC_GNUC >= 0x020700)
-#  define __attribute_cdecl     __attribute__((__cdecl__))
-#else
+#if !defined(__attribute_cdecl)
+#if defined(__i386__)
+#  if (ACC_CC_GNUC >= 0x030300)
+#    define __attribute_cdecl   __attribute__((__cdecl__, __used__))
+#  elif (ACC_CC_GNUC >= 0x020700)
+#    define __attribute_cdecl   __attribute__((__cdecl__))
+#  endif
+#endif
+#endif
+#if !defined(__attribute_cdecl)
 #  define __attribute_cdecl
 #endif
 
