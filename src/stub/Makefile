@@ -162,8 +162,8 @@ endef
 # default tools
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
 ##tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-deflate
-tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-lzma
-##tc.default.bin2h-c    = $(call tc,bin2h) --compress=none
+##tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-lzma
+tc.default.bin2h-c    = $(call tc,bin2h) --compress=none
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
@@ -648,6 +648,7 @@ i386-win32.pe.h : $(srcdir)/src/$$T.S
 
 m68k-atari.tos.h : tc_list = m68k-atari.tos default
 m68k-atari.tos.h : tc_bfdname = elf32-m68k
+m68k-atari.tos.h : tc_objdump_disasm_options = -m m68k:68040
 
 tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -m68000 -malign-int -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
