@@ -1,4 +1,4 @@
-/* linux.hh -- common stuff the the Linux stub loaders
+/* linux.h -- common stuff for the Linux stub loaders
 
    This file is part of the UPX executable compressor.
 
@@ -224,7 +224,7 @@ type name(type1 arg1) \
 }
 
 #define _syscall1nr(name,type1,arg1) \
-void __attribute__((__noreturn__)) name(type1 arg1) \
+void __attribute__((__noreturn__,__nothrow__)) name(type1 arg1) \
 { \
     if (Z1(__NR_##name)) { \
         if (Z0(arg1)) { \
@@ -331,8 +331,8 @@ static inline _syscall1(int,close,int,fd)
 static inline _syscall3(int,execve,const char *,file,char **,argv,char **,envp)
 static inline _syscall1nr(_exit,int,exitcode)
 static inline _syscall3(int,fcntl,int,fd,int,cmd,long,arg)
-static inline _syscall2(int,ftruncate,int,fd,size_t,len)
 static inline _syscall0(pid_t,fork)
+static inline _syscall2(int,ftruncate,int,fd,size_t,len)
 static inline _syscall0(pid_t,getpid)
 static inline _syscall2(int,gettimeofday,struct timeval *,tv,void *,tz)
 static inline _syscall3(off_t,lseek,int,fd,off_t,offset,int,whence)
@@ -352,12 +352,13 @@ static inline _syscall1(int,unlink,const char *,file)
 
 void *brk(void *);
 int close(int);
+void exit(int) __attribute__((__noreturn__,__nothrow__));
 void *mmap(void *, size_t, int, int, int, off_t);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
 int open(char const *, unsigned, unsigned);
 ssize_t read(int, void *, size_t);
-void exit(int) __attribute__((noreturn));
+ssize_t write(int, void const *, size_t);
 
 #endif  /*}*/
 
@@ -471,6 +472,7 @@ typedef struct
 #define AT_PHENT        4
 #define AT_PHNUM        5
 #define AT_PAGESZ       6
+#define AT_BASE         7
 #define AT_ENTRY        9
 
 #define ET_EXEC         2
@@ -494,12 +496,22 @@ typedef struct
 
 #define UPX_MAGIC_LE32  0x21585055          // "UPX!"
 
+#if 1
 // patch constants for our loader (le32 format)
-#define UPX1            0x31585055          // "UPX1"
+//#define UPX1            0x31585055          // "UPX1"
 #define UPX2            0x32585055          // "UPX2"
 #define UPX3            0x33585055          // "UPX4"
 #define UPX4            0x34585055          // "UPX4"
-#define UPX5            0x35585055          // "UPX5"
+//#define UPX5            0x35585055          // "UPX5"
+#else
+// transform into relocations when using ElfLinker
+extern const unsigned UPX2;
+extern const unsigned UPX3;
+extern const unsigned UPX4;
+#define UPX2    ((unsigned) (const void *) &UPX2)
+#define UPX3    ((unsigned) (const void *) &UPX3)
+#define UPX4    ((unsigned) (const void *) &UPX4)
+#endif
 
 
 typedef int nrv_int;

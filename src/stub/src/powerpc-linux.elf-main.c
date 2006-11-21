@@ -32,6 +32,7 @@
 
 #include "include/linux.h"
 
+
 /*************************************************************************
 // configuration section
 **************************************************************************/
@@ -46,8 +47,6 @@
 /*************************************************************************
 // "file" util
 **************************************************************************/
-
-extern void exit (int __status) __attribute__ ((__nothrow__)) __attribute__ ((__noreturn__));
 
 typedef struct {
     size_t size;  // must be first to match size[0] uncompressed size

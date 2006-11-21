@@ -234,6 +234,7 @@ tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -265,6 +266,7 @@ tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -294,6 +296,7 @@ tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -390,6 +393,7 @@ tmp/i386-bsd.syscall.o: $(srcdir)/src/$$T.S
 tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # info: we use the tc settings from i386-linux.elf
@@ -412,6 +416,7 @@ tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -440,6 +445,7 @@ tmp/i386-bsd.elf.execve-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/i386-bsd.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
@@ -523,6 +529,7 @@ tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -550,6 +557,7 @@ tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
@@ -581,6 +589,7 @@ tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -608,6 +617,7 @@ tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -712,6 +722,7 @@ tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -743,6 +754,7 @@ tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -751,12 +763,10 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 ifneq ($(strip $(STUBS)),)
 # FIXME: we want a dependency-only prerequisite here
-$(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
-$(STUBS): $(top_srcdir)/src/stub/scripts/bin2h.py
+$(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST) $(top_srcdir)/src/stub/scripts/bin2h.py
 endif
 -include tmp/*.d
 
-.DELETE_ON_ERROR: %.h %.o
 ifneq ($(strip $(STUBS)),)
 .DELETE_ON_ERROR: $(STUBS)
 endif

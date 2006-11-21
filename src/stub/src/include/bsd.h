@@ -1,4 +1,4 @@
-/* BSD.h -- common stuff to the BSD stub loaders
+/* bsd.h -- common stuff for the BSD stub loaders
 
    This file is part of the UPX executable compressor.
 
@@ -130,7 +130,7 @@ struct timespec {
 #define MAP_PRIVATE     0x02
 #define MAP_FIXED       0x10
 #define MAP_ANONYMOUS   0x1000  /* differs from Linux */
-#define MAP_DENYWRITE 0x0  /* does not exist on BSD ? */
+#define MAP_DENYWRITE   0x0     /* does not exist on BSD ? */
 
 
 /*************************************************************************
@@ -143,26 +143,27 @@ struct timespec {
 // use optimized assembly statements to further decrease the size.
 **************************************************************************/
 
-extern void *brk(void *);
-extern int close(int);
-extern void *mmap(void *, size_t, int, int, int, unsigned);
-extern int munmap(void *, size_t);
-extern int mprotect(void const *, size_t, int);
-extern int open(char const *, unsigned, unsigned);
-extern ssize_t read(int, void *, size_t);
-extern ssize_t write(int, char const *, size_t);
-void exit(int) __attribute__((noreturn));
+int access(char const *,int);
+int execve(char const *,char const *const *,char const *const *);
+int fcntl(int,int,long);
+int ftruncate(int,size_t);
+pid_t fork(void);
+pid_t getpid(void);
+int gettimeofday(struct timeval *,void *);
+int nanosleep(struct timespec const *,struct timespec *);
+pid_t waitpid(pid_t,int *,int);
+int unlink(char const *);
 
-extern int access(char const *,int);
-extern int execve(char const *,char const *const *,char const *const *);
-extern int fcntl(int,int,long);
-extern int ftruncate(int,size_t);
-extern pid_t fork(void);
-extern pid_t getpid(void);
-extern int gettimeofday(struct timeval *,void *);
-extern int nanosleep(struct timespec const *,struct timespec *);
-extern pid_t waitpid(pid_t,int *,int);
-extern int unlink(char const *);
+void *brk(void *);
+int close(int);
+void exit(int) __attribute__((__noreturn__,__nothrow__));
+void *mmap(void *, size_t, int, int, int, off_t);
+int munmap(void *, size_t);
+int mprotect(void const *, size_t, int);
+int open(char const *, unsigned, unsigned);
+ssize_t read(int, void *, size_t);
+ssize_t write(int, void const *, size_t);
+
 
 /*************************************************************************
 // <elf.h>
@@ -297,12 +298,22 @@ typedef struct
 
 #define UPX_MAGIC_LE32  0x21585055          // "UPX!"
 
+#if 1
 // patch constants for our loader (le32 format)
-#define UPX1            0x31585055          // "UPX1"
+//#define UPX1            0x31585055          // "UPX1"
 #define UPX2            0x32585055          // "UPX2"
 #define UPX3            0x33585055          // "UPX4"
 #define UPX4            0x34585055          // "UPX4"
-#define UPX5            0x35585055          // "UPX5"
+//#define UPX5            0x35585055          // "UPX5"
+#else
+// transform into relocations when using ElfLinker
+extern const unsigned UPX2;
+extern const unsigned UPX3;
+extern const unsigned UPX4;
+#define UPX2    ((unsigned) (const void *) &UPX2)
+#define UPX3    ((unsigned) (const void *) &UPX3)
+#define UPX4    ((unsigned) (const void *) &UPX4)
+#endif
 
 
 typedef int nrv_int;

@@ -27,28 +27,10 @@
 
    John F. Reiser
    <jreiser@users.sourceforge.net>
-*/
+ */
 
-typedef long ssize_t;
-typedef unsigned long size_t;
-typedef size_t uintptr_t;
-__extension__ typedef unsigned long long off_t;
-typedef unsigned char nrv_byte;
-typedef unsigned int nrv_uint;
 
-#define UPX_MAGIC_LE32  0x21585055          // "UPX!"
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE -PAGE_MASK
-#define O_RDONLY 0
-
-int close(int);
-void exit(int) __attribute__((__noreturn__));
-int mprotect(void *, size_t, int);
-int open(char const *, unsigned, unsigned);
-ssize_t pread(int, void *, size_t, unsigned);
-
-#define CONST_CAST(type, var) \
-    ((type) ((uintptr_t) (var)))
+#include "include/darwin.h"
 
 
 /*************************************************************************
@@ -58,6 +40,7 @@ ssize_t pread(int, void *, size_t, unsigned);
 // In order to make it much easier to move this code at runtime and execute
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
+
 
 /*************************************************************************
 // "file" util
@@ -101,6 +84,7 @@ err_exit(int a)
     exit(127);
 }
 #endif  //}
+
 
 /*************************************************************************
 // UPX & NRV stuff

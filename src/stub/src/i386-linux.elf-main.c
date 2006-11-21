@@ -31,6 +31,7 @@
 
 
 #include "include/linux.h"
+void *mmap(void *, size_t, int, int, int, off_t);
 
 
 /*************************************************************************
@@ -184,8 +185,6 @@ do_brk(void *addr)
     return brk(addr);
 }
 
-extern void *mmap(void *addr, size_t len,
-    int prot, int flags, int fd, off_t offset);
 
 /*************************************************************************
 // UPX & NRV stuff
