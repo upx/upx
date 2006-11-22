@@ -237,11 +237,23 @@ void check_options(int i, int argc)
 {
     assert(i <= argc);
 
+    if (opt->cmd != CMD_COMPRESS)
+    {
+        // invalidate compression options
+        opt->method = 0;
+        opt->level = 0;
+        opt->exact = 0;
+        opt->small = 0;
+        opt->crp.reset();
+    }
+
     // set default overlay action
     if (!(opt->cmd == CMD_COMPRESS || opt->cmd == CMD_DECOMPRESS))
         opt->overlay = opt->COPY_OVERLAY;
     else if (opt->overlay < 0)
         opt->overlay = opt->COPY_OVERLAY;
+
+    check_not_both(opt->exact, opt->overlay == opt->STRIP_OVERLAY, "--exact", "--overlay=strip");
 
     // set default backup option
     if (opt->backup < 0)
@@ -1419,16 +1431,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
     default:
         /* ??? */
         break;
-    }
-
-    if (opt->cmd != CMD_COMPRESS)
-    {
-        // invalidate compression options
-        opt->method = 0;
-        opt->level = 0;
-        opt->exact = 0;
-        opt->small = 0;
-        opt->crp.reset();
     }
 
     /* check options */
