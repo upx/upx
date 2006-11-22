@@ -765,7 +765,7 @@ static int do_option(int optc, const char *arg)
     case 631:
         opt->win32_pe.compress_icons = 1;
         if (mfx_optarg && mfx_optarg[0])
-            getoptvar(&opt->win32_pe.compress_icons, 0, 2, arg);
+            getoptvar(&opt->win32_pe.compress_icons, 0, 3, arg);
         //printf("compress_icons: %d\n", opt->win32_pe.compress_icons);
         break;
     case 632:

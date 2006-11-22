@@ -1399,7 +1399,8 @@ void PeFile::processResources(Resource *res)
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0)
                 iconsin1stdir = get_le16(ibuf + res->offs() + 4);
 
-    bool compress_icon = false, compress_idir = false;
+    bool compress_icon = opt->win32_pe.compress_icons == 3;
+    bool compress_idir = false;
     unsigned iconcnt = 0;
 
     // some statistics

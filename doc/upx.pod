@@ -875,6 +875,7 @@ Extra options available for this executable format:
   --compress-icons=1  Compress all but the first icon.
   --compress-icons=2  Compress all icons which are not in the
                       first icon directory. [DEFAULT]
+  --compress-icons=3  Compress all icons.
 
   --compress-resources=0  Don't compress any resources at all.
 
