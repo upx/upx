@@ -40,8 +40,8 @@
 #if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
 #  undef HAVE_UTIME_H /* this pulls in <windows.h> */
 #endif
-// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__)
+// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
+#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(_WIN32)
 #  undef HAVE_CHMOD
 #  undef HAVE_CHOWN
 #  undef HAVE_LSTAT
