@@ -577,6 +577,11 @@ unsigned get_ratio(unsigned u_len, unsigned c_len)
 
 extern "C" {
 
+// FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc*.deb packages)
+#if 1 && (ACC_ARCH_ARM) && defined(__pe__)
+int dup(int fd) { UNUSED(fd); return -1; }
+#endif
+
 #if defined(__DJGPP__)
 int _is_executable(const char *, int, const char *)
 {
