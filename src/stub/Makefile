@@ -168,6 +168,7 @@ tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
+tc.default.xstrip     = python $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
@@ -191,7 +192,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
-	$(call tc,objcopy) -R .shstrtab -R .strtab -R .symtab $1
+	$(call tc,xstrip) $1
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
