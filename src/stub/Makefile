@@ -191,6 +191,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
+	$(call tc,objcopy) -R .shstrtab -R .strtab -R .symtab $1
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
