@@ -146,57 +146,16 @@ def w_data_nasm(w, data):
     w_eol(w, i)
 
 
-def encode_compressed_stub_header(method, idata, odata):
-    assert 0 < method <= 255
-    if len(idata) <= 65535:
-        h = "UPX#" + struct.pack("<BHH", method, len(idata), len(odata))
-        assert len(h) == 9
-    else:
-        h = "UPX#" + "\x00" + struct.pack("<BII", method, len(idata), len(odata))
-        assert len(h) == 14
-    ##assert len(h) + len(odata) < len(idata), ("stub compression failed", len(h), len(odata), len(idata))
-    return h
-
-
 # /***********************************************************************
-# //
+# // write stub
 # ************************************************************************/
 
-def write_stub(w, idata, method_index):
-    method = opts.methods[method_index]
-    # compress
-    if method == 0:
-        odata = idata
-    elif method == 14: # M_LZMA:
-        import pylzma
-        odata = pylzma.compress(idata, eos=0)
-        ## FIXME: internal pylzma-0.3.0 error
-        ##assert pylzma.decompress(odata, maxlength=len(idata)) == idata
-        # recode lzma-header
-        prop = ord(odata[0])
-        pb = (prop / 9) / 5; lp = (prop / 9) % 5; lc = prop % 9
-        h = chr(((lc + lp) << 3) | pb) + chr((lp << 4) | lc)
-        odata = h + odata[5:]
-        # encode upx stub header
-        odata = encode_compressed_stub_header(method, idata, odata) + odata
-    elif method == 15: # M_DEFLATE:
-        odata = zlib.compress(idata, 9)
-        # strip zlib-header and zlib-trailer (adler32)
-        odata = odata[2:-4]
-        assert zlib.decompress(odata, -15) == idata
-        # encode upx stub header
-        odata = encode_compressed_stub_header(method, idata, odata) + odata
-    else:
-        raise Exception, ("invalid method", method, opts.methods)
-    if 0 and len(odata) >= len(idata):
-        odata = idata
-        method = 0
-    assert len(odata) <= len(idata), "stub compression failed"
-
-    if len(opts.methods) > 1:
+def write_stub(w, odata, method_index, methods):
+    method = methods[method_index]
+    if len(methods) > 1:
         if method_index == 0:
             w("#if (%s == %d)\n\n" % (opts.mname, method))
-        elif method_index < len(opts.methods) - 1:
+        elif method_index < len(methods) - 1:
             w("\n#elif (%s == %d)\n\n" % (opts.mname, method))
         else:
             w("\n#else\n\n")
@@ -217,9 +176,57 @@ def write_stub(w, idata, method_index):
         if opts.mode == "c":
             w("};\n")
 
-    if len(opts.methods) > 1:
-        if method_index == len(opts.methods) - 1:
+    if len(methods) > 1:
+        if method_index == len(methods) - 1:
             w("\n#endif\n")
+
+
+# /***********************************************************************
+# // compress stub
+# ************************************************************************/
+
+def encode_compressed_stub_header(method, idata, odata):
+    assert 0 < method <= 255
+    if len(idata) <= 65535:
+        h = "UPX#" + struct.pack("<BHH", method, len(idata), len(odata))
+        assert len(h) == 9
+    else:
+        h = "UPX#" + "\x00" + struct.pack("<BII", method, len(idata), len(odata))
+        assert len(h) == 14
+    ##assert len(h) + len(odata) < len(idata), ("stub compression failed", len(h), len(odata), len(idata))
+    return h
+
+
+def compress_stub(method, idata):
+    # compress
+    if method == 0:
+        return 0, idata
+    elif method == 14: # M_LZMA
+        import pylzma
+        odata = pylzma.compress(idata, eos=0)
+        ## FIXME: internal pylzma-0.3.0 error
+        ##assert pylzma.decompress(odata, maxlength=len(idata)) == idata
+        # recode lzma-header
+        prop = ord(odata[0])
+        pb = (prop / 9) / 5; lp = (prop / 9) % 5; lc = prop % 9
+        h = chr(((lc + lp) << 3) | pb) + chr((lp << 4) | lc)
+        odata = h + odata[5:]
+        # encode upx stub header
+        odata = encode_compressed_stub_header(method, idata, odata) + odata
+    elif method == 15: # M_DEFLATE
+        odata = zlib.compress(idata, 9)
+        # strip zlib-header and zlib-trailer (adler32)
+        odata = odata[2:-4]
+        assert zlib.decompress(odata, -15) == idata
+        # encode upx stub header
+        odata = encode_compressed_stub_header(method, idata, odata) + odata
+    else:
+        raise Exception, ("invalid method", method, opts.methods)
+    if 1 and len(odata) >= len(idata):
+        # not compressible
+        return 0, idata
+    assert len(odata) <= len(idata), "stub compression failed"
+    return method, odata
 
 
 # /***********************************************************************
@@ -273,6 +280,23 @@ def main(argv):
         assert re.search(r"^[a-zA-Z]", opts.ident), opts.ident
         assert not re.search(r"[^a-zA-Z0-9_]", opts.ident), opts.ident
 
+    # compress stubs
+    # (process in reverse order so that incompressible do not get sorted first)
+    mdata, mdata_odata = [], {}
+    assert len(opts.methods) >= 1
+    r_methods = opts.methods[:]
+    r_methods.reverse()
+    for method in r_methods:
+        method, odata = compress_stub(method, idata)
+        if mdata_odata.has_key(method):
+            assert mdata_odata[method] == odata
+        else:
+            mdata_odata[method] = odata
+            mdata.append(method)
+    assert len(mdata) >= 1
+    mdata.reverse()
+    ##print opts.methods, [(i, len(mdata_odata[i])) for i in mdata]
+
     # write ofile
     if opts.dry_run:
         ofp = None
@@ -287,9 +311,8 @@ def main(argv):
     if opts.verbose >= 0:
         if opts.mode == "c":
             w_header_c(w, ifile, ofile, len(idata))
-    assert len(opts.methods) >= 1
-    for i in range(len(opts.methods)):
-        write_stub(w, idata, i)
+    for i in range(len(mdata)):
+        write_stub(w, mdata_odata[mdata[i]], i, mdata)
     if ofp:
         if ofp is sys.stdout:
             ofp.flush()
