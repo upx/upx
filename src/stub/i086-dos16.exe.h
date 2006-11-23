@@ -1,4 +1,5 @@
-/* i086-dos16.exe.h -- created from i086-dos16.exe.bin, 19030 (0x4a56) bytes
+/* i086-dos16.exe.h
+   created from i086-dos16.exe.bin, 19030 (0x4a56) bytes
 
    This file is part of the UPX executable compressor.
 

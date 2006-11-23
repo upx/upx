@@ -1,4 +1,5 @@
-/* i386-linux.elf.shell-fold.h -- created from i386-linux.elf.shell-fold.bin, 1194 (0x4aa) bytes
+/* i386-linux.elf.shell-fold.h
+   created from i386-linux.elf.shell-fold.bin, 1194 (0x4aa) bytes
 
    This file is part of the UPX executable compressor.
 

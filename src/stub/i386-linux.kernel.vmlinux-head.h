@@ -1,4 +1,5 @@
-/* i386-linux.kernel.vmlinux-head.h -- created from i386-linux.kernel.vmlinux-head.bin, 39 (0x27) bytes
+/* i386-linux.kernel.vmlinux-head.h
+   created from i386-linux.kernel.vmlinux-head.bin, 39 (0x27) bytes
 
    This file is part of the UPX executable compressor.
 

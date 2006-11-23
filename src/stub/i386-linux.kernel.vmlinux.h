@@ -1,4 +1,5 @@
-/* i386-linux.kernel.vmlinux.h -- created from i386-linux.kernel.vmlinux.bin, 34465 (0x86a1) bytes
+/* i386-linux.kernel.vmlinux.h
+   created from i386-linux.kernel.vmlinux.bin, 34465 (0x86a1) bytes
 
    This file is part of the UPX executable compressor.
 

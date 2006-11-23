@@ -1,4 +1,5 @@
-/* i386-linux.elf-entry.h -- created from i386-linux.elf-entry.bin, 52744 (0xce08) bytes
+/* i386-linux.elf-entry.h
+   created from i386-linux.elf-entry.bin, 52744 (0xce08) bytes
 
    This file is part of the UPX executable compressor.
 

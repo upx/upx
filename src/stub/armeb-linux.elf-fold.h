@@ -1,4 +1,5 @@
-/* armeb-linux.elf-fold.h -- created from armeb-linux.elf-fold.bin, 2108 (0x83c) bytes
+/* armeb-linux.elf-fold.h
+   created from armeb-linux.elf-fold.bin, 2108 (0x83c) bytes
 
    This file is part of the UPX executable compressor.
 

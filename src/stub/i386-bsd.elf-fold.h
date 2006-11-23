@@ -1,4 +1,5 @@
-/* i386-bsd.elf-fold.h -- created from i386-bsd.elf-fold.bin, 1789 (0x6fd) bytes
+/* i386-bsd.elf-fold.h
+   created from i386-bsd.elf-fold.bin, 1789 (0x6fd) bytes
 
    This file is part of the UPX executable compressor.
 

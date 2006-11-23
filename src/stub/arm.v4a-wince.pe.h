@@ -1,4 +1,5 @@
-/* arm.v4a-wince.pe.h -- created from arm.v4a-wince.pe.bin, 19616 (0x4ca0) bytes
+/* arm.v4a-wince.pe.h
+   created from arm.v4a-wince.pe.bin, 19616 (0x4ca0) bytes
 
    This file is part of the UPX executable compressor.
 

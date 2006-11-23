@@ -1,4 +1,5 @@
-/* i386-linux.elf.interp-fold.h -- created from i386-linux.elf.interp-fold.bin, 1519 (0x5ef) bytes
+/* i386-linux.elf.interp-fold.h
+   created from i386-linux.elf.interp-fold.bin, 1519 (0x5ef) bytes
 
    This file is part of the UPX executable compressor.
 

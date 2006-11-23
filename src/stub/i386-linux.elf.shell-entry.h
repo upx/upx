@@ -1,4 +1,5 @@
-/* i386-linux.elf.shell-entry.h -- created from i386-linux.elf.shell-entry.bin, 41479 (0xa207) bytes
+/* i386-linux.elf.shell-entry.h
+   created from i386-linux.elf.shell-entry.bin, 41479 (0xa207) bytes
 
    This file is part of the UPX executable compressor.
 

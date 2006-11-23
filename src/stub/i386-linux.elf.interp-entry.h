@@ -1,4 +1,5 @@
-/* i386-linux.elf.interp-entry.h -- created from i386-linux.elf.interp-entry.bin, 64126 (0xfa7e) bytes
+/* i386-linux.elf.interp-entry.h
+   created from i386-linux.elf.interp-entry.bin, 64126 (0xfa7e) bytes
 
    This file is part of the UPX executable compressor.
 

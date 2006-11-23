@@ -1,4 +1,5 @@
-/* i386-linux.kernel.vmlinuz.h -- created from i386-linux.kernel.vmlinuz.bin, 35988 (0x8c94) bytes
+/* i386-linux.kernel.vmlinuz.h
+   created from i386-linux.kernel.vmlinuz.bin, 35988 (0x8c94) bytes
 
    This file is part of the UPX executable compressor.
 

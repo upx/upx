@@ -1,4 +1,5 @@
-/* mipsel.r3000-ps1.h -- created from mipsel.r3000-ps1.bin, 26795 (0x68ab) bytes
+/* mipsel.r3000-ps1.h
+   created from mipsel.r3000-ps1.bin, 26795 (0x68ab) bytes
 
    This file is part of the UPX executable compressor.
 

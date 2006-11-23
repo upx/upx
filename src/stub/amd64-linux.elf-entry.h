@@ -1,4 +1,5 @@
-/* amd64-linux.elf-entry.h -- created from amd64-linux.elf-entry.bin, 12687 (0x318f) bytes
+/* amd64-linux.elf-entry.h
+   created from amd64-linux.elf-entry.bin, 12687 (0x318f) bytes
 
    This file is part of the UPX executable compressor.
 

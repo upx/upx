@@ -32,9 +32,10 @@ import getopt, os, re, struct, sys, zlib
 
 
 class opts:
-    compress = None
     dry_run = 0
     ident = None
+    methods = [ 0 ]
+    mname = "STUB_COMPRESS_METHOD"
     mode = "c"
     verbose = 0
 
@@ -44,7 +45,7 @@ class opts:
 # ************************************************************************/
 
 def w_header_c(w, ifile, ofile, n):
-    w("/* %s -- created from %s, %d (0x%x) bytes\n" % (os.path.basename(ofile), os.path.basename(ifile), n, n))
+    w("/* %s\n   created from %s, %d (0x%x) bytes\n" % (os.path.basename(ofile), os.path.basename(ifile), n, n))
     w("""\n\
    This file is part of the UPX executable compressor.
 
@@ -153,8 +154,72 @@ def encode_compressed_stub_header(method, idata, odata):
     else:
         h = "UPX#" + "\x00" + struct.pack("<BII", method, len(idata), len(odata))
         assert len(h) == 14
-    assert len(h) + len(odata) < len(idata), "compression failed"
+    ##assert len(h) + len(odata) < len(idata), ("stub compression failed", len(h), len(odata), len(idata))
     return h
+
+
+# /***********************************************************************
+# //
+# ************************************************************************/
+
+def write_stub(w, idata, method_index):
+    method = opts.methods[method_index]
+    # compress
+    if method == 0:
+        odata = idata
+    elif method == 14: # M_LZMA:
+        import pylzma
+        odata = pylzma.compress(idata, eos=0)
+        ## FIXME: internal pylzma-0.3.0 error
+        ##assert pylzma.decompress(odata, maxlength=len(idata)) == idata
+        # recode lzma-header
+        prop = ord(odata[0])
+        pb = (prop / 9) / 5; lp = (prop / 9) % 5; lc = prop % 9
+        h = chr(((lc + lp) << 3) | pb) + chr((lp << 4) | lc)
+        odata = h + odata[5:]
+        # encode upx stub header
+        odata = encode_compressed_stub_header(method, idata, odata) + odata
+    elif method == 15: # M_DEFLATE:
+        odata = zlib.compress(idata, 9)
+        # strip zlib-header and zlib-trailer (adler32)
+        odata = odata[2:-4]
+        assert zlib.decompress(odata, -15) == idata
+        # encode upx stub header
+        odata = encode_compressed_stub_header(method, idata, odata) + odata
+    else:
+        raise Exception, ("invalid method", method, opts.methods)
+    if 0 and len(odata) >= len(idata):
+        odata = idata
+        method = 0
+    assert len(odata) <= len(idata), "stub compression failed"
+
+    if len(opts.methods) > 1:
+        if method_index == 0:
+            w("#if (%s == %d)\n\n" % (opts.mname, method))
+        elif method_index < len(opts.methods) - 1:
+            w("\n#elif (%s == %d)\n\n" % (opts.mname, method))
+        else:
+            w("\n#else\n\n")
+
+    if opts.ident:
+        if opts.mode == "c":
+            w_checksum_c(w, opts.ident.upper(), odata)
+            w("unsigned char %s[%d] = {\n" % (opts.ident, len(odata)))
+    if opts.mode == "c":
+        w_data_c(w, odata)
+    elif opts.mode == "gas":
+        w_data_gas(w, odata)
+    elif opts.mode == "nasm":
+        w_data_nasm(w, odata)
+    else:
+        assert 0, opts.mode
+    if opts.ident:
+        if opts.mode == "c":
+            w("};\n")
+
+    if len(opts.methods) > 1:
+        if method_index == len(opts.methods) - 1:
+            w("\n#endif\n")
 
 
 # /***********************************************************************
@@ -170,7 +235,7 @@ def main(argv):
         if 0: pass
         elif opt in ["-q", "--quiet"]: opts.verbose = opts.verbose - 1
         elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
-        elif opt in ["--compress"]: opts.compress = optarg
+        elif opt in ["--compress"]: opts.methods = map(int, optarg.split(","))
         elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
         elif opt in ["--ident"]: opts.ident = optarg
         elif opt in ["--mode"]: opts.mode = optarg.lower()
@@ -190,44 +255,13 @@ def main(argv):
         sys.exit(1)
 
     # read ifile
+    ifile = os.path.normpath(ifile)
     ifp = open(ifile, "rb")
     idata = ifp.read()
     ifp.close()
     assert len(idata) == st.st_size
 
-    # compress
-    if opts.compress in [None, "none"]:
-        odata = idata
-    elif opts.compress in ["zlib"]:
-        # zlib with header and adler32 checksum
-        odata = zlib.compress(idata, 9)
-        assert zlib.decompress(odata) == idata
-    elif opts.compress in ["upx-stub-deflate"]:
-        odata = zlib.compress(idata, 9)
-        # strip zlib-header and zlib-trailer (adler32)
-        odata = odata[2:-4]
-        assert zlib.decompress(odata, -15) == idata
-        # encode upx stub header
-        M_DEFLATE = 15
-        odata = encode_compressed_stub_header(M_DEFLATE, idata, odata) + odata
-    elif opts.compress in ["upx-stub-lzma"]:
-        import pylzma
-        odata = pylzma.compress(idata, eos=0)
-        ## FIXME: internal pylzma-0.3.0 error
-        ##assert pylzma.decompress(odata, maxlength=len(idata)) == idata
-        # strip lzma-header
-        prop = ord(odata[0])
-        pb = (prop / 9) / 5; lp = (prop / 9) % 5; lc = prop % 9
-        h = chr(((lc + lp) << 3) | pb) + chr((lp << 4) | lc)
-        odata = h + odata[5:]
-        # encode upx stub header
-        M_LZMA = 14
-        odata = encode_compressed_stub_header(M_LZMA, idata, odata) + odata
-    else:
-        raise Exception, ("invalid --compress=", opts.compress)
-    assert len(odata) <= len(idata), "compression failed"
-
-    # ident
+    # opts.ident
     if opts.ident in ["auto", "auto-stub"]:
         s = os.path.basename(ifile)
         s = re.sub(r"\.(bin|out)$", "", s)
@@ -253,21 +287,9 @@ def main(argv):
     if opts.verbose >= 0:
         if opts.mode == "c":
             w_header_c(w, ifile, ofile, len(idata))
-    if opts.ident:
-        if opts.mode == "c":
-            w_checksum_c(w, opts.ident.upper(), odata)
-            w("unsigned char %s[%d] = {\n" % (opts.ident, len(odata)))
-    if opts.mode == "c":
-        w_data_c(w, odata)
-    elif opts.mode == "gas":
-        w_data_gas(w, odata)
-    elif opts.mode == "nasm":
-        w_data_nasm(w, odata)
-    else:
-        assert 0, opts.mode
-    if opts.ident:
-        if opts.mode == "c":
-            w("};\n")
+    assert len(opts.methods) >= 1
+    for i in range(len(opts.methods)):
+        write_stub(w, idata, i)
     if ofp:
         if ofp is sys.stdout:
             ofp.flush()

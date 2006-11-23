@@ -1,4 +1,5 @@
-/* powerpc-linux.elf-entry.h -- created from powerpc-linux.elf-entry.bin, 10127 (0x278f) bytes
+/* powerpc-linux.elf-entry.h
+   created from powerpc-linux.elf-entry.bin, 10127 (0x278f) bytes
 
    This file is part of the UPX executable compressor.
 

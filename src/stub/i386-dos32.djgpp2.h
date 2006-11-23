@@ -1,4 +1,5 @@
-/* i386-dos32.djgpp2.h -- created from i386-dos32.djgpp2.bin, 33548 (0x830c) bytes
+/* i386-dos32.djgpp2.h
+   created from i386-dos32.djgpp2.bin, 33548 (0x830c) bytes
 
    This file is part of the UPX executable compressor.
 

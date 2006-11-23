@@ -1,4 +1,5 @@
-/* i386-dos32.watcom.le.h -- created from i386-dos32.watcom.le.bin, 35309 (0x89ed) bytes
+/* i386-dos32.watcom.le.h
+   created from i386-dos32.watcom.le.bin, 35309 (0x89ed) bytes
 
    This file is part of the UPX executable compressor.
 

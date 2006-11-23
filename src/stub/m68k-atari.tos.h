@@ -1,4 +1,5 @@
-/* m68k-atari.tos.h -- created from m68k-atari.tos.bin, 25878 (0x6516) bytes
+/* m68k-atari.tos.h
+   created from m68k-atari.tos.bin, 25878 (0x6516) bytes
 
    This file is part of the UPX executable compressor.
 

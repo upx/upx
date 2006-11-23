@@ -1,4 +1,5 @@
-/* amd64-linux.elf-fold.h -- created from amd64-linux.elf-fold.bin, 1775 (0x6ef) bytes
+/* amd64-linux.elf-fold.h
+   created from amd64-linux.elf-fold.bin, 1775 (0x6ef) bytes
 
    This file is part of the UPX executable compressor.
 

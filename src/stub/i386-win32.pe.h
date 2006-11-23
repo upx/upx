@@ -1,4 +1,5 @@
-/* i386-win32.pe.h -- created from i386-win32.pe.bin, 42482 (0xa5f2) bytes
+/* i386-win32.pe.h
+   created from i386-win32.pe.bin, 42482 (0xa5f2) bytes
 
    This file is part of the UPX executable compressor.
 

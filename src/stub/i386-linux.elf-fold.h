@@ -1,4 +1,5 @@
-/* i386-linux.elf-fold.h -- created from i386-linux.elf-fold.bin, 1691 (0x69b) bytes
+/* i386-linux.elf-fold.h
+   created from i386-linux.elf-fold.bin, 1691 (0x69b) bytes
 
    This file is part of the UPX executable compressor.
 

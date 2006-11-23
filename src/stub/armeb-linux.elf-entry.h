@@ -1,4 +1,5 @@
-/* armeb-linux.elf-entry.h -- created from armeb-linux.elf-entry.bin, 19529 (0x4c49) bytes
+/* armeb-linux.elf-entry.h
+   created from armeb-linux.elf-entry.bin, 19529 (0x4c49) bytes
 
    This file is part of the UPX executable compressor.
 

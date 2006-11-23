@@ -1,4 +1,5 @@
-/* arm-linux.elf-entry.h -- created from arm-linux.elf-entry.bin, 19530 (0x4c4a) bytes
+/* arm-linux.elf-entry.h
+   created from arm-linux.elf-entry.bin, 19530 (0x4c4a) bytes
 
    This file is part of the UPX executable compressor.
 

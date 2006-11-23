@@ -1,4 +1,5 @@
-/* i386-dos32.tmt.h -- created from i386-dos32.tmt.bin, 34553 (0x86f9) bytes
+/* i386-dos32.tmt.h
+   created from i386-dos32.tmt.bin, 34553 (0x86f9) bytes
 
    This file is part of the UPX executable compressor.
 

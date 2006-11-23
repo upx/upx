@@ -1,4 +1,5 @@
-/* powerpc-linux.elf-fold.h -- created from powerpc-linux.elf-fold.bin, 1944 (0x798) bytes
+/* powerpc-linux.elf-fold.h
+   created from powerpc-linux.elf-fold.bin, 1944 (0x798) bytes
 
    This file is part of the UPX executable compressor.
 

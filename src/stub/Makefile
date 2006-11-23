@@ -161,9 +161,8 @@ endef
 
 # default tools
 tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
-##tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-deflate
-##tc.default.bin2h-c    = $(call tc,bin2h) --compress=upx-stub-lzma
-tc.default.bin2h-c    = $(call tc,bin2h) --compress=none
+##tc.default.bin2h-c    = $(call tc,bin2h) --compress=14,15,0
+tc.default.bin2h-c    = $(call tc,bin2h) --compress=0
 tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
 tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null

@@ -1,4 +1,5 @@
-/* powerpc-darwin.macho-entry.h -- created from powerpc-darwin.macho-entry.bin, 9698 (0x25e2) bytes
+/* powerpc-darwin.macho-entry.h
+   created from powerpc-darwin.macho-entry.bin, 9698 (0x25e2) bytes
 
    This file is part of the UPX executable compressor.
 

@@ -1,4 +1,5 @@
-/* powerpc-darwin.macho-fold.h -- created from powerpc-darwin.macho-fold.bin, 1660 (0x67c) bytes
+/* powerpc-darwin.macho-fold.h
+   created from powerpc-darwin.macho-fold.bin, 1660 (0x67c) bytes
 
    This file is part of the UPX executable compressor.
 
