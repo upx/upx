@@ -192,7 +192,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
-	$(call tc,xstrip) $1
+	$(call tc,xstrip) --dump=$1.dump $1
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
@@ -764,7 +764,9 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 ifneq ($(strip $(STUBS)),)
 # FIXME: we want a dependency-only prerequisite here
-$(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST) $(top_srcdir)/src/stub/scripts/bin2h.py
+$(STUBS): tmp/.tmp-stamp $(MAKEFILE_LIST)
+$(STUBS): $(top_srcdir)/src/stub/scripts/bin2h.py
+$(STUBS): $(top_srcdir)/src/stub/scripts/xstrip.py
 endif
 -include tmp/*.d
 

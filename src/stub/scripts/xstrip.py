@@ -28,12 +28,36 @@
 #
 
 
-import getopt, os, re, sys
+import getopt, os, re, string, struct, sys
 
 
 class opts:
     dry_run = 0
+    dump = None
     verbose = 0
+
+
+# /***********************************************************************
+# //
+# ************************************************************************/
+
+def strip_with_dump(eh, idata):
+    new_len = 0
+    lines = open(opts.dump, "rb").readlines()
+    for l in lines:
+        l = re.sub(r"\s+", " ", l.strip())
+        f = l.split(" ")
+        if len(f) >= 8:
+            if f[7].startswith("CONTENTS"):
+                sh_offset = int("0x" + f[5], 16)
+                sh_size   = int("0x" + f[2], 16)
+                if sh_offset + sh_size > new_len:
+                    new_len = sh_offset + sh_size
+                    ##print sh_offset, sh_size, f
+    if new_len > len(eh):
+        ##print opts.dump, new_len
+        return eh, idata[:new_len-len(eh)]
+    return eh, idata
 
 
 # /***********************************************************************
@@ -51,18 +75,48 @@ def do_file(fn):
     fp.seek(0, 0)
     if idata[:4] != "\x7f\x45\x4c\x46":
         raise Exception, "%s is not %s" % (fn, "ELF")
-    pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
-    if pos >= 0:
-        odata = idata[:pos]
-    if odata and not opts.dry_run:
+    if idata[4:7] == "\x01\x01\x01":
+        # ELF32 LE
+        eh, idata = idata[:52], idata[52:]
+        e_shnum, e_shstrndx = struct.unpack("<HH", eh[48:52])
+        assert e_shstrndx + 3 == e_shnum
+        ##eh = eh[:48] + struct.pack("<HH", e_shnum - 3, e_shstrndx)
+    elif idata[4:7] == "\x01\x02\x01":
+        # ELF32 BE
+        eh, idata = idata[:52], idata[52:]
+        e_shnum, e_shstrndx = struct.unpack(">HH", eh[48:52])
+        assert e_shstrndx + 3 == e_shnum
+    elif idata[4:7] == "\x02\x01\x01":
+        # ELF64 LE
+        eh, idata = idata[:64], idata[64:]
+        e_shnum, e_shstrndx = struct.unpack("<HH", eh[60:64])
+        assert e_shstrndx + 3 == e_shnum
+    elif idata[4:7] == "\x02\x02\x01":
+        # ELF64 BE
+        eh, idata = idata[:64], idata[64:]
+        e_shnum, e_shstrndx = struct.unpack(">HH", eh[60:64])
+        assert e_shstrndx + 3 == e_shnum
+    else:
+        raise Exception, "%s is not %s" % (fn, "ELF")
+
+    odata = None
+    if opts.dump:
+        eh, odata = strip_with_dump(eh, idata)
+    else:
+        pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
+        if pos >= 0:
+            odata = idata[:pos]
+
+    if eh and odata and not opts.dry_run:
+        fp.write(eh)
         fp.write(odata)
-        fp.truncate(len(odata))
+        fp.truncate()
     fp.close()
 
 
 def main(argv):
     shortopts, longopts = "qv", [
-        "dry-run", "quiet", "verbose"
+        "dry-run", "dump=", "quiet", "verbose"
     ]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
     for opt, optarg in xopts:
@@ -70,6 +124,7 @@ def main(argv):
         elif opt in ["-q", "--quiet"]: opts.verbose = opts.verbose - 1
         elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
         elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
+        elif opt in ["--dump"]: opts.dump = optarg
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
     # process arguments
     if not args:
