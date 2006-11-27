@@ -120,6 +120,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
 {
     oloadconf = NULL;
     soloadconf = 0;
+    isrtm = false;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
 }

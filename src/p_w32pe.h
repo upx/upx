@@ -56,8 +56,6 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    bool isrtm;
-
     virtual unsigned processImports();
     virtual void processImports(unsigned, unsigned);
     virtual void rebuildImports(upx_byte *&);
@@ -67,6 +65,7 @@ protected:
     upx_byte *oloadconf;
     unsigned soloadconf;
 
+    bool isrtm;
     bool use_dep_hack;
     bool use_clear_dirty_stack;
 };
