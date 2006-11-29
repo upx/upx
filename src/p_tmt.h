@@ -42,6 +42,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_TMT_ADAM; }
     virtual const char *getName() const { return "tmt/adam"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-dos32.tmt"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

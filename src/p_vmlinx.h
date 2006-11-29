@@ -44,6 +44,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
     virtual const char *getName() const { return "vmlinux/386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
     virtual int getStrategy(Filter &);

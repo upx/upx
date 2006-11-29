@@ -165,6 +165,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_MACH_PPC32; }
     virtual const char *getName() const { return "Mach/ppc32"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.macho"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

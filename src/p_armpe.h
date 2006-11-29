@@ -42,6 +42,7 @@ public:
     virtual ~PackArmPe();
     virtual int getFormat() const { return UPX_F_WINCE_ARM_PE; }
     virtual const char *getName() const { return "arm/pe"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-wince.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

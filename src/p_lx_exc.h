@@ -49,6 +49,7 @@ public:
     );
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
     virtual const char *getName() const { return "linux/386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.execve"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
     virtual void buildLoader(const Filter *);
@@ -129,6 +130,7 @@ public:
     PackBSDI386(InputFile *f);
     virtual int getFormat() const { return UPX_F_BSD_i386; }
     virtual const char *getName() const { return "*BSD/386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-bsd.elf.execve"; }
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header

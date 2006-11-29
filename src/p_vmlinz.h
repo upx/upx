@@ -42,6 +42,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUZ_i386; }
     virtual const char *getName() const { return "vmlinuz/386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinuz"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
@@ -101,6 +102,7 @@ public:
     PackBvmlinuzI386(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_BVMLINUZ_i386; }
     virtual const char *getName() const { return "bvmlinuz/386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.bvmlinuz"; }
 
     virtual void pack(OutputFile *fo);
 
@@ -120,6 +122,7 @@ public:
     PackElks8086(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_ELKS_8086; }
     virtual const char *getName() const { return "elks/8086"; }
+    virtual const char *getFullName(const options_t *) const { return "i086-elks ???"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

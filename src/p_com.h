@@ -42,6 +42,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_DOS_COM; }
     virtual const char *getName() const { return "dos/com"; }
+    virtual const char *getFullName(const options_t *o) const { return o->cpu == o->CPU_8086 ? "i086-dos16.com" : "i286-dos16.com"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

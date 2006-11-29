@@ -42,6 +42,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WATCOM_LE; }
     virtual const char *getName() const { return "watcom/le"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-dos32.watcom.le"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

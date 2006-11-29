@@ -281,6 +281,7 @@ public:
     virtual ~PackLinuxElf64amd();
     virtual int getFormat() const { return UPX_F_LINUX_ELF64_AMD; }
     virtual const char *getName() const { return "linux/ElfAMD"; }
+    virtual const char *getFullName(const options_t *) const { return "amd64-linux.elf"; }
     virtual const int *getFilters() const;
     virtual bool canPack();
 protected:
@@ -303,6 +304,7 @@ public:
     virtual ~PackLinuxElf32ppc();
     virtual int getFormat() const { return UPX_F_LINUX_ELFPPC32; }
     virtual const char *getName() const { return "linux/ElfPPC"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc-linux.elf"; }
     virtual const int *getFilters() const;
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -322,6 +324,7 @@ public:
     virtual ~PackLinuxElf32x86();
     virtual int getFormat() const { return UPX_F_LINUX_ELF_i386; }
     virtual const char *getName() const { return "linux/elf386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.elf"; }
     virtual const int *getFilters() const;
 
     virtual void unpack(OutputFile *fo);
@@ -356,6 +359,7 @@ class PackFreeBSDElf32x86 : public PackBSDElf32x86
 public:
     PackFreeBSDElf32x86(InputFile *f);
     virtual ~PackFreeBSDElf32x86();
+    virtual const char *getFullName(const options_t *) const { return "i386-freebsd.elf"; }
 };
 
 class PackNetBSDElf32x86 : public PackBSDElf32x86
@@ -364,6 +368,7 @@ class PackNetBSDElf32x86 : public PackBSDElf32x86
 public:
     PackNetBSDElf32x86(InputFile *f);
     virtual ~PackNetBSDElf32x86();
+    virtual const char *getFullName(const options_t *) const { return "i386-netbsd.elf"; }
 };
 
 class PackOpenBSDElf32x86 : public PackBSDElf32x86
@@ -372,6 +377,7 @@ class PackOpenBSDElf32x86 : public PackBSDElf32x86
 public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
+    virtual const char *getFullName(const options_t *) const { return "i386-openbsd.elf"; }
 
 protected:
     virtual void buildLoader(const Filter *ft);
@@ -394,6 +400,7 @@ public:
     virtual ~PackLinuxElf32armLe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMLE; }
     virtual const char *getName() const { return "linux/armLE"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-linux.elf"; }
     virtual const int *getFilters() const;
 
 protected:
@@ -413,6 +420,7 @@ public:
     virtual ~PackLinuxElf32armBe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMBE; }
     virtual const char *getName() const { return "linux/armBE"; }
+    virtual const char *getFullName(const options_t *) const { return "armeb-linux.elf"; }
     virtual const int *getFilters() const;
 
 protected:

@@ -47,6 +47,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_ELFI_i386; }
     virtual const char *getName() const { return "linux/elfi386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.interp"; }
 
     virtual bool canPack();
     virtual void unpack(OutputFile *fo);

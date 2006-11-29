@@ -125,6 +125,7 @@ public:
     // A unique integer ID for this executable format. See conf.h.
     virtual int getFormat() const = 0;
     virtual const char *getName() const = 0;
+    virtual const char *getFullName(const options_t *) const = 0;
     virtual const int *getCompressionMethods(int method, int level) const = 0;
     virtual const int *getFilters() const = 0;
 
