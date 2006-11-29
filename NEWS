@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 2.92 beta (XX XXX 200.):
+
 Changes in 2.91 beta (29 Nov 2006):
   * assorted bug fixes
   * arm/pe: fix "missing" icon & version info resource problem for wince 5
