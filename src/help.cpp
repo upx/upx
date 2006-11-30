@@ -28,6 +28,8 @@
 
 #include "conf.h"
 #include "compress.h"
+#include "packmast.h"
+#include "packer.h"
 
 
 /*************************************************************************
@@ -82,6 +84,75 @@ void show_usage(void)
 #else
                 "");
 #endif
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+struct PackerNames
+{
+    struct Entry {
+        const char* fname;
+        const char* sname;
+    };
+    Entry names[32];
+    size_t names_count;
+    const options_t *o;
+    PackerNames() { names_count = 0; o = NULL; }
+    void add(Packer *p)
+    {
+        assert(names_count < 32);
+        names[names_count].fname = p->getFullName(o);
+        names[names_count].sname = p->getName();
+        names_count++;
+    }
+    static Packer* visit(Packer *p, void *user)
+    {
+        PackerNames *self = (PackerNames *) user;
+        self->add(p);
+        return NULL;
+    }
+    static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {
+        return strcmp(((const Entry *) a)->fname, ((const Entry *) b)->fname);
+    }
+    static int __acc_cdecl_qsort cmp_sname(const void *a, const void *b) {
+        return strcmp(((const Entry *) a)->sname, ((const Entry *) b)->sname);
+    }
+};
+
+static void show_all_packers(FILE *f, int verbose)
+{
+    options_t o; o.reset();
+    PackerNames pn; pn.o = &o;
+    PackMaster::visitAllPackers(pn.visit, NULL, &o, &pn);
+    qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), pn.cmp_fname);
+    size_t pos = 0;
+    for (size_t i = 0; i < pn.names_count; ++i)
+    {
+        const char *fn = pn.names[i].fname;
+        const char *sn = pn.names[i].sname;
+        if (verbose)
+        {
+            con_fprintf(f, "  %-30s %s\n", fn, sn);
+        }
+        else
+        {
+            if (pos == 0) {
+                con_fprintf(f, "  %s", fn);
+                pos = 2 + strlen(fn);
+            } else if (pos + 1 + strlen(fn) > 80) {
+                con_fprintf(f, "\n  %s", fn);
+                pos = 2 + strlen(fn);
+            } else {
+                con_fprintf(f, " %s", fn);
+                pos += 1 + strlen(fn);
+            }
+        }
+    }
+    if (!verbose && pn.names_count)
+        con_fprintf(f, "\n");
 }
 
 
@@ -245,37 +316,10 @@ void show_help(int x/*verbose*/)
     fg = con_fg(f,FG_YELLOW);
     con_fprintf(f,"This version supports:\n");
     fg = con_fg(f,fg);
-    con_fprintf(f,"   "
-// TODO:
-// support for mach/ppc32
-// support for linux elf/ppc32
-// support for linux elf/amd64
-                " arm/pe,"
-                " atari/tos,"
-                " bvmlinuz/386,"
-                " djgpp2/coff,"
-                " dos/com,"
-                " dos/exe,"
-                " dos/sys,"
-                "\n   "
-                //" elks/8086,"
-                " linux/amd64,"
-                " linux/i386,"
-                " linux/ppc32,"
-                " mach/ppc32,"
-                " ps1/exe,"
-                " rtm32/pe,"
-                "\n   "
-                " tmt/adam,"
-                " vmlinux/386,"
-                " vmlinuz/386,"
-                " watcom/le,"
-                //" win16/ne,"
-                " win32/pe"
-                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
-//                "\n\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
+    show_all_packers(f, x);
+    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
+//                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
                 "");
-
 
 #if defined(DEBUG) || defined(TESTING)
     fg = con_fg(f,FG_RED);

@@ -45,7 +45,8 @@ Packer::Packer(InputFile *f) :
     uip(NULL), linker(NULL),
     last_patch(NULL), last_patch_len(0), last_patch_off(0)
 {
-    file_size = f->st.st_size;
+    if (fi != NULL)
+        file_size = fi->st.st_size;
     uip = new UiPacker(this);
     memset(&ph, 0, sizeof(ph));
 }
@@ -66,6 +67,7 @@ void Packer::assertPacker()
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 13);
+    assert(strlen(getFullName(opt)) <= 26); // "i386-linux.kernel.bvmlinuz"
     if (bele == NULL) fprintf(stderr, "%s\n", getName());
     assert(bele != NULL);
 #if 1

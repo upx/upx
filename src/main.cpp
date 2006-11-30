@@ -77,8 +77,8 @@ void options_t::reset()
     o->win32_pe.keep_resource = "";
 }
 
-static struct options_t global_options;
-struct options_t *opt = &global_options;
+static options_t global_options;
+options_t *opt = &global_options;
 
 static int done_output_name = 0;
 static int done_script_name = 0;

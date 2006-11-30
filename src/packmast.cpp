@@ -61,7 +61,7 @@
 //
 **************************************************************************/
 
-PackMaster::PackMaster(InputFile *f, struct options_t *o) :
+PackMaster::PackMaster(InputFile *f, options_t *o) :
     fi(f), p(NULL)
 {
     // replace options with local options
@@ -90,12 +90,11 @@ PackMaster::~PackMaster()
 //
 **************************************************************************/
 
-typedef Packer* (*try_function)(Packer *p, InputFile *f);
-
-static Packer* try_pack(Packer *p, InputFile *f)
+static Packer* try_pack(Packer *p, void *user)
 {
     if (p == NULL)
         return NULL;
+    InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
         p->initPackHeader();
@@ -117,10 +116,11 @@ static Packer* try_pack(Packer *p, InputFile *f)
 }
 
 
-static Packer* try_unpack(Packer *p, InputFile *f)
+static Packer* try_unpack(Packer *p, void *user)
 {
     if (p == NULL)
         return NULL;
+    InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
         p->initPackHeader();
@@ -150,7 +150,7 @@ static Packer* try_unpack(Packer *p, InputFile *f)
 //
 **************************************************************************/
 
-static Packer* try_packers(InputFile *f, try_function func)
+Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o, void *user)
 {
     Packer *p = NULL;
 
@@ -159,124 +159,128 @@ static Packer* try_packers(InputFile *f, try_function func)
     //
     // .exe
     //
-    if (!opt->dos_exe.force_stub)
+    if (!o->dos_exe.force_stub)
     {
-        if ((p = func(new PackDjgpp2(f),f)) != NULL)
+        if ((p = func(new PackDjgpp2(f), user)) != NULL)
             return p;
-        if ((p = func(new PackTmt(f),f)) != NULL)
+        if ((p = func(new PackTmt(f), user)) != NULL)
             return p;
-        if ((p = func(new PackWcle(f),f)) != NULL)
+        if ((p = func(new PackWcle(f), user)) != NULL)
             return p;
 #if 0
-        if ((p = func(new PackVxd(f),f)) != NULL)
+        if ((p = func(new PackVxd(f), user)) != NULL)
             return p;
 #endif
-        if ((p = func(new PackW16Ne(f),f)) != NULL)
+#if 0
+        if ((p = func(new PackW16Ne(f), user)) != NULL)
             return p;
-        if ((p = func(new PackArmPe(f),f)) != NULL)
-            return p;
-        if ((p = func(new PackW32Pe(f),f)) != NULL)
+#endif
+        if ((p = func(new PackW32Pe(f), user)) != NULL)
             return p;
     }
-    if ((p = func(new PackExe(f),f)) != NULL)
+    if ((p = func(new PackArmPe(f), user)) != NULL)
+        return p;
+    if ((p = func(new PackExe(f), user)) != NULL)
         return p;
 
     //
     // atari
     //
-    if ((p = func(new PackTos(f),f)) != NULL)
+    if ((p = func(new PackTos(f), user)) != NULL)
         return p;
 
     //
     // linux kernel
     //
-    if ((p = func(new PackVmlinuxI386(f),f)) != NULL)
+    if ((p = func(new PackVmlinuxI386(f), user)) != NULL)
         return p;
-    if ((p = func(new PackVmlinuzI386(f),f)) != NULL)
+    if ((p = func(new PackVmlinuzI386(f), user)) != NULL)
         return p;
-    if ((p = func(new PackBvmlinuzI386(f),f)) != NULL)
+    if ((p = func(new PackBvmlinuzI386(f), user)) != NULL)
         return p;
 #if 0
-    if ((p = func(new PackElks8086(f),f)) != NULL)
+    if ((p = func(new PackElks8086(f), user)) != NULL)
         return p;
 #endif
 
     //
     // linux
     //
-    if (!opt->o_unix.force_execve)
+    if (!o->o_unix.force_execve)
     {
 #if 0
-        if (opt->unix.script_name)
+        if (o->unix.script_name)
         {
-            if ((p = func(new PackLinuxI386sep(f),f)) != NULL)
+            if ((p = func(new PackLinuxI386sep(f), user)) != NULL)
                 return p;
         }
 #endif
-        if (opt->o_unix.use_ptinterp) {
-            if ((p = func(new PackLinuxElf32x86interp(f),f)) != NULL)
+        if (o->o_unix.use_ptinterp) {
+            if ((p = func(new PackLinuxElf32x86interp(f), user)) != NULL)
                 return p;
         }
-        if ((p = func(new PackFreeBSDElf32x86(f),f)) != NULL)
+        if ((p = func(new PackFreeBSDElf32x86(f), user)) != NULL)
             return p;
-        if ((p = func(new PackNetBSDElf32x86(f),f)) != NULL)
+        if ((p = func(new PackNetBSDElf32x86(f), user)) != NULL)
             return p;
-        if ((p = func(new PackOpenBSDElf32x86(f),f)) != NULL)
+        if ((p = func(new PackOpenBSDElf32x86(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf32x86(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf32x86(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf64amd(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf64amd(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf32armLe(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf32armLe(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf32armBe(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf32armBe(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxElf32ppc(f),f)) != NULL)
+        if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
             return p;
-        if ((p = func(new PackLinuxI386sh(f),f)) != NULL)
+        if ((p = func(new PackLinuxI386sh(f), user)) != NULL)
             return p;
     }
-    if ((p = func(new PackBSDI386(f),f)) != NULL)
+    if ((p = func(new PackBSDI386(f), user)) != NULL)
         return p;
-    if ((p = func(new PackLinuxI386(f),f)) != NULL)
+    if ((p = func(new PackLinuxI386(f), user)) != NULL)
         return p;
 
     //
     // psone
     //
-    if ((p = func(new PackPs1(f),f)) != NULL)
+    if ((p = func(new PackPs1(f), user)) != NULL)
         return p;
 
     //
     // .sys and .com
     //
-    if ((p = func(new PackSys(f),f)) != NULL)
+    if ((p = func(new PackSys(f), user)) != NULL)
         return p;
-    if ((p = func(new PackCom(f),f)) != NULL)
+    if ((p = func(new PackCom(f), user)) != NULL)
         return p;
 
     // Mach (MacOS X PowerPC)
-    if ((p = func(new PackMachPPC32(f), f)) != NULL)
+    if ((p = func(new PackMachPPC32(f), user)) != NULL)
         return p;
 
     return NULL;
 }
 
 
-static Packer *getPacker(InputFile *f)
+Packer *PackMaster::getPacker(InputFile *f)
 {
-    Packer *p = try_packers(f, try_pack);
+    Packer *p = visitAllPackers(try_pack, f, opt, f);
     if (!p)
         throwUnknownExecutableFormat();
+    p->assertPacker();
     return p;
 }
 
 
-static Packer *getUnpacker(InputFile *f)
+Packer *PackMaster::getUnpacker(InputFile *f)
 {
-    Packer *p = try_packers(f, try_unpack);
+    Packer *p = visitAllPackers(try_unpack, f, opt, f);
     if (!p)
         throwNotPacked();
+    p->assertPacker();
     return p;
 }
 
@@ -288,7 +292,6 @@ static Packer *getUnpacker(InputFile *f)
 void PackMaster::pack(OutputFile *fo)
 {
     p = getPacker(fi);
-    p->assertPacker();
     fi = NULL;
     p->doPack(fo);
 }
@@ -306,7 +309,6 @@ void PackMaster::unpack(OutputFile *fo)
 void PackMaster::test()
 {
     p = getUnpacker(fi);
-    p->assertPacker();
     fi = NULL;
     p->doTest();
 }
@@ -315,7 +317,6 @@ void PackMaster::test()
 void PackMaster::list()
 {
     p = getUnpacker(fi);
-    p->assertPacker();
     fi = NULL;
     p->doList();
 }
@@ -323,9 +324,9 @@ void PackMaster::list()
 
 void PackMaster::fileInfo()
 {
-    p = try_packers(fi, try_unpack);
+    p = visitAllPackers(try_unpack, fi, opt, fi);
     if (!p)
-        p = try_packers(fi, try_pack);
+        p = visitAllPackers(try_pack, fi, opt, fi);
     if (!p)
         throwUnknownExecutableFormat(NULL, 1);    // make a warning here
     p->assertPacker();

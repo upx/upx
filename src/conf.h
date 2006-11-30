@@ -661,7 +661,6 @@ typedef ElfLinker Linker;
 
 // main.cpp
 extern const char *progname;
-void init_options(struct options_t *o);
 bool set_ec(int ec);
 #if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void e_exit(int ec) __attribute__((__noreturn__));

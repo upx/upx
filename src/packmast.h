@@ -41,7 +41,7 @@ class OutputFile;
 class PackMaster
 {
 public:
-    PackMaster(InputFile *f, struct options_t *o = NULL);
+    PackMaster(InputFile *f, options_t *o = NULL);
     virtual ~PackMaster();
 
     void pack(OutputFile *fo);
@@ -50,13 +50,19 @@ public:
     void list();
     void fileInfo();
 
+    typedef Packer* (*visit_func_t)(Packer *p, void *user);
+    static Packer* visitAllPackers(visit_func_t, InputFile *f, const options_t *, void *user);
+
 private:
     InputFile *fi;
     Packer *p;
 
+    static Packer *getPacker(InputFile *f);
+    static Packer *getUnpacker(InputFile *f);
+
     // setup local options for each file
-    struct options_t local_options;
-    struct options_t *saved_opt;
+    options_t local_options;
+    options_t *saved_opt;
 };
 
 
