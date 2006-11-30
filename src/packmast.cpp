@@ -64,7 +64,7 @@
 PackMaster::PackMaster(InputFile *f, options_t *o) :
     fi(f), p(NULL)
 {
-    // replace options with local options
+    // replace global options with local options
     saved_opt = o;
     if (o)
     {
@@ -79,7 +79,7 @@ PackMaster::~PackMaster()
 {
     fi = NULL;
     delete p; p = NULL;
-    // restore options
+    // restore global options
     if (saved_opt)
         opt = saved_opt;
     saved_opt = NULL;
