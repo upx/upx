@@ -293,7 +293,7 @@ void show_help(int x/*verbose*/)
                     "  --le                produce LE output [default: EXE]\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for win32/pe & rtm32/pe:\n");
+        con_fprintf(f,"Options for win32/pe, rtm32/pe & arm/pe:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --compress-exports=0    do not compress the export section\n"
@@ -301,6 +301,7 @@ void show_help(int x/*verbose*/)
                     "  --compress-icons=0      do not compress any icons\n"
                     "  --compress-icons=1      compress all but the first icon\n"
                     "  --compress-icons=2      compress all but the first icon directory [default]\n"
+                    "  --compress-icons=3      compress all icons\n"
                     "  --compress-resources=0  do not compress any resources at all\n"
                     "  --keep-resource=list    do not compress resources specified by list\n"
                     "  --strip-relocs=0        do not strip relocations\n"
