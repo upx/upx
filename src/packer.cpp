@@ -67,7 +67,8 @@ void Packer::assertPacker()
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 13);
-    assert(strlen(getFullName(opt)) <= 26); // "i386-linux.kernel.bvmlinuz"
+    assert(strlen(getFullName(opt)) <= 26);     // "i386-linux.kernel.bvmlinuz"
+    assert(strlen(getFullName(NULL)) <= 26);    // "i386-linux.kernel.bvmlinuz"
     if (bele == NULL) fprintf(stderr, "%s\n", getName());
     assert(bele != NULL);
 #if 1

@@ -103,6 +103,7 @@ struct PackerNames
     PackerNames() { names_count = 0; o = NULL; }
     void add(Packer *p)
     {
+        p->assertPacker();
         assert(names_count < 32);
         names[names_count].fname = p->getFullName(o);
         names[names_count].sname = p->getName();

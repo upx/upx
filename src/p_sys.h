@@ -42,7 +42,7 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_DOS_SYS; }
     virtual const char *getName() const { return "dos/sys"; }
-    virtual const char *getFullName(const options_t *o) const { return o->cpu == o->CPU_8086 ? "i086-dos16.sys" : "i286-dos16.sys"; }
+    virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_8086 ? "i086-dos16.sys" : "i286-dos16.sys"; }
 
     virtual bool canPack();
 

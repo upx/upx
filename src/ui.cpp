@@ -665,7 +665,7 @@ bool UiPacker::uiFileInfoStart()
     total_files++;
 
     int fg = con_fg(stdout,FG_CYAN);
-    con_fprintf(stdout,"%s [%s]\n", p->fi->getName(), p->getName());
+    con_fprintf(stdout,"%s [%s, %s]\n", p->fi->getName(), p->getFullName(opt), p->getName());
     fg = con_fg(stdout,fg);
     UNUSED(fg);
     if (p->ph.c_len > 0)
