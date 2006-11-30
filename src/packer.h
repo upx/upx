@@ -119,7 +119,7 @@ protected:
     Packer(InputFile *f);
 public:
     virtual ~Packer();
-    virtual void assertPacker();
+    virtual void assertPacker() const;
 
     virtual int getVersion() const = 0;
     // A unique integer ID for this executable format. See conf.h.

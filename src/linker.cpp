@@ -173,14 +173,14 @@ void ElfLinker::init(const void *pdata_v, int plen)
     output = new upx_byte[inputlen];
     outputlen = 0;
 
-    int pos = find(input, inputlen, "Sections:", 9);
+    int pos = find(input, inputlen, "Sections:\n", 10);
     assert(pos != -1);
     char *psections = (char *) input + pos;
 
-    char *psymbols = strstr(psections, "SYMBOL TABLE:");
+    char *psymbols = strstr(psections, "SYMBOL TABLE:\n");
     assert(psymbols != NULL);
 
-    char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR");
+    char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR ");
     assert(prelocs != NULL);
 
     preprocessSections(psections, psymbols);
@@ -369,11 +369,13 @@ ElfLinker::Relocation *ElfLinker::addRelocation(const char *section, unsigned of
     return rel;
 }
 
+#if 0
 void ElfLinker::setLoaderAlignOffset(int phase)
 {
     //assert(phase & 0);
     printf("\nFIXME: ElfLinker::setLoaderAlignOffset %d\n", phase);
 }
+#endif
 
 int ElfLinker::addLoader(const char *sname)
 {

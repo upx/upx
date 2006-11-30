@@ -100,8 +100,8 @@ struct PackerNames
     Entry names[32];
     size_t names_count;
     const options_t *o;
-    PackerNames() { names_count = 0; o = NULL; }
-    void add(Packer *p)
+    PackerNames() : names_count(0), o(NULL) { }
+    void add(const Packer *p)
     {
         p->assertPacker();
         assert(names_count < 32);
@@ -161,7 +161,7 @@ static void show_all_packers(FILE *f, int verbose)
 //
 **************************************************************************/
 
-void show_help(int x/*verbose*/)
+void show_help(int verbose)
 {
     FILE *f = con_term;
     int fg;
@@ -178,8 +178,8 @@ void show_help(int x/*verbose*/)
                 "  -d     decompress                        -l    list compressed file\n"
                 "  -t     test compressed file              -V    display version number\n"
                 "  -h     give %s help                    -L    display software license\n%s",
-                x == 0 ? "" : "  --best compress best (can be slow for big files)\n",
-                x == 0 ? "more" : "this", x == 0 ? "" : "\n");
+                verbose == 0 ? "" : "  --best compress best (can be slow for big files)\n",
+                verbose == 0 ? "more" : "this", verbose == 0 ? "" : "\n");
 
     fg = con_fg(f,FG_YELLOW);
     con_fprintf(f,"Options:\n");
@@ -191,15 +191,15 @@ void show_help(int x/*verbose*/)
                 //"  -f     force overwrite of output files and compression of suspicious files\n"
                 "  -f     force compression of suspicious files\n"
                 "%s%s"
-                , (x == 0) ? "  -k     keep backup files\n" : ""
+                , (verbose == 0) ? "  -k     keep backup files\n" : ""
 #if 1
-                , (x > 0) ? "  --no-color, --mono, --color, --no-progress   change look\n" : ""
+                , (verbose > 0) ? "  --no-color, --mono, --color, --no-progress   change look\n" : ""
 #else
                 , ""
 #endif
                 );
 
-    if (x > 0)
+    if (verbose > 0)
     {
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"\nBackup options:\n");
@@ -318,7 +318,7 @@ void show_help(int x/*verbose*/)
     fg = con_fg(f,FG_YELLOW);
     con_fprintf(f,"This version supports:\n");
     fg = con_fg(f,fg);
-    show_all_packers(f, x);
+    show_all_packers(f, verbose);
     con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
 //                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
                 "");

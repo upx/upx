@@ -81,7 +81,7 @@ public:
     virtual ~ElfLinker();
 
     virtual void init(const void *pdata, int plen);
-    virtual void setLoaderAlignOffset(int phase);
+    //virtual void setLoaderAlignOffset(int phase);
     virtual int addLoader(const char *sname);
     virtual Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
     virtual int getSection(const char *sname, int *slen=NULL) const;

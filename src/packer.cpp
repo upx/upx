@@ -60,7 +60,7 @@ Packer::~Packer()
 
 
 // for PackMaster
-void Packer::assertPacker()
+void Packer::assertPacker() const
 {
     assert(getFormat() > 0);
     assert(getFormat() <= 255);
