@@ -415,6 +415,7 @@ private:
 // compression methods - DO NOT CHANGE
 #define M_SKIP          (-2)
 #define M_END           (-1)
+#define M_ULTRA_BRUTE   (-3)
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8       3
 #define M_NRV2B_LE16    4
@@ -434,7 +435,7 @@ private:
 #define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
 #define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
 #define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
-#define M_IS_LZMA(x)    ((x) == M_LZMA)
+#define M_IS_LZMA(x)    (((x) & 255) == M_LZMA)
 #define M_IS_DEFLATE(x) ((x) == M_DEFLATE)
 
 

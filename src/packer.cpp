@@ -163,7 +163,9 @@ bool Packer::testUnpackFormat(int format) const
 
 bool ph_skipVerify(const PackHeader &ph)
 {
-    if (ph.method == M_LZMA)
+    if (M_IS_DEFLATE(ph.method))
+        return false;
+    if (M_IS_LZMA(ph.method))
         return false;
     if (ph.level > 1)
         return false;
@@ -1267,9 +1269,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
     int nmethods = 0;
     for (int mm = 0; methods[mm] != M_END; ++mm)
     {
-        if (methods[mm] == M_SKIP)
+        if (methods[mm] == M_ULTRA_BRUTE && !opt->ultra_brute)
+            break;
+        if (methods[mm] == M_SKIP || methods[mm] == M_ULTRA_BRUTE)
             continue;
-        if (opt->all_methods && !opt->all_methods_use_lzma && methods[mm] == M_LZMA)
+        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(methods[mm]))
             continue;
         assert(isValidCompressionMethod(methods[mm]));
         nmethods++;
@@ -1290,9 +1294,11 @@ void Packer::compressWithFilters(Filter *parm_ft,
     int nfilters_success = 0;
     for (int mm = 0; methods[mm] != M_END; ++mm) // for all methods
     {
-        if (methods[mm] == M_SKIP)
+        if (methods[mm] == M_ULTRA_BRUTE && !opt->ultra_brute)
+            break;
+        if (methods[mm] == M_SKIP || methods[mm] == M_ULTRA_BRUTE)
             continue;
-        if (opt->all_methods && !opt->all_methods_use_lzma && methods[mm] == M_LZMA)
+        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(methods[mm]))
             continue;
         unsigned hdr_c_len = 0;
         if (hdr_buf && hdr_u_len)

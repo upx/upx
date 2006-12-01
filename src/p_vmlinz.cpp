@@ -410,7 +410,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     const unsigned lsize = getLoaderSize();
 
-    if (ph.method == M_LZMA) {
+    if (M_IS_LZMA(ph.method)) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         acc_uint32e_t properties = // lc, lp, pb, dummy
             (res->lit_context_bits << 0) |

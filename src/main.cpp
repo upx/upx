@@ -499,7 +499,7 @@ static int do_option(int optc, const char *arg)
     case 'f':
         opt->force++;
         break;
-    case 902:
+    case 909:
         set_cmd(CMD_FILEINFO);
         break;
     case 'h':
@@ -568,7 +568,7 @@ static int do_option(int optc, const char *arg)
         break;
     case 722:
         opt->all_methods_use_lzma = false;
-        if (opt->method == M_LZMA)
+        if (M_IS_LZMA(opt->method))
             opt->method = -1;
         break;
 
@@ -586,6 +586,9 @@ static int do_option(int optc, const char *arg)
             e_method(opt->method, optc);
         break;
 
+    case 902:                               // --ultra-brute
+        opt->ultra_brute = true;
+        /* fallthrough */
     case 901:                               // --brute
         opt->all_methods = true;
         opt->all_methods_use_lzma = true;
@@ -656,6 +659,7 @@ static int do_option(int optc, const char *arg)
         break;
     case 524:                               // --all-methods
         opt->all_methods = true;
+        opt->all_methods_use_lzma = true;
         opt->method = -1;
         break;
     case 525:                               // --exact
@@ -871,10 +875,11 @@ static const struct mfx_option longopts[] =
     // commands
     {"best",             0x10, 0, 900},     // compress best
     {"brute",            0x10, 0, 901},     // compress best, brute force
+    {"ultra-brute",      0x10, 0, 902},     // compress best, brute force
     {"decompress",          0, 0, 'd'},     // decompress
     {"fast",             0x10, 0, '1'},     // compress faster
-    {"fileinfo",         0x10, 0, 902},     // display info about file
-    {"file-info",        0x10, 0, 902},     // display info about file
+    {"fileinfo",         0x10, 0, 909},     // display info about file
+    {"file-info",        0x10, 0, 909},     // display info about file
     {"help",                0, 0, 'h'+256}, // give help
     {"license",             0, 0, 'L'},     // display software license
     {"list",                0, 0, 'l'},     // list compressed exe
@@ -1039,6 +1044,7 @@ static const struct mfx_option longopts[] =
     // commands
     {"best",             0x10, 0, 900},     // compress best
     {"brute",            0x10, 0, 901},     // compress best, brute force
+    {"ultra-brute",      0x10, 0, 902},     // compress best, brute force
     {"fast",             0x10, 0, '1'},     // compress faster
 
     // options

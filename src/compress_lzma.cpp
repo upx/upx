@@ -189,7 +189,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
                              const upx_compress_config_t *cconf_parm,
                                    upx_compress_result_t *cresult )
 {
-    assert(method == M_LZMA);
+    assert(M_IS_LZMA(method));
     assert(level > 0); assert(cresult != NULL);
 
     int r = UPX_E_ERROR;
@@ -241,6 +241,12 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[3].uintVal = lzma_compress_config_t::dict_size_t::default_value_c;
     pr[5].uintVal = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
 #endif
+    // method overrides
+    if (method >= 0x100) {
+        pr[0].uintVal = (method >> 16) & 15;
+        pr[1].uintVal = (method >> 12) & 15;
+        pr[2].uintVal = (method >>  8) & 15;
+    }
 #if 0
     // DEBUG - set sizes so that we use a maxmimum amount of stack.
     //  These settings cause res->num_probs == 3147574, i.e. we will
@@ -382,6 +388,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 
 error:
     *dst_len = os.Pos;
+    //printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs, src_len, *dst_len);
     return r;
 }
 
@@ -402,7 +409,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
                                    int method,
                              const upx_compress_result_t *cresult )
 {
-    assert(method == M_LZMA);
+    assert(M_IS_LZMA(method));
     // see res->num_probs above
     COMPILE_TIME_ASSERT(sizeof(CProb) == 2)
     COMPILE_TIME_ASSERT(LZMA_BASE_SIZE == 1846)
@@ -479,7 +486,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
                                    int method,
                              const upx_compress_result_t *cresult )
 {
-    assert(method == M_LZMA);
+    assert(M_IS_LZMA(method));
 
     // FIXME - implement this
     // Note that Packer::verifyOverlappingDecompression() will

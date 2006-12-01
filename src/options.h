@@ -49,6 +49,7 @@ struct options_t {
     int method;
     int level;              // compression level 1..10
     int filter;             // preferred filter from Packer::getFilters()
+    bool ultra_brute;
     bool all_methods;       // try all available compression methods ?
     bool all_methods_use_lzma;
     bool all_filters;       // try all available filters ?

@@ -97,9 +97,9 @@ void PackDjgpp2::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,DJ2MAIN1",
               ft->id ? "DJCALLT1" : "",
               "DJ2MAIN2",
-              ph.method == M_LZMA ? "LZMA_INIT_STACK" : "",
+              M_IS_LZMA(ph.method) ? "LZMA_INIT_STACK" : "",
               getDecompressorSections(),
-              ph.method == M_LZMA ? "LZMA_DONE_STACK" : "",
+              M_IS_LZMA(ph.method) ? "LZMA_DONE_STACK" : "",
               "DJ2BSS00",
               NULL
              );

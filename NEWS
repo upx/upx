@@ -3,6 +3,7 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 2.92 beta (XX XXX 200.):
+  * new option '--ultra-brute' which tries even more variants
 
 Changes in 2.91 beta (29 Nov 2006):
   * assorted bug fixes

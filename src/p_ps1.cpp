@@ -300,7 +300,7 @@ void PackPs1::buildLoader(const Filter *)
     else if (ph.method == M_NRV2E_LE32)
         method = isCon ? "nrv2e.small,32bit.sub,nrv.done" :
                     "nrv2e.32bit,nrv.done";
-    else if (ph.method == M_LZMA)
+    else if (M_IS_LZMA(ph.method))
         method = "nrv2b.small,8bit.sub,nrv.done,lzma.prep";
     else
         throwInternalError("unknown compression method");
@@ -319,7 +319,7 @@ void PackPs1::buildLoader(const Filter *)
 
     foundBss = findBssSection();
 
-    if (ph.method == M_LZMA && !buildPart2)
+    if (M_IS_LZMA(ph.method) && !buildPart2)
     {
         initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
         addLoader("decompressor.start",
@@ -329,7 +329,7 @@ void PackPs1::buildLoader(const Filter *)
     }
     else
     {
-        if (ph.method == M_LZMA && buildPart2)
+        if (M_IS_LZMA(ph.method) && buildPart2)
         {
             sz_lcpr = MemBuffer::getSizeForCompression(sz_lunc);
             unsigned char *cprLoader = new unsigned char[sz_lcpr];
@@ -338,7 +338,7 @@ void PackPs1::buildLoader(const Filter *)
             if (r != UPX_E_OK || sz_lcpr >= sz_lunc)
                 throwInternalError("loader compression failed");
             initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1),
-                      (ph.method != M_LZMA || isCon) ? 0 : 1);
+                      isCon || !M_IS_LZMA(ph.method) ? 0 : 1);
             linker->addSection("lzma.exec", cprLoader, sz_lcpr, 0);
             delete [] cprLoader;
         }
@@ -352,7 +352,7 @@ void PackPs1::buildLoader(const Filter *)
 
         if (isCon)
         {
-            if (ph.method == M_LZMA)
+            if (M_IS_LZMA(ph.method))
                 addLoader(!foundBss ? "con.start" : "bss.con.start",
                           method,
                           ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
@@ -368,7 +368,7 @@ void PackPs1::buildLoader(const Filter *)
         }
         else
         {
-            if (ph.method == M_LZMA)
+            if (M_IS_LZMA(ph.method))
                 addLoader("cdb.start.lzma", "pad.code", "cdb.entry.lzma", method, "cdb.lzma.cpr",
                           ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
                           "lzma.exec", NULL);
@@ -441,10 +441,10 @@ bool PackPs1::findBssSection()
 
                         if (0 < ALIGN_DOWN(bss_end - bss_start, 4) )
                         {
-                            unsigned wkmem_sz = (ph.method == M_LZMA) ? 32768 : 800;
+                            unsigned wkmem_sz = M_IS_LZMA(ph.method) ? 32768 : 800;
                             unsigned end_offs = ih.tx_ptr + fdata_size + overlap;
                             if (bss_end > (end_offs + wkmem_sz))
-                                return (isCon || (!isCon && (ph.method == M_LZMA)));
+                                return isCon || (!isCon && M_IS_LZMA(ph.method));
                             else
                                 return false;
                         }
@@ -507,7 +507,7 @@ void PackPs1::pack(OutputFile *fo)
 
     unsigned lzma_init = 0;
 
-    if (ph.method == M_LZMA)
+    if (M_IS_LZMA(ph.method))
     {
         sz_lunc = getLoaderSize();
 
@@ -553,7 +553,7 @@ void PackPs1::pack(OutputFile *fo)
     }
     else
     {
-        d_len = (lsize - h_len) - getLoaderSectionStart((ph.method == M_LZMA) ? "cdb.entry.lzma" : "cdb.entry");
+        d_len = (lsize - h_len) - getLoaderSectionStart(M_IS_LZMA(ph.method) ? "cdb.entry.lzma" : "cdb.entry");
         e_len = (lsize - d_len) - h_len;
     }
 
@@ -561,10 +561,10 @@ void PackPs1::pack(OutputFile *fo)
     linker->defineSymbol("SC", MIPS_LO(sa_cnt > (0x10000 << 2) ?
                                        sa_cnt >> 5 : sa_cnt >> 2));
     linker->defineSymbol("DECO", decomp_data_start);
-    linker->defineSymbol("ldr_sz", (ph.method == M_LZMA ? sz_lunc + 16 : (d_len-pad_code)));
+    linker->defineSymbol("ldr_sz", M_IS_LZMA(ph.method) ? sz_lunc + 16 : (d_len-pad_code));
 
     if (foundBss)
-        if (ph.method == M_LZMA)
+        if (M_IS_LZMA(ph.method))
             linker->defineSymbol("wrkmem", bss_end - 160 - getDecompressorWrkmemSize()
                                            - (sz_lunc + 16));
         else
@@ -588,7 +588,7 @@ void PackPs1::pack(OutputFile *fo)
     ibuf.clear(0,fdata_size);
     upx_bytep paddata = ibuf;
 
-    if (ph.method == M_LZMA)
+    if (M_IS_LZMA(ph.method))
     {
         linker->defineSymbol("lzma_init_off", lzma_init);
         linker->defineSymbol("gb_e", linker->getSymbolOffset("gb8_e"));
@@ -600,7 +600,7 @@ void PackPs1::pack(OutputFile *fo)
     if (isCon)
     {
         linker->defineSymbol("PAD", pad_code);
-        if (ph.method == M_LZMA)
+        if (M_IS_LZMA(ph.method))
             linker->defineSymbol("DCRT", (entry + getLoaderSectionStart("lzma.exec")));
         else
             linker->defineSymbol("DCRT", (entry + (e_len - d_len)));
@@ -609,7 +609,7 @@ void PackPs1::pack(OutputFile *fo)
     {
         linker->defineSymbol("PSVR", FIX_PSVR);
         linker->defineSymbol("CPDO", comp_data_start);
-        if (ph.method == M_LZMA)
+        if (M_IS_LZMA(ph.method))
             linker->defineSymbol("lzma_cpr", getLoaderSectionStart("lzma.exec")
                                              - getLoaderSectionStart("cdb.entry.lzma"));
     }
@@ -621,7 +621,7 @@ void PackPs1::pack(OutputFile *fo)
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader, lsize);
 
-    if (!isCon && ph.method == M_LZMA && (HD_CODE_OFS + d_len + h_len) > CD_SEC)
+    if (!isCon && M_IS_LZMA(ph.method) && (HD_CODE_OFS + d_len + h_len) > CD_SEC)
         throwInternalError("lzma --boot-only loader > 2048");
 
     // ps1_exe_t structure
@@ -655,7 +655,7 @@ void PackPs1::pack(OutputFile *fo)
     printf("%-13s: eof in mem OF : %08X bytes\n", getName(), (unsigned int) oh.tx_ptr + oh.tx_len);
     unsigned char i = 0;
     if (isCon) { if (foundBss) i = 1; }
-    else { i = 2; if (ph.method == M_LZMA) { if (!foundBss) i = 3; else i = 4; } }
+    else { i = 2; if (M_IS_LZMA(ph.method)) { if (!foundBss) i = 3; else i = 4; } }
     const char *loader_method[] = { "con/stack", "con/bss", "cdb", "cdb/stack", "cdb/bss" };
     char method_name[32+1]; set_method_name(method_name, sizeof(method_name), ph.method, ph.level);
     printf("%-13s: methods       : %s, %s\n", getName(), method_name, loader_method[i]);

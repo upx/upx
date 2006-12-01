@@ -175,38 +175,13 @@ Note that compression level B<--best> can be somewhat slow for large
 files, but you definitely should use it when releasing a final version
 of your program.
 
-Quick start for achieving the best compression ratio:
-
-=over 4
-
-Try B<upx --brute myfile.exe>.
-
-=back
-
-Details for achieving the best compression ratio:
+Quick info for achieving the best compression ratio:
 
 =over 4
 
 =item *
 
-Use the compression level B<--best>.
-
-=item *
-
-Try one or both of the options B<--all-methods> and B<--all-filters>.
-
-=item *
-
-Try the option B<--crp-ms=NUMBER>. This uses more memory during compression
-to achieve a (slightly) better compression ratio.
-
-NUMBER must be a decimal value from 10000 to 999999, inclusive.
-The default value is 10000 (ten thousand).
-
-=item *
-
-Info: the option B<--brute> is an abbrevation for the options
-B<S<--best> S<--all-methods> S<--all-filters> S<--crp-ms=999999>>.
+Try B<upx --brute myfile.exe> or even B<upx --ultra-brute myfile.exe>.
 
 =item *
 
@@ -855,7 +830,7 @@ Screensavers are supported, with the restriction that the filename
 must end with ".scr" (as screensavers are handled slightly different
 than normal exe files).
 
-UPX compressed PE files has some minor memory overhead (usually in the
+UPX compressed PE files have some minor memory overhead (usually in the
 10 - 30 kbytes range) which can be seen by specifying the "-i" command
 line switch during compression.
 
