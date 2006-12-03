@@ -530,7 +530,7 @@ void PackW32Pe::processLoadConf(Reloc *rel, const Interval *iv,
 
 bool PackW32Pe::canPack()
 {
-    if (!readFileHeader())
+    if (!readFileHeader() || ih.cpu < 0x14c || ih.cpu > 0x150)
         return false;
     return true;
 }
