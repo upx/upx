@@ -211,7 +211,9 @@ typedef void (__acc_cdecl *upx_progress_func_t)
 struct upx_callback_t
 {
     upx_progress_func_t nprogress;
-    void * user1;
+    void *user;
+
+    void reset() { memset(this, 0, sizeof(*this)); }
 };
 
 

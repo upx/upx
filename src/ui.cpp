@@ -92,8 +92,6 @@ long UiPacker::update_u_len = 0;
 long UiPacker::update_fc_len = 0;
 long UiPacker::update_fu_len = 0;
 
-#define clear_cb()    memset(&cb, 0, sizeof(cb))
-
 
 /*************************************************************************
 // constants
@@ -182,7 +180,7 @@ UiPacker::UiPacker(const Packer *p_) :
 {
     init_global_constants();
 
-    clear_cb();
+    cb.reset();
 
     s = new State;
     memset(s,0,sizeof(*s));
@@ -208,7 +206,7 @@ UiPacker::UiPacker(const Packer *p_) :
 
 UiPacker::~UiPacker()
 {
-    clear_cb();
+    cb.reset();
     delete s; s = NULL;
 }
 
@@ -246,7 +244,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
     s->bar_pos = 1;             // because of the leading `\r'
     s->pass_digits = 0;
 
-    clear_cb();
+    cb.reset();
 
     if (s->pass < 0)            // no callback wanted
         return;
@@ -269,7 +267,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
 #else
     cb.nprogress = progress_callback;
 #endif
-    cb.user1 = this;
+    cb.user = this; // parameter for static function UiPacker::progress_callback()
 
     if (s->mode == M_CB_TERM)
     {
@@ -386,7 +384,7 @@ void UiPacker::endCallback()
     }
 #endif /* UI_USE_SCREEN */
 
-    clear_cb();
+    cb.reset();
 #if 0
     printf("callback: pass %d, step %6d, updates %6d\n",
            s->pass, s->step, s->spin_counter);
@@ -401,8 +399,8 @@ void UiPacker::endCallback()
 void __acc_cdecl UiPacker::progress_callback(upx_callback_p cb, unsigned isize, unsigned osize)
 {
     //printf("%6d %6d %d\n", isize, osize, state);
-    UiPacker *uip = (UiPacker *) cb->user1;
-    uip->doCallback(isize, osize);
+    UiPacker *self = (UiPacker *) cb->user;
+    self->doCallback(isize, osize);
 }
 
 
@@ -459,7 +457,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
     upx_snprintf(m, buflen, "  %3d.%1d%%  %c ",
                  ratio / 10000, (ratio % 10000) / 1000,
                  spinner[s->spin_counter & 3]);
-    assert((int)strlen(s->msg_buf) < 1 + 80);
+    assert(strlen(s->msg_buf) < 1 + 80);
 
     s->pos = pos;
     s->spin_counter++;
