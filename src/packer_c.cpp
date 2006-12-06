@@ -60,7 +60,7 @@ const int *Packer::getDefaultCompressionMethods_8(int method, int level, int sma
     static const int m_nrv2d[] = { M_NRV2D_8, M_END };
     static const int m_nrv2e[] = { M_NRV2E_8, M_END };
 
-    if (method == -1)       return m_all;
+    if (method == M_ALL)    return m_all;
     //if (M_IS_CL1B(method))  return m_cl1b;
     if (M_IS_LZMA(method))  return m_lzma;
     if (M_IS_NRV2B(method)) return m_nrv2b;
@@ -83,7 +83,7 @@ const int *Packer::getDefaultCompressionMethods_le32(int method, int level, int 
     static const int m_nrv2d[] = { M_NRV2D_LE32, M_END };
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
 
-    if (method == -1)       return m_all;
+    if (method == M_ALL)    return m_all;
     //if (M_IS_CL1B(method))  return m_cl1b;
     if (M_IS_LZMA(method))  return m_lzma;
     if (M_IS_NRV2B(method)) return m_nrv2b;

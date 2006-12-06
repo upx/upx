@@ -169,7 +169,7 @@ public:
 
 protected:
     // main compression drivers
-    virtual bool compress(upx_bytep in, upx_bytep out,
+    virtual bool compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
                           const upx_compress_config_t *cconf = NULL);
     virtual void decompress(const upx_bytep in, upx_bytep out,
                             bool verify_checksum = true, Filter *ft = NULL);
@@ -181,11 +181,24 @@ protected:
     void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
                              const upx_compress_config_t *cconf,
-                             int filter_strategy = 0,
-                             unsigned filter_buf_off = 0,
-                             unsigned compress_buf_off = 0,
-                             const upx_bytep header_buffer = NULL,
-                             unsigned header_length = 0);
+                             int filter_strategy = 0);
+    void compressWithFilters(Filter *ft,
+                             const unsigned overlap_range,
+                             const upx_compress_config_t *cconf,
+                             int filter_strategy,
+                             unsigned filter_buf_off,
+                             unsigned compress_ibuf_off,
+                             unsigned compress_obuf_off,
+                             const upx_bytep hdr_ptr, unsigned hdr_len);
+    // real compression driver
+    void compressWithFilters(upx_bytep i_ptr, unsigned i_len,
+                             upx_bytep o_ptr,
+                             upx_bytep f_ptr, unsigned f_len,
+                             const upx_bytep hdr_ptr, unsigned hdr_len,
+                             Filter *ft,
+                             const unsigned overlap_range,
+                             const upx_compress_config_t *cconf,
+                             int filter_strategy);
 
     // util for verifying overlapping decompresion
     //   non-destructive test
@@ -233,10 +246,6 @@ protected:
 
     // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;
-    virtual void tryFilters(Filter *ft, upx_byte *buf, unsigned buf_len,
-                            unsigned addvalue=0) const;
-    virtual void scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
-                             unsigned addvalue=0) const;
     virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
         { }
     virtual void addFilter32(int filter_id);

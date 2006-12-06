@@ -41,54 +41,6 @@ bool Packer::isValidFilter(int filter_id) const
 }
 
 
-void Packer::tryFilters(Filter *ft, upx_byte *buf, unsigned buf_len,
-                        unsigned addvalue) const
-{
-    // debug
-    //scanFilters(ft, buf, buf_len, addvalue);
-
-    ft->init();
-    if (opt->filter == 0)
-        return;
-    for (const int *f = getFilters(); f && *f >= 0; f++)
-    {
-        if (*f == 0)        // skip no-filter
-            continue;
-        if (opt->filter < 0 || *f == opt->filter)
-        {
-            ft->init(*f, addvalue);
-            optimizeFilter(ft, buf, buf_len);
-            if (ft->filter(buf, buf_len) && ft->calls > 0)
-                break;                      // success
-            ft->init();
-        }
-    }
-}
-
-
-void Packer::scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
-                         unsigned addvalue) const
-{
-    ft->init();
-    if (opt->filter == 0)
-        return;
-    for (const int *f = getFilters(); f && *f >= 0; f++)
-    {
-        if (*f == 0)        // skip no-filter
-            continue;
-        ft->init(*f, addvalue);
-        //static const int ctos[] = { 0xff, 0xfe, 0x80, 0x22, -1 };
-        //ft->preferred_ctos = ctos;
-        if (ft->scan(buf, buf_len))
-        {
-            printf("scanFilters: id 0x%02x size: %6d: calls %5d/%5d/%3d, cto 0x%02x\n",
-                   ft->id, ft->buf_len, ft->calls, ft->noncalls, ft->wrongcalls, ft->cto);
-        }
-        ft->init();
-    }
-}
-
-
 /*************************************************************************
 // addFilter32
 **************************************************************************/

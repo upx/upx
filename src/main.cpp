@@ -50,9 +50,9 @@ void options_t::reset()
     o->crp.reset();
 
     o->cmd = CMD_NONE;
-    o->method = -1;
+    o->method = M_NONE;
     o->level = -1;
-    o->filter = -1;
+    o->filter = FT_NONE;
 
     o->backup = -1;
     o->overlay = -1;

@@ -123,7 +123,7 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
     if (!use_thumb_stub)
         return getDefaultCompressionMethods_8(method, level);
 
-    if (method == -1)       return m_all;
+    if (method == M_ALL)    return m_all;
     if (M_IS_LZMA(method))  return m_lzma;
     if (M_IS_NRV2B(method)) return m_nrv2b;
     if (M_IS_NRV2E(method)) return m_nrv2e;
@@ -133,7 +133,7 @@ const int *PackArmPe::getCompressionMethods(int method, int level) const
 
 const int *PackArmPe::getFilters() const
 {
-    static const int filters[] = { 0x50, -1 };
+    static const int filters[] = { 0x50, FT_END };
     return filters;
 }
 
@@ -710,7 +710,7 @@ void PackArmPe::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 2048, &cconf, filter_strategy,
-                        ih.codebase, rvamin);
+                        ih.codebase, rvamin, 0, NULL, 0);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     /*

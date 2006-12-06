@@ -804,7 +804,7 @@ void PackW32Pe::pack(OutputFile *fo)
     }
 
     compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy,
-                        ih.codebase, rvamin);
+                        ih.codebase, rvamin, 0, NULL, 0);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)

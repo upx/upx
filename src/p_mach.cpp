@@ -60,7 +60,7 @@ const int *PackMachPPC32::getCompressionMethods(int /*method*/, int /*level*/) c
 
 const int *PackMachPPC32::getFilters() const
 {
-    static const int filters[] = { 0xd0, -1 };
+    static const int filters[] = { 0xd0, FT_END };
     return filters;
 }
 

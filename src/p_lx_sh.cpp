@@ -85,7 +85,7 @@ PackLinuxI386sh::buildLoader(Filter const *ft)
     // get fresh filter
     Filter fold_ft = *ft;
     fold_ft.init(ft->id, ft->addvalue);
-    int preferred_ctos[2] = {ft->cto, -1};
+    int preferred_ctos[2] = { ft->cto, -1 };
     fold_ft.preferred_ctos = preferred_ctos;
 
     // filter

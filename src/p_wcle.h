@@ -74,7 +74,7 @@ protected:
     virtual void encodeFixups();
     virtual void decodeFixups();
 
-    virtual void encodeImage(const Filter *ft);
+    virtual void encodeImage(Filter *ft);
     virtual void decodeImage();
 
     static void virt2rela(const le_object_table_entry_t *, unsigned *objn, unsigned *addr);

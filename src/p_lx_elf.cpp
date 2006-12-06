@@ -249,8 +249,8 @@ int const *
 PackLinuxElf32ppc::getFilters() const
 {
     static const int filters[] = {
-        0xd0, -1
-    };
+        0xd0,
+    FT_END };
     return filters;
 }
 
@@ -258,8 +258,8 @@ int const *
 PackLinuxElf64amd::getFilters() const
 {
     static const int filters[] = {
-        0x49, -1
-    };
+        0x49,
+    FT_END };
     return filters;
 }
 
@@ -1424,8 +1424,8 @@ using namespace N_BELE_CTP;
 static const int *
 ARM_getFilters(bool const isBE)
 {
-    static const int f50[] = { 0x50, -1 };
-    static const int f51[] = { 0x51, -1 };
+    static const int f50[] = { 0x50, FT_END };
+    static const int f51[] = { 0x51, FT_END };
     if (isBE)
         return f51;
     return f50;
@@ -1857,7 +1857,7 @@ PackLinuxElf32x86::getFilters() const
         0x82, 0x85,
         0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
 #endif
-    -1 };
+    FT_END };
     return filters;
 }
 

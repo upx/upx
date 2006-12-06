@@ -58,7 +58,7 @@ const int *PackCom::getFilters() const
 {
     static const int filters[] = {
         0x06, 0x03, 0x04, 0x01, 0x05, 0x02,
-    -1 };
+    FT_END };
     return filters;
 }
 

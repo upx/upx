@@ -77,7 +77,7 @@ const int *PackWcle::getFilters() const
 {
     static const int filters[] = {
         0x26, 0x24, 0x14, 0x11, 0x16, 0x13, 0x25, 0x12, 0x15,
-    -1 };
+    FT_END };
     return filters;
 }
 
@@ -428,7 +428,7 @@ void PackWcle::preprocessFixups()
 
 
 #define RESERVED 0x1000
-void PackWcle::encodeImage(const Filter *ft)
+void PackWcle::encodeImage(Filter *ft)
 {
     // concatenate image & preprocessed fixups
     unsigned isize = soimage + sofixups;
@@ -438,16 +438,18 @@ void PackWcle::encodeImage(const Filter *ft)
 
     delete[] ifixups; ifixups = NULL;
 
-    // compress
     oimage.allocForCompression(isize, RESERVED+512);
-    ph.filter = ft->id;
-    ph.filter_cto = ft->cto;
+    // prepare packheader
     ph.u_len = isize;
-    // reserve RESERVED bytes for the decompressor
-    if (!compress(ibuf,oimage+RESERVED))
-        throwNotCompressible();
-    ph.overlap_overhead = findOverlapOverhead(oimage+RESERVED, 512);
-    buildLoader(ft);
+    // prepare filter [already done]
+    // compress
+    upx_compress_config_t cconf; cconf.reset();
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    compressWithFilters(ibuf, isize,
+                        oimage + RESERVED,
+                        ibuf + ft->addvalue, ft->buf_len,
+                        NULL, 0,
+                        ft, 512, &cconf, 0);
 
     ibuf.dealloc();
     soimage = ph.c_len;
@@ -506,14 +508,12 @@ void PackWcle::pack(OutputFile *fo)
     ifixups[sofixups+12] = (unsigned char) (unsigned) objects;
     sofixups += 13;
 
-    // filter
+    // prepare filter
     Filter ft(ph.level);
-    tryFilters(&ft, iimage+text_vaddr, text_size, text_vaddr);
-
+    ft.buf_len = text_size;
+    ft.addvalue = text_vaddr;
+    // compress
     encodeImage(&ft);
-
-    // verify filter
-    ft.verifyUnfilter();
 
     const unsigned lsize = getLoaderSize();
     neweip = getLoaderSection("WCLEMAIN");

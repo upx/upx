@@ -442,10 +442,13 @@ private:
 #define UPX_F_LINUX_ELF32_ARMBE 133
 
 
+// compression methods
+#define M_ALL           (-1)
+#define M_END           (-2)
+#define M_NONE          (-3)
+#define M_SKIP          (-4)
+#define M_ULTRA_BRUTE   (-5)
 // compression methods - DO NOT CHANGE
-#define M_END           (-1)
-#define M_SKIP          (-2)
-#define M_ULTRA_BRUTE   (-3)
 #define M_NRV2B_LE32    2
 #define M_NRV2B_8       3
 #define M_NRV2B_LE16    4
@@ -469,10 +472,11 @@ private:
 #define M_IS_DEFLATE(x) ((x) == M_DEFLATE)
 
 
-// filters - DO NOT CHANGE
+// filters
 #define FT_END          (-1)
-#define FT_SKIP         (-2)
-#define FT_ULTRA_BRUTE  (-3)
+#define FT_NONE         (-2)
+#define FT_SKIP         (-3)
+#define FT_ULTRA_BRUTE  (-4)
 
 
 /*************************************************************************

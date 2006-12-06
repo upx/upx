@@ -68,7 +68,7 @@ const int *PackVmlinuxI386::getFilters() const
 {
     static const int filters[] = {
         0x49, 0x46,
-    -1 };
+    FT_END };
     return filters;
 }
 
@@ -358,7 +358,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     ph.u_len = phdri[0].p_offset;
     fi->seek(0, SEEK_SET);
     fi->readx(ibuf, ph.u_len);
-    compress(ibuf, obuf);
+    compress(ibuf, ph.u_len, obuf);
 
     while (0!=*p++) ;
     shdro[2].sh_name = ptr_diff(p, shstrtab);
@@ -383,7 +383,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
             ph.level = 1;
         }
     }
-    compress(ibuf, obuf, &cconf);
+    compress(ibuf, ph.u_len, obuf, &cconf);
     ph.level = old_level;
 
     // while (0!=*p++) ;  // name is the same

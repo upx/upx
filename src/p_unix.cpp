@@ -346,10 +346,10 @@ void PackUnix::packExtent(
             ft->cto = 0;
 
             compressWithFilters(ft, OVERHEAD, NULL_cconf, filter_strategy,
-                                0, 0, hdr_ibuf, hdr_u_len);
+                                0, 0, 0, hdr_ibuf, hdr_u_len);
         }
         else {
-            (void) compress(ibuf, obuf);    // ignore return value
+            (void) compress(ibuf, ph.u_len, obuf);    // ignore return value
         }
 
         if (ph.c_len < ph.u_len) {

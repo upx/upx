@@ -63,7 +63,7 @@ const int *PackExe::getCompressionMethods(int method, int level) const
     static const int m_nrv2d[] = { M_NRV2D_8, M_END };
     static const int m_nrv2e[] = { M_NRV2E_8, M_END };
 
-    if (method == -1)       return m_all;
+    if (method == M_ALL)    return m_all;
     if (M_IS_NRV2B(method)) return m_nrv2b;
     if (M_IS_NRV2D(method)) return m_nrv2d;
     if (M_IS_NRV2E(method)) return m_nrv2e;
