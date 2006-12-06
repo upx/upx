@@ -142,8 +142,8 @@ const int *PackW32Pe::getCompressionMethods(int method, int level) const
 const int *PackW32Pe::getFilters() const
 {
     static const int filters[] = {
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, 0x25, 0x15, 0x12,
-    -1 };
+        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+    FT_END };
     return filters;
 }
 
