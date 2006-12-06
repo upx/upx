@@ -1230,11 +1230,9 @@ static int prepareFilters(int *filters, int &filter_strategy,
     }
     assert(filter_strategy >= -1);
 
-    const int *filter_list;
-    filter_list = all_filters;
-    while (filter_list && *filter_list != FT_END)
+    while (all_filters && *all_filters != FT_END)
     {
-        int filter_id = *filter_list++;
+        int filter_id = *all_filters++;
         if (filter_id == FT_ULTRA_BRUTE && !opt->ultra_brute)
             break;
         if (filter_id == FT_SKIP || filter_id == FT_ULTRA_BRUTE)
@@ -1293,7 +1291,7 @@ void Packer::compressWithFilters(Filter *parm_ft,
     int filters[256];
     int nfilters = prepareFilters(filters, filter_strategy, getFilters());
     assert(nfilters > 0); assert(nfilters < 256);
-#if 1
+#if 0
     printf("compressWithFilters: m(%d):", nmethods);
     for (int i = 0; i < nmethods; i++) printf(" %d", methods[i]);
     printf(" f(%d):", nfilters);
