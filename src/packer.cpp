@@ -538,7 +538,7 @@ void Packer::checkOverlay(unsigned overlay)
         return;
     info("Found overlay: %d bytes", overlay);
     if (opt->overlay == opt->SKIP_OVERLAY)
-        throw OverlayException("file has overlay -- skipped; try `--overlay=copy'");
+        throw OverlayException("file has overlay -- skipped; try '--overlay=copy'");
 }
 
 
@@ -732,7 +732,7 @@ void Packer::checkAlreadyPacked(const void *b, int blen)
     //if (!tmp.fillPackHeader((unsigned char *)b + boff, blen - boff))
     //    return;
     //
-    // This also would require that the buffer in `b' holds
+    // This also would require that the buffer in 'b' holds
     // the full PackHeader, and not only the 4 magic bytes.
 
     throwAlreadyPacked();

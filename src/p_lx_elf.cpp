@@ -776,12 +776,12 @@ bool PackLinuxElf32::canPack()
 
     // additional requirements for linux/elf386
     if (get_native16(&ehdr->e_ehsize) != sizeof(*ehdr)) {
-        throwCantPack("invalid Ehdr e_ehsize; try `--force-execve'");
+        throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
     unsigned const e_phoff = get_native32(&ehdr->e_phoff);
     if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-        throwCantPack("non-contiguous Ehdr/Phdr; try `--force-execve'");
+        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
         return false;
     }
 
@@ -794,7 +794,7 @@ bool PackLinuxElf32::canPack()
                 return false;
         if (1!=exetype && phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
             if (phdr->p_offset != 0) {
-                throwCantPack("invalid Phdr p_offset; try `--force-execve'");
+                throwCantPack("invalid Phdr p_offset; try '--force-execve'");
                 return false;
             }
             exetype = 1;
@@ -901,12 +901,12 @@ PackLinuxElf64amd::canPack()
 
     // additional requirements for linux/elf386
     if (get_native16(&ehdr->e_ehsize) != sizeof(*ehdr)) {
-        throwCantPack("invalid Ehdr e_ehsize; try `--force-execve'");
+        throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
     acc_uint64l_t const e_phoff = get_native64(&ehdr->e_phoff);
     if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
-        throwCantPack("non-contiguous Ehdr/Phdr; try `--force-execve'");
+        throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
         return false;
     }
 
@@ -919,7 +919,7 @@ PackLinuxElf64amd::canPack()
         if (phdr->PT_LOAD64 == get_native32(&phdr->p_type)) {
             // Just avoid the "rewind" when unpacking?
             //if (phdr->p_offset != 0) {
-            //    throwCantPack("invalid Phdr p_offset; try `--force-execve'");
+            //    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
             //    return false;
             //}
             exetype = 1;

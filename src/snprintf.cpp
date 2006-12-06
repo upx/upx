@@ -333,7 +333,7 @@ static double my_modf(double x0, double *iptr)
 static void fmtfp (char *buffer, size_t *currlen, size_t maxlen,
                    LDOUBLE fvalue, int min, int max, int flags)
 {
-    /* avoid warnings with `gcc -Wshadow' */
+    /* avoid warnings with 'gcc -Wshadow' */
 #undef index
 #define index iindex
     int signvalue = 0;

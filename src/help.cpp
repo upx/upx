@@ -136,7 +136,7 @@ static void show_all_packers(FILE *f, int verbose)
         const char *sn = pn.names[i].sname;
         if (verbose)
         {
-            con_fprintf(f, "  %-30s %s\n", fn, sn);
+            con_fprintf(f, "    %-32s %s\n", fn, sn);
         }
         else
         {
@@ -187,7 +187,7 @@ void show_help(int verbose)
 
     con_fprintf(f,
                 "  -q     be quiet                          -v    be verbose\n"
-                "  -oFILE write output to `FILE'\n"
+                "  -oFILE write output to 'FILE'\n"
                 //"  -f     force overwrite of output files and compression of suspicious files\n"
                 "  -f     force compression of suspicious files\n"
                 "%s%s"
@@ -202,7 +202,14 @@ void show_help(int verbose)
     if (verbose > 0)
     {
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"\nBackup options:\n");
+        con_fprintf(f,"\nCompression tuning options:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --brute             try all available compression methods & filters\n"
+                    "  --ultra-brute       try even more compression variants\n"
+                    "\n");
+        fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"Backup options:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  -k, --backup        keep backup files\n"
@@ -312,15 +319,22 @@ void show_help(int verbose)
                     "\n");
     }
 
-    con_fprintf(f,
-                "file..   executables to (de)compress\n"
-                "\n");
-    fg = con_fg(f,FG_YELLOW);
-    con_fprintf(f,"This version supports:\n");
-    fg = con_fg(f,fg);
-    show_all_packers(f, verbose);
+    con_fprintf(f, "file..   executables to (de)compress\n");
+
+    if (verbose > 0)
+    {
+        fg = con_fg(f,FG_YELLOW);
+        con_fprintf(f,"\nThis version supports:\n");
+        fg = con_fg(f,fg);
+        show_all_packers(f, verbose);
+    }
+    else
+    {
+        con_fprintf(f,"\nType '%s --help' for more detailed help.\n", progname);
+    }
+
     con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
-//                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type `upx -L'.\n"
+//                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
                 "");
 
 #if defined(DEBUG) || defined(TESTING)
@@ -423,7 +437,7 @@ void show_version(int x)
 #if defined(WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999-2006 Igor Pavlov\n");
 #endif
-    fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type `%s -L'.\n", progname);
+    fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
 }
 
 

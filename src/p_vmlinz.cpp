@@ -208,7 +208,7 @@ int PackVmlinuzI386::decompressKernel()
         if (fd_pos != file_size)
         {
             //printf("fd_pos: %ld, file_size: %ld\n", (long)fd_pos, (long)file_size);
-            throwCantPack("trailing bytes after kernel image; use option `-f' to force packing");
+            throwCantPack("trailing bytes after kernel image; use option '-f' to force packing");
         }
 
 
@@ -227,7 +227,7 @@ int PackVmlinuzI386::decompressKernel()
         &&  0x0F==ibuf[19] && 0xA2==ibuf[20]  // cpuid
         ) goto head_ok;
 
-        throwCantPack("unrecognized kernel architecture; use option `-f' to force packing");
+        throwCantPack("unrecognized kernel architecture; use option '-f' to force packing");
     head_ok:
 
         // FIXME: more checks for special magic bytes in ibuf ???

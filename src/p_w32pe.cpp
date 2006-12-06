@@ -649,7 +649,7 @@ void PackW32Pe::pack(OutputFile *fo)
     if (ih.entry && ih.entry < rvamin)
         throwCantPack("run a virus scanner on this file!");
     if (!opt->force && ih.subsystem == 1)
-        throwCantPack("subsystem `native' is not supported (try --force)");
+        throwCantPack("subsystem 'native' is not supported (try --force)");
     if (ih.filealign < 0x200)
         throwCantPack("filealign < 0x200 is not yet supported");
 

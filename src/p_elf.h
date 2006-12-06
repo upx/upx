@@ -192,7 +192,7 @@ struct Shdr
         SHF_EXECINSTR  = (1 << 2),  /* Executable */
         SHF_MERGE      = (1 << 4),  /* Might be merged */
         SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
-        SHF_INFO_LINK  = (1 << 6),  /* `sh_info' contains SHT index */
+        SHF_INFO_LINK  = (1 << 6),  /* 'sh_info' contains SHT index */
         SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
     };
 }

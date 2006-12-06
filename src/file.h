@@ -131,7 +131,7 @@ public:
 
     off_t getBytesWritten() const { return bytes_written; }
 
-    // FIXME - these won't work when using the `--stdout' option
+    // FIXME - these won't work when using the '--stdout' option
     virtual void seek(off_t off, int whence)
     {
         assert(!opt->to_stdout);

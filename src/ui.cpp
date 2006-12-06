@@ -241,7 +241,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
     s->bar_len = 64;
     s->pos = -2;
     s->spin_counter = 0;
-    s->bar_pos = 1;             // because of the leading `\r'
+    s->bar_pos = 1;             // because of the leading '\r'
     s->pass_digits = 0;
 
     cb.reset();
@@ -481,7 +481,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
 #if 0
         s->screen->putString(s->screen,msg,s->b_cx,s->b_cy);
 #else
-        // FIXME: this doesn't honor `--mono' etc.
+        // FIXME: this doesn't honor '--mono' etc.
         int attr = FG_CYAN | s->s_bg;
         s->screen->putStringAttr(s->screen,msg,attr,s->b_cx,s->b_cy);
 #endif

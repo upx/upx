@@ -168,7 +168,7 @@ int PackTmt::readFileHeader()
 
     fi->seek(adam_offset,SEEK_SET);
     fi->readx(&ih,sizeof(ih));
-    // FIXME: should add some checks for the values in `ih'
+    // FIXME: should add some checks for the values in 'ih'
 
     return UPX_F_TMT_ADAM;
 #undef H4

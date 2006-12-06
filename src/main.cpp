@@ -183,7 +183,7 @@ static void e_method(int m, int l)
 static void e_optarg(const char *n)
 {
     fflush(con_term);
-    fprintf(stderr,"%s: invalid argument in option `%s'\n", argv0, n);
+    fprintf(stderr,"%s: invalid argument in option '%s'\n", argv0, n);
     e_exit(EXIT_USAGE);
 }
 
@@ -191,7 +191,7 @@ static void e_optarg(const char *n)
 static void e_optval(const char *n)
 {
     fflush(con_term);
-    fprintf(stderr,"%s: invalid value for option `%s'\n", argv0, n);
+    fprintf(stderr,"%s: invalid value for option '%s'\n", argv0, n);
     e_exit(EXIT_USAGE);
 }
 
@@ -201,10 +201,10 @@ void e_envopt(const char *n)
 {
     fflush(con_term);
     if (n)
-        fprintf(stderr,"%s: invalid string `%s' in environment variable `%s'\n",
+        fprintf(stderr,"%s: invalid string '%s' in environment variable '%s'\n",
                         argv0, n, OPTIONS_VAR);
     else
-        fprintf(stderr,"%s: illegal option in environment variable `%s'\n",
+        fprintf(stderr,"%s: illegal option in environment variable '%s'\n",
                         argv0, OPTIONS_VAR);
     e_exit(EXIT_USAGE);
 }
@@ -227,7 +227,7 @@ void check_not_both(bool e1, bool e2, const char *c1, const char *c2)
     if (e1 && e2)
     {
         fprintf(stderr,"%s: ",argv0);
-        fprintf(stderr,"cannot use both `%s' and `%s'\n", c1, c2);
+        fprintf(stderr,"cannot use both '%s' and '%s'\n", c1, c2);
         e_usage();
     }
 }
@@ -264,14 +264,14 @@ void check_options(int i, int argc)
     check_not_both(opt->to_stdout, opt->output_name != NULL, "--stdout", "-o");
     if (opt->to_stdout && opt->cmd == CMD_COMPRESS)
     {
-        fprintf(stderr,"%s: cannot use `--stdout' when compressing\n", argv0);
+        fprintf(stderr,"%s: cannot use '--stdout' when compressing\n", argv0);
         e_usage();
     }
     if (opt->to_stdout || opt->output_name)
     {
         if (i + 1 != argc)
         {
-            fprintf(stderr,"%s: need exactly one argument when using `%s'\n",
+            fprintf(stderr,"%s: need exactly one argument when using '%s'\n",
                     argv0, opt->to_stdout ? "--stdout" : "-o");
             e_usage();
         }
@@ -333,7 +333,7 @@ static void set_output_name(const char *n, bool allow_m)
 #if 1
     if (done_output_name > 0)
     {
-        fprintf(stderr,"%s: option `-o' more than once given\n",argv0);
+        fprintf(stderr,"%s: option '-o' more than once given\n",argv0);
         e_usage();
     }
 #endif
@@ -356,7 +356,7 @@ static void set_script_name(const char *n, bool allow_m)
 #if 1
     if (done_script_name > 0)
     {
-        fprintf(stderr,"%s: option `--script' more than once given\n",argv0);
+        fprintf(stderr,"%s: option '--script' more than once given\n",argv0);
         e_usage();
     }
 #endif
@@ -508,10 +508,13 @@ static int do_option(int optc, const char *arg)
         set_cmd(CMD_HELP);
         break;
     case 'h'+256:
-#if 0
-        /* according to GNU standards */
-        set_term(stdout);
-        opt->console = CON_FILE;
+#if 1
+        if (!acc_isatty(STDOUT_FILENO))
+        {
+            /* according to GNU standards */
+            set_term(stdout);
+            opt->console = CON_FILE;
+        }
 #endif
         show_help(1);
         e_exit(EXIT_OK);
@@ -716,7 +719,7 @@ static int do_option(int optc, const char *arg)
         opt->backup = 1;
         break;
     case 541:
-        if (opt->backup != 1)           // do not overide `--backup'
+        if (opt->backup != 1)           // do not overide '--backup'
             opt->backup = 0;
         break;
     // overlay

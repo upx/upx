@@ -307,19 +307,19 @@ bool PackTos::checkFileHeader()
     if ((f & F_PROTMODE) != F_PROT_P)
     {
         if (opt->force < 1)
-            throwCantPack("no private memory protection; use option `-f' to force packing");
+            throwCantPack("no private memory protection; use option '-f' to force packing");
     }
     if (f & F_SHTEXT)
     {
         if (opt->force < 1)
-            throwCantPack("shared text segment; use option `-f' to force packing");
+            throwCantPack("shared text segment; use option '-f' to force packing");
     }
 #if 0
     // fh_reserved seems to be unused
     if (ih.fh_reserved != 0)
     {
         if (opt->force < 1)
-            throwCantPack("reserved header field set; use option `-f' to force packing");
+            throwCantPack("reserved header field set; use option '-f' to force packing");
     }
 #endif
     return true;
