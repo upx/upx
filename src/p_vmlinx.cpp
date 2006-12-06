@@ -78,8 +78,8 @@ int PackVmlinuxI386::getStrategy(Filter &/*ft*/)
     // Called just before reading and compressing each block.
     // Might want to adjust blocksize, etc.
 
-    // If user specified the filter, then use it (-2==strategy).
-    // Else try the first two filters, and pick the better (2==strategy).
+    // If user specified the filter, then use it (-2==filter_strategy).
+    // Else try the first two filters, and pick the better (2==filter_strategy).
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
@@ -309,7 +309,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, getStrategy(ft), getFilters(), &cconf);
+    compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
 
     const unsigned lsize = getLoaderSize();
 

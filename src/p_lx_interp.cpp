@@ -164,9 +164,9 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
         ph.method = M_NRV2E_LE32; addLoader(getDecompressorSections(), NULL);
         addLoader("LXPTI090", NULL);
 
-        addLoader("LXPTI043", NULL);
-        ph.method = M_CL1B_LE32;  addLoader(getDecompressorSections(), NULL);
-        addLoader("LXPTI090", NULL);
+        //addLoader("LXPTI043", NULL);
+        //ph.method = M_CL1B_LE32;  addLoader(getDecompressorSections(), NULL);
+        //addLoader("LXPTI090", NULL);
 
         addLoader("LXPTI091", NULL);
 

@@ -37,16 +37,7 @@
 
 bool Packer::isValidFilter(int filter_id) const
 {
-    if (!Filter::isValidFilter(filter_id))
-        return false;
-    if (filter_id == 0)
-        return true;
-    for (const int *f = getFilters(); f && *f >= 0; f++)
-    {
-        if (*f == filter_id)
-            return true;
-    }
-    return false;
+    return Filter::isValidFilter(filter_id, getFilters());
 }
 
 
@@ -106,19 +97,19 @@ void Packer::scanFilters(Filter *ft, const upx_byte *buf, unsigned buf_len,
 #define FNOMRU 1  // filter, but not using mru
 #define MRUFLT 2  // mru filter
 
-static inline unsigned f80_call(int fid)
+static inline unsigned f80_call(int filter_id)
 {
-    return (1+ (0x0f & fid)) % 3;
+    return (1+ (0x0f & filter_id)) % 3;
 }
 
-static inline unsigned f80_jmp1(int fid)
+static inline unsigned f80_jmp1(int filter_id)
 {
-    return ((1+ (0x0f & fid)) / 3) % 3;
+    return ((1+ (0x0f & filter_id)) / 3) % 3;
 }
 
-static inline unsigned f80_jcc2(int fid)
+static inline unsigned f80_jcc2(int filter_id)
 {
-    return f80_jmp1(fid);
+    return f80_jmp1(filter_id);
 }
 
 

@@ -58,17 +58,16 @@ PackExe::PackExe(InputFile *f) :
 
 const int *PackExe::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_8, M_NRV2B_8, M_NRV2E_8, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_NRV2D_8, M_END };
+    static const int m_all[]   = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_END };
+    static const int m_nrv2b[] = { M_NRV2B_8, M_END };
+    static const int m_nrv2d[] = { M_NRV2D_8, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_END };
 
+    if (method == -1)       return m_all;
+    if (M_IS_NRV2B(method)) return m_nrv2b;
+    if (M_IS_NRV2D(method)) return m_nrv2d;
+    if (M_IS_NRV2E(method)) return m_nrv2e;
     bool small = ih_imagesize <= 256*1024;
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
-    if (M_IS_NRV2D(method))
-        return m_nrv2d;
-    if (M_IS_NRV2E(method))
-        return m_nrv2e;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
@@ -430,7 +429,7 @@ void PackExe::pack(OutputFile *fo)
     // compress (max_match = 8192)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = MAXMATCH;
-    compressWithFilters(&ft, 32, 0, NULL, &cconf);
+    compressWithFilters(&ft, 32, &cconf);
     if (ph.max_run_found + ph.max_match_found > 0x8000)
         throwCantPack("decompressor limit exceeded, send a bugreport");
 

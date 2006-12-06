@@ -135,7 +135,7 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
     // prepare bit-buffer settings
     cconf.bb_endian = 0;
     cconf.bb_size = 0;
-    if (method >= M_NRV2B_LE32 && method <= M_CL1B_LE16)
+    if (method >= M_NRV2B_LE32 && method <= M_NRV2E_LE16)
     {
         static const unsigned char sizes[3] = {32, 8, 16};
         cconf.bb_size = sizes[(method - M_NRV2B_LE32) % 3];

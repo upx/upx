@@ -115,19 +115,18 @@ PackArmPe::~PackArmPe()
 
 const int *PackArmPe::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_NRV2B_8, M_LZMA, M_END };
+    static const int m_all[]   = { M_NRV2B_8, M_NRV2E_8, M_LZMA, M_END };
     static const int m_lzma[]  = { M_LZMA, M_END };
+    static const int m_nrv2b[] = { M_NRV2B_8, M_END };
+    static const int m_nrv2e[] = { M_NRV2E_8, M_END };
 
     if (!use_thumb_stub)
         return getDefaultCompressionMethods_8(method, level);
 
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
-    if (M_IS_NRV2E(method))
-        return m_nrv2e;
-    if (M_IS_LZMA(method))
-        return m_lzma;
+    if (method == -1)       return m_all;
+    if (M_IS_LZMA(method))  return m_lzma;
+    if (M_IS_NRV2B(method)) return m_nrv2b;
+    if (M_IS_NRV2E(method)) return m_nrv2e;
     return m_nrv2e;
 }
 
@@ -698,20 +697,20 @@ void PackArmPe::pack(OutputFile *fo)
     ft.buf_len = ih.codesize;
     ft.addvalue = ih.codebase - rvamin;
     // compress
-    int strategy = allow_filter ? 0 : -3;
+    int filter_strategy = allow_filter ? 0 : -3;
 
     // disable filters for files with broken headers
     if (ih.codebase + ih.codesize > ph.u_len)
     {
         ft.buf_len = 1;
-        strategy = -3;
+        filter_strategy = -3;
     }
 
     // limit stack size needed for runtime decompression
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 2048, strategy,
-                        NULL, &cconf, ih.codebase, rvamin);
+    compressWithFilters(&ft, 2048, &cconf, filter_strategy,
+                        ih.codebase, rvamin);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     /*

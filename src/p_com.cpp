@@ -45,16 +45,11 @@ static const
 
 const int *PackCom::getCompressionMethods(int method, int level) const
 {
-    static const int m_nrv2b[] = { M_NRV2B_LE16, -1 };
-    if (M_IS_NRV2B(method))
-        return m_nrv2b;
+    static const int m_nrv2b[] = { M_NRV2B_LE16, M_END };
 #if 0
-    // NOT IMPLEMENTED
-    static const int m_nrv2d[] = { M_NRV2D_LE16, -1 };
-    if (M_IS_NRV2D(method))
-        return m_nrv2d;
+    static const int m_nrv2d[] = { M_NRV2D_LE16, M_END };
 #endif
-    UNUSED(level);
+    UNUSED(method); UNUSED(level);
     return m_nrv2b;
 }
 
@@ -202,7 +197,7 @@ void PackCom::pack(OutputFile *fo)
     ft.addvalue = getCallTrickOffset();
     // compress
     const unsigned overlap_range = ph.u_len < 0xFE00 - ft.addvalue ? 32 : 0;
-    compressWithFilters(&ft, overlap_range);
+    compressWithFilters(&ft, overlap_range, NULL_cconf);
 
     const int lsize = getLoaderSize();
     MemBuffer loader(lsize);

@@ -125,8 +125,8 @@ int PackUnix::getStrategy(Filter &/*ft*/)
     // Called just before reading and compressing each block.
     // Might want to adjust blocksize, etc.
 
-    // If user specified the filter, then use it (-2==strategy).
-    // Else try the first two filters, and pick the better (2==strategy).
+    // If user specified the filter, then use it (-2==filter_strategy).
+    // Else try the first two filters, and pick the better (2==filter_strategy).
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
@@ -151,9 +151,9 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         // which assumes it has free choice on each call [block].
         // And if the choices aren't the same on each block,
         // then un-filtering will give incorrect results.
-        int strategy = getStrategy(ft);
+        int filter_strategy = getStrategy(ft);
         if (file_size > (off_t)blocksize)
-            strategy = -3;      // no filters
+            filter_strategy = -3;      // no filters
 
         int l = fi->readx(ibuf, UPX_MIN(blocksize, remaining));
         remaining -= l;
@@ -170,7 +170,7 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         // that is, AFTER filtering.  We want BEFORE filtering,
         // so that decompression checks the end-to-end checksum.
         unsigned const end_u_adler = upx_adler32(ibuf, ph.u_len, ph.u_adler);
-        compressWithFilters(&ft, OVERHEAD, strategy);
+        compressWithFilters(&ft, OVERHEAD, NULL_cconf, filter_strategy);
 
         if (ph.c_len < ph.u_len) {
             ph.overlap_overhead = OVERHEAD;
@@ -318,7 +318,7 @@ void PackUnix::packExtent(
     }
     fi->seek(x.offset, SEEK_SET);
     for (off_t rest = x.size; 0 != rest; ) {
-        int const strategy = getStrategy(*ft);
+        int const filter_strategy = getStrategy(*ft);
         int l = fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
         if (l == 0) {
             break;
@@ -345,9 +345,8 @@ void PackUnix::packExtent(
             ft->id = 0;
             ft->cto = 0;
 
-            compressWithFilters(ft, OVERHEAD, strategy,
-                NULL, NULL, 0, 0, // those 4 args are the defaults
-                hdr_ibuf, hdr_u_len);
+            compressWithFilters(ft, OVERHEAD, NULL_cconf, filter_strategy,
+                                0, 0, hdr_ibuf, hdr_u_len);
         }
         else {
             (void) compress(ibuf, obuf);    // ignore return value

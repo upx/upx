@@ -180,12 +180,11 @@ protected:
     // high-level compression drivers
     void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
-                             int strategy = 0,
-                             const int *filters = NULL,
-                             const upx_compress_config_t *cconf = NULL,
+                             const upx_compress_config_t *cconf,
+                             int filter_strategy = 0,
                              unsigned filter_buf_off = 0,
                              unsigned compress_buf_off = 0,
-                             unsigned char *header_buffer = 0,
+                             const upx_bytep header_buffer = NULL,
                              unsigned header_length = 0);
 
     // util for verifying overlapping decompresion

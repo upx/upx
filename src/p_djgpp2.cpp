@@ -325,7 +325,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, 0, NULL, &cconf);
+    compressWithFilters(&ft, 512, &cconf);
 
     // patch coff header #2
     const unsigned lsize = getLoaderSize();

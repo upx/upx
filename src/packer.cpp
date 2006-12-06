@@ -1142,7 +1142,7 @@ void Packer::relocateLoader()
 // - ibuf[] is restored to the original unfiltered version
 // - obuf[] contains the best compressed version
 //
-// strategy:
+// filter_strategy:
 //   n:  try the first N filters, use best one
 //  -1:  try all filters, use first working one
 //  -2:  try only the opt->filter filter
@@ -1172,19 +1172,104 @@ void Packer::relocateLoader()
 // is OK because of the simplicity of not having two output arrays.
 **************************************************************************/
 
+static int prepareMethods(int *methods, int ph_method, const int *all_methods)
+{
+    int nmethods = 0;
+    if (!opt->all_methods || all_methods == NULL)
+    {
+        methods[nmethods++] = ph_method;
+        return nmethods;
+    }
+    for (int mm = 0; all_methods[mm] != M_END; ++mm)
+    {
+        int method = all_methods[mm];
+        if (method == M_ULTRA_BRUTE && !opt->ultra_brute)
+            break;
+        if (method == M_SKIP || method == M_ULTRA_BRUTE)
+            continue;
+        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(method))
+            continue;
+        // use this method
+        assert(Packer::isValidCompressionMethod(method));
+        methods[nmethods++] = method;
+    }
+    return nmethods;
+}
+
+
+static int prepareFilters(int *filters, int &filter_strategy,
+                          const int *all_filters)
+{
+    int nfilters = 0;
+
+    // setup filter filter_strategy
+    if (filter_strategy == 0)
+    {
+        if (opt->all_filters)
+            // choose best from all available filters
+            filter_strategy = INT_MAX;
+        else if (opt->filter >= 0 && Filter::isValidFilter(opt->filter, all_filters))
+            // try opt->filter
+            filter_strategy = -2;
+        else
+            // try the first working filter
+            filter_strategy = -1;
+    }
+    assert(filter_strategy != 0);
+
+    if (filter_strategy == -3)
+        goto done;
+    if (filter_strategy == -2)
+    {
+        if (opt->filter >= 0 && Filter::isValidFilter(opt->filter, all_filters))
+        {
+            filters[nfilters++] = opt->filter;
+            goto done;
+        }
+        filter_strategy = -1;
+    }
+    assert(filter_strategy >= -1);
+
+    const int *filter_list;
+    filter_list = all_filters;
+    while (filter_list && *filter_list != FT_END)
+    {
+        int filter_id = *filter_list++;
+        if (filter_id == FT_ULTRA_BRUTE && !opt->ultra_brute)
+            break;
+        if (filter_id == FT_SKIP || filter_id == FT_ULTRA_BRUTE)
+            continue;
+        if (filter_id == 0)
+            continue;
+        // use this filter
+        assert(Filter::isValidFilter(filter_id));
+        filters[nfilters++] = filter_id;
+        if (filter_strategy >= 0 && nfilters >= filter_strategy)
+            break;
+    }
+
+done:
+    // filter_strategy now only means "stop after first successful filter"
+    filter_strategy = (filter_strategy < 0) ? -1 : 0;
+    // make sure that we have a "no filter" fallback
+    for (int i = 0; i < nfilters; i++)
+        if (filters[i] == 0)
+            return nfilters;
+    filters[nfilters++] = 0;
+    return nfilters;
+}
+
+
 void Packer::compressWithFilters(Filter *parm_ft,
                                  const unsigned overlap_range,
-                                 int strategy, const int *parm_filters,
                                  const upx_compress_config_t *cconf,
+                                 int filter_strategy,
                                  unsigned filter_off, unsigned compress_buf_off,
-                                 unsigned char *hdr_buf,
-                                 unsigned hdr_u_len)
+                                 const upx_bytep hdr_buf, unsigned hdr_u_len)
 {
-    const int *f;
-    //
+    // struct copies
     const PackHeader orig_ph = this->ph;
           PackHeader best_ph = this->ph;
-    //
     const Filter orig_ft = *parm_ft;
           Filter best_ft = *parm_ft;
     //
@@ -1201,109 +1286,42 @@ void Packer::compressWithFilters(Filter *parm_ft,
     assert(orig_ft.id == 0);
     assert(filter_off + filter_len <= compress_buf_off + compress_buf_len);
 
-    // setup filter strategy
-    if (strategy == 0)
-    {
-        if (opt->all_filters)
-            // choose best from all available filters
-            strategy = INT_MAX;
-        else if (opt->filter >= 0 && isValidFilter(opt->filter))
-            // try opt->filter
-            strategy = -2;
-        else
-            // try the first working filter
-            strategy = -1;
-    }
-    assert(strategy != 0);
+    // prepare methods and filters
+    int methods[256];
+    int nmethods = prepareMethods(methods, ph.method, getCompressionMethods(-1, ph.level));
+    assert(nmethods > 0); assert(nmethods < 256);
+    int filters[256];
+    int nfilters = prepareFilters(filters, filter_strategy, getFilters());
+    assert(nfilters > 0); assert(nfilters < 256);
+#if 1
+    printf("compressWithFilters: m(%d):", nmethods);
+    for (int i = 0; i < nmethods; i++) printf(" %d", methods[i]);
+    printf(" f(%d):", nfilters);
+    for (int i = 0; i < nfilters; i++) printf(" %d", filters[i]);
+    printf("\n");
+#endif
 
-    // setup raw_filters
-    int tmp_filters[] = { 0, -1 };
-    const int *raw_filters = NULL;
-    if (strategy == -3)
-        raw_filters = tmp_filters;
-    else if (strategy == -2 && opt->filter >= 0)
-    {
-        tmp_filters[0] = opt->filter;
-        raw_filters = tmp_filters;
-    }
+    // update total_passes; previous (ui_total_passes > 0) means incremental
+    if (uip->ui_total_passes > 0)
+        uip->ui_total_passes -= 1;
+    if (filter_strategy < 0)
+        uip->ui_total_passes += nmethods;
     else
-    {
-        raw_filters = parm_filters;
-        if (raw_filters == NULL)
-            raw_filters = getFilters();
-        if (raw_filters == NULL)
-            raw_filters = tmp_filters;
-    }
-
-    // first pass - count number of filters
-    int raw_nfilters = 0;
-    for (f = raw_filters; *f >= 0; f++)
-    {
-        assert(isValidFilter(*f));
-        raw_nfilters++;
-    }
-
-    // copy filters, add a 0
-    int nfilters = 0;
-    bool zero_seen = false;
-    Array(int, filters, raw_nfilters + 2);
-    for (f = raw_filters; *f >= 0; f++)
-    {
-        if (*f == 0)
-            zero_seen = true;
-        filters[nfilters++] = *f;
-        if (nfilters == strategy)
-            break;
-    }
-    if (!zero_seen)
-        filters[nfilters++] = 0;
-    filters[nfilters] = -1;
-
-    // methods
-    int tmp_methods[] = { ph.method, M_END };
-    const int *methods = NULL;
-    if (opt->all_methods)
-        methods = getCompressionMethods(-1, ph.level);
-    if (methods == NULL)
-        methods = tmp_methods;
-    int nmethods = 0;
-    for (int mm = 0; methods[mm] != M_END; ++mm)
-    {
-        if (methods[mm] == M_ULTRA_BRUTE && !opt->ultra_brute)
-            break;
-        if (methods[mm] == M_SKIP || methods[mm] == M_ULTRA_BRUTE)
-            continue;
-        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(methods[mm]))
-            continue;
-        assert(isValidCompressionMethod(methods[mm]));
-        nmethods++;
-    }
-    assert(nmethods > 0);
-
-    // update total_passes; previous (0 < ui_total_passes) means incremental
-    if (strategy < 0)
-        uip->ui_total_passes += 1 * nmethods - (0 < uip->ui_total_passes);
-    else
-        uip->ui_total_passes += nfilters * nmethods - (0 < uip->ui_total_passes);
+        uip->ui_total_passes += nfilters * nmethods;
 
     // Working buffer for compressed data. Don't waste memory.
     MemBuffer *otemp = &obuf;
     MemBuffer otemp_buf;
 
-    // compress
-    int nfilters_success = 0;
-    for (int mm = 0; methods[mm] != M_END; ++mm) // for all methods
+    // compress using all methods/filters
+    int nfilters_success_total = 0;
+    for (int mm = 0; mm < nmethods; mm++) // for all methods
     {
-        if (methods[mm] == M_ULTRA_BRUTE && !opt->ultra_brute)
-            break;
-        if (methods[mm] == M_SKIP || methods[mm] == M_ULTRA_BRUTE)
-            continue;
-        if (opt->all_methods && !opt->all_methods_use_lzma && M_IS_LZMA(methods[mm]))
-            continue;
+        assert(isValidCompressionMethod(methods[mm]));
         unsigned hdr_c_len = 0;
         if (hdr_buf && hdr_u_len)
         {
-            if (nfilters_success != 0 && otemp == &obuf)
+            if (nfilters_success_total != 0 && otemp == &obuf)
             {
                 // do not overwrite obuf
                 otemp_buf.allocForCompression(compress_buf_len);
@@ -1316,21 +1334,22 @@ void Packer::compressWithFilters(Filter *parm_ft,
             if (hdr_c_len >= hdr_u_len)
                 throwInternalError("header compression size increase");
         }
-        for (int i = 0; i < nfilters; i++)          // for all filters
+        int nfilters_success_mm = 0;
+        for (int ff = 0; ff < nfilters; ff++) // for all filters
         {
+            assert(isValidFilter(filters[ff]));
             ibuf.checkState();
             obuf.checkState();
             // get fresh packheader
             ph = orig_ph;
             ph.method = methods[mm];
-            ph.filter = filters[i];
+            ph.filter = filters[ff];
             ph.overlap_overhead = 0;
             // get fresh filter
             Filter ft = orig_ft;
             ft.init(ph.filter, orig_ft.addvalue);
             // filter
             optimizeFilter(&ft, ibuf + filter_off, filter_len);
-
             bool success = ft.filter(ibuf + filter_off, filter_len);
             if (ft.id != 0 && ft.calls == 0)
             {
@@ -1340,9 +1359,9 @@ void Packer::compressWithFilters(Filter *parm_ft,
             if (!success)
             {
                 // filter failed or was useless
-                if (strategy > 0)
+                if (filter_strategy >= 0)
                 {
-                    // adjust passes
+                    // adjust ui passes
                     if (uip->ui_pass >= 0)
                         uip->ui_pass++;
                 }
@@ -1353,12 +1372,13 @@ void Packer::compressWithFilters(Filter *parm_ft,
             printf("filter: id 0x%02x size %6d, calls %5d/%5d/%3d/%5d/%5d, cto 0x%02x\n",
                    ft.id, ft.buf_len, ft.calls, ft.noncalls, ft.wrongcalls, ft.firstcall, ft.lastcall, ft.cto);
 #endif
-            if (nfilters_success != 0 && otemp == &obuf)
+            if (nfilters_success_total != 0 && otemp == &obuf)
             {
                 otemp_buf.allocForCompression(compress_buf_len);
                 otemp = &otemp_buf;
             }
-            nfilters_success++;
+            nfilters_success_total++;
+            nfilters_success_mm++;
             ph.filter_cto = ft.cto;
             ph.n_mru = ft.n_mru;
             // compress
@@ -1413,13 +1433,14 @@ void Packer::compressWithFilters(Filter *parm_ft,
             obuf.checkState();
             otemp->checkState();
             //
-            if (strategy < 0)
+            if (filter_strategy < 0)
                 break;
         }
+        assert(nfilters_success_mm > 0);
     }
 
     // postconditions 1)
-    assert(nfilters_success > 0);
+    assert(nfilters_success_total > 0);
     assert(best_ph.u_len == orig_ph.u_len);
     assert(best_ph.filter == best_ft.id);
     assert(best_ph.filter_cto == best_ft.cto);

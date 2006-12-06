@@ -187,34 +187,6 @@
 
 #define upx_byte                    unsigned char
 #define upx_bytep                   upx_byte *
-#define UPX_E_OK                    (0)
-#define UPX_E_ERROR                 (-1)
-#define UPX_E_OUT_OF_MEMORY         (-2)
-#define UPX_E_NOT_COMPRESSIBLE      (-3)
-#define UPX_E_INPUT_OVERRUN         (-4)
-#define UPX_E_OUTPUT_OVERRUN        (-5)
-#define UPX_E_LOOKBEHIND_OVERRUN    (-6)
-#define UPX_E_EOF_NOT_FOUND         (-7)
-#define UPX_E_INPUT_NOT_CONSUMED    (-8)
-#define UPX_E_NOT_YET_IMPLEMENTED   (-9)
-#define UPX_E_INVALID_ARGUMENT      (-10)
-
-struct upx_callback_t;
-#define upx_callback_p upx_callback_t *
-typedef void* (__acc_cdecl *upx_alloc_func_t)
-    (upx_callback_p self, unsigned items, unsigned size);
-typedef void      (__acc_cdecl *upx_free_func_t)
-    (upx_callback_p self, void* ptr);
-typedef void (__acc_cdecl *upx_progress_func_t)
-    (upx_callback_p, unsigned, unsigned);
-
-struct upx_callback_t
-{
-    upx_progress_func_t nprogress;
-    void *user;
-
-    void reset() { memset(this, 0, sizeof(*this)); }
-};
 
 
 /*************************************************************************
@@ -414,31 +386,23 @@ private:
 #define EXIT_INTERNAL   1
 
 
-// compression methods - DO NOT CHANGE
-#define M_SKIP          (-2)
-#define M_END           (-1)
-#define M_ULTRA_BRUTE   (-3)
-#define M_NRV2B_LE32    2
-#define M_NRV2B_8       3
-#define M_NRV2B_LE16    4
-#define M_NRV2D_LE32    5
-#define M_NRV2D_8       6
-#define M_NRV2D_LE16    7
-#define M_NRV2E_LE32    8
-#define M_NRV2E_8       9
-#define M_NRV2E_LE16    10
-#define M_CL1B_LE32     11
-#define M_CL1B_8        12
-#define M_CL1B_LE16     13
-#define M_LZMA          14
-#define M_DEFLATE       15      /* zlib */
+// magic constants for patching
+#define UPX_MAGIC_LE32          0x21585055      /* "UPX!" */
+#define UPX_MAGIC2_LE32         0xD5D0D8A1
 
-#define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
-#define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
-#define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
-#define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
-#define M_IS_LZMA(x)    (((x) & 255) == M_LZMA)
-#define M_IS_DEFLATE(x) ((x) == M_DEFLATE)
+
+// upx_compress() error codes
+#define UPX_E_OK                    (0)
+#define UPX_E_ERROR                 (-1)
+#define UPX_E_OUT_OF_MEMORY         (-2)
+#define UPX_E_NOT_COMPRESSIBLE      (-3)
+#define UPX_E_INPUT_OVERRUN         (-4)
+#define UPX_E_OUTPUT_OVERRUN        (-5)
+#define UPX_E_LOOKBEHIND_OVERRUN    (-6)
+#define UPX_E_EOF_NOT_FOUND         (-7)
+#define UPX_E_INPUT_NOT_CONSUMED    (-8)
+#define UPX_E_NOT_YET_IMPLEMENTED   (-9)
+#define UPX_E_INVALID_ARGUMENT      (-10)
 
 
 // Executable formats. Note: big endian types are >= 128.
@@ -478,8 +442,61 @@ private:
 #define UPX_F_LINUX_ELF32_ARMBE 133
 
 
-#define UPX_MAGIC_LE32      0x21585055          /* "UPX!" */
-#define UPX_MAGIC2_LE32     0xD5D0D8A1
+// compression methods - DO NOT CHANGE
+#define M_END           (-1)
+#define M_SKIP          (-2)
+#define M_ULTRA_BRUTE   (-3)
+#define M_NRV2B_LE32    2
+#define M_NRV2B_8       3
+#define M_NRV2B_LE16    4
+#define M_NRV2D_LE32    5
+#define M_NRV2D_8       6
+#define M_NRV2D_LE16    7
+#define M_NRV2E_LE32    8
+#define M_NRV2E_8       9
+#define M_NRV2E_LE16    10
+//#define M_CL1B_LE32     11
+//#define M_CL1B_8        12
+//#define M_CL1B_LE16     13
+#define M_LZMA          14
+#define M_DEFLATE       15      /* zlib */
+
+#define M_IS_NRV2B(x)   ((x) >= M_NRV2B_LE32 && (x) <= M_NRV2B_LE16)
+#define M_IS_NRV2D(x)   ((x) >= M_NRV2D_LE32 && (x) <= M_NRV2D_LE16)
+#define M_IS_NRV2E(x)   ((x) >= M_NRV2E_LE32 && (x) <= M_NRV2E_LE16)
+//#define M_IS_CL1B(x)    ((x) >= M_CL1B_LE32  && (x) <= M_CL1B_LE16)
+#define M_IS_LZMA(x)    (((x) & 255) == M_LZMA)
+#define M_IS_DEFLATE(x) ((x) == M_DEFLATE)
+
+
+// filters - DO NOT CHANGE
+#define FT_END          (-1)
+#define FT_SKIP         (-2)
+#define FT_ULTRA_BRUTE  (-3)
+
+
+/*************************************************************************
+// compression - callback_t
+**************************************************************************/
+
+struct upx_callback_t;
+#define upx_callback_p upx_callback_t *
+#if 0
+typedef void* (__acc_cdecl *upx_alloc_func_t)
+    (upx_callback_p self, unsigned items, unsigned size);
+typedef void      (__acc_cdecl *upx_free_func_t)
+    (upx_callback_p self, void* ptr);
+#endif
+typedef void (__acc_cdecl *upx_progress_func_t)
+    (upx_callback_p, unsigned, unsigned);
+
+struct upx_callback_t
+{
+    upx_progress_func_t nprogress;
+    void *user;
+
+    void reset() { memset(this, 0, sizeof(*this)); }
+};
 
 
 /*************************************************************************
@@ -587,6 +604,8 @@ struct upx_compress_config_t
     zlib_compress_config_t  conf_zlib;
     void reset() { conf_lzma.reset(); conf_ucl.reset(); conf_zlib.reset(); }
 };
+
+#define NULL_cconf  ((upx_compress_config_t *) NULL)
 
 
 /*************************************************************************

@@ -794,17 +794,17 @@ void PackW32Pe::pack(OutputFile *fo)
     ft.buf_len = ih.codesize;
     ft.addvalue = ih.codebase - rvamin;
     // compress
-    int strategy = allow_filter ? 0 : -3;
+    int filter_strategy = allow_filter ? 0 : -3;
 
     // disable filters for files with broken headers
     if (ih.codebase + ih.codesize > ph.u_len)
     {
         ft.buf_len = 1;
-        strategy = -3;
+        filter_strategy = -3;
     }
 
-    compressWithFilters(&ft, 2048, strategy,
-                        NULL, NULL, ih.codebase, rvamin);
+    compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy,
+                        ih.codebase, rvamin);
 // info: see buildLoader()
     newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
     if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)

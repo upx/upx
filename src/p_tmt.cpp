@@ -249,7 +249,10 @@ void PackTmt::pack(OutputFile *fo)
     Filter ft(ph.level);
     ft.buf_len = usize;
     // compress
-    compressWithFilters(&ft, 512);
+    upx_compress_config_t cconf; cconf.reset();
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    compressWithFilters(&ft, 512, &cconf);
 
     const unsigned lsize = getLoaderSize();
     const unsigned s_point = getLoaderSection("TMTMAIN1");

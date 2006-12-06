@@ -61,10 +61,10 @@ const FilterImp::FilterEntry *FilterImp::getFilter(int id)
         memset(filter_map, 0xff, sizeof(filter_map));
         for (int i = 0; i < n_filters; i++)
         {
-            int fid = filters[i].id;
-            assert(fid >= 0 && fid <= 255);
-            assert(filter_map[fid] == 0xff);
-            filter_map[fid] = (unsigned char) i;
+            int filter_id = filters[i].id;
+            assert(filter_id >= 0 && filter_id <= 255);
+            assert(filter_map[filter_id] == 0xff);
+            filter_map[filter_id] = (unsigned char) i;
         }
         done = true;
     }
@@ -83,6 +83,20 @@ bool Filter::isValidFilter(int filter_id)
 {
     const FilterImp::FilterEntry * const fe = FilterImp::getFilter(filter_id);
     return fe != NULL;
+}
+
+bool Filter::isValidFilter(int filter_id, const int *allowed_filters)
+{
+    if (!isValidFilter(filter_id))
+        return false;
+    if (filter_id == 0)
+        return true;
+    if (allowed_filters == NULL)
+        return false;
+    while (*allowed_filters != FT_END)
+        if (*allowed_filters++ == filter_id)
+            return true;
+    return false;
 }
 
 

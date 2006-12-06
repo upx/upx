@@ -62,6 +62,7 @@ public:
     bool scan(const upx_byte *buf, unsigned buf_len);
 
     static bool isValidFilter(int filter_id);
+    static bool isValidFilter(int filter_id, const int *allowed_filters);
 
 public:
     // Will be set by each call to filter()/unfilter().

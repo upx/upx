@@ -491,7 +491,7 @@ void PackPs1::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = 65535;
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, sa_cnt, 0, NULL, &cconf);
+    compressWithFilters(&ft, sa_cnt, &cconf);
 
     if (overlap)
     {

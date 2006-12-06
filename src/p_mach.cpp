@@ -53,7 +53,7 @@ PackMachPPC32::~PackMachPPC32()
 const int *PackMachPPC32::getCompressionMethods(int /*method*/, int /*level*/) const
 {
     // There really is no LE bias in M_NRV2E_LE32.
-    static const int m_nrv2e[] = { M_NRV2E_LE32, -1 };
+    static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
     return m_nrv2e;
 }
 

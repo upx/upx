@@ -112,7 +112,7 @@ void PackElks8086::pack(OutputFile *fo)
     ft.buf_len = ph.u_len;
     ft.addvalue = kernel_entry;
     // compress
-    compressWithFilters(&ft, overlap_range);
+    compressWithFilters(&ft, overlap_range, NULL_cconf);
 
     const unsigned lsize = getLoaderSize();
     MemBuffer loader(lsize);
