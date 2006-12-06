@@ -566,6 +566,9 @@ void PackWcle::pack(OutputFile *fo)
 
     writeFile(fo, opt->watcom_le.le);
 
+    // verify
+    verifyOverlappingDecompression(oimage + e_len, oimage.getSize() - e_len);
+
     // copy the overlay
     const unsigned overlaystart = ih.data_pages_offset + exe_offset
         + getImageSize();

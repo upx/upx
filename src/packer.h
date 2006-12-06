@@ -209,7 +209,8 @@ protected:
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify
-    virtual void verifyOverlappingDecompression(Filter *ft = NULL);
+    void verifyOverlappingDecompression(Filter *ft = NULL);
+    void verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft = NULL);
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);

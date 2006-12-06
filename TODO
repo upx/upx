@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2006-03-11.
+UPX TODO list. Last updated 2006-12-06.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -85,10 +85,6 @@ FORMAT WATCOM/LE
 - fix default file extension handling when the --le option is set
 
 - handle holes in the file
-
-- implement compressWithFilters()
-
-- add a call to verifyOverlappingDecompression()
 
 
 FORMAT WIN16/NE

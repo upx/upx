@@ -366,9 +366,8 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out,
     // verify checksum of decompressed data
     if (verify_checksum)
     {
-        if (ft) {
+        if (ft)
             ft->unfilter(out, ph.u_len);
-        }
         adler = upx_adler32(out, ph.u_len, ph.saved_u_adler);
         if (adler != ph.u_adler)
             throwChecksumError();
@@ -447,6 +446,20 @@ void Packer::verifyOverlappingDecompression(Filter *ft)
     memmove(obuf + offset, obuf, ph.c_len);
     decompress(obuf + offset, obuf, true, ft);
     obuf.checkState();
+}
+
+
+void Packer::verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Filter *ft)
+{
+    assert(ph.c_len < ph.u_len);
+    assert((int)ph.overlap_overhead > 0);
+    if (ph_skipVerify(ph))
+        return;
+    unsigned offset = (ph.u_len + ph.overlap_overhead) - ph.c_len;
+    if (offset + ph.c_len > o_size)
+        return;
+    memmove(o_ptr + offset, o_ptr, ph.c_len);
+    decompress(o_ptr + offset, o_ptr, true, ft);
 }
 
 
