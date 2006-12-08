@@ -137,7 +137,7 @@ int PackVmlinuzI386::decompressKernel()
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
     char const *p = (char const *)&obuf[setup_size];
     for (int j= 0; j < 0x200; ++j, ++p)
-    if (0==strncmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
+    if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
         /* whole megabyte < 16MB */
         physical_start = get_le32(1+ p);
         break;
