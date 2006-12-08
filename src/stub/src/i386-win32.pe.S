@@ -51,6 +51,7 @@ section         PETLSHAK
                 mov     dword ptr [edi + tls_address], offset tls_value
 section         PEMAIN02
                 push    edi
+section         PEMAIN03
                 or      ebp, -1
 
 // =============

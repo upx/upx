@@ -1,4 +1,4 @@
-UPX TODO list. Last updated 2006-12-06.
+UPX TODO list. Last updated 2006-12-08.
 
 
 IMPORTANT PROBLEMS THAT SHOULD BE FIXED SOON:
@@ -40,8 +40,6 @@ ALL FORMATS
 
 - implement `--cpu=486' option to use bswap on the 32-bit formats
     (if cpu >= 486)
-
-- consider removing "or ebp,-1" when not needed
 
 
 FORMAT DJGPP2/COFF

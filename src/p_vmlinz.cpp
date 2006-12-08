@@ -275,6 +275,7 @@ void PackVmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     addLoader("LINUZ000",
+              ph.first_offset_found == 1 ? "LINUZ001" : "",
               ft->id ? "LZCALLT1" : "",
               "LZIMAGE0",
               getDecompressorSections(),
@@ -361,6 +362,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     addLoader("LINUZ000",
+              ph.first_offset_found == 1 ? "LINUZ001" : "",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
               "+40", // align the stuff to 4 byte boundary

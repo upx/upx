@@ -50,7 +50,9 @@ section         TMTMAIN1
 
                 lea     esi, [edi + 1]
                 pop     edi
+section         TMTMAIN1A
                 or      ebp, -1
+section         TMTMAIN1B
                 push    edi
 section         TMTCALT1
                 push    edi

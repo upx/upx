@@ -92,7 +92,9 @@ void PackWcle::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_i386_dos32_watcom_le, sizeof(stub_i386_dos32_watcom_le));
-    addLoader("IDENTSTR,WCLEMAIN,UPX1HEAD,WCLECUTP", NULL);
+    addLoader("IDENTSTR,WCLEMAIN",
+              ph.first_offset_found == 1 ? "WCLEMAIN02" : "",
+              "WCLEMAIN03,UPX1HEAD,WCLECUTP", NULL);
 
     // fake alignment for the start of the decompressor
     linker->defineSymbol("WCLECUTP", 0x1000);

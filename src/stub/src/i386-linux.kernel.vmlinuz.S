@@ -76,12 +76,13 @@ section         LINUZ000
 // do not clear .bss: at this point, .bss comes only from
 // arch/i386/boot/compressed/*.o  which we are replacing entirely
 
-                or      ebp, -1 // decompressor assumption
                 mov     eax, offset original_entry  // 0x100000 : address of startup_32
                 push    cs      // MATCH00
                 push    eax     // MATCH00  entry address
                 push    edi     // MATCH01  save
                 push    esi     // MATCH02  save
+section         LINUZ001
+                or      ebp, -1 // decompressor assumption
 
 section         LZCALLT1
                 push    eax     // MATCH03  src unfilter

@@ -552,6 +552,7 @@ void PackW32Pe::buildLoader(const Filter *ft)
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
               tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
+              ph.first_offset_found == 1 ? "PEMAIN03" : "",
               getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",

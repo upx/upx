@@ -131,7 +131,9 @@ move_up:
                 cld
                 lea esi,[4+ edi]   //   &compressed [after move]
                 mov edi,ebp        // &uncompressed
+section         LINUX991
                 or  ebp, -1        // decompressor assumption
+section         LINUX992
                 jmp eax            // enter moved decompressor
 
 #include "include/header.S"

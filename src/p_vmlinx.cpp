@@ -246,7 +246,9 @@ void PackVmlinuxI386::buildLoader(const Filter *ft)
         }
         addFilter32(ft->id);
     }
-    addLoader("LINUX990,IDENTSTR,UPX1HEAD", NULL);
+    addLoader("LINUX990",
+              ph.first_offset_found == 1 ? "LINUX991" : "",
+              "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
 

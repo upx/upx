@@ -58,7 +58,9 @@ section         WCLEMAIN
 
                 lea     esi, [edi + 4]
                 pop     edi
+section         WCLEMAIN02
                 or      ebp, -1
+section         WCLEMAIN03
                 push    edi
                 jmp     decompressor
 
