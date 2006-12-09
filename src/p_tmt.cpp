@@ -268,7 +268,7 @@ void PackTmt::pack(OutputFile *fo)
     defineDecompressorSymbols();
 
     linker->defineSymbol("bytes_to_copy", ph.c_len + d_len);
-    linker->defineSymbol("copy_dest", ph.u_len + ph.overlap_overhead + d_len - 1);
+    linker->defineSymbol("copy_dest", 0u - (ph.u_len + ph.overlap_overhead + d_len - 1));
     linker->defineSymbol("copy_source", ph.c_len + lsize - 1);
     //fprintf(stderr,"\nelen=%x dlen=%x copy_len=%x  copy_to=%x  oo=%x  jmp_pos=%x  ulen=%x  c_len=%x \n\n",
     //                e_len,d_len,copy_len,copy_to,ph.overlap_overhead,jmp_pos,ph.u_len,ph.c_len);

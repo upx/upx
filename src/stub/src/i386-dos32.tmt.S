@@ -40,7 +40,10 @@ section         TMTMAIN1
                 mov     edi, 0          // relocated
                 push    edi
                 lea     esi, [edi + copy_source]
-                lea     edi, [edi + copy_dest]
+                sub     edi, offset copy_dest
+section         TMTMAIN1A
+                sbb     ebp, ebp        // ebp = -1
+section         TMTMAIN1B
                 mov     ecx, offset bytes_to_copy
 
                 std
@@ -50,9 +53,6 @@ section         TMTMAIN1
 
                 lea     esi, [edi + 1]
                 pop     edi
-section         TMTMAIN1A
-                or      ebp, -1
-section         TMTMAIN1B
                 push    edi
 section         TMTCALT1
                 push    edi
