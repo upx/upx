@@ -723,9 +723,9 @@ void PackW32Pe::pack(OutputFile *fo)
 
     const unsigned dllstrings = processImports();
     processTls(&tlsiv); // call before processRelocs!!
+    processLoadConf(&loadconfiv);
     processResources(&res);
     processExports(&xport);
-    processLoadConf(&loadconfiv);
     processRelocs();
 
     //OutputFile::dump("x1", ibuf, usize);
@@ -819,11 +819,13 @@ void PackW32Pe::pack(OutputFile *fo)
 
     pe_section_t osection[3];
     // section 0 : bss
-    //         1 : [ident + header] + packed_data + unpacker + tls
+    //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
 
     // section 2 should start with the resource data, because lots of lame
     // windoze codes assume that resources starts on the beginning of a section
+
+    // note: there should be no data in section 2 which needs fixup
 
     // identsplit - number of ident + (upx header) bytes to put into the PE header
     int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
@@ -838,7 +840,7 @@ void PackW32Pe::pack(OutputFile *fo)
     const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
     obuf.clear(ph.c_len, c_len - ph.c_len);
 
-    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4) + sotls;
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4) + sotls + soloadconf;
     const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
 
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
@@ -935,13 +937,18 @@ void PackW32Pe::pack(OutputFile *fo)
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
-    // tls is put into section 1
+    // tls & loadconf are put into section 1
 
-    ic = s1addr + s1size - sotls;
+    ic = s1addr + s1size - sotls - soloadconf;
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? 0x18 : 0;
     ic += sotls;
+
+    processLoadConf(&rel, &loadconfiv, ic);
+    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
+    ODSIZE(PEDIR_LOADCONF) = soloadconf;
+    ic += soloadconf;
 
     // these are put into section 2
 
@@ -967,19 +974,13 @@ void PackW32Pe::pack(OutputFile *fo)
     }
     ic += soexport;
 
-    processLoadConf(&rel, &loadconfiv, ic);
-    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
-    ODSIZE(PEDIR_LOADCONF) = soloadconf;
-    ic += soloadconf;
-
     processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;
 
     // this is computed here, because soxrelocs changes some lines above
-    const unsigned ncsize = soresources + soimpdlls + soexport + soloadconf
-        + soxrelocs;
+    const unsigned ncsize = soresources + soimpdlls + soexport + soxrelocs;
     ic = oh.filealign - 1;
 
     // this one is tricky: it seems windoze touches 4 bytes after
@@ -1061,12 +1062,12 @@ void PackW32Pe::pack(OutputFile *fo)
     if ((ic = fo->getBytesWritten() & 3) != 0)
         fo->write(ibuf,4 - ic);
     fo->write(otls,sotls);
+    fo->write(oloadconf, soloadconf);
     if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
         fo->write(ibuf,oh.filealign - ic);
     fo->write(oresources,soresources);
     fo->write(oimpdlls,soimpdlls);
     fo->write(oexport,soexport);
-    fo->write(oloadconf, soloadconf);
     fo->write(oxrelocs,soxrelocs);
 
     if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
