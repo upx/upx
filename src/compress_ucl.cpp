@@ -165,6 +165,10 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
         return UPX_E_ERROR;
     }
 
+    // make sure first_offset_found is set
+    if (res[6] == 0)
+        res[6] = 1;
+
     return convert_errno_from_ucl(r);
 }
 
