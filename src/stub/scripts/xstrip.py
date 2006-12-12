@@ -100,10 +100,11 @@ def do_file(fn):
         raise Exception, "%s is not %s" % (fn, "ELF")
 
     odata = None
+    pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
     if opts.dump:
         eh, odata = strip_with_dump(eh, idata)
+        assert len(odata) == pos, "unexpected strip_with_dump"
     else:
-        pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
         if pos >= 0:
             odata = idata[:pos]
 
