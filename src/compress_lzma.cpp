@@ -107,49 +107,49 @@ int compress_lzma_dummy = 0;
 
 namespace MyLzma {
 
-struct InStreamRam: public ISequentialInStream, public CMyUnknownImp
+struct InStream: public ISequentialInStream, public CMyUnknownImp
 {
     MY_UNKNOWN_IMP
-    const Byte *Data; size_t Size; size_t Pos;
+    const Byte *b_buf; size_t b_size; size_t b_pos;
     void Init(const Byte *data, size_t size) {
-        Data = data; Size = size; Pos = 0;
+        b_buf = data; b_size = size; b_pos = 0;
     }
     STDMETHOD(Read)(void *data, UInt32 size, UInt32 *processedSize);
 };
 
-STDMETHODIMP InStreamRam::Read(void *data, UInt32 size, UInt32 *processedSize)
+STDMETHODIMP InStream::Read(void *data, UInt32 size, UInt32 *processedSize)
 {
-    UInt32 remain = Size - Pos;
-    if (size > remain) size = remain;
-    memmove(data, Data + Pos, size);
-    Pos += size;
+    size_t remain = b_size - b_pos;
+    if (size > remain) size = (UInt32) remain;
+    memcpy(data, b_buf + b_pos, size);
+    b_pos += size;
     if (processedSize != NULL) *processedSize = size;
     return S_OK;
 }
 
-struct OutStreamRam : public ISequentialOutStream, public CMyUnknownImp
+struct OutStream : public ISequentialOutStream, public CMyUnknownImp
 {
     MY_UNKNOWN_IMP
-    Byte *Data; size_t Size; size_t Pos; bool Overflow;
+    Byte *b_buf; size_t b_size; size_t b_pos; bool overflow;
     void Init(Byte *data, size_t size) {
-        Data = data; Size = size; Pos = 0; Overflow = false;
+        b_buf = data; b_size = size; b_pos = 0; overflow = false;
     }
-    HRESULT WriteByte(Byte b) {
-        if (Pos >= Size) { Overflow = true; return E_FAIL; }
-        Data[Pos++] = b;
+    HRESULT WriteByte(Byte c) {
+        if (b_pos >= b_size) { overflow = true; return E_FAIL; }
+        b_buf[b_pos++] = c;
         return S_OK;
     }
     STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
 };
 
-STDMETHODIMP OutStreamRam::Write(const void *data, UInt32 size, UInt32 *processedSize)
+STDMETHODIMP OutStream::Write(const void *data, UInt32 size, UInt32 *processedSize)
 {
-    UInt32 i;
-    for (i = 0; i < size && Pos < Size; i++)
-        Data[Pos++] = ((const Byte *)data)[i];
-    if (processedSize != NULL) *processedSize = i;
-    if (i != size) { Overflow = true; return E_FAIL; }
-    return S_OK;
+    size_t remain = b_size - b_pos;
+    if (size > remain) size = (UInt32) remain, overflow = true;
+    memcpy(b_buf + b_pos, data, size);
+    b_pos += size;
+    if (processedSize != NULL) *processedSize = size;
+    return overflow ? E_FAIL : S_OK;
 }
 
 struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
@@ -197,8 +197,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     const lzma_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_lzma : NULL;
     lzma_compress_result_t *res = &cresult->result_lzma;
 
-    MyLzma::InStreamRam is; is.AddRef();
-    MyLzma::OutStreamRam os; os.AddRef();
+    MyLzma::InStream is; is.AddRef();
+    MyLzma::OutStream os; os.AddRef();
     is.Init(src, src_len);
     os.Init(dst, *dst_len);
 
@@ -348,16 +348,16 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
         goto error;
-    if (os.Overflow) {
+    if (os.overflow) {
         //r = UPX_E_OUTPUT_OVERRUN;
         r = UPX_E_NOT_COMPRESSIBLE;
         goto error;
     }
-    assert(os.Pos == 5);
+    assert(os.b_pos == 5);
 #if defined(USE_LZMA_PROPERTIES)
-    os.Pos = 1;
+    os.b_pos = 1;
 #else
-    os.Pos = 0;
+    os.b_pos = 0;
     // extra stuff in first byte: 5 high bits convenience for stub decompressor
     unsigned t = res->lit_context_bits + res->lit_pos_bits;
     os.WriteByte((t << 3) | res->pos_bits);
@@ -370,25 +370,26 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     } catch(...) { return UPX_E_OUT_OF_MEMORY; }
 #endif
 
-    assert(is.Pos <=  src_len);
-    assert(os.Pos <= *dst_len);
+    assert(is.b_pos <=  src_len);
+    assert(os.b_pos <= *dst_len);
     if (rh == E_OUTOFMEMORY)
         r = UPX_E_OUT_OF_MEMORY;
-    else if (os.Overflow)
+    else if (os.overflow)
     {
-        assert(os.Pos == *dst_len);
+        assert(os.b_pos == *dst_len);
         //r = UPX_E_OUTPUT_OVERRUN;
         r = UPX_E_NOT_COMPRESSIBLE;
     }
     else if (rh == S_OK)
     {
-        assert(is.Pos == src_len);
+        assert(is.b_pos == src_len);
         r = UPX_E_OK;
     }
 
 error:
-    *dst_len = os.Pos;
+    *dst_len = os.b_pos;
     //printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs, src_len, *dst_len);
+    //printf("%u %u %u\n", is.__m_RefCount, os.__m_RefCount, progress.__m_RefCount);
     return r;
 }
 
