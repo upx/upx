@@ -1,5 +1,5 @@
 /*
-;  i386-linux.kernel.vmlinux.S -- loader & decompressor for the vmlinux/i386 format
+;  arm-linux.kernel.vmlinux.S -- loader & decompressor for the vmlinux/arm format
 ;
 ;  This file is part of the UPX executable compressor.
 ;
