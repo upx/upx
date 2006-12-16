@@ -740,9 +740,10 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     ibuf.alloc(file_size);
     obuf.allocForCompression(file_size);
 
-    // .e_ident, .e_machine, .e_version, .e_flags
+    // .e_ident, .e_machine, .e_version
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
     ehdro.e_type = Elf32_Ehdr::ET_REL;
+    ehdro.e_flags = 0;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = sizeof(ehdro);  // later
@@ -776,7 +777,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     if (0x40==(0xf0 & ft.id)) {
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
-    linker->defineSymbol("BYTE_ADJ", (3& -ph.c_len));
+    linker->defineSymbol("BYTE_ADJ", (3& -txt_c_len));
     linker->defineSymbol("WORD_ADJ", 4);
     defineDecompressorSymbols();
     relocateLoader();
@@ -796,17 +797,17 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
-    // ENTRY_POINT
+    // This ought to be a linker section (to handle the relocation of 'bl'),
+    // but buildLoader gets called from the middle of compressWithFilters
+    // so there is a circularity problem.
     fo->write(&stub_arm_linux_kernel_vmlinux_head[0], sizeof(stub_arm_linux_kernel_vmlinux_head)-2*4);
-    tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
-
-    // COMPRESSED_LENGTH
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-4], 0);
-    tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
-
+    tmp_le32 = get_le32(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-2*4]);
+    tmp_le32 = (0xff000000 & tmp_le32) | (0x00ffffff & (-0+ ((3+ txt_c_len)>>2)));
+    fo->write(&tmp_le32, 4);
+    fo->write(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-4], 4);
     fo_off += sizeof(stub_arm_linux_kernel_vmlinux_head);
 
-    fo->write(obuf, ph.c_len); fo_off += ph.c_len;
+    fo->write(obuf, ~3& (3+ txt_c_len)); fo_off += ~3& (3+ txt_c_len);
     fo->write(loader, lsize); fo_off += lsize;
 
 #if 0

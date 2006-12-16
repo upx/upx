@@ -77,9 +77,15 @@ section         LXMOVEUP
 // ============= DECOMPRESSION
 // =============
 
+section NRV2B
 #include "arch/arm/v5a/nrv2b_d8.S"
+
+section NRV2D
 #include "arch/arm/v5a/nrv2d_d8.S"
+
+section NRV2E
 #include "arch/arm/v5a/nrv2e_d8.S"
+
 #include "arch/arm/v5a/lzma_d.S"
 
 // =============
