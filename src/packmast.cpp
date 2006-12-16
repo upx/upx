@@ -55,6 +55,7 @@
 #include "p_ps1.h"
 #include "p_mach.h"
 #include "p_armpe.h"
+#include "linker.h"
 
 
 /*************************************************************************
@@ -192,6 +193,10 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     // linux kernel
     //
+    if ((p = func(new PackVmlinuxARM(f), user)) != NULL)
+        return p;
+    if ((p = func(new PackVmlinuxAMD64(f), user)) != NULL)
+        return p;
     if ((p = func(new PackVmlinuxI386(f), user)) != NULL)
         return p;
     if ((p = func(new PackVmlinuzI386(f), user)) != NULL)

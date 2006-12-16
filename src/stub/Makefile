@@ -46,8 +46,13 @@ endif
 ifndef STUBS
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
+STUBS += amd64-linux.kernel.vmlinux.h
+STUBS += amd64-linux.kernel.vmlinux-head.h
+STUBS += amd64-linux.kernel.vmlinuz.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
+STUBS += arm-linux.kernel.vmlinux.h
+STUBS += arm-linux.kernel.vmlinux-head.h
 STUBS += armeb-linux.elf-entry.h
 STUBS += armeb-linux.elf-fold.h
 STUBS += arm.v4a-wince.pe.h
@@ -635,6 +640,49 @@ i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // amd64-linux.kernel.vmlinux
+# // amd64-linux.kernel.vmlinuz
+# // amd64-linux.kernel.vmlinux-head
+# ************************************************************************/
+
+amd64-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
+
+amd64-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+amd64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // arm-linux.kernel.vmlinux
+# // arm-linux.kernel.vmlinuz
+# // arm-linux.kernel.vmlinux-head
+# ************************************************************************/
+
+tc.arm-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+
+arm-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
+arm-linux.kernel.vmlinu%.h : tc_list = arm-linux.kernel default
+
+arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@

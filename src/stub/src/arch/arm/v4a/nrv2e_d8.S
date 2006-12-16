@@ -72,8 +72,10 @@
 #define CHECK_BYTE  /*empty*/
 #endif  /*}*/
 
+#undef GETBIT
 #define GETBIT  ADD2S(bits,bits); bleq get8_n2e
 
+#undef getnextb
 #define getnextb(reg) GETBIT; ADC2(reg,reg) /* Out: condition code not changed */
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs

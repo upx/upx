@@ -311,6 +311,16 @@ struct Shdr
         SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
         SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
     };
+
+    enum { // sh_flags
+        SHF_WRITE      = (1 << 0),  /* Writable */
+        SHF_ALLOC      = (1 << 1),  /* Occupies memory during execution */
+        SHF_EXECINSTR  = (1 << 2),  /* Executable */
+        SHF_MERGE      = (1 << 4),  /* Might be merged */
+        SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
+        SHF_INFO_LINK  = (1 << 6),  /* `sh_info' contains SHT index */
+        SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
+    };
 }
 __attribute_packed;
 

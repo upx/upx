@@ -210,7 +210,11 @@ const char *Packer::getDecompressorSections() const
         ||  UPX_F_LINUX_ELF64_AMD  ==ph.format
         ||  UPX_F_LINUX_ELF32_ARMLE==ph.format
         ||  UPX_F_LINUX_ELFPPC32   ==ph.format
-        ||  UPX_F_LINUX_ELF32_ARMBE==ph.format ) {
+        ||  UPX_F_LINUX_ELF32_ARMBE==ph.format
+        ||  UPX_F_BSD_ELF_i386     ==ph.format
+        ||  UPX_F_VMLINUX_AMD64    ==ph.format
+        ||  UPX_F_VMLINUX_ARM      ==ph.format
+    ) {
             return opt->small ? lzma_elf_small  : lzma_elf_fast;
         }
         return opt->small ? lzma_small  : lzma_fast;
@@ -243,6 +247,8 @@ void Packer::defineDecompressorSymbols()
     ||  UPX_F_LINUX_ELFPPC32   ==ph.format
     ||  UPX_F_LINUX_ELF32_ARMBE==ph.format
     ||  UPX_F_BSD_ELF_i386     ==ph.format
+    ||  UPX_F_VMLINUX_AMD64    ==ph.format
+    ||  UPX_F_VMLINUX_ARM      ==ph.format
     ) {
         // ELF calls the decompressor many times; the parameters change!
         return;
@@ -257,6 +263,7 @@ void Packer::defineDecompressorSymbols()
             (res->pos_bits << 16);
         if (linker->bele->isBE()) // big endian - bswap32
             acc_swab32s(&properties);
+
         linker->defineSymbol("lzma_properties", properties);
         // -2 for properties
         linker->defineSymbol("lzma_c_len", ph.c_len - 2);
