@@ -661,6 +661,9 @@ void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location,
         //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
         //set_be32(location, get_be32(location) + value / 4);
     }
+    else if (0==strcmp("R_ARM_ABS8", type)) {
+        *location += value;
+    }
     else
         super::relocate1(rel, location, value, type);
 }
@@ -689,6 +692,9 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location,
 
         //(b, 0xF000 + ((v - 1) / 2) * 0x10000);
         //set_le32(location, get_le32(location) + value / 4);
+    }
+    else if (0==strcmp("R_ARM_ABS8", type)) {
+        *location += value;
     }
     else
         super::relocate1(rel, location, value, type);
