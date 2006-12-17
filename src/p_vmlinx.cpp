@@ -774,6 +774,10 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     const unsigned lsize = getLoaderSize();
 
+    linker->defineSymbol(  "COMPRESSED_LENGTH", txt_c_len);
+    linker->defineSymbol("UNCOMPRESSED_LENGTH", txt_u_len);
+    linker->defineSymbol("METHOD", ph.method);
+
     defineFilterSymbols(linker, &ft);
     if (0x40==(0xf0 & ft.id)) {
         linker->defineSymbol("filter_length", ph.u_len); // redefine
@@ -796,17 +800,14 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + txt_c_len + lsize;
     shdro[1].sh_addralign = 1;
 
-    // This ought to be a linker section (to handle the relocation of 'bl'),
-    // but buildLoader gets called from the middle of compressWithFilters
-    // so there is a circularity problem.
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[0], sizeof(stub_arm_linux_kernel_vmlinux_head)-9*4);
-    tmp_le32 = get_le32(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-9*4]);
-    tmp_le32 = (0xff000000 & tmp_le32) | (0x00ffffff & (7+ ((3+ txt_c_len)>>2)));
+    // First word from vmlinux-head.S
+    fo->write(&stub_arm_linux_kernel_vmlinux_head[0], 4);
+
+    // Second word
+    tmp_le32 = (0xff000000 & get_le32(&stub_arm_linux_kernel_vmlinux_head[4]))
+        | (0x00ffffff & (-1+ ((3+ txt_c_len)>>2)));
     fo->write(&tmp_le32, 4);
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-8*4], 5*4);
-    tmp_le32 = txt_c_len; fo->write(&tmp_le32, 4);
-    tmp_le32 = txt_u_len; fo->write(&tmp_le32, 4);
-    tmp_le32 = ph.method; fo->write(&tmp_le32, 4);
+
     fo_off += sizeof(stub_arm_linux_kernel_vmlinux_head);
 
     fo->write(obuf, ~3& (3+ txt_c_len)); fo_off += ~3& (3+ txt_c_len);

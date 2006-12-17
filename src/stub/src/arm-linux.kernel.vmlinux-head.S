@@ -25,31 +25,8 @@
 ;  <jreiser@users.sourceforge.net>
 */
 
-/* Calling sequence of equivalent code in arch/arm/boot/compressed/misc.c:
-decompress_kernel:  # (char *out, char *tmp, char *end_tmp, int arch_id)
-*/
-        stmdb r2!,{r0,r3,sp,lr}  // &outdata, arch_id, sp_in, retaddr
-        mov sp,r2  // switch stacks to end_tmp area (64KB)
-        mov r2,r0  // &outdata
-        adr r0,.L10
-        ldmia r0!,{r1,r3,ip}  // r0=&indata; r1=insize; r3=outsize; ip=method
-        str r3,[sp,#-4]!  // outsize
-        mov r3,sp  // &outsize
-        str ip,[sp,#-4]!  // method
-// PackVmlinuxARM::pack knows the layout of the following words.
-        bl LINUX000  // (&indata, insize, &outdata, &outsize, method)
-spin:
-        cmp r0,#0  // check for success
-        bne spin
-
-        ldmia sp,{r1,r2,r3,ip,sp,lr}  // method, outsize, &outdata, arch_id, sp_in, retaddr
-        add r0,r2,r3  // rv= &outdata[outsize]
-        mov pc,lr  // return
-.L10:
-        .long   COMPRESSED_LENGTH
-        .long UNCOMPRESSED_LENGTH
-        .long METHOD
-
+        mov ip,lr  // ip= retaddr
+        bl LINUX000  // lr= PIC location of compressed data
 // Compressed data appears >here<, then decompressor.
 
 // vi:ts=8:et:nowrap

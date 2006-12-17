@@ -43,6 +43,37 @@
 */
 section         LINUX000
         // bkpt  // qemu DEBUG only
+/* Calling sequence of equivalent code in arch/arm/boot/compressed/misc.c:
+decompress_kernel:  # (char *out, char *tmp, char *tmp_end, int arch_id)
+        lr= &indata; ip= retaddr  # from arm-linux.kernel.vmlinux-head.S
+*/
+        mov r1,r2  // tmp_end
+        mov r2,r0  // &outdata
+        mov r0,lr  // &indata
+        str ip,[r1,#-4]!  // push retaddr on new stack
+
+// Value stored from r1 to memory will be overwritten by outsize.
+        stmdb r1!,{r0,r1,r2,r3,sp}  // &indata, space, &outdata, arch_id, sp_in
+        ldr r3,2*4+.L10  // method
+        mov sp,r1  // switch stacks to tmp_end area (64KB)
+        ldr r1,0*4+.L10  // insize
+        str r3,[sp,#-4]!  // method
+        ldr r3,1*4+.L10  // outsize
+        str r3,[sp,#2*4]  // outsize
+        add r3,sp, #2*4  // &outsize
+        bl .L20  // (&indata, insize, &outdata, &outsize, method)
+spin:
+        cmp r0,#0  // check for success
+        bne spin
+
+        ldmia sp,{r0,r1,r2,r3,ip,sp,lr}  // method, &indata, outsize, &outdata, arch_id, sp_in, retaddr
+        add r0,r2,r3  // rv= &outdata[outsize]
+        mov pc,lr  // return
+.L10:
+        .long   COMPRESSED_LENGTH
+        .long UNCOMPRESSED_LENGTH
+        .long METHOD
+.L20:
 /*
   r0= inptr
   r1= insize
@@ -80,6 +111,32 @@ section NRV2E
 // =============
 // ============= UNFILTER
 // =============
+
+#if 0  /*{ remind me about parameters for unfilter? */
+section         LXCKLLT9
+                pop     ecx     // MATCH05  len
+                pop     edx     // MATCH04  cto
+                pop     edi     // MATCH03  src
+
+                ckt32   edi, dl // dl has cto8
+/*
+        ;edi: adjust for the difference between 0 origin of buffer at filter,
+        ;and actual origin of destination at unfilter.
+        ;Filter.addvalue is 0: destination origin is unknown at filter time.
+        ;The input data is still relocatable, and address is assigned later
+        ;[as of 2004-12-15 it is 'always' 0x100000].
+*/
+
+section         LXCALLT9
+                pop     ecx     // MATCH05  len
+                pop     edi     // MATCH03  src
+                cjt32   0
+section         LINUX990
+                pop     esi     // MATCH02  restore
+                pop     edi     // MATCH01  restore
+                xor     ebx, ebx        // booting the 1st cpu
+                lret    // MATCH00  set cs
+#endif  /*}*/
 
 section         LXCKLLT9
         mvn ip,#4
