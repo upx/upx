@@ -71,7 +71,13 @@ void Packer::addFilter32(int filter_id)
     assert(isValidFilter(filter_id));
 
     if (filter_id < 0x80) {
-        if ((filter_id & 0xf) % 3 == 0) {
+        if (0x50==(0xF0 & filter_id)) {
+            addLoader("CKLLTR00",
+                ((0x50==filter_id) ? "CKLLTR50" :
+                 (0x51==filter_id) ? "CKLLTR51" : ""),
+                "CKLLTR10", NULL);
+        }
+        else if ((filter_id & 0xf) % 3 == 0) {
             if (filter_id < 0x40) {
                 addLoader("CALLTR00",
                         (filter_id > 0x20) ? "CTCLEVE1" : "",

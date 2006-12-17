@@ -54,26 +54,84 @@ decompress_kernel:  # (char *out, char *tmp, char *tmp_end, int arch_id)
 
 // Value stored from r1 to memory will be overwritten by outsize.
         stmdb r1!,{r0,r1,r2,r3,sp}  // &indata, space, &outdata, arch_id, sp_in
-        ldr r3,2*4+.L10  // method
+        loadcon8 3,METHOD  // mov r3,#METHOD
         mov sp,r1  // switch stacks to tmp_end area (64KB)
-        ldr r1,0*4+.L10  // insize
+        ldr r1,1f  // insize
         str r3,[sp,#-4]!  // method
-        ldr r3,1*4+.L10  // outsize
+        ldr r3,2f  // outsize
         str r3,[sp,#2*4]  // outsize
         add r3,sp, #2*4  // &outsize
-        bl .L20  // (&indata, insize, &outdata, &outsize, method)
+        bl decompressor  // (&indata, insize, &outdata, &outsize, method)
+        b 3f
+1:
+        .long   COMPRESSED_LENGTH
+2:
+        .long UNCOMPRESSED_LENGTH
+3:
 spin:
         cmp r0,#0  // check for success
         bne spin
 
+section         LINUX010
+        ldr r0,[sp,#3*4]  // &outdata
+        ldr r1,[sp,#2*4]  // outsize
+        loadcon8 2,CTO  // mov r2,#CTO
+        loadcon8 3,FID  // mov r3,#FID
+        bl unfilter  // unfilter(&outdata, outsize, cto, fid)
+
+section         LINUX020
         ldmia sp,{r0,r1,r2,r3,ip,sp,lr}  // method, &indata, outsize, &outdata, arch_id, sp_in, retaddr
         add r0,r2,r3  // rv= &outdata[outsize]
         mov pc,lr  // return
-.L10:
-        .long   COMPRESSED_LENGTH
-        .long UNCOMPRESSED_LENGTH
-        .long METHOD
-.L20:
+
+// =============
+// ============= UNFILTER
+// =============
+section         CKLLTR00
+//f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
+        ptr  .req r0
+        len  .req r1
+        cto  .req r2  @ unused
+        fid  .req r3
+
+        t1   .req r2
+        t2   .req r3
+unfilter:
+        and fid,fid,#0xff
+section         CKLLTR50
+        cmp fid,#0x50  @ last use of fid
+section         CKLLTR51
+        cmp fid,#0x51  @ last use of fid
+
+section         CKLLTR10
+        movne pc,lr  @ no-op if not filter 0x50
+
+        movs  len,len,lsr #2  @ word count
+        cmpne ptr,#0
+        moveq pc,lr  @ no-op if either len or ptr is 0
+
+top_unf:
+        sub len,len,#1
+        ldr t1,[ptr,len,lsl #2]
+        and t2,t1,#0x0f<<24
+        cmp t2,   #0x0b<<24; bne tst_unf  @ not 'bl' subroutine call
+        and t2,t1,#0xff<<24  @ all the non-displacement bits
+        sub t1,t1,len  @ convert to word-relative displacement
+        bic t1,t1,#0xff<<24  @ restrict to displacement field
+        orr t1,t1,t2  @ re-combine
+        str t1,[ptr,len,lsl #2]
+tst_unf:
+        cmp len,#0
+        bne top_unf
+        mov pc,lr
+
+        .unreq ptr
+        .unreq len
+        .unreq cto
+        .unreq fid
+
+section         LINUX030
+decompressor:
 /*
   r0= inptr
   r1= insize
@@ -81,17 +139,6 @@ spin:
   r3= &outsize
   sp/ method
 */
-
-section         LXCALLT1
-        mvn ip,#1
-        bkpt
-section         LXCKLLT1
-        mvn ip,#2
-        bkpt
-        .long filter_cto,filter_length
-section         LXMOVEUP
-        mvn ip,#3
-        bkpt
 
 // =============
 // ============= DECOMPRESSION
@@ -107,10 +154,6 @@ section NRV2E
 #include "arch/arm/v5a/nrv2e_d8.S"
 
 #include "arch/arm/v5a/lzma_d.S"
-
-// =============
-// ============= UNFILTER
-// =============
 
 #if 0  /*{ remind me about parameters for unfilter? */
 section         LXCKLLT9

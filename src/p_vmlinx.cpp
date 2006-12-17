@@ -397,25 +397,17 @@ void PackVmlinuxARM::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
-    addLoader("LINUX000",
-              (0x40==(0xf0 & ft->id)) ? "LXCKLLT1" : (ft->id ? "LXCALLT1" : ""),
-              "LXMOVEUP",
-              getDecompressorSections(),
-              NULL
-             );
+    addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
-        if (0x40==(0xf0 & ft->id)) {
-            addLoader("LXCKLLT9", NULL);
-        }
-        else {
-            addLoader("LXCALLT9", NULL);
-        }
+        addLoader("LINUX010", NULL);
+    }
+    addLoader("LINUX020", NULL);
+    if (ft->id) {
         addFilter32(ft->id);
     }
-    addLoader("LINUX990",
-              ph.first_offset_found == 1 ? "LINUX991" : "",
-              "LINUX992,IDENTSTR,UPX1HEAD", NULL);
+    addLoader("LINUX030", getDecompressorSections(),
+              "IDENTSTR,UPX1HEAD", NULL);
 }
 
 
@@ -427,10 +419,16 @@ static bool defineFilterSymbols(Linker *linker, const Filter *ft)
     }
     assert(ft->calls > 0);
 
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
+    if (0x50==(0xF0 & ft->id)) {
+        linker->defineSymbol("FID", ft->id);
+        linker->defineSymbol("CTO", ft->cto);
+    }
+    else {
+        linker->defineSymbol("filter_cto", ft->cto);
+        linker->defineSymbol("filter_length",
+                            (ft->id & 0xf) % 3 == 0 ? ft->calls :
+                            ft->lastcall - ft->calls * 4);
+    }
     return true;
 }
 
