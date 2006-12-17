@@ -770,6 +770,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
     unsigned const txt_c_len = ph.c_len;
+    unsigned const txt_u_len = ph.u_len;
 
     const unsigned lsize = getLoaderSize();
 
@@ -777,8 +778,6 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     if (0x40==(0xf0 & ft.id)) {
         linker->defineSymbol("filter_length", ph.u_len); // redefine
     }
-    linker->defineSymbol("BYTE_ADJ", (3& -txt_c_len));
-    linker->defineSymbol("WORD_ADJ", 4);
     defineDecompressorSymbols();
     relocateLoader();
 
@@ -794,24 +793,27 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + ph.c_len + lsize;
+    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + txt_c_len + lsize;
     shdro[1].sh_addralign = 1;
 
     // This ought to be a linker section (to handle the relocation of 'bl'),
     // but buildLoader gets called from the middle of compressWithFilters
     // so there is a circularity problem.
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[0], sizeof(stub_arm_linux_kernel_vmlinux_head)-2*4);
-    tmp_le32 = get_le32(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-2*4]);
-    tmp_le32 = (0xff000000 & tmp_le32) | (0x00ffffff & (-0+ ((3+ txt_c_len)>>2)));
+    fo->write(&stub_arm_linux_kernel_vmlinux_head[0], sizeof(stub_arm_linux_kernel_vmlinux_head)-9*4);
+    tmp_le32 = get_le32(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-9*4]);
+    tmp_le32 = (0xff000000 & tmp_le32) | (0x00ffffff & (7+ ((3+ txt_c_len)>>2)));
     fo->write(&tmp_le32, 4);
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-4], 4);
+    fo->write(&stub_arm_linux_kernel_vmlinux_head[sizeof(stub_arm_linux_kernel_vmlinux_head)-8*4], 5*4);
+    tmp_le32 = txt_c_len; fo->write(&tmp_le32, 4);
+    tmp_le32 = txt_u_len; fo->write(&tmp_le32, 4);
+    tmp_le32 = ph.method; fo->write(&tmp_le32, 4);
     fo_off += sizeof(stub_arm_linux_kernel_vmlinux_head);
 
     fo->write(obuf, ~3& (3+ txt_c_len)); fo_off += ~3& (3+ txt_c_len);
     fo->write(loader, lsize); fo_off += lsize;
 
 #if 0
-    printf("%-13s: compressed   : %8u bytes\n", getName(), ph.c_len);
+    printf("%-13s: compressed   : %8u bytes\n", getName(), txt_c_len);
     printf("%-13s: decompressor : %8u bytes\n", getName(), lsize);
 #endif
     verifyOverlappingDecompression();

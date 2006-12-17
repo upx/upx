@@ -37,29 +37,18 @@
 ; ============= ENTRY POINT
 ; =============
 
-;  In:
-;    r0= outptr; r1= &tmp; r3= arch_id; lr= retaddr, inptr - N
-
   How to debug: run under qemu (http://fabrice.bellard.free.fr/qemu/)
   after un-commenting the  bkpt  opcode below.  That opcode forces qemu
   to stop in gdb.  You'll have to "set $pc+=4" by hand.
 */
 section         LINUX000
-        bkpt  // qemu breakpoint
-        ldr r1,[lr,#-4]  // 'bl' instruction
-        str r3,[sp,$-4]!  // push arch_id
-        bic r1,r1,#~0<<24  // word count
-        sub sp,sp,#4  // space for outsize
-        mov r1,r1,lsl #2  // byte count
-        mov r3,sp  // &outsize
-        .long 0xe2411000 + BYTE_ADJ  // sub r1,r1,#BYTE_ADJ  // insize
-        mov r2,r0  // outptr
-        .long 0xe28e0000 + WORD_ADJ  // add r0,lr,#WORD_ADJ  // inptr
+        // bkpt  // qemu DEBUG only
 /*
   r0= inptr
   r1= insize
   r2= outptr
   r3= &outsize
+  sp/ method
 */
 
 section         LXCALLT1
