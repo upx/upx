@@ -130,7 +130,7 @@ PackVmlinuxARM::~PackVmlinuxARM()
 
 const int *PackVmlinuxARM::getCompressionMethods(int method, int level) const
 {
-    return Packer::getDefaultCompressionMethods_le32(method, level);
+    return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
 
@@ -406,8 +406,13 @@ void PackVmlinuxARM::buildLoader(const Filter *ft)
     if (ft->id) {
         addFilter32(ft->id);
     }
-    addLoader("LINUX030", getDecompressorSections(),
-              "IDENTSTR,UPX1HEAD", NULL);
+    addLoader("LINUX030", NULL);
+         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
+    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
+    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else throwBadLoader();
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
 }
 
 
