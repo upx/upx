@@ -50,12 +50,18 @@ static const
 //
 **************************************************************************/
 
-PackVmlinuxI386::~PackVmlinuxI386()
+template <class T>
+PackVmlinuxBase<T>::~PackVmlinuxBase()
 {
     delete [] shstrtab;
     delete [] phdri;
     delete [] shdri;
 }
+
+
+/*************************************************************************
+//
+**************************************************************************/
 
 const int *PackVmlinuxI386::getCompressionMethods(int method, int level) const
 {
@@ -108,13 +114,6 @@ PackVmlinuxI386::getElfSections()
         }
     }
     return shstrsec;
-}
-
-PackVmlinuxARM::~PackVmlinuxARM()
-{
-    delete [] shstrtab;
-    delete [] phdri;
-    delete [] shdri;
 }
 
 const int *PackVmlinuxARM::getCompressionMethods(int method, int level) const
@@ -1242,13 +1241,6 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 /*************************************************************************
 //
 **************************************************************************/
-
-PackVmlinuxAMD64::~PackVmlinuxAMD64()
-{
-    delete [] shstrtab;
-    delete [] phdri;
-    delete [] shdri;
-}
 
 const int *PackVmlinuxAMD64::getCompressionMethods(int method, int level) const
 {

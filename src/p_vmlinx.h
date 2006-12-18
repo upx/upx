@@ -51,6 +51,7 @@ public:
     {
         bele = N_BELE_CTP::getRTP<typename TElfClass::BeLePolicy>();
     }
+    virtual ~PackVmlinuxBase();
 
 protected:
     int n_ptload;
@@ -70,7 +71,6 @@ class PackVmlinuxI386 : public PackVmlinuxBase<ElfClass_LE32>
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
     PackVmlinuxI386(InputFile *f) : super(f) { }
-    virtual ~PackVmlinuxI386();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
     virtual const char *getName() const { return "vmlinux/386"; }
@@ -97,7 +97,6 @@ class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
     PackVmlinuxARM(InputFile *f) : super(f) { }
-    virtual ~PackVmlinuxARM();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
     virtual const char *getName() const { return "vmlinux/ARM"; }
@@ -124,7 +123,6 @@ class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
     typedef PackVmlinuxBase<ElfClass_LE64> super;
 public:
     PackVmlinuxAMD64(InputFile *f) : super(f) { }
-    virtual ~PackVmlinuxAMD64();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
     virtual const char *getName() const { return "vmlinux/AMD64"; }
