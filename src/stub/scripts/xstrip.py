@@ -33,17 +33,18 @@ import getopt, os, re, string, struct, sys
 
 class opts:
     dry_run = 0
-    dump = None
     verbose = 0
+    bindump = None
+    with_dump = None
 
 
 # /***********************************************************************
 # //
 # ************************************************************************/
 
-def strip_with_dump(eh, idata):
+def strip_with_dump(dump_fn, eh, idata):
     new_len = 0
-    lines = open(opts.dump, "rb").readlines()
+    lines = open(dump_fn, "rb").readlines()
     for l in lines:
         l = re.sub(r"\s+", " ", l.strip())
         f = l.split(" ")
@@ -55,9 +56,76 @@ def strip_with_dump(eh, idata):
                     new_len = sh_offset + sh_size
                     ##print sh_offset, sh_size, f
     if new_len > len(eh):
-        ##print opts.dump, new_len
+        ##print dump_fn, new_len
         return eh, idata[:new_len-len(eh)]
     return eh, idata
+
+
+# /***********************************************************************
+# // FIXME - this is only a first stub version
+# ************************************************************************/
+
+def create_bindump(bindump_fn, dump_fn):
+    data = ""
+    lines = open(dump_fn, "rb").readlines()
+    lines = map(lambda l: re.sub(r"\s+", " ", l.strip()).strip(), lines)
+    lines = filter(None, lines)
+    d = "\n".join(lines)
+    psections = d.find("Sections:\n")
+    psymbols  = d.find("SYMBOL TABLE:\n")
+    prelocs   = d.find("RELOCATION RECORDS FOR ");
+    assert 0 <= psections < psymbols < prelocs
+    # preprocessSections
+    sections = []
+    section_names = {}
+    for l in d[psections:psymbols].split("\n")[2:]:
+        if not l: continue
+        f = l.split(" ")
+        assert len(f) >= 8, (l, f)
+        assert f[6].startswith("2**"), (l, f)
+        assert f[7].startswith("CONTENTS"), (l, f)
+        assert int(f[0], 10) == len(sections)
+        e = f[1], int(f[2], 16), int(f[5], 16), int(f[6][3:], 10), len(sections)
+        sections.append(e)
+        assert not section_names.has_key(e[0]), e
+        section_names[e[0]] = e
+    ##print sections
+    # preprocessSymbols
+    symbols = []
+    section = None
+    for l in d[psymbols:prelocs].split("\n")[1:]:
+        if not l: continue
+        f = l.split(" ")
+        if len(f) == 6:
+            assert f[1] in "gl", (l, f) 
+            assert f[2] in "dFO", (l, f) 
+            section = section_names[f[3]]
+        elif len(f) == 5:
+            assert f[1] in "gl", (l, f) 
+            section = section_names[f[2]]
+        elif len(f) == 4:
+            assert f[1] in ["*UND*"], (l, f) 
+            section = None
+        else:
+            assert 0, (l, f) 
+        pass
+    # preprocessRelocations
+    relocs = []
+    section = None
+    for l in d[prelocs:].split("\n")[1:]:
+        if not l: continue
+        m = re.search(r"^RELOCATION RECORDS FOR \[(.+)\]", l)
+        if m:
+            section = section_names[m.group(1)]
+            continue
+        f = l.split(" ")
+        if f[0] == "OFFSET": continue
+        assert len(f) == 3, (l, f) 
+        pass
+    fp = open(bindump_fn, "wb")
+    fp.write(data)
+    fp.write(struct.pack("<I", len(data) + 4))
+    fp.close()
 
 
 # /***********************************************************************
@@ -101,8 +169,8 @@ def do_file(fn):
 
     odata = None
     pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
-    if opts.dump:
-        eh, odata = strip_with_dump(eh, idata)
+    if opts.with_dump:
+        eh, odata = strip_with_dump(opts.with_dump, eh, idata)
         assert len(odata) == pos, "unexpected strip_with_dump"
     else:
         if pos >= 0:
@@ -117,7 +185,7 @@ def do_file(fn):
 
 def main(argv):
     shortopts, longopts = "qv", [
-        "dry-run", "dump=", "quiet", "verbose"
+        "create-bindump=", "dry-run", "quiet", "verbose", "with-dump="
     ]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
     for opt, optarg in xopts:
@@ -125,13 +193,19 @@ def main(argv):
         elif opt in ["-q", "--quiet"]: opts.verbose = opts.verbose - 1
         elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
         elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
-        elif opt in ["--dump"]: opts.dump = optarg
+        elif opt in ["--create-bindump"]: opts.bindump = optarg
+        elif opt in ["--with-dump"]: opts.with_dump = optarg
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
-    # process arguments
     if not args:
         raise Exception, "error: no arguments given"
+    if opts.with_dump or opts.bindump:
+        assert len(args) == 1, "need exactly one file"
+    # process arguments
     for arg in args:
         do_file(arg)
+        if opts.bindump:
+            assert opts.with_dump, "need --with-dump"
+            create_bindump(opts.bindump, opts.with_dump)
     return 0
 
 

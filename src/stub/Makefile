@@ -197,7 +197,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
-	$(call tc,xstrip) --dump=$1.dump $1
+	$(call tc,xstrip) --with-dump=$1.dump --create-bindump=$1.bindump $1
 	cat $1.dump >> $1
 endef
 define tc.default.f-objstrip
@@ -392,7 +392,7 @@ tmp/i386-bsd.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,f-objstrip,$@)
 
-tmp/i386-bsd.syscall.o: $(srcdir)/src/$$T.S
+tmp/i386-bsd.syscall.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -453,7 +453,7 @@ tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-tmp/i386-bsd.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
+tmp/i386-bsd.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -565,7 +565,7 @@ tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
-tmp/i386-linux.elf.execve-upx_itoa.o: $(srcdir)/src/$$T.S
+tmp/i386-linux.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,f-objstrip,$@)
 
