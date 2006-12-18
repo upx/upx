@@ -799,7 +799,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + 
+    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) +
         txt_c_len + (3& -txt_c_len) + lsize;
     shdro[1].sh_addralign = 1;
 
@@ -1110,47 +1110,47 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 +++ ./debian/build/build-arm-none-ixp4xx/arch/arm/boot/compressed/Makefile	2006-12-16 02:39:38.000000000 -0800
 @@ -5,7 +5,7 @@
  #
- 
+
  HEAD	= head.o
 -OBJS	= misc.o
-+OBJS	= 
++OBJS	=
  FONTC	= drivers/video/console/font_acorn_8x8.c
- 
+
  FONT = $(addprefix ../../../../drivers/video/console/, font_acorn_8x8.o)
 @@ -73,8 +73,8 @@
- 
+
  SEDFLAGS	= s/TEXT_START/$(ZTEXTADDR)/;s/BSS_START/$(ZBSSADDR)/
- 
+
 -targets       := vmlinux vmlinux.lds piggy.gz piggy.o $(FONT) \
 -		 head.o misc.o $(OBJS)
 +targets       := vmlinux vmlinux.lds upx-piggy.o $(FONT) \
 +		 head.o $(OBJS)
  EXTRA_CFLAGS  := -fpic
  EXTRA_AFLAGS  :=
- 
+
 @@ -95,20 +95,16 @@
  # would otherwise mess up our GOT table
  CFLAGS_misc.o := -Dstatic=
- 
+
 -$(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/piggy.o \
 -	 	$(addprefix $(obj)/, $(OBJS)) FORCE
 +$(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) \
 +	 	$(addprefix $(obj)/, $(OBJS)) $(obj)/upx-piggy.o FORCE
  	$(call if_changed,ld)
  	@:
- 
+
 -$(obj)/piggy.gz: $(obj)/../Image FORCE
 -	$(call if_changed,gzip)
 -
 -$(obj)/piggy.o:  $(obj)/piggy.gz FORCE
 +$(obj)/upx-piggy.o:  vmlinux FORCE
 +	rm -f $@; upx --lzma -o $@ $<; touch $@
- 
+
  CFLAGS_font_acorn_8x8.o := -Dstatic=
- 
+
  $(obj)/vmlinux.lds: $(obj)/vmlinux.lds.in arch/arm/boot/Makefile .config
  	@sed "$(SEDFLAGS)" < $< > $@
- 
+
 -$(obj)/misc.o: $(obj)/misc.c include/asm/arch/uncompress.h lib/inflate.c
 -
 #endif  /*}*/

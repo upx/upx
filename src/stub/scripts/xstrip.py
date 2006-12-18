@@ -97,17 +97,17 @@ def create_bindump(bindump_fn, dump_fn):
         if not l: continue
         f = l.split(" ")
         if len(f) == 6:
-            assert f[1] in "gl", (l, f) 
-            assert f[2] in "dFO", (l, f) 
+            assert f[1] in "gl", (l, f)
+            assert f[2] in "dFO", (l, f)
             section = section_names[f[3]]
         elif len(f) == 5:
-            assert f[1] in "gl", (l, f) 
+            assert f[1] in "gl", (l, f)
             section = section_names[f[2]]
         elif len(f) == 4:
-            assert f[1] in ["*UND*"], (l, f) 
+            assert f[1] in ["*UND*"], (l, f)
             section = None
         else:
-            assert 0, (l, f) 
+            assert 0, (l, f)
         pass
     # preprocessRelocations
     relocs = []
@@ -120,7 +120,7 @@ def create_bindump(bindump_fn, dump_fn):
             continue
         f = l.split(" ")
         if f[0] == "OFFSET": continue
-        assert len(f) == 3, (l, f) 
+        assert len(f) == 3, (l, f)
         pass
     fp = open(bindump_fn, "wb")
     fp.write(data)
