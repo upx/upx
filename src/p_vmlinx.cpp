@@ -45,15 +45,10 @@ static const
 static const
 #include "stub/arm-linux.kernel.vmlinux.h"
 
+
 /*************************************************************************
 //
 **************************************************************************/
-
-PackVmlinuxI386::PackVmlinuxI386(InputFile *f) :
-    super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
-{
-    bele = &N_BELE_RTP::le_policy;
-}
 
 PackVmlinuxI386::~PackVmlinuxI386()
 {
@@ -113,12 +108,6 @@ PackVmlinuxI386::getElfSections()
         }
     }
     return shstrsec;
-}
-
-PackVmlinuxARM::PackVmlinuxARM(InputFile *f) :
-    super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
-{
-    bele = &N_BELE_RTP::le_policy;
 }
 
 PackVmlinuxARM::~PackVmlinuxARM()
@@ -1253,12 +1242,6 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 /*************************************************************************
 //
 **************************************************************************/
-
-PackVmlinuxAMD64::PackVmlinuxAMD64(InputFile *f) :
-    super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
-{
-    bele = &N_BELE_RTP::le_policy;
-}
 
 PackVmlinuxAMD64::~PackVmlinuxAMD64()
 {

@@ -31,15 +31,45 @@
 
 #include "p_elf.h"
 
+
 /*************************************************************************
 // vmlinx/i386 (bare binary Linux kernel image)
 **************************************************************************/
 
-class PackVmlinuxI386 : public Packer
+template <class TElfClass>
+class PackVmlinuxBase : public Packer
 {
     typedef Packer super;
+protected:
+    typedef typename TElfClass::Ehdr Ehdr;
+    typedef typename TElfClass::Shdr Shdr;
+    typedef typename TElfClass::Phdr Phdr;
+
 public:
-    PackVmlinuxI386(InputFile *f);
+    PackVmlinuxBase(InputFile *f) :
+        super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
+    {
+        bele = N_BELE_CTP::getRTP<typename TElfClass::BeLePolicy>();
+    }
+
+protected:
+    int n_ptload;
+    unsigned sz_ptload;
+    Phdr *phdri; // from input file
+    Shdr *shdri; // from input file
+    char *shstrtab; // from input file
+    Shdr *p_text;
+    Shdr *p_note0;
+    Shdr *p_note1;
+    Ehdr ehdri; // from input file
+};
+
+
+class PackVmlinuxI386 : public PackVmlinuxBase<ElfClass_LE32>
+{
+    typedef PackVmlinuxBase<ElfClass_LE32> super;
+public:
+    PackVmlinuxI386(InputFile *f) : super(f) { }
     virtual ~PackVmlinuxI386();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
@@ -59,25 +89,14 @@ protected:
     virtual Elf_LE32_Shdr const *getElfSections();
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-//    virtual const upx_byte *getLoader() const;
-//    virtual int getLoaderSize() const;
-
-    int n_ptload;
-    unsigned sz_ptload;
-    Elf_LE32_Phdr *phdri; // from input file
-    Elf_LE32_Shdr *shdri; // from input file
-    char *shstrtab; // from input file
-    Elf_LE32_Shdr *p_text;
-    Elf_LE32_Shdr *p_note0;
-    Elf_LE32_Shdr *p_note1;
-    Elf_LE32_Ehdr ehdri; // from input file
 };
 
-class PackVmlinuxARM : public Packer
+
+class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
 {
-    typedef Packer super;
+    typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
-    PackVmlinuxARM(InputFile *f);
+    PackVmlinuxARM(InputFile *f) : super(f) { }
     virtual ~PackVmlinuxARM();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
@@ -97,25 +116,14 @@ protected:
     virtual Elf_LE32_Shdr const *getElfSections();
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-//    virtual const upx_byte *getLoader() const;
-//    virtual int getLoaderSize() const;
-
-    int n_ptload;
-    unsigned sz_ptload;
-    Elf_LE32_Phdr *phdri; // from input file
-    Elf_LE32_Shdr *shdri; // from input file
-    char *shstrtab; // from input file
-    Elf_LE32_Shdr *p_text;
-    Elf_LE32_Shdr *p_note0;
-    Elf_LE32_Shdr *p_note1;
-    Elf_LE32_Ehdr ehdri; // from input file
 };
 
-class PackVmlinuxAMD64 : public Packer
+
+class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 {
-    typedef Packer super;
+    typedef PackVmlinuxBase<ElfClass_LE64> super;
 public:
-    PackVmlinuxAMD64(InputFile *f);
+    PackVmlinuxAMD64(InputFile *f) : super(f) { }
     virtual ~PackVmlinuxAMD64();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
@@ -135,18 +143,6 @@ protected:
     virtual Elf_LE64_Shdr const *getElfSections();
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-//    virtual const upx_byte *getLoader() const;
-//    virtual int getLoaderSize() const;
-
-    int n_ptload;
-    unsigned sz_ptload;
-    Elf_LE64_Phdr *phdri; // from input file
-    Elf_LE64_Shdr *shdri; // from input file
-    char *shstrtab; // from input file
-    Elf_LE64_Shdr *p_text;
-    Elf_LE64_Shdr *p_note0;
-    Elf_LE64_Shdr *p_note1;
-    Elf_LE64_Ehdr ehdri; // from input file
 };
 
 

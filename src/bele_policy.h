@@ -97,12 +97,11 @@ struct BEPolicy
     BEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
-    enum { isBE = 1, isLE = 0 };
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::BEPolicy CTP_Policy;
-    V bool isBE() C { return CTP_Policy::isBE; }
-    V bool isLE() C { return CTP_Policy::isLE; }
 #endif
+    V bool isBE() C { return true; }
+    V bool isLE() C { return false; }
 
     typedef BE16 U16;
     typedef BE32 U32;
@@ -175,12 +174,11 @@ struct LEPolicy
     LEPolicy() {}
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
-    enum { isBE = 0, isLE = 1 };
 #elif defined(BELE_RTP)
     typedef N_BELE_CTP::LEPolicy CTP_Policy;
-    V bool isBE() C { return CTP_Policy::isBE; }
-    V bool isLE() C { return CTP_Policy::isLE; }
 #endif
+    V bool isBE() C { return false; }
+    V bool isLE() C { return true; }
 
     typedef LE16 U16;
     typedef LE32 U32;

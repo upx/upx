@@ -360,6 +360,7 @@ typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf64_Ehdr;
 typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf64_Phdr;
 typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf64_Shdr;
 typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf64_Dyn;
+typedef void Elf64_Sym; // FIXME
 #undef P
 
 #define P N_BELE_CTP::BEPolicy
@@ -367,6 +368,7 @@ typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_BE64_Ehdr;
 typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Phdr;
 typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Shdr;
 typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_BE64_Dyn;
+typedef void Elf_BE64_Sym; // FIXME
 #undef P
 
 #define P N_BELE_CTP::LEPolicy
@@ -374,6 +376,7 @@ typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_LE64_Ehdr;
 typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Phdr;
 typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Shdr;
 typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_LE64_Dyn;
+typedef void Elf_LE64_Sym; // FIXME
 #undef P
 
 
@@ -409,6 +412,31 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Ehdr) == 64)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Phdr) == 56)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Shdr) == 64)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Dyn)  == 16)
+
+
+/*************************************************************************
+// aggregate all types in an ElfClass
+**************************************************************************/
+
+template <class TP, class TEhdr, class TPhdr, class TShdr, class TDyn, class TSym>
+struct ElfClass
+{
+    typedef TP      BeLePolicy;
+    typedef TEhdr   Ehdr;
+    typedef TPhdr   Phdr;
+    typedef TShdr   Shdr;
+    typedef TDyn    Dyn;
+    typedef TSym    Sym;
+};
+
+typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_BE32_Ehdr, Elf_BE32_Phdr, Elf_BE32_Shdr, Elf_BE32_Dyn,Elf_BE32_Sym>
+    ElfClass_BE32;
+typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_BE64_Ehdr, Elf_BE64_Phdr, Elf_BE64_Shdr, Elf_BE64_Dyn,Elf_BE64_Sym>
+    ElfClass_BE64;
+typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_LE32_Ehdr, Elf_LE32_Phdr, Elf_LE32_Shdr, Elf_LE32_Dyn,Elf_LE32_Sym>
+    ElfClass_LE32;
+typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_LE64_Ehdr, Elf_LE64_Phdr, Elf_LE64_Shdr, Elf_LE64_Dyn,Elf_LE64_Sym>
+    ElfClass_LE64;
 
 
 #endif /* already included */

@@ -538,26 +538,37 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 // forward declarations
 namespace N_BELE_CTP {
 class BEPolicy; class LEPolicy;
+extern const BEPolicy be_policy;
+extern const LEPolicy le_policy;
 }
 namespace N_BELE_RTP {
 class AbstractPolicy;
 class BEPolicy; class LEPolicy;
+extern const BEPolicy be_policy;
+extern const LEPolicy le_policy;
 }
 
 namespace N_BELE_CTP {
 #define BELE_CTP 1
 #include "bele_policy.h"
 #undef BELE_CTP
-extern const BEPolicy be_policy;
-extern const LEPolicy le_policy;
 }
 
 namespace N_BELE_RTP {
 #define BELE_RTP 1
 #include "bele_policy.h"
 #undef BELE_RTP
-extern const BEPolicy be_policy;
-extern const LEPolicy le_policy;
+}
+
+namespace N_BELE_CTP {
+
+template <class TCTP>
+static const N_BELE_RTP::AbstractPolicy* getRTP();
+template <>
+static const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>() { return &N_BELE_RTP::be_policy; }
+template <>
+static const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>() { return &N_BELE_RTP::le_policy; }
+
 }
 
 
