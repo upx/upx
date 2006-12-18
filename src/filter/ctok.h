@@ -58,10 +58,18 @@ static int F(Filter *f)
         memset(buf,0,256);
 
         for (ic = 0; ic < size - 5; ic++)
-            if (COND(b,ic,lastcall,id) && get_le32(b+ic+1)+ic+1 >= size)
+        {
+            if (!COND(b,ic,lastcall,id))
+                continue;
+            jc = get_le32(b+ic+1)+ic+1;
+            if (jc < size)
             {
-                buf[b[ic+1]] |= 1;
+                if (jc + addvalue >= (1u << 24)) // hi 8 bits won't be cto8
+                    return -1;
             }
+            else
+                buf[b[ic+1]] |= 1;
+        }
 
         if (getcto(f, buf) < 0)
             return -1;
@@ -79,8 +87,7 @@ static int F(Filter *f)
         // try to detect 'real' calls only
         if (jc < size)
         {
-            if ((1u<<24)<=(jc+addvalue))  // hi 8 bits won't be cto8
-                return 1;  // fail - buffer not restored
+            assert(jc + addvalue < (1u << 24)); // hi 8 bits won't be cto8
 #ifdef U
             set_be32(b+ic+1,jc+addvalue+cto);
 #endif

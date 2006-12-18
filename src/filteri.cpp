@@ -109,7 +109,7 @@ umin(unsigned const a, unsigned const b)
 
 #define COND1(b,x)     (b[x] == 0xe8 || b[x] == 0xe9)
 #define COND2(b,x,lc)  (lc!=(x) && 0xf==b[(x)-1] && 0x80<=b[x] && b[x]<=0x8f)
-#define  COND(b,x,lc,id) (COND1(b,x) || ((9<=(0xf&(id))) && COND2(b,x,lc)))
+#define COND(b,x,lc,id) (COND1(b,x) || ((9<=(0xf&(id))) && COND2(b,x,lc)))
 #define F                       f_ctok32_e8e9_bswap_le
 #define U                       u_ctok32_e8e9_bswap_le
 #include "filter/ctok.h"
