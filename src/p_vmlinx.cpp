@@ -800,7 +800,8 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + txt_c_len + lsize;
+    shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) + 
+        txt_c_len + (3& -txt_c_len) + lsize;
     shdro[1].sh_addralign = 1;
 
     // First word from vmlinux-head.S
@@ -813,7 +814,8 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     fo_off += sizeof(stub_arm_linux_kernel_vmlinux_head);
 
-    fo->write(obuf, ~3& (3+ txt_c_len)); fo_off += ~3& (3+ txt_c_len);
+    fo->write(obuf, txt_c_len); fo_off += txt_c_len;
+    tmp_le32 = 0; fo->write(&tmp_le32, 3& -txt_c_len); fo_off += 3& -txt_c_len;
     fo->write(loader, lsize); fo_off += lsize;
 
 #if 0
