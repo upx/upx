@@ -743,10 +743,9 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     ibuf.alloc(file_size);
     obuf.allocForCompression(file_size);
 
-    // .e_ident, .e_machine, .e_version
+    // .e_ident, .e_machine, .e_version, .e_flags
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
     ehdro.e_type = Elf32_Ehdr::ET_REL;
-    ehdro.e_flags = 0;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = sizeof(ehdro);  // later
