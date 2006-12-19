@@ -58,7 +58,6 @@ PackVmlinuxBase<T>::~PackVmlinuxBase()
     delete [] shdri;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -77,45 +76,6 @@ const int *PackVmlinuxI386::getFilters() const
     return filters;
 }
 
-// copied from PackUnix 2006-10-13.
-int PackVmlinuxI386::getStrategy(Filter &/*ft*/)
-{
-    // Called just before reading and compressing each block.
-    // Might want to adjust blocksize, etc.
-
-    // If user specified the filter, then use it (-2==filter_strategy).
-    // Else try the first two filters, and pick the better (2==filter_strategy).
-    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
-}
-
-
-Elf_LE32_Shdr const *
-PackVmlinuxI386::getElfSections()
-{
-    Elf_LE32_Shdr const *p, *shstrsec=0;
-    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
-    fi->seek(ehdri.e_shoff, SEEK_SET);
-    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf32_Shdr::SHT_STRTAB==p->sh_type
-        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
-        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
-        ) {
-            delete [] shstrtab;
-            shstrtab = new char[1+ p->sh_size];
-            fi->seek(p->sh_offset, SEEK_SET);
-            fi->readx(shstrtab, p->sh_size);
-            shstrtab[p->sh_size] = '\0';
-            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
-                shstrsec = p;
-                break;
-            }
-        }
-    }
-    return shstrsec;
-}
-
 const int *PackVmlinuxARM::getCompressionMethods(int method, int level) const
 {
     return Packer::getDefaultCompressionMethods_8(method, level);
@@ -126,45 +86,6 @@ const int *PackVmlinuxARM::getFilters() const
 {
     static const int f50[] = { 0x50, FT_END };
     return f50;
-}
-
-// copied from PackUnix 2006-10-13.
-int PackVmlinuxARM::getStrategy(Filter &/*ft*/)
-{
-    // Called just before reading and compressing each block.
-    // Might want to adjust blocksize, etc.
-
-    // If user specified the filter, then use it (-2==filter_strategy).
-    // Else try the first two filters, and pick the better (2==filter_strategy).
-    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
-}
-
-
-Elf_LE32_Shdr const *
-PackVmlinuxARM::getElfSections()
-{
-    Elf_LE32_Shdr const *p, *shstrsec=0;
-    shdri = new Elf_LE32_Shdr[(unsigned) ehdri.e_shnum];
-    fi->seek(ehdri.e_shoff, SEEK_SET);
-    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf32_Shdr::SHT_STRTAB==p->sh_type
-        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
-        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
-        ) {
-            delete [] shstrtab;
-            shstrtab = new char[1+ p->sh_size];
-            fi->seek(p->sh_offset, SEEK_SET);
-            fi->readx(shstrtab, p->sh_size);
-            shstrtab[p->sh_size] = '\0';
-            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
-                shstrsec = p;
-                break;
-            }
-        }
-    }
-    return shstrsec;
 }
 
 static int __acc_cdecl_qsort
@@ -1254,45 +1175,6 @@ const int *PackVmlinuxAMD64::getFilters() const
         0x49, 0x46,
     -1 };
     return filters;
-}
-
-// copied from PackUnix 2006-10-13.
-int PackVmlinuxAMD64::getStrategy(Filter &/*ft*/)
-{
-    // Called just before reading and compressing each block.
-    // Might want to adjust blocksize, etc.
-
-    // If user specified the filter, then use it (-2==strategy).
-    // Else try the first two filters, and pick the better (2==strategy).
-    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
-}
-
-
-Elf_LE64_Shdr const *
-PackVmlinuxAMD64::getElfSections()
-{
-    Elf_LE64_Shdr const *p, *shstrsec=0;
-    shdri = new Elf_LE64_Shdr[(unsigned) ehdri.e_shnum];
-    fi->seek(ehdri.e_shoff, SEEK_SET);
-    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf64_Shdr::SHT_STRTAB==p->sh_type
-        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
-        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
-        ) {
-            delete [] shstrtab;
-            shstrtab = new char[1+ p->sh_size];
-            fi->seek(p->sh_offset, SEEK_SET);
-            fi->readx(shstrtab, p->sh_size);
-            shstrtab[p->sh_size] = '\0';
-            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
-                shstrsec = p;
-                break;
-            }
-        }
-    }
-    return shstrsec;
 }
 
 static int __acc_cdecl_qsort
