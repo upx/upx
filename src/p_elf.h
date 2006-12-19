@@ -74,103 +74,8 @@ struct Ehdr
     Half e_shnum;               /* Section header table entry count */
     Half e_shstrndx;            /* Section header string table index */
 
-    enum { // e_ident[]
-        EI_CLASS      = 4,
-        EI_DATA       = 5,      /* Data encoding */
-        EI_VERSION    = 6,
-        EI_OSABI      = 7,
-        EI_ABIVERSION = 8,
-    };
-    enum { // e_ident[EI_CLASS]
-        ELFCLASS32 = 1,         /* 32-bit objects */
-        ELFCLASS64 = 2,         /* 64-bit objects */
-    };
-    enum { // e_ident[EI_DATA]
-        ELFDATA2LSB = 1,        /* 2's complement, little endian */
-        ELFDATA2MSB = 2         /* 2's complement, big endian */
-    };
-    enum { // e_ident[EI_OSABI]
-        ELFOSABI_NONE = 0,      // SYSV
-        ELFOSABI_NETBSD = 2,
-        ELFOSABI_LINUX = 3,
-        ELFOSABI_FREEBSD = 9,
-        ELFOSABI_OPENBSD = 12,
-        ELFOSABI_ARM = 97
-    };
-    enum { // e_type
-        ET_NONE = 0,            /* No file type */
-        ET_REL  = 1,            /* Relocatable file */
-        ET_EXEC = 2,            /* Executable file */
-        ET_DYN  = 3,            /* Shared object file */
-        ET_CORE = 4,            /* Core file */
-    };
-    enum { // e_machine
-        EM_386    = 3,
-        EM_PPC    = 20,
-        EM_PPC64  = 21,
-        EM_ARM    = 40,
-        EM_X86_64 = 62,
-    };
-    enum { // e_version
-        EV_CURRENT = 1,
-    };
-}
-__attribute_packed;
-
-
-// Program segment header.
-struct BasePhdr
-{
-    enum { // p_type
-        PT_LOAD    = 1,         /* Loadable program segment */
-        PT_DYNAMIC = 2,         /* Dynamic linking information */
-        PT_INTERP  = 3,         /* Name of program interpreter */
-        PT_NOTE    = 4,         /* Auxiliary information (esp. OpenBSD) */
-        PT_PHDR    = 6,         /* Entry for header table itself */
-    };
-
-    enum { // p_flags
-        PF_X = 1,               /* Segment is executable */
-        PF_W = 2,               /* Segment is writable */
-        PF_R = 4,               /* Segment is readable */
-    };
-}
-__attribute_packed;
-
-
-struct BaseShdr
-{
-    enum SHT { // sh_type
-        SHT_NULL = 0,           /* Section header table entry unused */
-        SHT_PROGBITS = 1,       /* Program data */
-        SHT_SYMTAB = 2,         /* Symbol table */
-        SHT_STRTAB = 3,         /* String table */
-        SHT_RELA = 4,           /* Relocation entries with addends */
-        SHT_HASH = 5,           /* Symbol hash table */
-        SHT_DYNAMIC = 6,        /* Dynamic linking information */
-        SHT_NOTE = 7,           /* Notes */
-        SHT_NOBITS = 8,         /* Program space with no data (bss) */
-        SHT_REL = 9,            /* Relocation entries, no addends */
-        SHT_SHLIB = 10,         /* Reserved */
-        SHT_DYNSYM = 11,        /* Dynamic linker symbol table */
-            /* 12, 13  hole */
-        SHT_INIT_ARRAY = 14,    /* Array of constructors */
-        SHT_FINI_ARRAY = 15,    /* Array of destructors */
-        SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
-        SHT_GROUP = 17,         /* Section group */
-        SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
-        SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
-    };
-
-    enum SHF { // sh_flags
-        SHF_WRITE      = (1 << 0),  /* Writable */
-        SHF_ALLOC      = (1 << 1),  /* Occupies memory during execution */
-        SHF_EXECINSTR  = (1 << 2),  /* Executable */
-        SHF_MERGE      = (1 << 4),  /* Might be merged */
-        SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
-        SHF_INFO_LINK  = (1 << 6),  /* 'sh_info' contains SHT index */
-        SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
-    };
+#   define WANT_EHDR_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
@@ -184,51 +89,10 @@ struct Dyn
     Xword d_tag;
     Addr d_val;
 
-    enum { // d_tag
-        DT_NULL     =  0,       /* End flag */
-        DT_NEEDED   =  1,       /* Name of needed library */
-        DT_HASH     =  4,       /* Hash table of symbol names */
-        DT_STRTAB   =  5,       /* String table */
-        DT_SYMTAB   =  6,       /* Symbol table */
-        DT_STRSZ    = 10,       /* Sizeof string table */
-    };
+#   define WANT_DYN_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
-
-
-struct BaseSym
-{
-    enum { // st_bind (high 4 bits of st_info)
-        STB_LOCAL   =   0,      /* Local symbol */
-        STB_GLOBAL  =   1,      /* Global symbol */
-        STB_WEAK    =   2,      /* Weak symbol */
-    };
-
-    enum { // st_type (low 4 bits of st_info)
-        STT_NOTYPE  =   0,      /* Symbol type is unspecified */
-        STT_OBJECT  =   1,      /* Symbol is a data object */
-        STT_FUNC    =   2,      /* Symbol is a code object */
-        STT_SECTION =   3,      /* Symbol associated with a section */
-        STT_FILE    =   4,      /* Symbol's name is file name */
-        STT_COMMON  =   5,      /* Symbol is a common data object */
-        STT_TLS     =   6,      /* Symbol is thread-local data object*/
-    };
-
-    enum { // st_other (visibility)
-        STV_DEFAULT  =  0,      /* Default symbol visibility rules */
-        STV_INTERNAL =  1,      /* Processor specific hidden class */
-        STV_HIDDEN   =  2,      /* Sym unavailable in other modules */
-        STV_PROTECTED=  3,      /* Not preemptible, not exported */
-    };
-
-    enum { // st_shndx
-        SHN_UNDEF   =   0,      /* Undefined section */
-        SHN_ABS     =   0xfff1, /* Associated symbol is absolute */
-        SHN_COMMON  =   0xfff2, /* Associated symbol is common */
-    };
-}
-__attribute_packed;
-
 
 } // namespace N_Elf
 
@@ -240,7 +104,7 @@ __attribute_packed;
 namespace N_Elf32 {
 
 template <class TElfITypes>
-struct Phdr : public N_Elf::BasePhdr
+struct Phdr
 {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
@@ -254,12 +118,14 @@ struct Phdr : public N_Elf::BasePhdr
     Word p_memsz;               /* Segment size in memory */
     Word p_flags;               /* Segment flags */
     Word p_align;               /* Segment alignment */
+
+#   define WANT_PHDR_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
 
 template <class TElfITypes>
-struct Shdr : public N_Elf::BaseShdr
 struct Shdr
 {
     typedef typename TElfITypes::Word    Word;
@@ -276,12 +142,15 @@ struct Shdr
     Word sh_info;               /* Additional section information */
     Word sh_addralign;          /* Section alignment */
     Word sh_entsize;            /* Entry size if section holds table */
+
+#   define WANT_SHDR_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
 
 template <class TElfITypes>
-struct Sym : public N_Elf::BaseSym
+struct Sym
 {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Addr    Addr;
@@ -293,6 +162,9 @@ struct Sym : public N_Elf::BaseSym
     unsigned char st_info;      /* symbol type and binding */
     unsigned char st_other;     /* symbol visibility */
     Section st_shndx;           /* section index */
+
+#   define WANT_SYM_ENUM 1
+#   include "p_elf_enum.h"
 
     static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
@@ -311,7 +183,7 @@ __attribute_packed;
 namespace N_Elf64 {
 
 template <class TElfITypes>
-struct Phdr : public N_Elf::BasePhdr
+struct Phdr
 {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Xword   Xword;
@@ -326,12 +198,15 @@ struct Phdr : public N_Elf::BasePhdr
     Xword p_filesz;             /* Segment size in file */
     Xword p_memsz;              /* Segment size in memory */
     Xword p_align;              /* Segment alignment */
+
+#   define WANT_PHDR_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
 
 template <class TElfITypes>
-struct Shdr : public N_Elf::BaseShdr
+struct Shdr
 {
     typedef typename TElfITypes::Word    Word;
     typedef typename TElfITypes::Xword   Xword;
@@ -348,6 +223,9 @@ struct Shdr : public N_Elf::BaseShdr
     Word  sh_info;              /* Additional section information */
     Xword sh_addralign;         /* Section alignment */
     Xword sh_entsize;           /* Entry size if section holds table */
+
+#   define WANT_SHDR_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
@@ -366,6 +244,9 @@ struct Sym
     Section st_shndx;           /* section index */
     Addr st_value;              /* symbol value */
     Xword st_size;              /* symbol size */
+
+#   define WANT_SYM_ENUM 1
+#   include "p_elf_enum.h"
 }
 __attribute_packed;
 
