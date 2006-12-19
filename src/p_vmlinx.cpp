@@ -91,7 +91,7 @@ PackVmlinuxBase<T>::compare_Phdr(void const *aa, void const *bb)
 }
 
 template <class T>
-class T::Shdr const *PackVmlinuxBase<T>::getElfSections()
+typename T::Shdr const *PackVmlinuxBase<T>::getElfSections()
 {
     Shdr const *p, *shstrsec=0;
     shdri = new Shdr[(unsigned) ehdri.e_shnum];
@@ -125,9 +125,9 @@ bool PackVmlinuxBase<T>::canPack()
 
     // now check the ELF header
     if (memcmp(&ehdri, "\x7f\x45\x4c\x46", 4)
-    ||  ehdri.e_ident[/*EI_CLASS*/ 4]!=my_elfclass
-    ||  ehdri.e_ident[/*EI_DATA*/ 5]!=my_elfdata
-    ||  ehdri.e_ident[/*EI_VERSION*/ 6]!=1  // EV_CURRENT
+    ||  ehdri.e_ident[Ehdr::EI_CLASS] != my_elfclass
+    ||  ehdri.e_ident[Ehdr::EI_DATA] != my_elfdata
+    ||  ehdri.e_ident[Ehdr::EI_VERSION] != Ehdr::EV_CURRENT
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
     ||  ehdri.e_version != 1  // version
     ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
@@ -138,7 +138,7 @@ bool PackVmlinuxBase<T>::canPack()
 
     // additional requirements for vmlinux
     if (ehdri.e_machine != my_e_machine
-    ||  ehdri.e_type!=Ehdr::ET_EXEC
+    ||  ehdri.e_type != Ehdr::ET_EXEC
     ||  !is_valid_e_entry(ehdri.e_entry)
     ) {
         return false;
@@ -188,6 +188,7 @@ bool PackVmlinuxBase<T>::canPack()
     }
     return 0 < n_ptload;
 }
+
 
 /*************************************************************************
 //
@@ -346,13 +347,13 @@ static const
 void PackVmlinuxI386::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
-    Elf32_Ehdr ehdro;
-    LE32 tmp_le32;
+    Ehdr ehdro;
+    U32 tmp_u32; // for external representation
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
     // .shstrtab /* .symtab .strtab */
-    Elf32_Shdr shdro[1+3+1/*+2*/];
+    Shdr shdro[1+3+1/*+2*/];
     memset(shdro, 0, sizeof(shdro));
 
     ibuf.alloc(file_size);
@@ -360,7 +361,7 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     // .e_ident, .e_machine, .e_version, .e_flags
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
-    ehdro.e_type = Elf32_Ehdr::ET_REL;
+    ehdro.e_type = Ehdr::ET_REL;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = 0;  // later
@@ -404,19 +405,19 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     char const *p = shstrtab;
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
-    shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
-    shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
+    shdro[1].sh_type = Shdr::SHT_PROGBITS;
+    shdro[1].sh_flags = Shdr::SHF_ALLOC | Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
     shdro[1].sh_size = sizeof(stub_i386_linux_kernel_vmlinux_head) + ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
     // ENTRY_POINT
     fo->write(&stub_i386_linux_kernel_vmlinux_head[0], sizeof(stub_i386_linux_kernel_vmlinux_head)-2*(1+ 4) +1);
-    tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
+    tmp_u32 = ehdri.e_entry; fo->write(&tmp_u32, 4);
 
     // COMPRESSED_LENGTH
     fo->write(&stub_i386_linux_kernel_vmlinux_head[sizeof(stub_i386_linux_kernel_vmlinux_head)-(1+ 4)], 1);
-    tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.c_len;      fo->write(&tmp_u32, 4);
 
     fo_off += sizeof(stub_i386_linux_kernel_vmlinux_head);
 
@@ -437,11 +438,11 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[2].sh_name = ptr_diff(p, shstrtab);
-    shdro[2].sh_type = Elf32_Shdr::SHT_NOTE;
+    shdro[2].sh_type = Shdr::SHT_NOTE;
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[2].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[2].sh_size;
 
     // .note with rest     --------------------------------
@@ -463,16 +464,16 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 
     // while (0!=*p++) ;  // name is the same
     shdro[3].sh_name = ptr_diff(p, shstrtab);
-    shdro[3].sh_type = Elf32_Shdr::SHT_NOTE;
+    shdro[3].sh_type = Shdr::SHT_NOTE;
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[3].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[3].sh_size;
 
     while (0!=*p++) ;
     shdro[4].sh_name = ptr_diff(p, shstrtab);
-    shdro[4].sh_type = Elf32_Shdr::SHT_STRTAB;
+    shdro[4].sh_type = Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
     shdro[4].sh_size = sizeof(shstrtab);  // already includes terminating '\0'
     shdro[4].sh_addralign = 1;
@@ -482,18 +483,18 @@ void PackVmlinuxI386::pack(OutputFile *fo)
     while (0!=*p++) ;
     fo_off = ~3 & (3+ fo_off);
     shdro[5].sh_name = ptr_diff(p, shstrtab);
-    shdro[5].sh_type = Elf32_Shdr::SHT_SYMTAB;
+    shdro[5].sh_type = Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
     shdro[5].sh_size = 16;  // XXX ?
     shdro[5].sh_link = 6;  // to .strtab for symbols
     shdro[5].sh_addralign = 4;
-    shdro[5].sh_entsize = 16;  // XXX Elf32_Sym
+    shdro[5].sh_entsize = 16;  // XXX Sym
     fo->seek(fo_off, SEEK_SET);
     fo->write("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16); fo_off += 16;
 
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
-    shdro[6].sh_type = Elf32_Shdr::SHT_STRTAB;
+    shdro[6].sh_type = Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
     shdro[6].sh_size = 1;  // XXX ?
     shdro[6].sh_addralign = 1;
@@ -526,16 +527,16 @@ int PackVmlinuxI386::canUnpack()
     // now check the ELF header
     if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Elf32_Ehdr::EM_386
+    ||  ehdri.e_machine != Ehdr::EM_386
     ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Elf32_Ehdr::ET_REL
+    ||  ehdri.e_type != Ehdr::ET_REL
     ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf32_Shdr) + ehdri.e_shoff)
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
     )
         return false;
 
     // find the .shstrtab section
-    Elf_LE32_Shdr const *const shstrsec = getElfSections();
+    Shdr const *const shstrsec = getElfSections();
     if (0==shstrsec) {
         return false;
     }
@@ -543,7 +544,7 @@ int PackVmlinuxI386::canUnpack()
     // check for .text .note .note  and sane (.sh_size + .sh_offset)
     p_note0 = p_note1 = p_text = 0;
     int j;
-    Elf_LE32_Shdr *p;
+    Shdr *p;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if ((unsigned)file_size < (p->sh_size + p->sh_offset)
         ||  shstrsec->sh_size < (5+ p->sh_name) ) {
@@ -582,7 +583,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note0->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
@@ -595,7 +596,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
     ph = ph_tmp;
     fi->seek(p_text->sh_offset + sizeof(stub_i386_linux_kernel_vmlinux_head) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
-    if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
+    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
     {
         throwCantUnpack(".text corrupted");
     }
@@ -614,7 +615,7 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 
     fi->seek(p_note1->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note1->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
@@ -630,13 +631,13 @@ void PackVmlinuxI386::unpack(OutputFile *fo)
 void PackVmlinuxARM::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
-    Elf32_Ehdr ehdro;
-    LE32 tmp_le32;
+    Ehdr ehdro;
+    U32 tmp_u32;
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
     // .shstrtab .symtab .strtab
-    Elf32_Shdr shdro[1+3+3];
+    Shdr shdro[1+3+3];
     memset(shdro, 0, sizeof(shdro));
 
     ibuf.alloc(file_size);
@@ -644,7 +645,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     // .e_ident, .e_machine, .e_version, .e_flags
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
-    ehdro.e_type = Elf32_Ehdr::ET_REL;
+    ehdro.e_type = Ehdr::ET_REL;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = sizeof(ehdro);  // later
@@ -695,8 +696,8 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     char const *p = shstrtab;
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
-    shdro[1].sh_type = Elf32_Shdr::SHT_PROGBITS;
-    shdro[1].sh_flags = Elf32_Shdr::SHF_ALLOC | Elf32_Shdr::SHF_EXECINSTR;
+    shdro[1].sh_type = Shdr::SHT_PROGBITS;
+    shdro[1].sh_flags = Shdr::SHF_ALLOC | Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
     shdro[1].sh_size = sizeof(stub_arm_linux_kernel_vmlinux_head) +
         txt_c_len + (3& -txt_c_len) + lsize;
@@ -706,14 +707,14 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     fo->write(&stub_arm_linux_kernel_vmlinux_head[0], 4);
 
     // Second word
-    tmp_le32 = (0xff000000 & get_le32(&stub_arm_linux_kernel_vmlinux_head[4]))
+    tmp_u32 = (0xff000000 & BeLePolicy::get32(&stub_arm_linux_kernel_vmlinux_head[4]))
         | (0x00ffffff & (-1+ ((3+ txt_c_len)>>2)));
-    fo->write(&tmp_le32, 4);
+    fo->write(&tmp_u32, 4);
 
     fo_off += sizeof(stub_arm_linux_kernel_vmlinux_head);
 
     fo->write(obuf, txt_c_len); fo_off += txt_c_len;
-    tmp_le32 = 0; fo->write(&tmp_le32, 3& -txt_c_len); fo_off += 3& -txt_c_len;
+    tmp_u32 = 0; fo->write(&tmp_u32, 3& -txt_c_len); fo_off += 3& -txt_c_len;
     fo->write(loader, lsize); fo_off += lsize;
 
 #if 0
@@ -730,11 +731,11 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[2].sh_name = ptr_diff(p, shstrtab);
-    shdro[2].sh_type = Elf32_Shdr::SHT_NOTE;
+    shdro[2].sh_type = Shdr::SHT_NOTE;
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[2].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[2].sh_size;
 
     // .note with rest     --------------------------------
@@ -756,16 +757,16 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     // while (0!=*p++) ;  // name is the same
     shdro[3].sh_name = ptr_diff(p, shstrtab);
-    shdro[3].sh_type = Elf32_Shdr::SHT_NOTE;
+    shdro[3].sh_type = Shdr::SHT_NOTE;
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[3].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[3].sh_size;
 
     while (0!=*p++) ;
     shdro[4].sh_name = ptr_diff(p, shstrtab);
-    shdro[4].sh_type = Elf32_Shdr::SHT_STRTAB;
+    shdro[4].sh_type = Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
     shdro[4].sh_size = sizeof(shstrtab);  // already includes terminating '\0'
     shdro[4].sh_addralign = 1;
@@ -774,24 +775,24 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     fo_off = ~3 & (3+ fo_off); fo->seek(fo_off, SEEK_SET);
     while (0!=*p++) ;
     shdro[5].sh_name = ptr_diff(p, shstrtab);
-    shdro[5].sh_type = Elf32_Shdr::SHT_SYMTAB;
+    shdro[5].sh_type = Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
-    shdro[5].sh_size = 5*sizeof(Elf_LE32_Sym);
-    //shdro[5].sh_flags = Elf32_Shdr::SHF_INFO_LINK;
+    shdro[5].sh_size = 5*sizeof(Sym);
+    //shdro[5].sh_flags = Shdr::SHF_INFO_LINK;
     shdro[5].sh_link = 6;  // to .strtab for symbols
     shdro[5].sh_info = 1+3;  // number of non-global symbols [binutils/bfd/elf.c]
     shdro[5].sh_addralign = 4;
-    shdro[5].sh_entsize = sizeof(Elf_LE32_Sym);
+    shdro[5].sh_entsize = sizeof(Sym);
 
-    Elf_LE32_Sym sec_sym;
+    Sym sec_sym;
 
     // Symbol 0; no references, but bfd demands it.
     memset(&sec_sym, 0, sizeof(sec_sym));
     fo->write(&sec_sym, sizeof(sec_sym)); fo_off += sizeof(sec_sym);
 
     // Each section before .shstrtab needs a symbol.
-    sec_sym.st_info = sec_sym.St_info(Elf32_Sym::STB_LOCAL, Elf32_Sym::STT_SECTION);
-    sec_sym.st_other = Elf32_Sym::STV_DEFAULT;
+    sec_sym.st_info = sec_sym.St_info(Sym::STB_LOCAL, Sym::STT_SECTION);
+    sec_sym.st_other = Sym::STV_DEFAULT;
     sec_sym.st_shndx = 1;  // .text
     fo->write(&sec_sym, sizeof(sec_sym)); fo_off += sizeof(sec_sym);
     sec_sym.st_shndx = 2;  // .note
@@ -800,12 +801,12 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     fo->write(&sec_sym, sizeof(sec_sym)); fo_off += sizeof(sec_sym);
 
     // the symbol we care about
-    Elf_LE32_Sym unc_ker;
+    Sym unc_ker;
     unc_ker.st_name = 1;  // 1 byte into strtab
     unc_ker.st_value = 0;
     unc_ker.st_size = txt_c_len;
-    unc_ker.st_info = unc_ker.St_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC);
-    unc_ker.st_other = Elf32_Sym::STV_DEFAULT;
+    unc_ker.st_info = unc_ker.St_info(Sym::STB_GLOBAL, Sym::STT_FUNC);
+    unc_ker.st_other = Sym::STV_DEFAULT;
     unc_ker.st_shndx = 1;  // .text
     fo->write(&unc_ker, sizeof(unc_ker)); fo_off += sizeof(unc_ker);
 
@@ -814,7 +815,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
-    shdro[6].sh_type = Elf32_Shdr::SHT_STRTAB;
+    shdro[6].sh_type = Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
     shdro[6].sh_size = sizeof(strtab);  // includes both '\0'
     shdro[6].sh_addralign = 1;
@@ -842,16 +843,16 @@ int PackVmlinuxARM::canUnpack()
     // now check the ELF header
     if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Elf32_Ehdr::EM_ARM
+    ||  ehdri.e_machine != Ehdr::EM_ARM
     ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Elf32_Ehdr::ET_REL
+    ||  ehdri.e_type != Ehdr::ET_REL
     ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf32_Shdr) + ehdri.e_shoff)
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
     )
         return false;
 
     // find the .shstrtab section
-    Elf_LE32_Shdr const *const shstrsec = getElfSections();
+    Shdr const *const shstrsec = getElfSections();
     if (0==shstrsec) {
         return false;
     }
@@ -859,7 +860,7 @@ int PackVmlinuxARM::canUnpack()
     // check for .text .note .note  and sane (.sh_size + .sh_offset)
     p_note0 = p_note1 = p_text = 0;
     int j;
-    Elf_LE32_Shdr *p;
+    Shdr *p;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if ((unsigned)file_size < (p->sh_size + p->sh_offset)
         ||  shstrsec->sh_size < (5+ p->sh_name) ) {
@@ -898,7 +899,7 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note0->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
@@ -911,7 +912,7 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
     ph = ph_tmp;
     fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
-    if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
+    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
     {
         throwCantUnpack(".text corrupted");
     }
@@ -930,7 +931,7 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 
     fi->seek(p_note1->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note1->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
@@ -1149,6 +1150,7 @@ void PackVmlinuxARM::unpack(OutputFile *fo)
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
+
 /*************************************************************************
 //
 **************************************************************************/
@@ -1205,13 +1207,13 @@ void PackVmlinuxAMD64::buildLoader(const Filter *ft)
 void PackVmlinuxAMD64::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
-    Elf64_Ehdr ehdro;
-    LE64 tmp_le32;
+    Ehdr ehdro;
+    U32 tmp_u32; // for external representation
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
     // .shstrtab /* .symtab .strtab */
-    Elf64_Shdr shdro[1+3+1/*+2*/];
+    Shdr shdro[1+3+1/*+2*/];
     memset(shdro, 0, sizeof(shdro));
     char const shstrtab[]= "\0.text\0.note\0.shstrtab\0.symtab\0.strtab";
     char const *p = shstrtab;
@@ -1221,7 +1223,7 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
 
     // .e_ident, .e_machine, .e_version, .e_flags
     memcpy(&ehdro, &ehdri, sizeof(ehdro));
-    ehdro.e_type = Elf64_Ehdr::ET_REL;
+    ehdro.e_type = Ehdr::ET_REL;
     ehdro.e_entry = 0;
     ehdro.e_phoff = 0;
     ehdro.e_shoff = 0;  // later
@@ -1262,19 +1264,19 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[1].sh_name = ptr_diff(p, shstrtab);
-    shdro[1].sh_type = Elf64_Shdr::SHT_PROGBITS;
-    shdro[1].sh_flags = Elf64_Shdr::SHF_ALLOC | Elf64_Shdr::SHF_EXECINSTR;
+    shdro[1].sh_type = Shdr::SHT_PROGBITS;
+    shdro[1].sh_flags = Shdr::SHF_ALLOC | Shdr::SHF_EXECINSTR;
     shdro[1].sh_offset = fo_off;
     shdro[1].sh_size = sizeof(stub_amd64_linux_kernel_vmlinux_head) + ph.c_len + lsize;
     shdro[1].sh_addralign = 1;
 
     // ENTRY_POINT
     fo->write(&stub_amd64_linux_kernel_vmlinux_head[0], sizeof(stub_amd64_linux_kernel_vmlinux_head)-2*(1+ 4) +1);
-    tmp_le32 = ehdri.e_entry; fo->write(&tmp_le32, 4);
+    tmp_u32 = ehdri.e_entry; fo->write(&tmp_u32, 4);
 
     // COMPRESSED_LENGTH
     fo->write(&stub_amd64_linux_kernel_vmlinux_head[sizeof(stub_amd64_linux_kernel_vmlinux_head)-(1+ 4)], 1);
-    tmp_le32 = ph.c_len;      fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.c_len;      fo->write(&tmp_u32, 4);
 
     fo_off += sizeof(stub_amd64_linux_kernel_vmlinux_head);
 
@@ -1295,11 +1297,11 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
 
     while (0!=*p++) ;
     shdro[2].sh_name = ptr_diff(p, shstrtab);
-    shdro[2].sh_type = Elf64_Shdr::SHT_NOTE;
+    shdro[2].sh_type = Shdr::SHT_NOTE;
     shdro[2].sh_offset = fo_off;
     shdro[2].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[2].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[2].sh_size;
 
     // .note with rest     --------------------------------
@@ -1321,16 +1323,16 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
 
     // while (0!=*p++) ;  // name is the same
     shdro[3].sh_name = ptr_diff(p, shstrtab);
-    shdro[3].sh_type = Elf64_Shdr::SHT_NOTE;
+    shdro[3].sh_type = Shdr::SHT_NOTE;
     shdro[3].sh_offset = fo_off;
     shdro[3].sh_size = sizeof(ph.u_len) + ph.c_len;
     shdro[3].sh_addralign = 1;
-    tmp_le32 = ph.u_len; fo->write(&tmp_le32, 4);
+    tmp_u32 = ph.u_len; fo->write(&tmp_u32, 4);
     fo->write(obuf, ph.c_len); fo_off += shdro[3].sh_size;
 
     while (0!=*p++) ;
     shdro[4].sh_name = ptr_diff(p, shstrtab);
-    shdro[4].sh_type = Elf64_Shdr::SHT_STRTAB;
+    shdro[4].sh_type = Shdr::SHT_STRTAB;
     shdro[4].sh_offset = fo_off;
     shdro[4].sh_size = sizeof(shstrtab);  // already includes terminating '\0'
     shdro[4].sh_addralign = 1;
@@ -1340,18 +1342,18 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
     while (0!=*p++) ;
     fo_off = ~3 & (3+ fo_off);
     shdro[5].sh_name = ptr_diff(p, shstrtab);
-    shdro[5].sh_type = Elf64_Shdr::SHT_SYMTAB;
+    shdro[5].sh_type = Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
     shdro[5].sh_size = 16;  // XXX ?
     shdro[5].sh_link = 6;  // to .strtab for symbols
     shdro[5].sh_addralign = 4;
-    shdro[5].sh_entsize = 16;  // XXX Elf64_Sym
+    shdro[5].sh_entsize = 16;  // XXX Sym
     fo->seek(fo_off, SEEK_SET);
     fo->write("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16); fo_off += 16;
 
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
-    shdro[6].sh_type = Elf64_Shdr::SHT_STRTAB;
+    shdro[6].sh_type = Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
     shdro[6].sh_size = 1;  // XXX ?
     shdro[6].sh_addralign = 1;
@@ -1383,16 +1385,16 @@ int PackVmlinuxAMD64::canUnpack()
     // now check the ELF header
     if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Elf64_Ehdr::EM_X86_64
+    ||  ehdri.e_machine != Ehdr::EM_X86_64
     ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Elf64_Ehdr::ET_REL
+    ||  ehdri.e_type != Ehdr::ET_REL
     ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Elf64_Shdr) + ehdri.e_shoff)
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
     )
         return false;
 
     // find the .shstrtab section
-    Elf_LE64_Shdr const *const shstrsec = getElfSections();
+    Shdr const *const shstrsec = getElfSections();
     if (0==shstrsec) {
         return false;
     }
@@ -1400,7 +1402,7 @@ int PackVmlinuxAMD64::canUnpack()
     // check for .text .note .note  and sane (.sh_size + .sh_offset)
     p_note0 = p_note1 = p_text = 0;
     int j;
-    Elf_LE64_Shdr *p;
+    Shdr *p;
     for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
         if ((unsigned)file_size < (p->sh_size + p->sh_offset)
         ||  shstrsec->sh_size < (5+ p->sh_name) ) {
@@ -1439,7 +1441,7 @@ void PackVmlinuxAMD64::unpack(OutputFile *fo)
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note0->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
@@ -1452,7 +1454,7 @@ void PackVmlinuxAMD64::unpack(OutputFile *fo)
     ph = ph_tmp;
     fi->seek(p_text->sh_offset + sizeof(stub_amd64_linux_kernel_vmlinux_head) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
-    if (0xE8!=buf[0] ||  get_le32(&buf[1]) != ph.c_len)
+    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
     {
         throwCantUnpack(".text corrupted");
     }
@@ -1471,7 +1473,7 @@ void PackVmlinuxAMD64::unpack(OutputFile *fo)
 
     fi->seek(p_note1->sh_offset, SEEK_SET);
     fi->readx(&buf[0], 4);
-    ph.u_len = get_le32(buf);
+    ph.u_len = BeLePolicy::get32(buf);
     ph.c_len = p_note1->sh_size - 4;
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
@@ -1483,8 +1485,9 @@ void PackVmlinuxAMD64::unpack(OutputFile *fo)
 
     ph = ph_tmp;
 }
+
+
 /*
 vi:ts=4:et
 */
-
 

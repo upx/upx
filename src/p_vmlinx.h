@@ -41,6 +41,7 @@ class PackVmlinuxBase : public Packer
 {
     typedef Packer super;
 protected:
+    typedef typename TElfClass::BeLePolicy BeLePolicy;
     // integral types
     typedef typename TElfClass::U16  U16;
     typedef typename TElfClass::U32  U32;
@@ -115,7 +116,7 @@ class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
 {
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
-    PackVmlinuxARM(InputFile *f) : super(f, Elf32_Ehdr::EM_ARM, 
+    PackVmlinuxARM(InputFile *f) : super(f, Elf32_Ehdr::EM_ARM,
         Elf32_Ehdr::ELFCLASS32, Elf32_Ehdr::ELFDATA2LSB) { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
     virtual const char *getName() const { return "vmlinux/ARM"; }
