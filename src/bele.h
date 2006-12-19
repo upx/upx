@@ -562,12 +562,12 @@ namespace N_BELE_RTP {
 
 namespace N_BELE_CTP {
 
-template <class TCTP>
-static const N_BELE_RTP::AbstractPolicy* getRTP();
+template <class T>
+static inline const N_BELE_RTP::AbstractPolicy* getRTP();
 template <>
-static const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>() { return &N_BELE_RTP::be_policy; }
+static inline const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>() { return &N_BELE_RTP::be_policy; }
 template <>
-static const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>() { return &N_BELE_RTP::le_policy; }
+static inline const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>() { return &N_BELE_RTP::le_policy; }
 
 }
 

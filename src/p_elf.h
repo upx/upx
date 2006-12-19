@@ -31,19 +31,33 @@
 
 
 /*************************************************************************
-// Some ELF type definitinons
+// N_Elf
 **************************************************************************/
 
 namespace N_Elf {
 
+template <class THalf, class TWord, class TXword, class TAddr, class TOff>
+struct ElfITypes
+{
+    // integral types
+    typedef THalf   Half;
+    typedef TWord   Word;
+    typedef TXword  Xword;
+    typedef TAddr   Addr;
+    typedef TOff    Off;
+    typedef THalf   Section;
+    typedef THalf   Versym;
+};
+
+
 // The ELF file header. This appears at the start of every ELF file.
-template <class TWord, class TAddr, class TOff, class THalf>
+template <class TElfITypes>
 struct Ehdr
 {
-    typedef TWord Word;
-    typedef TAddr Addr;
-    typedef TOff  Off;
-    typedef THalf Half;
+    typedef typename TElfITypes::Half    Half;
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Off     Off;
 
     unsigned char e_ident[16];  /* Magic number and other info */
     Half e_type;                /* Object file type */
@@ -76,7 +90,7 @@ struct Ehdr
         ELFDATA2MSB = 2         /* 2's complement, big endian */
     };
     enum { // e_ident[EI_OSABI]
-        ELFOSABI_NONE = 0,
+        ELFOSABI_NONE = 0,      // SYSV
         ELFOSABI_NETBSD = 2,
         ELFOSABI_LINUX = 3,
         ELFOSABI_FREEBSD = 9,
@@ -104,41 +118,9 @@ struct Ehdr
 __attribute_packed;
 
 
-template <class Word, class Addr>
-struct Dyn
-{
-    Word d_tag;
-    Addr d_val;
-
-    enum { // d_tag
-        DT_NULL     =  0,       /* End flag */
-        DT_NEEDED   =  1,       /* Name of needed library */
-        DT_HASH     =  4,       /* Hash table of symbol names */
-        DT_STRTAB   =  5,       /* String table */
-        DT_SYMTAB   =  6,       /* Symbol table */
-        DT_STRSZ    = 10,       /* Sizeof string table */
-    };
-}
-__attribute_packed;
-
-} // namespace N_Elf
-
-
-namespace N_Elf32 {
-
 // Program segment header.
-template <class Word, class Addr, class Off>
-struct Phdr
+struct BasePhdr
 {
-    Word p_type;                /* Segment type */
-    Off  p_offset;              /* Segment file offset */
-    Addr p_vaddr;               /* Segment virtual address */
-    Addr p_paddr;               /* Segment physical address */
-    Word p_filesz;              /* Segment size in file */
-    Word p_memsz;               /* Segment size in memory */
-    Word p_flags;               /* Segment flags */
-    Word p_align;               /* Segment alignment */
-
     enum { // p_type
         PT_LOAD    = 1,         /* Loadable program segment */
         PT_DYNAMIC = 2,         /* Dynamic linking information */
@@ -155,21 +137,10 @@ struct Phdr
 }
 __attribute_packed;
 
-template <class Word, class Addr, class Off>
-struct Shdr
-{
-    Word sh_name;               /* Section name (string tbl index) */
-    Word sh_type;               /* Section type */
-    Word sh_flags;              /* Section flags */
-    Addr sh_addr;               /* Section virtual addr at execution */
-    Off  sh_offset;             /* Section file offset */
-    Word sh_size;               /* Section size in bytes */
-    Word sh_link;               /* Link to another section */
-    Word sh_info;               /* Additional section information */
-    Word sh_addralign;          /* Section alignment */
-    Word sh_entsize;            /* Entry size if section holds table */
 
-    enum { // sh_type
+struct BaseShdr
+{
+    enum SHT { // sh_type
         SHT_NULL = 0,           /* Section header table entry unused */
         SHT_PROGBITS = 1,       /* Program data */
         SHT_SYMTAB = 2,         /* Symbol table */
@@ -191,7 +162,7 @@ struct Shdr
         SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
     };
 
-    enum { // sh_flags
+    enum SHF { // sh_flags
         SHF_WRITE      = (1 << 0),  /* Writable */
         SHF_ALLOC      = (1 << 1),  /* Occupies memory during execution */
         SHF_EXECINSTR  = (1 << 2),  /* Executable */
@@ -203,20 +174,30 @@ struct Shdr
 }
 __attribute_packed;
 
-template <class TT16, class TT32>
-struct Sym
+
+template <class TElfITypes>
+struct Dyn
 {
-    TT32 st_name;               /* symbol name (index into string table) */
-    TT32 st_value;              /* symbol value */
-    TT32 st_size;               /* symbol size */
-    unsigned char st_info;      /* symbol type and binding */
-    unsigned char st_other;     /* symbol visibility */
-    TT16 st_shndx;              /* section index */
+    typedef typename TElfITypes::Xword   Xword;
+    typedef typename TElfITypes::Addr    Addr;
 
-    unsigned int st_bind(unsigned int x) const { return 0xf & (x>>4); }
-    unsigned int st_type(unsigned int x) const { return 0xf &  x    ; }
-    unsigned char St_info(unsigned bind, unsigned type) const { return (bind<<4) + (0xf & type); }
+    Xword d_tag;
+    Addr d_val;
 
+    enum { // d_tag
+        DT_NULL     =  0,       /* End flag */
+        DT_NEEDED   =  1,       /* Name of needed library */
+        DT_HASH     =  4,       /* Hash table of symbol names */
+        DT_STRTAB   =  5,       /* String table */
+        DT_SYMTAB   =  6,       /* Symbol table */
+        DT_STRSZ    = 10,       /* Sizeof string table */
+    };
+}
+__attribute_packed;
+
+
+struct BaseSym
+{
     enum { // st_bind (high 4 bits of st_info)
         STB_LOCAL   =   0,      /* Local symbol */
         STB_GLOBAL  =   1,      /* Global symbol */
@@ -248,15 +229,95 @@ struct Sym
 }
 __attribute_packed;
 
+
+} // namespace N_Elf
+
+
+/*************************************************************************
+// N_Elf32
+**************************************************************************/
+
+namespace N_Elf32 {
+
+template <class TElfITypes>
+struct Phdr : public N_Elf::BasePhdr
+{
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Off     Off;
+
+    Word p_type;                /* Segment type */
+    Off  p_offset;              /* Segment file offset */
+    Addr p_vaddr;               /* Segment virtual address */
+    Addr p_paddr;               /* Segment physical address */
+    Word p_filesz;              /* Segment size in file */
+    Word p_memsz;               /* Segment size in memory */
+    Word p_flags;               /* Segment flags */
+    Word p_align;               /* Segment alignment */
+}
+__attribute_packed;
+
+
+template <class TElfITypes>
+struct Shdr : public N_Elf::BaseShdr
+struct Shdr
+{
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Off     Off;
+
+    Word sh_name;               /* Section name (string tbl index) */
+    Word sh_type;               /* Section type */
+    Word sh_flags;              /* Section flags */
+    Addr sh_addr;               /* Section virtual addr at execution */
+    Off  sh_offset;             /* Section file offset */
+    Word sh_size;               /* Section size in bytes */
+    Word sh_link;               /* Link to another section */
+    Word sh_info;               /* Additional section information */
+    Word sh_addralign;          /* Section alignment */
+    Word sh_entsize;            /* Entry size if section holds table */
+}
+__attribute_packed;
+
+
+template <class TElfITypes>
+struct Sym : public N_Elf::BaseSym
+{
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Section Section;
+
+    Word st_name;               /* symbol name (index into string table) */
+    Addr st_value;              /* symbol value */
+    Word st_size;               /* symbol size */
+    unsigned char st_info;      /* symbol type and binding */
+    unsigned char st_other;     /* symbol visibility */
+    Section st_shndx;           /* section index */
+
+    static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
+    static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
+    static unsigned char get_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
+}
+__attribute_packed;
+
+
 } // namespace N_Elf32
 
 
+/*************************************************************************
+// N_Elf64
+**************************************************************************/
+
 namespace N_Elf64 {
 
-// Program segment header.
-template <class Word, class Xword, class Addr, class Off>
-struct Phdr
+template <class TElfITypes>
+struct Phdr : public N_Elf::BasePhdr
 {
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Xword   Xword;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Off     Off;
+
     Word  p_type;               /* Segment type */
     Word  p_flags;              /* Segment flags */
     Off   p_offset;             /* Segment file offset */
@@ -265,25 +326,18 @@ struct Phdr
     Xword p_filesz;             /* Segment size in file */
     Xword p_memsz;              /* Segment size in memory */
     Xword p_align;              /* Segment alignment */
-
-    enum { // p_type
-        PT_LOAD    = 1,         /* Loadable program segment */
-        PT_DYNAMIC = 2,         /* Dynamic linking information */
-        PT_INTERP  = 3,         /* Name of program interpreter */
-        PT_PHDR    = 6,         /* Entry for header table itself */
-    };
-
-    enum { // p_flags
-        PF_X = 1,               /* Segment is executable */
-        PF_W = 2,               /* Segment is writable */
-        PF_R = 4,               /* Segment is readable */
-    };
 }
 __attribute_packed;
 
-template <class Word, class Xword, class Addr, class Off>
-struct Shdr
+
+template <class TElfITypes>
+struct Shdr : public N_Elf::BaseShdr
 {
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Xword   Xword;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Off     Off;
+
     Word  sh_name;              /* Section name (string tbl index) */
     Word  sh_type;              /* Section type */
     Xword sh_flags;             /* Section flags */
@@ -294,162 +348,144 @@ struct Shdr
     Word  sh_info;              /* Additional section information */
     Xword sh_addralign;         /* Section alignment */
     Xword sh_entsize;           /* Entry size if section holds table */
-
-    enum { // sh_type
-        SHT_NULL = 0,           /* Section header table entry unused */
-        SHT_PROGBITS = 1,       /* Program data */
-        SHT_SYMTAB = 2,         /* Symbol table */
-        SHT_STRTAB = 3,         /* String table */
-        SHT_RELA = 4,           /* Relocation entries with addends */
-        SHT_HASH = 5,           /* Symbol hash table */
-        SHT_DYNAMIC = 6,        /* Dynamic linking information */
-        SHT_NOTE = 7,           /* Notes */
-        SHT_NOBITS = 8,         /* Program space with no data (bss) */
-        SHT_REL = 9,            /* Relocation entries, no addends */
-        SHT_SHLIB = 10,         /* Reserved */
-        SHT_DYNSYM = 11,        /* Dynamic linker symbol table */
-            /* 12, 13  hole */
-        SHT_INIT_ARRAY = 14,    /* Array of constructors */
-        SHT_FINI_ARRAY = 15,    /* Array of destructors */
-        SHT_PREINIT_ARRAY = 16, /* Array of pre-constructors */
-        SHT_GROUP = 17,         /* Section group */
-        SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
-        SHT_GNU_LIBLIST = 0x6ffffff7,   /* Prelink library list */
-    };
-
-    enum { // sh_flags
-        SHF_WRITE      = (1 << 0),  /* Writable */
-        SHF_ALLOC      = (1 << 1),  /* Occupies memory during execution */
-        SHF_EXECINSTR  = (1 << 2),  /* Executable */
-        SHF_MERGE      = (1 << 4),  /* Might be merged */
-        SHF_STRINGS    = (1 << 5),  /* Contains nul-terminated strings */
-        SHF_INFO_LINK  = (1 << 6),  /* `sh_info' contains SHT index */
-        SHF_LINK_ORDER = (1 << 7),  /* Preserve order after combining */
-    };
 }
 __attribute_packed;
+
+
+template <class TElfITypes>
+struct Sym
+{
+    typedef typename TElfITypes::Word    Word;
+    typedef typename TElfITypes::Xword   Xword;
+    typedef typename TElfITypes::Addr    Addr;
+    typedef typename TElfITypes::Section Section;
+
+    Word st_name;               /* symbol name (index into string table) */
+    unsigned char st_info;      /* symbol type and binding */
+    unsigned char st_other;     /* symbol visibility */
+    Section st_shndx;           /* section index */
+    Addr st_value;              /* symbol value */
+    Xword st_size;              /* symbol size */
+}
+__attribute_packed;
+
 
 } // namespace N_Elf64
 
 
 /*************************************************************************
-// now for the actual types
+// aggregate types in an ElfClass
 **************************************************************************/
 
-#define P N_BELE_CTP::HostPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf32_Ehdr;
-typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf32_Phdr;
-typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf32_Shdr;
-typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf32_Dyn;
-typedef N_Elf32::Sym <P::U16,P::U32>               Elf32_Sym;
-#undef P
+namespace N_Elf {
 
-#define P N_BELE_CTP::BEPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_BE32_Ehdr;
-typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_BE32_Phdr;
-typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_BE32_Shdr;
-typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf_BE32_Dyn;
-typedef N_Elf32::Sym <P::U16,P::U32>               Elf_BE32_Sym;
-#undef P
+template <class TP>
+struct ElfClass_32
+{
+    typedef TP BeLePolicy;
 
-#define P N_BELE_CTP::LEPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U32,P::U32,P::U16> Elf_LE32_Ehdr;
-typedef N_Elf32::Phdr<P::U32,P::U32,P::U32>        Elf_LE32_Phdr;
-typedef N_Elf32::Shdr<P::U32,P::U32,P::U32>        Elf_LE32_Shdr;
-typedef N_Elf  ::Dyn <P::U32,P::U32>               Elf_LE32_Dyn;
-typedef N_Elf32::Sym <P::U16,P::U32>               Elf_LE32_Sym;
-#undef P
+    // integral types
+    typedef typename TP::U16 U16;
+    typedef typename TP::U32 U32;
+    typedef typename TP::U64 U64;
+    typedef N_Elf::ElfITypes<U16, U32, U32, U32, U32> ElfITypes;
 
-#define P N_BELE_CTP::HostPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf64_Ehdr;
-typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf64_Phdr;
-typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf64_Shdr;
-typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf64_Dyn;
-typedef void Elf64_Sym; // FIXME
-#undef P
+    // ELF types
+    typedef N_Elf  ::Ehdr<ElfITypes> Ehdr;
+    typedef N_Elf32::Phdr<ElfITypes> Phdr;
+    typedef N_Elf32::Shdr<ElfITypes> Shdr;
+    typedef N_Elf  ::Dyn <ElfITypes> Dyn;
+    typedef N_Elf32::Sym <ElfITypes> Sym;
 
-#define P N_BELE_CTP::BEPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_BE64_Ehdr;
-typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Phdr;
-typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_BE64_Shdr;
-typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_BE64_Dyn;
-typedef void Elf_BE64_Sym; // FIXME
-#undef P
-
-#define P N_BELE_CTP::LEPolicy
-typedef N_Elf  ::Ehdr<P::U32,P::U64,P::U64,P::U16> Elf_LE64_Ehdr;
-typedef N_Elf64::Phdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Phdr;
-typedef N_Elf64::Shdr<P::U32,P::U64,P::U64,P::U64> Elf_LE64_Shdr;
-typedef N_Elf  ::Dyn <P::U64,P::U64>               Elf_LE64_Dyn;
-typedef void Elf_LE64_Sym; // FIXME
-#undef P
+    static void compileTimeAssertions() {
+        BeLePolicy::compileTimeAssertions();
+        COMPILE_TIME_ASSERT(sizeof(Ehdr) == 52)
+        COMPILE_TIME_ASSERT(sizeof(Phdr) == 32)
+        COMPILE_TIME_ASSERT(sizeof(Shdr) == 40)
+        COMPILE_TIME_ASSERT(sizeof(Dyn)  ==  8)
+        COMPILE_TIME_ASSERT(sizeof(Sym)  == 16)
+    }
+};
 
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Ehdr)    == 52)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Phdr)    == 32)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Shdr)    == 40)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Dyn)     ==  8)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf32_Sym)     == 16)
+template <class TP>
+struct ElfClass_64
+{
+    typedef TP BeLePolicy;
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Ehdr) == 52)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Phdr) == 32)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Shdr) == 40)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Dyn)  ==  8)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE32_Sym)  == 16)
+    // integral types
+    typedef typename TP::U16 U16;
+    typedef typename TP::U32 U32;
+    typedef typename TP::U64 U64;
+    typedef N_Elf::ElfITypes<U16, U32, U64, U64, U64> ElfITypes;
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Ehdr) == 52)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Phdr) == 32)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Shdr) == 40)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Dyn)  ==  8)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE32_Sym)  == 16)
+    // ELF types
+    typedef N_Elf  ::Ehdr<ElfITypes> Ehdr;
+    typedef N_Elf64::Phdr<ElfITypes> Phdr;
+    typedef N_Elf64::Shdr<ElfITypes> Shdr;
+    typedef N_Elf  ::Dyn <ElfITypes> Dyn;
+    typedef N_Elf64::Sym <ElfITypes> Sym;
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Ehdr)    == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Phdr)    == 56)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Shdr)    == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf64_Dyn)     == 16)
+    static void compileTimeAssertions() {
+        BeLePolicy::compileTimeAssertions();
+        COMPILE_TIME_ASSERT(sizeof(Ehdr) == 64)
+        COMPILE_TIME_ASSERT(sizeof(Phdr) == 56)
+        COMPILE_TIME_ASSERT(sizeof(Shdr) == 64)
+        COMPILE_TIME_ASSERT(sizeof(Dyn)  == 16)
+        COMPILE_TIME_ASSERT(sizeof(Sym)  == 24)
+    }
+};
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE64_Ehdr) == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE64_Phdr) == 56)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE64_Shdr) == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_BE64_Dyn)  == 16)
+} // namespace N_Elf
 
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Ehdr) == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Phdr) == 56)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Shdr) == 64)
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(Elf_LE64_Dyn)  == 16)
+
+typedef N_Elf::ElfClass_32<N_BELE_CTP::HostPolicy> ElfClass_Host32;
+typedef N_Elf::ElfClass_64<N_BELE_CTP::HostPolicy> ElfClass_Host64;
+typedef N_Elf::ElfClass_32<N_BELE_CTP::BEPolicy>   ElfClass_BE32;
+typedef N_Elf::ElfClass_64<N_BELE_CTP::BEPolicy>   ElfClass_BE64;
+typedef N_Elf::ElfClass_32<N_BELE_CTP::LEPolicy>   ElfClass_LE32;
+typedef N_Elf::ElfClass_64<N_BELE_CTP::LEPolicy>   ElfClass_LE64;
 
 
 /*************************************************************************
-// aggregate all types in an ElfClass
+// typedef shortcuts
 **************************************************************************/
 
-template <class TP, class TEhdr, class TPhdr, class TShdr, class TDyn, class TSym>
-struct ElfClass
-{
-    typedef TP      BeLePolicy;
+typedef ElfClass_Host32::Ehdr Elf32_Ehdr;
+typedef ElfClass_Host32::Phdr Elf32_Phdr;
+typedef ElfClass_Host32::Shdr Elf32_Shdr;
+typedef ElfClass_Host32::Dyn  Elf32_Dyn;
+typedef ElfClass_Host32::Sym  Elf32_Sym;
 
-    // integral types
-    typedef typename TP::U16     U16;
-    typedef typename TP::U32     U32;
-    typedef typename TP::U64     U64;
-    typedef typename TEhdr::Addr Addr;
+typedef ElfClass_Host64::Ehdr Elf64_Ehdr;
+typedef ElfClass_Host64::Phdr Elf64_Phdr;
+typedef ElfClass_Host64::Shdr Elf64_Shdr;
+typedef ElfClass_Host64::Dyn  Elf64_Dyn;
+typedef ElfClass_Host64::Sym  Elf64_Sym;
 
-    // ELF types
-    typedef TEhdr   Ehdr;
-    typedef TPhdr   Phdr;
-    typedef TShdr   Shdr;
-    typedef TDyn    Dyn;
-    typedef TSym    Sym;
-};
+typedef ElfClass_BE32::Ehdr   Elf_BE32_Ehdr;
+typedef ElfClass_BE32::Phdr   Elf_BE32_Phdr;
+typedef ElfClass_BE32::Shdr   Elf_BE32_Shdr;
+typedef ElfClass_BE32::Dyn    Elf_BE32_Dyn;
+typedef ElfClass_BE32::Sym    Elf_BE32_Sym;
 
-typedef ElfClass<N_BELE_CTP::BEPolicy, Elf_BE32_Ehdr, Elf_BE32_Phdr, Elf_BE32_Shdr, Elf_BE32_Dyn,Elf_BE32_Sym>
-    ElfClass_BE32;
-typedef ElfClass<N_BELE_CTP::BEPolicy, Elf_BE64_Ehdr, Elf_BE64_Phdr, Elf_BE64_Shdr, Elf_BE64_Dyn,Elf_BE64_Sym>
-    ElfClass_BE64;
-typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_LE32_Ehdr, Elf_LE32_Phdr, Elf_LE32_Shdr, Elf_LE32_Dyn,Elf_LE32_Sym>
-    ElfClass_LE32;
-typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_LE64_Ehdr, Elf_LE64_Phdr, Elf_LE64_Shdr, Elf_LE64_Dyn,Elf_LE64_Sym>
-    ElfClass_LE64;
+typedef ElfClass_BE64::Ehdr   Elf_BE64_Ehdr;
+typedef ElfClass_BE64::Phdr   Elf_BE64_Phdr;
+typedef ElfClass_BE64::Shdr   Elf_BE64_Shdr;
+typedef ElfClass_BE64::Dyn    Elf_BE64_Dyn;
+typedef ElfClass_BE64::Sym    Elf_BE64_Sym;
+
+typedef ElfClass_LE32::Ehdr   Elf_LE32_Ehdr;
+typedef ElfClass_LE32::Phdr   Elf_LE32_Phdr;
+typedef ElfClass_LE32::Shdr   Elf_LE32_Shdr;
+typedef ElfClass_LE32::Dyn    Elf_LE32_Dyn;
+typedef ElfClass_LE32::Sym    Elf_LE32_Sym;
+
+typedef ElfClass_LE64::Ehdr   Elf_LE64_Ehdr;
+typedef ElfClass_LE64::Phdr   Elf_LE64_Phdr;
+typedef ElfClass_LE64::Shdr   Elf_LE64_Shdr;
+typedef ElfClass_LE64::Dyn    Elf_LE64_Dyn;
+typedef ElfClass_LE64::Sym    Elf_LE64_Sym;
 
 
 #endif /* already included */

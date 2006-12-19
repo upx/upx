@@ -51,6 +51,17 @@ static const
 **************************************************************************/
 
 template <class T>
+PackVmlinuxBase<T>::PackVmlinuxBase(InputFile *f,
+                                    unsigned e_machine, unsigned elfclass, unsigned elfdata) :
+    super(f),
+    my_e_machine(e_machine), my_elfclass(elfclass), my_elfdata(elfdata),
+    n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
+{
+    ElfClass::compileTimeAssertions();
+    bele = N_BELE_CTP::getRTP<BeLePolicy>();
+}
+
+template <class T>
 PackVmlinuxBase<T>::~PackVmlinuxBase()
 {
     delete [] shstrtab;
@@ -791,7 +802,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     fo->write(&sec_sym, sizeof(sec_sym)); fo_off += sizeof(sec_sym);
 
     // Each section before .shstrtab needs a symbol.
-    sec_sym.st_info = sec_sym.St_info(Sym::STB_LOCAL, Sym::STT_SECTION);
+    sec_sym.st_info = sec_sym.get_st_info(Sym::STB_LOCAL, Sym::STT_SECTION);
     sec_sym.st_other = Sym::STV_DEFAULT;
     sec_sym.st_shndx = 1;  // .text
     fo->write(&sec_sym, sizeof(sec_sym)); fo_off += sizeof(sec_sym);
@@ -805,7 +816,7 @@ void PackVmlinuxARM::pack(OutputFile *fo)
     unc_ker.st_name = 1;  // 1 byte into strtab
     unc_ker.st_value = 0;
     unc_ker.st_size = txt_c_len;
-    unc_ker.st_info = unc_ker.St_info(Sym::STB_GLOBAL, Sym::STT_FUNC);
+    unc_ker.st_info = unc_ker.get_st_info(Sym::STB_GLOBAL, Sym::STT_FUNC);
     unc_ker.st_other = Sym::STV_DEFAULT;
     unc_ker.st_shndx = 1;  // .text
     fo->write(&unc_ker, sizeof(unc_ker)); fo_off += sizeof(unc_ker);
@@ -1485,6 +1496,11 @@ void PackVmlinuxAMD64::unpack(OutputFile *fo)
 
     ph = ph_tmp;
 }
+
+
+// instantiate instances
+template class PackVmlinuxBase<ElfClass_LE32>;
+template class PackVmlinuxBase<ElfClass_LE64>;
 
 
 /*

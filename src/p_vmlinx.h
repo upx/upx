@@ -41,28 +41,23 @@ class PackVmlinuxBase : public Packer
 {
     typedef Packer super;
 protected:
-    typedef typename TElfClass::BeLePolicy BeLePolicy;
+    typedef TElfClass ElfClass;
+    typedef typename ElfClass::BeLePolicy BeLePolicy;
+    typedef typename ElfClass::ElfITypes  ElfITypes;
     // integral types
-    typedef typename TElfClass::U16  U16;
-    typedef typename TElfClass::U32  U32;
-    typedef typename TElfClass::U64  U64;
-    typedef typename TElfClass::Addr Addr;
+    typedef typename ElfClass::U16   U16;
+    typedef typename ElfClass::U32   U32;
+    typedef typename ElfClass::U64   U64;
+    typedef typename ElfITypes::Addr Addr;
     // ELF types
-    typedef typename TElfClass::Ehdr Ehdr;
-    typedef typename TElfClass::Shdr Shdr;
-    typedef typename TElfClass::Phdr Phdr;
-    typedef typename TElfClass::Dyn  Dyn;
-    typedef typename TElfClass::Sym  Sym;
+    typedef typename ElfClass::Ehdr Ehdr;
+    typedef typename ElfClass::Shdr Shdr;
+    typedef typename ElfClass::Phdr Phdr;
+    typedef typename ElfClass::Dyn  Dyn;
+    typedef typename ElfClass::Sym  Sym;
 
 public:
-    PackVmlinuxBase(InputFile *f,
-            unsigned e_machine, unsigned elfclass, unsigned elfdata) :
-        super(f),
-        my_e_machine(e_machine), my_elfclass(elfclass), my_elfdata(elfdata),
-        n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
-    {
-        bele = N_BELE_CTP::getRTP<typename TElfClass::BeLePolicy>();
-    }
+    PackVmlinuxBase(InputFile *, unsigned, unsigned, unsigned);
     virtual ~PackVmlinuxBase();
     virtual int getVersion() const { return 13; }
 
