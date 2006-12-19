@@ -36,10 +36,10 @@
 
 namespace N_Elf {
 
+// integral types
 template <class THalf, class TWord, class TXword, class TAddr, class TOff>
 struct ElfITypes
 {
-    // integral types
     typedef THalf   Half;
     typedef TWord   Word;
     typedef TXword  Xword;
@@ -93,6 +93,7 @@ struct Dyn
 #   include "p_elf_enum.h"
 }
 __attribute_packed;
+
 
 } // namespace N_Elf
 
@@ -255,7 +256,7 @@ __attribute_packed;
 
 
 /*************************************************************************
-// aggregate types in an ElfClass
+// aggregate types into an ElfClass
 **************************************************************************/
 
 namespace N_Elf {
@@ -285,6 +286,11 @@ struct ElfClass_32
         COMPILE_TIME_ASSERT(sizeof(Shdr) == 40)
         COMPILE_TIME_ASSERT(sizeof(Dyn)  ==  8)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 16)
+        COMPILE_TIME_ASSERT_ALIGNOF(Ehdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Phdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Shdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Dyn,  char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Sym,  char)
     }
 };
 
@@ -314,8 +320,14 @@ struct ElfClass_64
         COMPILE_TIME_ASSERT(sizeof(Shdr) == 64)
         COMPILE_TIME_ASSERT(sizeof(Dyn)  == 16)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 24)
+        COMPILE_TIME_ASSERT_ALIGNOF(Ehdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Phdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Shdr, char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Dyn,  char)
+        COMPILE_TIME_ASSERT_ALIGNOF(Sym,  char)
     }
 };
+
 
 } // namespace N_Elf
 
@@ -329,7 +341,7 @@ typedef N_Elf::ElfClass_64<N_BELE_CTP::LEPolicy>   ElfClass_LE64;
 
 
 /*************************************************************************
-// typedef shortcuts
+// shortcuts
 **************************************************************************/
 
 typedef ElfClass_Host32::Ehdr Elf32_Ehdr;
