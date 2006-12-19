@@ -134,16 +134,16 @@ bool PackVmlinuxBase<T>::canPack()
     ||  ehdri.e_ident[Ehdr::EI_DATA] != my_elfdata
     ||  ehdri.e_ident[Ehdr::EI_VERSION] != Ehdr::EV_CURRENT
     ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
+    ||  ehdri.e_machine != my_e_machine
     ||  ehdri.e_version != 1  // version
     ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phentsize!=sizeof(Phdr)
     )
         return false;
 
     // additional requirements for vmlinux
-    if (ehdri.e_machine != my_e_machine
-    ||  ehdri.e_type != Ehdr::ET_EXEC
+    if (ehdri.e_type != Ehdr::ET_EXEC
+    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdr not contiguous with Ehdr
+    ||  ehdri.e_phentsize!=sizeof(Phdr)
     ||  !is_valid_e_entry(ehdri.e_entry)
     ) {
         return false;
@@ -192,6 +192,122 @@ bool PackVmlinuxBase<T>::canPack()
         }
     }
     return 0 < n_ptload;
+}
+
+template <class T>
+int PackVmlinuxBase<T>::canUnpack()
+{
+    fi->seek(0, SEEK_SET);
+    fi->readx(&ehdri, sizeof(ehdri));
+
+    // now check the ELF header
+    if (memcmp(&ehdri, "\x7f\x45\x4c\x46", 4)
+    ||  ehdri.e_ident[Ehdr::EI_CLASS] != my_elfclass
+    ||  ehdri.e_ident[Ehdr::EI_DATA] != my_elfdata
+    ||  ehdri.e_ident[Ehdr::EI_VERSION] != Ehdr::EV_CURRENT
+    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
+    ||  ehdri.e_machine != my_e_machine
+    ||  ehdri.e_version != 1  // version
+    ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
+    )
+        return false;
+
+    if (ehdri.e_type != Ehdr::ET_REL
+    ||  ehdri.e_shoff != sizeof(ehdri)  // Shdr not contiguous with Ehdr
+    ||  ehdri.e_shentsize!=sizeof(Shdr)
+    ||  ehdri.e_shnum < 4
+    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
+    )
+        return false;
+
+    // find the .shstrtab section
+    Shdr const *const shstrsec = getElfSections();
+    if (0==shstrsec) {
+        return false;
+    }
+
+    // check for .text .note .note  and sane (.sh_size + .sh_offset)
+    p_note0 = p_note1 = p_text = 0;
+    int j;
+    Shdr *p;
+    for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+        if ((unsigned)file_size < (p->sh_size + p->sh_offset)
+        ||  shstrsec->sh_size < (5+ p->sh_name) ) {
+            continue;
+        }
+        if (0==strcmp(".text", shstrtab + p->sh_name)) {
+            p_text = p;
+        }
+        if (0==strcmp(".note", shstrtab + p->sh_name)) {
+            if (0==p_note0) {
+                p_note0 = p;
+            } else
+            if (0==p_note1) {
+                p_note1 = p;
+            }
+        }
+    }
+    if (0==p_text || 0==p_note0 || 0==p_note1) {
+        return false;
+    }
+
+    char buf[1024];
+    fi->seek(p_text->sh_offset + p_text->sh_size - sizeof(buf), SEEK_SET);
+    fi->readx(buf, sizeof(buf));
+    if (!getPackHeader(buf, sizeof(buf)))
+        return -1; // format is known, but definitely is not packed
+
+    return true;
+}
+
+template <class T>
+void PackVmlinuxBase<T>::unpack(OutputFile *fo)
+{
+    U32 word;
+    PackHeader const ph_tmp(ph);
+
+    fi->seek(p_note0->sh_offset, SEEK_SET);
+    fi->readx(&word, sizeof(word));
+    ph.u_len = BeLePolicy::get32(&word);
+    ph.c_len = p_note0->sh_size - sizeof(word);
+    ibuf.alloc(ph.c_len);
+    fi->readx(ibuf, ph.c_len);
+    obuf.allocForUncompression(ph.u_len);
+    decompress(ibuf, obuf, false);
+    fo->write(obuf, ph.u_len);
+    obuf.dealloc();
+    ibuf.dealloc();
+
+    ph = ph_tmp;
+    if (!has_valid_vmlinux_head()) {
+        throwCantUnpack(".text corrupted");
+    }
+    ibuf.alloc(ph.c_len);
+    fi->readx(ibuf, ph.c_len);
+    obuf.allocForUncompression(ph.u_len);
+    decompress(ibuf, obuf);
+
+    Filter ft(ph.level);
+    ft.init(ph.filter, 0);
+    ft.cto = (unsigned char) ph.filter_cto;
+    ft.unfilter(obuf, ph.u_len);
+    fo->write(obuf, ph.u_len);
+    obuf.dealloc();
+    ibuf.dealloc();
+
+    fi->seek(p_note1->sh_offset, SEEK_SET);
+    fi->readx(&word, sizeof(word));
+    ph.u_len = BeLePolicy::get32(&word);
+    ph.c_len = p_note1->sh_size - sizeof(word);
+    ibuf.alloc(ph.c_len);
+    fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
+    obuf.allocForUncompression(ph.u_len);
+    decompress(ibuf, obuf, false);
+    fo->write(obuf, ph.u_len);
+    obuf.dealloc();
+    ibuf.dealloc();
+
+    ph = ph_tmp;
 }
 
 
@@ -519,120 +635,6 @@ void PackVmlinuxI386::pack(OutputFile *fo)
 #undef shstrtab
 }
 
-
-/*************************************************************************
-// unpack
-**************************************************************************/
-
-int PackVmlinuxI386::canUnpack()
-{
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
-    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Ehdr::EM_386
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Ehdr::ET_REL
-    ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
-    )
-        return false;
-
-    // find the .shstrtab section
-    Shdr const *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-
-    // check for .text .note .note  and sane (.sh_size + .sh_offset)
-    p_note0 = p_note1 = p_text = 0;
-    int j;
-    Shdr *p;
-    for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if ((unsigned)file_size < (p->sh_size + p->sh_offset)
-        ||  shstrsec->sh_size < (5+ p->sh_name) ) {
-            continue;
-        }
-        if (0==strcmp(".text", shstrtab + p->sh_name)) {
-            p_text = p;
-        }
-        if (0==strcmp(".note", shstrtab + p->sh_name)) {
-            if (0==p_note0) {
-                p_note0 = p;
-            } else
-            if (0==p_note1) {
-                p_note1 = p;
-            }
-        }
-    }
-    if (0==p_text || 0==p_note0 || 0==p_note1) {
-        return false;
-    }
-
-    char buf[1024];
-    fi->seek(p_text->sh_offset + p_text->sh_size - sizeof(buf), SEEK_SET);
-    fi->readx(buf, sizeof(buf));
-    if (!getPackHeader(buf, sizeof(buf)))
-        return false;
-
-    return true;
-}
-
-
-void PackVmlinuxI386::unpack(OutputFile *fo)
-{
-    unsigned char buf[5];
-    PackHeader const ph_tmp(ph);
-
-    fi->seek(p_note0->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note0->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
-    fi->seek(p_text->sh_offset + sizeof(stub_i386_linux_kernel_vmlinux_head) -5, SEEK_SET);
-    fi->readx(&buf[0], 5);
-    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
-    {
-        throwCantUnpack(".text corrupted");
-    }
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf);
-
-    Filter ft(ph.level);
-    ft.init(ph.filter, 0);
-    ft.cto = (unsigned char) ph.filter_cto;
-    ft.unfilter(obuf, ph.u_len);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    fi->seek(p_note1->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note1->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
-}
-
 void PackVmlinuxARM::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
@@ -836,117 +838,42 @@ void PackVmlinuxARM::pack(OutputFile *fo)
 }
 
 
-/*************************************************************************
-// unpack
-**************************************************************************/
-
-int PackVmlinuxARM::canUnpack()
+bool PackVmlinuxARM::has_valid_vmlinux_head()
 {
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
-    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Ehdr::EM_ARM
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Ehdr::ET_REL
-    ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
-    )
-        return false;
-
-    // find the .shstrtab section
-    Shdr const *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-
-    // check for .text .note .note  and sane (.sh_size + .sh_offset)
-    p_note0 = p_note1 = p_text = 0;
-    int j;
-    Shdr *p;
-    for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if ((unsigned)file_size < (p->sh_size + p->sh_offset)
-        ||  shstrsec->sh_size < (5+ p->sh_name) ) {
-            continue;
-        }
-        if (0==strcmp(".text", shstrtab + p->sh_name)) {
-            p_text = p;
-        }
-        if (0==strcmp(".note", shstrtab + p->sh_name)) {
-            if (0==p_note0) {
-                p_note0 = p;
-            } else
-            if (0==p_note1) {
-                p_note1 = p;
-            }
-        }
-    }
-    if (0==p_text || 0==p_note0 || 0==p_note1) {
-        return false;
-    }
-
-    char buf[1024];
-    fi->seek(p_text->sh_offset + p_text->sh_size - sizeof(buf), SEEK_SET);
+    U32 buf[2];
+    fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
-    if (!getPackHeader(buf, sizeof(buf)))
-        return false;
-
-    return true;
+    //unsigned const word0 = BeLePolicy::get32(&buf[0]);
+    unsigned const word1 = BeLePolicy::get32(&buf[1]);
+    if (0xeb==(word1>>24)
+    &&  (0x00ffffff& word1)==(-1+ ((3+ ph.c_len)>>2))) {
+        return true;
+    }
+    return false;
 }
 
-
-void PackVmlinuxARM::unpack(OutputFile *fo)
+bool PackVmlinuxI386::has_valid_vmlinux_head()
 {
     unsigned char buf[5];
-    PackHeader const ph_tmp(ph);
-
-    fi->seek(p_note0->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note0->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
-    fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -5, SEEK_SET);
+    fi->seek(p_text->sh_offset + sizeof(stub_i386_linux_kernel_vmlinux_head) -5, SEEK_SET);
     fi->readx(&buf[0], 5);
     if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
     {
-        throwCantUnpack(".text corrupted");
+        return false;
     }
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf);
+    return true;
+}
 
-    Filter ft(ph.level);
-    ft.init(ph.filter, 0);
-    ft.cto = (unsigned char) ph.filter_cto;
-    ft.unfilter(obuf, ph.u_len);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    fi->seek(p_note1->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note1->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
+bool PackVmlinuxAMD64::has_valid_vmlinux_head()
+{
+    unsigned char buf[5];
+    fi->seek(p_text->sh_offset + sizeof(stub_amd64_linux_kernel_vmlinux_head) -5, SEEK_SET);
+    fi->readx(&buf[0], 5);
+    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
+    {
+        return false;
+    }
+    return true;
 }
 
 //
@@ -1375,120 +1302,6 @@ void PackVmlinuxAMD64::pack(OutputFile *fo)
 
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
-}
-
-
-/*************************************************************************
-// unpack
-**************************************************************************/
-
-int PackVmlinuxAMD64::canUnpack()
-{
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
-    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_machine != Ehdr::EM_X86_64
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_type != Ehdr::ET_REL
-    ||  ehdri.e_shnum < 4
-    ||  (unsigned)file_size < (ehdri.e_shnum * sizeof(Shdr) + ehdri.e_shoff)
-    )
-        return false;
-
-    // find the .shstrtab section
-    Shdr const *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-
-    // check for .text .note .note  and sane (.sh_size + .sh_offset)
-    p_note0 = p_note1 = p_text = 0;
-    int j;
-    Shdr *p;
-    for (p= shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if ((unsigned)file_size < (p->sh_size + p->sh_offset)
-        ||  shstrsec->sh_size < (5+ p->sh_name) ) {
-            continue;
-        }
-        if (0==strcmp(".text", shstrtab + p->sh_name)) {
-            p_text = p;
-        }
-        if (0==strcmp(".note", shstrtab + p->sh_name)) {
-            if (0==p_note0) {
-                p_note0 = p;
-            } else
-            if (0==p_note1) {
-                p_note1 = p;
-            }
-        }
-    }
-    if (0==p_text || 0==p_note0 || 0==p_note1) {
-        return false;
-    }
-
-    char buf[1024];
-    fi->seek(p_text->sh_offset + p_text->sh_size - sizeof(buf), SEEK_SET);
-    fi->readx(buf, sizeof(buf));
-    if (!getPackHeader(buf, sizeof(buf)))
-        return false;
-
-    return true;
-}
-
-
-void PackVmlinuxAMD64::unpack(OutputFile *fo)
-{
-    unsigned char buf[5];
-    PackHeader const ph_tmp(ph);
-
-    fi->seek(p_note0->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note0->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
-    fi->seek(p_text->sh_offset + sizeof(stub_amd64_linux_kernel_vmlinux_head) -5, SEEK_SET);
-    fi->readx(&buf[0], 5);
-    if (0xE8!=buf[0] ||  BeLePolicy::get32(&buf[1]) != ph.c_len)
-    {
-        throwCantUnpack(".text corrupted");
-    }
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, ph.c_len);
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf);
-
-    Filter ft(ph.level);
-    ft.init(ph.filter, 0);
-    ft.cto = (unsigned char) ph.filter_cto;
-    ft.unfilter(obuf, ph.u_len);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    fi->seek(p_note1->sh_offset, SEEK_SET);
-    fi->readx(&buf[0], 4);
-    ph.u_len = BeLePolicy::get32(buf);
-    ph.c_len = p_note1->sh_size - 4;
-    ibuf.alloc(ph.c_len);
-    fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
-    obuf.allocForUncompression(ph.u_len);
-    decompress(ibuf, obuf, false);
-    fo->write(obuf, ph.u_len);
-    obuf.dealloc();
-    ibuf.dealloc();
-
-    ph = ph_tmp;
 }
 
 

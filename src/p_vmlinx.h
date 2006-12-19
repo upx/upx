@@ -79,7 +79,10 @@ protected:
     virtual Shdr const *getElfSections();
     virtual int getStrategy(Filter &/*ft*/);
     virtual bool is_valid_e_entry(Addr) = 0;
+    virtual bool has_valid_vmlinux_head() = 0;
     virtual bool canPack();
+    virtual int canUnpack();  // bool, except -1: format known, but not packed
+    virtual void unpack(OutputFile *fo);
     static int __acc_cdecl_qsort compare_Phdr(void const *aa, void const *bb);
 };
 
@@ -97,14 +100,12 @@ public:
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
-
-    virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
 };
 
 
@@ -121,14 +122,12 @@ public:
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
-
-    virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
 };
 
 
@@ -145,14 +144,12 @@ public:
     virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
-    virtual void unpack(OutputFile *fo);
-
-    virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
 };
 
 
