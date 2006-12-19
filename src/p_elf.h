@@ -442,9 +442,9 @@ struct ElfClass
     typedef TSym    Sym;
 };
 
-typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_BE32_Ehdr, Elf_BE32_Phdr, Elf_BE32_Shdr, Elf_BE32_Dyn,Elf_BE32_Sym>
+typedef ElfClass<N_BELE_CTP::BEPolicy, Elf_BE32_Ehdr, Elf_BE32_Phdr, Elf_BE32_Shdr, Elf_BE32_Dyn,Elf_BE32_Sym>
     ElfClass_BE32;
-typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_BE64_Ehdr, Elf_BE64_Phdr, Elf_BE64_Shdr, Elf_BE64_Dyn,Elf_BE64_Sym>
+typedef ElfClass<N_BELE_CTP::BEPolicy, Elf_BE64_Ehdr, Elf_BE64_Phdr, Elf_BE64_Shdr, Elf_BE64_Dyn,Elf_BE64_Sym>
     ElfClass_BE64;
 typedef ElfClass<N_BELE_CTP::LEPolicy, Elf_LE32_Ehdr, Elf_LE32_Phdr, Elf_LE32_Shdr, Elf_LE32_Dyn,Elf_LE32_Sym>
     ElfClass_LE32;
