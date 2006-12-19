@@ -55,7 +55,6 @@
 #include "p_ps1.h"
 #include "p_mach.h"
 #include "p_armpe.h"
-#include "linker.h"
 
 
 /*************************************************************************

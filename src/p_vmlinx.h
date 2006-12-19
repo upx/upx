@@ -78,7 +78,7 @@ protected:
 
     virtual Shdr const *getElfSections();
     virtual int getStrategy(Filter &/*ft*/);
-    virtual int is_valid_e_entry(Addr);
+    virtual bool is_valid_e_entry(Addr) = 0;
     virtual bool canPack();
     static int __acc_cdecl_qsort compare_Phdr(void const *aa, void const *bb);
 };
@@ -104,7 +104,7 @@ public:
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-    virtual int is_valid_e_entry(Addr);
+    virtual bool is_valid_e_entry(Addr);
 };
 
 
@@ -128,7 +128,7 @@ public:
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-    virtual int is_valid_e_entry(Addr);
+    virtual bool is_valid_e_entry(Addr);
 };
 
 
@@ -152,7 +152,7 @@ public:
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-    virtual int is_valid_e_entry(Addr);
+    virtual bool is_valid_e_entry(Addr);
 };
 
 

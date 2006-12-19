@@ -70,12 +70,6 @@ PackVmlinuxBase<T>::~PackVmlinuxBase()
 }
 
 template <class T>
-int PackVmlinuxBase<T>::is_valid_e_entry(Addr /*e_entry*/)
-{
-    return 0;
-}
-
-template <class T>
 int PackVmlinuxBase<T>::getStrategy(Filter &/*ft*/)
 {
     // Called just before reading and compressing each block.
@@ -256,7 +250,7 @@ const int *PackVmlinuxARM::getFilters() const
 //  LOAD           0x27b000 0xc067a000 0x0067a000 0x10ee64 0x1b07e8 RWE 0x1000
 //  NOTE           0x000000 0x00000000 0x00000000 0x00000 0x00000 R   0x4
 
-int PackVmlinuxI386::is_valid_e_entry(Addr e_entry)
+bool PackVmlinuxI386::is_valid_e_entry(Addr e_entry)
 {
     return 0==(0x000fffff & e_entry); // entry on whole 1MB
 }
@@ -293,7 +287,7 @@ void PackVmlinuxI386::buildLoader(const Filter *ft)
               "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
-int PackVmlinuxARM::is_valid_e_entry(Addr e_entry)
+bool PackVmlinuxARM::is_valid_e_entry(Addr e_entry)
 {
     return 0xc0008000==e_entry;
 }
@@ -1180,7 +1174,7 @@ const int *PackVmlinuxAMD64::getFilters() const
     return filters;
 }
 
-int PackVmlinuxAMD64::is_valid_e_entry(Addr e_entry)
+bool PackVmlinuxAMD64::is_valid_e_entry(Addr e_entry)
 {
     return 0x200000<=e_entry; // 2MB
 }
