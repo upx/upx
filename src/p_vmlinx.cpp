@@ -268,7 +268,7 @@ void PackVmlinuxBase<T>::unpack(OutputFile *fo)
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
     fi->readx(&word, sizeof(word));
-    ph.u_len = BeLePolicy::get32(&word);
+    ph.u_len = word;
     ph.c_len = p_note0->sh_size - sizeof(word);
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, ph.c_len);
@@ -297,7 +297,7 @@ void PackVmlinuxBase<T>::unpack(OutputFile *fo)
 
     fi->seek(p_note1->sh_offset, SEEK_SET);
     fi->readx(&word, sizeof(word));
-    ph.u_len = BeLePolicy::get32(&word);
+    ph.u_len = word;
     ph.c_len = p_note1->sh_size - sizeof(word);
     ibuf.alloc(ph.c_len);
     fi->readx(ibuf, p_note1->sh_size - sizeof(ph.u_len));
@@ -843,9 +843,9 @@ bool PackVmlinuxARM::has_valid_vmlinux_head()
     U32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
-    //unsigned const word0 = BeLePolicy::get32(&buf[0]);
-    unsigned const word1 = BeLePolicy::get32(&buf[1]);
-    if (0xeb==(word1>>24)
+    //unsigned const word0 = buf[0];
+    unsigned const word1 = buf[1];
+    if (0xeb==(word1>>24
     &&  (0x00ffffff& word1)==(-1+ ((3+ ph.c_len)>>2))) {
         return true;
     }
