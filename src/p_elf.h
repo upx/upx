@@ -37,9 +37,14 @@
 namespace N_Elf {
 
 // The ELF file header. This appears at the start of every ELF file.
-template <class Word, class Addr, class Off, class Half>
+template <class TWord, class TAddr, class TOff, class THalf>
 struct Ehdr
 {
+    typedef TWord Word;
+    typedef TAddr Addr;
+    typedef TOff  Off;
+    typedef THalf Half;
+
     unsigned char e_ident[16];  /* Magic number and other info */
     Half e_type;                /* Object file type */
     Half e_machine;             /* Architecture */
@@ -422,6 +427,14 @@ template <class TP, class TEhdr, class TPhdr, class TShdr, class TDyn, class TSy
 struct ElfClass
 {
     typedef TP      BeLePolicy;
+
+    // integral types
+    typedef typename TP::U16     U16;
+    typedef typename TP::U32     U32;
+    typedef typename TP::U64     U64;
+    typedef typename TEhdr::Addr Addr;
+
+    // ELF types
     typedef TEhdr   Ehdr;
     typedef TPhdr   Phdr;
     typedef TShdr   Shdr;

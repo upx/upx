@@ -41,10 +41,17 @@ class PackVmlinuxBase : public Packer
 {
     typedef Packer super;
 protected:
+    // integral types
+    typedef typename TElfClass::U16  U16;
+    typedef typename TElfClass::U32  U32;
+    typedef typename TElfClass::U64  U64;
+    typedef typename TElfClass::Addr Addr;
+    // ELF types
     typedef typename TElfClass::Ehdr Ehdr;
     typedef typename TElfClass::Shdr Shdr;
     typedef typename TElfClass::Phdr Phdr;
-    typedef /*typename TElfClass::Addr*/ unsigned long Addr;
+    typedef typename TElfClass::Dyn  Dyn;
+    typedef typename TElfClass::Sym  Sym;
 
 public:
     PackVmlinuxBase(InputFile *f,
