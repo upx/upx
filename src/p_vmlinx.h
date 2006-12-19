@@ -44,10 +44,14 @@ protected:
     typedef typename TElfClass::Ehdr Ehdr;
     typedef typename TElfClass::Shdr Shdr;
     typedef typename TElfClass::Phdr Phdr;
+    typedef /*typename TElfClass::Addr*/ unsigned long Addr;
 
 public:
-    PackVmlinuxBase(InputFile *f) :
-        super(f), n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
+    PackVmlinuxBase(InputFile *f,
+            unsigned e_machine, unsigned elfclass, unsigned elfdata) :
+        super(f),
+        my_e_machine(e_machine), my_elfclass(elfclass), my_elfdata(elfdata),
+        n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
     {
         bele = N_BELE_CTP::getRTP<typename TElfClass::BeLePolicy>();
     }
@@ -55,6 +59,9 @@ public:
     virtual int getVersion() const { return 13; }
 
 protected:
+    unsigned int const my_e_machine;
+    unsigned char const my_elfclass;
+    unsigned char const my_elfdata;
     int n_ptload;
     unsigned sz_ptload;
     Phdr *phdri; // from input file
@@ -67,6 +74,9 @@ protected:
 
     virtual Shdr const *getElfSections();
     virtual int getStrategy(Filter &/*ft*/);
+    virtual int is_valid_e_entry(Addr);
+    virtual bool canPack();
+    static int __acc_cdecl_qsort compare_Phdr(void const *aa, void const *bb);
 };
 
 
@@ -74,7 +84,8 @@ class PackVmlinuxI386 : public PackVmlinuxBase<ElfClass_LE32>
 {
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
-    PackVmlinuxI386(InputFile *f) : super(f) { }
+    PackVmlinuxI386(InputFile *f) : super(f, Elf32_Ehdr::EM_386,
+        Elf32_Ehdr::ELFCLASS32, Elf32_Ehdr::ELFDATA2LSB) { }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
     virtual const char *getName() const { return "vmlinux/386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinux"; }
@@ -84,12 +95,12 @@ public:
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
 
-    virtual bool canPack();
     virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
+    virtual int is_valid_e_entry(Addr);
 };
 
 
@@ -97,7 +108,8 @@ class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
 {
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
-    PackVmlinuxARM(InputFile *f) : super(f) { }
+    PackVmlinuxARM(InputFile *f) : super(f, Elf32_Ehdr::EM_ARM, 
+        Elf32_Ehdr::ELFCLASS32, Elf32_Ehdr::ELFDATA2LSB) { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
     virtual const char *getName() const { return "vmlinux/ARM"; }
     virtual const char *getFullName(const options_t *) const { return "ARM-linux.kernel.vmlinux"; }
@@ -107,12 +119,12 @@ public:
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
 
-    virtual bool canPack();
     virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
+    virtual int is_valid_e_entry(Addr);
 };
 
 
@@ -120,7 +132,8 @@ class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 {
     typedef PackVmlinuxBase<ElfClass_LE64> super;
 public:
-    PackVmlinuxAMD64(InputFile *f) : super(f) { }
+    PackVmlinuxAMD64(InputFile *f) : super(f, Elf64_Ehdr::EM_X86_64,
+        Elf64_Ehdr::ELFCLASS64, Elf64_Ehdr::ELFDATA2LSB) { }
     virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
     virtual const char *getName() const { return "vmlinux/AMD64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-linux.kernel.vmlinux"; }
@@ -130,12 +143,12 @@ public:
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
 
-    virtual bool canPack();
     virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
+    virtual int is_valid_e_entry(Addr);
 };
 
 

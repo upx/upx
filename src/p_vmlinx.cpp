@@ -59,6 +59,12 @@ PackVmlinuxBase<T>::~PackVmlinuxBase()
 }
 
 template <class T>
+int PackVmlinuxBase<T>::is_valid_e_entry(Addr /*e_entry*/)
+{
+    return 0;
+}
+
+template <class T>
 int PackVmlinuxBase<T>::getStrategy(Filter &/*ft*/)
 {
     // Called just before reading and compressing each block.
@@ -68,6 +74,21 @@ int PackVmlinuxBase<T>::getStrategy(Filter &/*ft*/)
     // Else try the first two filters, and pick the better (2==strategy).
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 };
+
+template <class T>
+int __acc_cdecl_qsort
+PackVmlinuxBase<T>::compare_Phdr(void const *aa, void const *bb)
+{
+    Phdr const *const a = (Phdr const *)aa;
+    Phdr const *const b = (Phdr const *)bb;
+    unsigned const xa = a->p_type - Phdr::PT_LOAD;
+    unsigned const xb = b->p_type - Phdr::PT_LOAD;
+            if (xa < xb)         return -1;  // PT_LOAD first
+            if (xa > xb)         return  1;
+    if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
+    if (a->p_paddr > b->p_paddr) return  1;
+                                 return  0;
+}
 
 template <class T>
 class T::Shdr const *PackVmlinuxBase<T>::getElfSections()
@@ -94,7 +115,79 @@ class T::Shdr const *PackVmlinuxBase<T>::getElfSections()
         }
     }
     return shstrsec;
-};
+}
+
+template <class T>
+bool PackVmlinuxBase<T>::canPack()
+{
+    fi->seek(0, SEEK_SET);
+    fi->readx(&ehdri, sizeof(ehdri));
+
+    // now check the ELF header
+    if (memcmp(&ehdri, "\x7f\x45\x4c\x46", 4)
+    ||  ehdri.e_ident[/*EI_CLASS*/ 4]!=my_elfclass
+    ||  ehdri.e_ident[/*EI_DATA*/ 5]!=my_elfdata
+    ||  ehdri.e_ident[/*EI_VERSION*/ 6]!=1  // EV_CURRENT
+    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
+    ||  ehdri.e_version != 1  // version
+    ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
+    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
+    ||  ehdri.e_phentsize!=sizeof(Phdr)
+    )
+        return false;
+
+    // additional requirements for vmlinux
+    if (ehdri.e_machine != my_e_machine
+    ||  ehdri.e_type!=Ehdr::ET_EXEC
+    ||  !is_valid_e_entry(ehdri.e_entry)
+    ) {
+        return false;
+    }
+
+    // A Linux kernel must have a __ksymtab section. [??]
+    Shdr const *p, *const shstrsec = getElfSections();
+    if (0==shstrsec) {
+        return false;
+    }
+    {
+    int j;
+    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+        if (Shdr::SHT_PROGBITS==p->sh_type
+        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
+            break;
+        }
+    }
+    if (j < 0)
+        return false;
+    }
+
+    phdri = new Phdr[(unsigned) ehdri.e_phnum];
+    fi->seek(ehdri.e_phoff, SEEK_SET);
+    fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
+
+    // Put PT_LOAD together at the beginning, ascending by .p_paddr.
+    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
+
+    // Check that PT_LOADs form one contiguous chunk of the file.
+    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
+        if (Phdr::PT_LOAD==phdri[j].p_type) {
+            if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
+                       | phdri[j].p_align  | phdri[j].p_vaddr) ) {
+                return false;
+            }
+            if (0 < j) {
+                unsigned const sz = (0u - phdri[j-1].p_align)
+                                  & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
+                if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
+                    return false;
+                }
+            }
+            ++n_ptload;
+            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
+        }
+    }
+    return 0 < n_ptload;
+}
 
 /*************************************************************************
 //
@@ -126,20 +219,6 @@ const int *PackVmlinuxARM::getFilters() const
     return f50;
 }
 
-static int __acc_cdecl_qsort
-compare_Phdr(void const *aa, void const *bb)
-{
-    Elf32_Phdr const *const a = (Elf32_Phdr const *)aa;
-    Elf32_Phdr const *const b = (Elf32_Phdr const *)bb;
-    unsigned const xa = a->p_type - Elf32_Phdr::PT_LOAD;
-    unsigned const xb = b->p_type - Elf32_Phdr::PT_LOAD;
-            if (xa < xb)         return -1;  // PT_LOAD first
-            if (xa > xb)         return  1;
-    if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
-    if (a->p_paddr > b->p_paddr) return  1;
-                                 return  0;
-}
-
 //
 // Examples as of 2004-07-16 [readelf --segments vmlinux  # before fiddling]:
 //
@@ -165,72 +244,9 @@ compare_Phdr(void const *aa, void const *bb)
 //  LOAD           0x27b000 0xc067a000 0x0067a000 0x10ee64 0x1b07e8 RWE 0x1000
 //  NOTE           0x000000 0x00000000 0x00000000 0x00000 0x00000 R   0x4
 
-bool PackVmlinuxI386::canPack()
+int PackVmlinuxI386::is_valid_e_entry(Addr e_entry)
 {
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
-    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phentsize!=sizeof(Elf32_Phdr)
-    )
-        return false;
-
-    // additional requirements for vmlinux
-    if (ehdri.e_machine != Elf32_Ehdr::EM_386
-    ||  ehdri.e_type!=Elf32_Ehdr::ET_EXEC
-    ||  0!=(0x000fffff & ehdri.e_entry) // entry not on whole 1MB
-    ) {
-        return false;
-    }
-
-    // A Linux kernel must have a __ksymtab section. [??]
-    Elf_LE32_Shdr const *p, *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-    {
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf32_Shdr::SHT_PROGBITS==p->sh_type
-        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
-            break;
-        }
-    }
-    if (j < 0)
-        return false;
-    }
-
-    phdri = new Elf_LE32_Phdr[(unsigned) ehdri.e_phnum];
-    fi->seek(ehdri.e_phoff, SEEK_SET);
-    fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
-
-    // Put PT_LOAD together at the beginning, ascending by .p_paddr.
-    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
-
-    // Check that PT_LOADs form one contiguous chunk of the file.
-    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
-        if (Elf32_Phdr::PT_LOAD==phdri[j].p_type) {
-            if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
-                       | phdri[j].p_align  | phdri[j].p_vaddr) ) {
-                return false;
-            }
-            if (0 < j) {
-                unsigned const sz = (0u - phdri[j-1].p_align)
-                                  & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
-                if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
-                    return false;
-                }
-            }
-            ++n_ptload;
-            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
-        }
-    }
-    return 0 < n_ptload;
+    return 0==(0x000fffff & e_entry); // entry on whole 1MB
 }
 
 
@@ -265,74 +281,10 @@ void PackVmlinuxI386::buildLoader(const Filter *ft)
               "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
-bool PackVmlinuxARM::canPack()
+int PackVmlinuxARM::is_valid_e_entry(Addr e_entry)
 {
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x01\x01\x01", 7) // ELF 32-bit LSB
-    ||  !memcmp(&ehdri.e_ident[8], "FreeBSD", 7)  // branded
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phentsize!=sizeof(Elf32_Phdr)
-    )
-        return false;
-
-    // additional requirements for vmlinux
-    if (ehdri.e_machine != Elf32_Ehdr::EM_ARM
-    ||  ehdri.e_type!=Elf32_Ehdr::ET_EXEC
-    ||  0xc0008000!=ehdri.e_entry
-    ) {
-        return false;
-    }
-
-    // A Linux kernel must have a __ksymtab section. [??]
-    Elf_LE32_Shdr const *p, *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-    {
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf32_Shdr::SHT_PROGBITS==p->sh_type
-        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
-            break;
-        }
-    }
-    if (j < 0)
-        return false;
-    }
-
-    phdri = new Elf_LE32_Phdr[(unsigned) ehdri.e_phnum];
-    fi->seek(ehdri.e_phoff, SEEK_SET);
-    fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
-
-    // Put PT_LOAD together at the beginning, ascending by .p_paddr.
-    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
-
-    // Check that PT_LOADs form one contiguous chunk of the file.
-    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
-        if (Elf32_Phdr::PT_LOAD==phdri[j].p_type) {
-            if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
-                       | phdri[j].p_align  | phdri[j].p_vaddr) ) {
-                return false;
-            }
-            if (0 < j) {
-                unsigned const sz = (0u - phdri[j-1].p_align)
-                                  & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
-                if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
-                    return false;
-                }
-            }
-            ++n_ptload;
-            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
-        }
-    }
-    return 0 < n_ptload;
+    return 0xc0008000==e_entry;
 }
-
 
 Linker* PackVmlinuxARM::newLinker() const
 {
@@ -1215,89 +1167,10 @@ const int *PackVmlinuxAMD64::getFilters() const
     return filters;
 }
 
-static int __acc_cdecl_qsort
-compare_Phdr64(void const *aa, void const *bb)
+int PackVmlinuxAMD64::is_valid_e_entry(Addr e_entry)
 {
-    Elf64_Phdr const *const a = (Elf64_Phdr const *)aa;
-    Elf64_Phdr const *const b = (Elf64_Phdr const *)bb;
-    unsigned const xa = a->p_type - Elf64_Phdr::PT_LOAD;
-    unsigned const xb = b->p_type - Elf64_Phdr::PT_LOAD;
-            if (xa < xb)         return -1;  // PT_LOAD first
-            if (xa > xb)         return  1;
-    if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
-    if (a->p_paddr > b->p_paddr) return  1;
-                                 return  0;
+    return 0x200000<=e_entry; // 2MB
 }
-
-bool PackVmlinuxAMD64::canPack()
-{
-    fi->seek(0, SEEK_SET);
-    fi->readx(&ehdri, sizeof(ehdri));
-
-    // now check the ELF header
-    if (memcmp(&ehdri, "\x7f\x45\x4c\x46\x02\x01\x01", 7) // ELF 64-bit LSB
-    ||  ehdri.e_version != 1  // version
-    ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    ||  ehdri.e_phoff != sizeof(ehdri)  // Phdrs not contiguous with Ehdr
-    ||  ehdri.e_phentsize!=sizeof(Elf64_Phdr)
-    )
-        return false;
-
-    // additional requirements for vmlinux
-    if (ehdri.e_machine != Elf64_Ehdr::EM_X86_64
-    ||  ehdri.e_type!=Elf64_Ehdr::ET_EXEC
-    ||  ehdri.e_entry < 0x200000 // entry below 2MB
-    ) {
-        return false;
-    }
-
-    // A Linux kernel must have a __ksymtab section. [??]
-    Elf_LE64_Shdr const *p, *const shstrsec = getElfSections();
-    if (0==shstrsec) {
-        return false;
-    }
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Elf64_Shdr::SHT_PROGBITS==p->sh_type
-        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
-            break;
-        }
-    }
-    if (j < 0) {
-        return false;
-    }
-
-    phdri = new Elf_LE64_Phdr[(unsigned) ehdri.e_phnum];
-    fi->seek(ehdri.e_phoff, SEEK_SET);
-    fi->readx(phdri, ehdri.e_phnum * sizeof(*phdri));
-
-    // Put PT_LOAD together at the beginning, ascending by .p_paddr.
-    qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr64);
-
-    // Check that PT_LOADs form one contiguous chunk of the file.
-    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
-        if (Elf64_Phdr::PT_LOAD==phdri[j].p_type) {
-            if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
-                       | phdri[j].p_align  | phdri[j].p_vaddr) ) {
-                return false;
-            }
-            if (0 < j) {
-                unsigned const org = (0u - phdri[j].p_align) &
-                    (-1 + phdri[j].p_align +
-                        phdri[j-1].p_filesz + phdri[j-1].p_offset);
-                unsigned const loc = (0u - phdri[j].p_align) &
-                    (-1 + phdri[j].p_align + phdri[j].p_offset);
-                if (org!=loc) {
-                    return false;
-                }
-            }
-            ++n_ptload;
-            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
-        }
-    }
-    return 0 < n_ptload;
-}
-
 
 Linker* PackVmlinuxAMD64::newLinker() const
 {
