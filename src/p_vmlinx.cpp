@@ -58,6 +58,44 @@ PackVmlinuxBase<T>::~PackVmlinuxBase()
     delete [] shdri;
 }
 
+template <class T>
+int PackVmlinuxBase<T>::getStrategy(Filter &/*ft*/)
+{
+    // Called just before reading and compressing each block.
+    // Might want to adjust blocksize, etc.
+
+    // If user specified the filter, then use it (-2==strategy).
+    // Else try the first two filters, and pick the better (2==strategy).
+    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
+};
+
+template <class T>
+class T::Shdr const *PackVmlinuxBase<T>::getElfSections()
+{
+    Shdr const *p, *shstrsec=0;
+    shdri = new Shdr[(unsigned) ehdri.e_shnum];
+    fi->seek(ehdri.e_shoff, SEEK_SET);
+    fi->readx(shdri, ehdri.e_shnum * sizeof(*shdri));
+    int j;
+    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+        if (Shdr::SHT_STRTAB==p->sh_type
+        &&  (p->sh_size + p->sh_offset) <= (unsigned) file_size
+        &&  (10+ p->sh_name) <= p->sh_size  // 1+ strlen(".shstrtab")
+        ) {
+            delete [] shstrtab;
+            shstrtab = new char[1+ p->sh_size];
+            fi->seek(p->sh_offset, SEEK_SET);
+            fi->readx(shstrtab, p->sh_size);
+            shstrtab[p->sh_size] = '\0';
+            if (0==strcmp(".shstrtab", shstrtab + p->sh_name)) {
+                shstrsec = p;
+                break;
+            }
+        }
+    }
+    return shstrsec;
+};
+
 /*************************************************************************
 //
 **************************************************************************/
