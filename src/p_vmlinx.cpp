@@ -715,7 +715,7 @@ bool PackVmlinuxARM::has_valid_vmlinux_head()
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];
-    if (0xeb==(word1>>24
+    if (0xeb==(word1>>24)
     &&  (0x00ffffff& word1)==(-1+ ((3+ ph.c_len)>>2))) {
         return true;
     }
