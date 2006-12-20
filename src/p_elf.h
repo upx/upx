@@ -169,7 +169,7 @@ struct Sym
 
     static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
-    static unsigned char get_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
+    static unsigned char make_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
 }
 __attribute_packed;
 
@@ -248,6 +248,10 @@ struct Sym
 
 #   define WANT_SYM_ENUM 1
 #   include "p_elf_enum.h"
+
+    static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
+    static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
+    static unsigned char make_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
 }
 __attribute_packed;
 

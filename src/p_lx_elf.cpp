@@ -863,7 +863,7 @@ bool PackLinuxElf32::canPack()
             // elf_lookup() returns 0 if any required table is missing.
             Elf32_Sym const *const lsm = elf_lookup(run_start[j]);
             if (lsm && get_native16(&lsm->st_shndx)==Elf32_Sym::SHN_UNDEF
-            && get_native16(&lsm->st_info)==lsm->Elf32_Sym::get_st_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
+            && get_native16(&lsm->st_info)==lsm->Elf32_Sym::make_st_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
             && get_native16(&lsm->st_other)==Elf32_Sym::STV_DEFAULT ) {
                 break;
             }
