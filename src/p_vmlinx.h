@@ -81,8 +81,13 @@ protected:
     virtual bool is_valid_e_entry(Addr) = 0;
     virtual bool has_valid_vmlinux_head() = 0;
     virtual bool canPack();
+    virtual void pack(OutputFile *fo);
     virtual int canUnpack();  // bool, except -1: format known, but not packed
     virtual void unpack(OutputFile *fo);
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    ) = 0;
     static int __acc_cdecl_qsort compare_Phdr(void const *aa, void const *bb);
 };
 
@@ -99,13 +104,15 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
-    virtual void pack(OutputFile *fo);
-
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
 };
 
 
@@ -121,13 +128,16 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
-    virtual void pack(OutputFile *fo);
-
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
+    virtual void defineDecompressorSymbols();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
 };
 
 
@@ -143,13 +153,15 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
-    virtual void pack(OutputFile *fo);
-
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
 };
 
 
