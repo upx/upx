@@ -137,8 +137,9 @@ bool PackVmlinuxBase<T>::canPack()
     ||  ehdri.e_machine != my_e_machine
     ||  ehdri.e_version != 1  // version
     ||  ehdri.e_ehsize != sizeof(ehdri)  // different <elf.h> ?
-    )
+    ) {
         return false;
+    }
 
     // additional requirements for vmlinux
     if (ehdri.e_type != Ehdr::ET_EXEC
@@ -155,15 +156,16 @@ bool PackVmlinuxBase<T>::canPack()
         return false;
     }
     {
-    int j;
-    for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
-        if (Shdr::SHT_PROGBITS==p->sh_type
-        && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
-            break;
+        int j;
+        for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
+            if (Shdr::SHT_PROGBITS==p->sh_type
+            && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
+                break;
+            }
         }
-    }
-    if (j < 0)
-        return false;
+        if (j < 0) {
+            return false;
+        }
     }
 
     phdri = new Phdr[(unsigned) ehdri.e_phnum];
@@ -181,9 +183,12 @@ bool PackVmlinuxBase<T>::canPack()
                 return false;
             }
             if (0 < j) {
-                unsigned const sz = (0u - phdri[j-1].p_align)
-                                  & (phdri[j-1].p_align -1 + phdri[j-1].p_filesz);
-                if ((sz + phdri[j-1].p_offset)!=phdri[j].p_offset) {
+                unsigned const org = (0u - phdri[j].p_align) &
+                    (-1 + phdri[j].p_align +
+                        phdri[j-1].p_filesz + phdri[j-1].p_offset);
+                unsigned const loc = (0u - phdri[j].p_align) &
+                    (-1 + phdri[j].p_align + phdri[j].p_offset);
+                if (org!=loc) {
                     return false;
                 }
             }
