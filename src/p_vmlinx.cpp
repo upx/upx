@@ -271,7 +271,8 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     defineDecompressorSymbols();
     defineFilterSymbols(linker, &ft);
     if (0x40==(0xf0 & ft.id)) {
-        linker->defineSymbol("filter_length", ph.u_len); // redefine
+        linker->defineSymbol("filter_length", ft.buf_len); // redefine
+        assert(ft.buf_len == ph.u_len);
     }
     relocateLoader();
 
