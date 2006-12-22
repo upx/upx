@@ -81,7 +81,7 @@ section         LXCKLLT9
                 pop     edx     // MATCH04  cto
                 pop     edi     // MATCH03  src
 
-                ckt32   edi, dl // dl has cto8
+                ctok32  edi, dl // dl has cto8
 /*
         ;edi: adjust for the difference between 0 origin of buffer at filter,
         ;and actual origin of destination at unfilter.

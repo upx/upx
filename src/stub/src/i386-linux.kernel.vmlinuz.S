@@ -138,7 +138,7 @@ section         LZCKLLT9
                 pop     edx     // MATCH04  cto
                 pop     edi     // MATCH03  src
 
-                ckt32   0, dl   // dl has cto8
+                ctok32  0, dl   // dl has cto8
 /*
         ;0: Filter.addvalue = kernel_entry already did the 'add' at filter time
         ;[the runtime address of the destination was known], so we save 4 bytes

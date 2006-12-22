@@ -72,10 +72,10 @@ void Packer::addFilter32(int filter_id)
 
     if (filter_id < 0x80) {
         if (0x50==(0xF0 & filter_id)) {
-            addLoader("CKLLTR00",
-                ((0x50==filter_id) ? "CKLLTR50" :
-                 (0x51==filter_id) ? "CKLLTR51" : ""),
-                "CKLLTR10", NULL);
+            addLoader("ctok32.00",
+                ((0x50==filter_id) ? "ctok32.50" :
+                 (0x51==filter_id) ? "ctok32.51" : ""),
+                "ctok32.10", NULL);
         }
         else if ((filter_id & 0xf) % 3 == 0) {
             if (filter_id < 0x40) {
@@ -88,15 +88,15 @@ void Packer::addFilter32(int filter_id)
                         );
             }
             else if (0x40==(0xF0 & filter_id)) {
-                addLoader("CKLLTR00", NULL);
+                addLoader("ctok32.00", NULL);
                 if (9<=(0xf & filter_id)) {
-                    addLoader("CKLLTR10", NULL);
+                    addLoader("ctok32.10", NULL);
                 }
-                addLoader("CKLLTR20", NULL);
+                addLoader("ctok32.20", NULL);
                 if (9<=(0xf & filter_id)) {
-                    addLoader("CKLLTR30", NULL);
+                    addLoader("ctok32.30", NULL);
                 }
-                addLoader("CKLLTR40", NULL);
+                addLoader("ctok32.40", NULL);
             }
         }
         else

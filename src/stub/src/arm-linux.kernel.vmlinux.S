@@ -87,7 +87,7 @@ section         LINUX020
 // =============
 // ============= UNFILTER
 // =============
-section         CKLLTR00
+section         ctok32.00
 //f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0
         len  .req r1
@@ -98,12 +98,12 @@ section         CKLLTR00
         t2   .req r3
 unfilter:
         and fid,fid,#0xff
-section         CKLLTR50
+section         ctok32.50
         cmp fid,#0x50  @ last use of fid
-section         CKLLTR51
+section         ctok32.51
         cmp fid,#0x51  @ last use of fid
 
-section         CKLLTR10
+section         ctok32.10
         movne pc,lr  @ no-op if not filter 0x50
 
         movs  len,len,lsr #2  @ word count

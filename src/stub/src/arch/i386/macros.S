@@ -281,11 +281,13 @@ ctend:
 ;;  ecx has byte count (not count of applied instances), and
 ;;  edi points to buffer.
 */
-.macro          ckt32   addvalue, cto8
+.macro          ctok32  addvalue, cto8
+                local   ckstart, ckmark, ckcount, ckend
+                local   ckloop2, ckloop3
 // 1st param: effective addvalue (typically 0 or edi; any rvalue)
 // 2nd param: where is cto8 (dl, bl, or literal)
 
-section         CKLLTR00
+section         ctok32.00
         .ifnc   \addvalue, 0
                 mov     esi, \addvalue
         .endif
@@ -293,7 +295,7 @@ section         CKLLTR00
 ckloop3:
                 mov     al, [edi]
                 add     edi, 1
-section         CKLLTR10                // Jcc only
+section         ctok32.10                // Jcc only
                 cmp     al, 0x80        // lo of 6-byte Jcc
                 jb      ckloop2
                 cmp     al, 0x8f        // hi of 6-byte Jcc
@@ -301,7 +303,7 @@ section         CKLLTR10                // Jcc only
                 cmpb    [edi -2], 0x0F  // prefix of 6-byte Jcc
                 jes     ckmark
 ckloop2:
-section         CKLLTR20
+section         ctok32.20
                 sub     al, 0xE8
                 cmp     al, 0xE9 - 0xE8
                 jas     ckcount
@@ -325,11 +327,11 @@ ckmark:
                 add     edi, 4
 ckstart:
                 sub     ecx, 4
-section         CKLLTR30   // Jcc only
+section         ctok32.30   // Jcc only
                 mov     al, [edi]
                 add     edi, 1
                 loop    ckloop2  // prefix cannot overlap previous displacement
-section         CKLLTR40
+section         ctok32.40
 ckcount:
                 sub     ecx, 1
                 jgs     ckloop3

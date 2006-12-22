@@ -121,7 +121,7 @@ section LEXEC015
                 ret
 
                 ctojr32
-                ckt32   edi, dl
+                ctok32  edi, dl
 section LEXEC017
                 popa
                 ret

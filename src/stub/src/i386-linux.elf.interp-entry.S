@@ -167,7 +167,7 @@ section LXPTI150
                 mov ecx,INS
                 mov edx,CTO8
 
-                ckt32   edi, dl
+                ctok32  edi, dl
 
 section LXPTI160
                 popa
