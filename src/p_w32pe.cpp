@@ -1185,6 +1185,7 @@ void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
     for (p = idata; get_le32(p) != 0; ++p)
     {
         const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
         const unsigned dlen = strlen(dname);
         ICHECK(dname, dlen + 1);
 
@@ -1210,6 +1211,7 @@ void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
     {
         // restore the name of the dll
         const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
         const unsigned dlen = strlen(dname);
         ICHECK(dname, dlen + 1);
 
