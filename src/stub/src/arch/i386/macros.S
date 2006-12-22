@@ -153,9 +153,9 @@ section         CALLTR02
                 sub     eax, edi
                 sub     bl, 0xE8
 
-                .ifnc   \addvalue, 0
+        .ifnc   \addvalue, 0
                 add     eax, \addvalue
-                .endif
+        .endif
 
                 mov     [edi], eax
                 add     edi, 5
@@ -203,9 +203,11 @@ ctend:
 .macro          cit32   addvalue
 section         CALLTR00
                 mov     ecx, offset filter_length
-                .ifnc   \addvalue, 0
+        .ifnc   \addvalue, 0
+        .ifnc   \addvalue, esi
                 mov     esi, \addvalue
-                .endif
+        .endif
+        .endif
 calltrickloop:
                 mov     al, [edi]
                 inc     edi
@@ -230,9 +232,9 @@ section         CALLTR02
                 sub     eax, edi
                 sub     bl, 0xE8
 
-                .ifnc   \addvalue, 0
+        .ifnc   \addvalue, 0
                 add     eax, esi
-                .endif
+        .endif
 
                 mov     [edi], eax
                 add     edi, 5
@@ -267,9 +269,9 @@ section         CTBSWA11
 section         CALLTR13
                 sub     eax, edi
 
-                .ifnc   \addvalue, 0
+        .ifnc   \addvalue, 0
                 add     eax, esi
-                .endif
+        .endif
 
                 stosd
                 jmps    ctloop1
@@ -289,7 +291,9 @@ ctend:
 
 section         ctok32.00
         .ifnc   \addvalue, 0
+        .ifnc   \addvalue, esi
                 mov     esi, \addvalue
+        .endif
         .endif
                 jmps    ckstart
 ckloop3:

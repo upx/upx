@@ -142,7 +142,8 @@ const int *PackW32Pe::getCompressionMethods(int method, int level) const
 const int *PackW32Pe::getFilters() const
 {
     static const int filters[] = {
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+        0x26, 0x24, 0x49, 0x46, 0x16, 0x13, 0x14, 0x11,
+        FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
     FT_END };
     return filters;
 }
@@ -893,6 +894,9 @@ void PackW32Pe::pack(OutputFile *fo)
 
     defineFilterSymbols(linker, &ft);
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
+    if (0x40==(0xf0 & ft.id)) {
+        linker->defineSymbol("filter_length", ft.buf_len); // redefine
+    }
     defineDecompressorSymbols();
 
     // in case of overlapping decompression, this hack is needed,
@@ -910,6 +914,7 @@ void PackW32Pe::pack(OutputFile *fo)
     linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
 
     linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
+    //linker->dumpSymbols();
     relocateLoader();
 
     const unsigned lsize = getLoaderSize();

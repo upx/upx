@@ -75,8 +75,12 @@ section         PECTTPOS
                 lea     edi, [esi + filter_buffer_start]
 section         PECTTNUL
                 mov     edi, esi
-// section      PEDUMMY0
+
                 cjt32   esi
+
+section         ctok32.00
+                mov     ecx, offset filter_length
+                ctok32  esi, (offset filter_cto)
 
 // =============
 // ============= IMPORTS
