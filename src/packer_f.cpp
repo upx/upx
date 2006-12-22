@@ -29,6 +29,7 @@
 #include "conf.h"
 #include "packer.h"
 #include "filter.h"
+#include "linker.h"
 
 
 /*************************************************************************
@@ -307,6 +308,54 @@ void Packer::addFilter32(int filter_id)
 #undef NOFILT
 #undef FNOMRU
 #undef MRUFLT
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+void Packer::defineFilterSymbols(const Filter *ft)
+{
+    if (ft->id == 0)
+    {
+        linker->defineSymbol("filter_length", 0);
+        linker->defineSymbol("filter_cto", 0);
+        return;
+    }
+    assert(ft->calls > 0);
+    assert(ft->buf_len > 0);
+
+    if (ft->id >= 0x40 && ft->id <= 0x4f)
+    {
+        linker->defineSymbol("filter_length", ft->buf_len);
+        linker->defineSymbol("filter_cto", ft->cto);
+    }
+    else if (ft->id >= 0x50 && ft->id <= 0x5f)
+    {
+        linker->defineSymbol("filter_id", ft->id);
+        linker->defineSymbol("filter_cto", ft->cto);
+    }
+    else if ((ft->id & 0xf) % 3 == 0)
+    {
+        linker->defineSymbol("filter_length", ft->calls);
+        linker->defineSymbol("filter_cto", ft->cto);
+    }
+    else
+    {
+        linker->defineSymbol("filter_length", ft->lastcall - ft->calls * 4);
+        linker->defineSymbol("filter_cto", ft->cto);
+    }
+
+#if 0
+    if (0x80==(ft->id & 0xF0)) {
+        int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
+        if (mru && mru!=256) {
+            unsigned const is_pwr2 = (0==((mru -1) & mru));
+            //patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
+        }
+    }
+#endif
+}
 
 
 /*

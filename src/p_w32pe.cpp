@@ -169,20 +169,6 @@ int PackW32Pe::readFileHeader()
 }
 
 
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
-    return true;
-}
-
-
 /*************************************************************************
 // import handling
 **************************************************************************/
@@ -892,12 +878,9 @@ void PackW32Pe::pack(OutputFile *fo)
     linker->defineSymbol("VirtualFree", myimport + get_le32(oimpdlls + 16) + 16);
 #endif
 
-    defineFilterSymbols(linker, &ft);
-    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
-    if (0x40==(0xf0 & ft.id)) {
-        linker->defineSymbol("filter_length", ft.buf_len); // redefine
-    }
     defineDecompressorSymbols();
+    defineFilterSymbols(&ft);
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
 
     // in case of overlapping decompression, this hack is needed,
     // because windoze zeroes the word pointed by tlsindex before

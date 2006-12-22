@@ -94,8 +94,12 @@ section WCCTTPOS
                 lea     edi, [ebp + filter_buffer_start]
 section WCCTTNUL
                 mov     edi, ebp
-section WCALLTR1
+
                 cjt32   ebp
+
+section         ctok32.00
+                mov     ecx, offset filter_length
+                ctok32  ebp, (offset filter_cto)
 
 // =============
 // ============= RELOCATION

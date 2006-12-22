@@ -75,8 +75,8 @@ spin:
 section         LINUX010
         ldr r0,[sp,#3*4]  // &outdata
         ldr r1,[sp,#2*4]  // outsize
-        loadcon8 2,CTO  // mov r2,#CTO
-        loadcon8 3,FID  // mov r3,#FID
+        loadcon8 2,filter_cto   // mov r2,#filter_cto
+        loadcon8 3,filter_id    // mov r3,#filter_id
         bl unfilter  // unfilter(&outdata, outsize, cto, fid)
 
 section         LINUX020

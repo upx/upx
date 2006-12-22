@@ -76,7 +76,8 @@ const int *PackWcle::getCompressionMethods(int method, int level) const
 const int *PackWcle::getFilters() const
 {
     static const int filters[] = {
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+        0x26, 0x24, 0x49, 0x46, 0x16, 0x13, 0x14, 0x11,
+        FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
     FT_END };
     return filters;
 }
@@ -138,20 +139,6 @@ bool PackWcle::canPack()
 {
     if (!LeFile::readFileHeader())
         return false;
-    return true;
-}
-
-
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
     return true;
 }
 
@@ -548,9 +535,9 @@ void PackWcle::pack(OutputFile *fo)
     linker->defineSymbol("original_stack", ih.init_esp_offset +
                          IOT(ih.init_ss_object - 1, my_base_address));
     linker->defineSymbol("start_of_relocs", mps*pages);
-    defineFilterSymbols(linker, &ft);
-    linker->defineSymbol("filter_buffer_start", text_vaddr);
     defineDecompressorSymbols();
+    defineFilterSymbols(&ft);
+    linker->defineSymbol("filter_buffer_start", text_vaddr);
 
     unsigned jpos = (((ph.c_len + 3) &~ 3) + d_len + 3) / 4;
     linker->defineSymbol("words_to_copy", jpos);

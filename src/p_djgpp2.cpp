@@ -68,7 +68,8 @@ const int *PackDjgpp2::getCompressionMethods(int method, int level) const
 const int *PackDjgpp2::getFilters() const
 {
     static const int filters[] = {
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+        0x26, 0x24, 0x49, 0x46, 0x16, 0x13, 0x14, 0x11,
+        FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
     FT_END };
     return filters;
 }
@@ -234,29 +235,6 @@ void PackDjgpp2::stripDebug()
 }
 
 
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
-
-#if 0
-    if (0x80==(ft->id & 0xF0)) {
-        int const mru = ph.n_mru ? 1+ ph.n_mru : 0;
-        if (mru && mru!=256) {
-            unsigned const is_pwr2 = (0==((mru -1) & mru));
-            //patch_le32(0x80 + (char *)loader, lsize - 0x80, "NMRU", mru - is_pwr2);
-        }
-    }
-#endif
-    return true;
-}
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -350,7 +328,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     linker->defineSymbol("stack_for_lzma", bss->vaddr + bss->size);
     linker->defineSymbol("start_of_uncompressed", text->vaddr - hdrsize);
     linker->defineSymbol("start_of_compressed", data->vaddr);
-    defineFilterSymbols(linker, &ft);
+    defineFilterSymbols(&ft);
 
     // we should not overwrite our decompressor during unpacking
     // the original coff header (which is put just before the

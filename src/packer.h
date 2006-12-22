@@ -247,9 +247,9 @@ protected:
 
     // filter handling [see packer_f.cpp]
     virtual bool isValidFilter(int filter_id) const;
-    virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const
-        { }
+    virtual void optimizeFilter(Filter *, const upx_byte *, unsigned) const { }
     virtual void addFilter32(int filter_id);
+    virtual void defineFilterSymbols(const Filter *ft);
 
     // stub and overlay util
     static void handleStub(InputFile *fi, OutputFile *fo, long size);

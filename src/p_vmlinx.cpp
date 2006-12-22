@@ -199,26 +199,6 @@ bool PackVmlinuxBase<T>::canPack()
     return 0 < n_ptload;
 }
 
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0) {
-        linker->defineSymbol("filter_length", 0);
-        return false;
-    }
-    assert(ft->calls > 0);
-
-    if (0x50==(0xF0 & ft->id)) {
-        linker->defineSymbol("FID", ft->id);
-        linker->defineSymbol("CTO", ft->cto);
-    }
-    else {
-        linker->defineSymbol("filter_cto", ft->cto);
-        linker->defineSymbol("filter_length",
-                            (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                            ft->lastcall - ft->calls * 4);
-    }
-    return true;
-}
 
 template <class T>
 void PackVmlinuxBase<T>::pack(OutputFile *fo)
@@ -269,11 +249,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     const unsigned lsize = getLoaderSize();
 
     defineDecompressorSymbols();
-    defineFilterSymbols(linker, &ft);
-    if (0x40==(0xf0 & ft.id)) {
-        linker->defineSymbol("filter_length", ft.buf_len); // redefine
-        assert(ft.buf_len == ph.u_len);
-    }
+    defineFilterSymbols(&ft);
     relocateLoader();
 
     MemBuffer loader(lsize);

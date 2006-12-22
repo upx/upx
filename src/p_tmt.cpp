@@ -59,7 +59,8 @@ const int *PackTmt::getCompressionMethods(int method, int level) const
 const int *PackTmt::getFilters() const
 {
     static const int filters[] = {
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+        0x26, 0x24, 0x49, 0x46, 0x16, 0x13, 0x14, 0x11,
+        FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
     FT_END };
     return filters;
 }
@@ -186,19 +187,6 @@ bool PackTmt::canPack()
 }
 
 
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
-    return true;
-}
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -264,8 +252,8 @@ void PackTmt::pack(OutputFile *fo)
 
     // patch loader
     linker->defineSymbol("original_entry", ih.entry);
-    defineFilterSymbols(linker, &ft);
     defineDecompressorSymbols();
+    defineFilterSymbols(&ft);
 
     linker->defineSymbol("bytes_to_copy", ph.c_len + d_len);
     linker->defineSymbol("copy_dest", 0u - (ph.u_len + ph.overlap_overhead + d_len - 1));

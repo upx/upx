@@ -79,7 +79,12 @@ section DJ2BSS00
 
 section DJCALLT2
                 pop     edi
+
                 cjt32   0
+
+section         ctok32.00
+                mov     ecx, offset filter_length
+                ctok32  0, (offset filter_cto)
 
 section DJRETURN
                 jmp     original_entry

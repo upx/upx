@@ -84,7 +84,12 @@ section         TMTMAIN5
 
 section         TMTCALT2
                 pop     edi
+
                 cjt32   ebp
+
+section         ctok32.00
+                mov     ecx, offset filter_length
+                ctok32  ebp, (offset filter_cto)
 
 // =============
 // ============= RELOCATION

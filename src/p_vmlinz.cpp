@@ -67,8 +67,8 @@ const int *PackVmlinuzI386::getCompressionMethods(int method, int level) const
 const int *PackVmlinuzI386::getFilters() const
 {
     static const int filters[] = {
-        0x49,
-        0x26, 0x24, 0x16, 0x13, 0x14, 0x11, FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
+        0x26, 0x24, 0x49, 0x46, 0x16, 0x13, 0x14, 0x11,
+        FT_ULTRA_BRUTE, 0x25, 0x15, 0x12,
     FT_END };
     return filters;
 }
@@ -291,19 +291,6 @@ void PackVmlinuzI386::buildLoader(const Filter *ft)
 }
 
 
-static bool defineFilterSymbols(Linker *linker, const Filter *ft)
-{
-    if (ft->id == 0)
-        return false;
-    assert(ft->calls > 0);
-
-    linker->defineSymbol("filter_cto", ft->cto);
-    linker->defineSymbol("filter_length",
-                         (ft->id & 0xf) % 3 == 0 ? ft->calls :
-                         ft->lastcall - ft->calls * 4);
-    return true;
-}
-
 void PackVmlinuzI386::pack(OutputFile *fo)
 {
     readKernel();
@@ -321,8 +308,8 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 
     const unsigned lsize = getLoaderSize();
 
-    defineFilterSymbols(linker, &ft);
     defineDecompressorSymbols();
+    defineFilterSymbols(&ft);
     linker->defineSymbol("src_for_decompressor", zimage_offset + lsize);
     linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
@@ -443,11 +430,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     linker->defineSymbol("copy_dest", physical_start + edi);
     linker->defineSymbol("copy_source", bzimage_offset + esi);
 
-    defineFilterSymbols(linker, &ft);
-    if (0x40==(0xf0 & ft.id)) {
-        linker->defineSymbol("filter_length", ft.buf_len); // redefine
-        assert(ft.buf_len == ph.u_len);
-    }
+    defineFilterSymbols(&ft);
     defineDecompressorSymbols();
     linker->defineSymbol("original_entry", physical_start);
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
