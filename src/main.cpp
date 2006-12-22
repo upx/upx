@@ -1210,9 +1210,25 @@ static void first_options(int argc, char **argv)
 **************************************************************************/
 
 template <class T> struct TestBELE {
-static int test(void)
+static bool test(void)
 {
+    COMPILE_TIME_ASSERT_ALIGNED1(T)
+    struct test1_t { char a; T b; } __attribute_packed;
+    struct test2_t { char a; T b[3]; } __attribute_packed;
+    test1_t t1[7]; UNUSED(t1); test2_t t2[7]; UNUSED(t2);
+    COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
+    COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
+    COMPILE_TIME_ASSERT(sizeof(t1) == 7 + 7*sizeof(T))
+    COMPILE_TIME_ASSERT(sizeof(test2_t) == 1 + 3*sizeof(T))
+    COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
+    COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21*sizeof(T))
+#if defined(__acc_alignof)
+    COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
+    COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
+#endif
+#if 1 && !defined(xUPX_OFFICIAL_BUILD)
     T allbits; allbits = 0; allbits -= 1;
+    //++allbits; allbits++; --allbits; allbits--;
     T v1; v1 = 1; v1 *= 2; v1 -= 1;
     T v2; v2 = 1;
     assert( (v1 == v2)); assert(!(v1 != v2));
@@ -1226,7 +1242,9 @@ static int test(void)
     assert(v1 == 1); assert(v2 == 0);
     v1 <<= 1; v1 |= v2; v1 >>= 1; v2 &= v1; v2 /= v1; v2 *= v1;
     assert(v1 == 1); assert(v2 == 0);
-    return (v1 ^ v2) == 1;
+    if ((v1 ^ v2) != 1) return false;
+#endif
+    return true;
 }};
 
 
@@ -1258,12 +1276,12 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(LE32) == 4)
     COMPILE_TIME_ASSERT(sizeof(LE64) == 8)
 
-    COMPILE_TIME_ASSERT_ALIGNOF(BE16, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(BE32, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(BE64, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(LE16, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(LE32, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(LE64, char)
+    COMPILE_TIME_ASSERT_ALIGNED1(BE16)
+    COMPILE_TIME_ASSERT_ALIGNED1(BE32)
+    COMPILE_TIME_ASSERT_ALIGNED1(BE64)
+    COMPILE_TIME_ASSERT_ALIGNED1(LE16)
+    COMPILE_TIME_ASSERT_ALIGNED1(LE32)
+    COMPILE_TIME_ASSERT_ALIGNED1(LE64)
 
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_STRING4) == 4 + 1)
     assert(strlen(UPX_VERSION_STRING4) == 4);
@@ -1274,14 +1292,12 @@ void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_DATE + strlen(UPX_VERSION_DATE) - 4, UPX_VERSION_YEAR, 4) == 0);
 
 #if 1
-#  if 1 && !defined(UPX_OFFICIAL_BUILD)
     assert(TestBELE<LE16>::test());
     assert(TestBELE<LE32>::test());
     assert(TestBELE<LE64>::test());
     assert(TestBELE<BE16>::test());
     assert(TestBELE<BE32>::test());
     assert(TestBELE<BE64>::test());
-#  endif
     {
     static const unsigned char dd[32] = { 0, 0, 0, 0, 0, 0, 0,
          0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8,

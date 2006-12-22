@@ -231,8 +231,8 @@ unsigned Packer::getDecompressorWrkmemSize() const
     {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
         // FIXME - this is for i386 only
-        size = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4);
-        size = ALIGN_UP(size, 16);
+        size = 8 + 4 + ALIGN_UP(2 * res->num_probs, 4u);
+        size = ALIGN_UP(size, 16u);
     }
     assert((int)size >= 0);
     return size;

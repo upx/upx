@@ -120,6 +120,15 @@ protected:
 
     unsigned char ei_osabi;
     char const *osabi_note;
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr1) == 52 + 1*32 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr2) == 52 + 2*32 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr3) == 52 + 3*32 + 12)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr1)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr2)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr3)
+    }
 };
 
 

@@ -112,8 +112,12 @@ PeFile::PeFile(InputFile *f) : super(f)
     bele = &N_BELE_RTP::le_policy;
     //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
     //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
-    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248);
-    COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40);
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t::ddirs_t) == 8)
+    COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t::ddirs_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_section_t)
     COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt));
 
     isection = NULL;
@@ -611,7 +615,7 @@ unsigned PeFile::processImports() // pass 1
 
     unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
 
-    memcpy(importednames, llgpa, ALIGN_UP(sizeof(llgpa), 2));
+    memcpy(importednames, llgpa, ALIGN_UP((unsigned) sizeof(llgpa), 2u));
     strcpy(dllnames,kernel32dll);
     im->dllname = k32namepos;
     im->iat = ptr_diff(ordinals,oimpdlls);
@@ -886,7 +890,7 @@ void PeFile::processExports(Export *xport) // pass1
         return;
     }
     xport->convert(IDADDR(PEDIR_EXPORT),IDSIZE(PEDIR_EXPORT));
-    soexport = ALIGN_UP(xport->getsize(),4);
+    soexport = ALIGN_UP(xport->getsize(), 4u);
     oexport = new upx_byte[soexport];
     memset(oexport, 0, soexport);
 }
@@ -1066,7 +1070,7 @@ PeFile::Resource::~Resource()
 
 unsigned PeFile::Resource::dirsize() const
 {
-    return ALIGN_UP(dsize + ssize,4);
+    return ALIGN_UP(dsize + ssize, 4u);
 }
 
 bool PeFile::Resource::next()
@@ -1122,9 +1126,12 @@ const upx_byte *PeFile::Resource::nname() const
 
 void PeFile::Resource::init(const upx_byte *res)
 {
-    COMPILE_TIME_ASSERT(sizeof(res_dir_entry) == 8);
-    COMPILE_TIME_ASSERT(sizeof(res_dir) == 16 + sizeof(res_dir_entry));
-    COMPILE_TIME_ASSERT(sizeof(res_data) == 16);
+    COMPILE_TIME_ASSERT(sizeof(res_dir_entry) == 8)
+    COMPILE_TIME_ASSERT(sizeof(res_dir) == 16 + 8)
+    COMPILE_TIME_ASSERT(sizeof(res_data) == 16)
+    COMPILE_TIME_ASSERT_ALIGNED1(res_dir_entry)
+    COMPILE_TIME_ASSERT_ALIGNED1(res_dir)
+    COMPILE_TIME_ASSERT_ALIGNED1(res_data)
 
     start = res;
     root = head = current = NULL;

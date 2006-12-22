@@ -53,8 +53,8 @@
 #if defined(BELE_RTP)
 struct AbstractPolicy
 {
-    AbstractPolicy() {}
-    virtual inline ~AbstractPolicy() {}
+    inline AbstractPolicy() { }
+    virtual inline ~AbstractPolicy() { }
     V bool isBE() C = 0;
     V bool isLE() C = 0;
 
@@ -94,7 +94,7 @@ struct BEPolicy
     : public AbstractPolicy
 #endif
 {
-    BEPolicy() {}
+    inline BEPolicy() { }
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::BEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -156,9 +156,9 @@ struct BEPolicy
         COMPILE_TIME_ASSERT(sizeof(U16) == 2)
         COMPILE_TIME_ASSERT(sizeof(U32) == 4)
         COMPILE_TIME_ASSERT(sizeof(U64) == 8)
-        COMPILE_TIME_ASSERT_ALIGNOF(U16, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
+        COMPILE_TIME_ASSERT_ALIGNED1(U16)
+        COMPILE_TIME_ASSERT_ALIGNED1(U32)
+        COMPILE_TIME_ASSERT_ALIGNED1(U64)
     }
 
     // disable dynamic allocation
@@ -171,7 +171,7 @@ struct LEPolicy
     : public AbstractPolicy
 #endif
 {
-    LEPolicy() {}
+    inline LEPolicy() { }
 #if defined(BELE_CTP)
     typedef N_BELE_RTP::LEPolicy RTP_Policy;
 #elif defined(BELE_RTP)
@@ -233,9 +233,9 @@ struct LEPolicy
         COMPILE_TIME_ASSERT(sizeof(U16) == 2)
         COMPILE_TIME_ASSERT(sizeof(U32) == 4)
         COMPILE_TIME_ASSERT(sizeof(U64) == 8)
-        COMPILE_TIME_ASSERT_ALIGNOF(U16, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(U32, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(U64, char)
+        COMPILE_TIME_ASSERT_ALIGNED1(U16)
+        COMPILE_TIME_ASSERT_ALIGNED1(U32)
+        COMPILE_TIME_ASSERT_ALIGNED1(U64)
     }
 
     // disable dynamic allocation

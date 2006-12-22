@@ -47,11 +47,11 @@ PackDjgpp2::PackDjgpp2(InputFile *f) :
     super(f), coff_offset(0)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(external_scnhdr_t) == 40);
-    COMPILE_TIME_ASSERT(sizeof(coff_header_t) == 0xa8);
-    COMPILE_TIME_ASSERT_ALIGNOF(external_scnhdr_t, char)
-    COMPILE_TIME_ASSERT_ALIGNOF(coff_header_t, char)
-    COMPILE_TIME_ASSERT(sizeof(stub_i386_dos32_djgpp2_stubify) == 2048);
+    COMPILE_TIME_ASSERT(sizeof(external_scnhdr_t) == 40)
+    COMPILE_TIME_ASSERT(sizeof(coff_header_t) == 0xa8)
+    COMPILE_TIME_ASSERT_ALIGNED1(external_scnhdr_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(coff_header_t)
+    COMPILE_TIME_ASSERT(sizeof(stub_i386_dos32_djgpp2_stubify) == 2048)
     COMPILE_TIME_ASSERT(STUB_I386_DOS32_DJGPP2_STUBIFY_ADLER32 == 0xbf689ba8)
     COMPILE_TIME_ASSERT(STUB_I386_DOS32_DJGPP2_STUBIFY_CRC32   == 0x2ae982b2)
     //printf("0x%08x\n", upx_adler32(stubify_stub, sizeof(stubify_stub)));
@@ -334,7 +334,7 @@ void PackDjgpp2::pack(OutputFile *fo)
     data->size = ph.c_len;                // new size of .data
 
     unsigned stack = 1024 + ph.overlap_overhead + getDecompressorWrkmemSize();
-    stack = ALIGN_UP(stack, 16);
+    stack = ALIGN_UP(stack, 16u);
     if (bss->size < stack)  // give it a .bss
         bss->size = stack;
 

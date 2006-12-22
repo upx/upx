@@ -83,16 +83,17 @@ PackPs1::PackPs1(InputFile *f) :
     pad_code(0), bss_start(0), bss_end(0)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 136);
-    COMPILE_TIME_ASSERT(sizeof(ps1_exe_hb_t) == 44);
-    COMPILE_TIME_ASSERT(sizeof(ps1_exe_chb_t) == 5);
 
-    COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t));
-    COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40);
-#if 0 // 1 || defined(WITH_NRV)
-    COMPILE_TIME_ASSERT(sizeof(nrv_loader) == 14812);
-    COMPILE_TIME_ASSERT(NRV_BOOT_LOADER_CRC32 == 0x0);
-#endif
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_t) == 136)
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_hb_t) == 44)
+    COMPILE_TIME_ASSERT(sizeof(ps1_exe_chb_t) == 5)
+    COMPILE_TIME_ASSERT_ALIGNED1(ps1_exe_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(ps1_exe_hb_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(ps1_exe_chb_t)
+
+    COMPILE_TIME_ASSERT(PS_HDR_SIZE > sizeof(ps1_exe_t))
+    COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40)
+
     fdata_size = file_size - PS_HDR_SIZE;
     ram_size = !opt->ps1_exe.do_8mb ? 0x200000 : 0x800000;
 }
@@ -169,7 +170,7 @@ void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsign
         if (r != UPX_E_OK || sz_cbh >= SZ_IH_BKUP)
             throwInternalError("header compression failed");
         INIT_BH_BKUP(p, sz_cbh);
-        *len = ALIGN_UP(sz_cbh + sizeof(ps1_exe_chb_t) - 1, 4);
+        *len = ALIGN_UP(sz_cbh + (unsigned) sizeof(ps1_exe_chb_t) - 1, 4u);
         p->ih_csum = ADLER16(upx_adler32(&ih.epc, SZ_IH_BKUP));
         memcpy(dst, cpr_bh, SZ_IH_BKUP);
         delete [] cpr_bh;
@@ -314,7 +315,7 @@ void PackPs1::buildLoader(const Filter *)
             throwCantPack("packed data overlap (try --force)");
         }
         else
-            sa_tmp += overlap = ALIGN_UP((ph.overlap_overhead - sa_tmp),4);
+            sa_tmp += overlap = ALIGN_UP((ph.overlap_overhead - sa_tmp), 4u);
     }
 
     foundBss = findBssSection();
@@ -345,7 +346,7 @@ void PackPs1::buildLoader(const Filter *)
         else
             initLoader(stub_mipsel_r3000_ps1, sizeof(stub_mipsel_r3000_ps1));
 
-        pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4);
+        pad_code = ALIGN_GAP((ph.c_len + (isCon ? sz_lcpr : 0)), 4u);
         assert(pad_code < 4);
         static const unsigned char pad_buffer[4] = { 0, 0, 0, 0 };
         linker->addSection("pad.code", pad_buffer, pad_code, 0);
@@ -439,7 +440,7 @@ bool PackPs1::findBssSection()
                         bss_start = MIPS_IMM(p->hi1, p->lo1);
                         bss_end = MIPS_IMM(p->hi2, p->lo2);
 
-                        if (0 < ALIGN_DOWN(bss_end - bss_start, 4) )
+                        if (0 < ALIGN_DOWN(bss_end - bss_start, 4u))
                         {
                             unsigned wkmem_sz = M_IS_LZMA(ph.method) ? 32768 : 800;
                             unsigned end_offs = ih.tx_ptr + fdata_size + overlap;
@@ -478,9 +479,9 @@ void PackPs1::pack(OutputFile *fo)
     while (!(*--p_scan)) { if (sa_cnt++ > (0x10000 << 5) || sa_cnt >= fdata_size - 1024) break; }
 
     if (sa_cnt > (0x10000 << 2))
-        sa_cnt = ALIGN_DOWN(sa_cnt,32);
+        sa_cnt = ALIGN_DOWN(sa_cnt, 32u);
     else
-        sa_cnt = ALIGN_DOWN(sa_cnt,4);
+        sa_cnt = ALIGN_DOWN(sa_cnt, 4u);
 
     // prepare packheader
     ph.u_len = (fdata_size - sa_cnt);

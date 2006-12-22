@@ -483,7 +483,7 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
     unsigned low = 1;
     unsigned high = UPX_MIN(ph.u_len / 4 + 512, upper_limit);
     // but be optimistic for first try (speedup)
-    unsigned m = UPX_MIN(16, high);
+    unsigned m = UPX_MIN(16u, high);
     //
     unsigned overhead = 0;
     unsigned nr = 0;          // statistics
@@ -578,7 +578,7 @@ void Packer::copyOverlay(OutputFile *fo, unsigned overlay,
     // get buffer size, align to improve i/o speed
     unsigned buf_size = buf->getSize();
     if (buf_size > 65536)
-        buf_size = ALIGN_DOWN(buf_size, 4096);
+        buf_size = ALIGN_DOWN(buf_size, 4096u);
     assert((int)buf_size > 0);
 
     do {

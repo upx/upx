@@ -183,65 +183,65 @@ inline void set_le64(void *p, acc_uint64l_t v)
 // get signed values, i.e. sign-extend
 **************************************************************************/
 
-inline int sign_extend(int v, int bits)
+inline int sign_extend(unsigned v, unsigned bits)
 {
     const unsigned sign_bit = 1u << (bits - 1);
     v |= 0u - (v & sign_bit);
-    return v;
+    return (int) v;
 }
 
-inline acc_int64l_t sign_extend(acc_int64l_t v, int bits)
+inline acc_int64l_t sign_extend(acc_uint64l_t v, unsigned bits)
 {
     const acc_uint64l_t sign_bit = ACC_UINT64_C(1) << (bits - 1);
     v |= ACC_UINT64_C(0) - (v & sign_bit);
-    return v;
+    return (acc_int64l_t) v;
 }
 
 inline int get_be16_signed(const void *p)
 {
-    int v = get_be16(p);
+    unsigned v = get_be16(p);
     return sign_extend(v, 16);
 }
 
 inline int get_be24_signed(const void *p)
 {
-    int v = get_be24(p);
+    unsigned v = get_be24(p);
     return sign_extend(v, 24);
 }
 
 inline int get_be32_signed(const void *p)
 {
-    int v = get_be32(p);
+    unsigned v = get_be32(p);
     return sign_extend(v, 32);
 }
 
 inline acc_int64l_t get_be64_signed(const void *p)
 {
-    acc_int64l_t v = get_be64(p);
+    acc_uint64l_t v = get_be64(p);
     return sign_extend(v, 64);
 }
 
 inline int get_le16_signed(const void *p)
 {
-    int v = get_le16(p);
+    unsigned v = get_le16(p);
     return sign_extend(v, 16);
 }
 
 inline int get_le24_signed(const void *p)
 {
-    int v = get_le24(p);
+    unsigned v = get_le24(p);
     return sign_extend(v, 24);
 }
 
 inline int get_le32_signed(const void *p)
 {
-    int v = get_le32(p);
+    unsigned v = get_le32(p);
     return sign_extend(v, 32);
 }
 
 inline acc_int64l_t get_le64_signed(const void *p)
 {
-    acc_int64l_t v = get_le64(p);
+    acc_uint64l_t v = get_le64(p);
     return sign_extend(v, 64);
 }
 
@@ -304,11 +304,17 @@ inline void acc_ua_swab32s(void *p)
 // Important: these classes must be PODs (Plain Old Data), i.e. no
 //   constructor, no destructor, no virtual functions and no default
 //   assignment operator, and all fields must be public(!).
+//
+// [Actually we _can_ use a safe non-POD subset, but for this we need
+//  to have gcc bug 17519 fixed - see http://gcc.gnu.org/PR17519 ]
 **************************************************************************/
 
 struct BE16
 {
     unsigned char d[2];
+
+    //inline BE16() { }
+    //BE16(unsigned v) { set_be16(d, v); }
 
     BE16& operator =  (unsigned v) { set_be16(d, v); return *this; }
     BE16& operator += (unsigned v) { set_be16(d, get_be16(d) + v); return *this; }
@@ -330,6 +336,9 @@ struct BE32
 {
     unsigned char d[4];
 
+    //inline BE32() { }
+    //BE32(unsigned v) { set_be32(d, v); }
+
     BE32& operator =  (unsigned v) { set_be32(d, v); return *this; }
     BE32& operator += (unsigned v) { set_be32(d, get_be32(d) + v); return *this; }
     BE32& operator -= (unsigned v) { set_be32(d, get_be32(d) - v); return *this; }
@@ -349,6 +358,9 @@ __attribute_packed;
 struct BE64
 {
     unsigned char d[8];
+
+    //inline BE64() { }
+    //BE64(acc_uint64l_t v) { set_be64(d, v); }
 
     BE64& operator =  (acc_uint64l_t v) { set_be64(d, v); return *this; }
     BE64& operator += (acc_uint64l_t v) { set_be64(d, get_be64(d) + v); return *this; }
@@ -370,6 +382,9 @@ struct LE16
 {
     unsigned char d[2];
 
+    //inline LE16() { }
+    //LE16(unsigned v) { set_le16(d, v); }
+
     LE16& operator =  (unsigned v) { set_le16(d, v); return *this; }
     LE16& operator += (unsigned v) { set_le16(d, get_le16(d) + v); return *this; }
     LE16& operator -= (unsigned v) { set_le16(d, get_le16(d) - v); return *this; }
@@ -390,6 +405,9 @@ struct LE32
 {
     unsigned char d[4];
 
+    //inline LE32() { }
+    //LE32(unsigned v) { set_le32(d, v); }
+
     LE32& operator =  (unsigned v) { set_le32(d, v); return *this; }
     LE32& operator += (unsigned v) { set_le32(d, get_le32(d) + v); return *this; }
     LE32& operator -= (unsigned v) { set_le32(d, get_le32(d) - v); return *this; }
@@ -409,6 +427,9 @@ __attribute_packed;
 struct LE64
 {
     unsigned char d[8];
+
+    //inline LE64() { }
+    //LE64(acc_uint64l_t v) { set_le64(d, v); }
 
     LE64& operator =  (acc_uint64l_t v) { set_le64(d, v); return *this; }
     LE64& operator += (acc_uint64l_t v) { set_le64(d, get_le64(d) + v); return *this; }
@@ -467,6 +488,41 @@ inline T* operator - (T* ptr, const LE32& v) { return ptr - (unsigned) v; }
 template <class T> T* operator + (T* ptr, const LE64& v);
 template <class T> T* operator + (const LE64& v, T* ptr);
 template <class T> T* operator - (T* ptr, const LE64& v);
+
+
+/*************************************************************************
+// global overloads
+**************************************************************************/
+
+#if 1 && !defined(ALIGN_DOWN)
+inline unsigned ALIGN_DOWN(unsigned a, const LE32& b) { return ALIGN_DOWN(a, (unsigned) b); }
+inline unsigned ALIGN_DOWN(const LE32& a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
+inline unsigned ALIGN_UP  (unsigned a, const LE32& b) { return ALIGN_UP  (a, (unsigned) b); }
+inline unsigned ALIGN_UP  (const LE32& a, unsigned b) { return ALIGN_UP  ((unsigned) a, b); }
+#endif
+
+
+#if !defined(UPX_MAX)
+inline unsigned UPX_MAX(unsigned a, const BE16& b)    { return UPX_MAX(a, (unsigned) b); }
+inline unsigned UPX_MAX(const BE16& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
+inline unsigned UPX_MIN(unsigned a, const BE16& b)    { return UPX_MIN(a, (unsigned) b); }
+inline unsigned UPX_MIN(const BE16& a, unsigned b)    { return UPX_MIN((unsigned) a, b); }
+
+inline unsigned UPX_MAX(unsigned a, const BE32& b)    { return UPX_MAX(a, (unsigned) b); }
+inline unsigned UPX_MAX(const BE32& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
+inline unsigned UPX_MIN(unsigned a, const BE32& b)    { return UPX_MIN(a, (unsigned) b); }
+inline unsigned UPX_MIN(const BE32& a, unsigned b)    { return UPX_MIN((unsigned) a, b); }
+
+inline unsigned UPX_MAX(unsigned a, const LE16& b)    { return UPX_MAX(a, (unsigned) b); }
+inline unsigned UPX_MAX(const LE16& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
+inline unsigned UPX_MIN(unsigned a, const LE16& b)    { return UPX_MIN(a, (unsigned) b); }
+inline unsigned UPX_MIN(const LE16& a, unsigned b)    { return UPX_MIN((unsigned) a, b); }
+
+inline unsigned UPX_MAX(unsigned a, const LE32& b)    { return UPX_MAX(a, (unsigned) b); }
+inline unsigned UPX_MAX(const LE32& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
+inline unsigned UPX_MIN(unsigned a, const LE32& b)    { return UPX_MIN(a, (unsigned) b); }
+inline unsigned UPX_MIN(const LE32& a, unsigned b)    { return UPX_MIN((unsigned) a, b); }
+#endif
 
 
 /*************************************************************************
@@ -565,9 +621,11 @@ namespace N_BELE_CTP {
 template <class T>
 static inline const N_BELE_RTP::AbstractPolicy* getRTP();
 template <>
-static inline const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>() { return &N_BELE_RTP::be_policy; }
+static inline const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>()
+     { return &N_BELE_RTP::be_policy; }
 template <>
-static inline const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>() { return &N_BELE_RTP::le_policy; }
+static inline const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>()
+     { return &N_BELE_RTP::le_policy; }
 
 }
 

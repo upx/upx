@@ -291,7 +291,7 @@ unsigned PackArmPe::processImports() // pass 1
 
     unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
 
-    memcpy(importednames, llgpa, ALIGN_UP(sizeof(llgpa), 2));
+    memcpy(importednames, llgpa, ALIGN_UP((unsigned) sizeof(llgpa), 2u));
     strcpy(dllnames,kernel32dll);
     im->dllname = k32namepos;
     im->iat = ptr_diff(ordinals,oimpdlls);
@@ -439,7 +439,7 @@ unsigned PackArmPe::processImports() // pass 1
 
 void PackArmPe::processTls(Interval *) // pass 1
 {
-    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
+    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4u)) == 0)
         return;
 
     // never should happen on wince
@@ -745,7 +745,7 @@ void PackArmPe::pack(OutputFile *fo)
     const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
     obuf.clear(ph.c_len, c_len - ph.c_len);
 
-    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4) + sotls;
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4u) + sotls;
     const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
 
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
@@ -1057,7 +1057,7 @@ void PackArmPe::rebuildImports(upx_byte *& extrainfo)
             else
                 p += 5;
     }
-    sdllnames = ALIGN_UP(sdllnames,2);
+    sdllnames = ALIGN_UP(sdllnames,2u);
 
     upx_byte * const Obuf = obuf - rvamin;
     import_desc * const im0 = (import_desc*) (Obuf + ODADDR(PEDIR_IMPORT));

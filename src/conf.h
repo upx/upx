@@ -290,24 +290,25 @@
 #undef PAGE_MASK
 #undef PAGE_SIZE
 
-
-#undef __attribute_packed
-#if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
-#  if (1 && (ACC_ARCH_I386))
-#    define __attribute_packed
-#  else
-#    define __attribute_packed      __attribute__((__packed__,__aligned__(1)))
-#  endif
-#else
-#  define __attribute_packed
-#endif
-
 #if !defined(O_BINARY)
 #  define O_BINARY  0
 #endif
 
 #ifndef OPTIONS_VAR
 #  define OPTIONS_VAR   "UPX"
+#endif
+
+
+#undef __attribute_packed
+#if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
+#  if (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
+#    define __attribute_packed
+#  else
+#    define __attribute_packed      __attribute__((__packed__,__aligned__(1)))
+#  endif
+#endif
+#if !defined(__attribute_packed)
+#  define __attribute_packed
 #endif
 
 
@@ -318,36 +319,53 @@
 #define UNUSED(var)              ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)   ACC_COMPILE_TIME_ASSERT(e)
 
-#if 1
-#  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
+#define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
-     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z[7]; } __attribute_packed; \
-     COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
+     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; } __attribute_packed; \
+     COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 2*sizeof(b)+sizeof(a)) \
    }
-#else
-#  define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
-     struct acc_tmp_t { b x; a y; b z[7]; } __attribute_packed; \
-     COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 8*sizeof(b)+sizeof(a)) \
-   }
-#endif
-
 #if defined(__acc_alignof)
-#  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
+#  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
      __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) \
      COMPILE_TIME_ASSERT(__acc_alignof(a) == sizeof(b))
 #else
-#  define COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
+#  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \
      __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b)
 #endif
+#define COMPILE_TIME_ASSERT_ALIGNED1(a)     __COMPILE_TIME_ASSERT_ALIGNOF(a,char)
 
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 
+
+#if 0
 #define ALIGN_DOWN(a,b)     (((a) / (b)) * (b))
 #define ALIGN_UP(a,b)       ALIGN_DOWN((a) + ((b) - 1), b)
 #define ALIGN_GAP(a,b)      (ALIGN_UP(a,b) - (a))
+#elif 1
+template <class T>
+inline T ALIGN_DOWN(const T& a, const T& b) { T r; r = (a / b) * b; return r; }
+template <class T>
+inline T ALIGN_UP  (const T& a, const T& b) { T r; r = ((a + b - 1) / b) * b; return r; }
+template <class T>
+inline T ALIGN_GAP (const T& a, const T& b) { T r; r = ALIGN_UP(a, b) - a; return r; }
+#else
+inline unsigned ALIGN_DOWN(unsigned a, unsigned b) { return (a / b) * b; }
+inline unsigned ALIGN_UP  (unsigned a, unsigned b) { return ((a + b - 1) / b) * b; }
+inline unsigned ALIGN_GAP (unsigned a, unsigned b) { return ALIGN_UP(a, b) - a; }
+#endif
 
+#if 0
 #define UPX_MAX(a,b)        ((a) >= (b) ? (a) : (b))
 #define UPX_MIN(a,b)        ((a) <= (b) ? (a) : (b))
+#elif 1
+template <class T>
+inline const T& UPX_MAX(const T& a, const T& b) { if (a < b) return b; return a; }
+template <class T>
+inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b; }
+#else
+inline unsigned UPX_MAX(unsigned a, unsigned b) { return a < b ? b : a; }
+inline unsigned UPX_MIN(unsigned a, unsigned b) { return a < b ? a : b; }
+#endif
 
 
 // An Array allocates memory on the heap, but automatically

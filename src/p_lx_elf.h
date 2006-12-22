@@ -161,6 +161,15 @@ protected:
         char text[0x18 - 4*4];  // "OpenBSD"
         unsigned end;     // 0
     } elfnote;
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr1) == 52 + 1*32 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr2) == 52 + 2*32 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr3) == 52 + 3*32 + 12)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr1)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr2)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr3)
+    }
 };
 
 
@@ -225,6 +234,15 @@ protected:
     __attribute_packed;
 
     cprElfHdr3 elfout;
+
+    static void compileTimeAssertions() {
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr1) == 64 + 1*56 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr2) == 64 + 2*56 + 12)
+        COMPILE_TIME_ASSERT(sizeof(cprElfHdr3) == 64 + 3*56 + 12)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr1)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr2)
+        COMPILE_TIME_ASSERT_ALIGNED1(cprElfHdr3)
+    }
 };
 
 class PackLinuxElf32Be : public PackLinuxElf32

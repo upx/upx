@@ -135,7 +135,8 @@ struct Mach_ppc_thread_state {
     BE32 mq;        /* MQ register (601 only) */
 
     BE32 vrsave;    /* Vector Save Register */
-};
+}
+__attribute_packed;
 
 struct Mach_thread_command {
     BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */

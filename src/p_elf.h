@@ -290,11 +290,11 @@ struct ElfClass_32
         COMPILE_TIME_ASSERT(sizeof(Shdr) == 40)
         COMPILE_TIME_ASSERT(sizeof(Dyn)  ==  8)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 16)
-        COMPILE_TIME_ASSERT_ALIGNOF(Ehdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Phdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Shdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Dyn,  char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Sym,  char)
+        COMPILE_TIME_ASSERT_ALIGNED1(Ehdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Phdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Shdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Dyn)
+        COMPILE_TIME_ASSERT_ALIGNED1(Sym)
     }
 };
 
@@ -324,11 +324,11 @@ struct ElfClass_64
         COMPILE_TIME_ASSERT(sizeof(Shdr) == 64)
         COMPILE_TIME_ASSERT(sizeof(Dyn)  == 16)
         COMPILE_TIME_ASSERT(sizeof(Sym)  == 24)
-        COMPILE_TIME_ASSERT_ALIGNOF(Ehdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Phdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Shdr, char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Dyn,  char)
-        COMPILE_TIME_ASSERT_ALIGNOF(Sym,  char)
+        COMPILE_TIME_ASSERT_ALIGNED1(Ehdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Phdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Shdr)
+        COMPILE_TIME_ASSERT_ALIGNED1(Dyn)
+        COMPILE_TIME_ASSERT_ALIGNED1(Sym)
     }
 };
 

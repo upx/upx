@@ -100,7 +100,7 @@ int PackVmlinuzI386::readFileHeader()
         return 0;
 
     int format = UPX_F_VMLINUZ_i386;
-    unsigned sys_size = ALIGN_UP(file_size, 16) - setup_size;
+    unsigned sys_size = ALIGN_UP((unsigned) file_size, 16u) - setup_size;
 
     const unsigned char *p = (const unsigned char *) &h + 0x1e3;
 
@@ -143,7 +143,7 @@ int PackVmlinuzI386::decompressKernel()
         break;
     }
 
-    checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, 1024));
+    checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
 
     for (int gzoff = setup_size; gzoff < file_size; gzoff++)
     {
@@ -333,7 +333,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16) / 16;
+    bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16u) / 16;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
@@ -408,7 +408,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     // align everything to dword boundary - it is easier to handle
     unsigned c_len = ph.c_len;
     memset(obuf + c_len, 0, 4);
-    c_len = ALIGN_UP(c_len, 4);
+    c_len = ALIGN_UP(c_len, 4u);
 
     const unsigned lsize = getLoaderSize();
 
@@ -431,11 +431,11 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
 
-    const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4);
-    const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16);
+    const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4u);
+    const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16u);
     const unsigned copy_size = c_len + d_len4;
     const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
-    const unsigned esi = ALIGN_UP(c_len + lsize, 4) - 4;     // copy from
+    const unsigned esi = ALIGN_UP(c_len + lsize, 4u) - 4;   // copy from
 
     linker->defineSymbol("decompressor", decompr_pos - bzimage_offset + physical_start);
     linker->defineSymbol("src_for_decompressor", physical_start + decompr_pos - c_len);
@@ -457,7 +457,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = (ALIGN_UP(lsize + c_len, 16) / 16) & 0xffff;
+    bs->sys_size = (ALIGN_UP(lsize + c_len, 16u) / 16) & 0xffff;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, e_len);
