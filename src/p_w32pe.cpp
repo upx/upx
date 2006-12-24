@@ -1155,7 +1155,8 @@ int PackW32Pe::canUnpack()
 
 void PackW32Pe::rebuildImports(upx_byte *& extrainfo)
 {
-    if (ODADDR(PEDIR_IMPORT) == 0)
+    if (ODADDR(PEDIR_IMPORT) == 0
+        || ODSIZE(PEDIR_IMPORT) <= sizeof(import_desc))
         return;
 
 //    const upx_byte * const idata = obuf + get_le32(extrainfo);
