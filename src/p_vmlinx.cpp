@@ -52,9 +52,11 @@ static const
 
 template <class T>
 PackVmlinuxBase<T>::PackVmlinuxBase(InputFile *f,
-                                    unsigned e_machine, unsigned elfclass, unsigned elfdata) :
+                                    unsigned e_machine, unsigned elfclass, unsigned elfdata,
+                                    char const *const boot_label) :
     super(f),
     my_e_machine(e_machine), my_elfclass(elfclass), my_elfdata(elfdata),
+    my_boot_label(boot_label),
     n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
 {
     ElfClass::compileTimeAssertions();
@@ -370,16 +372,16 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     unc_ker.st_shndx = 1;  // .text
     fo->write(&unc_ker, sizeof(unc_ker)); fo_off += sizeof(unc_ker);
 
-    // '\0' before and after the name we want
-    char const strtab[] = "\0decompress_kernel";
-
+    unsigned const lablen = strlen(my_boot_label);
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
     shdro[6].sh_type = Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
-    shdro[6].sh_size = sizeof(strtab);  // includes both '\0'
+    shdro[6].sh_size = 2+ lablen;  // '\0' before and after
     shdro[6].sh_addralign = 1;
-    fo->write(strtab, sizeof(strtab)); fo_off += sizeof(strtab);
+    fo->seek(1, SEEK_CUR);  // the '\0' before
+    fo->write(my_boot_label, 1+ lablen);  // include the '\0' terminator
+    fo_off += 2+ lablen;
 
     fo->seek(0, SEEK_SET);
     fo->write(&ehdro, sizeof(ehdro));
@@ -738,18 +740,16 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 //# create a compressed vmlinux image from the original vmlinux
 //#
 //
-//targets := vmlinux upx-head.o upx-piggy.o
+//targets := vmlinux upx-piggy.o
 //
 //LDFLAGS_vmlinux := -Ttext $(IMAGE_OFFSET) -e startup_32
 //
-//$(obj)/vmlinux: $(obj)/upx-head.o $(obj)/upx-piggy.o FORCE
+//$(obj)/vmlinux: $(obj)/upx-piggy.o FORCE
 //	$(call if_changed,ld)
 //	@:
 //
 //$(obj)/upx-piggy.o: vmlinux FORCE
-//	rm -f $@
-//	upx --best -o $@ $<
-//	touch $@
+//	upx --lzma -f -o $@ $<; touch $@
 //
 //#
 //# The ORIGINAL build sequence using gzip is:
@@ -776,16 +776,11 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 //#   boot/compressed/upx-piggy.o     by upx format vmlinux/386
 //#
 //#   In arch/i386/boot:
-//#   boot/compressed/vmlinux         by ld upx-head.o upx-piggy.o
+//#   boot/compressed/vmlinux         by ld upx-piggy.o
 //#              boot/vmlinux.bin     by objcopy
 //#              boot/bzImage         by arch/i386/boot/tools/build with
 //#                                     bootsect and setup
 //#
-//-----
-//
-//----- arch/i386/boot/compressed/upx-head.S
-//startup_32: .globl startup_32  # In: %esi=0x90000 setup data "real_mode pointer"
-//  /* All code is in stub/src/i386-linux.kernel.vmlinux-head.S */
 //-----
 
 #if 0  /*{*/
@@ -828,7 +823,7 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 -
 -$(obj)/piggy.o:  $(obj)/piggy.gz FORCE
 +$(obj)/upx-piggy.o:  vmlinux FORCE
-+	rm -f $@; upx --lzma -o $@ $<; touch $@
++	upx --lzma -f -o $@ $<; touch $@
 
  CFLAGS_font_acorn_8x8.o := -Dstatic=
 
@@ -848,7 +843,7 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 //# create a compressed vmlinux image from the original vmlinux
 //#
 //
-//HEAD = upx-head.o
+//HEAD =
 //SYSTEM = $(TOPDIR)/vmlinux
 //
 //OBJECTS = $(HEAD)
