@@ -28,9 +28,9 @@
 
 /*************************************************************************
 // Use the preprocessor to work around
-//   - that the types using these enums have to be PODs, and
-//     deriving from an empty base class does not yield a POD
-//     any more
+//   - that the types embedding these enums have to be PODs, and
+//     deriving from an empty base class (which is the ususal C++ way
+//     of "importing" enums) does not yield a POD any more
 //   - that older compilers do not correctly perform EBCO
 **************************************************************************/
 
@@ -49,15 +49,15 @@
     };
     enum { // e_ident[EI_DATA]
         ELFDATA2LSB = 1,        /* 2's complement, little endian */
-        ELFDATA2MSB = 2         /* 2's complement, big endian */
+        ELFDATA2MSB = 2,        /* 2's complement, big endian */
     };
     enum { // e_ident[EI_OSABI]
-        ELFOSABI_NONE = 0,      // == ELFOSABI_SYSV
-        ELFOSABI_NETBSD = 2,
-        ELFOSABI_LINUX = 3,
+        ELFOSABI_NONE    = 0,      // == ELFOSABI_SYSV
+        ELFOSABI_NETBSD  = 2,
+        ELFOSABI_LINUX   = 3,
         ELFOSABI_FREEBSD = 9,
         ELFOSABI_OPENBSD = 12,
-        ELFOSABI_ARM = 97
+        ELFOSABI_ARM     = 97,
     };
     enum { // e_type
         ET_NONE = 0,            /* No file type */
