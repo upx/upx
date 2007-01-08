@@ -954,7 +954,7 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 
 //
 // Example test jig:
-//  $ gcc -o test-piggy -nostartfiles -nostdlib test-piggy.o piggy.o
+//  $ gcc -m32 -o test-piggy -nostartfiles -nostdlib test-piggy.o piggy.o
 //  $ gdb test-piggy
 //  (gdb) run >dumped
 //  (gdb)  /* Execute [single step, etc.; the decompressor+unfilter moves!]
@@ -1000,7 +1000,6 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 //      pushl $0x100000  # 1MB address
 //      call mmap
 //      leal -0x9000(%esp),%esi  # expect "lea 0x9000(%esi),%esp" later
-//      push %cs
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
