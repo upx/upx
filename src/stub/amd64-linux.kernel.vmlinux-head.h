@@ -1,5 +1,5 @@
 /* amd64-linux.kernel.vmlinux-head.h
-   created from amd64-linux.kernel.vmlinux-head.bin, 39 (0x27) bytes
+   created from amd64-linux.kernel.vmlinux-head.bin, 33 (0x21) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -28,12 +28,12 @@
  */
 
 
-#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_SIZE    39
-#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_ADLER32 0x7a591357
-#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0xf4f6740a
+#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_SIZE    33
+#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_ADLER32 0x206f1291
+#define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0x5b6874bd
 
-unsigned char stub_amd64_linux_kernel_vmlinux_head[39] = {
+unsigned char stub_amd64_linux_kernel_vmlinux_head[33] = {
 140,200,131,192,  8,142,216,142,192,141,142,  0,144,  0,  0,137,   /* 0x   0 */
- 73,248,137, 65,252, 15,178, 97,248,106,  0,157, 14,184,  0,  0,   /* 0x  10 */
-  0,  0,232,252,255,255,255                                        /* 0x  20 */
+ 73,248,137, 65,252, 15,178, 97,248,106,  0,157,232,252,255,255,   /* 0x  10 */
+255                                                                /* 0x  20 */
 };

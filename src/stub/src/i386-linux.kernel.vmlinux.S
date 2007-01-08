@@ -47,9 +47,75 @@
 */
 section         LINUX000
 ////    .byte 0xf1  // qemu In-Circuit-Emulator breakpoint
-                pop     edx     // &compressed; length at -4(#edx)
 
-                push    eax     // MATCH00(1/2)  entry address; __BOOT_CS
+#if 0  /*{*/
+// VGA debugging; In: edi= &putstr (linux/arch/*/boot/compressed/misc.c) */
+        jmp .L10
+print_hex:  // %eax in " %.8x"; ebx= &putstr;  clobbers edi,edx,ecx
+        sub esp,12
+        mov edi,esp
+        mov edx,eax
+        cld
+        
+        mov al,' '
+        stosb
+        mov ecx,8
+.L30:
+        rol edx,4
+        mov al,dl
+        and al,0xf
+        cmp al,10
+        sbb al,0x69
+        das
+        stosb
+        loop .L30
+        mov al,0
+        stosb
+
+        push esp
+        call ebx
+        add esp,4+ 3*4
+        ret
+
+print_stk8:  // eax= &putstr
+        push ebp
+        mov ebp,esp
+        push ebx
+        mov ebx,eax  // &putstr
+        push esi
+        push edi
+
+        mov esi,-8
+.L20:
+        mov eax,[ebp + 4*esi + 8*4 + 8]
+        call print_hex
+        inc esi
+        jnz .L20
+
+        sub esp,4
+        mov edi,esp
+        push edi
+        mov al,'\n'
+        stosb
+        mov al,0
+        stosb
+        call ebx  // NL
+        add esp,4+ 4
+
+        pop edi
+        pop esi
+        pop ebx
+        pop ebp
+        ret
+.L10:
+        mov ebx,edi  // &putstr in better register
+#endif  /*}*/
+
+                pop     edx     // &compressed; length at -4(#edx)
+                push %cs
+                push offset ENTRY_POINT  // MATCH00
+                mov eax, offset PHYSICAL_START  // destination of uncompression
+
                 push    edi     // MATCH01  save
                 push    esi     // MATCH02  save
 
@@ -112,6 +178,15 @@ move_up:
                 add eax, ~ALIGN + UNLAP
                 and eax, ALIGN
 
+#if 0  /*{*/
+  pusha
+  mov eax,ebx  // &putstr
+  call print_stk8
+  popa
+.L5:
+        pause
+        jmp .L5
+#endif  /*}*/
                 std
         // copy decompressor
                 lea esi,[-1+ ecx + esi]  // unmoved top -1 of decompressor
@@ -131,6 +206,7 @@ move_up:
                 cld
                 lea esi,[4+ edi]   //   &compressed [after move]
                 mov edi,ebp        // &uncompressed
+
 section         LINUX991
                 or  ebp, -1        // decompressor assumption
 section         LINUX992

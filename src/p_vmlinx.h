@@ -69,6 +69,7 @@ protected:
 
     int n_ptload;
     unsigned sz_ptload;
+    unsigned paddr_min;
     Phdr *phdri; // from input file
     Shdr *shdri; // from input file
     char *shstrtab; // from input file
@@ -107,6 +108,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
@@ -131,10 +133,10 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
-    virtual void defineDecompressorSymbols();
     virtual unsigned write_vmlinux_head(
         OutputFile *const fo,
         Shdr *const stxt
@@ -156,6 +158,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();

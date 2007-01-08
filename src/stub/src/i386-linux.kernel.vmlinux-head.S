@@ -53,9 +53,7 @@
 
         pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 
-        push %cs
-// PackVmlinuxI386::pack knows the format of the next two instructions.
-        movl $ ENTRY_POINT,%eax  # destination of uncompression (and entry point)
+// PackVmlinuxI386::pack knows the format of the following instruction.
         call COMPRESSED_LENGTH
 // Compressed data appears >here<, then decompressor.
 

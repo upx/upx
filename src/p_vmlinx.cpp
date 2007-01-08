@@ -177,27 +177,27 @@ bool PackVmlinuxBase<T>::canPack()
     // Put PT_LOAD together at the beginning, ascending by .p_paddr.
     qsort(phdri, ehdri.e_phnum, sizeof(*phdri), compare_Phdr);
 
-    // Check that PT_LOADs form one contiguous chunk of the file.
+    // Find convex hull of physical addresses, and count the PT_LOAD.
+    // Ignore ".bss": .p_filesz < .p_memsz
+    unsigned phys_lo= ~0u, phys_hi= 0u;
     for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
         if (Phdr::PT_LOAD==phdri[j].p_type) {
+            // Check for general sanity (not necessarily required.)
             if (0xfff & (phdri[j].p_offset | phdri[j].p_paddr
                        | phdri[j].p_align  | phdri[j].p_vaddr) ) {
                 return false;
             }
-            if (0 < j) {
-                unsigned const org = (0u - phdri[j].p_align) &
-                    (-1 + phdri[j].p_align +
-                        phdri[j-1].p_filesz + phdri[j-1].p_offset);
-                unsigned const loc = (0u - phdri[j].p_align) &
-                    (-1 + phdri[j].p_align + phdri[j].p_offset);
-                if (org!=loc) {
-                    return false;
-                }
+            if (phys_lo > phdri[j].p_paddr) {
+                phys_lo = phdri[j].p_paddr;
+            }
+            if (phys_hi < (phdri[j].p_filesz + phdri[j].p_paddr)) {
+                phys_hi = (phdri[j].p_filesz + phdri[j].p_paddr);
             }
             ++n_ptload;
-            sz_ptload = phdri[j].p_filesz + phdri[j].p_offset - phdri[0].p_offset;
         }
     }
+    paddr_min = phys_lo;
+    sz_ptload = phys_hi - phys_lo;
     return 0 < n_ptload;
 }
 
@@ -231,9 +231,29 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     fo->write(&ehdro, sizeof(ehdro)); fo_off+= sizeof(ehdro);
     fo->write(shdro, sizeof(shdro)); fo_off+= sizeof(shdro);
 
+// Notice overlap [containment] of physical PT_LOAD[2] into PTLOAD[1]
+// in this vmlinux for x86_64 from Fedora Core 6 on 2007-01-07:
+//Program Headers:
+//  Type           Offset             VirtAddr           PhysAddr
+//                 FileSiz            MemSiz              Flags  Align
+//  LOAD           0x0000000000200000 0xffffffff80200000 0x0000000000200000
+//                 0x000000000034bce8 0x000000000034bce8  R E    200000
+//  LOAD           0x000000000054c000 0xffffffff8054c000 0x000000000054c000
+//                 0x00000000000ed004 0x00000000001702a4  RWE    200000
+//  LOAD           0x0000000000800000 0xffffffffff600000 0x00000000005f5000
+//                 0x0000000000000c08 0x0000000000000c08  RWE    200000
+//  NOTE           0x0000000000000000 0x0000000000000000 0x0000000000000000
+//                 0x0000000000000000 0x0000000000000000  R      8
+// Therefore we must "compose" the convex hull to be loaded.
+
     ph.u_len = sz_ptload;
-    fi->seek(phdri[0].p_offset, SEEK_SET);
-    fi->readx(ibuf, ph.u_len);
+    memset(ibuf, 0, sz_ptload);
+    for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
+        if (Phdr::PT_LOAD==phdri[j].p_type) {
+            fi->seek(phdri[j].p_offset, SEEK_SET);
+            fi->readx(ibuf + (phdri[j].p_paddr - paddr_min), phdri[j].p_filesz);
+        }
+    }
     checkAlreadyPacked(ibuf + ph.u_len - 1024, 1024);
 
     // prepare filter
@@ -597,7 +617,32 @@ void PackVmlinuxI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUX990",
-              ph.first_offset_found == 1 ? "LINUX991" : "",
+              ((ph.first_offset_found == 1) ? "LINUX991" : ""),
+              "LINUX992,IDENTSTR,UPX1HEAD", NULL);
+}
+
+void PackVmlinuxAMD64::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(stub_amd64_linux_kernel_vmlinux, sizeof(stub_amd64_linux_kernel_vmlinux));
+    addLoader("LINUX000",
+              (0x40==(0xf0 & ft->id)) ? "LXCKLLT1" : (ft->id ? "LXCALLT1" : ""),
+              "LXMOVEUP",
+              getDecompressorSections(),
+              NULL
+             );
+    if (ft->id) {
+        assert(ft->calls > 0);
+        if (0x40==(0xf0 & ft->id)) {
+            addLoader("LXCKLLT9", NULL);
+        }
+        else {
+            addLoader("LXCALLT9", NULL);
+        }
+        addFilter32(ft->id);
+    }
+    addLoader("LINUX990",
+              ((ph.first_offset_found == 1) ? "LINUX991" : ""),
               "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
@@ -647,26 +692,56 @@ unsigned PackVmlinuxI386::write_vmlinux_head(
     Shdr *const stxt
 )
 {
-    // ENTRY_POINT
-    fo->write(&stub_i386_linux_kernel_vmlinux_head[0],
-        sizeof(stub_i386_linux_kernel_vmlinux_head)-2*(1+ 4) +1);
-    U32 tmp_u32 = ehdri.e_entry; fo->write(&tmp_u32, 4);
-
     // COMPRESSED_LENGTH
-    fo->write(&stub_i386_linux_kernel_vmlinux_head[
-        sizeof(stub_i386_linux_kernel_vmlinux_head)-(1+ 4)], 1);
-    tmp_u32 = ph.c_len;      fo->write(&tmp_u32, 4);
+    fo->write(&stub_i386_linux_kernel_vmlinux_head[0],
+        sizeof(stub_i386_linux_kernel_vmlinux_head)-(1+ 4) +1);
+    U32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
 
     stxt->sh_size += sizeof(stub_i386_linux_kernel_vmlinux_head);
 
     return sizeof(stub_i386_linux_kernel_vmlinux_head);
 }
 
+unsigned PackVmlinuxAMD64::write_vmlinux_head(
+    OutputFile *const fo,
+    Shdr *const stxt
+)
+{
+    // COMPRESSED_LENGTH
+    fo->write(&stub_amd64_linux_kernel_vmlinux_head[0],
+        sizeof(stub_amd64_linux_kernel_vmlinux_head)-(1+ 4) +1);
+    U32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
+printf("  Compressed length=0x%x\n", ph.c_len);
+printf("UnCompressed length=0x%x\n", ph.u_len);
+
+    stxt->sh_size += sizeof(stub_amd64_linux_kernel_vmlinux_head);
+
+    return sizeof(stub_amd64_linux_kernel_vmlinux_head);
+}
+
 void PackVmlinuxARM::defineDecompressorSymbols()
 {
+    super::defineDecompressorSymbols();
     linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
     linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
     linker->defineSymbol("METHOD", ph.method);
+}
+
+void PackVmlinuxI386::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    linker->defineSymbol("ENTRY_POINT", phdri[0].p_paddr);
+    linker->defineSymbol("PHYSICAL_START", phdri[0].p_paddr);
+}
+
+void PackVmlinuxAMD64::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    // We assume a 32-bit boot loader, so we use the 32-bit convention
+    // of "enter at the beginning" (startup_32).  The 64-bit convention
+    // would be to use ehdri.e_entry (startup_64).
+    linker->defineSymbol("ENTRY_POINT", phdri[0].p_paddr);
+    linker->defineSymbol("PHYSICAL_START", phdri[0].p_paddr);
 }
 
 unsigned PackVmlinuxARM::write_vmlinux_head(
@@ -959,51 +1034,6 @@ Linker* PackVmlinuxAMD64::newLinker() const
 }
 
 
-void PackVmlinuxAMD64::buildLoader(const Filter *ft)
-{
-    // prepare loader
-    initLoader(stub_amd64_linux_kernel_vmlinux, sizeof(stub_amd64_linux_kernel_vmlinux));
-    addLoader("LINUX000",
-              (0x40==(0xf0 & ft->id)) ? "LXCKLLT1" : (ft->id ? "LXCALLT1" : ""),
-              "LXMOVEUP",
-              getDecompressorSections(),
-              NULL
-             );
-    if (ft->id) {
-        assert(ft->calls > 0);
-        if (0x40==(0xf0 & ft->id)) {
-            addLoader("LXCKLLT9", NULL);
-        }
-        else {
-            addLoader("LXCALLT9", NULL);
-        }
-        addFilter32(ft->id);
-    }
-    addLoader("LINUX990,IDENTSTR,UPX1HEAD", NULL);
-}
-
-
-unsigned PackVmlinuxAMD64::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
-)
-{
-    // ENTRY_POINT
-    fo->write(&stub_amd64_linux_kernel_vmlinux_head[0],
-        sizeof(stub_amd64_linux_kernel_vmlinux_head)-2*(1+ 4) +1);
-    unsigned const t = BeLePolicy::get32(&ehdri.e_entry);
-    U32 tmp_u32; tmp_u32 = t;
-    fo->write(&tmp_u32, 4);
-
-    // COMPRESSED_LENGTH
-    fo->write(&stub_amd64_linux_kernel_vmlinux_head[
-        sizeof(stub_amd64_linux_kernel_vmlinux_head)-(1+ 4)], 1);
-    tmp_u32 = ph.c_len;      fo->write(&tmp_u32, 4);
-
-    stxt->sh_size += sizeof(stub_amd64_linux_kernel_vmlinux_head);
-
-    return sizeof(stub_amd64_linux_kernel_vmlinux_head);
-}
 
 
 // instantiate instances

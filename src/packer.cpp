@@ -1394,6 +1394,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
             if (compress(i_ptr, i_len, o_tmp, cconf))
             {
                 unsigned lsize = 0;
+                // findOverlapOperhead() might be slow; omit if already too big.
                 if (ph.c_len + lsize + hdr_c_len <= best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                 {
                     // get results
