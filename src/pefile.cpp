@@ -968,6 +968,10 @@ void PeFile::processTls(Interval *iv) // pass 1
     memcpy(otls + sizeof(tls),ibuf + tlsdatastart,sotls - sizeof(tls));
     tlsindex = tlsp->tlsindex - ih.imagebase;
     info("TLS: %u bytes tls data and %u relocations added",sotls - (unsigned) sizeof(tls),iv->ivnum);
+
+    // makes sure tls index is zero after decompression
+    if (tlsindex && tlsindex < ih.imagesize)
+        set_le32(ibuf + tlsindex, 0);
 }
 
 void PeFile::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 2

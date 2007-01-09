@@ -95,6 +95,20 @@ struct Dyn
 __attribute_packed;
 
 
+template <class TElfITypes>
+struct External_Note
+{
+    typedef typename TElfITypes::Word   Word;
+
+    Word xn_namesz;  // includes terminating '\0'
+    Word xn_datasz;
+    Word xn_type;
+    //char xn_name[N];  // terminate with '\0'
+    //char xn_data[M];  // aligned to 0 mod 4
+}
+__attribute_packed;
+
+
 } // namespace N_Elf
 
 
@@ -282,6 +296,7 @@ struct ElfClass_32
     typedef N_Elf32::Shdr<ElfITypes> Shdr;
     typedef N_Elf  ::Dyn <ElfITypes> Dyn;
     typedef N_Elf32::Sym <ElfITypes> Sym;
+    typedef N_Elf  ::External_Note<ElfITypes> External_Note;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -316,6 +331,7 @@ struct ElfClass_64
     typedef N_Elf64::Shdr<ElfITypes> Shdr;
     typedef N_Elf  ::Dyn <ElfITypes> Dyn;
     typedef N_Elf64::Sym <ElfITypes> Sym;
+    typedef N_Elf  ::External_Note<ElfITypes> External_Note;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -353,36 +369,42 @@ typedef ElfClass_Host32::Phdr Elf32_Phdr;
 typedef ElfClass_Host32::Shdr Elf32_Shdr;
 typedef ElfClass_Host32::Dyn  Elf32_Dyn;
 typedef ElfClass_Host32::Sym  Elf32_Sym;
+typedef ElfClass_Host32::External_Note  Elf32_External_Note;
 
 typedef ElfClass_Host64::Ehdr Elf64_Ehdr;
 typedef ElfClass_Host64::Phdr Elf64_Phdr;
 typedef ElfClass_Host64::Shdr Elf64_Shdr;
 typedef ElfClass_Host64::Dyn  Elf64_Dyn;
 typedef ElfClass_Host64::Sym  Elf64_Sym;
+typedef ElfClass_Host64::External_Note  Elf64_External_Note;
 
 typedef ElfClass_BE32::Ehdr   Elf_BE32_Ehdr;
 typedef ElfClass_BE32::Phdr   Elf_BE32_Phdr;
 typedef ElfClass_BE32::Shdr   Elf_BE32_Shdr;
 typedef ElfClass_BE32::Dyn    Elf_BE32_Dyn;
 typedef ElfClass_BE32::Sym    Elf_BE32_Sym;
+typedef ElfClass_BE32::External_Note    Elf_BE32_External_Note;
 
 typedef ElfClass_BE64::Ehdr   Elf_BE64_Ehdr;
 typedef ElfClass_BE64::Phdr   Elf_BE64_Phdr;
 typedef ElfClass_BE64::Shdr   Elf_BE64_Shdr;
 typedef ElfClass_BE64::Dyn    Elf_BE64_Dyn;
 typedef ElfClass_BE64::Sym    Elf_BE64_Sym;
+typedef ElfClass_BE64::External_Note    Elf_BE64_External_Note;
 
 typedef ElfClass_LE32::Ehdr   Elf_LE32_Ehdr;
 typedef ElfClass_LE32::Phdr   Elf_LE32_Phdr;
 typedef ElfClass_LE32::Shdr   Elf_LE32_Shdr;
 typedef ElfClass_LE32::Dyn    Elf_LE32_Dyn;
 typedef ElfClass_LE32::Sym    Elf_LE32_Sym;
+typedef ElfClass_LE32::External_Note    Elf_LE32_External_Note;
 
 typedef ElfClass_LE64::Ehdr   Elf_LE64_Ehdr;
 typedef ElfClass_LE64::Phdr   Elf_LE64_Phdr;
 typedef ElfClass_LE64::Shdr   Elf_LE64_Shdr;
 typedef ElfClass_LE64::Dyn    Elf_LE64_Dyn;
 typedef ElfClass_LE64::Sym    Elf_LE64_Sym;
+typedef ElfClass_LE64::External_Note    Elf_LE64_External_Note;
 
 
 #endif /* already included */

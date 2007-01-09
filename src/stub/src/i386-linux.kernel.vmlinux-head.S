@@ -36,6 +36,8 @@
         movl %cs,%eax; addl $1<<3,%eax  # the next segment after %cs
         movl %eax,%ds
         movl %eax,%es
+        movl %eax,%fs
+        movl %eax,%gs
         leal 0x9000(%esi),%ecx  # 0x99000 typical
         movl %ecx,-8(%ecx)  # 32-bit offset for stack pointer
         movl %eax,-4(%ecx)  # segment for stack pointer
@@ -53,9 +55,7 @@
 
         pushl $0; popf  # subsumes "cli; cld"; also clears NT for buggy BIOS
 
-        push %cs
-// PackVmlinuxI386::pack knows the format of the next two instructions.
-        movl $ ENTRY_POINT,%eax  # destination of uncompression (and entry point)
+// PackVmlinuxI386::pack knows the format of the following instruction.
         call COMPRESSED_LENGTH
 // Compressed data appears >here<, then decompressor.
 

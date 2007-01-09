@@ -57,7 +57,7 @@ protected:
     typedef typename ElfClass::Sym  Sym;
 
 public:
-    PackVmlinuxBase(InputFile *, unsigned, unsigned, unsigned);
+    PackVmlinuxBase(InputFile *, unsigned, unsigned, unsigned, char const *);
     virtual ~PackVmlinuxBase();
     virtual int getVersion() const { return 13; }
 
@@ -65,9 +65,11 @@ protected:
     unsigned int const my_e_machine;
     unsigned char const my_elfclass;
     unsigned char const my_elfdata;
+    char const *const my_boot_label;
 
     int n_ptload;
     unsigned sz_ptload;
+    unsigned paddr_min;
     Phdr *phdri; // from input file
     Shdr *shdri; // from input file
     char *shstrtab; // from input file
@@ -97,7 +99,7 @@ class PackVmlinuxI386 : public PackVmlinuxBase<ElfClass_LE32>
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
     PackVmlinuxI386(InputFile *f) : super(f, Ehdr::EM_386,
-        Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB) { }
+        Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "startup_32") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
     virtual const char *getName() const { return "vmlinux/386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinux"; }
@@ -106,6 +108,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
@@ -121,7 +124,7 @@ class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
     PackVmlinuxARM(InputFile *f) : super(f, Ehdr::EM_ARM,
-        Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB) { }
+        Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
     virtual const char *getName() const { return "vmlinux/ARM"; }
     virtual const char *getFullName(const options_t *) const { return "ARM-linux.kernel.vmlinux"; }
@@ -130,10 +133,10 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
-    virtual void defineDecompressorSymbols();
     virtual unsigned write_vmlinux_head(
         OutputFile *const fo,
         Shdr *const stxt
@@ -146,7 +149,7 @@ class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
     typedef PackVmlinuxBase<ElfClass_LE64> super;
 public:
     PackVmlinuxAMD64(InputFile *f) : super(f, Ehdr::EM_X86_64,
-        Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB) { }
+        Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "startup_32") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
     virtual const char *getName() const { return "vmlinux/AMD64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-linux.kernel.vmlinux"; }
@@ -155,6 +158,7 @@ public:
 
 protected:
     virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
