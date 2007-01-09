@@ -27,8 +27,16 @@
 ;
 */
 
+#undef amd64
+#undef i386
+#undef i486
+#undef i586
+#undef x86_64
+
                 .altmacro
                 .intel_syntax noprefix
+                // FIXME: enabing this causes stub changes ???
+                //.arch   i386, nojumps
                 .code32
 
 .macro          section name
@@ -38,6 +46,7 @@
 
 .macro          CPU     id
                 .ifc    \id, 386
+                // FIXME: enabing this causes stub changes ???
                 //.arch   i386, nojumps
                 .endif
                 .ifc    \id, 486

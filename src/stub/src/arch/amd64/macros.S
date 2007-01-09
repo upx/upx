@@ -27,7 +27,13 @@
 ;
 */
 
-                //.altmacro
+#undef amd64
+#undef i386
+#undef i486
+#undef i586
+#undef x86_64
+
+                //.altmacro       // not supported by x86_64-linux-as
                 .code64
 
 .macro          section name

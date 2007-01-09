@@ -27,8 +27,15 @@
 ;
 */
 
+#undef amd64
+#undef i386
+#undef i486
+#undef i586
+#undef x86_64
+
                 .altmacro
                 .intel_syntax noprefix
+                .arch   i8086, nojumps
                 .code16
 
 .macro          section name
