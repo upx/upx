@@ -28,6 +28,7 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+
 #include "arch/i386/macros.S"
 
 #define PAGE_SIZE ( 1<<12)

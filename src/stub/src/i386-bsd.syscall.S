@@ -28,8 +28,8 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
-        .code32
-        .intel_syntax noprefix
+
+#include "arch/i386/macros.S"
 
 #define SYS_mmap    197
 #define SYS_syscall 198

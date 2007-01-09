@@ -32,7 +32,6 @@
 #define         CJT16   1
 #include        "arch/i086/macros.S"
 
-                CPU     8086
 
 /*
 ; =============

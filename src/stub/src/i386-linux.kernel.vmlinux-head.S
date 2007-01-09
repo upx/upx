@@ -24,6 +24,10 @@
 ;  John Reiser
 ;  <jreiser@users.sourceforge.net>
 */
+
+#include "arch/i386/macros.S"
+        .att_syntax prefix
+
 // In: %esi=0x90000 setup data "real_mode pointer"
         #cli  # this must be true already
 ////    .byte 0xf1  # qemu debug only

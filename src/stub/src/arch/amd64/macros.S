@@ -33,7 +33,7 @@
 #undef i586
 #undef x86_64
 
-                //.altmacro       // not supported by x86_64-linux-as
+                //.altmacro       // not supported by x86_64-linux-as-2.15
                 .code64
 
 .macro          section name

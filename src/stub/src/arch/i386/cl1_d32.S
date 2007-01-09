@@ -45,7 +45,7 @@ section CL1SMA1B
                 call edx
 section CL1FAS1B
                 add ebx, ebx
-                jnz 1f
+                jnzs 1f
                 call edx
 1:
 section CL1GET1B
@@ -56,7 +56,7 @@ section CL1ENTER
 section CL1SMA10
 getbit_cl1:  // appears only in small version
                 add ebx, ebx
-                jz reload_cl1
+                jzs reload_cl1
                 ret
 section CL1RLOAD
 reload_cl1:  // for both small and fast version
@@ -72,13 +72,13 @@ section CL1WID02
                 adc ecx,ecx
                 // getbit
 section CL1WID03
-                jc lit89_cl1
+                jcs lit89_cl1
                 // getbit
 section CL1WID04
                 adc ecx,ecx
                 // getbit
 section CL1WID05
-                jc lit10_12_cl1
+                jcs lit10_12_cl1
                 // getbit
 section CL1WID06
                 adc ecx,ecx             // 0..7; -1+ (width/2) of length
@@ -91,13 +91,13 @@ section CL1WID07
 section CL1WID08
                 adc eax,eax
                 sub ecx, 1
-                jnc litwidth_cl1
+                jncs litwidth_cl1
                 lea ecx,[17 -2 + eax]   // 17: predecessors; ss22 returns 2..
                 cmp eax,0xffff-(17 -2)
-                jb litgo_cl1            // not maximal range of search
+                jbs litgo_cl1           // not maximal range of search
                 lea eax,[esi + ecx]     // esi after copy
                 push eax                // "parameter" to maxlit_cl1
-                jmp maxlit_cl1         // can have another literal afterwards
+                jmp maxlit_cl1          // can have another literal afterwards
 lit13_16_cl1:
                 // getbit
 section CL1WID09
@@ -109,7 +109,7 @@ section CL1WID10
                 jmps litmov_cl1
 lit10_12_cl1:
                 test ecx,ecx
-                jz lit13_16_cl1
+                jzs lit13_16_cl1
                 inc ecx         // 2,3,4
 lit89_cl1:
                 add ecx, 8
@@ -126,24 +126,24 @@ top_cl1:                // In: 0==ecx
                 lea eax,[1+ ecx]        // 1: the msb of offset or large width
                 // getbit
 section CL1TOP01
-                jnc match_cl1
+                jncs match_cl1
                 // getbit
 section CL1TOP02
-                jc lit1_cl1
+                jcs lit1_cl1
                 // getbit
 section CL1TOP03
-                jc lit2_cl1
+                jcs lit2_cl1
                 // getbit
 section CL1TOP04
-                jc lit3_cl1
+                jcs lit3_cl1
                 add ecx, 2
                 // getbit
 section CL1TOP05
-                jc lit45_cl1
+                jcs lit45_cl1
                 inc ecx
                 // getbit
 section CL1TOP06
-                jc lit67_cl1
+                jcs lit67_cl1
                 jmp widelit_cl1
 lit67_cl1:
 lit45_cl1:
@@ -152,11 +152,11 @@ section CL1TOP07
                 adc ecx,ecx
 litmov_cl1:
                 .byte 0xD1,((3<<6)|(5<<3)|1)    //shr ecx,1
-                jnc litmovb_cl1
+                jncs litmovb_cl1
                 movsb
 litmovb_cl1:
                 .byte 0xD1,((3<<6)|(5<<3)|1)    //shr ecx,1
-                jnc litmovw_cl1
+                jncs litmovw_cl1
                 movsw
 litmovw_cl1:
                 rep
@@ -179,13 +179,13 @@ section CL1OFF01
                 adc eax,eax
                 // getbit
 section CL1OFF02
-                jnc offset_cl1
+                jncs offset_cl1
                 sub eax, 3         // 2.. ==> -1[prev], (0,,<<8)|byte
-                jc prev_off_cl1
+                jcs prev_off_cl1
                 shl eax,8
                 lodsb
                 xor eax, ~0
-                jz done_cl1             // EOF
+                jzs done_cl1             // EOF
                 mov ebp,eax             // -offset
 prev_off_cl1:           // 1st 2 bits encode (5<=len),2,3,4
                 // getbit
@@ -194,7 +194,7 @@ section CL1OFF03
                 // getbit
 section CL1OFF04
                 adc ecx,ecx
-                jnz wrinkle_cl1
+                jnzs wrinkle_cl1
 section CL1LEN00
                 inc ecx         // 1: the msb
 mlen_cl1:
@@ -203,7 +203,7 @@ section CL1LEN01
                 adc ecx,ecx
                 // getbit
 section CL1LEN02
-                jnc mlen_cl1
+                jncs mlen_cl1
                 add ecx, 2         // 2.. ==> 4..
 section CL1COPY0
 wrinkle_cl1:
@@ -216,11 +216,11 @@ copy_cl1:
                 ja ripple_cl1
 maxlit_cl1: // literal copy cannot overlap; omit test for ripple
                 .byte 0xD1,((3<<6)|(5<<3)|1)    //shr ecx,1
-                jnc maxlitb_cl1
+                jncs maxlitb_cl1
                 movsb
 maxlitb_cl1:
                 .byte 0xD1,((3<<6)|(5<<3)|1)    //shr ecx,1
-                jnc maxlitw_cl1
+                jncs maxlitw_cl1
                 movsw
 maxlitw_cl1:
                 rep

@@ -29,7 +29,6 @@
 
 #include        "arch/i386/macros.S"
 
-                CPU     386
 
 section         WCLEMAIN
                 .byte   0xbf            // mov edi, 'alib'

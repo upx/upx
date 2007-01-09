@@ -35,7 +35,7 @@
 
                 .altmacro
                 .intel_syntax noprefix
-                .arch   i8086, nojumps
+                .arch   i8086, jumps
                 .code16
 
 .macro          section name
@@ -43,13 +43,12 @@
                 .code16
 .endm
 
-
 .macro          CPU     id
                 .ifc    \id, 8086
-                .arch   i8086, nojumps
+                .arch   i8086, jumps
                 .endif
                 .ifc    \id, 286
-                .arch   i286, nojumps
+                .arch   i286, jumps
                 .endif
 .endm
 
@@ -121,8 +120,12 @@
                 .byte   0x7f, \target - . - 1
 .endm
 
+#define         jbes    jnas
+#define         jbs     jcs
 #define         jes     jzs
+#define         jnbs    jncs
 #define         jnes    jnzs
+
 
 /*
 ; =============

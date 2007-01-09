@@ -106,7 +106,7 @@ copy_match_n2d:
                 sbb     cx, -2
 
                 sub     ax, bp
-                jb      handle_underflow_n2d
+                jbs     handle_underflow_n2d
                 mov     ds, ax
                 lea     ax, [bx + di]
 ds_ok_n2d:

@@ -35,8 +35,7 @@
 
                 .altmacro
                 .intel_syntax noprefix
-                // FIXME: enabing this causes stub changes ???
-                //.arch   i386, nojumps
+                .arch   i386, jumps
                 .code32
 
 .macro          section name
@@ -46,11 +45,10 @@
 
 .macro          CPU     id
                 .ifc    \id, 386
-                // FIXME: enabing this causes stub changes ???
-                //.arch   i386, nojumps
+                .arch   i386, jumps
                 .endif
                 .ifc    \id, 486
-                .arch   i486, nojumps
+                .arch   i486, jumps
                 .endif
 .endm
 
@@ -122,9 +120,12 @@
                 .byte   0x7f, \target - . - 1
 .endm
 
-#define         jes     jzs
-#define         jnes    jnzs
 #define         jbes    jnas
+#define         jbs     jcs
+#define         jes     jzs
+#define         jnbs    jncs
+#define         jnes    jnzs
+
 
 /*
 ;; =============
@@ -473,10 +474,10 @@ section LXMRU046 // 0==n_mru
         sub ebp, ebx
 
 section LXJCC020 // 0==n_mru, or Jcc excluded ('sub' of equals clears Carry)
-        jne unfcount
+        jnes unfcount
 section LXJCC021 // 0!=n_mru and Jcc participates// must set Carry
         sub ebp, 1  // set Carry iff in range
-        jnb unfcount
+        jnbs unfcount
 
 section LXJCC023 // found Jcc// re-swap 0x8Y opcode and 0x0f prefix
         mov [edi -1], bl  // 0x0f prefix
@@ -509,8 +510,10 @@ section LXUNF487 // 0!=n_mru && >=486
         jncs unf_store  // do not apply mru
 
 section LXMRU065 // 0!=n_mru
+    CPU     486         // (use faster but longer shr opcode sequence)
         shr __jc, 1  // eax= jc, or mru index
-        jnc mru4  // not 1st time for this jc
+    CPU     386
+        jncs mru4  // not 1st time for this jc
 section MRUBYTE3
         dec __hand_l
 section MRUARB30
@@ -655,20 +658,20 @@ section LXCALJMP
 
 // only CALL, or only JMP, is filtered
 section LXCALL00 // 0==n_mru
-        je lxunf
+        jes lxunf
 section LXCALL01 // 0!=n_rmu
         sub eax, 1  // set Carry iff in range
 
 section LXCJ2MRU // 0==n_mru, or apply mru to all that are filtered here
-        jb lxunf  // only Carry (Borrow) matters
+        jbs lxunf  // only Carry (Borrow) matters
 section LXCJ4MRU // 0!=n_mru, but apply mru only to subset of filtered here
-        jnb unfcount  // was not filtered anyway: do not unfilter
+        jnbs unfcount  // was not filtered anyway: do not unfilter
 
 //we will unfilter, and 0!=n_mru, but should we apply mru?
 section LXCJ6MRU // apply mru to JMP  only (0xFF==al)
-        jpe lxct3  // jump if even number of 1 bits in al
+        jps lxct3  // jump if even number of 1 bits in al
 section LXCJ7MRU // apply mru to CALL only (0xFE==al)
-        jpo lxct3  // jump if odd  number of 1 bits in al
+        jnps lxct3  // jump if odd  number of 1 bits in al
 section LXCJ8MRU // do not apply mru to one or both
         clc
 lxct3:

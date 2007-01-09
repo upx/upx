@@ -30,10 +30,9 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+
 #include "arch/i386/macros.S"
 
-
-//              CPU     386
 
 /*************************************************************************
 // program entry point

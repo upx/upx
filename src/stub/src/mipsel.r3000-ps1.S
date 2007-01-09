@@ -29,7 +29,7 @@
 ;  Jens Medoch
 ;  <jssg@users.sourceforge.net>
 ;
- */
+*/
 
             .set    mips1
             .set    noreorder

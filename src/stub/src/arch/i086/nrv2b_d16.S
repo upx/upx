@@ -52,9 +52,9 @@ section         NRVDDONE
 section         NRVDRETU
                 jcxz    decomp_ret_n2b
 section         NRVDECO1
-                jnb     loop1_n2b
+                jnbs    loop1_n2b
                 sub     cx, 3
-                jb      axbp_n2b
+                jbs     axbp_n2b
                 mov     ah, cl
                 lodsb
                 not     ax
@@ -67,7 +67,7 @@ axbp_n2b:
                 inc     cx
 loop2_n2b:
                 call    getbit_cx_n2b
-                jnb     loop2_n2b
+                jnbs    loop2_n2b
                 inc     cx
                 inc     cx
 copy_match_n2b:

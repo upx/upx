@@ -32,6 +32,7 @@
 
 #include "arch/i386/macros.S"
 
+
 /*
 ; =============
 ; ============= ENTRY POINT
@@ -56,7 +57,7 @@ print_hex:  // %eax in " %.8x"; ebx= &putstr;  clobbers edi,edx,ecx
         mov edi,esp
         mov edx,eax
         cld
-        
+
         mov al,' '
         stosb
         mov ecx,8

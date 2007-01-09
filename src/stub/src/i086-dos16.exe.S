@@ -30,10 +30,8 @@
 #define         EXE     1
 #include        "arch/i086/macros.S"
 
-                CPU     8086
 
 section         DEVICEENTRY
-
                 .long   -1
                 .short  attribute
                 .short  strategy        /* .sys header */
