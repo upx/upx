@@ -912,7 +912,7 @@ PackLinuxElf64amd::canPack()
 
     // The first PT_LOAD64 must cover the beginning of the file (0==p_offset).
     unsigned const e_phnum = get_native16(&ehdr->e_phnum);
-    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(buf + e_phoff);
+    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(buf + (unsigned) e_phoff);
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
             return false;

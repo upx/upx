@@ -112,7 +112,7 @@ protected:
     }
     __attribute_packed;
 
-    typedef struct bss_nfo
+    struct bss_nfo
     {
         LE16    hi1, op1, lo1, op2;
         LE16    hi2, op3, lo2, op4;

@@ -195,8 +195,8 @@ PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     BE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);
-    len += (3& -len) + sizeof(disp);
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + sizeof(disp);
     set_be32(&disp, 4+ len - sz_mach_headers);  // 4: sizeof(instruction)
     fo->write(&disp, sizeof(disp));
 

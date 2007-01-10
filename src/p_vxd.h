@@ -59,7 +59,7 @@ protected:
     virtual void encodeFixups();
     virtual void decodeFixups();
 
-    virtual void encodeImage(const Filter *ft);
+    virtual void encodeImage(Filter *ft);
     virtual void decodeImage();
 };
 

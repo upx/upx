@@ -204,7 +204,7 @@ PackLinuxI386::pack4(OutputFile *fo, Filter &ft)
         ((elfout.ehdr.e_phnum==3) ? (unsigned) elfout.phdr[2].p_memsz : 0) ;
     unsigned nw = fo->getBytesWritten();
     elfout.phdr[0].p_filesz = nw;
-    nw = -(-elfout.phdr[0].p_align & -nw);  // ALIGN_UP
+    nw = 0u-((0u-elfout.phdr[0].p_align) & (0u-nw));  // ALIGN_UP
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
     set_stub_brk(&elfout.phdr[1], nw + elfout.phdr[0].p_vaddr);
 

@@ -53,7 +53,7 @@ static const
 #define K0_BS           (0x80000000)
 #define K1_BS           (0xa0000000)
 #define EXE_BS          (ih.epc & K0_BS)
-#define FIX_PSVR        (K1_BS - EXE_BS) + (PS_HDR_SIZE - HD_CODE_OFS)
+#define FIX_PSVR        ((K1_BS - EXE_BS) + (PS_HDR_SIZE - HD_CODE_OFS))
 
 // lui / addiu
 #define MIPS_HI(a)      (((a) >> 16) + (((a) & 0x8000) >> 15))
@@ -152,7 +152,7 @@ bool PackPs1::readBkupHeader()
 }
 
 #define INIT_BH_BKUP(p, l)  {(p)->id = '1'; (p)->len = l;}
-#define ADLER16(a)          ((a) >> 16 ^ ((a) & 0xffff))
+#define ADLER16(a)          (((a) >> 16) ^ ((a) & 0xffff))
 
 void PackPs1::putBkupHeader(const unsigned char *src, unsigned char *dst, unsigned *len)
 {
@@ -390,7 +390,7 @@ void PackPs1::buildLoader(const Filter *)
 #define REG1(x)       (((x) >> 5) & 0x1f)
 #define REG2(x)       ((x) & 0x1f)
 
-#define MIPS_IMM(a,b) (((a) - (((b) & 0x8000) >> 15) << 16) | (b))
+#define MIPS_IMM(a,b) ((((a) - (((b) & 0x8000) >> 15)) << 16) | (b))
 
 // Type
 #define REGIMM  1

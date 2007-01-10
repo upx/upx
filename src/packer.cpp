@@ -1055,15 +1055,22 @@ void Packer::initLoader(const void *pdata, int plen, int small)
     linker->addSection("IDENTSTR", ident, size, 0);
 }
 
+#if 1 && (ACC_CC_BORLANDC)
+#else
 void Packer::addLoader(const char *s)
 {
     if (s)
         linker->addLoader(s);
 }
+#endif
 
-// provide specialization for [T = char]
+#if 1 && (ACC_CC_BORLANDC)
+void __acc_cdecl_va Packer::addLoader(const char *s, ...)
+#else
+// provide specialization for [T = const char *]
 template <>
 void __acc_cdecl_va Packer::addLoader<char>(const char *s, ...)
+#endif
 {
     va_list ap;
 

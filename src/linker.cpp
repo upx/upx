@@ -414,7 +414,7 @@ int ElfLinker::addLoader(const char *sname)
                 assert(tail);
                 assert(tail != section);
                 unsigned const v = ~0u << section->p2align;
-                if (unsigned const l = ~v & -(tail->offset + tail->size)) {
+                if (unsigned const l = ~v & (0u-(tail->offset + tail->size))) {
                     alignCode(l);
                     tail->size += l;
                 }

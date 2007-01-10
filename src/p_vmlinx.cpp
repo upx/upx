@@ -80,7 +80,7 @@ int PackVmlinuxBase<T>::getStrategy(Filter &/*ft*/)
     // If user specified the filter, then use it (-2==strategy).
     // Else try the first two filters, and pick the better (2==strategy).
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
-};
+}
 
 template <class T>
 int __acc_cdecl_qsort
@@ -251,7 +251,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     for (unsigned j = 0; j < ehdri.e_phnum; ++j) {
         if (Phdr::PT_LOAD==phdri[j].p_type) {
             fi->seek(phdri[j].p_offset, SEEK_SET);
-            fi->readx(ibuf + (phdri[j].p_paddr - paddr_min), phdri[j].p_filesz);
+            fi->readx(ibuf + ((unsigned) phdri[j].p_paddr - paddr_min), phdri[j].p_filesz);
         }
     }
     checkAlreadyPacked(ibuf + ph.u_len - 1024, 1024);
@@ -291,7 +291,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
 
     fo_off += write_vmlinux_head(fo, &shdro[1]);
     fo->write(obuf, txt_c_len); fo_off += txt_c_len;
-    unsigned const a = (shdro[1].sh_addralign -1) & -txt_c_len;
+    unsigned const a = (shdro[1].sh_addralign -1) & (0u-txt_c_len);
     if (0!=a) { // align
         fo_off += a;
         shdro[1].sh_size += a;
@@ -756,7 +756,7 @@ unsigned PackVmlinuxARM::write_vmlinux_head(
     U32 tmp_u32;
     unsigned const t = (0xff000000 &
             BeLePolicy::get32(&stub_arm_linux_kernel_vmlinux_head[4]))
-        | (0x00ffffff & (-1+ ((3+ ph.c_len)>>2)));
+        | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
     tmp_u32 = t;
     fo->write(&tmp_u32, 4);
 
@@ -775,7 +775,7 @@ bool PackVmlinuxARM::has_valid_vmlinux_head()
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];
     if (0xeb==(word1>>24)
-    &&  (0x00ffffff& word1)==(-1+ ((3+ ph.c_len)>>2))) {
+    &&  (0x00ffffff& word1)==(0u - 1 + ((3+ ph.c_len)>>2))) {
         return true;
     }
     return false;

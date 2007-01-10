@@ -35,7 +35,7 @@
 
 class PackW32Pe : public PeFile
 {
-    typedef PeFile super;;
+    typedef PeFile super;
 
 public:
     PackW32Pe(InputFile *f);

@@ -58,7 +58,7 @@ static int F(Filter *f)
     {
         unsigned char buf[256];
         unsigned short wbuf[256];
-        const size_t WW = (size_t)0 - (~(size_t)0) << W_CTO; // ???
+        const size_t WW = (size_t)0 - ((~(size_t)0) << W_CTO); // ???
         memset(wbuf, 0, sizeof(wbuf));
         memset(buf     , 0,       WW);
         memset(buf + WW, 1, 256 - WW);

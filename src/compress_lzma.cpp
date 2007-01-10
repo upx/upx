@@ -169,6 +169,10 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 } // namespace
 
 
+#if (ACC_CC_INTELC) && defined(__linux__)
+#  pragma warning(disable: 424)         // #424: extra ";" ignored
+#endif
+
 #include "C/Common/Alloc.cpp"
 #include "C/Common/CRC.cpp"
 //#include "C/7zip/Common/InBuffer.cpp"
