@@ -156,56 +156,6 @@ section NRV2E
 
 #include "arch/arm/v5a/lzma_d.S"
 
-#if 0  /*{ remind me about parameters for unfilter? */
-section         LXCKLLT9
-                pop     ecx     // MATCH05  len
-                pop     edx     // MATCH04  cto
-                pop     edi     // MATCH03  src
-
-                ckt32   edi, dl // dl has cto8
-/*
-        ;edi: adjust for the difference between 0 origin of buffer at filter,
-        ;and actual origin of destination at unfilter.
-        ;Filter.addvalue is 0: destination origin is unknown at filter time.
-        ;The input data is still relocatable, and address is assigned later
-        ;[as of 2004-12-15 it is 'always' 0x100000].
-*/
-
-section         LXCALLT9
-                pop     ecx     // MATCH05  len
-                pop     edi     // MATCH03  src
-                cjt32   0
-section         LINUX990
-                pop     esi     // MATCH02  restore
-                pop     edi     // MATCH01  restore
-                xor     ebx, ebx        // booting the 1st cpu
-                lret    // MATCH00  set cs
-#endif  /*}*/
-
-section         LXCKLLT9
-        mvn ip,#4
-        bkpt
-
-section         LXCALLT9
-        mvn ip,#5
-        bkpt
-
-section         LINUX990
-        mvn ip,#6
-        bkpt
-        mov pc,lr
-
-section         LINUX991
-        mvn ip,#7
-        bkpt
-#if 0  /*{*/
-                or  ebp, -1        // decompressor assumption
-#endif  /*}*/
-
-section         LINUX992
-        mvn ip,#8
-        bkpt
-
 #include "include/header.S"
 
 // vi:ts=8:et:nowrap
