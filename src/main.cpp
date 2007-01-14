@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 1996-2007 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2007 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -1478,7 +1478,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
-#if 0 && (UPX_VERSION_HEX < 0x020000)
+#if 0 && (UPX_VERSION_HEX < 0x030000)
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);

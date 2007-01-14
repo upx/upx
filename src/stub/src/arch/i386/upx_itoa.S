@@ -3,7 +3,7 @@
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 2002-2006 John F. Reiser
+;  Copyright (C) 2002-2007 John F. Reiser
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 1996-2007 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2007 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -26,8 +26,9 @@
  */
 
 
-#ifndef PEFILE_20060725_H
-#define PEFILE_20060725_H
+#ifndef __UPX_PEFILE_H
+#define __UPX_PEFILE_H
+
 
 /*************************************************************************
 // general/pe handling

@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2006 Laszlo Molnar
+   Copyright (C) 1996-2007 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2007 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -51,7 +51,7 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
-                "    Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006\n"
+                "  Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007\n"
                 "UPX %-10s  Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
 #if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
@@ -427,15 +427,15 @@ void show_version(int x)
     if (v != NULL && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
 #endif
-    fprintf(fp, "Copyright (C) 1996-2006 Markus Franz Xaver Johannes Oberhumer\n");
-    fprintf(fp, "Copyright (C) 1996-2006 Laszlo Molnar\n");
-    fprintf(fp, "Copyright (C) 2000-2006 John F. Reiser\n");
-    fprintf(fp, "Copyright (C) 2002-2006 Jens Medoch\n");
+    fprintf(fp, "Copyright (C) 1996-2007 Markus Franz Xaver Johannes Oberhumer\n");
+    fprintf(fp, "Copyright (C) 1996-2007 Laszlo Molnar\n");
+    fprintf(fp, "Copyright (C) 2000-2007 John F. Reiser\n");
+    fprintf(fp, "Copyright (C) 2002-2007 Jens Medoch\n");
 #if defined(WITH_ZLIB)
-    fprintf(fp, "Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler\n");
+    fprintf(fp, "Copyright (C) 1995" "-2005 Jean-loup Gailly and Mark Adler\n");
 #endif
 #if defined(WITH_LZMA)
-    fprintf(fp, "Copyright (C) 1999-2006 Igor Pavlov\n");
+    fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
 #endif
     fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
 }
