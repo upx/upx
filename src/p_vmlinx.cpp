@@ -1056,7 +1056,6 @@ Linker* PackVmlinuxAMD64::newLinker() const
 
 
 
-
 // instantiate instances
 template class PackVmlinuxBase<ElfClass_LE32>;
 template class PackVmlinuxBase<ElfClass_LE64>;

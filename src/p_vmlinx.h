@@ -127,7 +127,7 @@ public:
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
     virtual const char *getName() const { return "vmlinux/ARM"; }
-    virtual const char *getFullName(const options_t *) const { return "ARM-linux.kernel.vmlinux"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

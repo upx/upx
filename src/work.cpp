@@ -271,23 +271,23 @@ void do_files(int i, int argc, char *argv[])
             unlink_ofile(oname);
             printErr(iname,&e);
             e_exit(EXIT_ERROR);
+        } catch (std::bad_alloc *e) {
+            unlink_ofile(oname);
+            printErr(iname,"out of memory");
+            //delete e;
+            e_exit(EXIT_ERROR);
         } catch (const std::bad_alloc &) {
             unlink_ofile(oname);
             printErr(iname,"out of memory");
             e_exit(EXIT_ERROR);
-        } catch (std::bad_alloc *e) {
+        } catch (std::exception *e) {
             unlink_ofile(oname);
-            printErr(iname,"out of memory");
-            delete e;
+            printUnhandledException(iname,e);
+            //delete e;
             e_exit(EXIT_ERROR);
         } catch (const std::exception &e) {
             unlink_ofile(oname);
             printUnhandledException(iname,&e);
-            e_exit(EXIT_ERROR);
-        } catch (std::exception *e) {
-            unlink_ofile(oname);
-            printUnhandledException(iname,e);
-            delete e;
             e_exit(EXIT_ERROR);
         } catch (...) {
             unlink_ofile(oname);

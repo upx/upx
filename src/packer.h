@@ -226,14 +226,17 @@ protected:
     virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
     virtual void initLoader(const void *pdata, int plen, int small=-1);
-#if 1 && (ACC_CC_BORLANDC)
-    void __acc_cdecl_va addLoader(const char *, ...);
-#elif 1 && (ACC_CC_GNUC >= 0x040100)
-    void addLoader(const char *);
-    template <class T> void __acc_cdecl_va addLoader(const T *, ...) __attribute__((__sentinel__));
+#define C const char *
+    void addLoader(C); void addLoader(C,C); void addLoader(C,C,C);
+    void addLoader(C,C,C,C); void addLoader(C,C,C,C,C);
+    void addLoader(C,C,C,C,C,C); void addLoader(C,C,C,C,C,C,C);
+    void addLoader(C,C,C,C,C,C,C,C); void addLoader(C,C,C,C,C,C,C,C,C);
+    void addLoader(C,C,C,C,C,C,C,C,C,C);
+#undef C
+#if 1 && (ACC_CC_GNUC >= 0x040100)
+    void __acc_cdecl_va addLoaderVA(const char *s, ...) __attribute__((__sentinel__));
 #else
-    void addLoader(const char *);
-    template <class T> void __acc_cdecl_va addLoader(const T *, ...);
+    void __acc_cdecl_va addLoaderVA(const char *s, ...);
 #endif
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
@@ -307,13 +310,6 @@ private:
     Packer(const Packer &); // {}
     Packer& operator= (const Packer &); // { return *this; }
 };
-
-
-#if 1 && (ACC_CC_BORLANDC)
-#else
-template <>
-void __acc_cdecl_va Packer::addLoader<char>(const char *, ...);
-#endif
 
 
 #endif /* already included */

@@ -1055,30 +1055,40 @@ void Packer::initLoader(const void *pdata, int plen, int small)
     linker->addSection("IDENTSTR", ident, size, 0);
 }
 
-#if 1 && (ACC_CC_BORLANDC)
-#else
-void Packer::addLoader(const char *s)
-{
-    if (s)
-        linker->addLoader(s);
-}
-#endif
 
-#if 1 && (ACC_CC_BORLANDC)
-void __acc_cdecl_va Packer::addLoader(const char *s, ...)
-#else
-// provide specialization for [T = const char *]
-template <>
-void __acc_cdecl_va Packer::addLoader<char>(const char *s, ...)
-#endif
+#define C const char *
+void Packer::addLoader(C a)
+{ addLoaderVA(a, NULL); }
+void Packer::addLoader(C a, C b)
+{ addLoaderVA(a, b, NULL); }
+void Packer::addLoader(C a, C b, C c)
+{ addLoaderVA(a, b, c, NULL); }
+void Packer::addLoader(C a, C b, C c, C d)
+{ addLoaderVA(a, b, c, d, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e)
+{ addLoaderVA(a, b, c, d, e, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e, C f)
+{ addLoaderVA(a, b, c, d, e, f, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g)
+{ addLoaderVA(a, b, c, d, e, f, g, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h)
+{ addLoaderVA(a, b, c, d, e, f, g, h, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i)
+{ addLoaderVA(a, b, c, d, e, f, g, h, i, NULL); }
+void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i, C j)
+{ addLoaderVA(a, b, c, d, e, f, g, h, i, j, NULL); }
+#undef C
+
+void __acc_cdecl_va Packer::addLoaderVA(const char *s, ...)
 {
     va_list ap;
+    const char *t = s;
 
     va_start(ap, s);
-    while (s != NULL)
+    while (t != NULL)
     {
-        linker->addLoader(s);
-        s = va_arg(ap, const char *);
+        linker->addLoader(t);
+        t = va_arg(ap, const char *);
     }
     va_end(ap);
 }

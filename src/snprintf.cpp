@@ -83,9 +83,12 @@
 #undef NO_FLOAT
 #undef LDOUBLE
 #if 1
-#  define NO_FLOAT
-#  define float     error_no_float
-#  define double    error_no_float
+#  define NO_FLOAT 1
+#  if (ACC_CC_SUNPROC)
+#  else
+#  define float     error no_float
+#  define double    error no_float
+#  endif
 #elif 0 || defined(HAVE_LONG_DOUBLE)
 #  define LDOUBLE   long double
 #else

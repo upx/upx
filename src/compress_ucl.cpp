@@ -84,13 +84,14 @@ static int convert_errno_from_ucl(int r)
 }
 
 
+extern "C" {
 static void wrap_nprogress_ucl(ucl_uint a, ucl_uint b, int state, ucl_voidp user)
 {
     if (state != -1 && state != 3) return;
     upx_callback_p cb = (upx_callback_p) user;
     if (cb && cb->nprogress)
         cb->nprogress(cb, a, b);
-}
+}}
 
 
 /*************************************************************************

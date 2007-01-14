@@ -186,14 +186,18 @@ inline void set_le64(void *p, acc_uint64l_t v)
 inline int sign_extend(unsigned v, unsigned bits)
 {
     const unsigned sign_bit = 1u << (bits - 1);
-    v |= 0u - (v & sign_bit);
+    v &= sign_bit | (sign_bit - 1);
+    //v = (v ^ sign_bit) - sign_bit;
+    v |= 0 - (v & sign_bit);
     return (int) v;
 }
 
 inline acc_int64l_t sign_extend(acc_uint64l_t v, unsigned bits)
 {
     const acc_uint64l_t sign_bit = ACC_UINT64_C(1) << (bits - 1);
-    v |= ACC_UINT64_C(0) - (v & sign_bit);
+    v &= sign_bit | (sign_bit - 1);
+    //v = (v ^ sign_bit) - sign_bit;
+    v |= 0 - (v & sign_bit);
     return (acc_int64l_t) v;
 }
 
@@ -530,6 +534,7 @@ inline unsigned UPX_MIN(const LE32& a, unsigned b)    { return UPX_MIN((unsigned
 **************************************************************************/
 
 // for use with qsort()
+extern "C" {
 int __acc_cdecl_qsort be16_compare(const void *, const void *);
 int __acc_cdecl_qsort be24_compare(const void *, const void *);
 int __acc_cdecl_qsort be32_compare(const void *, const void *);
@@ -546,6 +551,7 @@ int __acc_cdecl_qsort le16_compare_signed(const void *, const void *);
 int __acc_cdecl_qsort le24_compare_signed(const void *, const void *);
 int __acc_cdecl_qsort le32_compare_signed(const void *, const void *);
 int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
+} // extern "C"
 
 
 // just for testing...

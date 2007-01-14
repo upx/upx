@@ -104,6 +104,8 @@
 #  if (_MSC_VER >= 1400)
 #    pragma warning(disable: 4996)      // W1: 'function': was declared deprecated
 #  endif
+#elif (ACC_CC_SUNPROC)
+//#  pragma error_messages(off,"badargtype2w")    // FIXME
 #elif (ACC_CC_WATCOMC)
 #  if (__WATCOMC__ < 1100)
 #    error "need Watcom C++ 11.0c or newer"
@@ -566,15 +568,15 @@ struct OptVar
 
 
 // optional assignments
-template <class T> void oassign(T& self, const T& other) {
+template <class T> inline void oassign(T& self, const T& other) {
     if (other.is_set) { self.v = other.v; self.is_set += 1; }
 }
 #if 0
-template <class V, class T> void oassign(V& v, const T& other) {
+template <class V, class T> inline void oassign(V& v, const T& other) {
     if (other.is_set) { v = other.v; }
 }
 #else
-template <class T> void oassign(unsigned& v, const T& other) {
+template <class T> inline void oassign(unsigned& v, const T& other) {
     if (other.is_set) { v = other.v; }
 }
 #endif

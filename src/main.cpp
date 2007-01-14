@@ -1321,6 +1321,7 @@ void upx_sanity_check(void)
     assert(get_le24_signed(d) == -131329);
     assert(get_le32(d) == 0xfcfdfeff);
     assert(get_le32_signed(d) == -50462977);
+    assert(get_le64_signed(d) == ACC_INT64_C(-506097522914230529));
     assert(find_be16(d, 2, 0xfffe) == 0);
     assert(find_le16(d, 2, 0xfeff) == 0);
     assert(find_be32(d, 4, 0xfffefdfc) == 0);
@@ -1329,6 +1330,7 @@ void upx_sanity_check(void)
     assert(get_be16_signed(d) == 32638);
     assert(get_be24_signed(d) == 8355453);
     assert(get_be32_signed(d) == 2138996092);
+    assert(get_be64_signed(d) == ACC_INT64_C(9186918263483431288));
     }
 #endif
 }

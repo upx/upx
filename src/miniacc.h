@@ -2,6 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
@@ -37,7 +38,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20060823L
+#define ACC_VERSION     20070112L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1169,7 +1170,7 @@ extern "C" {
 #  define ACC_SIZEOF_LONG_LONG      8
 #elif (ACC_ARCH_I386 && (ACC_CC_INTELC && defined(__linux__)))
 #  define ACC_SIZEOF_LONG_LONG      8
-#elif (ACC_ARCH_I386 && (ACC_CC_MWERKS || ACC_CC_PELLESC || ACC_CC_PGI))
+#elif (ACC_ARCH_I386 && (ACC_CC_MWERKS || ACC_CC_PELLESC || ACC_CC_PGI || ACC_CC_SUNPROC))
 #  define ACC_SIZEOF_LONG_LONG      8
 #elif (ACC_ARCH_I386 && (ACC_CC_INTELC || ACC_CC_MSC))
 #  define ACC_SIZEOF___INT64        8
@@ -1632,6 +1633,15 @@ extern "C" {
 #    define ACC_UNUSED_LABEL(l)     if (0) goto l
 #  else
 #    define ACC_UNUSED_LABEL(l)     switch(0) case 1:goto l
+#  endif
+#endif
+#if !defined(ACC_DEFINE_UNINITIALIZED_VAR)
+#  if 0
+#    define ACC_DEFINE_UNINITIALIZED_VAR(type,var,init)  type var
+#  elif 0 && (ACC_CC_GNUC)
+#    define ACC_DEFINE_UNINITIALIZED_VAR(type,var,init)  type var = var
+#  else
+#    define ACC_DEFINE_UNINITIALIZED_VAR(type,var,init)  type var = init
 #  endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
@@ -2745,12 +2755,18 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #if !defined(acc_signo_t)
 #  define acc_signo_t           int
 #endif
+#if defined(__cplusplus)
+extern "C" {
+#endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(acc_signo_t);
 #elif defined(RETSIGTYPE)
 typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
+#endif
+#if defined(__cplusplus)
+}
 #endif
 #  if defined(ACC_CFG_NO_ACC_UA_H)
 #  else
@@ -3164,12 +3180,18 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #if !defined(acc_signo_t)
 #  define acc_signo_t           int
 #endif
+#if defined(__cplusplus)
+extern "C" {
+#endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(acc_signo_t);
 #elif defined(RETSIGTYPE)
 typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
+#endif
+#if defined(__cplusplus)
+}
 #endif
 #  if !defined(ACC_CFG_NO_ACC_UA_H)
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
@@ -3968,32 +3990,42 @@ ACCLIB_EXTERN(void, acc_uclock_read) (acc_uclock_handle_p, acc_uclock_p);
 ACCLIB_EXTERN(double, acc_uclock_get_elapsed) (acc_uclock_handle_p, const acc_uclock_p, const acc_uclock_p);
 #endif
 ACCLIB_EXTERN(int, acc_uclock_flush_cpu_cache) (acc_uclock_handle_p, unsigned);
-typedef struct {
+struct acc_getopt_t;
+typedef struct acc_getopt_t acc_getopt_t;
+#ifndef acc_getopt_p
+#define acc_getopt_p acc_getopt_t *
+#endif
+struct acc_getopt_longopt_t;
+typedef struct acc_getopt_longopt_t acc_getopt_longopt_t;
+#ifndef acc_getopt_longopt_p
+#define acc_getopt_longopt_p acc_getopt_longopt_t *
+#endif
+struct acc_getopt_longopt_t {
     const char* name;
     int has_arg;
     int* flag;
     int val;
-} acc_getopt_longopt_t;
-#ifndef acc_getopt_longopt_p
-#define acc_getopt_longopt_p acc_getopt_longopt_t *
-#endif
-typedef struct {
-    int go_argc;
-    char** go_argv;
-    const char* go_shortopts;
-    const acc_getopt_longopt_p longopts;
-#if (ACC_BROKEN_CDECL_ALT_SYNTAX)
-    int __acc_cdecl_va (*go_error)(const char *, ...);
-#else
-    int (__acc_cdecl_va *go_error)(const char *, ...);
-#endif
-} acc_getopt_t;
-#ifndef acc_getopt_p
-#define acc_getopt_p acc_getopt_t *
-#endif
-ACCLIB_EXTERN(void, acc_getopt_init) (acc_getopt_p);
-ACCLIB_EXTERN(int, acc_getopt) (acc_getopt_p);
-ACCLIB_EXTERN(void, acc_getopt_close)(acc_getopt_p);
+};
+struct acc_getopt_t {
+    void *user;
+    char *optarg;
+    void (*opterr)(acc_getopt_p, const char*, void *);
+    int optind;
+    int optopt;
+    int errcount;
+    const char* progname;
+    int argc; char** argv;
+    int eof; int shortpos;
+    int pending_rotate_first, pending_rotate_middle;
+};
+enum { ACC_GETOPT_NO_ARG, ACC_GETOPT_REQUIRED_ARG, ACC_GETOPT_OPTIONAL_ARG, ACC_GETOPT_EXACT_ARG = 0x10 };
+enum { ACC_GETOPT_PERMUTE, ACC_GETOPT_RETURN_IN_ORDER, ACC_GETOPT_REQUIRE_ORDER };
+ACCLIB_EXTERN(void, acc_getopt_init) (acc_getopt_p g,
+                                      int start_argc, int argc, char** argv);
+ACCLIB_EXTERN(int, acc_getopt) (acc_getopt_p g,
+                                const char* shortopts,
+                                const acc_getopt_longopt_p longopts,
+                                int* longind);
 typedef struct {
     acc_uint32l_t seed;
 } acc_rand31_t;
@@ -5245,6 +5277,213 @@ ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
 }
 #endif
 #endif
+#if defined(ACC_WANT_ACCLIB_GETOPT)
+#  undef ACC_WANT_ACCLIB_GETOPT
+#define __ACCLIB_GETOPT_CH_INCLUDED 1
+#if !defined(ACCLIB_PUBLIC)
+#  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
+#endif
+ACCLIB_PUBLIC(void, acc_getopt_init) (acc_getopt_p g,
+                                      int start_argc, int argc, char** argv)
+{
+    memset(g, 0, sizeof(*g));
+    g->argc = argc;
+    g->argv = argv;
+    g->pending_rotate_first = g->pending_rotate_middle = g->optind = start_argc;
+}
+static int __ACCLIB_FUNCNAME(acc_getopt_rotate) (char **p, int first, int middle, int last)
+{
+    char** a; char** b;
+    if (first >= middle || middle >= last) return 0;
+    for (a = p + first, b = p + middle - 1; a < b; ++a, --b) {
+        char* t = *a; *a = *b; *b = t;
+    }
+    for (a = p + middle, b = p + last - 1; a < b; ++a, --b) {
+        char* t = *a; *a = *b; *b = t;
+    }
+    for (a = p + first, b = p + last - 1; a < b; ++a, --b) {
+        char* t = *a; *a = *b; *b = t;
+    }
+    return middle - first;
+}
+static int __acc_getopt_x(acc_getopt_p g, int ret, int oo, int flags, const char *f, ...)
+{
+    if (oo >= 0)
+        g->optopt = oo;
+    if (flags & 1)
+    {
+        if (g->shortpos == 0)
+            g->optind++;
+        else if (!g->argv[g->optind][++g->shortpos])
+            g->optind++, g->shortpos = 0;
+    }
+    if (f == NULL)
+        return ret;
+    if (g->opterr)
+    {
+#if !defined(HAVE_STDARG_H)
+        g->opterr(g, f, NULL);
+#else
+        va_list ap;
+        va_start(ap, f);
+        g->opterr(g, f, &ap);
+        va_end(ap);
+#endif
+    }
+    g->errcount++;
+    return ret;
+}
+ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
+                                const char* shortopts,
+                                const acc_getopt_longopt_p longopts,
+                                int* longind)
+{
+    int ordering = ACC_GETOPT_PERMUTE;
+    char *a;
+    int has_arg = 0;
+    char *arg;
+    unsigned char sc;
+    int i;
+    if (shortopts && (*shortopts == '-' || *shortopts == '+'))
+        ordering = *shortopts++ == '-' ? ACC_GETOPT_RETURN_IN_ORDER : ACC_GETOPT_REQUIRE_ORDER;
+    g->optarg = NULL;
+    g->optopt = '?';
+    if (longind != NULL)
+        *longind = -1;
+    if (g->eof || g->optind >= g->argc || g->argv == NULL)
+        goto acc_label_eof;
+    if (g->shortpos)
+        goto acc_label_next_shortopt;
+    g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
+    g->pending_rotate_first = g->pending_rotate_middle = g->optind;
+    if (ordering == ACC_GETOPT_PERMUTE)
+    {
+        while (g->optind < g->argc && !(g->argv[g->optind][0] == '-' && g->argv[g->optind][1]))
+            g->optind++;
+        g->pending_rotate_middle = g->optind;
+    }
+    if (g->optind >= g->argc)
+    {
+        g->optind = g->pending_rotate_first;
+    acc_label_eof:
+        g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
+        g->pending_rotate_first = g->pending_rotate_middle = g->optind;
+        g->eof = 1;
+        return -1;
+    }
+    a = g->argv[g->optind];
+    if (strcmp(a, "--") == 0)
+    {
+        g->optind++;
+        goto acc_label_eof;
+    }
+    if (!(a[0] == '-' && a[1]))
+    {
+        if (ordering == ACC_GETOPT_REQUIRE_ORDER)
+            goto acc_label_eof;
+        if (ordering == ACC_GETOPT_RETURN_IN_ORDER)
+        {
+            g->optarg = a;
+            g->optind++;
+            return 1;
+        }
+        __acc_getopt_x(g, -1, -1, 0, "invalid ordering %d", ordering);
+        goto acc_label_eof;
+    }
+    if (a[1] == '-')
+    {
+        const acc_getopt_longopt_p lo = NULL;
+        size_t match_chars;
+        for (arg = a + 2; *arg && *arg != '=' && *arg != '#'; )
+            ++arg;
+        match_chars = (size_t) (arg - (a + 2));
+        for (i = 0; longopts && longopts[i].name; ++i)
+        {
+            size_t n = match_chars;
+            size_t l = strlen(longopts[i].name);
+            if (longopts[i].has_arg & ACC_GETOPT_EXACT_ARG) n = l;
+            if (strncmp(a, longopts[i].name, n) != 0)
+                continue;
+            if (match_chars == l)
+            {
+                lo = &longopts[i];
+                break;
+            }
+            else if (lo == NULL)
+                lo = &longopts[i];
+            else
+                return __acc_getopt_x(g, '?', 0, 1, "option '%s' is ambiguous (could be '--%s' or '--%s')",
+                                      a, lo->name, longopts[i].name);
+        }
+        if (lo == NULL)
+            return __acc_getopt_x(g, '?', 0, 1, "unrecognized option '%s'", a);
+        switch (lo->has_arg & 0x2f)
+        {
+        case ACC_GETOPT_OPTIONAL_ARG:
+            break;
+        case ACC_GETOPT_REQUIRED_ARG:
+            if (*arg)
+                g->optarg = arg + 1;
+            else if (g->optind + 1 < g->argc)
+                g->optarg = g->argv[++g->optind];
+            else
+                return __acc_getopt_x(g, '?', 0, 1, "option '%s' requires an argument", lo->name);
+            g->optind++;
+            break;
+        case ACC_GETOPT_REQUIRED_ARG | 0x20:
+            break;
+        default:
+            if (*arg)
+                return __acc_getopt_x(g, '?', lo->val, 1, "option '%s' doesn't allow an argument", lo->name);
+            g->optind++;
+            break;
+        }
+        if (longind != NULL)
+            *longind = (int) (lo - longopts);
+        if (lo->flag != NULL)
+        {
+            *lo->flag = lo->val;
+            return 0;
+        }
+        return lo->val;
+    }
+    else
+    {
+        const char *sp;
+        g->shortpos = 1;
+    acc_label_next_shortopt:
+        a = g->argv[g->optind] + g->shortpos;
+        sp = NULL; sc = (unsigned char) *a;
+        if (shortopts)
+            sp = strchr(shortopts, sc);
+        if (!sp)
+            return __acc_getopt_x(g, '?', sc, 1, "invalid option '-%c'", sc);
+        if (sp[1] == ':') { has_arg++; if (sp[2] == ':') has_arg++; }
+        arg = a + 1;
+        switch (has_arg)
+        {
+        case ACC_GETOPT_OPTIONAL_ARG:
+            if (*arg)
+                g->optarg = arg + 1;
+            g->optind++, g->shortpos = 0;
+            break;
+        case ACC_GETOPT_REQUIRED_ARG:
+            if (*arg)
+                g->optarg = arg + 1;
+            else if (g->optind + 1 < g->argc)
+                g->optarg = g->argv[++g->optind];
+            else
+                return __acc_getopt_x(g, '?', 0, 1, "option '-%c' requires an argument", sc);
+            g->optind++, g->shortpos = 0;
+            break;
+        default:
+            __acc_getopt_x(g, 0, -1, 1, NULL);
+            break;
+        }
+        return sc;
+    }
+}
+#endif
 #if defined(ACC_WANT_ACCLIB_HALLOC)
 #  undef ACC_WANT_ACCLIB_HALLOC
 #define __ACCLIB_HALLOC_CH_INCLUDED 1
@@ -6161,7 +6400,7 @@ ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 }
 ACCLIB_PUBLIC(int, acc_set_binmode) (int fd, int binary)
 {
-#if (ACC_ARCH_M68K && ACC_OS_TOS && defined(__MINT__))
+#if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
     FILE* fp; int old_binary;
     if (fd == STDIN_FILENO) fp = stdin;
     else if (fd == STDOUT_FILENO) fp = stdout;
