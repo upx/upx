@@ -1003,6 +1003,28 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 ///* Fall into .text of upx-compressed vmlinux. */
 //-----
 
+// Example test jig for ARM:
+//-----main.c
+//unsigned work[(1<<16)/sizeof(unsigned)];
+//unsigned kernel[(3<<20)/sizeof(unsigned)];
+//
+///* In order to avoid complaints such as
+//     /usr/bin/ld: ERROR: libgcc_s.so uses hardware FP, whereas main uses software FP
+//   when building this test program, then you must change the .e_flags
+//   in the header of the compressed, relocatble output from upx, from
+//      Flags: 0x202, has entry point, GNU EABI, software FP
+//   to
+//      Flags: 0x0
+//*/
+//
+//main()
+//{
+//        char *const end = decompress_kernel(kernel, work, (1<<(16-2))+work, 0x1234);
+//        write(1, kernel, (char *)end - (char *)kernel);
+//        return 0;
+//}
+//-----
+
 
 /*************************************************************************
 //
