@@ -244,6 +244,28 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 
 # /***********************************************************************
+# // amd64-linux.kernel.vmlinux
+# // amd64-linux.kernel.vmlinuz
+# // amd64-linux.kernel.vmlinux-head
+# ************************************************************************/
+
+# info: we use the tc settings from arch-i386 !!
+
+amd64-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
+amd64-linux.kernel.vmlinu%.h : tc_bfdname = elf32-i386
+
+amd64-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+amd64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
 # // arm-linux.elf
 # ************************************************************************/
 
@@ -273,6 +295,30 @@ tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+
+# /***********************************************************************
+# // arm-linux.kernel.vmlinux
+# // arm-linux.kernel.vmlinuz
+# // arm-linux.kernel.vmlinux-head
+# ************************************************************************/
+
+arm-linux.kernel.vmlinu%.h : tc_list = arm-linux.kernel default
+arm-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
+
+tc.arm-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+
+arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -333,6 +379,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.com.h : tc_list = arch-i086 default
+i086-dos16.com.h : tc_bfdname = elf32-i386
 i086-dos16.com.h : tc_bfdarch = i8086
 
 i086-dos16.com.h : $(srcdir)/src/$$T.S
@@ -346,6 +393,7 @@ i086-dos16.com.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.exe.h : tc_list = arch-i086 default
+i086-dos16.exe.h : tc_bfdname = elf32-i386
 i086-dos16.exe.h : tc_bfdarch = i8086
 
 i086-dos16.exe.h : $(srcdir)/src/$$T.S
@@ -359,6 +407,7 @@ i086-dos16.exe.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i086-dos16.sys.h : tc_list = arch-i086 default
+i086-dos16.sys.h : tc_bfdname = elf32-i386
 i086-dos16.sys.h : tc_bfdarch = i8086
 
 i086-dos16.sys.h : $(srcdir)/src/$$T.S
@@ -463,6 +512,7 @@ tmp/i386-bsd.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i386-dos32.djgpp2% : tc_list = arch-i386 default
+i386-dos32.djggp2% : tc_bfdname = elf32-i386
 
 i386-dos32.djgpp2.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -480,6 +530,7 @@ i386-dos32.djgpp2-stubify.h : $(srcdir)/src/$$T.asm
 # ************************************************************************/
 
 i386-dos32.tmt.h : tc_list = arch-i386 default
+i386-dos32.tmt.h : tc_bfdname = elf32-i386
 
 i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -492,6 +543,7 @@ i386-dos32.tmt.h : $(srcdir)/src/$$T.S
 # ************************************************************************/
 
 i386-dos32.watcom.le.h : tc_list = arch-i386 default
+i386-dos32.watcom.le.h : tc_bfdname = elf32-i386
 
 i386-dos32.watcom.le.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -633,6 +685,7 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 # ************************************************************************/
 
 i386-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
+i386-linux.kernel.vmlinu%.h : tc_bfdname = elf32-i386
 
 i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -640,49 +693,6 @@ i386-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // amd64-linux.kernel.vmlinux
-# // amd64-linux.kernel.vmlinuz
-# // amd64-linux.kernel.vmlinux-head
-# ************************************************************************/
-
-amd64-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
-
-amd64-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-amd64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // arm-linux.kernel.vmlinux
-# // arm-linux.kernel.vmlinuz
-# // arm-linux.kernel.vmlinux-head
-# ************************************************************************/
-
-tc.arm-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.arm-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
-
-arm-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
-arm-linux.kernel.vmlinu%.h : tc_list = arm-linux.kernel default
-
-arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
