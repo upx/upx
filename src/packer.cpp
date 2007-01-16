@@ -546,8 +546,8 @@ void Packer::handleStub(InputFile *fif, OutputFile *fo, long size)
 
 void Packer::checkOverlay(unsigned overlay)
 {
-    assert((int)overlay >= 0);
-    assert((off_t)overlay < file_size);
+    if ((int)overlay < 0 || (off_t)overlay > file_size)
+        throw OverlayException("invalid overlay size; file is possibly corrupt");
     if (overlay == 0)
         return;
     info("Found overlay: %d bytes", overlay);
