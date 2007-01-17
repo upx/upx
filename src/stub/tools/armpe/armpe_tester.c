@@ -150,7 +150,7 @@ enum {
 #define get_le16(p) (*(unsigned short *) (p))
 
 static struct pe_header_t ih;
-static struct pe_section_t isections[3];
+static struct pe_section_t isections[4];
 static FILE *f;
 static void *vaddr;
 static FILE *out;
@@ -203,7 +203,8 @@ static int load(const char *file)
     if (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
         return print("unsupported processor type: %x\n", ih.cpu);
 
-    if (ih.objects != 3 || fread(isections, sizeof(isections), 1, f) != 1)
+    if ((ih.objects != 3 && ih.objects != 4)
+        || fread(isections, sizeof(isections), 1, f) != 1)
         return print("error reading section descriptors\n");
 
     return 0;
@@ -225,7 +226,7 @@ static int read(void)
     print("VirtualAlloc() ok %x\n", vaddr);
 #endif
 
-    for (ic = 1; ic <= 2; ic++)
+    for (ic = 1; ic <= (unsigned) ih.objects - 1; ic++)
         if (fseek(f, isections[ic].rawdataptr, SEEK_SET)
             || fread(vaddr + isections[ic].vaddr,
                      isections[ic].vsize, 1, f) != 1)
