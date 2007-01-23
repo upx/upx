@@ -251,13 +251,13 @@ unfold:
         push $ ADRX  // for upx_main
         push %r15  // LENX for upx_main
 
-        subl %ecx,%ecx  // assume small, thus no copy
         movl %edi,%edx  //  ADRM
         subl %esi,%edx  // (ADRM - ADRC) == relocation amount
         je L80  // no copy
         addl      %edx,%ebp  // update &decompress
-        addl      %edx,%ebx  // update &b_info
-        movl %r15d,%ecx  // LENX
+        //addl      %edx,%ebx  // copy==>no overlap; unfolded before overwrite
+        movl %ebx,%ecx  // XXX: 4GB  [&b_info] beyond end of decompressor
+        subl %esi,%ecx  // byte length
         shrl $3,%ecx  // qwords to copy
         cld
         rep; movsq
@@ -265,7 +265,7 @@ L80:
         xchgl %eax,%edi
 
 /* Decompress the folded part of this stub, then execute it. */
-        movl %ebx,%esi  // %arg2l= &b_info (relocated)
+        movl %ebx,%esi  // %arg2l= &b_info
         push %rax  // ret_addr after decompression
                xchgl %eax,%arg3l  // %arg3= dst for unfolding  XXX: 4GB
         lodsl; push %rax          // allocate slot on stack
