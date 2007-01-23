@@ -371,7 +371,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     rh = enc.Code(&is, &os, NULL, NULL, &progress);
 
 #ifndef _NO_EXCEPTIONS
-    } catch(...) { return UPX_E_OUT_OF_MEMORY; }
+    } catch (...) { rh = E_OUTOFMEMORY; }
 #endif
 
     assert(is.b_pos <=  src_len);
