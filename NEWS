@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 2.93 beta (XX XXX 2007):
+
 Changes in 2.92 beta (23 Jan 2007):
   * new option '--ultra-brute' which tries even more variants
   * slightly improved compression ratio for some files when
