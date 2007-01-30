@@ -303,8 +303,8 @@
 
 #undef __attribute_packed
 #if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
-#  if (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
-#    define __attribute_packed
+#  if (ACC_ARCH_I386) && (ACC_CC_INTELC && (__INTEL_COMPILER < 800))
+#  elif (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
 #  else
 #    define __attribute_packed      __attribute__((__packed__,__aligned__(1)))
 #  endif

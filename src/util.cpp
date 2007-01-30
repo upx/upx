@@ -582,11 +582,6 @@ extern "C" {
 int dup(int fd) { UNUSED(fd); return -1; }
 #endif
 
-// FIXME - quick hack for wrt54gl
-#if 1 && (ACC_ARCH_MIPS) && (ACC_OS_POSIX_LINUX) && (ACC_LIBC_UCLIBC)
-clock_t clock(void) { return 0; }
-#endif
-
 #if defined(__DJGPP__)
 int _is_executable(const char *, int, const char *)
 {
