@@ -66,7 +66,10 @@ typedef struct {
 } CLzmaDecoderState;
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768)
 
+#if defined(__WATCOMC__)
+#else
 #define CLzmaDecoderState   const CLzmaDecoderState
+#endif
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 
 #endif

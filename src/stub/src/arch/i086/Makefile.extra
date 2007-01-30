@@ -1,0 +1,74 @@
+#
+# highly experimental support for i086 using Open Watcom 1.6:
+#
+#   - download http://ftp.openwatcom.org/ftp/open-watcom-c-win32-1.6.exe
+#   - this .exe is actually a .zip, so unzip into a new diretory
+#   - the "binl" subdirectory does contain the (unofficial) Linux-hosted tools
+#   - set your envvar WATCOM to the main Watcom dir (see below)
+#
+# FIXME: how to convert the .obj to ELF ???
+# FIXME:   (we could use a Python script to convert the .disasm)
+#
+
+MAKEFLAGS += -rR
+.SUFFIXES:
+.SECONDEXPANSION:
+
+ifndef top_srcdir
+__dir_list   = . .. ../.. ../../.. ../../../.. ../../../../..
+__dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
+__dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
+top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
+endif
+vpath %.c $(top_srcdir)/src/stub/src/c
+
+export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
+
+STUBS =
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+ifneq ($(wildcard $(WATCOM)/binl/.),)
+STUBS += lzma_d_cf.S lzma_d_cs.S
+endif
+endif
+
+default.targets = all
+ifeq ($(strip $(STUBS)),)
+STUBS = NO_STUBS
+all.targets =
+endif
+include $(top_srcdir)/src/stub/Makefile
+
+
+# /***********************************************************************
+# // method-lzma
+# ************************************************************************/
+
+lzma_d_c%.S : tc_list = method-lzma default
+lzma_d_c%.S : tc_bfdname =
+
+c := tc.method-lzma.wcc
+$c  = $(WATCOM)/binl/wcc -zq -0
+$c += -mh
+$c += -zm -zc
+$c += -os -s -d0
+$c += -w5 -we -fr=/dev/null
+$c += -D_LZMA_UINT32_IS_ULONG=1
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
+
+tc.method-lzma.wdis  = $(WATCOM)/binl/wdis
+tc.method-lzma.wdump = $(WATCOM)/binl/wdump
+
+lzma_d_c%.S : lzma_d_c.c
+	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+
+FIXME:
+	$(call tc,f-objstrip,tmp/$T.o)
+	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
+	head -c-1 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	$(call tc,bin2h) --mode=gas tmp/$T.out $@
+
+lzma_d_cf.% : PP_FLAGS = -DFAST
+lzma_d_cs.% : PP_FLAGS = -DSMALL
