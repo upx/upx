@@ -8,6 +8,7 @@ __dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
 __dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
 top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
 endif
+-include $(top_srcdir)/Makevars.global ./Makevars.local
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
@@ -55,7 +56,7 @@ $c += -fmodulo-sched
 $c += -floop-optimize2
 $c += -ffixed-30
 else ifneq ($(findstring -gcc-4.2.0,$(firstword $($c))),)
-# gcc-4.2.0-20060826 snapshot
+# gcc-4.2.0-20060826.tar.bz2 snapshot
 $c += -fno-wrapv
 $c += -mtune=r4000
 $c += -fno-regmove
@@ -68,7 +69,9 @@ $c += -ffixed-30
 else
 $(error unknown gcc version: $(firstword $($c)))
 endif
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 $c += -I$(UPX_LZMADIR)
+endif
 $c += -I$(top_srcdir)/src
 
 lzma_d_c%.S : lzma_d_c.c
@@ -84,7 +87,7 @@ lzma_d_cs.% : PP_FLAGS = -DSMALL
 
 
 # /***********************************************************************
-# // test-stub-compression (needs UPX_UCLPACK)
+# // test-stub-compression (needs UPX_UCL_UCLPACK)
 # ************************************************************************/
 
 define __test_stub_compression
@@ -93,11 +96,13 @@ define __test_stub_compression
 	@rm -f $1.tmp.*
 	@bzip2 -9  < $1 > $1.tmp.bz2
 	@gzip -9mn < $1 > $1.tmp.gz
-	$(if $(UPX_UCLPACK),@$(UPX_UCLPACK) --nrv2b --10 $1 $1.tmp.uclpack-nrv2b | egrep ' into ')
+	$(if $(UPX_UCL_UCLPACK),@$(UPX_UCL_UCLPACK) --nrv2b --10 $1 $1.tmp.uclpack-nrv2b | egrep ' into ')
 	@ls -l $1.tmp.*
 endef
 
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 test-stub-compression: tc_list = mipsel.r3000-ps1 default
 test-stub-compression: lzma_d_cf.S lzma_d_cs.S
 	$(call __test_stub_compression,tmp/lzma_d_cs.out,tmp/lzma_d_cs.o)
 .PHONY: test-stub-compression
+endif

@@ -22,6 +22,15 @@ ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
 endif
 
+ifndef srcdir
+srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+endif
+ifndef top_srcdir
+top_srcdir := $(srcdir)/../..
+endif
+-include $(top_srcdir)/Makevars.global ./Makevars.local
+
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
@@ -34,14 +43,6 @@ endif
 # /***********************************************************************
 # //
 # ************************************************************************/
-
-ifndef srcdir
-srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
-endif
-ifndef top_srcdir
-top_srcdir := $(srcdir)/../..
-endif
 
 ifndef STUBS
 STUBS += amd64-linux.elf-entry.h

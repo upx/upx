@@ -7,9 +7,15 @@ MAKEFLAGS += -rR
 export SHELL = /bin/sh
 override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
 
-srcdir ?= $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-ifneq ($(srcdir),./)
+ifndef srcdir
+srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+endif
+ifndef top_srcdir
+top_srcdir := $(srcdir)/..
+endif
+-include $(top_srcdir)/Makevars.global ./Makevars.local
+ifneq ($(srcdir),.)
 ##$(info Info: using VPATH . $(srcdir))
 VPATH := . $(srcdir)
 endif
@@ -17,7 +23,7 @@ endif
 ifeq ($(CXX),)
 CXX = g++
 endif
-ifeq ($(firstword $(CXX)),g++)
+ifneq ($(findstring $(firstword $(CXX)),g++),)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
@@ -48,7 +54,7 @@ endif
 LIBS += -lucl -lz
 # you should set envvar UPX_LZMADIR to point to your unpacked lzma443.tar.bz2
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-DEFS += -DWITH_LZMA
+DEFS += -DWITH_LZMA=1
 INCLUDES += -I$(UPX_LZMADIR)
 endif
 

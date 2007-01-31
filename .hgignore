@@ -2,10 +2,13 @@ syntax: regexp
 
 ^\.bzr
 ^ChangeLog
+^Makevars.global
 ^build
 ^maint
 
 syntax: glob
+
+Makevars.local
 
 *.a
 *.dll

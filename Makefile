@@ -8,6 +8,7 @@ export SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = .
+-include $(top_srcdir)/Makevars.global ./Makevars.local
 
 
 # info: src/stub needs GNU make 3.81 and special build tools
@@ -33,15 +34,14 @@ endif
 	$(MAKE) -C src $@
 	$(MAKE) -C doc $@
 
-# automatically generate ChangeLog from Mercurial repo
-ChangeLog:
+
 ifneq ($(wildcard .hg/data/.),)
+# automatically generate ChangeLog from local Mercurial repo
+ChangeLog:
 	hg log --style=changelog > $@
-else
-	@echo "UPX info: no hg repo found"
+.PHONY: ChangeLog
 endif
 
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
-.PHONY: ChangeLog
 

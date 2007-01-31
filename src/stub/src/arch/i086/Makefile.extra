@@ -20,6 +20,7 @@ __dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
 __dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
 top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
 endif
+-include $(top_srcdir)/Makevars.global ./Makevars.local
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
