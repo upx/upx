@@ -30,7 +30,7 @@
 **************************************************************************/
 
 #define ACC_LIBC_NAKED 1
-#define ACC_OS_FREESTANDING 1
+/*#define ACC_OS_FREESTANDING 1*/
 #include "miniacc.h"
 
 #if 0
@@ -38,6 +38,10 @@
 #undef _LZMA_OUT_READ
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
+#endif
+#if (ACC_ARCH_I086) && (ACC_CC_WATCOMC)
+   typedef unsigned char __huge Byte;
+#  define _7ZIP_BYTE_DEFINED 1
 #endif
 
 #if 0
@@ -51,10 +55,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
 
 #else
 
-#define CLzmaDecoderState   CLzmaDecoderState_dummy
-#define LzmaDecode          LzmaDecode_dummy
+#define CLzmaDecoderState       CLzmaDecoderState_dummy
+#define LzmaDecodeProperties    LzmaDecodeProperties_dummy
+#define LzmaDecode              LzmaDecode_dummy
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
 #undef CLzmaDecoderState
+#undef LzmaDecodeProperties
 #undef LzmaDecode
 typedef struct {
     struct { unsigned char lc, lp, pb, dummy; } Properties;
@@ -65,8 +71,16 @@ typedef struct {
 #endif
 } CLzmaDecoderState;
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 
-#if defined(__WATCOMC__)
+#if (ACC_ARCH_I086) && (ACC_CC_WATCOMC)
+#  if (ACC_MM_HUGE)
+     typedef unsigned short __far MyCProb;
+#    undef CProb
+#    define CProb MyCProb
+#  endif
+#  define char  char __huge
+#elif (ACC_CC_WATCOMC)
 #else
 #define CLzmaDecoderState   const CLzmaDecoderState
 #endif

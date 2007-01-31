@@ -23,7 +23,7 @@ endif
 -include $(top_srcdir)/Makevars.global ./Makevars.local
 vpath %.c $(top_srcdir)/src/stub/src/c
 
-export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
+##export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
 
 STUBS =
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
@@ -48,17 +48,19 @@ lzma_d_c%.S : tc_list = method-lzma default
 lzma_d_c%.S : tc_bfdname =
 
 c := tc.method-lzma.wcc
-$c  = $(WATCOM)/binl/wcc -zq -0
-$c += -mh
+$c  = $(WATCOM)/binl/wcc -zq -bt=dos -0
+$c += -mc
 $c += -zm -zc
 $c += -os -s -d0
 $c += -w5 -we -fr=/dev/null
+$c += -D__INT_MAX__=32767
 $c += -D_LZMA_UINT32_IS_ULONG=1
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
-tc.method-lzma.wdis  = $(WATCOM)/binl/wdis
-tc.method-lzma.wdump = $(WATCOM)/binl/wdump
+tc.method-lzma.dmpobj = $(WATCOM)/binl/dmpobj
+tc.method-lzma.wdis   = $(WATCOM)/binl/wdis
+tc.method-lzma.wdump  = $(WATCOM)/binl/wdump
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
@@ -73,3 +75,5 @@ FIXME:
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
+lzma_d_cf.% : LABEL_PREFIX = .Lf
+lzma_d_cs.% : LABEL_PREFIX = .Ls
