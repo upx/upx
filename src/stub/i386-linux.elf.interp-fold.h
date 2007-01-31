@@ -29,11 +29,11 @@
 
 
 #define STUB_I386_LINUX_ELF_INTERP_FOLD_SIZE    1519
-#define STUB_I386_LINUX_ELF_INTERP_FOLD_ADLER32 0xe82498de
-#define STUB_I386_LINUX_ELF_INTERP_FOLD_CRC32   0xd7e223de
+#define STUB_I386_LINUX_ELF_INTERP_FOLD_ADLER32 0xbf8496ce
+#define STUB_I386_LINUX_ELF_INTERP_FOLD_CRC32   0xe6675cdc
 
 unsigned char stub_i386_linux_elf_interp_fold[1519] = {
-127, 69, 76, 70,  1,  1,  1,  0, 76,105,110,117,120,  0,  0,  0,   /* 0x   0 */
+127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   2,  0,  3,  0,  1,  0,  0,  0,116,  0,  1,  0, 52,  0,  0,  0,   /* 0x  10 */
   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,   /* 0x  20 */
   0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,   /* 0x  30 */

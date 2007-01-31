@@ -67,7 +67,8 @@ def do_file(fn):
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
             if e_ident[4:7] != "\x01\x01\x01":
                 raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            write("\x00Linux\x00\x00\x00")
+            ##write("\x00Linux\x00\x00\x00")
+            write("\x00" * 9)
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
             if e_ident[4:7] != "\x01\x01\x01":
                 raise Exception, "%s is not %s" % (fn, opts.bfdname)
@@ -75,11 +76,13 @@ def do_file(fn):
         elif opts.bfdname == "elf32-powerpc" and opts.elfosabi == "linux":
             if e_ident[4:7] != "\x01\x02\x01":
                 raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            write("\x00Linux\x00\x00\x00")
+            ##write("\x00Linux\x00\x00\x00")
+            write("\x00" * 9)
         elif opts.bfdname == "elf64-x86_64" and opts.elfosabi == "linux":
             if e_ident[4:7] != "\x02\x01\x01":
                 raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            write("\x00Linux\x00\x00\x00")
+            ##write("\x00Linux\x00\x00\x00")
+            write("\x00" * 9)
         else:
             done = 0
     else:
