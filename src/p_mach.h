@@ -29,160 +29,294 @@
 #ifndef __UPX_P_MACHO_H
 #define __UPX_P_MACHO_H
 
+// Apparently, Mach_fat_header and Mach_fat_arch have the endianness
+// of the machine on which they were created.  We must deal with both kinds.
+struct Mach_fat_header {
+    unsigned magic;
+        enum e8 {
+            FAT_MAGIC = 0xcafebabe
+        };
+    unsigned nfat_arch;  // Number of Mach_fat_arch which follow.
+};
+struct Mach_fat_arch {
+    unsigned cputype;
+    unsigned cpusubtype;
+    unsigned offset;
+    unsigned size;
+    unsigned align;  /* shift count; log base 2 */
+};
+
 /*************************************************************************
-// Mach  Mach Object executable
+// Mach  Mach Object executable; all structures are target-endian
 **************************************************************************/
 
-struct Mach_header {
-    BE32 magic;
-        enum {
-            MH_MAGIC = 0xfeedface
-        };
-    BE32 cputype;
-        enum {
-            CPU_TYPE_POWERPC = 18
-        };
-    BE32 cpysubtype;
-    BE32 filetype;
-        enum {
-            MH_EXECUTE = 2
-        };
-    BE32 ncmds;
-    BE32 sizeofcmds;
-    BE32 flags;
-        enum {
-            MH_NOUNDEFS = 1
-        };
+namespace N_Mach {
+
+// integral types
+template <class TWord, class TXword, class TAddr, class TOff>
+struct MachITypes
+{
+    typedef TWord   Word;
+    typedef TXword  Xword;
+    typedef TAddr   Addr;
+    typedef TOff    Off;
+};
+
+template <class TMachITypes>
+struct Mach_header
+{
+    typedef typename TMachITypes::Word Word;
+
+    Word magic;
+    Word cputype;
+    Word cpysubtype;
+    Word filetype;
+    Word ncmds;
+    Word sizeofcmds;
+    Word flags;
+#define WANT_MACH_HEADER_ENUM 1
+#include "p_mach_enum.h"
 }
 __attribute_packed;
 
-struct Mach_segment_command {
-    BE32 cmd;
-        enum {
-            LC_SEGMENT       = 0x1,
-            LC_THREAD        = 0x4,
-            LC_UNIXTHREAD    = 0x5,
-            LC_LOAD_DYLINKER = 0xe
-        };
-    BE32 cmdsize;
+template <class TMachITypes>
+struct Mach_header64
+{  // only difference is padding to 0 mod 8
+    typedef typename TMachITypes::Word Word;
+
+    Word magic;
+    Word cputype;
+    Word cpysubtype;
+    Word filetype;
+    Word ncmds;
+    Word sizeofcmds;
+    Word flags;
+    Word reserved;  // pad to 0 mod 8
+#define WANT_MACH_HEADER_ENUM 1
+#include "p_mach_enum.h"
+}
+__attribute_packed;
+
+template <class TMachITypes>
+struct Mach_segment_command
+{
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;
+    Word cmdsize;
     char segname[16];
-    BE32 vmaddr;
-    BE32 vmsize;
-    BE32 fileoff;
-    BE32 filesize;
-    BE32 maxprot;
-        enum {
-            VM_PROT_READ = 1,
-            VM_PROT_WRITE = 2,
-            VM_PROT_EXECUTE = 4
-        };
-    BE32 initprot;
-    BE32 nsects;
-    BE32 flags;
+    Addr vmaddr;
+    Addr vmsize;
+    Off  fileoff;
+    Off  filesize;
+    Word maxprot;
+    Word initprot;
+    Word nsects;
+    Word flags;
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
 }
 __attribute_packed;
 
-struct Mach_section {
+template <class TMachITypes>
+struct Mach_section_command
+{
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Off  Off;
+
     char sectname[16];
     char segname[16];
-    BE32 addr;   /* memory address */
-    BE32 size;   /* size in bytes */
-    BE32 offset; /* file offset */
-    BE32 align;  /* power of 2 */
-    BE32 reloff; /* file offset of relocation entries */
-    BE32 nreloc; /* number of relocation entries */
-    BE32 flags;  /* section type and attributes */
-        enum {
-            S_REGULAR = 0,
-            S_ZEROFILL,
-            S_CSTRING_LITERALS,
-            S_4BYTE_LITERALS,
-            S_8BYTE_LITERALS,
-            S_LITERAL_POINTERS,
-            S_NON_LAZY_SYMBOL_POINTERS,
-            S_LAZY_SYMBOL_POINTERS,
-            S_SYMBOL_STUBS,
-            S_MOD_INIT_FUNC_POINTERS,
-            S_MOD_TERM_FNC_POINTERS,
-            S_COALESCED
-        };
-        enum {
-            S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
-            S_ATTR_NO_TOC            = 0x40000000,
-            S_ATTR_STRIP_STATIC_SYMS = 0x20000000,
-            S_ATTR_SOME_INSTRUCTIONS = 0x00000400,
-            S_ATTR_EXT_RELOC         = 0x00000200,
-            S_ATTR_LOC_RELOC         = 0x00000100
-        };
-    BE32 reserved1;
-    BE32 reserved2;
-
+    Addr addr;   /* memory address */
+    Addr size;   /* size in bytes */
+    Word offset; /* file offset */  // FIXME: 64 bit?
+    Word align;  /* power of 2 */
+    Word reloff; /* file offset of relocation entries */
+    Word nreloc; /* number of relocation entries */
+    Word flags;  /* section type and attributes */
+    Word reserved1;
+    Word reserved2;
+#define WANT_MACH_SECTION_ENUM 1
+#include "p_mach_enum.h"
 }
 __attribute_packed;
 
-struct Mach_ppc_thread_state {
-    BE32 srr0;      /* Instruction address register (PC; entry addr) */
-    BE32 srr1;      /* Machine state register (supervisor) */
-    BE32  r0, r1, r2, r3, r4, r5, r6, r7;
-    BE32  r8, r9,r10,r11,r12,r13,r14,r15;
-    BE32 r16,r17,r18,r19,r20,r21,r22,r23;
-    BE32 r24,r25,r26,r27,r28,r29,r30,r31;
+template <class TMachITypes>
+struct Mach_ppc_thread_state
+{
+    typedef typename TMachITypes::Addr Addr;
 
-    BE32 cr;        /* Condition register */
-    BE32 xer;       /* User's integer exception register */
-    BE32 lr;        /* Link register */
-    BE32 ctr;       /* Count register */
-    BE32 mq;        /* MQ register (601 only) */
+    Addr srr0;      /* Instruction address register (PC; entry addr) */
+    Addr srr1;      /* Machine state register (supervisor) */
+    Addr  r0, r1, r2, r3, r4, r5, r6, r7;
+    Addr  r8, r9,r10,r11,r12,r13,r14,r15;
+    Addr r16,r17,r18,r19,r20,r21,r22,r23;
+    Addr r24,r25,r26,r27,r28,r29,r30,r31;
 
-    BE32 vrsave;    /* Vector Save Register */
+    Addr cr;        /* Condition register */  // FIXME: Word?
+    Addr xer;       /* User's integer exception register */
+    Addr lr;        /* Link register */
+    Addr ctr;       /* Count register */
+    Addr mq;        /* MQ register (601 only) */
+
+    Addr vrsave;    /* Vector Save Register */
 }
 __attribute_packed;
 
-struct Mach_thread_command {
-    BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
-    BE32 cmdsize;        /* total size of this command */
-    BE32 flavor;
-        enum {
-            PPC_THREAD_STATE = 1
-        };
-    BE32 count;          /* sizeof(following_thread_state)/4 */
-        enum {
-            PPC_THREAD_STATE_COUNT = sizeof(struct Mach_ppc_thread_state)/4
-        };
-    struct Mach_ppc_thread_state state;
+}  // namespace N_Mach
+
+namespace N_Mach32 {
+
+template <class TMachITypes>
+struct Mach_i386_thread_state
+{
+    typedef typename TMachITypes::Word Word;
+
+    Word eax, ebx, ecx, edx;
+    Word edi, esi, ebp;
+    Word esp, ss;
+    Word eflags;
+    Word eip, cs;
+    Word ds, es, fs, gs;
 }
 __attribute_packed;
 
+} // namespace N_Mach32
+
+namespace N_Mach64 {
+
+template <class TMachITypes>
+struct Mach_ppc_thread_state64
+{
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Xword Xword;
+
+    Xword srr0;    /* Instruction address register (PC; entry addr) */
+    Xword srr1;    /* Machine state register (supervisor) */
+    Xword  r0, r1, r2, r3, r4, r5, r6, r7;
+    Xword  r8, r9,r10,r11,r12,r13,r14,r15;
+    Xword r16,r17,r18,r19,r20,r21,r22,r23;
+    Xword r24,r25,r26,r27,r28,r29,r30,r31;
+
+    Word cr;        /* Condition register */
+    Xword xer;      /* User's integer exception register */
+    Xword lr;       /* Link register */
+    Xword ctr;      /* Count register */
+
+    Word vrsave;    /* Vector Save Register */
+}
+__attribute_packed;
+
+}  // namespace N_Mach64
+
+namespace N_Mach {
+
+template <class TP>
+struct MachClass_32
+{
+    typedef TP BeLePolicy;
+
+    // integral types
+    typedef typename TP::U16 U16;
+    typedef typename TP::U32 U32;
+    typedef typename TP::U64 U64;
+    typedef N_Mach::MachITypes<U32, U32, U32, U32> MachITypes;
+    typedef typename MachITypes::Addr Addr;
+
+    // Mach types
+    typedef N_Mach::Mach_header<MachITypes> Mach_header;
+    typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
+    typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+    typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
+};
+
+template <class TP>
+struct MachClass_64
+{
+    typedef TP BeLePolicy;
+
+    // integral types
+    typedef typename TP::U16 U16;
+    typedef typename TP::U32 U32;
+    typedef typename TP::U64 U64;
+    typedef N_Mach::MachITypes<U32, U64, U64, U64> MachITypes;
+
+    // Mach types
+    typedef N_Mach::Mach_header64<MachITypes> Mach_header;
+    typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
+    typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+};
+
+}  // namespace N_Mach
+
+typedef N_Mach::MachClass_32<N_BELE_CTP::HostPolicy> MachClass_Host32;
+typedef N_Mach::MachClass_64<N_BELE_CTP::HostPolicy> MachClass_Host64;
+typedef N_Mach::MachClass_32<N_BELE_CTP::BEPolicy>   MachClass_BE32;
+typedef N_Mach::MachClass_64<N_BELE_CTP::BEPolicy>   MachClass_BE64;
+typedef N_Mach::MachClass_32<N_BELE_CTP::LEPolicy>   MachClass_LE32;
+typedef N_Mach::MachClass_64<N_BELE_CTP::LEPolicy>   MachClass_LE64;
+
+// shortcuts
+typedef MachClass_Host32::Mach_segment_command Mach32_segment_command;
+typedef MachClass_Host32::Mach_section_command Mach32_section_command;
+typedef MachClass_Host32::Mach_ppc_thread_state Mach_ppc_thread_state;
+
+typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
+typedef MachClass_Host64::Mach_section_command Mach64_section_command;
+
+typedef MachClass_BE32::Mach_segment_command   MachBE32_segment_command;
+typedef MachClass_BE32::Mach_section_command   MachBE32_section_command;
+
+typedef MachClass_BE64::Mach_segment_command   MachBE64_segment_command;
+typedef MachClass_BE64::Mach_section_command   MachBE64_section_command;
+
+typedef MachClass_LE32::Mach_segment_command   MachLE32_segment_command;
+typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
+
+typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
+typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
 
 #include "p_unix.h"
 
 
-class PackMachPPC32 : public PackUnixBe32
+template <class TMachClass>
+class PackMachBase : public PackUnix
 {
-    typedef PackUnixBe32 super;
+    typedef PackUnix super;
+protected:
+    typedef TMachClass MachClass;
+    typedef typename MachClass::BeLePolicy BeLePolicy;
+    typedef typename MachClass::MachITypes MachITypes;
+    // integral types
+    typedef typename MachClass::U16   U16;
+    typedef typename MachClass::U32   U32;
+    typedef typename MachClass::U64   U64;
+    typedef typename MachClass::Addr  Addr;
+    // Mach types
+    typedef typename MachClass::Mach_header Mach_header;
+    typedef typename MachClass::Mach_segment_command Mach_segment_command;
+    typedef typename MachClass::Mach_section_command Mach_section_command;
+
 public:
-    PackMachPPC32(InputFile *f);
-    virtual ~PackMachPPC32();
+    PackMachBase(InputFile *f, unsigned, unsigned, unsigned);
+    virtual ~PackMachBase();
     virtual int getVersion() const { return 13; }
-    virtual int getFormat() const { return UPX_F_MACH_PPC32; }
-    virtual const char *getName() const { return "Mach/ppc32"; }
-    virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.macho"; }
-    virtual const int *getCompressionMethods(int method, int level) const;
-    virtual const int *getFilters() const;
 
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    virtual void pack4(OutputFile *, Filter &) = 0;  // append PackHeader
 
+    virtual void pack1_setup_threado(OutputFile *const fo) = 0;
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
     virtual unsigned find_SEGMENT_gap(unsigned const k);
 
 protected:
-    virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
@@ -196,6 +330,12 @@ protected:
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
 
+    static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
+
+    unsigned my_thread_flavor;
+    unsigned my_thread_state_word_count;
+    unsigned my_thread_command_size;
+
     unsigned  n_segment;
     unsigned sz_segment;
     unsigned sz_mach_headers;
@@ -205,10 +345,43 @@ protected:
 
     Mach_header mhdro;
     Mach_segment_command segcmdo;
-    Mach_thread_command threado;
     struct l_info linfo;
 };
 
+
+class PackMachPPC32 : public PackMachBase<MachClass_BE32>
+{
+    typedef PackMachBase<MachClass_BE32> super;
+
+public:
+    PackMachPPC32(InputFile *f) : super(f, Mach_thread_command::PPC_THREAD_STATE,
+        sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
+    virtual ~PackMachPPC32();
+    virtual int getFormat() const { return UPX_F_MACH_PPC32; }
+    virtual const char *getName() const { return "Mach/ppc32"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.macho"; }
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+    virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+
+    struct Mach_thread_command
+    {
+        BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        BE32 cmdsize;        /* total size of this command */
+        BE32 flavor;
+        BE32 count;          /* sizeof(following_thread_state)/4 */
+        Mach_ppc_thread_state state;
+    #define WANT_MACH_THREAD_ENUM
+    #include "p_mach_enum.h"
+    } threado
+    __attribute_packed;
+};
 
 #endif /* already included */
 

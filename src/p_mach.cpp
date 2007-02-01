@@ -39,12 +39,17 @@ static const
 static const
 #include "stub/powerpc-darwin.macho-fold.h"
 
-PackMachPPC32::PackMachPPC32(InputFile *f) :
-    super(f), n_segment(0), rawmseg(0), msegcmd(0)
+template <class T>
+PackMachBase<T>::PackMachBase(InputFile *f, unsigned flavor, unsigned count,
+        unsigned size) :
+    super(f), my_thread_flavor(flavor), my_thread_state_word_count(count),
+    my_thread_command_size(size),
+    n_segment(0), rawmseg(0), msegcmd(0)
 {
 }
 
-PackMachPPC32::~PackMachPPC32()
+template <class T>
+PackMachBase<T>::~PackMachBase()
 {
     delete [] msegcmd;
     delete [] rawmseg;
@@ -69,8 +74,9 @@ Linker *PackMachPPC32::newLinker() const
     return new ElfLinkerPpc32;
 }
 
+template <class T>
 void
-PackMachPPC32::addStubEntrySections(Filter const *)
+PackMachBase<T>::addStubEntrySections(Filter const *)
 {
     addLoader("MACOS000", NULL);
    //addLoader(getDecompressorSections(), NULL);
@@ -84,14 +90,16 @@ PackMachPPC32::addStubEntrySections(Filter const *)
 }
 
 
-void PackMachPPC32::defineSymbols(Filter const *)
+template <class T>
+void PackMachBase<T>::defineSymbols(Filter const *)
 {
     // empty
 }
 
 
+template <class T>
 void
-PackMachPPC32::buildMachLoader(
+PackMachBase<T>::buildMachLoader(
     upx_byte const *const proto,
     unsigned        const szproto,
     upx_byte const *const fold,
@@ -142,11 +150,15 @@ PackMachPPC32::buildLoader(const Filter *ft)
         stub_powerpc_darwin_macho_entry, sizeof(stub_powerpc_darwin_macho_entry),
         stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
 }
-void PackMachPPC32::patchLoader() { }
-void PackMachPPC32::updateLoader(OutputFile *) {}
 
-void
-PackMachPPC32::patchLoaderChecksum()
+template <class T>
+void PackMachBase<T>::patchLoader() { }
+
+template <class T>
+void PackMachBase<T>::updateLoader(OutputFile *) {}
+
+template <class T>
+void PackMachBase<T>::patchLoaderChecksum()
 {
     unsigned char *const ptr = getLoader();
     l_info *const lp = &linfo;
@@ -160,8 +172,9 @@ PackMachPPC32::patchLoaderChecksum()
     lp->l_checksum = upx_adler32(ptr, lsize);
 }
 
-static int __acc_cdecl_qsort
-compare_segment_command(void const *const aa, void const *const bb)
+template <class T>
+int __acc_cdecl_qsort
+PackMachBase<T>::compare_segment_command(void const *const aa, void const *const bb)
 {
     Mach_segment_command const *const a = (Mach_segment_command const *)aa;
     Mach_segment_command const *const b = (Mach_segment_command const *)bb;
@@ -174,8 +187,7 @@ compare_segment_command(void const *const aa, void const *const bb)
                                return  0;
 }
 
-void
-PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segcmdo) + sizeof(threado) + sizeof(linfo);
@@ -189,8 +201,7 @@ PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     fo->write(&linfo, sizeof(linfo));
 }
 
-void
-PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
+void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     BE32 disp;
     unsigned const zero = 0;
@@ -208,7 +219,8 @@ PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 // which follows in the file (or end-of-file).  Optimize for common case
 // where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
 
-unsigned PackMachPPC32::find_SEGMENT_gap(
+template <class T>
+unsigned PackMachBase<T>::find_SEGMENT_gap(
     unsigned const k
 )
 {
@@ -242,8 +254,8 @@ unsigned PackMachPPC32::find_SEGMENT_gap(
     return lo - hi;
 }
 
-void
-PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
+template <class T>
+void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
     Extent x;
     unsigned k;
@@ -304,12 +316,23 @@ PackMachPPC32::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 #undef PAGE_SIZE
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE -PAGE_MASK
-void
-PackMachPPC32::pack1(OutputFile *fo, Filter &/*ft*/)  // generate executable header
+
+void PackMachPPC32::pack1_setup_threado(OutputFile *const fo)
+{
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state, 0, sizeof(threado.state));
+    fo->write(&threado, sizeof(threado));
+}
+
+template <class T>
+void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate executable header
 {
     mhdro = mhdri;
     mhdro.ncmds = 2;
-    mhdro.sizeofcmds = sizeof(segcmdo) + sizeof(threado);
+    mhdro.sizeofcmds = sizeof(segcmdo) + my_thread_command_size;
     mhdro.flags = Mach_header::MH_NOUNDEFS;
     fo->write(&mhdro, sizeof(mhdro));
 
@@ -329,12 +352,7 @@ PackMachPPC32::pack1(OutputFile *fo, Filter &/*ft*/)  // generate executable hea
     segcmdo.flags = 0;
     fo->write(&segcmdo, sizeof(segcmdo));
 
-    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
-    threado.cmdsize = sizeof(threado);
-    threado.flavor = Mach_thread_command::PPC_THREAD_STATE;
-    threado.count =  Mach_thread_command::PPC_THREAD_STATE_COUNT;
-    memset(&threado.state, 0, sizeof(threado.state));
-    fo->write(&threado, sizeof(threado));
+    pack1_setup_threado(fo);
     sz_mach_headers = fo->getBytesWritten();
 
     memset((char *)&linfo, 0, sizeof(linfo));
@@ -343,8 +361,8 @@ PackMachPPC32::pack1(OutputFile *fo, Filter &/*ft*/)  // generate executable hea
     return;
 }
 
-void
-PackMachPPC32::unpack(OutputFile *fo)
+template <class T>
+void PackMachBase<T>::unpack(OutputFile *fo)
 {
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
@@ -414,8 +432,8 @@ PackMachPPC32::unpack(OutputFile *fo)
 }
 
 
-bool
-PackMachPPC32::canPack()
+template <class T>
+bool PackMachBase<T>::canPack()
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
@@ -462,6 +480,8 @@ PackMachPPC32::canPack()
     return 0 < n_segment;
 }
 
+template class PackMachBase<MachClass_BE32>;
+template class PackMachBase<MachClass_LE32>;
 /*
 vi:ts=4:et
 */
