@@ -455,6 +455,7 @@ private:
 
 #define UPX_F_VMLINUX_AMD64     27
 #define UPX_F_VMLINUX_ARM       28
+#define UPX_F_MACH_i386         29
 
 #define UPX_F_PLAIN_TEXT        127
 

@@ -255,6 +255,18 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
 }
 
 template <class T>
+void PackMachBase<T>::pack4(OutputFile *, Filter &)
+{
+    // empty
+}
+
+template <class T>
+void PackMachBase<T>::pack3(OutputFile *, Filter &)
+{
+    // empty
+}
+
+template <class T>
 void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
     Extent x;

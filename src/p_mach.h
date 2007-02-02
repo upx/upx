@@ -48,6 +48,7 @@ struct Mach_fat_arch {
 
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
+// 'otool' is the Mach analog of 'readelf' (convert executable file to ASCII).
 **************************************************************************/
 
 namespace N_Mach {
@@ -165,10 +166,6 @@ struct Mach_ppc_thread_state
 }
 __attribute_packed;
 
-}  // namespace N_Mach
-
-namespace N_Mach32 {
-
 template <class TMachITypes>
 struct Mach_i386_thread_state
 {
@@ -182,6 +179,23 @@ struct Mach_i386_thread_state
     Word ds, es, fs, gs;
 }
 __attribute_packed;
+
+template <class TMachITypes>
+struct Mach_i386_new_thread_state
+{
+    typedef typename TMachITypes::Word Word;
+
+    Word gs, fs, es, ds;
+    Word edi, esi, ebp, esp;
+    Word ebx, edx, ecx, eax;
+    Word eip, cs, efl;
+    Word uesp, ss;
+}
+__attribute_packed;
+
+}  // namespace N_Mach
+
+namespace N_Mach32 {
 
 } // namespace N_Mach32
 
@@ -230,6 +244,7 @@ struct MachClass_32
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
+    typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
 };
 
 template <class TP>
@@ -262,6 +277,7 @@ typedef N_Mach::MachClass_64<N_BELE_CTP::LEPolicy>   MachClass_LE64;
 typedef MachClass_Host32::Mach_segment_command Mach32_segment_command;
 typedef MachClass_Host32::Mach_section_command Mach32_section_command;
 typedef MachClass_Host32::Mach_ppc_thread_state Mach_ppc_thread_state;
+typedef MachClass_Host32::Mach_i386_thread_state Mach_i386_thread_state;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
@@ -300,7 +316,7 @@ protected:
     typedef typename MachClass::Mach_section_command Mach_section_command;
 
 public:
-    PackMachBase(InputFile *f, unsigned, unsigned, unsigned);
+    PackMachBase(InputFile *, unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
     virtual ~PackMachBase();
     virtual int getVersion() const { return 13; }
 
@@ -317,7 +333,6 @@ public:
     virtual unsigned find_SEGMENT_gap(unsigned const k);
 
 protected:
-    virtual Linker* newLinker() const;
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);
@@ -354,12 +369,21 @@ class PackMachPPC32 : public PackMachBase<MachClass_BE32>
     typedef PackMachBase<MachClass_BE32> super;
 
 public:
-    PackMachPPC32(InputFile *f) : super(f, Mach_thread_command::PPC_THREAD_STATE,
+    PackMachPPC32::PackMachPPC32(InputFile *f) : super(f,
+        Mach_thread_command::PPC_THREAD_STATE,
         sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
-    virtual ~PackMachPPC32();
+
     virtual int getFormat() const { return UPX_F_MACH_PPC32; }
     virtual const char *getName() const { return "Mach/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.macho"; }
+
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
+    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
+    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
+
 protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -377,6 +401,41 @@ protected:
         BE32 flavor;
         BE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_ppc_thread_state state;
+    #define WANT_MACH_THREAD_ENUM
+    #include "p_mach_enum.h"
+    } threado
+    __attribute_packed;
+};
+
+class PackMachI386 : public PackMachBase<MachClass_LE32>
+{
+    typedef PackMachBase<MachClass_LE32> super;
+
+public:
+    PackMachI386(InputFile *f) : super(f,
+        (unsigned)Mach_thread_command::i386_THREAD_STATE,
+        sizeof(Mach_i386_thread_state)>>2, sizeof(threado)) { }
+
+    virtual int getFormat() const { return UPX_F_MACH_i386; }
+    virtual const char *getName() const { return "Mach/i386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-darwin.macho"; }
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+    virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+
+    struct Mach_thread_command
+    {
+        LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        LE32 cmdsize;        /* total size of this command */
+        LE32 flavor;
+        LE32 count;          /* sizeof(following_thread_state)/4 */
+        Mach_i386_thread_state state;
     #define WANT_MACH_THREAD_ENUM
     #include "p_mach_enum.h"
     } threado

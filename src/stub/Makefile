@@ -65,6 +65,8 @@ STUBS += i386-bsd.elf-entry.h
 STUBS += i386-bsd.elf-fold.h
 STUBS += i386-bsd.elf.execve-entry.h
 STUBS += i386-bsd.elf.execve-fold.h
+STUBS += i386-darwin.macho-entry.h
+STUBS += i386-darwin.macho-fold.h
 STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
@@ -506,6 +508,34 @@ tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
 tmp/i386-bsd.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,f-objstrip,$@)
+
+
+# /***********************************************************************
+# // i386-darwin.macho
+# ************************************************************************/
+
+# info: we use the tc settings from i386-linux.elf
+i386-darwin.macho%.h : tc_list = i386-linux.elf default
+i386-darwin.macho%.h : tc_bfdname = elf32-i386
+
+i386-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+i386-darwin.macho-fold.h : tmp/$$T.o tmp/i386-darwin.macho-main.o
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	chmod a-x tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/i386-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/i386-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************

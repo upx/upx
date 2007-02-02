@@ -96,7 +96,9 @@
 #ifdef WANT_MACH_THREAD_ENUM  /*{*/
 #undef WANT_MACH_THREAD_ENUM
     enum { // thread flavor
-        PPC_THREAD_STATE = 1
+        PPC_THREAD_STATE = 1,
+        i386_THREAD_STATE = -1,
+        i386_NEW_THREAD_STATE = 1,
     };
 #endif  /*}*/
 
