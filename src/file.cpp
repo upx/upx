@@ -69,7 +69,7 @@ void File::unlink(const char *name)
 **************************************************************************/
 
 FileBase::FileBase() :
-    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(NULL)
+    _fd(-1), _flags(0), _shflags(0), _mode(0), _name(NULL), _offset(0), _length(0)
 {
     memset(&st,0,sizeof(st));
 }
@@ -104,6 +104,8 @@ void FileBase::sopen()
         assert(0);
 #endif
     }
+    ::fstat(_fd, &st);
+    _length = st.st_size;
 }
 
 
@@ -117,6 +119,8 @@ bool FileBase::close()
     _flags = 0;
     _mode = 0;
     _name = NULL;
+    _offset = 0;
+    _length = 0;
     return ok;
 }
 
@@ -164,10 +168,17 @@ void FileBase::seek(off_t off, int whence)
 {
     if (!isOpen())
         throwIOException("bad seek 1");
-    if (whence == SEEK_SET && off < 0)
-        throwIOException("bad seek 2");
-    if (whence == SEEK_END && off > 0)
-        throwIOException("bad seek 3");
+    if (whence == SEEK_SET) {
+        if (off < 0)
+            throwIOException("bad seek 2");
+        off += _offset;
+    }
+    if (whence == SEEK_END) {
+        if (off > 0)
+            throwIOException("bad seek 3");
+        off += _length;
+        whence = SEEK_SET;
+    }
     if (::lseek(_fd,off,whence) < 0)
         throwIOException("seek error",errno);
 }
@@ -180,7 +191,19 @@ off_t FileBase::tell() const
     off_t l = ::lseek(_fd, 0, SEEK_CUR);
     if (l < 0)
         throwIOException("tell error",errno);
-    return l;
+    return l - _offset;
+}
+
+
+void FileBase::set_extent(off_t offset, off_t length)
+{
+    _offset = offset;
+    _length = length;
+}
+
+off_t FileBase::st_size() const
+{
+    return _length;
 }
 
 
@@ -205,6 +228,8 @@ void InputFile::sopen(const char *name, int flags, int shflags)
     _flags = flags;
     _shflags = shflags;
     _mode = 0;
+    _offset = 0;
+    _length = 0;
     FileBase::sopen();
     if (!isOpen())
     {
@@ -289,6 +314,8 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode)
     _flags = flags;
     _shflags = shflags;
     _mode = mode;
+    _offset = 0;
+    _length = 0;
     FileBase::sopen();
     if (!isOpen())
     {
@@ -316,6 +343,8 @@ bool OutputFile::openStdout(int flags, bool force)
     _flags = flags;
     _shflags = -1;
     _mode = 0;
+    _offset = 0;
+    _length = 0;
     if (flags && acc_set_binmode(fd, 1) == -1)
         throwIOException(_name, errno);
     _fd = fd;

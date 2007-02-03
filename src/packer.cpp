@@ -46,7 +46,7 @@ Packer::Packer(InputFile *f) :
     last_patch(NULL), last_patch_len(0), last_patch_off(0)
 {
     if (fi != NULL)
-        file_size = fi->st.st_size;
+        file_size = fi->st_size();
     uip = new UiPacker(this);
     memset(&ph, 0, sizeof(ph));
 }
