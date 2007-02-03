@@ -427,12 +427,12 @@ public:
 protected:
     virtual const int *getFilters() const;
 
-    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
-    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
-    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
-    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
-    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
-    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
+    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
+    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
 
     virtual void pack1_setup_threado(OutputFile *const fo);
     virtual void pack3(OutputFile *, Filter &);  // append loader

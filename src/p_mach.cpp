@@ -371,15 +371,15 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
 }
 
 template <class T>
-void PackMachBase<T>::pack4(OutputFile *, Filter &)
+void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)
 {
-    // empty
+    PackUnix::pack4(fo, ft);  // FIXME  super() does not work?
 }
 
 template <class T>
-void PackMachBase<T>::pack3(OutputFile *, Filter &)
+void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)
 {
-    // empty
+    PackUnix::pack3(fo, ft);  // FIXME  super() does not work?
 }
 
 template <class T>
