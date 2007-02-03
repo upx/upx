@@ -245,6 +245,10 @@ struct MachClass_32
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
+
+    static void compileTimeAssertions() {
+        BeLePolicy::compileTimeAssertions();
+    }
 };
 
 template <class TP>
@@ -316,9 +320,10 @@ protected:
     typedef typename MachClass::Mach_section_command Mach_section_command;
 
 public:
-    PackMachBase(InputFile *, unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
+    PackMachBase(InputFile *, unsigned cpuid, unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
     virtual ~PackMachBase();
     virtual int getVersion() const { return 13; }
+    virtual const int *getCompressionMethods(int method, int level) const;
 
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -347,6 +352,7 @@ protected:
 
     static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
 
+    unsigned my_cputype;
     unsigned my_thread_flavor;
     unsigned my_thread_state_word_count;
     unsigned my_thread_command_size;
@@ -369,7 +375,7 @@ class PackMachPPC32 : public PackMachBase<MachClass_BE32>
     typedef PackMachBase<MachClass_BE32> super;
 
 public:
-    PackMachPPC32::PackMachPPC32(InputFile *f) : super(f,
+    PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
         Mach_thread_command::PPC_THREAD_STATE,
         sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
 
@@ -385,7 +391,6 @@ public:
     virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
 
 protected:
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
@@ -412,7 +417,7 @@ class PackMachI386 : public PackMachBase<MachClass_LE32>
     typedef PackMachBase<MachClass_LE32> super;
 
 public:
-    PackMachI386(InputFile *f) : super(f,
+    PackMachI386(InputFile *f) : super(f, Mach_header::CPU_TYPE_I386,
         (unsigned)Mach_thread_command::i386_THREAD_STATE,
         sizeof(Mach_i386_thread_state)>>2, sizeof(threado)) { }
 
@@ -420,14 +425,21 @@ public:
     virtual const char *getName() const { return "Mach/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-darwin.macho"; }
 protected:
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
+
+    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
+    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
+    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
+    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
+    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
+    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
 
     virtual void pack1_setup_threado(OutputFile *const fo);
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);
+    virtual void addStubEntrySections(Filter const *);
 
     struct Mach_thread_command
     {

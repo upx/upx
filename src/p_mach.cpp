@@ -39,13 +39,20 @@ static const
 static const
 #include "stub/powerpc-darwin.macho-fold.h"
 
+static const
+#include "stub/i386-darwin.macho-entry.h"
+static const
+#include "stub/i386-darwin.macho-fold.h"
+
 template <class T>
-PackMachBase<T>::PackMachBase(InputFile *f, unsigned flavor, unsigned count,
-        unsigned size) :
-    super(f), my_thread_flavor(flavor), my_thread_state_word_count(count),
-    my_thread_command_size(size),
+PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned flavor,
+        unsigned count, unsigned size) :
+    super(f), my_cputype(cputype), my_thread_flavor(flavor),
+    my_thread_state_word_count(count), my_thread_command_size(size),
     n_segment(0), rawmseg(0), msegcmd(0)
 {
+    MachClass::compileTimeAssertions();
+    bele = N_BELE_CTP::getRTP<BeLePolicy>();
 }
 
 template <class T>
@@ -55,7 +62,8 @@ PackMachBase<T>::~PackMachBase()
     delete [] rawmseg;
 }
 
-const int *PackMachPPC32::getCompressionMethods(int /*method*/, int /*level*/) const
+template <class T>
+const int *PackMachBase<T>::getCompressionMethods(int /*method*/, int /*level*/) const
 {
     // There really is no LE bias in M_NRV2E_LE32.
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
@@ -69,9 +77,20 @@ const int *PackMachPPC32::getFilters() const
     return filters;
 }
 
+int const *PackMachI386::getFilters() const
+{
+    static const int filters[] = { 0x49, FT_END };
+    return filters;
+}
+
 Linker *PackMachPPC32::newLinker() const
 {
     return new ElfLinkerPpc32;
+}
+
+Linker *PackMachI386::newLinker() const
+{
+    return new ElfLinkerX86;
 }
 
 template <class T>
@@ -87,6 +106,68 @@ PackMachBase<T>::addStubEntrySections(Filter const *)
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30"
         : NULL), NULL);
     addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
+}
+
+void PackMachI386::addStubEntrySections(Filter const *ft)
+{
+    int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
+
+            // entry to stub
+    addLoader("LEXEC000", NULL);
+
+    if (ft->id) {
+        { // decompr, unfilter are separate
+            addLoader("LXUNF000", NULL);
+            addLoader("LXUNF002", NULL);
+                if (0x80==(ft->id & 0xF0)) {
+                    if (256==n_mru) {
+                        addLoader("MRUBYTE0", NULL);
+                    }
+                    else if (n_mru) {
+                        addLoader("LXMRU005", NULL);
+                    }
+                    if (n_mru) {
+                        addLoader("LXMRU006", NULL);
+                    }
+                    else {
+                        addLoader("LXMRU007", NULL);
+                    }
+            }
+            else if (0x40==(ft->id & 0xF0)) {
+                addLoader("LXUNF008", NULL);
+            }
+            addLoader("LXUNF010", NULL);
+        }
+        if (n_mru) {
+            addLoader("LEXEC009", NULL);
+        }
+    }
+    addLoader("LEXEC010", NULL);
+    addLoader(getDecompressorSections(), NULL);
+    addLoader("LEXEC015", NULL);
+    if (ft->id) {
+        {  // decompr, unfilter are separate
+            if (0x80!=(ft->id & 0xF0)) {
+                addLoader("LXUNF042", NULL);
+            }
+        }
+        addFilter32(ft->id);
+        { // decompr, unfilter are separate
+            if (0x80==(ft->id & 0xF0)) {
+                if (0==n_mru) {
+                    addLoader("LXMRU058", NULL);
+                }
+            }
+            addLoader("LXUNF035", NULL);
+        }
+    }
+    else {
+        addLoader("LEXEC017", NULL);
+    }
+
+    addLoader("IDENTSTR", NULL);
+    addLoader("LEXEC020", NULL);
+    addLoader("FOLDEXEC", NULL);
 }
 
 
@@ -151,6 +232,14 @@ PackMachPPC32::buildLoader(const Filter *ft)
         stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
 }
 
+void
+PackMachI386::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_i386_darwin_macho_entry, sizeof(stub_i386_darwin_macho_entry),
+        stub_i386_darwin_macho_fold,  sizeof(stub_i386_darwin_macho_fold),  ft );
+}
+
 template <class T>
 void PackMachBase<T>::patchLoader() { }
 
@@ -201,6 +290,20 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     fo->write(&linfo, sizeof(linfo));
 }
 
+void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    // offset of p_info in compressed file
+    overlay_offset = sizeof(mhdro) + sizeof(segcmdo) + sizeof(threado) + sizeof(linfo);
+
+    super::pack4(fo, ft);
+    segcmdo.filesize = fo->getBytesWritten();
+    segcmdo.vmsize += segcmdo.filesize;
+    fo->seek(sizeof(mhdro), SEEK_SET);
+    fo->write(&segcmdo, sizeof(segcmdo));
+    fo->write(&threado, sizeof(threado));
+    fo->write(&linfo, sizeof(linfo));
+}
+
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     BE32 disp;
@@ -208,10 +311,24 @@ void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + sizeof(disp);
-    set_be32(&disp, 4+ len - sz_mach_headers);  // 4: sizeof(instruction)
+    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
     fo->write(&disp, sizeof(disp));
 
     threado.state.srr0 = len + segcmdo.vmaddr;  /* entry address */
+    super::pack3(fo, ft);
+}
+
+void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    LE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + sizeof(disp);
+    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
+    fo->write(&disp, sizeof(disp));
+
+    threado.state.eip = len + segcmdo.vmaddr;  /* entry address */
     super::pack3(fo, ft);
 }
 
@@ -228,8 +345,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
     ||  0==msegcmd[k].filesize ) {
         return 0;
     }
-    unsigned const hi = get_native32(&msegcmd[k].fileoff) +
-                        get_native32(&msegcmd[k].filesize);
+    unsigned const hi = msegcmd[k].fileoff + msegcmd[k].filesize;
     unsigned lo = ph.u_file_size;
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
@@ -242,7 +358,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         }
         if (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd
         &&  0!=msegcmd[j].filesize ) {
-            unsigned const t = get_native32(&msegcmd[j].fileoff);
+            unsigned const t = msegcmd[j].fileoff;
             if ((t - hi) < (lo - hi)) {
                 lo = t;
                 if (hi==lo) {
@@ -313,8 +429,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     for (k = 0; k < n_segment; ++k) {
         x.size = find_SEGMENT_gap(k);
         if (x.size) {
-            x.offset = get_native32(&msegcmd[k].fileoff) +
-                       get_native32(&msegcmd[k].filesize);
+            x.offset = msegcmd[k].fileoff +msegcmd[k].filesize;
             packExtent(x, total_in, total_out, 0, fo);
         }
     }
@@ -330,6 +445,16 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
 #define PAGE_SIZE -PAGE_MASK
 
 void PackMachPPC32::pack1_setup_threado(OutputFile *const fo)
+{
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state, 0, sizeof(threado.state));
+    fo->write(&threado, sizeof(threado));
+}
+
+void PackMachI386::pack1_setup_threado(OutputFile *const fo)
 {
     threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
     threado.cmdsize = sizeof(threado);
@@ -433,8 +558,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     for (unsigned j = 0; j < ncmds; ++j) {
         unsigned const size = find_SEGMENT_gap(j);
         if (size) {
-            unsigned const where = get_native32(&msegcmd[k].fileoff) +
-                                   get_native32(&msegcmd[k].filesize);
+            unsigned const where = msegcmd[k].fileoff +msegcmd[k].filesize;
             if (fo)
                 fo->seek(where, SEEK_SET);
             unpackExtent(size, fo, total_in, total_out,
@@ -451,7 +575,7 @@ bool PackMachBase<T>::canPack()
     fi->readx(&mhdri, sizeof(mhdri));
 
     if (Mach_header::MH_MAGIC         !=mhdri.magic
-    ||  Mach_header::CPU_TYPE_POWERPC !=mhdri.cputype
+    ||  my_cputype                    !=mhdri.cputype
     ||  Mach_header::MH_EXECUTE       !=mhdri.filetype
     )
         return false;

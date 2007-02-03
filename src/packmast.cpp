@@ -264,6 +264,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     // Mach (MacOS X PowerPC)
     if ((p = func(new PackMachPPC32(f), user)) != NULL)
         return p;
+    if ((p = func(new PackMachI386(f), user)) != NULL)
+        return p;
 
     return NULL;
 }
