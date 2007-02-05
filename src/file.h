@@ -60,6 +60,7 @@ public:
     int getFd() const { return _fd; }
     const char *getName() const { return _name; }
     virtual off_t st_size() const;  // { return _length; }
+    virtual void set_extent(off_t offset, off_t length);
 
 protected:
     void sopen();
@@ -68,7 +69,6 @@ protected:
     virtual void write(const void *buf, int len);
     virtual void seek(off_t off, int whence);
     virtual off_t tell() const;
-    virtual void set_extent(off_t offset, off_t length);
 
     int _fd;
     int _flags;

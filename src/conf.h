@@ -464,6 +464,7 @@ private:
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
 #define UPX_F_LINUX_ELF32_ARMBE 133
+#define UPX_F_MACH_FAT          134
 
 
 // compression methods

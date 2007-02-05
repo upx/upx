@@ -33,8 +33,9 @@
 // of the machine on which they were created.  We must deal with both kinds.
 struct Mach_fat_header {
     unsigned magic;
-        enum e8 {
-            FAT_MAGIC = 0xcafebabe
+        enum e8 {  // note conflict with java bytecode PackLinuxI386
+            FAT_MAGIC      = 0xcafebabe,
+            FAT_MAGIC_SWAB = 0xbebafeca,
         };
     unsigned nfat_arch;  // Number of Mach_fat_arch which follow.
 };
@@ -214,7 +215,7 @@ struct Mach_ppc_thread_state64
     Xword r16,r17,r18,r19,r20,r21,r22,r23;
     Xword r24,r25,r26,r27,r28,r29,r30,r31;
 
-    Word cr;        /* Condition register */
+    Word cr;        /* Condition register */  // FIXME: Xword?
     Xword xer;      /* User's integer exception register */
     Xword lr;       /* Link register */
     Xword ctr;      /* Count register */
@@ -236,7 +237,7 @@ struct MachClass_32
     typedef typename TP::U16 U16;
     typedef typename TP::U32 U32;
     typedef typename TP::U64 U64;
-    typedef N_Mach::MachITypes<U32, U32, U32, U32> MachITypes;
+    typedef N_Mach::MachITypes<U32, U64, U32, U32> MachITypes;
     typedef typename MachITypes::Addr Addr;
 
     // Mach types
@@ -452,6 +453,53 @@ protected:
     #include "p_mach_enum.h"
     } threado
     __attribute_packed;
+};
+
+class PackMachFat : public Packer
+{
+    typedef Packer super;
+public:
+    PackMachFat(InputFile *f);
+    virtual ~PackMachFat();
+
+    virtual int getVersion() const { return 13; }
+    virtual int getFormat() const { return UPX_F_MACH_FAT; }
+    virtual const char *getName() const { return "Mach/fat"; }
+    virtual const char *getFullName(const options_t *) const { return "fat-darwin.macho"; }
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+protected:
+    // implementation
+    virtual void pack(OutputFile *fo);
+    virtual void unpack(OutputFile *fo);
+    virtual void list();
+    virtual void fileInfo();
+
+public:
+    virtual bool canPack();
+    virtual int canUnpack();
+
+protected:
+    // loader core
+    virtual void buildLoader(const Filter *ft);
+    virtual Linker* newLinker() const;
+
+protected:
+    enum { N_FAT_ARCH = 5 };
+    struct Fat_head {
+        struct Mach_fat_header fat;
+        struct Mach_fat_arch arch[N_FAT_ARCH];
+    } fat_head;
+
+    // UI handler
+    UiPacker *uip;
+
+    // linker
+    Linker *linker;
+#define WANT_MACH_HEADER_ENUM
+#include "p_mach_enum.h"
+#undef  WANT_MACH_HEADER_ENUM
 };
 
 #endif /* already included */

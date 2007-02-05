@@ -244,7 +244,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     }
     if ((p = func(new PackBSDI386(f), user)) != NULL)
         return p;
-    if ((p = func(new PackLinuxI386(f), user)) != NULL)
+    if ((p = func(new PackMachFat(f), user)) != NULL)  // cafebabe conflict
+        return p;
+    if ((p = func(new PackLinuxI386(f), user)) != NULL)  // cafebabe conflict
         return p;
 
     //
