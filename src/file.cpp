@@ -104,8 +104,10 @@ void FileBase::sopen()
         assert(0);
 #endif
     }
-    ::fstat(_fd, &st);
-    _length = st.st_size;
+    if (!(_fd < 0)) {
+        ::fstat(_fd, &st);
+        _length = st.st_size;
+    }
 }
 
 
@@ -358,6 +360,16 @@ void OutputFile::write(const void *buf, int len)
     bytes_written += len;
 }
 
+off_t OutputFile::st_size() const
+{
+    if (opt->to_stdout) {  // might be a pipe ==> .st_size is invalid
+        return bytes_written;  // too big if seek()+write() instead of rewrite()
+    }
+    struct stat my_st;
+    ::fstat(_fd, &my_st);
+    return my_st.st_size;
+}
+
 
 void OutputFile::write(const MemBuffer *buf, int len)
 {
@@ -372,6 +384,36 @@ void OutputFile::write(const MemBuffer &buf, int len)
     write(&buf, len);
 }
 
+void OutputFile::rewrite(const void *buf, int len)
+{
+    assert(!opt->to_stdout);
+    write(buf, len);
+    bytes_written -= len;       // restore
+}
+
+void OutputFile::seek(off_t off, int whence)
+{
+    assert(!opt->to_stdout);
+    super::seek(off,whence);
+}
+
+void OutputFile::set_extent(off_t offset, off_t length)
+{
+    super::set_extent(offset, length);
+    bytes_written = 0;
+    if (0==offset && (off_t)~0u==length) {
+        ::fstat(_fd, &st);
+        _length = st.st_size - offset;
+    }
+}
+
+off_t OutputFile::clear_offset()
+{
+    _offset = 0;
+    ::lseek(_fd, 0, SEEK_END);
+    _length = tell();
+    return _length;
+}
 
 void OutputFile::dump(const char *name, const void *buf, int len, int flags)
 {

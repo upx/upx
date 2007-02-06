@@ -504,7 +504,7 @@ void UiPacker::uiPackStart(const OutputFile *fo)
 
 void UiPacker::uiPackEnd(const OutputFile *fo)
 {
-    uiUpdate(fo->getBytesWritten());
+    uiUpdate(fo->st_size());
 
     if (s->mode == M_QUIET)
         return;
@@ -521,7 +521,7 @@ void UiPacker::uiPackEnd(const OutputFile *fo)
     else if (opt->to_stdout)
         name = "<stdout>";
     con_fprintf(stdout,"%s\n",
-                mkline(p->ph.u_file_size, fo->getBytesWritten(),
+                mkline(p->ph.u_file_size, fo->st_size(),
                        p->ph.u_len, p->ph.c_len,
                        p->getName(), fn_basename(name)));
     printSetNl(0);

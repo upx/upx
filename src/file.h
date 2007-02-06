@@ -61,6 +61,7 @@ public:
     const char *getName() const { return _name; }
     virtual off_t st_size() const;  // { return _length; }
     virtual void set_extent(off_t offset, off_t length);
+    virtual off_t tell() const;
 
 protected:
     void sopen();
@@ -68,7 +69,6 @@ protected:
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);
     virtual void seek(off_t off, int whence);
-    virtual off_t tell() const;
 
     int _fd;
     int _flags;
@@ -132,21 +132,15 @@ public:
     virtual void write(const void *buf, int len);
     virtual void write(const MemBuffer *buf, int len);
     virtual void write(const MemBuffer &buf, int len);
+    virtual void set_extent(off_t offset, off_t length);
+    virtual off_t clear_offset();  // returns actual length
 
     off_t getBytesWritten() const { return bytes_written; }
+    virtual off_t st_size() const;  // { return _length; }
 
     // FIXME - these won't work when using the '--stdout' option
-    virtual void seek(off_t off, int whence)
-    {
-        assert(!opt->to_stdout);
-        super::seek(off,whence);
-    }
-    virtual void rewrite(const void *buf, int len)
-    {
-        assert(!opt->to_stdout);
-        write(buf, len);
-        bytes_written -= len;       // restore
-    }
+    virtual void seek(off_t off, int whence);
+    virtual void rewrite(const void *buf, int len);
 
     // util
     static void dump(const char *name, const void *buf, int len, int flags=-1);

@@ -285,9 +285,9 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segcmdo.filesize = fo->getBytesWritten();
     segcmdo.vmsize += segcmdo.filesize;
     fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->write(&segcmdo, sizeof(segcmdo));
-    fo->write(&threado, sizeof(threado));
-    fo->write(&linfo, sizeof(linfo));
+    fo->rewrite(&segcmdo, sizeof(segcmdo));
+    fo->rewrite(&threado, sizeof(threado));
+    fo->rewrite(&linfo, sizeof(linfo));
 }
 
 void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
@@ -299,9 +299,9 @@ void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segcmdo.filesize = fo->getBytesWritten();
     segcmdo.vmsize += segcmdo.filesize;
     fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->write(&segcmdo, sizeof(segcmdo));
-    fo->write(&threado, sizeof(threado));
-    fo->write(&linfo, sizeof(linfo));
+    fo->rewrite(&segcmdo, sizeof(segcmdo));
+    fo->rewrite(&threado, sizeof(threado));
+    fo->rewrite(&linfo, sizeof(linfo));
 }
 
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
@@ -643,14 +643,17 @@ const int *PackMachFat::getFilters() const
 
 void PackMachFat::pack(OutputFile *fo)
 {
+    unsigned const in_size = this->file_size;
     fo->write(&fat_head, sizeof(fat_head.fat) +
         fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
+    unsigned length;
     for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
-        unsigned base = fo->getBytesWritten();
-        base += ~(~0u<<fat_head.arch[j].align) & -base;
+        unsigned base = fo->clear_offset();  // actual length
+        base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up
         fo->seek(base, SEEK_SET);
         fo->set_extent(base, ~0u);
 
+        ph.u_file_size = fat_head.arch[j].size;
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         switch (fat_head.arch[j].cputype) {
         case PackMachFat::CPU_TYPE_I386: {
@@ -669,12 +672,16 @@ void PackMachFat::pack(OutputFile *fo)
         } break;
         }  // switch cputype
         fat_head.arch[j].offset = base;
-        fat_head.arch[j].size = fo->getBytesWritten() - base;
+        length = fo->clear_offset();
+        fat_head.arch[j].size = length - base;
     }
-    fo->set_extent(0, ~0u);
+    ph.u_file_size = in_size;;
+    fi->set_extent(0, in_size);
+
     fo->seek(0, SEEK_SET);
-    fo->write(&fat_head, sizeof(fat_head.fat) +
+    fo->rewrite(&fat_head, sizeof(fat_head.fat) +
         fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
+    fo->set_extent(0, length);
 }
 
 void PackMachFat::unpack(OutputFile */*fo*/)
