@@ -648,7 +648,7 @@ void PackMachFat::pack(OutputFile *fo)
         fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
     unsigned length;
     for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
-        unsigned base = fo->clear_offset();  // actual length
+        unsigned base = fo->unset_extent();  // actual length
         base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up
         fo->seek(base, SEEK_SET);
         fo->set_extent(base, ~0u);
@@ -672,10 +672,10 @@ void PackMachFat::pack(OutputFile *fo)
         } break;
         }  // switch cputype
         fat_head.arch[j].offset = base;
-        length = fo->clear_offset();
+        length = fo->unset_extent();
         fat_head.arch[j].size = length - base;
     }
-    ph.u_file_size = in_size;;
+    ph.u_file_size = in_size;
     fi->set_extent(0, in_size);
 
     fo->seek(0, SEEK_SET);
@@ -694,12 +694,6 @@ bool PackMachFat::canPack()
     struct Mach_fat_arch *arch = &fat_head.arch[0];
 
     fi->readx(&fat_head, sizeof(fat_head));
-    if (Mach_fat_header::FAT_MAGIC_SWAB==fat_head.fat.magic) {
-        unsigned *const p = &fat_head.fat.magic;
-        for (unsigned j = 0; j < sizeof(fat_head)/sizeof(unsigned); ++j) {
-            p[j] = acc_swab32(p[j]);
-        }
-    }
     if (Mach_fat_header::FAT_MAGIC!=fat_head.fat.magic
     ||  N_FAT_ARCH < fat_head.fat.nfat_arch) {
         return false;

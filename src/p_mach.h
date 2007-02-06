@@ -29,22 +29,20 @@
 #ifndef __UPX_P_MACHO_H
 #define __UPX_P_MACHO_H
 
-// Apparently, Mach_fat_header and Mach_fat_arch have the endianness
-// of the machine on which they were created.  We must deal with both kinds.
 struct Mach_fat_header {
-    unsigned magic;
+    BE32 magic;
         enum e8 {  // note conflict with java bytecode PackLinuxI386
             FAT_MAGIC      = 0xcafebabe,
             FAT_MAGIC_SWAB = 0xbebafeca,
         };
-    unsigned nfat_arch;  // Number of Mach_fat_arch which follow.
+    BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
 };
 struct Mach_fat_arch {
-    unsigned cputype;
-    unsigned cpusubtype;
-    unsigned offset;
-    unsigned size;
-    unsigned align;  /* shift count; log base 2 */
+    BE32 cputype;
+    BE32 cpusubtype;
+    BE32 offset;
+    BE32 size;
+    BE32 align;  /* shift count; log base 2 */
 };
 
 /*************************************************************************
@@ -281,8 +279,6 @@ typedef N_Mach::MachClass_64<N_BELE_CTP::LEPolicy>   MachClass_LE64;
 // shortcuts
 typedef MachClass_Host32::Mach_segment_command Mach32_segment_command;
 typedef MachClass_Host32::Mach_section_command Mach32_section_command;
-typedef MachClass_Host32::Mach_ppc_thread_state Mach_ppc_thread_state;
-typedef MachClass_Host32::Mach_i386_thread_state Mach_i386_thread_state;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
@@ -299,6 +295,8 @@ typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
 typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
 typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
 
+typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
+typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
 #include "p_unix.h"
 
 
@@ -367,6 +365,32 @@ protected:
 
     Mach_header mhdro;
     Mach_segment_command segcmdo;
+
+    struct b_info { // 12-byte header before each compressed block
+        U32 sz_unc;  // uncompressed_size
+        U32 sz_cpr;  //   compressed_size
+        unsigned char b_method;  // compression algorithm
+        unsigned char b_ftid;  // filter id
+        unsigned char b_cto8;  // filter parameter
+        unsigned char b_unused;
+    }
+    __attribute_packed;
+    struct l_info { // 12-byte trailer in header for loader
+        U32  l_checksum;
+        LE32 l_magic;
+        U16  l_lsize;
+        unsigned char l_version;
+        unsigned char l_format;
+    }
+    __attribute_packed;
+
+    struct p_info { // 12-byte packed program header
+        U32 p_progid;
+        U32 p_filesize;
+        U32 p_blocksize;
+    }
+    __attribute_packed;
+
     struct l_info linfo;
 };
 

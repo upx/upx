@@ -61,7 +61,6 @@ public:
     const char *getName() const { return _name; }
     virtual off_t st_size() const;  // { return _length; }
     virtual void set_extent(off_t offset, off_t length);
-    virtual off_t tell() const;
 
 protected:
     void sopen();
@@ -69,6 +68,7 @@ protected:
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);
     virtual void seek(off_t off, int whence);
+    virtual off_t tell() const;
 
     int _fd;
     int _flags;
@@ -133,7 +133,7 @@ public:
     virtual void write(const MemBuffer *buf, int len);
     virtual void write(const MemBuffer &buf, int len);
     virtual void set_extent(off_t offset, off_t length);
-    virtual off_t clear_offset();  // returns actual length
+    virtual off_t unset_extent();  // returns actual length
 
     off_t getBytesWritten() const { return bytes_written; }
     virtual off_t st_size() const;  // { return _length; }

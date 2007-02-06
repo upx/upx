@@ -407,11 +407,10 @@ void OutputFile::set_extent(off_t offset, off_t length)
     }
 }
 
-off_t OutputFile::clear_offset()
+off_t OutputFile::unset_extent()
 {
     _offset = 0;
-    ::lseek(_fd, 0, SEEK_END);
-    _length = tell();
+    _length = ::lseek(_fd, 0, SEEK_END);
     return _length;
 }
 
