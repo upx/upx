@@ -63,11 +63,10 @@ PackMachBase<T>::~PackMachBase()
 }
 
 template <class T>
-const int *PackMachBase<T>::getCompressionMethods(int /*method*/, int /*level*/) const
+const int *PackMachBase<T>::getCompressionMethods(int method, int level) const
 {
-    // There really is no LE bias in M_NRV2E_LE32.
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
-    return m_nrv2e;
+    // There really is no LE bias.
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 
