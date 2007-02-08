@@ -66,9 +66,9 @@ PackVmlinuxBase<T>::PackVmlinuxBase(InputFile *f,
 template <class T>
 PackVmlinuxBase<T>::~PackVmlinuxBase()
 {
-    delete [] shstrtab;
     delete [] phdri;
     delete [] shdri;
+    delete [] shstrtab;
 }
 
 template <class T>

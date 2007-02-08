@@ -98,7 +98,7 @@
     enum { // thread flavor
         PPC_THREAD_STATE = 1,
         i386_THREAD_STATE = -1,
-        i386_NEW_THREAD_STATE = 1,
+        i386_NEW_THREAD_STATE = 1
     };
 #endif  /*}*/
 

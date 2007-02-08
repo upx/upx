@@ -49,7 +49,7 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned flavor,
         unsigned count, unsigned size) :
     super(f), my_cputype(cputype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
-    n_segment(0), rawmseg(0), msegcmd(0)
+    n_segment(0), rawmseg(NULL), msegcmd(NULL)
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP<BeLePolicy>();
@@ -58,8 +58,8 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned flavor,
 template <class T>
 PackMachBase<T>::~PackMachBase()
 {
-    delete [] msegcmd;
     delete [] rawmseg;
+    delete [] msegcmd;
 }
 
 template <class T>
@@ -652,7 +652,7 @@ void PackMachFat::pack(OutputFile *fo)
     unsigned length = 0;
     for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
         unsigned base = fo->unset_extent();  // actual length
-        base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up
+        base += ~(~0u<<fat_head.arch[j].align) & (0-base);  // align up
         fo->seek(base, SEEK_SET);
         fo->set_extent(base, ~0u);
 
@@ -695,7 +695,7 @@ void PackMachFat::unpack(OutputFile *fo)
     unsigned length;
     for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
         unsigned base = fo->unset_extent();  // actual length
-        base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up
+        base += ~(~0u<<fat_head.arch[j].align) & (0-base);  // align up
         fo->seek(base, SEEK_SET);
         fo->set_extent(base, ~0u);
 

@@ -32,9 +32,9 @@
 
 struct Mach_fat_header {
     BE32 magic;
-        enum e8 {  // note conflict with java bytecode PackLinuxI386
+        enum {  // note conflict with java bytecode PackLinuxI386
             FAT_MAGIC      = 0xcafebabe,
-            FAT_MAGIC_SWAB = 0xbebafeca,
+            FAT_MAGIC_SWAB = 0xbebafeca
         };
     BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
 }
@@ -241,7 +241,11 @@ struct MachClass_32
     typedef typename TP::U32 U32;
     typedef typename TP::U64 U64;
     typedef N_Mach::MachITypes<U32, U64, U32, U32> MachITypes;
+#if (ACC_CC_BORLANDC)
+    typedef U32 Addr;
+#else
     typedef typename MachITypes::Addr Addr;
+#endif
 
     // Mach types
     typedef N_Mach::Mach_header<MachITypes> Mach_header;
@@ -252,6 +256,7 @@ struct MachClass_32
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
+        COMPILE_TIME_ASSERT(sizeof(Addr) == 4)
     }
 };
 
@@ -270,6 +275,10 @@ struct MachClass_64
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+
+    static void compileTimeAssertions() {
+        BeLePolicy::compileTimeAssertions();
+    }
 };
 
 }  // namespace N_Mach
@@ -515,12 +524,17 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-protected:
+#if (ACC_CC_BORLANDC)
+public:
+#endif
     enum { N_FAT_ARCH = 5 };
+protected:
     struct Fat_head {
         struct Mach_fat_header fat;
         struct Mach_fat_arch arch[N_FAT_ARCH];
-    } fat_head;
+    }
+    __attribute_packed;
+    Fat_head fat_head;
 
     // UI handler
     UiPacker *uip;
@@ -529,7 +543,6 @@ protected:
     Linker *linker;
 #define WANT_MACH_HEADER_ENUM
 #include "p_mach_enum.h"
-#undef  WANT_MACH_HEADER_ENUM
 };
 
 #endif /* already included */
