@@ -649,7 +649,7 @@ void PackMachFat::pack(OutputFile *fo)
     unsigned const in_size = this->file_size;
     fo->write(&fat_head, sizeof(fat_head.fat) +
         fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
-    unsigned length;
+    unsigned length = 0;
     for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
         unsigned base = fo->unset_extent();  // actual length
         base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up

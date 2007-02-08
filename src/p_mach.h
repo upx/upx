@@ -29,6 +29,7 @@
 #ifndef __UPX_P_MACHO_H
 #define __UPX_P_MACHO_H
 
+
 struct Mach_fat_header {
     BE32 magic;
         enum e8 {  // note conflict with java bytecode PackLinuxI386
@@ -36,14 +37,18 @@ struct Mach_fat_header {
             FAT_MAGIC_SWAB = 0xbebafeca,
         };
     BE32 nfat_arch;  // Number of Mach_fat_arch which follow.
-};
+}
+__attribute_packed;
+
 struct Mach_fat_arch {
     BE32 cputype;
     BE32 cpusubtype;
     BE32 offset;
     BE32 size;
     BE32 align;  /* shift count; log base 2 */
-};
+}
+__attribute_packed;
+
 
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
@@ -400,7 +405,7 @@ class PackMachPPC32 : public PackMachBase<MachClass_BE32>
     typedef PackMachBase<MachClass_BE32> super;
 
 public:
-    PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
+    PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
         Mach_thread_command::PPC_THREAD_STATE,
         sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
 
@@ -433,8 +438,9 @@ protected:
         Mach_ppc_thread_state state;
     #define WANT_MACH_THREAD_ENUM
     #include "p_mach_enum.h"
-    } threado
+    }
     __attribute_packed;
+    Mach_thread_command threado;
 };
 
 class PackMachI386 : public PackMachBase<MachClass_LE32>
@@ -475,8 +481,9 @@ protected:
         Mach_i386_thread_state state;
     #define WANT_MACH_THREAD_ENUM
     #include "p_mach_enum.h"
-    } threado
+    }
     __attribute_packed;
+    Mach_thread_command threado;
 };
 
 class PackMachFat : public Packer
