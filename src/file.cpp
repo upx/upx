@@ -411,6 +411,7 @@ off_t OutputFile::unset_extent()
 {
     _offset = 0;
     _length = ::lseek(_fd, 0, SEEK_END);
+    bytes_written = _length;
     return _length;
 }
 
