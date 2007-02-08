@@ -770,11 +770,13 @@ int PackMachFat::canUnpack()
             PackMachI386 packer(fi);
             if (!packer.canUnpack())
                 return 0;
+            ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             PackMachPPC32 packer(fi);
             if (!packer.canUnpack())
                 return 0;
+            ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
         } break;
         }  // switch cputype
     }
@@ -796,10 +798,6 @@ void PackMachFat::list()
     assert(false);
 }
 
-void PackMachFat::fileInfo()
-{
-    assert(false);
-}
 /*
 vi:ts=4:et
 */

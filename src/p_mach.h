@@ -498,7 +498,6 @@ protected:
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
     virtual void list();
-    virtual void fileInfo();
 
 public:
     virtual bool canPack();
