@@ -704,10 +704,14 @@ void PackMachFat::unpack(OutputFile *fo)
         switch (fat_head.arch[j].cputype) {
         case PackMachFat::CPU_TYPE_I386: {
             PackMachI386 packer(fi);
+            packer.initPackHeader();
+            packer.canUnpack();
             packer.unpack(fo);
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             PackMachPPC32 packer(fi);
+            packer.initPackHeader();
+            packer.canUnpack();
             packer.unpack(fo);
         } break;
         }  // switch cputype
@@ -715,10 +719,10 @@ void PackMachFat::unpack(OutputFile *fo)
         length = fo->unset_extent();
         fat_head.arch[j].size = length - base;
     }
+    fo->unset_extent();
     fo->seek(0, SEEK_SET);
     fo->rewrite(&fat_head, sizeof(fat_head.fat) +
         fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
-    fo->set_extent(0, length);
 }
 
 bool PackMachFat::canPack()
