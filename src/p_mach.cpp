@@ -500,6 +500,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
+    overlay_offset = sizeof(mhdro) + sizeof(segcmdo) +
+        my_thread_command_size + sizeof(linfo);
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
@@ -513,6 +515,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&bhdr, sizeof(bhdr));
     ph.u_len = get_native32(&bhdr.sz_unc);
     ph.c_len = get_native32(&bhdr.sz_cpr);
+    ph.method = bhdr.b_method;
+    ph.filter = bhdr.b_ftid;
     ph.filter_cto = bhdr.b_cto8;
 
     // Uncompress Macho headers
@@ -550,7 +554,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ) {
         if (Mach_segment_command::LC_SEGMENT==sc->cmd
         &&  0!=sc->filesize ) {
-            unsigned filesize = get_be32(&sc->filesize);
+            unsigned filesize = sc->filesize;
             unpackExtent(filesize, fo, total_in, total_out, c_adler, u_adler, false, sizeof(bhdr));
         }
     }
@@ -683,9 +687,38 @@ void PackMachFat::pack(OutputFile *fo)
     fo->set_extent(0, length);
 }
 
-void PackMachFat::unpack(OutputFile */*fo*/)
+void PackMachFat::unpack(OutputFile *fo)
 {
-    assert(false);
+    fo->seek(0, SEEK_SET);
+    fo->write(&fat_head, sizeof(fat_head.fat) +
+        fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
+    unsigned length;
+    for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
+        unsigned base = fo->unset_extent();  // actual length
+        base += ~(~0u<<fat_head.arch[j].align) & -base;  // align up
+        fo->seek(base, SEEK_SET);
+        fo->set_extent(base, ~0u);
+
+        ph.u_file_size = fat_head.arch[j].size;
+        fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
+        switch (fat_head.arch[j].cputype) {
+        case PackMachFat::CPU_TYPE_I386: {
+            PackMachI386 packer(fi);
+            packer.unpack(fo);
+        } break;
+        case PackMachFat::CPU_TYPE_POWERPC: {
+            PackMachPPC32 packer(fi);
+            packer.unpack(fo);
+        } break;
+        }  // switch cputype
+        fat_head.arch[j].offset = base;
+        length = fo->unset_extent();
+        fat_head.arch[j].size = length - base;
+    }
+    fo->seek(0, SEEK_SET);
+    fo->rewrite(&fat_head, sizeof(fat_head.fat) +
+        fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
+    fo->set_extent(0, length);
 }
 
 bool PackMachFat::canPack()
@@ -718,7 +751,30 @@ bool PackMachFat::canPack()
 
 int PackMachFat::canUnpack()
 {
-    return 0;
+    struct Mach_fat_arch *arch = &fat_head.arch[0];
+
+    fi->readx(&fat_head, sizeof(fat_head));
+    if (Mach_fat_header::FAT_MAGIC!=fat_head.fat.magic
+    ||  N_FAT_ARCH < fat_head.fat.nfat_arch) {
+        return false;
+    }
+    for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
+        fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
+        switch (arch[j].cputype) {
+        default: return false;
+        case PackMachFat::CPU_TYPE_I386: {
+            PackMachI386 packer(fi);
+            if (!packer.canUnpack())
+                return 0;
+        } break;
+        case PackMachFat::CPU_TYPE_POWERPC: {
+            PackMachPPC32 packer(fi);
+            if (!packer.canUnpack())
+                return 0;
+        } break;
+        }  // switch cputype
+    }
+    return 1;
 }
 
 void PackMachFat::buildLoader(const Filter */*ft*/)
