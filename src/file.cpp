@@ -178,7 +178,7 @@ void FileBase::seek(off_t off, int whence)
     if (whence == SEEK_END) {
         if (off > 0)
             throwIOException("bad seek 3");
-        off += _length;
+        off += _offset + _length;
         whence = SEEK_SET;
     }
     if (::lseek(_fd,off,whence) < 0)
