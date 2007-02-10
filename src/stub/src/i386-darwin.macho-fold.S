@@ -56,9 +56,25 @@ i386_ts_ds  = 12*4
 i386_ts_es  = 13*4
 i386_ts_fs  = 14*4
 i386_ts_gs  = 15*4
-fold_begin:
+
+fold_begin:  // In: ebx= &total_length
         int3
+        lea edi,[-4+ esp]  # &mhdrpp
+        lea esi,[ 2+ ebp]  # &f_unfilter
+        mov edx,[ebx]  # sz_total
+        mov ecx,ebx
+        sub ecx,edx  # &{l_info; p_info; b_info}
+        mov ebx,[sz_unc + sz_p_info + sz_l_info + ecx]  # sz_mach_headers
+        mov eax,2048  # allow for /usr/lib/dyld
+        cmp eax,ebx
+        jbe 0f
+        mov ebx,eax
+0:
+        sub esp,ebx  # alloca
+        pusha  # (mhdrpp, f_unfilter, f_decompress, mhdr, sz_mhdr, sz_total, src, junk)
         call upx_main  # Out: eax= &Mach_i386_thread_state of dyld
+        mov ecx,[4*4 + esp]  # sz_mhdr
+        lea esp,[8*4 + 1*ecx + esp]  # un_alloca
         jmp [i386_ts_eip + eax]
 
 SYS_exit  =1
@@ -72,32 +88,34 @@ SYS_pread =153
 SYS_mmap    =197
 SYS_mprotect= 74
 
-/* SYS_mmap takes a 64-bit off_t, but gcc-3.4.1-20040827 passes long long
-   in wrong registers.  So change C interface to use size_t (32-bits) instead
-   of off_t (64 bits), and convert here.
-*/
-#define pushbli  .byte 0x6a,
+sysgo:
+        pop edx  # return address for sysenter
+        .byte 0x0f, 0x34  # sysenter
 
-pread: .globl pread
-        int3
-        pushbli SYS_pread
-mmap: .globl mmap
-        int3
-        pushbli SYS_mmap
-
-exit: .globl exit
-        int3
-        pushbli SYS_exit
-read: .globl read
-        int3
-        pushbli SYS_read
-open: .globl open
-        int3
-        pushbli SYS_open
-close: .globl close
-        pushbli SYS_close
+// lazy jmps enable compression of this code
 mprotect: .globl mprotect
-        pushbli SYS_mprotect
+        mov al,SYS_mprotect; jmps 2+ 0f; 0:
+exit: .globl exit
+        mov al,SYS_exit;  jmps 2+ 0f; 0:
+pread: .globl pread
+        mov al,SYS_pread; jmps 2+ 0f; 0:
+close: .globl close
+        mov al,SYS_close; jmps 2+ 0f; 0:
+open: .globl open
+        mov al,SYS_open;  jmps 2+ 0f; 0:
+mmap: .globl mmap
+        mov al,SYS_mmap;  jmps 2+ 0f; 0:
+read: .globl read
+        mov al,SYS_read
+
+        movzbl eax,al  # SYS_nnnnn
+        mov ecx,esp  # &{user_ret_addr, arg1, arg2, ...}
+        call sysgo
+        jncs 0f
+        //mov errno,eax
+        or eax,~0
+0:
+        ret
 
 /*
 vi:ts=8:et:nowrap

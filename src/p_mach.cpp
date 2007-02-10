@@ -323,11 +323,11 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + sizeof(disp);
-    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
+    len += (3& (0u-len));
+    disp = len - sz_mach_headers;
     fo->write(&disp, sizeof(disp));
 
-    threado.state.eip = len + segcmdo.vmaddr;  /* entry address */
+    threado.state.eip = len + sizeof(disp) + segcmdo.vmaddr;  /* entry address */
     super::pack3(fo, ft);
 }
 

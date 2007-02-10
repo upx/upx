@@ -31,7 +31,7 @@
 ;
 */
 
-#include      "arch/i386/macros.S"
+#include "arch/i386/macros.S"
 
 
 /*************************************************************************
@@ -41,7 +41,7 @@
 
 section LEXEC000
 _start: .globl _start
-    int3
+////    int3
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
@@ -67,12 +67,12 @@ decompress:
 // // C callable decompressor
 // **************************************************************************/
 
-// /* Offsets to parameters, allowing for {push + pusha + call} */
-#define         O_INP   (4+ 8*4 +1*4)
-#define         O_INS   (4+ 8*4 +2*4)
-#define         O_OUTP  (4+ 8*4 +3*4)
-#define         O_OUTS  (4+ 8*4 +4*4)
-#define         O_PARAM (4+ 8*4 +5*4)
+// /* Offsets to parameters, allowing for {pusha + call} */
+#define         O_INP   (8*4 +1*4)
+#define         O_INS   (8*4 +2*4)
+#define         O_OUTP  (8*4 +3*4)
+#define         O_OUTS  (8*4 +4*4)
+#define         O_PARAM (8*4 +5*4)
 
 #define         INP     dword ptr [esp+O_INP]
 #define         INS     dword ptr [esp+O_INS]
@@ -81,7 +81,7 @@ decompress:
 #define         PARM    dword ptr [esp+O_PARAM]
 
 section LEXEC009
-        //  empty section for commonality with l_lx_exec86.asm
+        //;  empty section for commonality with l_lx_exec86.asm
 section LEXEC010
                 pusha
                 // cld
@@ -90,12 +90,12 @@ section LEXEC010
                 mov     edi, OUTP
 
                 or      ebp, -1
-//              align   8
+//;;              align   8
 
-#include      "arch/i386/nrv2b_d32.S"
-#include      "arch/i386/nrv2d_d32.S"
-#include      "arch/i386/nrv2e_d32.S"
-#include      "arch/i386/lzma_d.S"
+#include "arch/i386/nrv2b_d32.S"
+#include "arch/i386/nrv2d_d32.S"
+#include "arch/i386/nrv2e_d32.S"
+#include "arch/i386/lzma_d.S"
 
 section LEXEC015
                 // eax is 0 from decompressor code
@@ -129,40 +129,6 @@ section LEXEC020
 
 #define PAGE_SIZE ( 1<<12)
 
-#define MAP_FIXED     0x10
-#define MAP_PRIVATE   0x02
-#define MAP_ANONYMOUS 0x1000
-#define PROT_READ      1
-#define PROT_WRITE     2
-#define PROT_EXEC      4
-#define __NR_mmap    197
-#define __NR_syscall 198
-#define szElf32_Ehdr 0x34
-#define p_memsz  5*4
-
-#define __NR_write 4
-#define __NR_exit  1
-
-#define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate */
-
-fail_mmap:
-        pushsbli L71 - L70
-        call L71
-L70:
-        .ascii "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-        push 2  // fd stderr
-        push eax  // fake ret.addr
-        push __NR_write
-        pop eax
-        int 0x80
-die:
-        push 127  // only low 7 bits matter!
-        push eax  // fake ret.addr
-        push __NR_exit
-        pop eax  // write to stderr could fail, leaving eax as -EBADF etc.
-        int 0x80
-
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
@@ -191,10 +157,8 @@ unfold:
         ret      // &destination
 main:
         pop ebp  // &decompress
+        lea ebx,[-4+ _start - decompress + ebp]  // &total_length
         call unfold
             // compressed fold_elf86 follows
 
-/*
-vi:ts=8:et:nowrap
-*/
-
+// vi:ts=8:et:nowrap

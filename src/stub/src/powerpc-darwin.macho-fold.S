@@ -69,7 +69,7 @@ L90:
         lwz a1,-8(r31)  # offset to {l_info; p_info; b_info}
         subf a0,a1,r31  # &l_info
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  # sz_mach_headers
-        cmpli 0,a3,2048; bgt L100; li a3,2048  # at least 2KB for /usr/bin/dyld
+        cmpli 0,a3,2048; bgt L100; li a3,2048  # at least 2KB for /usr/lib/dyld
 L100:
         movr r29,sp  # remember for restoring later
         subf sp,a3,sp  # alloca

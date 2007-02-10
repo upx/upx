@@ -376,13 +376,13 @@ ERR_LAB
 
 Mach_i386_thread_state const *
 upx_main(
-    struct l_info const *const li,
-    size_t volatile sz_compressed,  // total length
+    Mach_header **const mhdrpp,  // Out: *mhdrpp= &real Mach_header
+    f_unfilter *const f_unf,
+    f_expand *const f_decompress,
     Mach_header *const mhdr,  // temp char[sz_mhdr] for decompressing
     size_t const sz_mhdr,
-    f_expand *const f_decompress,
-    f_unfilter *const f_unf,
-    Mach_header **const mhdrpp  // Out: *mhdrpp= &real Mach_header
+    size_t volatile sz_compressed,  // total length
+    struct l_info const *const li
 )
 {
     Mach_i386_thread_state const *entry;
