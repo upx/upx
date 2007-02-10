@@ -59,11 +59,12 @@ i386_ts_gs  = 15*4
 
 fold_begin:  // In: ebx= &total_length
 ////        int3
-        lea edi,[-4+ esp]  # &mhdrpp
+        push 0  # default value for mhdrp
+        mov edi,esp  # &mhdrp
         lea esi,[ 2+ ebp]  # &f_unfilter
         mov edx,[ebx]  # sz_total
         mov ecx,ebx
-        sub ecx,edx  # &{l_info; p_info; b_info}
+        sub ecx,edx  # src= &{l_info; p_info; b_info}
         mov ebx,[sz_unc + sz_p_info + sz_l_info + ecx]  # sz_mach_headers
         mov eax,2048  # allow for /usr/lib/dyld
         cmp eax,ebx
@@ -74,16 +75,8 @@ fold_begin:  // In: ebx= &total_length
         pusha  # (mhdrpp, f_unfilter, f_decompress, mhdr, sz_mhdr, sz_total, src, junk)
         call upx_main  # Out: eax= &Mach_i386_thread_state of dyld
         mov ecx,[4*4 + esp]  # sz_mhdr
-        lea esp,[8*4 + 1*ecx + esp]  # un_alloca
-        push [i386_ts_eip + eax]
-        sub eax,eax
-        sub ecx,ecx
-        sub edx,edx
-        sub ebx,ebx
-        sub ebp,ebp
-        sub esi,esi
-        sub edi,edi
-        ret
+        lea esp,[8*4 + 1*ecx + esp]  # un_pusha, un_alloca; keep mhdrp
+        jmp [i386_ts_eip + eax]  # esp: mhdrp, argc, argv...
 
 bswap: .globl bswap
         mov eax,[4+ esp]  # ptr
@@ -114,12 +107,12 @@ sysgo:
         .byte 0x0f, 0x34  # sysenter
 
 // lazy jmps enable compression of this code
+exit: .globl exit
+        mov al,SYS_exit;  jmps 2+ 0f; 0:
 mprotect: .globl mprotect
         mov al,SYS_mprotect; jmps 2+ 0f; 0:
 munmap: .globl munmap
         mov al,SYS_munmap; jmps 2+ 0f; 0:
-exit: .globl exit
-        mov al,SYS_exit;  jmps 2+ 0f; 0:
 pread: .globl pread
         mov al,SYS_pread; jmps 2+ 0f; 0:
 close: .globl close
