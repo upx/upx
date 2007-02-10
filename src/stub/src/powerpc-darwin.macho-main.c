@@ -316,6 +316,7 @@ typedef union {
    Adjust in mmap().
 */
 extern char *mmap(char *, size_t, unsigned, unsigned, int, /*off_t*/size_t);
+ssize_t pread(int, void *, size_t, /*off_t*/unsigned);  // FIXME?
 
 static Mach_ppc_thread_state const *
 do_xmap(

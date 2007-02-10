@@ -211,10 +211,11 @@ typedef struct {
     unsigned align;  /* shift count; log base 2 */
 } Fat_arch;
     enum e8 {
-        FAT_MAGIC = 0xcafebabe
+        FAT_MAGIC = 0xbebafeca  // 0xcafebabe in big endian
     };
     enum e9 {
         CPU_TYPE_I386      =          7,
+        CPU_TYPE_AMD64     = 0x01000007,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012
     };
@@ -285,7 +286,7 @@ typedef struct {
     Mach_i386_thread_state state;
 } Mach_thread_command;
         enum e6 {
-            i386_THREAD_STATE = (unsigned)-1
+            i386_THREAD_STATE = 1
         };
         enum e7 {
             i386_THREAD_STATE_COUNT = sizeof(Mach_i386_thread_state)/4
@@ -303,7 +304,10 @@ typedef union {
 #define PROT_WRITE     2
 #define PROT_EXEC      4
 
-extern char *mmap(char *, size_t, unsigned, unsigned, int, /*off_t*/size_t);
+typedef long long off_t;
+extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t);
+extern ssize_t pread(int, void *, size_t, off_t);
+extern void bswap(void *, unsigned);
 
 static Mach_i386_thread_state const *
 do_xmap(
@@ -331,7 +335,9 @@ do_xmap(
         addr -= frag;
         mlen += frag;
 
-        if (0!=mlen && addr != mmap(addr, mlen, VM_PROT_READ | VM_PROT_WRITE,
+        // Decompressor can overrun the destination by 3 bytes.  [i386 only]
+        if (0!=mlen && addr != mmap(addr, mlen + (xi ? 3 : 0),
+                VM_PROT_READ | VM_PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE |
                     ((xi || 0==sc->filesize) ? MAP_ANON : 0),
                 ((0==sc->filesize) ? -1 : fdi), sc->fileoff + fat_offset) ) {
@@ -355,6 +361,12 @@ ERR_LAB
             if (addr != mmap(addr, haddr - addr, sc->initprot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0 ) ) {
                 err_exit(9);
+            }
+        }
+        else if (xi) { // cleanup if decompressor overrun crosses page boundary
+            mlen = ~PAGE_MASK & (3+ mlen);
+            if (mlen<=3) { // page fragment was overrun buffer only
+                munmap(addr, mlen);
             }
         }
     }
@@ -421,8 +433,9 @@ ERR_LAB
         case MH_MAGIC: break;
         case FAT_MAGIC: {
             // stupid Apple: waste code and a page fault on EVERY execve
-            Fat_header const *const fh = (Fat_header const *)mhdr;
-            Fat_arch const *fa = (Fat_arch const *)(1+ fh);
+            Fat_header *const fh = (Fat_header *)mhdr;
+            Fat_arch *fa = (Fat_arch *)(1+ fh);
+            bswap(fh, sizeof(*fh) + (fh->nfat_arch>>24)*sizeof(*fa));
             for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
                 if (CPU_TYPE_I386==fa->cputype) {
                     fat_offset= fa->offset;

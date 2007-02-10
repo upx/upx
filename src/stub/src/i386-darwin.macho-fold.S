@@ -58,7 +58,7 @@ i386_ts_fs  = 14*4
 i386_ts_gs  = 15*4
 
 fold_begin:  // In: ebx= &total_length
-        int3
+////        int3
         lea edi,[-4+ esp]  # &mhdrpp
         lea esi,[ 2+ ebp]  # &f_unfilter
         mov edx,[ebx]  # sz_total
@@ -75,7 +75,27 @@ fold_begin:  // In: ebx= &total_length
         call upx_main  # Out: eax= &Mach_i386_thread_state of dyld
         mov ecx,[4*4 + esp]  # sz_mhdr
         lea esp,[8*4 + 1*ecx + esp]  # un_alloca
-        jmp [i386_ts_eip + eax]
+        push [i386_ts_eip + eax]
+        sub eax,eax
+        sub ecx,ecx
+        sub edx,edx
+        sub ebx,ebx
+        sub ebp,ebp
+        sub esi,esi
+        sub edi,edi
+        ret
+
+bswap: .globl bswap
+        mov eax,[4+ esp]  # ptr
+        mov ecx,[8+ esp]  # len
+0:
+        mov edx,[eax]
+        .byte 0x0f,0xc8+2  // bswap edx
+        mov [eax],edx
+        sub ecx,4
+        lea eax,[4+ eax]
+        jae 0b
+        ret
 
 SYS_exit  =1
 SYS_fork  =2
@@ -86,6 +106,7 @@ SYS_close =6
 
 SYS_pread =153
 SYS_mmap    =197
+SYS_munmap  = 73
 SYS_mprotect= 74
 
 sysgo:
@@ -95,6 +116,8 @@ sysgo:
 // lazy jmps enable compression of this code
 mprotect: .globl mprotect
         mov al,SYS_mprotect; jmps 2+ 0f; 0:
+munmap: .globl munmap
+        mov al,SYS_munmap; jmps 2+ 0f; 0:
 exit: .globl exit
         mov al,SYS_exit;  jmps 2+ 0f; 0:
 pread: .globl pread

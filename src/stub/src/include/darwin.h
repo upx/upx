@@ -85,8 +85,8 @@ typedef size_t uintptr_t;
 int close(int);
 void exit(int) __attribute__((__noreturn__,__nothrow__));
 int mprotect(void *, size_t, int);
+extern int munmap(char *, size_t);
 int open(char const *, unsigned, unsigned);
-ssize_t pread(int, void *, size_t, unsigned);
 
 
 /*************************************************************************
