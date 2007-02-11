@@ -39,9 +39,14 @@
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
 #endif
-#if (ACC_ARCH_I086) && (ACC_CC_WATCOMC)
-   typedef unsigned char __huge Byte;
+#if (ACC_ARCH_I086)
+#  define Byte  unsigned char
 #  define _7ZIP_BYTE_DEFINED 1
+#endif
+#if !defined(_LZMA_UINT32_IS_ULONG)
+#  if defined(__INT_MAX__) && ((__INT_MAX__)+0 == 32767)
+#    define _LZMA_UINT32_IS_ULONG 1
+#  endif
 #endif
 
 #if 0
@@ -58,7 +63,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
 #define CLzmaDecoderState       CLzmaDecoderState_dummy
 #define LzmaDecodeProperties    LzmaDecodeProperties_dummy
 #define LzmaDecode              LzmaDecode_dummy
+#if (ACC_CC_BORLANDC)
+#include "LzmaDecode.h"
+#else
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
+#endif
 #undef CLzmaDecoderState
 #undef LzmaDecodeProperties
 #undef LzmaDecode
@@ -70,10 +79,10 @@ typedef struct {
     CProb Probs[16382];
 #endif
 } CLzmaDecoderState;
-ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768)
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768u)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 
-#if (ACC_ARCH_I086) && (ACC_CC_WATCOMC)
+#if (ACC_ARCH_I086)
 #  if (ACC_MM_HUGE)
      typedef unsigned short __far MyCProb;
 #    undef CProb
@@ -84,7 +93,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 #else
 #define CLzmaDecoderState   const CLzmaDecoderState
 #endif
+#if (ACC_CC_BORLANDC)
+#include "LzmaDecode.c"
+#else
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#endif
 
 #endif
 

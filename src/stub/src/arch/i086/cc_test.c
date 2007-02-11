@@ -85,5 +85,10 @@ int16_t  __cdecl i2m(int16_t  a, int16_t  b) { return a * b; }
 uint32_t __cdecl u2m4(uint16_t a, uint16_t b) { return a * b; }
 int32_t  __cdecl i2m4(int16_t  a, int16_t  b) { return a * b; }
 
+uint16_t __cdecl u2shl12(uint16_t a) { return a << 12; }
+uint32_t __cdecl u4shl14(uint32_t a) { return a << 12; }
+uint16_t __cdecl u2shlv(uint16_t a, unsigned v) { return a << v; }
+uint32_t __cdecl u4shlv(uint32_t a, unsigned v) { return a << v; }
+
 
 /* vim:set ts=4 et: */

@@ -142,7 +142,7 @@
 .macro          M_WCC_PIA_086
                 add     ax, bx
                 adc     cx, 0
-                xchg    cx, bx
+                mov     cx, bx
                 mov     cl, _AHSHIFT
                 shl     bx, cl
                 add     dx, bx
@@ -159,7 +159,7 @@
 .macro          M_WCC_PIS_086
                 sub     ax, bx
                 adc     cx, 0
-                xchg    cx, bx
+                mov     cx, bx
                 mov     cl, _AHSHIFT
                 shl     bx, cl
                 sub     dx, bx
@@ -174,12 +174,17 @@
 
 // huge pointer diff: dx:ax = dx:ax - cx:bx
 .macro          M_WCC_PTS
+// normalize
 // FIXME
+// subtract
+                sub     ax, bx
+                sbb     dx, cx
 .endm
 
 
 // huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
 .macro          M_WCC_PTC
+// FIXME: should we normalize the pointers ???
                 local   L1
                 cmp     dx, cx
                 jnes    L1

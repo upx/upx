@@ -28,7 +28,7 @@ vpath %.c $(top_srcdir)/src/stub/src/c
 STUBS =
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 ifneq ($(wildcard $(WATCOM)/binl/.),)
-STUBS += lzma_d_cf.S lzma_d_cs.S
+STUBS += lzma_d_cf.S ##lzma_d_cs.S
 endif
 endif
 
@@ -48,23 +48,65 @@ lzma_d_c%.S : tc_list = method-lzma default
 lzma_d_c%.S : tc_bfdname =
 
 c := tc.method-lzma.wcc
-$c  = $(WATCOM)/binl/wcc -zq -bt=dos -0
+$c  = $(WATCOM)/binl/wcc -zq -bt=dos
 $c += -mc
 $c += -zm -zc
-$c += -os -s -d0
+$c += -os -s -0 -d0
 $c += -w5 -we -fr=/dev/null
 $c += -D__INT_MAX__=32767
-$c += -D_LZMA_UINT32_IS_ULONG=1
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
+
+ifneq ($(wildcard $(BC502DIR)/bin/.),)
+c := tc.method-lzma.bcc
+$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/bcc.bat
+$c += -mc
+$c += -O1 -1
+$c += -w
+$c += -D__INT_MAX__=32767
+##$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR))))
+$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR)/C/7zip/Compress/LZMA_C)))
+$c += -I$(top_srcdir)/src
+endif
+
+ifneq ($(wildcard $(DM847DIR)/bin/.),)
+c := tc.method-lzma.dmc
+$c  = @$(WINEENV) CFLAGS='$(DMC)' wine cmd.exe /c tmp/dmc.bat
+$c += -mc
+$c += -NS
+$c += -w-
+DMC := -o -0
+DMC += -D__INT_MAX__=32767
+DMC += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
+DMC += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
+endif
+
+ifneq ($(wildcard $(VC152DIR)/bin/.),)
+c := tc.method-lzma.cl
+$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/cl.bat
+$c += -AC
+$c += -Gy
+$c += -O1 -Gf -Gs -G0
+$c += -W4
+CL := -nologo
+CL += -D__INT_MAX__=32767
+CL += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
+CL += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
+endif
 
 tc.method-lzma.dmpobj = $(WATCOM)/binl/dmpobj
 tc.method-lzma.wdis   = $(WATCOM)/binl/wdis
 tc.method-lzma.wdump  = $(WATCOM)/binl/wdump
 
-lzma_d_c%.S : lzma_d_c.c
+lzma_d_c%.S : lzma_d_c.c $(MAKEFILE_LIST)
 	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
+##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
+##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
+##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 
 FIXME:
 	$(call tc,f-objstrip,tmp/$T.o)
@@ -83,10 +125,56 @@ lzma_d_cs.% : LABEL_PREFIX = .Ls
 # // cc_test
 # ************************************************************************/
 
+WINEENV = env
+WINEENV = env -i DISPLAY='$(DISPLAY)' HOME='$(HOME)' PATH='$(PATH)' USER='$(USER)'
+
+# work around limitations of wine's cmd.exe
+define mkbat
+	echo -E '@set PATH=$3;%PATH%' > $1
+	echo -E '@set a=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
+	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
+	echo -E '@set b=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
+	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
+	echo -E '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	unix2dos -q $1
+endef
+
 ifneq ($(wildcard $(WATCOM)/binl/.),)
-cc_test_wcc : tc_list = method-lzma default
-cc_test_wcc: cc_test.c
+cc_test_wc : tc_list = method-lzma default
+cc_test_wc: cc_test.c
 	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	cat tmp/$T.obj.disasm
+endif
+
+ifneq ($(wildcard $(BC502DIR)/bin/.),)
+tmp/bcc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,bcc.exe,$(BC502WINDIR)\\bin)
+cc_test_bc : tc_list = method-lzma default
+cc_test_bc: cc_test.c tmp/bcc.bat
+	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	cat tmp/$T.obj.disasm
+endif
+
+ifneq ($(wildcard $(DM847DIR)/bin/.),)
+tmp/dmc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,dmc.exe,$(DM847WINDIR)\\bin)
+cc_test_dm : tc_list = method-lzma default
+cc_test_dm: cc_test.c tmp/dmc.bat
+	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	cat tmp/$T.obj.disasm
+endif
+
+ifneq ($(wildcard $(VC152DIR)/bin/.),)
+tmp/cl.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,cl.exe,$(VC152WINDIR)\\bin)
+cc_test_vc : tc_list = method-lzma default
+cc_test_vc: cc_test.c tmp/cl.bat
+	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	cat tmp/$T.obj.disasm
 endif
