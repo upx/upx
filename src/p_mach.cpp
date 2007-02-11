@@ -408,6 +408,17 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     uip->ui_pass = 0;
     ft.addvalue = 0;
 
+    // Packer::compressWithFilters chooses a filter for us, and the stubs
+    // can handle only one filter, and most filters are for executable
+    // instructions.  So filter only the largest executable segment.
+    unsigned exe_filesize_max = 0;
+    for (k = 0; k < n_segment; ++k)
+    if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
+    &&  0!=(Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
+    &&  exe_filesize_max < msegcmd[k].filesize) {
+        exe_filesize_max = msegcmd[k].filesize;
+    }
+
     int nx = 0;
     for (k = 0; k < n_segment; ++k)
     if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
@@ -419,9 +430,13 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
             x.offset    += delta;
             x.size      -= delta;
         }
+        bool const do_filter = (msegcmd[k].filesize==exe_filesize_max)
+            && 0!=(Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot);
         packExtent(x, total_in, total_out,
-            ((Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
-                ? &ft : 0 ), fo, hdr_u_len );
+            (do_filter ? &ft : 0 ), fo, hdr_u_len );
+        if (do_filter) {
+            exe_filesize_max = 0;
+        }
         hdr_u_len = 0;
         ++nx;
     }
