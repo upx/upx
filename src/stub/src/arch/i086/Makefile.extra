@@ -77,3 +77,17 @@ lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
 lzma_d_cf.% : LABEL_PREFIX = .Lf
 lzma_d_cs.% : LABEL_PREFIX = .Ls
+
+
+# /***********************************************************************
+# // cc_test
+# ************************************************************************/
+
+ifneq ($(wildcard $(WATCOM)/binl/.),)
+cc_test_wcc : tc_list = method-lzma default
+cc_test_wcc: cc_test.c
+	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	cat tmp/$T.obj.disasm
+endif
+
