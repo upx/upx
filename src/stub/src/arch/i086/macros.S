@@ -129,6 +129,76 @@
 
 /*
 ; =============
+; ============= WATCOM C/C++ HUGE POINTER SUPPORT
+; =============
+*/
+
+/* DOS real mode */
+#define _AHSHIFT        12
+#define _AHINCR         (1 << _AHSHIFT)  /* 4096 */
+
+
+// huge pointer add: dx:ax = dx:ax + cx:bx
+.macro          M_WCC_PIA_086
+                add     ax, bx
+                adc     cx, 0
+                xchg    cx, bx
+                mov     cl, _AHSHIFT
+                shl     bx, cl
+                add     dx, bx
+.endm
+.macro          M_WCC_PIA_286
+                add     ax, bx
+                adc     cx, 0
+                shl     cx, _AHSHIFT
+                add     dx, cx
+.endm
+
+
+// huge pointer sub: dx:ax = dx:ax - cx:bx
+.macro          M_WCC_PIS_086
+                sub     ax, bx
+                adc     cx, 0
+                xchg    cx, bx
+                mov     cl, _AHSHIFT
+                shl     bx, cl
+                sub     dx, bx
+.endm
+.macro          M_WCC_PIS_286
+                sub     ax, bx
+                adc     cx, 0
+                shl     cx, _AHSHIFT
+                sub     dx, cx
+.endm
+
+
+// huge pointer diff: dx:ax = dx:ax - cx:bx
+.macro          M_WCC_PTS
+// FIXME
+.endm
+
+
+// huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
+.macro          M_WCC_PTC
+                local   L1
+                cmp     dx, cx
+                jnes    L1
+                cmp     ax, bx
+L1:
+.endm
+
+
+// umul32: dx:ax = dx:ax * cx:bx
+.macro          M_WCC_U4M
+                push    si
+                // compute high-word
+                // add low-word
+                pop     si
+.endm
+
+
+/*
+; =============
 ; ============= 16-BIT CALLTRICK & JUMPTRICK
 ; =============
 */
