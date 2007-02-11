@@ -344,7 +344,7 @@ do_xmap(
             err_exit(8);
         }
         if (xi && 0!=sc->filesize) {
-            if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
+            if (0==sc->fileoff && 0!=mhdrpp) {
                 *mhdrpp = (Mach_header *)addr;
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
