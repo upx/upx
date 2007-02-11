@@ -28,7 +28,9 @@ vpath %.c $(top_srcdir)/src/stub/src/c
 STUBS =
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 ifneq ($(wildcard $(WATCOM)/binl/.),)
-STUBS += lzma_d_cf.S ##lzma_d_cs.S
+ifneq ($(wildcard $(VCLINK.exe)),)
+STUBS += lzma_d_cf.S lzma_d_cs.S
+endif
 endif
 endif
 
@@ -98,22 +100,18 @@ tc.method-lzma.dmpobj = $(WATCOM)/binl/dmpobj
 tc.method-lzma.wdis   = $(WATCOM)/binl/wdis
 tc.method-lzma.wdump  = $(WATCOM)/binl/wdump
 
-lzma_d_c%.S : lzma_d_c.c $(MAKEFILE_LIST)
+lzma_d_c%.S : lzma_d_c.c cleanasm.py $(MAKEFILE_LIST)
 	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
-	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-##	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
-##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-##	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
-##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
-##	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-
-FIXME:
-	$(call tc,f-objstrip,tmp/$T.o)
-	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
-	head -c-1 tmp/$T.bin > tmp/$T.out
-	$(call tc,objdump) -b binary -m i386 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
-	$(call tc,bin2h) --mode=gas tmp/$T.out $@
+##	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
+##	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
+	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+	cp tmp/$T.obj tmp/$T.o
+	rm -f tmp/$T.lib
+	cd tmp && $(WINEENV) wine $(VCLINK.exe) -lib -nologo -out:$T.lib $T.o
+	cd tmp && $(call tc,m-ar) x $T.lib
+	$(call tc,objdump) -b coff-i386 -m i8086 -M intel -Dr --no-show -w tmp/$T.o | $(RTRIM) > tmp/$T.o.disasm
+	python cleanasm.py --label-prefix=$(LABEL_PREFIX) tmp/$T.o.disasm $@
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL

@@ -117,7 +117,7 @@ section         EXECUTPO
 #include        "arch/i086/nrv2b_d8.S"
 #include        "arch/i086/nrv2d_d8.S"
 #include        "arch/i086/nrv2e_d8.S"
-//#include        "arch/i086/lzma_d.S"
+#include        "arch/i086/lzma_d.S"
 
 section         EXEMAIN5
                 pop     bp
@@ -219,29 +219,19 @@ section         EXERETIP
                 lret
 
 
-section         wcc_pia_086
+section         __PIA
                 M_WCC_PIA_086
                 ret
-section         wcc_pia_286
-                CPU     286
-                M_WCC_PIA_286
-                CPU     8086
-                ret
-section         wcc_pis_086
-                M_WCC_PIS_086
-                ret
-section         wcc_pis_286
-                CPU     286
-                M_WCC_PIS_286
-                CPU     8086
-                ret
-section         wcc_pts
+//section         __PIS
+//                M_WCC_PIS_086
+//                ret
+section         __PTS
                 M_WCC_PTS
                 ret
-section         wcc_ptc
+section         __PTC
                 M_WCC_PTC
                 ret
-section         wcc_u4m
+section         __U4M
                 M_WCC_U4M
                 ret
 

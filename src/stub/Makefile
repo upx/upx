@@ -179,6 +179,7 @@ tc.default.sstrip     = sstrip
 tc.default.xstrip     = python $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
+tc.default.m-ar       = multiarch-ar-2.17
 tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
 tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
 tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
