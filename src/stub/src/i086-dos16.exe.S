@@ -219,23 +219,6 @@ section         EXERETIP
                 lret
 
 
-section         __PIA
-                M_WCC_PIA_086
-                ret
-//section         __PIS
-//                M_WCC_PIS_086
-//                ret
-section         __PTS
-                M_WCC_PTS
-                ret
-section         __PTC
-                M_WCC_PTC
-                ret
-section         __U4M
-                M_WCC_U4M
-                ret
-
-
 /*
 vi:ts=8:et:nowrap
 */

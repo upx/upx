@@ -134,41 +134,29 @@
 */
 
 /* DOS real mode */
-#define _AHSHIFT        12
-#define _AHINCR         (1 << _AHSHIFT)  /* 4096 */
+#define __AHSHIFT        12
+#define __AHINCR         (1 << __AHSHIFT)  /* 4096 */
 
 
 // huge pointer add: dx:ax = dx:ax + cx:bx
-.macro          M_WCC_PIA_086
+.macro          M_WCC_PIA
                 add     ax, bx
                 adc     cx, 0
                 mov     cx, bx
-                mov     cl, _AHSHIFT
+                mov     cl, __AHSHIFT
                 shl     bx, cl
                 add     dx, bx
-.endm
-.macro          M_WCC_PIA_286
-                add     ax, bx
-                adc     cx, 0
-                shl     cx, _AHSHIFT
-                add     dx, cx
 .endm
 
 
 // huge pointer sub: dx:ax = dx:ax - cx:bx
-.macro          M_WCC_PIS_086
+.macro          M_WCC_PIS
                 sub     ax, bx
                 adc     cx, 0
                 mov     cx, bx
-                mov     cl, _AHSHIFT
+                mov     cl, __AHSHIFT
                 shl     bx, cl
                 sub     dx, bx
-.endm
-.macro          M_WCC_PIS_286
-                sub     ax, bx
-                adc     cx, 0
-                shl     cx, _AHSHIFT
-                sub     dx, cx
 .endm
 
 
@@ -195,10 +183,9 @@ L1:
 
 // umul32: dx:ax = dx:ax * cx:bx
 .macro          M_WCC_U4M
-                push    si
+// FIXME
                 // compute high-word
                 // add low-word
-                pop     si
 .endm
 
 

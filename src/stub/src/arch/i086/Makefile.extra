@@ -1,13 +1,5 @@
 #
-# highly experimental support for i086 using Open Watcom 1.6:
-#
-#   - download http://ftp.openwatcom.org/ftp/open-watcom-c-win32-1.6.exe
-#   - this .exe is actually a .zip, so unzip into a new diretory
-#   - the "binl" subdirectory does contain the (unofficial) Linux-hosted tools
-#   - set your envvar WATCOM to the main Watcom dir (see below)
-#
-# FIXME: how to convert the .obj to ELF ???
-# FIXME:   (we could use a Python script to convert the .disasm)
+# highly experimental support for i086 using Open Watcom 1.6
 #
 
 MAKEFLAGS += -rR
@@ -26,13 +18,7 @@ vpath %.c $(top_srcdir)/src/stub/src/c
 ##export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
 
 STUBS =
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-ifneq ($(wildcard $(WATCOM)/binl/.),)
-ifneq ($(wildcard $(VCLINK.exe)),)
 STUBS += lzma_d_cf.S lzma_d_cs.S
-endif
-endif
-endif
 
 default.targets = all
 ifeq ($(strip $(STUBS)),)
@@ -46,12 +32,13 @@ include $(top_srcdir)/src/stub/Makefile
 # // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = method-lzma default
-lzma_d_c%.S : tc_bfdname =
+lzma_d_c% : tc_list = method-lzma default
+lzma_d_c% : tc_bfdname =
 
+# Open Watcom C/C++ 1.6
 c := tc.method-lzma.wcc
 $c  = $(WATCOM)/binl/wcc -zq -bt=dos
-$c += -mc
+$c += -mc -ecc
 $c += -zm -zc
 $c += -os -s -0 -d0
 $c += -w5 -we -fr=/dev/null
@@ -59,59 +46,38 @@ $c += -D__INT_MAX__=32767
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
-ifneq ($(wildcard $(BC502DIR)/bin/.),)
-c := tc.method-lzma.bcc
-$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/bcc.bat
-$c += -mc
-$c += -O1 -1
-$c += -w
-$c += -D__INT_MAX__=32767
-##$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR))))
-$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR)/C/7zip/Compress/LZMA_C)))
-$c += -I$(top_srcdir)/src
-endif
-
-ifneq ($(wildcard $(DM847DIR)/bin/.),)
-c := tc.method-lzma.dmc
-$c  = @$(WINEENV) CFLAGS='$(DMC)' wine cmd.exe /c tmp/dmc.bat
-$c += -mc
-$c += -NS
-$c += -w-
-DMC := -o -0
-DMC += -D__INT_MAX__=32767
-DMC += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
-DMC += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
-endif
-
-ifneq ($(wildcard $(VC152DIR)/bin/.),)
-c := tc.method-lzma.cl
-$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/cl.bat
-$c += -AC
-$c += -Gy
-$c += -O1 -Gf -Gs -G0
-$c += -W4
-CL := -nologo
-CL += -D__INT_MAX__=32767
-CL += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
-CL += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
-endif
-
 tc.method-lzma.dmpobj = $(WATCOM)/binl/dmpobj
 tc.method-lzma.wdis   = $(WATCOM)/binl/wdis
 tc.method-lzma.wdump  = $(WATCOM)/binl/wdump
 
-lzma_d_c%.S : lzma_d_c.c cleanasm.py $(MAKEFILE_LIST)
+lzma_d_c%.S : lzma_d_c%.i cleanasm.py $(MAKEFILE_LIST)
+	python cleanasm.py --label-prefix=$(LABEL_PREFIX) $< $@
+
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+ifneq ($(wildcard $(WATCOM)/binl/.),)
+ifneq ($(wildcard $(VCLINK.exe)),)
+
+lzma_d_c%.i : lzma_d_c.c tmp/.tmp-stamp $(MAKEFILE_LIST)
+	rm -f tmp/$T.a tmp/$T.o tmp/$T.obj
+# compile
 	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
 ##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
 ##	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
 ##	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-	cp tmp/$T.obj tmp/$T.o
-	rm -f tmp/$T.lib
-	cd tmp && $(WINEENV) wine $(VCLINK.exe) -lib -nologo -out:$T.lib $T.o
-	cd tmp && $(call tc,m-ar) x $T.lib
-	$(call tc,objdump) -b coff-i386 -m i8086 -M intel -Dr --no-show -w tmp/$T.o | $(RTRIM) > tmp/$T.o.disasm
-	python cleanasm.py --label-prefix=$(LABEL_PREFIX) tmp/$T.o.disasm $@
+# convert OMF to COFF because objdump does not support OMF
+# TODO: should write a Python script wdis2gas.py and use that instead
+	cp -p tmp/$T.obj tmp/$T.o
+	cd tmp && $(WINEENV) wine $(VCLINK.exe) -lib -nologo -out:$T.a $T.o
+	cd tmp && $(call tc,m-ar) x $T.a
+# dump
+	$(call tc,objdump) -b coff-i386 -m i8086 -M intel -Dr --no-show -w tmp/$T.o | $(RTRIM) > $@
+
+.PRECIOUS: lzma_d_cf.i lzma_d_cs.i
+
+endif
+endif
+endif
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
@@ -138,6 +104,47 @@ define mkbat
 	echo -E '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
 	unix2dos -q $1
 endef
+
+# Borland C/C++ 5.02
+ifneq ($(wildcard $(BC502DIR)/bin/.),)
+c := tc.method-lzma.bcc
+$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/bcc.bat
+$c += -mc
+$c += -O1 -1
+$c += -w
+$c += -D__INT_MAX__=32767
+##$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR))))
+$c += -I$(subst \,/,$(shell winepath -s z:$(realpath $(UPX_LZMADIR)/C/7zip/Compress/LZMA_C)))
+$c += -I$(top_srcdir)/src
+endif
+
+# Digital Mars C/C++ 8.47
+ifneq ($(wildcard $(DM847DIR)/bin/.),)
+c := tc.method-lzma.dmc
+$c  = @$(WINEENV) CFLAGS='$(DMC)' wine cmd.exe /c tmp/dmc.bat
+$c += -mc
+$c += -NS
+$c += -w-
+DMC := -o -0
+DMC += -D__INT_MAX__=32767
+DMC += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
+DMC += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
+endif
+
+# Visual C/C++ 1.52 (8.00c)
+ifneq ($(wildcard $(VC152DIR)/bin/.),)
+c := tc.method-lzma.cl
+$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/cl.bat
+$c += -AC
+$c += -Gy
+$c += -O1 -Gf -Gs -G0
+$c += -W4
+CL := -nologo
+CL += -D__INT_MAX__=32767
+CL += -I$(shell winepath -s z:$(realpath $(UPX_LZMADIR)))
+CL += -I$(shell winepath -s z:$(realpath $(top_srcdir)/src))
+endif
+
 
 ifneq ($(wildcard $(WATCOM)/binl/.),)
 cc_test_wc : tc_list = method-lzma default

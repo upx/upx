@@ -37,6 +37,89 @@
 ; Output:
 */
 
+
+/*************************************************************************
+// support code (see cleanasm.py)
+**************************************************************************/
+
+section LZMA_DEC99
+
+__PIA_V04:
+        mov     bx,WORD PTR [bp-94]
+        or      bx,ax
+        mov     WORD PTR [bp-8],bx
+        mov     WORD PTR [bp-4],dx
+__PIA_V03:
+        mov     ax,WORD PTR [bp-12]
+// FIXME: need optimized version here
+        movw    dx,ds
+        mov     bx,0x1
+        xor     cx,cx
+        M_WCC_PIA
+        mov     WORD PTR [bp-12],ax
+        movw    ds,dx
+        ret
+
+
+#if 1
+.macro lzma_WCC_PIA_V02
+// FIXME: need optimized version here
+        movw    dx,ds
+        mov     bx,0x1
+        xor     cx,cx
+        M_WCC_PIA
+.endm
+#define WCC_PIA_V02 lzma_WCC_PIA_V02
+#endif
+
+
+__PIA:
+        M_WCC_PIA
+        ret
+
+
+__PTC_V01:
+        mov     ax,WORD PTR [bp-12]
+        movw    dx,ds
+        mov     bx,WORD PTR [bp-26]
+        mov     cx,WORD PTR [bp-24]
+__PTC:
+        M_WCC_PTC
+        ret
+
+
+#if 1
+// FIXME: do we actually need the PTS result ??
+#define WCC_PTS     M_WCC_PTS
+#else
+#define WCC_PTS     xor ax,ax; xor dx,dx
+#endif
+
+
+__U4M_V02:
+        mov     bx,WORD PTR es:[bx]
+        mov     ax,WORD PTR [bp-102]
+        mov     dx,WORD PTR [bp-100]
+// FIXME: need optimized version here (cx = 0)
+        xor     cx,cx
+        M_WCC_U4M
+        mov     WORD PTR [bp-10],ax
+        mov     WORD PTR [bp-6],dx
+        ret
+
+
+__U4M_V01:
+// FIXME: need optimized version here (cx = 0)
+        xor     cx,cx
+        M_WCC_U4M
+        ret
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
+
 // init
 section LZMA_DEC00
 
@@ -53,6 +136,9 @@ section LZMA_DEC20
 // cleanup
 section LZMA_DEC30
 
+
+#undef WCC_PIA_V02
+#undef WCC_PTS
 
 // vi:ts=8:et
 
