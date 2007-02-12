@@ -122,7 +122,7 @@ __U4M_V01:
 
 // init
 section LZMA_DEC00
-        .byte   0xcc
+//        .byte   0xcc
         mov     bp, sp
         lea     bx, [bp + lzma_stack_adjust]
         xor     ax, ax
@@ -161,10 +161,10 @@ section LZMA_DEC00
         mov     ax, offset lzma_properties
         mov     ss:[bx], ax
         call    LZMA_DEC10
+//        .byte   0xcc
 
         mov     sp, bp
-        // FIXME 'es:di' should be set
-        lret
+        jmp     LZMA_DEC30
 
 section LZMA_DEC10
 .arch   i8086, nojumps
@@ -177,6 +177,13 @@ section LZMA_DEC20
 
 // cleanup
 section LZMA_DEC30
+        mov     di, offset lzma_u_len
+
+section LZMA_DEC31
+        pop     ax
+        push    ax
+        add     ax, offset lzma_u_len_segment
+        mov     es, ax
 
 
 #undef WCC_PIA_V02

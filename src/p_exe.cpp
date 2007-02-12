@@ -171,7 +171,10 @@ void PackExe::buildLoader(const Filter *)
                   NULL
                  );
     else if (ph.method == M_LZMA)
-        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99", NULL);
+        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
+                  ph.u_len > 0xffff ? "LZMA_DEC31" : "",
+                  NULL
+                 );
     else
         throwInternalError("unknown compression method");
     addLoader("EXEMAIN5", NULL);

@@ -279,6 +279,7 @@ void Packer::defineDecompressorSymbols()
             // -2 for properties
             linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2)  /  65536);
             linker->defineSymbol("lzma_u_len_hi", ph.u_len /  65536);
+            linker->defineSymbol("lzma_u_len_segment", (ph.u_len & 0xf0000) >> 4);
         }
     }
 }

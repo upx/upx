@@ -170,6 +170,7 @@
 .endm
 
 
+#if 0
 // huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
 .macro          M_WCC_PTC
 // FIXME: should we normalize the pointers ???
@@ -188,6 +189,9 @@ L1:
                 // add low-word
 .endm
 
+#else
+# include "tainted.h"
+#endif
 
 /*
 ; =============
