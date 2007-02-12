@@ -142,7 +142,7 @@
 .macro          M_WCC_PIA
                 add     ax, bx
                 adc     cx, 0
-                mov     cx, bx
+                mov     bx, cx
                 mov     cl, __AHSHIFT
                 shl     bx, cl
                 add     dx, bx
@@ -153,7 +153,7 @@
 .macro          M_WCC_PIS
                 sub     ax, bx
                 adc     cx, 0
-                mov     cx, bx
+                mov     bx, cx
                 mov     cl, __AHSHIFT
                 shl     bx, cl
                 sub     dx, bx
