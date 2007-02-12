@@ -223,8 +223,8 @@ def main(argv):
                         continue
         #
         if inst in [
-            "call", "ja", "jae", "jb", "jbe", "jcxz",
-            "je", "jge", "jl", "jmp", "jne", "loop",
+            "call", "ja", "jae", "jb", "jbe", "jcxz", "je",
+            "jg", "jge", "jl", "jle", "jmp", "jne", "loop",
         ]:
             k, v = parse_label(inst, args)
             olines[i][2] = None

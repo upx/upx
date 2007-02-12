@@ -149,6 +149,7 @@
 .endm
 
 
+#if 0
 // huge pointer sub: dx:ax = dx:ax - cx:bx
 .macro          M_WCC_PIS
                 sub     ax, bx
@@ -158,8 +159,10 @@
                 shl     bx, cl
                 sub     dx, bx
 .endm
+#endif
 
 
+#if 0
 // huge pointer diff: dx:ax = dx:ax - cx:bx
 .macro          M_WCC_PTS
 // normalize
@@ -168,6 +171,7 @@
                 sub     ax, bx
                 sbb     dx, cx
 .endm
+#endif
 
 
 #if 0
@@ -180,18 +184,16 @@
                 cmp     ax, bx
 L1:
 .endm
+#endif
 
 
+#if 0
 // umul32: dx:ax = dx:ax * cx:bx
 .macro          M_WCC_U4M
 // FIXME
-                // compute high-word
-                // add low-word
 .endm
-
-#else
-# include "tainted.h"
 #endif
+
 
 /*
 ; =============
