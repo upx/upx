@@ -62,11 +62,13 @@ const int *PackExe::getCompressionMethods(int method, int level) const
     static const int m_nrv2b[] = { M_NRV2B_8, M_END };
     static const int m_nrv2d[] = { M_NRV2D_8, M_END };
     static const int m_nrv2e[] = { M_NRV2E_8, M_END };
+    static const int m_lzma[] =  { M_LZMA, M_END };
 
     if (method == M_ALL)    return m_all;
     if (M_IS_NRV2B(method)) return m_nrv2b;
     if (M_IS_NRV2D(method)) return m_nrv2d;
     if (M_IS_NRV2E(method)) return m_nrv2e;
+    if (M_IS_LZMA(method)) return m_lzma;
     bool small = ih_imagesize <= 256*1024;
     if (level == 1 || small)
         return m_nrv2b;
@@ -94,7 +96,10 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     oh.ident = 'M' + 'Z' * 256;
     oh.headsize16 = 2;
 
-    oh.sp = ih.sp > 0x200 ? (unsigned) ih.sp : 0x200;
+    unsigned minsp = M_IS_LZMA(ph.method) ? getDecompressorWrkmemSize() + 0x1100 : 0x200;
+    assert(minsp < 0xff00);
+
+    oh.sp = ih.sp > minsp ? (unsigned) ih.sp : minsp;
 
     unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
     oh.ss = ph.c_len/16 + destpara;
@@ -165,6 +170,8 @@ void PackExe::buildLoader(const Filter *)
                   "NRV2EEX9",
                   NULL
                  );
+    else if (ph.method == M_LZMA)
+        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99", NULL);
     else
         throwInternalError("unknown compression method");
     addLoader("EXEMAIN5", NULL);
@@ -505,7 +512,11 @@ void PackExe::pack(OutputFile *fo)
                          (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff)
                           >= relocsize ? 0 : MAXRELOCS) - relocsize);
     linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
-    linker->defineSymbol("decompressor_entry", (packedsize & 15) + 1);
+
+    unsigned decompressor_entry = packedsize & 15;
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+        decompressor_entry++;
+    linker->defineSymbol("decompressor_entry", decompressor_entry);
 
     // patch loader
     if (flag & USEJUMP)
@@ -543,6 +554,7 @@ void PackExe::pack(OutputFile *fo)
 
     oh.ip = device_driver ? getLoaderSection("EXEENTRY") - 2 : 0;
 
+    defineDecompressorSymbols();
     relocateLoader();
     memcpy(loader, getLoader(), lsize);
     patchPackHeader(loader,e_len);

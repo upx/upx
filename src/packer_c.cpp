@@ -272,6 +272,14 @@ void Packer::defineDecompressorSymbols()
         linker->defineSymbol("lzma_u_len", ph.u_len);
         unsigned stack = getDecompressorWrkmemSize();
         linker->defineSymbol("lzma_stack_adjust", 0u - stack);
+
+        if (ph.format == UPX_F_DOS_EXE)
+        {
+            linker->defineSymbol("lzma_properties_hi", properties / 65536);
+            // -2 for properties
+            linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2)  /  65536);
+            linker->defineSymbol("lzma_u_len_hi", ph.u_len /  65536);
+        }
     }
 }
 

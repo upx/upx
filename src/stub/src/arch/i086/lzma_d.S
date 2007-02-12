@@ -122,7 +122,49 @@ __U4M_V01:
 
 // init
 section LZMA_DEC00
+        .byte   0xcc
+        mov     bp, sp
+        lea     bx, [bp + lzma_stack_adjust]
+        xor     ax, ax
+.clearstack:
+        push    ax
+        cmp     sp, bx
+        jnz     .clearstack
 
+        inc     si
+        inc     si
+
+        push    ss                      // outSizeProcessed
+        push    bx
+        mov     ax, offset lzma_u_len_hi
+        push    ax
+        mov     ax, offset lzma_u_len
+        push    ax                      // outSize
+        push    es
+        push    di                      // out
+
+        add     bx, 4
+        push    ss                      // inSizeProcessed
+        push    bx
+        mov     ax, offset lzma_c_len_hi
+        push    ax
+        mov     ax, offset lzma_c_len
+        push    ax                      // inSize
+        push    ds
+        push    si                      // in
+
+        add     bx, 4
+        push    ss
+        push    bx
+        mov     ax, offset lzma_properties_hi
+        mov     ss:[bx + 2], ax
+        mov     ax, offset lzma_properties
+        mov     ss:[bx], ax
+        call    LZMA_DEC10
+
+        mov     sp, bp
+        // FIXME 'es:di' should be set
+        lret
 
 section LZMA_DEC10
 .arch   i8086, nojumps
