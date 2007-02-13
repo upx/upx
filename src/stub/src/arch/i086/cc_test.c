@@ -77,9 +77,11 @@ int __cdecl ptc_ge(hptr a, hptr b) { return a >= b; }
 
 // u4m - unsigned multiplication
 uint32_t __cdecl u4m(uint32_t a, uint32_t b) { return a * b; }
+uint32_t __pascal u4m_p(uint32_t a, uint32_t b) { return b * a; }
 
 // i4m - signed multiplication
 int32_t  __cdecl i4m(int32_t  a, int32_t  b) { return a * b; }
+int32_t  __pascal i4m_p(int32_t a, int32_t b) { return b * a; }
 
 // just for testing
 uint16_t __cdecl u2m(uint16_t a, uint16_t b) { return a * b; }
@@ -95,6 +97,11 @@ uint32_t __cdecl u4shl16(uint32_t a) { return a << 16; }
 uint32_t __cdecl u4shl24(uint32_t a) { return a << 24; }
 uint16_t __cdecl u2shlv(uint16_t a, unsigned v) { return a << v; }
 uint32_t __cdecl u4shlv(uint32_t a, unsigned v) { return a << v; }
+
+void __pascal p4nshlv_v(unsigned char v, uint32_t __near *a) { *a <<= v; }
+void __pascal p4fshlv_v(unsigned char v, uint32_t __far *a) { *a <<= v; }
+uint32_t __pascal p4nshlv(unsigned char v, uint32_t __near *a) { return *a <<= v; }
+uint32_t __pascal p4fshlv(unsigned char v, uint32_t __far *a) { return *a <<= v; }
 
 hptrdiff_t __cdecl hptr2int(hptr a) { return (hptrdiff_t) a; }
 hptr __cdecl int2hptr(hptrdiff_t a) { return (hptr) a; }
