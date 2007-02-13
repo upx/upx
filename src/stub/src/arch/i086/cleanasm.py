@@ -139,7 +139,7 @@ def main(argv):
         if m.group(3): args = m.group(3).strip()
         #
         if inst in ["movl",] and re.search(r"\b[de]s\b", args):
-            # correct objdump bug
+            # fix bug in objdump
             inst = "movw"
         m = re.search(r"^(.+?)\b0x0\s+(\w+):\s+[12]\s+(__\w+)$", args)
         if m:

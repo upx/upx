@@ -47,6 +47,10 @@ struct options_t {
 
     // compression options
     int method;
+    bool method_lzma_seen;
+    bool method_nrv2b_seen;
+    bool method_nrv2d_seen;
+    bool method_nrv2e_seen;
     int level;              // compression level 1..10
     int filter;             // preferred filter from Packer::getFilters()
     bool ultra_brute;

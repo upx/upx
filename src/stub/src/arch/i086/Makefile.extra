@@ -108,7 +108,7 @@ endef
 # Borland C/C++ 5.02
 ifneq ($(wildcard $(BC502DIR)/bin/.),)
 c := tc.method-lzma.bcc
-$c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/bcc.bat
+$c  = @$(WINEENV) wine cmd.exe /c tmp/bcc.bat
 $c += -mc
 $c += -O1 -1
 $c += -w

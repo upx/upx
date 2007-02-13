@@ -35,7 +35,7 @@
 
 #ifdef WANT_MACH_HEADER_ENUM  /*{*/
 #undef WANT_MACH_HEADER_ENUM
-	enum { // magic
+    enum { // magic
         MH_MAGIC = 0xfeedface
     };
     enum { // cputype

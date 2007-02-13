@@ -30,8 +30,8 @@
 ; ------------- DECOMPRESSION -------------
 
 ; Input:
-;   si - source
-;   di - dest
+;   ds:si - source
+;   es:di - dest
 ;   cld
 
 ; Output:
@@ -111,10 +111,10 @@ __PIA_V03:
 #else
         // optimized version
         inc     ax
-        jnes    .L1
+        jnes    1f
         add     dh, (__AHINCR >> 8)
         movw    ds, dx
-.L1:
+1:
         mov     WORD PTR [bp-12],ax
 #endif
         ret
