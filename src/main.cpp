@@ -553,23 +553,28 @@ static int do_option(int optc, const char *arg)
 
     // method
     case 702:
+        opt->method_nrv2b_seen = true;
         if (!set_method(M_NRV2B_LE32, -1))
             e_method(M_NRV2B_LE32, opt->level);
         break;
     case 704:
+        opt->method_nrv2d_seen = true;
         if (!set_method(M_NRV2D_LE32, -1))
             e_method(M_NRV2D_LE32, opt->level);
         break;
     case 705:
+        opt->method_nrv2e_seen = true;
         if (!set_method(M_NRV2E_LE32, -1))
             e_method(M_NRV2E_LE32, opt->level);
         break;
     case 721:
+        opt->method_lzma_seen = true;
         opt->all_methods_use_lzma = true;
         if (!set_method(M_LZMA, -1))
             e_method(M_LZMA, opt->level);
         break;
     case 722:
+        opt->method_lzma_seen = false;
         opt->all_methods_use_lzma = false;
         if (M_IS_LZMA(opt->method))
             opt->method = -1;

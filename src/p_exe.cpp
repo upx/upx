@@ -53,11 +53,16 @@ PackExe::PackExe(InputFile *f) :
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32);
     ih_exesize = ih_imagesize = ih_overlay = 0;
+
+    // disable lzma for "--brute" unless explicitly given "--lzma"
+    if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
+        opt->all_methods_use_lzma = false;
 }
 
 
 const int *PackExe::getCompressionMethods(int method, int level) const
 {
+#if 0
     static const int m_all[]   = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_END };
     static const int m_nrv2b[] = { M_NRV2B_8, M_END };
     static const int m_nrv2d[] = { M_NRV2D_8, M_END };
@@ -68,11 +73,15 @@ const int *PackExe::getCompressionMethods(int method, int level) const
     if (M_IS_NRV2B(method)) return m_nrv2b;
     if (M_IS_NRV2D(method)) return m_nrv2d;
     if (M_IS_NRV2E(method)) return m_nrv2e;
-    if (M_IS_LZMA(method)) return m_lzma;
+    if (M_IS_LZMA(method))  return m_lzma;
     bool small = ih_imagesize <= 256*1024;
     if (level == 1 || small)
         return m_nrv2b;
     return m_nrv2e;
+#else
+    bool small = ih_imagesize <= 256*1024;
+    return Packer::getDefaultCompressionMethods_8(method, level, small);
+#endif
 }
 
 
@@ -96,7 +105,9 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     oh.ident = 'M' + 'Z' * 256;
     oh.headsize16 = 2;
 
-    unsigned minsp = M_IS_LZMA(ph.method) ? getDecompressorWrkmemSize() + 0x1100 : 0x200;
+    unsigned minsp = 0x200;
+    if (M_IS_LZMA(ph.method))
+        minsp = getDecompressorWrkmemSize() + 0x1500; // FIXME ???
     assert(minsp < 0xff00);
 
     oh.sp = ih.sp > minsp ? (unsigned) ih.sp : minsp;
@@ -170,7 +181,7 @@ void PackExe::buildLoader(const Filter *)
                   "NRV2EEX9",
                   NULL
                  );
-    else if (ph.method == M_LZMA)
+    else if M_IS_LZMA(ph.method)
         addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
                   ph.u_len > 0xffff ? "LZMA_DEC31" : "",
                   NULL
@@ -439,9 +450,12 @@ void PackExe::pack(OutputFile *fo)
     // compress (max_match = 8192)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = MAXMATCH;
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
     compressWithFilters(&ft, 32, &cconf);
-    if (ph.max_run_found + ph.max_match_found > 0x8000)
-        throwCantPack("decompressor limit exceeded, send a bugreport");
+
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+        if (ph.max_run_found + ph.max_match_found > 0x8000)
+            throwCantPack("decompressor limit exceeded, send a bugreport");
 
 #ifdef TESTING
     if (opt->debug.debug_level)

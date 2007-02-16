@@ -30,12 +30,102 @@
 ; ------------- DECOMPRESSION -------------
 
 ; Input:
-;   si - source
-;   di - dest
+;   ds:si - source
+;   es:di - dest
 ;   cld
 
 ; Output:
 */
+
+
+/*************************************************************************
+// support macros
+**************************************************************************/
+
+// huge pointer diff: dx:ax = dx:ax - cx:bx
+// !!! this version does nothing !!!
+.macro M_aNahdiff
+        add     sp, 8
+.endm
+
+
+// umul32: dx:ax = dx:ax * 00:bx
+.macro  M_LMUL_dxax_00bx
+        // mult high-word
+        mov     cx, ax      // cx: save ax
+        mov     ax, dx
+        mul     bx
+        xchg    ax, cx      // save high-word result, get orig ax
+        // mult low-word
+        mul     bx          // dx:ax := ax * bx
+        // add high-word
+        add     dx, cx      // add high-word result
+.endm
+
+
+// umul32: dx:ax = ax:cx * 00:bx
+.macro  M_LMUL_axcx_00bx
+        // mult high-word
+        mul     bx
+        xchg    ax, cx      // save high-word result, get low
+        // mult low-word
+        mul     bx
+        // add high-word
+        add     dx, cx      // add high-word result
+.endm
+
+
+// shld: dx:ax <<= 8
+.macro  M_shld_8
+        mov     dh, dl
+        mov     dl, ah
+        mov     ah, al
+        xor     al, al
+        //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+
+// shld: dx:ax >>= 11
+.macro  M_shrd_11
+#if 1
+        mov     al, ah
+        mov     ah, dl
+        mov     dl, dh
+        xor     dh, dh
+        shr     dx
+        rcr     ax
+        shr     dx
+        rcr     ax
+        shr     dx
+        rcr     ax
+#else
+        mov     bx, dx
+        mov     cl, 11
+        shr     dx, cl
+        shr     ax, cl
+        mov     cl, 5
+        shl     bx, cl
+        or      ax, bx
+#endif
+        //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+
+#if 0
+// shld: dx:ax <<= cl; trashes register "r1" (bx, di, si or bp)
+//   REQUIRED: 0 <= cl < 32
+// FIXME - this does not work yet
+.macro  M_shld r1
+        local   L1
+        mov     r1, ax      // save ax
+        shl     dx, cl
+        shl     ax, cl
+        neg     cl
+        and     cl, 15      // the 8086 uses all eight bits of the shift count
+        shr     r1, cl
+        or      dx, r1
+.endm
+#endif
 
 
 /*************************************************************************
@@ -44,127 +134,69 @@
 
 section LZMA_DEC99
 
-__PIA_V04:
-        mov     bx,WORD PTR [bp-94]
-        or      bx,ax
-        mov     WORD PTR [bp-8],bx
-        mov     WORD PTR [bp-4],dx
-__PIA_V03:
-        mov     ax,WORD PTR [bp-12]
-// FIXME: need optimized version here
-        movw    dx,ds
-        mov     bx,0x1
-        xor     cx,cx
-        M_WCC_PIA
-        mov     WORD PTR [bp-12],ax
-        movw    ds,dx
-        ret
-
-
-#if 1
-.macro lzma_WCC_PIA_V02
-// FIXME: need optimized version here
-        movw    dx,ds
-        mov     bx,0x1
-        xor     cx,cx
-        M_WCC_PIA
-.endm
-#define WCC_PIA_V02 lzma_WCC_PIA_V02
-#endif
-
-
-__PIA:
-        M_WCC_PIA
-        ret
-
-
-__PTC_V01:
-        mov     ax,WORD PTR [bp-12]
-        movw    dx,ds
-        mov     bx,WORD PTR [bp-26]
-        mov     cx,WORD PTR [bp-24]
-__PTC:
-        M_WCC_PTC
-        ret
-
-
-#if 1
-// FIXME: do we actually need the PTS result ??
-#define WCC_PTS     M_WCC_PTS
-#else
-#define WCC_PTS     xor ax,ax; xor dx,dx
-#endif
-
-
-__U4M_V02:
-        mov     bx,WORD PTR es:[bx]
-        mov     ax,WORD PTR [bp-102]
-        mov     dx,WORD PTR [bp-100]
-// FIXME: need optimized version here (cx = 0)
-        xor     cx,cx
-        M_WCC_U4M
-        mov     WORD PTR [bp-10],ax
-        mov     WORD PTR [bp-6],dx
-        ret
-
-
-__U4M_V01:
-// FIXME: need optimized version here (cx = 0)
-        xor     cx,cx
-        M_WCC_U4M
-        ret
-
 
 /*************************************************************************
 //
 **************************************************************************/
 
-
 // init
 section LZMA_DEC00
-//        .byte   0xcc
-        mov     bp, sp
-        lea     bx, [bp + lzma_stack_adjust]
-        xor     ax, ax
-.clearstack:
-        push    ax
-        cmp     sp, bx
-        jnz     .clearstack
+        //.byte   0xcc
 
-        inc     si
-        inc     si
-
-        push    ss                      // outSizeProcessed
-        push    bx
-        mov     ax, offset lzma_u_len_hi
-        push    ax
-        mov     ax, offset lzma_u_len
-        push    ax                      // outSize
-        push    es
-        push    di                      // out
-
-        add     bx, 4
-        push    ss                      // inSizeProcessed
-        push    bx
-        mov     ax, offset lzma_c_len_hi
-        push    ax
-        mov     ax, offset lzma_c_len
-        push    ax                      // inSize
         push    ds
-        push    si                      // in
+        mov     bp, sp
+#if 1
+        // DEBUG - check for enough stack
+        lea     bx, [bp + lzma_stack_adjust - 256]
+        cmp     bp, bx
+1:      jcs     1b
+#endif
+        lea     bx, [bp + lzma_stack_adjust]
+
+#if 0
+        // clear stack
+        xor     ax, ax
+1:      push    ax
+        cmp     sp, bx
+        jnz     1b
+#else
+        mov     sp, bx
+#endif
+
+        inc     si
+        inc     si
+
+        push    bx                      // &outSizeProcessed __near     [bp + 24]
+        mov     ax, offset lzma_u_len_hi // outSize
+        push    ax                      //                              [bp + 22]
+        mov     ax, offset lzma_u_len
+        push    ax                      //                              [bp + 20]
+        push    es                      // out                          [bp + 18]
+        push    di                      //                              [bp + 16]
 
         add     bx, 4
-        push    ss
-        push    bx
-        mov     ax, offset lzma_properties_hi
-        mov     ss:[bx + 2], ax
-        mov     ax, offset lzma_properties
-        mov     ss:[bx], ax
-        call    LZMA_DEC10
-//        .byte   0xcc
+        push    bx                      // &inSizeProcessed __near      [bp + 14]
+        mov     ax, offset lzma_c_len_hi // inSize
+        push    ax                      //                              [bp + 12]
+        mov     ax, offset lzma_c_len
+        push    ax                      //                              [bp + 10]
+        push    ds                      // in                           [bp + 8]
+        push    si                      //                              [bp + 6]
 
-        mov     sp, bp
+        // enter small model
+        push    ss
+        pop     ds
+
+        add     bx, 4
+        push    bx                      // &state __near                [bp + 4]
+        mov     ax, offset lzma_properties_hi
+        mov     [bx + 2], ax
+        mov     ax, offset lzma_properties
+        mov     [bx], ax
+
+        call    LZMA_DEC10
         jmp     LZMA_DEC30
+
 
 section LZMA_DEC10
 .arch   i8086, nojumps
@@ -172,11 +204,22 @@ section LZMA_DEC10
 section LZMA_DEC20
 .arch   i8086, nojumps
 #include "lzma_d_cf.S"
-
 .arch   i8086, jumps
+
 
 // cleanup
 section LZMA_DEC30
+#if 0
+        // clear dirty stack
+        lea     bx, [bp + lzma_stack_adjust - 256]
+        mov     sp, bp
+        xor     ax, ax
+1:      push    ax
+        cmp     sp, bx
+        jnz     1b
+#endif
+        mov     sp, bp
+        pop     ds
         mov     di, offset lzma_u_len
 
 section LZMA_DEC31
@@ -186,8 +229,5 @@ section LZMA_DEC31
         mov     es, ax
 
 
-#undef WCC_PIA_V02
-#undef WCC_PTS
 
-// vi:ts=8:et
-
+// vi:ts=4:et

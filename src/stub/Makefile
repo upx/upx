@@ -211,6 +211,7 @@ endef
 
 # some common arch settings
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
+tc.arch-i086.wdis     = $(WATCOM)/binl/wdis
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i386.djasm    = djasm
 

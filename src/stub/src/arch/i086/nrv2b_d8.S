@@ -152,5 +152,5 @@ f2_n2b:
                 ret
 decomp_done_n2b:
 
-/* vi:ts=8:et */
 
+/* vim:set ts=4 et: */
