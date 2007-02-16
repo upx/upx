@@ -39,35 +39,21 @@
 
 
 /*************************************************************************
-// override generic macros with special versions
+// support macros
 **************************************************************************/
 
 // huge pointer diff: dx:ax = dx:ax - cx:bx
 // !!! this version does nothing !!!
-.macro M_WCC_PTS_lzma
+.macro M_aNahdiff
+        add     sp, 8
 .endm
-
-#define M_WCC_PTS       M_WCC_PTS_lzma
-
-
-// huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
-// !!! this version does not normalize pointers !!!
-.macro M_WCC_PTC_lzma
-       local   L1
-       cmp     dx, cx
-       jnes    L1
-       cmp     ax, bx
-L1:
-.endm
-
-#define M_WCC_PTC       M_WCC_PTC_lzma
 
 
 // umul32: dx:ax = dx:ax * 00:bx
-.macro  M_WCC_U4M_dxax_00bx
+.macro  M_LMUL_dxax_00bx
         // mult high-word
-        xchg    cx, ax      // cx: save ax
-        xchg    ax, dx
+        mov     cx, ax      // cx: save ax
+        mov     ax, dx
         mul     bx
         xchg    ax, cx      // save high-word result, get orig ax
         // mult low-word
@@ -76,8 +62,9 @@ L1:
         add     dx, cx      // add high-word result
 .endm
 
+
 // umul32: dx:ax = ax:cx * 00:bx
-.macro  M_WCC_U4M_axcx_00bx
+.macro  M_LMUL_axcx_00bx
         // mult high-word
         mul     bx
         xchg    ax, cx      // save high-word result, get low
@@ -88,6 +75,43 @@ L1:
 .endm
 
 
+// shld: dx:ax <<= 8
+.macro  M_shld_8
+        mov     dh, dl
+        mov     dl, ah
+        mov     ah, al
+        xor     al, al
+        //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+
+// shld: dx:ax >>= 11
+.macro  M_shrd_11
+#if 1
+        mov     al, ah
+        mov     ah, dl
+        mov     dl, dh
+        xor     dh, dh
+        shr     dx
+        rcr     ax
+        shr     dx
+        rcr     ax
+        shr     dx
+        rcr     ax
+#else
+        mov     bx, dx
+        mov     cl, 11
+        shr     dx, cl
+        shr     ax, cl
+        mov     cl, 5
+        shl     bx, cl
+        or      ax, bx
+#endif
+        //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+
+#if 0
 // shld: dx:ax <<= cl; trashes register "r1" (bx, di, si or bp)
 //   REQUIRED: 0 <= cl < 32
 // FIXME - this does not work yet
@@ -101,6 +125,7 @@ L1:
         shr     r1, cl
         or      dx, r1
 .endm
+#endif
 
 
 /*************************************************************************
@@ -109,97 +134,6 @@ L1:
 
 section LZMA_DEC99
 
-__PIA_V04:
-        mov     bx,WORD PTR [bp-94]
-        or      bx,ax
-        mov     WORD PTR [bp-8],bx
-        mov     WORD PTR [bp-4],dx
-__PIA_V03:
-        mov     ax,WORD PTR [bp-12]
-        movw    dx,ds
-#if 0
-        mov     bx,0x1
-        xor     cx,cx
-        M_WCC_PIA
-        mov     WORD PTR [bp-12],ax
-        movw    ds,dx
-#else
-        // optimized version
-        inc     ax
-        jnes    1f
-        add     dh, (__AHINCR >> 8)
-        movw    ds, dx
-1:
-        mov     WORD PTR [bp-12],ax
-#endif
-        ret
-
-
-.macro M_WCC_PIA_V02_lzma
-        movw    dx, ds
-#if 0
-        mov     bx,0x1
-        xor     cx,cx
-        M_WCC_PIA
-#else
-        // optimized version
-        local   L1
-        inc     ax
-        jnes    L1
-        add     dh, (__AHINCR >> 8)
-        movw    ds, dx
-L1:
-#endif
-.endm
-#define WCC_PIA_V02     M_WCC_PIA_V02_lzma
-
-
-__PIA:
-        M_WCC_PIA
-        ret
-
-
-__PTC_V01:
-        mov     ax,WORD PTR [bp-12]
-        movw    dx,ds
-        mov     bx,WORD PTR [bp-26]
-        mov     cx,WORD PTR [bp-24]
-__PTC:
-        M_WCC_PTC
-        ret
-
-
-#define WCC_PTS     M_WCC_PTS
-
-
-__U4M_V02:
-#if 0
-        mov     bx,WORD PTR es:[bx]
-        mov     ax,WORD PTR [bp-102]
-        mov     dx,WORD PTR [bp-100]
-        xor     cx,cx
-        M_WCC_U4M
-#else
-        // optimized version
-        mov     bx,WORD PTR es:[bx]
-        mov     cx,WORD PTR [bp-102]
-        mov     ax,WORD PTR [bp-100]
-        M_WCC_U4M_axcx_00bx
-#endif
-        mov     WORD PTR [bp-10],ax
-        mov     WORD PTR [bp-6],dx
-        ret
-
-
-__U4M_V01:
-#if 0
-        xor     cx,cx
-        M_WCC_U4M
-#else
-        M_WCC_U4M_dxax_00bx
-#endif
-        ret
-
 
 /*************************************************************************
 //
@@ -207,14 +141,22 @@ __U4M_V01:
 
 // init
 section LZMA_DEC00
-//        .byte   0xcc
+        //.byte   0xcc
+
+        push    ds
         mov     bp, sp
+#if 1
+        // DEBUG - check for enough stack
+        lea     bx, [bp + lzma_stack_adjust - 256]
+        cmp     bp, bx
+1:      jcs     1b
+#endif
         lea     bx, [bp + lzma_stack_adjust]
+
 #if 0
         // clear stack
         xor     ax, ax
-1:
-        push    ax
+1:      push    ax
         cmp     sp, bx
         jnz     1b
 #else
@@ -224,32 +166,33 @@ section LZMA_DEC00
         inc     si
         inc     si
 
-        push    ss                      // &outSizeProcessed
-        push    bx
+        push    bx                      // &outSizeProcessed __near     [bp + 24]
         mov     ax, offset lzma_u_len_hi // outSize
-        push    ax
+        push    ax                      //                              [bp + 22]
         mov     ax, offset lzma_u_len
-        push    ax
-        push    es                      // out
-        push    di
+        push    ax                      //                              [bp + 20]
+        push    es                      // out                          [bp + 18]
+        push    di                      //                              [bp + 16]
 
         add     bx, 4
-        push    ss                      // &inSizeProcessed
-        push    bx
+        push    bx                      // &inSizeProcessed __near      [bp + 14]
         mov     ax, offset lzma_c_len_hi // inSize
-        push    ax
+        push    ax                      //                              [bp + 12]
         mov     ax, offset lzma_c_len
-        push    ax
-        push    ds                      // in
-        push    si
+        push    ax                      //                              [bp + 10]
+        push    ds                      // in                           [bp + 8]
+        push    si                      //                              [bp + 6]
+
+        // enter small model
+        push    ss
+        pop     ds
 
         add     bx, 4
-        push    ss
-        push    bx
+        push    bx                      // &state __near                [bp + 4]
         mov     ax, offset lzma_properties_hi
-        mov     ss:[bx + 2], ax
+        mov     [bx + 2], ax
         mov     ax, offset lzma_properties
-        mov     ss:[bx], ax
+        mov     [bx], ax
 
         call    LZMA_DEC10
         jmp     LZMA_DEC30
@@ -268,15 +211,15 @@ section LZMA_DEC20
 section LZMA_DEC30
 #if 0
         // clear dirty stack
-        lea     bx, [bp + lzma_stack_adjust - 128]
+        lea     bx, [bp + lzma_stack_adjust - 256]
         mov     sp, bp
         xor     ax, ax
-1:
-        push    ax
+1:      push    ax
         cmp     sp, bx
         jnz     1b
 #endif
         mov     sp, bp
+        pop     ds
         mov     di, offset lzma_u_len
 
 section LZMA_DEC31
@@ -285,13 +228,6 @@ section LZMA_DEC31
         add     ax, offset lzma_u_len_segment
         mov     es, ax
 
-
-#undef M_WCC_PTS
-#undef M_WCC_PTC
-#undef M_WCC_U4M
-
-#undef WCC_PIA_V02
-#undef WCC_PTS
 
 
 // vi:ts=4:et

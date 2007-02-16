@@ -120,6 +120,7 @@
                 .byte   0x7f, \target - . - 1
 .endm
 
+#define         jaes    jncs
 #define         jbes    jnas
 #define         jbs     jcs
 #define         jes     jzs
@@ -129,7 +130,7 @@
 
 /*
 ; =============
-; ============= WATCOM C/C++ HUGE POINTER SUPPORT
+; ============= HUGE POINTER SUPPORT
 ; =============
 */
 
@@ -138,6 +139,7 @@
 #define __AHINCR         (1 << __AHSHIFT)  /* 4096 */
 
 
+#if 0
 // huge pointer add: dx:ax = dx:ax + cx:bx
 .macro          M_WCC_PIA
                 add     ax, bx
@@ -147,6 +149,7 @@
                 shl     bx, cl
                 add     dx, bx
 .endm
+#endif
 
 
 #if 0

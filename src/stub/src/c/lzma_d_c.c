@@ -83,11 +83,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 32768u)
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 
 #if (ACC_ARCH_I086)
-#  if (ACC_MM_HUGE)
-     typedef unsigned short __far MyCProb;
-#    undef CProb
-#    define CProb MyCProb
-#  endif
 #  define char  char __huge
 #elif (ACC_CC_WATCOMC)
 #else

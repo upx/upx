@@ -107,7 +107,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 
     unsigned minsp = 0x200;
     if (M_IS_LZMA(ph.method))
-        minsp = getDecompressorWrkmemSize() + 0x1100;
+        minsp = getDecompressorWrkmemSize() + 0x1500; // FIXME ???
     assert(minsp < 0xff00);
 
     oh.sp = ih.sp > minsp ? (unsigned) ih.sp : minsp;

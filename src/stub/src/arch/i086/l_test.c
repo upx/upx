@@ -68,7 +68,7 @@ typedef unsigned int    uint32_t;
 >>> import pylzma; d="\1" + "\0"*131070 + "\2"; print len(d)
 >>> c=pylzma.compress(d, eos=0)[5:]; print len(c), map(ord, c)
 */
-static const unsigned char c_data[96] = {
+static const unsigned char c_data[92] = {
 0, 0, 128, 65, 72, 1, 140, 46, 188, 80, 161, 51, 135, 75, 212, 2, 20, 181, 241, 145, 230, 34, 107, 72, 201, 86, 118, 176, 70, 120, 214, 184, 247, 212, 250, 132, 59, 160, 44, 112, 185, 177, 245, 126, 103, 190, 14, 145, 73, 36, 148, 246, 166, 58, 41, 192, 68, 167, 144, 98, 122, 42, 61, 195, 135, 248, 98, 136, 254, 191, 96, 21, 192, 75, 86, 63, 228, 231, 15, 70, 52, 239, 169, 194, 249, 109, 126, 11, 123, 48, 0, 0
 };
 
@@ -100,7 +100,7 @@ int main()
     s->Properties.lc = 3; s->Properties.lp = 0; s->Properties.pb = 2;
     r = LzmaDecode(s, src, src_len, &src_out, dst, dst_len, &dst_out);
 
-    if (r != 0 || src_out > src_len || dst_out != dst_len)
+    if (r != 0 || src_out != src_len || dst_out != dst_len)
     {
         printf("ERROR: Decompression error %d %lu %lu\n", r, (long)src_out, (long)dst_out);
         return 1;
