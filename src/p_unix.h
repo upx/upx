@@ -235,7 +235,7 @@ public:
     virtual bool canPack();
 
 protected:
-    virtual const upx_byte *getLoader() const;
+    virtual upx_byte *getLoader() const;
     virtual int getLoaderSize() const;
 
     virtual void patchLoader();
