@@ -629,6 +629,13 @@ bool PackMachBase<T>::canPack()
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }
     }
+
+    // info: currently the header is 36 (32+4) bytes before EOF
+    unsigned char buf[256];
+    fi->seek(-(off_t)sizeof(buf), SEEK_END);
+    fi->readx(buf, sizeof(buf));
+    checkAlreadyPacked(buf, sizeof(buf));
+
     // set options
     opt->o_unix.blocksize = file_size;
     return 0 < n_segment;
@@ -765,6 +772,13 @@ bool PackMachFat::canPack()
         } break;
         }  // switch cputype
     }
+
+    // info: currently the header is 36 (32+4) bytes before EOF
+    unsigned char buf[256];
+    fi->seek(-(off_t)sizeof(buf), SEEK_END);
+    fi->readx(buf, sizeof(buf));
+    checkAlreadyPacked(buf, sizeof(buf));
+
     return true;
 }
 
