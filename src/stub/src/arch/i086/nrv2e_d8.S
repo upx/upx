@@ -168,4 +168,5 @@ f2_n2e:
                 ret
 decomp_done_n2e:
 
-/* vi:ts=8:et */
+
+/* vim:set ts=4 et: */

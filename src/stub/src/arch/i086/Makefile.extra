@@ -32,12 +32,12 @@ include $(top_srcdir)/src/stub/Makefile
 # // method-lzma
 # ************************************************************************/
 
-lzma_d_c% : tc_list = method-lzma default
+lzma_d_c% : tc_list = method-lzma arch-i086 default
 lzma_d_c% : tc_bfdname =
 
 # Open Watcom C/C++ 1.6
-c := tc.method-lzma.wcc
-$c  = $(WATCOM)/binl/wcc -zq -bt=dos
+c := tc.method-lzma.wcl
+$c  = PATH='$(WATCOM)/binl:$(PATH)' $(WATCOM)/binl/wcl -zq -bt=dos
 $c += -mc -ecc
 $c += -zm -zc
 $c += -os -s -0 -d0
@@ -47,7 +47,6 @@ $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
 tc.method-lzma.dmpobj = $(WATCOM)/binl/dmpobj
-tc.method-lzma.wdis   = $(WATCOM)/binl/wdis
 tc.method-lzma.wdump  = $(WATCOM)/binl/wdump
 
 lzma_d_c%.S : lzma_d_c%.i cleanasm.py $(MAKEFILE_LIST)
@@ -55,19 +54,23 @@ lzma_d_c%.S : lzma_d_c%.i cleanasm.py $(MAKEFILE_LIST)
 
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 ifneq ($(wildcard $(WATCOM)/binl/.),)
+ifneq ($(wildcard /usr/bin/wine),)
 ifneq ($(wildcard $(VCLINK.exe)),)
 
-lzma_d_c%.i : lzma_d_c.c tmp/.tmp-stamp $(MAKEFILE_LIST)
+lzma_d_c%.i : lzma_d_c.c $(MAKEFILE_LIST) $(TMP_DEPS)
 	rm -f tmp/$T.a tmp/$T.o tmp/$T.obj
 # compile
-	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
-##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
-##	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
-##	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
-	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
+	$(call tc,wcl) $(PP_FLAGS) -c -fo=tmp/$T_wc.obj $<
+	$(call tc,wdis) tmp/$T_wc.obj | $(RTRIM) > tmp/$T.obj.disasm
+##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T_bc.obj $<
+##	$(call tc,wdis) tmp/$T_bc.obj | $(RTRIM) > tmp/$T_bc.obj.disasm
+	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T_dm.obj $<
+	$(call tc,wdis) tmp/$T_dm.obj | $(RTRIM) > tmp/$T_dm.obj.disasm
+	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T_vc.obj $<
+	$(call tc,wdis) tmp/$T_vc.obj | $(RTRIM) > tmp/$T_vc.obj.disasm
 # convert OMF to COFF because objdump does not support OMF
 # TODO: should write a Python script wdis2gas.py and use that instead
-	cp -p tmp/$T.obj tmp/$T.o
+	cp -p tmp/$T_wc.obj tmp/$T.o
 	cd tmp && $(WINEENV) wine $(VCLINK.exe) -lib -nologo -out:$T.a $T.o
 	cd tmp && $(call tc,m-ar) x $T.a
 # dump
@@ -78,23 +81,29 @@ lzma_d_c%.i : lzma_d_c.c tmp/.tmp-stamp $(MAKEFILE_LIST)
 endif
 endif
 endif
+endif
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL
 lzma_d_cf.% : LABEL_PREFIX = .Lf
 lzma_d_cs.% : LABEL_PREFIX = .Ls
 
+TMP_DEPS = tmp/.tmp-stamp tmp/bcc.bat tmp/cl.bat tmp/dmc.bat
+
 
 # /***********************************************************************
 # // cc_test
 # ************************************************************************/
 
+CC_TEST_DEPS = $(MAKEFILE_LIST) $(TMP_DEPS)
 WINEENV = env
 WINEENV = env -i DISPLAY='$(DISPLAY)' HOME='$(HOME)' PATH='$(PATH)' USER='$(USER)'
 
 # work around limitations of wine's cmd.exe
 define mkbat
 	echo -E '@set PATH=$3;%PATH%' > $1
+	echo -E '@set INCLUDE=$4' >> $1
+	echo -E '@set LIB=$5' >> $1
 	echo -E '@set a=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
 	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
 	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
@@ -104,6 +113,19 @@ define mkbat
 	echo -E '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
 	unix2dos -q $1
 endef
+
+tmp/bcc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,bcc.exe,$(BC502WINDIR)\bin,,)
+tmp/cl.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,cl.exe,$(VC152WINDIR)\bin,$(VC152WINDIR)\include,$(VC152WINDIR)\lib)
+tmp/dmc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@$(call mkbat,$@,dmc.exe,$(DM847WINDIR)\bin,,)
+
+# gcc
+c := tc.arch-i386.gcc
+$c += -Wall -W
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
 
 # Borland C/C++ 5.02
 ifneq ($(wildcard $(BC502DIR)/bin/.),)
@@ -119,10 +141,11 @@ $c += -I$(top_srcdir)/src
 endif
 
 # Digital Mars C/C++ 8.47
+# http://www.digitalmars.com/download/freecompiler.html
 ifneq ($(wildcard $(DM847DIR)/bin/.),)
 c := tc.method-lzma.dmc
 $c  = @$(WINEENV) CFLAGS='$(DMC)' wine cmd.exe /c tmp/dmc.bat
-$c += -mc
+$c += -ms
 $c += -NS
 $c += -w-
 DMC := -o -0
@@ -135,9 +158,9 @@ endif
 ifneq ($(wildcard $(VC152DIR)/bin/.),)
 c := tc.method-lzma.cl
 $c  = @$(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/cl.bat
-$c += -AC
+$c += -AS -Gd
 $c += -Gy
-$c += -O1 -Gf -Gs -G0
+$c += -O2 -Gf -Gs -G0
 $c += -W4
 CL := -nologo
 CL += -D__INT_MAX__=32767
@@ -147,40 +170,70 @@ endif
 
 
 ifneq ($(wildcard $(WATCOM)/binl/.),)
-cc_test_wc : tc_list = method-lzma default
-cc_test_wc: cc_test.c
-	$(call tc,wcc) $(PP_FLAGS) -fo=tmp/$T.obj $<
+cc_test_wc : tc_list = method-lzma arch-i086 default
+cc_test_wc: cc_test.c $(CC_TEST_DEPS)
+	$(call tc,wcl) $(PP_FLAGS) -c -fo=tmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	cat tmp/$T.obj.disasm
 endif
 
 ifneq ($(wildcard $(BC502DIR)/bin/.),)
-tmp/bcc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,bcc.exe,$(BC502WINDIR)\\bin)
-cc_test_bc : tc_list = method-lzma default
-cc_test_bc: cc_test.c tmp/bcc.bat
+cc_test_bc : tc_list = method-lzma arch-i086 default
+cc_test_bc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	cat tmp/$T.obj.disasm
 endif
 
 ifneq ($(wildcard $(DM847DIR)/bin/.),)
-tmp/dmc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,dmc.exe,$(DM847WINDIR)\\bin)
-cc_test_dm : tc_list = method-lzma default
-cc_test_dm: cc_test.c tmp/dmc.bat
+cc_test_dm : tc_list = method-lzma arch-i086 default
+cc_test_dm: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	cat tmp/$T.obj.disasm
 endif
 
 ifneq ($(wildcard $(VC152DIR)/bin/.),)
-tmp/cl.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,cl.exe,$(VC152WINDIR)\\bin)
-cc_test_vc : tc_list = method-lzma default
-cc_test_vc: cc_test.c tmp/cl.bat
+cc_test_vc : tc_list = method-lzma arch-i086 default
+cc_test_vc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 ##	cat tmp/$T.obj.disasm
 endif
+
+
+# /***********************************************************************
+# // l_test
+# ************************************************************************/
+
+L_TEST_DEPS = lzma_d_c.c $(MAKEFILE_LIST) $(TMP_DEPS)
+DOSBOX = /usr/bin/time -v dosbox -exit
+DOSBOX = dosbox
+
+tmp/l_t_gcc_i386.%  : tc_list = arch-i386 default
+tmp/l_t_gcc_i386.out: l_test.c $(L_TEST_DEPS)
+	$(call tc,gcc) -O0 -g -o $@ $<
+	./$@
+
+tmp/l_t_bc.%  : tc_list = method-lzma arch-i086 default
+tmp/l_t_bc.exe: l_test.c $(L_TEST_DEPS)
+	$(call tc,bcc) -o$(subst /,\\,$@) $<
+	$(DOSBOX) $@
+
+tmp/l_t_dm.%  : tc_list = method-lzma arch-i086 default
+tmp/l_t_dm.exe: l_test.c $(L_TEST_DEPS)
+	$(call tc,dmc) -ml -o$(subst /,\\,$@) $<
+	$(DOSBOX) $@
+
+tmp/l_t_wc.%  : tc_list = method-lzma arch-i086 default
+tmp/l_t_wc.exe: l_test.c $(L_TEST_DEPS)
+	$(call tc,wcl) -fe=$@ $<
+	$(DOSBOX) $@
+
+tmp/l_t_vc.%  : tc_list = method-lzma arch-i086 default
+tmp/l_t_vc.exe: l_test.c $(L_TEST_DEPS)
+	$(call tc,cl) -Fe$(subst /,\\,$@) $<
+	$(DOSBOX) $@
+
+.PHONY: tmp/l_t_gcc_i386.out tmp/l_t_bc.exe tmp/l_t_dm.exe tmp/l_t_wc.exe tmp/l_t_vc.exe
 

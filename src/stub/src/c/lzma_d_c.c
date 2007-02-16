@@ -98,6 +98,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 #else
 #include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
 #endif
+#undef char
+#undef CLzmaDecoderState
 
 #endif
 

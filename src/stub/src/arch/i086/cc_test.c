@@ -103,6 +103,9 @@ void __pascal p4fshlv_v(unsigned char v, uint32_t __far *a) { *a <<= v; }
 uint32_t __pascal p4nshlv(unsigned char v, uint32_t __near *a) { return *a <<= v; }
 uint32_t __pascal p4fshlv(unsigned char v, uint32_t __far *a) { return *a <<= v; }
 
+uint32_t __cdecl shlv_2(uint16_t h, uint16_t l, unsigned v)
+{ uint16_t x = l >> (16 - v); l <<= v; h <<= v; h |= x; return h * 65536ul + l; }
+
 hptrdiff_t __cdecl hptr2int(hptr a) { return (hptrdiff_t) a; }
 hptr __cdecl int2hptr(hptrdiff_t a) { return (hptr) a; }
 

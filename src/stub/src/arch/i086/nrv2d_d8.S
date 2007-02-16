@@ -162,5 +162,5 @@ f2_n2d:
                 ret
 decomp_done_n2d:
 
-/* vi:ts=8:et */
 
+/* vim:set ts=4 et: */

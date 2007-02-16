@@ -88,6 +88,21 @@ L1:
 .endm
 
 
+// shld: dx:ax <<= cl; trashes register "r1" (bx, di, si or bp)
+//   REQUIRED: 0 <= cl < 32
+// FIXME - this does not work yet
+.macro  M_shld r1
+        local   L1
+        mov     r1, ax      // save ax
+        shl     dx, cl
+        shl     ax, cl
+        neg     cl
+        and     cl, 15      // the 8086 uses all eight bits of the shift count
+        shr     r1, cl
+        or      dx, r1
+.endm
+
+
 /*************************************************************************
 // support code (see cleanasm.py)
 **************************************************************************/
@@ -196,11 +211,12 @@ section LZMA_DEC00
         mov     bp, sp
         lea     bx, [bp + lzma_stack_adjust]
 #if 0
+        // clear stack
         xor     ax, ax
-.clearstack:
+1:
         push    ax
         cmp     sp, bx
-        jnz     .clearstack
+        jnz     1b
 #else
         mov     sp, bx
 #endif
@@ -250,6 +266,16 @@ section LZMA_DEC20
 
 // cleanup
 section LZMA_DEC30
+#if 0
+        // clear dirty stack
+        lea     bx, [bp + lzma_stack_adjust - 128]
+        mov     sp, bp
+        xor     ax, ax
+1:
+        push    ax
+        cmp     sp, bx
+        jnz     1b
+#endif
         mov     sp, bp
         mov     di, offset lzma_u_len
 
@@ -267,5 +293,5 @@ section LZMA_DEC31
 #undef WCC_PIA_V02
 #undef WCC_PTS
 
-// vi:ts=8:et
 
+// vi:ts=4:et
