@@ -167,6 +167,28 @@ L2:
 
 section LZMA_DEC99
 
+#if 0
+__PIA:  M_WCC_PIA
+        ret
+__PTC:  M_WCC_PTC
+        ret
+__PTS:  ret
+__U4M:  M_LMUL_dxax_00bx
+        ret
+#else
+.macro  M_PIA
+        M_WCC_PIA
+.endm
+.macro  M_PTC
+        M_WCC_PTC
+.endm
+.macro  M_PTS
+.endm
+.macro  M_U4M
+        M_LMUL_dxax_00bx
+.endm
+#endif
+
 
 /*************************************************************************
 //

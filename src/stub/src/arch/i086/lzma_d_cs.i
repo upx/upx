@@ -4,1688 +4,1612 @@ tmp/lzma_d_cs.o:     file format elf32-i386
 Disassembly of section .text.LzmaDecode:
 
 00000000 <.text.LzmaDecode>:
-       0:	push   bp
-       1:	mov    bp,sp
-       3:	sub    sp,0x92
-       7:	push   si
-       8:	push   di
-       9:	mov    di,word ptr [bp+4]
-       c:	mov    ax,di
-       e:	add    ax,0x4
-      11:	mov    word ptr [bp-112],ax
-      14:	mov    word ptr [bp-108],0x0
-      19:	mov    word ptr [bp-106],0x0
-      1e:	mov    byte ptr [bp-104],0x0
-      22:	mov    ax,0x1
-      25:	mov    cl,byte ptr [di+2]
-      28:	xor    ch,ch
-      2a:	shl    ax,cl
-      2c:	dec    ax
-      2d:	cwd
-      2e:	mov    word ptr [bp-98],dx
-      31:	mov    word ptr [bp-100],ax
-      34:	mov    ax,0x1
-      37:	mov    cl,byte ptr [di+1]
-      3a:	xor    ch,ch
-      3c:	shl    ax,cl
-      3e:	dec    ax
-      3f:	cwd
-      40:	mov    word ptr [bp-94],dx
-      43:	mov    word ptr [bp-96],ax
-      46:	mov    al,byte ptr [di]
-      48:	xor    ah,ah
-      4a:	mov    word ptr [bp-92],ax
-      4d:	mov    word ptr [bp-90],0x0
-      52:	mov    word ptr [bp-88],0x1
-      57:	mov    word ptr [bp-86],0x0
-      5c:	mov    word ptr [bp-84],0x1
-      61:	mov    word ptr [bp-82],0x0
-      66:	mov    word ptr [bp-80],0x1
-      6b:	mov    word ptr [bp-78],0x0
-      70:	mov    word ptr [bp-76],0x1
-      75:	mov    word ptr [bp-74],0x0
-      7a:	mov    bx,word ptr [bp+14]
-      7d:	mov    word ptr [bx],0x0
-      81:	mov    word ptr [bx+2],0x0
-      86:	mov    bx,word ptr [bp+24]
-      89:	mov    word ptr [bx],0x0
-      8d:	mov    word ptr [bx+2],0x0
-      92:	mov    word ptr [bp-52],0x0
-      97:	mov    word ptr [bp-50],0x0
-      9c:	mov    bx,0x300
-      9f:	xor    dx,dx
-      a1:	mov    cl,byte ptr [di+1]
-      a4:	xor    ch,ch
-      a6:	add    cx,ax
-      a8:	jcxz   0xb0
-      aa:	shl    bx,1
-      ac:	rcl    dx,1
-      ae:	loop   0xaa
-      b0:	add    bx,0x736
-      b4:	adc    dx,cx
-      b6:	mov    ax,dx
-      b8:	or     ax,bx
-      ba:	mov    word ptr [bp-46],dx
-      bd:	mov    word ptr [bp-48],bx
-      c0:	je     0xe9
-      c2:	mov    si,word ptr [bp-52]
-      c5:	shl    si,1
-      c7:	add    si,word ptr [bp-112]
-      ca:	mov    word ptr [si],0x400
-      ce:	add    si,0x2
-      d1:	add    word ptr [bp-52],0x1
-      d5:	adc    word ptr [bp-50],0x0
-      d9:	mov    dx,word ptr [bp-50]
-      dc:	mov    ax,word ptr [bp-52]
-      df:	cmp    dx,word ptr [bp-46]
-      e2:	jne    0xe7
-      e4:	cmp    ax,word ptr [bp-48]
-      e7:	jb     0xca
-      e9:	mov    dx,word ptr [bp+8]
-      ec:	mov    ax,word ptr [bp+6]
-      ef:	mov    word ptr [bp-66],dx
-      f2:	mov    word ptr [bp-68],ax
-      f5:	mov    cx,dx
-      f7:	mov    bx,ax
-      f9:	mov    dx,word ptr [bp+12]
-      fc:	mov    ax,word ptr [bp+10]
-      ff:	add    ax,bx
-     101:	mov    bx,cx
-     103:	adc    dx,0x0
-     106:	mov    cx,0x0	107: R_386_16	__AHSHIFT
-     109:	shl    dx,cl
-     10b:	add    dx,bx
-     10d:	mov    word ptr [bp-62],dx
-     110:	mov    word ptr [bp-64],ax
-     113:	mov    word ptr [bp-56],0x0
-     118:	mov    word ptr [bp-54],0x0
-     11d:	mov    word ptr [bp-60],0xffff
-     122:	mov    word ptr [bp-58],0xffff
-     127:	xor    di,di
-     129:	mov    dx,word ptr [bp-66]
-     12c:	mov    ax,word ptr [bp-68]
-     12f:	cmp    dx,word ptr [bp-62]
-     132:	jne    0x137
-     134:	cmp    ax,word ptr [bp-64]
-     137:	jne    0x13c
-     139:	jmp    0x10ee
-     13c:	mov    dx,word ptr [bp-54]
-     13f:	mov    ax,word ptr [bp-56]
-     142:	mov    cx,0x8
-     145:	shl    ax,1
-     147:	rcl    dx,1
-     149:	loop   0x145
-     14b:	push   ax
-     14c:	push   dx
-     14d:	les    bx,dword ptr [bp-68]
-     150:	xor    si,si
-     152:	add    word ptr [bp-68],0x1
-     156:	adc    si,0x0
-     159:	mov    cx,0x0	15a: R_386_16	__AHSHIFT
-     15c:	shl    si,cl
-     15e:	add    word ptr [bp-66],si
-     161:	mov    al,byte ptr es:[bx]
-     164:	xor    ah,ah
-     166:	test   ax,ax
-     168:	cwd
-     169:	mov    cx,dx
-     16b:	mov    bx,ax
-     16d:	pop    dx
-     16e:	pop    ax
-     16f:	or     ax,bx
-     171:	or     dx,cx
-     173:	mov    word ptr [bp-54],dx
-     176:	mov    word ptr [bp-56],ax
-     179:	inc    di
-     17a:	cmp    di,0x5
-     17d:	jb     0x129
-     17f:	mov    ax,word ptr [bp+22]
-     182:	or     ax,word ptr [bp+20]
-     185:	jne    0x18a
-     187:	jmp    0x10d1
-     18a:	mov    di,word ptr [bp-108]
-     18d:	and    di,word ptr [bp-100]
-     190:	mov    word ptr [bp-40],di
-     193:	shl    di,1
-     195:	mov    ax,word ptr [bp-90]
-     198:	mov    cx,0x5
-     19b:	shl    ax,cl
-     19d:	add    ax,word ptr [bp-112]
-     1a0:	add    di,ax
-     1a2:	cmp    word ptr [bp-58],0x100
-     1a7:	jne    0x1ad
-     1a9:	cmp    word ptr [bp-60],0x0
-     1ad:	jae    0x208
-     1af:	mov    dx,word ptr [bp-66]
-     1b2:	mov    ax,word ptr [bp-68]
-     1b5:	cmp    dx,word ptr [bp-62]
-     1b8:	jne    0x1bd
-     1ba:	cmp    ax,word ptr [bp-64]
-     1bd:	jne    0x1c2
-     1bf:	jmp    0x10ee
-     1c2:	mov    cl,0x8
-     1c4:	shl    word ptr [bp-60],1
-     1c7:	rcl    word ptr [bp-58],1
-     1ca:	loop   0x1c4
-     1cc:	mov    dx,word ptr [bp-54]
-     1cf:	mov    ax,word ptr [bp-56]
-     1d2:	mov    cl,0x8
-     1d4:	shl    ax,1
-     1d6:	rcl    dx,1
-     1d8:	loop   0x1d4
-     1da:	push   ax
-     1db:	push   dx
-     1dc:	les    bx,dword ptr [bp-68]
-     1df:	xor    si,si
-     1e1:	add    word ptr [bp-68],0x1
-     1e5:	adc    si,0x0
-     1e8:	mov    cx,0x0	1e9: R_386_16	__AHSHIFT
-     1eb:	shl    si,cl
-     1ed:	add    word ptr [bp-66],si
-     1f0:	mov    al,byte ptr es:[bx]
-     1f3:	xor    ah,ah
-     1f5:	test   ax,ax
-     1f7:	cwd
-     1f8:	mov    cx,dx
-     1fa:	mov    bx,ax
-     1fc:	pop    dx
-     1fd:	pop    ax
-     1fe:	or     ax,bx
-     200:	or     dx,cx
-     202:	mov    word ptr [bp-54],dx
-     205:	mov    word ptr [bp-56],ax
-     208:	mov    dx,word ptr [bp-58]
-     20b:	mov    ax,word ptr [bp-60]
-     20e:	mov    cx,0xb
-     211:	shr    dx,1
-     213:	rcr    ax,1
-     215:	loop   0x211
-     217:	mov    bx,word ptr [di]
-     219:	xor    cx,cx
-     21b:	call   0x21c	21c: R_386_PC16	__LMUL
-     21e:	mov    word ptr [bp-42],dx
-     221:	mov    word ptr [bp-44],ax
-     224:	cmp    dx,word ptr [bp-54]
-     227:	jne    0x22c
-     229:	cmp    ax,word ptr [bp-56]
-     22c:	ja     0x231
-     22e:	jmp    0x500
-     231:	mov    word ptr [bp-38],0x1
-     236:	mov    dx,word ptr [bp-42]
-     239:	mov    ax,word ptr [bp-44]
-     23c:	mov    word ptr [bp-58],dx
-     23f:	mov    word ptr [bp-60],ax
-     242:	mov    ax,0x800
-     245:	sub    ax,word ptr [di]
-     247:	mov    cx,0x5
-     24a:	shr    ax,cl
-     24c:	add    word ptr [di],ax
-     24e:	mov    ax,word ptr [bp-108]
-     251:	and    ax,word ptr [bp-96]
-     254:	mov    cx,word ptr [bp-92]
-     257:	shl    ax,cl
-     259:	mov    dl,byte ptr [bp-104]
-     25c:	xor    dh,dh
-     25e:	mov    cx,0x8
-     261:	sub    cx,word ptr [bp-92]
-     264:	sar    dx,cl
-     266:	add    ax,dx
-     268:	mov    cx,0x300
-     26b:	mul    cx
-     26d:	mov    di,ax
-     26f:	shl    di,1
-     271:	add    di,word ptr [bp-112]
-     274:	add    di,0xe6c
-     278:	cmp    word ptr [bp-90],0x7
-     27c:	jge    0x281
-     27e:	jmp    0x3b1
-     281:	mov    dx,word ptr [bp-106]
-     284:	mov    bx,word ptr [bp-108]
-     287:	mov    cx,word ptr [bp+18]
-     28a:	mov    ax,word ptr [bp+16]
-     28d:	add    bx,ax
-     28f:	mov    ax,cx
-     291:	adc    dx,0x0
-     294:	mov    cx,0x0	295: R_386_16	__AHSHIFT
-     297:	shl    dx,cl
-     299:	add    dx,ax
-     29b:	sub    bx,word ptr [bp-88]
-     29e:	sbb    dx,word ptr [bp-86]
-     2a1:	movl   es,dx
-     2a3:	mov    al,byte ptr es:[bx]
-     2a6:	xor    ah,ah
-     2a8:	mov    word ptr [bp-36],ax
-     2ab:	mov    dx,word ptr [bp-36]
-     2ae:	shl    dx,1
-     2b0:	mov    word ptr [bp-36],dx
-     2b3:	mov    si,word ptr [bp-38]
-     2b6:	shl    si,1
-     2b8:	and    dx,0x100
-     2bc:	mov    word ptr [bp-34],dx
-     2bf:	shl    dx,1
-     2c1:	add    dx,di
-     2c3:	add    si,dx
-     2c5:	add    si,0x200
-     2c9:	cmp    word ptr [bp-58],0x100
-     2ce:	jne    0x2d4
-     2d0:	cmp    word ptr [bp-60],0x0
-     2d4:	jae    0x336
-     2d6:	mov    dx,word ptr [bp-66]
-     2d9:	mov    ax,word ptr [bp-68]
-     2dc:	cmp    dx,word ptr [bp-62]
-     2df:	jne    0x2e4
-     2e1:	cmp    ax,word ptr [bp-64]
-     2e4:	jne    0x2e9
-     2e6:	jmp    0x10ee
-     2e9:	mov    word ptr [bp-32],si
-     2ec:	mov    cx,0x8
-     2ef:	shl    word ptr [bp-60],1
-     2f2:	rcl    word ptr [bp-58],1
-     2f5:	loop   0x2ef
-     2f7:	mov    dx,word ptr [bp-54]
-     2fa:	mov    ax,word ptr [bp-56]
-     2fd:	mov    cl,0x8
-     2ff:	shl    ax,1
-     301:	rcl    dx,1
-     303:	loop   0x2ff
-     305:	push   ax
-     306:	push   dx
-     307:	les    bx,dword ptr [bp-68]
-     30a:	xor    si,si
-     30c:	add    word ptr [bp-68],0x1
-     310:	adc    si,0x0
-     313:	mov    cx,0x0	314: R_386_16	__AHSHIFT
-     316:	shl    si,cl
-     318:	add    word ptr [bp-66],si
-     31b:	mov    al,byte ptr es:[bx]
-     31e:	xor    ah,ah
-     320:	test   ax,ax
-     322:	cwd
-     323:	mov    cx,dx
-     325:	mov    bx,ax
-     327:	pop    dx
-     328:	pop    ax
-     329:	or     ax,bx
-     32b:	or     dx,cx
-     32d:	mov    word ptr [bp-54],dx
-     330:	mov    word ptr [bp-56],ax
-     333:	mov    si,word ptr [bp-32]
-     336:	mov    dx,word ptr [bp-58]
-     339:	mov    ax,word ptr [bp-60]
-     33c:	mov    cx,0xb
-     33f:	shr    dx,1
-     341:	rcr    ax,1
-     343:	loop   0x33f
-     345:	mov    bx,word ptr [si]
-     347:	mov    word ptr [bp-116],bx
-     34a:	xor    cx,cx
-     34c:	call   0x34d	34d: R_386_PC16	__LMUL
-     34f:	mov    word ptr [bp-42],dx
-     352:	mov    word ptr [bp-44],ax
-     355:	cmp    dx,word ptr [bp-54]
-     358:	jne    0x35d
-     35a:	cmp    ax,word ptr [bp-56]
-     35d:	jbe    0x382
-     35f:	mov    dx,word ptr [bp-42]
-     362:	mov    ax,word ptr [bp-44]
-     365:	mov    word ptr [bp-58],dx
-     368:	mov    word ptr [bp-60],ax
-     36b:	mov    dx,0x800
-     36e:	sub    dx,word ptr [si]
-     370:	mov    cx,0x5
-     373:	shr    dx,cl
-     375:	add    word ptr [si],dx
-     377:	shl    word ptr [bp-38],1
-     37a:	cmp    word ptr [bp-34],0x0
-     37e:	jne    0x3b1
-     380:	jmp    0x3a7
-     382:	sub    word ptr [bp-60],ax
-     385:	sbb    word ptr [bp-58],dx
-     388:	sub    word ptr [bp-56],ax
-     38b:	sbb    word ptr [bp-54],dx
-     38e:	mov    dx,word ptr [bp-116]
-     391:	mov    cx,0x5
-     394:	shr    dx,cl
-     396:	sub    word ptr [si],dx
-     398:	mov    cx,word ptr [bp-38]
-     39b:	shl    cx,1
-     39d:	inc    cx
-     39e:	mov    word ptr [bp-38],cx
-     3a1:	cmp    word ptr [bp-34],0x0
-     3a5:	je     0x3b1
-     3a7:	cmp    word ptr [bp-38],0x100
-     3ac:	jge    0x3b1
-     3ae:	jmp    0x2ab
-     3b1:	cmp    word ptr [bp-38],0x100
-     3b6:	jl     0x3bb
-     3b8:	jmp    0x4a0
-     3bb:	mov    si,word ptr [bp-38]
-     3be:	shl    si,1
-     3c0:	add    si,di
-     3c2:	cmp    word ptr [bp-58],0x100
-     3c7:	jne    0x3cd
-     3c9:	cmp    word ptr [bp-60],0x0
-     3cd:	jae    0x42f
-     3cf:	mov    dx,word ptr [bp-66]
-     3d2:	mov    ax,word ptr [bp-68]
-     3d5:	cmp    dx,word ptr [bp-62]
-     3d8:	jne    0x3dd
-     3da:	cmp    ax,word ptr [bp-64]
-     3dd:	jne    0x3e2
-     3df:	jmp    0x10ee
-     3e2:	mov    word ptr [bp-30],si
-     3e5:	mov    cx,0x8
-     3e8:	shl    word ptr [bp-60],1
-     3eb:	rcl    word ptr [bp-58],1
-     3ee:	loop   0x3e8
-     3f0:	mov    dx,word ptr [bp-54]
-     3f3:	mov    ax,word ptr [bp-56]
-     3f6:	mov    cl,0x8
-     3f8:	shl    ax,1
-     3fa:	rcl    dx,1
-     3fc:	loop   0x3f8
-     3fe:	push   ax
-     3ff:	push   dx
-     400:	les    bx,dword ptr [bp-68]
-     403:	xor    si,si
-     405:	add    word ptr [bp-68],0x1
-     409:	adc    si,0x0
-     40c:	mov    cx,0x0	40d: R_386_16	__AHSHIFT
-     40f:	shl    si,cl
-     411:	add    word ptr [bp-66],si
-     414:	mov    al,byte ptr es:[bx]
-     417:	xor    ah,ah
-     419:	test   ax,ax
-     41b:	cwd
-     41c:	mov    cx,dx
-     41e:	mov    bx,ax
-     420:	pop    dx
-     421:	pop    ax
-     422:	or     ax,bx
-     424:	or     dx,cx
-     426:	mov    word ptr [bp-54],dx
-     429:	mov    word ptr [bp-56],ax
-     42c:	mov    si,word ptr [bp-30]
-     42f:	mov    dx,word ptr [bp-58]
-     432:	mov    ax,word ptr [bp-60]
-     435:	mov    cx,0xb
-     438:	shr    dx,1
-     43a:	rcr    ax,1
-     43c:	loop   0x438
-     43e:	mov    bx,word ptr [si]
-     440:	mov    word ptr [bp-114],bx
-     443:	xor    cx,cx
-     445:	call   0x446	446: R_386_PC16	__LMUL
-     448:	mov    word ptr [bp-42],dx
-     44b:	mov    word ptr [bp-44],ax
-     44e:	cmp    dx,word ptr [bp-54]
-     451:	jne    0x456
-     453:	cmp    ax,word ptr [bp-56]
-     456:	jbe    0x47f
-     458:	mov    dx,word ptr [bp-42]
-     45b:	mov    ax,word ptr [bp-44]
-     45e:	mov    word ptr [bp-58],dx
-     461:	mov    word ptr [bp-60],ax
-     464:	mov    dx,0x800
-     467:	sub    dx,word ptr [si]
-     469:	mov    cx,0x5
-     46c:	shr    dx,cl
-     46e:	add    word ptr [si],dx
-     470:	shl    word ptr [bp-38],1
-     473:	cmp    word ptr [bp-38],0x100
-     478:	jge    0x47d
-     47a:	jmp    0x3bb
-     47d:	jmp    0x4a0
-     47f:	sub    word ptr [bp-60],ax
-     482:	sbb    word ptr [bp-58],dx
-     485:	sub    word ptr [bp-56],ax
-     488:	sbb    word ptr [bp-54],dx
-     48b:	mov    dx,word ptr [bp-114]
-     48e:	mov    cx,0x5
-     491:	shr    dx,cl
-     493:	sub    word ptr [si],dx
-     495:	mov    cx,word ptr [bp-38]
-     498:	shl    cx,1
-     49a:	inc    cx
-     49b:	mov    word ptr [bp-38],cx
-     49e:	jmp    0x473
-     4a0:	mov    al,byte ptr [bp-38]
-     4a3:	mov    byte ptr [bp-104],al
-     4a6:	mov    bx,word ptr [bp-108]
-     4a9:	mov    dx,word ptr [bp-106]
-     4ac:	add    word ptr [bp-108],0x1
-     4b0:	adc    word ptr [bp-106],0x0
-     4b4:	mov    cx,word ptr [bp+18]
-     4b7:	mov    si,word ptr [bp+16]
-     4ba:	add    bx,si
-     4bc:	mov    si,cx
-     4be:	adc    dx,0x0
-     4c1:	mov    cx,0x0	4c2: R_386_16	__AHSHIFT
-     4c4:	shl    dx,cl
-     4c6:	add    dx,si
-     4c8:	movl   es,dx
-     4ca:	mov    byte ptr es:[bx],al
-     4cd:	cmp    word ptr [bp-90],0x4
-     4d1:	jge    0x4ee
-     4d3:	mov    word ptr [bp-90],0x0
-     4d8:	mov    dx,word ptr [bp-106]
-     4db:	mov    ax,word ptr [bp-108]
-     4de:	cmp    dx,word ptr [bp+22]
-     4e1:	jne    0x4e6
-     4e3:	cmp    ax,word ptr [bp+20]
-     4e6:	jae    0x4eb
-     4e8:	jmp    0x18a
-     4eb:	jmp    0x10d1
-     4ee:	cmp    word ptr [bp-90],0xa
-     4f2:	jge    0x4fa
-     4f4:	add    word ptr [bp-90],0xfffffffd
-     4f8:	jmp    0x4d8
-     4fa:	add    word ptr [bp-90],0xfffffffa
-     4fe:	jmp    0x4d8
-     500:	sub    word ptr [bp-60],ax
-     503:	sbb    word ptr [bp-58],dx
-     506:	sub    word ptr [bp-56],ax
-     509:	sbb    word ptr [bp-54],dx
-     50c:	mov    ax,word ptr [di]
-     50e:	mov    cx,0x5
-     511:	shr    ax,cl
-     513:	sub    word ptr [di],ax
-     515:	mov    di,word ptr [bp-90]
-     518:	shl    di,1
-     51a:	add    di,word ptr [bp-112]
-     51d:	add    di,0x180
-     521:	cmp    word ptr [bp-58],0x100
-     526:	jne    0x52c
-     528:	cmp    word ptr [bp-60],0x0
-     52c:	jae    0x587
-     52e:	mov    dx,word ptr [bp-66]
-     531:	mov    ax,word ptr [bp-68]
-     534:	cmp    dx,word ptr [bp-62]
-     537:	jne    0x53c
-     539:	cmp    ax,word ptr [bp-64]
-     53c:	jne    0x541
-     53e:	jmp    0x10ee
-     541:	mov    cl,0x8
-     543:	shl    word ptr [bp-60],1
-     546:	rcl    word ptr [bp-58],1
-     549:	loop   0x543
-     54b:	mov    dx,word ptr [bp-54]
-     54e:	mov    ax,word ptr [bp-56]
-     551:	mov    cl,0x8
-     553:	shl    ax,1
-     555:	rcl    dx,1
-     557:	loop   0x553
-     559:	push   ax
-     55a:	push   dx
-     55b:	les    bx,dword ptr [bp-68]
-     55e:	xor    si,si
-     560:	add    word ptr [bp-68],0x1
-     564:	adc    si,0x0
-     567:	mov    cx,0x0	568: R_386_16	__AHSHIFT
-     56a:	shl    si,cl
-     56c:	add    word ptr [bp-66],si
-     56f:	mov    al,byte ptr es:[bx]
-     572:	xor    ah,ah
-     574:	test   ax,ax
-     576:	cwd
-     577:	mov    cx,dx
-     579:	mov    bx,ax
-     57b:	pop    dx
-     57c:	pop    ax
-     57d:	or     ax,bx
-     57f:	or     dx,cx
-     581:	mov    word ptr [bp-54],dx
-     584:	mov    word ptr [bp-56],ax
-     587:	mov    dx,word ptr [bp-58]
-     58a:	mov    ax,word ptr [bp-60]
-     58d:	mov    cx,0xb
-     590:	shr    dx,1
-     592:	rcr    ax,1
-     594:	loop   0x590
-     596:	mov    bx,word ptr [di]
-     598:	xor    cx,cx
-     59a:	call   0x59b	59b: R_386_PC16	__LMUL
-     59d:	mov    word ptr [bp-42],dx
-     5a0:	mov    word ptr [bp-44],ax
-     5a3:	cmp    dx,word ptr [bp-54]
-     5a6:	jne    0x5ab
-     5a8:	cmp    ax,word ptr [bp-56]
-     5ab:	jbe    0x601
-     5ad:	mov    dx,word ptr [bp-42]
-     5b0:	mov    ax,word ptr [bp-44]
-     5b3:	mov    word ptr [bp-58],dx
-     5b6:	mov    word ptr [bp-60],ax
-     5b9:	mov    ax,0x800
-     5bc:	sub    ax,word ptr [di]
-     5be:	mov    cx,0x5
-     5c1:	shr    ax,cl
-     5c3:	add    word ptr [di],ax
-     5c5:	mov    dx,word ptr [bp-78]
-     5c8:	mov    ax,word ptr [bp-80]
-     5cb:	mov    word ptr [bp-74],dx
-     5ce:	mov    word ptr [bp-76],ax
-     5d1:	mov    dx,word ptr [bp-82]
-     5d4:	mov    ax,word ptr [bp-84]
-     5d7:	mov    word ptr [bp-78],dx
-     5da:	mov    word ptr [bp-80],ax
-     5dd:	mov    dx,word ptr [bp-86]
-     5e0:	mov    ax,word ptr [bp-88]
-     5e3:	mov    word ptr [bp-82],dx
-     5e6:	mov    word ptr [bp-84],ax
-     5e9:	cmp    word ptr [bp-90],0x7
-     5ed:	mov    ax,0x0
-     5f0:	jl     0x5f4
-     5f2:	mov    al,0x3
-     5f4:	mov    word ptr [bp-90],ax
-     5f7:	mov    di,word ptr [bp-112]
-     5fa:	add    di,0x664
-     5fe:	jmp    0xa10
-     601:	sub    word ptr [bp-60],ax
-     604:	sbb    word ptr [bp-58],dx
-     607:	sub    word ptr [bp-56],ax
-     60a:	sbb    word ptr [bp-54],dx
-     60d:	mov    ax,word ptr [di]
-     60f:	mov    cx,0x5
-     612:	shr    ax,cl
-     614:	sub    word ptr [di],ax
-     616:	mov    di,word ptr [bp-90]
-     619:	shl    di,1
-     61b:	add    di,word ptr [bp-112]
-     61e:	add    di,0x198
-     622:	cmp    word ptr [bp-58],0x100
-     627:	jne    0x62d
-     629:	cmp    word ptr [bp-60],0x0
-     62d:	jae    0x688
-     62f:	mov    dx,word ptr [bp-66]
-     632:	mov    ax,word ptr [bp-68]
-     635:	cmp    dx,word ptr [bp-62]
-     638:	jne    0x63d
-     63a:	cmp    ax,word ptr [bp-64]
-     63d:	jne    0x642
-     63f:	jmp    0x10ee
-     642:	mov    cl,0x8
-     644:	shl    word ptr [bp-60],1
-     647:	rcl    word ptr [bp-58],1
-     64a:	loop   0x644
-     64c:	mov    dx,word ptr [bp-54]
-     64f:	mov    ax,word ptr [bp-56]
-     652:	mov    cl,0x8
-     654:	shl    ax,1
-     656:	rcl    dx,1
-     658:	loop   0x654
-     65a:	push   ax
-     65b:	push   dx
-     65c:	les    bx,dword ptr [bp-68]
-     65f:	xor    si,si
-     661:	add    word ptr [bp-68],0x1
-     665:	adc    si,0x0
-     668:	mov    cx,0x0	669: R_386_16	__AHSHIFT
-     66b:	shl    si,cl
-     66d:	add    word ptr [bp-66],si
-     670:	mov    al,byte ptr es:[bx]
-     673:	xor    ah,ah
-     675:	test   ax,ax
-     677:	cwd
-     678:	mov    cx,dx
-     67a:	mov    bx,ax
-     67c:	pop    dx
-     67d:	pop    ax
-     67e:	or     ax,bx
-     680:	or     dx,cx
-     682:	mov    word ptr [bp-54],dx
-     685:	mov    word ptr [bp-56],ax
-     688:	mov    dx,word ptr [bp-58]
-     68b:	mov    ax,word ptr [bp-60]
-     68e:	mov    cx,0xb
-     691:	shr    dx,1
-     693:	rcr    ax,1
-     695:	loop   0x691
-     697:	mov    bx,word ptr [di]
-     699:	xor    cx,cx
-     69b:	call   0x69c	69c: R_386_PC16	__LMUL
-     69e:	mov    word ptr [bp-42],dx
-     6a1:	mov    word ptr [bp-44],ax
-     6a4:	cmp    dx,word ptr [bp-54]
-     6a7:	jne    0x6ac
-     6a9:	cmp    ax,word ptr [bp-56]
-     6ac:	ja     0x6b1
-     6ae:	jmp    0x803
-     6b1:	mov    dx,word ptr [bp-42]
-     6b4:	mov    ax,word ptr [bp-44]
-     6b7:	mov    word ptr [bp-58],dx
-     6ba:	mov    word ptr [bp-60],ax
-     6bd:	mov    bx,0x800
-     6c0:	sub    bx,word ptr [di]
-     6c2:	mov    cx,0x5
-     6c5:	shr    bx,cl
-     6c7:	add    word ptr [di],bx
-     6c9:	mov    di,word ptr [bp-40]
-     6cc:	shl    di,1
-     6ce:	mov    bx,word ptr [bp-90]
-     6d1:	shl    bx,cl
-     6d3:	add    bx,word ptr [bp-112]
-     6d6:	add    di,bx
-     6d8:	add    di,0x1e0
-     6dc:	cmp    dx,0x100
-     6e0:	jne    0x6e4
-     6e2:	test   ax,ax
-     6e4:	jae    0x73f
-     6e6:	mov    dx,word ptr [bp-66]
-     6e9:	mov    ax,word ptr [bp-68]
-     6ec:	cmp    dx,word ptr [bp-62]
-     6ef:	jne    0x6f4
-     6f1:	cmp    ax,word ptr [bp-64]
-     6f4:	jne    0x6f9
-     6f6:	jmp    0x10ee
-     6f9:	mov    cl,0x8
-     6fb:	shl    word ptr [bp-60],1
-     6fe:	rcl    word ptr [bp-58],1
-     701:	loop   0x6fb
-     703:	mov    dx,word ptr [bp-54]
-     706:	mov    ax,word ptr [bp-56]
-     709:	mov    cl,0x8
-     70b:	shl    ax,1
-     70d:	rcl    dx,1
-     70f:	loop   0x70b
-     711:	push   ax
-     712:	push   dx
-     713:	les    bx,dword ptr [bp-68]
-     716:	xor    si,si
-     718:	add    word ptr [bp-68],0x1
-     71c:	adc    si,0x0
-     71f:	mov    cx,0x0	720: R_386_16	__AHSHIFT
-     722:	shl    si,cl
-     724:	add    word ptr [bp-66],si
-     727:	mov    al,byte ptr es:[bx]
-     72a:	xor    ah,ah
-     72c:	test   ax,ax
-     72e:	cwd
-     72f:	mov    cx,dx
-     731:	mov    bx,ax
-     733:	pop    dx
-     734:	pop    ax
-     735:	or     ax,bx
-     737:	or     dx,cx
-     739:	mov    word ptr [bp-54],dx
-     73c:	mov    word ptr [bp-56],ax
-     73f:	mov    dx,word ptr [bp-58]
-     742:	mov    ax,word ptr [bp-60]
-     745:	mov    cx,0xb
-     748:	shr    dx,1
-     74a:	rcr    ax,1
-     74c:	loop   0x748
-     74e:	mov    bx,word ptr [di]
-     750:	xor    cx,cx
-     752:	call   0x753	753: R_386_PC16	__LMUL
-     755:	mov    word ptr [bp-42],dx
-     758:	mov    word ptr [bp-44],ax
-     75b:	cmp    dx,word ptr [bp-54]
-     75e:	jne    0x763
-     760:	cmp    ax,word ptr [bp-56]
-     763:	ja     0x768
-     765:	jmp    0x7eb
-     768:	mov    dx,word ptr [bp-42]
-     76b:	mov    ax,word ptr [bp-44]
-     76e:	mov    word ptr [bp-58],dx
-     771:	mov    word ptr [bp-60],ax
-     774:	mov    ax,0x800
-     777:	sub    ax,word ptr [di]
-     779:	mov    cx,0x5
-     77c:	shr    ax,cl
-     77e:	add    word ptr [di],ax
-     780:	mov    ax,word ptr [bp-106]
-     783:	or     ax,word ptr [bp-108]
-     786:	jne    0x78b
-     788:	jmp    0x10ee
-     78b:	cmp    word ptr [bp-90],0x7
-     78f:	mov    ax,0x9
-     792:	jl     0x796
-     794:	mov    al,0xb
-     796:	mov    word ptr [bp-90],ax
-     799:	mov    dx,word ptr [bp-106]
-     79c:	mov    bx,word ptr [bp-108]
-     79f:	mov    cx,word ptr [bp+18]
-     7a2:	mov    ax,word ptr [bp+16]
-     7a5:	add    bx,ax
-     7a7:	mov    ax,cx
-     7a9:	adc    dx,0x0
-     7ac:	mov    cx,0x0	7ad: R_386_16	__AHSHIFT
-     7af:	shl    dx,cl
-     7b1:	add    dx,ax
-     7b3:	sub    bx,word ptr [bp-88]
-     7b6:	sbb    dx,word ptr [bp-86]
-     7b9:	movl   es,dx
-     7bb:	mov    al,byte ptr es:[bx]
-     7be:	mov    byte ptr [bp-104],al
-     7c1:	mov    bx,word ptr [bp-108]
-     7c4:	mov    dx,word ptr [bp-106]
-     7c7:	add    word ptr [bp-108],0x1
-     7cb:	adc    word ptr [bp-106],0x0
-     7cf:	mov    cx,word ptr [bp+18]
-     7d2:	mov    si,word ptr [bp+16]
-     7d5:	add    bx,si
-     7d7:	mov    si,cx
-     7d9:	adc    dx,0x0
-     7dc:	mov    cx,0x0	7dd: R_386_16	__AHSHIFT
-     7df:	shl    dx,cl
-     7e1:	add    dx,si
-     7e3:	movl   es,dx
-     7e5:	mov    byte ptr es:[bx],al
-     7e8:	jmp    0x4d8
-     7eb:	sub    word ptr [bp-60],ax
-     7ee:	sbb    word ptr [bp-58],dx
-     7f1:	sub    word ptr [bp-56],ax
-     7f4:	sbb    word ptr [bp-54],dx
-     7f7:	mov    ax,word ptr [di]
-     7f9:	mov    cx,0x5
-     7fc:	shr    ax,cl
-     7fe:	sub    word ptr [di],ax
-     800:	jmp    0x9fb
-     803:	sub    word ptr [bp-60],ax
-     806:	sbb    word ptr [bp-58],dx
-     809:	sub    word ptr [bp-56],ax
-     80c:	sbb    word ptr [bp-54],dx
-     80f:	mov    ax,word ptr [di]
-     811:	mov    cx,0x5
-     814:	shr    ax,cl
-     816:	sub    word ptr [di],ax
-     818:	mov    di,word ptr [bp-90]
-     81b:	shl    di,1
-     81d:	add    di,word ptr [bp-112]
-     820:	add    di,0x1b0
-     824:	cmp    word ptr [bp-58],0x100
-     829:	jne    0x82f
-     82b:	cmp    word ptr [bp-60],0x0
-     82f:	jae    0x88a
-     831:	mov    dx,word ptr [bp-66]
-     834:	mov    ax,word ptr [bp-68]
-     837:	cmp    dx,word ptr [bp-62]
-     83a:	jne    0x83f
-     83c:	cmp    ax,word ptr [bp-64]
-     83f:	jne    0x844
-     841:	jmp    0x10ee
-     844:	mov    cl,0x8
-     846:	shl    word ptr [bp-60],1
-     849:	rcl    word ptr [bp-58],1
-     84c:	loop   0x846
-     84e:	mov    dx,word ptr [bp-54]
-     851:	mov    ax,word ptr [bp-56]
-     854:	mov    cl,0x8
-     856:	shl    ax,1
-     858:	rcl    dx,1
-     85a:	loop   0x856
-     85c:	push   ax
-     85d:	push   dx
-     85e:	les    bx,dword ptr [bp-68]
-     861:	xor    si,si
-     863:	add    word ptr [bp-68],0x1
-     867:	adc    si,0x0
-     86a:	mov    cx,0x0	86b: R_386_16	__AHSHIFT
-     86d:	shl    si,cl
-     86f:	add    word ptr [bp-66],si
-     872:	mov    al,byte ptr es:[bx]
-     875:	xor    ah,ah
-     877:	test   ax,ax
-     879:	cwd
-     87a:	mov    cx,dx
-     87c:	mov    bx,ax
-     87e:	pop    dx
-     87f:	pop    ax
-     880:	or     ax,bx
-     882:	or     dx,cx
-     884:	mov    word ptr [bp-54],dx
-     887:	mov    word ptr [bp-56],ax
-     88a:	mov    dx,word ptr [bp-58]
-     88d:	mov    ax,word ptr [bp-60]
-     890:	mov    cx,0xb
-     893:	shr    dx,1
-     895:	rcr    ax,1
-     897:	loop   0x893
-     899:	mov    bx,word ptr [di]
-     89b:	xor    cx,cx
-     89d:	call   0x89e	89e: R_386_PC16	__LMUL
-     8a0:	mov    word ptr [bp-42],dx
-     8a3:	mov    word ptr [bp-44],ax
-     8a6:	cmp    dx,word ptr [bp-54]
-     8a9:	jne    0x8ae
-     8ab:	cmp    ax,word ptr [bp-56]
-     8ae:	jbe    0x8d7
-     8b0:	mov    dx,word ptr [bp-42]
-     8b3:	mov    ax,word ptr [bp-44]
-     8b6:	mov    word ptr [bp-58],dx
-     8b9:	mov    word ptr [bp-60],ax
-     8bc:	mov    ax,0x800
-     8bf:	sub    ax,word ptr [di]
-     8c1:	mov    cx,0x5
-     8c4:	shr    ax,cl
-     8c6:	add    word ptr [di],ax
-     8c8:	mov    dx,word ptr [bp-82]
-     8cb:	mov    ax,word ptr [bp-84]
-     8ce:	mov    word ptr [bp-26],dx
-     8d1:	mov    word ptr [bp-28],ax
-     8d4:	jmp    0x9e3
-     8d7:	sub    word ptr [bp-60],ax
-     8da:	sbb    word ptr [bp-58],dx
-     8dd:	sub    word ptr [bp-56],ax
-     8e0:	sbb    word ptr [bp-54],dx
-     8e3:	mov    ax,word ptr [di]
-     8e5:	mov    cx,0x5
-     8e8:	shr    ax,cl
-     8ea:	sub    word ptr [di],ax
-     8ec:	mov    di,word ptr [bp-90]
-     8ef:	shl    di,1
-     8f1:	add    di,word ptr [bp-112]
-     8f4:	add    di,0x1c8
-     8f8:	cmp    word ptr [bp-58],0x100
-     8fd:	jne    0x903
-     8ff:	cmp    word ptr [bp-60],0x0
-     903:	jae    0x95e
-     905:	mov    dx,word ptr [bp-66]
-     908:	mov    ax,word ptr [bp-68]
-     90b:	cmp    dx,word ptr [bp-62]
-     90e:	jne    0x913
-     910:	cmp    ax,word ptr [bp-64]
-     913:	jne    0x918
-     915:	jmp    0x10ee
-     918:	mov    cl,0x8
-     91a:	shl    word ptr [bp-60],1
-     91d:	rcl    word ptr [bp-58],1
-     920:	loop   0x91a
-     922:	mov    dx,word ptr [bp-54]
-     925:	mov    ax,word ptr [bp-56]
-     928:	mov    cl,0x8
-     92a:	shl    ax,1
-     92c:	rcl    dx,1
-     92e:	loop   0x92a
-     930:	push   ax
-     931:	push   dx
-     932:	les    bx,dword ptr [bp-68]
-     935:	xor    si,si
-     937:	add    word ptr [bp-68],0x1
-     93b:	adc    si,0x0
-     93e:	mov    cx,0x0	93f: R_386_16	__AHSHIFT
-     941:	shl    si,cl
-     943:	add    word ptr [bp-66],si
-     946:	mov    al,byte ptr es:[bx]
-     949:	xor    ah,ah
-     94b:	test   ax,ax
-     94d:	cwd
-     94e:	mov    cx,dx
-     950:	mov    bx,ax
-     952:	pop    dx
-     953:	pop    ax
-     954:	or     ax,bx
-     956:	or     dx,cx
-     958:	mov    word ptr [bp-54],dx
-     95b:	mov    word ptr [bp-56],ax
-     95e:	mov    dx,word ptr [bp-58]
-     961:	mov    ax,word ptr [bp-60]
-     964:	mov    cx,0xb
-     967:	shr    dx,1
-     969:	rcr    ax,1
-     96b:	loop   0x967
-     96d:	mov    bx,word ptr [di]
-     96f:	xor    cx,cx
-     971:	call   0x972	972: R_386_PC16	__LMUL
-     974:	mov    word ptr [bp-42],dx
-     977:	mov    word ptr [bp-44],ax
-     97a:	cmp    dx,word ptr [bp-54]
-     97d:	jne    0x982
-     97f:	cmp    ax,word ptr [bp-56]
-     982:	jbe    0x9aa
-     984:	mov    dx,word ptr [bp-42]
-     987:	mov    ax,word ptr [bp-44]
-     98a:	mov    word ptr [bp-58],dx
-     98d:	mov    word ptr [bp-60],ax
-     990:	mov    ax,0x800
-     993:	sub    ax,word ptr [di]
-     995:	mov    cx,0x5
-     998:	shr    ax,cl
-     99a:	add    word ptr [di],ax
-     99c:	mov    dx,word ptr [bp-78]
-     99f:	mov    ax,word ptr [bp-80]
-     9a2:	mov    word ptr [bp-26],dx
-     9a5:	mov    word ptr [bp-28],ax
-     9a8:	jmp    0x9d7
-     9aa:	sub    word ptr [bp-60],ax
-     9ad:	sbb    word ptr [bp-58],dx
-     9b0:	sub    word ptr [bp-56],ax
-     9b3:	sbb    word ptr [bp-54],dx
-     9b6:	mov    ax,word ptr [di]
-     9b8:	mov    cx,0x5
-     9bb:	shr    ax,cl
-     9bd:	sub    word ptr [di],ax
-     9bf:	mov    dx,word ptr [bp-74]
-     9c2:	mov    ax,word ptr [bp-76]
-     9c5:	mov    word ptr [bp-26],dx
-     9c8:	mov    word ptr [bp-28],ax
-     9cb:	mov    dx,word ptr [bp-78]
-     9ce:	mov    ax,word ptr [bp-80]
-     9d1:	mov    word ptr [bp-74],dx
-     9d4:	mov    word ptr [bp-76],ax
-     9d7:	mov    dx,word ptr [bp-82]
-     9da:	mov    ax,word ptr [bp-84]
-     9dd:	mov    word ptr [bp-78],dx
-     9e0:	mov    word ptr [bp-80],ax
-     9e3:	mov    dx,word ptr [bp-86]
-     9e6:	mov    ax,word ptr [bp-88]
-     9e9:	mov    word ptr [bp-82],dx
-     9ec:	mov    word ptr [bp-84],ax
-     9ef:	mov    dx,word ptr [bp-26]
-     9f2:	mov    ax,word ptr [bp-28]
-     9f5:	mov    word ptr [bp-86],dx
-     9f8:	mov    word ptr [bp-88],ax
-     9fb:	cmp    word ptr [bp-90],0x7
-     9ff:	mov    ax,0x8
-     a02:	jl     0xa06
-     a04:	mov    al,0xb
-     a06:	mov    word ptr [bp-90],ax
-     a09:	mov    di,word ptr [bp-112]
-     a0c:	add    di,0xa68
-     a10:	cmp    word ptr [bp-58],0x100
-     a15:	jne    0xa1b
-     a17:	cmp    word ptr [bp-60],0x0
-     a1b:	jae    0xa76
-     a1d:	mov    dx,word ptr [bp-66]
-     a20:	mov    ax,word ptr [bp-68]
-     a23:	cmp    dx,word ptr [bp-62]
-     a26:	jne    0xa2b
-     a28:	cmp    ax,word ptr [bp-64]
-     a2b:	jne    0xa30
-     a2d:	jmp    0x10ee
-     a30:	mov    cl,0x8
-     a32:	shl    word ptr [bp-60],1
-     a35:	rcl    word ptr [bp-58],1
-     a38:	loop   0xa32
-     a3a:	mov    dx,word ptr [bp-54]
-     a3d:	mov    ax,word ptr [bp-56]
-     a40:	mov    cl,0x8
-     a42:	shl    ax,1
-     a44:	rcl    dx,1
-     a46:	loop   0xa42
-     a48:	push   ax
-     a49:	push   dx
-     a4a:	les    bx,dword ptr [bp-68]
-     a4d:	xor    si,si
-     a4f:	add    word ptr [bp-68],0x1
-     a53:	adc    si,0x0
-     a56:	mov    cx,0x0	a57: R_386_16	__AHSHIFT
-     a59:	shl    si,cl
-     a5b:	add    word ptr [bp-66],si
-     a5e:	mov    al,byte ptr es:[bx]
-     a61:	xor    ah,ah
-     a63:	test   ax,ax
-     a65:	cwd
-     a66:	mov    cx,dx
-     a68:	mov    bx,ax
-     a6a:	pop    dx
-     a6b:	pop    ax
-     a6c:	or     ax,bx
-     a6e:	or     dx,cx
-     a70:	mov    word ptr [bp-54],dx
-     a73:	mov    word ptr [bp-56],ax
-     a76:	mov    dx,word ptr [bp-58]
-     a79:	mov    ax,word ptr [bp-60]
-     a7c:	mov    cx,0xb
-     a7f:	shr    dx,1
-     a81:	rcr    ax,1
-     a83:	loop   0xa7f
-     a85:	mov    bx,word ptr [di]
-     a87:	xor    cx,cx
-     a89:	call   0xa8a	a8a: R_386_PC16	__LMUL
-     a8c:	mov    word ptr [bp-42],dx
-     a8f:	mov    word ptr [bp-44],ax
-     a92:	cmp    dx,word ptr [bp-54]
-     a95:	jne    0xa9a
-     a97:	cmp    ax,word ptr [bp-56]
-     a9a:	jbe    0xad4
-     a9c:	mov    dx,word ptr [bp-42]
-     a9f:	mov    ax,word ptr [bp-44]
-     aa2:	mov    word ptr [bp-58],dx
-     aa5:	mov    word ptr [bp-60],ax
-     aa8:	mov    ax,0x800
-     aab:	sub    ax,word ptr [di]
-     aad:	mov    cx,0x5
-     ab0:	shr    ax,cl
-     ab2:	add    word ptr [di],ax
-     ab4:	mov    ax,word ptr [bp-40]
-     ab7:	shl    ax,1
-     ab9:	shl    ax,1
-     abb:	shl    ax,1
-     abd:	shl    ax,1
-     abf:	add    ax,di
-     ac1:	add    ax,0x4
-     ac4:	mov    word ptr [bp-20],ax
-     ac7:	mov    word ptr [bp-22],0x0
-     acc:	mov    word ptr [bp-24],0x3
-     ad1:	jmp    0xbe8
-     ad4:	sub    word ptr [bp-60],ax
-     ad7:	sbb    word ptr [bp-58],dx
-     ada:	sub    word ptr [bp-56],ax
-     add:	sbb    word ptr [bp-54],dx
-     ae0:	mov    ax,word ptr [di]
-     ae2:	mov    cx,0x5
-     ae5:	shr    ax,cl
-     ae7:	sub    word ptr [di],ax
-     ae9:	mov    ax,di
-     aeb:	add    ax,0x2
-     aee:	mov    word ptr [bp-20],ax
-     af1:	cmp    word ptr [bp-58],0x100
-     af6:	jne    0xafc
-     af8:	cmp    word ptr [bp-60],0x0
-     afc:	jae    0xb57
-     afe:	mov    dx,word ptr [bp-66]
-     b01:	mov    ax,word ptr [bp-68]
-     b04:	cmp    dx,word ptr [bp-62]
-     b07:	jne    0xb0c
-     b09:	cmp    ax,word ptr [bp-64]
-     b0c:	jne    0xb11
-     b0e:	jmp    0x10ee
-     b11:	mov    cl,0x8
-     b13:	shl    word ptr [bp-60],1
-     b16:	rcl    word ptr [bp-58],1
-     b19:	loop   0xb13
-     b1b:	mov    dx,word ptr [bp-54]
-     b1e:	mov    ax,word ptr [bp-56]
-     b21:	mov    cl,0x8
-     b23:	shl    ax,1
-     b25:	rcl    dx,1
-     b27:	loop   0xb23
-     b29:	push   ax
-     b2a:	push   dx
-     b2b:	les    bx,dword ptr [bp-68]
-     b2e:	xor    si,si
-     b30:	add    word ptr [bp-68],0x1
-     b34:	adc    si,0x0
-     b37:	mov    cx,0x0	b38: R_386_16	__AHSHIFT
-     b3a:	shl    si,cl
-     b3c:	add    word ptr [bp-66],si
-     b3f:	mov    al,byte ptr es:[bx]
-     b42:	xor    ah,ah
-     b44:	test   ax,ax
-     b46:	cwd
-     b47:	mov    cx,dx
-     b49:	mov    bx,ax
-     b4b:	pop    dx
-     b4c:	pop    ax
-     b4d:	or     ax,bx
-     b4f:	or     dx,cx
-     b51:	mov    word ptr [bp-54],dx
-     b54:	mov    word ptr [bp-56],ax
-     b57:	mov    dx,word ptr [bp-58]
-     b5a:	mov    ax,word ptr [bp-60]
-     b5d:	mov    cx,0xb
-     b60:	shr    dx,1
-     b62:	rcr    ax,1
-     b64:	loop   0xb60
-     b66:	mov    bx,word ptr [bp-20]
-     b69:	mov    bx,word ptr [bx]
-     b6b:	mov    word ptr [bp-124],bx
-     b6e:	xor    cx,cx
-     b70:	call   0xb71	b71: R_386_PC16	__LMUL
-     b73:	mov    word ptr [bp-42],dx
-     b76:	mov    word ptr [bp-44],ax
-     b79:	cmp    dx,word ptr [bp-54]
-     b7c:	jne    0xb81
-     b7e:	cmp    ax,word ptr [bp-56]
-     b81:	jbe    0xbbd
-     b83:	mov    dx,word ptr [bp-42]
-     b86:	mov    ax,word ptr [bp-44]
-     b89:	mov    word ptr [bp-58],dx
-     b8c:	mov    word ptr [bp-60],ax
-     b8f:	mov    ax,0x800
-     b92:	mov    bx,word ptr [bp-20]
-     b95:	sub    ax,word ptr [bx]
-     b97:	mov    cx,0x5
-     b9a:	shr    ax,cl
-     b9c:	add    word ptr [bx],ax
-     b9e:	mov    ax,word ptr [bp-40]
-     ba1:	shl    ax,1
-     ba3:	shl    ax,1
-     ba5:	shl    ax,1
-     ba7:	shl    ax,1
-     ba9:	add    ax,di
-     bab:	add    ax,0x104
-     bae:	mov    word ptr [bp-20],ax
-     bb1:	mov    word ptr [bp-22],0x8
-     bb6:	mov    word ptr [bp-24],0x3
-     bbb:	jmp    0xbe8
-     bbd:	sub    word ptr [bp-60],ax
-     bc0:	sbb    word ptr [bp-58],dx
-     bc3:	sub    word ptr [bp-56],ax
-     bc6:	sbb    word ptr [bp-54],dx
-     bc9:	mov    ax,word ptr [bp-124]
-     bcc:	mov    cx,0x5
-     bcf:	shr    ax,cl
-     bd1:	mov    bx,word ptr [bp-20]
-     bd4:	sub    word ptr [bx],ax
-     bd6:	mov    ax,di
-     bd8:	add    ax,0x204
-     bdb:	mov    word ptr [bp-20],ax
-     bde:	mov    word ptr [bp-22],0x10
-     be3:	mov    word ptr [bp-24],0x8
-     be8:	mov    ax,word ptr [bp-24]
-     beb:	mov    word ptr [bp-18],ax
-     bee:	mov    di,0x1
-     bf1:	mov    si,di
-     bf3:	shl    si,1
-     bf5:	add    si,word ptr [bp-20]
-     bf8:	cmp    word ptr [bp-58],0x100
-     bfd:	jne    0xc03
-     bff:	cmp    word ptr [bp-60],0x0
-     c03:	jae    0xc65
-     c05:	mov    dx,word ptr [bp-66]
-     c08:	mov    ax,word ptr [bp-68]
-     c0b:	cmp    dx,word ptr [bp-62]
-     c0e:	jne    0xc13
-     c10:	cmp    ax,word ptr [bp-64]
-     c13:	jne    0xc18
-     c15:	jmp    0x10ee
-     c18:	mov    word ptr [bp-16],si
-     c1b:	mov    cx,0x8
-     c1e:	shl    word ptr [bp-60],1
-     c21:	rcl    word ptr [bp-58],1
-     c24:	loop   0xc1e
-     c26:	mov    dx,word ptr [bp-54]
-     c29:	mov    ax,word ptr [bp-56]
-     c2c:	mov    cl,0x8
-     c2e:	shl    ax,1
-     c30:	rcl    dx,1
-     c32:	loop   0xc2e
-     c34:	push   ax
-     c35:	push   dx
-     c36:	les    bx,dword ptr [bp-68]
-     c39:	xor    si,si
-     c3b:	add    word ptr [bp-68],0x1
-     c3f:	adc    si,0x0
-     c42:	mov    cx,0x0	c43: R_386_16	__AHSHIFT
-     c45:	shl    si,cl
-     c47:	add    word ptr [bp-66],si
-     c4a:	mov    al,byte ptr es:[bx]
-     c4d:	xor    ah,ah
-     c4f:	test   ax,ax
-     c51:	cwd
-     c52:	mov    cx,dx
-     c54:	mov    bx,ax
-     c56:	pop    dx
-     c57:	pop    ax
-     c58:	or     ax,bx
-     c5a:	or     dx,cx
-     c5c:	mov    word ptr [bp-54],dx
-     c5f:	mov    word ptr [bp-56],ax
-     c62:	mov    si,word ptr [bp-16]
-     c65:	mov    dx,word ptr [bp-58]
-     c68:	mov    ax,word ptr [bp-60]
-     c6b:	mov    cx,0xb
-     c6e:	shr    dx,1
-     c70:	rcr    ax,1
-     c72:	loop   0xc6e
-     c74:	mov    bx,word ptr [si]
-     c76:	mov    word ptr [bp-122],bx
-     c79:	xor    cx,cx
-     c7b:	call   0xc7c	c7c: R_386_PC16	__LMUL
-     c7e:	mov    word ptr [bp-42],dx
-     c81:	mov    word ptr [bp-44],ax
-     c84:	cmp    dx,word ptr [bp-54]
-     c87:	jne    0xc8c
-     c89:	cmp    ax,word ptr [bp-56]
-     c8c:	jbe    0xcaa
-     c8e:	mov    dx,word ptr [bp-42]
-     c91:	mov    ax,word ptr [bp-44]
-     c94:	mov    word ptr [bp-58],dx
-     c97:	mov    word ptr [bp-60],ax
-     c9a:	mov    dx,0x800
-     c9d:	sub    dx,word ptr [si]
-     c9f:	mov    cx,0x5
-     ca2:	shr    dx,cl
-     ca4:	add    word ptr [si],dx
-     ca6:	shl    di,1
-     ca8:	jmp    0xcc3
-     caa:	sub    word ptr [bp-60],ax
-     cad:	sbb    word ptr [bp-58],dx
-     cb0:	sub    word ptr [bp-56],ax
-     cb3:	sbb    word ptr [bp-54],dx
-     cb6:	mov    dx,word ptr [bp-122]
-     cb9:	mov    cx,0x5
-     cbc:	shr    dx,cl
-     cbe:	sub    word ptr [si],dx
-     cc0:	shl    di,1
-     cc2:	inc    di
-     cc3:	dec    word ptr [bp-18]
-     cc6:	je     0xccb
-     cc8:	jmp    0xbf1
-     ccb:	mov    word ptr [bp-72],di
-     cce:	mov    ax,0x1
-     cd1:	mov    cx,word ptr [bp-24]
-     cd4:	shl    ax,cl
-     cd6:	sub    word ptr [bp-72],ax
-     cd9:	mov    ax,word ptr [bp-22]
-     cdc:	add    word ptr [bp-72],ax
-     cdf:	cmp    word ptr [bp-90],0x4
-     ce3:	jl     0xce8
-     ce5:	jmp    0x1016
-     ce8:	add    word ptr [bp-90],0x7
-     cec:	cmp    word ptr [bp-72],0x4
-     cf0:	jge    0xcf7
-     cf2:	mov    di,word ptr [bp-72]
-     cf5:	jmp    0xcfa
-     cf7:	mov    di,0x3
-     cfa:	mov    cx,0x7
-     cfd:	shl    di,cl
-     cff:	add    di,word ptr [bp-112]
-     d02:	add    di,0x360
-     d06:	mov    word ptr [bp-12],0x6
-     d0b:	mov    si,0x1
-     d0e:	mov    cx,si
-     d10:	shl    cx,1
-     d12:	add    cx,di
-     d14:	mov    word ptr [bp-10],cx
-     d17:	cmp    word ptr [bp-58],0x100
-     d1c:	jne    0xd22
-     d1e:	cmp    word ptr [bp-60],0x0
-     d22:	jae    0xd84
-     d24:	mov    dx,word ptr [bp-66]
-     d27:	mov    ax,word ptr [bp-68]
-     d2a:	cmp    dx,word ptr [bp-62]
-     d2d:	jne    0xd32
-     d2f:	cmp    ax,word ptr [bp-64]
-     d32:	jne    0xd37
-     d34:	jmp    0x10ee
-     d37:	mov    word ptr [bp-14],si
-     d3a:	mov    cx,0x8
-     d3d:	shl    word ptr [bp-60],1
-     d40:	rcl    word ptr [bp-58],1
-     d43:	loop   0xd3d
-     d45:	mov    dx,word ptr [bp-54]
-     d48:	mov    ax,word ptr [bp-56]
-     d4b:	mov    cl,0x8
-     d4d:	shl    ax,1
-     d4f:	rcl    dx,1
-     d51:	loop   0xd4d
-     d53:	push   ax
-     d54:	push   dx
-     d55:	les    bx,dword ptr [bp-68]
-     d58:	xor    si,si
-     d5a:	add    word ptr [bp-68],0x1
-     d5e:	adc    si,0x0
-     d61:	mov    cx,0x0	d62: R_386_16	__AHSHIFT
-     d64:	shl    si,cl
-     d66:	add    word ptr [bp-66],si
-     d69:	mov    al,byte ptr es:[bx]
-     d6c:	xor    ah,ah
-     d6e:	test   ax,ax
-     d70:	cwd
-     d71:	mov    cx,dx
-     d73:	mov    bx,ax
-     d75:	pop    dx
-     d76:	pop    ax
-     d77:	or     ax,bx
-     d79:	or     dx,cx
-     d7b:	mov    word ptr [bp-54],dx
-     d7e:	mov    word ptr [bp-56],ax
-     d81:	mov    si,word ptr [bp-14]
-     d84:	mov    dx,word ptr [bp-58]
-     d87:	mov    ax,word ptr [bp-60]
-     d8a:	mov    cx,0xb
-     d8d:	shr    dx,1
-     d8f:	rcr    ax,1
-     d91:	loop   0xd8d
-     d93:	mov    bx,word ptr [bp-10]
-     d96:	mov    bx,word ptr [bx]
-     d98:	mov    word ptr [bp-120],bx
-     d9b:	xor    cx,cx
-     d9d:	call   0xd9e	d9e: R_386_PC16	__LMUL
-     da0:	mov    word ptr [bp-42],dx
-     da3:	mov    word ptr [bp-44],ax
-     da6:	cmp    dx,word ptr [bp-54]
-     da9:	jne    0xdae
-     dab:	cmp    ax,word ptr [bp-56]
-     dae:	jbe    0xdcf
-     db0:	mov    dx,word ptr [bp-42]
-     db3:	mov    ax,word ptr [bp-44]
-     db6:	mov    word ptr [bp-58],dx
-     db9:	mov    word ptr [bp-60],ax
-     dbc:	mov    dx,0x800
-     dbf:	mov    bx,word ptr [bp-10]
-     dc2:	sub    dx,word ptr [bx]
-     dc4:	mov    cx,0x5
-     dc7:	shr    dx,cl
-     dc9:	add    word ptr [bx],dx
-     dcb:	shl    si,1
-     dcd:	jmp    0xdeb
-     dcf:	sub    word ptr [bp-60],ax
-     dd2:	sbb    word ptr [bp-58],dx
-     dd5:	sub    word ptr [bp-56],ax
-     dd8:	sbb    word ptr [bp-54],dx
-     ddb:	mov    dx,word ptr [bp-120]
-     dde:	mov    cx,0x5
-     de1:	shr    dx,cl
-     de3:	mov    bx,word ptr [bp-10]
-     de6:	sub    word ptr [bx],dx
-     de8:	shl    si,1
-     dea:	inc    si
-     deb:	dec    word ptr [bp-12]
-     dee:	je     0xdf3
-     df0:	jmp    0xd0e
-     df3:	mov    di,word ptr [bp-72]
-     df6:	add    si,0xffffffc0
-     df9:	cmp    si,0x4
-     dfc:	jge    0xe01
-     dfe:	jmp    0xff3
-     e01:	mov    cx,si
-     e03:	sar    cx,1
-     e05:	dec    cx
-     e06:	mov    word ptr [bp-8],cx
-     e09:	mov    ax,si
-     e0b:	and    ax,0x1
-     e0e:	or     al,0x2
-     e10:	xor    cx,cx
-     e12:	mov    word ptr [bp-86],cx
-     e15:	mov    word ptr [bp-88],ax
-     e18:	cmp    si,0xe
-     e1b:	jge    0xe42
-     e1d:	mov    word ptr [bp-72],di
-     e20:	mov    cx,word ptr [bp-8]
-     e23:	jcxz   0xe2d
-     e25:	shl    word ptr [bp-88],1
-     e28:	rcl    word ptr [bp-86],1
-     e2b:	loop   0xe25
-     e2d:	mov    di,word ptr [bp-88]
-     e30:	shl    di,1
-     e32:	add    di,word ptr [bp-112]
-     e35:	add    di,0x55e
-     e39:	mov    cx,si
-     e3b:	shl    cx,1
-     e3d:	sub    di,cx
-     e3f:	jmp    0xef5
-     e42:	add    word ptr [bp-8],0xfffffffc
-     e46:	cmp    word ptr [bp-58],0x100
-     e4b:	jne    0xe51
-     e4d:	cmp    word ptr [bp-60],0x0
-     e51:	jae    0xead
-     e53:	mov    dx,word ptr [bp-66]
-     e56:	mov    ax,word ptr [bp-68]
-     e59:	cmp    dx,word ptr [bp-62]
-     e5c:	jne    0xe61
-     e5e:	cmp    ax,word ptr [bp-64]
-     e61:	jne    0xe66
-     e63:	jmp    0x10ee
-     e66:	mov    cx,0x8
-     e69:	shl    word ptr [bp-60],1
-     e6c:	rcl    word ptr [bp-58],1
-     e6f:	loop   0xe69
-     e71:	mov    dx,word ptr [bp-54]
-     e74:	mov    ax,word ptr [bp-56]
-     e77:	mov    cl,0x8
-     e79:	shl    ax,1
-     e7b:	rcl    dx,1
-     e7d:	loop   0xe79
-     e7f:	push   ax
-     e80:	push   dx
-     e81:	les    bx,dword ptr [bp-68]
-     e84:	xor    si,si
-     e86:	add    word ptr [bp-68],0x1
-     e8a:	adc    si,0x0
-     e8d:	mov    cx,0x0	e8e: R_386_16	__AHSHIFT
-     e90:	shl    si,cl
-     e92:	add    word ptr [bp-66],si
+       0:	push   si
+       1:	push   di
+       2:	push   bp
+       3:	mov    bp,sp
+       5:	sub    sp,0x66
+       8:	mov    si,word ptr [bp+8]
+       b:	lea    bx,[si+4]
+       e:	mov    word ptr [bp-34],bx
+      11:	xor    ax,ax
+      13:	mov    word ptr [bp-20],ax
+      16:	mov    word ptr [bp-18],ax
+      19:	mov    byte ptr [bp-2],0x0
+      1d:	mov    cl,byte ptr [si+2]
+      20:	mov    ax,0x1
+      23:	shl    ax,cl
+      25:	dec    ax
+      26:	mov    word ptr [bp-88],ax
+      29:	mov    cl,byte ptr [si+1]
+      2c:	mov    ax,0x1
+      2f:	shl    ax,cl
+      31:	dec    ax
+      32:	cwd
+      33:	mov    word ptr [bp-86],ax
+      36:	mov    word ptr [bp-84],dx
+      39:	mov    al,byte ptr [si]
+      3b:	xor    ah,ah
+      3d:	mov    word ptr [bp-78],ax
+      40:	mov    word ptr [bp-16],0x0
+      45:	mov    word ptr [bp-102],0x1
+      4a:	mov    word ptr [bp-100],0x0
+      4f:	mov    word ptr [bp-52],0x1
+      54:	mov    word ptr [bp-50],0x0
+      59:	mov    word ptr [bp-56],0x1
+      5e:	mov    word ptr [bp-54],0x0
+      63:	mov    word ptr [bp-68],0x1
+      68:	mov    word ptr [bp-74],0x0
+      6d:	mov    bx,word ptr [bp+18]
+      70:	mov    word ptr [bx],0x0
+      74:	mov    word ptr [bx+2],0x0
+      79:	mov    bx,word ptr [bp+28]
+      7c:	mov    word ptr [bx],0x0
+      80:	mov    word ptr [bx+2],0x0
+      85:	mov    dl,byte ptr [si+1]
+      88:	xor    dh,dh
+      8a:	mov    cx,ax
+      8c:	add    cx,dx
+      8e:	mov    ax,0x300
+      91:	xor    dl,dl
+      93:	jcxz   0x9b
+      95:	shl    ax,1
+      97:	rcl    dx,1
+      99:	loop   0x95
+      9b:	mov    si,ax
+      9d:	add    si,0x736
+      a1:	mov    cx,dx
+      a3:	adc    cx,0x0
+      a6:	xor    dx,dx
+      a8:	xor    ax,ax
+      aa:	cmp    ax,cx
+      ac:	jb     0xb4
+      ae:	jne    0xc7
+      b0:	cmp    dx,si
+      b2:	jae    0xc7
+      b4:	mov    bx,dx
+      b6:	shl    bx,1
+      b8:	add    bx,word ptr [bp-34]
+      bb:	mov    word ptr [bx],0x400
+      bf:	add    dx,0x1
+      c2:	adc    ax,0x0
+      c5:	jmp    0xaa
+      c7:	mov    bx,word ptr [bp+10]
+      ca:	mov    word ptr [bp-12],bx
+      cd:	mov    ax,word ptr [bp+12]
+      d0:	mov    word ptr [bp-10],ax
+      d3:	mov    ax,bx
+      d5:	mov    dx,word ptr [bp+12]
+      d8:	mov    bx,word ptr [bp+14]
+      db:	mov    cx,word ptr [bp+16]
+      de:	call   0xdf	df: R_386_PC16	__PIA
+      e1:	mov    word ptr [bp-30],ax
+      e4:	mov    word ptr [bp-28],dx
+      e7:	xor    ax,ax
+      e9:	mov    word ptr [bp-6],ax
+      ec:	mov    word ptr [bp-4],ax
+      ef:	mov    si,0xffff
+      f2:	mov    di,si
+      f4:	mov    word ptr [bp-72],ax
+      f7:	jmp    0x13c
+      f9:	les    bx,dword ptr [bp-12]
+      fc:	mov    al,byte ptr es:[bx]
+      ff:	mov    byte ptr [bp-90],al
+     102:	mov    byte ptr [bp-89],0x0
+     106:	mov    ax,word ptr [bp-6]
+     109:	mov    dx,word ptr [bp-4]
+     10c:	mov    cx,0x8
+     10f:	shl    ax,1
+     111:	rcl    dx,1
+     113:	loop   0x10f
+     115:	mov    bx,word ptr [bp-90]
+     118:	or     bx,ax
+     11a:	mov    word ptr [bp-6],bx
+     11d:	mov    word ptr [bp-4],dx
+     120:	mov    ax,word ptr [bp-12]
+     123:	movl   dx,es
+     125:	mov    bx,0x1
+     128:	xor    cx,cx
+     12a:	call   0x12b	12b: R_386_PC16	__PIA
+     12d:	mov    word ptr [bp-12],ax
+     130:	mov    word ptr [bp-10],dx
+     133:	inc    word ptr [bp-72]
+     136:	cmp    word ptr [bp-72],0x5
+     13a:	jge    0x153
+     13c:	mov    ax,word ptr [bp-12]
+     13f:	mov    dx,word ptr [bp-10]
+     142:	mov    bx,word ptr [bp-30]
+     145:	mov    cx,word ptr [bp-28]
+     148:	call   0x149	149: R_386_PC16	__PTC
+     14b:	jne    0xf9
+     14d:	mov    ax,0x1
+     150:	jmp    0x10f3
+     153:	mov    ax,word ptr [bp-18]
+     156:	cmp    ax,word ptr [bp+26]
+     159:	jb     0x168
+     15b:	je     0x160
+     15d:	jmp    0x109e
+     160:	mov    ax,word ptr [bp-20]
+     163:	cmp    ax,word ptr [bp+24]
+     166:	jae    0x15d
+     168:	mov    ax,word ptr [bp-20]
+     16b:	and    ax,word ptr [bp-88]
+     16e:	mov    word ptr [bp-58],ax
+     171:	mov    cl,0x5
+     173:	mov    dx,word ptr [bp-16]
+     176:	shl    dx,cl
+     178:	add    dx,word ptr [bp-34]
+     17b:	shl    ax,1
+     17d:	add    dx,ax
+     17f:	mov    word ptr [bp-14],dx
+     182:	cmp    di,0x100
+     186:	jae    0x1dc
+     188:	mov    ax,word ptr [bp-12]
+     18b:	mov    dx,word ptr [bp-10]
+     18e:	mov    bx,word ptr [bp-30]
+     191:	mov    cx,word ptr [bp-28]
+     194:	call   0x195	195: R_386_PC16	__PTC
+     197:	je     0x14d
+     199:	mov    cx,0x8
+     19c:	shl    si,1
+     19e:	rcl    di,1
+     1a0:	loop   0x19c
+     1a2:	les    bx,dword ptr [bp-12]
+     1a5:	mov    al,byte ptr es:[bx]
+     1a8:	mov    byte ptr [bp-90],al
+     1ab:	mov    byte ptr [bp-89],0x0
+     1af:	mov    ax,word ptr [bp-6]
+     1b2:	mov    dx,word ptr [bp-4]
+     1b5:	mov    cx,0x8
+     1b8:	shl    ax,1
+     1ba:	rcl    dx,1
+     1bc:	loop   0x1b8
+     1be:	mov    bx,word ptr [bp-90]
+     1c1:	or     bx,ax
+     1c3:	mov    word ptr [bp-6],bx
+     1c6:	mov    word ptr [bp-4],dx
+     1c9:	mov    ax,word ptr [bp-12]
+     1cc:	movl   dx,es
+     1ce:	mov    bx,0x1
+     1d1:	xor    cx,cx
+     1d3:	call   0x1d4	1d4: R_386_PC16	__PIA
+     1d6:	mov    word ptr [bp-12],ax
+     1d9:	mov    word ptr [bp-10],dx
+     1dc:	mov    word ptr [bp-98],si
+     1df:	mov    word ptr [bp-96],di
+     1e2:	mov    cx,0xb
+     1e5:	shr    word ptr [bp-96],1
+     1e8:	rcr    word ptr [bp-98],1
+     1eb:	loop   0x1e5
+     1ed:	mov    bx,word ptr [bp-14]
+     1f0:	mov    bx,word ptr [bx]
+     1f2:	mov    ax,word ptr [bp-98]
+     1f5:	mov    dx,word ptr [bp-96]
+     1f8:	xor    cx,cx
+     1fa:	call   0x1fb	1fb: R_386_PC16	__U4M
+     1fd:	mov    word ptr [bp-8],ax
+     200:	mov    word ptr [bp-94],dx
+     203:	mov    ax,word ptr [bp-4]
+     206:	cmp    ax,dx
+     208:	jb     0x217
+     20a:	je     0x20f
+     20c:	jmp    0x4d9
+     20f:	mov    ax,word ptr [bp-6]
+     212:	cmp    ax,word ptr [bp-8]
+     215:	jae    0x20c
+     217:	mov    word ptr [bp-26],0x1
+     21c:	mov    si,word ptr [bp-8]
+     21f:	mov    di,dx
+     221:	mov    ax,0x800
+     224:	mov    bx,word ptr [bp-14]
+     227:	sub    ax,word ptr [bx]
+     229:	mov    cl,0x5
+     22b:	shr    ax,cl
+     22d:	add    word ptr [bx],ax
+     22f:	mov    cx,0x8
+     232:	sub    cx,word ptr [bp-78]
+     235:	mov    al,byte ptr [bp-2]
+     238:	xor    ah,ah
+     23a:	sar    ax,cl
+     23c:	cwd
+     23d:	mov    word ptr [bp-90],ax
+     240:	mov    bx,dx
+     242:	mov    ax,word ptr [bp-20]
+     245:	and    ax,word ptr [bp-86]
+     248:	mov    dx,word ptr [bp-18]
+     24b:	and    dx,word ptr [bp-84]
+     24e:	mov    cx,word ptr [bp-78]
+     251:	jcxz   0x259
+     253:	shl    ax,1
+     255:	rcl    dx,1
+     257:	loop   0x253
+     259:	add    ax,word ptr [bp-90]
+     25c:	adc    dx,bx
+     25e:	mov    bx,0x300
+     261:	xor    cx,cx
+     263:	call   0x264	264: R_386_PC16	__U4M
+     266:	shl    ax,1
+     268:	rcl    dx,1
+     26a:	mov    dx,word ptr [bp-34]
+     26d:	add    dx,0xe6c
+     271:	add    dx,ax
+     273:	mov    word ptr [bp-14],dx
+     276:	cmp    word ptr [bp-16],0x7
+     27a:	jge    0x27f
+     27c:	jmp    0x3a7
+     27f:	mov    bx,word ptr [bp-20]
+     282:	sub    bx,word ptr [bp-102]
+     285:	mov    cx,word ptr [bp-18]
+     288:	sbb    cx,word ptr [bp-100]
+     28b:	mov    ax,word ptr [bp+20]
+     28e:	mov    dx,word ptr [bp+22]
+     291:	call   0x292	292: R_386_PC16	__PIA
+     294:	mov    bx,ax
+     296:	movl   es,dx
+     298:	mov    al,byte ptr es:[bx]
+     29b:	xor    ah,ah
+     29d:	mov    word ptr [bp-76],ax
+     2a0:	shl    word ptr [bp-76],1
+     2a3:	mov    ax,word ptr [bp-76]
+     2a6:	xor    al,al
+     2a8:	and    ah,0x1
+     2ab:	mov    word ptr [bp-66],ax
+     2ae:	shl    ax,1
+     2b0:	mov    dx,word ptr [bp-14]
+     2b3:	add    dh,0x2
+     2b6:	add    dx,ax
+     2b8:	mov    ax,word ptr [bp-26]
+     2bb:	shl    ax,1
+     2bd:	add    dx,ax
+     2bf:	mov    word ptr [bp-46],dx
+     2c2:	cmp    di,0x100
+     2c6:	jae    0x31f
+     2c8:	mov    ax,word ptr [bp-12]
+     2cb:	mov    dx,word ptr [bp-10]
+     2ce:	mov    bx,word ptr [bp-30]
+     2d1:	mov    cx,word ptr [bp-28]
+     2d4:	call   0x2d5	2d5: R_386_PC16	__PTC
+     2d7:	jne    0x2dc
+     2d9:	jmp    0x14d
+     2dc:	mov    cx,0x8
+     2df:	shl    si,1
+     2e1:	rcl    di,1
+     2e3:	loop   0x2df
+     2e5:	les    bx,dword ptr [bp-12]
+     2e8:	mov    al,byte ptr es:[bx]
+     2eb:	mov    byte ptr [bp-90],al
+     2ee:	mov    byte ptr [bp-89],0x0
+     2f2:	mov    ax,word ptr [bp-6]
+     2f5:	mov    dx,word ptr [bp-4]
+     2f8:	mov    cx,0x8
+     2fb:	shl    ax,1
+     2fd:	rcl    dx,1
+     2ff:	loop   0x2fb
+     301:	mov    bx,word ptr [bp-90]
+     304:	or     bx,ax
+     306:	mov    word ptr [bp-6],bx
+     309:	mov    word ptr [bp-4],dx
+     30c:	mov    ax,word ptr [bp-12]
+     30f:	movl   dx,es
+     311:	mov    bx,0x1
+     314:	xor    cx,cx
+     316:	call   0x317	317: R_386_PC16	__PIA
+     319:	mov    word ptr [bp-12],ax
+     31c:	mov    word ptr [bp-10],dx
+     31f:	mov    word ptr [bp-98],si
+     322:	mov    word ptr [bp-96],di
+     325:	mov    cx,0xb
+     328:	shr    word ptr [bp-96],1
+     32b:	rcr    word ptr [bp-98],1
+     32e:	loop   0x328
+     330:	mov    bx,word ptr [bp-46]
+     333:	mov    bx,word ptr [bx]
+     335:	mov    ax,word ptr [bp-98]
+     338:	mov    dx,word ptr [bp-96]
+     33b:	xor    cx,cx
+     33d:	call   0x33e	33e: R_386_PC16	__U4M
+     340:	mov    word ptr [bp-8],ax
+     343:	mov    word ptr [bp-94],dx
+     346:	mov    ax,word ptr [bp-4]
+     349:	cmp    ax,dx
+     34b:	jb     0x357
+     34d:	jne    0x375
+     34f:	mov    ax,word ptr [bp-6]
+     352:	cmp    ax,word ptr [bp-8]
+     355:	jae    0x375
+     357:	mov    si,word ptr [bp-8]
+     35a:	mov    di,dx
+     35c:	mov    ax,0x800
+     35f:	mov    bx,word ptr [bp-46]
+     362:	sub    ax,word ptr [bx]
+     364:	mov    cl,0x5
+     366:	shr    ax,cl
+     368:	add    word ptr [bx],ax
+     36a:	shl    word ptr [bp-26],1
+     36d:	cmp    word ptr [bp-66],0x0
+     371:	jne    0x3a7
+     373:	jmp    0x39d
+     375:	sub    si,word ptr [bp-8]
+     378:	sbb    di,dx
+     37a:	mov    ax,word ptr [bp-8]
+     37d:	sub    word ptr [bp-6],ax
+     380:	sbb    word ptr [bp-4],dx
+     383:	mov    cl,0x5
+     385:	mov    bx,word ptr [bp-46]
+     388:	mov    ax,word ptr [bx]
+     38a:	shr    ax,cl
+     38c:	sub    word ptr [bx],ax
+     38e:	mov    ax,word ptr [bp-26]
+     391:	add    ax,ax
+     393:	inc    ax
+     394:	mov    word ptr [bp-26],ax
+     397:	cmp    word ptr [bp-66],0x0
+     39b:	je     0x3a7
+     39d:	cmp    word ptr [bp-26],0x100
+     3a2:	jge    0x3a7
+     3a4:	jmp    0x2a0
+     3a7:	mov    ax,word ptr [bp-26]
+     3aa:	cmp    ax,0x100
+     3ad:	jl     0x3b2
+     3af:	jmp    0x48f
+     3b2:	shl    ax,1
+     3b4:	mov    bx,word ptr [bp-14]
+     3b7:	add    bx,ax
+     3b9:	mov    word ptr [bp-40],bx
+     3bc:	cmp    di,0x100
+     3c0:	jae    0x419
+     3c2:	mov    ax,word ptr [bp-12]
+     3c5:	mov    dx,word ptr [bp-10]
+     3c8:	mov    bx,word ptr [bp-30]
+     3cb:	mov    cx,word ptr [bp-28]
+     3ce:	call   0x3cf	3cf: R_386_PC16	__PTC
+     3d1:	jne    0x3d6
+     3d3:	jmp    0x14d
+     3d6:	mov    cx,0x8
+     3d9:	shl    si,1
+     3db:	rcl    di,1
+     3dd:	loop   0x3d9
+     3df:	les    bx,dword ptr [bp-12]
+     3e2:	mov    al,byte ptr es:[bx]
+     3e5:	mov    byte ptr [bp-90],al
+     3e8:	mov    byte ptr [bp-89],0x0
+     3ec:	mov    ax,word ptr [bp-6]
+     3ef:	mov    dx,word ptr [bp-4]
+     3f2:	mov    cx,0x8
+     3f5:	shl    ax,1
+     3f7:	rcl    dx,1
+     3f9:	loop   0x3f5
+     3fb:	mov    bx,word ptr [bp-90]
+     3fe:	or     bx,ax
+     400:	mov    word ptr [bp-6],bx
+     403:	mov    word ptr [bp-4],dx
+     406:	mov    ax,word ptr [bp-12]
+     409:	movl   dx,es
+     40b:	mov    bx,0x1
+     40e:	xor    cx,cx
+     410:	call   0x411	411: R_386_PC16	__PIA
+     413:	mov    word ptr [bp-12],ax
+     416:	mov    word ptr [bp-10],dx
+     419:	mov    word ptr [bp-98],si
+     41c:	mov    word ptr [bp-96],di
+     41f:	mov    cx,0xb
+     422:	shr    word ptr [bp-96],1
+     425:	rcr    word ptr [bp-98],1
+     428:	loop   0x422
+     42a:	mov    bx,word ptr [bp-40]
+     42d:	mov    bx,word ptr [bx]
+     42f:	mov    ax,word ptr [bp-98]
+     432:	mov    dx,word ptr [bp-96]
+     435:	xor    cx,cx
+     437:	call   0x438	438: R_386_PC16	__U4M
+     43a:	mov    word ptr [bp-8],ax
+     43d:	mov    word ptr [bp-94],dx
+     440:	mov    ax,word ptr [bp-4]
+     443:	cmp    ax,dx
+     445:	jb     0x451
+     447:	jne    0x46a
+     449:	mov    ax,word ptr [bp-6]
+     44c:	cmp    ax,word ptr [bp-8]
+     44f:	jae    0x46a
+     451:	mov    si,word ptr [bp-8]
+     454:	mov    di,dx
+     456:	mov    ax,0x800
+     459:	mov    bx,word ptr [bp-40]
+     45c:	sub    ax,word ptr [bx]
+     45e:	mov    cl,0x5
+     460:	shr    ax,cl
+     462:	add    word ptr [bx],ax
+     464:	shl    word ptr [bp-26],1
+     467:	jmp    0x3a7
+     46a:	sub    si,word ptr [bp-8]
+     46d:	sbb    di,dx
+     46f:	mov    ax,word ptr [bp-8]
+     472:	sub    word ptr [bp-6],ax
+     475:	sbb    word ptr [bp-4],dx
+     478:	mov    cl,0x5
+     47a:	mov    bx,word ptr [bp-40]
+     47d:	mov    ax,word ptr [bx]
+     47f:	shr    ax,cl
+     481:	sub    word ptr [bx],ax
+     483:	mov    ax,word ptr [bp-26]
+     486:	add    ax,ax
+     488:	inc    ax
+     489:	mov    word ptr [bp-26],ax
+     48c:	jmp    0x3a7
+     48f:	mov    al,byte ptr [bp-26]
+     492:	mov    byte ptr [bp-2],al
+     495:	mov    bx,word ptr [bp-20]
+     498:	mov    cx,word ptr [bp-18]
+     49b:	add    word ptr [bp-20],0x1
+     49f:	adc    word ptr [bp-18],0x0
+     4a3:	mov    ax,word ptr [bp+20]
+     4a6:	mov    dx,word ptr [bp+22]
+     4a9:	call   0x4aa	4aa: R_386_PC16	__PIA
+     4ac:	mov    bx,ax
+     4ae:	movl   es,dx
+     4b0:	mov    al,byte ptr [bp-26]
+     4b3:	mov    byte ptr es:[bx],al
+     4b6:	mov    ax,word ptr [bp-16]
+     4b9:	cmp    ax,0x4
+     4bc:	jge    0x4c6
+     4be:	xor    ax,ax
+     4c0:	mov    word ptr [bp-16],ax
+     4c3:	jmp    0x153
+     4c6:	cmp    ax,0xa
+     4c9:	jge    0x4d2
+     4cb:	sub    word ptr [bp-16],0x3
+     4cf:	jmp    0x153
+     4d2:	sub    word ptr [bp-16],0x6
+     4d6:	jmp    0x153
+     4d9:	sub    si,word ptr [bp-8]
+     4dc:	sbb    di,dx
+     4de:	mov    ax,word ptr [bp-8]
+     4e1:	sub    word ptr [bp-6],ax
+     4e4:	sbb    word ptr [bp-4],dx
+     4e7:	mov    cl,0x5
+     4e9:	mov    bx,word ptr [bp-14]
+     4ec:	mov    ax,word ptr [bx]
+     4ee:	shr    ax,cl
+     4f0:	sub    word ptr [bx],ax
+     4f2:	mov    ax,word ptr [bp-16]
+     4f5:	shl    ax,1
+     4f7:	mov    dx,word ptr [bp-34]
+     4fa:	add    dx,0x180
+     4fe:	add    dx,ax
+     500:	mov    word ptr [bp-14],dx
+     503:	cmp    di,0x100
+     507:	jae    0x560
+     509:	mov    ax,word ptr [bp-12]
+     50c:	mov    dx,word ptr [bp-10]
+     50f:	mov    bx,word ptr [bp-30]
+     512:	mov    cx,word ptr [bp-28]
+     515:	call   0x516	516: R_386_PC16	__PTC
+     518:	jne    0x51d
+     51a:	jmp    0x14d
+     51d:	mov    cx,0x8
+     520:	shl    si,1
+     522:	rcl    di,1
+     524:	loop   0x520
+     526:	les    bx,dword ptr [bp-12]
+     529:	mov    al,byte ptr es:[bx]
+     52c:	mov    byte ptr [bp-90],al
+     52f:	mov    byte ptr [bp-89],0x0
+     533:	mov    ax,word ptr [bp-6]
+     536:	mov    dx,word ptr [bp-4]
+     539:	mov    cx,0x8
+     53c:	shl    ax,1
+     53e:	rcl    dx,1
+     540:	loop   0x53c
+     542:	mov    bx,word ptr [bp-90]
+     545:	or     bx,ax
+     547:	mov    word ptr [bp-6],bx
+     54a:	mov    word ptr [bp-4],dx
+     54d:	mov    ax,word ptr [bp-12]
+     550:	movl   dx,es
+     552:	mov    bx,0x1
+     555:	xor    cx,cx
+     557:	call   0x558	558: R_386_PC16	__PIA
+     55a:	mov    word ptr [bp-12],ax
+     55d:	mov    word ptr [bp-10],dx
+     560:	mov    word ptr [bp-98],si
+     563:	mov    word ptr [bp-96],di
+     566:	mov    cx,0xb
+     569:	shr    word ptr [bp-96],1
+     56c:	rcr    word ptr [bp-98],1
+     56f:	loop   0x569
+     571:	mov    bx,word ptr [bp-14]
+     574:	mov    bx,word ptr [bx]
+     576:	mov    ax,word ptr [bp-98]
+     579:	mov    dx,word ptr [bp-96]
+     57c:	xor    cx,cx
+     57e:	call   0x57f	57f: R_386_PC16	__U4M
+     581:	mov    word ptr [bp-8],ax
+     584:	mov    word ptr [bp-94],dx
+     587:	mov    ax,word ptr [bp-4]
+     58a:	cmp    ax,dx
+     58c:	jb     0x598
+     58e:	jne    0x5e9
+     590:	mov    ax,word ptr [bp-6]
+     593:	cmp    ax,word ptr [bp-8]
+     596:	jae    0x5e9
+     598:	mov    si,word ptr [bp-8]
+     59b:	mov    di,dx
+     59d:	mov    ax,0x800
+     5a0:	mov    bx,word ptr [bp-14]
+     5a3:	sub    ax,word ptr [bx]
+     5a5:	mov    cl,0x5
+     5a7:	shr    ax,cl
+     5a9:	add    word ptr [bx],ax
+     5ab:	mov    ax,word ptr [bp-56]
+     5ae:	mov    word ptr [bp-68],ax
+     5b1:	mov    ax,word ptr [bp-54]
+     5b4:	mov    word ptr [bp-74],ax
+     5b7:	mov    ax,word ptr [bp-52]
+     5ba:	mov    word ptr [bp-56],ax
+     5bd:	mov    ax,word ptr [bp-50]
+     5c0:	mov    word ptr [bp-54],ax
+     5c3:	mov    ax,word ptr [bp-102]
+     5c6:	mov    word ptr [bp-52],ax
+     5c9:	mov    ax,word ptr [bp-100]
+     5cc:	mov    word ptr [bp-50],ax
+     5cf:	cmp    word ptr [bp-16],0x7
+     5d3:	jge    0x5d9
+     5d5:	xor    ax,ax
+     5d7:	jmp    0x5dc
+     5d9:	mov    ax,0x3
+     5dc:	mov    word ptr [bp-16],ax
+     5df:	mov    bx,word ptr [bp-34]
+     5e2:	add    bx,0x664
+     5e6:	jmp    0xa1f
+     5e9:	sub    si,word ptr [bp-8]
+     5ec:	sbb    di,dx
+     5ee:	mov    ax,word ptr [bp-8]
+     5f1:	sub    word ptr [bp-6],ax
+     5f4:	sbb    word ptr [bp-4],dx
+     5f7:	mov    cl,0x5
+     5f9:	mov    bx,word ptr [bp-14]
+     5fc:	mov    ax,word ptr [bx]
+     5fe:	shr    ax,cl
+     600:	sub    word ptr [bx],ax
+     602:	mov    dx,word ptr [bp-16]
+     605:	shl    dx,1
+     607:	mov    ax,word ptr [bp-34]
+     60a:	add    ax,0x198
+     60d:	add    ax,dx
+     60f:	mov    word ptr [bp-14],ax
+     612:	cmp    di,0x100
+     616:	jae    0x66f
+     618:	mov    ax,word ptr [bp-12]
+     61b:	mov    dx,word ptr [bp-10]
+     61e:	mov    bx,word ptr [bp-30]
+     621:	mov    cx,word ptr [bp-28]
+     624:	call   0x625	625: R_386_PC16	__PTC
+     627:	jne    0x62c
+     629:	jmp    0x14d
+     62c:	mov    cx,0x8
+     62f:	shl    si,1
+     631:	rcl    di,1
+     633:	loop   0x62f
+     635:	les    bx,dword ptr [bp-12]
+     638:	mov    al,byte ptr es:[bx]
+     63b:	mov    byte ptr [bp-90],al
+     63e:	mov    byte ptr [bp-89],0x0
+     642:	mov    ax,word ptr [bp-6]
+     645:	mov    dx,word ptr [bp-4]
+     648:	mov    cx,0x8
+     64b:	shl    ax,1
+     64d:	rcl    dx,1
+     64f:	loop   0x64b
+     651:	mov    bx,word ptr [bp-90]
+     654:	or     bx,ax
+     656:	mov    word ptr [bp-6],bx
+     659:	mov    word ptr [bp-4],dx
+     65c:	mov    ax,word ptr [bp-12]
+     65f:	movl   dx,es
+     661:	mov    bx,0x1
+     664:	xor    cx,cx
+     666:	call   0x667	667: R_386_PC16	__PIA
+     669:	mov    word ptr [bp-12],ax
+     66c:	mov    word ptr [bp-10],dx
+     66f:	mov    word ptr [bp-98],si
+     672:	mov    word ptr [bp-96],di
+     675:	mov    cx,0xb
+     678:	shr    word ptr [bp-96],1
+     67b:	rcr    word ptr [bp-98],1
+     67e:	loop   0x678
+     680:	mov    bx,word ptr [bp-14]
+     683:	mov    bx,word ptr [bx]
+     685:	mov    ax,word ptr [bp-98]
+     688:	mov    dx,word ptr [bp-96]
+     68b:	xor    cx,cx
+     68d:	call   0x68e	68e: R_386_PC16	__U4M
+     690:	mov    word ptr [bp-8],ax
+     693:	mov    word ptr [bp-94],dx
+     696:	mov    ax,word ptr [bp-12]
+     699:	mov    dx,word ptr [bp-10]
+     69c:	mov    bx,0x1
+     69f:	xor    cx,cx
+     6a1:	call   0x6a2	6a2: R_386_PC16	__PIA
+     6a4:	mov    word ptr [bp-82],ax
+     6a7:	mov    word ptr [bp-80],dx
+     6aa:	mov    ax,word ptr [bp-4]
+     6ad:	cmp    ax,word ptr [bp-94]
+     6b0:	jb     0x6bf
+     6b2:	je     0x6b7
+     6b4:	jmp    0x80d
+     6b7:	mov    ax,word ptr [bp-6]
+     6ba:	cmp    ax,word ptr [bp-8]
+     6bd:	jae    0x6b4
+     6bf:	mov    si,word ptr [bp-8]
+     6c2:	mov    di,word ptr [bp-94]
+     6c5:	mov    ax,0x800
+     6c8:	mov    bx,word ptr [bp-14]
+     6cb:	sub    ax,word ptr [bx]
+     6cd:	mov    cl,0x5
+     6cf:	shr    ax,cl
+     6d1:	add    word ptr [bx],ax
+     6d3:	mov    ax,word ptr [bp-16]
+     6d6:	shl    ax,cl
+     6d8:	mov    dx,word ptr [bp-34]
+     6db:	add    dx,0x1e0
+     6df:	add    dx,ax
+     6e1:	mov    ax,word ptr [bp-58]
+     6e4:	shl    ax,1
+     6e6:	add    dx,ax
+     6e8:	mov    word ptr [bp-14],dx
+     6eb:	cmp    di,0x100
+     6ef:	jae    0x745
+     6f1:	mov    ax,word ptr [bp-12]
+     6f4:	mov    dx,word ptr [bp-10]
+     6f7:	mov    bx,word ptr [bp-30]
+     6fa:	mov    cx,word ptr [bp-28]
+     6fd:	call   0x6fe	6fe: R_386_PC16	__PTC
+     700:	jne    0x705
+     702:	jmp    0x14d
+     705:	mov    ax,si
+     707:	mov    cx,0x8
+     70a:	shl    ax,1
+     70c:	rcl    di,1
+     70e:	loop   0x70a
+     710:	mov    si,ax
+     712:	les    bx,dword ptr [bp-12]
+     715:	mov    al,byte ptr es:[bx]
+     718:	mov    byte ptr [bp-90],al
+     71b:	mov    byte ptr [bp-89],0x0
+     71f:	mov    ax,word ptr [bp-6]
+     722:	mov    dx,word ptr [bp-4]
+     725:	mov    cx,0x8
+     728:	shl    ax,1
+     72a:	rcl    dx,1
+     72c:	loop   0x728
+     72e:	mov    bx,word ptr [bp-90]
+     731:	or     bx,ax
+     733:	mov    word ptr [bp-6],bx
+     736:	mov    word ptr [bp-4],dx
+     739:	mov    bx,word ptr [bp-82]
+     73c:	mov    word ptr [bp-12],bx
+     73f:	mov    ax,word ptr [bp-80]
+     742:	mov    word ptr [bp-10],ax
+     745:	mov    word ptr [bp-98],si
+     748:	mov    word ptr [bp-96],di
+     74b:	mov    cx,0xb
+     74e:	shr    word ptr [bp-96],1
+     751:	rcr    word ptr [bp-98],1
+     754:	loop   0x74e
+     756:	mov    bx,word ptr [bp-14]
+     759:	mov    bx,word ptr [bx]
+     75b:	mov    ax,word ptr [bp-98]
+     75e:	mov    dx,word ptr [bp-96]
+     761:	xor    cx,cx
+     763:	call   0x764	764: R_386_PC16	__U4M
+     766:	mov    word ptr [bp-8],ax
+     769:	mov    word ptr [bp-94],dx
+     76c:	mov    ax,word ptr [bp-4]
+     76f:	cmp    ax,dx
+     771:	jb     0x77d
+     773:	jne    0x7a6
+     775:	mov    ax,word ptr [bp-6]
+     778:	cmp    ax,word ptr [bp-8]
+     77b:	jae    0x7f1
+     77d:	mov    si,word ptr [bp-8]
+     780:	mov    di,dx
+     782:	mov    ax,0x800
+     785:	mov    bx,word ptr [bp-14]
+     788:	sub    ax,word ptr [bx]
+     78a:	mov    cl,0x5
+     78c:	shr    ax,cl
+     78e:	add    word ptr [bx],ax
+     790:	mov    ax,word ptr [bp-18]
+     793:	or     ax,word ptr [bp-20]
+     796:	jne    0x79b
+     798:	jmp    0x14d
+     79b:	cmp    word ptr [bp-16],0x7
+     79f:	jge    0x7a8
+     7a1:	mov    ax,0x9
+     7a4:	jmp    0x7ab
+     7a6:	jmp    0x7f1
+     7a8:	mov    ax,0xb
+     7ab:	mov    word ptr [bp-16],ax
+     7ae:	mov    bx,word ptr [bp-20]
+     7b1:	sub    bx,word ptr [bp-102]
+     7b4:	mov    cx,word ptr [bp-18]
+     7b7:	sbb    cx,word ptr [bp-100]
+     7ba:	mov    ax,word ptr [bp+20]
+     7bd:	mov    dx,word ptr [bp+22]
+     7c0:	call   0x7c1	7c1: R_386_PC16	__PIA
+     7c3:	mov    bx,ax
+     7c5:	movl   es,dx
+     7c7:	mov    al,byte ptr es:[bx]
+     7ca:	mov    byte ptr [bp-2],al
+     7cd:	mov    bx,word ptr [bp-20]
+     7d0:	mov    cx,word ptr [bp-18]
+     7d3:	add    word ptr [bp-20],0x1
+     7d7:	adc    word ptr [bp-18],0x0
+     7db:	mov    ax,word ptr [bp+20]
+     7de:	mov    dx,word ptr [bp+22]
+     7e1:	call   0x7e2	7e2: R_386_PC16	__PIA
+     7e4:	mov    bx,ax
+     7e6:	movl   es,dx
+     7e8:	mov    al,byte ptr [bp-2]
+     7eb:	mov    byte ptr es:[bx],al
+     7ee:	jmp    0x153
+     7f1:	sub    si,word ptr [bp-8]
+     7f4:	sbb    di,dx
+     7f6:	mov    ax,word ptr [bp-8]
+     7f9:	sub    word ptr [bp-6],ax
+     7fc:	sbb    word ptr [bp-4],dx
+     7ff:	mov    cl,0x5
+     801:	mov    bx,word ptr [bp-14]
+     804:	mov    ax,word ptr [bx]
+     806:	shr    ax,cl
+     808:	sub    word ptr [bx],ax
+     80a:	jmp    0xa07
+     80d:	sub    si,word ptr [bp-8]
+     810:	sbb    di,word ptr [bp-94]
+     813:	mov    ax,word ptr [bp-8]
+     816:	sub    word ptr [bp-6],ax
+     819:	mov    ax,word ptr [bp-94]
+     81c:	sbb    word ptr [bp-4],ax
+     81f:	mov    cl,0x5
+     821:	mov    bx,word ptr [bp-14]
+     824:	mov    ax,word ptr [bx]
+     826:	shr    ax,cl
+     828:	sub    word ptr [bx],ax
+     82a:	mov    ax,word ptr [bp-16]
+     82d:	shl    ax,1
+     82f:	mov    dx,word ptr [bp-34]
+     832:	add    dx,0x1b0
+     836:	add    dx,ax
+     838:	mov    word ptr [bp-14],dx
+     83b:	cmp    di,0x100
+     83f:	jae    0x891
+     841:	mov    ax,word ptr [bp-12]
+     844:	mov    dx,word ptr [bp-10]
+     847:	mov    bx,word ptr [bp-30]
+     84a:	mov    cx,word ptr [bp-28]
+     84d:	call   0x84e	84e: R_386_PC16	__PTC
+     850:	jne    0x855
+     852:	jmp    0x14d
+     855:	mov    cx,0x8
+     858:	shl    si,1
+     85a:	rcl    di,1
+     85c:	loop   0x858
+     85e:	les    bx,dword ptr [bp-12]
+     861:	mov    al,byte ptr es:[bx]
+     864:	mov    byte ptr [bp-90],al
+     867:	mov    byte ptr [bp-89],0x0
+     86b:	mov    ax,word ptr [bp-6]
+     86e:	mov    dx,word ptr [bp-4]
+     871:	mov    cx,0x8
+     874:	shl    ax,1
+     876:	rcl    dx,1
+     878:	loop   0x874
+     87a:	mov    bx,word ptr [bp-90]
+     87d:	or     bx,ax
+     87f:	mov    word ptr [bp-6],bx
+     882:	mov    word ptr [bp-4],dx
+     885:	mov    bx,word ptr [bp-82]
+     888:	mov    word ptr [bp-12],bx
+     88b:	mov    ax,word ptr [bp-80]
+     88e:	mov    word ptr [bp-10],ax
+     891:	mov    word ptr [bp-98],si
+     894:	mov    word ptr [bp-96],di
+     897:	mov    cx,0xb
+     89a:	shr    word ptr [bp-96],1
+     89d:	rcr    word ptr [bp-98],1
+     8a0:	loop   0x89a
+     8a2:	mov    bx,word ptr [bp-14]
+     8a5:	mov    bx,word ptr [bx]
+     8a7:	mov    ax,word ptr [bp-98]
+     8aa:	mov    dx,word ptr [bp-96]
+     8ad:	xor    cx,cx
+     8af:	call   0x8b0	8b0: R_386_PC16	__U4M
+     8b2:	mov    word ptr [bp-8],ax
+     8b5:	mov    word ptr [bp-94],dx
+     8b8:	mov    ax,word ptr [bp-4]
+     8bb:	cmp    ax,dx
+     8bd:	jb     0x8c9
+     8bf:	jne    0x8e5
+     8c1:	mov    ax,word ptr [bp-6]
+     8c4:	cmp    ax,word ptr [bp-8]
+     8c7:	jae    0x8e5
+     8c9:	mov    si,word ptr [bp-8]
+     8cc:	mov    di,dx
+     8ce:	mov    ax,0x800
+     8d1:	mov    bx,word ptr [bp-14]
+     8d4:	sub    ax,word ptr [bx]
+     8d6:	mov    cl,0x5
+     8d8:	shr    ax,cl
+     8da:	add    word ptr [bx],ax
+     8dc:	mov    ax,word ptr [bp-52]
+     8df:	mov    cx,word ptr [bp-50]
+     8e2:	jmp    0x9f5
+     8e5:	sub    si,word ptr [bp-8]
+     8e8:	sbb    di,dx
+     8ea:	mov    ax,word ptr [bp-8]
+     8ed:	sub    word ptr [bp-6],ax
+     8f0:	sbb    word ptr [bp-4],dx
+     8f3:	mov    cl,0x5
+     8f5:	mov    bx,word ptr [bp-14]
+     8f8:	mov    ax,word ptr [bx]
+     8fa:	shr    ax,cl
+     8fc:	sub    word ptr [bx],ax
+     8fe:	mov    dx,word ptr [bp-16]
+     901:	shl    dx,1
+     903:	mov    ax,word ptr [bp-34]
+     906:	add    ax,0x1c8
+     909:	add    ax,dx
+     90b:	mov    word ptr [bp-14],ax
+     90e:	cmp    di,0x100
+     912:	jae    0x96b
+     914:	mov    ax,word ptr [bp-12]
+     917:	mov    dx,word ptr [bp-10]
+     91a:	mov    bx,word ptr [bp-30]
+     91d:	mov    cx,word ptr [bp-28]
+     920:	call   0x921	921: R_386_PC16	__PTC
+     923:	jne    0x928
+     925:	jmp    0x14d
+     928:	mov    cx,0x8
+     92b:	shl    si,1
+     92d:	rcl    di,1
+     92f:	loop   0x92b
+     931:	les    bx,dword ptr [bp-12]
+     934:	mov    al,byte ptr es:[bx]
+     937:	mov    byte ptr [bp-90],al
+     93a:	mov    byte ptr [bp-89],0x0
+     93e:	mov    ax,word ptr [bp-6]
+     941:	mov    dx,word ptr [bp-4]
+     944:	mov    cx,0x8
+     947:	shl    ax,1
+     949:	rcl    dx,1
+     94b:	loop   0x947
+     94d:	mov    bx,word ptr [bp-90]
+     950:	or     bx,ax
+     952:	mov    word ptr [bp-6],bx
+     955:	mov    word ptr [bp-4],dx
+     958:	mov    ax,word ptr [bp-12]
+     95b:	movl   dx,es
+     95d:	mov    bx,0x1
+     960:	xor    cx,cx
+     962:	call   0x963	963: R_386_PC16	__PIA
+     965:	mov    word ptr [bp-12],ax
+     968:	mov    word ptr [bp-10],dx
+     96b:	mov    word ptr [bp-98],si
+     96e:	mov    word ptr [bp-96],di
+     971:	mov    cx,0xb
+     974:	shr    word ptr [bp-96],1
+     977:	rcr    word ptr [bp-98],1
+     97a:	loop   0x974
+     97c:	mov    bx,word ptr [bp-14]
+     97f:	mov    bx,word ptr [bx]
+     981:	mov    ax,word ptr [bp-98]
+     984:	mov    dx,word ptr [bp-96]
+     987:	xor    cx,cx
+     989:	call   0x98a	98a: R_386_PC16	__U4M
+     98c:	mov    word ptr [bp-8],ax
+     98f:	mov    word ptr [bp-94],dx
+     992:	mov    ax,word ptr [bp-4]
+     995:	cmp    ax,dx
+     997:	jb     0x9a3
+     999:	jne    0x9be
+     99b:	mov    ax,word ptr [bp-6]
+     99e:	cmp    ax,word ptr [bp-8]
+     9a1:	jae    0x9be
+     9a3:	mov    si,word ptr [bp-8]
+     9a6:	mov    di,dx
+     9a8:	mov    ax,0x800
+     9ab:	mov    bx,word ptr [bp-14]
+     9ae:	sub    ax,word ptr [bx]
+     9b0:	mov    cl,0x5
+     9b2:	shr    ax,cl
+     9b4:	add    word ptr [bx],ax
+     9b6:	mov    ax,word ptr [bp-56]
+     9b9:	mov    cx,word ptr [bp-54]
+     9bc:	jmp    0x9e9
+     9be:	sub    si,word ptr [bp-8]
+     9c1:	sbb    di,dx
+     9c3:	mov    ax,word ptr [bp-8]
+     9c6:	sub    word ptr [bp-6],ax
+     9c9:	sbb    word ptr [bp-4],dx
+     9cc:	mov    cl,0x5
+     9ce:	mov    bx,word ptr [bp-14]
+     9d1:	mov    ax,word ptr [bx]
+     9d3:	shr    ax,cl
+     9d5:	sub    word ptr [bx],ax
+     9d7:	mov    ax,word ptr [bp-68]
+     9da:	mov    cx,word ptr [bp-74]
+     9dd:	mov    dx,word ptr [bp-56]
+     9e0:	mov    word ptr [bp-68],dx
+     9e3:	mov    dx,word ptr [bp-54]
+     9e6:	mov    word ptr [bp-74],dx
+     9e9:	mov    dx,word ptr [bp-52]
+     9ec:	mov    word ptr [bp-56],dx
+     9ef:	mov    dx,word ptr [bp-50]
+     9f2:	mov    word ptr [bp-54],dx
+     9f5:	mov    dx,word ptr [bp-102]
+     9f8:	mov    word ptr [bp-52],dx
+     9fb:	mov    dx,word ptr [bp-100]
+     9fe:	mov    word ptr [bp-50],dx
+     a01:	mov    word ptr [bp-102],ax
+     a04:	mov    word ptr [bp-100],cx
+     a07:	cmp    word ptr [bp-16],0x7
+     a0b:	jge    0xa12
+     a0d:	mov    ax,0x8
+     a10:	jmp    0xa15
+     a12:	mov    ax,0xb
+     a15:	mov    word ptr [bp-16],ax
+     a18:	mov    bx,word ptr [bp-34]
+     a1b:	add    bx,0xa68
+     a1f:	mov    word ptr [bp-14],bx
+     a22:	mov    bx,word ptr [bp-14]
+     a25:	mov    word ptr [bp-22],bx
+     a28:	cmp    di,0x100
+     a2c:	jae    0xa85
+     a2e:	mov    ax,word ptr [bp-12]
+     a31:	mov    dx,word ptr [bp-10]
+     a34:	mov    bx,word ptr [bp-30]
+     a37:	mov    cx,word ptr [bp-28]
+     a3a:	call   0xa3b	a3b: R_386_PC16	__PTC
+     a3d:	jne    0xa42
+     a3f:	jmp    0x14d
+     a42:	mov    cx,0x8
+     a45:	shl    si,1
+     a47:	rcl    di,1
+     a49:	loop   0xa45
+     a4b:	les    bx,dword ptr [bp-12]
+     a4e:	mov    al,byte ptr es:[bx]
+     a51:	mov    byte ptr [bp-90],al
+     a54:	mov    byte ptr [bp-89],0x0
+     a58:	mov    ax,word ptr [bp-6]
+     a5b:	mov    dx,word ptr [bp-4]
+     a5e:	mov    cx,0x8
+     a61:	shl    ax,1
+     a63:	rcl    dx,1
+     a65:	loop   0xa61
+     a67:	mov    bx,word ptr [bp-90]
+     a6a:	or     bx,ax
+     a6c:	mov    word ptr [bp-6],bx
+     a6f:	mov    word ptr [bp-4],dx
+     a72:	mov    ax,word ptr [bp-12]
+     a75:	movl   dx,es
+     a77:	mov    bx,0x1
+     a7a:	xor    cx,cx
+     a7c:	call   0xa7d	a7d: R_386_PC16	__PIA
+     a7f:	mov    word ptr [bp-12],ax
+     a82:	mov    word ptr [bp-10],dx
+     a85:	mov    word ptr [bp-98],si
+     a88:	mov    word ptr [bp-96],di
+     a8b:	mov    cx,0xb
+     a8e:	shr    word ptr [bp-96],1
+     a91:	rcr    word ptr [bp-98],1
+     a94:	loop   0xa8e
+     a96:	mov    bx,word ptr [bp-22]
+     a99:	mov    bx,word ptr [bx]
+     a9b:	mov    ax,word ptr [bp-98]
+     a9e:	mov    dx,word ptr [bp-96]
+     aa1:	xor    cx,cx
+     aa3:	call   0xaa4	aa4: R_386_PC16	__U4M
+     aa6:	mov    word ptr [bp-8],ax
+     aa9:	mov    word ptr [bp-94],dx
+     aac:	mov    ax,word ptr [bp-4]
+     aaf:	cmp    ax,dx
+     ab1:	jb     0xabd
+     ab3:	jne    0xaef
+     ab5:	mov    ax,word ptr [bp-6]
+     ab8:	cmp    ax,word ptr [bp-8]
+     abb:	jae    0xaef
+     abd:	mov    si,word ptr [bp-8]
+     ac0:	mov    di,dx
+     ac2:	mov    ax,0x800
+     ac5:	mov    bx,word ptr [bp-22]
+     ac8:	sub    ax,word ptr [bx]
+     aca:	mov    cl,0x5
+     acc:	shr    ax,cl
+     ace:	add    word ptr [bx],ax
+     ad0:	mov    cl,0x4
+     ad2:	mov    ax,word ptr [bp-58]
+     ad5:	shl    ax,cl
+     ad7:	mov    dx,word ptr [bp-14]
+     ada:	add    dx,0x4
+     add:	add    dx,ax
+     adf:	mov    word ptr [bp-22],dx
+     ae2:	xor    ax,ax
+     ae4:	mov    word ptr [bp-70],ax
+     ae7:	mov    word ptr [bp-60],0x3
+     aec:	jmp    0xc00
+     aef:	sub    si,word ptr [bp-8]
+     af2:	sbb    di,dx
+     af4:	mov    ax,word ptr [bp-8]
+     af7:	sub    word ptr [bp-6],ax
+     afa:	sbb    word ptr [bp-4],dx
+     afd:	mov    cl,0x5
+     aff:	mov    bx,word ptr [bp-22]
+     b02:	mov    ax,word ptr [bx]
+     b04:	shr    ax,cl
+     b06:	sub    word ptr [bx],ax
+     b08:	mov    bx,word ptr [bp-14]
+     b0b:	inc    bx
+     b0c:	inc    bx
+     b0d:	mov    word ptr [bp-22],bx
+     b10:	cmp    di,0x100
+     b14:	jae    0xb6d
+     b16:	mov    ax,word ptr [bp-12]
+     b19:	mov    dx,word ptr [bp-10]
+     b1c:	mov    bx,word ptr [bp-30]
+     b1f:	mov    cx,word ptr [bp-28]
+     b22:	call   0xb23	b23: R_386_PC16	__PTC
+     b25:	jne    0xb2a
+     b27:	jmp    0x14d
+     b2a:	mov    cx,0x8
+     b2d:	shl    si,1
+     b2f:	rcl    di,1
+     b31:	loop   0xb2d
+     b33:	les    bx,dword ptr [bp-12]
+     b36:	mov    al,byte ptr es:[bx]
+     b39:	mov    byte ptr [bp-90],al
+     b3c:	mov    byte ptr [bp-89],0x0
+     b40:	mov    ax,word ptr [bp-6]
+     b43:	mov    dx,word ptr [bp-4]
+     b46:	mov    cx,0x8
+     b49:	shl    ax,1
+     b4b:	rcl    dx,1
+     b4d:	loop   0xb49
+     b4f:	mov    bx,word ptr [bp-90]
+     b52:	or     bx,ax
+     b54:	mov    word ptr [bp-6],bx
+     b57:	mov    word ptr [bp-4],dx
+     b5a:	mov    ax,word ptr [bp-12]
+     b5d:	movl   dx,es
+     b5f:	mov    bx,0x1
+     b62:	xor    cx,cx
+     b64:	call   0xb65	b65: R_386_PC16	__PIA
+     b67:	mov    word ptr [bp-12],ax
+     b6a:	mov    word ptr [bp-10],dx
+     b6d:	mov    word ptr [bp-98],si
+     b70:	mov    word ptr [bp-96],di
+     b73:	mov    cx,0xb
+     b76:	shr    word ptr [bp-96],1
+     b79:	rcr    word ptr [bp-98],1
+     b7c:	loop   0xb76
+     b7e:	mov    bx,word ptr [bp-22]
+     b81:	mov    bx,word ptr [bx]
+     b83:	mov    ax,word ptr [bp-98]
+     b86:	mov    dx,word ptr [bp-96]
+     b89:	xor    cx,cx
+     b8b:	call   0xb8c	b8c: R_386_PC16	__U4M
+     b8e:	mov    word ptr [bp-8],ax
+     b91:	mov    word ptr [bp-94],dx
+     b94:	mov    ax,word ptr [bp-4]
+     b97:	cmp    ax,dx
+     b99:	jb     0xba5
+     b9b:	jne    0xbd3
+     b9d:	mov    ax,word ptr [bp-6]
+     ba0:	cmp    ax,word ptr [bp-8]
+     ba3:	jae    0xbd3
+     ba5:	mov    si,word ptr [bp-8]
+     ba8:	mov    di,dx
+     baa:	mov    ax,0x800
+     bad:	mov    bx,word ptr [bp-22]
+     bb0:	sub    ax,word ptr [bx]
+     bb2:	mov    cl,0x5
+     bb4:	shr    ax,cl
+     bb6:	add    word ptr [bx],ax
+     bb8:	mov    cl,0x4
+     bba:	mov    ax,word ptr [bp-58]
+     bbd:	shl    ax,cl
+     bbf:	mov    dx,word ptr [bp-14]
+     bc2:	add    dx,0x104
+     bc6:	add    dx,ax
+     bc8:	mov    word ptr [bp-22],dx
+     bcb:	mov    word ptr [bp-70],0x8
+     bd0:	jmp    0xae7
+     bd3:	sub    si,word ptr [bp-8]
+     bd6:	sbb    di,dx
+     bd8:	mov    ax,word ptr [bp-8]
+     bdb:	sub    word ptr [bp-6],ax
+     bde:	sbb    word ptr [bp-4],dx
+     be1:	mov    cl,0x5
+     be3:	mov    bx,word ptr [bp-22]
+     be6:	mov    ax,word ptr [bx]
+     be8:	shr    ax,cl
+     bea:	sub    word ptr [bx],ax
+     bec:	mov    bx,word ptr [bp-14]
+     bef:	add    bx,0x204
+     bf3:	mov    word ptr [bp-22],bx
+     bf6:	mov    word ptr [bp-70],0x10
+     bfb:	mov    word ptr [bp-60],0x8
+     c00:	mov    ax,word ptr [bp-60]
+     c03:	mov    word ptr [bp-62],ax
+     c06:	mov    word ptr [bp-24],0x1
+     c0b:	mov    ax,word ptr [bp-24]
+     c0e:	shl    ax,1
+     c10:	mov    bx,word ptr [bp-22]
+     c13:	add    bx,ax
+     c15:	mov    word ptr [bp-38],bx
+     c18:	cmp    di,0x100
+     c1c:	jae    0xc75
+     c1e:	mov    ax,word ptr [bp-12]
+     c21:	mov    dx,word ptr [bp-10]
+     c24:	mov    bx,word ptr [bp-30]
+     c27:	mov    cx,word ptr [bp-28]
+     c2a:	call   0xc2b	c2b: R_386_PC16	__PTC
+     c2d:	jne    0xc32
+     c2f:	jmp    0x14d
+     c32:	mov    cx,0x8
+     c35:	shl    si,1
+     c37:	rcl    di,1
+     c39:	loop   0xc35
+     c3b:	les    bx,dword ptr [bp-12]
+     c3e:	mov    al,byte ptr es:[bx]
+     c41:	mov    byte ptr [bp-90],al
+     c44:	mov    byte ptr [bp-89],0x0
+     c48:	mov    ax,word ptr [bp-6]
+     c4b:	mov    dx,word ptr [bp-4]
+     c4e:	mov    cx,0x8
+     c51:	shl    ax,1
+     c53:	rcl    dx,1
+     c55:	loop   0xc51
+     c57:	mov    bx,word ptr [bp-90]
+     c5a:	or     bx,ax
+     c5c:	mov    word ptr [bp-6],bx
+     c5f:	mov    word ptr [bp-4],dx
+     c62:	mov    ax,word ptr [bp-12]
+     c65:	movl   dx,es
+     c67:	mov    bx,0x1
+     c6a:	xor    cx,cx
+     c6c:	call   0xc6d	c6d: R_386_PC16	__PIA
+     c6f:	mov    word ptr [bp-12],ax
+     c72:	mov    word ptr [bp-10],dx
+     c75:	mov    word ptr [bp-98],si
+     c78:	mov    word ptr [bp-96],di
+     c7b:	mov    cx,0xb
+     c7e:	shr    word ptr [bp-96],1
+     c81:	rcr    word ptr [bp-98],1
+     c84:	loop   0xc7e
+     c86:	mov    bx,word ptr [bp-38]
+     c89:	mov    bx,word ptr [bx]
+     c8b:	mov    ax,word ptr [bp-98]
+     c8e:	mov    dx,word ptr [bp-96]
+     c91:	xor    cx,cx
+     c93:	call   0xc94	c94: R_386_PC16	__U4M
+     c96:	mov    word ptr [bp-8],ax
+     c99:	mov    word ptr [bp-94],dx
+     c9c:	mov    ax,word ptr [bp-4]
+     c9f:	cmp    ax,dx
+     ca1:	jb     0xcad
+     ca3:	jne    0xcc5
+     ca5:	mov    ax,word ptr [bp-6]
+     ca8:	cmp    ax,word ptr [bp-8]
+     cab:	jae    0xcc5
+     cad:	mov    si,word ptr [bp-8]
+     cb0:	mov    di,dx
+     cb2:	mov    ax,0x800
+     cb5:	mov    bx,word ptr [bp-38]
+     cb8:	sub    ax,word ptr [bx]
+     cba:	mov    cl,0x5
+     cbc:	shr    ax,cl
+     cbe:	add    word ptr [bx],ax
+     cc0:	shl    word ptr [bp-24],1
+     cc3:	jmp    0xce7
+     cc5:	sub    si,word ptr [bp-8]
+     cc8:	sbb    di,dx
+     cca:	mov    ax,word ptr [bp-8]
+     ccd:	sub    word ptr [bp-6],ax
+     cd0:	sbb    word ptr [bp-4],dx
+     cd3:	mov    cl,0x5
+     cd5:	mov    bx,word ptr [bp-38]
+     cd8:	mov    ax,word ptr [bx]
+     cda:	shr    ax,cl
+     cdc:	sub    word ptr [bx],ax
+     cde:	mov    ax,word ptr [bp-24]
+     ce1:	add    ax,ax
+     ce3:	inc    ax
+     ce4:	mov    word ptr [bp-24],ax
+     ce7:	dec    word ptr [bp-62]
+     cea:	je     0xcef
+     cec:	jmp    0xc0b
+     cef:	mov    cl,byte ptr [bp-60]
+     cf2:	mov    ax,0x1
+     cf5:	shl    ax,cl
+     cf7:	sub    word ptr [bp-24],ax
+     cfa:	mov    ax,word ptr [bp-70]
+     cfd:	add    word ptr [bp-24],ax
+     d00:	cmp    word ptr [bp-16],0x4
+     d04:	jl     0xd09
+     d06:	jmp    0x1025
+     d09:	add    word ptr [bp-16],0x7
+     d0d:	mov    ax,word ptr [bp-24]
+     d10:	cmp    ax,0x4
+     d13:	jl     0xd18
+     d15:	mov    ax,0x3
+     d18:	mov    cl,0x7
+     d1a:	mov    dx,ax
+     d1c:	shl    dx,cl
+     d1e:	mov    ax,word ptr [bp-34]
+     d21:	add    ax,0x360
+     d24:	add    ax,dx
+     d26:	mov    word ptr [bp-14],ax
+     d29:	mov    word ptr [bp-92],0x6
+     d2e:	mov    word ptr [bp-32],0x1
+     d33:	mov    ax,word ptr [bp-32]
+     d36:	shl    ax,1
+     d38:	mov    bx,word ptr [bp-14]
+     d3b:	add    bx,ax
+     d3d:	mov    word ptr [bp-42],bx
+     d40:	cmp    di,0x100
+     d44:	jae    0xd9d
+     d46:	mov    ax,word ptr [bp-12]
+     d49:	mov    dx,word ptr [bp-10]
+     d4c:	mov    bx,word ptr [bp-30]
+     d4f:	mov    cx,word ptr [bp-28]
+     d52:	call   0xd53	d53: R_386_PC16	__PTC
+     d55:	jne    0xd5a
+     d57:	jmp    0x14d
+     d5a:	mov    cx,0x8
+     d5d:	shl    si,1
+     d5f:	rcl    di,1
+     d61:	loop   0xd5d
+     d63:	les    bx,dword ptr [bp-12]
+     d66:	mov    al,byte ptr es:[bx]
+     d69:	mov    byte ptr [bp-90],al
+     d6c:	mov    byte ptr [bp-89],0x0
+     d70:	mov    ax,word ptr [bp-6]
+     d73:	mov    dx,word ptr [bp-4]
+     d76:	mov    cx,0x8
+     d79:	shl    ax,1
+     d7b:	rcl    dx,1
+     d7d:	loop   0xd79
+     d7f:	mov    bx,word ptr [bp-90]
+     d82:	or     bx,ax
+     d84:	mov    word ptr [bp-6],bx
+     d87:	mov    word ptr [bp-4],dx
+     d8a:	mov    ax,word ptr [bp-12]
+     d8d:	movl   dx,es
+     d8f:	mov    bx,0x1
+     d92:	xor    cx,cx
+     d94:	call   0xd95	d95: R_386_PC16	__PIA
+     d97:	mov    word ptr [bp-12],ax
+     d9a:	mov    word ptr [bp-10],dx
+     d9d:	mov    word ptr [bp-98],si
+     da0:	mov    word ptr [bp-96],di
+     da3:	mov    cx,0xb
+     da6:	shr    word ptr [bp-96],1
+     da9:	rcr    word ptr [bp-98],1
+     dac:	loop   0xda6
+     dae:	mov    bx,word ptr [bp-42]
+     db1:	mov    bx,word ptr [bx]
+     db3:	mov    ax,word ptr [bp-98]
+     db6:	mov    dx,word ptr [bp-96]
+     db9:	xor    cx,cx
+     dbb:	call   0xdbc	dbc: R_386_PC16	__U4M
+     dbe:	mov    word ptr [bp-8],ax
+     dc1:	mov    word ptr [bp-94],dx
+     dc4:	mov    ax,word ptr [bp-4]
+     dc7:	cmp    ax,dx
+     dc9:	jb     0xdd5
+     dcb:	jne    0xded
+     dcd:	mov    ax,word ptr [bp-6]
+     dd0:	cmp    ax,word ptr [bp-8]
+     dd3:	jae    0xded
+     dd5:	mov    si,word ptr [bp-8]
+     dd8:	mov    di,dx
+     dda:	mov    ax,0x800
+     ddd:	mov    bx,word ptr [bp-42]
+     de0:	sub    ax,word ptr [bx]
+     de2:	mov    cl,0x5
+     de4:	shr    ax,cl
+     de6:	add    word ptr [bx],ax
+     de8:	shl    word ptr [bp-32],1
+     deb:	jmp    0xe0f
+     ded:	sub    si,word ptr [bp-8]
+     df0:	sbb    di,dx
+     df2:	mov    ax,word ptr [bp-8]
+     df5:	sub    word ptr [bp-6],ax
+     df8:	sbb    word ptr [bp-4],dx
+     dfb:	mov    cl,0x5
+     dfd:	mov    bx,word ptr [bp-42]
+     e00:	mov    ax,word ptr [bx]
+     e02:	shr    ax,cl
+     e04:	sub    word ptr [bx],ax
+     e06:	mov    ax,word ptr [bp-32]
+     e09:	add    ax,ax
+     e0b:	inc    ax
+     e0c:	mov    word ptr [bp-32],ax
+     e0f:	dec    word ptr [bp-92]
+     e12:	je     0xe17
+     e14:	jmp    0xd33
+     e17:	sub    word ptr [bp-32],0x40
+     e1b:	mov    ax,word ptr [bp-32]
+     e1e:	cmp    ax,0x4
+     e21:	jl     0xe68
+     e23:	sar    ax,1
+     e25:	dec    ax
+     e26:	mov    word ptr [bp-36],ax
+     e29:	mov    ax,word ptr [bp-32]
+     e2c:	and    ax,0x1
+     e2f:	or     al,0x2
+     e31:	mov    word ptr [bp-102],ax
+     e34:	xor    ax,ax
+     e36:	mov    word ptr [bp-100],ax
+     e39:	cmp    word ptr [bp-32],0xe
+     e3d:	jge    0xe6b
+     e3f:	mov    cx,word ptr [bp-36]
+     e42:	jcxz   0xe4c
+     e44:	shl    word ptr [bp-102],1
+     e47:	rcl    word ptr [bp-100],1
+     e4a:	loop   0xe44
+     e4c:	mov    dx,word ptr [bp-102]
+     e4f:	shl    dx,1
+     e51:	mov    ax,word ptr [bp-34]
+     e54:	add    ax,0x560
+     e57:	add    dx,ax
+     e59:	mov    ax,word ptr [bp-32]
+     e5c:	shl    ax,1
+     e5e:	sub    dx,ax
+     e60:	dec    dx
+     e61:	dec    dx
+     e62:	mov    word ptr [bp-14],dx
+     e65:	jmp    0xf10
+     e68:	jmp    0x100c
+     e6b:	sub    word ptr [bp-36],0x4
+     e6f:	cmp    di,0x100
+     e73:	jae    0xecc
+     e75:	mov    ax,word ptr [bp-12]
+     e78:	mov    dx,word ptr [bp-10]
+     e7b:	mov    bx,word ptr [bp-30]
+     e7e:	mov    cx,word ptr [bp-28]
+     e81:	call   0xe82	e82: R_386_PC16	__PTC
+     e84:	jne    0xe89
+     e86:	jmp    0x14d
+     e89:	mov    cx,0x8
+     e8c:	shl    si,1
+     e8e:	rcl    di,1
+     e90:	loop   0xe8c
+     e92:	les    bx,dword ptr [bp-12]
      e95:	mov    al,byte ptr es:[bx]
-     e98:	xor    ah,ah
-     e9a:	test   ax,ax
-     e9c:	cwd
-     e9d:	mov    cx,dx
-     e9f:	mov    bx,ax
-     ea1:	pop    dx
-     ea2:	pop    ax
-     ea3:	or     ax,bx
-     ea5:	or     dx,cx
-     ea7:	mov    word ptr [bp-54],dx
-     eaa:	mov    word ptr [bp-56],ax
-     ead:	shr    word ptr [bp-58],1
-     eb0:	rcr    word ptr [bp-60],1
-     eb3:	mov    dx,word ptr [bp-58]
-     eb6:	mov    ax,word ptr [bp-60]
-     eb9:	shl    word ptr [bp-88],1
-     ebc:	rcl    word ptr [bp-86],1
-     ebf:	cmp    word ptr [bp-54],dx
-     ec2:	jne    0xec7
-     ec4:	cmp    word ptr [bp-56],ax
-     ec7:	jb     0xed3
-     ec9:	sub    word ptr [bp-56],ax
-     ecc:	sbb    word ptr [bp-54],dx
-     ecf:	or     byte ptr [bp-88],0x1
-     ed3:	dec    word ptr [bp-8]
-     ed6:	je     0xedb
-     ed8:	jmp    0xe46
-     edb:	mov    word ptr [bp-72],di
-     ede:	mov    di,word ptr [bp-112]
-     ee1:	add    di,0x644
-     ee5:	mov    cx,0x4
-     ee8:	shl    word ptr [bp-88],1
-     eeb:	rcl    word ptr [bp-86],1
-     eee:	loop   0xee8
-     ef0:	mov    word ptr [bp-8],0x4
-     ef5:	mov    word ptr [bp-6],0x1
-     efa:	mov    si,0x1
-     efd:	mov    cx,si
-     eff:	shl    cx,1
-     f01:	add    cx,di
-     f03:	mov    word ptr [bp-2],cx
-     f06:	cmp    word ptr [bp-58],0x100
-     f0b:	jne    0xf11
-     f0d:	cmp    word ptr [bp-60],0x0
-     f11:	jae    0xf73
-     f13:	mov    dx,word ptr [bp-66]
-     f16:	mov    ax,word ptr [bp-68]
-     f19:	cmp    dx,word ptr [bp-62]
-     f1c:	jne    0xf21
-     f1e:	cmp    ax,word ptr [bp-64]
-     f21:	jne    0xf26
-     f23:	jmp    0x10ee
-     f26:	mov    word ptr [bp-4],si
-     f29:	mov    cx,0x8
-     f2c:	shl    word ptr [bp-60],1
-     f2f:	rcl    word ptr [bp-58],1
-     f32:	loop   0xf2c
-     f34:	mov    dx,word ptr [bp-54]
-     f37:	mov    ax,word ptr [bp-56]
-     f3a:	mov    cl,0x8
-     f3c:	shl    ax,1
-     f3e:	rcl    dx,1
-     f40:	loop   0xf3c
-     f42:	push   ax
-     f43:	push   dx
-     f44:	les    bx,dword ptr [bp-68]
-     f47:	xor    si,si
-     f49:	add    word ptr [bp-68],0x1
-     f4d:	adc    si,0x0
-     f50:	mov    cx,0x0	f51: R_386_16	__AHSHIFT
-     f53:	shl    si,cl
-     f55:	add    word ptr [bp-66],si
-     f58:	mov    al,byte ptr es:[bx]
-     f5b:	xor    ah,ah
-     f5d:	test   ax,ax
-     f5f:	cwd
-     f60:	mov    cx,dx
-     f62:	mov    bx,ax
-     f64:	pop    dx
-     f65:	pop    ax
-     f66:	or     ax,bx
-     f68:	or     dx,cx
-     f6a:	mov    word ptr [bp-54],dx
-     f6d:	mov    word ptr [bp-56],ax
-     f70:	mov    si,word ptr [bp-4]
-     f73:	mov    dx,word ptr [bp-58]
-     f76:	mov    ax,word ptr [bp-60]
-     f79:	mov    cx,0xb
-     f7c:	shr    dx,1
-     f7e:	rcr    ax,1
-     f80:	loop   0xf7c
-     f82:	mov    bx,word ptr [bp-2]
-     f85:	mov    bx,word ptr [bx]
-     f87:	mov    word ptr [bp-118],bx
-     f8a:	xor    cx,cx
-     f8c:	call   0xf8d	f8d: R_386_PC16	__LMUL
-     f8f:	mov    word ptr [bp-42],dx
-     f92:	mov    word ptr [bp-44],ax
-     f95:	cmp    dx,word ptr [bp-54]
-     f98:	jne    0xf9d
-     f9a:	cmp    ax,word ptr [bp-56]
-     f9d:	jbe    0xfbe
-     f9f:	mov    dx,word ptr [bp-42]
-     fa2:	mov    ax,word ptr [bp-44]
-     fa5:	mov    word ptr [bp-58],dx
-     fa8:	mov    word ptr [bp-60],ax
-     fab:	mov    dx,0x800
-     fae:	mov    bx,word ptr [bp-2]
-     fb1:	sub    dx,word ptr [bx]
-     fb3:	mov    cx,0x5
-     fb6:	shr    dx,cl
-     fb8:	add    word ptr [bx],dx
-     fba:	shl    si,1
-     fbc:	jmp    0xfe6
-     fbe:	sub    word ptr [bp-60],ax
-     fc1:	sbb    word ptr [bp-58],dx
-     fc4:	sub    word ptr [bp-56],ax
-     fc7:	sbb    word ptr [bp-54],dx
-     fca:	mov    dx,word ptr [bp-118]
-     fcd:	mov    cx,0x5
-     fd0:	shr    dx,cl
-     fd2:	mov    bx,word ptr [bp-2]
-     fd5:	sub    word ptr [bx],dx
-     fd7:	shl    si,1
-     fd9:	inc    si
-     fda:	mov    ax,word ptr [bp-6]
-     fdd:	test   ax,ax
-     fdf:	cwd
-     fe0:	or     word ptr [bp-88],ax
-     fe3:	or     word ptr [bp-86],dx
-     fe6:	shl    word ptr [bp-6],1
-     fe9:	dec    word ptr [bp-8]
-     fec:	je     0xff1
-     fee:	jmp    0xefd
-     ff1:	jmp    0x1001
-     ff3:	mov    ax,si
-     ff5:	test   ax,ax
-     ff7:	cwd
-     ff8:	mov    word ptr [bp-86],dx
-     ffb:	mov    word ptr [bp-88],ax
-     ffe:	mov    word ptr [bp-72],di
-    1001:	add    word ptr [bp-88],0x1
-    1005:	adc    word ptr [bp-86],0x0
-    1009:	mov    dx,word ptr [bp-86]
-    100c:	mov    ax,word ptr [bp-88]
-    100f:	or     dx,ax
-    1011:	jne    0x1016
-    1013:	jmp    0x10d1
-    1016:	add    word ptr [bp-72],0x2
-    101a:	mov    dx,word ptr [bp-86]
-    101d:	mov    ax,word ptr [bp-88]
-    1020:	cmp    dx,word ptr [bp-106]
-    1023:	jne    0x1028
-    1025:	cmp    ax,word ptr [bp-108]
-    1028:	jbe    0x102d
-    102a:	jmp    0x10ee
-    102d:	mov    di,word ptr [bp-72]
-    1030:	mov    cx,word ptr [bp+18]
-    1033:	mov    bx,word ptr [bp+16]
-    1036:	mov    dx,word ptr [bp-106]
-    1039:	mov    si,word ptr [bp-108]
-    103c:	add    si,bx
-    103e:	mov    bx,cx
-    1040:	adc    dx,0x0
-    1043:	mov    cx,0x0	1044: R_386_16	__AHSHIFT
-    1046:	shl    dx,cl
-    1048:	add    dx,bx
-    104a:	mov    cx,dx
-    104c:	mov    bx,si
-    104e:	mov    dx,word ptr [bp-86]
-    1051:	mov    si,ax
-    1053:	neg    dx
-    1055:	neg    si
-    1057:	sbb    dx,0x0
-    105a:	add    si,bx
-    105c:	mov    bx,cx
-    105e:	adc    dx,0x0
-    1061:	mov    cx,0x0	1062: R_386_16	__AHSHIFT
-    1064:	shl    dx,cl
-    1066:	add    dx,bx
-    1068:	mov    word ptr [bp-0x8c],dx
-    106c:	mov    word ptr [bp-0x8e],si
-    1070:	les    bx,dword ptr [bp-0x8e]
-    1074:	mov    al,byte ptr es:[bx]
-    1077:	mov    byte ptr [bp-104],al
-    107a:	dec    di
-    107b:	mov    bx,0x1
-    107e:	xor    dx,dx
-    1080:	add    word ptr [bp-0x8e],bx
-    1084:	adc    dx,0x0
-    1087:	mov    cx,0x0	1088: R_386_16	__AHSHIFT
-    108a:	shl    dx,cl
-    108c:	add    word ptr [bp-0x8c],dx
-    1090:	mov    bx,word ptr [bp-108]
-    1093:	mov    dx,word ptr [bp-106]
-    1096:	add    word ptr [bp-108],0x1
-    109a:	adc    word ptr [bp-106],0x0
-    109e:	mov    cx,word ptr [bp+18]
-    10a1:	mov    si,word ptr [bp+16]
-    10a4:	add    bx,si
-    10a6:	mov    si,cx
-    10a8:	adc    dx,0x0
-    10ab:	mov    cx,0x0	10ac: R_386_16	__AHSHIFT
-    10ae:	shl    dx,cl
-    10b0:	add    dx,si
-    10b2:	movl   es,dx
-    10b4:	mov    byte ptr es:[bx],al
-    10b7:	test   di,di
-    10b9:	jne    0x10be
-    10bb:	jmp    0x4d8
-    10be:	mov    dx,word ptr [bp-106]
-    10c1:	mov    ax,word ptr [bp-108]
-    10c4:	cmp    dx,word ptr [bp+22]
-    10c7:	jne    0x10cc
-    10c9:	cmp    ax,word ptr [bp+20]
-    10cc:	jb     0x1070
-    10ce:	jmp    0x4d8
-    10d1:	cmp    word ptr [bp-58],0x100
-    10d6:	jne    0x10dc
-    10d8:	cmp    word ptr [bp-60],0x0
-    10dc:	jae    0x1109
-    10de:	mov    dx,word ptr [bp-66]
-    10e1:	mov    ax,word ptr [bp-68]
-    10e4:	cmp    dx,word ptr [bp-62]
-    10e7:	jne    0x10f7
-    10e9:	cmp    ax,word ptr [bp-64]
-    10ec:	jne    0x10f7
-    10ee:	mov    ax,0x1
-    10f1:	pop    di
-    10f2:	pop    si
+     e98:	mov    byte ptr [bp-90],al
+     e9b:	mov    byte ptr [bp-89],0x0
+     e9f:	mov    ax,word ptr [bp-6]
+     ea2:	mov    dx,word ptr [bp-4]
+     ea5:	mov    cx,0x8
+     ea8:	shl    ax,1
+     eaa:	rcl    dx,1
+     eac:	loop   0xea8
+     eae:	mov    bx,word ptr [bp-90]
+     eb1:	or     bx,ax
+     eb3:	mov    word ptr [bp-6],bx
+     eb6:	mov    word ptr [bp-4],dx
+     eb9:	mov    ax,word ptr [bp-12]
+     ebc:	movl   dx,es
+     ebe:	mov    bx,0x1
+     ec1:	xor    cx,cx
+     ec3:	call   0xec4	ec4: R_386_PC16	__PIA
+     ec6:	mov    word ptr [bp-12],ax
+     ec9:	mov    word ptr [bp-10],dx
+     ecc:	shr    di,1
+     ece:	rcr    si,1
+     ed0:	shl    word ptr [bp-102],1
+     ed3:	rcl    word ptr [bp-100],1
+     ed6:	mov    ax,word ptr [bp-4]
+     ed9:	cmp    di,ax
+     edb:	jb     0xee4
+     edd:	jne    0xeee
+     edf:	cmp    si,word ptr [bp-6]
+     ee2:	ja     0xeee
+     ee4:	sub    word ptr [bp-6],si
+     ee7:	sbb    word ptr [bp-4],di
+     eea:	or     byte ptr [bp-102],0x1
+     eee:	dec    word ptr [bp-36]
+     ef1:	je     0xef6
+     ef3:	jmp    0xe6f
+     ef6:	mov    bx,word ptr [bp-34]
+     ef9:	add    bx,0x644
+     efd:	mov    word ptr [bp-14],bx
+     f00:	mov    cx,0x4
+     f03:	shl    word ptr [bp-102],1
+     f06:	rcl    word ptr [bp-100],1
+     f09:	loop   0xf03
+     f0b:	mov    word ptr [bp-36],0x4
+     f10:	mov    ax,0x1
+     f13:	mov    word ptr [bp-64],ax
+     f16:	mov    word ptr [bp-48],ax
+     f19:	mov    ax,word ptr [bp-48]
+     f1c:	shl    ax,1
+     f1e:	mov    bx,word ptr [bp-14]
+     f21:	add    bx,ax
+     f23:	mov    word ptr [bp-44],bx
+     f26:	cmp    di,0x100
+     f2a:	jae    0xf83
+     f2c:	mov    ax,word ptr [bp-12]
+     f2f:	mov    dx,word ptr [bp-10]
+     f32:	mov    bx,word ptr [bp-30]
+     f35:	mov    cx,word ptr [bp-28]
+     f38:	call   0xf39	f39: R_386_PC16	__PTC
+     f3b:	jne    0xf40
+     f3d:	jmp    0x14d
+     f40:	mov    cx,0x8
+     f43:	shl    si,1
+     f45:	rcl    di,1
+     f47:	loop   0xf43
+     f49:	les    bx,dword ptr [bp-12]
+     f4c:	mov    al,byte ptr es:[bx]
+     f4f:	mov    byte ptr [bp-90],al
+     f52:	mov    byte ptr [bp-89],0x0
+     f56:	mov    ax,word ptr [bp-6]
+     f59:	mov    dx,word ptr [bp-4]
+     f5c:	mov    cx,0x8
+     f5f:	shl    ax,1
+     f61:	rcl    dx,1
+     f63:	loop   0xf5f
+     f65:	mov    bx,word ptr [bp-90]
+     f68:	or     bx,ax
+     f6a:	mov    word ptr [bp-6],bx
+     f6d:	mov    word ptr [bp-4],dx
+     f70:	mov    ax,word ptr [bp-12]
+     f73:	movl   dx,es
+     f75:	mov    bx,0x1
+     f78:	xor    cx,cx
+     f7a:	call   0xf7b	f7b: R_386_PC16	__PIA
+     f7d:	mov    word ptr [bp-12],ax
+     f80:	mov    word ptr [bp-10],dx
+     f83:	mov    word ptr [bp-98],si
+     f86:	mov    word ptr [bp-96],di
+     f89:	mov    cx,0xb
+     f8c:	shr    word ptr [bp-96],1
+     f8f:	rcr    word ptr [bp-98],1
+     f92:	loop   0xf8c
+     f94:	mov    bx,word ptr [bp-44]
+     f97:	mov    bx,word ptr [bx]
+     f99:	mov    ax,word ptr [bp-98]
+     f9c:	mov    dx,word ptr [bp-96]
+     f9f:	xor    cx,cx
+     fa1:	call   0xfa2	fa2: R_386_PC16	__U4M
+     fa4:	mov    word ptr [bp-8],ax
+     fa7:	mov    word ptr [bp-94],dx
+     faa:	mov    ax,word ptr [bp-4]
+     fad:	cmp    ax,dx
+     faf:	jb     0xfbb
+     fb1:	jne    0xfd3
+     fb3:	mov    ax,word ptr [bp-6]
+     fb6:	cmp    ax,word ptr [bp-8]
+     fb9:	jae    0xfd3
+     fbb:	mov    si,word ptr [bp-8]
+     fbe:	mov    di,dx
+     fc0:	mov    ax,0x800
+     fc3:	mov    bx,word ptr [bp-44]
+     fc6:	sub    ax,word ptr [bx]
+     fc8:	mov    cl,0x5
+     fca:	shr    ax,cl
+     fcc:	add    word ptr [bx],ax
+     fce:	shl    word ptr [bp-48],1
+     fd1:	jmp    0xfff
+     fd3:	sub    si,word ptr [bp-8]
+     fd6:	sbb    di,dx
+     fd8:	mov    ax,word ptr [bp-8]
+     fdb:	sub    word ptr [bp-6],ax
+     fde:	sbb    word ptr [bp-4],dx
+     fe1:	mov    cl,0x5
+     fe3:	mov    bx,word ptr [bp-44]
+     fe6:	mov    ax,word ptr [bx]
+     fe8:	shr    ax,cl
+     fea:	sub    word ptr [bx],ax
+     fec:	mov    ax,word ptr [bp-48]
+     fef:	add    ax,ax
+     ff1:	inc    ax
+     ff2:	mov    word ptr [bp-48],ax
+     ff5:	mov    ax,word ptr [bp-64]
+     ff8:	cwd
+     ff9:	or     word ptr [bp-102],ax
+     ffc:	or     word ptr [bp-100],dx
+     fff:	shl    word ptr [bp-64],1
+    1002:	dec    word ptr [bp-36]
+    1005:	je     0x100a
+    1007:	jmp    0xf19
+    100a:	jmp    0x1013
+    100c:	cwd
+    100d:	mov    word ptr [bp-102],ax
+    1010:	mov    word ptr [bp-100],dx
+    1013:	add    word ptr [bp-102],0x1
+    1017:	adc    word ptr [bp-100],0x0
+    101b:	mov    ax,word ptr [bp-100]
+    101e:	or     ax,word ptr [bp-102]
+    1021:	jne    0x1025
+    1023:	jmp    0x109e
+    1025:	add    word ptr [bp-24],0x2
+    1029:	mov    ax,word ptr [bp-100]
+    102c:	cmp    ax,word ptr [bp-18]
+    102f:	jbe    0x1034
+    1031:	jmp    0x14d
+    1034:	jne    0x103e
+    1036:	mov    ax,word ptr [bp-102]
+    1039:	cmp    ax,word ptr [bp-20]
+    103c:	ja     0x1031
+    103e:	mov    bx,word ptr [bp-20]
+    1041:	sub    bx,word ptr [bp-102]
+    1044:	mov    cx,word ptr [bp-18]
+    1047:	sbb    cx,word ptr [bp-100]
+    104a:	mov    ax,word ptr [bp+20]
+    104d:	mov    dx,word ptr [bp+22]
+    1050:	call   0x1051	1051: R_386_PC16	__PIA
+    1053:	mov    bx,ax
+    1055:	movl   es,dx
+    1057:	mov    al,byte ptr es:[bx]
+    105a:	mov    byte ptr [bp-2],al
+    105d:	mov    bx,word ptr [bp-20]
+    1060:	mov    cx,word ptr [bp-18]
+    1063:	dec    word ptr [bp-24]
+    1066:	add    word ptr [bp-20],0x1
+    106a:	adc    word ptr [bp-18],0x0
+    106e:	mov    ax,word ptr [bp+20]
+    1071:	mov    dx,word ptr [bp+22]
+    1074:	call   0x1075	1075: R_386_PC16	__PIA
+    1077:	mov    bx,ax
+    1079:	movl   es,dx
+    107b:	mov    al,byte ptr [bp-2]
+    107e:	mov    byte ptr es:[bx],al
+    1081:	cmp    word ptr [bp-24],0x0
+    1085:	jne    0x108a
+    1087:	jmp    0x153
+    108a:	mov    ax,word ptr [bp-18]
+    108d:	cmp    ax,word ptr [bp+26]
+    1090:	jb     0x103e
+    1092:	jne    0x1087
+    1094:	mov    ax,word ptr [bp-20]
+    1097:	cmp    ax,word ptr [bp+24]
+    109a:	jb     0x103e
+    109c:	jmp    0x1087
+    109e:	cmp    di,0x100
+    10a2:	jae    0x10cc
+    10a4:	mov    ax,word ptr [bp-12]
+    10a7:	mov    dx,word ptr [bp-10]
+    10aa:	mov    bx,word ptr [bp-30]
+    10ad:	mov    cx,word ptr [bp-28]
+    10b0:	call   0x10b1	10b1: R_386_PC16	__PTC
+    10b3:	jne    0x10b8
+    10b5:	jmp    0x14d
+    10b8:	mov    ax,word ptr [bp-12]
+    10bb:	mov    dx,word ptr [bp-10]
+    10be:	mov    bx,0x1
+    10c1:	xor    cx,cx
+    10c3:	call   0x10c4	10c4: R_386_PC16	__PIA
+    10c6:	mov    word ptr [bp-12],ax
+    10c9:	mov    word ptr [bp-10],dx
+    10cc:	mov    ax,word ptr [bp-12]
+    10cf:	mov    dx,word ptr [bp-10]
+    10d2:	mov    bx,word ptr [bp+10]
+    10d5:	mov    cx,word ptr [bp+12]
+    10d8:	call   0x10d9	10d9: R_386_PC16	__PTS
+    10db:	mov    bx,word ptr [bp+18]
+    10de:	mov    word ptr [bx],ax
+    10e0:	mov    word ptr [bx+2],dx
+    10e3:	mov    ax,word ptr [bp-20]
+    10e6:	mov    bx,word ptr [bp+28]
+    10e9:	mov    word ptr [bx],ax
+    10eb:	mov    ax,word ptr [bp-18]
+    10ee:	mov    word ptr [bx+2],ax
+    10f1:	xor    ax,ax
     10f3:	mov    sp,bp
     10f5:	pop    bp
-    10f6:	ret
-    10f7:	mov    ax,0x1
-    10fa:	cwd
-    10fb:	add    word ptr [bp-68],ax
-    10fe:	adc    dx,0x0
-    1101:	mov    cx,0x0	1102: R_386_16	__AHSHIFT
-    1104:	shl    dx,cl
-    1106:	add    word ptr [bp-66],dx
-    1109:	push   word ptr [bp+8]
-    110c:	push   word ptr [bp+6]
-    110f:	push   word ptr [bp-66]
-    1112:	push   word ptr [bp-68]
-    1115:	call   0x1116	1116: R_386_PC16	__aNahdiff
-    1118:	mov    bx,word ptr [bp+14]
-    111b:	mov    word ptr [bx+2],dx
-    111e:	mov    word ptr [bx],ax
-    1120:	mov    dx,word ptr [bp-106]
-    1123:	mov    ax,word ptr [bp-108]
-    1126:	mov    bx,word ptr [bp+24]
-    1129:	mov    word ptr [bx+2],dx
-    112c:	mov    word ptr [bx],ax
-    112e:	xor    ax,ax
-    1130:	pop    di
-    1131:	pop    si
-    1132:	mov    sp,bp
-    1134:	pop    bp
-    1135:	ret
+    10f6:	pop    di
+    10f7:	pop    si
+    10f8:	ret

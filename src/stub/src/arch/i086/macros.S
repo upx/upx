@@ -139,7 +139,7 @@
 #define __AHINCR         (1 << __AHSHIFT)  /* 4096 */
 
 
-#if 0
+#if 1
 // huge pointer add: dx:ax = dx:ax + cx:bx
 .macro          M_WCC_PIA
                 add     ax, bx
@@ -177,7 +177,7 @@
 #endif
 
 
-#if 0
+#if 1
 // huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
 .macro          M_WCC_PTC
 // FIXME: should we normalize the pointers ???

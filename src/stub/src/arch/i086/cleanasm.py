@@ -41,8 +41,12 @@ class opts:
 
 
 inline_map = {
-    "__aNNalshl":    "M_aNNalshl",
-    "__aNahdiff":    "M_aNahdiff",
+    "__aNNalshl":    ["M_aNNalshl", 1],
+    "__aNahdiff":    ["M_aNahdiff", 1],
+    "__PIA":         ["M_PIA", 999],
+    "__PTS":         ["M_PTS", 999],
+    "__PTC":         ["M_PTC", 999],
+    "__U4M":         ["M_U4M", 999],
 }
 
 
@@ -261,11 +265,11 @@ def main(argv):
         if opts.auto_inline and inst == "call":
             v = labels[args_label]
             if v[:2] == [1, 2]:     # external 2-byte
-                if v[3] == 1:           # only one call
-                    x = inline_map.get(v[2])
+                x = inline_map.get(v[2])
+                if x and v[3] <= x[1]:       # max. number of calls
                     ##print "inline", v, x
                     if x:
-                        olines[i][1] = x
+                        olines[i][1] = x[0]
                         olines[i][2] = "/* inlined */"
                         olines[i][2] = ""
                         olines[i][3] = None
