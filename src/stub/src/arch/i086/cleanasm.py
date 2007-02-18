@@ -179,7 +179,7 @@ def main(argv):
         if opts.call_rewrite and inst in ["call"]:
             k, v = parse_label(inst, args)
             if v[:2] == [1, 2]:     # external 2-byte
-                if k == "__LMUL":
+                if k in ["__LMUL", "__U4M",]:
                     s = [
                         ["xor",  "cx,cx"],
                     ]
@@ -197,6 +197,15 @@ def main(argv):
                     dpos = omatch(i - 4, s[-4:])
                     if dpos:
                         orewrite_inst(i, "*DEL*", "", dpos)
+                        continue
+                if k == "__PIA":
+                    s = [
+                        ["mov",  "bx,0x1"],
+                        ["xor",  "cx,cx"],
+                    ]
+                    dpos = omatch(i - 2, s[-2:])
+                    if dpos:
+                        orewrite_inst(i, "M_PIA1", "", dpos)
                         continue
         if opts.loop_rewrite and inst in ["loop"]:
             s = [

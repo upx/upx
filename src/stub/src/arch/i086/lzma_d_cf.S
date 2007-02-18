@@ -105,9 +105,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
         inc     word ptr [bp-72]
@@ -171,9 +169,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf013:
@@ -188,8 +184,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -234,8 +229,7 @@
         add     ax,word ptr [bp-90]
         adc     dx,bx
         mov     bx,0x300
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         shl     ax,1
         rcl     dx,1
         mov     dx,word ptr [bp-34]
@@ -300,9 +294,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf024:
@@ -317,8 +309,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -400,9 +391,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf033:
@@ -417,8 +406,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -528,9 +516,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf043:
@@ -545,8 +531,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -633,9 +618,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf051:
@@ -650,15 +633,12 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-82],ax
         mov     word ptr [bp-80],dx
         mov     ax,word ptr [bp-4]
@@ -733,8 +713,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -863,8 +842,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -931,9 +909,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf075:
@@ -948,8 +924,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1043,9 +1018,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf087:
@@ -1060,8 +1033,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1135,9 +1107,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf094:
@@ -1152,8 +1122,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1235,9 +1204,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf102:
@@ -1252,8 +1219,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1353,9 +1319,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf113:
@@ -1370,8 +1334,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1479,9 +1442,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf126:
@@ -1551,9 +1512,7 @@
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
         movw    dx,es
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf135:
@@ -1568,8 +1527,7 @@
         mov     bx,word ptr [bx]
         mov     ax,word ptr [bp-98]
         mov     dx,word ptr [bp-96]
-        xor     cx,cx
-        M_U4M
+        M_LMUL_dxax_00bx
         mov     word ptr [bp-8],ax
         mov     word ptr [bp-94],dx
         mov     ax,word ptr [bp-4]
@@ -1689,9 +1647,7 @@
 .Lf150:
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
-        mov     bx,0x1
-        xor     cx,cx
-        M_PIA
+        M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
 .Lf151:
