@@ -60,7 +60,19 @@
         mul     bx          // dx:ax := ax * bx
         // add high-word
         add     dx, cx      // add high-word result
-        //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+// umul32: dx:ax = dx:ax * word ptr [bx]
+.macro  M_LMUL_dxax_00bx_ptr
+        // mult high-word
+        mov     cx, ax      // save ax
+        mov     ax, dx
+        mul     word ptr [bx]
+        xchg    ax, cx      // save high-word result, get saved ax
+        // mult low-word
+        mul     word ptr [bx]
+        // add high-word
+        add     dx, cx      // add high-word result
 .endm
 
 
@@ -73,7 +85,6 @@
         mul     bx
         // add high-word
         add     dx, cx      // add high-word result
-        //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
 
@@ -83,7 +94,6 @@
         mov     dl, ah
         mov     ah, al
         xor     al, al
-        //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
 .macro  M_shld_8_bp h l
@@ -118,7 +128,6 @@
         shl     bx, cl
         or      ax, bx
 #endif
-        //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
 .macro  M_shrd_11_bp h l
@@ -201,6 +210,12 @@ L1:
 .endm
 .macro  M_PTC
         M_WCC_PTC
+.endm
+.macro  M_PTC_JNE l
+        cmp     ax, bx
+        jnes    l
+        cmp     dx, cx
+        jnes    l
 .endm
 .macro  M_PTS
 .endm

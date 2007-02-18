@@ -116,8 +116,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf005
+        M_PTC_JNE .Lf005
 .Lf007:
         mov     ax,0x1
         jmp     .Lf139
@@ -264,8 +263,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf021
+        M_PTC_JNE .Lf021
         jmp     .Lf007
 .Lf021:
         mov     cx,0x8
@@ -353,8 +351,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf029
+        M_PTC_JNE .Lf029
         jmp     .Lf007
 .Lf029:
         mov     cx,0x8
@@ -470,8 +467,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf038
+        M_PTC_JNE .Lf038
         jmp     .Lf007
 .Lf038:
         mov     cx,0x8
@@ -564,8 +560,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf045
+        M_PTC_JNE .Lf045
         jmp     .Lf007
 .Lf045:
         mov     cx,0x8
@@ -635,8 +630,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf051
+        M_PTC_JNE .Lf051
         jmp     .Lf007
 .Lf051:
         mov     ax,si
@@ -758,8 +752,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf061
+        M_PTC_JNE .Lf061
         jmp     .Lf007
 .Lf061:
         mov     cx,0x8
@@ -831,8 +824,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf066
+        M_PTC_JNE .Lf066
         jmp     .Lf007
 .Lf066:
         mov     cx,0x8
@@ -932,8 +924,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf077
+        M_PTC_JNE .Lf077
         jmp     .Lf007
 .Lf077:
         mov     cx,0x8
@@ -1013,8 +1004,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf083
+        M_PTC_JNE .Lf083
         jmp     .Lf007
 .Lf083:
         mov     cx,0x8
@@ -1102,8 +1092,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf090
+        M_PTC_JNE .Lf090
         jmp     .Lf007
 .Lf090:
         mov     cx,0x8
@@ -1209,8 +1198,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf100
+        M_PTC_JNE .Lf100
         jmp     .Lf007
 .Lf100:
         mov     cx,0x8
@@ -1324,8 +1312,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf112
+        M_PTC_JNE .Lf112
         jmp     .Lf007
 .Lf112:
         mov     cx,0x8
@@ -1394,8 +1381,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf121
+        M_PTC_JNE .Lf121
         jmp     .Lf007
 .Lf121:
         mov     cx,0x8
@@ -1537,8 +1523,7 @@
         mov     dx,word ptr [bp-10]
         mov     bx,word ptr [bp-30]
         mov     cx,word ptr [bp-28]
-        M_PTC
-        jne     .Lf137
+        M_PTC_JNE .Lf137
         jmp     .Lf007
 .Lf137:
         mov     ax,word ptr [bp-12]
