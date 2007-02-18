@@ -101,29 +101,37 @@ def main(argv):
 
     olines = []
     def omatch(pos, m):
+        def match(a, b):
+            if b is None:
+                return False
+            if "^" in a or "*" in a:
+                # regexp
+                return re.search(a, b.lower())
+            else:
+                return a.lower() == b.lower()
         i = 0
         dpos = []
         while i < len(m):
             if pos < 0 or pos >= len(olines):
                 return []
-            dpos.append(pos)
             o = olines[pos][1:3]
             assert len(m[i]) == 2, (i, m)
-            if o[0].lower() != m[i][0].lower():
+            m0 = match(m[i][0], o[0])
+            m1 = match(m[i][1], o[1])
+            if not m0 or not m1:
                 return []
-            if o[1].lower() != m[i][1].lower():
-                return []
+            dpos.append([pos, m0, m1])
             pos += 1
             i += 1
         return dpos
     def orewrite_inst(i, inst, args, dpos):
-        for pos in dpos:
+        for pos, m0, m1 in dpos:
             olines[pos][1] = "*DEL*"
         olines[i][1] = inst
         olines[i][2] = args
         olines[i][3] = None
     def orewrite_call(i, k, v, dpos):
-        for pos in dpos:
+        for pos, m0, m1 in dpos:
             olines[pos][1] = "*DEL*"
         v[2] = k
         olines[i][2] = None
@@ -187,7 +195,7 @@ def main(argv):
                         continue
         if opts.loop_rewrite and inst in ["loop"]:
             s = [
-                ["mov",  "cx,0xb"],
+                ["mov",  r"^c[lx],0xb$"],
                 ["shr",  "dx,1"],
                 ["rcr",  "ax,1"],
             ]
@@ -196,7 +204,7 @@ def main(argv):
                 orewrite_inst(i, "M_shrd_11", "", dpos)
                 continue
             s = [
-                ["mov",  "cl,0x8"],
+                ["mov",  r"^c[lx],0x8$"],
                 ["shl",  "ax,1"],
                 ["rcl",  "dx,1"],
             ]
@@ -204,14 +212,25 @@ def main(argv):
             if dpos:
                 orewrite_inst(i, "M_shld_8", "", dpos)
                 continue
-            s = [
-                ["mov",  "cx,0x8"],
-                ["shl",  "ax,1"],
-                ["rcl",  "dx,1"],
+            s1 = [
+                ["mov",  r"^c[lx],0x8$"],
+                ["shl",  r"^word ptr \[bp([+-]\d+)\],1$"],
+                ["rcl",  r"^word ptr \[bp([+-]\d+)\],1$"],
             ]
-            dpos = omatch(i - 3, s[-3:])
-            if dpos:
-                orewrite_inst(i, "M_shld_8", "", dpos)
+            s2 = [
+                ["mov",  r"^dx,word ptr"],
+                ["mov",  r"^ax,word ptr"],
+            ]
+            s3 = [
+                ["mov",  r"^ax,word ptr"],
+                ["mov",  r"^dx,word ptr"],
+            ]
+            dpos1 = omatch(i - 3, s1[-3:])
+            dpos2 = omatch(i + 1, s2)
+            dpos3 = omatch(i + 1, s3)
+            if dpos1 and (dpos2 or dos3):
+                m = "M_shld_8_bp %s %s" % (dpos1[-2][2].group(1), dpos1[-1][2].group(1))
+                orewrite_inst(i, m, "", dpos1)
                 continue
         #
         if inst in [

@@ -52,14 +52,15 @@
 // umul32: dx:ax = dx:ax * 00:bx
 .macro  M_LMUL_dxax_00bx
         // mult high-word
-        mov     cx, ax      // cx: save ax
+        mov     cx, ax      // save ax
         mov     ax, dx
         mul     bx
-        xchg    ax, cx      // save high-word result, get orig ax
+        xchg    ax, cx      // save high-word result, get saved ax
         // mult low-word
         mul     bx          // dx:ax := ax * bx
         // add high-word
         add     dx, cx      // add high-word result
+        //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
 
@@ -72,6 +73,7 @@
         mul     bx
         // add high-word
         add     dx, cx      // add high-word result
+        //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
 
@@ -82,6 +84,17 @@
         mov     ah, al
         xor     al, al
         //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+.macro  M_shld_8_bp l h
+        mov     dx, word ptr[bp+h]
+        mov     ax, word ptr[bp+l]
+        mov     dh, dl
+        mov     dl, ah
+        mov     ah, al
+        xor     al, al
+        mov     word ptr[bp+h], dx
+        mov     word ptr[bp+l], ax
 .endm
 
 
@@ -99,11 +112,11 @@
         shr     dx
         rcr     ax
 #else
-        mov     bx, dx
         mov     cl, 11
-        shr     dx, cl
+        mov     bx, dx      // save dx
         shr     ax, cl
-        mov     cl, 5
+        shr     dx, cl
+        mov     cl, 5       // cl = 16 - cl
         shl     bx, cl
         or      ax, bx
 #endif
@@ -111,21 +124,41 @@
 .endm
 
 
-#if 0
-// shld: dx:ax <<= cl; trashes register "r1" (bx, di, si or bp)
-//   REQUIRED: 0 <= cl < 32
-// FIXME - this does not work yet
-.macro  M_shld r1
-        local   L1
+// shld: dx:ax <<= cl; trashes cl and register "r1" (bx, di, si or bp)
+//   REQUIRED: 0 <= cl <= 15
+.macro  M_shld_00_15 r1
         mov     r1, ax      // save ax
         shl     dx, cl
         shl     ax, cl
-        neg     cl
-        and     cl, 15      // the 8086 uses all eight bits of the shift count
+        sub     cl, 16
+        neg     cl          // cl = 16 - cl
         shr     r1, cl
         or      dx, r1
 .endm
-#endif
+
+// shld: dx:ax <<= cl; trashes cl
+//   REQUIRED: 16 <= cl <= 32
+.macro  M_shld_16_32
+        sub     cl, 16
+        shr     ax, cl
+        mov     dx, ax
+        xor     ax, ax
+.endm
+
+// shld: dx:ax <<= cl; trashes cl and register "r1" (bx, di, si or bp)
+//   REQUIRED: 0 <= cl <= 32
+.macro  M_shld r1
+        local   L1, L2
+        cmp     cl, 16
+        jaes    L1
+// 0 <= cl <= 15
+        M_shld_00_15 r1
+        jmps    L2
+L1:
+// 16 <= cl <= 32
+        M_shld_16_32
+L2:
+.endm
 
 
 /*************************************************************************

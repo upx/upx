@@ -120,15 +120,18 @@ define mkbat
 	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
 	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
 	echo -E '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
-	unix2dos -q $1
+	$(UNIX2DOS) $1
 endef
 
+winedir_s = $(shell winepath -s z:$(realpath -f -n $1))
+winedir_w = $(shell winepath -w $(realpath -f -n $1))
+
 tmp/bcc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,bcc.exe,$(BC502WINDIR)\bin,,)
+	@$(call mkbat,$@,bcc.exe,$(call winedir_w,$(BC502DIR)/bin))
 tmp/cl.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,cl.exe,$(VC152WINDIR)\bin,$(VC152WINDIR)\include,$(VC152WINDIR)\lib)
+	@$(call mkbat,$@,cl.exe,$(call winedir_w,$(VC152DIR)/bin),$(call winedir_w,$(VC152DIR)/include),$(call winedir_w,$(VC152DIR)/lib))
 tmp/dmc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
-	@$(call mkbat,$@,dmc.exe,$(shell winepath -w $(DM849DIR)/bin),,)
+	@$(call mkbat,$@,dmc.exe,$(call winedir_w,$(DM849DIR)/bin))
 
 # Open Watcom C/C++ 1.6
 # http://openwatcom.com/
