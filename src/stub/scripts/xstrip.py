@@ -101,6 +101,8 @@ def create_bindump(bindump_fn, dump_fn):
             assert f[1] in "gl", (l, f)
             assert f[2] in "dFO", (l, f)
             section = section_names[f[3]]
+        elif len(f) == 5 and f[2] == "*ABS*":
+            pass
         elif len(f) == 5:
             assert f[1] in "gl", (l, f)
             section = section_names[f[2]]

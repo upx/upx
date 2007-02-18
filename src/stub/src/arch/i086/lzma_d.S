@@ -283,6 +283,10 @@ section LZMA_DEC00
         call    LZMA_DEC10
         jmp     LZMA_DEC30
 
+    ignore_reloc_overflow lzma_u_len
+    ignore_reloc_overflow lzma_c_len
+    ignore_reloc_overflow lzma_properties
+
 
 section LZMA_DEC10
 .arch   i8086, nojumps
@@ -307,6 +311,9 @@ section LZMA_DEC30
         mov     sp, bp
         pop     ds
         mov     di, offset lzma_u_len
+
+    ignore_reloc_overflow lzma_u_len
+
 
 section LZMA_DEC31
         pop     ax
