@@ -41,8 +41,12 @@ class opts:
 
 
 inline_map = {
-    "__aNNalshl":    "M_aNNalshl",
-    "__aNahdiff":    "M_aNahdiff",
+    "__aNNalshl":    ["M_aNNalshl", 1],
+    "__aNahdiff":    ["M_aNahdiff", 1],
+    "__PIA":         ["M_PIA", 999],
+    "__PTS":         ["M_PTS", 999],
+    "__PTC":         ["M_PTC", 999],
+    "__U4M":         ["M_U4M", 999],
 }
 
 
@@ -63,6 +67,7 @@ def main(argv):
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
 
     #
+    assert opts.label_prefix
     assert len(args) == 2
     ifile = args[0]
     ofile = args[1]
@@ -100,30 +105,54 @@ def main(argv):
         return k
 
     olines = []
-    def omatch(pos, m):
-        i = 0
-        dpos = []
-        while i < len(m):
+    def omatch(pos, mlen, m, debug=0):
+        assert len(m) >= abs(mlen)
+        def sgn(x):
+            if x < 0: return -1
+            if x > 0: return  1
+            return 0
+        def match(a, b):
+            if b is None:
+                return False
+            if "^" in a or "*" in a:
+                # regexp
+                return re.search(a, b.lower())
+            else:
+                return a.lower() == b.lower()
+        mpos = []
+        while len(mpos) != abs(mlen):
             if pos < 0 or pos >= len(olines):
                 return []
-            dpos.append(pos)
-            o = olines[pos][1:3]
+            o = olines[pos]
+            if o[1] != "*DEL*":
+                mpos.append(pos)
+            pos += sgn(mlen)
+        if mlen < 0:
+            mpos.reverse()
+        if debug and 1: print mlen, m, [olines[x] for x in mpos]
+        dpos = []
+        i = -abs(mlen)
+        while i < 0:
+            pos = mpos[i]
+            o = olines[pos]
+            assert o[1] != "*DEL*"
             assert len(m[i]) == 2, (i, m)
-            if o[0].lower() != m[i][0].lower():
+            m0 = match(m[i][0], o[1])
+            m1 = match(m[i][1], o[2])
+            if not m0 or not m1:
                 return []
-            if o[1].lower() != m[i][1].lower():
-                return []
-            pos += 1
+            dpos.append([pos, m0, m1])
             i += 1
+        assert len(dpos) == abs(mlen)
         return dpos
     def orewrite_inst(i, inst, args, dpos):
-        for pos in dpos:
+        for pos, m0, m1 in dpos:
             olines[pos][1] = "*DEL*"
         olines[i][1] = inst
         olines[i][2] = args
         olines[i][3] = None
     def orewrite_call(i, k, v, dpos):
-        for pos in dpos:
+        for pos, m0, m1 in dpos:
             olines[pos][1] = "*DEL*"
         v[2] = k
         olines[i][2] = None
@@ -166,11 +195,16 @@ def main(argv):
         if opts.call_rewrite and inst in ["call"]:
             k, v = parse_label(inst, args)
             if v[:2] == [1, 2]:     # external 2-byte
-                if k == "__LMUL":
+                if k in ["__LMUL", "__U4M",]:
                     s = [
+                        ["mov",  "bx,word ptr [bx]"],
                         ["xor",  "cx,cx"],
                     ]
-                    dpos = omatch(i - 1, s[-1:])
+                    dpos = omatch(i-1, -2, s, debug=0)
+                    if 0 and dpos:
+                        orewrite_inst(i, "M_LMUL_dxax_00bx_ptr", "", dpos)
+                        continue
+                    dpos = omatch(i-1, -1, s)
                     if dpos:
                         orewrite_inst(i, "M_LMUL_dxax_00bx", "", dpos)
                         continue
@@ -181,37 +215,93 @@ def main(argv):
                         ["push", "word ptr [bp-66]"],
                         ["push", "word ptr [bp-68]"],
                     ]
-                    dpos = omatch(i - 4, s[-4:])
+                    dpos = omatch(i-1, -4, s)
                     if dpos:
                         orewrite_inst(i, "*DEL*", "", dpos)
                         continue
+                if k == "__PIA":
+                    s = [
+                        ["mov",  "bx,0x1"],
+                        ["xor",  "cx,cx"],
+                    ]
+                    dpos = omatch(i-1, -2, s)
+                    if dpos:
+                        orewrite_inst(i, "M_PIA1", "", dpos)
+                        continue
+                if k == "__PTC":
+                    s = [
+                        ["jne",  "(.*)"],
+                    ]
+                    dpos = omatch(i+1, 1, s)
+                    if dpos:
+                        olines[i][1] = "M_PTC_JNE"
+                        k, v = parse_label("jne", dpos[0][2].group(1))
+                        orewrite_call(i, k, v, dpos)
+                        continue
         if opts.loop_rewrite and inst in ["loop"]:
             s = [
-                ["mov",  "cx,0xb"],
+                ["mov",  r"^c[lx],0xb$"],
                 ["shr",  "dx,1"],
                 ["rcr",  "ax,1"],
             ]
-            dpos = omatch(i - 3, s[-3:])
+            dpos = omatch(i-1, -3, s)
             if dpos:
                 orewrite_inst(i, "M_shrd_11", "", dpos)
                 continue
             s = [
-                ["mov",  "cl,0x8"],
+                ["mov",  r"^c[lx],0x8$"],
                 ["shl",  "ax,1"],
                 ["rcl",  "dx,1"],
             ]
-            dpos = omatch(i - 3, s[-3:])
+            dpos = omatch(i-1, -3, s)
             if dpos:
                 orewrite_inst(i, "M_shld_8", "", dpos)
                 continue
-            s = [
-                ["mov",  "cx,0x8"],
-                ["shl",  "ax,1"],
-                ["rcl",  "dx,1"],
+            s1 = [
+                ["mov",  r"^c[lx],0x8$"],
+                ["shl",  r"^word ptr \[bp([+-]\d+)\],1$"],
+                ["rcl",  r"^word ptr \[bp([+-]\d+)\],1$"],
             ]
-            dpos = omatch(i - 3, s[-3:])
-            if dpos:
-                orewrite_inst(i, "M_shld_8", "", dpos)
+            s2 = [
+                ["mov",  r"^dx,word ptr"],
+                ["mov",  r"^ax,word ptr"],
+            ]
+            s3 = [
+                ["mov",  r"^ax,word ptr"],
+                ["mov",  r"^dx,word ptr"],
+            ]
+            dpos1 = omatch(i-1, -3, s1)
+            dpos2 = omatch(i+1,  2, s2)
+            dpos3 = omatch(i+1,  2, s3)
+            if dpos1 and (dpos2 or dos3):
+                bp_dx, bp_ax = dpos1[-1][2].group(1), dpos1[-2][2].group(1)
+                m = "M_shld_8_bp %s %s" % (bp_dx, bp_ax)
+                orewrite_inst(i, m, "", dpos1)
+                continue
+            s1 = [
+                ["mov",  r"^word ptr \[bp([+-]\d+)\],si$"],
+                ["mov",  r"^word ptr \[bp([+-]\d+)\],di$"],
+                ["mov",  r"^c[lx],0xb$"],
+                ["shr",  r"^word ptr \[bp([+-]\d+)\],1$"],
+                ["rcr",  r"^word ptr \[bp([+-]\d+)\],1$"],
+            ]
+            s2 = [
+                ["mov",  r"^bx,word ptr"],
+                ["mov",  r"^bx,word ptr"],
+                ["mov",  r"^ax,word ptr \[bp([+-]\d+)\]$"],
+                ["mov",  r"^dx,word ptr \[bp([+-]\d+)\]$"],
+            ]
+            dpos1 = omatch(i-1, -5, s1)
+            dpos2 = omatch(i+1,  4, s2)
+            if dpos1 and dpos2:
+                bp_dx, bp_ax = dpos1[-2][2].group(1), dpos1[-1][2].group(1)
+                bp_di, bp_si = dpos1[-4][2].group(1), dpos1[-5][2].group(1)
+                assert bp_dx == dpos2[-1][2].group(1)
+                assert bp_ax == dpos2[-2][2].group(1)
+                assert bp_dx == bp_di
+                assert bp_ax == bp_si
+                m = "M_shrd_11_disi_bp %s %s" % (bp_dx, bp_ax)
+                orewrite_inst(i, m, "", dpos1 + dpos2[-2:])
                 continue
         #
         if inst in [
@@ -241,11 +331,11 @@ def main(argv):
         if opts.auto_inline and inst == "call":
             v = labels[args_label]
             if v[:2] == [1, 2]:     # external 2-byte
-                if v[3] == 1:           # only one call
-                    x = inline_map.get(v[2])
+                x = inline_map.get(v[2])
+                if x and v[3] <= x[1]:       # max. number of calls
                     ##print "inline", v, x
                     if x:
-                        olines[i][1] = x
+                        olines[i][1] = x[0]
                         olines[i][2] = "/* inlined */"
                         olines[i][2] = ""
                         olines[i][3] = None

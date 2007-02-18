@@ -111,7 +111,7 @@ def main(argv):
             olines.append("  call " + f)
         elif 1:
             s = m.group(3).strip()
-            s = re.sub("L\$(\d+)", opts.label_prefix + "\g<1>", s)
+            s = re.sub(r"L\$(\d+)", opts.label_prefix + r"\g<1>", s)
             olines.append("  " + s)
         else:
             s = re.split(r"\s+", m.group(1).strip())

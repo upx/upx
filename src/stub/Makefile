@@ -140,6 +140,8 @@ RTRIM     := sed -e 's/[ $(tab)]*$$//'
 BLSQUEEZE := $(RTRIM) | cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
 # delete blank lines
 BLDEL     := $(RTRIM) | sed -e '/^$$/d'
+#
+UNIX2DOS  := perl -i -pe 's/$$/\r/;'
 
 # clear some vars, just in case
 LABEL_PREFIX =
