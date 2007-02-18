@@ -63,6 +63,7 @@ def main(argv):
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
 
     #
+    assert opts.label_prefix
     assert len(args) == 2
     ifile = args[0]
     ofile = args[1]
