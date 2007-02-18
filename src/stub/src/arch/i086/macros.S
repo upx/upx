@@ -41,6 +41,14 @@
 .macro          section name
                 .section \name
                 .code16
+                .set current_section,\name
+.endm
+
+.macro          ignore_reloc_overflow sym
+                .pushsection ignore_reloc_overflow
+                .byte   \sym
+                .byte   current_section
+                .popsection
 .endm
 
 .macro          CPU     id

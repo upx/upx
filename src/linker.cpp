@@ -585,6 +585,7 @@ void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
 /*************************************************************************
 // ElfLinker arch subclasses
 // FIXME: add more displacment overflow checks
+// FIXME: add support for our special "ignore_reloc_overflow" section
 **************************************************************************/
 
 #if 0 // FIXME
