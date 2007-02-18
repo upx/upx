@@ -121,6 +121,9 @@ def main(argv):
                 return []
             o = olines[pos][1:3]
             assert len(m[i]) == 2, (i, m)
+            if o[1] == "*DEL*":
+                pos += 1
+                continue
             m0 = match(m[i][0], o[0])
             m1 = match(m[i][1], o[1])
             if not m0 or not m1:
@@ -181,8 +184,13 @@ def main(argv):
             if v[:2] == [1, 2]:     # external 2-byte
                 if k in ["__LMUL", "__U4M",]:
                     s = [
+                        ["mov",  "bx,word ptr [bx]"],
                         ["xor",  "cx,cx"],
                     ]
+                    dpos = omatch(i - 2, s[-2:])
+                    if 0 and dpos:
+                        orewrite_inst(i, "M_LMUL_dxax_00bx_ptr", "", dpos)
+                        continue
                     dpos = omatch(i - 1, s[-1:])
                     if dpos:
                         orewrite_inst(i, "M_LMUL_dxax_00bx", "", dpos)
@@ -243,8 +251,34 @@ def main(argv):
             dpos2 = omatch(i + 1, s2)
             dpos3 = omatch(i + 1, s3)
             if dpos1 and (dpos2 or dos3):
-                m = "M_shld_8_bp %s %s" % (dpos1[-2][2].group(1), dpos1[-1][2].group(1))
+                bp_dx, bp_ax = dpos1[-1][2].group(1), dpos1[-2][2].group(1)
+                m = "M_shld_8_bp %s %s" % (bp_dx, bp_ax)
                 orewrite_inst(i, m, "", dpos1)
+                continue
+            s1 = [
+                ["mov",  r"^word ptr \[bp([+-]\d+)\],si$"],
+                ["mov",  r"^word ptr \[bp([+-]\d+)\],di$"],
+                ["mov",  r"^c[lx],0xb$"],
+                ["shr",  r"^word ptr \[bp([+-]\d+)\],1$"],
+                ["rcr",  r"^word ptr \[bp([+-]\d+)\],1$"],
+            ]
+            s2 = [
+                ["mov",  r"^bx,word ptr"],
+                ["mov",  r"^bx,word ptr"],
+                ["mov",  r"^ax,word ptr \[bp([+-]\d+)\]$"],
+                ["mov",  r"^dx,word ptr \[bp([+-]\d+)\]$"],
+            ]
+            dpos1 = omatch(i - 5, s1[-5:])
+            dpos2 = omatch(i + 1, s2)
+            if dpos1 and dpos2:
+                bp_dx, bp_ax = dpos1[-2][2].group(1), dpos1[-1][2].group(1)
+                bp_di, bp_si = dpos1[-4][2].group(1), dpos1[-5][2].group(1)
+                assert bp_dx == dpos2[-1][2].group(1)
+                assert bp_ax == dpos2[-2][2].group(1)
+                assert bp_dx == bp_di
+                assert bp_ax == bp_si
+                m = "M_shrd_11_disi_bp %s %s" % (bp_dx, bp_ax)
+                orewrite_inst(i, m, "", dpos1 + dpos2[-2:])
                 continue
         #
         if inst in [

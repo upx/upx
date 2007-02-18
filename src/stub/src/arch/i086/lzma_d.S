@@ -86,13 +86,10 @@
         //xor     cx, cx      // FIXME - do we need this ?
 .endm
 
-.macro  M_shld_8_bp l h
+.macro  M_shld_8_bp h l
         mov     dx, word ptr[bp+h]
         mov     ax, word ptr[bp+l]
-        mov     dh, dl
-        mov     dl, ah
-        mov     ah, al
-        xor     al, al
+        M_shld_8
         mov     word ptr[bp+h], dx
         mov     word ptr[bp+l], ax
 .endm
@@ -100,7 +97,7 @@
 
 // shld: dx:ax >>= 11
 .macro  M_shrd_11
-#if 1
+#if 0
         mov     al, ah
         mov     ah, dl
         mov     dl, dh
@@ -112,6 +109,7 @@
         shr     dx
         rcr     ax
 #else
+    // WARNING: this trashes "bx" !
         mov     cl, 11
         mov     bx, dx      // save dx
         shr     ax, cl
@@ -121,6 +119,22 @@
         or      ax, bx
 #endif
         //xor     cx, cx      // FIXME - do we need this ?
+.endm
+
+.macro  M_shrd_11_bp h l
+        mov     dx, word ptr[bp+h]
+        mov     ax, word ptr[bp+l]
+        M_shrd_11
+        mov     word ptr[bp+h], dx
+        mov     word ptr[bp+l], ax
+.endm
+
+.macro  M_shrd_11_disi_bp h l
+        mov     dx, di
+        mov     ax, si
+        M_shrd_11
+        mov     word ptr[bp+h], dx
+        mov     word ptr[bp+l], ax
 .endm
 
 
@@ -202,7 +216,7 @@ section LZMA_DEC00
 
         push    ds
         mov     bp, sp
-#if 1
+#if 0
         // DEBUG - check for enough stack
         lea     bx, [bp + lzma_stack_adjust - 256]
         cmp     bp, bx
@@ -284,7 +298,6 @@ section LZMA_DEC31
         push    ax
         add     ax, offset lzma_u_len_segment
         mov     es, ax
-
 
 
 // vi:ts=4:et
