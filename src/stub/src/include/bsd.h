@@ -134,35 +134,28 @@ struct timespec {
 
 
 /*************************************************************************
-// i386 syscalls
-//
-// Because of different <asm/unistd.h> versions and subtle bugs
-// in both gcc and egcs we define all syscalls manually.
-//
-// Also, errno conversion is not necessary in our case, and we
-// use optimized assembly statements to further decrease the size.
+// syscalls
 **************************************************************************/
 
-int access(char const *,int);
-int execve(char const *,char const *const *,char const *const *);
-int fcntl(int,int,long);
-int ftruncate(int,size_t);
+int access(char const *, int);
+void *brk(void *);
+int close(int);
+int execve(char const *, char const *const *, char const *const *);
+void exit(int) __attribute__((__noreturn__,__nothrow__));
+int fcntl(int, int, long);
+int ftruncate(int, size_t);
 pid_t fork(void);
 pid_t getpid(void);
 int gettimeofday(struct timeval *,void *);
-int nanosleep(struct timespec const *,struct timespec *);
-pid_t waitpid(pid_t,int *,int);
-int unlink(char const *);
-
-void *brk(void *);
-int close(int);
-void exit(int) __attribute__((__noreturn__,__nothrow__));
 void *mmap(void *, size_t, int, int, int, off_t);
 int munmap(void *, size_t);
 int mprotect(void const *, size_t, int);
+int nanosleep(struct timespec const *,struct timespec *);
 int open(char const *, unsigned, unsigned);
 ssize_t read(int, void *, size_t);
+pid_t waitpid(pid_t, int *, int);
 ssize_t write(int, void const *, size_t);
+int unlink(char const *);
 
 
 /*************************************************************************

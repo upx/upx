@@ -60,7 +60,7 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-//    virtual const upx_byte *getLoader() const;
+//    virtual upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
     struct boot_sect_t
