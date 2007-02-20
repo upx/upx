@@ -755,6 +755,42 @@ Linker* PackExe::newLinker() const
     return new ElfLinkerX86();
 }
 
+/*
+
+memory layout at decompression time
+===================================
+
+normal exe
+----------
+
+a, at load time
+
+(e - copying code, C - compressed data, d - decompressor+relocator,
+ x - not specified, U - uncompressed code+data, R uncompressed relocation)
+
+eeCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCdddd
+^ CS:0                                       ^ SS:0
+
+b, after copying
+
+xxxxxxxxxxxxxxxCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCdddd
+^ES:DI=0       ^ DS:SI=0                     ^ CS=SS, IP in range 0..0xf
+
+c, after uncompression
+
+UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRdddd
+                                           ^ ES:DI
+
+device driver
+-------------
+
+the file has 2 entry points, CS:0 in device driver mode, and
+CS:exe_as_device_entry in normal mode. the code in section DEVICEENTRY
+sets up the same environment for section EXEENTRY, as it would see in normal
+execution mode.
+
+*/
+
 
 /*
 vi:ts=4:et
