@@ -1082,14 +1082,8 @@ void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i, C j)
 void __acc_cdecl_va Packer::addLoaderVA(const char *s, ...)
 {
     va_list ap;
-    const char *t = s;
-
     va_start(ap, s);
-    while (t != NULL)
-    {
-        linker->addLoader(t);
-        t = va_arg(ap, const char *);
-    }
+    linker->addLoader(s, ap);
     va_end(ap);
 }
 

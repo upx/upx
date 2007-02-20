@@ -83,6 +83,12 @@ public:
     virtual void init(const void *pdata, int plen);
     //virtual void setLoaderAlignOffset(int phase);
     virtual int addLoader(const char *sname);
+    void addLoader(const char *s, va_list ap);
+#if 1 && (ACC_CC_GNUC >= 0x040100)
+    void __acc_cdecl_va addLoaderVA(const char *s, ...) __attribute__((__sentinel__));
+#else
+    void __acc_cdecl_va addLoaderVA(const char *s, ...);
+#endif
     virtual Section *addSection(const char *sname, const void *sdata, int slen, unsigned p2align);
     virtual int getSection(const char *sname, int *slen=NULL) const;
     virtual int getSectionSize(const char *sname) const;

@@ -439,6 +439,23 @@ int ElfLinker::addLoader(const char *sname)
     return outputlen;
 }
 
+void ElfLinker::addLoader(const char *s, va_list ap)
+{
+    while (s != NULL)
+    {
+        addLoader(s);
+        s = va_arg(ap, const char *);
+    }
+}
+
+void __acc_cdecl_va ElfLinker::addLoaderVA(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    addLoader(s, ap);
+    va_end(ap);
+}
+
 int ElfLinker::getSection(const char *sname, int *slen) const
 {
     const Section *section = findSection(sname);
