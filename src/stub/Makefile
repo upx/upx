@@ -134,15 +134,6 @@ maintainer-clean:
 # util var for use in the rules - basename of the current target
 override T = $(basename $(notdir $@))
 
-# trim (strip) trailing whitespace
-RTRIM     := sed -e 's/[ $(tab)]*$$//'
-# squeeze duplicate blank lines, delete empty first & last line
-BLSQUEEZE := $(RTRIM) | cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
-# delete blank lines
-BLDEL     := $(RTRIM) | sed -e '/^$$/d'
-#
-UNIX2DOS  := perl -i -pe 's/$$/\r/;'
-
 # clear some vars, just in case
 LABEL_PREFIX =
 PP_FLAGS =
@@ -150,6 +141,21 @@ tc_bfdarch =
 tc_bfdname =
 tc_list =
 tc_objdump_disasm_options =
+
+# commands
+PYTHON     = python
+UNIX2DOS  := perl -i -pe 's/$$/\r/;'
+
+# trim (strip) trailing whitespace
+RTRIM     := sed -e 's/[ $(tab)]*$$//'
+# squeeze duplicate blank lines, delete empty first & last line
+BLSQUEEZE := $(RTRIM) | cat --squeeze-blank | sed -e '1{/^$$/d}' -e '$${/^$$/d}'
+# delete blank lines
+BLDEL     := $(RTRIM) | sed -e '/^$$/d'
+# delete blank lines at top (beginning) of file
+BLDELTOP  := sed -e '/./,$$!d'
+# delete blank lines at bottom (end) of file
+BLDELBOT  := sed -e ':a' -e '/^\n*$$/{$$d;N;ba' -e '}'
 
 
 # /***********************************************************************
@@ -170,15 +176,15 @@ define tc
 endef
 
 # default tools
-tc.default.bin2h      = python $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
+tc.default.bin2h      = $(PYTHON) $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
 ##tc.default.bin2h-c    = $(call tc,bin2h) --compress=14,15,0
 tc.default.bin2h-c    = $(call tc,bin2h) --compress=0
-tc.default.brandelf   = python $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
-tc.default.gpp_inc    = python $(top_srcdir)/src/stub/scripts/gpp_inc.py
-tc.default.gpp_mkdep  = python $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
+tc.default.brandelf   = $(PYTHON) $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))
+tc.default.gpp_inc    = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py
+tc.default.gpp_mkdep  = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
 tc.default.sstrip     = sstrip
-tc.default.xstrip     = python $(top_srcdir)/src/stub/scripts/xstrip.py
+tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
 tc.default.m-ar       = multiarch-ar-2.17
