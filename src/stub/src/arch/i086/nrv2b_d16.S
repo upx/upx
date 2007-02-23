@@ -37,6 +37,10 @@
 ; bp - -1
 */
 
+#ifndef  COPY_MATCH
+# define COPY_MATCH     rep movsb
+#endif
+
 section         NRV2B160
 literal_n2b:
                 movsb
@@ -79,8 +83,7 @@ section         NRVGTD00
 section         NRVDECO2
                 lea     ax, [bp+di]
                 xchg    ax, si
-                rep
-                movsb
+                COPY_MATCH
                 xchg    ax, si
                 jmps    decomp_start_n2b
 getbit_cx_n2b:

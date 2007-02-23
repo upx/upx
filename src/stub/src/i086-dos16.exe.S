@@ -59,15 +59,40 @@ strategy:
                 push    bp
                 push    ds
                 push    es
+
+section         LZMADEVICE
+                sub     ax, offset exe_stack_ss + 0x10
+                mov     ds, ax          /* ds = cs - 0x10 */
+
+section         DEVICEENTRY2
                 .byte   0x72            /* "jc 0xf9" but flag C is 0 => nop */
 exe_as_device_entry:
                 stc                     /* flag C is 1 */
                 pushf
 
 /* ============= */
+section         LZMAENTRY
+                push    ss
+                pop     es
+                mov     bx, 0x8000
+                xor     cx, cx
+                mov     si, offset COMPRESSED_LZMA_START + 0x100 /* ds = cs - 0x10 */
+                mov     di, 0x10
+                mov     bp, -1
+                .byte   0xa8            /* skips the following "movsb" */
+
+#define         COPY_MATCH .byte 0x26; rep movsb
+#include        "arch/i086/nrv2b_d16.S" /* for uncompressing lzma */
+
+#define         literal_n2b     literal_n2b_
+#define         copy_match_n2b  copy_match_n2b_
+#define         getbit_cx_n2b   getbit_cx_n2b_
+#define         getbit_n2b      getbit_n2b_
+#define         decomp_done_n2b decomp_done_n2b_
+
+/* ============= */
 
 section         EXEENTRY
-exe_entry:
                 mov     cx, offset words_to_copy
                 mov     si, offset copy_offset
                 mov     di, si
@@ -86,11 +111,10 @@ addaxds:
                 rep
                 movsw
                 cld
-section         DEVICESUB
-                /* subb    [cs:si + addaxds + 4], 0x10 */
+section         LONGSUB
+                subb    [cs:si + addaxds + 4], 0x10
+section         SHORTSUB
                 .byte   0x2e, 0x80, 0x6c, addaxds + 4, 0x10
-section         EXESUB
-                subb    [cs:si + addaxds - exe_entry + 4], 0x10
 section         JNCDOCOPY
                 jncs    do_copy
                 xchg    ax, dx
@@ -109,6 +133,8 @@ section         EXEMAIN4
                 mov     bx, offset bx_magic     /* 0x800F + 0x10*bp - 0x10 */
                 push    bp
                 lret
+
+section         COMPRESSED_LZMA_START
 
 #include        "include/header.S"
 

@@ -96,7 +96,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 #define oh  (*eh)
     // fill new exe header
     int flag = 0;
-    if (!opt->dos_exe.no_reloc)
+    if (!opt->dos_exe.no_reloc && ph.method != M_LZMA)
         flag |= USEJUMP;
     if (ih.relocs == 0)
         flag |= NORELOC;
@@ -128,21 +128,87 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 #undef oh
 }
 
+void PackExe::addLoaderEpilogue(int flag)
+{
+    addLoader("EXEMAIN5", NULL);
+    if (relocsize)
+        addLoader(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? "EXENOADJ" : "EXEADJUS",
+                  "EXERELO1",
+                  has_9a ? "EXEREL9A" : "",
+                  "EXERELO2",
+                  ih_exesize > 0xFE00 ? "EXEREBIG" : "",
+                  "EXERELO3",
+                  NULL
+                 );
+    addLoader("EXEMAIN8",
+              device_driver ? "DEVICEEND" : "",
+              (flag & SS) ? "EXESTACK" : "",
+              (flag & SP) ? "EXESTASP" : "",
+              (flag & USEJUMP) ? "EXEJUMPF" : "",
+              NULL
+             );
+    if (!(flag & USEJUMP))
+        addLoader(ih.cs ? "EXERCSPO" : "",
+                  "EXERETIP",
+                  NULL
+                 );
+
+    linker->defineSymbol("original_cs", ih.cs);
+    linker->defineSymbol("original_ip", ih.ip);
+    linker->defineSymbol("original_sp", ih.sp);
+    linker->defineSymbol("original_ss", ih.ss);
+    linker->defineSymbol("reloc_size",
+                         (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff)
+                          >= relocsize ? 0 : MAXRELOCS) - relocsize);
+}
 
 void PackExe::buildLoader(const Filter *)
 {
-    struct exe_header_t tmp_oh;
+    exe_header_t tmp_oh;
     int flag = fillExeHeader(&tmp_oh);
 
-    // prepare loader
     initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
-    if (device_driver)
-        addLoader("DEVICEENTRY", NULL);
+
+    if (ph.method == M_LZMA)
+    {
+        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
+                  ph.u_len > 0xffff ? "LZMA_DEC31" : "",
+                  NULL
+                 );
+        addLoaderEpilogue(flag);
+        defineDecompressorSymbols();
+        relocateLoader();
+        const unsigned lsize = getLoaderSize();
+        MemBuffer loader(lsize);
+        memcpy(loader, getLoader(), lsize);
+
+        MemBuffer compressed_lzma;
+        compressed_lzma.allocForCompression(lsize);
+        unsigned c_len_lzma = MemBuffer::getSizeForCompression(lsize);
+        upx_compress(loader, lsize, compressed_lzma, &c_len_lzma,
+                     NULL, M_NRV2B_LE16, 9, NULL, NULL);
+
+        info("lzma+relocator code compressed: %u -> %u", lsize, c_len_lzma);
+        // reinit the loader
+        initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
+        // prepare loader
+        if (device_driver)
+            addLoader("DEVICEENTRY,LZMADEVICE,DEVICEENTRY2", NULL);
+
+        linker->addSection("COMPRESSED_LZMA", compressed_lzma, c_len_lzma, 0);
+        addLoader("LZMAENTRY,NRV2B160,NRVDDONE,NRVDECO1,NRVGTD00,NRVDECO2",
+                  NULL);
+    }
+    else if (device_driver)
+        addLoader("DEVICEENTRY,DEVICEENTRY2", NULL);
+
     addLoader("EXEENTRY",
-              device_driver ? "DEVICESUB" : "EXESUB",
+              ph.method == M_LZMA && device_driver ? "LONGSUB" : "SHORTSUB",
               "JNCDOCOPY",
               relocsize ? "EXERELPU" : "",
-              "EXEMAIN4,+G5DXXXX,UPX1HEAD,EXECUTPO",
+              "EXEMAIN4",
+              ph.method == M_LZMA ? "COMPRESSED_LZMA_START,COMPRESSED_LZMA" : "",
+              "+G5DXXXX,UPX1HEAD,EXECUTPO",
               NULL
              );
     if (ph.method == M_NRV2B_8)
@@ -182,34 +248,11 @@ void PackExe::buildLoader(const Filter *)
                   NULL
                  );
     else if M_IS_LZMA(ph.method)
-        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
-                  ph.u_len > 0xffff ? "LZMA_DEC31" : "",
-                  NULL
-                 );
+        return;
     else
         throwInternalError("unknown compression method");
-    addLoader("EXEMAIN5", NULL);
-    if (relocsize)
-        addLoader(ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff) >= relocsize ? "EXENOADJ" : "EXEADJUS",
-                  "EXERELO1",
-                  has_9a ? "EXEREL9A" : "",
-                  "EXERELO2",
-                  ih_exesize > 0xFE00 ? "EXEREBIG" : "",
-                  "EXERELO3",
-                  NULL
-                 );
-    addLoader("EXEMAIN8",
-              device_driver ? "DEVICEEND" : "",
-              (flag & SS) ? "EXESTACK" : "",
-              (flag & SP) ? "EXESTASP" : "",
-              (flag & USEJUMP) ? "EXEJUMPF" : "",
-              NULL
-             );
-    if (!(flag & USEJUMP))
-        addLoader(ih.cs ? "EXERCSPO" : "",
-                  "EXERETIP",
-                  NULL
-                 );
+
+    addLoaderEpilogue(flag);
 }
 
 
@@ -521,18 +564,11 @@ void PackExe::pack(OutputFile *fo)
     }
     extra_info[eisize++] = (unsigned char) flag;
 
-    linker->defineSymbol("original_cs", ih.cs);
-    linker->defineSymbol("original_ip", ih.ip);
-    linker->defineSymbol("original_sp", ih.sp);
-    linker->defineSymbol("original_ss", ih.ss);
-    linker->defineSymbol("reloc_size",
-                         (ph.u_len <= DI_LIMIT || (ph.u_len & 0x7fff)
-                          >= relocsize ? 0 : MAXRELOCS) - relocsize);
     linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
 
-    unsigned decompressor_entry = packedsize & 15;
-    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
-        decompressor_entry++;
+    unsigned decompressor_entry = 1 + (packedsize & 15);
+    if (M_IS_LZMA(ph.method))
+        decompressor_entry = 0x10;
     linker->defineSymbol("decompressor_entry", decompressor_entry);
 
     // patch loader
@@ -569,7 +605,8 @@ void PackExe::pack(OutputFile *fo)
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
-    oh.ip = device_driver ? getLoaderSection("EXEENTRY") - 2 : 0;
+    const char *exeentry = ph.method == M_LZMA ? "LZMAENTRY" : "EXEENTRY";
+    oh.ip = device_driver ? getLoaderSection(exeentry) - 2 : 0;
 
     defineDecompressorSymbols();
     relocateLoader();
@@ -620,7 +657,7 @@ int PackExe::canUnpack()
         return false;
     const off_t off = ih.headsize16 * 16;
     fi->seek(off, SEEK_SET);
-    bool b = readPackHeader(256);
+    bool b = readPackHeader(4096);
     return b && (off + (off_t) ph.c_len <= file_size);
 }
 
@@ -788,6 +825,33 @@ the file has 2 entry points, CS:0 in device driver mode, and
 CS:exe_as_device_entry in normal mode. the code in section DEVICEENTRY
 sets up the same environment for section EXEENTRY, as it would see in normal
 execution mode.
+
+lzma uncompression for normal exes
+----------------------------------
+
+(n - nrv2b uncompressor, l - nrv2b compressed lzma + relocator code)
+
+a, at load time
+
+nneelllCCCCCCCCCCCCCCCCCCCCCCCCC
+
+^ CS:0                                       ^ SS:0
+
+b, after nrv2b
+
+nneelllCCCCCCCCCCCCCCCCCCCCCCCCC             dddd
+^ CS:0                                       ^ SS:0x10
+
+after this, normal ee code runs
+
+lzma + device driver
+--------------------
+
+(D - device driver adapter)
+
+a, at load time
+
+DDnneelllCCCCCCCCCCCCCCCCCCCCCCCCC
 
 */
 
