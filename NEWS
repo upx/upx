@@ -6,6 +6,7 @@ Changes in 2.93 beta (XX XXX 2007):
   * new formats Mach/i386 and Mach/fat support Mac OS X i686 and
     Univeral binaries [i686 and PowerPC only]
   * LZMA algorithm support for dos/exe added; use option '--lzma' to enable
+  * pe: better icon compression handling
 
 Changes in 2.92 beta (23 Jan 2007):
   * new option '--ultra-brute' which tries even more variants

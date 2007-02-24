@@ -50,18 +50,6 @@
 #  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
 #endif
 
-
-// Unicode string compare
-static bool ustrsame(const void *s1, const void *s2)
-{
-    unsigned len1 = get_le16(s1);
-    unsigned len2 = get_le16(s2);
-    if (len1 != len2)
-        return false;
-    return memcmp(s1, s2, 2 + 2*len1) == 0;
-}
-
-
 #if (__ACC_CXX_HAVE_PLACEMENT_DELETE) || defined(__DJGPP__)
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
@@ -1245,6 +1233,12 @@ upx_byte *PeFile::Resource::build()
     newstart = new upx_byte [dirsize()];
     unsigned bpos = 0,spos = dsize;
     build(root,bpos,spos,0);
+
+    // dirsize() is 4 bytes aligned, so we may need to zero
+    // up to 2 bytes to make valgrind happy
+    while (spos < dirsize())
+        newstart[spos++] = 0;
+
     return newstart;
 }
 
@@ -1349,7 +1343,7 @@ static bool match(unsigned itype, const unsigned char *ntype,
                 if (unistr[2 + ic * 2] != (unsigned char) mkeep[ic])
                     return false;
             return mkeep[ic] == 0 || mkeep[ic] == ',' || mkeep[ic] == '/';
-        };
+        }
     };
 
     // FIXME this comparison is not too exact
@@ -1404,15 +1398,31 @@ void PeFile::processResources(Resource *res)
     oresources = new upx_byte[soresources];
     upx_byte *ores = oresources + res->dirsize();
 
+    char *keep_icons = NULL; // icon ids in the first icon group
     unsigned iconsin1stdir = 0;
     if (opt->win32_pe.compress_icons == 2)
         while (res->next()) // there is no rewind() in Resource
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0)
+            {
                 iconsin1stdir = get_le16(ibuf + res->offs() + 4);
+                keep_icons = new char[1 + iconsin1stdir * 9];
+                *keep_icons = 0;
+                for (unsigned ic = 0; ic < iconsin1stdir; ic++)
+                    snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
+                             get_le16(ibuf + res->offs() + 6 + ic * 14 + 12));
+                if (*keep_icons)
+                    keep_icons[strlen(keep_icons) - 1] = 0;
+            }
 
-    bool compress_icon = opt->win32_pe.compress_icons == 3;
-    bool compress_idir = false;
-    unsigned iconcnt = 0;
+    // the icon id which should not be compressed when compress_icons == 1
+    unsigned first_icon_id = (unsigned) -1;
+    if (opt->win32_pe.compress_icons == 1)
+        while (res->next())
+            if (res->itype() == RT_GROUP_ICON && first_icon_id == (unsigned) -1)
+                first_icon_id = get_le16(ibuf + res->offs() + 6 + 12);
+
+    bool compress_icon = opt->win32_pe.compress_icons > 1;
+    bool compress_idir = opt->win32_pe.compress_icons == 3;
 
     // some statistics
     unsigned usize = 0;
@@ -1426,26 +1436,27 @@ void PeFile::processResources(Resource *res)
         bool do_compress = true;
         if (!opt->win32_pe.compress_resources)
             do_compress = false;
-        else if (rtype == RT_VERSION)       // version info
-            do_compress = false;
         else if (rtype == RT_ICON)          // icon
-            do_compress = compress_icon && opt->win32_pe.compress_icons;
+        {
+            if (opt->win32_pe.compress_icons == 0)
+                do_compress = false;
+            else if (opt->win32_pe.compress_icons == 1)
+                if ((first_icon_id == (unsigned) -1
+                     || first_icon_id == res->iname()))
+                    do_compress = compress_icon;
+        }
         else if (rtype == RT_GROUP_ICON)    // icon directory
             do_compress = compress_idir && opt->win32_pe.compress_icons;
         else if (rtype > 0 && rtype < RT_LAST)
             do_compress = opt->win32_pe.compress_rt[rtype] ? true : false;
-        else if (res->ntype())              // named resource type
-        {
-            const upx_byte * const t = res->ntype();
-            if (ustrsame(t, "\x7\x0T\x0Y\x0P\x0""E\x0L\x0I\x0""B\x0"))
-                do_compress = false;        // u"TYPELIB"
-            else if (ustrsame(t, "\x8\x0R\x0""E\x0G\x0I\x0S\x0T\x0R\x0Y\x0"))
-                do_compress = false;        // u"REGISTRY"
-        }
 
-        if (do_compress && opt->win32_pe.keep_resource[0])
-            do_compress ^= match(res->itype(), res->ntype(), res->iname(),
-                                 res->nname(), opt->win32_pe.keep_resource);
+        if (keep_icons)
+            do_compress &= !match(res->itype(), res->ntype(), res->iname(),
+                                  res->nname(), keep_icons);
+        do_compress &= !match(res->itype(), res->ntype(), res->iname(),
+                              res->nname(), "TYPELIB,REGISTRY,16");
+        do_compress &= !match(res->itype(), res->ntype(), res->iname(),
+                              res->nname(), opt->win32_pe.keep_resource);
 
         if (do_compress)
         {
@@ -1463,8 +1474,8 @@ void PeFile::processResources(Resource *res)
         memcpy(ores, ibuf + res->offs(), res->size());
         ibuf.fill(res->offs(), res->size(), FILLVAL);
         res->newoffs() = ptr_diff(ores,oresources);
-        if (rtype == RT_ICON)
-            compress_icon = (++iconcnt >= iconsin1stdir || opt->win32_pe.compress_icons == 1);
+        if (rtype == RT_ICON && opt->win32_pe.compress_icons == 1)
+            compress_icon = true;
         else if (rtype == RT_GROUP_ICON)
         {
             if (opt->win32_pe.compress_icons == 1)
@@ -1479,6 +1490,7 @@ void PeFile::processResources(Resource *res)
     }
     soresources = ptr_diff(ores,oresources);
 
+    delete[] keep_icons;
     if (!res->clear())
     {
         // The area occupied by the resource directory is not continuous
