@@ -163,7 +163,7 @@
 //   REQUIRED: 16 <= cl <= 32
 .macro  M_shld_16_32
         sub     cl, 16
-        shr     ax, cl
+        shl     ax, cl
         mov     dx, ax
         xor     ax, ax
 .endm
