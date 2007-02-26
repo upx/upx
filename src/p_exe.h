@@ -111,6 +111,8 @@ protected:
         MINMEM = 16,
         MAXMEM = 32
     };
+
+    unsigned stack_for_lzma;    // stack size required for lzma
 };
 
 

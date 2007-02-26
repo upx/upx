@@ -57,6 +57,7 @@ PackExe::PackExe(InputFile *f) :
     // disable lzma for "--brute" unless explicitly given "--lzma"
     if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
         opt->all_methods_use_lzma = false;
+    stack_for_lzma = 0;
 }
 
 
@@ -89,7 +90,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 
     unsigned minsp = 0x200;
     if (M_IS_LZMA(ph.method))
-        minsp = getDecompressorWrkmemSize() + 0x1500; // FIXME ???
+        minsp = stack_for_lzma;
     assert(minsp < 0xff00);
 
     oh.sp = ih.sp > minsp ? (unsigned) ih.sp : minsp;
@@ -104,7 +105,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 
     if (oh.ss != ih.ss)
         flag |= SS;
-    if (oh.sp != ih.sp)
+    if (oh.sp != ih.sp || M_IS_LZMA(ph.method))
         flag |= SP;
     return flag;
 #undef oh
@@ -157,6 +158,7 @@ void PackExe::buildLoader(const Filter *)
                   ph.u_len > 0xffff ? "LZMA_DEC31" : "",
                   NULL
                  );
+
         addLoaderEpilogue(flag);
         defineDecompressorSymbols();
         relocateLoader();
@@ -181,6 +183,13 @@ void PackExe::buildLoader(const Filter *)
         linker->addSection("COMPRESSED_LZMA", compressed_lzma, c_len_lzma, 0);
         addLoader("LZMAENTRY,NRV2B160,NRVDDONE,NRVDECO1,NRVGTD00,NRVDECO2",
                   NULL);
+
+        // Lzma decompression code starts at ss:0x10, and its size is
+        // lsize bytes. It also needs getDecompressorWrkmemSize() bytes
+        // during uncompression. It also uses some stack, so 0x100
+        // more bytes are allocated
+        stack_for_lzma = getDecompressorWrkmemSize() + lsize + 0x100;
+        stack_for_lzma = stack_for_lzma & ~0xf;
     }
     else if (device_driver)
         addLoader("DEVICEENTRY,DEVICEENTRY2", NULL);
