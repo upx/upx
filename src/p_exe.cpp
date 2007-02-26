@@ -62,26 +62,8 @@ PackExe::PackExe(InputFile *f) :
 
 const int *PackExe::getCompressionMethods(int method, int level) const
 {
-#if 0
-    static const int m_all[]   = { M_NRV2B_8, M_NRV2D_8, M_NRV2E_8, M_END };
-    static const int m_nrv2b[] = { M_NRV2B_8, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_8, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_8, M_END };
-    static const int m_lzma[] =  { M_LZMA, M_END };
-
-    if (method == M_ALL)    return m_all;
-    if (M_IS_NRV2B(method)) return m_nrv2b;
-    if (M_IS_NRV2D(method)) return m_nrv2d;
-    if (M_IS_NRV2E(method)) return m_nrv2e;
-    if (M_IS_LZMA(method))  return m_lzma;
-    bool small = ih_imagesize <= 256*1024;
-    if (level == 1 || small)
-        return m_nrv2b;
-    return m_nrv2e;
-#else
     bool small = ih_imagesize <= 256*1024;
     return Packer::getDefaultCompressionMethods_8(method, level, small);
-#endif
 }
 
 
@@ -96,7 +78,7 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
 #define oh  (*eh)
     // fill new exe header
     int flag = 0;
-    if (!opt->dos_exe.no_reloc && ph.method != M_LZMA)
+    if (!opt->dos_exe.no_reloc && !M_IS_LZMA(ph.method))
         flag |= USEJUMP;
     if (ih.relocs == 0)
         flag |= NORELOC;
@@ -169,7 +151,7 @@ void PackExe::buildLoader(const Filter *)
 
     initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
 
-    if (ph.method == M_LZMA)
+    if (M_IS_LZMA(ph.method))
     {
         addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
                   ph.u_len > 0xffff ? "LZMA_DEC31" : "",
@@ -185,8 +167,9 @@ void PackExe::buildLoader(const Filter *)
         MemBuffer compressed_lzma;
         compressed_lzma.allocForCompression(lsize);
         unsigned c_len_lzma = MemBuffer::getSizeForCompression(lsize);
-        upx_compress(loader, lsize, compressed_lzma, &c_len_lzma,
-                     NULL, M_NRV2B_LE16, 9, NULL, NULL);
+        int r = upx_compress(loader, lsize, compressed_lzma, &c_len_lzma,
+                             NULL, M_NRV2B_LE16, 9, NULL, NULL);
+        assert(r == UPX_E_OK); assert(c_len_lzma < lsize);
 
         info("lzma+relocator code compressed: %u -> %u", lsize, c_len_lzma);
         // reinit the loader
@@ -203,11 +186,11 @@ void PackExe::buildLoader(const Filter *)
         addLoader("DEVICEENTRY,DEVICEENTRY2", NULL);
 
     addLoader("EXEENTRY",
-              ph.method == M_LZMA && device_driver ? "LONGSUB" : "SHORTSUB",
+              M_IS_LZMA(ph.method) && device_driver ? "LONGSUB" : "SHORTSUB",
               "JNCDOCOPY",
               relocsize ? "EXERELPU" : "",
               "EXEMAIN4",
-              ph.method == M_LZMA ? "COMPRESSED_LZMA_START,COMPRESSED_LZMA" : "",
+              M_IS_LZMA(ph.method) ? "COMPRESSED_LZMA_START,COMPRESSED_LZMA" : "",
               "+G5DXXXX,UPX1HEAD,EXECUTPO",
               NULL
              );
@@ -605,7 +588,7 @@ void PackExe::pack(OutputFile *fo)
     oh.m512 = outputlen & 511;
     oh.p512 = (outputlen + 511) >> 9;
 
-    const char *exeentry = ph.method == M_LZMA ? "LZMAENTRY" : "EXEENTRY";
+    const char *exeentry = M_IS_LZMA(ph.method) ? "LZMAENTRY" : "EXEENTRY";
     oh.ip = device_driver ? getLoaderSection(exeentry) - 2 : 0;
 
     defineDecompressorSymbols();
