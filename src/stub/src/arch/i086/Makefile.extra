@@ -32,14 +32,21 @@ include $(top_srcdir)/src/stub/Makefile
 # //
 # ************************************************************************/
 
+# enumerate the names of all environment variables
+# FIXME: "origin" does not work for things like "export LC_ALL=C"
+##__minienv_varlist = $(foreach v,$1,$(if $(findstring environment,$(origin $v)),$v))
+__minienv_varlist = $(foreach v,$1,$(if $($v),$v))
+# enumerate the names of all environment variables
+__minienv_expand = $(foreach v,$(call __minienv_varlist,$1),$v='$($v)')
+
 DOSBOX = true
 DOSBOX = dosbox
 DOSBOX = /usr/bin/time -p dosbox -exit
 
 ifneq ($(wildcard /usr/bin/wine),)
 WINEENV = @env
-WINEENV = @env -i DISPLAY='$(DISPLAY)' HOME='$(HOME)' PATH='$(PATH)' USER='$(USER)'
-winedir_s = $(shell winepath -s z:$(realpath $1))
+WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME PATH USER TERM)
+winedir_s = z:$(shell winepath -s $(realpath $1))
 winedir_w = $(shell winepath -w $(realpath $1))
 else
 WINEENV = false 'WINEENV'
@@ -146,8 +153,7 @@ lzma_d_c%.S : lzma_d_c%.i cleanasm.py $(MAKEFILE_LIST)
 ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
 
-lzma_d_c%.i : tmp/lzma_d_c%.i
-	cp $< $@
+lzma_d_c%.i : tmp/lzma_d_c%.i ; cp $< $@
 
 tmp/lzma_d_c%.i : lzma_d_c.c wdis2gas.py $(MAKEFILE_LIST) $(TMP_DEPS)
 	rm -f tmp/$T*.i tmp/$T*.o tmp/$T*.obj tmp/$T*.S
@@ -174,8 +180,8 @@ endif
 	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objdump) -b elf32-i386 -m i8086 -M intel -dr -j .text.LzmaDecode --no-show -w tmp/$T.o | $(RTRIM) | perl -pe 's/DWORD/dword/g; s/WORD/word/g; s/BYTE/byte/g; s/PTR/ptr/g;' > $@
 
-.PRECIOUS: lzma_d_cf.i lzma_d_cs.i
-.PRECIOUS: tmp/lzma_d_cf.i tmp/lzma_d_cs.i
+.PRECIOUS: lzma_d_c%.i
+.PRECIOUS: tmp/lzma_d_c%.i
 
 endif
 endif

@@ -76,14 +76,14 @@ def main(argv):
         if m: continue
         m = re.search(r"^(BSS|Routine) Size:", l)
         if m: continue
-        m = re.search(r"Segment:\s+(.+)\s+([0-9a-fA-F]+)\s+bytes$", l)
+        m = re.search(r"^Segment:\s+(.+)\s+([0-9a-fA-F]+)\s+bytes$", l)
         if m:
             s = re.split(r"\s+", m.group(1))
             assert len(s) == 3, (i, l, s, m.groups())
             section = s
             func = None
             continue
-        m = re.search(r"Comdat:\s+(.+)\s+SEGMENT NONE '(\w+)'\s+([0-9a-fA-F]+)\s+bytes$", l)
+        m = re.search(r"^Comdat:\s+(.+)\s+SEGMENT NONE '(\w+)'\s+([0-9a-fA-F]+)\s+bytes$", l)
         if m:
             section = [m.group(2)]
             assert section[0].endswith("_TEXT"), (i, l, section)

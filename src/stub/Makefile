@@ -104,14 +104,16 @@ default: $$(default.targets)
 endif
 endif
 
+
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
 	upx-stubtools-check-version 20060823
 	@echo "timestamp" > $@
-tmp/.tmp-stamp:
+%/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
+.PRECIOUS: %/.tmp-stamp
 .all-stamp: $$(STUBS)
 	@echo "timestamp" > $@
 
