@@ -53,11 +53,11 @@ PackExe::PackExe(InputFile *f) :
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32);
     ih_exesize = ih_imagesize = ih_overlay = 0;
+    stack_for_lzma = 0;
 
     // disable lzma for "--brute" unless explicitly given "--lzma"
     if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
         opt->all_methods_use_lzma = false;
-    stack_for_lzma = 0;
 }
 
 
@@ -161,8 +161,22 @@ void PackExe::buildLoader(const Filter *)
 
         addLoaderEpilogue(flag);
         defineDecompressorSymbols();
+        const unsigned lsize0 = getLoaderSize();
+
+        // Lzma decompression code starts at ss:0x10, and its size is
+        // lsize bytes. It also needs getDecompressorWrkmemSize() bytes
+        // during uncompression. It also uses some stack, so 0x100
+        // more bytes are allocated
+        stack_for_lzma = 0x10 + lsize0 + getDecompressorWrkmemSize() + 0x100;
+        stack_for_lzma = ALIGN_UP(stack_for_lzma, 16u);
+
+        unsigned clear_dirty_stack_low = 0x10 + lsize0;
+        clear_dirty_stack_low = ALIGN_UP(clear_dirty_stack_low, 2u);
+        linker->defineSymbol("clear_dirty_stack_low", clear_dirty_stack_low);
+
         relocateLoader();
         const unsigned lsize = getLoaderSize();
+        assert(lsize0 == lsize);
         MemBuffer loader(lsize);
         memcpy(loader, getLoader(), lsize);
 
@@ -184,12 +198,6 @@ void PackExe::buildLoader(const Filter *)
         addLoader("LZMAENTRY,NRV2B160,NRVDDONE,NRVDECO1,NRVGTD00,NRVDECO2",
                   NULL);
 
-        // Lzma decompression code starts at ss:0x10, and its size is
-        // lsize bytes. It also needs getDecompressorWrkmemSize() bytes
-        // during uncompression. It also uses some stack, so 0x100
-        // more bytes are allocated
-        stack_for_lzma = getDecompressorWrkmemSize() + lsize + 0x100;
-        stack_for_lzma = stack_for_lzma & ~0xf;
     }
     else if (device_driver)
         addLoader("DEVICEENTRY,DEVICEENTRY2", NULL);

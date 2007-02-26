@@ -244,7 +244,7 @@ section LZMA_DEC00
         xor     ax, ax
 1:      push    ax
         cmp     sp, bx
-        jnz     1b
+        jnzs    1b
 #else
         mov     sp, bx
 #endif
@@ -269,7 +269,7 @@ section LZMA_DEC00
         push    ds                      // in                           [bp + 8]
         push    si                      //                              [bp + 6]
 
-        // enter small model
+        // enter small memory model
         push    ss
         pop     ds
 
@@ -299,14 +299,14 @@ section LZMA_DEC20
 
 // cleanup
 section LZMA_DEC30
-#if 0
+#if 1
         // clear dirty stack
-        lea     bx, [bp + lzma_stack_adjust - 256]
         mov     sp, bp
+        mov     bx, offset clear_dirty_stack_low
         xor     ax, ax
 1:      push    ax
         cmp     sp, bx
-        jnz     1b
+        jnzs    1b
 #endif
         mov     sp, bp
         pop     ds
