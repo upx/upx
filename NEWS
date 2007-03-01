@@ -10,6 +10,7 @@ Changes in 2.93 beta (XX XXX 2007):
     because runtime decompression is about 30 times slower than NRV -
     which is really noticable on old machines.
   * win32/pe & arm/pe: better icon compression handling
+  * dos/exe: fixed a rarely occuring bug in relocation handling
 
 Changes in 2.92 beta (23 Jan 2007):
   * new option '--ultra-brute' which tries even more variants

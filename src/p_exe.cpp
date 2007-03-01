@@ -388,7 +388,7 @@ unsigned optimize_relocs(upx_byte *b, const unsigned size,
                 break;
             }
             unsigned offs = addr - es*16;
-            if (offs >= 3 && b[es*16 + offs-3] == 0x9a)
+            if (offs >= 3 && b[es*16 + offs-3] == 0x9a && offs > di + 3)
             {
                 for (t = di; t < offs-3; t++)
                     if (b[es*16+t] == 0x9a && get_le16(b+es*16+t+3) <= seg_high)
