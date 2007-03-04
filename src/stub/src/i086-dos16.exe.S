@@ -130,7 +130,9 @@ section         EXEMAIN4
                 pop     es
                 push    ss
                 mov     bp, offset decompressor_entry
+section         EXEMAIN4B
                 mov     bx, offset bx_magic     /* 0x800F + 0x10*bp - 0x10 */
+section         EXEMAIN4C
                 push    bp
                 lret
 

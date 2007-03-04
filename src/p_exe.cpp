@@ -209,6 +209,8 @@ void PackExe::buildLoader(const Filter *)
               "JNCDOCOPY",
               relocsize ? "EXERELPU" : "",
               "EXEMAIN4",
+              M_IS_LZMA(ph.method) ? "" : "EXEMAIN4B",
+              "EXEMAIN4C",
               M_IS_LZMA(ph.method) ? "COMPRESSED_LZMA_START,COMPRESSED_LZMA" : "",
               "+G5DXXXX,UPX1HEAD,EXECUTPO",
               NULL
@@ -566,7 +568,8 @@ void PackExe::pack(OutputFile *fo)
     }
     extra_info[eisize++] = (unsigned char) flag;
 
-    linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
+    if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))
+        linker->defineSymbol("bx_magic", 0x7FFF + 0x10 * ((packedsize & 15) + 1));
 
     unsigned decompressor_entry = 1 + (packedsize & 15);
     if (M_IS_LZMA(ph.method))
