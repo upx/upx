@@ -43,7 +43,7 @@
 .macro  M_PIA_small
         add     ax, bx
         adc     cx, 0
-#if 1
+#if 0
         // code size: 8 bytes
         // i086: 2+4+56+3 == 65 clocks
         // i286: 2+2+17+2 == 23 clocks
