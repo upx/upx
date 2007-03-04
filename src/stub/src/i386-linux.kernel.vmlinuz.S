@@ -108,7 +108,7 @@ section         LBZIMAGE
 
 section         LZIMAGE0
 
-// this checka20 stuff looks very unneccessary to me
+// this checka20 stuff looks very unnecessary to me
 checka20:
                 inc     edi             // change value
                 mov     [1 + ebp], edi  // store to 0x000000 (even megabyte)

@@ -197,7 +197,7 @@ For win32/pe programs there's B<--strip-relocs=0>. See notes below.
 
 =head1 OVERLAY HANDLING OPTIONS
 
-Info: An "overlay" means auxillary data atached after the logical end of
+Info: An "overlay" means auxiliary data atached after the logical end of
 an executable, and it often contains application specific data
 (this is a common practice to avoid an extra data file, though
 it would be better to use resource sections).
@@ -616,7 +616,7 @@ How it works:
   UPX uses kernel execve(), which first requires decompressing to a
   temporary file in the filesystem.  Interestingly -
   because of the good memory management of the Linux kernel - this
-  often does not introduce a noticable delay, and in fact there
+  often does not introduce a noticeable delay, and in fact there
   will be no disk access at all if you have enough free memory as
   the entire process takes places within the filesystem buffers.
 
@@ -656,7 +656,7 @@ Specific drawbacks:
 
   - Because of temporary decompression to disk the decompression speed
     is not as fast as with the other executable formats. Still, I can see
-    no noticable delay when starting programs like my ~3 MB emacs (which
+    no noticeable delay when starting programs like my ~3 MB emacs (which
     is less than 1 MB when compressed :-).
 
 Extra options available for this executable format:

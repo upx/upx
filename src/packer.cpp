@@ -1190,7 +1190,7 @@ void Packer::relocateLoader()
 // The workaround is for hdr_buf and hdr_u_len to describe the Elf headers
 // (typically less than 512 bytes) when .text is passed in, and include
 // them in the calculation of shortest output.  Then the result
-// this->ph.method  will say which [single] method to use for everthing.
+// this->ph.method  will say which [single] method to use for everything.
 // The Elf headers are never filtered.  They are short enough (< 512 bytes)
 // that compressing them more than once per method (once here when choosing,
 // once again just before writing [because compressWithFilters discards])

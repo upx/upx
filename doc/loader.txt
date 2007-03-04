@@ -45,6 +45,6 @@ These symbols can be defined later in C++ using
 
         linker->defineSymbol("xx", yy)
 
-This functionality (we could say it's a simple linker) is achived by
+This functionality (we could say it's a simple linker) is achieved by
 compiling the assembly into an ELF object file which a little C++
 module (src/linker.cpp) can interpret and work with.

@@ -29,7 +29,7 @@
 /*************************************************************************
 // Use the preprocessor to work around
 //   - that the types embedding these enums have to be PODs, and
-//     deriving from an empty base class (which is the ususal C++ way
+//     deriving from an empty base class (which is the usual C++ way
 //     of "importing" enums) does not yield a POD any more
 //   - that older compilers do not correctly perform EBCO
 **************************************************************************/

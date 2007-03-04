@@ -717,7 +717,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     //OutputFile::dump("x1", ibuf, usize);
 
-    // some checks for broken linkers - disable filter if neccessary
+    // some checks for broken linkers - disable filter if necessary
     bool allow_filter = true;
     if (ih.codebase == ih.database
         || ih.codebase + ih.codesize > ih.imagesize
