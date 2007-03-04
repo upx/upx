@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 2.93 beta (XX XXX 2007):
+Changes in 2.93 beta (08 Mar 2007):
   * new formats Mach/i386 and Mach/fat support Mac OS X i686 and
     Univeral binaries [i686 and PowerPC only]
   * dos/exe: LZMA is now also supported for 16-bit dos/exe. Please note that
