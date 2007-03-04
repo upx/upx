@@ -154,7 +154,9 @@ void PackExe::buildLoader(const Filter *)
 
     if (M_IS_LZMA(ph.method))
     {
-        addLoader("LZMA_DEC00,LZMA_DEC10,LZMA_DEC99,LZMA_DEC30",
+        addLoader("LZMA_DEC00",
+                  opt->small ? "LZMA_DEC10" : "LZMA_DEC20",
+                  "LZMA_DEC30",
                   ph.u_len > 0xffff ? "LZMA_DEC31" : "",
                   NULL
                  );

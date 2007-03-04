@@ -42,16 +42,10 @@
 //
 **************************************************************************/
 
-section LZMA_DEC99
-.macro LZMA_DEC99_dummy
-.endm
-
-
 // init
 section LZMA_DEC00
         //.byte   0xcc
 
-        push    ds
         mov     bp, sp
 #if 0
         // DEBUG - check for enough stack
@@ -91,26 +85,24 @@ section LZMA_DEC00
         push    ds                      // in                           [bp + 8]
         push    si                      //                              [bp + 6]
 
+        add     bx, 4
+        push    bx                      // &state __near                [bp + 4]
+
         // enter small memory model
+        push    ds                      // save ds && dummy for call
         push    ss
         pop     ds
 
-        add     bx, 4
-        push    bx                      // &state __near                [bp + 4]
-        mov     ax, offset lzma_properties_hi
-        mov     [bx + 2], ax
-        mov     ax, offset lzma_properties
-        mov     [bx], ax
-
-        call    LZMA_DEC10
-        jmp     LZMA_DEC30
+        // fill properties
+        movw    [bx],   offset lzma_properties
+        movw    [bx+2], offset lzma_properties_hi
 
     ignore_reloc_overflow lzma_u_len
     ignore_reloc_overflow lzma_c_len
     ignore_reloc_overflow lzma_properties
 
 
-//#define ret
+#define ret
 section LZMA_DEC10
 .arch   i8086, nojumps
 #define SMALL 1
@@ -119,18 +111,18 @@ section LZMA_DEC10
 #undef SMALL
 section LZMA_DEC20
 .arch   i8086, nojumps
-#define SMALL 1
-//#define FAST 1
+#define FAST 1
 #include "lzma_m.h"
 #include "lzma_d_cf.S"
-//#undef FAST
-#undef SMALL
+#undef FAST
 .arch   i8086, jumps
 #undef ret
 
 
 // cleanup
 section LZMA_DEC30
+        pop     ds
+
 #if 1
         // clear dirty stack
         mov     sp, bp
@@ -141,7 +133,6 @@ section LZMA_DEC30
         jnzs    1b
 #endif
         mov     sp, bp
-        pop     ds
         mov     di, offset lzma_u_len
 
     ignore_reloc_overflow lzma_u_len
