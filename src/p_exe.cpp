@@ -54,6 +54,7 @@ PackExe::PackExe(InputFile *f) :
     COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32);
     ih_exesize = ih_imagesize = ih_overlay = 0;
     stack_for_lzma = 0;
+    use_clear_dirty_stack = false;
 
     // disable lzma for "--brute" unless explicitly given "--lzma"
     if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
@@ -157,7 +158,9 @@ void PackExe::buildLoader(const Filter *)
         addLoader("LZMA_DEC00",
                   opt->small ? "LZMA_DEC10" : "LZMA_DEC20",
                   "LZMA_DEC30",
-                  ph.u_len > 0xffff ? "LZMA_DEC31" : "",
+                  use_clear_dirty_stack ? "LZMA_DEC31" : "",
+                  "LZMA_DEC32",
+                  ph.u_len > 0xffff ? "LZMA_DEC33" : "",
                   NULL
                  );
 
@@ -174,7 +177,8 @@ void PackExe::buildLoader(const Filter *)
 
         unsigned clear_dirty_stack_low = 0x10 + lsize0;
         clear_dirty_stack_low = ALIGN_UP(clear_dirty_stack_low, 2u);
-        linker->defineSymbol("clear_dirty_stack_low", clear_dirty_stack_low);
+        if (use_clear_dirty_stack)
+            linker->defineSymbol("clear_dirty_stack_low", clear_dirty_stack_low);
 
         relocateLoader();
         const unsigned lsize = getLoaderSize();

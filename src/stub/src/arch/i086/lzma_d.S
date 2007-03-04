@@ -123,7 +123,7 @@ section LZMA_DEC20
 section LZMA_DEC30
         pop     ds
 
-#if 1
+section LZMA_DEC31
         // clear dirty stack
         mov     sp, bp
         mov     bx, offset clear_dirty_stack_low
@@ -131,14 +131,13 @@ section LZMA_DEC30
 1:      push    ax
         cmp     sp, bx
         jnzs    1b
-#endif
+
+section LZMA_DEC32
         mov     sp, bp
         mov     di, offset lzma_u_len
-
     ignore_reloc_overflow lzma_u_len
 
-
-section LZMA_DEC31
+section LZMA_DEC33
         pop     ax
         push    ax
         add     ax, offset lzma_u_len_segment

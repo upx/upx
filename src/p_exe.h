@@ -113,6 +113,7 @@ protected:
     };
 
     unsigned stack_for_lzma;    // stack size required for lzma
+    bool use_clear_dirty_stack;
 };
 
 
