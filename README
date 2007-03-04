@@ -96,7 +96,7 @@ THE FUTURE
   - We will *NOT* add any sort of protection and/or encryption.
     This only gives people a false feeling of security because
     by definition all protectors/compressors can be broken.
-    And don't trust any advertisment of authors of other executable
+    And don't trust any advertisement of authors of other executable
     compressors about this topic - just do a websearch on "unpackers"...
 
   - Fix all remaining bugs - keep your reports coming ;-)

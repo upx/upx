@@ -5,12 +5,12 @@ User visible changes for UPX
 Changes in 2.93 beta (XX XXX 2007):
   * new formats Mach/i386 and Mach/fat support Mac OS X i686 and
     Univeral binaries [i686 and PowerPC only]
-  * LZMA is now also supported for 16-bit dos/exe. Please note that
+  * dos/exe: LZMA is now also supported for 16-bit dos/exe. Please note that
     you have to explicitly use '--lzma' even for '--ultra-brute' here
     because runtime decompression is about 30 times slower than NRV -
-    which is really noticable on old machines.
-  * win32/pe & arm/pe: better icon compression handling
+    which is really noticeable on old machines.
   * dos/exe: fixed a rarely occuring bug in relocation handling
+  * win32/pe & arm/pe: better icon compression handling
 
 Changes in 2.92 beta (23 Jan 2007):
   * new option '--ultra-brute' which tries even more variants
