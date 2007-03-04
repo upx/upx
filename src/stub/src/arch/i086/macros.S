@@ -138,76 +138,6 @@
 
 /*
 ; =============
-; ============= HUGE POINTER SUPPORT
-; =============
-*/
-
-/* DOS real mode */
-#define __AHSHIFT        12
-#define __AHINCR         (1 << __AHSHIFT)  /* 4096 */
-
-
-#if 1
-// huge pointer add: dx:ax = dx:ax + cx:bx
-.macro          M_WCC_PIA
-                add     ax, bx
-                adc     cx, 0
-                mov     bx, cx
-                mov     cl, __AHSHIFT
-                shl     bx, cl
-                add     dx, bx
-.endm
-#endif
-
-
-#if 0
-// huge pointer sub: dx:ax = dx:ax - cx:bx
-.macro          M_WCC_PIS
-                sub     ax, bx
-                adc     cx, 0
-                mov     bx, cx
-                mov     cl, __AHSHIFT
-                shl     bx, cl
-                sub     dx, bx
-.endm
-#endif
-
-
-#if 0
-// huge pointer diff: dx:ax = dx:ax - cx:bx
-.macro          M_WCC_PTS
-// normalize
-// FIXME
-// subtract
-                sub     ax, bx
-                sbb     dx, cx
-.endm
-#endif
-
-
-#if 1
-// huge pointer compare: set zero and carry flags: dx:ax cmp cx:bx
-.macro          M_WCC_PTC
-// FIXME: should we normalize the pointers ???
-                local   L1
-                cmp     dx, cx
-                jnes    L1
-                cmp     ax, bx
-L1:
-.endm
-#endif
-
-
-#if 0
-// umul32: dx:ax = dx:ax * cx:bx
-.macro          M_WCC_U4M
-// FIXME
-.endm
-#endif
-
-
-/*
-; =============
 ; ============= 16-BIT CALLTRICK & JUMPTRICK
 ; =============
 */
@@ -236,6 +166,7 @@ section         CT16I086
 section         CALLTRI2
                 lodsw
                 loop    cjt16_L1
+
 
 /*
 ; =============
@@ -271,6 +202,7 @@ section         CALLTRI6
                 jmps    cjt16_L11
 cjt16_L2:
 .endm
+
 
 /*
 ; vi:ts=8:et:nowrap
