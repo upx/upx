@@ -92,9 +92,13 @@ int PackExe::fillExeHeader(struct exe_header_t *eh) const
     unsigned minsp = 0x200;
     if (M_IS_LZMA(ph.method))
         minsp = stack_for_lzma;
+    minsp = ALIGN_UP(minsp, 16u);
     assert(minsp < 0xff00);
-
-    oh.sp = ih.sp > minsp ? (unsigned) ih.sp : minsp;
+    if (oh.sp > minsp)
+        minsp = oh.sp;
+    if (minsp < 0xff00 - 2)
+        minsp = ALIGN_UP(minsp, 2u);
+    oh.sp = minsp;
 
     unsigned destpara = (ph.u_len + ph.overlap_overhead - ph.c_len + 31) / 16;
     oh.ss = ph.c_len/16 + destpara;
@@ -148,8 +152,9 @@ void PackExe::addLoaderEpilogue(int flag)
 
 void PackExe::buildLoader(const Filter *)
 {
-    exe_header_t tmp_oh;
-    int flag = fillExeHeader(&tmp_oh);
+    // get flag
+    exe_header_t dummy_oh;
+    int flag = fillExeHeader(&dummy_oh);
 
     initLoader(stub_i086_dos16_exe, sizeof(stub_i086_dos16_exe));
 
