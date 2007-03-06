@@ -4,7 +4,7 @@ User visible changes for UPX
 
 Changes in 2.93 beta (08 Mar 2007):
   * new formats Mach/i386 and Mach/fat support Mac OS X i686 and
-    Univeral binaries [i686 and PowerPC only]
+    Universal binaries [i686 and PowerPC only]
   * dos/exe: LZMA is now also supported for 16-bit dos/exe. Please note that
     you have to explicitly use '--lzma' even for '--ultra-brute' here
     because runtime decompression is about 30 times slower than NRV -
@@ -312,8 +312,8 @@ Changes in 0.80 (03 Aug 1999)
   * win32/pe: even better TLS support
   * win32/pe: versioninfo works on NT
   * win32/pe: import by ordinal from kernel32.dll works
-  * win32/pe: other import improvements: importing a nonexistant DLL
-    results in a usual Windows message, importing a nonexistant function
+  * win32/pe: other import improvements: importing a nonexistent DLL
+    results in a usual Windows message, importing a nonexistent function
     results in program exit (instead of crash ;-)
   * win32/pe: new option: '--compress-resources=0'
   * win32/pe: reduced memory requirement during uncompression, some
@@ -365,7 +365,7 @@ Changes in 0.60 (06 Mar 1999)
   * win32/pe: fixed file corruption when the size of the export data is invalid
   * win32/pe: fixed a problem with empty resource data
   * win32/pe: compressed file alignment set to minimum value
-  * win32/pe: made all compressed sections writeable
+  * win32/pe: made all compressed sections writable
   * fixed some other win32/pe bugs
   * fixed an address optimization problem for some not Watcom LE files
   * fixed a bug which could make UPX hang when an exe header contained
