@@ -190,7 +190,7 @@ L1:
 // umul32: dx:ax = dx:ax * 0x0600
 .macro  M_U4M_dxax_0x0600
     // FIXME: compute clocks and optimize this
-#if 1
+#if 0
         // code size: 18 bytes
         // i086: > 140 clocks (mul needs 70 clocks)
         // i286: >  26 clocks (mul needs 13 clocks)
