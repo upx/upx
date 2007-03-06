@@ -195,29 +195,42 @@ def main(argv):
         if opts.call_rewrite and inst in ["call"]:
             k, v = parse_label(inst, args)
             if v[:2] == [1, 2]:     # external 2-byte
+                if k == "__aNahdiff":
+                    s = [
+                        ["push", "word ptr [bp+8]"],
+                        ["push", "word ptr [bp+6]"],
+                        ["push", r"word ptr \[bp([+-]\d+)\]$"],
+                        ["push", r"word ptr \[bp([+-]\d+)\]$"],
+                    ]
+                    dpos = omatch(i-1, -4, s)
+                    if dpos:
+                        orewrite_inst(i, "*DEL*", "", dpos)
+                        continue
                 if k in ["__LMUL", "__U4M",]:
+                    s1 = [
+                        ["mov",  "bx,0x300"],
+                        ["xor",  "cx,cx"],
+                    ]
+                    s2 = [
+                        ["shl",  "ax,1"],
+                        ["rcl",  "dx,1"],
+                    ]
+                    dpos1 = omatch(i-1, -2, s1)
+                    dpos2 = omatch(i+1,  2, s2)
+                    if dpos1 and dpos2:
+                        orewrite_inst(i, "M_U4M_dxax_0x0600", "", dpos1 + dpos2)
+                        continue
                     s = [
                         ["mov",  "bx,word ptr [bx]"],
                         ["xor",  "cx,cx"],
                     ]
                     dpos = omatch(i-1, -2, s, debug=0)
                     if 0 and dpos:
-                        orewrite_inst(i, "M_LMUL_dxax_00bx_ptr", "", dpos)
+                        orewrite_inst(i, "M_U4M_dxax_00bx_ptr", "", dpos)
                         continue
                     dpos = omatch(i-1, -1, s)
                     if dpos:
-                        orewrite_inst(i, "M_LMUL_dxax_00bx", "", dpos)
-                        continue
-                if k == "__aNahdiff":
-                    s = [
-                        ["push", "word ptr [bp+8]"],
-                        ["push", "word ptr [bp+6]"],
-                        ["push", "word ptr [bp-66]"],
-                        ["push", "word ptr [bp-68]"],
-                    ]
-                    dpos = omatch(i-1, -4, s)
-                    if dpos:
-                        orewrite_inst(i, "*DEL*", "", dpos)
+                        orewrite_inst(i, "M_U4M_dxax_00bx", "", dpos)
                         continue
                 if k == "__PIA":
                     s = [
@@ -256,6 +269,36 @@ def main(argv):
             dpos = omatch(i-1, -3, s)
             if dpos:
                 orewrite_inst(i, "M_shld_8", "", dpos)
+                continue
+            s1 = [
+                ["mov",  r"^c[lx],0x8$"],
+                ["shl",  "si,1"],
+                ["rcl",  "di,1"],
+            ]
+            s2 = [
+                ["les",  r"^bx,dword ptr \[bp([+-]\d+)\]$"],
+            ]
+            dpos1 = omatch(i-1, -3, s1)
+            dpos2 = omatch(i+1,  1, s2)
+            if 1 and dpos1 and dpos2:
+                # bx and cx are free for use
+                orewrite_inst(i, "M_shld_disi_8_bxcx", "", dpos1)
+                continue
+            s1 = [
+                ["mov",  "ax,si"],
+                ["mov",  r"^c[lx],0x8$"],
+                ["shl",  "ax,1"],
+                ["rcl",  "di,1"],
+            ]
+            s2 = [
+                ["mov",  "si,ax"],
+                ["les",  r"^bx,dword ptr \[bp([+-]\d+)\]$"],
+            ]
+            dpos1 = omatch(i-1, -4, s1)
+            dpos2 = omatch(i+1,  2, s2)
+            if 1 and dpos1 and dpos2:
+                # bx and cx are free for use
+                orewrite_inst(i, "M_shld_diax_8_bxcx", "", dpos1[-3:])
                 continue
             s1 = [
                 ["mov",  r"^c[lx],0x8$"],
