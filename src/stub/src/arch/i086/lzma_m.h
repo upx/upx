@@ -189,7 +189,6 @@ L1:
 
 // umul32: dx:ax = dx:ax * 0x0600
 .macro  M_U4M_dxax_0x0600
-    // FIXME: compute clocks and optimize this
 #if 0
         // code size: 18 bytes
         // i086: > 140 clocks (mul needs 70 clocks)
@@ -198,7 +197,7 @@ L1:
         M_U4M_dxax_00bx
         shl     ax
         rcl     dx
-#elif 1
+#elif 0
         // code size: 14 bytes
         // i086: > 140 clocks (mul needs 70 clocks)
         // i286: >  26 clocks (mul needs 13 clocks)
@@ -236,14 +235,19 @@ L1:
 
 // shld: di:si <<= 8; bx and cx are free
 .macro  M_shld_disi_8_bxcx
-    // FIXME: compute clocks and optimize this
-#if 1
+#if 0
+        // code size: 9 bytes
+        // i086: 2 + 7*(2+2+18) + (2+2+5) == 165 clocks
+        // i286: 2 + 7*(2+2+10) + (2+2+4) == 108 clocks
         local   L1
         mov     cx, 8
 L1:     shl     si
         rcl     di
         loop    L1
 #else
+        // code size: 16 bytes
+        // i086: 17 clocks
+        // i286: 16 clocks
         mov     bx, di
         mov     cx, si
         mov     bh, bl
@@ -258,14 +262,19 @@ L1:     shl     si
 
 // shld: di:ax <<= 8; bx and cx are free
 .macro  M_shld_diax_8_bxcx
-    // FIXME: compute clocks and optimize this
-#if 1
+#if 0
+        // code size: 9 bytes
+        // i086: 2 + 7*(2+2+18) + (2+2+5) == 165 clocks
+        // i286: 2 + 7*(2+2+10) + (2+2+4) == 108 clocks
         local   L1
         mov     cx, 8
 L1:     shl     ax
         rcl     di
         loop    L1
 #else
+        // code size: 12 bytes
+        // i086: 13 clocks
+        // i286: 12 clocks
         mov     bx, di
         mov     bh, bl
         mov     bl, ah
