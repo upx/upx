@@ -57,7 +57,7 @@ Subroutine do_xmap() of src/stub/l_lx_elf.c performs the
 "virtual execve()" using the compressed data as source, and stores
 the decompressed bytes directly into the appropriate virtual addresses.
 
-Before transfering control to the PT_INTERP "program interpreter",
+Before transferring control to the PT_INTERP "program interpreter",
 minor tricks are required to setup the Elf32_auxv_t entries,
 clear the free portion of the stack (to compensate for ld-linux.so.2
 assuming that its automatic stack variables are initialized to zero),
