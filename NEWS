@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.00 (08 Apr 2007):
+
 Changes in 2.93 beta (08 Mar 2007):
   * new formats Mach/i386 and Mach/fat support Mac OS X i686 and
     Universal binaries [i686 and PowerPC only]
