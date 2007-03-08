@@ -197,7 +197,7 @@ For win32/pe programs there's B<--strip-relocs=0>. See notes below.
 
 =head1 OVERLAY HANDLING OPTIONS
 
-Info: An "overlay" means auxiliary data atached after the logical end of
+Info: An "overlay" means auxiliary data attached after the logical end of
 an executable, and it often contains application specific data
 (this is a common practice to avoid an extra data file, though
 it would be better to use resource sections).
@@ -345,7 +345,7 @@ Extra options available for this executable format:
 First of all, it is recommended to use B<UPX> *instead* of B<strip>. strip has
 the very bad habit of replacing your stub with its own (outdated) version.
 Additionally B<UPX> corrects a bug/feature in strip v2.8.x: it
-will fix the 4 KByte aligment of the stub.
+will fix the 4 KByte alignment of the stub.
 
 B<UPX> includes the full functionality of stubify. This means it will
 automatically stubify your COFF files. Use the option B<--coff> to
@@ -380,7 +380,7 @@ Extra options available for this executable format:
 Introduction
 
   Linux/386 support in UPX consists of 3 different executable formats,
-  one optimized for ELF excutables ("linux/elf386"), one optimized
+  one optimized for ELF executables ("linux/elf386"), one optimized
   for shell scripts ("linux/sh386"), and one generic format
   ("linux/386").
 
@@ -408,14 +408,14 @@ General user's overview
   or network I/O.
 
   Depending on the statistics of usage and access, and the relative
-  speeds of CPU, RAM, swap space, /tmp, and filesystem storage, then
+  speeds of CPU, RAM, swap space, /tmp, and file system storage, then
   invoking and running a compressed executable can be faster than
   directly running the corresponding uncompressed program.
-  The operating system might perfrom fewer expensive I/O operations
+  The operating system might perform fewer expensive I/O operations
   to invoke the compressed program.  Paging to or from swap space
-  or /tmp might be faster than paging from the general filesystem.
+  or /tmp might be faster than paging from the general file system.
   ``Medium-sized'' programs which access about 1/3 to 1/2 of their
-  stored program bytes can do particulary well with compression.
+  stored program bytes can do particularly well with compression.
   Small programs tend not to benefit as much because the absolute
   savings is less.  Big programs tend not to benefit proportionally
   because each invocation may use only a small fraction of the program,
@@ -424,7 +424,7 @@ General user's overview
   then compression may win anyway.
 
   Currently, executables compressed by UPX do not share RAM at runtime
-  in the way that executables mapped from a filesystem do.  As a
+  in the way that executables mapped from a file system do.  As a
   result, if the same program is run simultaneously by more than one
   process, then using the compressed version will require more RAM and/or
   swap space.  So, shell programs (bash, csh, etc.)  and ``make''
@@ -513,7 +513,7 @@ The linux/elf386 format decompresses directly into RAM,
 uses only one exec, does not use space in /tmp,
 and does not use /proc.
 
-Linux/elf386 is automatically selected for Linux ELF exectuables.
+Linux/elf386 is automatically selected for Linux ELF executables.
 
 Packed programs will be byte-identical to the original after uncompression.
 
@@ -602,7 +602,7 @@ Extra options available for this executable format:
 Please read the general Linux description first.
 
 The generic linux/386 format decompresses to /tmp and needs
-/proc filesystem support. It starts the decompressed program
+/proc file system support. It starts the decompressed program
 via the execve() syscall.
 
 Linux/386 is only selected if the specialized linux/elf386
@@ -614,11 +614,11 @@ How it works:
 
   For files which are not ELF and not a script for a known "-c" shell,
   UPX uses kernel execve(), which first requires decompressing to a
-  temporary file in the filesystem.  Interestingly -
+  temporary file in the file system.  Interestingly -
   because of the good memory management of the Linux kernel - this
   often does not introduce a noticeable delay, and in fact there
   will be no disk access at all if you have enough free memory as
-  the entire process takes places within the filesystem buffers.
+  the entire process takes places within the file system buffers.
 
   A compressed executable consists of the UPX stub and an overlay
   which contains the original program in a compressed form.
@@ -644,7 +644,7 @@ Specific drawbacks:
     decompression, but you still need it for the full execution time
     of the program.
 
-  - You must have /proc filesystem support as the stub wants to open
+  - You must have /proc file system support as the stub wants to open
     /proc/<pid>/exe and needs /proc/<pid>/fd/X. This also means that you
     cannot compress programs that are used during the boot sequence
     before /proc is mounted.
@@ -683,7 +683,7 @@ Notes:
 
   - UPX creates as default a suitable executable for CD-Mastering
     and console transfer. For a CD-Master main executable you could also try
-    the special option "--boot-only" as descriped below.
+    the special option "--boot-only" as described below.
 
   - Normally the packed files use the same memory areas like the uncompressed
     versions, so they will not override other memory areas while unpacking.
@@ -759,7 +759,7 @@ Benefits:
   - Better compression (but note that the kernel was already compressed,
   so the improvement is not as large as with other formats).
   Still, the bytes saved may be essential for special needs like
-  bootdisks.
+  boot disks.
 
      For example, this is what I get for my 2.2.16 kernel:
         1589708  vmlinux
@@ -806,13 +806,13 @@ Extra options available for this executable format:
 =head2 NOTES FOR WIN32/PE
 
 The PE support in B<UPX> is quite stable now, but probably there are
-still some incompabilities with some files.
+still some incompatibilities with some files.
 
 Because of the way B<UPX> (and other packers for this format) works, you
 can see increased memory usage of your compressed files because the whole
 program is loaded into memory at startup.
 If you start several instances of huge compressed programs you're
-wasting memory because the common segements of the program won't
+wasting memory because the common segments of the program won't
 get shared across the instances.
 On the other hand if you're compressing only smaller programs, or
 running only one instance of larger programs, then this penalty is
