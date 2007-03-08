@@ -27,7 +27,6 @@ ifneq ($(findstring $(firstword $(CXX)),g++),)
 USE_GNUC ?= 1
 endif
 ifeq ($(USE_GNUC),1)
-CXXFLAGS += -MMD
 ifeq ($(DEBUG),1)
 CXXFLAGS += -O0 -g
 else
@@ -59,16 +58,24 @@ INCLUDES += -I$(UPX_LZMADIR)
 endif
 
 
-all: upx$(exeext)
-.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS)
+all: .depend upx$(exeext)
+.DELETE_ON_ERROR: .depend upx$(exeext) $(upx_OBJECTS)
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
 	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
 
-%.o : %.cpp
+%.o : %.cpp .depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
+
+.depend: $(wildcard $(srcdir)/*.cpp) $(wildcard $(srcdir)/*.h) $(MAKEFILE_LIST)
+	@rm -f $@
+ifeq ($(USE_GNUC),1)
+	$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
+else
+	touch $@
+endif
 
 
 ifeq ($(USE_GNUC),1)
@@ -82,7 +89,7 @@ endif
 
 
 mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.map *.o *.obj *.res upx.exe upx.out upx.ttp upx$(exeext)
+	rm -f *.d *.map *.o *.obj *.res .depend upx.exe upx.out upx.ttp upx$(exeext)
 
--include *.d
+include $(wildcard .depend)
 .PHONY: all mostlyclean clean distclean maintainer-clean
