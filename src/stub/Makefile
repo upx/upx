@@ -18,7 +18,7 @@ empty :=
 space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
 
-ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
+ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
 endif
 
@@ -29,7 +29,7 @@ endif
 ifndef top_srcdir
 top_srcdir := $(srcdir)/../..
 endif
--include $(top_srcdir)/Makevars.global ./Makevars.local
+include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)

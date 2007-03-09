@@ -1,11 +1,15 @@
 #
-# UPX Makefile - needs GNU make 3.80 or better
+# UPX Makefile - needs GNU make 3.81 or better
 #
 
 MAKEFLAGS += -rR
 .SUFFIXES:
 export SHELL = /bin/sh
 override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
+
+ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
+$(error GNU make 3.81 or better is required)
+endif
 
 ifndef srcdir
 srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
@@ -14,7 +18,7 @@ endif
 ifndef top_srcdir
 top_srcdir := $(srcdir)/..
 endif
--include $(top_srcdir)/Makevars.global ./Makevars.local
+include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 ifneq ($(srcdir),.)
 ##$(info Info: using VPATH . $(srcdir))
 VPATH := . $(srcdir)
@@ -58,7 +62,7 @@ INCLUDES += -I$(UPX_LZMADIR)
 endif
 
 
-all: .depend upx$(exeext)
+all: upx$(exeext) | .depend
 .DELETE_ON_ERROR: .depend upx$(exeext) $(upx_OBJECTS)
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
@@ -66,13 +70,14 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
 
-%.o : %.cpp .depend
+%.o : %.cpp | .depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
 .depend: $(wildcard $(srcdir)/*.cpp) $(wildcard $(srcdir)/*.h) $(MAKEFILE_LIST)
 	@rm -f $@
 ifeq ($(USE_GNUC),1)
-	$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
+	@echo "Updating $@"
+	@$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
 	touch $@
 endif
@@ -91,5 +96,6 @@ endif
 mostlyclean clean distclean maintainer-clean:
 	rm -f *.d *.map *.o *.obj *.res .depend upx.exe upx.out upx.ttp upx$(exeext)
 
-include $(wildcard .depend)
 .PHONY: all mostlyclean clean distclean maintainer-clean
+
+-include .depend

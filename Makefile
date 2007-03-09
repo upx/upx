@@ -1,26 +1,27 @@
 #
-# UPX toplevel Makefile - needs GNU make 3.80 or better
+# UPX toplevel Makefile - needs GNU make 3.81 or better
 #
 
 MAKEFLAGS += -rR
 .SUFFIXES:
 export SHELL = /bin/sh
 
+ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
+$(error GNU make 3.81 or better is required)
+endif
+
 srcdir = .
 top_srcdir = .
--include $(top_srcdir)/Makevars.global ./Makevars.local
+include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 
 
-# info: src/stub needs GNU make 3.81 and special build tools
+# info: src/stub needs special build tools
 BUILD_STUB = 0
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
 BUILD_STUB = 1
 endif
 ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
 BUILD_STUB = 1
-endif
-ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.79 3.79.1 3.80),)
-BUILD_STUB = 0
 endif
 
 
