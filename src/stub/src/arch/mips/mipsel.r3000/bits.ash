@@ -34,11 +34,15 @@
 #ifndef _MR3K_STD_CONF_
 #define _MR3K_STD_CONF_
 
+#define  JOHN       1
+#define  ALT_SMALL  1
+
 
 ;//////////////////////////////////////
 ;// register defines
 ;//////////////////////////////////////
 
+#if 1
 #define tmp         at
 
 #define dst         t0
@@ -57,6 +61,31 @@
 #define var         t6
 #define m_off       t7
 #define m_pos       t7
+
+#else
+
+.print "\nwarning redefined src / dst\n"
+
+#define tmp         v1
+
+#define src         a0
+#define dst         a1
+
+#define pc          v0
+#define cnt         a2
+
+#define src_ilen    src
+#define bb          t1
+#define ilen        t2
+#define last_m_off  t3
+#define m_len       t4
+#define bc          t5
+
+#define var         t6
+#define m_off       t7
+#define m_pos       t7
+
+#endif
 
 
 ;//////////////////////////////////////
@@ -89,11 +118,31 @@
 
 .macro  init
 
+init_sz = .
+
+.if (JOHN == 0)
             move    bc,zero
+
+.else   //  John's method
+
+    .if (UCL_SMALL == 1)
+        .if (ALT_SMALL == 1)
+            lui     bc,1 << (31 - 16)
+            move    bb,bc
+        .else
+            move    bc,zero
+        .endif
+    .else
+            lui     bc,1 << (31 - 16)
+            move    bb,bc
+    .endif
+.endif
             li      last_m_off,1
     .if (src != src_ilen)
             move    src_ilen,src
     .endif
+
+init_sz = . - init_sz
 
 .endm
 
@@ -104,6 +153,7 @@
 
 .macro  ADDBITS
 
+.if (JOHN == 0)
     .if (UCL_SMALL == 1)
             addiu   bc, -1
             bltz    bc, 2b
@@ -112,32 +162,92 @@
             addiu   bc, -1
     .endif
 
+.else   //  John's method
+
+    .if (UCL_SMALL == 1)
+        .if (ALT_SMALL == 1)
+            beq     bc,bb,2b  # detect flag bit [empty]
+        .else
+            addiu   bc,-1
+            bltz    bc,2b
+        .endif
+    .else
+	    srl     var,bb,31  # var= most significant bit of bb
+            bne     bc,bb,2f  # detect flag bit [empty]
+	    sll     bb,1
+    .endif
+.endif
+
 .endm
 
 .macro  ADDBITS_DONE
 
+.if (JOHN == 0)
             srlv    var,bb,bc
     .if (UCL_SMALL == 1)
             jr      ra
     .endif
             andi    var,0x0001
 
+.else   //  John's method
+
+    .if (UCL_SMALL == 1)
+        .if (ALT_SMALL == 1)
+	    srl     var,bb,31  # var= most significant bit of bb
+            jr      ra
+	    sll     bb,1
+        .else
+            srlv    var,bb,bc
+            jr      ra
+            andi    var,0x0001
+        .endif
+    .else
+        .if (UCL_NRV_BB == 8)
+            sll     bb,1
+            addiu   bb,1  # the flag bit
+	    srl     var,bb,8  # var= most significant bit of bb
+            sll     bb,24  # left-justify in register
+        .else
+	    srl     var,bb,31  # var= most significant bit of bb
+	    sll     bb,1
+            addiu   bb,1
+        .endif
+    .endif
+
+.endif
+
 .endm
 
 .macro  FILLBYTES_8
 
-    .if (UCL_SMALL == 1)
-            li      bc,8
-    .else
+.if (JOHN == 0)
             li      bc,7
-    .endif
             lbu     bb,0(src_ilen)
             addiu   src_ilen,1
 
+.else   //  John's method
+
+    .if (ALT_SMALL == 0)
+       .if (UCL_SMALL == 1)
+            li      bc,8
+        .endif
+    .endif
+            lbu     bb,0(src_ilen)
+            addiu   src_ilen,1
+    .if ((ALT_SMALL == 1) && (UCL_SMALL == 1))
+            sll     bb,1
+            addiu   bb,1  # the flag bit
+            sll     bb,24-1 # left-justify in register
+    .endif
+
+.endif
+
 .endm
+
 
 .macro  FILLBYTES_32
 
+.if (JOHN == 0)
     .if (UCL_SMALL == 1)
             li      bc,32
     .else
@@ -147,9 +257,27 @@
             lwl     bb,3(src_ilen)
             addiu   src_ilen,4
 
+.else   //  John's method
+
+    .if (ALT_SMALL == 0)
+        .if (UCL_SMALL == 1)
+            li      bc,32
+        .endif
+    .endif
+            lwr     bb,0(src_ilen)
+            lwl     bb,3(src_ilen)
+            addiu   src_ilen,4
+    .if ((ALT_SMALL == 1) && (UCL_SMALL == 1))
+	    srl     var,bb,31  # var= most significant bit of bb
+	    sll     bb,1
+            jr      ra
+            addiu   bb,1
+    .endif
+.endif
+
 .endm
 
-.macro  FILLBYTES
+.macro  FILLBITS
 
     .if (UCL_NRV_BB == 8)
             FILLBYTES_8
@@ -159,78 +287,28 @@
 
 .endm
 
-// This alternate for UCL_SMALL is 1 cycle faster for most getbit
-// at a cost of 1 cycle (32 bits) or 3 cycles (8 bits) during refill.
-// [Refill could save 1 cycle if MIPS had "set CarryIn" for ADD or SHIFT.]
-// Call 'getbit'; it returns the next bit (0 or 1), in register 'var'.
-// Register 'bb' is the bit buffer; register 'bc' contains the 'empty' value.
-// The cases for widths 8 and 32 are not as similar as before,
-// and 64-bit registers would require other code.
-// But it is 1 cycle faster 31/32 of the time.
-// [Indentation after control transfer emphasizes delay slot.]
-//
-//init:
-//	lui bc,1<<(31 - 16)  # 1<<31  the flag bit
-//	lui bb,1<<(31 - 16)  # 1<<31  empty
-//--
-//  .if (8==UCL_NRV_BB)
-//refill:
-//	lbu bb,0(src_ilen)
-//	addiu src_len,1
-//	sll bb,1
-//	ori bb,1  # the flag bit
-//	sll bb,24-1  # left-justify in register
-//	// falling through the 'beq' below saves 3 words of space
-//  .endif
-//getbit:
-//	beq bc,bb,refill  # detect flag bit [empty]
-//	  srl var,bb,31  # var= most significant bit of bb
-//	jr ra
-//	  sll bb,1
-//  .if (32==UCL_NRV_BB)
-//refill:
-//	lwr bb,0(src_ilen)
-//	lwl bb,3(src_ilen)
-//	addiu src_ilen,4
-//	srl var,bb,31  # var= most significant bit of bb
-//	sll bb,1
-//	jr ra
-//	  ori bb,1  # the flag bit
-//  .endif
-
-// 2006-09-06  Faster by 3 cycles for inline expansion:
-//	beq bc,bb,7f  # detect flag bit [empty]
-//	  srl var,bb,31  # var= most significant bit of bb
-//	sll bb,1
-//6:
-//	.subsection 1  # somewhere out-of-line
-//7:
-//	b refill
-//	  addi ra,r_bd_base,6b - bd_base  # return past the 'sll' above
-//	.subsection 0  # return to main in-line code
-//
-// which is 3 cycles usually, +2 cycles for entering refill,
-// +8 bytes (2 instructions) per getbit [7 in nrv2b, 9 in nrv2e]
-// and requires another register r_bd_base which holds a handy
-// address within +/- 32KB of the returns from refill.
-//
-
 .macro  GBIT
 
     .if (UCL_SMALL == 1)
 2:
-            FILLBYTES
+            FILLBITS
 1:
             ADDBITS
             ADDBITS_DONE
     .else
             ADDBITS
-            FILLBYTES
+            FILLBITS
+.if (JOHN == 1)
+            ADDBITS_DONE
+2:
+.else
 2:
             ADDBITS_DONE
+.endif
     .endif
 
 .endm
+
 
 ;//////////////////////////////////////
 ;// getbit call macro for SMALL version
@@ -247,8 +325,23 @@
         .ifb   p1
             bal     t      // gb_sub
         .else
+
+.if (JOHN == 0)
             bal     t+4    // gb_sub+4
             addiu   bc,-1
+
+.else   //  John's method
+
+    .if (UCL_SMALL == 1)
+        .if (ALT_SMALL == 0)
+            bal     t+4    // gb_sub+4
+            addiu   bc,-1
+        .else
+            bal     t     // gb_sub+4
+            nop
+        .endif
+    .endif
+.endif
         .endif
     .else
             GBIT
@@ -271,20 +364,20 @@
     .endif
             \type   decomp_done
     .if (UCL_SMALL == 1)
-            WITHOUT_SUB = 0
             GBIT
     .endif
 .else
 .ifc "\option", "sub_only"
 
 2:
-            FILLBYTES
-    .ifnb label
+            FILLBITS
+.ifnb label
             .global \label
 \label:
-    .endif
+.endif
             ADDBITS
             ADDBITS_DONE
+
 .else
 .ifc "\option", "without_sub"
     .if (UCL_SMALL == 1)
@@ -309,12 +402,12 @@
 
 .macro   uclmcpy     ret
 
-            local   wordchk, bcpy
-            local   bcpy_chk, skip
+            local   wordchk, prepbcpy
+            local   bcopy, skip
 
-    .if (UCL_FAST == 1)
+.if (UCL_FAST == 1)
             slti    var,m_off,4
-            bnez    var,bcpy
+            bnez    var,prepbcpy
             subu    m_pos,dst,m_off
 wordchk:
             slti    var,m_len,4
@@ -327,22 +420,56 @@ wordchk:
             addiu   m_pos,4
             bnez    m_len,wordchk
             addiu   dst,4
+
+    .if (UCL_SMALL == 1)
+        .if (WITHOUT_SUB == 1)
+            t = gb_e
+        .else
+            t = 1f
+        .endif
+            bal     t
+            addiu   ra, (\ret + 4) - (. + 4)
+    .else
+        .if (JOHN == 0)
             b       \ret
             nop
-    .else
+        .else
+            b       \ret + 4
+	    srl     var,bb,31  # var= most significant bit of bb
+        .endif
+    .endif
+prepbcpy:
+.else
             subu    m_pos,dst,m_off
     .endif
-bcpy_chk:
-            beqz    m_len,\ret
-bcpy:
+bcopy:
             lbu     var,0(m_pos)
 skip:
             addiu   m_len,-1
-            sb      var,0(dst)
             addiu   m_pos,1
-            b       bcpy_chk
             addiu   dst,1
+            bnez    m_len,bcopy
+            sb      var,-1(dst)
+
+    .if (UCL_SMALL == 1)
+        .if (WITHOUT_SUB == 1)
+            t = gb_e
+        .else
+            t = 1f
+        .endif
+            bal     t
+            addiu   ra, (\ret + 4) - (. + 4)
+    .else
+        .if (JOHN == 0)
+            b       \ret
+            nop
+        .else
+            b       \ret + 4
+	    srl     var,bb,31  # var= most significant bit of bb
+        .endif
+    .endif
 
 .endm
+
 
 #endif  //_MR3K_STD_CONF_

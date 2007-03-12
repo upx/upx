@@ -318,7 +318,8 @@ void PackPs1::buildLoader(const Filter *)
             sa_tmp += overlap = ALIGN_UP((ph.overlap_overhead - sa_tmp), 4u);
     }
 
-    foundBss = findBssSection();
+    if (isCon || !isCon && M_IS_LZMA(ph.method))
+        foundBss = findBssSection();
 
     if (M_IS_LZMA(ph.method) && !buildPart2)
     {
@@ -370,16 +371,20 @@ void PackPs1::buildLoader(const Filter *)
         else
         {
             if (M_IS_LZMA(ph.method))
-                addLoader("cdb.start.lzma", "pad.code", "cdb.entry.lzma", method, "cdb.lzma.cpr",
+                addLoader(!foundBss ? "cdb.start.lzma" : "bss.cdb.start.lzma", "pad.code",
+                          !foundBss ? "cdb.entry.lzma" : "bss.cdb.entry.lzma",
+                          method, "cdb.lzma.cpr",
                           ih.tx_ptr & 0xffff ?  "dec.ptr" : "dec.ptr.hi",
                           "lzma.exec", NULL);
             else
+            {
+                assert(foundBss != true);
                 addLoader("cdb.start", "pad.code", "cdb.entry",
                           ih.tx_ptr & 0xffff ?  "cdb.dec.ptr" : "cdb.dec.ptr.hi",
                           method,
                           sa_cnt ? sa_cnt > (0x10000 << 2) ? "memset.long" : "memset.short" : "",
-                          !foundBss ? "cdb.exit" : "bss.exit",
-                          "pad.code", NULL);
+                          "cdb.exit", NULL);
+            }
         }
         addLoader("UPX1HEAD", "IDENTSTR", NULL);
     }
@@ -554,7 +559,9 @@ void PackPs1::pack(OutputFile *fo)
     }
     else
     {
-        d_len = (lsize - h_len) - getLoaderSectionStart(M_IS_LZMA(ph.method) ? "cdb.entry.lzma" : "cdb.entry");
+        const char* entry_lzma = !foundBss ? "cdb.entry.lzma" : "bss.cdb.entry.lzma";
+
+        d_len = (lsize - h_len) - getLoaderSectionStart(M_IS_LZMA(ph.method) ? entry_lzma : "cdb.entry");
         e_len = (lsize - d_len) - h_len;
     }
 
@@ -611,8 +618,12 @@ void PackPs1::pack(OutputFile *fo)
         linker->defineSymbol("PSVR", FIX_PSVR);
         linker->defineSymbol("CPDO", comp_data_start);
         if (M_IS_LZMA(ph.method))
-            linker->defineSymbol("lzma_cpr", getLoaderSectionStart("lzma.exec")
-                                             - getLoaderSectionStart("cdb.entry.lzma"));
+        {
+            unsigned entry_lzma = getLoaderSectionStart( !foundBss ? "cdb.entry.lzma" :
+                                                                     "bss.cdb.entry.lzma");
+
+            linker->defineSymbol("lzma_cpr", getLoaderSectionStart("lzma.exec") - entry_lzma);
+        }
     }
 
     relocateLoader();

@@ -684,6 +684,9 @@ Notes:
   - UPX creates as default a suitable executable for CD-Mastering
     and console transfer. For a CD-Master main executable you could also try
     the special option "--boot-only" as described below.
+    It has been reported that upx packed executables are fully compatible with 
+    the Sony PlayStation 2 (PS2, PStwo) and Sony PlayStation Portable (PSP) in 
+    Sony PlayStation (PSone) emulation mode.
 
   - Normally the packed files use the same memory areas like the uncompressed
     versions, so they will not override other memory areas while unpacking.
