@@ -172,9 +172,9 @@ init_sz = . - init_sz
             bltz    bc,2b
         .endif
     .else
-	    srl     var,bb,31  # var= most significant bit of bb
+        srl     var,bb,31  # var= most significant bit of bb
             bne     bc,bb,2f  # detect flag bit [empty]
-	    sll     bb,1
+        sll     bb,1
     .endif
 .endif
 
@@ -193,9 +193,9 @@ init_sz = . - init_sz
 
     .if (UCL_SMALL == 1)
         .if (ALT_SMALL == 1)
-	    srl     var,bb,31  # var= most significant bit of bb
+        srl     var,bb,31  # var= most significant bit of bb
             jr      ra
-	    sll     bb,1
+        sll     bb,1
         .else
             srlv    var,bb,bc
             jr      ra
@@ -205,11 +205,11 @@ init_sz = . - init_sz
         .if (UCL_NRV_BB == 8)
             sll     bb,1
             addiu   bb,1  # the flag bit
-	    srl     var,bb,8  # var= most significant bit of bb
+        srl     var,bb,8  # var= most significant bit of bb
             sll     bb,24  # left-justify in register
         .else
-	    srl     var,bb,31  # var= most significant bit of bb
-	    sll     bb,1
+        srl     var,bb,31  # var= most significant bit of bb
+        sll     bb,1
             addiu   bb,1
         .endif
     .endif
@@ -268,8 +268,8 @@ init_sz = . - init_sz
             lwl     bb,3(src_ilen)
             addiu   src_ilen,4
     .if ((ALT_SMALL == 1) && (UCL_SMALL == 1))
-	    srl     var,bb,31  # var= most significant bit of bb
-	    sll     bb,1
+        srl     var,bb,31  # var= most significant bit of bb
+        sll     bb,1
             jr      ra
             addiu   bb,1
     .endif
@@ -427,21 +427,26 @@ wordchk:
         .else
             t = 1f
         .endif
+        .if (1 == 1)
+            b       \ret
+            nop
+        .else
             bal     t
             addiu   ra, (\ret + 4) - (. + 4)
+        .endif
     .else
         .if (JOHN == 0)
             b       \ret
             nop
         .else
             b       \ret + 4
-	    srl     var,bb,31  # var= most significant bit of bb
+            srl     var,bb,31  # var= most significant bit of bb
         .endif
     .endif
 prepbcpy:
 .else
             subu    m_pos,dst,m_off
-    .endif
+.endif
 bcopy:
             lbu     var,0(m_pos)
 skip:
@@ -457,15 +462,20 @@ skip:
         .else
             t = 1f
         .endif
+        .if (1 == 1)
+            b       \ret
+            nop
+        .else
             bal     t
             addiu   ra, (\ret + 4) - (. + 4)
+        .endif
     .else
         .if (JOHN == 0)
             b       \ret
             nop
         .else
             b       \ret + 4
-	    srl     var,bb,31  # var= most significant bit of bb
+            srl     var,bb,31  # var= most significant bit of bb
         .endif
     .endif
 

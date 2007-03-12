@@ -237,13 +237,13 @@ section     con.exit
 section     bss.cdb.start.lzma
             la      t0,PSVR          // prepare to compute value
             subu    t0,s0,t0         // get stored header offset in mem
-            lui     var,%hi(wrkmem-REG_SZ)  // size of decomp. routine
+            la      var,wrkmem-REG_SZ
             jr      t0
-            addiu   var,%lo(wrkmem-REG_SZ)  // adjust the stack with this size
+            move    tmp,sp
 
 section     bss.cdb.entry.lzma
-            move    tmp,sp
             push    1,var            // push used regs
+            move    sp,var
             addiu   src,t0,lzma_cpr  // compressed lzma decoder offset
             addiu   dst,sp,REG_SZ
 
