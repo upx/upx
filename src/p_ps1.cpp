@@ -585,7 +585,7 @@ void PackPs1::pack(OutputFile *fo)
 
     unsigned pad = 0;
 
-    if (!opt->ps1_exe.no_align)
+    if (!opt->ps1_exe.no_align || !isCon)
     {
         pad = oh.tx_len;
         oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC);
