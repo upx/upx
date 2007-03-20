@@ -607,7 +607,8 @@ void PackW32Pe::pack(OutputFile *fo)
            (ih.cpu < 0x14c || ih.cpu > 0x150)
         || (ih.opthdrsize != 0xe0)
         || ((ih.flags & EXECUTABLE) == 0)
-        || (ih.subsystem != 2 && ih.subsystem != 3 && ih.subsystem != 1)
+        || (ih.subsystem != 2 && ih.subsystem != 3
+            && ih.subsystem != 1 && ih.subsystem != 9)
         || (ih.entry == 0 && !isdll)
         || (ih.ddirsentries != 16)
         || IDSIZE(PEDIR_EXCEPTION) // is this used on i386?
