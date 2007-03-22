@@ -616,6 +616,9 @@ void PackW32Pe::pack(OutputFile *fo)
        ))
         throwCantPack("unexpected value in PE header (try --force)");
 
+    if (ih.subsystem == 9)
+        throwCantPack("x86/wince files are not yet supported");
+
     if (IDSIZE(PEDIR_SEC))
         IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
     if (IDSIZE(PEDIR_COMRT))
