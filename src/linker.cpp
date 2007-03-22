@@ -228,15 +228,20 @@ void ElfLinker::preprocessSymbols(char *start, char *end)
         assert(nextl != NULL);
 
         if (sscanf(start, "%x g *ABS* %x %1023s",
-                        &value, &offset, symbol) == 3)
+                   &value, &offset, symbol) == 3)
         {
             char *s = strstr(start, symbol);
             s[strlen(symbol)] = 0;
             addSymbol(s, "*ABS*", value);
             assert(offset == 0);
         }
+#if 0
         else if (sscanf(start, "%x%*8c %1023s %*x %1023s",
-                   &offset, section, symbol) == 3)
+#else
+        // work around broken scanf implementations
+        else if (sscanf(start, "%x%*c%*c%*c%*c%*c%*c%*c%*c %1023s %*x %1023s",
+#endif
+                        &offset, section, symbol) == 3)
         {
             char *s = strstr(start, symbol);
             s[strlen(symbol)] = 0;
