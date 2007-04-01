@@ -300,7 +300,7 @@ ctend:
 // 2nd param: where is cto8 (dl, bl, or literal)
 
 section         ctok32.00
-        .ifc    \addvalue, edi
+        .ifnc   \addvalue, esi
                 mov     esi, \addvalue
         .endif
                 jmps    ckstart
