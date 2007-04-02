@@ -98,9 +98,7 @@ section WCCTTNUL
 
 section         ctok32.00
                 mov     ecx, offset filter_length
-                push    esi
                 ctok32  ebp, (offset filter_cto)
-                pop     esi
 
 // =============
 // ============= RELOCATION

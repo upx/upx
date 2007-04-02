@@ -301,8 +301,8 @@ ctend:
 
 section         ctok32.00
         .ifnc   \addvalue, 0
-        .ifnc   \addvalue, esi
-                mov     esi, \addvalue
+        .ifc    \addvalue, edi
+                mov     esi, edi
         .endif
         .endif
                 jmps    ckstart
@@ -335,7 +335,11 @@ ckmark:
 
                 sub     eax, edi
         .ifnc   \addvalue, 0
+        .ifc    \addvalue, edi
                 add     eax, esi
+        .else
+                add     eax, \addvalue
+        .endif
         .endif
                 mov     [edi], eax
                 add     edi, 4
