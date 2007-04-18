@@ -35,7 +35,7 @@
 .endm
 
 .macro          loadcon8 reg,val8
-        .byte \val8, \reg<<4, 0xa0, 0xe3  /* mov \reg,#\val8 */
+        .long (0xe3<<24)|(0xa0<<16)|((\reg<<4)<<8)+(\val8)  /* mov \reg,#\val8 */
 .endm
 
 // vi:ts=8:et:nowrap
