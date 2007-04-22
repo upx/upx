@@ -125,8 +125,8 @@ class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
 public:
     PackVmlinuxARM(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
-    virtual int getFormat() const { return UPX_F_VMLINUX_ARM; }
-    virtual const char *getName() const { return "vmlinux/ARM"; }
+    virtual int getFormat() const { return UPX_F_VMLINUX_ARMEL; }
+    virtual const char *getName() const { return "vmlinux/armel"; }
     virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -150,7 +150,7 @@ public:
     PackVmlinuxARMEB(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "decompress_kernel") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARMEB; }
-    virtual const char *getName() const { return "vmlinux/ARMEB"; }
+    virtual const char *getName() const { return "vmlinux/armeb"; }
     virtual const char *getFullName(const options_t *) const { return "armbe-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;

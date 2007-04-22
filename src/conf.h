@@ -448,7 +448,7 @@ private:
 #define UPX_F_LINUX_ELFI_i386   20
 #define UPX_F_WINCE_ARM_PE      21
 #define UPX_F_LINUX_ELF64_AMD   22
-#define UPX_F_LINUX_ELF32_ARMLE 23
+#define UPX_F_LINUX_ELF32_ARMEL 23
 #define UPX_F_BSD_i386          24
 #define UPX_F_BSD_ELF_i386      25
 #define UPX_F_BSD_SH_i386       26

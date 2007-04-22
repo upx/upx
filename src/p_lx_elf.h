@@ -416,7 +416,7 @@ class PackLinuxElf32armLe : public PackLinuxElf32Le
 public:
     PackLinuxElf32armLe(InputFile *f);
     virtual ~PackLinuxElf32armLe();
-    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMLE; }
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMEL; }
     virtual const char *getName() const { return "linux/armLE"; }
     virtual const char *getFullName(const options_t *) const { return "arm-linux.elf"; }
     virtual const int *getFilters() const;
