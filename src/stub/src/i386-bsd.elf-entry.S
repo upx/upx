@@ -67,12 +67,12 @@ decompress:
 // // C callable decompressor
 // **************************************************************************/
 
-// /* Offsets to parameters, allowing for {push + pusha + call} */
-#define         O_INP   (4+ 8*4 +1*4)
-#define         O_INS   (4+ 8*4 +2*4)
-#define         O_OUTP  (4+ 8*4 +3*4)
-#define         O_OUTS  (4+ 8*4 +4*4)
-#define         O_PARAM (4+ 8*4 +5*4)
+// /* Offsets to parameters, allowing for {pusha + call} */
+#define         O_INP   (8*4 +1*4)
+#define         O_INS   (8*4 +2*4)
+#define         O_OUTP  (8*4 +3*4)
+#define         O_OUTS  (8*4 +4*4)
+#define         O_PARAM (8*4 +5*4)
 
 #define         INP     dword ptr [esp+O_INP]
 #define         INS     dword ptr [esp+O_INS]
