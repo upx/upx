@@ -44,6 +44,8 @@ static const
 #include "stub/amd64-linux.kernel.vmlinux.h"
 static const
 #include "stub/arm-linux.kernel.vmlinux.h"
+static const
+#include "stub/armeb-linux.kernel.vmlinux.h"
 
 
 /*************************************************************************
@@ -547,16 +549,27 @@ const int *PackVmlinuxI386::getFilters() const
     return filters;
 }
 
-const int *PackVmlinuxARM::getCompressionMethods(int method, int level) const
+const int *PackVmlinuxARMEL::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
+const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
 {
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
 
-const int *PackVmlinuxARM::getFilters() const
+const int *PackVmlinuxARMEL::getFilters() const
 {
     static const int f50[] = { 0x50, FT_END };
     return f50;
+}
+
+const int *PackVmlinuxARMEB::getFilters() const
+{
+    static const int f51[] = { 0x51, FT_END };
+    return f51;
 }
 
 //
@@ -646,21 +659,53 @@ void PackVmlinuxAMD64::buildLoader(const Filter *ft)
               "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
-bool PackVmlinuxARM::is_valid_e_entry(Addr e_entry)
+bool PackVmlinuxARMEL::is_valid_e_entry(Addr e_entry)
 {
     return 0xc0008000==e_entry;
 }
 
-Linker* PackVmlinuxARM::newLinker() const
+bool PackVmlinuxARMEB::is_valid_e_entry(Addr e_entry)
+{
+    return 0xc0008000==e_entry;
+}
+
+Linker* PackVmlinuxARMEL::newLinker() const
 {
     return new ElfLinkerArmLE;
 }
 
+Linker* PackVmlinuxARMEB::newLinker() const
+{
+    return new ElfLinkerArmBE;
+}
 
-void PackVmlinuxARM::buildLoader(const Filter *ft)
+
+void PackVmlinuxARMEL::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
+    addLoader("LINUX000", NULL);
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addLoader("LINUX010", NULL);
+    }
+    addLoader("LINUX020", NULL);
+    if (ft->id) {
+        addFilter32(ft->id);
+    }
+    addLoader("LINUX030", NULL);
+         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
+    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
+    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else throwBadLoader();
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
+}
+
+void PackVmlinuxARMEB::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(stub_armeb_linux_kernel_vmlinux, sizeof(stub_armeb_linux_kernel_vmlinux));
     addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
@@ -686,6 +731,8 @@ static const
 #include "stub/amd64-linux.kernel.vmlinux-head.h"
 static const
 #include "stub/arm-linux.kernel.vmlinux-head.h"
+static const
+#include "stub/armeb-linux.kernel.vmlinux-head.h"
 
 unsigned PackVmlinuxI386::write_vmlinux_head(
     OutputFile *const fo,
@@ -719,7 +766,15 @@ printf("UnCompressed length=0x%x\n", ph.u_len);
     return sizeof(stub_amd64_linux_kernel_vmlinux_head);
 }
 
-void PackVmlinuxARM::defineDecompressorSymbols()
+void PackVmlinuxARMEL::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
+    linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
+    linker->defineSymbol("METHOD", ph.method);
+}
+
+void PackVmlinuxARMEB::defineDecompressorSymbols()
 {
     super::defineDecompressorSymbols();
     linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
@@ -744,7 +799,7 @@ void PackVmlinuxAMD64::defineDecompressorSymbols()
     linker->defineSymbol("PHYSICAL_START", phdri[0].p_paddr);
 }
 
-unsigned PackVmlinuxARM::write_vmlinux_head(
+unsigned PackVmlinuxARMEL::write_vmlinux_head(
     OutputFile *const fo,
     Shdr *const stxt
 )
@@ -766,11 +821,47 @@ unsigned PackVmlinuxARM::write_vmlinux_head(
     return sizeof(stub_arm_linux_kernel_vmlinux_head);
 }
 
+unsigned PackVmlinuxARMEB::write_vmlinux_head(
+    OutputFile *const fo,
+    Shdr *const stxt
+)
+{
+    // First word from vmlinux-head.S
+    fo->write(&stub_armeb_linux_kernel_vmlinux_head[0], 4);
 
-bool PackVmlinuxARM::has_valid_vmlinux_head()
+    // Second word
+    U32 tmp_u32;
+    unsigned const t = (0xff000000 &
+            BeLePolicy::get32(&stub_armeb_linux_kernel_vmlinux_head[4]))
+        | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
+    tmp_u32 = t;
+    fo->write(&tmp_u32, 4);
+
+    stxt->sh_addralign = 4;
+    stxt->sh_size += sizeof(stub_armeb_linux_kernel_vmlinux_head);
+
+    return sizeof(stub_armeb_linux_kernel_vmlinux_head);
+}
+
+
+bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
     U32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);
+    fi->readx(buf, sizeof(buf));
+    //unsigned const word0 = buf[0];
+    unsigned const word1 = buf[1];
+    if (0xeb==(word1>>24)
+    &&  (0x00ffffff& word1)==(0u - 1 + ((3+ ph.c_len)>>2))) {
+        return true;
+    }
+    return false;
+}
+
+bool PackVmlinuxARMEB::has_valid_vmlinux_head()
+{
+    U32 buf[2];
+    fi->seek(p_text->sh_offset + sizeof(stub_armeb_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];
@@ -1058,6 +1149,7 @@ Linker* PackVmlinuxAMD64::newLinker() const
 
 // instantiate instances
 template class PackVmlinuxBase<ElfClass_LE32>;
+template class PackVmlinuxBase<ElfClass_BE32>;
 template class PackVmlinuxBase<ElfClass_LE64>;
 
 
