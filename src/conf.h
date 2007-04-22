@@ -463,8 +463,9 @@ private:
 #define UPX_F_SOLARIS_SPARC     130
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
-#define UPX_F_LINUX_ELF32_ARMBE 133
+#define UPX_F_LINUX_ELF32_ARMEB 133
 #define UPX_F_MACH_FAT          134
+#define UPX_F_VMLINUX_ARMEB     135
 
 
 // compression methods

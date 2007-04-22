@@ -194,6 +194,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     if ((p = func(new PackVmlinuxARM(f), user)) != NULL)
         return p;
+    if ((p = func(new PackVmlinuxARMEB(f), user)) != NULL)
+        return p;
     if ((p = func(new PackVmlinuxAMD64(f), user)) != NULL)
         return p;
     if ((p = func(new PackVmlinuxI386(f), user)) != NULL)

@@ -143,6 +143,30 @@ protected:
     );
 };
 
+class PackVmlinuxARMEB : public PackVmlinuxBase<ElfClass_BE32>
+{
+    typedef PackVmlinuxBase<ElfClass_BE32> super;
+public:
+    PackVmlinuxARMEB(InputFile *f) : super(f, Ehdr::EM_ARM,
+        Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "decompress_kernel") { }
+    virtual int getFormat() const { return UPX_F_VMLINUX_ARMEB; }
+    virtual const char *getName() const { return "vmlinux/ARMEB"; }
+    virtual const char *getFullName(const options_t *) const { return "armbe-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+protected:
+    virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
+    virtual Linker* newLinker() const;
+    virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
+};
+
 
 class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 {
