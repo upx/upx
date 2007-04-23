@@ -436,7 +436,7 @@ class PackLinuxElf32armBe : public PackLinuxElf32Be
 public:
     PackLinuxElf32armBe(InputFile *f);
     virtual ~PackLinuxElf32armBe();
-    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMEB; }
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMBE; }
     virtual const char *getName() const { return "linux/armBE"; }
     virtual const char *getFullName(const options_t *) const { return "armeb-linux.elf"; }
     virtual const int *getFilters() const;

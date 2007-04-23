@@ -56,8 +56,6 @@ STUBS += arm-linux.kernel.vmlinux.h
 STUBS += arm-linux.kernel.vmlinux-head.h
 STUBS += armeb-linux.elf-entry.h
 STUBS += armeb-linux.elf-fold.h
-STUBS += armeb-linux.kernel.vmlinux.h
-STUBS += armeb-linux.kernel.vmlinux-head.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
 STUBS += i086-dos16.com.h
@@ -333,28 +331,6 @@ arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // armeb-linux.kernel.vmlinux
-# // armeb-linux.kernel.vmlinuz
-# // armeb-linux.kernel.vmlinux-head
-# ************************************************************************/
-
-armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
-armeb-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
-
-tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian
-
-armeb-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-armeb-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
