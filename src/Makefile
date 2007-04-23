@@ -63,7 +63,7 @@ endif
 
 
 all: upx$(exeext) | .depend
-.DELETE_ON_ERROR: .depend upx$(exeext) $(upx_OBJECTS)
+.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) .depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
@@ -73,7 +73,7 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 %.o : %.cpp | .depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
-.depend: $(wildcard $(srcdir)/*.cpp) $(wildcard $(srcdir)/*.h) $(MAKEFILE_LIST)
+.depend: $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h) $(MAKEFILE_LIST)
 	@rm -f $@
 ifeq ($(USE_GNUC),1)
 	@echo "Updating $@"
@@ -98,4 +98,10 @@ mostlyclean clean distclean maintainer-clean:
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 
+ifeq ($(MAKECMDGOALS),mostlyclean)
+else ifeq ($(MAKECMDGOALS),clean)
+else ifeq ($(MAKECMDGOALS),distclean)
+else ifeq ($(MAKECMDGOALS),maintainer-clean)
+else
 -include .depend
+endif
