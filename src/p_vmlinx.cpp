@@ -549,7 +549,12 @@ const int *PackVmlinuxI386::getFilters() const
     return filters;
 }
 
-const int *PackVmlinuxARM::getCompressionMethods(int method, int level) const
+const int *PackVmlinuxARMEL::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
+const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
 {
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
@@ -560,7 +565,7 @@ const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
 }
 
 
-const int *PackVmlinuxARM::getFilters() const
+const int *PackVmlinuxARMEL::getFilters() const
 {
     static const int f50[] = { 0x50, FT_END };
     return f50;
@@ -659,7 +664,7 @@ void PackVmlinuxAMD64::buildLoader(const Filter *ft)
               "LINUX992,IDENTSTR,UPX1HEAD", NULL);
 }
 
-bool PackVmlinuxARM::is_valid_e_entry(Addr e_entry)
+bool PackVmlinuxARMEL::is_valid_e_entry(Addr e_entry)
 {
     return 0xc0008000==e_entry;
 }
@@ -669,7 +674,7 @@ bool PackVmlinuxARMEB::is_valid_e_entry(Addr e_entry)
     return 0xc0008000==e_entry;
 }
 
-Linker* PackVmlinuxARM::newLinker() const
+Linker* PackVmlinuxARMEL::newLinker() const
 {
     return new ElfLinkerArmLE;
 }
@@ -680,7 +685,8 @@ Linker* PackVmlinuxARMEB::newLinker() const
 }
 
 
-void PackVmlinuxARM::buildLoader(const Filter *ft)
+
+void PackVmlinuxARMEL::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
@@ -766,7 +772,15 @@ printf("UnCompressed length=0x%x\n", ph.u_len);
     return sizeof(stub_amd64_linux_kernel_vmlinux_head);
 }
 
-void PackVmlinuxARM::defineDecompressorSymbols()
+void PackVmlinuxARMEL::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
+    linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
+    linker->defineSymbol("METHOD", ph.method);
+}
+
+void PackVmlinuxARMEB::defineDecompressorSymbols()
 {
     super::defineDecompressorSymbols();
     linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
@@ -799,7 +813,7 @@ void PackVmlinuxAMD64::defineDecompressorSymbols()
     linker->defineSymbol("PHYSICAL_START", phdri[0].p_paddr);
 }
 
-unsigned PackVmlinuxARM::write_vmlinux_head(
+unsigned PackVmlinuxARMEL::write_vmlinux_head(
     OutputFile *const fo,
     Shdr *const stxt
 )
@@ -844,7 +858,7 @@ unsigned PackVmlinuxARMEB::write_vmlinux_head(
 }
 
 
-bool PackVmlinuxARM::has_valid_vmlinux_head()
+bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
     U32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);

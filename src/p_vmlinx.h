@@ -119,11 +119,11 @@ protected:
 };
 
 
-class PackVmlinuxARM : public PackVmlinuxBase<ElfClass_LE32>
+class PackVmlinuxARMEL : public PackVmlinuxBase<ElfClass_LE32>
 {
     typedef PackVmlinuxBase<ElfClass_LE32> super;
 public:
-    PackVmlinuxARM(InputFile *f) : super(f, Ehdr::EM_ARM,
+    PackVmlinuxARMEL(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARMEL; }
     virtual const char *getName() const { return "vmlinux/armel"; }
