@@ -559,11 +559,6 @@ const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
-const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
-{
-    return Packer::getDefaultCompressionMethods_8(method, level);
-}
-
 
 const int *PackVmlinuxARMEL::getFilters() const
 {
@@ -773,14 +768,6 @@ printf("UnCompressed length=0x%x\n", ph.u_len);
 }
 
 void PackVmlinuxARMEL::defineDecompressorSymbols()
-{
-    super::defineDecompressorSymbols();
-    linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
-    linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
-    linker->defineSymbol("METHOD", ph.method);
-}
-
-void PackVmlinuxARMEB::defineDecompressorSymbols()
 {
     super::defineDecompressorSymbols();
     linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
