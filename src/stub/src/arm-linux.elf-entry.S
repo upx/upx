@@ -103,7 +103,7 @@ copy:
         sub r10,r12,r9  // &b_info
         add r10,r10,r4  // relocated &b_info
 
-        ldrb r0,[r11,# b_method ]  // 5th param
+        ldr r0,[r11,# b_method ]  // 5th param (whole word: endian issues!)
         stmdb sp!,{r0,lr}
         ldr  r3,[r11,# sz_unc]
         add  r0, r11,# sz_b_info
