@@ -503,7 +503,9 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
 
     // 2007-04-25 lower bound 0x810 using --lzma on
     //    http://www.equi4.com/pub/tk/8.4.13/tclkit-linux-x86.gz
-    if ((int)overlap_overhead >= 0xa00)
+    // So that file will fail until this function does a real
+    // decompress+verify.
+    if ((int)overlap_overhead >= 256)
         return UPX_E_OK;
 
     UNUSED(cresult);
