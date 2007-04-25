@@ -499,7 +499,7 @@ int PackUnix::canUnpack()
 
     fi->seek(-bufsize, SEEK_END);
     fi->readx(buf, bufsize);
-    if (!getPackHeader(buf, bufsize))
+    if (!getPackHeader(buf, bufsize, true))  // allow incompressible extents
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
