@@ -418,7 +418,7 @@ public:
     virtual ~PackLinuxElf32armLe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMEL; }
     virtual const char *getName() const { return "linux/armel"; }
-    virtual const char *getFullName(const options_t *) const { return "armel-linux.elf"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-linux.elf"; }
     virtual const int *getFilters() const;
 
 protected:
