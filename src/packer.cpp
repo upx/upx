@@ -481,7 +481,7 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
 
     // prepare to deal with very pessimistic values
     unsigned low = 1;
-    unsigned high = UPX_MIN(ph.u_len / 4 + 512, upper_limit);
+    unsigned high = UPX_MIN(ph.u_len + 512, upper_limit);
     // but be optimistic for first try (speedup)
     unsigned m = UPX_MIN(16u, high);
     //

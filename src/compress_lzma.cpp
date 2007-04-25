@@ -486,6 +486,15 @@ error:
 // test_overlap
 **************************************************************************/
 
+// from <ucl/ucl.h>:
+// test an overlapping in-place decompression within a buffer:
+//   - try a virtual decompression from &buf[src_off] -> &buf[0]
+//   - no data is actually written
+//   - only the bytes at buf[src_off..src_off+src_len-1] will get accessed 
+//
+// 2007-04-25  However, I do not see any "virtual decompress" function in lzma
+// that avoids writing the result.   Therefore, do an actual decompress.
+
 int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
@@ -493,22 +502,22 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
 {
     assert(M_IS_LZMA(method));
 
-    // FIXME - implement this
     // Note that Packer::verifyOverlappingDecompression() will
     // verify the final result in any case.
-    UNUSED(buf);
+    unsigned dlen = *dst_len;
+    unsigned const overlap_overhead = src_off + src_len - dlen;
+    // printf("upx_lzma_test_overlap: %d\n", overlap_overhead);
 
-    unsigned overlap_overhead = src_off + src_len - *dst_len;
-    //printf("upx_lzma_test_overlap: %d\n", overlap_overhead);
-
-    // 2007-04-25 lower bound 0x810 using --lzma on
-    //    http://www.equi4.com/pub/tk/8.4.13/tclkit-linux-x86.gz
-    // So that file will fail until this function does a real
-    // decompress+verify.
-    if ((int)overlap_overhead >= 256)
+    upx_bytep const dst = (upx_bytep)malloc(overlap_overhead + dlen);
+    upx_bytep const src = (overlap_overhead + dlen + dst) - src_len;
+    // High end of src aligns with high end of dst (including overlap_overhead).
+    memcpy(src, &buf[src_off], src_len);
+    int const rv = upx_lzma_decompress(src, src_len, dst, &dlen,
+                    method, cresult);
+    free(dst);
+    if (UPX_E_OK==rv) {
         return UPX_E_OK;
-
-    UNUSED(cresult);
+    }
     return UPX_E_ERROR;
 }
 
