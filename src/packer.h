@@ -214,8 +214,8 @@ protected:
 
     // packheader handling
     virtual int patchPackHeader(void *b, int blen);
-    virtual bool getPackHeader(void *b, int blen);
-    virtual bool readPackHeader(int len);
+    virtual bool getPackHeader(void *b, int blen, bool allow_incompressible=false);
+    virtual bool readPackHeader(int len, bool allow_incompressible=false);
     virtual void checkAlreadyPacked(const void *b, int blen);
 
     // loader core

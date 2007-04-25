@@ -684,7 +684,7 @@ int Packer::patchPackHeader(void *b, int blen)
 }
 
 
-bool Packer::getPackHeader(void *b, int blen)
+bool Packer::getPackHeader(void *b, int blen, bool allow_incompressible)
 {
     if (!ph.fillPackHeader((unsigned char *)b, blen))
         return false;
@@ -697,7 +697,9 @@ bool Packer::getPackHeader(void *b, int blen)
         if (!testUnpackVersion(ph.version))
             return false;
 
-    if (ph.c_len > ph.u_len || (off_t)ph.c_len >= file_size
+    if (ph.c_len > ph.u_len
+        || (ph.c_len == ph.u_len && !allow_incompressible)
+        || (off_t)ph.c_len >= file_size
         || ph.version <= 0 || ph.version >= 0xff)
         throwCantUnpack("header corrupted");
     else if ((off_t)ph.u_len > ph.u_file_size)
@@ -722,14 +724,14 @@ bool Packer::getPackHeader(void *b, int blen)
 }
 
 
-bool Packer::readPackHeader(int len)
+bool Packer::readPackHeader(int len, bool allow_incompressible)
 {
     assert((int)len > 0);
     MemBuffer buf(len);
     len = fi->read(buf, len);
     if (len <= 0)
         return false;
-    return getPackHeader(buf, len);
+    return getPackHeader(buf, len, allow_incompressible);
 }
 
 
