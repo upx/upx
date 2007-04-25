@@ -697,7 +697,7 @@ bool Packer::getPackHeader(void *b, int blen)
         if (!testUnpackVersion(ph.version))
             return false;
 
-    if (ph.c_len >= ph.u_len || (off_t)ph.c_len >= file_size
+    if (ph.c_len > ph.u_len || (off_t)ph.c_len >= file_size
         || ph.version <= 0 || ph.version >= 0xff)
         throwCantUnpack("header corrupted");
     else if ((off_t)ph.u_len > ph.u_file_size)
