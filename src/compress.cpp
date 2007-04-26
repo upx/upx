@@ -182,8 +182,10 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
 //
 **************************************************************************/
 
-int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_test_overlap       ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult )
 {
@@ -201,15 +203,15 @@ int upx_test_overlap       ( const upx_bytep buf, unsigned src_off,
     }
 #if defined(WITH_LZMA)
     else if (M_IS_LZMA(method))
-        r = upx_lzma_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
+        r = upx_lzma_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
 #if defined(WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_nrv_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
+        r = upx_nrv_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
 #if defined(WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
-        r = upx_ucl_test_overlap(buf, src_off, src_len, dst_len, method, cresult);
+        r = upx_ucl_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
     else {
         throwInternalError("unknown decompression method");

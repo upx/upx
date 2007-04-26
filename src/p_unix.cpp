@@ -173,8 +173,10 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         compressWithFilters(&ft, OVERHEAD, NULL_cconf, filter_strategy);
 
         if (ph.c_len < ph.u_len) {
+            const upx_bytep tbuf = NULL;
+            if (ft.id == 0) tbuf = ibuf;
             ph.overlap_overhead = OVERHEAD;
-            if (!testOverlappingDecompression(obuf, ph.overlap_overhead)) {
+            if (!testOverlappingDecompression(obuf, tbuf, ph.overlap_overhead)) {
                 // not in-place compressible
                 ph.c_len = ph.u_len;
             }
@@ -353,8 +355,10 @@ void PackUnix::packExtent(
         }
 
         if (ph.c_len < ph.u_len) {
+            const upx_bytep tbuf = NULL;
+            if (ft == NULL || ft->id == 0) tbuf = ibuf;
             ph.overlap_overhead = OVERHEAD;
-            if (!testOverlappingDecompression(obuf, ph.overlap_overhead)) {
+            if (!testOverlappingDecompression(obuf, tbuf, ph.overlap_overhead)) {
                 // not in-place compressible
                 ph.c_len = ph.u_len;
             }

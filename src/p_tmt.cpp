@@ -67,11 +67,12 @@ const int *PackTmt::getFilters() const
 
 
 unsigned PackTmt::findOverlapOverhead(const upx_bytep buf,
+                                      const upx_bytep tbuf,
                                       unsigned range,
                                       unsigned upper_limit) const
 {
     // make sure the decompressor will be paragraph aligned
-    unsigned o = super::findOverlapOverhead(buf, range, upper_limit);
+    unsigned o = super::findOverlapOverhead(buf, tbuf, range, upper_limit);
     o = ((o + 0x20) &~ 0xf) - (ph.u_len & 0xf);
     return o;
 }

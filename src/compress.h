@@ -46,8 +46,10 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
-int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_lzma_test_overlap  ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -65,8 +67,10 @@ int upx_nrv_decompress     ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
-int upx_nrv_test_overlap   ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_nrv_test_overlap   ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -84,8 +88,10 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
-int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_ucl_test_overlap   ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif
@@ -102,8 +108,10 @@ int upx_zlib_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
-int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_zlib_test_overlap  ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
 #endif

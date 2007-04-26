@@ -58,6 +58,7 @@ protected:
     virtual int readFileHeader();
 
     virtual unsigned findOverlapOverhead(const upx_bytep buf,
+                                         const upx_bytep tbuf,
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     virtual void buildLoader(const Filter *ft);

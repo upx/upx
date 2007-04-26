@@ -28,6 +28,7 @@
 
 #include "conf.h"
 #include "compress.h"
+#include "mem.h"
 
 
 void lzma_compress_config_t::reset()
@@ -483,44 +484,32 @@ error:
 
 
 /*************************************************************************
-// test_overlap
+// test_overlap - see <ucl/ucl.h> for semantics
 **************************************************************************/
 
-// from <ucl/ucl.h>:
-// test an overlapping in-place decompression within a buffer:
-//   - try a virtual decompression from &buf[src_off] -> &buf[0]
-//   - no data is actually written
-//   - only the bytes at buf[src_off..src_off+src_len-1] will get accessed 
-//
-// 2007-04-25  However, I do not see any "virtual decompress" function in lzma
-// that avoids writing the result.   Therefore, do an actual decompress.
-
-int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_lzma_test_overlap  ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult )
 {
     assert(M_IS_LZMA(method));
 
-    // Note that Packer::verifyOverlappingDecompression() will
-    // verify the final result in any case.
-    unsigned dlen = *dst_len;
-    unsigned const overlap_overhead = src_off + src_len - dlen;
-    // printf("upx_lzma_test_overlap: %d\n", overlap_overhead);
-
-    upx_bytep const dst = (upx_bytep)malloc(src_off + src_len);
-    if (dst) {
-        upx_bytep const src = &dst[src_off];
-        // High ends of src and dst are equal (including overlap_overhead.)
-        memcpy(src, &buf[src_off], src_len);
-        int const rv = upx_lzma_decompress(src, src_len, dst, &dlen,
-                        method, cresult);
-        free(dst);
-        if (UPX_E_OK==rv) {
-            return UPX_E_OK;
-        }
-    }
-    return UPX_E_ERROR;
+    MemBuffer b(src_off + src_len);
+    memcpy(b + src_off, buf + src_off, src_len);
+    unsigned saved_dst_len = *dst_len;
+    int r = upx_lzma_decompress(b + src_off, src_len, b, dst_len, method, cresult);
+    if (r != UPX_E_OK)
+        return r;
+    if (*dst_len != saved_dst_len)
+        return UPX_E_ERROR;
+    // NOTE: there is a very tiny possibility that decompression has
+    //   succeeded but the data is not restored correctly because of
+    //   in-place buffer overlapping.
+    if (tbuf != NULL && memcmp(tbuf, b, *dst_len) != 0)
+        return UPX_E_ERROR;
+    return UPX_E_OK;
 }
 
 

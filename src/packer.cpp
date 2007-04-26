@@ -386,13 +386,16 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 // overlapping decompression
 **************************************************************************/
 
-bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
+bool ph_testOverlappingDecompression(const PackHeader &ph,
+                                     const upx_bytep buf,
+                                     const upx_bytep tbuf,
                                      unsigned overlap_overhead)
 {
     if (ph.c_len >= ph.u_len)
         return false;
 
-    assert((int)overlap_overhead >= 0);
+    assert((int) overlap_overhead >= 0);
+    assert((int) (ph.u_len + overlap_overhead) >= 0);
 
     // Because upx_test_overlap() does not use the asm_fast decompressor
     // we must account for extra 3 bytes that asm_fast does use,
@@ -406,16 +409,17 @@ bool ph_testOverlappingDecompression(const PackHeader &ph, const upx_bytep buf,
 
     unsigned src_off = ph.u_len + overlap_overhead - ph.c_len;
     unsigned new_len = ph.u_len;
-    int r = upx_test_overlap(buf - src_off, src_off,
-                             ph.c_len, &new_len, ph.method, &ph.compress_result);
+    int r = upx_test_overlap(buf - src_off, tbuf,
+                             src_off, ph.c_len, &new_len,
+                             ph.method, &ph.compress_result);
     return (r == UPX_E_OK && new_len == ph.u_len);
 }
 
 
-bool Packer::testOverlappingDecompression(const upx_bytep buf,
+bool Packer::testOverlappingDecompression(const upx_bytep buf, const upx_bytep tbuf,
                                           unsigned overlap_overhead) const
 {
-    return ph_testOverlappingDecompression(ph, buf, overlap_overhead);
+    return ph_testOverlappingDecompression(ph, buf, tbuf, overlap_overhead);
 }
 
 
@@ -474,6 +478,7 @@ void Packer::verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Fi
 **************************************************************************/
 
 unsigned Packer::findOverlapOverhead(const upx_bytep buf,
+                                     const upx_bytep tbuf,
                                      unsigned range,
                                      unsigned upper_limit) const
 {
@@ -493,8 +498,8 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
         assert(m >= low); assert(m <= high);
         assert(m < overhead || overhead == 0);
         nr++;
-        bool success = testOverlappingDecompression(buf, m);
-        //printf("testOverlapOverhead: %d %d -> %d\n", nr, m, (int)success);
+        bool success = testOverlappingDecompression(buf, tbuf, m);
+        printf("testOverlapOverhead(%d): %d %d: %d -> %d\n", nr, low, high, m, (int)success);
         if (success)
         {
             overhead = m;
@@ -1413,7 +1418,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                 if (ph.c_len + lsize + hdr_c_len <= best_ph.c_len + best_ph_lsize + best_hdr_c_len)
                 {
                     // get results
-                    ph.overlap_overhead = findOverlapOverhead(o_tmp, overlap_range);
+                    ph.overlap_overhead = findOverlapOverhead(o_tmp, i_ptr, overlap_range);
                     buildLoader(&ft);
                     lsize = getLoaderSize();
                     assert(lsize > 0);

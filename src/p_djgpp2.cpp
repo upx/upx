@@ -76,10 +76,11 @@ const int *PackDjgpp2::getFilters() const
 
 
 unsigned PackDjgpp2::findOverlapOverhead(const upx_bytep buf,
+                                         const upx_bytep tbuf,
                                          unsigned range,
                                          unsigned upper_limit) const
 {
-    unsigned o = super::findOverlapOverhead(buf, range, upper_limit);
+    unsigned o = super::findOverlapOverhead(buf, tbuf, range, upper_limit);
     o = (o + 0x3ff) &~ 0x1ff;
     return o;
 }

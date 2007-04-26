@@ -203,9 +203,11 @@ protected:
     // util for verifying overlapping decompresion
     //   non-destructive test
     virtual bool testOverlappingDecompression(const upx_bytep buf,
+                                              const upx_bytep tbuf,
                                               unsigned overlap_overhead) const;
     //   non-destructive find
     virtual unsigned findOverlapOverhead(const upx_bytep buf,
+                                         const upx_bytep tbuf,
                                          unsigned range = 0,
                                          unsigned upper_limit = ~0u) const;
     //   destructive decompress + verify

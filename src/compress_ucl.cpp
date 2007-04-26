@@ -228,12 +228,15 @@ int upx_ucl_decompress     ( const upx_bytep src, unsigned  src_len,
 //
 **************************************************************************/
 
-int upx_ucl_test_overlap   ( const upx_bytep buf, unsigned src_off,
-                                   unsigned  src_len, unsigned* dst_len,
+int upx_ucl_test_overlap   ( const upx_bytep buf,
+                             const upx_bytep tbuf,
+                                   unsigned  src_off, unsigned src_len,
+                                   unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult )
 {
     int r;
+    UNUSED(tbuf); // not needed for UCL
 
     switch (method)
     {
