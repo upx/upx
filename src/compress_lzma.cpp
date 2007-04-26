@@ -508,15 +508,17 @@ int upx_lzma_test_overlap  ( const upx_bytep buf, unsigned src_off,
     unsigned const overlap_overhead = src_off + src_len - dlen;
     // printf("upx_lzma_test_overlap: %d\n", overlap_overhead);
 
-    upx_bytep const dst = (upx_bytep)malloc(overlap_overhead + dlen);
-    upx_bytep const src = (overlap_overhead + dlen + dst) - src_len;
-    // High end of src aligns with high end of dst (including overlap_overhead).
-    memcpy(src, &buf[src_off], src_len);
-    int const rv = upx_lzma_decompress(src, src_len, dst, &dlen,
-                    method, cresult);
-    free(dst);
-    if (UPX_E_OK==rv) {
-        return UPX_E_OK;
+    upx_bytep const dst = (upx_bytep)malloc(src_off + src_len);
+    if (dst) {
+        upx_bytep const src = &dst[src_off];
+        // High ends of src and dst are equal (including overlap_overhead.)
+        memcpy(src, &buf[src_off], src_len);
+        int const rv = upx_lzma_decompress(src, src_len, dst, &dlen,
+                        method, cresult);
+        free(dst);
+        if (UPX_E_OK==rv) {
+            return UPX_E_OK;
+        }
     }
     return UPX_E_ERROR;
 }
