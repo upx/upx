@@ -500,14 +500,16 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
             overhead = m;
             // Succeed early if m lies in [low .. low+range-1], i.e. if
             // if the range of the current interval is <= range.
-            //if (m <= low + range - 1)
-            if (m + 1 <= low + range)   // avoid underflow
+            //   if (m <= low + range - 1)
+            //   if (m <  low + range)
+            if (m - low < range)                    // avoid underflow
                 break;
             high = m - 1;
         }
         else
             low = m + 1;
-        m = (low + high) / 2;
+        ////m = (low + high) / 2;
+        m = (low & high) + ((low ^ high) >> 1);     // avoid overflow
     }
 
     //printf("findOverlapOverhead: %d (%d tries)\n", overhead, nr);
