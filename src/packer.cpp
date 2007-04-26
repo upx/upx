@@ -499,7 +499,7 @@ unsigned Packer::findOverlapOverhead(const upx_bytep buf,
         assert(m < overhead || overhead == 0);
         nr++;
         bool success = testOverlappingDecompression(buf, tbuf, m);
-        printf("testOverlapOverhead(%d): %d %d: %d -> %d\n", nr, low, high, m, (int)success);
+        //printf("testOverlapOverhead(%d): %d %d: %d -> %d\n", nr, low, high, m, (int)success);
         if (success)
         {
             overhead = m;
