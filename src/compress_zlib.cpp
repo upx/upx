@@ -191,6 +191,15 @@ done:
 // test_overlap
 **************************************************************************/
 
+// from <ucl/ucl.h>:
+// test an overlapping in-place decompression within a buffer:
+//   - try a virtual decompression from &buf[src_off] -> &buf[0]
+//   - no data is actually written
+//   - only the bytes at buf[src_off..src_off+src_len-1] will get accessed 
+//
+// 2007-04-25  However, I do not see any "virtual decompress" function in zlib
+// that avoids writing the result.   Therefore, do an actual decompress.
+
 int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
                                    unsigned  src_len, unsigned* dst_len,
                                    int method,
@@ -198,17 +207,24 @@ int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
 {
     assert(method == M_DEFLATE);
 
-    // FIXME - implement this
     // Note that Packer::verifyOverlappingDecompression() will
     // verify the final result in any case.
-    UNUSED(buf);
 
     unsigned overlap_overhead = src_off + src_len - *dst_len;
     //printf("upx_zlib_test_overlap: %d\n", overlap_overhead);
-    if ((int)overlap_overhead >= 256)
-        return UPX_E_OK;
 
-    UNUSED(cresult);
+    upx_bytep const dst = (upx_bytep)malloc(src_off + src_len);
+    if (dst) {
+        upx_bytep const src = &dst[src_off];
+        // High ends of src and dst are equal (including overlap_overhead.)
+        memcpy(src, &buf[src_off], src_len);
+        int const rv = upx_zlib_decompress(src, src_len, dst, &dlen,
+                        method, cresult);
+        free(dst);
+        if (UPX_E_OK==rv) {
+            return UPX_E_OK;
+        }
+    }
     return UPX_E_ERROR;
 }
 
