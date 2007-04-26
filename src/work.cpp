@@ -58,12 +58,13 @@
 
 void do_one_file(const char *iname, char *oname)
 {
+    int r;
     struct stat st;
     memset(&st, 0, sizeof(st));
 #if defined(HAVE_LSTAT)
-    int r = lstat(iname,&st);
+    r = lstat(iname,&st);
 #else
-    int r = stat(iname,&st);
+    r = stat(iname,&st);
 #endif
 
     if (r != 0)
@@ -211,15 +212,18 @@ void do_one_file(const char *iname, char *oname)
         struct utimbuf u;
         u.actime = st.st_atime;
         u.modtime = st.st_mtime;
-        (void) ::utime(name,&u);
+        r = utime(name, &u);
+        UNUSED(r);
 #endif
 #if defined(HAVE_CHMOD)
         // copy permissions
-        (void) ::chmod(name, st.st_mode);
+        r = chmod(name, st.st_mode);
+        UNUSED(r);
 #endif
 #if defined(HAVE_CHOWN)
         // copy the ownership
-        (void) ::chown(name, st.st_uid, st.st_gid);
+        r = chown(name, st.st_uid, st.st_gid);
+        UNUSED(r);
 #endif
     }
 

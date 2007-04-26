@@ -211,7 +211,7 @@ int upx_zlib_test_overlap  ( const upx_bytep buf, unsigned src_off,
     // verify the final result in any case.
 
     unsigned dlen = *dst_len;
-    unsigned overlap_overhead = src_off + src_len - dlen;
+    //unsigned overlap_overhead = src_off + src_len - dlen;
     //printf("upx_zlib_test_overlap: %d\n", overlap_overhead);
 
     upx_bytep const dst = (upx_bytep)malloc(src_off + src_len);
