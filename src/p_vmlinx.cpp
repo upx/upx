@@ -46,6 +46,8 @@ static const
 #include "stub/arm-linux.kernel.vmlinux.h"
 static const
 #include "stub/armeb-linux.kernel.vmlinux.h"
+static const
+#include "stub/powerpc-linux.kernel.vmlinux.h"
 
 
 /*************************************************************************
@@ -203,6 +205,7 @@ bool PackVmlinuxBase<T>::canPack()
     return 0 < n_ptload;
 }
 
+#include "p_elf.h"
 
 template <class T>
 void PackVmlinuxBase<T>::pack(OutputFile *fo)
@@ -267,13 +270,79 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
-    compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
+
+    unsigned ppc32_extra = 0;
+    if (Ehdr::EM_PPC==my_e_machine) {
+        // output layout:
+        //      .long UPX_MAGIC_LE32
+        //      .long L20 - L10
+        // L10:
+        //      b_info for Ehdr; compressed Ehdr; .balign 4  // one block only
+        //      b_info for LOAD; compressed LOAD; .balign 4  // possibly many blocks
+        //          // This allows per-block filters!
+        // L20:
+        //      b f_decompress
+        // +4:  f_unfilter(char *buf, unsigned len, unsigned cto8, unsigned ftid)
+        //          // Code for multiple filters can "daisy chain" on ftid.
+        //      f_decompress(char const *src, unsigned  src_len,
+        //                   char       *dst, unsigned *dst_len, int method)
+        unsigned tmp;
+        tmp = UPX_MAGIC_LE32; fo->write(&tmp, sizeof(tmp)); fo_off += sizeof(tmp);
+        tmp = 0;              fo->write(&tmp, sizeof(tmp)); fo_off += sizeof(tmp);
+        ppc32_extra += 2*sizeof(tmp);
+        unsigned const len_unc = sizeof(ehdri) + sizeof(Phdr) * ehdri.e_phnum;
+        MemBuffer unc_hdr(len_unc);
+        MemBuffer cpr_hdr; cpr_hdr.allocForCompression(len_unc);
+        memcpy(&unc_hdr[0],             &ehdri, sizeof(ehdri));
+        memcpy(&unc_hdr[sizeof(ehdri)],  phdri, sizeof(Phdr) * ehdri.e_phnum);
+        unsigned len_cpr = 0;
+        int const r = upx_compress(unc_hdr, len_unc, cpr_hdr, &len_cpr,
+            NULL, ph.method, 10, NULL, NULL );
+        if (UPX_E_OK!=r || len_unc<=len_cpr)  // FIXME: allow no compression
+            throwInternalError("Ehdr compression failed");
+
+        struct b_info { // 12-byte header before each compressed block
+            unsigned sz_unc;  // uncompressed_size
+            unsigned sz_cpr;  //   compressed_size
+            unsigned char b_method;  // compression algorithm
+            unsigned char b_ftid;  // filter id
+            unsigned char b_cto8;  // filter parameter
+            unsigned char b_unused;  // FIXME: !=0  for partial-block unfilter
+            // unsigned f_offset, f_len;  // only if    partial-block unfilter
+        }
+        __attribute_packed;
+
+        struct b_info hdr_info;
+        set_be32(&hdr_info.sz_unc, len_unc);
+        set_be32(&hdr_info.sz_cpr, len_cpr);
+        hdr_info.b_method = ph.method;
+        hdr_info.b_ftid = 0;
+        hdr_info.b_cto8 = 0;
+        hdr_info.b_unused = 0;
+        fo->write(&hdr_info, sizeof(hdr_info)); fo_off += sizeof(hdr_info);
+        unsigned const frag = (3& -len_cpr);
+        ppc32_extra += sizeof(hdr_info) + len_cpr + frag;
+        fo_off += len_cpr + frag;
+        fo->write(cpr_hdr, len_cpr + frag);
+        compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
+        set_be32(&hdr_info.sz_unc, ph.u_len);
+        set_be32(&hdr_info.sz_cpr, ph.c_len);
+        hdr_info.b_ftid = ft.id;
+        hdr_info.b_cto8 = ft.cto;
+        fo->write(&hdr_info, sizeof(hdr_info)); fo_off += sizeof(hdr_info);
+        ppc32_extra += sizeof(hdr_info);
+    }
+    else {
+        compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
+    }
     unsigned const txt_c_len = ph.c_len;
 
     const unsigned lsize = getLoaderSize();
 
     defineDecompressorSymbols();
-    defineFilterSymbols(&ft);
+    if (ft.id!=0) {
+        defineFilterSymbols(&ft);
+    }
     relocateLoader();
 
     MemBuffer loader(lsize);
@@ -287,13 +356,13 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     shdro[1].sh_name = ptr_diff(p, shstrtab);
     shdro[1].sh_type = Shdr::SHT_PROGBITS;
     shdro[1].sh_flags = Shdr::SHF_ALLOC | Shdr::SHF_EXECINSTR;
-    shdro[1].sh_offset = fo_off;
-    shdro[1].sh_size = txt_c_len + lsize;  // plus more ...
+    shdro[1].sh_offset = fo_off - ppc32_extra;
+    shdro[1].sh_size = ppc32_extra + txt_c_len + lsize;  // plus more ...
     shdro[1].sh_addralign = 1;  // default
 
     fo_off += write_vmlinux_head(fo, &shdro[1]);
     fo->write(obuf, txt_c_len); fo_off += txt_c_len;
-    unsigned const a = (shdro[1].sh_addralign -1) & (0u-txt_c_len);
+    unsigned const a = (shdro[1].sh_addralign -1) & (0u-(ppc32_extra + txt_c_len));
     if (0!=a) { // align
         fo_off += a;
         shdro[1].sh_size += a;
@@ -361,7 +430,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     shdro[5].sh_name = ptr_diff(p, shstrtab);
     shdro[5].sh_type = Shdr::SHT_SYMTAB;
     shdro[5].sh_offset = fo_off;
-    shdro[5].sh_size = 5*sizeof(Sym);
+    shdro[5].sh_size = ((Ehdr::EM_PPC==my_e_machine) + 5)*sizeof(Sym);
     //shdro[5].sh_flags = Shdr::SHF_INFO_LINK;
     shdro[5].sh_link = 6;  // to .strtab for symbols
     shdro[5].sh_info = 1+3;  // number of non-global symbols [binutils/bfd/elf.c]
@@ -388,26 +457,40 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
     Sym unc_ker;
     unc_ker.st_name = 1;  // 1 byte into strtab
     unc_ker.st_value = 0;
-    unc_ker.st_size = txt_c_len;
+    unc_ker.st_size = ppc32_extra + txt_c_len;
     unc_ker.st_info = unc_ker.make_st_info(Sym::STB_GLOBAL, Sym::STT_FUNC);
     unc_ker.st_other = Sym::STV_DEFAULT;
     unc_ker.st_shndx = 1;  // .text
     fo->write(&unc_ker, sizeof(unc_ker)); fo_off += sizeof(unc_ker);
 
     unsigned const lablen = strlen(my_boot_label);
+    if (Ehdr::EM_PPC==my_e_machine) {
+        unc_ker.st_name += 1+ lablen;
+        unc_ker.st_value = unc_ker.st_size;
+        unc_ker.st_size = 0;
+        fo->write(&unc_ker, sizeof(unc_ker)); fo_off += sizeof(unc_ker);
+    }
     while (0!=*p++) ;
     shdro[6].sh_name = ptr_diff(p, shstrtab);
     shdro[6].sh_type = Shdr::SHT_STRTAB;
     shdro[6].sh_offset = fo_off;
-    shdro[6].sh_size = 2+ lablen;  // '\0' before and after
+    shdro[6].sh_size = 2+ lablen + (Ehdr::EM_PPC==my_e_machine)*(1+ 12);  // '\0' before and after
     shdro[6].sh_addralign = 1;
     fo->seek(1, SEEK_CUR);  // the '\0' before
     fo->write(my_boot_label, 1+ lablen);  // include the '\0' terminator
+    if (Ehdr::EM_PPC==my_e_machine) {
+        fo->write("_vmlinux_end", 1+ 12); fo_off += 1+ 12;
+    }
     fo_off += 2+ lablen;
 
     fo->seek(0, SEEK_SET);
     fo->write(&ehdro, sizeof(ehdro));
     fo->write(&shdro, sizeof(shdro));
+    if (Ehdr::EM_PPC==my_e_machine) {
+        fo->seek(sizeof(unsigned), SEEK_CUR);
+        set_be32(&ppc32_extra, ppc32_extra - 2*sizeof(unsigned) + txt_c_len);
+        fo->write(&ppc32_extra, sizeof(ppc32_extra));
+    }
 
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
@@ -559,6 +642,12 @@ const int *PackVmlinuxARMEB::getCompressionMethods(int method, int level) const
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
+const int *PackVmlinuxPPC32::getCompressionMethods(int method, int level) const
+{
+    // No real dependency on LE32.
+    return Packer::getDefaultCompressionMethods_le32(method, level);
+}
+
 
 const int *PackVmlinuxARMEL::getFilters() const
 {
@@ -570,6 +659,12 @@ const int *PackVmlinuxARMEB::getFilters() const
 {
     static const int f51[] = { 0x51, FT_END };
     return f51;
+}
+
+const int *PackVmlinuxPPC32::getFilters() const
+{
+    static const int fd0[] = { 0xd0, FT_END };
+    return fd0;
 }
 
 //
@@ -669,6 +764,11 @@ bool PackVmlinuxARMEB::is_valid_e_entry(Addr e_entry)
     return 0xc0008000==e_entry;
 }
 
+bool PackVmlinuxPPC32::is_valid_e_entry(Addr e_entry)
+{
+    return 0xc0000000==e_entry;
+}
+
 Linker* PackVmlinuxARMEL::newLinker() const
 {
     return new ElfLinkerArmLE;
@@ -677,6 +777,11 @@ Linker* PackVmlinuxARMEL::newLinker() const
 Linker* PackVmlinuxARMEB::newLinker() const
 {
     return new ElfLinkerArmBE;
+}
+
+Linker* PackVmlinuxPPC32::newLinker() const
+{
+    return new ElfLinkerPpc32;
 }
 
 
@@ -725,6 +830,28 @@ void PackVmlinuxARMEB::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,UPX1HEAD", NULL);
 }
 
+void PackVmlinuxPPC32::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(stub_powerpc_linux_kernel_vmlinux, sizeof(stub_powerpc_linux_kernel_vmlinux));
+    addLoader("LINUX000", NULL);
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addLoader("LINUX010", NULL);
+    }
+    addLoader("LINUX020", NULL);
+    if (ft->id) {
+        addFilter32(ft->id);
+    }
+    addLoader("LINUX030", NULL);
+         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
+    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
+    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else throwBadLoader();
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
+}
+
 
 static const
 #include "stub/i386-linux.kernel.vmlinux-head.h"
@@ -734,6 +861,8 @@ static const
 #include "stub/arm-linux.kernel.vmlinux-head.h"
 static const
 #include "stub/armeb-linux.kernel.vmlinux-head.h"
+static const
+#include "stub/powerpc-linux.kernel.vmlinux-head.h"
 
 unsigned PackVmlinuxI386::write_vmlinux_head(
     OutputFile *const fo,
@@ -781,6 +910,14 @@ void PackVmlinuxARMEB::defineDecompressorSymbols()
     linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
     linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
     linker->defineSymbol("METHOD", ph.method);
+}
+
+void PackVmlinuxPPC32::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    // linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
+    // linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
+    // linker->defineSymbol("METHOD", ph.method);
 }
 
 void PackVmlinuxI386::defineDecompressorSymbols()
@@ -844,6 +981,14 @@ unsigned PackVmlinuxARMEB::write_vmlinux_head(
     return sizeof(stub_armeb_linux_kernel_vmlinux_head);
 }
 
+unsigned PackVmlinuxPPC32::write_vmlinux_head(
+    OutputFile * /*const fo*/,
+    Shdr * /*const stxt*/
+)
+{
+    return 0;
+}
+
 
 bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
@@ -863,6 +1008,20 @@ bool PackVmlinuxARMEB::has_valid_vmlinux_head()
 {
     U32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_armeb_linux_kernel_vmlinux_head) -8, SEEK_SET);
+    fi->readx(buf, sizeof(buf));
+    //unsigned const word0 = buf[0];
+    unsigned const word1 = buf[1];
+    if (0xeb==(word1>>24)
+    &&  (0x00ffffff& word1)==(0u - 1 + ((3+ ph.c_len)>>2))) {
+        return true;
+    }
+    return false;
+}
+
+bool PackVmlinuxPPC32::has_valid_vmlinux_head()
+{
+    U32 buf[2];
+    fi->seek(p_text->sh_offset + sizeof(stub_powerpc_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];

@@ -106,7 +106,7 @@ static int F(Filter *f)
     f->noncalls = noncalls;
     f->lastcall = lastcall;
 
-#if 0
+#if 1
     printf("\ncalls=%d noncalls=%d text_size=%x calltrickoffset=%x\n",
         calls,noncalls,size,cto8);
 #endif

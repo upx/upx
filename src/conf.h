@@ -466,6 +466,7 @@ private:
 #define UPX_F_LINUX_ELF32_ARMEB 133
 #define UPX_F_MACH_FAT          134
 #define UPX_F_VMLINUX_ARMEB     135
+#define UPX_F_VMLINUX_PPC32     136
 
 
 // compression methods

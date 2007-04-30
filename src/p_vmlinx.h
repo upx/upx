@@ -167,6 +167,30 @@ protected:
     );
 };
 
+class PackVmlinuxPPC32 : public PackVmlinuxBase<ElfClass_BE32>
+{
+    typedef PackVmlinuxBase<ElfClass_BE32> super;
+public:
+    PackVmlinuxPPC32(InputFile *f) : super(f, Ehdr::EM_PPC,
+        Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "_vmlinux_start") { }
+    virtual int getFormat() const { return UPX_F_VMLINUX_PPC32; }
+    virtual const char *getName() const { return "vmlinux/ppc32"; }
+    virtual const char *getFullName(const options_t *) const { return "ppc32-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+protected:
+    virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
+    virtual Linker* newLinker() const;
+    virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
+};
+
 
 class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 {

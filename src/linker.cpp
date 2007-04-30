@@ -801,6 +801,12 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location,
         return super::relocate1(rel, location, value, type);
     type += 6;
 
+    if (strcmp(type, "ADDR32") == 0)
+    {
+        set_be32(location, get_be32(location) + value);
+        return;
+    }
+
     if (strncmp(type, "REL", 3) == 0)
     {
         value -= rel->section->offset + rel->offset;

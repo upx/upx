@@ -62,3 +62,8 @@ L20:
         bdnz+ L20  # if (0!=--ctr) goto L20;  // likely
         ret
 
+#undef ptr0
+#undef ftid
+#undef cto8
+#undef len
+#undef ptr

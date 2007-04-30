@@ -92,6 +92,8 @@ STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
+STUBS += powerpc-linux.kernel.vmlinux.h
+STUBS += powerpc-linux.kernel.vmlinux-head.h
 endif
 
 
@@ -881,6 +883,25 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+
+# /***********************************************************************
+# // powerpc-linux.kernel.vmlinux
+# ************************************************************************/
+powerpc-linux.kernel.vmlinu%.h : tc_list = powerpc-linux.kernel default
+powerpc-linux.kernel.vmlinu%.h : tc_bfdname = elf32-powerpc
+
+tc.powerpc-linux.kernel.gcc  = $(tc.powerpc-linux.elf.gcc)
+
+powerpc-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
