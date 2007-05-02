@@ -324,13 +324,53 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         ppc32_extra += sizeof(hdr_info) + len_cpr + frag;
         fo_off += len_cpr + frag;
         fo->write(cpr_hdr, len_cpr + frag);
-        compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
+
+        // Partial filter: .text and following contiguous SHF_EXECINSTR
+        upx_bytep f_ptr = ibuf;
+        unsigned  f_len = 0;
+        Shdr const *shdr = 1+ shdri;  // skip empty shdr[0]
+        if (ft.buf_len==0  // not specified yet  FIXME: was set near construction
+        && (Shdr::SHF_ALLOC     & shdr->sh_flags)
+        && (Shdr::SHF_EXECINSTR & shdr->sh_flags)) {
+            // shdr[1] is instructions (probably .text)
+            f_ptr = ibuf + (shdr->sh_offset - phdri[0].p_offset);
+            f_len = shdr->sh_size;
+            ++shdr;
+            for (int j= -2+ ehdri.e_shnum; --j>=0; ++shdr) {
+                if ((Shdr::SHF_ALLOC     & shdr->sh_flags)
+                &&  (Shdr::SHF_EXECINSTR & shdr->sh_flags)
+                &&  shdr[0].sh_offset==(shdr[-1].sh_size + shdr[-1].sh_offset)) {
+                    f_len += shdr->sh_size;
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        else { // ft.buf_len already specified, or shdr[1] not instructions
+            f_ptr = ibuf;
+            f_len = ph.u_len;
+        }
+        compressWithFilters(ibuf, ph.u_len, obuf,
+            f_ptr, f_len,  // filter range
+            NULL, 0,  // hdr_ptr, hdr_len
+            &ft, 512, &cconf, getStrategy(ft));
+
         set_be32(&hdr_info.sz_unc, ph.u_len);
         set_be32(&hdr_info.sz_cpr, ph.c_len);
         hdr_info.b_ftid = ft.id;
         hdr_info.b_cto8 = ft.cto;
+        if (ph.u_len!=f_len) {
+            hdr_info.b_unused = 1;  // flag for partial filter
+        }
         fo->write(&hdr_info, sizeof(hdr_info)); fo_off += sizeof(hdr_info);
         ppc32_extra += sizeof(hdr_info);
+        if (ph.u_len!=f_len) {
+            set_be32(&hdr_info.sz_unc, f_ptr - ibuf);
+            set_be32(&hdr_info.sz_cpr, f_len);
+            fo->write(&hdr_info, 2*sizeof(unsigned)); fo_off += 2*sizeof(unsigned);
+            ppc32_extra += 2*sizeof(unsigned);
+        }
 
 #if 0  /*{ Documentation: changes to arch/powerpc/boot/main.c */
 struct b_info {
@@ -947,9 +987,9 @@ void PackVmlinuxPPC32::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUX030", NULL);
-         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
-    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
-    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+         if (ph.method == M_NRV2E_LE32) addLoader("NRV2E", NULL);
+    else if (ph.method == M_NRV2B_LE32) addLoader("NRV2B", NULL);
+    else if (ph.method == M_NRV2D_LE32) addLoader("NRV2D", NULL);
     else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
     else throwBadLoader();
     addLoader("IDENTSTR,UPX1HEAD", NULL);
