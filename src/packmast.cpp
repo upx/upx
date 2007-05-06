@@ -243,6 +243,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
             return p;
         if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
             return p;
+        if ((p = func(new PackLinuxElf32mipsel(f), user)) != NULL)
+            return p;
         if ((p = func(new PackLinuxI386sh(f), user)) != NULL)
             return p;
     }

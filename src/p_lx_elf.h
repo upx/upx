@@ -70,6 +70,8 @@ protected:
     unsigned sz_phdrs;  // sizeof Phdr[]
     unsigned sz_elf_hdrs;  // all Elf headers
     unsigned sz_pack2;  // after pack2(), before loader
+    unsigned lg2_page;  // log2(PAGE_SIZE)
+    unsigned page_size;  // 1u<<lg2_page
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -126,6 +128,7 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
+    unsigned page_mask;  // AND clears the offset-within-page
 
     Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab;  // from DT_HASH
@@ -211,6 +214,7 @@ protected:
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
+    acc_uint64l_t page_mask;  // AND clears the offset-within-page
 
     struct cprElfHdr1 {
         Elf64_Ehdr ehdr;
@@ -439,6 +443,26 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMEB; }
     virtual const char *getName() const { return "linux/armeb"; }
     virtual const char *getFullName(const options_t *) const { return "armeb-linux.elf"; }
+    virtual const int *getFilters() const;
+
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual Linker* newLinker() const;
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void buildLoader(const Filter *);
+    virtual void updateLoader(OutputFile *);
+    virtual void defineSymbols(Filter const *);
+};
+
+class PackLinuxElf32mipsel : public PackLinuxElf32Le
+{
+    typedef PackLinuxElf32Le super;
+public:
+    PackLinuxElf32mipsel(InputFile *f);
+    virtual ~PackLinuxElf32mipsel();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_MIPSEL; }
+    virtual const char *getName() const { return "linux/mipsel"; }
+    virtual const char *getFullName(const options_t *) const { return "mipsel-linux.elf"; }
     virtual const int *getFilters() const;
 
 protected:

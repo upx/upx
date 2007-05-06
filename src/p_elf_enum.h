@@ -68,10 +68,13 @@
     };
     enum { // e_machine
         EM_386    = 3,
+        EM_MIPS   = 8,
+        EM_MIPS_RS3_LE =  10,   /* MIPS R3000 little-endian */
         EM_PPC    = 20,
         EM_PPC64  = 21,
         EM_ARM    = 40,
         EM_X86_64 = 62
+
     };
     enum { // e_version
         EV_CURRENT = 1

@@ -337,9 +337,11 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
             f_len = shdr->sh_size;
             ++shdr;
             for (int j= -2+ ehdri.e_shnum; --j>=0; ++shdr) {
+                unsigned prev_end = shdr[-1].sh_size + shdr[-1].sh_offset;
+                prev_end += ~(-shdr[0].sh_addralign) & -prev_end;  // align_up
                 if ((Shdr::SHF_ALLOC     & shdr->sh_flags)
                 &&  (Shdr::SHF_EXECINSTR & shdr->sh_flags)
-                &&  shdr[0].sh_offset==(shdr[-1].sh_size + shdr[-1].sh_offset)) {
+                &&  shdr[0].sh_offset==prev_end) {
                     f_len += shdr->sh_size;
                 }
                 else {
@@ -347,7 +349,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
                 }
             }
         }
-        else { // ft.buf_len already specified, or shdr[1] not instructions
+        else { // ft.buf_len already specified, or Shdr[1] not instructions
             f_ptr = ibuf;
             f_len = ph.u_len;
         }

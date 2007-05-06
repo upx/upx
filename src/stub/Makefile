@@ -88,6 +88,8 @@ STUBS += i386-linux.kernel.vmlinuz.h
 STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
 STUBS += mipsel.r3000-ps1.h
+STUBS += mipsel.r3000-linux.elf-entry.h
+STUBS += mipsel.r3000-linux.elf-fold.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
@@ -823,6 +825,42 @@ else
 endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // mipsel.r3000-linux.elf
+# ************************************************************************/
+
+mipsel.r3000-linux.elf%.h : tc_list = mipsel.r3000-ps1 default
+mipsel.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
+
+mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
+ifeq (1,1)
+	# info: we really need as-2.17 here
+	$(call tc,pp-as) -DPS1 $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,as) tmp/$T.i -o tmp/$T.bin
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
+else
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
+	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
+endif
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+mipsel.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mipsel.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************

@@ -333,6 +333,35 @@ decomp_done:
 section     decompressor.start
 decompressor:
 
+section     lzma.init
+            li      tmp,%lo(lzma_stack_adjust-lzma_args_sz)
+            addu    sp,tmp
+/*
+            move    var,sp
+1:
+            sw      zero,0(var)
+            addiu   tmp,4
+            bnez    tmp,1b
+            addiu   var,4
+*/
+            addiu   src,2
+            la      inSize,lzma_c_len
+            la      outSize,lzma_u_len
+
+            addu    poutSizeProcessed,sp,outSizeProcessed
+            addiu   pinSizeprocessed,sp,inSizeProcessed
+
+            la      tmp,lzma_properties
+            sw      dst,dst_save(sp)
+            addiu   CLzmaDecoderState,sp,lzma_args_sz
+            bal     decompressor
+            sw      tmp,0(CLzmaDecoderState)
+            lw      dst,dst_save(sp)
+            lw      outSize,outSizeProcessed(sp)
+            li      tmp,%lo(lzma_stack_adjust-lzma_args_sz)
+            addu    dst,outSize
+            subu    sp,tmp
+
 #include    "arch/mips/mipsel.r3000/lzma_d.S"
 
 #include    "include/header.S"

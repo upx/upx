@@ -1,11 +1,8 @@
-/* lzma_d.S -- MIPS R3000 decompressor for LZMA
+/* mipsel.r3000-linux.elf-fold.lds --
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2007 Laszlo Molnar
    Copyright (C) 2000-2007 John F. Reiser
-   Copyright (C) 2002-2007 Jens Medoch
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -26,15 +23,26 @@
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <mfx@users.sourceforge.net>          <ml1050@users.sourceforge.net>
 
-   John F. Reiser                       Jens Medoch
-   <jreiser@users.sourceforge.net>      <jssg@users.sourceforge.net>
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
-section     LZMA_DEC10
-#include    "lzma_d_cs.S"
 
-section     LZMA_DEC20
-#include    "lzma_d_cf.S"
-
-// vi:ts=8:et
-
+OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips", "elf32-littlemips")
+OUTPUT_ARCH(mips)
+/*ENTRY(_start)*/
+PHDRS
+{
+    text PT_LOAD FILEHDR PHDRS ;
+    data PT_LOAD ;  /* for setting brk(0) */
+}
+SECTIONS
+{
+  . = 0x00100000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+  .text : {
+    *(.text)
+    *(.data)
+  } : text
+  .data : {
+  } : data
+}

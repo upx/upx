@@ -141,6 +141,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), file_image(NULL), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0),
+    lg2_page(12), page_size(1u<<lg2_page),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL)
 {
 }
@@ -201,7 +202,7 @@ void PackLinuxElf::defineSymbols(Filter const *)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL),
+    : super(f), phdri(NULL), page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), dynsym(NULL)
 {
 }
@@ -212,7 +213,7 @@ PackLinuxElf32::~PackLinuxElf32()
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdri(NULL)
+    : super(f), phdri(NULL), page_mask(~0ull<<lg2_page)
 {
 }
 
@@ -243,6 +244,12 @@ int const *
 PackLinuxElf32armBe::getCompressionMethods(int method, int level) const
 {
     return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
+int const *
+PackLinuxElf32mipsel::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
 int const *
@@ -286,6 +293,11 @@ void PackLinuxElf32armLe::updateLoader(OutputFile *fo)
 void PackLinuxElf32armBe::updateLoader(OutputFile *fo)
 {
     ARM_updateLoader(fo);
+}
+
+void PackLinuxElf32mipsel::updateLoader(OutputFile *fo)
+{
+    ARM_updateLoader(fo);  // not ARM specific; (no 32-bit immediates)
 }
 
 void PackLinuxElf32::updateLoader(OutputFile *fo)
@@ -560,8 +572,6 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
             }
         }
     }
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (-PAGE_MASK)
     lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
     acc_uint64l_t       lo_va_stub = get_native64(&elfout.phdr[0].p_vaddr);
     acc_uint64l_t adrc;
@@ -572,7 +582,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*PAGE_SIZE));
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
     if (is_big) {
         set_native64(    &elfout.ehdr.e_entry,
             get_native64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
@@ -581,10 +591,10 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
                lo_va_stub      = lo_va_user;
         adrc = lo_va_stub;
         adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
-        adru = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
+        adru = page_mask & (~page_mask + adrm);  // round up to page boundary
         adrx = adru + hlen;
-        lenm = PAGE_SIZE + len;
-        lenu = PAGE_SIZE + len;
+        lenm = page_size + len;
+        lenu = page_size + len;
         cntc = len >> 3;  // over-estimate; corrected at runtime
     }
     else {
@@ -592,12 +602,12 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
         adrc = adrm;
         adru = lo_va_stub;
         adrx = lo_va_stub + hlen;
-        lenm = PAGE_SIZE;
-        lenu = PAGE_SIZE + len;
+        lenm = page_size;
+        lenu = page_size + len;
         cntc = 0;
     }
-    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
+    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
 
@@ -614,8 +624,6 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
 #undef EI_NIDENT
     linker->defineSymbol("LENM", lenm);  // len  for map
     linker->defineSymbol("ADRM", adrm);  // addr for map
-#undef PAGE_SIZE
-#undef PAGE_MASK
 
     //linker->dumpSymbols();  // debug
 }
@@ -732,6 +740,19 @@ PackLinuxElf32armLe::buildLoader(Filter const *ft)
     buildLinuxLoader(
         stub_arm_linux_elf_entry, sizeof(stub_arm_linux_elf_entry),
         stub_arm_linux_elf_fold,  sizeof(stub_arm_linux_elf_fold), ft);
+}
+
+static const
+#include "stub/mipsel.r3000-linux.elf-entry.h"
+static const
+#include "stub/mipsel.r3000-linux.elf-fold.h"
+
+void
+PackLinuxElf32mipsel::buildLoader(Filter const *ft)
+{
+    buildLinuxLoader(
+        stub_mipsel_r3000_linux_elf_entry, sizeof(stub_mipsel_r3000_linux_elf_entry),
+        stub_mipsel_r3000_linux_elf_fold,  sizeof(stub_mipsel_r3000_linux_elf_fold), ft);
 }
 
 static const
@@ -993,6 +1014,10 @@ PackLinuxElf32::generateElfHdr(
     cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    if (Elf32_Ehdr::EM_MIPS==e_machine) { // MIPS R3000  FIXME
+        h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = Elf32_Ehdr::ELFOSABI_NONE;
+        h3->ehdr.e_flags = ehdri.e_flags;
+    }
 
     assert(get_native32(&h2->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
                          h2->ehdr.e_shoff = 0;
@@ -1006,19 +1031,33 @@ PackLinuxElf32::generateElfHdr(
     set_native32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
+    unsigned const e_phnum = get_native16(&ehdri.e_phnum);
+    Elf32_Phdr const *phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
+            unsigned x = phdr->p_align >> lg2_page;
+            while (x>>=1) {
+                ++lg2_page;
+            }
+        }
+    }
+    page_size =  1u<<lg2_page;
+    page_mask = ~0u<<lg2_page;
+    for (unsigned j=0; j < 3; ++j) {
+        set_native32(&h3->phdr[j].p_align, page_size);
+    }
+
     // Info for OS kernel to set the brk()
     if (brka) {
-#define PAGE_MASK (~0u<<12)
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
+        unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
         set_native32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
-        set_native32(&h2->phdr[1].p_offset, ~PAGE_MASK & brkb);
+        set_native32(&h2->phdr[1].p_offset, ~page_mask & brkb);
         set_native32(&h2->phdr[1].p_vaddr, brkb);
         set_native32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
         set_native32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
-#undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
         assert(2==get_native16(&h2->ehdr.e_phnum));
@@ -1057,16 +1096,14 @@ PackOpenBSDElf32x86::generateElfHdr(
     set_native32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
                   h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
 
-#define PAGE_MASK (~0u<<12)
-    unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
+    unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
     set_native32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
-    set_native32(&h3->phdr[1].p_offset, ~PAGE_MASK & brkb);
+    set_native32(&h3->phdr[1].p_offset, ~page_mask & brkb);
     set_native32(&h3->phdr[1].p_vaddr, brkb);
     set_native32(&h3->phdr[1].p_paddr, brkb);
     h3->phdr[1].p_filesz = 0;
     h3->phdr[1].p_memsz =  0;
     set_native32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
-#undef PAGE_MASK
 
     set_native32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
     set_native32(&h3->phdr[2].p_offset, note_offset);
@@ -1118,19 +1155,33 @@ PackLinuxElf64::generateElfHdr(
     set_native64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
+    unsigned const e_phnum = get_native16(&ehdri.e_phnum);
+    Elf64_Phdr const *phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD64 == get_native64(&phdr->p_type)) {
+            unsigned x = phdr->p_align >> lg2_page;
+            while (x>>=1) {
+                ++lg2_page;
+            }
+        }
+    }
+    page_size =  1u  <<lg2_page;
+    page_mask = ~0ull<<lg2_page;
+    for (unsigned j=0; j < 3; ++j) {
+        set_native64(&h3->phdr[j].p_align, page_size);
+    }
+
     // Info for OS kernel to set the brk()
     if (brka) {
-#define PAGE_MASK (~0ul<<12)
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
-        unsigned const brkb = brka | ((0==(~PAGE_MASK & brka)) ? 0x20 : 0);
+        unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
         set_native32(&h2->phdr[1].p_type, PT_LOAD32);  // be sure
-        set_native64(&h2->phdr[1].p_offset, ~PAGE_MASK & brkb);
+        set_native64(&h2->phdr[1].p_offset, ~page_mask & brkb);
         set_native64(&h2->phdr[1].p_vaddr, brkb);
         set_native64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
         set_native32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
-#undef PAGE_MASK
     }
     if (ph.format==getFormat()) {
         assert(2==get_native16(&h2->ehdr.e_phnum));
@@ -1184,6 +1235,14 @@ void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
     super::pack1(fo, ft);
     cprElfHdr3 h3;
     memcpy(&h3, stub_armeb_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+}
+
+void PackLinuxElf32mipsel::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    cprElfHdr3 h3;
+    memcpy(&h3, stub_mipsel_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
@@ -1443,12 +1502,17 @@ PackLinuxElf32armLe::getFilters() const
     return ARM_getFilters(false);
 }
 
+const int *
+PackLinuxElf32mipsel::getFilters() const
+{
+    static const int f_none[] = { FT_END };
+    return f_none;
+}
+
 void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
-#define PAGE_MASK (~0u<<12)
-#define PAGE_SIZE (-PAGE_MASK)
     lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
     unsigned const lo_va_user = 0x8000;  // XXX
     unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);
@@ -1465,17 +1529,15 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
                               lo_va_stub    = lo_va_user;
         adrc = lo_va_stub;
         adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
-        adrx = hlen + (PAGE_MASK & (~PAGE_MASK + adrm));  // round up to page boundary
+        adrx = hlen + (page_mask & (~page_mask + adrm));  // round up to page boundary
     }
-    adrm = PAGE_MASK & (~PAGE_MASK + adrm);  // round up to page boundary
-    adrc = PAGE_MASK & (~PAGE_MASK + adrc);  // round up to page boundary
+    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
+    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
 
     linker->defineSymbol("ADRM", adrm);  // addr for map
-#undef PAGE_SIZE
-#undef PAGE_MASK
 }
 
 void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
@@ -1486,6 +1548,82 @@ void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
 void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 {
     ARM_defineSymbols(ft);
+}
+
+void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
+{
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+
+    // We want to know if compressed data, plus stub, plus a couple pages,
+    // will fit below the uncompressed program in memory.  But we don't
+    // know the final total compressed size yet, so use the uncompressed
+    // size (total over all PT_LOAD32) as an upper bound.
+    unsigned len = 0;
+    unsigned lo_va_user = ~0u;  // infinity
+    for (int j= get_native16(&ehdri.e_phnum); --j>=0; ) {
+        if (PT_LOAD32 == get_native32(&phdri[j].p_type)) {
+            len += (unsigned)get_native32(&phdri[j].p_filesz);
+            unsigned const va = get_native32(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
+    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
+    unsigned       lo_va_stub = get_native64(&elfout.phdr[0].p_vaddr);
+    unsigned adrc;
+    unsigned adrm;
+    unsigned adru;
+    unsigned adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
+    if (is_big) {
+        set_native32(    &elfout.ehdr.e_entry,
+            get_native32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_native32(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_native32(&elfout.phdr[0].p_paddr, lo_va_user);
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
+        adru = page_mask & (~page_mask + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = page_size + len;
+        lenu = page_size + len;
+        cntc = len >> 3;  // over-estimate; corrected at runtime
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = page_size;
+        lenu = page_size + len;
+        cntc = 0;
+    }
+    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
+    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
+
+    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+    linker->defineSymbol("LENX", 0x2345);  // FIXME
+
+    // For actual moving, we need the true count, which depends on sz_pack2
+    // and is not yet known.  So the runtime stub detects "no move"
+    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
+    //linker->defineSymbol("CNTC", cntc);  // count  for copy
+
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    linker->defineSymbol("ADRU", adru);  // addr for unmap
+#define EI_NIDENT 16  /* <elf.h> */
+    linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
+#undef EI_NIDENT
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
+
+    //linker->dumpSymbols();  // debug
 }
 
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
@@ -1502,10 +1640,8 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
 #if 0  /*{*/
-#define PAGE_MASK (~0u<<12)
     // pre-calculate for benefit of runtime disappearing act via munmap()
-    set_native32(&elfout.phdr[0].p_memsz, PAGE_MASK & (~PAGE_MASK + len));
-#undef PAGE_MASK
+    set_native32(&elfout.phdr[0].p_memsz, page_mask & (~page_mask + len));
 #else  /*}{*/
     set_native32(&elfout.phdr[0].p_memsz, len);
 #endif  /*}*/
@@ -1552,10 +1688,8 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
 #if 0  /*{*/
-#define PAGE_MASK (~0u<<12)
     // pre-calculate for benefit of runtime disappearing act via munmap()
-    set_native64(&elfout.phdr[0].p_memsz, PAGE_MASK & (~PAGE_MASK + len));
-#undef PAGE_MASK
+    set_native64(&elfout.phdr[0].p_memsz, page_mask & (~page_mask + len));
 #else  /*}{*/
     set_native64(&elfout.phdr[0].p_memsz, len);
 #endif  /*}*/
@@ -1873,9 +2007,26 @@ PackLinuxElf32armLe::~PackLinuxElf32armLe()
 {
 }
 
+PackLinuxElf32mipsel::PackLinuxElf32mipsel(InputFile *f) : super(f)
+{
+    e_machine = Elf32_Ehdr::EM_MIPS;
+    ei_class  = Elf32_Ehdr::ELFCLASS32;
+    ei_data   = Elf32_Ehdr::ELFDATA2LSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
+}
+
+PackLinuxElf32mipsel::~PackLinuxElf32mipsel()
+{
+}
+
 Linker* PackLinuxElf32armLe::newLinker() const
 {
     return new ElfLinkerArmLE();
+}
+
+Linker* PackLinuxElf32mipsel::newLinker() const
+{
+    return new ElfLinkerMipsLE();
 }
 
 PackLinuxElf32armBe::PackLinuxElf32armBe(InputFile *f) : super(f)
