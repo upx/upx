@@ -837,12 +837,12 @@ mipsel.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
 mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -DPS1 $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,pp-as) $< -o - | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
 else
 	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
+	$(call tc,gcc) -c -Wa,-O,-mno-pdr $< -o tmp/$T.bin
 endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@

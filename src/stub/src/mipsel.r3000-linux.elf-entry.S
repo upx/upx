@@ -59,11 +59,7 @@ PROT_EXEC=  4
 
 MAP_PRIVATE=        2
 MAP_FIXED=       0x10
-MAP_ANONYMOUS= 0x1000
-
-PAGE_SHIFT= 12
-PAGE_MASK= (~0<<PAGE_SHIFT)
-PAGE_SIZE= -PAGE_MASK
+MAP_ANONYMOUS=  0x800
 
 M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5
@@ -82,6 +78,7 @@ lenu:   .long LENU
 adrx:   .long ADRX
 lenx:   .long LENX
 _start: .globl _start
+        break
         bal main
           addiu s7,ra, decompressor - 0f  // s7= &decompress
 0:
@@ -123,44 +120,46 @@ LZMA_BASE_NUM = 1846
 LZMA_LIT_NUM  =  768
 
 lxlzma_szframe  = 12*4
-lxlzma_oldsp    = 11*4
-lxlzma_origdst  = 10*4
-lxlzma_origsrc  =  9*4
+lxlzma_sv_pc    = 11*4
+lxlzma_sv_sp    = 10*4
+        /* 9 */
 lxlzma_dstdone  =  8*4
 lxlzma_srcdone  =  7*4
+
 lxlzma_pdstdone =  6*4
 lxlzma_dstlen   =  5*4
 lxlzma_dst      =  4*4
 
         lbu t0,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
+        li tmp,-2*LZMA_LIT_NUM
         lbu t1,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
         andi v0,t0,7  # pos_bits
         srl t0,t0,3  # (lit_context_bits + lit_pos_bits)
-        li tmp,-2*LZMA_LIT_NUM
         sllv tmp,tmp,t0
         addiu tmp,tmp,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
-        addu sp,sp,tmp
-        sw tmp,   lxlzma_oldsp(sp)  # dynamic frame size
+        addu sp,sp,tmp  # alloca
+        sw tmp,   lxlzma_sv_sp(sp)  # dynamic frame size
         addiu tmp,sp,lxlzma_dstdone
-        sw tmp,     lxlzma_pdstdone(sp)
         sw lxdstlen,lxlzma_dstlen(sp)
         sw lxdst,   lxlzma_dst(sp)
         addiu a3,sp,lxlzma_srcdone
-        move  a2,lxsrclen
-        addiu a1,lxsrc,2
+        sw ra,lxlzma_sv_pc(sp)
+        addiu a2,lxsrclen,-2  # 2 header bytes
+        sw tmp,     lxlzma_pdstdone(sp)
+        addiu a1,lxsrc,2  # 2 header bytes
         addiu a0,sp,lxlzma_szframe  # &CLzamDecoderState
         sb   v0,2(a0)   # pos_bits
         andi tmp,t1,0xf
         sb   tmp,0(a0)  # lit_context_bits
         srl  t1,t1,4
-        sb   t1,1(a0)   # lit_pos_bits
-        jalr s7
+        bal lzma_decode
+          sb   t1,1(a0)   # lit_pos_bits
+        lw ra,lxlzma_sv_pc(sp)
+        lw tmp,lxlzma_sv_sp(sp)
+        jr ra
+          subu sp,sp,tmp  # un_alloca
 
-        lw tmp,     lxlzma_oldsp(sp)
-        lw lxdst,   lxlzma_origdst(sp)
-        lw lxdstlen,lxlzma_dstdone(sp)
-        subu sp,tmp
-
+lzma_decode:
 #include "arch/mips/mipsel.r3000/lzma_d.S"
 
   section LZMA_DEC30
@@ -181,11 +180,11 @@ eof:
         pop t0; sw s0,(t0)  // actual length used t0 dst
         pop t0; jr t0; nop
 
-/* These from /usr/include/sys/syscall.h */
-SYS_write =  4
-SYS_exit  =  1
-SYS_mmap  =    197
-SYS___syscall= 198
+/* These from /usr/include/asm/unistd.h */
+__NR_Linux = 4000
+__NR_write = 4+ __NR_Linux
+__NR_exit  = 1+ __NR_Linux
+__NR_mmap  = 90+ __NR_Linux
 
 msg_SELinux:
         addiu a2,zero,L71 - L70  // length
@@ -199,11 +198,11 @@ L71:
   section ELFMAINZ
 L72:
         li a0,2  // fd stderr
-        li v0,SYS_write
+        li v0,__NR_write
         syscall
 die:
         li a0,127
-        li v0,SYS_exit
+        li v0,__NR_exit
         syscall
 
 /* Decompress the rest of this loader, and jump to it.
@@ -226,26 +225,17 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
    the brk() of the _un_compressed program.  The address and length are pre-
    calculated by PackLinuxElf64amd::defineSymbols().
 */
-#define a0_mmap a2
-#define a1_mmap a3
-#define a2_mmap 0x10
-#define a3_mmap 0x14
-#define a4_mmap 0x18
-#define a5_mmap 0x1c
+#define a4 0x10
+#define a5 0x14
 #define sp_frame 0x20
 
-        lw a0_mmap,adrm - decompressor(s7)
         addiu sp,sp,-sp_frame
-        lw a1_mmap,lenm - decompressor(s7)
-        li t0, PROT_READ | PROT_WRITE | PROT_EXEC
-        sw t0,a2_mmap(sp)
-        li t0, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        sw t0,a3_mmap(sp)
-        li a1,0
-        sw zero,a4_mmap(sp)  //; sw zero,a5_mmap(sp)  // MAP_ANON ==> ignore offset
-        li a0,SYS_mmap
-        li v0,SYS___syscall
-        syscall  // FIXME: check for error
+        lw a0,adrm - decompressor(s7)
+        li a2, PROT_READ | PROT_WRITE | PROT_EXEC
+        lw a1,lenm - decompressor(s7)
+        li a3, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+        sw zero,a4(sp)  //; sw zero,a5_mmap(sp)  // MAP_ANON ==> ignore offset
+        li v0,__NR_mmap; syscall; bnez a3,err_syscall
         move a0,v0  // &new page(s)
 
         lw a1,adrc - decompressor(s7)
@@ -269,9 +259,13 @@ L80:
         lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len
         move a2,v0  // &dst
         lw a1,sz_cpr(s6)  // src_len
-        move a0,s6  // &b_info(fold)
+        addiu a0,s6,sz_b_info
         jr s7  // decompress(src, srclen, dst, &dstlen /*, method*/)
           move ra,a2  // return to decompressed code
+
+err_syscall:
+        b err_syscall
+          nop
 main:
         lw s5,sz_pack2 - decompressor(s7)  // length before stub
         bal unfold
