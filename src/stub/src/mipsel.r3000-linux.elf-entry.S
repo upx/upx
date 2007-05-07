@@ -126,34 +126,33 @@ lxlzma_sv_sp    = 10*4
 lxlzma_dstdone  =  8*4
 lxlzma_srcdone  =  7*4
 
-lxlzma_pdstdone =  6*4
-lxlzma_dstlen   =  5*4
-lxlzma_dst      =  4*4
+#define a4 t0
+#define a5 t1
+#define a6 t2
 
-        lbu t0,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
+        lbu t9,0(lxsrc)  # ((lit_context_bits + lit_pos_bits)<<3) | pos_bits
         li tmp,-2*LZMA_LIT_NUM
-        lbu t1,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
-        andi v0,t0,7  # pos_bits
-        srl t0,t0,3  # (lit_context_bits + lit_pos_bits)
-        sllv tmp,tmp,t0
+        lbu t8,1(lxsrc)  # (lit_pos_bits<<4) | lit_context_bits
+        andi v0,t9,7  # pos_bits
+        srl t9,t9,3  # (lit_context_bits + lit_pos_bits)
+        sllv tmp,tmp,t9
         addiu tmp,tmp,-4 - 2*LZMA_BASE_NUM - lxlzma_szframe
         addu sp,sp,tmp  # alloca
-        sw tmp,   lxlzma_sv_sp(sp)  # dynamic frame size
-        addiu tmp,sp,lxlzma_dstdone
-        sw lxdstlen,lxlzma_dstlen(sp)
-        sw lxdst,   lxlzma_dst(sp)
+                sw tmp,lxlzma_sv_sp(sp)  # dynamic frame size
+        addiu a6,sp,lxlzma_dstdone
+                sw ra, lxlzma_sv_pc(sp)
+        move  a5,lxdstlen
+        move  a4,lxdst
         addiu a3,sp,lxlzma_srcdone
-        sw ra,lxlzma_sv_pc(sp)
         addiu a2,lxsrclen,-2  # 2 header bytes
-        sw tmp,     lxlzma_pdstdone(sp)
         addiu a1,lxsrc,2  # 2 header bytes
         addiu a0,sp,lxlzma_szframe  # &CLzamDecoderState
-        sb   v0,2(a0)   # pos_bits
-        andi tmp,t1,0xf
-        sb   tmp,0(a0)  # lit_context_bits
-        srl  t1,t1,4
+        sb     v0,2(a0)   # pos_bits
+        andi tmp,t8,0xf
+        sb   tmp, 0(a0)  # lit_context_bits
+        srl  t8,t8,4
         bal lzma_decode
-          sb   t1,1(a0)   # lit_pos_bits
+          sb   t8,1(a0)   # lit_pos_bits
         lw ra,lxlzma_sv_pc(sp)
         lw tmp,lxlzma_sv_sp(sp)
         jr ra
@@ -225,8 +224,8 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
    the brk() of the _un_compressed program.  The address and length are pre-
    calculated by PackLinuxElf64amd::defineSymbols().
 */
-#define a4 0x10
-#define a5 0x14
+#define a4_sys 0x10
+#define a5_sys 0x14
 #define sp_frame 0x20
 
         addiu sp,sp,-sp_frame
@@ -234,7 +233,7 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
         li a2, PROT_READ | PROT_WRITE | PROT_EXEC
         lw a1,lenm - decompressor(s7)
         li a3, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        sw zero,a4(sp)  //; sw zero,a5_mmap(sp)  // MAP_ANON ==> ignore offset
+        sw zero,a4_sys(sp)  //; sw zero,a5_sys(sp)  // MAP_ANON ==> ignore offset
         li v0,__NR_mmap; syscall; bnez a3,err_syscall
         move a0,v0  // &new page(s)
 
