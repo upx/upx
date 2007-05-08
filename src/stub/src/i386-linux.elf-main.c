@@ -512,6 +512,16 @@ ERR_LAB
 // This function is optimized for size.
 **************************************************************************/
 
+#if defined(__mips__)  /*{*/
+void *upx_main(  // returns entry address
+    struct b_info const *const bi,  // 1st block header
+    size_t const sz_compressed,  // total length
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    Elf32_auxv_t *const av,
+    f_expand *const f_decompress,
+    f_unfilter *const f_unf
+)
+#else  /*}{ !__mips__ */
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
@@ -531,12 +541,26 @@ void *upx_main(
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
     unsigned const volatile dynbase  // value+result: compiler must not change
 )
+#endif  /*}*/
 {
+#if !defined(__mips__)  /*{*/
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)(void *)xo.buf;  // temp char[MAX_ELF_HDR+OVERHEAD]
+#endif  /*}*/
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
     Elf32_Addr reloc;
     Elf32_Addr entry;
 
+#if defined(__mips__)  /*{*/
+    unsigned dynbase = 0;
+    Extent xo, xi, xj;
+    xo.buf  = (char *)ehdr;
+    xo.size = bi->sz_unc;
+    xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
+    xj.buf = CONST_CAST(char *, bi); xj.size = sz_compressed;
+
+    // ehdr = Uncompress Ehdr and Phdrs
+    unpackExtent(&xj, &xo, f_decompress, 0);  // never filtered?
+#else  /*}{ !__mips__ */
     // sizeof(Ehdr+Phdrs),   compressed; including b_info header
     size_t const sz_pckhdrs = xi.size;
 
@@ -553,6 +577,7 @@ void *upx_main(
     // Prepare to decompress the Elf headers again, into the first PT_LOAD.
     xi.buf  -= sz_pckhdrs;
     xi.size  = sz_compressed;
+#endif  /*}*/
 
     // Some kernels omit AT_PHNUM,AT_PHENT,AT_PHDR because this stub has no PT_INTERP.
     // That is "too much" optimization.  Linux 2.6.x seems to give all AT_*.
@@ -584,7 +609,6 @@ ERR_LAB
 
     return (void *)entry;
 }
-
 
 /*
 vi:ts=4:et:nowrap
