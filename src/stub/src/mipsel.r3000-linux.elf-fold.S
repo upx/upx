@@ -30,6 +30,11 @@
 #include "arch/mips/mipsel.r3000/macros.ash"
 #include "arch/mips/mipsel.r3000/bits.ash"
 
+        .set mips1
+        .set noreorder
+        .set noat
+        .altmacro
+
 PAGE_SHIFT= 12
 PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
 
@@ -43,120 +48,111 @@ sz_p_info= 12
 OVERHEAD=2048
 MAX_ELF_HDR=1024
 
-SYS_read=  3
-SYS_open=  5
-SYS_close= 6
+#define sp_frame 0x20
+BAL=0x04110000
 
-SYS___syscall= 198
-SYS_mmap=    197
-SYS_mprotect= 74
-SYS_munmap=   73
-
-SYS_exit= 1
-SYS_readlink= 58
-
-        break
-#if 0  /*{*/
 /* In:
-    cld
-    %rbp= &decompress
-    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
+    s7= &decompress
+    s5= sz_pack2
+    s4= JMPU
+    s3= ADRU
+    s2= LENU
+    s1= ADRX
+    s0= LENX
+    sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
-        call L90  # push &L90a
-L90a:
-        .asciz "/proc/self/exe"
-L90b:
-#include "arch/amd64/bxx.S"
-L90:
-        pop %arg6  # L90a; later, &amdbxx: f_unfilter
-        movq %rsp,%rsi
-        leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
-        movq %rdi,%rsp
-0:
-        cmpq $0,(%rsi); movsq; jne 0b  # move past argv
-        movq %rdi,%arg3  # remember &new_env[0]
-        stosq  # space for new_env[0]
-0:
-        cmpq $0,(%rsi); movsq; jne 0b  # move past env
-        pushq %rdi  # &Elf64_auxv
-0:
-        cmpq $0,(%rsi); movsq; movsq; jne 0b  # move past auxv
+        addiu a3,sp,4+ sp_frame  # &argv[0]
+L10:  # stop when a3= &env[0]
+        lw tmp,0(a3)
+          addiu a3,a3,4
+        bne tmp,zero,L10
+          move t1,zero  # &f_unfilter
+L20:  # stop when a3= &auxv[0]
+        lw tmp,0(a3)
+          addiu a3,a3,4
+        bne tmp,zero,L20
+          move t0,s7  # &f_decompress
 
-        movq %rdi,(%arg3)  # new_env[0]
-        movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),%eax  # "   ="
-        stosl
-        movl $4096,%arg3l # buflen
-        movq  %rdi,%arg2  # buffer
-        movq %arg6,%arg1  # "/proc/self/exe"
-        push $ SYS_readlink; pop %rax
-        syscall; testl %eax,%eax; js 0f; movb $0,(%arg2,%rax)
-0:
-        addq $ L90b - L90a,%arg6  # &amdbxx: f_unfilter
-        pop %arg4  # &Elf64_auxv
-        pop %arg2  # LENX
-        pop %arg1  # ADRX
+        addiu sp,sp,sp_frame - MAX_ELF_HDR  # alloca
+        move a2,sp  # &Elf32_Ehdr tmp space
+        move a1,s1  # LENX  FIXME 2007-05-07: bad value
 
-        subq $ OVERHEAD,%rsp
-        movq %rsp,%arg3  # &ELf64_Ehdr temporary space
-        movq %rbp,%arg5  # &decompress: f_expand
-        call upx_main  # Out: %rax= entry
-/* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
-                Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6 )
+/* We need a position-independent call of upx_main, which is external.
+   "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
+   ".long BAL + upx_main" then changing R_MIPS_32 to R_MIPS_PC16
+     in a utility program, is botched when loaded by multiarch-ld-2.17
+     (relocates as if R_MIPS_32, changing the opcode and not
+     subtracting the current location).
+   So do it the hard way.
 */
-        addq $OVERHEAD,%rsp
-        pop %arg2  # LENU
-        pop %arg1  # ADRU
-        pop %rcx   # JMPU
-        push %rax  # &entry
-        push $ SYS_munmap; pop %rax
-        jmp *%rcx  # goto: syscall; ret
+        bal 9f  # ra= &8f
+          lw v0,4(ra)  # v0= load_time(&8f)
+8:
+        .long upx_main
+        .long 8b
+9:
+        lw v1,(ra)  # v1= load_time(&upx_main)
+        subu v0,ra,v0
+        addu v0,v0,v1
+        jalr v0
+          move a0,s0  # ADRX  FIXME: 2007-05-07 bad value
+/* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
+                Elf32_Auxv_t *a3, f_decompr t0, f_unfilter t1 )
+*/
+        addiu sp,sp, MAX_ELF_HDR
+        move a0,s3  # ADRU
+        move a1,s2  # LENU
+        jr s4       # JMPU
+          move ra,v0  # &entry
+pic_table:
 
-munmap: .globl munmap
-        movb $ SYS_munmap,%al; jmp sysgo
-mprotect: .globl mprotect
-        movb $ SYS_mprotect,%al; jmp sysgo
-brk: .globl brk
-        movb $ SYS_brk,%al; jmp sysgo
+__NR_Linux = 4000
+__NR_brk      =  45+ __NR_Linux
+__NR_close    =   6+ __NR_Linux
+__NR_exit     =   1+ __NR_Linux
+__NR_mmap     =  90+ __NR_Linux
+__NR_mprotect = 125+ __NR_Linux
+__NR_munmap   =  91+ __NR_Linux
+__NR_open     =   5+ __NR_Linux
+__NR_read     =   3+ __NR_Linux
 
-mmap: .globl mmap
-        movb $ SYS_mmap,%al
-sysarg4:
-        movq %arg4,%sys4
-sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
-        movzbl %al,%eax
+err_syscall:
+        li a0,-1
+exit: .globl exit
+        li v0,__NR_exit
+sysgo:
+   break  # debug only
         syscall
-        cmpq $ PAGE_MASK,%rax; jc no_fail
-        orq $~0,%rax  # failure; IGNORE errno
-no_fail:
-        ret
-
+sysret:
+        sltiu tmp,v0,PAGE_MASK
+        addiu tmp,tmp,-1
+        j ra
+          or v0,v0,tmp
 read: .globl read
-        movb $ SYS_read,%al; jmp sysgo
+        b sysgo; li v0,__NR_read
 open: .globl open
-        movb $ SYS_open,%al; jmp sysgo
+        b sysgo; li v0,__NR_open
 close: .globl close
-        movb $ SYS_close,%al; jmp sysgo
-
-exit: .globl exit
-        movb $ SYS_exit,%al; jmp sysgo
-#endif  /*}*/
-
-munmap: .globl munmap
-        break
-mprotect: .globl mprotect
-        break
+        b sysgo; li v0,__NR_close
 brk: .globl brk
-        break
+        b sysgo; li v0,__NR_brk
+munmap: .globl munmap
+        b sysgo; li v0,__NR_munmap
+mprotect: .globl mprotect
+        b sysgo; li v0,__NR_mprotect
+
+#define a4_sys 0x10
+#define a5_sys 0x14
+
 mmap: .globl mmap
-        break
-read: .globl read
-        break
-open: .globl open
-        break
-close: .globl close
-        break
-exit: .globl exit
-        break
+    break  # debug only
+        addiu sp,sp,-sp_frame
+        sw t0,a4_sys(sp)
+        sw t1,a5_sys(sp)
+        li v0,__NR_mmap
+        syscall
+        b sysret
+          addiu sp,sp, sp_frame
 
 # vi:ts=8:et:nowrap

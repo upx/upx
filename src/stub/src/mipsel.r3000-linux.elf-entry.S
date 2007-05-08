@@ -141,7 +141,7 @@ lxlzma_srcdone  =  7*4
                 sw tmp,lxlzma_sv_sp(sp)  # dynamic frame size
         addiu a6,sp,lxlzma_dstdone
                 sw ra, lxlzma_sv_pc(sp)
-        move  a5,lxdstlen
+        lw    a5,0(lxdstlen)
         move  a4,lxdst
         addiu a3,sp,lxlzma_srcdone
         addiu a2,lxsrclen,-2  # 2 header bytes
@@ -242,6 +242,7 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
         lw s3,adru - decompressor(s7)  // for unmap in fold
         lw s2,lenu - decompressor(s7)  // for unmap in fold
         lw s1,adrx - decompressor(s7)  // for upx_main
+        lw s0,lenx - decompressor(s7)  // for upx_main
 
         beq a0,a1,L80  // no copy
           subu t0,a0,a1  // (ADRM - ADRC) == relocation amount
