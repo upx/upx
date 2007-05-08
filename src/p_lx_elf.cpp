@@ -1607,7 +1607,6 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
     adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-    linker->defineSymbol("LENX", 0x2345);  // FIXME
 
     // For actual moving, we need the true count, which depends on sz_pack2
     // and is not yet known.  So the runtime stub detects "no move"

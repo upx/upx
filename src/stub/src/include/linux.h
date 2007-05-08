@@ -351,6 +351,175 @@ static inline _syscall1(int,unlink,const char *,file)
 #undef Z0
 #undef Z1
 
+#elif defined(__mips__)  /*}{*/
+
+#undef  MAP_ANONYMOUS
+#define MAP_ANONYMOUS 0x800
+
+/*  Cannot write an inline assembler constraint for a specific register.
+        http://gcc.gnu.org/ml/gcc-help/2007-02/msg00068.html
+    Workaround:
+        const register int num asm("v0") = 4;
+        const register char *const str asm("a0") = string;
+        asm volatile("syscall" : : "r"(num), "r"(str));
+*/
+static void *mmap(
+    void *addr, size_t len,
+    int prot, int flags,
+    int fd, off_t offset
+)
+{
+#define __NR_mmap (90+ 4000)
+    register void * const a0 asm("a0") = addr;
+    register size_t const a1 asm("a1") = len;
+    register int    const a2 asm("a2") = prot;
+    register int    const a3 asm("a3") = flags;
+    register int    const t0 asm("t0") = fd;
+    register off_t  const t1 asm("t1") = offset;
+    register int          v0 asm("v0") = __NR_mmap;
+    __asm__ __volatile__(
+      /*"break\n"*/  /* debug only */
+        "addiu $29,$29,-0x20\n"
+        "sw $8,0x10($29)\n"
+        "sw $9,0x14($29)\n"
+        "syscall\n"
+        "addiu $29,$29, 0x20\n"
+        "b sysret\n"
+    "sysgo:"
+      /*"break\n"*/  /* debug only */
+        "syscall\n"
+    "sysret:"
+        "li $3,~0\n"
+        "bnez $7,sysbad\n"
+        "jr $31\n"
+    "sysbad:"
+        "or $2,$2,$3\n"
+        "jr $31"
+    : "=r"(v0)
+    :  "r"(v0), "r"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(t0), "r"(t1)
+    );
+    return (void *)v0;
+}
+
+static ssize_t read(int fd, void *buf, size_t len)
+{
+#define __NR_read (3+ 4000)
+    register int    const a0 asm("a0") = fd;
+    register void * const a1 asm("a1") = buf;
+    register size_t const a2 asm("a2") = len;
+    register size_t       v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_read), "r"(a0), "r"(a1), "r"(a2)
+    );
+    return v0;
+}
+
+static void *brk(void *addr)
+{
+#define __NR_brk (45+ 4000)
+    register void *const a0 asm("a0") = addr;
+    register void *      v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_brk), "r"(a0)
+    );
+    return v0;
+}
+
+static int close(int fd)
+{
+#define __NR_close (6+ 4000)
+    register int const a0 asm("a0") = fd;
+    register int       v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_close), "r"(a0)
+    );
+    return v0;
+}
+
+static void exit(int code) __attribute__ ((__noreturn__));
+static void exit(int code)
+{
+#define __NR_exit (1+ 4000)
+    register int const a0 asm("a0") = code;
+    register int       v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_exit), "r"(a0)
+    : "memory"
+    );
+    for (;;) {}
+}
+
+#if 0  /*{ UNUSED */
+static int munmap(void *addr, size_t len)
+{
+#define __NR_munmap (91+ 4000)
+    register  void *const a0 asm("a0") = addr;
+    register size_t const a1 asm("a2") = len;
+    register size_t       v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_munmap), "r"(a0), "r"(a1)
+    );
+    return v0;
+}
+#endif  /*}*/
+
+static int mprotect(void const *addr, size_t len, int prot)
+{
+#define __NR_mprotect (125+ 4000)
+    register void const *const a0 asm("a0") = addr;
+    register size_t      const a1 asm("a1") = len;
+    register int         const a2 asm("a2") = prot;
+    register size_t            v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_mprotect), "r"(a0), "r"(a1), "r"(a2)
+    );
+    return v0;
+}
+
+static ssize_t open(char const *path, int kind, int mode)
+{
+#define __NR_open (5+ 4000)
+    register char const *const a0 asm("a0") = path;
+    register int         const a1 asm("a1") = kind;
+    register int         const a2 asm("a2") = mode;
+    register size_t            v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_open), "r"(a0), "r"(a1), "r"(a2)
+    );
+    return v0;
+}
+
+#if 0  /*{ UNUSED */
+static ssize_t write(int fd, void const *buf, size_t len)
+{
+#define __NR_write (4+ 4000)
+    register int          const a0 asm("a0") = fd;
+    register void const * const a1 asm("a1") = buf;
+    register size_t       const a2 asm("a2") = len;
+    register size_t             v0 asm("v0");
+    __asm__ __volatile__(
+        "bal sysgo"
+    :      "=r"(v0)
+    :  [v0] "r"(__NR_write), "r"(a0), "r"(a1), "r"(a2)
+    );
+    return v0;
+}
+#endif  /*}*/
+
 #else  /*}{ generic */
 
 void *brk(void *);

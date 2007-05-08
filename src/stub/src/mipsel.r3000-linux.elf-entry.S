@@ -76,9 +76,8 @@ adru:   .long ADRU
 adrc:   .long ADRC
 lenu:   .long LENU
 adrx:   .long ADRX
-lenx:   .long LENX
 _start: .globl _start
-        break
+////    break  # debug only
         bal main
           addiu s7,ra, decompressor - 0f  // s7= &decompress
 0:
@@ -214,8 +213,6 @@ die:
    uncompressed program.  [This is a significant kernel misfeature.]
 */
 unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
-        // compute s5= &decompressor - &b_info(user)
-        addiu s5,s5,(decompressor - sz_pack2) - (sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info)
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
@@ -242,7 +239,6 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
         lw s3,adru - decompressor(s7)  // for unmap in fold
         lw s2,lenu - decompressor(s7)  // for unmap in fold
         lw s1,adrx - decompressor(s7)  // for upx_main
-        lw s0,lenx - decompressor(s7)  // for upx_main
 
         beq a0,a1,L80  // no copy
           subu t0,a0,a1  // (ADRM - ADRC) == relocation amount

@@ -858,7 +858,10 @@ tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -S -Os $< -o tmp/$T.i
+	sed -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
+	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' <tmp/$T.i >tmp/$T.s
+	$(call tc,gcc) -c -Wa,-O,-mno-pdr tmp/$T.s -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 

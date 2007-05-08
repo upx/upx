@@ -38,6 +38,9 @@
 PAGE_SHIFT= 12
 PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
 
+sz_Ehdr= 52
+sz_Phdr= 32
+
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
@@ -58,7 +61,6 @@ BAL=0x04110000
     s3= ADRU
     s2= LENU
     s1= ADRX
-    s0= LENX
     sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
@@ -76,7 +78,7 @@ L20:  # stop when a3= &auxv[0]
 
         addiu sp,sp,sp_frame - MAX_ELF_HDR  # alloca
         move a2,sp  # &Elf32_Ehdr tmp space
-        move a1,s1  # LENX  FIXME 2007-05-07: bad value
+        addiu a1,s5,-(sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info)
 
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
@@ -92,7 +94,7 @@ L20:  # stop when a3= &auxv[0]
         subu v0,ra,v0
         addiu v0,v0,%lo(upx_main)
         jalr v0
-          move a0,s0  # ADRX  FIXME: 2007-05-07 bad value
+          move a0,s1
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
                 Elf32_Auxv_t *a3, f_decompr t0, f_unfilter t1 )
 */
