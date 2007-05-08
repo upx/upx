@@ -245,7 +245,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
     uip->endCallback();
 
     if (r == UPX_E_OUT_OF_MEMORY)
-        throwCantPack("out of memory");
+        throwOutOfMemoryException();
     if (r != UPX_E_OK)
         throwInternalError("compression failed");
 
@@ -282,6 +282,8 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
         // decompress
         unsigned new_len = ph.u_len;
         r = upx_decompress(o_ptr, ph.c_len, i_ptr, &new_len, ph.method, &ph.compress_result);
+        if (r == UPX_E_OUT_OF_MEMORY)
+            throwOutOfMemoryException();
         //printf("%d %d: %d %d %d\n", ph.method, r, ph.c_len, ph.u_len, new_len);
         if (r != UPX_E_OK)
             throwInternalError("decompression failed");
@@ -360,6 +362,8 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out,
     // decompress
     unsigned new_len = ph.u_len;
     int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method, &ph.compress_result);
+    if (r == UPX_E_OUT_OF_MEMORY)
+        throwOutOfMemoryException();
     if (r != UPX_E_OK || new_len != ph.u_len)
         throwCompressedDataViolation();
 
@@ -412,6 +416,8 @@ bool ph_testOverlappingDecompression(const PackHeader &ph,
     int r = upx_test_overlap(buf - src_off, tbuf,
                              src_off, ph.c_len, &new_len,
                              ph.method, &ph.compress_result);
+    if (r == UPX_E_OUT_OF_MEMORY)
+        throwOutOfMemoryException();
     return (r == UPX_E_OK && new_len == ph.u_len);
 }
 

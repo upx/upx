@@ -161,6 +161,14 @@ void throwBadLoader()
 }
 
 
+void throwOutOfMemoryException(const char *msg)
+{
+    if (msg == NULL)
+        msg = "out of memory";
+    throw OutOfMemoryException(msg);
+}
+
+
 void throwIOException(const char *msg, int e)
 {
     throw IOException(msg, e);

@@ -481,6 +481,8 @@ PackLinuxElf32::buildLinuxLoader(
         unsigned char *tmp = new unsigned char[tmp_len];
         memset(tmp, 0, tmp_len);
         r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
+        if (r == UPX_E_OUT_OF_MEMORY)
+            throwOutOfMemoryException();
         printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
         for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
             printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);

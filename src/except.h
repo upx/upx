@@ -220,6 +220,7 @@ void throwBadLoader() NORET;
 void throwChecksumError() NORET;
 void throwCompressedDataViolation() NORET;
 void throwInternalError(const char *msg) NORET;
+void throwOutOfMemoryException(const char *msg = NULL) NORET;
 void throwIOException(const char *msg = NULL, int e = 0) NORET;
 void throwEOFException(const char *msg = NULL, int e = 0) NORET;
 

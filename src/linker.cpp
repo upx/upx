@@ -159,7 +159,9 @@ void ElfLinker::init(const void *pdata_v, int plen)
         input = new upx_byte[inputlen + 1];
         unsigned new_len = u_len;
         int r = upx_decompress(pdata, c_len, input, &new_len, method, NULL);
-        if (r != 0 || new_len != u_len)
+        if (r == UPX_E_OUT_OF_MEMORY)
+            throwOutOfMemoryException();
+        if (r != UPX_E_OK || new_len != u_len)
             throwBadLoader();
     }
     else
