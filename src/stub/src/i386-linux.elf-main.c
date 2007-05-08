@@ -338,13 +338,12 @@ upx_bzero(char *p, size_t len)
 #define bzero upx_bzero
 
 
-static void
+static Elf32_auxv_t *
 #if defined(__i386__)  /*{*/
-__attribute__((regparm(3), stdcall))
+__attribute__((regparm(2), stdcall))
 #endif  /*}*/
-auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
+auxv_find(Elf32_auxv_t *av, unsigned const type)
 {
-    DPRINTF((STR_auxv_up(),av,type,value));
     if (av
 #if defined(__i386__)  /*{*/
     && 0==(1&(int)av)  /* PT_INTERP usually inhibits, except for hatch */
@@ -353,9 +352,22 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
     for (;; ++av) {
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
-            av->a_un.a_val = value;
-            return;
+            return av;
         }
+    }
+    return 0;
+}
+
+static void
+#if defined(__i386__)  /*{*/
+__attribute__((regparm(3), stdcall))
+#endif  /*}*/
+auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
+{
+    DPRINTF((STR_auxv_up(),av,type,value));
+    av = auxv_find(av, type);
+    if (av) {
+        av->a_un.a_val = value;
     }
 }
 
@@ -380,7 +392,7 @@ static unsigned long  // returns relocation constant
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
-    char **const p_brk
+    char **const p_brk, unsigned const page_mask
 )
 {
     size_t lo= ~0, hi= 0, szlo= 0;
@@ -396,10 +408,10 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
             hi =  phdr->p_memsz + phdr->p_vaddr;
         }
     }
-    szlo += ~PAGE_MASK & lo;  // page fragment on lo edge
-    lo   -= ~PAGE_MASK & lo;  // round down to page boundary
-    hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
-    szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
+    szlo += ~page_mask & lo;  // page fragment on lo edge
+    lo   -= ~page_mask & lo;  // round down to page boundary
+    hi    =  page_mask & (hi - lo - page_mask -1);  // page length
+    szlo  =  page_mask & (szlo    - page_mask -1);  // page length
     addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
     //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
@@ -412,9 +424,16 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
+    unsigned frag_mask = ~PAGE_MASK;
+    {
+        Elf32_auxv_t const *const av_pgsz = auxv_find(av, AT_PAGESZ);
+        if (av_pgsz) {
+            frag_mask = av_pgsz->a_un.a_val -1;
+        }
+    }
     char *v_brk;
-    unsigned const reloc = xfind_pages(
-        ((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
+    unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
+         phdr, ehdr->e_phnum, &v_brk, ~frag_mask );
     int j;
     DPRINTF((STR_do_xmap(),
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));
@@ -426,9 +445,9 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
-        char *haddr =           phdr->p_memsz + addr;
-        size_t frag  = (int)addr &~ PAGE_MASK;
+        char * addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
+        char *const haddr =     phdr->p_memsz + addr;
+        size_t frag  = (int)addr & frag_mask;
         mlen += frag;
         addr -= frag;
 
@@ -450,7 +469,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
         //if (PROT_WRITE & prot) {
         //    bzero(addr, frag);  // fragment at lo end
         //}
-        frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
+        frag = (-mlen) & frag_mask;  // distance to next page boundary
         if (PROT_WRITE & prot) { // note: read-only .bss not supported here
             bzero(mlen+addr, frag);  // fragment at hi end
         }
@@ -481,7 +500,7 @@ ERR_LAB
         }
 #if defined(__i386__)  /*{*/
         else if (xi) { // cleanup if decompressor overrun crosses page boundary
-            mlen = ~PAGE_MASK & (3+ mlen);
+            mlen = frag_mask & (3+ mlen);
             if (mlen<=3) { // page fragment was overrun buffer only
                 munmap(addr, mlen);
             }

@@ -373,7 +373,7 @@ static void *mmap(
     register void * const a0 asm("a0") = addr;
     register size_t const a1 asm("a1") = len;
     register int    const a2 asm("a2") = prot;
-    register int    const a3 asm("a3") = flags;
+    register int          a3 asm("a3") = flags;
     register int    const t0 asm("t0") = fd;
     register off_t  const t1 asm("t1") = offset;
     register int          v0 asm("v0") = __NR_mmap;
@@ -395,8 +395,8 @@ static void *mmap(
     "sysbad:"
         "or $2,$2,$3\n"
         "jr $31"
-    : "=r"(v0)
-    :  "r"(v0), "r"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(t0), "r"(t1)
+    : "=r"(v0), "=r"(a3)
+    :  "r"(v0), "r"(a0), "r"(a1), "r"(a2), "r"(t0), "r"(t1)
     );
     return (void *)v0;
 }
@@ -412,6 +412,7 @@ static ssize_t read(int fd, void *buf, size_t len)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_read), "r"(a0), "r"(a1), "r"(a2)
+    : "a3"
     );
     return v0;
 }
@@ -425,6 +426,7 @@ static void *brk(void *addr)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_brk), "r"(a0)
+    : "a3"
     );
     return v0;
 }
@@ -438,6 +440,7 @@ static int close(int fd)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_close), "r"(a0)
+    : "a3"
     );
     return v0;
 }
@@ -452,7 +455,7 @@ static void exit(int code)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_exit), "r"(a0)
-    : "memory"
+    : "a3", "memory"
     );
     for (;;) {}
 }
@@ -468,6 +471,7 @@ static int munmap(void *addr, size_t len)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_munmap), "r"(a0), "r"(a1)
+    : "a3"
     );
     return v0;
 }
@@ -484,6 +488,7 @@ static int mprotect(void const *addr, size_t len, int prot)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_mprotect), "r"(a0), "r"(a1), "r"(a2)
+    : "a3"
     );
     return v0;
 }
@@ -499,6 +504,7 @@ static ssize_t open(char const *path, int kind, int mode)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_open), "r"(a0), "r"(a1), "r"(a2)
+    : "a3"
     );
     return v0;
 }
@@ -515,6 +521,7 @@ static ssize_t write(int fd, void const *buf, size_t len)
         "bal sysgo"
     :      "=r"(v0)
     :  [v0] "r"(__NR_write), "r"(a0), "r"(a1), "r"(a2)
+    : "a3"
     );
     return v0;
 }
