@@ -194,6 +194,8 @@ bool PackPs1::getBkupHeader(unsigned char *p, unsigned char *dst)
         unsigned sz_bh = SZ_IH_BKUP;
         int r = upx_decompress((const unsigned char *)&src->ih_bkup, src->len,
                                unc_bh, &sz_bh, M_NRV2E_8, NULL );
+        if (r == UPX_E_OUT_OF_MEMORY)
+            throwOutOfMemoryException();
         if (r != UPX_E_OK || sz_bh != SZ_IH_BKUP)
             throwInternalError("header decompression failed");
         unsigned ad = upx_adler32(unc_bh, SZ_IH_BKUP);

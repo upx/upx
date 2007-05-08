@@ -192,11 +192,7 @@ void MemBuffer::alloc(unsigned size)
     assert((int)total > 0);
     unsigned char *p = (unsigned char *) malloc(total);
     if (!p)
-    {
-        //throw bad_alloc();
-        throw OutOfMemoryException("out of memory");
-        //exit(1);
-    }
+        throwOutOfMemoryException();
     b_size = size;
     if (use_mcheck)
     {

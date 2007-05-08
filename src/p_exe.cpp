@@ -478,7 +478,7 @@ void PackExe::pack(OutputFile *fo)
         for (ic = 0; ic < ih.relocs; ic++)
         {
             unsigned jc = get_le32(wr+4*ic);
-            set_le32(wr+4*ic, (jc>>16)*16+(jc&0xffff));
+            set_le32(wr+4*ic, ((jc>>16)*16+(jc&0xffff)) & 0xfffff);
         }
         qsort(wr,ih.relocs,4,le32_compare);
         relocsize = optimize_relocs(ibuf, ih_imagesize, wr, ih.relocs, w, &has_9a);
