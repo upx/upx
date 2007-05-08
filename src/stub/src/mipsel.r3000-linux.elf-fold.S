@@ -86,15 +86,11 @@ L20:  # stop when a3= &auxv[0]
      subtracting the current location).
    So do it the hard way.
 */
-        bal 9f  # ra= &8f
-          lw v0,4(ra)  # v0= load_time(&8f)
-8:
-        .long upx_main
-        .long 8b
+        bal 9f  # ra= &9f
+          li v0,%lo(9f)
 9:
-        lw v1,(ra)  # v1= load_time(&upx_main)
         subu v0,ra,v0
-        addu v0,v0,v1
+        addiu v0,v0,%lo(upx_main)
         jalr v0
           move a0,s0  # ADRX  FIXME: 2007-05-07 bad value
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
