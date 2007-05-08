@@ -136,17 +136,17 @@ done:
 // "file" util
 **************************************************************************/
 
-struct Extent {
+typedef struct {
     size_t size;  // must be first to match size[0] uncompressed size
     char *buf;
-};
+} Extent;
 
 
 static void
 #if (ACC_CC_GNUC >= 0x030300) && defined(__i386__)  /*{*/
 __attribute__((__noinline__, __used__, regparm(3), stdcall))
 #endif  /*}*/
-xread(struct Extent *x, char *buf, size_t count)
+xread(Extent *x, char *buf, size_t count)
 {
     char *p=x->buf, *q=buf;
     size_t j;
@@ -202,8 +202,8 @@ typedef int f_expand(
 
 static void
 unpackExtent(
-    struct Extent *const xi,  // input
-    struct Extent *const xo,  // output
+    Extent *const xi,  // input
+    Extent *const xo,  // output
     f_expand *const f_decompress,
     f_unfilter *f_unf
 )
@@ -407,7 +407,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 }
 
 static Elf32_Addr  // entry address
-do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
+do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     Elf32_auxv_t *const av, unsigned *p_reloc, f_unfilter *const f_unf)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
@@ -424,7 +424,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
     }
     else if (PT_LOAD==phdr->p_type) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
-        struct Extent xo;
+        Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =  (char *)(phdr->p_vaddr + reloc);
         char *haddr =           phdr->p_memsz + addr;
@@ -517,8 +517,8 @@ void *upx_main(
     unsigned const sz_compressed,
     f_expand *const f_decompress,
     f_unfilter */*const*/ f_unfilter,
-    struct Extent xo,
-    struct Extent xi,
+    Extent xo,
+    Extent xi,
     unsigned const volatile dynbase
 ) __asm__("upx_main");
 
@@ -527,8 +527,8 @@ void *upx_main(
     unsigned const sz_compressed,
     f_expand *const f_decompress,
     f_unfilter */*const*/ f_unf,
-    struct Extent xo,  // {sz_unc, ehdr}    for ELF headers
-    struct Extent xi,  // {sz_cpr, &b_info} for ELF headers
+    Extent xo,  // {sz_unc, ehdr}    for ELF headers
+    Extent xi,  // {sz_cpr, &b_info} for ELF headers
     unsigned const volatile dynbase  // value+result: compiler must not change
 )
 {
