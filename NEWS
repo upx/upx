@@ -3,6 +3,8 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.01 (XX XXX 2007):
+  * dos/exe: fixed an incorrect error message caused by a bug in
+    relocation handling
 
 Changes in 3.00 (27 Apr 2007):
   * watcom/le & tmt/adam: fixed a problem when using certain filters
