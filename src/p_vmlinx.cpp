@@ -320,7 +320,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         hdr_info.b_cto8 = 0;
         hdr_info.b_unused = 0;
         fo->write(&hdr_info, sizeof(hdr_info)); fo_off += sizeof(hdr_info);
-        unsigned const frag = (3& -len_cpr);
+        unsigned const frag = (3& (0u-len_cpr));
         ppc32_extra += sizeof(hdr_info) + len_cpr + frag;
         fo_off += len_cpr + frag;
         fo->write(cpr_hdr, len_cpr + frag);
@@ -333,12 +333,12 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         && (Shdr::SHF_ALLOC     & shdr->sh_flags)
         && (Shdr::SHF_EXECINSTR & shdr->sh_flags)) {
             // shdr[1] is instructions (probably .text)
-            f_ptr = ibuf + (shdr->sh_offset - phdri[0].p_offset);
+            f_ptr = ibuf + (unsigned) (shdr->sh_offset - phdri[0].p_offset);
             f_len = shdr->sh_size;
             ++shdr;
-            for (int j= -2+ ehdri.e_shnum; --j>=0; ++shdr) {
+            for (int j= ehdri.e_shnum - 2; --j>=0; ++shdr) {
                 unsigned prev_end = shdr[-1].sh_size + shdr[-1].sh_offset;
-                prev_end += ~(-shdr[0].sh_addralign) & -prev_end;  // align_up
+                prev_end += ~(0u-shdr[0].sh_addralign) & (0u-prev_end);  // align_up
                 if ((Shdr::SHF_ALLOC     & shdr->sh_flags)
                 &&  (Shdr::SHF_EXECINSTR & shdr->sh_flags)
                 &&  shdr[0].sh_offset==prev_end) {
@@ -368,7 +368,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         fo->write(&hdr_info, sizeof(hdr_info)); fo_off += sizeof(hdr_info);
         ppc32_extra += sizeof(hdr_info);
         if (ph.u_len!=f_len) {
-            set_be32(&hdr_info.sz_unc, f_ptr - ibuf);
+            set_be32(&hdr_info.sz_unc, f_ptr - (upx_bytep) ibuf);
             set_be32(&hdr_info.sz_cpr, f_len);
             fo->write(&hdr_info, 2*sizeof(unsigned)); fo_off += 2*sizeof(unsigned);
             ppc32_extra += 2*sizeof(unsigned);
