@@ -103,8 +103,8 @@ L20:  # stop when a3= &auxv[0]
         move a1,s2  # LENU
         jr s4       # JMPU
           move ra,v0  # &entry
-pic_table:
 
+#if 0  /*{*/
 __NR_Linux = 4000
 __NR_brk      =  45+ __NR_Linux
 __NR_close    =   6+ __NR_Linux
@@ -120,7 +120,6 @@ err_syscall:
 exit: .globl exit
         li v0,__NR_exit
 sysgo:
-   break  # debug only
         syscall
 sysret:
         sltiu tmp,v0,PAGE_MASK
@@ -144,7 +143,6 @@ mprotect: .globl mprotect
 #define a5_sys 0x14
 
 mmap: .globl mmap
-    break  # debug only
         addiu sp,sp,-sp_frame
         sw t0,a4_sys(sp)
         sw t1,a5_sys(sp)
@@ -152,5 +150,6 @@ mmap: .globl mmap
         syscall
         b sysret
           addiu sp,sp, sp_frame
+#endif  /*}*/
 
 # vi:ts=8:et:nowrap

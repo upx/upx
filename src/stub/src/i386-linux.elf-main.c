@@ -171,8 +171,8 @@ xread(Extent *x, char *buf, size_t count)
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB
-static void
-err_exit(int a) __attribute__ ((__noreturn__));
+static void __attribute__ ((__noreturn__))
+err_exit(int a)
 {
     (void)a;  // debugging convenience
     exit(127);
@@ -392,7 +392,12 @@ static unsigned long  // returns relocation constant
 __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
-    char **const p_brk, unsigned const page_mask
+    char **const p_brk
+#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
+    , unsigned const page_mask
+#else  /*}{*/
+#define page_mask PAGE_MASK
+#endif  /*}*/
 )
 {
     size_t lo= ~0, hi= 0, szlo= 0;
@@ -424,6 +429,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
+#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
     unsigned frag_mask = ~PAGE_MASK;
     {
         Elf32_auxv_t const *const av_pgsz = auxv_find(av, AT_PAGESZ);
@@ -431,9 +437,16 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
             frag_mask = av_pgsz->a_un.a_val -1;
         }
     }
+#else  /*}{*/
+    unsigned const frag_mask = ~PAGE_MASK;
+#endif  /*}*/
     char *v_brk;
     unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
-         phdr, ehdr->e_phnum, &v_brk, ~frag_mask );
+         phdr, ehdr->e_phnum, &v_brk
+#if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
+        , ~frag_mask
+#endif  /*}*/
+        );
     int j;
     DPRINTF((STR_do_xmap(),
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));

@@ -395,8 +395,8 @@ static void *mmap(
     "sysbad:"
         "or $2,$2,$3\n"
         "jr $31"
-    : "=r"(v0), "=r"(a3)
-    :  "r"(v0), "r"(a0), "r"(a1), "r"(a2), "r"(t0), "r"(t1)
+    : "+r"(v0), "+r"(a3)
+    :  "r"(a0), "r"(a1), "r"(a2),      "r"(t0), "r"(t1)
     );
     return (void *)v0;
 }
@@ -407,11 +407,11 @@ static ssize_t read(int fd, void *buf, size_t len)
     register int    const a0 asm("a0") = fd;
     register void * const a1 asm("a1") = buf;
     register size_t const a2 asm("a2") = len;
-    register size_t       v0 asm("v0");
+    register size_t       v0 asm("v0") = __NR_read;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_read), "r"(a0), "r"(a1), "r"(a2)
+    : "+r"(v0)
+    : "r"(a0), "r"(a1), "r"(a2)
     : "a3"
     );
     return v0;
@@ -421,11 +421,11 @@ static void *brk(void *addr)
 {
 #define __NR_brk (45+ 4000)
     register void *const a0 asm("a0") = addr;
-    register void *      v0 asm("v0");
+    register void *      v0 asm("v0") = (void *)__NR_brk;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_brk), "r"(a0)
+    : "+r"(v0)
+    : "r"(a0)
     : "a3"
     );
     return v0;
@@ -435,11 +435,11 @@ static int close(int fd)
 {
 #define __NR_close (6+ 4000)
     register int const a0 asm("a0") = fd;
-    register int       v0 asm("v0");
+    register int       v0 asm("v0") = __NR_close;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_close), "r"(a0)
+    : "+r"(v0)
+    : "r"(a0)
     : "a3"
     );
     return v0;
@@ -450,12 +450,12 @@ static void exit(int code)
 {
 #define __NR_exit (1+ 4000)
     register int const a0 asm("a0") = code;
-    register int       v0 asm("v0");
+    register int       v0 asm("v0") = __NR_exit;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_exit), "r"(a0)
-    : "a3", "memory"
+    :
+    : "r"(v0), "r"(a0)
+    : "a3"
     );
     for (;;) {}
 }
@@ -483,11 +483,11 @@ static int mprotect(void const *addr, size_t len, int prot)
     register void const *const a0 asm("a0") = addr;
     register size_t      const a1 asm("a1") = len;
     register int         const a2 asm("a2") = prot;
-    register size_t            v0 asm("v0");
+    register size_t            v0 asm("v0") = __NR_mprotect;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_mprotect), "r"(a0), "r"(a1), "r"(a2)
+    : "+r"(v0)
+    : "r"(a0), "r"(a1), "r"(a2)
     : "a3"
     );
     return v0;
@@ -499,11 +499,11 @@ static ssize_t open(char const *path, int kind, int mode)
     register char const *const a0 asm("a0") = path;
     register int         const a1 asm("a1") = kind;
     register int         const a2 asm("a2") = mode;
-    register size_t            v0 asm("v0");
+    register size_t            v0 asm("v0") = __NR_open;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_open), "r"(a0), "r"(a1), "r"(a2)
+    : "+r"(v0)
+    : "r"(a0), "r"(a1), "r"(a2)
     : "a3"
     );
     return v0;
@@ -516,11 +516,11 @@ static ssize_t write(int fd, void const *buf, size_t len)
     register int          const a0 asm("a0") = fd;
     register void const * const a1 asm("a1") = buf;
     register size_t       const a2 asm("a2") = len;
-    register size_t             v0 asm("v0");
+    register size_t             v0 asm("v0") = __NR_write;
     __asm__ __volatile__(
         "bal sysgo"
-    :      "=r"(v0)
-    :  [v0] "r"(__NR_write), "r"(a0), "r"(a1), "r"(a2)
+    : "+r"(v0)
+    : "r"(a0), "r"(a1), "r"(a2)
     : "a3"
     );
     return v0;
