@@ -380,22 +380,21 @@ static void *mmap(
     __asm__ __volatile__(
       /*"break\n"*/  /* debug only */
         "addiu $29,$29,-0x20\n"
-        "sw $8,0x10($29)\n"
-        "sw $9,0x14($29)\n"
-        "syscall\n"
-        "addiu $29,$29, 0x20\n"
-        "b sysret\n"
+        "\tsw $8,0x10($29)\n"
+        "\tsw $9,0x14($29)\n"
+        "\tsyscall\n"
+        "\taddiu $29,$29, 0x20\n"
+        "\tb sysret\n"
     "sysgo:"
       /*"break\n"*/  /* debug only */
-        "syscall\n"
+        "\tsyscall\n"
     "sysret:"
-        "li $3,~0\n"
-        "bnez $7,sysbad\n"
-        "jr $31\n"
+        "\tbnez $7,sysbad\n"  /* $7 === a3 */
+        "\tjr $31\n"
     "sysbad:"
-        "or $2,$2,$3\n"
-        "jr $31"
-    : "+r"(v0), "+r"(a3)
+        "\tli $2,-1\n"  /* $2 === v0; overwrite 'errno' */
+        "\tjr $31"
+    : "+r"(v0), "+r"(a3)  /* "+r" ==> both read and write */
     :  "r"(a0), "r"(a1), "r"(a2),      "r"(t0), "r"(t1)
     );
     return (void *)v0;
@@ -431,6 +430,7 @@ static void *brk(void *addr)
     return v0;
 }
 
+#if 0  /*{*/
 static int close(int fd)
 {
 #define __NR_close (6+ 4000)
@@ -444,6 +444,7 @@ static int close(int fd)
     );
     return v0;
 }
+#endif  /*}*/
 
 static void exit(int code) __attribute__ ((__noreturn__));
 static void exit(int code)

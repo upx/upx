@@ -312,13 +312,36 @@ make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
-                &&  8<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
+                &&  (2*4)<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
                 (phdr->p_offset==0) ) )
         {
             hatch[0]= 0xef90005b;  // syscall __NR_unmap
             hatch[1]= 0xe1a0f00e;  // mov pc,lr
+        }
+    }
+    return hatch;
+}
+#elif defined(__mips__)  /*}{*/
+static void *
+make_hatch_mips(
+    Elf32_Phdr const *const phdr,
+    unsigned const reloc,
+    unsigned const frag_mask)
+{
+    unsigned *hatch = 0;
+    DPRINTF((STR_make_hatch_arm(),phdr,reloc));
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  (3*4)<=(frag_mask & -(int)hatch) ) ) // space left on page
+        )
+        {
+            hatch[0]= 0x0000000c;  // syscall
+            hatch[1]= 0x03e00008;  // jr $ra
+            hatch[2]= 0x00000000;  //   nop
         }
     }
     return hatch;
@@ -451,7 +474,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     DPRINTF((STR_do_xmap(),
         fdi, ehdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), av, p_reloc, f_unf));
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
-    if (PT_PHDR==phdr->p_type) {
+    if (xi && PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     }
     else if (PT_LOAD==phdr->p_type) {
@@ -479,6 +502,8 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
                 ((PROT_EXEC & prot) ? f_unf : 0) );
         }
         // Linux does not fixup the low end, so neither do we.
+        // Indeed, must leave it alone because some PT_GNU_RELRO
+        // dangle below PT_LOAD (but still on the low page)!
         //if (PROT_WRITE & prot) {
         //    bzero(addr, frag);  // fragment at lo end
         //}
@@ -496,7 +521,12 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #elif defined(__arm__)  /*}{*/
             void *const hatch = make_hatch_arm(phdr, reloc);
             if (0!=hatch) {
-                auxv_up((Elf32_auxv_t *)(void *)av, AT_NULL, (unsigned)hatch);
+                auxv_up(av, AT_NULL, (unsigned)hatch);
+            }
+#elif defined(__mips__)  /*}{*/
+            void *const hatch = make_hatch_mips(phdr, reloc, frag_mask);
+            if (0!=hatch) {
+                auxv_up(av, AT_NULL, (unsigned)hatch);
             }
 #endif  /*}*/
             if (0!=mprotect(addr, mlen, prot)) {
@@ -520,16 +550,9 @@ ERR_LAB
         }
 #endif  /*}*/
     }
-    if (!xi) { // 2nd call (PT_INTERP); close()+check is smaller here
-        if (0!=close(fdi)) {
-            err_exit(11);
-        }
-    }
-    else { // 1st call (main); also have (0!=av) here
-        if (ET_DYN!=ehdr->e_type) {
-            // Needed only if compressed shell script invokes compressed shell.
-            do_brk(v_brk);
-        }
+    if (xi && ET_DYN!=ehdr->e_type) {
+        // Needed only if compressed shell script invokes compressed shell.
+        do_brk(v_brk);
     }
     if (0!=p_reloc) {
         *p_reloc = reloc;
@@ -634,7 +657,8 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, 0, 0, 0);
+        entry = do_xmap(fdi, ehdr, 0, av, 0, 0);
+        //close(fdi);  // FIXME: bug in mipsel gcc 4.1.1
         break;
     }
   }

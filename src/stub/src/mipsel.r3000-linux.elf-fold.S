@@ -48,37 +48,53 @@ sz_b_info= 12
 sz_l_info= 12
 sz_p_info= 12
 
+a_type = 0  # Elf32_auxv_t
+a_val  = 4
+
+__NR_Linux = 4000
+__NR_brk      =  45+ __NR_Linux
+__NR_close    =   6+ __NR_Linux
+__NR_exit     =   1+ __NR_Linux
+__NR_mmap     =  90+ __NR_Linux
+__NR_mprotect = 125+ __NR_Linux
+__NR_munmap   =  91+ __NR_Linux
+__NR_open     =   5+ __NR_Linux
+__NR_read     =   3+ __NR_Linux
+
 OVERHEAD=2048
-MAX_ELF_HDR=1024
+MAX_ELF_HDR=512
 
 #define sp_frame 0x20
 BAL=0x04110000
 
 /* In:
     s7= &decompress
+
     s5= sz_pack2
-    s4= JMPU
+
     s3= ADRU
     s2= LENU
     s1= ADRX
+
     sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
         addiu a3,sp,4+ sp_frame  # &argv[0]
-L10:  # stop when a3= &env[0]
+L10:
         lw tmp,0(a3)
           addiu a3,a3,4
-        bne tmp,zero,L10
+        bne tmp,zero,L10  # stop when a3= &env[0]
           move t1,zero  # &f_unfilter
-L20:  # stop when a3= &auxv[0]
+L20:
         lw tmp,0(a3)
           addiu a3,a3,4
-        bne tmp,zero,L20
+        bne tmp,zero,L20  # stop when a3= &auxv[0]
           move t0,s7  # &f_decompress
 
         addiu sp,sp,sp_frame - MAX_ELF_HDR  # alloca
         move a2,sp  # &Elf32_Ehdr tmp space
         addiu a1,s5,-(sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info)
+        move a0,s1
 
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
@@ -94,27 +110,27 @@ L20:  # stop when a3= &auxv[0]
         subu v0,ra,v0
         addiu v0,v0,%lo(upx_main)
         jalr v0
-          move a0,s1
+          move s6,a3  # save av
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
                 Elf32_Auxv_t *a3, f_decompr t0, f_unfilter t1 )
 */
-        addiu sp,sp, MAX_ELF_HDR
-        move a0,s3  # ADRU
-        move a1,s2  # LENU
-        jr s4       # JMPU
+        addiu sp,sp, MAX_ELF_HDR  # un-alloca
+L30:  # find end of av
+        lw tmp,a_type(s6)
+          addiu s6,s6,8
+        bnez tmp,L30  # stop when s6= &auxv_t[NULL]
           move ra,v0  # &entry
+        lw tmp,-8+ a_val(s6)
+          move a1,s2  # LENU
+        beqz tmp,L40  # could not make escape hatch
+          move a0,s3  # ADRU
+        jr tmp  # goto munmap escape hatch: [syscall; jr ra; nop]
+          li v0,__NR_munmap
+L40:
+        jr ra  # omit munmap
+          nop
 
-#if 0  /*{*/
-__NR_Linux = 4000
-__NR_brk      =  45+ __NR_Linux
-__NR_close    =   6+ __NR_Linux
-__NR_exit     =   1+ __NR_Linux
-__NR_mmap     =  90+ __NR_Linux
-__NR_mprotect = 125+ __NR_Linux
-__NR_munmap   =  91+ __NR_Linux
-__NR_open     =   5+ __NR_Linux
-__NR_read     =   3+ __NR_Linux
-
+#if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */
 err_syscall:
         li a0,-1
 exit: .globl exit

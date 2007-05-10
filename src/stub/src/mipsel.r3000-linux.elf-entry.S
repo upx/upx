@@ -71,7 +71,6 @@ M_NRV2E_LE32=8
 sz_pack2 = . - 4
 adrm:   .long ADRM
 lenm:   .long LENM
-jmpu:   .long JMPU
 adru:   .long ADRU
 adrc:   .long ADRC
 lenu:   .long LENU
@@ -235,7 +234,6 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
         move a0,v0  // &new page(s)
 
         lw a1,adrc - decompressor(s7)
-        lw s4,jmpu - decompressor(s7)  // for unmap in fold
         lw s3,adru - decompressor(s7)  // for unmap in fold
         lw s2,lenu - decompressor(s7)  // for unmap in fold
         lw s1,adrx - decompressor(s7)  // for upx_main
