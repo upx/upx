@@ -9,6 +9,7 @@
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
+.NOTPARALLEL:
 export LC_ALL = C
 export SHELL = /bin/sh
 
