@@ -104,7 +104,7 @@ L20:
      subtracting the current location).
    So do it the hard way.
 */
-        bal 9f  # ra= &9f
+        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
           li v0,%lo(9f)
 9:
         subu v0,ra,v0
@@ -119,12 +119,12 @@ L30:  # find end of av
         lw tmp,a_type(s6)
           addiu s6,s6,8
         bnez tmp,L30  # stop when s6= &auxv_t[NULL]
-          move ra,v0  # &entry
+          move jp,v0  # &entry
         lw tmp,-8+ a_val(s6)
           move a1,s2  # LENU
         beqz tmp,L40  # could not make escape hatch
           move a0,s3  # ADRU
-        jr tmp  # goto munmap escape hatch: [syscall; jr ra; nop]
+        jr tmp  # goto munmap escape hatch: [syscall; jr jp; nop]
           li v0,__NR_munmap
 L40:
         jr ra  # omit munmap
