@@ -32,6 +32,7 @@
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
+ssize_t write(int, void const *, size_t);
 
 
 /*************************************************************************
@@ -45,7 +46,14 @@ void *mmap(void *, size_t, int, int, int, off_t);
 #if 1  /*{*/
 #define DPRINTF(a) /* empty: no debug drivel */
 #else  /*}{*/
+#if 0
 #include "stdarg.h"
+#else
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+#endif
 
 static int
 unsimal(unsigned x, char *ptr, int n)
@@ -68,7 +76,7 @@ decimal(int x, char *ptr, int n)
     return unsimal(x, ptr, n);
 }
 
-extern char const *STR_hex();
+extern char const *STR_hex(void);
 
 static int
 heximal(unsigned x, char *ptr, int n)
@@ -83,16 +91,15 @@ heximal(unsigned x, char *ptr, int n)
 
 
 #define DPRINTF(a) dprintf a
-extern char const *STR_0x();
-extern char const *STR_xread();
-extern char const *STR_unpackExtent();
-extern char const *STR_make_hatch_arm();
-extern char const *STR_auxv_up();
-extern char const *STR_xfind_pages();
-extern char const *STR_do_xmap();
-extern char const *STR_upx_main();
+extern char const *STR_0x(void);
+extern char const *STR_xread(void);
+extern char const *STR_unpackExtent(void);
+extern char const *STR_make_hatch_arm(void);
+extern char const *STR_auxv_up(void);
+extern char const *STR_xfind_pages(void);
+extern char const *STR_do_xmap(void);
+extern char const *STR_upx_main(void);
 
-extern int write(int fd, char const *buf, size_t n);
 
 static int
 dprintf(char const *fmt, ...)
