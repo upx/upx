@@ -88,6 +88,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(SizeT) >= 4)
 #else
 #define CLzmaDecoderState   const CLzmaDecoderState
 #endif
+int LzmaDecodeProperties(CLzmaProperties *, const unsigned char *, int);
+int LzmaDecode(CLzmaDecoderState *, const unsigned char *, SizeT, SizeT *, unsigned char *, SizeT, SizeT *);
 #if (ACC_CC_BORLANDC)
 #include "LzmaDecode.c"
 #else
