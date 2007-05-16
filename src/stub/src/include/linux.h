@@ -430,7 +430,6 @@ static void *brk(void *addr)
     return v0;
 }
 
-#if 0  /*{*/
 static int close(int fd)
 {
 #define __NR_close (6+ 4000)
@@ -444,7 +443,6 @@ static int close(int fd)
     );
     return v0;
 }
-#endif  /*}*/
 
 static void exit(int code) __attribute__ ((__noreturn__));
 static void exit(int code)
