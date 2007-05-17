@@ -882,6 +882,8 @@ void PackArmPe::pack(OutputFile *fo)
     oh.codesize = osection[1].vsize;
     oh.codebase = osection[1].vaddr;
     oh.headersize = osection[1].rawdataptr;
+    if (rvamin < osection[0].rawdataptr)
+        throwCantPack("object alignment too small");
 
     if (opt->win32_pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;

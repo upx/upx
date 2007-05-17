@@ -1021,6 +1021,8 @@ void PackW32Pe::pack(OutputFile *fo)
     oh.codebase = osection[1].vaddr;
     // oh.headersize = osection[0].rawdataptr;
     oh.headersize = rvamin;
+    if (rvamin < osection[0].rawdataptr)
+        throwCantPack("object alignment too small");
 
     if (opt->win32_pe.strip_relocs && !isdll)
         oh.flags |= RELOCS_STRIPPED;
