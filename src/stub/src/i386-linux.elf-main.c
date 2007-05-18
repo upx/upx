@@ -32,6 +32,7 @@
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
+ssize_t write(int, void const *, size_t);
 
 
 /*************************************************************************
@@ -45,7 +46,14 @@ void *mmap(void *, size_t, int, int, int, off_t);
 #if 1  /*{*/
 #define DPRINTF(a) /* empty: no debug drivel */
 #else  /*}{*/
+#if 0
 #include "stdarg.h"
+#else
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+#endif
 
 static int
 unsimal(unsigned x, char *ptr, int n)
@@ -68,7 +76,7 @@ decimal(int x, char *ptr, int n)
     return unsimal(x, ptr, n);
 }
 
-extern char const *STR_hex();
+extern char const *STR_hex(void);
 
 static int
 heximal(unsigned x, char *ptr, int n)
@@ -83,16 +91,15 @@ heximal(unsigned x, char *ptr, int n)
 
 
 #define DPRINTF(a) dprintf a
-extern char const *STR_0x();
-extern char const *STR_xread();
-extern char const *STR_unpackExtent();
-extern char const *STR_make_hatch_arm();
-extern char const *STR_auxv_up();
-extern char const *STR_xfind_pages();
-extern char const *STR_do_xmap();
-extern char const *STR_upx_main();
+extern char const *STR_0x(void);
+extern char const *STR_xread(void);
+extern char const *STR_unpackExtent(void);
+extern char const *STR_make_hatch_arm(void);
+extern char const *STR_auxv_up(void);
+extern char const *STR_xfind_pages(void);
+extern char const *STR_do_xmap(void);
+extern char const *STR_upx_main(void);
 
-extern int write(int fd, char const *buf, size_t n);
 
 static int
 dprintf(char const *fmt, ...)
@@ -291,6 +298,9 @@ make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
                 * hatch  = escape;
             }
         }
+        else {
+            hatch = 0;
+        }
     }
     return hatch;
 }
@@ -320,6 +330,9 @@ make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
             hatch[0]= 0xef90005b;  // syscall __NR_unmap
             hatch[1]= 0xe1a0f00e;  // mov pc,lr
         }
+        else {
+            hatch = 0;
+        }
     }
     return hatch;
 }
@@ -340,8 +353,11 @@ make_hatch_mips(
         )
         {
             hatch[0]= 0x0000000c;  // syscall
-            hatch[1]= 0x03e00008;  // jr $ra
+            hatch[1]= 0x03200008;  // jr $25  # $25 === $t9 === jp
             hatch[2]= 0x00000000;  //   nop
+        }
+        else {
+            hatch = 0;
         }
     }
     return hatch;
@@ -440,9 +456,14 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~page_mask & lo;  // round down to page boundary
     hi    =  page_mask & (hi - lo - page_mask -1);  // page length
     szlo  =  page_mask & (szlo    - page_mask -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
+    if (MAP_FIXED & mflags) {
+        addr = (char *)lo;
+    }
+    else {
+        addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
+        //munmap(szlo + addr, hi - szlo);
+    }
     *p_brk = hi + addr;  // the logical value of brk(0)
-    //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
     return (unsigned long)addr - lo;
 }
 
@@ -657,8 +678,9 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, 0, 0);
-        //close(fdi);  // FIXME: bug in mipsel gcc 4.1.1
+        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0);
+        auxv_up(av, AT_BASE, reloc);  // uClibc only?
+        close(fdi);
         break;
     }
   }

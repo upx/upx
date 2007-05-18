@@ -65,6 +65,17 @@ M_NRV2B_LE32=2  // ../conf.h
 M_NRV2D_LE32=5
 M_NRV2E_LE32=8
 
+/* These from /usr/include/asm/unistd.h */
+__NR_Linux = 4000
+__NR_write = 4+ __NR_Linux
+__NR_exit  = 1+ __NR_Linux
+__NR_mmap  = 90+ __NR_Linux
+__NR_cacheflush = 147+ __NR_Linux
+
+/* asm/cachectl.h */
+ICACHE= 1<<0
+DCACHE= 1<<1
+
 //BAL=0x04110000
 
   section ELFMAINX
@@ -120,7 +131,7 @@ LZMA_LIT_NUM  =  768
 lxlzma_szframe  = 12*4
 lxlzma_sv_pc    = 11*4
 lxlzma_sv_sp    = 10*4
-        /* 9 */
+lxlzma_dst      =  9*4
 lxlzma_dstdone  =  8*4
 lxlzma_srcdone  =  7*4
 
@@ -140,6 +151,7 @@ lxlzma_srcdone  =  7*4
         addiu a6,sp,lxlzma_dstdone
                 sw ra, lxlzma_sv_pc(sp)
         lw    a5,0(lxdstlen)
+                sw lxdst,lxlzma_dst(sp)
         move  a4,lxdst
         addiu a3,sp,lxlzma_srcdone
         addiu a2,lxsrclen,-2  # 2 header bytes
@@ -151,13 +163,37 @@ lxlzma_srcdone  =  7*4
         srl  t8,t8,4
         bal lzma_decode
           sb   t8,1(a0)   # lit_pos_bits
+
+/* It seems that for our uses the icache does not need to be invalidated,
+   because no lines from the destination have ever been fetched.  However,
+   if the dcache is write-back, then some of the results might not be in
+   memory yet, and the icache could fetch stale data; so memory must be
+   updated from dcache.
+   The *next* call of the decompressor will tend to sweep much of the dcache
+   anyway, because the probability history array (typically ushort[7990] or
+   ushort[14134]) gets initialized.
+*/
+        move t8,v0  # return value from decompression
+        lw a0,lxlzma_dst(sp)
+        lw a1,lxlzma_dstdone(sp)
+        li a2,ICACHE|DCACHE
+        li v0,__NR_cacheflush
+        syscall
+        move v0,t8  # return value from decompression
+
         lw ra,lxlzma_sv_pc(sp)
         lw tmp,lxlzma_sv_sp(sp)
         jr ra
           subu sp,sp,tmp  # un_alloca
 
 lzma_decode:
+  section LZMA_DEC20
+#if 1  /*{*/
 #include "arch/mips/mipsel.r3000/lzma_d.S"
+#else  /*}{*/
+//#include "arch/mips/mipsel.r3000/jfr-lzma_d.S"
+#endif  /*}*/
+
 
   section LZMA_DEC30
         break  // FIXME
@@ -176,12 +212,6 @@ eof:
         pop t0; sub s0,s0,t0  // dst -= original_dst
         pop t0; sw s0,(t0)  // actual length used t0 dst
         pop t0; jr t0; nop
-
-/* These from /usr/include/asm/unistd.h */
-__NR_Linux = 4000
-__NR_write = 4+ __NR_Linux
-__NR_exit  = 1+ __NR_Linux
-__NR_mmap  = 90+ __NR_Linux
 
 msg_SELinux:
         addiu a2,zero,L71 - L70  // length

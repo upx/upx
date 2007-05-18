@@ -48,6 +48,7 @@ sz_b_info= 12
 sz_l_info= 12
 sz_p_info= 12
 
+sz_auxv= 8
 a_type = 0  # Elf32_auxv_t
 a_val  = 4
 
@@ -60,7 +61,9 @@ __NR_mprotect = 125+ __NR_Linux
 __NR_munmap   =  91+ __NR_Linux
 __NR_open     =   5+ __NR_Linux
 __NR_read     =   3+ __NR_Linux
+__NR_readlink =  85+ __NR_Linux
 
+PATHSIZE=4096
 OVERHEAD=2048
 MAX_ELF_HDR=512
 
@@ -76,25 +79,56 @@ BAL=0x04110000
     s2= LENU
     s1= ADRX
 
-    sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0...,strings}
+    sp= -sp_frame + &{argc,argv...,0,env...,0,auxv...,0,0,strings}
 */
 fold_begin:
-        addiu a3,sp,4+ sp_frame  # &argv[0]
-L10:
-        lw tmp,0(a3)
-          addiu a3,a3,4
-        bne tmp,zero,L10  # stop when a3= &env[0]
-          move t1,zero  # &f_unfilter
-L20:
-        lw tmp,0(a3)
-          addiu a3,a3,4
-        bne tmp,zero,L20  # stop when a3= &auxv[0]
-          move t0,s7  # &f_decompress
+        addiu v0,sp,sp_frame  # &argc
+        addiu sp,-(4+ 4+ PATHSIZE - sp_frame)  # alloca: new envp[0], "   =", buffer
+        move v1,sp
+L10:  # copy argc,argv
+        lw tmp,0(v0); addiu v0,4
+        sw tmp,0(v1); addiu v1,4
+        bnez tmp,L10  # stop when v0= &env[0]
+          move s0,v1  # new &env[0]
+        addiu v1,4  # leave space for new env[0]
+L20:  # copy env
+        lw tmp,0(v0); addiu v0,4
+        sw tmp,0(v1); addiu v1,4
+        bnez tmp,L20  # stop when v0= &auxv[0]
+          move s4,v1  # new &auxv[0]
+L30:  # copy auxv
+        lw tmp,0(v0); lw t0,4(v0); addiu v0,sz_auxv
+        sw tmp,0(v1); sw t0,4(v1); addiu v1,sz_auxv
+        bnez tmp,L30  # stop when v0= &auxv[N]
+          move s6,v1  # new &auxv[N]
 
-        addiu sp,sp,sp_frame - MAX_ELF_HDR  # alloca
+        sw v1,0(s0)  # new env[0]
+        li tmp,' '
+        sb tmp,0(v1)  # endian neutral!
+        sb tmp,1(v1)
+        sb tmp,2(v1)
+        li tmp,'='
+        sb tmp,3(v1)
+
+        li a2,PATHSIZE-1
+        addiu a1,v1,4  # &buf[0]
+        bal 9f
+          move a0,ra
+        .asciz "/proc/self/exe"
+        .balign 4
+9:
+        li v0,__NR_readlink
+        syscall
+        bltz a3,0f
+          addu tmp,a0,v0
+        sb $0,(tmp)  # null terminate the path
+0:
+        addiu sp,-MAX_ELF_HDR  # alloca
+        move t1,zero  # &f_unfilter
+        move t0,s7  # &f_decompress
+        move a3,s4  # new &auxv[0]
         move a2,sp  # &Elf32_Ehdr tmp space
         addiu a1,s5,-(sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info)
-        move a0,s1
 
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.
@@ -104,30 +138,26 @@ L20:
      subtracting the current location).
    So do it the hard way.
 */
-        bal 9f  # ra= &9f
+        bltzal $0,9f  # ra= &9f; no branch (condition is false!)
           li v0,%lo(9f)
 9:
         subu v0,ra,v0
         addiu v0,v0,%lo(upx_main)
         jalr v0
-          move s6,a3  # save av
+          move a0,s1
 /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2,
                 Elf32_Auxv_t *a3, f_decompr t0, f_unfilter t1 )
 */
-        addiu sp,sp, MAX_ELF_HDR  # un-alloca
-L30:  # find end of av
-        lw tmp,a_type(s6)
-          addiu s6,s6,8
-        bnez tmp,L30  # stop when s6= &auxv_t[NULL]
-          move ra,v0  # &entry
-        lw tmp,-8+ a_val(s6)
+        move jp,v0  # &entry
+        addiu sp, MAX_ELF_HDR  # un-alloca
+        lw tmp,-sz_auxv+ a_val(s6)
           move a1,s2  # LENU
         beqz tmp,L40  # could not make escape hatch
           move a0,s3  # ADRU
-        jr tmp  # goto munmap escape hatch: [syscall; jr ra; nop]
+        jr tmp  # goto munmap escape hatch: [syscall; jr jp; nop]
           li v0,__NR_munmap
 L40:
-        jr ra  # omit munmap
+        jr jp  # omit munmap
           nop
 
 #if 0  /*{ replaced by macros in include/linux.h because of 'bal' vs gcc */

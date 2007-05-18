@@ -242,7 +242,7 @@ amd64-linux.elf%.h : tc_bfdname = elf64-x86-64
 
 tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -296,7 +296,7 @@ arm-linux.elf%.h : tc_bfdname = elf32-littlearm
 
 tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
 tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
@@ -330,7 +330,7 @@ arm-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
 
 tc.arm-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
 tc.arm-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -632,7 +632,7 @@ i386-linux.elf%.h : tc_bfdname = elf32-i386
 
 tc.i386-linux.elf.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.i386-linux.elf.gcc     += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.i386-linux.elf.gcc     += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 tc.i386-linux.elf.gcc     += -mtune=k6
 tc.i386-linux.elf.gcc     += -Os -fno-omit-frame-pointer
 tc.i386-linux.elf.gcc     += -momit-leaf-frame-pointer
@@ -793,7 +793,7 @@ m68k-atari.tos.h : tc_objdump_disasm_options = -m m68k:68040
 
 tc.m68k-atari.tos.gcc  = m68k-linux-gcc-4.1.1 -m68000 -malign-int -nostdinc -MMD -MT $@
 tc.m68k-atari.tos.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.m68k-atari.tos.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 m68k-atari.tos.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp -Wa,-m68000,-l,--pcrel,--register-prefix-optional $< -o tmp/$T.bin
@@ -812,7 +812,7 @@ tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O -mno-pdr
 ##tc.mipsel.r3000-ps1.as   = mipsel-linux-as-2.16.1 -O -mno-pdr
 tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
 tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
@@ -859,9 +859,9 @@ tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -S -Os $< -o tmp/$T.i
+	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
 	sed -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
-	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' <tmp/$T.i >tmp/$T.s
+	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s
 	$(call tc,gcc) -c -Wa,-O,-mno-pdr tmp/$T.s -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
@@ -904,7 +904,7 @@ powerpc-linux.elf%.h : tc_bfdname = elf32-powerpc
 
 tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mcpu=405 -nostdinc -MMD -MT $@
 tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wwrite-strings -Werror
+tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
