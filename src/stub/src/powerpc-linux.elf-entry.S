@@ -144,6 +144,7 @@ unfold:
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)
         addi src,r30,sz_b_info
+        la sp,-6*4(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
 main:

@@ -128,7 +128,11 @@
 #include "lzma_d_cs.S"
 
   section LZMA_DEC20
+#if 1  /*{*/
 #include "lzma_d_cf.S"
+#else  /*}{*/
+#include "lzma_d-arm.S"
+#endif  /*}*/
 
   section LZMA_DEC30
 

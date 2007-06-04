@@ -31,6 +31,7 @@
 
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
+retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 
 sz_b_info= 12
   sz_unc= 0
@@ -61,8 +62,9 @@ fold_begin:
 #include "arch/powerpc/32/bxx.S"
 
 L90:
+        la sp,6*4(sp)  // trim save area used by decompressor
         li   a6,0
-        stwu a6,-4(sp)  # default value
+        stwu a6,-4(sp)  # _push_ default value for dyld
         movr a6,sp  # &mhdrp
         mflr a5  # &ppcbxx: f_unfilter
 

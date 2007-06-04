@@ -5,6 +5,8 @@ User visible changes for UPX
 Changes in 3.01 (XX XXX 2007):
   * dos/exe: fixed an incorrect error message caused by a bug in
     relocation handling
+  * new format linux/mipsel supports ELF on [32-bit] R3000
+  * fix argv[0] on PowerPC with --lzma
 
 Changes in 3.00 (27 Apr 2007):
   * watcom/le & tmt/adam: fixed a problem when using certain filters

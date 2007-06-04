@@ -43,7 +43,7 @@ sz_l_info= 12
 sz_p_info= 12
 
 OVERHEAD= 2048
-LINKAREA= 4*4  // SysV C linkage area: (sp, lr); but 16-byte align
+LINKAREA= 6*4  // (sp,cr,pc, xx,yy.zz) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
 */
@@ -67,6 +67,7 @@ zfind:
         cmpi cr7,t0,0; bne+ cr7,zfind
         ret
 L90:
+        la sp,6*4(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
         lwz a6,0(sp)  // sp at execve
         call zfind  // a6= &env

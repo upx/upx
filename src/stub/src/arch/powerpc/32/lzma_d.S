@@ -28,6 +28,7 @@
 */
 
 #include "ppc_regs.h"
+retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 
 #define section .section
 
@@ -59,7 +60,7 @@
         addi  a2,lsrc,-2  // inSize
         la    a1,2(src)  // inp
 
-        stw r0,4(sp)  // ret.addr
+        stw r0,retaddr(sp)  // save return address in caller's frame
         lbz r0,0(src)  // first byte, replaces LzmaDecodeProperties()
         rlwinm t1,r0,32-3,3,31  // t1= (r0>>3)==(lit_context-bits + lit_pos_bits)
         rlwinm t0,r0,0,32-3,31  // t0= (7& t0)==pos_bits
@@ -102,7 +103,7 @@
 
   section LZMA_DEC30
         lwz sp,0(sp)  // old sp
-        lwz r0,4(sp)  // ret.addr
+        lwz r0,retaddr(sp)
         mtlr r0
         blr
 
