@@ -93,7 +93,16 @@ _start: .globl _start
 0:
 
 /* Returns 0 on success; non-zero on failure. */
-decompressor:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
+decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdstlen, uint method)
+#define lxsrc    a0
+#define lxsrclen a1
+#define lxdst    a2
+#define lxdstlen a3
+
+#undef src  /* bits.ash */
+#define src     lxsrc
+#undef dst  /* bits.ash */
+#define dst     lxdst
 
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
   section NRV2E
@@ -108,10 +117,6 @@ decompressor:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint me
         nrv2b eof
 
 section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
-#define lxsrc    a0
-#define lxsrclen a1
-#define lxdst    a2
-#define lxdstlen a3
 
 /* LzmaDecode(a0=CLzmaDecoderState *,
         a1=src, a2=srclen, a3=*psrcdone,
@@ -198,21 +203,19 @@ lzma_decode:
   section LZMA_DEC30
         break  // FIXME
 
-  section NRV_TAIL
-        // empty
+  section NRV_HEAD
+        add lxsrclen,lxsrclen,lxsrc  //  src_EOF
+        sw lxdst,(lxdstlen)  // original lxdst in &lxdstlen
 
-.macro pop reg
-        lw \reg,0(sp)
-          addiu sp,sp,4
-.endm
+  section NRV_TAIL
+eof:
+        lw v1,(lxdstlen)  // original lxdst
+        sub v0,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
+        sub v1,lxdst,v1  // actual length generated
+        jr ra
+          sw v1,(lxdstlen)
 
   section ELFMAINY
-eof:
-        pop t0; sub v0,v0,t0  // src -= eof;  // return 0: good; else: bad
-        pop t0; sub s0,s0,t0  // dst -= original_dst
-        pop t0; sw s0,(t0)  // actual length used t0 dst
-        pop t0; jr t0; nop
-
 msg_SELinux:
         addiu a2,zero,L71 - L70  // length
         bal L72

@@ -42,7 +42,7 @@
 ;// register defines
 ;//////////////////////////////////////
 
-#if 1
+#if defined(PS1)  /*{*/
 #define tmp         at
 
 #define dst         t0
@@ -62,8 +62,25 @@
 #define m_off       t7
 #define m_pos       t7
 
-#else
+#elif defined(_TARGET_LINUX_)  /*}{*/
+#define tmp         at
 
+/* decompress(src, src_len, dst, &dst_len, method); */
+#define src         a0
+#define dst         a2
+
+#define src_ilen    src
+#define bb          t1
+#define ilen        t2
+#define last_m_off  t3
+#define m_len       t4
+#define bc          t5
+
+#define var         t6
+#define m_off       t7
+#define m_pos       t7
+
+#else  /*}{*/
 .print "\nwarning redefined src / dst\n"
 
 #define tmp         v1
@@ -85,7 +102,7 @@
 #define m_off       t7
 #define m_pos       t7
 
-#endif
+#endif  /*}*/
 
 
 ;//////////////////////////////////////
