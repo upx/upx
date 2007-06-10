@@ -210,10 +210,18 @@ lzma_decode:
   section NRV_TAIL
 eof:
         lw v1,(lxdstlen)  // original lxdst
-        sub v0,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
-        sub v1,lxdst,v1  // actual length generated
+        subu t8,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
+
+        move a0,v1  // original lxdst
+        subu a1,lxdst,v1  // actual length generated
+          sw a1,(lxdstlen)
+        li a2,ICACHE|DCACHE
+        li v0,__NR_cacheflush
+        syscall
+
         jr ra
-          sw v1,(lxdstlen)
+          move v0,t8  # return value from decompression
+
 
   section ELFMAINY
 msg_SELinux:
@@ -273,14 +281,16 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
 
         beq a0,a1,L80  // no copy
           subu t0,a0,a1  // (ADRM - ADRC) == relocation amount
+        subu a2,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
+        addu a2,a2,s5  //  + sz_pack2; length to copy
         addu s7,s7,t0  // update &decompress
-        move a2,s5  // length
 move_up:  // memcpy(dst=a0, src=a1, len=round_up(a2, 8))
         lw t0, 0(a1); addiu a0,a0, 8
         lw t1, 4(a1); addiu a2,a2,-8
         sw t0,-8(a0); addiu a1,a1, 8
         bgtz a2,move_up
           sw t1,-4(a0)
+        move v0,a0  // unfolded stub follows copied decompressor
 L80:
 // Decompress the folded part of this stub, then execute it.
         lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len

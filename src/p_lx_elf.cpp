@@ -574,7 +574,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
             }
         }
     }
-    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
+    lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
     acc_uint64l_t       lo_va_stub = get_native64(&elfout.phdr[0].p_vaddr);
     acc_uint64l_t adrc;
     acc_uint64l_t adrm;
@@ -1571,8 +1571,8 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
             }
         }
     }
-    lsize = /*getLoaderSize()*/  64 * 1024;  // upper bound; avoid circularity
-    unsigned       lo_va_stub = get_native64(&elfout.phdr[0].p_vaddr);
+    lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
+    unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);
     unsigned adrc;
     unsigned adrm;
     unsigned adru;

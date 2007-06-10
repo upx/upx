@@ -120,7 +120,7 @@ L30:  # copy auxv
         li v0,__NR_readlink
         syscall
         bltz a3,0f
-          addu tmp,a0,v0
+          addu tmp,a1,v0
         sb $0,(tmp)  # null terminate the path
 0:
         addiu sp,-MAX_ELF_HDR  # alloca
