@@ -196,7 +196,7 @@ lzma_decode:
 #if 1  /*{*/
 #include "arch/mips/mipsel.r3000/lzma_d.S"
 #else  /*}{*/
-//#include "arch/mips/mipsel.r3000/lzma_d-mips3k.S"
+#include "arch/mips/mipsel.r3000/lzma_d-mips3k.S"       /* gpp_inc:ignore=1: */
 #endif  /*}*/
 
 

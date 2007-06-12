@@ -54,56 +54,67 @@ def add_dep(state, fn, mode):
     fn = os.path.normcase(fn)
     if fn in files:
         return
-    # FIXME: could use samestat() etc.
+    # FIXME: could use os.path.samestat() etc.
     files.append(fn)
     files_st[fn] = os.stat(fn)
 
 
-def not_found(l, s, state):
-    if opts.fatal:
-        raise Exception, "%s:%d: include file %s not found" % (state[0], state[2], s)
+def not_found(state, l, inc, fatal=None):
+    if fatal is None:
+        fatal = opts.fatal
+    if fatal:
+        raise Exception, "%s:%d: include file %s not found" % (state[0], state[2], inc)
     return l
 
 
-def handle_inc_c(l, state, ofp):
-    m = re.search(r"^\s*\#\s*include\s+([\"\<].+)", l)
+def parse_comment(state, l, comment):
+    cf = {}
+    if not comment: return cf
+    m = re.search(r"gpp_inc:(.+?):", comment.strip())
+    if not m: return cf
+    flags = re.split(r"\s+", m.group(1).strip())
+    for f in flags:
+        assert f, (f, flags, m.groups(), comment)
+        if   f == "ignore=0": cf["fatal"] = 1
+        elif f == "ignore=1": cf["fatal"] = 0
+        else:
+            raise Exception, "%s:%d: bad flags %s %s" % (state[0], state[2], f, str(flags))
+    return cf
+
+
+def handle_inc_c(state, l, ofp):
+    m = re.search(r"^\s*\#\s*include\s+([\"\<])(.+?)([\"\>])(.*)$", l)
     if not m:
         return l
-    s = m.group(1).strip()
-    # FIXME: strip comments ?
-    if len(s) < 3:
-        return not_found(l, s, state)
-    if s[0] == '<' and s[-1] == '>':
+    q1, inc, q2, comment = m.groups()
+    cf = parse_comment(state, l, comment)
+    if q1 == '<' and q2 == '>':
         dirs = opts.includes
-    elif s[0] == '"' and s[-1] == '"':
+    elif q1 == '"' and q2 == '"':
         dirs = [state[1]] + opts.includes
     else:
         raise Exception, "syntax error: include line " + l
-    inc = s[1:-1]
     for dir in dirs:
         fn = os.path.join(dir, inc)
         if os.path.isfile(fn):
-            add_dep(state, fn, s[0] == '<')
+            add_dep(state, fn, q1 == '<')
             handle_file(fn, ofp, state)
             return None
-    return not_found(l, s, state)
+    return not_found(state, l, inc, cf.get("fatal"))
 
 
-def handle_inc_nasm(l, state, ofp):
-    m = re.search(r"^\s*\%\s*include\s+([\"\<].+)", l)
+def handle_inc_nasm(state, l, ofp):
+    m = re.search(r"^\s*\%\s*include\s+([\"\<])(.+?)([\"\>])(.*)$", l)
     if not m:
         return l
-    s = m.group(1).strip()
-    # FIXME: strip comments ?
-    if len(s) < 3:
-        return not_found(l, s, state)
-    if s[0] == '<' and s[-1] == '>':
+    q1, inc, q2, comment = m.groups()
+    cf = parse_comment(state, l, comment)
+    if q1 == '<' and q2 == '>':
         pass
-    elif s[0] == '"' and s[-1] == '"':
+    elif q1 == '"' and q2 == '"':
         pass
     else:
         raise Exception, "syntax error: include line " + l
-    inc = s[1:-1]
     # info: nasm simply does concat the includes
     for prefix in opts.includes + [""]:
         fn = prefix + inc
@@ -111,7 +122,7 @@ def handle_inc_nasm(l, state, ofp):
             add_dep(state, fn, False)
             handle_file(fn, ofp, state)
             return None
-    return not_found(l, s, state)
+    return not_found(state, l, inc, cf.get("fatal"))
 
 
 def handle_file(ifn, ofp, parent_state=None):
@@ -121,9 +132,9 @@ def handle_file(ifn, ofp, parent_state=None):
         state[2] += 1       # line counter
         l = l.rstrip("\n")
         if opts.mode == "c":
-            l = handle_inc_c(l, state, ofp)
+            l = handle_inc_c(state, l, ofp)
         elif opts.mode == "nasm":
-            l = handle_inc_nasm(l, state, ofp)
+            l = handle_inc_nasm(state, l, ofp)
         if l is not None:
             ofp.write(l + "\n")
 
