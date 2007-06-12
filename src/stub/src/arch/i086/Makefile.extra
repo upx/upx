@@ -47,9 +47,9 @@ DOSBOX = true
 DOSBOX = dosbox
 DOSBOX = /usr/bin/time -p dosbox -exit
 
-ifneq ($(wildcard /usr/bin/wine),)
+ifneq ($(wildcard /usr/bin/wine /usr/local/bin/wine),)
 WINEENV = @env
-WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME PATH USER TERM)
+WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME LANG LC_ALL PATH USER TERM)
 winedir_s = z:$(shell winepath -s $(realpath $1))
 winedir_w = $(shell winepath -w $(realpath $1))
 else
@@ -181,7 +181,7 @@ endif
 	$(PYTHON) wdis2gas.py tmp/$T_wc.obj.disasm tmp/$T.S
 	$(call tc,gcc) -c -o tmp/$T.o tmp/$T.S
 	$(call tc,f-objstrip,tmp/$T.o)
-	$(call tc,objdump) -b elf32-i386 -m i8086 -M intel -dr -j .text.LzmaDecode --no-show -w tmp/$T.o | $(RTRIM) | perl -pe 's/DWORD/dword/g; s/WORD/word/g; s/BYTE/byte/g; s/PTR/ptr/g;' > $@
+	$(call tc,objdump) -b elf32-i386 -m i8086 -M intel -dr -j .text.LzmaDecode --no-show -w tmp/$T.o | $(RTRIM) | $(PERL) -pe 's/\bDWORD\b/dword/g; s/\bWORD\b/word/g; s/\bBYTE\b/byte/g; s/\bPTR\b/ptr/g;' > $@
 
 .PRECIOUS: lzma_d_c%.i tmp/lzma_d_c%.i
 

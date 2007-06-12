@@ -152,8 +152,9 @@ tc_list =
 tc_objdump_disasm_options =
 
 # commands
+PERL       = perl
 PYTHON     = python
-UNIX2DOS  := perl -i -pe 's/$$/\r/;'
+UNIX2DOS  := $(PERL) -i -pe 's/$$/\r/;'
 
 # trim (strip) trailing whitespace
 RTRIM     := sed -e 's/[ $(tab)]*$$//'
