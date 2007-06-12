@@ -138,7 +138,7 @@ class PackBSDI386 : public PackLinuxI386
 public:
     PackBSDI386(InputFile *f);
     virtual int getFormat() const { return UPX_F_BSD_i386; }
-    virtual const char *getName() const { return "*BSD/386"; }
+    virtual const char *getName() const { return "BSD/386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-bsd.elf.execve"; }
 
 protected:

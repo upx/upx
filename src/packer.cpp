@@ -67,8 +67,9 @@ void Packer::assertPacker() const
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 13);
-    assert(strlen(getFullName(opt)) <= 26);     // "i386-linux.kernel.bvmlinuz"
-    assert(strlen(getFullName(NULL)) <= 26);    // "i386-linux.kernel.bvmlinuz"
+    // info: 32 is limit for show_all_packers() in help.cpp
+    assert(strlen(getFullName(opt)) <= 28);
+    assert(strlen(getFullName(NULL)) <= 28);
     if (bele == NULL) fprintf(stderr, "%s\n", getName());
     assert(bele != NULL);
 #if 1

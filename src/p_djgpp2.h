@@ -43,7 +43,7 @@ public:
     virtual int getVersion() const { return 14; }
     virtual int getFormat() const { return UPX_F_DJGPP2_COFF; }
     virtual const char *getName() const { return "djgpp2/coff"; }
-    virtual const char *getFullName(const options_t *) const { return "i386-dos32.djgpp2"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-dos32.djgpp2.coff"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

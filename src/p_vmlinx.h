@@ -175,7 +175,7 @@ public:
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2MSB, "_vmlinux_start") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_PPC32; }
     virtual const char *getName() const { return "vmlinux/ppc32"; }
-    virtual const char *getFullName(const options_t *) const { return "ppc32-linux.kernel.vmlinux"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

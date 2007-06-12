@@ -97,14 +97,14 @@ struct PackerNames
         const char* fname;
         const char* sname;
     };
-    Entry names[32];
+    Entry names[64];
     size_t names_count;
     const options_t *o;
     PackerNames() : names_count(0), o(NULL) { }
     void add(const Packer *p)
     {
         p->assertPacker();
-        assert(names_count < 32);
+        assert(names_count < 64);
         names[names_count].fname = p->getFullName(o);
         names[names_count].sname = p->getName();
         names_count++;

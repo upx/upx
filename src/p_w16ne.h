@@ -42,7 +42,8 @@ public:
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_WIN16_NE; }
     virtual const char *getName() const { return "win16/ne"; }
-    virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_286 ? "i286-win16.ne" : "i386-win16.ne"; }
+    //virtual const char *getFullName(const options_t *o) const { return o && o->cpu == o->CPU_286 ? "i286-win16.ne" : "i386-win16.ne"; }
+    virtual const char *getFullName(const options_t *) const { return "i286-win16.ne"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
