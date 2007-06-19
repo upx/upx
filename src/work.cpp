@@ -141,6 +141,8 @@ void do_one_file(const char *iname, char *oname)
             // cannot rely on open() because of umask
             //int omode = st.st_mode | 0600;
             int omode = 0600;
+            if (!opt->preserve_mode)
+                omode = 0666;
             fo.sopen(tname,flags,shmode,omode);
             // open succeeded - now set oname[]
             strcpy(oname,tname);
@@ -209,21 +211,30 @@ void do_one_file(const char *iname, char *oname)
         UNUSED(name);
 #if defined(USE_UTIME)
         // copy time stamp
-        struct utimbuf u;
-        u.actime = st.st_atime;
-        u.modtime = st.st_mtime;
-        r = utime(name, &u);
-        UNUSED(r);
+        if (opt->preserve_timestamp)
+        {
+            struct utimbuf u;
+            u.actime = st.st_atime;
+            u.modtime = st.st_mtime;
+            r = utime(name, &u);
+            UNUSED(r);
+        }
 #endif
 #if defined(HAVE_CHMOD)
         // copy permissions
-        r = chmod(name, st.st_mode);
-        UNUSED(r);
+        if (opt->preserve_mode)
+        {
+            r = chmod(name, st.st_mode);
+            UNUSED(r);
+        }
 #endif
 #if defined(HAVE_CHOWN)
         // copy the ownership
-        r = chown(name, st.st_uid, st.st_gid);
-        UNUSED(r);
+        if (opt->preserve_ownership)
+        {
+            r = chown(name, st.st_uid, st.st_gid);
+            UNUSED(r);
+        }
 #endif
     }
 

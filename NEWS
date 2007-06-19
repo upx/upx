@@ -3,6 +3,8 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.01 (XX XXX 2007):
+  * new options --no-mode, --no-owner and --no-time to disable preservation
+    of mode (file permissions), file ownership and timestamps.
   * dos/exe: fixed an incorrect error message caused by a bug in
     relocation handling
   * new format linux/mipsel supports ELF on [32-bit] R3000

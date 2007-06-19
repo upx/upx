@@ -56,6 +56,9 @@ void options_t::reset()
 
     o->backup = -1;
     o->overlay = -1;
+    o->preserve_mode = true;
+    o->preserve_ownership = true;
+    o->preserve_timestamp = true;
 
     o->console = CON_FILE;
 #if defined(__DJGPP__)
@@ -646,6 +649,15 @@ static int do_option(int optc, const char *arg)
     case 519:
         opt->no_env = true;
         break;
+    case 526:
+        opt->preserve_mode = false;
+        break;
+    case 527:
+        opt->preserve_ownership = false;
+        break;
+    case 528:
+        opt->preserve_timestamp = false;
+        break;
     // compression settings
     case 520:                               // --small
         if (opt->small < 0)
@@ -900,7 +912,10 @@ static const struct mfx_option longopts[] =
     {"force-compress",      0, 0, 'f'},     //   and compression of suspicious files
     {"info",                0, 0, 'i'},     // info mode
     {"no-env",           0x10, 0, 519},     // no environment var
+    {"no-mode",          0x10, 0, 526},     // do not preserve mode (permissions)
+    {"no-owner",         0x10, 0, 527},     // do not preserve ownership
     {"no-progress",         0, 0, 516},     // no progress bar
+    {"no-time",          0x10, 0, 528},     // do not preserve timestamp
     {"output",           0x21, 0, 'o'},
     {"quiet",               0, 0, 'q'},     // quiet mode
     {"silent",              0, 0, 'q'},     // quiet mode

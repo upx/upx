@@ -69,6 +69,9 @@ struct options_t {
     bool no_env;
     bool no_progress;
     const char *output_name;
+    bool preserve_mode;
+    bool preserve_ownership;
+    bool preserve_timestamp;
     int small;
     int verbose;
     bool to_stdout;
