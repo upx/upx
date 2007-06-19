@@ -139,7 +139,8 @@ B<--help>: prints the help
 B<--version>: print the version of B<UPX>
 
 B<--exact>: when compressing, require to be able to get a byte-identical file
-after decompression with option B<-d>
+after decompression with option B<-d> [NOTE: this is work in progress and does
+not work for all formats yet]
 
 [ ...to be written... - type `B<upx --help>' for now ]
 
