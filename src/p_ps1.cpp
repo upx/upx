@@ -256,8 +256,9 @@ bool PackPs1::canPack()
     fi->readx(buf, sizeof(buf));
     checkAlreadyPacked(buf, sizeof(buf));
 
-    for (unsigned i = 0; i < sizeof(buf); i++)
+    for (size_t i = 0; i < sizeof(buf); i++)
         if (buf[i] != 0)
+        {
             if (!opt->force)
                 throwCantPack("unknown data in header (try --force)");
             else
@@ -267,6 +268,7 @@ bool PackPs1::canPack()
                 opt->backup = 1;
                 break;
             }
+        }
     if (!checkFileHeader())
         throwCantPack("unsupported header flags (try --force)");
     if (!opt->force && file_size < PS_MIN_SIZE)
@@ -320,7 +322,7 @@ void PackPs1::buildLoader(const Filter *)
             sa_tmp += overlap = ALIGN_UP((ph.overlap_overhead - sa_tmp), 4u);
     }
 
-    if (isCon || !isCon && M_IS_LZMA(ph.method))
+    if (isCon || M_IS_LZMA(ph.method))
         foundBss = findBssSection();
 
     if (M_IS_LZMA(ph.method) && !buildPart2)
@@ -574,11 +576,13 @@ void PackPs1::pack(OutputFile *fo)
     linker->defineSymbol("ldr_sz", M_IS_LZMA(ph.method) ? sz_lunc + 16 : (d_len-pad_code));
 
     if (foundBss)
+    {
         if (M_IS_LZMA(ph.method))
             linker->defineSymbol("wrkmem", bss_end - 160 - getDecompressorWrkmemSize()
                                            - (sz_lunc + 16));
         else
             linker->defineSymbol("wrkmem", bss_end - 16 - (d_len - pad_code));
+    }
 
 
     const unsigned entry = comp_data_start - e_len;

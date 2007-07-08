@@ -89,7 +89,8 @@ compress_lzma$(objext) : CXXFLAGS += -Wno-cast-qual
 compress_lzma$(objext) : CXXFLAGS += -Wno-non-virtual-dtor
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 compress_lzma$(objext) : CXXFLAGS += -Wno-unused
-##compress_lzma$(objext) : CXXFLAGS += -Wno-error
+# needed for gcc-4.3:
+compress_lzma$(objext) : CXXFLAGS += -Wno-error
 endif
 
 

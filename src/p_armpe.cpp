@@ -542,10 +542,12 @@ void PackArmPe::pack(OutputFile *fo)
     else if (opt->win32_pe.strip_relocs < 0)
         opt->win32_pe.strip_relocs = (ih.imagebase >= 0x10000);
     if (opt->win32_pe.strip_relocs)
+    {
         if (ih.imagebase < 0x10000)
             throwCantPack("--strip-relocs is not allowed when imagebase < 0x10000");
         else
             ih.flags |= RELOCS_STRIPPED;
+    }
 
     if (memcmp(isection[0].name,"UPX",3) == 0)
         throwAlreadyPackedByUPX();
