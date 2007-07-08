@@ -12,7 +12,8 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+include $(top_srcdir)/src/stub/src/c/Makedefs.lzma
+ifneq ($(UPX_LZMA_VERSION),)
 STUBS += lzma_d_cf.S lzma_d_cs.S
 endif
 
@@ -37,6 +38,7 @@ $c += -Os -fomit-frame-pointer
 $c += -fno-unit-at-a-time
 $c += -ffunction-sections
 $c += -fwrapv
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 

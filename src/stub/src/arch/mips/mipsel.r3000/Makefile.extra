@@ -12,7 +12,8 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+include $(top_srcdir)/src/stub/src/c/Makedefs.lzma
+ifneq ($(UPX_LZMA_VERSION),)
 STUBS += lzma_d_cf.S lzma_d_cs.S
 endif
 
@@ -69,7 +70,8 @@ $c += -ffixed-30
 else
 $(error unknown gcc version: $(firstword $($c)))
 endif
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+ifneq ($(UPX_LZMA_VERSION),)
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 $c += -I$(UPX_LZMADIR)
 endif
 $c += -I$(top_srcdir)/src
@@ -100,7 +102,7 @@ define __test_stub_compression
 	@ls -l $1.tmp.*
 endef
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+ifneq ($(UPX_LZMA_VERSION),)
 test-stub-compression: tc_list = mipsel.r3000-ps1 default
 test-stub-compression: lzma_d_cf.S lzma_d_cs.S
 	$(call __test_stub_compression,tmp/lzma_d_cs.out,tmp/lzma_d_cs.o)

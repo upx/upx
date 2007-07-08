@@ -48,6 +48,9 @@
 #    define _LZMA_UINT32_IS_ULONG 1
 #  endif
 #endif
+#if !defined(_LZMA_NO_SYSTEM_SIZE_T)
+#  define _LZMA_NO_SYSTEM_SIZE_T 1
+#endif
 
 #if 0
 
@@ -66,7 +69,11 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(CLzmaDecoderState) == 16)
 #if (ACC_CC_BORLANDC)
 #include "LzmaDecode.h"
 #else
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
+#if (WITH_LZMA >= 0x449)
+#  include "C/Compress/Lzma/LzmaDecode.h"
+#else
+#  include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
+#endif
 #endif
 #undef CLzmaDecoderState
 #undef LzmaDecodeProperties
@@ -93,7 +100,11 @@ int LzmaDecode(CLzmaDecoderState *, const unsigned char *, SizeT, SizeT *, unsig
 #if (ACC_CC_BORLANDC)
 #include "LzmaDecode.c"
 #else
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#if (WITH_LZMA >= 0x449)
+#  include "C/Compress/Lzma/LzmaDecode.c"
+#else
+#  include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#endif
 #endif
 #undef char
 #undef CLzmaDecoderState

@@ -1,9 +1,3 @@
-#
-# highly experimental support for i086 using Open Watcom C/C++
-#
-##export WATCOM ?= /opt/cc-i386-linux/watcom/open-watcom-1.6
-#
-
 MAKEFLAGS += -rR
 .SUFFIXES:
 .SECONDEXPANSION:
@@ -18,7 +12,8 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+include $(top_srcdir)/src/stub/src/c/Makedefs.lzma
+ifneq ($(UPX_LZMA_VERSION),)
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
 STUBS += lzma_d_cf.S lzma_d_cs.S
 endif
@@ -94,6 +89,7 @@ lzma_d_c% : tc_bfdname =
 c := tc.arch-i086.gcc
 $c += -MF /dev/null
 $c += -Wall -W
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
@@ -105,7 +101,12 @@ $c += -ms
 $c += -O1 -1
 $c += -w
 $c += -D__INT_MAX__=32767
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
+ifeq ($(UPX_LZMA_VERSION),0x449)
+$c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/Compress/Lzma))
+else
 $c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/7zip/Compress/LZMA_C))
+endif
 $c += -I$(top_srcdir)/src
 endif
 
@@ -113,14 +114,16 @@ endif
 # http://www.digitalmars.com/download/freecompiler.html
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 c := tc.method-lzma.dmc
-$c  = $(WINEENV) CFLAGS='$(DMC)' wine cmd.exe /c tmp/dmc.bat
+$c  = $(WINEENV) DMC1='$(DMC1)' DMC2='$(DMC2)' wine cmd.exe /c tmp/dmc.bat
 $c += -ms -R
 $c += -NS
 $c += -w- -w7 -r
-DMC := -o -0
-DMC += -D__INT_MAX__=32767
-DMC += -I$(call winedir_w,$(UPX_LZMADIR))
-DMC += -I$(call winedir_w,$(top_srcdir)/src)
+$c += @DMC1 @DMC2
+DMC1 := -o -0
+DMC1 += -D__INT_MAX__=32767
+DMC1 += -DWITH_LZMA=$(UPX_LZMA_VERSION)
+DMC2 := -I$(call winedir_w,$(UPX_LZMADIR))
+DMC2 += -I$(call winedir_w,$(top_srcdir)/src)
 endif
 
 # Visual C/C++ 1.52 (8.00c)
@@ -133,6 +136,7 @@ $c += -O2 -Gf -Gs -G0
 $c += -W4
 CL := -nologo
 CL += -D__INT_MAX__=32767
+CL += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 CL += -I$(call winedir_s,$(UPX_LZMADIR))
 CL += -I$(call winedir_s,$(top_srcdir)/src)
 endif
@@ -147,12 +151,13 @@ $c += -zm -zc
 $c += -os -s -0 -d0
 $c += -w5 -we -fr=/dev/null
 $c += -D__INT_MAX__=32767
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 endif
 
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+ifneq ($(UPX_LZMA_VERSION),)
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
 
 lzma_d_c%.S : tmp/lzma_d_c%.i cleanasm.py $(MAKEFILE_LIST)

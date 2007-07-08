@@ -55,9 +55,15 @@ INCLUDES += -I$(UPX_UCLDIR)/include
 LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
-# you should set envvar UPX_LZMADIR to point to your unpacked lzma443.tar.bz2
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-DEFS += -DWITH_LZMA=1
+# you should set envvar UPX_LZMADIR to point to your unpacked LZMA SDK lzma443.tar.bz2
+# NOTE: only version 4.43 is currently sufficiently tested !
+ifneq ($(wildcard $(UPX_LZMADIR)/CPP/7zip/.),)
+UPX_LZMA_VERSION = 0x449
+else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+UPX_LZMA_VERSION = 0x443
+endif
+ifneq ($(UPX_LZMA_VERSION),)
+DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 INCLUDES += -I$(UPX_LZMADIR)
 endif
 
@@ -86,9 +92,11 @@ endif
 ifeq ($(USE_GNUC),1)
 ##compress_lzma$(objext) : CXXFLAGS += -O3 -fomit-frame-pointer
 compress_lzma$(objext) : CXXFLAGS += -Wno-cast-qual
+ifeq ($(UPX_LZMA_VERSION),0x443)
 compress_lzma$(objext) : CXXFLAGS += -Wno-non-virtual-dtor
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 compress_lzma$(objext) : CXXFLAGS += -Wno-unused
+endif
 # needed for gcc-4.3:
 compress_lzma$(objext) : CXXFLAGS += -Wno-error
 endif

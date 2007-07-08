@@ -102,9 +102,15 @@ int compress_lzma_dummy = 0;
 #undef _WIN32_WCE
 #undef COMPRESS_MF_MT
 #undef _NO_EXCEPTIONS
-#include "C/Common/MyInitGuid.h"
-//#include "C/7zip/Compress/LZMA/LZMADecoder.h"
-#include "C/7zip/Compress/LZMA/LZMAEncoder.h"
+#if (WITH_LZMA >= 0x449)
+#  define INITGUID 1
+//#  include "CPP/7zip/Compress/LZMA/LZMADecoder.h"
+#  include "CPP/7zip/Compress/LZMA/LZMAEncoder.h"
+#else
+#  include "C/Common/MyInitGuid.h"
+//#  include "C/7zip/Compress/LZMA/LZMADecoder.h"
+#  include "C/7zip/Compress/LZMA/LZMAEncoder.h"
+#endif
 
 namespace MyLzma {
 
@@ -174,16 +180,29 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 #  pragma warning(disable: 424)         // #424: extra ";" ignored
 #endif
 
-#include "C/Common/Alloc.cpp"
-#include "C/Common/CRC.cpp"
-//#include "C/7zip/Common/InBuffer.cpp"
-#include "C/7zip/Common/OutBuffer.cpp"
-#include "C/7zip/Common/StreamUtils.cpp"
-#include "C/7zip/Compress/LZ/LZInWindow.cpp"
-//#include "C/7zip/Compress/LZ/LZOutWindow.cpp"
-//#include "C/7zip/Compress/LZMA/LZMADecoder.cpp"
-#include "C/7zip/Compress/LZMA/LZMAEncoder.cpp"
-#include "C/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
+#if (WITH_LZMA >= 0x449)
+#  include "C/Alloc.c"
+#  include "C/7zCrc.c"
+#  include "C/Compress/Lz/MatchFinder.c"
+//#  include "CPP/7zip/Common/InBuffer.cpp"
+#  include "CPP/7zip/Common/OutBuffer.cpp"
+#  include "CPP/7zip/Common/StreamUtils.cpp"
+//#  include "CPP/7zip/Compress/LZ/LZOutWindow.cpp"
+//#  include "CPP/7zip/Compress/LZMA/LZMADecoder.cpp"
+#  include "CPP/7zip/Compress/LZMA/LZMAEncoder.cpp"
+#  include "CPP/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
+#else
+#  include "C/Common/Alloc.cpp"
+#  include "C/Common/CRC.cpp"
+//#  include "C/7zip/Common/InBuffer.cpp"
+#  include "C/7zip/Common/OutBuffer.cpp"
+#  include "C/7zip/Common/StreamUtils.cpp"
+#  include "C/7zip/Compress/LZ/LZInWindow.cpp"
+//#  include "C/7zip/Compress/LZ/LZOutWindow.cpp"
+//#  include "C/7zip/Compress/LZMA/LZMADecoder.cpp"
+#  include "C/7zip/Compress/LZMA/LZMAEncoder.cpp"
+#  include "C/7zip/Compress/RangeCoder/RangeCoderBit.cpp"
+#endif
 #undef RC_NORMALIZE
 
 
@@ -224,7 +243,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     PROPVARIANT pr[8];
     pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
     pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
-    pr[7].vt = VT_BSTR;
+    unsigned nprops = 7;
 
     // setup defaults
     pr[0].uintVal = 2;                  // 0 .. 4
@@ -236,9 +255,11 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     pr[6].uintVal = 0;
 #ifdef COMPRESS_MF_BT4
     static wchar_t matchfinder[] = L"BT4";
-#endif
     assert(NCompress::NLZMA::FindMatchFinder(matchfinder) >= 0);
-    pr[7].bstrVal = matchfinder;
+    pr[nprops].vt = VT_BSTR;
+    pr[nprops].bstrVal = matchfinder;
+    nprops++;
+#endif
 #if 1
     pr[0].uintVal = lzma_compress_config_t::pos_bits_t::default_value_c;
     pr[1].uintVal = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
@@ -349,7 +370,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 #  error
 #endif
 
-    if (enc.SetCoderProperties(propIDs, pr, 8) != S_OK)
+    if (enc.SetCoderProperties(propIDs, pr, nprops) != S_OK)
         goto error;
     if (enc.WriteCoderProperties(&os) != S_OK)
         goto error;
@@ -407,8 +428,13 @@ error:
 #undef _LZMA_OUT_READ
 #undef _LZMA_PROB32
 #undef _LZMA_LOC_OPT
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
-#include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#if (WITH_LZMA >= 0x449)
+#  include "C/Compress/Lzma/LzmaDecode.h"
+#  include "C/Compress/Lzma/LzmaDecode.c"
+#else
+#  include "C/7zip/Compress/LZMA_C/LzmaDecode.h"
+#  include "C/7zip/Compress/LZMA_C/LzmaDecode.c"
+#endif
 
 int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
                                    upx_bytep dst, unsigned* dst_len,
@@ -519,9 +545,14 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
 
 const char *upx_lzma_version_string(void)
 {
-    // FIXME
-//    return NULL;
+#if (WITH_LZMA == 0x449)
+    return "4.49";
+#elif (WITH_LZMA == 0x443)
     return "4.43";
+#else
+#  error "unknown version"
+    return NULL;
+#endif
 }
 
 
