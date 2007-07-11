@@ -12,7 +12,7 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 vpath %.c $(top_srcdir)/src/stub/src/c
 
 STUBS =
-include $(top_srcdir)/src/stub/src/c/Makedefs.lzma
+include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 ifneq ($(UPX_LZMA_VERSION),)
 STUBS += lzma_d_cf.S lzma_d_cs.S
 endif
