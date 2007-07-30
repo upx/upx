@@ -69,6 +69,7 @@ struct UiPacker::State
 
 #if defined(UI_USE_SCREEN)
     screen_t *screen;
+    int screen_init_done;
     int b_cx, b_cy;
     int s_cx, s_cy;
     int s_fg, s_bg;
@@ -237,6 +238,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
 
     s->pass = pass;
     s->total_passes = total_passes;
+    //printf("startCallback %d %d\n", s->pass, s->total_passes);
 
     s->bar_len = 64;
     s->pos = -2;
@@ -305,8 +307,9 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
 #if defined(UI_USE_SCREEN)
     if (s->mode == M_CB_SCREEN)
     {
-        if (pass <= 1)
+        if (!s->screen_init_done)
         {
+            s->screen_init_done = 1;
             if (s->screen->hideCursor)
                 s->cursor_shape = s->screen->hideCursor(s->screen);
             s->s_fg = s->screen->getFg(s->screen);
@@ -344,10 +347,14 @@ void UiPacker::finalCallback(unsigned u_len, unsigned c_len)
 
 void UiPacker::endCallback()
 {
+    bool done = (s->total_passes <= 0 || s->pass >= s->total_passes);
+    endCallback(done);
+}
+
+void UiPacker::endCallback(bool done)
+{
     if (s->pass < 0)            // no callback wanted
         return;
-
-    const bool done = (s->total_passes <= 0 || s->pass >= s->total_passes);
 
     if (s->mode == M_CB_TERM)
     {
@@ -364,6 +371,8 @@ void UiPacker::endCallback()
         if (done)
         {
             int cx, cy, sy;
+            assert(s->screen_init_done);
+            s->screen_init_done = 0;
             assert(s->s_cx == 0 && s->b_cx == 0);
             s->screen->getCursor(s->screen, &cx, &cy);
             sy = UPX_MAX(0, s->s_cy - s->scroll_up);
@@ -422,11 +431,6 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
         s->next_update += s->step;
     }
 
-#if 0
-    printf("%6d %6d %6d %6d\n", isize, osize, s->step, s->next_update);
-    return;
-#endif
-
     // compute progress position
     int pos = -1;
     if (isize >= s->u_len)
@@ -436,6 +440,12 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
         pos = get_ratio(s->u_len, isize) * s->bar_len / 1000000;
         assert(pos >= 0); assert(pos <= s->bar_len);
     }
+
+#if 0
+    printf("%6d %6d %6d %6d %3d %3d\n", isize, osize, s->step, s->next_update, pos, s->pos);
+    return;
+#endif
+
     if (pos < s->pos)
         return;
     if (pos < 0 && pos == s->pos)
