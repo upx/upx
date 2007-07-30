@@ -152,6 +152,8 @@ tc_list =
 tc_objdump_disasm_options =
 
 # commands
+ECHO_e     = /bin/echo -e
+ECHO_E     = /bin/echo -E
 PERL       = perl
 PYTHON     = python
 UNIX2DOS  := $(PERL) -i -pe 's/$$/\r/;'

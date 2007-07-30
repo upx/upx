@@ -55,16 +55,16 @@ endif
 
 # work around limitations of wine's cmd.exe
 define mkbat
-	echo -E '@set PATH=$3;%PATH%' > $1
-	echo -E '@set INCLUDE=$4' >> $1
-	echo -E '@set LIB=$5' >> $1
-	echo -E '@set a=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
-	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
-	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
-	echo -E '@set b=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
-	echo -e '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
-	echo -e '@shift\n@shift\n@shift\n@shift' >> $1
-	echo -E '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	$(ECHO_E) '@set PATH=$3;%PATH%' > $1
+	$(ECHO_E) '@set INCLUDE=$4' >> $1
+	$(ECHO_E) '@set LIB=$5' >> $1
+	$(ECHO_E) '@set a=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	$(ECHO_e) '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
+	$(ECHO_e) '@shift\n@shift\n@shift\n@shift' >> $1
+	$(ECHO_E) '@set b=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
+	$(ECHO_e) '@shift\n@shift\n@shift\n@shift\n@shift' >> $1
+	$(ECHO_e) '@shift\n@shift\n@shift\n@shift' >> $1
+	$(ECHO_E) '$2 %a% %b% %1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
 	$(UNIX2DOS) $1
 endef
 
