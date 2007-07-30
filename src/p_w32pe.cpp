@@ -592,6 +592,10 @@ void PackW32Pe::buildLoader(const Filter *ft)
 
 void PackW32Pe::pack(OutputFile *fo)
 {
+    // FIXME: we need to think about better support for --exact
+    if (opt->exact)
+        throwCantPackExact();
+
     const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);

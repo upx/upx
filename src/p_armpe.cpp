@@ -507,6 +507,10 @@ void PackArmPe::buildLoader(const Filter *ft)
 
 void PackArmPe::pack(OutputFile *fo)
 {
+    // FIXME: we need to think about better support for --exact
+    if (opt->exact)
+        throwCantPackExact();
+
     const unsigned objs = ih.objects;
     isection = new pe_section_t[objs];
     fi->seek(pe_offset+sizeof(ih),SEEK_SET);
