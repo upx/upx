@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.02 (XX XXX 2007):
+
 Changes in 3.01 (31 Jul 2007):
   * new options --no-mode, --no-owner and --no-time to disable preservation
     of mode (file permissions), file ownership and timestamps.
