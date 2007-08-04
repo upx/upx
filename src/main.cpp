@@ -1106,6 +1106,13 @@ static const struct mfx_option longopts[] =
     // compression settings
     {"exact",            0x10, 0, 525},     // user requires byte-identical decompression
 
+    // compression method
+    {"nrv2b",            0x10, 0, 702},     // --nrv2b
+    {"nrv2d",            0x10, 0, 704},     // --nrv2d
+    {"nrv2e",            0x10, 0, 705},     // --nrv2e
+    {"lzma",             0x10, 0, 721},     // --lzma
+    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
+    // compression settings
     // compression runtime parameters
 
     // win32/pe
