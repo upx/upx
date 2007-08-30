@@ -73,6 +73,7 @@ _start: .globl _start
         sub r9,r12,r1  // &our_Elf32_Ehdr
         add r1,r1,# PAGE_SIZE
         stmdb sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
+D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
@@ -104,15 +105,16 @@ copy:
         add r10,r10,r4  // relocated &b_info
 
         ldr r0,[r11,# b_method ]  // 5th param (whole word: endian issues!)
-        stmdb sp!,{r0,lr}
+        stmdb sp!,{r0, lr}  // 5th param, dst for unfolded
+D_stm1=2*4
         ldr  r3,[r11,# sz_unc]
         add  r0, r11,# sz_b_info
         ldr  r1,[r11,# sz_cpr ]
         mov  r2,lr  // dst
-        str  r3,[sp,#2*4]  // sz_unc; lzma needs for EOF
-        add  r3, sp,#2*4  // &sz_unc
+        str  r3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
+        add  r3, sp,#D_stm1 + D_sz_unc   // &sz_unc
         mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
-        ldmia sp!,{r1, pc}  // discard 5th param; return
+        ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
