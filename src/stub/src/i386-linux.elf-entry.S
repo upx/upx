@@ -195,8 +195,8 @@ unfold:
         push __NR_mmap
         pop eax
         int 0x80  // changes only %eax; %edx is live
-        test eax,eax
-        js msg_SELinux
+        cmp eax,[ebx]
+        jne msg_SELinux  // not the expected address (includes error)
         xchg eax, edx  // %edx= page after .text; %eax= &Elf32_Ehdr of this program
         xchg eax, ebx  // %ebx= &Elf32_Ehdr of this program
 
