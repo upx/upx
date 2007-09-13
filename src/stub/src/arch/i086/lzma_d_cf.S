@@ -2,21 +2,21 @@
         push    di
         push    bp
         mov     bp,sp
-        sub     sp,0x66
+        sub     sp,102
         mov     si,word ptr [bp+8]
         lea     bx,[si+4]
         mov     word ptr [bp-34],bx
         xor     ax,ax
         mov     word ptr [bp-20],ax
         mov     word ptr [bp-18],ax
-        mov     byte ptr [bp-2],0x0
+        mov     byte ptr [bp-2],0
         mov     cl,byte ptr [si+2]
-        mov     ax,0x1
+        mov     ax,1
         shl     ax,cl
         dec     ax
         mov     word ptr [bp-88],ax
         mov     cl,byte ptr [si+1]
-        mov     ax,0x1
+        mov     ax,1
         shl     ax,cl
         dec     ax
         cwd
@@ -25,26 +25,26 @@
         mov     al,byte ptr [si]
         xor     ah,ah
         mov     word ptr [bp-78],ax
-        mov     word ptr [bp-16],0x0
-        mov     word ptr [bp-102],0x1
-        mov     word ptr [bp-100],0x0
-        mov     word ptr [bp-52],0x1
-        mov     word ptr [bp-50],0x0
-        mov     word ptr [bp-56],0x1
-        mov     word ptr [bp-54],0x0
-        mov     word ptr [bp-68],0x1
-        mov     word ptr [bp-74],0x0
+        mov     word ptr [bp-16],0
+        mov     word ptr [bp-102],1
+        mov     word ptr [bp-100],0
+        mov     word ptr [bp-52],1
+        mov     word ptr [bp-50],0
+        mov     word ptr [bp-56],1
+        mov     word ptr [bp-54],0
+        mov     word ptr [bp-68],1
+        mov     word ptr [bp-74],0
         mov     bx,word ptr [bp+18]
-        mov     word ptr [bx],0x0
-        mov     word ptr [bx+2],0x0
+        mov     word ptr [bx],0
+        mov     word ptr [bx+2],0
         mov     bx,word ptr [bp+28]
-        mov     word ptr [bx],0x0
-        mov     word ptr [bx+2],0x0
+        mov     word ptr [bx],0
+        mov     word ptr [bx+2],0
         mov     dl,byte ptr [si+1]
         xor     dh,dh
         mov     cx,ax
         add     cx,dx
-        mov     ax,0x300
+        mov     ax,768
         xor     dl,dl
         jcxz    .Lf001
 .Lf000:
@@ -53,9 +53,9 @@
         loop    .Lf000
 .Lf001:
         mov     si,ax
-        add     si,0x736
+        add     si,1846
         mov     cx,dx
-        adc     cx,0x0
+        adc     cx,0
         xor     dx,dx
         xor     ax,ax
 .Lf002:
@@ -68,9 +68,9 @@
         mov     bx,dx
         shl     bx,1
         add     bx,word ptr [bp-34]
-        mov     word ptr [bx],0x400
-        add     dx,0x1
-        adc     ax,0x0
+        mov     word ptr [bx],1024
+        add     dx,1
+        adc     ax,0
         jmp     .Lf002
 .Lf004:
         mov     bx,word ptr [bp+10]
@@ -87,7 +87,7 @@
         xor     ax,ax
         mov     word ptr [bp-6],ax
         mov     word ptr [bp-4],ax
-        mov     si,0xffff
+        mov     si,65535
         mov     di,si
         mov     word ptr [bp-72],ax
         jmp     .Lf006
@@ -95,7 +95,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -104,12 +104,12 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
         inc     word ptr [bp-72]
-        cmp     word ptr [bp-72],0x5
+        cmp     word ptr [bp-72],5
         jge     .Lf008
 .Lf006:
         mov     ax,word ptr [bp-12]
@@ -118,7 +118,7 @@
         mov     cx,word ptr [bp-28]
         M_PTC_JNE .Lf005
 .Lf007:
-        mov     ax,0x1
+        mov     ax,1
         jmp     .Lf125
 .Lf008:
         mov     ax,word ptr [bp-18]
@@ -135,14 +135,14 @@
         mov     ax,word ptr [bp-20]
         and     ax,word ptr [bp-88]
         mov     word ptr [bp-58],ax
-        mov     cl,0x5
+        mov     cl,5
         mov     dx,word ptr [bp-16]
         shl     dx,cl
         add     dx,word ptr [bp-34]
         shl     ax,1
         add     dx,ax
         mov     word ptr [bp-14],dx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf012
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -154,7 +154,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -163,7 +163,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -185,16 +185,16 @@
         cmp     ax,word ptr [bp-8]
         jae     .Lf013
 .Lf015:
-        mov     word ptr [bp-26],0x1
+        mov     word ptr [bp-26],1
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
-        mov     cx,0x8
+        mov     cx,8
         sub     cx,word ptr [bp-78]
         mov     al,byte ptr [bp-2]
         xor     ah,ah
@@ -217,10 +217,10 @@
         adc     dx,bx
         M_U4M_dxax_0x0600
         mov     dx,word ptr [bp-34]
-        add     dx,0xe6c
+        add     dx,3692
         add     dx,ax
         mov     word ptr [bp-14],dx
-        cmp     word ptr [bp-16],0x7
+        cmp     word ptr [bp-16],7
         jge     .Lf018
         jmp     .Lf025
 .Lf018:
@@ -232,7 +232,7 @@
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr es:[bx]
         xor     ah,ah
         mov     word ptr [bp-76],ax
@@ -240,17 +240,17 @@
         shl     word ptr [bp-76],1
         mov     ax,word ptr [bp-76]
         xor     al,al
-        and     ah,0x1
+        and     ah,1
         mov     word ptr [bp-66],ax
         shl     ax,1
         mov     dx,word ptr [bp-14]
-        add     dh,0x2
+        add     dh,2
         add     dx,ax
         mov     ax,word ptr [bp-26]
         shl     ax,1
         add     dx,ax
         mov     word ptr [bp-46],dx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf021
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -263,7 +263,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -272,7 +272,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -293,14 +293,14 @@
 .Lf022:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-46]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         shl     word ptr [bp-26],1
-        cmp     word ptr [bp-66],0x0
+        cmp     word ptr [bp-66],0
         jne     .Lf025
         jmp     .Lf024
 .Lf023:
@@ -309,7 +309,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-46]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -318,15 +318,15 @@
         add     ax,ax
         inc     ax
         mov     word ptr [bp-26],ax
-        cmp     word ptr [bp-66],0x0
+        cmp     word ptr [bp-66],0
         je      .Lf025
 .Lf024:
-        cmp     word ptr [bp-26],0x100
+        cmp     word ptr [bp-26],256
         jge     .Lf025
         jmp     .Lf019
 .Lf025:
         mov     ax,word ptr [bp-26]
-        cmp     ax,0x100
+        cmp     ax,256
         jl      .Lf026
         jmp     .Lf031
 .Lf026:
@@ -334,7 +334,7 @@
         mov     bx,word ptr [bp-14]
         add     bx,ax
         mov     word ptr [bp-40],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf028
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -347,7 +347,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -356,7 +356,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -377,10 +377,10 @@
 .Lf029:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-40]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         shl     word ptr [bp-26],1
@@ -391,7 +391,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-40]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -406,28 +406,28 @@
         mov     byte ptr [bp-2],al
         mov     bx,word ptr [bp-20]
         mov     cx,word ptr [bp-18]
-        add     word ptr [bp-20],0x1
-        adc     word ptr [bp-18],0x0
+        add     word ptr [bp-20],1
+        adc     word ptr [bp-18],0
         mov     ax,word ptr [bp+20]
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr [bp-26]
         mov     byte ptr es:[bx],al
         mov     ax,word ptr [bp-16]
-        cmp     ax,0x4
+        cmp     ax,4
         jge     .Lf032
         xor     ax,ax
         mov     word ptr [bp-16],ax
         jmp     .Lf008
 .Lf032:
-        cmp     ax,0xa
+        cmp     ax,10
         jge     .Lf033
-        sub     word ptr [bp-16],0x3
+        sub     word ptr [bp-16],3
         jmp     .Lf008
 .Lf033:
-        sub     word ptr [bp-16],0x6
+        sub     word ptr [bp-16],6
         jmp     .Lf008
 .Lf034:
         sub     si,word ptr [bp-8]
@@ -435,7 +435,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -443,10 +443,10 @@
         mov     ax,word ptr [bp-16]
         shl     ax,1
         mov     dx,word ptr [bp-34]
-        add     dx,0x180
+        add     dx,384
         add     dx,ax
         mov     word ptr [bp-14],dx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf036
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -459,7 +459,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -468,7 +468,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -489,10 +489,10 @@
 .Lf037:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         mov     ax,word ptr [bp-56]
@@ -507,16 +507,16 @@
         mov     word ptr [bp-52],ax
         mov     ax,word ptr [bp-100]
         mov     word ptr [bp-50],ax
-        cmp     word ptr [bp-16],0x7
+        cmp     word ptr [bp-16],7
         jge     .Lf038
         xor     ax,ax
         jmp     .Lf039
 .Lf038:
-        mov     ax,0x3
+        mov     ax,3
 .Lf039:
         mov     word ptr [bp-16],ax
         mov     bx,word ptr [bp-34]
-        add     bx,0x664
+        add     bx,1636
         jmp     .Lf068
 .Lf040:
         sub     si,word ptr [bp-8]
@@ -524,7 +524,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -532,10 +532,10 @@
         mov     dx,word ptr [bp-16]
         shl     dx,1
         mov     ax,word ptr [bp-34]
-        add     ax,0x198
+        add     ax,408
         add     ax,dx
         mov     word ptr [bp-14],ax
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf042
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -548,7 +548,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -557,7 +557,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -586,22 +586,22 @@
 .Lf045:
         mov     si,word ptr [bp-8]
         mov     di,word ptr [bp-94]
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         mov     ax,word ptr [bp-16]
         shl     ax,cl
         mov     dx,word ptr [bp-34]
-        add     dx,0x1e0
+        add     dx,480
         add     dx,ax
         mov     ax,word ptr [bp-58]
         shl     ax,1
         add     dx,ax
         mov     word ptr [bp-14],dx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf047
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -616,7 +616,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -645,10 +645,10 @@
 .Lf048:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         mov     ax,word ptr [bp-18]
@@ -656,14 +656,14 @@
         jne     .Lf049
         jmp     .Lf007
 .Lf049:
-        cmp     word ptr [bp-16],0x7
+        cmp     word ptr [bp-16],7
         jge     .Lf051
-        mov     ax,0x9
+        mov     ax,9
         jmp     .Lf052
 .Lf050:
         jmp     .Lf053
 .Lf051:
-        mov     ax,0xb
+        mov     ax,11
 .Lf052:
         mov     word ptr [bp-16],ax
         mov     bx,word ptr [bp-20]
@@ -674,18 +674,18 @@
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-2],al
         mov     bx,word ptr [bp-20]
         mov     cx,word ptr [bp-18]
-        add     word ptr [bp-20],0x1
-        adc     word ptr [bp-18],0x0
+        add     word ptr [bp-20],1
+        adc     word ptr [bp-18],0
         mov     ax,word ptr [bp+20]
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr [bp-2]
         mov     byte ptr es:[bx],al
         jmp     .Lf008
@@ -695,7 +695,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -708,7 +708,7 @@
         sub     word ptr [bp-6],ax
         mov     ax,word ptr [bp-94]
         sbb     word ptr [bp-4],ax
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -716,10 +716,10 @@
         mov     ax,word ptr [bp-16]
         shl     ax,1
         mov     dx,word ptr [bp-34]
-        add     dx,0x1b0
+        add     dx,432
         add     dx,ax
         mov     word ptr [bp-14],dx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf056
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -732,7 +732,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -761,10 +761,10 @@
 .Lf057:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         mov     ax,word ptr [bp-52]
@@ -776,7 +776,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -784,10 +784,10 @@
         mov     dx,word ptr [bp-16]
         shl     dx,1
         mov     ax,word ptr [bp-34]
-        add     ax,0x1c8
+        add     ax,456
         add     ax,dx
         mov     word ptr [bp-14],ax
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf060
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -800,7 +800,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -809,7 +809,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -830,10 +830,10 @@
 .Lf061:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-14]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         mov     ax,word ptr [bp-56]
@@ -845,7 +845,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-14]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -869,21 +869,21 @@
         mov     word ptr [bp-102],ax
         mov     word ptr [bp-100],cx
 .Lf065:
-        cmp     word ptr [bp-16],0x7
+        cmp     word ptr [bp-16],7
         jge     .Lf066
-        mov     ax,0x8
+        mov     ax,8
         jmp     .Lf067
 .Lf066:
-        mov     ax,0xb
+        mov     ax,11
 .Lf067:
         mov     word ptr [bp-16],ax
         mov     bx,word ptr [bp-34]
-        add     bx,0xa68
+        add     bx,2664
 .Lf068:
         mov     word ptr [bp-14],bx
         mov     bx,word ptr [bp-14]
         mov     word ptr [bp-22],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf070
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -896,7 +896,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -905,7 +905,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -926,23 +926,23 @@
 .Lf071:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-22]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
-        mov     cl,0x4
+        mov     cl,4
         mov     ax,word ptr [bp-58]
         shl     ax,cl
         mov     dx,word ptr [bp-14]
-        add     dx,0x4
+        add     dx,4
         add     dx,ax
         mov     word ptr [bp-22],dx
         xor     ax,ax
         mov     word ptr [bp-70],ax
 .Lf072:
-        mov     word ptr [bp-60],0x3
+        mov     word ptr [bp-60],3
         jmp     .Lf078
 .Lf073:
         sub     si,word ptr [bp-8]
@@ -950,7 +950,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-22]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -959,7 +959,7 @@
         inc     bx
         inc     bx
         mov     word ptr [bp-22],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf075
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -972,7 +972,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -981,7 +981,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -1002,20 +1002,20 @@
 .Lf076:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-22]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
-        mov     cl,0x4
+        mov     cl,4
         mov     ax,word ptr [bp-58]
         shl     ax,cl
         mov     dx,word ptr [bp-14]
-        add     dx,0x104
+        add     dx,260
         add     dx,ax
         mov     word ptr [bp-22],dx
-        mov     word ptr [bp-70],0x8
+        mov     word ptr [bp-70],8
         jmp     .Lf072
 .Lf077:
         sub     si,word ptr [bp-8]
@@ -1023,27 +1023,27 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-22]
         mov     ax,word ptr [bx]
         shr     ax,cl
         sub     word ptr [bx],ax
         mov     bx,word ptr [bp-14]
-        add     bx,0x204
+        add     bx,516
         mov     word ptr [bp-22],bx
-        mov     word ptr [bp-70],0x10
-        mov     word ptr [bp-60],0x8
+        mov     word ptr [bp-70],16
+        mov     word ptr [bp-60],8
 .Lf078:
         mov     ax,word ptr [bp-60]
         mov     word ptr [bp-62],ax
-        mov     word ptr [bp-24],0x1
+        mov     word ptr [bp-24],1
 .Lf079:
         mov     ax,word ptr [bp-24]
         shl     ax,1
         mov     bx,word ptr [bp-22]
         add     bx,ax
         mov     word ptr [bp-38],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf081
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -1056,7 +1056,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -1065,7 +1065,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -1086,10 +1086,10 @@
 .Lf082:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-38]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         shl     word ptr [bp-24],1
@@ -1100,7 +1100,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-38]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -1115,37 +1115,37 @@
         jmp     .Lf079
 .Lf085:
         mov     cl,byte ptr [bp-60]
-        mov     ax,0x1
+        mov     ax,1
         shl     ax,cl
         sub     word ptr [bp-24],ax
         mov     ax,word ptr [bp-70]
         add     word ptr [bp-24],ax
-        cmp     word ptr [bp-16],0x4
+        cmp     word ptr [bp-16],4
         jl      .Lf086
         jmp     .Lf116
 .Lf086:
-        add     word ptr [bp-16],0x7
+        add     word ptr [bp-16],7
         mov     ax,word ptr [bp-24]
-        cmp     ax,0x4
+        cmp     ax,4
         jl      .Lf087
-        mov     ax,0x3
+        mov     ax,3
 .Lf087:
-        mov     cl,0x7
+        mov     cl,7
         mov     dx,ax
         shl     dx,cl
         mov     ax,word ptr [bp-34]
-        add     ax,0x360
+        add     ax,864
         add     ax,dx
         mov     word ptr [bp-14],ax
-        mov     word ptr [bp-92],0x6
-        mov     word ptr [bp-32],0x1
+        mov     word ptr [bp-92],6
+        mov     word ptr [bp-32],1
 .Lf088:
         mov     ax,word ptr [bp-32]
         shl     ax,1
         mov     bx,word ptr [bp-14]
         add     bx,ax
         mov     word ptr [bp-42],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf090
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -1158,7 +1158,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -1167,7 +1167,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -1188,10 +1188,10 @@
 .Lf091:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-42]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         shl     word ptr [bp-32],1
@@ -1202,7 +1202,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-42]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -1216,20 +1216,20 @@
         je      .Lf094
         jmp     .Lf088
 .Lf094:
-        sub     word ptr [bp-32],0x40
+        sub     word ptr [bp-32],64
         mov     ax,word ptr [bp-32]
-        cmp     ax,0x4
+        cmp     ax,4
         jl      .Lf097
         sar     ax,1
         dec     ax
         mov     word ptr [bp-36],ax
         mov     ax,word ptr [bp-32]
-        and     ax,0x1
-        or      al,0x2
+        and     ax,1
+        or      al,2
         mov     word ptr [bp-102],ax
         xor     ax,ax
         mov     word ptr [bp-100],ax
-        cmp     word ptr [bp-32],0xe
+        cmp     word ptr [bp-32],14
         jge     .Lf098
         mov     cx,word ptr [bp-36]
         jcxz    .Lf096
@@ -1241,7 +1241,7 @@
         mov     dx,word ptr [bp-102]
         shl     dx,1
         mov     ax,word ptr [bp-34]
-        add     ax,0x560
+        add     ax,1376
         add     dx,ax
         mov     ax,word ptr [bp-32]
         shl     ax,1
@@ -1253,9 +1253,9 @@
 .Lf097:
         jmp     .Lf114
 .Lf098:
-        sub     word ptr [bp-36],0x4
+        sub     word ptr [bp-36],4
 .Lf099:
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf101
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -1268,7 +1268,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -1277,7 +1277,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -1295,23 +1295,23 @@
 .Lf102:
         sub     word ptr [bp-6],si
         sbb     word ptr [bp-4],di
-        or      byte ptr [bp-102],0x1
+        or      byte ptr [bp-102],1
 .Lf103:
         dec     word ptr [bp-36]
         je      .Lf104
         jmp     .Lf099
 .Lf104:
         mov     bx,word ptr [bp-34]
-        add     bx,0x644
+        add     bx,1604
         mov     word ptr [bp-14],bx
-        mov     cx,0x4
+        mov     cx,4
 .Lf105:
         shl     word ptr [bp-102],1
         rcl     word ptr [bp-100],1
         loop    .Lf105
-        mov     word ptr [bp-36],0x4
+        mov     word ptr [bp-36],4
 .Lf106:
-        mov     ax,0x1
+        mov     ax,1
         mov     word ptr [bp-64],ax
         mov     word ptr [bp-48],ax
 .Lf107:
@@ -1320,7 +1320,7 @@
         mov     bx,word ptr [bp-14]
         add     bx,ax
         mov     word ptr [bp-44],bx
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf109
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]
@@ -1333,7 +1333,7 @@
         les     bx,dword ptr [bp-12]
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-90],al
-        mov     byte ptr [bp-89],0x0
+        mov     byte ptr [bp-89],0
         mov     ax,word ptr [bp-6]
         mov     dx,word ptr [bp-4]
         M_shld_8
@@ -1342,7 +1342,7 @@
         mov     word ptr [bp-6],bx
         mov     word ptr [bp-4],dx
         mov     ax,word ptr [bp-12]
-        movw    dx,es
+        mov     dx,es
         M_PIA1
         mov     word ptr [bp-12],ax
         mov     word ptr [bp-10],dx
@@ -1363,10 +1363,10 @@
 .Lf110:
         mov     si,word ptr [bp-8]
         mov     di,dx
-        mov     ax,0x800
+        mov     ax,2048
         mov     bx,word ptr [bp-44]
         sub     ax,word ptr [bx]
-        mov     cl,0x5
+        mov     cl,5
         shr     ax,cl
         add     word ptr [bx],ax
         shl     word ptr [bp-48],1
@@ -1377,7 +1377,7 @@
         mov     ax,word ptr [bp-8]
         sub     word ptr [bp-6],ax
         sbb     word ptr [bp-4],dx
-        mov     cl,0x5
+        mov     cl,5
         mov     bx,word ptr [bp-44]
         mov     ax,word ptr [bx]
         shr     ax,cl
@@ -1402,14 +1402,14 @@
         mov     word ptr [bp-102],ax
         mov     word ptr [bp-100],dx
 .Lf115:
-        add     word ptr [bp-102],0x1
-        adc     word ptr [bp-100],0x0
+        add     word ptr [bp-102],1
+        adc     word ptr [bp-100],0
         mov     ax,word ptr [bp-100]
         or      ax,word ptr [bp-102]
         jne     .Lf116
         jmp     .Lf122
 .Lf116:
-        add     word ptr [bp-24],0x2
+        add     word ptr [bp-24],2
         mov     ax,word ptr [bp-100]
         cmp     ax,word ptr [bp-18]
         jbe     .Lf118
@@ -1429,22 +1429,22 @@
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr es:[bx]
         mov     byte ptr [bp-2],al
         mov     bx,word ptr [bp-20]
         mov     cx,word ptr [bp-18]
         dec     word ptr [bp-24]
-        add     word ptr [bp-20],0x1
-        adc     word ptr [bp-18],0x0
+        add     word ptr [bp-20],1
+        adc     word ptr [bp-18],0
         mov     ax,word ptr [bp+20]
         mov     dx,word ptr [bp+22]
         M_PIA
         mov     bx,ax
-        movw    es,dx
+        mov     es,dx
         mov     al,byte ptr [bp-2]
         mov     byte ptr es:[bx],al
-        cmp     word ptr [bp-24],0x0
+        cmp     word ptr [bp-24],0
         jne     .Lf121
 .Lf120:
         jmp     .Lf008
@@ -1458,7 +1458,7 @@
         jb      .Lf119
         jmp     .Lf120
 .Lf122:
-        cmp     di,0x100
+        cmp     di,256
         jae     .Lf124
         mov     ax,word ptr [bp-12]
         mov     dx,word ptr [bp-10]

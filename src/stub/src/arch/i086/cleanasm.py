@@ -76,6 +76,11 @@ def main(argv):
     lines = filter(None, map(string.rstrip, lines))
     #
     #
+    def inst_has_label(inst):
+        return inst in [
+            "call", "ja", "jae", "jb", "jbe", "jcxz", "je",
+            "jg", "jge", "jl", "jle", "jmp", "jne", "loop",
+        ]
     labels = {}
     def parse_label(inst, args):
         k = v = None
@@ -174,12 +179,16 @@ def main(argv):
         label = m.group(1).strip()
         inst = m.group(2).strip()
         args = ""
-        if m.group(3): args = m.group(3).strip()
+        if m.group(3):
+            args = m.group(3).strip()
+        if not inst_has_label(inst):
+            def hex2int(m): return str(int(m.group(0), 16))
+            args = re.sub(r"\b0x[0-9a-fA-F]+\b", hex2int, args)
         #
         if 1 and inst in ["movl",] and re.search(r"\b[de]s\b", args):
             # work around a bug in objdump 2.17 (fixed in binutils 2.18)
             inst = "mov"
-        m = re.search(r"^(.+?)\b0x0\s+(\w+):\s+(1|2|R_386_16|R_386_PC16)\s+(__\w+)$", args)
+        m = re.search(r"^(.+?)\b0\s+(\w+):\s+(1|2|R_386_16|R_386_PC16)\s+(__\w+)$", args)
         if m:
             # 1 or 2 byte reloc
             args = m.group(1) + m.group(4)
@@ -197,10 +206,10 @@ def main(argv):
             if v[:2] == [1, 2]:     # external 2-byte
                 if k == "__aNahdiff":
                     s = [
-                        ["push", "word ptr [bp+(8|0x8)]"],
-                        ["push", "word ptr [bp+(6|0x6)]"],
-                        ["push", r"word ptr \[bp([+-](\d+|0x\w+))\]$"],
-                        ["push", r"word ptr \[bp([+-](\d+|0x\w+))\]$"],
+                        ["push", "word ptr [bp+8]"],
+                        ["push", "word ptr [bp+6]"],
+                        ["push", r"word ptr \[bp([+-](\d+))\]$"],
+                        ["push", r"word ptr \[bp([+-](\d+))\]$"],
                     ]
                     dpos = omatch(i-1, -4, s)
                     if dpos:
@@ -208,7 +217,7 @@ def main(argv):
                         continue
                 if k in ["__LMUL", "__U4M",]:
                     s1 = [
-                        ["mov",  "bx,0x300"],
+                        ["mov",  "bx,768"],     # 0x300
                         ["xor",  "cx,cx"],
                     ]
                     s2 = [
@@ -234,7 +243,7 @@ def main(argv):
                         continue
                 if k == "__PIA":
                     s = [
-                        ["mov",  "bx,0x1"],
+                        ["mov",  "bx,1"],
                         ["xor",  "cx,cx"],
                     ]
                     dpos = omatch(i-1, -2, s)
@@ -253,7 +262,7 @@ def main(argv):
                         continue
         if opts.loop_rewrite and inst in ["loop"]:
             s = [
-                ["mov",  r"^c[lx],0xb$"],
+                ["mov",  r"^c[lx],11$"],
                 ["shr",  "dx,1"],
                 ["rcr",  "ax,1"],
             ]
@@ -262,7 +271,7 @@ def main(argv):
                 orewrite_inst(i, "M_shrd_11", "", dpos)
                 continue
             s = [
-                ["mov",  r"^c[lx],0x8$"],
+                ["mov",  r"^c[lx],8$"],
                 ["shl",  "ax,1"],
                 ["rcl",  "dx,1"],
             ]
@@ -271,12 +280,12 @@ def main(argv):
                 orewrite_inst(i, "M_shld_8", "", dpos)
                 continue
             s1 = [
-                ["mov",  r"^c[lx],0x8$"],
+                ["mov",  r"^c[lx],8$"],
                 ["shl",  "si,1"],
                 ["rcl",  "di,1"],
             ]
             s2 = [
-                ["les",  r"^bx,dword ptr \[bp([+-](\d+|0x\w+))\]$"],
+                ["les",  r"^bx,dword ptr \[bp([+-](\d+))\]$"],
             ]
             dpos1 = omatch(i-1, -3, s1)
             dpos2 = omatch(i+1,  1, s2)
@@ -286,13 +295,13 @@ def main(argv):
                 continue
             s1 = [
                 ["mov",  "ax,si"],
-                ["mov",  r"^c[lx],0x8$"],
+                ["mov",  r"^c[lx],8$"],
                 ["shl",  "ax,1"],
                 ["rcl",  "di,1"],
             ]
             s2 = [
                 ["mov",  "si,ax"],
-                ["les",  r"^bx,dword ptr \[bp([+-](\d+|0x\w+))\]$"],
+                ["les",  r"^bx,dword ptr \[bp([+-](\d+))\]$"],
             ]
             dpos1 = omatch(i-1, -4, s1)
             dpos2 = omatch(i+1,  2, s2)
@@ -301,9 +310,9 @@ def main(argv):
                 orewrite_inst(i, "M_shld_diax_8_bxcx", "", dpos1[-3:])
                 continue
             s1 = [
-                ["mov",  r"^c[lx],0x8$"],
-                ["shl",  r"^word ptr \[bp([+-](\d+|0x\w+))\],1$"],
-                ["rcl",  r"^word ptr \[bp([+-](\d+|0x\w+))\],1$"],
+                ["mov",  r"^c[lx],8$"],
+                ["shl",  r"^word ptr \[bp([+-](\d+))\],1$"],
+                ["rcl",  r"^word ptr \[bp([+-](\d+))\],1$"],
             ]
             s2 = [
                 ["mov",  r"^dx,word ptr"],
@@ -322,17 +331,17 @@ def main(argv):
                 orewrite_inst(i, m, "", dpos1)
                 continue
             s1 = [
-                ["mov",  r"^word ptr \[bp([+-](\d+|0x\w+))\],si$"],
-                ["mov",  r"^word ptr \[bp([+-](\d+|0x\w+))\],di$"],
-                ["mov",  r"^c[lx],0xb$"],
-                ["shr",  r"^word ptr \[bp([+-](\d+|0x\w+))\],1$"],
-                ["rcr",  r"^word ptr \[bp([+-](\d+|0x\w+))\],1$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],si$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],di$"],
+                ["mov",  r"^c[lx],11$"],
+                ["shr",  r"^word ptr \[bp([+-](\d+))\],1$"],
+                ["rcr",  r"^word ptr \[bp([+-](\d+))\],1$"],
             ]
             s2 = [
                 ["mov",  r"^bx,word ptr"],
                 ["mov",  r"^bx,word ptr"],
-                ["mov",  r"^ax,word ptr \[bp([+-](\d+|0x\w+))\]$"],
-                ["mov",  r"^dx,word ptr \[bp([+-](\d+|0x\w+))\]$"],
+                ["mov",  r"^ax,word ptr \[bp([+-](\d+))\]$"],
+                ["mov",  r"^dx,word ptr \[bp([+-](\d+))\]$"],
             ]
             dpos1 = omatch(i-1, -5, s1)
             dpos2 = omatch(i+1,  4, s2)
@@ -347,10 +356,7 @@ def main(argv):
                 orewrite_inst(i, m, "", dpos1 + dpos2[-2:])
                 continue
         #
-        if inst in [
-            "call", "ja", "jae", "jb", "jbe", "jcxz", "je",
-            "jg", "jge", "jl", "jle", "jmp", "jne", "loop",
-        ]:
+        if inst_has_label(inst):
             k, v = parse_label(inst, args)
             olines[i][2] = None
             olines[i][3] = add_label(k, v)
