@@ -199,12 +199,12 @@ tc.default.sstrip     = sstrip
 tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
-tc.default.m-ar       = multiarch-ar-2.18
-tc.default.m-ld       = multiarch-ld-2.18 $(if $(tc_bfdname),-b $(tc_bfdname))
-tc.default.m-nm       = multiarch-nm-2.18 $(if $(tc_bfdname),--target=$(tc_bfdname))
-tc.default.m-objcopy  = multiarch-objcopy-2.18 $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = multiarch-objdump-2.18 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
-tc.default.m-readelf  = multiarch-readelf-2.18
+tc.default.m-ar       = multiarch-ar-2.17
+tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
+tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
+tc.default.m-readelf  = multiarch-readelf-2.17
 
 # default binutils
 tc.default.ld         = $(call tc,m-ld)
