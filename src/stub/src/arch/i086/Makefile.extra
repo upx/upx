@@ -259,6 +259,7 @@ l_test_all: tmp/l_test_gcc_i386.out
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 tmp/l_test_bc.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_bc.exe: l_test.c $(L_TEST_DEPS)
+	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,bcc) -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
@@ -268,6 +269,7 @@ endif
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 tmp/l_test_dm.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_dm.exe: l_test.c $(L_TEST_DEPS)
+	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,dmc) -ml -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
@@ -277,6 +279,7 @@ endif
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
 tmp/l_test_vc.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_vc.exe: l_test.c $(L_TEST_DEPS)
+	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,cl) -Fe$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
@@ -286,6 +289,7 @@ endif
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
 tmp/l_test_wc.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_wc.exe: l_test.c $(L_TEST_DEPS)
+	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,wcl) -fe=$@ $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe

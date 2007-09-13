@@ -53,7 +53,9 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objcopy) -O binary tmp/$T.o tmp/$T.bin
 	head -c-0 tmp/$T.bin > tmp/$T.out
-	$(call tc,objdump) -b binary -m armv4 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+#	# info: multiarch-objdump-2.18 segfaults here, so use 2.17
+#	####$(call tc,objdump) -b binary -m armv4 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	multiarch-objdump-2.17 -b binary -m armv4 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
 lzma_d_cs.% : PP_FLAGS = -DSMALL

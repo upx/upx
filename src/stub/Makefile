@@ -181,7 +181,7 @@ __tc_varsearch = $(firstword $(foreach v,$1,$(if $($v),$v,)))
 # error sentinel for missing commands
 __tc_FALSE     = false tc_FALSE: '1:$1 2:$2 3:$3 4:$4 5:$5' '$@' '$<' '$(tc_list)'
 # call (expand) the first variable that is not empty
-  # [move the next line within the "tc" macro for debugging]
+  # [move the next comment line within the "tc" macro for debugging]
   # tc debug '1:$1 2:$2 3:$3 4:$4 5:$5' '$@' '$<' '$(tc_list)'
 define tc
   $(call $(call __tc_varsearch,$(call __tc_varlist,$1) __tc_FALSE),$2,$3,$4,$5)
@@ -199,12 +199,12 @@ tc.default.sstrip     = sstrip
 tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
-tc.default.m-ar       = multiarch-ar-2.17
-tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
-tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
-tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
-tc.default.m-readelf  = multiarch-readelf-2.17
+tc.default.m-ar       = multiarch-ar-2.18
+tc.default.m-ld       = multiarch-ld-2.18 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-nm       = multiarch-nm-2.18 $(if $(tc_bfdname),--target=$(tc_bfdname))
+tc.default.m-objcopy  = multiarch-objcopy-2.18 $(if $(tc_bfdname),-F $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.18 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
+tc.default.m-readelf  = multiarch-readelf-2.18
 
 # default binutils
 tc.default.ld         = $(call tc,m-ld)
@@ -253,7 +253,9 @@ amd64-linux.elf-entry.h: $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 amd64-linux.elf-fold.h : tmp/$$T.o tmp/amd64-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+#	# FIXME: multiarch-ld-2.18 creates a huge file here, so use 2.17
+#	####$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	multiarch-ld-2.17 --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
