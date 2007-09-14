@@ -457,7 +457,7 @@ def main(argv):
                 ofp.write("%s:\n" % (labels[label][2]))
         if inst == "*DEL*":
             continue
-        if 1 and current_label in [".Lf123", ".Lf124", ".Ls123", ".Ls124"]:
+        if 1 and current_label in [".Lf122", ".Lf123", ".Lf124", ".Ls122", ".Ls123", ".Ls124"]:
             continue
         if args_label:
             if opts.verbose:

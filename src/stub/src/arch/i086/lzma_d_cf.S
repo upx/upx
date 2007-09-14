@@ -1459,14 +1459,6 @@
         jb      .Lf119
         jmp     .Lf120
 .Lf122:
-        cmp     di,256
-        jae     .Lf124
-        mov     ax,word ptr [bp-12]
-        mov     dx,word ptr [bp-10]
-        mov     bx,word ptr [bp-30]
-        mov     cx,word ptr [bp-28]
-        M_PTC_JNE .Lf123
-        jmp     .Lf007
 .Lf123:
 .Lf124:
 .Lf125:

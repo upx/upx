@@ -1459,14 +1459,6 @@
         jb      .Ls119
         jmp     .Ls120
 .Ls122:
-        cmp     di,256
-        jae     .Ls124
-        mov     ax,word ptr [bp-12]
-        mov     dx,word ptr [bp-10]
-        mov     bx,word ptr [bp-30]
-        mov     cx,word ptr [bp-28]
-        M_PTC_JNE .Ls123
-        jmp     .Ls007
 .Ls123:
 .Ls124:
 .Ls125:
