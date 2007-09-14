@@ -279,7 +279,6 @@ void Packer::defineDecompressorSymbols()
         if (ph.format == UPX_F_DOS_EXE)
         {
             linker->defineSymbol("lzma_properties_hi", properties >> 16);   // pb
-            // len - 2 because of properties
             linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2) >> 16);
             linker->defineSymbol("lzma_u_len_hi", ph.u_len >> 16);
             linker->defineSymbol("lzma_u_len_segment", (ph.u_len & 0xf0000) >> 4);

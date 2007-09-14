@@ -38,6 +38,7 @@ class opts:
     auto_inline = 1
     call_rewrite = 1
     loop_rewrite = 1
+    mov_rewrite = 1
 
 
 inline_map = {
@@ -119,7 +120,7 @@ def main(argv):
         def match(a, b):
             if b is None:
                 return False
-            if "^" in a or "*" in a:
+            if "^" in a or "*" in a or "$" in a:
                 # regexp
                 return re.search(a, b.lower())
             else:
@@ -354,6 +355,61 @@ def main(argv):
                 assert bp_ax == bp_si
                 m = "M_shrd_11_disi_bp %s %s" % (bp_dx, bp_ax)
                 orewrite_inst(i, m, "", dpos1 + dpos2[-2:])
+                continue
+        if opts.mov_rewrite and inst in ["mov"]:
+            s = [
+                ["mov",  r"^al,byte ptr \[(di|si)\]$"],
+                ["xor",  r"^ah,ah$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],ax$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^word ptr \[bp([+-](\d+))\],(0|1)$"],
+                ["mov",  r"^bx,word ptr \[bp([+-](\d+))\]$"],
+                ["mov",  r"^word ptr \[bx\],(0)$"],
+                ["mov",  r"^word ptr \[bx([+-](\d+))\],(0)$"],
+                ["mov",  r"^bx,word ptr \[bp([+-](\d+))\]$"],
+                ["mov",  r"^word ptr \[bx\],(0)$"],
+                ["mov",  r"^word ptr \[bx([+-](\d+))\],(0)$"],
+                ["mov",  r"^dl,byte ptr \[(di|si)([+-](\d+))\]$"],
+                ["xor",  r"^dh,dh$"],
+                ["mov",  r"^cx,ax$"],
+            ]
+            dpos = omatch(i, -len(s), s)
+            if dpos:
+                ipos, n_del = 16, 0
+                pos0 = dpos[0][0]
+                r = []
+                for pos, m0, m1 in dpos:
+                    assert pos == pos0 + len(r)
+                    r.append([olines[pos][1], olines[pos][2]])
+                z0 = r[0]; z1 = r[2]; del r[:3]
+                r.insert(0, ["xor", "ax,ax"])
+                r.insert(ipos, z0); r.insert(ipos + 1, z1)
+                i = 0
+                while i < len(r):
+                    inst, args = r[i]
+                    if inst == "mov" and args.endswith(",0"):
+                        r[i] = [inst, args[:-1] + "ax"]
+                    elif inst == "mov" and args.endswith(",1"):
+                        assert i < ipos
+                        r.insert(ipos, [inst, args[:-1] + "ax"])
+                        del r[i]; i -= 1; n_del += 1
+                    i += 1
+                assert len(r) == len(dpos)
+                pos = pos0
+                for inst, args in r:
+                    print pos-pos0, inst, args
+                    olines[pos][1] = inst
+                    olines[pos][2] = args
+                    pos += 1
+                if n_del:
+                    olines.insert(pos0 + ipos - n_del, [None, "inc", "ax", None])
                 continue
         #
         if inst_has_label(inst):

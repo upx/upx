@@ -22,24 +22,25 @@
         cwd
         mov     word ptr [bp-86],ax
         mov     word ptr [bp-84],dx
-        mov     al,byte ptr [si]
-        xor     ah,ah
-        mov     word ptr [bp-78],ax
-        mov     word ptr [bp-16],0
-        mov     word ptr [bp-102],1
-        mov     word ptr [bp-100],0
-        mov     word ptr [bp-52],1
-        mov     word ptr [bp-50],0
-        mov     word ptr [bp-56],1
-        mov     word ptr [bp-54],0
-        mov     word ptr [bp-68],1
-        mov     word ptr [bp-74],0
+        xor     ax,ax
+        mov     word ptr [bp-16],ax
+        mov     word ptr [bp-100],ax
+        mov     word ptr [bp-50],ax
+        mov     word ptr [bp-54],ax
+        mov     word ptr [bp-74],ax
         mov     bx,word ptr [bp+18]
-        mov     word ptr [bx],0
-        mov     word ptr [bx+2],0
+        mov     word ptr [bx],ax
+        mov     word ptr [bx+2],ax
         mov     bx,word ptr [bp+28]
-        mov     word ptr [bx],0
-        mov     word ptr [bx+2],0
+        mov     word ptr [bx],ax
+        mov     word ptr [bx+2],ax
+        inc     ax
+        mov     word ptr [bp-102],ax
+        mov     word ptr [bp-52],ax
+        mov     word ptr [bp-56],ax
+        mov     word ptr [bp-68],ax
+        mov     al,byte ptr [si]
+        mov     word ptr [bp-78],ax
         mov     dl,byte ptr [si+1]
         xor     dh,dh
         mov     cx,ax
