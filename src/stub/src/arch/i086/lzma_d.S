@@ -89,13 +89,13 @@ section LZMA_DEC00
         push    bx                      // &state __near                [bp + 4]
 
         // enter small memory model
-        push    ds                      // save ds && dummy for call
+        push    ds                      // save ds and dummy for call
         push    ss
         pop     ds
 
-        // fill properties
-        movw    [bx],   offset lzma_properties
-        movw    [bx+2], offset lzma_properties_hi
+        // fill properties: lc lp pb
+        movw    [bx],   offset lzma_properties          // lc lp
+        movb    [bx+2], offset lzma_properties_hi       // pb
 
     ignore_reloc_overflow lzma_u_len
     ignore_reloc_overflow lzma_c_len

@@ -262,7 +262,6 @@ void Packer::defineDecompressorSymbols()
     if (M_IS_LZMA(ph.method))
     {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
-        // FIXME - this is for i386 only
         acc_uint32e_t properties = // lc, lp, pb, dummy
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
@@ -271,7 +270,7 @@ void Packer::defineDecompressorSymbols()
             acc_swab32s(&properties);
 
         linker->defineSymbol("lzma_properties", properties);
-        // -2 for properties
+        // len - 2 because of properties
         linker->defineSymbol("lzma_c_len", ph.c_len - 2);
         linker->defineSymbol("lzma_u_len", ph.u_len);
         unsigned stack = getDecompressorWrkmemSize();
@@ -279,10 +278,10 @@ void Packer::defineDecompressorSymbols()
 
         if (ph.format == UPX_F_DOS_EXE)
         {
-            linker->defineSymbol("lzma_properties_hi", properties / 65536);
-            // -2 for properties
-            linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2)  /  65536);
-            linker->defineSymbol("lzma_u_len_hi", ph.u_len /  65536);
+            linker->defineSymbol("lzma_properties_hi", properties >> 16);   // pb
+            // len - 2 because of properties
+            linker->defineSymbol("lzma_c_len_hi", (ph.c_len - 2) >> 16);
+            linker->defineSymbol("lzma_u_len_hi", ph.u_len >> 16);
             linker->defineSymbol("lzma_u_len_segment", (ph.u_len & 0xf0000) >> 4);
         }
     }

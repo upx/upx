@@ -188,10 +188,10 @@ def main(argv):
         if 1 and inst in ["movl",] and re.search(r"\b[de]s\b", args):
             # work around a bug in objdump 2.17 (fixed in binutils 2.18)
             inst = "mov"
-        m = re.search(r"^(.+?)\b0\s+(\w+):\s+(1|2|R_386_16|R_386_PC16)\s+(__\w+)$", args)
+        m = re.search(r"^(.+?)\b(0|0x0)\s+(\w+):\s+(1|2|R_386_16|R_386_PC16)\s+(__\w+)$", args)
         if m:
             # 1 or 2 byte reloc
-            args = m.group(1) + m.group(4)
+            args = m.group(1) + m.group(5)
         olines.append([label, inst, args, None])
     #
     # pass 2
