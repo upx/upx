@@ -404,7 +404,7 @@ def main(argv):
                 assert len(r) == len(dpos)
                 pos = pos0
                 for inst, args in r:
-                    print pos-pos0, inst, args
+                    ##print pos-pos0, inst, args
                     olines[pos][1] = inst
                     olines[pos][2] = args
                     pos += 1
@@ -447,13 +447,17 @@ def main(argv):
     #
     # write ofile
     ofp = open(ofile, "wb")
+    current_label = None
     for label, inst, args, args_label in olines:
         if labels.has_key(label):
+            current_label = labels[label][2]
             if opts.verbose:
                 ofp.write("%s: /* %d */\n" % (labels[label][2], labels[label][3]))
             else:
                 ofp.write("%s:\n" % (labels[label][2]))
         if inst == "*DEL*":
+            continue
+        if 1 and current_label in [".Lf123", ".Lf124", ".Ls123", ".Ls124"]:
             continue
         if args_label:
             if opts.verbose:

@@ -1468,26 +1468,7 @@
         M_PTC_JNE .Ls123
         jmp     .Ls007
 .Ls123:
-        mov     ax,word ptr [bp-12]
-        mov     dx,word ptr [bp-10]
-        M_PIA1
-        mov     word ptr [bp-12],ax
-        mov     word ptr [bp-10],dx
 .Ls124:
-        mov     ax,word ptr [bp-12]
-        mov     dx,word ptr [bp-10]
-        mov     bx,word ptr [bp+10]
-        mov     cx,word ptr [bp+12]
-        M_PTS
-        mov     bx,word ptr [bp+18]
-        mov     word ptr [bx],ax
-        mov     word ptr [bx+2],dx
-        mov     ax,word ptr [bp-20]
-        mov     bx,word ptr [bp+28]
-        mov     word ptr [bx],ax
-        mov     ax,word ptr [bp-18]
-        mov     word ptr [bx+2],ax
-        xor     ax,ax
 .Ls125:
         mov     sp,bp
         pop     bp
