@@ -464,6 +464,17 @@ def main(argv):
                 args = "%s /* %d */" % (labels[args_label][2], labels[args_label][3])
             else:
                 args = labels[args_label][2]
+        if 0:
+            # remove unneeded "byte/word/dword ptr"
+            # [this works, but disabled for now as we gain nothing]
+            if re.search(r"\bbyte ptr ", args):
+                if re.search(r"^[abcd][hl],", args): args = args.replace("byte ptr ", "")
+                if re.search(r",[abcd][hl]$", args): args = args.replace("byte ptr ", "")
+            if re.search(r"\bword ptr ", args):
+                if re.search(r"^[abcds][ix],", args): args = args.replace("word ptr ", "")
+                if re.search(r",[abcds][ix]$", args): args = args.replace("word ptr ", "")
+            if re.search(r"\bdword ptr ", args):
+                if re.search(r"^[abcd][x],",  args): args = args.replace("dword ptr ", "")
         l = "%8s%-7s %s" % ("", inst, args)
         ofp.write(l.rstrip() + "\n")
     ofp.close()

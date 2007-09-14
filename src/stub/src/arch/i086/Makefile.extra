@@ -217,7 +217,7 @@ cc_test_bc : tc_list = method-lzma arch-i086 default
 cc_test_bc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-cc_test_all: cc_test_bc
+cc_test-all: cc_test_bc
 endif
 
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
@@ -225,7 +225,7 @@ cc_test_dm : tc_list = method-lzma arch-i086 default
 cc_test_dm: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-cc_test_all: cc_test_dm
+cc_test-all: cc_test_dm
 endif
 
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
@@ -233,7 +233,7 @@ cc_test_vc : tc_list = method-lzma arch-i086 default
 cc_test_vc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-cc_test_all: cc_test_vc
+cc_test-all: cc_test_vc
 endif
 
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
@@ -241,10 +241,10 @@ cc_test_wc : tc_list = method-lzma arch-i086 default
 cc_test_wc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,wcl) $(PP_FLAGS) -c -fo=tmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
-cc_test_all: cc_test_wc
+cc_test-all: cc_test_wc
 endif
 
-.PHONY: cc_test_all
+.PHONY: cc_test-all
 
 endif # wdis
 
@@ -259,7 +259,7 @@ tmp/l_test_gcc_i386.%  : tc_list = arch-i086 default
 tmp/l_test_gcc_i386.out: l_test.c $(L_TEST_DEPS)
 	$(call tc,gcc) -O0 -g -o $@ $<
 	./$@
-l_test_all: tmp/l_test_gcc_i386.out
+l_test-all: tmp/l_test_gcc_i386.out
 
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 tmp/l_test_bc.%  : tc_list = method-lzma arch-i086 default
@@ -268,7 +268,7 @@ tmp/l_test_bc.exe: l_test.c $(L_TEST_DEPS)
 	$(call tc,bcc) -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
-##l_test_all: tmp/l_test_bc.exe
+##l_test-all: tmp/l_test_bc.exe
 endif
 
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
@@ -278,7 +278,7 @@ tmp/l_test_dm.exe: l_test.c $(L_TEST_DEPS)
 	$(call tc,dmc) -ml -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
-l_test_all: tmp/l_test_dm.exe
+l_test-all: tmp/l_test_dm.exe
 endif
 
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
@@ -288,7 +288,7 @@ tmp/l_test_vc.exe: l_test.c $(L_TEST_DEPS)
 	$(call tc,cl) -Fe$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
-l_test_all: tmp/l_test_vc.exe
+l_test-all: tmp/l_test_vc.exe
 endif
 
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
@@ -298,8 +298,8 @@ tmp/l_test_wc.exe: l_test.c $(L_TEST_DEPS)
 	$(call tc,wcl) -fe=$@ $<
 	@rm -f l_test.o l_test.obj
 	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
-l_test_all: tmp/l_test_wc.exe
+l_test-all: tmp/l_test_wc.exe
 endif
 
-.PHONY: l_test_all
+.PHONY: l_test-all
 
