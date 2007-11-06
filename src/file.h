@@ -63,7 +63,7 @@ public:
     virtual void set_extent(off_t offset, off_t length);
 
 protected:
-    void sopen();
+    bool do_sopen();
     virtual int read(void *buf, int len);
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);

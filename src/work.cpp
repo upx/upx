@@ -51,6 +51,9 @@
 #  define SH_DENYWR     (-1)
 #endif
 
+// ignore errors in some cases and silence __attribute__((__warn_unused_result__))
+#define IGNORE_ERROR(var)        ACC_UNUSED(var)
+
 
 /*************************************************************************
 // process one file
@@ -98,8 +101,13 @@ void do_one_file(const char *iname, char *oname)
     fi.sopen(iname, O_RDONLY | O_BINARY, SH_DENYWR);
 
 #if defined(USE_FTIME)
-    struct ftime fit;
-    getftime(fi.getFd(),&fit);
+    struct ftime fi_ftime;
+    memset(&fi_ftime, 0, sizeof(fi_ftime));
+    if (opt->preserve_timestamp)
+    {
+        if (getftime(fi.getFd(), &fi_ftime) != 0)
+            throwIOException("cannot determine file timestamp");
+    }
 #endif
 
     // open output file
@@ -124,9 +132,11 @@ void do_one_file(const char *iname, char *oname)
             if (opt->force >= 2)
             {
 #if defined(HAVE_CHMOD)
-                (void) ::chmod(tname, 0777);
+                r = chmod(tname, 0777);
+                IGNORE_ERROR(r);
 #endif
-                (void) ::unlink(tname);
+                r = unlink(tname);
+                IGNORE_ERROR(r);
             }
             int flags = O_CREAT | O_WRONLY | O_BINARY;
             if (opt->force)
@@ -165,15 +175,17 @@ void do_one_file(const char *iname, char *oname)
         throwInternalError("invalid command");
 
     // copy time stamp
-    if (oname[0] && fo.isOpen())
+    if (opt->preserve_timestamp && oname[0] && fo.isOpen())
     {
 #if defined(USE_FTIME)
-        setftime(fo.getFd(),&fit);
+        r = setftime(fo.getFd(), &fi_ftime);
+        IGNORE_ERROR(r);
 #elif defined(USE__FUTIME)
         struct _utimbuf u;
         u.actime = st.st_atime;
         u.modtime = st.st_mtime;
-        (void) _futime(fo.getFd(),&u);
+        r = _futime(fo.getFd(), &u);
+        IGNORE_ERROR(r);
 #endif
     }
 
@@ -188,7 +200,8 @@ void do_one_file(const char *iname, char *oname)
         if (!opt->backup)
         {
 #if defined(HAVE_CHMOD)
-            (void) ::chmod(iname, 0777);
+            r = chmod(iname, 0777);
+            IGNORE_ERROR(r);
 #endif
             File::unlink(iname);
         }
@@ -217,7 +230,7 @@ void do_one_file(const char *iname, char *oname)
             u.actime = st.st_atime;
             u.modtime = st.st_mtime;
             r = utime(name, &u);
-            UNUSED(r);
+            IGNORE_ERROR(r);
         }
 #endif
 #if defined(HAVE_CHMOD)
@@ -225,7 +238,7 @@ void do_one_file(const char *iname, char *oname)
         if (opt->preserve_mode)
         {
             r = chmod(name, st.st_mode);
-            UNUSED(r);
+            IGNORE_ERROR(r);
         }
 #endif
 #if defined(HAVE_CHOWN)
@@ -233,7 +246,7 @@ void do_one_file(const char *iname, char *oname)
         if (opt->preserve_ownership)
         {
             r = chown(name, st.st_uid, st.st_gid);
-            UNUSED(r);
+            IGNORE_ERROR(r);
         }
 #endif
     }
@@ -251,9 +264,11 @@ static void unlink_ofile(char *oname)
     if (oname && oname[0])
     {
 #if defined(HAVE_CHMOD)
-        (void) ::chmod(oname, 0777);
+        int r;
+        r = chmod(oname, 0777);
+        IGNORE_ERROR(r);
 #endif
-        if (::unlink(oname) == 0)
+        if (unlink(oname) == 0)
             oname[0] = 0;
     }
 }

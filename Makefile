@@ -36,7 +36,7 @@ endif
 	$(MAKE) -C doc $@
 
 
-ifneq ($(wildcard .hg/data/.),)
+ifneq ($(wildcard .hg/.),)
 # automatically generate ChangeLog from local Mercurial repo
 ChangeLog:
 	hg log --style=changelog > $@

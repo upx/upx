@@ -88,7 +88,7 @@ FileBase::~FileBase()
 }
 
 
-void FileBase::sopen()
+bool FileBase::do_sopen()
 {
     if (_shflags < 0)
         _fd = ::open(_name, _flags, _mode);
@@ -101,13 +101,15 @@ void FileBase::sopen()
 #elif defined(SH_DENYRW)
         _fd = ::sopen(_name, _flags, _shflags, _mode);
 #else
-        assert(0);
+        throwInternalError("bad usage of do_sopen()");
 #endif
     }
-    if (!(_fd < 0)) {
-        ::fstat(_fd, &st);
-        _length = st.st_size;
-    }
+    if (_fd < 0)
+        return false;
+    if (::fstat(_fd, &st) != 0)
+        throwIOException(_name, errno);
+    _length = st.st_size;
+    return true;
 }
 
 
@@ -232,8 +234,7 @@ void InputFile::sopen(const char *name, int flags, int shflags)
     _mode = 0;
     _offset = 0;
     _length = 0;
-    FileBase::sopen();
-    if (!isOpen())
+    if (!FileBase::do_sopen())
     {
         if (errno == ENOENT)
             throw FileNotFoundException(_name, errno);
@@ -318,8 +319,7 @@ void OutputFile::sopen(const char *name, int flags, int shflags, int mode)
     _mode = mode;
     _offset = 0;
     _length = 0;
-    FileBase::sopen();
-    if (!isOpen())
+    if (!FileBase::do_sopen())
     {
 #if 0
         // don't throw FileNotFound here -- this is confusing
@@ -366,7 +366,8 @@ off_t OutputFile::st_size() const
         return bytes_written;  // too big if seek()+write() instead of rewrite()
     }
     struct stat my_st;
-    ::fstat(_fd, &my_st);
+    if (::fstat(_fd, &my_st) != 0)
+        throwIOException(_name, errno);
     return my_st.st_size;
 }
 
@@ -402,15 +403,19 @@ void OutputFile::set_extent(off_t offset, off_t length)
     super::set_extent(offset, length);
     bytes_written = 0;
     if (0==offset && (off_t)~0u==length) {
-        ::fstat(_fd, &st);
+        if (::fstat(_fd, &st) != 0)
+            throwIOException(_name, errno);
         _length = st.st_size - offset;
     }
 }
 
 off_t OutputFile::unset_extent()
 {
+    off_t l = ::lseek(_fd, 0, SEEK_END);
+    if (l < 0)
+        throwIOException("lseek error", errno);
     _offset = 0;
-    _length = ::lseek(_fd, 0, SEEK_END);
+    _length = l;
     bytes_written = _length;
     return _length;
 }
