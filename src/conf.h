@@ -379,12 +379,14 @@ inline unsigned UPX_MIN(unsigned a, unsigned b) { return a < b ? a : b; }
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 
-struct nocopy
+struct noncopyable
 {
-    inline nocopy() {}
+protected:
+    inline noncopyable() {}
+    inline ~noncopyable() {}
 private:
-    nocopy(const nocopy &); // undefined
-    nocopy& operator=(const nocopy &); // undefined
+    noncopyable(const noncopyable &); // undefined
+    const noncopyable& operator=(const noncopyable &); // undefined
 };
 
 

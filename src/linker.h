@@ -34,7 +34,7 @@
 // ElfLinker
 **************************************************************************/
 
-class ElfLinker : private nocopy
+class ElfLinker : private noncopyable
 {
     friend class Packer;
 public:
@@ -110,7 +110,7 @@ protected:
 };
 
 
-struct ElfLinker::Section : private nocopy
+struct ElfLinker::Section : private noncopyable
 {
     char *name;
     void *input;
@@ -125,7 +125,7 @@ struct ElfLinker::Section : private nocopy
 };
 
 
-struct ElfLinker::Symbol : private nocopy
+struct ElfLinker::Symbol : private noncopyable
 {
     char *name;
     Section *section;
@@ -136,7 +136,7 @@ struct ElfLinker::Symbol : private nocopy
 };
 
 
-struct ElfLinker::Relocation : private nocopy
+struct ElfLinker::Relocation : private noncopyable
 {
     const Section *section;
     unsigned offset;

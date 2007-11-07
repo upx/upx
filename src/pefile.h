@@ -229,7 +229,7 @@ protected:
         RT_MANIFEST, RT_LAST
     };
 
-    class Interval : private nocopy
+    class Interval : private noncopyable
     {
         unsigned capacity;
         void *base;
@@ -257,7 +257,7 @@ protected:
         static int __acc_cdecl_qsort compare(const void *p1,const void *p2);
     };
 
-    class Reloc : private nocopy
+    class Reloc : private noncopyable
     {
         upx_byte *start;
         unsigned size;
@@ -280,7 +280,7 @@ protected:
         void finish(upx_byte *&p,unsigned &size);
     };
 
-    class Resource : private nocopy
+    class Resource : private noncopyable
     {
         struct res_dir_entry;
         struct res_dir;
@@ -331,7 +331,7 @@ protected:
          */
     };
 
-    class Export : private nocopy
+    class Export : private noncopyable
     {
         struct export_dir_t
         {
