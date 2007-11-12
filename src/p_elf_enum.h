@@ -141,10 +141,14 @@
     enum { // d_tag
         DT_NULL     =  0,       /* End flag */
         DT_NEEDED   =  1,       /* Name of needed library */
+        DT_PLTRELSZ	=  2,       /* Size in bytes of PLT relocs */
         DT_HASH     =  4,       /* Hash table of symbol names */
         DT_STRTAB   =  5,       /* String table */
         DT_SYMTAB   =  6,       /* Symbol table */
-        DT_STRSZ    = 10        /* Sizeof string table */
+        DT_STRSZ    = 10,       /* Sizeof string table */
+        DT_PLTREL	= 20,       /* Type of reloc in PLT */
+        DT_JMPREL	= 23,       /* Address of PLT relocs */
+        DT_GNU_HASH = 0x6ffffef5        /* GNU-style hash table */
     };
 #endif
 
