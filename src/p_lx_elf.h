@@ -465,6 +465,25 @@ protected:
     virtual void defineSymbols(Filter const *);
 };
 
+class PackLinuxElf32mipseb : public PackLinuxElf32Be
+{
+    typedef PackLinuxElf32Be super;
+public:
+    PackLinuxElf32mipseb(InputFile *f);
+    virtual ~PackLinuxElf32mipseb();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF32_MIPSEB; }
+    virtual const char *getName() const { return "linux/mipseb"; }
+    virtual const char *getFullName(const options_t *) const { return "mipseb-linux.elf"; }
+    virtual const int *getFilters() const;
+
+protected:
+    virtual Linker* newLinker() const;
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void buildLoader(const Filter *);
+    virtual void updateLoader(OutputFile *);
+    virtual void defineSymbols(Filter const *);
+};
+
 class PackLinuxElf32mipsel : public PackLinuxElf32Le
 {
     typedef PackLinuxElf32Le super;

@@ -297,6 +297,11 @@ void PackLinuxElf32mipsel::updateLoader(OutputFile *fo)
     ARM_updateLoader(fo);  // not ARM specific; (no 32-bit immediates)
 }
 
+void PackLinuxElf32mipseb::updateLoader(OutputFile *fo)
+{
+    ARM_updateLoader(fo);  // not ARM specific; (no 32-bit immediates)
+}
+
 void PackLinuxElf32::updateLoader(OutputFile *fo)
 {
     set_native32(&elfout.ehdr.e_entry, fo->getBytesWritten() +
@@ -752,6 +757,19 @@ PackLinuxElf32mipsel::buildLoader(Filter const *ft)
     buildLinuxLoader(
         stub_mipsel_r3000_linux_elf_entry, sizeof(stub_mipsel_r3000_linux_elf_entry),
         stub_mipsel_r3000_linux_elf_fold,  sizeof(stub_mipsel_r3000_linux_elf_fold), ft);
+}
+
+static const
+#include "stub/mipseb.r3000-linux.elf-entry.h"
+static const
+#include "stub/mipseb.r3000-linux.elf-fold.h"
+
+void
+PackLinuxElf32mipseb::buildLoader(Filter const *ft)
+{
+    buildLinuxLoader(
+        stub_mipseb_r3000_linux_elf_entry, sizeof(stub_mipseb_r3000_linux_elf_entry),
+        stub_mipseb_r3000_linux_elf_fold,  sizeof(stub_mipseb_r3000_linux_elf_fold), ft);
 }
 
 static const
@@ -1294,6 +1312,14 @@ void PackLinuxElf32mipsel::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
+void PackLinuxElf32mipseb::pack1(OutputFile *fo, Filter &ft)
+{
+    super::pack1(fo, ft);
+    cprElfHdr3 h3;
+    memcpy(&h3, stub_mipseb_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
+}
+
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
@@ -1551,6 +1577,13 @@ PackLinuxElf32armLe::getFilters() const
 }
 
 const int *
+PackLinuxElf32mipseb::getFilters() const
+{
+    static const int f_none[] = { FT_END };
+    return f_none;
+}
+
+const int *
 PackLinuxElf32mipsel::getFilters() const
 {
     static const int f_none[] = { FT_END };
@@ -1596,6 +1629,78 @@ void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
 void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 {
     ARM_defineSymbols(ft);
+}
+
+void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)
+{
+    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
+
+    // We want to know if compressed data, plus stub, plus a couple pages,
+    // will fit below the uncompressed program in memory.  But we don't
+    // know the final total compressed size yet, so use the uncompressed
+    // size (total over all PT_LOAD32) as an upper bound.
+    unsigned len = 0;
+    unsigned lo_va_user = ~0u;  // infinity
+    for (int j= get_native16(&ehdri.e_phnum); --j>=0; ) {
+        if (PT_LOAD32 == get_native32(&phdri[j].p_type)) {
+            len += (unsigned)get_native32(&phdri[j].p_filesz);
+            unsigned const va = get_native32(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
+    lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
+    unsigned lo_va_stub = get_native32(&elfout.phdr[0].p_vaddr);
+    unsigned adrc;
+    unsigned adrm;
+    unsigned adru;
+    unsigned adrx;
+    unsigned cntc;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
+    if (is_big) {
+        set_native32(    &elfout.ehdr.e_entry,
+            get_native32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_native32(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_native32(&elfout.phdr[0].p_paddr, lo_va_user);
+               lo_va_stub      = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, get_native16(&ehdri.e_phnum));
+        adru = page_mask & (~page_mask + adrm);  // round up to page boundary
+        adrx = adru + hlen;
+        lenm = page_size + len;
+        lenu = page_size + len;
+        cntc = len >> 3;  // over-estimate; corrected at runtime
+    }
+    else {
+        adrm = lo_va_stub + len;
+        adrc = adrm;
+        adru = lo_va_stub;
+        adrx = lo_va_stub + hlen;
+        lenm = page_size;
+        lenu = page_size + len;
+        cntc = 0;
+    }
+    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
+    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
+
+    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+
+    // For actual moving, we need the true count, which depends on sz_pack2
+    // and is not yet known.  So the runtime stub detects "no move"
+    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
+    //linker->defineSymbol("CNTC", cntc);  // count  for copy
+
+    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("ADRU", adru);  // addr for unmap
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // addr for map
+
+    //linker->dumpSymbols();  // debug
 }
 
 void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
@@ -2051,6 +2156,18 @@ PackLinuxElf32armLe::~PackLinuxElf32armLe()
 {
 }
 
+PackLinuxElf32mipseb::PackLinuxElf32mipseb(InputFile *f) : super(f)
+{
+    e_machine = Elf32_Ehdr::EM_MIPS;
+    ei_class  = Elf32_Ehdr::ELFCLASS32;
+    ei_data   = Elf32_Ehdr::ELFDATA2MSB;
+    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
+}
+
+PackLinuxElf32mipseb::~PackLinuxElf32mipseb()
+{
+}
+
 PackLinuxElf32mipsel::PackLinuxElf32mipsel(InputFile *f) : super(f)
 {
     e_machine = Elf32_Ehdr::EM_MIPS;
@@ -2066,6 +2183,11 @@ PackLinuxElf32mipsel::~PackLinuxElf32mipsel()
 Linker* PackLinuxElf32armLe::newLinker() const
 {
     return new ElfLinkerArmLE();
+}
+
+Linker* PackLinuxElf32mipseb::newLinker() const
+{
+    return new ElfLinkerMipsBE();
 }
 
 Linker* PackLinuxElf32mipsel::newLinker() const
