@@ -81,6 +81,7 @@ L90:
         pushq %rdi  # &Elf64_auxv
 0:
         cmpq $0,(%rsi); movsq; movsq; jne 0b  # move past auxv
+        lea -8(%rdi),%r15  # &auxv[N-1].a_un
 
         movq %rdi,(%arg3)  # new_env[0]
         movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),%eax  # "   ="
@@ -99,16 +100,20 @@ L90:
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         movq %rbp,%arg5  # &decompress: f_expand
+        pushq $0  # reloc
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
-                Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6 )
+                Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6,
+                Elf64_Addr reloc )
 */
+        popq %rdx  # reloc
         addq $OVERHEAD,%rsp
         pop %arg2  # LENU
         pop %arg1  # ADRU
         pop %rcx   # JMPU
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
+        jmp *(%r15)
         jmp *%rcx  # goto: syscall; ret
 
 munmap: .globl munmap

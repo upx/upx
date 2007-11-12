@@ -236,7 +236,8 @@ do_xmap(
     int const fdi,
     Elf64_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_unfilter *const f_unf,
+    Elf64_Addr *p_reloc
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *) (ehdr->e_phoff +
@@ -279,6 +280,7 @@ do_xmap(
             if (0==phdr->p_offset) {
                 Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
                 *(int *)&ehdr->e_ident[12] = 0x90c3050f;  // syscall; ret; nop
+                auxv_up(av, AT_NULL, (uint64_t)&ehdr->e_ident[12]);
             }
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -299,6 +301,9 @@ ERR_LAB
             brk(v_brk);
         }
     }
+    if (0!=p_reloc) {
+        *p_reloc = reloc;
+    }
     return ehdr->e_entry + reloc;
 }
 
@@ -316,7 +321,8 @@ upx_main(  // returns entry address
     Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     Elf64_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_unfilter *const f_unf,
+    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
@@ -338,12 +344,12 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf);  // "rewind"
+    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
 
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = (char const *)phdr->p_vaddr;
+        char const *const iname = reloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
@@ -352,7 +358,7 @@ upx_main(  // returns entry address
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
         close(fdi);
     }
   }
