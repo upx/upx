@@ -156,6 +156,7 @@ struct timespec {
 #define __NR_open                 5
 #define __NR_close                6
 #define __NR_waitpid              7
+#define __NR_link                 9
 #define __NR_unlink              10
 #define __NR_execve              11
 #define __NR_lseek               19
@@ -347,6 +348,7 @@ static inline _syscall3(ssize_t,read,int,fd,void *,buf,size_t,count)
 static inline _syscall3(pid_t,waitpid,pid_t,pid,int *,wait_stat,int,options)
 static inline _syscall3(ssize_t,write,int,fd,const void *,buf,size_t,count)
 static inline _syscall1(int,unlink,const char *,file)
+static inline _syscall2(int,link,const char *,src, const char *,dst)
 
 #undef Z0
 #undef Z1
