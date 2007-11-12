@@ -195,6 +195,15 @@ protected:
 };
 
 
+class ElfLinkerMipsBE : public ElfLinker
+{
+    typedef ElfLinker super;
+protected:
+    virtual void relocate1(const Relocation *, upx_byte *location,
+                           unsigned value, const char *type);
+};
+
+
 class ElfLinkerMipsLE : public ElfLinker
 {
     typedef ElfLinker super;
