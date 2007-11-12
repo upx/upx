@@ -121,18 +121,29 @@ protected:
     virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
     static unsigned elf_hash(char const *) /*const*/;
+    static unsigned gnu_hash(char const *) /*const*/;
     virtual void const *elf_find_dynamic(unsigned) const;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
+    Elf32_Shdr const *elf_find_section_name(char const *) const;
+    Elf32_Shdr const *elf_find_section_type(unsigned) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
+	Elf32_Shdr const *shdri; // from input file
     unsigned page_mask;  // AND clears the offset-within-page
 
     Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab;  // from DT_HASH
+    unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
+	char const *shstrtab;   // via Elf32_Shdr
+    int n_elf_shnum;  // via e_shnum
+
+	Elf32_Shdr const *sec_strndx;
+	Elf32_Shdr const *sec_dynsym;
+	Elf32_Shdr const *sec_dynstr;
 
     struct cprElfHdr1 {
         Elf32_Ehdr ehdr;
@@ -466,7 +477,6 @@ public:
     virtual const int *getFilters() const;
 
 protected:
-    virtual const int *getCompressionMethods(int method, int level) const;
     virtual Linker* newLinker() const;
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void buildLoader(const Filter *);
