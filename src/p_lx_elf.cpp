@@ -841,11 +841,12 @@ bool PackLinuxElf32::canPack()
         return false;
 
     // additional requirements for linux/elf386
-    if (ehdr->e_ehsize != sizeof(*ehdr)) {
+    if (get_native16(&ehdr->e_ehsize) != sizeof(*ehdr)) {
         throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
-    unsigned const e_phoff = ehdr->e_phoff;
+    unsigned const e_shoff = get_native32(&ehdr->e_shoff);
+    unsigned const e_phoff = get_native32(&ehdr->e_phoff);
     if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
         throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
         return false;
@@ -853,23 +854,24 @@ bool PackLinuxElf32::canPack()
 
     unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
-    unsigned const e_phnum = ehdr->e_phnum;
+    unsigned const e_phnum = get_native16(&ehdr->e_phnum);
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(buf + e_phoff);
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
                 return false;
-        if (1!=exetype && phdr->PT_LOAD32 == phdr->p_type) {
-            if (phdr->p_offset != 0) {
+        unsigned const p_type = get_native32(&phdr->p_type);
+        unsigned const p_offset = get_native32(&phdr->p_offset);
+        if (1!=exetype && phdr->PT_LOAD32 == p_type) {
+            if (p_offset != 0) {
                 throwCantPack("invalid Phdr p_offset; try '--force-execve'");
                 return false;
             }
             exetype = 1;
         }
         if (Elf32_Ehdr::ELFOSABI_NONE==osabi0  // Still seems to be generic.
-        && NULL!=osabi_note && phdr->PT_NOTE == phdr->p_type) {
-            unsigned const offset = phdr->p_offset;
+        && NULL!=osabi_note && phdr->PT_NOTE == p_type) {
             struct Elf32_Note note; memset(&note, 0, sizeof(note));
-            fi->seek(offset, SEEK_SET);
+            fi->seek(p_offset, SEEK_SET);
             fi->readx(&note, sizeof(note));
             fi->seek(0, SEEK_SET);
             if (4==get_native32(&note.descsz)
@@ -903,26 +905,26 @@ bool PackLinuxElf32::canPack()
     // Otherwise (no __libc_start_main as global undefined): skip it.
     // Also allow  __uClibc_main  and  __uClibc_start_main .
 
-    if (Elf32_Ehdr::ET_DYN==ehdr->e_type) {
+    if (Elf32_Ehdr::ET_DYN==get_native16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
         file_image = new char[file_size];
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         ehdri= *ehdr;
-        phdri= (Elf32_Phdr *)(ehdr->e_phoff + file_image);  // do not free() !!
-        shdri= (Elf32_Shdr *)(ehdr->e_shoff + file_image);  // do not free() !!
+        phdri= (Elf32_Phdr *)(e_phoff + file_image);  // do not free() !!
+        shdri= (Elf32_Shdr *)(e_shoff + file_image);  // do not free() !!
 
-        n_elf_shnum = ehdr->e_shnum;
-        shdri = (Elf32_Shdr const *)(ehdr->e_shoff + file_image);
+        n_elf_shnum = get_native16(&ehdr->e_shnum);
+        shdri = (Elf32_Shdr const *)(e_shoff + file_image);
         //sec_strndx = &shdri[ehdr->e_shstrndx];
         //shstrtab = (char const *)(sec_strndx->sh_offset + file_image);
         sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-        sec_dynstr = sec_dynsym->sh_link + shdri;
+        sec_dynstr = get_native32(&sec_dynsym->sh_link) + shdri;
 
-        int j= ehdr->e_phnum;
+        int j= e_phnum;
         phdr= phdri;
-        for (; --j>=0; ++phdr) if (Elf32_Phdr::PT_DYNAMIC==phdr->p_type) {
-            dynseg= (Elf32_Dyn const *)(phdr->p_offset + file_image);
+        for (; --j>=0; ++phdr) if (Elf32_Phdr::PT_DYNAMIC==get_native32(&phdr->p_type)) {
+            dynseg= (Elf32_Dyn const *)(get_native32(&phdr->p_offset) + file_image);
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
@@ -945,11 +947,12 @@ bool PackLinuxElf32::canPack()
                 break;
             }
             if (sec_dynsym) {
-                Elf32_Sym const *symp = (Elf32_Sym const *)(sec_dynsym->sh_offset + file_image);
+                Elf32_Sym const *symp = (Elf32_Sym const *)(get_native32(&sec_dynsym->sh_offset) + file_image);
                 Elf32_Sym const *const symlwa = (Elf32_Sym const *)(
-                    sec_dynsym->sh_size + sec_dynsym->sh_offset + file_image);
+                    get_native32(&sec_dynsym->sh_size) +
+                    get_native32(&sec_dynsym->sh_offset) + file_image);
                 for (; symp < symlwa; ++symp)
-                if (0==strcmp(run_start[j], symp->st_name + dynstr)) {
+                if (0==strcmp(run_start[j], get_native32(&symp->st_name) + dynstr)) {
                     goto found;
                 }
             }
