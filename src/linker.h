@@ -198,6 +198,8 @@ protected:
 class ElfLinkerMipsBE : public ElfLinker
 {
     typedef ElfLinker super;
+public:
+    ElfLinkerMipsBE() { bele = &N_BELE_RTP::be_policy; }
 protected:
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
