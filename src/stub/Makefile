@@ -814,10 +814,10 @@ m68k-atari.tos.h : $(srcdir)/src/$$T.S
 
 # BUG: generate bad data [byte-swapped] using 'mipsel', but at least 'make' completes.
 mipseb.r3000-linux.elf%.h : tc_list = mipseb.r3000-linux.elf default
-mipseb.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
+mipseb.r3000-linux.elf%.h : tc_bfdname = elf32-bigmips
 
-tc.mipseb.r3000-linux.elf.as   = mipsel-elf-as-20060406 -O -mno-pdr
-tc.mipseb.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mipseb.r3000-linux.elf.as   = mips-linux-as-2.17 -O -mno-pdr
+tc.mipseb.r3000-linux.elf.gcc  = mips-linux-gcc-4.1.2 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
 tc.mipseb.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.mipseb.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 

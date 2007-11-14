@@ -28,8 +28,7 @@
  */
 
 
-/* 2007-11-12: BUG: should be elf32-bigmips, but that does not work yet */
-OUTPUT_FORMAT("elf32-littlemips", "elf32-littlemips", "elf32-littlemips")
+OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips", "elf32-bigmips")
 OUTPUT_ARCH(mips)
 /*ENTRY(_start)*/
 PHDRS
