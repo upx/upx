@@ -88,8 +88,8 @@ STUBS += i386-linux.kernel.vmlinux-head.h
 STUBS += i386-linux.kernel.vmlinuz.h
 STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
-STUBS += mipseb.r3000-linux.elf-entry.h
-STUBS += mipseb.r3000-linux.elf-fold.h
+STUBS += mips.r3000-linux.elf-entry.h
+STUBS += mips.r3000-linux.elf-fold.h
 STUBS += mipsel.r3000-ps1.h
 STUBS += mipsel.r3000-linux.elf-entry.h
 STUBS += mipsel.r3000-linux.elf-fold.h
@@ -809,18 +809,18 @@ m68k-atari.tos.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // mipseb.r3000-linux.elf
+# // mips.r3000-linux.elf
 # ************************************************************************/
 
-mipseb.r3000-linux.elf%.h : tc_list = mipseb.r3000-linux.elf default
-mipseb.r3000-linux.elf%.h : tc_bfdname = elf32-bigmips
+mips.r3000-linux.elf%.h : tc_list = mips.r3000-linux.elf default
+mips.r3000-linux.elf%.h : tc_bfdname = elf32-bigmips
 
-tc.mipseb.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EB -O -mno-pdr
-tc.mipseb.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
-tc.mipseb.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.mipseb.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.mips.r3000-linux.elf.as   = mipsel-elf-as-20060406 -EB -O -mno-pdr
+tc.mips.r3000-linux.elf.gcc  = mipsel-linux-gcc-4.1.1 -meb -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mips.r3000-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-mipseb.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
+mips.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
 	$(call tc,pp-as) -D_TARGET_LINUX_ $< -o - | $(RTRIM) > tmp/$T.i
@@ -833,17 +833,17 @@ endif
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-mipseb.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mipseb.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
+mips.r3000-linux.elf-fold.h : tmp/$$T.o tmp/mips.r3000-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/mipseb.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
+tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/mipseb.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
 	sed -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s

@@ -473,7 +473,7 @@ public:
     virtual ~PackLinuxElf32mipseb();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_MIPSEB; }
     virtual const char *getName() const { return "linux/mipseb"; }
-    virtual const char *getFullName(const options_t *) const { return "mipseb-linux.elf"; }
+    virtual const char *getFullName(const options_t *) const { return "mips-linux.elf"; }
     virtual const int *getFilters() const;
 
 protected:

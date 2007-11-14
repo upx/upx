@@ -1,5 +1,5 @@
-/* mipseb.r3000-linux.elf-fold.h
-   created from mipseb.r3000-linux.elf-fold.bin, 2560 (0xa00) bytes
+/* mips.r3000-linux.elf-fold.h
+   created from mips.r3000-linux.elf-fold.bin, 2560 (0xa00) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -28,11 +28,11 @@
  */
 
 
-#define STUB_MIPSEB_R3000_LINUX_ELF_FOLD_SIZE    2560
-#define STUB_MIPSEB_R3000_LINUX_ELF_FOLD_ADLER32 0x046f2e6d
-#define STUB_MIPSEB_R3000_LINUX_ELF_FOLD_CRC32   0xaafb790d
+#define STUB_MIPS_R3000_LINUX_ELF_FOLD_SIZE    2560
+#define STUB_MIPS_R3000_LINUX_ELF_FOLD_ADLER32 0x046f2e6d
+#define STUB_MIPS_R3000_LINUX_ELF_FOLD_CRC32   0xaafb790d
 
-unsigned char stub_mipseb_r3000_linux_elf_fold[2560] = {
+unsigned char stub_mips_r3000_linux_elf_fold[2560] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  2,  0,  8,  0,  0,  0,  1,  0, 16,  0,128,  0,  0,  0, 52,   /* 0x  10 */
   0,  0,  0,  0,  0,  0, 48,  1,  0, 52,  0, 32,  0,  2,  0,  0,   /* 0x  20 */

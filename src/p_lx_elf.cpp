@@ -760,16 +760,16 @@ PackLinuxElf32mipsel::buildLoader(Filter const *ft)
 }
 
 static const
-#include "stub/mipseb.r3000-linux.elf-entry.h"
+#include "stub/mips.r3000-linux.elf-entry.h"
 static const
-#include "stub/mipseb.r3000-linux.elf-fold.h"
+#include "stub/mips.r3000-linux.elf-fold.h"
 
 void
 PackLinuxElf32mipseb::buildLoader(Filter const *ft)
 {
     buildLinuxLoader(
-        stub_mipseb_r3000_linux_elf_entry, sizeof(stub_mipseb_r3000_linux_elf_entry),
-        stub_mipseb_r3000_linux_elf_fold,  sizeof(stub_mipseb_r3000_linux_elf_fold), ft);
+        stub_mips_r3000_linux_elf_entry, sizeof(stub_mips_r3000_linux_elf_entry),
+        stub_mips_r3000_linux_elf_fold,  sizeof(stub_mips_r3000_linux_elf_fold), ft);
 }
 
 static const
@@ -1319,7 +1319,7 @@ void PackLinuxElf32mipseb::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
     cprElfHdr3 h3;
-    memcpy(&h3, stub_mipseb_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    memcpy(&h3, stub_mips_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, get_native16(&ehdri.e_phnum)) );
 }
 
