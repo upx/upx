@@ -29,13 +29,13 @@
 
 
 #define STUB_MIPSEB_R3000_LINUX_ELF_ENTRY_SIZE    10218
-#define STUB_MIPSEB_R3000_LINUX_ELF_ENTRY_ADLER32 0xcf7e81ee
-#define STUB_MIPSEB_R3000_LINUX_ELF_ENTRY_CRC32   0xbc6803c2
+#define STUB_MIPSEB_R3000_LINUX_ELF_ENTRY_ADLER32 0x532081de
+#define STUB_MIPSEB_R3000_LINUX_ELF_ENTRY_CRC32   0xf0aa70ce
 
 unsigned char stub_mipseb_r3000_linux_elf_entry[10218] = {
 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x   0 */
   0,  1,  0,  8,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  10 */
-  0,  0, 30,  0,  0,  0, 16,  1,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */
+  0,  0, 30,  0,  0,  0,  0,  1,  0, 52,  0,  0,  0,  0,  0, 40,   /* 0x  20 */
   0, 21,  0, 18,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   /* 0x  30 */
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4, 17,  0, 43,   /* 0x  40 */
  39,247,  0,  0, 60, 13,128,  0,  1,160, 72, 33, 36, 11,  0,  1,   /* 0x  50 */
