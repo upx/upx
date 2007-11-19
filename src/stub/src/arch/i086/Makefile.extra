@@ -43,10 +43,15 @@ DOSBOX = dosbox
 DOSBOX = /usr/bin/time -p dosbox -exit
 
 ifneq ($(wildcard /usr/bin/wine /usr/local/bin/wine),)
-WINEENV = @env
-WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME LANG LC_ALL PATH USER TERM)
-winedir_s = z:$(shell winepath -s $(realpath $1))
-winedir_w = $(shell winepath -w $(realpath $1))
+##WINEENV = @env
+WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME LANG LC_ALL PATH USER TERM WINEPREFIX)
+ifdef WINEPREFIX
+winedir_s = z:$(shell WINEPREFIX='$(WINEPREFIX)' winepath -s '$(realpath $1)')
+winedir_w =   $(shell WINEPREFIX='$(WINEPREFIX)' winepath -w '$(realpath $1)')
+else
+winedir_s = z:$(shell winepath -s '$(realpath $1)')
+winedir_w =   $(shell winepath -w '$(realpath $1)')
+endif
 else
 WINEENV = false 'WINEENV'
 winedir_s = $1
