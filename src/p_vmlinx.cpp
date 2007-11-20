@@ -485,9 +485,7 @@ void prep_kernel(unsigned long a1, unsigned long a2)
     const unsigned lsize = getLoaderSize();
 
     defineDecompressorSymbols();
-    if (ft.id!=0) {
-        defineFilterSymbols(&ft);
-    }
+    defineFilterSymbols(&ft);
     relocateLoader();
 
     MemBuffer loader(lsize);
