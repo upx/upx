@@ -133,14 +133,20 @@ int PackVmlinuzI386::decompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
     char const *p = (char const *)&obuf[setup_size];
-    for (int j= 0; j < 0x200; ++j, ++p)
-    if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
-        /* whole megabyte < 16MB */
-        physical_start = get_le32(1+ p);
-        break;
+    for (int j= 0; j < 0x200; ++j, ++p) {
+        if (0==memcmp("\xE8\x00\x00\x00\x00\x5D", p, 6)) {
+            /* "call 1f; 1f: pop %ebp"  determines actual execution address; */
+            /* linux-2.6.21 (spring 2007) and later; upx stub needs work. */
+            throwCantPack("Relocatable kernel is not yet supported");
+        }
+        // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
+        if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
+            /* whole megabyte < 16MB */
+            physical_start = get_le32(1+ p);
+            break;
+        }
     }
 
     checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
