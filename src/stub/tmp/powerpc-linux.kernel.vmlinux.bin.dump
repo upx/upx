@@ -1,4 +1,4 @@
-tmp/powerpc-linux.kernel.vmlinux.bin:     file format elf32-powerpc
+file format elf32-powerpc
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

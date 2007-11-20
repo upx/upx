@@ -1,4 +1,4 @@
-tmp/mipsel.r3000-linux.elf-entry.bin:     file format elf32-littlemips
+file format elf32-littlemips
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

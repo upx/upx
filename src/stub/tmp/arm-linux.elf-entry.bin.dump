@@ -1,4 +1,4 @@
-tmp/arm-linux.elf-entry.bin:     file format elf32-littlearm
+file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

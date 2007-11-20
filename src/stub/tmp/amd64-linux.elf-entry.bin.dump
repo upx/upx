@@ -1,4 +1,4 @@
-tmp/amd64-linux.elf-entry.bin:     file format elf64-x86-64
+file format elf64-x86-64
 
 Sections:
 Idx Name          Size      VMA               LMA               File off  Algn  Flags

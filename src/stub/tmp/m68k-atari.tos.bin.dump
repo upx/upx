@@ -1,4 +1,4 @@
-tmp/m68k-atari.tos.bin:     file format elf32-m68k
+file format elf32-m68k
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

@@ -1,4 +1,4 @@
-tmp/arm.v4a-wince.pe.bin:     file format elf32-littlearm
+file format elf32-littlearm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

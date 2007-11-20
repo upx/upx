@@ -1,4 +1,4 @@
-tmp/mips.r3000-linux.elf-entry.bin:     file format elf32-bigmips
+file format elf32-bigmips
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

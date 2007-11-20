@@ -1,4 +1,4 @@
-tmp/armeb-linux.elf-entry.bin:     file format elf32-bigarm
+file format elf32-bigarm
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags

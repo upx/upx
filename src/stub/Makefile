@@ -222,9 +222,7 @@ define tc.default.f-embed_objinfo
 	$(call tc,objcopy) -R .text -R .data -R .bss $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
 	$(call tc,objdump) -Dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
-	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) > $1.dump
-## TODO: stub: remove filename from dump in order reduce diff noise when renaming files
-##	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed -e '1s/^.*: *file format/file format/' > $1.dump
+	$(call tc,objdump) -htr -w $1 | $(BLSQUEEZE) | sed -e '1s/^.*: *file format/file format/' > $1.dump
 	$(call tc,xstrip) --with-dump=$1.dump --create-bindump=$1.bindump $1
 	cat $1.dump >> $1
 endef

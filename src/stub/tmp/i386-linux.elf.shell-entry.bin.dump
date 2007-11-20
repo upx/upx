@@ -1,4 +1,4 @@
-tmp/i386-linux.elf.shell-entry.bin:     file format elf32-i386
+file format elf32-i386
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn  Flags
