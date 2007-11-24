@@ -149,7 +149,16 @@ L30:  # copy auxv
                 Elf32_Auxv_t *a3, f_decompr t0, f_unfilter t1 )
 */
         move jp,v0  # &entry
-        addiu sp, MAX_ELF_HDR  # un-alloca
+/* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
+   2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
+*/
+        addiu tmp, sp, MAX_ELF_HDR  # result of un-alloca
+        addiu sp, -300  # estimated stack bound of upx_main and below
+0:
+        addiu sp,4
+        bne sp,tmp,0b
+          sw $0,-4(sp)
+
         lw tmp,-sz_auxv+ a_val(s6)
           move a1,s2  # LENU
         beqz tmp,L40  # could not make escape hatch

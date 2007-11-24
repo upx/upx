@@ -184,12 +184,21 @@ lxlzma_srcdone  =  7*4
         li a2,ICACHE|DCACHE
         li v0,__NR_cacheflush
         syscall
-        move v0,t8  # return value from decompression
 
-        lw ra,lxlzma_sv_pc(sp)
         lw tmp,lxlzma_sv_sp(sp)
+        lw ra,lxlzma_sv_pc(sp)
+/* Workaround suspected glibc bug: elf/rtld.c assumes uninit local is zero.
+   2007-11-24 openembedded.org mipsel-linux 2.6.12.6/glibc 2.3.2
+*/
+        subu tmp,sp,tmp  # previous sp (un_alloca)
+0:
+        addiu sp,4
+        bne sp,tmp,0b
+          sw $0,-4(sp)
+
         jr ra
-          subu sp,sp,tmp  # un_alloca
+          move v0,t8  # return value from decompression
+      
 
 lzma_decode:
   section LZMA_DEC20
