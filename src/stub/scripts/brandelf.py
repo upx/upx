@@ -56,33 +56,36 @@ def do_file(fn):
         if not opts.dry_run:
             fp.write(s)
 
+    def brand_freebsd(s):
+        if e_ident[4:7] != s:
+            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+        write("\x09")
+    def brand_linux(s):
+        if e_ident[4:7] != s:
+            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+        ##write("\x00Linux\x00\x00\x00")
+        write("\x00" * 9)
+    def brand_openbsd(s):
+        if e_ident[4:7] != s:
+            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+        write("\x0c")
+
     if opts.bfdname[:3] == "elf":
         if e_ident[:4] != "\x7f\x45\x4c\x46":
             raise Exception, "%s is not %s" % (fn, "ELF")
         fp.seek(7, 0)
         if opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
-            if e_ident[4:7] != "\x01\x01\x01":
-                raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            write("\x09")
+            brand_freebsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
-            if e_ident[4:7] != "\x01\x01\x01":
-                raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            ##write("\x00Linux\x00\x00\x00")
-            write("\x00" * 9)
+            brand_linux("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
-            if e_ident[4:7] != "\x01\x01\x01":
-                raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            write("\x0c")
+            brand_openbsd("\x01\x01\x01")
+        elif opts.bfdname == "elf32-littlemips" and opts.elfosabi == "linux":
+            brand_linux("\x01\x01\x01")
         elif opts.bfdname == "elf32-powerpc" and opts.elfosabi == "linux":
-            if e_ident[4:7] != "\x01\x02\x01":
-                raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            ##write("\x00Linux\x00\x00\x00")
-            write("\x00" * 9)
+            brand_linux("\x01\x02\x01")
         elif opts.bfdname == "elf64-x86_64" and opts.elfosabi == "linux":
-            if e_ident[4:7] != "\x02\x01\x01":
-                raise Exception, "%s is not %s" % (fn, opts.bfdname)
-            ##write("\x00Linux\x00\x00\x00")
-            write("\x00" * 9)
+            brand_linux("\x02\x01\x01")
         else:
             done = 0
     else:
