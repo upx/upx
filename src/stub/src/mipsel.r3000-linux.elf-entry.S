@@ -139,6 +139,7 @@ lxlzma_sv_sp    = 10*4
 lxlzma_dst      =  9*4
 lxlzma_dstdone  =  8*4
 lxlzma_srcdone  =  7*4
+lxlzma_retval   = lxlzma_srcdone
 
 #define a4 t0
 #define a5 t1
@@ -178,12 +179,15 @@ lxlzma_srcdone  =  7*4
    anyway, because the probability history array (typically ushort[7990] or
    ushort[14134]) gets initialized.
 */
-        move t8,v0  # return value from decompression
+        sw v0,lxlzma_retval(sp)  # return value from decompression
+
         lw a0,lxlzma_dst(sp)
         lw a1,lxlzma_dstdone(sp)
         li a2,ICACHE|DCACHE
         li v0,__NR_cacheflush
         syscall
+
+        lw v0,lxlzma_retval(sp)  # return value from decompression
 
         lw tmp,lxlzma_sv_sp(sp)
         lw ra,lxlzma_sv_pc(sp)
@@ -197,7 +201,7 @@ lxlzma_srcdone  =  7*4
           sw $0,-4(sp)
 
         jr ra
-          move v0,t8  # return value from decompression
+          nop
       
 
 lzma_decode:
@@ -220,6 +224,8 @@ lzma_decode:
 eof:
         lw v1,(lxdstlen)  // original lxdst
         subu t8,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
+        addiu sp,-4
+        sw t8,0(sp)
 
         move a0,v1  // original lxdst
         subu a1,lxdst,v1  // actual length generated
@@ -228,8 +234,9 @@ eof:
         li v0,__NR_cacheflush
         syscall
 
+        lw v0,0(sp)
         jr ra
-          move v0,t8  # return value from decompression
+          addiu sp,4
 
 
   section ELFMAINY
