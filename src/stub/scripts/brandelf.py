@@ -56,6 +56,10 @@ def do_file(fn):
         if not opts.dry_run:
             fp.write(s)
 
+    def brand_arm(s):
+        if e_ident[4:7] != s:
+            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+        write("\x61") # ELFOSABI_ARM
     def brand_freebsd(s):
         if e_ident[4:7] != s:
             raise Exception, "%s is not %s" % (fn, opts.bfdname)
@@ -74,12 +78,16 @@ def do_file(fn):
         if e_ident[:4] != "\x7f\x45\x4c\x46":
             raise Exception, "%s is not %s" % (fn, "ELF")
         fp.seek(7, 0)
-        if opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
+        if opts.bfdname == "elf32-bigarm" and opts.elfosabi == "arm":
+            brand_arm("\x01\x02\x01")
+        elif opts.bfdname == "elf32-i386" and opts.elfosabi == "freebsd":
             brand_freebsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
             brand_linux("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
             brand_openbsd("\x01\x01\x01")
+        elif opts.bfdname == "elf32-littlearm" and opts.elfosabi == "arm":
+            brand_arm("\x01\x01\x01")
         elif opts.bfdname == "elf32-littlemips" and opts.elfosabi == "linux":
             brand_linux("\x01\x01\x01")
         elif opts.bfdname == "elf32-powerpc" and opts.elfosabi == "linux":
