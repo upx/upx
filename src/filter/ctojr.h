@@ -249,11 +249,11 @@ static int F(Filter *f)
     f->noncalls = noncalls;
     f->lastcall = lastcall;
 
-/*#ifdef TESTING*/
+#if 0 || defined(TESTING)
     printf("\ncalls=%d noncalls=%d noncalls2=%d text_size=%x calltrickoffset=%x\n",
         calls,noncalls,noncalls2,size,cto8);
     printf("CALL/JMP/JCC  %d  %d  %d\n",wtally[0],wtally[1],wtally[2]);
-/*#endif*/
+#endif
     return 0;
 }
 
