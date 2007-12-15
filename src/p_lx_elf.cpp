@@ -1104,7 +1104,7 @@ PackLinuxElf32::generateElfHdr(
     Elf32_Phdr const *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (phdr->PT_LOAD32 == get_native32(&phdr->p_type)) {
-            unsigned x = phdr->p_align >> lg2_page;
+            unsigned x = get_native32(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
             }
@@ -1228,7 +1228,7 @@ PackLinuxElf64::generateElfHdr(
     Elf64_Phdr const *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (phdr->PT_LOAD64 == get_native64(&phdr->p_type)) {
-            unsigned x = phdr->p_align >> lg2_page;
+            unsigned x = get_native64(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
             }
