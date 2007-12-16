@@ -2,9 +2,10 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.02 (XX XXX 2007):
+Changes in 3.02 (16 Dec 2007):
   * fix unmapping on arm-linux.elf
   * fix error checking in mmap for i386-linux.elf [triggered by -fPIE]
+  * bug fixes
 
 Changes in 3.01 (31 Jul 2007):
   * new options --no-mode, --no-owner and --no-time to disable preservation
