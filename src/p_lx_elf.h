@@ -131,19 +131,19 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
-	Elf32_Shdr const *shdri; // from input file
+    Elf32_Shdr const *shdri; // from input file
     unsigned page_mask;  // AND clears the offset-within-page
 
     Elf32_Dyn    const *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab;  // from DT_HASH
     unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
-	char const *shstrtab;   // via Elf32_Shdr
+    char const *shstrtab;   // via Elf32_Shdr
     int n_elf_shnum;  // via e_shnum
 
-	Elf32_Shdr const *sec_strndx;
-	Elf32_Shdr const *sec_dynsym;
-	Elf32_Shdr const *sec_dynstr;
+    Elf32_Shdr const *sec_strndx;
+    Elf32_Shdr const *sec_dynsym;
+    Elf32_Shdr const *sec_dynstr;
 
     struct cprElfHdr1 {
         Elf32_Ehdr ehdr;
