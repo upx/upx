@@ -545,12 +545,14 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
 
 const char *upx_lzma_version_string(void)
 {
-#if (WITH_LZMA == 0x449)
+#if (WITH_LZMA + 0 == 0x457)
+    return "4.57";
+#elif (WITH_LZMA + 0 == 0x449)
     return "4.49";
-#elif (WITH_LZMA == 0x443)
+#elif (WITH_LZMA + 0 == 0x443)
     return "4.43";
 #else
-#  error "unknown version"
+#  error "unknown WITH_LZMA version"
     return NULL;
 #endif
 }

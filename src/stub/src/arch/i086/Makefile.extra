@@ -107,7 +107,7 @@ $c += -O1 -1
 $c += -w
 $c += -D__INT_MAX__=32767
 $c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
-ifeq ($(UPX_LZMA_VERSION),0x449)
+ifneq ($(findstring .$(UPX_LZMA_VERSION).,.0x449.0x457.),)
 $c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/Compress/Lzma))
 else
 $c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/7zip/Compress/LZMA_C))
