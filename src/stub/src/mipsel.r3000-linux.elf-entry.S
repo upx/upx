@@ -202,7 +202,7 @@ lxlzma_retval   = lxlzma_srcdone
 
         jr ra
           nop
-      
+
 
 lzma_decode:
   section LZMA_DEC20
