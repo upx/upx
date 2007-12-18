@@ -38,19 +38,34 @@ __minienv_varlist = $(foreach v,$1,$(if $($v),$v))
 # enumerate the names of all environment variables
 __minienv_expand = $(foreach v,$(call __minienv_varlist,$1),$v='$($v)')
 
-DOSBOX = true
-DOSBOX = dosbox
-DOSBOX = /usr/bin/time -p dosbox -exit
+ifndef DOSBOX
+DOSBOX := $(shell which dosbox 2>/dev/null)
+endif
+ifdef DOSBOX
+ifndef RUN_DOSBOX
+RUN_DOSBOX = $(DOSBOX)
+RUN_DOSBOX = /usr/bin/time -p $(DOSBOX) -exit
+endif
+endif
 
-ifneq ($(wildcard /usr/bin/wine /usr/local/bin/wine),)
+ifndef WINE
+WINE := $(shell which wine 2>/dev/null)
+endif
+ifdef WINE
+ifndef WINEPATH
+WINEPATH := $(shell which winepath 2>/dev/null)
+endif
+endif
+
+ifdef WINE
 ##WINEENV = @env
 WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME LANG LC_ALL PATH USER TERM WINEPREFIX)
 ifdef WINEPREFIX
-winedir_s = z:$(shell WINEPREFIX='$(WINEPREFIX)' winepath -s '$(realpath $1)')
-winedir_w =   $(shell WINEPREFIX='$(WINEPREFIX)' winepath -w '$(realpath $1)')
+winedir_s = z:$(shell WINEPREFIX='$(WINEPREFIX)' $(WINEPATH) -s '$(realpath $1)')
+winedir_w =   $(shell WINEPREFIX='$(WINEPREFIX)' $(WINEPATH) -w '$(realpath $1)')
 else
-winedir_s = z:$(shell winepath -s '$(realpath $1)')
-winedir_w =   $(shell winepath -w '$(realpath $1)')
+winedir_s = z:$(shell $(WINEPATH) -s '$(realpath $1)')
+winedir_w =   $(shell $(WINEPATH) -w '$(realpath $1)')
 endif
 else
 WINEENV = false 'WINEENV'
@@ -60,7 +75,8 @@ endif
 
 # work around limitations of wine's cmd.exe
 define mkbat
-	$(ECHO_E) '@set PATH=$3;%PATH%' > $1
+	rm -f $1
+	$(ECHO_E) '@set PATH=$3;%PATH%' >> $1
 	$(ECHO_E) '@set INCLUDE=$4' >> $1
 	$(ECHO_E) '@set LIB=$5' >> $1
 	$(ECHO_E) '@set a=%1 %2 %3 %4 %5 %6 %7 %8 %9' >> $1
@@ -73,7 +89,7 @@ define mkbat
 	$(UNIX2DOS) $1
 endef
 
-TMP_DEPS = tmp/.tmp-stamp tmp/bcc.bat tmp/cl.bat tmp/dmc.bat
+TMP_DEPS = tmp/.tmp-stamp tmp/bcc.bat tmp/bcc.rsp tmp/cl.bat tmp/cl.rsp tmp/dmc.bat tmp/dmc.rsp
 
 tmp/bcc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
 	@$(call mkbat,$@,bcc.exe,$(call winedir_w,$(BC502DIR)/bin))
@@ -81,6 +97,34 @@ tmp/cl.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
 	@$(call mkbat,$@,cl.exe,$(call winedir_w,$(VC152DIR)/bin),$(call winedir_w,$(VC152DIR)/include),$(call winedir_w,$(VC152DIR)/lib))
 tmp/dmc.bat: tmp/.tmp-stamp $(MAKEFILE_LIST)
 	@$(call mkbat,$@,dmc.exe,$(call winedir_w,$(DM849DIR)/bin))
+
+tmp/bcc.rsp: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@rm -f $@
+	@$(ECHO_E) '-D__INT_MAX__=32767' >> $@
+	@$(ECHO_E) '-DWITH_LZMA=$(UPX_LZMA_VERSION)' >> $@
+ifneq ($(findstring .$(UPX_LZMA_VERSION).,.0x449.0x457.),)
+	@$(ECHO_E) '-I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/Compress/Lzma))' >> $@
+else
+	@$(ECHO_E) '-I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/7zip/Compress/LZMA_C))' >> $@
+endif
+	@$(ECHO_E) '-I$(top_srcdir)/src' >> $@
+	@$(UNIX2DOS) $@
+
+tmp/cl.rsp: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@rm -f $@
+	@$(ECHO_E) '-D__INT_MAX__=32767' >> $@
+	@$(ECHO_E) '-DWITH_LZMA=$(UPX_LZMA_VERSION)' >> $@
+	@$(ECHO_E) '-I$(call winedir_w,$(UPX_LZMADIR))' >> $@
+	@$(ECHO_E) '-I$(call winedir_w,$(top_srcdir)/src)' >> $@
+	@$(UNIX2DOS) $@
+
+tmp/dmc.rsp: tmp/.tmp-stamp $(MAKEFILE_LIST)
+	@rm -f $@
+	@$(ECHO_E) '-D__INT_MAX__=32767' >> $@
+	@$(ECHO_E) '-DWITH_LZMA=$(UPX_LZMA_VERSION)' >> $@
+	@$(ECHO_E) '-I$(call winedir_w,$(UPX_LZMADIR))' >> $@
+	@$(ECHO_E) '-I$(call winedir_w,$(top_srcdir)/src)' >> $@
+	@$(UNIX2DOS) $@
 
 
 # /***********************************************************************
@@ -99,51 +143,41 @@ $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 
 # Borland C/C++ 5.02
+ifdef WINE
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 c := tc.method-lzma.bcc
-$c  = $(WINEENV) wine cmd.exe /c tmp/bcc.bat
+$c  = $(WINEENV) $(WINE) cmd.exe /c tmp/bcc.bat
 $c += -ms
 $c += -O1 -1
 $c += -w
-$c += -D__INT_MAX__=32767
-$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
-ifneq ($(findstring .$(UPX_LZMA_VERSION).,.0x449.0x457.),)
-$c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/Compress/Lzma))
-else
-$c += -I$(subst \,/,$(call winedir_w,$(UPX_LZMADIR)/C/7zip/Compress/LZMA_C))
+$c += @tmp/bcc.rsp
 endif
-$c += -I$(top_srcdir)/src
 endif
 
 # Digital Mars C/C++ 8.49
 # http://www.digitalmars.com/download/freecompiler.html
+ifdef WINE
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 c := tc.method-lzma.dmc
-$c  = $(WINEENV) DMC1='$(DMC1)' DMC2='$(DMC2)' wine cmd.exe /c tmp/dmc.bat
+$c  = $(WINEENV) $(WINE) cmd.exe /c tmp/dmc.bat
 $c += -ms -R
 $c += -NS
 $c += -w- -w7 -r
-$c += @DMC1 @DMC2
-DMC1 := -o -0
-DMC1 += -D__INT_MAX__=32767
-DMC1 += -DWITH_LZMA=$(UPX_LZMA_VERSION)
-DMC2 := -I$(call winedir_w,$(UPX_LZMADIR))
-DMC2 += -I$(call winedir_w,$(top_srcdir)/src)
+$c += -o -0
+$c += @tmp/dmc.rsp
+endif
 endif
 
 # Visual C/C++ 1.52 (8.00c)
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
 c := tc.method-lzma.cl
-$c  = $(WINEENV) CL='$(CL)' wine cmd.exe /c tmp/cl.bat
+$c  = $(WINEENV) $(WINE) cmd.exe /c tmp/cl.bat
+$c += -nologo
 $c += -AS -Gd
 $c += -Gy
 $c += -O2 -Gf -Gs -G0
 $c += -W4
-CL := -nologo
-CL += -D__INT_MAX__=32767
-CL += -DWITH_LZMA=$(UPX_LZMA_VERSION)
-CL += -I$(call winedir_s,$(UPX_LZMADIR))
-CL += -I$(call winedir_s,$(top_srcdir)/src)
+$c += @tmp/cl.rsp
 endif
 
 # Open Watcom C/C++ 1.6
@@ -179,17 +213,23 @@ tmp/lzma_d_c%.i : tmp/lzma_d_c%.S $(MAKEFILE_LIST)
 tmp/lzma_d_c%.S : lzma_d_c.c wdis2gas.py $(MAKEFILE_LIST) $(TMP_DEPS)
 	rm -f tmp/$T*.i tmp/$T*.o tmp/$T*.obj tmp/$T*.S
 # compile
+ifdef WINE
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 ##	$(call tc,bcc) $(PP_FLAGS) -c -otmp/$T_bc.obj $<
 ##	$(call tc,wdis) tmp/$T_bc.obj | $(RTRIM) > tmp/$T_bc.obj.disasm
 endif
+endif
+ifdef WINE
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 	$(call tc,dmc) $(PP_FLAGS) -c -otmp/$T_dm.obj $<
 	$(call tc,wdis) tmp/$T_dm.obj | $(RTRIM) > tmp/$T_dm.obj.disasm
 endif
+endif
+ifdef WINE
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
 	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T_vc.obj $<
 	$(call tc,wdis) tmp/$T_vc.obj | $(RTRIM) > tmp/$T_vc.obj.disasm
+endif
 endif
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
 	$(call tc,wcl) $(PP_FLAGS) -c -fo=tmp/$T_wc.obj $<
@@ -217,6 +257,7 @@ ifneq ($(wildcard $(WATCOM)/binl/wdis),)
 
 CC_TEST_DEPS = $(MAKEFILE_LIST) $(TMP_DEPS)
 
+ifdef WINE
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 cc_test_bc : tc_list = method-lzma arch-i086 default
 cc_test_bc: cc_test.c $(CC_TEST_DEPS)
@@ -224,7 +265,9 @@ cc_test_bc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 cc_test-all: cc_test_bc
 endif
+endif
 
+ifdef WINE
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 cc_test_dm : tc_list = method-lzma arch-i086 default
 cc_test_dm: cc_test.c $(CC_TEST_DEPS)
@@ -232,13 +275,16 @@ cc_test_dm: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 cc_test-all: cc_test_dm
 endif
+endif
 
+ifdef WINE
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
 cc_test_vc : tc_list = method-lzma arch-i086 default
 cc_test_vc: cc_test.c $(CC_TEST_DEPS)
 	$(call tc,cl) $(PP_FLAGS) -c -Fotmp/$T.obj $<
 	$(call tc,wdis) tmp/$T.obj | $(RTRIM) > tmp/$T.obj.disasm
 cc_test-all: cc_test_vc
+endif
 endif
 
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
@@ -266,34 +312,46 @@ tmp/l_test_gcc_i386.out: l_test.c $(L_TEST_DEPS)
 	./$@
 l_test-all: tmp/l_test_gcc_i386.out
 
+ifdef WINE
 ifneq ($(wildcard $(BC502DIR)/bin/bcc.exe),)
 tmp/l_test_bc.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_bc.exe: l_test.c $(L_TEST_DEPS)
 	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,bcc) -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
-	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
+ifdef RUN_DOSBOX
+	cp -p $@ tmp/test.exe && $(RUN_DOSBOX) tmp/test.exe
+endif
 ##l_test-all: tmp/l_test_bc.exe
 endif
+endif
 
+ifdef WINE
 ifneq ($(wildcard $(DM849DIR)/bin/dmc.exe),)
 tmp/l_test_dm.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_dm.exe: l_test.c $(L_TEST_DEPS)
 	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,dmc) -ml -o$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
-	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
+ifdef RUN_DOSBOX
+	cp -p $@ tmp/test.exe && $(RUN_DOSBOX) tmp/test.exe
+endif
 l_test-all: tmp/l_test_dm.exe
 endif
+endif
 
+ifdef WINE
 ifneq ($(wildcard $(VC152DIR)/bin/cl.exe),)
 tmp/l_test_vc.%  : tc_list = method-lzma arch-i086 default
 tmp/l_test_vc.exe: l_test.c $(L_TEST_DEPS)
 	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,cl) -Fe$(subst /,\\,$@) $<
 	@rm -f l_test.o l_test.obj
-	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
+ifdef RUN_DOSBOX
+	cp -p $@ tmp/test.exe && $(RUN_DOSBOX) tmp/test.exe
+endif
 l_test-all: tmp/l_test_vc.exe
+endif
 endif
 
 ifneq ($(wildcard $(WATCOM)/binl/wcl),)
@@ -302,7 +360,9 @@ tmp/l_test_wc.exe: l_test.c $(L_TEST_DEPS)
 	@rm -f l_test.o l_test.obj tmp/test.exe $@
 	$(call tc,wcl) -fe=$@ $<
 	@rm -f l_test.o l_test.obj
-	cp -p $@ tmp/test.exe && $(DOSBOX) tmp/test.exe
+ifdef RUN_DOSBOX
+	cp -p $@ tmp/test.exe && $(RUN_DOSBOX) tmp/test.exe
+endif
 l_test-all: tmp/l_test_wc.exe
 endif
 
