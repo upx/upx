@@ -45,6 +45,11 @@ enum {
 struct options_t {
     int cmd;
 
+    // mp (meta) options
+    int mp_compress_task;
+    bool mp_query_format;
+    bool mp_query_num_tasks;
+
     // compression options
     int method;
     bool method_lzma_seen;

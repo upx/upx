@@ -633,6 +633,17 @@ static int do_option(int optc, const char *arg)
         opt->debug.disable_random_id = true;
         break;
 
+    // mp (meta)
+    case 501:
+        getoptvar(&opt->mp_compress_task, 1, 999999, arg);
+        break;
+    case 502:
+        opt->mp_query_format = true;
+        break;
+    case 503:
+        opt->mp_query_num_tasks = true;
+        break;
+
     // misc
     case 512:
         opt->console = CON_FILE;
@@ -1035,6 +1046,11 @@ static const struct mfx_option longopts[] =
     {"no-align",         0x10, 0, 671},
     {"8-bit",            0x10, 0, 672},
     {"8mb-ram",          0x10, 0, 673},
+
+    // mp (meta) options
+    {"mp-compress-task",        0x31, 0, 501},
+    {"mp-query-format",         0x10, 0, 502},
+    {"mp-query-num-tasks",      0x10, 0, 503},
 
     { NULL, 0, NULL, 0 }
 };
