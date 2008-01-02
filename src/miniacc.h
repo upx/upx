@@ -2,6 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
@@ -38,7 +39,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20070113L
+#define ACC_VERSION     20080102L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -419,6 +420,9 @@
 #  elif defined(__NT__) && (__WATCOMC__ < 1100)
 #    define ACC_OS_WIN32        1
 #    define ACC_INFO_OS         "win32"
+#  elif defined(__linux__) || defined(__LINUX__)
+#    define ACC_OS_POSIX        1
+#    define ACC_INFO_OS         "posix"
 #  else
 #    error "please specify a target using the -bt compiler option"
 #  endif
@@ -464,7 +468,7 @@
 #  elif defined(__IRIX__) || defined(__irix__)
 #    define ACC_OS_POSIX_IRIX       1
 #    define ACC_INFO_OS_POSIX       "irix"
-#  elif defined(__linux__) || defined(__linux)
+#  elif defined(__linux__) || defined(__linux) || defined(__LINUX__)
 #    define ACC_OS_POSIX_LINUX      1
 #    define ACC_INFO_OS_POSIX       "linux"
 #  elif defined(__APPLE__) || defined(__MACOS__)
@@ -896,7 +900,7 @@
 #  endif
 #endif
 #if !defined(__ACC_MM_OVERRIDE)
-#if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
+#if (ACC_ARCH_I086)
 #if (UINT_MAX != ACC_0xffffL)
 #  error "this should not happen"
 #endif
@@ -927,6 +931,7 @@
 #else
 #  error "unknown memory model"
 #endif
+#if (ACC_OS_DOS16 || ACC_OS_OS216 || ACC_OS_WIN16)
 #define ACC_HAVE_MM_HUGE_PTR        1
 #define ACC_HAVE_MM_HUGE_ARRAY      1
 #if (ACC_MM_TINY)
@@ -978,6 +983,7 @@ extern "C" {
 #endif
 #ifdef __cplusplus
 }
+#endif
 #endif
 #elif (ACC_ARCH_C166)
 #if !defined(__MODEL__)
@@ -1148,6 +1154,8 @@ extern "C" {
 #    if (ACC_CC_GNUC >= 0x030300ul)
 #      if ((__LONG_MAX__)+0 == (__LONG_LONG_MAX__)+0)
 #        define ACC_SIZEOF_LONG_LONG      ACC_SIZEOF_LONG
+#      elif (__ACC_LSR(__LONG_LONG_MAX__,30) == 1)
+#        define ACC_SIZEOF_LONG_LONG      4
 #      endif
 #    endif
 #  endif
@@ -1396,12 +1404,14 @@ extern "C" {
 #  define ACC_INFO_LIBC         "default"
 #endif
 #endif
+#if !defined(__acc_gnuc_extension__)
 #if (ACC_CC_GNUC >= 0x020800ul)
 #  define __acc_gnuc_extension__    __extension__
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_gnuc_extension__    __extension__
 #else
 #  define __acc_gnuc_extension__
+#endif
 #endif
 #if !defined(__acc_ua_volatile)
 #  define __acc_ua_volatile     volatile
@@ -1707,6 +1717,8 @@ extern "C" {
 #  else
 #    define __acc_cdecl_sighandler      __cdecl
 #  endif
+#elif (ACC_ARCH_I386) && (ACC_CC_WATCOMC)
+#  define __acc_cdecl                   __cdecl
 #elif (ACC_ARCH_M68K && ACC_OS_TOS && (ACC_CC_PUREC || ACC_CC_TURBOC))
 #  define __acc_cdecl                   cdecl
 #endif
@@ -1728,6 +1740,7 @@ extern "C" {
 #if !defined(__acc_cdecl_va)
 #  define __acc_cdecl_va                __acc_cdecl
 #endif
+#if !defined(ACC_CFG_NO_WINDOWS_H)
 #if (ACC_OS_CYGWIN || (ACC_OS_EMX && defined(__RSXNT__)) || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  if (ACC_CC_WATCOMC && (__WATCOMC__ < 1000))
 #  elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
@@ -1735,6 +1748,7 @@ extern "C" {
 #  else
 #    define ACC_HAVE_WINDOWS_H 1
 #  endif
+#endif
 #endif
 #if (ACC_ARCH_ALPHA)
 #  define ACC_OPT_AVOID_UINT_INDEX  1
@@ -2143,6 +2157,7 @@ extern "C" {
 #define HAVE_DIFFTIME 1
 #define HAVE_FILENO 1
 #define HAVE_FSTAT 1
+#define HAVE_GETENV 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GMTIME 1
 #define HAVE_ISATTY 1
@@ -2285,7 +2300,7 @@ extern "C" {
 #  if (_MSC_VER < 700)
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
-#  else
+#  elif (_MSC_VER < 1500)
 #    define snprintf _snprintf
 #    define vsnprintf _vsnprintf
 #  endif
@@ -2704,6 +2719,9 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  elif (ACC_SIZEOF_LONG >= 4)
 #    define ACC_INT32_C(c)      c##L
 #    define ACC_UINT32_C(c)     c##UL
+#  elif (ACC_SIZEOF_LONG_LONG >= 4)
+#    define ACC_INT32_C(c)      c##LL
+#    define ACC_UINT32_C(c)     c##ULL
 #  else
 #    error "ACC_INT32_C"
 #  endif
@@ -2799,7 +2817,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #  define ACC_UA_GET_LE16(p)    ACC_UA_GET16(p)
 #  define ACC_UA_SET_LE16(p,v)  ACC_UA_SET16(p,v)
 #endif
-#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_forceinline)
+#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE16)
 extern __acc_forceinline unsigned long __ACC_UA_GET_LE16(__acc_ua_volatile const void* pp);
@@ -2835,7 +2853,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsi
 #  define ACC_UA_GET_LE32(p)    ACC_UA_GET32(p)
 #  define ACC_UA_SET_LE32(p,v)  ACC_UA_SET32(p,v)
 #endif
-#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_forceinline)
+#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE32)
 extern __acc_forceinline unsigned long __ACC_UA_GET_LE32(__acc_ua_volatile const void* pp);
@@ -3129,6 +3147,9 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  elif (ACC_SIZEOF_LONG >= 4)
 #    define ACC_INT32_C(c)      c##L
 #    define ACC_UINT32_C(c)     c##UL
+#  elif (ACC_SIZEOF_LONG_LONG >= 4)
+#    define ACC_INT32_C(c)      c##LL
+#    define ACC_UINT32_C(c)     c##ULL
 #  else
 #    error "ACC_INT32_C"
 #  endif
@@ -3223,7 +3244,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #  define ACC_UA_GET_LE16(p)    ACC_UA_GET16(p)
 #  define ACC_UA_SET_LE16(p,v)  ACC_UA_SET16(p,v)
 #endif
-#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_forceinline)
+#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE16)
 extern __acc_forceinline unsigned long __ACC_UA_GET_LE16(__acc_ua_volatile const void* pp);
@@ -3259,7 +3280,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsi
 #  define ACC_UA_GET_LE32(p)    ACC_UA_GET32(p)
 #  define ACC_UA_SET_LE32(p,v)  ACC_UA_SET32(p,v)
 #endif
-#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_forceinline)
+#if !defined(ACC_CFG_NO_INLINE_ASM) && defined(__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE32)
 extern __acc_forceinline unsigned long __ACC_UA_GET_LE32(__acc_ua_volatile const void* pp);
@@ -3835,6 +3856,7 @@ ACCLIB_EXTERN(int, acc_closedir) (acc_dir_p);
 #  define acc_stackavail()  _chkstack()
 #endif
 ACCLIB_EXTERN(acclib_handle_t, acc_get_osfhandle) (int);
+ACCLIB_EXTERN(const char *, acc_getenv) (const char *);
 ACCLIB_EXTERN(int, acc_isatty) (int);
 ACCLIB_EXTERN(int, acc_mkdir) (const char*, unsigned);
 ACCLIB_EXTERN(int, acc_rmdir) (const char*);
@@ -3849,7 +3871,8 @@ ACCLIB_EXTERN_NOINLINE(void, acc_debug_break) (void);
 ACCLIB_EXTERN_NOINLINE(void, acc_debug_nop) (void);
 ACCLIB_EXTERN_NOINLINE(int, acc_debug_align_check_query) (void);
 ACCLIB_EXTERN_NOINLINE(int, acc_debug_align_check_enable) (int);
-ACCLIB_EXTERN_NOINLINE(int, acc_debug_running_on_valgrind) (void);
+ACCLIB_EXTERN_NOINLINE(unsigned, acc_debug_running_on_qemu) (void);
+ACCLIB_EXTERN_NOINLINE(unsigned, acc_debug_running_on_valgrind) (void);
 #if !defined(acc_int64l_t) || defined(ACC_CFG_NO_DOUBLE)
 #  undef __ACCLIB_PCLOCK_USE_RDTSC
 #  undef __ACCLIB_PCLOCK_USE_PERFCTR
@@ -4603,10 +4626,6 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
     ACCCHK_ASSERT(sizeof(size_t) == 4)
     ACCCHK_ASSERT(sizeof(ptrdiff_t) == 4)
     ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
-#elif (ACC_ARCH_AMD64)
-    ACCCHK_ASSERT(sizeof(size_t) == 8)
-    ACCCHK_ASSERT(sizeof(ptrdiff_t) == 8)
-    ACCCHK_ASSERT(sizeof(acc_intptr_t) == sizeof(void *))
 #endif
 #if (ACC_OS_DOS32 || ACC_OS_OS2 || ACC_OS_WIN32)
     ACCCHK_ASSERT(sizeof(size_t) == 4)
@@ -5276,213 +5295,6 @@ ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
     return 0;
 }
 #endif
-#endif
-#if defined(ACC_WANT_ACCLIB_GETOPT)
-#  undef ACC_WANT_ACCLIB_GETOPT
-#define __ACCLIB_GETOPT_CH_INCLUDED 1
-#if !defined(ACCLIB_PUBLIC)
-#  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
-#endif
-ACCLIB_PUBLIC(void, acc_getopt_init) (acc_getopt_p g,
-                                      int start_argc, int argc, char** argv)
-{
-    memset(g, 0, sizeof(*g));
-    g->argc = argc;
-    g->argv = argv;
-    g->pending_rotate_first = g->pending_rotate_middle = g->optind = start_argc;
-}
-static int __ACCLIB_FUNCNAME(acc_getopt_rotate) (char **p, int first, int middle, int last)
-{
-    char** a; char** b;
-    if (first >= middle || middle >= last) return 0;
-    for (a = p + first, b = p + middle - 1; a < b; ++a, --b) {
-        char* t = *a; *a = *b; *b = t;
-    }
-    for (a = p + middle, b = p + last - 1; a < b; ++a, --b) {
-        char* t = *a; *a = *b; *b = t;
-    }
-    for (a = p + first, b = p + last - 1; a < b; ++a, --b) {
-        char* t = *a; *a = *b; *b = t;
-    }
-    return middle - first;
-}
-static int __acc_getopt_x(acc_getopt_p g, int ret, int oo, int flags, const char *f, ...)
-{
-    if (oo >= 0)
-        g->optopt = oo;
-    if (flags & 1)
-    {
-        if (g->shortpos == 0)
-            g->optind++;
-        else if (!g->argv[g->optind][++g->shortpos])
-            g->optind++, g->shortpos = 0;
-    }
-    if (f == NULL)
-        return ret;
-    if (g->opterr)
-    {
-#if !defined(HAVE_STDARG_H)
-        g->opterr(g, f, NULL);
-#else
-        va_list ap;
-        va_start(ap, f);
-        g->opterr(g, f, &ap);
-        va_end(ap);
-#endif
-    }
-    g->errcount++;
-    return ret;
-}
-ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
-                                const char* shortopts,
-                                const acc_getopt_longopt_p longopts,
-                                int* longind)
-{
-    int ordering = ACC_GETOPT_PERMUTE;
-    char *a;
-    int has_arg = 0;
-    char *arg;
-    unsigned char sc;
-    int i;
-    if (shortopts && (*shortopts == '-' || *shortopts == '+'))
-        ordering = *shortopts++ == '-' ? ACC_GETOPT_RETURN_IN_ORDER : ACC_GETOPT_REQUIRE_ORDER;
-    g->optarg = NULL;
-    g->optopt = '?';
-    if (longind != NULL)
-        *longind = -1;
-    if (g->eof || g->optind >= g->argc || g->argv == NULL)
-        goto acc_label_eof;
-    if (g->shortpos)
-        goto acc_label_next_shortopt;
-    g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
-    g->pending_rotate_first = g->pending_rotate_middle = g->optind;
-    if (ordering == ACC_GETOPT_PERMUTE)
-    {
-        while (g->optind < g->argc && !(g->argv[g->optind][0] == '-' && g->argv[g->optind][1]))
-            g->optind++;
-        g->pending_rotate_middle = g->optind;
-    }
-    if (g->optind >= g->argc)
-    {
-        g->optind = g->pending_rotate_first;
-    acc_label_eof:
-        g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
-        g->pending_rotate_first = g->pending_rotate_middle = g->optind;
-        g->eof = 1;
-        return -1;
-    }
-    a = g->argv[g->optind];
-    if (strcmp(a, "--") == 0)
-    {
-        g->optind++;
-        goto acc_label_eof;
-    }
-    if (!(a[0] == '-' && a[1]))
-    {
-        if (ordering == ACC_GETOPT_REQUIRE_ORDER)
-            goto acc_label_eof;
-        if (ordering == ACC_GETOPT_RETURN_IN_ORDER)
-        {
-            g->optarg = a;
-            g->optind++;
-            return 1;
-        }
-        __acc_getopt_x(g, -1, -1, 0, "invalid ordering %d", ordering);
-        goto acc_label_eof;
-    }
-    if (a[1] == '-')
-    {
-        const acc_getopt_longopt_p lo = NULL;
-        size_t match_chars;
-        for (arg = a + 2; *arg && *arg != '=' && *arg != '#'; )
-            ++arg;
-        match_chars = (size_t) (arg - (a + 2));
-        for (i = 0; longopts && longopts[i].name; ++i)
-        {
-            size_t n = match_chars;
-            size_t l = strlen(longopts[i].name);
-            if (longopts[i].has_arg & ACC_GETOPT_EXACT_ARG) n = l;
-            if (strncmp(a, longopts[i].name, n) != 0)
-                continue;
-            if (match_chars == l)
-            {
-                lo = &longopts[i];
-                break;
-            }
-            else if (lo == NULL)
-                lo = &longopts[i];
-            else
-                return __acc_getopt_x(g, '?', 0, 1, "option '%s' is ambiguous (could be '--%s' or '--%s')",
-                                      a, lo->name, longopts[i].name);
-        }
-        if (lo == NULL)
-            return __acc_getopt_x(g, '?', 0, 1, "unrecognized option '%s'", a);
-        switch (lo->has_arg & 0x2f)
-        {
-        case ACC_GETOPT_OPTIONAL_ARG:
-            break;
-        case ACC_GETOPT_REQUIRED_ARG:
-            if (*arg)
-                g->optarg = arg + 1;
-            else if (g->optind + 1 < g->argc)
-                g->optarg = g->argv[++g->optind];
-            else
-                return __acc_getopt_x(g, '?', 0, 1, "option '%s' requires an argument", lo->name);
-            g->optind++;
-            break;
-        case ACC_GETOPT_REQUIRED_ARG | 0x20:
-            break;
-        default:
-            if (*arg)
-                return __acc_getopt_x(g, '?', lo->val, 1, "option '%s' doesn't allow an argument", lo->name);
-            g->optind++;
-            break;
-        }
-        if (longind != NULL)
-            *longind = (int) (lo - longopts);
-        if (lo->flag != NULL)
-        {
-            *lo->flag = lo->val;
-            return 0;
-        }
-        return lo->val;
-    }
-    else
-    {
-        const char *sp;
-        g->shortpos = 1;
-    acc_label_next_shortopt:
-        a = g->argv[g->optind] + g->shortpos;
-        sp = NULL; sc = (unsigned char) *a;
-        if (shortopts)
-            sp = strchr(shortopts, sc);
-        if (!sp)
-            return __acc_getopt_x(g, '?', sc, 1, "invalid option '-%c'", sc);
-        if (sp[1] == ':') { has_arg++; if (sp[2] == ':') has_arg++; }
-        arg = a + 1;
-        switch (has_arg)
-        {
-        case ACC_GETOPT_OPTIONAL_ARG:
-            if (*arg)
-                g->optarg = arg + 1;
-            g->optind++, g->shortpos = 0;
-            break;
-        case ACC_GETOPT_REQUIRED_ARG:
-            if (*arg)
-                g->optarg = arg + 1;
-            else if (g->optind + 1 < g->argc)
-                g->optarg = g->argv[++g->optind];
-            else
-                return __acc_getopt_x(g, '?', 0, 1, "option '-%c' requires an argument", sc);
-            g->optind++, g->shortpos = 0;
-            break;
-        default:
-            __acc_getopt_x(g, 0, -1, 1, NULL);
-            break;
-        }
-        return sc;
-    }
-}
 #endif
 #if defined(ACC_WANT_ACCLIB_HALLOC)
 #  undef ACC_WANT_ACCLIB_HALLOC
@@ -6374,6 +6186,18 @@ ACCLIB_PUBLIC(int, acc_uclock_flush_cpu_cache) (acc_uclock_handle_p h, unsigned 
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
 #  endif
 #endif
+#if (ACC_OS_WIN32 && ACC_CC_PELLESC && (__POCC__ >= 290))
+#  pragma warn(push)
+#  pragma warn(disable:2007)
+#endif
+ACCLIB_PUBLIC(const char *, acc_getenv) (const char *s)
+{
+#if defined(HAVE_GETENV)
+    return getenv(s);
+#else
+    ACC_UNUSED(s); return (const char *) 0;
+#endif
+}
 ACCLIB_PUBLIC(acclib_handle_t, acc_get_osfhandle) (int fd)
 {
     if (fd < 0)
@@ -6561,9 +6385,10 @@ ACCLIB_PUBLIC(acc_uint32e_t, acc_muldiv32u) (acc_uint32e_t a, acc_uint32e_t b, a
     return r;
 }
 #endif
-#if (ACC_OS_WIN32 && ACC_CC_PELLESC && (__POCC__ >= 290))
-#  pragma warn(push)
-#  pragma warn(disable:2007)
+#if 0
+ACCLIB_PUBLIC_NOINLINE(int, acc_syscall_clock_gettime) (int c)
+{
+}
 #endif
 #if (ACC_OS_WIN16)
 ACC_EXTERN_C void __far __pascal DebugBreak(void);
@@ -6641,13 +6466,27 @@ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_enable) (int v)
 #endif
     ACC_UNUSED(v); return r;
 }
-ACCLIB_PUBLIC_NOINLINE(int, acc_debug_running_on_valgrind) (void)
+ACCLIB_PUBLIC_NOINLINE(unsigned, acc_debug_running_on_qemu) (void)
+{
+    unsigned r = 0;
+#if (ACC_OS_POSIX_LINUX || ACC_OS_WIN32 || ACC_OS_WIN64)
+    const char* p;
+    p = acc_getenv("ACC_ENV_RUNNING_ON_QEMU");
+    if (p) {
+        if (p[0] == 0) r = 0;
+        else if ((p[0] >= '0' && p[0] <= '9') && p[1] == 0) r = p[0] - '0';
+        else r = 1;
+    }
+#endif
+    return r;
+}
+ACCLIB_PUBLIC_NOINLINE(unsigned, acc_debug_running_on_valgrind) (void)
 {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
     volatile unsigned long args[5] = { 0x1001, 0, 0, 0, 0 };
-    long r = 0;
+    unsigned long r = 0;
     __asm__ __volatile__(".byte 0xc1,0xc0,0x1d,0xc1,0xc0,0x03,0xc1,0xc8,0x1b,0xc1,0xc8,0x05,0xc1,0xc0,0x0d,0xc1,0xc0,0x13\n" : "=d" (r) : "a" (&args[0]), "d" (r) : __ACC_ASM_CLOBBER);
-    return (int) r;
+    return (unsigned) r;
 #else
     return 0;
 #endif
