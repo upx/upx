@@ -51,7 +51,7 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
-                "  Copyright (C) 1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007\n"
+                "                          Copyright (C) 1996 - 2008\n"
                 "UPX %-10s  Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
 #if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
@@ -140,15 +140,16 @@ static void show_all_packers(FILE *f, int verbose)
         }
         else
         {
+            size_t fl = strlen(fn);
             if (pos == 0) {
                 con_fprintf(f, "  %s", fn);
-                pos = 2 + strlen(fn);
-            } else if (pos + 1 + strlen(fn) > 80) {
+                pos = 2 + fl;
+            } else if (pos + 1 + fl > 80) {
                 con_fprintf(f, "\n  %s", fn);
-                pos = 2 + strlen(fn);
+                pos = 2 + fl;
             } else {
                 con_fprintf(f, " %s", fn);
-                pos += 1 + strlen(fn);
+                pos += 1 + fl;
             }
         }
     }
