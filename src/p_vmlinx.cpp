@@ -22,11 +22,11 @@
    If not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Markus F.X.J. Oberhumer   Laszlo Molnar
-   markus@oberhumer.com      ml1050@users.sourceforge.net
+   Markus F.X.J. Oberhumer              Laszlo Molnar
+   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
 
    John Reiser
-   jreiser@users.sourceforge.net
+   <jreiser@users.sourceforge.net>
  */
 
 
