@@ -69,7 +69,7 @@ Tools needed to build/modify the UPX sources
   - A C++ compiler supporting inner classes, templates, exceptions
     and RTTI.
 
-  - GNU make 3.80 or better (GNU make 3.81 recommened).
+  - GNU make 3.81 or better
 
 
 To compile the packer sources
@@ -93,9 +93,6 @@ To compile the packer sources
 
 If you want to modify the stub sources you'll also need
 -------------------------------------------------------
-
-  - GNU make 3.81 or better
-    http://savannah.gnu.org/projects/make/
 
   - Perl & Python
 
