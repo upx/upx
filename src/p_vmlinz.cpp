@@ -137,9 +137,22 @@ int PackVmlinuzI386::decompressKernel()
     char const *p = (char const *)&obuf[setup_size];
     for (int j= 0; j < 0x200; ++j, ++p) {
         if (0==memcmp("\xE8\x00\x00\x00\x00\x5D", p, 6)) {
-            /* "call 1f; 1f: pop %ebp"  determines actual execution address; */
-            /* linux-2.6.21 (spring 2007) and later; upx stub needs work. */
-            throwCantPack("Relocatable kernel is not yet supported");
+            // "call 1f; 1f: pop %ebp"  determines actual execution address.
+            // linux-2.6.21 (spring 2007) and later; upx stub needs work
+            // unless LOAD_PHYSICAL_ADDR is known.
+            // Allowed code is:  linux-2.6.23/arch/x86/head_32.S  2008-01-01
+            //      call 1f
+            //  1:  popl %ebp
+            //      subl $1b, %ebp  # 32-bit immediate
+            //      movl $LOAD_PHYSICAL_ADDR, %ebx
+            //
+            if (0==memcmp("\x81\xed", 6+  p, 2)      // subl $imm.w,%ebp
+            &&  0==memcmp("\xbb",     12+ p, 1) ) {  // movl $...,%ebx
+                physical_start = get_le32(13+ p);
+            }
+            else {
+                throwCantPack("Relocatable kernel is not yet supported");
+            }
         }
         // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
         if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
