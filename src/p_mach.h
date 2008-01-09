@@ -236,13 +236,13 @@ struct MachClass_32
 {
     typedef TP BeLePolicy;
 
-    // integral types
-    typedef typename TP::U16 U16;
-    typedef typename TP::U32 U32;
-    typedef typename TP::U64 U64;
-    typedef N_Mach::MachITypes<U32, U64, U32, U32> MachITypes;
+    // integral types (target endianness)
+    typedef typename TP::U16 TE16;
+    typedef typename TP::U32 TE32;
+    typedef typename TP::U64 TE64;
+    typedef N_Mach::MachITypes<TE32, TE64, TE32, TE32> MachITypes;
 #if (ACC_CC_BORLANDC)
-    typedef U32 Addr;
+    typedef TE32 Addr;
 #else
     typedef typename MachITypes::Addr Addr;
 #endif
@@ -265,11 +265,11 @@ struct MachClass_64
 {
     typedef TP BeLePolicy;
 
-    // integral types
-    typedef typename TP::U16 U16;
-    typedef typename TP::U32 U32;
-    typedef typename TP::U64 U64;
-    typedef N_Mach::MachITypes<U32, U64, U64, U64> MachITypes;
+    // integral types (target endianness)
+    typedef typename TP::U16 TE16;
+    typedef typename TP::U32 TE32;
+    typedef typename TP::U64 TE64;
+    typedef N_Mach::MachITypes<TE32, TE64, TE64, TE64> MachITypes;
 
     // Mach types
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
@@ -322,10 +322,10 @@ protected:
     typedef TMachClass MachClass;
     typedef typename MachClass::BeLePolicy BeLePolicy;
     typedef typename MachClass::MachITypes MachITypes;
-    // integral types
-    typedef typename MachClass::U16   U16;
-    typedef typename MachClass::U32   U32;
-    typedef typename MachClass::U64   U64;
+    // integral types (target endianness)
+    typedef typename MachClass::TE16  TE16;
+    typedef typename MachClass::TE32  TE32;
+    typedef typename MachClass::TE64  TE64;
     typedef typename MachClass::Addr  Addr;
     // Mach types
     typedef typename MachClass::Mach_header Mach_header;
@@ -381,8 +381,8 @@ protected:
     Mach_segment_command segcmdo;
 
     struct b_info { // 12-byte header before each compressed block
-        U32 sz_unc;  // uncompressed_size
-        U32 sz_cpr;  //   compressed_size
+        TE32 sz_unc;  // uncompressed_size
+        TE32 sz_cpr;  //   compressed_size
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
@@ -390,22 +390,32 @@ protected:
     }
     __attribute_packed;
     struct l_info { // 12-byte trailer in header for loader
-        U32  l_checksum;
+        TE32 l_checksum;
         LE32 l_magic;
-        U16  l_lsize;
+        TE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
     }
     __attribute_packed;
 
     struct p_info { // 12-byte packed program header
-        U32 p_progid;
-        U32 p_filesize;
-        U32 p_blocksize;
+        TE32 p_progid;
+        TE32 p_filesize;
+        TE32 p_blocksize;
     }
     __attribute_packed;
 
     struct l_info linfo;
+
+    static void compileTimeAssertions() {
+        MachClass::compileTimeAssertions();
+        COMPILE_TIME_ASSERT(sizeof(b_info) == 12)
+        COMPILE_TIME_ASSERT(sizeof(l_info) == 12)
+        COMPILE_TIME_ASSERT(sizeof(p_info) == 12)
+        COMPILE_TIME_ASSERT_ALIGNED1(b_info)
+        COMPILE_TIME_ASSERT_ALIGNED1(l_info)
+        COMPILE_TIME_ASSERT_ALIGNED1(p_info)
+    }
 };
 
 

@@ -45,9 +45,9 @@ protected:
     typedef typename ElfClass::BeLePolicy BeLePolicy;
     typedef typename ElfClass::ElfITypes  ElfITypes;
     // integral types
-    typedef typename ElfClass::U16   U16;
-    typedef typename ElfClass::U32   U32;
-    typedef typename ElfClass::U64   U64;
+    typedef typename ElfClass::TE16  TE16;
+    typedef typename ElfClass::TE32  TE32;
+    typedef typename ElfClass::TE64  TE64;
     typedef typename ElfITypes::Addr Addr;
     // ELF types
     typedef typename ElfClass::Ehdr Ehdr;

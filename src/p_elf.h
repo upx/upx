@@ -284,11 +284,11 @@ struct ElfClass_32
 {
     typedef TP BeLePolicy;
 
-    // integral types
-    typedef typename TP::U16 U16;
-    typedef typename TP::U32 U32;
-    typedef typename TP::U64 U64;
-    typedef N_Elf::ElfITypes<U16, U32, U32, U32, U32> ElfITypes;
+    // integral types (target endianness)
+    typedef typename TP::U16 TE16;
+    typedef typename TP::U32 TE32;
+    typedef typename TP::U64 TE64;
+    typedef N_Elf::ElfITypes<TE16, TE32, TE32, TE32, TE32> ElfITypes;
 
     // ELF types
     typedef N_Elf  ::Ehdr<ElfITypes> Ehdr;
@@ -319,11 +319,11 @@ struct ElfClass_64
 {
     typedef TP BeLePolicy;
 
-    // integral types
-    typedef typename TP::U16 U16;
-    typedef typename TP::U32 U32;
-    typedef typename TP::U64 U64;
-    typedef N_Elf::ElfITypes<U16, U32, U64, U64, U64> ElfITypes;
+    // integral types (target endianness)
+    typedef typename TP::U16 TE16;
+    typedef typename TP::U32 TE32;
+    typedef typename TP::U64 TE64;
+    typedef N_Elf::ElfITypes<TE16, TE32, TE64, TE64, TE64> ElfITypes;
 
     // ELF types
     typedef N_Elf  ::Ehdr<ElfITypes> Ehdr;

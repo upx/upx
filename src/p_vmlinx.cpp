@@ -212,7 +212,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
 {
     unsigned fo_off = 0;
     Ehdr ehdro;
-    U32 tmp_u32;
+    TE32 tmp_u32;
 
     // NULL
     // .text(PT_LOADs) .note(1st page) .note(rest)
@@ -709,7 +709,7 @@ int PackVmlinuxBase<T>::canUnpack()
 template <class T>
 void PackVmlinuxBase<T>::unpack(OutputFile *fo)
 {
-    U32 word;
+    TE32 word;
     PackHeader const ph_tmp(ph);
 
     fi->seek(p_note0->sh_offset, SEEK_SET);
@@ -1015,7 +1015,7 @@ unsigned PackVmlinuxI386::write_vmlinux_head(
     // COMPRESSED_LENGTH
     fo->write(&stub_i386_linux_kernel_vmlinux_head[0],
         sizeof(stub_i386_linux_kernel_vmlinux_head)-(1+ 4) +1);
-    U32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
+    TE32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
 
     stxt->sh_size += sizeof(stub_i386_linux_kernel_vmlinux_head);
 
@@ -1030,7 +1030,7 @@ unsigned PackVmlinuxAMD64::write_vmlinux_head(
     // COMPRESSED_LENGTH
     fo->write(&stub_amd64_linux_kernel_vmlinux_head[0],
         sizeof(stub_amd64_linux_kernel_vmlinux_head)-(1+ 4) +1);
-    U32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
+    TE32 tmp_u32; tmp_u32 = ph.c_len; fo->write(&tmp_u32, 4);
 printf("  Compressed length=0x%x\n", ph.c_len);
 printf("UnCompressed length=0x%x\n", ph.u_len);
 
@@ -1089,7 +1089,7 @@ unsigned PackVmlinuxARMEL::write_vmlinux_head(
     fo->write(&stub_arm_linux_kernel_vmlinux_head[0], 4);
 
     // Second word
-    U32 tmp_u32;
+    TE32 tmp_u32;
     unsigned const t = (0xff000000 &
             BeLePolicy::get32(&stub_arm_linux_kernel_vmlinux_head[4]))
         | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
@@ -1111,7 +1111,7 @@ unsigned PackVmlinuxARMEB::write_vmlinux_head(
     fo->write(&stub_armeb_linux_kernel_vmlinux_head[0], 4);
 
     // Second word
-    U32 tmp_u32;
+    TE32 tmp_u32;
     unsigned const t = (0xff000000 &
             BeLePolicy::get32(&stub_armeb_linux_kernel_vmlinux_head[4]))
         | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
@@ -1135,7 +1135,7 @@ unsigned PackVmlinuxPPC32::write_vmlinux_head(
 
 bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
-    U32 buf[2];
+    TE32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
@@ -1149,7 +1149,7 @@ bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 
 bool PackVmlinuxARMEB::has_valid_vmlinux_head()
 {
-    U32 buf[2];
+    TE32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_armeb_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
@@ -1163,7 +1163,7 @@ bool PackVmlinuxARMEB::has_valid_vmlinux_head()
 
 bool PackVmlinuxPPC32::has_valid_vmlinux_head()
 {
-    U32 buf[2];
+    TE32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_powerpc_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
