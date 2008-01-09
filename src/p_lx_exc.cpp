@@ -526,22 +526,22 @@ bool PackLinuxI386::canPack()
                 ei_osabi = osabi0;  // Proudly declares its osabi in Ehdr.
                 break;
             default:
-            unsigned const e_phnum = get_native16(&ehdr.e_phnum);
+            unsigned const e_phnum = get_te16(&ehdr.e_phnum);
             if (e_phnum<=(512/sizeof(Elf32_Phdr))) {
                 char buf2[512];
-                fi->seek(get_native32(&ehdr.e_phoff), SEEK_SET);
+                fi->seek(get_te32(&ehdr.e_phoff), SEEK_SET);
                 fi->readx(buf2, sizeof(buf2));
                 fi->seek(0, SEEK_SET);
                 Elf32_Phdr const *phdr = (Elf32_Phdr const *)buf2;
                 for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-                    if (phdr->PT_NOTE == get_native32(&phdr->p_type)) {
-                        unsigned const offset = get_native32(&phdr->p_offset);
+                    if (phdr->PT_NOTE == get_te32(&phdr->p_type)) {
+                        unsigned const offset = get_te32(&phdr->p_offset);
                         struct Elf32_Note note; memset(&note, 0, sizeof(note));
                         fi->seek(offset, SEEK_SET);
                         fi->readx(&note, sizeof(note));
                         fi->seek(0, SEEK_SET);
-                        if (4==get_native32(&note.descsz)
-                        &&  1==get_native32(&note.type)
+                        if (4==get_te32(&note.descsz)
+                        &&  1==get_te32(&note.type)
                         &&  0==note.end ) {
                             if (0==strcmp("NetBSD", (char const *)&note.text)) {
                                 ei_osabi = Elf32_Ehdr::ELFOSABI_NETBSD;

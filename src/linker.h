@@ -38,7 +38,7 @@ class ElfLinker : private noncopyable
 {
     friend class Packer;
 public:
-    const N_BELE_RTP::AbstractPolicy *bele;
+    const N_BELE_RTP::AbstractPolicy *bele; // target endianness
 protected:
     struct      Section;
     struct      Symbol;
@@ -107,6 +107,14 @@ protected:
     virtual void relocate();
     virtual void relocate1(const Relocation *, upx_byte *location,
                            unsigned value, const char *type);
+
+    // target endianness abstraction
+    unsigned get_te16(const void *p)        const { return bele->get16(p); }
+    unsigned get_te32(const void *p)        const { return bele->get32(p); }
+    acc_uint64l_t get_te64(const void *p)   const { return bele->get64(p); }
+    void set_te16(void *p, unsigned v)      const { bele->set16(p, v); }
+    void set_te32(void *p, unsigned v)      const { bele->set32(p, v); }
+    void set_te64(void *p, acc_uint64l_t v) const { bele->set64(p, v); }
 };
 
 

@@ -191,8 +191,8 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         // write block header
         b_info blk_info;
         memset(&blk_info, 0, sizeof(blk_info));
-        set_native32(&blk_info.sz_unc, ph.u_len);
-        set_native32(&blk_info.sz_cpr, ph.c_len);
+        set_te32(&blk_info.sz_unc, ph.u_len);
+        set_te32(&blk_info.sz_cpr, ph.c_len);
         if (ph.c_len < ph.u_len) {
             blk_info.b_method = (unsigned char) ph.method;
             blk_info.b_ftid = (unsigned char) ph.filter;
@@ -252,7 +252,7 @@ void PackUnix::pack4(OutputFile *fo, Filter &)
     writePackHeader(fo);
 
     unsigned tmp;
-    set_native32(&tmp, overlay_offset);
+    set_te32(&tmp, overlay_offset);
     fo->write(&tmp, sizeof(tmp));
 }
 
@@ -278,9 +278,9 @@ void PackUnix::pack(OutputFile *fo)
     pack1(fo, ft);  // generate Elf header, etc.
 
     p_info hbuf;
-    set_native32(&hbuf.p_progid, progid);
-    set_native32(&hbuf.p_filesize, file_size);
-    set_native32(&hbuf.p_blocksize, blocksize);
+    set_te32(&hbuf.p_progid, progid);
+    set_te32(&hbuf.p_filesize, file_size);
+    set_te32(&hbuf.p_blocksize, blocksize);
     fo->write(&hbuf, sizeof(hbuf));
 
     pack2(fo, ft);  // append the compressed body
@@ -389,8 +389,8 @@ void PackUnix::packExtent(
             ph.c_adler = upx_adler32(obuf, ph.c_len, ph.saved_c_adler);
             end_u_adler = ph.u_adler;
             memset(&tmp, 0, sizeof(tmp));
-            set_native32(&tmp.sz_unc, hdr_u_len);
-            set_native32(&tmp.sz_cpr, hdr_c_len);
+            set_te32(&tmp.sz_unc, hdr_u_len);
+            set_te32(&tmp.sz_cpr, hdr_c_len);
             tmp.b_method = (unsigned char) ph.method;
             fo->write(&tmp, sizeof(tmp));
             b_len += sizeof(b_info);
@@ -400,8 +400,8 @@ void PackUnix::packExtent(
             hdr_u_len = 0;  // compress hdr one time only
         }
         memset(&tmp, 0, sizeof(tmp));
-        set_native32(&tmp.sz_unc, ph.u_len);
-        set_native32(&tmp.sz_cpr, ph.c_len);
+        set_te32(&tmp.sz_unc, ph.u_len);
+        set_te32(&tmp.sz_cpr, ph.c_len);
         if (ph.c_len < ph.u_len) {
             tmp.b_method = (unsigned char) ph.method;
             if (ft) {
@@ -439,8 +439,8 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
     b_info hdr; memset(&hdr, 0, sizeof(hdr));
     while (wanted) {
         fi->readx(&hdr, szb_info);
-        int const sz_unc = ph.u_len = get_native32(&hdr.sz_unc);
-        int const sz_cpr = ph.c_len = get_native32(&hdr.sz_cpr);
+        int const sz_unc = ph.u_len = get_te32(&hdr.sz_unc);
+        int const sz_cpr = ph.c_len = get_te32(&hdr.sz_cpr);
         ph.filter_cto = hdr.b_cto8;
 
         if (sz_unc == 0) { // must never happen while 0!=wanted
@@ -509,7 +509,7 @@ int PackUnix::canUnpack()
     int l = ph.buf_offset + ph.getPackHeaderSize();
     if (l < 0 || l + 4 > bufsize)
         throwCantUnpack("file corrupted");
-    overlay_offset = get_native32(buf+l);
+    overlay_offset = get_te32(buf+l);
     if ((off_t)overlay_offset >= file_size)
         throwCantUnpack("file corrupted");
 
@@ -531,15 +531,15 @@ void PackUnix::unpack(OutputFile *fo)
         Elf32_Ehdr ehdr;
         fi->seek(0, SEEK_SET);
         fi->readx(&ehdr, sizeof(ehdr));
-        unsigned const e_entry = get_native32(&ehdr.e_entry);
+        unsigned const e_entry = get_te32(&ehdr.e_entry);
         if (e_entry < 0x401180) { /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
         }
         else {
             Elf32_Phdr phdr;
-            fi->seek(get_native32(&ehdr.e_phoff), SEEK_SET);
+            fi->seek(get_te32(&ehdr.e_phoff), SEEK_SET);
             fi->readx(&phdr, sizeof(phdr));
-            unsigned const p_vaddr = get_native32(&phdr.p_vaddr);
+            unsigned const p_vaddr = get_te32(&phdr.p_vaddr);
             if (0x80==(e_entry - p_vaddr)) { /* 1.22 old style */
                 szb_info = 2*sizeof(unsigned);
             }
@@ -558,8 +558,8 @@ void PackUnix::unpack(OutputFile *fo)
     {
         p_info hbuf;
         fi->readx(&hbuf, sizeof(hbuf));
-        orig_file_size = get_native32(&hbuf.p_filesize);
-        blocksize = get_native32(&hbuf.p_blocksize);
+        orig_file_size = get_te32(&hbuf.p_filesize);
+        blocksize = get_te32(&hbuf.p_blocksize);
 
         if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
             throwCantUnpack("file header corrupted");
@@ -583,8 +583,8 @@ void PackUnix::unpack(OutputFile *fo)
         unsigned sz_unc, sz_cpr;
 
         fi->readx(&bhdr, szb_info);
-        ph.u_len = sz_unc = get_native32(&bhdr.sz_unc);
-        ph.c_len = sz_cpr = get_native32(&bhdr.sz_cpr);
+        ph.u_len = sz_unc = get_te32(&bhdr.sz_unc);
+        ph.c_len = sz_cpr = get_te32(&bhdr.sz_cpr);
 
         if (sz_unc == 0)                   // uncompressed size 0 -> EOF
         {

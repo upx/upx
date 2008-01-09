@@ -205,7 +205,7 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
     {
         fi->seek(0, SEEK_SET);
         fi->readx(bufehdr, MAX_INTERP_HDR);
-        unsigned const e_entry = get_native32(&ehdr->e_entry);
+        unsigned const e_entry = get_te32(&ehdr->e_entry);
         if (e_entry < 0x401180) { /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
         }
@@ -214,16 +214,16 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
-    unsigned orig_file_size = get_native32(&hbuf.p_filesize);
-    blocksize = get_native32(&hbuf.p_blocksize);
+    unsigned orig_file_size = get_te32(&hbuf.p_filesize);
+    blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
     fi->readx(&bhdr, szb_info);
-    ph.u_len = get_native32(&bhdr.sz_unc);
-    ph.c_len = get_native32(&bhdr.sz_cpr);
+    ph.u_len = get_te32(&bhdr.sz_unc);
+    ph.c_len = get_te32(&bhdr.sz_cpr);
     ph.filter_cto = bhdr.b_cto8;
 
     // Uncompress Ehdr and Phdrs.
@@ -277,7 +277,7 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 
     // check for end-of-file
     fi->readx(&bhdr, szb_info);
-    unsigned const sz_unc = ph.u_len = get_native32(&bhdr.sz_unc);
+    unsigned const sz_unc = ph.u_len = get_te32(&bhdr.sz_unc);
 
     if (sz_unc == 0) { // uncompressed size 0 -> EOF
         // note: magic is always stored le32

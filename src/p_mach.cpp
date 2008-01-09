@@ -520,16 +520,16 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
-    unsigned orig_file_size = get_native32(&hbuf.p_filesize);
-    blocksize = get_native32(&hbuf.p_blocksize);
+    unsigned orig_file_size = get_te32(&hbuf.p_filesize);
+    blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
     fi->readx(&bhdr, sizeof(bhdr));
-    ph.u_len = get_native32(&bhdr.sz_unc);
-    ph.c_len = get_native32(&bhdr.sz_cpr);
+    ph.u_len = get_te32(&bhdr.sz_unc);
+    ph.c_len = get_te32(&bhdr.sz_cpr);
     ph.method = bhdr.b_method;
     ph.filter = bhdr.b_ftid;
     ph.filter_cto = bhdr.b_cto8;

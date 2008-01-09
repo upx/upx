@@ -283,8 +283,16 @@ protected:
     static upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
     static unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
+    // target endianness abstraction
+    unsigned get_te16(const void *p)        const { return bele->get16(p); }
+    unsigned get_te32(const void *p)        const { return bele->get32(p); }
+    acc_uint64l_t get_te64(const void *p)   const { return bele->get64(p); }
+    void set_te16(void *p, unsigned v)      const { bele->set16(p, v); }
+    void set_te32(void *p, unsigned v)      const { bele->set32(p, v); }
+    void set_te64(void *p, acc_uint64l_t v) const { bele->set64(p, v); }
+
 protected:
-    const N_BELE_RTP::AbstractPolicy *bele;
+    const N_BELE_RTP::AbstractPolicy *bele; // target endianness
     InputFile *fi;
     off_t file_size;        // will get set by constructor
     PackHeader ph;          // must be filled by canUnpack()

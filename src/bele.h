@@ -591,7 +591,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 
 
 /*************************************************************************
-// Provide namespaces and classes to abtract endianness policies.
+// Provide namespaces and classes to abstract endianness policies.
 //
 // CTP - Compile-Time Polymorphism (templates)
 // RTP - Run-Time Polymorphism (virtual functions)

@@ -265,13 +265,6 @@ class PackLinuxElf32Be : public PackLinuxElf32
     typedef PackLinuxElf32 super;
 protected:
     PackLinuxElf32Be(InputFile *f) : super(f) { bele = &N_BELE_RTP::be_policy; }
-
-    virtual acc_uint64l_t get_native64(const void *b) const { return get_be64(b); }
-    virtual unsigned get_native32(const void *b) const { return get_be32(b); }
-    virtual unsigned get_native16(const void *b) const { return get_be16(b); }
-    virtual void set_native64(void *b, acc_uint64l_t v) const { set_be64(b, v); }
-    virtual void set_native32(void *b, unsigned v) const { set_be32(b, v); }
-    virtual void set_native16(void *b, unsigned v) const { set_be16(b, v); }
 };
 
 class PackLinuxElf32Le : public PackLinuxElf32
@@ -279,13 +272,6 @@ class PackLinuxElf32Le : public PackLinuxElf32
     typedef PackLinuxElf32 super;
 protected:
     PackLinuxElf32Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
-
-    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
-    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
-    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
-    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
-    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
-    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
 };
 
 class PackLinuxElf64Le : public PackLinuxElf64
@@ -293,14 +279,8 @@ class PackLinuxElf64Le : public PackLinuxElf64
     typedef PackLinuxElf64 super;
 protected:
     PackLinuxElf64Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
-
-    virtual acc_uint64l_t get_native64(const void *b) const { return get_le64(b); }
-    virtual unsigned get_native32(const void *b) const { return get_le32(b); }
-    virtual unsigned get_native16(const void *b) const { return get_le16(b); }
-    virtual void set_native64(void *b, acc_uint64l_t v) const { set_le64(b, v); }
-    virtual void set_native32(void *b, unsigned v) const { set_le32(b, v); }
-    virtual void set_native16(void *b, unsigned v) const { set_le16(b, v); }
 };
+
 
 /*************************************************************************
 // linux/elf64amd
@@ -325,6 +305,7 @@ protected:
     virtual void defineSymbols(Filter const *);
 };
 
+
 /*************************************************************************
 // linux/elf32ppc
 **************************************************************************/
@@ -344,6 +325,7 @@ protected:
     virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;
 };
+
 
 /*************************************************************************
 // linux/elf386
@@ -420,6 +402,7 @@ protected:
         unsigned const brka
     );
 };
+
 
 /*************************************************************************
 // linux/elfarm
@@ -502,6 +485,7 @@ protected:
     virtual void updateLoader(OutputFile *);
     virtual void defineSymbols(Filter const *);
 };
+
 
 #endif /*} already included */
 
