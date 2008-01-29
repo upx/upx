@@ -88,6 +88,8 @@ protected:
     MemBuffer setup_buf;
     int setup_size;
     unsigned physical_start;
+    unsigned page_offset;
+    unsigned config_physical_align;
 };
 
 

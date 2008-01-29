@@ -51,7 +51,7 @@ static const unsigned bzimage_offset = 0x100000;
 **************************************************************************/
 
 PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
-    super(f), physical_start(0x100000)
+    super(f), physical_start(0x100000), page_offset(0), config_physical_align(0)
 {
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x218);
@@ -124,6 +124,11 @@ int PackVmlinuzI386::readFileHeader()
 }
 
 
+static int is_pow2(unsigned const x)
+{
+    return !(x & (-1+ x));
+}
+
 // read full kernel into obuf[], gzip-decompress into ibuf[],
 // return decompressed size
 int PackVmlinuzI386::decompressKernel()
@@ -133,9 +138,17 @@ int PackVmlinuzI386::decompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
+    char const *base = 0;
+    unsigned relocated = 0;
+
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
     char const *p = (char const *)&obuf[setup_size];
     for (int j= 0; j < 0x200; ++j, ++p) {
+        if (0==memcmp("\x8d\x83",    p, 2)  // leal d32(%ebx),%eax
+        &&  0==memcmp("\xff\xe0", 6+ p, 2)  // jmp *%eax
+        ) {
+            relocated = get_te32(2+ p);
+        }
         if (0==memcmp("\xE8\x00\x00\x00\x00\x5D", p, 6)) {
             // "call 1f; 1f: pop %ebp"  determines actual execution address.
             // linux-2.6.21 (spring 2007) and later; upx stub needs work
@@ -146,19 +159,43 @@ int PackVmlinuzI386::decompressKernel()
             //      subl $1b, %ebp  # 32-bit immediate
             //      movl $LOAD_PHYSICAL_ADDR, %ebx
             //
+            unsigned const cpa_0 = 1+ get_te32(16+ p);
+            unsigned const cpa_1 =    get_te32(22+ p);
             if (0==memcmp("\x81\xed", 6+  p, 2)      // subl $imm.w,%ebp
-            &&  0==memcmp("\xbb",     12+ p, 1) ) {  // movl $...,%ebx
-                physical_start = get_le32(13+ p);
+            &&  0==memcmp("\xbb",     12+ p, 1) ) {  // movl $imm.w,%ebx
+                physical_start = get_te32(13+ p);
+            } else
+            if (0==memcmp("\x81\xed", 6+  p, 2)  // subl $imm.w,%ebp
+            &&  0==memcmp("\x89\xeb", 12+ p, 2)  // movl %ebp,%ebx
+            &&  0==memcmp("\x81\xc3", 14+ p, 2)  // addl $imm.w,%ebx
+            &&  0==memcmp("\x81\xe3", 20+ p, 2)  // andl $imm.w,%ebx
+            &&  is_pow2(cpa_0) && -cpa_0==cpa_1) {
+                base = (5+ p) - get_te32(8+ p);
+                config_physical_align = cpa_0;
             }
             else {
-                throwCantPack("Relocatable kernel is not yet supported");
+                throwCantPack("Unrecognized relocatable kernel");
             }
         }
         // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
         if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
             /* whole megabyte < 16MB */
-            physical_start = get_le32(1+ p);
+            physical_start = get_te32(1+ p);
             break;
+        }
+    }
+    if (base && relocated) {
+        char const *p = relocated + base;
+        for (int j= 0; j < 0x200; ++j, ++p) {
+            if (0==memcmp("\x01\x9c\x0b", p, 3)  // addl %ebx,d32(%ebx,%ecx)
+            ) {
+                page_offset = - get_te32(3+ p);
+            }
+            if (0==memcmp("\x89\xeb",    p, 2)  // movl %ebp,%ebx
+            &&  0==memcmp("\x81\xeb", 2+ p, 2)  // subl $imm32,%ebx
+            ) {
+                physical_start = get_te32(4+ p);
+            }
         }
     }
 
@@ -376,7 +413,15 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
-    addLoader("LINUZ000",
+    if (0!=page_offset) { // relocatable kernel
+        addLoader("LINUZ100,LINUZ110",
+            ((0!=config_physical_align) ? "LINUZ120" : "LINUZ130"),
+            "LINUZ140,LZCUTPOI",
+            (ph.first_offset_found == 1 ? "LINUZ001" : ""),
+            NULL);
+    }
+    else {
+        addLoader("LINUZ000",
               ph.first_offset_found == 1 ? "LINUZ001" : "",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
@@ -384,16 +429,15 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
               "UPX1HEAD", // 32 byte
               "LZCUTPOI",
               NULL);
+        // fake alignment for the start of the decompressor
+        linker->defineSymbol("LZCUTPOI", 0x1000);
+    }
 
-    // fake alignment for the start of the decompressor
-    linker->defineSymbol("LZCUTPOI", 0x1000);
+    addLoader(getDecompressorSections(), NULL);
 
-    addLoader(getDecompressorSections(),
-              NULL
-             );
     if (ft->id)
     {
-        assert(ft->calls > 0);
+            assert(ft->calls > 0);
         if (0x40==(0xf0 & ft->id)) {
             addLoader("LZCKLLT9", NULL);
         }
@@ -402,7 +446,27 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         }
         addFilter32(ft->id);
     }
-    addLoader("LINUZ990", NULL);
+    if (0!=page_offset) {
+        addLoader("LINUZ150", NULL);
+        unsigned const l_len = getLoaderSize();
+        unsigned const c_len = ALIGN_UP(ph.c_len, 4u);
+        unsigned const e_len = getLoaderSectionStart("LZCUTPOI");
+        linker->defineSymbol("compressed_length", c_len);
+        linker->defineSymbol("load_physical_address", physical_start);  // FIXME
+        if (0!=config_physical_align) {
+            linker->defineSymbol("neg_config_physical_align", - config_physical_align);
+        }
+        linker->defineSymbol("neg_length_mov", - ALIGN_UP(c_len + l_len, 4u));
+        linker->defineSymbol("neg_page_offset", - page_offset);
+        //linker->defineSymbol("physical_start", physical_start);
+        linker->defineSymbol("unc_length", ph.u_len);
+        linker->defineSymbol("dec_offset", ph.overlap_overhead + e_len);
+        linker->defineSymbol("unc_offset", ph.overlap_overhead + ph.u_len - c_len);
+        addLoader("IDENTSTR,+40,UPX1HEAD", NULL);
+    }
+    else {
+        addLoader("LINUZ990", NULL);
+    }
 }
 
 
@@ -472,8 +536,18 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     bs->sys_size = (ALIGN_UP(lsize + c_len, 16u) / 16) & 0xffff;
 
     fo->write(setup_buf, setup_buf.getSize());
-    fo->write(loader, e_len);
+
+    unsigned const e_pfx = (0==page_offset) ? 0 : getLoaderSectionStart("LINUZ110");
+    if (0!=page_offset) {
+        fo->write(loader, e_pfx);
+    }
+    else {
+        fo->write(loader, e_len);
+    }
     fo->write(obuf, c_len);
+    if (0!=page_offset) {
+        fo->write(loader + e_pfx, e_len - e_pfx);
+    }
     fo->write(loader + e_len, lsize - e_len);
 #if 0
     printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());

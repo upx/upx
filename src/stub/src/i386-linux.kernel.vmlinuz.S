@@ -38,9 +38,15 @@
   How to debug: run under qemu (http://fabrice.bellard.free.fr/qemu/)
   after un-commenting the 0xf1 opcode below.  That opcode forces qemu
   to stop in gdb.  You'll have to "set $pc+=1" by hand.
+  Example:
+    $ qemu -S -s -kernel vmlinuz.upx -m 256 -std-vga -hda /dev/sdd &
+    $ gdb -
+    (gdb) target remote localhost:1234
+    (gdb) continue   ## qemu internal breakpoint
+    (gdb) set $pc+=1   ## our 0xf1 icebp
 */
 section         LINUZ000
-////    .byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+    ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
                 //cli    // this must be true already
 
 /*
@@ -85,6 +91,97 @@ section         LINUZ000
 section         LINUZ001
                 or      ebp, -1 // decompressor assumption
 
+section LINUZ100  // relocatable, or not at 0x100000; linux-2.6.23 (summer 2007)
+L00:
+                ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+                //cli  // this must be true now (else we already lost the race)
+                cld
+BP_loadflags = 0x211  // 529  include/asm/asm_offsets.h; Documentation/i386/boot.txt
+                testb [BP_loadflags + esi],(1<<6)
+                jnz L03  // bootloader asked: no change in segments
+                mov eax,cs
+                add eax, 1<<3  // the next segment after cs:  __BOOT_DS
+                mov ds,eax
+                mov es,eax
+                mov ss,eax
+                lea esp,[stack_offset + esi]  // FIXME: avoid commandline ??
+L03:
+                .byte 0xe8
+                .long compressed_length  // MATCH10  call L10
+L05:
+section LINUZ110
+L10:
+                pop ebp  // MATCH10  &compressed
+                call L20  // MATCH11
+moveloop:
+                neg ecx
+                cmp edi,esi
+                jbe forw  // dst<=src ==> move ascending
+                lea esi,[-4+ esi + ecx]  // other end
+                lea edi,[-4+ edi + ecx]
+                std  // move descending
+forw:
+                shr ecx,2
+                rep movsd
+                cld
+                ret
+L20:
+                pop esi  // MATCH11  src  &moveloop
+                mov ecx,[-4+ esi]  // byte length
+                neg ecx
+                and ecx,-4
+                add esp,ecx  // allocate
+                mov edi,esp  // dst
+                call esi  // move the moveloop
+
+section LINUZ120  // runtime relocatable
+                mov edi,ebp  // bootloader put us here
+                neg edi
+                and edi,offset neg_config_physical_align
+                neg edi  // entry address  where we belong
+section LINUZ130  // fixed address (need not be 0x100000)
+                mov edi,offset load_physical_address  // link address
+
+section LINUZ140
+                mov eax,esp  // &moveloop (reloc)
+                lea edx,[unc_length + edi]
+                mov esi,ebp  // src for move
+                push edx  // MATCH20  end of relocation info
+                add edx,offset (dec_offset - (L29 - L27) - (L05 - L00))  // &decompressor (reloc)
+                push edi  // MATCH21  runtime entry
+                add edi,offset unc_offset  // dst for move ( + u_len - c_len )
+                push edi  // MATCH22  &compressed (reloc)
+                mov ecx,offset neg_length_mov
+                push edx  // MATCH23  &decompressor (reloc)
+                jmp eax  // moveloop (reloc); MATCH23 return: &decompressor (reloc)
+L27:
+                pop esi  // MATCH22 &compressed (reloc)
+                pop edi  // MATCH21 &uncompressed
+                push edi  // MATCH24  runtime entry
+                push edi  // MATCH03  src unfilter
+L29:  // assumed location of LZCUTPOI
+
+        // decompressor and unfilter >>here<<
+
+section LINUZ150  // fall in after unfilter
+                pop ebp  // MATCH24 runtime entry
+                pop esi  // MATCH20 end of relocation info
+                mov ebx,ebp
+                sub ebx,offset load_physical_address
+                jz L40
+                std
+                lodsd  // point at highest relocation, not beyond it
+                jmp L35
+L30:
+                add [neg_page_offset + ebx + eax],ebx
+L35:
+                lodsd
+                test eax,eax
+                jnz L30
+L40:
+                xor ebx,ebx  // processor 0
+                jmp ebp  // entry to decompressed
+                
 section         LZCALLT1
                 push    eax     // MATCH03  src unfilter
 section         LZCKLLT1
