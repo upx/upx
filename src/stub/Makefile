@@ -89,9 +89,9 @@ STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
 STUBS += mips.r3000-linux.elf-entry.h
 STUBS += mips.r3000-linux.elf-fold.h
-STUBS += mipsel.r3000-ps1.h
 STUBS += mipsel.r3000-linux.elf-entry.h
 STUBS += mipsel.r3000-linux.elf-fold.h
+STUBS += mipsel.r3000-ps1.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
@@ -849,33 +849,6 @@ tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 
 # /***********************************************************************
-# // mipsel.r3000-ps1
-# ************************************************************************/
-
-mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
-mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
-
-tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O -mno-pdr
-##tc.mipsel.r3000-ps1.as   = mipsel-linux-as-2.16.1 -O -mno-pdr
-tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
-tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
-ifeq (1,1)
-	# info: we really need as-2.17 here
-	$(call tc,pp-as) -DPS1 $< -o - | $(RTRIM) > tmp/$T.i
-	$(call tc,as) tmp/$T.i -o tmp/$T.bin
-	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
-else
-	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
-	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
-endif
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-
-# /***********************************************************************
 # // mipsel.r3000-linux.elf
 # ************************************************************************/
 
@@ -912,6 +885,33 @@ tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Wa,-O,-mno-pdr tmp/$T.s -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+
+# /***********************************************************************
+# // mipsel.r3000-ps1
+# ************************************************************************/
+
+mipsel.r3000-ps1.h : tc_list = mipsel.r3000-ps1 default
+mipsel.r3000-ps1.h : tc_bfdname = elf32-littlemips
+
+tc.mipsel.r3000-ps1.as   = mipsel-elf-as-20060406 -O -mno-pdr
+##tc.mipsel.r3000-ps1.as   = mipsel-linux-as-2.16.1 -O -mno-pdr
+tc.mipsel.r3000-ps1.gcc  = mipsel-linux-gcc-4.1.1 -mel -march=r3000 -mno-abicalls -mabi=eabi -G0 -nostdinc -MMD -MT $@
+tc.mipsel.r3000-ps1.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
+ifeq (1,1)
+	# info: we really need as-2.17 here
+	$(call tc,pp-as) -DPS1 $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,as) tmp/$T.i -o tmp/$T.bin
+	$(call tc,gpp_mkdep) --mode=c --MMD=$@ $< --MF=tmp/$T.d
+else
+	# info: as-2.16.1 as used by gcc-4.1.1 does _not_ work
+	$(call tc,gcc) -c -DPS1 -Wa,-O,-mno-pdr $< -o tmp/$T.bin
+endif
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -976,7 +976,9 @@ tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 # /***********************************************************************
 # // powerpc-linux.kernel.vmlinux
+# // powerpc-linux.kernel.vmlinux-head
 # ************************************************************************/
+
 powerpc-linux.kernel.vmlinu%.h : tc_list = powerpc-linux.kernel default
 powerpc-linux.kernel.vmlinu%.h : tc_bfdname = elf32-powerpc
 
