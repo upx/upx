@@ -50,7 +50,6 @@ STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
-STUBS += amd64-linux.kernel.vmlinuz.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
 STUBS += arm-linux.kernel.vmlinux.h
@@ -274,7 +273,6 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 # /***********************************************************************
 # // amd64-linux.kernel.vmlinux
-# // amd64-linux.kernel.vmlinuz
 # // amd64-linux.kernel.vmlinux-head
 # ************************************************************************/
 
@@ -328,7 +326,6 @@ tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
 
 # /***********************************************************************
 # // arm-linux.kernel.vmlinux
-# // arm-linux.kernel.vmlinuz
 # // arm-linux.kernel.vmlinux-head
 # ************************************************************************/
 
@@ -352,7 +349,6 @@ arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 # /***********************************************************************
 # // armeb-linux.kernel.vmlinux
-# // armeb-linux.kernel.vmlinuz
 # // armeb-linux.kernel.vmlinux-head
 # ************************************************************************/
 
@@ -759,8 +755,8 @@ tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 
 # /***********************************************************************
 # // i386-linux.kernel.vmlinux
-# // i386-linux.kernel.vmlinuz
 # // i386-linux.kernel.vmlinux-head
+# // i386-linux.kernel.vmlinuz
 # ************************************************************************/
 
 i386-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
