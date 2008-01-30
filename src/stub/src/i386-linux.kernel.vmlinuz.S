@@ -181,7 +181,7 @@ L35:
 L40:
                 xor ebx,ebx  // processor 0
                 jmp ebp  // entry to decompressed
-                
+
 section         LZCALLT1
                 push    eax     // MATCH03  src unfilter
 section         LZCKLLT1
