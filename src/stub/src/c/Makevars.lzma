@@ -1,6 +1,16 @@
 # you should set envvar UPX_LZMADIR to point to your unpacked LZMA SDK lzma443.tar.bz2
 # NOTE: only version 4.43 is currently sufficiently tested !
 
+ifndef UPX_LZMADIR
+ifdef top_srcdir
+ifneq ($(wildcard $(top_srcdir)/src/stub/src/c/lzma-sdk/C/.),)
+UPX_LZMADIR := $(top_srcdir)/src/stub/src/c/lzma-sdk
+else ifneq ($(wildcard $(top_srcdir)/src/lzma-sdk/C/.),)
+UPX_LZMADIR := $(top_srcdir)/src/lzma-sdk
+endif
+endif
+endif
+
 ifneq ($(wildcard $(UPX_LZMADIR)/C/CpuArch.h),)
 UPX_LZMA_VERSION = 0x457
 else ifneq ($(wildcard $(UPX_LZMADIR)/CPP/7zip/.),)
