@@ -126,7 +126,7 @@ int PackVmlinuzI386::readFileHeader()
 
 static int is_pow2(unsigned const x)
 {
-    return !(x & (-1+ x));
+    return !(x & (x - 1));
 }
 
 // read full kernel into obuf[], gzip-decompress into ibuf[],
@@ -169,7 +169,7 @@ int PackVmlinuzI386::decompressKernel()
             &&  0==memcmp("\x89\xeb", 12+ p, 2)  // movl %ebp,%ebx
             &&  0==memcmp("\x81\xc3", 14+ p, 2)  // addl $imm.w,%ebx
             &&  0==memcmp("\x81\xe3", 20+ p, 2)  // andl $imm.w,%ebx
-            &&  is_pow2(cpa_0) && -cpa_0==cpa_1) {
+            &&  is_pow2(cpa_0) && (0u-cpa_0)==cpa_1) {
                 base = (5+ p) - get_te32(8+ p);
                 config_physical_align = cpa_0;
             }
@@ -189,7 +189,7 @@ int PackVmlinuzI386::decompressKernel()
         for (int j= 0; j < 0x200; ++j, ++p) {
             if (0==memcmp("\x01\x9c\x0b", p, 3)  // addl %ebx,d32(%ebx,%ecx)
             ) {
-                page_offset = - get_te32(3+ p);
+                page_offset = 0u - get_te32(3+ p);
             }
             if (0==memcmp("\x89\xeb",    p, 2)  // movl %ebp,%ebx
             &&  0==memcmp("\x81\xeb", 2+ p, 2)  // subl $imm32,%ebx
@@ -454,10 +454,10 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         linker->defineSymbol("compressed_length", c_len);
         linker->defineSymbol("load_physical_address", physical_start);  // FIXME
         if (0!=config_physical_align) {
-            linker->defineSymbol("neg_config_physical_align", - config_physical_align);
+            linker->defineSymbol("neg_config_physical_align", 0u - config_physical_align);
         }
-        linker->defineSymbol("neg_length_mov", - ALIGN_UP(c_len + l_len, 4u));
-        linker->defineSymbol("neg_page_offset", - page_offset);
+        linker->defineSymbol("neg_length_mov", 0u - ALIGN_UP(c_len + l_len, 4u));
+        linker->defineSymbol("neg_page_offset", 0u - page_offset);
         //linker->defineSymbol("physical_start", physical_start);
         linker->defineSymbol("unc_length", ph.u_len);
         linker->defineSymbol("dec_offset", ph.overlap_overhead + e_len);
