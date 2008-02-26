@@ -193,7 +193,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
         : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30"
         : NULL), NULL);
-    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
+    addLoader("CFLUSH,ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
 }
 
 

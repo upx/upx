@@ -90,15 +90,38 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 
   section NRV_TAIL
 eof_nrv:
-#define tmp r0  /* hibit is dead */
-        lwz tmp,0(ldst)  // original dst
+#define dst0 a4
+#define tmp a1
+        lwz dst0,0(ldst)  // original dst
         mtlr t3  // return address
-        addi dst,dst,1  // uncorrect for 'stbu'
-        addi src,src,1  // uncorrect for 'lbzu'
-        subf dst,tmp,dst  // dst -= tmp;  // dst length
+        subf a0,lsrc,src
+        subf tmp,dst0,dst  // -1+ dst length 
+        addi a0,a0,1  // return 0: good; else: bad  [+1: correct for lbzu]
+        addi tmp,tmp,1  // dst length
+        stw  tmp,0(ldst)
 #undef tmp
-        subf a0,lsrc,src  // src -= eof;  // return 0: good; else: bad
-        stw dst,0(ldst)
+
+// CACHELINE=32 is the observed minimum line size of any cache.
+// Some caches may have larger lines, but it is cumbersome to lookup
+// {AT_DCACHEBSIZE, AT_ICACHEBSIZE, AT_UCACHEBSIZE: /usr/include/elf.h},
+// then save the correct size in a variable {where to put it?}, or to modify
+// the two instructions here.  If a cache has larger lines, then we expect
+// that the second dcbst (or icbi) on a the same line will be fast.
+// If not, then too bad.
+
+  section CFLUSH  // In: a2=dst= &highest stored byte; a4=dst0= &lowest stored byte
+CACHELINE=32
+        ori dst0,dst0,-1+ CACHELINE  // highest addr on cache line
+cfl_nrv:
+        dcbst  0,dst0  // initiate store (modified) cacheline to memory
+        cmpl cr0,dst0,dst  // did we cover the highest-addressed byte?
+        icbi   0,dst0  // discard instructions from cacheline
+        addi     dst0,dst0,CACHELINE  // highest addr on next line
+        blt  cr0,cfl_nrv  // not done yet
+#undef dst0
+        sync   // wait for all memory operations to finish
+        isync  // discard prefetched instructions (if any)
+cfl_ret:
         ret
 
   section ELFMAINY
@@ -119,7 +142,7 @@ die:
         li a0,127
         li 0,__NR_exit; sc
 
-/* Decompress the rest of this loader, and jump to it. */
+        /* Decompress the rest of this loader, and jump to it. */
 unfold:
         mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 

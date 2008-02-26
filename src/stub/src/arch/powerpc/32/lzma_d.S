@@ -71,8 +71,8 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 
         li   a0,-2*LZMA_LIT_SIZE
         slw  a0,a0,t1  // -2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
-        addi a0,a0,-2*4 -(szSizeT +4) - 2*LZMA_BASE_SIZE
-// alloca{sp,ra, inSizeProcessed,*_bits, CLzmaDecoderState}
+        addi a0,a0,-4*4 -(szSizeT +4) - 2*LZMA_BASE_SIZE
+// alloca{sp,ra,orig_dst,&outSizeProcessed, inSizeProcessed,*_bits, CLzmaDecoderState}
         mr a3,sp
         add sp,sp,a0
         rlwinm sp,sp,0,0,32-6  // (1<<6) byte align
@@ -87,8 +87,10 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         stw a3,0(sp)  // frame chain
 
         lbz r0,-1(a1)  // second byte, replaces LzmaDecodeProperties()
-        la a3,2*4        (sp)  // &inSizeProcessed
-        la a0,2*4+szSizeT(sp)  // &CLzmaDecoderState
+        stw a4,2*4(sp)  // outp
+        la a3,4*4        (sp)  // &inSizeProcessed
+        stw a6,3*4(sp)  // &outSizeProcessed
+        la a0,4*4+szSizeT(sp)  // &CLzmaDecoderState
         rlwinm t1,r0,32-4,4,31  // t1= (r0>>4)==lit_pos_bits
         rlwinm r0,r0,0,32-4,31  // r0= (0xf& r0)==lit_context_bits
         stb t0,2(a0)  // pos_bits
@@ -101,11 +103,15 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
   section LZMA_DEC20
 #include "lzma_d_cf.S"
 
-  section LZMA_DEC30
+  section LZMA_DEC30  // Out: a0= retval; a2= &hi stored; a4= &lo stored; lr= retaddr
+          lwz a2,3*4(sp)  // &outSizeProcessed
+        lwz a4,2*4(sp)  // &lowest byte stored
+          lwz a2,0(a2)  // outSizeProcessed
         lwz sp,0(sp)  // old sp
+          add a2,a2,a4  // &next byte to store
         lwz r0,retaddr(sp)
+          addi a2,a2,-1  // &highest byte stored
         mtlr r0
-        blr
 
 not_lzma:
 
