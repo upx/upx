@@ -95,7 +95,7 @@ eof_nrv:
         lwz dst0,0(ldst)  // original dst
         mtlr t3  // return address
         subf a0,lsrc,src
-        subf tmp,dst0,dst  // -1+ dst length 
+        subf tmp,dst0,dst  // -1+ dst length
         addi a0,a0,1  // return 0: good; else: bad  [+1: correct for lbzu]
         addi tmp,tmp,1  // dst length
         stw  tmp,0(ldst)
