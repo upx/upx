@@ -39,11 +39,12 @@
   after un-commenting the 0xf1 opcode below.  That opcode forces qemu
   to stop in gdb.  You'll have to "set $pc+=1" by hand.
   Example:
-    $ qemu -S -s -kernel vmlinuz.upx -m 256 -std-vga -hda /dev/sdd &
+    $ qemu -S -s -kernel vmlinuz.upx -m 256 -nographic -hda <filesys_image> &
     $ gdb -
     (gdb) target remote localhost:1234
     (gdb) continue   ## qemu internal breakpoint
     (gdb) set $pc+=1   ## our 0xf1 icebp
+  [ gdb-6.6-43.fc8 has a bug https://bugzilla.redhat.com/show_bug.cgi?id=436037 ]
 */
 section         LINUZ000
     ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
@@ -93,12 +94,17 @@ section         LINUZ001
 
 section LINUZ100  // relocatable, or not at 0x100000; linux-2.6.23 (summer 2007)
 L00:
-                ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+    ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
                 //cli  // this must be true now (else we already lost the race)
                 cld
+BP_version = 0x206  // 518  include/asm/asm_offsets.h; Documentation/i386/boot.txt
+                cmpw [BP_version + esi],0x207
+                jb L01  // no KEEP_SEGMENTS in BP_loadflags
 BP_loadflags = 0x211  // 529  include/asm/asm_offsets.h; Documentation/i386/boot.txt
-                testb [BP_loadflags + esi],(1<<6)
+KEEP_SEGMENTS = (1<<6)
+                testb [BP_loadflags + esi],KEEP_SEGMENTS
                 jnz L03  // bootloader asked: no change in segments
+L01:
                 mov eax,cs
                 add eax, 1<<3  // the next segment after cs:  __BOOT_DS
                 mov ds,eax
@@ -126,6 +132,7 @@ forw:
                 cld
                 ret
 L20:
+                mov edx,esi  // save pointer to real-mode data (MATCH19)
                 pop esi  // MATCH11  src  &moveloop
                 mov ecx,[-4+ esi]  // byte length
                 neg ecx
@@ -144,6 +151,7 @@ section LINUZ130  // fixed address (need not be 0x100000)
 
 section LINUZ140
                 mov eax,esp  // &moveloop (reloc)
+                push edx  // MATCH19 pointer to real-mode data (original esi)
                 lea edx,[unc_length + edi]
                 mov esi,ebp  // src for move
                 push edx  // MATCH20  end of relocation info
@@ -179,6 +187,7 @@ L35:
                 test eax,eax
                 jnz L30
 L40:
+                pop esi  // MATCH19 pointer to real-mode data (original esi)
                 xor ebx,ebx  // processor 0
                 jmp ebp  // entry to decompressed
 
