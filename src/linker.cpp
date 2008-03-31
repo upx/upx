@@ -774,18 +774,18 @@ void ElfLinkerMipsBE::relocate1(const Relocation *rel, upx_byte *location,
 #define MIPS_PC26(a)    (((a) & 0x0fffffff) >> 2)
 
     if (strcmp(type, "R_MIPS_HI16") == 0)
-        set_le16(location, get_le16(location) + MIPS_HI(value));
+        set_be16(2+location, get_be16(2+location) + MIPS_HI(value));
     else if (strcmp(type, "R_MIPS_LO16") == 0)
-        set_le16(location, get_le16(location) + MIPS_LO(value));
+        set_be16(2+location, get_be16(2+location) + MIPS_LO(value));
     else if (strcmp(type, "R_MIPS_PC16") == 0)
     {
         value -= rel->section->offset + rel->offset;
-        set_le16(location, get_le16(location) + MIPS_PC16(value));
+        set_be16(2+location, get_be16(2+location) + MIPS_PC16(value));
     }
     else if (strcmp(type, "R_MIPS_26") == 0)
-        set_le32(location, get_le32(location) + MIPS_PC26(value));
+        set_be32(location, get_be32(location) + MIPS_PC26(value));
     else if (strcmp(type, "R_MIPS_32") == 0)
-        set_le32(location, get_le32(location) + value);
+        set_be32(location, get_be32(location) + value);
     else
         super::relocate1(rel, location, value, type);
 

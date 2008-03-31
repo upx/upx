@@ -227,6 +227,7 @@ eof:
         addiu sp,-4
         sw t8,0(sp)
 
+  section CFLUSH
         move a0,v1  // original lxdst
         subu a1,lxdst,v1  // actual length generated
           sw a1,(lxdstlen)
