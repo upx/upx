@@ -133,7 +133,7 @@
 ;// init decompressor
 ;//////////////////////////////////////
 
-.macro  init
+.macro  init gb_subr
 
 init_sz = .
 
@@ -154,10 +154,48 @@ init_sz = .
             move    bb,bc
     .endif
 .endif
-            li      last_m_off,1
     .if (src != src_ilen)
             move    src_ilen,src
     .endif
+.ifnb gb_subr
+    .if (BIG_ENDIAN == 1)
+      .if (JOHN != 1) || (UCL_SMALL != 1) || (ALT_SMALL != 1)
+         .error "assume 1==JOHN==UCL_SMALL==ALT_SMALL"
+      .endif
+            local around, refill
+        gb_e = gb_subr
+            b around
+              li      last_m_off,1
+        refill:
+            // "lw bb,0(src_ilen)" of little-endian, unaligned data
+            lbu     bb,3(src_ilen)
+            lbu     var,2(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,var
+            lbu     var,1(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,var
+            lbu     var,0(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,var
+            addiu   src_ilen,4
+
+            srl     var,bb,31  # var= most significant bit of bb
+            sll     bb,1
+            jr      ra
+              addiu   bb,1  # the flag bit
+        gb_subr:
+            beq     bc,bb,refill   # detect empty
+              srl     var,bb,31  # var= most significant bit of bb
+            jr      ra
+              sll     bb,1
+        around:
+    .else
+            li      last_m_off,1
+    .endif
+.else
+            li      last_m_off,1
+.endif
 
 init_sz = . - init_sz
 
@@ -262,27 +300,57 @@ init_sz = . - init_sz
 .endm
 
 
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN 0
+#endif
+
 .macro  FILLBYTES_32
 
 .if (JOHN == 0)
-    .if (UCL_SMALL == 1)
-            li      bc,32
-    .else
-            li      bc,31
-    .endif
+  .if (BIG_ENDIAN == 1)
+            // "lw bb,0(src_ilen)" of little-endian, unaligned data
+            lbu     bb,3(src_ilen)
+            lbu     tmp,2(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+            lbu     tmp,1(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+            lbu     tmp,0(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+  .else  // LITTLE_ENDIAN
             lwr     bb,0(src_ilen)
             lwl     bb,3(src_ilen)
+  .endif
             addiu   src_ilen,4
-
+  .if (UCL_SMALL == 1)
+            li      bc,32
+  .else
+            li      bc,31
+  .endif
 .else   //  John's method
-
     .if (ALT_SMALL == 0)
         .if (UCL_SMALL == 1)
             li      bc,32
         .endif
     .endif
+    .if (BIG_ENDIAN == 1)
+            // "lw bb,0(src_ilen)" of little-endian, unaligned data
+            lbu     bb,3(src_ilen)
+            lbu     tmp,2(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+            lbu     tmp,1(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+            lbu     tmp,0(src_ilen)
+            sll     bb,bb,8
+            or      bb,bb,tmp
+    .else  // LITTLE_ENDIAN
             lwr     bb,0(src_ilen)
             lwl     bb,3(src_ilen)
+    .endif
             addiu   src_ilen,4
     .if ((ALT_SMALL == 1) && (UCL_SMALL == 1))
         srl     var,bb,31  # var= most significant bit of bb

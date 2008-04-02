@@ -43,7 +43,7 @@
             local   n2b_1, n2b_2, n2b_3
             local   n2b_4, n2b_5, n2b_6
 
-            init
+            init gb_nrv2b
 n2b_1:
             GETBIT
             li      m_off,1
