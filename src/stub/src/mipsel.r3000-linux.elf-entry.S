@@ -217,6 +217,10 @@ lzma_decode:
         break  // FIXME
 
   section NRV_HEAD
+    .if (BIG_ENDIAN == 1)
+        addiu sp,-4
+        sw ra,0(sp)
+    .endif
         add lxsrclen,lxsrclen,lxsrc  //  src_EOF
         sw lxdst,(lxdstlen)  // original lxdst in &lxdstlen
 
@@ -224,7 +228,11 @@ lzma_decode:
 eof:
         lw v1,(lxdstlen)  // original lxdst
         subu t8,lxsrc,lxsrclen  // new_src - src_EOF;  // return 0: good; else: bad
+    .if (BIG_ENDIAN == 1)
+        lw ra,0(sp)
+    .else
         addiu sp,-4
+    .endif
         sw t8,0(sp)
 
   section CFLUSH
