@@ -138,11 +138,12 @@ int PackVmlinuzI386::decompressKernel()
     fi->seek(0, SEEK_SET);
     fi->readx(obuf, file_size);
 
-    char const *base = 0;
+    {
+    const upx_byte *base = NULL;
     unsigned relocated = 0;
 
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
-    char const *p = (char const *)&obuf[setup_size];
+    const upx_byte *p = &obuf[setup_size];
     for (int j= 0; j < 0x200; ++j, ++p) {
         if (0==memcmp("\x8d\x83",    p, 2)  // leal d32(%ebx),%eax
         &&  0==memcmp("\xff\xe0", 6+ p, 2)  // jmp *%eax
@@ -185,7 +186,7 @@ int PackVmlinuzI386::decompressKernel()
         }
     }
     if (base && relocated) {
-        char const *p = relocated + base;
+        p = base + relocated;
         for (int j= 0; j < 0x200; ++j, ++p) {
             if (0==memcmp("\x01\x9c\x0b", p, 3)  // addl %ebx,d32(%ebx,%ecx)
             ) {
@@ -197,6 +198,7 @@ int PackVmlinuzI386::decompressKernel()
                 physical_start = get_te32(4+ p);
             }
         }
+    }
     }
 
     checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
