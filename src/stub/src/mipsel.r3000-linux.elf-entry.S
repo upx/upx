@@ -297,29 +297,38 @@ unfold:  // s7= &decompress; s6= &b_info(fold); s5= sz_pack2
         li a3, MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         sw zero,a4_sys(sp)  //; sw zero,a5_sys(sp)  // MAP_ANON ==> ignore offset
         li v0,__NR_mmap; syscall; bnez a3,err_syscall
-        move a0,v0  // &new page(s)
+        move s0,v0  // ADRM: &new page(s); &dst for unfold, or &copy of PT_LOAD[0]
 
-        lw a1,adrc - decompressor(s7)
+        lw a0,adrc - decompressor(s7)
         lw s3,adru - decompressor(s7)  // for unmap in fold
         lw s2,lenu - decompressor(s7)  // for unmap in fold
         lw s1,adrx - decompressor(s7)  // for upx_main
 
-        beq a0,a1,L80  // no copy
-          subu t0,a0,a1  // (ADRM - ADRC) == relocation amount
-        subu a2,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
-        addu a2,a2,s5  //  + sz_pack2; length to copy
+        beq s0,a0,L80  // no copy
+          subu t0,s0,a0  // (ADRM - ADRC) == relocation amount
+        subu s4,s6,s7  // &b_info(fold) - &decompress; >= sizeof(decompress)
+        addu a2,s4,s5  //  + sz_pack2; length to copy
         addu s7,s7,t0  // update &decompress
-move_up:  // memcpy(dst=a0, src=a1, len=round_up(a2, 8))
-        lw t0, 0(a1); addiu a0,a0, 8
-        lw t1, 4(a1); addiu a2,a2,-8
-        sw t0,-8(a0); addiu a1,a1, 8
+
+        move a1,s0
+        // memcpy(dst=a1, src=a0, len=round_up(a2, 8))
+move_up:
+        lw t0, 0(a0); addiu a1,a1, 8
+        lw t1, 4(a0); addiu a2,a2,-8
+        sw t0,-8(a1); addiu a0,a0, 8
         bgtz a2,move_up
-          sw t1,-4(a0)
-        move v0,a0  // unfolded stub follows copied decompressor
+          sw t1,-4(a1)
+        move s0,a1  // &dst for unfolding
+
+        move a0,s7  // moved &decompressor
+        // a1 already == &end of moved decompressor
+        li a2,ICACHE|DCACHE
+        li v0,__NR_cacheflush
+        syscall  // moved decompressor
 L80:
 // Decompress the folded part of this stub, then execute it.
         lw t0,sz_unc(s6); move a3,sp; sw t0,0(sp)  // &dst_len
-        move a2,v0  // &dst
+        move a2,s0  // &dst
         lw a1,sz_cpr(s6)  // src_len
         addiu a0,s6,sz_b_info
         jr s7  // decompress(src, srclen, dst, &dstlen /*, method*/)
