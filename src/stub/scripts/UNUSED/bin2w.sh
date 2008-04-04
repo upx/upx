@@ -30,7 +30,7 @@
 # Convert binary 4-byte integers to assembler input.
 # Endian-ness will be handled by the assembler.
 
-od -Ax -tx4 | 
+od -Ax -tx4 |
 sed -e '
   /^\([^ ]*\) \([^ ]*\) \([^ ]*\) \([^ ]*\) \([^ ]*\)$/ {
     s//\/*0x\1*\/ .long 0x\2,0x\3,0x\4,0x\5/p
