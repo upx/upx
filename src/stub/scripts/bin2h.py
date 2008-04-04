@@ -71,6 +71,9 @@ def w_header_c(w, ifile, ofile, n):
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */\n\n\n""")
 
 
@@ -81,46 +84,40 @@ def w_header_c(w, ifile, ofile, n):
 class DataWriter:
     def __init__(self, w):
         self.w = w
+        self.pos = None
 
-    def w_eol(self, i):
-        if i >= 0:
-            self.w("   /* 0x%04x */\n" % (i))
+    def w_bol(self, pos):
+        self.w("/* 0x%04x */ " % (pos))
+        self.pos = pos
+    def w_eol(self, fill=""):
+        if self.pos is not None:
+            self.w(fill.rstrip() + "\n")
 
 
 class DataWriter_c(DataWriter):
-    def w_eol(self, i):
-        if i >= 0:
-            self.w("   /* 0x%4x */\n" % (i))
-
     def w_data(self, data):
         w, n = self.w, len(data)
         for i in range(n):
-            if i % 16 == 0:
-                self.w_eol(i - 16)
+            if i & 15 == 0:
+                self.w_eol()
+                self.w_bol(i)
             w("%3d" % ord(data[i]))
-            w(", " [i == n - 1])
-        i = n
-        while i % 16 != 0:
-            w(" " * 4)
-            i += 1
-        self.w_eol(i - 16)
+            if i != n - 1: w(",")
+        self.w_eol()
 
 
 class DataWriter_gas(DataWriter):
     def w_data(self, data):
         w, n = self.w, len(data)
         for i in range(n):
-            if i % 16 == 0:
-                self.w_eol(i - 16)
+            if i & 15 == 0:
+                self.w_eol()
+                self.w_bol(i)
                 w(".byte ")
             else:
                 w(",")
             w("%3d" % ord(data[i]))
-        i = n
-        while i % 16 != 0:
-            w(" " * 4)
-            i += 1
-        self.w_eol(i - 16)
+        self.w_eol()
 
 
 class _DataWriter_gas_u32(DataWriter):
@@ -128,19 +125,16 @@ class _DataWriter_gas_u32(DataWriter):
         w, n = self.w, len(data)
         assert n % 4 == 0, n
         for i in range(0, n, 4):
-            if i % 16 == 0:
-                self.w_eol(i - 16)
+            if i & 15 == 0:
+                self.w_eol()
+                self.w_bol(i)
                 w(".int ")
             else:
                 w(",")
             v = struct.unpack(self.DECODE, data[i:i+4])
             assert len(v) == 1, v
             w("0x%08x" % (v[0] & 0xffffffffL))
-        i = n
-        while i % 16 != 0:
-            w(" " * 11)
-            i += 4
-        self.w_eol(i - 16)
+        self.w_eol()
 
 class DataWriter_gas_be32(_DataWriter_gas_u32):
     DECODE = ">i"
@@ -149,24 +143,25 @@ class DataWriter_gas_le32(_DataWriter_gas_u32):
 
 
 class DataWriter_nasm(DataWriter):
-    def w_eol(self, i):
-        if i >= 0:
-            self.w("   ; 0x%04x\n" % (i))
+    def w_bol(self, pos):
+        self.pos = pos
+    def w_eol(self, fill=""):
+        if self.pos is not None:
+            self.w(fill)
+            self.w("   ; 0x%04x\n" % (self.pos))
 
     def w_data(self, data):
         w, n = self.w, len(data)
         for i in range(n):
-            if i % 16 == 0:
-                self.w_eol(i - 16)
+            if i & 15 == 0:
+                self.w_eol()
+                self.w_bol(i)
                 w("db ")
             else:
                 w(",")
             w("%3d" % ord(data[i]))
-        i = n
-        while i % 16 != 0:
-            w("    ")
-            i += 1
-        self.w_eol(i - 16)
+        nn = ((n + 15) & ~15) - n
+        self.w_eol(" " * 4 * nn)
 
 
 # /***********************************************************************
