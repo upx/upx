@@ -190,7 +190,6 @@ endef
 
 # default tools
 tc.default.bin2h      = $(PYTHON) $(top_srcdir)/src/stub/scripts/bin2h.py --ident=auto-stub
-tc.default.bin2w      = $(top_srcdir)/src/stub/scripts/bin2w.sh
 ##tc.default.bin2h-c    = $(call tc,bin2h) --compress=14,15,0
 tc.default.bin2h-c    = $(call tc,bin2h) --compress=0
 tc.default.brandelf   = $(PYTHON) $(top_srcdir)/src/stub/scripts/brandelf.py $(if $(tc_bfdname),--bfdname=$(tc_bfdname))

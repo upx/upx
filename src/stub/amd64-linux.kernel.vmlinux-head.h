@@ -25,6 +25,9 @@
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -33,7 +36,7 @@
 #define STUB_AMD64_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0xf78f5286
 
 unsigned char stub_amd64_linux_kernel_vmlinux_head[37] = {
-140,200,131,192,  8,142,216,142,192,142,224,142,232,141,142,  0,   /* 0x   0 */
-144,  0,  0,137, 73,248,137, 65,252, 15,178, 97,248,106,  0,157,   /* 0x  10 */
-232,252,255,255,255                                                /* 0x  20 */
+/* 0x0000 */ 140,200,131,192,  8,142,216,142,192,142,224,142,232,141,142,  0,
+/* 0x0010 */ 144,  0,  0,137, 73,248,137, 65,252, 15,178, 97,248,106,  0,157,
+/* 0x0020 */ 232,252,255,255,255
 };

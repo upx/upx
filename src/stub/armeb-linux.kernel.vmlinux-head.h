@@ -25,6 +25,9 @@
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -33,5 +36,5 @@
 #define STUB_ARMEB_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0xb5ec5990
 
 unsigned char stub_armeb_linux_kernel_vmlinux_head[8] = {
-225,160,192, 14,235,255,255,254                                    /* 0x   0 */
+/* 0x0000 */ 225,160,192, 14,235,255,255,254
 };

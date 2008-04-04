@@ -25,6 +25,9 @@
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+
+   John F. Reiser
+   <jreiser@users.sourceforge.net>
  */
 
 
@@ -33,5 +36,5 @@
 #define STUB_POWERPC_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0xbb153f5c
 
 unsigned char stub_powerpc_linux_kernel_vmlinux_head[8] = {
-127,232,  2,166, 72,  0,  0,  1                                    /* 0x   0 */
+/* 0x0000 */ 127,232,  2,166, 72,  0,  0,  1
 };
