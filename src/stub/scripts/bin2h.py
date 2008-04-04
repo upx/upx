@@ -78,77 +78,107 @@ def w_header_c(w, ifile, ofile, n):
 # // write data
 # ************************************************************************/
 
+class DataWriter:
+    def __init__(self, w):
+        self.w = w
+
+    def w_eol(self, i):
+        if i >= 0:
+            self.w("   /* 0x%04x */\n" % (i))
+
+
+class DataWriter_c(DataWriter):
+    def w_eol(self, i):
+        if i >= 0:
+            self.w("   /* 0x%4x */\n" % (i))
+
+    def w_data(self, data):
+        w, n = self.w, len(data)
+        for i in range(n):
+            if i % 16 == 0:
+                self.w_eol(i - 16)
+            w("%3d" % ord(data[i]))
+            w(", " [i == n - 1])
+        i = n
+        while i % 16 != 0:
+            w(" " * 4)
+            i += 1
+        self.w_eol(i - 16)
+
+
+class DataWriter_gas(DataWriter):
+    def w_data(self, data):
+        w, n = self.w, len(data)
+        for i in range(n):
+            if i % 16 == 0:
+                self.w_eol(i - 16)
+                w(".byte ")
+            else:
+                w(",")
+            w("%3d" % ord(data[i]))
+        i = n
+        while i % 16 != 0:
+            w(" " * 4)
+            i += 1
+        self.w_eol(i - 16)
+
+
+class _DataWriter_gas_u32(DataWriter):
+    def w_data(self, data):
+        w, n = self.w, len(data)
+        assert n % 4 == 0, n
+        for i in range(0, n, 4):
+            if i % 16 == 0:
+                self.w_eol(i - 16)
+                w(".int ")
+            else:
+                w(",")
+            v = struct.unpack(self.DECODE, data[i:i+4])
+            assert len(v) == 1, v
+            w("0x%08x" % (v[0] & 0xffffffffL))
+        i = n
+        while i % 16 != 0:
+            w(" " * 11)
+            i += 4
+        self.w_eol(i - 16)
+
+class DataWriter_gas_be32(_DataWriter_gas_u32):
+    DECODE = ">i"
+class DataWriter_gas_le32(_DataWriter_gas_u32):
+    DECODE = "<i"
+
+
+class DataWriter_nasm(DataWriter):
+    def w_eol(self, i):
+        if i >= 0:
+            self.w("   ; 0x%04x\n" % (i))
+
+    def w_data(self, data):
+        w, n = self.w, len(data)
+        for i in range(n):
+            if i % 16 == 0:
+                self.w_eol(i - 16)
+                w("db ")
+            else:
+                w(",")
+            w("%3d" % ord(data[i]))
+        i = n
+        while i % 16 != 0:
+            w("    ")
+            i += 1
+        self.w_eol(i - 16)
+
+
+# /***********************************************************************
+# // write stub
+# ************************************************************************/
+
 def w_checksum_c(w, s, data):
     w("#define %s_SIZE    %d\n"     % (s, len(data)))
     w("#define %s_ADLER32 0x%08x\n" % (s, 0xffffffffL & zlib.adler32(data)))
     w("#define %s_CRC32   0x%08x\n" % (s, 0xffffffffL & zlib.crc32(data)))
     w("\n")
 
-
-def w_data_c(w, data):
-    def w_eol(w, i):
-        if i > 0:
-            w("   /* 0x%4x */" % (i - 16))
-            w("\n")
-
-    n = len(data)
-    for i in range(n):
-        if i % 16 == 0:
-            w_eol(w, i)
-        w("%3d" % ord(data[i]))
-        w(", " [i == n - 1])
-    i = n
-    while i % 16 != 0:
-        w("    ")
-        i += 1
-    w_eol(w, i)
-
-
-def w_data_gas(w, data):
-    def w_eol(w, i):
-        if i > 0:
-            w("   /* 0x%04x */" % (i - 16))
-            w("\n")
-
-    n = len(data)
-    for i in range(n):
-        if i % 16 == 0:
-            w_eol(w, i)
-            w(".byte ")
-        else:
-            w(",")
-        w("%3d" % ord(data[i]))
-    i = n
-    while i % 16 != 0:
-        w("    ")
-        i += 1
-    w_eol(w, i)
-
-
-def w_data_nasm(w, data):
-    def w_eol(w, i):
-        if i > 0:
-            w("   ; 0x%04x" % (i - 16))
-            w("\n")
-
-    n = len(data)
-    for i in range(n):
-        if i % 16 == 0:
-            w_eol(w, i)
-            w("db ")
-        else:
-            w(",")
-        w("%3d" % ord(data[i]))
-    i = n
-    while i % 16 != 0:
-        w("    ")
-        i += 1
-    w_eol(w, i)
-
-
-# /***********************************************************************
-# // write stub
-# ************************************************************************/
 
 def write_stub(w, odata, method_index, methods):
     method = methods[method_index]
@@ -165,13 +195,17 @@ def write_stub(w, odata, method_index, methods):
             w_checksum_c(w, opts.ident.upper(), odata)
             w("unsigned char %s[%d] = {\n" % (opts.ident, len(odata)))
     if opts.mode == "c":
-        w_data_c(w, odata)
+        DataWriter_c(w).w_data(odata)
     elif opts.mode == "gas":
-        w_data_gas(w, odata)
+        DataWriter_gas(w).w_data(odata)
+    elif opts.mode == "gas-be32":
+        DataWriter_gas_be32(w).w_data(odata)
+    elif opts.mode == "gas-le32":
+        DataWriter_gas_le32(w).w_data(odata)
     elif opts.mode == "nasm":
-        w_data_nasm(w, odata)
+        DataWriter_nasm(w).w_data(odata)
     else:
-        assert 0, opts.mode
+        assert 0, ("invalid mode", opts.mode)
     if opts.ident:
         if opts.mode == "c":
             w("};\n")
