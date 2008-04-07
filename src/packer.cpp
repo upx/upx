@@ -1121,6 +1121,11 @@ int Packer::getLoaderSize() const
     return size;
 }
 
+bool Packer::hasLoaderSection(const char *name) const
+{
+    void *section = linker->findSection(name, false);
+    return section != NULL;
+}
 
 int Packer::getLoaderSection(const char *name, int *slen) const
 {

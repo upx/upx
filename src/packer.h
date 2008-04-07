@@ -240,6 +240,7 @@ protected:
 #else
     void __acc_cdecl_va addLoaderVA(const char *s, ...);
 #endif
+    virtual bool hasLoaderSection(const char *name) const;
     virtual int getLoaderSection(const char *name, int *slen=NULL) const;
     virtual int getLoaderSectionStart(const char *name, int *slen=NULL) const;
 
