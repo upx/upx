@@ -225,26 +225,16 @@ void show_help(int verbose)
                     "  --overlay=skip      don't compress a file with an overlay\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for atari/tos:\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --all-methods       try all available compression methods\n"
-                    "\n");
-        fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for djgpp2/coff:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --coff              produce COFF output [default: EXE]\n"
-                    "  --all-methods       try all available compression methods\n"
-                    "  --all-filters       try all available preprocessing filters\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for dos/com:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --8086              make compressed com work on any 8086\n"
-                    "  --all-methods       try all available compression methods\n"
-                    "  --all-filters       try all available preprocessing filters\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for dos/exe:\n");
@@ -252,15 +242,12 @@ void show_help(int verbose)
         con_fprintf(f,
                     "  --8086              make compressed exe work on any 8086\n"
                     "  --no-reloc          put no relocations in to the exe header\n"
-                    "  --all-methods       try all available compression methods\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for dos/sys:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --8086              make compressed sys work on any 8086\n"
-                    "  --all-methods       try all available compression methods\n"
-                    "  --all-filters       try all available preprocessing filters\n"
                     "\n");
 #if 0
         fg = con_fg(f,FG_YELLOW);
@@ -275,25 +262,10 @@ void show_help(int verbose)
         con_fprintf(f,"Options for ps1/exe:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
-                    "  --all-methods       try all available compression methods\n"
                     "  --8-bit             uses 8 bit size compression [default: 32 bit]\n"
                     "  --8mb-ram           8 megabyte memory limit [default: 2 mb]\n"
                     "  --boot-only         disables client/host transfer compatibility\n"
                     "  --no-align          don't align to 2048 bytes [enables: --console-run]\n"
-                    "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for tmt/adam:\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --all-methods       try all available compression methods\n"
-                    "  --all-filters       try all available preprocessing filters\n"
-                    "\n");
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for vmlinuz/386\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --all-methods       try all available compression methods\n"
-                    "  --all-filters       try all available preprocessing filters\n"
                     "\n");
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for watcom/le:\n");
@@ -315,8 +287,6 @@ void show_help(int verbose)
                     "  --keep-resource=list    do not compress resources specified by list\n"
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
-                    "  --all-methods           try all available compression methods\n"
-                    "  --all-filters           try all available preprocessing filters\n"
                     "\n");
     }
 
