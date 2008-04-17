@@ -2,10 +2,11 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.03 (XX XXX 2008):
+Changes in 3.03 (27 Apr 2008):
   * implement cache flushing for PowerPC (esp. model 440)
   * fix cache flushing on MIPS (>3MB compressed, or with holes)
   * fix MIPS big-endian
+  * bug fixes
 
 Changes in 3.02 (16 Dec 2007):
   * fix unmapping on arm-linux.elf
