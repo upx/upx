@@ -29,6 +29,43 @@
 
 #include "arch/i386/macros.S"
 
+// include/linux/screen_info.h
+si_orig_x		= 0x00
+si_orig_y		= 0x01
+//si_dontuse1		= 0x02  // EXT_MEM_K sits here
+si_orig_video_page	= 0x04
+si_orig_video_mode	= 0x06
+si_orig_video_cols	= 0x07
+si_vidport		= 0x08  // FIXME  upx stealing
+si_orig_video_ega_bx	= 0x0a
+//si_unused3		= 0x0c
+si_orig_video_lines	= 0x0e
+si_orig_video_isVGA	= 0x0f
+si_orig_video_points	= 0x10
+
+// VESA graphic mode -- linear frame buffer
+si_lfb_width		= 0x12
+si_lfb_height		= 0x14
+si_lfb_depth		= 0x16
+si_lfb_base		= 0x18
+si_lfb_size		= 0x1c
+//si_dontuse2, dontuse3	= 0x20  // CL_MAGIC and CL_OFFSET here
+si_lfb_linelength	= 0x24
+si_red_size		= 0x26
+si_red_pos		= 0x27
+si_green_size		= 0x28
+si_green_pos		= 0x29
+si_blue_size		= 0x2a
+si_blue_pos		= 0x2b
+si_rsvd_size		= 0x2c
+si_rsvd_pos		= 0x2d
+si_vesapm_seg		= 0x2e
+si_vesapm_off		= 0x30
+si_pages		= 0x32
+si_vesa_attributes	= 0x34
+si_capabilities		= 0x36
+
+si_vidmem               = 0x3c  // FIXME upx stealing
 
 // =============
 // ============= ENTRY POINT
@@ -46,9 +83,146 @@
     (gdb) set $pc+=1   ## our 0xf1 icebp
   [ gdb-6.6-43.fc8 has a bug https://bugzilla.redhat.com/show_bug.cgi?id=436037 ]
 */
-section         LINUZ000
+
+section LINUZVGA  // debug print to VGA console
+Lvga0:
+#if 0  /*{*/
     ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+// choose which VGA region and port, depending on video mode
+        mov eax,0xb0000
+        mov dx,0x3b4
+        cmpb [esi + si_orig_video_mode],7; je 0f
+        movb ah,0x80  // 0xb8000
+        movb dl,0xd4  // 0x3d4
+0:
+        mov [esi + si_vidmem],eax
+        mov [esi + si_vidport],dx
+        jmp .L10  // jump around subroutine definitions
+
+putstr:
+        push ebp; mov ebp,esp; push edi
+
+        mov edi,[ebp+ 2*4]  // ptr
+.L40:
+        movb al,[edi]; inc edi
+        cmpb al,0; jz .L49
+        cmpb al,'\n'; je .L47
+.L45:
+        movb dl,al
+        call curpos
+        add eax,[esi+ si_vidmem]
+        movb [eax],dl
+        incb    [esi+ si_orig_x]
+        movb al,[esi+ si_orig_x]
+        cmpb al,[esi+ si_orig_video_cols]; jb .L40
+.L47:
+        call newline
+        jmp .L40
+.L49:
+        call setcursor
+        pop edi; leave; ret
+
+newline:
+        movb [esi+ si_orig_x],0
+        incb [esi+ si_orig_y]
+        movb al,[esi+ si_orig_y]
+        cmpb al,[esi+ si_orig_video_lines]; jb no_scroll
+        decb [esi+ si_orig_y]
+scroll:
+        push esi; push edi
+        mov edi,[esi+ si_vidmem]
+        movb al,[esi+ si_orig_video_lines]
+        movzbl ecx,[esi+ si_orig_video_cols]
+        lea esi,[edi + ecx*2]
+        push ecx
+          dec eax; mulb cl; xchg eax,ecx  // ecx= (lines -1) * cols
+          rep; movsw  // move all lines up
+        pop ecx  // cols
+        movw ax,[edi]; mov al,' '  // ' ' with ah= current_video_attributes
+        rep; stosw  // fill last line with spaces
+        pop edi; pop esi
+no_scroll:
+        //jmp setcursor
+
+setcursor:
+        call curpos; shr eax; xchg eax,ecx  // ecx= position
+        mov edx,[esi+ si_vidport]
+        mov al,14; call outb_p; inc edx
+        mov al,ch; call outb_p; dec edx
+        mov al,15; call outb_p; inc edx
+        mov al,cl
+        // jmp outb_p
+ 
+outb_p:
+        outb dx,al
+        call 0f; 0:  // insure minimum delay between 'outb'
+        call 0f; 0:
+        call 0f; 0:
+        call 0f; 0:
+        ret
+
+curpos:
+        movzbl eax,[esi+ si_orig_y]
+        movzbl ecx,[esi+ si_orig_x]
+        mulb [esi+ si_orig_video_cols]  // ax= y * cols
+        add eax,ecx  // + x
+        add eax,eax  // * 2
+        ret
+
+put_hex:  // %eax in " %.8x";  clobbers edi,edx,ecx,eax
+        sub esp,12
+        mov edi,esp
+        mov edx,eax
+
+        mov al,' '
+        stosb
+        mov ecx,8
+.L30:
+        rol edx,4
+        mov al,dl
+        and al,0xf
+        cmp al,10
+        sbb al,0x69
+        das
+        stosb
+        loop .L30
+        mov al,0
+        stosb
+
+        push esp; call putstr
+        add esp,4+ 3*4
+        ret
+
+print_stk8:
+        push ebp; mov ebp,esp; push ebx; push esi; push edi
+
+        push -8  // -(number of words to print)
+        pop ecx
+.L20:
+        mov eax,[ebp + 4*ecx + 8*4 + 8]
+        push ecx; call put_hex; pop ecx
+        inc ecx
+        jnz .L20
+        call newline
+
+        pop edi; pop esi; pop ebx; pop ebp
+        ret
+
+.L10:
+// example of specific debugging
+        mov eax,[esi+ 0x228]  // cmd_line_ptr
+        mov ecx,[esi+ 0x238]  // cmdline_size
+        mov edx,esi
+
+        pusha
+        call print_stk8
+        popa
+#endif  /*}*/
+Lvga9:
+
+section LINUZ000
                 //cli    // this must be true already
+                cld
 
 /*
         ; The only facts about segments here, that are true for all kernels:
@@ -60,6 +234,8 @@ section         LINUZ000
                 add eax, 1<<3           // the next segment after %cs
                 mov ds, eax
                 mov es, eax
+
+section LINUZ001
 /*
         ; fs, gs set by startup_32 in arch/i386/kernel/head.S
 
@@ -73,9 +249,16 @@ section         LINUZ000
         ; In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
         ; boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
 */
+
                 lea     ecx, [stack_offset + esi] // (0x9000 + 0x90000) typical
+// Bootloaders such as grub-0.97-33.fc9.src.rpm (April 2008) are not leaving
+// enough stack space for lzma:  real mode segment esi=0x932b0, with
+// cmdline at 0x99000 for 0x800.  (0x99000 - 0x932b0) == 0x5d50 == 23888;
+// lzma wants 28000.
+                mov     ecx,0x20000
+
                 mov     [-8 + ecx], ecx         // 32-bit offset for stack pointer
-                mov     [-4 + ecx], eax         // segment for stack
+                mov     [-4 + ecx], ds          // segment for stack
                 lss     esp, [-8 + ecx]         // %ss:%esp= %ds:0x99000
 
                 push    0
@@ -89,12 +272,12 @@ section         LINUZ000
                 push    eax     // MATCH00  entry address
                 push    edi     // MATCH01  save
                 push    esi     // MATCH02  save
-section         LINUZ001
+
+section LINUZ010
                 or      ebp, -1 // decompressor assumption
 
 section LINUZ100  // relocatable, or not at 0x100000; linux-2.6.23 (summer 2007)
-L00:
-    ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+L00a:
                 //cli  // this must be true now (else we already lost the race)
                 cld
 BP_version = 0x206  // 518  include/asm/asm_offsets.h; Documentation/i386/boot.txt
@@ -111,10 +294,15 @@ L01:
                 mov es,eax
                 mov ss,eax
                 lea esp,[stack_offset + esi]  // FIXME: avoid commandline ??
+                mov esp,0x20000  // See comment on Bootloaders in section LINUZ001
 L03:
+L00b:
+
+section LINUZ101
+L05a:
                 .byte 0xe8
                 .long compressed_length  // MATCH10  call L10
-L05:
+L05b:
 section LINUZ110
 L10:
                 pop ebp  // MATCH10  &compressed
@@ -155,7 +343,7 @@ section LINUZ140
                 lea edx,[unc_length + edi]
                 mov esi,ebp  // src for move
                 push edx  // MATCH20  end of relocation info
-                add edx,offset (dec_offset - (L29 - L27) - (L05 - L00))  // &decompressor (reloc)
+                add edx,offset (dec_offset - (L29 - L27) - (L05b - L05a) - (L00b - L00a) - (Lvga9 - Lvga0))  // &decompressor (reloc)
                 push edi  // MATCH21  runtime entry
                 add edi,offset unc_offset  // dst for move ( + u_len - c_len )
                 push edi  // MATCH22  &compressed (reloc)
@@ -186,6 +374,7 @@ L35:
                 lodsd
                 test eax,eax
                 jnz L30
+                cld
 L40:
                 pop esi  // MATCH19 pointer to real-mode data (original esi)
                 xor ebx,ebx  // processor 0

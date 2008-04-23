@@ -342,7 +342,7 @@ void PackVmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     addLoader("LINUZ000",
-              ph.first_offset_found == 1 ? "LINUZ001" : "",
+              ph.first_offset_found == 1 ? "LINUZ010" : "",
               ft->id ? "LZCALLT1" : "",
               "LZIMAGE0",
               getDecompressorSections(),
@@ -416,15 +416,15 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     if (0!=page_offset) { // relocatable kernel
-        addLoader("LINUZ100,LINUZ110",
+        addLoader("LINUZ100,LINUZVGA,LINUZ101,LINUZ110",
             ((0!=config_physical_align) ? "LINUZ120" : "LINUZ130"),
             "LINUZ140,LZCUTPOI",
-            (ph.first_offset_found == 1 ? "LINUZ001" : ""),
+            (ph.first_offset_found == 1 ? "LINUZ010" : ""),
             NULL);
     }
     else {
-        addLoader("LINUZ000",
-              ph.first_offset_found == 1 ? "LINUZ001" : "",
+        addLoader("LINUZ000,LINUZVGA,LINUZ001",
+              ph.first_offset_found == 1 ? "LINUZ010" : "",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
               "+40", // align the stuff to 4 byte boundary
