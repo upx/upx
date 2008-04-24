@@ -416,7 +416,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     if (0!=page_offset) { // relocatable kernel
-        addLoader("LINUZ100,LINUZVGA,LINUZ101,LINUZ110",
+        addLoader("LINUZ000,LINUZVGA,LINUZ101,LINUZ110",
             ((0!=config_physical_align) ? "LINUZ120" : "LINUZ130"),
             "LINUZ140,LZCUTPOI",
             (ph.first_offset_found == 1 ? "LINUZ010" : ""),
@@ -452,7 +452,8 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         addLoader("LINUZ150", NULL);
         unsigned const l_len = getLoaderSize();
         unsigned const c_len = ALIGN_UP(ph.c_len, 4u);
-        unsigned const e_len = getLoaderSectionStart("LZCUTPOI");
+        unsigned const e_len = getLoaderSectionStart("LZCUTPOI") -
+                               getLoaderSectionStart("LINUZ110");
         linker->defineSymbol("compressed_length", c_len);
         linker->defineSymbol("load_physical_address", physical_start);  // FIXME
         if (0!=config_physical_align) {

@@ -67,13 +67,21 @@ si_capabilities		= 0x36
 
 si_vidmem               = 0x3c  // FIXME upx stealing
 
+// linux/Documentation/i386/boot.txt
+BP_version              = 0x206  // boot protocol 2.00+ (kernel 1.3.73)
+BP_loadflags            = 0x211  // 2.00+
+   LOADED_HIGH   = (1<<0)
+   KEEP_SEGMENTS = (1<<6)
+BP_cmd_line_ptr         = 0x228  // 2.02+ (kernel 2.4.0-test3-pre3)
+BP_cmdline_size         = 0x238
+
 // =============
 // ============= ENTRY POINT
 // =============
 
 /*
   How to debug: run under qemu (http://fabrice.bellard.free.fr/qemu/)
-  after un-commenting the 0xf1 opcode below.  That opcode forces qemu
+  after un-commenting the 0xf1 opcode(s) below.  That opcode forces qemu
   to stop in gdb.  You'll have to "set $pc+=1" by hand.
   Example:
     $ qemu -S -s -kernel vmlinuz.upx -m 256 -nographic -hda <filesys_image> &
@@ -85,7 +93,6 @@ si_vidmem               = 0x3c  // FIXME upx stealing
 */
 
 section LINUZVGA  // debug print to VGA console
-Lvga0:
 #if 0  /*{*/
     ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
 // choose which VGA region and port, depending on video mode
@@ -119,8 +126,8 @@ putstr:
         call newline
         jmp .L40
 .L49:
-        call setcursor
-        pop edi; leave; ret
+        pop edi; pop ebp
+        jmp setcursor
 
 newline:
         movb [esi+ si_orig_x],0
@@ -194,7 +201,7 @@ put_hex:  // %eax in " %.8x";  clobbers edi,edx,ecx,eax
         ret
 
 print_stk8:
-        push ebp; mov ebp,esp; push ebx; push esi; push edi
+        push ebp; mov ebp,esp; push ebx; push edi
 
         push -8  // -(number of words to print)
         pop ecx
@@ -203,10 +210,8 @@ print_stk8:
         push ecx; call put_hex; pop ecx
         inc ecx
         jnz .L20
-        call newline
-
-        pop edi; pop esi; pop ebx; pop ebp
-        ret
+        pop edi; pop ebx; pop ebp
+        jmp newline
 
 .L10:
 // example of specific debugging
@@ -218,55 +223,71 @@ print_stk8:
         call print_stk8
         popa
 #endif  /*}*/
-Lvga9:
 
 section LINUZ000
-                //cli    // this must be true already
+    ////.byte 0xf1  // qemu In-Circuit-Emulator breakpoint
+                //cli  // this must be true now (else we already lost the race)
                 cld
-
+#if 0  /*{ conflict: want to fetch memory, but might not have valid %ds */
+                cmpw [BP_version + esi],0x207
+                jb L01  // no KEEP_SEGMENTS in BP_loadflags
+                testb [BP_loadflags + esi],KEEP_SEGMENTS
+                jnz L03  // bootloader asked: no change in segments
+L01:
+#endif  /*}*/
 /*
         ; The only facts about segments here, that are true for all kernels:
         ; %cs is a valid "flat" code segment; no other segment reg is valid;
         ; the next segment after %cs is a valid "flat" data segment, but
         ; no segment register designates it yet.
 */
-                mov eax, cs
-                add eax, 1<<3           // the next segment after %cs
-                mov ds, eax
-                mov es, eax
+                mov eax,cs
+                add eax, 1<<3  // the next segment after cs:  __BOOT_DS
+                mov ds,eax
+                mov es,eax
+                mov ss,eax
+                lea esp,[stack_offset + esi]  // ancient default
+L03:
+// If the kernel command line ends below (0x99800 - cmd_exp), then move it up.
+cmd_exp = 80  // allow kernel to expand command line "in place" by this much
 
-section LINUZ001
-/*
-        ; fs, gs set by startup_32 in arch/i386/kernel/head.S
+                cmpw [esi+ BP_version],0x202; jb nbp202  // boot protocol too old
+                mov ebp,esi  // save register
+                mov esi,[esi+ BP_cmd_line_ptr]
+                sub ecx,ecx  // length
+0:
+                lodsb; inc ecx; cmpb al,0; jne 0b  // find end and 1+strlen
 
-        ; Linux Documentation/i386/boot.txt "SAMPLE BOOT CONFIGURATION" says
-        ; 0x8000-0x8FFF  Stack and heap  [inside the "real mode segment",
-        ; just below the command line at offset 0x9000].
+                mov edx,edi  // save register
+                mov edi,0x99800 - cmd_exp -1; lea eax,[edi + cmd_exp]
+                dec esi; cmp esi,edi; jae 8f
+                std; rep movsb; cld  // move command line bytes
+                inc edi;     mov [ebp+ BP_cmd_line_ptr],edi
+                sub eax,edi; mov [ebp+ BP_cmdline_size],eax  // maximum strlen
 
-        ; arch/i386/boot/compressed/head.S "Do the decompression ..." says
-        ; %esi contains the "real mode pointer" [as a 32-bit addr].
-
-        ; In any case, avoid EBDA (Extended BIOS Data Area) below 0xA0000.
-        ; boot.txt says 0x9A000 is the limit.  LILO goes up to 0x9B000.
-*/
-
-                lea     ecx, [stack_offset + esi] // (0x9000 + 0x90000) typical
-// Bootloaders such as grub-0.97-33.fc9.src.rpm (April 2008) are not leaving
-// enough stack space for lzma:  real mode segment esi=0x932b0, with
-// cmdline at 0x99000 for 0x800.  (0x99000 - 0x932b0) == 0x5d50 == 23888;
-// lzma wants 28000.
-                mov     ecx,0x20000
-
-                mov     [-8 + ecx], ecx         // 32-bit offset for stack pointer
-                mov     [-4 + ecx], ds          // segment for stack
-                lss     esp, [-8 + ecx]         // %ss:%esp= %ds:0x99000
-
+                and edi,~3  // word align down
+                mov [edi-8],edi
+                mov [edi-4],ds
+                lss esp,[edi-8]  // stack ends at command line
+8:
+                mov edi,edx  // restore register
+                mov esi,ebp  // restore register
+nbp202:
                 push    0
                 popf            // BIOS can leave random flags (such as NT)
 
-// do not clear .bss: at this point, .bss comes only from
-// arch/i386/boot/compressed/*.o  which we are replacing entirely
+// If the real mode segment is above the floor, then move it down.
+// The default floor is 0x90000, but 0x10000 (64K) for confirmed bzImage.
+                push edi; mov edi,0x90000  // save register
+                cmpw [esi+ BP_version],0x200; jb 8f  // boot protocol too old
+                testb [esi+ BP_loadflags],LOADED_HIGH; jz 8f  // not bzImage
+                mov edi,0x10000
+8:
+                push edi; mov ecx,0x250>>2; rep movsd
+                pop esi  // new real mode pointer
+                pop edi  // restore register
 
+section LINUZ001  // Bvmlinuz and not relocatable
                 mov     eax, offset original_entry  // 0x100000 : address of startup_32
                 push    cs      // MATCH00
                 push    eax     // MATCH00  entry address
@@ -276,33 +297,10 @@ section LINUZ001
 section LINUZ010
                 or      ebp, -1 // decompressor assumption
 
-section LINUZ100  // relocatable, or not at 0x100000; linux-2.6.23 (summer 2007)
-L00a:
-                //cli  // this must be true now (else we already lost the race)
-                cld
-BP_version = 0x206  // 518  include/asm/asm_offsets.h; Documentation/i386/boot.txt
-                cmpw [BP_version + esi],0x207
-                jb L01  // no KEEP_SEGMENTS in BP_loadflags
-BP_loadflags = 0x211  // 529  include/asm/asm_offsets.h; Documentation/i386/boot.txt
-KEEP_SEGMENTS = (1<<6)
-                testb [BP_loadflags + esi],KEEP_SEGMENTS
-                jnz L03  // bootloader asked: no change in segments
-L01:
-                mov eax,cs
-                add eax, 1<<3  // the next segment after cs:  __BOOT_DS
-                mov ds,eax
-                mov es,eax
-                mov ss,eax
-                lea esp,[stack_offset + esi]  // FIXME: avoid commandline ??
-                mov esp,0x20000  // See comment on Bootloaders in section LINUZ001
-L03:
-L00b:
-
-section LINUZ101
-L05a:
+section LINUZ101  // Bvmlinuz and relocatable
                 .byte 0xe8
                 .long compressed_length  // MATCH10  call L10
-L05b:
+
 section LINUZ110
 L10:
                 pop ebp  // MATCH10  &compressed
@@ -343,7 +341,7 @@ section LINUZ140
                 lea edx,[unc_length + edi]
                 mov esi,ebp  // src for move
                 push edx  // MATCH20  end of relocation info
-                add edx,offset (dec_offset - (L29 - L27) - (L05b - L05a) - (L00b - L00a) - (Lvga9 - Lvga0))  // &decompressor (reloc)
+                add edx,offset (dec_offset - (L29 - L27))  // &decompressor (reloc)
                 push edi  // MATCH21  runtime entry
                 add edi,offset unc_offset  // dst for move ( + u_len - c_len )
                 push edi  // MATCH22  &compressed (reloc)
