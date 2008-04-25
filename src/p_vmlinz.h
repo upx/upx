@@ -68,8 +68,8 @@ protected:
         char            _[0x1f1];
         unsigned char   setup_sects;
         char            __[2];
-        LE16            sys_size;
-        char            ___[8];
+        LE32            sys_size;
+        char            ___[6];
         LE16            boot_flag;      // 0xAA55
         // 0x200
         char            ____[2];

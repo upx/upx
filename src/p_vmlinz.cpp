@@ -111,12 +111,16 @@ int PackVmlinuzI386::readFileHeader()
     else if (hdrs && (h.load_flags & 1) != 0)
     {
         format = UPX_F_BVMLINUZ_i386;
-        // account for 16-bit h.sys_size, wrap around at 20 bits
-        sys_size &= (1 << 20) - 1;
     }
 
-    if (16u * h.sys_size != sys_size)
-        return 0;
+    if (0x204<=h.version) {
+        if ((16u * h.sys_size) != sys_size)
+            return 0;
+    }
+    else { // h.sys_size is only 2 bytes
+        if ((16u * (0xffff & h.sys_size)) != (~(~0u<<20) & sys_size))
+            return 0;
+    }
 
     // FIXME: add more checks for a valid kernel
 
@@ -144,7 +148,21 @@ int PackVmlinuzI386::decompressKernel()
 
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
     const upx_byte *p = &obuf[setup_size];
-    for (int j= 0; j < 0x200; ++j, ++p) {
+    unsigned cpa_0 = 0;
+    unsigned cpa_1 = 0;
+    int j;
+    for ((p = &obuf[setup_size]), (j= 0); j < 0x200; ++j, ++p) {
+        if (0==memcmp("\x89\xeb\x81\xc3", p, 4)
+        &&  0==memcmp("\x81\xe3",      8+ p, 2)) {
+            // movl %ebp,%ebx
+            // addl $imm.w,%ebx
+            // andl $imm.w,%ebx
+            cpa_0 = 1+ get_te32( 4+ p);
+            cpa_1 =    get_te32(10+ p);
+            break;
+        }
+    }
+    for ((p = &obuf[setup_size]), (j= 0); j < 0x200; ++j, ++p) {
         if (0==memcmp("\x8d\x83",    p, 2)  // leal d32(%ebx),%eax
         &&  0==memcmp("\xff\xe0", 6+ p, 2)  // jmp *%eax
         ) {
@@ -160,16 +178,11 @@ int PackVmlinuzI386::decompressKernel()
             //      subl $1b, %ebp  # 32-bit immediate
             //      movl $LOAD_PHYSICAL_ADDR, %ebx
             //
-            unsigned const cpa_0 = 1+ get_te32(16+ p);
-            unsigned const cpa_1 =    get_te32(22+ p);
             if (0==memcmp("\x81\xed", 6+  p, 2)      // subl $imm.w,%ebp
             &&  0==memcmp("\xbb",     12+ p, 1) ) {  // movl $imm.w,%ebx
                 physical_start = get_te32(13+ p);
             } else
             if (0==memcmp("\x81\xed", 6+  p, 2)  // subl $imm.w,%ebp
-            &&  0==memcmp("\x89\xeb", 12+ p, 2)  // movl %ebp,%ebx
-            &&  0==memcmp("\x81\xc3", 14+ p, 2)  // addl $imm.w,%ebx
-            &&  0==memcmp("\x81\xe3", 20+ p, 2)  // andl $imm.w,%ebx
             &&  is_pow2(cpa_0) && (0u-cpa_0)==cpa_1) {
                 base = (5+ p) - get_te32(8+ p);
                 config_physical_align = cpa_0;
@@ -293,6 +306,15 @@ int PackVmlinuzI386::decompressKernel()
         &&  0xB8==ibuf[14]  // mov $...,%eax
         &&  0x0F==ibuf[19] && 0xA2==ibuf[20]  // cpuid
         ) goto head_ok;
+
+        // cmpw   $0x207,0x206(%esi)  Debian vmlinuz-2.6.24-12-generic
+        if (0==memcmp("\x66\x81\xbe\x06\x02\x00\x00\x07\x02", ibuf, 9)) goto head_ok;
+
+        // testb  $0x40,0x211(%esi)  Fedora vmlinuz-2.6.25-0.218.rc8.git7.fc9.i686
+        if (0==memcmp("\xf6\x86\x11\x02\x00\x00\x40", ibuf, 7)) goto head_ok;
+
+        // rex.W prefix for x86_64
+        if (0x48==ibuf[0]) throwCantPack("x86_64 bzImage is not yet supported");
 
         throwCantPack("unrecognized kernel architecture; use option '-f' to force packing");
     head_ok:
@@ -484,7 +506,11 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 8); // ushort: ~28KB stack
+
+    // FIXME: new stub allows most of low memory as stack for Bvmlinuz ?
+    //cconf.conf_lzma.max_num_probs = (0x99000 - 0x10250)>>1; // ushort: 560560 stack
+
     compressWithFilters(&ft, 512, &cconf);
 
     // align everything to dword boundary - it is easier to handle
@@ -536,7 +562,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
-    bs->sys_size = (ALIGN_UP(lsize + c_len, 16u) / 16) & 0xffff;
+    bs->sys_size = (ALIGN_UP(lsize + c_len, 16u) / 16);
 
     fo->write(setup_buf, setup_buf.getSize());
 
