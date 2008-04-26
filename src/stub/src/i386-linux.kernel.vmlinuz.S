@@ -49,7 +49,10 @@ si_lfb_height		= 0x14
 si_lfb_depth		= 0x16
 si_lfb_base		= 0x18
 si_lfb_size		= 0x1c
-//si_dontuse2, dontuse3	= 0x20  // CL_MAGIC and CL_OFFSET here
+
+BP_cmd_line_magic       = 0x20  // protocol < 2.02, or if null pointer
+BP_cmd_line_offset      = 0x22  // protocol < 2.02, or if null pointer
+
 si_lfb_linelength	= 0x24
 si_red_size		= 0x26
 si_red_pos		= 0x27
@@ -251,19 +254,30 @@ L03:
 // If the kernel command line ends below (0x99800 - cmd_exp), then move it up.
 cmd_exp = 80  // allow kernel to expand command line "in place" by this much
 
-                cmpw [esi+ BP_version],0x202; jb nbp202  // boot protocol too old
                 mov ebp,esi  // save register
-                mov esi,[esi+ BP_cmd_line_ptr]
+                cmpw [esi+ BP_version],0x202; jae cl_bp202
+cl_nbp202:  // use < 2.02 method.  in: ebp= real_mode_ptr
+                mov esi,ebp  // absolute worst case default
+                cmpw [ebp+ BP_cmd_line_magic],0xA33F; jne cl_move  // nothing at all
+                movzwl esi,[ebp+ BP_cmd_line_offset]
+                add esi,ebp
+                jmp cl_move
+cl_bp202:  // try >= 2.02 method
+                mov esi,[esi+ BP_cmd_line_ptr]  // supposed pointer
+                test esi,esi; jz cl_nbp202  // not really!
+cl_move:  // in: esi= cmd_line_ptr; ebp= real_mode_ptr
                 sub ecx,ecx  // length
 0:
                 lodsb; inc ecx; cmpb al,0; jne 0b  // find end and 1+strlen
 
                 mov edx,edi  // save register
-                mov edi,0x99800 - cmd_exp -1; lea eax,[edi + cmd_exp]
-                dec esi; cmp esi,edi; jae 8f
-                std; rep movsb; cld  // move command line bytes
-                inc edi;     mov [ebp+ BP_cmd_line_ptr],edi
-                sub eax,edi; mov [ebp+ BP_cmdline_size],eax  // maximum strlen
+                mov edi,0x99800 - cmd_exp; lea eax,[edi + cmd_exp -1]
+                cmp esi,edi; jae 8f
+                dec edi; dec esi; std; rep movsb; cld  // move command line bytes
+                inc edi;     mov  [ebp+ BP_cmd_line_ptr],edi
+                sub eax,edi; mov  [ebp+ BP_cmdline_size],eax  // maximum strlen
+                mov eax,edi
+                sub eax,ebp; movw [ebp+ BP_cmd_line_offset],ax  // backward compat
 
                 and edi,~3  // word align down
                 mov [edi-8],edi
@@ -278,10 +292,11 @@ nbp202:
 
 // If the real mode segment is above the floor, then move it down.
 // The default floor is 0x90000, but 0x10000 (64K) for confirmed bzImage.
+// But due to possible complications with BP_cmd_line_offset, keep 0x90000.
                 push edi; mov edi,0x90000  // save register
                 cmpw [esi+ BP_version],0x200; jb 8f  // boot protocol too old
                 testb [esi+ BP_loadflags],LOADED_HIGH; jz 8f  // not bzImage
-                mov edi,0x10000
+                mov edi,0x90000
 8:
                 push edi; mov ecx,0x250>>2; rep movsd
                 pop esi  // new real mode pointer
@@ -341,19 +356,24 @@ section LINUZ140
                 lea edx,[unc_length + edi]
                 mov esi,ebp  // src for move
                 push edx  // MATCH20  end of relocation info
-                add edx,offset (dec_offset - (L29 - L27))  // &decompressor (reloc)
+                add edx,offset dec_offset  // &LZCUTPOI
                 push edi  // MATCH21  runtime entry
                 add edi,offset unc_offset  // dst for move ( + u_len - c_len )
                 push edi  // MATCH22  &compressed (reloc)
                 mov ecx,offset neg_length_mov
                 push edx  // MATCH23  &decompressor (reloc)
-                jmp eax  // moveloop (reloc); MATCH23 return: &decompressor (reloc)
-L27:
+                jmp eax  // moveloop (reloc); MATCH23 return: &LINUZ141 (reloc)
+// assumed location of LZCUTPOI >>here<<  [0== length(LZCUTPOI)]
+
+section LINUZ141  // one-time prolog to decompressor
                 pop esi  // MATCH22 &compressed (reloc)
                 pop edi  // MATCH21 &uncompressed
                 push edi  // MATCH24  runtime entry
+section LINUZ145  // only if filter
                 push edi  // MATCH03  src unfilter
-L29:  // assumed location of LZCUTPOI
+                //push   offset filter_cto      // MATCH04  cto unfilter
+                .byte   0x6a, filter_cto        // MATCH04  cto unfilter
+                push    offset filter_length    // MATCH05  len unfilter
 
         // decompressor and unfilter >>here<<
 
@@ -378,9 +398,9 @@ L40:
                 xor ebx,ebx  // processor 0
                 jmp ebp  // entry to decompressed
 
-section         LZCALLT1
+section         LZCALLT1  // 0x40!=(0xf0 & ft->id)
                 push    eax     // MATCH03  src unfilter
-section         LZCKLLT1
+section         LZCKLLT1  // 0x40==(0xf0 & ft->id)
                 push    eax                     // MATCH03  src unfilter
                 //push   offset filter_cto      // MATCH04  cto unfilter
                 .byte   0x6a, filter_cto        // MATCH04  cto unfilter
@@ -432,14 +452,7 @@ section         LZCKLLT9
                 pop     edx     // MATCH04  cto
                 pop     edi     // MATCH03  src
 
-                ctok32  0, dl   // dl has cto8
-/*
-        ;0: Filter.addvalue = kernel_entry already did the 'add' at filter time
-        ;[the runtime address of the destination was known], so we save 4 bytes
-        ;(plus 1 cycle per instance) by not doing the 'add' when unfiltering.
-        ;If .addvalue was 0, then use 'edi' instead of 0 in call to ckt32,
-        ;to compensate for difference in origin of buffer.
-*/
+                ctok32  edi, dl   // dl has cto8
 
 section         LZCALLT9
                 pop     edi     // MATCH03  src

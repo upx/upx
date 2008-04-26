@@ -73,6 +73,15 @@ const int *PackVmlinuzI386::getFilters() const
     return filters;
 }
 
+const int *PackBvmlinuzI386::getFilters() const
+{
+    // The destination buffer might be relocated at runtime.
+    static const int filters[] = {
+        0x49, 0x46,
+    FT_END };
+    return filters;
+}
+
 
 bool PackVmlinuzI386::canPack()
 {
@@ -438,9 +447,11 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
     // prepare loader
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     if (0!=page_offset) { // relocatable kernel
+        assert(0==ft->id || 0x40==(0xf0 & ft->id));  // others assume fixed buffer address
         addLoader("LINUZ000,LINUZVGA,LINUZ101,LINUZ110",
             ((0!=config_physical_align) ? "LINUZ120" : "LINUZ130"),
-            "LINUZ140,LZCUTPOI",
+            "LINUZ140,LZCUTPOI,LINUZ141",
+            (ft->id ? "LINUZ145" : ""),
             (ph.first_offset_found == 1 ? "LINUZ010" : ""),
             NULL);
     }
@@ -454,7 +465,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
               "LZCUTPOI",
               NULL);
         // fake alignment for the start of the decompressor
-        linker->defineSymbol("LZCUTPOI", 0x1000);
+        //linker->defineSymbol("LZCUTPOI", 0x1000);
     }
 
     addLoader(getDecompressorSections(), NULL);
@@ -471,10 +482,10 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     if (0!=page_offset) {
-        addLoader("LINUZ150", NULL);
+        addLoader("LINUZ150,IDENTSTR,+40,UPX1HEAD", NULL);
         unsigned const l_len = getLoaderSize();
         unsigned const c_len = ALIGN_UP(ph.c_len, 4u);
-        unsigned const e_len = getLoaderSectionStart("LZCUTPOI") -
+        unsigned const e_len = getLoaderSectionStart("LINUZ141") -
                                getLoaderSectionStart("LINUZ110");
         linker->defineSymbol("compressed_length", c_len);
         linker->defineSymbol("load_physical_address", physical_start);  // FIXME
@@ -487,7 +498,6 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
         linker->defineSymbol("unc_length", ph.u_len);
         linker->defineSymbol("dec_offset", ph.overlap_overhead + e_len);
         linker->defineSymbol("unc_offset", ph.overlap_overhead + ph.u_len - c_len);
-        addLoader("IDENTSTR,+40,UPX1HEAD", NULL);
     }
     else {
         addLoader("LINUZ990", NULL);
@@ -502,11 +512,11 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     // prepare filter
     Filter ft(ph.level);
     ft.buf_len = ph.u_len;
-    ft.addvalue = physical_start;  // saves 4 bytes in unfilter code
+    ft.addvalue = 0;  // The destination buffer might be relocated at runtime.
 
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 8); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
 
     // FIXME: new stub allows most of low memory as stack for Bvmlinuz ?
     //cconf.conf_lzma.max_num_probs = (0x99000 - 0x10250)>>1; // ushort: 560560 stack
@@ -539,21 +549,25 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
     const int e_len = getLoaderSectionStart("LZCUTPOI");
     assert(e_len > 0);
 
-    const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4u);
-    const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16u);
-    const unsigned copy_size = c_len + d_len4;
-    const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
-    const unsigned esi = ALIGN_UP(c_len + lsize, 4u) - 4;   // copy from
+    if (0==page_offset) {  // not relocatable kernel
+        const unsigned d_len4 = ALIGN_UP(lsize - e_len, 4u);
+        const unsigned decompr_pos = ALIGN_UP(ph.u_len + ph.overlap_overhead, 16u);
+        const unsigned copy_size = c_len + d_len4;
+        const unsigned edi = decompr_pos + d_len4 - 4;          // copy to
+        const unsigned esi = ALIGN_UP(c_len + lsize, 4u) - 4;   // copy from
 
-    linker->defineSymbol("decompressor", decompr_pos - bzimage_offset + physical_start);
-    linker->defineSymbol("src_for_decompressor", physical_start + decompr_pos - c_len);
-    linker->defineSymbol("words_to_copy", copy_size / 4);
-    linker->defineSymbol("copy_dest", physical_start + edi);
-    linker->defineSymbol("copy_source", bzimage_offset + esi);
+        linker->defineSymbol("decompressor", decompr_pos - bzimage_offset + physical_start);
+        linker->defineSymbol("src_for_decompressor", physical_start + decompr_pos - c_len);
+        linker->defineSymbol("words_to_copy", copy_size / 4);
+        linker->defineSymbol("copy_dest", physical_start + edi);
+        linker->defineSymbol("copy_source", bzimage_offset + esi);
+    }
 
     defineFilterSymbols(&ft);
     defineDecompressorSymbols();
-    linker->defineSymbol("original_entry", physical_start);
+    if (0==page_offset) {
+        linker->defineSymbol("original_entry", physical_start);
+    }
     linker->defineSymbol("stack_offset", stack_offset_during_uncompression);
     relocateLoader();
 

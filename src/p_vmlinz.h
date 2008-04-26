@@ -105,6 +105,7 @@ public:
     virtual int getFormat() const { return UPX_F_BVMLINUZ_i386; }
     virtual const char *getName() const { return "bvmlinuz/386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.bvmlinuz"; }
+    virtual const int *getFilters() const;
 
     virtual void pack(OutputFile *fo);
 
