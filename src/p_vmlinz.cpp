@@ -506,7 +506,8 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 8); // ushort: ~28KB stack
+    //cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 8); // ushort: ~388 KiB stack
 
     // FIXME: new stub allows most of low memory as stack for Bvmlinuz ?
     //cconf.conf_lzma.max_num_probs = (0x99000 - 0x10250)>>1; // ushort: 560560 stack
