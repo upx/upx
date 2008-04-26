@@ -433,7 +433,7 @@ void PackWcle::encodeImage(Filter *ft)
     // prepare filter [already done]
     // compress
     upx_compress_config_t cconf; cconf.reset();
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(ibuf, isize,
                         oimage + RESERVED,
                         ibuf + ft->addvalue, ft->buf_len,

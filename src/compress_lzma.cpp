@@ -276,7 +276,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
 #if 0
     // DEBUG - set sizes so that we use a maxmimum amount of stack.
     //  These settings cause res->num_probs == 3147574, i.e. we will
-    //  need about 6 MB of stack during runtime decompression.
+    //  need about 6 MiB of stack during runtime decompression.
     pr[1].uintVal = 4;
     pr[2].uintVal = 8;
 #endif

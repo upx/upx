@@ -263,7 +263,7 @@ void show_help(int verbose)
         fg = con_fg(f,fg);
         con_fprintf(f,
                     "  --8-bit             uses 8 bit size compression [default: 32 bit]\n"
-                    "  --8mb-ram           8 megabyte memory limit [default: 2 mb]\n"
+                    "  --8mib-ram          8 megabyte memory limit [default: 2 MiB]\n"
                     "  --boot-only         disables client/host transfer compatibility\n"
                     "  --no-align          don't align to 2048 bytes [enables: --console-run]\n"
                     "\n");

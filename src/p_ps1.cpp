@@ -95,7 +95,7 @@ PackPs1::PackPs1(InputFile *f) :
     COMPILE_TIME_ASSERT(SZ_IH_BKUP == 40)
 
     fdata_size = file_size - PS_HDR_SIZE;
-    ram_size = !opt->ps1_exe.do_8mb ? 0x200000 : 0x800000;
+    ram_size = !opt->ps1_exe.do_8mib ? 0x200000 : 0x800000;
 }
 
 const int *PackPs1::getCompressionMethods(int method, int level) const
@@ -500,7 +500,7 @@ void PackPs1::pack(OutputFile *fo)
     // compress (max_match = 65535)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = 65535;
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, sa_cnt, &cconf);
 
     if (overlap)

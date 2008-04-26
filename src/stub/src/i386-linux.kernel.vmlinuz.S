@@ -162,7 +162,7 @@ setcursor:
         mov al,15; call outb_p; inc edx
         mov al,cl
         // jmp outb_p
- 
+
 outb_p:
         outb dx,al
         call 0f; 0:  // insure minimum delay between 'outb'

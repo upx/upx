@@ -99,7 +99,7 @@ section         EXEENTRY
                 push    ds
                 .byte   0xa9
 do_copy:
-                mov     ch, 0x80        /* 64 kbyte */
+                mov     ch, 0x80        /* 64 KiB */
                 mov     ax, cs
 addaxds:
                 add     ax, offset source_segment /* MSB is referenced by the "sub" below */

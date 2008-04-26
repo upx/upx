@@ -47,7 +47,7 @@ static int F(Filter *f)
     unsigned calls = 0, noncalls = 0, noncalls2 = 0;
     unsigned lastnoncall = size, lastcall = 0;
 
-    // find a 16MB large empty address space
+    // find a 16 MiB large empty address space
     {
         unsigned char buf[256];
         memset(buf,0,256);

@@ -225,7 +225,7 @@ unfold:
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
-   all of the uncompressed program.  If large (>=3MB uncompressed), then enough
+   all of the uncompressed program.  If large (>=3 MiB uncompressed), then enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address and length are pre-
    calculated by PackLinuxElf64amd::defineSymbols().

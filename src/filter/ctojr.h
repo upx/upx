@@ -123,8 +123,8 @@ static int F(Filter *f)
         N_MRU : 0;
 #endif  //}
 
-    // FIXME: We must fit into 8MB because we steal one bit.
-    // find a 16MB large empty address space
+    // FIXME: We must fit into 8 MiB because we steal one bit.
+    // find a 16 MiB large empty address space
     {
         int which;
         unsigned char buf[256];
