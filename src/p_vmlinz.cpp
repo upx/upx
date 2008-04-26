@@ -193,14 +193,14 @@ int PackVmlinuzI386::decompressKernel()
         }
         // Find "ljmp $__BOOT_CS,$__PHYSICAL_START" if any.
         if (0==memcmp("\xEA\x00\x00", p, 3) && 0==(0xf & p[3]) && 0==p[4]) {
-            /* whole megabyte < 16MB */
+            /* whole megabyte < 16 MiB */
             physical_start = get_te32(1+ p);
             break;
         }
     }
     if (base && relocated) {
         p = base + relocated;
-        for (int j= 0; j < 0x200; ++j, ++p) {
+        for (j = 0; j < 0x200; ++j, ++p) {
             if (0==memcmp("\x01\x9c\x0b", p, 3)  // addl %ebx,d32(%ebx,%ecx)
             ) {
                 page_offset = 0u - get_te32(3+ p);
@@ -392,7 +392,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     // compress
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, 512, &cconf);
 
     const unsigned lsize = getLoaderSize();
@@ -611,7 +611,7 @@ int PackVmlinuzI386::canUnpack()
 void PackVmlinuzI386::unpack(OutputFile *fo)
 {
     // no uncompression support for this format, so that
-    // it is possible to remove the original deflate code (>10KB)
+    // it is possible to remove the original deflate code (>10 KiB)
 
     // FIXME: but we could write the uncompressed "vmlinux" image
 

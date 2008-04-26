@@ -242,7 +242,7 @@ void PackTmt::pack(OutputFile *fo)
     // compress
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, 512, &cconf);
 
     const unsigned lsize = getLoaderSize();

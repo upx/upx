@@ -51,8 +51,8 @@ B<UPX> is a versatile executable packer with the following features:
   - excellent compression ratio: compresses better than zip/gzip,
       use UPX to decrease the size of your distribution !
 
-  - very fast decompression: about 10 MB/sec on an ancient Pentium 133,
-      about 200 MB/sec on an Athlon XP 2000+.
+  - very fast decompression: about 10 MiB/sec on an ancient Pentium 133,
+      about 200 MiB/sec on an Athlon XP 2000+.
 
   - no memory overhead for your compressed executables for most of the
       supported formats
@@ -153,7 +153,7 @@ as compared to the first decompressed version.]
 
 B<UPX> offers ten different compression levels from B<-1> to B<-9>,
 and B<--best>.  The default compression level is B<-8> for files
-smaller than 512 kB, and B<-7> otherwise.
+smaller than 512 KiB, and B<-7> otherwise.
 
 =over 4
 
@@ -349,7 +349,7 @@ Extra options available for this executable format:
 First of all, it is recommended to use B<UPX> *instead* of B<strip>. strip has
 the very bad habit of replacing your stub with its own (outdated) version.
 Additionally B<UPX> corrects a bug/feature in strip v2.8.x: it
-will fix the 4 KByte alignment of the stub.
+will fix the 4 KiB alignment of the stub.
 
 B<UPX> includes the full functionality of stubify. This means it will
 automatically stubify your COFF files. Use the option B<--coff> to
@@ -660,8 +660,8 @@ Specific drawbacks:
 
   - Because of temporary decompression to disk the decompression speed
     is not as fast as with the other executable formats. Still, I can see
-    no noticeable delay when starting programs like my ~3 MB emacs (which
-    is less than 1 MB when compressed :-).
+    no noticeable delay when starting programs like my ~3 MiB emacs (which
+    is less than 1 MiB when compressed :-).
 
 Extra options available for this executable format:
 
@@ -681,7 +681,7 @@ nostalgic feelings of one of the authors.
 Packed programs will be byte-identical to the original after uncompression,
 until further notice.
 
-Maximum uncompressed size: ~1.89 / ~7.60 Mbytes.
+Maximum uncompressed size: ~1.89 / ~7.60 MiB.
 
 Notes:
 
@@ -708,7 +708,7 @@ Extra options available for this executable format:
 
   --8-bit             Uses 8 bit size compression [default: 32 bit]
 
-  --8mb-ram           PSone has 8 MB ram available [default: 2 MB]
+  --8mib-ram          PSone has 8 MiB ram available [default: 2 MiB]
 
   --boot-only         This format is for main exes and CD-Mastering only !
                       It may slightly improve the compression ratio,
@@ -838,7 +838,7 @@ must end with ".scr" (as screensavers are handled slightly different
 than normal exe files).
 
 UPX compressed PE files have some minor memory overhead (usually in the
-10 - 30 kbytes range) which can be seen by specifying the "-i" command
+10 - 30 KiB range) which can be seen by specifying the "-i" command
 line switch during compression.
 
 Extra options available for this executable format:

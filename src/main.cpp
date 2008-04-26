@@ -881,7 +881,7 @@ static int do_option(int optc, const char *arg)
         opt->ps1_exe.do_8bit = true;
         break;
     case 673:
-        opt->ps1_exe.do_8mb = false;
+        opt->ps1_exe.do_8mib = false;
         break;
 
     case '\0':
@@ -1045,6 +1045,7 @@ static const struct mfx_option longopts[] =
     {"boot-only",        0x10, 0, 670},
     {"no-align",         0x10, 0, 671},
     {"8-bit",            0x10, 0, 672},
+    {"8mib-ram",         0x10, 0, 673},
     {"8mb-ram",          0x10, 0, 673},
 
     // mp (meta) options

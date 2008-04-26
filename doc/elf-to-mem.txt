@@ -46,8 +46,8 @@ may not be used to take the address of a function.
 
 The address  0x00400000 was chosen to be out of the way of the usual
 load address 0x08048000, and to minimize fragmentation in kernel
-page tables; one page of page tables covers 4MB. The address
-0x00401000 was chosen as 1 page up from a 64KB boundary, to
+page tables; one page of page tables covers 4 MiB. The address
+0x00401000 was chosen as 1 page up from a 64 KiB boundary, to
 make the startup code and its constants smaller.
 
 Decompression of the executable begins by decompressing the Elf32_Ehdr

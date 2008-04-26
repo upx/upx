@@ -28,7 +28,7 @@ dos/exe
 watcom/le
 ---------
  * 16-bit selector alias fixups
- * 16-bit offset relocation for objects larger than 4 kB
+ * 16-bit offset relocation for objects larger than 4 KiB
  * 16:16 fixups
 
 If you need any of the above (they're very rare), send us an URL of a

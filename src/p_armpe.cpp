@@ -714,7 +714,7 @@ void PackArmPe::pack(OutputFile *fo)
 
     // limit stack size needed for runtime decompression
     upx_compress_config_t cconf; cconf.reset();
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, 2048, &cconf, filter_strategy,
                         ih.codebase, rvamin, 0, NULL, 0);
 // info: see buildLoader()
@@ -898,7 +898,7 @@ void PackArmPe::pack(OutputFile *fo)
     //    set_le32(ibuf + ic,get_le32("UPX "));
     ibuf.clear(0, oh.filealign);
 
-    info("Image size change: %u -> %u kBytes",
+    info("Image size change: %u -> %u KiB",
          ih.imagesize / 1024, oh.imagesize / 1024);
 
     infoHeader("[Writing compressed file]");

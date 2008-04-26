@@ -506,7 +506,7 @@ void PackExe::pack(OutputFile *fo)
     // compress (max_match = 8192)
     upx_compress_config_t cconf; cconf.reset();
     cconf.conf_ucl.max_match = MAXMATCH;
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
     compressWithFilters(&ft, 32, &cconf);
 
     if (M_IS_NRV2B(ph.method) || M_IS_NRV2D(ph.method) || M_IS_NRV2E(ph.method))

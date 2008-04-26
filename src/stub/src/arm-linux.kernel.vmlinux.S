@@ -56,7 +56,7 @@ decompress_kernel:  # (char *out, char *tmp, char *tmp_end, int arch_id)
 // Value stored from r1 to memory will be overwritten by outsize.
         stmdb r1!,{r0,r1,r2,r3,sp}  // &indata, space, &outdata, arch_id, sp_in
         loadcon8 3,METHOD  // mov r3,#METHOD
-        mov sp,r1  // switch stacks to tmp_end area (64KB)
+        mov sp,r1  // switch stacks to tmp_end area (64 KiB)
         ldr r1,1f  // insize
         str r3,[sp,#-4]!  // method
         ldr r3,2f  // outsize

@@ -108,14 +108,14 @@ then skip another one - the unfiltering process needs some information
 to be able to reverse the filtering.
 
 UPX uses the following idea, which works nicely. First we assume that
-the size of the area that should be filtered is less than 16MB. Then
+the size of the area that should be filtered is less than 16 MiB. Then
 UPX scans over this area and keeps a record of the bytes that are
 following the 0xE8 bytes. If we are lucky, there will be bytes that
 were not found following 0xE8. These bytes are our candidates to be
 used as markers.
 
 Do you still remember that we assumed that the size of scanned area is
-less than 16MB? Well, this means that when we process a real call, the
+less than 16 MiB? Well, this means that when we process a real call, the
 resulting offset will be less than 0x00FFFFFF too. So the MSB is always
 0x00. Which is a nice place to store our marker. Of course we should
 reverse the byte order in the resulting offset - so this marker will

@@ -371,7 +371,7 @@ umax(unsigned a, unsigned b)
 // OpenBSD 3.9 wants all .text from all modules together, then (above that)
 // all .data from all modules together, in order to maximize the effectiveness
 // of lowering the segment limit on %cs as an implementation of "no-execute
-// .data".  Thus OpenBSD 3.9 puts a gap of 0x20000000 (512MB) between the
+// .data".  Thus OpenBSD 3.9 puts a gap of 0x20000000 (512 MiB) between the
 // origins of .text and .data in each module.  So, mapping ET_DYN must "level"
 // the excursion in .text and .data of anything which preceeded it,
 // then add the new PT_LOAD.

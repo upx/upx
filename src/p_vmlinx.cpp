@@ -269,7 +269,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
 
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28KB stack
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
 
     unsigned ppc32_extra = 0;
     if (Ehdr::EM_PPC==my_e_machine) {
@@ -837,7 +837,7 @@ const int *PackVmlinuxPPC32::getFilters() const
 
 bool PackVmlinuxI386::is_valid_e_entry(Addr e_entry)
 {
-    return 0==(0x000fffff & e_entry); // entry on whole 1MB
+    return 0==(0x000fffff & e_entry); // entry on whole 1 MiB
 }
 
 
@@ -1390,8 +1390,8 @@ bool PackVmlinuxAMD64::has_valid_vmlinux_head()
 //      pushl $0
 //      pushl $ MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED
 //      pushl $ PROT_EXEC | PROT_WRITE | PROT_READ
-//      pushl $0x600000  # 6MB length
-//      pushl $0x100000  # 1MB address
+//      pushl $0x600000  # 6 MiB length
+//      pushl $0x100000  # 1 MiB address
 //      call mmap
 //      leal -0x9000(%esp),%esi  # expect "lea 0x9000(%esi),%esp" later
 ///* Fall into .text of upx-compressed vmlinux. */
@@ -1440,7 +1440,7 @@ const int *PackVmlinuxAMD64::getFilters() const
 
 bool PackVmlinuxAMD64::is_valid_e_entry(Addr e_entry)
 {
-    return 0x200000<=e_entry; // 2MB
+    return 0x200000<=e_entry; // 2 MiB
 }
 
 Linker* PackVmlinuxAMD64::newLinker() const
