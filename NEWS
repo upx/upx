@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.04 (XX XXX 2008):
+
 Changes in 3.03 (27 Apr 2008):
   * implement cache flushing for PowerPC (esp. model 440)
   * fix cache flushing on MIPS (>3 MiB compressed, or with holes)
