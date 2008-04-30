@@ -1,4 +1,4 @@
-/* ACC -- Automatic Compiler Configuration
+/* ACC --- Automatic Compiler Configuration
 
    This file is part of the UPX executable compressor.
 
@@ -39,7 +39,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20080102L
+#define ACC_VERSION     20080430L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -2187,7 +2187,7 @@ extern "C" {
 #define HAVE_UMASK 1
 #define HAVE_UTIME 1
 #define HAVE_VSNPRINTF 1
-#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX || ACC_OS_QNX)
+#if (ACC_OS_BEOS || ACC_OS_CYGWIN || ACC_OS_POSIX || ACC_OS_QNX || ACC_OS_VMS)
 #  define HAVE_STRCASECMP 1
 #  define HAVE_STRNCASECMP 1
 #elif (ACC_OS_WIN32 && ACC_CC_GNUC) && defined(__PW32__)
@@ -2624,7 +2624,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
 #  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_VOID_P
-#elif (ACC_ARCH_I386 && ACC_CC_MSC && (_MSC_VER >= 1300))
+#elif ((ACC_ARCH_ARM || ACC_ARCH_I386) && ACC_CC_MSC && (_MSC_VER >= 1300))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
@@ -3052,7 +3052,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
 #  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_VOID_P
-#elif (ACC_ARCH_I386 && ACC_CC_MSC && (_MSC_VER >= 1300))
+#elif ((ACC_ARCH_ARM || ACC_ARCH_I386) && ACC_CC_MSC && (_MSC_VER >= 1300))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
