@@ -290,19 +290,17 @@ nbp202:
                 push    0
                 popf            // BIOS can leave random flags (such as NT)
 
-// If the real mode segment is above the floor, then move it down.
-// The default floor is 0x90000, but 0x10000 (64K) for confirmed bzImage.
-// But due to possible complications with BP_cmd_line_offset, keep 0x90000.
+// If the real mode segment is above 0x90000, then move it down.
+// FIXME: BP_cmd_line_offset
                 push edi; mov edi,0x90000  // save register
-                cmpw [esi+ BP_version],0x200; jb 8f  // boot protocol too old
-                testb [esi+ BP_loadflags],LOADED_HIGH; jz 8f  // not bzImage
-                mov edi,0x90000
-8:
                 push edi; mov ecx,0x250>>2; rep movsd
                 pop esi  // new real mode pointer
                 pop edi  // restore register
 
-section LINUZ001  // Bvmlinuz and not relocatable
+section LINUZ001  // Bvmlinuz only
+                mov esp,0x90000  // unused [non-B]Vmlinuz area, down to 0x10000
+
+section LINUZ005  // Bvmlinuz and not relocatable
                 mov     eax, offset original_entry  // 0x100000 : address of startup_32
                 push    cs      // MATCH00
                 push    eax     // MATCH00  entry address

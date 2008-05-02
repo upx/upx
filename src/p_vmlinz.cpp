@@ -82,6 +82,13 @@ const int *PackBvmlinuzI386::getFilters() const
     return filters;
 }
 
+int PackVmlinuzI386::getStrategy(Filter &/*ft*/)
+{
+    // If user specified the filter, then use it (-2==filter_strategy).
+    // Else try the first two filters, and pick the better (2==filter_strategy).
+    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
+}
+
 
 bool PackVmlinuzI386::canPack()
 {
@@ -402,7 +409,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
     upx_compress_config_t cconf; cconf.reset();
     // limit stack size needed for runtime decompression
     cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
-    compressWithFilters(&ft, 512, &cconf);
+    compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
 
     const unsigned lsize = getLoaderSize();
 
@@ -448,7 +455,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
     initLoader(stub_i386_linux_kernel_vmlinuz, sizeof(stub_i386_linux_kernel_vmlinuz));
     if (0!=page_offset) { // relocatable kernel
         assert(0==ft->id || 0x40==(0xf0 & ft->id));  // others assume fixed buffer address
-        addLoader("LINUZ000,LINUZVGA,LINUZ101,LINUZ110",
+        addLoader("LINUZ000,LINUZ001,LINUZVGA,LINUZ101,LINUZ110",
             ((0!=config_physical_align) ? "LINUZ120" : "LINUZ130"),
             "LINUZ140,LZCUTPOI,LINUZ141",
             (ft->id ? "LINUZ145" : ""),
@@ -456,7 +463,7 @@ void PackBvmlinuzI386::buildLoader(const Filter *ft)
             NULL);
     }
     else {
-        addLoader("LINUZ000,LINUZVGA,LINUZ001",
+        addLoader("LINUZ000,LINUZ001,LINUZVGA,LINUZ005",
               ph.first_offset_found == 1 ? "LINUZ010" : "",
               (0x40==(0xf0 & ft->id)) ? "LZCKLLT1" : (ft->id ? "LZCALLT1" : ""),
               "LBZIMAGE,IDENTSTR",
@@ -511,17 +518,17 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     // prepare filter
     Filter ft(ph.level);
-    ft.buf_len = ph.u_len;
+    ft.buf_len = (ph.u_len * 3)/5;
+    // May 2008: 3/5 is heuristic to cover most .text but avoid non-instructions.
+    // Otherwise "call trick" filter cannot find a free marker byte,
+    // especially when it searches over tables of data.
     ft.addvalue = 0;  // The destination buffer might be relocated at runtime.
 
     upx_compress_config_t cconf; cconf.reset();
-    // limit stack size needed for runtime decompression
-    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
+    // LINUZ001 allows most of low memory as stack for Bvmlinuz
+    cconf.conf_lzma.max_num_probs = (0x90000 - 0x10000)>>1; // ushort: 512 KiB stack
 
-    // FIXME: new stub allows most of low memory as stack for Bvmlinuz ?
-    //cconf.conf_lzma.max_num_probs = (0x99000 - 0x10250)>>1; // ushort: 560560 stack
-
-    compressWithFilters(&ft, 512, &cconf);
+    compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
 
     // align everything to dword boundary - it is easier to handle
     unsigned c_len = ph.c_len;

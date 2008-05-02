@@ -45,6 +45,7 @@ public:
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinuz"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
+    virtual int getStrategy(Filter &);
 
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
