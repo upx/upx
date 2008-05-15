@@ -177,22 +177,22 @@ L60:
 // called twice:
 //  1st with esi==edi, ecx=0, edx= bitmap of slots needed: just update edx.
 //  2nd with esi!=edi, ecx= slot_count: move, then append AT_IGNORE slots
-// entry: esi= src = &argc; edi= dst; ecx= # slots wanted; edx= bits wanted
+// entry: esi= src = -1+ &argc; edi= dst; ecx= # slots wanted; edx= bits wanted
 // exit:  edi= &auxtab; edx= bits still needed; ecx= 0; ebx= &envp[0]; esi= &auxv[N]
 do_auxv:
         // cld
+        lodsd; stosd  // saved &Elf32_Ehdr
+        lodsd; stosd  // argc can be 0
 
-L10:  // move argc+argv
-        lodsd
-        stosd
+L10:  // move argv
+        lodsd; stosd
         test eax,eax
         jne L10
 
         xchg edi, ebx  // ebx= &envp[0]
         add edi, ebx  // insert extra space
 L20:  // move envp
-        lodsd
-        stosd
+        lodsd; stosd
         test eax,eax
         jne L20
 

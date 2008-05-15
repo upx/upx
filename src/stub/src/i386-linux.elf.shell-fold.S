@@ -65,16 +65,15 @@ fold_begin:     // In: %ebx= uncDst; edx= &b_info cprSrc; ebp = &decompress
         mov edi, esp
 do_auxv:  // entry: %esi=src = &argc; %edi=dst.  exit: %edi= &AT_NULL
         // cld
+        lodsd; stosd  // argc can be 0
 
-L10:  // move argc+argv
-        lodsd
-        stosd
+L10:  // move argv
+        lodsd; stosd
         test eax,eax
         jne L10
 
 L20:  // move envp
-        lodsd
-        stosd
+        lodsd; stosd
         test eax,eax
         jne L20
 

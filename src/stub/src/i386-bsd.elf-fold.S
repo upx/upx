@@ -163,16 +163,15 @@ L60:
 // exit:  edi= &auxtab; edx= bits still needed
 do_auxv:
         // cld
+        lodsd; stosd  // argc can be zero
 
-L10:  // move argc+argv
-        lodsd
-        stosd
+L10:  // move argv
+        lodsd; stosd
         test eax,eax
         jne L10
 
 L20:  // move envp
-        lodsd
-        stosd
+        lodsd; stosd
         test eax,eax
         jne L20
 
