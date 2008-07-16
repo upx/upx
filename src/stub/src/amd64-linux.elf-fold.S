@@ -72,6 +72,7 @@ L90:
         movq %rsp,%rsi
         leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
         movq %rdi,%rsp
+        push $6; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,JMPU,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%arg3  # remember &new_env[0]
@@ -81,7 +82,7 @@ L90:
         pushq %rdi  # &Elf64_auxv
 0:
         cmpq $0,(%rsi); movsq; movsq; jne 0b  # move past auxv
-        lea -8(%rdi),%r15  # &auxv[N-1].a_un
+        lea -8(%rdi),%r15  # &auxv[N].a_un
 
         movq %rdi,(%arg3)  # new_env[0]
         movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),%eax  # "   ="
