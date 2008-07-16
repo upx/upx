@@ -807,7 +807,7 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
     Elf32_Shdr const *shdr = shdri;
     int j = n_elf_shnum;
     for (; 0 <=--j; ++shdr) {
-        if (0==strcmp(name, &shstrtab[shdr->sh_name])) {
+        if (0==strcmp(name, &shstrtab[get_te32(&shdr->sh_name)])) {
             return shdr;
         }
     }
@@ -821,7 +821,7 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_type(
     Elf32_Shdr const *shdr = shdri;
     int j = n_elf_shnum;
     for (; 0 <=--j; ++shdr) {
-        if (type==shdr->sh_type) {
+        if (type==get_te32(&shdr->sh_type)) {
             return shdr;
         }
     }
@@ -1049,9 +1049,10 @@ PackLinuxElf32::getbase(const Elf32_Phdr *phdr, int e_phnum) const
 {
     off_t base = ~0u;
     for (int j = 0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_LOAD == phdr->p_type) {
-            if (phdr->p_vaddr < (unsigned) base)
-                base = phdr->p_vaddr;
+        if (phdr->PT_LOAD == get_te32(&phdr->p_type)) {
+            unsigned const vaddr = get_te32(&phdr->p_vaddr);
+            if (vaddr < (unsigned) base)
+                base = vaddr;
         }
     }
     if (0!=base) {
@@ -2280,7 +2281,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
         unsigned const m = elf_hash(name) % nbucket;
         unsigned si;
         for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
-            char const *const p= dynsym[si].st_name + dynstr;
+            char const *const p= get_te32(&dynsym[si].st_name) + dynstr;
             if (0==strcmp(name, p)) {
                 return &dynsym[si];
             }
@@ -2308,7 +2309,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
 
                 dsp += bucket;
                 do if (0==((h ^ get_te32(hp))>>1)) {
-                    char const *const p = dsp->st_name + dynstr;
+                    char const *const p = get_te32(&dsp->st_name) + dynstr;
                     if (0==strcmp(name, p)) {
                         return dsp;
                     }
