@@ -80,11 +80,17 @@ protected:
         unsigned char   load_flags;
         char            ______[2];
         LE32            code32_start;
+        char            _7[0x230 - (0x214 + 4)];
+        LE32            kernel_alignment;
+        char            relocatable_kernel;
+        char            _8[0x248 - (0x234 + 1)];
+        LE32            payload_offset;
+        LE32            payload_length;
 
         // some more uninteresting fields here ...
-        // see /usr/src/linux/Documentation/i386/zero-page.txt
+        // see /usr/src/linux/Documentation/i386/boot.txt
     }
-    __attribute_packed;
+    __attribute_packed h;
 
     MemBuffer setup_buf;
     int setup_size;

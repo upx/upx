@@ -28,6 +28,7 @@
 
 #include "conf.h"
 
+#include "p_elf.h"
 #include "file.h"
 #include "filter.h"
 #include "packer.h"
@@ -54,7 +55,7 @@ PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     super(f), physical_start(0x100000), page_offset(0), config_physical_align(0)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x218);
+    COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x250);
 }
 
 
@@ -102,8 +103,6 @@ bool PackVmlinuzI386::canPack()
 
 int PackVmlinuzI386::readFileHeader()
 {
-    boot_sect_t h;
-
     setup_size = 0;
 
     fi->readx(&h, sizeof(h));
@@ -232,14 +231,18 @@ int PackVmlinuzI386::decompressKernel()
 
     checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
 
-    for (int gzoff = setup_size; gzoff < file_size; gzoff++)
+    int gzoff = setup_size;
+    if (0x208<=h.version) {
+        gzoff += h.payload_offset;
+    }
+    for (; gzoff < file_size; gzoff++)
     {
         // find gzip header (2 bytes magic + 1 byte method "deflated")
         int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B\x08", 3);
         if (off < 0)
             break;
         gzoff += off;
-        const int gzlen = file_size - gzoff;
+        const int gzlen = (h.version < 0x208) ? (file_size - gzoff) : h.payload_length;
         if (gzlen < 256)
             break;
         // check gzip flag byte
@@ -287,6 +290,45 @@ int PackVmlinuzI386::decompressKernel()
 
         if (klen <= gzlen)
             continue;
+
+        if (0x208<=h.version && 0==memcmp("\177ELF", ibuf, 4)) {
+            // Full ELF in theory; but for now, try to handle as .bin.
+            // Check for PT_LOAD.p_paddr being ascending and adjacent.
+            Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)(void const *)ibuf;
+            Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(ehdr->e_phoff + (char const *)ehdr);
+            Elf_LE32_Shdr const *shdr = (Elf_LE32_Shdr const *)(ehdr->e_shoff + (char const *)ehdr);
+            unsigned hi_paddr = 0, lo_paddr = 0;
+            unsigned delta_off = 0;
+            for (unsigned j=0; j < ehdr->e_phnum; ++j, ++phdr) {
+                if (phdr->PT_LOAD==phdr->p_type) {
+                    unsigned step = (-1+ phdr->p_align + hi_paddr) & ~(-1+ phdr->p_align);
+                    if (0==hi_paddr) {
+                        delta_off = phdr->p_paddr - phdr->p_offset;
+                        lo_paddr = phdr->p_paddr;
+                        hi_paddr = phdr->p_filesz + phdr->p_paddr;
+                    }
+                    else if (step==phdr->p_paddr
+                        && delta_off==(phdr->p_paddr - phdr->p_offset)) {
+                        hi_paddr = phdr->p_filesz + phdr->p_paddr;
+                    }
+                    else {
+                        return 0;  // Not equivalent to a .bin.  Too complex for now.
+                    }
+                }
+            }
+            unsigned xlen = 0;
+            for (unsigned j=1; j < ehdr->e_shnum; ++j) {
+                if (shdr->SHF_EXECINSTR & shdr[j].sh_flags) {
+                    xlen += shdr[j].sh_size;  // FIXME: include sh_addralign
+                }
+                else {
+                    break;
+                }
+            }
+            //printf("xlen = 0x%x\n", xlen);  // FIXME: use as length to filter
+            memmove(ibuf, (lo_paddr - delta_off) + ibuf, hi_paddr - lo_paddr);  // FIXME: set_size
+            // FIXME: .bss ?  Apparently handled by head.S
+        }
 
         if (opt->force > 0)
             return klen;
@@ -426,6 +468,7 @@ void PackVmlinuzI386::pack(OutputFile *fo)
 
     boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
     bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16u) / 16;
+    bs->payload_length = ph.c_len;
 
     fo->write(setup_buf, setup_buf.getSize());
     fo->write(loader, lsize);
