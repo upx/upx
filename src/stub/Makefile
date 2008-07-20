@@ -50,6 +50,8 @@ STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
+STUBS += armel-eabi-linux.elf-entry.h
+STUBS += armel-eabi-linux.elf-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
 STUBS += arm-linux.kernel.vmlinux.h
@@ -291,6 +293,32 @@ amd64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+
+# /***********************************************************************
+# // armel-eabi-linux.elf
+# ************************************************************************/
+
+armel-eabi-linux.elf%.h : tc_list = armel-eabi-linux.elf default
+armel-eabi-linux.elf%.h : tc_bfdname = elf32-littlearm
+
+tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+armel-eabi-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+armel-eabi-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/arm-linux.elf-fold.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/arm-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
 
 # /***********************************************************************
 # // arm-linux.elf

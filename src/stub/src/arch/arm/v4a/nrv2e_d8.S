@@ -111,15 +111,11 @@ eof_n2e:
         str dst,[r4]
 
 #if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
-/* linux/include/asm-arm/unistd.h */
-#define __NR_SYSCALL_BASE       0x900000
-#define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
-#define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
         mov r4,r0  // save result value
         mov r0,r3  // orig_dst
         add r1,r3,dst  // orig_dst + dst_len
         mov r2,#0
-        swi __ARM_NR_cacheflush  // decompressed region
+        do_sys2 __ARM_NR_cacheflush  // decompressed region
         mov r0,r4  // result value
 #endif  /*}*/
 

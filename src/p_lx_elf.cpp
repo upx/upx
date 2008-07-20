@@ -45,6 +45,8 @@
 #define PT_LOAD32   Elf32_Phdr::PT_LOAD
 #define PT_LOAD64   Elf64_Phdr::PT_LOAD
 
+static unsigned const EF_ARM_HASENTRY = 0x02;
+static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
 
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
@@ -721,6 +723,11 @@ PackOpenBSDElf32x86::buildLoader(const Filter *ft)
 }
 
 static const
+#include "stub/armel-eabi-linux.elf-entry.h"
+static const
+#include "stub/armel-eabi-linux.elf-fold.h"
+
+static const
 #include "stub/arm-linux.elf-entry.h"
 static const
 #include "stub/arm-linux.elf-fold.h"
@@ -743,9 +750,16 @@ PackLinuxElf32armBe::buildLoader(Filter const *ft)
 void
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
-    buildLinuxLoader(
-        stub_arm_linux_elf_entry, sizeof(stub_arm_linux_elf_entry),
-        stub_arm_linux_elf_fold,  sizeof(stub_arm_linux_elf_fold), ft);
+    if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
+        buildLinuxLoader(
+            stub_armel_eabi_linux_elf_entry, sizeof(stub_armel_eabi_linux_elf_entry),
+            stub_armel_eabi_linux_elf_fold,  sizeof(stub_armel_eabi_linux_elf_fold), ft);
+    }
+    else {
+        buildLinuxLoader(
+            stub_arm_linux_elf_entry,        sizeof(stub_arm_linux_elf_entry),
+            stub_arm_linux_elf_fold,         sizeof(stub_arm_linux_elf_fold), ft);
+    }
 }
 
 static const
@@ -887,7 +901,15 @@ bool PackLinuxElf32::canPack()
         }
     }
     if (Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // No EI_OSBAI, no PT_NOTE.
-        osabi0 = opt->o_unix.osabi0;  // Possibly specified by command-line.
+        if (Elf32_Ehdr::EM_ARM==e_machine
+        &&  Elf32_Ehdr::ELFDATA2LSB==ei_data
+        &&  EF_ARM_EABI_VER4==(0xff000000 & get_te32(&ehdr->e_flags))) {
+            // armel-eabi ARM little-endian Linux EABI version 4 is a mess.
+            ei_osabi = osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
+        }
+        else {
+            osabi0 = opt->o_unix.osabi0;  // Possibly specified by command-line.
+        }
     }
     if (osabi0!=ei_osabi) {
         return false;
@@ -1298,7 +1320,15 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
     cprElfHdr3 h3;
-    memcpy(&h3, stub_arm_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
+        ei_osabi = Elf32_Ehdr::ELFOSABI_NONE;
+        memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+
+        set_te32(&h3.ehdr.e_flags, EF_ARM_EABI_VER4 | EF_ARM_HASENTRY);
+    }
+    else {
+        memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    }
     generateElfHdr(fo, &h3, getbrk(phdri, get_te16(&ehdri.e_phnum)) );
 }
 

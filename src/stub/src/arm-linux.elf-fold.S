@@ -123,47 +123,58 @@ tst_unf:
         .unreq cto
         .unreq fid
 
+__NR_exit  =  1 + __NR_SYSCALL_BASE
+__NR_read  =  3 + __NR_SYSCALL_BASE
+__NR_write =  4 + __NR_SYSCALL_BASE
+__NR_open  =  5 + __NR_SYSCALL_BASE
+__NR_close =  6 + __NR_SYSCALL_BASE
+__NR_brk   = 45 + __NR_SYSCALL_BASE
+
+__NR_mmap2    = 192 + __NR_SYSCALL_BASE
+__NR_mprotect = 125 + __NR_SYSCALL_BASE
+__NR_munmap   =  91 + __NR_SYSCALL_BASE
+
         .globl exit
 exit:
-        swi 0x00900001
+        do_sys __NR_exit
 
         .globl read
 read:
-        swi 0x00900003; mov pc,lr
+        do_sys __NR_read; ret
 
         .globl write
 write:
-        swi 0x00900004; mov pc,lr
+        do_sys __NR_write; ret
 
         .globl open
 open:
-        swi 0x00900005; mov pc,lr
+        do_sys __NR_open; ret
 
         .globl close
 close:
-        swi 0x00900006; mov pc,lr
+        do_sys __NR_close; ret
 
         .globl brk
 brk:
-        swi 0x0090002d; mov pc,lr
+        do_sys __NR_brk; ret
 
         .globl munmap
 munmap:
-        swi 0x0090005b; mov pc,lr
+        do_sys __NR_munmap; ret
 
         .globl mprotect
 mprotect:
-        swi 0x0090007d; mov pc,lr
+        do_sys __NR_mprotect; ret
 
         .globl mmap
 mmap:
         str r5,[sp,#-4]!; ldr r5,[sp,#4+4]
         str r4,[sp,#-4]!; ldr r4,[sp,#4+4]
         mov r5,r5,lsr #12  @ convert to page number
-        swi 0x009000c0  @ mmap64
+        do_sys __NR_mmap2
         ldr r4,[sp],#4
         ldr r5,[sp],#4
-        mov pc,lr
+        ret
 
 #if 0  /*{ "gcc-3.4 -fPIC" botches string constants when code moves! */
         .globl STR_0x

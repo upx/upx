@@ -34,6 +34,39 @@
                 .section \name
 .endm
 
+#if defined(ARMEL_EABI4)  /*{*/
+
+__NR_SYSCALL_BASE = 0
+.macro          do_sys N
+                mov r12,r7  // save r7 in ip
+                mov r7,#\N  // syscall number
+                swi 0
+                mov r7,r12  // restore r7 from ip
+.endm
+.macro          do_sys2 N
+                mov r12,r7  // save r7 in ip
+                mov r7,   #(\N) & 0xff  // syscall number
+                orr r7,r7,#(\N) &~0xff  // high bits
+                swi 0
+                mov r7,r12  // restore r7 from ip
+.endm
+
+#else  /*}{*/
+
+__NR_SYSCALL_BASE = 0x900000
+.macro          do_sys N
+                swi \N
+.endm
+.macro          do_sys2 N
+                swi \N
+.endm
+
+#endif  /*}*/
+
+.macro          ret
+                bx lr  /* armv5 for thumb interworking */
+.endm
+
 .macro          loadcon8 reg,val8
         .long (0xe3<<24)|(0xa0<<16)|((\reg<<4)<<8)+(\val8)  /* mov \reg,#\val8 */
 .endm

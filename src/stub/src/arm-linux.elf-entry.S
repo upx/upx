@@ -53,6 +53,13 @@ MAP_ANONYMOUS= 0x20
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
+__NR_exit =      1 + __NR_SYSCALL_BASE
+__NR_write =     4 + __NR_SYSCALL_BASE
+__NR_mmap64 = 0xc0 + __NR_SYSCALL_BASE
+
+__ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
+__ARM_NR_cacheflush =  2 + __ARM_NR_BASE
+
         //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
 start_params:
@@ -77,7 +84,12 @@ D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
-        swi 0x009000c0  // mmap64
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_mmap64
+        swi 0
+#else  /*}{*/
+        swi __NR_mmap64
+#endif  /*}*/
         cmn r0,#4096
         bcs msg_SELinux
 copy:
@@ -89,15 +101,16 @@ copy:
         mov lr,r0  // dst for unfolded code
         add r5,r5,r4  // relocated f_decompress
 
-/* linux/include/asm-arm/unistd.h */
-#define __NR_SYSCALL_BASE       0x900000
-#define __ARM_NR_BASE           (__NR_SYSCALL_BASE+0x0f0000)
-#define __ARM_NR_cacheflush     (__ARM_NR_BASE+2)
-
         mov r0,r5
         add r1,r9,r4  // relocated end_decompress
         mov r2,#0
-        swi __ARM_NR_cacheflush  // relocated decompressor
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,   #__ARM_NR_cacheflush& 0xff
+        orr r7,r7,#__ARM_NR_cacheflush&~0xff
+        swi 0
+#else  /*}{*/
+        swi __ARM_NR_cacheflush
+#endif  /*}*/
 
         ldr r9,[r12]  // sz_pack2
         sub r9,r9,#sz_Elf32_Ehdr + 2*sz_Elf32_Phdr + sz_l_info + sz_p_info
@@ -142,10 +155,20 @@ msg_SELinux:
         mov r2,#L71 - L70  // length
         adr r1,L70  // message text
         mov r0,#2  // fd stderr
-        swi 0x00900004  // write
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_write
+        swi 0
+#else  /*}{*/
+        swi __NR_write
+#endif  /*}*/
 die:
         mov r0,#127
-        swi 0x00900001  // exit
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_exit
+        swi 0
+#else  /*}{*/
+        swi __NR_exit
+#endif  /*}*/
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
 L71:
