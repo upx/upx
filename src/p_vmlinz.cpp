@@ -292,7 +292,7 @@ int PackVmlinuzI386::decompressKernel()
             continue;
 
         if (0x208<=h.version && 0==memcmp("\177ELF", ibuf, 4)) {
-            // Full ELF in theory; but for now, try to handle as .bin.
+            // Full ELF in theory; but for now, try to handle as .bin at 0x100000.
             // Check for PT_LOAD.p_paddr being ascending and adjacent.
             Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)(void const *)ibuf;
             Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(ehdr->e_phoff + (char const *)ehdr);
@@ -302,7 +302,10 @@ int PackVmlinuzI386::decompressKernel()
             for (unsigned j=0; j < ehdr->e_phnum; ++j, ++phdr) {
                 if (phdr->PT_LOAD==phdr->p_type) {
                     unsigned step = (-1+ phdr->p_align + hi_paddr) & ~(-1+ phdr->p_align);
-                    if (0==hi_paddr) {
+                    if (0==hi_paddr) { // first PT_LOAD
+                        if (0x100000!=phdr->p_paddr) {
+                            return 0;  // Not at traditional location.
+                        }
                         delta_off = phdr->p_paddr - phdr->p_offset;
                         lo_paddr = phdr->p_paddr;
                         hi_paddr = phdr->p_filesz + phdr->p_paddr;
@@ -317,12 +320,15 @@ int PackVmlinuzI386::decompressKernel()
                 }
             }
             unsigned xlen = 0;
+            // FIXME: ascending order is only a convention; might need sorting.
             for (unsigned j=1; j < ehdr->e_shnum; ++j) {
-                if (shdr->SHF_EXECINSTR & shdr[j].sh_flags) {
-                    xlen += shdr[j].sh_size;  // FIXME: include sh_addralign
-                }
-                else {
-                    break;
+                if (shdr->SHT_PROGBITS==shdr->sh_type) { // SHT_REL might be intermixed
+                    if (shdr->SHF_EXECINSTR & shdr[j].sh_flags) {
+                        xlen += shdr[j].sh_size;  // FIXME: include sh_addralign
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
             //printf("xlen = 0x%x\n", xlen);  // FIXME: use as length to filter
