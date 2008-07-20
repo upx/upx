@@ -1321,7 +1321,6 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     super::pack1(fo, ft);
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
-        ei_osabi = Elf32_Ehdr::ELFOSABI_NONE;
         memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
 
         set_te32(&h3.ehdr.e_flags, EF_ARM_EABI_VER4 | EF_ARM_HASENTRY);
