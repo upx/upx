@@ -53,6 +53,7 @@ static const unsigned bzimage_offset = 0x100000;
 
 PackVmlinuzI386::PackVmlinuzI386(InputFile *f) :
     super(f), physical_start(0x100000), page_offset(0), config_physical_align(0)
+    , filter_len(0)
 {
     bele = &N_BELE_RTP::le_policy;
     COMPILE_TIME_ASSERT(sizeof(boot_sect_t) == 0x250);
@@ -166,6 +167,10 @@ int PackVmlinuzI386::decompressKernel()
     unsigned cpa_0 = 0;
     unsigned cpa_1 = 0;
     int j;
+    if (0x205<=h.version) {
+        cpa_0 = h.kernel_alignment;
+        cpa_1 = 0u - cpa_0;
+    } else
     for ((p = &obuf[setup_size]), (j= 0); j < 0x200; ++j, ++p) {
         if (0==memcmp("\x89\xeb\x81\xc3", p, 4)
         &&  0==memcmp("\x81\xe3",      8+ p, 2)) {
@@ -292,7 +297,7 @@ int PackVmlinuzI386::decompressKernel()
             continue;
 
         if (0x208<=h.version && 0==memcmp("\177ELF", ibuf, 4)) {
-            // Full ELF in theory; but for now, try to handle as .bin at 0x100000.
+            // Full ELF in theory; for now, try to handle as .bin at physical_start.
             // Check for PT_LOAD.p_paddr being ascending and adjacent.
             Elf_LE32_Ehdr const *const ehdr = (Elf_LE32_Ehdr const *)(void const *)ibuf;
             Elf_LE32_Phdr const *phdr = (Elf_LE32_Phdr const *)(ehdr->e_phoff + (char const *)ehdr);
@@ -303,8 +308,8 @@ int PackVmlinuzI386::decompressKernel()
                 if (phdr->PT_LOAD==phdr->p_type) {
                     unsigned step = (-1+ phdr->p_align + hi_paddr) & ~(-1+ phdr->p_align);
                     if (0==hi_paddr) { // first PT_LOAD
-                        if (0x100000!=phdr->p_paddr) {
-                            return 0;  // Not at traditional location.
+                        if (physical_start!=phdr->p_paddr) {
+                            return 0;
                         }
                         delta_off = phdr->p_paddr - phdr->p_offset;
                         lo_paddr = phdr->p_paddr;
@@ -319,19 +324,17 @@ int PackVmlinuzI386::decompressKernel()
                     }
                 }
             }
-            unsigned xlen = 0;
             // FIXME: ascending order is only a convention; might need sorting.
             for (unsigned j=1; j < ehdr->e_shnum; ++j) {
                 if (shdr->SHT_PROGBITS==shdr->sh_type) { // SHT_REL might be intermixed
                     if (shdr->SHF_EXECINSTR & shdr[j].sh_flags) {
-                        xlen += shdr[j].sh_size;  // FIXME: include sh_addralign
+                        filter_len += shdr[j].sh_size;  // FIXME: include sh_addralign
                     }
                     else {
                         break;
                     }
                 }
             }
-            //printf("xlen = 0x%x\n", xlen);  // FIXME: use as length to filter
             memmove(ibuf, (lo_paddr - delta_off) + ibuf, hi_paddr - lo_paddr);  // FIXME: set_size
             // FIXME: .bss ?  Apparently handled by head.S
         }
@@ -567,7 +570,7 @@ void PackBvmlinuzI386::pack(OutputFile *fo)
 
     // prepare filter
     Filter ft(ph.level);
-    ft.buf_len = (ph.u_len * 3)/5;
+    ft.buf_len = (filter_len ? filter_len : (ph.u_len * 3)/5);
     // May 2008: 3/5 is heuristic to cover most .text but avoid non-instructions.
     // Otherwise "call trick" filter cannot find a free marker byte,
     // especially when it searches over tables of data.

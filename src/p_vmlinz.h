@@ -97,6 +97,7 @@ protected:
     unsigned physical_start;
     unsigned page_offset;
     unsigned config_physical_align;
+    unsigned filter_len;
 };
 
 
