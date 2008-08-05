@@ -1324,6 +1324,7 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
         memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
 
         set_te32(&h3.ehdr.e_flags, EF_ARM_EABI_VER4 | EF_ARM_HASENTRY);
+        h3.ehdr.e_ident[Elf32_Ehdr::EI_ABIVERSION] = 4;
     }
     else {
         memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
