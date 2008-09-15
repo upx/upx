@@ -711,6 +711,358 @@ void PackVmlinuzI386::unpack(OutputFile *fo)
 }
 
 
+PackVmlinuzARMEL::PackVmlinuzARMEL(InputFile *f) :
+    super(f), setup_size(0), filter_len(0)
+{
+    bele = &N_BELE_RTP::le_policy;
+}
+
+const int *PackVmlinuzARMEL::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_le32(method, level);
+}
+
+const int *PackVmlinuzARMEL::getFilters() const
+{
+    static const int f50[] = { 0x50, FT_END };
+    return f50;
+}
+
+int PackVmlinuzARMEL::getStrategy(Filter &/*ft*/)
+{
+    // If user specified the filter, then use it (-2==filter_strategy).
+    // Else try the first two filters, and pick the better (2==filter_strategy).
+    return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
+}
+
+bool PackVmlinuzARMEL::canPack()
+{
+    return readFileHeader() == getFormat();
+}
+
+int PackVmlinuzARMEL::readFileHeader()
+{
+    unsigned int hdr[8];
+
+    fi->readx(&hdr, sizeof(hdr));
+    for (int j=0; j < 8; ++j) {
+        if (0xe1a00000!=get_te32(&hdr[j])) {
+            return 0;
+        }
+    }
+    return UPX_F_VMLINUZ_ARMEL;
+}
+
+int PackVmlinuzARMEL::decompressKernel()
+{
+    // read whole kernel image
+    obuf.alloc(file_size);
+    fi->seek(0, SEEK_SET);
+    fi->readx(obuf, file_size);
+
+    //checkAlreadyPacked(obuf + setup_size, UPX_MIN(file_size - setup_size, (off_t)1024));
+
+    // Find head.S:
+    //      bl decompress_kernel  # 0xeb......
+    //      b call_kernel         # 0xea......
+    //LC0: .word LC0              # self!
+    unsigned decompress_kernel = 0;
+    unsigned caller1 = 0;
+    unsigned caller2 = 0;
+    unsigned got_start = 0;
+    unsigned got_end = 0;
+    for (unsigned j = 0; j < 0x400; j+=4) {
+        unsigned w;
+        if (j!=get_te32(j + obuf)) {
+            continue;
+        }
+        if (0xea000000!=(0xff000000&    get_te32(-4+ j + obuf))
+        ||  0xeb000000!=(0xff000000&(w= get_te32(-8+ j + obuf))) ) {
+            continue;
+        }
+        caller1 = -8 + j;
+        decompress_kernel = ((0x00ffffff & w)<<2) + 8+ caller1;
+        for (unsigned k = 12; k<=128; k+=4) {
+            w = get_te32(j - k + obuf);
+            if (0xeb000000==(0xff000000 & w)
+            &&  decompress_kernel==(((0x00ffffff & w)<<2) + 8+ j - k) ) {
+                caller2 = j - k;
+                break;
+            }
+        }
+        got_start = get_te32(5*4 + j + obuf);
+        got_end   = get_te32(6*4 + j + obuf);
+        break;
+    }
+    if (0==decompress_kernel) {
+        return 0;
+    }
+
+    // Find first subroutine that is called by decompress_kernel,
+    // which we will consider to be the start of the gunzip module
+    // and the end of the non-gunzip modules.
+    for (unsigned j = decompress_kernel; j < (unsigned)file_size; j+=4) {
+        unsigned w = get_te32(j + obuf);
+        if (0xeb800000==(0xff800000 & w)) {
+            setup_size = 8+ ((0xff000000 | w)<<2) + j;
+            // Move the GlobalOffsetTable.
+            for (unsigned k = got_start; k < got_end; k+=4) {
+                w = get_te32(k + obuf);
+                // FIXME: must relocate w
+                set_te32(k - got_start + setup_size + obuf, w);
+            }
+            setup_size += got_end - got_start;
+            set_te32(&obuf[caller1], 0xeb000000 |
+                (0x00ffffff & ((setup_size - (8+ caller1))>>2)) );
+            set_te32(&obuf[caller2], 0xeb000000 |
+                (0x00ffffff & ((setup_size - (8+ caller2))>>2)) );
+            break;
+        }
+    }
+
+    for (int gzoff = 0; gzoff < 0x4000; gzoff+=4) {
+        // find gzip header (2 bytes magic + 1 byte method "deflated")
+        int off = find(obuf + gzoff, file_size - gzoff, "\x1F\x8B\x08", 3);
+        if (off < 0 || 0!=(3u & off))
+            break;  // not found, or not word-aligned
+        gzoff += off;
+        const int gzlen = file_size - gzoff;
+        if (gzlen < 256)
+            break;
+        // check gzip flag byte
+        unsigned char flags = obuf[gzoff + 3];
+        if ((flags & 0xe0) != 0)        // reserved bits set
+            continue;
+        //printf("found gzip header at offset %d\n", gzoff);
+
+        // try to decompress
+        int klen;
+        int fd;
+        off_t fd_pos;
+        for (;;)
+        {
+            klen = -1;
+            fd = -1;
+            fd_pos = -1;
+            // open
+            fi->seek(gzoff, SEEK_SET);
+            fd = dup(fi->getFd());
+            if (fd < 0)
+                break;
+            gzFile zf = gzdopen(fd, "rb");
+            if (zf == NULL)
+                break;
+            // estimate gzip-decompressed kernel size & alloc buffer
+            if (ibuf.getSize() == 0)
+                ibuf.alloc(gzlen * 3);
+            // decompress
+            klen = gzread(zf, ibuf, ibuf.getSize());
+            fd_pos = lseek(fd, 0, SEEK_CUR);
+            gzclose(zf);
+            fd = -1;
+            if (klen != (int)ibuf.getSize())
+                break;
+            // realloc and try again
+            unsigned const s = ibuf.getSize();
+            ibuf.dealloc();
+            ibuf.alloc(3 * s / 2);
+        }
+        if (fd >= 0)
+            (void) close(fd);
+        if (klen <= 0)
+            continue;
+
+        if (klen <= gzlen)
+            continue;
+
+        if (opt->force > 0)
+            return klen;
+
+        // some checks
+        if (fd_pos != file_size) {
+            //printf("fd_pos: %ld, file_size: %ld\n", (long)fd_pos, (long)file_size);
+        }
+
+    //head_ok:
+
+        // FIXME: more checks for special magic bytes in ibuf ???
+        // FIXME: more checks for kernel architecture ???
+
+        return klen;
+    }
+
+    return 0;
+}
+
+void PackVmlinuzARMEL::readKernel()
+{
+    int klen = decompressKernel();
+    if (klen <= 0)
+        throwCantPack("kernel decompression failed");
+    //OutputFile::dump("kernel.img", ibuf, klen);
+
+    // copy the setup boot code
+    setup_buf.alloc(setup_size);
+    memcpy(setup_buf, obuf, setup_size);
+    //OutputFile::dump("setup.img", setup_buf, setup_size);
+
+    obuf.dealloc();
+    obuf.allocForCompression(klen);
+
+    ph.u_len = klen;
+    ph.filter = 0;
+}
+
+Linker* PackVmlinuzARMEL::newLinker() const
+{
+    return new ElfLinkerArmLE;
+}
+
+static const
+#include "stub/arm-linux.kernel.vmlinux.h"
+static const
+#include "stub/armel-linux.kernel.vmlinuz-head.h"
+
+void PackVmlinuzARMEL::buildLoader(const Filter *ft)
+{
+    // prepare loader; same as vmlinux (with 'x')
+    initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
+    addLoader("LINUX000", NULL);
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addLoader("LINUX010", NULL);
+    }
+    addLoader("LINUX020", NULL);
+    if (ft->id) {
+        addFilter32(ft->id);
+    }
+    addLoader("LINUX030", NULL);
+         if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
+    else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
+    else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else throwBadLoader();
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
+
+    // To debug (2008-09-14):
+    //   Build gdb-6.8-21.fc9.src.rpm; ./configure --target=arm-none-elf; make
+    //     Contains the fix for http://bugzilla.redhat.com/show_bug.cgi?id=436037
+    //   Install qemu-0.9.1-6.fc9.i386.rpm
+    //   qemu-system-arm -s -S -kernel <file> -nographic
+    //   (gdb) target remote localhost:1234
+    //   A very small boot loader runs at pc=0x0; the kernel is at 0x10000 (64KiB).
+}
+
+void PackVmlinuzARMEL::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
+    linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
+    linker->defineSymbol("METHOD", ph.method);
+}
+
+unsigned PackVmlinuzARMEL::write_vmlinuz_head(OutputFile *const fo)
+{ // First word from vmlinuz-head.S
+    fo->write(&stub_armel_linux_kernel_vmlinuz_head[0], 4);
+
+    // Second word
+    LE32 tmp_u32;
+    unsigned const t = (0xff000000 &
+            get_te32(&stub_armel_linux_kernel_vmlinuz_head[4]))
+        | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
+    tmp_u32 = t;
+    fo->write((void const *)&tmp_u32, 4);
+
+    return sizeof(stub_armel_linux_kernel_vmlinuz_head);
+}
+
+void PackVmlinuzARMEL::pack(OutputFile *fo)
+{
+    readKernel();
+
+    // prepare filter
+    Filter ft(ph.level);
+    ft.buf_len = ph.u_len;
+    ft.addvalue = 0;
+
+    // compress
+    upx_compress_config_t cconf; cconf.reset();
+    // limit stack size needed for runtime decompression
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 5); // ushort: 52,844 byte stack
+    compressWithFilters(&ft, 512, &cconf, getStrategy(ft));
+
+    const unsigned lsize = getLoaderSize();
+
+    defineDecompressorSymbols();
+    defineFilterSymbols(&ft);
+    relocateLoader();
+
+    MemBuffer loader(lsize);
+    memcpy(loader, getLoader(), lsize);
+    patchPackHeader(loader, lsize);
+
+//    boot_sect_t * const bs = (boot_sect_t *) ((unsigned char *) setup_buf);
+//    bs->sys_size = ALIGN_UP(lsize + ph.c_len, 16u) / 16;
+//    bs->payload_length = ph.c_len;
+
+    fo->write(setup_buf, setup_buf.getSize());
+    write_vmlinuz_head(fo);
+    fo->write(obuf, ph.c_len);
+    unsigned const zero = 0;
+    fo->write((void const *)&zero, 3u & (0u - ph.c_len));
+    fo->write(loader, lsize);
+#if 0
+    printf("%-13s: setup        : %8ld bytes\n", getName(), (long) setup_buf.getSize());
+    printf("%-13s: loader       : %8ld bytes\n", getName(), (long) lsize);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) ph.c_len);
+#endif
+
+    // verify
+    verifyOverlappingDecompression();
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
+}
+
+int PackVmlinuzARMEL::canUnpack()
+{
+    if (readFileHeader() != getFormat())
+        return false;
+    fi->seek(setup_size, SEEK_SET);
+    return readPackHeader(1024) ? 1 : -1;
+}
+
+void PackVmlinuzARMEL::unpack(OutputFile *fo)
+{
+    // no uncompression support for this format, so that
+    // it is possible to remove the original deflate code (>10 KiB)
+
+    // FIXME: but we could write the uncompressed "vmlinux" image
+
+    ibuf.alloc(ph.c_len);
+    obuf.allocForUncompression(ph.u_len);
+
+    fi->seek(setup_size + ph.buf_offset + ph.getPackHeaderSize(), SEEK_SET);
+    fi->readx(ibuf, ph.c_len);
+
+    // decompress
+    decompress(ibuf, obuf);
+
+    // unfilter
+    Filter ft(ph.level);
+    ft.init(ph.filter, 0);
+    ft.cto = (unsigned char) ph.filter_cto;
+    ft.unfilter(obuf, ph.u_len);
+
+    // write decompressed file
+    if (fo)
+    {
+        throwCantUnpack("build a new kernel instead :-)");
+        //fo->write(obuf, ph.u_len);
+    }
+}
+
 /*
 vi:ts=4:et
 */

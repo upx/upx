@@ -150,6 +150,52 @@ protected:
 };
 
 
+/*************************************************************************
+// vmlinuz/armel (gzip compressed Linux kernel image)
+**************************************************************************/
+
+class PackVmlinuzARMEL : public Packer
+{
+    typedef Packer super;
+public:
+    PackVmlinuzARMEL(InputFile *f);
+    virtual int getVersion() const { return 13; }
+    virtual int getFormat() const { return UPX_F_VMLINUZ_ARMEL; }
+    virtual const char *getName() const { return "vmlinuz/armel"; }
+    virtual const char *getFullName(const options_t *) const { return "armel-linux.kernel.vmlinuz"; }
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+    virtual int getStrategy(Filter &);
+
+    virtual void pack(OutputFile *fo);
+    virtual void unpack(OutputFile *fo);
+
+    virtual bool canPack();
+    virtual int canUnpack();
+
+protected:
+    virtual int readFileHeader();
+    virtual int decompressKernel();
+    virtual void readKernel();
+
+    virtual void buildLoader(const Filter *ft);
+    virtual unsigned write_vmlinuz_head(OutputFile *const fo);
+    virtual void defineDecompressorSymbols();
+    virtual Linker* newLinker() const;
+
+//    virtual upx_byte *getLoader() const;
+//    virtual int getLoaderSize() const;
+
+
+    MemBuffer setup_buf;
+    int setup_size;
+//    unsigned physical_start;
+//    unsigned page_offset;
+//    unsigned config_physical_align;
+    unsigned filter_len;
+};
+
+
 #endif /* already included */
 
 

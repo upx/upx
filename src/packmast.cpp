@@ -206,6 +206,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         return p;
     if ((p = func(new PackBvmlinuzI386(f), user)) != NULL)
         return p;
+    if ((p = func(new PackVmlinuzARMEL(f), user)) != NULL)
+        return p;
 #if 0
     if ((p = func(new PackElks8086(f), user)) != NULL)
         return p;
