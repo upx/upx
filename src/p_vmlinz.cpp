@@ -719,7 +719,7 @@ PackVmlinuzARMEL::PackVmlinuzARMEL(InputFile *f) :
 
 const int *PackVmlinuzARMEL::getCompressionMethods(int method, int level) const
 {
-    return Packer::getDefaultCompressionMethods_le32(method, level);
+    return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
 const int *PackVmlinuzARMEL::getFilters() const
