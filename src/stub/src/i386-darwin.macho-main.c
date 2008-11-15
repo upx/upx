@@ -304,7 +304,6 @@ typedef union {
 #define PROT_WRITE     2
 #define PROT_EXEC      4
 
-typedef long long off_t;
 extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t);
 extern ssize_t pread(int, void *, size_t, off_t);
 extern void bswap(void *, unsigned);
@@ -312,7 +311,7 @@ extern void bswap(void *, unsigned);
 static Mach_i386_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
-    unsigned const fat_offset,
+    off_t fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -398,7 +397,7 @@ upx_main(
 )
 {
     Mach_i386_thread_state const *entry;
-    unsigned fat_offset = 0;
+    off_t fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));

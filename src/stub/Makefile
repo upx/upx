@@ -52,6 +52,8 @@ STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
+STUBS += arm-darwin.macho-entry.h
+STUBS += arm-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
 STUBS += arm-linux.kernel.vmlinux.h
@@ -323,6 +325,35 @@ tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+# /***********************************************************************
+# // arm-darwin.macho
+# ************************************************************************/
+
+# info: we use the tc settings from arm-linux.elf, but override v4 with v5
+arm-darwin.macho%.h : tc_list = arm-linux.elf default
+arm-darwin.macho%.h : tc_bfdname = elf32-littlearm
+tc.arm-darwin.macho-entry.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm-darwin.macho-fold.gcc   = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+
+arm-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm-darwin.macho-fold.h : tmp/$$T.o tmp/arm-darwin.macho-main.o
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	chmod a-x tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/arm-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm

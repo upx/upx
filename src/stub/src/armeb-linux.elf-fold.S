@@ -27,6 +27,7 @@
 @  <jreiser@users.sourceforge.net>
 @
 
+#define ARM_OLDABI 1
 #define FILTER_ID 0x51  /* big-endian */
 #include "arm-linux.elf-fold.S"
 #undef FILTER_ID

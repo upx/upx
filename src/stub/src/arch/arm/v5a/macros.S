@@ -34,7 +34,27 @@
                 .section \name
 .endm
 
-#if defined(ARMEL_EABI4)  /*{*/
+#if defined(ARMEL_DARWIN)  /*{*/
+__NR_SYSCALL_BASE = 0
+.macro          do_sys N
+                mov ip,#\N
+                swi 0x80  // sets Carry iff error
+                orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
+                ret
+.endm
+
+.macro          do_dcache_flush  // In: r0=addr; r1=len
+                mov r3,#1  // _sys_dcache_flush
+                mov ip,#(1<<31)  // syscall number?
+                swi 0x80
+.endm
+
+.macro          do_icache_invalidate  // In: r0=addr; r1=len
+                mov r3,#0  // _sys_icache_invalidate
+                mov ip,#(1<<31)  // syscall number?
+                swi 0x80
+.endm
+#elif defined(ARMEL_EABI4)  /*}{*/
 
 __NR_SYSCALL_BASE = 0
 .macro          do_sys N
@@ -51,7 +71,7 @@ __NR_SYSCALL_BASE = 0
                 mov r7,r12  // restore r7 from ip
 .endm
 
-#else  /*}{*/
+#elif defined(ARM_OLDABI)  /*}{*/
 
 __NR_SYSCALL_BASE = 0x900000
 .macro          do_sys N
@@ -61,6 +81,13 @@ __NR_SYSCALL_BASE = 0x900000
                 swi \N
 .endm
 
+#else  /*}{*/
+.macro          do_sys N
+                error \N  // ARM_OLDABI, ARMEL_EABI4, ARMEL_DARWIN ?
+.endm
+.macro          do_sys2 N
+                error \N  // ARM_OLDABI, ARMEL_EABI4, ARMEL_DARWIN ?
+.endm
 #endif  /*}*/
 
 .macro          ret

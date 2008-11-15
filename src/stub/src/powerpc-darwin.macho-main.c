@@ -313,15 +313,15 @@ typedef union {
 
 /* bug in crosstool/powerpc-750-linux-gnu/gcc-3.4.1-glibc-20040827:
    unsigned long long off_t goes into registers (9,10) instead of (8,9).
-   Adjust in mmap().
+   Adjust in mmap(), pread(), and include/darwin.h .
 */
-extern char *mmap(char *, size_t, unsigned, unsigned, int, /*off_t*/size_t);
-ssize_t pread(int, void *, size_t, /*off_t*/unsigned);  // FIXME?
+extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t);
+ssize_t pread(int, void *, size_t, off_t);
 
 static Mach_ppc_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
-    unsigned const fat_offset,
+    off_t const fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -399,7 +399,7 @@ upx_main(
 )
 {
     Mach_ppc_thread_state const *entry;
-    unsigned fat_offset = 0;
+    off_t fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));

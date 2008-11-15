@@ -29,6 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
+#define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
 
 #define bkpt .long 0xe1200070

@@ -69,6 +69,11 @@ typedef unsigned long long uint64_t;
 #endif
 typedef size_t uintptr_t;
 
+// XXX: restrict ourselves to 4GB for off_t.  Some versions of gcc
+// have bugs in handling 64-bit integers (such as passing as argument
+// the wrong registers) and it takes more code anyway.
+// Adjust in system call wrappers, particularly mmap() and pread().
+typedef unsigned off_t;
 
 // misc constants
 

@@ -27,6 +27,7 @@
 @  <jreiser@users.sourceforge.net>
 @
 
+#define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
 
 sz_Elf32_Ehdr = 13*4

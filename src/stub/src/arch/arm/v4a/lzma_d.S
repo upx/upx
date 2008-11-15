@@ -45,7 +45,7 @@
 #define M_LZMA          14
         ldrb ip,meth; cmp ip,#M_LZMA; bne not_lzma
 
-#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
+#if defined(LINUX_ARM_CACHEFLUSH)||defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
 	PUSH {dst,ldst, fp,lr}  // dst,ldst for cache flush
 #else  /*}{*/
 	PUSH {          fp,lr}
@@ -115,6 +115,14 @@
         mov r2,#0
         do_sys2 __ARM_NR_cacheflush  // decompressed region
         mov r0,r3  // result value
+#endif  /*}*/
+#if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
+        mov r4,r0  // save result value
+        POP {r0,r1}  // dst, ldst
+        ldr r1,[r1]  // ldst by reference
+        PUSH {r0,r1}; do_dcache_flush
+        POP  {r0,r1}; do_icache_invalidate
+        mov r0,r4  // result value
 #endif  /*}*/
 
         POP {fp,pc}

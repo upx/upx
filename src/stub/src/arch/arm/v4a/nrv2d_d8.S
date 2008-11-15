@@ -118,6 +118,14 @@ eof_n2d:
         do_sys2 __ARM_NR_cacheflush  // decompressed region
         mov r0,r4  // result value
 #endif  /*}*/
+#if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
+        mov r4,r0  // save result value
+        mov r0,r3  // orig_dst
+        mov r1,dst  // dst_len
+        PUSH {r0,r1}; do_dcache_flush
+        POP  {r0,r1}; do_icache_invalidate
+        mov r0,r4  // result value
+#endif  /*}*/
 
         POP {r4,r5,r6,r7 ,pc}
 

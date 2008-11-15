@@ -40,8 +40,14 @@
     };
     enum { // cputype
         CPU_TYPE_I386      =          7,
+        CPU_TYPE_ARM       =         12,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012
+    };
+    enum { // cpusubtype
+        CPU_SUBTYPE_ARM_ALL = 0,
+        CPU_SUBTYPE_ARM_V4T = 5,
+        CPU_SUBTYPE_ARM_V6  = 6
     };
     enum { // filetype
         MH_EXECUTE = 2
@@ -98,7 +104,8 @@
     enum { // thread flavor
         PPC_THREAD_STATE = 1,
         i386_THREAD_STATE = 1,
-        i386_OLD_THREAD_STATE = -1
+        i386_OLD_THREAD_STATE = -1,
+        ARM_THREAD_STATE = 1
     };
 #endif  /*}*/
 

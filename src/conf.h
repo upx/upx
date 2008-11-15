@@ -460,6 +460,7 @@ private:
 #define UPX_F_MACH_i386         29
 #define UPX_F_LINUX_ELF32_MIPSEL 30
 #define UPX_F_VMLINUZ_ARMEL     31
+#define UPX_F_MACH_ARMEL        32
 
 #define UPX_F_PLAIN_TEXT        127
 

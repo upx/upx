@@ -34,7 +34,16 @@
                 .section \name
 .endm
 
-#if defined(ARMEL_EABI4)  /*{*/
+#if defined(ARMEL_DARWIN)  /*{*/
+__NR_SYSCALL_BASE = 0
+.macro          do_sys N
+                mov ip,#\N
+                swi 0x80  // returns Carry iff error
+                orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
+                ret
+.endm
+
+#elif defined(ARMEL_EABI4)  /*}{*/
 
 __NR_SYSCALL_BASE = 0
 .macro          do_sys N
@@ -51,7 +60,7 @@ __NR_SYSCALL_BASE = 0
                 mov r7,r12  // restore r7 from ip
 .endm
 
-#else  /*}{*/
+#elif defined(ARM_OLDABI)  /*}{*/
 
 __NR_SYSCALL_BASE = 0x900000
 .macro          do_sys N
@@ -61,10 +70,17 @@ __NR_SYSCALL_BASE = 0x900000
                 swi \N
 .endm
 
+#else  /*}{*/
+.macro          do_sys N
+                error ARM_OLDABI, ARMEL_EABI4, ARMEL_DARWIN ?
+.endm
+.macro          do_sys2 N
+                error ARM_OLDABI, ARMEL_EABI4, ARMEL_DARWIN ?
+.endm
 #endif  /*}*/
 
 .macro          ret
-                mov pc,lr  /* armv4 fails for thumb interworking */
+                mov pc,lr  /* armv4 lacks 'bx'; fails for thumb interworking */
 .endm
 
 // vi:ts=8:et:nowrap

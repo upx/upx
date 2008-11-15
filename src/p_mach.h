@@ -197,6 +197,19 @@ struct Mach_i386_new_thread_state
 }
 __attribute_packed;
 
+template <class TMachITypes>
+struct Mach_ARM_thread_state
+{
+    typedef typename TMachITypes::Word Word;
+
+    Word r[13];  // r0-r12
+    Word sp;  // r13
+    Word lr;  // r14
+    Word pc;  // r15
+    Word cpsr;
+}
+__attribute_packed;
+
 }  // namespace N_Mach
 
 namespace N_Mach32 {
@@ -253,6 +266,7 @@ struct MachClass_32
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
+    typedef N_Mach::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -311,6 +325,7 @@ typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
+typedef MachClass_LE32::Mach_ARM_thread_state  Mach_ARM_thread_state;
 #include "p_unix.h"
 
 
@@ -484,6 +499,43 @@ protected:
         LE32 flavor;
         LE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_i386_thread_state state;
+    #define WANT_MACH_THREAD_ENUM
+    #include "p_mach_enum.h"
+    }
+    __attribute_packed;
+    Mach_thread_command threado;
+};
+
+class PackMachARMEL : public PackMachBase<MachClass_LE32>
+{
+    typedef PackMachBase<MachClass_LE32> super;
+
+public:
+    PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
+        (unsigned)Mach_thread_command::ARM_THREAD_STATE,
+        sizeof(Mach_ARM_thread_state)>>2, sizeof(threado)) { }
+
+    virtual int getFormat() const { return UPX_F_MACH_ARMEL; }
+    virtual const char *getName() const { return "Mach/ARMEL"; }
+    virtual const char *getFullName(const options_t *) const { return "ARMEL-darwin.macho"; }
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+    virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+    virtual void addStubEntrySections(Filter const *);
+
+    struct Mach_thread_command
+    {
+        LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        LE32 cmdsize;        /* total size of this command */
+        LE32 flavor;
+        LE32 count;          /* sizeof(following_thread_state)/4 */
+        Mach_ARM_thread_state state;
     #define WANT_MACH_THREAD_ENUM
     #include "p_mach_enum.h"
     }
