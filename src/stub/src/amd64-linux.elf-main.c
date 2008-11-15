@@ -298,7 +298,7 @@ ERR_LAB
     if (xi) { // 1st call (main); also have (0!=av) here
         if (ET_DYN!=ehdr->e_type) {
             // Needed only if compressed shell script invokes compressed shell.
-            brk(v_brk);
+            // brk(v_brk);  // SIGSEGV when is_big [unmaps ourself!]
         }
     }
     if (0!=p_reloc) {
