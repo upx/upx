@@ -46,9 +46,9 @@
         ldrb ip,meth; cmp ip,#M_LZMA; bne not_lzma
 
 #if defined(LINUX_ARM_CACHEFLUSH)||defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
-	PUSH {dst,ldst, fp,lr}  // dst,ldst for cache flush
+        PUSH {dst,ldst, fp,lr}  // dst,ldst for cache flush
 #else  /*}{*/
-	PUSH {          fp,lr}
+        PUSH {          fp,lr}
 #endif  /*}*/
 
 #define a0 r0

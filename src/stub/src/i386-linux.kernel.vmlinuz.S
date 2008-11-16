@@ -30,43 +30,43 @@
 #include "arch/i386/macros.S"
 
 // include/linux/screen_info.h
-si_orig_x		= 0x00
-si_orig_y		= 0x01
-//si_dontuse1		= 0x02  // EXT_MEM_K sits here
-si_orig_video_page	= 0x04
-si_orig_video_mode	= 0x06
-si_orig_video_cols	= 0x07
-si_vidport		= 0x08  // FIXME  upx stealing
-si_orig_video_ega_bx	= 0x0a
-//si_unused3		= 0x0c
-si_orig_video_lines	= 0x0e
-si_orig_video_isVGA	= 0x0f
-si_orig_video_points	= 0x10
+si_orig_x               = 0x00
+si_orig_y               = 0x01
+//si_dontuse1           = 0x02  // EXT_MEM_K sits here
+si_orig_video_page      = 0x04
+si_orig_video_mode      = 0x06
+si_orig_video_cols      = 0x07
+si_vidport              = 0x08  // FIXME  upx stealing
+si_orig_video_ega_bx    = 0x0a
+//si_unused3            = 0x0c
+si_orig_video_lines     = 0x0e
+si_orig_video_isVGA     = 0x0f
+si_orig_video_points    = 0x10
 
 // VESA graphic mode -- linear frame buffer
-si_lfb_width		= 0x12
-si_lfb_height		= 0x14
-si_lfb_depth		= 0x16
-si_lfb_base		= 0x18
-si_lfb_size		= 0x1c
+si_lfb_width            = 0x12
+si_lfb_height           = 0x14
+si_lfb_depth            = 0x16
+si_lfb_base             = 0x18
+si_lfb_size             = 0x1c
 
 BP_cmd_line_magic       = 0x20  // protocol < 2.02, or if null pointer
 BP_cmd_line_offset      = 0x22  // protocol < 2.02, or if null pointer
 
-si_lfb_linelength	= 0x24
-si_red_size		= 0x26
-si_red_pos		= 0x27
-si_green_size		= 0x28
-si_green_pos		= 0x29
-si_blue_size		= 0x2a
-si_blue_pos		= 0x2b
-si_rsvd_size		= 0x2c
-si_rsvd_pos		= 0x2d
-si_vesapm_seg		= 0x2e
-si_vesapm_off		= 0x30
-si_pages		= 0x32
-si_vesa_attributes	= 0x34
-si_capabilities		= 0x36
+si_lfb_linelength       = 0x24
+si_red_size             = 0x26
+si_red_pos              = 0x27
+si_green_size           = 0x28
+si_green_pos            = 0x29
+si_blue_size            = 0x2a
+si_blue_pos             = 0x2b
+si_rsvd_size            = 0x2c
+si_rsvd_pos             = 0x2d
+si_vesapm_seg           = 0x2e
+si_vesapm_off           = 0x30
+si_pages                = 0x32
+si_vesa_attributes      = 0x34
+si_capabilities         = 0x36
 
 si_vidmem               = 0x3c  // FIXME upx stealing
 
