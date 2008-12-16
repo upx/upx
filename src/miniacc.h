@@ -39,7 +39,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20080430L
+#define ACC_VERSION     20081216L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -577,6 +577,10 @@
 #  define ACC_CC_AZTECC         1
 #  define ACC_INFO_CC           "Aztec C"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__AZTEC_C__)
+#elif defined(__CODEGEARC__)
+#  define ACC_CC_CODEGEARC      1
+#  define ACC_INFO_CC           "CodeGear C"
+#  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__CODEGEARC__)
 #elif defined(__BORLANDC__)
 #  define ACC_CC_BORLANDC       1
 #  define ACC_INFO_CC           "Borland C"
@@ -2624,7 +2628,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
 #  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_VOID_P
-#elif ((ACC_ARCH_ARM || ACC_ARCH_I386) && ACC_CC_MSC && (_MSC_VER >= 1300))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1300) && (ACC_SIZEOF_VOID_P == 4) && (ACC_SIZEOF_INT == 4))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
@@ -3052,7 +3056,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #  define acc_intptr_t          acc_intptr_t
 #  define acc_uintptr_t         acc_uintptr_t
 #  define ACC_SIZEOF_ACC_INTPTR_T   ACC_SIZEOF_VOID_P
-#elif ((ACC_ARCH_ARM || ACC_ARCH_I386) && ACC_CC_MSC && (_MSC_VER >= 1300))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1300) && (ACC_SIZEOF_VOID_P == 4) && (ACC_SIZEOF_INT == 4))
    typedef __w64 int            acc_intptr_t;
    typedef __w64 unsigned int   acc_uintptr_t;
 #  define acc_intptr_t          acc_intptr_t
@@ -6418,11 +6422,11 @@ ACCLIB_PUBLIC_NOINLINE(void, acc_debug_nop) (void)
 ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_query) (void)
 {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
-    long r;
+    size_t r;
     __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
     return (int)(r >> 18) & 1;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
-    long r;
+    unsigned long r;
     __asm {
         pushf
         pop eax
