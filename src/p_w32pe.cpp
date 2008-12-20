@@ -1105,7 +1105,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
 int PackW32Pe::canUnpack()
 {
-    if (!readFileHeader())
+    if (!readFileHeader() || ih.cpu < 0x14c || ih.cpu > 0x150)
         return false;
 
     unsigned objs = ih.objects;
