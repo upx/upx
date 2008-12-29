@@ -39,7 +39,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20081216L
+#define ACC_VERSION     20081229L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1427,6 +1427,8 @@ extern "C" {
 #  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define __acc_alignof(e)      __alignof(e)
+#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_alignof(e)      __alignof__(e)
 #endif
 #endif
 #if defined(__acc_alignof)
@@ -1475,6 +1477,8 @@ extern "C" {
 #  define __acc_inline          __inline
 #elif (ACC_CC_MSC && (_MSC_VER >= 900))
 #  define __acc_inline          __inline
+#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_inline          __inline__
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #  define __acc_inline          inline
 #endif
@@ -1495,6 +1499,8 @@ extern "C" {
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #  define __acc_forceinline     __forceinline
+#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #endif
 #endif
 #if defined(__acc_forceinline)
@@ -1520,6 +1526,8 @@ extern "C" {
 #  else
 #    define __acc_noinline      __declspec(noinline)
 #  endif
+#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_noinline        __attribute__((__noinline__))
 #endif
 #endif
 #if defined(__acc_noinline)
@@ -2813,7 +2821,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
 #if (ACC_OPT_UNALIGNED16) && defined(acc_int16e_t)
 #define ACC_UA_GET16(p)         (* (__acc_ua_volatile const acc_uint16e_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET16(p,v)       (* (__acc_ua_volatile acc_uint16e_t*) (__acc_ua_volatile void*) (p) = (acc_uint16e_t) (v))
+#define ACC_UA_SET16(p,v)       ((* (__acc_ua_volatile acc_uint16e_t*) (__acc_ua_volatile void*) (p)) = (acc_uint16e_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE16(p)    ACC_UA_GET16(p)
 #  define ACC_UA_SET_BE16(p,v)  ACC_UA_SET16(p,v)
@@ -2849,7 +2857,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsi
 #endif
 #if (ACC_OPT_UNALIGNED32) && defined(acc_int32e_t)
 #define ACC_UA_GET32(p)         (* (__acc_ua_volatile const acc_uint32e_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET32(p,v)       (* (__acc_ua_volatile acc_uint32e_t*) (__acc_ua_volatile void*) (p) = (acc_uint32e_t) (v))
+#define ACC_UA_SET32(p,v)       ((* (__acc_ua_volatile acc_uint32e_t*) (__acc_ua_volatile void*) (p)) = (acc_uint32e_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE32(p)    ACC_UA_GET32(p)
 #  define ACC_UA_SET_BE32(p,v)  ACC_UA_SET32(p,v)
@@ -2885,7 +2893,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE32(__acc_ua_volatile void* pp, unsi
 #endif
 #if (ACC_OPT_UNALIGNED64) && defined(acc_int64l_t)
 #define ACC_UA_GET64(p)         (* (__acc_ua_volatile const acc_uint64l_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET64(p,v)       (* (__acc_ua_volatile acc_uint64l_t*) (__acc_ua_volatile void*) (p) = (acc_uint64l_t) (v))
+#define ACC_UA_SET64(p,v)       ((* (__acc_ua_volatile acc_uint64l_t*) (__acc_ua_volatile void*) (p)) = (acc_uint64l_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE64(p)    ACC_UA_GET64(p)
 #  define ACC_UA_SET_BE64(p,v)  ACC_UA_SET64(p,v)
@@ -3240,7 +3248,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
 #if (ACC_OPT_UNALIGNED16) && defined(acc_int16e_t)
 #define ACC_UA_GET16(p)         (* (__acc_ua_volatile const acc_uint16e_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET16(p,v)       (* (__acc_ua_volatile acc_uint16e_t*) (__acc_ua_volatile void*) (p) = (acc_uint16e_t) (v))
+#define ACC_UA_SET16(p,v)       ((* (__acc_ua_volatile acc_uint16e_t*) (__acc_ua_volatile void*) (p)) = (acc_uint16e_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE16(p)    ACC_UA_GET16(p)
 #  define ACC_UA_SET_BE16(p,v)  ACC_UA_SET16(p,v)
@@ -3276,7 +3284,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsi
 #endif
 #if (ACC_OPT_UNALIGNED32) && defined(acc_int32e_t)
 #define ACC_UA_GET32(p)         (* (__acc_ua_volatile const acc_uint32e_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET32(p,v)       (* (__acc_ua_volatile acc_uint32e_t*) (__acc_ua_volatile void*) (p) = (acc_uint32e_t) (v))
+#define ACC_UA_SET32(p,v)       ((* (__acc_ua_volatile acc_uint32e_t*) (__acc_ua_volatile void*) (p)) = (acc_uint32e_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE32(p)    ACC_UA_GET32(p)
 #  define ACC_UA_SET_BE32(p,v)  ACC_UA_SET32(p,v)
@@ -3312,7 +3320,7 @@ extern __acc_forceinline void __ACC_UA_SET_LE32(__acc_ua_volatile void* pp, unsi
 #endif
 #if (ACC_OPT_UNALIGNED64) && defined(acc_int64l_t)
 #define ACC_UA_GET64(p)         (* (__acc_ua_volatile const acc_uint64l_t*) (__acc_ua_volatile const void*) (p))
-#define ACC_UA_SET64(p,v)       (* (__acc_ua_volatile acc_uint64l_t*) (__acc_ua_volatile void*) (p) = (acc_uint64l_t) (v))
+#define ACC_UA_SET64(p,v)       ((* (__acc_ua_volatile acc_uint64l_t*) (__acc_ua_volatile void*) (p)) = (acc_uint64l_t) (v))
 #if (ACC_ABI_BIG_ENDIAN)
 #  define ACC_UA_GET_BE64(p)    ACC_UA_GET64(p)
 #  define ACC_UA_SET_BE64(p,v)  ACC_UA_SET64(p,v)
