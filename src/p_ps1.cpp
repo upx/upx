@@ -433,7 +433,7 @@ bool PackPs1::findBssSection()
             reg = REG1(op);
             for (; i >= 0; i--)
             {
-                bss_nfo *p = (bss_nfo *)&p1[i];
+                bss_nfo *p = (bss_nfo *)(void *)&p1[i];
                 unsigned short op1 = p->op1, op2 = p->op2;
 
                 // check for la (x),bss_start

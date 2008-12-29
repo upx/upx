@@ -132,8 +132,8 @@ PackLinuxI386::generateElfHdr(
     unsigned const brka
 )
 {
-    cprElfHdr2 *const h2 = (cprElfHdr2 *)&elfout;
-    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
+    cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
+    cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
 
     assert(h2->ehdr.e_phoff     == sizeof(Elf32_Ehdr));
@@ -528,11 +528,14 @@ bool PackLinuxI386::canPack()
             default:
             unsigned const e_phnum = get_te16(&ehdr.e_phnum);
             if (e_phnum<=(512/sizeof(Elf32_Phdr))) {
-                char buf2[512];
+                union {
+                    char buf2[512];
+                    Elf32_Phdr phdr;
+                } u;
                 fi->seek(get_te32(&ehdr.e_phoff), SEEK_SET);
-                fi->readx(buf2, sizeof(buf2));
+                fi->readx(u.buf2, sizeof(u.buf2));
                 fi->seek(0, SEEK_SET);
-                Elf32_Phdr const *phdr = (Elf32_Phdr const *)buf2;
+                Elf32_Phdr const *phdr = &u.phdr;
                 for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
                     if (phdr->PT_NOTE == get_te32(&phdr->p_type)) {
                         unsigned const offset = get_te32(&phdr->p_offset);

@@ -643,7 +643,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
-    Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
+    Mach_segment_command const *sc = (Mach_segment_command const *)(void *)(1+ mhdr);
     unsigned k;
 
     fi->seek(- (off_t)(sizeof(bhdr) + ph.c_len), SEEK_CUR);

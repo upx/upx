@@ -343,7 +343,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
     qsort(start + 1024,counts[0],4,le32_compare);
 
     rel = (reloc*) start;
-    rel1 = (LE16*) rel;
+    rel1 = (LE16*) start;
     for (unsigned ic = 0; ic < counts[0]; ic++)
     {
         unsigned pos = get_le32(start + 1024 + 4 * ic);

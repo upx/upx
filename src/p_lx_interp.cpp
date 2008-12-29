@@ -197,14 +197,17 @@ void PackLinuxElf32x86interp::pack3(OutputFile *fo, Filter &/*ft*/)
 void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 {
 #define MAX_INTERP_HDR 512
-    char bufehdr[MAX_INTERP_HDR];
-    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *)bufehdr;
-    Elf32_Phdr const *phdr = (Elf32_Phdr *)(1+ehdr);
+    union {
+        char buf[MAX_INTERP_HDR];
+        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+    } u;
+    Elf32_Ehdr *const ehdr = &u.e.ehdr;
+    Elf32_Phdr const *phdr = &u.e.phdr;
 
     unsigned szb_info = sizeof(b_info);
     {
         fi->seek(0, SEEK_SET);
-        fi->readx(bufehdr, MAX_INTERP_HDR);
+        fi->readx(u.buf, MAX_INTERP_HDR);
         unsigned const e_entry = get_te32(&ehdr->e_entry);
         if (e_entry < 0x401180) { /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
