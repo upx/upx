@@ -306,7 +306,7 @@ int PackVmlinuzI386::decompressKernel()
             unsigned delta_off = 0;
             for (unsigned j=0; j < ehdr->e_phnum; ++j, ++phdr) {
                 if (phdr->PT_LOAD==phdr->p_type) {
-                    unsigned step = (-1+ phdr->p_align + hi_paddr) & ~(-1+ phdr->p_align);
+                    unsigned step = (hi_paddr + phdr->p_align - 1) & ~(phdr->p_align - 1);
                     if (0==hi_paddr) { // first PT_LOAD
                         if (physical_start!=phdr->p_paddr) {
                             return 0;
@@ -776,11 +776,11 @@ int PackVmlinuzARMEL::decompressKernel()
         if (j!=get_te32(j + obuf)) {
             continue;
         }
-        if (0xea000000!=(0xff000000&    get_te32(-4+ j + obuf))
-        ||  0xeb000000!=(0xff000000&(w= get_te32(-8+ j + obuf))) ) {
+        if (0xea000000!=(0xff000000&    get_te32(j - 4 + obuf))
+        ||  0xeb000000!=(0xff000000&(w= get_te32(j - 8 + obuf))) ) {
             continue;
         }
-        caller1 = -8 + j;
+        caller1 = j - 8;
         decompress_kernel = ((0x00ffffff & w)<<2) + 8+ caller1;
         for (unsigned k = 12; k<=128; k+=4) {
             w = get_te32(j - k + obuf);
