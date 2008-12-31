@@ -1,6 +1,8 @@
 #
 # UPX Makefile - needs GNU make 3.81 or better
 #
+# Copyright (C) 1996-2009 Markus Franz Xaver Johannes Oberhumer
+#
 
 MAKEFLAGS += -rR
 .SUFFIXES:

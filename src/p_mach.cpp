@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2004-2008 John Reiser
+   Copyright (C) 2004-2009 John Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them

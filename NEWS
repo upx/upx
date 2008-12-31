@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.04 (XX XXX 2008):
+Changes in 3.04 (XX XXX 2009):
   * new format vmlinuz/armel for Debian NSLU2 (etc.) linux kernel
   * bvmlinuz boot protocol 2.08 for 386 Linux kernel
   * Extended ABI version 4 for armel-eabi ARM Linux ELF
