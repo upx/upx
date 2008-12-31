@@ -47,7 +47,7 @@ static int F(Filter *f)
     // scan
     const upx_byte *b = f->buf;
 #endif
-    const unsigned size  = umin(f->buf_len, -(~0u<<(32 - (6+ W_CTO))));
+    const unsigned size  = umin(f->buf_len, 0u - (~0u<<(32 - (6+ W_CTO))));
     const unsigned size4 = size -4;
 
     unsigned ic;
@@ -72,9 +72,11 @@ static int F(Filter *f)
         }
 
         if (getcto(f, buf) < 0) {
-            if (0!=W_CTO)  // FIXME: what is this ???
-                return -1;
+#if (W_CTO != 0)
+            return -1;
+#else
             f->cto = 0;
+#endif
         }
     }
     const unsigned char cto8 = f->cto;
@@ -95,8 +97,9 @@ static int F(Filter *f)
             lastcall = ic;
         }
         else {
-            assert(0==W_CTO  // FIXME: what is this ???
-            || (~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
+#if (W_CTO != 0)
+            assert((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
+#endif
             lastnoncall = ic;
             noncalls++;
         }
@@ -122,7 +125,7 @@ static int F(Filter *f)
 static int U(Filter *f)
 {
     upx_byte *b = f->buf;
-    const unsigned size4 = umin(f->buf_len - 4, -(~0u<<(32 - (6+ W_CTO))));
+    const unsigned size4 = umin(f->buf_len - 4, 0u - (~0u<<(32 - (6+ W_CTO))));
     const unsigned addvalue = f->addvalue;
 
     unsigned ic;

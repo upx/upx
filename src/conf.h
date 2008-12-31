@@ -111,6 +111,9 @@
 #    error "need Watcom C++ 11.0c or newer"
 #  endif
 #  if defined(__cplusplus)
+#    pragma warning 367 9               // w3: conditional expression in if statement is always true
+#    pragma warning 368 9               // w3: conditional expression in if statement is always false
+#    pragma warning 389 9               // w3: integral value may be truncated
 #    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
 #  endif
 #endif
@@ -159,6 +162,9 @@
 #endif
 #if 0 && !defined(WITH_LZMA)
 #  define WITH_LZMA 1
+#endif
+#if 1 && (ACC_CC_WATCOMC)
+#  undef WITH_LZMA
 #endif
 #if defined(UPX_OFFICIAL_BUILD)
 #  if !defined(WITH_LZMA) || !defined(WITH_NRV) || !defined(WITH_UCL)
@@ -302,15 +308,24 @@
 
 
 #undef __attribute_packed
-#if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
-#  if (ACC_ARCH_I386) && (ACC_CC_INTELC && (__INTEL_COMPILER < 800))
-#  elif (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
-#  else
-#    define __attribute_packed      __attribute__((__packed__,__aligned__(1)))
-#  endif
+#if (ACC_CC_INTELC && (__INTEL_COMPILER < 800))
+#elif (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
+#elif (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
+#  define __attribute_packed        __attribute__((__packed__,__aligned__(1)))
+#  define __packed_struct(s)        struct s {
+#  define __packed_struct_end()     } __attribute_packed;
+#elif (ACC_CC_WATCOMC)
+#  define __attribute_packed
+#  define __packed_struct(s)        _Packed struct s {
+#  define __packed_struct_end()     };
 #endif
+
 #if !defined(__attribute_packed)
 #  define __attribute_packed
+#endif
+#if !defined(__packed_struct)
+#  define __packed_struct(s)        struct s {
+#  define __packed_struct_end()     };
 #endif
 
 
@@ -323,8 +338,9 @@
 
 #define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
-     struct acc_tmp_t { acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; } __attribute_packed; \
+     __packed_struct(acc_tmp_t) acc_tmp_b_t x; acc_tmp_a_t y; acc_tmp_b_t z; __packed_struct_end() \
      COMPILE_TIME_ASSERT(sizeof(struct acc_tmp_t) == 2*sizeof(b)+sizeof(a)) \
+     COMPILE_TIME_ASSERT(sizeof(((acc_tmp_t*)0)->x)+sizeof(((acc_tmp_t*)0)->y)+sizeof(((acc_tmp_t*)0)->z) == 2*sizeof(b)+sizeof(a)) \
    }
 #if defined(__acc_alignof)
 #  define __COMPILE_TIME_ASSERT_ALIGNOF(a,b) \

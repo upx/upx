@@ -164,7 +164,7 @@ int PackW32Pe::readFileHeader()
     char buf[6];
     fi->seek(0x200, SEEK_SET);
     fi->readx(buf, 6);
-    isrtm = memcmp(&buf, "32STUB" ,6) == 0;
+    isrtm = memcmp(buf, "32STUB" ,6) == 0;
     return super::readFileHeader();
 }
 

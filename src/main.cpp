@@ -1257,8 +1257,8 @@ template <class T> struct TestBELE {
 static bool test(void)
 {
     COMPILE_TIME_ASSERT_ALIGNED1(T)
-    struct test1_t { char a; T b; } __attribute_packed;
-    struct test2_t { char a; T b[3]; } __attribute_packed;
+    __packed_struct(test1_t) char a; T b;    __packed_struct_end()
+    __packed_struct(test2_t) char a; T b[3]; __packed_struct_end()
     test1_t t1[7]; UNUSED(t1); test2_t t2[7]; UNUSED(t2);
     COMPILE_TIME_ASSERT(sizeof(test1_t) == 1 + sizeof(T))
     COMPILE_TIME_ASSERT_ALIGNED1(test1_t)
@@ -1270,7 +1270,11 @@ static bool test(void)
     COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
     COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
 #endif
-#if 1 && !defined(xUPX_OFFICIAL_BUILD)
+#if 1 && (ACC_CC_WATCOMC)
+    test1_t t11; COMPILE_TIME_ASSERT(sizeof(t11.a) <= sizeof(t11.b))
+    test2_t t22; COMPILE_TIME_ASSERT(sizeof(t22.a) <= sizeof(t22.b))
+#endif
+#if 1 && !defined(UPX_OFFICIAL_BUILD)
     T allbits; allbits = 0; allbits -= 1;
     //++allbits; allbits++; --allbits; allbits--;
     T v1; v1 = 1; v1 *= 2; v1 -= 1;

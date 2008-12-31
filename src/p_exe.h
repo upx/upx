@@ -74,8 +74,7 @@ protected:
     virtual Linker* newLinker() const;
     void addLoaderEpilogue(int flag);
 
-    struct exe_header_t
-    {
+    __packed_struct(exe_header_t)
         LE16 ident;
         LE16 m512;
         LE16 p512;
@@ -91,8 +90,7 @@ protected:
         LE16 relocoffs;
         char __[2];             // overlnum
         LE32 firstreloc;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     exe_header_t ih, oh;
 

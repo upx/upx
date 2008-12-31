@@ -846,14 +846,14 @@ bool PackLinuxElf32::canPack()
 {
     union {
         unsigned char buf[sizeof(Elf32_Ehdr) + 14*sizeof(Elf32_Phdr)];
-        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+        //struct { U_Elf32_Ehdr ehdr; U_Elf32_Phdr phdr; } e;
     } u;
     COMPILE_TIME_ASSERT(sizeof(u.buf) <= 512);
 
     fi->seek(0, SEEK_SET);
     fi->readx(u.buf, sizeof(u.buf));
     fi->seek(0, SEEK_SET);
-    Elf32_Ehdr const *const ehdr = &u.e.ehdr;
+    Elf32_Ehdr const *const ehdr = (Elf32_Ehdr *) u.buf;
 
     // now check the ELF header
     if (checkEhdr(ehdr) != 0)
@@ -897,7 +897,7 @@ bool PackLinuxElf32::canPack()
             &&  1==get_te32(&note.type)
             &&  0==note.end
             &&  (1+ strlen(osabi_note))==get_te32(&note.namesz)
-            &&  0==strcmp(osabi_note, (char const *)&note.text)
+            &&  0==strcmp(osabi_note, (char const *)note.text)
             ) {
                 osabi0 = ei_osabi;  // Specified by PT_NOTE.
             }
@@ -937,7 +937,7 @@ bool PackLinuxElf32::canPack()
         file_image = new char[file_size];
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
-        ehdri= *ehdr;
+        memcpy(&ehdri, ehdr, sizeof(Elf32_Ehdr));
         phdri= (Elf32_Phdr *)(e_phoff + file_image);  // do not free() !!
         shdri= (Elf32_Shdr *)(e_shoff + file_image);  // do not free() !!
 
@@ -1007,13 +1007,13 @@ PackLinuxElf64amd::canPack()
 {
     union {
         unsigned char buf[sizeof(Elf64_Ehdr) + 14*sizeof(Elf64_Phdr)];
-        struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
+        //struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
     } u;
     COMPILE_TIME_ASSERT(sizeof(u) <= 1024);
 
     fi->readx(u.buf, sizeof(u.buf));
     fi->seek(0, SEEK_SET);
-    Elf64_Ehdr const *const ehdr = &u.e.ehdr;
+    Elf64_Ehdr const *const ehdr = (Elf64_Ehdr *) u.buf;
 
     // now check the ELF header
     if (checkEhdr(ehdr) != 0)
@@ -1895,11 +1895,11 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 {
 #define MAX_ELF_HDR 512
     union {
-        char buf[MAX_ELF_HDR];
-        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+        unsigned char buf[MAX_ELF_HDR];
+        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
     } u;
-    Elf32_Ehdr *const ehdr = &u.e.ehdr;
-    Elf32_Phdr const *phdr = &u.e.phdr;
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
+    Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
 
     unsigned szb_info = sizeof(b_info);
     {
@@ -1958,7 +1958,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         }
     }
 
-    phdr = &u.e.phdr;
+    phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
     for (unsigned j = 0; j < phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, phnum);
         if (size) {
@@ -2003,11 +2003,11 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 {
 #define MAX_ELF_HDR 1024
     union {
-        char buf[MAX_ELF_HDR];
-        struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
+        unsigned char buf[MAX_ELF_HDR];
+        //struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
     } u;
-    Elf64_Ehdr *const ehdr = &u.e.ehdr;
-    Elf64_Phdr const *phdr = &u.e.phdr;
+    Elf64_Ehdr *const ehdr = (Elf64_Ehdr *) u.buf;
+    Elf64_Phdr const *phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
 
     unsigned szb_info = sizeof(b_info);
     {
@@ -2066,7 +2066,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
 
-    phdr = &u.e.phdr;
+    phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
     for (unsigned j = 0; j < phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, phnum);
         if (size) {
@@ -2367,11 +2367,11 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
 {
 #define MAX_ELF_HDR 512
     union {
-        char buf[MAX_ELF_HDR];
-        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+        unsigned char buf[MAX_ELF_HDR];
+        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
     } u;
-    Elf32_Ehdr *const ehdr = &u.e.ehdr;
-    Elf32_Phdr const *phdr = &u.e.phdr;
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
+    Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
 
     unsigned szb_info = sizeof(b_info);
     {
@@ -2430,7 +2430,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
         }
     }
 
-    phdr = &u.e.phdr;
+    phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
     for (unsigned j = 0; j < phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, phnum);
         if (size) {

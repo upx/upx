@@ -51,7 +51,8 @@ PackExe::PackExe(InputFile *f) :
     super(f)
 {
     bele = &N_BELE_RTP::le_policy;
-    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32);
+    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 32)
+    COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
     ih_exesize = ih_imagesize = ih_overlay = 0;
     stack_for_lzma = 0;
     use_clear_dirty_stack = false;

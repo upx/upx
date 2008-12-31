@@ -529,13 +529,13 @@ bool PackLinuxI386::canPack()
             unsigned const e_phnum = get_te16(&ehdr.e_phnum);
             if (e_phnum<=(512/sizeof(Elf32_Phdr))) {
                 union {
-                    char buf2[512];
-                    Elf32_Phdr phdr;
+                    unsigned char buf2[512];
+                    //Elf32_Phdr phdr;
                 } u;
                 fi->seek(get_te32(&ehdr.e_phoff), SEEK_SET);
                 fi->readx(u.buf2, sizeof(u.buf2));
                 fi->seek(0, SEEK_SET);
-                Elf32_Phdr const *phdr = &u.phdr;
+                Elf32_Phdr const *phdr = (Elf32_Phdr *) u.buf2;
                 for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
                     if (phdr->PT_NOTE == get_te32(&phdr->p_type)) {
                         unsigned const offset = get_te32(&phdr->p_offset);
@@ -546,11 +546,11 @@ bool PackLinuxI386::canPack()
                         if (4==get_te32(&note.descsz)
                         &&  1==get_te32(&note.type)
                         &&  0==note.end ) {
-                            if (0==strcmp("NetBSD", (char const *)&note.text)) {
+                            if (0==strcmp("NetBSD", (char const *)note.text)) {
                                 ei_osabi = Elf32_Ehdr::ELFOSABI_NETBSD;
                                 break;
                             }
-                            if (0==strcmp("OpenBSD", (char const *)&note.text)) {
+                            if (0==strcmp("OpenBSD", (char const *)note.text)) {
                                 ei_osabi = Elf32_Ehdr::ELFOSABI_OPENBSD;
                                 break;
                             }

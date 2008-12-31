@@ -744,7 +744,7 @@ int PackVmlinuzARMEL::readFileHeader()
 {
     unsigned int hdr[8];
 
-    fi->readx(&hdr, sizeof(hdr));
+    fi->readx(hdr, sizeof(hdr));
     for (int j=0; j < 8; ++j) {
         if (0xe1a00000!=get_te32(&hdr[j])) {
             return 0;

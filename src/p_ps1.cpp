@@ -127,8 +127,8 @@ int PackPs1::readFileHeader()
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ih, sizeof(ih));
-    if (memcmp(&ih.id, "PS-X EXE", 8) != 0 &&
-        memcmp(&ih.id, "EXE X-SP", 8) != 0)
+    if (memcmp(&ih.id[0], "PS-X EXE", 8) != 0 &&
+        memcmp(&ih.id[0], "EXE X-SP", 8) != 0)
         return 0;
     if (ih.text != 0 || ih.data != 0)
         return 0;

@@ -106,7 +106,7 @@ PeFile::PeFile(InputFile *f) : super(f)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t::ddirs_t)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_section_t)
-    COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt));
+    COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt))
 
     isection = NULL;
     oimport = NULL;
@@ -158,8 +158,7 @@ bool PeFile::testUnpackVersion(int version) const
 
 int PeFile::readFileHeader()
 {
-    struct exe_header_t
-    {
+    __packed_struct(exe_header_t)
         LE16 mz;
         LE16 m512;
         LE16 p512;
@@ -167,9 +166,12 @@ int PeFile::readFileHeader()
         LE16 relocoffs;
         char __[34];
         LE32 nexepos;
-    }
-    __attribute_packed;
-    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64);
+    __packed_struct_end()
+
+    COMPILE_TIME_ASSERT(sizeof(exe_header_t) == 64)
+    COMPILE_TIME_ASSERT_ALIGNED1(exe_header_t)
+    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)0)->_)  == 18)
+    COMPILE_TIME_ASSERT(sizeof(((exe_header_t*)0)->__) == 34)
 
     exe_header_t h;
     int ic;
@@ -286,12 +288,10 @@ void PeFile::Interval::dump() const
 // relocation handling
 **************************************************************************/
 
-struct PeFile::Reloc::reloc
-{
+__packed_struct(PeFile::Reloc::reloc)
     LE32  pagestart;
     LE32  size;
-}
-__attribute_packed;
+__packed_struct_end()
 
 void PeFile::Reloc::newRelocPos(void *p)
 {
@@ -302,7 +302,8 @@ void PeFile::Reloc::newRelocPos(void *p)
 PeFile::Reloc::Reloc(upx_byte *s,unsigned si) :
     start(s), size(si), rel(NULL), rel1(NULL)
 {
-    COMPILE_TIME_ASSERT(sizeof(reloc) == 8);
+    COMPILE_TIME_ASSERT(sizeof(reloc) == 8)
+    COMPILE_TIME_ASSERT_ALIGNED1(reloc)
     memset(counts,0,sizeof(counts));
     unsigned pos,type;
     while (next(pos,type))
@@ -460,18 +461,17 @@ void PeFile::processRelocs() // pass1
 // import handling
 **************************************************************************/
 
-struct import_desc
-{
+__packed_struct(import_desc)
     LE32  oft;      // orig first thunk
     char  _[8];
     LE32  dllname;
     LE32  iat;      // import address table
-}
-__attribute_packed;
+__packed_struct_end()
 
 void PeFile::processImports(unsigned myimport, unsigned iat_off) // pass 2
 {
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
+    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20)
+    COMPILE_TIME_ASSERT_ALIGNED1(import_desc)
 
     // adjust import data
     for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
@@ -755,7 +755,8 @@ unsigned PeFile::processImports() // pass 1
 
 PeFile::Export::Export(char *_base) : base(_base), iv(_base)
 {
-    COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40);
+    COMPILE_TIME_ASSERT(sizeof(export_dir_t) == 40)
+    COMPILE_TIME_ASSERT_ALIGNED1(export_dir_t)
     ename = functionptrs = ordinals = NULL;
     names = NULL;
     memset(&edir,0,sizeof(edir));
@@ -903,19 +904,18 @@ void PeFile::processExports(Export *xport,unsigned newoffs) // pass2
 // the virtual memory manager only for pages which are not yet loaded.
 // of course it was impossible to debug this ;-)
 
-struct tls
-{
+__packed_struct(tls)
     LE32 datastart; // VA tls init data start
     LE32 dataend;   // VA tls init data end
     LE32 tlsindex;  // VA tls index
     LE32 callbacks; // VA tls callbacks
     char _[8];      // zero init, characteristics
-}
-__attribute_packed;
+__packed_struct_end()
 
 void PeFile::processTls(Interval *iv) // pass 1
 {
-    COMPILE_TIME_ASSERT(sizeof(tls) == 24);
+    COMPILE_TIME_ASSERT(sizeof(tls) == 24)
+    COMPILE_TIME_ASSERT_ALIGNED1(tls)
 
     if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
         return;
@@ -997,15 +997,12 @@ void PeFile::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 
 // resource handling
 **************************************************************************/
 
-struct PeFile::Resource::res_dir_entry
-{
+__packed_struct(PeFile::Resource::res_dir_entry)
     LE32  tnl; // Type | Name | Language id - depending on level
     LE32  child;
-}
-__attribute_packed;
+__packed_struct_end()
 
-struct PeFile::Resource::res_dir
-{
+__packed_struct(PeFile::Resource::res_dir)
     char  _[12]; // flags, timedate, version
     LE16  namedentr;
     LE16  identr;
@@ -1014,16 +1011,13 @@ struct PeFile::Resource::res_dir
     res_dir_entry entries[1];
     // it's usually safe to assume that every res_dir contains
     // at least one res_dir_entry - check() complains otherwise
-}
-__attribute_packed;
+__packed_struct_end()
 
-struct PeFile::Resource::res_data
-{
+__packed_struct(PeFile::Resource::res_data)
     LE32  offset;
     LE32  size;
     char  _[8]; // codepage, reserved
-}
-__attribute_packed;
+__packed_struct_end()
 
 struct PeFile::Resource::upx_rnode
 {
@@ -1032,14 +1026,14 @@ struct PeFile::Resource::upx_rnode
     upx_rnode       *parent;
 };
 
-struct PeFile::Resource::upx_rbranch : public upx_rnode
+struct PeFile::Resource::upx_rbranch : public PeFile::Resource::upx_rnode
 {
     unsigned        nc;
     upx_rnode       **children;
     res_dir         data;
 };
 
-struct PeFile::Resource::upx_rleaf : public upx_rnode
+struct PeFile::Resource::upx_rleaf : public PeFile::Resource::upx_rnode
 {
     upx_rleaf       *next;
     unsigned        newoffset;
@@ -1534,14 +1528,17 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
     if (IDADDR(PEDIR_DEBUG) == 0)
         return overlaystart;
 
-    struct debug_dir_t
-    {
+    __packed_struct(debug_dir_t)
         char  _[16]; // flags, time/date, version, type
         LE32  size;
         char  __[4]; // rva
         LE32  fpos;
-    }
-    __attribute_packed;
+    __packed_struct_end()
+
+    COMPILE_TIME_ASSERT(sizeof(debug_dir_t) == 28)
+    COMPILE_TIME_ASSERT_ALIGNED1(debug_dir_t)
+    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)0)->_)  == 16)
+    COMPILE_TIME_ASSERT(sizeof(((debug_dir_t*)0)->__) ==  4)
 
     const debug_dir_t *dd = (const debug_dir_t*) (ibuf + IDADDR(PEDIR_DEBUG));
     for (unsigned ic = 0; ic < IDSIZE(PEDIR_DEBUG) / sizeof(debug_dir_t); ic++, dd++)

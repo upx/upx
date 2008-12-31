@@ -64,7 +64,7 @@ PackVmlinuxBase<T>::PackVmlinuxBase(InputFile *f,
     n_ptload(0), phdri(NULL), shdri(NULL), shstrtab(NULL)
 {
     ElfClass::compileTimeAssertions();
-    bele = N_BELE_CTP::getRTP<BeLePolicy>();
+    bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
 }
 
 template <class T>
@@ -628,7 +628,7 @@ void prep_kernel(unsigned long a1, unsigned long a2)
 
     fo->seek(0, SEEK_SET);
     fo->write(&ehdro, sizeof(ehdro));
-    fo->write(&shdro, sizeof(shdro));
+    fo->write(&shdro[0], sizeof(shdro));
     if (Ehdr::EM_PPC==my_e_machine) {
         fo->seek(sizeof(unsigned), SEEK_CUR);
         set_be32(&ppc32_extra, ppc32_extra - 2*sizeof(unsigned) + txt_c_len);

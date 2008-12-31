@@ -287,21 +287,21 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
 
 Packer *PackMaster::getPacker(InputFile *f)
 {
-    Packer *p = visitAllPackers(try_pack, f, opt, f);
-    if (!p)
+    Packer *pp = visitAllPackers(try_pack, f, opt, f);
+    if (!pp)
         throwUnknownExecutableFormat();
-    p->assertPacker();
-    return p;
+    pp->assertPacker();
+    return pp;
 }
 
 
 Packer *PackMaster::getUnpacker(InputFile *f)
 {
-    Packer *p = visitAllPackers(try_unpack, f, opt, f);
-    if (!p)
+    Packer *pp = visitAllPackers(try_unpack, f, opt, f);
+    if (!pp)
         throwNotPacked();
-    p->assertPacker();
-    return p;
+    pp->assertPacker();
+    return pp;
 }
 
 

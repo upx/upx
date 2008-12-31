@@ -57,7 +57,7 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned flavor,
     n_segment(0), rawmseg(NULL), msegcmd(NULL)
 {
     MachClass::compileTimeAssertions();
-    bele = N_BELE_CTP::getRTP<BeLePolicy>();
+    bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
 }
 
 template <class T>
@@ -574,7 +574,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 
     segcmdo.cmd = Mach_segment_command::LC_SEGMENT;
     segcmdo.cmdsize = sizeof(segcmdo);
-    strncpy((char *)&segcmdo.segname, "__TEXT", sizeof(segcmdo.segname));
+    strncpy((char *)segcmdo.segname, "__TEXT", sizeof(segcmdo.segname));
     segcmdo.vmaddr = PAGE_MASK & (~PAGE_MASK +
         msegcmd[n_segment -1].vmsize + msegcmd[n_segment -1].vmaddr );
     segcmdo.vmsize = 0;    // adjust later
@@ -683,10 +683,10 @@ bool PackMachBase<T>::canPack()
     )
         return false;
 
-    rawmseg = (Mach_segment_command *)new char[mhdri.sizeofcmds];
+    rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
-    msegcmd = new Mach_segment_command[mhdri.ncmds];
+    msegcmd = new Mach_segment_command[(unsigned) mhdri.ncmds];
     unsigned char *ptr = (unsigned char *)rawmseg;
     for (unsigned j= 0; j < mhdri.ncmds; ++j) {
         msegcmd[j] = *(Mach_segment_command *)ptr;

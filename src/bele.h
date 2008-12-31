@@ -282,12 +282,12 @@ inline unsigned acc_swap32p(const acc_uint32e_t *p)
 
 inline void acc_swab16s(acc_uint16e_t *p)
 {
-    *p = acc_swab16(*p);
+    *p = (acc_uint16e_t) acc_swab16(*p);
 }
 
 inline void acc_swab32s(acc_uint32e_t *p)
 {
-    *p = acc_swab32(*p);
+    *p = (acc_uint32e_t) acc_swab32(*p);
 }
 
 
@@ -313,8 +313,7 @@ inline void acc_ua_swab32s(void *p)
 //  to have gcc bug 17519 fixed - see http://gcc.gnu.org/PR17519 ]
 **************************************************************************/
 
-struct BE16
-{
+__packed_struct(BE16)
     unsigned char d[2];
 
     //inline BE16() { }
@@ -332,12 +331,10 @@ struct BE16
     BE16& operator >>= (unsigned v) { set_be16(d, get_be16(d) >> v); return *this; }
 
     operator unsigned () const  { return get_be16(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct BE32
-{
+__packed_struct(BE32)
     unsigned char d[4];
 
     //inline BE32() { }
@@ -355,12 +352,10 @@ struct BE32
     BE32& operator >>= (unsigned v) { set_be32(d, get_be32(d) >> v); return *this; }
 
     operator unsigned () const  { return get_be32(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct BE64
-{
+__packed_struct(BE64)
     unsigned char d[8];
 
     //inline BE64() { }
@@ -378,12 +373,10 @@ struct BE64
     BE64& operator >>= (unsigned v) { set_be64(d, get_be64(d) >> v); return *this; }
 
     operator acc_uint64l_t () const  { return get_be64(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct LE16
-{
+__packed_struct(LE16)
     unsigned char d[2];
 
     //inline LE16() { }
@@ -401,12 +394,10 @@ struct LE16
     LE16& operator >>= (unsigned v) { set_le16(d, get_le16(d) >> v); return *this; }
 
     operator unsigned () const  { return get_le16(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct LE32
-{
+__packed_struct(LE32)
     unsigned char d[4];
 
     //inline LE32() { }
@@ -424,12 +415,10 @@ struct LE32
     LE32& operator >>= (unsigned v) { set_le32(d, get_le32(d) >> v); return *this; }
 
     operator unsigned () const  { return get_le32(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct LE64
-{
+__packed_struct(LE64)
     unsigned char d[8];
 
     //inline LE64() { }
@@ -447,8 +436,7 @@ struct LE64
     LE64& operator >>= (unsigned v) { set_le64(d, get_le64(d) >> v); return *this; }
 
     operator acc_uint64l_t () const  { return get_le64(d); }
-}
-__attribute_packed;
+__packed_struct_end()
 
 
 /*************************************************************************
@@ -623,16 +611,10 @@ namespace N_BELE_RTP {
 }
 
 namespace N_BELE_CTP {
-
-template <class T>
-inline const N_BELE_RTP::AbstractPolicy* getRTP();
-template <>
-inline const N_BELE_RTP::AbstractPolicy* getRTP<BEPolicy>()
-     { return &N_BELE_RTP::be_policy; }
-template <>
-inline const N_BELE_RTP::AbstractPolicy* getRTP<LEPolicy>()
-     { return &N_BELE_RTP::le_policy; }
-
+inline const N_BELE_RTP::AbstractPolicy* getRTP(const BEPolicy*)
+    { return &N_BELE_RTP::be_policy; }
+inline const N_BELE_RTP::AbstractPolicy* getRTP(const LEPolicy*)
+    { return &N_BELE_RTP::le_policy; }
 }
 
 

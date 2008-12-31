@@ -198,11 +198,11 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 {
 #define MAX_INTERP_HDR 512
     union {
-        char buf[MAX_INTERP_HDR];
-        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+        unsigned char buf[MAX_INTERP_HDR];
+        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
     } u;
-    Elf32_Ehdr *const ehdr = &u.e.ehdr;
-    Elf32_Phdr const *phdr = &u.e.phdr;
+    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
+    Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
 
     unsigned szb_info = sizeof(b_info);
     {

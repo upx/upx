@@ -485,7 +485,7 @@ void PackWcle::pack(OutputFile *fo)
     const unsigned text_vaddr = IOT(ih.init_cs_object-1,my_base_address);
 
     // attach some useful data at the end of preprocessed fixups
-    ifixups[sofixups++] = (unsigned char) ih.automatic_data_object;
+    ifixups[sofixups++] = (unsigned char) (ih.automatic_data_object & 0xff);
     unsigned ic = objects*sizeof(*iobject_table);
     memcpy(ifixups+sofixups,iobject_desc,ic);
     iobject_desc.dealloc();

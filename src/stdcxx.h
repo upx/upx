@@ -97,6 +97,7 @@ namespace std { class bad_alloc { }; }
 #elif (ACC_CC_SYMANTECC)
 #define std
 class bad_alloc { };
+#elif (ACC_CC_WATCOMC && (__WATCOMC__ >= 1280))
 #elif (ACC_CC_WATCOMC)
 #define std
 class bad_alloc { };
