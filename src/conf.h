@@ -107,8 +107,8 @@
 #elif (ACC_CC_SUNPROC)
 //#  pragma error_messages(off,"badargtype2w")    // FIXME
 #elif (ACC_CC_WATCOMC)
-#  if (__WATCOMC__ < 1100)
-#    error "need Watcom C++ 11.0c or newer"
+#  if (__WATCOMC__ < 1280)
+#    error "need Open Watcom C++ 1.8 or newer"  // because earlier versions do not support nested classes
 #  endif
 #  if defined(__cplusplus)
 #    pragma warning 367 9               // w3: conditional expression in if statement is always true

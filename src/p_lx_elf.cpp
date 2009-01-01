@@ -846,7 +846,7 @@ bool PackLinuxElf32::canPack()
 {
     union {
         unsigned char buf[sizeof(Elf32_Ehdr) + 14*sizeof(Elf32_Phdr)];
-        //struct { U_Elf32_Ehdr ehdr; U_Elf32_Phdr phdr; } e;
+        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
     } u;
     COMPILE_TIME_ASSERT(sizeof(u.buf) <= 512);
 
