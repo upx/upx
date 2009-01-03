@@ -52,6 +52,8 @@ extern int compress_lzma_dummy;
 int compress_lzma_dummy = 0;
 #else
 
+#undef USE_LZMA_PROPERTIES
+
 
 // INFO: the LZMA SDK is covered by a permissive license which allows
 //   using unmodified LZMA source code in UPX and the UPX stubs.
@@ -90,11 +92,244 @@ int compress_lzma_dummy = 0;
 //   while you keep LZMA SDK code unmodified.
 
 
+#if (WITH_LZMA >= 0x461)
+#include "C/7zVersion.h"
+#if (WITH_LZMA != (0x100 * MY_VER_MAJOR) + (0x10 * (MY_VER_MINOR / 10)) + (MY_VER_MINOR % 10))
+#  error "WITH_LZMA version mismatch"
+#endif
+#include "C/Types.h"
+static void *cb_alloc(void *, size_t size) {
+    return malloc(size);
+}
+static void cb_free(void *, void *ptr) {
+    free(ptr);
+}
+#endif
+
+
 /*************************************************************************
-// cruft because of pseudo-COM layer
+// compress defaults
 **************************************************************************/
 
-#undef USE_LZMA_PROPERTIES
+static int prepare(lzma_compress_result_t *res,
+                   unsigned src_len, int method, int level,
+                   const lzma_compress_config_t *lcconf)
+{
+    // setup defaults
+    res->pos_bits            = 2;                   // 0 .. 4
+    res->lit_pos_bits        = 0;                   // 0 .. 4
+    res->lit_context_bits    = 3;                   // 0 .. 8
+    res->dict_size           = 4 * 1024 * 1024;     // 1 .. 2**30
+    res->fast_mode           = 2;
+    res->num_fast_bytes      = 64;                  // 5 .. 273
+    res->match_finder_cycles = 0;
+#if 1
+    res->pos_bits            = lzma_compress_config_t::pos_bits_t::default_value_c;
+    res->lit_pos_bits        = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
+    res->lit_context_bits    = lzma_compress_config_t::lit_context_bits_t::default_value_c;
+    res->dict_size           = lzma_compress_config_t::dict_size_t::default_value_c;
+    res->num_fast_bytes      = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
+#endif
+    // method overrides
+    if (method >= 0x100) {
+        res->pos_bits         = (method >> 16) & 15;
+        res->lit_pos_bits     = (method >> 12) & 15;
+        res->lit_context_bits = (method >>  8) & 15;
+    }
+#if 0
+    // DEBUG - set sizes so that we use a maxmimum amount of stack.
+    //  These settings cause res->num_probs == 3147574, i.e. we will
+    //  need about 6 MiB of stack during runtime decompression.
+    res->lit_pos_bits     = 4;
+    res->lit_context_bits = 8;
+#endif
+
+    // FIXME: tune these settings according to level
+    switch (level)
+    {
+    case 1:
+        res->dict_size      = 256 * 1024;
+        res->fast_mode      = 0;
+        res->num_fast_bytes = 8;
+        break;
+    case 2:
+        res->dict_size      = 256 * 1024;
+        res->fast_mode      = 0;
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    case 9:
+        res->dict_size      = 8 * 1024 * 1024;
+        break;
+    case 10:
+        res->dict_size      = src_len;
+        break;
+    default:
+        goto error;
+    }
+
+    // cconf overrides
+    if (lcconf)
+    {
+        oassign(res->pos_bits, lcconf->pos_bits);
+        oassign(res->lit_pos_bits, lcconf->lit_pos_bits);
+        oassign(res->lit_context_bits, lcconf->lit_context_bits);
+        oassign(res->dict_size, lcconf->dict_size);
+        oassign(res->num_fast_bytes, lcconf->num_fast_bytes);
+    }
+
+    // limit dictionary size
+    if (res->dict_size > src_len)
+        res->dict_size = src_len;
+
+    // limit num_probs
+    if (lcconf && lcconf->max_num_probs)
+    {
+        for (;;)
+        {
+            unsigned n = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+            if (n <= lcconf->max_num_probs)
+                break;
+            if (res->lit_pos_bits > res->lit_context_bits)
+            {
+                if (res->lit_pos_bits == 0)
+                    goto error;
+                res->lit_pos_bits -= 1;
+            }
+            else
+            {
+                if (res->lit_context_bits == 0)
+                    goto error;
+                res->lit_context_bits -= 1;
+            }
+        }
+    }
+
+    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
+    //printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
+    return 0;
+
+error:
+    return -1;
+}
+
+
+/*************************************************************************
+// compress
+**************************************************************************/
+
+#if (WITH_LZMA >= 0x461)
+#define kLiteralNextStates kLiteralNextStates_enc
+#include "C/LzmaEnc.h"
+#include "C/LzmaEnc.c"
+#include "C/LzFind.c"
+#undef kLiteralNextStates
+#undef kNumFullDistances
+
+
+struct upx_ICompressProgress {
+    SRes (*Progress)(void *p, UInt64 inSize, UInt64 outSize);
+    upx_callback_p cb;
+};
+
+static SRes cb_progress(void *p, UInt64 inSize, UInt64 outSize) {
+    upx_callback_p cb = ((upx_ICompressProgress *) p)->cb;
+    if (cb && cb->nprogress)
+        cb->nprogress(cb, (unsigned) inSize, (unsigned) outSize);
+    return SZ_OK;
+}
+
+
+int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   upx_callback_p cb,
+                                   int method, int level,
+                             const upx_compress_config_t *cconf_parm,
+                                   upx_compress_result_t *cresult )
+{
+    assert(M_IS_LZMA(method));
+    assert(level > 0); assert(cresult != NULL);
+    COMPILE_TIME_ASSERT(LZMA_PROPS_SIZE == 5)
+
+    int r = UPX_E_ERROR;
+    int rh;
+
+    unsigned dst_avail = *dst_len;
+    *dst_len = 0;
+
+    ISzAlloc cba; cba.Alloc = cb_alloc; cba.Free = cb_free;
+    upx_ICompressProgress progress;
+    progress.Progress = cb_progress; progress.cb = cb;
+
+    const lzma_compress_config_t *lcconf = cconf_parm ? &cconf_parm->conf_lzma : NULL;
+    lzma_compress_result_t *res = &cresult->result_lzma;
+    if (prepare(res, src_len, method, level, lcconf) != 0)
+        goto error;
+
+    CLzmaEncProps props; memset(&props, 0, sizeof(props));
+    props.level    = level;
+    LzmaEncProps_Init(&props);
+    props.pb       = res->pos_bits;
+    props.lp       = res->lit_pos_bits;
+    props.lc       = res->lit_context_bits;
+    props.dictSize = res->dict_size;
+    props.algo     = res->fast_mode ? 1 : 0;
+    props.fb       = res->num_fast_bytes;
+    props.mc       = res->match_finder_cycles;
+
+    unsigned char props_buf[LZMA_PROPS_SIZE];
+    SizeT props_buf_size; props_buf_size = LZMA_PROPS_SIZE;
+
+#if defined(USE_LZMA_PROPERTIES)
+    if (dst_avail < 1)
+        goto error;
+    dst[0] = 0; // filled below
+    dst += 1; *dst_len += 1; dst_avail -= 1;
+#else
+    if (dst_avail < 2)
+        goto error;
+    // extra stuff in first byte: 5 high bits convenience for stub decompressor
+    unsigned tt; tt = res->lit_context_bits + res->lit_pos_bits;
+    dst[0] = ((tt << 3) | res->pos_bits);
+    dst[1] = ((res->lit_pos_bits << 4) | (res->lit_context_bits));
+    dst += 2; *dst_len += 2; dst_avail -= 2;
+#endif
+    SizeT x_len; x_len = dst_avail;
+    rh = LzmaEncode(dst, &x_len, src, src_len,
+                    &props, props_buf, &props_buf_size, 0,
+                    (ICompressProgress *) &progress, &cba, &cba);
+    assert(x_len <= dst_avail);
+    *dst_len += x_len;
+    if (rh == SZ_OK) {
+#if defined(USE_LZMA_PROPERTIES)
+        dst[-1] = probs_buf[0];
+#endif
+        r = UPX_E_OK;
+    }
+
+error:
+    //printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs, src_len, *dst_len);
+    return r;
+}
+
+#endif /* (WITH_LZMA >= 0x461) */
+
+
+/*************************************************************************
+// compress - cruft because of pseudo-COM layer
+**************************************************************************/
+
+#if (WITH_LZMA < 0x461)
 
 #undef MSDOS
 #undef OS2
@@ -241,128 +476,25 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         NCoderPropID::kMatchFinder          // 7  mf
     };
     PROPVARIANT pr[8];
-    pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
-    pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
-    unsigned nprops = 7;
-
-    // setup defaults
-    pr[0].uintVal = 2;                  // 0 .. 4
-    pr[1].uintVal = 0;                  // 0 .. 4
-    pr[2].uintVal = 3;                  // 0 .. 8
-    pr[3].uintVal = 4 * 1024 * 1024;    // 1 .. 2**30
-    pr[4].uintVal = 2;
-    pr[5].uintVal = 64;                 // 5 .. 273
-    pr[6].uintVal = 0;
 #ifdef COMPRESS_MF_BT4
+    const unsigned nprops = 8;
     static wchar_t matchfinder[] = L"BT4";
     assert(NCompress::NLZMA::FindMatchFinder(matchfinder) >= 0);
-    pr[nprops].vt = VT_BSTR;
-    pr[nprops].bstrVal = matchfinder;
-    nprops++;
+    pr[7].vt = VT_BSTR; pr[7].bstrVal = matchfinder;
+#else
+    const unsigned nprops = 7;
 #endif
-#if 1
-    pr[0].uintVal = lzma_compress_config_t::pos_bits_t::default_value_c;
-    pr[1].uintVal = lzma_compress_config_t::lit_pos_bits_t::default_value_c;
-    pr[2].uintVal = lzma_compress_config_t::lit_context_bits_t::default_value_c;
-    pr[3].uintVal = lzma_compress_config_t::dict_size_t::default_value_c;
-    pr[5].uintVal = lzma_compress_config_t::num_fast_bytes_t::default_value_c;
-#endif
-    // method overrides
-    if (method >= 0x100) {
-        pr[0].uintVal = (method >> 16) & 15;
-        pr[1].uintVal = (method >> 12) & 15;
-        pr[2].uintVal = (method >>  8) & 15;
-    }
-#if 0
-    // DEBUG - set sizes so that we use a maxmimum amount of stack.
-    //  These settings cause res->num_probs == 3147574, i.e. we will
-    //  need about 6 MiB of stack during runtime decompression.
-    pr[1].uintVal = 4;
-    pr[2].uintVal = 8;
-#endif
-
-    // FIXME: tune these settings according to level
-    switch (level)
-    {
-    case 1:
-        pr[3].uintVal = 256 * 1024;
-        pr[4].uintVal = 0;
-        pr[5].uintVal = 8;
-        break;
-    case 2:
-        pr[3].uintVal = 256 * 1024;
-        pr[4].uintVal = 0;
-        break;
-    case 3:
-        break;
-    case 4:
-        break;
-    case 5:
-        break;
-    case 6:
-        break;
-    case 7:
-        break;
-    case 8:
-        break;
-    case 9:
-        pr[3].uintVal = 8 * 1024 * 1024;
-        break;
-    case 10:
-        pr[3].uintVal = src_len;
-        break;
-    default:
+    pr[0].vt = pr[1].vt = pr[2].vt = pr[3].vt = VT_UI4;
+    pr[4].vt = pr[5].vt = pr[6].vt = VT_UI4;
+    if (prepare(res, src_len, method, level, lcconf) != 0)
         goto error;
-    }
-
-    // cconf overrides
-    if (lcconf)
-    {
-        oassign(pr[0].uintVal, lcconf->pos_bits);
-        oassign(pr[1].uintVal, lcconf->lit_pos_bits);
-        oassign(pr[2].uintVal, lcconf->lit_context_bits);
-        oassign(pr[3].uintVal, lcconf->dict_size);
-        oassign(pr[5].uintVal, lcconf->num_fast_bytes);
-    }
-
-    // limit dictionary size
-    if (pr[3].uintVal > src_len)
-        pr[3].uintVal = src_len;
-
-    // limit num_probs
-    if (lcconf && lcconf->max_num_probs)
-    {
-        for (;;)
-        {
-            unsigned n = 1846 + (768 << (pr[2].uintVal + pr[1].uintVal));
-            if (n <= lcconf->max_num_probs)
-                break;
-            if (pr[1].uintVal > pr[2].uintVal)
-            {
-                if (pr[1].uintVal == 0)
-                    goto error;
-                pr[1].uintVal -= 1;
-            }
-            else
-            {
-                if (pr[2].uintVal == 0)
-                    goto error;
-                pr[2].uintVal -= 1;
-            }
-        }
-    }
-
-    res->pos_bits = pr[0].uintVal;
-    res->lit_pos_bits = pr[1].uintVal;
-    res->lit_context_bits = pr[2].uintVal;
-    res->dict_size = pr[3].uintVal;
-    res->fast_mode = pr[4].uintVal;
-    res->num_fast_bytes = pr[5].uintVal;
-    res->match_finder_cycles = pr[6].uintVal;
-    //res->num_probs = LzmaGetNumProbs(&s.Properties));
-    //res->num_probs = (LZMA_BASE_SIZE + (LZMA_LIT_SIZE << ((Properties)->lc + (Properties)->lp)))
-    res->num_probs = 1846 + (768 << (res->lit_context_bits + res->lit_pos_bits));
-    //printf("\nlzma_compress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
+    pr[0].uintVal = res->pos_bits;
+    pr[1].uintVal = res->lit_pos_bits;
+    pr[2].uintVal = res->lit_context_bits;
+    pr[3].uintVal = res->dict_size;
+    pr[4].uintVal = res->fast_mode;
+    pr[5].uintVal = res->num_fast_bytes;
+    pr[6].uintVal = res->match_finder_cycles;
 
 #ifndef _NO_EXCEPTIONS
     try {
@@ -419,10 +551,109 @@ error:
     return r;
 }
 
+#endif /* (WITH_LZMA < 0x461) */
+
 
 /*************************************************************************
 // decompress
 **************************************************************************/
+
+#if (WITH_LZMA >= 0x461)
+
+#undef _LZMA_PROB32
+#include "C/LzmaDec.h"
+#include "C/LzmaDec.c"
+
+
+int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
+                                   upx_bytep dst, unsigned* dst_len,
+                                   int method,
+                             const upx_compress_result_t *cresult )
+{
+#define Properties prop
+    assert(M_IS_LZMA(method));
+    // see res->num_probs above
+    COMPILE_TIME_ASSERT(sizeof(CLzmaProb) == 2)
+    COMPILE_TIME_ASSERT(LZMA_PROPS_SIZE == 5)
+    COMPILE_TIME_ASSERT(LZMA_BASE_SIZE == 1846)
+    COMPILE_TIME_ASSERT(LZMA_LIT_SIZE == 768)
+
+    ISzAlloc cba; cba.Alloc = cb_alloc; cba.Free = cb_free;
+    CLzmaDec s; memset(&s, 0, sizeof(s));
+    SizeT srcLen = 0;
+    int r = UPX_E_ERROR;
+    SRes rh;
+    ELzmaStatus status;
+
+#if defined(USE_LZMA_PROPERTIES)
+    rh = LzmaProps_Decode(&s.Properties, src, src_len);
+    if (rh != 0)
+        goto error;
+    src += 1; src_len -= 1;
+#else
+    if (src_len < 3)
+        goto error;
+    s.Properties.pb = src[0] & 7;
+    s.Properties.lp = (src[1] >> 4);
+    s.Properties.lc = src[1] & 15;
+    if (s.Properties.pb >= 5) goto error;
+    if (s.Properties.lp >= 5) goto error;
+    if (s.Properties.lc >= 9) goto error;
+    // extra
+    if ((src[0] >> 3) != (int)(s.Properties.lc + s.Properties.lp)) goto error;
+    src += 2; src_len -= 2;
+#endif
+    s.Properties.dicSize = 0;
+
+    if (cresult)
+    {
+        assert(cresult->method == method);
+        assert(cresult->result_lzma.pos_bits == (unsigned) s.Properties.pb);
+        assert(cresult->result_lzma.lit_pos_bits == (unsigned) s.Properties.lp);
+        assert(cresult->result_lzma.lit_context_bits == (unsigned) s.Properties.lc);
+        assert(cresult->result_lzma.num_probs == (unsigned) LzmaProps_GetNumProbs(&s.Properties));
+        const lzma_compress_result_t *res = &cresult->result_lzma;
+        UNUSED(res);
+        //printf("\nlzma_decompress config: %u %u %u %u %u\n", res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs);
+    }
+
+    rh = LzmaDec_AllocateProbs2(&s, &s.Properties, &cba);
+    if (rh != SZ_OK)
+    {
+        r = UPX_E_OUT_OF_MEMORY;
+        goto error;
+    }
+
+    s.dic = dst; s.dicPos = 0; s.dicBufSize = *dst_len;
+    LzmaDec_Init(&s);
+    srcLen = src_len;
+    rh = LzmaDec_DecodeToDic(&s, *dst_len, src, &srcLen, LZMA_FINISH_ANY, &status);
+    assert(srcLen <= src_len);
+    assert(s.dicPos <= *dst_len);
+    if (rh == SZ_OK && status == LZMA_STATUS_NEEDS_MORE_INPUT)
+        rh = SZ_ERROR_INPUT_EOF;
+    if (rh == SZ_OK && status == LZMA_STATUS_MAYBE_FINISHED_WITHOUT_MARK)
+    {
+        r = UPX_E_OK;
+        if (srcLen != src_len)
+            r = UPX_E_INPUT_NOT_CONSUMED;
+    }
+error:
+    *dst_len = s.dicPos;
+//    LzmaDec_Free(&s, &cba); // FIXME - why does this crash ???
+    return r;
+#undef Properties
+}
+
+
+#endif /* (WITH_LZMA >= 0x461) */
+
+
+/*************************************************************************
+// decompress
+**************************************************************************/
+
+#if (WITH_LZMA < 0x461)
 
 #undef _LZMA_IN_CB
 #undef _LZMA_OUT_READ
@@ -503,10 +734,10 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
 error:
     *dst_len = dst_out;
     free(s.Probs);
-
-    UNUSED(cresult);
     return r;
 }
+
+#endif /* (WITH_LZMA < 0x461) */
 
 
 /*************************************************************************
@@ -545,14 +776,16 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
 
 const char *upx_lzma_version_string(void)
 {
-#if (WITH_LZMA + 0 == 0x457)
+#if (WITH_LZMA >= 0x461)
+    return MY_VERSION;
+#elif (WITH_LZMA + 0 == 0x457)
     return "4.57";
 #elif (WITH_LZMA + 0 == 0x449)
     return "4.49";
 #elif (WITH_LZMA + 0 == 0x443)
     return "4.43";
 #else
-#  error "unknown WITH_LZMA version"
+#   error "unknown WITH_LZMA version"
     return NULL;
 #endif
 }

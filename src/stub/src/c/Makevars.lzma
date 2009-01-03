@@ -11,10 +11,18 @@ endif
 endif
 endif
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/CpuArch.h),)
+ifneq ($(wildcard $(UPX_LZMADIR)/C/7zVersion.h),)
+UPX_LZMA_VERSION := $(shell perl -ne 'print "0x$$1$$2" if /^\s*\#\s*define\s+MY_VERSION\s+"(\d)\.(\d\d)[\s\w]*"/;' $(UPX_LZMADIR)/C/7zVersion.h)
+else ifneq ($(wildcard $(UPX_LZMADIR)/CPP/Windows/Time.cpp),)
+UPX_LZMA_VERSION = 0x459
+else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zBuf.h),)
+UPX_LZMA_VERSION = 0x458
+else ifneq ($(wildcard $(UPX_LZMADIR)/C/CpuArch.h),)
 UPX_LZMA_VERSION = 0x457
 else ifneq ($(wildcard $(UPX_LZMADIR)/CPP/7zip/.),)
 UPX_LZMA_VERSION = 0x449
+else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/Compress/LZ/Patricia/.),)
+UPX_LZMA_VERSION = 0x442
 else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
 UPX_LZMA_VERSION = 0x443
 endif
