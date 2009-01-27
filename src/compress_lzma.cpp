@@ -307,7 +307,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     SizeT x_len; x_len = dst_avail;
     rh = LzmaEncode(dst, &x_len, src, src_len,
                     &props, props_buf, &props_buf_size, 0,
-                    (ICompressProgress *) &progress, &cba, &cba);
+                    (ICompressProgress *) (void *) &progress, &cba, &cba);
     assert(x_len <= dst_avail);
     *dst_len += x_len;
     if (rh == SZ_OK) {
