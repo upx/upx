@@ -168,7 +168,8 @@ unfold:
         pop esi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
 
         lea eax, [ebp - (4+ decompress - _start)]  // 4: sizeof(int)
-        sub eax, [eax]  // %eax= &Elf32_Ehdr of this program
+        mov edi, [eax]  // total length of compressed data
+        sub eax, edi    // %eax= &Elf32_Ehdr of this program
         mov edx, eax    // %edx= &Elf32_Ehdr of this program
 
 // Linux requires PF_W in order to create .bss (implied by .p_filesz!=.p_memsz),

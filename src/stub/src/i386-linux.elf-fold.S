@@ -52,6 +52,7 @@
 // are uncompressed.
 
 fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program; %ebp= f_expand
+        //   %edi=total length of compressed data
         // patchLoader will modify to be
         //   dword sz_uncompressed, sz_compressed
         //   byte  compressed_data...
@@ -76,6 +77,7 @@ fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program; %ebp= f_expand
 
 #define ET_DYN    3
 
+        push edi  // save total length of compressed data
         push ebx  // save &Elf32_Ehdr
         sub ecx, ecx
         mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
@@ -114,6 +116,7 @@ L52:
         mov byte ptr [ecx + eax], 0  // NUL terminate the link text
 L55:
         pop ebx  // recover &Elf32_Ehdr
+        pop esi  // recover total length of compressed data
 
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
@@ -135,9 +138,7 @@ L55:
 L53:
         push eax  // dynbase
 
-        mov esi, [e_entry + ebx]  // end of compressed data
         lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  // 1st &b_info
-        sub esi, eax  // length of compressed data
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
         add ecx, szb_info
@@ -182,6 +183,7 @@ L60:
 do_auxv:
         // cld
         lodsd; stosd  // saved &Elf32_Ehdr
+        lodsd; stosd  // saved total length of compressed data
         lodsd; stosd  // argc can be 0
 
 L10:  // move argv
