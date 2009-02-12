@@ -45,7 +45,7 @@ stub/**.*-stamp
 stub/tmp*/*
 stub/**/tmp*/*
 
-stub/tools/armpe/armpe_tester
+stub/tools/armpe/armpe_tester{,.exe,.out}
 
 stub/tools/sstrip/amd64-linux-sstrip
 stub/tools/sstrip/i386-linux-sstrip
