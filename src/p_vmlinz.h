@@ -64,8 +64,7 @@ protected:
 //    virtual upx_byte *getLoader() const;
 //    virtual int getLoaderSize() const;
 
-    struct boot_sect_t
-    {
+    __packed_struct(boot_sect_t)
         char            _[0x1f1];
         unsigned char   setup_sects;
         char            __[2];
@@ -86,11 +85,11 @@ protected:
         char            _8[0x248 - (0x234 + 1)];
         LE32            payload_offset;
         LE32            payload_length;
-
         // some more uninteresting fields here ...
         // see /usr/src/linux/Documentation/i386/boot.txt
-    }
-    __attribute_packed h;
+    __packed_struct_end()
+
+    boot_sect_t h;
 
     MemBuffer setup_buf;
     int setup_size;

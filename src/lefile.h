@@ -49,8 +49,8 @@ public:
 protected:
     enum { FIXUP_EXTRA = 3 };
 
-    struct le_header_t
-    {   // 0x00
+    __packed_struct(le_header_t)
+        // 0x00
         char  _[2];             // signature: 'LE' || 'LX'
         char  byte_order;       // 0 little endian
         char  word_order;       // 0 little endian
@@ -117,28 +117,23 @@ protected:
         LE16  device_id;
         LE16  ddk_version;
 #endif
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct le_object_table_entry_t
-    {
+    __packed_struct(le_object_table_entry_t)
         LE32  virtual_size;
         LE32  base_address;
         LE32  flags;
         LE32  pagemap_index;
         LE32  npages;
         LE32  reserved;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct le_pagemap_entry_t
-    {
+    __packed_struct(le_pagemap_entry_t)
         unsigned char h;
         unsigned char m;
         unsigned char l;
         unsigned char type;  // 0x00-legal;0x40-iterated;0x80-invalid;0xC0-zeroed
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     virtual void readObjectTable();
     virtual void writeObjectTable();

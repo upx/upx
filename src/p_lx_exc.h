@@ -87,26 +87,23 @@ protected:
 
     unsigned n_mru;
 
-    struct cprElfHdr1 {
+    __packed_struct(cprElfHdr1)
         Elf_LE32_Ehdr ehdr;
         Elf_LE32_Phdr phdr[1];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr2 {
+    __packed_struct(cprElfHdr2)
         Elf_LE32_Ehdr ehdr;
         Elf_LE32_Phdr phdr[2];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr3 {
+    __packed_struct(cprElfHdr3)
         Elf_LE32_Ehdr ehdr;
         Elf_LE32_Phdr phdr[3];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     cprElfHdr3 elfout;
 

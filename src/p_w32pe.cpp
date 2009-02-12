@@ -173,14 +173,12 @@ int PackW32Pe::readFileHeader()
 // import handling
 **************************************************************************/
 
-struct import_desc
-{
+__packed_struct(import_desc)
     LE32  oft;      // orig first thunk
     char  _[8];
     LE32  dllname;
     LE32  iat;      // import address table
-}
-__attribute_packed;
+__packed_struct_end()
 
 void PackW32Pe::processImports(unsigned myimport, unsigned) // pass 2
 {
