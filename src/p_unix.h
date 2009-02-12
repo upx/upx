@@ -92,30 +92,28 @@ protected:
     unsigned b_len;  // total length of b_info blocks
 
     // must agree with stub/linux.hh
-    struct b_info { // 12-byte header before each compressed block
+    __packed_struct(b_info) // 12-byte header before each compressed block
         unsigned sz_unc;  // uncompressed_size
         unsigned sz_cpr;  //   compressed_size
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
         unsigned char b_unused;
-    }
-    __attribute_packed;
-    struct l_info { // 12-byte trailer in header for loader
+    __packed_struct_end()
+
+    __packed_struct(l_info) // 12-byte trailer in header for loader
         LE32 l_checksum;
         LE32 l_magic;
         LE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct p_info { // 12-byte packed program header
+    __packed_struct(p_info) // 12-byte packed program header
         unsigned p_progid;
         unsigned p_filesize;
         unsigned p_blocksize;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     struct l_info linfo;
 
@@ -135,31 +133,28 @@ protected:
     PackUnixBe32(InputFile *f) : super(f) { bele = &N_BELE_RTP::be_policy; }
 
     // must agree with stub/linux.hh
-    struct b_info { // 12-byte header before each compressed block
+    __packed_struct(b_info) // 12-byte header before each compressed block
         BE32 sz_unc;  // uncompressed_size
         BE32 sz_cpr;  //   compressed_size
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
         unsigned char b_unused;
-    }
-    __attribute_packed;
-    struct l_info { // 12-byte trailer in header for loader
+    __packed_struct_end()
+
+    __packed_struct(l_info) // 12-byte trailer in header for loader
         BE32 l_checksum;
         BE32 l_magic;
         BE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct p_info { // 12-byte packed program header
+    __packed_struct(p_info) // 12-byte packed program header
         BE32 p_progid;
         BE32 p_filesize;
         BE32 p_blocksize;
-    }
-    __attribute_packed;
-
+    __packed_struct_end()
 };
 
 
@@ -170,31 +165,28 @@ protected:
     PackUnixLe32(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
 
     // must agree with stub/linux.hh
-    struct b_info { // 12-byte header before each compressed block
+    __packed_struct(b_info) // 12-byte header before each compressed block
         LE32 sz_unc;  // uncompressed_size
         LE32 sz_cpr;  //   compressed_size
         unsigned char b_method;  // compression algorithm
         unsigned char b_ftid;  // filter id
         unsigned char b_cto8;  // filter parameter
         unsigned char b_unused;
-    }
-    __attribute_packed;
-    struct l_info { // 12-byte trailer in header for loader
+    __packed_struct_end()
+
+    __packed_struct(l_info) // 12-byte trailer in header for loader
         LE32 l_checksum;
         LE32 l_magic;
         LE16 l_lsize;
         unsigned char l_version;
         unsigned char l_format;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct p_info { // 12-byte packed program header
+    __packed_struct(p_info) // 12-byte packed program header
         LE32 p_progid;
         LE32 p_filesize;
         LE32 p_blocksize;
-    }
-    __attribute_packed;
-
+    __packed_struct_end()
 };
 
 

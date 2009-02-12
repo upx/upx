@@ -62,8 +62,7 @@ protected:
     virtual int readFileHeader();
     virtual bool checkFileHeader();
 
-    struct tos_header_t
-    {
+    __packed_struct(tos_header_t)
         BE16 fh_magic;
         BE32 fh_text;
         BE32 fh_data;
@@ -72,8 +71,7 @@ protected:
         BE32 fh_reserved;
         BE32 fh_flag;
         BE16 fh_reloc;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     tos_header_t ih, oh;
 

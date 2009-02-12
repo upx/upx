@@ -145,26 +145,23 @@ protected:
     Elf32_Shdr const *sec_dynsym;
     Elf32_Shdr const *sec_dynstr;
 
-    struct cprElfHdr1 {
+    __packed_struct(cprElfHdr1)
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[1];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr2 {
+    __packed_struct(cprElfHdr2)
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[2];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr3 {
+    __packed_struct(cprElfHdr3)
         Elf32_Ehdr ehdr;
         Elf32_Phdr phdr[3];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     cprElfHdr3 elfout;
 
@@ -227,26 +224,23 @@ protected:
     Elf64_Phdr *phdri; // for  input file
     acc_uint64l_t page_mask;  // AND clears the offset-within-page
 
-    struct cprElfHdr1 {
+    __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[1];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr2 {
+    __packed_struct(cprElfHdr2)
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[2];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct cprElfHdr3 {
+    __packed_struct(cprElfHdr3)
         Elf64_Ehdr ehdr;
         Elf64_Phdr phdr[3];
         l_info linfo;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     cprElfHdr3 elfout;
 

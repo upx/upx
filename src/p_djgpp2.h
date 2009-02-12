@@ -66,19 +66,16 @@ protected:
 
     long coff_offset;
 
-    struct external_scnhdr_t
-    {
+    __packed_struct(external_scnhdr_t)
         char    _[12];    // name, paddr
         LE32    vaddr;
         LE32    size;
         LE32    scnptr;
         char    misc[12]; // relptr, lnnoptr, nreloc, nlnno
         char    __[4];    // flags
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct coff_header_t
-    {
+    __packed_struct(coff_header_t)
         // ext_file_hdr
         LE16    f_magic;
         LE16    f_nscns;
@@ -99,8 +96,7 @@ protected:
 
         // section headers
         external_scnhdr_t sh[3];
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     coff_header_t coff_hdr;
     external_scnhdr_t *text,*data,*bss;

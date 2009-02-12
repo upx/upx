@@ -67,8 +67,7 @@ protected:
     virtual int readFileHeader();
     virtual bool checkFileHeader();
 
-    struct ps1_exe_t
-    {
+    __packed_struct(ps1_exe_t)
         // ident string
         char id[8];
         // is NULL
@@ -91,33 +90,26 @@ protected:
         char origin[60];
         // backup of the original header (epc - is_len)
         // id & the upx header ...
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     // for unpack
-    struct ps1_exe_hb_t
-    {
+    __packed_struct(ps1_exe_hb_t)
         LE32 ih_bkup[10];
         // plus checksum for the backup
         LE32 ih_csum;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct ps1_exe_chb_t
-    {
+    __packed_struct(ps1_exe_chb_t)
         unsigned char id;
         unsigned char len;
         LE16          ih_csum;
         unsigned char ih_bkup;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
-    struct bss_nfo
-    {
+    __packed_struct(bss_nfo)
         LE16    hi1, op1, lo1, op2;
         LE16    hi2, op3, lo2, op4;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     ps1_exe_t ih, oh;
     ps1_exe_hb_t bh;

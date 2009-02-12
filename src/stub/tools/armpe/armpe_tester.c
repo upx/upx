@@ -32,38 +32,46 @@
 // arm-9tdmi-linux-gnu-gcc -Wl,--section-start,.interp=0x1000
 // arm-wince-pe-gcc -Wl,--image-base,0x400000
 
+#include <stddef.h>
+#include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <string.h>
-#include <stdarg.h>
 
-#ifdef i386
-# define UPX_MMAP_ADDRESS 0x20000000
+#ifdef __i386__
+#  define UPX_MMAP_ADDRESS  0x20000000
 #else
-# define UPX_MMAP_ADDRESS 0x10000
+#  define UPX_MMAP_ADDRESS  0x10000
 #endif
 
-#ifdef linux
-# include <sys/mman.h>
+#ifdef __linux__
+#  include <sys/mman.h>
 #else
 void *VirtualAlloc(void *address, unsigned size, unsigned type, unsigned protect);
-# define MEM_COMMIT 0x1000
-# define PAGE_EXECUTE_READWRITE 0x0040
+#  define MEM_COMMIT 0x1000
+#  define PAGE_EXECUTE_READWRITE 0x0040
 #endif
 
-typedef unsigned short LE16;
-typedef unsigned long  LE32;
-#define __attribute_packed
+typedef size_t          acc_uintptr_t;
+typedef unsigned short  LE16;
+typedef unsigned int    LE32;
+#define get_le32(p)     (* (const unsigned *) (p))
+#define set_le32(p,v)   (* (unsigned *) (p) = (v))
+#define get_le16(p)     (* (const unsigned short *) (p))
 
-struct ddirs_t
-{
+#if !defined(__packed_struct)
+#  define __packed_struct(s)        struct s {
+#  define __packed_struct_end()     };
+#endif
+
+
+__packed_struct(ddirs_t)
     LE32    vaddr;
     LE32    size;
-}
-__attribute_packed;
+__packed_struct_end()
 
-struct pe_header_t
-{
+
+__packed_struct(pe_header_t)
     // 0x0
     char    _[4];
     LE16    cpu;
@@ -97,13 +105,12 @@ struct pe_header_t
     char    _____[20];
     // 0x74
     LE32    ddirsentries;
-
+    //
     struct ddirs_t ddirs[16];
-}
-__attribute_packed;
+__packed_struct_end()
 
-struct pe_section_t
-{
+
+__packed_struct(pe_section_t)
     char    name[8];
     LE32    vsize;
     LE32    vaddr;
@@ -111,12 +118,10 @@ struct pe_section_t
     LE32    rawdataptr;
     char    _[12];
     LE32    flags;
-}
-__attribute_packed;
+__packed_struct_end()
 
 
-struct exe_header_t
-{
+__packed_struct(exe_header_t)
     LE16 mz;
     LE16 m512;
     LE16 p512;
@@ -124,8 +129,8 @@ struct exe_header_t
     LE16 relocoffs;
     char __[34];
     LE32 nexepos;
-}
-__attribute_packed;
+__packed_struct_end()
+
 
 enum {
     PEDIR_EXPORT    = 0,
@@ -145,9 +150,6 @@ enum {
     PEDIR_COMRT     = 14
 };
 
-#define get_le32(p) (*(unsigned *) (p))
-#define set_le32(p, v) (*(unsigned *) (p) = (v))
-#define get_le16(p) (*(unsigned short *) (p))
 
 static struct pe_header_t ih;
 static struct pe_section_t isections[4];
@@ -213,7 +215,7 @@ static int load(const char *file)
 static int read(void)
 {
     unsigned ic;
-#ifdef linux
+#ifdef __linux__
     vaddr = mmap((void *) UPX_MMAP_ADDRESS, ih.imagesize,
                  PROT_WRITE | PROT_READ | PROT_EXEC,
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
@@ -237,7 +239,7 @@ static int read(void)
 static void dump(char n)
 {
     char buf[100];
-#ifdef linux
+#ifdef __linux__
     snprintf(buf, sizeof(buf), "/tmp/a.dump%c", n);
 #else
     snprintf(buf, sizeof(buf), "/a.dump%c", n);
@@ -247,7 +249,7 @@ static void dump(char n)
     fclose(f2);
 }
 
-static int loadlibraryw(unsigned short *name)
+static int loadlibraryw(const unsigned short *name)
 {
     return name[0] + name[1] * 0x100 + name[2] * 0x10000;
 }
@@ -315,7 +317,7 @@ static void dump2(int c)
 
 static void call(void)
 {
-#ifndef i386
+#ifndef __i386__
     void (*entry)(void (*)(int), unsigned) = vaddr + ih.entry;
     entry(dump2, 1);
     dump('z');
@@ -346,10 +348,12 @@ static int main2(int argc, char **argv)
 int main(int argc, char **argv)
 {
     out = stdout;
-#ifndef linux
+#ifndef __linux__
     out = fopen("/wtest.log", "wt");
 #endif
     int ret = main2(argc, argv);
     fclose(out);
     return ret;
 }
+
+/* vim:set ts=4 sw=4 et: */

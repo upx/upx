@@ -106,8 +106,7 @@ protected:
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
 
-    struct pe_header_t
-    {
+    __packed_struct(pe_header_t)
         // 0x0
         char    _[4];               // pemagic
         LE16    cpu;
@@ -142,19 +141,15 @@ protected:
         // 0x74
         LE32    ddirsentries;       // usually 16
 
-        struct ddirs_t
-        {
+        __packed_struct(ddirs_t)
             LE32    vaddr;
             LE32    size;
-        }
-        __attribute_packed;
+        __packed_struct_end()
 
-        struct ddirs_t ddirs[16];
-    }
-    __attribute_packed;
+        ddirs_t ddirs[16];
+    __packed_struct_end()
 
-    struct pe_section_t
-    {
+    __packed_struct(pe_section_t)
         char    name[8];
         LE32    vsize;
         LE32    vaddr;
@@ -162,8 +157,7 @@ protected:
         LE32    rawdataptr;
         char    _[12];
         LE32    flags;
-    }
-    __attribute_packed;
+    __packed_struct_end()
 
     pe_header_t ih, oh;
     pe_section_t *isection;
@@ -333,8 +327,7 @@ protected:
 
     class Export : private noncopyable
     {
-        struct export_dir_t
-        {
+        __packed_struct(export_dir_t)
             char  _[12]; // flags, timedate, version
             LE32  name;
             char  __[4]; // ordinal base
@@ -343,8 +336,7 @@ protected:
             LE32  addrtable;
             LE32  nameptrtable;
             LE32  ordinaltable;
-        }
-        __attribute_packed;
+        __packed_struct_end()
 
         export_dir_t edir;
         char  *ename;
