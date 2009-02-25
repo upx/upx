@@ -792,6 +792,10 @@ int PackVmlinuzARMEL::decompressKernel()
         }
         got_start = get_te32(5*4 + j + obuf);
         got_end   = get_te32(6*4 + j + obuf);
+#if 0  /*{*/
+        printf("decompress_kernel=0x%x  got_start=0x%x  got_end=0x%x\n",
+            decompress_kernel, got_start, got_end);
+#endif  /*}*/
         break;
     }
     if (0==decompress_kernel) {

@@ -43,7 +43,7 @@
   to stop in gdb.  You'll have to "set $pc+=4" by hand.
 */
 section         LINUX000
-        // bkpt  // qemu DEBUG only
+        // bkpt  // qemu DEBUG only  // 'bkpt' == 0xe1200070
 /* Calling sequence of equivalent code in arch/arm/boot/compressed/misc.c:
 decompress_kernel:  # (char *out, char *tmp, char *tmp_end, int arch_id)
         lr= &indata; ip= retaddr  # from arm-linux.kernel.vmlinux-head.S
@@ -82,7 +82,8 @@ section         LINUX010
 
 section         LINUX020
         ldmia sp,{r0,r1,r2,r3,ip,sp,lr}  // method, &indata, outsize, &outdata, arch_id, sp_in, retaddr
-        add r0,r2,r3  // rv= &outdata[outsize]
+// See arch/arm/boot/compressed/misc.c/flush_window(): out = &output_data[output_ptr];
+        mov r0,r2  // rv= outsize
         mov pc,lr  // return
 
 // =============

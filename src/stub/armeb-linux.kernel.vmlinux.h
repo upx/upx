@@ -32,8 +32,8 @@
 
 
 #define STUB_ARMEB_LINUX_KERNEL_VMLINUX_SIZE    17050
-#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_ADLER32 0x5e9bdb94
-#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_CRC32   0xc4201123
+#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_ADLER32 0x1bacdbb2
+#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_CRC32   0x6f6c29f7
 
 unsigned char stub_armeb_linux_kernel_vmlinux[17050] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -45,7 +45,7 @@ unsigned char stub_armeb_linux_kernel_vmlinux[17050] = {
 /* 0x0060 */ 226,141, 48,  8,235,255,255,254,234,  0,  0, 14,  0,  0,  0,  0,
 /* 0x0070 */   0,  0,  0,  0,227, 80,  0,  0, 26,  0,  0, 14,229,157,  0, 12,
 /* 0x0080 */ 229,157, 16,  8,227,160, 32,  0,227,160, 48,  0,235,255,255,254,
-/* 0x0090 */ 232,157,112, 15,224,130,  0,  3,225,160,240, 14,226,  3, 48,255,
+/* 0x0090 */ 232,157,112, 15,225,160,  0,  2,225,160,240, 14,226,  3, 48,255,
 /* 0x00a0 */ 227, 83,  0, 80,227, 83,  0, 81, 17,160,240, 14,225,176, 17, 33,
 /* 0x00b0 */  19, 80,  0,  0,  1,160,240, 14,226, 65, 16,  1,231,144, 33,  1,
 /* 0x00c0 */ 226,  2, 52, 15,227, 83,  4, 11, 26,  0,  0, 12,226,  2, 52,255,
