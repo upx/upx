@@ -128,13 +128,14 @@
         POP {fp,pc}
 1:
 
-  section LZMA_DEC10
-#include "lzma_d_cs.S"
-
   section LZMA_DEC20
-#if 1  /*{*/
 #include "lzma_d_cf.S"
+
+  section LZMA_DEC10
+#if 0  /*{*/
+#include "lzma_d_cs.S"
 #else  /*}{*/
+#define PARAMETER_STYLE 3
 #include "lzma_d-arm.S"
 #endif  /*}*/
 

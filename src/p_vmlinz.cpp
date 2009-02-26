@@ -944,7 +944,8 @@ void PackVmlinuzARMEL::buildLoader(const Filter *ft)
          if (ph.method == M_NRV2E_8) addLoader("NRV2E", NULL);
     else if (ph.method == M_NRV2B_8) addLoader("NRV2B", NULL);
     else if (ph.method == M_NRV2D_8) addLoader("NRV2D", NULL);
-    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00",
+        (opt->small ? "LZMA_DEC10" : "LZMA_DEC20"), "LZMA_DEC30", NULL);
     else throwBadLoader();
     addLoader("IDENTSTR,UPX1HEAD", NULL);
 

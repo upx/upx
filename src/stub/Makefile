@@ -423,7 +423,7 @@ arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
 armeb-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian
+tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
 
 armeb-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
