@@ -78,10 +78,13 @@
 #  if (ACC_OS_WIN32 || ACC_OS_WIN64)
 #  elif defined(__linux__)
 #    pragma warning(error: 424)         // #424: extra ";" ignored
+//#    pragma warning(disable: 128)       // #128: loop is not reachable from preceding code
+//#    pragma warning(disable: 181)       // #181: argument is incompatible with corresponding format string conversion
 #    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
 #    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
 #    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
-#    pragma warning(disable: 1418)      // #1418: external definition with no prior declaration
+#    pragma warning(disable: 1418)      // #1418: external function definition with no prior declaration
+//#    pragma warning(disable: 1419)      // #1419: external declaration in primary source file
 #  else
 #    error "untested platform"
 #  endif
