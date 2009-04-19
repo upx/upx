@@ -158,7 +158,7 @@ LzmaDecode: .globl LzmaDecode
 	ldrb r4,[inPtr],#1; and r4,r4,#7  // pb
 	ldrb r6,[inPtr],#1; mov r5,r6,lsr #4  // lp
 	                    and r6,r6,#0xf  // lc
-	
+
 #endif  /*}*/
 
 #if 3==PARAMETER_STYLE  /*{  lc,lp,pb,xx  in separate bytes before probs[] */
