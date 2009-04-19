@@ -68,8 +68,7 @@ PackMaster::PackMaster(InputFile *f, options_t *o) :
     saved_opt = o;
     if (o)
     {
-        this->local_options = *o;       // struct copy
-        //memcpy(&this->local_options, o, sizeof(*o)); // struct copy
+        memcpy(&this->local_options, o, sizeof(*o)); // struct copy
         opt = &this->local_options;
     }
 }

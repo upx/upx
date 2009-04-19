@@ -120,7 +120,7 @@ int upx_ucl_compress       ( const upx_bytep src, unsigned  src_len,
 
     ucl_compress_config_t cconf; cconf.reset();
     if (cconf_parm)
-        cconf = cconf_parm->conf_ucl; // struct copy
+        memcpy(&cconf, &cconf_parm->conf_ucl, sizeof(cconf)); // cconf = cconf_parm->conf_ucl; // struct copy
 
     ucl_uint *res = cresult->result_ucl.result;
     // assume no info available - fill in worst case results
