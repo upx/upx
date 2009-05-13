@@ -474,6 +474,8 @@ private:
 #define UPX_F_VMLINUZ_ARMEL     31
 #define UPX_F_MACH_ARMEL        32
 
+#define UPX_F_DYLIB_i386        33
+
 #define UPX_F_PLAIN_TEXT        127
 
 #define UPX_F_ATARI_TOS         129

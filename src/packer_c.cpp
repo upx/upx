@@ -218,6 +218,7 @@ const char *Packer::getDecompressorSections() const
         ||  UPX_F_VMLINUX_PPC32    ==ph.format
         ||  UPX_F_MACH_PPC32       ==ph.format
         ||  UPX_F_MACH_i386        ==ph.format
+        ||  UPX_F_DYLIB_i386       ==ph.format
     ) {
             return opt->small ? lzma_elf_small  : lzma_elf_fast;
         }
@@ -257,6 +258,7 @@ void Packer::defineDecompressorSymbols()
     ||  UPX_F_VMLINUX_PPC32    ==ph.format
     ||  UPX_F_MACH_PPC32       ==ph.format
     ||  UPX_F_MACH_i386        ==ph.format
+    ||  UPX_F_DYLIB_i386       ==ph.format
     ) {
         // ELF calls the decompressor many times; the parameters change!
         return;

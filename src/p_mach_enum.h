@@ -50,7 +50,8 @@
         CPU_SUBTYPE_ARM_V6  = 6
     };
     enum { // filetype
-        MH_EXECUTE = 2
+        MH_EXECUTE = 2,
+        MH_DYLIB   = 6
     };
     enum { // flags
         MH_NOUNDEFS = 1
@@ -61,10 +62,22 @@
 #undef WANT_MACH_SEGMENT_ENUM
     enum { // cmd
         LC_SEGMENT       = 0x1,
+        LC_SYMTAB        = 0x2,
         LC_THREAD        = 0x4,
         LC_UNIXTHREAD    = 0x5,
+        LC_DYSYMTAB      = 0xb,
+        LC_LOAD_DYLIB    = 0xc,
+        LC_ID_DYLIB      = 0xd,
         LC_LOAD_DYLINKER = 0xe,
-        LC_SEGMENT_64    = 0x19
+        LC_ROUTINES      = 0x11,
+        LC_SEGMENT_64    = 0x19,
+        LC_ROUTINES_64   = 0x1a,
+        LC_UUID          = 0x1b,
+        LC_RPATH         = 0x1c,
+        LC_CODE_SIGNATURE = 0x1d,
+        LC_SEGMENT_SPLIT_INFO = 0x1e,
+        LC_REEXPORT_DYLIB = 0x1f,
+        LC_REQ_DYLD      = 0x80000000  // OR'ed ==> must not ignore
     };
     enum { // maxprot
         VM_PROT_READ = 1,

@@ -140,6 +140,77 @@ __packed_struct(Mach_section_command)
 __packed_struct_end()
 
 template <class TMachITypes>
+__packed_struct(Mach_symtab_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;      /* LC_SYMTAB */
+    Word cmdsize;  /* sizeof(struct Mach_symtab_command) */
+    Off  symoff;   /* symbol table offset */
+    Word nsyms;    /* number of symbol table entries */
+    Off  stroff;   /* string table offset */
+    Word strsize;  /* string table size in bytes */
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_dysymtab_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;           /* LC_DYSYMTAB */
+    Word cmdsize;       /* sizeof(struct Mach_dysymtab_command) */
+    Word ilocalsym;     /* index to local symbols */
+    Word nlocalsym;     /* number of local symbols */
+    Word iextdefsym;    /* index to externally defined symbols */
+    Word nextdefsym;    /* number of externally defined symbols */
+    Word iundefsym;     /* index to undefined symbols */
+    Word nundefsym;     /* number of undefined symbols */
+    Off tocoff;         /* file offset to table of contents */
+    Word ntoc;          /* number of entries in table of contents */
+    Off modtaboff;      /* file offset to module table */
+    Word nmodtab;       /* number of module table entries */
+    Off extrefsymoff;   /* offset to referenced symbol table */
+    Word nextrefsymoff; /* number of referenced symbol table entries */
+    Off indirectsymoff; /* file offset to the indirect symbol table */
+    Word nindirectsyms; /* number of indirect symbol table entries */
+    Off extreloff;      /* offset to external relocation entries */
+    Word nextrel;       /* number of external relocation entries */
+    Off locreloff;      /* offset to local relocation entries */
+    Word nlocrel;       /* number of local relocation entries */
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_segsplit_info_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;           /* LC_SEGMENT_SPLIT_INFO */
+    Word cmdsize;       /* sizeof(struct Mach_segsplit_info_command) */
+    Off dataoff;
+    Word datasize;
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_routines_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;
+    Word cmdsize;
+    Addr init_address;
+    Word init_module;
+    Word reserved1;
+    Word reserved2;
+    Word reserved3;
+    Word reserved4;
+    Word reserved5;
+    Word reserved6;
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
+template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state)
     typedef typename TMachITypes::Addr Addr;
 
@@ -221,6 +292,26 @@ __packed_struct(Mach_ppc_thread_state64)
     Word vrsave;    /* Vector Save Register */
 __packed_struct_end()
 
+template <class TMachITypes>
+__packed_struct(Mach_routines_command_64)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Xword Xword;
+
+    Word cmd;
+    Word cmdsize;
+    Addr init_address;
+    Xword init_module;
+    Xword reserved1;
+    Xword reserved2;
+    Xword reserved3;
+    Xword reserved4;
+    Xword reserved5;
+    Xword reserved6;
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
 }  // namespace N_Mach64
 
 namespace N_Mach {
@@ -245,6 +336,10 @@ struct MachClass_32
     typedef N_Mach::Mach_header<MachITypes> Mach_header;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+    typedef N_Mach::Mach_symtab_command<MachITypes>  Mach_symtab_command;
+    typedef N_Mach::Mach_dysymtab_command<MachITypes> Mach_dysymtab_command;
+    typedef N_Mach::Mach_segsplit_info_command<MachITypes> Mach_segsplit_info_command;
+    typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
     typedef N_Mach::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
@@ -270,6 +365,10 @@ struct MachClass_64
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+    typedef N_Mach::Mach_symtab_command<MachITypes>  Mach_symtab_command;
+    typedef N_Mach::Mach_dysymtab_command<MachITypes> Mach_dysymtab_command;
+    typedef N_Mach::Mach_segsplit_info_command<MachITypes> Mach_segsplit_info_command;
+    typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -288,21 +387,45 @@ typedef N_Mach::MachClass_64<N_BELE_CTP::LEPolicy>   MachClass_LE64;
 // shortcuts
 typedef MachClass_Host32::Mach_segment_command Mach32_segment_command;
 typedef MachClass_Host32::Mach_section_command Mach32_section_command;
+typedef MachClass_Host32::Mach_symtab_command Mach32_symtab_command;
+typedef MachClass_Host32::Mach_dysymtab_command Mach32_dysymtab_command;
+typedef MachClass_Host32::Mach_segsplit_info_command Mach32_segsplit_info_command;
+typedef MachClass_Host32::Mach_routines_command Mach32_routines_command;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
+typedef MachClass_Host64::Mach_symtab_command Mach64_symtab_command;
+typedef MachClass_Host64::Mach_dysymtab_command Mach64_dysymtab_command;
+typedef MachClass_Host64::Mach_segsplit_info_command Mach64_segsplit_info_command;
+typedef MachClass_Host64::Mach_routines_command Mach64_routines_command;
 
 typedef MachClass_BE32::Mach_segment_command   MachBE32_segment_command;
 typedef MachClass_BE32::Mach_section_command   MachBE32_section_command;
+typedef MachClass_BE32::Mach_symtab_command   MachBE32_symtab_command;
+typedef MachClass_BE32::Mach_dysymtab_command   MachBE32_dysymtab_command;
+typedef MachClass_BE32::Mach_segsplit_info_command   MachBE32_segsplit_info_command;
+typedef MachClass_BE32::Mach_routines_command   MachBE32_routines_command;
 
 typedef MachClass_BE64::Mach_segment_command   MachBE64_segment_command;
 typedef MachClass_BE64::Mach_section_command   MachBE64_section_command;
+typedef MachClass_BE64::Mach_symtab_command   MachBE64_symtab_command;
+typedef MachClass_BE64::Mach_dysymtab_command   MachBE64_dysymtab_command;
+typedef MachClass_BE64::Mach_segsplit_info_command   MachBE64_segsplit_info_command;
+typedef MachClass_BE64::Mach_routines_command   MachBE64_routines_command;
 
 typedef MachClass_LE32::Mach_segment_command   MachLE32_segment_command;
 typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
+typedef MachClass_LE32::Mach_symtab_command   MachLE32_symtab_command;
+typedef MachClass_LE32::Mach_dysymtab_command   MachLE32_dysymtab_command;
+typedef MachClass_LE32::Mach_segsplit_info_command   MachLE32_segsplit_info_command;
+typedef MachClass_LE32::Mach_routines_command   MachLE32_routines_command;
 
 typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
 typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
+typedef MachClass_LE64::Mach_symtab_command   MachLE64_symtab_command;
+typedef MachClass_LE64::Mach_dysymtab_command   MachLE64_dysymtab_command;
+typedef MachClass_LE64::Mach_segsplit_info_command   MachLE64_segsplit_info_command;
+typedef MachClass_LE64::Mach_routines_command   MachLE64_routines_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
@@ -327,9 +450,14 @@ protected:
     typedef typename MachClass::Mach_header Mach_header;
     typedef typename MachClass::Mach_segment_command Mach_segment_command;
     typedef typename MachClass::Mach_section_command Mach_section_command;
+    typedef typename MachClass::Mach_symtab_command Mach_symtab_command;
+    typedef typename MachClass::Mach_dysymtab_command Mach_dysymtab_command;
+    typedef typename MachClass::Mach_segsplit_info_command Mach_segsplit_info_command;
+    typedef typename MachClass::Mach_routines_command Mach_routines_command;
 
 public:
-    PackMachBase(InputFile *, unsigned cpuid, unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
+    PackMachBase(InputFile *, unsigned cpuid, unsigned filetype,
+        unsigned t_flavor, unsigned ts_word_cnt, unsigned tc_size);
     virtual ~PackMachBase();
     virtual int getVersion() const { return 13; }
     virtual const int *getCompressionMethods(int method, int level) const;
@@ -362,6 +490,7 @@ protected:
     static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
 
     unsigned my_cputype;
+    unsigned my_filetype;
     unsigned my_thread_flavor;
     unsigned my_thread_state_word_count;
     unsigned my_thread_command_size;
@@ -375,6 +504,7 @@ protected:
 
     Mach_header mhdro;
     Mach_segment_command segcmdo;
+    Mach_routines_command rcmd;
 
     __packed_struct(b_info)     // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size
@@ -419,7 +549,7 @@ class PackMachPPC32 : public PackMachBase<MachClass_BE32>
 
 public:
     PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
-        Mach_thread_command::PPC_THREAD_STATE,
+        Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
         sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
 
     virtual int getFormat() const { return UPX_F_MACH_PPC32; }
@@ -454,7 +584,7 @@ class PackMachI386 : public PackMachBase<MachClass_LE32>
 
 public:
     PackMachI386(InputFile *f) : super(f, Mach_header::CPU_TYPE_I386,
-        (unsigned)Mach_thread_command::i386_THREAD_STATE,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::i386_THREAD_STATE,
         sizeof(Mach_i386_thread_state)>>2, sizeof(threado)) { }
 
     virtual int getFormat() const { return UPX_F_MACH_i386; }
@@ -483,13 +613,34 @@ protected:
     Mach_thread_command threado;
 };
 
+class PackDylibI386 : public PackMachI386 //PackMachBase<MachClass_LE32>
+{
+    typedef PackMachI386 /*PackMachBase<MachClass_LE32>*/ super;
+
+public:
+    PackDylibI386(InputFile *f) : super(f) { my_filetype = Mach_header::MH_DYLIB; }
+
+    virtual int getFormat() const { return UPX_F_DYLIB_i386; }
+    virtual const char *getName() const { return "Dylib/i386"; }
+    virtual const char *getFullName(const options_t *) const { return "i386-darwin.dylib"; }
+protected:
+    //virtual void pack1_setup_threado(OutputFile *const fo);
+    //virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    //virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    //virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+    virtual void addStubEntrySections(Filter const *);
+};
+
 class PackMachARMEL : public PackMachBase<MachClass_LE32>
 {
     typedef PackMachBase<MachClass_LE32> super;
 
 public:
     PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
-        (unsigned)Mach_thread_command::ARM_THREAD_STATE,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
         sizeof(Mach_ARM_thread_state)>>2, sizeof(threado)) { }
 
     virtual int getFormat() const { return UPX_F_MACH_ARMEL; }

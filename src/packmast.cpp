@@ -279,6 +279,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         return p;
     if ((p = func(new PackMachARMEL(f), user)) != NULL)
         return p;
+    if ((p = func(new PackDylibI386(f), user)) != NULL)
+        return p;
 
     return NULL;
 }
