@@ -75,6 +75,8 @@ STUBS += i386-bsd.elf-entry.h
 STUBS += i386-bsd.elf-fold.h
 STUBS += i386-bsd.elf.execve-entry.h
 STUBS += i386-bsd.elf.execve-fold.h
+STUBS += i386-darwin.dylib-entry.h
+# STUBS += i386-darwin.dylib-fold.h
 STUBS += i386-darwin.macho-entry.h
 STUBS += i386-darwin.macho-fold.h
 STUBS += i386-openbsd.elf-fold.h
@@ -620,6 +622,21 @@ tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
 tmp/i386-bsd.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
 	$(call tc,f-objstrip,$@)
+
+
+# /***********************************************************************
+# // i386-darwin.dylib
+# ************************************************************************/
+
+# info: we use the tc settings from i386-linux.elf
+i386-darwin.dylib%.h : tc_list = i386-linux.elf default
+i386-darwin.dylib%.h : tc_bfdname = elf32-i386
+
+## All code is in dylib-entry.  There is no dylib-fold, no dylib-main.
+i386-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************

@@ -627,7 +627,7 @@ protected:
     //virtual void pack1_setup_threado(OutputFile *const fo);
     //virtual void pack1(OutputFile *, Filter &);  // generate executable header
     //virtual void pack2(OutputFile *, Filter &);  // append compressed data
-    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     //virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);

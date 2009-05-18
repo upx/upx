@@ -49,6 +49,20 @@ static const
 static const
 #include "stub/arm-darwin.macho-fold.h"
 
+// Packing a Darwin (Mach-o) Mac OS X dylib (dynamic shared library)
+// is restricted.  UPX gets control as the -init function, at the very
+// end of processing by dyld.  Relocation, loading of dependent libraries,
+// etc., already have taken place before decompression.  So the Mach-o
+// headers, the __IMPORT segment, the __LINKEDIT segment, anything
+// that is modifed by relocation, etc., cannot be compressed. 
+// We simplify arbitrarily by compressing only the __TEXT segment,
+// which must be the first segment.
+
+static const
+#include "stub/i386-darwin.dylib-entry.h"
+// The runtime stub for the dyld -init routine does not use "fold"ed code.
+//#include "stub/i386-darwin.dylib-fold.h"
+
 template <class T>
 PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
@@ -293,7 +307,9 @@ PackMachARMEL::buildLoader(const Filter *ft)
 void
 PackDylibI386::buildLoader(const Filter *ft)
 {
-    super::buildLoader(ft);
+    buildMachLoader(
+        stub_i386_darwin_dylib_entry, sizeof(stub_i386_darwin_dylib_entry),
+        0,  0,  ft );
 }
 
 template <class T>
@@ -383,7 +399,7 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     unsigned opos = fo->getBytesWritten();
     segcmdo.filesize = opos;
-    segcmdo.vmsize += opos;
+    segcmdo.vmsize = msegcmd->vmsize;
     rcmd.init_address = threado.state.eip;
     fo->seek(sizeof(mhdro), SEEK_SET);
     fo->rewrite(&segcmdo, sizeof(segcmdo));
@@ -391,7 +407,7 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     fo->rewrite(&rcmd, sizeof(rcmd));
     fo->rewrite(&linfo, sizeof(linfo));
 
-    // Append __IMPORT and __LINKEDIT segments, page aligned.
+    // Append each non-__TEXT segment, page aligned.
     int slide = 0;
     unsigned hdrpos = sizeof(mhdro) + sizeof(segcmdo);
     Mach_segment_command const *seg = rawmseg;
@@ -418,10 +434,8 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         hdrpos += seg->cmdsize;
         break;  // contain no file offset fields
     case Mach_segment_command::LC_SEGMENT: {
-        // __IMPORT and __LINKEDIT must be seen by dylinker before decompression.
-        // All other segments have been combined into new compressed __TEXT.
-        if (0==strncmp(&seg->segname[0], "__IMPORT", 1+ 8)
-        ||  0==strncmp(&seg->segname[0], "__LINKEDIT", 1+ 10)) {
+        // non-__TEXT might be observed and relocated by dyld before us.
+        if (0!=strncmp(&seg->segname[0], "__TEXT", 1+ 6)) {
             Mach_segment_command segcmdtmp = *seg;
             opos += ~PAGE_MASK & (0u - opos);  // advance to PAGE_SIZE boundary
             slide = opos - segcmdtmp.fileoff;
@@ -531,6 +545,26 @@ void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
 }
 
+void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    LE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + 3*sizeof(disp);
+
+    disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
+    fo->write(&disp, sizeof(disp));  // src offset(compressed __TEXT)
+
+    disp = len - disp - 3*sizeof(disp);
+    fo->write(&disp, sizeof(disp));  // length(compressed __TEXT)
+
+    unsigned const save_sz_mach_headers(sz_mach_headers);
+    sz_mach_headers = 0;
+    super::pack3(fo, ft);
+    sz_mach_headers = save_sz_mach_headers;
+}
+
 // Determine length of gap between PT_LOAD phdri[k] and closest PT_LOAD
 // which follows in the file (or end-of-file).  Optimize for common case
 // where the PT_LOAD are adjacent ascending by .p_offset.  Assume no overlap.
@@ -593,6 +627,9 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
         &&  0!=msegcmd[k].filesize ) {
             uip->ui_total_passes++;
+            if (my_filetype==Mach_header::MH_DYLIB) {
+                break;
+            }
             if (find_SEGMENT_gap(k)) {
                 uip->ui_total_passes++;
             }
@@ -639,7 +676,11 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         }
         hdr_u_len = 0;
         ++nx;
+        if (my_filetype==Mach_header::MH_DYLIB) {
+            break;
+        }
     }
+    if (my_filetype!=Mach_header::MH_DYLIB)
     for (k = 0; k < n_segment; ++k) {
         x.size = find_SEGMENT_gap(k);
         if (x.size) {
@@ -648,6 +689,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         }
     }
 
+    if (my_filetype!=Mach_header::MH_DYLIB)
     if ((off_t)total_in != file_size)
         throwEOFException();
     segcmdo.filesize = fo->getBytesWritten();
@@ -699,14 +741,16 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         Mach_segment_command const *const endseg =
             (Mach_segment_command const *)(mhdri.sizeofcmds + (char const *)seg);
         for (; seg < endseg; seg = (Mach_segment_command const *)(
-                seg->cmdsize + (char const *)seg)) {
-            // All except __IMPORT and __LINKEDIT will be coalesced into __TEXT.
-            if (0!=strncmp(&seg->segname[0], "__IMPORT", 1+ 8)
-            &&  0!=strncmp(&seg->segname[0], "__LINKEDIT", 1+ 10)){
+                seg->cmdsize + (char const *)seg))
+        switch (~Mach_segment_command::LC_REQ_DYLD & seg->cmd) {
+        case Mach_segment_command::LC_SEGMENT: {
+            // Old __TEXT will be replaced by new __TEXT.
+            if (0==strncmp(&seg->segname[0], "__TEXT", 1+ 6)) {
                 mhdro.ncmds -= 1;
                 mhdro.sizeofcmds -= seg->cmdsize;
             }
         }
+        }  // end 'switch'
     }
     fo->write(&mhdro, sizeof(mhdro));
 
@@ -739,12 +783,17 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         Mach_segment_command const *const endseg =
             (Mach_segment_command const *)(mhdri.sizeofcmds + (char const *)seg);
         for (; seg < endseg; seg = (Mach_segment_command const *)(
-                seg->cmdsize + (char const *)seg)) {
-            if (0==strncmp(&seg->segname[0], "__IMPORT", 1+ 8)
-            ||  0==strncmp(&seg->segname[0], "__LINKEDIT", 1+ 10)){
+                seg->cmdsize + (char const *)seg))
+        switch (~Mach_segment_command::LC_REQ_DYLD & seg->cmd) {
+        default: {
+            fo->write(seg, seg->cmdsize);
+        } break;
+        case Mach_segment_command::LC_SEGMENT: {
+            if (0!=strncmp(&seg->segname[0], "__TEXT", 1+ 6)) {
                 fo->write(seg, seg->cmdsize);
             }
-        }
+        } break;
+        }  // end 'switch'
         memset(&rcmd, 0, sizeof(rcmd));
         rcmd.cmd= Mach_segment_command::LC_ROUTINES;
         rcmd.cmdsize = sizeof(rcmd);
