@@ -164,7 +164,7 @@ main:
         sub ecx,offset(decompress)
         cld; rep movsb
 
-        // Goto copied dy_reloc.
+        // Goto the copied dy_reloc.
         lea eax,[-offset(dy_top - dy_reloc) + edi]
         jmp %eax
 dy_reloc:
@@ -179,7 +179,12 @@ dy_reloc:
         pop esi  # &b_info for Mach_header
         mov edi,edx  # runtime base address
 
-        // Decompress __TEXT.
+        // Decompress __TEXT, but do not overwrite Mach_headers
+        // in order to maintain consistency with dyld partial caching of them.
+        // So, skip the first compressed block.
+        lodsd; add edi,eax  # sz_unc
+        lodsd; add esi,eax  # sz_cpr
+        lodsd  # b_method
 dy_uncpr:
         push esi; push edi  # save in case unfilter
 

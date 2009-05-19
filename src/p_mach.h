@@ -500,6 +500,7 @@ protected:
     unsigned sz_mach_headers;
     Mach_segment_command *rawmseg;  // as input, with sections
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
+    unsigned o_routines_cmd;  // file offset to LC_ROUINTES
     Mach_header mhdri;
 
     Mach_header mhdro;
@@ -618,7 +619,7 @@ class PackDylibI386 : public PackMachI386 //PackMachBase<MachClass_LE32>
     typedef PackMachI386 /*PackMachBase<MachClass_LE32>*/ super;
 
 public:
-    PackDylibI386(InputFile *f) : super(f) { my_filetype = Mach_header::MH_DYLIB; }
+    PackDylibI386(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_DYLIB_i386; }
     virtual const char *getName() const { return "Dylib/i386"; }
