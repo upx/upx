@@ -776,31 +776,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segcmdo.flags = 0;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         fo->write(&segcmdo, sizeof(segcmdo));
-    }
-
-    if (my_filetype==Mach_header::MH_EXECUTE) {
         pack1_setup_threado(fo);
     }
     if (my_filetype==Mach_header::MH_DYLIB) {
-        Mach_segment_command const *seg = rawmseg;
-        Mach_segment_command const *const endseg =
-            (Mach_segment_command const *)(mhdri.sizeofcmds + (char const *)seg);
-        for (; seg < endseg; seg = (Mach_segment_command const *)(
-                seg->cmdsize + (char const *)seg))
-        switch (~Mach_segment_command::LC_REQ_DYLD & seg->cmd) {
-        default: {
-            fo->write(seg, seg->cmdsize);
-        } break;
-        case Mach_segment_command::LC_SEGMENT: {
-            //if (0!=strncmp(&seg->segname[0], "__TEXT", 1+ 6)) {
-                fo->write(seg, seg->cmdsize);
-            //}
-        } break;
-        }  // end 'switch'
-        memset(&rcmd, 0, sizeof(rcmd));
-        rcmd.cmd= Mach_segment_command::LC_ROUTINES;
-        rcmd.cmdsize = sizeof(rcmd);
-        //fo->write(&rcmd, sizeof(rcmd));
+        fo->write(rawmseg, mhdri.sizeofcmds);
     }
     sz_mach_headers = fo->getBytesWritten();
 
@@ -813,8 +792,11 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
-    overlay_offset = sizeof(mhdro) + sizeof(segcmdo) +
-        my_thread_command_size + sizeof(linfo);
+    fi->seek(0, SEEK_SET);
+    fi->readx(&mhdri, sizeof(mhdri));
+    rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
+    fi->readx(rawmseg, mhdri.sizeofcmds);
+    overlay_offset = sizeof(mhdri) + mhdri.sizeofcmds + sizeof(linfo);
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
@@ -868,9 +850,35 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         if (Mach_segment_command::LC_SEGMENT==sc->cmd
         &&  0!=sc->filesize ) {
             unsigned filesize = sc->filesize;
-            unpackExtent(filesize, fo, total_in, total_out, c_adler, u_adler, false, sizeof(bhdr));
+            unpackExtent(filesize, fo, total_in, total_out,
+                c_adler, u_adler, false, sizeof(bhdr));
+            if (my_filetype==Mach_header::MH_DYLIB) {
+                break;
+            }
         }
     }
+    if (my_filetype==Mach_header::MH_DYLIB) {
+        Mach_segment_command const *rc = rawmseg;
+        rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc);
+        sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc);
+        for (
+            k=1;
+            k < ncmds;
+            (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc)),
+                   (rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc))
+        ) {
+            if (Mach_segment_command::LC_SEGMENT==rc->cmd
+            &&  0!=rc->filesize ) {
+                fi->seek(rc->fileoff, SEEK_SET);
+                fo->seek(sc->fileoff, SEEK_SET);
+                unsigned const len = rc->filesize;
+                char data[len];
+                fi->readx(data, len);
+                fo->write(data, len);
+            }
+        }
+    }
+    else
     for (unsigned j = 0; j < ncmds; ++j) {
         unsigned const size = find_SEGMENT_gap(j);
         if (size) {
@@ -881,6 +889,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
                 c_adler, u_adler, false, sizeof(bhdr));
         }
     }
+    delete mhdr;
 }
 
 
