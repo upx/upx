@@ -2,6 +2,10 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.05 (01 XXX 2009):
+  * new format Dylib/i386 supports shared libraries on Darwin (Mach-o);
+    an existing -init function (LC_ROUTINES command) is required.
+
 Changes in 3.04 (27 Apr 2009):
   * new format vmlinuz/armel for Debian NSLU2 (etc.) linux kernel
   * bvmlinuz boot protocol 2.08 for 386 Linux kernel
