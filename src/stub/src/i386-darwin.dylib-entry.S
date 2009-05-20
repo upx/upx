@@ -36,6 +36,7 @@
 
 /*************************************************************************
 // We have been CALLed as a subroutine from dyld; C-language rules apply.
+// -4*4+_start: .long offset(user_init_function)
 // -3*4+_start: .long offset(&b_info of compressed Mach_headers) 
 // -2*4+_start: .long length(compressed __TEXT)
 // -1*4+_start: .long total_length  # of preceding bytes in file
@@ -44,6 +45,7 @@
 section LEXEC000
 _start: .globl _start
 ////    int3  # for debug only
+        push eax  # space for &user_init_function
         pusha
         call main  // push address of decompress subroutine
 decompress:
@@ -172,7 +174,9 @@ dy_reloc:
         // Copy compressed __TEXT.
         push edi  # remember start of compressed __TEXT
         mov edx,ebx  # &total_length
+          mov eax,[-3*4+ebx]  # offset(user_init_function)
         sub edx,[ebx]  # runtime base address
+          add eax,edx; mov [(1+2+8)*4 + esp],eax  # relocate &user_init_function
         mov esi,[-2*4 + ebx]; add esi,edx
         mov ecx,[-1*4 + ebx]
         rep movsb

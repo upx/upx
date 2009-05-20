@@ -68,7 +68,8 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
     super(f), my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
-    n_segment(0), rawmseg(NULL), msegcmd(NULL), o_routines_cmd(0)
+    n_segment(0), rawmseg(NULL), msegcmd(NULL), o_routines_cmd(0),
+    prev_init_address(0)
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
@@ -570,7 +571,10 @@ void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + 3*sizeof(disp);
+    len += (3& (0u-len)) + 4*sizeof(disp);
+
+    disp = prev_init_address;
+    fo->write(&disp, sizeof(disp));  // user .init_address
 
     disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
     fo->write(&disp, sizeof(disp));  // src offset(compressed __TEXT)
@@ -915,6 +919,7 @@ bool PackMachBase<T>::canPack()
         if (((Mach_segment_command const *)ptr)->cmd ==
               Mach_segment_command::LC_ROUTINES) {
             o_routines_cmd = (char *)ptr - (char *)rawmseg;
+            prev_init_address = ((Mach_routines_command const *)ptr)->init_address;
         }
         ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
     }
