@@ -227,11 +227,6 @@ void PackMachARMEL::addStubEntrySections(Filter const */*ft*/)
     addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
-void PackDylibI386::addStubEntrySections(Filter const *ft)
-{
-    super::addStubEntrySections(ft);
-}
-
 template <class T>
 void PackMachBase<T>::defineSymbols(Filter const *)
 {

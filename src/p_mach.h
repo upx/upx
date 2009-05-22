@@ -615,9 +615,9 @@ protected:
     Mach_thread_command threado;
 };
 
-class PackDylibI386 : public PackMachI386 //PackMachBase<MachClass_LE32>
+class PackDylibI386 : public PackMachI386
 {
-    typedef PackMachI386 /*PackMachBase<MachClass_LE32>*/ super;
+    typedef PackMachI386 super;
 
 public:
     PackDylibI386(InputFile *f);
@@ -626,14 +626,9 @@ public:
     virtual const char *getName() const { return "Dylib/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-darwin.dylib"; }
 protected:
-    //virtual void pack1_setup_threado(OutputFile *const fo);
-    //virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    //virtual void pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-    //virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);
-    virtual void addStubEntrySections(Filter const *);
 };
 
 class PackMachARMEL : public PackMachBase<MachClass_LE32>
