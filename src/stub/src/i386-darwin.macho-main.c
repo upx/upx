@@ -303,9 +303,12 @@ typedef union {
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
+#define MAP_ANON_FD -1
 
-extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t);
-extern ssize_t pread(int, void *, size_t, off_t);
+// We have off_t as 32 bits, but syscalls consider off_t as 64 bits.
+// Make the top 32 bits explicit, and pass a 0.
+extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t, unsigned);
+extern ssize_t pread(int, void *, size_t, off_t, unsigned);
 extern void bswap(void *, unsigned);
 
 static Mach_i386_thread_state const *
@@ -339,7 +342,7 @@ do_xmap(
                 VM_PROT_READ | VM_PROT_WRITE,
                 MAP_FIXED | MAP_PRIVATE |
                     ((xi || 0==sc->filesize) ? MAP_ANON : 0),
-                ((0==sc->filesize) ? -1 : fdi), sc->fileoff + fat_offset) ) {
+                ((0==sc->filesize) ? -1 : fdi), sc->fileoff + fat_offset, 0) ) {
             err_exit(8);
         }
         if (xi && 0!=sc->filesize) {
@@ -358,7 +361,7 @@ ERR_LAB
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, sc->initprot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0, 0 ) ) {
                 err_exit(9);
             }
         }
@@ -424,7 +427,7 @@ upx_main(
             err_exit(18);
         }
 fat:
-        if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
+        if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset, 0)) {
 ERR_LAB
             err_exit(19);
         }

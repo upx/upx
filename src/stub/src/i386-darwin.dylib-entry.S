@@ -147,14 +147,15 @@ main:
 
         push eax  # length for eventual munmap
 
-        push 0 # offset
+        push 0  # hi32(offset)
+        push 0  # lo32(offset)
         push -1  # fd
         push MAP_ANON|MAP_PRIVATE
         push PROT_READ|PROT_WRITE
         push eax  # length
         push 0  # addr
         call mmap
-        add esp,6*4
+        add esp,7*4
 
         push eax  # addr for eventual munmap
 
