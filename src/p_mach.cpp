@@ -396,9 +396,13 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE -PAGE_MASK
 
-void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+template <class T>
+void PackMachBase<T>::pack4dylib(  // append PackHeader
+    OutputFile *const fo,
+    Filter &ft,
+    Addr init_address
+)
 {
-    rcmd.init_address = threado.state.eip;
     unsigned opos = sizeof(mhdro);
     fo->seek(opos, SEEK_SET);
 
@@ -420,22 +424,22 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     case Mach_segment_command::LC_LOAD_DYLIB:
     case Mach_segment_command::LC_ID_DYLIB:
     case Mach_segment_command::LC_LOAD_DYLINKER:
-    case Mach_segment_command::LC_SEGMENT_64:
-    case Mach_segment_command::LC_ROUTINES_64:
     case Mach_segment_command::LC_UUID:
     case Mach_segment_command::LC_RPATH:
     case Mach_segment_command::LC_CODE_SIGNATURE:
     case Mach_segment_command::LC_REEXPORT_DYLIB:
         hdrpos += seg->cmdsize;
         break;  // contain no file offset fields
+    case Mach_segment_command::LC_ROUTINES_64:
     case Mach_segment_command::LC_ROUTINES: {
         Mach_routines_command cmd = *(Mach_routines_command const *)seg;
         cmd.reserved1 = cmd.init_address;
-        cmd.init_address = threado.state.eip;
+        cmd.init_address = init_address;
         fo->seek(hdrpos, SEEK_SET);
         fo->rewrite(&cmd, sizeof(cmd));
         hdrpos += sizeof(cmd);
     } break;
+    case Mach_segment_command::LC_SEGMENT_64:
     case Mach_segment_command::LC_SEGMENT: {
         // non-__TEXT might be observed and relocated by dyld before us.
         Mach_segment_command segcmdtmp = *seg;
@@ -515,7 +519,12 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(linfo);
-    PackMachBase<MachClass_LE32>::pack4(fo, ft);
+    PackMachBase<T>::pack4(fo, ft);
+}
+
+void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    pack4dylib(fo, ft, threado.state.eip);
 }
 
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader

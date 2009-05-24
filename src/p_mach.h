@@ -468,6 +468,8 @@ public:
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     virtual void pack4(OutputFile *, Filter &) = 0;  // append PackHeader
 
+    virtual void pack4dylib(OutputFile *, Filter &, Addr init_address);
+
     virtual void pack1_setup_threado(OutputFile *const fo) = 0;
     virtual void unpack(OutputFile *fo);
 
@@ -506,7 +508,6 @@ protected:
 
     Mach_header mhdro;
     Mach_segment_command segcmdo;
-    Mach_routines_command rcmd;
 
     __packed_struct(b_info)     // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size
