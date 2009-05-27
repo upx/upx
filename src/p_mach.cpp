@@ -63,6 +63,9 @@ static const
 // The runtime stub for the dyld -init routine does not use "fold"ed code.
 //#include "stub/i386-darwin.dylib-fold.h"
 
+static const
+#include "stub/powerpc-darwin.dylib-entry.h"
+
 template <class T>
 PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
@@ -83,6 +86,11 @@ PackMachBase<T>::~PackMachBase()
 }
 
 PackDylibI386::PackDylibI386(InputFile *f) : super(f)
+{
+    my_filetype = Mach_header::MH_DYLIB;
+}
+
+PackDylibPPC32::PackDylibPPC32(InputFile *f) : super(f)
 {
     my_filetype = Mach_header::MH_DYLIB;
 }
@@ -313,6 +321,14 @@ PackDylibI386::buildLoader(const Filter *ft)
         0,  0,  ft );
 }
 
+void
+PackDylibPPC32::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_powerpc_darwin_dylib_entry, sizeof(stub_powerpc_darwin_dylib_entry),
+        0,  0,  ft );
+}
+
 template <class T>
 void PackMachBase<T>::patchLoader() { }
 
@@ -430,6 +446,13 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
     case Mach_segment_command::LC_REEXPORT_DYLIB:
         hdrpos += seg->cmdsize;
         break;  // contain no file offset fields
+    case Mach_segment_command::LC_TWOLEVEL_HINTS: {
+        Mach_twolevel_hints_command cmd = *(Mach_twolevel_hints_command const *)seg;
+        if (o_end_txt <= cmd.offset) { cmd.offset += slide; }
+        fo->seek(hdrpos, SEEK_SET);
+        fo->rewrite(&cmd, sizeof(cmd));
+        hdrpos += sizeof(cmd);
+    } break;
     case Mach_segment_command::LC_ROUTINES_64:
     case Mach_segment_command::LC_ROUTINES: {
         Mach_routines_command cmd = *(Mach_routines_command const *)seg;
@@ -527,9 +550,14 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     pack4dylib(fo, ft, threado.state.eip);
 }
 
+void PackDylibPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    pack4dylib(fo, ft, threado.state.srr0);
+}
+
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
-    BE32 disp;
+    TE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
@@ -543,7 +571,7 @@ void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 
 void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
-    LE32 disp;
+    TE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
@@ -557,7 +585,7 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 
 void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
-    LE32 disp;
+    TE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
@@ -571,7 +599,30 @@ void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
-    LE32 disp;
+    TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + 4*sizeof(disp);
+
+    disp = prev_init_address;
+    fo->write(&disp, sizeof(disp));  // user .init_address
+
+    disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
+    fo->write(&disp, sizeof(disp));  // src offset(compressed __TEXT)
+
+    disp = len - disp - 3*sizeof(disp);
+    fo->write(&disp, sizeof(disp));  // length(compressed __TEXT)
+
+    unsigned const save_sz_mach_headers(sz_mach_headers);
+    sz_mach_headers = 0;
+    super::pack3(fo, ft);
+    sz_mach_headers = save_sz_mach_headers;
+}
+
+void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));

@@ -70,6 +70,7 @@
         LC_ID_DYLIB      = 0xd,
         LC_LOAD_DYLINKER = 0xe,
         LC_ROUTINES      = 0x11,
+        LC_TWOLEVEL_HINTS= 0x16,
         LC_SEGMENT_64    = 0x19,
         LC_ROUTINES_64   = 0x1a,
         LC_UUID          = 0x1b,

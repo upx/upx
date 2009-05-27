@@ -211,6 +211,20 @@ __packed_struct(Mach_routines_command)
 __packed_struct_end()
 
 template <class TMachITypes>
+__packed_struct(Mach_twolevel_hints_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Off  Off;
+
+    Word cmd;
+    Word cmdsize;
+    Off offset;   /* offset to the hint table */
+    Word nhints;  /* number of hints */
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
+template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state)
     typedef typename TMachITypes::Addr Addr;
 
@@ -340,6 +354,7 @@ struct MachClass_32
     typedef N_Mach::Mach_dysymtab_command<MachITypes> Mach_dysymtab_command;
     typedef N_Mach::Mach_segsplit_info_command<MachITypes> Mach_segsplit_info_command;
     typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
+    typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
     typedef N_Mach::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
@@ -369,6 +384,7 @@ struct MachClass_64
     typedef N_Mach::Mach_dysymtab_command<MachITypes> Mach_dysymtab_command;
     typedef N_Mach::Mach_segsplit_info_command<MachITypes> Mach_segsplit_info_command;
     typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
+    typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -391,6 +407,7 @@ typedef MachClass_Host32::Mach_symtab_command Mach32_symtab_command;
 typedef MachClass_Host32::Mach_dysymtab_command Mach32_dysymtab_command;
 typedef MachClass_Host32::Mach_segsplit_info_command Mach32_segsplit_info_command;
 typedef MachClass_Host32::Mach_routines_command Mach32_routines_command;
+typedef MachClass_Host32::Mach_twolevel_hints_command Mach32_twolevel_hints_command;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
@@ -398,6 +415,7 @@ typedef MachClass_Host64::Mach_symtab_command Mach64_symtab_command;
 typedef MachClass_Host64::Mach_dysymtab_command Mach64_dysymtab_command;
 typedef MachClass_Host64::Mach_segsplit_info_command Mach64_segsplit_info_command;
 typedef MachClass_Host64::Mach_routines_command Mach64_routines_command;
+typedef MachClass_Host64::Mach_twolevel_hints_command Mach64_twolevel_hints_command;
 
 typedef MachClass_BE32::Mach_segment_command   MachBE32_segment_command;
 typedef MachClass_BE32::Mach_section_command   MachBE32_section_command;
@@ -405,6 +423,7 @@ typedef MachClass_BE32::Mach_symtab_command   MachBE32_symtab_command;
 typedef MachClass_BE32::Mach_dysymtab_command   MachBE32_dysymtab_command;
 typedef MachClass_BE32::Mach_segsplit_info_command   MachBE32_segsplit_info_command;
 typedef MachClass_BE32::Mach_routines_command   MachBE32_routines_command;
+typedef MachClass_BE32::Mach_twolevel_hints_command   MachBE32_twolevel_hints_command;
 
 typedef MachClass_BE64::Mach_segment_command   MachBE64_segment_command;
 typedef MachClass_BE64::Mach_section_command   MachBE64_section_command;
@@ -412,6 +431,7 @@ typedef MachClass_BE64::Mach_symtab_command   MachBE64_symtab_command;
 typedef MachClass_BE64::Mach_dysymtab_command   MachBE64_dysymtab_command;
 typedef MachClass_BE64::Mach_segsplit_info_command   MachBE64_segsplit_info_command;
 typedef MachClass_BE64::Mach_routines_command   MachBE64_routines_command;
+typedef MachClass_BE64::Mach_twolevel_hints_command   MachBE64_twolevel_hints_command;
 
 typedef MachClass_LE32::Mach_segment_command   MachLE32_segment_command;
 typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
@@ -419,6 +439,7 @@ typedef MachClass_LE32::Mach_symtab_command   MachLE32_symtab_command;
 typedef MachClass_LE32::Mach_dysymtab_command   MachLE32_dysymtab_command;
 typedef MachClass_LE32::Mach_segsplit_info_command   MachLE32_segsplit_info_command;
 typedef MachClass_LE32::Mach_routines_command   MachLE32_routines_command;
+typedef MachClass_LE32::Mach_twolevel_hints_command   MachLE32_twolevel_hints_command;
 
 typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
 typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
@@ -426,6 +447,7 @@ typedef MachClass_LE64::Mach_symtab_command   MachLE64_symtab_command;
 typedef MachClass_LE64::Mach_dysymtab_command   MachLE64_dysymtab_command;
 typedef MachClass_LE64::Mach_segsplit_info_command   MachLE64_segsplit_info_command;
 typedef MachClass_LE64::Mach_routines_command   MachLE64_routines_command;
+typedef MachClass_LE64::Mach_twolevel_hints_command   MachLE64_twolevel_hints_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
@@ -454,6 +476,7 @@ protected:
     typedef typename MachClass::Mach_dysymtab_command Mach_dysymtab_command;
     typedef typename MachClass::Mach_segsplit_info_command Mach_segsplit_info_command;
     typedef typename MachClass::Mach_routines_command Mach_routines_command;
+    typedef typename MachClass::Mach_twolevel_hints_command Mach_twolevel_hints_command;
 
 public:
     PackMachBase(InputFile *, unsigned cpuid, unsigned filetype,
@@ -579,6 +602,22 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+};
+
+class PackDylibPPC32 : public PackMachPPC32
+{
+    typedef PackMachPPC32 super;
+
+public:
+    PackDylibPPC32(InputFile *f);
+
+    virtual int getFormat() const { return UPX_F_DYLIB_PPC32; }
+    virtual const char *getName() const { return "Dylib/ppc32"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.dylib"; }
+protected:
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual void buildLoader(const Filter *ft);
 };
 
 class PackMachI386 : public PackMachBase<MachClass_LE32>

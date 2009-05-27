@@ -102,6 +102,7 @@ STUBS += mips.r3000-linux.elf-fold.h
 STUBS += mipsel.r3000-linux.elf-entry.h
 STUBS += mipsel.r3000-linux.elf-fold.h
 STUBS += mipsel.r3000-ps1.h
+STUBS += powerpc-darwin.dylib-entry.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
@@ -1049,6 +1050,19 @@ tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
+
+# /***********************************************************************
+# // powerpc-darwin.dylib
+# ************************************************************************/
+
+# info: we use the tc settings from powerpc-linux.elf
+powerpc-darwin.dylib%.h : tc_list = powerpc-linux.elf default
+powerpc-darwin.dylib%.h : tc_bfdname = elf32-powerpc
+
+powerpc-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 
 # /***********************************************************************
 # // powerpc-linux.elf
