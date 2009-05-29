@@ -718,7 +718,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     unsigned total_in = 0;
     unsigned total_out = 0;
 
-    unsigned hdr_u_len = mhdri.sizeofcmds;
+    unsigned hdr_u_len = mhdri.sizeofcmds + sizeof(mhdri);
 
     uip->ui_pass = 0;
     ft.addvalue = 0;
@@ -741,7 +741,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
         x.offset = msegcmd[k].fileoff;
         x.size   = msegcmd[k].filesize;
         if (0 == nx) { // 1st LC_SEGMENT must cover Mach_header at 0==fileoffset
-            unsigned const delta = mhdri.sizeofcmds;
+            unsigned const delta = mhdri.sizeofcmds + sizeof(mhdri);
             x.offset    += delta;
             x.size      -= delta;
         }
