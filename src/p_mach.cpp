@@ -473,7 +473,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
                 segcmdtmp.filesize = fo->getBytesWritten();
                 segcmdtmp.maxprot  |= Mach_segment_command::VM_PROT_WRITE;
                 segcmdtmp.initprot |= Mach_segment_command::VM_PROT_WRITE;
-                o_end_txt = segcmdtmp.filesize + segcmdtmp.fileoff;
+                opos = o_end_txt = segcmdtmp.filesize + segcmdtmp.fileoff;
             }
             else {
                 opos += ~PAGE_MASK & (0u - opos);  // advance to PAGE_SIZE boundary

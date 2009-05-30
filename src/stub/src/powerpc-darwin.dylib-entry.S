@@ -1,5 +1,5 @@
 /*
- *  powerpc-darwin.dylib-entry.S -- program entry point & decompressor (PowerPC32 dylib)
+ *  powerpc-darwin.dylib-entry.S -- program entry point & decompress (PowerPC32 dylib)
  *
  *  This file is part of the UPX executable compressor.
  *
@@ -41,7 +41,7 @@
 _start: .globl _start
         mflr r2
         call main  # must be exactly 1 instruction; link_register= &decompress
-decompressor:
+decompress:
   section NRV_HEAD
 SZ_DLINE=128  # size of data cache line in Apple G5
 
@@ -110,10 +110,28 @@ cfl_ret:
         // IDENTSTR goes here
 
   section ELFMAINZ
+sz_l_info= 12
+sz_p_info= 12
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
   b_method= 8
+  b_ftid=   9
+  b_cto8=  10
+
+// register numbers during entry
+#define f_unc 31
+#define f_unf 30
+#define l_unm 29
+#define a_unm 28
+#define unc   27
+#define cpr   26
+#define unc2  25
+#define cpr2  24
+#define l_unc 23
+#define l_cpr 22
+#define f_uini 21
+#define t_h   20  /* temporary */
 
 PROT_NONE  =0x00
 PROT_READ  =0x01
@@ -125,21 +143,22 @@ MAP_PRIVATE =0x2
 MAP_ANON    =0x1000
 
 SYS_mmap    =197
+SYS_munmap=   73
 SYS_mprotect= 74
 
 main2:
-    teq r0,r0  // debugging
+    //teq r0,r0  // debugging
         stwu r2,-4*(1+ 32-a0)(sp)  # retaddr
         stmw a0,4*1(sp)
-        mflr r31  # r31= &decompressor
-        lwz  r29, -4*1(r31)  # "call main" at _start
-        lwz  r30,-4*1+ _start - decompressor(r31)  # 4+ offset(_start)
-        rlwinm r29,r29,0,6,29  # 4+ main - decompressor
-        add  r30,r30,r29  # offset(main); ASSUMES (8+_start)==decompressor
-        addi r29,r29,-4   # main - decompressor
+        mflr f_unc  # f_unc= &decompress
+        lwz  t_h, -4*1(f_unc)  # "call main" at _start
+        lwz  l_unm,-4*1+ _start - decompress(f_unc)  # 4+ offset(_start)
+        rlwinm t_h,t_h,0,6,29  # 4+ main - decompress
+        add  l_unm,l_unm,t_h  # offset(main); ASSUMES (8+_start)==decompress
+        addi t_h,t_h,-4   # main - decompress
 
         li  a0,0  # addr
-        mr  a1,r30  # length
+        mr  a1,l_unm  # length for munmap
         li  a2,PROT_READ|PROT_WRITE
         li  a3,MAP_ANON|MAP_PRIVATE
         li  a4,-1
@@ -148,19 +167,19 @@ main2:
         li  0,SYS_mmap
         sc
           li a0,-1  # failure
-    teq r0,r0  // debugging
+        mr a_unm,a0  # address for munmap
 
 
         li   a2,main - movup2
         mtctr a2
-        add  a1,a0 ,r30  # lwa(dst); new_page + offset(main)
-        add  a0,r29,r31  # lwa(src); &main
+        add  a1,a0 ,l_unm  # lwa(dst); new_page + offset(main)
+        add  a0,t_h,f_unc  # lwa(src); &main
 movup1:  # descending copy [moveup2, main)
         lbzu r0,-1(a0)
         stbu r0,-1(a1)
         bdnz+ movup1
 
-        subf a2,a2,r30  # offset(movup2)
+        subf a2,a2,l_unm  # offset(movup2)
         mtlr a1  # &copied movup2
         mtctr a2  # offset(movup2)
         blr  # goto the copied code
@@ -169,11 +188,77 @@ movup2:  # descending copy [base, movup2)
         lbzu r0,-1(a0)
         stbu r0,-1(a1)
         bdnz+ movup2
+        subf f_unc,a0,f_unc
+        add  f_unc,a1,f_unc  # relocated decompress
 
-        subf r31,a0,r31
-        add  r31,a1,r31  # relocated decompressor
+        lwz  t0,-4*3+ _start - decompress(f_unc)  # offset(b_info)
+        add  cpr,a1,t0  # &b_info
+        add  unc,a0,t0  # &b_info
+        addi unc,unc,-sz_l_info -sz_p_info
 
-    teq r0,r0
+        // skip compressed Mach headers
+        lwz  t0,sz_cpr(cpr)
+        addi cpr,cpr,sz_b_info
+        add  cpr,cpr,t0
+dy_uncpr:
+        mr cpr2,cpr
+        mr unc2,unc
+        addi a0,cpr,sz_unc; call get4; beq dy_done; add unc,unc,a0; mr l_unc,a0
+        addi a0,cpr,sz_cpr; call get4;              add cpr,cpr,a0; mr l_cpr,a0
+        addi cpr,cpr,sz_b_info
+
+        stwu l_unc,-4(sp)
+        mtlr f_unc
+        addi a0,cpr2,sz_b_info  # src
+        mr a1,l_cpr
+        mr a2,unc2  # dst
+        mr a3,sp  # &l_dst
+        lbz a4,b_method(cpr2)
+        blrl  # uncompress
+        addi sp,sp,4
+                // FIXME: check status
+
+        lbz a3,b_ftid(cpr2); cmpli cr0,a3,0; beq dy_uncpr
+        lbz a2,b_cto8(cpr2)
+        lwz a1,sz_unc(cpr2)
+        mr  a0,unc2
+        bl unfilter
+        b dy_uncpr
+
+dy_done:
+        bl dy_done2
+dy_done1:  # escape hatch
+        sc  # munmap
+          li a0,~0  # failure
+        lmw t0,0(sp); addi sp,sp,4*(32-t0)
+        mtlr t0  # &continuation in dyld
+        bctr  # goto user_init_function
+dy_done2:
+        li t0,(dy_done2 - dy_done1)/4
+        mflr a0; la a0,dy_done2 - dy_done1(a0)
+        mtctr t0
+dy_done3:
+        lwzu t0,-4(a0)
+        stwu t0,-4(unc2)
+        bdnz+ dy_done3
+
+        mtlr unc2
+        mtctr f_uini  # user_init_function
+        mr a0,a_unm
+        mr a1,l_unm
+        li  0,SYS_munmap
+        blr  # goto relocted dy_done1
+
+get4:
+        lbz t0,3(a0)
+        lbz t1,2(a0); rlwimi t0,t1, 8,16,23
+        lbz t1,1(a0); rlwimi t0,t1,16, 8,15
+        lbz t1,0(a0); rlwimi t0,t1,24, 0, 7
+        mr. a0,t0  # set condition codes
+        blr
+
+unfilter:  # FIXME
+        ret
 main:
         b main2
 dy_top:
