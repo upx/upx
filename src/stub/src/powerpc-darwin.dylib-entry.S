@@ -70,6 +70,11 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 
 #include "arch/powerpc/32/lzma_d.S"
 
+#undef off
+#undef len
+#undef bits
+#undef disp
+
   section NRV_TAIL
 eof_nrv:
 #define dst0 a4
@@ -121,17 +126,18 @@ sz_b_info= 12
 
 // register numbers during entry
 #define f_unc 31
-#define f_unf 30
+#define f_uini 30
 #define l_unm 29
 #define a_unm 28
-#define unc   27
-#define cpr   26
-#define unc2  25
-#define cpr2  24
+#define r_unc 27
+#define r_cpr 26
+#define s_unc 25
+#define s_cpr 24
 #define l_unc 23
 #define l_cpr 22
-#define f_uini 21
-#define t_h   20  /* temporary */
+#define t_h   21  /* temporary */
+
+LINKAREA= 6*4  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 
 PROT_NONE  =0x00
 PROT_READ  =0x01
@@ -188,40 +194,46 @@ movup2:  # descending copy [base, movup2)
         lbzu r0,-1(a0)
         stbu r0,-1(a1)
         bdnz+ movup2
+
+        lwz  f_uini,-4*4+ _start - decompress(f_unc)  # offset(user_init_fn)
         subf f_unc,a0,f_unc
         add  f_unc,a1,f_unc  # relocated decompress
+        add  f_uini,f_uini,a0
 
         lwz  t0,-4*3+ _start - decompress(f_unc)  # offset(b_info)
-        add  cpr,a1,t0  # &b_info
-        add  unc,a0,t0  # &b_info
-        addi unc,unc,-sz_l_info -sz_p_info
+        add  r_cpr,a1,t0  # &b_info
+        add  r_unc,a0,t0  # &b_info
+        addi r_unc,r_unc,-sz_l_info -sz_p_info
 
         // skip compressed Mach headers
-        lwz  t0,sz_cpr(cpr)
-        addi cpr,cpr,sz_b_info
-        add  cpr,cpr,t0
+        lwz  t0,sz_cpr(r_cpr)
+        addi r_cpr,r_cpr,sz_b_info
+        add  r_cpr,r_cpr,t0
 dy_uncpr:
-        mr cpr2,cpr
-        mr unc2,unc
-        addi a0,cpr,sz_unc; call get4; beq dy_done; add unc,unc,a0; mr l_unc,a0
-        addi a0,cpr,sz_cpr; call get4;              add cpr,cpr,a0; mr l_cpr,a0
-        addi cpr,cpr,sz_b_info
+        mr s_cpr,r_cpr
+        mr s_unc,r_unc
+        addi a0,r_cpr,sz_unc; call get4; beq dy_done
+                                        add r_unc,r_unc,a0; mr l_unc,a0
+        addi a0,r_cpr,sz_cpr; call get4
+                                        add r_cpr,r_cpr,a0; mr l_cpr,a0
+        addi r_cpr,r_cpr,sz_b_info
 
-        stwu l_unc,-4(sp)
+        stwu l_unc,-8(sp)  # keep stack 8-byte aligned
         mtlr f_unc
-        addi a0,cpr2,sz_b_info  # src
+        addi a0,s_cpr,sz_b_info  # src
         mr a1,l_cpr
-        mr a2,unc2  # dst
+        mr a2,s_unc  # dst
         mr a3,sp  # &l_dst
-        lbz a4,b_method(cpr2)
+        lbz a4,b_method(s_cpr)
+        la sp,-LINKAREA(sp)
         blrl  # uncompress
-        addi sp,sp,4
+        la sp,8+LINKAREA(sp)
                 // FIXME: check status
 
-        lbz a3,b_ftid(cpr2); cmpli cr0,a3,0; beq dy_uncpr
-        lbz a2,b_cto8(cpr2)
-        lwz a1,sz_unc(cpr2)
-        mr  a0,unc2
+        lbz a3,b_ftid(s_cpr); cmpli cr0,a3,0; beq dy_uncpr
+        lbz a2,b_cto8(s_cpr)
+        lwz a1,sz_unc(s_cpr)
+        mr  a0,s_unc
         bl unfilter
         b dy_uncpr
 
@@ -239,15 +251,15 @@ dy_done2:
         mtctr t0
 dy_done3:
         lwzu t0,-4(a0)
-        stwu t0,-4(unc2)
+        stwu t0,-4(s_unc)
         bdnz+ dy_done3
 
-        mtlr unc2
+        mtlr s_unc
         mtctr f_uini  # user_init_function
         mr a0,a_unm
         mr a1,l_unm
         li  0,SYS_munmap
-        blr  # goto relocted dy_done1
+        blr  # goto relocated dy_done1
 
 get4:
         lbz t0,3(a0)
@@ -257,8 +269,9 @@ get4:
         mr. a0,t0  # set condition codes
         blr
 
-unfilter:  # FIXME
-        ret
+unfilter:
+#include "arch/powerpc/32/bxx.S"
+
 main:
         b main2
 dy_top:

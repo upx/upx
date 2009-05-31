@@ -43,7 +43,7 @@ sz_l_info= 12
 sz_p_info= 12
 
 OVERHEAD= 2048
-LINKAREA= 6*4  // (sp,cr,pc, xx,yy.zz) save area per calling convention
+LINKAREA= 6*4  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
 */

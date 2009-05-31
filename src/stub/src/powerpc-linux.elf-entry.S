@@ -167,8 +167,20 @@ unfold:
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)
         addi src,r30,sz_b_info
-        la sp,-6*4(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
+        la sp,-6*4(sp)  // (sp,pc,cr, xx,yy,zz) save area per calling convention
         bctr  // goto decomrpess; return to link register (mmap'ed page)
+
+// Example code at entrypoint of C-language subroutine:
+//      mflr    r0  # r0= return address
+//      stwu    sp,-96(sp)  # allocate local frame; chain to previous frame
+//      stmw    r14,24(sp)  # save 18 regs r14,r15,...,r31; 4*18 == (96 - 24)
+//      stw     r0,100(sp)  # save return address into caller's frame (100 >= 96)
+// Example code at exit:
+//      lwz     r0,100(sp)  # r0= return address
+//      lmw     r14,24(sp)  # restore 18 regs r14,r15,...,r31
+//      mtlr    r0  # prepare for indirect jump
+//      addi    sp,sp,96  # de-allocate local frame
+//      blr  # goto return address
 
 main:
 ////  teq r0,r0  // debugging

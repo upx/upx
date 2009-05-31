@@ -3,8 +3,9 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.05 (01 XXX 2009):
-  * new format Dylib/i386 supports shared libraries on Darwin (Mach-o);
-    an existing -init function (LC_ROUTINES command) is required.
+  * new formats Dylib/i386 and Dylib/ppc32 support shared libraries
+    [such as browser plugins] on Darwin (Apple Macintosh).  An existing
+    -init function (LC_ROUTINES command) is required.
 
 Changes in 3.04 (27 Apr 2009):
   * new format vmlinuz/armel for Debian NSLU2 (etc.) linux kernel
