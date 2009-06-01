@@ -475,7 +475,6 @@ private:
 #define UPX_F_MACH_ARMEL        32
 
 #define UPX_F_DYLIB_i386        33
-#define UPX_F_DYLIB_PPC32       34
 
 #define UPX_F_PLAIN_TEXT        127
 
@@ -488,6 +487,7 @@ private:
 #define UPX_F_VMLINUX_ARMEB     135
 #define UPX_F_VMLINUX_PPC32     136
 #define UPX_F_LINUX_ELF32_MIPSEB 137
+#define UPX_F_DYLIB_PPC32       138
 
 
 // compression methods
