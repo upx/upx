@@ -979,6 +979,7 @@ bool PackMachBase<T>::canPack()
         ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
     }
     if (Mach_header::MH_DYLIB==my_filetype && 0==o_routines_cmd) {
+        infoWarning("missing -init function");
         return false;
     }
 
@@ -1055,18 +1056,42 @@ void PackMachFat::pack(OutputFile *fo)
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         switch (fat_head.arch[j].cputype) {
         case PackMachFat::CPU_TYPE_I386: {
-            PackMachI386 packer(fi);
-            packer.initPackHeader();
-            packer.canPack();
-            packer.updatePackHeader();
-            packer.pack(fo);
+            N_Mach::Mach_header<MachClass_LE32::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_LE32::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachI386 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibI386 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
-            PackMachPPC32 packer(fi);
-            packer.initPackHeader();
-            packer.canPack();
-            packer.updatePackHeader();
-            packer.pack(fo);
+            N_Mach::Mach_header<MachClass_BE32::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachPPC32 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibPPC32 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
         } break;
         }  // switch cputype
         fat_head.arch[j].offset = base;
@@ -1098,16 +1123,38 @@ void PackMachFat::unpack(OutputFile *fo)
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         switch (fat_head.arch[j].cputype) {
         case PackMachFat::CPU_TYPE_I386: {
-            PackMachI386 packer(fi);
-            packer.initPackHeader();
-            packer.canUnpack();
-            packer.unpack(fo);
+            N_Mach::Mach_header<MachClass_LE32::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_LE32::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachI386 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibI386 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
-            PackMachPPC32 packer(fi);
-            packer.initPackHeader();
-            packer.canUnpack();
-            packer.unpack(fo);
+            N_Mach::Mach_header<MachClass_BE32::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachPPC32 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibPPC32 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
         } break;
         }  // switch cputype
         fat_head.arch[j].offset = base;
@@ -1135,13 +1182,19 @@ bool PackMachFat::canPack()
         default: return false;
         case PackMachFat::CPU_TYPE_I386: {
             PackMachI386 packer(fi);
-            if (!packer.canPack())
-                return false;
+            if (!packer.canPack()) {
+                PackDylibI386 pack2r(fi);
+                if (!pack2r.canPack())
+                    return false;
+            }
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             PackMachPPC32 packer(fi);
-            if (!packer.canPack())
-                return false;
+            if (!packer.canPack()) {
+                PackDylibPPC32 pack2r(fi);
+                if (!pack2r.canPack())
+                    return false;
+            }
         } break;
         }  // switch cputype
     }
@@ -1170,15 +1223,27 @@ int PackMachFat::canUnpack()
         default: return false;
         case PackMachFat::CPU_TYPE_I386: {
             PackMachI386 packer(fi);
-            if (!packer.canUnpack())
-                return 0;
-            ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
+            if (!packer.canUnpack()) {
+                PackDylibI386 pack2r(fi);
+                if (!pack2r.canUnpack())
+                    return 0;
+                else
+                    ph.format = pack2r.getFormat(); // FIXME: copy entire PackHeader
+            }
+            else
+                ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             PackMachPPC32 packer(fi);
-            if (!packer.canUnpack())
-                return 0;
-            ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
+            if (!packer.canUnpack()) {
+                PackDylibPPC32 pack2r(fi);
+                if (!pack2r.canUnpack())
+                    return 0;
+                else
+                    ph.format = pack2r.getFormat(); // FIXME: copy entire PackHeader
+            }
+            else
+                ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
         } break;
         }  // switch cputype
     }
