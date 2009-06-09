@@ -32,7 +32,7 @@
 /*************************************************************************
 // We have been CALLed as a subroutine from dyld; C-language rules apply.
 // -4*4+_start: .long offset(user_init_function)
-// -3*4+_start: .long offset(b_info of compressed Mach_headers) 
+// -3*4+_start: .long offset(b_info of compressed Mach_headers)
 // -2*4+_start: .long length(compressed __TEXT)
 // -1*4+_start: .long 8+ total_length  # 8+ number of preceding bytes in file
 **************************************************************************/

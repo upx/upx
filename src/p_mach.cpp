@@ -54,7 +54,7 @@ static const
 // end of processing by dyld.  Relocation, loading of dependent libraries,
 // etc., already have taken place before decompression.  So the Mach-o
 // headers, the __IMPORT segment, the __LINKEDIT segment, anything
-// that is modifed by relocation, etc., cannot be compressed. 
+// that is modifed by relocation, etc., cannot be compressed.
 // We simplify arbitrarily by compressing only the __TEXT segment,
 // which must be the first segment.
 

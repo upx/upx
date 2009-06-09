@@ -37,7 +37,7 @@
 /*************************************************************************
 // We have been CALLed as a subroutine from dyld; C-language rules apply.
 // -4*4+_start: .long offset(user_init_function)
-// -3*4+_start: .long offset(&b_info of compressed Mach_headers) 
+// -3*4+_start: .long offset(&b_info of compressed Mach_headers)
 // -2*4+_start: .long length(compressed __TEXT)
 // -1*4+_start: .long total_length  # of preceding bytes in file
 **************************************************************************/
@@ -171,7 +171,7 @@ main:
         lea eax,[-offset(dy_top - dy_reloc) + edi]
         jmp %eax
 dy_reloc:
-        
+
         // Copy compressed __TEXT.
         push edi  # remember start of compressed __TEXT
         mov edx,ebx  # &total_length
