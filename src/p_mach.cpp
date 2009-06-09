@@ -433,7 +433,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
             seg->cmdsize + (char const *)seg )
     ) switch (~Mach_segment_command::LC_REQ_DYLD & seg->cmd) {
     default:  // unknown if any file offset field must slide
-        printf("Unrecognized Macho cmd  offset=0x%x  cmd=0x%x  size=0x%x\n", (char *)seg - (char *)rawmseg, (unsigned)seg->cmd, (unsigned)seg->cmdsize);
+        printf("Unrecognized Macho cmd  offset=0x%lx  cmd=0x%lx  size=0x%lx\n", (unsigned long)((const char *)seg - (const char *)rawmseg), (unsigned long)seg->cmd, (unsigned long)seg->cmdsize);
         // fall through
     case Mach_segment_command::LC_THREAD:
     case Mach_segment_command::LC_UNIXTHREAD:
@@ -447,7 +447,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         hdrpos += seg->cmdsize;
         break;  // contain no file offset fields
     case Mach_segment_command::LC_TWOLEVEL_HINTS: {
-        Mach_twolevel_hints_command cmd = *(Mach_twolevel_hints_command const *)seg;
+        Mach_twolevel_hints_command cmd; memcpy(&cmd, seg, sizeof(cmd));
         if (o_end_txt <= cmd.offset) { cmd.offset += slide; }
         fo->seek(hdrpos, SEEK_SET);
         fo->rewrite(&cmd, sizeof(cmd));
@@ -455,7 +455,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
     } break;
     case Mach_segment_command::LC_ROUTINES_64:
     case Mach_segment_command::LC_ROUTINES: {
-        Mach_routines_command cmd = *(Mach_routines_command const *)seg;
+        Mach_routines_command cmd; memcpy(&cmd, seg, sizeof(cmd));
         cmd.reserved1 = cmd.init_address;
         cmd.init_address = init_address;
         fo->seek(hdrpos, SEEK_SET);
@@ -486,7 +486,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
             hdrpos += sizeof(segcmdtmp);
 
             // Update the sections.
-            Mach_section_command const *secp = (Mach_section_command const *)(1+ seg);
+            Mach_section_command const *secp = (Mach_section_command const *)(const void*)(const char*)(1+ seg);
             unsigned const nsects = segcmdtmp.nsects;
             Mach_section_command seccmdtmp;
             for (unsigned j = 0; j < nsects; ++secp, ++j) {
@@ -503,7 +503,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
                 fo->seek(opos, SEEK_SET);
                 fi->seek(seg->fileoff, SEEK_SET);
                 unsigned const len = seg->filesize;
-                char data[len];
+                MemBuffer data(len);
                 fi->readx(data, len);
                 fo->write(data, len);
                 opos += len;
@@ -511,7 +511,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         }
     } break;
     case Mach_segment_command::LC_SYMTAB: {
-        Mach_symtab_command cmd = *(Mach_symtab_command const *)seg;
+        Mach_symtab_command cmd; memcpy(&cmd, seg, sizeof(cmd));
         if (o_end_txt <= cmd.symoff) { cmd.symoff += slide; }
         if (o_end_txt <= cmd.stroff) { cmd.stroff += slide; }
         fo->seek(hdrpos, SEEK_SET);
@@ -519,7 +519,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         hdrpos += sizeof(cmd);
     } break;
     case Mach_segment_command::LC_DYSYMTAB: {
-        Mach_dysymtab_command cmd = *(Mach_dysymtab_command const *)seg;
+        Mach_dysymtab_command cmd; memcpy(&cmd, seg, sizeof(cmd));
         if (o_end_txt <= cmd.tocoff)         { cmd.tocoff         += slide; }
         if (o_end_txt <= cmd.modtaboff)      { cmd.modtaboff      += slide; }
         if (o_end_txt <= cmd.extrefsymoff)   { cmd.extrefsymoff   += slide; }
@@ -531,7 +531,7 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         hdrpos += sizeof(cmd);
     } break;
     case Mach_segment_command::LC_SEGMENT_SPLIT_INFO: {
-        Mach_segsplit_info_command cmd = *(Mach_segsplit_info_command const *)seg;
+        Mach_segsplit_info_command cmd; memcpy(&cmd, seg, sizeof(cmd));
         if (o_end_txt <= cmd.dataoff) { cmd.dataoff += slide; }
         fo->seek(hdrpos, SEEK_SET);
         fo->rewrite(&cmd, sizeof(cmd));
@@ -931,7 +931,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
                 fi->seek(rc->fileoff, SEEK_SET);
                 fo->seek(sc->fileoff, SEEK_SET);
                 unsigned const len = rc->filesize;
-                char data[len];
+                MemBuffer data(len);
                 fi->readx(data, len);
                 fo->write(data, len);
             }
@@ -973,10 +973,10 @@ bool PackMachBase<T>::canPack()
         msegcmd[j] = *(Mach_segment_command const *)ptr;
         if (((Mach_segment_command const *)ptr)->cmd ==
               Mach_segment_command::LC_ROUTINES) {
-            o_routines_cmd = (char *)ptr - (char *)rawmseg;
+            o_routines_cmd = (const char *)ptr - (const char *)rawmseg;
             prev_init_address = ((Mach_routines_command const *)ptr)->init_address;
         }
-        ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
+        ptr += (unsigned) ((const Mach_segment_command *)ptr)->cmdsize;
     }
     if (Mach_header::MH_DYLIB==my_filetype && 0==o_routines_cmd) {
         infoWarning("missing -init function");
@@ -1056,8 +1056,8 @@ void PackMachFat::pack(OutputFile *fo)
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         switch (fat_head.arch[j].cputype) {
         case PackMachFat::CPU_TYPE_I386: {
-            N_Mach::Mach_header<MachClass_LE32::MachITypes> hdr;
             typedef N_Mach::Mach_header<MachClass_LE32::MachITypes> Mach_header;
+            Mach_header hdr;
             fi->readx(&hdr, sizeof(hdr));
             if (hdr.filetype==Mach_header::MH_EXECUTE) {
                 PackMachI386 packer(fi);
@@ -1075,8 +1075,8 @@ void PackMachFat::pack(OutputFile *fo)
             }
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
-            N_Mach::Mach_header<MachClass_BE32::MachITypes> hdr;
             typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
+            Mach_header hdr;
             fi->readx(&hdr, sizeof(hdr));
             if (hdr.filetype==Mach_header::MH_EXECUTE) {
                 PackMachPPC32 packer(fi);
