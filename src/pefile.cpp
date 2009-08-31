@@ -1343,8 +1343,8 @@ static bool match(unsigned itype, const unsigned char *ntype,
     // FIXME this comparison is not too exact
     while (1)
     {
-        char *delim1 = strchr(keep, '/');
-        char *delim2 = strchr(keep, ',');
+        char const *delim1 = strchr(keep, '/');
+        char const *delim2 = strchr(keep, ',');
         if (helper::match(itype, ntype, keep))
         {
             if (!delim1)
