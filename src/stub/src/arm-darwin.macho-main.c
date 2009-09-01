@@ -301,8 +301,8 @@ typedef union {
 
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
-//#define MAP_ANON    0x1000
-#define MAP_ANON  0x20  // x86 DEBUG ONLY
+#define MAP_ANON    0x1000
+//#define MAP_ANON  0x20  // x86 DEBUG ONLY
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
