@@ -40,6 +40,7 @@
     };
     enum { // cputype
         CPU_TYPE_I386      =          7,
+        CPU_TYPE_X86_64    = 0x01000007,
         CPU_TYPE_ARM       =         12,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012
@@ -117,7 +118,9 @@
 #undef WANT_MACH_THREAD_ENUM
     enum { // thread flavor
         PPC_THREAD_STATE = 1,
-        i386_THREAD_STATE = 1,
+        PPC_THREAD_STATE64 = 5,
+        x86_THREAD_STATE32 = 1,
+        x86_THREAD_STATE64 = 4,
         i386_OLD_THREAD_STATE = -1,
         ARM_THREAD_STATE = 1
     };

@@ -45,6 +45,11 @@ static const
 #include "stub/i386-darwin.macho-fold.h"
 
 static const
+#include "stub/amd64-darwin.macho-entry.h"
+static const
+#include "stub/amd64-darwin.macho-fold.h"
+
+static const
 #include "stub/arm-darwin.macho-entry.h"
 static const
 #include "stub/arm-darwin.macho-fold.h"
@@ -66,6 +71,8 @@ static const
 static const
 #include "stub/powerpc-darwin.dylib-entry.h"
 
+static unsigned lc_segment[2];
+
 template <class T>
 PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
@@ -76,6 +83,8 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
+    lc_segment[0] = Mach_segment_command::LC_SEGMENT;
+    lc_segment[1] = Mach_segment_command::LC_SEGMENT_64;
 }
 
 template <class T>
@@ -120,6 +129,12 @@ int const *PackMachI386::getFilters() const
     return filters;
 }
 
+int const *PackMachAMD64::getFilters() const
+{
+    static const int filters[] = { 0x49, FT_END };
+    return filters;
+}
+
 int const *PackMachARMEL::getFilters() const
 {
     static const int filters[] = { 0x50, FT_END };
@@ -134,6 +149,11 @@ Linker *PackMachPPC32::newLinker() const
 Linker *PackMachI386::newLinker() const
 {
     return new ElfLinkerX86;
+}
+
+Linker *PackMachAMD64::newLinker() const
+{
+    return new ElfLinkerAMD64;
 }
 
 Linker *PackMachARMEL::newLinker() const
@@ -218,6 +238,21 @@ void PackMachI386::addStubEntrySections(Filter const *ft)
     addLoader("IDENTSTR", NULL);
     addLoader("LEXEC020", NULL);
     addLoader("FOLDEXEC", NULL);
+}
+
+void PackMachAMD64::addStubEntrySections(Filter const */*ft*/)
+{
+    addLoader("MACHMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
 void PackMachARMEL::addStubEntrySections(Filter const */*ft*/)
@@ -306,6 +341,14 @@ PackMachI386::buildLoader(const Filter *ft)
 }
 
 void
+PackMachAMD64::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_amd64_darwin_macho_entry, sizeof(stub_amd64_darwin_macho_entry),
+        stub_amd64_darwin_macho_fold,  sizeof(stub_amd64_darwin_macho_fold),  ft );
+}
+
+void
 PackMachARMEL::buildLoader(const Filter *ft)
 {
     buildMachLoader(
@@ -356,8 +399,9 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 {
     Mach_segment_command const *const a = (Mach_segment_command const *)aa;
     Mach_segment_command const *const b = (Mach_segment_command const *)bb;
-    unsigned const xa = a->cmd - Mach_segment_command::LC_SEGMENT;
-    unsigned const xb = b->cmd - Mach_segment_command::LC_SEGMENT;
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const xa = a->cmd - lc_seg;
+    unsigned const xb = b->cmd - lc_seg;
            if (xa < xb)        return -1;  // LC_SEGMENT first
            if (xa > xb)        return  1;
     if (a->vmaddr < b->vmaddr) return -1;  // ascending by .vmaddr
@@ -393,6 +437,20 @@ void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     fo->rewrite(&linfo, sizeof(linfo));
 }
 
+void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    // offset of p_info in compressed file
+    overlay_offset = sizeof(mhdro) + sizeof(segcmdo) + sizeof(threado) + sizeof(linfo);
+
+    super::pack4(fo, ft);
+    segcmdo.filesize = fo->getBytesWritten();
+    segcmdo.vmsize += segcmdo.filesize;
+    fo->seek(sizeof(mhdro), SEEK_SET);
+    fo->rewrite(&segcmdo, sizeof(segcmdo));
+    fo->rewrite(&threado, sizeof(threado));
+    fo->rewrite(&linfo, sizeof(linfo));
+}
+
 void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
@@ -411,6 +469,11 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 #undef PAGE_SIZE
 #define PAGE_MASK (~0u<<12)
 #define PAGE_SIZE -PAGE_MASK
+
+#undef PAGE_MASK64
+#undef PAGE_SIZE64
+#define PAGE_MASK64 (~(uint64_t)0<<12)
+#define PAGE_SIZE64 -PAGE_MASK64
 
 template <class T>
 void PackMachBase<T>::pack4dylib(  // append PackHeader
@@ -583,6 +646,20 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
 }
 
+void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len));
+    disp = len - sz_mach_headers;
+    fo->write(&disp, sizeof(disp));
+
+    threado.state.rip = len + sizeof(disp) + segcmdo.vmaddr;  /* entry address */
+    super::pack3(fo, ft);
+}
+
 void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
@@ -652,7 +729,8 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
     unsigned const k
 )
 {
-    if (Mach_segment_command::LC_SEGMENT!=msegcmd[k].cmd
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    if (lc_seg!=msegcmd[k].cmd
     ||  0==msegcmd[k].filesize ) {
         return 0;
     }
@@ -667,7 +745,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         if (k==j) {
             break;
         }
-        if (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd
+        if (lc_seg==msegcmd[j].cmd
         &&  0!=msegcmd[j].filesize ) {
             unsigned const t = msegcmd[j].fileoff;
             if ((t - hi) < (lo - hi)) {
@@ -696,13 +774,14 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)
 template <class T>
 void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     Extent x;
     unsigned k;
 
     // count passes, set ptload vars
     uip->ui_total_passes = 0;
     for (k = 0; k < n_segment; ++k) {
-        if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
+        if (lc_seg==msegcmd[k].cmd
         &&  0!=msegcmd[k].filesize ) {
             uip->ui_total_passes++;
             if (my_filetype==Mach_header::MH_DYLIB) {
@@ -728,7 +807,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     // instructions.  So filter only the largest executable segment.
     unsigned exe_filesize_max = 0;
     for (k = 0; k < n_segment; ++k)
-    if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
+    if (lc_seg==msegcmd[k].cmd
     &&  0!=(Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
     &&  exe_filesize_max < msegcmd[k].filesize) {
         exe_filesize_max = msegcmd[k].filesize;
@@ -736,7 +815,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
 
     int nx = 0;
     for (k = 0; k < n_segment; ++k)
-    if (Mach_segment_command::LC_SEGMENT==msegcmd[k].cmd
+    if (lc_seg==msegcmd[k].cmd
     &&  0!=msegcmd[k].filesize ) {
         x.offset = msegcmd[k].fileoff;
         x.size   = msegcmd[k].filesize;
@@ -793,6 +872,16 @@ void PackMachI386::pack1_setup_threado(OutputFile *const fo)
     fo->write(&threado, sizeof(threado));
 }
 
+void PackMachAMD64::pack1_setup_threado(OutputFile *const fo)
+{
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state, 0, sizeof(threado.state));
+    fo->write(&threado, sizeof(threado));
+}
+
 void PackMachARMEL::pack1_setup_threado(OutputFile *const fo)
 {
     threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
@@ -806,6 +895,7 @@ void PackMachARMEL::pack1_setup_threado(OutputFile *const fo)
 template <class T>
 void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate executable header
 {
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         mhdro.ncmds = 2;
@@ -814,11 +904,11 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     }
     fo->write(&mhdro, sizeof(mhdro));
 
-    segcmdo.cmd = Mach_segment_command::LC_SEGMENT;
+    segcmdo.cmd = lc_seg;
     segcmdo.cmdsize = sizeof(segcmdo);
     strncpy((char *)segcmdo.segname, "__TEXT", sizeof(segcmdo.segname));
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        segcmdo.vmaddr = PAGE_MASK & (~PAGE_MASK +
+        segcmdo.vmaddr = PAGE_MASK64 & (~PAGE_MASK64 +
             msegcmd[n_segment -1].vmsize + msegcmd[n_segment -1].vmaddr );
     }
     if (my_filetype==Mach_header::MH_DYLIB) {
@@ -851,6 +941,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
@@ -890,7 +981,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
     n_segment = 0;
     for (unsigned j= 0; j < ncmds; ++j) {
-        n_segment += (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd);
+        n_segment += (lc_seg==msegcmd[j].cmd);
     }
 
     unsigned total_in = 0;
@@ -906,7 +997,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         k < ncmds;
         (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
     ) {
-        if (Mach_segment_command::LC_SEGMENT==sc->cmd
+        if (lc_seg==sc->cmd
         &&  0!=sc->filesize ) {
             unsigned filesize = sc->filesize;
             unpackExtent(filesize, fo, total_in, total_out,
@@ -926,7 +1017,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
             (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc)),
                    (rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc))
         ) {
-            if (Mach_segment_command::LC_SEGMENT==rc->cmd
+            if (lc_seg==rc->cmd
             &&  0!=rc->filesize ) {
                 fi->seek(rc->fileoff, SEEK_SET);
                 fo->seek(sc->fileoff, SEEK_SET);
@@ -955,21 +1046,23 @@ void PackMachBase<T>::unpack(OutputFile *fo)
 template <class T>
 bool PackMachBase<T>::canPack()
 {
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
-    if (Mach_header::MH_MAGIC         !=mhdri.magic
-    ||  my_cputype                    !=mhdri.cputype
-    ||  my_filetype                   !=mhdri.filetype
+    if ((Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) !=mhdri.magic
+    ||  my_cputype   !=mhdri.cputype
+    ||  my_filetype  !=mhdri.filetype
     )
         return false;
 
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
-    msegcmd = new Mach_segment_command[(unsigned) mhdri.ncmds];
+    unsigned const ncmds = mhdri.ncmds;
+    msegcmd = new Mach_segment_command[ncmds];
     unsigned char const *ptr = (unsigned char const *)rawmseg;
-    for (unsigned j= 0; j < mhdri.ncmds; ++j) {
+    for (unsigned j= 0; j < ncmds; ++j) {
         msegcmd[j] = *(Mach_segment_command const *)ptr;
         if (((Mach_segment_command const *)ptr)->cmd ==
               Mach_segment_command::LC_ROUTINES) {
@@ -984,11 +1077,11 @@ bool PackMachBase<T>::canPack()
     }
 
     // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
-    qsort(msegcmd, mhdri.ncmds, sizeof(*msegcmd), compare_segment_command);
+    qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
 
     // Check that LC_SEGMENTs form one contiguous chunk of the file.
-    for (unsigned j= 0; j < mhdri.ncmds; ++j) {
-        if (Mach_segment_command::LC_SEGMENT==msegcmd[j].cmd) {
+    for (unsigned j= 0; j < ncmds; ++j) {
+        if (lc_seg==msegcmd[j].cmd) {
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
@@ -1017,6 +1110,7 @@ bool PackMachBase<T>::canPack()
 
 template class PackMachBase<MachClass_BE32>;
 template class PackMachBase<MachClass_LE32>;
+template class PackMachBase<MachClass_LE64>;
 
 
 PackMachFat::PackMachFat(InputFile *f) : super(f)

@@ -475,6 +475,8 @@ private:
 #define UPX_F_MACH_ARMEL        32
 
 #define UPX_F_DYLIB_i386        33
+#define UPX_F_MACH_AMD64        34
+#define UPX_F_DYLIB_AMD64       35
 
 #define UPX_F_PLAIN_TEXT        127
 

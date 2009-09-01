@@ -48,6 +48,8 @@ endif
 # ************************************************************************/
 
 ifndef STUBS
+STUBS += amd64-darwin.macho-entry.h
+STUBS += amd64-darwin.macho-fold.h
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux.h
@@ -246,6 +248,34 @@ tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT
 tc.arch-i086.wdis     = $(WATCOM)/binl/wdis
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i386.djasm    = djasm
+
+
+# /***********************************************************************
+# // amd64-darwin.macho
+# ************************************************************************/
+
+# info: we use the tc settings from amd64-linux.elf
+amd64-darwin.macho%.h : tc_list = amd64-linux.elf default
+amd64-darwin.macho%.h : tc_bfdname = elf64-x86-64
+
+amd64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+amd64-darwin.macho-fold.h : tmp/$$T.o tmp/amd64-darwin.macho-main.o
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	chmod a-x tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/amd64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
