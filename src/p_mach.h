@@ -388,7 +388,11 @@ struct MachClass_64
     typedef typename TP::U32 TE32;
     typedef typename TP::U64 TE64;
     typedef N_Mach::MachITypes<TE32, TE64, TE64, TE64> MachITypes;
+#if (ACC_CC_BORLANDC)
+    typedef TE64 Addr;
+#else
     typedef typename MachITypes::Addr Addr;
+#endif
 
     // Mach types
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
@@ -402,6 +406,7 @@ struct MachClass_64
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
+        COMPILE_TIME_ASSERT(sizeof(Addr) == 8)
     }
 };
 
@@ -589,9 +594,7 @@ class PackMachPPC32 : public PackMachBase<MachClass_BE32>
     typedef PackMachBase<MachClass_BE32> super;
 
 public:
-    PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
-        Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
-        sizeof(Mach_ppc_thread_state)>>2, sizeof(threado)) { }
+    PackMachPPC32(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_PPC32; }
     virtual const char *getName() const { return "Mach/ppc32"; }
@@ -640,9 +643,7 @@ class PackMachI386 : public PackMachBase<MachClass_LE32>
     typedef PackMachBase<MachClass_LE32> super;
 
 public:
-    PackMachI386(InputFile *f) : super(f, Mach_header::CPU_TYPE_I386,
-        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE32,
-        sizeof(Mach_i386_thread_state)>>2, sizeof(threado)) { }
+    PackMachI386(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_i386; }
     virtual const char *getName() const { return "Mach/i386"; }
@@ -691,9 +692,7 @@ class PackMachAMD64 : public PackMachBase<MachClass_LE64>
     typedef PackMachBase<MachClass_LE64> super;
 
 public:
-    PackMachAMD64(InputFile *f) : super(f, Mach_header::CPU_TYPE_X86_64,
-        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE64,
-        sizeof(Mach_AMD64_thread_state)>>2, sizeof(threado)) { }
+    PackMachAMD64(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_AMD64; }
     virtual const char *getName() const { return "Mach/AMD64"; }
@@ -726,9 +725,7 @@ class PackMachARMEL : public PackMachBase<MachClass_LE32>
     typedef PackMachBase<MachClass_LE32> super;
 
 public:
-    PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
-        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
-        sizeof(Mach_ARM_thread_state)>>2, sizeof(threado)) { }
+    PackMachARMEL(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_ARMEL; }
     virtual const char *getName() const { return "Mach/ARMEL"; }

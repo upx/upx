@@ -366,6 +366,7 @@ off_t OutputFile::st_size() const
         return bytes_written;  // too big if seek()+write() instead of rewrite()
     }
     struct stat my_st;
+    my_st.st_size = 0;
     if (::fstat(_fd, &my_st) != 0)
         throwIOException(_name, errno);
     return my_st.st_size;

@@ -71,7 +71,11 @@ static const
 static const
 #include "stub/powerpc-darwin.dylib-entry.h"
 
-static unsigned lc_segment[2];
+static const unsigned lc_segment[2] = {
+    0x1, 0x19
+    //Mach_segment_command::LC_SEGMENT,
+    //Mach_segment_command::LC_SEGMENT_64
+};
 
 template <class T>
 PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
@@ -83,8 +87,6 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
-    lc_segment[0] = Mach_segment_command::LC_SEGMENT;
-    lc_segment[1] = Mach_segment_command::LC_SEGMENT_64;
 }
 
 template <class T>
@@ -117,11 +119,21 @@ const int *PackMachARMEL::getCompressionMethods(int method, int level) const
 }
 
 
+PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
+        Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
+        sizeof(Mach_ppc_thread_state)>>2, sizeof(threado))
+{ }
+
 const int *PackMachPPC32::getFilters() const
 {
     static const int filters[] = { 0xd0, FT_END };
     return filters;
 }
+
+PackMachI386::PackMachI386(InputFile *f) : super(f, Mach_header::CPU_TYPE_I386,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE32,
+        sizeof(Mach_i386_thread_state)>>2, sizeof(threado))
+{ }
 
 int const *PackMachI386::getFilters() const
 {
@@ -129,11 +141,21 @@ int const *PackMachI386::getFilters() const
     return filters;
 }
 
+PackMachAMD64::PackMachAMD64(InputFile *f) : super(f, Mach_header::CPU_TYPE_X86_64,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::x86_THREAD_STATE64,
+        sizeof(Mach_AMD64_thread_state)>>2, sizeof(threado))
+{ }
+
 int const *PackMachAMD64::getFilters() const
 {
     static const int filters[] = { 0x49, FT_END };
     return filters;
 }
+
+PackMachARMEL::PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
+        sizeof(Mach_ARM_thread_state)>>2, sizeof(threado))
+{ }
 
 int const *PackMachARMEL::getFilters() const
 {
@@ -472,7 +494,7 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
 #undef PAGE_MASK64
 #undef PAGE_SIZE64
-#define PAGE_MASK64 (~(uint64_t)0<<12)
+#define PAGE_MASK64 (~(acc_uint64l_t)0<<12)
 #define PAGE_SIZE64 -PAGE_MASK64
 
 template <class T>
