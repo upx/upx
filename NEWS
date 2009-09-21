@@ -2,13 +2,11 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.05 (01 XXX 2009):
+Changes in 3.04 (25 Sep 2009):
   * new format Mach/AMD64 supports 64-bit programs on Apple Macintosh.
   * new formats Dylib/i386 and Dylib/ppc32 support shared libraries
     [such as browser plugins] on Darwin (Apple Macintosh).  An existing
     -init function (LC_ROUTINES command) is required.
-
-Changes in 3.04 (27 Apr 2009):
   * new format vmlinuz/armel for Debian NSLU2 (etc.) linux kernel
   * bvmlinuz boot protocol 2.08 for 386 Linux kernel
   * Extended ABI version 4 for armel-eabi ARM Linux ELF
