@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.04 (25 Sep 2009):
+Changes in 3.04 (27 Sep 2009):
   * new format Mach/AMD64 supports 64-bit programs on Apple Macintosh.
   * new formats Dylib/i386 and Dylib/ppc32 support shared libraries
     [such as browser plugins] on Darwin (Apple Macintosh).  An existing
