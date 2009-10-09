@@ -56,16 +56,16 @@ PackExe::PackExe(InputFile *f) :
     ih_exesize = ih_imagesize = ih_overlay = 0;
     stack_for_lzma = 0;
     use_clear_dirty_stack = false;
-
-    // disable lzma for "--brute" unless explicitly given "--lzma"
-    if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
-        opt->all_methods_use_lzma = false;
 }
 
 
 const int *PackExe::getCompressionMethods(int method, int level) const
 {
     bool small = ih_imagesize <= 256*1024;
+    // disable lzma for "--brute" unless explicitly given "--lzma"
+    // WARNING: this side effect persists for later files!
+    if (opt->all_methods_use_lzma && !opt->method_lzma_seen)
+        opt->all_methods_use_lzma = false;
     return Packer::getDefaultCompressionMethods_8(method, level, small);
 }
 
