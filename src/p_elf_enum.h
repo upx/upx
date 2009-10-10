@@ -145,6 +145,10 @@
         DT_HASH     =  4,       /* Hash table of symbol names */
         DT_STRTAB   =  5,       /* String table */
         DT_SYMTAB   =  6,       /* Symbol table */
+        DT_RELA     =  7,       /* Relocations which do contain an addend */
+        DT_RELAENT  =  9,       /* Size of one RELA relocation */
+        DT_REL      = 17,       /* Relocations which contain no addend */
+        DT_RELENT   = 19,       /* Size of one Rel relocation */
         DT_STRSZ    = 10,       /* Sizeof string table */
         DT_PLTREL   = 20,       /* Type of reloc in PLT */
         DT_JMPREL   = 23,       /* Address of PLT relocs */
