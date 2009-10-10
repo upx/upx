@@ -955,40 +955,35 @@ bool PackLinuxElf32::canPack()
             break;
         }
         // elf_find_dynamic() returns 0 if 0==dynseg.
-        gashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
-        hashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
+        //gashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
+        //hashtab= (unsigned int const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
         dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
         dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
+        Elf32_Rel const *
+        jmprel=     (Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_JMPREL);
+        //unsigned const sz_1pltrel =
+        //    (Elf32_Dyn::DT_REL==elf_unsigned_dynamic(Elf32_Dyn::DT_PLTREL))
+        //        ? elf_unsigned_dynamic(Elf32_Dyn::DT_RELENT)
+        //        : elf_unsigned_dynamic(Elf32_Dyn::DT_RELAENT);
 
-        // FIXME 2007-09-10  It seems that DT_GNU_HASH does not have undefined
-        // symbols.  So if no DT_HASH, then we would have to look in .dynsym.
-        char const *const run_start[]= {
-            "__libc_start_main", "__uClibc_main", "__uClibc_start_main",
-        };
-        for (j=0; j<3; ++j) {
-            // elf_lookup() returns 0 if any required table is missing.
-            Elf32_Sym const *const lsm = elf_lookup(run_start[j]);
-            if (lsm && get_te16(&lsm->st_shndx)==Elf32_Sym::SHN_UNDEF
-            && get_te16(&lsm->st_info)==lsm->Elf32_Sym::make_st_info(Elf32_Sym::STB_GLOBAL, Elf32_Sym::STT_FUNC)
-            && get_te16(&lsm->st_other)==Elf32_Sym::STV_DEFAULT ) {
-                break;
-            }
-            if (sec_dynsym) {
-                Elf32_Sym const *symp = (Elf32_Sym const *)(get_te32(&sec_dynsym->sh_offset) + file_image);
-                Elf32_Sym const *const symlwa = (Elf32_Sym const *)(
-                    get_te32(&sec_dynsym->sh_size) +
-                    get_te32(&sec_dynsym->sh_offset) + file_image);
-                for (; symp < symlwa; ++symp)
-                if (0==strcmp(run_start[j], get_te32(&symp->st_name) + dynstr)) {
-                    goto found;
-                }
-            }
+        // Modified 2009-10-10 to detect a ProgramLinkageTable relocation
+        // which references the symbol, because DT_GNU_HASH contains only
+        // defined symbols, and there might be no DT_HASH.
+
+        for (   int sz = elf_unsigned_dynamic(Elf32_Dyn::DT_PLTRELSZ);
+                0 < sz;
+                (sz -= sizeof(Elf32_Rel)), ++jmprel) {
+            unsigned const symnum = jmprel->r_info >> 8;
+            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+            if (0==strcmp(symnam, "__libc_start_main")
+            ||  0==strcmp(symnam, "__uClibc_main")
+            ||  0==strcmp(symnam, "__uClibc_start_main"))
+                goto main_found;
         }
-found:
-        phdri = 0;  // done "borrowing" this member
-        if (3<=j) {
-            return false;
-        }
+        phdri = 0;
+        return false;
+main_found:
+        phdri = 0;
     }
     // XXX Theoretically the following test should be first,
     // but PackUnix::canPack() wants 0!=exetype ?
@@ -1113,6 +1108,7 @@ PackLinuxElf32::generateElfHdr(
     cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
     if (Elf32_Ehdr::EM_MIPS==e_machine) { // MIPS R3000  FIXME
         h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = Elf32_Ehdr::ELFOSABI_NONE;
@@ -2285,6 +2281,17 @@ PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
             return t + file_image;
         }
         break;
+    }
+    return 0;
+}
+
+unsigned
+PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
+{
+    Elf32_Dyn const *dynp= dynseg;
+    if (dynp)
+    for (; Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
+        return get_te32(&dynp->d_val);
     }
     return 0;
 }

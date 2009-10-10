@@ -123,6 +123,7 @@ protected:
     static unsigned elf_hash(char const *) /*const*/;
     static unsigned gnu_hash(char const *) /*const*/;
     virtual void const *elf_find_dynamic(unsigned) const;
+    virtual unsigned elf_unsigned_dynamic(unsigned) const;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
     Elf32_Shdr const *elf_find_section_name(char const *) const;
