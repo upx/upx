@@ -412,6 +412,9 @@ void PackUnix::packExtent(
         fo->write(&tmp, sizeof(tmp));
         b_len += sizeof(b_info);
 
+        if (ft) {
+            ph.u_adler = end_u_adler;
+        }
         // write compressed data
         if (ph.c_len < ph.u_len) {
             fo->write(obuf, ph.c_len);
@@ -422,9 +425,6 @@ void PackUnix::packExtent(
             fo->write(ibuf, ph.u_len);
         }
 
-        if (ft) {
-            ph.u_adler = end_u_adler;
-        }
         total_in += ph.u_len;
         total_out += ph.c_len;
     }
