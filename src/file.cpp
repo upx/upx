@@ -396,6 +396,17 @@ void OutputFile::rewrite(const void *buf, int len)
 void OutputFile::seek(off_t off, int whence)
 {
     assert(!opt->to_stdout);
+    switch (whence) {
+    case SEEK_SET: {
+        if (bytes_written < off) {
+            bytes_written = off;
+        }
+        _length = bytes_written;  // cheap, lazy update; needed?
+    } break;
+    case SEEK_END: {
+        _length = bytes_written;  // necessary
+    } break;
+    }
     super::seek(off,whence);
 }
 
