@@ -68,7 +68,7 @@ protected:
     virtual uint64_t elf_unsigned_dynamic(unsigned) const = 0;
 
 protected:
-    unsigned e_phnum;		/* Program header table entry count */
+    unsigned e_phnum;       /* Program header table entry count */
     char       *file_image;       // if ET_DYN investigation
     char const *dynstr;   // from DT_STRTAB
 
