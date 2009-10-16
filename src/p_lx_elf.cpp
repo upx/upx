@@ -2078,124 +2078,6 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     fo->rewrite(&linfo, sizeof(linfo));
 }
 
-void PackLinuxElf32::unpack(OutputFile *fo)
-{
-#define MAX_ELF_HDR 512
-    union {
-        unsigned char buf[MAX_ELF_HDR];
-        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
-    } u;
-    Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
-    Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-
-    unsigned szb_info = sizeof(b_info);
-    {
-        fi->seek(0, SEEK_SET);
-        fi->readx(u.buf, MAX_ELF_HDR);
-        unsigned const e_entry = get_te32(&ehdr->e_entry);
-        if (e_entry < 0x401180
-        &&  ehdr->e_machine==Elf32_Ehdr::EM_386) { /* old style, 8-byte b_info */
-            szb_info = 2*sizeof(unsigned);
-        }
-    }
-
-    fi->seek(overlay_offset, SEEK_SET);
-    p_info hbuf;
-    fi->readx(&hbuf, sizeof(hbuf));
-    unsigned orig_file_size = get_te32(&hbuf.p_filesize);
-    blocksize = get_te32(&hbuf.p_blocksize);
-    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
-        throwCantUnpack("file header corrupted");
-
-    ibuf.alloc(blocksize + OVERHEAD);
-    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
-    fi->readx(&bhdr, szb_info);
-    ph.u_len = get_te32(&bhdr.sz_unc);
-    ph.c_len = get_te32(&bhdr.sz_cpr);
-    ph.filter_cto = bhdr.b_cto8;
-
-    // Uncompress Ehdr and Phdrs.
-    bool is_shlib = (sizeof(u) < ph.u_len);
-    if (is_shlib) {
-        fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, file_size);  // the whole compressed file
-            // FIXME: re-construct original Ehdr and Phdrs in ibuf
-        fo->write(ibuf, overlay_offset);
-            // FIXME: not finished
-        return;
-    }
-    fi->readx(ibuf, ph.c_len);
-    if (!is_shlib) {
-        decompress(ibuf, (upx_byte *)ehdr, false);
-        fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
-    }
-
-    unsigned total_in = 0;
-    unsigned total_out = 0;
-    unsigned c_adler = upx_adler32(NULL, 0);
-    unsigned u_adler = upx_adler32(NULL, 0);
-
-    // decompress PT_LOAD32
-    bool first_PF_X = true;
-    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (PT_LOAD32==get_te32(&phdr->p_type)) {
-            unsigned const filesz = get_te32(&phdr->p_filesz);
-            unsigned const offset = get_te32(&phdr->p_offset);
-            if (fo)
-                fo->seek(offset, SEEK_SET);
-            if (Elf32_Phdr::PF_X & get_te32(&phdr->p_flags)) {
-                unpackExtent(filesz, fo, total_in, total_out,
-                    c_adler, u_adler, first_PF_X, szb_info);
-                first_PF_X = false;
-            }
-            else {
-                unpackExtent(filesz, fo, total_in, total_out,
-                    c_adler, u_adler, false, szb_info);
-            }
-        }
-    }
-
-    phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-    for (unsigned j = 0; j < e_phnum; ++j) {
-        unsigned const size = find_LOAD_gap(phdr, j, e_phnum);
-        if (size) {
-            unsigned const where = get_te32(&phdr[j].p_offset) +
-                                   get_te32(&phdr[j].p_filesz);
-            if (fo)
-                fo->seek(where, SEEK_SET);
-            unpackExtent(size, fo, total_in, total_out,
-                c_adler, u_adler, false, szb_info);
-        }
-    }
-
-    // check for end-of-file
-    fi->readx(&bhdr, szb_info);
-    unsigned const sz_unc = ph.u_len = get_te32(&bhdr.sz_unc);
-
-    if (sz_unc == 0) { // uncompressed size 0 -> EOF
-        // note: magic is always stored le32
-        unsigned const sz_cpr = get_le32(&bhdr.sz_cpr);
-        if (sz_cpr != UPX_MAGIC_LE32)  // sz_cpr must be h->magic
-            throwCompressedDataViolation();
-    }
-    else { // extra bytes after end?
-        throwCompressedDataViolation();
-    }
-
-    // update header with totals
-    ph.c_len = total_in;
-    ph.u_len = total_out;
-
-    // all bytes must be written
-    if (total_out != orig_file_size)
-        throwEOFException();
-
-    // finally test the checksums
-    if (ph.c_adler != c_adler || ph.u_adler != u_adler)
-        throwChecksumError();
-#undef MAX_ELF_HDR
-}
-
 void PackLinuxElf64::unpack(OutputFile *fo)
 {
 #define MAX_ELF_HDR 1024
@@ -2610,7 +2492,7 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
 
 }
 
-void PackLinuxElf32x86::unpack(OutputFile *fo)
+void PackLinuxElf32::unpack(OutputFile *fo)
 {
 #define MAX_ELF_HDR 512
     union {
@@ -2627,10 +2509,10 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
     {
         fi->seek(0, SEEK_SET);
         fi->readx(u.buf, MAX_ELF_HDR);
-        unsigned const e_entry = get_te32(&ehdr->e_entry);
-        unsigned const e_type = get_te16(&ehdr->e_type);
-        if (e_entry < 0x401180 && Elf32_Ehdr::ET_EXEC==e_type) {
-            // beware ET_DYN.e_entry==0x10f0 or so
+        if (get_te32(&ehdr->e_entry) < 0x401180
+        &&  Elf32_Ehdr::EM_386 ==get_te16(&ehdr->e_machine)
+        &&  Elf32_Ehdr::ET_EXEC==get_te16(&ehdr->e_type)) {
+            // Beware ET_DYN.e_entry==0x10f0 (or so) does NOT qualify here.
             /* old style, 8-byte b_info */
             szb_info = 2*sizeof(unsigned);
         }
@@ -2808,6 +2690,10 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
 #undef MAX_ELF_HDR
 }
 
+void PackLinuxElf::unpack(OutputFile */*fo*/)
+{
+    throwCantUnpack("internal error");
+}
 
 /*
 vi:ts=4:et
