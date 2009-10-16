@@ -63,7 +63,12 @@ protected:
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo) = 0;
 
+    virtual unsigned elf_get_offset_from_address(unsigned) const = 0;
+    virtual void const *elf_find_dynamic(unsigned) const = 0;
+    virtual uint64_t elf_unsigned_dynamic(unsigned) const = 0;
+
 protected:
+    unsigned e_phnum;		/* Program header table entry count */
     char       *file_image;       // if ET_DYN investigation
     char const *dynstr;   // from DT_STRTAB
 
@@ -72,6 +77,10 @@ protected:
     unsigned sz_pack2;  // after pack2(), before loader
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
+    unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
+    unsigned xct_va;  // minimum SHT_EXECINSTR virtual address
+    unsigned hatch_off;  // file offset of escape hatch
+    unsigned hatch_va;  // virtual address of escape hatch
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -122,12 +131,12 @@ protected:
 
     static unsigned elf_hash(char const *) /*const*/;
     static unsigned gnu_hash(char const *) /*const*/;
-    virtual void const *elf_find_dynamic(unsigned) const;
-    virtual unsigned elf_unsigned_dynamic(unsigned) const;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
+    void const *elf_find_dynamic(unsigned) const;
+    uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -220,10 +229,16 @@ protected:
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
 
+    virtual unsigned elf_get_offset_from_address(unsigned) const;
+    void const *elf_find_dynamic(unsigned) const;
+    uint64_t elf_unsigned_dynamic(unsigned) const;
+
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
     acc_uint64l_t page_mask;  // AND clears the offset-within-page
+
+    Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
 
     __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;
@@ -259,21 +274,30 @@ class PackLinuxElf32Be : public PackLinuxElf32
 {
     typedef PackLinuxElf32 super;
 protected:
-    PackLinuxElf32Be(InputFile *f) : super(f) { bele = &N_BELE_RTP::be_policy; }
+    PackLinuxElf32Be(InputFile *f) : super(f) {
+        bele = &N_BELE_RTP::be_policy;
+        e_phnum = get_te16(&ehdri.e_phnum);
+    }
 };
 
 class PackLinuxElf32Le : public PackLinuxElf32
 {
     typedef PackLinuxElf32 super;
 protected:
-    PackLinuxElf32Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
+    PackLinuxElf32Le(InputFile *f) : super(f) {
+        bele = &N_BELE_RTP::le_policy;
+        e_phnum = get_te16(&ehdri.e_phnum);
+    }
 };
 
 class PackLinuxElf64Le : public PackLinuxElf64
 {
     typedef PackLinuxElf64 super;
 protected:
-    PackLinuxElf64Le(InputFile *f) : super(f) { bele = &N_BELE_RTP::le_policy; }
+    PackLinuxElf64Le(InputFile *f) : super(f) {
+        bele = &N_BELE_RTP::le_policy;
+        e_phnum = get_te16(&ehdri.e_phnum);
+    }
 };
 
 

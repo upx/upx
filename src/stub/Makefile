@@ -97,6 +97,7 @@ STUBS += i386-linux.elf.shell-fold.h
 STUBS += i386-linux.kernel.vmlinux.h
 STUBS += i386-linux.kernel.vmlinux-head.h
 STUBS += i386-linux.kernel.vmlinuz.h
+STUBS += i386-linux.shlib-init.h
 STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
 STUBS += mips.r3000-linux.elf-entry.h
@@ -888,6 +889,18 @@ i386-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+
+# /***********************************************************************
+# // i386-linux.shlib
+# ************************************************************************/
+
+i386-linux.shlib%.h : tc_list = i386-linux.elf arch-i386 default
+i386-linux.shlib%.h : tc_bfdname = elf32-i386
+
+i386-linux.shlib-init.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
 
 # /***********************************************************************
 # // armel-linux.kernel.vmlinuz
