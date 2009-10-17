@@ -685,7 +685,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     unsigned lenu;
     len += (7&-lsize) + lsize;
     bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
-    if (is_big) {
+    if (is_big && ehdri.ET_EXEC==get_te16(&ehdri.e_type)) {
         set_te64(    &elfout.ehdr.e_entry,
             get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
         set_te64(&elfout.phdr[0].p_vaddr, lo_va_user);
@@ -1389,6 +1389,7 @@ PackLinuxElf64::generateElfHdr(
     cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
 
     assert(get_te32(&h2->ehdr.e_phoff)     == sizeof(Elf64_Ehdr));
