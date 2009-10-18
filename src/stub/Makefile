@@ -54,6 +54,7 @@ STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
+STUBS += amd64-linux.shlib-init.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
 STUBS += arm-darwin.macho-entry.h
@@ -331,6 +332,19 @@ amd64-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 amd64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // amd64-linux.shlib
+# ************************************************************************/
+
+amd64-linux.shlib%.h : tc_list = amd64-linux.elf default
+amd64-linux.shlib%.h : tc_bfdname = elf64-x86-64
+
+amd64-linux.shlib-init.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 
