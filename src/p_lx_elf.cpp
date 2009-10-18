@@ -48,6 +48,18 @@
 static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
 
+static unsigned
+umin(unsigned a, unsigned b)
+{
+    return (a < b) ? a : b;
+}
+
+static uint64_t
+umin64(uint64_t a, uint64_t b)
+{
+    return (a < b) ? a : b;
+}
+
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -204,10 +216,9 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             unsigned const len  = get_te32(&phdr->p_filesz);
             unsigned const ioff = get_te32(&phdr->p_offset);
             unsigned const type = get_te32(&phdr->p_type);
-            if (phdr->PT_INTERP==type) {  // FIXME
+            if (phdr->PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
-                // by decrementing e_phnum.  FIXME: must relocate .p_offset,
-                // and ::pack4 must rewrite it to the output, too.
+                // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
                 memcpy(phdr, 1+phdr, j * sizeof(*phdr));
                 memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
@@ -228,7 +239,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 else {  // Change length of first PT_LOAD.
                     va_init += get_te32(&phdr->p_vaddr);
                     set_te32(&phdr->p_filesz, sz_pack2 + lsize);
-                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize);  // FIXME
+                    set_te32(&phdr->p_memsz,  sz_pack2 + lsize);
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -280,12 +291,11 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         for (int j = e_phnum; --j>=0; ++phdr) {
             uint64_t const len  = get_te64(&phdr->p_filesz);
             uint64_t const ioff = get_te64(&phdr->p_offset);
-            uint64_t const align= get_te64(&phdr->p_align);
+            uint64_t       align= get_te64(&phdr->p_align);
             unsigned const type = get_te32(&phdr->p_type);
-            if (phdr->PT_INTERP==type) {  // FIXME
+            if (phdr->PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
-                // by decrementing e_phnum.  FIXME: must relocate .p_offset,
-                // and ::pack4 must rewrite it to the output, too.
+                // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
                 memcpy(phdr, 1+phdr, j * sizeof(*phdr));
                 memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
@@ -295,19 +305,25 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             }
             if (phdr->PT_LOAD==type) {
                 if (xct_off < ioff) {  // Slide up non-first PT_LOAD.
-                    fi->seek(ioff, SEEK_SET);
-                    fi->readx(ibuf, len);
-                    // Unfortunately .p_align typically is 2MB.  FIXME
+                    // AMD64 chip supports page sizes of 4KiB, 2MiB, and 1GiB;
+                    // the operating system chooses one.  .p_align typically
+                    // is a forward-looking 2MiB.  In 2009 Linux chooses 4KiB.
+                    // We choose 4KiB to waste less space.  If Linux chooses
+                    // 2MiB later, then our output will not run.
+                    if ((1u<<12) < align) {
+                        align = 1u<<12;
+                        set_te64(&phdr->p_align, align);
+                    }
                     off += (align-1) & (ioff - off);
-                    fo->seek(off, SEEK_SET);
-                    fo->write(ibuf, len);
+                    fi->seek(ioff, SEEK_SET); fi->readx(ibuf, len);
+                    fo->seek( off, SEEK_SET); fo->write(ibuf, len);
                     rel = off - ioff;
                     set_te64(&phdr->p_offset, rel + ioff);
                 }
                 else {  // Change length of first PT_LOAD.
                     va_init += get_te64(&phdr->p_vaddr);
                     set_te64(&phdr->p_filesz, sz_pack2 + lsize);
-                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);  // FIXME
+                    set_te64(&phdr->p_memsz,  sz_pack2 + lsize);
                 }
                 continue;  // all done with this PT_LOAD
             }
@@ -635,7 +651,7 @@ PackLinuxElf32::buildLinuxLoader(
         get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
             sizeof(l_info) );
     h.sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
-    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
+    h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
@@ -698,7 +714,7 @@ PackLinuxElf64::buildLinuxLoader(
         get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
             sizeof(l_info) );
     h.sz_unc = ((szfold < fold_hdrlen) ? 0 : (szfold - fold_hdrlen));
-    h.b_method = (unsigned char) ph.method;  // FIXME: endian trouble
+    h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
   }
@@ -1040,18 +1056,6 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
         }
     }
     return 0;
-}
-
-static unsigned
-umin(unsigned a, unsigned b)
-{
-    return (a < b) ? a : b;
-}
-
-static uint64_t
-umin64(uint64_t a, uint64_t b)
-{
-    return (a < b) ? a : b;
 }
 
 bool PackLinuxElf32::canPack()
