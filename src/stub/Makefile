@@ -57,12 +57,14 @@ STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.shlib-init.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
+STUBS += armel-eabi-linux.shlib-init.h
 STUBS += arm-darwin.macho-entry.h
 STUBS += arm-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
 STUBS += arm-linux.kernel.vmlinux.h
 STUBS += arm-linux.kernel.vmlinux-head.h
+STUBS += arm-linux.shlib-init.h
 STUBS += armeb-linux.elf-entry.h
 STUBS += armeb-linux.elf-fold.h
 STUBS += armeb-linux.kernel.vmlinux.h
@@ -380,6 +382,19 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 # /***********************************************************************
+# // armel-eabi-linux.shlib
+# ************************************************************************/
+
+armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+armel-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
 # // arm-darwin.macho
 # ************************************************************************/
 
@@ -461,6 +476,19 @@ arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // arm-linux.shlib
+# ************************************************************************/
+
+arm-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+arm-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+arm-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************

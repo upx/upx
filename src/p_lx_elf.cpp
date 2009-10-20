@@ -271,8 +271,8 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         }
         ehdri.e_shnum = 0;
         ehdri.e_shoff = old_dtinit;  // easy to find for unpacking
-        //ehdri.e_shentsize = 0;
-        //ehdri.e_shstrndx = 0;
+        ehdri.e_shentsize = 0;
+        ehdri.e_shstrndx = 0;
     }
 }
 
@@ -691,7 +691,8 @@ PackLinuxElf32::buildLinuxLoader(
 
     addStubEntrySections(ft);
 
-    defineSymbols(ft);
+    if (0==xct_off)
+        defineSymbols(ft);  // main program only, not for shared lib
     relocateLoader();
 }
 
@@ -739,16 +740,14 @@ PackLinuxElf64::buildLinuxLoader(
 
     addStubEntrySections(ft);
 
-    defineSymbols(ft);
+    if (0==xct_off)
+        defineSymbols(ft);  // main program only, not for shared lib
     relocateLoader();
 }
 
 void
 PackLinuxElf64amd::defineSymbols(Filter const *)
 {
-    if (0!=xct_va) {  // is shared lib
-        return;  // no symbols needed
-    }
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
     // We want to know if compressed data, plus stub, plus a couple pages,
@@ -920,11 +919,15 @@ static const
 #include "stub/armel-eabi-linux.elf-entry.h"
 static const
 #include "stub/armel-eabi-linux.elf-fold.h"
+static const
+#include "stub/armel-eabi-linux.shlib-init.h"
 
 static const
 #include "stub/arm-linux.elf-entry.h"
 static const
 #include "stub/arm-linux.elf-fold.h"
+static const
+#include "stub/arm-linux.shlib-init.h"
 
 static const
 #include "stub/armeb-linux.elf-entry.h"
@@ -945,6 +948,13 @@ void
 PackLinuxElf32armLe::buildLoader(Filter const *ft)
 {
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
+
+        if (0!=xct_off) {  // shared library
+            buildLinuxLoader(
+                stub_armel_eabi_linux_shlib_init, sizeof(stub_armel_eabi_linux_shlib_init),
+                NULL,                      0,                                ft );
+            return;
+        }
         buildLinuxLoader(
             stub_armel_eabi_linux_elf_entry, sizeof(stub_armel_eabi_linux_elf_entry),
             stub_armel_eabi_linux_elf_fold,  sizeof(stub_armel_eabi_linux_elf_fold), ft);
@@ -1502,17 +1512,6 @@ PackLinuxElf32::generateElfHdr(
     set_te32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
               h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
-    Elf32_Phdr const *phdr = phdri;
-    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_LOAD32 == get_te32(&phdr->p_type)) {
-            unsigned x = get_te32(&phdr->p_align) >> lg2_page;
-            while (x>>=1) {
-                ++lg2_page;
-            }
-        }
-    }
-    page_size =  1u<<lg2_page;
-    page_mask = ~0u<<lg2_page;
     for (unsigned j=0; j < 3; ++j) {
         set_te32(&h3->phdr[j].p_align, page_size);
     }
@@ -1626,17 +1625,6 @@ PackLinuxElf64::generateElfHdr(
     set_te64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
-    Elf64_Phdr const *phdr = phdri;
-    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (phdr->PT_LOAD64 == get_te64(&phdr->p_type)) {
-            unsigned x = get_te64(&phdr->p_align) >> lg2_page;
-            while (x>>=1) {
-                ++lg2_page;
-            }
-        }
-    }
-    page_size =  1u  <<lg2_page;
-    page_mask = ~0ull<<lg2_page;
     for (unsigned j=0; j < 3; ++j) {
         set_te64(&h3->phdr[j].p_align, page_size);
     }
@@ -1676,22 +1664,34 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
+    Elf32_Phdr const *phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD32 == get_te32(&phdr->p_type)) {
+            unsigned x = get_te32(&phdr->p_align) >> lg2_page;
+            while (x>>=1) {
+                ++lg2_page;
+            }
+        }
+    }
+    page_size =  1u<<lg2_page;
+    page_mask = ~0u<<lg2_page;
+
     progid = 0;  // getRandomId();  not useful, so do not clutter
 }
 
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    if (0==xct_off)  // main executable
-        generateElfHdr(fo, stub_i386_linux_elf_fold,
-            getbrk(phdri, e_phnum) );
-    else {  // shared library
+    if (0!=xct_off) {  // shared library
         fi->seek(0, SEEK_SET);
         fi->readx(ibuf, xct_off);
 
         sz_elf_hdrs = xct_off - sizeof(l_info);
         fo->write(ibuf, xct_off);
+        return;
     }
+    generateElfHdr(fo, stub_i386_linux_elf_fold,
+        getbrk(phdri, e_phnum) );
 }
 
 void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
@@ -1703,6 +1703,14 @@ void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    if (0!=xct_off) {  // shared library
+        fi->seek(0, SEEK_SET);
+        fi->readx(ibuf, xct_off);
+
+        sz_elf_hdrs = xct_off - sizeof(l_info);
+        fo->write(ibuf, xct_off);
+        return;
+    }
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
         memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
@@ -1757,6 +1765,18 @@ void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
     phdri = new Elf64_Phdr[e_phnum];
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
+
+    Elf64_Phdr const *phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (phdr->PT_LOAD64 == get_te64(&phdr->p_type)) {
+            unsigned x = get_te64(&phdr->p_align) >> lg2_page;
+            while (x>>=1) {
+                ++lg2_page;
+            }
+        }
+    }
+    page_size =  1u  <<lg2_page;
+    page_mask = ~0ull<<lg2_page;
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
 }
