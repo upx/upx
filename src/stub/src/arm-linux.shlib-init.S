@@ -236,7 +236,7 @@ top_unf:
 tst_unf:
         cmp len,#0
         bne top_unf
-        mov pc,lr
+        ret
 
 #undef ptr
 #undef len
@@ -282,7 +282,7 @@ supervise:
         ldr arg2,[fp,#p_mprot+4]  // dstlen
         ldr arg1,[fp,#p_mprot  ]  // dst
         mov r6,arg1  // required result
-        do_sys __NR_mmap64; cmp r0,r6; beq 0f; bkpt; 0:
+        do_sys7t __NR_mmap64; cmp r0,r6; beq 0f; bkpt; 0:
 
         // Restore fragment of page below dst
         ldr ecx,[fp,#o_wfrag]
@@ -304,11 +304,11 @@ supervise:
         ldr arg2,[sp,#1*4]  // len
         mov arg3,#0
         add arg2,arg2,arg1  // hi(dst)
-        do_sys2 __ARM_NR_cacheflush
+        do_sys7t2 __ARM_NR_cacheflush
 
         ldmia sp!,{arg1,arg2}
         mov arg3,#PROT_READ|PROT_EXEC
-        do_sys __NR_mprotect
+        do_sys7t __NR_mprotect
 
 //p_unmap
         //ldmia sp!,{arg1,arg2, pc}
@@ -338,7 +338,7 @@ o_super= -18*4
         mov arg3,#PROT_READ|PROT_WRITE|PROT_EXEC
         str arg2,[fp,#p_unmap+1*4]  // length to unmap
         mov arg1,#0  // any addr
-        do_sys __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
+        do_sys7t __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
         str r0,[fp,#p_unmap+0*4]  // address to unmap
 
         ldr esi,[fp,#p_mprot]
@@ -374,7 +374,7 @@ o_super= -18*4
         mov arg2,edi  // hi(dst) of copied code
         mov arg1,edx  // lo(dst) of copied code
         mov arg3,#0
-        do_sys2 __ARM_NR_cacheflush
+        do_sys7t2 __ARM_NR_cacheflush
 
         pop pc  // goto copied supervisor
 
