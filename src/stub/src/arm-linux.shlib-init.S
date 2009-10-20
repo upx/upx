@@ -33,6 +33,7 @@
 #include "arch/arm/v5a/macros.S"
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
+#define bkpt_th .short 0xde01  /* reserved instr; Linux GNU eabi breakpoint */
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
 
@@ -264,6 +265,9 @@ o_uncpr= -13*4
         push esi  // src;  arglist ready for decompress  step 6
 p_uncpr= -17*4
 
+        and tmp,esi,#3  // length of prefix alignment
+        add ecx,ecx,#3  // allow  suffix alignment
+        add ecx,ecx,tmp  // prefix increases byte length
         ldr tmp,[fp,#o_wfrag]; add edx,tmp,ecx,lsr #2  // w_srclen + w_frag
         ldr tmp,[fp,#o_uncpr]; bl wlen_subr
         ldr tmp,[fp,#o_unflt]; bl wlen_subr
@@ -277,11 +281,12 @@ supervise:
         mov arg3,#PROT_READ|PROT_WRITE
         ldr arg2,[fp,#p_mprot+4]  // dstlen
         ldr arg1,[fp,#p_mprot  ]  // dst
-        do_sys __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
+        mov r6,arg1  // required result
+        do_sys __NR_mmap64; cmp r0,r6; beq 0f; bkpt; 0:
 
         // Restore fragment of page below dst
         ldr ecx,[fp,#o_wfrag]
-        mov edi,r0
+        //mov edi,r0  // NOP: edi==r0
         ldr esi,[fp,#p_unmap]
         bl movsl
 
@@ -337,14 +342,20 @@ o_super= -18*4
         str r0,[fp,#p_unmap+0*4]  // address to unmap
 
         ldr esi,[fp,#p_mprot]
-        mov edi,r0  // edi= dst
+        //mov edi,r0  // edi= dst  NOP: edi==r0
         ldr ecx,[fp,#o_wfrag]  // w_fragment
         bl movsl  // copy the fragment
 
-        ldr ecx,[fp,#p_uncpr+1*4]  // len
         ldr esi,[fp,#p_uncpr+0*4]  // src
-        str edi,[fp,#p_uncpr+0*4]  // dst
-        bl memcpyW  // copy compressed data
+        ldr ecx,[fp,#p_uncpr+1*4]  // len
+        and tmp,esi,#3  // length of prefix alignment
+        sub esi,esi,tmp  // down to word aligned
+        add ecx,ecx,tmp  // prefix increases byte length
+        add tmp,tmp,edi // skip prefix at destination
+        str tmp,[fp,#p_uncpr+0*4]  // dst
+        add ecx,ecx,#3  // round up to full words
+        lsr ecx,ecx,#2
+        bl movsl  // copy all aligned words that contain compressed data
 
         mov edx,edi  // lo(dst) of copied code
 
@@ -379,37 +390,6 @@ wlen_subr:  // edx+= nwords of inline subr at *tmp
         bic tmp,tmp,#0xff<<24  // displacment field
         add tmp,tmp,#1  // displ omits one word
         add edx,edx,tmp
-        ret
-
-// dst (edi) is 4-byte aligned.
-// src (esi) is unknown aligned
-// cnt (ecx) is bytes
-// Round up count to full words.
-memcpyW:  
-        add ecx,ecx,#3
-        lsr ecx,ecx,#2
-        tst esi,#3; beq movsl  // 4-byte aligned
-        tst esi,#1; beq movsw2  // 2-byte aligned
-movsb4:
-        ldrb tmp,[esi],#1
-        ldrb r6, [esi],#1
-        ldrb r12,[esi],#1
-        ldrb r7, [esi],#1
-
-        orr tmp,tmp,r6,lsl #8
-        orr r12,r12,r7,lsl #8
-                subs ecx,ecx,#1
-        orr tmp,tmp,r12,lsl #16
-        str tmp,[edi],#4
-                bne movsb4
-        ret
-movsw2:
-        ldrh tmp,[esi],#2
-        ldrh r12,[esi],#2
-                subs ecx,ecx,#1
-        orr tmp,tmp,r12,lsl #16
-        str tmp,[edi],#4
-                bne movsw2
         ret
 
 /*__XTHEENDX__*/
