@@ -1671,6 +1671,9 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
             while (x>>=1) {
                 ++lg2_page;
             }
+            if (hatch_off < 16 && Elf32_Ehdr::EM_ARM==e_machine) {
+                hatch_off = get_te32(&phdr->p_offset) + get_te32(&phdr->p_memsz);
+            }
         }
     }
     page_size =  1u<<lg2_page;
@@ -2269,10 +2272,10 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        ehdri.e_ident[0+hatch_off] = 0xcd;  // INT 0x80 (syscall [munmap])
-        ehdri.e_ident[1+hatch_off] = 0x80;
-        ehdri.e_ident[2+hatch_off] = 0x61;  // POPA
-        ehdri.e_ident[3+hatch_off] = 0xc3;  // RET
+        ehdri.e_ident[12] = 0xcd;  // INT 0x80 (syscall [munmap])
+        ehdri.e_ident[13] = 0x80;
+        ehdri.e_ident[14] = 0x61;  // POPA
+        ehdri.e_ident[15] = 0xc3;  // RET
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
     }
@@ -2328,11 +2331,11 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        ehdri.e_ident[0+hatch_off] = 0x0f;  // syscall [munmap]
-        ehdri.e_ident[1+hatch_off] = 0x05;
-        ehdri.e_ident[2+hatch_off] = 0x5f;  // pop %rdi  (arg1)
-        ehdri.e_ident[3+hatch_off] = 0x5e;  // pop %rsi  (arg2)
-        ehdri.e_ident[4+hatch_off] = 0xc3;  // RET
+        ehdri.e_ident[11] = 0x0f;  // syscall [munmap]
+        ehdri.e_ident[12] = 0x05;
+        ehdri.e_ident[13] = 0x5f;  // pop %rdi  (arg1)
+        ehdri.e_ident[14] = 0x5e;  // pop %rsi  (arg2)
+        ehdri.e_ident[15] = 0xc3;  // RET
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
     }

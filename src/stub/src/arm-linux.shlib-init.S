@@ -86,12 +86,10 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
 _start: .globl _start
 
-        stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,ip,lr}
-o_uinit= (3+4+1)*4  // ip
-
+        stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
         mov fp,sp
-        sub sp,sp,#4
-o_hatch= -1*4
+o_uinit= (3+4+2)*4  // pc
+
         bl main  // push &f_decompress
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
@@ -177,7 +175,8 @@ main:
                mov ecx,esi
         lodsl; sub ecx,ecx,eax; //str ecx,[fp,#o_reloc]
         lodsl; add eax,ecx,eax; str eax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
-        lodsl; add eax,ecx,eax; str eax,[fp,#o_hatch]  // reloc &hatch   for step 10
+        lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
+o_hatch= -1*4
         lodsl; add edi,ecx,eax  // &p_info; also destination for decompress
         add esi,edi,#sz_p_info  // &b_info
 
@@ -289,6 +288,17 @@ supervise:
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
         blx eax  // decompress
         add sp,sp,#4  // toss arg5
+
+        bl L620
+//hatch:
+        do_sys7t __NR_munmap
+        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+
+L620:  // Implant escape hatch at end of .text
+        ldr eax,[fp,#o_hatch]
+        ldmia  lr,{arg1,arg2,arg3}
+        stmia eax,{arg1,arg2,arg3}
+
 //p_unflt
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
@@ -300,6 +310,7 @@ supervise:
         ldr arg2,[sp,#1*4]  // len
         mov arg3,#0
         add arg2,arg2,arg1  // hi(dst)
+        add arg2,arg2,#3*4  // len(hatch)
         do_sys7t2 __ARM_NR_cacheflush
 
         ldmia sp!,{arg1,arg2}
@@ -308,12 +319,7 @@ supervise:
 
 //p_unmap
         ldmia sp!,{arg1,arg2, r3}  // r3= &hatch
-// Eventually:
-//      bx r3
-//hatch:
-//      do_sys7t __NR_munmap
-        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,ip,lr}
-        bx ip  // allows thumb interworking
+        bx r3
 
 movsl_subr:
         ldr ecx,[esi,#-4]  // 'bl <over>' instruction word
