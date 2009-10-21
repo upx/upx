@@ -86,12 +86,8 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
 _start: .globl _start
 
-        stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
-o_uinit= (3+4+2)*4
-
-//hatch:
-//      syscall  // munmap
-//      ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+        stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,ip,lr}
+o_uinit= (3+4+1)*4  // ip
 
         mov fp,sp
         sub sp,sp,#4
@@ -311,10 +307,13 @@ supervise:
         do_sys7t __NR_mprotect
 
 //p_unmap
-        //ldmia sp!,{arg1,arg2, pc}
-        add sp,sp,#-p_unmap
-
-        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+        ldmia sp!,{arg1,arg2, r3}  // r3= &hatch
+// Eventually:
+//      bx r3
+//hatch:
+//      do_sys7t __NR_munmap
+        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,ip,lr}
+        bx ip  // allows thumb interworking
 
 movsl_subr:
         ldr ecx,[esi,#-4]  // 'bl <over>' instruction word
