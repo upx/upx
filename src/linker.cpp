@@ -679,7 +679,10 @@ void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location,
     {
         set_be32(location, get_be32(location) + value);
     }
-    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0
+         ||  strcmp(type, "R_ARM_THM_XPC22") == 0
+         ||  strcmp(type, "R_ARM_THM_PC22") == 0
+    )
     {
         value -= rel->section->offset + rel->offset;
         value += ((get_be16(location) & 0x7ff) << 12);
@@ -711,7 +714,10 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location,
     {
         set_le32(location, get_le32(location) + value);
     }
-    else if (strcmp(type, "R_ARM_THM_CALL") == 0)
+    else if (strcmp(type, "R_ARM_THM_CALL") == 0
+         ||  strcmp(type, "R_ARM_THM_XPC22") == 0
+         ||  strcmp(type, "R_ARM_THM_PC22") == 0
+    )
     {
         value -= rel->section->offset + rel->offset;
         value += ((get_le16(location) & 0x7ff) << 12);
