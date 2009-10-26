@@ -158,13 +158,11 @@ p_mprot=_  // 15
         lsr tmp,tmp,#2; push_ tmp  // w_fragment
 o_wfrag=_  // 16
 
-        .balign 4
         call4 L610
-        .arm
 f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
 #define ptr r0
 #define len r1
-#define cto r2
+#define cto r2  /* FIXME: unused */
 #define fid r3
 
 #define t1 r2
@@ -173,27 +171,26 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
 #ifndef FILTER_ID  /*{*/
 #define FILTER_ID 0x50  /* little-endian */
 #endif  /*}*/
-        and fid,fid,#0xff
-        cmp fid,#FILTER_ID  // last use of fid
-        bxne lr  // no-op if not filter 0x50
-
-        movs  len,len,lsr #2  // word count
-        cmpne ptr,#0
-        bxeq lr  // no-op if either len or ptr is 0
-
+        lsl fid,fid,#24; tst len,len; beq unf_done
+        lsr fid,fid,#24; tst ptr,ptr; beq unf_done
+        cmp fid,#FILTER_ID; bne unf_done  // last use of fid
+        b tst_unf
 top_unf:
-        sub len,len,#1
-        ldr t1,[ptr,len,lsl #2]
-        and t2,t1,#0x0f<<24
-        cmp t2,   #0x0b<<24; bne tst_unf  // not 'bl' subroutine call
-        and t2,t1,#0xff<<24  // all the non-displacement bits
-        sub t1,t1,len  // convert to word-relative displacement
-        bic t1,t1,#0xff<<24  // restrict to displacement field
+        sub len,len,#4
+        ldr t1,[ptr,len]
+        lsl t2,t1,#4
+        lsr t2,t2,#4+24  // bits 27..24
+        cmp t2,#0x0b; bne tst_unf  // not 'bl' subroutine call
+        lsr len,len,#2; sub t2,t1,len  // convert to word-relative displacement
+        lsl len,len,#2
+        lsr t1,t1,#24; lsl t2,t2,#8
+        lsl t1,t1,#24; lsr t2,t2,#8
         orr t1,t1,t2  // re-combine
-        str t1,[ptr,len,lsl #2]
+        str t1,[ptr,len]
 tst_unf:
         cmp len,#0
         bne top_unf
+unf_done:
         ret
 
 #undef ptr
@@ -204,10 +201,9 @@ tst_unf:
 #undef t1
 #undef t2
 
-        .thumb
         .thumb_func
 L610:
-        mov tmp,lr; sub tmp,#1; push_ tmp  // &f_unfilter (ARM mode)
+        push_ lr  // &f_unfilter (thumb mode)
 o_unflt=_  // 17
         ldrb tmp,[esi,#b_method-4+1]; push_ tmp  // ftid
         ldrb tmp,[esi,#b_method-4+2]; push_ tmp  // cto8
@@ -330,13 +326,11 @@ _=-5+_  // 22
         pop_ tmp  // toss arg5
 
 //p_unflt  // 21
-        pop {arg1,arg2,arg3,arg4, eax}
-_=-5+_  // 16
+        pop {arg1,arg2,arg3,arg4, eax, r5}  // r5= w_fragment [discard]
+_=-6+_  // 15
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
-        blx eax  // unfilter
+        blx eax  // f_unfilter
 0:
-        add sp,#4  // toss w_fragment
-_=-1+_  // 15
         ldr arg1,[sp,#0*4]  // lo(dst)
         ldr arg2,[sp,#1*4]  // len
         add arg2,arg1  // hi(dst)
@@ -365,6 +359,8 @@ _=-3+_  // 9
         .thumb_func
 movsl_subr:
 .real_start_ofmovsl_subr:
+        lsr esi,esi,#2
+        lsl esi,esi,#2  // word align [corrects for thumb-mode]
         push {lr}; mov tmp,esi; bl wlen_subr
         pop {tmp}; mov lr,tmp
 // FALL THROUGH to the part of 'movsl' that trims to a multiple of 8 words.
@@ -374,17 +370,17 @@ movsl_subr:
         str tmp,[edi,#0]; add edi,#4
         sub ecx,#1
         .thumb_func
-movsl:
+movsl:  // In:  edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= word count
 .real_start_ofmovsl:
         mov tmp,#7; tst ecx,tmp; bne 9b
         lsr ecx,#3; beq 9f
         .balign 4; bx pc; nop  // enter ARM mode
         .arm
-        stmdb sp!,{r2,r4,r6, r7,r8,r9}  // tmp===r3, ecx===r5
+        stmdb  sp!,{r2,   r4,r6, r7,r8,r9}  // tmp===r3, ecx===r5
 7:
         ldmia esi!,{r2,r3,r4,r6, r7,r8,r9,r12}; subs ecx,ecx,#1
         stmia edi!,{r2,r3,r4,r6, r7,r8,r9,r12}; bne 7b
-        ldmia sp!,{r2,r4,r6, r7,r8,r9}
+        ldmia  sp!,{r2,   r4,r6, r7,r8,r9}
 9:
         ret
 
@@ -452,11 +448,12 @@ o_super=_  // 28
 
         ldr esi,[SP(o_uncpr)]
         str edi,[SP(o_uncpr)]
-        bl movsl_subr  // copy decompressor (FIXME: must be ARM mode)
+        bl movsl_subr  // copy decompressor
 
+        add tmp,edi,#1  // dst f_unfilter thumb mode
         ldr esi,[SP(o_unflt)]
-        str edi,[SP(o_unflt)]
-        bl movsl_subr  // copy unfilter (FIXME: must be ARM mode)
+        str tmp,[SP(o_unflt)]
+        bl movsl_subr  // copy f_unfilter
 
         pop_ esi   // &supervise
         add r7,edi,#1  // &copied (thumb mode)
@@ -476,6 +473,8 @@ get4u:
         ret
 
 wlen_subr:  // Out: ecx= nwords of inline subr at *tmp
+        lsr tmp,tmp,#2
+        lsl tmp,tmp,#2  // word align (correct for thumb mode)
         sub tmp,#4
         ldrh ecx,[tmp,#0]; lsl ecx,#32-11; lsr ecx,#32-11-11  // hi(disp)
         ldrh tmp,[tmp,#2]; lsl tmp,#32-11; lsr tmp,#32-11- 0  // lo(disp)
