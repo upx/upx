@@ -2815,7 +2815,9 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     ph.filter_cto = bhdr.b_cto8;
-    bool const is_shlib = (ehdr->e_ident[12]==0xcd) || (ehdr->e_ident[11]==0x0f);
+    bool const is_shlib = (ehdr->e_ident[12]==0xcd)  // EM_386
+        || (ehdr->e_ident[11]==0x0f)  // EM_X86_64
+        || (get_te16(&ehdr->e_ident[12])==0xdf00);  // EM_ARM (thumb)
 
     // Peek at resulting Ehdr and Phdrs for use in controlling unpacking.
     // Uncompress an extra time, and don't verify or update checksums.
