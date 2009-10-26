@@ -115,6 +115,7 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
+STUBS += thumb-eabi-linux.shlib-init.h
 endif
 
 
@@ -389,6 +390,23 @@ armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
 armel-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
 armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // thumb-eabi-linux.shlib
+# ************************************************************************/
+
+thumb-eabi-linux.shlib%.h : tc_list = thumb-eabi-linux.elf armel-eabi-linux.elf default
+thumb-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@
+tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+thumb-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
