@@ -63,9 +63,9 @@ protected:
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo);
 
-    virtual unsigned elf_get_offset_from_address(uint64_t) const = 0;
+    virtual unsigned elf_get_offset_from_address(acc_uint64l_t) const = 0;
     virtual void const *elf_find_dynamic(unsigned) const = 0;
-    virtual uint64_t elf_unsigned_dynamic(unsigned) const = 0;
+    virtual acc_uint64l_t elf_unsigned_dynamic(unsigned) const = 0;
 
 protected:
     unsigned e_phnum;       /* Program header table entry count */
@@ -79,8 +79,8 @@ protected:
     unsigned page_size;  // 1u<<lg2_page
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
-    uint64_t load_va;  // PT_LOAD[0].p_vaddr
-    uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
+    acc_uint64l_t load_va;  // PT_LOAD[0].p_vaddr
+    acc_uint64l_t xct_va;  // minimum SHT_EXECINSTR virtual address
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -132,11 +132,11 @@ protected:
     static unsigned elf_hash(char const *) /*const*/;
     static unsigned gnu_hash(char const *) /*const*/;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
-    virtual unsigned elf_get_offset_from_address(uint64_t) const;
+    virtual unsigned elf_get_offset_from_address(acc_uint64l_t) const;
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
-    uint64_t elf_unsigned_dynamic(unsigned) const;
+    acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -229,11 +229,11 @@ protected:
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
 
-    virtual unsigned elf_get_offset_from_address(uint64_t) const;
+    virtual unsigned elf_get_offset_from_address(acc_uint64l_t) const;
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
-    uint64_t elf_unsigned_dynamic(unsigned) const;
+    acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf64_Ehdr  ehdri; // from input file

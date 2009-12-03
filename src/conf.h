@@ -143,6 +143,9 @@
 #endif
 
 // just in case
+#undef _
+#undef __
+#undef ___
 #undef NDEBUG
 #undef dos
 #undef linux
