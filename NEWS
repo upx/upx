@@ -3,6 +3,9 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.05 (XX XXX XXXX):
+  * i386-linux and amd64-linux support shared libraries (DT_INIT must
+    exist, all info needed by runtime loader must be first in .text, etc.)
+  * bug fixes
 
 Changes in 3.04 (27 Sep 2009):
   * new format Mach/AMD64 supports 64-bit programs on Apple Macintosh.
