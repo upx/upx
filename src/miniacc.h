@@ -2,6 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
@@ -39,7 +41,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20081229L
+#define ACC_VERSION     20100205L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1561,7 +1563,7 @@ extern "C" {
 #  define __acc_nothrow         __attribute__((__nothrow__))
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC) && defined(__cplusplus)
 #  define __acc_nothrow         __declspec(nothrow)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 900) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_nothrow         __attribute__((__nothrow__))
 #elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_nothrow         __attribute__((__nothrow__))
@@ -1664,6 +1666,15 @@ extern "C" {
 #    define ACC_DEFINE_UNINITIALIZED_VAR(type,var,init)  type var = var
 #  else
 #    define ACC_DEFINE_UNINITIALIZED_VAR(type,var,init)  type var = init
+#  endif
+#endif
+#if !defined(ACC_UNCONST_CAST)
+#  if 1 && defined(__cplusplus)
+#    define ACC_UNCONST_CAST(t,e)   (const_cast<t> (e))
+#  elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((acc_uintptr_t) ((const void *) (e))))))
+#  else
+#    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((const void *) (e)))))
 #  endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
@@ -3941,11 +3952,10 @@ typedef struct acc_pclock_t acc_pclock_t;
 #define ACC_PCLOCK_MONOTONIC            1
 #define ACC_PCLOCK_PROCESS_CPUTIME_ID   2
 #define ACC_PCLOCK_THREAD_CPUTIME_ID    3
-#define ACC_PCLOCK_REALTIME_HR          4
-#define ACC_PCLOCK_MONOTONIC_HR         5
 struct acc_pclock_handle_t {
     acclib_handle_t h;
     int mode;
+    int read_error;
     const char* name;
     int (*gettime) (acc_pclock_handle_p, acc_pclock_p);
 #if defined(acc_int64l_t)
@@ -3982,6 +3992,7 @@ ACCLIB_EXTERN(int, acc_pclock_flush_cpu_cache) (acc_pclock_handle_p, unsigned);
 typedef struct {
     acclib_handle_t h;
     int mode;
+    int read_error;
     const char* name;
 #if defined(__ACCLIB_UCLOCK_USE_PERFCTR)
     acc_perfctr_handle_t pch;
@@ -5598,6 +5609,42 @@ ACCLIB_PUBLIC(long, acc_safe_hwrite) (int fd, const acc_hvoid_p buf, long size)
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
+#if 0 && (ACC_OS_POSIX_LINUX && ACC_ARCH_AMD64 && ACC_ASM_SYNTAX_GNUC)
+#ifndef acc_pclock_syscall_clock_gettime
+#define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
+#endif
+static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
+{
+    long r;
+    __asm__ __volatile__("syscall\n" : "=a" (r) : "0" (228), "D" (clockid), "S" (ts) : __ACC_ASM_CLOBBER);
+    return r;
+}
+#endif
+#if 0 && (ACC_OS_POSIX_LINUX && ACC_ARCH_I386 && ACC_ASM_SYNTAX_GNUC)
+#ifndef acc_pclock_syscall_clock_gettime
+#define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
+#endif
+static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
+{
+    long r;
+    __asm__ __volatile__("int $0x80\n" : "=a" (r) : "0" (265), "b" (clockid), "c" (ts) : __ACC_ASM_CLOBBER);
+    return r;
+}
+#endif
+#if 0 && defined(acc_pclock_syscall_clock_gettime)
+#ifndef acc_pclock_read_clock_gettime_r_syscall
+#define acc_pclock_read_clock_gettime_r_syscall acc_pclock_read_clock_gettime_r_syscall
+#endif
+static int acc_pclock_read_clock_gettime_r_syscall(acc_pclock_handle_p h, acc_pclock_p c)
+{
+     struct timespec ts;
+    if (acc_pclock_syscall_clock_gettime(0, &ts) != 0)
+        return -1;
+    c->tv_sec = ts.tv_sec;
+    c->tv_nsec = ts.tv_nsec;
+    ACC_UNUSED(h); return 0;
+}
+#endif
 #if defined(HAVE_GETTIMEOFDAY)
 #ifndef acc_pclock_read_gettimeofday
 #define acc_pclock_read_gettimeofday acc_pclock_read_gettimeofday
@@ -5642,6 +5689,20 @@ static int acc_pclock_read_clock(acc_pclock_handle_p h, acc_pclock_p c)
     ACC_UNUSED(h); return 0;
 }
 #endif
+#if 1 && defined(acc_pclock_syscall_clock_gettime)
+#ifndef acc_pclock_read_clock_gettime_m_syscall
+#define acc_pclock_read_clock_gettime_m_syscall acc_pclock_read_clock_gettime_m_syscall
+#endif
+static int acc_pclock_read_clock_gettime_m_syscall(acc_pclock_handle_p h, acc_pclock_p c)
+{
+     struct timespec ts;
+    if (acc_pclock_syscall_clock_gettime(1, &ts) != 0)
+        return -1;
+    c->tv_sec = ts.tv_sec;
+    c->tv_nsec = ts.tv_nsec;
+    ACC_UNUSED(h); return 0;
+}
+#endif
 #if (ACC_OS_DOS32 && ACC_CC_GNUC) && defined(__DJGPP__) && defined(UCLOCKS_PER_SEC)
 #ifndef acc_pclock_read_uclock
 #define acc_pclock_read_uclock acc_pclock_read_uclock
@@ -5660,13 +5721,27 @@ static int acc_pclock_read_uclock(acc_pclock_handle_p h, acc_pclock_p c)
 }
 #endif
 #if 0 && defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_PROCESS_CPUTIME_ID) && defined(acc_int64l_t)
-#ifndef acc_pclock_read_clock_gettime_p
-#define acc_pclock_read_clock_gettime_p acc_pclock_read_clock_gettime_p
+#ifndef acc_pclock_read_clock_gettime_p_libc
+#define acc_pclock_read_clock_gettime_p_libc acc_pclock_read_clock_gettime_p_libc
 #endif
-static int acc_pclock_read_clock_gettime_p(acc_pclock_handle_p h, acc_pclock_p c)
+static int acc_pclock_read_clock_gettime_p_libc(acc_pclock_handle_p h, acc_pclock_p c)
 {
     struct timespec ts;
     if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0)
+        return -1;
+    c->tv_sec = ts.tv_sec;
+    c->tv_nsec = ts.tv_nsec;
+    ACC_UNUSED(h); return 0;
+}
+#endif
+#if 1 && defined(acc_pclock_syscall_clock_gettime)
+#ifndef acc_pclock_read_clock_gettime_p_syscall
+#define acc_pclock_read_clock_gettime_p_syscall acc_pclock_read_clock_gettime_p_syscall
+#endif
+static int acc_pclock_read_clock_gettime_p_syscall(acc_pclock_handle_p h, acc_pclock_p c)
+{
+     struct timespec ts;
+    if (acc_pclock_syscall_clock_gettime(2, &ts) != 0)
         return -1;
     c->tv_sec = ts.tv_sec;
     c->tv_nsec = ts.tv_nsec;
@@ -5734,13 +5809,27 @@ static int acc_pclock_read_perfctr(acc_pclock_handle_p h, acc_pclock_p c)
 }
 #endif
 #if 0 && defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_THREAD_CPUTIME_ID) && defined(acc_int64l_t)
-#ifndef acc_pclock_read_clock_gettime_t
-#define acc_pclock_read_clock_gettime_t acc_pclock_read_clock_gettime_t
+#ifndef acc_pclock_read_clock_gettime_t_libc
+#define acc_pclock_read_clock_gettime_t_libc acc_pclock_read_clock_gettime_t_libc
 #endif
-static int acc_pclock_read_clock_gettime_t(acc_pclock_handle_p h, acc_pclock_p c)
+static int acc_pclock_read_clock_gettime_t_libc(acc_pclock_handle_p h, acc_pclock_p c)
 {
     struct timespec ts;
     if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0)
+        return -1;
+    c->tv_sec = ts.tv_sec;
+    c->tv_nsec = ts.tv_nsec;
+    ACC_UNUSED(h); return 0;
+}
+#endif
+#if 1 && defined(acc_pclock_syscall_clock_gettime)
+#ifndef acc_pclock_read_clock_gettime_t_syscall
+#define acc_pclock_read_clock_gettime_t_syscall acc_pclock_read_clock_gettime_t_syscall
+#endif
+static int acc_pclock_read_clock_gettime_t_syscall(acc_pclock_handle_p h, acc_pclock_p c)
+{
+     struct timespec ts;
+    if (acc_pclock_syscall_clock_gettime(3, &ts) != 0)
         return -1;
     c->tv_sec = ts.tv_sec;
     c->tv_nsec = ts.tv_nsec;
@@ -5773,6 +5862,7 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
     int i;
     h->h = (acclib_handle_t) 0;
     h->mode = -1;
+    h->read_error = 2;
     h->name = NULL;
     h->gettime = 0;
 #if defined(acc_int64l_t)
@@ -5780,29 +5870,42 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
 #endif
     switch (mode)
     {
-    case ACC_PCLOCK_REALTIME_HR:
-#     if defined(acc_pclock_read_gettimeofday)
-        h->gettime = acc_pclock_read_gettimeofday;
-        h->name = "gettimeofday";
-#     endif
-        break;
     case ACC_PCLOCK_REALTIME:
-#     if defined(acc_pclock_read_gettimeofday)
-        h->gettime = acc_pclock_read_gettimeofday;
-        h->name = "gettimeofday";
+#     if defined(acc_pclock_read_clock_gettime_r_syscall)
+        if (acc_pclock_read_clock_gettime_r_syscall(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_r_syscall;
+            h->name = "CLOCK_REALTIME/syscall";
+            break;
+        }
 #     endif
-        break;
-    case ACC_PCLOCK_MONOTONIC_HR:
-#     if defined(acc_pclock_read_uclock)
-        h->gettime = acc_pclock_read_uclock;
-        h->name = "uclock";
+#     if defined(acc_pclock_read_gettimeofday)
+        if (acc_pclock_read_gettimeofday(h, &c) == 0) {
+            h->gettime = acc_pclock_read_gettimeofday;
+            h->name = "gettimeofday";
+            break;
+        }
 #     endif
         break;
     case ACC_PCLOCK_MONOTONIC:
+#     if defined(acc_pclock_read_clock_gettime_m_syscall)
+        if (acc_pclock_read_clock_gettime_m_syscall(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_m_syscall;
+            h->name = "CLOCK_MONOTONIC/syscall";
+            break;
+        }
+#     endif
+#     if defined(acc_pclock_read_uclock)
+        if (acc_pclock_read_uclock(h, &c) == 0) {
+            h->gettime = acc_pclock_read_uclock;
+            h->name = "uclock";
+            break;
+        }
+#     endif
 #     if defined(acc_pclock_read_clock)
-        if (!h->gettime) {
+        if (acc_pclock_read_clock(h, &c) == 0) {
             h->gettime = acc_pclock_read_clock;
             h->name = "clock";
+            break;
         }
 #     endif
         break;
@@ -5815,35 +5918,52 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
         }
 #     endif
 #     if defined(acc_pclock_read_getprocesstimes)
-        if (!h->gettime && acc_pclock_read_getprocesstimes(h, &c) == 0) {
+        if (acc_pclock_read_getprocesstimes(h, &c) == 0) {
             h->gettime = acc_pclock_read_getprocesstimes;
             h->name = "GetProcessTimes";
             break;
         }
 #     endif
-#     if defined(acc_pclock_read_clock_gettime_p)
-        if (!h->gettime && acc_pclock_read_clock_gettime_p(h, &c) == 0) {
-            h->gettime = acc_pclock_read_clock_gettime_p;
-            h->name = "CLOCK_PROCESS_CPUTIME_ID";
+#     if defined(acc_pclock_read_clock_gettime_p_syscall)
+        if (acc_pclock_read_clock_gettime_p_syscall(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_p_syscall;
+            h->name = "CLOCK_PROCESS_CPUTIME_ID/syscall";
+            break;
+        }
+#     endif
+#     if defined(acc_pclock_read_clock_gettime_p_libc)
+        if (acc_pclock_read_clock_gettime_p_libc(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_p_libc;
+            h->name = "CLOCK_PROCESS_CPUTIME_ID/libc";
             break;
         }
 #     endif
 #     if defined(acc_pclock_read_getrusage)
-        h->gettime = acc_pclock_read_getrusage;
-        h->name = "getrusage";
+        if (acc_pclock_read_getrusage(h, &c) == 0) {
+            h->gettime = acc_pclock_read_getrusage;
+            h->name = "getrusage";
+            break;
+        }
 #     endif
         break;
     case ACC_PCLOCK_THREAD_CPUTIME_ID:
 #     if defined(acc_pclock_read_getthreadtimes)
-        if (!h->gettime && acc_pclock_read_getthreadtimes(h, &c) == 0) {
+        if (acc_pclock_read_getthreadtimes(h, &c) == 0) {
             h->gettime = acc_pclock_read_getthreadtimes;
             h->name = "GetThreadTimes";
         }
 #     endif
-#     if defined(acc_pclock_read_clock_gettime_t)
-        if (!h->gettime && acc_pclock_read_clock_gettime_t(h, &c) == 0) {
-            h->gettime = acc_pclock_read_clock_gettime_t;
-            h->name = "CLOCK_THREAD_CPUTIME_ID";
+#     if defined(acc_pclock_read_clock_gettime_t_syscall)
+        if (acc_pclock_read_clock_gettime_t_syscall(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_t_syscall;
+            h->name = "CLOCK_THREAD_CPUTIME_ID/syscall";
+            break;
+        }
+#     endif
+#     if defined(acc_pclock_read_clock_gettime_t_libc)
+        if (acc_pclock_read_clock_gettime_t_libc(h, &c) == 0) {
+            h->gettime = acc_pclock_read_clock_gettime_t_libc;
+            h->name = "CLOCK_THREAD_CPUTIME_ID/libc";
             break;
         }
 #     endif
@@ -5854,6 +5974,7 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
     if (!h->h)
         h->h = (acclib_handle_t) 1;
     h->mode = mode;
+    h->read_error = 0;
     if (!h->name)
         h->name = "unknown";
     for (i = 0; i < 10; i++) {
@@ -5864,10 +5985,6 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
 ACCLIB_PUBLIC(int, acc_pclock_open_default) (acc_pclock_handle_p h)
 {
     if (acc_pclock_open(h, ACC_PCLOCK_PROCESS_CPUTIME_ID) == 0)
-        return 0;
-    if (acc_pclock_open(h, ACC_PCLOCK_MONOTONIC_HR) == 0)
-        return 0;
-    if (acc_pclock_open(h, ACC_PCLOCK_REALTIME_HR) == 0)
         return 0;
     if (acc_pclock_open(h, ACC_PCLOCK_MONOTONIC) == 0)
         return 0;
@@ -5894,6 +6011,7 @@ ACCLIB_PUBLIC(void, acc_pclock_read) (acc_pclock_handle_p h, acc_pclock_p c)
         if (h->gettime(h, c) == 0)
             return;
     }
+    h->read_error = 1;
 #if defined(acc_int64l_t)
     c->tv_sec = 0;
 #else
@@ -6009,6 +6127,7 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_p h)
 #endif
     h->h = (acclib_handle_t) 1;
     h->mode = 0;
+    h->read_error = 0;
     h->name = NULL;
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
     h->pch.h = 0;
@@ -6062,6 +6181,7 @@ ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
                 return;
         } else {
             h->mode = 0; h->qpf = 0.0; c->qpc = 0;
+            h->read_error = 1;
         }
     }
 #endif
@@ -6354,6 +6474,8 @@ ACCLIB_PUBLIC(int, acc_mkdir) (const char* name, unsigned mode)
 # else
     return mkdir(name);
 # endif
+#elif (ACC_CC_WATCOMC)
+    return mkdir(name, (mode_t) mode);
 #else
     return mkdir(name, mode);
 #endif
