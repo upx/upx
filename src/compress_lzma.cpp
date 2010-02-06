@@ -51,6 +51,7 @@ void lzma_compress_config_t::reset()
 extern int compress_lzma_dummy;
 int compress_lzma_dummy = 0;
 #else
+#define opt compress_lzma_opt
 
 #undef USE_LZMA_PROPERTIES
 
@@ -312,7 +313,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     *dst_len += x_len;
     if (rh == SZ_OK) {
 #if defined(USE_LZMA_PROPERTIES)
-        dst[-1] = probs_buf[0];
+        dst[-1] = props_buf[0];
 #endif
         r = UPX_E_OK;
     }
