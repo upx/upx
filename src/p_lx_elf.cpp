@@ -1615,6 +1615,7 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
             }
         }
     }
+    uip->ui_total_passes -= !!is_shlib;  // not .data of shlib
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
