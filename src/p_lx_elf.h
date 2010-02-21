@@ -61,7 +61,7 @@ protected:
     ) = 0;
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
-    virtual void unpack(OutputFile *fo) = 0;
+    virtual void unpack(OutputFile *fo);
 
     virtual unsigned elf_get_offset_from_address(unsigned) const = 0;
     virtual void const *elf_find_dynamic(unsigned) const = 0;
@@ -360,8 +360,6 @@ public:
     virtual const char *getName() const { return "linux/elf386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf"; }
     virtual const int *getFilters() const;
-
-    virtual void unpack(OutputFile *fo);
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
