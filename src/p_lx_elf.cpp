@@ -240,7 +240,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
-                for (int j = len; j > 0; ++dyn, j -= sizeof(*dyn)) {
+                for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
                         old_dtinit = dyn->d_val;
                         unsigned const t = (unsigned char *)&dyn->d_val -
@@ -1207,10 +1207,10 @@ PackLinuxElf64amd::canPack()
 }
 
 off_t
-PackLinuxElf32::getbrk(const Elf32_Phdr *phdr, int e_phnum) const
+PackLinuxElf32::getbrk(const Elf32_Phdr *phdr, int nph) const
 {
     off_t brka = 0;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) {
+    for (int j = 0; j < nph; ++phdr, ++j) {
         if (PT_LOAD32 == get_te32(&phdr->p_type)) {
             off_t b = get_te32(&phdr->p_vaddr) + get_te32(&phdr->p_memsz);
             if (b > brka)
@@ -1221,10 +1221,10 @@ PackLinuxElf32::getbrk(const Elf32_Phdr *phdr, int e_phnum) const
 }
 
 off_t
-PackLinuxElf32::getbase(const Elf32_Phdr *phdr, int e_phnum) const
+PackLinuxElf32::getbase(const Elf32_Phdr *phdr, int nph) const
 {
     off_t base = ~0u;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) {
+    for (int j = 0; j < nph; ++phdr, ++j) {
         if (phdr->PT_LOAD == get_te32(&phdr->p_type)) {
             unsigned const vaddr = get_te32(&phdr->p_vaddr);
             if (vaddr < (unsigned) base)
@@ -1238,10 +1238,10 @@ PackLinuxElf32::getbase(const Elf32_Phdr *phdr, int e_phnum) const
 }
 
 off_t
-PackLinuxElf64::getbrk(const Elf64_Phdr *phdr, int e_phnum) const
+PackLinuxElf64::getbrk(const Elf64_Phdr *phdr, int nph) const
 {
     off_t brka = 0;
-    for (int j = 0; j < e_phnum; ++phdr, ++j) {
+    for (int j = 0; j < nph; ++phdr, ++j) {
         if (PT_LOAD64 == get_te32(&phdr->p_type)) {
             off_t b = get_te64(&phdr->p_vaddr) + get_te64(&phdr->p_memsz);
             if (b > brka)
@@ -1552,7 +1552,7 @@ void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
 unsigned PackLinuxElf32::find_LOAD_gap(
     Elf32_Phdr const *const phdr,
     unsigned const k,
-    unsigned const e_phnum
+    unsigned const nph
 )
 {
     if (PT_LOAD32!=get_te32(&phdr[k].p_type)) {
@@ -1564,7 +1564,7 @@ unsigned PackLinuxElf32::find_LOAD_gap(
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
-        if (e_phnum==j) {
+        if (nph==j) {
             j = 0;
         }
         if (k==j) {
@@ -1674,7 +1674,7 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 unsigned PackLinuxElf64::find_LOAD_gap(
     Elf64_Phdr const *const phdr,
     unsigned const k,
-    unsigned const e_phnum
+    unsigned const nph
 )
 {
     if (PT_LOAD64!=get_te32(&phdr[k].p_type)) {
@@ -1686,7 +1686,7 @@ unsigned PackLinuxElf64::find_LOAD_gap(
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
-        if (e_phnum==j) {
+        if (nph==j) {
             j = 0;
         }
         if (k==j) {
@@ -2782,10 +2782,10 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
                 unsigned const dyn_len = get_te32(&phdr->p_filesz);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)((unsigned char *)ibuf +
                     (dyn_off - load_off));
-                for (unsigned j= 0; j < dyn_len; ++dyn, j += sizeof(*dyn)) {
+                for (unsigned j2= 0; j2 < dyn_len; ++dyn, j2 += sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
                         if (fo) {
-                            fo->seek(sizeof(unsigned) + j + dyn_off, SEEK_SET);
+                            fo->seek(sizeof(unsigned) + j2 + dyn_off, SEEK_SET);
                             fo->rewrite(&old_dtinit, sizeof(old_dtinit));
                             fo->seek(0, SEEK_END);
                         }
