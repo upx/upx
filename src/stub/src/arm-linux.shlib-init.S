@@ -85,7 +85,7 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 //  .long offset({p_info; b_info; compressed data})
 
 _start: .globl _start
-
+        nop  //; bkpt  // for debugging
         stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
         mov fp,sp
 o_uinit= (3+4+2)*4  // pc
@@ -146,8 +146,14 @@ L71:
 .macro lsl dst,src,cnt
         mov \dst,\src,lsl \cnt
 .endm
+.macro lsls dst,src,cnt
+        movs \dst,\src,lsl \cnt
+.endm
 .macro lsr dst,src,cnt
         mov \dst,\src,lsr \cnt
+.endm
+.macro lsrs dst,src,cnt
+        movs \dst,\src,lsr \cnt
 .endm
 
 #define lodsl ldr eax,[esi],#4
@@ -291,26 +297,31 @@ supervise:
 
         bl L620
 //hatch:
-        do_sys7t __NR_munmap
+#if defined(ARMEL_EABI4)  //{
+        swi 0  // last part of  do_sys7t __NR_munmap
+#elif defined(ARM_OLDABI)  //}{
+        do_sys __NR_munmap
+#else  //}{
+        error ARMEL_EABI4, ARM_OLDABI
+#endif  //}
         ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
 
 L620:  // Implant escape hatch at end of .text
         ldr eax,[fp,#o_hatch]
-        ldmia  lr,{arg1,arg2,arg3}
-        stmia eax,{arg1,arg2,arg3}
+        ldmia  lr,{arg1,arg2}
+        stmia eax,{arg1,arg2}
 
 //p_unflt
-        ldmia sp!,{arg1,arg2,arg3,arg4, eax}
+        ldmia sp!,{arg1,arg2,arg3,arg4, eax, r12}  // r12= w_fragment [toss]
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
         blx eax  // unfilter
 0:
-        add sp,sp,#4  // toss w_fragment
 //p_mprot
         ldr arg1,[sp,#0*4]  // lo(dst)
         ldr arg2,[sp,#1*4]  // len
         mov arg3,#0
         add arg2,arg2,arg1  // hi(dst)
-        add arg2,arg2,#3*4  // len(hatch)
+        add arg2,arg2,#2*4  // len(hatch)
         do_sys7t2 __ARM_NR_cacheflush
 
         ldmia sp!,{arg1,arg2}
@@ -318,17 +329,36 @@ L620:  // Implant escape hatch at end of .text
         do_sys7t __NR_mprotect
 
 //p_unmap
-        ldmia sp!,{arg1,arg2, r3}  // r3= &hatch
-        bx r3
+#if defined(ARMEL_EABI4)  //{
+// first part of  do_sys7t __NR_munmap
+.if __NR_munmap <= 0xff
+        mov r7,#__NR_munmap
+.else
+        mov r7,#__NR_munmap>>16
+        lsl r7,r7,#16
+        add r7,r7,#__NR_munmap - ((__NR_munmap>>16)<<16)
+.endif
+#endif  //}
+        ldmia sp!,{arg1,arg2, pc}  // goto hatch
 
 movsl_subr:
         ldr ecx,[esi,#-4]  // 'bl <over>' instruction word
         bic ecx,ecx,#0xff<<24  // displacment field
         add ecx,ecx,#1  // displ omits one word
-      //b movsl
-movsl:  // FIXME:  bug when 0==ecx
-        ldr tmp,[esi],#4; subs ecx,ecx,#1
-        str tmp,[edi],#4; bne movsl
+// FALL THROUGH to the part of 'movsl' that trims to a multiple of 8 words.
+// 7/8 of the time this is faster; 1/8 of the time it's slower.
+9:
+        ldr tmp,[esi],#4; sub ecx,ecx,#1
+        str tmp,[edi],#4
+movsl:  // edi= 4-byte aligned dst; esi= 4-byte aligned src; ecx= word count
+        tst ecx,#7; bne 9b  // work ecx down to multiple of 8
+        lsrs ecx,ecx,#3; beq 9f
+        stmdb sp!, {r2,   r4,r6, r7,r8,r9}  // tmp===r3, ecx===r5
+7:
+        ldmia esi!,{r2,r3,r4,r6, r7,r8,r9,r12}; subs ecx,ecx,#1
+        stmia edi!,{r2,r3,r4,r6, r7,r8,r9,r12}; bne 7b
+        ldmia sp!, {r2,   r4,r6, r7,r8,r9}
+9:
         ret
 
 L220:

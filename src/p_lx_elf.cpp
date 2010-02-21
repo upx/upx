@@ -265,6 +265,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         }
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
+            va_init |= (Elf32_Ehdr::EM_ARM==e_machine);
             unsigned word; set_te32(&word, va_init);
             fo->rewrite(&word, sizeof(word));
             fo->seek(0, SEEK_END);
@@ -922,7 +923,7 @@ static const
 static const
 #include "stub/armel-eabi-linux.elf-fold.h"
 static const
-#include "stub/armel-eabi-linux.shlib-init.h"
+#include "stub/thumb-eabi-linux.shlib-init.h"
 
 static const
 #include "stub/arm-linux.elf-entry.h"
@@ -953,7 +954,7 @@ PackLinuxElf32armLe::buildLoader(Filter const *ft)
 
         if (0!=xct_off) {  // shared library
             buildLinuxLoader(
-                stub_armel_eabi_linux_shlib_init, sizeof(stub_armel_eabi_linux_shlib_init),
+                stub_thumb_eabi_linux_shlib_init, sizeof(stub_thumb_eabi_linux_shlib_init),
                 NULL,                      0,                                ft );
             return;
         }
@@ -1673,9 +1674,6 @@ void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
             while (x>>=1) {
                 ++lg2_page;
             }
-            if (hatch_off < 16 && Elf32_Ehdr::EM_ARM==e_machine) {
-                hatch_off = get_te32(&phdr->p_offset) + get_te32(&phdr->p_memsz);
-            }
         }
     }
     page_size =  1u<<lg2_page;
@@ -2278,6 +2276,10 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         ehdri.e_ident[13] = 0x80;
         ehdri.e_ident[14] = 0x61;  // POPA
         ehdri.e_ident[15] = 0xc3;  // RET
+        if (Elf32_Ehdr::EM_ARM==e_machine) {
+            set_te16(&ehdri.e_ident[12], 0xdf00);  // swi 0
+            set_te16(&ehdri.e_ident[14], 0xbdff);  // pop {all regs}
+        }
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
     }
