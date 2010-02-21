@@ -34,6 +34,7 @@
                 .section \name
 .endm
 
+/* The order of #if-#elif matters: ARMEL_EABI4 takes precedence over ARM_OLDABI */
 #if defined(ARMEL_DARWIN)  /*{*/
 __NR_SYSCALL_BASE = 0
 .macro          do_sys N
