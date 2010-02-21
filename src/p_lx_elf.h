@@ -63,7 +63,7 @@ protected:
     virtual void addStubEntrySections(Filter const *);
     virtual void unpack(OutputFile *fo);
 
-    virtual unsigned elf_get_offset_from_address(unsigned) const = 0;
+    virtual unsigned elf_get_offset_from_address(uint64_t) const = 0;
     virtual void const *elf_find_dynamic(unsigned) const = 0;
     virtual uint64_t elf_unsigned_dynamic(unsigned) const = 0;
 
@@ -78,9 +78,9 @@ protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
-    unsigned xct_va;  // minimum SHT_EXECINSTR virtual address
     unsigned hatch_off;  // file offset of escape hatch
-    unsigned hatch_va;  // virtual address of escape hatch
+    uint64_t load_va;  // PT_LOAD[0].p_vaddr
+    uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -132,7 +132,7 @@ protected:
     static unsigned elf_hash(char const *) /*const*/;
     static unsigned gnu_hash(char const *) /*const*/;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
-    virtual unsigned elf_get_offset_from_address(unsigned) const;
+    virtual unsigned elf_get_offset_from_address(uint64_t) const;
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
@@ -229,16 +229,28 @@ protected:
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
 
-    virtual unsigned elf_get_offset_from_address(unsigned) const;
+    virtual unsigned elf_get_offset_from_address(uint64_t) const;
+    Elf64_Shdr const *elf_find_section_name(char const *) const;
+    Elf64_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
     uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
+    Elf64_Shdr const *shdri; // from input file
     acc_uint64l_t page_mask;  // AND clears the offset-within-page
 
     Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
+    unsigned int const *hashtab;  // from DT_HASH
+    unsigned int const *gashtab;  // from DT_GNU_HASH
+    Elf64_Sym    const *dynsym;   // from DT_SYMTAB
+    char const *shstrtab;   // via Elf64_Shdr
+    int n_elf_shnum;  // via e_shnum
+
+    Elf64_Shdr const *sec_strndx;
+    Elf64_Shdr const *sec_dynsym;
+    Elf64_Shdr const *sec_dynstr;
 
     __packed_struct(cprElfHdr1)
         Elf64_Ehdr ehdr;
