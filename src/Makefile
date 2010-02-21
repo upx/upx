@@ -39,7 +39,7 @@ else
 CXXFLAGS += -O2
 endif
 CXXFLAGS_WERROR = -Werror
-CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings 
+CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
 CXXFLAGS += $(CXXFLAGS_WERROR)
 endif
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)

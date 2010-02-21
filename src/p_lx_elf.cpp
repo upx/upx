@@ -54,8 +54,8 @@ umin(unsigned a, unsigned b)
     return (a < b) ? a : b;
 }
 
-static uint64_t
-umin64(uint64_t a, uint64_t b)
+static acc_uint64l_t
+umin64(acc_uint64l_t a, acc_uint64l_t b)
 {
     return (a < b) ? a : b;
 }
@@ -286,13 +286,13 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         Elf64_Phdr *phdr = phdri;
         unsigned off = sz_pack2;
         unsigned off_init = 0;  // where in file
-        uint64_t va_init = sz_pack2;   // virtual address
-        uint64_t rel = 0;
-        uint64_t old_dtinit = 0;
+        acc_uint64l_t va_init = sz_pack2;   // virtual address
+        acc_uint64l_t rel = 0;
+        acc_uint64l_t old_dtinit = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
-            uint64_t const len  = get_te64(&phdr->p_filesz);
-            uint64_t const ioff = get_te64(&phdr->p_offset);
-            uint64_t       align= get_te64(&phdr->p_align);
+            acc_uint64l_t const len  = get_te64(&phdr->p_filesz);
+            acc_uint64l_t const ioff = get_te64(&phdr->p_offset);
+            acc_uint64l_t       align= get_te64(&phdr->p_align);
             unsigned const type = get_te32(&phdr->p_type);
             if (phdr->PT_INTERP==type) {
                 // Rotate to highest position, so it can be lopped
@@ -350,7 +350,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         }
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
-            uint64_t word; set_te64(&word, va_init);
+            acc_uint64l_t word; set_te64(&word, va_init);
             fo->rewrite(&word, sizeof(word));
             fo->seek(0, SEEK_END);
         }
@@ -1077,7 +1077,7 @@ bool PackLinuxElf32::canPack()
         unsigned char buf[sizeof(Elf32_Ehdr) + 14*sizeof(Elf32_Phdr)];
         //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
     } u;
-    COMPILE_TIME_ASSERT(sizeof(u.buf) <= 512);
+    COMPILE_TIME_ASSERT(sizeof(u.buf) <= 512)
 
     fi->seek(0, SEEK_SET);
     fi->readx(u.buf, sizeof(u.buf));
@@ -1278,7 +1278,7 @@ PackLinuxElf64amd::canPack()
         unsigned char buf[sizeof(Elf64_Ehdr) + 14*sizeof(Elf64_Phdr)];
         //struct { Elf64_Ehdr ehdr; Elf64_Phdr phdr; } e;
     } u;
-    COMPILE_TIME_ASSERT(sizeof(u) <= 1024);
+    COMPILE_TIME_ASSERT(sizeof(u) <= 1024)
 
     fi->readx(u.buf, sizeof(u.buf));
     fi->seek(0, SEEK_SET);
@@ -1336,8 +1336,8 @@ PackLinuxElf64amd::canPack()
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf32_Ehdr));
-        phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
-        shdri= (Elf64_Shdr const *)(e_shoff + file_image);  // do not free() !!
+        phdri= (Elf64_Phdr       *)((size_t)e_phoff + file_image);  // do not free() !!
+        shdri= (Elf64_Shdr const *)((size_t)e_shoff + file_image);  // do not free() !!
 
         n_elf_shnum = get_te16(&ehdr->e_shnum);
         //sec_strndx = &shdri[ehdr->e_shstrndx];
@@ -1396,8 +1396,8 @@ PackLinuxElf64amd::canPack()
                 }
             }
             // Rely on 0==elf_unsigned_dynamic(tag) if no such tag.
-            uint64_t const va_gash = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
-            uint64_t const va_hash = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
+            acc_uint64l_t const va_gash = elf_unsigned_dynamic(Elf64_Dyn::DT_GNU_HASH);
+            acc_uint64l_t const va_hash = elf_unsigned_dynamic(Elf64_Dyn::DT_HASH);
             if (xct_va < va_gash  ||  (0==va_gash && xct_va < va_hash)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_STRTAB)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_SYMTAB)
@@ -1410,7 +1410,7 @@ PackLinuxElf64amd::canPack()
                 goto abandon;
             }
             for ((shdr= shdri), (j= n_elf_shnum); --j>=0; ++shdr) {
-                uint64_t const sh_addr = get_te64(&shdr->sh_addr);
+                acc_uint64l_t const sh_addr = get_te64(&shdr->sh_addr);
                 if ( sh_addr==va_gash
                 ||  (sh_addr==va_hash && 0==va_gash) ) {
                     shdr= &shdri[get_te32(&shdr->sh_link)];  // the associated SHT_SYMTAB
@@ -2322,7 +2322,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     // rewrite Elf header
     if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        uint64_t const base= get_te64(&elfout.phdr[0].p_vaddr);
+        acc_uint64l_t const base= get_te64(&elfout.phdr[0].p_vaddr);
         set_te16(&elfout.ehdr.e_type, Elf64_Ehdr::ET_DYN);
         set_te16(&elfout.ehdr.e_phnum, 1);
         set_te64(    &elfout.ehdr.e_entry,
@@ -2345,7 +2345,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     }
     else {
         if (Elf64_Phdr::PT_NOTE==get_te64(&elfout.phdr[2].p_type)) {
-            uint64_t const reloc = get_te64(&elfout.phdr[0].p_vaddr);
+            acc_uint64l_t const reloc = get_te64(&elfout.phdr[0].p_vaddr);
             set_te64(            &elfout.phdr[2].p_vaddr,
                 reloc + get_te64(&elfout.phdr[2].p_vaddr));
             set_te64(            &elfout.phdr[2].p_paddr,
@@ -2622,7 +2622,7 @@ Linker* PackLinuxElf32armBe::newLinker() const
 }
 
 unsigned
-PackLinuxElf32::elf_get_offset_from_address(uint64_t const addr) const
+PackLinuxElf32::elf_get_offset_from_address(acc_uint64l_t const addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -2650,7 +2650,7 @@ PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
     return 0;
 }
 
-uint64_t
+acc_uint64l_t
 PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
 {
     Elf32_Dyn const *dynp= dynseg;
@@ -2662,12 +2662,12 @@ PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
 }
 
 unsigned
-PackLinuxElf64::elf_get_offset_from_address(uint64_t const addr) const
+PackLinuxElf64::elf_get_offset_from_address(acc_uint64l_t const addr) const
 {
     Elf64_Phdr const *phdr = phdri;
     int j = e_phnum;
     for (; --j>=0; ++phdr) if (PT_LOAD64 == get_te32(&phdr->p_type)) {
-        uint64_t const t = addr - get_te64(&phdr->p_vaddr);
+        acc_uint64l_t const t = addr - get_te64(&phdr->p_vaddr);
         if (t < get_te64(&phdr->p_filesz)) {
             return t + get_te64(&phdr->p_offset);
         }
@@ -2681,16 +2681,16 @@ PackLinuxElf64::elf_find_dynamic(unsigned int const key) const
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
     for (; Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
-        uint64_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
+        acc_uint64l_t const t= elf_get_offset_from_address(get_te64(&dynp->d_val));
         if (t) {
-            return t + file_image;
+            return (size_t)t + file_image;
         }
         break;
     }
     return 0;
 }
 
-uint64_t
+acc_uint64l_t
 PackLinuxElf64::elf_unsigned_dynamic(unsigned int const key) const
 {
     Elf64_Dyn const *dynp= dynseg;
@@ -2780,8 +2780,12 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 #define MAX_ELF_HDR 512
     union {
         unsigned char buf[MAX_ELF_HDR];
-        //struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+#if (ACC_CC_BORLANDC || ACC_CC_SUNPROC)
+#else
+        struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
+#endif
     } u;
+    COMPILE_TIME_ASSERT(sizeof(u) == MAX_ELF_HDR)
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
     Elf32_Phdr *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
     unsigned old_data_off = 0;
@@ -2849,7 +2853,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         }
         // Search the Phdrs of compressed
         int n_ptload = 0;
-        phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(unsigned char *)ibuf);
+        phdr = (Elf32_Phdr *) (void *) (1+ (Elf32_Ehdr *)(unsigned char *)ibuf);
         for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type) && 0!=n_ptload++) {
                 old_data_off = get_te32(&phdr->p_offset);
@@ -2863,7 +2867,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         ph.u_len = 0;
 
         // Decompress and unfilter the tail of first PT_LOAD.
-        phdr = (Elf32_Phdr *)(1+ ehdr);
+        phdr = (Elf32_Phdr *) (void *) (1+ ehdr);
         for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type)) {
                 ph.u_len = get_te32(&phdr->p_filesz) - overlay_offset;
