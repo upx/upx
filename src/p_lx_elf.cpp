@@ -2136,7 +2136,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 
     // decompress PT_LOAD32
     bool first_PF_X = true;
-    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+    unsigned const u_phnum = get_te16(&ehdr->e_phnum);
+    for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
         if (PT_LOAD32==get_te32(&phdr->p_type)) {
             unsigned const filesz = get_te32(&phdr->p_filesz);
             unsigned const offset = get_te32(&phdr->p_offset);
@@ -2155,8 +2156,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     }
 
     phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-    for (unsigned j = 0; j < e_phnum; ++j) {
-        unsigned const size = find_LOAD_gap(phdr, j, e_phnum);
+    for (unsigned j = 0; j < u_phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
         if (size) {
             unsigned const where = get_te32(&phdr[j].p_offset) +
                                    get_te32(&phdr[j].p_filesz);
@@ -2242,8 +2243,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 
     // decompress PT_LOAD32
     bool first_PF_X = true;
+    unsigned const u_phnum = get_te16(&ehdr->e_phnum);
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
-    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+    for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
         if (PT_LOAD32==get_te32(&phdr->p_type)) {
             acc_uint64l_t const filesz = get_te64(&phdr->p_filesz);
             acc_uint64l_t const offset = get_te64(&phdr->p_offset);
@@ -2262,8 +2264,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     }
 
     phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
-    for (unsigned j = 0; j < e_phnum; ++j) {
-        unsigned const size = find_LOAD_gap(phdr, j, e_phnum);
+    for (unsigned j = 0; j < u_phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
         if (size) {
             unsigned const where = get_te64(&phdr[j].p_offset) +
                                    get_te64(&phdr[j].p_filesz);
@@ -2660,6 +2662,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
     decompress(ibuf, (upx_byte *)ehdr, false);
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
+    unsigned const u_phnum = get_te16(&ehdr->e_phnum);
     unsigned total_in = 0;
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
@@ -2681,7 +2684,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
         // Search the Phdrs of compressed
         int n_ptload = 0;
         phdr = (Elf32_Phdr *)(1+ (Elf32_Ehdr *)(unsigned char *)ibuf);
-        for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type) && 0!=n_ptload++) {
                 old_data_off = get_te32(&phdr->p_offset);
                 old_data_len = get_te32(&phdr->p_filesz);
@@ -2695,7 +2698,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
 
         // Decompress and unfilter the tail of first PT_LOAD.
         phdr = (Elf32_Phdr *)(1+ ehdr);
-        for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type)) {
                 ph.u_len = get_te32(&phdr->p_filesz) - overlay_offset;
                 break;
@@ -2707,7 +2710,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
     else {  // main executable
         // Decompress each PT_LOAD.
         bool first_PF_X = true;
-        for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type)) {
                 unsigned const filesz = get_te32(&phdr->p_filesz);
                 unsigned const offset = get_te32(&phdr->p_offset);
@@ -2728,8 +2731,8 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
 
     // The gaps between PT_LOAD and after last PT_LOAD
     phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-    for (unsigned j = 0; j < e_phnum; ++j) {
-        unsigned const size = find_LOAD_gap(phdr, j, e_phnum);
+    for (unsigned j = 0; j < u_phnum; ++j) {
+        unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
         if (size) {
             unsigned const where = get_te32(&phdr[j].p_offset) +
                                    get_te32(&phdr[j].p_filesz);
@@ -2758,7 +2761,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
         int n_ptload = 0;
         unsigned load_off = 0;
         phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-        for (unsigned j= 0; j < e_phnum; ++j, ++phdr) {
+        for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (PT_LOAD32==get_te32(&phdr->p_type) && 0!=n_ptload++) {
                 load_off = get_te32(&phdr->p_offset);
                 fi->seek(old_data_off, SEEK_SET);
@@ -2773,7 +2776,7 @@ void PackLinuxElf32x86::unpack(OutputFile *fo)
         }
         // Restore DT_INIT.d_val
         phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
-        for (unsigned j= 0; j < e_phnum; ++j, ++phdr) {
+        for (unsigned j= 0; j < u_phnum; ++j, ++phdr) {
             if (phdr->PT_DYNAMIC==get_te32(&phdr->p_type)) {
                 unsigned const dyn_off = get_te32(&phdr->p_offset);
                 unsigned const dyn_len = get_te32(&phdr->p_filesz);
