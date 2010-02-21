@@ -643,9 +643,9 @@ PackLinuxElf32::buildLinuxLoader(
 {
     initLoader(proto, szproto);
 
+  if (0 < szfold) {
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
-  if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
         get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
@@ -654,12 +654,10 @@ PackLinuxElf32::buildLinuxLoader(
     h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
-  }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
-  if (0 < szfold) {
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
@@ -679,7 +677,6 @@ PackLinuxElf32::buildLinuxLoader(
         delete[] tmp;
     }
 #endif  //}
-  }
     unsigned const sz_cpr = h.sz_cpr;
     set_te32(&h.sz_cpr, h.sz_cpr);
     set_te32(&h.sz_unc, h.sz_unc);
@@ -688,6 +685,10 @@ PackLinuxElf32::buildLinuxLoader(
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
+  }
+  else {
+    linker->addSection("FOLDEXEC", "", 0, 0);
+  }
 
     addStubEntrySections(ft);
 
@@ -707,9 +708,9 @@ PackLinuxElf64::buildLinuxLoader(
 {
     initLoader(proto, szproto);
 
+  if (0 < szfold) {
     struct b_info h; memset(&h, 0, sizeof(h));
     unsigned fold_hdrlen = 0;
-  if (0 < szfold) {
     cprElfHdr1 const *const hf = (cprElfHdr1 const *)fold;
     fold_hdrlen = umax(0x80, sizeof(hf->ehdr) +
         get_te16(&hf->ehdr.e_phentsize) * get_te16(&hf->ehdr.e_phnum) +
@@ -718,17 +719,14 @@ PackLinuxElf64::buildLinuxLoader(
     h.b_method = (unsigned char) ph.method;
     h.b_ftid = (unsigned char) ph.filter;
     h.b_cto8 = (unsigned char) ph.filter_cto;
-  }
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
     unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
-  if (0 < szfold) {
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
-  }
     unsigned const sz_cpr = h.sz_cpr;
     set_te32(&h.sz_cpr, h.sz_cpr);
     set_te32(&h.sz_unc, h.sz_unc);
@@ -737,6 +735,10 @@ PackLinuxElf64::buildLinuxLoader(
     // This adds the definition to the "library", to be used later.
     linker->addSection("FOLDEXEC", cprLoader, sizeof(h) + sz_cpr, 0);
     delete [] cprLoader;
+  }
+  else {
+    linker->addSection("FOLDEXEC", "", 0, 0);
+  }
 
     addStubEntrySections(ft);
 
