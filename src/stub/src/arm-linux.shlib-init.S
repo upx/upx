@@ -33,6 +33,7 @@
 #include "arch/arm/v5a/macros.S"
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
+#define bkpt_th .short 0xde01  /* reserved instr; Linux GNU eabi breakpoint */
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
 
@@ -86,15 +87,9 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 _start: .globl _start
 
         stmdb sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
-o_uinit= (3+4+2)*4
-
-//hatch:
-//      syscall  // munmap
-//      ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
-
         mov fp,sp
-        sub sp,sp,#4
-o_hatch= -1*4
+o_uinit= (3+4+2)*4  // pc
+
         bl main  // push &f_decompress
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
@@ -180,7 +175,8 @@ main:
                mov ecx,esi
         lodsl; sub ecx,ecx,eax; //str ecx,[fp,#o_reloc]
         lodsl; add eax,ecx,eax; str eax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
-        lodsl; add eax,ecx,eax; str eax,[fp,#o_hatch]  // reloc &hatch   for step 10
+        lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
+o_hatch= -1*4
         lodsl; add edi,ecx,eax  // &p_info; also destination for decompress
         add esi,edi,#sz_p_info  // &b_info
 
@@ -235,7 +231,7 @@ top_unf:
 tst_unf:
         cmp len,#0
         bne top_unf
-        mov pc,lr
+        ret
 
 #undef ptr
 #undef len
@@ -264,6 +260,9 @@ o_uncpr= -13*4
         push esi  // src;  arglist ready for decompress  step 6
 p_uncpr= -17*4
 
+        and tmp,esi,#3  // length of prefix alignment
+        add ecx,ecx,#3  // allow  suffix alignment
+        add ecx,ecx,tmp  // prefix increases byte length
         ldr tmp,[fp,#o_wfrag]; add edx,tmp,ecx,lsr #2  // w_srclen + w_frag
         ldr tmp,[fp,#o_uncpr]; bl wlen_subr
         ldr tmp,[fp,#o_unflt]; bl wlen_subr
@@ -277,17 +276,29 @@ supervise:
         mov arg3,#PROT_READ|PROT_WRITE
         ldr arg2,[fp,#p_mprot+4]  // dstlen
         ldr arg1,[fp,#p_mprot  ]  // dst
-        do_sys __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
+        mov r6,arg1  // required result
+        do_sys7t __NR_mmap64; cmp r0,r6; beq 0f; bkpt; 0:
 
         // Restore fragment of page below dst
         ldr ecx,[fp,#o_wfrag]
-        mov edi,r0
+        //mov edi,r0  // NOP: edi==r0
         ldr esi,[fp,#p_unmap]
         bl movsl
 
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
         blx eax  // decompress
         add sp,sp,#4  // toss arg5
+
+        bl L620
+//hatch:
+        do_sys7t __NR_munmap
+        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+
+L620:  // Implant escape hatch at end of .text
+        ldr eax,[fp,#o_hatch]
+        ldmia  lr,{arg1,arg2,arg3}
+        stmia eax,{arg1,arg2,arg3}
+
 //p_unflt
         ldmia sp!,{arg1,arg2,arg3,arg4, eax}
         tst arg4,arg4; beq 0f  // 0==ftid ==> no filter
@@ -299,17 +310,16 @@ supervise:
         ldr arg2,[sp,#1*4]  // len
         mov arg3,#0
         add arg2,arg2,arg1  // hi(dst)
-        do_sys2 __ARM_NR_cacheflush
+        add arg2,arg2,#3*4  // len(hatch)
+        do_sys7t2 __ARM_NR_cacheflush
 
         ldmia sp!,{arg1,arg2}
         mov arg3,#PROT_READ|PROT_EXEC
-        do_sys __NR_mprotect
+        do_sys7t __NR_mprotect
 
 //p_unmap
-        //ldmia sp!,{arg1,arg2, pc}
-        add sp,sp,#-p_unmap
-
-        ldmia sp!,{arg1,arg2,arg3, eax,ecx,r6,r7, fp,lr,pc}
+        ldmia sp!,{arg1,arg2, r3}  // r3= &hatch
+        bx r3
 
 movsl_subr:
         ldr ecx,[esi,#-4]  // 'bl <over>' instruction word
@@ -333,18 +343,24 @@ o_super= -18*4
         mov arg3,#PROT_READ|PROT_WRITE|PROT_EXEC
         str arg2,[fp,#p_unmap+1*4]  // length to unmap
         mov arg1,#0  // any addr
-        do_sys __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
+        do_sys7t __NR_mmap64; cmn r0,#4096; bcc 0f; bkpt; 0:
         str r0,[fp,#p_unmap+0*4]  // address to unmap
 
         ldr esi,[fp,#p_mprot]
-        mov edi,r0  // edi= dst
+        //mov edi,r0  // edi= dst  NOP: edi==r0
         ldr ecx,[fp,#o_wfrag]  // w_fragment
         bl movsl  // copy the fragment
 
-        ldr ecx,[fp,#p_uncpr+1*4]  // len
         ldr esi,[fp,#p_uncpr+0*4]  // src
-        str edi,[fp,#p_uncpr+0*4]  // dst
-        bl memcpyW  // copy compressed data
+        ldr ecx,[fp,#p_uncpr+1*4]  // len
+        and tmp,esi,#3  // length of prefix alignment
+        sub esi,esi,tmp  // down to word aligned
+        add ecx,ecx,tmp  // prefix increases byte length
+        add tmp,tmp,edi // skip prefix at destination
+        str tmp,[fp,#p_uncpr+0*4]  // dst
+        add ecx,ecx,#3  // round up to full words
+        lsr ecx,ecx,#2
+        bl movsl  // copy all aligned words that contain compressed data
 
         mov edx,edi  // lo(dst) of copied code
 
@@ -363,7 +379,7 @@ o_super= -18*4
         mov arg2,edi  // hi(dst) of copied code
         mov arg1,edx  // lo(dst) of copied code
         mov arg3,#0
-        do_sys2 __ARM_NR_cacheflush
+        do_sys7t2 __ARM_NR_cacheflush
 
         pop pc  // goto copied supervisor
 
@@ -379,37 +395,6 @@ wlen_subr:  // edx+= nwords of inline subr at *tmp
         bic tmp,tmp,#0xff<<24  // displacment field
         add tmp,tmp,#1  // displ omits one word
         add edx,edx,tmp
-        ret
-
-// dst (edi) is 4-byte aligned.
-// src (esi) is unknown aligned
-// cnt (ecx) is bytes
-// Round up count to full words.
-memcpyW:  
-        add ecx,ecx,#3
-        lsr ecx,ecx,#2
-        tst esi,#3; beq movsl  // 4-byte aligned
-        tst esi,#1; beq movsw2  // 2-byte aligned
-movsb4:
-        ldrb tmp,[esi],#1
-        ldrb r6, [esi],#1
-        ldrb r12,[esi],#1
-        ldrb r7, [esi],#1
-
-        orr tmp,tmp,r6,lsl #8
-        orr r12,r12,r7,lsl #8
-                subs ecx,ecx,#1
-        orr tmp,tmp,r12,lsl #16
-        str tmp,[edi],#4
-                bne movsb4
-        ret
-movsw2:
-        ldrh tmp,[esi],#2
-        ldrh r12,[esi],#2
-                subs ecx,ecx,#1
-        orr tmp,tmp,r12,lsl #16
-        str tmp,[edi],#4
-                bne movsw2
         ret
 
 /*__XTHEENDX__*/

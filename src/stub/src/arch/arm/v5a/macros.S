@@ -34,6 +34,7 @@
                 .section \name
 .endm
 
+/* The order of #if-#elif matters: ARMEL_EABI4 takes precedence over ARM_OLDABI */
 #if defined(ARMEL_DARWIN)  /*{*/
 __NR_SYSCALL_BASE = 0
 .macro          do_sys N
@@ -41,6 +42,9 @@ __NR_SYSCALL_BASE = 0
                 swi 0x80  // sets Carry iff error
                 orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
                 ret
+.endm
+.macro          do_sys7t N
+                do_sys \N
 .endm
 
 .macro          do_dcache_flush  // In: r0=addr; r1=len
@@ -57,17 +61,23 @@ __NR_SYSCALL_BASE = 0
 #elif defined(ARMEL_EABI4)  /*}{*/
 
 __NR_SYSCALL_BASE = 0
-.macro          do_sys N
-                mov r12,r7  // save r7 in ip
+.macro          do_sys7t N
                 mov r7,#\N  // syscall number
                 swi 0
+.endm
+.macro          do_sys N
+                mov r12,r7  // save r7 in ip
+                do_sys7t \N
                 mov r7,r12  // restore r7 from ip
 .endm
-.macro          do_sys2 N
-                mov r12,r7  // save r7 in ip
+.macro          do_sys7t2 N
                 mov r7,   #(\N) & 0xff  // syscall number
                 orr r7,r7,#(\N) &~0xff  // high bits
                 swi 0
+.endm
+.macro          do_sys2 N
+                mov r12,r7  // save r7 in ip
+                do_sys7t2 \N
                 mov r7,r12  // restore r7 from ip
 .endm
 
@@ -77,8 +87,14 @@ __NR_SYSCALL_BASE = 0x900000
 .macro          do_sys N
                 swi \N
 .endm
+.macro          do_sys7t N
+                do_sys \N
+.endm
 .macro          do_sys2 N
                 swi \N
+.endm
+.macro          do_sys7t2 N
+                do_sys2 \N
 .endm
 
 #else  /*}{*/
