@@ -114,8 +114,7 @@ L90:
         pop %rcx   # JMPU
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
-        jmp *(%r15)
-        jmp *%rcx  # goto: syscall; ret
+        jmp *(%r15)  # goto: syscall; ret
 
 munmap: .globl munmap
         movb $ __NR_munmap,%al; jmp sysgo

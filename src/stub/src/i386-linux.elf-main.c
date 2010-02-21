@@ -665,7 +665,7 @@ void *upx_main(
     // This is necessary for ET_DYN if|when we override a prelink address.
 
     entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
-    auxv_up(av, AT_ENTRY , entry);  // might not be necessary?
+    auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;

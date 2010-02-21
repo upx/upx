@@ -340,11 +340,11 @@ upx_main(  // returns entry address
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     auxv_up(av, AT_PHDR  , (unsigned long)(1+(Elf64_Ehdr *)phdr->p_vaddr));
     auxv_up(av, AT_PHNUM , ehdr->e_phnum);
-    auxv_up(av, AT_ENTRY , (unsigned long)ehdr->e_entry);
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
     entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
+    auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
