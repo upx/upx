@@ -59,7 +59,7 @@ __NR_readlink= 89
 /* In:
     cld
     %rbp= &decompress
-    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,argc,argv...,0,env...,0,auxv...,0...,strings}
+    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,crumb,argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
         call L90  # push &L90a
@@ -72,7 +72,7 @@ L90:
         movq %rsp,%rsi
         leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
         movq %rdi,%rsp
-        push $6; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,JMPU,argc
+        push $7; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,JMPU,crumb,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%arg3  # remember &new_env[0]
@@ -112,6 +112,10 @@ L90:
         pop %arg2  # LENU
         pop %arg1  # ADRU
         pop %rcx   # JMPU
+        pop %rcx   # breadcrumb size in pages
+        shl $12,%ecx  
+        addl %ecx,%arg1l  # addr += crumb  XXX 4GB
+        subl %ecx,%arg2l  # len  -= crumb  XXX 4GB
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
         jmp *(%r15)  # goto: syscall; ret

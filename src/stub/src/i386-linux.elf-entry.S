@@ -41,7 +41,7 @@
 
 section LEXEC000
 _start: .globl _start
-////    int3
+////    nop; int3
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
@@ -180,6 +180,11 @@ unfold:
         add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
+section LUNMP000
+        push 0  // 0-page bread crumb
+section LUNMP001
+        push 1  // 1-page bread crumb
+section LEXEC025
         push eax  // destination for 'ret'
 
                 // mmap a page to hold the decompressed fold_elf86

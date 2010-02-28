@@ -50,11 +50,11 @@ fold_begin:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
     r5= f_decompress
-    sp/ ADRU,LENU,sz_unc,argc,argv...
+    sp/ ADRU,LENU,sz_unc,crumb,argc,argv...
 */
-        ldr r3,[sp,#3*4]  @ argc
+        ldr r3,[sp,#4*4]  @ argc
         add r3,sp,r3,lsl #2  @ skip argv
-        add r3,r3,#3*4 +4 +4  @ skip ADRU,LENU,sz_unc, argc, env_end
+        add r3,r3,#4*4 +4 +4  @ skip ADRU,LENU,sz_unc,crumb, argc, env_end
 .Lenv:
         ldr r0,[r3],#4  @ skip env
         cmp r0,#0
@@ -81,7 +81,9 @@ fold_begin:
         mov lr,r0  @ entry address
         add sp,sp,#(9-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
-        ldmia sp!,{r0,r1,r2}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type]
+        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb
+        add r0,r0,r3  @ ADRU+=crumb
+        sub r1,r1,r3  @ LENU-=crumb
         ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)

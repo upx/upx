@@ -222,6 +222,11 @@ die:
 */
 unfold:
         pop %rbx  // &b_info
+  section LUNMP000
+        push $0  // 0-page bread crumb
+  section LUNMP001
+        push $1  // 1-page bread crumb
+  section ELFMAINZu
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
@@ -278,7 +283,7 @@ L80:
         ret
 
 main:
-////    int3  # uncomment for debugging
+////    nop; int3  # uncomment for debugging
         pop %rbp  // &decompress
         movl -4-(ret_main - _start)(%rbp),%r15d  // sz_pack2: length before stub
         subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d  // XXX: 4GB

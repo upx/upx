@@ -883,6 +883,9 @@ static int do_option(int optc, const char *arg)
     case 673:
         opt->ps1_exe.do_8mib = false;
         break;
+    case 674:
+        opt->o_unix.unmap_all_pages = true;  // val ?
+        break;
 
     case '\0':
         return -1;
@@ -1032,6 +1035,7 @@ static const struct mfx_option longopts[] =
     {"netbsd",           0x10, 0, 668},
     {"OpenBSD",          0x10, 0, 669},
     {"openbsd",          0x10, 0, 669},
+    {"unmap-all-pages",  0x10, 0, 674},     // linux /proc/self/exe vanishes
     // watcom/le
     {"le",               0x10, 0, 620},     // produce LE output
     // win32/pe

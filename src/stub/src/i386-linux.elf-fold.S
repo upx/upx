@@ -151,6 +151,9 @@ L53:
         pop ecx  // end of unmap region
         pop ebx  // start of unmap region (&Elf32_Ehdr of this stub)
         add esp, MAX_ELF_HDR + OVERHEAD  // un-alloca
+        pop edx  // bread crumb size in pages
+        shl edx,12
+        add ebx,edx  // start of unmap region
         push eax  // save entry address
 
         dec edi  // auxv table
@@ -184,6 +187,7 @@ do_auxv:
         // cld
         lodsd; stosd  // saved &Elf32_Ehdr
         lodsd; stosd  // saved total length of compressed data
+        lodsd; stosd  // crumb
         lodsd; stosd  // argc can be 0
 
 L10:  // move argv

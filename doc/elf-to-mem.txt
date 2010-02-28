@@ -64,18 +64,27 @@ assuming that its automatic stack variables are initialized to zero),
 and remove (all but 4 bytes of) the decompression program (and
 compressed executable) from the address space.
 
-Because the UPX runtime stub removes all traces of the compressed file
-from the address space, then the Linux kernel erases the symlink
-/proc/self/exe.  Linux stores the pathname argument that was specified
-to execve() immediately after the '\0' which terminates the character
-string of the last environment variable [as of execve()].  This is true
-for at least all Linux 2.6, 2.4, and 2.2 kernels.  Linux kernel 2.6.29
-and later records a pointer to that character string in
-Elf32_auxv[AT_EXECFN].  The pathname is not "bound" to the file as
-strongly as /proc/self/exe (the file may be changed without affecting
-the pathname), but the pathname does provide some information.
-The pathname may be relative to the working directory, so look before
-any chdir().
+As of upx-3.05, by default on Linux, upon decompression then one page
+of the compressed executable remains mapped into the address space
+of the process.  If all of the pages of the compressed executable are
+unmapped, then the Linux kernel erases the symlink /proc/self/exe,
+and this can cause trouble for the runtime shared library loader
+expanding $ORIGIN in -rpath, or for application code that relies on
+/proc/self/exe.  Use the compress-time command-line option
+--unmap-all-pages to achieve that effect at run time.  Upx-3.04
+and previous versions did this by default with no option.  However,
+too much other software erroneously assumes that /proc/self/exe
+always exists.
+
+Linux stores the pathname argument that was specified to execve()
+immediately after the '\0' which terminates the character string of the
+last environment variable [as of execve()].  This is true for at least
+all Linux 2.6, 2.4, and 2.2 kernels.  Linux kernel 2.6.29 and later
+records a pointer to that character string in Elf32_auxv[AT_EXECFN].
+The pathname is not "bound" to the file as strongly as /proc/self/exe
+(the file may be changed without affecting the pathname), but the
+pathname does provide some information.  The pathname may be relative
+to the working directory, so look before any chdir().
 
 The Elf formats for Linux add an environment variable named "   " [three
 spaces] which saves the results of readlink("/proc/self/exe",,) before

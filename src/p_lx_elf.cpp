@@ -365,6 +365,9 @@ void
 PackLinuxElf::addStubEntrySections(Filter const *)
 {
     addLoader("ELFMAINX", NULL);
+    if (hasLoaderSection("ELFMAINXu")) {
+        addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINXu", NULL);
+    }
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
@@ -374,7 +377,11 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         : NULL), NULL);
     if (hasLoaderSection("CFLUSH"))
         addLoader("CFLUSH");
-    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ,FOLDEXEC", NULL);
+    addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ", NULL);
+    if (hasLoaderSection("ELFMAINZu")) {
+        addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINZu", NULL);
+    }
+    addLoader("FOLDEXEC", NULL);
 }
 
 
@@ -618,7 +625,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     }
 
     addLoader("IDENTSTR", NULL);
-    addLoader("LEXEC020", NULL);
+    addLoader("LEXEC020", (opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 

@@ -32,7 +32,7 @@
 #define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
 
-#define bkpt .long 0xe1200070
+#define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
 
@@ -68,6 +68,7 @@ start_params:
         .long LENF  // end_decompress - (start_params -4)
         .long CPR0  //           cpr0 - (start_params -4)
 _start: .globl _start
+////    nop; bkpt
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -80,7 +81,12 @@ _start: .globl _start
         mov r0,r2  // ADRM
         sub r9,r12,r1  // &our_Elf32_Ehdr
         add r1,r1,# PAGE_SIZE
-        stmdb sp!,{r0,r1,r2}  // ADRU,LENU,space for sz_unc
+  section LUNMP000
+        mov r3,#0<<12  // 0-page crumb
+  section LUNMP001
+        mov r3,#1<<12  // 1-page crumb
+  section ELFMAINXu
+        stmdb sp!,{r0,r1,r2,r3}  // ADRU,LENU,space for sz_unc,crumb
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS

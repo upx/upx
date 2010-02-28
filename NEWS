@@ -5,6 +5,8 @@ User visible changes for UPX
 Changes in 3.05 (XX XXX XXXX):
   * i386-linux and amd64-linux support shared libraries (DT_INIT must
     exist, all info needed by runtime loader must be first in .text, etc.)
+  * Linux /proc/self/exe now is preserved by default, by leaving behind
+    one page.  New compress-time option --unmap-all-pages is available.
   * bug fixes
 
 Changes in 3.04 (27 Sep 2009):
