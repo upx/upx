@@ -113,7 +113,7 @@ L90:
         pop %arg1  # ADRU
         pop %rcx   # JMPU
         pop %rcx   # breadcrumb size in pages
-        shl $12,%ecx  
+        shl $12,%ecx
         addl %ecx,%arg1l  # addr += crumb  XXX 4GB
         subl %ecx,%arg2l  # len  -= crumb  XXX 4GB
         push %rax  # &entry
