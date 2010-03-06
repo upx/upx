@@ -37,8 +37,8 @@
             .altmacro
 
 
-#include "arch/mips/mipsel.r3000/macros.ash"
-#include "arch/mips/mipsel.r3000/bits.ash"
+#include "arch/mips/r3000/macros.ash"
+#include "arch/mips/r3000/bits.ash"
 
 /*
 =============
@@ -287,9 +287,9 @@ section     memset.long
 =============
 */
 
-#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
-#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
-#include "arch/mips/mipsel.r3000/nrv2e_d.ash"
+#include "arch/mips/r3000/nrv2b_d.ash"
+#include "arch/mips/r3000/nrv2d_d.ash"
+#include "arch/mips/r3000/nrv2e_d.ash"
 
 
 // ========== cd-boot
@@ -362,7 +362,7 @@ section     lzma.init
             addu    dst,outSize
             subu    sp,tmp
 
-#include    "arch/mips/mipsel.r3000/lzma_d.S"
+#include    "arch/mips/r3000/lzma_d.S"
 
 #include    "include/header.S"
 

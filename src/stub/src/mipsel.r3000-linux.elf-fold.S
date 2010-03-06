@@ -27,8 +27,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/mips/mipsel.r3000/macros.ash"
-#include "arch/mips/mipsel.r3000/bits.ash"
+#include "arch/mips/r3000/macros.ash"
+#include "arch/mips/r3000/bits.ash"
 
         .set mips1
         .set noreorder

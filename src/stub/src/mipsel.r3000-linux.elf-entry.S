@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/mips/mipsel.r3000/macros.ash"
-#include "arch/mips/mipsel.r3000/bits.ash"
+#include "arch/mips/r3000/macros.ash"
+#include "arch/mips/r3000/bits.ash"
 
 #ifndef BIG_ENDIAN
 # define BIG_ENDIAN 0
@@ -110,15 +110,15 @@ decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdst
 
         UCL_init    32,1,0
         decomp_done = eof
-#include "arch/mips/mipsel.r3000/nrv2e_d.ash"
+#include "arch/mips/r3000/nrv2e_d.ash"
   section NRV2E
         build nrv2e, full
 
-#include "arch/mips/mipsel.r3000/nrv2d_d.ash"
+#include "arch/mips/r3000/nrv2d_d.ash"
   section NRV2D
         build nrv2d, full
 
-#include "arch/mips/mipsel.r3000/nrv2b_d.ash"
+#include "arch/mips/r3000/nrv2b_d.ash"
   section NRV2B
         build nrv2b, full
 
@@ -213,9 +213,9 @@ lxlzma_retval   = lxlzma_srcdone
 lzma_decode:
   section LZMA_DEC20
 #if 1  /*{*/
-#include "arch/mips/mipsel.r3000/lzma_d.S"
+#include "arch/mips/r3000/lzma_d.S"
 #else  /*}{*/
-#include "arch/mips/mipsel.r3000/lzma_d-mips3k.S"       /* gpp_inc:ignore=1: */
+#include "arch/mips/r3000/lzma_d-mips3k.S"       /* gpp_inc:ignore=1: */
 #endif  /*}*/
 
 
