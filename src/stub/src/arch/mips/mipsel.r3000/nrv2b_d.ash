@@ -43,16 +43,16 @@
             local   n2b_1, n2b_2, n2b_3
             local   n2b_4, n2b_5, n2b_6
 
-            init gb_nrv2b
+            init
 n2b_1:
             GETBIT
             li      m_off,1
             beqz    var,n2b_2
             lbu     var,0(src_ilen)
             addiu   src_ilen,1
-            sb      var,0(dst)
-            b       n2b_1
             addiu   dst,1
+            b       n2b_1
+            sb      var,-1(dst)
 n2b_2:
             GETBIT
             sll     m_off,1
@@ -76,9 +76,14 @@ n2b_3:
             addiu   m_off,1
             beqz    m_off,\done
             addiu   src_ilen,1
+        .if (UCL_SMALL == 0)
             move    last_m_off,m_off
+        .endif
 n2b_4:
-            GETBIT  1
+            GETBIT
+        .if (UCL_SMALL == 1)
+            move    last_m_off,m_off
+        .endif
             move    m_len,var
             GETBIT
             sll     m_len,1

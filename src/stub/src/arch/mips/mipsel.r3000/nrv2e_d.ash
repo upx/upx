@@ -43,16 +43,16 @@
             local   n2e_1, n2e_2, n2e_3, n2e_4
             local   n2e_5, n2e_6, n2e_7
 
-            init gb_nrv2e
+            init
 n2e_1:
             GETBIT
             li      m_off,1
             beqz    var,n2e_2
             lbu     var,0(src_ilen)
             addiu   src_ilen,1
-            sb      var,0(dst)
-            b       n2e_1
             addiu   dst,1
+            b       n2e_1
+            sb      var,-1(dst)
 n2e_2:
             GETBIT
             sll     m_off,1
