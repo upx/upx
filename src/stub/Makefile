@@ -1031,7 +1031,7 @@ tc.mips.r3000-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-protot
 mips.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -D_TARGET_LINUX_ $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEB__ $< -o - | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
@@ -1070,7 +1070,7 @@ mipsel.r3000-linux.elf%.h : tc_bfdname = elf32-littlemips
 mipsel.r3000-linux.elf-entry.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -D_TARGET_LINUX_ $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,pp-as) -D_TARGET_LINUX_ -D__MIPSEL__ $< -o - | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
@@ -1115,7 +1115,7 @@ tc.mipsel.r3000-ps1.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes
 mipsel.r3000-ps1.h : $(srcdir)/src/$$T.S
 ifeq (1,1)
 	# info: we really need as-2.17 here
-	$(call tc,pp-as) -DPS1 $< -o - | $(RTRIM) > tmp/$T.i
+	$(call tc,pp-as) -DPS1=1 -D__MIPSEL__ $< -o - | $(RTRIM) > tmp/$T.i
 	$(call tc,as) tmp/$T.i -o tmp/$T.bin
 	$(call tc,gpp_mkdep) --mode=c --MMD=$@ --MF=tmp/$T.d $<
 else
