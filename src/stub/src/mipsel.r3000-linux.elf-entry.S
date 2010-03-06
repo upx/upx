@@ -32,6 +32,10 @@
 #include "arch/mips/mipsel.r3000/macros.ash"
 #include "arch/mips/mipsel.r3000/bits.ash"
 
+#ifndef BIG_ENDIAN
+# define BIG_ENDIAN 0
+#endif
+
         .set mips1
         .set noreorder
         .set noat
@@ -104,17 +108,19 @@ decompressor:  // (uchar const *lxsrc, size_t lxsrclen, uchar *lxdst, u32 &lxdst
 #undef dst  /* bits.ash */
 #define dst     lxdst
 
+        UCL_init    32,1,0
+        decomp_done = eof
 #include "arch/mips/mipsel.r3000/nrv2e_d.ash"
   section NRV2E
-        nrv2e eof
+        build nrv2e, full
 
 #include "arch/mips/mipsel.r3000/nrv2d_d.ash"
   section NRV2D
-        nrv2d eof
+        build nrv2d, full
 
 #include "arch/mips/mipsel.r3000/nrv2b_d.ash"
   section NRV2B
-        nrv2b eof
+        build nrv2b, full
 
 section     LZMA_ELF00 # (a0=lxsrc, a1=lxsrclen, a2=lxdst, a3= &lxdstlen)
 

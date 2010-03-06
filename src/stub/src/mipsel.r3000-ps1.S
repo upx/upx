@@ -296,36 +296,36 @@ section     memset.long
 
             UCL_init    8,0,1
 section     nrv2b.8bit
-            build full, nrv2b
+            build nrv2b, full
 section     nrv2d.8bit
-            build full, nrv2d
+            build nrv2d, full
 section     nrv2e.8bit
-            build full, nrv2e
+            build nrv2e, full
 
             UCL_init    32,0,1
 section     nrv2b.32bit
-            build full, nrv2b
+            build nrv2b, full
 section     nrv2d.32bit
-            build full, nrv2d
+            build nrv2d, full
 section     nrv2e.32bit
-            build full, nrv2e
+            build nrv2e, full
 
 // ========== console-run
 
             UCL_init    8,1,0
 section     8bit.sub
-            build sub_only, 0, gb8_e
+            build 0, sub_only, gb8_e
 
             UCL_init    32,1,0
 section     32bit.sub
-            build sub_only, 0, gb32_e
+            build 0, sub_only, gb32_e
 
 section     nrv2b.small
-            build without_sub, nrv2b
+            build nrv2b, without_sub
 section     nrv2d.small
-            build without_sub, nrv2d
+            build nrv2d, without_sub
 section     nrv2e.small
-            build without_sub, nrv2e
+            build nrv2e, without_sub
 
 section     nrv.done
 decomp_done:
