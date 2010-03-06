@@ -304,6 +304,7 @@ void do_files(int i, int argc, char *argv[])
         } catch (std::bad_alloc *e) {
             unlink_ofile(oname);
             printErr(iname,"out of memory");
+            UNUSED(e);
             //delete e;
             e_exit(EXIT_ERROR);
         } catch (const std::bad_alloc &) {

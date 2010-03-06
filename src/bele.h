@@ -587,13 +587,13 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 
 // forward declarations
 namespace N_BELE_CTP {
-class BEPolicy; class LEPolicy;
+struct BEPolicy; struct LEPolicy;
 extern const BEPolicy be_policy;
 extern const LEPolicy le_policy;
 }
 namespace N_BELE_RTP {
-class AbstractPolicy;
-class BEPolicy; class LEPolicy;
+struct AbstractPolicy;
+struct BEPolicy; struct LEPolicy;
 extern const BEPolicy be_policy;
 extern const LEPolicy le_policy;
 }
