@@ -641,7 +641,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     }
 error:
     *dst_len = s.dicPos;
-//    LzmaDec_Free(&s, &cba); // FIXME - why does this crash ???
+    LzmaDec_FreeProbs(&s, &cba);
     return r;
 #undef Properties
 }
