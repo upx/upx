@@ -228,6 +228,17 @@ unfold:
         push $1  // 1-page bread crumb
   section ELFMAINZu
 
+/* Load the addresses and lengths.
+   XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
+   XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
+   (Use an temporary register to obtain 4GB range on PUSH constant.)
+*/
+        push $ JMPU  // for unmap in fold
+        push %rax    // for unmap in fold
+        push $ LENU  // for unmap in fold
+        push %rcx    // ADRX for upx_main
+        push %r15  // LENX for upx_main
+
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
    all of the uncompressed program.  If large (>=3 MiB uncompressed), then enough
@@ -244,18 +255,7 @@ unfold:
         syscall  // %rax= result; trashes %rcx,%r11 only
         cmpl %eax,%edi; jne msg_SELinux  // XXX: 4GB
 
-/* Load the addresses and lengths.
-   XXX: 2GB  Note that  PUSH $imm32      sign-extends to 64 bits.
-   XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
-   (Use an temporary register to obtain 4GB range on PUSH constant.)
-*/
-        push $ JMPU  // for unmap in fold
-        push $ ADRU  // for unmap in fold
         movl $ ADRC,%esi
-        push $ LENU  // for unmap in fold
-        push $ ADRX  // for upx_main
-        push %r15  // LENX for upx_main
-
         movl %edi,%edx  //  ADRM
         subl %esi,%edx  // (ADRM - ADRC) == relocation amount
         je L80  // no copy
@@ -270,14 +270,14 @@ L80:
         xchgl %eax,%edi
 
 /* Decompress the folded part of this stub, then execute it. */
-        movl %ebx,%esi  // %arg2l= &b_info
+        movq %rbx,%arg2  // &b_info
         push %rax  // ret_addr after decompression
                xchgl %eax,%arg3l  // %arg3= dst for unfolding  XXX: 4GB
         lodsl; push %rax          // allocate slot on stack
                movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
         lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  // b_method
-              xchg %arg1l,%arg2l  // XXX: 4GB
+              xchg %arg1,%arg2
         call *%rbp  // decompress
                pop %rcx  // discard len_dst
         ret
@@ -285,9 +285,13 @@ L80:
 main:
 ////    nop; int3  # uncomment for debugging
         pop %rbp  // &decompress
-        movl -4-(ret_main - _start)(%rbp),%r15d  // sz_pack2: length before stub
-        subl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%r15d  // XXX: 4GB
-        call unfold  // push &b_info
+        lea -4-(ret_main - _start)(%rbp),%rax  // &sz_pack2
+        movl (%rax),%r15d  // sz_pack2: length before stub
+        movl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%edx
+        subq %r15,%rax  // ADRU= &Elf64_Ehdr of this stub (ET_DYN)
+        subl %edx,%r15d  // LENX for upx_main
+        lea (%rax,%rdx),%rcx  // ADRX= &b_info of user program for upx_main
+        call unfold  // push &b_info of folded_loader
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/

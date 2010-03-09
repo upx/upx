@@ -812,7 +812,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
     adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
-    linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+    //linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
 
     // For actual moving, we need the true count, which depends on sz_pack2
     // and is not yet known.  So the runtime stub detects "no move"
@@ -821,7 +821,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
 
     linker->defineSymbol("LENU", lenu);  // len  for unmap
     linker->defineSymbol("ADRC", adrc);  // addr for copy
-    linker->defineSymbol("ADRU", adru);  // addr for unmap
+    //linker->defineSymbol("ADRU", adru);  // addr for unmap
 #define EI_NIDENT 16  /* <elf.h> */
     linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
 #undef EI_NIDENT

@@ -111,10 +111,10 @@ L90:
         addq $OVERHEAD,%rsp
         pop %arg2  # LENU
         pop %arg1  # ADRU
-        pop %rcx   # JMPU
+        pop %rcx   # JMPU [unused]
         pop %rcx   # breadcrumb size in pages
         shl $12,%ecx
-        addl %ecx,%arg1l  # addr += crumb  XXX 4GB
+        addq %rcx,%arg1   # addr += crumb
         subl %ecx,%arg2l  # len  -= crumb  XXX 4GB
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
