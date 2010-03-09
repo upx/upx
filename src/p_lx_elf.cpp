@@ -220,7 +220,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
-                memcpy(phdr, 1+phdr, j * sizeof(*phdr));
+                memmove(phdr, 1+phdr, j * sizeof(*phdr));  // overlapping
                 memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
                 --phdr;
                 set_te16(&ehdri.e_phnum, --e_phnum);
