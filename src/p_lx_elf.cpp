@@ -137,14 +137,16 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
     if (get_te16(&ehdr->e_phentsize) != sizeof(Elf64_Phdr))
         return 6;
 
-    // check for Linux kernels
-    acc_uint64l_t const entry = get_te64(&ehdr->e_entry);
-    if (entry == 0xC0100000)    // uncompressed vmlinux
-        return 1000;
-    if (entry == 0x00001000)    // compressed vmlinux
-        return 1001;
-    if (entry == 0x00100000)    // compressed bvmlinux
-        return 1002;
+    if (type == Elf64_Ehdr::ET_EXEC) {
+        // check for Linux kernels
+        acc_uint64l_t const entry = get_te64(&ehdr->e_entry);
+        if (entry == 0xC0100000)    // uncompressed vmlinux
+            return 1000;
+        if (entry == 0x00001000)    // compressed vmlinux
+            return 1001;
+        if (entry == 0x00100000)    // compressed bvmlinux
+            return 1002;
+    }
 
     // FIXME: add more checks for kernels
 
