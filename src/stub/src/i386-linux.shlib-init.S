@@ -310,5 +310,10 @@ L220:
 
         ret  // goto copied supervise:
 
+// empty sections for commonality with non-shlib
+section LUNMP000
+section LUNMP001
+section LEXEC025
+
 // vi:ts=8:et:nowrap
 
