@@ -1191,6 +1191,25 @@ void PackMachFat::pack(OutputFile *fo)
                 packer.pack(fo);
             }
         } break;
+        case PackMachFat::CPU_TYPE_X86_64: {
+            typedef N_Mach::Mach_header<MachClass_LE64::MachITypes> Mach_header;
+            Mach_header hdr;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachAMD64 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
+            //else if (hdr.filetype==Mach_header::MH_DYLIB) {
+            //    PackDylibAMD64 packer(fi);
+            //    packer.initPackHeader();
+            //    packer.canPack();
+            //    packer.updatePackHeader();
+            //    packer.pack(fo);
+            //}
+        } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
             Mach_header hdr;
@@ -1298,12 +1317,24 @@ bool PackMachFat::canPack()
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
-        default: return false;
+        default: {
+            infoWarning("unknown cputype 0x%x: %s",
+                (unsigned)arch[j].cputype, fi->getName());
+            return false;
+        } break;
         case PackMachFat::CPU_TYPE_I386: {
             PackMachI386 packer(fi);
             if (!packer.canPack()) {
                 PackDylibI386 pack2r(fi);
                 if (!pack2r.canPack())
+                    return false;
+            }
+        } break;
+        case PackMachFat::CPU_TYPE_X86_64: {
+            PackMachAMD64 packer(fi);
+            if (!packer.canPack()) {
+                //PackDylibI386 pack2r(fi);
+                //if (!pack2r.canPack())
                     return false;
             }
         } break;
