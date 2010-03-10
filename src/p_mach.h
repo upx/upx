@@ -128,13 +128,37 @@ __packed_struct(Mach_section_command)
     char segname[16];
     Addr addr;   /* memory address */
     Addr size;   /* size in bytes */
-    Word offset; /* file offset */  // FIXME: 64 bit?
+    Word offset; /* file offset */
     Word align;  /* power of 2 */
     Word reloff; /* file offset of relocation entries */
     Word nreloc; /* number of relocation entries */
     Word flags;  /* section type and attributes */
-    Word reserved1;
-    Word reserved2;
+    Word reserved1;  /* for offset or index */
+    Word reserved2;  /* for count or sizeof */
+#define WANT_MACH_SECTION_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_section_command_64)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Off  Off;
+    typedef typename TMachITypes::Word Off32;
+    typedef typename TMachITypes::Xword Xword;
+
+    char sectname[16];
+    char segname[16];
+    Addr addr;   /* memory address */
+    Addr size;   /* size in bytes */
+    Off32 offset; /* file offset */
+    Word align;  /* power of 2 */
+    Word reloff; /* file offset of relocation entries */
+    Word nreloc; /* number of relocation entries */
+    Word flags;  /* section type and attributes */
+    Word reserved1;  /* for offset or index */
+    Word reserved2;  /* for count or sizeof */
+    Word reserved3;  /* NOT IN 32-bit VERSION!! */
 #define WANT_MACH_SECTION_ENUM 1
 #include "p_mach_enum.h"
 __packed_struct_end()
@@ -143,12 +167,13 @@ template <class TMachITypes>
 __packed_struct(Mach_symtab_command)
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
+    typedef typename TMachITypes::Word Off32;
 
     Word cmd;      /* LC_SYMTAB */
     Word cmdsize;  /* sizeof(struct Mach_symtab_command) */
-    Off  symoff;   /* symbol table offset */
+    Off32 symoff;  /* symbol table offset */
     Word nsyms;    /* number of symbol table entries */
-    Off  stroff;   /* string table offset */
+    Off32 stroff;  /* string table offset */
     Word strsize;  /* string table size in bytes */
 __packed_struct_end()
 
@@ -156,6 +181,7 @@ template <class TMachITypes>
 __packed_struct(Mach_dysymtab_command)
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Off  Off;
+    typedef typename TMachITypes::Word Off32;
 
     Word cmd;           /* LC_DYSYMTAB */
     Word cmdsize;       /* sizeof(struct Mach_dysymtab_command) */
@@ -165,17 +191,17 @@ __packed_struct(Mach_dysymtab_command)
     Word nextdefsym;    /* number of externally defined symbols */
     Word iundefsym;     /* index to undefined symbols */
     Word nundefsym;     /* number of undefined symbols */
-    Off tocoff;         /* file offset to table of contents */
+    Off32 tocoff;       /* file offset to table of contents */
     Word ntoc;          /* number of entries in table of contents */
-    Off modtaboff;      /* file offset to module table */
+    Off32 modtaboff;    /* file offset to module table */
     Word nmodtab;       /* number of module table entries */
-    Off extrefsymoff;   /* offset to referenced symbol table */
+    Off32 extrefsymoff; /* offset to referenced symbol table */
     Word nextrefsymoff; /* number of referenced symbol table entries */
-    Off indirectsymoff; /* file offset to the indirect symbol table */
+    Off32 indirectsymoff; /* file offset to the indirect symbol table */
     Word nindirectsyms; /* number of indirect symbol table entries */
-    Off extreloff;      /* offset to external relocation entries */
+    Off32 extreloff;    /* offset to external relocation entries */
     Word nextrel;       /* number of external relocation entries */
-    Off locreloff;      /* offset to local relocation entries */
+    Off32 locreloff;      /* offset to local relocation entries */
     Word nlocrel;       /* number of local relocation entries */
 __packed_struct_end()
 
@@ -194,7 +220,6 @@ template <class TMachITypes>
 __packed_struct(Mach_routines_command)
     typedef typename TMachITypes::Word Word;
     typedef typename TMachITypes::Addr Addr;
-    typedef typename TMachITypes::Off  Off;
 
     Word cmd;
     Word cmdsize;
@@ -206,6 +231,26 @@ __packed_struct(Mach_routines_command)
     Word reserved4;
     Word reserved5;
     Word reserved6;
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_routines_command_64)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Addr Addr;
+    typedef typename TMachITypes::Xword Xword;
+
+    Word cmd;
+    Word cmdsize;
+    Addr init_address;
+    Xword init_module;
+    Xword reserved1;
+    Xword reserved2;
+    Xword reserved3;
+    Xword reserved4;
+    Xword reserved5;
+    Xword reserved6;
 #define WANT_MACH_SEGMENT_ENUM 1
 #include "p_mach_enum.h"
 __packed_struct_end()
@@ -318,26 +363,6 @@ __packed_struct(Mach_ppc_thread_state64)
     Word vrsave;    /* Vector Save Register */
 __packed_struct_end()
 
-template <class TMachITypes>
-__packed_struct(Mach_routines_command_64)
-    typedef typename TMachITypes::Word Word;
-    typedef typename TMachITypes::Addr Addr;
-    typedef typename TMachITypes::Xword Xword;
-
-    Word cmd;
-    Word cmdsize;
-    Addr init_address;
-    Xword init_module;
-    Xword reserved1;
-    Xword reserved2;
-    Xword reserved3;
-    Xword reserved4;
-    Xword reserved5;
-    Xword reserved6;
-#define WANT_MACH_SEGMENT_ENUM 1
-#include "p_mach_enum.h"
-__packed_struct_end()
-
 }  // namespace N_Mach64
 
 namespace N_Mach {
@@ -397,11 +422,11 @@ struct MachClass_64
     // Mach types
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
-    typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
+    typedef N_Mach::Mach_section_command_64<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_symtab_command<MachITypes>  Mach_symtab_command;
     typedef N_Mach::Mach_dysymtab_command<MachITypes> Mach_dysymtab_command;
     typedef N_Mach::Mach_segsplit_info_command<MachITypes> Mach_segsplit_info_command;
-    typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
+    typedef N_Mach::Mach_routines_command_64<MachITypes> Mach_routines_command;
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
 
     static void compileTimeAssertions() {
