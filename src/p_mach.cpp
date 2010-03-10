@@ -597,9 +597,9 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
             Mach_section_command seccmdtmp;
             for (unsigned j = 0; j < nsects; ++secp, ++j) {
                 seccmdtmp = *secp;
-                seccmdtmp.offset += slide;
+                if (o_end_txt <= seccmdtmp.offset) { seccmdtmp.offset += slide; }
                 if (seccmdtmp.nreloc) {
-                    seccmdtmp.reloff += slide;
+                    if (o_end_txt <= seccmdtmp.reloff) { seccmdtmp.reloff += slide; }
                 }
                 fo->rewrite(&seccmdtmp, sizeof(seccmdtmp));
                 hdrpos += sizeof(seccmdtmp);
@@ -747,7 +747,7 @@ void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 
 void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
-    TE32 disp;  // FIXME: 64-bit ???
+    TE32 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
