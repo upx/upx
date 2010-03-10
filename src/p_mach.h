@@ -720,6 +720,22 @@ protected:
     Mach_thread_command threado;
 };
 
+class PackDylibAMD64 : public PackMachAMD64
+{
+    typedef PackMachAMD64 super;
+
+public:
+    PackDylibAMD64(InputFile *f);
+
+    virtual int getFormat() const { return UPX_F_DYLIB_AMD64; }
+    virtual const char *getName() const { return "Dylib/AMD64"; }
+    virtual const char *getFullName(const options_t *) const { return "AMD64-darwin.dylib"; }
+protected:
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual void buildLoader(const Filter *ft);
+};
+
 class PackMachARMEL : public PackMachBase<MachClass_LE32>
 {
     typedef PackMachBase<MachClass_LE32> super;

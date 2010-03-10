@@ -285,6 +285,8 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         return p;
     if ((p = func(new PackDylibPPC32(f), user)) != NULL)
         return p;
+    if ((p = func(new PackDylibAMD64(f), user)) != NULL)
+        return p;
 
     return NULL;
 }

@@ -70,11 +70,19 @@ static const
 
 static const
 #include "stub/powerpc-darwin.dylib-entry.h"
+static const
+#include "stub/amd64-darwin.dylib-entry.h"
 
 static const unsigned lc_segment[2] = {
     0x1, 0x19
     //Mach_segment_command::LC_SEGMENT,
     //Mach_segment_command::LC_SEGMENT_64
+};
+
+static const unsigned lc_routines[2] = {
+    0x11, 0x1a
+    //Mach_segment_command::LC_ROUTINES,
+    //Mach_segment_command::LC_ROUTINES_64
 };
 
 template <class T>
@@ -97,6 +105,11 @@ PackMachBase<T>::~PackMachBase()
 }
 
 PackDylibI386::PackDylibI386(InputFile *f) : super(f)
+{
+    my_filetype = Mach_header::MH_DYLIB;
+}
+
+PackDylibAMD64::PackDylibAMD64(InputFile *f) : super(f)
 {
     my_filetype = Mach_header::MH_DYLIB;
 }
@@ -387,6 +400,14 @@ PackDylibI386::buildLoader(const Filter *ft)
 }
 
 void
+PackDylibAMD64::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_amd64_darwin_dylib_entry, sizeof(stub_amd64_darwin_dylib_entry),
+        0,  0,  ft );
+}
+
+void
 PackDylibPPC32::buildLoader(const Filter *ft)
 {
     buildMachLoader(
@@ -635,6 +656,11 @@ void PackDylibI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     pack4dylib(fo, ft, threado.state.eip);
 }
 
+void PackDylibAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    pack4dylib(fo, ft, threado.state.rip);
+}
+
 void PackDylibPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     pack4dylib(fo, ft, threado.state.srr0);
@@ -699,6 +725,29 @@ void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + 4*sizeof(disp);
+
+    disp = prev_init_address;
+    fo->write(&disp, sizeof(disp));  // user .init_address
+
+    disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
+    fo->write(&disp, sizeof(disp));  // src offset(compressed __TEXT)
+
+    disp = len - disp - 3*sizeof(disp);
+    fo->write(&disp, sizeof(disp));  // length(compressed __TEXT)
+
+    unsigned const save_sz_mach_headers(sz_mach_headers);
+    sz_mach_headers = 0;
+    super::pack3(fo, ft);
+    sz_mach_headers = save_sz_mach_headers;
+}
+
+void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE32 disp;  // FIXME: 64-bit ???
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
@@ -1069,6 +1118,7 @@ template <class T>
 bool PackMachBase<T>::canPack()
 {
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    unsigned const lc_rout = lc_routines[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
@@ -1086,10 +1136,10 @@ bool PackMachBase<T>::canPack()
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
         msegcmd[j] = *(Mach_segment_command const *)ptr;
-        if (((Mach_segment_command const *)ptr)->cmd ==
-              Mach_segment_command::LC_ROUTINES) {
+        if (((Mach_segment_command const *)ptr)->cmd == lc_rout) {
             o_routines_cmd = (const char *)ptr - (const char *)rawmseg;
-            prev_init_address = ((Mach_routines_command const *)ptr)->init_address;
+            prev_init_address =
+                ((Mach_routines_command const *)ptr)->init_address;
         }
         ptr += (unsigned) ((const Mach_segment_command *)ptr)->cmdsize;
     }
@@ -1202,13 +1252,13 @@ void PackMachFat::pack(OutputFile *fo)
                 packer.updatePackHeader();
                 packer.pack(fo);
             }
-            //else if (hdr.filetype==Mach_header::MH_DYLIB) {
-            //    PackDylibAMD64 packer(fi);
-            //    packer.initPackHeader();
-            //    packer.canPack();
-            //    packer.updatePackHeader();
-            //    packer.pack(fo);
-            //}
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibAMD64 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
         } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
@@ -1333,8 +1383,8 @@ bool PackMachFat::canPack()
         case PackMachFat::CPU_TYPE_X86_64: {
             PackMachAMD64 packer(fi);
             if (!packer.canPack()) {
-                //PackDylibI386 pack2r(fi);
-                //if (!pack2r.canPack())
+                PackDylibI386 pack2r(fi);
+                if (!pack2r.canPack())
                     return false;
             }
         } break;
