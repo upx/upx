@@ -180,6 +180,7 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
   section MACHMAINZ
+SYS_mmap =197
 #define PAGE_SIZE ( 1<<12)
 
 sz_Mach_header= 7*4
@@ -219,7 +220,7 @@ main:
         mov $PROT_READ|PROT_WRITE,%arg3l
         mov %eax,%arg2l  # length
         sub %arg1l,%arg1l  # 0  addr
-        push $__NR_mmap; pop %rax
+        push $SYS_mmap; pop %rax
         syscall
 
         push %rax  # addr for eventual munmap
@@ -227,7 +228,7 @@ main:
         // Copy interval [decompress, dy_top).
         mov %rbp,%rsi  # decompressor
         mov %rax,%rbp  # new location
-        mov $rax,%rdi  # dst for decompressor
+        mov %rax,%rdi  # dst for decompressor
         mov $dy_top,%ecx
         sub $decompress,%ecx
         cld; rep movsb
@@ -259,37 +260,37 @@ dy_uncpr:
         push %rsi; push %rdi  # save in case unfilter
 
         lodsl; test %eax,%eax; jz dy_done
-         push %rax  // sz_uncompressed  (maximum dstlen for lzma)
-         mov %rsp,%rcx  // save &dstlen
-        push %rax  // space for 5th param b_info.misc
-         push %rcx  // &dstlen
-        push %rdi  // dst
-        add %rax,%rdi  // next dst
-        lodsl; push %rax  // sz_compressed  (srclen)
+          push %rax  // sz_uncompressed  (maximum dstlen for lzma)
+        mov %rsp,%arg4  // &dstlen
+        mov %rdi,%arg3  // dst
+          add %rdi,%rax; push %rax  // next dst
+        lodsl; mov %eax,%arg2l  // sz_compressed  (srclen)
         mov %rax,%rcx
-        lodsl; mov %rax,3*4(%rsp) // last 4 bytes of b_info
-        push %rsi  // &compressed __TEXT
-        add %rcx,%rsi  // next src
-        call *%rbp  // decompress(src, srclen, dst, &dstlen, b_info.misc)
-         add $(5+1)*4,%rsp  // (5+1) args to decompress
+        lodsl; mov %eax,%arg5l // last 4 bytes of b_info
+        mov %rsi,%arg1  // &compressed __TEXT
+          add %rsi,%rcx; push %rcx  // next src
+        call *%rbp  // decompress(1=rdi=src, 2=rsi=srclen, 3=rdx=dst, 4=rcx=&dstlen, 5=r8=b_info.misc)
+          pop %rsi  // next src
+          pop %rdi  // next dst
+          pop %rcx  // dstlen (junk)
 
         pop %rdx; pop %rax  # rdx= old dst; rax= old &b_info
-        movzbl 1+ b_method(%rax),%ecx; jecxz dy_uncpr; push %rcx  # ftid
-        movzbl 2+ b_method(%rax),%ecx;                 push ecx  # cto8
-        push sz_unc(%rax)
-        push %rdx    # dst
-        lea 2(%rbp),%rax; call *%rax  # f_unfilter(dst, dstlen, cto8, ftid)
-        add $4*4,%rsp
+        movzbl 1+ b_method(%rax),%arg4l  # ftid
+          test %arg4l,%arg4l; je dy_uncpr  # no filter
+        movzbl 2+ b_method(%rax),%arg3l  # cto8
+        mov sz_unc(%rax),%arg2l
+        mov %rdx,%arg1    # dst
+        # FIXME: only i386 has f_unfilter==(2+ f_decompress)
+        lea 2(%rbp),%rax; call *%rax  # f_unfilter(1=rdi=dst, 2=rsi=dstlen, 3=rdx=cto8, 4=rcx=ftid)
         jmp dy_uncpr
 
 SYS_munmap=73
 dy_done:
-        pop %rax  # discard, leaving 1 junk word below the regs for POPA
-        lea -5(%rdi),%rdx  # steal some space at high end of __TEXT
-        movb $0x5b,(%rdx)  # pop eax
-        movl $0xc3615858,1(%rdx)  # pop eax; pop eax; popa; ret
-        push $SYS_munmap; pop %rax
-        syscall
+        pop %rax; pop %rcx  # discard
+        lea -4(%rdi),%rdx  # steal some space at high end of __TEXT
+        movl $0x90c35d5b,(%rdx)  # pop %rbx; pop %rbp; ret; nop
+        # FIXME push $SYS_munmap; pop %rax
+        # FIXME syscall
         jmp *%rdx
 dy_top:
 
