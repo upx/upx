@@ -177,11 +177,17 @@ eof:
 
 end_decompress: .globl end_decompress
 
+#undef src
+#undef lsrc
+#undef dst
+#undef ldst
+#undef meth
+#undef methb
         /* IDENTSTR goes here */
 
   section MACHMAINZ
-SYS_mmap =197
-#define PAGE_SIZE ( 1<<12)
+SYS_mmap = 0x02000000 + 197
+PAGE_SIZE= ( 1<<12)
 
 sz_Mach_header= 7*4
 mh_sizeofcmds=5*4
@@ -197,14 +203,17 @@ sz_b_info=3*4
   sz_cpr= 4
   b_method= 8
 
-#define MAP_FIXED     0x10
-#define MAP_PRIVATE   0x02
-#define MAP_ANON    0x1000
-#define PROT_READ      1
-#define PROT_WRITE     2
-#define PROT_EXEC      4
+MAP_FIXED=     0x10
+MAP_PRIVATE=   0x02
+MAP_ANON=    0x1000
+PROT_READ=      1
+PROT_WRITE=     2
+PROT_EXEC=      4
 
 
+bad_mmap:
+        hlt
+        j bad_mmap
 main:
         pop %rbp  # &decompress
         lea -4+ _start - decompress(%rbp),%rbx  # &total_length
@@ -214,14 +223,15 @@ main:
 
         push %rax  # length for eventual munmap
 
-        sub %arg6l,%arg6l  # offset
-        sub %arg5l,%arg5l  # fd
-        mov $MAP_ANON|MAP_PRIVATE,%arg4l
+        mov $0,%arg6l  # offset
+        mov $0,%arg5l  # fd
+        mov $MAP_ANON|MAP_PRIVATE,%sys4l
         mov $PROT_READ|PROT_WRITE,%arg3l
         mov %eax,%arg2l  # length
         sub %arg1l,%arg1l  # 0  addr
-        push $SYS_mmap; pop %rax
+        mov $SYS_mmap,%eax
         syscall
+        jc bad_mmap
 
         push %rax  # addr for eventual munmap
 
@@ -280,18 +290,27 @@ dy_uncpr:
         movzbl 2+ b_method(%rax),%arg3l  # cto8
         mov sz_unc(%rax),%arg2l
         mov %rdx,%arg1    # dst
-        # FIXME: only i386 has f_unfilter==(2+ f_decompress)
-        lea 2(%rbp),%rax; call *%rax  # f_unfilter(1=rdi=dst, 2=rsi=dstlen, 3=rdx=cto8, 4=rcx=ftid)
+        call f_unfilter  # f_unfilter(1=rdi=dst, 2=rsi=dstlen, 3=rdx=cto8, 4=rcx=ftid)
         jmp dy_uncpr
 
-SYS_munmap=73
+SYS_munmap= 0x02000000 + 73
 dy_done:
         pop %rax; pop %rcx  # discard
         lea -4(%rdi),%rdx  # steal some space at high end of __TEXT
         movl $0x90c35d5b,(%rdx)  # pop %rbx; pop %rbp; ret; nop
-        # FIXME push $SYS_munmap; pop %rax
+        # FIXME mov $SYS_munmap,%eax
         # FIXME syscall
         jmp *%rdx
+
+#undef off
+#undef len
+#undef lenq
+#undef bits
+#undef disp
+
+f_unfilter:
+#include "arch/amd64/bxx.S"
+
 dy_top:
 
 

@@ -62,3 +62,8 @@ ckcount:
         decq %rcx; jnz ckloop3
 ckend:
         ret
+
+#undef ptr
+#undef len
+#undef cto8
+#undef ftid
