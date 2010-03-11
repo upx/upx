@@ -45,6 +45,7 @@
 
 section MACHMAINX
 _start: .globl _start
+L100: pause; jmp L100  // FIXME
     int3  // FIXME
         push %rax  // space for &user_init function
         push %rbp  // callee-save registers
@@ -213,7 +214,7 @@ PROT_EXEC=      4
 
 bad_mmap:
         hlt
-        j bad_mmap
+        jmp bad_mmap
 main:
         pop %rbp  # &decompress
         lea -4+ _start - decompress(%rbp),%rbx  # &total_length
@@ -251,9 +252,9 @@ dy_reloc:
         // Copy compressed __TEXT.
         push %rdi  # remember start of compressed __TEXT
         mov %rbx,%rdx  # &total_length
-          mov -3*4(%rbx),%eax  # offset(user_init_function)
+          mov -4*4(%rbx),%eax  # offset(user_init_function)
         sub (%rbx),%edx  # runtime base address
-          add %rdx,%rax; mov %rax,(1+2+8)*4(%rsp)  # relocate &user_init_function
+          add %rdx,%rax; mov %rax,(1+2+2)*4(%rsp)  # relocate &user_init_function
         mov -2*4(%rbx),%esi; add %rdx,%rsi
         mov -1*4(%rbx),%ecx
         rep movsb
@@ -265,7 +266,7 @@ dy_reloc:
         // So, skip the first compressed block.
         lodsl; add %rax,%rdi  # sz_unc
         lodsl; add %rax,%rsi  # sz_cpr
-        lodsl  # b_method
+        lodsl  # junk {b_method}
 dy_uncpr:
         push %rsi; push %rdi  # save in case unfilter
 
@@ -296,10 +297,12 @@ dy_uncpr:
 SYS_munmap= 0x02000000 + 73
 dy_done:
         pop %rax; pop %rcx  # discard
+        mov $PAGE_SIZE,%arg2l  // length for munmap
+        pop %arg1  // addr for munmap
+        pop %rbx; pop %rbp  // saved registers
+        mov $SYS_munmap,%eax
         lea -4(%rdi),%rdx  # steal some space at high end of __TEXT
-        movl $0x90c35d5b,(%rdx)  # pop %rbx; pop %rbp; ret; nop
-        # FIXME mov $SYS_munmap,%eax
-        # FIXME syscall
+        movl $0x90c3050f,(%rdx)  # syscall; ret; nop
         jmp *%rdx
 
 #undef off
