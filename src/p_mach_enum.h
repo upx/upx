@@ -90,24 +90,32 @@
 
 #ifdef WANT_MACH_SECTION_ENUM  /*{*/
 #undef WANT_MACH_SECTION_ENUM
-    enum { // section flags
+    enum { // section type  (low byte only)
         S_REGULAR = 0,
         S_ZEROFILL,
         S_CSTRING_LITERALS,
         S_4BYTE_LITERALS,
         S_8BYTE_LITERALS,
         S_LITERAL_POINTERS,
-        S_NON_LAZY_SYMBOL_POINTERS,
-        S_LAZY_SYMBOL_POINTERS,
+        S_NON_LAZY_SYMBOL_POINTERS,  // sectname __nl_symbol_ptr
+        S_LAZY_SYMBOL_POINTERS,      // sectname __la_symbol_ptr
         S_SYMBOL_STUBS,
-        S_MOD_INIT_FUNC_POINTERS,
-        S_MOD_TERM_FNC_POINTERS,
-        S_COALESCED
+        S_MOD_INIT_FUNC_POINTERS,    // sectname __mod_init_func
+        S_MOD_TERM_FUNC_POINTERS,
+        S_COALESCED,
+        S_GB_ZEROFILL,
+        S_INTERPOSING,
+        S_16BYTE_LITERALS,
+        S_DTRACE_DOF
     };
-    enum {
+    enum { // section flags (high 24 bits)
         S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
         S_ATTR_NO_TOC            = 0x40000000,
         S_ATTR_STRIP_STATIC_SYMS = 0x20000000,
+        S_ATTR_NO_DEAD_STRIP     = 0x10000000,
+        S_ATTR_LIVE_SUPPORT      = 0x08000000,
+        S_ATTR_SELF_MODIFYING_CODE = 0x04000000,
+        S_ATTR_DEBUG             = 0x02000000,
         S_ATTR_SOME_INSTRUCTIONS = 0x00000400,
         S_ATTR_EXT_RELOC         = 0x00000200,
         S_ATTR_LOC_RELOC         = 0x00000100

@@ -571,7 +571,7 @@ protected:
     Mach_segment_command *rawmseg;  // as input, with sections
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
     unsigned o_routines_cmd;  // file offset to LC_ROUINTES
-    unsigned prev_init_address;
+    acc_uint64l_t prev_init_address;
     Mach_header mhdri;
 
     Mach_header mhdro;

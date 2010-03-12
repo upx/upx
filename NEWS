@@ -3,6 +3,8 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.05 (27 Apr 2010):
+  * Withdraw support for shared libraries on Darwin (Apple Mac OS X)
+    because upx does not understand enough about .dylib.
   * i386-linux and amd64-linux support shared libraries (DT_INIT must
     exist, all info needed by runtime loader must be first in .text, etc.)
   * Linux /proc/self/exe now is preserved by default, by leaving behind

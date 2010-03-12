@@ -598,9 +598,59 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
             for (unsigned j = 0; j < nsects; ++secp, ++j) {
                 seccmdtmp = *secp;
                 if (o_end_txt <= seccmdtmp.offset) { seccmdtmp.offset += slide; }
-                if (seccmdtmp.nreloc) {
-                    if (o_end_txt <= seccmdtmp.reloff) { seccmdtmp.reloff += slide; }
+                if (o_end_txt <= seccmdtmp.reloff) { seccmdtmp.reloff += slide; }
+                if (0==strncmp(&seccmdtmp.sectname[0], "__mod_init_func", 1+ 15)) {
+                    if (seccmdtmp.flags==9  // FIXME: S_MOD_INIT_FUNC_POINTERS
+                    &&  seccmdtmp.nreloc==0 && seccmdtmp.size==sizeof(Addr) ) {
+                        seccmdtmp.addr = seccmdtmp.offset = init_address -4*4 - 8;
+                    }
+                    else
+                        infoWarning("unknown __mod_init_func section");
                 }
+#if 0  /*{*/
+// 2010-03-12  Stop work because I don't understand what is going on,
+// and I cannot find good documentation on the meaning of various parts
+// of .dylib.  amd64(x86_64) is almost certain to fail in the dynamic
+// loader, before the upx stub gets control.  For instance:
+//
+// Program received signal EXC_BAD_ACCESS, Could not access memory.
+// Reason: KERN_INVALID_ADDRESS at address: 0x000000015f00329a
+// 0x00007fff5fc10ce3 in __dyld__ZN16ImageLoaderMachO23setupLazyPointerHandlerERKN11ImageLoader11LinkContextE ()
+// (gdb) bt
+// #0  0x00007fff5fc10ce3 in __dyld__ZN16ImageLoaderMachO23setupLazyPointerHandlerERKN11ImageLoader11LinkContextE ()
+// #1  0x00007fff5fc138c2 in __dyld__ZN16ImageLoaderMachO6doBindERKN11ImageLoader11LinkContextEb ()
+// #2  0x00007fff5fc0c0ab in __dyld__ZN11ImageLoader13recursiveBindERKNS_11LinkContextEb ()
+// #3  0x00007fff5fc0c08f in __dyld__ZN11ImageLoader13recursiveBindERKNS_11LinkContextEb ()
+// #4  0x00007fff5fc0f49e in __dyld__ZN11ImageLoader4linkERKNS_11LinkContextEbbRKNS_10RPathChainE ()
+// #5  0x00007fff5fc04c56 in __dyld__ZN4dyld4linkEP11ImageLoaderbRKNS0_10RPathChainE ()
+// #6  0x00007fff5fc06e04 in __dyld__ZN4dyld5_mainEPK11mach_headermiPPKcS5_S5_ ()
+// #7  0x00007fff5fc01695 in __dyld__ZN13dyldbootstrap5startEPK11mach_headeriPPKcl ()
+// #8  0x00007fff5fc0103a in __dyld__dyld_start ()
+// #9  0x0000000100000000 in ?? ()
+// #10 0x0000000000000001 in ?? ()
+// #11 0x00007fff5fbffbd0 in ?? ()
+//
+// The various paragraphs below are experiments in "commenting out" pieces of
+// the compressed .dylib, trying to isolate the bug(s).
+                // FIXME
+                unsigned const t = seccmdtmp.flags & 0xff;
+                if (t==6  // FIXME: S_NON_LAZY_SYMBOL_POINTERS
+                ||  t==7  // FIXME: S_LAZY_SYMBOL_POINTERS
+                ||  t==8  // FIXME: S_SYMBOL_STUBS
+                ||  t==11 // FIXME: S_COALESCED
+                ) {
+                    seccmdtmp.flags = 0;  // FIXME: S_REGULAR
+                    strcpy(seccmdtmp.sectname, "__data");
+                }
+                // FIXME
+                if (0==strncmp("__stub_helper", &seccmdtmp.sectname[0], 1+ 13)) {
+                    strcpy(seccmdtmp.sectname, "__text");
+                }
+                // FIXME
+                if (0==strncmp("__dyld", &seccmdtmp.sectname[0], 1+ 6)) {
+                    strcpy(seccmdtmp.sectname, "__text");
+                }
+#endif  /*}*/
                 fo->rewrite(&seccmdtmp, sizeof(seccmdtmp));
                 hdrpos += sizeof(seccmdtmp);
             }
@@ -748,11 +798,15 @@ void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
+    TE64 disp64;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + 4*sizeof(disp);
+    fo->write(&zero, 7& (0u-len));
+    len += (7& (0u-len)) + sizeof(disp64) + 4*sizeof(disp);
 
+    disp64= len;
+    fo->write(&disp64, sizeof(disp64));  // __mod_init_func
+    
     disp = prev_init_address;
     fo->write(&disp, sizeof(disp));  // user .init_address
 

@@ -281,12 +281,16 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         return p;
     if ((p = func(new PackMachARMEL(f), user)) != NULL)
         return p;
-    if ((p = func(new PackDylibI386(f), user)) != NULL)
-        return p;
-    if ((p = func(new PackDylibPPC32(f), user)) != NULL)
-        return p;
-    if ((p = func(new PackDylibAMD64(f), user)) != NULL)
-        return p;
+
+    // 2010-03-12  omit these because PackMachBase<T>::pack4dylib (p_mach.cpp)
+    // does not understand what the Darwin (Apple Mac OS X) dynamic loader
+    // assumes about .dylib file structure.
+    //if ((p = func(new PackDylibI386(f), user)) != NULL)
+    //    return p;
+    //if ((p = func(new PackDylibPPC32(f), user)) != NULL)
+    //    return p;
+    //if ((p = func(new PackDylibAMD64(f), user)) != NULL)
+    //    return p;
 
     return NULL;
 }
