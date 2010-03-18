@@ -400,8 +400,10 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
-    f->seek(0, SEEK_SET);
-    f->readx(&ehdri, sizeof(ehdri));
+    if (f) {
+        f->seek(0, SEEK_SET);
+        f->readx(&ehdri, sizeof(ehdri));
+    }
 }
 
 PackLinuxElf32::~PackLinuxElf32()
@@ -415,8 +417,10 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
-    f->seek(0, SEEK_SET);
-    f->readx(&ehdri, sizeof(ehdri));
+    if (f) {
+        f->seek(0, SEEK_SET);
+        f->readx(&ehdri, sizeof(ehdri));
+    }
 }
 
 PackLinuxElf64::~PackLinuxElf64()
