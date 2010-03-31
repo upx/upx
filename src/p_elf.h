@@ -193,7 +193,8 @@ __packed_struct(Sym)
 
     static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
-    static unsigned char make_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
+    static unsigned char make_st_info(unsigned bind, unsigned type)
+        { return (unsigned char) (((bind<<4) + (0xf & type)) & 0xff); }
 __packed_struct_end()
 
 
@@ -269,7 +270,8 @@ __packed_struct(Sym)
 
     static unsigned int  get_st_bind(unsigned x) { return 0xf & (x>>4); }
     static unsigned int  get_st_type(unsigned x) { return 0xf &  x    ; }
-    static unsigned char make_st_info(unsigned bind, unsigned type) { return (bind<<4) + (0xf & type); }
+    static unsigned char make_st_info(unsigned bind, unsigned type)
+        { return (unsigned char) (((bind<<4) + (0xf & type)) & 0xff); }
 __packed_struct_end()
 
 

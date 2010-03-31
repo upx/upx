@@ -275,7 +275,7 @@ void PackMachI386::addStubEntrySections(Filter const *ft)
     addLoader("FOLDEXEC", NULL);
 }
 
-void PackMachAMD64::addStubEntrySections(Filter const */*ft*/)
+void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
 {
     addLoader("MACHMAINX", NULL);
    //addLoader(getDecompressorSections(), NULL);
@@ -290,7 +290,7 @@ void PackMachAMD64::addStubEntrySections(Filter const */*ft*/)
     addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
-void PackMachARMEL::addStubEntrySections(Filter const */*ft*/)
+void PackMachARMEL::addStubEntrySections(Filter const * /*ft*/)
 {
     addLoader("MACHMAINX", NULL);
    //addLoader(getDecompressorSections(), NULL);
@@ -806,7 +806,7 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     disp64= len;
     fo->write(&disp64, sizeof(disp64));  // __mod_init_func
-    
+
     disp = prev_init_address;
     fo->write(&disp, sizeof(disp));  // user .init_address
 
@@ -872,7 +872,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         }
         if (lc_seg==msegcmd[j].cmd
         &&  0!=msegcmd[j].filesize ) {
-            unsigned const t = msegcmd[j].fileoff;
+            unsigned const t = (unsigned) msegcmd[j].fileoff;
             if ((t - hi) < (lo - hi)) {
                 lo = t;
                 if (hi==lo) {
@@ -935,7 +935,7 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     if (lc_seg==msegcmd[k].cmd
     &&  0!=(Mach_segment_command::VM_PROT_EXECUTE & msegcmd[k].initprot)
     &&  exe_filesize_max < msegcmd[k].filesize) {
-        exe_filesize_max = msegcmd[k].filesize;
+        exe_filesize_max = (unsigned) msegcmd[k].filesize;
     }
 
     int nx = 0;
@@ -1176,7 +1176,7 @@ bool PackMachBase<T>::canPack()
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
-    if ((Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) !=mhdri.magic
+    if (((unsigned) Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) !=mhdri.magic
     ||  my_cputype   !=mhdri.cputype
     ||  my_filetype  !=mhdri.filetype
     )
@@ -1421,11 +1421,10 @@ bool PackMachFat::canPack()
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
-        default: {
+        default:
             infoWarning("unknown cputype 0x%x: %s",
                 (unsigned)arch[j].cputype, fi->getName());
             return false;
-        } break;
         case PackMachFat::CPU_TYPE_I386: {
             PackMachI386 packer(fi);
             if (!packer.canPack()) {
@@ -1505,7 +1504,7 @@ int PackMachFat::canUnpack()
     return 1;
 }
 
-void PackMachFat::buildLoader(const Filter */*ft*/)
+void PackMachFat::buildLoader(const Filter * /*ft*/)
 {
     assert(false);
 }
