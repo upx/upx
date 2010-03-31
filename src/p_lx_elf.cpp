@@ -1831,6 +1831,8 @@ unsigned PackLinuxElf32::find_LOAD_gap(
     unsigned const hi = get_te32(&phdr[k].p_offset) +
                         get_te32(&phdr[k].p_filesz);
     unsigned lo = ph.u_file_size;
+    if (lo < hi)
+        throwCantPack("bad input: PT_LOAD beyond end-of-file");
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
@@ -1938,6 +1940,8 @@ unsigned PackLinuxElf64::find_LOAD_gap(
     unsigned const hi = get_te64(&phdr[k].p_offset) +
                         get_te64(&phdr[k].p_filesz);
     unsigned lo = ph.u_file_size;
+    if (lo < hi)
+        throwCantPack("bad input: PT_LOAD beyond end-of-file");
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
