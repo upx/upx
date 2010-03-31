@@ -93,6 +93,7 @@
 #    error "need Visual C++ 5.0 or newer"
 #  endif
 #  pragma warning(error: 4096)          // W2: '__cdecl' must be used with '...'
+#  pragma warning(error: 4138)          // Wx: '*/' found outside of comment
 #  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
 #  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
 #  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated

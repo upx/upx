@@ -1672,7 +1672,7 @@ PackLinuxElf64::generateElfHdr(
     }
 }
 
-void PackLinuxElf32::pack1(OutputFile */*fo*/, Filter &/*ft*/)
+void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -1774,7 +1774,7 @@ void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
     generateElfHdr(fo, stub_powerpc_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
-void PackLinuxElf64::pack1(OutputFile */*fo*/, Filter &/*ft*/)
+void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -3001,7 +3001,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 #undef MAX_ELF_HDR
 }
 
-void PackLinuxElf::unpack(OutputFile */*fo*/)
+void PackLinuxElf::unpack(OutputFile * /*fo*/)
 {
     throwCantUnpack("internal error");
 }

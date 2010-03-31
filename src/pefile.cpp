@@ -1402,8 +1402,8 @@ void PeFile::processResources(Resource *res)
                 keep_icons = new char[1 + iconsin1stdir * 9];
                 *keep_icons = 0;
                 for (unsigned ic = 0; ic < iconsin1stdir; ic++)
-                    snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
-                             get_le16(ibuf + res->offs() + 6 + ic * 14 + 12));
+                    upx_snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
+                                 get_le16(ibuf + res->offs() + 6 + ic * 14 + 12));
                 if (*keep_icons)
                     keep_icons[strlen(keep_icons) - 1] = 0;
             }
