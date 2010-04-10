@@ -113,6 +113,7 @@ struct PackerNames
     {
         PackerNames *self = (PackerNames *) user;
         self->add(p);
+        delete p; p = NULL;
         return NULL;
     }
     static int __acc_cdecl_qsort cmp_fname(const void *a, const void *b) {

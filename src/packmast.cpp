@@ -162,54 +162,72 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     {
         if ((p = func(new PackDjgpp2(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackTmt(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackWcle(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
 #if 0
         if ((p = func(new PackVxd(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
 #endif
 #if 0
         if ((p = func(new PackW16Ne(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
 #endif
         if ((p = func(new PackW32Pe(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
     }
     if ((p = func(new PackArmPe(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackExe(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 
     //
     // atari
     //
     if ((p = func(new PackTos(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 
     //
     // linux kernel
     //
     if ((p = func(new PackVmlinuxARMEL(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuxARMEB(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuxPPC32(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuxAMD64(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuxI386(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuzI386(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackBvmlinuzI386(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuzARMEL(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 #if 0
     if ((p = func(new PackElks8086(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 #endif
 
     //
@@ -222,75 +240,101 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         {
             if ((p = func(new PackLinuxI386sep(f), user)) != NULL)
                 return p;
+            delete p; p = NULL;
         }
 #endif
         if (o->o_unix.use_ptinterp) {
             if ((p = func(new PackLinuxElf32x86interp(f), user)) != NULL)
                 return p;
+            delete p; p = NULL;
         }
         if ((p = func(new PackFreeBSDElf32x86(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackNetBSDElf32x86(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackOpenBSDElf32x86(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32x86(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf64amd(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32armLe(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32armBe(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32mipsel(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32mipseb(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxI386sh(f), user)) != NULL)
             return p;
+        delete p; p = NULL;
     }
     if ((p = func(new PackBSDI386(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackMachFat(f), user)) != NULL)  // cafebabe conflict
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackLinuxI386(f), user)) != NULL)  // cafebabe conflict
         return p;
+    delete p; p = NULL;
 
     //
     // psone
     //
     if ((p = func(new PackPs1(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 
     //
     // .sys and .com
     //
     if ((p = func(new PackSys(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackCom(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 
     // Mach (MacOS X PowerPC)
     if ((p = func(new PackMachPPC32(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackMachI386(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackMachAMD64(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
     if ((p = func(new PackMachARMEL(f), user)) != NULL)
         return p;
+    delete p; p = NULL;
 
     // 2010-03-12  omit these because PackMachBase<T>::pack4dylib (p_mach.cpp)
     // does not understand what the Darwin (Apple Mac OS X) dynamic loader
     // assumes about .dylib file structure.
     //if ((p = func(new PackDylibI386(f), user)) != NULL)
     //    return p;
+    //delete p; p = NULL;
     //if ((p = func(new PackDylibPPC32(f), user)) != NULL)
     //    return p;
+    //delete p; p = NULL;
     //if ((p = func(new PackDylibAMD64(f), user)) != NULL)
     //    return p;
+    //delete p; p = NULL;
 
     return NULL;
 }
