@@ -51,8 +51,9 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
-                "                          Copyright (C) 1996 - 2009\n"
+                "                          Copyright (C) 1996 - %s\n"
                 "UPX %-10s  Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
+                UPX_VERSION_YEAR,
 #if (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
 #elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
