@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.06 (XX XXX XXXX):
+
 Changes in 3.05 (27 Apr 2010):
   * i386-linux and amd64-linux support shared libraries (DT_INIT must
     exist, all info needed by runtime loader must be first in .text, etc.)
