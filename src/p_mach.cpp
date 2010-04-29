@@ -861,6 +861,8 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
     }
     unsigned const hi = msegcmd[k].fileoff + msegcmd[k].filesize;
     unsigned lo = ph.u_file_size;
+    if (lo < hi)
+        throwCantPack("bad input: LC_SEGMENT beyond end-of-file");
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
