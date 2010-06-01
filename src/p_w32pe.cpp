@@ -168,6 +168,138 @@ int PackW32Pe::readFileHeader()
     return super::readFileHeader();
 }
 
+//new: processTLS moved to p_w32pe.cpp for TLS callback support
+/*************************************************************************
+// TLS handling
+**************************************************************************/
+
+// thanks for theowl for providing me some docs, so that now I understand
+// what I'm doing here :)
+
+// 1999-10-17: this was tricky to find:
+// when the fixup records and the tls area are on the same page, then
+// the tls area is not relocated, because the relocation is done by
+// the virtual memory manager only for pages which are not yet loaded.
+// of course it was impossible to debug this ;-)
+
+__packed_struct(tls)
+    LE32 datastart; // VA tls init data start
+    LE32 dataend;   // VA tls init data end
+    LE32 tlsindex;  // VA tls index
+    LE32 callbacks; // VA tls callbacks
+    char _[8];      // zero init, characteristics
+__packed_struct_end()
+
+void PackW32Pe::processTls(Interval *iv) // pass 1
+{
+    COMPILE_TIME_ASSERT(sizeof(tls) == 24)
+    COMPILE_TIME_ASSERT_ALIGNED1(tls)
+
+    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
+        return;
+
+    const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+
+    use_tls_callbacks = false; //NEW - Stefan Widmann
+
+    // note: TLS callbacks are not implemented in Windows 95/98/ME
+    if (tlsp->callbacks)
+    {
+        if (tlsp->callbacks < ih.imagebase)
+            throwCantPack("invalid TLS callback");
+        else if (tlsp->callbacks - ih.imagebase + 4 >= ih.imagesize)
+            throwCantPack("invalid TLS callback");
+        unsigned v = get_le32(ibuf + tlsp->callbacks - ih.imagebase);
+
+        //NEW: TLS callback support - Stefan Widmann
+#if 0
+        if (v != 0)
+        {
+            //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
+            throwCantPack("TLS callbacks are not supported");
+        }
+#endif		
+        if(v != 0)
+        {
+            //count number of callbacks, just for information string - Stefan Widmann
+            unsigned num_callbacks = 0;
+            unsigned callback_offset = 0;
+            while(get_le32(ibuf + tlsp->callbacks - ih.imagebase + callback_offset))
+            {
+                //increment number of callbacks
+                num_callbacks++;
+                //increment pointer by 4
+                callback_offset += 4;
+            }
+            info("TLS: %u callback(s) found, adding TLS callback handler", num_callbacks);
+            //set flag to include necessary sections in loader
+            use_tls_callbacks = true;
+            //define linker symbols
+            tlscb_ptr = tlsp->callbacks;
+        }
+    }
+
+    const unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
+    const unsigned tlsdataend = tlsp->dataend - ih.imagebase;
+
+    // now some ugly stuff: find the relocation entries in the tls data area
+    unsigned pos,type;
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC),IDSIZE(PEDIR_RELOC));
+    while (rel.next(pos,type))
+        if (pos >= tlsdatastart && pos < tlsdataend)
+            iv->add(pos,type);
+
+    //NEW: if TLS callbacks are used, we need two more DWORDS at the end of the TLS
+    sotls = sizeof(tls) + tlsdataend - tlsdatastart + (use_tls_callbacks ? 8 : 0);
+
+    // the PE loader wants this stuff uncompressed
+    otls = new upx_byte[sotls];
+    memset(otls,0,sotls);
+    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),0x18);
+    // WARNING: this can acces data in BSS
+    memcpy(otls + sizeof(tls),ibuf + tlsdatastart,sotls - sizeof(tls));
+    tlsindex = tlsp->tlsindex - ih.imagebase;
+    //NEW: subtract two dwords if TLS callbacks are used - Stefan Widmann
+    info("TLS: %u bytes tls data and %u relocations added",sotls - (unsigned) sizeof(tls) - (use_tls_callbacks ? 8 : 0),iv->ivnum);
+
+    // makes sure tls index is zero after decompression
+    if (tlsindex && tlsindex < ih.imagesize)
+        set_le32(ibuf + tlsindex, 0);
+}
+
+void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 2
+{
+    if (sotls == 0)
+        return;
+    // add new relocation entries
+    unsigned ic;
+    //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
+    for (ic = 0; ic < (use_tls_callbacks ? 16 : 12); ic += 4)
+        rel->add(newaddr + ic,3);
+
+    tls * const tlsp = (tls*) otls;
+    // now the relocation entries in the tls data area
+    for (ic = 0; ic < iv->ivnum; ic += 4)
+    {
+        void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - ih.imagebase) + sizeof(tls);
+        unsigned kc = get_le32(p);
+        if (kc < tlsp->dataend && kc >= tlsp->datastart)
+        {
+            kc +=  newaddr + sizeof(tls) - tlsp->datastart;
+            set_le32(p,kc + ih.imagebase);
+            rel->add(kc,iv->ivarr[ic].len);
+        }
+        else
+            rel->add(kc - ih.imagebase,iv->ivarr[ic].len);
+    }
+
+    tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
+    //NEW: subtract the size of the callback chain from dataend - Stefan Widmann
+    tlsp->dataend = newaddr + sotls + ih.imagebase - (use_tls_callbacks ? 8 : 0);
+
+    //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
+    tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + ih.imagebase - 8 : 0);
+}
 
 /*************************************************************************
 // import handling
@@ -577,14 +709,30 @@ void PackW32Pe::buildLoader(const Filter *ft)
     }
     if (use_dep_hack)
         addLoader("PEDEPHAK", NULL);
+
+    //NEW: TLS callback support PART 1, the callback handler installation - Stefan Widmann
+    if(use_tls_callbacks)
+        addLoader("PETLSC", NULL);
+
     addLoader("PEMAIN20", NULL);
     if (use_clear_dirty_stack)
         addLoader("CLEARSTACK", NULL);
     addLoader("PEMAIN21", NULL);
+#if 0
     addLoader(ih.entry ? "PEDOJUMP" : "PERETURN",
               "IDENTSTR,UPX1HEAD",
               NULL
              );
+#endif
+    //NEW: last loader sections split up to insert TLS callback handler - Stefan Widmann
+    addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", NULL);
+
+    //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
+    if(use_tls_callbacks)
+        addLoader("PETLSC2", NULL);
+
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
+
 }
 
 
@@ -605,12 +753,13 @@ void PackW32Pe::pack(OutputFile *fo)
 
     // check the PE header
     // FIXME: add more checks
+    //NEW: subsystem check moved to switch ... case below, check of COFF magic, 32 bit machine flag check - Stefan Widmann
     if (!opt->force && (
            (ih.cpu < 0x14c || ih.cpu > 0x150)
         || (ih.opthdrsize != 0xe0)
         || ((ih.flags & EXECUTABLE) == 0)
-        || (ih.subsystem != 2 && ih.subsystem != 3
-            && ih.subsystem != 1 && ih.subsystem != 9)
+        || ((ih.flags & BITS_32_MACHINE) == 0) //NEW: 32 bit machine flag must be set - Stefan Widmann
+        || (ih.coffmagic != 0x10B) //COFF magic is 0x10B in PE files, 0x20B in PE32+ files - Stefan Widmann
         || (ih.entry == 0 && !isdll)
         || (ih.ddirsentries != 16)
         || IDSIZE(PEDIR_EXCEPTION) // is this used on i386?
@@ -618,15 +767,90 @@ void PackW32Pe::pack(OutputFile *fo)
        ))
         throwCantPack("unexpected value in PE header (try --force)");
 
-    if (ih.subsystem == 9)
-        throwCantPack("x86/wince files are not yet supported");
+    switch(ih.subsystem)  //let's take a closer look at the subsystem
+      {
+        case 1: //NATIVE
+          {
+            if(!opt->force)
+              {
+                throwCantPack("win32/native applications are not yet supported");
+              }
+            break;
+          }
+        case 2: //GUI
+          {
+            //fine, continue
+            break;
+          }
+        case 3: //CONSOLE
+          {
+            //fine, continue
+            break;
+          }
+        case 5: //OS2
+          {
+            throwCantPack("win32/os2 files are not yet supported");
+            break;
+          }
+        case 7: //POSIX - do x32/posix files exist?
+          {
+            throwCantPack("win32/posix files are not yet supported");
+            break;
+          }
+        case 9: //WINCE x86 files
+          {
+            throwCantPack("PE32/wince files are not yet supported");
+            break;
+          }
+        case 10: //EFI APPLICATION
+          {
+            throwCantPack("PE32/EFIapplication files are not yet supported");
+            break;
+          }
+        case 11: //EFI BOOT SERVICE DRIVER
+          {
+            throwCantPack("PE32/EFIbootservicedriver files are not yet supported");
+            break;
+          }
+        case 12: //EFI RUNTIME DRIVER
+          {
+            throwCantPack("PE32/EFIruntimedriver files are not yet supported");
+            break;
+          }
+        case 13: //EFI ROM
+          {
+            throwCantPack("PE32/EFIROM files are not yet supported");
+            break;
+          }
+        case 14: //XBOX - will we ever see an XBOX file?
+          {
+            throwCantPack("PE32/xbox files are not yet supported");
+            break;
+          }
+        case 16: //WINDOWS BOOT APPLICATION
+          {
+            throwCantPack("PE32/windowsbootapplication files are not yet supported");
+            break;
+          }
+        default: //UNKNOWN SUBSYSTEM
+          {
+            throwCantPack("PE32/? unknown subsystem");
+            break;
+          }
+      }
 
+    //remove certificate directory entry		
     if (IDSIZE(PEDIR_SEC))
         IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
-    if (IDSIZE(PEDIR_COMRT))
-        throwCantPack(".NET files (win32/net) are not yet supported");
 
-    if (isdll)
+    //check CLR Runtime Header directory entry	
+    if (IDSIZE(PEDIR_COMRT))
+        throwCantPack(".NET files (win32/.net) are not yet supported");
+
+    //NEW: disable reloc stripping if ASLR is enabled
+    if(ih.dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+        opt->win32_pe.strip_relocs = false;
+    else if (isdll) //do never strip relocations from DLLs
         opt->win32_pe.strip_relocs = false;
     else if (opt->win32_pe.strip_relocs < 0)
         opt->win32_pe.strip_relocs = (ih.imagebase >= 0x400000);
@@ -644,8 +868,10 @@ void PackW32Pe::pack(OutputFile *fo)
         throwCantPack("file is possibly packed/protected (try --force)");
     if (ih.entry && ih.entry < rvamin)
         throwCantPack("run a virus scanner on this file!");
-    if (!opt->force && ih.subsystem == 1)
+#if 0 //subsystem check moved to switch ... case above - Stefan Widmann
+        if (!opt->force && ih.subsystem == 1)
         throwCantPack("subsystem 'native' is not supported (try --force)");
+#endif		
     if (ih.filealign < 0x200)
         throwCantPack("filealign < 0x200 is not yet supported");
 
@@ -904,6 +1130,16 @@ void PackW32Pe::pack(OutputFile *fo)
     linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
     linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
 
+    //NEW: TLS callback support - Stefan Widmann
+    ic = s1addr + s1size - sotls - soloadconf; //moved here, we need the address of the new TLS!
+    if(use_tls_callbacks)
+      {
+        //esi is ih.imagebase + rvamin
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - (ih.imagebase + rvamin));
+        linker->defineSymbol("tls_callbacks_off", ic + sotls - 8 - rvamin);
+        linker->defineSymbol("tls_module_base", 0u - rvamin);
+      }
+
     linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
     //linker->dumpSymbols();
     relocateLoader();
@@ -935,7 +1171,7 @@ void PackW32Pe::pack(OutputFile *fo)
 
     // tls & loadconf are put into section 1
 
-    ic = s1addr + s1size - sotls - soloadconf;
+    //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? 0x18 : 0;

@@ -114,7 +114,7 @@ section         PEK32ORD
                 jmps    next_imp
 not_kernel32:
 section         PEIMORD1
-                movzxw  eax, [edi]
+                movzxw  eax, word ptr [edi]  //new: "word ptr" - Stefan Widmann
                 inc     edi
                 push    eax
                 inc     edi
@@ -135,6 +135,7 @@ next_imp:
                 add     ebx, 4
                 jmps    next_func
 imp_failed:
+                
 section         PEIERDLL
                 popa
                 xor     eax, eax
@@ -194,7 +195,7 @@ section         PEDEPHAK
                 push    4                       // PAGE_READWRITE
                 push    ebx
                 push    edi
-                call    ebp
+                call    ebp                     //VirtualProtect
 
   #if 0
                 or      eax, eax
@@ -216,14 +217,31 @@ section         PEDEPHAK
   #endif
                 push    ebx
                 push    edi
-                call    ebp
+                call    ebp                     //;VirtualProtect
 
 pedep9:
-                pop     eax                     // restore stack
+                pop     eax                     //;restore stack
+
+//;NEW: TLS callback support - Stefan Widmann				
+section         PETLSC
+                lea ebx, [esi + tls_module_base] //;load module base to ebx
+                lea eax, [esi + tls_callbacks_ptr] //;load pointer to original callback chain
+                lea edi, [ebx + tls_handler_start] //;load offset of handler
+                push edi
+                inc edi //;pointer to original TLS callback chain is to be saved to handler + 2
+                inc edi
+                stosd
+                pop eax
+                lea edi, [esi + tls_callbacks_off] //;get ptr to first TLS callback entry
+                stosd //;save the handler ptr to the TLS callback chain
+                //;emulate callbacks like PE loader would have done
+                push 0 //;reserved
+                push 1 //;DLL_PROCESS_ATTACH
+                push ebx //;module base alias module handle alias hInstance alias ...
+                call eax //;contains ptr to callback handler
 
 section         PEMAIN20
                 popa
-
 
 // clear the dirty stack
 .macro          clearstack128  tmp_reg
@@ -249,6 +267,30 @@ section         PERETURN
 section         PEDOJUMP
                 jmp    original_entry
 
+section         PETLSC2				
+                //;TLS_CALLBACK(hModule, reason, reserved)
+tls_handler_start:
+                push esi
+                .byte 0xBE //mov esi, XXXXXXXX
+tlsc_chain_ptr: 
+                .byte 0, 0, 0, 0
+                cld  //;you never know, this code gets called by the PE loader
+walk_tlsc_chain2:
+                lodsd
+                test eax, eax
+                jz done_callbacks
+                //;copy the stack frame, 3 arguments
+                push 3
+                pop ecx
+push_loop:
+                push dword ptr [esp + 0x10] //;4 bytes
+                loop push_loop
+                call eax
+                jmp walk_tlsc_chain2
+done_callbacks:
+                pop esi
+                ret 0x0C
+                
 // =============
 // ============= CUT HERE
 // =============

@@ -61,14 +61,21 @@ protected:
     virtual void processImports(unsigned, unsigned);
     virtual void rebuildImports(upx_byte *&);
 
+    virtual void processTls(Interval *); //NEW: TLS callback handling - Stefan Widmann
+    void processTls(Reloc *, const Interval *, unsigned); //NEW: TLS callback handling - Stefan Widmann
+    
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
     upx_byte *oloadconf;
     unsigned soloadconf;
 
+    unsigned tlscb_ptr; //NEW: TLS callback handling - Stefan Widmann
+    //unsigned tlscb_off; //NEW: TLS callback handling - Stefan Widmann
+    
     bool isrtm;
     bool use_dep_hack;
     bool use_clear_dirty_stack;
+    bool use_tls_callbacks;  //NEW: TLS callback handling - Stefan Widmann
 };
 
 
