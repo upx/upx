@@ -167,7 +167,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
 
 PackLinuxElf::~PackLinuxElf()
 {
-    delete[] file_image;
+    delete[] file_image; file_image = NULL;
 }
 
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
@@ -400,6 +400,7 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
+    memset(&ehdri, 0, sizeof(ehdri));
     if (f) {
         f->seek(0, SEEK_SET);
         f->readx(&ehdri, sizeof(ehdri));
@@ -408,7 +409,7 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 
 PackLinuxElf32::~PackLinuxElf32()
 {
-    delete[] phdri;
+    delete[] phdri; phdri = NULL;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
@@ -417,6 +418,7 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
+    memset(&ehdri, 0, sizeof(ehdri));
     if (f) {
         f->seek(0, SEEK_SET);
         f->readx(&ehdri, sizeof(ehdri));
@@ -425,7 +427,7 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 
 PackLinuxElf64::~PackLinuxElf64()
 {
-    delete[] phdri;
+    delete[] phdri; phdri = NULL;
 }
 
 Linker* PackLinuxElf64amd::newLinker() const
@@ -2032,9 +2034,6 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     if ((off_t)total_in != file_size)
         throwEOFException();
 }
-
-#include "bele.h"
-using namespace N_BELE_CTP;
 
 // Filter 0x50, 0x51 assume HostPolicy::isLE
 static const int *

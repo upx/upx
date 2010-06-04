@@ -41,7 +41,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20100205L
+#define ACC_VERSION     20100419L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -758,6 +758,9 @@
 #elif (UINT_MAX <= ACC_0xffffL) && defined(__AVR__)
 #  define ACC_ARCH_AVR              1
 #  define ACC_INFO_ARCH             "avr"
+#elif defined(__avr32__) || defined(__AVR32__)
+#  define ACC_ARCH_AVR32            1
+#  define ACC_INFO_ARCH             "avr32"
 #elif defined(__bfin__)
 #  define ACC_ARCH_BLACKFIN         1
 #  define ACC_INFO_ARCH             "blackfin"
@@ -1316,9 +1319,11 @@ extern "C" {
 #elif !defined(ACC_ABI_BIG_ENDIAN) && !defined(ACC_ABI_LITTLE_ENDIAN)
 #if (ACC_ARCH_ALPHA) && (ACC_ARCH_CRAY_MPP)
 #  define ACC_ABI_BIG_ENDIAN        1
+#elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
+#  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430)
 #  define ACC_ABI_LITTLE_ENDIAN     1
-#elif (ACC_ARCH_M68K || ACC_ARCH_S390)
+#elif (ACC_ARCH_AVR32 || ACC_ARCH_M68K || ACC_ARCH_S390)
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif 1 && defined(__IAR_SYSTEMS_ICC__) && defined(__LITTLE_ENDIAN__)
 #  if (__LITTLE_ENDIAN__ == 1)
@@ -1669,7 +1674,7 @@ extern "C" {
 #  endif
 #endif
 #if !defined(ACC_UNCONST_CAST)
-#  if 1 && defined(__cplusplus)
+#  if 0 && defined(__cplusplus)
 #    define ACC_UNCONST_CAST(t,e)   (const_cast<t> (e))
 #  elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((acc_uintptr_t) ((const void *) (e))))))
@@ -2312,8 +2317,12 @@ extern "C" {
 #  undef HAVE_SNPRINTF
 #  undef HAVE_VSNPRINTF
 #elif (ACC_CC_INTELC)
+#  ifndef snprintf
 #  define snprintf _snprintf
+#  endif
+#  ifndef vsnprintf
 #  define vsnprintf _vsnprintf
+#  endif
 #elif (ACC_CC_LCCWIN32)
 #  define utime _utime
 #elif (ACC_CC_MSC)
@@ -2324,8 +2333,16 @@ extern "C" {
 #    undef HAVE_SNPRINTF
 #    undef HAVE_VSNPRINTF
 #  elif (_MSC_VER < 1500)
+#    ifndef snprintf
 #    define snprintf _snprintf
+#    endif
+#    ifndef vsnprintf
 #    define vsnprintf _vsnprintf
+#    endif
+#  else
+#    ifndef snprintf
+#    define snprintf _snprintf
+#    endif
 #  endif
 #  if ((_MSC_VER < 800) && ACC_OS_WIN16)
 #    undef HAVE_ALLOCA

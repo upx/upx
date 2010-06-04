@@ -469,7 +469,7 @@ int ElfLinker::getSection(const char *sname, int *slen) const
     const Section *section = findSection(sname);
     if (slen)
         *slen = section->size;
-    return section->output - output;
+    return (int) (section->output - output);
 }
 
 int ElfLinker::getSectionSize(const char *sname) const

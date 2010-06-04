@@ -986,11 +986,14 @@ void PackVmlinuxPPC32::buildLoader(const Filter *ft)
         addFilter32(ft->id);
     }
     addLoader("LINUX030", NULL);
-         if (ph.method == M_NRV2E_LE32) addLoader("NRV2E", NULL);
-    else if (ph.method == M_NRV2B_LE32) addLoader("NRV2B", NULL);
-    else if (ph.method == M_NRV2D_LE32) addLoader("NRV2D", NULL);
+         if (ph.method == M_NRV2E_LE32) addLoader("NRV2E,NRV_TAIL", NULL);
+    else if (ph.method == M_NRV2B_LE32) addLoader("NRV2B,NRV_TAIL", NULL);
+    else if (ph.method == M_NRV2D_LE32) addLoader("NRV2D,NRV_TAIL", NULL);
     else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
     else throwBadLoader();
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+
     addLoader("IDENTSTR,UPX1HEAD", NULL);
 }
 
