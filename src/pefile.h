@@ -214,7 +214,7 @@ protected:
         DLL_FLAG        = 0x2000,
         FBIG_ENDIAN     = 0x8000
     };
-    
+
     //NEW: DLL characteristics definition for ASLR, ... - Stefan Widmann
     enum {
         IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE         = 0x0040,

@@ -135,7 +135,7 @@ next_imp:
                 add     ebx, 4
                 jmps    next_func
 imp_failed:
-                
+
 section         PEIERDLL
                 popa
                 xor     eax, eax
@@ -222,7 +222,7 @@ section         PEDEPHAK
 pedep9:
                 pop     eax                     //;restore stack
 
-//;NEW: TLS callback support - Stefan Widmann				
+//;NEW: TLS callback support - Stefan Widmann
 section         PETLSC
                 lea ebx, [esi + tls_module_base] //;load module base to ebx
                 lea eax, [esi + tls_callbacks_ptr] //;load pointer to original callback chain
@@ -267,12 +267,12 @@ section         PERETURN
 section         PEDOJUMP
                 jmp    original_entry
 
-section         PETLSC2				
+section         PETLSC2
                 //;TLS_CALLBACK(hModule, reason, reserved)
 tls_handler_start:
                 push esi
                 .byte 0xBE //mov esi, XXXXXXXX
-tlsc_chain_ptr: 
+tlsc_chain_ptr:
                 .byte 0, 0, 0, 0
                 cld  //;you never know, this code gets called by the PE loader
 walk_tlsc_chain2:
@@ -290,7 +290,7 @@ push_loop:
 done_callbacks:
                 pop esi
                 ret 0x0C
-                
+
 // =============
 // ============= CUT HERE
 // =============

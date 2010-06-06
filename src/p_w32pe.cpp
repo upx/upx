@@ -218,7 +218,7 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
             //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
             throwCantPack("TLS callbacks are not supported");
         }
-#endif		
+#endif
         if(v != 0)
         {
             //count number of callbacks, just for information string - Stefan Widmann
@@ -839,11 +839,11 @@ void PackW32Pe::pack(OutputFile *fo)
           }
       }
 
-    //remove certificate directory entry		
+    //remove certificate directory entry
     if (IDSIZE(PEDIR_SEC))
         IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
 
-    //check CLR Runtime Header directory entry	
+    //check CLR Runtime Header directory entry
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files (win32/.net) are not yet supported");
 
@@ -871,7 +871,7 @@ void PackW32Pe::pack(OutputFile *fo)
 #if 0 //subsystem check moved to switch ... case above - Stefan Widmann
         if (!opt->force && ih.subsystem == 1)
         throwCantPack("subsystem 'native' is not supported (try --force)");
-#endif		
+#endif
     if (ih.filealign < 0x200)
         throwCantPack("filealign < 0x200 is not yet supported");
 
