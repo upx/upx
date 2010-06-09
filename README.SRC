@@ -98,7 +98,7 @@ If you want to modify the stub sources you'll also need
 
   - A number of cross-assemblers and cross-compilers - precompiled
     binaries for i386-linux hosts are available from
-    http://sourceforge.net/project/showfiles.php?group_id=2331
+    http://sourceforge.net/projects/upx/files/upx-tools/20060823/
 
 
 Misc. notes
