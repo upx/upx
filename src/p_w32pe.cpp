@@ -123,6 +123,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     isrtm = false;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
+    use_tls_callbacks = false;
 }
 
 
@@ -199,8 +200,6 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
-
-    use_tls_callbacks = false; //NEW - Stefan Widmann
 
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks)
