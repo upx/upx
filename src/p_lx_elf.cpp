@@ -175,8 +175,8 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     unsigned disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // ALIGN_UP 0 mod 4
-    len += (3& -len); // 0 mod 4
+    fo->write(&zero, 3& (0u-len));  // ALIGN_UP 0 mod 4
+    len += (3& (0u-len)); // 0 mod 4
 
     unsigned const t = 4 ^ (4 & len) ^ ((!!xct_off)<<2);  // 0 or 4
     fo->write(&zero, t);
@@ -2266,8 +2266,8 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += 3& -len;
+    fo->write(&zero, 3& (0u-len));  // align to 0 mod 4
+    len += 3& (0u-len);
     set_te32(&elfout.phdr[0].p_filesz, len);
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
@@ -2329,8 +2329,8 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& -len);  // align to 0 mod 4
-    len += 3& -len;
+    fo->write(&zero, 3& (0u-len));  // align to 0 mod 4
+    len += 3& (0u-len);
     set_te64(&elfout.phdr[0].p_filesz, len);
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
