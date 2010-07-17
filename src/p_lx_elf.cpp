@@ -635,7 +635,11 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     }
 
     addLoader("IDENTSTR", NULL);
-    addLoader("LEXEC020", (opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "LEXEC025", NULL);
+    addLoader("LEXEC020", NULL);
+    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
+        addLoader("LEXECDYN", NULL);
+    }
+    addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 

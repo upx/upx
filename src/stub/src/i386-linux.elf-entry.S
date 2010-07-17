@@ -180,6 +180,34 @@ unfold:
         add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
+section LEXECDYN
+// VDSO might be at [eax]; if so, then erase AT_SYSINFO and AT_SYSINFO_EHDR.
+// This happens with some kernels (Linux-2.6.34) for ET_DYN when stack is
+// unlimited (ulimit -s unlimited), because the only PT_LOAD of compressed
+// ET_DYN is placed at TASK_UNMAPPED_BASE (TASK_SIZE/3, typically 0x40000000)
+// and VDSO follows.  When stack is limited, then allocation is from high
+// (just below stack) to low: VDSO will be below our PT_LOAD, and mmap()
+// below will steal the lowest page of stack.
+        pop ecx; push ecx  // argc
+        push esi
+        push eax
+        lea esi,[esp + 4*ecx + (3+1)*4]  // &env
+1:
+        lodsd; test eax,eax; jne 1b  // skip env
+2:
+        lodsd; test eax,eax; je 5f  // done with auxv
+AT_IGNORE=  1
+AT_SYSINFO= 32
+AT_SYSINFO_EHDR=33
+        subb al,AT_SYSINFO
+        cmpb al,AT_SYSINFO_EHDR - AT_SYSINFO
+        lodsd
+        ja 2b; movb [esi - 2*4],AT_IGNORE
+        jmp 2b
+5:
+        pop eax
+        pop esi
+
 section LUNMP000
         push 0  // 0-page bread crumb
 section LUNMP001
