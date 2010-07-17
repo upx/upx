@@ -127,7 +127,8 @@ section LEXEC017
 
 section LEXEC020
 
-#define PAGE_SIZE ( 1<<12)
+#define PAGE_SHIFT 12
+#define PAGE_SIZE ( 1 << PAGE_SHIFT)
 
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
@@ -202,7 +203,11 @@ AT_SYSINFO_EHDR=33
         subb al,AT_SYSINFO
         cmpb al,AT_SYSINFO_EHDR - AT_SYSINFO
         lodsd
-        ja 2b; movb [esi - 2*4],AT_IGNORE
+        ja 2b  // not AT_SYSINFO*
+        xor eax,[esp]
+        shr eax,PAGE_SHIFT
+        jne 2b  // no conflict with decompressed fold_elf86
+        movb [esi - 2*4],AT_IGNORE
         jmp 2b
 5:
         pop eax
