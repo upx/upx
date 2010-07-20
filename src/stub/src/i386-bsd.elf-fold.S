@@ -128,6 +128,9 @@ L53:
         pop ecx  // end of unmap region
         pop ebx  // start of unmap region (&Elf32_Ehdr of this stub)
         add esp, MAX_ELF_HDR + OVERHEAD  // un-alloca
+        pop edx  // bread crumb size in pages
+        shl edx,12
+        add ebx,edx  // start of unmap region
 
         push eax  // save entry address as ret.addr
         push 0  // 'leave' uses this to clear ebp

@@ -179,6 +179,11 @@ unfold:
         add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
+section LUNMP000
+        push 0  // 0-page bread crumb
+section LUNMP001
+        push 1  // 1-page bread crumb
+section LEXEC025
         push eax  // destination for 'ret'
 
                 // mmap a page to hold the decompressed fold_elf86
