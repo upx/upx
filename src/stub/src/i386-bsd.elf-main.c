@@ -368,6 +368,8 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
 
+#define MAP_ANON_FD -1
+
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -396,7 +398,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     lo   -= ~PAGE_MASK & lo;  // round down to page boundary
     hi    =  PAGE_MASK & (hi - lo - PAGE_MASK -1);  // page length
     szlo  =  PAGE_MASK & (szlo    - PAGE_MASK -1);  // page length
-    addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
+    addr = mmap((void *)lo, hi, PROT_NONE, mflags, MAP_ANON_FD, 0);
     *p_brk = hi + addr;  // the logical value of brk(0)
     //mprotect(szlo + addr, hi - szlo, PROT_NONE);  // no access, but keep the frames!
     return (unsigned long)addr - lo;
@@ -430,14 +432,18 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, struct Extent *const xi,
         mlen += frag;
         addr -= frag;
 
-        if (addr != mmap(addr, mlen
+        if (addr != (xi
+            ? mmap(addr, mlen
 #if defined(__i386__)  /*{*/
-            // Decompressor can overrun the destination by 3 bytes.
-            + (xi ? 3 : 0)
+                    // Decompressor can overrun the destination by 3 bytes.
+                    + 3
 #endif  /*}*/
-                , prot | (xi ? PROT_WRITE : 0),
-                MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
-                (xi ? -1 : fdi), phdr->p_offset - frag) ) {
+                , prot | PROT_WRITE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS,
+                MAP_ANON_FD , 0 )
+            : mmap(addr, mlen
+                , prot,              MAP_FIXED | MAP_PRIVATE,
+                fdi,          phdr->p_offset - frag) ))
+        {
             err_exit(8);
         }
         if (xi) {
@@ -473,7 +479,7 @@ ERR_LAB
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
+                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, MAP_ANON_FD, 0 ) ) {
                 err_exit(9);
             }
         }
