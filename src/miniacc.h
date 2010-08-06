@@ -41,7 +41,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20100419L
+#define ACC_VERSION     20100805L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -4071,12 +4071,13 @@ struct acc_getopt_longopt_t {
 };
 struct acc_getopt_t {
     void *user;
+    const char *progname;
+    int bad_option;
     char *optarg;
     void (*opterr)(acc_getopt_p, const char*, void *);
     int optind;
     int optopt;
     int errcount;
-    const char* progname;
     int argc; char** argv;
     int eof; int shortpos;
     int pending_rotate_first, pending_rotate_middle;
@@ -5336,6 +5337,239 @@ ACCLIB_PUBLIC(int, acc_dos_free) (void __far* p)
 }
 #endif
 #endif
+#if defined(ACC_WANT_ACCLIB_GETOPT)
+#  undef ACC_WANT_ACCLIB_GETOPT
+#define __ACCLIB_GETOPT_CH_INCLUDED 1
+#if !defined(ACCLIB_PUBLIC)
+#  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
+#endif
+ACCLIB_PUBLIC(void, acc_getopt_init) (acc_getopt_p g,
+                                      int start_argc, int argc, char** argv)
+{
+    memset(g, 0, sizeof(*g));
+    g->optind = start_argc;
+    g->argc = argc; g->argv = argv;
+    g->optopt = -1;
+}
+static int __ACCLIB_FUNCNAME(acc_getopt_rotate) (char **p, int first, int middle, int last)
+{
+    int i = middle, n = middle - first;
+    if (first >= middle || middle >= last) return 0;
+    for (;;)
+    {
+        char* t = p[first]; p[first] = p[i]; p[i] = t;
+        if (++first == middle)
+        {
+            if (++i == last) break;
+            middle = i;
+        }
+        else if (++i == last)
+            i = middle;
+    }
+    return n;
+}
+static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, int flags, const char *f, ...)
+{
+    if (flags & 1)
+    {
+        if (g->shortpos == 0)
+            g->optind++;
+        else if (!g->argv[g->optind][++g->shortpos])
+            g->optind++, g->shortpos = 0;
+        if (flags & 2)
+            return ret;
+    }
+    if (g->opterr)
+    {
+#if defined(HAVE_STDARG_H)
+        struct { va_list ap; } s;
+        va_start(s.ap, f);
+        g->opterr(g, f, &s);
+        va_end(s.ap);
+#else
+        g->opterr(g, f, NULL);
+#endif
+    }
+    g->errcount++;
+    return ret;
+}
+ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
+                                const char* shortopts,
+                                const acc_getopt_longopt_p longopts,
+                                int* longind)
+{
+#define pe  __ACCLIB_FUNCNAME(acc_getopt_perror)
+    int ordering = ACC_GETOPT_PERMUTE;
+    int missing_arg_ret = g->bad_option;
+    char *a;
+    if (shortopts)
+    {
+        if (*shortopts == '-' || *shortopts == '+')
+            ordering = *shortopts++ == '-' ? ACC_GETOPT_RETURN_IN_ORDER : ACC_GETOPT_REQUIRE_ORDER;
+        if (*shortopts == ':')
+            missing_arg_ret = *shortopts++;
+    }
+    g->optarg = NULL;
+    if (g->optopt == -1)
+        g->optopt = g->bad_option;
+    if (longind != NULL)
+        *longind = -1;
+    if (g->eof || g->optind < 0 || g->argv == NULL)
+        goto acc_label_out3;
+    if (g->shortpos)
+        goto acc_label_next_shortopt;
+    g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
+    g->pending_rotate_first = g->pending_rotate_middle = g->optind;
+    if (ordering == ACC_GETOPT_PERMUTE)
+    {
+        while (g->optind < g->argc && !(g->argv[g->optind][0] == '-' && g->argv[g->optind][1]))
+            g->optind++;
+        g->pending_rotate_middle = g->optind;
+    }
+    if (g->optind >= g->argc)
+        goto acc_label_out1;
+    a = g->argv[g->optind];
+    if (a[0] == '-' && a[1] == '-')
+    {
+        char *arg;
+        const acc_getopt_longopt_p lo = NULL;
+        const acc_getopt_longopt_p l2 = NULL;
+        size_t a_len;
+        int need_exact = 0;
+        int i;
+        a += 2; arg = a;
+        if (arg[0] == 0)
+        {
+            g->optind++;
+            goto acc_label_out2;
+        }
+        while (arg[0] && arg[0] != '=' && arg[0] != '#')
+            ++arg;
+        a_len = (size_t) (arg - a);
+        for (i = 0; a_len && longopts && longopts[i].name; ++i)
+        {
+            size_t l = strlen(longopts[i].name);
+            if (strncmp(a, longopts[i].name, a_len) != 0)
+                continue;
+            if (a_len == l)
+            {
+                lo = &longopts[i];
+                goto acc_label_found_lo;
+            }
+            if (longopts[i].has_arg & ACC_GETOPT_EXACT_ARG)
+                need_exact = 1;
+            if (lo == NULL)
+                lo = &longopts[i];
+            else
+                l2 = &longopts[i];
+        }
+        if (lo == NULL || need_exact)
+            return pe(g, g->bad_option, 1, "unrecognized option '--%s'", a);
+        if (l2)
+            return pe(g, g->bad_option, 1, "option '--%s' is ambiguous (could be '--%s' or '--%s')", a, lo->name, l2->name);
+    acc_label_found_lo:
+        switch (lo->has_arg & 0x2f)
+        {
+        case ACC_GETOPT_OPTIONAL_ARG:
+            if (arg[0] && arg[1])
+                g->optarg = arg + 1;
+            g->optind++;
+            break;
+        case ACC_GETOPT_REQUIRED_ARG:
+            if (arg[0])
+            {
+                if (arg[1])
+                    g->optarg = arg + 1;
+            }
+            else if (g->optind + 1 < g->argc)
+                g->optarg = g->argv[++g->optind];
+            if (!g->optarg)
+                return pe(g, missing_arg_ret, 1, "option '--%s' requires an argument", lo->name);
+            g->optind++;
+            break;
+        case ACC_GETOPT_REQUIRED_ARG | 0x20:
+            if (arg[0] && arg[1])
+                g->optarg = arg + 1;
+            if (!g->optarg)
+                return pe(g, missing_arg_ret, 1, "option '--%s=' requires an argument", lo->name);
+            g->optind++;
+            break;
+        default:
+            if (arg[0])
+                return pe(g, g->bad_option, 1, "option '--%s' doesn't allow an argument", lo->name);
+            g->optind++;
+            break;
+        }
+        if (longind != NULL)
+            *longind = (int) (lo - longopts);
+        if (lo->flag != NULL)
+        {
+            *lo->flag = lo->val;
+            return 0;
+        }
+        return lo->val;
+    }
+    if (a[0] == '-' && a[1])
+    {
+        char *arg;
+        int has_arg;
+        const char *sp;
+        unsigned char sc;
+        g->shortpos = 1;
+    acc_label_next_shortopt:
+        a = g->argv[g->optind] + g->shortpos;
+        sp = NULL; sc = (unsigned char) *a;
+        if (sc != ':' && shortopts)
+            sp = strchr(shortopts, sc);
+        if (!sp)
+        {
+            g->optopt = sc;
+            return pe(g, g->bad_option, 1, "invalid option '-%c'", sc);
+        }
+        arg = a + 1; has_arg = 0;
+        if (sp[1] == ':') { has_arg++; if (sp[2] == ':') has_arg++; }
+        switch (has_arg)
+        {
+        case ACC_GETOPT_OPTIONAL_ARG:
+            if (arg[0])
+                g->optarg = arg;
+            g->optind++, g->shortpos = 0;
+            break;
+        case ACC_GETOPT_REQUIRED_ARG:
+            if (arg[0])
+                g->optarg = arg;
+            else if (g->optind + 1 < g->argc)
+                g->optarg = g->argv[++g->optind];
+            else
+            {
+                g->optopt = sc;
+                return pe(g, missing_arg_ret, 1, "option '-%c' requires an argument", sc);
+            }
+            g->optind++, g->shortpos = 0;
+            break;
+        default:
+            pe(g, 0, 3, NULL);
+            break;
+        }
+        return sc;
+    }
+    if (ordering == ACC_GETOPT_RETURN_IN_ORDER)
+    {
+        g->optarg = a;
+        g->optind++;
+        return 1;
+    }
+    goto acc_label_out2;
+acc_label_out1:
+    g->optind = g->pending_rotate_first;
+acc_label_out2:
+    g->optind -= __ACCLIB_FUNCNAME(acc_getopt_rotate)(g->argv, g->pending_rotate_first, g->pending_rotate_middle, g->optind);
+acc_label_out3:
+    g->eof = 1;
+    return -1;
+#undef pe
+}
+#endif
 #if defined(ACC_WANT_ACCLIB_HALLOC)
 #  undef ACC_WANT_ACCLIB_HALLOC
 #define __ACCLIB_HALLOC_CH_INCLUDED 1
@@ -5813,7 +6047,7 @@ static int acc_pclock_read_perfctr(acc_pclock_handle_p h, acc_pclock_p c)
     acc_perfctr_clock_t pcc;
     double secs;
     acc_uint64l_t nsecs;
-    acc_perfctr_read(&h->pch, &pcc);
+    __ACCLIB_FUNCNAME(acc_perfctr_read)(&h->pch, &pcc);
     if __acc_unlikely(h->ticks_base == 0)
         h->ticks_base = pcc.tsc;
     else
@@ -5928,7 +6162,7 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
         break;
     case ACC_PCLOCK_PROCESS_CPUTIME_ID:
 #     if defined(acc_pclock_read_perfctr)
-        if (acc_perfctr_open(&h->pch) == 0) {
+        if (__ACCLIB_FUNCNAME(acc_perfctr_open)(&h->pch) == 0) {
             h->gettime = acc_pclock_read_perfctr;
             h->name = "perfctr";
             break;
@@ -5995,19 +6229,19 @@ ACCLIB_PUBLIC(int, acc_pclock_open) (acc_pclock_handle_p h, int mode)
     if (!h->name)
         h->name = "unknown";
     for (i = 0; i < 10; i++) {
-        acc_pclock_read(h, &c);
+        __ACCLIB_FUNCNAME(acc_pclock_read)(h, &c);
     }
     return 0;
 }
 ACCLIB_PUBLIC(int, acc_pclock_open_default) (acc_pclock_handle_p h)
 {
-    if (acc_pclock_open(h, ACC_PCLOCK_PROCESS_CPUTIME_ID) == 0)
+    if (__ACCLIB_FUNCNAME(acc_pclock_open)(h, ACC_PCLOCK_PROCESS_CPUTIME_ID) == 0)
         return 0;
-    if (acc_pclock_open(h, ACC_PCLOCK_MONOTONIC) == 0)
+    if (__ACCLIB_FUNCNAME(acc_pclock_open)(h, ACC_PCLOCK_MONOTONIC) == 0)
         return 0;
-    if (acc_pclock_open(h, ACC_PCLOCK_REALTIME) == 0)
+    if (__ACCLIB_FUNCNAME(acc_pclock_open)(h, ACC_PCLOCK_REALTIME) == 0)
         return 0;
-    if (acc_pclock_open(h, ACC_PCLOCK_THREAD_CPUTIME_ID) == 0)
+    if (__ACCLIB_FUNCNAME(acc_pclock_open)(h, ACC_PCLOCK_THREAD_CPUTIME_ID) == 0)
         return 0;
     return -1;
 }
@@ -6018,7 +6252,7 @@ ACCLIB_PUBLIC(int, acc_pclock_close) (acc_pclock_handle_p h)
     h->name = NULL;
     h->gettime = 0;
 #if (__ACCLIB_PCLOCK_USE_PERFCTR)
-    acc_perfctr_close(&h->pch);
+    __ACCLIB_FUNCNAME(acc_perfctr_close)(&h->pch);
 #endif
     return 0;
 }
@@ -6059,7 +6293,7 @@ ACCLIB_PUBLIC(int, acc_pclock_flush_cpu_cache) (acc_pclock_handle_p h, unsigned 
 {
     if (h->h) {
 #if (__ACCLIB_PCLOCK_USE_PERFCTR)
-        return acc_perfctr_flush_cpu_cache(&h->pch, flags);
+        return __ACCLIB_FUNCNAME(acc_perfctr_flush_cpu_cache)(&h->pch, flags);
 #endif
     }
     ACC_UNUSED(h); ACC_UNUSED(flags);
@@ -6148,7 +6382,7 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_p h)
     h->name = NULL;
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
     h->pch.h = 0;
-    if (h->mode == 0 && acc_perfctr_open(&h->pch) == 0)
+    if (h->mode == 0 && __ACCLIB_FUNCNAME(acc_perfctr_open)(&h->pch) == 0)
         h->mode = 2;
 #endif
 #if (__ACCLIB_UCLOCK_USE_QPC)
@@ -6163,7 +6397,7 @@ ACCLIB_PUBLIC(int, acc_uclock_open) (acc_uclock_handle_p h)
 #endif
     for (i = 0; i < 10; i++) {
         acc_uclock_t c;
-        acc_uclock_read(h, &c);
+        __ACCLIB_FUNCNAME(acc_uclock_read)(h, &c);
     }
     return 0;
 }
@@ -6173,18 +6407,18 @@ ACCLIB_PUBLIC(int, acc_uclock_close) (acc_uclock_handle_p h)
     h->mode = -1;
     h->name = NULL;
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
-    acc_perfctr_close(&h->pch);
+    __ACCLIB_FUNCNAME(acc_perfctr_close)(&h->pch);
 #endif
     return 0;
 }
 ACCLIB_PUBLIC(void, acc_uclock_read) (acc_uclock_handle_p h, acc_uclock_p c)
 {
 #if (__ACCLIB_UCLOCK_USE_RDTSC)
-    acc_tsc_read((acc_uint32e_t*) (void*) &c->tsc);
+    __ACCLIB_FUNCNAME(acc_tsc_read)((acc_uint32e_t*) (void*) &c->tsc);
 #endif
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
     if (h->pch.h) {
-        acc_perfctr_read(&h->pch, &c->pcc);
+        __ACCLIB_FUNCNAME(acc_perfctr_read)(&h->pch, &c->pcc);
         if (h->mode > 0 && h->mode <= 2)
             return;
     }
@@ -6250,7 +6484,7 @@ ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
     if (h->pch.h && h->mode == 2) {
         if (!h->name) h->name = "perfctr";
-        return acc_perfctr_get_elapsed(&h->pch, &start->pcc, &stop->pcc);
+        return __ACCLIB_FUNCNAME(acc_perfctr_get_elapsed)(&h->pch, &start->pcc, &stop->pcc);
     }
 #endif
 #if (__ACCLIB_UCLOCK_USE_QPC)
@@ -6305,7 +6539,7 @@ ACCLIB_PUBLIC(int, acc_uclock_flush_cpu_cache) (acc_uclock_handle_p h, unsigned 
 {
     if (h->h) {
 #if (__ACCLIB_UCLOCK_USE_PERFCTR)
-        return acc_perfctr_flush_cpu_cache(&h->pch, flags);
+        return __ACCLIB_FUNCNAME(acc_perfctr_flush_cpu_cache)(&h->pch, flags);
 #endif
     }
     ACC_UNUSED(h); ACC_UNUSED(flags);
@@ -6622,7 +6856,7 @@ ACCLIB_PUBLIC_NOINLINE(unsigned, acc_debug_running_on_qemu) (void)
     unsigned r = 0;
 #if (ACC_OS_POSIX_LINUX || ACC_OS_WIN32 || ACC_OS_WIN64)
     const char* p;
-    p = acc_getenv("ACC_ENV_RUNNING_ON_QEMU");
+    p = __ACCLIB_FUNCNAME(acc_getenv)("ACC_ENV_RUNNING_ON_QEMU");
     if (p) {
         if (p[0] == 0) r = 0;
         else if ((p[0] >= '0' && p[0] <= '9') && p[1] == 0) r = p[0] - '0';

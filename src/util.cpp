@@ -37,6 +37,7 @@
 #endif
 #define ACC_WANT_ACC_INCI_H 1
 #include "miniacc.h"
+#define ACC_WANT_ACCLIB_GETOPT 1
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_MISC 1
 #define ACC_WANT_ACCLIB_UA 1
