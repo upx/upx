@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_BELE_H
-#define __UPX_BELE_H
+#define __UPX_BELE_H 1
 
 
 /*************************************************************************
@@ -543,7 +543,7 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 
 
 // just for testing...
-#if !defined(ACC_CFG_NO_UNALIGNED)
+#if !(ACC_CFG_NO_UNALIGNED)
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
    typedef acc_uint16e_t LE16_unaligned __attribute__((__aligned__(1)));
    typedef acc_uint32e_t LE32_unaligned __attribute__((__aligned__(1)));

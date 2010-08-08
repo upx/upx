@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_CONF_H
-#define __UPX_CONF_H
+#define __UPX_CONF_H 1
 
 #include "version.h"
 
@@ -167,10 +167,10 @@
 #undef linux
 #undef small
 #undef tos
-#if defined(ACC_CC_DMC)
+#if (ACC_CC_DMC)
 #  undef tell
 #endif
-#if !defined(ACC_CC_PGI)
+#if !(ACC_CC_PGI)
 #  undef unix
 #endif
 #if defined(__DJGPP__)
@@ -189,14 +189,14 @@
 #  undef WITH_LZMA
 #endif
 #if defined(UPX_OFFICIAL_BUILD)
-#  if !defined(WITH_LZMA) || !defined(WITH_NRV) || !defined(WITH_UCL)
+#  if !(WITH_LZMA) || !(WITH_NRV) || !(WITH_UCL)
 #    error
 #  endif
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
 #  include <nrv/nrvconf.h>
 #endif
-#if defined(WITH_UCL)
+#if (WITH_UCL)
 #  define ucl_compress_config_t REAL_ucl_compress_config_t
 #  include <ucl/uclconf.h>
 #  include <ucl/ucl.h>
@@ -205,11 +205,6 @@
 #  endif
 #  undef ucl_compress_config_t
 #  undef ucl_compress_config_p
-#endif
-#if !defined(__UPX_CHECKER)
-#  if defined(__UCL_CHECKER) || defined(__NRV_CHECKER)
-#    define __UPX_CHECKER
-#  endif
 #endif
 #if !defined(UINT_MAX) || (UINT_MAX < 0xffffffffL)
 #  error "UINT_MAX"
@@ -224,7 +219,7 @@
 **************************************************************************/
 
 // malloc debuggers
-#if defined(WITH_VALGRIND)
+#if (WITH_VALGRIND)
 #  include <valgrind/memcheck.h>
 #endif
 
@@ -263,11 +258,11 @@
 #endif
 
 
-#if !defined(HAVE_STRCASECMP) && defined(HAVE_STRICMP)
-#  define strcasecmp      stricmp
+#if !(HAVE_STRCASECMP) && (HAVE_STRICMP)
+#  define strcasecmp        stricmp
 #endif
-#if !defined(HAVE_STRNCASECMP) && defined(HAVE_STRNICMP)
-#  define strncasecmp     strnicmp
+#if !(HAVE_STRNCASECMP) && (HAVE_STRNICMP)
+#  define strncasecmp       strnicmp
 #endif
 
 

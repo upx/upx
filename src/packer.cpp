@@ -26,7 +26,7 @@
  */
 
 
-//#define WANT_STL
+//#define WANT_STL 1
 #include "conf.h"
 #include "file.h"
 #include "packer.h"
@@ -211,7 +211,7 @@ bool Packer::compress(upx_bytep i_ptr, unsigned i_len, upx_bytep o_ptr,
             cconf.conf_ucl.max_offset = opt->crp.crp_ucl.max_offset;
         if (opt->crp.crp_ucl.max_match != UINT_MAX && opt->crp.crp_ucl.max_match < cconf.conf_ucl.max_match)
             cconf.conf_ucl.max_match = opt->crp.crp_ucl.max_match;
-#if defined(WITH_NRV)
+#if (WITH_NRV)
         if (ph.level >= 7 || (ph.level >= 4 && ph.u_len >= 512*1024))
             step = 0;
 #endif
@@ -625,7 +625,7 @@ unsigned Packer::getRandomId() const
 #endif
     while (id == 0)
     {
-#if !defined(HAVE_GETTIMEOFDAY) || defined(__DJGPP__)
+#if !(HAVE_GETTIMEOFDAY) || defined(__DJGPP__)
         id ^= (unsigned) time(NULL);
         id ^= ((unsigned) clock()) << 12;
 #else
@@ -634,7 +634,7 @@ unsigned Packer::getRandomId() const
         id ^= (unsigned) tv.tv_sec;
         id ^= ((unsigned) tv.tv_usec) << 12;  // shift into high-bits
 #endif
-#if defined(HAVE_GETPID)
+#if (HAVE_GETPID)
         id ^= (unsigned) getpid();
 #endif
         id ^= (unsigned) fi->st.st_ino;

@@ -31,7 +31,7 @@
 
 
 #ifndef __UPX_P_LX_ELF_H  //{
-#define __UPX_P_LX_ELF_H
+#define __UPX_P_LX_ELF_H 1
 
 
 class PackLinuxElf : public PackUnix

@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_FILTER_H
-#define __UPX_FILTER_H
+#define __UPX_FILTER_H 1
 
 class Filter;
 class FilterImp;

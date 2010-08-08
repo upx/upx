@@ -62,7 +62,7 @@ void options_t::reset()
     o->console = CON_FILE;
 #if defined(__DJGPP__)
     o->console = CON_INIT;
-#elif defined(USE_SCREEN_WIN32)
+#elif (USE_SCREEN_WIN32)
     o->console = CON_INIT;
 #elif 1 && defined(__linux__)
     o->console = CON_INIT;
@@ -1419,7 +1419,7 @@ void upx_sanity_check(void)
 // main entry point
 **************************************************************************/
 
-#if !defined(WITH_GUI)
+#if !(WITH_GUI)
 
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
@@ -1469,7 +1469,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
     set_term(stderr);
 
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     if (ucl_init() != UCL_E_OK)
     {
         show_head();
@@ -1480,7 +1480,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
         e_exit(EXIT_INIT);
     }
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     if (nrv_init() != NRV_E_OK || NRV_VERSION != nrv_version())
     {
         show_head();
@@ -1573,7 +1573,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     return exit_code;
 }
 
-#endif /* !defined(WITH_GUI) */
+#endif /* !(WITH_GUI) */
 
 
 /*

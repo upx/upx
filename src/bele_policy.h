@@ -39,7 +39,7 @@
    // CTP - Compile-Time Polymorphism (templates)
 #  define V     static inline
 #  define S     static int __acc_cdecl_qsort
-#  define C
+#  define C     /*empty*/
 #elif defined(BELE_RTP)
    // RTP - Run-Time Polymorphism (virtual functions)
 #  define V     virtual

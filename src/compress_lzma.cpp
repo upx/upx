@@ -47,7 +47,7 @@ void lzma_compress_config_t::reset()
 }
 
 
-#if !defined(WITH_LZMA)
+#if !(WITH_LZMA)
 extern int compress_lzma_dummy;
 int compress_lzma_dummy = 0;
 #else
@@ -291,7 +291,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     unsigned char props_buf[LZMA_PROPS_SIZE];
     SizeT props_buf_size; props_buf_size = LZMA_PROPS_SIZE;
 
-#if defined(USE_LZMA_PROPERTIES)
+#if (USE_LZMA_PROPERTIES)
     if (dst_avail < 1)
         goto error;
     dst[0] = 0; // filled below
@@ -312,7 +312,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     assert(x_len <= dst_avail);
     *dst_len += x_len;
     if (rh == SZ_OK) {
-#if defined(USE_LZMA_PROPERTIES)
+#if (USE_LZMA_PROPERTIES)
         dst[-1] = props_buf[0];
 #endif
         r = UPX_E_OK;
@@ -513,7 +513,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
         goto error;
     }
     assert(os.b_pos == 5);
-#if defined(USE_LZMA_PROPERTIES)
+#if (USE_LZMA_PROPERTIES)
     os.b_pos = 1;
 #else
     os.b_pos = 0;
@@ -586,7 +586,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     SRes rh;
     ELzmaStatus status;
 
-#if defined(USE_LZMA_PROPERTIES)
+#if (USE_LZMA_PROPERTIES)
     rh = LzmaProps_Decode(&s.Properties, src, src_len);
     if (rh != 0)
         goto error;
@@ -684,7 +684,7 @@ int upx_lzma_decompress    ( const upx_bytep src, unsigned  src_len,
     int r = UPX_E_ERROR;
     int rh;
 
-#if defined(USE_LZMA_PROPERTIES)
+#if (USE_LZMA_PROPERTIES)
     if (src_len < 2)
         goto error;
     rh = LzmaDecodeProperties(&s.Properties, src, src_len);

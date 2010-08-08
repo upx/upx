@@ -48,7 +48,7 @@ binmode(INFILE);
 # check file size
 @st = stat($ifile);
 if (1 && $st[7] <= 0) {
-    print STDERR "$ifile: ERROR: emtpy file\n";
+    print STDERR "$ifile: ERROR: empty file\n";
     exit(1);
 }
 if (1 && $st[7] > 64*1024) {

@@ -284,7 +284,7 @@ def main(argv):
     # check file size
     st = os.stat(ifile)
     if 1 and st.st_size <= 0:
-        print >> sys.stderr, "%s: ERROR: emtpy file" % (ifile)
+        print >> sys.stderr, "%s: ERROR: empty file" % (ifile)
         sys.exit(1)
     if 1 and st.st_size > 128*1024:
         print >> sys.stderr, "%s: ERROR: file is too big (%d bytes)" % (ifile, st.st_size)

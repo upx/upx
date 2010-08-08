@@ -78,7 +78,7 @@ xread(struct Extent *x, char *buf, size_t count)
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
-#define ERR_LAB
+#define ERR_LAB /*empty*/
 static void
 err_exit(int a)
 {

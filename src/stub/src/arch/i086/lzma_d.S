@@ -102,7 +102,7 @@ section LZMA_DEC00
     ignore_reloc_overflow lzma_properties
 
 
-#define ret
+#define ret /*empty*/
 section LZMA_DEC10
 .arch   i8086, nojumps
 #define SMALL 1

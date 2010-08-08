@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_OPTIONS_H
-#define __UPX_OPTIONS_H
+#define __UPX_OPTIONS_H 1
 
 
 /*************************************************************************

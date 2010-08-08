@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_UI_H
-#define __UPX_UI_H
+#define __UPX_UI_H 1
 
 class InputFile;
 class OutputFile;

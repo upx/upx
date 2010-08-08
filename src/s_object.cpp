@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-#if defined(USE_SCREEN)
+#if (USE_SCREEN)
 
 #define this local_this
 
@@ -92,7 +92,7 @@ screen_t *sobject_construct(const screen_t *c, size_t data_size)
 }
 
 
-#endif /* defined(USE_SCREEN) */
+#endif /* (USE_SCREEN) */
 
 
 /*

@@ -310,13 +310,13 @@ void show_help(int verbose)
 //                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
                 "");
 
-#if defined(DEBUG) || defined(TESTING)
+#if (DEBUG) || (TESTING)
     fg = con_fg(f,FG_RED);
     con_fprintf(f,"\nWARNING: this version is compiled with"
-#if defined(DEBUG)
+#if (DEBUG)
                 " -DDEBUG"
 #endif
-#if defined(TESTING)
+#if (TESTING)
                 " -DTESTING"
 #endif
                 "\n");
@@ -380,22 +380,22 @@ void show_version(int x)
     UNUSED(v);
 
     fprintf(fp, "upx %s\n", UPX_VERSION_STRING);
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     v = upx_nrv_version_string();
     if (v != NULL && v[0])
         fprintf(fp, "NRV data compression library %s\n", v);
 #endif
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     v = upx_ucl_version_string();
     if (v != NULL && v[0])
         fprintf(fp, "UCL data compression library %s\n", v);
 #endif
-#if defined(WITH_ZLIB)
+#if (WITH_ZLIB)
     v = upx_zlib_version_string();
     if (v != NULL && v[0])
         fprintf(fp, "zlib data compression library %s\n", v);
 #endif
-#if defined(WITH_LZMA)
+#if (WITH_LZMA)
     v = upx_lzma_version_string();
     if (v != NULL && v[0])
         fprintf(fp, "LZMA SDK version %s\n", v);
@@ -404,10 +404,10 @@ void show_version(int x)
     fprintf(fp, "Copyright (C) 1996-2010 Laszlo Molnar\n");
     fprintf(fp, "Copyright (C) 2000-2010 John F. Reiser\n");
     fprintf(fp, "Copyright (C) 2002-2010 Jens Medoch\n");
-#if defined(WITH_ZLIB)
+#if (WITH_ZLIB)
     fprintf(fp, "Copyright (C) 1995" "-2005 Jean-loup Gailly and Mark Adler\n");
 #endif
-#if defined(WITH_LZMA)
+#if (WITH_LZMA)
     fprintf(fp, "Copyright (C) 1999" "-2006 Igor Pavlov\n");
 #endif
     fprintf(fp, "UPX comes with ABSOLUTELY NO WARRANTY; for details type '%s -L'.\n", progname);
