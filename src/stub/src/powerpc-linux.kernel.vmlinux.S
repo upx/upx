@@ -31,7 +31,7 @@
 */
 
 #include "arch/powerpc/32/macros.S"
-#include "arch/powerpc/32/regs.h"
+#include "arch/powerpc/32/ppc_regs.h"
 
 // offsets in struct b_info
 sz_unc   = 0
