@@ -63,15 +63,15 @@ protected:
 
     virtual void processTls(Interval *); //NEW: TLS callback handling - Stefan Widmann
     void processTls(Reloc *, const Interval *, unsigned); //NEW: TLS callback handling - Stefan Widmann
-    
+
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
     upx_byte *oloadconf;
     unsigned soloadconf;
 
     unsigned tlscb_ptr; //NEW: TLS callback handling - Stefan Widmann
-    //unsigned tlscb_off; //NEW: TLS callback handling - Stefan Widmann
-    
+    unsigned tls_handler_offset;
+
     bool isrtm;
     bool use_dep_hack;
     bool use_clear_dirty_stack;

@@ -123,6 +123,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
     isrtm = false;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
+    use_tls_callbacks = false;
 }
 
 
@@ -200,8 +201,6 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
 
-    use_tls_callbacks = false; //NEW - Stefan Widmann
-
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks)
     {
@@ -218,7 +217,7 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
             //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
             throwCantPack("TLS callbacks are not supported");
         }
-#endif		
+#endif
         if(v != 0)
         {
             //count number of callbacks, just for information string - Stefan Widmann
@@ -299,6 +298,14 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
 
     //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
     tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + ih.imagebase - 8 : 0);
+
+    if(use_tls_callbacks)
+    {
+      //set handler offset
+      set_le32(otls + sotls - 8, tls_handler_offset + ih.imagebase);
+      //add relocation for TLS handler offset
+      rel->add(newaddr + sotls - 8, 3);
+    }
 }
 
 /*************************************************************************
@@ -839,11 +846,11 @@ void PackW32Pe::pack(OutputFile *fo)
           }
       }
 
-    //remove certificate directory entry		
+    //remove certificate directory entry
     if (IDSIZE(PEDIR_SEC))
         IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
 
-    //check CLR Runtime Header directory entry	
+    //check CLR Runtime Header directory entry
     if (IDSIZE(PEDIR_COMRT))
         throwCantPack(".NET files (win32/.net) are not yet supported");
 
@@ -871,7 +878,7 @@ void PackW32Pe::pack(OutputFile *fo)
 #if 0 //subsystem check moved to switch ... case above - Stefan Widmann
         if (!opt->force && ih.subsystem == 1)
         throwCantPack("subsystem 'native' is not supported (try --force)");
-#endif		
+#endif
     if (ih.filealign < 0x200)
         throwCantPack("filealign < 0x200 is not yet supported");
 
@@ -1135,8 +1142,8 @@ void PackW32Pe::pack(OutputFile *fo)
     if(use_tls_callbacks)
       {
         //esi is ih.imagebase + rvamin
-        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - (ih.imagebase + rvamin));
-        linker->defineSymbol("tls_callbacks_off", ic + sotls - 8 - rvamin);
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr);
+        //linker->defineSymbol("tls_callbacks_off", ic + sotls - 8 - rvamin);
         linker->defineSymbol("tls_module_base", 0u - rvamin);
       }
 
@@ -1172,6 +1179,11 @@ void PackW32Pe::pack(OutputFile *fo)
     // tls & loadconf are put into section 1
 
     //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann
+    //get address of TLS callback handler
+    tls_handler_offset = linker->getSymbolOffset("PETLSC2");
+    //add relocation entry for TLS callback handler
+    rel.add(tls_handler_offset + 4, 3);
+
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? 0x18 : 0;

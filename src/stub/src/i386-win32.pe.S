@@ -114,7 +114,7 @@ section         PEK32ORD
                 jmps    next_imp
 not_kernel32:
 section         PEIMORD1
-                movzxw  eax, word ptr [edi]  //new: "word ptr" - Stefan Widmann
+                movzxw  eax, word ptr [edi]
                 inc     edi
                 push    eax
                 inc     edi
@@ -135,7 +135,7 @@ next_imp:
                 add     ebx, 4
                 jmps    next_func
 imp_failed:
-                
+
 section         PEIERDLL
                 popa
                 xor     eax, eax
@@ -222,23 +222,21 @@ section         PEDEPHAK
 pedep9:
                 pop     eax                     //;restore stack
 
-//;NEW: TLS callback support - Stefan Widmann				
+//;NEW: TLS callback support - Stefan Widmann
 section         PETLSC
                 lea ebx, [esi + tls_module_base] //;load module base to ebx
-                lea eax, [esi + tls_callbacks_ptr] //;load pointer to original callback chain
-                lea edi, [ebx + tls_handler_start] //;load offset of handler
+                lea edi, [ebx + tls_handler_start + 1] //;load offset of handler
                 push edi
-                inc edi //;pointer to original TLS callback chain is to be saved to handler + 2
-                inc edi
-                stosd
-                pop eax
-                lea edi, [esi + tls_callbacks_off] //;get ptr to first TLS callback entry
-                stosd //;save the handler ptr to the TLS callback chain
+                //;remove jump from TLS handler entry (overwrite displacement)
+                xor eax, eax
+                stosb
+                pop ecx
+                dec ecx
                 //;emulate callbacks like PE loader would have done
-                push 0 //;reserved
+                push eax //;0 - reserved
                 push 1 //;DLL_PROCESS_ATTACH
                 push ebx //;module base alias module handle alias hInstance alias ...
-                call eax //;contains ptr to callback handler
+                call ecx //;contains ptr to callback handler
 
 section         PEMAIN20
                 popa
@@ -267,13 +265,12 @@ section         PERETURN
 section         PEDOJUMP
                 jmp    original_entry
 
-section         PETLSC2				
+section         PETLSC2
                 //;TLS_CALLBACK(hModule, reason, reserved)
 tls_handler_start:
+                jmp end_of_tls_handler //;this jump is patched to EB 00 (jmp $+2) by stub
                 push esi
-                .byte 0xBE //mov esi, XXXXXXXX
-tlsc_chain_ptr: 
-                .byte 0, 0, 0, 0
+                mov esi, offset tls_callbacks_ptr //;must be relocated
                 cld  //;you never know, this code gets called by the PE loader
 walk_tlsc_chain2:
                 lodsd
@@ -289,8 +286,9 @@ push_loop:
                 jmp walk_tlsc_chain2
 done_callbacks:
                 pop esi
+end_of_tls_handler:
                 ret 0x0C
-                
+
 // =============
 // ============= CUT HERE
 // =============
