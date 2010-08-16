@@ -224,19 +224,19 @@ pedep9:
 
 //;NEW: TLS callback support - Stefan Widmann
 section         PETLSC
-                lea ebx, [esi + tls_module_base] //;load module base to ebx
-                lea edi, [ebx + tls_handler_start + 1] //;load offset of handler
-                push edi
+                lea     ebx, [esi + tls_module_base] //;load module base to ebx
+                lea     edi, [ebx + tls_handler_start + 1] //;load offset of handler
+                push    edi
                 //;remove jump from TLS handler entry (overwrite displacement)
-                xor eax, eax
+                xor     eax, eax
                 stosb
-                pop ecx
-                dec ecx
+                pop     ecx
+                dec     ecx
                 //;emulate callbacks like PE loader would have done
-                push eax //;0 - reserved
-                push 1 //;DLL_PROCESS_ATTACH
-                push ebx //;module base alias module handle alias hInstance alias ...
-                call ecx //;contains ptr to callback handler
+                push    eax                     //;0 - reserved
+                push    1                       //;DLL_PROCESS_ATTACH
+                push    ebx                     //;module base alias module handle alias hInstance alias ...
+                call    ecx                     //;contains ptr to callback handler
 
 section         PEMAIN20
                 popa
@@ -268,26 +268,26 @@ section         PEDOJUMP
 section         PETLSC2
                 //;TLS_CALLBACK(hModule, reason, reserved)
 tls_handler_start:
-                jmp end_of_tls_handler //;this jump is patched to EB 00 (jmp $+2) by stub
-                push esi
-                mov esi, offset tls_callbacks_ptr //;must be relocated
-                cld  //;you never know, this code gets called by the PE loader
+                jmp     end_of_tls_handler      //;this jump is patched to EB 00 (jmp $+2) by stub
+                push    esi
+                mov     esi, offset tls_callbacks_ptr //;must be relocated
+                cld                             //;you never know, this code gets called by the PE loader
 walk_tlsc_chain2:
                 lodsd
-                test eax, eax
-                jz done_callbacks
+                test    eax, eax
+                jz      done_callbacks
                 //;copy the stack frame, 3 arguments
-                push 3
-                pop ecx
+                push    3
+                pop     ecx
 push_loop:
-                push dword ptr [esp + 0x10] //;4 bytes
-                loop push_loop
-                call eax
-                jmp walk_tlsc_chain2
+                push    dword ptr [esp + 0x10] //;4 bytes
+                loop    push_loop
+                call    eax
+                jmp     walk_tlsc_chain2
 done_callbacks:
-                pop esi
+                pop     esi
 end_of_tls_handler:
-                ret 0x0C
+                ret     0x0C
 
 // =============
 // ============= CUT HERE
