@@ -28,7 +28,7 @@
 
 #include "conf.h"
 
-#if defined(USE_SCREEN) && defined(__DJGPP__)
+#if (USE_SCREEN) && defined(__DJGPP__)
 
 #include "screen.h"
 
@@ -37,7 +37,7 @@
 #define mask_fg 0x0f
 #define mask_bg 0xf0
 
-/* #define USE_SCROLLBACK */
+/* #define USE_SCROLLBACK 1 */
 
 
 /*************************************************************************
@@ -70,7 +70,7 @@ struct screen_data_t
     unsigned char init_attr;
     unsigned char empty_attr;
     unsigned short empty_cell;
-#ifdef USE_SCROLLBACK
+#if USE_SCROLLBACK
     /* scrollback buffer */
     unsigned short sb_buf[32][256];
     int sb_size;
@@ -89,7 +89,7 @@ static struct
 };
 
 
-#ifdef USE_SCROLLBACK
+#if USE_SCROLLBACK
 static __inline__ void sb_add(screen_t *this, int *val, int inc)
 {
     *val = (*val + inc) & (this->data->sb_size - 1);
@@ -304,7 +304,7 @@ static int init(screen_t *this, int fd)
         return -1;
 
     this->data->mode = -1;
-#ifdef USE_SCROLLBACK
+#if USE_SCROLLBACK
     this->data->sb_size = 32;
     this->data->sb_base = 0;
     this->data->sb_sp = 0;
@@ -404,7 +404,7 @@ static int scrollUp(screen_t *this, int lines)
     if (lines <= 0 || lines > sr)
         return 0;
 
-#ifdef USE_SCROLLBACK
+#if USE_SCROLLBACK
     /* copy to scrollback buffer */
     for (y = 0; y < lines; y++)
     {
@@ -449,7 +449,7 @@ static int scrollDown(screen_t *this, int lines)
     /* copy top lines from scrollback buffer */
     for (y = lines; --y >= 0; )
     {
-#ifdef USE_SCROLLBACK
+#if USE_SCROLLBACK
         const unsigned short *buf = sb_pop(this);
         if (buf == NULL)
             clearLine(this,y);
@@ -556,7 +556,7 @@ screen_t *screen_djgpp2_construct(void)
 }
 
 
-#endif /* defined(USE_SCREEN) && defined(__DJGPP__) */
+#endif /* (USE_SCREEN) && defined(__DJGPP__) */
 
 
 /*

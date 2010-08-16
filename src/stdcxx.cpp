@@ -26,7 +26,7 @@
  */
 
 
-//#define WANT_STL
+//#define WANT_STL 1
 #include "conf.h"
 #include "stdcxx.h"
 

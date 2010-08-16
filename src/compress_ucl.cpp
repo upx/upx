@@ -28,23 +28,23 @@
 
 #include "conf.h"
 #include "compress.h"
-#if !defined(WITH_UCL)
+#if !(WITH_UCL)
 extern int compress_ucl_dummy;
 int compress_ucl_dummy = 0;
 #else
 
-#if 1 && !defined(UCL_USE_ASM) && (ACC_ARCH_I386)
+#if 1 && !(UCL_USE_ASM) && (ACC_ARCH_I386)
 #  if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_WATCOMC)
-#    define UCL_USE_ASM
+#    define UCL_USE_ASM 1
 #  endif
 #endif
-#if defined(UCL_NO_ASM)
+#if (UCL_NO_ASM)
 #  undef UCL_USE_ASM
 #endif
-#if defined(ACC_CFG_NO_UNALIGNED)
+#if (ACC_CFG_NO_UNALIGNED)
 #  undef UCL_USE_ASM
 #endif
-#if 1 && defined(UCL_USE_ASM)
+#if 1 && (UCL_USE_ASM)
 #  include <ucl/ucl_asm.h>
 #  define ucl_nrv2b_decompress_safe_8       ucl_nrv2b_decompress_asm_safe_8
 #  define ucl_nrv2b_decompress_safe_le16    ucl_nrv2b_decompress_asm_safe_le16

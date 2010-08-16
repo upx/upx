@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_PACKMASTER_H
-#define __UPX_PACKMASTER_H
+#define __UPX_PACKMASTER_H 1
 
 class Packer;
 class InputFile;

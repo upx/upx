@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_STDCXX_H
-#define __UPX_STDCXX_H
+#define __UPX_STDCXX_H 1
 
 #ifdef __cplusplus
 
@@ -93,9 +93,9 @@ using namespace std;
 #elif (ACC_CC_DMC)
 namespace std { class bad_alloc { }; }
 #elif (ACC_CC_GNUC && ACC_OS_EMX)
-#define std
+#define std /*empty*/
 #elif (ACC_CC_SYMANTECC)
-#define std
+#define std /*empty*/
 class bad_alloc { };
 #endif
 
@@ -107,11 +107,11 @@ class bad_alloc { };
 #ifdef WANT_STL
 
 #if defined(__linux__)
-#  define _NOTHREADS
+#  define _NOTHREADS 1
 #endif
 #if defined(__GNUC__)
 #  define __THROW_BAD_ALLOC     throw bad_alloc()
-#  define __USE_MALLOC
+#  define __USE_MALLOC          1
 #  define enable                upx_stl_enable
 #endif
 #if defined(_MSC_VER)

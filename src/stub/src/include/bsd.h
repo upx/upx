@@ -359,7 +359,7 @@ struct p_info       // 12-byte packed program header follows stub loader
 #endif
 #endif
 #if !defined(__attribute_cdecl)
-#  define __attribute_cdecl
+#  define __attribute_cdecl /*empty*/
 #endif
 
 

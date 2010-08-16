@@ -177,7 +177,7 @@ xread(Extent *x, char *buf, size_t count)
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
-#define ERR_LAB
+#define ERR_LAB /*empty*/
 static void __attribute__ ((__noreturn__))
 err_exit(int a)
 {
@@ -383,15 +383,22 @@ __attribute__((regparm(2), stdcall))
 #endif  /*}*/
 auxv_find(Elf32_auxv_t *av, unsigned const type)
 {
+    Elf32_auxv_t *avail = 0;
     if (av
 #if defined(__i386__)  /*{*/
     && 0==(1&(int)av)  /* PT_INTERP usually inhibits, except for hatch */
 #endif  /*}*/
-    )
-    for (;; ++av) {
-        if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
-            av->a_type = type;
-            return av;
+    ) {
+        for (;; ++av) {
+            if (av->a_type==type)
+                return av;
+            if (av->a_type==AT_IGNORE)
+                avail = av;
+        }
+        if (0!=avail && AT_NULL!=type) {
+                av = avail;
+                av->a_type = type;
+                return av;
         }
     }
     return 0;

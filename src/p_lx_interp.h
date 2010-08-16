@@ -31,7 +31,7 @@
 
 
 #ifndef __UPX_P_LX_INTERP_H  //{
-#define __UPX_P_LX_INTERP_H
+#define __UPX_P_LX_INTERP_H 1
 
 
 /*************************************************************************

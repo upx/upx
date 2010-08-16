@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_P_VMLINX_H
-#define __UPX_P_VMLINX_H
+#define __UPX_P_VMLINX_H 1
 
 #include "p_elf.h"
 

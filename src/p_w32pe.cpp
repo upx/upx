@@ -273,7 +273,7 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
     // add new relocation entries
     unsigned ic;
     //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
-    for (ic = 0; ic < (use_tls_callbacks ? 16 : 12); ic += 4)
+    for (ic = 0; ic < (use_tls_callbacks ? 16u : 12u); ic += 4)
         rel->add(newaddr + ic,3);
 
     tls * const tlsp = (tls*) otls;

@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_SNPRINTF_H
-#define __UPX_SNPRINTF_H
+#define __UPX_SNPRINTF_H 1
 
 #ifdef __cplusplus
 extern "C" {

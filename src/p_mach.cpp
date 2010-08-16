@@ -1382,6 +1382,23 @@ void PackMachFat::unpack(OutputFile *fo)
                 packer.unpack(fo);
             }
         } break;
+        case PackMachFat::CPU_TYPE_X86_64: {
+            N_Mach::Mach_header<MachClass_LE64::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_LE64::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachAMD64 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibAMD64 packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+        } break;
         case PackMachFat::CPU_TYPE_POWERPC: {
             N_Mach::Mach_header<MachClass_BE32::MachITypes> hdr;
             typedef N_Mach::Mach_header<MachClass_BE32::MachITypes> Mach_header;
@@ -1481,6 +1498,18 @@ int PackMachFat::canUnpack()
             PackMachI386 packer(fi);
             if (!packer.canUnpack()) {
                 PackDylibI386 pack2r(fi);
+                if (!pack2r.canUnpack())
+                    return 0;
+                else
+                    ph.format = pack2r.getFormat(); // FIXME: copy entire PackHeader
+            }
+            else
+                ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
+        } break;
+        case PackMachFat::CPU_TYPE_X86_64: {
+            PackMachAMD64 packer(fi);
+            if (!packer.canUnpack()) {
+                PackDylibAMD64 pack2r(fi);
                 if (!pack2r.canUnpack())
                     return 0;
                 else

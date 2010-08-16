@@ -30,7 +30,7 @@
 
 FILE *con_term = NULL;
 
-#if defined(USE_CONSOLE)
+#if (USE_CONSOLE)
 
 /*************************************************************************
 //
@@ -84,14 +84,14 @@ static int do_init(FILE *f)
     if (!acc_isatty(STDIN_FILENO) || !acc_isatty(STDOUT_FILENO) || !acc_isatty(STDERR_FILENO))
         return con_mode;
 
-#if defined(USE_ANSI)
+#if (USE_ANSI)
     try_init(&console_ansi_mono,f);
     try_init(&console_ansi_color,f);
 #endif
-#if defined(USE_SCREEN)
+#if (USE_SCREEN)
     try_init(&console_screen,f);
 #endif
-#if defined(USE_AALIB)
+#if (USE_AALIB)
     try_init(&console_aalib,f);
 #endif
 

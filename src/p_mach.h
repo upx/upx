@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_P_MACHO_H
-#define __UPX_P_MACHO_H
+#define __UPX_P_MACHO_H 1
 
 
 __packed_struct(Mach_fat_header)
@@ -640,7 +640,7 @@ protected:
         BE32 flavor;
         BE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_ppc_thread_state state;
-    #define WANT_MACH_THREAD_ENUM
+    #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
 
@@ -689,7 +689,7 @@ protected:
         LE32 flavor;
         LE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_i386_thread_state state;
-    #define WANT_MACH_THREAD_ENUM
+    #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
 
@@ -738,7 +738,7 @@ protected:
         LE32 flavor;
         LE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_AMD64_thread_state state;
-    #define WANT_MACH_THREAD_ENUM
+    #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
 
@@ -788,7 +788,7 @@ protected:
         LE32 flavor;
         LE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_ARM_thread_state state;
-    #define WANT_MACH_THREAD_ENUM
+    #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
 
@@ -841,7 +841,7 @@ protected:
 
     // linker
     Linker *linker;
-#define WANT_MACH_HEADER_ENUM
+#define WANT_MACH_HEADER_ENUM 1
 #include "p_mach_enum.h"
 };
 

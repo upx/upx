@@ -41,7 +41,7 @@ static int mcheck_init()
     if (use_mcheck < 0)
     {
         use_mcheck = 1;
-#if defined(WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
+#if (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
         if (RUNNING_ON_VALGRIND)
         {
             //fprintf(stderr, "upx: detected RUNNING_ON_VALGRIND\n");

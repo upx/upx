@@ -1,5 +1,5 @@
 #ifndef __PPC_REGS__  /*{*/
-#define __PPC_REGS__
+#define __PPC_REGS__ 1
 
 #define r0 0
 #define r1 1

@@ -36,7 +36,7 @@
 static const
 #include "stub/i086-dos16.com.h"
 
-//#define TESTING
+//#define TESTING 1
 
 
 /*************************************************************************

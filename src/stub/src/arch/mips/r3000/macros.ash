@@ -83,7 +83,7 @@
 .endm
 
 #ifndef DEBUG
-#   define PRINT(str)
+#   define PRINT(str)   /*empty*/
 #else
-#   define PRINT(str)  .print str
+#   define PRINT(str)   .print str
 #endif

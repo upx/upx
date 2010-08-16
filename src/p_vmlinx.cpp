@@ -322,6 +322,7 @@ void PackVmlinuxBase<T>::pack(OutputFile *fo)
         unsigned const frag = (3& (0u-len_cpr));
         ppc32_extra += sizeof(hdr_info) + len_cpr + frag;
         fo_off += len_cpr + frag;
+        memset(&cpr_hdr[len_cpr], 0, frag);  // valgrind only
         fo->write(cpr_hdr, len_cpr + frag);
 
         // Partial filter: .text and following contiguous SHF_EXECINSTR

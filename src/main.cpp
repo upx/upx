@@ -27,7 +27,6 @@
 
 
 #include "conf.h"
-#include "mygetopt.h"
 #include "file.h"
 #include "packer.h"
 #include "p_elf.h"
@@ -63,7 +62,7 @@ void options_t::reset()
     o->console = CON_FILE;
 #if defined(__DJGPP__)
     o->console = CON_INIT;
-#elif defined(USE_SCREEN_WIN32)
+#elif (USE_SCREEN_WIN32)
     o->console = CON_INIT;
 #elif 1 && defined(__linux__)
     o->console = CON_INIT;
@@ -89,6 +88,19 @@ static int done_script_name = 0;
 
 const char *argv0 = "";
 const char *progname = "";
+
+static acc_getopt_t mfx_getopt;
+#define mfx_optarg      mfx_getopt.optarg
+#define mfx_optind      mfx_getopt.optind
+#define mfx_option      acc_getopt_longopt_t
+static void handle_opterr(acc_getopt_p g, const char *f, void *v)
+{
+    struct A { va_list ap; };
+    struct A *a = (struct A *) v;
+    fprintf( stderr, "%s: ", g->progname);
+    vfprintf(stderr, f, a->ap);
+    fprintf( stderr, "\n");
+}
 
 
 static int num_files = -1;
@@ -1061,13 +1073,14 @@ static const struct mfx_option longopts[] =
 };
 
     int optc, longind;
-    char buf[256];
+    char shortopts[256];
 
-    prepare_shortopts(buf,"123456789hH?V",longopts),
-    mfx_optind = 0;
-    mfx_opterr = 1;
+    prepare_shortopts(shortopts, "123456789hH?V", longopts),
+    acc_getopt_init(&mfx_getopt, 1, argc, argv);
+    mfx_getopt.progname = progname;
+    mfx_getopt.opterr = handle_opterr;
     opt->o_unix.osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
-    while ((optc = mfx_getopt_long(argc, argv, buf, longopts, &longind)) >= 0)
+    while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, &longind)) >= 0)
     {
         if (do_option(optc, argv[mfx_optind-1]) != 0)
             e_usage();
@@ -1153,7 +1166,7 @@ static const struct mfx_option longopts[] =
     int targc;
     char **targv = NULL;
     static const char sep[] = " \t";
-    char buf[256];
+    char shortopts[256];
 
     var = getenv(OPTIONS_VAR);
     if (var == NULL || !var[0])
@@ -1209,10 +1222,11 @@ static const struct mfx_option longopts[] =
             e_envopt(targv[i]);
 
     /* handle options */
-    prepare_shortopts(buf,"123456789",longopts);
-    mfx_optind = 0;
-    mfx_opterr = 1;
-    while ((optc = mfx_getopt_long(targc, targv, buf, longopts, &longind)) >= 0)
+    prepare_shortopts(shortopts, "123456789", longopts);
+    acc_getopt_init(&mfx_getopt, 1, targc, targv);
+    mfx_getopt.progname = progname;
+    mfx_getopt.opterr = handle_opterr;
+    while ((optc = acc_getopt(&mfx_getopt, shortopts, longopts, &longind)) >= 0)
     {
         if (do_option(optc, targv[mfx_optind-1]) != 0)
             e_envopt(NULL);
@@ -1405,7 +1419,7 @@ void upx_sanity_check(void)
 // main entry point
 **************************************************************************/
 
-#if !defined(WITH_GUI)
+#if !(WITH_GUI)
 
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
@@ -1455,7 +1469,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
     set_term(stderr);
 
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     if (ucl_init() != UCL_E_OK)
     {
         show_head();
@@ -1466,7 +1480,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
         e_exit(EXIT_INIT);
     }
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     if (nrv_init() != NRV_E_OK || NRV_VERSION != nrv_version())
     {
         show_head();
@@ -1559,7 +1573,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     return exit_code;
 }
 
-#endif /* !defined(WITH_GUI) */
+#endif /* !(WITH_GUI) */
 
 
 /*

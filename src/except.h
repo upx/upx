@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_EXCEPT_H
-#define __UPX_EXCEPT_H
+#define __UPX_EXCEPT_H 1
 
 #ifdef __cplusplus
 
@@ -204,7 +204,7 @@ public:
 // (noreturn) is probably not the correct semantics for throwing exceptions
 #define NORET __attribute__((__noreturn__))
 #else
-#define NORET
+#define NORET /*empty*/
 #endif
 
 void throwCantPack(const char *msg) NORET;

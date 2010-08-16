@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_LINKER_H
-#define __UPX_LINKER_H
+#define __UPX_LINKER_H 1
 
 
 /*************************************************************************

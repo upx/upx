@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_LEFILE_H
-#define __UPX_LEFILE_H
+#define __UPX_LEFILE_H 1
 
 class InputFile;
 class OutputFile;

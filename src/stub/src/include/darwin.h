@@ -119,7 +119,7 @@ typedef unsigned int nrv_uint;
 #endif
 #endif
 #if !defined(__attribute_cdecl)
-#  define __attribute_cdecl
+#  define __attribute_cdecl /*empty*/
 #endif
 
 

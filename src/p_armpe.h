@@ -27,7 +27,8 @@
 
 
 #ifndef __UPX_P_ARMPE_H
-#define __UPX_P_ARMPE_H
+#define __UPX_P_ARMPE_H 1
+
 
 /*************************************************************************
 // arm/pe

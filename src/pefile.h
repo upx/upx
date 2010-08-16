@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_PEFILE_H
-#define __UPX_PEFILE_H
+#define __UPX_PEFILE_H 1
 
 
 /*************************************************************************

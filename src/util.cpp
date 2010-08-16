@@ -37,6 +37,7 @@
 #endif
 #define ACC_WANT_ACC_INCI_H 1
 #include "miniacc.h"
+#define ACC_WANT_ACCLIB_GETOPT 1
 #define ACC_WANT_ACCLIB_HSREAD 1
 #define ACC_WANT_ACCLIB_MISC 1
 #define ACC_WANT_ACCLIB_UA 1
@@ -376,7 +377,7 @@ bool fn_is_same_file(const char *n1, const char *n2)
 
 #if 0 // not used
 
-#if defined(HAVE_LOCALTIME)
+#if (HAVE_LOCALTIME)
 void tm2str(char *s, size_t size, const struct tm *tmp)
 {
     upx_snprintf(s, size, "%04d-%02d-%02d %02d:%02d:%02d",
@@ -390,9 +391,9 @@ void tm2str(char *s, size_t size, const struct tm *tmp)
 void time2str(char *s, size_t size, const time_t *t)
 {
     assert(size >= 18);
-#if defined(HAVE_LOCALTIME)
+#if (HAVE_LOCALTIME)
     tm2str(s, size, localtime(t));
-#elif defined(HAVE_CTIME)
+#elif (HAVE_CTIME)
     const char *p = ctime(t);
     memset(s, ' ', 16);
     memcpy(s + 2, p + 4, 6);
@@ -467,7 +468,7 @@ bool file_exists(const char *name)
         return true;
 
     /* return true if we can lstat it */
-#if defined(HAVE_LSTAT)
+#if (HAVE_LSTAT)
     //memset(&st, 0, sizeof(st));
     r = lstat(name, &st);
     if (r != -1)

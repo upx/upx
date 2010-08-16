@@ -41,7 +41,7 @@
 
 section LEXEC000
 _start: .globl _start
-////    int3
+////    nop; int3
 /*
 ;; How to debug this code:  Uncomment the 'int3' breakpoint instruction above.
 ;; Build the stubs and upx.  Compress a testcase, such as a copy of /bin/date.
@@ -135,8 +135,7 @@ section LEXEC020
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
-#define __NR_mmap    197
-#define __NR_syscall 198
+#define SYS_mmap     477
 #define szElf32_Ehdr 0x34
 #define p_memsz  5*4
 
@@ -179,24 +178,24 @@ unfold:
         add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
+section LUNMP000
+        push 0  // 0-page bread crumb
+section LUNMP001
+        push 1  // 1-page bread crumb
+section LEXEC025
         push eax  // destination for 'ret'
 
                 // mmap a page to hold the decompressed fold_elf86
         xor ecx, ecx  // %ecx= 0
-        // MAP_ANONYMOUS ==>offset is ignored, so do not push!
-        push ecx  // pad (must be zero?)
+        push ecx; push ecx  // 64-bit offset
         push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
         push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         mov ch, PAGE_SIZE >> 8  // %ecx= PAGE_SIZE
         push PROT_READ | PROT_WRITE | PROT_EXEC
         push ecx  // length
         push eax  // destination
-        xor eax,eax  // 0
-        push eax  // current thread
-        mov al, __NR_mmap
-        push eax  // __NR_mmap
         push eax  // fake return address
-        mov al, __NR_syscall
+        mov eax, SYS_mmap
         int 0x80  // changes only %eax; %edx is live
         jb fail_mmap
         xchg eax, edx  // %edx= page after .text; %eax= &Elf32_Ehdr of this program
@@ -215,7 +214,8 @@ unfold:
         mov [4*3 + esp],eax
         push esi  // &compressed_data
         call ebp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
-        add esp, (5+1 + 9)*4  // (5+1) args to decompress, 9 "args" to mmap
+        add esp, (5+1 + 8)*4  // (5+1) args to decompress, 8 "args" to mmap
+
         ret      // &destination
 main:
         pop ebp  // &decompress

@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_PACKER_H
-#define __UPX_PACKER_H
+#define __UPX_PACKER_H 1
 
 #include "mem.h"
 

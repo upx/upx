@@ -41,7 +41,7 @@ void zlib_compress_config_t::reset()
 }
 
 
-#if !defined(WITH_ZLIB)
+#if !(WITH_ZLIB)
 extern int compress_zlib_dummy;
 int compress_zlib_dummy = 0;
 #else

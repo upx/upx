@@ -27,7 +27,7 @@
 
 
 #ifndef __UPX_FILE_H
-#define __UPX_FILE_H
+#define __UPX_FILE_H 1
 
 class MemBuffer;
 

@@ -39,41 +39,41 @@
 #undef USE_SCREEN_WIN32
 #undef USE_FRAMES
 
-#if defined(WITH_GUI) && !defined(NO_CONSOLE)
-#  define NO_CONSOLE
+#if 1 && (WITH_GUI) && !defined(NO_CONSOLE)
+#  define NO_CONSOLE 1
 #endif
 
 #if 1 && defined(__linux__)
-#  define USE_SCREEN
-#  define USE_SCREEN_VCSA
-#  if !defined(HAVE_LINUX_KD_H)
+#  define USE_SCREEN 1
+#  define USE_SCREEN_VCSA 1
+#  if !(HAVE_LINUX_KD_H)
 #    undef USE_SCREEN
 #    undef USE_SCREEN_VCSA
 #  endif
-#  if !defined(HAVE_LINUX_KDEV_T_H) || !defined(HAVE_LINUX_MAJOR_H)
+#  if !(HAVE_LINUX_KDEV_T_H) || !(HAVE_LINUX_MAJOR_H)
 #    undef USE_SCREEN
 #    undef USE_SCREEN_VCSA
 #  endif
 #endif
 
 #if 1 && defined(__DJGPP__)
-#  define USE_SCREEN
+#  define USE_SCREEN 1
 #elif 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  define USE_SCREEN
-#  define USE_SCREEN_WIN32
+#  define USE_SCREEN 1
+#  define USE_SCREEN_WIN32 1
 #elif 1 && (ACC_OS_EMX && defined(__RSXNT__))
-#  define USE_SCREEN
-#  define USE_SCREEN_WIN32
+#  define USE_SCREEN 1
+#  define USE_SCREEN_WIN32 1
 #endif
 
 
-#if 0 || defined(NO_ANSI)
+#if 0 || (NO_ANSI)
 #  undef USE_ANSI
 #endif
-#if 0 || defined(NO_SCREEN)
+#if 0 || (NO_SCREEN)
 #  undef USE_SCREEN
 #endif
-#if 0 || defined(NO_FRAMES) || !defined(USE_SCREEN)
+#if 0 || (NO_FRAMES) || !(USE_SCREEN)
 #  undef USE_FRAMES
 #endif
 #if 1
@@ -81,11 +81,11 @@
 #endif
 
 
-#if 0 || defined(USE_ANSI) || defined(USE_SCREEN)
-#  define USE_CONSOLE
+#if 0 || (USE_ANSI) || (USE_SCREEN)
+#  define USE_CONSOLE 1
 #endif
 
-#if 0 || defined(NO_CONSOLE) || !defined(USE_CONSOLE)
+#if 0 || (NO_CONSOLE) || !(USE_CONSOLE)
 #  undef USE_CONSOLE
 #  undef USE_ANSI
 #  undef USE_SCREEN
@@ -110,7 +110,7 @@ enum {
 };
 
 
-#if defined(USE_CONSOLE)
+#if (USE_CONSOLE)
 
 typedef struct
 {
@@ -165,7 +165,7 @@ void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...);
 
 extern FILE *con_term;
 
-#if defined(USE_CONSOLE)
+#if (USE_CONSOLE)
 
 extern int con_mode;
 extern console_t *con;

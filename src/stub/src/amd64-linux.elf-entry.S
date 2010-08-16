@@ -261,6 +261,8 @@ unfold:
         je L80  // no copy
         addl      %edx,%ebp  // update &decompress
         //addl      %edx,%ebx  // copy==>no overlap; unfolded before overwrite
+        addl      %edx,1*8(%rsp)  // update ADRX  XXX: 4GB
+        addl      %edx,3*8(%rsp)  // update ADRU  XXX: 4GB
         movl %ebx,%ecx  // XXX: 4GB  [&b_info] beyond end of decompressor
         subl %esi,%ecx  // byte length
         shrl $3,%ecx  // qwords to copy

@@ -27,9 +27,9 @@
 
 
 #ifndef __UPX_SCREEN_H
-#define __UPX_SCREEN_H
+#define __UPX_SCREEN_H 1
 
-#if defined(USE_SCREEN)
+#if (USE_SCREEN)
 
 
 /*************************************************************************
@@ -113,7 +113,7 @@ void screen_show_frames(screen_t *);
 #undef LOGU
 #undef LOGS
 
-#if defined(SCREEN_DEBUG)
+#if (SCREEN_DEBUG)
 static void LOG(const char *format, ...)
 {
     static FILE *logfile = NULL;
@@ -129,13 +129,13 @@ static void LOG(const char *format, ...)
     fflush(logfile);
     va_end(args);
 }
-#  define LOGI(x)    LOG(#x " %ld\n", (long)(x))
-#  define LOGU(x)    LOG(#x " %lu\n", (long)(x))
-#  define LOGS(x)    LOG(#x " %s\n", x)
+#  define LOGI(x)   LOG(#x " %ld\n", (long)(x))
+#  define LOGU(x)   LOG(#x " %lu\n", (long)(x))
+#  define LOGS(x)   LOG(#x " %s\n", x)
 #else
-#  define LOGI(x)
-#  define LOGU(x)
-#  define LOGS(x)
+#  define LOGI(x)   /*empty*/
+#  define LOGU(x)   /*empty*/
+#  define LOGS(x)   /*empty*/
 #endif
 
 #endif /* if #0 */

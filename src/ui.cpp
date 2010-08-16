@@ -33,8 +33,8 @@
 #include "packer.h"
 
 
-#if 1 && defined(USE_SCREEN)
-#define UI_USE_SCREEN
+#if 1 && (USE_SCREEN)
+#define UI_USE_SCREEN 1
 #endif
 
 
@@ -67,7 +67,7 @@ struct UiPacker::State
     int bar_len;
     int pass_digits;        // number of digits needed to print total_passes
 
-#if defined(UI_USE_SCREEN)
+#if (UI_USE_SCREEN)
     screen_t *screen;
     int screen_init_done;
     int b_cx, b_cy;
@@ -304,7 +304,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step,
         }
     }
 
-#if defined(UI_USE_SCREEN)
+#if (UI_USE_SCREEN)
     if (s->mode == M_CB_SCREEN)
     {
         if (!s->screen_init_done)
@@ -365,7 +365,7 @@ void UiPacker::endCallback(bool done)
     }
 
     // restore screen
-#if defined(UI_USE_SCREEN)
+#if (UI_USE_SCREEN)
     if (s->mode == M_CB_SCREEN)
     {
         if (done)
@@ -484,7 +484,7 @@ void UiPacker::doCallback(unsigned isize, unsigned osize)
         return;
     }
 
-#if defined(UI_USE_SCREEN)
+#if (UI_USE_SCREEN)
     if (s->mode == M_CB_SCREEN)
     {
         const char *msg = &s->msg_buf[1];

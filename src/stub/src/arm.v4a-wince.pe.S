@@ -38,9 +38,9 @@
 
 #define DEBUG 0
 #if DEBUG == 0
-# define DINIT
-# define DDUMP(x)
-# define DDONE
+# define DINIT      /*empty*/
+# define DDUMP(x)   /*empty*/
+# define DDONE      /*empty*/
 #else
  #define DDUMP(x)   stmfd sp!, {r0 - r3}; mov  r0, x; mov lr, pc; mov pc, r8; ldmia sp!, {r0 - r3}
  #if DEBUG == 1
@@ -48,10 +48,10 @@
  #define DDONE      mov  pc, lr
  #elif DEBUG == 2
  #define DINIT      adr  r8, writefile
- #define DDONE
+ #define DDONE      /*empty*/
  #elif DEBUG == 3
  #define DINIT      adr  r8, DelFile
- #define DDONE
+ #define DDONE      /*empty*/
  #endif
 #endif
 

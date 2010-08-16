@@ -43,7 +43,7 @@ unsigned upx_adler32(const void *buf, unsigned len, unsigned adler)
     assert(buf != NULL);
 #if 0
     return adler32(adler, (const Bytef *) buf, len); // zlib
-#elif defined(WITH_UCL)
+#elif (WITH_UCL)
     return ucl_adler32(adler, (const ucl_bytep) buf, len);
 #else
 #  error
@@ -59,7 +59,7 @@ unsigned upx_crc32(const void *buf, unsigned len, unsigned crc)
     assert(buf != NULL);
 #if 0
     return crc32(crc, (const Bytef *) buf, len); // zlib
-#elif defined(WITH_UCL)
+#elif (WITH_UCL)
     return ucl_crc32(crc, (const ucl_bytep) buf, len);
 #else
 #  error
@@ -108,17 +108,17 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
 
     if (0) {
     }
-#if defined(WITH_LZMA)
+#if (WITH_LZMA)
     else if (M_IS_LZMA(method))
         r = upx_lzma_compress(src, src_len, dst, dst_len,
                               cb, method, level, cconf, cresult);
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_nrv_compress(src, src_len, dst, dst_len,
                              cb, method, level, cconf, cresult);
 #endif
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_compress(src, src_len, dst, dst_len,
                              cb, method, level, cconf, cresult);
@@ -154,19 +154,19 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
 
     if (0) {
     }
-#if defined(WITH_LZMA)
+#if (WITH_LZMA)
     else if (M_IS_LZMA(method))
         r = upx_lzma_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_nrv_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
-#if defined(WITH_ZLIB)
+#if (WITH_ZLIB)
     else if (M_IS_DEFLATE(method))
         r = upx_zlib_decompress(src, src_len, dst, dst_len, method, cresult);
 #endif
@@ -201,15 +201,15 @@ int upx_test_overlap       ( const upx_bytep buf,
 
     if (0) {
     }
-#if defined(WITH_LZMA)
+#if (WITH_LZMA)
     else if (M_IS_LZMA(method))
         r = upx_lzma_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
-#if defined(WITH_NRV)
+#if (WITH_NRV)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_nrv_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
-#if defined(WITH_UCL)
+#if (WITH_UCL)
     else if (M_IS_NRV2B(method) || M_IS_NRV2D(method) || M_IS_NRV2E(method))
         r = upx_ucl_test_overlap(buf, tbuf, src_off, src_len, dst_len, method, cresult);
 #endif
