@@ -1351,27 +1351,40 @@ void upx_sanity_check(void)
     assert(TestBELE<BE32>::test());
     assert(TestBELE<BE64>::test());
     {
-    static const unsigned char dd[32] = { 0, 0, 0, 0, 0, 0, 0,
-         0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8,
-         0, 0, 0, 0,
-         0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78,
+    static const unsigned char dd[32]
+#if 1 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE) && defined(__ELF__)
+        __attribute__((__aligned__(16)))
+#endif
+        = { 0, 0, 0, 0, 0, 0, 0,
+        0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8,
+        0, 0, 0, 0,
+        0x7f, 0x7e, 0x7d, 0x7c, 0x7b, 0x7a, 0x79, 0x78,
     0, 0, 0, 0, 0 };
     const unsigned char *d;
+    const N_BELE_RTP::AbstractPolicy *bele;
     d = dd + 7;
     assert(upx_adler32(d, 4) == 0x09f003f7);
     assert(upx_adler32(d, 4, 0) == 0x09ec03f6);
     assert(upx_adler32(d, 4, 1) == 0x09f003f7);
+    bele = &N_BELE_RTP::be_policy;
     assert(get_be16(d) == 0xfffe);
+    assert(bele->get16(d) == 0xfffe);
     assert(get_be16_signed(d) == -2);
     assert(get_be24(d) == 0xfffefd);
+    assert(bele->get24(d) == 0xfffefd);
     assert(get_be24_signed(d) == -259);
     assert(get_be32(d) == 0xfffefdfc);
+    assert(bele->get32(d) == 0xfffefdfc);
     assert(get_be32_signed(d) == -66052);
+    bele = &N_BELE_RTP::le_policy;
     assert(get_le16(d) == 0xfeff);
+    assert(bele->get16(d) == 0xfeff);
     assert(get_le16_signed(d) == -257);
     assert(get_le24(d) == 0xfdfeff);
+    assert(bele->get24(d) == 0xfdfeff);
     assert(get_le24_signed(d) == -131329);
     assert(get_le32(d) == 0xfcfdfeff);
+    assert(bele->get32(d) == 0xfcfdfeff);
     assert(get_le32_signed(d) == -50462977);
     assert(get_le64_signed(d) == ACC_INT64_C(-506097522914230529));
     assert(find_be16(d, 2, 0xfffe) == 0);

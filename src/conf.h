@@ -36,6 +36,21 @@
 // ACC
 **************************************************************************/
 
+#if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
+#ifndef _CRT_NONSTDC_NO_DEPRECATE
+#define _CRT_NONSTDC_NO_DEPRECATE 1
+#endif
+#ifndef _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS 1
+#endif
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE 1
+#endif
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
+#endif
+
 #include "miniacc.h"
 #if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
 #  undef HAVE_UTIME_H /* this pulls in <windows.h> */

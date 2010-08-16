@@ -38,13 +38,5 @@ endif
 	$(MAKE) -C doc $@
 
 
-ifneq ($(wildcard .hg/.),)
-# automatically generate ChangeLog from local Mercurial repo
-ChangeLog:
-	hg log --style=changelog > $@
-.PHONY: ChangeLog
-endif
-
-
 .PHONY: default all mostlyclean clean distclean maintainer-clean
 

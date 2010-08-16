@@ -546,7 +546,7 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     }
 
 error:
-    *dst_len = os.b_pos;
+    *dst_len = (unsigned) os.b_pos;
     //printf("\nlzma_compress: %d: %u %u %u %u %u, %u - > %u\n", r, res->pos_bits, res->lit_pos_bits, res->lit_context_bits, res->dict_size, res->num_probs, src_len, *dst_len);
     //printf("%u %u %u\n", is.__m_RefCount, os.__m_RefCount, progress.__m_RefCount);
     return r;
