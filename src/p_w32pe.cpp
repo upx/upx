@@ -298,6 +298,14 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
 
     //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
     tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + ih.imagebase - 8 : 0);
+
+    if(use_tls_callbacks)
+    {
+      //set handler offset
+      set_le32(otls + sotls - 8, tls_handler_offset + ih.imagebase);
+      //add relocation for TLS handler offset
+      rel->add(newaddr + sotls - 8, 3);
+    }
 }
 
 /*************************************************************************
@@ -1134,8 +1142,8 @@ void PackW32Pe::pack(OutputFile *fo)
     if(use_tls_callbacks)
       {
         //esi is ih.imagebase + rvamin
-        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - (ih.imagebase + rvamin));
-        linker->defineSymbol("tls_callbacks_off", ic + sotls - 8 - rvamin);
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr);
+        //linker->defineSymbol("tls_callbacks_off", ic + sotls - 8 - rvamin);
         linker->defineSymbol("tls_module_base", 0u - rvamin);
       }
 
@@ -1171,6 +1179,11 @@ void PackW32Pe::pack(OutputFile *fo)
     // tls & loadconf are put into section 1
 
     //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann
+    //get address of TLS callback handler
+    tls_handler_offset = linker->getSymbolOffset("PETLSC2");
+    //add relocation entry for TLS callback handler
+    rel.add(tls_handler_offset + 4, 3);
+
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? 0x18 : 0;

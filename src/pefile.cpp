@@ -1751,6 +1751,10 @@ void PeFile::unpack(OutputFile *fo)
     oh.headersize = rvamin;
     oh.chksum = 0;
 
+    //NEW: disable reloc stripping if ASLR is enabled
+    if(ih.dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+        opt->win32_pe.strip_relocs = false;
+
     // FIXME: ih.flags is checked here because of a bug in UPX 0.92
     if ((opt->win32_pe.strip_relocs && !isdll) || (ih.flags & RELOCS_STRIPPED))
     {

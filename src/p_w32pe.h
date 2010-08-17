@@ -71,7 +71,7 @@ protected:
     unsigned soloadconf;
 
     unsigned tlscb_ptr; //NEW: TLS callback handling - Stefan Widmann
-    //unsigned tlscb_off; //NEW: TLS callback handling - Stefan Widmann
+    unsigned tls_handler_offset;
 
     bool isrtm;
     bool use_dep_hack;
