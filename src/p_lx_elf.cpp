@@ -47,6 +47,7 @@
 
 static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
+static unsigned const EF_ARM_EABI_VER5 = 0x05000000;
 
 static unsigned
 umin(unsigned a, unsigned b)
@@ -1154,9 +1155,11 @@ bool PackLinuxElf32::canPack()
         }
     }
     if (Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // No EI_OSBAI, no PT_NOTE.
+        unsigned const arm_eabi = 0xff000000u & get_te32(&ehdr->e_flags);
         if (Elf32_Ehdr::EM_ARM==e_machine
         &&  Elf32_Ehdr::ELFDATA2LSB==ei_data
-        &&  EF_ARM_EABI_VER4==(0xff000000 & get_te32(&ehdr->e_flags))) {
+        &&   (EF_ARM_EABI_VER5==arm_eabi
+          ||  EF_ARM_EABI_VER4==arm_eabi ) ) {
             // armel-eabi ARM little-endian Linux EABI version 4 is a mess.
             ei_osabi = osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
         }
@@ -1739,10 +1742,11 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     }
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
+        unsigned const e_flags = get_te32(&ehdri.e_flags);
         memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
 
-        set_te32(&h3.ehdr.e_flags, EF_ARM_EABI_VER4 | EF_ARM_HASENTRY);
-        h3.ehdr.e_ident[Elf32_Ehdr::EI_ABIVERSION] = 4;
+        set_te32(&h3.ehdr.e_flags, e_flags);
+        h3.ehdr.e_ident[Elf32_Ehdr::EI_ABIVERSION] = e_flags>>24;
     }
     else {
         memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
