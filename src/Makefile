@@ -49,7 +49,7 @@ exeext ?= .out
 libext ?= .a
 objext ?= .o
 
-upx_SOURCES := $(wildcard $(srcdir)/*.cpp)
+upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 # we need UCL and zlib - you can set envvar UPX_UCLDIR
@@ -77,7 +77,7 @@ upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 %.o : %.cpp | .depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
-.depend: $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h) $(MAKEFILE_LIST)
+.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
 ifeq ($(USE_GNUC),1)
 	@echo "Updating $@"
