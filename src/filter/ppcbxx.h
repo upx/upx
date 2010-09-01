@@ -108,6 +108,7 @@ static int F(Filter *f)
     f->calls = calls;
     f->noncalls = noncalls;
     f->lastcall = lastcall;
+    ACC_UNUSED(lastnoncall);
 
 #if 0 || defined(TESTING)
     printf("\ncalls=%d noncalls=%d text_size=%x calltrickoffset=%x\n",
