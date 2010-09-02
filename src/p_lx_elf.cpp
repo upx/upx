@@ -828,11 +828,13 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
 
     //linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
+    ACC_UNUSED(adrx);
 
     // For actual moving, we need the true count, which depends on sz_pack2
     // and is not yet known.  So the runtime stub detects "no move"
     // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
     //linker->defineSymbol("CNTC", cntc);  // count  for copy
+    ACC_UNUSED(cntc);
 
     linker->defineSymbol("LENU", lenu);  // len  for unmap
     linker->defineSymbol("ADRC", adrc);  // addr for copy
@@ -2109,6 +2111,7 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
 
     linker->defineSymbol("ADRM", adrm);  // addr for map
+    ACC_UNUSED(adrx);
 }
 
 void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
@@ -2183,6 +2186,7 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)
     // and is not yet known.  So the runtime stub detects "no move"
     // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
     //linker->defineSymbol("CNTC", cntc);  // count  for copy
+    ACC_UNUSED(cntc);
 
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     linker->defineSymbol("LENU", lenu);  // len  for unmap
@@ -2255,6 +2259,7 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
     // and is not yet known.  So the runtime stub detects "no move"
     // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
     //linker->defineSymbol("CNTC", cntc);  // count  for copy
+    ACC_UNUSED(cntc);
 
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     linker->defineSymbol("LENU", lenu);  // len  for unmap
