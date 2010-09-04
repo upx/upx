@@ -2,8 +2,9 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.06 (XX XXX XXXX):
+Changes in 3.06 (04 Sep 2010):
   * win32/pe: TLS callback support contributed by Stefan Widmann. Thanks!
+  * bug fixes
 
 Changes in 3.05 (27 Apr 2010):
   * i386-linux and amd64-linux support shared libraries (DT_INIT must
