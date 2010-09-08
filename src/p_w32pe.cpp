@@ -1180,9 +1180,12 @@ void PackW32Pe::pack(OutputFile *fo)
 
     //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann
     //get address of TLS callback handler
-    tls_handler_offset = linker->getSymbolOffset("PETLSC2");
-    //add relocation entry for TLS callback handler
-    rel.add(tls_handler_offset + 4, 3);
+    if (use_tls_callbacks)
+    {
+        tls_handler_offset = linker->getSymbolOffset("PETLSC2");
+        //add relocation entry for TLS callback handler
+        rel.add(tls_handler_offset + 4, 3);
+    }
 
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
