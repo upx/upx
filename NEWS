@@ -2,7 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.07 (XX XXX XXX):
+Changes in 3.07 (08 Sep 2010):
+  * win32/pe: fixed relocation handling for files with *no* TLS callbacks
 
 Changes in 3.06 (04 Sep 2010):
   * win32/pe: TLS callback support contributed by Stefan Widmann. Thanks!
