@@ -41,7 +41,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20100808L
+#define ACC_VERSION     20101017L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -553,12 +553,27 @@
 #  define ACC_CC_PELLESC        1
 #  define ACC_INFO_CC           "Pelles C"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__POCC__)
-#elif defined(__llvm__) && defined(__GNUC__) && defined(__VERSION__)
-#  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_LLVM         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#elif defined(__clang__) && defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
+#  if defined(__GNUC_PATCHLEVEL__)
+#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
 #  else
-#    define ACC_CC_LLVM         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
 #  endif
+#  if defined(__clang_major__) && defined(__clang_minor__) && defined(__clang_patchlevel__)
+#    define ACC_CC_CLANG_CLANG  (__clang_major__ * 0x10000L + __clang_minor__ * 0x100 + __clang_patchlevel__)
+#  else
+#    define ACC_CC_CLANG_CLANG  0x020700L
+#  endif
+#  define ACC_CC_CLANG          ACC_CC_CLANG_GNUC
+#  define ACC_INFO_CC           "clang"
+#  define ACC_INFO_CCVER        __VERSION__
+#elif defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
+#  if defined(__GNUC_PATCHLEVEL__)
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#  else
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#  endif
+#  define ACC_CC_LLVM           ACC_CC_LLVM_GNUC
 #  define ACC_INFO_CC           "llvm-gcc"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__GNUC__) && defined(__VERSION__)
@@ -1175,7 +1190,7 @@ extern "C" {
 #if (ACC_ARCH_I086 && ACC_CC_DMC)
 #elif (ACC_CC_CILLY) && defined(__GNUC__)
 #  define ACC_SIZEOF_LONG_LONG      8
-#elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define ACC_SIZEOF_LONG_LONG      8
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64 || defined(_WIN32)) && ACC_CC_MSC && (_MSC_VER >= 1400))
 #  define ACC_SIZEOF_LONG_LONG      8
@@ -1418,17 +1433,17 @@ extern "C" {
 #if !defined(__acc_gnuc_extension__)
 #if (ACC_CC_GNUC >= 0x020800ul)
 #  define __acc_gnuc_extension__    __extension__
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_gnuc_extension__    __extension__
 #else
-#  define __acc_gnuc_extension__
+#  define __acc_gnuc_extension__    /*empty*/
 #endif
 #endif
 #if !defined(__acc_ua_volatile)
 #  define __acc_ua_volatile     volatile
 #endif
 #if !defined(__acc_alignof)
-#if (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#if (ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
 #  define __acc_alignof(e)      __alignof__(e)
@@ -1446,7 +1461,7 @@ extern "C" {
 #  define __acc_constructor     __attribute__((__constructor__,__used__))
 #elif (ACC_CC_GNUC >= 0x020700ul)
 #  define __acc_constructor     __attribute__((__constructor__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_constructor     __attribute__((__constructor__))
 #endif
 #endif
@@ -1458,7 +1473,7 @@ extern "C" {
 #  define __acc_destructor      __attribute__((__destructor__,__used__))
 #elif (ACC_CC_GNUC >= 0x020700ul)
 #  define __acc_destructor      __attribute__((__destructor__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_destructor      __attribute__((__destructor__))
 #endif
 #endif
@@ -1474,7 +1489,7 @@ extern "C" {
 #  define __acc_inline          inline
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
 #  define __acc_inline          __inline
-#elif (ACC_CC_CILLY || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#elif (ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define __acc_inline          __inline__
 #elif (ACC_CC_DMC)
 #  define __acc_inline          __inline
@@ -1493,7 +1508,7 @@ extern "C" {
 #if defined(__acc_inline)
 #  define __acc_HAVE_inline 1
 #else
-#  define __acc_inline
+#  define __acc_inline          /*empty*/
 #endif
 #if !defined(__acc_forceinline)
 #if (ACC_CC_GNUC >= 0x030200ul)
@@ -1502,7 +1517,7 @@ extern "C" {
 #  define __acc_forceinline     __forceinline
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #  define __acc_forceinline     __forceinline
@@ -1513,7 +1528,7 @@ extern "C" {
 #if defined(__acc_forceinline)
 #  define __acc_HAVE_forceinline 1
 #else
-#  define __acc_forceinline
+#  define __acc_forceinline     /*empty*/
 #endif
 #if !defined(__acc_noinline)
 #if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040003ul)
@@ -1524,7 +1539,7 @@ extern "C" {
 #  define __acc_noinline        __declspec(noinline)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noinline        __attribute__((__noinline__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define __acc_noinline        __declspec(noinline)
@@ -1540,7 +1555,7 @@ extern "C" {
 #if defined(__acc_noinline)
 #  define __acc_HAVE_noinline 1
 #else
-#  define __acc_noinline
+#  define __acc_noinline        /*empty*/
 #endif
 #if (__acc_HAVE_forceinline || __acc_HAVE_noinline) && !(__acc_HAVE_inline)
 #  error "this should not happen"
@@ -1552,7 +1567,7 @@ extern "C" {
 #  define __acc_noreturn        __declspec(noreturn)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noreturn        __attribute__((__noreturn__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #  define __acc_noreturn        __declspec(noreturn)
@@ -1561,7 +1576,7 @@ extern "C" {
 #if defined(__acc_noreturn)
 #  define __acc_HAVE_noreturn 1
 #else
-#  define __acc_noreturn
+#  define __acc_noreturn        /*empty*/
 #endif
 #if !defined(__acc_nothrow)
 #if (ACC_CC_GNUC >= 0x030300ul)
@@ -1570,7 +1585,7 @@ extern "C" {
 #  define __acc_nothrow         __declspec(nothrow)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 900) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_nothrow         __attribute__((__nothrow__))
 #elif (ACC_CC_MSC && (_MSC_VER >= 1200)) && defined(__cplusplus)
 #  define __acc_nothrow         __declspec(nothrow)
@@ -1579,14 +1594,14 @@ extern "C" {
 #if defined(__acc_nothrow)
 #  define __acc_HAVE_nothrow 1
 #else
-#  define __acc_nothrow
+#  define __acc_nothrow         /*empty*/
 #endif
 #if !defined(__acc_restrict)
 #if (ACC_CC_GNUC >= 0x030400ul)
 #  define __acc_restrict        __restrict__
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
 #  define __acc_restrict        __restrict__
-#elif (ACC_CC_LLVM)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM)
 #  define __acc_restrict        __restrict__
 #elif (ACC_CC_MSC && (_MSC_VER >= 1400))
 #  define __acc_restrict        __restrict
@@ -1595,7 +1610,7 @@ extern "C" {
 #if defined(__acc_restrict)
 #  define __acc_HAVE_restrict 1
 #else
-#  define __acc_restrict
+#  define __acc_restrict        /*empty*/
 #endif
 #if !defined(__acc_likely) && !defined(__acc_unlikely)
 #if (ACC_CC_GNUC >= 0x030200ul)
@@ -1604,7 +1619,7 @@ extern "C" {
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
-#elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
 #endif
@@ -1624,7 +1639,7 @@ extern "C" {
 #    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PELLESC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
-#  elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNUSED(var)         ((void) var)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED(var)         if (&var) ; else
@@ -1643,7 +1658,7 @@ extern "C" {
 #    define ACC_UNUSED_FUNC(func)   ((void) func)
 #  elif (ACC_CC_BORLANDC || ACC_CC_NDPC || ACC_CC_TURBOC)
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
-#  elif (ACC_CC_LLVM)
+#  elif (ACC_CC_CLANG || ACC_CC_LLVM)
 #    define ACC_UNUSED_FUNC(func)   ((void) &func)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_UNUSED_FUNC(func)   if (func) ; else
@@ -1658,7 +1673,7 @@ extern "C" {
 #if !defined(ACC_UNUSED_LABEL)
 #  if (ACC_CC_WATCOMC) && defined(__cplusplus)
 #    define ACC_UNUSED_LABEL(l)     switch(0) case 1:goto l
-#  elif (ACC_CC_INTELC || ACC_CC_WATCOMC)
+#  elif (ACC_CC_CLANG || ACC_CC_INTELC || ACC_CC_WATCOMC)
 #    define ACC_UNUSED_LABEL(l)     if (0) goto l
 #  else
 #    define ACC_UNUSED_LABEL(l)     switch(0) case 1:goto l
@@ -1676,7 +1691,7 @@ extern "C" {
 #if !defined(ACC_UNCONST_CAST)
 #  if 0 && defined(__cplusplus)
 #    define ACC_UNCONST_CAST(t,e)   (const_cast<t> (e))
-#  elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((acc_uintptr_t) ((const void *) (e))))))
 #  else
 #    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((const void *) (e)))))
@@ -1710,7 +1725,7 @@ extern "C" {
 #  if (ACC_CC_GNUC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PACIFICC)
 #  elif (ACC_CC_DMC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define __acc_cdecl                 __cdecl
-#    define __acc_cdecl_atexit
+#    define __acc_cdecl_atexit          /*empty*/
 #    define __acc_cdecl_main            __cdecl
 #    if (ACC_OS_OS2 && (ACC_CC_DMC || ACC_CC_SYMANTECC))
 #      define __acc_cdecl_qsort         __pascal
@@ -1751,19 +1766,19 @@ extern "C" {
 #  define __acc_cdecl                   cdecl
 #endif
 #if !defined(__acc_cdecl)
-#  define __acc_cdecl
+#  define __acc_cdecl                   /*empty*/
 #endif
 #if !defined(__acc_cdecl_atexit)
-#  define __acc_cdecl_atexit
+#  define __acc_cdecl_atexit            /*empty*/
 #endif
 #if !defined(__acc_cdecl_main)
-#  define __acc_cdecl_main
+#  define __acc_cdecl_main              /*empty*/
 #endif
 #if !defined(__acc_cdecl_qsort)
-#  define __acc_cdecl_qsort
+#  define __acc_cdecl_qsort             /*empty*/
 #endif
 #if !defined(__acc_cdecl_sighandler)
-#  define __acc_cdecl_sighandler
+#  define __acc_cdecl_sighandler        /*empty*/
 #endif
 #if !defined(__acc_cdecl_va)
 #  define __acc_cdecl_va                __acc_cdecl
@@ -1847,9 +1862,9 @@ extern "C" {
 #elif (ACC_ARCH_I386 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
 #  define ACC_ASM_SYNTAX_MSC 1
 #elif (ACC_OS_WIN64 && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
-#elif (ACC_ARCH_I386 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
+#elif (ACC_ARCH_I386 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
 #  define ACC_ASM_SYNTAX_GNUC 1
-#elif (ACC_ARCH_AMD64 && (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
+#elif (ACC_ARCH_AMD64 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
 #  define ACC_ASM_SYNTAX_GNUC 1
 #endif
 #if (ACC_ASM_SYNTAX_GNUC)
@@ -2533,7 +2548,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #elif (ACC_SIZEOF_SHORT == 2)
 #  define acc_int16e_t          short int
 #  define acc_uint16e_t         unsigned short int
-#elif 1 && !(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_GNUC >= 0x025f00ul || ACC_CC_LLVM)
+#elif 1 && !(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x025f00ul) || ACC_CC_LLVM)
    typedef int __acc_int16e_hi_t __attribute__((__mode__(__HI__)));
    typedef unsigned int __acc_uint16e_hi_t __attribute__((__mode__(__HI__)));
 #  define acc_int16e_t          __acc_int16e_hi_t
@@ -2560,7 +2575,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #elif (ACC_SIZEOF_LONG_LONG == 4)
 #  define acc_int32e_t          acc_llong_t
 #  define acc_uint32e_t         acc_ullong_t
-#elif 1 && !(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul || ACC_CC_LLVM) && (__INT_MAX__+0 > 2147483647L)
+#elif 1 && !(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x025f00ul) || ACC_CC_LLVM) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
    typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
 #  define acc_int32e_t          __acc_int32e_si_t
@@ -2961,7 +2976,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #elif (ACC_SIZEOF_SHORT == 2)
 #  define acc_int16e_t          short int
 #  define acc_uint16e_t         unsigned short int
-#elif 1 && !(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_GNUC >= 0x025f00ul || ACC_CC_LLVM)
+#elif 1 && !(ACC_CFG_TYPE_NO_MODE_HI) && (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x025f00ul) || ACC_CC_LLVM)
    typedef int __acc_int16e_hi_t __attribute__((__mode__(__HI__)));
    typedef unsigned int __acc_uint16e_hi_t __attribute__((__mode__(__HI__)));
 #  define acc_int16e_t          __acc_int16e_hi_t
@@ -2988,7 +3003,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t;
 #elif (ACC_SIZEOF_LONG_LONG == 4)
 #  define acc_int32e_t          acc_llong_t
 #  define acc_uint32e_t         acc_ullong_t
-#elif 1 && !(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_GNUC >= 0x025f00ul || ACC_CC_LLVM) && (__INT_MAX__+0 > 2147483647L)
+#elif 1 && !(ACC_CFG_TYPE_NO_MODE_SI) && (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x025f00ul) || ACC_CC_LLVM) && (__INT_MAX__+0 > 2147483647L)
    typedef int __acc_int32e_si_t __attribute__((__mode__(__SI__)));
    typedef unsigned int __acc_uint32e_si_t __attribute__((__mode__(__SI__)));
 #  define acc_int32e_t          __acc_int32e_si_t
@@ -3642,9 +3657,9 @@ typedef unsigned short wchar_t;
 #  endif
 #endif
 #if !defined(__ACCLIB_CONST_CAST_RETURN)
-#if 1 && (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#if 1 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __ACCLIB_CONST_CAST_RETURN(type,var) return (type) (acc_uintptr_t) (var);
-#elif (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __ACCLIB_CONST_CAST_RETURN(type,var) \
         { union { type a; const type b; } u; u.b = (var); return u.a; }
 #else
@@ -4166,7 +4181,7 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #  define ACC_CXX_NOTHROW   throw()
 #endif
 #if !defined(ACC_CXX_NOTHROW)
-#  define ACC_CXX_NOTHROW
+#  define ACC_CXX_NOTHROW   /*empty*/
 #endif
 #if defined(__ACC_CXX_DO_NEW)
 #elif (ACC_CC_NDPC || ACC_CC_PGI)
@@ -4203,7 +4218,7 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  elif (ACC_CC_MSC && (_MSC_VER >= 1200))
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
-#  elif (ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  elif (ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
 #  elif (ACC_CC_PGI)
 #    define __ACC_CXX_HAVE_PLACEMENT_DELETE 1
@@ -4926,13 +4941,13 @@ ACCLIB_PUBLIC(void, acc_ua_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
 #if !defined(ACCLIB_PUBLIC_NOINLINE)
 #  if !defined(__acc_noinline)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     r __ACCLIB_FUNCNAME(f)
-#  elif (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
+#  elif (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x030400ul) || ACC_CC_LLVM)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline __attribute__((__used__)) r __ACCLIB_FUNCNAME(f)
 #  else
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
 #  endif
 #endif
-#if (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
+#if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x030400ul) || ACC_CC_LLVM)
 extern void* volatile __acc_vget_ptr;
 void* volatile __attribute__((__used__)) __acc_vget_ptr = (void *) 0;
 #else
@@ -5151,12 +5166,12 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_randmt_r32) (acc_randmt_p r)
 {
     acc_uint32l_t v;
     if __acc_unlikely(r->n == 624) {
-        int i = 0, j;
+        unsigned i = 0, j;
         r->n = 0;
         do {
-            j = i - 623; if (j < 0) j += 624;
+            j = i - 623; if ((int) j < 0) j += 624;
             v = (r->s[i] & ACC_UINT32_C(0x80000000)) ^ (r->s[j] & ACC_UINT32_C(0x7fffffff));
-            j = i - 227; if (j < 0) j += 624;
+            j = i - 227; if ((int) j < 0) j += 624;
             r->s[i] = r->s[j] ^ (v >> 1);
             if (v & 1) r->s[i] ^= ACC_UINT32_C(0x9908b0df);
         } while (++i != 624);
@@ -5189,12 +5204,12 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_randmt64_r64) (acc_randmt64_p r)
 {
     acc_uint64l_t v;
     if __acc_unlikely(r->n == 312) {
-        int i = 0, j;
+        unsigned i = 0, j;
         r->n = 0;
         do {
-            j = i - 311; if (j < 0) j += 312;
+            j = i - 311; if ((int) j < 0) j += 312;
             v = (r->s[i] & ACC_UINT64_C(0xffffffff80000000)) ^ (r->s[j] & ACC_UINT64_C(0x7fffffff));
-            j = i - 156; if (j < 0) j += 312;
+            j = i - 156; if ((int) j < 0) j += 312;
             r->s[i] = r->s[j] ^ (v >> 1);
             if (v & 1) r->s[i] ^= ACC_UINT64_C(0xb5026f5aa96619e9);
         } while (++i != 312);
@@ -5372,7 +5387,7 @@ static int __ACCLIB_FUNCNAME(acc_getopt_perror) (acc_getopt_p g, int ret, const 
 {
     if (g->opterr)
     {
-#if HAVE_STDARG_H
+#if (HAVE_STDARG_H)
         struct { va_list ap; } s;
         va_start(s.ap, f);
         g->opterr(g, f, &s);
@@ -5425,70 +5440,66 @@ ACCLIB_PUBLIC(int, acc_getopt) (acc_getopt_p g,
     a = g->argv[g->optind];
     if (a[0] == '-' && a[1] == '-')
     {
-        char* arg;
-        size_t a_len, i;
+        size_t l = 0;
+        const acc_getopt_longopt_p o;
+        const acc_getopt_longopt_p o1 = NULL;
+        const acc_getopt_longopt_p o2 = NULL;
         int need_exact = 0;
-        const acc_getopt_longopt_p lo = NULL;
-        const acc_getopt_longopt_p l2 = NULL;
         ++g->optind;
         if (!a[2])
             goto acc_label_eof;
-        for (a += 2, arg = a; arg[0] && arg[0] != '=' && arg[0] != '#'; )
-            ++arg;
-        a_len = (size_t) (arg - a);
-        for (i = 0; a_len && longopts && longopts[i].name; ++i)
+        for (a += 2; a[l] && a[l] != '=' && a[l] != '#'; )
+            ++l;
+        for (o = longopts; l && o && o->name; ++o)
         {
-            if (strncmp(a, longopts[i].name, a_len) != 0)
+            if (strncmp(a, o->name, l) != 0)
                 continue;
-            if (!longopts[i].name[a_len])
-            {
-                lo = &longopts[i];
-                goto acc_label_found_lo;
-            }
-            need_exact |= longopts[i].has_arg & ACC_GETOPT_EXACT_ARG;
-            if (lo)
-                l2 = &longopts[i];
-            else
-                lo = &longopts[i];
+            if (!o->name[l])
+                goto acc_label_found_o;
+            need_exact |= o->has_arg & ACC_GETOPT_EXACT_ARG;
+            if (o1) o2 = o;
+            else    o1 = o;
         }
-        if (!lo || need_exact)
+        if (!o1 || need_exact)
             return pe(g, g->bad_option, "unrecognized option '--%s'", a);
-        if (l2)
-            return pe(g, g->bad_option, "option '--%s' is ambiguous (could be '--%s' or '--%s')", a, lo->name, l2->name);
-    acc_label_found_lo:
-        switch (lo->has_arg & 0x2f)
+        if (o2)
+            return pe(g, g->bad_option, "option '--%s' is ambiguous (could be '--%s' or '--%s')", a, o1->name, o2->name);
+        o = o1;
+    acc_label_found_o:
+        a += l;
+        switch (o->has_arg & 0x2f)
         {
         case ACC_GETOPT_OPTIONAL_ARG:
-            if (arg[0])
-                g->optarg = arg + 1;
+            if (a[0])
+                g->optarg = a + 1;
             break;
         case ACC_GETOPT_REQUIRED_ARG:
-            if (arg[0])
-                g->optarg = arg + 1;
+            if (a[0])
+                g->optarg = a + 1;
             else if (g->optind < g->argc)
                 g->optarg = g->argv[g->optind++];
             if (!g->optarg)
-                return pe(g, missing_arg_ret, "option '--%s' requires an argument", lo->name);
+                return pe(g, missing_arg_ret, "option '--%s' requires an argument", o->name);
             break;
         case ACC_GETOPT_REQUIRED_ARG | 0x20:
-            if (arg[0] && arg[1])
-                g->optarg = arg + 1;
+            if (a[0] && a[1])
+                g->optarg = a + 1;
             if (!g->optarg)
-                return pe(g, missing_arg_ret, "option '--%s=' requires an argument", lo->name);
+                return pe(g, missing_arg_ret, "option '--%s=' requires an argument", o->name);
             break;
         default:
-            if (arg[0])
-                return pe(g, g->bad_option, "option '--%s' doesn't allow an argument", lo->name);
+            if (a[0])
+                return pe(g, g->bad_option, "option '--%s' doesn't allow an argument", o->name);
             break;
         }
         if (longind)
-            *longind = (int) (lo - longopts);
-        if (lo->flag)
+            *longind = (int) (o - longopts);
+        if (o->flag)
         {
-            *lo->flag = lo->val;
+            *o->flag = o->val;
             return 0;
         }
-        return lo->val;
+        return o->val;
     }
     if (a[0] == '-' && a[1])
     {
@@ -6534,7 +6545,7 @@ ACCLIB_PUBLIC(int, acc_uclock_flush_cpu_cache) (acc_uclock_handle_p h, unsigned 
 #if !defined(ACCLIB_PUBLIC_NOINLINE)
 #  if !defined(__acc_noinline)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     r __ACCLIB_FUNCNAME(f)
-#  elif (ACC_CC_GNUC >= 0x030400ul) || (ACC_CC_LLVM)
+#  elif (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x030400ul) || ACC_CC_LLVM)
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline __attribute__((__used__)) r __ACCLIB_FUNCNAME(f)
 #  else
 #    define ACCLIB_PUBLIC_NOINLINE(r,f)     __acc_noinline r __ACCLIB_FUNCNAME(f)
