@@ -326,7 +326,7 @@
 
 #if (ACC_CC_INTELC && (__INTEL_COMPILER < 800))
 #elif (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
-#elif (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
+#elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE)
 #  define __packed_struct(s)        struct s {
 #  define __packed_struct_end()     } __attribute__((__packed__,__aligned__(1)));
 #elif (ACC_CC_WATCOMC)
@@ -752,7 +752,7 @@ typedef ElfLinker Linker;
 // main.cpp
 extern const char *progname;
 bool set_ec(int ec);
-#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void e_exit(int ec) __attribute__((__noreturn__));
 #else
 void e_exit(int ec);
@@ -764,7 +764,7 @@ void printSetNl(int need_nl);
 void printClearLine(FILE *f = NULL);
 void printErr(const char *iname, const Throwable *e);
 void printUnhandledException(const char *iname, const std::exception *e);
-#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void __acc_cdecl_va printErr(const char *iname, const char *format, ...)
         __attribute__((__format__(__printf__,2,3)));
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...)
@@ -774,7 +774,7 @@ void __acc_cdecl_va printErr(const char *iname, const char *format, ...);
 void __acc_cdecl_va printWarn(const char *iname, const char *format, ...);
 #endif
 
-#if (ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void __acc_cdecl_va infoWarning(const char *format, ...)
         __attribute__((__format__(__printf__,1,2)));
 void __acc_cdecl_va infoHeader(const char *format, ...)

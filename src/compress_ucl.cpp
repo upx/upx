@@ -34,7 +34,7 @@ int compress_ucl_dummy = 0;
 #else
 
 #if 1 && !(UCL_USE_ASM) && (ACC_ARCH_I386)
-#  if (ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_WATCOMC)
+#  if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_WATCOMC)
 #    define UCL_USE_ASM 1
 #  endif
 #endif
