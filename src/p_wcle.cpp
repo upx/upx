@@ -823,7 +823,9 @@ void PackWcle::unpack(OutputFile *fo)
 
         Filter ft(ph.level);
         ft.init(ph.filter, text_vaddr);
-        ft.cto = (unsigned char) (ph.version < 11 ? (get_le32(oimage+ph.u_len-9) >> 24) : ph.filter_cto);
+        ft.cto = (unsigned char) ph.filter_cto;
+        if (ph.version < 11)
+            ft.cto = (unsigned char) (get_le32(oimage+ph.u_len-9) >> 24);
         ft.unfilter(oimage+text_vaddr, text_size);
     }
 
