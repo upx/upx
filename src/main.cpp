@@ -1285,8 +1285,12 @@ static bool test(void)
     COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
     COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21*sizeof(T))
 #if defined(__acc_alignof)
+#if (ACC_CC_CLANG && ACC_ARCH_AMD64)
+    // CBUG: clang-2.8 bug in 64-bit mode
+#else
     COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
     COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
+#endif
 #endif
 #if 1 && (ACC_CC_WATCOMC)
     test1_t t11; COMPILE_TIME_ASSERT(sizeof(t11.a) <= sizeof(t11.b))
@@ -1358,15 +1362,12 @@ void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_DATE + strlen(UPX_VERSION_DATE) - 4, UPX_VERSION_YEAR, 4) == 0);
 
 #if 1
-#if (ACC_CC_CLANG && ACC_ARCH_AMD64) // clang-2.8 bug
-#else
     assert(TestBELE<LE16>::test());
     assert(TestBELE<LE32>::test());
     assert(TestBELE<LE64>::test());
     assert(TestBELE<BE16>::test());
     assert(TestBELE<BE32>::test());
     assert(TestBELE<BE64>::test());
-#endif
     {
     static const unsigned char dd[32]
 #if 1 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE) && defined(__ELF__)
