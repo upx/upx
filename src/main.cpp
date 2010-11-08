@@ -1438,6 +1438,9 @@ int __acc_cdecl_main main(int argc, char *argv[])
     // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
     putenv("LFN=y");
 #endif
+#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (ACC_CC_MSC) && defined(_WRITE_ABORT_MSG) && defined(_CALL_REPORTFAULT)
+    _set_abort_behavior(_WRITE_ABORT_MSG, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
     acc_wildargv(&argc, &argv);
 
     upx_sanity_check();
