@@ -85,6 +85,7 @@ STUBS += i386-darwin.dylib-entry.h
 # STUBS += i386-darwin.dylib-fold.h
 STUBS += i386-darwin.macho-entry.h
 STUBS += i386-darwin.macho-fold.h
+STUBS += i386-netbsd.elf-fold.h
 STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
@@ -643,6 +644,7 @@ i086-dos16.sys.h : $(srcdir)/src/$$T.S
 
 # /***********************************************************************
 # // i386-bsd.elf
+# // i386-netbsd.elf
 # // i386-openbsd.elf
 # ************************************************************************/
 
@@ -674,6 +676,19 @@ tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
+
+# info: we use the tc settings from i386-linux.elf
+i386-netbsd.elf%.h : tc_list = i386-linux.elf arch-i386 default
+i386-netbsd.elf%.h : tc_bfdname = elf32-i386
+
+# NetBSD uses the OpenBSD fold.o (for PT_NOTE handling), but the plain BSD entry.o and main.o
+i386-netbsd.elf-fold.h :  tmp/i386-openbsd.elf-fold.o tmp/i386-bsd.elf-main.o tmp/i386-bsd.syscall.o $(srcdir)/src/i386-bsd.elf-fold.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/i386-bsd.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,brandelf) --elfosabi=netbsd tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # info: we use the tc settings from i386-linux.elf

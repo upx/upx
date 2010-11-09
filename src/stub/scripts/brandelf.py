@@ -69,6 +69,10 @@ def do_file(fn):
             raise Exception, "%s is not %s" % (fn, opts.bfdname)
         ##write("\x00Linux\x00\x00\x00")
         write("\x00" * 9)
+    def brand_netbsd(s):
+        if e_ident[4:7] != s:
+            raise Exception, "%s is not %s" % (fn, opts.bfdname)
+        write("\x02")
     def brand_openbsd(s):
         if e_ident[4:7] != s:
             raise Exception, "%s is not %s" % (fn, opts.bfdname)
@@ -84,6 +88,8 @@ def do_file(fn):
             brand_freebsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
             brand_linux("\x01\x01\x01")
+        elif opts.bfdname == "elf32-i386" and opts.elfosabi == "netbsd":
+            brand_openbsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
             brand_openbsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-littlearm" and opts.elfosabi == "arm":

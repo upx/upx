@@ -141,6 +141,7 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
+    Elf32_Phdr *pt_note;  // PT_NOTE if any
     Elf32_Shdr const *shdri; // from input file
     unsigned page_mask;  // AND clears the offset-within-page
 
@@ -238,6 +239,7 @@ protected:
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
+    Elf64_Phdr *pt_note;  // PT_NOTE if any
     Elf64_Shdr const *shdri; // from input file
     acc_uint64l_t page_mask;  // AND clears the offset-within-page
 
@@ -413,6 +415,13 @@ public:
     PackNetBSDElf32x86(InputFile *f);
     virtual ~PackNetBSDElf32x86();
     virtual const char *getFullName(const options_t *) const { return "i386-netbsd.elf"; }
+protected:
+    virtual void buildLoader(const Filter *ft);
+    virtual void generateElfHdr(
+        OutputFile *,
+        void const *proto,
+        unsigned const brka
+    );
 };
 
 class PackOpenBSDElf32x86 : public PackBSDElf32x86

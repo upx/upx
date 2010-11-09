@@ -44,6 +44,8 @@
 
 #define PT_LOAD32   Elf32_Phdr::PT_LOAD
 #define PT_LOAD64   Elf64_Phdr::PT_LOAD
+#define PT_NOTE32   Elf32_Phdr::PT_NOTE
+#define PT_NOTE64   Elf64_Phdr::PT_NOTE
 
 static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
@@ -396,7 +398,8 @@ void PackLinuxElf::defineSymbols(Filter const *)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL), shdri(NULL), page_mask(~0u<<lg2_page),
+    : super(f), phdri(NULL), pt_note(NULL), shdri(NULL),
+    page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
@@ -414,7 +417,8 @@ PackLinuxElf32::~PackLinuxElf32()
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdri(NULL), shdri(NULL), page_mask(~0ull<<lg2_page),
+    : super(f), phdri(NULL), pt_note(NULL), shdri(NULL),
+    page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     shstrtab(NULL), n_elf_shnum(0),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
@@ -912,10 +916,32 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
         tmp,                     sizeof(stub_i386_bsd_elf_fold), ft);
 }
 
-#if 0  //{  re-use for OpenBSD, too
 static const
-#include "stub/i386-bsd.elf-entry.h"
-#endif  //}
+#include "stub/i386-netbsd.elf-fold.h"
+
+void
+PackNetBSDElf32x86::buildLoader(const Filter *ft)
+{
+    unsigned char tmp[sizeof(stub_i386_netbsd_elf_fold)];
+    memcpy(tmp, stub_i386_netbsd_elf_fold, sizeof(stub_i386_netbsd_elf_fold));
+    checkPatch(NULL, 0, 0, 0);  // reset
+    if (opt->o_unix.is_ptinterp) {
+        unsigned j;
+        for (j = 0; j < sizeof(stub_i386_netbsd_elf_fold)-1; ++j) {
+            if (0x60==tmp[  j]
+            &&  0x47==tmp[1+j] ) {
+                /* put INC EDI before PUSHA: inhibits auxv_up for PT_INTERP */
+                tmp[  j] = 0x47;
+                tmp[1+j] = 0x60;
+                break;
+            }
+        }
+    }
+    buildLinuxLoader(
+        stub_i386_bsd_elf_entry, sizeof(stub_i386_bsd_elf_entry),
+        tmp,                     sizeof(stub_i386_netbsd_elf_fold), ft);
+}
+
 static const
 #include "stub/i386-openbsd.elf-fold.h"
 
@@ -1148,7 +1174,7 @@ bool PackLinuxElf32::canPack()
             fi->seek(0, SEEK_SET);
             if (4==get_te32(&note.descsz)
             &&  1==get_te32(&note.type)
-            &&  0==note.end
+            // &&  0==note.end
             &&  (1+ strlen(osabi_note))==get_te32(&note.namesz)
             &&  0==strcmp(osabi_note, (char const *)note.text)
             ) {
@@ -1571,6 +1597,75 @@ PackLinuxElf32::generateElfHdr(
 }
 
 void
+PackNetBSDElf32x86::generateElfHdr(
+    OutputFile *fo,
+    void const *proto,
+    unsigned const brka
+)
+{
+    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
+    memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
+    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    assert(2==get_te16(&h3->ehdr.e_phnum));
+    set_te16(&h3->ehdr.e_phnum, 3);
+
+    assert(get_te32(&h3->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
+                         h3->ehdr.e_shoff = 0;
+    assert(get_te16(&h3->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
+    assert(get_te16(&h3->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
+           set_te16(&h3->ehdr.e_shentsize, sizeof(Elf32_Shdr));
+                         h3->ehdr.e_shnum = 0;
+                         h3->ehdr.e_shstrndx = 0;
+
+    sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
+    unsigned const note_offset = sz_elf_hdrs;
+    set_te32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
+                  h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
+
+    unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
+    set_te32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
+    set_te32(&h3->phdr[1].p_offset, ~page_mask & brkb);
+    set_te32(&h3->phdr[1].p_vaddr, brkb);
+    set_te32(&h3->phdr[1].p_paddr, brkb);
+    h3->phdr[1].p_filesz = 0;
+    h3->phdr[1].p_memsz =  0;
+    set_te32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
+
+    set_te32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
+    set_te32(&h3->phdr[2].p_offset, note_offset);
+    set_te32(&h3->phdr[2].p_vaddr, note_offset);
+    set_te32(&h3->phdr[2].p_paddr, note_offset);
+    set_te32(&h3->phdr[2].p_filesz, sizeof(elfnote));
+    set_te32(&h3->phdr[2].p_memsz,  sizeof(elfnote));
+    set_te32(&h3->phdr[2].p_flags, Elf32_Phdr::PF_R);
+    set_te32(&h3->phdr[2].p_align, 4);
+
+    set_te32(&elfnote.namesz, 8);
+    set_te32(&elfnote.descsz, 4);
+    set_te32(&elfnote.type,   1);
+    strcpy(elfnote.text, "NetBSD");
+    if (pt_note) {
+        struct Elf32_Note oldnote;
+        fi->seek(get_te32(&pt_note->p_offset), SEEK_SET);
+        fi->readx(&oldnote, sizeof(oldnote));
+        elfnote.end = oldnote.end;
+    }
+    else {
+        elfnote.end = 0;
+    }
+
+    if (ph.format==getFormat()) {
+        memset(&h3->linfo, 0, sizeof(h3->linfo));
+        fo->write(h3, sizeof(*h3) - sizeof(h3->linfo));
+        fo->write(&elfnote, sizeof(elfnote));
+        fo->write(&h3->linfo, sizeof(h3->linfo));
+    }
+    else {
+        assert(false);  // unknown ph.format, PackLinuxElf32
+    }
+}
+
+void
 PackOpenBSDElf32x86::generateElfHdr(
     OutputFile *fo,
     void const *proto,
@@ -1697,6 +1792,9 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
 
     Elf32_Phdr const *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (!pt_note && phdr->PT_NOTE32 == get_te32(&phdr->p_type)) {
+            pt_note = const_cast<Elf32_Phdr *>(phdr);
+        }
         if (phdr->PT_LOAD32 == get_te32(&phdr->p_type)) {
             unsigned x = get_te32(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
@@ -1800,6 +1898,9 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
 
     Elf64_Phdr const *phdr = phdri;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        if (!pt_note && phdr->PT_NOTE64 == get_te32(&phdr->p_type)) {
+            pt_note = const_cast<Elf64_Phdr *>(phdr);
+        }
         if (phdr->PT_LOAD64 == get_te64(&phdr->p_type)) {
             unsigned x = get_te64(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
