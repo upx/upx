@@ -1840,25 +1840,27 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
         fo->write(ibuf, xct_off);
         return;
     }
+    unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
-        unsigned const e_flags = get_te32(&ehdri.e_flags);
         memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
 
-        set_te32(&h3.ehdr.e_flags, e_flags);
         h3.ehdr.e_ident[Elf32_Ehdr::EI_ABIVERSION] = e_flags>>24;
     }
     else {
         memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     }
+    set_te32(&h3.ehdr.e_flags, e_flags);
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
 }
 
 void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
     memcpy(&h3, stub_armeb_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    set_te32(&h3.ehdr.e_flags, e_flags);
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
 }
 
