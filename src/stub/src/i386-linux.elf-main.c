@@ -43,9 +43,13 @@ ssize_t write(int, void const *, size_t);
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#if 1  /*{*/
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
+
+#if !DEBUG || defined(__mips__)  /*{*/
 #define DPRINTF(a) /* empty: no debug drivel */
-#else  /*}{*/
+#else  /*}{ DEBUG */
 #if 0
 #include "stdarg.h"
 #else
@@ -55,12 +59,23 @@ ssize_t write(int, void const *, size_t);
 #define va_start    __builtin_va_start
 #endif
 
+#ifdef __arm__  /*{*/
+extern unsigned div10(unsigned);
+#else  /*}{*/
+static unsigned
+div10(unsigned x)
+{
+    return x / 10u;
+}
+#endif  /*}*/
+
 static int
 unsimal(unsigned x, char *ptr, int n)
 {
     if (10<=x) {
-        n = unsimal(x/10, ptr, n);
-        x %= 10;
+        unsigned const q = div10(x);
+        n = unsimal(q, ptr, n);
+        x -= 10 * q;
     }
     ptr[n] = '0' + x;
     return 1+ n;

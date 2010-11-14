@@ -207,4 +207,65 @@ mmap: .globl mmap
           addiu sp,sp, sp_frame
 #endif  /*}*/
 
+#if 0  /*{ truly-PIC string constants for debugging */
+/* UNFORTUNATELY THIS DOES NOT WORK because gcc uses 'jal' instead of 'bal' */
+
+        .globl STR_0x
+ret_at:
+        jr at
+          nop
+STR_0x:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "0x"
+        .balign 4
+
+        .globl STR_hex
+STR_hex:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "0123456789abcdef"
+        .balign 4
+
+        .globl STR_xread
+STR_xread:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "xread %p(%x %p) %p %x\n"
+        .balign 4
+
+        .globl STR_unpackExtent
+STR_unpackExtent:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "unpackExtent in=%p(%x %p)  out=%p(%x %p)  %p %p\n"
+        .balign 4
+
+        .globl STR_make_hatch_arm
+STR_make_hatch_arm:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "make_hatch_arm %p %x\n"
+        .balign 4
+
+        .globl STR_auxv_up
+STR_auxv_up:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "auxv_up  %p %x %x\n"
+        .balign 4
+
+        .globl STR_xfind_pages
+STR_xfind_pages:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "xfind_pages  %x  %p  %d  %p\n"
+        .balign 4
+
+        .globl STR_do_xmap
+STR_do_xmap:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "do_xmap  fdi=%x  ehdr=%p  xi=%p(%x %p)  av=%p  p_reloc=%p  f_unf=%p\n"
+        .balign 4
+
+        .globl STR_upx_main
+STR_upx_main:
+        move at,ra; bal ret_at; move v0,ra
+        .asciz "upx_main av=%p  szc=%x  f_dec=%p  f_unf=%p  xo=%p(%x %p)  xi=%p(%x %p)  dynbase=%x\n",
+        .balign 4
+#endif  /*}*/
+
 # vi:ts=8:et:nowrap

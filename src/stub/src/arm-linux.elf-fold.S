@@ -119,7 +119,7 @@ top_unf:
 tst_unf:
         cmp len,#0
         bne top_unf
-        mov pc,lr
+        ret
 
         .unreq ptr
         .unreq len
@@ -179,58 +179,95 @@ mmap:
         ldr r5,[sp],#4
         ret
 
-#if 0  /*{ "gcc-3.4 -fPIC" botches string constants when code moves! */
+
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
+
+#if DEBUG  /*{ "gcc-3.4 -fPIC" botches string constants when code moves! */
+
+div10: .globl div10
+	mov ip,r0  @ extra copy used at end
+	sub r1,r1,r1  @ hi
+
+	mov r2,r0  @ copy lo
+	adds r0,r0,r0,lsl #3   @ 9*lo
+	adc  r1,r1,r1,lsl #3   @ 9*hi + C
+	add  r1,r1,r2,lsr #(32 - 3)  @ bits shifted from lo to hi
+
+	mov r2,r0  @ copy lo
+	adds r0,r0,r0,lsl #4
+	adc  r1,r1,r1,lsl #4
+	add  r1,r1,r2,lsr #(32 - 4)  @ * 0x99
+
+	mov r2,r0  @ copy lo
+	adds r0,r0,r0,lsl #8
+	adc  r1,r1,r1,lsl #8
+	add  r1,r1,r2,lsr #(32 - 8)  @ * 0x9999
+
+	mov r2,r0  @ copy lo
+	adds r0,r0,r0,lsl #16
+	adc  r1,r1,r1,lsl #16
+	add  r1,r1,r2,lsr #(32 - 16)  @ * 0x99999999
+
+	subs r0,r0,ip,lsl #(32 - 1)  @ - * 0x80000000
+	sbc  r1,r1,ip,lsr #1  @ * 0x19999999
+
+	adds r0,r0,r0
+	adc  r0,r1,#0  @ round and move to result
+	ret
+
         .globl STR_0x
 STR_0x:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "0x"
         .balign 4
 
         .globl STR_hex
 STR_hex:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "0123456789abcdef"
         .balign 4
 
         .globl STR_xread
 STR_xread:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "xread %p(%x %p) %p %x\n"
         .balign 4
 
         .globl STR_unpackExtent
 STR_unpackExtent:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "unpackExtent in=%p(%x %p)  out=%p(%x %p)  %p %p\n"
         .balign 4
 
         .globl STR_make_hatch_arm
 STR_make_hatch_arm:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "make_hatch_arm %p %x\n"
         .balign 4
 
         .globl STR_auxv_up
 STR_auxv_up:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "auxv_up  %p %x %x\n"
         .balign 4
 
         .globl STR_xfind_pages
 STR_xfind_pages:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "xfind_pages  %x  %p  %d  %p\n"
         .balign 4
 
         .globl STR_do_xmap
 STR_do_xmap:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "do_xmap  fdi=%x  ehdr=%p  xi=%p(%x %p)  av=%p  p_reloc=%p  f_unf=%p\n"
         .balign 4
 
         .globl STR_upx_main
 STR_upx_main:
-        mov r0,pc; mov pc,lr
+        mov r0,pc; ret
         .asciz "upx_main av=%p  szc=%x  f_dec=%p  f_unf=%p  xo=%p(%x %p)  xi=%p(%x %p)  dynbase=%x\n",
         .balign 4
 #endif  /*}*/

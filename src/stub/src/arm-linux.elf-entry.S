@@ -61,6 +61,10 @@ __NR_mmap64 = 0xc0 + __NR_SYSCALL_BASE
 __ARM_NR_BASE  = 0xf0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
+
         //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
 start_params:
@@ -74,6 +78,16 @@ _start: .globl _start
    the brk() of the _un_compressed program.  The address is pre-calculated
    calculated by PackLinuxElf32arm::addLinkerSymbols().
 */
+
+#if DEBUG  /*{*/
+#define TRACE_REGS r0-r12,r14,r15
+// sp (r13) is not included because the write-back might cause UNDEFINED behavior
+// if the write-back register is not first or last.  The actual value of sp
+// usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
+// one word closer to the stack pointer because r13 has been omitted.
+
+        stmdb sp!,{TRACE_REGS}; bl trace1
+#endif  /*}*/
         adr r12,start_params -4  // &sz_pack2
         ldmia r12,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
         add r10,r10,r12  // end_decompress
@@ -96,6 +110,9 @@ D_sz_unc=2*4  // stack displacement to sz_unc
         swi 0
 #else  /*}{*/
         swi __NR_mmap64
+#endif  /*}*/
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; bl trace2
 #endif  /*}*/
         cmn r0,#4096
         bcs msg_SELinux
@@ -133,8 +150,72 @@ D_stm1=2*4
         mov  r2,lr  // dst
         str  r3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
         add  r3, sp,#D_stm1 + D_sz_unc   // &sz_unc
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; bl trace3
+#endif  /*}*/
         mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
         ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
+
+#if DEBUG  /*{*/
+trace3:
+        add r0,r0,#1
+trace2:
+        add r0,r0,#1
+trace1:
+        add r0,r0,#1
+trace0:
+
+TRACE_BUFLEN=512
+trace_print:
+        str lr,[sp,#(-1+ 15)*4]  @ return pc; [remember: sp is not stored]
+        mov r4,sp  @ &saved_r0
+        ldr r1,[sp]  @ saved r0
+        sub sp,sp,#TRACE_BUFLEN
+        mov r2,sp  @ output string
+
+        sub r0,r0,r1; mov r1,#'\n'; bl trace_hex  @ which trace
+        mov r1,#'>';  strb r1,[r2],#1
+
+        mov r5,#3  @ rows to print
+L600:  @ each row
+        sub r0,r4,#TRACE_BUFLEN
+        sub r0,r0,sp
+        mov r0,r0,lsr #2; mov r1,#'\n'; bl trace_hex  @ which block of 8
+
+        mov r6,#8  @ words per row
+L610:  @ each word
+        ldr r0,[r4],#4; mov r1,#' '; bl trace_hex  @ next word
+        subs r6,r6,#1; bgt L610
+
+        subs r5,r5,#1; bgt L600
+
+        mov r0,#'\n'; strb r0,[r2],#1
+        sub r2,r2,sp  @ count
+        mov r1,sp  @ buf
+        mov r0,#2  @ FD_STDERR
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_write
+        swi 0
+#else  /*}{*/
+        swi __NR_write
+#endif  /*}*/
+        add sp,sp,#TRACE_BUFLEN
+        ldmia sp!,{TRACE_REGS}
+
+trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
+        strb r1,[r2],#1  @ punctuation
+        mov r3,#4*(8 -1)  @ shift count
+        adr ip,hex
+L620:
+        mov r1,r0,lsr r3
+        and r1,r1,#0xf
+        ldrb r1,[ip, r1]
+        strb r1,[r2],#1
+        subs r3,r3,#4; bge L620
+        ret
+hex:
+        .ascii "0123456789abcdef"
+#endif  /*}*/
 
 f_decompress:
 #define LINUX_ARM_CACHEFLUSH 1
