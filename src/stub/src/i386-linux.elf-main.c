@@ -321,7 +321,11 @@ make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
 }
 #elif defined(__arm__)  /*}{*/
 static void *
-make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
+make_hatch_arm(
+    Elf32_Phdr const *const phdr,
+    unsigned const reloc,
+    unsigned const sys_munmap
+)
 {
     unsigned *hatch = 0;
     DPRINTF((STR_make_hatch_arm(),phdr,reloc));
@@ -335,14 +339,14 @@ make_hatch_arm(Elf32_Phdr const *const phdr, unsigned const reloc)
         // and the action is the same when either test succeeds.
 
         // Try page fragmentation just beyond .text .
-        if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
+        if ( ( (hatch = (void *)(~3u & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
                 ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
                 &&  (2*4)<=(~PAGE_MASK & -(int)hatch) ) ) // space left on page
         // Try Elf32_Ehdr.e_ident[8..15] .  warning: 'const' cast away
         ||   ( (hatch = (void *)(&((Elf32_Ehdr *)phdr->p_vaddr + reloc)->e_ident[8])),
                 (phdr->p_offset==0) ) )
         {
-            hatch[0]= 0xef90005b;  // syscall __NR_unmap
+            hatch[0]= sys_munmap;  // syscall __NR_unmap
             hatch[1]= 0xe1a0f00e;  // mov pc,lr
         }
         else {
@@ -491,7 +495,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *p_reloc, f_unfilter *const f_unf)
+    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
@@ -507,6 +511,9 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     unsigned const frag_mask = ~PAGE_MASK;
 #endif  /*}*/
     char *v_brk;
+#if defined(__arm__)  /*{*/
+    unsigned const sys_munmap = *p_reloc;
+#endif  /*}*/
     unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
          phdr, ehdr->e_phnum, &v_brk
 #if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
@@ -562,7 +569,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
                 auxv_up((Elf32_auxv_t *)(~1 & (int)av), AT_NULL, (unsigned)hatch);
             }
 #elif defined(__arm__)  /*}{*/
-            void *const hatch = make_hatch_arm(phdr, reloc);
+            void *const hatch = make_hatch_arm(phdr, reloc, sys_munmap);
             if (0!=hatch) {
                 auxv_up(av, AT_NULL, (unsigned)hatch);
             }
@@ -627,7 +634,8 @@ void *upx_main(
     f_unfilter */*const*/ f_unfilter,
     Extent xo,
     Extent xi,
-    unsigned const volatile dynbase
+    unsigned const volatile dynbase,
+    unsigned const sys_munmap
 ) __asm__("upx_main");
 
 void *upx_main(
@@ -637,7 +645,8 @@ void *upx_main(
     f_unfilter */*const*/ f_unf,
     Extent xo,  // {sz_unc, ehdr}    for ELF headers
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
-    unsigned const volatile dynbase  // value+result: compiler must not change
+    unsigned const volatile dynbase,  // value+result: compiler must not change
+    unsigned const sys_munmap
 )
 #endif  /*}*/
 {
@@ -686,6 +695,11 @@ void *upx_main(
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     // This is necessary for ET_DYN if|when we override a prelink address.
 
+#if defined(__arm__)  /*{*/
+    reloc = sys_munmap;  // sneak an input value
+#elif !defined(__mips__)  /*}{*/
+    (void)sys_munmap;  // UNUSED
+#endif  /*}*/
     entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
     auxv_up(av, AT_ENTRY , entry);
 

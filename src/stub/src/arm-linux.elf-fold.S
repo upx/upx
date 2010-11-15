@@ -75,15 +75,31 @@ fold_begin:
         adr r6,f_unfilter
         add r9,r9,#sz_b_info  @ for unpackExtent
         mov r11,#0  @ dynbase for ET_EXEC;  FIXME for ET_DYN
-        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11}
+#if defined(ARMEL_DARWIN)  /*{*/
+        ldr r12,4*1 + munmap
+#elif defined(ARMEL_EABI4)  /*}{*/
+        ldr r12,4*2 + munmap
+#elif defined(ARM_OLDABI)  /*}{*/
+        ldr r12,4*0 + munmap
+#else  /*}{*/
+        mov r12,#0
+#endif  /*}*/
+        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
         bl upx_main
         mov lr,r0  @ entry address
-        add sp,sp,#(9-4)*4
+        add sp,sp,#(10-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
         ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb
         add r0,r0,r3  @ ADRU+=crumb
         sub r1,r1,r3  @ LENU-=crumb
+#if defined(ARMEL_DARWIN)  /*{*/
+        mov r12,#0xff & __NR_munmap
+#elif defined(ARMEL_EABI4)  /*}{*/
+        mov r7, #0xff & __NR_munmap
+#elif defined(ARM_OLDABI)  /*{*/
+        @ empty
+#endif  /*}*/
         ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
@@ -211,10 +227,10 @@ div10: .globl div10
 	add  r1,r1,r2,lsr #(32 - 16)  @ * 0x99999999
 
 	subs r0,r0,ip,lsl #(32 - 1)  @ - * 0x80000000
-	sbc  r1,r1,ip,lsr #1  @ * 0x19999999
+	sbc  r1,r1,ip,lsr #1         @   * 0x19999999
 
-	adds r0,r0,r0
-	adc  r0,r1,#0  @ round and move to result
+	adds r0,r0,ip
+	adc  r0,r1,#0  @ * 0x0.1999999a
 	ret
 
         .globl STR_0x
