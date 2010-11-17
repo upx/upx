@@ -181,10 +181,13 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     fo->write(&zero, 3& (0u-len));  // ALIGN_UP 0 mod 4
     len += (3& (0u-len)); // 0 mod 4
 
-    unsigned const t = 4 ^ (4 & len) ^ ((!!xct_off)<<2);  // 0 or 4
+    unsigned const t = (4 & len) ^ ((!!xct_off)<<2);  // 0 or 4
     fo->write(&zero, t);
     len += t;
 
+    set_te32(&disp, 2*sizeof(disp) + len - (sz_elf_hdrs + sizeof(p_info) + sizeof(l_info)));
+    fo->write(&disp, sizeof(disp));  // .e_entry - &first_b_info
+    len += sizeof(disp);
     set_te32(&disp, len);  // distance back to beginning (detect dynamic reloc)
     fo->write(&disp, sizeof(disp));
     len += sizeof(disp);
@@ -398,7 +401,7 @@ void PackLinuxElf::defineSymbols(Filter const *)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL), pt_note(NULL), shdri(NULL),
+    : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     shstrtab(NULL), n_elf_shnum(0),
@@ -413,11 +416,12 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 
 PackLinuxElf32::~PackLinuxElf32()
 {
+    delete[] note_body;
     delete[] phdri; phdri = NULL;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdri(NULL), pt_note(NULL), shdri(NULL),
+    : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     shstrtab(NULL), n_elf_shnum(0),
@@ -432,6 +436,7 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 
 PackLinuxElf64::~PackLinuxElf64()
 {
+    delete[] note_body;
     delete[] phdri; phdri = NULL;
 }
 
@@ -917,7 +922,13 @@ PackBSDElf32x86::buildLoader(const Filter *ft)
 }
 
 static const
+#include "stub/i386-netbsd.elf-entry.h"
+
+static const
 #include "stub/i386-netbsd.elf-fold.h"
+
+#define WANT_NHDR_ENUM
+#include "p_elf_enum.h"
 
 void
 PackNetBSDElf32x86::buildLoader(const Filter *ft)
@@ -938,8 +949,8 @@ PackNetBSDElf32x86::buildLoader(const Filter *ft)
         }
     }
     buildLinuxLoader(
-        stub_i386_bsd_elf_entry, sizeof(stub_i386_bsd_elf_entry),
-        tmp,                     sizeof(stub_i386_netbsd_elf_fold), ft);
+        stub_i386_netbsd_elf_entry, sizeof(stub_i386_netbsd_elf_entry),
+        tmp,                        sizeof(stub_i386_netbsd_elf_fold), ft);
 }
 
 static const
@@ -1153,6 +1164,7 @@ bool PackLinuxElf32::canPack()
     unsigned osabi0 = u.buf[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(u.buf + e_phoff);
+    note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
                 return false;
@@ -1166,17 +1178,30 @@ bool PackLinuxElf32::canPack()
             load_va = get_te32(&phdr->p_vaddr);
             exetype = 1;
         }
+        if (phdr->PT_NOTE == p_type) {
+            unsigned const x = get_te32(&phdr->p_memsz);
+            if ( sizeof(elfout.notes) < x  // beware overflow of note_size
+            ||  (sizeof(elfout.notes) < (note_size += x)) ) {
+                throwCantPack("PT_NOTEs too big; try '--force-execve'");
+                return false;
+            }
+        }
         if (Elf32_Ehdr::ELFOSABI_NONE==osabi0  // Still seems to be generic.
         && NULL!=osabi_note && phdr->PT_NOTE == p_type) {
-            struct Elf32_Note note; memset(&note, 0, sizeof(note));
+            struct {
+                struct Elf32_Nhdr nhdr;
+                char name[8];
+                unsigned body;
+            } note;
+            memset(&note, 0, sizeof(note));
             fi->seek(p_offset, SEEK_SET);
             fi->readx(&note, sizeof(note));
             fi->seek(0, SEEK_SET);
-            if (4==get_te32(&note.descsz)
-            &&  1==get_te32(&note.type)
+            if (4==get_te32(&note.nhdr.descsz)
+            &&  1==get_te32(&note.nhdr.type)
             // &&  0==note.end
-            &&  (1+ strlen(osabi_note))==get_te32(&note.namesz)
-            &&  0==strcmp(osabi_note, (char const *)note.text)
+            &&  (1+ strlen(osabi_note))==get_te32(&note.nhdr.namesz)
+            &&  0==strcmp(osabi_note, (char const *)&note.name[0])
             ) {
                 osabi0 = ei_osabi;  // Specified by PT_NOTE.
             }
@@ -1596,6 +1621,12 @@ PackLinuxElf32::generateElfHdr(
     }
 }
 
+static unsigned
+up4(unsigned x)
+{
+    return ~3u & (3+ x);
+}
+
 void
 PackNetBSDElf32x86::generateElfHdr(
     OutputFile *fo,
@@ -1603,62 +1634,92 @@ PackNetBSDElf32x86::generateElfHdr(
     unsigned const brka
 )
 {
-    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
-    memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
-    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
-    assert(2==get_te16(&h3->ehdr.e_phnum));
-    set_te16(&h3->ehdr.e_phnum, 3);
+    super::generateElfHdr(fo, proto, brka);
+    cprElfHdr2 *const h2 = (cprElfHdr2 *)(void *)&elfout;
 
-    assert(get_te32(&h3->ehdr.e_phoff)     == sizeof(Elf32_Ehdr));
-                         h3->ehdr.e_shoff = 0;
-    assert(get_te16(&h3->ehdr.e_ehsize)    == sizeof(Elf32_Ehdr));
-    assert(get_te16(&h3->ehdr.e_phentsize) == sizeof(Elf32_Phdr));
-           set_te16(&h3->ehdr.e_shentsize, sizeof(Elf32_Shdr));
-                         h3->ehdr.e_shnum = 0;
-                         h3->ehdr.e_shstrndx = 0;
+    sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);
+    unsigned note_offset = sz_elf_hdrs;
 
-    sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
-    unsigned const note_offset = sz_elf_hdrs;
-    set_te32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
-                  h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
+    // Find the NetBSD PT_NOTE and the PaX PT_NOTE.
+    Elf32_Nhdr const *np_NetBSD = 0;  unsigned sz_NetBSD = 0;
+    Elf32_Nhdr const *np_PaX    = 0;  unsigned sz_PaX    = 0;
+    unsigned char *cp = note_body;
+    unsigned j;
+    for (j=0; j < note_size; ) {
+        Elf32_Nhdr const *const np = (Elf32_Nhdr const *)cp;
+        int k = sizeof(*np) + up4(get_te32(&np->namesz))
+            + up4(get_te32(&np->descsz));
 
-    unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
-    set_te32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
-    set_te32(&h3->phdr[1].p_offset, ~page_mask & brkb);
-    set_te32(&h3->phdr[1].p_vaddr, brkb);
-    set_te32(&h3->phdr[1].p_paddr, brkb);
-    h3->phdr[1].p_filesz = 0;
-    h3->phdr[1].p_memsz =  0;
-    set_te32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
-
-    set_te32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
-    set_te32(&h3->phdr[2].p_offset, note_offset);
-    set_te32(&h3->phdr[2].p_vaddr, note_offset);
-    set_te32(&h3->phdr[2].p_paddr, note_offset);
-    set_te32(&h3->phdr[2].p_filesz, sizeof(elfnote));
-    set_te32(&h3->phdr[2].p_memsz,  sizeof(elfnote));
-    set_te32(&h3->phdr[2].p_flags, Elf32_Phdr::PF_R);
-    set_te32(&h3->phdr[2].p_align, 4);
-
-    set_te32(&elfnote.namesz, 8);
-    set_te32(&elfnote.descsz, 4);
-    set_te32(&elfnote.type,   1);
-    strcpy(elfnote.text, "NetBSD");
-    if (pt_note) {
-        struct Elf32_Note oldnote;
-        fi->seek(get_te32(&pt_note->p_offset), SEEK_SET);
-        fi->readx(&oldnote, sizeof(oldnote));
-        elfnote.end = oldnote.end;
+        if (NHDR_NETBSD_TAG == np->type && 7== np->namesz
+        &&  NETBSD_DESCSZ == np->descsz
+        &&  0==strcmp(ELF_NOTE_NETBSD_NAME, (char const *)&np->body)) {
+            np_NetBSD = np;
+            sz_NetBSD = k;
+        }
+        if (NHDR_PAX_TAG == np->type && 4== np->namesz
+        &&  PAX_DESCSZ==np->descsz
+        &&  0==strcmp(ELF_NOTE_PAX_NAME, (char const *)&np->body)) {
+            np_PaX = np;
+            sz_PaX = k;
+        }
+        cp += k;
+        j += k;
     }
-    else {
-        elfnote.end = 0;
+    
+    // Add PT_NOTE for the NetBSD note and PaX note, if any.
+    note_offset += (np_NetBSD ? sizeof(Elf32_Phdr) : 0);
+    note_offset += (np_PaX    ? sizeof(Elf32_Phdr) : 0);
+    Elf32_Phdr *phdr = &elfout.phdr[2];
+    if (np_NetBSD) {
+        set_te32(&phdr->p_type, Elf32_Phdr::PT_NOTE);
+        set_te32(&phdr->p_offset, note_offset);
+        set_te32(&phdr->p_vaddr, note_offset);
+        set_te32(&phdr->p_paddr, note_offset);
+        set_te32(&phdr->p_filesz, sz_NetBSD);
+        set_te32(&phdr->p_memsz,  sz_NetBSD);
+        set_te32(&phdr->p_flags, Elf32_Phdr::PF_R);
+        set_te32(&phdr->p_align, 4);
+
+        sz_elf_hdrs += sz_NetBSD + sizeof(*phdr);
+        note_offset += sz_NetBSD;
+        ++phdr;
     }
+    if (np_PaX) {
+        set_te32(&phdr->p_type, Elf32_Phdr::PT_NOTE);
+        set_te32(&phdr->p_offset, note_offset);
+        set_te32(&phdr->p_vaddr, note_offset);
+        set_te32(&phdr->p_paddr, note_offset);
+        set_te32(&phdr->p_filesz, sz_PaX);
+        set_te32(&phdr->p_memsz,  sz_PaX);
+        set_te32(&phdr->p_flags, Elf32_Phdr::PF_R);
+        set_te32(&phdr->p_align, 4);
+
+        unsigned bits = get_te32(&np_PaX->body[4]);
+        bits &= ~PAX_MPROTECT;
+        bits |=  PAX_NOMPROTECT;
+        set_te32((unsigned *)&np_PaX->body[4], bits);
+
+        sz_elf_hdrs += sz_PaX + sizeof(*phdr);
+        note_offset += sz_PaX;
+        ++phdr;
+    }
+    set_te32(&h2->phdr[0].p_filesz, note_offset);
+              h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
     if (ph.format==getFormat()) {
-        memset(&h3->linfo, 0, sizeof(h3->linfo));
-        fo->write(h3, sizeof(*h3) - sizeof(h3->linfo));
-        fo->write(&elfnote, sizeof(elfnote));
-        fo->write(&h3->linfo, sizeof(h3->linfo));
+        set_te16(&h2->ehdr.e_phnum, !!sz_NetBSD + !!sz_PaX +
+        get_te16(&h2->ehdr.e_phnum));
+        fo->seek(0, SEEK_SET);
+        fo->rewrite(h2, sizeof(*h2) - sizeof(h2->linfo));
+
+        memcpy(&((char *)phdr)[0],         np_NetBSD, sz_NetBSD);
+        memcpy(&((char *)phdr)[sz_NetBSD], np_PaX,    sz_PaX);
+
+        fo->write(&elfout.phdr[2],
+            &((char *)phdr)[sz_PaX + sz_NetBSD] - (char *)&elfout.phdr[2]);
+
+        l_info foo; memset(&foo, 0, sizeof(foo));
+        fo->rewrite(&foo, sizeof(foo));
     }
     else {
         assert(false);  // unknown ph.format, PackLinuxElf32
@@ -1686,19 +1747,14 @@ PackOpenBSDElf32x86::generateElfHdr(
                          h3->ehdr.e_shnum = 0;
                          h3->ehdr.e_shstrndx = 0;
 
-    sz_elf_hdrs = sizeof(*h3) - sizeof(linfo);
-    unsigned const note_offset = sz_elf_hdrs;
-    set_te32(&h3->phdr[0].p_filesz, sizeof(*h3)+sizeof(elfnote));  // + identsize;
-                  h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
+    struct {
+        Elf32_Nhdr nhdr;
+        char name[8];
+        unsigned body;
+    } elfnote;
 
-    unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
-    set_te32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
-    set_te32(&h3->phdr[1].p_offset, ~page_mask & brkb);
-    set_te32(&h3->phdr[1].p_vaddr, brkb);
-    set_te32(&h3->phdr[1].p_paddr, brkb);
-    h3->phdr[1].p_filesz = 0;
-    h3->phdr[1].p_memsz =  0;
-    set_te32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
+    unsigned const note_offset = sizeof(*h3) - sizeof(linfo);
+    sz_elf_hdrs = sizeof(elfnote) + note_offset;
 
     set_te32(&h3->phdr[2].p_type, Elf32_Phdr::PT_NOTE);
     set_te32(&h3->phdr[2].p_offset, note_offset);
@@ -1709,11 +1765,24 @@ PackOpenBSDElf32x86::generateElfHdr(
     set_te32(&h3->phdr[2].p_flags, Elf32_Phdr::PF_R);
     set_te32(&h3->phdr[2].p_align, 4);
 
-    set_te32(&elfnote.namesz, 8);
-    set_te32(&elfnote.descsz, 4);
-    set_te32(&elfnote.type,   1);
-    strcpy(elfnote.text, "OpenBSD");
-                  elfnote.end   = 0;
+    // Q: Same as this->note_body[0 .. this->note_size-1] ?
+    set_te32(&elfnote.nhdr.namesz, 8);
+    set_te32(&elfnote.nhdr.descsz, OPENBSD_DESCSZ);
+    set_te32(&elfnote.nhdr.type,   NHDR_OPENBSD_TAG);
+    memcpy(elfnote.name, "OpenBSD", sizeof(elfnote.name));
+    elfnote.body = 0;
+
+    set_te32(&h3->phdr[0].p_filesz, sz_elf_hdrs);
+              h3->phdr[0].p_memsz = h3->phdr[0].p_filesz;
+
+    unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
+    set_te32(&h3->phdr[1].p_type, PT_LOAD32);  // be sure
+    set_te32(&h3->phdr[1].p_offset, ~page_mask & brkb);
+    set_te32(&h3->phdr[1].p_vaddr, brkb);
+    set_te32(&h3->phdr[1].p_paddr, brkb);
+    h3->phdr[1].p_filesz = 0;
+    h3->phdr[1].p_memsz =  0;
+    set_te32(&h3->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
 
     if (ph.format==getFormat()) {
         memset(&h3->linfo, 0, sizeof(h3->linfo));
@@ -1790,12 +1859,28 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
 
+    // Remember all PT_NOTE, and find lg2_page from PT_LOAD.
     Elf32_Phdr const *phdr = phdri;
+    note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (!pt_note && phdr->PT_NOTE32 == get_te32(&phdr->p_type)) {
-            pt_note = const_cast<Elf32_Phdr *>(phdr);
+        if (phdr->PT_NOTE32 == get_te32(&phdr->p_type)) {
+            note_size += ~3u & (3+ get_te32(&phdr->p_filesz));
         }
-        if (phdr->PT_LOAD32 == get_te32(&phdr->p_type)) {
+    }
+    if (note_size) {
+        note_body = new unsigned char[note_size];
+        note_size = 0;
+    }
+    phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        unsigned const type = get_te32(&phdr->p_type);
+        if (phdr->PT_NOTE32 == type) {
+            unsigned const len = get_te32(&phdr->p_filesz);
+            fi->seek(get_te32(&phdr->p_offset), SEEK_SET);
+            fi->readx(&note_body[note_size], len);
+            note_size += ~3u & (3+ len);
+        }
+        if (phdr->PT_LOAD32 == type) {
             unsigned x = get_te32(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
@@ -1899,11 +1984,26 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     fi->readx(phdri, sz_phdrs);
 
     Elf64_Phdr const *phdr = phdri;
+    note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (!pt_note && phdr->PT_NOTE64 == get_te32(&phdr->p_type)) {
-            pt_note = const_cast<Elf64_Phdr *>(phdr);
+        if (phdr->PT_NOTE64 == get_te32(&phdr->p_type)) {
+            note_size += ~3u & (3+ get_te64(&phdr->p_filesz));
         }
-        if (phdr->PT_LOAD64 == get_te64(&phdr->p_type)) {
+    }
+    if (note_size) {
+        note_body = new unsigned char[note_size];
+        note_size = 0;
+    }
+    phdr = phdri;
+    for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
+        unsigned const type = get_te32(&phdr->p_type);
+        if (phdr->PT_NOTE64 == type) {
+            unsigned const len = get_te64(&phdr->p_filesz);
+            fi->seek(get_te64(&phdr->p_offset), SEEK_SET);
+            fi->readx(&note_body[note_size], len);
+            note_size += ~3u & (3+ len);
+        }
+        if (phdr->PT_LOAD64 == type) {
             unsigned x = get_te64(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
@@ -2420,18 +2520,19 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
     }
     else {
-        if (Elf32_Phdr::PT_NOTE==get_te32(&elfout.phdr[2].p_type)) {
-            unsigned const reloc = get_te32(&elfout.phdr[0].p_vaddr);
-            set_te32(            &elfout.phdr[2].p_vaddr,
-                reloc + get_te32(&elfout.phdr[2].p_vaddr));
-            set_te32(            &elfout.phdr[2].p_paddr,
-                reloc + get_te32(&elfout.phdr[2].p_paddr));
-            fo->rewrite(&elfout, sz_elf_hdrs);
-            fo->rewrite(&elfnote, sizeof(elfnote));
+        unsigned const reloc = get_te32(&elfout.phdr[0].p_vaddr);
+        Elf32_Phdr *phdr = &elfout.phdr[2];
+        unsigned const o_phnum = get_te16(&elfout.ehdr.e_phnum);
+        for (unsigned j = 2; j < o_phnum; ++j, ++phdr) {
+            if (Elf32_Phdr::PT_NOTE==get_te32(&phdr->p_type)) {
+                set_te32(            &phdr->p_vaddr,
+                    reloc + get_te32(&phdr->p_vaddr));
+                set_te32(            &phdr->p_paddr,
+                    reloc + get_te32(&phdr->p_paddr));
+            }
         }
-        else {
-            fo->rewrite(&elfout, sz_elf_hdrs);
-        }
+        fo->rewrite(&elfout, sizeof(Elf32_Phdr) * o_phnum + sizeof(Elf32_Ehdr));
+        fo->seek(sz_elf_hdrs, SEEK_SET);  // skip over PT_NOTE bodies, if any
         fo->rewrite(&linfo, sizeof(linfo));
     }
 }

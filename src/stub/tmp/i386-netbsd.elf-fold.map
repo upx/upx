@@ -9,47 +9,48 @@ Linker script and memory map
 TARGET(elf32-i386)
                 0x0000000000c01080                . = ((0xc01000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000c01080      0x694
+.text           0x0000000000c01080      0x68c
  *(.text)
- .text          0x0000000000c01080       0xcc tmp/i386-openbsd.elf-fold.o
- .text          0x0000000000c0114c      0x558 tmp/i386-bsd.elf-main.o
-                0x0000000000c0156c                upx_main
- .text          0x0000000000c016a4       0x6d tmp/i386-bsd.syscall.o
-                0x0000000000c0170d                waitpid
-                0x0000000000c016e1                munmap
-                0x0000000000c016f5                execve
-                0x0000000000c016ed                getpid
-                0x0000000000c016fd                ftruncate
-                0x0000000000c016a4                mmap
-                0x0000000000c01705                nanosleep
-                0x0000000000c016d5                write
-                0x0000000000c016d1                read
-                0x0000000000c01709                unlink
-                0x0000000000c016f9                fork
-                0x0000000000c01701                gettimeofday
-                0x0000000000c016e9                access
-                0x0000000000c016c9                exit
-                0x0000000000c016c8                brk
-                0x0000000000c016d9                open
-                0x0000000000c016e5                mprotect
-                0x0000000000c016f1                fcntl
-                0x0000000000c016dd                close
+ .text          0x0000000000c01080       0xc2 tmp/i386-bsd.elf-fold.o
+ *fill*         0x0000000000c01142        0x2 00
+ .text          0x0000000000c01144      0x558 tmp/i386-bsd.elf-main.o
+                0x0000000000c01564                upx_main
+ .text          0x0000000000c0169c       0x6d tmp/i386-bsd.syscall.o
+                0x0000000000c01705                waitpid
+                0x0000000000c016d9                munmap
+                0x0000000000c016ed                execve
+                0x0000000000c016e5                getpid
+                0x0000000000c016f5                ftruncate
+                0x0000000000c0169c                mmap
+                0x0000000000c016fd                nanosleep
+                0x0000000000c016cd                write
+                0x0000000000c016c9                read
+                0x0000000000c01701                unlink
+                0x0000000000c016f1                fork
+                0x0000000000c016f9                gettimeofday
+                0x0000000000c016e1                access
+                0x0000000000c016c1                exit
+                0x0000000000c016c0                brk
+                0x0000000000c016d1                open
+                0x0000000000c016dd                mprotect
+                0x0000000000c016e9                fcntl
+                0x0000000000c016d5                close
  *(.data)
- *fill*         0x0000000000c01711        0x3 00
- .data          0x0000000000c01714        0x0 tmp/i386-openbsd.elf-fold.o
- .data          0x0000000000c01714        0x0 tmp/i386-bsd.elf-main.o
- .data          0x0000000000c01714        0x0 tmp/i386-bsd.syscall.o
+ *fill*         0x0000000000c01709        0x3 00
+ .data          0x0000000000c0170c        0x0 tmp/i386-bsd.elf-fold.o
+ .data          0x0000000000c0170c        0x0 tmp/i386-bsd.elf-main.o
+ .data          0x0000000000c0170c        0x0 tmp/i386-bsd.syscall.o
 
 .data
 
-.bss            0x0000000000c01714        0x0
- .bss           0x0000000000c01714        0x0 tmp/i386-openbsd.elf-fold.o
- .bss           0x0000000000c01714        0x0 tmp/i386-bsd.elf-main.o
- .bss           0x0000000000c01714        0x0 tmp/i386-bsd.syscall.o
+.bss            0x0000000000c0170c        0x0
+ .bss           0x0000000000c0170c        0x0 tmp/i386-bsd.elf-fold.o
+ .bss           0x0000000000c0170c        0x0 tmp/i386-bsd.elf-main.o
+ .bss           0x0000000000c0170c        0x0 tmp/i386-bsd.syscall.o
 
-.rel.dyn        0x0000000000c01714        0x0
- .rel.text      0x0000000000000000        0x0 tmp/i386-openbsd.elf-fold.o
-LOAD tmp/i386-openbsd.elf-fold.o
+.rel.dyn        0x0000000000c0170c        0x0
+ .rel.text      0x0000000000000000        0x0 tmp/i386-bsd.elf-fold.o
+LOAD tmp/i386-bsd.elf-fold.o
 LOAD tmp/i386-bsd.elf-main.o
 LOAD tmp/i386-bsd.syscall.o
 OUTPUT(tmp/i386-netbsd.elf-fold.bin elf32-i386)

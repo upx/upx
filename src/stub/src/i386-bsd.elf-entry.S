@@ -132,10 +132,13 @@ section LEXEC020
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
 #define MAP_ANONYMOUS 0x1000
+FD_MAP_ANON = -1
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
-#define SYS_mmap     477
+#ifndef SYS_mmap  /*{*/
+#define SYS_mmap     197
+#endif  /*}*/
 #define szElf32_Ehdr 0x34
 #define p_memsz  5*4
 
@@ -188,18 +191,19 @@ section LEXEC025
                 // mmap a page to hold the decompressed fold_elf86
         xor ecx, ecx  // %ecx= 0
         push ecx; push ecx  // 64-bit offset
-        push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
+        push ecx  // OpenBSD 4.8, NetBSD 5.1 extra arg between fd and offset?
+        push FD_MAP_ANON  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
         push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
         mov ch, PAGE_SIZE >> 8  // %ecx= PAGE_SIZE
         push PROT_READ | PROT_WRITE | PROT_EXEC
         push ecx  // length
         push eax  // destination
-        push eax  // fake return address
+        push edx  // save &Elf32_Ehdr of this program
         mov eax, SYS_mmap
-        int 0x80  // changes only %eax; %edx is live
+        int 0x80  // returns eax; NetBSD clobbers edx
         jb fail_mmap
-        xchg eax, edx  // %edx= page after .text; %eax= &Elf32_Ehdr of this program
-        xchg eax, ebx  // %ebx= &Elf32_Ehdr of this program
+        xchg eax, edx  // %edx= page after .text
+        pop ebx; push ebx  // %ebx= &Elf32_Ehdr of this program
 
         cld
         lodsd
@@ -214,7 +218,7 @@ section LEXEC025
         mov [4*3 + esp],eax
         push esi  // &compressed_data
         call ebp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
-        add esp, (5+1 + 8)*4  // (5+1) args to decompress, 8 "args" to mmap
+        add esp, (5+1 + 8+1)*4  // (5+1) args to decompress, 8+1 "args" to mmap
 
         ret      // &destination
 main:

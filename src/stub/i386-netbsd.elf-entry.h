@@ -1,5 +1,5 @@
-/* i386-bsd.elf-entry.h
-   created from i386-bsd.elf-entry.bin, 38067 (0x94b3) bytes
+/* i386-netbsd.elf-entry.h
+   created from i386-netbsd.elf-entry.bin, 38067 (0x94b3) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_I386_BSD_ELF_ENTRY_SIZE    38067
-#define STUB_I386_BSD_ELF_ENTRY_ADLER32 0xb531f4d9
-#define STUB_I386_BSD_ELF_ENTRY_CRC32   0x0dce684c
+#define STUB_I386_NETBSD_ELF_ENTRY_SIZE    38067
+#define STUB_I386_NETBSD_ELF_ENTRY_ADLER32 0xb531f4d9
+#define STUB_I386_NETBSD_ELF_ENTRY_CRC32   0x0dce684c
 
-unsigned char stub_i386_bsd_elf_entry[38067] = {
+unsigned char stub_i386_netbsd_elf_entry[38067] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0,  3,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 152, 34,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,

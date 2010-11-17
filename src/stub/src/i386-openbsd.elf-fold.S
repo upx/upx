@@ -113,10 +113,9 @@ L50:
 L53:
         push eax  // dynbase
 
-        mov esi, [e_entry + ebx]  // end of compressed data
-        mov eax, [szElf32_Ehdr + 2*szElf32_Phdr + p_memsz + ebx]  // PT_NOTE.p_memsz
-        lea eax, [szElf32_Ehdr + 3*szElf32_Phdr + eax + szl_info + szp_info + ebx]  // 1st &b_info
-        sub esi, eax  // length of compressed data
+        mov eax, [e_entry + ebx]  // end of compressed data
+        mov esi, [-2*4 + eax]  // length of compressed data
+        sub eax, esi  // 1st &b_info
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
         add ecx, szb_info
