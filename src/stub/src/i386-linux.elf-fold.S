@@ -238,56 +238,5 @@ mmap: .globl mmap
         pop ebx
         ret
 
-#ifndef DEBUG  /*{*/
-#define DEBUG 0
-#endif  /*}*/
-
-#if DEBUG  /*{ truly-PIC string constants for debugging */
-        .globl STR_0x
-STR_0x:
-        call 0f; .asciz "0x"; 0:
-        pop eax; ret
-
-        .globl STR_hex
-STR_hex:
-        call 0f; .asciz "0123456789abcdef"; 0:
-        pop eax; ret
-
-        .globl STR_xread
-STR_xread:
-        call 0f; .asciz "xread %p(%x %p) %p %x\n"; 0:
-        pop eax; ret
-
-        .globl STR_unpackExtent
-STR_unpackExtent:
-        call 0f; .asciz "unpackExtent in=%p(%x %p)  out=%p(%x %p)  %p %p\n"; 0:
-        pop eax; ret
-
-        .globl STR_make_hatch_arm
-STR_make_hatch_arm:
-        call 0f; .asciz "make_hatch_arm %p %x\n"; 0:
-        pop eax; ret
-
-        .globl STR_auxv_up
-STR_auxv_up:
-        call 0f; .asciz "auxv_up  %p %x %x\n"; 0:
-        pop eax; ret
-
-        .globl STR_xfind_pages
-STR_xfind_pages:
-        call 0f; .asciz "xfind_pages  %x  %p  %d  %p\n"; 0:
-        pop eax; ret
-
-        .globl STR_do_xmap
-STR_do_xmap:
-        call 0f; .asciz "do_xmap  fdi=%x  ehdr=%p  xi=%p(%x %p)  av=%p  p_reloc=%p  f_unf=%p\n"; 0:
-        pop eax; ret
-
-        .globl STR_upx_main
-STR_upx_main:
-        call 0f; .asciz "upx_main av=%p  szc=%x  f_dec=%p  f_unf=%p  xo=%p(%x %p)  xi=%p(%x %p)  dynbase=%x\n"; 0:
-        pop eax; ret
-#endif  /*}*/
-
 // vi:ts=8:et:nowrap
 

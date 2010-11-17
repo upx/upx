@@ -59,6 +59,46 @@ ssize_t write(int, void const *, size_t);
 #define va_start    __builtin_va_start
 #endif
 
+#if defined(__i386__)  /*{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "call 0f; .asciz \"" value "\"; \
+      0: pop %0;" : "=a"(var) : \
+    )
+#elif defined(__arm__)  /*}{*/
+    __asm__ __volatile__ ( \
+        "mov r0,pc; ret; \
+        .asciz \"" value "\"; .balign 4" : "=a"(var) : \
+    )
+#elif defined(__mips__)  /*}{*/
+    __asm__ __volatile__ ( \
+        "mov at,ra; bal 0f; move v0,ra; \
+        .asciz \"" value "\"; .balign 4; \
+      0: jr at; nop" : "=a"(var) : \
+    )
+#endif  /*}*/
+
+
+#define DEBUG_STRCON(name, value) \
+    static char const *name(void) \
+    { \
+        char *rv; PIC_STRING(value, rv); \
+        return rv; \
+    }
+    
+DEBUG_STRCON(STR_hex, "0123456789abcdef");
+DEBUG_STRCON(STR_xread, "xread %%p(%%x %%p) %%p %%x\\n")
+DEBUG_STRCON(STR_unpackExtent,
+        "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
+DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x\\n");
+DEBUG_STRCON(STR_auxv_up, "auxv_up  %%p %%x %%x\\n");
+DEBUG_STRCON(STR_xfind_pages, "xfind_pages  %%x  %%p  %%d  %%p\\n");
+DEBUG_STRCON(STR_do_xmap, 
+    "do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  p_reloc=%%p  f_unf=%%p\\n")
+DEBUG_STRCON(STR_upx_main,
+    "upx_main av=%%p  szc=%%x  f_dec=%%p  f_unf=%%p  "
+    "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  dynbase=%%x\\n")
+
 #ifdef __arm__  /*{*/
 extern unsigned div10(unsigned);
 #else  /*}{*/
@@ -106,15 +146,6 @@ heximal(unsigned x, char *ptr, int n)
 
 
 #define DPRINTF(a) dprintf a
-extern char const *STR_0x(void);
-extern char const *STR_xread(void);
-extern char const *STR_unpackExtent(void);
-extern char const *STR_make_hatch_arm(void);
-extern char const *STR_auxv_up(void);
-extern char const *STR_xfind_pages(void);
-extern char const *STR_do_xmap(void);
-extern char const *STR_upx_main(void);
-
 
 static int
 dprintf(char const *fmt, ...)
@@ -290,6 +321,7 @@ static void *
 make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
+    DPRINTF((STR_make_hatch(),phdr,reloc));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -328,7 +360,7 @@ make_hatch_arm(
 )
 {
     unsigned *hatch = 0;
-    DPRINTF((STR_make_hatch_arm(),phdr,reloc));
+    DPRINTF((STR_make_hatch(),phdr,reloc));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
