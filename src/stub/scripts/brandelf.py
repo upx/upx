@@ -89,7 +89,7 @@ def do_file(fn):
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "linux":
             brand_linux("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "netbsd":
-            brand_openbsd("\x01\x01\x01")
+            brand_netbsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-i386" and opts.elfosabi == "openbsd":
             brand_openbsd("\x01\x01\x01")
         elif opts.bfdname == "elf32-littlearm" and opts.elfosabi == "arm":
