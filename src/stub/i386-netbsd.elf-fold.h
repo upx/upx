@@ -32,11 +32,11 @@
 
 
 #define STUB_I386_NETBSD_ELF_FOLD_SIZE    1801
-#define STUB_I386_NETBSD_ELF_FOLD_ADLER32 0x4e60064e
-#define STUB_I386_NETBSD_ELF_FOLD_CRC32   0xaf3043d8
+#define STUB_I386_NETBSD_ELF_FOLD_ADLER32 0x084c0644
+#define STUB_I386_NETBSD_ELF_FOLD_CRC32   0xf944f014
 
 unsigned char stub_i386_netbsd_elf_fold[1801] = {
-/* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 12,  0,  0,  0,  0,  0,  0,  0,  0,
+/* 0x0000 */ 127, 69, 76, 70,  1,  1,  1,  2,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   2,  0,  3,  0,  1,  0,  0,  0,128, 16,192,  0, 52,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,
 /* 0x0030 */   0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0, 16,192,  0,
