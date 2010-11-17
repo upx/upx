@@ -1864,7 +1864,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (phdr->PT_NOTE32 == get_te32(&phdr->p_type)) {
-            note_size += ~3u & (3+ get_te32(&phdr->p_filesz));
+            note_size += up4(get_te32(&phdr->p_filesz));
         }
     }
     if (note_size) {
@@ -1878,7 +1878,7 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
             unsigned const len = get_te32(&phdr->p_filesz);
             fi->seek(get_te32(&phdr->p_offset), SEEK_SET);
             fi->readx(&note_body[note_size], len);
-            note_size += ~3u & (3+ len);
+            note_size += up4(len);
         }
         if (phdr->PT_LOAD32 == type) {
             unsigned x = get_te32(&phdr->p_align) >> lg2_page;
@@ -1987,7 +1987,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (phdr->PT_NOTE64 == get_te32(&phdr->p_type)) {
-            note_size += ~3u & (3+ get_te64(&phdr->p_filesz));
+            note_size += up4(get_te64(&phdr->p_filesz));
         }
     }
     if (note_size) {
@@ -2001,7 +2001,7 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
             unsigned const len = get_te64(&phdr->p_filesz);
             fi->seek(get_te64(&phdr->p_offset), SEEK_SET);
             fi->readx(&note_body[note_size], len);
-            note_size += ~3u & (3+ len);
+            note_size += up4(len);
         }
         if (phdr->PT_LOAD64 == type) {
             unsigned x = get_te64(&phdr->p_align) >> lg2_page;
