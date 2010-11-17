@@ -49,6 +49,7 @@ ssize_t write(int, void const *, size_t);
 
 #if !DEBUG || defined(__mips__)  /*{*/
 #define DPRINTF(a) /* empty: no debug drivel */
+#define DEBUG_STRCON(name, value) /* empty */
 #else  /*}{ DEBUG */
 #if 0
 #include "stdarg.h"
@@ -86,18 +87,6 @@ ssize_t write(int, void const *, size_t);
         return rv; \
     }
     
-DEBUG_STRCON(STR_hex, "0123456789abcdef");
-DEBUG_STRCON(STR_xread, "xread %%p(%%x %%p) %%p %%x\\n")
-DEBUG_STRCON(STR_unpackExtent,
-        "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
-DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x\\n");
-DEBUG_STRCON(STR_auxv_up, "auxv_up  %%p %%x %%x\\n");
-DEBUG_STRCON(STR_xfind_pages, "xfind_pages  %%x  %%p  %%d  %%p\\n");
-DEBUG_STRCON(STR_do_xmap, 
-    "do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  p_reloc=%%p  f_unf=%%p\\n")
-DEBUG_STRCON(STR_upx_main,
-    "upx_main av=%%p  szc=%%x  f_dec=%%p  f_unf=%%p  "
-    "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  dynbase=%%x\\n")
 
 #ifdef __arm__  /*{*/
 extern unsigned div10(unsigned);
@@ -131,7 +120,7 @@ decimal(int x, char *ptr, int n)
     return unsimal(x, ptr, n);
 }
 
-extern char const *STR_hex(void);
+DEBUG_STRCON(STR_hex, "0123456789abcdef");
 
 static int
 heximal(unsigned x, char *ptr, int n)
@@ -195,6 +184,8 @@ typedef struct {
 } Extent;
 
 
+DEBUG_STRCON(STR_xread, "xread %%p(%%x %%p) %%p %%x\\n")
+
 static void
 #if (ACC_CC_GNUC >= 0x030300) && defined(__i386__)  /*{*/
 __attribute__((__noinline__, __used__, regparm(3), stdcall))
@@ -252,6 +243,9 @@ typedef void f_unfilter(
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
           nrv_byte *, nrv_uint *, unsigned );
+
+DEBUG_STRCON(STR_unpackExtent,
+        "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
 
 static void
 unpackExtent(
@@ -313,6 +307,8 @@ ERR_LAB
         xo->size -= h.sz_unc;
     }
 }
+
+DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x\\n");
 
 #if defined(__i386__)  /*{*/
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
@@ -395,7 +391,7 @@ make_hatch_mips(
     unsigned const frag_mask)
 {
     unsigned *hatch = 0;
-    DPRINTF((STR_make_hatch_arm(),phdr,reloc));
+    DPRINTF((STR_make_hatch(),phdr,reloc));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),
@@ -455,6 +451,8 @@ auxv_find(Elf32_auxv_t *av, unsigned const type)
     return 0;
 }
 
+DEBUG_STRCON(STR_auxv_up, "auxv_up  %%p %%x %%x\\n");
+
 static void
 #if defined(__i386__)  /*{*/
 __attribute__((regparm(3), stdcall))
@@ -480,6 +478,7 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
          |(REP8(PROT_WRITE) & EXP8(PF_W)) \
         ) >> ((pf & (PF_R|PF_W|PF_X))<<2) ))
 
+DEBUG_STRCON(STR_xfind_pages, "xfind_pages  %%x  %%p  %%d  %%p\\n");
 
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
@@ -524,6 +523,9 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     *p_brk = hi + addr;  // the logical value of brk(0)
     return (unsigned long)addr - lo;
 }
+
+DEBUG_STRCON(STR_do_xmap, 
+    "do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  p_reloc=%%p  f_unf=%%p\\n")
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
@@ -643,6 +645,10 @@ ERR_LAB
 }
 
 
+DEBUG_STRCON(STR_upx_main,
+    "upx_main av=%%p  szc=%%x  f_dec=%%p  f_unf=%%p  "
+    "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  dynbase=%%x\\n")
+
 /*************************************************************************
 // upx_main - called by our entry code
 //
@@ -669,7 +675,6 @@ void *upx_main(
     unsigned const volatile dynbase,
     unsigned const sys_munmap
 ) __asm__("upx_main");
-
 void *upx_main(
     Elf32_auxv_t *const av,
     unsigned const sz_compressed,
