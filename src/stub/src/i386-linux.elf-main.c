@@ -61,35 +61,33 @@ ssize_t write(int, void const *, size_t);
 
 #if defined(__i386__)  /*{*/
 #define PIC_STRING(value, var) \
-    char const *var; \
     __asm__ __volatile__ ( \
         "call 0f; .asciz \"" value "\"; \
-      0: pop %0;" : "=a"(var) : \
-    ); \
-    return var;
+      0: pop %0;" : "=r"(var) : \
+    )
 #elif defined(__arm__)  /*}{*/
 #define PIC_STRING(value, var) \
-    char const *var; \
     __asm__ __volatile__ ( \
-        "mov r0,pc; ret; \
-        .asciz \"" value "\"; .balign 4" : "=a"(var) : \
-    ); \
-    return var;
+        "mov %0,pc; b 0f; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " : "=r"(var) \
+    )
 #elif defined(__mips__)  /*}{*/
 #define PIC_STRING(value, var) \
-    register char const *var; \
     __asm__ __volatile__ ( \
         ".set noreorder; bal 0f; move %0,$31; .set reorder; \
         .asciz \"" value "\"; .balign 4; \
       0: " \
         : "=r"(var) : : "ra" \
-    ); \
-    return var;
+    )
 #endif  /*}*/
 
 
-#define DEBUG_STRCON(name, value) \
-    static char const *name(void) { PIC_STRING(value, rv); }
+#define DEBUG_STRCON(name, strcon) \
+    static char const *name(void) { \
+        register char const *rv; PIC_STRING(strcon, rv); \
+        return rv; \
+    }
     
 
 #ifdef __arm__  /*{*/
