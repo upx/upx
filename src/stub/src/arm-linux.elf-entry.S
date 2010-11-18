@@ -86,7 +86,7 @@ _start: .globl _start
 // usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
 // one word closer to the stack pointer because r13 has been omitted.
 
-        stmdb sp!,{TRACE_REGS}; bl trace1
+        stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
         adr r12,start_params -4  // &sz_pack2
         ldmia r12,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
@@ -112,7 +112,7 @@ D_sz_unc=2*4  // stack displacement to sz_unc
         swi __NR_mmap64
 #endif  /*}*/
 #if DEBUG  /*{*/
-        stmdb sp!,{TRACE_REGS}; bl trace2
+        stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
         cmn r0,#4096
         bcs msg_SELinux
@@ -151,29 +151,20 @@ D_stm1=2*4
         str  r3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
         add  r3, sp,#D_stm1 + D_sz_unc   // &sz_unc
 #if DEBUG  /*{*/
-        stmdb sp!,{TRACE_REGS}; bl trace3
+        stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
         mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
         ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
 
 #if DEBUG  /*{*/
-trace3:
-        add r0,r0,#1
-trace2:
-        add r0,r0,#1
-trace1:
-        add r0,r0,#1
-trace0:
-
 TRACE_BUFLEN=512
-trace_print:
+trace:
         str lr,[sp,#(-1+ 15)*4]  @ return pc; [remember: sp is not stored]
         mov r4,sp  @ &saved_r0
-        ldr r1,[sp]  @ saved r0
         sub sp,sp,#TRACE_BUFLEN
         mov r2,sp  @ output string
 
-        sub r0,r0,r1; mov r1,#'\n'; bl trace_hex  @ which trace
+        mov r1,#'\n'; bl trace_hex  @ In: r0 as label
         mov r1,#'>';  strb r1,[r2],#1
 
         mov r5,#3  @ rows to print
