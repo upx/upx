@@ -77,12 +77,12 @@ ssize_t write(int, void const *, size_t);
     return var;
 #elif defined(__mips__)  /*}{*/
 #define PIC_STRING(value, var) \
-    register char const *rv; \
+    register char const *var; \
     __asm__ __volatile__ ( \
         ".set noreorder; bal 0f; move %0,$31; .set reorder; \
         .asciz \"" value "\"; .balign 4; \
       0: " \
-        : "=r"(rv) : : "ra" \
+        : "=r"(var) : : "ra" \
     ); \
     return var;
 #endif  /*}*/
