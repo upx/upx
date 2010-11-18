@@ -62,6 +62,7 @@ __NR_munmap   =  91+ __NR_Linux
 __NR_open     =   5+ __NR_Linux
 __NR_read     =   3+ __NR_Linux
 __NR_readlink =  85+ __NR_Linux
+__NR_write    =   4+ __NR_Linux
 
 PATHSIZE=4096
 OVERHEAD=2048
@@ -183,6 +184,8 @@ sysret:
           or v0,v0,tmp
 read: .globl read
         b sysgo; li v0,__NR_read
+write: .globl write
+        b sysgo; li v0,__NR_write
 open: .globl open
         b sysgo; li v0,__NR_open
 close: .globl close

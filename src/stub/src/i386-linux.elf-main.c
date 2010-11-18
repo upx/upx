@@ -29,6 +29,9 @@
    <jreiser@users.sourceforge.net>
  */
 
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
@@ -43,11 +46,7 @@ ssize_t write(int, void const *, size_t);
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#ifndef DEBUG  /*{*/
-#define DEBUG 0
-#endif  /*}*/
-
-#if !DEBUG || defined(__mips__)  /*{*/
+#if !DEBUG  /*{*/
 #define DPRINTF(a) /* empty: no debug drivel */
 #define DEBUG_STRCON(name, value) /* empty */
 #else  /*}{ DEBUG */
@@ -62,30 +61,35 @@ ssize_t write(int, void const *, size_t);
 
 #if defined(__i386__)  /*{*/
 #define PIC_STRING(value, var) \
+    char const *var; \
     __asm__ __volatile__ ( \
         "call 0f; .asciz \"" value "\"; \
       0: pop %0;" : "=a"(var) : \
-    )
+    ); \
+    return var;
 #elif defined(__arm__)  /*}{*/
+#define PIC_STRING(value, var) \
+    char const *var; \
     __asm__ __volatile__ ( \
         "mov r0,pc; ret; \
         .asciz \"" value "\"; .balign 4" : "=a"(var) : \
-    )
+    ); \
+    return var;
 #elif defined(__mips__)  /*}{*/
+#define PIC_STRING(value, var) \
+    register char const *rv asm("v0"); \
     __asm__ __volatile__ ( \
-        "mov at,ra; bal 0f; move v0,ra; \
+        ".set noreorder; bal 0f; move %0,$31; .set reorder; \
         .asciz \"" value "\"; .balign 4; \
-      0: jr at; nop" : "=a"(var) : \
-    )
+      0: " \
+        : "+r"(rv) \
+    ); \
+    return var;
 #endif  /*}*/
 
 
 #define DEBUG_STRCON(name, value) \
-    static char const *name(void) \
-    { \
-        char *rv; PIC_STRING(value, rv); \
-        return rv; \
-    }
+    static char const *name(void) { PIC_STRING(value, rv); }
     
 
 #ifdef __arm__  /*{*/
@@ -701,6 +705,10 @@ void *upx_main(
     xo.size = bi->sz_unc;
     xi.buf = CONST_CAST(char *, bi); xi.size = sz_compressed;
     xj.buf = CONST_CAST(char *, bi); xj.size = sz_compressed;
+
+    DPRINTF((STR_upx_main(),
+        av, sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        &xi, xi.size, xi.buf, dynbase));
 
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xj, &xo, f_decompress, 0);  // never filtered?

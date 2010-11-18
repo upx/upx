@@ -511,7 +511,7 @@ static ssize_t open(char const *path, int kind, int mode)
     return v0;
 }
 
-#if 0  /*{ UNUSED */
+#if DEBUG  /*{*/
 static ssize_t write(int fd, void const *buf, size_t len)
 {
 #define __NR_write (4+ 4000)
@@ -520,7 +520,7 @@ static ssize_t write(int fd, void const *buf, size_t len)
     register size_t       const a2 asm("a2") = len;
     register size_t             v0 asm("v0") = __NR_write;
     __asm__ __volatile__(
-        "bal sysgo"
+        "b sysgo"
     : "+r"(v0)
     : "r"(a0), "r"(a1), "r"(a2)
     : "a3"
