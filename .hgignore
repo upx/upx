@@ -42,7 +42,9 @@ src/*.ttp
 
 stub/**MMakefile
 stub/**.*-stamp
-stub/tmp*/*
+##stub/tmp*/*
+stub/tmp*/*.{bin,bin.bindump,bin.disasm,d,map,o,o.disasm}
+stub/tmp*/mips{,el}.r3000-*.{i,s}
 stub/**/tmp*/*
 
 stub/tools/armpe/armpe_tester{,.exe,.out}
