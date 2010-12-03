@@ -53,27 +53,27 @@ STUBS += amd64-darwin.macho-entry.h
 STUBS += amd64-darwin.macho-fold.h
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
-STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
+STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
-STUBS += armel-eabi-linux.elf-entry.h
-STUBS += armel-eabi-linux.elf-fold.h
-STUBS += armel-eabi-linux.shlib-init.h
 STUBS += arm-darwin.macho-entry.h
 STUBS += arm-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
-STUBS += arm-linux.kernel.vmlinux.h
 STUBS += arm-linux.kernel.vmlinux-head.h
+STUBS += arm-linux.kernel.vmlinux.h
 STUBS += arm-linux.shlib-init.h
-STUBS += armeb-linux.elf-entry.h
-STUBS += armeb-linux.elf-fold.h
-STUBS += armeb-linux.kernel.vmlinux.h
-STUBS += armeb-linux.kernel.vmlinux-head.h
-STUBS += armel-linux.kernel.vmlinuz.h
-STUBS += armel-linux.kernel.vmlinuz-head.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
+STUBS += armeb-linux.elf-entry.h
+STUBS += armeb-linux.elf-fold.h
+STUBS += armeb-linux.kernel.vmlinux-head.h
+STUBS += armeb-linux.kernel.vmlinux.h
+STUBS += armel-eabi-linux.elf-entry.h
+STUBS += armel-eabi-linux.elf-fold.h
+STUBS += armel-eabi-linux.shlib-init.h
+STUBS += armel-linux.kernel.vmlinuz-head.h
+STUBS += armel-linux.kernel.vmlinuz.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
@@ -85,11 +85,8 @@ STUBS += i386-darwin.dylib-entry.h
 # STUBS += i386-darwin.dylib-fold.h
 STUBS += i386-darwin.macho-entry.h
 STUBS += i386-darwin.macho-fold.h
-STUBS += i386-netbsd.elf-entry.h
-STUBS += i386-netbsd.elf-fold.h
-STUBS += i386-openbsd.elf-fold.h
-STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.djgpp2-stubify.h
+STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.tmt.h
 STUBS += i386-dos32.watcom.le.h
 STUBS += i386-linux.elf-entry.h
@@ -100,10 +97,13 @@ STUBS += i386-linux.elf.interp-entry.h
 STUBS += i386-linux.elf.interp-fold.h
 STUBS += i386-linux.elf.shell-entry.h
 STUBS += i386-linux.elf.shell-fold.h
-STUBS += i386-linux.kernel.vmlinux.h
 STUBS += i386-linux.kernel.vmlinux-head.h
+STUBS += i386-linux.kernel.vmlinux.h
 STUBS += i386-linux.kernel.vmlinuz.h
 STUBS += i386-linux.shlib-init.h
+STUBS += i386-netbsd.elf-entry.h
+STUBS += i386-netbsd.elf-fold.h
+STUBS += i386-openbsd.elf-fold.h
 STUBS += i386-win32.pe.h
 STUBS += m68k-atari.tos.h
 STUBS += mips.r3000-linux.elf-entry.h
@@ -116,8 +116,8 @@ STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
 STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
-STUBS += powerpc-linux.kernel.vmlinux.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
+STUBS += powerpc-linux.kernel.vmlinux.h
 STUBS += thumb-eabi-linux.shlib-init.h
 endif
 
@@ -400,6 +400,7 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
+
 # /***********************************************************************
 # // armel-eabi-linux.shlib
 # ************************************************************************/
@@ -458,6 +459,7 @@ tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
+
 
 # /***********************************************************************
 # // arm-linux.elf
@@ -1203,6 +1205,7 @@ powerpc-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
+
 
 # /***********************************************************************
 # // powerpc-linux.elf

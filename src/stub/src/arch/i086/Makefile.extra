@@ -56,7 +56,7 @@ WINEPATH_EXE:= $(shell which winepath 2>/dev/null)
 endif
 ifdef WINE_EXE
 ##WINEENV = @env
-WINEENV = @env -i $(call __minienv_expand,DISPLAY HOME LANG LC_ALL PATH USER TERM WINEDEBUG WINEPATH WINEPREFIX)
+WINEENV = @env -i $(call __minienv_expand,$(sort DISPLAY HOME LANG LC_ALL PATH USER TERM WINEDEBUG WINEPATH WINEPREFIX $(WINEENV_EXTRA_VARNAMES)))
 ifdef WINEPREFIX
 winedir_s = z:$(shell WINEPREFIX='$(WINEPREFIX)' $(WINEPATH_EXE) -s '$(realpath $1)')
 winedir_w =   $(shell WINEPREFIX='$(WINEPREFIX)' $(WINEPATH_EXE) -w '$(realpath $1)')
