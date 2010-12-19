@@ -365,6 +365,7 @@ unsigned PackW32Pe::processImports() // pass 1
         unsigned   iat;
         LE32       *lookupt;
         unsigned   npos;
+        unsigned   original_position;
         bool       isk32;
 
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
@@ -373,6 +374,8 @@ unsigned PackW32Pe::processImports() // pass 1
             const udll *u2 = * (const udll * const *) p2;
             if (u1->isk32) return -1;
             if (u2->isk32) return 1;
+            if (!*u1->lookupt) return 1;
+            if (!*u2->lookupt) return -1;
             int rc = strcasecmp(u1->name,u2->name);
             if (rc) return rc;
             if (u1->ordinal) return -1;
@@ -399,6 +402,7 @@ unsigned PackW32Pe::processImports() // pass 1
         dlls[ic].iat = im->iat;
         dlls[ic].lookupt = (LE32*) (ibuf + (im->oft ? im->oft : im->iat));
         dlls[ic].npos = 0;
+        dlls[ic].original_position = ic;
         dlls[ic].isk32 = strcasecmp(kernel32dll,dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
@@ -510,8 +514,10 @@ unsigned PackW32Pe::processImports() // pass 1
     for (ic = 0; ic < dllnum; ic++)
     {
         LE32 *tarr = idlls[ic]->lookupt;
+#if 0 && ENABLE_THIS_AND_UNCOMPRESSION_WILL_BREAK
         if (!*tarr)  // no imports from this dll
             continue;
+#endif
         set_le32(ppi,idlls[ic]->npos);
         set_le32(ppi+4,idlls[ic]->iat - rvamin);
         ppi += 8;
@@ -579,7 +585,7 @@ unsigned PackW32Pe::processImports() // pass 1
         for (ic = 0; ic < dllnum; ic++, im++)
         {
             memset(im,FILLVAL,sizeof(*im));
-            im->dllname = ptr_diff(idlls[ic]->name,ibuf); // I only need this info
+            im->dllname = ptr_diff(dlls[idlls[ic]->original_position].name,ibuf);
         }
     }
     else
