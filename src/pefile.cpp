@@ -1698,6 +1698,8 @@ void PeFile::unpack(OutputFile *fo)
     extrainfo += sizeof (oh);
     unsigned objs = oh.objects;
 
+    if ((int) objs <= 0)
+        throwCantUnpack("unexpected value in the PE header");
     Array(pe_section_t, osection, objs);
     memcpy(osection,extrainfo,sizeof(pe_section_t) * objs);
     rvamin = osection[0].vaddr;

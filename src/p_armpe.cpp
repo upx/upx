@@ -244,7 +244,7 @@ unsigned PackArmPe::processImports() // pass 1
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
-        for (LE32 *tarr = dlls[ic].lookupt; *tarr; tarr++)
+        for (IPTR_I(LE32, tarr, dlls[ic].lookupt); *tarr; tarr += 1)
         {
             if (*tarr & 0x80000000)
             {
@@ -256,10 +256,12 @@ unsigned PackArmPe::processImports() // pass 1
             }
             else
             {
-                unsigned len = strlen(ibuf + *tarr + 2);
+            {
+                IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
+                unsigned len = strlen(n);
                 soimport += len + 1;
                 if (dlls[ic].shname == NULL || len < strlen (dlls[ic].shname))
-                    dlls[ic].shname = ibuf + *tarr + 2;
+                    dlls[ic].shname = n;
             }
             soimport++; // separator
         }
