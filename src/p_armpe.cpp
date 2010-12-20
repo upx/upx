@@ -256,7 +256,6 @@ unsigned PackArmPe::processImports() // pass 1
             }
             else
             {
-            {
                 IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
                 unsigned len = strlen(n);
                 soimport += len + 1;
