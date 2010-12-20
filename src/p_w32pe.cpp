@@ -183,6 +183,8 @@ int PackW32Pe::readFileHeader()
 // the virtual memory manager only for pages which are not yet loaded.
 // of course it was impossible to debug this ;-)
 
+#define TLS_CB_ALIGNMENT 4u   // alignment of tls callbacks
+
 __packed_struct(tls)
     LE32 datastart; // VA tls init data start
     LE32 dataend;   // VA tls init data end
@@ -211,13 +213,6 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         unsigned v = get_le32(ibuf + tlsp->callbacks - ih.imagebase);
 
         //NEW: TLS callback support - Stefan Widmann
-#if 0
-        if (v != 0)
-        {
-            //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
-            throwCantPack("TLS callbacks are not supported");
-        }
-#endif
         if(v != 0)
         {
             //count number of callbacks, just for information string - Stefan Widmann
@@ -248,8 +243,11 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
         if (pos >= tlsdatastart && pos < tlsdataend)
             iv->add(pos,type);
 
-    //NEW: if TLS callbacks are used, we need two more DWORDS at the end of the TLS
-    sotls = sizeof(tls) + tlsdataend - tlsdatastart + (use_tls_callbacks ? 8 : 0);
+    sotls = sizeof(tls) + tlsdataend - tlsdatastart;
+    // if TLS callbacks are used, we need two more DWORDS at the end of the TLS
+    // ... and those dwords should be correctly aligned
+    if (use_tls_callbacks)
+        sotls = ALIGN_UP(sotls, TLS_CB_ALIGNMENT) + 8;
 
     // the PE loader wants this stuff uncompressed
     otls = new upx_byte[sotls];
@@ -293,8 +291,8 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
     }
 
     tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
-    //NEW: subtract the size of the callback chain from dataend - Stefan Widmann
-    tlsp->dataend = newaddr + sotls + ih.imagebase - (use_tls_callbacks ? 8 : 0);
+    const tls * const itlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+    tlsp->dataend = tlsp->datastart + itlsp->dataend - itlsp->datastart;
 
     //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
     tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + ih.imagebase - 8 : 0);
