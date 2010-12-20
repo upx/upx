@@ -314,6 +314,7 @@ L220:
 section LUNMP000
 section LUNMP001
 section LEXEC025
+section LEXECDYN
 
 // vi:ts=8:et:nowrap
 
