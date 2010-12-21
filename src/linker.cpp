@@ -45,6 +45,18 @@ static bool update_capacity(unsigned size, unsigned *capacity)
     return true;
 }
 
+static __acc_cdecl_va void internal_error(const char *format, ...)
+{
+    char buf[1024];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(buf, sizeof(buf), format, ap);
+    va_end(ap);
+
+    throwInternalError(buf);
+}
+
 
 /*************************************************************************
 // Section
@@ -317,10 +329,7 @@ ElfLinker::Section *ElfLinker::findSection(const char *name, bool fatal) const
         if (strcmp(sections[ic]->name, name) == 0)
             return sections[ic];
     if (fatal)
-    {
-        printf("unknown section %s\n", name);
-        abort();
-    }
+        internal_error("unknown section %s\n", name);
     return NULL;
 }
 
@@ -330,10 +339,7 @@ ElfLinker::Symbol *ElfLinker::findSymbol(const char *name, bool fatal) const
         if (strcmp(symbols[ic]->name, name) == 0)
             return symbols[ic];
     if (fatal)
-    {
-        printf("unknown symbol %s\n", name);
-        abort();
-    }
+        internal_error("unknown symbol %s\n", name);
     return NULL;
 }
 
@@ -502,17 +508,11 @@ void ElfLinker::relocate()
         }
         else if (strcmp(rel->value->section->name, "*UND*") == 0 &&
                  rel->value->offset == 0xdeaddead)
-        {
-            printf("undefined symbol '%s' referenced\n", rel->value->name);
-            abort();
-        }
+            internal_error("undefined symbol '%s' referenced\n", rel->value->name);
         else if (rel->value->section->output == NULL)
-        {
-            printf("can not apply reloc '%s:%x' without section '%s'\n",
-                   rel->section->name, rel->offset,
-                   rel->value->section->name);
-            abort();
-        }
+            internal_error("can not apply reloc '%s:%x' without section '%s'\n",
+                           rel->section->name, rel->offset,
+                           rel->value->section->name);
         else
         {
             value = rel->value->section->offset +
@@ -529,10 +529,7 @@ void ElfLinker::defineSymbol(const char *name, unsigned value)
 {
     Symbol *symbol = findSymbol(name);
     if (strcmp(symbol->section->name, "*ABS*") == 0)
-    {
-        printf("defineSymbol: symbol '%s' is *ABS*\n", name);
-        abort();
-    }
+        internal_error("defineSymbol: symbol '%s' is *ABS*\n", name);
     else if (strcmp(symbol->section->name, "*UND*") == 0) // for undefined symbols
         symbol->offset = value;
     else if (strcmp(symbol->section->name, name) == 0) // for sections
@@ -545,10 +542,7 @@ void ElfLinker::defineSymbol(const char *name, unsigned value)
         }
     }
     else
-    {
-        printf("defineSymbol: symbol '%s' already defined\n", name);
-        abort();
-    }
+        internal_error("defineSymbol: symbol '%s' already defined\n", name);
 }
 
 // debugging support
@@ -602,8 +596,7 @@ void ElfLinker::alignWithByte(unsigned len, unsigned char b)
 void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
                           unsigned, const char *)
 {
-    printf("unknown relocation type '%s\n", rel->type);
-    abort();
+    internal_error("unknown relocation type '%s\n", rel->type);
 }
 
 
@@ -616,16 +609,12 @@ void ElfLinker::relocate1(const Relocation *rel, upx_byte *,
 #if 0 // FIXME
 static void check8(const Relocation *rel, const upx_byte *location, int v, int d)
 {
-    if (v < -128 || v > 127) {
-        printf("value out of range (%d) in reloc %s:%x\n",
-               v, rel->section->name, rel->offset);
-        abort();
-    }
-    if (d < -128 || d > 127) {
-        printf("displacement target out of range (%d) in reloc %s:%x\n",
-               v, rel->section->name, rel->offset);
-        abort();
-    }
+    if (v < -128 || v > 127)
+        internal_error("value out of range (%d) in reloc %s:%x\n",
+                       v, rel->section->name, rel->offset);
+    if (d < -128 || d > 127)
+        internal_error("displacement target out of range (%d) in reloc %s:%x\n",
+                       v, rel->section->name, rel->offset);
 }
 #endif
 
@@ -651,11 +640,8 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
         int displ = (signed char) *location + (int) value;
 #endif
         if (displ < -128 || displ > 127)
-        {
-            printf("target out of range (%d) in reloc %s:%x\n",
-                   displ, rel->section->name, rel->offset);
-            abort();
-        }
+            internal_error("target out of range (%d) in reloc %s:%x\n",
+                           displ, rel->section->name, rel->offset);
         *location += value;
     }
     else if (strcmp(type, "16") == 0)
@@ -857,19 +843,15 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location,
 
     // Note that original (*location).displ is ignored.
     if (strcmp(type, "24") == 0) {
-        if (3& value) {
-            printf("unaligned word diplacement");
-            abort();
-        }
+        if (3& value)
+            internal_error("unaligned word diplacement");
         // FIXME: displacment overflow?
         set_be32(location, (0xfc000003 & get_be32(location)) +
             (0x03fffffc & value));
     }
     else if (strcmp(type, "14") == 0) {
-        if (3& value) {
-            printf("unaligned word diplacement");
-            abort();
-        }
+        if (3& value)
+            internal_error("unaligned word diplacement");
         // FIXME: displacment overflow?
         set_be32(location, (0xffff0003 & get_be32(location)) +
             (0x0000fffc & value));
@@ -901,11 +883,9 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
 #else
         int displ = (signed char) *location + (int) value;
 #endif
-        if (range_check && (displ < -128 || displ > 127)) {
-            printf("target out of range (%d,%d,%d) in reloc %s:%x\n",
-                   displ, *location, value, rel->section->name, rel->offset);
-            abort();
-        }
+        if (range_check && (displ < -128 || displ > 127))
+            internal_error("target out of range (%d,%d,%d) in reloc %s:%x\n",
+                           displ, *location, value, rel->section->name, rel->offset);
         *location += value;
     }
     else if (strcmp(type, "16") == 0)
