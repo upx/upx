@@ -45,7 +45,7 @@ static bool update_capacity(unsigned size, unsigned *capacity)
     return true;
 }
 
-static __acc_cdecl_va void internal_error(const char *format, ...)
+static void __acc_cdecl_va internal_error(const char *format, ...)
 {
     char buf[1024];
     va_list ap;
