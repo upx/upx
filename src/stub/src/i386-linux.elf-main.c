@@ -88,7 +88,7 @@ ssize_t write(int, void const *, size_t);
         register char const *rv; PIC_STRING(strcon, rv); \
         return rv; \
     }
-    
+
 
 #ifdef __arm__  /*{*/
 extern unsigned div10(unsigned);
@@ -526,7 +526,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     return (unsigned long)addr - lo;
 }
 
-DEBUG_STRCON(STR_do_xmap, 
+DEBUG_STRCON(STR_do_xmap,
     "do_xmap  fdi=%%x  ehdr=%%p  xi=%%p(%%x %%p)  av=%%p  p_reloc=%%p  f_unf=%%p\\n")
 
 static Elf32_Addr  // entry address

@@ -1665,7 +1665,7 @@ PackNetBSDElf32x86::generateElfHdr(
         cp += k;
         j += k;
     }
-    
+
     // Add PT_NOTE for the NetBSD note and PaX note, if any.
     note_offset += (np_NetBSD ? sizeof(Elf32_Phdr) : 0);
     note_offset += (np_PaX    ? sizeof(Elf32_Phdr) : 0);
