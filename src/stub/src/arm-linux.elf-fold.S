@@ -203,35 +203,35 @@ mmap:
 #if DEBUG  /*{*/
 
 div10: .globl div10
-	mov ip,r0  @ extra copy used at end
-	sub r1,r1,r1  @ hi
+        mov ip,r0  @ extra copy used at end
+        sub r1,r1,r1  @ hi
 
-	mov r2,r0  @ copy lo
-	adds r0,r0,r0,lsl #3   @ 9*lo
-	adc  r1,r1,r1,lsl #3   @ 9*hi + C
-	add  r1,r1,r2,lsr #(32 - 3)  @ bits shifted from lo to hi
+        mov r2,r0  @ copy lo
+        adds r0,r0,r0,lsl #3   @ 9*lo
+        adc  r1,r1,r1,lsl #3   @ 9*hi + C
+        add  r1,r1,r2,lsr #(32 - 3)  @ bits shifted from lo to hi
 
-	mov r2,r0  @ copy lo
-	adds r0,r0,r0,lsl #4
-	adc  r1,r1,r1,lsl #4
-	add  r1,r1,r2,lsr #(32 - 4)  @ * 0x99
+        mov r2,r0  @ copy lo
+        adds r0,r0,r0,lsl #4
+        adc  r1,r1,r1,lsl #4
+        add  r1,r1,r2,lsr #(32 - 4)  @ * 0x99
 
-	mov r2,r0  @ copy lo
-	adds r0,r0,r0,lsl #8
-	adc  r1,r1,r1,lsl #8
-	add  r1,r1,r2,lsr #(32 - 8)  @ * 0x9999
+        mov r2,r0  @ copy lo
+        adds r0,r0,r0,lsl #8
+        adc  r1,r1,r1,lsl #8
+        add  r1,r1,r2,lsr #(32 - 8)  @ * 0x9999
 
-	mov r2,r0  @ copy lo
-	adds r0,r0,r0,lsl #16
-	adc  r1,r1,r1,lsl #16
-	add  r1,r1,r2,lsr #(32 - 16)  @ * 0x99999999
+        mov r2,r0  @ copy lo
+        adds r0,r0,r0,lsl #16
+        adc  r1,r1,r1,lsl #16
+        add  r1,r1,r2,lsr #(32 - 16)  @ * 0x99999999
 
-	subs r0,r0,ip,lsl #(32 - 1)  @ - * 0x80000000
-	sbc  r1,r1,ip,lsr #1         @   * 0x19999999
+        subs r0,r0,ip,lsl #(32 - 1)  @ - * 0x80000000
+        sbc  r1,r1,ip,lsr #1         @   * 0x19999999
 
-	adds r0,r0,ip
-	adc  r0,r1,#0  @ * 0x0.1999999a
-	ret
+        adds r0,r0,ip
+        adc  r0,r1,#0  @ * 0x0.1999999a
+        ret
 
 #endif  /*}*/
 
