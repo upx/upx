@@ -5,9 +5,9 @@
 // remains copyright by John F. Reiser and licensed under GNU Lesser General
 // Public License (GNU LGPL).
 
-// Hand compiled Copyright (c) 2006-2010 John F. Reiser  (2007-06-18)
+// Hand compiled Copyright (c) 2006-2011 John F. Reiser  (2007-06-18)
 // from modified LzmaDecode.c.
-// LZMA SDK 4.40 Copyright (c) 1999-2010 Igor Pavlov (2006-05-01)
+// LZMA SDK 4.40 Copyright (c) 1999-2011 Igor Pavlov (2006-05-01)
 //
 // This file is licensed under either of these two licenses:
 //   1) GNU Lesser General Public License (GNU LGPL)

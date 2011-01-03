@@ -1,5 +1,5 @@
            Decompressing ELF Directly to Memory on Linux/x86
-        Copyright (C) 2000-2010 John F. Reiser  jreiser@BitWagon.com
+        Copyright (C) 2000-2011 John F. Reiser  jreiser@BitWagon.com
 
 References:
   <elf.h>   definitions for the ELF file format
