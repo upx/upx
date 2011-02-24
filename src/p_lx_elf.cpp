@@ -1296,6 +1296,8 @@ bool PackLinuxElf32::canPack()
         // and also requires ld-linux to behave.
 
         if (elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
+            if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL))
+                goto abandon;
             Elf32_Shdr const *shdr = shdri;
             xct_va = ~0u;
             for (j= n_elf_shnum; --j>=0; ++shdr) {
@@ -1326,7 +1328,6 @@ bool PackLinuxElf32::canPack()
                     break;
                 }
             }
-            // FIXME: DT_TEXTREL
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1467,6 +1468,8 @@ PackLinuxElf64amd::canPack()
         // and also requires ld-linux to behave.
 
         if (elf_find_dynamic(Elf64_Dyn::DT_INIT)) {
+            if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL))
+                goto abandon;
             Elf64_Shdr const *shdr = shdri;
             xct_va = ~0ull;
             for (j= n_elf_shnum; --j>=0; ++shdr) {
@@ -1497,7 +1500,6 @@ PackLinuxElf64amd::canPack()
                     break;
                 }
             }
-            // FIXME: DT_TEXTREL
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -2872,6 +2874,17 @@ PackLinuxElf32::elf_get_offset_from_address(acc_uint64l_t const addr) const
     return 0;
 }
 
+Elf32_Dyn const *
+PackLinuxElf32::elf_has_dynamic(unsigned int const key) const
+{
+    Elf32_Dyn const *dynp= dynseg;
+    if (dynp)
+    for (; Elf32_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te32(&dynp->d_tag)==key) {
+        return dynp;
+    }
+    return 0;
+}
+
 void const *
 PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
 {
@@ -2908,6 +2921,17 @@ PackLinuxElf64::elf_get_offset_from_address(acc_uint64l_t const addr) const
         if (t < get_te64(&phdr->p_filesz)) {
             return t + get_te64(&phdr->p_offset);
         }
+    }
+    return 0;
+}
+
+Elf64_Dyn const *
+PackLinuxElf64::elf_has_dynamic(unsigned int const key) const
+{
+    Elf64_Dyn const *dynp= dynseg;
+    if (dynp)
+    for (; Elf64_Dyn::DT_NULL!=dynp->d_tag; ++dynp) if (get_te64(&dynp->d_tag)==key) {
+        return dynp;
     }
     return 0;
 }

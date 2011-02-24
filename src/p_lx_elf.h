@@ -136,6 +136,7 @@ protected:
     Elf32_Shdr const *elf_find_section_name(char const *) const;
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
+    Elf32_Dyn const *elf_has_dynamic(unsigned) const;
     acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
@@ -242,6 +243,7 @@ protected:
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
+    Elf64_Dyn const *elf_has_dynamic(unsigned) const;
     acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
 
 protected:

@@ -152,6 +152,7 @@
         DT_RELENT   = 19,       /* Size of one Rel relocation */
         DT_STRSZ    = 10,       /* Sizeof string table */
         DT_PLTREL   = 20,       /* Type of reloc in PLT */
+        DT_TEXTREL  = 22,       /* Reloc might modify .text */
         DT_JMPREL   = 23,       /* Address of PLT relocs */
         DT_CHECKSUM = 0x6ffffdf8,       /* Only for prelink? */
         DT_GNU_HASH = 0x6ffffef5,       /* GNU-style hash table */
