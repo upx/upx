@@ -498,7 +498,7 @@ void ElfLinker::relocate()
     for (unsigned ic = 0; ic < nrelocations; ic++)
     {
         const Relocation *rel = relocations[ic];
-        unsigned value;
+        unsigned value = 0;
 
         if (rel->section->output == NULL)
             continue;
