@@ -410,6 +410,22 @@ void OutputFile::seek(off_t off, int whence)
     super::seek(off,whence);
 }
 
+int OutputFile::read(void *buf, int len)
+{
+    InputFile infile;
+    infile.open(this->getName(), O_RDONLY);
+    infile.seek(this->tell(), SEEK_SET);
+    return infile.read(buf, len);
+}
+
+int OutputFile::readx(void *buf, int len)
+{
+    InputFile infile;
+    infile.open(this->getName(), O_RDONLY);
+    infile.seek(this->tell(), SEEK_SET);
+    return infile.readx(buf, len);
+}
+
 void OutputFile::set_extent(off_t offset, off_t length)
 {
     super::set_extent(offset, length);

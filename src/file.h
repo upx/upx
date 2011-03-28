@@ -141,6 +141,8 @@ public:
     // FIXME - these won't work when using the '--stdout' option
     virtual void seek(off_t off, int whence);
     virtual void rewrite(const void *buf, int len);
+    virtual int read(void *buf, int len);
+    virtual int readx(void *buf, int len);
 
     // util
     static void dump(const char *name, const void *buf, int len, int flags=-1);
