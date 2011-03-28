@@ -63,6 +63,22 @@ umin64(acc_uint64l_t a, acc_uint64l_t b)
     return (a < b) ? a : b;
 }
 
+static unsigned
+up4(unsigned x)
+{
+    return ~3u & (3+ x);
+}
+
+static unsigned
+fpad4(OutputFile *fo)
+{
+    unsigned len = fo->getBytesWritten();
+    unsigned d = 3u & (0 - len);
+    unsigned zero = 0;
+    fo->write(&zero, d);
+    return d + len;
+}
+
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -162,7 +178,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), file_image(NULL), dynstr(NULL),
-    sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0),
+    sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0), sz_pack2b(0),
     lg2_page(12), page_size(1u<<lg2_page), xct_off(0), xct_va(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL)
 {
@@ -175,11 +191,10 @@ PackLinuxElf::~PackLinuxElf()
 
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
+    sz_pack2b = fpad4(fo);  // after headers, all PT_LOAD, gaps
     unsigned disp;
     unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));  // ALIGN_UP 0 mod 4
-    len += (3& (0u-len)); // 0 mod 4
+    unsigned len = sz_pack2a;  // after headers and all PT_LOAD
 
     unsigned const t = (4 & len) ^ ((!!xct_off)<<2);  // 0 or 4
     fo->write(&zero, t);
@@ -208,6 +223,9 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     sz_pack2 = len;  // 0 mod 8
 
     super::pack3(fo, ft);  // append the decompressor
+    fpad4(fo);
+    set_te16(&linfo.l_lsize, up4(
+    get_te16(&linfo.l_lsize) + len - sz_pack2a));
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
@@ -490,9 +508,9 @@ void PackLinuxElf64::patchLoader()
 {
 }
 
-void PackLinuxElf32::ARM_updateLoader(OutputFile *fo)
+void PackLinuxElf32::ARM_updateLoader(OutputFile */*fo*/)
 {
-    set_te32(&elfout.ehdr.e_entry, fo->getBytesWritten() +
+    set_te32(&elfout.ehdr.e_entry, sz_pack2 +
         linker->getSymbolOffset("_start") +
         get_te32(&elfout.phdr[0].p_vaddr));
 }
@@ -517,15 +535,15 @@ void PackLinuxElf32mipseb::updateLoader(OutputFile *fo)
     ARM_updateLoader(fo);  // not ARM specific; (no 32-bit immediates)
 }
 
-void PackLinuxElf32::updateLoader(OutputFile *fo)
+void PackLinuxElf32::updateLoader(OutputFile */*fo*/)
 {
-    set_te32(&elfout.ehdr.e_entry, fo->getBytesWritten() +
+    set_te32(&elfout.ehdr.e_entry, sz_pack2 +
         get_te32(&elfout.phdr[0].p_vaddr));
 }
 
-void PackLinuxElf64::updateLoader(OutputFile *fo)
+void PackLinuxElf64::updateLoader(OutputFile */*fo*/)
 {
-    set_te64(&elfout.ehdr.e_entry, fo->getBytesWritten() +
+    set_te64(&elfout.ehdr.e_entry, sz_pack2 +
         get_te64(&elfout.phdr[0].p_vaddr));
 }
 
@@ -1623,12 +1641,6 @@ PackLinuxElf32::generateElfHdr(
     }
 }
 
-static unsigned
-up4(unsigned x)
-{
-    return ~3u & (3+ x);
-}
-
 void
 PackNetBSDElf32x86::generateElfHdr(
     OutputFile *fo,
@@ -2128,6 +2140,8 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         hdr_u_len = 0;
         ++nx;
     }
+    sz_pack2a = fpad4(fo);
+
     for (k = 0; k < e_phnum; ++k) {
         x.size = find_LOAD_gap(phdri, k, e_phnum);
         if (x.size) {
@@ -2237,6 +2251,8 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         hdr_u_len = 0;
         ++nx;
     }
+    sz_pack2a = fpad4(fo);
+
     for (k = 0; k < e_phnum; ++k) {
         x.size = find_LOAD_gap(phdri, k, e_phnum);
         if (x.size) {
@@ -2475,25 +2491,34 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
     //linker->dumpSymbols();  // debug
 }
 
+// Swap the byte ranges  fo[a to b]  and  fo[b to c].
+static void swap_byte_ranges(OutputFile *fo, unsigned a, unsigned b, unsigned c)
+{
+    MemBuffer buf(c - a);
+    fo->seek(a, SEEK_SET);
+    fo->readx(buf, c - a);
+    fo->seek(a, SEEK_SET);
+    fo->rewrite(&buf[b - a], c - b);
+    fo->rewrite(&buf[0], b - a);
+}
+
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 {
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));  // align to 0 mod 4
-    len += 3& (0u-len);
-    set_te32(&elfout.phdr[0].p_filesz, len);
-    super::pack4(fo, ft);  // write PackHeader and overlay_offset
+    unsigned len = fpad4(fo);
+
+    // Put the loader in the middle, after the compressed PT_LOADs
+    // and before the compressed gaps (and debuginfo!)
+    // As first written, loader is  fo[sz_pack2b to len],
+    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
+    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-#if 0  /*{*/
-    // pre-calculate for benefit of runtime disappearing act via munmap()
-    set_te32(&elfout.phdr[0].p_memsz, page_mask & (~page_mask + len));
-#else  /*}{*/
-    set_te32(&elfout.phdr[0].p_memsz, len);
-#endif  /*}*/
+    set_te32(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
+              elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
+    super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
     // rewrite Elf header
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
@@ -2542,22 +2567,20 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 {
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));  // align to 0 mod 4
-    len += 3& (0u-len);
-    set_te64(&elfout.phdr[0].p_filesz, len);
-    super::pack4(fo, ft);  // write PackHeader and overlay_offset
+    unsigned len = fpad4(fo);
+
+    // Put the loader in the middle, after the compressed PT_LOADs
+    // and before the compressed gaps (and debuginfo!)
+    // As first written, loader is  fo[sz_pack2b to len],
+    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
+    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-#if 0  /*{*/
-    // pre-calculate for benefit of runtime disappearing act via munmap()
-    set_te64(&elfout.phdr[0].p_memsz, page_mask & (~page_mask + len));
-#else  /*}{*/
-    set_te64(&elfout.phdr[0].p_memsz, len);
-#endif  /*}*/
+    set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + len);
+              elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
+    super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
     // rewrite Elf header
     if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
@@ -2620,9 +2643,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
 
-    fi->seek(overlay_offset, SEEK_SET);
-    p_info hbuf;
-    fi->readx(&hbuf, sizeof(hbuf));
+    Elf64_Phdr phdr0x;
+    fi->seek(get_te64(&ehdri.e_phoff), SEEK_SET);
+    fi->readx(&phdr0x, sizeof(phdr0x));
+    load_va = get_te64(&phdr0x.p_vaddr);
+
+    fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
+                  fi->readx(&linfo, sizeof(linfo));
+    p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
@@ -2644,12 +2672,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
 
-    // decompress PT_LOAD32
+    // decompress PT_LOAD64
     bool first_PF_X = true;
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
     for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
-        if (PT_LOAD32==get_te32(&phdr->p_type)) {
+        if (PT_LOAD64==get_te32(&phdr->p_type)) {
             acc_uint64l_t const filesz = get_te64(&phdr->p_filesz);
             acc_uint64l_t const offset = get_te64(&phdr->p_offset);
             if (fo)
@@ -2665,7 +2693,15 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             }
         }
     }
+    lsize = get_te16(&linfo.l_lsize);
+    if (( (unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
+            ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
+        // Loader is not at end; skip past it.
+        // total_in does not include n*szb_info, so we use SEEK_CUR.
+        fi->seek(up4(total_in) - total_in + lsize, SEEK_CUR);
+    }
 
+    // The gaps between PT_LOAD and after last PT_LOAD
     phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
     for (unsigned j = 0; j < u_phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
@@ -3048,7 +3084,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     } u;
     COMPILE_TIME_ASSERT(sizeof(u) == MAX_ELF_HDR)
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;
-    Elf32_Phdr *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
+    Elf32_Phdr const *phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
     unsigned old_data_off = 0;
     unsigned old_data_len = 0;
     unsigned old_dtinit = 0;
@@ -3067,9 +3103,14 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     }
     old_dtinit = ehdr->e_shoff;
 
-    fi->seek(overlay_offset, SEEK_SET);
-    p_info hbuf;
-    fi->readx(&hbuf, sizeof(hbuf));
+    Elf32_Phdr phdr0x;
+    fi->seek(get_te32(&ehdri.e_phoff), SEEK_SET);
+    fi->readx(&phdr0x, sizeof(phdr0x));
+    load_va = get_te32(&phdr0x.p_vaddr);
+
+    fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
+                  fi->readx(&linfo, sizeof(linfo));
+    p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
@@ -3158,6 +3199,13 @@ void PackLinuxElf32::unpack(OutputFile *fo)
                 }
             }
         }
+    }
+    lsize = get_te16(&linfo.l_lsize);
+    if (( (unsigned)(get_te32(&ehdri.e_entry) - load_va) + up4(lsize) +
+            ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
+        // Loader is not at end; skip past it.
+        // total_in does not include n*szb_info, so we use SEEK_CUR.
+        fi->seek(up4(total_in) - total_in + lsize, SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
