@@ -231,11 +231,11 @@ PackUnix::patchLoaderChecksum()
     l_info *const lp = &linfo;
     // checksum for loader; also some PackHeader info
     lp->l_magic = UPX_MAGIC_LE32;  // LE32 always
-    lp->l_lsize = (unsigned short) lsize;
+    set_te16(&lp->l_lsize, (unsigned short) lsize);
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
     // INFO: lp->l_checksum is currently unused
-    lp->l_checksum = upx_adler32(ptr, lsize);
+    set_te32(&lp->l_checksum, upx_adler32(ptr, lsize));
 }
 
 void PackUnix::pack3(OutputFile *fo, Filter &/*ft*/)
@@ -498,7 +498,7 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 
 int PackUnix::canUnpack()
 {
-    upx_byte buf[128];
+    upx_byte buf[sizeof(overlay_offset) + 32];
     const int bufsize = sizeof(buf);
 
     fi->seek(-bufsize, SEEK_END);
