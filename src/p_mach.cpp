@@ -429,11 +429,11 @@ void PackMachBase<T>::patchLoaderChecksum()
     // checksum for loader; also some PackHeader info
     lp->l_checksum = 0;
     lp->l_magic = UPX_MAGIC_LE32;  // LE32 always
-    lp->l_lsize = (unsigned short) lsize;
+    set_te16(&lp->l_lsize, (unsigned short) lsize);
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
     // INFO: lp->l_checksum is currently unused
-    lp->l_checksum = upx_adler32(ptr, lsize);
+    set_te32(&lp->l_checksum, upx_adler32(ptr, lsize));
 }
 
 template <class T>
