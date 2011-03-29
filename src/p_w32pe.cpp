@@ -252,7 +252,7 @@ void PackW32Pe::processTls(Interval *iv) // pass 1
     // the PE loader wants this stuff uncompressed
     otls = new upx_byte[sotls];
     memset(otls,0,sotls);
-    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),0x18);
+    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),sizeof(tls));
     // WARNING: this can acces data in BSS
     memcpy(otls + sizeof(tls),ibuf + tlsdatastart,sotls - sizeof(tls));
     tlsindex = tlsp->tlsindex - ih.imagebase;
@@ -290,9 +290,9 @@ void PackW32Pe::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pa
             rel->add(kc - ih.imagebase,iv->ivarr[ic].len);
     }
 
+    const unsigned tls_data_size = tlsp->dataend - tlsp->datastart;
     tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
-    const tls * const itlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
-    tlsp->dataend = tlsp->datastart + itlsp->dataend - itlsp->datastart;
+    tlsp->dataend = tlsp->datastart + tls_data_size;
 
     //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
     tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + ih.imagebase - 8 : 0);
