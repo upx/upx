@@ -1313,7 +1313,12 @@ bool PackLinuxElf32::canPack()
         // into good positions when building the original shared library,
         // and also requires ld-linux to behave.
 
+        // Apparently glibc-2.13.90 insists on 0==e_ident[EI_PAD..15],
+        // so compressing shared libraries may be doomed anyway.
+
         if (elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
+            if (this->e_machine!=Elf32_Ehdr::EM_386)
+                goto abandon;  // need stub: EM_ARM EM_MIPS EM_PPC
             if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL))
                 goto abandon;
             Elf32_Shdr const *shdr = shdri;
