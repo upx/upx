@@ -2583,7 +2583,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + len);
+    set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
               elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
