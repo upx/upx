@@ -52,7 +52,8 @@
     };
     enum { // filetype
         MH_EXECUTE = 2,
-        MH_DYLIB   = 6
+        MH_DYLIB   = 6,
+        MH_BUNDLE  = 8		/* dynamically bound bundle file */
     };
     enum { // flags
         MH_NOUNDEFS = 1
