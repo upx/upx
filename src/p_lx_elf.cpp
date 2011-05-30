@@ -1184,8 +1184,10 @@ bool PackLinuxElf32::canPack()
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(u.buf + e_phoff);
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
-        if (j >= 14)
-                return false;
+        if (j >= 14) {
+            throwCantPack("too many Elf32_Phdr; try '--force-execve'");
+            return false;
+        }
         unsigned const p_type = get_te32(&phdr->p_type);
         unsigned const p_offset = get_te32(&phdr->p_offset);
         if (1!=exetype && phdr->PT_LOAD32 == p_type) {
@@ -1319,8 +1321,12 @@ bool PackLinuxElf32::canPack()
         if (elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
             if (this->e_machine!=Elf32_Ehdr::EM_386)
                 goto abandon;  // need stub: EM_ARM EM_MIPS EM_PPC
-            if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL))
+            if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL)) {
+                shdri = NULL;
+                phdri = NULL;
+                throwCantPack("re-compile with -fPIC to remove DT_TEXTREL");
                 goto abandon;
+            }
             Elf32_Shdr const *shdr = shdri;
             xct_va = ~0u;
             for (j= n_elf_shnum; --j>=0; ++shdr) {
@@ -1340,6 +1346,9 @@ bool PackLinuxElf32::canPack()
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERDEF)
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERSYM)
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEEDED) ) {
+                phdri = NULL;
+                shdri = NULL;
+                throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
             for ((shdr= shdri), (j= n_elf_shnum); --j>=0; ++shdr) {
@@ -1357,10 +1366,12 @@ bool PackLinuxElf32::canPack()
         else
             infoWarning("no DT_INIT: %s", fi->getName());
 abandon:
-        phdri = 0;  // Done with this
+        phdri = NULL;  // Done with this
+        shdri = NULL;
         return false;
 proceed:
-        phdri = 0;
+        phdri = NULL;
+        shdri = NULL;
     }
     // XXX Theoretically the following test should be first,
     // but PackUnix::canPack() wants 0!=exetype ?
