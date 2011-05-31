@@ -279,7 +279,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
-                        old_dtinit = dyn->d_val;
+                        old_dtinit = dyn->d_val;  // copy ONLY, never examined
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)ibuf;
                         off_init += t;
@@ -364,7 +364,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 Elf64_Dyn *dyn = (Elf64_Dyn *)(void *)ibuf;
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te64(&dyn->d_tag)) {
-                        old_dtinit = dyn->d_val;
+                        old_dtinit = dyn->d_val;  // copy ONLY, never examined
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)ibuf;
                         off_init += t;
@@ -3117,7 +3117,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             szb_info = 2*sizeof(unsigned);
         }
     }
-    old_dtinit = ehdr->e_shoff;
+    old_dtinit = ehdr->e_shoff;  // copy ONLY, never examined
 
     Elf32_Phdr phdr0x;
     fi->seek(get_te32(&ehdri.e_phoff), SEEK_SET);
