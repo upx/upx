@@ -72,7 +72,7 @@ M_NRV2E_LE32=8
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
-//  .long offset({p_info; b_info; compressed data})
+//  .long offset({l_info; p_info; b_info; compressed data})
   section ELFMAINX
 _start: .globl _start
 ////  nop; int3; int3
@@ -255,8 +255,8 @@ main:
         lodsl; sub %rax,%rcx; //mov %rcx,o_reloc(%rbp)
         lodsl; add %rcx,%rax; mov %rax,o_uinit(%rbp)  // reloc DT_INIT  for step 12
         lodsl; add %rcx,%rax; mov %rax,o_hatch(%rbp)  // reloc &hatch   for step 10
-        lodsl; lea (%rcx,%rax),%rdi  // &p_info; also destination for decompress
-        lea sz_p_info(%rdi),%rsi  // &b_info
+        lodsl; lea (%rcx,%rax),%rdi  // &l_info; also destination for decompress
+        lea sz_l_info+sz_p_info(%rdi),%rsi  // &b_info
 
         push %rax; push %rax  // param space: munmap temp pages  step 9
 p_unmap= -2*8
@@ -326,6 +326,12 @@ supervise:
 //p_unflt
         pop %arg1
         pop %arg2
+
+        lea (%arg1,%arg2),%rax
+        movl $0x5e5f050f, (%rax)  // "syscall; pop %rdi; pop %rsi"
+        movb       $0xc3,4(%rax)  // "ret"
+        mov %rax,o_hatch(%rbp)  // hatch beyond .text
+
         pop %arg3
         pop %arg4
         pop %rax;

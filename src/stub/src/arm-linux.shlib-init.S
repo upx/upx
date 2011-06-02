@@ -183,8 +183,8 @@ main:
         lodsl; add eax,ecx,eax; str eax,[fp,#o_uinit]  // reloc DT_INIT  for step 12
         lodsl; add eax,ecx,eax; push eax               // reloc &hatch   for step 10
 o_hatch= -1*4
-        lodsl; add edi,ecx,eax  // &p_info; also destination for decompress
-        add esi,edi,#sz_p_info  // &b_info
+        lodsl; add edi,ecx,eax  // &l_info; also destination for decompress
+        add esi,edi,#sz_l_info + sz_p_info  // &b_info
 
         sub sp,sp,#2*4  // param space: munmap temp pages  step 9
 p_unmap= -3*4

@@ -133,6 +133,7 @@ PAGE_MASK= -PAGE_SIZE  // AND clears the offset within page
 #define szElf32_Ehdr 0x34
 #define p_memsz  5*4
 sz_p_info = 3*4
+sz_l_info = 3*4
 sz_b_info=3*4
   sz_unc= 0
   sz_cpr= 4
@@ -181,9 +182,9 @@ main:
         lodsd; sub ecx,eax; //mov [ebp+o_reloc],ecx
         lodsd; add eax,ecx; mov [ebp+o_uinit],eax  // reloc DT_INIT  for step 12
         lodsd; add eax,ecx; push eax  // reloc &hatch   for step 10
-o_hatch= -1*4
-        lodsd; add eax,ecx; xchg eax,edi  // &p_info; also destination for decompress
-        lea esi,[edi + sz_p_info]  // &b_info
+p_hatch= -1*4
+        lodsd; add eax,ecx; xchg eax,edi  // &l_info; also destination for decompress
+        lea esi,[edi + sz_l_info + sz_p_info]  // &b_info
 
         push eax; push eax  // param space: munmap temp pages  step 9
 p_unmap= -3*4
@@ -241,7 +242,14 @@ supervise:
         rep movsd
 
         call [ebp+o_uncpr]  // decompress
-        add esp,5*4  // remove params
+// decompression can overrun dst by 3 bytes on i386; construct hatch now
+        pop eax; pop eax  // discard src, srclen
+        pop eax  // dst
+        pop ecx  // &dstlen
+        pop edx  // discard method,filter,cto,junk
+        add eax,[ecx]  // dst += dstlen
+        mov [dword ptr eax],0xc36180cd  // "int 0x80; popa; ret"
+        mov [esp + p_hatch - o_uncpr],eax  // hatch at end of .text
 //o_uncpr
         pop eax  // &decompress
 //p_unflt
@@ -258,6 +266,7 @@ supervise:
         pop ebx  // &temp pages
         pop ecx  // length
         push __NR_munmap; pop eax
+//p_hatch
         ret  // goto escape hatch
 //hatch:
         int 0x80  // munmap temporary pages

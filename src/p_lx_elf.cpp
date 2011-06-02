@@ -189,6 +189,17 @@ PackLinuxElf::~PackLinuxElf()
     delete[] file_image; file_image = NULL;
 }
 
+// Swap the byte ranges  fo[a to b]  and  fo[b to c].
+static void swap_byte_ranges(OutputFile *fo, unsigned a, unsigned b, unsigned c)
+{
+    MemBuffer buf(c - a);
+    fo->seek(a, SEEK_SET);
+    fo->readx(buf, c - a);
+    fo->seek(a, SEEK_SET);
+    fo->rewrite(&buf[b - a], c - b);
+    fo->rewrite(&buf[0], b - a);
+}
+
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
     sz_pack2b = fpad4(fo);  // after headers, all PT_LOAD, gaps
@@ -207,7 +218,7 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     fo->write(&disp, sizeof(disp));
     len += sizeof(disp);
 
-    if (xct_off) {
+    if (xct_off) {  // is_shlib
         set_te32(&disp, elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) - load_va);
         fo->write(&disp, sizeof(disp));
         len += sizeof(disp);
@@ -223,9 +234,15 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     sz_pack2 = len;  // 0 mod 8
 
     super::pack3(fo, ft);  // append the decompressor
-    fpad4(fo);
     set_te16(&linfo.l_lsize, up4(
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
+
+    len = fpad4(fo);
+    // Put the loader in the middle, after the compressed PT_LOADs
+    // and before the compressed gaps (and debuginfo!)
+    // As first written, loader is  fo[sz_pack2b to len],
+    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
+    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
@@ -293,7 +310,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         }
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
-            va_init |= (Elf32_Ehdr::EM_ARM==e_machine);
+            va_init |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
             unsigned word; set_te32(&word, va_init);
             fo->rewrite(&word, sizeof(word));
             fo->seek(0, SEEK_END);
@@ -326,7 +343,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 // Rotate to highest position, so it can be lopped
                 // by decrementing e_phnum.
                 memcpy((unsigned char *)ibuf, phdr, sizeof(*phdr));
-                memcpy(phdr, 1+phdr, j * sizeof(*phdr));
+                memmove(phdr, 1+phdr, j * sizeof(*phdr));  // overlapping
                 memcpy(&phdr[j], (unsigned char *)ibuf, sizeof(*phdr));
                 --phdr;
                 set_te16(&ehdri.e_phnum, --e_phnum);
@@ -1317,14 +1334,17 @@ bool PackLinuxElf32::canPack()
 
         // Apparently glibc-2.13.90 insists on 0==e_ident[EI_PAD..15],
         // so compressing shared libraries may be doomed anyway.
+        // 2011-06-01: stub.shlib-init.S works around by installing hatch
+        // at end of .text.
 
         if (elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
-            if (this->e_machine!=Elf32_Ehdr::EM_386)
-                goto abandon;  // need stub: EM_ARM EM_MIPS EM_PPC
+            if (this->e_machine!=Elf32_Ehdr::EM_386
+            &&  this->e_machine!=Elf32_Ehdr::EM_ARM)
+                goto abandon;  // need stub: EM_MIPS EM_PPC
             if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL)) {
                 shdri = NULL;
                 phdri = NULL;
-                throwCantPack("re-compile with -fPIC to remove DT_TEXTREL");
+                throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
             Elf32_Shdr const *shdr = shdri;
@@ -1502,8 +1522,12 @@ PackLinuxElf64amd::canPack()
         // and also requires ld-linux to behave.
 
         if (elf_find_dynamic(Elf64_Dyn::DT_INIT)) {
-            if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL))
+            if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL)) {
+                shdri = NULL;
+                phdri = NULL;
+                throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
+            }
             Elf64_Shdr const *shdr = shdri;
             xct_va = ~0ull;
             for (j= n_elf_shnum; --j>=0; ++shdr) {
@@ -1523,6 +1547,9 @@ PackLinuxElf64amd::canPack()
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERDEF)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED) ) {
+                phdri = NULL;
+                shdri = NULL;
+                throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
             for ((shdr= shdri), (j= n_elf_shnum); --j>=0; ++shdr) {
@@ -1877,7 +1904,7 @@ PackLinuxElf64::generateElfHdr(
     }
 }
 
-void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
+void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -1921,40 +1948,38 @@ void PackLinuxElf32::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     page_mask = ~0u<<lg2_page;
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
+    if (0!=xct_off) {  // shared library
+        fi->seek(0, SEEK_SET);
+        fi->readx(ibuf, xct_off);
+
+        sz_elf_hdrs = xct_off;
+        fo->write(ibuf, xct_off);
+        memset(&linfo, 0, sizeof(linfo));
+        fo->write(&linfo, sizeof(linfo));
+    }
 }
 
 void PackLinuxElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    if (0!=xct_off) {  // shared library
-        fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, xct_off);
-
-        sz_elf_hdrs = xct_off - sizeof(l_info);
-        fo->write(ibuf, xct_off);
+    if (0!=xct_off)  // shared library
         return;
-    }
-    generateElfHdr(fo, stub_i386_linux_elf_fold,
-        getbrk(phdri, e_phnum) );
+    generateElfHdr(fo, stub_i386_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
 void PackBSDElf32x86::pack1(OutputFile *fo, Filter &ft)
 {
     PackLinuxElf32::pack1(fo, ft);
+    if (0!=xct_off) // shared library
+        return;
     generateElfHdr(fo, stub_i386_bsd_elf_fold, getbrk(phdri, e_phnum) );
 }
 
 void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    if (0!=xct_off) {  // shared library
-        fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, xct_off);
-
-        sz_elf_hdrs = xct_off - sizeof(l_info);
-        fo->write(ibuf, xct_off);
+    if (0!=xct_off)  // shared library
         return;
-    }
     unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
@@ -1972,6 +1997,8 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
 void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    if (0!=xct_off)  // shared library
+        return;
     unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
     memcpy(&h3, stub_armeb_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
@@ -1982,6 +2009,8 @@ void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
 void PackLinuxElf32mipsel::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    if (0!=xct_off)  // shared library
+        return;
     cprElfHdr3 h3;
     memcpy(&h3, stub_mipsel_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
@@ -1990,6 +2019,8 @@ void PackLinuxElf32mipsel::pack1(OutputFile *fo, Filter &ft)
 void PackLinuxElf32mipseb::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    if (0!=xct_off)  // shared library
+        return;
     cprElfHdr3 h3;
     memcpy(&h3, stub_mips_r3000_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
@@ -1998,10 +2029,12 @@ void PackLinuxElf32mipseb::pack1(OutputFile *fo, Filter &ft)
 void PackLinuxElf32ppc::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
+    if (0!=xct_off)  // shared library
+        return;
     generateElfHdr(fo, stub_powerpc_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
-void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
+void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
@@ -2044,20 +2077,23 @@ void PackLinuxElf64::pack1(OutputFile * /*fo*/, Filter & /*ft*/)
     page_mask = ~0ull<<lg2_page;
 
     progid = 0;  // getRandomId();  not useful, so do not clutter
+    if (0!=xct_off) {  // shared library
+        fi->seek(0, SEEK_SET);
+        fi->readx(ibuf, xct_off);
+
+        sz_elf_hdrs = xct_off;
+        fo->write(ibuf, xct_off);
+        memset(&linfo, 0, sizeof(linfo));
+        fo->write(&linfo, sizeof(linfo));
+    }
 }
 
 void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
 {
     super::pack1(fo, ft);
-    if (0==xct_off)  // main executable
-        generateElfHdr(fo, stub_amd64_linux_elf_fold, getbrk(phdri, e_phnum) );
-    else {  // shared library
-        fi->seek(0, SEEK_SET);
-        fi->readx(ibuf, xct_off);
-
-        sz_elf_hdrs = xct_off - sizeof(l_info);
-        fo->write(ibuf, xct_off);
-    }
+    if (0!=xct_off)  // shared library
+        return;
+    generateElfHdr(fo, stub_amd64_linux_elf_fold, getbrk(phdri, e_phnum) );
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
@@ -2507,27 +2543,9 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
     //linker->dumpSymbols();  // debug
 }
 
-// Swap the byte ranges  fo[a to b]  and  fo[b to c].
-static void swap_byte_ranges(OutputFile *fo, unsigned a, unsigned b, unsigned c)
-{
-    MemBuffer buf(c - a);
-    fo->seek(a, SEEK_SET);
-    fo->readx(buf, c - a);
-    fo->seek(a, SEEK_SET);
-    fo->rewrite(&buf[b - a], c - b);
-    fo->rewrite(&buf[0], b - a);
-}
-
 void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 {
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
-    unsigned len = fpad4(fo);
-
-    // Put the loader in the middle, after the compressed PT_LOADs
-    // and before the compressed gaps (and debuginfo!)
-    // As first written, loader is  fo[sz_pack2b to len],
-    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
-    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
@@ -2551,16 +2569,10 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        ehdri.e_ident[12] = 0xcd;  // INT 0x80 (syscall [munmap])
-        ehdri.e_ident[13] = 0x80;
-        ehdri.e_ident[14] = 0x61;  // POPA
-        ehdri.e_ident[15] = 0xc3;  // RET
-        if (Elf32_Ehdr::EM_ARM==e_machine) {
-            set_te16(&ehdri.e_ident[12], 0xdf00);  // swi 0
-            set_te16(&ehdri.e_ident[14], 0xbdff);  // pop {all regs}
-        }
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
+        fo->seek(sz_elf_hdrs, SEEK_SET);
+        fo->rewrite(&linfo, sizeof(linfo));
     }
     else {
         unsigned const reloc = get_te32(&elfout.phdr[0].p_vaddr);
@@ -2583,13 +2595,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 {
     overlay_offset = sz_elf_hdrs + sizeof(linfo);
-    unsigned len = fpad4(fo);
-
-    // Put the loader in the middle, after the compressed PT_LOADs
-    // and before the compressed gaps (and debuginfo!)
-    // As first written, loader is  fo[sz_pack2b to len],
-    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
-    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
@@ -2613,11 +2618,6 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
-        ehdri.e_ident[11] = 0x0f;  // syscall [munmap]
-        ehdri.e_ident[12] = 0x05;
-        ehdri.e_ident[13] = 0x5f;  // pop %rdi  (arg1)
-        ehdri.e_ident[14] = 0x5e;  // pop %rsi  (arg2)
-        ehdri.e_ident[15] = 0xc3;  // RET
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
     }
@@ -2665,7 +2665,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     load_va = get_te64(&phdr0x.p_vaddr);
 
     fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
-                  fi->readx(&linfo, sizeof(linfo));
+    fi->readx(&linfo, sizeof(linfo));
+    lsize = get_te16(&linfo.l_lsize);
     p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
@@ -2709,7 +2710,6 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             }
         }
     }
-    lsize = get_te16(&linfo.l_lsize);
     if (( (unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
             ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
@@ -3125,7 +3125,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     load_va = get_te32(&phdr0x.p_vaddr);
 
     fi->seek(overlay_offset - sizeof(l_info), SEEK_SET);
-                  fi->readx(&linfo, sizeof(linfo));
+    fi->readx(&linfo, sizeof(linfo));
+    lsize = get_te16(&linfo.l_lsize);
     p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
@@ -3138,9 +3139,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     ph.filter_cto = bhdr.b_cto8;
-    bool const is_shlib = (ehdr->e_ident[12]==0xcd)  // EM_386
-        || (ehdr->e_ident[11]==0x0f)  // EM_X86_64
-        || (get_te16(&ehdr->e_ident[12])==0xdf00);  // EM_ARM (thumb)
+    bool const is_shlib = (ehdr->e_shoff!=0);
 
     // Peek at resulting Ehdr and Phdrs for use in controlling unpacking.
     // Uncompress an extra time, and don't verify or update checksums.
@@ -3166,6 +3165,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         // Read enough to position the input for next unpackExtent.
         fi->seek(0, SEEK_SET);
         fi->readx(ibuf, overlay_offset + sizeof(hbuf) + szb_info + ph.c_len);
+        overlay_offset -= sizeof(linfo);
         if (fo) {
             fo->write(ibuf + ph.u_len, overlay_offset - ph.u_len);
         }
@@ -3216,7 +3216,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             }
         }
     }
-    lsize = get_te16(&linfo.l_lsize);
     if (( (unsigned)(get_te32(&ehdri.e_entry) - load_va) + up4(lsize) +
             ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
