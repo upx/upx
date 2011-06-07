@@ -252,7 +252,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
     set_te32(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
     if (0!=xct_off) {  // shared library
         Elf32_Phdr *phdr = phdri;
-        unsigned off = sz_pack2;
+        unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         unsigned va_init = sz_pack2;   // virtual address
         unsigned rel = 0;
@@ -329,7 +329,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
     set_te64(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
     if (0!=xct_off) {  // shared library
         Elf64_Phdr *phdr = phdri;
-        unsigned off = sz_pack2;
+        unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         acc_uint64l_t va_init = sz_pack2;   // virtual address
         acc_uint64l_t rel = 0;
