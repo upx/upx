@@ -439,6 +439,13 @@ void PeFile::processRelocs() // pass1
                         orelocs);
     delete [] fix[3];
 
+    // Malware that hides behind UPX often has PE header info that is
+    // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
+    // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
+    // the relocs into one array.
+    if ((rnum * 4 + 1024) < (sorelocs + 4*(2 + xcounts[2] + xcounts[1])))
+        throwCantUnpack("Invalid relocs");
+
     // append relocs type "LOW" then "HIGH"
     for (ic = 2; ic ; ic--)
     {
