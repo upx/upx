@@ -47,7 +47,7 @@
 #define PT_NOTE32   Elf32_Phdr::PT_NOTE
 #define PT_NOTE64   Elf64_Phdr::PT_NOTE
 
-static unsigned const EF_ARM_HASENTRY = 0x02;
+//static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
 static unsigned const EF_ARM_EABI_VER5 = 0x05000000;
 
@@ -1703,7 +1703,7 @@ PackNetBSDElf32x86::generateElfHdr(
     unsigned char *cp = note_body;
     unsigned j;
     for (j=0; j < note_size; ) {
-        Elf32_Nhdr const *const np = (Elf32_Nhdr const *)cp;
+        Elf32_Nhdr const *const np = (Elf32_Nhdr const *)(void *)cp;
         int k = sizeof(*np) + up4(get_te32(&np->namesz))
             + up4(get_te32(&np->descsz));
 
@@ -1754,7 +1754,7 @@ PackNetBSDElf32x86::generateElfHdr(
         unsigned bits = get_te32(&np_PaX->body[4]);
         bits &= ~PAX_MPROTECT;
         bits |=  PAX_NOMPROTECT;
-        set_te32((unsigned *)&np_PaX->body[4], bits);
+        set_te32(ACC_UNCONST_CAST(unsigned char *, &np_PaX->body[4]), bits);
 
         sz_elf_hdrs += sz_PaX + sizeof(*phdr);
         note_offset += sz_PaX;
@@ -1790,7 +1790,7 @@ PackOpenBSDElf32x86::generateElfHdr(
     unsigned const brka
 )
 {
-    cprElfHdr3 *const h3 = (cprElfHdr3 *)&elfout;
+    cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
     assert(2==get_te16(&h3->ehdr.e_phnum));
@@ -2913,7 +2913,7 @@ Linker* PackLinuxElf32armBe::newLinker() const
 }
 
 unsigned
-PackLinuxElf32::elf_get_offset_from_address(acc_uint64l_t const addr) const
+PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -2963,7 +2963,7 @@ PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
     return 0;
 }
 
-unsigned
+acc_uint64l_t
 PackLinuxElf64::elf_get_offset_from_address(acc_uint64l_t const addr) const
 {
     Elf64_Phdr const *phdr = phdri;

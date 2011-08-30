@@ -114,7 +114,7 @@ void PackLinuxElf32x86interp::pack1(OutputFile *fo, Filter &)
     h3.phdr[2].p_align = 1;
 
     if (opt->o_unix.make_ptinterp) { // unusual "once per release"
-        *(cprElfHdr3 *)&elfout = h3;
+        *(cprElfHdr3 *)(void *)&elfout = h3;
         elfout.ehdr.e_phnum = 1;
         fo->write(&elfout, elfout.ehdr.e_ehsize + elfout.ehdr.e_phentsize);
     }

@@ -1079,8 +1079,8 @@ void PackVmlinuxAMD64::defineDecompressorSymbols()
     // We assume a 32-bit boot loader, so we use the 32-bit convention
     // of "enter at the beginning" (startup_32).  The 64-bit convention
     // would be to use ehdri.e_entry (startup_64).
-    linker->defineSymbol("ENTRY_POINT", phdri[0].p_paddr);
-    linker->defineSymbol("PHYSICAL_START", phdri[0].p_paddr);
+    linker->defineSymbol("ENTRY_POINT", (unsigned) phdri[0].p_paddr);
+    linker->defineSymbol("PHYSICAL_START", (unsigned) phdri[0].p_paddr);
 }
 
 unsigned PackVmlinuxARMEL::write_vmlinux_head(
