@@ -611,7 +611,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
 // Rely on "+80CXXXX" [etc] in getDecompressorSections() packer_c.cpp */
 //    // Here is a quick summary of the format of the output file:
 //    linker->setLoaderAlignOffset(
-//            // Elf32_Edhr
+//            // Elf32_Ehdr
 //        sizeof(elfout.ehdr) +
 //            // Elf32_Phdr: 1 for exec86, 2 for sh86, 3 for elf86
 //        (get_te16(&elfout.ehdr.e_phentsize) * get_te16(&elfout.ehdr.e_phnum)) +
@@ -1671,8 +1671,7 @@ PackLinuxElf32::generateElfHdr(
         set_te32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
-        if (Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
-        &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
+        if (ARM_is_QNX())
             set_te32(&h2->phdr[1].p_memsz, 1);  // 0==.p_memsz invalid on QNX 6.3.0
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
@@ -2358,6 +2357,17 @@ PackLinuxElf32mipsel::getFilters() const
     return f_none;
 }
 
+// October 2011: QNX 6.3.0 has no unique signature?
+int PackLinuxElf32::ARM_is_QNX(void)
+{
+    if (Elf32_Ehdr::EM_ARM==get_te16(&ehdri.e_machine)
+    &&  Elf32_Ehdr::ELFDATA2MSB== ehdri.e_ident[Elf32_Ehdr::EI_DATA]
+    &&  Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
+    &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
+        return 1;
+    return 0;
+}
+
 void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
@@ -2401,9 +2411,8 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 #define MAP_ANONYMOUS 0x20     /* UNIX standard */
 #define MAP_PRIVANON     3     /* QNX anonymous private memory */
     unsigned mflg = MAP_PRIVATE | MAP_ANONYMOUS;
-    if (Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
-    &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
-        mflg = MAP_PRIVANON;  // QNX only
+    if (ARM_is_QNX())
+        mflg = MAP_PRIVANON;
     linker->defineSymbol("MFLG", mflg);
 
     ACC_UNUSED(adrx);

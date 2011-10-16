@@ -104,6 +104,7 @@ protected:
     // but the class hierarchy splits after this class.
     virtual void ARM_defineSymbols(Filter const *ft);
     virtual void ARM_updateLoader(OutputFile *);
+    virtual int  ARM_is_QNX(void);
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void pack2(OutputFile *, Filter &);  // append compressed data
