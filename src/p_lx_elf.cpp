@@ -2363,8 +2363,25 @@ int PackLinuxElf32::ARM_is_QNX(void)
     if (Elf32_Ehdr::EM_ARM==get_te16(&ehdri.e_machine)
     &&  Elf32_Ehdr::ELFDATA2MSB== ehdri.e_ident[Elf32_Ehdr::EI_DATA]
     &&  Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
-    &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
-        return 1;
+    &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr))) {
+        Elf32_Phdr const *phdr = phdri;
+        for (int j = get_te16(&ehdri.e_phnum); --j>=0; ++phdr) {
+            if (Elf32_Phdr::PT_INTERP==get_te32(&phdr->p_type)) {
+                char interp[64];
+                unsigned const sz_interp = get_te32(&phdr->p_filesz);
+                unsigned const pos_interp = get_te32(&phdr->p_offset);
+                if (sz_interp <= sizeof(interp)
+                &&  (sz_interp + pos_interp) <= fi->st_size()) {
+                    fi->seek(pos_interp, SEEK_SET);
+                    fi->readx(interp, sz_interp);
+                    for (int k = -5+ sz_interp; k>=0; --k) {
+                        if (0==memcmp("ldqnx", &interp[k], 5))
+                            return 1;
+                    }
+                }
+            }
+        }
+    }
     return 0;
 }
 
