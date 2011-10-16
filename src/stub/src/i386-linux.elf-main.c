@@ -217,9 +217,12 @@ xread(Extent *x, char *buf, size_t count)
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB /*empty*/
+DEBUG_STRCON(STR_exit, "err_exit %%x\\n");
+
 static void __attribute__ ((__noreturn__))
 err_exit(int a)
 {
+    DPRINTF((STR_exit(), a));
     (void)a;  // debugging convenience
     exit(127);
 }
@@ -248,6 +251,7 @@ typedef int f_expand(
 
 DEBUG_STRCON(STR_unpackExtent,
         "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
+DEBUG_STRCON(STR_err5, "sz_cpr=%%x  sz_unc=%%x  xo->size=%%x\\n");
 
 static void
 unpackExtent(
@@ -279,6 +283,7 @@ ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
         ||  h.sz_unc > xo->size ) {
+            DPRINTF((STR_err5(), h.sz_cpr, h.sz_unc, xo->size));
             err_exit(5);
         }
         // Now we have:
@@ -482,6 +487,9 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 
 DEBUG_STRCON(STR_xfind_pages, "xfind_pages  %%x  %%p  %%d  %%p\\n");
 
+#if !defined(__arm__)  //{
+#define m_privanon (MAP_PRIVATE | MAP_ANONYMOUS)
+#endif  //}
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -491,6 +499,9 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
+#if defined(__arm__)  //
+    , unsigned const m_privanon
+#endif  //}
 #if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
     , unsigned const page_mask
 #else  /*}{*/
@@ -501,7 +512,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     DPRINTF((STR_xfind_pages(), mflags, phdr, phnum, p_brk));
-    mflags += MAP_PRIVATE | MAP_ANONYMOUS;  // '+' can optimize better than '|'
+    mflags |= m_privanon;
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
@@ -531,7 +542,11 @@ DEBUG_STRCON(STR_do_xmap,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf)
+    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf
+#if defined(__arm__)  //{
+    , unsigned const m_privanon
+#endif  //}
+)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
@@ -552,6 +567,9 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  /*}*/
     unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
          phdr, ehdr->e_phnum, &v_brk
+#if defined(__arm__)  //{
+        , m_privanon
+#endif  //}
 #if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
         , ~frag_mask
 #endif  /*}*/
@@ -579,7 +597,7 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
             + (xi ? 3 : 0)
 #endif  /*}*/
                 , prot | (xi ? PROT_WRITE : 0),
-                MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
+                MAP_FIXED | (xi ? m_privanon : MAP_PRIVATE),
                 (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
@@ -623,7 +641,7 @@ ERR_LAB
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
+                    MAP_FIXED | m_privanon, -1, 0 ) ) {
                 err_exit(9);
             }
         }
@@ -676,6 +694,9 @@ void *upx_main(
     Extent xi,
     unsigned const volatile dynbase,
     unsigned const sys_munmap
+#if defined(__arm__)  //{
+    , unsigned m_privanon
+#endif  //}
 ) __asm__("upx_main");
 void *upx_main(
     Elf32_auxv_t *const av,
@@ -686,6 +707,9 @@ void *upx_main(
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
     unsigned const volatile dynbase,  // value+result: compiler must not change
     unsigned const sys_munmap
+#if defined(__arm__)  //{
+    , unsigned m_privanon
+#endif  //}
 )
 #endif  /*}*/
 {
@@ -743,7 +767,11 @@ void *upx_main(
 #elif !defined(__mips__)  /*}{*/
     (void)sys_munmap;  // UNUSED
 #endif  /*}*/
-    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
+    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf
+#if defined(__arm__)  //{
+        , m_privanon
+#endif  //}
+    );
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
@@ -757,7 +785,11 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0);
+        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0
+#if defined(__arm__)  //{
+            , m_privanon
+#endif  //}
+        );
         auxv_up(av, AT_BASE, reloc);  // uClibc only?
         close(fdi);
         break;

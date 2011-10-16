@@ -50,11 +50,15 @@ fold_begin:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
     r5= f_decompress
-    sp/ ADRU,LENU,sz_unc,crumb,argc,argv...
+    sp/ ADRU,LENU,sz_unc,crumb,MFLG,argc,argv...
 */
-        ldr r3,[sp,#4*4]  @ argc
+SP_sz_unc= 2*4
+SP_MFLG= 4*4
+SP_argc= 5*4
+        ldr r3,[sp,#SP_argc]
+        ldr lr,[sp,#SP_MFLG]
         add r3,sp,r3,lsl #2  @ skip argv
-        add r3,r3,#4*4 +4 +4  @ skip ADRU,LENU,sz_unc,crumb, argc, env_end
+        add r3,r3,#SP_argc +4 +4  @ skip ADRU,LENU,sz_unc,crumb,MFLG, argc, env_end
 .Lenv:
         ldr r0,[r3],#4  @ skip env
         cmp r0,#0
@@ -65,7 +69,7 @@ fold_begin:
         ldr r0,[r2],#2*4  @ .a_type
         cmp r0,#0
         bne .Laux
-        str r2,[sp,#2*4]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+        str r2,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
 
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
         mov r4,r9  @ total size of compressed data
@@ -84,13 +88,13 @@ fold_begin:
 #else  /*}{*/
         mov r12,#0
 #endif  /*}*/
-        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
+        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
         ldmia sp!,{r0,r1,r2,r3}
         bl upx_main
         mov lr,r0  @ entry address
-        add sp,sp,#(10-4)*4
+        add sp,sp,#(11-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
-        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb
+        ldmia sp!,{r0,r1,r2,r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb,MFLG
         add r0,r0,r3  @ ADRU+=crumb
         sub r1,r1,r3  @ LENU-=crumb
 #if defined(ARMEL_DARWIN)  /*{*/

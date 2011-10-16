@@ -1671,6 +1671,9 @@ PackLinuxElf32::generateElfHdr(
         set_te32(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
         h2->phdr[1].p_memsz =  0;
+        if (Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
+        &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
+            set_te32(&h2->phdr[1].p_memsz, 1);  // 0==.p_memsz invalid on QNX 6.3.0
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
@@ -2360,7 +2363,15 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
     lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
-    unsigned const lo_va_user = 0x8000;  // XXX
+    unsigned lo_va_user = ~0u;  // infinity
+    for (int j= e_phnum; --j>=0; ) {
+        if (PT_LOAD32 == get_te32(&phdri[j].p_type)) {
+            unsigned const va = get_te32(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
     unsigned lo_va_stub = get_te32(&elfout.phdr[0].p_vaddr);
     unsigned adrc;
     unsigned adrm;
@@ -2384,6 +2395,17 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
 
     linker->defineSymbol("ADRM", adrm);  // addr for map
+
+#define MAP_PRIVATE      2     /* UNIX standard */
+#define MAP_FIXED     0x10     /* UNIX standard */
+#define MAP_ANONYMOUS 0x20     /* UNIX standard */
+#define MAP_PRIVANON     3     /* QNX anonymous private memory */
+    unsigned mflg = MAP_PRIVATE | MAP_ANONYMOUS;
+    if (Elf32_Ehdr::ELFOSABI_ARM==ehdri.e_ident[Elf32_Ehdr::EI_OSABI]
+    &&  0x100000==(page_mask & get_te32(&phdri[0].p_vaddr)))
+        mflg = MAP_PRIVANON;  // QNX only
+    linker->defineSymbol("MFLG", mflg);
+
     ACC_UNUSED(adrx);
 }
 

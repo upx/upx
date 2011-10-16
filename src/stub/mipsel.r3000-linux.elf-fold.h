@@ -32,8 +32,8 @@
 
 
 #define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_SIZE    2548
-#define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_ADLER32 0x133a34a5
-#define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_CRC32   0x3bbceedc
+#define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_ADLER32 0x650a34b5
+#define STUB_MIPSEL_R3000_LINUX_ELF_FOLD_CRC32   0xcda4d5a7
 
 unsigned char stub_mipsel_r3000_linux_elf_fold[2548] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -113,7 +113,7 @@ unsigned char stub_mipsel_r3000_linux_elf_fold[2548] = {
 /* 0x04a0 */   4,  0,  0, 16,255,255,  2, 52,  4,  0, 66,140,  0,  0,  0,  0,
 /* 0x04b0 */ 255,255, 66, 36, 20,  0,162,175, 16,  0,162,150, 20,  0,164,143,
 /* 0x04c0 */   2,  0, 66, 56, 44,  0,163,150,  1,  0, 66, 44,  0, 17,  2,  0,
-/* 0x04d0 */  39, 40,  4,  0,  2,  8, 71, 36,255,255, 99, 36, 33, 64, 32,  2,
+/* 0x04d0 */  39, 40,  4,  0,  2,  8, 71, 52,255,255, 99, 36, 33, 64, 32,  2,
 /* 0x04e0 */ 255,255,  4, 36, 33, 72,  0,  0, 19,  0,  0, 16,  1,  0, 10, 36,
 /* 0x04f0 */   0,  0,  2,141,  0,  0,  0,  0, 14,  0, 74, 20,255,255, 99, 36,
 /* 0x0500 */   8,  0,  6,141,  0,  0,  0,  0, 43, 16,196,  0,  2,  0, 64, 16,

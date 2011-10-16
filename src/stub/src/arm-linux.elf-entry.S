@@ -47,9 +47,7 @@ PROT_READ=  1
 PROT_WRITE= 2
 PROT_EXEC=  4
 
-MAP_PRIVATE= 2
 MAP_FIXED=     0x10
-MAP_ANONYMOUS= 0x20
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
@@ -71,6 +69,8 @@ start_params:
         .long ADRM  // dst  for map
         .long LENF  // end_decompress - (start_params -4)
         .long CPR0  //           cpr0 - (start_params -4)
+mflg:
+        .long MFLG  // MAP_{PRIVATE|ANONYMOUS}
 _start: .globl _start
 ////    nop; bkpt
 /* Get some pages: enough
@@ -89,7 +89,8 @@ _start: .globl _start
         stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
         adr r12,start_params -4  // &sz_pack2
-        ldmia r12,{r1,r2, r10,r11}  // r1= sz_pack2; r2= ADRM; r10= LENF; r11= CPR0;
+        ldmia r12,{r1,r2, r10,r11,lr}  // r1= sz_pack2; r2= ADRM; r10= LENF;
+                                       //r11= CPR0; lr= MFLG
         add r10,r10,r12  // end_decompress
         add r11,r11,r12  // cpr0
         mov r0,r2  // ADRM
@@ -100,11 +101,12 @@ _start: .globl _start
   section LUNMP001
         mov r3,#1<<12  // 1-page crumb
   section ELFMAINXu
-        stmdb sp!,{r0,r1,r2,r3}  // ADRU,LENU,space for sz_unc,crumb
+        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,crumb,MFLG
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
-        mov r3,#MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+        ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
         mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
+        orr r3,r3,#MAP_FIXED
 #if defined(ARMEL_EABI4)  /*{*/
         mov r7,#__NR_mmap64
         swi 0
@@ -114,7 +116,6 @@ D_sz_unc=2*4  // stack displacement to sz_unc
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
-        cmn r0,#4096
         bcs msg_SELinux
 copy:
         ldmia r9!,{r1,r2,r3,r4,r5,r6,r7,r8}; cmp r9,r10  // upto end-decompress
