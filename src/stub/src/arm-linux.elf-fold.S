@@ -29,6 +29,7 @@
 
 #define ARM_OLDABI 1
 #include "arch/arm/v4a/macros.S"
+#define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 
 sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
@@ -194,10 +195,20 @@ mmap:
         str r5,[sp,#-4]!; ldr r5,[sp,#4+4]
         str r4,[sp,#-4]!; ldr r4,[sp,#4+4]
         mov r5,r5,lsr #12  @ convert to page number
+mmap_do:
         do_sys __NR_mmap2
         ldr r4,[sp],#4
         ldr r5,[sp],#4
         ret
+
+bits_privanon= -4+ fold_begin  // entry stores: MAP_{PRIVATE|ANON}  QNX vs linux
+
+mmap_privanon: .globl mmap_privanon
+        ldr r12,bits_privanon  @ r12 === ip
+        str r5,[sp,#-4]!; mov r5,#0  @ offset= 0
+        str r4,[sp,#-4]!; mvn r4,#0  @ fd= -1
+        orr r3,r3,r12  @ flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
+        b mmap_do
 
 
 #ifndef DEBUG  /*{*/

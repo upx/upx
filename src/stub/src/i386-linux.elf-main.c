@@ -35,6 +35,12 @@
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
+#if defined(__i386__)  //{
+#  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
+        MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
+#else  //}{
+  void *mmap_privanon(void *, size_t, int, int);
+#endif  //}
 ssize_t write(int, void const *, size_t);
 
 
@@ -487,9 +493,6 @@ auxv_up(Elf32_auxv_t *av, unsigned const type, unsigned const value)
 
 DEBUG_STRCON(STR_xfind_pages, "xfind_pages  %%x  %%p  %%d  %%p\\n");
 
-#if !defined(__arm__)  //{
-#define m_privanon (MAP_PRIVATE | MAP_ANONYMOUS)
-#endif  //}
 // Find convex hull of PT_LOAD (the minimal interval which covers all PT_LOAD),
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
@@ -499,9 +502,6 @@ __attribute__((regparm(3), stdcall))
 #endif  /*}*/
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     char **const p_brk
-#if defined(__arm__)  //
-    , unsigned const m_privanon
-#endif  //}
 #if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
     , unsigned const page_mask
 #else  /*}{*/
@@ -512,7 +512,6 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     DPRINTF((STR_xfind_pages(), mflags, phdr, phnum, p_brk));
-    mflags |= m_privanon;
     for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
@@ -530,7 +529,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
         addr = (char *)lo;
     }
     else {
-        addr = mmap((void *)lo, hi, PROT_NONE, mflags, -1, 0);
+        addr = mmap_privanon((void *)lo, hi, PROT_NONE, mflags);
         //munmap(szlo + addr, hi - szlo);
     }
     *p_brk = hi + addr;  // the logical value of brk(0)
@@ -542,11 +541,7 @@ DEBUG_STRCON(STR_do_xmap,
 
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
-    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf
-#if defined(__arm__)  //{
-    , unsigned const m_privanon
-#endif  //}
-)
+    Elf32_auxv_t *const av, unsigned *const p_reloc, f_unfilter *const f_unf)
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (void const *)ehdr);
@@ -567,9 +562,6 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #endif  /*}*/
     unsigned const reloc = xfind_pages(((ET_EXEC==ehdr->e_type) ? MAP_FIXED : 0),
          phdr, ehdr->e_phnum, &v_brk
-#if defined(__arm__)  //{
-        , m_privanon
-#endif  //}
 #if defined(__mips__)  /*{ any machine with varying PAGE_SIZE */
         , ~frag_mask
 #endif  /*}*/
@@ -591,19 +583,24 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
         mlen += frag;
         addr -= frag;
 
-        if (addr != mmap(addr, mlen
 #if defined(__i386__)  /*{*/
-            // Decompressor can overrun the destination by 3 bytes.
-            + (xi ? 3 : 0)
+    // Decompressor can overrun the destination by 3 bytes.
+#  define LEN_OVER 3
+#else  /*}{*/
+#  define LEN_OVER 0
 #endif  /*}*/
-                , prot | (xi ? PROT_WRITE : 0),
-                MAP_FIXED | (xi ? m_privanon : MAP_PRIVATE),
-                (xi ? -1 : fdi), phdr->p_offset - frag) ) {
-            err_exit(8);
-        }
+
         if (xi) {
+            if (addr != mmap_privanon(addr, LEN_OVER + mlen,
+                    prot | PROT_WRITE, MAP_FIXED) )
+                err_exit(6);
             unpackExtent(xi, &xo, (f_expand *)fdi,
                 ((PROT_EXEC & prot) ? f_unf : 0) );
+        }
+        else {
+            if (addr != mmap(addr, mlen, prot, MAP_FIXED | MAP_PRIVATE,
+                    fdi, phdr->p_offset - frag) )
+                err_exit(8);
         }
         // Linux does not fixup the low end, so neither do we.
         // Indeed, must leave it alone because some PT_GNU_RELRO
@@ -640,8 +637,7 @@ ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
-            if (addr != mmap(addr, haddr - addr, prot,
-                    MAP_FIXED | m_privanon, -1, 0 ) ) {
+            if (addr != mmap_privanon(addr, haddr - addr, prot, MAP_FIXED)) {
                 err_exit(9);
             }
         }
@@ -683,6 +679,14 @@ void *upx_main(  // returns entry address
     Elf32_auxv_t *const av,
     f_expand *const f_decompress,
     f_unfilter *const f_unf
+) __asm__("upx_main");
+void *upx_main(  // returns entry address
+    struct b_info const *const bi,  // 1st block header
+    size_t const sz_compressed,  // total length
+    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    Elf32_auxv_t *const av,
+    f_expand *const f_decompress,
+    f_unfilter *const f_unf
 )
 #else  /*}{ !__mips__ */
 void *upx_main(
@@ -694,9 +698,6 @@ void *upx_main(
     Extent xi,
     unsigned const volatile dynbase,
     unsigned const sys_munmap
-#if defined(__arm__)  //{
-    , unsigned m_privanon
-#endif  //}
 ) __asm__("upx_main");
 void *upx_main(
     Elf32_auxv_t *const av,
@@ -707,9 +708,6 @@ void *upx_main(
     Extent xi,  // {sz_cpr, &b_info} for ELF headers
     unsigned const volatile dynbase,  // value+result: compiler must not change
     unsigned const sys_munmap
-#if defined(__arm__)  //{
-    , unsigned m_privanon
-#endif  //}
 )
 #endif  /*}*/
 {
@@ -767,11 +765,7 @@ void *upx_main(
 #elif !defined(__mips__)  /*}{*/
     (void)sys_munmap;  // UNUSED
 #endif  /*}*/
-    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf
-#if defined(__arm__)  //{
-        , m_privanon
-#endif  //}
-    );
+    entry = do_xmap((int)f_decompress, ehdr, &xi, av, &reloc, f_unf);
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
@@ -785,11 +779,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0
-#if defined(__arm__)  //{
-            , m_privanon
-#endif  //}
-        );
+        entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0);
         auxv_up(av, AT_BASE, reloc);  // uClibc only?
         close(fdi);
         break;

@@ -70,7 +70,7 @@ start_params:
         .long LENF  // end_decompress - (start_params -4)
         .long CPR0  //           cpr0 - (start_params -4)
 mflg:
-        .long MFLG  // MAP_{PRIVATE|ANONYMOUS}
+        .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 ////    nop; bkpt
 /* Get some pages: enough
@@ -105,7 +105,8 @@ _start: .globl _start
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
-        mvn r4,#0  // -1; cater to *BSD for fd when MAP_ANON
+        mov r5,#0  // offset= 0
+        mvn r4,#0  // fd= -1; cater to *BSD for fd when MAP_ANON
         orr r3,r3,#MAP_FIXED
 #if defined(ARMEL_EABI4)  /*{*/
         mov r7,#__NR_mmap64
@@ -122,7 +123,9 @@ copy:
         stmia r0!,{r1,r2,r3,r4,r5,r6,r7,r8}; blo copy
 
         sub r4,r0,r9  // relocation amount
+        ldr r1,[sp,#4*4]  // MFLG
         adr r5,f_decompress
+        str r1,[r0],#4  // MFLG
         mov lr,r0  // dst for unfolded code
         add r5,r5,r4  // relocated f_decompress
 
@@ -154,7 +157,7 @@ D_stm1=2*4
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
-        mov lr,pc; mov pc,r5  // decompress folded code [opcode 'bx' not in v4a]
+        mov lr,pc; mov pc,r5  // decompress folded code [opcode 'blx' not in v4a]
         ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
 
 #if DEBUG  /*{*/
