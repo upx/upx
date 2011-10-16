@@ -117,6 +117,7 @@ D_sz_unc=2*4  // stack displacement to sz_unc
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#2; bl trace
 #endif  /*}*/
+        cmn r0,#4096
         bcs msg_SELinux
 copy:
         ldmia r9!,{r1,r2,r3,r4,r5,r6,r7,r8}; cmp r9,r10  // upto end-decompress
