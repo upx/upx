@@ -395,7 +395,7 @@ tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
@@ -487,7 +487,7 @@ tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
@@ -574,7 +574,7 @@ tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
@@ -1090,7 +1090,7 @@ tmp/mips.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
 	sed -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s
@@ -1129,7 +1129,7 @@ tmp/mipsel.r3000-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -D_TARGET_LINUX_ $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -S -Os -MF tmp/$T.d $< -o - | $(RTRIM) > tmp/$T.i
 	sed -e 's/	j[ 	][ 	]*$$L/	b $$L/' \
 	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s
