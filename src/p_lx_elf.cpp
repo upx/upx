@@ -1711,13 +1711,15 @@ PackNetBSDElf32x86::generateElfHdr(
 
         if (NHDR_NETBSD_TAG == np->type && 7== np->namesz
         &&  NETBSD_DESCSZ == np->descsz
-        &&  0==strcmp(ELF_NOTE_NETBSD_NAME, (char const *)&np->body)) {
+        &&  0==strcmp(ELF_NOTE_NETBSD_NAME,
+                /* &np->body */ (char const *)(1+ np))) {
             np_NetBSD = np;
             sz_NetBSD = k;
         }
         if (NHDR_PAX_TAG == np->type && 4== np->namesz
         &&  PAX_DESCSZ==np->descsz
-        &&  0==strcmp(ELF_NOTE_PAX_NAME, (char const *)&np->body)) {
+        &&  0==strcmp(ELF_NOTE_PAX_NAME,
+                /* &np->body */ (char const *)(1+ np))) {
             np_PaX = np;
             sz_PaX = k;
         }
@@ -1753,10 +1755,12 @@ PackNetBSDElf32x86::generateElfHdr(
         set_te32(&phdr->p_flags, Elf32_Phdr::PF_R);
         set_te32(&phdr->p_align, 4);
 
-        unsigned bits = get_te32(&np_PaX->body[4]);
+        unsigned bits = get_te32(  /* &np_PaX->body[4] */
+            &(ACC_UNCONST_CAST(unsigned char *, (1+ np_PaX)))[4] );
         bits &= ~PAX_MPROTECT;
         bits |=  PAX_NOMPROTECT;
-        set_te32(ACC_UNCONST_CAST(unsigned char *, &np_PaX->body[4]), bits);
+        set_te32(  /* &np_PaX->body[4] */
+            &(ACC_UNCONST_CAST(unsigned char *, (1+ np_PaX)))[4],  bits);
 
         sz_elf_hdrs += sz_PaX + sizeof(*phdr);
         note_offset += sz_PaX;

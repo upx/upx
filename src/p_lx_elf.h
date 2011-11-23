@@ -190,7 +190,7 @@ protected:
         unsigned namesz;
         unsigned descsz;
         unsigned type;
-        unsigned char body[0];
+        //unsigned char body[0];
     };
 
     static void compileTimeAssertions() {
