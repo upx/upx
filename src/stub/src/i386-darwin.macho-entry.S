@@ -129,6 +129,9 @@ section LEXEC020
 
 #define PAGE_SIZE ( 1<<12)
 
+GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
+NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
+
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
@@ -136,10 +139,17 @@ sz_b_info= 12
 
 // Decompress the rest of this loader, and jump to it.
 unfold:
-        pop esi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
-        mov eax,[sz_cpr + esi]
-        lea edx,[sz_b_info + eax + esi]
-        push edx  // &destination
+        pop ebx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+        mov ecx,[sz_cpr + ebx]
+        lea esi,[             -1+ sz_b_info + ecx + ebx]  // &hi_byte folded original
+        mov edi,[sz_unc + ebx]
+        lea edi,[GAP + NO_LAP -1+ sz_b_info + edi + ebx]  // &hi_byte folded copy
+        std; rep movsb  // copy descending
+
+        lea edx,[GAP                              + ebx]  // &unfolded
+        mov esi,ebx  // &b_info
+        lea ebx,[1+ edi]  // &lo_byte folded copy
+        push edx  // &unfolded code
         cld
         lodsd
         push eax  // sz_uncompressed  (maximum dstlen for lzma)
@@ -151,13 +161,13 @@ unfold:
         push eax  // sz_compressed  (srclen)
         lodsd
         mov [4*3 + esp],eax // last 4 bytes of b_info
-        push esi  // &compressed_data
+        push ebx  // &copied_compressed_data
         call ebp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
         add esp, (5+1)*4  // (5+1) args to decompress
+        lea ebx,[-4+ _start - decompress + ebp]  // &total_length
         ret      // &destination
 main:
         pop ebp  // &decompress
-        lea ebx,[-4+ _start - decompress + ebp]  // &total_length
         call unfold
             // compressed fold_elf86 follows
 
