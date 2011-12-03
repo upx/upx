@@ -177,6 +177,9 @@ end_decompress: .globl end_decompress
   section MACHMAINZ
 #define PAGE_SIZE ( 1<<12)
 
+GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
+NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
+
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
@@ -184,23 +187,30 @@ sz_b_info= 12
 
 // Decompress the rest of this loader, and jump to it.
 unfold:
-        pop %rsi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
-        mov sz_cpr(%rsi),%eax
-        lea sz_b_info(%rsi,%rax),%rax
-        push %rax  // &destination
-               movq %rax,%arg3    // %arg3= dst for unfolding
+        pop %rbx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+        mov sz_cpr(%rbx),%ecx
+        lea              -1+ sz_b_info(%rcx,%rbx),%rsi  // &hi_byte folded original
+        mov sz_unc(%rbx),%edi
+        lea GAP + NO_LAP -1+ sz_b_info(%rdi,%rbx),%rdi  // &hi_byte folded copy
+        std; rep movsb  // copy descending
+
+        lea GAP                            (%rbx),%arg3 // &unfolded
+        mov %rbx,%rsi  // &b_info
+        lea 1(%rdi),%arg1  // &lo_byte folded copy
+        push %arg3  // return to unfolded code
+
         cld
         lodsl; push %rax          // allocate slot on stack
                movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
-        lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
+        lodsl; push %rax          // sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  // b_method
-               xchg  %arg1,%arg2  // XXX: 4GB
+               pop %arg2          // sz_cpr
         call *%rbp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
                pop %rcx  // discard len_dst
+        lea -4+ _start - ret_main(%rbp),%rbx  // &total_length for fold:
         ret
 main:
         pop %rbp  // &decompress
-        lea -4+ _start - ret_main(%rbp),%rbx  // &total_length for fold:
         call unfold
             // compressed fold_elf86 follows
 
