@@ -525,7 +525,7 @@ void PackLinuxElf64::patchLoader()
 {
 }
 
-void PackLinuxElf32::ARM_updateLoader(OutputFile */*fo*/)
+void PackLinuxElf32::ARM_updateLoader(OutputFile * /*fo*/)
 {
     set_te32(&elfout.ehdr.e_entry, sz_pack2 +
         linker->getSymbolOffset("_start") +
@@ -552,13 +552,13 @@ void PackLinuxElf32mipseb::updateLoader(OutputFile *fo)
     ARM_updateLoader(fo);  // not ARM specific; (no 32-bit immediates)
 }
 
-void PackLinuxElf32::updateLoader(OutputFile */*fo*/)
+void PackLinuxElf32::updateLoader(OutputFile * /*fo*/)
 {
     set_te32(&elfout.ehdr.e_entry, sz_pack2 +
         get_te32(&elfout.phdr[0].p_vaddr));
 }
 
-void PackLinuxElf64::updateLoader(OutputFile */*fo*/)
+void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
 {
     set_te64(&elfout.ehdr.e_entry, sz_pack2 +
         get_te64(&elfout.phdr[0].p_vaddr));
@@ -1025,8 +1025,10 @@ static const
 #include "stub/arm-linux.elf-entry.h"
 static const
 #include "stub/arm-linux.elf-fold.h"
+#if 0
 static const
 #include "stub/arm-linux.shlib-init.h"
+#endif
 
 static const
 #include "stub/armeb-linux.elf-entry.h"
@@ -2375,10 +2377,10 @@ int PackLinuxElf32::ARM_is_QNX(void)
                 unsigned const sz_interp = get_te32(&phdr->p_filesz);
                 unsigned const pos_interp = get_te32(&phdr->p_offset);
                 if (sz_interp <= sizeof(interp)
-                &&  (sz_interp + pos_interp) <= fi->st_size()) {
+                &&  (sz_interp + pos_interp) <= (unsigned) fi->st_size()) {
                     fi->seek(pos_interp, SEEK_SET);
                     fi->readx(interp, sz_interp);
-                    for (int k = -5+ sz_interp; k>=0; --k) {
+                    for (int k = sz_interp - 5; k>=0; --k) {
                         if (0==memcmp("ldqnx", &interp[k], 5))
                             return 1;
                     }
