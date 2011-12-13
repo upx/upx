@@ -76,6 +76,21 @@ and previous versions did this by default with no option.  However,
 too much other software erroneously assumes that /proc/self/exe
 always exists.
 
+On arm*-linux-elf there is no good address at which to retain one
+page of the compressed executable.  Pages below the usual .p_vaddr
+0x8000 (32KiB) are rejected by the kernel.  Using a page above the
+original uncompressed brk(0) would require placing the entire initial
+compressed program above uncompressed brk(0), which would significantly
+increase the running brk(0); but too many programs break if brk(0)
+moves.  Thus on arm*-linux-elf the compressed executable begins
+with 0x8000==.p_vaddr, all pages mapped by execve() that are also
+occupied by decompressed bytes are removed before overwriting, and
+/proc/self/exe becomes a "(deleted)" symlink.  It might be possible
+to preserve /proc/self/exe if the original uncompressed executable
+were created with 0x9000==.p_vaddr (one page higher than the usual
+0x8000) so that the compressed page mapped at 0x8000 would linger.
+[This has not been tested.]
+
 Linux stores the pathname argument that was specified to execve()
 immediately after the '\0' which terminates the character string of the
 last environment variable [as of execve()].  This is true for at least
