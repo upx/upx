@@ -2015,7 +2015,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             fi->readx((void*)shdr,ehdri.e_shentsize*ehdri.e_shnum);
 
             // set this so we can use elf_find_section_name
-            shdri = (Elf32_Shdr * const)shdr;
+            shdri = (Elf32_Shdr *)shdr;
         }
 
         //set the shstrtab
@@ -2207,7 +2207,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             fi->readx((void*)shdr,ehdri.e_shentsize*ehdri.e_shnum);
 
             // set this so we can use elf_find_section_name
-            shdri = (Elf64_Shdr * const)shdr;
+            shdri = (Elf64_Shdr *)shdr;
         }
 
         //set the shstrtab
