@@ -2004,30 +2004,30 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
     if (opt->o_unix.preserve_build_id) {
         n_elf_shnum = ehdri.e_shnum;
         Elf32_Shdr *shdr = NULL;
-    
+
         Elf32_Shdr const *tmp = shdri;
 
         if (! shdri) {
             shdr = new Elf32_Shdr[n_elf_shnum];
-        
+
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
             fi->readx((void*)shdr,ehdri.e_shentsize*ehdri.e_shnum);
-    
+
             // set this so we can use elf_find_section_name
             shdri = (Elf32_Shdr * const)shdr;
         }
 
         //set the shstrtab
         sec_strndx = &shdr[ehdri.e_shstrndx];
-    
+
         char *strtab = new char[sec_strndx->sh_size];
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
-    
+
         shstrtab = (const char*)strtab;
-    
+
         Elf32_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
             unsigned char *data = new unsigned char[buildid->sh_size];
@@ -2035,16 +2035,16 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
             fi->readx(data,buildid->sh_size);
-    
+
             buildid_data  = data;
-    
+
             o_elf_shnum = 3;
             memset(&shdrout.shdr,0,sizeof(shdrout));
-    
+
             //setup the build-id
             memcpy(&shdrout.shdr[1],buildid, sizeof(shdrout.shdr[1]));
             shdrout.shdr[1].sh_name = 1;
-    
+
             //setup the shstrtab
             memcpy(&shdrout.shdr[2],sec_strndx, sizeof(shdrout.shdr[2]));
             shdrout.shdr[2].sh_name = 20;
@@ -2187,7 +2187,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         memset(&linfo, 0, sizeof(linfo));
         fo->write(&linfo, sizeof(linfo));
     }
-    
+
     // only execute if option present
     if (opt->o_unix.preserve_build_id) {
         // set this so we can use elf_find_section_name
@@ -2201,7 +2201,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
         if (! shdri) {
             shdr = new Elf64_Shdr[n_elf_shnum];
-        
+
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
             fi->readx((void*)shdr,ehdri.e_shentsize*ehdri.e_shnum);
@@ -2209,17 +2209,17 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             // set this so we can use elf_find_section_name
             shdri = (Elf64_Shdr * const)shdr;
         }
-    
+
         //set the shstrtab
         sec_strndx = &shdri[ehdri.e_shstrndx];
-    
+
         char *strtab = new char[sec_strndx->sh_size];
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
-    
+
         shstrtab = (const char*)strtab;
-    
+
         Elf64_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
             unsigned char *data = new unsigned char[buildid->sh_size];
@@ -2227,28 +2227,28 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
             fi->readx(data,buildid->sh_size);
-    
+
             buildid_data  = data;
-    
+
             o_elf_shnum = 3;
             memset(&shdrout.shdr,0,sizeof(shdrout));
-    
+
             //setup the build-id
             memcpy(&shdrout.shdr[1],buildid, sizeof(shdrout.shdr[1]));
             shdrout.shdr[1].sh_name = 1;
-    
+
             //setup the shstrtab
             memcpy(&shdrout.shdr[2],sec_strndx, sizeof(shdrout.shdr[2]));
             shdrout.shdr[2].sh_name = 20;
             shdrout.shdr[2].sh_size = 29; //size of our static shstrtab
         }
-    
+
         if (shdr) {
             shdri = tmp;
             delete [] shdr;
             shdr = NULL;
         }
-    }    
+    }
 }
 
 void PackLinuxElf64amd::pack1(OutputFile *fo, Filter &ft)
@@ -2769,7 +2769,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         shdrout.shdr[1].sh_offset = shdrout.shdr[2].sh_offset+shdrout.shdr[2].sh_size;
 
         fo->write(&shdrout, ssize);
-    
+
         fo->write(o_shstrtab,shdrout.shdr[2].sh_size);
         fo->write(buildid_data,shdrout.shdr[1].sh_size);
     }
@@ -2836,7 +2836,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         shdrout.shdr[1].sh_offset = shdrout.shdr[2].sh_offset+shdrout.shdr[2].sh_size;
 
         fo->write(&shdrout, ssize);
-    
+
         fo->write(o_shstrtab,shdrout.shdr[2].sh_size);
         fo->write(buildid_data,shdrout.shdr[1].sh_size);
     }
