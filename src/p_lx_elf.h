@@ -192,7 +192,7 @@ protected:
 
     __packed_struct(cprElfShdr3)
         Elf32_Shdr shdr[3];
-    __packed_struct_end();
+    __packed_struct_end()
 
     cprElfShdr3 shdrout;
 
@@ -305,7 +305,7 @@ protected:
 
     __packed_struct(cprElfShdr3)
         Elf64_Shdr shdr[3];
-    __packed_struct_end();
+    __packed_struct_end()
 
     cprElfShdr3 shdrout;
 
