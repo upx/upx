@@ -88,6 +88,10 @@ protected:
     unsigned char ei_data;
     unsigned char ei_osabi;
     char const *osabi_note;
+
+    unsigned char const *buildid_data;
+    int o_elf_shnum; // num output Shdrs
+    static unsigned char o_shstrtab[];
 };
 
 class PackLinuxElf32 : public PackLinuxElf
@@ -185,6 +189,12 @@ protected:
     __packed_struct_end()
 
     cprElfHdrNetBSD elfout;
+
+    __packed_struct(cprElfShdr3)
+        Elf32_Shdr shdr[3];
+    __packed_struct_end();
+
+    cprElfShdr3 shdrout;
 
     struct Elf32_Nhdr {
         unsigned namesz;
@@ -292,6 +302,12 @@ protected:
     __packed_struct_end()
 
     cprElfHdr4 elfout;
+
+    __packed_struct(cprElfShdr3)
+        Elf64_Shdr shdr[3];
+    __packed_struct_end();
+
+    cprElfShdr3 shdrout;
 
     static void compileTimeAssertions() {
         COMPILE_TIME_ASSERT(sizeof(cprElfHdr1) == 64 + 1*56 + 12)

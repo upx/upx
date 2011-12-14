@@ -290,6 +290,11 @@ void show_help(int verbose)
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "\n");
+        con_fprintf(f,"Options for linux/elf:\n");
+        fg = con_fg(f,fg);
+        con_fprintf(f,
+                    "  --preserve-build-id     copy .gnu.note.build-id to compressed output\n"
+                    "\n");
     }
 
     con_fprintf(f, "file..   executables to (de)compress\n");

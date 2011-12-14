@@ -898,6 +898,9 @@ static int do_option(int optc, const char *arg)
     case 674:
         opt->o_unix.unmap_all_pages = true;  // val ?
         break;
+    case 675:
+        opt->o_unix.preserve_build_id = true;
+        break;
 
     case '\0':
         return -1;
@@ -1048,6 +1051,7 @@ static const struct mfx_option longopts[] =
     {"OpenBSD",          0x10, 0, 669},
     {"openbsd",          0x10, 0, 669},
     {"unmap-all-pages",  0x10, 0, 674},     // linux /proc/self/exe vanishes
+    {"preserve-build-id",   0, 0, 675},
     // watcom/le
     {"le",               0x10, 0, 620},     // produce LE output
     // win32/pe
