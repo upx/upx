@@ -5,7 +5,7 @@
 # cross-assemblers and cross-compilers - please see README.SRC
 # for details.
 #
-# Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2012 Markus Franz Xaver Johannes Oberhumer
 #
 
 MAKEFLAGS += -rR
