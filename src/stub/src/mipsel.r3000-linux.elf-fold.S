@@ -200,6 +200,13 @@ mprotect: .globl mprotect
 #define a4_sys 0x10
 #define a5_sys 0x14
 
+MAP_PRIVATE=  0x002
+MAP_ANONYMOUS=0x800  # not same as i386
+
+mmap_privanon: .globl mmap_privanon
+        ori a3,a3,MAP_PRIVATE|MAP_ANONYMOUS
+        li t0,-1  # fd
+        li t1,0   # offset
 mmap: .globl mmap
         addiu sp,sp,-sp_frame
         sw t0,a4_sys(sp)
