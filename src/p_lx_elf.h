@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2011 Laszlo Molnar
-   Copyright (C) 2000-2011 John F. Reiser
+   Copyright (C) 1996-2012 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2012 Laszlo Molnar
+   Copyright (C) 2000-2012 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -192,7 +192,7 @@ protected:
 
     __packed_struct(cprElfShdr3)
         Elf32_Shdr shdr[3];
-    __packed_struct_end();
+    __packed_struct_end()
 
     cprElfShdr3 shdrout;
 
@@ -305,7 +305,7 @@ protected:
 
     __packed_struct(cprElfShdr3)
         Elf64_Shdr shdr[3];
-    __packed_struct_end();
+    __packed_struct_end()
 
     cprElfShdr3 shdrout;
 

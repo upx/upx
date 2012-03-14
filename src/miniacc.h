@@ -2,6 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
+   Copyright (C) 2012 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
    Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
@@ -32,7 +34,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation, Inc.,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
    Markus F.X.J. Oberhumer
    <markus@oberhumer.com>
@@ -41,7 +43,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20101017L
+#define ACC_VERSION     20120101L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -537,7 +539,7 @@
 #  define ACC_INFO_CC           "sdcc"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(SDCC)
 #elif defined(__PATHSCALE__) && defined(__PATHCC_PATCHLEVEL__)
-#  define ACC_CC_PATHSCALE      (__PATHCC__ * 0x10000L + __PATHCC_MINOR__ * 0x100 + __PATHCC_PATCHLEVEL__)
+#  define ACC_CC_PATHSCALE      (__PATHCC__ * 0x10000L + (__PATHCC_MINOR__+0) * 0x100 + (__PATHCC_PATCHLEVEL__+0))
 #  define ACC_INFO_CC           "Pathscale C"
 #  define ACC_INFO_CCVER        __PATHSCALE__
 #elif defined(__INTEL_COMPILER)
@@ -555,32 +557,32 @@
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__POCC__)
 #elif defined(__clang__) && defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
 #  if defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
 #  else
-#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
 #  endif
 #  if defined(__clang_major__) && defined(__clang_minor__) && defined(__clang_patchlevel__)
-#    define ACC_CC_CLANG_CLANG  (__clang_major__ * 0x10000L + __clang_minor__ * 0x100 + __clang_patchlevel__)
+#    define ACC_CC_CLANG_CLANG  (__clang_major__ * 0x10000L + (__clang_minor__+0) * 0x100 + (__clang_patchlevel__+0))
 #  else
-#    define ACC_CC_CLANG_CLANG  0x020700L
+#    define ACC_CC_CLANG_CLANG  0x010000L
 #  endif
 #  define ACC_CC_CLANG          ACC_CC_CLANG_GNUC
 #  define ACC_INFO_CC           "clang"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
 #  if defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
 #  else
-#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
 #  endif
 #  define ACC_CC_LLVM           ACC_CC_LLVM_GNUC
 #  define ACC_INFO_CC           "llvm-gcc"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__GNUC__) && defined(__VERSION__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100 + __GNUC_PATCHLEVEL__)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
 #  elif defined(__GNUC_MINOR__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + __GNUC_MINOR__ * 0x100)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
 #  else
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
 #  endif
@@ -724,6 +726,20 @@
 #  define ACC_CC_UNKNOWN        1
 #  define ACC_INFO_CC           "unknown"
 #  define ACC_INFO_CCVER        "unknown"
+#endif
+#if (ACC_CC_GNUC) && defined(__OPEN64__)
+#  if defined(__OPENCC__) && defined(__OPENCC_MINOR__) && defined(__OPENCC_PATCHLEVEL__)
+#    define ACC_CC_OPEN64_OPEN64 (__OPENCC__ * 0x10000L + (__OPENCC_MINOR__+0) * 0x100 + (__OPENCC_PATCHLEVEL__+0))
+#    define ACC_CC_OPEN64_GNUC  ACC_CC_GNUC
+#    define ACC_CC_OPEN64       ACC_CC_OPEN64_OPEN64
+#  endif
+#endif
+#if (ACC_CC_GNUC) && defined(__PCC__)
+#  if defined(__PCC__) && defined(__PCC_MINOR__) && defined(__PCC_MINORMINOR__)
+#    define ACC_CC_PCC_PCC      (__PCC__ * 0x10000L + (__PCC_MINOR__+0) * 0x100 + (__PCC_MINORMINOR__+0))
+#    define ACC_CC_PCC_GNUC     ACC_CC_GNUC
+#    define ACC_CC_PCC          ACC_CC_PCC_PCC
+#  endif
 #endif
 #if 0 && (ACC_CC_MSC && (_MSC_VER >= 1200)) && !defined(_MSC_FULL_VER)
 #  error "ACC_CC_MSC: _MSC_FULL_VER is not defined"
@@ -1411,13 +1427,13 @@ extern "C" {
 #  define ACC_INFO_LIBC         "newlib"
 #elif defined(__UCLIBC__) && defined(__UCLIBC_MAJOR__) && defined(__UCLIBC_MINOR__)
 #  if defined(__UCLIBC_SUBLEVEL__)
-#    define ACC_LIBC_UCLIBC     (__UCLIBC_MAJOR__ * 0x10000L + __UCLIBC_MINOR__ * 0x100 + __UCLIBC_SUBLEVEL__)
+#    define ACC_LIBC_UCLIBC     (__UCLIBC_MAJOR__ * 0x10000L + (__UCLIBC_MINOR__+0) * 0x100 + (__UCLIBC_SUBLEVEL__+0))
 #  else
 #    define ACC_LIBC_UCLIBC     0x00090bL
 #  endif
 #  define ACC_INFO_LIBC         "uclibc"
 #elif defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#  define ACC_LIBC_GLIBC        (__GLIBC__ * 0x10000L + __GLIBC_MINOR__ * 0x100)
+#  define ACC_LIBC_GLIBC        (__GLIBC__ * 0x10000L + (__GLIBC_MINOR__+0) * 0x100)
 #  define ACC_INFO_LIBC         "glibc"
 #elif (ACC_CC_MWERKS) && defined(__MSL__)
 #  define ACC_LIBC_MSL          __MSL__
@@ -1862,6 +1878,7 @@ extern "C" {
 #elif (ACC_ARCH_I386 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
 #  define ACC_ASM_SYNTAX_MSC 1
 #elif (ACC_OS_WIN64 && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
+#elif (ACC_ARCH_I386 && ACC_CC_GNUC && (ACC_CC_GNUC == 0x011f00ul))
 #elif (ACC_ARCH_I386 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
 #  define ACC_ASM_SYNTAX_GNUC 1
 #elif (ACC_ARCH_AMD64 && (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC || ACC_CC_PATHSCALE))
@@ -5842,26 +5859,26 @@ ACCLIB_PUBLIC(long, acc_safe_hwrite) (int fd, const acc_hvoid_p buf, long size)
 #if !defined(ACCLIB_PUBLIC)
 #  define ACCLIB_PUBLIC(r,f)    r __ACCLIB_FUNCNAME(f)
 #endif
-#if 0 && (ACC_OS_POSIX_LINUX && ACC_ARCH_AMD64 && ACC_ASM_SYNTAX_GNUC)
+#if 1 && (ACC_OS_POSIX_LINUX && ACC_ARCH_AMD64 && ACC_ASM_SYNTAX_GNUC)
 #ifndef acc_pclock_syscall_clock_gettime
 #define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
 #endif
 static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
 {
-    long r;
-    __asm__ __volatile__("syscall\n" : "=a" (r) : "0" (228), "D" (clockid), "S" (ts) : __ACC_ASM_CLOBBER);
-    return r;
+    unsigned long r = 228;
+    __asm__ __volatile__("syscall\n" : "=a" (r) : "0" (r), "D" (clockid), "S" (ts) : __ACC_ASM_CLOBBER);
+    return (long) r;
 }
 #endif
-#if 0 && (ACC_OS_POSIX_LINUX && ACC_ARCH_I386 && ACC_ASM_SYNTAX_GNUC)
+#if 1 && (ACC_OS_POSIX_LINUX && ACC_ARCH_I386 && ACC_ASM_SYNTAX_GNUC)
 #ifndef acc_pclock_syscall_clock_gettime
 #define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
 #endif
 static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
 {
-    long r;
-    __asm__ __volatile__("int $0x80\n" : "=a" (r) : "0" (265), "b" (clockid), "c" (ts) : __ACC_ASM_CLOBBER);
-    return r;
+    unsigned long r = 265;
+    __asm__ __volatile__("pushl %%ebx\n pushl %%edx\n popl %%ebx\n int $0x80\n popl %%ebx\n" : "=a" (r) : "0" (r), "d" (clockid), "c" (ts) : __ACC_ASM_CLOBBER);
+    return (long) r;
 }
 #endif
 #if 0 && defined(acc_pclock_syscall_clock_gettime)
@@ -5953,7 +5970,7 @@ static int acc_pclock_read_uclock(acc_pclock_handle_p h, acc_pclock_p c)
     ACC_UNUSED(h); return 0;
 }
 #endif
-#if 0 && (HAVE_CLOCK_GETTIME) && defined(CLOCK_PROCESS_CPUTIME_ID) && defined(acc_int64l_t)
+#if 1 && (HAVE_CLOCK_GETTIME) && defined(CLOCK_PROCESS_CPUTIME_ID) && defined(acc_int64l_t)
 #ifndef acc_pclock_read_clock_gettime_p_libc
 #define acc_pclock_read_clock_gettime_p_libc acc_pclock_read_clock_gettime_p_libc
 #endif
@@ -6041,7 +6058,7 @@ static int acc_pclock_read_perfctr(acc_pclock_handle_p h, acc_pclock_p c)
     ACC_UNUSED(h); return 0;
 }
 #endif
-#if 0 && (HAVE_CLOCK_GETTIME) && defined(CLOCK_THREAD_CPUTIME_ID) && defined(acc_int64l_t)
+#if 1 && (HAVE_CLOCK_GETTIME) && defined(CLOCK_THREAD_CPUTIME_ID) && defined(acc_int64l_t)
 #ifndef acc_pclock_read_clock_gettime_t_libc
 #define acc_pclock_read_clock_gettime_t_libc acc_pclock_read_clock_gettime_t_libc
 #endif
@@ -6776,7 +6793,7 @@ ACCLIB_PUBLIC_NOINLINE(void, acc_debug_break) (void)
 #elif (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
     DebugBreak();
 #else
-    * (volatile int *) 0x1 = -1;
+    * (volatile unsigned long *) (volatile void *) (size_t) 0x1 = ~0ul;
 #endif
 }
 ACCLIB_PUBLIC_NOINLINE(void, acc_debug_nop) (void)
@@ -6785,7 +6802,7 @@ ACCLIB_PUBLIC_NOINLINE(void, acc_debug_nop) (void)
 ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_query) (void)
 {
 #if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
-    size_t r;
+    size_t r = 0;
     __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
     return (int)(r >> 18) & 1;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
@@ -6802,21 +6819,20 @@ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_query) (void)
 }
 ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_enable) (int v)
 {
-    int r;
 #if (ACC_ARCH_AMD64) && (ACC_ASM_SYNTAX_GNUC)
     if (v) {
         __asm__ __volatile__("pushf\n orl $262144,(%%rsp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     } else {
         __asm__ __volatile__("pushf\n andl $-262145,(%%rsp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     }
-    r = 0;
+    return 0;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
     if (v) {
         __asm__ __volatile__("pushf\n orl $262144,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     } else {
         __asm__ __volatile__("pushf\n andl $-262145,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
     }
-    r = 0;
+    return 0;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
     if (v) { __asm {
         pushf
@@ -6827,11 +6843,10 @@ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_enable) (int v)
         and dword ptr [esp],-262145
         popf
     }}
-    r = 0;
+    return 0;
 #else
-    r = -1;
+    ACC_UNUSED(v); return -1;
 #endif
-    ACC_UNUSED(v); return r;
 }
 ACCLIB_PUBLIC_NOINLINE(unsigned, acc_debug_running_on_qemu) (void)
 {

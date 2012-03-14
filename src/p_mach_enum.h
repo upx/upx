@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2007-2011 John F. Reiser
+   Copyright (C) 2007-2012 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -53,7 +53,7 @@
     enum { // filetype
         MH_EXECUTE = 2,
         MH_DYLIB   = 6,
-        MH_BUNDLE  = 8		/* dynamically bound bundle file */
+        MH_BUNDLE  = 8      /* dynamically bound bundle file */
     };
     enum { // flags
         MH_NOUNDEFS = 1

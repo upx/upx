@@ -7,11 +7,11 @@ Changes in 3.09 (XX XXX XXXX):
 Changes in 3.08 (12 Dec 2011):
   * Fix allocation in runtime stub for darwin.macho-entry (i386 and amd64).
   * Compress shared library on ELF i386 only [ld.so threatens even this case].
-  * Attempt to suport ELF on QNX 6.3.0 for armel (experimental).
-  * Better diangostic when ELF -fPIC is needed.
+  * Attempt to support ELF on QNX 6.3.0 for armel (experimental).
+  * Better diagnostic when ELF -fPIC is needed.
   * PT_NOTE improvements for *BSD.
   * Preserve more ELF .e_flags on ARM.
-  * Minor code improvements for ELF stubs
+  * Minor code improvements for ELF stubs.
   * Defend against another flavor of corrupt PE header.
   * bug fixes
 
