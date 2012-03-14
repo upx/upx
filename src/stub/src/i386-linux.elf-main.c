@@ -35,7 +35,7 @@
 
 #include "include/linux.h"
 void *mmap(void *, size_t, int, int, int, off_t);
-#if defined(__i386__)  //{
+#if defined(__i386__) || defined(__mips__) //{
 #  define mmap_privanon(addr,len,prot,flgs) mmap((addr),(len),(prot), \
         MAP_PRIVATE|MAP_ANONYMOUS|(flgs),-1,0)
 #else  //}{
