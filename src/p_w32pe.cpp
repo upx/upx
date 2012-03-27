@@ -834,7 +834,7 @@ void PackW32Pe::pack(OutputFile *fo)
             throwCantPack("PE32/EFIROM files are not yet supported");
             break;
           }
-        case 14: //XBOX - will we ever see an XBOX file?
+        case 14: //XBOX - will we ever see a XBOX file?
           {
             throwCantPack("PE32/xbox files are not yet supported");
             break;
@@ -917,7 +917,7 @@ void PackW32Pe::pack(OutputFile *fo)
         if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
             == (PEFL_WRITE|PEFL_SHARED)))
             if (!opt->force)
-                throwCantPack("writeable shared sections not supported (try --force)");
+                throwCantPack("writable shared sections not supported (try --force)");
         if (jc && isection[ic].rawdataptr - jc > ih.filealign)
             throwCantPack("superfluous data between sections");
         fi->seek(isection[ic].rawdataptr,SEEK_SET);
@@ -1092,7 +1092,7 @@ void PackW32Pe::pack(OutputFile *fo)
         // still in a read only section by looking at the pe header of the
         // file. If this check fails the runtime does "interesting" things
         // like not running the floating point initialization code - the result
-        // is an R6002 runtime error.
+        // is a R6002 runtime error.
         // These supposed to be read only addresses are covered by the sections
         // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
         // in the memory. And the page on which the PE header is stored is read

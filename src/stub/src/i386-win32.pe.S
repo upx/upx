@@ -203,8 +203,8 @@ section         PEDEPHAK
   #endif
 
                 lea     eax, [edi + swri]
-                andb    [eax], 0x7f             // marks UPX0 non writeable
-                andb    [eax + 0x28], 0x7f      // marks UPX1 non writeable
+                andb    [eax], 0x7f             // marks UPX0 non writable
+                andb    [eax + 0x28], 0x7f      // marks UPX1 non writable
 
   #if 0
                 push    esp

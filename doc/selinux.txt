@@ -20,7 +20,7 @@ code 127, and a record will be added to the history file
 
 In "targeted enforcing" mode, SELinux pays close attention mostly to
 designated processes that run with elevated privileges: web server,
-print server, login server, etc.  Ordinary user excutables receive
+print server, login server, etc.  Ordinary user executables receive
 much less scrutiny.  However, one of the eventual goals of SELinux is to
 eradicate runtime generation of instructions because of the possibility
 for exploitation by malware (virus, trojan, key logger, privilege

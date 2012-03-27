@@ -475,7 +475,7 @@ void Packer::verifyOverlappingDecompression(upx_bytep o_ptr, unsigned o_size, Fi
 
 
 /*************************************************************************
-// Find overhead for in-place decompression in an heuristic way
+// Find overhead for in-place decompression in a heuristic way
 // (using a binary search). Return 0 on error.
 //
 // To speed up things:

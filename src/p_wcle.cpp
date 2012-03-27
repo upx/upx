@@ -360,7 +360,7 @@ void PackWcle::preprocessFixups()
                     //if (memcmp(iimage+jc+fixp2,fix+5,(fix[1] & 0x10) ? 4 : 2))
                     //    throwCantPack("illegal fixup offset");
 
-                    // work around an pmwunlite bug: remove duplicated fixups
+                    // work around a pmwunlite bug: remove duplicated fixups
                     // FIXME: fix the other cases too
                     if (rc == 0 || get_le32(rl+4*rc-4) != jc+fixp2)
                     {

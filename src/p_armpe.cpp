@@ -599,7 +599,7 @@ void PackArmPe::pack(OutputFile *fo)
         if (((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
             == (PEFL_WRITE|PEFL_SHARED)))
             if (!opt->force)
-                throwCantPack("writeable shared sections not supported (try --force)");
+                throwCantPack("writable shared sections not supported (try --force)");
         if (jc && isection[ic].rawdataptr - jc > ih.filealign)
             throwCantPack("superfluous data between sections");
         fi->seek(isection[ic].rawdataptr,SEEK_SET);

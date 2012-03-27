@@ -44,7 +44,7 @@ test file.
 
 win32/pe
 --------
- * writeable shared sections (`--force' *may* work)
+ * writable shared sections (`--force' *may* work)
  * certificates in the image
  * compressing files which contain a big BSS requires lots of memory
    during compression

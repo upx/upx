@@ -449,7 +449,7 @@ int PackLinuxI386::getLoaderPrefixSize() const
 // some ELF utitlity functions
 **************************************************************************/
 
-// basic check of an Linux ELF Ehdr
+// basic check of a Linux ELF Ehdr
 int PackLinuxI386::checkEhdr(const Elf_LE32_Ehdr *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
