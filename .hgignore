@@ -9,6 +9,7 @@ syntax: regexp
 syntax: glob
 
 .depend
+*.qtcreator.{config,creator,creator.user,files,includes}
 Makevars.local
 
 *.a
