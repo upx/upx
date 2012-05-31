@@ -43,7 +43,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20120101L
+#define ACC_VERSION     20120531L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -1655,6 +1655,8 @@ extern "C" {
 #    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PELLESC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
+#  elif (ACC_CC_CLANG && (ACC_CC_CLANG_CLANG >= 0x030200ul))
+#    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNUSED(var)         ((void) var)
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
@@ -1729,6 +1731,8 @@ extern "C" {
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-!(e)];}
 #  elif (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
+#  elif (ACC_CC_GNUC >= 0x040800ul)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-2*!(e)] __attribute__((__unused__));}
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
 #  elif (ACC_CC_TURBOC && (__TURBOC__ == 0x0295))
