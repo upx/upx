@@ -1271,10 +1271,9 @@ bool PackLinuxElf32::canPack()
     if (Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // No EI_OSBAI, no PT_NOTE.
         unsigned const arm_eabi = 0xff000000u & get_te32(&ehdr->e_flags);
         if (Elf32_Ehdr::EM_ARM==e_machine
-        &&  Elf32_Ehdr::ELFDATA2LSB==ei_data
         &&   (EF_ARM_EABI_VER5==arm_eabi
           ||  EF_ARM_EABI_VER4==arm_eabi ) ) {
-            // armel-eabi ARM little-endian Linux EABI version 4 is a mess.
+            // armel-eabi armeb-eabi ARM Linux EABI version 4 is a mess.
             ei_osabi = osabi0 = Elf32_Ehdr::ELFOSABI_LINUX;
         }
         else {
