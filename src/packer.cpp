@@ -1311,7 +1311,8 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                                  Filter *parm_ft,
                                  const unsigned overlap_range,
                                  const upx_compress_config_t *cconf,
-                                 int filter_strategy)
+                                 int filter_strategy,
+                                 int inhibit_compression_check)
 {
     parm_ft->buf_len = f_len;
     // struct copies
@@ -1487,14 +1488,17 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
     this->ph = best_ph;
     *parm_ft = best_ft;
 
-    // finally check compression ratio
-    if (best_ph.c_len + best_ph_lsize >= best_ph.u_len)
-        throwNotCompressible();
-    if (!checkCompressionRatio(best_ph.u_len, best_ph.c_len))
-        throwNotCompressible();
+    // Finally, check compression ratio.
+    // Might be inhibited when blocksize < file_size, for instance.
+    if (!inhibit_compression_check) {
+        if (best_ph.c_len + best_ph_lsize >= best_ph.u_len)
+            throwNotCompressible();
+        if (!checkCompressionRatio(best_ph.u_len, best_ph.c_len))
+            throwNotCompressible();
 
-    // postconditions 2)
-    assert(best_ph.overlap_overhead > 0);
+        // postconditions 2)
+        assert(best_ph.overlap_overhead > 0);
+    }
 
     // convenience
     buildLoader(&best_ft);
@@ -1508,10 +1512,11 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
 void Packer::compressWithFilters(Filter *ft,
                                  const unsigned overlap_range,
                                  const upx_compress_config_t *cconf,
-                                 int filter_strategy)
+                                 int filter_strategy,
+                                 int inhibit_compression_check)
 {
     compressWithFilters(ft, overlap_range, cconf, filter_strategy,
-                        0, 0, 0, NULL, 0);
+                        0, 0, 0, NULL, 0, inhibit_compression_check);
 }
 
 
@@ -1522,7 +1527,8 @@ void Packer::compressWithFilters(Filter *ft,
                                  unsigned filter_off,
                                  unsigned ibuf_off,
                                  unsigned obuf_off,
-                                 const upx_bytep hdr_ptr, unsigned hdr_len)
+                                 const upx_bytep hdr_ptr, unsigned hdr_len,
+                                 int inhibit_compression_check)
 {
     ibuf.checkState(); obuf.checkState();
 
@@ -1538,7 +1544,8 @@ void Packer::compressWithFilters(Filter *ft,
                         o_ptr,
                         f_ptr, f_len,
                         hdr_ptr, hdr_len,
-                        ft, overlap_range, cconf, filter_strategy);
+                        ft, overlap_range, cconf, filter_strategy,
+                        inhibit_compression_check);
 
     ibuf.checkState(); obuf.checkState();
 }

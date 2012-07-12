@@ -142,6 +142,7 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
 //        ui_total_passes = 0;
 
     unsigned remaining = file_size;
+    unsigned n_block = 0;
     while (remaining > 0)
     {
         // FIXME: disable filters if we have more than one block.
@@ -170,7 +171,8 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
         // that is, AFTER filtering.  We want BEFORE filtering,
         // so that decompression checks the end-to-end checksum.
         unsigned const end_u_adler = upx_adler32(ibuf, ph.u_len, ph.u_adler);
-        compressWithFilters(&ft, OVERHEAD, NULL_cconf, filter_strategy);
+        compressWithFilters(&ft, OVERHEAD, NULL_cconf, filter_strategy,
+            !!n_block++);  // check compression ratio only on first block
 
         if (ph.c_len < ph.u_len) {
             const upx_bytep tbuf = NULL;

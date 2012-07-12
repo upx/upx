@@ -181,7 +181,8 @@ protected:
     void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
                              const upx_compress_config_t *cconf,
-                             int filter_strategy = 0);
+                             int filter_strategy = 0,
+                             int inhibit_compression_check = 0);
     void compressWithFilters(Filter *ft,
                              const unsigned overlap_range,
                              const upx_compress_config_t *cconf,
@@ -189,7 +190,8 @@ protected:
                              unsigned filter_buf_off,
                              unsigned compress_ibuf_off,
                              unsigned compress_obuf_off,
-                             const upx_bytep hdr_ptr, unsigned hdr_len);
+                             const upx_bytep hdr_ptr, unsigned hdr_len,
+                             int inhibit_compression_check = 0);
     // real compression driver
     void compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                              upx_bytep o_ptr,
@@ -198,7 +200,8 @@ protected:
                              Filter *ft,
                              const unsigned overlap_range,
                              const upx_compress_config_t *cconf,
-                             int filter_strategy);
+                             int filter_strategy,
+                             int inhibit_compression_check = 0);
 
     // util for verifying overlapping decompresion
     //   non-destructive test
