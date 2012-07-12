@@ -50,7 +50,7 @@ protected:
     // because they depend on Elf32 or Elf64 data structures, which differ.
 
     virtual void pack1(OutputFile *, Filter &) = 0;  // generate executable header
-    virtual void pack2(OutputFile *, Filter &) = 0;  // append compressed data
+    virtual int  pack2(OutputFile *, Filter &) = 0;  // append compressed data
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     //virtual void pack4(OutputFile *, Filter &) = 0;  // append pack header
 
@@ -111,7 +111,7 @@ protected:
     virtual int  ARM_is_QNX(void);
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    virtual int  pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);
@@ -228,7 +228,7 @@ protected:
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    virtual int  pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append pack header
     virtual void unpack(OutputFile *fo);

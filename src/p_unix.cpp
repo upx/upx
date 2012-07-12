@@ -130,7 +130,7 @@ int PackUnix::getStrategy(Filter &/*ft*/)
     return (opt->no_filter ? -3 : ((opt->filter > 0) ? -2 : 2));
 }
 
-void PackUnix::pack2(OutputFile *fo, Filter &ft)
+int PackUnix::pack2(OutputFile *fo, Filter &ft)
 {
     // compress blocks
     unsigned total_in = 0;
@@ -224,6 +224,8 @@ void PackUnix::pack2(OutputFile *fo, Filter &ft)
     if ((off_t)total_in != file_size) {
         throwEOFException();
     }
+
+    return 1;  // default: write end-of-compression bhdr next
 }
 
 void
@@ -285,12 +287,13 @@ void PackUnix::pack(OutputFile *fo)
     set_te32(&hbuf.p_blocksize, blocksize);
     fo->write(&hbuf, sizeof(hbuf));
 
-    pack2(fo, ft);  // append the compressed body
-
-    // write block end marker (uncompressed size 0)
-    b_info hdr; memset(&hdr, 0, sizeof(hdr));
-    set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
-    fo->write(&hdr, sizeof(hdr));
+    // append the compressed body
+    if (pack2(fo, ft)) {
+        // write block end marker (uncompressed size 0)
+        b_info hdr; memset(&hdr, 0, sizeof(hdr));
+        set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
+        fo->write(&hdr, sizeof(hdr));
+    }
 
     pack3(fo, ft);  // append loader
 

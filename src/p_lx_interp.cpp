@@ -124,12 +124,12 @@ void PackLinuxElf32x86interp::pack1(OutputFile *fo, Filter &)
 #undef E
 }
 
-void PackLinuxElf32x86interp::pack2(OutputFile *fo, Filter &ft)
+int PackLinuxElf32x86interp::pack2(OutputFile *fo, Filter &ft)
 {
     if (opt->o_unix.make_ptinterp) {
-        return;  // ignore current input file!
+        return 1;  // ignore current input file!
     }
-    super::pack2(fo, ft);
+    return super::pack2(fo, ft);
 }
 
 #undef PAGE_MASK

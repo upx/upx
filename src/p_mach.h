@@ -532,7 +532,7 @@ public:
 
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
-    virtual void pack2(OutputFile *, Filter &);  // append compressed data
+    virtual int  pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
     virtual void pack4(OutputFile *, Filter &) = 0;  // append PackHeader
 

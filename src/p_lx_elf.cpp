@@ -196,17 +196,6 @@ PackLinuxElf::~PackLinuxElf()
     delete[] file_image; file_image = NULL;
 }
 
-// Swap the byte ranges  fo[a to b]  and  fo[b to c].
-static void swap_byte_ranges(OutputFile *fo, unsigned a, unsigned b, unsigned c)
-{
-    MemBuffer buf(c - a);
-    fo->seek(a, SEEK_SET);
-    fo->readx(buf, c - a);
-    fo->seek(a, SEEK_SET);
-    fo->rewrite(&buf[b - a], c - b);
-    fo->rewrite(&buf[0], b - a);
-}
-
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
     sz_pack2b = fpad4(fo);  // after headers, all PT_LOAD, gaps
@@ -245,16 +234,28 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
 
     len = fpad4(fo);
-    // Put the loader in the middle, after the compressed PT_LOADs
-    // and before the compressed gaps (and debuginfo!)
-    // As first written, loader is  fo[sz_pack2b to len],
-    // and gaps and debuginfo are   fo[sz_pack2a to sz_pack2b].
-    swap_byte_ranges(fo, sz_pack2a, sz_pack2b, len);
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 {
-    super::pack3(fo, ft);
+    super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    // Then compressed gaps (including debuginfo.)
+    unsigned total_in = 0, total_out = 0;
+    for (unsigned k = 0; k < e_phnum; ++k) {
+        Extent x;
+        x.size = find_LOAD_gap(phdri, k, e_phnum);
+        if (x.size) {
+            x.offset = get_te32(&phdri[k].p_offset) +
+                       get_te32(&phdri[k].p_filesz);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
+    }
+    // write block end marker (uncompressed size 0)
+    b_info hdr; memset(&hdr, 0, sizeof(hdr));
+    set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
+    fo->write(&hdr, sizeof(hdr));
+    fpad4(fo);
+
     set_te32(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
     set_te32(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
     if (0!=xct_off) {  // shared library
@@ -331,7 +332,24 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
 
 void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 {
-    super::pack3(fo, ft);
+    super::pack3(fo, ft);  // loader follows compressed PT_LOADs
+    // Then compressed gaps (including debuginfo.)
+    unsigned total_in = 0, total_out = 0;
+    for (unsigned k = 0; k < e_phnum; ++k) {
+        Extent x;
+        x.size = find_LOAD_gap(phdri, k, e_phnum);
+        if (x.size) {
+            x.offset = get_te64(&phdri[k].p_offset) +
+                       get_te64(&phdri[k].p_filesz);
+            packExtent(x, total_in, total_out, 0, fo);
+        }
+    }
+    // write block end marker (uncompressed size 0)
+    b_info hdr; memset(&hdr, 0, sizeof(hdr));
+    set_le32(&hdr.sz_cpr, UPX_MAGIC_LE32);
+    fo->write(&hdr, sizeof(hdr));
+    fpad4(fo);
+
     set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
     set_te64(&elfout.phdr[0].p_memsz,  sz_pack2 + lsize);
     if (0!=xct_off) {  // shared library
@@ -2298,7 +2316,7 @@ unsigned PackLinuxElf32::find_LOAD_gap(
     return lo - hi;
 }
 
-void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
+int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
     unsigned k;
@@ -2356,17 +2374,15 @@ void PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
     }
     sz_pack2a = fpad4(fo);
 
+    // Accounting only; ::pack3 will do the compression and output
     for (k = 0; k < e_phnum; ++k) {
-        x.size = find_LOAD_gap(phdri, k, e_phnum);
-        if (x.size) {
-            x.offset = get_te32(&phdri[k].p_offset) +
-                       get_te32(&phdri[k].p_filesz);
-            packExtent(x, total_in, total_out, 0, fo);
-        }
+        total_in += find_LOAD_gap(phdri, k, e_phnum);
     }
 
     if ((off_t)total_in != file_size)
         throwEOFException();
+
+    return 0;  // omit end-of-compression bhdr for now
 }
 
 // Determine length of gap between PT_LOAD phdr[k] and closest PT_LOAD
@@ -2409,7 +2425,7 @@ unsigned PackLinuxElf64::find_LOAD_gap(
     return lo - hi;
 }
 
-void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
+int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 {
     Extent x;
     unsigned k;
@@ -2467,17 +2483,15 @@ void PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     }
     sz_pack2a = fpad4(fo);
 
-    for (k = 0; k < e_phnum; ++k) {
-        x.size = find_LOAD_gap(phdri, k, e_phnum);
-        if (x.size) {
-            x.offset = get_te64(&phdri[k].p_offset) +
-                       get_te64(&phdri[k].p_filesz);
-            packExtent(x, total_in, total_out, 0, fo);
-        }
+    // Accounting only; ::pack3 will do the compression and output
+    for (k = 0; k < e_phnum; ++k) { // 
+        total_in += find_LOAD_gap(phdri, k, e_phnum);
     }
 
     if ((off_t)total_in != file_size)
         throwEOFException();
+
+    return 0;  // omit end-of-compression bhdr for now
 }
 
 // Filter 0x50, 0x51 assume HostPolicy::isLE

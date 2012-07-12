@@ -899,7 +899,7 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)
 }
 
 template <class T>
-void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
+int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed body
 {
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     Extent x;
@@ -977,6 +977,8 @@ void PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     if ((off_t)total_in != file_size)
         throwEOFException();
     segcmdo.filesize = fo->getBytesWritten();
+
+    return 1;
 }
 
 void PackMachPPC32::pack1_setup_threado(OutputFile *const fo)
