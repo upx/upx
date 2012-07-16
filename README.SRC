@@ -71,6 +71,12 @@ Tools needed to build/modify the UPX sources
 
   - GNU make 3.81 or better
 
+  - zlib and zlib-devel [or zlib-dev] software packages for your
+    host environment, or via  http://www.cygwin.org/setup.exe
+
+  - lzma SDK, such as from  https://sourceforge.net/projects/sevenzip/
+    files/LZMA%20SDK/4.43/
+
 
 To compile the packer sources
 -----------------------------
@@ -85,6 +91,7 @@ To compile the packer sources
   to your unpacked lzma443.tar.bz2 source directory, e.g.
 
      export UPX_LZMADIR=$HOME/local/src/lzma-4.43     (Unix)
+     export UPX_LZMA_VERSION=0x443  # perhaps 0x459,0x458,0x457,0x449,0x442
 
   Finally type
 
