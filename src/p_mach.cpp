@@ -447,8 +447,19 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     unsigned const xb = b->cmd - lc_seg;
            if (xa < xb)        return -1;  // LC_SEGMENT first
            if (xa > xb)        return  1;
-    if (a->vmaddr < b->vmaddr) return -1;  // ascending by .vmaddr
-    if (a->vmaddr > b->vmaddr) return  1;
+    // Beware 0==.vmsize (some MacOSX __DWARF debug info: a "comment")
+    if (a->vmsize!=0 && b->vmsize!=0) {
+        if (a->vmaddr < b->vmaddr) return -1;  // ascending by .vmaddr
+        if (a->vmaddr > b->vmaddr) return  1;
+    }
+    else { // 0==.vmsize goes last, except ordered by fileoff
+        if (a->vmsize)         return -1;  // 'a' is first
+        if (b->vmsize)         return  1;  // 'a' is last
+        if (a->fileoff < b->fileoff)
+                               return -1;
+        if (a->fileoff > b->fileoff)
+                               return  1;
+    }
                                return  0;
 }
 
@@ -1128,6 +1139,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ) {
         if (lc_seg==sc->cmd
         &&  0!=sc->filesize ) {
+            fo->seek(sc->fileoff, SEEK_SET);
             unsigned filesize = sc->filesize;
             unpackExtent(filesize, fo, total_in, total_out,
                 c_adler, u_adler, false, sizeof(bhdr));
@@ -1161,7 +1173,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     for (unsigned j = 0; j < ncmds; ++j) {
         unsigned const size = find_SEGMENT_gap(j);
         if (size) {
-            unsigned const where = msegcmd[k].fileoff +msegcmd[k].filesize;
+            unsigned const where = msegcmd[j].fileoff +msegcmd[j].filesize;
             if (fo)
                 fo->seek(where, SEEK_SET);
             unpackExtent(size, fo, total_in, total_out,
@@ -1215,7 +1227,7 @@ bool PackMachBase<T>::canPack()
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
-            if (0 < j) {
+            if (0 < j && msegcmd[j-1].vmsize!=0) {
                 unsigned const sz = PAGE_MASK
                                   & (~PAGE_MASK + msegcmd[j-1].filesize);
                 if ((sz + msegcmd[j-1].fileoff)!=msegcmd[j].fileoff) {
