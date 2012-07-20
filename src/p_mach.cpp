@@ -1139,7 +1139,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     ) {
         if (lc_seg==sc->cmd
         &&  0!=sc->filesize ) {
-            fo->seek(sc->fileoff, SEEK_SET);
+            if (fo)
+                fo->seek(sc->fileoff, SEEK_SET);
             unsigned filesize = sc->filesize;
             unpackExtent(filesize, fo, total_in, total_out,
                 c_adler, u_adler, false, sizeof(bhdr));
@@ -1161,11 +1162,13 @@ void PackMachBase<T>::unpack(OutputFile *fo)
             if (lc_seg==rc->cmd
             &&  0!=rc->filesize ) {
                 fi->seek(rc->fileoff, SEEK_SET);
-                fo->seek(sc->fileoff, SEEK_SET);
+                if (fo)
+                    fo->seek(sc->fileoff, SEEK_SET);
                 unsigned const len = rc->filesize;
                 MemBuffer data(len);
                 fi->readx(data, len);
-                fo->write(data, len);
+                if (fo)
+                    fo->write(data, len);
             }
         }
     }
@@ -1180,7 +1183,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
                 c_adler, u_adler, false, sizeof(bhdr));
         }
     }
-    delete mhdr;
+    delete [] mhdr;
 }
 
 
