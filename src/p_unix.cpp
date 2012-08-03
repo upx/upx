@@ -503,18 +503,25 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
 
 int PackUnix::canUnpack()
 {
-    upx_byte buf[sizeof(overlay_offset) + 32];
+    int const small = 32 + sizeof(overlay_offset);
+    // Allow zero-filled last page, for Mac OS X code signing.
+    upx_byte buf[4096 + 2*small +1];
     const int bufsize = sizeof(buf);
 
     fi->seek(-bufsize, SEEK_END);
     fi->readx(buf, bufsize);
-    if (!getPackHeader(buf, bufsize, true))  // allow incompressible extents
+    buf[small] = 1;  // Prevent running off the low-address end.
+    upx_byte *ptr = &buf[bufsize];
+    while (0 == *--ptr) ;
+    ptr -= small;
+    // allow incompressible extents
+    if (!getPackHeader(ptr, bufsize - (ptr - buf), true))
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
     if (l < 0 || l + 4 > bufsize)
         throwCantUnpack("file corrupted");
-    overlay_offset = get_te32(buf+l);
+    overlay_offset = get_te32(ptr+l);
     if ((off_t)overlay_offset >= file_size)
         throwCantUnpack("file corrupted");
 
