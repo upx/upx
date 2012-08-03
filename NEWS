@@ -3,6 +3,8 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.09 (XX XXX XXXX):
+  * Allow for code signing on Mac OS X executables.
+  * bug fixes
 
 Changes in 3.08 (12 Dec 2011):
   * Fix allocation in runtime stub for darwin.macho-entry (i386 and amd64).
