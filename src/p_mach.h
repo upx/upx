@@ -280,6 +280,15 @@ __packed_struct(Mach_linkedit_data_command)
 __packed_struct_end()
 
 template <class TMachITypes>
+__packed_struct(Mach_uuid_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    unsigned char uuid[16];
+__packed_struct_end()
+
+template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state)
     typedef typename TMachITypes::Addr Addr;
 
@@ -403,6 +412,7 @@ struct MachClass_32
     typedef N_Mach::Mach_routines_command<MachITypes> Mach_routines_command;
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
+    typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
     typedef N_Mach::Mach_AMD64_thread_state<MachITypes> Mach_AMD64_thread_state;
@@ -440,6 +450,7 @@ struct MachClass_64
     typedef N_Mach::Mach_routines_command_64<MachITypes> Mach_routines_command;
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
+    typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -465,6 +476,7 @@ typedef MachClass_Host32::Mach_segsplit_info_command Mach32_segsplit_info_comman
 typedef MachClass_Host32::Mach_routines_command Mach32_routines_command;
 typedef MachClass_Host32::Mach_twolevel_hints_command Mach32_twolevel_hints_command;
 typedef MachClass_Host32::Mach_linkedit_data_command Mach32_linkedit_data_command;
+typedef MachClass_Host32::Mach_uuid_command Mach32_uuid_command;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
@@ -474,6 +486,7 @@ typedef MachClass_Host64::Mach_segsplit_info_command Mach64_segsplit_info_comman
 typedef MachClass_Host64::Mach_routines_command Mach64_routines_command;
 typedef MachClass_Host64::Mach_twolevel_hints_command Mach64_twolevel_hints_command;
 typedef MachClass_Host64::Mach_linkedit_data_command Mach64_linkedit_data_command;
+typedef MachClass_Host64::Mach_uuid_command Mach64_uuid_command;
 
 typedef MachClass_BE32::Mach_segment_command   MachBE32_segment_command;
 typedef MachClass_BE32::Mach_section_command   MachBE32_section_command;
@@ -483,6 +496,7 @@ typedef MachClass_BE32::Mach_segsplit_info_command   MachBE32_segsplit_info_comm
 typedef MachClass_BE32::Mach_routines_command   MachBE32_routines_command;
 typedef MachClass_BE32::Mach_twolevel_hints_command   MachBE32_twolevel_hints_command;
 typedef MachClass_BE32::Mach_linkedit_data_command   MachBE32_linkedit_data_command;
+typedef MachClass_BE32::Mach_uuid_command   MachBE32_uuid_command;
 
 typedef MachClass_BE64::Mach_segment_command   MachBE64_segment_command;
 typedef MachClass_BE64::Mach_section_command   MachBE64_section_command;
@@ -492,6 +506,7 @@ typedef MachClass_BE64::Mach_segsplit_info_command   MachBE64_segsplit_info_comm
 typedef MachClass_BE64::Mach_routines_command   MachBE64_routines_command;
 typedef MachClass_BE64::Mach_twolevel_hints_command   MachBE64_twolevel_hints_command;
 typedef MachClass_BE64::Mach_linkedit_data_command   MachBE64_linkedit_data_command;
+typedef MachClass_BE64::Mach_uuid_command   MachBE64_uuid_command;
 
 typedef MachClass_LE32::Mach_segment_command   MachLE32_segment_command;
 typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
@@ -501,6 +516,7 @@ typedef MachClass_LE32::Mach_segsplit_info_command   MachLE32_segsplit_info_comm
 typedef MachClass_LE32::Mach_routines_command   MachLE32_routines_command;
 typedef MachClass_LE32::Mach_twolevel_hints_command   MachLE32_twolevel_hints_command;
 typedef MachClass_LE32::Mach_linkedit_data_command   MachLE32_linkedit_data_command;
+typedef MachClass_LE32::Mach_uuid_command   MachLE32_uuid_command;
 
 typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
 typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
@@ -510,6 +526,7 @@ typedef MachClass_LE64::Mach_segsplit_info_command   MachLE64_segsplit_info_comm
 typedef MachClass_LE64::Mach_routines_command   MachLE64_routines_command;
 typedef MachClass_LE64::Mach_twolevel_hints_command   MachLE64_twolevel_hints_command;
 typedef MachClass_LE64::Mach_linkedit_data_command   MachLE64_linkedit_data_command;
+typedef MachClass_LE64::Mach_uuid_command   MachLE64_uuid_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
@@ -541,6 +558,7 @@ protected:
     typedef typename MachClass::Mach_routines_command Mach_routines_command;
     typedef typename MachClass::Mach_twolevel_hints_command Mach_twolevel_hints_command;
     typedef typename MachClass::Mach_linkedit_data_command Mach_linkedit_data_command;
+    typedef typename MachClass::Mach_uuid_command Mach_uuid_command;
 
 public:
     PackMachBase(InputFile *, unsigned cpuid, unsigned filetype,
@@ -594,8 +612,11 @@ protected:
     Mach_header mhdri;
 
     Mach_header mhdro;
-    Mach_segment_command segcmdo[2];  // __TEXT; __LINKEDIT (needed for code signing)
-    Mach_linkedit_data_command linkedito;
+    Mach_segment_command segTEXT;
+    Mach_section_command secTEXT;
+    Mach_segment_command segLINK;
+    Mach_linkedit_data_command linkitem;
+    Mach_uuid_command uuid_cmd;
 
     __packed_struct(b_info)     // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size
