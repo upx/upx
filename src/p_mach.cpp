@@ -1115,8 +1115,12 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segTEXT.cmdsize = sizeof(segTEXT) + sizeof(secTEXT);
     strncpy((char *)segTEXT.segname, "__TEXT", sizeof(segTEXT.segname));
     if (my_filetype==Mach_header::MH_EXECUTE) {
+        int k;  // must ignore zero-length segments, which sort last
+        for (k=n_segment; --k>=0; )
+            if (msegcmd[k].vmsize!=0)
+                break;
         segTEXT.vmaddr = PAGE_MASK64 & (~PAGE_MASK64 +
-            msegcmd[n_segment -1].vmsize + msegcmd[n_segment -1].vmaddr );
+            msegcmd[k].vmsize + msegcmd[k].vmaddr );
     }
     if (my_filetype==Mach_header::MH_DYLIB) {
         segTEXT.vmaddr = 0;
