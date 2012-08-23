@@ -116,7 +116,7 @@ decimal(int x, char *ptr, int n)
 {
     if (x < 0) {
         x = -x;
-        *ptr = '-'; ++n;
+        *ptr[n++] = '-';
     }
     return unsimal(x, ptr, n);
 }
@@ -382,6 +382,7 @@ typedef struct {
     unsigned reserved;
 } Mach_header64;
         enum e0 {
+            MH_MAGIC   =   0xfeedface,
             MH_MAGIC64 = 1+0xfeedface
         };
         enum e2 {
@@ -456,7 +457,6 @@ typedef union {
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
-
 #define MAP_ANON_FD    -1
 
 extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
@@ -498,14 +498,16 @@ do_xmap(
         mlen += frag;
 
         if (0!=mlen) {
+            // Decompressor can overrun the destination by 3 bytes.  [x86 only]
+            size_t const mlen3 = mlen + (xi ? 3 : 0);
             unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
             unsigned const flags = MAP_FIXED | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
             off_t const offset = sc->fileoff + fat_offset;
 
-            DPRINTF((STR_mmap(), addr, mlen, prot, flags, fdm, offset));
-            if (addr !=     mmap(addr, mlen, prot, flags, fdm, offset)) {
+            DPRINTF((STR_mmap(), addr, mlen3, prot, flags, fdm, offset));
+            if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset)) {
                 err_exit(8);
             }
         }
@@ -533,6 +535,12 @@ ERR_LAB
                 err_exit(9);
             }
         }
+        else if (xi) { // cleanup if decompressor overrun crosses page boundary
+            mlen = ~PAGE_MASK & (3+ mlen);
+            if (mlen<=3) { // page fragment was overrun buffer only
+                munmap(addr, mlen);
+            }
+        }
     }
     else if (LC_UNIXTHREAD==sc->cmd || LC_THREAD==sc->cmd) {
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
@@ -544,8 +552,6 @@ ERR_LAB
     return entry;
 }
 
-
-extern void spin(void *, ...);
 
 /*************************************************************************
 // upx_main - called by our entry code
@@ -604,6 +610,7 @@ ERR_LAB
             err_exit(19);
         }
         switch (mhdr->magic) {
+        case MH_MAGIC: break;
         case MH_MAGIC64: break;
         case FAT_CIGAM:
         case FAT_MAGIC: {
