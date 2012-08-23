@@ -612,6 +612,9 @@ protected:
     Mach_header mhdri;
 
     Mach_header mhdro;
+    Mach_segment_command segZERO;
+    Mach_segment_command segMHDR;
+    Mach_section_command secMHDR;
     Mach_segment_command segTEXT;
     Mach_section_command secTEXT;
     Mach_segment_command segLINK;
