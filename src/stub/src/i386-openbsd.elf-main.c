@@ -61,8 +61,8 @@ static int
 decimal(int x, char *ptr, int n)
 {
     if (x < 0) {
-        *ptr++ = '-'; ++n;
         x = -x;
+        *ptr = '-'; ++n;
     }
     return unsimal(x, ptr, n);
 }

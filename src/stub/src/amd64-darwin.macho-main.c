@@ -116,7 +116,7 @@ decimal(int x, char *ptr, int n)
 {
     if (x < 0) {
         x = -x;
-        *ptr++ = '-'; ++n;
+        *ptr = '-'; ++n;
     }
     return unsimal(x, ptr, n);
 }

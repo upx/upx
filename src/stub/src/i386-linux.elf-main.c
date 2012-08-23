@@ -111,8 +111,8 @@ unsimal(unsigned x, char *ptr, int n)
 {
     if (10<=x) {
         unsigned const q = div10(x);
-        n = unsimal(q, ptr, n);
         x -= 10 * q;
+        n = unsimal(q, ptr, n);
     }
     ptr[n] = '0' + x;
     return 1+ n;
@@ -122,8 +122,8 @@ static int
 decimal(int x, char *ptr, int n)
 {
     if (x < 0) {
-        *ptr++ = '-'; ++n;
         x = -x;
+        *ptr = '-'; ++n;
     }
     return unsimal(x, ptr, n);
 }
