@@ -86,6 +86,8 @@ SYS_munmap   =0x49
 SYS_mprotect =0x4a
 
 // lazy jmps enable compression of this code
+write: .globl write
+        mov $SYS_write,%al;  jmp 2+ 0f; 0:
 exit: .globl exit
         mov $SYS_exit,%al;  jmp 2+ 0f; 0:
 mprotect: .globl mprotect

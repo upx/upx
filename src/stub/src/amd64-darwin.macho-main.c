@@ -32,6 +32,9 @@
 
 #include "include/darwin.h"
 
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
 
 /*************************************************************************
 // configuration section
@@ -40,6 +43,138 @@
 // In order to make it much easier to move this code at runtime and execute
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
+
+#if !DEBUG  /*{*/
+#define DPRINTF(a) /* empty: no debug drivel */
+#define DEBUG_STRCON(name, value) /* empty */
+#else  /*}{ DEBUG */
+extern int write(int, void const *, size_t);
+#if 0
+#include "stdarg.h"
+#else
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+#endif
+
+#if defined(__i386__) || defined(__x86_64__) /*{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "call 0f; .asciz \"" value "\"; \
+      0: pop %0;" : "=r"(var) : \
+    )
+#elif defined(__arm__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "mov %0,pc; b 0f; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " : "=r"(var) \
+    )
+#elif defined(__mips__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        ".set noreorder; bal 0f; move %0,$31; .set reorder; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " \
+        : "=r"(var) : : "ra" \
+    )
+#endif  /*}*/
+
+
+#define DEBUG_STRCON(name, strcon) \
+    static char const *name(void) { \
+        register char const *rv; PIC_STRING(strcon, rv); \
+        return rv; \
+    }
+
+
+#ifdef __arm__  /*{*/
+extern unsigned div10(unsigned);
+#else  /*}{*/
+static unsigned
+div10(unsigned x)
+{
+    return x / 10u;
+}
+#endif  /*}*/
+
+static int
+unsimal(unsigned x, char *ptr, int n)
+{
+    if (10<=x) {
+        unsigned const q = div10(x);
+        x -= 10 * q;
+        n = unsimal(q, ptr, n);
+    }
+    ptr[n] = '0' + x;
+    return 1+ n;
+}
+
+static int
+decimal(int x, char *ptr, int n)
+{
+    if (x < 0) {
+        x = -x;
+        *ptr++ = '-'; ++n;
+    }
+    return unsimal(x, ptr, n);
+}
+
+DEBUG_STRCON(STR_hex, "0123456789abcdef");
+
+static int
+heximal(unsigned long x, char *ptr, int n)
+{
+    if (16<=x) {
+        n = heximal(x>>4, ptr, n);
+        x &= 0xf;
+    }
+    ptr[n] = STR_hex()[x];
+    return 1+ n;
+}
+
+
+#define DPRINTF(a) dprintf a
+
+static int
+dprintf(char const *fmt, ...)
+{
+    char c;
+    int n= 0;
+    char *ptr;
+    char buf[20];
+    va_list va; va_start(va, fmt);
+    ptr= &buf[0];
+    while (0!=(c= *fmt++)) if ('%'!=c) goto literal;
+    else switch (c= *fmt++) {
+    default: {
+literal:
+        n+= write(2, fmt-1, 1);
+    } break;
+    case 0: goto done;  /* early */
+    case 'u': {
+        n+= write(2, buf, unsimal(va_arg(va, unsigned), buf, 0));
+    } break;
+    case 'd': {
+        n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
+    } break;
+    case 'p': {
+        buf[0] = '0';
+        buf[1] = 'x';
+        n+= write(2, buf, heximal((unsigned long)va_arg(va, void *), buf, 2));
+    } break;
+    case 'x': {
+        buf[0] = '0';
+        buf[1] = 'x';
+        n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+    } break;
+    }
+done:
+    va_end(va);
+    return n;
+}
+#endif  /*}*/
 
 
 /*************************************************************************
@@ -51,13 +186,17 @@ typedef struct {
     void *buf;
 } Extent;
 
+DEBUG_STRCON(STR_xread, "xread %%p(%%x %%p) %%p %%x\\n")
+DEBUG_STRCON(STR_xreadfail, "xreadfail %%p(%%x %%p) %%p %%x\\n")
 
 static void
 xread(Extent *x, void *buf, size_t count)
 {
     unsigned char *p=x->buf, *q=buf;
     size_t j;
+    DPRINTF((STR_xread(), x, x->size, x->buf, buf, count));
     if (x->size < count) {
+        DPRINTF((STR_xreadfail(), x, x->size, x->buf, buf, count));
         exit(127);
     }
     for (j = count; 0!=j--; ++p, ++q) {
@@ -77,9 +216,12 @@ xread(Extent *x, void *buf, size_t count)
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB /*empty*/
+DEBUG_STRCON(STR_exit, "err_exit %%x\\n");
+
 static void
 err_exit(int a)
 {
+    DPRINTF((STR_exit(), a));
     (void)a;  // debugging convenience
     exit(127);
 }
@@ -122,6 +264,10 @@ typedef int f_expand(
     const nrv_byte *, nrv_uint,
           nrv_byte *, nrv_uint *, unsigned );
 
+DEBUG_STRCON(STR_unpackExtent,
+        "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
+DEBUG_STRCON(STR_err5, "sz_cpr=%%x  sz_unc=%%x  xo->size=%%x\\n");
+
 static void
 unpackExtent(
     Extent *const xi,  // input
@@ -130,6 +276,8 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
+    DPRINTF((STR_unpackExtent(),
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf));
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -150,6 +298,7 @@ ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
         ||  h.sz_unc > xo->size ) {
+            DPRINTF((STR_err5(), h.sz_cpr, h.sz_unc, xo->size));
             err_exit(5);
         }
         // Now we have:
@@ -314,6 +463,11 @@ extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
 ssize_t pread(int, void *, size_t, off_t);
 extern void bswap(void *, unsigned);
 
+DEBUG_STRCON(STR_mmap,
+    "mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p\\n");
+DEBUG_STRCON(STR_do_xmap,
+    "do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n")
+
 static Mach_AMD64_thread_state const *
 do_xmap(
     Mach_header64 const *const mhdr,
@@ -329,9 +483,12 @@ do_xmap(
     Mach_AMD64_thread_state const *entry = 0;
     unsigned j;
 
+    DPRINTF((STR_do_xmap(),
+        fdi, mhdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf));
+
     for ( j=0; j < mhdr->ncmds; ++j,
         (sc = (Mach_segment_command const *)(sc->cmdsize + (void const *)sc))
-    ) if (LC_SEGMENT_64==sc->cmd) {
+    ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
         unsigned char  *addr = xo.buf  =        (unsigned char *)sc->vmaddr;
@@ -340,11 +497,17 @@ do_xmap(
         addr -= frag;
         mlen += frag;
 
-        if (0!=mlen && addr != mmap(addr, mlen, VM_PROT_READ | VM_PROT_WRITE,
-                MAP_FIXED | MAP_PRIVATE |
-                    ((xi || 0==sc->filesize) ? MAP_ANON : 0),
-                ((0==sc->filesize) ? MAP_ANON_FD : fdi), sc->fileoff + fat_offset) ) {
-            err_exit(8);
+        if (0!=mlen) {
+            unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
+            unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+                        ((xi || 0==sc->filesize) ? MAP_ANON : 0);
+            int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
+            off_t const offset = sc->fileoff + fat_offset;
+
+            DPRINTF((STR_mmap(), addr, mlen, prot, flags, fdm, offset));
+            if (addr !=     mmap(addr, mlen, prot, flags, fdm, offset)) {
+                err_exit(8);
+            }
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
@@ -365,7 +528,7 @@ ERR_LAB
             0!=addr &&
 #endif  /*}*/
                         addr < haddr) { // need pages for .bss
-            if (addr != mmap(addr, haddr - addr, sc->initprot,
+            if (0!=addr && addr != mmap(addr, haddr - addr, sc->initprot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0 ) ) {
                 err_exit(9);
             }
@@ -389,6 +552,10 @@ extern void spin(void *, ...);
 //
 **************************************************************************/
 
+DEBUG_STRCON(STR_upx_main,
+    "upx_main szc=%%x  f_dec=%%p  f_unf=%%p  "
+    "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  mhdrpp=%%p\\n")
+
 Mach_AMD64_thread_state const *
 upx_main(
     struct l_info const *const li,
@@ -408,6 +575,10 @@ upx_main(
     xo.buf  = (unsigned char *)mhdr;
     xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
     xi0 = xi;
+
+    DPRINTF((STR_upx_main(),
+        sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        &xi, xi.size, xi.buf, mhdrpp));
 
     // Uncompress Macho headers
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?

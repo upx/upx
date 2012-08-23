@@ -296,7 +296,7 @@ tmp/amd64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c -Os -fPIC $< -o $@
 	$(call tc,f-objstrip,$@)
 	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
