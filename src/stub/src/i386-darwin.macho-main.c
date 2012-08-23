@@ -32,6 +32,9 @@
 
 #include "include/darwin.h"
 
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
 
 /*************************************************************************
 // configuration section
@@ -41,6 +44,138 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
+#if !DEBUG  /*{*/
+#define DPRINTF(a) /* empty: no debug drivel */
+#define DEBUG_STRCON(name, value) /* empty */
+#else  /*}{ DEBUG */
+extern int write(int, void const *, size_t);
+#if 0
+#include "stdarg.h"
+#else
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+#endif
+
+#if defined(__i386__) || defined(__x86_64__) /*{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "call 0f; .asciz \"" value "\"; \
+      0: pop %0;" : "=r"(var) : \
+    )
+#elif defined(__arm__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "mov %0,pc; b 0f; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " : "=r"(var) \
+    )
+#elif defined(__mips__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        ".set noreorder; bal 0f; move %0,$31; .set reorder; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " \
+        : "=r"(var) : : "ra" \
+    )
+#endif  /*}*/
+
+
+#define DEBUG_STRCON(name, strcon) \
+    static char const *name(void) { \
+        register char const *rv; PIC_STRING(strcon, rv); \
+        return rv; \
+    }
+
+
+#ifdef __arm__  /*{*/
+extern unsigned div10(unsigned);
+#else  /*}{*/
+static unsigned
+div10(unsigned x)
+{
+    return x / 10u;
+}
+#endif  /*}*/
+
+static int
+unsimal(unsigned x, char *ptr, int n)
+{
+    if (10<=x) {
+        unsigned const q = div10(x);
+        x -= 10 * q;
+        n = unsimal(q, ptr, n);
+    }
+    ptr[n] = '0' + x;
+    return 1+ n;
+}
+
+static int
+decimal(int x, char *ptr, int n)
+{
+    if (x < 0) {
+        x = -x;
+        *ptr[n++] = '-';
+    }
+    return unsimal(x, ptr, n);
+}
+
+DEBUG_STRCON(STR_hex, "0123456789abcdef");
+
+static int
+heximal(unsigned long x, char *ptr, int n)
+{
+    if (16<=x) {
+        n = heximal(x>>4, ptr, n);
+        x &= 0xf;
+    }
+    ptr[n] = STR_hex()[x];
+    return 1+ n;
+}
+
+
+#define DPRINTF(a) dprintf a
+
+static int
+dprintf(char const *fmt, ...)
+{
+    char c;
+    int n= 0;
+    char *ptr;
+    char buf[20];
+    va_list va; va_start(va, fmt);
+    ptr= &buf[0];
+    while (0!=(c= *fmt++)) if ('%'!=c) goto literal;
+    else switch (c= *fmt++) {
+    default: {
+literal:
+        n+= write(2, fmt-1, 1);
+    } break;
+    case 0: goto done;  /* early */
+    case 'u': {
+        n+= write(2, buf, unsimal(va_arg(va, unsigned), buf, 0));
+    } break;
+    case 'd': {
+        n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
+    } break;
+    case 'p': {
+        buf[0] = '0';
+        buf[1] = 'x';
+        n+= write(2, buf, heximal((unsigned long)va_arg(va, void *), buf, 2));
+    } break;
+    case 'x': {
+        buf[0] = '0';
+        buf[1] = 'x';
+        n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+    } break;
+    }
+done:
+    va_end(va);
+    return n;
+}
+#endif  /*}*/
+
 
 /*************************************************************************
 // "file" util
@@ -48,16 +183,20 @@
 
 typedef struct {
     size_t size;  // must be first to match size[0] uncompressed size
-    char *buf;
+    void *buf;
 } Extent;
 
+DEBUG_STRCON(STR_xread, "xread %%p(%%x %%p) %%p %%x\\n")
+DEBUG_STRCON(STR_xreadfail, "xreadfail %%p(%%x %%p) %%p %%x\\n")
 
 static void
-xread(Extent *x, char *buf, size_t count)
+xread(Extent *x, void *buf, size_t count)
 {
-    char *p=x->buf, *q=buf;
+    unsigned char *p=x->buf, *q=buf;
     size_t j;
+    DPRINTF((STR_xread(), x, x->size, x->buf, buf, count));
     if (x->size < count) {
+        DPRINTF((STR_xreadfail(), x, x->size, x->buf, buf, count));
         exit(127);
     }
     for (j = count; 0!=j--; ++p, ++q) {
@@ -77,9 +216,12 @@ xread(Extent *x, char *buf, size_t count)
 #define err_exit(a) goto error
 #else  //}{  save debugging time
 #define ERR_LAB /*empty*/
+DEBUG_STRCON(STR_exit, "err_exit %%x\\n");
+
 static void
 err_exit(int a)
 {
+    DPRINTF((STR_exit(), a));
     (void)a;  // debugging convenience
     exit(127);
 }
@@ -122,6 +264,10 @@ typedef int f_expand(
     const nrv_byte *, nrv_uint,
           nrv_byte *, nrv_uint *, unsigned );
 
+DEBUG_STRCON(STR_unpackExtent,
+        "unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n");
+DEBUG_STRCON(STR_err5, "sz_cpr=%%x  sz_unc=%%x  xo->size=%%x\\n");
+
 static void
 unpackExtent(
     Extent *const xi,  // input
@@ -130,13 +276,15 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
+    DPRINTF((STR_unpackExtent(),
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf));
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
         //   compressible and is stored in its uncompressed form.
 
         // Read and check block sizes.
-        xread(xi, (char *)&h, sizeof(h));
+        xread(xi, (unsigned char *)&h, sizeof(h));
         if (h.sz_unc == 0) {                     // uncompressed size 0 -> EOF
             if (h.sz_cpr != UPX_MAGIC_LE32)      // h.sz_cpr must be h->magic
                 err_exit(2);
@@ -150,6 +298,7 @@ ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
         ||  h.sz_unc > xo->size ) {
+            DPRINTF((STR_err5(), h.sz_cpr, h.sz_unc, xo->size));
             err_exit(5);
         }
         // Now we have:
@@ -178,7 +327,7 @@ ERR_LAB
 }
 
 static void
-upx_bzero(char *p, size_t len)
+upx_bzero(unsigned char *p, size_t len)
 {
     if (len) do {
         *p++= 0;
@@ -208,14 +357,16 @@ typedef struct {
     unsigned cpusubtype;
     unsigned offset;
     unsigned size;
-    unsigned align;  /* shift count; log base 2 */
+    unsigned align;  /* shift count (log base 2) */
 } Fat_arch;
     enum e8 {
-        FAT_MAGIC = 0xbebafeca  // 0xcafebabe in big endian
+        FAT_MAGIC = 0xcafebabe,
+        FAT_CIGAM = 0xbebafeca
     };
     enum e9 {
         CPU_TYPE_I386      =          7,
         CPU_TYPE_AMD64     = 0x01000007,
+        CPU_TYPE_ARM       =         12,
         CPU_TYPE_POWERPC   = 0x00000012,
         CPU_TYPE_POWERPC64 = 0x01000012
     };
@@ -230,7 +381,8 @@ typedef struct {
     unsigned flags;
 } Mach_header;
         enum e0 {
-            MH_MAGIC = 0xfeedface
+            MH_MAGIC   =   0xfeedface,
+            MH_MAGIC64 = 1+0xfeedface
         };
         enum e2 {
             MH_EXECUTE = 2
@@ -245,6 +397,7 @@ typedef struct {
 } Mach_load_command;
         enum e4 {
             LC_SEGMENT       = 0x1,
+            LC_SEGMENT_64    = 0x19,
             LC_THREAD        = 0x4,
             LC_UNIXTHREAD    = 0x5,
             LC_LOAD_DYLINKER = 0xe
@@ -303,18 +456,23 @@ typedef union {
 #define PROT_READ      1
 #define PROT_WRITE     2
 #define PROT_EXEC      4
-#define MAP_ANON_FD -1
+#define MAP_ANON_FD    -1
 
 // We have off_t as 32 bits, but syscalls consider off_t as 64 bits.
 // Make the top 32 bits explicit, and pass a 0.
-extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t, unsigned);
+extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t, unsigned);
 extern ssize_t pread(int, void *, size_t, off_t, unsigned);
 extern void bswap(void *, unsigned);
+
+DEBUG_STRCON(STR_mmap,
+    "mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p\\n");
+DEBUG_STRCON(STR_do_xmap,
+    "do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n")
 
 static Mach_i386_thread_state const *
 do_xmap(
     Mach_header const *const mhdr,
-    off_t fat_offset,
+    off_t const fat_offset,
     Extent *const xi,
     int const fdi,
     Mach_header **mhdrpp,
@@ -326,24 +484,33 @@ do_xmap(
     Mach_i386_thread_state const *entry = 0;
     unsigned j;
 
+    DPRINTF((STR_do_xmap(),
+        fdi, mhdr, xi, (xi? xi->size: 0), (xi? xi->buf: 0), f_unf));
+
     for ( j=0; j < mhdr->ncmds; ++j,
-        (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
-    ) if (LC_SEGMENT==sc->cmd) {
+        (sc = (Mach_segment_command const *)(sc->cmdsize + (void const *)sc))
+    ) if (LC_SEGMENT==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
-        char  *addr = xo.buf  =                 (char *)sc->vmaddr;
-        char *haddr =           sc->vmsize +                  addr;
+        unsigned char  *addr = xo.buf  =        (unsigned char *)sc->vmaddr;
+        unsigned char *haddr =           sc->vmsize +                  addr;
         size_t frag = (int)addr &~ PAGE_MASK;
         addr -= frag;
         mlen += frag;
 
-        // Decompressor can overrun the destination by 3 bytes.  [i386 only]
-        if (0!=mlen && addr != mmap(addr, mlen + (xi ? 3 : 0),
-                VM_PROT_READ | VM_PROT_WRITE,
-                MAP_FIXED | MAP_PRIVATE |
-                    ((xi || 0==sc->filesize) ? MAP_ANON : 0),
-                ((0==sc->filesize) ? -1 : fdi), sc->fileoff + fat_offset, 0) ) {
-            err_exit(8);
+        if (0!=mlen) {
+            // Decompressor can overrun the destination by 3 bytes.  [x86 only]
+            size_t const mlen3 = mlen + (xi ? 3 : 0);
+            unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
+            unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+                        ((xi || 0==sc->filesize) ? MAP_ANON : 0);
+            int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
+            off_t const offset = sc->fileoff + fat_offset;
+
+            DPRINTF((STR_mmap(), addr, mlen3, prot, flags, fdm, offset));
+            if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset, 0)) {
+                err_exit(8);
+            }
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff && 0!=mhdrpp) {
@@ -360,7 +527,7 @@ ERR_LAB
         }
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
-            if (addr != mmap(addr, haddr - addr, sc->initprot,
+            if (0!=addr && addr != mmap(addr, haddr - addr, sc->initprot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANON, MAP_ANON_FD, 0, 0 ) ) {
                 err_exit(9);
             }
@@ -388,6 +555,10 @@ ERR_LAB
 //
 **************************************************************************/
 
+DEBUG_STRCON(STR_upx_main,
+    "upx_main szc=%%x  f_dec=%%p  f_unf=%%p  "
+    "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  mhdrpp=%%p\\n")
+
 Mach_i386_thread_state const *
 upx_main(
     Mach_header **const mhdrpp,  // Out: *mhdrpp= &real Mach_header
@@ -402,23 +573,27 @@ upx_main(
     Mach_i386_thread_state const *entry;
     off_t fat_offset = 0;
     Extent xi, xo, xi0;
-    xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
+    xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
-    xo.buf  = (char *)mhdr;
-    xo.size = ((struct b_info const *)xi.buf)->sz_unc;
+    xo.buf  = (unsigned char *)mhdr;
+    xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
     xi0 = xi;
+
+    DPRINTF((STR_upx_main(),
+        sz_compressed, f_decompress, f_unf, &xo, xo.size, xo.buf,
+        &xi, xi.size, xi.buf, mhdrpp));
 
     // Uncompress Macho headers
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
 
-    entry = do_xmap(mhdr, fat_offset, &xi0, -1, mhdrpp, f_decompress, f_unf);
+    entry = do_xmap(mhdr, fat_offset, &xi0, MAP_ANON_FD, mhdrpp, f_decompress, f_unf);
 
   { // Map dyld dynamic loader
     Mach_load_command const *lc = (Mach_load_command const *)(1+ mhdr);
     unsigned j;
 
     for (j=0; j < mhdr->ncmds; ++j,
-        (lc = (Mach_load_command const *)(lc->cmdsize + (char const *)lc))
+        (lc = (Mach_load_command const *)(lc->cmdsize + (void const *)lc))
     ) if (LC_LOAD_DYLINKER==lc->cmd) {
         char const *const dyld_name = ((Mach_lc_str const *)(1+ lc))->offset +
             (char const *)lc;
@@ -433,6 +608,8 @@ ERR_LAB
         }
         switch (mhdr->magic) {
         case MH_MAGIC: break;
+        case MH_MAGIC64: break;
+        case FAT_CIGAM:
         case FAT_MAGIC: {
             // stupid Apple: waste code and a page fault on EVERY execve
             Fat_header *const fh = (Fat_header *)mhdr;

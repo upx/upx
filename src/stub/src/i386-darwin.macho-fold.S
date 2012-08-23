@@ -107,6 +107,8 @@ sysgo:
         .byte 0x0f, 0x34  # sysenter
 
 // lazy jmps enable compression of this code
+write: .globl write
+        mov al,SYS_write; jmps 2+ 0f; 0:
 exit: .globl exit
         mov al,SYS_exit;  jmps 2+ 0f; 0:
 mprotect: .globl mprotect
