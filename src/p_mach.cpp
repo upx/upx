@@ -351,8 +351,7 @@ PackMachBase<T>::buildMachLoader(
 
     int const GAP = 128;  // must match stub/l_mac_ppc.S
     int const NO_LAP = 64;  // must match stub/src/*darwin*.S
-    segTEXT.vmsize += h.sz_unc - h.sz_cpr + GAP + NO_LAP;
-    secTEXT.size   += h.sz_unc - h.sz_cpr + GAP + NO_LAP;
+    segTEXT.vmsize = h.sz_unc - h.sz_cpr + GAP + NO_LAP;
 
     addStubEntrySections(ft);
 
@@ -486,7 +485,9 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
 
     super::pack4(fo, ft);
-    segTEXT.vmsize = segTEXT.filesize = fo->getBytesWritten();
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
     secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
     secTEXT.size = segTEXT.vmsize - secTEXT.offset;
@@ -523,7 +524,9 @@ void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
 
     super::pack4(fo, ft);
-    segTEXT.vmsize = segTEXT.filesize = fo->getBytesWritten();
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
     secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
     secTEXT.size = segTEXT.vmsize - secTEXT.offset;
@@ -560,7 +563,9 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
 
     super::pack4(fo, ft);
-    segTEXT.vmsize = segTEXT.filesize = fo->getBytesWritten();
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
     secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
     secTEXT.size = segTEXT.vmsize - secTEXT.offset;
@@ -597,7 +602,9 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
 
     super::pack4(fo, ft);
-    segTEXT.vmsize = segTEXT.filesize = fo->getBytesWritten();
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
     secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
     secTEXT.size = segTEXT.vmsize - secTEXT.offset;
@@ -1375,7 +1382,9 @@ bool PackMachBase<T>::canPack()
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
-            if (0 < j && msegcmd[j-1].vmsize!=0) {
+            if (msegcmd[j].vmsize==0)
+                break;  // was sorted last
+            if (0 < j) {
                 unsigned const sz = PAGE_MASK
                                   & (~PAGE_MASK + msegcmd[j-1].filesize);
                 if ((sz + msegcmd[j-1].fileoff)!=msegcmd[j].fileoff) {
