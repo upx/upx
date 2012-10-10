@@ -85,52 +85,6 @@ fpad4(OutputFile *fo)
     return d + len;
 }
 
-void
-PackLinuxElf32::hemfix(Elf32_Phdr *phdr, unsigned n_phdr)
-{
-    unsigned j;
-    for (j=0; j < n_phdr; ++phdr, ++j) {
-        unsigned const mask = -phdr->p_align;
-        if (PT_LOAD32==phdr->p_type) {  /* first PT_LOAD */
-            if (~mask & phdr->p_vaddr
-            &&  0==(~mask & (phdr->p_vaddr - phdr->p_offset))) {
-                unsigned const hem = ~mask & phdr->p_offset;
-                phdr->p_offset -= hem;
-                phdr->p_vaddr  -= hem;
-                if (phdr->p_paddr)
-                    phdr->p_paddr  -= hem;
-                phdr->p_filesz += hem;
-                phdr->p_memsz  += hem;
-            }
-            break;
-        }
-    }
-    return;
-}
-
-void
-PackLinuxElf64::hemfix(Elf64_Phdr *phdr, unsigned n_phdr)
-{
-    unsigned j;
-    for (j=0; j < n_phdr; ++phdr, ++j) {
-        unsigned const mask = -phdr->p_align;
-        if (PT_LOAD64==phdr->p_type) {  /* first PT_LOAD */
-            if (~mask & phdr->p_vaddr
-            &&  0==(~mask & (phdr->p_vaddr - phdr->p_offset))) {
-                unsigned const hem = ~mask & phdr->p_offset;
-                phdr->p_offset -= hem;
-                phdr->p_vaddr  -= hem;
-                if (phdr->p_paddr)
-                    phdr->p_paddr  -= hem;
-                phdr->p_filesz += hem;
-                phdr->p_memsz  += hem;
-            }
-            break;
-        }
-    }
-    return;
-}
-
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -1286,8 +1240,7 @@ bool PackLinuxElf32::canPack()
 
     unsigned osabi0 = u.buf[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
-    Elf32_Phdr *phdr = (Elf32_Phdr *)(u.buf + e_phoff);
-    hemfix(phdr, umin(14, e_phnum));
+    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(u.buf + e_phoff);
     note_size = 0;
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14) {
@@ -1523,16 +1476,16 @@ PackLinuxElf64amd::canPack()
     }
 
     // The first PT_LOAD64 must cover the beginning of the file (0==p_offset).
-    Elf64_Phdr *phdr = (Elf64_Phdr *)(u.buf + e_phoff);
-    hemfix(phdr, umin(14, e_phnum));
+    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(u.buf + (unsigned) e_phoff);
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
             return false;
         if (phdr->PT_LOAD64 == get_te32(&phdr->p_type)) {
-            if (phdr->p_offset != 0) {
-                throwCantPack("invalid Phdr p_offset; try '--force-execve'");
-                return false;
-            }
+            // Just avoid the "rewind" when unpacking?
+            //if (phdr->p_offset != 0) {
+            //    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
+            //    return false;
+            //}
             load_va = get_te64(&phdr->p_vaddr);
             exetype = 1;
             break;
@@ -2021,7 +1974,6 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
     phdri = new Elf32_Phdr[e_phnum];
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
-    hemfix(phdri, e_phnum);
 
     // Remember all PT_NOTE, and find lg2_page from PT_LOAD.
     Elf32_Phdr const *phdr = phdri;
@@ -2211,7 +2163,6 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     phdri = new Elf64_Phdr[e_phnum];
     fi->seek(e_phoff, SEEK_SET);
     fi->readx(phdri, sz_phdrs);
-    hemfix(phdri, e_phnum);
 
     Elf64_Phdr const *phdr = phdri;
     note_size = 0;
