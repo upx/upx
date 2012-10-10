@@ -1376,7 +1376,7 @@ bool PackMachBase<T>::canPack()
     // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
     qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
 
-    // Check that LC_SEGMENTs form one contiguous chunk of the file.
+    // Check alignment of non-null LC_SEGMENT.
     for (unsigned j= 0; j < ncmds; ++j) {
         if (lc_seg==msegcmd[j].cmd) {
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
@@ -1384,13 +1384,11 @@ bool PackMachBase<T>::canPack()
             }
             if (msegcmd[j].vmsize==0)
                 break;  // was sorted last
-            if (0 < j) {
-                unsigned const sz = PAGE_MASK
-                                  & (~PAGE_MASK + msegcmd[j-1].filesize);
-                if ((sz + msegcmd[j-1].fileoff)!=msegcmd[j].fileoff) {
-                    return false;
-                }
-            }
+
+            // We used to check that LC_SEGMENTS were contiguous,
+            // but apparently that is not needed anymore,
+            // and Google compilers generate strange layouts.
+
             ++n_segment;
             sz_segment = msegcmd[j].filesize + msegcmd[j].fileoff - msegcmd[0].fileoff;
         }

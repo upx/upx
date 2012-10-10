@@ -101,6 +101,7 @@ public:
     PackLinuxElf32(InputFile *f);
     virtual ~PackLinuxElf32();
 protected:
+    void hemfix(Elf32_Phdr *phdr, unsigned n_phdr);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
     virtual bool canPack();
 
@@ -225,6 +226,7 @@ public:
     /*virtual void buildLoader(const Filter *);*/
 
 protected:
+    void hemfix(Elf64_Phdr *phdr, unsigned n_phdr);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
