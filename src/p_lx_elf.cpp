@@ -2484,7 +2484,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
     sz_pack2a = fpad4(fo);
 
     // Accounting only; ::pack3 will do the compression and output
-    for (k = 0; k < e_phnum; ++k) { // 
+    for (k = 0; k < e_phnum; ++k) { //
         total_in += find_LOAD_gap(phdri, k, e_phnum);
     }
 
