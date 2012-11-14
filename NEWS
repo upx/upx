@@ -3,7 +3,9 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.09 (XX XXX XXXX):
-  * Allow for code signing on Mac OS X executables.
+  * Allow for code signing and LC_UUID on Mac OS X executables.
+  * Allow non-contiguous LC_SEGMENTs and 0==.vmsize for Mach-O.
+  * Allow zero-filled final page in PackUnix::canUnpack().
   * bug fixes
 
 Changes in 3.08 (12 Dec 2011):
