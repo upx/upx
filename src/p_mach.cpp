@@ -496,7 +496,9 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
     }
     secXHDR.addr += secXHDR.offset;
-    unsigned const foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
     segLINK.fileoff = foff1;
     segLINK.vmaddr = segTEXT.vmaddr + foff1;
     fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
@@ -538,7 +540,9 @@ void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
     }
     secXHDR.addr += secXHDR.offset;
-    unsigned const foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
     segLINK.fileoff = foff1;
     segLINK.vmaddr = segTEXT.vmaddr + foff1;
     fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
@@ -580,7 +584,9 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
     }
     secXHDR.addr += secXHDR.offset;
-    unsigned const foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
     segLINK.fileoff = foff1;
     segLINK.vmaddr = segTEXT.vmaddr + foff1;
     fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
@@ -622,7 +628,9 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
     }
     secXHDR.addr += secXHDR.offset;
-    unsigned const foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
     segLINK.fileoff = foff1;
     segLINK.vmaddr = segTEXT.vmaddr + foff1;
     fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);

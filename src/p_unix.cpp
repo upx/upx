@@ -505,8 +505,10 @@ int PackUnix::canUnpack()
 {
     int const small = 32 + sizeof(overlay_offset);
     // Allow zero-filled last page, for Mac OS X code signing.
-    upx_byte buf[4096 + 2*small +1];
-    const int bufsize = sizeof(buf);
+    int bufsize = 2*4096 + 2*small +1;
+    if (bufsize > fi->st_size())
+        bufsize = fi->st_size();
+    upx_byte buf[bufsize];
 
     fi->seek(-bufsize, SEEK_END);
     fi->readx(buf, bufsize);
