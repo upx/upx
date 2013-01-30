@@ -2108,6 +2108,9 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     else {
         memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     }
+    // Fighting over .e_ident[EI_ABIVERSION]: Debian armhf is latest culprit.
+    // So copy from input to output; but see PackLinuxElf32::generateElfHdr
+    memcpy(&h3.ehdr.e_ident, &ehdri.e_ident, sizeof(ehdri.e_ident));
     set_te32(&h3.ehdr.e_flags, e_flags);
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
 }
