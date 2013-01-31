@@ -756,6 +756,7 @@ void *upx_main(
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
     auxv_up(av, AT_PHNUM , ehdr->e_phnum);
     auxv_up(av, AT_PHENT , ehdr->e_phentsize);
+    while (PT_LOAD!=phdr->p_type) ++phdr;  // skip ARM PT_EXIDX and others
     auxv_up(av, AT_PHDR  , dynbase + (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     // This is necessary for ET_DYN if|when we override a prelink address.
