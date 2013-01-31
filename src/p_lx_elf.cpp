@@ -436,7 +436,10 @@ PackLinuxElf::addStubEntrySections(Filter const *)
 {
     addLoader("ELFMAINX", NULL);
     if (hasLoaderSection("ELFMAINXu")) {
-        addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINXu", NULL);
+        int const all_pages = opt->o_unix.unmap_all_pages ||
+            // brk() trouble if static
+            (Elf32_Ehdr::EM_ARM==e_machine && 0x8000==load_va);
+        addLoader((all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINXu", NULL);
     }
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
