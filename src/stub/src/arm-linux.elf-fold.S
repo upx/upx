@@ -98,12 +98,25 @@ SP_argc= 5*4
         ldmia sp!,{r0,r1,r2,r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb,MFLG
         add r0,r0,r3  @ ADRU+=crumb
         sub r1,r1,r3  @ LENU-=crumb
+
+        mov r3,#0  @ clear registers: paranoia
+        mov r4,#0
+        mov r5,#0
+        mov r6,#0
+
+        mov r8,#0
+        mov r9,#0
+        mov r10,#0
+        mov r11,#0
 #if defined(ARMEL_DARWIN)  /*{*/
+        mov r7,#0
         mov r12,#0xff & __NR_munmap
 #elif defined(ARMEL_EABI4)  /*}{*/
+        mov r12,#0
         mov r7, #0xff & __NR_munmap
 #elif defined(ARM_OLDABI)  /*{*/
-        @ empty
+        mov r7,#0
+        mov r12,#0
 #endif  /*}*/
         ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
 
