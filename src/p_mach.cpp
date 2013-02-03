@@ -473,6 +473,9 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 #define PAGE_MASK64 (~(acc_uint64l_t)0<<12)
 #define PAGE_SIZE64 -PAGE_MASK64
 
+// At 2013-02-03 part of the source for codesign was
+//    http://opensource.apple.com/source/cctools/cctools-836/libstuff/ofile.c
+
 void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
