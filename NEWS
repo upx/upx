@@ -2,7 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.09 (XX XXX XXXX):
+Changes in 3.09 (17 Feb 2013):
+  * New option --preserve-build-id for GNU ELF.
   * Allow for code signing and LC_UUID on Mac OS X executables.
   * Allow non-contiguous LC_SEGMENTs and 0==.vmsize for Mach-O.
   * Allow zero-filled final page in PackUnix::canUnpack().
