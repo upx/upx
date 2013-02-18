@@ -508,22 +508,21 @@ int PackUnix::canUnpack()
     int bufsize = 2*4096 + 2*small +1;
     if (bufsize > fi->st_size())
         bufsize = fi->st_size();
-    upx_byte buf[bufsize];
+    MemBuffer buf(bufsize);
 
     fi->seek(-bufsize, SEEK_END);
     fi->readx(buf, bufsize);
-    buf[small] = 1;  // Prevent running off the low-address end.
-    upx_byte *ptr = &buf[bufsize];
-    while (0 == *--ptr) ;
-    ptr -= small;
+    int i = bufsize;
+    while (i > small && 0 == buf[--i]) { }
+    i -= small;
     // allow incompressible extents
-    if (!getPackHeader(ptr, bufsize - (ptr - buf), true))
+    if (i < 0 || !getPackHeader(buf + i, bufsize - i, true))
         return false;
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
     if (l < 0 || l + 4 > bufsize)
         throwCantUnpack("file corrupted");
-    overlay_offset = get_te32(ptr+l);
+    overlay_offset = get_te32(buf + i + l);
     if ((off_t)overlay_offset >= file_size)
         throwCantUnpack("file corrupted");
 

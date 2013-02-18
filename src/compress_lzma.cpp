@@ -352,6 +352,7 @@ namespace MyLzma {
 
 struct InStream: public ISequentialInStream, public CMyUnknownImp
 {
+    virtual ~InStream() { }
     MY_UNKNOWN_IMP
     const Byte *b_buf; size_t b_size; size_t b_pos;
     void Init(const Byte *data, size_t size) {
@@ -372,6 +373,7 @@ STDMETHODIMP InStream::Read(void *data, UInt32 size, UInt32 *processedSize)
 
 struct OutStream : public ISequentialOutStream, public CMyUnknownImp
 {
+    virtual ~OutStream() { }
     MY_UNKNOWN_IMP
     Byte *b_buf; size_t b_size; size_t b_pos; bool overflow;
     void Init(Byte *data, size_t size) {
@@ -397,6 +399,7 @@ STDMETHODIMP OutStream::Write(const void *data, UInt32 size, UInt32 *processedSi
 
 struct ProgressInfo : public ICompressProgressInfo, public CMyUnknownImp
 {
+    virtual ~ProgressInfo() { }
     MY_UNKNOWN_IMP
     STDMETHOD(SetRatioInfo)(const UInt64 *inSize, const UInt64 *outSize);
     upx_callback_p cb;

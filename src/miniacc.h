@@ -1748,6 +1748,8 @@ extern "C" {
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-!(e)];}
 #  elif (ACC_CC_DMC || ACC_CC_PACIFICC || ACC_CC_SYMANTECC || ACC_CC_ZORTECHC)
 #    define ACC_COMPILE_TIME_ASSERT(e)  switch(0) case 1:case !(e):break;
+#  elif (ACC_CC_GNUC >= 0x040700ul) && defined(__cplusplus)
+#    define ACC_COMPILE_TIME_ASSERT(e)  {enum {__acc_cta_e=1/!!(e)} __attribute__((__unused__));}
 #  elif (ACC_CC_GNUC >= 0x040700ul)
 #    define ACC_COMPILE_TIME_ASSERT(e)  {typedef int __acc_cta_t[1-2*!(e)] __attribute__((__unused__));}
 #  elif (ACC_CC_MSC && (_MSC_VER < 900))

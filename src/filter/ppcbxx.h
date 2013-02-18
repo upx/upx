@@ -98,7 +98,7 @@ static int F(Filter *f)
         }
         else {
 #if (W_CTO != 0)
-            assert((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != cto8);  // this should not happen
+            assert((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) != (unsigned) cto8);  // this should not happen
 #endif
             lastnoncall = ic;
             noncalls++;
@@ -133,7 +133,7 @@ static int U(Filter *f)
 
    for (ic = 0; ic<=size4; ic+=4) if (COND(b,ic)) {
         unsigned const word = get_be32(b+ic);
-        if ((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) == f->cto) {
+        if ((~(~0u<<W_CTO) & (word>>(24+2 - W_CTO))) == (unsigned) f->cto) {
             unsigned const jc = word & (~(~0u<<(26 - W_CTO)) & (~0u<<2));
             set_be32(b+ic, (0xfc000003&word)|(0x03fffffc&(jc-ic-addvalue)));
             f->calls++;

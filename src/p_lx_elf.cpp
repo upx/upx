@@ -102,7 +102,7 @@ PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
     int const type = get_te16(&ehdr->e_type);
     if (type != Elf32_Ehdr::ET_EXEC && type != Elf32_Ehdr::ET_DYN)
         return 2;
-    if (get_te16(&ehdr->e_machine) != e_machine)
+    if (get_te16(&ehdr->e_machine) != (unsigned) e_machine)
         return 3;
     if (get_te32(&ehdr->e_version) != Elf32_Ehdr::EV_CURRENT)
         return 4;
@@ -135,7 +135,7 @@ int
 PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 {
     const unsigned char * const buf = ehdr->e_ident;
-    unsigned osabi0 = buf[Elf32_Ehdr::EI_OSABI];
+    unsigned char osabi0 = buf[Elf32_Ehdr::EI_OSABI];
     if (0==osabi0) {
         osabi0 = opt->o_unix.osabi0;
     }
@@ -153,7 +153,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
     int const type = get_te16(&ehdr->e_type);
     if (type != Elf64_Ehdr::ET_EXEC && type != Elf64_Ehdr::ET_DYN)
         return 2;
-    if (get_te16(&ehdr->e_machine) != e_machine)
+    if (get_te16(&ehdr->e_machine) != (unsigned) e_machine)
         return 3;
     if (get_te32(&ehdr->e_version) != Elf64_Ehdr::EV_CURRENT)
         return 4;
@@ -1241,7 +1241,7 @@ bool PackLinuxElf32::canPack()
         return false;
     }
 
-    unsigned osabi0 = u.buf[Elf32_Ehdr::EI_OSABI];
+    unsigned char osabi0 = u.buf[Elf32_Ehdr::EI_OSABI];
     // The first PT_LOAD32 must cover the beginning of the file (0==p_offset).
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(u.buf + e_phoff);
     note_size = 0;
@@ -2041,7 +2041,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         //set the shstrtab
         sec_strndx = &shdr[ehdri.e_shstrndx];
 
-        char *strtab = new char[sec_strndx->sh_size];
+        char *strtab = new char[(unsigned) sec_strndx->sh_size];
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
@@ -2050,7 +2050,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 
         Elf32_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
-            unsigned char *data = new unsigned char[buildid->sh_size];
+            unsigned char *data = new unsigned char[(unsigned) buildid->sh_size];
             memset(data,0,buildid->sh_size);
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
@@ -2059,7 +2059,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             buildid_data  = data;
 
             o_elf_shnum = 3;
-            memset(&shdrout.shdr,0,sizeof(shdrout));
+            memset(&shdrout,0,sizeof(shdrout));
 
             //setup the build-id
             memcpy(&shdrout.shdr[1],buildid, sizeof(shdrout.shdr[1]));
@@ -2113,7 +2113,7 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     }
     // Fighting over .e_ident[EI_ABIVERSION]: Debian armhf is latest culprit.
     // So copy from input to output; but see PackLinuxElf32::generateElfHdr
-    memcpy(&h3.ehdr.e_ident, &ehdri.e_ident, sizeof(ehdri.e_ident));
+    memcpy(&h3.ehdr.e_ident[0], &ehdri.e_ident[0], sizeof(ehdri.e_ident));
     set_te32(&h3.ehdr.e_flags, e_flags);
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
 }
@@ -2236,7 +2236,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         //set the shstrtab
         sec_strndx = &shdri[ehdri.e_shstrndx];
 
-        char *strtab = new char[sec_strndx->sh_size];
+        char *strtab = new char[(unsigned) sec_strndx->sh_size];
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
@@ -2245,7 +2245,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
         Elf64_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
-            unsigned char *data = new unsigned char[buildid->sh_size];
+            unsigned char *data = new unsigned char[(unsigned) buildid->sh_size];
             memset(data,0,buildid->sh_size);
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
@@ -2254,7 +2254,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
             buildid_data  = data;
 
             o_elf_shnum = 3;
-            memset(&shdrout.shdr,0,sizeof(shdrout));
+            memset(&shdrout,0,sizeof(shdrout));
 
             //setup the build-id
             memcpy(&shdrout.shdr[1],buildid, sizeof(shdrout.shdr[1]));
