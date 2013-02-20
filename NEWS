@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.10 (XX XXX XXXX):
+
 Changes in 3.09 (18 Feb 2013):
   * New option --preserve-build-id for GNU ELF.
   * Allow for code signing and LC_UUID on Mac OS X executables.
