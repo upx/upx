@@ -56,7 +56,8 @@
         MH_BUNDLE  = 8      /* dynamically bound bundle file */
     };
     enum { // flags
-        MH_NOUNDEFS = 1
+        MH_NOUNDEFS = 1,
+        MH_DYLDLINK = 4     /* code signing demands this */
     };
 #endif  /*}*/
 

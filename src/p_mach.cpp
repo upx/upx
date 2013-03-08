@@ -1167,7 +1167,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
             + sizeof(segXHDR) + sizeof(secXHDR)
             + sizeof(segTEXT) + sizeof(secTEXT) + sizeof(segLINK) +
             my_thread_command_size /* + sizeof(uuid_cmd) + sizeof(linkitem) */ ;
-        mhdro.flags = Mach_header::MH_NOUNDEFS;
+        mhdro.flags = Mach_header::MH_NOUNDEFS | Mach_header::MH_DYLDLINK;
     }
     fo->write(&mhdro, sizeof(mhdro));
 
