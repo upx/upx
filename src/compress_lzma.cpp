@@ -415,7 +415,7 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 } // namespace
 
 
-#if (ACC_CC_INTELC) && defined(__linux__)
+#if (ACC_CC_INTELC_GNUC)
 #  pragma warning(disable: 424)         // #424: extra ";" ignored
 #endif
 

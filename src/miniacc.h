@@ -2,23 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 2012 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2011 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2010 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2009 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2008 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2007 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2006 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2005 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2004 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2003 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -43,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20130212L
+#define ACC_VERSION     20130321L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -61,20 +45,26 @@
 #    define __LONG_MAX__ 9223372036854775807L
 #  endif
 #endif
-#if defined(__INTEL_COMPILER) && defined(__linux__)
+#if !defined(ACC_CFG_NO_DISABLE_WUNDEF)
+#if defined(__ARMCC_VERSION)
+#  pragma diag_suppress 193
+#elif defined(__clang__) && defined(__clang_minor__)
+#  pragma clang diagnostic ignored "-Wundef"
+#elif defined(__INTEL_COMPILER)
 #  pragma warning(disable: 193)
-#endif
-#if defined(__KEIL__) && defined(__C166__)
+#elif defined(__KEIL__) && defined(__C166__)
 #  pragma warning disable = 322
-#elif 0 && defined(__C251__)
-#  pragma warning disable = 322
-#endif
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && !defined(__MWERKS__)
-#  if (_MSC_VER >= 1300)
+#elif defined(__GNUC__) && defined(__GNUC_MINOR__)
+#  if ((__GNUC__-0) >= 5 || ((__GNUC__-0) == 4 && (__GNUC_MINOR__-0) >= 2))
+#    pragma GCC diagnostic ignored "-Wundef"
+#  endif
+#elif defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__MWERKS__)
+#  if ((_MSC_VER-0) >= 1300)
 #    pragma warning(disable: 4668)
 #  endif
 #endif
-#if defined(__POCC__) && defined(_WIN32)
+#endif
+#if 0 && defined(__POCC__) && defined(_WIN32)
 #  if (__POCC__ >= 400)
 #    pragma warn(disable: 2216)
 #  endif
@@ -86,6 +76,20 @@
 #endif
 #if defined(__BORLANDC__) && defined(__MSDOS__) && !defined(__FLAT__)
 #  pragma option -h
+#endif
+#if !(ACC_CFG_NO_DISABLE_WCRTNONSTDC)
+#ifndef _CRT_NONSTDC_NO_DEPRECATE
+#define _CRT_NONSTDC_NO_DEPRECATE 1
+#endif
+#ifndef _CRT_NONSTDC_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS 1
+#endif
+#ifndef _CRT_SECURE_NO_DEPRECATE
+#define _CRT_SECURE_NO_DEPRECATE 1
+#endif
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
+#endif
 #endif
 #if (ACC_CFG_NO_CONFIG_HEADER)
 #elif defined(ACC_CFG_CONFIG_HEADER)
@@ -442,12 +446,12 @@
 #elif defined(__VMS)
 #  define ACC_OS_VMS            1
 #  define ACC_INFO_OS           "vms"
-#elif ((defined(__mips__) && defined(__R5900__)) || defined(__MIPS_PSX2__))
+#elif (defined(__mips__) && defined(__R5900__)) || defined(__MIPS_PSX2__)
 #  define ACC_OS_CONSOLE        1
 #  define ACC_OS_CONSOLE_PS2    1
 #  define ACC_INFO_OS           "console"
 #  define ACC_INFO_OS_CONSOLE   "ps2"
-#elif (defined(__mips__) && defined(__psp__))
+#elif defined(__mips__) && defined(__psp__)
 #  define ACC_OS_CONSOLE        1
 #  define ACC_OS_CONSOLE_PSP    1
 #  define ACC_INFO_OS           "console"
@@ -475,9 +479,18 @@
 #  elif defined(__linux__) || defined(__linux) || defined(__LINUX__)
 #    define ACC_OS_POSIX_LINUX      1
 #    define ACC_INFO_OS_POSIX       "linux"
-#  elif defined(__APPLE__) || defined(__MACOS__)
-#    define ACC_OS_POSIX_MACOSX     1
-#    define ACC_INFO_OS_POSIX       "macosx"
+#  elif defined(__APPLE__) && defined(__MACH__)
+#    if ((__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__-0) >= 20000)
+#      define ACC_OS_POSIX_DARWIN     1040
+#      define ACC_INFO_OS_POSIX       "darwin_iphone"
+#    elif ((__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__-0) >= 1040)
+#      define ACC_OS_POSIX_DARWIN     __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#      define ACC_INFO_OS_POSIX       "darwin"
+#    else
+#      define ACC_OS_POSIX_DARWIN     1
+#      define ACC_INFO_OS_POSIX       "darwin"
+#    endif
+#    define ACC_OS_POSIX_MACOSX     ACC_OS_POSIX_DARWIN
 #  elif defined(__minix__) || defined(__minix)
 #    define ACC_OS_POSIX_MINIX      1
 #    define ACC_INFO_OS_POSIX       "minix"
@@ -539,17 +552,17 @@
 #  define ACC_INFO_CC           "sdcc"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(SDCC)
 #elif defined(__PATHSCALE__) && defined(__PATHCC_PATCHLEVEL__)
-#  define ACC_CC_PATHSCALE      (__PATHCC__ * 0x10000L + (__PATHCC_MINOR__+0) * 0x100 + (__PATHCC_PATCHLEVEL__+0))
+#  define ACC_CC_PATHSCALE      (__PATHCC__ * 0x10000L + (__PATHCC_MINOR__-0) * 0x100 + (__PATHCC_PATCHLEVEL__-0))
 #  define ACC_INFO_CC           "Pathscale C"
 #  define ACC_INFO_CCVER        __PATHSCALE__
-#elif defined(__INTEL_COMPILER)
-#  define ACC_CC_INTELC         1
+#elif defined(__INTEL_COMPILER) && ((__INTEL_COMPILER-0) > 0)
+#  define ACC_CC_INTELC         __INTEL_COMPILER
 #  define ACC_INFO_CC           "Intel C"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__INTEL_COMPILER)
-#  if defined(_WIN32) || defined(_WIN64)
-#    define ACC_CC_SYNTAX_MSC 1
-#  else
-#    define ACC_CC_SYNTAX_GNUC 1
+#  if defined(_MSC_VER) && ((_MSC_VER-0) > 0)
+#    define ACC_CC_INTELC_MSC   _MSC_VER
+#  elif defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
+#    define ACC_CC_INTELC_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  endif
 #elif defined(__POCC__) && defined(_WIN32)
 #  define ACC_CC_PELLESC        1
@@ -557,41 +570,40 @@
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__POCC__)
 #elif defined(__ARMCC_VERSION) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
 #  if defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_ARMCC_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
+#    define ACC_CC_ARMCC_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  else
-#    define ACC_CC_ARMCC_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
+#    define ACC_CC_ARMCC_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100)
 #  endif
 #  define ACC_CC_ARMCC          __ARMCC_VERSION
 #  define ACC_INFO_CC           "ARM C Compiler"
 #  define ACC_INFO_CCVER        __VERSION__
-#elif defined(__clang__) && defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
-#  else
-#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
-#  endif
+#elif defined(__clang__) && defined(__llvm__) && defined(__VERSION__)
 #  if defined(__clang_major__) && defined(__clang_minor__) && defined(__clang_patchlevel__)
-#    define ACC_CC_CLANG_CLANG  (__clang_major__ * 0x10000L + (__clang_minor__+0) * 0x100 + (__clang_patchlevel__+0))
+#    define ACC_CC_CLANG        (__clang_major__ * 0x10000L + (__clang_minor__-0) * 0x100 + (__clang_patchlevel__-0))
 #  else
-#    define ACC_CC_CLANG_CLANG  0x010000L
+#    define ACC_CC_CLANG        0x010000L
 #  endif
-#  define ACC_CC_CLANG          ACC_CC_CLANG_GNUC
+#  if defined(_MSC_VER) && ((_MSC_VER-0) > 0)
+#    define ACC_CC_CLANG_MSC    _MSC_VER
+#  elif defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
+#    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
+#  endif
 #  define ACC_INFO_CC           "clang"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__llvm__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
 #  if defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  else
-#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
+#    define ACC_CC_LLVM_GNUC    (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100)
 #  endif
 #  define ACC_CC_LLVM           ACC_CC_LLVM_GNUC
 #  define ACC_INFO_CC           "llvm-gcc"
 #  define ACC_INFO_CCVER        __VERSION__
 #elif defined(__GNUC__) && defined(__VERSION__)
 #  if defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100 + (__GNUC_PATCHLEVEL__+0))
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  elif defined(__GNUC_MINOR__)
-#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__+0) * 0x100)
+#    define ACC_CC_GNUC         (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100)
 #  else
 #    define ACC_CC_GNUC         (__GNUC__ * 0x10000L)
 #  endif
@@ -662,8 +674,8 @@
 #  else
 #    define ACC_INFO_CCVER      "unknown"
 #  endif
-#elif defined(_MSC_VER)
-#  define ACC_CC_MSC            1
+#elif defined(_MSC_VER) && ((_MSC_VER-0) > 0)
+#  define ACC_CC_MSC            _MSC_VER
 #  define ACC_INFO_CC           "Microsoft C"
 #  if defined(_MSC_FULL_VER)
 #    define ACC_INFO_CCVER      ACC_PP_MACRO_EXPAND(_MSC_VER) "." ACC_PP_MACRO_EXPAND(_MSC_FULL_VER)
@@ -696,7 +708,7 @@
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__SC__)
 #elif defined(__SUNPRO_C)
 #  define ACC_INFO_CC           "SunPro C"
-#  if ((__SUNPRO_C)+0 > 0)
+#  if ((__SUNPRO_C-0) > 0)
 #    define ACC_CC_SUNPROC      __SUNPRO_C
 #    define ACC_INFO_CCVER      ACC_PP_MACRO_EXPAND(__SUNPRO_C)
 #  else
@@ -705,7 +717,7 @@
 #  endif
 #elif defined(__SUNPRO_CC)
 #  define ACC_INFO_CC           "SunPro C"
-#  if ((__SUNPRO_CC)+0 > 0)
+#  if ((__SUNPRO_CC-0) > 0)
 #    define ACC_CC_SUNPROC      __SUNPRO_CC
 #    define ACC_INFO_CCVER      ACC_PP_MACRO_EXPAND(__SUNPRO_CC)
 #  else
@@ -743,16 +755,14 @@
 #endif
 #if (ACC_CC_GNUC) && defined(__OPEN64__)
 #  if defined(__OPENCC__) && defined(__OPENCC_MINOR__) && defined(__OPENCC_PATCHLEVEL__)
-#    define ACC_CC_OPEN64_OPEN64 (__OPENCC__ * 0x10000L + (__OPENCC_MINOR__+0) * 0x100 + (__OPENCC_PATCHLEVEL__+0))
+#    define ACC_CC_OPEN64       (__OPENCC__ * 0x10000L + (__OPENCC_MINOR__-0) * 0x100 + (__OPENCC_PATCHLEVEL__-0))
 #    define ACC_CC_OPEN64_GNUC  ACC_CC_GNUC
-#    define ACC_CC_OPEN64       ACC_CC_OPEN64_OPEN64
 #  endif
 #endif
 #if (ACC_CC_GNUC) && defined(__PCC__)
 #  if defined(__PCC__) && defined(__PCC_MINOR__) && defined(__PCC_MINORMINOR__)
-#    define ACC_CC_PCC_PCC      (__PCC__ * 0x10000L + (__PCC_MINOR__+0) * 0x100 + (__PCC_MINORMINOR__+0))
+#    define ACC_CC_PCC          (__PCC__ * 0x10000L + (__PCC_MINOR__-0) * 0x100 + (__PCC_MINORMINOR__-0))
 #    define ACC_CC_PCC_GNUC     ACC_CC_GNUC
-#    define ACC_CC_PCC          ACC_CC_PCC_PCC
 #  endif
 #endif
 #if 0 && (ACC_CC_MSC && (_MSC_VER >= 1200)) && !defined(_MSC_FULL_VER)
@@ -789,10 +799,10 @@
 #  define ACC_INFO_ARCH             "arm_thumb"
 #elif defined(__IAR_SYSTEMS_ICC__) && defined(__ICCARM__)
 #  define ACC_ARCH_ARM              1
-#  if defined(__CPU_MODE__) && ((__CPU_MODE__)+0 == 1)
+#  if defined(__CPU_MODE__) && ((__CPU_MODE__-0) == 1)
 #    define ACC_ARCH_ARM_THUMB      1
 #    define ACC_INFO_ARCH           "arm_thumb"
-#  elif defined(__CPU_MODE__) && ((__CPU_MODE__)+0 == 2)
+#  elif defined(__CPU_MODE__) && ((__CPU_MODE__-0) == 2)
 #    define ACC_INFO_ARCH           "arm"
 #  else
 #    define ACC_INFO_ARCH           "arm"
@@ -1206,7 +1216,7 @@ extern "C" {
 #if (ACC_SIZEOF_LONG > 0 && ACC_SIZEOF_LONG < 8)
 #  if defined(__LONG_MAX__) && defined(__LONG_LONG_MAX__)
 #    if (ACC_CC_GNUC >= 0x030300ul)
-#      if ((__LONG_MAX__)+0 == (__LONG_LONG_MAX__)+0)
+#      if ((__LONG_MAX__-0) == (__LONG_LONG_MAX__-0))
 #        define ACC_SIZEOF_LONG_LONG      ACC_SIZEOF_LONG
 #      elif (__ACC_LSR(__LONG_LONG_MAX__,30) == 1)
 #        define ACC_SIZEOF_LONG_LONG      4
@@ -1220,7 +1230,7 @@ extern "C" {
 #if (ACC_ARCH_I086 && ACC_CC_DMC)
 #elif (ACC_CC_CILLY) && defined(__GNUC__)
 #  define ACC_SIZEOF_LONG_LONG      8
-#elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define ACC_SIZEOF_LONG_LONG      8
 #elif ((ACC_OS_WIN32 || ACC_OS_WIN64 || defined(_WIN32)) && ACC_CC_MSC && (_MSC_VER >= 1400))
 #  define ACC_SIZEOF_LONG_LONG      8
@@ -1242,11 +1252,11 @@ extern "C" {
 #  define ACC_SIZEOF___INT64        8
 #elif (ACC_ARCH_I386 && (ACC_CC_WATCOMC && (__WATCOMC__ >= 1100)))
 #  define ACC_SIZEOF___INT64        8
-#elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && (_INTEGRAL_MAX_BITS == 64))
+#elif (ACC_CC_WATCOMC && defined(_INTEGRAL_MAX_BITS) && ((_INTEGRAL_MAX_BITS-0) == 64))
 #  define ACC_SIZEOF___INT64        8
 #elif (ACC_OS_OS400 || defined(__OS400__)) && defined(__LLP64_IFC__)
 #  define ACC_SIZEOF_LONG_LONG      8
-#elif (defined(__vms) || defined(__VMS)) && (__INITIAL_POINTER_SIZE+0 == 64)
+#elif (defined(__vms) || defined(__VMS)) && ((__INITIAL_POINTER_SIZE-0) == 64)
 #  define ACC_SIZEOF_LONG_LONG      8
 #elif (ACC_CC_SDCC) && (ACC_SIZEOF_INT == 2)
 #elif 1 && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -1444,13 +1454,13 @@ extern "C" {
 #  define ACC_INFO_LIBC         "newlib"
 #elif defined(__UCLIBC__) && defined(__UCLIBC_MAJOR__) && defined(__UCLIBC_MINOR__)
 #  if defined(__UCLIBC_SUBLEVEL__)
-#    define ACC_LIBC_UCLIBC     (__UCLIBC_MAJOR__ * 0x10000L + (__UCLIBC_MINOR__+0) * 0x100 + (__UCLIBC_SUBLEVEL__+0))
+#    define ACC_LIBC_UCLIBC     (__UCLIBC_MAJOR__ * 0x10000L + (__UCLIBC_MINOR__-0) * 0x100 + (__UCLIBC_SUBLEVEL__-0))
 #  else
 #    define ACC_LIBC_UCLIBC     0x00090bL
 #  endif
 #  define ACC_INFO_LIBC         "uclibc"
 #elif defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#  define ACC_LIBC_GLIBC        (__GLIBC__ * 0x10000L + (__GLIBC_MINOR__+0) * 0x100)
+#  define ACC_LIBC_GLIBC        (__GLIBC__ * 0x10000L + (__GLIBC_MINOR__-0) * 0x100)
 #  define ACC_INFO_LIBC         "glibc"
 #elif (ACC_CC_MWERKS) && defined(__MSL__)
 #  define ACC_LIBC_MSL          __MSL__
@@ -1476,7 +1486,7 @@ extern "C" {
 #  define __acc_ua_volatile     volatile
 #endif
 #if !defined(__acc_alignof)
-#if (ACC_CC_ARMCC_GNUC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#if (ACC_CC_ARMCC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
 #  define __acc_alignof(e)      __alignof__(e)
@@ -1486,8 +1496,28 @@ extern "C" {
 #  define __acc_alignof(e)      __alignof__(e)
 #endif
 #endif
-#if defined(__acc_alignof)
+#if defined(__acc_alignof) && !defined(__acc_HAVE_alignof)
 #  define __acc_HAVE_alignof 1
+#endif
+#if !defined(__acc_struct_align16) && (__acc_HAVE_alignof)
+#if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x030000ul))
+#elif (ACC_CC_CLANG && (ACC_CC_CLANG < 0x020800ul)) && defined(__cplusplus)
+#elif (ACC_CC_CILLY || ACC_CC_PCC)
+#elif (ACC_CC_INTELC_MSC) || (ACC_CC_MSC && (_MSC_VER >= 1300))
+#  define __acc_struct_align16(s)       struct __declspec(align(16)) s {
+#  define __acc_struct_align16_end()    };
+#  define __acc_struct_align32(s)       struct __declspec(align(32)) s {
+#  define __acc_struct_align32_end()    };
+#  define __acc_struct_align64(s)       struct __declspec(align(64)) s {
+#  define __acc_struct_align64_end()    };
+#elif (ACC_CC_ARMCC || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define __acc_struct_align16(s)       struct s {
+#  define __acc_struct_align16_end()    } __attribute__((__aligned__(16)));
+#  define __acc_struct_align32(s)       struct s {
+#  define __acc_struct_align32_end()    } __attribute__((__aligned__(32)));
+#  define __acc_struct_align64(s)       struct s {
+#  define __acc_struct_align64_end()    } __attribute__((__aligned__(64)));
+#endif
 #endif
 #if !defined(__acc_constructor)
 #if (ACC_CC_GNUC >= 0x030400ul)
@@ -1546,9 +1576,9 @@ extern "C" {
 #if !defined(__acc_forceinline)
 #if (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_INTELC_MSC)
 #  define __acc_forceinline     __forceinline
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_INTELC_GNUC)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
@@ -1568,9 +1598,9 @@ extern "C" {
 #  define __acc_noinline        __attribute__((__noinline__,__used__))
 #elif (ACC_CC_GNUC >= 0x030200ul)
 #  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_MSC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_INTELC_MSC)
 #  define __acc_noinline        __declspec(noinline)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800) && ACC_CC_INTELC_GNUC)
 #  define __acc_noinline        __attribute__((__noinline__))
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noinline        __attribute__((__noinline__))
@@ -1593,12 +1623,29 @@ extern "C" {
 #if (__acc_HAVE_forceinline || __acc_HAVE_noinline) && !(__acc_HAVE_inline)
 #  error "this should not happen"
 #endif
+#if !defined(__acc_c99_extern_inline)
+#if defined(__GNUC_GNU_INLINE__)
+#  define __acc_c99_extern_inline   __acc_inline
+#elif defined(__GNUC_STDC_INLINE__)
+#  define __acc_c99_extern_inline   extern __acc_inline
+#elif ((__STDC_VERSION__ + 0) >= 199901L)
+#  define __acc_c99_extern_inline   extern __acc_inline
+#endif
+#if !defined(__acc_c99_extern_inline) && (__acc_HAVE_inline)
+#  define __acc_c99_extern_inline   __acc_inline
+#endif
+#endif
+#if defined(__acc_c99_extern_inline)
+#  define __acc_HAVE_c99_extern_inline 1
+#else
+#  define __acc_c99_extern_inline   /*empty*/
+#endif
 #if !defined(__acc_noreturn)
 #if (ACC_CC_GNUC >= 0x020700ul)
 #  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_INTELC_MSC)
 #  define __acc_noreturn        __declspec(noreturn)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_INTELC_GNUC)
 #  define __acc_noreturn        __attribute__((__noreturn__))
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_noreturn        __attribute__((__noreturn__))
@@ -1614,9 +1661,9 @@ extern "C" {
 #if !defined(__acc_nothrow)
 #if (ACC_CC_GNUC >= 0x030300ul)
 #  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_SYNTAX_MSC) && defined(__cplusplus)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 450) && ACC_CC_INTELC_MSC) && defined(__cplusplus)
 #  define __acc_nothrow         __declspec(nothrow)
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 900) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 900) && ACC_CC_INTELC_GNUC)
 #  define __acc_nothrow         __attribute__((__nothrow__))
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_nothrow         __attribute__((__nothrow__))
@@ -1632,7 +1679,7 @@ extern "C" {
 #if !defined(__acc_restrict)
 #if (ACC_CC_GNUC >= 0x030400ul)
 #  define __acc_restrict        __restrict__
-#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_SYNTAX_GNUC)
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 600) && ACC_CC_INTELC_GNUC)
 #  define __acc_restrict        __restrict__
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM)
 #  define __acc_restrict        __restrict__
@@ -1672,7 +1719,7 @@ extern "C" {
 #    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_BORLANDC || ACC_CC_HIGHC || ACC_CC_NDPC || ACC_CC_PELLESC || ACC_CC_TURBOC)
 #    define ACC_UNUSED(var)         if (&var) ; else
-#  elif (ACC_CC_CLANG && (ACC_CC_CLANG_CLANG >= 0x030200ul))
+#  elif (ACC_CC_CLANG && (ACC_CC_CLANG >= 0x030200ul))
 #    define ACC_UNUSED(var)         ((void) &var)
 #  elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #    define ACC_UNUSED(var)         ((void) var)
@@ -1730,6 +1777,15 @@ extern "C" {
 #    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((acc_uintptr_t) ((const void *) (e))))))
 #  else
 #    define ACC_UNCONST_CAST(t,e)   ((t) ((void *) ((char *) ((const void *) (e)))))
+#  endif
+#endif
+#if !defined(ACC_BLOCK_BEGIN)
+#  if (ACC_CC_MSC)
+#    define ACC_BLOCK_BEGIN         do {
+#    define ACC_BLOCK_END           } while (0,0);
+#  else
+#    define ACC_BLOCK_BEGIN         do {
+#    define ACC_BLOCK_END           } while (0);
 #  endif
 #endif
 #if !defined(ACC_COMPILE_TIME_ASSERT_HEADER)
@@ -4320,16 +4376,30 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #    define ACCCHK_ASSERT_IS_UNSIGNED_T(type)   ACCCHK_ASSERT_SIGN_T(type,>)
 #  endif
 #endif
+#if defined(ACCCHK_CFG_PEDANTIC)
 #if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550) && (__BORLANDC__ < 0x0560))
 #  pragma option push -w-8055
 #elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0530) && (__BORLANDC__ < 0x0550))
 #  pragma option push -w-osh
 #endif
+#endif
 #if (ACC_0xffffffffL - ACC_UINT32_C(4294967294) != 1)
-#  error "preprocessor error 1"
+#  error "preprocessor error"
 #endif
 #if (ACC_0xffffffffL - ACC_UINT32_C(0xfffffffd) != 2)
-#  error "preprocessor error 2"
+#  error "preprocessor error"
+#endif
+#if +0
+#  error "preprocessor error"
+#endif
+#if -0
+#  error "preprocessor error"
+#endif
+#if +0 != 0
+#  error "preprocessor error"
+#endif
+#if -0 != 0
+#  error "preprocessor error"
 #endif
 #define ACCCHK_VAL  1
 #define ACCCHK_TMP1 ACCCHK_VAL
@@ -4505,16 +4575,14 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
     ACCCHK_ASSERT((((1u  << 15) + 1) >> 15) == 1)
     ACCCHK_ASSERT((((1ul << 31) + 1) >> 31) == 1)
 #endif
+#if defined(ACCCHK_CFG_PEDANTIC)
 #if defined(__MSDOS__) && defined(__TURBOC__) && (__TURBOC__ < 0x0150)
-#elif 1 && (ACC_CC_ARMCC) && !defined(ACCCHK_CFG_PEDANTIC)
-#elif 1 && (ACC_CC_SUNPROC) && !defined(ACCCHK_CFG_PEDANTIC)
 #else
     ACCCHK_ASSERT((1   << (8*SIZEOF_INT-1)) < 0)
 #endif
+#endif
     ACCCHK_ASSERT((1u  << (8*SIZEOF_INT-1)) > 0)
-#if 1 && (ACC_CC_ARMCC) && !defined(ACCCHK_CFG_PEDANTIC)
-#elif 1 && (ACC_CC_SUNPROC) && !defined(ACCCHK_CFG_PEDANTIC)
-#else
+#if defined(ACCCHK_CFG_PEDANTIC)
     ACCCHK_ASSERT((1l  << (8*SIZEOF_LONG-1)) < 0)
 #endif
     ACCCHK_ASSERT((1ul << (8*SIZEOF_LONG-1)) > 0)
@@ -4651,13 +4719,13 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #if (SIZEOF_INT == 4)
 # if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
 # else
-    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0u) == 0xffffffffu)
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & (~0u+0u)) == 0xffffffffu)
 # endif
 #endif
 #if (SIZEOF_LONG == 4)
 # if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
 # else
-    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & ~0ul) == 0xfffffffful)
+    ACCCHK_ASSERT((ACC_UINT64_C(0xffffffffffffffff) & (~0ul+0ul)) == 0xfffffffful)
 # endif
 #endif
 #endif
@@ -4739,16 +4807,17 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #elif (SIZEOF_INT > 1)
     ACCCHK_ASSERT( (int) ((unsigned char) ((signed char) -1)) == 255)
 #endif
+#if defined(ACCCHK_CFG_PEDANTIC)
 #if (ACC_CC_KEILC)
 #elif (ACC_CC_NDPC)
-#elif 1 && (ACC_CC_LCC || ACC_CC_LCCWIN32) && !defined(ACCCHK_CFG_PEDANTIC)
-#elif 1 && (ACC_CC_ARMCC) && !defined(ACCCHK_CFG_PEDANTIC)
-#elif 1 && (ACC_CC_SUNPROC) && !defined(ACCCHK_CFG_PEDANTIC)
 #elif !(ACC_BROKEN_INTEGRAL_PROMOTION) && (SIZEOF_INT > 1)
     ACCCHK_ASSERT( (((unsigned char)128) << (int)(8*sizeof(int)-8)) < 0)
 #endif
+#endif
+#if defined(ACCCHK_CFG_PEDANTIC)
 #if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0530) && (__BORLANDC__ < 0x0560))
 #  pragma option pop
+#endif
 #endif
 #endif
 #if defined(ACC_WANT_ACCLIB_UA)
@@ -4890,31 +4959,33 @@ ACCLIB_PUBLIC(void, acc_ua_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
     ACC_UA_SET_BE64(p, v);
 #elif defined(ACC_UA_SET_BE32)
     acc_hbyte_p b = (acc_hbyte_p) p;
-    ACC_UA_SET_BE32(b + 4, (v >>  0));
-    ACC_UA_SET_BE32(b + 0, (v >> 32));
+    ACC_UA_SET_BE32(b + 4, v);
+    v >>= 32;
+    ACC_UA_SET_BE32(b + 0, v);
 #elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     acc_hbyte_p b = (acc_hbyte_p) p;
-    b[7] = (unsigned char) ((v >>  0) & 0xff);
-    b[6] = (unsigned char) ((v >>  8) & 0xff);
-    b[5] = (unsigned char) ((v >> 16) & 0xff);
-    b[4] = (unsigned char) ((v >> 24) & 0xff);
-    b[3] = (unsigned char) ((v >> 32) & 0xff);
-    b[2] = (unsigned char) ((v >> 40) & 0xff);
-    b[1] = (unsigned char) ((v >> 48) & 0xff);
-    b[0] = (unsigned char) ((v >> 56) & 0xff);
+    b[7] = (unsigned char) v; v >>= 8;
+    b[6] = (unsigned char) v; v >>= 8;
+    b[5] = (unsigned char) v; v >>= 8;
+    b[4] = (unsigned char) v; v >>= 8;
+    b[3] = (unsigned char) v; v >>= 8;
+    b[2] = (unsigned char) v; v >>= 8;
+    b[1] = (unsigned char) v; v >>= 8;
+    b[0] = (unsigned char) v;
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
     acc_uint32l_t x;
-    x = (acc_uint32l_t) (v >>  0);
-    b[7] = (unsigned char) ((x >>  0) & 0xff);
-    b[6] = (unsigned char) ((x >>  8) & 0xff);
-    b[5] = (unsigned char) ((x >> 16) & 0xff);
-    b[4] = (unsigned char) ((x >> 24) & 0xff);
-    x = (acc_uint32l_t) (v >> 32);
-    b[3] = (unsigned char) ((x >>  0) & 0xff);
-    b[2] = (unsigned char) ((x >>  8) & 0xff);
-    b[1] = (unsigned char) ((x >> 16) & 0xff);
-    b[0] = (unsigned char) ((x >> 24) & 0xff);
+    x = (acc_uint32l_t) v;
+    b[7] = (unsigned char) x; x >>= 8;
+    b[6] = (unsigned char) x; x >>= 8;
+    b[5] = (unsigned char) x; x >>= 8;
+    b[4] = (unsigned char) x;
+    v >>= 32;
+    x = (acc_uint32l_t) v;
+    b[3] = (unsigned char) x; x >>= 8;
+    b[2] = (unsigned char) x; x >>= 8;
+    b[1] = (unsigned char) x; x >>= 8;
+    b[0] = (unsigned char) x;
 #endif
 }
 #endif
@@ -4947,31 +5018,33 @@ ACCLIB_PUBLIC(void, acc_ua_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
     ACC_UA_SET_LE64(p, v);
 #elif defined(ACC_UA_SET_LE32)
     acc_hbyte_p b = (acc_hbyte_p) p;
-    ACC_UA_SET_LE32(b + 0, (v >>  0));
-    ACC_UA_SET_LE32(b + 4, (v >> 32));
+    ACC_UA_SET_LE32(b + 0, v);
+    v >>= 32;
+    ACC_UA_SET_LE32(b + 4, v);
 #elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
     acc_hbyte_p b = (acc_hbyte_p) p;
-    b[0] = (unsigned char) ((v >>  0) & 0xff);
-    b[1] = (unsigned char) ((v >>  8) & 0xff);
-    b[2] = (unsigned char) ((v >> 16) & 0xff);
-    b[3] = (unsigned char) ((v >> 24) & 0xff);
-    b[4] = (unsigned char) ((v >> 32) & 0xff);
-    b[5] = (unsigned char) ((v >> 40) & 0xff);
-    b[6] = (unsigned char) ((v >> 48) & 0xff);
-    b[7] = (unsigned char) ((v >> 56) & 0xff);
+    b[0] = (unsigned char) v; v >>= 8;
+    b[1] = (unsigned char) v; v >>= 8;
+    b[2] = (unsigned char) v; v >>= 8;
+    b[3] = (unsigned char) v; v >>= 8;
+    b[4] = (unsigned char) v; v >>= 8;
+    b[5] = (unsigned char) v; v >>= 8;
+    b[6] = (unsigned char) v; v >>= 8;
+    b[7] = (unsigned char) v;
 #else
     acc_hbyte_p b = (acc_hbyte_p) p;
     acc_uint32l_t x;
-    x = (acc_uint32l_t) (v >>  0);
-    b[0] = (unsigned char) ((x >>  0) & 0xff);
-    b[1] = (unsigned char) ((x >>  8) & 0xff);
-    b[2] = (unsigned char) ((x >> 16) & 0xff);
-    b[3] = (unsigned char) ((x >> 24) & 0xff);
-    x = (acc_uint32l_t) (v >> 32);
-    b[4] = (unsigned char) ((x >>  0) & 0xff);
-    b[5] = (unsigned char) ((x >>  8) & 0xff);
-    b[6] = (unsigned char) ((x >> 16) & 0xff);
-    b[7] = (unsigned char) ((x >> 24) & 0xff);
+    x = (acc_uint32l_t) v;
+    b[0] = (unsigned char) x; x >>= 8;
+    b[1] = (unsigned char) x; x >>= 8;
+    b[2] = (unsigned char) x; x >>= 8;
+    b[3] = (unsigned char) x;
+    v >>= 32;
+    x = (acc_uint32l_t) v;
+    b[4] = (unsigned char) x; x >>= 8;
+    b[5] = (unsigned char) x; x >>= 8;
+    b[6] = (unsigned char) x; x >>= 8;
+    b[7] = (unsigned char) x;
 #endif
 }
 #endif
@@ -5159,15 +5232,19 @@ ACCLIB_PUBLIC(void, acc_srand48) (acc_rand48_p r, acc_uint32l_t seed)
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48) (acc_rand48_p r)
 {
+    acc_uint64l_t a;
     r->seed = r->seed * ACC_UINT64_C(25214903917) + 11;
     r->seed &= ACC_UINT64_C(0xffffffffffff);
-    return (acc_uint32l_t) (r->seed >> 17);
+    a = r->seed >> 17;
+    return (acc_uint32l_t) a;
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand48_r32) (acc_rand48_p r)
 {
+    acc_uint64l_t a;
     r->seed = r->seed * ACC_UINT64_C(25214903917) + 11;
     r->seed &= ACC_UINT64_C(0xffffffffffff);
-    return (acc_uint32l_t) (r->seed >> 16);
+    a = r->seed >> 16;
+    return (acc_uint32l_t) a;
 }
 #endif
 #if defined(acc_int64l_t)
@@ -5177,19 +5254,23 @@ ACCLIB_PUBLIC(void, acc_srand64) (acc_rand64_p r, acc_uint64l_t seed)
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64) (acc_rand64_p r)
 {
+    acc_uint64l_t a;
     r->seed = r->seed * ACC_UINT64_C(6364136223846793005) + 1;
 #if (ACC_SIZEOF_ACC_INT64L_T > 8)
     r->seed &= ACC_UINT64_C(0xffffffffffffffff);
 #endif
-    return (acc_uint32l_t) (r->seed >> 33);
+    a = r->seed >> 33;
+    return (acc_uint32l_t) a;
 }
 ACCLIB_PUBLIC(acc_uint32l_t, acc_rand64_r32) (acc_rand64_p r)
 {
+    acc_uint64l_t a;
     r->seed = r->seed * ACC_UINT64_C(6364136223846793005) + 1;
 #if (ACC_SIZEOF_ACC_INT64L_T > 8)
     r->seed &= ACC_UINT64_C(0xffffffffffffffff);
 #endif
-    return (acc_uint32l_t) (r->seed >> 32);
+    a = r->seed >> 32;
+    return (acc_uint32l_t) a;
 }
 #endif
 ACCLIB_PUBLIC(void, acc_srandmt) (acc_randmt_p r, acc_uint32l_t seed)
@@ -5955,7 +6036,8 @@ static int acc_pclock_read_clock(acc_pclock_handle_p h, acc_pclock_p c)
     secs = (double)ticks / (CLOCKS_PER_SEC);
     nsecs = (acc_uint64l_t) (secs * 1000000000.0);
     c->tv_sec = (acc_int64l_t) (nsecs / 1000000000ul);
-    c->tv_nsec = (acc_uint32l_t) (nsecs % 1000000000ul);
+    nsecs = (nsecs % 1000000000ul);
+    c->tv_nsec = (acc_uint32l_t) nsecs;
 #else
     ticks = clock();
     secs = (double)ticks / (CLOCKS_PER_SEC);
@@ -6041,7 +6123,8 @@ static int acc_pclock_read_getprocesstimes(acc_pclock_handle_p h, acc_pclock_p c
     else
         ticks -= h->ticks_base;
     c->tv_sec = (acc_int64l_t) (ticks / 10000000ul);
-    c->tv_nsec = (acc_uint32l_t)(ticks % 10000000ul) * 100u;
+    ticks = (ticks % 10000000ul) * 100u;
+    c->tv_nsec = (acc_uint32l_t) ticks;
     ACC_UNUSED(h); return 0;
 }
 #endif
@@ -6129,7 +6212,8 @@ static int acc_pclock_read_getthreadtimes(acc_pclock_handle_p h, acc_pclock_p c)
     else
         ticks -= h->ticks_base;
     c->tv_sec = (acc_int64l_t) (ticks / 10000000ul);
-    c->tv_nsec = (acc_uint32l_t)(ticks % 10000000ul) * 100;
+    ticks = (ticks % 10000000ul) * 100u;
+    c->tv_nsec = (acc_uint32l_t) ticks;
     ACC_UNUSED(h); return 0;
 }
 #endif
@@ -6515,9 +6599,12 @@ ACCLIB_PUBLIC(double, acc_uclock_get_elapsed) (acc_uclock_handle_p h, const acc_
 #endif
 #if (__ACCLIB_UCLOCK_USE_QPC)
     if (h->qpf > 0.0 && h->mode == 3) {
+        acc_int64l_t t;
         if (!h->name) h->name = "qpc";
         if (start->qpc == 0 || stop->qpc == 0) return 0.0;
-        return (double) (stop->qpc - start->qpc) / h->qpf;
+        t = stop->qpc - start->qpc;
+        d = (double) t;
+        return d / h->qpf;
     }
 #endif
 #if (ACC_OS_DOS16 || ACC_OS_WIN16)
@@ -6775,7 +6862,8 @@ ACCLIB_PUBLIC(acc_int32e_t, acc_muldiv32s) (acc_int32e_t a, acc_int32e_t b, acc_
     if __acc_likely(x != 0)
     {
 #if defined(acc_int64l_t)
-        r = (acc_int32e_t) (((acc_int64l_t) a * b) / x);
+        acc_int64l_t rr = (((acc_int64l_t) a * b) / x);
+        r = (acc_int32e_t) rr;
 #else
         ACC_UNUSED(a); ACC_UNUSED(b);
 #endif
@@ -6788,7 +6876,8 @@ ACCLIB_PUBLIC(acc_uint32e_t, acc_muldiv32u) (acc_uint32e_t a, acc_uint32e_t b, a
     if __acc_likely(x != 0)
     {
 #if defined(acc_int64l_t)
-        r = (acc_uint32e_t) (((acc_uint64l_t) a * b) / x);
+        acc_uint64l_t rr = (((acc_uint64l_t) a * b) / x);
+        r = (acc_uint32e_t) rr;
 #else
         ACC_UNUSED(a); ACC_UNUSED(b);
 #endif
@@ -6959,4 +7048,4 @@ ACCLIB_PUBLIC(void, acc_wildargv) (int* argc, char*** argv)
 #endif
 #endif
 
-/* vim:set ts=4 et: */
+/* vim:set ts=4 sw=4 et: */
