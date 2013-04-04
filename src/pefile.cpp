@@ -67,6 +67,11 @@
 #define OPTR_C(type, var, v)    type* const var = (v)
 #endif
 
+static void xcheck(const void *p)
+{
+    if (!p)
+        throwCantUnpack("unexpected NULL pointer; take care!");
+}
 static void xcheck(const void *p, size_t plen, const void *b, size_t blen)
 {
     const char *pp = (const char *) p;
@@ -1179,6 +1184,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
     for (const res_dir_entry *rde = node->entries + ic - 1; --ic >= 0; rde--)
     {
         upx_rnode *child = convert(start + (rde->child & 0x7fffffff),branch,level + 1);
+        xcheck(child);
         branch->children[ic] = child;
         child->id = rde->tnl;
         if (child->id & 0x80000000)
@@ -1214,6 +1220,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
     res_dir_entry *be = b->entries;
     for (unsigned ic = 0; ic < branch->nc; ic++, be++)
     {
+        xcheck(branch->children[ic]);
         be->tnl = branch->children[ic]->id;
         be->child = bpos + ((level < 2) ? 0x80000000 : 0);
 
@@ -1245,6 +1252,7 @@ upx_byte *PeFile::Resource::build()
 
 void PeFile::Resource::destroy(upx_rnode *node,unsigned level)
 {
+    xcheck(node);
     delete [] node->name; node->name = NULL;
     if (level != 3)
     {
@@ -1673,9 +1681,10 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
             }
         }
     upx_byte *p = res.build();
+    OCHECK(obuf + ODADDR(PEDIR_RESOURCE) - rvamin, 16);
     // write back when the original is zeroed
     if (get_le32(obuf + ODADDR(PEDIR_RESOURCE) - rvamin + 12) == 0)
-        omemcpy(obuf + ODADDR(PEDIR_RESOURCE) - rvamin,p,res.dirsize());
+        omemcpy(obuf + ODADDR(PEDIR_RESOURCE) - rvamin, p, res.dirsize());
     delete [] p;
 }
 
@@ -1724,6 +1733,7 @@ void PeFile::unpack(OutputFile *fo)
         Filter ft(ph.level);
         ft.init(ph.filter,oh.codebase - rvamin);
         ft.cto = (unsigned char) ph.filter_cto;
+        OCHECK(obuf + oh.codebase - rvamin, oh.codesize);
         ft.unfilter(obuf + oh.codebase - rvamin, oh.codesize);
     }
 
