@@ -111,30 +111,35 @@ _=-1+_  // one less word on stack
 #define lodslu bl get4u
 
   section ELFMAINX
+//D_INFO:
 //  .long offset(.)  // detect relocation
 //  .long offset(user DT_INIT)
 //  .long offset(escape_hatch)
-//  .long offset({p_info; b_info; compressed data})
+//  .long offset({l_info; p_info; b_info; compressed data})
 
+#define DEBUG 0
         .code 16  //; .balign 4
 .real_start_ofELFMAINX:
         .thumb_func
 _start: .globl _start
-        nop  //; bkpt_th  // for debugging
+        nop
+#if DEBUG  //{
+        bkpt_th  // for debugging
+#endif  //}
         push {r0,r1,r2,r3,r4,r5,r6,r7,lr}
 _=9
 o_uinit= 1  // lr
-        adr tmp,here; mov esi,#4*4 + here - _start
+        adr esi,here
+        sub esi,esi,#4*4 + 2*(4+ DEBUG)  // D_INFO
 here:
-        sub esi,tmp,esi
                mov ecx,esi
         ldr eax,[esi,#0*4]; sub ecx,eax; //str ecx,[SP(o_reloc)]
 // reloc DT_INIT  for step 12
         ldr tmp,[esi,#1*4]; add tmp,ecx; str tmp,[SP(o_uinit)]
-        ldr edi,[esi,#3*4]; add edi,ecx  // &p_info; also destination for decompress
+        ldr edi,[esi,#3*4]; add edi,ecx  // &l_info; also destination for decompress
 // reloc &hatch (thumb mode)  for step 10
-        ldr tmp,[esi,#2*4]; add tmp,ecx; add tmp,#1
-        mov esi,#sz_p_info
+        ldr tmp,[esi,#2*4]; add tmp,ecx
+        mov esi,#sz_l_info+sz_p_info
         add esi,edi  // &b_info
 
         push_ tmp
@@ -325,6 +330,13 @@ _=-5+_  // 22
         blx eax  // decompress
         pop_ tmp  // toss arg5
 
+// Place the escape hatch
+        ldr edi,[SP(o_hatch)]
+        ldr tmp,hatch  // the 2 instructions
+        str tmp,[edi]
+        add edi,#1  // thumb mode
+        str edi,[SP(o_hatch)]
+
 //p_unflt  // 21
         pop {arg1,arg2,arg3,arg4, eax, r5}  // r5= w_fragment [discard]
 _=-6+_  // 15
@@ -352,9 +364,10 @@ _=-3+_  // 12
 .endif
         pop {arg1,arg2, pc}  // goto hatch
 _=-3+_  // 9
-//hatch:
-//      swi 0  // 0xdf00; munmap
-//      pop {r0,r1,r2,r3,r4,r5,r6,r7,pc}  // 0xbdff; goto user DT_INIT
+        .balign 4
+hatch:
+        swi 0  // 0xdf00; munmap
+        pop {r0,r1,r2,r3,r4,r5,r6,r7,pc}  // 0xbdff; goto user DT_INIT
 
         .thumb_func
 movsl_subr:
