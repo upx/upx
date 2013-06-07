@@ -102,6 +102,7 @@ _start: .globl _start
         mov r3,#1<<12  // 1-page crumb
   section ELFMAINXu
         stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,crumb,MFLG
+SP_MFLG= 4*4
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
@@ -124,9 +125,9 @@ copy:
         stmia r0!,{r1,r2,r3,r4,r5,r6,r7,r8}; blo copy
 
         sub r4,r0,r9  // relocation amount
-        ldr r1,[sp,#4*4]  // MFLG
+        ldr r1,[sp,#SP_MFLG]
         adr r5,f_decompress
-        str r1,[r0],#4  // MFLG
+        str r1,[r0],#4  // MFLG at -4+ fold_begin
         mov lr,r0  // dst for unfolded code
         add r5,r5,r4  // relocated f_decompress
 

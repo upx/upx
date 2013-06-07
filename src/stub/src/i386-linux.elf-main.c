@@ -321,7 +321,7 @@ ERR_LAB
     }
 }
 
-DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x\\n");
+DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x %%x\\n");
 
 #if defined(__i386__)  /*{*/
 // Create (or find) an escape hatch to use when munmapping ourselves the stub.
@@ -330,7 +330,7 @@ static void *
 make_hatch_x86(Elf32_Phdr const *const phdr, unsigned const reloc)
 {
     unsigned *hatch = 0;
-    DPRINTF((STR_make_hatch(),phdr,reloc));
+    DPRINTF((STR_make_hatch(),phdr,reloc,0));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -369,7 +369,7 @@ make_hatch_arm(
 )
 {
     unsigned *hatch = 0;
-    DPRINTF((STR_make_hatch(),phdr,reloc));
+    DPRINTF((STR_make_hatch(),phdr,reloc,sys_munmap));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // The format of the 'if' is
         //  if ( ( (hatch = loc1), test_loc1 )
@@ -404,7 +404,7 @@ make_hatch_mips(
     unsigned const frag_mask)
 {
     unsigned *hatch = 0;
-    DPRINTF((STR_make_hatch(),phdr,reloc));
+    DPRINTF((STR_make_hatch(),phdr,reloc,frag_mask));
     if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
         // Try page fragmentation just beyond .text .
         if ( ( (hatch = (void *)(phdr->p_memsz + phdr->p_vaddr + reloc)),

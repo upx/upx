@@ -40,6 +40,10 @@ sz_b_info = 12
   sz_cpr= 4
   b_method= 8
 
+#ifndef DEBUG  /*{*/
+#define DEBUG 0
+#endif  /*}*/
+
 @@ control just falls through, after this part and compiled C code
 @@ are uncompressed.
 
@@ -95,10 +99,25 @@ SP_argc= 5*4
         mov lr,r0  @ entry address
         add sp,sp,#(11-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
+
+  @ __clear_cache(hatch, &hatch[2]);
+        ldr r2,[sp,#2*4]  @ 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+        ldr r0,[r2,#4 -2*4]   @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+        add r1,r0,#2*4  @ len= 2 instructions  the "escape hatch"
+        mov r2,#0
+        do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
+
         ldmia sp!,{r0,r1,r2,r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb,MFLG
         add r0,r0,r3  @ ADRU+=crumb
         sub r1,r1,r3  @ LENU-=crumb
 
+#if DEBUG  /*{*/
+        ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+        ldr r4,[r3,#0]  @ 1st instr
+        ldr r5,[r3,#4]  @ 2nd instr
+#define TRACE_REGS r0-r12,r14,r15
+        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
+#endif  /*}*/
         mov r3,#0  @ clear registers: paranoia
         mov r4,#0
         mov r5,#0
@@ -155,6 +174,57 @@ tst_unf:
         bne top_unf
         ret
 
+#if DEBUG  /*{*/
+TRACE_BUFLEN=512
+trace:
+        str lr,[sp,#(-1+ 15)*4]  @ return pc; [remember: sp is not stored]
+        mov r4,sp  @ &saved_r0
+        sub sp,sp,#TRACE_BUFLEN
+        mov r2,sp  @ output string
+
+        mov r1,#'\n'; bl trace_hex  @ In: r0 as label
+        mov r1,#'>';  strb r1,[r2],#1
+
+        mov r5,#3  @ rows to print
+L600:  @ each row
+        sub r0,r4,#TRACE_BUFLEN
+        sub r0,r0,sp
+        mov r0,r0,lsr #2; mov r1,#'\n'; bl trace_hex  @ which block of 8
+
+        mov r6,#8  @ words per row
+L610:  @ each word
+        ldr r0,[r4],#4; mov r1,#' '; bl trace_hex  @ next word
+        subs r6,r6,#1; bgt L610
+
+        subs r5,r5,#1; bgt L600
+
+        mov r0,#'\n'; strb r0,[r2],#1
+        sub r2,r2,sp  @ count
+        mov r1,sp  @ buf
+        mov r0,#2  @ FD_STDERR
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_write
+        swi 0
+#else  /*}{*/
+        swi __NR_write
+#endif  /*}*/
+        add sp,sp,#TRACE_BUFLEN
+        ldmia sp!,{TRACE_REGS}
+
+trace_hex:  // In: r0=val, r1=punctuation before, r2=ptr; Uses: r3, ip
+        strb r1,[r2],#1  @ punctuation
+        mov r3,#4*(8 -1)  @ shift count
+        adr ip,hex
+L620:
+        mov r1,r0,lsr r3
+        and r1,r1,#0xf
+        ldrb r1,[ip, r1]
+        strb r1,[r2],#1
+        subs r3,r3,#4; bge L620
+        ret
+hex:
+        .ascii "0123456789abcdef"
+#endif  /*}*/
         .unreq ptr
         .unreq len
         .unreq cto
@@ -170,6 +240,9 @@ __NR_brk   = 45 + __NR_SYSCALL_BASE
 __NR_mmap2    = 192 + __NR_SYSCALL_BASE
 __NR_mprotect = 125 + __NR_SYSCALL_BASE
 __NR_munmap   =  91 + __NR_SYSCALL_BASE
+
+__ARM_NR_BASE       = 0x0f0000 + __NR_SYSCALL_BASE
+__ARM_NR_cacheflush = 2 + __ARM_NR_BASE
 
         .globl exit
 exit:
@@ -223,10 +296,6 @@ mmap_privanon: .globl mmap_privanon
         orr r3,r3,r12  @ flags |= MAP_{PRIVATE|ANON}  [QNX vs Linux]
         b mmap_do
 
-
-#ifndef DEBUG  /*{*/
-#define DEBUG 0
-#endif  /*}*/
 
 #if DEBUG  /*{*/
 
