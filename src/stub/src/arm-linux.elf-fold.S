@@ -100,12 +100,14 @@ SP_argc= 5*4
         add sp,sp,#(11-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 
+#if 0  //{ make_hatch_arm() does it then
   @ __clear_cache(hatch, &hatch[2]);
         ldr r2,[sp,#2*4]  @ 1+ &Elf32_auxv_t[AT_NULL@.a_type]
         ldr r0,[r2,#4 -2*4]   @ Elf32_auxv_t[AT_NULL@.a_type].a_val
         add r1,r0,#2*4  @ len= 2 instructions  the "escape hatch"
         mov r2,#0
         do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
+#endif  //}
 
         ldmia sp!,{r0,r1,r2,r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb,MFLG
         add r0,r0,r3  @ ADRU+=crumb
@@ -235,7 +237,10 @@ __NR_read  =  3 + __NR_SYSCALL_BASE
 __NR_write =  4 + __NR_SYSCALL_BASE
 __NR_open  =  5 + __NR_SYSCALL_BASE
 __NR_close =  6 + __NR_SYSCALL_BASE
+__NR_unlink= 10 + __NR_SYSCALL_BASE
+__NR_getpid= 20 + __NR_SYSCALL_BASE
 __NR_brk   = 45 + __NR_SYSCALL_BASE
+
 
 __NR_mmap2    = 192 + __NR_SYSCALL_BASE
 __NR_mprotect = 125 + __NR_SYSCALL_BASE
@@ -243,6 +248,11 @@ __NR_munmap   =  91 + __NR_SYSCALL_BASE
 
 __ARM_NR_BASE       = 0x0f0000 + __NR_SYSCALL_BASE
 __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
+
+        .globl my_bkpt
+my_bkpt:
+        bkpt
+        ret
 
         .globl exit
 exit:
@@ -264,6 +274,14 @@ open:
 close:
         do_sys __NR_close; ret
 
+        .globl unlink
+unlink:
+        do_sys __NR_unlink; ret
+
+        .globl getpid
+getpid:
+        do_sys __NR_getpid; ret
+
         .globl brk
 brk:
         do_sys __NR_brk; ret
@@ -276,6 +294,11 @@ munmap:
 mprotect:
         do_sys __NR_mprotect; ret
 
+        .globl __clear_cache
+__clear_cache:
+        mov r2,#0
+        do_sys2 __ARM_NR_cacheflush; ret
+        
         .globl mmap
 mmap:
         str r5,[sp,#-4]!; ldr r5,[sp,#4+4]

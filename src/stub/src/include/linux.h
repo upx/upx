@@ -541,6 +541,7 @@ ssize_t read(int, void *, size_t);
 ssize_t write(int, void const *, size_t);
 
 #endif  /*}*/
+void __clear_cache(void *, void *);
 
 
 /*************************************************************************
@@ -654,6 +655,7 @@ typedef struct
 #define AT_PAGESZ       6
 #define AT_BASE         7
 #define AT_ENTRY        9
+#define AT_RANDOM       25 /* Address of 16 random bytes.  */
 
 #define ET_EXEC         2
 #define ET_DYN          3
