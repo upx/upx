@@ -661,7 +661,7 @@ ERR_LAB
     return ehdr->e_entry + reloc;
 }
 
-#if defined(__arm__)  //{
+#if 0 && defined(__arm__)  //{
 static uint32_t ascii5(char *p, uint32_t v, unsigned n)
 {
     do {
@@ -800,7 +800,7 @@ ERR_LAB
         close(fdi);
         break;
     }
-#if defined(__arm__)  //{ Hack for__clear_cache() not working.
+#if 0 && defined(__arm__)  //{ Hack for__clear_cache() not working.
 #  define SET4(p, c0, c1, c2, c3) \
         (p)[0] = c0, (p)[1] = c1, (p)[2] = c2, (p)[3] = c3
     if (ehdr->e_phnum <= j) { // no PT_INTERP

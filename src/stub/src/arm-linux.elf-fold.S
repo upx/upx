@@ -156,6 +156,17 @@ SP_argc= 4*4
         mov r9,#0
         mov r10,#0
         mov r11,#0
+
+/* Heuristic cache flush: sweep contiguous range to force collisions and evictions. */
+        sub r12,sp,#(1<<19)  @ limit: 1/2 MB more
+sweep:
+        ldr r7,[sp],#-(1<<5)  @ extend stack; read allocate 32 bytes
+        str r7,[sp]  @ make it dirty
+        ldr r7,[sp]  @ read alocate again in case dirtying caused COW split
+        cmp r12,sp; blo sweep
+
+        add sp,sp,#(1<<19)  @ pop stack
+
 #if defined(ARMEL_DARWIN)  /*{*/
         mov r7,#0
         mov r12,#0xff & __NR_munmap
