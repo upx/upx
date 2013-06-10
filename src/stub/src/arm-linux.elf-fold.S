@@ -57,25 +57,52 @@ fold_begin:
     r5= f_decompress
     sp/ ADRU,LENU,sz_unc,crumb,MFLG,argc,argv...
 */
+        ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,crumb,MFLG,argc
+        mov r1,sp  @ old_argv
+        sub sp,sp,#4096  @ buffer for readlink
+        sub sp,sp,#2*4  @ room for added env ptr and text
+        mov r0,sp  @ new_argv
+        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,crumb,argc;  drop MFLG
 SP_sz_unc= 2*4
-SP_MFLG= 4*4
-SP_argc= 5*4
-        ldr r3,[sp,#SP_argc]
-        ldr lr,[sp,#SP_MFLG]
-        add r3,sp,r3,lsl #2  @ skip argv
-        add r3,r3,#SP_argc +4 +4  @ skip ADRU,LENU,sz_unc,crumb,MFLG, argc, env_end
-.Lenv:
-        ldr r0,[r3],#4  @ skip env
-        cmp r0,#0
-        bne .Lenv
-                /* r3= &Elf32_auxv_t */
-        mov r2,r3
-.Laux:
-        ldr r0,[r2],#2*4  @ .a_type
-        cmp r0,#0
-        bne .Laux
-        str r2,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+SP_argc= 4*4
 
+        add r11,r11,#1  @ (1+argc) for end of argv
+.Larg:  @ copy argv
+        ldr r2,[r1],#4; subs r11,r11,#1
+        str r2,[r0],#4; bne .Larg
+
+.Lenv:  @ copy env
+        ldr r2,[r1],#4
+        str r2,[r0],#4
+        cmp r2,#0; bne .Lenv
+
+        sub r4,r0,#4  @ added env ptr goes here
+        str r2,[r0],#4  @ terminator after added ptr
+        mov r3,r0  @ new &Elf32_auxv_t
+ 
+.Laux:  @ copy auxv
+        ldr r2,[r1,#4]  @ .a_val
+        str r2,[r0,#4]
+        ldr r2,[r1],#2*4  @ .a_type
+        str r2,[r0],#2*4
+        cmp r2,#0; bne .Laux
+
+        str r0,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+
+        str r0,[r4]  @ new env ptr
+        ldr r2,space3eq
+        str r2,[r0],#4  @ "   =" of new env var
+
+        mov r2,#4096  @ buffer length
+        mov r1,r0  @ buffer for readlink
+        adr r0,proc_self_exe
+        sub r2,r2,#1  @ room for null terminator
+        bl readlink; cmn r0,#4096; bcs 0f  @ error
+        mov r2,#0
+        strb r2,[r1,r0]  @ null terminate pathname
+0:
+ 
+/* Construct arglist for upx_main */
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
         mov r4,r9  @ total size of compressed data
         ldr r9,[r10,#sz_cpr]  @ xi.size  of ELF headers
@@ -93,11 +120,11 @@ SP_argc= 5*4
 #else  /*}{*/
         mov r12,#0
 #endif  /*}*/
-        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+        stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
         bl upx_main
         mov lr,r0  @ entry address
-        add sp,sp,#(11-4)*4
+        add sp,sp,#(10-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 
 #if 0  //{ make_hatch_arm() does it then
@@ -109,7 +136,7 @@ SP_argc= 5*4
         do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
 #endif  //}
 
-        ldmia sp!,{r0,r1,r2,r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb,MFLG
+        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb
         add r0,r0,r3  @ ADRU+=crumb
         sub r1,r1,r3  @ LENU-=crumb
 
@@ -140,6 +167,12 @@ SP_argc= 5*4
         mov r12,#0
 #endif  /*}*/
         ldr pc,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
+
+space3eq:
+        .ascii "   ="
+proc_self_exe:
+        .asciz "/proc/self/exe"
+        .balign 4
 
 f_unfilter:  @ (char *ptr, uint len, uint cto, uint fid)
         ptr  .req r0
@@ -240,6 +273,7 @@ __NR_close =  6 + __NR_SYSCALL_BASE
 __NR_unlink= 10 + __NR_SYSCALL_BASE
 __NR_getpid= 20 + __NR_SYSCALL_BASE
 __NR_brk   = 45 + __NR_SYSCALL_BASE
+__NR_readlink=85+ __NR_SYSCALL_BASE
 
 
 __NR_mmap2    = 192 + __NR_SYSCALL_BASE
@@ -285,6 +319,10 @@ getpid:
         .globl brk
 brk:
         do_sys __NR_brk; ret
+
+        .globl readlink
+readlink:
+        do_sys __NR_readlink; ret
 
         .globl munmap
 munmap:
