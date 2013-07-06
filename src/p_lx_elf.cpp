@@ -85,6 +85,15 @@ fpad4(OutputFile *fo)
     return d + len;
 }
 
+static unsigned
+funpad4(InputFile *fi)
+{
+    unsigned d = 3u & (0 - fi->tell());
+    if (d)
+        fi->seek(d, SEEK_CUR);
+    return d;
+}
+
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -184,7 +193,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), file_image(NULL), dynstr(NULL),
-    sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0), sz_pack2b(0),
+    sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
     lg2_page(12), page_size(1u<<lg2_page), xct_off(0), xct_va(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
@@ -198,7 +207,6 @@ PackLinuxElf::~PackLinuxElf()
 
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
 {
-    sz_pack2b = fpad4(fo);  // after headers, all PT_LOAD, gaps
     unsigned disp;
     unsigned const zero = 0;
     unsigned len = sz_pack2a;  // after headers and all PT_LOAD
@@ -230,10 +238,10 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     sz_pack2 = len;  // 0 mod 8
 
     super::pack3(fo, ft);  // append the decompressor
-    set_te16(&linfo.l_lsize, up4(
+    set_te16(&linfo.l_lsize, up4(  // MATCH03: up4
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
 
-    len = fpad4(fo);
+    len = fpad4(fo);  // MATCH03
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
@@ -2378,7 +2386,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
         hdr_u_len = 0;
         ++nx;
     }
-    sz_pack2a = fpad4(fo);
+    sz_pack2a = fpad4(fo);  // MATCH01
 
     // Accounting only; ::pack3 will do the compression and output
     for (k = 0; k < e_phnum; ++k) {
@@ -2487,7 +2495,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
         hdr_u_len = 0;
         ++nx;
     }
-    sz_pack2a = fpad4(fo);
+    sz_pack2a = fpad4(fo);  // MATCH01
 
     // Accounting only; ::pack3 will do the compression and output
     for (k = 0; k < e_phnum; ++k) { //
@@ -2968,11 +2976,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             }
         }
     }
-    if (( (unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
-            ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
+    bool const is_shlib = 0;  // XXX ??
+    if (is_shlib
+    ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
+                ph.getPackHeaderSize() + sizeof(overlay_offset))
+            < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
-        // total_in does not include n*szb_info, so we use SEEK_CUR.
-        fi->seek(up4(total_in) - total_in + lsize, SEEK_CUR);
+        funpad4(fi);  // MATCH01
+        fi->seek(lsize, SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
@@ -3474,11 +3485,13 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             }
         }
     }
-    if (( (unsigned)(get_te32(&ehdri.e_entry) - load_va) + up4(lsize) +
-            ph.getPackHeaderSize() + sizeof(overlay_offset)) < up4(fi->st_size())) {
+    if (is_shlib
+    ||  ((unsigned)(get_te32(&ehdri.e_entry) - load_va) + up4(lsize) +
+                ph.getPackHeaderSize() + sizeof(overlay_offset))
+            < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
-        // total_in does not include n*szb_info, so we use SEEK_CUR.
-        fi->seek(up4(total_in) - total_in + lsize, SEEK_CUR);
+        funpad4(fi);  // MATCH01
+        fi->seek(lsize, SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD

@@ -75,7 +75,6 @@ protected:
     unsigned sz_elf_hdrs;  // all Elf headers
     unsigned sz_pack2;  // after pack2(), before loader
     unsigned sz_pack2a;  // after pack2() of all PT_LOAD
-    unsigned sz_pack2b;  // after pack2() of all PT_LOAD and gaps
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
