@@ -646,7 +646,7 @@ void PackWcle::decodeFixups()
         // 32 bit offset fixups
         while (get_le32(wrkmem+4*jc) < ic*mps)
         {
-            if (ic > 1 && ((get_le32(wrkmem+4*(jc-2))+3) & (mps-1)) < 3) // cross page fixup?
+            if (jc > 1 && ((get_le32(wrkmem+4*(jc-2))+3) & (mps-1)) < 3) // cross page fixup?
             {
                 r = get_le32(oimage+get_le32(wrkmem+4*(jc-2)));
                 fp[0] = 7;
