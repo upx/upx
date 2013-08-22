@@ -487,6 +487,8 @@ private:
 #define UPX_F_MACH_AMD64        34
 #define UPX_F_DYLIB_AMD64       35
 
+#define UPX_F_WIN64_PEP         36
+
 #define UPX_F_PLAIN_TEXT        127
 
 #define UPX_F_ATARI_TOS         129

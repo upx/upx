@@ -32,6 +32,7 @@
 #include "packer.h"
 #include "lefile.h"
 #include "pefile.h"
+#include "pepfile.h"
 #include "p_elf.h"
 
 #include "p_com.h"
@@ -50,6 +51,7 @@
 #include "p_vxd.h"
 #include "p_w16ne.h"
 #include "p_w32pe.h"
+#include "p_w64pep.h"
 #include "p_vmlinz.h"
 #include "p_vmlinx.h"
 #include "p_ps1.h"
@@ -179,6 +181,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
             return p;
         delete p; p = NULL;
 #endif
+        if ((p = func(new PackW64Pep(f), user)) != NULL)
+            return p;
+        delete p; p = NULL;
         if ((p = func(new PackW32Pe(f), user)) != NULL)
             return p;
         delete p; p = NULL;

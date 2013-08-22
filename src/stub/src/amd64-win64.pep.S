@@ -1,0 +1,431 @@
+/*
+;  AMD64-win64.pep.S -- loader & decompressor for the w64/pe32+ format
+;
+;  This file is part of the UPX executable compressor.
+;
+;  Copyright (C) 1996-2009 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2009 Laszlo Molnar
+;  All Rights Reserved.
+;
+;  UPX and the UCL library are free software; you can redistribute them
+;  and/or modify them under the terms of the GNU General Public License as
+;  published by the Free Software Foundation; either version 2 of
+;  the License, or (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; see the file COPYING.
+;  If not, write to the Free Software Foundation, Inc.,
+;  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+;
+;  Markus F.X.J. Oberhumer              Laszlo Molnar
+;  <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+;
+;---------------------------------------------------------------------
+;
+; 64 bit modifications (C) 2010 Stefan Widmann
+;
+; Major changes when porting 32 bit code to 64 bit:
+;  - there are no pusha/popa instructions
+;  - since we cannot use pusha/popa, we save rbx, rsi, rdi and rbp instead
+;  - inc <reg> are now being encoded in 2 byte instructions
+;  - functions use fast call calling convention (parameters are passed in registers)
+;    rcx, rdx,  r8, r9
+;  - caller is responsible for stack allocation for callee
+;  - caller cleans up stack
+;  - caller must keep the stack 16 byte aligned, 32 bytes shadow space on stack
+; For more information about the 64 bit calling convention see http://blogs.msdn.com/oldnewthing/archive/2004/01/14/58579.aspx
+*/
+
+#include "arch/amd64/macros.S"
+
+#define         IMM8(value) byte ptr 0; \
+                .reloc $ - 1, R_X86_64_8, value
+
+#define         IMM16(value) word ptr (1<<15); \
+                .reloc $ - 2, R_X86_64_16, (1<<15) + value
+
+#define         IMM32(value) dword ptr (1<<31); \
+                .reloc $ - 4, R_X86_64_32, (1<<31) + value
+
+#define         IMM64(value) qword ptr (1<<63); \
+                .reloc $ - 8, R_X86_64_64, (1<<63) + value
+
+#define         SHORT(label) $ + 1; .reloc $ - 1, R_X86_64_PC8, label
+
+.intel_syntax noprefix
+
+// =============
+// ============= ENTRY POINT
+// =============
+
+section         PEISDLL1
+                cmp     dl, 1
+                jnz     reloc_end_jmp
+section         PEMAIN01
+                //; remember to keep stack aligned!
+                push    rbx
+                push    rsi
+                push    rdi
+                push    rbp
+                movabs  rsi, IMM64(start_of_compressed)         //; relocated
+                lea     rdi, [rsi + start_of_uncompressed]
+
+section         PEICONS1
+                incw    [rdi + icon_offset]
+section         PEICONS2
+                add     [rdi + icon_offset], IMM16(icon_delta)
+section         PETLSHAK
+                mov     [rdi + tls_address], IMM32(tls_value)
+
+section         PEMAIN02
+                push    rdi
+section         PEMAIN03
+
+// =============
+// ============= DECOMPRESSION
+// =============
+
+.att_syntax
+section         NRV_HEAD
+/* Working registers */
+#define off  %eax  /* XXX: 2GB */
+#define len  %ecx  /* XXX: 2GB */
+#define lenq %rcx
+#define bits %ebx
+#define disp %rbp
+
+        xor bits,bits  // empty; force refill
+        xor len,len  // create loop invariant
+        orq $(~0),disp  // -1: initial displacement
+        call setup  // push &getbit [TUNED]
+ra_setup:
+
+#define jnextb0np jnextb0yp
+#define jnextb0yp GETBITp; jnc
+#define jnextb1np jnextb1yp
+#define jnextb1yp GETBITp; jc
+#define GETBITp \
+        addl bits,bits; jnz 0f; \
+        movl (%rsi),bits; subq $-4,%rsi; \
+        adcl bits,bits; movb (%rsi),%dl; \
+0:
+/* Same, but without prefetch (not useful for length of match.) */
+#define jnextb0n jnextb0y
+#define jnextb0y GETBIT; jnc
+#define jnextb1n jnextb1y
+#define jnextb1y GETBIT; jc
+#define GETBIT \
+        addl bits,bits; jnz 0f; \
+        movl (%rsi),bits; subq $-4,%rsi; \
+        adcl bits,bits; \
+0:
+
+/* rotate next bit into bottom bit of reg */
+#define getnextbp(reg) call *%r11; adcl reg,reg
+#define getnextb(reg)  getnextbp(reg)
+
+
+getbit:
+        addl bits,bits; jz refill  // Carry= next bit
+        rep; ret
+refill:
+        movl (%rsi),bits; subq $-4,%rsi  // next 32 bits; set Carry
+        adcl bits,bits  // LSB= 1 (CarryIn); CarryOut= next bit
+        movb (%rsi),%dl  // speculate: literal, or bottom 8 bits of offset
+        rep; ret
+
+copy:  // In: len, %rdi, disp;  Out: 0==len, %rdi, disp;  trashes %rax, %rdx
+        leaq (%rdi,disp),%rax; cmpl $5,len  // <=3 is forced
+        movb (%rax),%dl; jbe copy1  // <=5 for better branch predict
+        cmpq $-4,disp;   ja  copy1  // 4-byte chunks would overlap
+        subl $4,len  // adjust for termination cases
+copy4:
+        movl (%rax),%edx; addq $4,      %rax; subl $4,len
+        movl %edx,(%rdi); leaq  4(%rdi),%rdi; jnc copy4
+        addl $4,len; movb (%rax),%dl; jz copy0
+copy1:
+        incq %rax; movb %dl,(%rdi); subl $1,len
+                   movb (%rax),%dl
+        leaq 1(%rdi),%rdi;          jnz copy1
+copy0:
+        rep; ret
+
+setup:
+        cld
+        pop %r11  // addq $ getbit - ra_setup,%r11  # &getbit
+
+#define NO_METHOD_CHECK
+
+section         NRV2E
+#include "arch/amd64/nrv2e_d.S"
+
+
+#if 0  //; FIXME
+#include "arch/amd64/nrv2b_d.S"
+#include "arch/amd64/nrv2d_d.S"
+#include "arch/amd64/nrv2e_d.S"
+#include "arch/amd64/lzma_d.S"
+#endif
+
+.intel_syntax noprefix
+// =============
+section         PEMAIN10
+eof:
+                pop     rsi             // load vaddr
+
+// =============
+// ============= CALLTRICK
+// =============
+
+section         PECTTPOS
+                lea     rdi, [rsi + filter_buffer_start]
+section         PECTTNUL
+                mov     rdi, rsi
+
+#if 0 //; FIXME use amd_bxx.S
+                cjt32   esi
+#endif
+
+section         ctok32.00
+                mov     ecx, offset filter_length
+#if 0  //; FIXME
+                ctok32  esi, (offset filter_cto)
+#endif
+
+// =============
+// ============= IMPORTS
+// =============
+
+section PEIMPORT
+                lea     rdi, [rsi + compressed_imports]
+next_dll:
+                mov     eax, [rdi]
+                or      eax, eax
+                jz      SHORT(imports_done)
+                mov     ebx, [rdi + 4]    // iat
+                lea     rcx, [rax + rsi + start_of_imports]
+                add     rbx, rsi
+                add     rdi, 8
+
+                sub     rsp, 0x28
+                call    [rsi + LoadLibraryA]
+                add     rsp, 0x28
+
+                xchg    rax, rbp
+next_func:
+                mov     al, [rdi]
+                inc     rdi
+                or      al, al
+                jz      next_dll
+section         PEIBYORD
+                jns     SHORT(byname)
+section         PEK32ORD
+                jpe     not_kernel32
+                mov     eax, [rdi]
+                add     rdi, 4
+                mov     rax, [rax + rsi + kernel32_ordinals]
+                jmp     SHORT(next_imp)
+not_kernel32:
+section         PEIMORD1
+                movzxw  rdx, word ptr [rdi]
+                add     rdi, 2
+                jmp     SHORT(first_imp)
+
+byname:
+section         PEIMPOR2
+                mov     rcx, rdi        // something > 0
+                mov     rdx, rdi
+                dec     eax
+                repne
+                scasb
+first_imp:
+                mov     rcx, rbp
+
+                sub     rsp, 0x28
+                call    [rsi + GetProcAddress]
+                add     rsp, 0x28
+
+                or      rax, rax
+                jz      imp_failed
+next_imp:
+                mov     [rbx], rax
+                add     rbx, 8
+                jmp     SHORT(next_func)
+imp_failed:
+section         PEIERDLL
+                pop     rbp
+                pop     rdi
+                pop     rsi
+                pop     rbx
+                xor     eax, eax
+                ret
+
+section         PEIEREXE
+                //      rcx contains garbage -> garbage return code
+                sub     rsp, 0x28
+                call    [rsi + ExitProcess]
+section         PEIMDONE
+imports_done:
+
+// =============
+// ============= RELOCATION
+// =============
+
+section         PERELOC1
+               lea     rdi, [rsi + start_of_relocs]
+section         PERELOC2
+               add     rdi, 4
+section         PERELOC3
+               lea     rbx, [rsi - 4]
+
+#if 0  //; FIXME
+               reloc64 rdi, rbx, rsi
+#endif
+
+
+// =============
+
+// FIXME: depends on that in PERELOC1 edi is set!!
+section         PERLOHI0
+#if 0
+               xchg    edi, esi
+               lea     ecx, [rdi + reloc_delt]
+#endif
+
+section         PERELLO0
+#if 0
+               .byte   0xA9 //test eax, XXXXXXXX
+rello0:
+               add     [rdi + rax], cx //why do we just use cx instead of ecx?
+               lodsd
+               or      eax, eax
+               jnz     rello0
+#endif
+// =============
+
+section         PERELHI0
+#if 0
+               shr     ecx, 16
+               .byte   0xA9 //test eax, XXXXXXXX
+relhi0:
+               add     [rdi + rax], cx //why do we just use cx instead of ecx?
+               lodsd
+               or      eax, eax
+               jnz     relhi0
+#endif
+
+// =============
+section         PEDEPHAK
+                mov     rbp, [rsi + VirtualProtect]
+                lea     rdi, [rsi + vp_base]
+                mov     ebx, IMM32(vp_size)     // 0x1000 or 0x2000
+
+                push    rax                     // provide 8 bytes stack
+                mov     r9, rsp
+                mov     r8d, 4                  // PAGE_READWRITE
+                mov     rdx, rbx                // size
+                mov     rcx, rdi                // address
+
+                sub     rsp, 0x20
+                call    rbp                     // VirtualProtect
+
+                lea     rax, [rdi + swri]
+                andb    [rax], 0x7f             // marks UPX0 non writeable
+                andb    [rax + 0x28], 0x7f      // marks UPX1 non writeable
+
+                lea     r9, [rsp + 0x20]
+                movq    r8, [r9]                // original protection
+                mov     rdx, rbx
+                mov     rcx, rdi
+
+                call    rbp
+                add     rsp, 0x28
+
+// =============
+section         PETLSC
+                lea     rcx, [rsi + tls_module_base] //;load module base to rcx
+                lea     rdi, [rcx + tls_handler_start + 1] //;load offset of handler
+                //;remove jump from TLS handler entry (overwrite displacement)
+                xor     eax, eax
+                stosb
+                //;emulate callbacks like PE loader would have done
+                mov     r8, rax                 //;0 - reserved
+                mov     edx, 1                  //;DLL_PROCESS_ATTACH
+
+                push    rax                     //;align stack
+                call    rdi                     //;contains ptr to callback handler
+                pop     rax
+
+// =============
+section         PEMAIN20
+                pop     rbp
+                pop     rdi
+                pop     rsi
+                pop     rbx
+
+// clear the dirty stack
+.macro          clearstack128  tmp_reg
+                .local   loop
+                lea     \tmp_reg, [rsp - 128]
+loop:
+                push    0
+                cmp     rsp, \tmp_reg
+                jnz     loop
+                sub     rsp, -128
+.endm
+
+section         CLEARSTACK
+                clearstack128 rax
+
+section         PEMAIN21
+reloc_end_jmp:
+
+section         PERETURN
+                mov     eax, 1
+                ret
+section         PEDOJUMP
+                jmp     original_entry
+
+// =============
+section         PETLSC2
+                //;TLS_CALLBACK(hModule, reason, reserved)
+tls_handler_start:
+                jmp     end_of_tls_handler      //;this jump is patched to EB 00 (jmp $+2) by stub
+                push    rsi
+                movabs  rsi, IMM64(tls_callbacks_ptr)  //;must be relocated
+                cld                             //;you never know, this code gets called by the PE loader
+walk_tlsc_chain2:
+                lodsq
+                test    rax, rax
+                jz      done_callbacks
+
+                push    rcx
+                push    rdx
+                push    r8
+
+                sub     rsp, 0x28
+                call    rax
+                add     rsp, 0x28
+
+                pop     r8
+                pop     rdx
+                pop     rcx
+
+                jmp     walk_tlsc_chain2
+done_callbacks:
+                pop     rsi
+end_of_tls_handler:
+                ret
+
+// =============
+// ============= CUT HERE
+// =============
+
+#include        "include/header.S"
+
+// vi:ts=8:et:nowrap

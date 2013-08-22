@@ -56,6 +56,7 @@ STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
+STUBS += amd64-win64.pep.h
 STUBS += arm-darwin.macho-entry.h
 STUBS += arm-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
@@ -365,6 +366,20 @@ amd64-linux.shlib%.h : tc_bfdname = elf64-x86-64
 
 amd64-linux.shlib-init.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // amd64-win64.pep
+# ************************************************************************/
+
+amd64-win64.pep.h : tc_list = amd64-linux.elf default
+amd64-win64.pep.h : tc_bfdname = elf64-x86-64
+
+amd64-win64.pep.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+#	$(call tc,objdump) -Dr -M intel-mnemonic tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasmi
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 

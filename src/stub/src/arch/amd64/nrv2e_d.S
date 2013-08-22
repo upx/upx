@@ -29,7 +29,11 @@
    <jreiser@users.sourceforge.net>
 */
 
+#ifndef NO_METHOD_CHECK
         cmpb $ M_NRV2E_LE32,methb; je top_n2e; jmp not_n2e
+#else
+        jmp top_n2e
+#endif
 
 lit_n2e:
         incq %rsi; movb %dl,(%rdi)
