@@ -57,11 +57,23 @@
 
 #define         SHORT(label) $ + 1; .reloc $ - 1, R_X86_64_PC8, label
 
+//; debugging is not too user friendly under wine:
+//; by adding the "DEBUG" macro into the code
+//; an exception will be raised, and a register dump is printed
+//; WINEDEBUG=trace+seh wine x.exe &> x.debug
+#define         DEBUG           movb [0], 0
+
 .intel_syntax noprefix
 
 // =============
 // ============= ENTRY POINT
 // =============
+
+section         START
+section         PEISDLL0
+                mov     [rsp + 8], rcx
+                mov     [rsp + 0x10], rdx
+                mov     [rsp + 0x18], r8
 
 section         PEISDLL1
                 cmp     dl, 1
@@ -72,7 +84,7 @@ section         PEMAIN01
                 push    rsi
                 push    rdi
                 push    rbp
-                movabs  rsi, IMM64(start_of_compressed)         //; relocated
+                lea     rsi, [rip + start_of_compressed]
                 lea     rdi, [rsi + start_of_uncompressed]
 
 section         PEICONS1
@@ -80,6 +92,9 @@ section         PEICONS1
 section         PEICONS2
                 add     [rdi + icon_offset], IMM16(icon_delta)
 section         PETLSHAK
+//;                mov     r14, [rdi + tls_address]
+//; FIXME the overwritten data should be saved, and restored
+//; after decompression
                 mov     [rdi + tls_address], IMM32(tls_value)
 
 section         PEMAIN02
@@ -179,7 +194,7 @@ eof:
                 pop     rsi             // load vaddr
 
 // =============
-// ============= CALLTRICK
+// ============= FILTERS
 // =============
 
 section         PECTTPOS
@@ -202,6 +217,7 @@ section         ctok32.00
 // =============
 
 section PEIMPORT
+                sub     rsp, 0x28
                 lea     rdi, [rsi + compressed_imports]
 next_dll:
                 mov     eax, [rdi]
@@ -212,9 +228,7 @@ next_dll:
                 add     rbx, rsi
                 add     rdi, 8
 
-                sub     rsp, 0x28
                 call    [rsi + LoadLibraryA]
-                add     rsp, 0x28
 
                 xchg    rax, rbp
 next_func:
@@ -246,18 +260,20 @@ section         PEIMPOR2
 first_imp:
                 mov     rcx, rbp
 
-                sub     rsp, 0x28
                 call    [rsi + GetProcAddress]
-                add     rsp, 0x28
 
+#if 1
+;// FIXME: is this error handling really needed?
                 or      rax, rax
                 jz      imp_failed
+#endif
 next_imp:
                 mov     [rbx], rax
                 add     rbx, 8
                 jmp     SHORT(next_func)
 imp_failed:
 section         PEIERDLL
+                add     rsp, 0x28
                 pop     rbp
                 pop     rdi
                 pop     rsi
@@ -267,57 +283,78 @@ section         PEIERDLL
 
 section         PEIEREXE
                 //      rcx contains garbage -> garbage return code
-                sub     rsp, 0x28
                 call    [rsi + ExitProcess]
 section         PEIMDONE
 imports_done:
+                add     rsp, 0x28
 
 // =============
 // ============= RELOCATION
 // =============
 
 section         PERELOC1
-               lea     rdi, [rsi + start_of_relocs]
+                lea     rdi, [rsi + start_of_relocs]
 section         PERELOC2
-               add     rdi, 4
+                add     rdi, 4
 section         PERELOC3
-               lea     rbx, [rsi - 4]
-
-#if 0  //; FIXME
-               reloc64 rdi, rbx, rsi
-#endif
+                lea     rbx, [rsi - 4]
+reloc_main:
+                xor     eax, eax
+                mov     al, [rdi]
+                inc     rdi
+                or      eax, eax
+                jz      SHORT(reloc_endx)
+                cmp     al, 0xEF
+                ja      reloc_fx
+reloc_add:
+                add     rbx, rax
+                mov     rax, [rbx]
+                bswap   rax
+                add     rax, rsi
+                mov     [rbx], rax
+                jmp     reloc_main
+reloc_fx:
+                and     al, 0x0F
+                shl     eax, 16
+                mov     ax, [rdi]
+                add     rdi, 2
+section         REL64BIG
+                or      eax, eax
+                jnz     SHORT(reloc_add)
+                mov     eax, [rdi]
+                add     rdi, 4
+section         RELOC64J
+                jmp     SHORT(reloc_add)
+reloc_endx:
 
 
 // =============
 
-// FIXME: depends on that in PERELOC1 edi is set!!
+// FIXME: depends on that in PERELOC1 rdi is set!!
 section         PERLOHI0
-#if 0
-               xchg    edi, esi
-               lea     ecx, [rdi + reloc_delt]
-#endif
+                xchg    rdi, rsi
+                lea     rcx, [rdi + reloc_delt]
 
 section         PERELLO0
-#if 0
-               .byte   0xA9 //test eax, XXXXXXXX
+                jmp     1f
 rello0:
-               add     [rdi + rax], cx //why do we just use cx instead of ecx?
-               lodsd
-               or      eax, eax
-               jnz     rello0
-#endif
+                add     [rdi + rax], cx
+1:
+                lodsd
+                or      eax, eax
+                jnz     rello0
+
 // =============
 
 section         PERELHI0
-#if 0
-               shr     ecx, 16
-               .byte   0xA9 //test eax, XXXXXXXX
+                shr     ecx, 16
+                jmp     1f
 relhi0:
-               add     [rdi + rax], cx //why do we just use cx instead of ecx?
-               lodsd
-               or      eax, eax
-               jnz     relhi0
-#endif
+                add     [rdi + rax], cx
+1:
+                lodsd
+                or      eax, eax
+                jnz     relhi0
 
 // =============
 section         PEDEPHAK
@@ -347,6 +384,9 @@ section         PEDEPHAK
                 add     rsp, 0x28
 
 // =============
+// ============= TLS callback support part 1
+// =============
+
 section         PETLSC
                 lea     rcx, [rsi + tls_module_base] //;load module base to rcx
                 lea     rdi, [rcx + tls_handler_start + 1] //;load offset of handler
@@ -355,13 +395,15 @@ section         PETLSC
                 stosb
                 //;emulate callbacks like PE loader would have done
                 mov     r8, rax                 //;0 - reserved
-                mov     edx, 1                  //;DLL_PROCESS_ATTACH
+                push    1                       //;DLL_PROCESS_ATTACH
+                pop     rdx
 
                 push    rax                     //;align stack
                 call    rdi                     //;contains ptr to callback handler
                 pop     rax
 
-// =============
+// ============= Cleanup
+
 section         PEMAIN20
                 pop     rbp
                 pop     rdi
@@ -385,19 +427,28 @@ section         CLEARSTACK
 section         PEMAIN21
 reloc_end_jmp:
 
+section         PEISDLL9
+                mov     r8, [rsp + 0x18]
+                mov     rdx, [rsp + 0x10]
+                mov     rcx, [rsp + 8]
+
 section         PERETURN
-                mov     eax, 1
+                push    1
+                pop     rax
                 ret
 section         PEDOJUMP
                 jmp     original_entry
 
 // =============
+// ============= TLS callback support part 2
+// =============
+
 section         PETLSC2
                 //;TLS_CALLBACK(hModule, reason, reserved)
 tls_handler_start:
                 jmp     end_of_tls_handler      //;this jump is patched to EB 00 (jmp $+2) by stub
                 push    rsi
-                movabs  rsi, IMM64(tls_callbacks_ptr)  //;must be relocated
+                lea     rsi, [rip + tls_callbacks_ptr]
                 cld                             //;you never know, this code gets called by the PE loader
 walk_tlsc_chain2:
                 lodsq

@@ -284,8 +284,12 @@ protected:
     void checkPatch(void *b, int blen, int boff, int size);
 
     // relocation util
+    static upx_byte *optimizeReloc(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big, int bits);
+    static unsigned unoptimizeReloc(upx_byte **in,upx_byte *image,MemBuffer *out,int bs, int bits);
     static upx_byte *optimizeReloc32(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
     static unsigned unoptimizeReloc32(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
+    static upx_byte *optimizeReloc64(upx_byte *in,unsigned relocnum,upx_byte *out,upx_byte *image,int bs,int *big);
+    static unsigned unoptimizeReloc64(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
     // target endianness abstraction
     unsigned get_te16(const void *p)        const { return bele->get16(p); }

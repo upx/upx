@@ -389,7 +389,11 @@ void PepFile::processRelocs() // pass1
 
     Reloc rel(ibuf + IDADDR(PEDIR_RELOC),IDSIZE(PEDIR_RELOC));
     const unsigned *counts = rel.getcounts();
-    const unsigned rnum = counts[1] + counts[2] + counts[3];
+    unsigned rnum = 0;
+
+    unsigned ic;
+    for (ic = 1; ic < 16; ic++)
+        rnum += counts[ic];
 
     if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
     {
@@ -400,30 +404,32 @@ void PepFile::processRelocs() // pass1
         return;
     }
 
-    unsigned ic;
-    for (ic = 15; ic > 3; ic--)
-        if (counts[ic])
+    for (ic = 15; ic; ic--)
+        if (counts[ic] != 10)
             infoWarning("skipping unsupported relocation type %d (%d)",ic,counts[ic]);
 
-    LE32 *fix[4];
-    for (; ic; ic--)
+    LE32 *fix[16];
+    for (ic = 15; ic; ic--)
         fix[ic] = new LE32 [counts[ic]];
 
-    unsigned xcounts[4];
+    unsigned xcounts[16];
     memset(xcounts, 0, sizeof(xcounts));
 
     // prepare sorting
     unsigned pos,type;
     while (rel.next(pos,type))
     {
+        // FIXME add check for relocations which try to modify the
+        // PE header or other relocation records
+
         if (pos >= ih.imagesize)
             continue;           // skip out-of-bounds record
-        if (type < 4)
+        if (type < 16)
             fix[type][xcounts[type]++] = pos - rvamin;
     }
 
     // remove duplicated records
-    for (ic = 1; ic <= 3; ic++)
+    for (ic = 1; ic <= 15; ic++)
     {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
         unsigned prev = ~0;
@@ -436,20 +442,23 @@ void PepFile::processRelocs() // pass1
         xcounts[ic] = jc;
     }
 
-    // preprocess "type 3" relocation records
-    for (ic = 0; ic < xcounts[3]; ic++)
+    // preprocess "type 10" relocation records
+    for (ic = 0; ic < xcounts[10]; ic++)
     {
-        pos = fix[3][ic] + rvamin;
-        set_le32(ibuf + pos, get_le32(ibuf + pos) - ih.imagebase - rvamin);
+        pos = fix[10][ic] + rvamin;
+        set_le64(ibuf + pos, get_le64(ibuf + pos) - ih.imagebase - rvamin);
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
     orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
-    sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
+    sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
                                         orelocs, ibuf + rvamin,1, &big_relocs),
                         orelocs);
-    delete [] fix[3];
 
+    for (ic = 15; ic; ic--)
+        delete [] fix[ic];
+
+#if 0
     // Malware that hides behind UPX often has PE header info that is
     // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
     // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
@@ -471,6 +480,7 @@ void PepFile::processRelocs() // pass1
             big_relocs |= 2 * ic;
         }
     }
+#endif
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 

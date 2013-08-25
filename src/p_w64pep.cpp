@@ -562,7 +562,7 @@ void PackW64Pep::processTls(Interval *iv) // pass 1
 
     // makes sure tls index is zero after decompression
     if (tlsindex && tlsindex < ih.imagesize)
-        set_le64(ibuf + tlsindex, 0); //changed to LE64 - Stefan Widmann
+        set_le32(ibuf + tlsindex, 0);
 }
 
 void PackW64Pep::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 2
@@ -602,7 +602,7 @@ void PackW64Pep::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // p
     if (use_tls_callbacks)
     {
         //set handler offset
-        set_le32(otls + sotls - 16, tls_handler_offset + ih.imagebase);
+        set_le64(otls + sotls - 16, tls_handler_offset + ih.imagebase);
         //add relocation for TLS handler offset
         rel->add(newaddr + sotls - 16, 10);
     }
@@ -662,7 +662,7 @@ void PackW64Pep::processLoadConf(Reloc *rel, const Interval *iv,
 bool PackW64Pep::canPack()
 {
     //just check if machine type is 0x8664
-	if (!readFileHeader() || ih.cpu != 0x8664)   // CPU magic of AMD64 is 0x8664
+    if (!readFileHeader() || ih.cpu != 0x8664)   // CPU magic of AMD64 is 0x8664
         return false;
     return true;
 }
@@ -679,6 +679,9 @@ void PackW64Pep::buildLoader(const Filter *ft)
 
     // prepare loader
     initLoader(stub_amd64_win64_pep, sizeof(stub_amd64_win64_pep), 2);
+    addLoader("START");
+    if (ih.entry && isdll)
+        addLoader("PEISDLL0");
     addLoader(isdll ? "PEISDLL1" : "",
               "PEMAIN01",
               icondir_count > 1 ? (icondir_count == 2 ? "PEICONS1" : "PEICONS2") : "",
@@ -712,17 +715,19 @@ void PackW64Pep::buildLoader(const Filter *ft)
     if (sorelocs)
     {
         addLoader(soimport == 0 || soimport + cimports != crelocs ? "PERELOC1" : "PERELOC2",
-                  "PERELOC3,RELOC320",
-                  big_relocs ? "REL32BIG" : "",
-                  "RELOC32J",
+                  "PERELOC3",
+                  big_relocs ? "REL64BIG" : "",
+                  "RELOC64J",
                   NULL
                  );
-        //FIXME: the following should be moved out of the above if
-        addLoader(big_relocs&6 ? "PERLOHI0" : "",
-                  big_relocs&4 ? "PERELLO0" : "",
-                  big_relocs&2 ? "PERELHI0" : "",
-                  NULL
-                 );
+        if (0)
+        {
+            addLoader(big_relocs&6 ? "PERLOHI0" : "",
+                      big_relocs&4 ? "PERELLO0" : "",
+                      big_relocs&2 ? "PERELHI0" : "",
+                      NULL
+                     );
+        }
     }
     if (use_dep_hack)
         addLoader("PEDEPHAK", NULL);
@@ -736,7 +741,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
         addLoader("CLEARSTACK", NULL);
     addLoader("PEMAIN21", NULL);
 
-    //NEW: last loader sections split up to insert TLS callback handler - Stefan Widmann
+    if (ih.entry && isdll)
+        addLoader("PEISDLL9");
     addLoader(ih.entry ? "PEDOJUMP" : "PERETURN", NULL);
 
     //NEW: TLS callback support PART 2, the callback handler - Stefan Widmann
@@ -744,7 +750,6 @@ void PackW64Pep::buildLoader(const Filter *ft)
         addLoader("PETLSC2", NULL);
 
     addLoader("IDENTSTR,UPX1HEAD", NULL);
-
 }
 
 
@@ -855,7 +860,7 @@ void PackW64Pep::pack(OutputFile *fo)
         throwCantPack(".NET files (win64/.net) are not yet supported");
 
     //FIXME: Relocation stripping disabled yet - Stefan Widmann
-    opt->win32_pe.strip_relocs = true;//false;
+    opt->win32_pe.strip_relocs = false;
 #if 0 //removed - Stefan Widmann
     if (isdll)
         opt->win32_pe.strip_relocs = false;
@@ -1073,7 +1078,7 @@ void PackW64Pep::pack(OutputFile *fo)
     const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
     obuf.clear(ph.c_len, c_len - ph.c_len);
 
-    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,4u) + sotls + soloadconf;
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize,8u) + sotls + soloadconf;
     const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
 
     const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
@@ -1110,7 +1115,7 @@ void PackW64Pep::pack(OutputFile *fo)
                              0x2000 : 0x1000);          // 2 pages or 1 page
         linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
         //NEW: offset of import adjusted - Stefan Widmann
-		linker->defineSymbol("VirtualProtect", myimport + get_le32(oimpdlls + 16) + 16);
+        linker->defineSymbol("VirtualProtect", myimport + get_le32(oimpdlls + 16) + 16);
     }
 // FIXME    linker->defineSymbol("reloc_delt", 0u - (unsigned) (ih.imagebase - rvamin));
     linker->defineSymbol("start_of_relocs", crelocs);
@@ -1146,16 +1151,16 @@ void PackW64Pep::pack(OutputFile *fo)
 
     const unsigned esi0 = s1addr + ic;
     linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
-    linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
+    linker->defineSymbol("start_of_compressed", esi0);
     //NEW: TLS callback support - Stefan Widmann
     ic = s1addr + s1size - sotls - soloadconf; //moved here, we need the address of the new TLS!
     if (use_tls_callbacks)
     {
-        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr);
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - ih.imagebase);
         linker->defineSymbol("tls_module_base", 0u - rvamin);
     }
 
-    linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
+    linker->defineSymbol("START", upxsection);
     //linker->dumpSymbols();
     relocateLoader();
 
@@ -1165,7 +1170,6 @@ void PackW64Pep::pack(OutputFile *fo)
     patchPackHeader(loader, lsize);
 
     Reloc rel(1024); // new relocations are put here
-    rel.add(linker->getSymbolOffset("PEMAIN01") + 6, 10); // FIXME
 
     // new PE header
     memcpy(&oh,&ih,sizeof(oh));
@@ -1188,6 +1192,10 @@ void PackW64Pep::pack(OutputFile *fo)
     //APPROACH 1: just keep the exception directory, it's only used during runtime, not during init
     // -> nothing to do
 #if 0
+    ODADDR(PEDIR_EXCEPTION) = 0;
+    ODSIZE(PEDIR_EXCEPTION) = 0;
+#endif
+#if 0
     //APPROACH 2: we remove the exception directory from the header, the stub installs the table
     //            after decompression by calling RtlAddFunctionTable (see MSDN for details)
     ODADDR(PEDIR_EXCEPTION) = 0;
@@ -1202,13 +1210,8 @@ void PackW64Pep::pack(OutputFile *fo)
     // tls & loadconf are put into section 1
 
     //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann
-    //get address of TLS callback handler
     if (use_tls_callbacks)
-    {
         tls_handler_offset = linker->getSymbolOffset("PETLSC2");
-        //add relocation entry for TLS callback handler
-        rel.add(tls_handler_offset + 5, 10);
-    }
 
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
@@ -1331,8 +1334,8 @@ void PackW64Pep::pack(OutputFile *fo)
     fo->write(loader,codesize);
     if (opt->debug.dump_stub_loader)
         OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
-    if ((ic = fo->getBytesWritten() & 3) != 0)
-        fo->write(ibuf,4 - ic);
+    if ((ic = fo->getBytesWritten() & 7) != 0)
+        fo->write(ibuf,8 - ic);
     fo->write(otls,sotls);
     fo->write(oloadconf, soloadconf);
     if ((ic = fo->getBytesWritten() & (oh.filealign-1)) != 0)
