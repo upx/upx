@@ -1503,7 +1503,7 @@ void PepFile::rebuildRelocs(upx_byte *& extrainfo)
 //    upx_byte *p = rdata;
     OPTR_I(upx_byte, p, rdata);
     MemBuffer wrkmem;
-    unsigned relocn = unoptimizeReloc32(&rdata,obuf,&wrkmem,1);
+    unsigned relocn = unoptimizeReloc64(&rdata,obuf,&wrkmem,1);
     unsigned r16 = 0;
     if (big & 6)                // 16 bit relocations
     {
@@ -1532,8 +1532,8 @@ void PepFile::rebuildRelocs(upx_byte *& extrainfo)
     for (unsigned ic = 0; ic < relocn; ic++)
     {
         p = obuf + get_le32(wrkmem + 4 * ic);
-        set_le32(p, get_le32((unsigned char *)p) + oh.imagebase + rvamin);
-        rel.add(rvamin + get_le32(wrkmem + 4 * ic),3);
+        set_le64(p, get_le64((unsigned char *)p) + oh.imagebase + rvamin);
+        rel.add(rvamin + get_le32(wrkmem + 4 * ic),10);
     }
     rel.finish (oxrelocs,soxrelocs);
 

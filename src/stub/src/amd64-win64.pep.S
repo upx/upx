@@ -92,10 +92,10 @@ section         PEICONS1
 section         PEICONS2
                 add     [rdi + icon_offset], IMM16(icon_delta)
 section         PETLSHAK
-//;                mov     r14, [rdi + tls_address]
-//; FIXME the overwritten data should be saved, and restored
-//; after decompression
-                mov     [rdi + tls_address], IMM32(tls_value)
+                lea     rax, [rdi + tls_address]
+                push    [rax]   // save the TLS index
+                mov     [rax],  IMM32(tls_value) // restore compressed data overwritten by the TLS index
+                push    rax
 
 section         PEMAIN02
                 push    rdi
@@ -192,6 +192,11 @@ section         NRV2E
 section         PEMAIN10
 eof:
                 pop     rsi             // load vaddr
+
+section         PETLSHAK2               // restore the TLS index
+                pop     rdi
+                pop     rax
+                mov     [rdi], eax
 
 // =============
 // ============= FILTERS

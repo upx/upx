@@ -695,6 +695,7 @@ void PackW64Pep::buildLoader(const Filter *ft)
               "PEMAIN10",
               NULL
              );
+    addLoader(tmp_tlsindex ? "PETLSHAK2" : "");
     if (ft->id)
     {
         const unsigned texv = ih.codebase - rvamin;
@@ -1509,8 +1510,7 @@ void PackW64Pep::rebuildImports(upx_byte *& extrainfo)
         }
         im->iat = iatoffs;
 
-//        LE32 *newiat = (LE32 *) (Obuf + iatoffs);
-        OPTR_I(LE32, newiat, (LE32 *) (Obuf + iatoffs));
+        OPTR_I(LE64, newiat, (LE64 *) (Obuf + iatoffs));
 
         // restore the imported names+ordinals
         for (p += 8; *p; ++newiat)
@@ -1528,21 +1528,21 @@ void PackW64Pep::rebuildImports(upx_byte *& extrainfo)
                 }
                 else
                 {
-                    OCHECK(Obuf + *newiat + 2, ilen + 1);
-                    strcpy(Obuf + *newiat + 2, p);
+                    OCHECK(Obuf + (*newiat + 2), ilen + 1);
+                    strcpy(Obuf + (*newiat + 2), p);
                 }
                 p += ilen;
             }
             else if (*p == 0xff)
             {
-                *newiat = get_le16(p + 1) + 0x80000000;
-                //;;;printf(" %x",(unsigned)*newiat);
+                *newiat = get_le16(p + 1) + (1ULL << 63);
+                //;;;printf(" %llx",(unsigned long long)*newiat);
                 p += 3;
             }
             else
             {
-                *newiat = get_le32(get_le32(p + 1) + import);
-                assert(*newiat & 0x80000000);
+                *newiat = get_le64(get_le32(p + 1) + import);
+                assert(*newiat & (1ULL << 63));
                 p += 5;
             }
         *newiat = 0;
