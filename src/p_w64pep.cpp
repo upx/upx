@@ -139,17 +139,10 @@ PackW64Pep::~PackW64Pep()
 }
 
 
-const int *PackW64Pep::getCompressionMethods(int method, int /*level*/) const
+const int *PackW64Pep::getCompressionMethods(int method, int level) const
 {
-    // FIXME bool small = ih.codesize + ih.datasize <= 256*1024;
-    //return Packer::getDefaultCompressionMethods_le32(method, level, small);
-    static const int m_nrv2b[] = { M_NRV2B_LE32, M_END };
-    static const int m_nrv2d[] = { M_NRV2D_LE32, M_END };
-    static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
-    if (M_IS_NRV2B(method)) return m_nrv2b;
-    if (M_IS_NRV2D(method)) return m_nrv2d;
-    if (M_IS_NRV2E(method)) return m_nrv2e;
-    return m_nrv2e;
+    bool small = ih.codesize + ih.datasize <= 256*1024;
+    return Packer::getDefaultCompressionMethods_le32(method, level, small);
 }
 
 
@@ -693,9 +686,9 @@ void PackW64Pep::buildLoader(const Filter *ft)
               tmp_tlsindex ? "PETLSHAK" : "",
               "PEMAIN02",
               //ph.first_offset_found == 1 ? "PEMAIN03" : "",
-              "NRV_HEAD",
-              ph.method == M_NRV2B_LE32 ? "NRV2B" :
-              ph.method == M_NRV2D_LE32 ? "NRV2D" : "NRV2E",
+              M_IS_LZMA(ph.method) ? "LZMA_HEAD,LZMA_ELF00,LZMA_DEC20,LZMA_TAIL" :
+              M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B" :
+              M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D" : "NRV_HEAD,NRV2E",
               //getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",
@@ -1140,7 +1133,11 @@ void PackW64Pep::pack(OutputFile *fo)
     linker->defineSymbol("VirtualFree", myimport + get_le32(oimpdlls + 16) + 32);
 #endif
 
-//FIXME    defineDecompressorSymbols();
+    if (M_IS_LZMA(ph.method))
+    {
+        linker->defineSymbol("lzma_c_len", ph.c_len - 2);
+        linker->defineSymbol("lzma_u_len", ph.u_len);
+    }
     defineFilterSymbols(&ft);
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
 

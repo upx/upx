@@ -182,13 +182,25 @@ section         NRV2D
 #include "arch/amd64/nrv2d_d.S"
 section         NRV2E
 #include "arch/amd64/nrv2e_d.S"
-
-#if 0
-#include "arch/amd64/lzma_d.S"
-#endif
-
 #undef len
+
 .intel_syntax noprefix
+section         LZMA_HEAD
+                mov     eax, IMM32(lzma_u_len)
+                push    rax
+                mov     rcx, rsp
+                mov     rdx, rdi
+                mov     rdi, rsi
+                mov     esi, IMM32(lzma_c_len)
+
+.att_syntax
+#include "arch/amd64/regs.h"
+#include "arch/amd64/lzma_d.S"
+
+.intel_syntax noprefix
+section         LZMA_TAIL
+                leave
+                pop     rax
 // =============
 section         PEMAIN10
 eof:

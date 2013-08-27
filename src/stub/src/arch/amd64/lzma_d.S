@@ -46,8 +46,9 @@ section LZMA_ELF00
 //      addq src,lsrc; push lsrc  // &input_eof
 
 #define M_LZMA          14
+#ifndef NO_METHOD_CHECK
         cmpb $ M_LZMA,methb; jne not_lzma
-
+#endif
         pushq %rbp; movq %rsp,%rbp  // we use alloca
 
 //LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
@@ -75,7 +76,7 @@ section LZMA_ELF00
         leaq -(2*szSizeT +4) - 2*LZMA_BASE_SIZE(%rsp,%rbx,2), %rbx
         andq $~0<<6,%rbx  // 64-byte align
 1:
-        pushq $0  // clera CLzmaDecoderState on stack
+        pushq $0  // clear CLzmaDecoderState on stack
         cmpq %rbx,%rsp
         jne 1b
 
