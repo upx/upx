@@ -41,8 +41,8 @@ public:
     PackW64Pep(InputFile *f);
     virtual ~PackW64Pep();
     virtual int getFormat() const { return UPX_F_WIN64_PEP; }
-    virtual const char *getName() const { return "win64/pep"; }
-    virtual const char *getFullName(const options_t *) const { return "AMD64-win64.pep"; }
+    virtual const char *getName() const { return "win64/pe"; }
+    virtual const char *getFullName(const options_t *) const { return "amd64-win64.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 

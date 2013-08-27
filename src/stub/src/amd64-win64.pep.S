@@ -187,6 +187,7 @@ section         NRV2E
 #include "arch/amd64/lzma_d.S"
 #endif
 
+#undef len
 .intel_syntax noprefix
 // =============
 section         PEMAIN10
@@ -207,15 +208,16 @@ section         PECTTPOS
 section         PECTTNUL
                 mov     rdi, rsi
 
-#if 0 //; FIXME use amd_bxx.S
-                cjt32   esi
-#endif
-
-section         ctok32.00
+section         PEFILTER49
                 mov     ecx, offset filter_length
-#if 0  //; FIXME
-                ctok32  esi, (offset filter_cto)
-#endif
+                mov     dl, IMM8(filter_cto)
+.att_syntax
+#define esi ebx
+#define rsi rbx
+#include "arch/amd64/bxx.S"
+#undef esi
+#undef rsi
+.intel_syntax noprefix
 
 // =============
 // ============= IMPORTS

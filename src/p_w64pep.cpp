@@ -150,7 +150,7 @@ const int *PackW64Pep::getCompressionMethods(int /*method*/, int /*level*/) cons
 
 const int *PackW64Pep::getFilters() const
 {
-    static const int filters[] = { FT_END };
+    static const int filters[] = { 0x49, FT_END };
     return filters;
 }
 
@@ -701,7 +701,7 @@ void PackW64Pep::buildLoader(const Filter *ft)
         const unsigned texv = ih.codebase - rvamin;
         assert(ft->calls > 0);
         addLoader(texv ? "PECTTPOS" : "PECTTNUL",NULL);
-        addFilter32(ft->id);
+        addLoader("PEFILTER49");
     }
     if (soimport)
         addLoader("PEIMPORT",
@@ -969,13 +969,11 @@ void PackW64Pep::pack(OutputFile *fo)
     //OutputFile::dump("x1", ibuf, usize);
 
     // some checks for broken linkers - disable filter if necessary
-    bool allow_filter = false;
-/*
-    if (ih.codebase == ih.database
-        || ih.codebase + ih.codesize > ih.imagesize
+    bool allow_filter = true;
+    if (ih.codebase + ih.codesize > ih.imagesize
         || (isection[virta2objnum(ih.codebase,isection,objs)].flags & PEFL_CODE) == 0)
         allow_filter = false;
-*/
+
     const unsigned oam1 = ih.objectalign - 1;
 
     // FIXME: disabled: the uncompressor would not allocate enough memory
@@ -1137,7 +1135,7 @@ void PackW64Pep::pack(OutputFile *fo)
 #endif
 
 //FIXME    defineDecompressorSymbols();
-//FIXME    defineFilterSymbols(&ft);
+    defineFilterSymbols(&ft);
     linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
 
     // in case of overlapping decompression, this hack is needed,

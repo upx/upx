@@ -33,8 +33,10 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #define cto8 %arg3l /* known to be "%dl" */
 #define ftid %arg4l
 
+#ifndef NO_METHOD_CHECK
         cmpl $0x49,ftid; jne ckend  # filter: JMP, CALL, 6-byte Jxx
         movq len,%rcx  # byte count
+#endif
         movq ptr,%rsi  # remember start of buffer
         jmp ckstart
 ckloop3:
@@ -61,7 +63,9 @@ ckstart:
 ckcount:
         decq %rcx; jnz ckloop3
 ckend:
+#ifndef NO_METHOD_CHECK
         ret
+#endif
 
 #undef ptr
 #undef len
