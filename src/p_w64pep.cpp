@@ -139,11 +139,16 @@ PackW64Pep::~PackW64Pep()
 }
 
 
-const int *PackW64Pep::getCompressionMethods(int /*method*/, int /*level*/) const
+const int *PackW64Pep::getCompressionMethods(int method, int /*level*/) const
 {
     // FIXME bool small = ih.codesize + ih.datasize <= 256*1024;
     //return Packer::getDefaultCompressionMethods_le32(method, level, small);
+    static const int m_nrv2b[] = { M_NRV2B_LE32, M_END };
+    static const int m_nrv2d[] = { M_NRV2D_LE32, M_END };
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
+    if (M_IS_NRV2B(method)) return m_nrv2b;
+    if (M_IS_NRV2D(method)) return m_nrv2d;
+    if (M_IS_NRV2E(method)) return m_nrv2e;
     return m_nrv2e;
 }
 
@@ -689,7 +694,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
               "PEMAIN02",
               //ph.first_offset_found == 1 ? "PEMAIN03" : "",
               "NRV_HEAD",
-              "NRV2E",
+              ph.method == M_NRV2B_LE32 ? "NRV2B" :
+              ph.method == M_NRV2D_LE32 ? "NRV2D" : "NRV2E",
               //getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",

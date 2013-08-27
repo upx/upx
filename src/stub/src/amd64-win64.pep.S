@@ -176,14 +176,14 @@ setup:
 
 #define NO_METHOD_CHECK
 
+section         NRV2B
+#include "arch/amd64/nrv2b_d.S"
+section         NRV2D
+#include "arch/amd64/nrv2d_d.S"
 section         NRV2E
 #include "arch/amd64/nrv2e_d.S"
 
-
-#if 0  //; FIXME
-#include "arch/amd64/nrv2b_d.S"
-#include "arch/amd64/nrv2d_d.S"
-#include "arch/amd64/nrv2e_d.S"
+#if 0
 #include "arch/amd64/lzma_d.S"
 #endif
 
