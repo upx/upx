@@ -1190,25 +1190,6 @@ void PackW64Pep::pack(OutputFile *fo)
     ODADDR(PEDIR_BOUNDIM) = 0;  //remove bound import table
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
-    //EXCEPTION DIRECTORY HANDLING - Stefan Widmann
-    //APPROACH 1: just keep the exception directory, it's only used during runtime, not during init
-    // -> nothing to do
-#if 0
-    ODADDR(PEDIR_EXCEPTION) = 0;
-    ODSIZE(PEDIR_EXCEPTION) = 0;
-#endif
-#if 0
-    //APPROACH 2: we remove the exception directory from the header, the stub installs the table
-    //            after decompression by calling RtlAddFunctionTable (see MSDN for details)
-    ODADDR(PEDIR_EXCEPTION) = 0;
-    ODSIZE(PEDIR_EXCEPTION) = 0;
-    //set flag
-    use_exception_dir = true;
-    //link code to loader
-    linker->defineSymbol("exception_ptr", IDADDR(PEDIRE_EXCEPTION)); //stub needs data about function table
-    linker->defineSymbol("exception_size", IDSIZE(PEDIR_EXCEPTION));
-#endif
-
     // tls & loadconf are put into section 1
 
     //ic = s1addr + s1size - sotls - soloadconf;  //ATTENTION: moved upwards to TLS callback handling - Stefan Widmann

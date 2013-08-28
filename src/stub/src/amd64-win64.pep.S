@@ -302,7 +302,7 @@ section         PEIERDLL
 
 section         PEIEREXE
                 //      rcx contains garbage -> garbage return code
-                call    [rsi + ExitProcess]
+                jmp     [rsi + ExitProcess]
 section         PEIMDONE
 imports_done:
                 add     rsp, 0x28
@@ -407,18 +407,14 @@ section         PEDEPHAK
 // =============
 
 section         PETLSC
-                lea     rcx, [rsi + tls_module_base] //;load module base to rcx
-                lea     rdi, [rcx + tls_handler_start + 1] //;load offset of handler
-                //;remove jump from TLS handler entry (overwrite displacement)
-                xor     eax, eax
-                stosb
-                //;emulate callbacks like PE loader would have done
-                mov     r8, rax                 //;0 - reserved
-                push    1                       //;DLL_PROCESS_ATTACH
+                movb    [rip + PETLSC2], 0xfc   // "cld" instead of "ret"
+                lea     rcx, [rsi + tls_module_base] // module base
+                push    1                       // DLL_PROCESS_ATTACH
                 pop     rdx
+                xor     r8, r8                  // 0 - reserved
 
-                push    rax                     //;align stack
-                call    rdi                     //;contains ptr to callback handler
+                push    rax                     // align stack
+                call    PETLSC2
                 pop     rax
 
 // ============= Cleanup
@@ -462,13 +458,13 @@ section         PEDOJUMP
 // ============= TLS callback support part 2
 // =============
 
-section         PETLSC2
-                //;TLS_CALLBACK(hModule, reason, reserved)
-tls_handler_start:
-                jmp     end_of_tls_handler      //;this jump is patched to EB 00 (jmp $+2) by stub
+// this is the new TLS callback handler
+// it calls the original callbacks ONLY after the compression is done
+
+section         PETLSC2         // TLS_CALLBACK(hModule, reason, reserved)
+                ret             // this ret gets overwritten with cld by PETLSC
                 push    rsi
                 lea     rsi, [rip + tls_callbacks_ptr]
-                cld                             //;you never know, this code gets called by the PE loader
 walk_tlsc_chain2:
                 lodsq
                 test    rax, rax
@@ -489,7 +485,6 @@ walk_tlsc_chain2:
                 jmp     walk_tlsc_chain2
 done_callbacks:
                 pop     rsi
-end_of_tls_handler:
                 ret
 
 // =============

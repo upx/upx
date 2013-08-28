@@ -4,6 +4,7 @@ User visible changes for UPX
 
 Changes in 3.10 (XX XXX 2013):
   * Experimental support added for Windows 64-bit PE files.
+    based on the work by Stefan Widmann
   * bug fixes
 
 Changes in 3.09 (18 Feb 2013):
