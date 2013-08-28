@@ -625,10 +625,12 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
         return super::relocate1(rel, location, value, type);
     type += 9;
 
+    bool range_check = false;
     if (strncmp(type, "PC", 2) == 0)
     {
         value -= rel->section->offset + rel->offset;
         type += 2;
+        range_check = true;
     }
 
     if (strcmp(type, "8") == 0)
@@ -638,7 +640,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
 #else
         int displ = (signed char) *location + (int) value;
 #endif
-        if (displ < -128 || displ > 127)
+        if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n",
                            displ, rel->section->name, rel->offset);
         *location += value;
