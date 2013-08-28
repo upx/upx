@@ -405,7 +405,7 @@ void PepFile::processRelocs() // pass1
     }
 
     for (ic = 15; ic; ic--)
-        if (counts[ic] != 10)
+        if (ic != 10 && counts[ic])
             infoWarning("skipping unsupported relocation type %d (%d)",ic,counts[ic]);
 
     LE32 *fix[16];
