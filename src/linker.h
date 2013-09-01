@@ -95,7 +95,7 @@ public:
     virtual int getSectionSize(const char *sname) const;
     virtual upx_byte *getLoader(int *llen=NULL) const;
     virtual void defineSymbol(const char *name, u64 value);
-    virtual unsigned getSymbolOffset(const char *) const;
+    virtual u64 getSymbolOffset(const char *) const;
 
     virtual void dumpSymbol(const Symbol *, unsigned flags, FILE *fp) const;
     virtual void dumpSymbols(unsigned flags=0, FILE *fp=NULL) const;
@@ -125,7 +125,7 @@ struct ElfLinker::Section : private noncopyable
     void *input;
     upx_byte *output;
     unsigned size;
-    unsigned offset;
+    u64 offset;
     unsigned p2align;   // log2
     Section *next;
 

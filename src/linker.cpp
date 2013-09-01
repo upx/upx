@@ -549,8 +549,8 @@ void ElfLinker::dumpSymbol(const Symbol *symbol, unsigned flags, FILE *fp) const
 {
     if ((flags & 1) && symbol->section->output == NULL)
         return;
-    fprintf(fp, "%-28s 0x%16llx | %-28s 0x%08x\n",
-            symbol->name, (unsigned long long) symbol->offset, symbol->section->name, symbol->section->offset);
+    fprintf(fp, "%-28s 0x%016llx | %-28s 0x%016llx\n",
+            symbol->name, (unsigned long long) symbol->offset, symbol->section->name, (unsigned long long) symbol->section->offset);
 }
 void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
 {
@@ -561,7 +561,7 @@ void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
         // default: dump symbols in used section order
         for (const Section *section = head; section; section = section->next)
         {
-            fprintf(fp, "%-42s%-28s 0x%08x\n", "", section->name, section->offset);
+            fprintf(fp, "%-42s%-28s 0x%016llx\n", "", section->name, (unsigned long long) section->offset);
             for (unsigned ic = 0; ic < nsymbols; ic++)
             {
                 const Symbol *symbol = symbols[ic];
@@ -578,7 +578,7 @@ void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
     }
 }
 
-unsigned ElfLinker::getSymbolOffset(const char *name) const
+ElfLinker::u64 ElfLinker::getSymbolOffset(const char *name) const
 {
     const Symbol *symbol = findSymbol(name);
     if (symbol->section->output == NULL)
