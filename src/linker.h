@@ -73,7 +73,7 @@ protected:
     Section *findSection(const char *name, bool fatal=true) const;
     Symbol *findSymbol(const char *name, bool fatal=true) const;
 
-    Symbol *addSymbol(const char *name, const char *section, unsigned offset);
+    Symbol *addSymbol(const char *name, const char *section, u64 offset);
     Relocation *addRelocation(const char *section, unsigned off, const char *type,
                               const char *symbol, u64 add);
 

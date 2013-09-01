@@ -356,7 +356,7 @@ ElfLinker::Section *ElfLinker::addSection(const char *sname, const void *sdata, 
 }
 
 ElfLinker::Symbol *ElfLinker::addSymbol(const char *name, const char *section,
-                                        unsigned offset)
+                                        u64 offset)
 {
     //printf("addSymbol: %s %s 0x%x\n", name, section, offset);
     if (update_capacity(nsymbols, &nsymbols_capacity))
