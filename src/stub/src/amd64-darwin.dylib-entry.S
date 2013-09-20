@@ -289,7 +289,12 @@ dy_uncpr:
         movzbl 1+ b_method(%rax),%arg4l  # ftid
           test %arg4l,%arg4l; je dy_uncpr  # no filter
         movzbl 2+ b_method(%rax),%arg3l  # cto8
+#if 0
         mov sz_unc(%rax),%arg2l
+#else
+        // sz_unc == 0
+        mov (%rax),%arg2l
+#endif
         mov %rdx,%arg1    # dst
         call f_unfilter  # f_unfilter(1=rdi=dst, 2=rsi=dstlen, 3=rdx=cto8, 4=rcx=ftid)
         jmp dy_uncpr

@@ -190,7 +190,12 @@ unfold:
         pop %rbx  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
         mov sz_cpr(%rbx),%ecx
         lea              -1+ sz_b_info(%rcx,%rbx),%rsi  // &hi_byte folded original
+#if 0
         mov sz_unc(%rbx),%edi
+#else
+        // sz_unc == 0
+        mov (%rbx),%edi
+#endif
         lea GAP + NO_LAP -1+ sz_b_info(%rdi,%rbx),%rdi  // &hi_byte folded copy
         std; rep movsb  // copy descending
 
