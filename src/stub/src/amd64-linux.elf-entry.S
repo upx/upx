@@ -233,11 +233,22 @@ unfold:
    XXX: 4GB  Note that  MOVL $imm32,reg  zero-extends to 64-bits.
    (Use an temporary register to obtain 4GB range on PUSH constant.)
 */
+
+#if 1
+/* INFO: newer gas versions (correctly) encode the "push $IMMEDIATE" into
+   a R_X86_64_32S instead of R_X86_64_32 relocation type.
+   Avoid that until tested.
+*/
+        .byte 0x68; .int JMPU   // push $ JMPU (R_X86_64_32)
+        push %rax    // for unmap in fold
+        .byte 0x68; .int LENU   // push $ JMPU (R_X86_64_32)
+#else
         push $ JMPU  // for unmap in fold
         push %rax    // for unmap in fold
         push $ LENU  // for unmap in fold
+#endif
         push %rcx    // ADRX for upx_main
-        push %r15  // LENX for upx_main
+        push %r15    // LENX for upx_main
 
 /* Get some pages.  If small, then get 1 page located just after the end
    of the first PT_LOAD of the compressed program.  This will still be below
