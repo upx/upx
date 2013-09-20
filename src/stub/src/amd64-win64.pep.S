@@ -44,18 +44,18 @@
 #include "arch/amd64/macros.S"
 
 #define         IMM8(value) byte ptr 0; \
-                .reloc $ - 1, R_X86_64_8, value
+                .reloc . - 1, R_X86_64_8, value
 
 #define         IMM16(value) word ptr (1<<15); \
-                .reloc $ - 2, R_X86_64_16, (1<<15) + value
+                .reloc . - 2, R_X86_64_16, (1<<15) + value
 
 #define         IMM32(value) dword ptr (1<<31); \
-                .reloc $ - 4, R_X86_64_32, (1<<31) + value
+                .reloc . - 4, R_X86_64_32, (1<<31) + value
 
 #define         IMM64(value) qword ptr (1<<63); \
-                .reloc $ - 8, R_X86_64_64, (1<<63) + value
+                .reloc . - 8, R_X86_64_64, (1<<63) + value
 
-#define         SHORT(label) $ + 1; .reloc $ - 1, R_X86_64_PC8, label
+#define         SHORT(label) . + 1; .reloc . - 1, R_X86_64_PC8, label
 
 //; debugging is not too user friendly under wine:
 //; by adding the "DEBUG" macro into the code
