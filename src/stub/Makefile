@@ -138,7 +138,7 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20060823
+	upx-stubtools-check-version 20130920
 	@echo "timestamp" > $@
 %/.tmp-stamp:
 	@mkdir -p $(dir $@)
@@ -247,9 +247,14 @@ define tc.default.f-embed_objinfo
 	$(call tc,xstrip) --with-dump=$1.dump --create-bindump=$1.bindump $1
 	cat $1.dump >> $1
 endef
+
+tc.default.f-objstrip-disasm.bin = @true
+tc.default.f-objstrip-disasm.o   = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
+tc.default.f-objstrip-disasm.obj = $(call tc,objdump) -dr $(tc_objdump_disasm_options) $1 | $(RTRIM) > $1.disasm
 define tc.default.f-objstrip
 	chmod a-x $1
 	$(call tc,objcopy) -R .comment -R .note -R .note.GNU-stack -R .reginfo $1
+	$(call tc,f-objstrip-disasm$(suffix $1),$1)
 endef
 
 # some common arch settings
@@ -299,7 +304,6 @@ tmp/amd64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os -fPIC $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -333,7 +337,6 @@ tmp/amd64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -374,76 +377,19 @@ amd64-linux.shlib-init.h : $(srcdir)/src/$$T.S
 # // amd64-win64.pep
 # ************************************************************************/
 
-amd64-win64.pep.h : tc_list = amd64-linux.elf default
+amd64-win64.pep.h : tc_list = amd64-win64.pep amd64-linux.elf default
 amd64-win64.pep.h : tc_bfdname = elf64-x86-64
+amd64-win64.pep.h : tc_objdump_disasm_options = -M intel-mnemonic
+
+tc.amd64-win64.pep.gcc  = amd64-linux-gcc-4.1.1 -m64 -nostdinc -MMD -MT $@
+tc.amd64-win64.pep.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.amd64-win64.pep.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.amd64-win64.pep.objdump = multiarch-objdump-2.23.90
 
 amd64-win64.pep.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-#	$(call tc,objdump) -Dr -M intel-mnemonic tmp/$T.bin | $(RTRIM) > tmp/$T.bin.disasmi
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // armel-eabi-linux.elf
-# ************************************************************************/
-
-armel-eabi-linux.elf%.h : tc_list = armel-eabi-linux.elf default
-armel-eabi-linux.elf%.h : tc_bfdname = elf32-littlearm
-
-tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-armel-eabi-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
-
-armel-eabi-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm-linux.elf-fold.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/arm-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
-tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
-	$(call tc,gcc) -c -Os $< -o $@
-	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
-
-
-# /***********************************************************************
-# // armel-eabi-linux.shlib
-# ************************************************************************/
-
-armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
-armel-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
-
-armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // thumb-eabi-linux.shlib
-# ************************************************************************/
-
-thumb-eabi-linux.shlib%.h : tc_list = thumb-eabi-linux.elf armel-eabi-linux.elf default
-thumb-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
-
-tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@
-tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-thumb-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -473,7 +419,6 @@ tmp/arm-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -505,7 +450,6 @@ tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -545,24 +489,26 @@ arm-linux.shlib%.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armeb-linux.kernel.vmlinux
-# // armeb-linux.kernel.vmlinux-head
+# // arm.v4a-wince.pe
+# // arm.v4t-wince.pe
 # ************************************************************************/
 
-armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
-armeb-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
+# info: we use the tc settings from arm-linux.elf
+arm.v4a-wince.pe.h : tc_list = arm-linux.elf default
+arm.v4t-wince.pe.h : tc_list = arm-linux.elf default
+arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 
-tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
-
-armeb-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-armeb-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
+arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -592,30 +538,94 @@ tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
-# // arm.v4a-wince.pe
-# // arm.v4t-wince.pe
+# // armeb-linux.kernel.vmlinux
+# // armeb-linux.kernel.vmlinux-head
 # ************************************************************************/
 
-# info: we use the tc settings from arm-linux.elf
-arm.v4a-wince.pe.h : tc_list = arm-linux.elf default
-arm.v4t-wince.pe.h : tc_list = arm-linux.elf default
-arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
+armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
+armeb-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
 
-arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
+
+armeb-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
+armeb-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // armel-eabi-linux.elf
+# ************************************************************************/
+
+armel-eabi-linux.elf%.h : tc_list = armel-eabi-linux.elf default
+armel-eabi-linux.elf%.h : tc_bfdname = elf32-littlearm
+
+tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+armel-eabi-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+armel-eabi-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm-linux.elf-fold.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/arm-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+
+# /***********************************************************************
+# // armel-eabi-linux.shlib
+# ************************************************************************/
+
+armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+armel-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // armel-linux.kernel.vmlinuz
+# // armel-linux.kernel.vmlinuz-head
+# ************************************************************************/
+#
+armel-linux.kernel.vmlinu%.h : tc_list = armel-linux.kernel default
+armel-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
+
+tc.armel-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.armel-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.armel-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+armel-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+armel-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
@@ -693,7 +703,6 @@ tmp/i386-bsd.syscall.o : $(srcdir)/src/$$T.S
 tmp/i386-bsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # info: we use the tc settings from i386-linux.elf
@@ -734,7 +743,6 @@ tmp/i386-openbsd.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -763,7 +771,6 @@ tmp/i386-bsd.elf.execve-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-bsd.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/i386-bsd.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
@@ -810,7 +817,6 @@ tmp/i386-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -893,7 +899,6 @@ tmp/i386-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -921,7 +926,6 @@ tmp/i386-linux.elf.execve-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.execve-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 tmp/i386-linux.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o $@
@@ -953,7 +957,6 @@ tmp/i386-linux.elf.interp-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -981,7 +984,6 @@ tmp/i386-linux.elf.shell-fold.o : $(srcdir)/src/$$T.S
 tmp/i386-linux.elf.shell-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -1014,28 +1016,6 @@ i386-linux.shlib%.h : tc_bfdname = elf32-i386
 i386-linux.shlib-init.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
-
-# /***********************************************************************
-# // armel-linux.kernel.vmlinuz
-# // armel-linux.kernel.vmlinuz-head
-# ************************************************************************/
-#
-armel-linux.kernel.vmlinu%.h : tc_list = armel-linux.kernel default
-armel-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
-
-tc.armel-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.armel-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.armel-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-armel-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-armel-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
 
@@ -1111,7 +1091,6 @@ tmp/mips.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.e
 	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s
 	$(call tc,gcc) -c -Wa,-O,-mno-pdr tmp/$T.s -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -1150,7 +1129,6 @@ tmp/mipsel.r3000-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux
 	    -e 's/	jal[ 	][ 	]*\([^\$$]\)/	bal \1/' < tmp/$T.i > tmp/$T.s
 	$(call tc,gcc) -c -Wa,-O,-mno-pdr tmp/$T.s -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -1205,7 +1183,6 @@ tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -1251,7 +1228,6 @@ tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
-	$(call tc,objdump) -dr $(tc_objdump_disasm_options) $@ | $(RTRIM) > $@.disasm
 
 
 # /***********************************************************************
@@ -1273,6 +1249,23 @@ powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // thumb-eabi-linux.shlib
+# ************************************************************************/
+
+thumb-eabi-linux.shlib%.h : tc_list = thumb-eabi-linux.elf armel-eabi-linux.elf default
+thumb-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@
+tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+thumb-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
