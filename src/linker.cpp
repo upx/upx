@@ -306,7 +306,7 @@ void ElfLinker::preprocessRelocations(char *start, char *end)
 
                 assert(strlen(p) == 8 || strlen(p) == 16);
                 char *endptr = NULL;
-                unsigned long long ull = strtoull(p, &endptr, 16);
+                acc_uint64l_t ull = strtoull(p, &endptr, 16);
                 add = (u64) ull;
                 assert(add == ull);
                 assert(endptr && *endptr == '\0');
@@ -549,8 +549,11 @@ void ElfLinker::dumpSymbol(const Symbol *symbol, unsigned flags, FILE *fp) const
 {
     if ((flags & 1) && symbol->section->output == NULL)
         return;
-    fprintf(fp, "%-28s 0x%016llx | %-28s 0x%016llx\n",
-            symbol->name, (unsigned long long) symbol->offset, symbol->section->name, (unsigned long long) symbol->section->offset);
+    char d0[16+1], d1[16+1];
+    upx_snprintf(d0, sizeof(d0), "%016llx", (acc_uint64_t) symbol->offset);
+    upx_snprintf(d1, sizeof(d1), "%016llx", (acc_uint64_t) symbol->section->offset);
+    fprintf(fp, "%-28s 0x%-16s | %-28s 0x%-16s\n",
+            symbol->name, d0, symbol->section->name, d1);
 }
 void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
 {
@@ -561,7 +564,9 @@ void ElfLinker::dumpSymbols(unsigned flags, FILE *fp) const
         // default: dump symbols in used section order
         for (const Section *section = head; section; section = section->next)
         {
-            fprintf(fp, "%-42s%-28s 0x%016llx\n", "", section->name, (unsigned long long) section->offset);
+            char d1[16+1];
+            upx_snprintf(d1, sizeof(d1), "%016llx", (acc_uint64_t) section->offset);
+            fprintf(fp, "%-42s%-28s 0x%-16s\n", "", section->name, d1);
             for (unsigned ic = 0; ic < nsymbols; ic++)
             {
                 const Symbol *symbol = symbols[ic];
