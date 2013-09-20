@@ -2,10 +2,12 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.10 (XX XXX 2013):
-  * Experimental support added for Windows 64-bit PE files.
-    based on the work by Stefan Widmann
+Changes in 3.91 (27 Sep 2013):
+  * Added experimental support for Windows 64-bit PE files, based on
+    work by Stefan Widmann. Please use for testing only!
   * bug fixes
+
+==================================================================
 
 Changes in 3.09 (18 Feb 2013):
   * New option --preserve-build-id for GNU ELF.
