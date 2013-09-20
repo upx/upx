@@ -79,7 +79,7 @@ SP_argc= 4*4
         sub r4,r0,#4  @ added env ptr goes here
         str r2,[r0],#4  @ terminator after added ptr
         mov r3,r0  @ new &Elf32_auxv_t
- 
+
 .Laux:  @ copy auxv
         ldr r2,[r1,#4]  @ .a_val
         str r2,[r0,#4]
@@ -101,7 +101,7 @@ SP_argc= 4*4
         mov r2,#0
         strb r2,[r1,r0]  @ null terminate pathname
 0:
- 
+
 /* Construct arglist for upx_main */
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
         mov r4,r9  @ total size of compressed data
@@ -347,7 +347,7 @@ mprotect:
 __clear_cache:
         mov r2,#0
         do_sys2 __ARM_NR_cacheflush; ret
-        
+
         .globl mmap
 mmap:
         str r5,[sp,#-4]!; ldr r5,[sp,#4+4]
