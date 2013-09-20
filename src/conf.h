@@ -149,6 +149,19 @@
 #  endif
 #endif
 
+/* intergral types */
+#define upx_int8_t      acc_int8_t
+#define upx_uint8_t     acc_uint8_t
+#define upx_int16_t     acc_int16_t
+#define upx_uint16_t    acc_uint16_t
+#define upx_int32_t     acc_int32_t
+#define upx_uint32_t    acc_uint32_t
+#define upx_int64_t     acc_int64_t
+#define upx_uint64_t    acc_uint64_t
+#define UPX_INT64_C     ACC_INT64_C
+#define UPX_UINT64_C    ACC_UINT64_C
+#define upx_uintptr_t   acc_uintptr_t
+
 
 /*************************************************************************
 //
