@@ -172,5 +172,6 @@ mmap: .globl mmap
         ret
 
 
+.balign 4,0
 // vi:ts=8:et:nowrap
 

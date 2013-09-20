@@ -209,8 +209,8 @@ dy_uncpr:
         add esp, (5+1)*4  // (5+1) args to decompress
 
         pop edx; pop eax  # edx= old dst; eax= old &b_info
-        movzbl ecx,[1+ b_method + eax]; jecxz dy_uncpr; push ecx  # ftid
-        movzbl ecx,[2+ b_method + eax];                 push ecx  # cto8
+        movzx ecx, byte ptr [1+ b_method + eax]; jecxz dy_uncpr; push ecx  # ftid
+        movzx ecx, byte ptr [2+ b_method + eax];                 push ecx  # cto8
         push [sz_unc + eax]
         push edx    # dst
         lea eax,[2+ ebp]; call eax  # f_unfilter(dst, dstlen, cto8, ftid)

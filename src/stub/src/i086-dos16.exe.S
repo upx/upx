@@ -112,7 +112,7 @@ addaxds:
                 movsw
                 cld
 section         LONGSUB
-                subb    [cs:si + addaxds + 4], 0x10
+                subb    cs:[si + addaxds + 4], 0x10
 section         SHORTSUB
                 .byte   0x2e, 0x80, 0x6c, addaxds + 4, 0x10
 section         JNCDOCOPY
@@ -177,7 +177,7 @@ reloc_0:
                 xor     ax, ax
 reloc_1:
                 add     di, ax
-                add     [es:di], bp
+                add     es:[di], bp
 reloc_2:
                 lodsb
                 dec     ax
@@ -188,9 +188,9 @@ section         EXEREL9A
                 inc     di
 reloc_4:
                 inc     di
-                cmpb    [es:di], 0x9a
+                cmpb    es:[di], 0x9a
                 jne     reloc_4
-                cmp     [es:di+3], dx
+                cmp     es:[di+3], dx
                 ja      reloc_4
                 mov     al, 3
                 jmps    reloc_1

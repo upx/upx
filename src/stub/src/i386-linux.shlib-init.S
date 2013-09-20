@@ -201,8 +201,8 @@ p_mprot= -5*4
         sub eax,ebx  // restore
         add edi,ebx
 
-        movzbl ecx,[esi+b_method-4+1]; push ecx  // ftid
-        movzbl ecx,[esi+b_method-4+2]; push ecx  // cto8
+        movzx ecx, byte ptr [esi+b_method-4+1]; push ecx  // ftid
+        movzx ecx, byte ptr [esi+b_method-4+2]; push ecx  // cto8
         push eax; mov ecx,esp  // dstlen  also for unfilter  step 7
         push edi  // dst                 param for unfilter  step 7
 p_unflt= -9*4
@@ -248,12 +248,12 @@ supervise:
         pop ecx  // &dstlen
         pop edx  // discard method,filter,cto,junk
         add eax,[ecx]  // dst += dstlen
-        mov [dword ptr eax],0xc36180cd  // "int 0x80; popa; ret"
+        mov dword ptr [eax],0xc36180cd  // "int 0x80; popa; ret"
         mov [esp + p_hatch - o_uncpr],eax  // hatch at end of .text
 //o_uncpr
         pop eax  // &decompress
 //p_unflt
-        cmp [word ptr esp+3*4],0; je 0f  // 0==ftid ==> no filter
+        cmp word ptr [esp+3*4],0; je 0f  // 0==ftid ==> no filter
         add eax,2; call eax  // unfilter {i386 f_unf==(2+f_unc)}
 0:
         add esp,4*4

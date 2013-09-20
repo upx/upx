@@ -259,7 +259,7 @@ cmd_exp = 80  // allow kernel to expand command line "in place" by this much
 cl_nbp202:  // use < 2.02 method.  in: ebp= real_mode_ptr
                 mov esi,ebp  // absolute worst case default
                 cmpw [ebp+ BP_cmd_line_magic],0xA33F; jne cl_move  // nothing at all
-                movzwl esi,[ebp+ BP_cmd_line_offset]
+                movzx esi, word ptr [ebp+ BP_cmd_line_offset]
                 add esi,ebp
                 jmp cl_move
 cl_bp202:  // try >= 2.02 method

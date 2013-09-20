@@ -11,8 +11,7 @@ TARGET(elf32-i386)
 
 .text           0x0000000000c01080      0x68c
  *(.text)
- .text          0x0000000000c01080       0xc2 tmp/i386-bsd.elf-fold.o
- *fill*         0x0000000000c01142        0x2 00
+ .text          0x0000000000c01080       0xc4 tmp/i386-bsd.elf-fold.o
  .text          0x0000000000c01144      0x558 tmp/i386-bsd.elf-main.o
                 0x0000000000c01564                upx_main
  .text          0x0000000000c0169c       0x6d tmp/i386-bsd.syscall.o

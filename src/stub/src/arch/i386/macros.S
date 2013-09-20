@@ -472,7 +472,7 @@ decompr0:
 
 section LXJCC010
 lxunf2:  // have seen 0x80..0x8f of possible recoded 6-byte Jcc <d32>
-        movzwl ebp, [edi]  // 2 bytes, zero-extended
+        movzx ebp, word ptr [edi]  // 2 bytes, zero-extended
 
 section LXMRU045 // 0!=n_mru
         sub ebp, __cto8_0f
@@ -644,7 +644,7 @@ section LXMRU040 // 0!=n_mru
 
 section LXUNF030
 lxctloop:
-        movzxw eax, [edi]  // 2 bytes, zero extended
+        movzx eax, word ptr [edi]  // 2 bytes, zero extended
         add edi, 1
 section LXJCC000
         cmp al, 0x80  // lo of Jcc <d32>

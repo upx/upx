@@ -135,6 +135,7 @@ read: .globl read
 0:
         ret
 
+.balign 2,144
 /*
 vi:ts=8:et:nowrap
 */
