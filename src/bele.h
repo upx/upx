@@ -88,7 +88,7 @@ inline void set_be32(void *p, unsigned v)
 #endif
 }
 
-inline acc_uint64l_t get_be64(const void *p)
+inline upx_uint64_t get_be64(const void *p)
 {
 #if defined(ACC_UA_GET_BE64)
     return ACC_UA_GET_BE64(p);
@@ -97,7 +97,7 @@ inline acc_uint64l_t get_be64(const void *p)
 #endif
 }
 
-inline void set_be64(void *p, acc_uint64l_t v)
+inline void set_be64(void *p, upx_uint64_t v)
 {
 #if defined(ACC_UA_SET_BE64)
     ACC_UA_SET_BE64(p, v);
@@ -160,7 +160,7 @@ inline void set_le32(void *p, unsigned v)
 #endif
 }
 
-inline acc_uint64l_t get_le64(const void *p)
+inline upx_uint64_t get_le64(const void *p)
 {
 #if defined(ACC_UA_GET_LE64)
     return ACC_UA_GET_LE64(p);
@@ -169,7 +169,7 @@ inline acc_uint64l_t get_le64(const void *p)
 #endif
 }
 
-inline void set_le64(void *p, acc_uint64l_t v)
+inline void set_le64(void *p, upx_uint64_t v)
 {
 #if defined(ACC_UA_SET_LE64)
     ACC_UA_SET_LE64(p, v);
@@ -192,13 +192,13 @@ inline int sign_extend(unsigned v, unsigned bits)
     return (int) v;
 }
 
-inline acc_int64l_t sign_extend(acc_uint64l_t v, unsigned bits)
+inline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits)
 {
-    const acc_uint64l_t sign_bit = ACC_UINT64_C(1) << (bits - 1);
+    const upx_uint64_t sign_bit = UPX_UINT64_C(1) << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
     //v = (v ^ sign_bit) - sign_bit;
     v |= 0 - (v & sign_bit);
-    return (acc_int64l_t) v;
+    return (upx_int64_t) v;
 }
 
 inline int get_be16_signed(const void *p)
@@ -219,9 +219,9 @@ inline int get_be32_signed(const void *p)
     return sign_extend(v, 32);
 }
 
-inline acc_int64l_t get_be64_signed(const void *p)
+inline upx_int64_t get_be64_signed(const void *p)
 {
-    acc_uint64l_t v = get_be64(p);
+    upx_uint64_t v = get_be64(p);
     return sign_extend(v, 64);
 }
 
@@ -243,9 +243,9 @@ inline int get_le32_signed(const void *p)
     return sign_extend(v, 32);
 }
 
-inline acc_int64l_t get_le64_signed(const void *p)
+inline upx_int64_t get_le64_signed(const void *p)
 {
-    acc_uint64l_t v = get_le64(p);
+    upx_uint64_t v = get_le64(p);
     return sign_extend(v, 64);
 }
 
@@ -269,25 +269,25 @@ inline unsigned acc_swab32(unsigned v)
 }
 
 
-inline unsigned acc_swab16p(const acc_uint16e_t *p)
+inline unsigned acc_swab16p(const upx_uint16_t *p)
 {
     return acc_swab16(*p);
 }
 
-inline unsigned acc_swap32p(const acc_uint32e_t *p)
+inline unsigned acc_swap32p(const upx_uint32_t *p)
 {
     return acc_swab32(*p);
 }
 
 
-inline void acc_swab16s(acc_uint16e_t *p)
+inline void acc_swab16s(upx_uint16_t *p)
 {
-    *p = (acc_uint16e_t) acc_swab16(*p);
+    *p = (upx_uint16_t) acc_swab16(*p);
 }
 
-inline void acc_swab32s(acc_uint32e_t *p)
+inline void acc_swab32s(upx_uint32_t *p)
 {
-    *p = (acc_uint32e_t) acc_swab32(*p);
+    *p = (upx_uint32_t) acc_swab32(*p);
 }
 
 
@@ -359,20 +359,20 @@ __packed_struct(BE64)
     unsigned char d[8];
 
     //inline BE64() { }
-    //BE64(acc_uint64l_t v) { set_be64(d, v); }
+    //BE64(upx_uint64_t v) { set_be64(d, v); }
 
-    BE64& operator =  (acc_uint64l_t v) { set_be64(d, v); return *this; }
-    BE64& operator += (acc_uint64l_t v) { set_be64(d, get_be64(d) + v); return *this; }
-    BE64& operator -= (acc_uint64l_t v) { set_be64(d, get_be64(d) - v); return *this; }
-    BE64& operator *= (acc_uint64l_t v) { set_be64(d, get_be64(d) * v); return *this; }
-    BE64& operator /= (acc_uint64l_t v) { set_be64(d, get_be64(d) / v); return *this; }
-    BE64& operator &= (acc_uint64l_t v) { set_be64(d, get_be64(d) & v); return *this; }
-    BE64& operator |= (acc_uint64l_t v) { set_be64(d, get_be64(d) | v); return *this; }
-    BE64& operator ^= (acc_uint64l_t v) { set_be64(d, get_be64(d) ^ v); return *this; }
+    BE64& operator =  (upx_uint64_t v) { set_be64(d, v); return *this; }
+    BE64& operator += (upx_uint64_t v) { set_be64(d, get_be64(d) + v); return *this; }
+    BE64& operator -= (upx_uint64_t v) { set_be64(d, get_be64(d) - v); return *this; }
+    BE64& operator *= (upx_uint64_t v) { set_be64(d, get_be64(d) * v); return *this; }
+    BE64& operator /= (upx_uint64_t v) { set_be64(d, get_be64(d) / v); return *this; }
+    BE64& operator &= (upx_uint64_t v) { set_be64(d, get_be64(d) & v); return *this; }
+    BE64& operator |= (upx_uint64_t v) { set_be64(d, get_be64(d) | v); return *this; }
+    BE64& operator ^= (upx_uint64_t v) { set_be64(d, get_be64(d) ^ v); return *this; }
     BE64& operator <<= (unsigned v) { set_be64(d, get_be64(d) << v); return *this; }
     BE64& operator >>= (unsigned v) { set_be64(d, get_be64(d) >> v); return *this; }
 
-    operator acc_uint64l_t () const  { return get_be64(d); }
+    operator upx_uint64_t () const  { return get_be64(d); }
 __packed_struct_end()
 
 
@@ -422,20 +422,20 @@ __packed_struct(LE64)
     unsigned char d[8];
 
     //inline LE64() { }
-    //LE64(acc_uint64l_t v) { set_le64(d, v); }
+    //LE64(upx_uint64_t v) { set_le64(d, v); }
 
-    LE64& operator =  (acc_uint64l_t v) { set_le64(d, v); return *this; }
-    LE64& operator += (acc_uint64l_t v) { set_le64(d, get_le64(d) + v); return *this; }
-    LE64& operator -= (acc_uint64l_t v) { set_le64(d, get_le64(d) - v); return *this; }
-    LE64& operator *= (acc_uint64l_t v) { set_le64(d, get_le64(d) * v); return *this; }
-    LE64& operator /= (acc_uint64l_t v) { set_le64(d, get_le64(d) / v); return *this; }
-    LE64& operator &= (acc_uint64l_t v) { set_le64(d, get_le64(d) & v); return *this; }
-    LE64& operator |= (acc_uint64l_t v) { set_le64(d, get_le64(d) | v); return *this; }
-    LE64& operator ^= (acc_uint64l_t v) { set_le64(d, get_le64(d) ^ v); return *this; }
+    LE64& operator =  (upx_uint64_t v) { set_le64(d, v); return *this; }
+    LE64& operator += (upx_uint64_t v) { set_le64(d, get_le64(d) + v); return *this; }
+    LE64& operator -= (upx_uint64_t v) { set_le64(d, get_le64(d) - v); return *this; }
+    LE64& operator *= (upx_uint64_t v) { set_le64(d, get_le64(d) * v); return *this; }
+    LE64& operator /= (upx_uint64_t v) { set_le64(d, get_le64(d) / v); return *this; }
+    LE64& operator &= (upx_uint64_t v) { set_le64(d, get_le64(d) & v); return *this; }
+    LE64& operator |= (upx_uint64_t v) { set_le64(d, get_le64(d) | v); return *this; }
+    LE64& operator ^= (upx_uint64_t v) { set_le64(d, get_le64(d) ^ v); return *this; }
     LE64& operator <<= (unsigned v) { set_le64(d, get_le64(d) << v); return *this; }
     LE64& operator >>= (unsigned v) { set_le64(d, get_le64(d) >> v); return *this; }
 
-    operator acc_uint64l_t () const  { return get_le64(d); }
+    operator upx_uint64_t () const  { return get_le64(d); }
 __packed_struct_end()
 
 
@@ -545,8 +545,8 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 // just for testing...
 #if !(ACC_CFG_NO_UNALIGNED)
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
-   typedef acc_uint16e_t LE16_unaligned __attribute__((__aligned__(1)));
-   typedef acc_uint32e_t LE32_unaligned __attribute__((__aligned__(1)));
+   typedef upx_uint16_t LE16_unaligned __attribute__((__aligned__(1)));
+   typedef upx_uint32_t LE32_unaligned __attribute__((__aligned__(1)));
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif
@@ -555,8 +555,8 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  endif
 #endif
 #if 0 && (ACC_ARCH_I386) && (ACC_CC_INTELC)
-   typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
-   typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
+   typedef __declspec(align(1)) upx_uint16_t LE16_unaligned;
+   typedef __declspec(align(1)) upx_uint32_t LE32_unaligned;
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif
@@ -565,8 +565,8 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 #  endif
 #endif
 #if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
-   typedef __declspec(align(1)) acc_uint16e_t LE16_unaligned;
-   typedef __declspec(align(1)) acc_uint32e_t LE32_unaligned;
+   typedef __declspec(align(1)) upx_uint16_t LE16_unaligned;
+   typedef __declspec(align(1)) upx_uint32_t LE32_unaligned;
 #  ifndef LE16
 #    define LE16    LE16_unaligned
 #  endif

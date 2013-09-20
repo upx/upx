@@ -64,7 +64,7 @@ protected:
     virtual void unpack(OutputFile *fo);
 
     //virtual void const *elf_find_dynamic(unsigned) const = 0;
-    virtual acc_uint64l_t elf_unsigned_dynamic(unsigned) const = 0;
+    virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const = 0;
 
 protected:
     unsigned e_phnum;       /* Program header table entry count */
@@ -79,8 +79,8 @@ protected:
     unsigned page_size;  // 1u<<lg2_page
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
-    acc_uint64l_t load_va;  // PT_LOAD[0].p_vaddr
-    acc_uint64l_t xct_va;  // minimum SHT_EXECINSTR virtual address
+    upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
+    upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -142,7 +142,7 @@ protected:
     Elf32_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
     Elf32_Dyn const *elf_has_dynamic(unsigned) const;
-    acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
+    upx_uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf32_Ehdr  ehdri; // from input file
@@ -250,12 +250,12 @@ protected:
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
 
-    virtual acc_uint64l_t elf_get_offset_from_address(acc_uint64l_t) const;
+    virtual upx_uint64_t elf_get_offset_from_address(upx_uint64_t) const;
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
     void const *elf_find_dynamic(unsigned) const;
     Elf64_Dyn const *elf_has_dynamic(unsigned) const;
-    acc_uint64l_t elf_unsigned_dynamic(unsigned) const;
+    upx_uint64_t elf_unsigned_dynamic(unsigned) const;
 
 protected:
     Elf64_Ehdr  ehdri; // from input file
@@ -263,7 +263,7 @@ protected:
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
     Elf64_Shdr const *shdri; // from input file
-    acc_uint64l_t page_mask;  // AND clears the offset-within-page
+    upx_uint64_t page_mask;  // AND clears the offset-within-page
 
     Elf64_Dyn    const *dynseg;   // from PT_DYNAMIC
     unsigned int const *hashtab;  // from DT_HASH

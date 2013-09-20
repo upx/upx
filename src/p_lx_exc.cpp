@@ -375,7 +375,7 @@ PackLinuxI386::buildLinuxLoader(
     addLoader("FOLDEXEC", NULL);
     if (M_IS_LZMA(ph.method)) {
         const lzma_compress_result_t *res = &ph.compress_result.result_lzma;
-        acc_uint32e_t properties = // lc, lp, pb, dummy
+        upx_uint32_t properties = // lc, lp, pb, dummy
             (res->lit_context_bits << 0) |
             (res->lit_pos_bits << 8) |
             (res->pos_bits << 16);

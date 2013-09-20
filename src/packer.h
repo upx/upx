@@ -292,12 +292,12 @@ protected:
     static unsigned unoptimizeReloc64(upx_byte **in,upx_byte *image,MemBuffer *out,int bs);
 
     // target endianness abstraction
-    unsigned get_te16(const void *p)        const { return bele->get16(p); }
-    unsigned get_te32(const void *p)        const { return bele->get32(p); }
-    acc_uint64l_t get_te64(const void *p)   const { return bele->get64(p); }
-    void set_te16(void *p, unsigned v)      const { bele->set16(p, v); }
-    void set_te32(void *p, unsigned v)      const { bele->set32(p, v); }
-    void set_te64(void *p, acc_uint64l_t v) const { bele->set64(p, v); }
+    unsigned get_te16(const void *p)       const { return bele->get16(p); }
+    unsigned get_te32(const void *p)       const { return bele->get32(p); }
+    upx_uint64_t get_te64(const void *p)   const { return bele->get64(p); }
+    void set_te16(void *p, unsigned v)     const { bele->set16(p, v); }
+    void set_te32(void *p, unsigned v)     const { bele->set32(p, v); }
+    void set_te64(void *p, upx_uint64_t v) const { bele->set64(p, v); }
 
 protected:
     const N_BELE_RTP::AbstractPolicy *bele; // target endianness

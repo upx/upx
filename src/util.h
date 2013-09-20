@@ -53,10 +53,10 @@ void center_string(char *buf, size_t size, const char *s);
 int find(const void *b, int blen, const void *what, int wlen);
 int find_be16(const void *b, int blen, unsigned what);
 int find_be32(const void *b, int blen, unsigned what);
-int find_be64(const void *b, int blen, acc_uint64l_t what);
+int find_be64(const void *b, int blen, upx_uint64_t what);
 int find_le16(const void *b, int blen, unsigned what);
 int find_le32(const void *b, int blen, unsigned what);
-int find_le64(const void *b, int blen, acc_uint64l_t what);
+int find_le64(const void *b, int blen, upx_uint64_t what);
 
 int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
 

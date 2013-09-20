@@ -72,9 +72,9 @@
 
 #undef LLONG
 #undef ULLONG
-#if 1 && defined(acc_int64l_t)
-#  define LLONG     acc_int64l_t
-#  define ULLONG    acc_uint64l_t
+#if 1 && defined(upx_int64_t)
+#  define LLONG     upx_int64_t
+#  define ULLONG    upx_uint64_t
 #else
 #  define LLONG     long int
 #  define ULLONG    unsigned long int
@@ -713,7 +713,7 @@ static size_t dopr(char *buffer, size_t maxlen, const char *format, va_list args
                 break;
             case 'p':
                 strvalue = (const char *) va_arg (args, const void *);
-                fmtint (buffer, &currlen, maxlen, (LLONG) (acc_uintptr_t) strvalue, 16, min, max, flags);
+                fmtint (buffer, &currlen, maxlen, (LLONG) (upx_uintptr_t) strvalue, 16, min, max, flags);
                 break;
             case 'n':
                 if (cflags == DP_C_SHORT) {

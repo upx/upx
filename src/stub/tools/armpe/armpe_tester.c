@@ -52,7 +52,7 @@ void *VirtualAlloc(void *address, unsigned size, unsigned type, unsigned protect
 #  define PAGE_EXECUTE_READWRITE 0x0040
 #endif
 
-typedef size_t          acc_uintptr_t;
+typedef size_t          upx_uintptr_t;
 typedef unsigned short  LE16;
 typedef unsigned int    LE32;
 #define get_le32(p)     (* (const unsigned *) (p))

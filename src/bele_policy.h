@@ -61,17 +61,17 @@ struct AbstractPolicy
     V unsigned get16(const void *p) C = 0;
     V unsigned get24(const void *p) C = 0;
     V unsigned get32(const void *p) C = 0;
-    V acc_uint64l_t get64(const void *p) C = 0;
+    V upx_uint64_t get64(const void *p) C = 0;
 
     V void set16(void *p, unsigned v) C = 0;
     V void set24(void *p, unsigned v) C = 0;
     V void set32(void *p, unsigned v) C = 0;
-    V void set64(void *p, acc_uint64l_t v) C = 0;
+    V void set64(void *p, upx_uint64_t v) C = 0;
 
     V unsigned get16_signed(const void *p) C = 0;
     V unsigned get24_signed(const void *p) C = 0;
     V unsigned get32_signed(const void *p) C = 0;
-    V acc_uint64l_t get64_signed(const void *p) C = 0;
+    V upx_uint64_t get64_signed(const void *p) C = 0;
 
     S u16_compare(const void *a, const void *b) C = 0;
     S u24_compare(const void *a, const void *b) C = 0;
@@ -113,7 +113,7 @@ struct BEPolicy
         { return get_be24(p); }
     V unsigned get32(const void *p) C
         { return get_be32(p); }
-    V acc_uint64l_t get64(const void *p) C
+    V upx_uint64_t get64(const void *p) C
         { return get_be64(p); }
 
     V void set16(void *p, unsigned v) C
@@ -122,7 +122,7 @@ struct BEPolicy
         { set_be24(p, v); }
     V void set32(void *p, unsigned v) C
         { set_be32(p, v); }
-    V void set64(void *p, acc_uint64l_t v) C
+    V void set64(void *p, upx_uint64_t v) C
         { set_be64(p, v); }
 
     V unsigned get16_signed(const void *p) C
@@ -131,7 +131,7 @@ struct BEPolicy
         { return get_be24_signed(p); }
     V unsigned get32_signed(const void *p) C
         { return get_be32_signed(p); }
-    V acc_uint64l_t get64_signed(const void *p) C
+    V upx_uint64_t get64_signed(const void *p) C
         { return get_be64_signed(p); }
 
     S u16_compare(const void *a, const void *b) C
@@ -190,7 +190,7 @@ struct LEPolicy
         { return get_le24(p); }
     V unsigned get32(const void *p) C
         { return get_le32(p); }
-    V acc_uint64l_t get64(const void *p) C
+    V upx_uint64_t get64(const void *p) C
         { return get_le64(p); }
 
     V void set16(void *p, unsigned v) C
@@ -199,7 +199,7 @@ struct LEPolicy
         { set_le24(p, v); }
     V void set32(void *p, unsigned v) C
         { set_le32(p, v); }
-    V void set64(void *p, acc_uint64l_t v) C
+    V void set64(void *p, upx_uint64_t v) C
         { set_le64(p, v); }
 
     V unsigned get16_signed(const void *p) C
@@ -208,7 +208,7 @@ struct LEPolicy
         { return get_le24_signed(p); }
     V unsigned get32_signed(const void *p) C
         { return get_le32_signed(p); }
-    V acc_uint64l_t get64_signed(const void *p) C
+    V upx_uint64_t get64_signed(const void *p) C
         { return get_le64_signed(p); }
 
     S u16_compare(const void *a, const void *b) C
@@ -259,9 +259,9 @@ struct HostAlignedPolicy
     enum { isBE = HostPolicy::isBE, isLE = HostPolicy::isLE };
 #endif
 
-    typedef acc_uint16e_t U16;
-    typedef acc_uint32e_t U32;
-    typedef acc_uint64l_t U64;
+    typedef upx_uint16_t U16;
+    typedef upx_uint32_t U32;
+    typedef upx_uint64_t U64;
 
     static void compileTimeAssertions() {
         COMPILE_TIME_ASSERT(sizeof(U16) == 2)

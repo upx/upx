@@ -512,7 +512,7 @@ void PackW64Pep::processTls(Interval *iv) // pass 1
             throwCantPack("invalid TLS callback");
         else if (tlsp->callbacks - ih.imagebase + 4 >= ih.imagesize)
             throwCantPack("invalid TLS callback");
-        acc_uint64l_t v = get_le64(ibuf + (tlsp->callbacks - ih.imagebase));
+        upx_uint64_t v = get_le64(ibuf + (tlsp->callbacks - ih.imagebase));
         if (v != 0)
         {
             //count number of callbacks, just for information string - Stefan Widmann
@@ -580,7 +580,7 @@ void PackW64Pep::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // p
     for (ic = 0; ic < iv->ivnum; ic += 4)
     {
         void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - ih.imagebase) + sizeof(tls);
-        acc_uint64l_t kc = get_le64(p); //changed to LE64 - Stefan Widmann
+        upx_uint64_t kc = get_le64(p); //changed to LE64 - Stefan Widmann
         if (kc < tlsp->dataend && kc >= tlsp->datastart)
         {
             kc +=  newaddr + sizeof(tls) - tlsp->datastart;

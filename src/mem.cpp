@@ -154,7 +154,7 @@ void MemBuffer::fill(unsigned off, unsigned len, int value)
 //
 **************************************************************************/
 
-#define PTR(p)      ((unsigned) ((acc_uintptr_t)(p) & 0xffffffff))
+#define PTR(p)      ((unsigned) ((upx_uintptr_t)(p) & 0xffffffff))
 #define MAGIC1(p)   (PTR(p) ^ 0xfefdbeeb)
 #define MAGIC2(p)   (PTR(p) ^ 0xfefdbeeb ^ 0x80024001)
 

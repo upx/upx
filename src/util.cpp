@@ -88,8 +88,8 @@ int __acc_cdecl_qsort be32_compare(const void *e1, const void *e2)
 
 int __acc_cdecl_qsort be64_compare(const void *e1, const void *e2)
 {
-    const acc_uint64l_t d1 = get_be64(e1);
-    const acc_uint64l_t d2 = get_be64(e2);
+    const upx_uint64_t d1 = get_be64(e1);
+    const upx_uint64_t d2 = get_be64(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -116,8 +116,8 @@ int __acc_cdecl_qsort le32_compare(const void *e1, const void *e2)
 
 int __acc_cdecl_qsort le64_compare(const void *e1, const void *e2)
 {
-    const acc_uint64l_t d1 = get_le64(e1);
-    const acc_uint64l_t d2 = get_le64(e2);
+    const upx_uint64_t d1 = get_le64(e1);
+    const upx_uint64_t d2 = get_le64(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -145,8 +145,8 @@ int __acc_cdecl_qsort be32_compare_signed(const void *e1, const void *e2)
 
 int __acc_cdecl_qsort be64_compare_signed(const void *e1, const void *e2)
 {
-    const acc_int64l_t d1 = get_be64_signed(e1);
-    const acc_int64l_t d2 = get_be64_signed(e2);
+    const upx_int64_t d1 = get_be64_signed(e1);
+    const upx_int64_t d2 = get_be64_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -173,8 +173,8 @@ int __acc_cdecl_qsort le32_compare_signed(const void *e1, const void *e2)
 
 int __acc_cdecl_qsort le64_compare_signed(const void *e1, const void *e2)
 {
-    const acc_int64l_t d1 = get_le64_signed(e1);
-    const acc_int64l_t d2 = get_le64_signed(e2);
+    const upx_int64_t d1 = get_le64_signed(e1);
+    const upx_int64_t d2 = get_le64_signed(e2);
     return (d1 < d2) ? -1 : ((d1 > d2) ? 1 : 0);
 }
 
@@ -217,7 +217,7 @@ int find_be32(const void *b, int blen, unsigned what)
 }
 
 
-int find_be64(const void *b, int blen, acc_uint64l_t what)
+int find_be64(const void *b, int blen, upx_uint64_t what)
 {
     unsigned char w[8];
     set_be64(w, what);
@@ -241,7 +241,7 @@ int find_le32(const void *b, int blen, unsigned what)
 }
 
 
-int find_le64(const void *b, int blen, acc_uint64l_t what)
+int find_le64(const void *b, int blen, upx_uint64_t what)
 {
     unsigned char w[8];
     set_le64(w, what);
@@ -562,8 +562,8 @@ unsigned get_ratio(unsigned u_len, unsigned c_len)
     const unsigned n = 1000000;
     if (u_len <= 0)
         return c_len <= 0 ? 0 : n;
-#if defined(acc_uint64l_t)
-    return (unsigned) ((c_len * (acc_uint64l_t)n) / u_len);
+#if defined(upx_uint64_t)
+    return (unsigned) ((c_len * (upx_uint64_t)n) / u_len);
 #else
 # if 0
     return (unsigned) acc_umuldiv32(c_len, n, u_len);
