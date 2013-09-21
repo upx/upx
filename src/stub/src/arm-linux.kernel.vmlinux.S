@@ -48,20 +48,19 @@ section         LINUX000
 decompress_kernel:  # (char *out, char *tmp, char *tmp_end, int arch_id)
         lr= &indata; ip= retaddr  # from arm-linux.kernel.vmlinux-head.S
 */
-        mov r1,r2  // tmp_end
-        mov r2,r0  // &outdata
-        mov r0,lr  // &indata
-        str ip,[r1,#-4]!  // push retaddr on new stack
+        str ip,[r2,#-4]!  // push retaddr on new stack
+        stmdb   r2!,{r0,r3,sp}  // &outdata, arch_id, sp_in
+        sub     r2,r2,#4  // space for outsize
+        loadcon8      3,METHOD  // mov r3,#METHOD
+        stmdb   r2!,{r3,lr}  // METHOD, &indata
+        mov sp, r2  // method,&indata,space,&outdata,arch_id,sp_in,retaddr
 
-// Value stored from r1 to memory will be overwritten by outsize.
-        stmdb r1!,{r0,r1,r2,r3,sp}  // &indata, space, &outdata, arch_id, sp_in
-        loadcon8 3,METHOD  // mov r3,#METHOD
-        mov sp,r1  // switch stacks to tmp_end area (64 KiB)
-        ldr r1,1f  // insize
-        str r3,[sp,#-4]!  // method
         ldr r3,2f  // outsize
-        str r3,[sp,#2*4]  // outsize
-        add r3,sp, #2*4  // &outsize
+        str r3,[sp,#2*4] //  outsize
+        add r3, sp,#2*4  // &outsize
+        mov r2,r0  // &outdata
+        ldr r1,1f  // insize
+        mov r0,lr  // &indata
         bl decompressor  // (&indata, insize, &outdata, &outsize, method)
         b 3f
 1:
