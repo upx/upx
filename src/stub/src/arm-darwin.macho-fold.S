@@ -47,6 +47,8 @@ sz_b_info = 12
   sz_cpr= 4
   b_method= 8
 
+_start: .globl _start  // ignored, but silence "cannot find entry symbol _start" from ld
+
 // control just falls through, after this part and compiled C code
 // are uncompressed.
 
