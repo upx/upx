@@ -230,6 +230,7 @@ error:
 **************************************************************************/
 
 #if (WITH_LZMA >= 0x461)
+#define _7ZIP_ST 1
 #define kLiteralNextStates kLiteralNextStates_enc
 #include "C/LzmaEnc.h"
 #include "C/LzmaEnc.c"

@@ -38,9 +38,9 @@ extern "C" {
 //
 **************************************************************************/
 
-int __acc_cdecl    upx_vsnprintf(char *str, size_t count, const char *format, va_list ap);
+int                upx_vsnprintf(char *str, size_t count, const char *format, va_list ap);
 int __acc_cdecl_va upx_snprintf(char *str, size_t count, const char *format,...);
-int __acc_cdecl    upx_vasprintf(char **ptr, const char *format, va_list ap);
+int                upx_vasprintf(char **ptr, const char *format, va_list ap);
 int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...);
 
 #if 1

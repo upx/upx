@@ -72,7 +72,7 @@
 
 #undef LLONG
 #undef ULLONG
-#if 1 && defined(upx_int64_t)
+#if 1
 #  define LLONG     upx_int64_t
 #  define ULLONG    upx_uint64_t
 #else
@@ -798,7 +798,7 @@ static int xdopr(char *buffer, size_t maxlen, const char *format, va_list args)
 }
 
 
-int __acc_cdecl upx_vsnprintf(char *str, size_t count, const char *format, va_list ap)
+int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap)
 {
     return xdopr(str, count, format, ap);
 }
@@ -816,7 +816,7 @@ int __acc_cdecl_va upx_snprintf(char *str, size_t count, const char *format,...)
 }
 
 
-int __acc_cdecl upx_vasprintf(char **ptr, const char *format, va_list ap)
+int upx_vasprintf(char **ptr, const char *format, va_list ap)
 {
     int ret;
 

@@ -62,7 +62,7 @@ private:
     DISABLE_NEW_DELETE
 
 private:
-    static long counter;                // for debugging
+    static unsigned long counter;       // for debugging
 };
 
 

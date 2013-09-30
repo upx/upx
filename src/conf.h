@@ -150,17 +150,21 @@
 #endif
 
 /* intergral types */
-#define upx_int8_t      acc_int8_t
-#define upx_uint8_t     acc_uint8_t
-#define upx_int16_t     acc_int16_t
-#define upx_uint16_t    acc_uint16_t
-#define upx_int32_t     acc_int32_t
-#define upx_uint32_t    acc_uint32_t
-#define upx_int64_t     acc_int64_t
-#define upx_uint64_t    acc_uint64_t
+typedef acc_int8_t      upx_int8_t;
+typedef acc_uint8_t     upx_uint8_t;
+typedef acc_int16_t     upx_int16_t;
+typedef acc_uint16_t    upx_uint16_t;
+typedef acc_int32_t     upx_int32_t;
+typedef acc_uint32_t    upx_uint32_t;
+typedef acc_int64_t     upx_int64_t;
+typedef acc_uint64_t    upx_uint64_t;
+typedef acc_uintptr_t   upx_uintptr_t;
+#define UPX_INT16_C     ACC_INT16_C
+#define UPX_UINT16_C    ACC_UINT16_C
+#define UPX_INT32_C     ACC_INT32_C
+#define UPX_UINT32_C    ACC_UINT32_C
 #define UPX_INT64_C     ACC_INT64_C
 #define UPX_UINT64_C    ACC_UINT64_C
-#define upx_uintptr_t   acc_uintptr_t
 
 
 /*************************************************************************

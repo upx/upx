@@ -33,7 +33,7 @@
 //
 **************************************************************************/
 
-long Throwable::counter = 0;
+unsigned long Throwable::counter = 0;
 
 Throwable::Throwable(const char *m, int e, bool w) NOTHROW
     : super(), msg(NULL), err(e), is_warning(w)
@@ -41,7 +41,7 @@ Throwable::Throwable(const char *m, int e, bool w) NOTHROW
     if (m)
         msg = strdup(m);
 #if 0
-    fprintf(stderr, "construct exception: %s %ld\n", msg, counter);
+    fprintf(stderr, "construct exception: %s %lu\n", msg, counter);
     counter++;
 #endif
 }
@@ -53,7 +53,7 @@ Throwable::Throwable(const Throwable &other) NOTHROW
     if (other.msg)
         msg = strdup(other.msg);
 #if 0
-    fprintf(stderr, "copy exception: %s %ld\n", msg, counter);
+    fprintf(stderr, "copy exception: %s %lu\n", msg, counter);
     counter++;
 #endif
 }
@@ -63,7 +63,7 @@ Throwable::~Throwable() NOTHROW
 {
 #if 0
     counter--;
-    fprintf(stderr, "destruct exception: %s %ld\n", msg, counter);
+    fprintf(stderr, "destruct exception: %s %lu\n", msg, counter);
 #endif
     if (msg)
         free(msg);

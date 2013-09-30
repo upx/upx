@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.91 (27 Sep 2013):
+Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
     work by Stefan Widmann. Please use for testing only!
   * bug fixes

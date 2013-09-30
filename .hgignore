@@ -10,6 +10,7 @@ syntax: glob
 
 .depend
 *.qtcreator.{config,creator,creator.user,files,includes}
+*.sublime-{project,workspace}
 Makevars.local
 
 *.a
