@@ -459,7 +459,7 @@ section         PEDOJUMP
 // =============
 
 // this is the new TLS callback handler
-// it calls the original callbacks ONLY after the compression is done
+// it calls the original callbacks ONLY after the decompression is done
 
 section         PETLSC2         // TLS_CALLBACK(hModule, reason, reserved)
                 ret             // this ret gets overwritten with cld by PETLSC

@@ -27,7 +27,6 @@
    -------------------------------------------------------------------
 
    PE+ format extension changes         (C) 2010 Stefan Widmann
-   changes in:
 
  */
 
@@ -135,6 +134,7 @@ PackW64Pep::PackW64Pep(InputFile *f) : super(f)
 
 PackW64Pep::~PackW64Pep()
 {
+    oimpdlls = NULL; // this is now a pointer to ImportLinker output
     delete [] oloadconf;
 }
 
@@ -183,33 +183,262 @@ __packed_struct(import_desc)
     LE32  iat;      // import address table
 __packed_struct_end()
 
+/*
+ ImportLinker: 32 and 64 bit import table building.
+ Import entries (dll name + proc name/ordinal pairs) can be
+ added in arbitrary order.
+
+ Internally it works by creating sections with special names,
+ and adding relocation entries between those sections. The special
+ names ensure that when the import table is built in the memory
+ from those sections, a correct table can be generated simply by
+ sorting the sections by name, and adding all of them to the output
+ in the sorted order.
+ */
+
+class ImportLinker : public ElfLinkerAMD64
+{
+    struct tstr : private ::noncopyable
+    {
+        char *s;
+        explicit tstr(char *str) : s(str) {}
+        ~tstr() { delete [] s; }
+        operator char *() const { return s; }
+    };
+
+    // encoding of dll and proc names are required, so that our special
+    // control characters in the name of sections can work as intended
+    static char *encode_name(const char *name, char *buf)
+    {
+        char *b = buf;
+        while (*name)
+        {
+            *b++ = 'a' + ((*name >> 4) & 0xf);
+            *b++ = 'a' + (*name  & 0xf);
+            name++;
+        }
+        *b = 0;
+        return buf;
+    }
+
+    static char *name_for_dll(const char *dll, char first_char)
+    {
+        assert(dll);
+        unsigned l = strlen(dll);
+        assert(l > 0);
+
+        char *name = new char[3 * l + 2];
+        assert(name);
+        name[0] = first_char;
+        char *n = name + 1 + 2 * l;
+        do {
+            *n++ = tolower(*dll);
+        } while(*dll++);
+        return encode_name(name + 1 + 2 * l, name + 1) - 1;
+    }
+
+    static char *name_for_proc(const char *dll, const char *proc,
+                               char first_char, char separator)
+    {
+        unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
+        tstr dlln(name_for_dll(dll, first_char));
+        char *procn = new char[len];
+        snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        encode_name(proc, procn + strlen(procn));
+        return procn;
+    }
+
+    static char zeros[sizeof(import_desc)];
+
+    enum {
+        // the order of identifiers is very important below!!
+        descriptor_id = 'D',
+        thunk_id,
+        dll_name_id,
+        proc_name_id,
+        ordinal_id,
+
+        thunk_separator_first,
+        thunk_separator,
+        thunk_separator_last,
+        procname_separator,
+    };
+
+    unsigned thunk_size; // 4 or 8 bytes
+
+    void add(const char *dll, const char *proc, unsigned ordinal)
+    {
+        tstr sdll(name_for_dll(dll, dll_name_id));
+        tstr desc_name(name_for_dll(dll, descriptor_id));
+
+        char tsep = thunk_separator;
+        if (findSection(sdll, false) == NULL)
+        {
+            tsep = thunk_separator_first;
+            addSection(sdll, dll, strlen(dll) + 1, 0); // name of the dll
+            addSymbol(sdll, sdll, 0);
+
+            addSection(desc_name, zeros, sizeof(zeros), 0); // descriptor
+            addRelocation(desc_name, offsetof(import_desc, dllname),
+                          "R_X86_64_32", sdll, 0);
+        }
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        addSection(thunk, zeros, thunk_size, 0);
+        addSymbol(thunk, thunk, 0);
+        if (tsep == thunk_separator_first)
+        {
+            addRelocation(desc_name, offsetof(import_desc, iat),
+                          "R_X86_64_32", thunk, 0);
+
+            tstr last_thunk(name_for_proc(dll, "X", thunk_id, thunk_separator_last));
+            addSection(last_thunk, zeros, thunk_size, 0);
+        }
+
+        const char *reltype = thunk_size == 4 ? "R_X86_64_32" : "R_X86_64_64";
+        if (ordinal != 0u)
+        {
+            addRelocation(thunk, 0, reltype, "*UND*",
+                          ordinal | (1ull << (thunk_size * 8 - 1)));
+        }
+        else
+        {
+            tstr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
+            addSection(proc_name, zeros, 2, 1); // 2 bytes of word aligned "hint"
+            addSymbol(proc_name, proc_name, 0);
+            addRelocation(thunk, 0, reltype, proc_name, 0);
+
+            strcat(proc_name, "X");
+            addSection(proc_name, proc, strlen(proc), 0); // the name of the symbol
+        }
+    }
+
+    static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
+    {
+        const Section *s1 = * (const Section * const *) p1;
+        const Section *s2 = * (const Section * const *) p2;
+        return strcmp(s1->name, s2->name);
+    }
+
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
+
+    const Section *getThunk(const char *dll, const char *proc, char tsep) const
+    {
+        assert(dll);
+        assert(proc);
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        return findSection(thunk, false);
+    }
+
+public:
+    explicit ImportLinker(unsigned thunk_size_) : thunk_size(thunk_size_)
+    {
+        assert(thunk_size == 4 || thunk_size == 8);
+        addSection("*UND*", NULL, 0, 0);
+        addSymbol("*UND*", "*UND*", 0);
+        addSection("*ZSTART", NULL, 0, 0);
+        addSymbol("*ZSTART", "*ZSTART", 0);
+        Section *s = addSection("Dzero", zeros, sizeof(import_desc), 0);
+        assert(s->name[0] == descriptor_id);
+
+        // one trailing 00 byte after the last proc name
+        addSection("Zzero", zeros, 1, 0);
+    }
+
+    template <typename C>
+    void add(const C *dll, unsigned ordinal)
+    {
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[20];
+        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        add((const char*) dll, ord, ordinal);
+    }
+
+    template <typename C1, typename C2>
+    void add(const C1 *dll, const C2 *proc)
+    {
+        assert(proc);
+        add((const char*) dll, (const char*) proc, 0);
+    }
+
+    unsigned build()
+    {
+        assert(output == NULL);
+        int osize = 4 + 2 * nsections; // upper limit for alignments
+        for (unsigned ic = 0; ic < nsections; ic++)
+            osize += sections[ic]->size;
+        output = new upx_byte[osize];
+
+        // sort the sections by name before adding them all
+        qsort(sections, nsections, sizeof (Section*), ImportLinker::compare);
+
+        for (unsigned ic = 0; ic < nsections; ic++)
+            addLoader(sections[ic]->name);
+        addLoader("+40D");
+        assert(outputlen <= osize);
+
+        //OutputFile::dump("il0.imp", output, outputlen);
+        return outputlen;
+    }
+
+    void relocate(unsigned myimport)
+    {
+        assert(nsections > 0);
+        assert(output);
+        defineSymbol("*ZSTART", /*0xffffffffff1000ull + 0 * */ myimport);
+        ElfLinkerAMD64::relocate();
+        //OutputFile::dump("il1.imp", output, outputlen);
+    }
+
+    template <typename C1, typename C2>
+    upx_uint64_t getAddress(const C1 *dll, const C2 *proc) const
+    {
+        const Section *s = getThunk((const char*) dll, (const char*) proc,
+                                    thunk_separator_first);
+        if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
+                                       thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C1>
+    upx_uint64_t getAddress(const C1 *dll, unsigned ordinal) const
+    {
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[20];
+        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+
+        const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
+        if (s == NULL
+            && (s = getThunk((const char*) dll, ord, thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C1>
+    upx_uint64_t getAddress(const C1 *dll) const
+    {
+        tstr sdll(name_for_dll((const char*) dll, dll_name_id));
+        return findSection(sdll, true)->offset;
+    }
+};
+char ImportLinker::zeros[sizeof(import_desc)];
+
+ImportLinker ilinker(8);
+
 void PackW64Pep::processImports(unsigned myimport, unsigned) // pass 2
 {
     COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
 
-    // adjust import data
-    for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
-    {
-        if (im->dllname < myimport)
-            im->dllname += myimport;
-        LE64 *p = (LE64*) (oimpdlls + im->iat);  //changed to LE64 - Stefan Widmann
-        im->iat += myimport;
-
-        while (*p)
-            if ((*p++ & 0x8000000000000000ULL) == 0)  // changed to 64 bit - Stefan Widmann
-                p[-1] += myimport;
-    }
+    ilinker.relocate(myimport);
+    int len;
+    oimpdlls = ilinker.getLoader(&len);
+    assert(len == (int) soimpdlls);
+    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
 }
 
 unsigned PackW64Pep::processImports() // pass 1
 {
     static const unsigned char kernel32dll[] = "KERNEL32.DLL";
-    static const char llgpa[] = "\x0\x0""LoadLibraryA\x0\x0"
-                                "GetProcAddress\x0\x0"
-                                "VirtualProtect\x0\x0"
-                                "VirtualAlloc\x0\x0"
-                                "VirtualFree\x0\x0\x0";
-    static const char exitp[] = "ExitProcess\x0\x0\x0";
 
     unsigned dllnum = 0;
     import_desc *im = (import_desc*) (ibuf + IDADDR(PEDIR_IMPORT));
@@ -227,8 +456,7 @@ unsigned PackW64Pep::processImports() // pass 1
         const upx_byte *shname;
         unsigned   ordinal;
         unsigned   iat;
-        LE64       *lookupt; //changed to LE64* - Stefan Widmann
-        unsigned   npos;
+        LE64       *lookupt;
         unsigned   original_position;
         bool       isk32;
 
@@ -256,31 +484,28 @@ unsigned PackW64Pep::processImports() // pass 1
 
     soimport = 1024; // safety
 
-    unsigned ic,k32o;
-    for (ic = k32o = 0; dllnum && im->dllname; ic++, im++)
+    unsigned ic;
+    for (ic = 0; dllnum && im->dllname; ic++, im++)
     {
         idlls[ic] = dlls + ic;
         dlls[ic].name = ibuf + im->dllname;
         dlls[ic].shname = NULL;
         dlls[ic].ordinal = 0;
         dlls[ic].iat = im->iat;
-        dlls[ic].lookupt = (LE64*) (ibuf + (im->oft ? im->oft : im->iat)); //changed to LE64* - Stefan Widmann
-        dlls[ic].npos = 0;
+        dlls[ic].lookupt = (LE64*) (ibuf + (im->oft ? im->oft : im->iat));
         dlls[ic].original_position = ic;
         dlls[ic].isk32 = strcasecmp(kernel32dll,dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
         // FIXME use IPTR_I as in p32pe.cpp
-        for (LE64 *tarr = dlls[ic].lookupt; *tarr; tarr++) //changed to LE64* - Stefan Widmann
+        for (LE64 *tarr = dlls[ic].lookupt; *tarr; tarr++)
         {
-            if (*tarr & 0x8000000000000000ULL) //in PE32+, bit 63 indicates an ordinal
+            if (*tarr & (1ULL << 63))
             {
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
-                if (dlls[ic].isk32)
-                    kernel32ordinal = true,k32o++;
             }
             else //it's an import by name
             {
@@ -294,113 +519,74 @@ unsigned PackW64Pep::processImports() // pass 1
     }
     oimport = new upx_byte[soimport];
     memset(oimport,0,soimport);
-    oimpdlls = new upx_byte[soimport];
-    memset(oimpdlls,0,soimport);
 
     qsort(idlls,dllnum,sizeof (udll*),udll::compare);
-
-    unsigned dllnamelen = sizeof (kernel32dll);
-    unsigned dllnum2 = 1;
-    for (ic = 0; ic < dllnum; ic++)
-        if (!idlls[ic]->isk32 && (ic == 0 || strcasecmp(idlls[ic - 1]->name,idlls[ic]->name)))
-        {
-            dllnum2++;
-            dllnamelen += strlen(idlls[ic]->name) + 1;
-        }
-    //fprintf(stderr,"dllnum=%d dllnum2=%d soimport=%d\n",dllnum,dllnum2,soimport); //
 
     info("Processing imports: %d DLLs", dllnum);
 
     // create the new import table
-    im = (import_desc*) oimpdlls;
-
-    LE64 *ordinals = (LE64*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc)); //changed to LE64* - Stefan Widmann
-    LE64 *lookuptable = ordinals + 6 + k32o + (isdll ? 0 : 1); //changed to LE64* - Stefan Widmann
-    upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 16; //double the size per hint - is that correct? - Stefan Widmann
-    upx_byte *importednames = dllnames + (dllnamelen &~ 1);
-
-    unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
-
-    memcpy(importednames, llgpa, sizeof(llgpa));
+    ilinker.add(kernel32dll, "LoadLibraryA");
+    ilinker.add(kernel32dll, "GetProcAddress");
     if (!isdll)
-        memcpy(importednames + sizeof(llgpa) - 1, exitp, sizeof(exitp));
-    strcpy(dllnames,kernel32dll);
-    im->dllname = k32namepos;
-    im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryA
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddress
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16;   // VirtualProtect
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16 + 16;   // VirtualAlloc
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 16 + 16 + 14;   // VirtualFree
-    if (!isdll)
-        *ordinals++ = ptr_diff(importednames,oimpdlls) + sizeof(llgpa) - 3; // ExitProcess
-    dllnames += sizeof(kernel32dll);
-    importednames += sizeof(llgpa) - 2 + (isdll ? 0 : sizeof(exitp) - 1);
+        ilinker.add(kernel32dll, "ExitProcess");
+    ilinker.add(kernel32dll, "VirtualProtect");
 
-    im++;
     for (ic = 0; ic < dllnum; ic++)
+    {
         if (idlls[ic]->isk32)
         {
-            idlls[ic]->npos = k32namepos;
+            // for kernel32.dll we need to put all the imported
+            // ordinals into the output import table, as on
+            // some versions of windows GetProcAddress does not resolve them
             if (idlls[ic]->ordinal)
-                for (LE64 *tarr = idlls[ic]->lookupt; *tarr; tarr++) //changed to LE64* - Stefan Widmann
-                    if (*tarr & 0x8000000000000000ULL) //in PE32+, bit 63 indicates an ordinal - Stefan Widmann
-                        *ordinals++ = *tarr;
+                for (LE64 *tarr = idlls[ic]->lookupt; *tarr; tarr++)
+                    if (*tarr & (1ULL << 63))
+                    {
+                        ilinker.add(kernel32dll, *tarr & 0xffff);
+                        kernel32ordinal = true;
+                    }
         }
-        else if (ic && strcasecmp(idlls[ic-1]->name,idlls[ic]->name) == 0)
-            idlls[ic]->npos = idlls[ic-1]->npos;
         else
         {
-            im->dllname = idlls[ic]->npos = ptr_diff(dllnames,oimpdlls);
-            im->iat = ptr_diff(lookuptable,oimpdlls);
-
-            strcpy(dllnames,idlls[ic]->name);
-            dllnames += strlen(idlls[ic]->name)+1;
             if (idlls[ic]->ordinal)
-                *lookuptable = idlls[ic]->ordinal + 0x8000000000000000ULL; //bit 63 indicates an ordinal - Stefan Widmann
+                ilinker.add(idlls[ic]->name, idlls[ic]->ordinal);
             else if (idlls[ic]->shname)
-            {
-                if (ptr_diff(importednames,oimpdlls) & 1)
-                    importednames--;
-                *lookuptable = ptr_diff(importednames,oimpdlls);
-                importednames += 2;
-                strcpy(importednames,idlls[ic]->shname);
-                importednames += strlen(idlls[ic]->shname) + 1;
-            }
-            lookuptable += 2;
-            im++;
+                ilinker.add(idlls[ic]->name, idlls[ic]->shname);
+            else
+                throwInternalError("should not happen");
         }
-    soimpdlls = ALIGN_UP(ptr_diff(importednames,oimpdlls),4);
+    }
+
+    soimpdlls = ilinker.build();
 
     Interval names(ibuf),iats(ibuf),lookups(ibuf);
+
     // create the preprocessed data
-    ordinals -= k32o;
     upx_byte *ppi = oimport;  // preprocessed imports
     for (ic = 0; ic < dllnum; ic++)
     {
-        //LE32 *tarr = idlls[ic]->lookupt;
-        LE64 *tarr = idlls[ic]->lookupt; //changed to LE64* - Stefan Widmann
+        LE64 *tarr = idlls[ic]->lookupt;
 #if 0 && ENABLE_THIS_AND_UNCOMPRESSION_WILL_BREAK // FIXME
         if (!*tarr)  // no imports from this dll
             continue;
 #endif
-        set_le32(ppi,idlls[ic]->npos);
+        set_le32(ppi, ilinker.getAddress(idlls[ic]->name));
         set_le32(ppi+4,idlls[ic]->iat - rvamin);
         ppi += 8;
         for (; *tarr; tarr++)
-            if (*tarr & 0x8000000000000000ULL) //bit 63 indicates ordinal - Stefan Widmann
+            if (*tarr & (1ULL << 63))
             {
+                unsigned ord = *tarr & 0xffff;
                 if (idlls[ic]->isk32)
                 {
                     *ppi++ = 0xfe; // signed + odd parity
-                    set_le32(ppi,ptr_diff(ordinals,oimpdlls));
-                    ordinals++;
+                    set_le32(ppi, ilinker.getAddress(idlls[ic]->name, ord));
                     ppi += 4;
                 }
                 else
                 {
                     *ppi++ = 0xff;
-                    set_le16(ppi,*tarr & 0xffff);
+                    set_le16(ppi, ord);
                     ppi += 2;
                 }
             }
@@ -430,8 +616,7 @@ unsigned PackW64Pep::processImports() // pass 1
     if (soimport == 4)
         soimport = 0;
 
-    //OutputFile::dump("x0.imp", oimport, soimport);
-    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
+    OutputFile::dump("x0.imp", oimport, soimport);
 
     unsigned ilen = 0;
     names.flatten();
@@ -688,7 +873,8 @@ void PackW64Pep::buildLoader(const Filter *ft)
               //ph.first_offset_found == 1 ? "PEMAIN03" : "",
               M_IS_LZMA(ph.method) ? "LZMA_HEAD,LZMA_ELF00,LZMA_DEC20,LZMA_TAIL" :
               M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B" :
-              M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D" : "NRV_HEAD,NRV2E",
+              M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D" :
+              M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E" : "UNKNOWN_COMPRESSION_METHOD",
               //getDecompressorSections(),
               /*multipass ? "PEMULTIP" :  */  "",
               "PEMAIN10",
@@ -934,12 +1120,6 @@ void PackW64Pep::pack(OutputFile *fo)
         jc += isection[ic].rawdataptr;
     }
 
-#if 0 //Stefan Widmann: still necessary?
-    // check for NeoLite
-    if (find(ibuf + ih.entry, 64+7, "NeoLite", 7) >= 0)
-        throwCantPack("file is already compressed with another packer");
-#endif
-
     unsigned overlay = file_size - stripDebug(overlaystart);
     if (overlay >= (unsigned) file_size)
     {
@@ -1112,26 +1292,20 @@ void PackW64Pep::pack(OutputFile *fo)
         linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
                              0x2000 : 0x1000);          // 2 pages or 1 page
         linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
-        //NEW: offset of import adjusted - Stefan Widmann
-        linker->defineSymbol("VirtualProtect", myimport + get_le32(oimpdlls + 16) + 16);
+        linker->defineSymbol("VirtualProtect", myimport +
+                             ilinker.getAddress("kernel32.dll", "VirtualProtect"));
     }
-// FIXME    linker->defineSymbol("reloc_delt", 0u - (unsigned) (ih.imagebase - rvamin));
     linker->defineSymbol("start_of_relocs", crelocs);
-    //NEW: offset of import adjusted - Stefan Widmann
-    linker->defineSymbol("ExitProcess", myimport + get_le32(oimpdlls + 16) + 40);
-    //NEW: offset of import adjusted - Stefan Widmann
-    linker->defineSymbol("GetProcAddress", myimport + get_le32(oimpdlls + 16) + 8);
+    if (!isdll)
+        linker->defineSymbol("ExitProcess", myimport +
+                             ilinker.getAddress("kernel32.dll", "ExitProcess"));
+    linker->defineSymbol("GetProcAddress", myimport +
+                         ilinker.getAddress("kernel32.dll", "GetProcAddress"));
     linker->defineSymbol("kernel32_ordinals", myimport);
-    //NEW: offset of import adjusted - Stefan Widmann
-    linker->defineSymbol("LoadLibraryA", myimport + get_le32(oimpdlls + 16));
+    linker->defineSymbol("LoadLibraryA", myimport +
+                         ilinker.getAddress("kernel32.dll", "LoadLibraryA"));
     linker->defineSymbol("start_of_imports", myimport);
     linker->defineSymbol("compressed_imports", cimports);
-#if 0
-    //NEW: offset of import adjusted - Stefan Widmann
-    linker->defineSymbol("VirtualAlloc", myimport + get_le32(oimpdlls + 16) + 24);
-    //NEW: offset of import adjusted - Stefan Widmann
-    linker->defineSymbol("VirtualFree", myimport + get_le32(oimpdlls + 16) + 32);
-#endif
 
     if (M_IS_LZMA(ph.method))
     {
@@ -1351,11 +1525,8 @@ void PackW64Pep::pack(OutputFile *fo)
     // copy the overlay
     copyOverlay(fo, overlay, &obuf);
 
-#if 0 //REMOVED FOR TESTING! Stefan Widmann
-    // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
-#endif
 }
 
 /*************************************************************************
