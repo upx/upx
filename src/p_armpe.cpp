@@ -39,13 +39,6 @@ static const
 static const
 #include "stub/arm.v4t-wince.pe.h"
 
-#define IDSIZE(x)       ih.ddirs[x].size
-#define IDADDR(x)       ih.ddirs[x].vaddr
-#define ODSIZE(x)       oh.ddirs[x].size
-#define ODADDR(x)       oh.ddirs[x].vaddr
-
-#define isdll           ((ih.flags & DLL_FLAG) != 0)
-
 #define FILLVAL         0
 
 /*************************************************************************
@@ -790,10 +783,9 @@ void PackArmPe::pack(OutputFile *fo)
     ODADDR(PEDIR_BOUNDIM) = 0;
     ODSIZE(PEDIR_BOUNDIM) = 0;
 
-
     // tls is put into section 1
     ic = s1addr + s1size - sotls;
-    super::processTls(&rel,&tlsiv,ic);
+//    super::processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? 0x18 : 0;
     ic += sotls;
@@ -803,7 +795,7 @@ void PackArmPe::pack(OutputFile *fo)
     ic = ncsection;
 
     // wince wants relocation data at the beginning of a section
-    processRelocs(&rel);
+    PeFile::processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;

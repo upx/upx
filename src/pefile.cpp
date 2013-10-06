@@ -32,13 +32,6 @@
 #include "packer.h"
 #include "pefile.h"
 
-#define IDSIZE(x)       ih.ddirs[x].size
-#define IDADDR(x)       ih.ddirs[x].vaddr
-#define ODSIZE(x)       oh.ddirs[x].size
-#define ODADDR(x)       oh.ddirs[x].vaddr
-
-#define isdll           ((ih.flags & DLL_FLAG) != 0)
-
 #define FILLVAL         0
 
 /*************************************************************************
@@ -103,13 +96,9 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 PeFile::PeFile(InputFile *f) : super(f)
 {
     bele = &N_BELE_RTP::le_policy;
-    //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
-    //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
-    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
-    COMPILE_TIME_ASSERT(sizeof(pe_header_t::ddirs_t) == 8)
+    COMPILE_TIME_ASSERT(sizeof(ddirs_t) == 8)
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40)
-    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
-    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t::ddirs_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(ddirs_t)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_section_t)
     COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt))
 
@@ -130,6 +119,7 @@ PeFile::PeFile(InputFile *f) : super(f)
     sorelocs = 0;
     soxrelocs = 0;
     sotls = 0;
+    isdll = false;
 }
 
 
@@ -202,7 +192,7 @@ int PeFile::readFileHeader()
     if (ic == 20)
         return 0;
     fi->seek(pe_offset,SEEK_SET);
-    fi->readx(&ih,sizeof(ih));
+    readPeHeader();
     fi->seek(0x200,SEEK_SET);
     fi->readx(&h,6);
     return getFormat();
@@ -373,11 +363,11 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
 void PeFile::processRelocs(Reloc *rel) // pass2
 {
     rel->finish(oxrelocs,soxrelocs);
-    if (opt->win32_pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs && !isdll /*FIXME ASLR*/)
         soxrelocs = 0;
 }
 
-void PeFile::processRelocs() // pass1
+void PeFile32::processRelocs() // pass1
 {
     big_relocs = 0;
 
@@ -468,7 +458,7 @@ void PeFile::processRelocs() // pass1
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 
-
+#if 0
 /*************************************************************************
 // import handling
 **************************************************************************/
@@ -759,7 +749,7 @@ unsigned PeFile::processImports() // pass 1
     info("Imports: original size: %u bytes, preprocessed size: %u bytes",ilen,soimport);
     return names.ivnum == 1 ? names.ivarr[0].start : 0;
 }
-
+#endif
 
 /*************************************************************************
 // export handling
@@ -915,7 +905,7 @@ void PeFile::processExports(Export *xport,unsigned newoffs) // pass2
 // the tls area is not relocated, because the relocation is done by
 // the virtual memory manager only for pages which are not yet loaded.
 // of course it was impossible to debug this ;-)
-
+#if 0
 __packed_struct(tls)
     LE32 datastart; // VA tls init data start
     LE32 dataend;   // VA tls init data end
@@ -1003,7 +993,7 @@ void PeFile::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 
     tlsp->dataend = newaddr + sotls + ih.imagebase;
     tlsp->callbacks = 0; // note: TLS callbacks are not implemented in Windows 95/98/ME
 }
-
+#endif
 
 /*************************************************************************
 // resource handling
@@ -1573,7 +1563,7 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 // unpack
 **************************************************************************/
 
-void PeFile::rebuildRelocs(upx_byte *& extrainfo)
+void PeFile32::rebuildRelocs(upx_byte *& extrainfo)
 {
     if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (oh.flags & RELOCS_STRIPPED))
         return;
@@ -1657,7 +1647,7 @@ void PeFile::rebuildTls()
     // this is an easy one : just do nothing ;-)
 }
 
-void PeFile::rebuildResources(upx_byte *& extrainfo)
+void PeFile::rebuildResources(upx_byte *& extrainfo, unsigned lastvaddr)
 {
     if (ODSIZE(PEDIR_RESOURCE) == 0 || IDSIZE(PEDIR_RESOURCE) == 0)
         return;
@@ -1666,7 +1656,7 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
     extrainfo += 2;
 
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
-    const upx_byte *r = ibuf - isection[ih.objects - 1].vaddr;
+    const upx_byte *r = ibuf - lastvaddr;
     Resource res(r + vaddr);
     while (res.next())
         if (res.offs() > vaddr)
@@ -1688,7 +1678,8 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
     delete [] p;
 }
 
-void PeFile::unpack(OutputFile *fo)
+template <typename ht>
+void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh)
 {
     //infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 
@@ -1751,7 +1742,7 @@ void PeFile::unpack(OutputFile *fo)
         fi->readx(ibuf,isection[3].size);
     }
 
-    rebuildResources(extrainfo);
+    rebuildResources(extrainfo, isection[ih.objects - 1].vaddr);
 
     //FIXME: this does bad things if the relocation section got removed
     // during compression ...
@@ -1804,6 +1795,26 @@ void PeFile::unpack(OutputFile *fo)
         copyOverlay(fo, overlay, &obuf);
     }
     ibuf.dealloc();
+}
+
+PeFile32::PeFile32(InputFile *f) : super(f)
+{
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
+
+    iddirs = ih.ddirs;
+    oddirs = oh.ddirs;
+}
+
+void PeFile32::readPeHeader()
+{
+    fi->readx(&ih,sizeof(ih));
+    isdll = ((ih.flags & DLL_FLAG) != 0);
+}
+
+void PeFile32::unpack(OutputFile *fo)
+{
+    super::unpack(fo, ih, oh);
 }
 
 /*

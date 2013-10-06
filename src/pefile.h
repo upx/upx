@@ -47,7 +47,8 @@ protected:
     virtual ~PeFile();
     virtual int getVersion() const { return 13; }
 
-    virtual void unpack(OutputFile *fo);
+    template <typename ht>
+    void unpack(OutputFile *fo, const ht &ih, ht &oh);
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
@@ -56,6 +57,7 @@ protected:
 protected:
     virtual int readFileHeader();
     virtual bool testUnpackVersion(int version) const;
+    virtual void readPeHeader() = 0;
 
     unsigned pe_offset;
 
@@ -67,9 +69,9 @@ protected:
     upx_byte *oimpdlls;
     unsigned soimpdlls;
 
-    void processRelocs();
+    virtual void processRelocs() = 0;
     void processRelocs(Reloc *);
-    void rebuildRelocs(upx_byte *&);
+    virtual void rebuildRelocs(upx_byte *&) = 0;
     upx_byte *orelocs;
     unsigned sorelocs;
     upx_byte *oxrelocs;
@@ -83,12 +85,12 @@ protected:
 
     void processResources(Resource *);
     void processResources(Resource *, unsigned);
-    void rebuildResources(upx_byte *&);
+    void rebuildResources(upx_byte *&, unsigned);
     upx_byte *oresources;
     unsigned soresources;
 
-    virtual void processTls(Interval *);
-    void processTls(Reloc *, const Interval *, unsigned);
+//    virtual void processTls(Interval *);
+//    void processTls(Reloc *, const Interval *, unsigned);
     void rebuildTls();
     upx_byte *otls;
     unsigned sotls;
@@ -106,49 +108,17 @@ protected:
     unsigned crelocs;               // rva of preprocessed fixups
     int big_relocs;
 
-    __packed_struct(pe_header_t)
-        // 0x0
-        char    _[4];               // pemagic
-        LE16    cpu;
-        LE16    objects;
-        char    __[12];             // timestamp + reserved
-        LE16    opthdrsize;
-        LE16    flags;
-        // optional header
-        LE16    coffmagic;          // NEW: Stefan Widmann
-        char    ___[2];             // linkerversion
-        LE32    codesize;
-        // 0x20
-        LE32    datasize;
-        LE32    bsssize;
-        LE32    entry;
-        LE32    codebase;
-        // 0x30
-        LE32    database;
-        // nt specific fields
-        LE32    imagebase;
-        LE32    objectalign;
-        LE32    filealign;          // should set to 0x200 ?
-        // 0x40
-        char    ____[16];           // versions
-        // 0x50
-        LE32    imagesize;
-        LE32    headersize;
-        LE32    chksum;             // should set to 0
-        LE16    subsystem;
-        LE16    dllflags;
-        // 0x60
-        char    _____[20];          // stack + heap sizes
-        // 0x74
-        LE32    ddirsentries;       // usually 16
-
-        __packed_struct(ddirs_t)
-            LE32    vaddr;
-            LE32    size;
-        __packed_struct_end()
-
-        ddirs_t ddirs[16];
+    __packed_struct(ddirs_t)
+        LE32    vaddr;
+        LE32    size;
     __packed_struct_end()
+    ddirs_t *iddirs;
+    ddirs_t *oddirs;
+
+    LE32 &IDSIZE(unsigned x) { return iddirs[x].size; }
+    LE32 &IDADDR(unsigned x) { return iddirs[x].vaddr; }
+    LE32 &ODSIZE(unsigned x) { return oddirs[x].size; }
+    LE32 &ODADDR(unsigned x) { return oddirs[x].vaddr; }
 
     __packed_struct(pe_section_t)
         char    name[8];
@@ -160,8 +130,8 @@ protected:
         LE32    flags;
     __packed_struct_end()
 
-    pe_header_t ih, oh;
     pe_section_t *isection;
+    bool isdll;
 
     static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);
     unsigned tryremove (unsigned, unsigned);
@@ -370,6 +340,61 @@ protected:
         unsigned getsize() const { return size; }
     };
 
+};
+
+class PeFile32 : public PeFile
+{
+    typedef PeFile super;
+protected:
+    PeFile32(InputFile *f);
+    //virtual ~PeFile32();
+    virtual void unpack(OutputFile *fo);
+
+    virtual void readPeHeader();
+
+    virtual void processRelocs();
+    virtual void rebuildRelocs(upx_byte *&);
+
+    __packed_struct(pe_header_t)
+        // 0x0
+        char    _[4];               // pemagic
+        LE16    cpu;
+        LE16    objects;
+        char    __[12];             // timestamp + reserved
+        LE16    opthdrsize;
+        LE16    flags;
+        // optional header
+        LE16    coffmagic;          // NEW: Stefan Widmann
+        char    ___[2];             // linkerversion
+        LE32    codesize;
+        // 0x20
+        LE32    datasize;
+        LE32    bsssize;
+        LE32    entry;
+        LE32    codebase;
+        // 0x30
+        LE32    database;
+        // nt specific fields
+        LE32    imagebase;
+        LE32    objectalign;
+        LE32    filealign;          // should set to 0x200 ?
+        // 0x40
+        char    ____[16];           // versions
+        // 0x50
+        LE32    imagesize;
+        LE32    headersize;
+        LE32    chksum;             // should set to 0
+        LE16    subsystem;
+        LE16    dllflags;
+        // 0x60
+        char    _____[20];          // stack + heap sizes
+        // 0x74
+        LE32    ddirsentries;       // usually 16
+
+        ddirs_t ddirs[16];
+    __packed_struct_end()
+
+    pe_header_t ih, oh;
 };
 
 #endif /* already included */

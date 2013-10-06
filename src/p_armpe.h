@@ -34,9 +34,9 @@
 // arm/pe
 **************************************************************************/
 
-class PackArmPe : public PeFile
+class PackArmPe : public PeFile32
 {
-    typedef PeFile super;
+    typedef PeFile32 super;
 
 public:
     PackArmPe(InputFile *f);

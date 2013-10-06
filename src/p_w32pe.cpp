@@ -37,13 +37,6 @@
 static const
 #include "stub/i386-win32.pe.h"
 
-#define IDSIZE(x)       ih.ddirs[x].size
-#define IDADDR(x)       ih.ddirs[x].vaddr
-#define ODSIZE(x)       oh.ddirs[x].size
-#define ODADDR(x)       oh.ddirs[x].vaddr
-
-#define isdll           ((ih.flags & DLL_FLAG) != 0)
-
 #define FILLVAL         0
 
 
@@ -1226,7 +1219,7 @@ void PackW32Pe::pack(OutputFile *fo)
     }
     ic += soexport;
 
-    processRelocs(&rel);
+    PeFile::processRelocs(&rel);
     ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
     ODSIZE(PEDIR_RELOC) = soxrelocs;
     ic += soxrelocs;
