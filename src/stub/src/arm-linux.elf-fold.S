@@ -132,7 +132,7 @@ SP_argc= 4*4
 /* Preserve symlink /proc/self/exe by mapping one page into stack */
         adr r0,proc_self_exe
         mov r1,#O_RDONLY
-        bl open
+        bl open  @ no error check: cannot recover
 
         mov r1,#0
         stmdb sp!,{r0,r1,r3}  @ fd, offset, new &Elf32_auxv_t
@@ -140,8 +140,10 @@ SP_argc= 4*4
         mov r1,#PAGE_SIZE
         mov r2,#PROT_READ
         mov r3,#MAP_PRIVATE|MAP_FIXED
-        bl mmap
-        ldmia sp!,{r1,r2,r3}  @ junk, junk, new &Elf32_auxv_t
+        bl mmap  @ no error check: cannot recover
+        ldr r0,[sp],#4  @ fd
+        bl close
+        ldmia sp!,{r1,r3}  @ junk, new &Elf32_auxv_t
 
 /* Construct arglist for upx_main */
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
