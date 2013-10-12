@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "pefile.h"
+#include "linker.h"
 
 #define FILLVAL         0
 
@@ -120,6 +121,7 @@ PeFile::PeFile(InputFile *f) : super(f)
     soxrelocs = 0;
     sotls = 0;
     isdll = false;
+    ilinker = NULL;
 }
 
 
@@ -457,6 +459,257 @@ void PeFile32::processRelocs() // pass1
     }
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
+
+/*************************************************************************
+// import handling
+**************************************************************************/
+
+__packed_struct(import_desc)
+    LE32  oft;      // orig first thunk
+    char  _[8];
+    LE32  dllname;
+    LE32  iat;      // import address table
+__packed_struct_end()
+
+/*
+ ImportLinker: 32 and 64 bit import table building.
+ Import entries (dll name + proc name/ordinal pairs) can be
+ added in arbitrary order.
+
+ Internally it works by creating sections with special names,
+ and adding relocation entries between those sections. The special
+ names ensure that when the import table is built in the memory
+ from those sections, a correct table can be generated simply by
+ sorting the sections by name, and adding all of them to the output
+ in the sorted order.
+ */
+
+class PeFile::ImportLinker : public ElfLinkerAMD64
+{
+    struct tstr : private ::noncopyable
+    {
+        char *s;
+        explicit tstr(char *str) : s(str) {}
+        ~tstr() { delete [] s; }
+        operator char *() const { return s; }
+    };
+
+    // encoding of dll and proc names are required, so that our special
+    // control characters in the name of sections can work as intended
+    static char *encode_name(const char *name, char *buf)
+    {
+        char *b = buf;
+        while (*name)
+        {
+            *b++ = 'a' + ((*name >> 4) & 0xf);
+            *b++ = 'a' + (*name  & 0xf);
+            name++;
+        }
+        *b = 0;
+        return buf;
+    }
+
+    static char *name_for_dll(const char *dll, char first_char)
+    {
+        assert(dll);
+        unsigned l = strlen(dll);
+        assert(l > 0);
+
+        char *name = new char[3 * l + 2];
+        assert(name);
+        name[0] = first_char;
+        char *n = name + 1 + 2 * l;
+        do {
+            *n++ = tolower(*dll);
+        } while(*dll++);
+        return encode_name(name + 1 + 2 * l, name + 1) - 1;
+    }
+
+    static char *name_for_proc(const char *dll, const char *proc,
+                               char first_char, char separator)
+    {
+        unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
+        tstr dlln(name_for_dll(dll, first_char));
+        char *procn = new char[len];
+        snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        encode_name(proc, procn + strlen(procn));
+        return procn;
+    }
+
+    static char zeros[sizeof(import_desc)];
+
+    enum {
+        // the order of identifiers is very important below!!
+        descriptor_id = 'D',
+        thunk_id,
+        dll_name_id,
+        proc_name_id,
+        ordinal_id,
+
+        thunk_separator_first,
+        thunk_separator,
+        thunk_separator_last,
+        procname_separator,
+    };
+
+    unsigned thunk_size; // 4 or 8 bytes
+
+    void add(const char *dll, const char *proc, unsigned ordinal)
+    {
+        tstr sdll(name_for_dll(dll, dll_name_id));
+        tstr desc_name(name_for_dll(dll, descriptor_id));
+
+        char tsep = thunk_separator;
+        if (findSection(sdll, false) == NULL)
+        {
+            tsep = thunk_separator_first;
+            addSection(sdll, dll, strlen(dll) + 1, 0); // name of the dll
+            addSymbol(sdll, sdll, 0);
+
+            addSection(desc_name, zeros, sizeof(zeros), 0); // descriptor
+            addRelocation(desc_name, offsetof(import_desc, dllname),
+                          "R_X86_64_32", sdll, 0);
+        }
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        addSection(thunk, zeros, thunk_size, 0);
+        addSymbol(thunk, thunk, 0);
+        if (tsep == thunk_separator_first)
+        {
+            addRelocation(desc_name, offsetof(import_desc, iat),
+                          "R_X86_64_32", thunk, 0);
+
+            tstr last_thunk(name_for_proc(dll, "X", thunk_id, thunk_separator_last));
+            addSection(last_thunk, zeros, thunk_size, 0);
+        }
+
+        const char *reltype = thunk_size == 4 ? "R_X86_64_32" : "R_X86_64_64";
+        if (ordinal != 0u)
+        {
+            addRelocation(thunk, 0, reltype, "*UND*",
+                          ordinal | (1ull << (thunk_size * 8 - 1)));
+        }
+        else
+        {
+            tstr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
+            addSection(proc_name, zeros, 2, 1); // 2 bytes of word aligned "hint"
+            addSymbol(proc_name, proc_name, 0);
+            addRelocation(thunk, 0, reltype, proc_name, 0);
+
+            strcat(proc_name, "X");
+            addSection(proc_name, proc, strlen(proc), 0); // the name of the symbol
+        }
+    }
+
+    static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
+    {
+        const Section *s1 = * (const Section * const *) p1;
+        const Section *s2 = * (const Section * const *) p2;
+        return strcmp(s1->name, s2->name);
+    }
+
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
+
+    const Section *getThunk(const char *dll, const char *proc, char tsep) const
+    {
+        assert(dll);
+        assert(proc);
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        return findSection(thunk, false);
+    }
+
+public:
+    explicit ImportLinker(unsigned thunk_size_) : thunk_size(thunk_size_)
+    {
+        assert(thunk_size == 4 || thunk_size == 8);
+        addSection("*UND*", NULL, 0, 0);
+        addSymbol("*UND*", "*UND*", 0);
+        addSection("*ZSTART", NULL, 0, 0);
+        addSymbol("*ZSTART", "*ZSTART", 0);
+        Section *s = addSection("Dzero", zeros, sizeof(import_desc), 0);
+        assert(s->name[0] == descriptor_id);
+
+        // one trailing 00 byte after the last proc name
+        addSection("Zzero", zeros, 1, 0);
+    }
+
+    template <typename C>
+    void add(const C *dll, unsigned ordinal)
+    {
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[20];
+        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        add((const char*) dll, ord, ordinal);
+    }
+
+    template <typename C1, typename C2>
+    void add(const C1 *dll, const C2 *proc)
+    {
+        assert(proc);
+        add((const char*) dll, (const char*) proc, 0);
+    }
+
+    unsigned build()
+    {
+        assert(output == NULL);
+        int osize = 4 + 2 * nsections; // upper limit for alignments
+        for (unsigned ic = 0; ic < nsections; ic++)
+            osize += sections[ic]->size;
+        output = new upx_byte[osize];
+
+        // sort the sections by name before adding them all
+        qsort(sections, nsections, sizeof (Section*), ImportLinker::compare);
+
+        for (unsigned ic = 0; ic < nsections; ic++)
+            addLoader(sections[ic]->name);
+        addLoader("+40D");
+        assert(outputlen <= osize);
+
+        //OutputFile::dump("il0.imp", output, outputlen);
+        return outputlen;
+    }
+
+    void relocate(unsigned myimport)
+    {
+        assert(nsections > 0);
+        assert(output);
+        defineSymbol("*ZSTART", /*0xffffffffff1000ull + 0 * */ myimport);
+        ElfLinkerAMD64::relocate();
+        //OutputFile::dump("il1.imp", output, outputlen);
+    }
+
+    template <typename C1, typename C2>
+    upx_uint64_t getAddress(const C1 *dll, const C2 *proc) const
+    {
+        const Section *s = getThunk((const char*) dll, (const char*) proc,
+                                    thunk_separator_first);
+        if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
+                                       thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C1>
+    upx_uint64_t getAddress(const C1 *dll, unsigned ordinal) const
+    {
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[20];
+        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+
+        const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
+        if (s == NULL
+            && (s = getThunk((const char*) dll, ord, thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C1>
+    upx_uint64_t getAddress(const C1 *dll) const
+    {
+        tstr sdll(name_for_dll((const char*) dll, dll_name_id));
+        return findSection(sdll, true)->offset;
+    }
+};
+char PeFile::ImportLinker::zeros[sizeof(import_desc)];
 
 #if 0
 /*************************************************************************
@@ -1804,6 +2057,13 @@ PeFile32::PeFile32(InputFile *f) : super(f)
 
     iddirs = ih.ddirs;
     oddirs = oh.ddirs;
+
+    ilinker = new ImportLinker(4);
+}
+
+PeFile32::~PeFile32()
+{
+    delete ilinker;
 }
 
 void PeFile32::readPeHeader()

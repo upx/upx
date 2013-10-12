@@ -42,6 +42,7 @@ protected:
     class Reloc;
     class Resource;
     class Export;
+    class ImportLinker;
 
     PeFile(InputFile *f);
     virtual ~PeFile();
@@ -68,6 +69,7 @@ protected:
     unsigned soimport;
     upx_byte *oimpdlls;
     unsigned soimpdlls;
+    ImportLinker *ilinker;
 
     virtual void processRelocs() = 0;
     void processRelocs(Reloc *);
@@ -347,7 +349,7 @@ class PeFile32 : public PeFile
     typedef PeFile super;
 protected:
     PeFile32(InputFile *f);
-    //virtual ~PeFile32();
+    virtual ~PeFile32();
     virtual void unpack(OutputFile *fo);
 
     virtual void readPeHeader();
