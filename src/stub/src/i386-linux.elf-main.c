@@ -513,7 +513,20 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     size_t lo= ~0, hi= 0, szlo= 0;
     char *addr;
     DPRINTF((STR_xfind_pages(), mflags, phdr, phnum, p_brk));
-    for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type) {
+    for (; --phnum>=0; ++phdr) if (PT_LOAD==phdr->p_type
+#if defined(__arm__)  /*{*/
+                               &&  phdr->p_memsz
+// Android < 4.1 (kernel < 3.0.31) often has PT_INTERP of /system/bin/linker
+// with bad PT_LOAD[0].  https://sourceforge.net/p/upx/bugs/221
+// Type: EXEC (Executable file)
+// 
+// Program Headers:
+// Type   Offset   VirtAddr   PhysAddr FileSiz MemSiz  Flg  Align
+// LOAD 0x0000d4 0x00000000 0xb0000000 0x00000 0x00000 R   0x1000
+// LOAD 0x001000 0xb0001000 0xb0001000 0x07614 0x07614 R E 0x1000
+// LOAD 0x009000 0xb0009000 0xb0009000 0x006f8 0x0ccdc RW  0x1000
+#endif  /*}*/
+                                                ) {
         if (phdr->p_vaddr < lo) {
             lo = phdr->p_vaddr;
             szlo = phdr->p_filesz;
@@ -574,7 +587,11 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
     if (xi && PT_PHDR==phdr->p_type) {
         auxv_up(av, AT_PHDR, phdr->p_vaddr + reloc);
     }
-    else if (PT_LOAD==phdr->p_type) {
+    else if (PT_LOAD==phdr->p_type
+#if defined(__arm__)  /*{*/
+         &&  phdr->p_memsz
+#endif  /*}*/
+                          ) {
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
