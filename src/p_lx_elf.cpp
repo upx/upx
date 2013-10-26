@@ -195,6 +195,7 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), file_image(NULL), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
     lg2_page(12), page_size(1u<<lg2_page), xct_off(0), xct_va(0),
+    jni_onload_va(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
 {
@@ -203,6 +204,51 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
 PackLinuxElf::~PackLinuxElf()
 {
     delete[] file_image; file_image = NULL;
+}
+
+void
+PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
+{
+    e_type  = get_te16(&ehdri.e_type);
+    e_phnum = get_te16(&ehdri.e_phnum);
+    e_shnum = get_te16(&ehdri.e_shnum);
+    e_phoff = get_te32(&ehdri.e_phoff);
+    e_shoff = get_te32(&ehdri.e_shoff);
+    sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
+
+    if (f && Elf32_Ehdr::ET_DYN!=e_type) {
+        unsigned const len = sz_phdrs + e_phoff;
+        file_image = new char[len];
+        f->seek(0, SEEK_SET);
+        f->readx(file_image, len);
+        phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
+    }
+    if (f && Elf32_Ehdr::ET_DYN==e_type) {
+        // The DT_STRTAB has no designated length.  Read the whole file.
+        file_image = new char[file_size];
+        f->seek(0, SEEK_SET);
+        f->readx(file_image, file_size);
+        phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
+        shdri= (Elf32_Shdr const *)(e_shoff + file_image);  // do not free() !!
+        sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
+        if (sec_dynsym)
+            sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
+
+        Elf32_Phdr const *phdr= phdri;
+        for (int j = e_phnum; --j>=0; ++phdr)
+        if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
+            dynseg= (Elf32_Dyn const *)(get_te32(&phdr->p_offset) + file_image);
+            break;
+        }
+        // elf_find_dynamic() returns 0 if 0==dynseg.
+        dynstr =      (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
+        dynsym = (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
+        gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
+        hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
+        jni_onload_sym = elf_lookup("JNI_OnLoad");
+        if (jni_onload_sym)
+            jni_onload_va = get_te32(&jni_onload_sym->st_value);
+    }
 }
 
 void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
@@ -223,7 +269,10 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     len += sizeof(disp);
 
     if (xct_off) {  // is_shlib
-        set_te32(&disp, elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) - load_va);
+        upx_uint64_t const firstpc_va = (jni_onload_va
+            ? jni_onload_va
+            : elf_unsigned_dynamic(Elf32_Dyn::DT_INIT) );
+        set_te32(&disp, firstpc_va - load_va);
         fo->write(&disp, sizeof(disp));
         len += sizeof(disp);
 
@@ -305,7 +354,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 continue;  // all done with this PT_LOAD
             }
             // Compute new offset of &DT_INIT.d_val.
-            if (phdr->PT_DYNAMIC==type) {
+            if (0==jni_onload_sym && phdr->PT_DYNAMIC==type) {
                 off_init = rel + ioff;
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
@@ -475,7 +524,8 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
     : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
-    shstrtab(NULL), n_elf_shnum(0),
+    jni_onload_sym(NULL),
+    shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
     memset(&ehdri, 0, sizeof(ehdri));
@@ -488,14 +538,14 @@ PackLinuxElf32::PackLinuxElf32(InputFile *f)
 PackLinuxElf32::~PackLinuxElf32()
 {
     delete[] note_body;
-    delete[] phdri; phdri = NULL;
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
     : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
-    shstrtab(NULL), n_elf_shnum(0),
+    jni_onload_sym(NULL),
+    shstrtab(NULL),
     sec_strndx(NULL), sec_dynsym(NULL), sec_dynstr(NULL)
 {
     memset(&ehdri, 0, sizeof(ehdri));
@@ -508,7 +558,52 @@ PackLinuxElf64::PackLinuxElf64(InputFile *f)
 PackLinuxElf64::~PackLinuxElf64()
 {
     delete[] note_body;
-    delete[] phdri; phdri = NULL;
+}
+
+// FIXME: should be templated with PackLinuxElf32help1
+void
+PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
+{
+    e_type  = get_te16(&ehdri.e_type);
+    e_phnum = get_te16(&ehdri.e_phnum);
+    e_shnum = get_te16(&ehdri.e_shnum);
+    e_phoff = get_te64(&ehdri.e_phoff);
+    e_shoff = get_te64(&ehdri.e_shoff);
+    sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
+
+    if (f && Elf64_Ehdr::ET_DYN!=e_type) {
+        unsigned const len = sz_phdrs + e_phoff;
+        file_image = new char[len];
+        f->seek(0, SEEK_SET);
+        f->readx(file_image, len);
+        phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
+    }
+    if (f && Elf64_Ehdr::ET_DYN==e_type) {
+        // The DT_STRTAB has no designated length.  Read the whole file.
+        file_image = new char[file_size];
+        f->seek(0, SEEK_SET);
+        f->readx(file_image, file_size);
+        phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
+        shdri= (Elf64_Shdr const *)(e_shoff + file_image);  // do not free() !!
+        sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
+        if (sec_dynsym)
+            sec_dynstr = get_te64(&sec_dynsym->sh_link) + shdri;
+
+        Elf64_Phdr const *phdr= phdri;
+        for (int j = e_phnum; --j>=0; ++phdr)
+        if (Elf64_Phdr::PT_DYNAMIC==get_te64(&phdr->p_type)) {
+            dynseg= (Elf64_Dyn const *)(get_te64(&phdr->p_offset) + file_image);
+            break;
+        }
+        // elf_find_dynamic() returns 0 if 0==dynseg.
+        dynstr =      (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
+        dynsym = (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
+        gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
+        hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
+        jni_onload_sym = elf_lookup("JNI_OnLoad");
+        if (jni_onload_sym)
+            jni_onload_va = get_te64(&jni_onload_sym->st_value);
+    }
 }
 
 Linker* PackLinuxElf64amd::newLinker() const
@@ -1168,7 +1263,7 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_name(
 ) const
 {
     Elf32_Shdr const *shdr = shdri;
-    int j = n_elf_shnum;
+    int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (0==strcmp(name, &shstrtab[get_te32(&shdr->sh_name)])) {
             return shdr;
@@ -1182,7 +1277,7 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_name(
 ) const
 {
     Elf64_Shdr const *shdr = shdri;
-    int j = n_elf_shnum;
+    int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         unsigned ndx = get_te64(&shdr->sh_name);
         if (0==strcmp(name, &shstrtab[ndx])) {
@@ -1197,7 +1292,7 @@ Elf32_Shdr const *PackLinuxElf32::elf_find_section_type(
 ) const
 {
     Elf32_Shdr const *shdr = shdri;
-    int j = n_elf_shnum;
+    int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (type==get_te32(&shdr->sh_type)) {
             return shdr;
@@ -1211,7 +1306,7 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
 ) const
 {
     Elf64_Shdr const *shdr = shdri;
-    int j = n_elf_shnum;
+    int j = e_shnum;
     for (; 0 <=--j; ++shdr) {
         if (type==get_te32(&shdr->sh_type)) {
             return shdr;
@@ -1242,8 +1337,6 @@ bool PackLinuxElf32::canPack()
         throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
-    unsigned const e_shoff = get_te32(&ehdr->e_shoff);
-    unsigned const e_phoff = get_te32(&ehdr->e_phoff);
     if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
         throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
         return false;
@@ -1328,31 +1421,7 @@ bool PackLinuxElf32::canPack()
     // Also allow  __uClibc_main  and  __uClibc_start_main .
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
-        // The DT_STRTAB has no designated length.  Read the whole file.
-        file_image = new char[file_size];
-        fi->seek(0, SEEK_SET);
-        fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf32_Ehdr));
-        phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
-        shdri= (Elf32_Shdr const *)(e_shoff + file_image);  // do not free() !!
-
-        n_elf_shnum = get_te16(&ehdr->e_shnum);
-        //sec_strndx = &shdri[ehdr->e_shstrndx];
-        //shstrtab = (char const *)(sec_strndx->sh_offset + file_image);
-        sec_dynsym = elf_find_section_type(Elf32_Shdr::SHT_DYNSYM);
-        if (sec_dynsym)
-            sec_dynstr = get_te32(&sec_dynsym->sh_link) + shdri;
-
-        int j= e_phnum;
-        phdr= phdri;
-        for (; --j>=0; ++phdr)
-        if (Elf32_Phdr::PT_DYNAMIC==get_te32(&phdr->p_type)) {
-            dynseg= (Elf32_Dyn const *)(get_te32(&phdr->p_offset) + file_image);
-            break;
-        }
-        // elf_find_dynamic() returns 0 if 0==dynseg.
-        dynstr=          (char const *)elf_find_dynamic(Elf32_Dyn::DT_STRTAB);
-        dynsym=     (Elf32_Sym const *)elf_find_dynamic(Elf32_Dyn::DT_SYMTAB);
 
         // Modified 2009-10-10 to detect a ProgramLinkageTable relocation
         // which references the symbol, because DT_GNU_HASH contains only
@@ -1389,19 +1458,17 @@ bool PackLinuxElf32::canPack()
         // 2011-06-01: stub.shlib-init.S works around by installing hatch
         // at end of .text.
 
-        if (elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
+        if (jni_onload_sym || elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
             if (this->e_machine!=Elf32_Ehdr::EM_386
             &&  this->e_machine!=Elf32_Ehdr::EM_ARM)
                 goto abandon;  // need stub: EM_MIPS EM_PPC
             if (elf_has_dynamic(Elf32_Dyn::DT_TEXTREL)) {
-                shdri = NULL;
-                phdri = NULL;
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
             Elf32_Shdr const *shdr = shdri;
             xct_va = ~0u;
-            for (j= n_elf_shnum; --j>=0; ++shdr) {
+            for (int j= e_shnum; --j>=0; ++shdr) {
                 if (Elf32_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                     xct_va = umin(xct_va, get_te32(&shdr->sh_addr));
                 }
@@ -1418,12 +1485,11 @@ bool PackLinuxElf32::canPack()
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERDEF)
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERSYM)
             ||  xct_va < elf_unsigned_dynamic(Elf32_Dyn::DT_VERNEEDED) ) {
-                phdri = NULL;
-                shdri = NULL;
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
-            for ((shdr= shdri), (j= n_elf_shnum); --j>=0; ++shdr) {
+            shdr= shdri;
+            for (int j= e_shnum; --j>=0; ++shdr) {
                 unsigned const sh_addr = get_te32(&shdr->sh_addr);
                 if ( sh_addr==va_gash
                 ||  (sh_addr==va_hash && 0==va_gash) ) {
@@ -1436,14 +1502,10 @@ bool PackLinuxElf32::canPack()
             goto proceed;  // But proper packing depends on checking xct_va.
         }
         else
-            infoWarning("no DT_INIT: %s", fi->getName());
+            infoWarning("no DT_INIT or JNI_OnLoad: %s", fi->getName());
 abandon:
-        phdri = NULL;  // Done with this
-        shdri = NULL;
         return false;
-proceed:
-        phdri = NULL;
-        shdri = NULL;
+proceed: ;
     }
     // XXX Theoretically the following test should be first,
     // but PackUnix::canPack() wants 0!=exetype ?
@@ -1479,8 +1541,6 @@ PackLinuxElf64amd::canPack()
         throwCantPack("invalid Ehdr e_ehsize; try '--force-execve'");
         return false;
     }
-    upx_uint64_t const e_shoff = get_te64(&ehdr->e_shoff);
-    upx_uint64_t const e_phoff = get_te64(&ehdr->e_phoff);
     if (e_phoff != sizeof(*ehdr)) {// Phdrs not contiguous with Ehdr
         throwCantPack("non-contiguous Ehdr/Phdr; try '--force-execve'");
         return false;
@@ -1525,7 +1585,6 @@ PackLinuxElf64amd::canPack()
         phdri= (Elf64_Phdr       *)((size_t)e_phoff + file_image);  // do not free() !!
         shdri= (Elf64_Shdr const *)((size_t)e_shoff + file_image);  // do not free() !!
 
-        n_elf_shnum = get_te16(&ehdr->e_shnum);
         //sec_strndx = &shdri[ehdr->e_shstrndx];
         //shstrtab = (char const *)(sec_strndx->sh_offset + file_image);
         sec_dynsym = elf_find_section_type(Elf64_Shdr::SHT_DYNSYM);
@@ -1575,14 +1634,12 @@ PackLinuxElf64amd::canPack()
 
         if (elf_find_dynamic(Elf64_Dyn::DT_INIT)) {
             if (elf_has_dynamic(Elf64_Dyn::DT_TEXTREL)) {
-                shdri = NULL;
-                phdri = NULL;
                 throwCantPack("DT_TEXTREL found; re-compile with -fPIC");
                 goto abandon;
             }
             Elf64_Shdr const *shdr = shdri;
             xct_va = ~0ull;
-            for (j= n_elf_shnum; --j>=0; ++shdr) {
+            for (j= e_shnum; --j>=0; ++shdr) {
                 if (Elf64_Shdr::SHF_EXECINSTR & get_te32(&shdr->sh_flags)) {
                     xct_va = umin64(xct_va, get_te64(&shdr->sh_addr));
                 }
@@ -1599,12 +1656,10 @@ PackLinuxElf64amd::canPack()
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERDEF)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERSYM)
             ||  xct_va < elf_unsigned_dynamic(Elf64_Dyn::DT_VERNEEDED) ) {
-                phdri = NULL;
-                shdri = NULL;
                 throwCantPack("DT_ tag above stub");
                 goto abandon;
             }
-            for ((shdr= shdri), (j= n_elf_shnum); --j>=0; ++shdr) {
+            for ((shdr= shdri), (j= e_shnum); --j>=0; ++shdr) {
                 upx_uint64_t const sh_addr = get_te64(&shdr->sh_addr);
                 if ( sh_addr==va_gash
                 ||  (sh_addr==va_hash && 0==va_gash) ) {
@@ -1617,10 +1672,8 @@ PackLinuxElf64amd::canPack()
             goto proceed;  // But proper packing depends on checking xct_va.
         }
 abandon:
-        phdri = 0;  // Done with this
         return false;
-proceed:
-        phdri = 0;
+proceed: ;
     }
     // XXX Theoretically the following test should be first,
     // but PackUnix::canPack() wants 0!=exetype ?
@@ -1978,13 +2031,8 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
-    unsigned const e_phoff = get_te32(&ehdri.e_phoff);
     assert(e_phoff == sizeof(Elf32_Ehdr));  // checked by canPack()
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
-
-    phdri = new Elf32_Phdr[e_phnum];
-    fi->seek(e_phoff, SEEK_SET);
-    fi->readx(phdri, sz_phdrs);
 
     // Remember all PT_NOTE, and find lg2_page from PT_LOAD.
     Elf32_Phdr const *phdr = phdri;
@@ -2030,13 +2078,12 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 
     // if the preserve build-id option was specified
     if (opt->o_unix.preserve_build_id) {
-        n_elf_shnum = ehdri.e_shnum;
         Elf32_Shdr *shdr = NULL;
 
         Elf32_Shdr const *tmp = shdri;
 
         if (! shdri) {
-            shdr = new Elf32_Shdr[n_elf_shnum];
+            shdr = new Elf32_Shdr[e_shnum];
 
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
@@ -2170,13 +2217,8 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 {
     fi->seek(0, SEEK_SET);
     fi->readx(&ehdri, sizeof(ehdri));
-    unsigned const e_phoff = get_te32(&ehdri.e_phoff);
     assert(e_phoff == sizeof(Elf64_Ehdr));  // checked by canPack()
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
-
-    phdri = new Elf64_Phdr[e_phnum];
-    fi->seek(e_phoff, SEEK_SET);
-    fi->readx(phdri, sz_phdrs);
 
     Elf64_Phdr const *phdr = phdri;
     note_size = 0;
@@ -2222,7 +2264,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
     // only execute if option present
     if (opt->o_unix.preserve_build_id) {
         // set this so we can use elf_find_section_name
-        n_elf_shnum = ehdri.e_shnum;
+        e_shnum = ehdri.e_shnum;
 
         // there is a class member similar to this, but I did not
         // want to assume it would be available
@@ -2231,7 +2273,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         Elf64_Shdr *shdr = NULL;
 
         if (! shdri) {
-            shdr = new Elf64_Shdr[n_elf_shnum];
+            shdr = new Elf64_Shdr[e_shnum];
 
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
@@ -2821,6 +2863,15 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
         fo->seek(sz_elf_hdrs, SEEK_SET);
         fo->rewrite(&linfo, sizeof(linfo));
+
+        if (jni_onload_va) {
+            unsigned tmp = sz_pack2 + get_te32(&elfout.phdr[0].p_vaddr);
+            tmp |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
+            set_te32(&tmp, tmp);
+            fo->seek((char const *)&jni_onload_sym->st_value - file_image, SEEK_SET);
+            fo->rewrite(&tmp, sizeof(tmp));
+            fo->seek(0, SEEK_SET);
+        }
     }
     else {
         unsigned const reloc = get_te32(&elfout.phdr[0].p_vaddr);
@@ -3283,7 +3334,7 @@ PackLinuxElf64::elf_unsigned_dynamic(unsigned int const key) const
     return 0;
 }
 
-unsigned PackLinuxElf32::gnu_hash(char const *q)
+unsigned PackLinuxElf::gnu_hash(char const *q)
 {
     unsigned char const *p = (unsigned char const *)q;
     unsigned h;
@@ -3294,7 +3345,7 @@ unsigned PackLinuxElf32::gnu_hash(char const *q)
     return h;
 }
 
-unsigned PackLinuxElf32::elf_hash(char const *p)
+unsigned PackLinuxElf::elf_hash(char const *p)
 {
     unsigned h;
     for (h= 0; 0!=*p; ++p) {
@@ -3346,6 +3397,55 @@ Elf32_Sym const *PackLinuxElf32::elf_lookup(char const *name) const
                 dsp += bucket;
                 do if (0==((h ^ get_te32(hp))>>1)) {
                     char const *const p = get_te32(&dsp->st_name) + dynstr;
+                    if (0==strcmp(name, p)) {
+                        return dsp;
+                    }
+                } while (++dsp, 0==(1u& get_te32(hp++)));
+            }
+        }
+    }
+    return 0;
+
+}
+
+Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
+{
+    if (hashtab && dynsym && dynstr) {
+        unsigned const nbucket = get_te32(&hashtab[0]);
+        unsigned const *const buckets = &hashtab[2];
+        unsigned const *const chains = &buckets[nbucket];
+        unsigned const m = elf_hash(name) % nbucket;
+        unsigned si;
+        for (si= get_te32(&buckets[m]); 0!=si; si= get_te32(&chains[si])) {
+            char const *const p= get_te64(&dynsym[si].st_name) + dynstr;
+            if (0==strcmp(name, p)) {
+                return &dynsym[si];
+            }
+        }
+    }
+    if (gashtab && dynsym && dynstr) {
+        unsigned const n_bucket = get_te32(&gashtab[0]);
+        unsigned const symbias  = get_te32(&gashtab[1]);
+        unsigned const n_bitmask = get_te32(&gashtab[2]);
+        unsigned const gnu_shift = get_te32(&gashtab[3]);
+        unsigned long const *const bitmask = (unsigned long const *)&gashtab[4];
+        unsigned      const *const buckets = (unsigned const *)&bitmask[n_bitmask];
+
+        unsigned const h = gnu_hash(name);
+        unsigned const hbit1 = 077& h;
+        unsigned const hbit2 = 077& (h>>gnu_shift);
+        unsigned long const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
+
+        if (1& (w>>hbit1) & (w>>hbit2)) {
+            unsigned bucket = get_te32(&buckets[h % n_bucket]);
+            if (0!=bucket) {
+                Elf64_Sym const *dsp = dynsym;
+                unsigned const *const hasharr = &buckets[n_bucket];
+                unsigned const *hp = &hasharr[bucket - symbias];
+
+                dsp += bucket;
+                do if (0==((h ^ get_te32(hp))>>1)) {
+                    char const *const p = get_te64(&dsp->st_name) + dynstr;
                     if (0==strcmp(name, p)) {
                         return dsp;
                     }

@@ -65,9 +65,15 @@ protected:
 
     //virtual void const *elf_find_dynamic(unsigned) const = 0;
     virtual upx_uint64_t elf_unsigned_dynamic(unsigned) const = 0;
+    static unsigned elf_hash(char const *) /*const*/;
+    static unsigned gnu_hash(char const *) /*const*/;
 
 protected:
+    unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
+    unsigned e_shnum;
+    unsigned e_phoff;
+    unsigned e_shoff;
     char       *file_image;       // if ET_DYN investigation
     char const *dynstr;   // from DT_STRTAB
 
@@ -81,6 +87,7 @@ protected:
     unsigned hatch_off;  // file offset of escape hatch
     upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
+    upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
 
     unsigned short e_machine;
     unsigned char ei_class;
@@ -100,6 +107,7 @@ public:
     PackLinuxElf32(InputFile *f);
     virtual ~PackLinuxElf32();
 protected:
+    virtual void PackLinuxElf32help1(InputFile *f);
     virtual int checkEhdr(Elf32_Ehdr const *ehdr) const;
     virtual bool canPack();
 
@@ -134,8 +142,6 @@ protected:
         unsigned const e_phnum);
     virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
 
-    static unsigned elf_hash(char const *) /*const*/;
-    static unsigned gnu_hash(char const *) /*const*/;
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
     Elf32_Shdr const *elf_find_section_name(char const *) const;
@@ -156,8 +162,8 @@ protected:
     unsigned int const *hashtab;  // from DT_HASH
     unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf32_Sym    const *dynsym;   // from DT_SYMTAB
+    Elf32_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf32_Shdr
-    int n_elf_shnum;  // via e_shnum
 
     Elf32_Shdr const *sec_strndx;
     Elf32_Shdr const *sec_dynsym;
@@ -224,6 +230,7 @@ public:
     /*virtual void buildLoader(const Filter *);*/
 
 protected:
+    virtual void PackLinuxElf64help1(InputFile *f);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -250,6 +257,7 @@ protected:
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
 
+    virtual Elf64_Sym const *elf_lookup(char const *) const;
     virtual upx_uint64_t elf_get_offset_from_address(upx_uint64_t) const;
     Elf64_Shdr const *elf_find_section_name(char const *) const;
     Elf64_Shdr const *elf_find_section_type(unsigned) const;
@@ -269,8 +277,8 @@ protected:
     unsigned int const *hashtab;  // from DT_HASH
     unsigned int const *gashtab;  // from DT_GNU_HASH
     Elf64_Sym    const *dynsym;   // from DT_SYMTAB
+    Elf64_Sym    const *jni_onload_sym;
     char const *shstrtab;   // via Elf64_Shdr
-    int n_elf_shnum;  // via e_shnum
 
     Elf64_Shdr const *sec_strndx;
     Elf64_Shdr const *sec_dynsym;
@@ -326,7 +334,7 @@ class PackLinuxElf32Be : public PackLinuxElf32
 protected:
     PackLinuxElf32Be(InputFile *f) : super(f) {
         bele = &N_BELE_RTP::be_policy;
-        e_phnum = get_te16(&ehdri.e_phnum);
+        PackLinuxElf32help1(f);
     }
 };
 
@@ -336,7 +344,7 @@ class PackLinuxElf32Le : public PackLinuxElf32
 protected:
     PackLinuxElf32Le(InputFile *f) : super(f) {
         bele = &N_BELE_RTP::le_policy;
-        e_phnum = get_te16(&ehdri.e_phnum);
+        PackLinuxElf32help1(f);
     }
 };
 
@@ -346,7 +354,7 @@ class PackLinuxElf64Le : public PackLinuxElf64
 protected:
     PackLinuxElf64Le(InputFile *f) : super(f) {
         bele = &N_BELE_RTP::le_policy;
-        e_phnum = get_te16(&ehdri.e_phnum);
+        PackLinuxElf64help1(f);
     }
 };
 
