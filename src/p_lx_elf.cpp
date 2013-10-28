@@ -212,6 +212,12 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
+    if (ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32) {
+        e_phoff = 0;
+        e_shoff = 0;
+        sz_phdrs = 0;
+        return;
+    }
     e_phoff = get_te32(&ehdri.e_phoff);
     e_shoff = get_te32(&ehdri.e_shoff);
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
@@ -567,6 +573,12 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
+    if (ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64) {
+        e_phoff = 0;
+        e_shoff = 0;
+        sz_phdrs = 0;
+        return;
+    }
     e_phoff = get_te64(&ehdri.e_phoff);
     e_shoff = get_te64(&ehdri.e_shoff);
     sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);

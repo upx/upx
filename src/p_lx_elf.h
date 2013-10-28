@@ -72,8 +72,6 @@ protected:
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
-    unsigned e_phoff;
-    unsigned e_shoff;
     char       *file_image;       // if ET_DYN investigation
     char const *dynstr;   // from DT_STRTAB
 
@@ -153,6 +151,8 @@ protected:
 protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
+    unsigned e_phoff;
+    unsigned e_shoff;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
     Elf32_Shdr const *shdri; // from input file
@@ -268,6 +268,8 @@ protected:
 protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
+    upx_uint64_t e_phoff;
+    upx_uint64_t e_shoff;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
     Elf64_Shdr const *shdri; // from input file
