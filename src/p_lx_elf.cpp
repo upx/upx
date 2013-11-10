@@ -254,6 +254,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         jni_onload_sym = elf_lookup("JNI_OnLoad");
         if (jni_onload_sym)
             jni_onload_va = get_te32(&jni_onload_sym->st_value);
+            jni_onload_va = 0;
     }
 }
 
@@ -360,7 +361,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 continue;  // all done with this PT_LOAD
             }
             // Compute new offset of &DT_INIT.d_val.
-            if (0==jni_onload_sym && phdr->PT_DYNAMIC==type) {
+            if (/*0==jni_onload_sym &&*/ phdr->PT_DYNAMIC==type) {
                 off_init = rel + ioff;
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
@@ -615,6 +616,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         jni_onload_sym = elf_lookup("JNI_OnLoad");
         if (jni_onload_sym)
             jni_onload_va = get_te64(&jni_onload_sym->st_value);
+            jni_onload_va = 0;
     }
 }
 
@@ -1470,7 +1472,7 @@ bool PackLinuxElf32::canPack()
         // 2011-06-01: stub.shlib-init.S works around by installing hatch
         // at end of .text.
 
-        if (jni_onload_sym || elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
+        if (/*jni_onload_sym ||*/ elf_find_dynamic(Elf32_Dyn::DT_INIT)) {
             if (this->e_machine!=Elf32_Ehdr::EM_386
             &&  this->e_machine!=Elf32_Ehdr::EM_ARM)
                 goto abandon;  // need stub: EM_MIPS EM_PPC
