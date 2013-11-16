@@ -389,6 +389,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         }
         ehdri.e_shnum = 0;
         ehdri.e_shoff = old_dtinit;  // easy to find for unpacking
+        ehdri.e_shoff = 0;
         ehdri.e_shentsize = 0;
         ehdri.e_shstrndx = 0;
     }
@@ -3522,7 +3523,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     ph.filter_cto = bhdr.b_cto8;
-    bool const is_shlib = (ehdr->e_shoff!=0);
+    bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
 
     // Peek at resulting Ehdr and Phdrs for use in controlling unpacking.
     // Uncompress an extra time, and don't verify or update checksums.
