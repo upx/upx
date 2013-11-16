@@ -176,8 +176,8 @@ f_unfilter:  // (char *ptr, uint len, uint cto, uint fid)
 #ifndef FILTER_ID  /*{*/
 #define FILTER_ID 0x50  /* little-endian */
 #endif  /*}*/
-        lsl fid,fid,#24; tst len,len; beq unf_done
-        lsr fid,fid,#24; tst ptr,ptr; beq unf_done
+        lsl fid,fid,#24; lsr len,len,#2
+        lsr fid,fid,#24; lsl len,len,#2
         cmp fid,#FILTER_ID; bne unf_done  // last use of fid
         b tst_unf
 top_unf:
