@@ -3042,14 +3042,18 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             }
         }
     }
-    bool const is_shlib = 0;  // XXX ??
+    bool const is_shlib = 0;  // XXX: THIS IS BROKEN; see 32-bit ::unpack
     if (is_shlib
     ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
             < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
         funpad4(fi);  // MATCH01
-        fi->seek(lsize, SEEK_CUR);
+        unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
+        //if (0==old_dtinit) {
+        //    old_dtinit = d_info[2 + (0==d_info[0])];
+        //}
+        fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD
@@ -3606,7 +3610,11 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             < up4(fi->st_size())) {
         // Loader is not at end; skip past it.
         funpad4(fi);  // MATCH01
-        fi->seek(lsize, SEEK_CUR);
+        unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
+        if (0==old_dtinit) {
+            old_dtinit = d_info[2 + (0==d_info[0])];
+        }
+        fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
 
     // The gaps between PT_LOAD and after last PT_LOAD

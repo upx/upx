@@ -331,7 +331,9 @@ _=-5+_  // 22
         pop_ tmp  // toss arg5
 
 // Place the escape hatch
-        ldr edi,[SP(o_hatch)]
+        pop  {arg1,arg2}  // addr, len
+        push {arg1,arg2}
+        add edi,arg1,arg2  // ldr edi,[SP(o_hatch)]
         ldr tmp,hatch  // the 2 instructions
         str tmp,[edi]
         add edi,#1  // thumb mode
