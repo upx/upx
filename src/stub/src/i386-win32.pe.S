@@ -114,7 +114,7 @@ section         PEK32ORD
                 jmps    next_imp
 not_kernel32:
 section         PEIMORD1
-                movzxw  eax, word ptr [edi]
+                movzx   eax, word ptr [edi]
                 inc     edi
                 push    eax
                 inc     edi

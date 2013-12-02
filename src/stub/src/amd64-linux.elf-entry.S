@@ -241,7 +241,7 @@ unfold:
 */
         .byte 0x68; .int JMPU   // push $ JMPU (R_X86_64_32)
         push %rax    // for unmap in fold
-        .byte 0x68; .int LENU   // push $ JMPU (R_X86_64_32)
+        .byte 0x68; .int LENU   // push $ LENU (R_X86_64_32)
 #else
         push $ JMPU  // for unmap in fold
         push %rax    // for unmap in fold

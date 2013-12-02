@@ -265,7 +265,7 @@ section         PEK32ORD
                 jmp     SHORT(next_imp)
 not_kernel32:
 section         PEIMORD1
-                movzxw  rdx, word ptr [rdi]
+                movzx   rdx, word ptr [rdi]
                 add     rdi, 2
                 jmp     SHORT(first_imp)
 
