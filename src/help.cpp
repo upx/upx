@@ -290,6 +290,7 @@ void show_help(int verbose)
                     "  --strip-relocs=0        do not strip relocations\n"
                     "  --strip-relocs=1        strip relocations [default]\n"
                     "\n");
+        fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for linux/elf:\n");
         fg = con_fg(f,fg);
         con_fprintf(f,
