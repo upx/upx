@@ -336,9 +336,7 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #endif
 
 
-#if (ACC_CC_INTELC && (__INTEL_COMPILER < 800))
-#elif (0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386))
-#elif (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC_GNUC || ACC_CC_PATHSCALE)
+#if (ACC_CC_CLANG || ACC_CC_GNUC || (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800)) || ACC_CC_PATHSCALE)
 #  define __packed_struct(s)        struct s {
 #  define __packed_struct_end()     } __attribute__((__packed__,__aligned__(1)));
 #elif (ACC_CC_WATCOMC)
