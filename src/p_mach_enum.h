@@ -81,9 +81,12 @@
         LC_CODE_SIGNATURE = 0x1d,
         LC_SEGMENT_SPLIT_INFO = 0x1e,
         LC_REEXPORT_DYLIB = 0x1f,
-        LC_LAZY_LOAD_DYLIB= 0X20,
-        LC_ENCRYPTION_INFO= 0X21,
-        LC_DYLD_INFO      = 0X22,  // compressed dyld information (10.6.x)
+        LC_LAZY_LOAD_DYLIB= 0x20,
+        LC_ENCRYPTION_INFO= 0x21,
+        LC_DYLD_INFO      = 0x22,  // compressed dyld information (10.6.x)
+        LC_VERSION_MIN_MACOSX= 0x24,
+        LC_FUNCTION_STARTS= 0x26,
+        LC_DATA_IN_CODE   = 0x29,
         LC_REQ_DYLD      = 0x80000000  // OR'ed ==> must not ignore
     };
     enum { // maxprot
