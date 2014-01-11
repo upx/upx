@@ -2,9 +2,9 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2013 Laszlo Molnar
-   Copyright (C) 2000-2013 John F. Reiser
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Laszlo Molnar
+   Copyright (C) 2000-2014 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -519,7 +519,7 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
 // Android < 4.1 (kernel < 3.0.31) often has PT_INTERP of /system/bin/linker
 // with bad PT_LOAD[0].  https://sourceforge.net/p/upx/bugs/221
 // Type: EXEC (Executable file)
-// 
+//
 // Program Headers:
 // Type   Offset   VirtAddr   PhysAddr FileSiz MemSiz  Flg  Align
 // LOAD 0x0000d4 0x00000000 0xb0000000 0x00000 0x00000 R   0x1000

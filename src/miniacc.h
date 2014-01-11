@@ -2,7 +2,7 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20130916L
+#define ACC_VERSION     20140107L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -165,12 +165,14 @@
 #  include <limits.h>
 #endif
 #if 0
-#define ACC_0xffffL             0xfffful
-#define ACC_0xffffffffL         0xfffffffful
+#define ACC_0xffffUL            0xfffful
+#define ACC_0xffffffffUL        0xfffffffful
 #else
-#define ACC_0xffffL             65535ul
-#define ACC_0xffffffffL         4294967295ul
+#define ACC_0xffffUL            65535ul
+#define ACC_0xffffffffUL        4294967295ul
 #endif
+#define ACC_0xffffL             ACC_0xffffUL
+#define ACC_0xffffffffL         ACC_0xffffffffUL
 #if (ACC_0xffffL == ACC_0xffffffffL)
 #  error "your preprocessor is broken 1"
 #endif
@@ -675,8 +677,8 @@
 #  else
 #    define ACC_INFO_CCVER      "unknown"
 #  endif
-#elif defined(__IBMC__)
-#  define ACC_CC_IBMC           1
+#elif defined(__IBMC__) && ((__IBMC__-0) > 0)
+#  define ACC_CC_IBMC           __IBMC__
 #  define ACC_INFO_CC           "IBM C"
 #  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__IBMC__)
 #elif defined(__KEIL__) && defined(__C166__)
@@ -1181,26 +1183,270 @@ extern "C" {
 #  define __acc_gnuc_extension__    __extension__
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_gnuc_extension__    __extension__
+#elif (ACC_CC_IBMC >= 600)
+#  define __acc_gnuc_extension__    __extension__
 #else
+#endif
+#endif
+#if !defined(__acc_gnuc_extension__)
 #  define __acc_gnuc_extension__    /*empty*/
 #endif
+#if !defined(__acc_inline)
+#if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
+#elif defined(__cplusplus)
+#  define __acc_inline          inline
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__-0 >= 199901L)
+#  define __acc_inline          inline
+#elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
+#  define __acc_inline          __inline
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
+#  define __acc_inline          __inline__
+#elif (ACC_CC_DMC)
+#  define __acc_inline          __inline
+#elif (ACC_CC_IBMC >= 600)
+#  define __acc_inline          __inline__
+#elif (ACC_CC_INTELC)
+#  define __acc_inline          __inline
+#elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x2405))
+#  define __acc_inline          __inline
+#elif (ACC_CC_MSC && (_MSC_VER >= 900))
+#  define __acc_inline          __inline
+#elif (ACC_CC_SUNPROC >= 0x5100)
+#  define __acc_inline          __inline__
 #endif
-#if !defined(__acc_ua_volatile)
-#  define __acc_ua_volatile     volatile
+#endif
+#if defined(__acc_inline)
+#  ifndef __acc_HAVE_inline
+#  define __acc_HAVE_inline 1
+#  endif
+#else
+#  define __acc_inline          /*empty*/
+#endif
+#if !defined(__acc_forceinline)
+#if (ACC_CC_GNUC >= 0x030200ul)
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
+#elif (ACC_CC_IBMC >= 700)
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
+#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450))
+#  define __acc_forceinline     __forceinline
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800))
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1200))
+#  define __acc_forceinline     __forceinline
+#elif (ACC_CC_SUNPROC >= 0x5100)
+#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
+#endif
+#endif
+#if defined(__acc_forceinline)
+#  ifndef __acc_HAVE_forceinline
+#  define __acc_HAVE_forceinline 1
+#  endif
+#else
+#  define __acc_forceinline     __acc_inline
+#endif
+#if !defined(__acc_noinline)
+#if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040003ul)
+#  define __acc_noinline        __attribute__((__noinline__,__used__))
+#elif (ACC_CC_GNUC >= 0x030200ul)
+#  define __acc_noinline        __attribute__((__noinline__))
+#elif (ACC_CC_IBMC >= 700)
+#  define __acc_noinline        __attribute__((__noinline__))
+#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 600))
+#  define __acc_noinline        __declspec(noinline)
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800))
+#  define __acc_noinline        __attribute__((__noinline__))
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define __acc_noinline        __attribute__((__noinline__))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1300))
+#  define __acc_noinline        __declspec(noinline)
+#elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x3200) && (ACC_OS_WIN32 || ACC_OS_WIN64))
+#  if defined(__cplusplus)
+#  else
+#    define __acc_noinline      __declspec(noinline)
+#  endif
+#elif (ACC_CC_SUNPROC >= 0x5100)
+#  define __acc_noinline        __attribute__((__noinline__))
+#endif
+#endif
+#if defined(__acc_noinline)
+#  ifndef __acc_HAVE_noinline
+#  define __acc_HAVE_noinline 1
+#  endif
+#else
+#  define __acc_noinline        /*empty*/
+#endif
+#if (__acc_HAVE_forceinline || __acc_HAVE_noinline) && !(__acc_HAVE_inline)
+#  error "unexpected configuration - check your compiler defines"
+#endif
+#if !defined(__acc_static_inline)
+#if (ACC_CC_IBMC)
+#  define __acc_static_inline       __acc_gnuc_extension__ static __acc_inline
+#endif
+#endif
+#if !defined(__acc_static_inline)
+#  define __acc_static_inline       static __acc_inline
+#endif
+#if !defined(__acc_static_forceinline)
+#if (ACC_CC_IBMC)
+#  define __acc_static_forceinline  __acc_gnuc_extension__ static __acc_forceinline
+#endif
+#endif
+#if !defined(__acc_static_forceinline)
+#  define __acc_static_forceinline  static __acc_forceinline
+#endif
+#if !defined(__acc_static_noinline)
+#if (ACC_CC_IBMC)
+#  define __acc_static_noinline     __acc_gnuc_extension__ static __acc_noinline
+#endif
+#endif
+#if !defined(__acc_static_noinline)
+#  define __acc_static_noinline     static __acc_noinline
+#endif
+#if !defined(__acc_c99_extern_inline)
+#if defined(__GNUC_GNU_INLINE__)
+#  define __acc_c99_extern_inline   __acc_inline
+#elif defined(__GNUC_STDC_INLINE__)
+#  define __acc_c99_extern_inline   extern __acc_inline
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__-0 >= 199901L)
+#  define __acc_c99_extern_inline   extern __acc_inline
+#endif
+#if !defined(__acc_c99_extern_inline) && (__acc_HAVE_inline)
+#  define __acc_c99_extern_inline   __acc_inline
+#endif
+#endif
+#if defined(__acc_c99_extern_inline)
+#  ifndef __acc_HAVE_c99_extern_inline
+#  define __acc_HAVE_c99_extern_inline 1
+#  endif
+#else
+#  define __acc_c99_extern_inline   /*empty*/
+#endif
+#if !defined(__acc_may_alias)
+#if (ACC_CC_GNUC >= 0x030400ul)
+#  define __acc_may_alias       __attribute__((__may_alias__))
+#elif (ACC_CC_CLANG >= 0x020900ul)
+#  define __acc_may_alias       __attribute__((__may_alias__))
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 1210))
+#  define __acc_may_alias       __attribute__((__may_alias__))
+#endif
+#endif
+#if defined(__acc_may_alias)
+#  ifndef __acc_HAVE_may_alias
+#  define __acc_HAVE_may_alias 1
+#  endif
+#else
+#  define __acc_may_alias       /*empty*/
+#endif
+#if !defined(__acc_noreturn)
+#if (ACC_CC_GNUC >= 0x020700ul)
+#  define __acc_noreturn        __attribute__((__noreturn__))
+#elif (ACC_CC_IBMC >= 700)
+#  define __acc_noreturn        __attribute__((__noreturn__))
+#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450))
+#  define __acc_noreturn        __declspec(noreturn)
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 600))
+#  define __acc_noreturn        __attribute__((__noreturn__))
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define __acc_noreturn        __attribute__((__noreturn__))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1200))
+#  define __acc_noreturn        __declspec(noreturn)
+#endif
+#endif
+#if defined(__acc_noreturn)
+#  ifndef __acc_HAVE_noreturn
+#  define __acc_HAVE_noreturn 1
+#  endif
+#else
+#  define __acc_noreturn        /*empty*/
+#endif
+#if !defined(__acc_nothrow)
+#if (ACC_CC_GNUC >= 0x030300ul)
+#  define __acc_nothrow         __attribute__((__nothrow__))
+#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450)) && defined(__cplusplus)
+#  define __acc_nothrow         __declspec(nothrow)
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 900))
+#  define __acc_nothrow         __attribute__((__nothrow__))
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#  define __acc_nothrow         __attribute__((__nothrow__))
+#elif (ACC_CC_MSC && (_MSC_VER >= 1200)) && defined(__cplusplus)
+#  define __acc_nothrow         __declspec(nothrow)
+#endif
+#endif
+#if defined(__acc_nothrow)
+#  ifndef __acc_HAVE_nothrow
+#  define __acc_HAVE_nothrow 1
+#  endif
+#else
+#  define __acc_nothrow         /*empty*/
+#endif
+#if !defined(__acc_restrict)
+#if (ACC_CC_GNUC >= 0x030400ul)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_IBMC >= 800) && !defined(__cplusplus)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_IBMC >= 1210)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 600))
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM)
+#  define __acc_restrict        __restrict__
+#elif (ACC_CC_MSC && (_MSC_VER >= 1400))
+#  define __acc_restrict        __restrict
+#endif
+#endif
+#if defined(__acc_restrict)
+#  ifndef __acc_HAVE_restrict
+#  define __acc_HAVE_restrict 1
+#  endif
+#else
+#  define __acc_restrict        /*empty*/
 #endif
 #if !defined(__acc_alignof)
 #if (ACC_CC_ARMCC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
 #  define __acc_alignof(e)      __alignof__(e)
+#elif (ACC_CC_IBMC >= 600)
+#  define __acc_alignof(e)      (__acc_gnuc_extension__ __alignof__(e))
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 700))
 #  define __acc_alignof(e)      __alignof__(e)
 #elif (ACC_CC_MSC && (_MSC_VER >= 1300))
 #  define __acc_alignof(e)      __alignof(e)
-#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
+#elif (ACC_CC_SUNPROC >= 0x5100)
 #  define __acc_alignof(e)      __alignof__(e)
 #endif
 #endif
-#if defined(__acc_alignof) && !defined(__acc_HAVE_alignof)
+#if defined(__acc_alignof)
+#  ifndef __acc_HAVE_alignof
 #  define __acc_HAVE_alignof 1
+#  endif
+#endif
+#if !defined(__acc_struct_packed)
+#if (ACC_CC_PCC && (ACC_CC_PCC < 0x010100ul))
+#elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
+#elif (ACC_CC_CLANG && (ACC_CC_CLANG < 0x020800ul)) && defined(__cplusplus)
+#elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul)) && defined(__cplusplus)
+#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC < 0x5110)) && !defined(__cplusplus)
+#elif (ACC_CC_ARMCC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI || (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_struct_packed(s)        struct s {
+#  define __acc_struct_packed_end()     } __acc_may_alias __attribute__((__packed__));
+#elif (ACC_CC_IBMC >= 700)
+#  define __acc_struct_packed(s)        __acc_gnuc_extension__ struct s {
+#  define __acc_struct_packed_end()     } __acc_may_alias __attribute__((__packed__));
+#elif (ACC_CC_INTELC_MSC) || (ACC_CC_MSC && (_MSC_VER >= 1300))
+#  define __acc_struct_packed(s)        __pragma(pack(push,1)) struct s {
+#  define __acc_struct_packed_end()     } __pragma(pack(pop));
+#elif (ACC_CC_WATCOMC)
+#  define __acc_packed_struct(s)        _Packed struct s {
+#  define __acc_packed_struct_end()     };
+#endif
+#endif
+#if !defined(__acc_byte_struct)
+#if defined(__acc_struct_packed)
+#  define __acc_byte_struct(s,n)        __acc_struct_packed(s) unsigned char a[n]; __acc_struct_packed_end()
+#elif (ACC_CC_CLANG || (ACC_CC_SUNPROC >= 0x5100))
+#  define __acc_byte_struct(s,n)        struct s { unsigned char a[n]; } __acc_may_alias __attribute__((__packed__));
+#endif
 #endif
 #if !defined(__acc_struct_align16) && (__acc_HAVE_alignof)
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x030000ul))
@@ -1213,7 +1459,7 @@ extern "C" {
 #  define __acc_struct_align32_end()    };
 #  define __acc_struct_align64(s)       struct __declspec(align(64)) s {
 #  define __acc_struct_align64_end()    };
-#elif (ACC_CC_ARMCC || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_INTELC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
+#elif (ACC_CC_ARMCC || ACC_CC_CLANG || ACC_CC_GNUC || (ACC_CC_IBMC >= 700) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_struct_align16(s)       struct s {
 #  define __acc_struct_align16_end()    } __attribute__((__aligned__(16)));
 #  define __acc_struct_align32(s)       struct s {
@@ -1232,7 +1478,9 @@ extern "C" {
 #endif
 #endif
 #if defined(__acc_constructor)
+#  ifndef __acc_HAVE_constructor
 #  define __acc_HAVE_constructor 1
+#  endif
 #endif
 #if !defined(__acc_destructor)
 #if (ACC_CC_GNUC >= 0x030400ul)
@@ -1244,173 +1492,18 @@ extern "C" {
 #endif
 #endif
 #if defined(__acc_destructor)
+#  ifndef __acc_HAVE_destructor
 #  define __acc_HAVE_destructor 1
+#  endif
 #endif
 #if (__acc_HAVE_destructor) && !(__acc_HAVE_constructor)
 #  error "unexpected configuration - check your compiler defines"
 #endif
-#if !defined(__acc_inline)
-#if (ACC_CC_TURBOC && (__TURBOC__ <= 0x0295))
-#elif defined(__cplusplus)
-#  define __acc_inline          inline
-#elif (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0550))
-#  define __acc_inline          __inline
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CILLY || ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE || ACC_CC_PGI)
-#  define __acc_inline          __inline__
-#elif (ACC_CC_DMC)
-#  define __acc_inline          __inline
-#elif (ACC_CC_INTELC)
-#  define __acc_inline          __inline
-#elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x2405))
-#  define __acc_inline          __inline
-#elif (ACC_CC_MSC && (_MSC_VER >= 900))
-#  define __acc_inline          __inline
-#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
-#  define __acc_inline          __inline__
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#  define __acc_inline          inline
-#endif
-#endif
-#if defined(__acc_inline)
-#  define __acc_HAVE_inline 1
-#else
-#  define __acc_inline          /*empty*/
-#endif
-#if !defined(__acc_forceinline)
-#if (ACC_CC_GNUC >= 0x030200ul)
-#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450))
-#  define __acc_forceinline     __forceinline
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800))
-#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#elif (ACC_CC_MSC && (_MSC_VER >= 1200))
-#  define __acc_forceinline     __forceinline
-#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
-#  define __acc_forceinline     __inline__ __attribute__((__always_inline__))
-#endif
-#endif
-#if defined(__acc_forceinline)
-#  define __acc_HAVE_forceinline 1
-#else
-#  define __acc_forceinline     __acc_inline
-#endif
-#if !defined(__acc_noinline)
-#if 1 && (ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x040000ul) && (ACC_CC_GNUC < 0x040003ul)
-#  define __acc_noinline        __attribute__((__noinline__,__used__))
-#elif (ACC_CC_GNUC >= 0x030200ul)
-#  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 600))
-#  define __acc_noinline        __declspec(noinline)
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800))
-#  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-#  define __acc_noinline        __attribute__((__noinline__))
-#elif (ACC_CC_MSC && (_MSC_VER >= 1300))
-#  define __acc_noinline        __declspec(noinline)
-#elif (ACC_CC_MWERKS && (__MWERKS__ >= 0x3200) && (ACC_OS_WIN32 || ACC_OS_WIN64))
-#  if defined(__cplusplus)
-#  else
-#    define __acc_noinline      __declspec(noinline)
-#  endif
-#elif (ACC_CC_SUNPROC && (ACC_CC_SUNPROC >= 0x5100))
-#  define __acc_noinline        __attribute__((__noinline__))
-#endif
-#endif
-#if defined(__acc_noinline)
-#  define __acc_HAVE_noinline 1
-#else
-#  define __acc_noinline        /*empty*/
-#endif
-#if (__acc_HAVE_forceinline || __acc_HAVE_noinline) && !(__acc_HAVE_inline)
-#  error "unexpected configuration - check your compiler defines"
-#endif
-#if !defined(__acc_c99_extern_inline)
-#if defined(__GNUC_GNU_INLINE__)
-#  define __acc_c99_extern_inline   __acc_inline
-#elif defined(__GNUC_STDC_INLINE__)
-#  define __acc_c99_extern_inline   extern __acc_inline
-#elif ((__STDC_VERSION__ + 0) >= 199901L)
-#  define __acc_c99_extern_inline   extern __acc_inline
-#endif
-#if !defined(__acc_c99_extern_inline) && (__acc_HAVE_inline)
-#  define __acc_c99_extern_inline   __acc_inline
-#endif
-#endif
-#if defined(__acc_c99_extern_inline)
-#  define __acc_HAVE_c99_extern_inline 1
-#else
-#  define __acc_c99_extern_inline   /*empty*/
-#endif
-#if !defined(__acc_may_alias)
-#if (ACC_CC_GNUC >= 0x030400ul)
-#  define __acc_may_alias       __attribute__((__may_alias__))
-#elif (ACC_CC_CLANG >= 0x020900ul)
-#  define __acc_may_alias       __attribute__((__may_alias__))
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 1210))
-#  define __acc_may_alias       __attribute__((__may_alias__))
-#endif
-#endif
-#if defined(__acc_may_alias)
-#  define __acc_HAVE_may_alias 1
-#else
-#  define __acc_may_alias       /*empty*/
-#endif
-#if !defined(__acc_noreturn)
-#if (ACC_CC_GNUC >= 0x020700ul)
-#  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450))
-#  define __acc_noreturn        __declspec(noreturn)
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 600))
-#  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-#  define __acc_noreturn        __attribute__((__noreturn__))
-#elif (ACC_CC_MSC && (_MSC_VER >= 1200))
-#  define __acc_noreturn        __declspec(noreturn)
-#endif
-#endif
-#if defined(__acc_noreturn)
-#  define __acc_HAVE_noreturn 1
-#else
-#  define __acc_noreturn        /*empty*/
-#endif
-#if !defined(__acc_nothrow)
-#if (ACC_CC_GNUC >= 0x030300ul)
-#  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_INTELC_MSC && (__INTEL_COMPILER >= 450)) && defined(__cplusplus)
-#  define __acc_nothrow         __declspec(nothrow)
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 900))
-#  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
-#  define __acc_nothrow         __attribute__((__nothrow__))
-#elif (ACC_CC_MSC && (_MSC_VER >= 1200)) && defined(__cplusplus)
-#  define __acc_nothrow         __declspec(nothrow)
-#endif
-#endif
-#if defined(__acc_nothrow)
-#  define __acc_HAVE_nothrow 1
-#else
-#  define __acc_nothrow         /*empty*/
-#endif
-#if !defined(__acc_restrict)
-#if (ACC_CC_GNUC >= 0x030400ul)
-#  define __acc_restrict        __restrict__
-#elif (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 600))
-#  define __acc_restrict        __restrict__
-#elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM)
-#  define __acc_restrict        __restrict__
-#elif (ACC_CC_MSC && (_MSC_VER >= 1400))
-#  define __acc_restrict        __restrict
-#endif
-#endif
-#if defined(__acc_restrict)
-#  define __acc_HAVE_restrict 1
-#else
-#  define __acc_restrict        /*empty*/
-#endif
 #if !defined(__acc_likely) && !defined(__acc_unlikely)
 #if (ACC_CC_GNUC >= 0x030200ul)
+#  define __acc_likely(e)       (__builtin_expect(!!(e),1))
+#  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
+#elif (ACC_CC_IBMC >= 1010)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
@@ -1422,14 +1515,39 @@ extern "C" {
 #endif
 #endif
 #if defined(__acc_likely)
+#  ifndef __acc_HAVE_likely
 #  define __acc_HAVE_likely 1
+#  endif
 #else
 #  define __acc_likely(e)       (e)
 #endif
 #if defined(__acc_unlikely)
+#  ifndef __acc_HAVE_unlikely
 #  define __acc_HAVE_unlikely 1
+#  endif
 #else
 #  define __acc_unlikely(e)     (e)
+#endif
+#if !defined(__acc_cte)
+#endif
+#if defined(__acc_cte)
+#  ifndef __acc_HAVE_cte
+#  define __acc_HAVE_cte 1
+#  endif
+#else
+#  define __acc_cte(e)          (e)
+#endif
+#if !defined(__acc_unreachable)
+#if (ACC_CC_GNUC >= 0x040500ul)
+#  define __acc_unreachable()   __builtin_unreachable();
+#endif
+#endif
+#if defined(__acc_unreachable)
+#  ifndef __acc_HAVE_unreachable
+#  define __acc_HAVE_unreachable 1
+#  endif
+#else
+#  define __acc_unreachable(e)  /*empty*/
 #endif
 #if !defined(ACC_UNUSED)
 #  if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0600))
@@ -1520,10 +1638,10 @@ extern "C" {
 #if !defined(ACC_BLOCK_BEGIN)
 #  if (ACC_CC_MSC)
 #    define ACC_BLOCK_BEGIN         do {
-#    define ACC_BLOCK_END           } while (0,0);
+#    define ACC_BLOCK_END           } while (((void)0),0);
 #  else
 #    define ACC_BLOCK_BEGIN         do {
-#    define ACC_BLOCK_END           } while (0);
+#    define ACC_BLOCK_END           } while __acc_cte(0);
 #  endif
 #endif
 #ifndef __ACC_CTA_NAME
@@ -2083,90 +2201,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_INFO_LIBC         "default"
 #endif
 #endif
-#if (ACC_ARCH_ALPHA)
-#  define ACC_OPT_AVOID_UINT_INDEX  1
-#elif (ACC_ARCH_AMD64)
-#  define ACC_OPT_AVOID_INT_INDEX   1
-#  define ACC_OPT_AVOID_UINT_INDEX  1
-#  define ACC_OPT_UNALIGNED16       1
-#  define ACC_OPT_UNALIGNED32       1
-#  define ACC_OPT_UNALIGNED64       1
-#elif (ACC_ARCH_ARM)
-#  if defined(__ARM_FEATURE_UNALIGNED)
-#    define ACC_OPT_UNALIGNED16     1
-#    define ACC_OPT_UNALIGNED32     1
-#  elif defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM+0) >= 7)
-#    define ACC_OPT_UNALIGNED16     1
-#    define ACC_OPT_UNALIGNED32     1
-#  elif defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM+0) >= 6) && !defined(__TARGET_PROFILE_M)
-#    define ACC_OPT_UNALIGNED16     1
-#    define ACC_OPT_UNALIGNED32     1
-#  endif
-#elif (ACC_ARCH_ARM64)
-#  define ACC_OPT_UNALIGNED16       1
-#  define ACC_OPT_UNALIGNED32       1
-#  define ACC_OPT_UNALIGNED64       1
-#elif (ACC_ARCH_CRIS)
-#  define ACC_OPT_UNALIGNED16       1
-#  define ACC_OPT_UNALIGNED32       1
-#elif (ACC_ARCH_I386)
-#  define ACC_OPT_UNALIGNED16       1
-#  define ACC_OPT_UNALIGNED32       1
-#elif (ACC_ARCH_IA64)
-#  define ACC_OPT_AVOID_INT_INDEX   1
-#  define ACC_OPT_AVOID_UINT_INDEX  1
-#  define ACC_OPT_PREFER_POSTINC    1
-#elif (ACC_ARCH_M68K)
-#  define ACC_OPT_PREFER_POSTINC    1
-#  define ACC_OPT_PREFER_PREDEC     1
-#  if defined(__mc68020__) && !defined(__mcoldfire__)
-#    define ACC_OPT_UNALIGNED16     1
-#    define ACC_OPT_UNALIGNED32     1
-#  endif
-#elif (ACC_ARCH_MIPS)
-#  define ACC_OPT_AVOID_UINT_INDEX  1
-#elif (ACC_ARCH_POWERPC)
-#  define ACC_OPT_PREFER_PREINC     1
-#  define ACC_OPT_PREFER_PREDEC     1
-#  if (ACC_ABI_BIG_ENDIAN)
-#    define ACC_OPT_UNALIGNED16     1
-#    define ACC_OPT_UNALIGNED32     1
-#    if (ACC_WORDSIZE == 8)
-#      define ACC_OPT_UNALIGNED64   1
-#    endif
-#  endif
-#elif (ACC_ARCH_S390)
-#  define ACC_OPT_UNALIGNED16       1
-#  define ACC_OPT_UNALIGNED32       1
-#  if (ACC_WORDSIZE == 8)
-#    define ACC_OPT_UNALIGNED64     1
-#  endif
-#elif (ACC_ARCH_SH)
-#  define ACC_OPT_PREFER_POSTINC    1
-#  define ACC_OPT_PREFER_PREDEC     1
-#endif
-#ifndef ACC_CFG_NO_INLINE_ASM
-#if (ACC_ABI_NEUTRAL_ENDIAN) || (ACC_ARCH_GENERIC)
-#  define ACC_CFG_NO_INLINE_ASM 1
-#elif (ACC_CC_LLVM)
-#  define ACC_CFG_NO_INLINE_ASM 1
-#endif
-#endif
-#if (ACC_CFG_NO_INLINE_ASM)
-#  undef ACC_ASM_SYNTAX_MSC
-#  undef ACC_ASM_SYNTAX_GNUC
-#  undef __ACC_ASM_CLOBBER
-#endif
-#ifndef ACC_CFG_NO_UNALIGNED
-#if (ACC_ABI_NEUTRAL_ENDIAN) || (ACC_ARCH_GENERIC)
-#  define ACC_CFG_NO_UNALIGNED 1
-#endif
-#endif
-#if (ACC_CFG_NO_UNALIGNED)
-#  undef ACC_OPT_UNALIGNED16
-#  undef ACC_OPT_UNALIGNED32
-#  undef ACC_OPT_UNALIGNED64
-#endif
 #if (ACC_ARCH_I386 && (ACC_OS_DOS32 || ACC_OS_WIN32) && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
 #  define ACC_ASM_SYNTAX_MSC 1
 #elif (ACC_OS_WIN64 && (ACC_CC_DMC || ACC_CC_INTELC || ACC_CC_MSC || ACC_CC_PELLESC))
@@ -2180,12 +2214,156 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #endif
 #if (ACC_ASM_SYNTAX_GNUC)
 #if (ACC_ARCH_I386 && ACC_CC_GNUC && (ACC_CC_GNUC < 0x020000ul))
-#  define __ACC_ASM_CLOBBER         "ax"
-#elif (ACC_CC_INTELC)
-#  define __ACC_ASM_CLOBBER         "memory"
+#  define __ACC_ASM_CLOBBER                     "ax"
+#  define __ACC_ASM_CLOBBER_LIST_CC             /*empty*/
+#  define __ACC_ASM_CLOBBER_LIST_CC_MEMORY      /*empty*/
+#  define __ACC_ASM_CLOBBER_LIST_EMPTY          /*empty*/
+#elif (ACC_CC_INTELC && (__INTEL_COMPILER < 1000))
+#  define __ACC_ASM_CLOBBER                     "memory"
+#  define __ACC_ASM_CLOBBER_LIST_CC             /*empty*/
+#  define __ACC_ASM_CLOBBER_LIST_CC_MEMORY      : "memory"
+#  define __ACC_ASM_CLOBBER_LIST_EMPTY          /*empty*/
 #else
-#  define __ACC_ASM_CLOBBER         "cc", "memory"
+#  define __ACC_ASM_CLOBBER                     "cc", "memory"
+#  define __ACC_ASM_CLOBBER_LIST_CC             : "cc"
+#  define __ACC_ASM_CLOBBER_LIST_CC_MEMORY      : "cc", "memory"
+#  define __ACC_ASM_CLOBBER_LIST_EMPTY          /*empty*/
 #endif
+#endif
+#if (ACC_ARCH_ALPHA)
+#  define ACC_OPT_AVOID_UINT_INDEX          1
+#elif (ACC_ARCH_AMD64)
+#  define ACC_OPT_AVOID_INT_INDEX           1
+#  define ACC_OPT_AVOID_UINT_INDEX          1
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED64
+#  define ACC_OPT_UNALIGNED64               1
+#  endif
+#elif (ACC_ARCH_ARM)
+#  if defined(__ARM_FEATURE_UNALIGNED)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
+#  elif defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM+0) >= 7)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
+#  elif defined(__TARGET_ARCH_ARM) && ((__TARGET_ARCH_ARM+0) >= 6) && !defined(__TARGET_PROFILE_M)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
+#  endif
+#elif (ACC_ARCH_ARM64)
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED64
+#  define ACC_OPT_UNALIGNED64               1
+#  endif
+#elif (ACC_ARCH_CRIS)
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#elif (ACC_ARCH_I386)
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#elif (ACC_ARCH_IA64)
+#  define ACC_OPT_AVOID_INT_INDEX           1
+#  define ACC_OPT_AVOID_UINT_INDEX          1
+#  define ACC_OPT_PREFER_POSTINC            1
+#elif (ACC_ARCH_M68K)
+#  define ACC_OPT_PREFER_POSTINC            1
+#  define ACC_OPT_PREFER_PREDEC             1
+#  if defined(__mc68020__) && !defined(__mcoldfire__)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
+#  endif
+#elif (ACC_ARCH_MIPS)
+#  define ACC_OPT_AVOID_UINT_INDEX          1
+#elif (ACC_ARCH_POWERPC)
+#  define ACC_OPT_PREFER_PREINC             1
+#  define ACC_OPT_PREFER_PREDEC             1
+#  if (ACC_ABI_BIG_ENDIAN)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
+#    if (ACC_WORDSIZE == 8)
+#      ifndef ACC_OPT_UNALIGNED64
+#      define ACC_OPT_UNALIGNED64           1
+#      endif
+#    endif
+#  endif
+#elif (ACC_ARCH_S390)
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#  if (ACC_WORDSIZE == 8)
+#    ifndef ACC_OPT_UNALIGNED64
+#    define ACC_OPT_UNALIGNED64             1
+#    endif
+#  endif
+#elif (ACC_ARCH_SH)
+#  define ACC_OPT_PREFER_POSTINC            1
+#  define ACC_OPT_PREFER_PREDEC             1
+#endif
+#ifndef ACC_CFG_NO_INLINE_ASM
+#if (ACC_ABI_NEUTRAL_ENDIAN) || (ACC_ARCH_GENERIC)
+#  define ACC_CFG_NO_INLINE_ASM 1
+#elif (ACC_CC_LLVM)
+#  define ACC_CFG_NO_INLINE_ASM 1
+#endif
+#endif
+#if (ACC_CFG_NO_INLINE_ASM)
+#  undef ACC_ASM_SYNTAX_MSC
+#  undef ACC_ASM_SYNTAX_GNUC
+#  undef __ACC_ASM_CLOBBER
+#  undef __ACC_ASM_CLOBBER_LIST_CC
+#  undef __ACC_ASM_CLOBBER_LIST_CC_MEMORY
+#  undef __ACC_ASM_CLOBBER_LIST_EMPTY
+#endif
+#ifndef ACC_CFG_NO_UNALIGNED
+#if (ACC_ABI_NEUTRAL_ENDIAN) || (ACC_ARCH_GENERIC)
+#  define ACC_CFG_NO_UNALIGNED 1
+#endif
+#endif
+#if (ACC_CFG_NO_UNALIGNED)
+#  undef ACC_OPT_UNALIGNED16
+#  undef ACC_OPT_UNALIGNED32
+#  undef ACC_OPT_UNALIGNED64
 #endif
 #if defined(__ACC_INFOSTR_MM)
 #elif (ACC_MM_FLAT) && (defined(__ACC_INFOSTR_PM) || defined(ACC_INFO_ABI_PM))
@@ -2450,7 +2628,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t__;
 #endif
 #if !defined(acc_word_t)
 #if defined(ACC_WORDSIZE) && (ACC_WORDSIZE+0 > 0)
-#if (ACC_WORDSIZE == ACC_SIZEOF_ACC_INTPTR_T) && !defined(__ACC_INTPTR_T_IS_POINTER)
+#if (ACC_WORDSIZE == ACC_SIZEOF_ACC_INTPTR_T) && !(__ACC_INTPTR_T_IS_POINTER)
 #  define acc_word_t                acc_uintptr_t
 #  define acc_sword_t               acc_intptr_t
 #  define ACC_SIZEOF_ACC_WORD_T ACC_SIZEOF_ACC_INTPTR_T
@@ -2486,6 +2664,10 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t__;
 #  error "acc_word_t"
 #endif
 #endif
+#endif
+#if 1 && defined(acc_word_t)
+    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_word_t)  == ACC_WORDSIZE)
+    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_sword_t) == ACC_WORDSIZE)
 #endif
 #if 1
 #define acc_int8_t                  signed char
@@ -3227,6 +3409,9 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 }
 #endif
 #  if !(ACC_CFG_SKIP_ACC_UA)
+#if !defined(__acc_ua_volatile)
+#  define __acc_ua_volatile     volatile
+#endif
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
 #elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul)) && defined(__cplusplus)
 #elif (ACC_CC_INTELC) && defined(_WIN32)
@@ -3259,7 +3444,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #if (__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_ASM_SYNTAX_GNUC) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE16)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3272,7 +3457,7 @@ unsigned long __ACC_UA_GET_LE16(__acc_ua_volatile const void* pp) {
 #define ACC_UA_GET_LE16(p)      __ACC_UA_GET_LE16(p)
 #endif
 #if !defined(ACC_UA_SET_LE16)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3301,7 +3486,7 @@ void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsigned long v) {
 #if (__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_ASM_SYNTAX_GNUC) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE32)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3314,7 +3499,7 @@ unsigned long __ACC_UA_GET_LE32(__acc_ua_volatile const void* pp) {
 #define ACC_UA_GET_LE32(p)      __ACC_UA_GET_LE32(p)
 #endif
 #if !defined(ACC_UA_SET_LE32)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3571,7 +3756,7 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t__;
 #endif
 #if !defined(acc_word_t)
 #if defined(ACC_WORDSIZE) && (ACC_WORDSIZE+0 > 0)
-#if (ACC_WORDSIZE == ACC_SIZEOF_ACC_INTPTR_T) && !defined(__ACC_INTPTR_T_IS_POINTER)
+#if (ACC_WORDSIZE == ACC_SIZEOF_ACC_INTPTR_T) && !(__ACC_INTPTR_T_IS_POINTER)
 #  define acc_word_t                acc_uintptr_t
 #  define acc_sword_t               acc_intptr_t
 #  define ACC_SIZEOF_ACC_WORD_T ACC_SIZEOF_ACC_INTPTR_T
@@ -3607,6 +3792,10 @@ __acc_gnuc_extension__ typedef unsigned long long acc_ullong_t__;
 #  error "acc_word_t"
 #endif
 #endif
+#endif
+#if 1 && defined(acc_word_t)
+    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_word_t)  == ACC_WORDSIZE)
+    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_sword_t) == ACC_WORDSIZE)
 #endif
 #if 1
 #define acc_int8_t                  signed char
@@ -3738,6 +3927,9 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 }
 #endif
 #  if !(ACC_CFG_SKIP_ACC_UA)
+#if !defined(__acc_ua_volatile)
+#  define __acc_ua_volatile     volatile
+#endif
 #if (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020700ul))
 #elif (ACC_CC_GNUC && (ACC_CC_GNUC < 0x020800ul)) && defined(__cplusplus)
 #elif (ACC_CC_INTELC) && defined(_WIN32)
@@ -3770,7 +3962,7 @@ typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #if (__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_ASM_SYNTAX_GNUC) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE16)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3783,7 +3975,7 @@ unsigned long __ACC_UA_GET_LE16(__acc_ua_volatile const void* pp) {
 #define ACC_UA_GET_LE16(p)      __ACC_UA_GET_LE16(p)
 #endif
 #if !defined(ACC_UA_SET_LE16)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3812,7 +4004,7 @@ void __ACC_UA_SET_LE16(__acc_ua_volatile void* pp, unsigned long v) {
 #if (__acc_HAVE_forceinline)
 #if (ACC_ARCH_POWERPC && ACC_ABI_BIG_ENDIAN) && (ACC_ASM_SYNTAX_GNUC) && (ACC_CC_GNUC)
 #if !defined(ACC_UA_GET_LE32)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -3825,7 +4017,7 @@ unsigned long __ACC_UA_GET_LE32(__acc_ua_volatile const void* pp) {
 #define ACC_UA_GET_LE32(p)      __ACC_UA_GET_LE32(p)
 #endif
 #if !defined(ACC_UA_SET_LE32)
-static __acc_forceinline
+__acc_static_forceinline
 #if (ACC_CC_CLANG || (ACC_CC_GNUC >= 0x020800ul) || ACC_CC_INTELC_GNUC || ACC_CC_LLVM)
 __attribute__((__unused__))
 #endif
@@ -5407,9 +5599,11 @@ void* volatile acc_vget_ptr__ = (void *) 0;
 #ifndef __ACCLIB_VGET_BODY
 #define __ACCLIB_VGET_BODY(T) \
     if __acc_unlikely(acc_vget_ptr__) { \
-        * (T *) acc_vget_ptr__ = v; \
-        * (int *) acc_vget_ptr__ = expr; \
-        v = * (T *) acc_vget_ptr__; \
+        typedef T __acc_may_alias TT; \
+        unsigned char e; expr &= 255; e = (unsigned char) expr; \
+        * (TT *) acc_vget_ptr__ = v; \
+        * (unsigned char *) acc_vget_ptr__ = e; \
+        v = * (TT *) acc_vget_ptr__; \
     } \
     return v;
 #endif
@@ -6300,10 +6494,10 @@ ACCLIB_PUBLIC(long, acc_safe_hwrite) (int fd, const acc_hvoid_p buf, long size)
 #ifndef acc_pclock_syscall_clock_gettime
 #define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
 #endif
-static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
+__acc_static_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
 {
     unsigned long r = 228;
-    __asm__ __volatile__("syscall\n" : "=a" (r) : "0" (r), "D" (clockid), "S" (ts) : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__("syscall\n" : "=a" (r) : "0" (r), "D" (clockid), "S" (ts) __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     return (long) r;
 }
 #endif
@@ -6311,10 +6505,10 @@ static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct
 #ifndef acc_pclock_syscall_clock_gettime
 #define acc_pclock_syscall_clock_gettime acc_pclock_syscall_clock_gettime
 #endif
-static __acc_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
+__acc_static_noinline long acc_pclock_syscall_clock_gettime(long clockid, struct timespec *ts)
 {
     unsigned long r = 265;
-    __asm__ __volatile__("pushl %%ebx\n pushl %%edx\n popl %%ebx\n int $0x80\n popl %%ebx\n" : "=a" (r) : "0" (r), "d" (clockid), "c" (ts) : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__("pushl %%ebx\n pushl %%edx\n popl %%ebx\n int $0x80\n popl %%ebx\n" : "=a" (r) : "0" (r), "d" (clockid), "c" (ts) __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     return (long) r;
 }
 #endif
@@ -6945,7 +7139,7 @@ ACCLIB_PUBLIC_NOINLINE(void, acc_debug_break) (void)
 #elif (ACC_OS_WIN64) && (ACC_HAVE_WINDOWS_H)
     DebugBreak();
 #elif (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
-    __asm__ __volatile__("int $3\n" : : : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__("int $3\n" : : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
     __asm { int 3 }
 #elif (ACC_OS_WIN32) && (ACC_HAVE_WINDOWS_H)
@@ -6966,7 +7160,7 @@ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_query) (void)
 # else
     size_t r = 0;
 # endif
-    __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     return (int)(r >> 18) & 1;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
     unsigned long r;
@@ -6984,16 +7178,16 @@ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_enable) (int v)
 {
 #if (ACC_ARCH_AMD64) && (ACC_ASM_SYNTAX_GNUC)
     if (v) {
-        __asm__ __volatile__("pushf\n orl $262144,(%%rsp)\n popf\n" : : : __ACC_ASM_CLOBBER);
+        __asm__ __volatile__("pushf\n orl $262144,(%%rsp)\n popf\n" : : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     } else {
-        __asm__ __volatile__("pushf\n andl $-262145,(%%rsp)\n popf\n" : : : __ACC_ASM_CLOBBER);
+        __asm__ __volatile__("pushf\n andl $-262145,(%%rsp)\n popf\n" : : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     }
     return 0;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
     if (v) {
-        __asm__ __volatile__("pushf\n orl $262144,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
+        __asm__ __volatile__("pushf\n orl $262144,(%%esp)\n popf\n" : : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     } else {
-        __asm__ __volatile__("pushf\n andl $-262145,(%%esp)\n popf\n" : : : __ACC_ASM_CLOBBER);
+        __asm__ __volatile__("pushf\n andl $-262145,(%%esp)\n popf\n" : : __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
     }
     return 0;
 #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)
@@ -7034,9 +7228,9 @@ ACCLIB_PUBLIC_NOINLINE(unsigned, acc_debug_running_on_valgrind) (void)
     size_t r = 0;
     a[0] = 0x1001; a[1] = 0; a[2] = 0; a[3] = 0; a[4] = 0; a[5] = 0;
 #  if (ACC_ARCH_AMD64)
-    __asm__ __volatile__(".byte 0x48,0xc1,0xc7,0x03,0x48,0xc1,0xc7,0x0d,0x48,0xc1,0xc7,0x3d,0x48,0xc1,0xc7,0x33,0x48,0x87,0xdb\n" : "=d" (r) : "a" (&a[0]), "d" (r) : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__(".byte 0x48,0xc1,0xc7,0x03,0x48,0xc1,0xc7,0x0d,0x48,0xc1,0xc7,0x3d,0x48,0xc1,0xc7,0x33,0x48,0x87,0xdb\n" : "=d" (r) : "a" (&a[0]), "d" (r) __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
 #  elif (ACC_ARCH_I386)
-    __asm__ __volatile__(".byte 0xc1,0xc7,0x03,0xc1,0xc7,0x0d,0xc1,0xc7,0x1d,0xc1,0xc7,0x13,0x87,0xdb\n" : "=d" (r) : "a" (&a[0]), "d" (r) : __ACC_ASM_CLOBBER);
+    __asm__ __volatile__(".byte 0xc1,0xc7,0x03,0xc1,0xc7,0x0d,0xc1,0xc7,0x1d,0xc1,0xc7,0x13,0x87,0xdb\n" : "=d" (r) : "a" (&a[0]), "d" (r) __ACC_ASM_CLOBBER_LIST_CC_MEMORY);
 #  endif
     return (unsigned) r;
 #else

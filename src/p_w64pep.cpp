@@ -2,8 +2,8 @@
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2013 Laszlo Molnar
+   Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2014 Laszlo Molnar
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -243,12 +243,12 @@ class ImportLinker : public ElfLinkerAMD64
         unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
         tstr dlln(name_for_dll(dll, first_char));
         char *procn = new char[len];
-        snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        upx_snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
         encode_name(proc, procn + strlen(procn));
         return procn;
     }
 
-    static char zeros[sizeof(import_desc)];
+    static const char zeros[sizeof(import_desc)];
 
     enum {
         // the order of identifiers is very important below!!
@@ -347,15 +347,18 @@ public:
     template <typename C>
     void add(const C *dll, unsigned ordinal)
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
-        char ord[20];
-        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
         add((const char*) dll, ord, ordinal);
     }
 
     template <typename C1, typename C2>
     void add(const C1 *dll, const C2 *proc)
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
         assert(proc);
         add((const char*) dll, (const char*) proc, 0);
     }
@@ -392,6 +395,8 @@ public:
     template <typename C1, typename C2>
     upx_uint64_t getAddress(const C1 *dll, const C2 *proc) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
         const Section *s = getThunk((const char*) dll, (const char*) proc,
                                     thunk_separator_first);
         if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
@@ -400,12 +405,13 @@ public:
         return s->offset;
     }
 
-    template <typename C1>
-    upx_uint64_t getAddress(const C1 *dll, unsigned ordinal) const
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll, unsigned ordinal) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
-        char ord[20];
-        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
 
         const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
         if (s == NULL
@@ -414,14 +420,15 @@ public:
         return s->offset;
     }
 
-    template <typename C1>
-    upx_uint64_t getAddress(const C1 *dll) const
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         tstr sdll(name_for_dll((const char*) dll, dll_name_id));
         return findSection(sdll, true)->offset;
     }
 };
-char ImportLinker::zeros[sizeof(import_desc)];
+const char ImportLinker::zeros[sizeof(import_desc)] = { 0 };
 
 ImportLinker ilinker(8);
 

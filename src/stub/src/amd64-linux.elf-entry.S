@@ -2,9 +2,9 @@
 *
 *  This file is part of the UPX executable compressor.
 *
-*  Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
-*  Copyright (C) 1996-2013 Laszlo Molnar
-*  Copyright (C) 2000-2013 John F. Reiser
+*  Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
+*  Copyright (C) 1996-2014 Laszlo Molnar
+*  Copyright (C) 2000-2014 John F. Reiser
 *  All Rights Reserved.
 *
 *  UPX and the UCL library are free software; you can redistribute them
@@ -241,7 +241,7 @@ unfold:
 */
         .byte 0x68; .int JMPU   // push $ JMPU (R_X86_64_32)
         push %rax    // for unmap in fold
-        .byte 0x68; .int LENU   // push $ JMPU (R_X86_64_32)
+        .byte 0x68; .int LENU   // push $ LENU (R_X86_64_32)
 #else
         push $ JMPU  // for unmap in fold
         push %rax    // for unmap in fold

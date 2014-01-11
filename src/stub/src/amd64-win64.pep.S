@@ -3,8 +3,8 @@
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 1996-2009 Markus Franz Xaver Johannes Oberhumer
-;  Copyright (C) 1996-2009 Laszlo Molnar
+;  Copyright (C) 1996-2014 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2014 Laszlo Molnar
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them
@@ -265,7 +265,7 @@ section         PEK32ORD
                 jmp     SHORT(next_imp)
 not_kernel32:
 section         PEIMORD1
-                movzxw  rdx, word ptr [rdi]
+                movzx   rdx, word ptr [rdi]
                 add     rdi, 2
                 jmp     SHORT(first_imp)
 
