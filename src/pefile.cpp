@@ -44,6 +44,20 @@
 #  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
 #endif
 
+#if 1
+//static
+unsigned my_strlen(const char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+static unsigned my_strlen(const unsigned char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+#undef strlen
+#define strlen my_strlen
+#endif
+
 #if (__ACC_CXX_HAVE_PLACEMENT_DELETE) || defined(__DJGPP__)
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
@@ -531,12 +545,12 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
         tstr dlln(name_for_dll(dll, first_char));
         char *procn = new char[len];
-        snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        upx_snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
         encode_name(proc, procn + strlen(procn));
         return procn;
     }
 
-    static char zeros[sizeof(import_desc)];
+    static const char zeros[sizeof(import_desc)];
 
     enum {
         // the order of identifiers is very important below!!
@@ -635,15 +649,18 @@ public:
     template <typename C>
     void add(const C *dll, unsigned ordinal)
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
-        char ord[20];
-        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
         add((const char*) dll, ord, ordinal);
     }
 
     template <typename C1, typename C2>
     void add(const C1 *dll, const C2 *proc)
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
         assert(proc);
         add((const char*) dll, (const char*) proc, 0);
     }
@@ -680,6 +697,8 @@ public:
     template <typename C1, typename C2>
     upx_uint64_t getAddress(const C1 *dll, const C2 *proc) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
         const Section *s = getThunk((const char*) dll, (const char*) proc,
                                     thunk_separator_first);
         if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
@@ -688,12 +707,13 @@ public:
         return s->offset;
     }
 
-    template <typename C1>
-    upx_uint64_t getAddress(const C1 *dll, unsigned ordinal) const
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll, unsigned ordinal) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         assert(ordinal > 0 && ordinal < 0x10000);
-        char ord[20];
-        snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
 
         const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
         if (s == NULL
@@ -702,56 +722,45 @@ public:
         return s->offset;
     }
 
-    template <typename C1>
-    upx_uint64_t getAddress(const C1 *dll) const
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll) const
     {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
         tstr sdll(name_for_dll((const char*) dll, dll_name_id));
         return findSection(sdll, true)->offset;
     }
 };
-char PeFile::ImportLinker::zeros[sizeof(import_desc)];
+const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = { 0 };
 
-#if 0
-/*************************************************************************
-// import handling
-**************************************************************************/
-
-__packed_struct(import_desc)
-    LE32  oft;      // orig first thunk
-    char  _[8];
-    LE32  dllname;
-    LE32  iat;      // import address table
-__packed_struct_end()
-
-void PeFile::processImports(unsigned myimport, unsigned iat_off) // pass 2
+void PeFile::addKernelImport(const char *dll, const char *name)
 {
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20)
-    COMPILE_TIME_ASSERT_ALIGNED1(import_desc)
-
-    // adjust import data
-    for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
-    {
-        if (im->dllname < myimport)
-            im->dllname += myimport;
-        LE32 *p = (LE32*) (oimpdlls + im->iat);
-        im->iat += myimport;
-        im->oft = im->iat;
-
-        while (*p)
-            if ((*p++ & 0x80000000) == 0)  // import by name?
-                p[-1] += myimport;
-
-        im->iat = im == (import_desc*) oimpdlls ? iat_off : iat_off + 12;
-    }
+    ilinker->add(dll, name);
 }
 
-unsigned PeFile::processImports() // pass 1
+void PeFile::addKernelImports()
 {
-    static const unsigned char kernel32dll[] = "COREDLL.dll";
-    static const char llgpa[] = "\x0\x0""LoadLibraryW\x0\x0"
-                                "GetProcAddressA\x0\x0\x0"
-                                "CacheSync";
-    //static const char exitp[] = "ExitProcess\x0\x0\x0";
+    addKernelImport("KERNEL32.DLL", "LoadLibraryA");
+    addKernelImport("KERNEL32.DLL", "GetProcAddress");
+    if (!isdll)
+        addKernelImport("KERNEL32.DLL", "ExitProcess");
+    addKernelImport("KERNEL32.DLL", "VirtualProtect");
+}
+
+void PeFile::processImports(unsigned myimport, unsigned) // pass 2
+{
+    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
+
+    ilinker->relocate(myimport);
+    int len;
+    oimpdlls = ilinker->getLoader(&len);
+    assert(len == (int) soimpdlls);
+    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
+}
+
+template <typename LEXX, typename ord_mask_t>
+unsigned PeFile::processImports(ord_mask_t ord_mask) // pass 1
+{
+    static const unsigned char kernel32dll[] = "KERNEL32.DLL";
 
     unsigned dllnum = 0;
     import_desc *im = (import_desc*) (ibuf + IDADDR(PEDIR_IMPORT));
@@ -769,8 +778,8 @@ unsigned PeFile::processImports() // pass 1
         const upx_byte *shname;
         unsigned   ordinal;
         unsigned   iat;
-        LE32       *lookupt;
-        unsigned   npos;
+        LEXX       *lookupt;
+        unsigned   original_position;
         bool       isk32;
 
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
@@ -779,6 +788,8 @@ unsigned PeFile::processImports() // pass 1
             const udll *u2 = * (const udll * const *) p2;
             if (u1->isk32) return -1;
             if (u2->isk32) return 1;
+            if (!*u1->lookupt) return 1;
+            if (!*u2->lookupt) return -1;
             int rc = strcasecmp(u1->name,u2->name);
             if (rc) return rc;
             if (u1->ordinal) return -1;
@@ -795,33 +806,32 @@ unsigned PeFile::processImports() // pass 1
 
     soimport = 1024; // safety
 
-    unsigned ic,k32o;
-    for (ic = k32o = 0; dllnum && im->dllname; ic++, im++)
+    unsigned ic;
+    for (ic = 0; dllnum && im->dllname; ic++, im++)
     {
         idlls[ic] = dlls + ic;
         dlls[ic].name = ibuf + im->dllname;
         dlls[ic].shname = NULL;
         dlls[ic].ordinal = 0;
         dlls[ic].iat = im->iat;
-        dlls[ic].lookupt = (LE32*) (ibuf + (im->oft ? im->oft : im->iat));
-        dlls[ic].npos = 0;
+        dlls[ic].lookupt = (LEXX*) (ibuf + (im->oft ? im->oft : im->iat));
+        dlls[ic].original_position = ic;
         dlls[ic].isk32 = strcasecmp(kernel32dll,dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
-        for (LE32 *tarr = dlls[ic].lookupt; *tarr; tarr++)
+        for (IPTR_I(LEXX, tarr, dlls[ic].lookupt); *tarr; tarr += 1)
         {
-            if (*tarr & 0x80000000)
+            if (*tarr & ord_mask)
             {
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
-                //if (dlls[ic].isk32)
-                //    kernel32ordinal = true,k32o++;
             }
-            else
+            else //it's an import by name
             {
-                unsigned len = strlen(ibuf + *tarr + 2);
+                IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
+                unsigned len = strlen(n);
                 soimport += len + 1;
                 if (dlls[ic].shname == NULL || len < strlen (dlls[ic].shname))
                     dlls[ic].shname = ibuf + *tarr + 2;
@@ -831,106 +841,70 @@ unsigned PeFile::processImports() // pass 1
     }
     oimport = new upx_byte[soimport];
     memset(oimport,0,soimport);
-    oimpdlls = new upx_byte[soimport];
-    memset(oimpdlls,0,soimport);
 
     qsort(idlls,dllnum,sizeof (udll*),udll::compare);
-
-    unsigned dllnamelen = sizeof (kernel32dll);
-    unsigned dllnum2 = 1;
-    for (ic = 0; ic < dllnum; ic++)
-        if (!idlls[ic]->isk32 && (ic == 0 || strcasecmp(idlls[ic - 1]->name,idlls[ic]->name)))
-        {
-            dllnum2++;
-            dllnamelen += strlen(idlls[ic]->name) + 1;
-        }
-    //fprintf(stderr,"dllnum=%d dllnum2=%d soimport=%d\n",dllnum,dllnum2,soimport); //
 
     info("Processing imports: %d DLLs", dllnum);
 
     // create the new import table
-    im = (import_desc*) oimpdlls;
+    addKernelImports();
 
-    LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 4;// + k32o + (isdll ? 0 : 1);
-    upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
-    upx_byte *importednames = dllnames + (dllnamelen &~ 1);
-
-    unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
-
-    memcpy(importednames, llgpa, ALIGN_UP((unsigned) sizeof(llgpa), 2u));
-    strcpy(dllnames,kernel32dll);
-    im->dllname = k32namepos;
-    im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryW
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddressA
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 18;   // CacheSync
-    dllnames += sizeof(kernel32dll);
-    importednames += sizeof(llgpa);
-
-    im++;
     for (ic = 0; ic < dllnum; ic++)
+    {
         if (idlls[ic]->isk32)
         {
-            idlls[ic]->npos = k32namepos;
-            /*
+            // for kernel32.dll we need to put all the imported
+            // ordinals into the output import table, as on
+            // some versions of windows GetProcAddress does not resolve them
             if (idlls[ic]->ordinal)
-                for (LE32 *tarr = idlls[ic]->lookupt; *tarr; tarr++)
-                    if (*tarr & 0x80000000)
-                        *ordinals++ = *tarr;
-            */
+                for (LEXX *tarr = idlls[ic]->lookupt; *tarr; tarr++)
+                    if (*tarr & ord_mask)
+                    {
+                        ilinker->add(kernel32dll, *tarr & 0xffff);
+                        kernel32ordinal = true;
+                    }
         }
-        else if (ic && strcasecmp(idlls[ic-1]->name,idlls[ic]->name) == 0)
-            idlls[ic]->npos = idlls[ic-1]->npos;
         else
         {
-            im->dllname = idlls[ic]->npos = ptr_diff(dllnames,oimpdlls);
-            im->iat = ptr_diff(lookuptable,oimpdlls);
-
-            strcpy(dllnames,idlls[ic]->name);
-            dllnames += strlen(idlls[ic]->name)+1;
             if (idlls[ic]->ordinal)
-                *lookuptable = idlls[ic]->ordinal + 0x80000000;
+                ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
             else if (idlls[ic]->shname)
-            {
-                if (ptr_diff(importednames,oimpdlls) & 1)
-                    importednames--;
-                *lookuptable = ptr_diff(importednames,oimpdlls);
-                importednames += 2;
-                strcpy(importednames,idlls[ic]->shname);
-                importednames += strlen(idlls[ic]->shname) + 1;
-            }
-            lookuptable += 2;
-            im++;
+                ilinker->add(idlls[ic]->name, idlls[ic]->shname);
+            else
+                throwInternalError("should not happen");
         }
-    soimpdlls = ALIGN_UP(ptr_diff(importednames,oimpdlls),4);
+    }
+
+    soimpdlls = ilinker->build();
 
     Interval names(ibuf),iats(ibuf),lookups(ibuf);
+
     // create the preprocessed data
-    //ordinals -= k32o;
     upx_byte *ppi = oimport;  // preprocessed imports
     for (ic = 0; ic < dllnum; ic++)
     {
-        LE32 *tarr = idlls[ic]->lookupt;
+        LEXX *tarr = idlls[ic]->lookupt;
+#if 0 && ENABLE_THIS_AND_UNCOMPRESSION_WILL_BREAK // FIXME
         if (!*tarr)  // no imports from this dll
             continue;
-        set_le32(ppi,idlls[ic]->npos);
+#endif
+        set_le32(ppi, ilinker->getAddress(idlls[ic]->name));
         set_le32(ppi+4,idlls[ic]->iat - rvamin);
         ppi += 8;
         for (; *tarr; tarr++)
-            if (*tarr & 0x80000000)
+            if (*tarr & ord_mask)
             {
-                /*if (idlls[ic]->isk32)
+                unsigned ord = *tarr & 0xffff;
+                if (idlls[ic]->isk32)
                 {
                     *ppi++ = 0xfe; // signed + odd parity
-                    set_le32(ppi,ptr_diff(ordinals,oimpdlls));
-                    ordinals++;
+                    set_le32(ppi, ilinker->getAddress(idlls[ic]->name, ord));
                     ppi += 4;
                 }
-                else*/
+                else
                 {
                     *ppi++ = 0xff;
-                    set_le16(ppi,*tarr & 0xffff);
+                    set_le16(ppi, ord);
                     ppi += 2;
                 }
             }
@@ -961,7 +935,6 @@ unsigned PeFile::processImports() // pass 1
         soimport = 0;
 
     //OutputFile::dump("x0.imp", oimport, soimport);
-    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
 
     unsigned ilen = 0;
     names.flatten();
@@ -981,7 +954,7 @@ unsigned PeFile::processImports() // pass 1
         for (ic = 0; ic < dllnum; ic++, im++)
         {
             memset(im,FILLVAL,sizeof(*im));
-            im->dllname = ptr_diff(idlls[ic]->name,ibuf); // I only need this info
+            im->dllname = ptr_diff(dlls[idlls[ic]->original_position].name,ibuf);
         }
     }
     else
@@ -1002,7 +975,6 @@ unsigned PeFile::processImports() // pass 1
     info("Imports: original size: %u bytes, preprocessed size: %u bytes",ilen,soimport);
     return names.ivnum == 1 ? names.ivarr[0].start : 0;
 }
-#endif
 
 /*************************************************************************
 // export handling
@@ -1816,9 +1788,10 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 // unpack
 **************************************************************************/
 
-void PeFile32::rebuildRelocs(upx_byte *& extrainfo)
+void PeFile::rebuildRelocs(upx_byte *& extrainfo, unsigned bits,
+                           unsigned flags, upx_uint64_t imagebase)
 {
-    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (oh.flags & RELOCS_STRIPPED))
+    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & RELOCS_STRIPPED))
         return;
 
     if (ODSIZE(PEDIR_RELOC) == 8) // some tricky dlls use this
@@ -1834,7 +1807,7 @@ void PeFile32::rebuildRelocs(upx_byte *& extrainfo)
 //    upx_byte *p = rdata;
     OPTR_I(upx_byte, p, rdata);
     MemBuffer wrkmem;
-    unsigned relocn = unoptimizeReloc32(&rdata,obuf,&wrkmem,1);
+    unsigned relocn = unoptimizeReloc(&rdata,obuf,&wrkmem,1,bits);
     unsigned r16 = 0;
     if (big & 6)                // 16 bit relocations
     {
@@ -1863,8 +1836,11 @@ void PeFile32::rebuildRelocs(upx_byte *& extrainfo)
     for (unsigned ic = 0; ic < relocn; ic++)
     {
         p = obuf + get_le32(wrkmem + 4 * ic);
-        set_le32(p, get_le32((unsigned char *)p) + oh.imagebase + rvamin);
-        rel.add(rvamin + get_le32(wrkmem + 4 * ic),3);
+        if (bits == 32)
+            set_le32(p, get_le32((unsigned char *)p) + imagebase + rvamin);
+        else
+            set_le64(p, get_le64((unsigned char *)p) + imagebase + rvamin);
+        rel.add(rvamin + get_le32(wrkmem + 4 * ic), bits == 32 ? 3 : 10);
     }
     rel.finish (oxrelocs,soxrelocs);
 
@@ -1931,8 +1907,122 @@ void PeFile::rebuildResources(upx_byte *& extrainfo, unsigned lastvaddr)
     delete [] p;
 }
 
-template <typename ht>
-void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh)
+template <typename LEXX, typename ord_mask_t>
+void PeFile::rebuildImports(upx_byte *& extrainfo,
+                            ord_mask_t ord_mask, bool set_oft)
+{
+    if (ODADDR(PEDIR_IMPORT) == 0
+        || ODSIZE(PEDIR_IMPORT) <= sizeof(import_desc))
+        return;
+
+//    const upx_byte * const idata = obuf + get_le32(extrainfo);
+    OPTR_C(const upx_byte, idata, obuf + get_le32(extrainfo));
+    const unsigned inamespos = get_le32(extrainfo + 4);
+    extrainfo += 8;
+
+    unsigned sdllnames = 0;
+
+//    const upx_byte *import = ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr;
+//    const upx_byte *p;
+    IPTR_I(const upx_byte, import, ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
+    OPTR(const upx_byte, p);
+
+    for (p = idata; get_le32(p) != 0; ++p)
+    {
+        const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
+        const unsigned dlen = strlen(dname);
+        ICHECK(dname, dlen + 1);
+
+        sdllnames += dlen + 1;
+        for (p += 8; *p;)
+            if (*p == 1)
+                p += strlen(++p) + 1;
+            else if (*p == 0xff)
+                p += 3; // ordinal
+            else
+                p += 5;
+    }
+    sdllnames = ALIGN_UP(sdllnames, 2u);
+
+    upx_byte * const Obuf = obuf - rvamin;
+    import_desc * const im0 = (import_desc*) (Obuf + ODADDR(PEDIR_IMPORT));
+    import_desc *im = im0;
+    upx_byte *dllnames = Obuf + inamespos;
+    upx_byte *importednames = dllnames + sdllnames;
+    upx_byte * const importednames_start = importednames;
+
+    for (p = idata; get_le32(p) != 0; ++p)
+    {
+        // restore the name of the dll
+        const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
+        const unsigned dlen = strlen(dname);
+        ICHECK(dname, dlen + 1);
+
+        const unsigned iatoffs = get_le32(p + 4) + rvamin;
+        if (inamespos)
+        {
+            // now I rebuild the dll names
+            OCHECK(dllnames, dlen + 1);
+            strcpy(dllnames, dname);
+            im->dllname = ptr_diff(dllnames,Obuf);
+            //;;;printf("\ndll: %s:",dllnames);
+            dllnames += dlen + 1;
+        }
+        else
+        {
+            OCHECK(Obuf + im->dllname, dlen + 1);
+            strcpy(Obuf + im->dllname, dname);
+        }
+        im->iat = iatoffs;
+        if (set_oft)
+            im->oft = iatoffs;
+
+        OPTR_I(LEXX, newiat, (LEXX *) (Obuf + iatoffs));
+
+        // restore the imported names+ordinals
+        for (p += 8; *p; ++newiat)
+            if (*p == 1)
+            {
+                const unsigned ilen = strlen(++p) + 1;
+                if (inamespos)
+                {
+                    if (ptr_diff(importednames, importednames_start) & 1)
+                        importednames -= 1;
+                    omemcpy(importednames + 2, p, ilen);
+                    //;;;printf(" %s",importednames+2);
+                    *newiat = ptr_diff(importednames, Obuf);
+                    importednames += 2 + ilen;
+                }
+                else
+                {
+                    OCHECK(Obuf + *newiat + 2, ilen + 1);
+                    strcpy(Obuf + *newiat + 2, p);
+                }
+                p += ilen;
+            }
+            else if (*p == 0xff)
+            {
+                *newiat = get_le16(p + 1) + ord_mask;
+                //;;;printf(" %x",(unsigned)*newiat);
+                p += 3;
+            }
+            else
+            {
+                *newiat = *(const LEXX*)(get_le32(p + 1) + import);
+                assert(*newiat & ord_mask);
+                p += 5;
+            }
+        *newiat = 0;
+        im++;
+    }
+    //memset(idata,0,p - idata);
+}
+
+template <typename ht, typename LEXX, typename ord_mask_t>
+void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh,
+                    ord_mask_t ord_mask, bool set_oft)
 {
     //infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 
@@ -1981,8 +2071,8 @@ void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh)
         ft.unfilter(obuf + oh.codebase - rvamin, oh.codesize);
     }
 
-    rebuildImports(extrainfo);
-    rebuildRelocs(extrainfo);
+    rebuildImports<LEXX>(extrainfo, ord_mask, set_oft);
+    rebuildRelocs(extrainfo, sizeof(ih.imagebase) * 8, oh.flags, oh.imagebase);
     rebuildTls();
     rebuildExports();
 
@@ -2074,7 +2164,13 @@ void PeFile32::readPeHeader()
 
 void PeFile32::unpack(OutputFile *fo)
 {
-    super::unpack(fo, ih, oh);
+    bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
+    super::unpack<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
+}
+
+unsigned PeFile32::processImports() // pass 1
+{
+    return super::processImports<LE32>(1u << 31);
 }
 
 /*

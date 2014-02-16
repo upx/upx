@@ -48,8 +48,9 @@ protected:
     virtual ~PeFile();
     virtual int getVersion() const { return 13; }
 
-    template <typename ht>
-    void unpack(OutputFile *fo, const ht &ih, ht &oh);
+    template <typename ht, typename LEXX, typename ord_mask_t>
+    void unpack(OutputFile *fo, const ht &ih, ht &oh,
+                ord_mask_t ord_mask, bool set_oft);
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
@@ -62,18 +63,25 @@ protected:
 
     unsigned pe_offset;
 
-    virtual unsigned processImports() = 0;
-    virtual void processImports(unsigned, unsigned) = 0;
-    virtual void rebuildImports(upx_byte *&) = 0;
+    template <typename LEXX, typename ord_mask_t>
+    unsigned processImports(ord_mask_t ord_mask);
+
+    template <typename LEXX, typename ord_mask_t>
+    void rebuildImports(upx_byte *& extrainfo,
+                        ord_mask_t ord_mask, bool set_oft);
+    virtual void processImports(unsigned, unsigned);
     upx_byte *oimport;
     unsigned soimport;
     upx_byte *oimpdlls;
     unsigned soimpdlls;
     ImportLinker *ilinker;
+    void addKernelImport(const char *, const char *);
+    virtual void addKernelImports();
 
     virtual void processRelocs() = 0;
     void processRelocs(Reloc *);
-    virtual void rebuildRelocs(upx_byte *&) = 0;
+    void rebuildRelocs(upx_byte *&, unsigned bits,
+                       unsigned flags, upx_uint64_t imagebase);
     upx_byte *orelocs;
     unsigned sorelocs;
     upx_byte *oxrelocs;
@@ -354,8 +362,8 @@ protected:
 
     virtual void readPeHeader();
 
+    virtual unsigned processImports();
     virtual void processRelocs();
-    virtual void rebuildRelocs(upx_byte *&);
 
     __packed_struct(pe_header_t)
         // 0x0

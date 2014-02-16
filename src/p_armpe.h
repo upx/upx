@@ -56,9 +56,8 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    virtual unsigned processImports();
     virtual void processImports(unsigned, unsigned);
-    virtual void rebuildImports(upx_byte *&);
+    virtual void addKernelImports();
 
     virtual void processTls(Interval *);
 
