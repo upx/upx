@@ -99,12 +99,22 @@ protected:
     upx_byte *oresources;
     unsigned soresources;
 
-//    virtual void processTls(Interval *);
-//    void processTls(Reloc *, const Interval *, unsigned);
+    template <typename>
+    struct tls_traits;
+    template <typename LEXX>
+    void processTls1(Interval *iv,
+                     typename tls_traits<LEXX>::cb_value_t imagebase,
+                     unsigned imagesize); // pass 1
+    template <typename LEXX>
+    void processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
+                     typename tls_traits<LEXX>::cb_value_t imagebase); // pass 2
     void rebuildTls();
     upx_byte *otls;
     unsigned sotls;
     unsigned tlsindex;
+    unsigned tlscb_ptr;
+    unsigned tls_handler_offset;
+    bool use_tls_callbacks;
 
     unsigned stripDebug(unsigned);
 
@@ -364,6 +374,8 @@ protected:
 
     virtual unsigned processImports();
     virtual void processRelocs();
+    virtual void processTls(Interval *);
+    void processTls(Reloc *, const Interval *, unsigned);
 
     __packed_struct(pe_header_t)
         // 0x0

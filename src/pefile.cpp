@@ -136,6 +136,7 @@ PeFile::PeFile(InputFile *f) : super(f)
     sotls = 0;
     isdll = false;
     ilinker = NULL;
+    use_tls_callbacks = false;
 }
 
 
@@ -1130,41 +1131,71 @@ void PeFile::processExports(Export *xport,unsigned newoffs) // pass2
 // the tls area is not relocated, because the relocation is done by
 // the virtual memory manager only for pages which are not yet loaded.
 // of course it was impossible to debug this ;-)
-#if 0
-__packed_struct(tls)
-    LE32 datastart; // VA tls init data start
-    LE32 dataend;   // VA tls init data end
-    LE32 tlsindex;  // VA tls index
-    LE32 callbacks; // VA tls callbacks
-    char _[8];      // zero init, characteristics
-__packed_struct_end()
 
-void PeFile::processTls(Interval *iv) // pass 1
+template <>
+struct PeFile::tls_traits<LE32>
 {
-    COMPILE_TIME_ASSERT(sizeof(tls) == 24)
+    __packed_struct(tls)
+        LE32 datastart; // VA tls init data start
+        LE32 dataend;   // VA tls init data end
+        LE32 tlsindex;  // VA tls index
+        LE32 callbacks; // VA tls callbacks
+        char _[8];      // zero init, characteristics
+    __packed_struct_end()
+
+    static const unsigned sotls = 24;
+    static const unsigned cb_size = 4;
+    typedef unsigned cb_value_t;
+    static const unsigned reloc_type = 3;
+};
+
+template <typename LEXX>
+void PeFile::processTls1(Interval *iv,
+                         typename tls_traits<LEXX>::cb_value_t imagebase,
+                         unsigned imagesize) // pass 1
+{
+    typedef typename tls_traits<LEXX>::tls tls;
+    typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
+    const unsigned cb_size = tls_traits<LEXX>::cb_size;
+
+    COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
 
     if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks)
     {
-        if (tlsp->callbacks < ih.imagebase)
+        if (tlsp->callbacks < imagebase)
             throwCantPack("invalid TLS callback");
-        else if (tlsp->callbacks - ih.imagebase + 4 >= ih.imagesize)
+        else if (tlsp->callbacks - imagebase + 4 >= imagesize)
             throwCantPack("invalid TLS callback");
-        unsigned v = get_le32(ibuf + tlsp->callbacks - ih.imagebase);
-        if (v != 0)
+        cb_value_t v = *(LEXX*)(ibuf + (tlsp->callbacks - imagebase));
+
+        if(v != 0)
         {
-            //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
-            throwCantPack("TLS callbacks are not supported");
+            //count number of callbacks, just for information string - Stefan Widmann
+            unsigned num_callbacks = 0;
+            unsigned callback_offset = 0;
+            while(*(LEXX*)(ibuf + tlsp->callbacks - imagebase + callback_offset))
+            {
+                //increment number of callbacks
+                num_callbacks++;
+                callback_offset += cb_size;
+            }
+            info("TLS: %u callback(s) found, adding TLS callback handler", num_callbacks);
+            //set flag to include necessary sections in loader
+            use_tls_callbacks = true;
+            //define linker symbols
+            tlscb_ptr = tlsp->callbacks;
         }
     }
 
-    const unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
-    const unsigned tlsdataend = tlsp->dataend - ih.imagebase;
+    const unsigned tlsdatastart = tlsp->datastart - imagebase;
+    const unsigned tlsdataend = tlsp->dataend - imagebase;
 
     // now some ugly stuff: find the relocation entries in the tls data area
     unsigned pos,type;
@@ -1174,51 +1205,76 @@ void PeFile::processTls(Interval *iv) // pass 1
             iv->add(pos,type);
 
     sotls = sizeof(tls) + tlsdataend - tlsdatastart;
+    // if TLS callbacks are used, we need two more {D|Q}WORDS at the end of the TLS
+    // ... and those dwords should be correctly aligned
+    if (use_tls_callbacks)
+        sotls = ALIGN_UP(sotls, cb_size) + 2 * cb_size;
 
     // the PE loader wants this stuff uncompressed
     otls = new upx_byte[sotls];
     memset(otls,0,sotls);
-    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),0x18);
+    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),sizeof(tls));
     // WARNING: this can acces data in BSS
     memcpy(otls + sizeof(tls),ibuf + tlsdatastart,sotls - sizeof(tls));
-    tlsindex = tlsp->tlsindex - ih.imagebase;
-    info("TLS: %u bytes tls data and %u relocations added",sotls - (unsigned) sizeof(tls),iv->ivnum);
+    tlsindex = tlsp->tlsindex - imagebase;
+    //NEW: subtract two dwords if TLS callbacks are used - Stefan Widmann
+    info("TLS: %u bytes tls data and %u relocations added",
+         sotls - (unsigned) sizeof(tls) - (use_tls_callbacks ? 2 * cb_size : 0),iv->ivnum);
 
     // makes sure tls index is zero after decompression
-    if (tlsindex && tlsindex < ih.imagesize)
+    if (tlsindex && tlsindex < imagesize)
         set_le32(ibuf + tlsindex, 0);
 }
 
-void PeFile::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 2
+template <typename LEXX>
+void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
+                         typename tls_traits<LEXX>::cb_value_t imagebase) // pass 2
 {
+    typedef typename tls_traits<LEXX>::tls tls;
+    typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
+    const unsigned cb_size = tls_traits<LEXX>::cb_size;
+    const unsigned reloc_type = tls_traits<LEXX>::reloc_type;
+
     if (sotls == 0)
         return;
     // add new relocation entries
     unsigned ic;
-    for (ic = 0; ic < 12; ic += 4)
-        rel->add(newaddr + ic,3);
+    //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
+    for (ic = 0; ic < (use_tls_callbacks ? 4 * cb_size : 3 * cb_size); ic += cb_size)
+        rel->add(newaddr + ic, reloc_type);
 
     tls * const tlsp = (tls*) otls;
     // now the relocation entries in the tls data area
     for (ic = 0; ic < iv->ivnum; ic += 4)
     {
-        void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - ih.imagebase) + sizeof(tls);
-        unsigned kc = get_le32(p);
+        void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - imagebase) + sizeof(tls);
+        cb_value_t kc = *(LEXX*)(p);
         if (kc < tlsp->dataend && kc >= tlsp->datastart)
         {
             kc +=  newaddr + sizeof(tls) - tlsp->datastart;
-            set_le32(p,kc + ih.imagebase);
+            *(LEXX*)(p) = kc + imagebase;
             rel->add(kc,iv->ivarr[ic].len);
         }
         else
-            rel->add(kc - ih.imagebase,iv->ivarr[ic].len);
+            rel->add(kc - imagebase,iv->ivarr[ic].len);
     }
 
-    tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
-    tlsp->dataend = newaddr + sotls + ih.imagebase;
-    tlsp->callbacks = 0; // note: TLS callbacks are not implemented in Windows 95/98/ME
+    const unsigned tls_data_size = tlsp->dataend - tlsp->datastart;
+    tlsp->datastart = newaddr + sizeof(tls) + imagebase;
+    tlsp->dataend = tlsp->datastart + tls_data_size;
+
+    //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
+    tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + imagebase - 2 * cb_size : 0);
+
+    if (use_tls_callbacks)
+    {
+      //set handler offset
+      *(LEXX*)(otls + sotls - 2 * cb_size) = tls_handler_offset + imagebase;
+      //add relocation for TLS handler offset
+      rel->add(newaddr + sotls - 2 * cb_size, reloc_type);
+    }
 }
-#endif
+
 
 /*************************************************************************
 // resource handling
@@ -1791,6 +1847,7 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 void PeFile::rebuildRelocs(upx_byte *& extrainfo, unsigned bits,
                            unsigned flags, upx_uint64_t imagebase)
 {
+    assert(bits == 32 || bits == 64);
     if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & RELOCS_STRIPPED))
         return;
 
@@ -2171,6 +2228,16 @@ void PeFile32::unpack(OutputFile *fo)
 unsigned PeFile32::processImports() // pass 1
 {
     return super::processImports<LE32>(1u << 31);
+}
+
+void PeFile32::processTls(Interval *iv)
+{
+    super::processTls1<LE32>(iv, ih.imagebase, ih.imagesize);
+}
+
+void PeFile32::processTls(Reloc *r, const Interval *iv, unsigned a)
+{
+    super::processTls2<LE32>(r, iv, a, ih.imagebase);
 }
 
 /*

@@ -58,9 +58,6 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    virtual void processTls(Interval *); //NEW: TLS callback handling - Stefan Widmann
-    void processTls(Reloc *, const Interval *, unsigned); //NEW: TLS callback handling - Stefan Widmann
-
     void processLoadConf(Reloc *, const Interval *, unsigned);
     void processLoadConf(Interval *);
     upx_byte *oloadconf;
