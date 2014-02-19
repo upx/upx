@@ -30,7 +30,7 @@
    changes in:
  */
 
-
+#if 0
 #include "conf.h"
 #include "file.h"
 #include "filter.h"
@@ -1731,7 +1731,7 @@ void PepFile::unpack(OutputFile *fo)
  <offset of extra info 4>
 */
 
-
+#endif
 /*
 vi:ts=4:et
 */

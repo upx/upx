@@ -142,21 +142,6 @@ PeFile::PeFile(InputFile *f) : super(f)
 }
 
 
-PeFile::~PeFile()
-{
-    delete [] isection;
-    delete [] orelocs;
-    delete [] oimport;
-    oimpdlls = NULL;
-    delete [] oexport;
-    delete [] otls;
-    delete [] oresources;
-    delete [] oxrelocs;
-    delete [] oloadconf;
-    //delete res;
-}
-
-
 bool PeFile::testUnpackVersion(int version) const
 {
     if (version != ph_version && ph_version != -1)
@@ -475,6 +460,107 @@ void PeFile32::processRelocs() // pass1
             big_relocs |= 2 * ic;
         }
     }
+    info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
+}
+
+void PeFile64::processRelocs() // pass1
+{
+    big_relocs = 0;
+
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC),IDSIZE(PEDIR_RELOC));
+    const unsigned *counts = rel.getcounts();
+    unsigned rnum = 0;
+
+    unsigned ic;
+    for (ic = 1; ic < 16; ic++)
+        rnum += counts[ic];
+
+    if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
+    {
+        if (IDSIZE(PEDIR_RELOC))
+            ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+        orelocs = new upx_byte [1];
+        sorelocs = 0;
+        return;
+    }
+
+    for (ic = 15; ic; ic--)
+        if (ic != 10 && counts[ic])
+            infoWarning("skipping unsupported relocation type %d (%d)",ic,counts[ic]);
+
+    LE32 *fix[16];
+    for (ic = 15; ic; ic--)
+        fix[ic] = new LE32 [counts[ic]];
+
+    unsigned xcounts[16];
+    memset(xcounts, 0, sizeof(xcounts));
+
+    // prepare sorting
+    unsigned pos,type;
+    while (rel.next(pos,type))
+    {
+        // FIXME add check for relocations which try to modify the
+        // PE header or other relocation records
+
+        if (pos >= ih.imagesize)
+            continue;           // skip out-of-bounds record
+        if (type < 16)
+            fix[type][xcounts[type]++] = pos - rvamin;
+    }
+
+    // remove duplicated records
+    for (ic = 1; ic <= 15; ic++)
+    {
+        qsort(fix[ic], xcounts[ic], 4, le32_compare);
+        unsigned prev = ~0;
+        unsigned jc = 0;
+        for (unsigned kc = 0; kc < xcounts[ic]; kc++)
+            if (fix[ic][kc] != prev)
+                prev = fix[ic][jc++] = fix[ic][kc];
+
+        //printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        xcounts[ic] = jc;
+    }
+
+    // preprocess "type 10" relocation records
+    for (ic = 0; ic < xcounts[10]; ic++)
+    {
+        pos = fix[10][ic] + rvamin;
+        set_le64(ibuf + pos, get_le64(ibuf + pos) - ih.imagebase - rvamin);
+    }
+
+    ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+    orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
+    sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
+                                        orelocs, ibuf + rvamin,1, &big_relocs),
+                        orelocs);
+
+    for (ic = 15; ic; ic--)
+        delete [] fix[ic];
+
+#if 0
+    // Malware that hides behind UPX often has PE header info that is
+    // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
+    // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
+    // the relocs into one array.
+    if ((rnum * 4 + 1024) < (sorelocs + 4*(2 + xcounts[2] + xcounts[1])))
+        throwCantUnpack("Invalid relocs");
+
+    // append relocs type "LOW" then "HIGH"
+    for (ic = 2; ic ; ic--)
+    {
+        memcpy(orelocs + sorelocs,fix[ic],4 * xcounts[ic]);
+        sorelocs += 4 * xcounts[ic];
+        delete [] fix[ic];
+
+        set_le32(orelocs + sorelocs,0);
+        if (xcounts[ic])
+        {
+            sorelocs += 4;
+            big_relocs |= 2 * ic;
+        }
+    }
+#endif
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 
@@ -850,6 +936,7 @@ unsigned PeFile::processImports(ord_mask_t ord_mask) // pass 1
 
     info("Processing imports: %d DLLs", dllnum);
 
+    ilinker = new ImportLinker(sizeof(LEXX));
     // create the new import table
     addKernelImports();
 
@@ -1150,6 +1237,23 @@ struct PeFile::tls_traits<LE32>
     static const unsigned cb_size = 4;
     typedef unsigned cb_value_t;
     static const unsigned reloc_type = 3;
+};
+
+template <>
+struct PeFile::tls_traits<LE64>
+{
+    __packed_struct(tls)
+        LE64 datastart; // VA tls init data start
+        LE64 dataend;   // VA tls init data end
+        LE64 tlsindex;  // VA tls index
+        LE64 callbacks; // VA tls callbacks
+        char _[8];      // zero init, characteristics
+    __packed_struct_end()
+
+    static const unsigned sotls = 40;
+    static const unsigned cb_size = 8;
+    typedef upx_uint64_t cb_value_t;
+    static const unsigned reloc_type = 10;
 };
 
 template <typename LEXX>
@@ -2101,8 +2205,8 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
                 }
                 else
                 {
-                    OCHECK(Obuf + *newiat + 2, ilen + 1);
-                    strcpy(Obuf + *newiat + 2, p);
+                    OCHECK(Obuf + (*newiat + 2), ilen + 1);
+                    strcpy(Obuf + (*newiat + 2), p);
                 }
                 p += ilen;
             }
@@ -2307,6 +2411,26 @@ int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
     return false;
 }
 
+upx_uint64_t PeFile::ilinkerGetAddress(const char *d, const char *n) const
+{
+    return ilinker->getAddress(d, n);
+}
+
+PeFile::~PeFile()
+{
+    delete [] isection;
+    delete [] orelocs;
+    delete [] oimport;
+    oimpdlls = NULL;
+    delete [] oexport;
+    delete [] otls;
+    delete [] oresources;
+    delete [] oxrelocs;
+    delete [] oloadconf;
+    delete ilinker;
+    //delete res;
+}
+
 
 /*************************************************************************
 //  PeFile32
@@ -2319,14 +2443,10 @@ PeFile32::PeFile32(InputFile *f) : super(f)
 
     iddirs = ih.ddirs;
     oddirs = oh.ddirs;
-
-    ilinker = new ImportLinker(4);
 }
 
 PeFile32::~PeFile32()
-{
-    delete ilinker;
-}
+{}
 
 void PeFile32::readPeHeader()
 {
@@ -2359,6 +2479,53 @@ void PeFile32::processTls(Interval *iv)
 void PeFile32::processTls(Reloc *r, const Interval *iv, unsigned a)
 {
     super::processTls2<LE32>(r, iv, a, ih.imagebase);
+}
+
+/*************************************************************************
+//  PeFile64
+**************************************************************************/
+
+PeFile64::PeFile64(InputFile *f) : super(f)
+{
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 264)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
+
+    iddirs = ih.ddirs;
+    oddirs = oh.ddirs;
+}
+
+PeFile64::~PeFile64()
+{}
+
+void PeFile64::readPeHeader()
+{
+    fi->readx(&ih,sizeof(ih));
+    isdll = ((ih.flags & DLL_FLAG) != 0);
+}
+
+void PeFile64::unpack(OutputFile *fo)
+{
+    super::unpack<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false);
+}
+
+int PeFile64::canUnpack()
+{
+    return canUnpack0(3, ih.objects, ih.entry, sizeof(ih));
+}
+
+unsigned PeFile64::processImports() // pass 1
+{
+    return super::processImports<LE64>(1ULL << 63);
+}
+
+void PeFile64::processTls(Interval *iv)
+{
+    super::processTls1<LE64>(iv, ih.imagebase, ih.imagesize);
+}
+
+void PeFile64::processTls(Reloc *r, const Interval *iv, unsigned a)
+{
+    super::processTls2<LE64>(r, iv, a, ih.imagebase);
 }
 
 /*

@@ -118,9 +118,7 @@ PackW32Pe::PackW32Pe(InputFile *f) : super(f)
 
 
 PackW32Pe::~PackW32Pe()
-{
-    delete [] oloadconf;
-}
+{}
 
 
 const int *PackW32Pe::getCompressionMethods(int method, int level) const
@@ -857,20 +855,6 @@ void PackW32Pe::pack(OutputFile *fo)
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
 }
-
-/*
- extra info added to help uncompression:
-
- <ih sizeof(pe_head)>
- <pe_section_t objs*sizeof(pe_section_t)>
- <start of compressed imports 4> - optional           \
- <start of the names from uncompressed imports> - opt /
- <start of compressed relocs 4> - optional   \
- <relocation type indicator 1> - optional    /
- <icondir_count 2> - optional
- <offset of extra info 4>
-*/
-
 
 /*
 vi:ts=4:et

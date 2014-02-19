@@ -80,6 +80,7 @@ protected:
     ImportLinker *ilinker;
     void addKernelImport(const char *, const char *);
     virtual void addKernelImports();
+    upx_uint64_t ilinkerGetAddress(const char *, const char *) const;
 
     virtual void processRelocs() = 0;
     void processRelocs(Reloc *);
@@ -420,6 +421,64 @@ protected:
         // 0x60
         char    _____[20];          // stack + heap sizes
         // 0x74
+        LE32    ddirsentries;       // usually 16
+
+        ddirs_t ddirs[16];
+    __packed_struct_end()
+
+    pe_header_t ih, oh;
+};
+
+class PeFile64 : public PeFile
+{
+    typedef PeFile super;
+protected:
+    PeFile64(InputFile *f);
+    virtual ~PeFile64();
+    virtual void unpack(OutputFile *fo);
+    virtual int canUnpack();
+
+    virtual void readPeHeader();
+
+    virtual unsigned processImports();
+    virtual void processRelocs();
+    virtual void processTls(Interval *);
+    void processTls(Reloc *, const Interval *, unsigned);
+
+    __packed_struct(pe_header_t)
+        // 0x0
+        char    _[4];               // pemagic
+        LE16    cpu;
+        LE16    objects;            // number of sections
+        char    __[12];             // timestamp + reserved
+        LE16    opthdrsize;
+        LE16    flags;              // characteristics
+        // optional header
+        LE16    coffmagic;          // NEW: Stefan Widmann
+        char    ___[2];             // linkerversion
+        LE32    codesize;
+        // 0x20
+        LE32    datasize;
+        LE32    bsssize;
+        LE32    entry;              // still a 32 bit RVA
+        LE32    codebase;
+        // 0x30
+        //LE32    database;         // field does not exist in PE+!
+        // nt specific fields
+        LE64    imagebase;          // LE32 -> LE64 - Stefan Widmann standard is 0x0000000140000000
+        LE32    objectalign;
+        LE32    filealign;          // should set to 0x200 ?
+        // 0x40
+        char    ____[16];           // versions
+        // 0x50
+        LE32    imagesize;
+        LE32    headersize;
+        LE32    chksum;             // should set to 0
+        LE16    subsystem;
+        LE16    dllflags;
+        // 0x60
+        char    _____[36];          // stack + heap sizes + loader flag
+        // 0x84
         LE32    ddirsentries;       // usually 16
 
         ddirs_t ddirs[16];
