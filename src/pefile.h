@@ -116,6 +116,11 @@ protected:
     unsigned tls_handler_offset;
     bool use_tls_callbacks;
 
+    void processLoadConf(Reloc *, const Interval *, unsigned);
+    void processLoadConf(Interval *);
+    upx_byte *oloadconf;
+    unsigned soloadconf;
+
     unsigned stripDebug(unsigned);
 
     unsigned icondir_offset;

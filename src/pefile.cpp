@@ -137,6 +137,8 @@ PeFile::PeFile(InputFile *f) : super(f)
     isdll = false;
     ilinker = NULL;
     use_tls_callbacks = false;
+    oloadconf = NULL;
+    soloadconf = 0;
 }
 
 
@@ -1275,6 +1277,50 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
     }
 }
 
+/*************************************************************************
+// Load Configuration handling
+**************************************************************************/
+
+void PeFile::processLoadConf(Interval *iv) // pass 1
+{
+    if (IDSIZE(PEDIR_LOADCONF) == 0)
+        return;
+
+    const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+    const upx_byte * const loadconf = ibuf + lcaddr;
+    soloadconf = get_le32(loadconf);
+    if (soloadconf == 0)
+        return;
+    if (soloadconf > 256)
+        throwCantPack("size of Load Configuration directory unexpected");
+
+    // if there were relocation entries referring to the load config table
+    // then we need them for the copy of the table too
+    unsigned pos,type;
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC));
+    while (rel.next(pos, type))
+        if (pos >= lcaddr && pos < lcaddr + soloadconf)
+        {
+            iv->add(pos - lcaddr, type);
+            // printf("loadconf reloc detected: %x\n", pos);
+        }
+
+    oloadconf = new upx_byte[soloadconf];
+    memcpy(oloadconf, loadconf, soloadconf);
+}
+
+void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
+                                unsigned newaddr) // pass2
+{
+    // now we have the address of the new load config table
+    // so we can create the new relocation entries
+    for (unsigned ic = 0; ic < iv->ivnum; ic++)
+    {
+        rel->add(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+        //printf("loadconf reloc added: %x %d\n",
+        //       iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+    }
+}
 
 /*************************************************************************
 // resource handling
