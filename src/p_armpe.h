@@ -50,7 +50,6 @@ public:
     virtual void pack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);

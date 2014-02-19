@@ -147,11 +147,12 @@ PeFile::~PeFile()
     delete [] isection;
     delete [] orelocs;
     delete [] oimport;
-    delete [] oimpdlls;
+    oimpdlls = NULL;
     delete [] oexport;
     delete [] otls;
     delete [] oresources;
     delete [] oxrelocs;
+    delete [] oloadconf;
     //delete res;
 }
 
@@ -2243,6 +2244,74 @@ void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh,
     ibuf.dealloc();
 }
 
+int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
+                       LE32 &ih_entry, unsigned ihsize)
+{
+    if (!canPack())
+        return false;
+
+    unsigned objs = ih_objects;
+    isection = new pe_section_t[objs];
+    fi->seek(pe_offset + ihsize, SEEK_SET);
+    fi->readx(isection,sizeof(pe_section_t)*objs);
+    if (ih_objects < 3)
+        return -1;
+    bool is_packed = ((ih_objects == 3 || ih_objects == max_sections) &&
+                      (IDSIZE(15) || ih_entry > isection[1].vaddr));
+    bool found_ph = false;
+    if (memcmp(isection[0].name,"UPX",3) == 0)
+    {
+        // current version
+        fi->seek(isection[1].rawdataptr - 64, SEEK_SET);
+        found_ph = readPackHeader(1024);
+        if (!found_ph)
+        {
+            // old versions
+            fi->seek(isection[2].rawdataptr, SEEK_SET);
+            found_ph = readPackHeader(1024);
+        }
+    }
+    if (is_packed && found_ph)
+        return true;
+    if (!is_packed && !found_ph)
+        return -1;
+    if (is_packed && ih_entry < isection[2].vaddr)
+    {
+        unsigned char buf[256];
+        bool x = false;
+
+        memset(buf, 0, sizeof(buf));
+        try {
+            fi->seek(ih_entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
+            fi->read(buf, sizeof(buf));
+
+            // FIXME this is for x86
+            static const unsigned char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
+            // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
+
+            int offset = find(buf, sizeof(buf), magic, 7);
+            if (offset >= 0 && find(buf + offset + 1, sizeof(buf) - offset - 1, magic, 7) >= 0)
+                x = true;
+        } catch (...) {
+            //x = true;
+        }
+        if (x)
+            throwCantUnpack("file is modified/hacked/protected; take care!!!");
+        else
+            throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+        return false;   // not reached
+    }
+
+    // FIXME: what should we say here ?
+    //throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+    return false;
+}
+
+
+/*************************************************************************
+//  PeFile32
+**************************************************************************/
+
 PeFile32::PeFile32(InputFile *f) : super(f)
 {
     COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
@@ -2269,6 +2338,12 @@ void PeFile32::unpack(OutputFile *fo)
 {
     bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
     super::unpack<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
+}
+
+int PeFile32::canUnpack()
+{
+    return canUnpack0(getFormat() == UPX_F_WINCE_ARM_PE ? 4 : 3,
+                      ih.objects, ih.entry, sizeof(ih));
 }
 
 unsigned PeFile32::processImports() // pass 1

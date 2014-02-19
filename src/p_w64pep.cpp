@@ -123,8 +123,6 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 
 PackW64Pep::PackW64Pep(InputFile *f) : super(f)
 {
-    oloadconf = NULL;
-    soloadconf = 0;
     isrtm = false;
     use_dep_hack = true;
     use_clear_dirty_stack = true;
@@ -133,10 +131,7 @@ PackW64Pep::PackW64Pep(InputFile *f) : super(f)
 
 
 PackW64Pep::~PackW64Pep()
-{
-    oimpdlls = NULL; // this is now a pointer to ImportLinker output
-    delete [] oloadconf;
-}
+{}
 
 
 const int *PackW64Pep::getCompressionMethods(int method, int level) const

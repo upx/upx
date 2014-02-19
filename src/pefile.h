@@ -56,6 +56,9 @@ protected:
     virtual bool canUnpackVersion(int version) const
         {  return (version >= 12 && version <= 13); }
 
+    int canUnpack0(unsigned max_sections, LE16 &ih_objects,
+                   LE32 &ih_entry, unsigned ihsize);
+
 protected:
     virtual int readFileHeader();
     virtual bool testUnpackVersion(int version) const;
@@ -374,6 +377,7 @@ protected:
     PeFile32(InputFile *f);
     virtual ~PeFile32();
     virtual void unpack(OutputFile *fo);
+    virtual int canUnpack();
 
     virtual void readPeHeader();
 
