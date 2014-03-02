@@ -37,9 +37,6 @@
 static const
 #include "stub/i386-win32.pe.h"
 
-#define FILLVAL         0
-
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -251,9 +248,123 @@ void PackW32Pe::buildLoader(const Filter *ft)
 
 }
 
+bool PackW32Pe::handleForceOption()
+{
+    return (ih.cpu < 0x14c || ih.cpu > 0x150)
+        || (ih.opthdrsize != 0xe0)
+        || ((ih.flags & EXECUTABLE) == 0)
+        || ((ih.flags & BITS_32_MACHINE) == 0) //NEW: 32 bit machine flag must be set - Stefan Widmann
+        || (ih.coffmagic != 0x10B) //COFF magic is 0x10B in PE files, 0x20B in PE32+ files - Stefan Widmann
+        || (ih.entry == 0 && !isdll)
+        || (ih.ddirsentries != 16)
+        || IDSIZE(PEDIR_EXCEPTION) // is this used on i386?
+//        || IDSIZE(PEDIR_COPYRIGHT)
+        ;
+}
+
+void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
+                              unsigned sizeof_oh, unsigned ic,
+                              Reloc &, unsigned s1addr)
+{
+    const unsigned myimport = ncsection + soresources - rvamin;
+
+    // patch loader
+    linker->defineSymbol("original_entry", ih.entry);
+    if (use_dep_hack)
+    {
+        // This works around a "protection" introduced in MSVCRT80, which
+        // works like this:
+        // When the compiler detects that it would link in some code from its
+        // C runtime library which references some data in a read only
+        // section then it compiles in a runtime check whether that data is
+        // still in a read only section by looking at the pe header of the
+        // file. If this check fails the runtime does "interesting" things
+        // like not running the floating point initialization code - the result
+        // is a R6002 runtime error.
+        // These supposed to be read only addresses are covered by the sections
+        // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
+        // in the memory. And the page on which the PE header is stored is read
+        // only so we must make it rw, fix the flags (i.e. clear
+        // PEFL_WRITE of osection[x].flags), and make it ro again.
+
+        // rva of the most significant byte of member "flags" in section "UPX0"
+        const unsigned swri = pe_offset + sizeof_oh + sizeof(pe_section_t) - 1;
+        // make sure we only touch the minimum number of pages
+        const unsigned addr = 0u - rvamin + swri;
+        linker->defineSymbol("swri", addr &  0xfff);    // page offset
+        // check whether osection[0].flags and osection[1].flags
+        // are on the same page
+        linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
+                             0x2000 : 0x1000);          // 2 pages or 1 page
+        linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
+        linker->defineSymbol("VirtualProtect", myimport +
+                             ilinkerGetAddress("kernel32.dll", "VirtualProtect"));
+    }
+    linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
+    linker->defineSymbol("start_of_relocs", crelocs);
+    linker->defineSymbol("ExitProcess", myimport +
+                         ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+    linker->defineSymbol("GetProcAddress", myimport +
+                         ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
+    linker->defineSymbol("kernel32_ordinals", myimport);
+    linker->defineSymbol("LoadLibraryA", myimport +
+                         ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
+    linker->defineSymbol("start_of_imports", myimport);
+    linker->defineSymbol("compressed_imports", cimports);
+
+    defineDecompressorSymbols();
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
+
+    // in case of overlapping decompression, this hack is needed,
+    // because windoze zeroes the word pointed by tlsindex before
+    // it starts programs
+    linker->defineSymbol("tls_value", (tlsindex + 4 > s1addr) ?
+                         get_le32(obuf + tlsindex - s1addr - ic) : 0);
+    linker->defineSymbol("tls_address", tlsindex - rvamin);
+
+    linker->defineSymbol("icon_delta", icondir_count - 1);
+    linker->defineSymbol("icon_offset", ncsection + icondir_offset - rvamin);
+
+    const unsigned esi0 = s1addr + ic;
+    linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
+    linker->defineSymbol("start_of_compressed", esi0 + ih.imagebase);
+
+    if (use_tls_callbacks)
+    {
+        //esi is ih.imagebase + rvamin
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr);
+        linker->defineSymbol("tls_module_base", 0u - rvamin);
+    }
+
+    linker->defineSymbol(isdll ? "PEISDLL1" : "PEMAIN01", upxsection);
+    //linker->dumpSymbols();
+}
+
+void PackW32Pe::addNewRelocations(Reloc &rel, unsigned)
+{
+    rel.add(linker->getSymbolOffset("PEMAIN01") + 2, 3);
+    if (use_tls_callbacks)
+    {
+        tls_handler_offset = linker->getSymbolOffset("PETLSC2");
+        //add relocation entry for TLS callback handler
+        rel.add(tls_handler_offset + 4, 3);
+    }
+}
+
+void PackW32Pe::setOhDataBase(const pe_section_t *osection)
+{
+    oh.database = osection[2].vaddr;
+}
+
+void PackW32Pe::setOhHeaderSize(const pe_section_t *)
+{
+    oh.headersize = rvamin; // FIXME
+}
 
 void PackW32Pe::pack(OutputFile *fo)
 {
+    super::pack0(fo, 0x0c, 0x400000, false);
+#if 0
     // FIXME: we need to think about better support for --exact
     if (opt->exact)
         throwCantPackExact();
@@ -854,6 +965,7 @@ void PackW32Pe::pack(OutputFile *fo)
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
+#endif
 }
 
 /*

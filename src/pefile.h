@@ -43,10 +43,38 @@ protected:
     class Resource;
     class Export;
     class ImportLinker;
+    struct pe_section_t;
 
     PeFile(InputFile *f);
     virtual ~PeFile();
     virtual int getVersion() const { return 13; }
+
+    void readSectionHeaders(unsigned objs, unsigned sizeof_ih);
+    unsigned readSections(unsigned objs, unsigned usize,
+                          unsigned ih_filealign, unsigned ih_datasize);
+    void checkHeaderValues(unsigned subsystem, unsigned mask,
+                           unsigned ih_entry, unsigned ih_filealign);
+    unsigned handleStripRelocs(upx_uint64_t ih_imagebase,
+                               upx_uint64_t default_imagebase,
+                               unsigned dllflags);
+
+    virtual bool handleForceOption() = 0;
+    virtual void callCompressWithFilters(Filter &, int filter_strategy,
+                                         unsigned ih_codebase);
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
+                               unsigned sizeof_oh, unsigned isize_isplit,
+                               Reloc &rel, unsigned s1addr) = 0;
+    virtual void addNewRelocations(Reloc &, unsigned) {}
+    void callProcessRelocs(Reloc &rel, unsigned &ic);
+    void callProcessResources(Resource &res, unsigned &ic);
+    virtual unsigned getProcessImportParam(unsigned) { return 0; }
+    virtual void setOhDataBase(const pe_section_t *osection) = 0;
+    virtual void setOhHeaderSize(const pe_section_t *osection) = 0;
+
+    template <typename LEXX, typename ht>
+    void pack0(OutputFile *fo, ht &ih, ht &oh,
+               unsigned subsystem_mask, upx_uint64_t default_imagebase,
+               bool last_section_rsrc_only);
 
     template <typename ht, typename LEXX, typename ord_mask_t>
     void unpack(OutputFile *fo, const ht &ih, ht &oh,
@@ -72,6 +100,7 @@ protected:
     template <typename LEXX, typename ord_mask_t>
     void rebuildImports(upx_byte *& extrainfo,
                         ord_mask_t ord_mask, bool set_oft);
+    virtual unsigned processImports() = 0;
     virtual void processImports(unsigned, unsigned);
     upx_byte *oimport;
     unsigned soimport;
@@ -112,6 +141,9 @@ protected:
     template <typename LEXX>
     void processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
                      typename tls_traits<LEXX>::cb_value_t imagebase); // pass 2
+    virtual void processTls(Interval *iv) = 0;
+    virtual void processTls(Reloc *r, const Interval *iv, unsigned a) = 0;
+
     void rebuildTls();
     upx_byte *otls;
     unsigned sotls;
@@ -161,6 +193,10 @@ protected:
 
     pe_section_t *isection;
     bool isdll;
+    bool isrtm;
+    bool use_dep_hack;
+    bool use_clear_dirty_stack;
+
 
     static unsigned virta2objnum (unsigned, pe_section_t *, unsigned);
     unsigned tryremove (unsigned, unsigned);
@@ -377,6 +413,8 @@ class PeFile32 : public PeFile
 protected:
     PeFile32(InputFile *f);
     virtual ~PeFile32();
+    void pack0(OutputFile *fo, unsigned subsystem_mask,
+               upx_uint64_t default_imagebase, bool last_section_rsrc_only);
     virtual void unpack(OutputFile *fo);
     virtual int canUnpack();
 
@@ -435,6 +473,10 @@ class PeFile64 : public PeFile
 protected:
     PeFile64(InputFile *f);
     virtual ~PeFile64();
+
+    void pack0(OutputFile *fo, unsigned subsystem_mask,
+               upx_uint64_t default_imagebase);
+
     virtual void unpack(OutputFile *fo);
     virtual int canUnpack();
 

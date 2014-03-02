@@ -463,6 +463,7 @@ void PeFile32::processRelocs() // pass1
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 
+// FIXME - this is too similar to PeFile32::processRelocs
 void PeFile64::processRelocs() // pass1
 {
     big_relocs = 0;
@@ -1990,6 +1991,527 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 // pack
 **************************************************************************/
 
+void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
+{
+    isection = new pe_section_t[objs];
+    fi->seek(pe_offset+sizeof_ih,SEEK_SET);
+    fi->readx(isection,sizeof(pe_section_t)*objs);
+    rvamin = isection[0].vaddr;
+
+    infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
+}
+
+void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
+                               unsigned ih_entry, unsigned ih_filealign)
+{
+    if ((1u << subsystem) & mask)
+    {
+        char buf[100];
+        upx_snprintf(buf, sizeof(buf), "PE: subsystem %u is not supported",
+                     subsystem);
+        throwCantPack(buf);
+    }
+    //check CLR Runtime Header directory entry
+    if (IDSIZE(PEDIR_COMRT))
+        throwCantPack(".NET files are not yet supported");
+
+    if (memcmp(isection[0].name,"UPX",3) == 0)
+        throwAlreadyPackedByUPX();
+
+    if (!opt->force && IDSIZE(15))
+        throwCantPack("file is possibly packed/protected (try --force)");
+
+    if (ih_entry && ih_entry < rvamin)
+        throwCantPack("run a virus scanner on this file!");
+
+    if (ih_filealign < 0x200)
+        throwCantPack("filealign < 0x200 is not yet supported");
+}
+
+unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
+                                   upx_uint64_t default_imagebase,
+                                   unsigned dllflags)
+{
+    if (dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+        opt->win32_pe.strip_relocs = false;
+    else if (isdll) //do never strip relocations from DLLs
+        opt->win32_pe.strip_relocs = false;
+    else if (opt->win32_pe.strip_relocs < 0)
+        opt->win32_pe.strip_relocs = (ih_imagebase >= default_imagebase);
+    if (opt->win32_pe.strip_relocs)
+    {
+        if (ih_imagebase < default_imagebase)
+            throwCantPack("--strip-relocs is not allowed with this imagebase");
+        else
+            return RELOCS_STRIPPED;
+    }
+    return 0;
+}
+
+unsigned PeFile::readSections(unsigned objs, unsigned usize,
+                              unsigned ih_filealign, unsigned ih_datasize)
+{
+    const unsigned xtrasize = UPX_MAX(ih_datasize, 65536u) + IDSIZE(PEDIR_IMPORT)
+        + IDSIZE(PEDIR_BOUNDIM) + IDSIZE(PEDIR_IAT) + IDSIZE(PEDIR_DELAYIMP)
+        + IDSIZE(PEDIR_RELOC);
+    ibuf.alloc(usize + xtrasize);
+
+    // BOUND IMPORT support. FIXME: is this ok?
+    fi->seek(0,SEEK_SET);
+    fi->readx(ibuf,isection[0].rawdataptr);
+
+    //Interval holes(ibuf);
+
+    unsigned ic,jc,overlaystart = 0;
+    ibuf.clear(0, usize);
+    for (ic = jc = 0; ic < objs; ic++)
+    {
+        if (isection[ic].rawdataptr && overlaystart < isection[ic].rawdataptr + isection[ic].size)
+            overlaystart = ALIGN_UP(isection[ic].rawdataptr + isection[ic].size,ih_filealign);
+        if (isection[ic].vsize == 0)
+            isection[ic].vsize = isection[ic].size;
+        if ((isection[ic].flags & PEFL_BSS) || isection[ic].rawdataptr == 0
+            || (isection[ic].flags & PEFL_INFO))
+        {
+            //holes.add(isection[ic].vaddr,isection[ic].vsize);
+            continue;
+        }
+        if (isection[ic].vaddr + isection[ic].size > usize)
+            throwCantPack("section size problem");
+        if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
+            == (PEFL_WRITE|PEFL_SHARED)))
+            if (!opt->force)
+                throwCantPack("writable shared sections not supported (try --force)");
+        if (jc && isection[ic].rawdataptr - jc > ih_filealign)
+            throwCantPack("superfluous data between sections");
+        fi->seek(isection[ic].rawdataptr,SEEK_SET);
+        jc = isection[ic].size;
+        if (jc > isection[ic].vsize)
+            jc = isection[ic].vsize;
+        if (isection[ic].vsize == 0) // hack for some tricky programs - may this break other progs?
+            jc = isection[ic].vsize = isection[ic].size;
+        if (isection[ic].vaddr + jc > ibuf.getSize())
+            throwInternalError("buffer too small 1");
+        fi->readx(ibuf + isection[ic].vaddr,jc);
+        jc += isection[ic].rawdataptr;
+    }
+    return overlaystart;
+}
+
+void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase)
+{
+    compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy,
+                        ih_codebase, rvamin, 0, NULL, 0);
+}
+
+void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic)
+{
+    // wince wants relocation data at the beginning of a section
+    PeFile::processRelocs(&rel);
+    ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
+    ODSIZE(PEDIR_RELOC) = soxrelocs;
+    ic += soxrelocs;
+}
+
+void PeFile::callProcessResources(Resource &res, unsigned &ic)
+{
+    if (soresources)
+        processResources(&res,ic);
+    ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
+    ODSIZE(PEDIR_RESOURCE) = soresources;
+    ic += soresources;
+}
+
+template <typename LEXX, typename ht>
+void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
+                   unsigned subsystem_mask, upx_uint64_t default_imagebase,
+                   bool last_section_rsrc_only)
+{
+    // FIXME: we need to think about better support for --exact
+    if (opt->exact)
+        throwCantPackExact();
+
+    const unsigned objs = ih.objects;
+    readSectionHeaders(objs, sizeof(ih));
+    if (!opt->force && handleForceOption())
+        throwCantPack("unexpected value in PE header (try --force)");
+    checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign);
+
+    //remove certificate directory entry
+    if (IDSIZE(PEDIR_SEC))
+        IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
+
+    ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
+
+    handleStub(fi,fo,pe_offset);
+    unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
+    unsigned overlay = file_size - stripDebug(overlaystart);
+    if (overlay >= (unsigned) file_size)
+        overlay = 0;
+    checkOverlay(overlay);
+
+    Resource res;
+    Interval tlsiv(ibuf);
+    Interval loadconfiv(ibuf);
+    Export xport((char*)(unsigned char*)ibuf);
+
+    const unsigned dllstrings = processImports();
+    processTls(&tlsiv); // call before processRelocs!!
+    processLoadConf(&loadconfiv);
+    processResources(&res);
+    processExports(&xport);
+    processRelocs();
+
+    //OutputFile::dump("x1", ibuf, usize);
+
+    // some checks for broken linkers - disable filter if necessary
+    bool allow_filter = true;
+    if (/*FIXME ih.codebase == ih.database
+        ||*/ ih.codebase + ih.codesize > ih.imagesize
+        || (isection[virta2objnum(ih.codebase,isection,objs)].flags & PEFL_CODE) == 0)
+        allow_filter = false;
+
+    const unsigned oam1 = ih.objectalign - 1;
+
+    // FIXME: disabled: the uncompressor would not allocate enough memory
+    //objs = tryremove(IDADDR(PEDIR_RELOC),objs);
+
+    // FIXME: if the last object has a bss then this won't work
+    // newvsize = (isection[objs-1].vaddr + isection[objs-1].size + oam1) &~ oam1;
+    // temporary solution:
+    unsigned newvsize = (isection[objs-1].vaddr + isection[objs-1].vsize + oam1) &~ oam1;
+
+    //fprintf(stderr,"newvsize=%x objs=%d\n",newvsize,objs);
+    if (newvsize + soimport + sorelocs > ibuf.getSize())
+         throwInternalError("buffer too small 2");
+    memcpy(ibuf+newvsize,oimport,soimport);
+    memcpy(ibuf+newvsize+soimport,orelocs,sorelocs);
+
+    cimports = newvsize - rvamin;   // rva of preprocessed imports
+    crelocs = cimports + soimport;  // rva of preprocessed fixups
+
+    ph.u_len = newvsize + soimport + sorelocs;
+
+    // some extra data for uncompression support
+    unsigned s = 0;
+    upx_byte * const p1 = ibuf + ph.u_len;
+    memcpy(p1 + s,&ih,sizeof (ih));
+    s += sizeof (ih);
+    memcpy(p1 + s,isection,ih.objects * sizeof(*isection));
+    s += ih.objects * sizeof(*isection);
+    if (soimport)
+    {
+        set_le32(p1 + s,cimports);
+        set_le32(p1 + s + 4,dllstrings);
+        s += 8;
+    }
+    if (sorelocs)
+    {
+        set_le32(p1 + s,crelocs);
+        p1[s + 4] = (unsigned char) (big_relocs & 6);
+        s += 5;
+    }
+    if (soresources)
+    {
+        set_le16(p1 + s,icondir_count);
+        s += 2;
+    }
+    // end of extra data
+    set_le32(p1 + s,ptr_diff(p1,ibuf) - rvamin);
+    s += 4;
+    ph.u_len += s;
+    obuf.allocForCompression(ph.u_len);
+
+    // prepare packheader
+    ph.u_len -= rvamin;
+    // prepare filter
+    Filter ft(ph.level);
+    ft.buf_len = ih.codesize;
+    ft.addvalue = ih.codebase - rvamin;
+    // compress
+    int filter_strategy = allow_filter ? 0 : -3;
+
+    // disable filters for files with broken headers
+    if (ih.codebase + ih.codesize > ph.u_len)
+    {
+        ft.buf_len = 1;
+        filter_strategy = -3;
+    }
+
+    callCompressWithFilters(ft, filter_strategy, ih.codebase);
+// info: see buildLoader()
+    newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
+    if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
+        tlsindex = 0;
+
+    int identsize = 0;
+    const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
+    assert(identsize > 0);
+    unsigned ic;
+    getLoaderSection("UPX1HEAD",(int*)&ic);
+    identsize += ic;
+
+    const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
+    pe_section_t osection[oobjs];
+    // section 0 : bss
+    //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
+    //         2 : not compressed data
+    //         3 : resource data -- wince 5 needs a new section for this
+
+    // the last section should start with the resource data, because lots of lame
+    // windoze codes assume that resources starts on the beginning of a section
+
+    // note: there should be no data in the last section which needs fixup
+
+    // identsplit - number of ident + (upx header) bytes to put into the PE header
+    int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
+    if ((identsplit & 0x1ff) == 0)
+        identsplit = 0;
+    else if (((identsplit + identsize) ^ identsplit) < 0x200)
+        identsplit = identsize;
+    else
+        identsplit = ALIGN_GAP(identsplit, 0x200);
+    ic = identsize - identsplit;
+
+    const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
+    obuf.clear(ph.c_len, c_len - ph.c_len);
+
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize, (unsigned) sizeof(LEXX)) + sotls + soloadconf;
+    const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
+
+    const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
+    const unsigned upxsection = s1addr + ic + c_len;
+
+    Reloc rel(1024); // new relocations are put here
+    addNewRelocations(rel, upxsection);
+
+    // new PE header
+    memcpy(&oh,&ih,sizeof(oh));
+    oh.filealign = 0x200; // identsplit depends on this
+    memset(osection,0,sizeof(osection));
+
+    oh.entry = upxsection;
+    oh.objects = oobjs;
+    oh.chksum = 0;
+
+    // fill the data directory
+    ODADDR(PEDIR_DEBUG) = 0;
+    ODSIZE(PEDIR_DEBUG) = 0;
+    ODADDR(PEDIR_IAT) = 0;
+    ODSIZE(PEDIR_IAT) = 0;
+    ODADDR(PEDIR_BOUNDIM) = 0;
+    ODSIZE(PEDIR_BOUNDIM) = 0;
+
+    // tls & loadconf are put into section 1
+    ic = s1addr + s1size - sotls - soloadconf;
+    processTls(&rel,&tlsiv,ic);
+    ODADDR(PEDIR_TLS) = sotls ? ic : 0;
+    ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
+    ic += sotls;
+
+    processLoadConf(&rel, &loadconfiv, ic);
+    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
+    ODSIZE(PEDIR_LOADCONF) = soloadconf;
+    ic += soloadconf;
+
+    const bool rel_at_sections_start = oobjs == 4;
+
+    ic = ncsection;
+    if (!last_section_rsrc_only)
+        callProcessResources(res, ic);
+    if (rel_at_sections_start)
+        callProcessRelocs(rel, ic);
+
+    PeFile::processImports(ic, getProcessImportParam(upxsection));
+    ODADDR(PEDIR_IMPORT) = ic;
+    ODSIZE(PEDIR_IMPORT) = soimpdlls;
+    ic += soimpdlls;
+
+    processExports(&xport,ic);
+    ODADDR(PEDIR_EXPORT) = soexport ? ic : 0;
+    ODSIZE(PEDIR_EXPORT) = soexport;
+    if (!isdll && opt->win32_pe.compress_exports)
+    {
+        ODADDR(PEDIR_EXPORT) = IDADDR(PEDIR_EXPORT);
+        ODSIZE(PEDIR_EXPORT) = IDSIZE(PEDIR_EXPORT);
+    }
+    ic += soexport;
+
+    if (!rel_at_sections_start)
+        callProcessRelocs(rel, ic);
+
+    // when the resource is put alone into section 3
+    const unsigned res_start = (ic + oam1) &~ oam1;;
+    if (last_section_rsrc_only)
+        callProcessResources(res, ic);
+
+    defineSymbols(ncsection, upxsection, sizeof(oh),
+                  identsize - identsplit, rel, s1addr);
+    defineFilterSymbols(&ft);
+    relocateLoader();
+    const unsigned lsize = getLoaderSize();
+    MemBuffer loader(lsize);
+    memcpy(loader,getLoader(),lsize);
+    patchPackHeader(loader, lsize);
+
+    const unsigned ncsize = soxrelocs + soimpdlls + soexport
+        + (!last_section_rsrc_only ? soresources : 0);
+    const unsigned fam1 = oh.filealign - 1;
+
+    // this one is tricky: it seems windoze touches 4 bytes after
+    // the end of the relocation data - so we have to increase
+    // the virtual size of this section
+    const unsigned ncsize_virt_increase = (ncsize & oam1) == 0 ? 8 : 0;
+
+    // fill the sections
+    strcpy(osection[0].name,"UPX0");
+    strcpy(osection[1].name,"UPX1");
+    // after some windoze debugging I found that the name of the sections
+    // DOES matter :( .rsrc is used by oleaut32.dll (TYPELIBS)
+    // and because of this lame dll, the resource stuff must be the
+    // first in the 3rd section - the author of this dll seems to be
+    // too idiot to use the data directories... M$ suxx 4 ever!
+    // ... even worse: exploder.exe in NiceTry also depends on this to
+    // locate version info
+
+    strcpy(osection[2].name, !last_section_rsrc_only && soresources ? ".rsrc" : "UPX2");
+
+    osection[0].vaddr = rvamin;
+    osection[1].vaddr = s1addr;
+    osection[2].vaddr = ncsection;
+
+    osection[0].size = 0;
+    osection[1].size = (s1size + fam1) &~ fam1;
+    osection[2].size = (ncsize + fam1) &~ fam1;
+
+    osection[0].vsize = osection[1].vaddr - osection[0].vaddr;
+    if (oobjs == 3)
+    {
+        osection[1].vsize = (osection[1].size + oam1) &~ oam1;
+        osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
+        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
+        osection[0].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+        osection[1].rawdataptr = osection[0].rawdataptr;
+        osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
+    }
+    else
+    {
+        osection[1].vsize = osection[1].size;
+        osection[2].vsize = osection[2].size;
+        oh.imagesize = osection[2].vaddr + osection[2].vsize;
+        osection[0].rawdataptr = 0;
+        osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+    }
+    osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
+
+    osection[0].flags = (unsigned) (PEFL_BSS|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
+    osection[1].flags = (unsigned) (PEFL_DATA|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
+    osection[2].flags = (unsigned) (PEFL_DATA|PEFL_WRITE|PEFL_READ);
+
+    if (oobjs == 4)
+    {
+        strcpy(osection[3].name, ".rsrc");
+        osection[3].vaddr = res_start;
+        osection[3].size = (soresources + fam1) &~ fam1;
+        osection[3].vsize = osection[3].size;
+        osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
+        osection[2].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+        osection[3].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+        if (soresources == 0)
+        {
+            oh.objects = 3;
+            memset(&osection[3], 0, sizeof(osection[3]));
+        }
+    }
+
+    oh.bsssize  = osection[0].vsize;
+    oh.datasize = osection[2].vsize + (oobjs > 3 ? osection[3].vsize : 0);
+    setOhDataBase(osection);
+    oh.codesize = osection[1].vsize;
+    oh.codebase = osection[1].vaddr;
+    setOhHeaderSize(osection);
+    if (rvamin < osection[0].rawdataptr)
+        throwCantPack("object alignment too small");
+
+    if (opt->win32_pe.strip_relocs && !isdll)
+        oh.flags |= RELOCS_STRIPPED;
+
+    //for (ic = 0; ic < oh.filealign; ic += 4)
+    //    set_le32(ibuf + ic,get_le32("UPX "));
+    ibuf.clear(0, oh.filealign);
+
+    info("Image size change: %u -> %u KiB",
+         ih.imagesize / 1024, oh.imagesize / 1024);
+
+    infoHeader("[Writing compressed file]");
+
+    // write loader + compressed file
+    fo->write(&oh,sizeof(oh));
+    fo->write(osection,sizeof(osection));
+    // some alignment
+    if (identsplit == identsize)
+    {
+        unsigned n = osection[oobjs == 3 ? 0 : 1].rawdataptr - fo->getBytesWritten() - identsize;
+        assert(n <= oh.filealign);
+        fo->write(ibuf, n);
+    }
+    fo->write(loader + codesize,identsize);
+    infoWriting("loader", fo->getBytesWritten());
+    fo->write(obuf,c_len);
+    infoWriting("compressed data", c_len);
+    fo->write(loader,codesize);
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
+    if ((ic = fo->getBytesWritten() & (sizeof(LEXX) - 1)) != 0)
+        fo->write(ibuf, sizeof(LEXX) - ic);
+    fo->write(otls,sotls);
+    fo->write(oloadconf, soloadconf);
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
+        fo->write(ibuf,oh.filealign - ic);
+    if (!last_section_rsrc_only)
+        fo->write(oresources,soresources);
+    else
+        fo->write(oxrelocs,soxrelocs);
+    fo->write(oimpdlls,soimpdlls);
+    fo->write(oexport,soexport);
+    fo->write(oxrelocs,soxrelocs);
+    if (!last_section_rsrc_only)
+        fo->write(oxrelocs,soxrelocs);
+
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
+        fo->write(ibuf,oh.filealign - ic);
+
+    if (last_section_rsrc_only)
+    {
+        fo->write(oresources,soresources);
+        if ((ic = fo->getBytesWritten() & fam1) != 0)
+            fo->write(ibuf,oh.filealign - ic);
+    }
+
+#if 0
+    printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
+    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
+    printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
+    printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
+    printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);
+    printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
+    printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
+    printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
+    printf("%-13s: loadconf     : %8ld bytes\n", getName(), (long) soloadconf);
+#endif
+
+    // verify
+    verifyOverlappingDecompression();
+
+    // copy the overlay
+    copyOverlay(fo, overlay, &obuf);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
+}
 
 /*************************************************************************
 // unpack
@@ -2454,6 +2976,14 @@ void PeFile32::readPeHeader()
     isdll = ((ih.flags & DLL_FLAG) != 0);
 }
 
+void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
+                     upx_uint64_t default_imagebase,
+                     bool last_section_rsrc_only)
+{
+    super::pack0<LE32>(fo, ih, oh, subsystem_mask,
+                       default_imagebase, last_section_rsrc_only);
+}
+
 void PeFile32::unpack(OutputFile *fo)
 {
     bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
@@ -2501,6 +3031,12 @@ void PeFile64::readPeHeader()
 {
     fi->readx(&ih,sizeof(ih));
     isdll = ((ih.flags & DLL_FLAG) != 0);
+}
+
+void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
+                     upx_uint64_t default_imagebase)
+{
+    super::pack0<LE64>(fo, ih, oh, subsystem_mask, default_imagebase, false);
 }
 
 void PeFile64::unpack(OutputFile *fo)

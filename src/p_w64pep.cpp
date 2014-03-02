@@ -42,16 +42,6 @@
 static const
 #include "stub/amd64-win64.pep.h"
 
-#define IDSIZE(x)       ih.ddirs[x].size
-#define IDADDR(x)       ih.ddirs[x].vaddr
-#define ODSIZE(x)       oh.ddirs[x].size
-#define ODADDR(x)       oh.ddirs[x].vaddr
-
-#define isdll           ((ih.flags & DLL_FLAG) != 0)
-
-#define FILLVAL         0
-
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -150,20 +140,6 @@ const int *PackW64Pep::getFilters() const
 Linker* PackW64Pep::newLinker() const
 {
     return new ElfLinkerAMD64;
-}
-
-
-/*************************************************************************
-// util
-**************************************************************************/
-
-int PackW64Pep::readFileHeader()
-{
-    char buf[6];
-    fi->seek(0x200, SEEK_SET);
-    fi->readx(buf, 6);
-    isrtm = 0;
-    return super::readFileHeader();
 }
 
 
@@ -267,9 +243,109 @@ void PackW64Pep::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,UPX1HEAD", NULL);
 }
 
+bool PackW64Pep::handleForceOption()
+{
+    return (ih.cpu != 0x8664)  //CPU magic of AMD64 is 0x8664
+        || (ih.opthdrsize != 0xF0) //optional header size is 0xF0 in PE32+ files - Stefan Widmann
+        || (ih.coffmagic != 0x20B) //COFF magic is 0x20B in PE+ files, 0x10B in "normal" 32 bit PE files - Stefan Widmann
+        || ((ih.flags & EXECUTABLE) == 0)
+        || ((ih.flags & BITS_32_MACHINE) == 1) //NEW: 32 bit machine flag may not be set - Stefan Widmann
+        || (ih.entry == 0 && !isdll)
+        || (ih.ddirsentries != 16)
+        ;
+}
+
+void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
+                               unsigned sizeof_oh, unsigned ic,
+                               Reloc &, unsigned s1addr)
+{
+    const unsigned myimport = ncsection + soresources - rvamin;
+
+    // patch loader
+    linker->defineSymbol("original_entry", ih.entry);
+    if (use_dep_hack)
+    {
+        // This works around a "protection" introduced in MSVCRT80, which
+        // works like this:
+        // When the compiler detects that it would link in some code from its
+        // C runtime library which references some data in a read only
+        // section then it compiles in a runtime check whether that data is
+        // still in a read only section by looking at the pe header of the
+        // file. If this check fails the runtime does "interesting" things
+        // like not running the floating point initialization code - the result
+        // is a R6002 runtime error.
+        // These supposed to be read only addresses are covered by the sections
+        // UPX0 & UPX1 in the compressed files, so we have to patch the PE header
+        // in the memory. And the page on which the PE header is stored is read
+        // only so we must make it rw, fix the flags (i.e. clear
+        // PEFL_WRITE of osection[x].flags), and make it ro again.
+
+        // rva of the most significant byte of member "flags" in section "UPX0"
+        const unsigned swri = pe_offset + sizeof_oh + sizeof(pe_section_t) - 1;
+        // make sure we only touch the minimum number of pages
+        const unsigned addr = 0u - rvamin + swri;
+        linker->defineSymbol("swri", addr &  0xfff);    // page offset
+        // check whether osection[0].flags and osection[1].flags
+        // are on the same page
+        linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
+                             0x2000 : 0x1000);          // 2 pages or 1 page
+        linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
+        linker->defineSymbol("VirtualProtect", myimport +
+                             ilinkerGetAddress("kernel32.dll", "VirtualProtect"));
+    }
+    linker->defineSymbol("start_of_relocs", crelocs);
+    if (!isdll)
+        linker->defineSymbol("ExitProcess", myimport +
+                             ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+    linker->defineSymbol("GetProcAddress", myimport +
+                         ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
+    linker->defineSymbol("kernel32_ordinals", myimport);
+    linker->defineSymbol("LoadLibraryA", myimport +
+                         ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
+    linker->defineSymbol("start_of_imports", myimport);
+    linker->defineSymbol("compressed_imports", cimports);
+
+    if (M_IS_LZMA(ph.method))
+    {
+        linker->defineSymbol("lzma_c_len", ph.c_len - 2);
+        linker->defineSymbol("lzma_u_len", ph.u_len);
+    }
+    linker->defineSymbol("filter_buffer_start", ih.codebase - rvamin);
+
+    // in case of overlapping decompression, this hack is needed,
+    // because windoze zeroes the word pointed by tlsindex before
+    // it starts programs
+    linker->defineSymbol("tls_value", (tlsindex + 4 > s1addr) ?
+                         get_le32(obuf + tlsindex - s1addr - ic) : 0);
+    linker->defineSymbol("tls_address", tlsindex - rvamin);
+
+    linker->defineSymbol("icon_delta", icondir_count - 1);
+    linker->defineSymbol("icon_offset", ncsection + icondir_offset - rvamin);
+
+    const unsigned esi0 = s1addr + ic;
+    linker->defineSymbol("start_of_uncompressed", 0u - esi0 + rvamin);
+    linker->defineSymbol("start_of_compressed", esi0);
+
+    if (use_tls_callbacks)
+    {
+        linker->defineSymbol("tls_callbacks_ptr", tlscb_ptr - ih.imagebase);
+        linker->defineSymbol("tls_module_base", 0u - rvamin);
+    }
+
+    linker->defineSymbol("START", upxsection);
+}
+
+void PackW64Pep::setOhHeaderSize(const pe_section_t *)
+{
+    oh.headersize = rvamin; // FIXME
+}
 
 void PackW64Pep::pack(OutputFile *fo)
 {
+    // FIXME: Relocation stripping disabled for now - Stefan Widmann
+    opt->win32_pe.strip_relocs = false;
+    super::pack0(fo, 0x0c, 0x0000000140000000ULL);
+#if 0
     // FIXME: we need to think about better support for --exact
     if (opt->exact)
         throwCantPackExact();
@@ -856,6 +932,7 @@ void PackW64Pep::pack(OutputFile *fo)
 
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
+#endif
 }
 
 /*

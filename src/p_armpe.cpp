@@ -237,9 +237,76 @@ void PackArmPe::buildLoader(const Filter *ft)
     addLoader("IDENTSTR,UPX1HEAD", NULL);
 }
 
+bool PackArmPe::handleForceOption()
+{
+    return (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
+        || (ih.opthdrsize != 0xe0)
+        || ((ih.flags & EXECUTABLE) == 0)
+        || (ih.entry == 0 /*&& !isdll*/)
+        || (ih.ddirsentries != 16)
+//        || IDSIZE(PEDIR_EXCEPTION) // is this used on arm?
+//        || IDSIZE(PEDIR_COPYRIGHT)
+        ;
+}
+
+void PackArmPe::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase)
+{
+    // limit stack size needed for runtime decompression
+    upx_compress_config_t cconf; cconf.reset();
+    cconf.conf_lzma.max_num_probs = 1846 + (768 << 4); // ushort: ~28 KiB stack
+    compressWithFilters(&ft, 2048, &cconf, filter_strategy,
+                        ih_codebase, rvamin, 0, NULL, 0);
+}
+
+void PackArmPe::addNewRelocations(Reloc &rel, unsigned upxsection)
+{
+    static const char* symbols_to_relocate[] = {
+        "ONAM", "BIMP", "BREL", "FIBE", "FIBS", "ENTR", "DST0", "SRC0"
+    };
+    for (unsigned s2r = 0; s2r < TABLESIZE(symbols_to_relocate); s2r++)
+    {
+        unsigned off = linker->getSymbolOffset(symbols_to_relocate[s2r]);
+        if (off != 0xdeaddead)
+            rel.add(off + upxsection, 3);
+    }
+}
+
+unsigned PackArmPe::getProcessImportParam(unsigned upxsection)
+{
+    return linker->getSymbolOffset("IATT") + upxsection;
+}
+
+void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned,
+                              unsigned ic, Reloc &, unsigned s1addr)
+{
+    const unsigned onam = ncsection + soxrelocs + ih.imagebase;
+    linker->defineSymbol("start_of_dll_names", onam);
+    linker->defineSymbol("start_of_imports", ih.imagebase + rvamin + cimports);
+    linker->defineSymbol("start_of_relocs", crelocs + rvamin + ih.imagebase);
+    linker->defineSymbol("filter_buffer_end", ih.imagebase + ih.codebase + ih.codesize);
+    linker->defineSymbol("filter_buffer_start", ih.imagebase + ih.codebase);
+    linker->defineSymbol("original_entry", ih.entry + ih.imagebase);
+    linker->defineSymbol("uncompressed_length", ph.u_len);
+    linker->defineSymbol("start_of_uncompressed", ih.imagebase + rvamin);
+    linker->defineSymbol("compressed_length", ph.c_len);
+    linker->defineSymbol("start_of_compressed", ih.imagebase + s1addr + ic);
+    defineDecompressorSymbols();
+}
+
+void PackArmPe::setOhDataBase(const pe_section_t *osection)
+{
+    oh.database = osection[2].vaddr;
+}
+
+void PackArmPe::setOhHeaderSize(const pe_section_t *osection)
+{
+    oh.headersize = osection[1].rawdataptr;
+}
 
 void PackArmPe::pack(OutputFile *fo)
 {
+    super::pack0(fo, 1U << 9, 0x10000, true);
+#if 0
     // FIXME: we need to think about better support for --exact
     if (opt->exact)
         throwCantPackExact();
@@ -695,6 +762,7 @@ void PackArmPe::pack(OutputFile *fo)
     // finally check the compression ratio
     if (!checkFinalCompressionRatio(fo))
         throwNotCompressible();
+#endif
 }
 
 /*
