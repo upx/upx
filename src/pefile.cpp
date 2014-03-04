@@ -361,7 +361,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
     p = start;
     siz = ptr_diff(rel1,start) &~ 3;
     siz -= 8;
-    assert(siz > 0);
+    // siz can be 0 in 64-bit mode // assert(siz > 0);
     start = 0; // safety
 }
 
@@ -849,7 +849,7 @@ void PeFile::processImports(unsigned myimport, unsigned) // pass 2
 }
 
 template <typename LEXX, typename ord_mask_t>
-unsigned PeFile::processImports(ord_mask_t ord_mask) // pass 1
+unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 {
     static const unsigned char kernel32dll[] = "KERNEL32.DLL";
 
@@ -2004,7 +2004,7 @@ void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
 void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
                                unsigned ih_entry, unsigned ih_filealign)
 {
-    if ((1u << subsystem) & mask)
+    if ((1u << subsystem) & ~mask)
     {
         char buf[100];
         upx_snprintf(buf, sizeof(buf), "PE: subsystem %u is not supported",
@@ -2322,7 +2322,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (rel_at_sections_start)
         callProcessRelocs(rel, ic);
 
-    PeFile::processImports(ic, getProcessImportParam(upxsection));
+    processImports(ic, getProcessImportParam(upxsection));
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
@@ -2389,16 +2389,15 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     {
         osection[1].vsize = (osection[1].size + oam1) &~ oam1;
         osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
-        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
+        oh.imagesize = osection[2].vaddr + osection[2].vsize;
         osection[0].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
         osection[1].rawdataptr = osection[0].rawdataptr;
-        osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
     }
     else
     {
         osection[1].vsize = osection[1].size;
         osection[2].vsize = osection[2].size;
-        oh.imagesize = osection[2].vaddr + osection[2].vsize;
+        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
         osection[0].rawdataptr = 0;
         osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
     }
@@ -2751,8 +2750,8 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
 }
 
 template <typename ht, typename LEXX, typename ord_mask_t>
-void PeFile::unpack(OutputFile *fo, const ht &ih, ht &oh,
-                    ord_mask_t ord_mask, bool set_oft)
+void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
+                     ord_mask_t ord_mask, bool set_oft)
 {
     //infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 
@@ -2987,7 +2986,7 @@ void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
 void PeFile32::unpack(OutputFile *fo)
 {
     bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
-    super::unpack<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
+    unpack0<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
 }
 
 int PeFile32::canUnpack()
@@ -2998,17 +2997,17 @@ int PeFile32::canUnpack()
 
 unsigned PeFile32::processImports() // pass 1
 {
-    return super::processImports<LE32>(1u << 31);
+    return processImports0<LE32>(1u << 31);
 }
 
 void PeFile32::processTls(Interval *iv)
 {
-    super::processTls1<LE32>(iv, ih.imagebase, ih.imagesize);
+    processTls1<LE32>(iv, ih.imagebase, ih.imagesize);
 }
 
 void PeFile32::processTls(Reloc *r, const Interval *iv, unsigned a)
 {
-    super::processTls2<LE32>(r, iv, a, ih.imagebase);
+    processTls2<LE32>(r, iv, a, ih.imagebase);
 }
 
 /*************************************************************************
@@ -3041,7 +3040,7 @@ void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
 
 void PeFile64::unpack(OutputFile *fo)
 {
-    super::unpack<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false);
+    unpack0<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false);
 }
 
 int PeFile64::canUnpack()
@@ -3051,17 +3050,17 @@ int PeFile64::canUnpack()
 
 unsigned PeFile64::processImports() // pass 1
 {
-    return super::processImports<LE64>(1ULL << 63);
+    return processImports0<LE64>(1ULL << 63);
 }
 
 void PeFile64::processTls(Interval *iv)
 {
-    super::processTls1<LE64>(iv, ih.imagebase, ih.imagesize);
+    processTls1<LE64>(iv, ih.imagebase, ih.imagesize);
 }
 
 void PeFile64::processTls(Reloc *r, const Interval *iv, unsigned a)
 {
-    super::processTls2<LE64>(r, iv, a, ih.imagebase);
+    processTls2<LE64>(r, iv, a, ih.imagebase);
 }
 
 /*

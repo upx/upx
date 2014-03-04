@@ -77,8 +77,8 @@ protected:
                bool last_section_rsrc_only);
 
     template <typename ht, typename LEXX, typename ord_mask_t>
-    void unpack(OutputFile *fo, const ht &ih, ht &oh,
-                ord_mask_t ord_mask, bool set_oft);
+    void unpack0(OutputFile *fo, const ht &ih, ht &oh,
+                 ord_mask_t ord_mask, bool set_oft);
 
     // unpacker capabilities
     virtual bool canUnpackVersion(int version) const
@@ -95,7 +95,7 @@ protected:
     unsigned pe_offset;
 
     template <typename LEXX, typename ord_mask_t>
-    unsigned processImports(ord_mask_t ord_mask);
+    unsigned processImports0(ord_mask_t ord_mask);
 
     template <typename LEXX, typename ord_mask_t>
     void rebuildImports(upx_byte *& extrainfo,
