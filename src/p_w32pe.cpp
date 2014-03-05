@@ -107,11 +107,7 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 **************************************************************************/
 
 PackW32Pe::PackW32Pe(InputFile *f) : super(f)
-{
-    isrtm = false;
-    use_dep_hack = true;
-    use_clear_dirty_stack = true;
-}
+{}
 
 
 PackW32Pe::~PackW32Pe()
@@ -297,17 +293,18 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
         linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
                              0x2000 : 0x1000);          // 2 pages or 1 page
         linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
-        linker->defineSymbol("VirtualProtect", myimport +
+        linker->defineSymbol("VirtualProtect", -rvamin +
                              ilinkerGetAddress("kernel32.dll", "VirtualProtect"));
     }
     linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
     linker->defineSymbol("start_of_relocs", crelocs);
-    linker->defineSymbol("ExitProcess", myimport +
-                         ilinkerGetAddress("kernel32.dll", "ExitProcess"));
-    linker->defineSymbol("GetProcAddress", myimport +
+    if (!isdll)
+        linker->defineSymbol("ExitProcess", -rvamin +
+                             ilinkerGetAddress("kernel32.dll", "ExitProcess"));
+    linker->defineSymbol("GetProcAddress", -rvamin +
                          ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
     linker->defineSymbol("kernel32_ordinals", myimport);
-    linker->defineSymbol("LoadLibraryA", myimport +
+    linker->defineSymbol("LoadLibraryA", -rvamin +
                          ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
     linker->defineSymbol("start_of_imports", myimport);
     linker->defineSymbol("compressed_imports", cimports);

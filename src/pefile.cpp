@@ -139,6 +139,10 @@ PeFile::PeFile(InputFile *f) : super(f)
     use_tls_callbacks = false;
     oloadconf = NULL;
     soloadconf = 0;
+
+    use_dep_hack = true;
+    use_clear_dirty_stack = true;
+    isrtm = false;
 }
 
 
@@ -763,6 +767,7 @@ public:
         for (unsigned ic = 0; ic < nsections; ic++)
             osize += sections[ic]->size;
         output = new upx_byte[osize];
+        outputlen = 0;
 
         // sort the sections by name before adding them all
         qsort(sections, nsections, sizeof (Section*), ImportLinker::compare);

@@ -59,10 +59,6 @@ public:
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-
-    bool isrtm;
-    bool use_dep_hack;
-    bool use_clear_dirty_stack;
 };
 
 

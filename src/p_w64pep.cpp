@@ -112,11 +112,7 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 **************************************************************************/
 
 PackW64Pep::PackW64Pep(InputFile *f) : super(f)
-{
-    isrtm = false;
-    use_dep_hack = true;
-    use_clear_dirty_stack = true;
-}
+{}
 
 
 PackW64Pep::~PackW64Pep()
