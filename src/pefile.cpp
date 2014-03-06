@@ -680,6 +680,8 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
                           "R_X86_64_32", sdll, 0);
         }
         tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        if (findSection(thunk, false) != NULL)
+            return; // we already have this dll/proc
         addSection(thunk, zeros, thunk_size, 0);
         addSymbol(thunk, thunk, 0);
         if (tsep == thunk_separator_first)
