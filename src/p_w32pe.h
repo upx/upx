@@ -34,9 +34,9 @@
 // w32/pe
 **************************************************************************/
 
-class PackW32Pe : public PeFile
+class PackW32Pe : public PeFile32
 {
-    typedef PeFile super;
+    typedef PeFile32 super;
 
 public:
     PackW32Pe(InputFile *f);
@@ -47,36 +47,22 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
+    virtual bool handleForceOption();
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
+                               unsigned sizeof_oh, unsigned isize_isplit,
+                               Reloc &rel, unsigned s1addr);
+    virtual void addNewRelocations(Reloc &, unsigned upxsection);
+    virtual void setOhDataBase(const pe_section_t *osection);
+    virtual void setOhHeaderSize(const pe_section_t *osection);
     virtual void pack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual int canUnpack();
 
 protected:
     virtual int readFileHeader();
 
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
-
-    virtual unsigned processImports();
-    virtual void processImports(unsigned, unsigned);
-    virtual void rebuildImports(upx_byte *&);
-
-    virtual void processTls(Interval *); //NEW: TLS callback handling - Stefan Widmann
-    void processTls(Reloc *, const Interval *, unsigned); //NEW: TLS callback handling - Stefan Widmann
-
-    void processLoadConf(Reloc *, const Interval *, unsigned);
-    void processLoadConf(Interval *);
-    upx_byte *oloadconf;
-    unsigned soloadconf;
-
-    unsigned tlscb_ptr; //NEW: TLS callback handling - Stefan Widmann
-    unsigned tls_handler_offset;
-
-    bool isrtm;
-    bool use_dep_hack;
-    bool use_clear_dirty_stack;
-    bool use_tls_callbacks;  //NEW: TLS callback handling - Stefan Widmann
 };
 
 

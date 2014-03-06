@@ -247,7 +247,7 @@ next_dll:
                 add     rbx, rsi
                 add     rdi, 8
 
-                call    [rsi + LoadLibraryA]
+                call    [rip + LoadLibraryA]
 
                 xchg    rax, rbp
 next_func:
@@ -279,7 +279,7 @@ section         PEIMPOR2
 first_imp:
                 mov     rcx, rbp
 
-                call    [rsi + GetProcAddress]
+                call    [rip + GetProcAddress]
 
 #if 1
 ;// FIXME: is this error handling really needed?
@@ -302,7 +302,7 @@ section         PEIERDLL
 
 section         PEIEREXE
                 //      rcx contains garbage -> garbage return code
-                jmp     [rsi + ExitProcess]
+                jmp     [rip + ExitProcess]
 section         PEIMDONE
 imports_done:
                 add     rsp, 0x28
@@ -377,7 +377,7 @@ relhi0:
 
 // =============
 section         PEDEPHAK
-                mov     rbp, [rsi + VirtualProtect]
+                mov     rbp, [rip + VirtualProtect]
                 lea     rdi, [rsi + vp_base]
                 mov     ebx, IMM32(vp_size)     // 0x1000 or 0x2000
 

@@ -31,13 +31,7 @@
 #include "filter.h"
 #include "packer.h"
 #include "pefile.h"
-
-#define IDSIZE(x)       ih.ddirs[x].size
-#define IDADDR(x)       ih.ddirs[x].vaddr
-#define ODSIZE(x)       oh.ddirs[x].size
-#define ODADDR(x)       oh.ddirs[x].vaddr
-
-#define isdll           ((ih.flags & DLL_FLAG) != 0)
+#include "linker.h"
 
 #define FILLVAL         0
 
@@ -48,6 +42,20 @@
 #if defined(__BORLANDC__)
 #  undef strcpy
 #  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
+#endif
+
+#if 1
+//static
+unsigned my_strlen(const char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+static unsigned my_strlen(const unsigned char *s)
+{
+    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
+}
+#undef strlen
+#define strlen my_strlen
 #endif
 
 #if (__ACC_CXX_HAVE_PLACEMENT_DELETE) || defined(__DJGPP__)
@@ -103,13 +111,9 @@ static void xcheck(size_t poff, size_t plen, const void *b, size_t blen)
 PeFile::PeFile(InputFile *f) : super(f)
 {
     bele = &N_BELE_RTP::le_policy;
-    //printf("pe_header_t %d\n", (int) sizeof(pe_header_t));
-    //printf("pe_section_t %d\n", (int) sizeof(pe_section_t));
-    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
-    COMPILE_TIME_ASSERT(sizeof(pe_header_t::ddirs_t) == 8)
+    COMPILE_TIME_ASSERT(sizeof(ddirs_t) == 8)
     COMPILE_TIME_ASSERT(sizeof(pe_section_t) == 40)
-    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
-    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t::ddirs_t)
+    COMPILE_TIME_ASSERT_ALIGNED1(ddirs_t)
     COMPILE_TIME_ASSERT_ALIGNED1(pe_section_t)
     COMPILE_TIME_ASSERT(RT_LAST == TABLESIZE(opt->win32_pe.compress_rt))
 
@@ -130,20 +134,15 @@ PeFile::PeFile(InputFile *f) : super(f)
     sorelocs = 0;
     soxrelocs = 0;
     sotls = 0;
-}
+    isdll = false;
+    ilinker = NULL;
+    use_tls_callbacks = false;
+    oloadconf = NULL;
+    soloadconf = 0;
 
-
-PeFile::~PeFile()
-{
-    delete [] isection;
-    delete [] orelocs;
-    delete [] oimport;
-    delete [] oimpdlls;
-    delete [] oexport;
-    delete [] otls;
-    delete [] oresources;
-    delete [] oxrelocs;
-    //delete res;
+    use_dep_hack = true;
+    use_clear_dirty_stack = true;
+    isrtm = false;
 }
 
 
@@ -202,7 +201,7 @@ int PeFile::readFileHeader()
     if (ic == 20)
         return 0;
     fi->seek(pe_offset,SEEK_SET);
-    fi->readx(&ih,sizeof(ih));
+    readPeHeader();
     fi->seek(0x200,SEEK_SET);
     fi->readx(&h,6);
     return getFormat();
@@ -366,18 +365,18 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
     p = start;
     siz = ptr_diff(rel1,start) &~ 3;
     siz -= 8;
-    assert(siz > 0);
+    // siz can be 0 in 64-bit mode // assert(siz > 0);
     start = 0; // safety
 }
 
 void PeFile::processRelocs(Reloc *rel) // pass2
 {
     rel->finish(oxrelocs,soxrelocs);
-    if (opt->win32_pe.strip_relocs && !isdll)
+    if (opt->win32_pe.strip_relocs && !isdll /*FIXME ASLR*/)
         soxrelocs = 0;
 }
 
-void PeFile::processRelocs() // pass1
+void PeFile32::processRelocs() // pass1
 {
     big_relocs = 0;
 
@@ -468,6 +467,107 @@ void PeFile::processRelocs() // pass1
     info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
 }
 
+// FIXME - this is too similar to PeFile32::processRelocs
+void PeFile64::processRelocs() // pass1
+{
+    big_relocs = 0;
+
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC),IDSIZE(PEDIR_RELOC));
+    const unsigned *counts = rel.getcounts();
+    unsigned rnum = 0;
+
+    unsigned ic;
+    for (ic = 1; ic < 16; ic++)
+        rnum += counts[ic];
+
+    if ((opt->win32_pe.strip_relocs && !isdll) || rnum == 0)
+    {
+        if (IDSIZE(PEDIR_RELOC))
+            ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+        orelocs = new upx_byte [1];
+        sorelocs = 0;
+        return;
+    }
+
+    for (ic = 15; ic; ic--)
+        if (ic != 10 && counts[ic])
+            infoWarning("skipping unsupported relocation type %d (%d)",ic,counts[ic]);
+
+    LE32 *fix[16];
+    for (ic = 15; ic; ic--)
+        fix[ic] = new LE32 [counts[ic]];
+
+    unsigned xcounts[16];
+    memset(xcounts, 0, sizeof(xcounts));
+
+    // prepare sorting
+    unsigned pos,type;
+    while (rel.next(pos,type))
+    {
+        // FIXME add check for relocations which try to modify the
+        // PE header or other relocation records
+
+        if (pos >= ih.imagesize)
+            continue;           // skip out-of-bounds record
+        if (type < 16)
+            fix[type][xcounts[type]++] = pos - rvamin;
+    }
+
+    // remove duplicated records
+    for (ic = 1; ic <= 15; ic++)
+    {
+        qsort(fix[ic], xcounts[ic], 4, le32_compare);
+        unsigned prev = ~0;
+        unsigned jc = 0;
+        for (unsigned kc = 0; kc < xcounts[ic]; kc++)
+            if (fix[ic][kc] != prev)
+                prev = fix[ic][jc++] = fix[ic][kc];
+
+        //printf("xcounts[%u] %u->%u\n", ic, xcounts[ic], jc);
+        xcounts[ic] = jc;
+    }
+
+    // preprocess "type 10" relocation records
+    for (ic = 0; ic < xcounts[10]; ic++)
+    {
+        pos = fix[10][ic] + rvamin;
+        set_le64(ibuf + pos, get_le64(ibuf + pos) - ih.imagebase - rvamin);
+    }
+
+    ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
+    orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
+    sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
+                                        orelocs, ibuf + rvamin,1, &big_relocs),
+                        orelocs);
+
+    for (ic = 15; ic; ic--)
+        delete [] fix[ic];
+
+#if 0
+    // Malware that hides behind UPX often has PE header info that is
+    // deliberately corrupt.  Sometimes it is even tuned to cause us trouble!
+    // Use an extra check to avoid AccessViolation (SIGSEGV) when appending
+    // the relocs into one array.
+    if ((rnum * 4 + 1024) < (sorelocs + 4*(2 + xcounts[2] + xcounts[1])))
+        throwCantUnpack("Invalid relocs");
+
+    // append relocs type "LOW" then "HIGH"
+    for (ic = 2; ic ; ic--)
+    {
+        memcpy(orelocs + sorelocs,fix[ic],4 * xcounts[ic]);
+        sorelocs += 4 * xcounts[ic];
+        delete [] fix[ic];
+
+        set_le32(orelocs + sorelocs,0);
+        if (xcounts[ic])
+        {
+            sorelocs += 4;
+            big_relocs |= 2 * ic;
+        }
+    }
+#endif
+    info("Relocations: original size: %u bytes, preprocessed size: %u bytes",(unsigned) IDSIZE(PEDIR_RELOC),sorelocs);
+}
 
 /*************************************************************************
 // import handling
@@ -480,35 +580,285 @@ __packed_struct(import_desc)
     LE32  iat;      // import address table
 __packed_struct_end()
 
-void PeFile::processImports(unsigned myimport, unsigned iat_off) // pass 2
+/*
+ ImportLinker: 32 and 64 bit import table building.
+ Import entries (dll name + proc name/ordinal pairs) can be
+ added in arbitrary order.
+
+ Internally it works by creating sections with special names,
+ and adding relocation entries between those sections. The special
+ names ensure that when the import table is built in the memory
+ from those sections, a correct table can be generated simply by
+ sorting the sections by name, and adding all of them to the output
+ in the sorted order.
+ */
+
+class PeFile::ImportLinker : public ElfLinkerAMD64
 {
-    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20)
-    COMPILE_TIME_ASSERT_ALIGNED1(import_desc)
-
-    // adjust import data
-    for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
+    struct tstr : private ::noncopyable
     {
-        if (im->dllname < myimport)
-            im->dllname += myimport;
-        LE32 *p = (LE32*) (oimpdlls + im->iat);
-        im->iat += myimport;
-        im->oft = im->iat;
+        char *s;
+        explicit tstr(char *str) : s(str) {}
+        ~tstr() { delete [] s; }
+        operator char *() const { return s; }
+    };
 
-        while (*p)
-            if ((*p++ & 0x80000000) == 0)  // import by name?
-                p[-1] += myimport;
-
-        im->iat = im == (import_desc*) oimpdlls ? iat_off : iat_off + 12;
+    // encoding of dll and proc names are required, so that our special
+    // control characters in the name of sections can work as intended
+    static char *encode_name(const char *name, char *buf)
+    {
+        char *b = buf;
+        while (*name)
+        {
+            *b++ = 'a' + ((*name >> 4) & 0xf);
+            *b++ = 'a' + (*name  & 0xf);
+            name++;
+        }
+        *b = 0;
+        return buf;
     }
+
+    static char *name_for_dll(const char *dll, char first_char)
+    {
+        assert(dll);
+        unsigned l = strlen(dll);
+        assert(l > 0);
+
+        char *name = new char[3 * l + 2];
+        assert(name);
+        name[0] = first_char;
+        char *n = name + 1 + 2 * l;
+        do {
+            *n++ = tolower(*dll);
+        } while(*dll++);
+        return encode_name(name + 1 + 2 * l, name + 1) - 1;
+    }
+
+    static char *name_for_proc(const char *dll, const char *proc,
+                               char first_char, char separator)
+    {
+        unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
+        tstr dlln(name_for_dll(dll, first_char));
+        char *procn = new char[len];
+        upx_snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        encode_name(proc, procn + strlen(procn));
+        return procn;
+    }
+
+    static const char zeros[sizeof(import_desc)];
+
+    enum {
+        // the order of identifiers is very important below!!
+        descriptor_id = 'D',
+        thunk_id,
+        dll_name_id,
+        proc_name_id,
+        ordinal_id,
+
+        thunk_separator_first,
+        thunk_separator,
+        thunk_separator_last,
+        procname_separator,
+    };
+
+    unsigned thunk_size; // 4 or 8 bytes
+
+    void add(const char *dll, const char *proc, unsigned ordinal)
+    {
+        tstr sdll(name_for_dll(dll, dll_name_id));
+        tstr desc_name(name_for_dll(dll, descriptor_id));
+
+        char tsep = thunk_separator;
+        if (findSection(sdll, false) == NULL)
+        {
+            tsep = thunk_separator_first;
+            addSection(sdll, dll, strlen(dll) + 1, 0); // name of the dll
+            addSymbol(sdll, sdll, 0);
+
+            addSection(desc_name, zeros, sizeof(zeros), 0); // descriptor
+            addRelocation(desc_name, offsetof(import_desc, dllname),
+                          "R_X86_64_32", sdll, 0);
+        }
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        if (findSection(thunk, false) != NULL)
+            return; // we already have this dll/proc
+        addSection(thunk, zeros, thunk_size, 0);
+        addSymbol(thunk, thunk, 0);
+        if (tsep == thunk_separator_first)
+        {
+            addRelocation(desc_name, offsetof(import_desc, iat),
+                          "R_X86_64_32", thunk, 0);
+
+            tstr last_thunk(name_for_proc(dll, "X", thunk_id, thunk_separator_last));
+            addSection(last_thunk, zeros, thunk_size, 0);
+        }
+
+        const char *reltype = thunk_size == 4 ? "R_X86_64_32" : "R_X86_64_64";
+        if (ordinal != 0u)
+        {
+            addRelocation(thunk, 0, reltype, "*UND*",
+                          ordinal | (1ull << (thunk_size * 8 - 1)));
+        }
+        else
+        {
+            tstr proc_name(name_for_proc(dll, proc, proc_name_id, procname_separator));
+            addSection(proc_name, zeros, 2, 1); // 2 bytes of word aligned "hint"
+            addSymbol(proc_name, proc_name, 0);
+            addRelocation(thunk, 0, reltype, proc_name, 0);
+
+            strcat(proc_name, "X");
+            addSection(proc_name, proc, strlen(proc), 0); // the name of the symbol
+        }
+    }
+
+    static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
+    {
+        const Section *s1 = * (const Section * const *) p1;
+        const Section *s2 = * (const Section * const *) p2;
+        return strcmp(s1->name, s2->name);
+    }
+
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0); }
+
+    const Section *getThunk(const char *dll, const char *proc, char tsep) const
+    {
+        assert(dll);
+        assert(proc);
+        tstr thunk(name_for_proc(dll, proc, thunk_id, tsep));
+        return findSection(thunk, false);
+    }
+
+public:
+    explicit ImportLinker(unsigned thunk_size_) : thunk_size(thunk_size_)
+    {
+        assert(thunk_size == 4 || thunk_size == 8);
+        addSection("*UND*", NULL, 0, 0);
+        addSymbol("*UND*", "*UND*", 0);
+        addSection("*ZSTART", NULL, 0, 0);
+        addSymbol("*ZSTART", "*ZSTART", 0);
+        Section *s = addSection("Dzero", zeros, sizeof(import_desc), 0);
+        assert(s->name[0] == descriptor_id);
+
+        // one trailing 00 byte after the last proc name
+        addSection("Zzero", zeros, 1, 0);
+    }
+
+    template <typename C>
+    void add(const C *dll, unsigned ordinal)
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+        add((const char*) dll, ord, ordinal);
+    }
+
+    template <typename C1, typename C2>
+    void add(const C1 *dll, const C2 *proc)
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
+        assert(proc);
+        add((const char*) dll, (const char*) proc, 0);
+    }
+
+    unsigned build()
+    {
+        assert(output == NULL);
+        int osize = 4 + 2 * nsections; // upper limit for alignments
+        for (unsigned ic = 0; ic < nsections; ic++)
+            osize += sections[ic]->size;
+        output = new upx_byte[osize];
+        outputlen = 0;
+
+        // sort the sections by name before adding them all
+        qsort(sections, nsections, sizeof (Section*), ImportLinker::compare);
+
+        for (unsigned ic = 0; ic < nsections; ic++)
+            addLoader(sections[ic]->name);
+        addLoader("+40D");
+        assert(outputlen <= osize);
+
+        //OutputFile::dump("il0.imp", output, outputlen);
+        return outputlen;
+    }
+
+    void relocate(unsigned myimport)
+    {
+        assert(nsections > 0);
+        assert(output);
+        defineSymbol("*ZSTART", /*0xffffffffff1000ull + 0 * */ myimport);
+        ElfLinkerAMD64::relocate();
+        //OutputFile::dump("il1.imp", output, outputlen);
+    }
+
+    template <typename C1, typename C2>
+    upx_uint64_t getAddress(const C1 *dll, const C2 *proc) const
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C1) == 1)  // "char" or "unsigned char"
+        ACC_COMPILE_TIME_ASSERT(sizeof(C2) == 1)  // "char" or "unsigned char"
+        const Section *s = getThunk((const char*) dll, (const char*) proc,
+                                    thunk_separator_first);
+        if (s == NULL && (s = getThunk((const char*) dll,(const char*) proc,
+                                       thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll, unsigned ordinal) const
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
+        assert(ordinal > 0 && ordinal < 0x10000);
+        char ord[1+5+1];
+        upx_snprintf(ord, sizeof(ord), "%c%05u", ordinal_id, ordinal);
+
+        const Section *s = getThunk((const char*) dll, ord, thunk_separator_first);
+        if (s == NULL
+            && (s = getThunk((const char*) dll, ord, thunk_separator)) == NULL)
+            throwInternalError("entry not found");
+        return s->offset;
+    }
+
+    template <typename C>
+    upx_uint64_t getAddress(const C *dll) const
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
+        tstr sdll(name_for_dll((const char*) dll, dll_name_id));
+        return findSection(sdll, true)->offset;
+    }
+};
+const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = { 0 };
+
+void PeFile::addKernelImport(const char *dll, const char *name)
+{
+    ilinker->add(dll, name);
 }
 
-unsigned PeFile::processImports() // pass 1
+void PeFile::addKernelImports()
 {
-    static const unsigned char kernel32dll[] = "COREDLL.dll";
-    static const char llgpa[] = "\x0\x0""LoadLibraryW\x0\x0"
-                                "GetProcAddressA\x0\x0\x0"
-                                "CacheSync";
-    //static const char exitp[] = "ExitProcess\x0\x0\x0";
+    addKernelImport("KERNEL32.DLL", "LoadLibraryA");
+    addKernelImport("KERNEL32.DLL", "GetProcAddress");
+    if (!isdll)
+        addKernelImport("KERNEL32.DLL", "ExitProcess");
+    addKernelImport("KERNEL32.DLL", "VirtualProtect");
+}
+
+void PeFile::processImports(unsigned myimport, unsigned) // pass 2
+{
+    COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
+
+    ilinker->relocate(myimport);
+    int len;
+    oimpdlls = ilinker->getLoader(&len);
+    assert(len == (int) soimpdlls);
+    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
+}
+
+template <typename LEXX, typename ord_mask_t>
+unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
+{
+    static const unsigned char kernel32dll[] = "KERNEL32.DLL";
 
     unsigned dllnum = 0;
     import_desc *im = (import_desc*) (ibuf + IDADDR(PEDIR_IMPORT));
@@ -526,8 +876,8 @@ unsigned PeFile::processImports() // pass 1
         const upx_byte *shname;
         unsigned   ordinal;
         unsigned   iat;
-        LE32       *lookupt;
-        unsigned   npos;
+        LEXX       *lookupt;
+        unsigned   original_position;
         bool       isk32;
 
         static int __acc_cdecl_qsort compare(const void *p1, const void *p2)
@@ -536,6 +886,8 @@ unsigned PeFile::processImports() // pass 1
             const udll *u2 = * (const udll * const *) p2;
             if (u1->isk32) return -1;
             if (u2->isk32) return 1;
+            if (!*u1->lookupt) return 1;
+            if (!*u2->lookupt) return -1;
             int rc = strcasecmp(u1->name,u2->name);
             if (rc) return rc;
             if (u1->ordinal) return -1;
@@ -552,33 +904,32 @@ unsigned PeFile::processImports() // pass 1
 
     soimport = 1024; // safety
 
-    unsigned ic,k32o;
-    for (ic = k32o = 0; dllnum && im->dllname; ic++, im++)
+    unsigned ic;
+    for (ic = 0; dllnum && im->dllname; ic++, im++)
     {
         idlls[ic] = dlls + ic;
         dlls[ic].name = ibuf + im->dllname;
         dlls[ic].shname = NULL;
         dlls[ic].ordinal = 0;
         dlls[ic].iat = im->iat;
-        dlls[ic].lookupt = (LE32*) (ibuf + (im->oft ? im->oft : im->iat));
-        dlls[ic].npos = 0;
+        dlls[ic].lookupt = (LEXX*) (ibuf + (im->oft ? im->oft : im->iat));
+        dlls[ic].original_position = ic;
         dlls[ic].isk32 = strcasecmp(kernel32dll,dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
-        for (LE32 *tarr = dlls[ic].lookupt; *tarr; tarr++)
+        for (IPTR_I(LEXX, tarr, dlls[ic].lookupt); *tarr; tarr += 1)
         {
-            if (*tarr & 0x80000000)
+            if (*tarr & ord_mask)
             {
                 importbyordinal = true;
                 soimport += 2; // ordinal num: 2 bytes
                 dlls[ic].ordinal = *tarr & 0xffff;
-                //if (dlls[ic].isk32)
-                //    kernel32ordinal = true,k32o++;
             }
-            else
+            else //it's an import by name
             {
-                unsigned len = strlen(ibuf + *tarr + 2);
+                IPTR_I(const upx_byte, n, ibuf + *tarr + 2);
+                unsigned len = strlen(n);
                 soimport += len + 1;
                 if (dlls[ic].shname == NULL || len < strlen (dlls[ic].shname))
                     dlls[ic].shname = ibuf + *tarr + 2;
@@ -588,106 +939,71 @@ unsigned PeFile::processImports() // pass 1
     }
     oimport = new upx_byte[soimport];
     memset(oimport,0,soimport);
-    oimpdlls = new upx_byte[soimport];
-    memset(oimpdlls,0,soimport);
 
     qsort(idlls,dllnum,sizeof (udll*),udll::compare);
 
-    unsigned dllnamelen = sizeof (kernel32dll);
-    unsigned dllnum2 = 1;
-    for (ic = 0; ic < dllnum; ic++)
-        if (!idlls[ic]->isk32 && (ic == 0 || strcasecmp(idlls[ic - 1]->name,idlls[ic]->name)))
-        {
-            dllnum2++;
-            dllnamelen += strlen(idlls[ic]->name) + 1;
-        }
-    //fprintf(stderr,"dllnum=%d dllnum2=%d soimport=%d\n",dllnum,dllnum2,soimport); //
-
     info("Processing imports: %d DLLs", dllnum);
 
+    ilinker = new ImportLinker(sizeof(LEXX));
     // create the new import table
-    im = (import_desc*) oimpdlls;
+    addKernelImports();
 
-    LE32 *ordinals = (LE32*) (oimpdlls + (dllnum2 + 1) * sizeof(import_desc));
-    LE32 *lookuptable = ordinals + 4;// + k32o + (isdll ? 0 : 1);
-    upx_byte *dllnames = ((upx_byte*) lookuptable) + (dllnum2 - 1) * 8;
-    upx_byte *importednames = dllnames + (dllnamelen &~ 1);
-
-    unsigned k32namepos = ptr_diff(dllnames,oimpdlls);
-
-    memcpy(importednames, llgpa, ALIGN_UP((unsigned) sizeof(llgpa), 2u));
-    strcpy(dllnames,kernel32dll);
-    im->dllname = k32namepos;
-    im->iat = ptr_diff(ordinals,oimpdlls);
-    *ordinals++ = ptr_diff(importednames,oimpdlls);             // LoadLibraryW
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14;        // GetProcAddressA
-    *ordinals++ = ptr_diff(importednames,oimpdlls) + 14 + 18;   // CacheSync
-    dllnames += sizeof(kernel32dll);
-    importednames += sizeof(llgpa);
-
-    im++;
     for (ic = 0; ic < dllnum; ic++)
+    {
         if (idlls[ic]->isk32)
         {
-            idlls[ic]->npos = k32namepos;
-            /*
+            // for kernel32.dll we need to put all the imported
+            // ordinals into the output import table, as on
+            // some versions of windows GetProcAddress does not resolve them
             if (idlls[ic]->ordinal)
-                for (LE32 *tarr = idlls[ic]->lookupt; *tarr; tarr++)
-                    if (*tarr & 0x80000000)
-                        *ordinals++ = *tarr;
-            */
+                for (LEXX *tarr = idlls[ic]->lookupt; *tarr; tarr++)
+                    if (*tarr & ord_mask)
+                    {
+                        ilinker->add(kernel32dll, *tarr & 0xffff);
+                        kernel32ordinal = true;
+                    }
         }
-        else if (ic && strcasecmp(idlls[ic-1]->name,idlls[ic]->name) == 0)
-            idlls[ic]->npos = idlls[ic-1]->npos;
         else
         {
-            im->dllname = idlls[ic]->npos = ptr_diff(dllnames,oimpdlls);
-            im->iat = ptr_diff(lookuptable,oimpdlls);
-
-            strcpy(dllnames,idlls[ic]->name);
-            dllnames += strlen(idlls[ic]->name)+1;
             if (idlls[ic]->ordinal)
-                *lookuptable = idlls[ic]->ordinal + 0x80000000;
+                ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
             else if (idlls[ic]->shname)
-            {
-                if (ptr_diff(importednames,oimpdlls) & 1)
-                    importednames--;
-                *lookuptable = ptr_diff(importednames,oimpdlls);
-                importednames += 2;
-                strcpy(importednames,idlls[ic]->shname);
-                importednames += strlen(idlls[ic]->shname) + 1;
-            }
-            lookuptable += 2;
-            im++;
+                ilinker->add(idlls[ic]->name, idlls[ic]->shname);
+            else
+                throwInternalError("should not happen");
         }
-    soimpdlls = ALIGN_UP(ptr_diff(importednames,oimpdlls),4);
+    }
+
+    soimpdlls = ilinker->build();
 
     Interval names(ibuf),iats(ibuf),lookups(ibuf);
+
     // create the preprocessed data
-    //ordinals -= k32o;
     upx_byte *ppi = oimport;  // preprocessed imports
     for (ic = 0; ic < dllnum; ic++)
     {
-        LE32 *tarr = idlls[ic]->lookupt;
+        LEXX *tarr = idlls[ic]->lookupt;
+#if 0 && ENABLE_THIS_AND_UNCOMPRESSION_WILL_BREAK // FIXME
         if (!*tarr)  // no imports from this dll
             continue;
-        set_le32(ppi,idlls[ic]->npos);
+#endif
+        set_le32(ppi, ilinker->getAddress(idlls[ic]->name));
         set_le32(ppi+4,idlls[ic]->iat - rvamin);
         ppi += 8;
         for (; *tarr; tarr++)
-            if (*tarr & 0x80000000)
+            if (*tarr & ord_mask)
             {
-                /*if (idlls[ic]->isk32)
+                unsigned ord = *tarr & 0xffff;
+                if (idlls[ic]->isk32)
                 {
                     *ppi++ = 0xfe; // signed + odd parity
-                    set_le32(ppi,ptr_diff(ordinals,oimpdlls));
-                    ordinals++;
+                    set_le32(ppi, ilinker->getAddress(idlls[ic]->name, ord));
                     ppi += 4;
                 }
-                else*/
+                else
                 {
                     *ppi++ = 0xff;
-                    set_le16(ppi,*tarr & 0xffff);
+                    set_le16(ppi, ord);
                     ppi += 2;
                 }
             }
@@ -718,7 +1034,6 @@ unsigned PeFile::processImports() // pass 1
         soimport = 0;
 
     //OutputFile::dump("x0.imp", oimport, soimport);
-    //OutputFile::dump("x1.imp", oimpdlls, soimpdlls);
 
     unsigned ilen = 0;
     names.flatten();
@@ -738,7 +1053,7 @@ unsigned PeFile::processImports() // pass 1
         for (ic = 0; ic < dllnum; ic++, im++)
         {
             memset(im,FILLVAL,sizeof(*im));
-            im->dllname = ptr_diff(idlls[ic]->name,ibuf); // I only need this info
+            im->dllname = ptr_diff(dlls[idlls[ic]->original_position].name,ibuf);
         }
     }
     else
@@ -759,7 +1074,6 @@ unsigned PeFile::processImports() // pass 1
     info("Imports: original size: %u bytes, preprocessed size: %u bytes",ilen,soimport);
     return names.ivnum == 1 ? names.ivarr[0].start : 0;
 }
-
 
 /*************************************************************************
 // export handling
@@ -916,40 +1230,87 @@ void PeFile::processExports(Export *xport,unsigned newoffs) // pass2
 // the virtual memory manager only for pages which are not yet loaded.
 // of course it was impossible to debug this ;-)
 
-__packed_struct(tls)
-    LE32 datastart; // VA tls init data start
-    LE32 dataend;   // VA tls init data end
-    LE32 tlsindex;  // VA tls index
-    LE32 callbacks; // VA tls callbacks
-    char _[8];      // zero init, characteristics
-__packed_struct_end()
-
-void PeFile::processTls(Interval *iv) // pass 1
+template <>
+struct PeFile::tls_traits<LE32>
 {
-    COMPILE_TIME_ASSERT(sizeof(tls) == 24)
+    __packed_struct(tls)
+        LE32 datastart; // VA tls init data start
+        LE32 dataend;   // VA tls init data end
+        LE32 tlsindex;  // VA tls index
+        LE32 callbacks; // VA tls callbacks
+        char _[8];      // zero init, characteristics
+    __packed_struct_end()
+
+    static const unsigned sotls = 24;
+    static const unsigned cb_size = 4;
+    typedef unsigned cb_value_t;
+    static const unsigned reloc_type = 3;
+};
+
+template <>
+struct PeFile::tls_traits<LE64>
+{
+    __packed_struct(tls)
+        LE64 datastart; // VA tls init data start
+        LE64 dataend;   // VA tls init data end
+        LE64 tlsindex;  // VA tls index
+        LE64 callbacks; // VA tls callbacks
+        char _[8];      // zero init, characteristics
+    __packed_struct_end()
+
+    static const unsigned sotls = 40;
+    static const unsigned cb_size = 8;
+    typedef upx_uint64_t cb_value_t;
+    static const unsigned reloc_type = 10;
+};
+
+template <typename LEXX>
+void PeFile::processTls1(Interval *iv,
+                         typename tls_traits<LEXX>::cb_value_t imagebase,
+                         unsigned imagesize) // pass 1
+{
+    typedef typename tls_traits<LEXX>::tls tls;
+    typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
+    const unsigned cb_size = tls_traits<LEXX>::cb_size;
+
+    COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
 
     if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
+
     // note: TLS callbacks are not implemented in Windows 95/98/ME
     if (tlsp->callbacks)
     {
-        if (tlsp->callbacks < ih.imagebase)
+        if (tlsp->callbacks < imagebase)
             throwCantPack("invalid TLS callback");
-        else if (tlsp->callbacks - ih.imagebase + 4 >= ih.imagesize)
+        else if (tlsp->callbacks - imagebase + 4 >= imagesize)
             throwCantPack("invalid TLS callback");
-        unsigned v = get_le32(ibuf + tlsp->callbacks - ih.imagebase);
-        if (v != 0)
+        cb_value_t v = *(LEXX*)(ibuf + (tlsp->callbacks - imagebase));
+
+        if(v != 0)
         {
-            //fprintf(stderr, "TLS callbacks: 0x%0x -> 0x%0x\n", (int)tlsp->callbacks, v);
-            throwCantPack("TLS callbacks are not supported");
+            //count number of callbacks, just for information string - Stefan Widmann
+            unsigned num_callbacks = 0;
+            unsigned callback_offset = 0;
+            while(*(LEXX*)(ibuf + tlsp->callbacks - imagebase + callback_offset))
+            {
+                //increment number of callbacks
+                num_callbacks++;
+                callback_offset += cb_size;
+            }
+            info("TLS: %u callback(s) found, adding TLS callback handler", num_callbacks);
+            //set flag to include necessary sections in loader
+            use_tls_callbacks = true;
+            //define linker symbols
+            tlscb_ptr = tlsp->callbacks;
         }
     }
 
-    const unsigned tlsdatastart = tlsp->datastart - ih.imagebase;
-    const unsigned tlsdataend = tlsp->dataend - ih.imagebase;
+    const unsigned tlsdatastart = tlsp->datastart - imagebase;
+    const unsigned tlsdataend = tlsp->dataend - imagebase;
 
     // now some ugly stuff: find the relocation entries in the tls data area
     unsigned pos,type;
@@ -959,51 +1320,120 @@ void PeFile::processTls(Interval *iv) // pass 1
             iv->add(pos,type);
 
     sotls = sizeof(tls) + tlsdataend - tlsdatastart;
+    // if TLS callbacks are used, we need two more {D|Q}WORDS at the end of the TLS
+    // ... and those dwords should be correctly aligned
+    if (use_tls_callbacks)
+        sotls = ALIGN_UP(sotls, cb_size) + 2 * cb_size;
 
     // the PE loader wants this stuff uncompressed
     otls = new upx_byte[sotls];
     memset(otls,0,sotls);
-    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),0x18);
+    memcpy(otls,ibuf + IDADDR(PEDIR_TLS),sizeof(tls));
     // WARNING: this can acces data in BSS
     memcpy(otls + sizeof(tls),ibuf + tlsdatastart,sotls - sizeof(tls));
-    tlsindex = tlsp->tlsindex - ih.imagebase;
-    info("TLS: %u bytes tls data and %u relocations added",sotls - (unsigned) sizeof(tls),iv->ivnum);
+    tlsindex = tlsp->tlsindex - imagebase;
+    //NEW: subtract two dwords if TLS callbacks are used - Stefan Widmann
+    info("TLS: %u bytes tls data and %u relocations added",
+         sotls - (unsigned) sizeof(tls) - (use_tls_callbacks ? 2 * cb_size : 0),iv->ivnum);
 
     // makes sure tls index is zero after decompression
-    if (tlsindex && tlsindex < ih.imagesize)
+    if (tlsindex && tlsindex < imagesize)
         set_le32(ibuf + tlsindex, 0);
 }
 
-void PeFile::processTls(Reloc *rel,const Interval *iv,unsigned newaddr) // pass 2
+template <typename LEXX>
+void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
+                         typename tls_traits<LEXX>::cb_value_t imagebase) // pass 2
 {
+    typedef typename tls_traits<LEXX>::tls tls;
+    typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
+    const unsigned cb_size = tls_traits<LEXX>::cb_size;
+    const unsigned reloc_type = tls_traits<LEXX>::reloc_type;
+
     if (sotls == 0)
         return;
     // add new relocation entries
     unsigned ic;
-    for (ic = 0; ic < 12; ic += 4)
-        rel->add(newaddr + ic,3);
+    //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
+    for (ic = 0; ic < (use_tls_callbacks ? 4 * cb_size : 3 * cb_size); ic += cb_size)
+        rel->add(newaddr + ic, reloc_type);
 
     tls * const tlsp = (tls*) otls;
     // now the relocation entries in the tls data area
     for (ic = 0; ic < iv->ivnum; ic += 4)
     {
-        void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - ih.imagebase) + sizeof(tls);
-        unsigned kc = get_le32(p);
+        void *p = otls + iv->ivarr[ic].start - (tlsp->datastart - imagebase) + sizeof(tls);
+        cb_value_t kc = *(LEXX*)(p);
         if (kc < tlsp->dataend && kc >= tlsp->datastart)
         {
             kc +=  newaddr + sizeof(tls) - tlsp->datastart;
-            set_le32(p,kc + ih.imagebase);
+            *(LEXX*)(p) = kc + imagebase;
             rel->add(kc,iv->ivarr[ic].len);
         }
         else
-            rel->add(kc - ih.imagebase,iv->ivarr[ic].len);
+            rel->add(kc - imagebase,iv->ivarr[ic].len);
     }
 
-    tlsp->datastart = newaddr + sizeof(tls) + ih.imagebase;
-    tlsp->dataend = newaddr + sotls + ih.imagebase;
-    tlsp->callbacks = 0; // note: TLS callbacks are not implemented in Windows 95/98/ME
+    const unsigned tls_data_size = tlsp->dataend - tlsp->datastart;
+    tlsp->datastart = newaddr + sizeof(tls) + imagebase;
+    tlsp->dataend = tlsp->datastart + tls_data_size;
+
+    //NEW: if we have TLS callbacks to handle, we create a pointer to the new callback chain - Stefan Widmann
+    tlsp->callbacks = (use_tls_callbacks ? newaddr + sotls + imagebase - 2 * cb_size : 0);
+
+    if (use_tls_callbacks)
+    {
+      //set handler offset
+      *(LEXX*)(otls + sotls - 2 * cb_size) = tls_handler_offset + imagebase;
+      //add relocation for TLS handler offset
+      rel->add(newaddr + sotls - 2 * cb_size, reloc_type);
+    }
 }
 
+/*************************************************************************
+// Load Configuration handling
+**************************************************************************/
+
+void PeFile::processLoadConf(Interval *iv) // pass 1
+{
+    if (IDSIZE(PEDIR_LOADCONF) == 0)
+        return;
+
+    const unsigned lcaddr = IDADDR(PEDIR_LOADCONF);
+    const upx_byte * const loadconf = ibuf + lcaddr;
+    soloadconf = get_le32(loadconf);
+    if (soloadconf == 0)
+        return;
+    if (soloadconf > 256)
+        throwCantPack("size of Load Configuration directory unexpected");
+
+    // if there were relocation entries referring to the load config table
+    // then we need them for the copy of the table too
+    unsigned pos,type;
+    Reloc rel(ibuf + IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC));
+    while (rel.next(pos, type))
+        if (pos >= lcaddr && pos < lcaddr + soloadconf)
+        {
+            iv->add(pos - lcaddr, type);
+            // printf("loadconf reloc detected: %x\n", pos);
+        }
+
+    oloadconf = new upx_byte[soloadconf];
+    memcpy(oloadconf, loadconf, soloadconf);
+}
+
+void PeFile::processLoadConf(Reloc *rel, const Interval *iv,
+                                unsigned newaddr) // pass2
+{
+    // now we have the address of the new load config table
+    // so we can create the new relocation entries
+    for (unsigned ic = 0; ic < iv->ivnum; ic++)
+    {
+        rel->add(iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+        //printf("loadconf reloc added: %x %d\n",
+        //       iv->ivarr[ic].start + newaddr, iv->ivarr[ic].len);
+    }
+}
 
 /*************************************************************************
 // resource handling
@@ -1568,14 +1998,536 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 // pack
 **************************************************************************/
 
+void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
+{
+    isection = new pe_section_t[objs];
+    fi->seek(pe_offset+sizeof_ih,SEEK_SET);
+    fi->readx(isection,sizeof(pe_section_t)*objs);
+    rvamin = isection[0].vaddr;
+
+    infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
+}
+
+void PeFile::checkHeaderValues(unsigned subsystem, unsigned mask,
+                               unsigned ih_entry, unsigned ih_filealign)
+{
+    if ((1u << subsystem) & ~mask)
+    {
+        char buf[100];
+        upx_snprintf(buf, sizeof(buf), "PE: subsystem %u is not supported",
+                     subsystem);
+        throwCantPack(buf);
+    }
+    //check CLR Runtime Header directory entry
+    if (IDSIZE(PEDIR_COMRT))
+        throwCantPack(".NET files are not yet supported");
+
+    if (memcmp(isection[0].name,"UPX",3) == 0)
+        throwAlreadyPackedByUPX();
+
+    if (!opt->force && IDSIZE(15))
+        throwCantPack("file is possibly packed/protected (try --force)");
+
+    if (ih_entry && ih_entry < rvamin)
+        throwCantPack("run a virus scanner on this file!");
+
+    if (ih_filealign < 0x200)
+        throwCantPack("filealign < 0x200 is not yet supported");
+}
+
+unsigned PeFile::handleStripRelocs(upx_uint64_t ih_imagebase,
+                                   upx_uint64_t default_imagebase,
+                                   unsigned dllflags)
+{
+    if (dllflags & IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)
+        opt->win32_pe.strip_relocs = false;
+    else if (isdll) //do never strip relocations from DLLs
+        opt->win32_pe.strip_relocs = false;
+    else if (opt->win32_pe.strip_relocs < 0)
+        opt->win32_pe.strip_relocs = (ih_imagebase >= default_imagebase);
+    if (opt->win32_pe.strip_relocs)
+    {
+        if (ih_imagebase < default_imagebase)
+            throwCantPack("--strip-relocs is not allowed with this imagebase");
+        else
+            return RELOCS_STRIPPED;
+    }
+    return 0;
+}
+
+unsigned PeFile::readSections(unsigned objs, unsigned usize,
+                              unsigned ih_filealign, unsigned ih_datasize)
+{
+    const unsigned xtrasize = UPX_MAX(ih_datasize, 65536u) + IDSIZE(PEDIR_IMPORT)
+        + IDSIZE(PEDIR_BOUNDIM) + IDSIZE(PEDIR_IAT) + IDSIZE(PEDIR_DELAYIMP)
+        + IDSIZE(PEDIR_RELOC);
+    ibuf.alloc(usize + xtrasize);
+
+    // BOUND IMPORT support. FIXME: is this ok?
+    fi->seek(0,SEEK_SET);
+    fi->readx(ibuf,isection[0].rawdataptr);
+
+    //Interval holes(ibuf);
+
+    unsigned ic,jc,overlaystart = 0;
+    ibuf.clear(0, usize);
+    for (ic = jc = 0; ic < objs; ic++)
+    {
+        if (isection[ic].rawdataptr && overlaystart < isection[ic].rawdataptr + isection[ic].size)
+            overlaystart = ALIGN_UP(isection[ic].rawdataptr + isection[ic].size,ih_filealign);
+        if (isection[ic].vsize == 0)
+            isection[ic].vsize = isection[ic].size;
+        if ((isection[ic].flags & PEFL_BSS) || isection[ic].rawdataptr == 0
+            || (isection[ic].flags & PEFL_INFO))
+        {
+            //holes.add(isection[ic].vaddr,isection[ic].vsize);
+            continue;
+        }
+        if (isection[ic].vaddr + isection[ic].size > usize)
+            throwCantPack("section size problem");
+        if (!isrtm && ((isection[ic].flags & (PEFL_WRITE|PEFL_SHARED))
+            == (PEFL_WRITE|PEFL_SHARED)))
+            if (!opt->force)
+                throwCantPack("writable shared sections not supported (try --force)");
+        if (jc && isection[ic].rawdataptr - jc > ih_filealign)
+            throwCantPack("superfluous data between sections");
+        fi->seek(isection[ic].rawdataptr,SEEK_SET);
+        jc = isection[ic].size;
+        if (jc > isection[ic].vsize)
+            jc = isection[ic].vsize;
+        if (isection[ic].vsize == 0) // hack for some tricky programs - may this break other progs?
+            jc = isection[ic].vsize = isection[ic].size;
+        if (isection[ic].vaddr + jc > ibuf.getSize())
+            throwInternalError("buffer too small 1");
+        fi->readx(ibuf + isection[ic].vaddr,jc);
+        jc += isection[ic].rawdataptr;
+    }
+    return overlaystart;
+}
+
+void PeFile::callCompressWithFilters(Filter &ft, int filter_strategy, unsigned ih_codebase)
+{
+    compressWithFilters(&ft, 2048, NULL_cconf, filter_strategy,
+                        ih_codebase, rvamin, 0, NULL, 0);
+}
+
+void PeFile::callProcessRelocs(Reloc &rel, unsigned &ic)
+{
+    // wince wants relocation data at the beginning of a section
+    PeFile::processRelocs(&rel);
+    ODADDR(PEDIR_RELOC) = soxrelocs ? ic : 0;
+    ODSIZE(PEDIR_RELOC) = soxrelocs;
+    ic += soxrelocs;
+}
+
+void PeFile::callProcessResources(Resource &res, unsigned &ic)
+{
+    if (soresources)
+        processResources(&res,ic);
+    ODADDR(PEDIR_RESOURCE) = soresources ? ic : 0;
+    ODSIZE(PEDIR_RESOURCE) = soresources;
+    ic += soresources;
+}
+
+template <typename LEXX, typename ht>
+void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
+                   unsigned subsystem_mask, upx_uint64_t default_imagebase,
+                   bool last_section_rsrc_only)
+{
+    // FIXME: we need to think about better support for --exact
+    if (opt->exact)
+        throwCantPackExact();
+
+    const unsigned objs = ih.objects;
+    readSectionHeaders(objs, sizeof(ih));
+    if (!opt->force && handleForceOption())
+        throwCantPack("unexpected value in PE header (try --force)");
+    checkHeaderValues(ih.subsystem, subsystem_mask, ih.entry, ih.filealign);
+
+    //remove certificate directory entry
+    if (IDSIZE(PEDIR_SEC))
+        IDSIZE(PEDIR_SEC) = IDADDR(PEDIR_SEC) = 0;
+
+    ih.flags |= handleStripRelocs(ih.imagebase, default_imagebase, ih.dllflags);
+
+    handleStub(fi,fo,pe_offset);
+    unsigned overlaystart = readSections(objs, ih.imagesize, ih.filealign, ih.datasize);
+    unsigned overlay = file_size - stripDebug(overlaystart);
+    if (overlay >= (unsigned) file_size)
+        overlay = 0;
+    checkOverlay(overlay);
+
+    Resource res;
+    Interval tlsiv(ibuf);
+    Interval loadconfiv(ibuf);
+    Export xport((char*)(unsigned char*)ibuf);
+
+    const unsigned dllstrings = processImports();
+    processTls(&tlsiv); // call before processRelocs!!
+    processLoadConf(&loadconfiv);
+    processResources(&res);
+    processExports(&xport);
+    processRelocs();
+
+    //OutputFile::dump("x1", ibuf, usize);
+
+    // some checks for broken linkers - disable filter if necessary
+    bool allow_filter = true;
+    if (/*FIXME ih.codebase == ih.database
+        ||*/ ih.codebase + ih.codesize > ih.imagesize
+        || (isection[virta2objnum(ih.codebase,isection,objs)].flags & PEFL_CODE) == 0)
+        allow_filter = false;
+
+    const unsigned oam1 = ih.objectalign - 1;
+
+    // FIXME: disabled: the uncompressor would not allocate enough memory
+    //objs = tryremove(IDADDR(PEDIR_RELOC),objs);
+
+    // FIXME: if the last object has a bss then this won't work
+    // newvsize = (isection[objs-1].vaddr + isection[objs-1].size + oam1) &~ oam1;
+    // temporary solution:
+    unsigned newvsize = (isection[objs-1].vaddr + isection[objs-1].vsize + oam1) &~ oam1;
+
+    //fprintf(stderr,"newvsize=%x objs=%d\n",newvsize,objs);
+    if (newvsize + soimport + sorelocs > ibuf.getSize())
+         throwInternalError("buffer too small 2");
+    memcpy(ibuf+newvsize,oimport,soimport);
+    memcpy(ibuf+newvsize+soimport,orelocs,sorelocs);
+
+    cimports = newvsize - rvamin;   // rva of preprocessed imports
+    crelocs = cimports + soimport;  // rva of preprocessed fixups
+
+    ph.u_len = newvsize + soimport + sorelocs;
+
+    // some extra data for uncompression support
+    unsigned s = 0;
+    upx_byte * const p1 = ibuf + ph.u_len;
+    memcpy(p1 + s,&ih,sizeof (ih));
+    s += sizeof (ih);
+    memcpy(p1 + s,isection,ih.objects * sizeof(*isection));
+    s += ih.objects * sizeof(*isection);
+    if (soimport)
+    {
+        set_le32(p1 + s,cimports);
+        set_le32(p1 + s + 4,dllstrings);
+        s += 8;
+    }
+    if (sorelocs)
+    {
+        set_le32(p1 + s,crelocs);
+        p1[s + 4] = (unsigned char) (big_relocs & 6);
+        s += 5;
+    }
+    if (soresources)
+    {
+        set_le16(p1 + s,icondir_count);
+        s += 2;
+    }
+    // end of extra data
+    set_le32(p1 + s,ptr_diff(p1,ibuf) - rvamin);
+    s += 4;
+    ph.u_len += s;
+    obuf.allocForCompression(ph.u_len);
+
+    // prepare packheader
+    ph.u_len -= rvamin;
+    // prepare filter
+    Filter ft(ph.level);
+    ft.buf_len = ih.codesize;
+    ft.addvalue = ih.codebase - rvamin;
+    // compress
+    int filter_strategy = allow_filter ? 0 : -3;
+
+    // disable filters for files with broken headers
+    if (ih.codebase + ih.codesize > ph.u_len)
+    {
+        ft.buf_len = 1;
+        filter_strategy = -3;
+    }
+
+    callCompressWithFilters(ft, filter_strategy, ih.codebase);
+// info: see buildLoader()
+    newvsize = (ph.u_len + rvamin + ph.overlap_overhead + oam1) &~ oam1;
+    if (tlsindex && ((newvsize - ph.c_len - 1024 + oam1) &~ oam1) > tlsindex + 4)
+        tlsindex = 0;
+
+    int identsize = 0;
+    const unsigned codesize = getLoaderSection("IDENTSTR",&identsize);
+    assert(identsize > 0);
+    unsigned ic;
+    getLoaderSection("UPX1HEAD",(int*)&ic);
+    identsize += ic;
+
+    const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
+    pe_section_t osection[oobjs];
+    // section 0 : bss
+    //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
+    //         2 : not compressed data
+    //         3 : resource data -- wince 5 needs a new section for this
+
+    // the last section should start with the resource data, because lots of lame
+    // windoze codes assume that resources starts on the beginning of a section
+
+    // note: there should be no data in the last section which needs fixup
+
+    // identsplit - number of ident + (upx header) bytes to put into the PE header
+    int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
+    if ((identsplit & 0x1ff) == 0)
+        identsplit = 0;
+    else if (((identsplit + identsize) ^ identsplit) < 0x200)
+        identsplit = identsize;
+    else
+        identsplit = ALIGN_GAP(identsplit, 0x200);
+    ic = identsize - identsplit;
+
+    const unsigned c_len = ((ph.c_len + ic) & 15) == 0 ? ph.c_len : ph.c_len + 16 - ((ph.c_len + ic) & 15);
+    obuf.clear(ph.c_len, c_len - ph.c_len);
+
+    const unsigned s1size = ALIGN_UP(ic + c_len + codesize, (unsigned) sizeof(LEXX)) + sotls + soloadconf;
+    const unsigned s1addr = (newvsize - (ic + c_len) + oam1) &~ oam1;
+
+    const unsigned ncsection = (s1addr + s1size + oam1) &~ oam1;
+    const unsigned upxsection = s1addr + ic + c_len;
+
+    Reloc rel(1024); // new relocations are put here
+    addNewRelocations(rel, upxsection);
+
+    // new PE header
+    memcpy(&oh,&ih,sizeof(oh));
+    oh.filealign = 0x200; // identsplit depends on this
+    memset(osection,0,sizeof(osection));
+
+    oh.entry = upxsection;
+    oh.objects = oobjs;
+    oh.chksum = 0;
+
+    // fill the data directory
+    ODADDR(PEDIR_DEBUG) = 0;
+    ODSIZE(PEDIR_DEBUG) = 0;
+    ODADDR(PEDIR_IAT) = 0;
+    ODSIZE(PEDIR_IAT) = 0;
+    ODADDR(PEDIR_BOUNDIM) = 0;
+    ODSIZE(PEDIR_BOUNDIM) = 0;
+
+    // tls & loadconf are put into section 1
+    ic = s1addr + s1size - sotls - soloadconf;
+    processTls(&rel,&tlsiv,ic);
+    ODADDR(PEDIR_TLS) = sotls ? ic : 0;
+    ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
+    ic += sotls;
+
+    processLoadConf(&rel, &loadconfiv, ic);
+    ODADDR(PEDIR_LOADCONF) = soloadconf ? ic : 0;
+    ODSIZE(PEDIR_LOADCONF) = soloadconf;
+    ic += soloadconf;
+
+    const bool rel_at_sections_start = oobjs == 4;
+
+    ic = ncsection;
+    if (!last_section_rsrc_only)
+        callProcessResources(res, ic);
+    if (rel_at_sections_start)
+        callProcessRelocs(rel, ic);
+
+    processImports(ic, getProcessImportParam(upxsection));
+    ODADDR(PEDIR_IMPORT) = ic;
+    ODSIZE(PEDIR_IMPORT) = soimpdlls;
+    ic += soimpdlls;
+
+    processExports(&xport,ic);
+    ODADDR(PEDIR_EXPORT) = soexport ? ic : 0;
+    ODSIZE(PEDIR_EXPORT) = soexport;
+    if (!isdll && opt->win32_pe.compress_exports)
+    {
+        ODADDR(PEDIR_EXPORT) = IDADDR(PEDIR_EXPORT);
+        ODSIZE(PEDIR_EXPORT) = IDSIZE(PEDIR_EXPORT);
+    }
+    ic += soexport;
+
+    if (!rel_at_sections_start)
+        callProcessRelocs(rel, ic);
+
+    // when the resource is put alone into section 3
+    const unsigned res_start = (ic + oam1) &~ oam1;;
+    if (last_section_rsrc_only)
+        callProcessResources(res, ic);
+
+    defineSymbols(ncsection, upxsection, sizeof(oh),
+                  identsize - identsplit, rel, s1addr);
+    defineFilterSymbols(&ft);
+    relocateLoader();
+    const unsigned lsize = getLoaderSize();
+    MemBuffer loader(lsize);
+    memcpy(loader,getLoader(),lsize);
+    patchPackHeader(loader, lsize);
+
+    const unsigned ncsize = soxrelocs + soimpdlls + soexport
+        + (!last_section_rsrc_only ? soresources : 0);
+    const unsigned fam1 = oh.filealign - 1;
+
+    // this one is tricky: it seems windoze touches 4 bytes after
+    // the end of the relocation data - so we have to increase
+    // the virtual size of this section
+    const unsigned ncsize_virt_increase = (ncsize & oam1) == 0 ? 8 : 0;
+
+    // fill the sections
+    strcpy(osection[0].name,"UPX0");
+    strcpy(osection[1].name,"UPX1");
+    // after some windoze debugging I found that the name of the sections
+    // DOES matter :( .rsrc is used by oleaut32.dll (TYPELIBS)
+    // and because of this lame dll, the resource stuff must be the
+    // first in the 3rd section - the author of this dll seems to be
+    // too idiot to use the data directories... M$ suxx 4 ever!
+    // ... even worse: exploder.exe in NiceTry also depends on this to
+    // locate version info
+
+    strcpy(osection[2].name, !last_section_rsrc_only && soresources ? ".rsrc" : "UPX2");
+
+    osection[0].vaddr = rvamin;
+    osection[1].vaddr = s1addr;
+    osection[2].vaddr = ncsection;
+
+    osection[0].size = 0;
+    osection[1].size = (s1size + fam1) &~ fam1;
+    osection[2].size = (ncsize + fam1) &~ fam1;
+
+    osection[0].vsize = osection[1].vaddr - osection[0].vaddr;
+    if (oobjs == 3)
+    {
+        osection[1].vsize = (osection[1].size + oam1) &~ oam1;
+        osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
+        oh.imagesize = osection[2].vaddr + osection[2].vsize;
+        osection[0].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+        osection[1].rawdataptr = osection[0].rawdataptr;
+    }
+    else
+    {
+        osection[1].vsize = osection[1].size;
+        osection[2].vsize = osection[2].size;
+        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
+        osection[0].rawdataptr = 0;
+        osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+    }
+    osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
+
+    osection[0].flags = (unsigned) (PEFL_BSS|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
+    osection[1].flags = (unsigned) (PEFL_DATA|PEFL_EXEC|PEFL_WRITE|PEFL_READ);
+    osection[2].flags = (unsigned) (PEFL_DATA|PEFL_WRITE|PEFL_READ);
+
+    if (oobjs == 4)
+    {
+        strcpy(osection[3].name, ".rsrc");
+        osection[3].vaddr = res_start;
+        osection[3].size = (soresources + fam1) &~ fam1;
+        osection[3].vsize = osection[3].size;
+        osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
+        osection[2].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+        osection[3].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+        if (soresources == 0)
+        {
+            oh.objects = 3;
+            memset(&osection[3], 0, sizeof(osection[3]));
+        }
+    }
+
+    oh.bsssize  = osection[0].vsize;
+    oh.datasize = osection[2].vsize + (oobjs > 3 ? osection[3].vsize : 0);
+    setOhDataBase(osection);
+    oh.codesize = osection[1].vsize;
+    oh.codebase = osection[1].vaddr;
+    setOhHeaderSize(osection);
+    if (rvamin < osection[0].rawdataptr)
+        throwCantPack("object alignment too small");
+
+    if (opt->win32_pe.strip_relocs && !isdll)
+        oh.flags |= RELOCS_STRIPPED;
+
+    //for (ic = 0; ic < oh.filealign; ic += 4)
+    //    set_le32(ibuf + ic,get_le32("UPX "));
+    ibuf.clear(0, oh.filealign);
+
+    info("Image size change: %u -> %u KiB",
+         ih.imagesize / 1024, oh.imagesize / 1024);
+
+    infoHeader("[Writing compressed file]");
+
+    // write loader + compressed file
+    fo->write(&oh,sizeof(oh));
+    fo->write(osection,sizeof(osection));
+    // some alignment
+    if (identsplit == identsize)
+    {
+        unsigned n = osection[oobjs == 3 ? 0 : 1].rawdataptr - fo->getBytesWritten() - identsize;
+        assert(n <= oh.filealign);
+        fo->write(ibuf, n);
+    }
+    fo->write(loader + codesize,identsize);
+    infoWriting("loader", fo->getBytesWritten());
+    fo->write(obuf,c_len);
+    infoWriting("compressed data", c_len);
+    fo->write(loader,codesize);
+    if (opt->debug.dump_stub_loader)
+        OutputFile::dump(opt->debug.dump_stub_loader, loader, codesize);
+    if ((ic = fo->getBytesWritten() & (sizeof(LEXX) - 1)) != 0)
+        fo->write(ibuf, sizeof(LEXX) - ic);
+    fo->write(otls,sotls);
+    fo->write(oloadconf, soloadconf);
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
+        fo->write(ibuf,oh.filealign - ic);
+    if (!last_section_rsrc_only)
+        fo->write(oresources,soresources);
+    else
+        fo->write(oxrelocs,soxrelocs);
+    fo->write(oimpdlls,soimpdlls);
+    fo->write(oexport,soexport);
+    fo->write(oxrelocs,soxrelocs);
+    if (!last_section_rsrc_only)
+        fo->write(oxrelocs,soxrelocs);
+
+    if ((ic = fo->getBytesWritten() & fam1) != 0)
+        fo->write(ibuf,oh.filealign - ic);
+
+    if (last_section_rsrc_only)
+    {
+        fo->write(oresources,soresources);
+        if ((ic = fo->getBytesWritten() & fam1) != 0)
+            fo->write(ibuf,oh.filealign - ic);
+    }
+
+#if 0
+    printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
+    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
+    printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
+    printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
+    printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
+    printf("%-13s: tls          : %8ld bytes\n", getName(), (long) sotls);
+    printf("%-13s: resources    : %8ld bytes\n", getName(), (long) soresources);
+    printf("%-13s: imports      : %8ld bytes\n", getName(), (long) soimpdlls);
+    printf("%-13s: exports      : %8ld bytes\n", getName(), (long) soexport);
+    printf("%-13s: relocs       : %8ld bytes\n", getName(), (long) soxrelocs);
+    printf("%-13s: loadconf     : %8ld bytes\n", getName(), (long) soloadconf);
+#endif
+
+    // verify
+    verifyOverlappingDecompression();
+
+    // copy the overlay
+    copyOverlay(fo, overlay, &obuf);
+
+    // finally check the compression ratio
+    if (!checkFinalCompressionRatio(fo))
+        throwNotCompressible();
+}
 
 /*************************************************************************
 // unpack
 **************************************************************************/
 
-void PeFile::rebuildRelocs(upx_byte *& extrainfo)
+void PeFile::rebuildRelocs(upx_byte *& extrainfo, unsigned bits,
+                           unsigned flags, upx_uint64_t imagebase)
 {
-    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (oh.flags & RELOCS_STRIPPED))
+    assert(bits == 32 || bits == 64);
+    if (!ODADDR(PEDIR_RELOC) || !ODSIZE(PEDIR_RELOC) || (flags & RELOCS_STRIPPED))
         return;
 
     if (ODSIZE(PEDIR_RELOC) == 8) // some tricky dlls use this
@@ -1591,7 +2543,7 @@ void PeFile::rebuildRelocs(upx_byte *& extrainfo)
 //    upx_byte *p = rdata;
     OPTR_I(upx_byte, p, rdata);
     MemBuffer wrkmem;
-    unsigned relocn = unoptimizeReloc32(&rdata,obuf,&wrkmem,1);
+    unsigned relocn = unoptimizeReloc(&rdata,obuf,&wrkmem,1,bits);
     unsigned r16 = 0;
     if (big & 6)                // 16 bit relocations
     {
@@ -1620,8 +2572,11 @@ void PeFile::rebuildRelocs(upx_byte *& extrainfo)
     for (unsigned ic = 0; ic < relocn; ic++)
     {
         p = obuf + get_le32(wrkmem + 4 * ic);
-        set_le32(p, get_le32((unsigned char *)p) + oh.imagebase + rvamin);
-        rel.add(rvamin + get_le32(wrkmem + 4 * ic),3);
+        if (bits == 32)
+            set_le32(p, get_le32((unsigned char *)p) + imagebase + rvamin);
+        else
+            set_le64(p, get_le64((unsigned char *)p) + imagebase + rvamin);
+        rel.add(rvamin + get_le32(wrkmem + 4 * ic), bits == 32 ? 3 : 10);
     }
     rel.finish (oxrelocs,soxrelocs);
 
@@ -1657,7 +2612,7 @@ void PeFile::rebuildTls()
     // this is an easy one : just do nothing ;-)
 }
 
-void PeFile::rebuildResources(upx_byte *& extrainfo)
+void PeFile::rebuildResources(upx_byte *& extrainfo, unsigned lastvaddr)
 {
     if (ODSIZE(PEDIR_RESOURCE) == 0 || IDSIZE(PEDIR_RESOURCE) == 0)
         return;
@@ -1666,7 +2621,7 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
     extrainfo += 2;
 
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
-    const upx_byte *r = ibuf - isection[ih.objects - 1].vaddr;
+    const upx_byte *r = ibuf - lastvaddr;
     Resource res(r + vaddr);
     while (res.next())
         if (res.offs() > vaddr)
@@ -1688,7 +2643,122 @@ void PeFile::rebuildResources(upx_byte *& extrainfo)
     delete [] p;
 }
 
-void PeFile::unpack(OutputFile *fo)
+template <typename LEXX, typename ord_mask_t>
+void PeFile::rebuildImports(upx_byte *& extrainfo,
+                            ord_mask_t ord_mask, bool set_oft)
+{
+    if (ODADDR(PEDIR_IMPORT) == 0
+        || ODSIZE(PEDIR_IMPORT) <= sizeof(import_desc))
+        return;
+
+//    const upx_byte * const idata = obuf + get_le32(extrainfo);
+    OPTR_C(const upx_byte, idata, obuf + get_le32(extrainfo));
+    const unsigned inamespos = get_le32(extrainfo + 4);
+    extrainfo += 8;
+
+    unsigned sdllnames = 0;
+
+//    const upx_byte *import = ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr;
+//    const upx_byte *p;
+    IPTR_I(const upx_byte, import, ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
+    OPTR(const upx_byte, p);
+
+    for (p = idata; get_le32(p) != 0; ++p)
+    {
+        const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
+        const unsigned dlen = strlen(dname);
+        ICHECK(dname, dlen + 1);
+
+        sdllnames += dlen + 1;
+        for (p += 8; *p;)
+            if (*p == 1)
+                p += strlen(++p) + 1;
+            else if (*p == 0xff)
+                p += 3; // ordinal
+            else
+                p += 5;
+    }
+    sdllnames = ALIGN_UP(sdllnames, 2u);
+
+    upx_byte * const Obuf = obuf - rvamin;
+    import_desc * const im0 = (import_desc*) (Obuf + ODADDR(PEDIR_IMPORT));
+    import_desc *im = im0;
+    upx_byte *dllnames = Obuf + inamespos;
+    upx_byte *importednames = dllnames + sdllnames;
+    upx_byte * const importednames_start = importednames;
+
+    for (p = idata; get_le32(p) != 0; ++p)
+    {
+        // restore the name of the dll
+        const upx_byte *dname = get_le32(p) + import;
+        ICHECK(dname, 1);
+        const unsigned dlen = strlen(dname);
+        ICHECK(dname, dlen + 1);
+
+        const unsigned iatoffs = get_le32(p + 4) + rvamin;
+        if (inamespos)
+        {
+            // now I rebuild the dll names
+            OCHECK(dllnames, dlen + 1);
+            strcpy(dllnames, dname);
+            im->dllname = ptr_diff(dllnames,Obuf);
+            //;;;printf("\ndll: %s:",dllnames);
+            dllnames += dlen + 1;
+        }
+        else
+        {
+            OCHECK(Obuf + im->dllname, dlen + 1);
+            strcpy(Obuf + im->dllname, dname);
+        }
+        im->iat = iatoffs;
+        if (set_oft)
+            im->oft = iatoffs;
+
+        OPTR_I(LEXX, newiat, (LEXX *) (Obuf + iatoffs));
+
+        // restore the imported names+ordinals
+        for (p += 8; *p; ++newiat)
+            if (*p == 1)
+            {
+                const unsigned ilen = strlen(++p) + 1;
+                if (inamespos)
+                {
+                    if (ptr_diff(importednames, importednames_start) & 1)
+                        importednames -= 1;
+                    omemcpy(importednames + 2, p, ilen);
+                    //;;;printf(" %s",importednames+2);
+                    *newiat = ptr_diff(importednames, Obuf);
+                    importednames += 2 + ilen;
+                }
+                else
+                {
+                    OCHECK(Obuf + (*newiat + 2), ilen + 1);
+                    strcpy(Obuf + (*newiat + 2), p);
+                }
+                p += ilen;
+            }
+            else if (*p == 0xff)
+            {
+                *newiat = get_le16(p + 1) + ord_mask;
+                //;;;printf(" %x",(unsigned)*newiat);
+                p += 3;
+            }
+            else
+            {
+                *newiat = *(const LEXX*)(get_le32(p + 1) + import);
+                assert(*newiat & ord_mask);
+                p += 5;
+            }
+        *newiat = 0;
+        im++;
+    }
+    //memset(idata,0,p - idata);
+}
+
+template <typename ht, typename LEXX, typename ord_mask_t>
+void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
+                     ord_mask_t ord_mask, bool set_oft)
 {
     //infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 
@@ -1737,8 +2807,8 @@ void PeFile::unpack(OutputFile *fo)
         ft.unfilter(obuf + oh.codebase - rvamin, oh.codesize);
     }
 
-    rebuildImports(extrainfo);
-    rebuildRelocs(extrainfo);
+    rebuildImports<LEXX>(extrainfo, ord_mask, set_oft);
+    rebuildRelocs(extrainfo, sizeof(ih.imagebase) * 8, oh.flags, oh.imagebase);
     rebuildTls();
     rebuildExports();
 
@@ -1751,7 +2821,7 @@ void PeFile::unpack(OutputFile *fo)
         fi->readx(ibuf,isection[3].size);
     }
 
-    rebuildResources(extrainfo);
+    rebuildResources(extrainfo, isection[ih.objects - 1].vaddr);
 
     //FIXME: this does bad things if the relocation section got removed
     // during compression ...
@@ -1804,6 +2874,200 @@ void PeFile::unpack(OutputFile *fo)
         copyOverlay(fo, overlay, &obuf);
     }
     ibuf.dealloc();
+}
+
+int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
+                       LE32 &ih_entry, unsigned ihsize)
+{
+    if (!canPack())
+        return false;
+
+    unsigned objs = ih_objects;
+    isection = new pe_section_t[objs];
+    fi->seek(pe_offset + ihsize, SEEK_SET);
+    fi->readx(isection,sizeof(pe_section_t)*objs);
+    if (ih_objects < 3)
+        return -1;
+    bool is_packed = ((ih_objects == 3 || ih_objects == max_sections) &&
+                      (IDSIZE(15) || ih_entry > isection[1].vaddr));
+    bool found_ph = false;
+    if (memcmp(isection[0].name,"UPX",3) == 0)
+    {
+        // current version
+        fi->seek(isection[1].rawdataptr - 64, SEEK_SET);
+        found_ph = readPackHeader(1024);
+        if (!found_ph)
+        {
+            // old versions
+            fi->seek(isection[2].rawdataptr, SEEK_SET);
+            found_ph = readPackHeader(1024);
+        }
+    }
+    if (is_packed && found_ph)
+        return true;
+    if (!is_packed && !found_ph)
+        return -1;
+    if (is_packed && ih_entry < isection[2].vaddr)
+    {
+        unsigned char buf[256];
+        bool x = false;
+
+        memset(buf, 0, sizeof(buf));
+        try {
+            fi->seek(ih_entry - isection[1].vaddr + isection[1].rawdataptr, SEEK_SET);
+            fi->read(buf, sizeof(buf));
+
+            // FIXME this is for x86
+            static const unsigned char magic[] = "\x8b\x1e\x83\xee\xfc\x11\xdb";
+            // mov ebx, [esi];    sub esi, -4;    adc ebx,ebx
+
+            int offset = find(buf, sizeof(buf), magic, 7);
+            if (offset >= 0 && find(buf + offset + 1, sizeof(buf) - offset - 1, magic, 7) >= 0)
+                x = true;
+        } catch (...) {
+            //x = true;
+        }
+        if (x)
+            throwCantUnpack("file is modified/hacked/protected; take care!!!");
+        else
+            throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+        return false;   // not reached
+    }
+
+    // FIXME: what should we say here ?
+    //throwCantUnpack("file is possibly modified/hacked/protected; take care!");
+    return false;
+}
+
+upx_uint64_t PeFile::ilinkerGetAddress(const char *d, const char *n) const
+{
+    return ilinker->getAddress(d, n);
+}
+
+PeFile::~PeFile()
+{
+    delete [] isection;
+    delete [] orelocs;
+    delete [] oimport;
+    oimpdlls = NULL;
+    delete [] oexport;
+    delete [] otls;
+    delete [] oresources;
+    delete [] oxrelocs;
+    delete [] oloadconf;
+    delete ilinker;
+    //delete res;
+}
+
+
+/*************************************************************************
+//  PeFile32
+**************************************************************************/
+
+PeFile32::PeFile32(InputFile *f) : super(f)
+{
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 248)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
+
+    iddirs = ih.ddirs;
+    oddirs = oh.ddirs;
+}
+
+PeFile32::~PeFile32()
+{}
+
+void PeFile32::readPeHeader()
+{
+    fi->readx(&ih,sizeof(ih));
+    isdll = ((ih.flags & DLL_FLAG) != 0);
+}
+
+void PeFile32::pack0(OutputFile *fo, unsigned subsystem_mask,
+                     upx_uint64_t default_imagebase,
+                     bool last_section_rsrc_only)
+{
+    super::pack0<LE32>(fo, ih, oh, subsystem_mask,
+                       default_imagebase, last_section_rsrc_only);
+}
+
+void PeFile32::unpack(OutputFile *fo)
+{
+    bool set_oft = getFormat() == UPX_F_WINCE_ARM_PE;
+    unpack0<pe_header_t, LE32>(fo, ih, oh, 1U << 31, set_oft);
+}
+
+int PeFile32::canUnpack()
+{
+    return canUnpack0(getFormat() == UPX_F_WINCE_ARM_PE ? 4 : 3,
+                      ih.objects, ih.entry, sizeof(ih));
+}
+
+unsigned PeFile32::processImports() // pass 1
+{
+    return processImports0<LE32>(1u << 31);
+}
+
+void PeFile32::processTls(Interval *iv)
+{
+    processTls1<LE32>(iv, ih.imagebase, ih.imagesize);
+}
+
+void PeFile32::processTls(Reloc *r, const Interval *iv, unsigned a)
+{
+    processTls2<LE32>(r, iv, a, ih.imagebase);
+}
+
+/*************************************************************************
+//  PeFile64
+**************************************************************************/
+
+PeFile64::PeFile64(InputFile *f) : super(f)
+{
+    COMPILE_TIME_ASSERT(sizeof(pe_header_t) == 264)
+    COMPILE_TIME_ASSERT_ALIGNED1(pe_header_t)
+
+    iddirs = ih.ddirs;
+    oddirs = oh.ddirs;
+}
+
+PeFile64::~PeFile64()
+{}
+
+void PeFile64::readPeHeader()
+{
+    fi->readx(&ih,sizeof(ih));
+    isdll = ((ih.flags & DLL_FLAG) != 0);
+}
+
+void PeFile64::pack0(OutputFile *fo, unsigned subsystem_mask,
+                     upx_uint64_t default_imagebase)
+{
+    super::pack0<LE64>(fo, ih, oh, subsystem_mask, default_imagebase, false);
+}
+
+void PeFile64::unpack(OutputFile *fo)
+{
+    unpack0<pe_header_t, LE64>(fo, ih, oh, 1ULL << 63, false);
+}
+
+int PeFile64::canUnpack()
+{
+    return canUnpack0(3, ih.objects, ih.entry, sizeof(ih));
+}
+
+unsigned PeFile64::processImports() // pass 1
+{
+    return processImports0<LE64>(1ULL << 63);
+}
+
+void PeFile64::processTls(Interval *iv)
+{
+    processTls1<LE64>(iv, ih.imagebase, ih.imagesize);
+}
+
+void PeFile64::processTls(Reloc *r, const Interval *iv, unsigned a)
+{
+    processTls2<LE64>(r, iv, a, ih.imagebase);
 }
 
 /*

@@ -34,9 +34,9 @@
 // arm/pe
 **************************************************************************/
 
-class PackArmPe : public PeFile
+class PackArmPe : public PeFile32
 {
-    typedef PeFile super;
+    typedef PeFile32 super;
 
 public:
     PackArmPe(InputFile *f);
@@ -47,18 +47,26 @@ public:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
+    virtual bool handleForceOption();
+    virtual void callCompressWithFilters(Filter &, int filter_strategy,
+                                         unsigned ih_codebase);
+    virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
+                               unsigned sizeof_oh, unsigned isize_isplit,
+                               Reloc &rel, unsigned s1addr);
+    virtual void addNewRelocations(Reloc &, unsigned upxsection);
+    virtual unsigned getProcessImportParam(unsigned upxsection);
+    virtual void setOhDataBase(const pe_section_t *osection);
+    virtual void setOhHeaderSize(const pe_section_t *osection);
     virtual void pack(OutputFile *fo);
 
     virtual bool canPack();
-    virtual int canUnpack();
 
 protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    virtual unsigned processImports();
     virtual void processImports(unsigned, unsigned);
-    virtual void rebuildImports(upx_byte *&);
+    virtual void addKernelImports();
 
     virtual void processTls(Interval *);
 
