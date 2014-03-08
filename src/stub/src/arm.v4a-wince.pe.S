@@ -81,7 +81,7 @@ section ExeStart
         DINIT
         adr     r3, SRC0
         ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
-        ldmia   r3, {r4, r10, r11}      @ r10=LoadLibraryW, r11=GetProcAddressA
+        ldmia   r3, {r4, r9, r10, r11}  @ r11=LoadLibraryW, r10=GetProcAddressA
         mov     dst0, r2
 
         bl      ProcessAll
@@ -93,7 +93,7 @@ section ExeStart
         ldr     pc, ENTR
 
 CacheSync:
-        ldr     pc, IATT + 8
+        ldr     pc, IATT
 
 SRC0:   .long   start_of_compressed
 SRCL:   .long   compressed_length
@@ -330,10 +330,10 @@ get_le32:                               @ optimized for size
         mov     pc, lr
 
 LoadLibraryW:
-        mov     pc, r10
+        mov     pc, r11
 
 GetProcAddressA:
-        mov     pc, r11
+        mov     pc, r10
 
 BIMP:   .long   start_of_imports
 ONAM:   .long   start_of_dll_names

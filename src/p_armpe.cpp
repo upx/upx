@@ -105,15 +105,20 @@ __packed_struct_end()
     for (import_desc *im = (import_desc*) oimpdlls; im->dllname; im++)
     {
         im->oft = im->iat;
-        im->iat = im == (import_desc*) oimpdlls ? iat_off : iat_off + 12;
+        bool is_coredll = strcasecmp(kernelDll(), (char*) oimpdlls +
+                                     im->dllname - myimport) == 0;
+        im->iat = is_coredll ? iat_off : iat_off + 12;
     }
 }
 
-void PackArmPe::addKernelImports()
+void PackArmPe::addStubImports()
 {
-    addKernelImport("COREDLL.DLL", "LoadLibraryW");
-    addKernelImport("COREDLL.DLL", "GetProcAddressA");
-    addKernelImport("COREDLL.DLL", "CacheSync");
+    // the order of procedure names below should match the
+    // assumptions of the assembly stubs
+    // WARNING! these names are sorted alphanumerically by the ImportLinker
+    addKernelImport("CacheSync");
+    addKernelImport("GetProcAddressA");
+    addKernelImport("LoadLibraryW");
 }
 
 void PackArmPe::processTls(Interval *) // pass 1

@@ -827,21 +827,29 @@ public:
         tstr sdll(name_for_dll((const char*) dll, dll_name_id));
         return findSection(sdll, true)->offset;
     }
+
+    template <typename C>
+    upx_uint64_t hasDll(const C *dll) const
+    {
+        ACC_COMPILE_TIME_ASSERT(sizeof(C) == 1)  // "char" or "unsigned char"
+        tstr sdll(name_for_dll((const char*) dll, dll_name_id));
+        return findSection(sdll, false) != NULL;
+    }
 };
 const char PeFile::ImportLinker::zeros[sizeof(import_desc)] = { 0 };
 
-void PeFile::addKernelImport(const char *dll, const char *name)
+void PeFile::addKernelImport(const char *name)
 {
-    ilinker->add(dll, name);
+    ilinker->add(kernelDll(), name);
 }
 
-void PeFile::addKernelImports()
+void PeFile::addStubImports()
 {
-    addKernelImport("KERNEL32.DLL", "LoadLibraryA");
-    addKernelImport("KERNEL32.DLL", "GetProcAddress");
+    addKernelImport("LoadLibraryA");
+    addKernelImport("GetProcAddress");
     if (!isdll)
-        addKernelImport("KERNEL32.DLL", "ExitProcess");
-    addKernelImport("KERNEL32.DLL", "VirtualProtect");
+        addKernelImport("ExitProcess");
+    addKernelImport("VirtualProtect");
 }
 
 void PeFile::processImports(unsigned myimport, unsigned) // pass 2
@@ -858,8 +866,6 @@ void PeFile::processImports(unsigned myimport, unsigned) // pass 2
 template <typename LEXX, typename ord_mask_t>
 unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 {
-    static const unsigned char kernel32dll[] = "KERNEL32.DLL";
-
     unsigned dllnum = 0;
     import_desc *im = (import_desc*) (ibuf + IDADDR(PEDIR_IMPORT));
     import_desc * const im_save = im;
@@ -914,7 +920,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         dlls[ic].iat = im->iat;
         dlls[ic].lookupt = (LEXX*) (ibuf + (im->oft ? im->oft : im->iat));
         dlls[ic].original_position = ic;
-        dlls[ic].isk32 = strcasecmp(kernel32dll,dlls[ic].name) == 0;
+        dlls[ic].isk32 = strcasecmp(kernelDll(), (const char*)dlls[ic].name) == 0;
 
         soimport += strlen(dlls[ic].name) + 1 + 4;
 
@@ -946,7 +952,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
 
     ilinker = new ImportLinker(sizeof(LEXX));
     // create the new import table
-    addKernelImports();
+    addStubImports();
 
     for (ic = 0; ic < dllnum; ic++)
     {
@@ -955,15 +961,17 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             // for kernel32.dll we need to put all the imported
             // ordinals into the output import table, as on
             // some versions of windows GetProcAddress does not resolve them
+            if (strcasecmp((const char*)idlls[ic]->name, "kernel32.dll"))
+                continue;
             if (idlls[ic]->ordinal)
                 for (LEXX *tarr = idlls[ic]->lookupt; *tarr; tarr++)
                     if (*tarr & ord_mask)
                     {
-                        ilinker->add(kernel32dll, *tarr & 0xffff);
+                        ilinker->add(kernelDll(), *tarr & 0xffff);
                         kernel32ordinal = true;
                     }
         }
-        else
+        else if (!ilinker->hasDll(idlls[ic]->name))
         {
             if (idlls[ic]->ordinal)
                 ilinker->add(idlls[ic]->name, idlls[ic]->ordinal);
@@ -994,7 +1002,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             if (*tarr & ord_mask)
             {
                 unsigned ord = *tarr & 0xffff;
-                if (idlls[ic]->isk32)
+                if (idlls[ic]->isk32 && kernel32ordinal)
                 {
                     *ppi++ = 0xfe; // signed + odd parity
                     set_le32(ppi, ilinker->getAddress(idlls[ic]->name, ord));
@@ -2350,7 +2358,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // when the resource is put alone into section 3
     const unsigned res_start = (ic + oam1) &~ oam1;;
     if (last_section_rsrc_only)
-        callProcessResources(res, ic);
+        callProcessResources(res, ic = res_start);
 
     defineSymbols(ncsection, upxsection, sizeof(oh),
                   identsize - identsplit, rel, s1addr);

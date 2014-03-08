@@ -54,8 +54,8 @@ section ExeStart
 
         adr     r3, SRC0
         ldmia   r3, {r5, r6, r7, r9, r10, r11, ip}  @ r7=dst0
-        add     r5, pc, #4096           @ r3=addr src0, r10=LoadLibraryW
-.L01:                                   @ r11=GetProcAddressA, ip=CacheSync
+        add     r5, pc, #4096           @ r3=addr src0, ip=LoadLibraryW
+.L01:                                   @ r11=GetProcAddressA, r10=CacheSync
         ldr     r6, [r7]
         add     r7, r7, #4096
         cmp     r7, r5
@@ -82,7 +82,7 @@ ENTR:   .long   original_entry
 ProcessAll:
         ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
         mov     dst0, r2
-        mov     r4, ip                  @ CacheSync
+        mov     r4, r10                 @ CacheSync
         push    {r4, lr}
 
         @@ uncompress/unfilter/imports/relocs are copied here by the upx linker
@@ -265,7 +265,7 @@ get_le32:                               @ optimized for size
         bx      lr
 
 LoadLibraryW:
-        bx      r10
+        bx      ip
 
 GetProcAddressA:
         bx      r11

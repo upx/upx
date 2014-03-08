@@ -46,6 +46,7 @@ public:
     virtual const char *getFullName(const options_t *) const { return "arm-wince.pe"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
+    virtual void defineFilterSymbols(const Filter *) {}
 
     virtual bool handleForceOption();
     virtual void callCompressWithFilters(Filter &, int filter_strategy,
@@ -65,8 +66,9 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
+    virtual const char *kernelDll() const { return "coredll.dll"; }
     virtual void processImports(unsigned, unsigned);
-    virtual void addKernelImports();
+    virtual void addStubImports();
 
     virtual void processTls(Interval *);
 
