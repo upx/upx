@@ -2412,7 +2412,6 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     {
         osection[1].vsize = osection[1].size;
         osection[2].vsize = osection[2].size;
-        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
         osection[0].rawdataptr = 0;
         osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
     }
@@ -2431,6 +2430,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         osection[3].rawdataptr = osection[2].rawdataptr + osection[2].size;
         osection[2].flags = (unsigned) (PEFL_DATA|PEFL_READ);
         osection[3].flags = (unsigned) (PEFL_DATA|PEFL_READ);
+        oh.imagesize = (osection[3].vaddr + osection[3].vsize + oam1) &~ oam1;
         if (soresources == 0)
         {
             oh.objects = 3;
