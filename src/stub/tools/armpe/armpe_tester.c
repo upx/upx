@@ -29,8 +29,19 @@
    <jreiser@users.sourceforge.net>
 */
 
-// arm-9tdmi-linux-gnu-gcc -Wl,--section-start,.interp=0x1000
+/*
+ The stub of a compressed wince file can be tested on an android
+ phone. Compress a wince file using "--strip-relocs=0", then copy it
+ to the phone using "adb push test.exe /data/local/tmp".
+ Cross compile this file using the "gcc-arm-linux-gnueabi",
+ "libc6-dev-armel-cross" and related debian packages.
+ Copy armpe_tester.out into /data/local/tmp/ too. Then use "adb shell"
+ to run the test program, and watch the output.
+
+*/
+
 // arm-wince-pe-gcc -Wl,--image-base,0x400000
+
 
 #include <stddef.h>
 #include <stdarg.h>
@@ -41,7 +52,7 @@
 #ifdef __i386__
 #  define UPX_MMAP_ADDRESS  0x20000000
 #else
-#  define UPX_MMAP_ADDRESS  0x10000
+#  define UPX_MMAP_ADDRESS  0x410000 // 0x10000
 #endif
 
 #ifdef __linux__
@@ -157,6 +168,7 @@ static FILE *f;
 static void *vaddr;
 static FILE *out;
 
+#if 0
 static int print(const char *format, ...)
 {
     va_list ap;
@@ -168,6 +180,9 @@ static int print(const char *format, ...)
     va_end(ap);
     return ret;
 }
+#else
+#define print printf
+#endif
 
 static int load(const char *file)
 {
@@ -198,10 +213,12 @@ static int load(const char *file)
     }
     if (ic == 20)
         return print("pe header not found\n");
+    printf("pe header found at offset: %u\n", pe_offset);
     if (fseek(f, pe_offset, SEEK_SET)
         || fread(&ih, sizeof(ih), 1, f) != 1)
         return print("can not load pe header\n");
 
+    print("ih.imagesize=0x%x\n", ih.imagesize);
     if (ih.cpu != 0x1c0 && ih.cpu != 0x1c2)
         return print("unsupported processor type: %x\n", ih.cpu);
 
@@ -221,13 +238,13 @@ static int read(void)
                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
     if (((int) vaddr) == -1)
         return print("mmap() failed: %d\n", errno);
+    print("mmap for %p (size %x) successful\n", vaddr, ih.imagesize);
 #else
     if ((vaddr = VirtualAlloc(0, ih.imagesize,
                               MEM_COMMIT, PAGE_EXECUTE_READWRITE)) == 0)
         return print("VirtualAlloc() failed\n");
     print("VirtualAlloc() ok %x\n", vaddr);
 #endif
-
     for (ic = 1; ic <= (unsigned) ih.objects - 1; ic++)
         if (fseek(f, isections[ic].rawdataptr, SEEK_SET)
             || fread(vaddr + isections[ic].vaddr,
@@ -240,7 +257,7 @@ static void dump(char n)
 {
     char buf[100];
 #ifdef __linux__
-    snprintf(buf, sizeof(buf), "/tmp/a.dump%c", n);
+    snprintf(buf, sizeof(buf), "a.dump%c", n);
 #else
     snprintf(buf, sizeof(buf), "/a.dump%c", n);
 #endif
@@ -277,12 +294,25 @@ static int import(void)
 {
     if (ih.ddirs[PEDIR_IMPORT].vaddr == 0)
         return print("no imports?\n");
+    print("loadlibraryw=%p,getprocaddressa=%p,cachesync=%p\n",
+          loadlibraryw, getprocaddressa, cachesync);
     void *imports = vaddr + ih.ddirs[PEDIR_IMPORT].vaddr;
-    void *coredll_imports = vaddr + get_le32(imports + 16);
-    set_le32(coredll_imports, (unsigned) loadlibraryw);
-    set_le32(coredll_imports + 4, (unsigned) getprocaddressa);
-    set_le32(coredll_imports + 8, (unsigned) cachesync);
-    return 0;
+    while (get_le32(imports + 12))
+    {
+        if (strcasecmp(vaddr + get_le32(imports + 12), "coredll.dll") == 0)
+        {
+            void *coredll_imports = vaddr + get_le32(imports + 16);
+            print("coredll_imports=%p\n", coredll_imports);
+            set_le32(coredll_imports + 8, (unsigned) loadlibraryw);
+            set_le32(coredll_imports + 4, (unsigned) getprocaddressa);
+            set_le32(coredll_imports + 0, (unsigned) cachesync);
+            return 0;
+        }
+        imports += 20;
+    }
+
+    print("coredll.dll not found");
+    return 1;
 }
 
 static int reloc(void)

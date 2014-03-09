@@ -22,7 +22,7 @@ all: armpe_tester.out
 #all: armpe_tester.exe
 
 armpe_tester.out: armpe_tester.c $(MAKEFILE_LIST)
-	arm-linux-gcc-4.1.0 -Wl,--section-start,.interp=0x1000 -g $(CFLAGS_W) -o $@ $<
+	arm-linux-gnueabi-gcc -static $(CFLAGS_W) -o $@ $<
 
 armpe_tester.exe: armpe_tester.c $(MAKEFILE_LIST)
 	arm-wince-pe-gcc -Wl,--image-base,0x400000 -s $(CFLAGS_W) -o $@ $<
