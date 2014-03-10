@@ -3,6 +3,8 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.92 (XX XXX 2014):
+  * all pe formats: important internal changes - reunited the diverged
+    source files - please report regressions into the bug tracker
 
 Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
