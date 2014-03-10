@@ -303,9 +303,20 @@ static int import(void)
         {
             void *coredll_imports = vaddr + get_le32(imports + 16);
             print("coredll_imports=%p\n", coredll_imports);
-            set_le32(coredll_imports + 8, (unsigned) loadlibraryw);
-            set_le32(coredll_imports + 4, (unsigned) getprocaddressa);
-            set_le32(coredll_imports + 0, (unsigned) cachesync);
+            void *oft =  vaddr + get_le32(imports);
+            unsigned pos = 0;
+            while (get_le32(oft + pos))
+            {
+                void *name = vaddr + get_le32(oft + pos) + 2;
+                print("name=%s\n", (char*) name);
+                if (strcasecmp(name, "loadlibraryw") == 0)
+                    set_le32(coredll_imports + pos, (unsigned) loadlibraryw);
+                else if (strcasecmp(name, "getprocaddressa") == 0)
+                    set_le32(coredll_imports + pos, (unsigned) getprocaddressa);
+                else if (strcasecmp(name, "cachesync") == 0)
+                    set_le32(coredll_imports + pos, (unsigned) cachesync);
+                pos += 4;
+            }
             return 0;
         }
         imports += 20;
