@@ -40,7 +40,7 @@
 
         .arm
 
-        dst0    .req r9                 @ global register
+        dst0    .req r8                 @ global register
 
 section DllStart
         cmp     r1, #1
@@ -53,9 +53,9 @@ section ExeStart
         @ otherwise the THUMB mode stuff fails
 
         adr     r3, SRC0
-        ldmia   r3, {r5, r6, r7, r9, r10, r11, ip}  @ r7=dst0
-        add     r5, pc, #4096           @ r3=addr src0, ip=LoadLibraryW
-.L01:                                   @ r11=GetProcAddressA, r10=CacheSync
+        ldmia   r3, {r5, r6, r7, r8, r9, r10, r11}  @ r7=dst0
+        add     r5, pc, #4096           @ r3=addr src0, r11=LoadLibraryW
+.L01:                                   @ r10=GetProcAddressA, r9=CacheSync
         ldr     r6, [r7]
         add     r7, r7, #4096
         cmp     r7, r5
@@ -82,7 +82,7 @@ ENTR:   .long   original_entry
 ProcessAll:
         ldmia   r3!, {r0, r1, r2}       @ r0=src0, r1=slen, r2=dst0, r3=addr dstl
         mov     dst0, r2
-        mov     r4, r10                 @ CacheSync
+        mov     r4, r9                  @ CacheSync
         push    {r4, lr}
 
         @@ uncompress/unfilter/imports/relocs are copied here by the upx linker
@@ -265,10 +265,10 @@ get_le32:                               @ optimized for size
         bx      lr
 
 LoadLibraryW:
-        bx      ip
+        bx      r11
 
 GetProcAddressA:
-        bx      r11
+        bx      r10
 
 S(BIMP):.long   start_of_imports
 S(ONAM):.long   start_of_dll_names
