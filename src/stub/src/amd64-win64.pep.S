@@ -177,13 +177,24 @@ setup:
 #define NO_METHOD_CHECK
 
 section         NRV2B
+#define eof eofb
 #include "arch/amd64/nrv2b_d.S"
-section         NRV2D
-#include "arch/amd64/nrv2d_d.S"
-section         NRV2E
-#include "arch/amd64/nrv2e_d.S"
-#undef len
+eofb:
 
+section         NRV2D
+#undef eof
+#define eof eofd
+#include "arch/amd64/nrv2d_d.S"
+eofd:
+
+section         NRV2E
+#undef eof
+#define eof eofe
+#include "arch/amd64/nrv2e_d.S"
+eofe:
+
+#undef eof
+#undef len
 .intel_syntax noprefix
 section         LZMA_HEAD
                 mov     eax, IMM32(lzma_u_len)
@@ -203,7 +214,6 @@ section         LZMA_TAIL
                 pop     rax
 // =============
 section         PEMAIN10
-eof:
                 pop     rsi             // load vaddr
 
 section         PETLSHAK2               // restore the TLS index
@@ -383,6 +393,7 @@ section         PEDEPHAK
 
                 push    rax                     // provide 8 bytes stack
                 mov     r9, rsp
+// FIXME        push    4; pop     r8
                 mov     r8d, 4                  // PAGE_READWRITE
                 mov     rdx, rbx                // size
                 mov     rcx, rdi                // address
