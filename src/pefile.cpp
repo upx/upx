@@ -918,7 +918,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
         dlls[ic].shname = NULL;
         dlls[ic].ordinal = 0;
         dlls[ic].iat = im->iat;
-        dlls[ic].lookupt = (LEXX*) (ibuf + (im->oft ? im->oft : im->iat));
+        dlls[ic].lookupt = (LEXX*) (ibuf + (unsigned) (im->oft ? im->oft : im->iat));
         dlls[ic].original_position = ic;
         dlls[ic].isk32 = strcasecmp(kernelDll(), (const char*)dlls[ic].name) == 0;
 
