@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.92 (XX XXX 2014):
+Changes in 3.92 (XX XXX 2015):
   * all pe formats: important internal changes - reunited the diverged
     source files - please report regressions into the bug tracker
 
