@@ -43,7 +43,7 @@ class Filter;
 //
 **************************************************************************/
 
-// see stub/header.ash
+// see stub/src/include/header.S
 class PackHeader
 {
     friend class Packer;
