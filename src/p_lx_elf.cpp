@@ -212,7 +212,11 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
-    if (ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32) {
+    if (ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32
+    || (Elf32_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf32_Ehdr::EI_DATA]
+            && &N_BELE_RTP::be_policy != bele)
+    || (Elf32_Ehdr::ELFDATA2LSB == ehdri.e_ident[Elf32_Ehdr::EI_DATA]
+            && &N_BELE_RTP::le_policy != bele)) {
         e_phoff = 0;
         e_shoff = 0;
         sz_phdrs = 0;
@@ -575,7 +579,11 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
-    if (ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64) {
+    if (ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64
+    || (Elf64_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]
+            && &N_BELE_RTP::be_policy != bele)
+    || (Elf64_Ehdr::ELFDATA2LSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]
+            && &N_BELE_RTP::le_policy != bele)) {
         e_phoff = 0;
         e_shoff = 0;
         sz_phdrs = 0;
