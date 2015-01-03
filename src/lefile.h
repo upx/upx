@@ -180,8 +180,8 @@ protected:
 
     InputFile *fif;
     OutputFile *fof;
-    long le_offset;
-    long exe_offset;
+    unsigned le_offset;
+    unsigned exe_offset;
 
     le_header_t ih;
     le_header_t oh;
