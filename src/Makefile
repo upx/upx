@@ -37,9 +37,15 @@ ifeq ($(DEBUG),1)
 CXXFLAGS += -O0 -g
 else
 CXXFLAGS += -O2
+LDFLAGS += -s
 endif
-CXXFLAGS_WERROR = -Werror
+# some gcc versions suffer over-agressive aliasing and wrapv optimization features/bugs
+CXXFLAGS_OPTIMIZE_STRICT_ALIASING ?= -fno-strict-aliasing
+CXXFLAGS_OPTIMIZE_WRAPV ?= -fwrapv
+CXXFLAGS += $(CXXFLAGS_OPTIMIZE_STRICT_ALIASING)
+CXXFLAGS += $(CXXFLAGS_OPTIMIZE_WRAPV)
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
+CXXFLAGS_WERROR ?= -Werror
 CXXFLAGS += $(CXXFLAGS_WERROR)
 endif
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
