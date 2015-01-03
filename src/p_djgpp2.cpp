@@ -138,16 +138,16 @@ void PackDjgpp2::handleStub(OutputFile *fo)
 }
 
 
-static bool is_dlm(InputFile *fi, long coff_offset)
+static bool is_dlm(InputFile *fi, unsigned coff_offset)
 {
     unsigned char buf[4];
-    long off;
+    unsigned off;
 
     try {
         fi->seek(coff_offset, SEEK_SET);
         fi->readx(buf, 4);
         off = get_le32(buf);
-        if (off < 0 || off > coff_offset + 4)
+        if (off > coff_offset + 4)
             return false;
         fi->seek(off, SEEK_SET);
         fi->readx(buf, 4);

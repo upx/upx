@@ -64,7 +64,7 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    long coff_offset;
+    unsigned coff_offset;
 
     __packed_struct(external_scnhdr_t)
         char    _[12];    // name, paddr
