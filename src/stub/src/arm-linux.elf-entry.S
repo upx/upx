@@ -91,10 +91,12 @@ _start: .globl _start
         adr r12,start_params -4  // &sz_pack2
         ldmia r12,{r1,r2, r10,r11,lr}  // r1= sz_pack2; r2= ADRM; r10= LENF;
                                        //r11= CPR0; lr= MFLG
-        add r10,r10,r12  // end_decompress
         add r11,r11,r12  // cpr0
-        mov r0,r2  // ADRM
+        add r10,r10,r12  // end_decompress
+        ldr r3,[r11,# sz_unc]
         sub r9,r12,r1  // &our_Elf32_Ehdr
+        add r1,r1,r3  // sz_pack2 + cpr0.sz_unc
+        mov r0,r2  // ADRM
         add r1,r1,# PAGE_SIZE
   section LUNMP000
         mov r3,#0<<12  // 0-page crumb
