@@ -3455,13 +3455,13 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
-        unsigned long const *const bitmask = (unsigned long const *)&gashtab[4];
-        unsigned      const *const buckets = (unsigned const *)&bitmask[n_bitmask];
+        upx_uint64_t const *const bitmask = (upx_uint64_t const *)&gashtab[4];
+        unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
 
         unsigned const h = gnu_hash(name);
         unsigned const hbit1 = 077& h;
         unsigned const hbit2 = 077& (h>>gnu_shift);
-        unsigned long const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
+        upx_uint64_t const w = get_te64(&bitmask[(n_bitmask -1) & (h>>6)]);
 
         if (1& (w>>hbit1) & (w>>hbit2)) {
             unsigned bucket = get_te32(&buckets[h % n_bucket]);
