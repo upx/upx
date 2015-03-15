@@ -98,7 +98,13 @@ int compress_lzma_dummy = 0;
 #if (WITH_LZMA != (0x100 * MY_VER_MAJOR) + (0x10 * (MY_VER_MINOR / 10)) + (MY_VER_MINOR % 10))
 #  error "WITH_LZMA version mismatch"
 #endif
+
+#if (WITH_LZMA >= 0x938)
+#include "C/7zTypes.h"
+#else
 #include "C/Types.h"
+#endif
+
 static void *cb_alloc(void *, size_t size) {
     return malloc(size);
 }
