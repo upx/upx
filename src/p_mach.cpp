@@ -492,8 +492,8 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segTEXT.filesize = t;
     segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
-    secTEXT.size = segTEXT.vmsize - secTEXT.offset;
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
     secXHDR.offset = overlay_offset - sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
@@ -536,8 +536,8 @@ void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segTEXT.filesize = t;
     segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
-    secTEXT.size = segTEXT.vmsize - secTEXT.offset;
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
     secXHDR.offset = overlay_offset - sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
@@ -580,8 +580,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segTEXT.filesize = t;
     segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
-    secTEXT.size = segTEXT.vmsize - secTEXT.offset;
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
     secXHDR.offset = overlay_offset - sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
@@ -624,8 +624,8 @@ void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     segTEXT.filesize = t;
     segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr + secTEXT.offset;
-    secTEXT.size = segTEXT.vmsize - secTEXT.offset;
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
     secXHDR.offset = overlay_offset - sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
