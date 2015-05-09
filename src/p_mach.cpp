@@ -1259,12 +1259,15 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
-    if (!fo  // -t (test) mode
-    &&  (MH_MAGIC + (sizeof(Addr)>>3)) != mhdri.magic
+    if ((MH_MAGIC + (sizeof(Addr)>>3)) != mhdri.magic
     &&  Mach_fat_header::FAT_MAGIC != mhdri.magic) {
         throwCantUnpack("file header corrupted");
     }
-    rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
+    unsigned const sz_cmds = mhdri.sizeofcmds;
+    if ((sizeof(mhdri) + sz_cmds) > fi->st_size()) {
+        throwCantUnpack("file header corrupted");
+    }
+    rawmseg = (Mach_segment_command *)new char[sz_cmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     // FIXME forgot space left for LC_CODE_SIGNATURE;
@@ -1295,10 +1298,13 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned const ncmds = mhdr->ncmds;
 
     msegcmd = new Mach_segment_command[ncmds];
-    unsigned char *ptr = (unsigned char *)(1+mhdr);
+    unsigned char const *ptr = (unsigned char const *)(1+mhdr);
     for (unsigned j= 0; j < ncmds; ++j) {
-        msegcmd[j] = *(Mach_segment_command *)ptr;
-        ptr += (unsigned) ((Mach_segment_command *)ptr)->cmdsize;
+        msegcmd[j] = *(Mach_segment_command const *)ptr;
+        ptr += (unsigned) ((Mach_segment_command const *)ptr)->cmdsize;
+        if ((ptr - (unsigned char const *)(1+mhdr)) > fi->st_size()) {
+            throwCantUnpack("cmdsize");
+        }
     }
 
     // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
