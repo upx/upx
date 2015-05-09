@@ -108,6 +108,9 @@ public:
 
     virtual void seek(off_t off, int whence);
     virtual off_t tell() const;
+    virtual off_t st_size_orig() const;
+protected:
+    off_t _length_orig;
 };
 
 

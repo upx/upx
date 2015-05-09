@@ -855,6 +855,7 @@ public:
 
 protected:
     // implementation
+    virtual unsigned check_fat_head();  // number of architectures
     virtual void pack(OutputFile *fo);
     virtual void unpack(OutputFile *fo);
     virtual void list();

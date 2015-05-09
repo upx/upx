@@ -243,6 +243,7 @@ void InputFile::sopen(const char *name, int flags, int shflags)
         else
             throwIOException(_name, errno);
     }
+    _length_orig = _length;
 }
 
 
@@ -294,6 +295,10 @@ off_t InputFile::tell() const
     return super::tell();
 }
 
+off_t InputFile::st_size_orig() const
+{
+    return _length_orig;
+}
 
 /*************************************************************************
 //

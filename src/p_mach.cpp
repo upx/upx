@@ -1443,6 +1443,34 @@ PackMachFat::~PackMachFat()
 {
 }
 
+unsigned PackMachFat::check_fat_head()
+{
+    struct Mach_fat_arch const *const arch = &fat_head.arch[0];
+    unsigned nfat = fat_head.fat.nfat_arch;
+    if (Mach_fat_header::FAT_MAGIC!=fat_head.fat.magic
+    ||  N_FAT_ARCH < nfat) {
+        return 0;
+    }
+    for (unsigned j=0; j < nfat; ++j) {
+        unsigned const align = arch[j].align;
+        unsigned const mask = ~(~0u<<align);
+        unsigned const size = arch[j].size;
+        unsigned const offset = arch[j].offset;
+        if (align < 12 || align > 24) { // heuristic
+            throwUnknownExecutableFormat("align", 0);
+        }
+        if (mask > size) {
+            throwUnknownExecutableFormat("size", 0);
+        }
+        if (mask & offset
+        ||  fi->st_size_orig() < (size + offset)
+        ||  fi->st_size_orig() <= offset) {  // redundant unless overflow
+            throwUnknownExecutableFormat("offset", 0);
+        }
+    }
+    return nfat;
+}
+
 const int *PackMachFat::getCompressionMethods(int /*method*/, int /*level*/) const
 {
     static const int m_nrv2e[] = { M_NRV2E_LE32, M_END };
@@ -1549,8 +1577,9 @@ void PackMachFat::unpack(OutputFile *fo)
         fo->write(&fat_head, sizeof(fat_head.fat) +
             fat_head.fat.nfat_arch * sizeof(fat_head.arch[0]));
     }
+    unsigned const nfat = check_fat_head();
     unsigned length;
-    for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
+    for (unsigned j=0; j < nfat; ++j) {
         unsigned base = (fo ? fo->unset_extent() : 0);  // actual length
         base += ~(~0u<<fat_head.arch[j].align) & (0-base);  // align up
         if (fo) {
@@ -1631,11 +1660,8 @@ bool PackMachFat::canPack()
     struct Mach_fat_arch *arch = &fat_head.arch[0];
 
     fi->readx(&fat_head, sizeof(fat_head));
-    if (Mach_fat_header::FAT_MAGIC!=fat_head.fat.magic
-    ||  N_FAT_ARCH < fat_head.fat.nfat_arch) {
-        return false;
-    }
-    for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
+    unsigned const nfat = check_fat_head();
+    for (unsigned j=0; j < nfat; ++j) {
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
@@ -1684,11 +1710,11 @@ int PackMachFat::canUnpack()
     struct Mach_fat_arch *arch = &fat_head.arch[0];
 
     fi->readx(&fat_head, sizeof(fat_head));
-    if (Mach_fat_header::FAT_MAGIC!=fat_head.fat.magic
-    ||  N_FAT_ARCH < fat_head.fat.nfat_arch) {
+    unsigned const nfat = check_fat_head();
+    if (0 == nfat) {
         return false;
     }
-    for (unsigned j=0; j < fat_head.fat.nfat_arch; ++j) {
+    for (unsigned j=0; j < nfat; ++j) {
         fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
