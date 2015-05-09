@@ -778,6 +778,8 @@ int PackWcle::canUnpack()
     // FIXME: 1024 could be too large for some files
     //int len = 1024;
     int len = UPX_MIN(getImageSize(), 256u);
+    if (len == 0)
+        return false;
     return readPackHeader(len) ? 1 : -1;
 }
 
