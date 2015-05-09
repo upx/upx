@@ -3014,7 +3014,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
-    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
+    || orig_file_size > fi->st_size())
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
@@ -3533,7 +3534,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     p_info hbuf;  fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
-    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
+    || orig_file_size > fi->st_size())
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
@@ -3541,7 +3543,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (ph.c_len > fi->st_size())
+    if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
     ph.filter_cto = bhdr.b_cto8;
     bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
