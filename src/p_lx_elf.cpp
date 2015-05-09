@@ -3016,7 +3016,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
     || orig_file_size > fi->st_size())
-        throwCantUnpack("file header corrupted");
+        throwCantUnpack("p_info corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
@@ -3024,7 +3024,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
-        throwCantUnpack("file header corrupted");
+        throwCantUnpack("b_info corrupted");
 
     ph.filter_cto = bhdr.b_cto8;
 
@@ -3536,7 +3536,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
     || orig_file_size > fi->st_size())
-        throwCantUnpack("file header corrupted");
+        throwCantUnpack("p_info corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
@@ -3544,7 +3544,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
     if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
-        throwCantUnpack("file header corrupted");
+        throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
     bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
 
