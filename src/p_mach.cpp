@@ -1285,7 +1285,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&hbuf, sizeof(hbuf));
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
-    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
+    ||  blocksize > 0x01000000)
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
