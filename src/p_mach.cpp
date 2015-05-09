@@ -1253,6 +1253,12 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 #define WANT_MACH_HEADER_ENUM 1
 #include "p_mach_enum.h"
 
+static unsigned
+umin(unsigned a, unsigned b)
+{
+    return (a <= b) ? a : b;
+}
+
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
@@ -1287,6 +1293,8 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&bhdr, sizeof(bhdr));
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
+    if (file_size < ph.c_len)
+        throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
     ph.filter = bhdr.b_ftid;
     ph.filter_cto = bhdr.b_cto8;
@@ -1300,9 +1308,10 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     msegcmd = new Mach_segment_command[ncmds];
     unsigned char const *ptr = (unsigned char const *)(1+mhdr);
     for (unsigned j= 0; j < ncmds; ++j) {
-        msegcmd[j] = *(Mach_segment_command const *)ptr;
+        memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
+            ((Mach_segment_command const *)ptr)->cmdsize));
         ptr += (unsigned) ((Mach_segment_command const *)ptr)->cmdsize;
-        if ((ptr - (unsigned char const *)(1+mhdr)) > fi->st_size()) {
+        if ((ptr - (unsigned char const *)mhdr) > ph.u_len) {
             throwCantUnpack("cmdsize");
         }
     }
