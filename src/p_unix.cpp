@@ -539,25 +539,7 @@ int PackUnix::canUnpack()
 
 void PackUnix::unpack(OutputFile *fo)
 {
-    unsigned szb_info = sizeof(b_info);
-    {
-        Elf32_Ehdr ehdr;
-        fi->seek(0, SEEK_SET);
-        fi->readx(&ehdr, sizeof(ehdr));
-        unsigned const e_entry = get_te32(&ehdr.e_entry);
-        if (e_entry < 0x401180) { /* old style, 8-byte b_info */
-            szb_info = 2*sizeof(unsigned);
-        }
-        else {
-            Elf32_Phdr phdr;
-            fi->seek(get_te32(&ehdr.e_phoff), SEEK_SET);
-            fi->readx(&phdr, sizeof(phdr));
-            unsigned const p_vaddr = get_te32(&phdr.p_vaddr);
-            if (0x80==(e_entry - p_vaddr)) { /* 1.22 old style */
-                szb_info = 2*sizeof(unsigned);
-            }
-        }
-    }
+    unsigned const szb_info = sizeof(b_info);
 
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
@@ -574,7 +556,7 @@ void PackUnix::unpack(OutputFile *fo)
         orig_file_size = get_te32(&hbuf.p_filesize);
         blocksize = get_te32(&hbuf.p_blocksize);
 
-        if (file_size > (off_t)orig_file_size || blocksize > orig_file_size)
+        if (file_size != (off_t)orig_file_size || blocksize > orig_file_size)
             throwCantUnpack("file header corrupted");
     }
     else
