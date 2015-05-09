@@ -300,6 +300,9 @@ static int U(Filter *f)
                         }
                         else { // not 1st time at this destination
                             jc >>= 1;
+                            if (N_MRU <= jc) {
+                                throwCompressedDataViolation();
+                            }
                             int kh = jc + hand;
                             if (N_MRU <= kh) {
                                 kh -= N_MRU;
