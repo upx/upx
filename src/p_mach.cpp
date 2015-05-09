@@ -1294,7 +1294,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&bhdr, sizeof(bhdr));
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (file_size < ph.c_len)
+    if (file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
     ph.filter = bhdr.b_ftid;
