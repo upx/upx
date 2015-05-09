@@ -1250,12 +1250,20 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     return;
 }
 
+#define WANT_MACH_HEADER_ENUM 1
+#include "p_mach_enum.h"
+
 template <class T>
 void PackMachBase<T>::unpack(OutputFile *fo)
 {
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
+    if (!fo  // -t (test) mode
+    &&  (MH_MAGIC + (sizeof(Addr)>>3)) != mhdri.magic
+    &&  Mach_fat_header::FAT_MAGIC != mhdri.magic) {
+        throwCantUnpack("file header corrupted");
+    }
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
@@ -1657,12 +1665,12 @@ void PackMachFat::unpack(OutputFile *fo)
 
 bool PackMachFat::canPack()
 {
-    struct Mach_fat_arch *arch = &fat_head.arch[0];
+    struct Mach_fat_arch const *const arch = &fat_head.arch[0];
 
     fi->readx(&fat_head, sizeof(fat_head));
     unsigned const nfat = check_fat_head();
     for (unsigned j=0; j < nfat; ++j) {
-        fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
+        fi->set_extent(arch[j].offset, arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
         default:
@@ -1707,7 +1715,7 @@ bool PackMachFat::canPack()
 
 int PackMachFat::canUnpack()
 {
-    struct Mach_fat_arch *arch = &fat_head.arch[0];
+    struct Mach_fat_arch const *const arch = &fat_head.arch[0];
 
     fi->readx(&fat_head, sizeof(fat_head));
     unsigned const nfat = check_fat_head();
@@ -1715,7 +1723,7 @@ int PackMachFat::canUnpack()
         return false;
     }
     for (unsigned j=0; j < nfat; ++j) {
-        fi->set_extent(fat_head.arch[j].offset, fat_head.arch[j].size);
+        fi->set_extent(arch[j].offset, arch[j].size);
         fi->seek(0, SEEK_SET);
         switch (arch[j].cputype) {
         default: return false;
