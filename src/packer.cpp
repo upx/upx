@@ -361,6 +361,9 @@ void ph_decompress(PackHeader &ph, const upx_bytep in, upx_bytep out,
     }
 
     // decompress
+    if (ph.u_len < ph.c_len) {
+        throwCantUnpack("header corrupted");
+    }
     unsigned new_len = ph.u_len;
     int r = upx_decompress(in, ph.c_len, out, &new_len, ph.method, &ph.compress_result);
     if (r == UPX_E_OUT_OF_MEMORY)
