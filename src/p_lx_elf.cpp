@@ -3022,7 +3022,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (ph.c_len > fi->st_size())
+    if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
 
     ph.filter_cto = bhdr.b_cto8;
