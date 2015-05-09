@@ -212,7 +212,9 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
+    unsigned const e_phentsize = get_te16(&ehdri.e_phentsize);
     if (ehdri.e_ident[Elf32_Ehdr::EI_CLASS]!=Elf32_Ehdr::ELFCLASS32
+    || sizeof(Elf32_Phdr) != e_phentsize
     || (Elf32_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf32_Ehdr::EI_DATA]
             && &N_BELE_RTP::be_policy != bele)
     || (Elf32_Ehdr::ELFDATA2LSB == ehdri.e_ident[Elf32_Ehdr::EI_DATA]
@@ -224,7 +226,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
     e_phoff = get_te32(&ehdri.e_phoff);
     e_shoff = get_te32(&ehdri.e_shoff);
-    sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
+    sz_phdrs = e_phnum * e_phentsize;
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
@@ -579,7 +581,9 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     e_type  = get_te16(&ehdri.e_type);
     e_phnum = get_te16(&ehdri.e_phnum);
     e_shnum = get_te16(&ehdri.e_shnum);
+    unsigned const e_phentsize = get_te16(&ehdri.e_phentsize);
     if (ehdri.e_ident[Elf64_Ehdr::EI_CLASS]!=Elf64_Ehdr::ELFCLASS64
+    || sizeof(Elf64_Phdr) != e_phentsize
     || (Elf64_Ehdr::ELFDATA2MSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]
             && &N_BELE_RTP::be_policy != bele)
     || (Elf64_Ehdr::ELFDATA2LSB == ehdri.e_ident[Elf64_Ehdr::EI_DATA]
@@ -591,7 +595,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     }
     e_phoff = get_te64(&ehdri.e_phoff);
     e_shoff = get_te64(&ehdri.e_shoff);
-    sz_phdrs = e_phnum * get_te16(&ehdri.e_phentsize);
+    sz_phdrs = e_phnum * e_phentsize;
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
