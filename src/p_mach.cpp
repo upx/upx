@@ -1690,6 +1690,8 @@ bool PackMachFat::canPack()
 
     fi->readx(&fat_head, sizeof(fat_head));
     unsigned const nfat = check_fat_head();
+    if (0==nfat)
+        return false;
     for (unsigned j=0; j < nfat; ++j) {
         fi->set_extent(arch[j].offset, arch[j].size);
         fi->seek(0, SEEK_SET);
