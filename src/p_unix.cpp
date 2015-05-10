@@ -565,6 +565,8 @@ void PackUnix::unpack(OutputFile *fo)
         fi->seek(4, SEEK_CUR);
     }
 
+    if ((int)(blocksize + OVERHEAD) < 0)
+        throwCantUnpack("blocksize corrupted");
     ibuf.alloc(blocksize + OVERHEAD);
 
     // decompress blocks
@@ -595,6 +597,8 @@ void PackUnix::unpack(OutputFile *fo)
             throwCompressedDataViolation();
 
         i = blocksize + OVERHEAD - sz_cpr;
+        if (i < 0)
+            throwCantUnpack("corrupt b_info");
         fi->readx(buf+i, sz_cpr);
         // update checksum of compressed data
         c_adler = upx_adler32(buf + i, sz_cpr, c_adler);
