@@ -1304,6 +1304,11 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(ibuf, ph.c_len);
     Mach_header *const mhdr = (Mach_header *)new upx_byte[ph.u_len];
     decompress(ibuf, (upx_byte *)mhdr, false);
+    if (mhdri.magic      != mhdr->magic
+    ||  mhdri.cputype    != mhdr->cputype
+    ||  mhdri.cpusubtype != mhdr->cpusubtype
+    ||  mhdri.filetype   != mhdr->filetype)
+        throwCantUnpack("file header corrupted");
     unsigned const ncmds = mhdr->ncmds;
 
     msegcmd = new Mach_segment_command[ncmds];

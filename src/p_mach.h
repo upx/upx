@@ -71,7 +71,7 @@ __packed_struct(Mach_header)
 
     Word magic;
     Word cputype;
-    Word cpysubtype;
+    Word cpusubtype;
     Word filetype;
     Word ncmds;
     Word sizeofcmds;
@@ -87,7 +87,7 @@ __packed_struct(Mach_header64)
 
     Word magic;
     Word cputype;
-    Word cpysubtype;
+    Word cpusubtype;
     Word filetype;
     Word ncmds;
     Word sizeofcmds;
