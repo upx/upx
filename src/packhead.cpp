@@ -286,6 +286,8 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen)
         if (p[size - 1] != get_packheader_checksum(p, size - 1))
             throwCantUnpack("header corrupted 3");
 
+    if (c_len < 2 || u_len < 2 || c_len > 500000000 || u_len > 500000000)
+        throwCantUnpack("header corrupted 4");
     //
     // success
     //
