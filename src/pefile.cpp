@@ -1493,10 +1493,13 @@ struct PeFile::Resource::upx_rleaf : public PeFile::Resource::upx_rnode
 PeFile::Resource::Resource() : root(NULL)
 {}
 
-PeFile::Resource::Resource(const upx_byte *p)
+PeFile::Resource::Resource(const upx_byte *p,
+                           const upx_byte *ibufstart_,
+                           const upx_byte *ibufend_)
 {
+    ibufstart = ibufstart_;
+    ibufend = ibufend_;
     init(p);
-
 }
 
 PeFile::Resource::~Resource()
@@ -1578,14 +1581,24 @@ void PeFile::Resource::init(const upx_byte *res)
 
 void PeFile::Resource::check(const res_dir *node,unsigned level)
 {
+    ibufcheck(node, sizeof(*node));
     int ic = node->identr + node->namedentr;
     if (ic == 0)
         return;
     for (const res_dir_entry *rde = node->entries; --ic >= 0; rde++)
+    {
+        ibufcheck(rde, sizeof(*rde));
         if (((rde->child & 0x80000000) == 0) ^ (level == 2))
             throwCantPack("unsupported resource structure");
         else if (level != 2)
             check((const res_dir*) (start + (rde->child & 0x7fffffff)),level + 1);
+    }
+}
+
+void PeFile::Resource::ibufcheck(const void *m, unsigned siz)
+{
+    if (m < ibufstart || m > ibufend - siz)
+        throwCantUnpack("corrupted resources");
 }
 
 PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
@@ -1595,6 +1608,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
     if (level == 3)
     {
         const res_data *node = (const res_data *) rnode;
+        ibufcheck(node, sizeof(*node));
         upx_rleaf *leaf = new upx_rleaf;
         leaf->name = NULL;
         leaf->parent = parent;
@@ -1608,6 +1622,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
     }
 
     const res_dir *node = (const res_dir *) rnode;
+    ibufcheck(node, sizeof(*node));
     int ic = node->identr + node->namedentr;
     if (ic == 0)
         return NULL;
@@ -1628,7 +1643,9 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
         if (child->id & 0x80000000)
         {
             const upx_byte *p = start + (child->id & 0x7fffffff);
+            ibufcheck(p, 2);
             const unsigned len = 2 + 2 * get_le16(p);
+            ibufcheck(p, len);
             child->name = new upx_byte[len];
             memcpy(child->name,p,len); // copy unicode string
             ssize += len; // size of unicode strings
@@ -1643,6 +1660,9 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
 {
     if (level == 3)
     {
+        if (bpos + sizeof(res_data) >= dirsize())
+            throwCantUnpack("corrupted resources");
+
         res_data *l = (res_data*) (newstart + bpos);
         const upx_rleaf *leaf = (const upx_rleaf*) node;
         *l = leaf->data;
@@ -1651,6 +1671,9 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
         bpos += sizeof(*l);
         return;
     }
+    if (bpos + sizeof(res_dir) >= dirsize())
+        throwCantUnpack("corrupted resources");
+
     res_dir * const b = (res_dir*) (newstart + bpos);
     const upx_rbranch *branch = (const upx_rbranch*) node;
     *b = branch->data;
@@ -1666,6 +1689,8 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
         if ((p = branch->children[ic]->name) != 0)
         {
             be->tnl = spos + 0x80000000;
+            if (spos + get_le16(p) * 2 + 2 >= dirsize())
+                throwCantUnpack("corrupted resources");
             memcpy(newstart + spos,p,get_le16(p) * 2 + 2);
             spos += get_le16(p) * 2 + 2;
         }
@@ -2629,11 +2654,16 @@ void PeFile::rebuildResources(upx_byte *& extrainfo, unsigned lastvaddr)
     extrainfo += 2;
 
     const unsigned vaddr = IDADDR(PEDIR_RESOURCE);
+
+    if (lastvaddr > vaddr || (vaddr - lastvaddr) > ibuf.getSize())
+        throwCantUnpack("corrupted PE header");
+
     const upx_byte *r = ibuf - lastvaddr;
-    Resource res(r + vaddr);
+    Resource res(r + vaddr, ibuf, ibuf + ibuf.getSize());
     while (res.next())
         if (res.offs() > vaddr)
         {
+            ICHECK(r + res.offs() - 4, 4);
             unsigned origoffs = get_le32(r + res.offs() - 4);
             res.newoffs() = origoffs;
             omemcpy(obuf + origoffs - rvamin,r + res.offs(),res.size());
@@ -2771,6 +2801,8 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     //infoHeader("[Processing %s, format %s, %d sections]", fn_basename(fi->getName()), getName(), objs);
 
     handleStub(fi,fo,pe_offset);
+    if (ih.filealign == 0)
+        throwCantUnpack("unexpected value in the PE header");
 
     const unsigned iobjs = ih.objects;
     const unsigned overlay = file_size - ALIGN_UP(isection[iobjs - 1].rawdataptr
@@ -2792,7 +2824,7 @@ void PeFile::unpack0(OutputFile *fo, const ht &ih, ht &oh,
     extrainfo += sizeof (oh);
     unsigned objs = oh.objects;
 
-    if ((int) objs <= 0)
+    if ((int) objs <= 0 || isection[2].size == 0)
         throwCantUnpack("unexpected value in the PE header");
     Array(pe_section_t, osection, objs);
     memcpy(osection,extrainfo,sizeof(pe_section_t) * objs);

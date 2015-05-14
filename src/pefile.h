@@ -340,6 +340,9 @@ protected:
         unsigned   dsize;
         unsigned   ssize;
 
+        const upx_byte *ibufstart;
+        const upx_byte *ibufend;
+
         void check(const res_dir*,unsigned);
         upx_rnode *convert(const void *,upx_rnode *,unsigned);
         void build(const upx_rnode *,unsigned &,unsigned &,unsigned);
@@ -347,9 +350,12 @@ protected:
         void dump(const upx_rnode *,unsigned) const;
         void destroy(upx_rnode *urd,unsigned level);
 
+        void ibufcheck(const void *m, unsigned size);
+
     public:
         Resource();
-        Resource(const upx_byte *p);
+        Resource(const upx_byte *p, const upx_byte *ibufstart,
+                 const upx_byte *ibufend);
         ~Resource();
         void init(const upx_byte *);
 
