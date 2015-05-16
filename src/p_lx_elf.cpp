@@ -2629,7 +2629,7 @@ int PackLinuxElf32::ARM_is_QNX(void)
                 unsigned const sz_interp = get_te32(&phdr->p_filesz);
                 unsigned const pos_interp = get_te32(&phdr->p_offset);
                 if (sz_interp <= sizeof(interp)
-                &&  (sz_interp + pos_interp) <= (unsigned) fi->st_size()) {
+                &&  (sz_interp + pos_interp) <= file_size) {
                     fi->seek(pos_interp, SEEK_SET);
                     fi->readx(interp, sz_interp);
                     for (int k = sz_interp - 5; k>=0; --k) {
@@ -3024,7 +3024,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
+    if (ph.c_len > file_size || ph.c_len == 0 || ph.u_len == 0
+    ||  ph.u_len > sizeof(u))
         throwCantUnpack("b_info corrupted");
 
     ph.filter_cto = bhdr.b_cto8;
@@ -3032,6 +3033,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     // Uncompress Ehdr and Phdrs.
     fi->readx(ibuf, ph.c_len);
     decompress(ibuf, (upx_byte *)ehdr, false);
+    if (ehdr->e_type   !=ehdri.e_type
+    ||  ehdr->e_machine!=ehdri.e_machine
+    ||  ehdr->e_version!=ehdri.e_version
+    ||  ehdr->e_flags  !=ehdri.e_flags
+    ||  ehdr->e_ehsize !=ehdri.e_ehsize
+        // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
+    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf32_Ehdr::EI_OSABI))
+        throwCantUnpack("ElfXX_Ehdr corrupted");
 
     unsigned total_in = 0;
     unsigned total_out = 0;
@@ -3063,7 +3072,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     if (is_shlib
     ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
-            < up4(fi->st_size())) {
+            < up4(file_size)) {
         // Loader is not at end; skip past it.
         funpad4(fi);  // MATCH01
         unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
@@ -3544,7 +3553,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     fi->readx(&bhdr, szb_info);
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (ph.c_len > fi->st_size() || ph.c_len == 0 || ph.u_len == 0)
+    if (ph.c_len > file_size || ph.c_len == 0 || ph.u_len == 0
+    ||  ph.u_len > sizeof(u))
         throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
     bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
@@ -3555,6 +3565,15 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         throwCompressedDataViolation();
     fi->readx(ibuf, ph.c_len);
     decompress(ibuf, (upx_byte *)ehdr, false);
+    if (ehdr->e_type   !=ehdri.e_type
+    ||  ehdr->e_machine!=ehdri.e_machine
+    ||  ehdr->e_version!=ehdri.e_version
+    ||  ehdr->e_flags  !=ehdri.e_flags
+    ||  ehdr->e_ehsize !=ehdri.e_ehsize
+        // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
+    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf32_Ehdr::EI_OSABI))
+        throwCantUnpack("ElfXX_Ehdr corrupted");
+
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);
@@ -3627,7 +3646,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     if (is_shlib
     ||  ((unsigned)(get_te32(&ehdri.e_entry) - load_va) + up4(lsize) +
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
-            < up4(fi->st_size())) {
+            < up4(file_size)) {
         // Loader is not at end; skip past it.
         funpad4(fi);  // MATCH01
         unsigned d_info[4]; fi->readx(d_info, sizeof(d_info));
