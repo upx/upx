@@ -63,7 +63,7 @@ static unsigned my_strlen(const unsigned char *s)
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
 #define OPTR(type, var)         BoundedPtr<type> var(obuf, obuf.getSize())
 #define IPTR_I_D(type, var, disp) \
-                                BoundedPtr<type> var(ibuf + disp, ibuf.getSize() - disp, ibuf + disp)
+                                BoundedPtr<type> var(ibuf + (disp), ibuf.getSize() - (disp), ibuf + (disp))
 #define IPTR_I(type, var, v)    BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
 #define OPTR_I(type, var, v)    BoundedPtr<type> var(obuf, obuf.getSize(), v)
 #define IPTR_C(type, var, v)    const BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
@@ -71,6 +71,8 @@ static unsigned my_strlen(const unsigned char *s)
 #else
 #define IPTR(type, var)         type* var = 0
 #define OPTR(type, var)         type* var = 0
+#define IPTR_I_D(type, var, disp) \
+                                type* var = (v) + (disp)
 #define IPTR_I(type, var, v)    type* var = (v)
 #define OPTR_I(type, var, v)    type* var = (v)
 #define IPTR_C(type, var, v)    type* const var = (v)
