@@ -1417,7 +1417,8 @@ bool PackLinuxElf32::canPack()
             }
         }
     }
-    if (Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // No EI_OSBAI, no PT_NOTE.
+    if (Elf32_Ehdr::ELFOSABI_NONE ==osabi0
+    ||  Elf32_Ehdr::ELFOSABI_LINUX==osabi0) { // No EI_OSBAI, no PT_NOTE.
         unsigned const arm_eabi = 0xff000000u & get_te32(&ehdr->e_flags);
         if (Elf32_Ehdr::EM_ARM==e_machine
         &&   (EF_ARM_EABI_VER5==arm_eabi
