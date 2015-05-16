@@ -449,13 +449,13 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         ph.filter_cto = hdr.b_cto8;
 
         if (sz_unc == 0) { // must never happen while 0!=wanted
-            throwCompressedDataViolation();
+            throwCantUnpack("corrupt b_info");
             break;
         }
         if (sz_unc <= 0 || sz_cpr <= 0)
-            throwCompressedDataViolation();
+            throwCantUnpack("corrupt b_info");
         if (sz_cpr > sz_unc || sz_unc > (int)blocksize)
-            throwCompressedDataViolation();
+            throwCantUnpack("corrupt b_info");
 
         int j = blocksize + OVERHEAD - sz_cpr;
         fi->readx(ibuf+j, sz_cpr);
@@ -493,6 +493,8 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         // write block
         if (fo)
             fo->write(ibuf + j, sz_unc);
+        if (wanted < (unsigned)sz_unc)
+            throwCantUnpack("corrupt b_info");
         wanted -= sz_unc;
     }
 }
