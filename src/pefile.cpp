@@ -62,6 +62,8 @@ static unsigned my_strlen(const unsigned char *s)
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
 #define OPTR(type, var)         BoundedPtr<type> var(obuf, obuf.getSize())
+#define IPTR_I_D(type, var, disp) \
+                                BoundedPtr<type> var(ibuf + disp, ibuf.getSize() - disp, ibuf + disp)
 #define IPTR_I(type, var, v)    BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
 #define OPTR_I(type, var, v)    BoundedPtr<type> var(obuf, obuf.getSize(), v)
 #define IPTR_C(type, var, v)    const BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
@@ -2698,7 +2700,7 @@ void PeFile::rebuildImports(upx_byte *& extrainfo,
 
 //    const upx_byte *import = ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr;
 //    const upx_byte *p;
-    IPTR_I(const upx_byte, import, ibuf + IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
+    IPTR_I_D(const upx_byte, import, IDADDR(PEDIR_IMPORT) - isection[2].vaddr);
     OPTR(const upx_byte, p);
 
     for (p = idata; get_le32(p) != 0; ++p)
