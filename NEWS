@@ -5,6 +5,11 @@ User visible changes for UPX
 Changes in 3.92 (XX XXX 2015):
   * all pe formats: important internal changes - reunited the diverged
     source files - please report regressions into the bug tracker
+  * Fix CERT-FI Case 829767 UPX command line tools segfaults.
+    Received by UPX Team on 2015-May-08; originally reported
+    by Codenomicon to NCSC-FI on 2015-01-08.
+    The vulnerabilities were discovered by Joonas Kuorilehto and
+    Antti Häyrynen from Codenomicon 
 
 Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
