@@ -1286,7 +1286,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
-    ||  blocksize > 0x01000000)
+    ||  blocksize > 0x05000000)  // emacs-21.2.1 was 0x01d47e6c (== 30703212)
         throwCantUnpack("file header corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
@@ -1333,33 +1333,26 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     unsigned total_out = 0;
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
-    Mach_segment_command const *sc = (Mach_segment_command const *)(void *)(1+ mhdr);
-    unsigned k;
 
     fi->seek(- (off_t)(sizeof(bhdr) + ph.c_len), SEEK_CUR);
-    for (
-        k = 0;
-        k < ncmds;
-        (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
-    ) {
-        if (lc_seg==sc->cmd
-        &&  0!=sc->filesize ) {
+    for (unsigned k = 0; k < ncmds; ++k) {
+        if (msegcmd[k].cmd==lc_seg && msegcmd[k].filesize!=0) {
             if (fo)
-                fo->seek(sc->fileoff, SEEK_SET);
-            unsigned filesize = sc->filesize;
-            unpackExtent(filesize, fo, total_in, total_out,
+                fo->seek(msegcmd[k].fileoff, SEEK_SET);
+            unpackExtent(msegcmd[k].filesize, fo, total_in, total_out,
                 c_adler, u_adler, false, sizeof(bhdr));
             if (my_filetype==Mach_header::MH_DYLIB) {
-                break;
+                break;  // only the first lc_seg when MH_DYLIB
             }
         }
     }
-    if (my_filetype==Mach_header::MH_DYLIB) {
+    Mach_segment_command const *sc = (Mach_segment_command const *)(void *)(1+ mhdr);
+    if (my_filetype==Mach_header::MH_DYLIB) { // rest of lc_seg are not compressed
         Mach_segment_command const *rc = rawmseg;
         rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc);
         sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc);
         for (
-            k=1;
+            unsigned k=1;  // skip first lc_seg, which was uncompressed above
             k < ncmds;
             (++k), (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc)),
                    (rc = (Mach_segment_command const *)(rc->cmdsize + (char const *)rc))
