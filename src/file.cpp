@@ -168,7 +168,7 @@ void FileBase::write(const void *buf, int len)
 }
 
 
-void FileBase::seek(off_t off, int whence)
+off_t FileBase::seek(off_t off, int whence)
 {
     if (!isOpen())
         throwIOException("bad seek 1");
@@ -185,6 +185,7 @@ void FileBase::seek(off_t off, int whence)
     }
     if (::lseek(_fd,off,whence) < 0)
         throwIOException("seek error",errno);
+    return off - _offset;
 }
 
 
@@ -284,9 +285,12 @@ int InputFile::readx(MemBuffer &buf, int len)
 }
 
 
-void InputFile::seek(off_t off, int whence)
+off_t InputFile::seek(off_t off, int whence)
 {
-    super::seek(off,whence);
+    off_t pos = super::seek(off,whence);
+    if (_length < pos)
+        throwIOException("bad seek 4");
+    return pos;
 }
 
 
@@ -398,7 +402,7 @@ void OutputFile::rewrite(const void *buf, int len)
     bytes_written -= len;       // restore
 }
 
-void OutputFile::seek(off_t off, int whence)
+off_t OutputFile::seek(off_t off, int whence)
 {
     assert(!opt->to_stdout);
     switch (whence) {
@@ -412,7 +416,7 @@ void OutputFile::seek(off_t off, int whence)
         _length = bytes_written;  // necessary
     } break;
     }
-    super::seek(off,whence);
+    return super::seek(off,whence);
 }
 
 // WARNING: fsync() does not exist in some Windows environments.
