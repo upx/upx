@@ -1270,7 +1270,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         throwCantUnpack("file header corrupted");
     }
     unsigned const sz_cmds = mhdri.sizeofcmds;
-    if ((sizeof(mhdri) + sz_cmds) > fi->st_size()) {
+    if ((sizeof(mhdri) + sz_cmds) > (size_t)fi->st_size()) {
         throwCantUnpack("file header corrupted");
     }
     rawmseg = (Mach_segment_command *)new char[sz_cmds];
@@ -1425,11 +1425,11 @@ bool PackMachBase<T>::canPack()
     // Check alignment of non-null LC_SEGMENT.
     for (unsigned j= 0; j < ncmds; ++j) {
         if (lc_seg==msegcmd[j].cmd) {
+            if (msegcmd[j].vmsize==0)
+                break;  // was sorted last
             if (~PAGE_MASK & (msegcmd[j].fileoff | msegcmd[j].vmaddr)) {
                 return false;
             }
-            if (msegcmd[j].vmsize==0)
-                break;  // was sorted last
 
             // We used to check that LC_SEGMENTS were contiguous,
             // but apparently that is not needed anymore,
