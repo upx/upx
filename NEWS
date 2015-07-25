@@ -10,6 +10,8 @@ Changes in 3.92 (XX XXX 2015):
     by Codenomicon to NCSC-FI on 2015-01-08.
     The vulnerabilities were discovered by Joonas Kuorilehto and
     Antti Häyrynen from Codenomicon 
+  * Explicitly diagnose Go-language bad PT_LOAD; recommend hemfix.c.
+    https://sourceforge.net/p/upx/bugs/195/
 
 Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
