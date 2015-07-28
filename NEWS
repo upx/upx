@@ -11,7 +11,8 @@ Changes in 3.92 (XX XXX 2015):
     The vulnerabilities were discovered by Joonas Kuorilehto and
     Antti Häyrynen from Codenomicon 
   * Explicitly diagnose Go-language bad PT_LOAD; recommend hemfix.c.
-    https://sourceforge.net/p/upx/bugs/195/
+    https://sourceforge.net/p/upx/bugs/195/   https://github.com/pwaller/goupx
+  * bug fixes
 
 Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
