@@ -95,7 +95,8 @@ int compress_lzma_dummy = 0;
 
 #if (WITH_LZMA >= 0x461)
 #include "C/7zVersion.h"
-#if (WITH_LZMA != (0x100 * MY_VER_MAJOR) + (0x10 * (MY_VER_MINOR / 10)) + (MY_VER_MINOR % 10))
+#if (WITH_LZMA != ((0x1000 * (MY_VER_MAJOR / 10)) + (0x0100 * (MY_VER_MAJOR % 10)) +\
+                   (0x0010 * (MY_VER_MINOR / 10)) + (0x0001 * (MY_VER_MINOR % 10))))
 #  error "WITH_LZMA version mismatch"
 #endif
 
