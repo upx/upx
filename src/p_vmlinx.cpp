@@ -165,6 +165,7 @@ bool PackVmlinuxBase<T>::canPack()
         int j;
         for (p = shdri, j= ehdri.e_shnum; --j>=0; ++p) {
             if (Shdr::SHT_PROGBITS==p->sh_type
+            && (p->sh_name  + shstrsec->sh_offset) < (unsigned)file_size
             && 0==strcmp("__ksymtab", p->sh_name + shstrtab)) {
                 break;
             }
