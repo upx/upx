@@ -1494,8 +1494,12 @@ struct PeFile::Resource::upx_rleaf : public PeFile::Resource::upx_rnode
     res_data        data;
 };
 
-PeFile::Resource::Resource() : root(NULL)
-{}
+PeFile::Resource::Resource(const upx_byte *ibufstart_,
+                           const upx_byte *ibufend_) : root(NULL)
+{
+    ibufstart = ibufstart_;
+    ibufend = ibufend_;
+}
 
 PeFile::Resource::Resource(const upx_byte *p,
                            const upx_byte *ibufstart_,
@@ -2126,8 +2130,8 @@ unsigned PeFile::readSections(unsigned objs, unsigned usize,
             == (PEFL_WRITE|PEFL_SHARED)))
             if (!opt->force)
                 throwCantPack("writable shared sections not supported (try --force)");
-        if (jc && isection[ic].rawdataptr - jc > ih_filealign)
-            throwCantPack("superfluous data between sections");
+        if (jc && isection[ic].rawdataptr - jc > ih_filealign && !opt->force)
+            throwCantPack("superfluous data between sections (try --force)");
         fi->seek(isection[ic].rawdataptr,SEEK_SET);
         jc = isection[ic].size;
         if (jc > isection[ic].vsize)
@@ -2194,7 +2198,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         overlay = 0;
     checkOverlay(overlay);
 
-    Resource res;
+    Resource res(ibuf, ibuf + ibuf.getSize());
     Interval tlsiv(ibuf);
     Interval loadconfiv(ibuf);
     Export xport((char*)(unsigned char*)ibuf);

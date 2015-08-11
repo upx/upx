@@ -353,7 +353,7 @@ protected:
         void ibufcheck(const void *m, unsigned size);
 
     public:
-        Resource();
+        Resource(const upx_byte *ibufstart, const upx_byte *ibufen);
         Resource(const upx_byte *p, const upx_byte *ibufstart,
                  const upx_byte *ibufend);
         ~Resource();
