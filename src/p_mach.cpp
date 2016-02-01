@@ -54,6 +54,11 @@ static const
 static const
 #include "stub/arm-darwin.macho-fold.h"
 
+static const
+#include "stub/arm64-darwin.macho-entry.h"
+static const
+#include "stub/arm64-darwin.macho-fold.h"
+
 // Packing a Darwin (Mach-o) Mac OS X dylib (dynamic shared library)
 // is restricted.  UPX gets control as the -init function, at the very
 // end of processing by dyld.  Relocation, loading of dependent libraries,
@@ -131,6 +136,11 @@ const int *PackMachARMEL::getCompressionMethods(int method, int level) const
     return Packer::getDefaultCompressionMethods_8(method, level);
 }
 
+const int *PackMachARM64EL::getCompressionMethods(int method, int level) const
+{
+    return Packer::getDefaultCompressionMethods_8(method, level);
+}
+
 
 PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC,
         Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE,
@@ -170,9 +180,20 @@ PackMachARMEL::PackMachARMEL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
         sizeof(Mach_ARM_thread_state)>>2, sizeof(threado))
 { }
 
+PackMachARM64EL::PackMachARM64EL(InputFile *f) : super(f, Mach_header::CPU_TYPE_ARM,
+        Mach_header::MH_EXECUTE, (unsigned)Mach_thread_command::ARM_THREAD_STATE,
+        sizeof(Mach_ARM64_thread_state)>>2, sizeof(threado))
+{ }
+
 int const *PackMachARMEL::getFilters() const
 {
     static const int filters[] = { 0x50, FT_END };
+    return filters;
+}
+
+int const *PackMachARM64EL::getFilters() const
+{
+    static const int filters[] = { 0x51, FT_END };
     return filters;
 }
 
@@ -194,6 +215,11 @@ Linker *PackMachAMD64::newLinker() const
 Linker *PackMachARMEL::newLinker() const
 {
     return new ElfLinkerArmLE;
+}
+
+Linker *PackMachARM64EL::newLinker() const
+{
+    return new ElfLinkerArm64LE;
 }
 
 template <class T>
@@ -305,6 +331,21 @@ void PackMachARMEL::addStubEntrySections(Filter const * /*ft*/)
     addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
 }
 
+void PackMachARM64EL::addStubEntrySections(Filter const * /*ft*/)
+{
+    addLoader("MACHMAINX", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ,FOLDEXEC", NULL);
+}
+
 template <class T>
 void PackMachBase<T>::defineSymbols(Filter const *)
 {
@@ -389,6 +430,14 @@ PackMachARMEL::buildLoader(const Filter *ft)
     buildMachLoader(
         stub_arm_darwin_macho_entry, sizeof(stub_arm_darwin_macho_entry),
         stub_arm_darwin_macho_fold,  sizeof(stub_arm_darwin_macho_fold),  ft );
+}
+
+void
+PackMachARM64EL::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_arm64_darwin_macho_entry, sizeof(stub_arm64_darwin_macho_entry),
+        stub_arm64_darwin_macho_fold,  sizeof(stub_arm64_darwin_macho_fold),  ft );
 }
 
 void
@@ -609,6 +658,50 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 }
 
 void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    // offset of p_info in compressed file
+    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
+        + sizeof(segXHDR) + sizeof(secXHDR)
+        + sizeof(segTEXT) + sizeof(secTEXT)
+        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        overlay_offset += sizeof(uuid_cmd) + sizeof(linkitem);
+    }
+
+    super::pack4(fo, ft);
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
+    secTEXT.offset = overlay_offset - sizeof(linfo);
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
+    secXHDR.offset = overlay_offset - sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
+    }
+    secXHDR.addr += secXHDR.offset;
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
+    segLINK.fileoff = foff1;
+    segLINK.vmaddr = segTEXT.vmaddr + foff1;
+    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
+    fo->seek(sizeof(mhdro), SEEK_SET);
+    fo->rewrite(&segZERO, sizeof(segZERO));
+    fo->rewrite(&segXHDR, sizeof(segXHDR));
+    fo->rewrite(&secXHDR, sizeof(secXHDR));
+    fo->rewrite(&segTEXT, sizeof(segTEXT));
+    fo->rewrite(&secTEXT, sizeof(secTEXT));
+    fo->rewrite(&segLINK, sizeof(segLINK));
+    fo->rewrite(&threado, sizeof(threado));
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        fo->rewrite(&uuid_cmd, sizeof(uuid_cmd));
+        fo->rewrite(&linkitem, sizeof(linkitem));
+    }
+    fo->rewrite(&linfo, sizeof(linfo));
+}
+
+void PackMachARM64EL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
@@ -906,6 +999,20 @@ void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
 }
 
+void PackMachARM64EL::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len));
+    disp = len - sz_mach_headers;
+    fo->write(&disp, sizeof(disp));
+
+    threado.state.pc = len + sizeof(disp) + segTEXT.vmaddr;  /* entry address */
+    super::pack3(fo, ft);
+}
+
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
@@ -1147,6 +1254,16 @@ void PackMachAMD64::pack1_setup_threado(OutputFile *const fo)
 }
 
 void PackMachARMEL::pack1_setup_threado(OutputFile *const fo)
+{
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state, 0, sizeof(threado.state));
+    fo->write(&threado, sizeof(threado));
+}
+
+void PackMachARM64EL::pack1_setup_threado(OutputFile *const fo)
 {
     threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
     threado.cmdsize = sizeof(threado);

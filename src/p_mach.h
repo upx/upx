@@ -320,28 +320,9 @@ __packed_struct(Mach_i386_thread_state)
     Word ds, es, fs, gs;
 __packed_struct_end()
 
-template <class TMachITypes>
-__packed_struct(Mach_AMD64_thread_state)
-    typedef typename TMachITypes::Xword Xword;
+}  // namespace N_Mach
 
-    Xword rax, rbx, rcx, rdx;
-    Xword rdi, rsi, rbp, rsp;
-    Xword  r8,  r9, r10, r11;
-    Xword r12, r13, r14, r15;
-    Xword rip, rflags;
-    Xword cs, fs, gs;
-__packed_struct_end()
-
-template <class TMachITypes>
-__packed_struct(Mach_i386_new_thread_state)
-    typedef typename TMachITypes::Word Word;
-
-    Word gs, fs, es, ds;
-    Word edi, esi, ebp, esp;
-    Word ebx, edx, ecx, eax;
-    Word eip, cs, efl;
-    Word uesp, ss;
-__packed_struct_end()
+namespace N_Mach32 {
 
 template <class TMachITypes>
 __packed_struct(Mach_ARM_thread_state)
@@ -354,13 +335,21 @@ __packed_struct(Mach_ARM_thread_state)
     Word cpsr;
 __packed_struct_end()
 
-}  // namespace N_Mach
-
-namespace N_Mach32 {
-
 } // namespace N_Mach32
 
 namespace N_Mach64 {
+
+template <class TMachITypes>
+__packed_struct(Mach_AMD64_thread_state)
+    typedef typename TMachITypes::Xword Xword;
+
+    Xword rax, rbx, rcx, rdx;
+    Xword rdi, rsi, rbp, rsp;
+    Xword  r8,  r9, r10, r11;
+    Xword r12, r13, r14, r15;
+    Xword rip, rflags;
+    Xword cs, fs, gs;
+__packed_struct_end()
 
 template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state64)
@@ -380,6 +369,22 @@ __packed_struct(Mach_ppc_thread_state64)
     Xword ctr;      /* Count register */
 
     Word vrsave;    /* Vector Save Register */
+__packed_struct_end()
+
+template <class TMachITypes> __packed_struct(Mach_ARM64_thread_state)
+    typedef typename TMachITypes::Xword Xword;
+    typedef typename TMachITypes::Word Word;
+
+    Xword x0,  x1,  x2,  x3;
+    Xword x4,  x5,  x6,  x7;
+    Xword x8,  x9,  x10, x11;
+    Xword x12, x13, x14, x15;
+    Xword x16, x17, x18, x19;
+    Xword x20, x21, x22, x23;
+    Xword x24, x25, x26, x27;
+    Xword x28, fp,  lr,  sp;
+    Xword pc;
+    Word cpsr;
 __packed_struct_end()
 
 }  // namespace N_Mach64
@@ -413,10 +418,10 @@ struct MachClass_32
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
+
     typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
-    typedef N_Mach::Mach_AMD64_thread_state<MachITypes> Mach_AMD64_thread_state;
-    typedef N_Mach::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
+    typedef N_Mach32::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -451,6 +456,9 @@ struct MachClass_64
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
+
+    typedef N_Mach64::Mach_AMD64_thread_state<MachITypes> Mach_AMD64_thread_state;
+    typedef N_Mach64::Mach_ARM64_thread_state<MachITypes> Mach_ARM64_thread_state;
 
     static void compileTimeAssertions() {
         BeLePolicy::compileTimeAssertions();
@@ -530,7 +538,8 @@ typedef MachClass_LE64::Mach_uuid_command   MachLE64_uuid_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
-typedef MachClass_LE32::Mach_AMD64_thread_state  Mach_AMD64_thread_state;  // FIXME  LE32 vs AMD64
+typedef MachClass_LE64::Mach_AMD64_thread_state  Mach_AMD64_thread_state;
+typedef MachClass_LE64::Mach_ARM64_thread_state  Mach_ARM64_thread_state;
 typedef MachClass_LE32::Mach_ARM_thread_state  Mach_ARM_thread_state;
 #include "p_unix.h"
 
@@ -832,6 +841,40 @@ protected:
         LE32 flavor;
         LE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_ARM_thread_state state;
+    #define WANT_MACH_THREAD_ENUM 1
+    #include "p_mach_enum.h"
+    __packed_struct_end()
+
+    Mach_thread_command threado;
+};
+
+class PackMachARM64EL : public PackMachBase<MachClass_LE64>
+{
+    typedef PackMachBase<MachClass_LE64> super;
+
+public:
+    PackMachARM64EL(InputFile *f);
+
+    virtual int getFormat() const { return UPX_F_MACH_ARM64EL; }
+    virtual const char *getName() const { return "Mach/ARM64EL"; }
+    virtual const char *getFullName(const options_t *) const { return "ARM64EL-darwin.macho"; }
+protected:
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+    virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+    virtual void addStubEntrySections(Filter const *);
+
+    __packed_struct(Mach_thread_command)
+        LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        LE32 cmdsize;        /* total size of this command */
+        LE32 flavor;
+        LE32 count;          /* sizeof(following_thread_state)/4 */
+        Mach_ARM64_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
