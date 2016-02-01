@@ -730,6 +730,22 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location,
         super::relocate1(rel, location, value, type);
 }
 
+void ElfLinkerArm64LE::relocate1(const Relocation *rel, upx_byte *location,
+                               upx_uint64_t value, const char *type)
+{
+    if (strcmp(type, "R_AARCH64_CALL26") == 0)
+    {
+        value -= rel->section->offset + rel->offset;
+        set_le24(location, get_le24(location) + value / 4);  // FIXME set_le26
+    }
+    else if (strcmp(type, "R_AARCH64_ABS32") == 0)
+    {
+        set_le32(location, get_le32(location) + value);
+    }
+    else
+        super::relocate1(rel, location, value, type);
+}
+
 
 void ElfLinkerM68k::alignCode(unsigned len)
 {
