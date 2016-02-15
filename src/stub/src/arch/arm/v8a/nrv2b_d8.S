@@ -41,11 +41,6 @@
 #define off  w5
 
 /* macros reduce "noise" when comparing this ARM code to corresponding THUMB code */
-#define PUSH1(r1)    str r1,   [sp,#-1*8]!
-#define PUSH2(r1,r2) stp r1,r2,[sp,#-2*8]!
-#define PUSH4(r1,r2,r3,r4) stp r1,r2,[sp,#-4*8]!; stp r3,r4,[sp,#2*8]
-#define POP2(r1,r2)                      ldp r1,r2,[sp],#2*8
-#define POP3(r1,r2,r3) ldr r3,[sp,#2*8]; ldp r1,r2,[sp],#3*8
 #define ADD2( dst,src) add  dst,dst,src
 #define ADD2S(dst,src) adds dst,dst,src
 #define ADC2( dst,src) adc  dst,dst,src

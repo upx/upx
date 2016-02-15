@@ -49,10 +49,6 @@
 #define cnt  w1  /* overlaps 'len' while reading an offset */
 
 /* macros reduce "noise" when comparing this ARM code to corresponding THUMB code */
-#define PUSH2(r1,r2) stp r1,r2,[sp,#-2*8]!
-#define POP2(r1,r2)  ldp r1,r2,[sp],#2*8
-#define PUSH3(r1,r2,r3) stp r1,r2,[sp,#-3*8]!; str r3,[sp,#2*8]
-
 #define ADD2( dst,src) add  dst,dst,src
 #define ADD2S(dst,src) adds dst,dst,src
 #define ADC2( dst,src) adc  dst,dst,src

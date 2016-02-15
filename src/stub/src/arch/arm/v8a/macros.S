@@ -29,6 +29,17 @@
 
                 .altmacro
 
+#define PUSH1(r1)          str r1,   [sp,#-1*8]!
+#define PUSH2(r1,r2)       stp r1,r2,[sp,#-2*8]!
+#define PUSH3(r1,r2,r3)    stp r1,r2,[sp,#-3*8]!; str r3,   [sp,#2*8]
+#define PUSH4(r1,r2,r3,r4) stp r1,r2,[sp,#-4*8]!; stp r3,r4,[sp,#2*8]
+#define PUSH5(r1,r2,r3,r4,r5) PUSH2(r4,r5); PUSH3(r1,r2,r3)
+
+#define POP1(r1)                               ldr r1,   [sp],#1*8
+#define POP2(r1,r2)                            ldp r1,r2,[sp],#2*8
+#define POP3(r1,r2,r3)    ldr r3,   [sp,#2*8]; ldp r1,r2,[sp],#3*8
+#define POP4(r1,r2,r3,r4) ldp r3,r4,[sp,#2*8]; ldp r1,r2,[sp],#4*8
+
 .macro          section name
                 .section \name
 .endm
@@ -104,10 +115,6 @@ __NR_SYSCALL_BASE = 0x900000
                 error \N  // ARM_OLDABI, ARMEL_EABI4, ARMEL_DARWIN ?
 .endm
 #endif  /*}*/
-
-.macro          ret
-                br lr  /* armv5 for thumb interworking */
-.endm
 
 .macro          loadcon8 reg,val8
         .long (0xe3<<24)|(0xa0<<16)|((\reg<<4)<<8)+(\val8)  /* mov \reg,#\val8 */
