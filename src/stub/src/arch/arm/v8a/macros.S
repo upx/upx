@@ -26,6 +26,8 @@
 ;  <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
 ;
 */
+#ifndef __MACROS_S__  // {
+#define __MACROS_S__ 1
 
                 .altmacro
 
@@ -120,4 +122,5 @@ __NR_SYSCALL_BASE = 0x900000
         .long (0xe3<<24)|(0xa0<<16)|((\reg<<4)<<8)+(\val8)  /* mov \reg,#\val8 */
 .endm
 
+#endif  //}
 // vi:ts=8:et:nowrap

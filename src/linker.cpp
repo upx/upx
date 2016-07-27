@@ -182,7 +182,7 @@ void ElfLinker::init(const void *pdata_v, int plen)
         input = new upx_byte[inputlen + 1];
         memcpy(input, pdata, inputlen);
     }
-    input[2 * inputlen] = 0; // NUL terminate
+    input[inputlen] = 0; // NUL terminate
 
     output = new upx_byte[inputlen];
     outputlen = 0;

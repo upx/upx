@@ -30,6 +30,7 @@
 */
 
 #define section .section
+#define fp x29
 
   section LZMA_ELF00
 //decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
@@ -61,6 +62,7 @@
 #define inSzP      3*4  /*   inSizeprocessed */
 #define State      4*4  /* CLzmaDecoderState */
 #define t0 w7
+#define t0x x7
 #define t1 w8
 #define t1x x8
 
@@ -69,28 +71,28 @@
 //      a1= inp,  a2= inSize,  a3= &inSizeProcessed,
 //      a4= outp, a5= outSize, a6= &outSizeProcessed
 //)
-#define LZMA_BASE_SIZE 1846
-#define LZMA_LIT_SIZE   768
+LZMA_BASE_SIZE= 1846
+LZMA_LIT_SIZE=   768
 
         ldrb t0,[src,#0]  // first byte, replaces LzmaDecodeProperties()
         mov t1,#2*LZMA_LIT_SIZE
         lsr t0,t0,#3  // lit_context_bits + lit_pos_bits
         lsl t1,t1,t0  // 2*LZMA_LIT_SIZE << (lit_context_bits + lit_pos_bits)
-        mov t0,sp
+        mov t0x,sp
 #define W 4  /* even #bits to round up so that 8 bits span all the 1's */
         add t1,t1,#((~(~0<<W) + State + 2*LZMA_BASE_SIZE)>>W)<<W
         sub sp,sp,t1  // alloca
 
         ldr t1,[ldst]
-        str ldst,a6  // &outSizeProcessed
-        str t1,  a5  // outSize
-        str dst, a4   // outp
+        mov a6,ldst  // &outSizeProcessed
+        mov a5,t1  // outSize
+        mov a4,dst  // outp
 
-        add r3,sp,#inSzP
+        add a3,sp,#inSzP
         mov t1x,#0
 1:  // clear inSizeProcessed and CLzmaDecoderState
-        str t1x,[r3],#8
-        cmp r3,t0
+        str t1x,[a3],#8
+        cmp a3,t0x
         blo 1b
 
         add a3,sp,#inSzP // &inSizeProcessed
@@ -101,14 +103,14 @@
         and  t1,t1,#7  // posBits
         strb t1,[sp,#2 + State]
         ldrb t1,[a1],#1  // second byte, replaces LzmaDecodeProperties()
-        mov  a0,t1,LSR #4  // lit_pos_bits
-        strb a0,[sp,#1 + State]
+        lsr  w0,t1,#4  // lit_pos_bits
+        strb w0,[sp,#1 + State]
         and  t1,t1,#0xf  // lib_context_bits
         strb t1,[sp,#0 + State]
 
         add a0,sp,#State
         bl 1f  // the call
-        mov sp,t0  // un-alloca
+        mov sp,t0x  // un-alloca
 
 #if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
         mov w3,w0  // save result value
@@ -128,8 +130,13 @@
         mov x0,x4  // result value
 #endif  /*}*/
 
-        POP {fp,pc}
+        POP2(fp,lr); ret
 1:
+#undef ldst
+#undef t1x
+#undef t1
+#undef t0x
+#undef t0
 
   section LZMA_DEC20
 #include "lzma_d_cf.S"

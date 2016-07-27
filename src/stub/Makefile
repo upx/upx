@@ -48,72 +48,72 @@ endif
 # ************************************************************************/
 
 ifndef STUBS
-#STUBS += amd64-darwin.dylib-entry.h
-#STUBS += amd64-darwin.macho-entry.h
-#STUBS += amd64-darwin.macho-fold.h
-#STUBS += amd64-linux.elf-entry.h
-#STUBS += amd64-linux.elf-fold.h
-#STUBS += amd64-linux.kernel.vmlinux-head.h
-#STUBS += amd64-linux.kernel.vmlinux.h
-#STUBS += amd64-linux.shlib-init.h
-#STUBS += amd64-win64.pep.h
-#STUBS += arm-darwin.macho-entry.h
-#STUBS += arm-darwin.macho-fold.h
-#STUBS += arm64-darwin.macho-entry.h
-#STUBS += arm64-darwin.macho-fold.h
-#STUBS += arm-linux.elf-entry.h
-#STUBS += arm-linux.elf-fold.h
-#STUBS += arm-linux.kernel.vmlinux-head.h
-#STUBS += arm-linux.kernel.vmlinux.h
-#STUBS += arm-linux.shlib-init.h
-#STUBS += arm.v4a-wince.pe.h
-#STUBS += arm.v4t-wince.pe.h
-#STUBS += armeb-linux.elf-entry.h
-#STUBS += armeb-linux.elf-fold.h
-#STUBS += armeb-linux.kernel.vmlinux-head.h
-#STUBS += armeb-linux.kernel.vmlinux.h
-#STUBS += armel-eabi-linux.elf-entry.h
-#STUBS += armel-eabi-linux.elf-fold.h
-#STUBS += armel-eabi-linux.shlib-init.h
-#STUBS += armel-linux.kernel.vmlinuz-head.h
-#STUBS += armel-linux.kernel.vmlinuz.h
-#STUBS += i086-dos16.com.h
-#STUBS += i086-dos16.exe.h
-#STUBS += i086-dos16.sys.h
-#STUBS += i386-bsd.elf-entry.h
-#STUBS += i386-bsd.elf-fold.h
-#STUBS += i386-bsd.elf.execve-entry.h
-#STUBS += i386-bsd.elf.execve-fold.h
-#STUBS += i386-darwin.dylib-entry.h
+STUBS += amd64-darwin.dylib-entry.h
+STUBS += amd64-darwin.macho-entry.h
+STUBS += amd64-darwin.macho-fold.h
+STUBS += amd64-linux.elf-entry.h
+STUBS += amd64-linux.elf-fold.h
+STUBS += amd64-linux.kernel.vmlinux-head.h
+STUBS += amd64-linux.kernel.vmlinux.h
+STUBS += amd64-linux.shlib-init.h
+STUBS += amd64-win64.pep.h
+STUBS += arm-darwin.macho-entry.h
+STUBS += arm-darwin.macho-fold.h
+STUBS += arm64-darwin.macho-entry.h
+STUBS += arm64-darwin.macho-fold.h
+STUBS += arm-linux.elf-entry.h
+STUBS += arm-linux.elf-fold.h
+STUBS += arm-linux.kernel.vmlinux-head.h
+STUBS += arm-linux.kernel.vmlinux.h
+STUBS += arm-linux.shlib-init.h
+STUBS += arm.v4a-wince.pe.h
+STUBS += arm.v4t-wince.pe.h
+STUBS += armeb-linux.elf-entry.h
+STUBS += armeb-linux.elf-fold.h
+STUBS += armeb-linux.kernel.vmlinux-head.h
+STUBS += armeb-linux.kernel.vmlinux.h
+STUBS += armel-eabi-linux.elf-entry.h
+STUBS += armel-eabi-linux.elf-fold.h
+STUBS += armel-eabi-linux.shlib-init.h
+STUBS += armel-linux.kernel.vmlinuz-head.h
+STUBS += armel-linux.kernel.vmlinuz.h
+STUBS += i086-dos16.com.h
+STUBS += i086-dos16.exe.h
+STUBS += i086-dos16.sys.h
+STUBS += i386-bsd.elf-entry.h
+STUBS += i386-bsd.elf-fold.h
+STUBS += i386-bsd.elf.execve-entry.h
+STUBS += i386-bsd.elf.execve-fold.h
+STUBS += i386-darwin.dylib-entry.h
 ## STUBS += i386-darwin.dylib-fold.h
-#STUBS += i386-darwin.macho-entry.h
-#STUBS += i386-darwin.macho-fold.h
-#STUBS += i386-dos32.djgpp2-stubify.h
-#STUBS += i386-dos32.djgpp2.h
-#STUBS += i386-dos32.tmt.h
-#STUBS += i386-dos32.watcom.le.h
-#STUBS += i386-linux.elf-entry.h
-#STUBS += i386-linux.elf-fold.h
-#STUBS += i386-linux.elf.execve-entry.h
-#STUBS += i386-linux.elf.execve-fold.h
-#STUBS += i386-linux.elf.interp-entry.h
-#STUBS += i386-linux.elf.interp-fold.h
-#STUBS += i386-linux.elf.shell-entry.h
-#STUBS += i386-linux.elf.shell-fold.h
-#STUBS += i386-linux.kernel.vmlinux-head.h
-#STUBS += i386-linux.kernel.vmlinux.h
-#STUBS += i386-linux.kernel.vmlinuz.h
-#STUBS += i386-linux.shlib-init.h
-#STUBS += i386-netbsd.elf-entry.h
-#STUBS += i386-netbsd.elf-fold.h
-#STUBS += i386-openbsd.elf-fold.h
-#STUBS += i386-win32.pe.h
-#STUBS += m68k-atari.tos.h
-#STUBS += mips.r3000-linux.elf-entry.h
-#STUBS += mips.r3000-linux.elf-fold.h
-#STUBS += mipsel.r3000-linux.elf-entry.h
-#STUBS += mipsel.r3000-linux.elf-fold.h
-#STUBS += mipsel.r3000-ps1.h
+STUBS += i386-darwin.macho-entry.h
+STUBS += i386-darwin.macho-fold.h
+STUBS += i386-dos32.djgpp2-stubify.h
+STUBS += i386-dos32.djgpp2.h
+STUBS += i386-dos32.tmt.h
+STUBS += i386-dos32.watcom.le.h
+STUBS += i386-linux.elf-entry.h
+STUBS += i386-linux.elf-fold.h
+STUBS += i386-linux.elf.execve-entry.h
+STUBS += i386-linux.elf.execve-fold.h
+STUBS += i386-linux.elf.interp-entry.h
+STUBS += i386-linux.elf.interp-fold.h
+STUBS += i386-linux.elf.shell-entry.h
+STUBS += i386-linux.elf.shell-fold.h
+STUBS += i386-linux.kernel.vmlinux-head.h
+STUBS += i386-linux.kernel.vmlinux.h
+STUBS += i386-linux.kernel.vmlinuz.h
+STUBS += i386-linux.shlib-init.h
+STUBS += i386-netbsd.elf-entry.h
+STUBS += i386-netbsd.elf-fold.h
+STUBS += i386-openbsd.elf-fold.h
+STUBS += i386-win32.pe.h
+STUBS += m68k-atari.tos.h
+STUBS += mips.r3000-linux.elf-entry.h
+STUBS += mips.r3000-linux.elf-fold.h
+STUBS += mipsel.r3000-linux.elf-entry.h
+STUBS += mipsel.r3000-linux.elf-fold.h
+STUBS += mipsel.r3000-ps1.h
 STUBS += powerpc-darwin.dylib-entry.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
@@ -121,13 +121,16 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
-STUBS += ppc64le-darwin.dylib-entry.h
+
+# Need a UPX-standard compiler for ppc64le !
+#STUBS += ppc64le-darwin.dylib-entry.h
 #STUBS += ppc64le-darwin.macho-entry.h
 #STUBS += ppc64le-darwin.macho-fold.h
-STUBS += ppc64le-linux.elf-entry.h
-STUBS += ppc64le-linux.elf-fold.h
-STUBS += ppc64le-linux.kernel.vmlinux-head.h
-STUBS += ppc64le-linux.kernel.vmlinux.h
+#STUBS += ppc64le-linux.elf-entry.h
+#STUBS += ppc64le-linux.elf-fold.h
+#STUBS += ppc64le-linux.kernel.vmlinux-head.h
+#STUBS += ppc64le-linux.kernel.vmlinux.h
+
 #STUBS += thumb-eabi-linux.shlib-init.h
 endif
 
@@ -147,7 +150,7 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	#upx-stubtools-check-version 20130920
+	upx-stubtools-check-version 20130920
 	@echo "timestamp" > $@
 %/.tmp-stamp:
 	@mkdir -p $(dir $@)
@@ -231,12 +234,12 @@ tc.default.sstrip     = sstrip
 tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
-tc.default.m-ar       = ar
-tc.default.m-ld       = ld $(if $(tc_bfdname),-b $(tc_bfdname))
-tc.default.m-nm       = nm $(if $(tc_bfdname),--target=$(tc_bfdname))
-tc.default.m-objcopy  = objcopy $(if $(tc_bfdname),-F $(tc_bfdname))
-tc.default.m-objdump  = objdump $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
-tc.default.m-readelf  = readelf
+tc.default.m-ar       = multiarch-ar-2.17
+tc.default.m-ld       = multiarch-ld-2.17 $(if $(tc_bfdname),-b $(tc_bfdname))
+tc.default.m-nm       = multiarch-nm-2.17 $(if $(tc_bfdname),--target=$(tc_bfdname))
+tc.default.m-objcopy  = multiarch-objcopy-2.17 $(if $(tc_bfdname),-F $(tc_bfdname))
+tc.default.m-objdump  = multiarch-objdump-2.17 $(if $(tc_bfdname),-b $(tc_bfdname)) $(if $(tc_bfdarch),-m $(tc_bfdarch))
+tc.default.m-readelf  = multiarch-readelf-2.17
 
 # default binutils
 tc.default.ld         = $(call tc,m-ld)
@@ -322,7 +325,7 @@ tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 amd64-linux.elf%.h : tc_list = amd64-linux.elf default
 amd64-linux.elf%.h : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc  = gcc -m64 -nostdinc -MMD -MT $@
+tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
@@ -1217,13 +1220,12 @@ powerpc-darwin.macho%.h : tc_list = powerpc-linux.elf default
 powerpc-darwin.macho%.h : tc_bfdname = elf32-powerpc
 
 powerpc-darwin.macho-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin 
+	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
-	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin /usr/powerpc-linux-gnu/lib/libc.a /usr/lib/gcc-cross/powerpc-linux-gnu/4.8/libgcc.a
-#/usr/lib/gcc-cross/powerpc-linux-gnu/4.8/libgcc.a
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -1257,8 +1259,8 @@ powerpc-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 powerpc-linux.elf%.h : tc_list = powerpc-linux.elf default
 powerpc-linux.elf%.h : tc_bfdname = elf32-powerpc
 
-tc.powerpc-linux.elf.gcc  = gcc -m32 -mbig-endian -mtune=powerpc -nostdinc -MMD -MT $@
-tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
+tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mtune=powerpc -nostdinc -MMD -MT $@
+tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables   # -fno-stack-protector
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
@@ -1267,8 +1269,7 @@ powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc-linux.elf-fold.h : tmp/$$T.o tmp/powerpc-linux.elf-main.o $(srcdir)/src/$$T.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin /usr/powerpc-linux-gnu/lib/libc.a /usr/lib/gcc-cross/powerpc-linux-gnu/4.8/libgcc.a
-#/usr/lib/gcc/powerpc-linux-gnu/5/libgcc.a /usr/lib/powerpc-linux-gnu/libc.a
+	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -1350,7 +1351,9 @@ ppc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 ppc64le-linux.elf%.h : tc_list = ppc64le-linux.elf default
 ppc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
 
-tc.ppc64le-linux.elf.gcc  = gcc -m64 -mlittle-endian -mcpu=power8 -nostdinc -MMD -MT $@
+# Neither of these two compilers works!
+#tc.ppc64le-linux.elf.gcc  = powerpc64.970-linux-gcc-4.1.1 -m64 -mlittle-endian -nostdinc -MMD -MT $@
+#tc.ppc64le-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5   -m64 -mlittle-endian -nostdinc -MMD -MT $@
 tc.ppc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.ppc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 

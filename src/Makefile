@@ -10,7 +10,6 @@
 # dependencies on the default values of builtin variables,
 # then we cannot use builtin variables at all.
 MAKEFLAGS += -rR
-DEBUG=1
 
 .SUFFIXES:
 export SHELL = /bin/sh
