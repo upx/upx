@@ -123,13 +123,17 @@ STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
 
 # Need a UPX-standard compiler for ppc64le !
-#STUBS += ppc64le-darwin.dylib-entry.h
-#STUBS += ppc64le-darwin.macho-entry.h
+STUBS += ppc64le-darwin.dylib-entry.h
+STUBS += ppc64le-darwin.macho-entry.h
 #STUBS += ppc64le-darwin.macho-fold.h
-#STUBS += ppc64le-linux.elf-entry.h
+#  undefined reference to `_savegpr0_28' `_restgpr0_28' `_savegpr0_16' `_restgpr0_16' `_savegpr0_27' `_restgpr0_27'
+
+STUBS += ppc64le-linux.elf-entry.h
 #STUBS += ppc64le-linux.elf-fold.h
-#STUBS += ppc64le-linux.kernel.vmlinux-head.h
-#STUBS += ppc64le-linux.kernel.vmlinux.h
+#  SIGSEGV: bin-upx-20130920/multiarch-ld-2.17 -b elf64-powerpcle --strip-all -T ./src/ppc64le-linux.elf-fold.lds -Map tmp/ppc64le-linux.elf-fold.map tmp/ppc64le-linux.elf-fold.o tmp/ppc64le-linux.elf-main.o -o tmp/ppc64le-linux.elf-fold.bin
+
+STUBS += ppc64le-linux.kernel.vmlinux-head.h
+STUBS += ppc64le-linux.kernel.vmlinux.h
 
 #STUBS += thumb-eabi-linux.shlib-init.h
 endif
@@ -1351,9 +1355,7 @@ ppc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 ppc64le-linux.elf%.h : tc_list = ppc64le-linux.elf default
 ppc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
 
-# Neither of these two compilers works!
-#tc.ppc64le-linux.elf.gcc  = powerpc64.970-linux-gcc-4.1.1 -m64 -mlittle-endian -nostdinc -MMD -MT $@
-#tc.ppc64le-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5   -m64 -mlittle-endian -nostdinc -MMD -MT $@
+tc.ppc64le-linux.elf.gcc  = ppc64-linux-gnu-gcc   -m64 -mlittle-endian -nostdinc -MMD -MT $@
 tc.ppc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.ppc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
