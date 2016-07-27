@@ -371,6 +371,26 @@ __packed_struct(Mach_ppc_thread_state64)
     Word vrsave;    /* Vector Save Register */
 __packed_struct_end()
 
+template <class TMachITypes>
+__packed_struct(Mach_ppcle_thread_state64)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Xword Xword;
+
+    Xword srr0;    /* Instruction address register (PC; entry addr) */
+    Xword srr1;    /* Machine state register (supervisor) */
+    Xword  r0, r1, r2, r3, r4, r5, r6, r7;
+    Xword  r8, r9,r10,r11,r12,r13,r14,r15;
+    Xword r16,r17,r18,r19,r20,r21,r22,r23;
+    Xword r24,r25,r26,r27,r28,r29,r30,r31;
+
+    Word cr;        /* Condition register */  // FIXME: Xword?
+    Xword xer;      /* User's integer exception register */
+    Xword lr;       /* Link register */
+    Xword ctr;      /* Count register */
+
+    Word vrsave;    /* Vector Save Register */
+__packed_struct_end()
+
 template <class TMachITypes> __packed_struct(Mach_ARM64_thread_state)
     typedef typename TMachITypes::Xword Xword;
     typedef typename TMachITypes::Word Word;
@@ -457,6 +477,7 @@ struct MachClass_64
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
 
+    typedef N_Mach64::Mach_ppcle_thread_state64<MachITypes> Mach_ppcle_thread_state64;
     typedef N_Mach64::Mach_AMD64_thread_state<MachITypes> Mach_AMD64_thread_state;
     typedef N_Mach64::Mach_ARM64_thread_state<MachITypes> Mach_ARM64_thread_state;
 
@@ -537,6 +558,7 @@ typedef MachClass_LE64::Mach_linkedit_data_command   MachLE64_linkedit_data_comm
 typedef MachClass_LE64::Mach_uuid_command   MachLE64_uuid_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
+typedef MachClass_LE64::Mach_ppcle_thread_state64  Mach_ppcle_thread_state64;
 typedef MachClass_LE32::Mach_i386_thread_state Mach_i386_thread_state;
 typedef MachClass_LE64::Mach_AMD64_thread_state  Mach_AMD64_thread_state;
 typedef MachClass_LE64::Mach_ARM64_thread_state  Mach_ARM64_thread_state;
@@ -700,6 +722,39 @@ protected:
     Mach_thread_command threado;
 };
 
+class PackMachPPC64LE : public PackMachBase<MachClass_LE64>
+{
+    typedef PackMachBase<MachClass_LE64> super;
+
+public:
+    PackMachPPC64LE(InputFile *f);
+
+    virtual int getFormat() const { return UPX_F_MACH_PPC64LE; }
+    virtual const char *getName() const { return "Mach/ppc64LE"; }
+    virtual const char *getFullName(const options_t *) const { return "ppc64le-darwin.macho"; }
+
+protected:
+    virtual const int *getFilters() const;
+
+    virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual Linker* newLinker() const;
+    virtual void buildLoader(const Filter *ft);
+
+    __packed_struct(Mach_thread_command)
+        LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        LE32 cmdsize;        /* total size of this command */
+        LE32 flavor;
+        LE32 count;          /* sizeof(following_thread_state)/4 */
+        Mach_ppcle_thread_state64 state64;
+    #define WANT_MACH_THREAD_ENUM 1
+    #include "p_mach_enum.h"
+    __packed_struct_end()
+
+    Mach_thread_command threado;
+};
+
 class PackDylibPPC32 : public PackMachPPC32
 {
     typedef PackMachPPC32 super;
@@ -710,6 +765,22 @@ public:
     virtual int getFormat() const { return UPX_F_DYLIB_PPC32; }
     virtual const char *getName() const { return "Dylib/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.dylib"; }
+protected:
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
+    virtual void buildLoader(const Filter *ft);
+};
+
+class PackDylibPPC64LE : public PackMachPPC64LE
+{
+    typedef PackMachPPC64LE super;
+
+public:
+    PackDylibPPC64LE(InputFile *f);
+
+    virtual int getFormat() const { return UPX_F_DYLIB_PPC64LE; }
+    virtual const char *getName() const { return "Dylib/ppc64LE"; }
+    virtual const char *getFullName(const options_t *) const { return "ppc64le-darwin.dylib"; }
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader

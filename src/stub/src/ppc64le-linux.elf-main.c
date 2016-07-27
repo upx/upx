@@ -1,10 +1,10 @@
-/* powerpc-linux.elf-main.c -- stub loader for Linux ELF PowerPC32 executable
+/* ppc64le-linux.elf-main.c -- stub loader for Linux ELF PowerPC64LE xecutable
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2015 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2015 Laszlo Molnar
-   Copyright (C) 2000-2015 John F. Reiser
+   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2013 Laszlo Molnar
+   Copyright (C) 2000-2013 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -32,7 +32,6 @@
 
 #include "include/linux.h"
 
-
 /*************************************************************************
 // configuration section
 **************************************************************************/
@@ -41,7 +40,7 @@
 // it at an address different from it load address:  there must be no
 // static data, and no string constants.
 
-#define MAX_ELF_HDR 512  // Elf32_Ehdr + n*Elf32_Phdr must fit in this
+#define MAX_ELF_HDR 1024  // Elf64_Ehdr + n*Elf64_Phdr must fit in this
 
 
 /*************************************************************************
@@ -138,7 +137,7 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_decompress)((unsigned char *)xi->buf, h.sz_cpr,
+            int const j = (*f_decompress)((const unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
@@ -156,6 +155,7 @@ ERR_LAB
     }
 }
 
+#if 0
 static void
 upx_bzero(char *p, size_t len)
 {
@@ -164,10 +164,11 @@ upx_bzero(char *p, size_t len)
     } while (--len);
 }
 #define bzero upx_bzero
+#endif
 
 
 static void
-auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
+auxv_up(Elf64_auxv_t *av, unsigned type, unsigned const value)
 {
     if (av)
     for (;; ++av) {
@@ -196,7 +197,7 @@ auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
 // and mmap that much, to be sure that a kernel using exec-shield-randomize
 // won't place the first piece in a way that leaves no room for the rest.
 static unsigned long  // returns relocation constant
-xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
+xfind_pages(unsigned mflags, Elf64_Phdr const *phdr, int phnum,
     char **const p_brk
 )
 {
@@ -222,17 +223,17 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
     return (unsigned long)addr - lo;
 }
 
-static Elf32_Addr  // entry address
+static Elf64_Addr  // entry address
 do_xmap(
-    Elf32_Ehdr const *const ehdr,
+    Elf64_Ehdr const *const ehdr,
     Extent *const xi,
     int const fdi,
-    Elf32_auxv_t *const av,
+    Elf64_auxv_t *const av,
     f_expand *const f_decompress,
     f_unfilter *const f_unf
 )
 {
-    Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
+    Elf64_Phdr const *phdr = (Elf64_Phdr const *) (ehdr->e_phoff +
         (char const *)ehdr);
     char *v_brk;
     unsigned long const reloc = xfind_pages(
@@ -248,7 +249,7 @@ do_xmap(
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz +                  addr;
-        size_t frag  = (int)addr &~ PAGE_MASK;
+        size_t frag  = (long)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
         addr  += reloc;
@@ -267,9 +268,9 @@ do_xmap(
         //    bzero(addr, frag);  // fragment at lo end
         //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        if (PROT_WRITE & prot) {
-            bzero(mlen+addr, frag);  // fragment at hi end
-        }
+        /* if  (! (PROT_WRITE & prot))  {
+            	bzero(mlen+addr, frag);  // fragment at hi end
+	} */
         if (xi) {
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -295,15 +296,15 @@ ERR_LAB
 void *upx_main(
     struct l_info const *const li,
     size_t const sz_compressed,  // total length
-    Elf32_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+    Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     size_t const sz_ehdr,
     f_expand *const f_decompress,
     f_unfilter *const f_unf,
-    Elf32_auxv_t *const av
+    Elf64_auxv_t *const av
 )
 {
-    Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
-    Elf32_Addr entry;
+    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
+    Elf64_Addr entry;
 
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
@@ -318,13 +319,14 @@ void *upx_main(
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
 
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, AT_PHDR  , (unsigned)(1+(Elf32_Ehdr *)phdr->p_vaddr));
-    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
-    auxv_up(av, AT_ENTRY , (unsigned)ehdr->e_entry);
+    auxv_up(av, (unsigned ) AT_PHDR  , (long )(1+(Elf64_Ehdr *)phdr->p_vaddr));
+    auxv_up(av, (unsigned ) AT_PHNUM , ehdr->e_phnum);
+    auxv_up(av, (unsigned ) AT_ENTRY , (unsigned ) ehdr->e_entry);
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
     entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf);
+    auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;

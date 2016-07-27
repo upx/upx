@@ -213,6 +213,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if ((p = func(new PackVmlinuxPPC32(f), user)) != NULL)
         return p;
     delete p; p = NULL;
+    if ((p = func(new PackVmlinuxPPC64LE(f), user)) != NULL)
+        return p;
+    delete p; p = NULL;
     if ((p = func(new PackVmlinuxAMD64(f), user)) != NULL)
         return p;
     delete p; p = NULL;
@@ -276,6 +279,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
             return p;
         delete p; p = NULL;
+        if ((p = func(new PackLinuxElf64ppcle(f), user)) != NULL)
+            return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32mipsel(f), user)) != NULL)
             return p;
         delete p; p = NULL;
@@ -315,6 +321,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
 
     // Mach (MacOS X PowerPC)
     if ((p = func(new PackMachPPC32(f), user)) != NULL)
+        return p;
+    delete p; p = NULL;
+    if ((p = func(new PackMachPPC64LE(f), user)) != NULL)
         return p;
     delete p; p = NULL;
     if ((p = func(new PackMachI386(f), user)) != NULL)

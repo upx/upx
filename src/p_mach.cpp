@@ -123,6 +123,10 @@ PackDylibPPC32::PackDylibPPC32(InputFile *f) : super(f)
 {
     my_filetype = Mach_header::MH_DYLIB;
 }
+PackDylibPPC64LE::PackDylibPPC64LE(InputFile *f) : super(f)
+{
+    my_filetype = Mach_header::MH_DYLIB;
+}
 
 template <class T>
 const int *PackMachBase<T>::getCompressionMethods(int method, int level) const
@@ -147,7 +151,18 @@ PackMachPPC32::PackMachPPC32(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWE
         sizeof(Mach_ppc_thread_state)>>2, sizeof(threado))
 { }
 
+PackMachPPC64LE::PackMachPPC64LE(InputFile *f) : super(f, Mach_header::CPU_TYPE_POWERPC64LE,
+        Mach_header::MH_EXECUTE, Mach_thread_command::PPC_THREAD_STATE64,
+        sizeof(Mach_ppcle_thread_state64)>>2, sizeof(threado))
+{ }
+
 const int *PackMachPPC32::getFilters() const
+{
+    static const int filters[] = { 0xd0, FT_END };
+    return filters;
+}
+
+const int *PackMachPPC64LE::getFilters() const
 {
     static const int filters[] = { 0xd0, FT_END };
     return filters;
@@ -200,6 +215,11 @@ int const *PackMachARM64EL::getFilters() const
 Linker *PackMachPPC32::newLinker() const
 {
     return new ElfLinkerPpc32;
+}
+
+Linker *PackMachPPC64LE::newLinker() const
+{
+    return new ElfLinkerPpc64le;
 }
 
 Linker *PackMachI386::newLinker() const
@@ -408,6 +428,19 @@ PackMachPPC32::buildLoader(const Filter *ft)
         stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
 }
 
+static const
+#include "stub/ppc64le-darwin.macho-entry.h"
+static const
+#include "stub/ppc64le-darwin.macho-fold.h"
+
+void
+PackMachPPC64LE::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_ppc64le_darwin_macho_entry, sizeof(stub_ppc64le_darwin_macho_entry),
+        stub_ppc64le_darwin_macho_fold,  sizeof(stub_ppc64le_darwin_macho_fold),  ft );
+}
+
 void
 PackMachI386::buildLoader(const Filter *ft)
 {
@@ -461,6 +494,16 @@ PackDylibPPC32::buildLoader(const Filter *ft)
 {
     buildMachLoader(
         stub_powerpc_darwin_dylib_entry, sizeof(stub_powerpc_darwin_dylib_entry),
+        0,  0,  ft );
+}
+
+static const
+#include "stub/ppc64le-darwin.dylib-entry.h"
+void
+PackDylibPPC64LE::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_ppc64le_darwin_dylib_entry, sizeof(stub_ppc64le_darwin_dylib_entry),
         0,  0,  ft );
 }
 
@@ -519,7 +562,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 
 #undef PAGE_MASK64
 #undef PAGE_SIZE64
-#define PAGE_MASK64 (~(upx_uint64_t)0<<12)
+#define PAGE_MASK64 (~(upx_uint64_t)0<<16)
 #define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
 
 // At 2013-02-03 part of the source for codesign was
@@ -569,6 +612,54 @@ void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     fo->rewrite(&linfo, sizeof(linfo));
 }
 
+void PackMachPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    // offset of p_info in compressed file
+    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
+        + sizeof(segXHDR) + sizeof(secXHDR)
+        + sizeof(segTEXT) + sizeof(secTEXT)
+        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        overlay_offset += sizeof(uuid_cmd) + sizeof(linkitem);
+    }
+
+    super::pack4(fo, ft);
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
+    secTEXT.offset = overlay_offset - sizeof(linfo);
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
+    secXHDR.offset = overlay_offset - sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        secXHDR.offset -= sizeof(uuid_cmd) + sizeof(linkitem);
+    }
+    secXHDR.addr += secXHDR.offset;
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
+    segLINK.fileoff = foff1;
+    segLINK.vmaddr = segTEXT.vmaddr + foff1;
+    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
+    fo->seek(sizeof(mhdro), SEEK_SET);
+    fo->rewrite(&segZERO, sizeof(segZERO));
+    fo->rewrite(&segXHDR, sizeof(segXHDR));
+    fo->rewrite(&secXHDR, sizeof(secXHDR));
+    fo->rewrite(&segTEXT, sizeof(segTEXT));
+    fo->rewrite(&secTEXT, sizeof(secTEXT));
+    fo->rewrite(&segLINK, sizeof(segLINK));
+    fo->rewrite(&threado, sizeof(threado));
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        fo->rewrite(&uuid_cmd, sizeof(uuid_cmd));
+        fo->rewrite(&linkitem, sizeof(linkitem));
+    }
+    fo->rewrite(&linfo, sizeof(linfo));
+}
+
+#undef PAGE_MASK64
+#undef PAGE_SIZE64
+#define PAGE_MASK64 (~(upx_uint64_t)0<<12)
+#define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
 void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
@@ -943,6 +1034,11 @@ void PackDylibPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     pack4dylib(fo, ft, threado.state.srr0);
 }
 
+void PackDylibPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    pack4dylib(fo, ft, threado.state64.srr0);
+}
+
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
@@ -954,6 +1050,20 @@ void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     fo->write(&disp, sizeof(disp));
 
     threado.state.srr0 = len + segTEXT.vmaddr;  /* entry address */
+    super::pack3(fo, ft);
+}
+
+void PackMachPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE64 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + sizeof(disp);
+    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
+    fo->write(&disp, sizeof(disp));
+
+    threado.state64.srr0 = len + segTEXT.vmaddr;  /* entry address */
     super::pack3(fo, ft);
 }
 
@@ -1066,6 +1176,28 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + 4*sizeof(disp);
+
+    disp = prev_init_address;
+    fo->write(&disp, sizeof(disp));  // user .init_address
+
+    disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
+    fo->write(&disp, sizeof(disp));  // src offset(compressed __TEXT)
+
+    disp = len - disp - 3*sizeof(disp);
+    fo->write(&disp, sizeof(disp));  // length(compressed __TEXT)
+
+    unsigned const save_sz_mach_headers(sz_mach_headers);
+    sz_mach_headers = 0;
+    super::pack3(fo, ft);
+    sz_mach_headers = save_sz_mach_headers;
+}
+void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE64 disp;
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
@@ -1230,6 +1362,16 @@ void PackMachPPC32::pack1_setup_threado(OutputFile *const fo)
     threado.flavor = my_thread_flavor;
     threado.count =  my_thread_state_word_count;
     memset(&threado.state, 0, sizeof(threado.state));
+    fo->write(&threado, sizeof(threado));
+}
+
+void PackMachPPC64LE::pack1_setup_threado(OutputFile *const fo)
+{
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state64, 0, sizeof(threado.state64));
     fo->write(&threado, sizeof(threado));
 }
 
@@ -1411,7 +1553,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(&bhdr, sizeof(bhdr));
     ph.u_len = get_te32(&bhdr.sz_unc);
     ph.c_len = get_te32(&bhdr.sz_cpr);
-    if (file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
+    if ((unsigned)file_size < ph.c_len || ph.c_len == 0 || ph.u_len == 0)
         throwCantUnpack("file header corrupted");
     ph.method = bhdr.b_method;
     ph.filter = bhdr.b_ftid;
@@ -1434,7 +1576,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         memcpy(&msegcmd[j], ptr, umin(sizeof(Mach_segment_command),
             ((Mach_segment_command const *)ptr)->cmdsize));
         ptr += (unsigned) ((Mach_segment_command const *)ptr)->cmdsize;
-        if ((ptr - (unsigned char const *)mhdr) > ph.u_len) {
+        if ((unsigned)(ptr - (unsigned char const *)mhdr) > ph.u_len) {
             throwCantUnpack("cmdsize");
         }
     }
@@ -1602,8 +1744,8 @@ unsigned PackMachFat::check_fat_head()
             throwUnknownExecutableFormat("size", 0);
         }
         if (mask & offset
-        ||  fi->st_size_orig() < (size + offset)
-        ||  fi->st_size_orig() <= offset) {  // redundant unless overflow
+        ||  (unsigned)fi->st_size_orig() < size + offset
+        ||  (unsigned)fi->st_size_orig() <= offset) {  // redundant unless overflow
             throwUnknownExecutableFormat("offset", 0);
         }
     }
@@ -1689,6 +1831,25 @@ void PackMachFat::pack(OutputFile *fo)
             }
             else if (hdr.filetype==Mach_header::MH_DYLIB) {
                 PackDylibPPC32 packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
+        } break;
+        case PackMachFat::CPU_TYPE_POWERPC64LE: {
+            typedef N_Mach::Mach_header<MachClass_LE64::MachITypes> Mach_header;
+            Mach_header hdr;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachPPC64LE packer(fi);
+                packer.initPackHeader();
+                packer.canPack();
+                packer.updatePackHeader();
+                packer.pack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibPPC64LE packer(fi);
                 packer.initPackHeader();
                 packer.canPack();
                 packer.updatePackHeader();
@@ -1781,6 +1942,23 @@ void PackMachFat::unpack(OutputFile *fo)
                 packer.unpack(fo);
             }
         } break;
+        case PackMachFat::CPU_TYPE_POWERPC64LE: {
+            N_Mach::Mach_header<MachClass_LE64::MachITypes> hdr;
+            typedef N_Mach::Mach_header<MachClass_LE64::MachITypes> Mach_header;
+            fi->readx(&hdr, sizeof(hdr));
+            if (hdr.filetype==Mach_header::MH_EXECUTE) {
+                PackMachPPC64LE packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+            else if (hdr.filetype==Mach_header::MH_DYLIB) {
+                PackDylibPPC64LE packer(fi);
+                packer.initPackHeader();
+                packer.canUnpack();
+                packer.unpack(fo);
+            }
+        } break;
         }  // switch cputype
         fat_head.arch[j].offset = base;
         length = (fo ? fo->unset_extent() : 0);
@@ -1830,6 +2008,14 @@ bool PackMachFat::canPack()
             PackMachPPC32 packer(fi);
             if (!packer.canPack()) {
                 PackDylibPPC32 pack2r(fi);
+                if (!pack2r.canPack())
+                    return false;
+            }
+        } break;
+        case PackMachFat::CPU_TYPE_POWERPC64LE: {
+            PackMachPPC64LE packer(fi);
+            if (!packer.canPack()) {
+                PackDylibPPC64LE pack2r(fi);
                 if (!pack2r.canPack())
                     return false;
             }
@@ -1888,6 +2074,18 @@ int PackMachFat::canUnpack()
             PackMachPPC32 packer(fi);
             if (!packer.canUnpack()) {
                 PackDylibPPC32 pack2r(fi);
+                if (!pack2r.canUnpack())
+                    return 0;
+                else
+                    ph.format = pack2r.getFormat(); // FIXME: copy entire PackHeader
+            }
+            else
+                ph.format = packer.getFormat(); // FIXME: copy entire PackHeader
+        } break;
+        case PackMachFat::CPU_TYPE_POWERPC64LE: {
+            PackMachPPC64LE packer(fi);
+            if (!packer.canUnpack()) {
+                PackDylibPPC64LE pack2r(fi);
                 if (!pack2r.canUnpack())
                     return 0;
                 else

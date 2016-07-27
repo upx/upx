@@ -182,7 +182,7 @@ void ElfLinker::init(const void *pdata_v, int plen)
         input = new upx_byte[inputlen + 1];
         memcpy(input, pdata, inputlen);
     }
-    input[inputlen] = 0; // NUL terminate
+    input[2 * inputlen] = 0; // NUL terminate
 
     output = new upx_byte[inputlen];
     outputlen = 0;
@@ -880,6 +880,49 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location,
         set_be32(location, (0xffff0003 & get_be32(location)) +
             (0x0000fffc & value));
     }
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location,
+                                upx_uint64_t value, const char *type)
+{
+    if (strncmp(type, "R_PPC64_REL", 11))
+        return super::relocate1(rel, location, value, type);
+    type += 11;
+
+    bool range_check = false;
+    if (strncmp(type, "PC", 2) == 0)
+    {
+        type += 2;
+        range_check = true;
+    }
+
+    /* value will hold relative displacement */
+    value -= rel->section->offset + rel->offset;
+
+    if (strcmp(type, "8") == 0)
+    {
+#if (ACC_CC_PGI)
+        int displ = * (signed char *) location + (int) value; // CBUG
+#else
+        int displ = (signed char) *location + (int) value;
+#endif
+        if (range_check && (displ < -128 || displ > 127))
+            internal_error("target out of range (%d) in reloc %s:%x\n",
+                           displ, rel->section->name, rel->offset);
+        *location += value;
+    }
+    else if (strncmp(type, "14", 2) == 0)  // for "32" and "32S"
+        set_le16(location, get_le16(location) + value);
+    else if (strcmp(type, "16") == 0)
+        set_le16(location, get_le16(location) + value);
+    else if (strncmp(type, "24", 2) == 0)  // for "32" and "32S"
+        set_le24(location, get_le24(location) + value);
+    else if (strncmp(type, "32", 2) == 0)  // for "32" and "32S"
+        set_le32(location, get_le32(location) + value);
+    else if (strcmp(type, "64") == 0)
+        set_le64(location, get_le64(location) + value);
     else
         super::relocate1(rel, location, value, type);
 }

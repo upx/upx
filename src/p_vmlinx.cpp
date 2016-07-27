@@ -792,6 +792,12 @@ const int *PackVmlinuxPPC32::getCompressionMethods(int method, int level) const
     return Packer::getDefaultCompressionMethods_le32(method, level);
 }
 
+const int *PackVmlinuxPPC64LE::getCompressionMethods(int method, int level) const
+{
+    // No real dependency on LE32.
+    return Packer::getDefaultCompressionMethods_le32(method, level);
+}
+
 
 const int *PackVmlinuxARMEL::getFilters() const
 {
@@ -806,6 +812,12 @@ const int *PackVmlinuxARMEB::getFilters() const
 }
 
 const int *PackVmlinuxPPC32::getFilters() const
+{
+    static const int fd0[] = { 0xd0, FT_END };
+    return fd0;
+}
+
+const int *PackVmlinuxPPC64LE::getFilters() const
 {
     static const int fd0[] = { 0xd0, FT_END };
     return fd0;
@@ -913,6 +925,11 @@ bool PackVmlinuxPPC32::is_valid_e_entry(Addr e_entry)
     return 0xc0000000==e_entry;
 }
 
+bool PackVmlinuxPPC64LE::is_valid_e_entry(Addr e_entry)
+{
+    return 0xc0000000==e_entry;
+}
+
 Linker* PackVmlinuxARMEL::newLinker() const
 {
     return new ElfLinkerArmLE;
@@ -928,6 +945,10 @@ Linker* PackVmlinuxPPC32::newLinker() const
     return new ElfLinkerPpc32;
 }
 
+Linker* PackVmlinuxPPC64LE::newLinker() const
+{
+    return new ElfLinkerPpc64le;
+}
 
 
 void PackVmlinuxARMEL::buildLoader(const Filter *ft)
@@ -978,6 +999,33 @@ void PackVmlinuxPPC32::buildLoader(const Filter *ft)
 {
     // prepare loader
     initLoader(stub_powerpc_linux_kernel_vmlinux, sizeof(stub_powerpc_linux_kernel_vmlinux));
+    addLoader("LINUX000", NULL);
+    if (ft->id) {
+        assert(ft->calls > 0);
+        addLoader("LINUX010", NULL);
+    }
+    addLoader("LINUX020", NULL);
+    if (ft->id) {
+        addFilter32(ft->id);
+    }
+    addLoader("LINUX030", NULL);
+         if (ph.method == M_NRV2E_LE32) addLoader("NRV2E,NRV_TAIL", NULL);
+    else if (ph.method == M_NRV2B_LE32) addLoader("NRV2B,NRV_TAIL", NULL);
+    else if (ph.method == M_NRV2D_LE32) addLoader("NRV2D,NRV_TAIL", NULL);
+    else if (M_IS_LZMA(ph.method))   addLoader("LZMA_ELF00,LZMA_DEC10,LZMA_DEC30", NULL);
+    else throwBadLoader();
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+
+    addLoader("IDENTSTR,UPX1HEAD", NULL);
+}
+
+static const
+#include "stub/ppc64le-linux.kernel.vmlinux.h"
+void PackVmlinuxPPC64LE::buildLoader(const Filter *ft)
+{
+    // prepare loader
+    initLoader(stub_ppc64le_linux_kernel_vmlinux, sizeof(stub_ppc64le_linux_kernel_vmlinux));
     addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
@@ -1067,6 +1115,14 @@ void PackVmlinuxPPC32::defineDecompressorSymbols()
     // linker->defineSymbol("METHOD", ph.method);
 }
 
+void PackVmlinuxPPC64LE::defineDecompressorSymbols()
+{
+    super::defineDecompressorSymbols();
+    // linker->defineSymbol(  "COMPRESSED_LENGTH", ph.c_len);
+    // linker->defineSymbol("UNCOMPRESSED_LENGTH", ph.u_len);
+    // linker->defineSymbol("METHOD", ph.method);
+}
+
 void PackVmlinuxI386::defineDecompressorSymbols()
 {
     super::defineDecompressorSymbols();
@@ -1136,6 +1192,14 @@ unsigned PackVmlinuxPPC32::write_vmlinux_head(
     return 0;
 }
 
+unsigned PackVmlinuxPPC64LE::write_vmlinux_head(
+    OutputFile * /*const fo*/,
+    Shdr * /*const stxt*/
+)
+{
+    return 0;
+}
+
 
 bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
@@ -1169,6 +1233,21 @@ bool PackVmlinuxPPC32::has_valid_vmlinux_head()
 {
     TE32 buf[2];
     fi->seek(p_text->sh_offset + sizeof(stub_powerpc_linux_kernel_vmlinux_head) -8, SEEK_SET);
+    fi->readx(buf, sizeof(buf));
+    //unsigned const word0 = buf[0];
+    unsigned const word1 = buf[1];
+    if (0xeb==(word1>>24)
+    &&  (0x00ffffff& word1)==(0u - 1 + ((3+ ph.c_len)>>2))) {
+        return true;
+    }
+    return false;
+}
+
+#include "stub/ppc64le-linux.kernel.vmlinux-head.h"
+bool PackVmlinuxPPC64LE::has_valid_vmlinux_head()
+{
+    TE64 buf[2];
+    fi->seek(p_text->sh_offset + sizeof(stub_ppc64le_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];

@@ -904,6 +904,9 @@
 #elif defined(__IAR_SYSTEMS_ICC__) && defined(__ICC430__)
 #  define ACC_ARCH_MSP430           1
 #  define ACC_INFO_ARCH             "msp430"
+#elif defined(__powerpc64__) || defined(__powerpc64le) 
+#  define ACC_ARCH_POWERPC64        1
+#  define ACC_INFO_ARCH             "powerpc64"
 #elif defined(__powerpc__) || defined(__powerpc) || defined(__ppc__) || defined(__PPC__) || defined(_M_PPC) || defined(_ARCH_PPC) || defined(_ARCH_PWR)
 #  define ACC_ARCH_POWERPC          1
 #  define ACC_INFO_ARCH             "powerpc"

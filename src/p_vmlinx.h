@@ -191,6 +191,30 @@ protected:
     );
 };
 
+class PackVmlinuxPPC64LE : public PackVmlinuxBase<ElfClass_LE64>
+{
+    typedef PackVmlinuxBase<ElfClass_LE64> super;
+public:
+    PackVmlinuxPPC64LE(InputFile *f) : super(f, Ehdr::EM_PPC64,
+        Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "_vmlinux_start") { }
+    virtual int getFormat() const { return UPX_F_VMLINUX_PPC64LE; }
+    virtual const char *getName() const { return "ppc64LE"; }
+    virtual const char *getFullName(const options_t *) const { return "ppc64le-linux.kernel.vmlinux"; }
+    virtual const int *getCompressionMethods(int method, int level) const;
+    virtual const int *getFilters() const;
+
+protected:
+    virtual void buildLoader(const Filter *ft);
+    virtual void defineDecompressorSymbols();
+    virtual Linker* newLinker() const;
+    virtual bool is_valid_e_entry(Addr);
+    virtual bool has_valid_vmlinux_head();
+    virtual unsigned write_vmlinux_head(
+        OutputFile *const fo,
+        Shdr *const stxt
+    );
+};
+
 
 class PackVmlinuxAMD64 : public PackVmlinuxBase<ElfClass_LE64>
 {

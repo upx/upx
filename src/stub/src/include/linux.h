@@ -90,15 +90,15 @@ struct timespec {
 
 // misc constants
 
-#if defined(__amd64__) || defined(__powerpc64__)
+#if defined(__mips__) || defined(__powerpc64__)
+#define PAGE_MASK       (~0ul<<16)   // discards the offset, keeps the page
+#define PAGE_SIZE       ( 1ul<<16)
+#elif defined(__amd64__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
 #elif defined(__i386__) || defined(__powerpc__) || defined(__arm__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
-#elif defined(__mips__)
-#define PAGE_MASK       (~0ul<<16)   // discards the offset, keeps the page
-#define PAGE_SIZE       ( 1ul<<16)
 #endif
 
 #define SEEK_SET        0

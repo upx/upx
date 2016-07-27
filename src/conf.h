@@ -519,6 +519,11 @@ private:
 #define UPX_F_LINUX_ELF32_MIPSEB 137
 #define UPX_F_DYLIB_PPC32       138
 
+#define UPX_F_MACH_PPC64LE      140
+#define UPX_F_LINUX_ELFPPC64LE  141
+#define UPX_F_VMLINUX_PPC64LE   142
+#define UPX_F_DYLIB_PPC64LE     143
+
 
 // compression methods
 #define M_ALL           (-1)

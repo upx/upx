@@ -66,7 +66,7 @@ void Packer::assertPacker() const
     assert(getFormat() <= 255);
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
-    assert(strlen(getName()) <= 13);
+    assert(strlen(getName()) <= 15);
     // info: 32 is limit for show_all_packers() in help.cpp
     assert(strlen(getFullName(opt)) <= 28);
     assert(strlen(getFullName(NULL)) <= 28);

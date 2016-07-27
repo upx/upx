@@ -1,10 +1,10 @@
-/* powerpc-darwin.macho-main.c -- loader stub for Mach-o PowerPC32
+/* ppc64le-darwin.macho-main.c -- loader stub for Mach-o PowerPC64LE
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2015 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2015 Laszlo Molnar
-   Copyright (C) 2000-2015 John F. Reiser
+   Copyright (C) 1996-2013 Markus Franz Xaver Johannes Oberhumer
+   Copyright (C) 1996-2013 Laszlo Molnar
+   Copyright (C) 2000-2013 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -159,7 +159,7 @@ ERR_LAB
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
             nrv_uint out_len = h.sz_unc;  // EOF for lzma
-            int const j = (*f_decompress)((unsigned char *)xi->buf, h.sz_cpr,
+            int const j = (*f_decompress)((const unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
                 err_exit(7);
@@ -283,20 +283,20 @@ typedef struct {
     unsigned mq;        /* MQ register (601 only) */
 
     unsigned vrsave;    /* Vector Save Register */
-} Mach_ppc_thread_state;
+} Mach_ppcle_thread_state64;
 
 typedef struct {
     unsigned cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
     unsigned cmdsize;        /* total size of this command */
     unsigned flavor;
     unsigned count;          /* sizeof(following_thread_state)/4 */
-    Mach_ppc_thread_state state;
+    Mach_ppcle_thread_state64 state;
 } Mach_thread_command;
         enum e6 {
             PPC_THREAD_STATE = 1
         };
         enum e7 {
-            PPC_THREAD_STATE_COUNT = sizeof(Mach_ppc_thread_state)/4
+            PPC_THREAD_STATE_COUNT = sizeof(Mach_ppcle_thread_state64)/4
         };
 
 typedef union {
@@ -318,7 +318,7 @@ typedef union {
 extern char *mmap(char *, size_t, unsigned, unsigned, int, off_t);
 ssize_t pread(int, void *, size_t, off_t);
 
-static Mach_ppc_thread_state const *
+static Mach_ppcle_thread_state64 const *
 do_xmap(
     Mach_header const *const mhdr,
     off_t const fat_offset,
@@ -330,7 +330,7 @@ do_xmap(
 )
 {
     Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
-    Mach_ppc_thread_state const *entry = 0;
+    Mach_ppcle_thread_state64 const *entry = 0;
     unsigned j;
 
     for ( j=0; j < mhdr->ncmds; ++j,
@@ -338,9 +338,9 @@ do_xmap(
     ) if (LC_SEGMENT==sc->cmd) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
-        char  *addr = xo.buf  =                 (char *)sc->vmaddr;
+        char  *addr = xo.buf  =                 (char *)(long)sc->vmaddr;
         char *haddr =           sc->vmsize +                  addr;
-        size_t frag = (int)addr &~ PAGE_MASK;
+        size_t frag = (long)addr &~ PAGE_MASK;
         addr -= frag;
         mlen += frag;
 
@@ -387,7 +387,7 @@ ERR_LAB
 //
 **************************************************************************/
 
-Mach_ppc_thread_state const *
+Mach_ppcle_thread_state64 const *
 upx_main(
     struct l_info const *const li,
     size_t volatile sz_compressed,  // total length
@@ -398,7 +398,7 @@ upx_main(
     Mach_header **const mhdrpp  // Out: *mhdrpp= &real Mach_header
 )
 {
-    Mach_ppc_thread_state const *entry;
+    Mach_ppcle_thread_state64 const *entry;
     off_t fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info

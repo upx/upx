@@ -355,6 +355,8 @@ class PackLinuxElf64Le : public PackLinuxElf64
     typedef PackLinuxElf64 super;
 protected:
     PackLinuxElf64Le(InputFile *f) : super(f) {
+	lg2_page=16;
+        page_size=1u<<lg2_page;
         bele = &N_BELE_RTP::le_policy;
         PackLinuxElf64help1(f);
     }
@@ -400,6 +402,29 @@ public:
     virtual const char *getFullName(const options_t *) const { return "powerpc-linux.elf"; }
     virtual const int *getFilters() const;
 protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
+};
+
+/*************************************************************************
+// linux/elf64ppcle
+**************************************************************************/
+
+class PackLinuxElf64ppcle : public PackLinuxElf64Le
+{
+    typedef PackLinuxElf64Le super;
+public:
+    PackLinuxElf64ppcle(InputFile *f);
+    virtual ~PackLinuxElf64ppcle();
+    virtual int getFormat() const { return UPX_F_LINUX_ELFPPC64LE; }
+    virtual const char *getName() const { return "ElfPPC64LE"; }
+    virtual const char *getFullName(const options_t *) const { return "ppc64le-linux.elf"; }
+    virtual const int *getFilters() const;
+protected:
+    unsigned lg2_page;  // log2(PAGE_SIZE)
+    unsigned page_size;  // 1u<<lg2_page
+    virtual bool canPack();
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;

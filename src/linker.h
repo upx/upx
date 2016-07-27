@@ -241,6 +241,14 @@ protected:
                            upx_uint64_t value, const char *type);
 };
 
+class ElfLinkerPpc64le : public ElfLinker
+{
+    typedef ElfLinker super;
+protected:
+    virtual void relocate1(const Relocation *, upx_byte *location,
+                           upx_uint64_t value, const char *type);
+};
+
 
 class ElfLinkerX86 : public ElfLinker
 {
