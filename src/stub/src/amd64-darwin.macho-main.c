@@ -538,7 +538,7 @@ ERR_LAB
         else if (xi) { // cleanup if decompressor overrun crosses page boundary
             mlen = ~PAGE_MASK & (3+ mlen);
             if (mlen<=3) { // page fragment was overrun buffer only
-                munmap(addr, mlen);
+                munmap((char *)addr, mlen);
             }
         }
     }
