@@ -184,23 +184,25 @@ void ElfLinker::init(const void *pdata_v, int plen)
     }
     input[inputlen] = 0; // NUL terminate
 
-    output = new upx_byte[inputlen];
+    output = new upx_byte[inputlen ? inputlen : 0x4000];
     outputlen = 0;
 
-    int pos = find(input, inputlen, "Sections:\n", 10);
-    assert(pos != -1);
-    char *psections = (char *) input + pos;
+    if ((int)strlen("Sections:\n" "SYMBOL TABLE:\n" "RELOCATION RECORDS FOR ") < inputlen) {
+        int pos = find(input, inputlen, "Sections:\n", 10);
+        assert(pos != -1);
+        char *psections = (char *) input + pos;
 
-    char *psymbols = strstr(psections, "SYMBOL TABLE:\n");
-    assert(psymbols != NULL);
+        char *psymbols = strstr(psections, "SYMBOL TABLE:\n");
+        assert(psymbols != NULL);
 
-    char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR ");
-    assert(prelocs != NULL);
+        char *prelocs = strstr(psymbols, "RELOCATION RECORDS FOR ");
+        assert(prelocs != NULL);
 
-    preprocessSections(psections, psymbols);
-    preprocessSymbols(psymbols, prelocs);
-    preprocessRelocations(prelocs, (char*) input + inputlen);
-    addLoader("*UND*");
+        preprocessSections(psections, psymbols);
+        preprocessSymbols(psymbols, prelocs);
+        preprocessRelocations(prelocs, (char*) input + inputlen);
+        addLoader("*UND*");
+    }
 }
 
 void ElfLinker::preprocessSections(char *start, char *end)
