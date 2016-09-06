@@ -59,8 +59,9 @@
     enum { // flags
         MH_NOUNDEFS = 1,
         MH_DYLDLINK = 4,    /* code signing demands this */
+        MH_BINDATLOAD = 0x8,   // DT_BIND_NOW
         MH_TWOLEVEL = 0x80,
-        MH_PIE      = 0x200000
+        MH_PIE      = 0x200000   // ASLR
     };
 #endif  /*}*/
 

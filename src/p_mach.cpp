@@ -53,6 +53,8 @@ static const
 #include "stub/arm-darwin.macho-entry.h"
 static const
 #include "stub/arm-darwin.macho-fold.h"
+static const
+#include "stub/amd64-darwin.macho-upxmain.h"
 
 static const
 #include "stub/arm64-darwin.macho-entry.h"
@@ -455,9 +457,17 @@ PackMachI386::buildLoader(const Filter *ft)
 void
 PackMachAMD64::buildLoader(const Filter *ft)
 {
-    buildMachLoader(
-        stub_amd64_darwin_macho_entry, sizeof(stub_amd64_darwin_macho_entry),
-        stub_amd64_darwin_macho_fold,  sizeof(stub_amd64_darwin_macho_fold),  ft );
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        initLoader(NULL, 0);
+        linker->addSection("UPXMAIN", stub_amd64_darwin_macho_upxmain_exe,
+            sizeof(stub_amd64_darwin_macho_upxmain_exe), 0);
+        addLoader("UPXMAIN", NULL);
+    }
+    else {
+        buildMachLoader(
+            stub_amd64_darwin_macho_entry, sizeof(stub_amd64_darwin_macho_entry),
+            stub_amd64_darwin_macho_fold,  sizeof(stub_amd64_darwin_macho_fold),  ft );
+    }
 }
 
 void
@@ -1689,7 +1699,12 @@ bool PackMachBase<T>::canPack()
     msegcmd = new Mach_segment_command[ncmds];
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
-        msegcmd[j] = *(Mach_segment_command const *)ptr;
+        if (lc_seg == *(unsigned const *)ptr) {
+            msegcmd[j] = *(Mach_segment_command const *)ptr;
+        }
+        else {
+            memcpy(&msegcmd[j], ptr, 2*sizeof(unsigned)); // cmd and size
+        }
         switch (((Mach_uuid_command const *)ptr)->cmd) {
         default: break;
         case Mach_segment_command::LC_UUID: {

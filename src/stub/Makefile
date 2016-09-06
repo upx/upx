@@ -51,6 +51,7 @@ ifndef STUBS
 STUBS += amd64-darwin.dylib-entry.h
 STUBS += amd64-darwin.macho-entry.h
 STUBS += amd64-darwin.macho-fold.h
+STUBS += amd64-darwin.macho-upxmain.h
 STUBS += amd64-linux.elf-entry.h
 STUBS += amd64-linux.elf-fold.h
 STUBS += amd64-linux.kernel.vmlinux-head.h
@@ -313,6 +314,9 @@ amd64-darwin.macho-fold.h : tmp/$$T.o tmp/amd64-darwin.macho-main.o
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+amd64-darwin.macho-upxmain.h: amd64-darwin.macho-upxmain.exe
+	$(call tc,bin2h) $< $@
+	
 tmp/amd64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
