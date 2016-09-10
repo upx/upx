@@ -47,6 +47,11 @@ __packed_struct(Mach_fat_arch)
     BE32 align;  /* shift count; log base 2 */
 __packed_struct_end()
 
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t data[2];  // because cmdsize >= 16
+} Mach_command;  // generic prefix
 
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
