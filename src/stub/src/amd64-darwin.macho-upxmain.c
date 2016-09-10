@@ -29,7 +29,8 @@
    <jreiser@users.sourceforge.net>
  */
 
-
+#include <stdio.h>
+#include <stdlib.h>
 #include "include/darwin.h"
 
 #ifndef DEBUG  /*{*/
@@ -135,10 +136,10 @@ heximal(unsigned long x, char *ptr, int n)
 }
 
 
-#define DPRINTF(a) dprintf a
+#define DPRINTF(a) my_printf a
 
 static int
-dprintf(char const *fmt, ...)
+my_printf(char const *fmt, ...)
 {
     char c;
     int n= 0;
@@ -397,11 +398,13 @@ typedef struct {
     unsigned cmdsize;
 } Mach_load_command;
         enum e4 {
+            LC_REQ_DYLD      = 0x80000000,  // OR'ed ==> must not ignore
             LC_SEGMENT       = 0x1,
             LC_SEGMENT_64    = 0x19,
             LC_THREAD        = 0x4,
             LC_UNIXTHREAD    = 0x5,
-            LC_LOAD_DYLINKER = 0xe
+            LC_LOAD_DYLINKER = 0xe,
+            LC_MAIN          = (0x28|LC_REQ_DYLD)
         };
 
 typedef struct {
@@ -422,6 +425,27 @@ typedef struct {
             VM_PROT_WRITE = 2,
             VM_PROT_EXECUTE = 4
         };
+
+typedef struct {
+    char sectname[16];
+    char segname[16];
+    uint64_t addr;   /* memory address */
+    uint64_t size;   /* size in bytes */
+    unsigned offset; /* file offset */
+    unsigned align;  /* power of 2 */
+    unsigned reloff; /* file offset of relocation entries */
+    unsigned nreloc; /* number of relocation entries */
+    unsigned flags;  /* section type and attributes */
+    unsigned reserved1;  /* for offset or index */
+    unsigned reserved2;  /* for count or sizeof */
+} Mach_section_command;
+
+typedef struct {
+    uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
+    uint32_t cmdsize;  // 24
+    uint64_t entryoff;  // file offset of main() [expected in __TEXT]
+    uint64_t stacksize;  // non-default initial stack size
+} Mach_main_command;
 
 typedef struct {
     uint64_t rax, rbx, rcx, rdx;
@@ -469,7 +493,7 @@ DEBUG_STRCON(STR_mmap,
 DEBUG_STRCON(STR_do_xmap,
     "do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n")
 
-static Mach_AMD64_thread_state const *
+static uint64_t  // entry address
 do_xmap(
     Mach_header64 const *const mhdr,
     off_t const fat_offset,
@@ -481,7 +505,8 @@ do_xmap(
 )
 {
     Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
-    Mach_AMD64_thread_state const *entry = 0;
+    Mach_segment_command const *segTEXT = 0;
+    uint64_t entry = 0;
     unsigned j;
 
     DPRINTF((STR_do_xmap(),
@@ -514,6 +539,7 @@ do_xmap(
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
+                segTEXT = sc;
                 *mhdrpp = (Mach_header64 *)(void *)addr;
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
@@ -547,12 +573,17 @@ ERR_LAB
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = &thrc->state;
+            entry = thrc->rip;
+    }
+    else if (LC_MAIN==sc->cmd) {
+        entry = ((Mach_main_command const *)sc)->entryoff;
+        if (segTEXT->fileoff <= entry && entry < segTEXT->filesize) {
+            entry += segTEXT->vmaddr;
         }
+        // XXX FIXME TODO: if entry not in segTEXT
     }
     return entry;
 }
-
 
 /*************************************************************************
 // upx_main - called by our entry code
@@ -563,7 +594,7 @@ DEBUG_STRCON(STR_upx_main,
     "upx_main szc=%%x  f_dec=%%p  f_unf=%%p  "
     "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  mhdrpp=%%p\\n")
 
-Mach_AMD64_thread_state const *
+uint64_t // entry address
 upx_main(
     struct l_info const *const li,
     size_t volatile sz_compressed,  // total length
@@ -574,7 +605,7 @@ upx_main(
     Mach_header64 **const mhdrpp  // Out: *mhdrpp= &real Mach_header64
 )
 {
-    Mach_AMD64_thread_state const *entry;
+    uint64_t entry;
     off_t fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
@@ -636,25 +667,56 @@ ERR_LAB
     return entry;
 }
 
-f_expand *f_exp;
-f_unfilter *f_unf;
-void (*launch)(void const *, Mach_header64 **);
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t data[2];  // because cmdsize >= 16
+} Mach_command;  // generic prefix
 
-// Build on Mac OS X:
-//   gcc -o amd64-darwin.macho-upxmain.exe \
-//     -fPIC amd64-darwin.macho-upxmain.c -Wl,-pagezero_size,0xffff0000
+//
+// Build on Mac OS X: (where gcc is really clang)
+//   gcc -o amd64-darwin.macho-upxmain.exe -fno-stack-protector \
+//     -Os -fPIC amd64-darwin.macho-upxmain.c -Wl,-pagezero_size,0xffff0000 \
+//     -Wl,-no_pie -Wl,-no_uuid -Wl,-no_function_starts -Wl,-headerpad,0x400
 int
 main(int argc, char *argv[])
 {
     Mach_header64 *mhdrp;
-    unsigned long const base = 0xffff0000ul;
-    size_t const len = *(size_t *)(base - sizeof(size_t));
-    void const *const ptr = (void const *)(base - len);
+    Mach_header64 const *mhdr0 = (Mach_header64 const *)((~0ul<<16) & (unsigned long)&main);
+    Mach_command const *ptr = (Mach_command const *)(1+ mhdr0);
+    f_unfilter *f_unf;
+    f_expand *f_exp;
+    unsigned char const *payload;
+    size_t paysize;
+
+    unsigned j;
+    for (j=0; j < mhdr0->ncmds; ++j,
+            ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr))
+    if (LC_SEGMENT_64==ptr->cmd) {
+        Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
+//fprintf(stderr, "ptr=%p  segptr=%p\n", ptr, segptr);
+        if ((long)0x0000545845545f5ful == *(long const *)segptr->segname) { // "__TEXT"
+            Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
+            //if ((long)0x0000747865745f5ful == *(long const *)secptr->sectname) { // "__text"
+                f_unf = (f_unfilter *)(sizeof(unsigned short) + secptr->addr);
+                f_exp = (f_expand *)((char const *)f_unf + ((unsigned short *)f_unf)[-1]);
+//fprintf(stderr, "f_unf=%p  f_exp=%p\n", f_unf, f_exp);
+            //}
+        }
+        if ((long)0x415441445f585055ul == *(long const *)segptr->segname) { // "UPX_DATA"
+            payload = (unsigned char const *)(segptr->vmaddr);
+            paysize = segptr->filesize;
+//fprintf(stderr, "payload=%p  paysize=%lu\n", payload, paysize);
+        }
+    }
     char mhdr[2048];
-    void const *entry = upx_main((struct l_info const *)ptr, len,
-        (Mach_header64 *)&mhdr, sizeof(mhdr),
+//fprintf(stderr, "call upx_main(payload=%p  paysize=%lu  mhdr=%p  f_exp=%p  f_unf=%p  mhdrp@%p)\n",
+//payload, paysize, mhdr, f_exp, f_unf, &mhdrp);
+    uint64_t entry = upx_main((struct l_info const *)payload, paysize,
+        (Mach_header64 *)mhdr, sizeof(mhdr),
         f_exp, f_unf, &mhdrp);
-    launch(entry, &mhdrp);
+//fprintf(stderr, "return to launch\n");
+    //launch(entry, &mhdrp);
     return 0;
 }
 
