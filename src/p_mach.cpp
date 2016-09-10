@@ -825,21 +825,21 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 memcpy(&segLINK, segptr, sizeof(segLINK));
                 delta = offLINK - segLINK.fileoff;  // relocation constant
 
-                // Mach_command __LINKEDIT
-                // The contents remain the same, but at a different offset in the file
+                // The contents for __LINKEDIT remain the same,
+                // but move to a different offset in the file
                 fo->seek(offLINK, SEEK_SET);
                 fo->write(&stub_amd64_darwin_macho_upxmain_exe[segLINK.fileoff], segLINK.filesize);
-
-                // Update the __LINKEDIT header
-                segLINK.vmaddr += delta;
-                segLINK.fileoff = offLINK;
-                fo->seek((char const *)ptr1 - (char const *)ptr0, SEEK_SET);
-                fo->rewrite(&segLINK, sizeof(segLINK));
 
                 // Mach_segment_command for new segXHDR
                 segXHDR.cmdsize = sizeof(segXHDR);
                 segXHDR.nsects = 0;
+                fo->seek((char const *)ptr1 - (char const *)ptr0, SEEK_SET);
                 fo->rewrite(&segXHDR, sizeof(segXHDR));
+
+                // Update the __LINKEDIT header
+                segLINK.vmaddr += delta;
+                segLINK.fileoff = offLINK;
+                fo->rewrite(&segLINK, sizeof(segLINK));
             }
         } break;
         case Mach_segment_command::LC_DYLD_INFO_ONLY: {
@@ -1640,25 +1640,32 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
+        uint64_t next_va = 0;
+        uint64_t next_fpos = 0;
         for (unsigned j = 0; j < mhdro.ncmds -1; ++j, 
                 (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1)) {
                 Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
-            if (lc_seg == ptr1->cmd && !strcmp("__LINKEDIT", segptr->segname)) {
-                // Mach_command before __LINKEDIT
-                fo->write((1+ ptr0), (char const *)ptr1 - (char const *)(1+ ptr0));
-                // Mach_command __LINKEDIT
-                fo->write(segptr, segptr->cmdsize);
-                // LC_SEGMENT_64 for payload; steal space from -Wl,-headerpadsize
-                segXHDR.cmdsize = sizeof(segXHDR);
-                segXHDR.nsects = 0;
-                fo->write(&segXHDR, sizeof(segXHDR));
-                // Mach_command after __LINKEDIT
-                fo->write(ptr1->cmdsize + (char const *)ptr1, cmdsize - ptr1->cmdsize);
-                // Contents before __LINKEDIT; put non-headers at same offset in file
-                unsigned pos = sizeof(mhdro) + mhdro.sizeofcmds; // includes sizeof(segXHDR)
-                fo->write(&stub_amd64_darwin_macho_upxmain_exe[pos], segptr->fileoff - pos);
-                break;
+            if (lc_seg == ptr1->cmd) {
+                if (!strcmp("__LINKEDIT", segptr->segname)) {
+                    // Mach_command before __LINKEDIT
+                    fo->write((1+ ptr0), (char const *)ptr1 - (char const *)(1+ ptr0));
+                    // LC_SEGMENT_64 for UPX_DATA; steal space from -Wl,-headerpadsize
+                    segXHDR.cmdsize = sizeof(segXHDR);
+                    segXHDR.vmaddr = next_va;
+                    segXHDR.fileoff = PAGE_MASK & (~PAGE_MASK + next_fpos);
+                    segXHDR.maxprot = segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
+                    segXHDR.nsects = 0;
+                    fo->write(&segXHDR, sizeof(segXHDR));
+                    // Mach_command __LINKEDIT and after
+                    fo->write((char const *)ptr1, cmdsize);
+                    // Contents before __LINKEDIT; put non-headers at same offset in file
+                    unsigned pos = sizeof(mhdro) + mhdro.sizeofcmds; // includes sizeof(segXHDR)
+                    fo->write(&stub_amd64_darwin_macho_upxmain_exe[pos], segptr->fileoff - pos);
+                    break;
+                }
+                next_va = segptr->vmsize + segptr->vmaddr;
+                next_fpos = segptr->filesize + segptr->fileoff;
             }
         }
     }
