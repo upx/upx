@@ -424,6 +424,13 @@ typedef struct {
         };
 
 typedef struct {
+    uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
+    uint32_t cmdsize;  // 24
+    uint64_t entryoff;  // file offset of main() [expected in __TEXT]
+    uint64_t stacksize;  // non-default initial stack size
+} Mach_main_command;
+
+typedef struct {
     uint64_t rax, rbx, rcx, rdx;
     uint64_t rdi, rsi, rbp, rsp;
     uint64_t  r8,  r9, r10, r11;
