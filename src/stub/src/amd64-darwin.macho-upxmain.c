@@ -698,7 +698,8 @@ typedef struct {
 // Build on Mac OS X: (where gcc is really clang)
 //   gcc -o amd64-darwin.macho-upxmain.exe -fno-stack-protector \
 //     -Os -fPIC amd64-darwin.macho-upxmain.c -Wl,-pagezero_size,0xffff0000 \
-//     -Wl,-no_pie -Wl,-no_uuid -Wl,-no_function_starts -Wl,-headerpad,0x400
+//     -Wl,-no_pie -Wl,-no_uuid -Wl,-no_function_starts -Wl,-headerpad,0x400 \
+//     -Wl,-unexported_symbols_list amd64-darwin.macho-upxhide.txt
 int
 main(int argc, char *argv[])
 {
