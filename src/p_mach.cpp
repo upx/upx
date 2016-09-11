@@ -831,13 +831,14 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 fo->write(&stub_amd64_darwin_macho_upxmain_exe[segLINK.fileoff], segLINK.filesize);
 
                 // Mach_segment_command for new segXHDR
-                segXHDR.cmdsize = sizeof(segXHDR);
+                segXHDR.cmdsize = sizeof(segXHDR);  // no need for sections
+                segLINK.vmaddr = segXHDR.vmsize;
+                segXHDR.vmsize -= segXHDR.vmaddr;  // reserve for decompressed program
                 segXHDR.nsects = 0;
                 fo->seek((char const *)ptr1 - (char const *)ptr0, SEEK_SET);
                 fo->rewrite(&segXHDR, sizeof(segXHDR));
 
                 // Update the __LINKEDIT header
-                segLINK.vmaddr += delta;
                 segLINK.fileoff = offLINK;
                 fo->rewrite(&segLINK, sizeof(segLINK));
             }
@@ -1423,6 +1424,10 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     for (k = 0; k < n_segment; ++k) {
         if (lc_seg==msegcmd[k].cmd
         &&  0!=msegcmd[k].filesize ) {
+            uint64_t const hi_va = msegcmd[k].vmaddr + msegcmd[k].vmsize;
+            if (segXHDR.vmsize < hi_va) {
+                segXHDR.vmsize = hi_va;
+            }
             uip->ui_total_passes++;
             if (my_filetype==Mach_header::MH_DYLIB) {
                 break;
@@ -1565,6 +1570,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         mhdro.ncmds += 1;  // we add LC_SEGMENT{,_64} for UPX_DATA
         mhdro.sizeofcmds += sizeof(segXHDR);
         mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
+        mhdro.flags |= Mach_header::MH_BINDATLOAD;  // DT_BIND_NOW
     }
     fo->write(&mhdro, sizeof(mhdro));
 
@@ -1654,7 +1660,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     segXHDR.cmdsize = sizeof(segXHDR);
                     segXHDR.vmaddr = next_va;
                     segXHDR.fileoff = PAGE_MASK & (~PAGE_MASK + next_fpos);
-                    segXHDR.maxprot = segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
+                    segXHDR.maxprot = Mach_segment_command::VM_PROT_READ
+                                    | Mach_segment_command::VM_PROT_WRITE
+                                    | Mach_segment_command::VM_PROT_EXECUTE;
+                    segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
                     segXHDR.nsects = 0;
                     fo->write(&segXHDR, sizeof(segXHDR));
                     // Mach_command __LINKEDIT and after

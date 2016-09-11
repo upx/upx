@@ -573,7 +573,8 @@ ERR_LAB
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = thrc->rip;
+            entry = thrc->state.rip;
+        }
     }
     else if (LC_MAIN==sc->cmd) {
         entry = ((Mach_main_command const *)sc)->entryoff;
@@ -681,7 +682,6 @@ typedef struct {
 int
 main(int argc, char *argv[])
 {
-    Mach_header64 *mhdrp;
     Mach_header64 const *mhdr0 = (Mach_header64 const *)((~0ul<<16) & (unsigned long)&main);
     Mach_command const *ptr = (Mach_command const *)(1+ mhdr0);
     f_unfilter *f_unf;
@@ -711,12 +711,12 @@ main(int argc, char *argv[])
     }
     char mhdr[2048];
 //fprintf(stderr, "call upx_main(payload=%p  paysize=%lu  mhdr=%p  f_exp=%p  f_unf=%p  mhdrp@%p)\n",
-//payload, paysize, mhdr, f_exp, f_unf, &mhdrp);
+//payload, paysize, mhdr, f_exp, f_unf, &argv[-2]);
     uint64_t entry = upx_main((struct l_info const *)payload, paysize,
         (Mach_header64 *)mhdr, sizeof(mhdr),
-        f_exp, f_unf, &mhdrp);
+        f_exp, f_unf, (Mach_header64 **)&argv[-2]);
 //fprintf(stderr, "return to launch\n");
-    //launch(entry, &mhdrp);
+    asm("movq %2,-1*8(%1); lea -2*8(%1),%rsp; jmp *%0" : : "r" (entry), "r" (argv), "r" ((long)argc));
     return 0;
 }
 
