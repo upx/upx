@@ -716,7 +716,8 @@ main(int argc, char *argv[])
         (Mach_header64 *)mhdr, sizeof(mhdr),
         f_exp, f_unf, (Mach_header64 **)&argv[-2]);
 //fprintf(stderr, "return to launch\n");
-    asm("movq %2,-1*8(%1); lea -2*8(%1),%rsp; jmp *%0" : : "r" (entry), "r" (argv), "r" ((long)argc));
+    argv[-1] = argc;
+    asm("lea -2*8(%1),%rsp; jmp *%0" : : "r" (entry), "r" (argv));
     return 0;
 }
 
