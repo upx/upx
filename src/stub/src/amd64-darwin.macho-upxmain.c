@@ -482,6 +482,7 @@ typedef union {
 #define PROT_WRITE     2
 #define PROT_EXEC      4
 #define MAP_ANON_FD    -1
+#define MAP_FAILED ((void *) -1)
 
 extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
 ssize_t pread(int, void *, size_t, off_t);
@@ -506,6 +507,7 @@ do_xmap(
     Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
     Mach_segment_command const *segTEXT = 0;
     uint64_t entry = 0;
+    unsigned long base = 0;
     unsigned j;
 
     DPRINTF((STR_do_xmap(),
@@ -522,19 +524,24 @@ do_xmap(
         addr -= frag;
         mlen += frag;
 
-        if (0!=mlen) {
+        if (0!=mlen) { // In particular, omitted for __PAGEZERO
             // Decompressor can overrun the destination by 3 bytes.  [x86 only]
             size_t const mlen3 = mlen + (xi ? 3 : 0);
             unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-            unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+            unsigned const flags = ((addr + base) ? MAP_FIXED : 0) | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
             off_t const offset = sc->fileoff + fat_offset;
 
-            DPRINTF((STR_mmap(), addr, mlen3, prot, flags, fdm, offset));
-            if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset)) {
+            DPRINTF((STR_mmap(),       addr + base, mlen3, prot, flags, fdm, offset));
+            unsigned char *mapa = mmap(addr + base, mlen3, prot, flags, fdm, offset);
+            if (MAP_FAILED == mapa) {
                 err_exit(8);
             }
+            if (0 == (addr + base)) { // dyld auto-relocate
+                base = (unsigned long)mapa;  // relocation constant
+            }
+            addr = mapa;
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
@@ -572,15 +579,16 @@ ERR_LAB
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = thrc->state.rip;
+            entry = thrc->state.rip + base;  // JMP 
         }
     }
     else if (LC_MAIN==sc->cmd) {
         entry = ((Mach_main_command const *)sc)->entryoff;
         if (segTEXT->fileoff <= entry && entry < segTEXT->filesize) {
-            entry += segTEXT->vmaddr;
+            entry += segTEXT->vmaddr;  // CALL
         }
-        // XXX FIXME TODO: if entry not in segTEXT
+        // XXX FIXME TODO: if entry not in segTEXT?
+        // XXX FIXME TODO: LC_MAIN is a CALL; LC_*THREAD is a JMP
     }
     return entry;
 }
