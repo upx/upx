@@ -485,8 +485,7 @@ typedef union {
 
 extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
 ssize_t pread(int, void *, size_t, off_t);
-#define bswap(a,b) /*EMPTY*/
-//extern void bswap(void *, unsigned);
+extern void bswap(void *, unsigned);
 
 DEBUG_STRCON(STR_mmap,
     "mmap  addr=%%p  len=%%p  prot=%%x  flags=%%x  fd=%%d  off=%%p\\n");
@@ -586,6 +585,20 @@ ERR_LAB
     return entry;
 }
 
+static off_t
+fat_find(Fat_header *fh) // *fh suffers bswap()
+{
+    Fat_arch *fa = (Fat_arch *)(1+ fh);
+    bswap(fh, sizeof(*fh) + (fh->nfat_arch>>24)*sizeof(*fa));
+    unsigned j;
+    for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
+        if (CPU_TYPE_AMD64==fa->cputype) {
+            return fa->offset;  // should not be 0 because of header
+        }
+    }
+    return 0;
+}
+
 /*************************************************************************
 // upx_main - called by our entry code
 //
@@ -637,28 +650,27 @@ upx_main(
         if (0 > fdi) {
             err_exit(18);
         }
-fat:
-        if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
+        for (;;) { // possibly 2 times for 'fat' binary
+            if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
 ERR_LAB
-            err_exit(19);
-        }
-        switch (mhdr->magic) {
-        case MH_MAGIC: break;
-        case MH_MAGIC64: break;
-        case FAT_CIGAM:
-        case FAT_MAGIC: {
-            // stupid Apple: waste code and a page fault on EVERY execve
-            Fat_header *const fh = (Fat_header *)mhdr;
-            Fat_arch *fa = (Fat_arch *)(1+ fh);
-            bswap(fh, sizeof(*fh) + (fh->nfat_arch>>24)*sizeof(*fa));
-            for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
-                if (CPU_TYPE_AMD64==fa->cputype) {
-                    fat_offset= fa->offset;
-                    goto fat;
-                }
+                err_exit(19);
             }
-        } break;
-        } // switch
+            switch (mhdr->magic) {
+            case MH_MAGIC: break;  // i686 on x86_64 ?
+            case MH_MAGIC64: break;
+
+            case FAT_CIGAM:
+            case FAT_MAGIC: {
+                // stupid Apple: waste code and a page fault on EVERY execve
+                fat_offset = fat_find((Fat_header *)mhdr);
+                if (fat_offset) {
+                    continue;  // the 'for' loop
+                }
+                err_exit(20);  // no other choice
+            } break;
+            } // switch
+            break;
+        }
         entry = do_xmap(mhdr, fat_offset, 0, fdi, 0, 0, 0);
         close(fdi);
         break;
@@ -699,7 +711,7 @@ main(int argc, char *argv[])
             Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
             //if ((long)0x0000747865745f5ful == *(long const *)secptr->sectname) { // "__text"
                 f_unf = (f_unfilter *)(sizeof(unsigned short) + secptr->addr);
-                f_exp = (f_expand *)((char const *)f_unf + ((unsigned short *)f_unf)[-1]);
+                f_exp = (f_expand *)(*(unsigned short *)secptr->addr + secptr->addr);
 //fprintf(stderr, "f_unf=%p  f_exp=%p\n", f_unf, f_exp);
             //}
         }
@@ -716,8 +728,8 @@ main(int argc, char *argv[])
         (Mach_header64 *)mhdr, sizeof(mhdr),
         f_exp, f_unf, (Mach_header64 **)&argv[-2]);
 //fprintf(stderr, "return to launch\n");
-    argv[-1] = argc;
-    asm("lea -2*8(%1),%rsp; jmp *%0" : : "r" (entry), "r" (argv));
+    argv[-1] = (char *)(long)argc;
+    asm("lea -2*8(%1),%%rsp; jmp *%0" : : "r" (entry), "r" (argv));
     return 0;
 }
 
