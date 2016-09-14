@@ -765,6 +765,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
     super::pack4(fo, ft);
     unsigned const t = fo->getBytesWritten();
+    segTEXT.vmaddr = segZERO.vmaddr + segZERO.vmsize;
     segTEXT.filesize = t;
     segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
@@ -800,14 +801,16 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
+        unsigned const ncmds = mhdro.ncmds;
         unsigned delta = 0;
-        for (unsigned j = 0; j < mhdro.ncmds -1; ++j, 
+        for (unsigned j = 0; j < ncmds -1; ++j, 
                 (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1))
         switch (ptr1->cmd) {
         case Mach_segment_command::LC_SEGMENT_64: {
             Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
             if (!strcmp("__TEXT", segptr->segname)) {
+                memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
                 secTEXT.align = 0;
@@ -849,6 +852,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             if (blk.bind_off)      blk.bind_off      += delta;
             if (blk.lazy_bind_off) blk.lazy_bind_off += delta;
             if (blk.export_off)    blk.export_off    += delta;
+blk.export_off = 0;
+blk.export_size = 0;
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
         } break;
@@ -867,6 +872,12 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             if (blk.indirectsymoff) blk.indirectsymoff += delta;
             if (blk.extreloff)      blk.extreloff      += delta;
             if (blk.locreloff)      blk.locreloff      += delta;
+blk.ilocalsym = 0;
+blk.nlocalsym = 0;
+blk.iextdefsym = 0;
+blk.nextdefsym = 0;
+blk.iundefsym = 0;
+blk.nundefsym = 0;
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
         } break;
@@ -876,11 +887,44 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
         } break;
+        case Mach_segment_command::LC_MAIN: {
+                // TEMPORARY: change to LC_UNIX_THREAD; known to be continusous with last
+// LC_MAIN requires libSystem.B.dylib to provide the environment for main(), and CALLs the entryoff.
+// LC_UNIXTHREAD does not need libSystem.B.dylib, and JMPs to the .rip with %rsp/argc and argv= 8+%rsp
+    threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+    threado.cmdsize = sizeof(threado);
+    threado.flavor = my_thread_flavor;
+    threado.count =  my_thread_state_word_count;
+    memset(&threado.state, 0, sizeof(threado.state));
+            threado.state.rip = ((N_Mach::Mach_main_command const *)ptr1)->entryoff + segTEXT.vmaddr;
+            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
+            fo->rewrite(&threado, sizeof(threado));
+            mhdro.sizeofcmds += sizeof(threado) - ((Mach_command const *)ptr1)->cmdsize;
+            fo->seek(0, SEEK_SET);
+            fo->rewrite(&mhdro, sizeof(mhdro));
+        } break;
+        case Mach_segment_command::LC_LOAD_DYLIB: {
+                // Temporary test: remove this command; known to be contiguous with last
+            N_Mach::Mach_load_dylib_command blk;
+memset(&blk, 0, sizeof(blk));
+            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
+            fo->rewrite(&blk, sizeof(blk));
+            mhdro.ncmds -= 1;
+            mhdro.sizeofcmds -= ((Mach_command const *)ptr1)->cmdsize;
+            fo->seek(0, SEEK_SET);
+            fo->rewrite(&mhdro, sizeof(mhdro));
+        } break;
         case Mach_segment_command::LC_DATA_IN_CODE: {
             N_Mach::Mach_data_in_code_command blk; memcpy(&blk, ptr1, sizeof(blk));
             if (blk.dataoff) blk.dataoff += delta;
+memset(&blk, 0, sizeof(blk));
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
+                // Temporary test: remove this command; known to be last
+            mhdro.ncmds -= 1;
+            mhdro.sizeofcmds -= ((Mach_command const *)ptr1)->cmdsize;
+            fo->seek(0, SEEK_SET);
+            fo->rewrite(&mhdro, sizeof(mhdro));
         } break;
         } // end switch
         fo->seek(0, SEEK_END);
