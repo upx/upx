@@ -518,8 +518,8 @@ do_xmap(
     ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
-        unsigned char  *addr = xo.buf  =        (unsigned char *)sc->vmaddr;
-        unsigned char *haddr =           sc->vmsize +                  addr;
+        unsigned char  *addr = xo.buf  = base + (unsigned char *)sc->vmaddr;
+        unsigned char *haddr =     sc->vmsize +                        addr;
         size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
         addr -= frag;
         mlen += frag;
@@ -528,17 +528,17 @@ do_xmap(
             // Decompressor can overrun the destination by 3 bytes.  [x86 only]
             size_t const mlen3 = mlen + (xi ? 3 : 0);
             unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-            unsigned const flags = ((addr + base) ? MAP_FIXED : 0) | MAP_PRIVATE |
+            unsigned const flags = (addr ? MAP_FIXED : 0) | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
             off_t const offset = sc->fileoff + fat_offset;
 
-            DPRINTF((STR_mmap(),       addr + base, mlen3, prot, flags, fdm, offset));
-            unsigned char *mapa = mmap(addr + base, mlen3, prot, flags, fdm, offset);
+            DPRINTF((STR_mmap(),       addr, mlen3, prot, flags, fdm, offset));
+            unsigned char *mapa = mmap(addr, mlen3, prot, flags, fdm, offset);
             if (MAP_FAILED == mapa) {
                 err_exit(8);
             }
-            if (0 == (addr + base)) { // dyld auto-relocate
+            if (0 == addr) { // dyld auto-relocate
                 base = (unsigned long)mapa;  // relocation constant
             }
             addr = mapa;
@@ -703,6 +703,9 @@ typedef struct {
 int
 main(int argc, char *argv[])
 {
+    // Entry via JMP
+    asm("movl 1*8(%%rbp),%0; leaq 2*8(%%rbp),%1" : "=r" (argc), "=r" (argv) : );
+
     Mach_header64 const *mhdr0 = (Mach_header64 const *)((~0ul<<16) & (unsigned long)&main);
     Mach_command const *ptr = (Mach_command const *)(1+ mhdr0);
     f_unfilter *f_unf;
