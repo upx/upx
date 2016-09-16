@@ -764,10 +764,10 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
 
     super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
+    unsigned const eofcmpr = fo->getBytesWritten();
     segTEXT.vmaddr = segZERO.vmaddr + segZERO.vmsize;
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
+    segTEXT.filesize = eofcmpr;
+    segTEXT.vmsize  += eofcmpr;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
     secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
     secTEXT.size = segTEXT.filesize - secTEXT.offset;
@@ -813,6 +813,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
+                    // Put f_unf and f_exp before compiled C code:
+                    // steal space from -Wl,-headerpadsize
                 secTEXT.align = 0;
                 unsigned const d = getLoaderSize();
                 secTEXT.addr -= d;
@@ -835,13 +837,17 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
                 // Mach_segment_command for new segXHDR
                 segXHDR.cmdsize = sizeof(segXHDR);  // no need for sections
-                segLINK.vmaddr = segXHDR.vmsize;
-                segXHDR.vmsize -= segXHDR.vmaddr;  // reserve for decompressed program
+                segXHDR.vmaddr = segTEXT.vmsize + segTEXT.vmaddr;  // XXX FIXME
+                segXHDR.vmsize = offLINK - segTEXT.vmsize;
+                segXHDR.fileoff = segTEXT.filesize + segTEXT.fileoff;  // XXX FIXME: assumes no __DATA in stub
+                segXHDR.filesize = offLINK - segTEXT.filesize;  // XXX FIXME: assumes no __DATA in stub;
+                segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
                 fo->seek((char const *)ptr1 - (char const *)ptr0, SEEK_SET);
                 fo->rewrite(&segXHDR, sizeof(segXHDR));
 
                 // Update the __LINKEDIT header
+                segLINK.vmaddr = segXHDR.vmsize + segXHDR.vmaddr;
                 segLINK.fileoff = offLINK;
                 fo->rewrite(&segLINK, sizeof(segLINK));
             }
@@ -1468,10 +1474,6 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     for (k = 0; k < n_segment; ++k) {
         if (lc_seg==msegcmd[k].cmd
         &&  0!=msegcmd[k].filesize ) {
-            uint64_t const hi_va = msegcmd[k].vmaddr + msegcmd[k].vmsize;
-            if (segXHDR.vmsize < hi_va) {
-                segXHDR.vmsize = hi_va;
-            }
             uip->ui_total_passes++;
             if (my_filetype==Mach_header::MH_DYLIB) {
                 break;
@@ -1690,8 +1692,6 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
-        uint64_t next_va = 0;
-        uint64_t next_fpos = 0;
         for (unsigned j = 0; j < mhdro.ncmds -1; ++j, 
                 (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1)) {
@@ -1702,11 +1702,9 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     fo->write((1+ ptr0), (char const *)ptr1 - (char const *)(1+ ptr0));
                     // LC_SEGMENT_64 for UPX_DATA; steal space from -Wl,-headerpadsize
                     segXHDR.cmdsize = sizeof(segXHDR);
-                    segXHDR.vmaddr = next_va;
-                    segXHDR.fileoff = PAGE_MASK & (~PAGE_MASK + next_fpos);
-                    segXHDR.maxprot = Mach_segment_command::VM_PROT_READ
-                                    | Mach_segment_command::VM_PROT_WRITE
-                                    | Mach_segment_command::VM_PROT_EXECUTE;
+                    segXHDR.vmaddr = 0;
+                    segXHDR.fileoff = 0;
+                    segXHDR.maxprot =  Mach_segment_command::VM_PROT_READ;
                     segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
                     segXHDR.nsects = 0;
                     fo->write(&segXHDR, sizeof(segXHDR));
@@ -1717,8 +1715,6 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     fo->write(&stub_amd64_darwin_macho_upxmain_exe[pos], segptr->fileoff - pos);
                     break;
                 }
-                next_va = segptr->vmsize + segptr->vmaddr;
-                next_fpos = segptr->filesize + segptr->fileoff;
             }
         }
     }
