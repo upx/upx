@@ -696,21 +696,31 @@ typedef struct {
 
 //
 // Build on Mac OS X: (where gcc is really clang)
-//   gcc -o amd64-darwin.macho-upxmain.exe -fno-stack-protector \
-//     -Os -fPIC amd64-darwin.macho-upxmain.c -Wl,-pagezero_size,0xffff0000 \
-//     -Wl,-no_pie -Wl,-no_uuid -Wl,-no_function_starts -Wl,-headerpad,0x400 \
-//     -Wl,-unexported_symbols_list amd64-darwin.macho-upxhide.txt
+// gcc -o amd64-darwin.macho-upxmain.exe \
+//    -Os -fPIC -fno-stack-protector \
+//    amd64-darwin.macho-upxmain.c \
+//    amd64-darwin.macho-upxsubr.S \
+//    -Wl,-pagezero_size,0xf0000000 \
+//    -Wl,-no_pie \
+//    -Wl,-no_uuid \
+//    -Wl,-no_function_starts \
+//    -Wl,-bind_at_load \
+//    -Wl,-headerpad,0x400 \
+//
+//#    -Wl,-unexported_symbols_list unexport-upxload.txt \
+//# strip -u -r amd64-darwin.macho-upxmain.exe
+
 int
 main(int argc, char *argv[])
 {
-    // Entry via JMP
+    // Entry via JMP (with no parameters) instead of CALL
     asm("movl 1*8(%%rbp),%0; leaq 2*8(%%rbp),%1" : "=r" (argc), "=r" (argv) : );
 
     Mach_header64 const *mhdr0 = (Mach_header64 const *)((~0ul<<16) & (unsigned long)&main);
     Mach_command const *ptr = (Mach_command const *)(1+ mhdr0);
     f_unfilter *f_unf;
     f_expand *f_exp;
-    unsigned char const *payload;
+    char *payload;
     size_t paysize;
 
     unsigned j;
@@ -718,28 +728,24 @@ main(int argc, char *argv[])
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr))
     if (LC_SEGMENT_64==ptr->cmd) {
         Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
-//fprintf(stderr, "ptr=%p  segptr=%p\n", ptr, segptr);
         if ((long)0x0000545845545f5ful == *(long const *)segptr->segname) { // "__TEXT"
             Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
             //if ((long)0x0000747865745f5ful == *(long const *)secptr->sectname) { // "__text"
                 f_unf = (f_unfilter *)(sizeof(unsigned short) + secptr->addr);
                 f_exp = (f_expand *)(*(unsigned short *)secptr->addr + secptr->addr);
-//fprintf(stderr, "f_unf=%p  f_exp=%p\n", f_unf, f_exp);
             //}
         }
         if ((long)0x415441445f585055ul == *(long const *)segptr->segname) { // "UPX_DATA"
-            payload = (unsigned char const *)(segptr->vmaddr);
+            payload = (char *)(segptr->vmaddr);
             paysize = segptr->filesize;
-//fprintf(stderr, "payload=%p  paysize=%lu\n", payload, paysize);
         }
     }
     char mhdr[2048];
-//fprintf(stderr, "call upx_main(payload=%p  paysize=%lu  mhdr=%p  f_exp=%p  f_unf=%p  mhdrp@%p)\n",
-//payload, paysize, mhdr, f_exp, f_unf, &argv[-2]);
     uint64_t entry = upx_main((struct l_info const *)payload, paysize,
         (Mach_header64 *)mhdr, sizeof(mhdr),
         f_exp, f_unf, (Mach_header64 **)&argv[-2]);
-//fprintf(stderr, "return to launch\n");
+
+    munmap(payload, paysize);  // leaving __LINKEDIT
     argv[-1] = (char *)(long)argc;
     asm("lea -2*8(%1),%%rsp; jmp *%0" : : "r" (entry), "r" (argv));
     return 0;
