@@ -798,14 +798,19 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         fo->rewrite(&linfo, sizeof(linfo));
     }
     if (my_filetype == Mach_header::MH_EXECUTE) {
+        // Get a writeable copy of the stub to make editing easier.
+        unsigned char upxstub[sizeof(stub_amd64_darwin_macho_upxmain_exe)];
+        memcpy(upxstub, stub_amd64_darwin_macho_upxmain_exe, sizeof(upxstub));
+
+        Mach_header *const ptr0 = (Mach_header *)upxstub;
+        Mach_command *ptr1 = (Mach_command *)(1+ ptr0);
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
-        Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
-        Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
         unsigned const ncmds = mhdro.ncmds;
         unsigned delta = 0;
         for (unsigned j = 0; j < ncmds -1; ++j, 
                 (cmdsize -= ptr1->cmdsize),
-                ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1))
+                ptr1 = (Mach_command *)(ptr1->cmdsize + (char *)ptr1))
+next:
         switch (ptr1->cmd) {
         case Mach_segment_command::LC_SEGMENT_64: {
             Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
@@ -826,7 +831,10 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 fo->rewrite(getLoader(), d);
                 fo->seek(0, SEEK_END);
             }
-            if (!strcmp("__LINKEDIT", ((Mach_segment_command const *)ptr1)->segname)) {
+            if (!strcmp("__DATA", segptr->segname) && !segptr->vmsize) {
+                goto omit;
+            }
+            if (!strcmp("__LINKEDIT", segptr->segname)) {
                 memcpy(&segLINK, segptr, sizeof(segLINK));
                 delta = offLINK - segLINK.fileoff;  // relocation constant
 
@@ -863,6 +871,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 blk.export_size = 0;
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
+            goto omit;  // try omitting this
         } break;
         case Mach_segment_command::LC_SYMTAB: {
             Mach_symtab_command blk; memcpy(&blk, ptr1, sizeof(blk));
@@ -870,6 +879,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             if (blk.stroff) blk.stroff += delta;
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
+            goto omit;  // try omitting this
         } break;
         case Mach_segment_command::LC_DYSYMTAB: {
             Mach_dysymtab_command blk; memcpy(&blk, ptr1, sizeof(blk));
@@ -888,6 +898,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 blk.nundefsym = 0;
             fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
             fo->rewrite(&blk, sizeof(blk));
+            goto omit;  // adds full path as another agrument?
         } break;
         case Mach_segment_command::LC_FUNCTION_STARTS: {
             N_Mach::Mach_function_starts_command blk; memcpy(&blk, ptr1, sizeof(blk));
@@ -933,7 +944,32 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             fo->seek(0, SEEK_SET);
             fo->rewrite(&mhdro, sizeof(mhdro));
         } break;
+        case Mach_segment_command::LC_LOAD_DYLINKER: {
+            // Try omitting this
+omit:
+            fo->seek(sizeof(mhdro) + mhdro.sizeofcmds - cmdsize, SEEK_SET);
+            Mach_command *ptr2 = ptr1;
+            unsigned const sz_omit = ptr1->cmdsize;
+            ptr1 = (Mach_command *)(sz_omit + (char *)ptr1);
+            cmdsize -= sz_omit;
+
+            fo->rewrite(ptr1, cmdsize);  // slide in file  TODO: clear the garbage
+            memmove(ptr2, ptr1, cmdsize);  // overlapping slide lower
+            ptr1 = ptr2;
+
+            mhdro.ncmds -= 1;
+            mhdro.sizeofcmds -= sz_omit;
+            fo->seek(0, SEEK_SET);
+            fo->rewrite(&mhdro, sizeof(mhdro));
+            if (++j < (ncmds -1))
+                goto next;
+            goto done;
+        } break;
+        case Mach_segment_command::LC_SOURCE_VERSION: {
+            goto omit;
+        } break;
         } // end switch
+done:
         fo->seek(0, SEEK_END);
     }
 }
