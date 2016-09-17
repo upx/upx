@@ -971,8 +971,16 @@ omit:
                 goto next;
             goto done;
         } break;
-        case Mach_segment_command::LC_SOURCE_VERSION: {
+        case Mach_segment_command::LC_SOURCE_VERSION: { // copy from saved original
+            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
+            fo->rewrite(&cmdSRCVER, sizeof(cmdSRCVER));
+            memcpy(ptr1, &cmdSRCVER, sizeof(cmdSRCVER));
             goto omit;
+        } break;
+        case Mach_segment_command::LC_VERSION_MIN_MACOSX: { // copy from saved original
+            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
+            fo->rewrite(&cmdVERMIN, sizeof(cmdVERMIN));
+            memcpy(ptr1, &cmdVERMIN, sizeof(cmdVERMIN));
         } break;
         } // end switch
 done:
