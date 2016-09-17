@@ -836,6 +836,8 @@ next:
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 memcpy(&segLINK, segptr, sizeof(segLINK));
+                segLINK.initprot = Mach_segment_command::VM_PROT_READ
+                                 | Mach_segment_command::VM_PROT_EXECUTE;
                 delta = offLINK - segLINK.fileoff;  // relocation constant
 
                 // The contents for __LINKEDIT remain the same,
@@ -1722,7 +1724,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segLINK.cmdsize = sizeof(segLINK);
     strncpy((char *)segLINK.segname, "__LINKEDIT", sizeof(segLINK.segname));
     segLINK.nsects = 0;
-    segLINK.initprot = Mach_segment_command::VM_PROT_READ;
+    segLINK.initprot = Mach_segment_command::VM_PROT_READ
+                     | Mach_segment_command::VM_PROT_EXECUTE;
     // Adjust later: .vmaddr .vmsize .fileoff .filesize
 
     if (my_filetype == Mach_header::MH_EXECUTE) {
