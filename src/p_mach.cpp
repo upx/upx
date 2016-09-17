@@ -776,12 +776,9 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         secXHDR.offset -= sizeof(linkitem);
     }
     secXHDR.addr += secXHDR.offset;
-    unsigned offLINK = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (offLINK < segTEXT.vmsize)
-        offLINK += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = offLINK;
+    unsigned offLINK = segLINK.fileoff;
     segLINK.vmaddr = segTEXT.vmaddr + offLINK;
-    if (0) {
+    if (my_filetype != Mach_header::MH_EXECUTE) {
         fo->seek(offLINK - 1, SEEK_SET); fo->write("", 1);
         fo->seek(sizeof(mhdro), SEEK_SET);
         fo->rewrite(&segZERO, sizeof(segZERO));
@@ -818,32 +815,31 @@ next:
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
-                    // Put f_unf and f_exp before compiled C code:
-                    // steal space from -Wl,-headerpadsize
-                secTEXT.align = 0;
-                unsigned const d = getLoaderSize();
-                secTEXT.addr -= d;
-                secTEXT.size += d;
-                secTEXT.offset -= d;
+                //    // Put f_unf and f_exp before compiled C code:
+                //    // steal space from -Wl,-headerpadsize
+                //secTEXT.align = 0;
+                //unsigned const d = getLoaderSize();
+                //secTEXT.addr -= d;
+                //secTEXT.size += d;
+                //secTEXT.offset -= d;
                 fo->seek((char const *)secptr - (char const *)ptr0, SEEK_SET);
                 fo->rewrite(&secTEXT, sizeof(secTEXT));
-                fo->seek(secTEXT.offset, SEEK_SET);
-                fo->rewrite(getLoader(), d);
+                //fo->seek(secTEXT.offset, SEEK_SET);
+                //fo->rewrite(getLoader(), d);
                 fo->seek(0, SEEK_END);
             }
             if (!strcmp("__DATA", segptr->segname) && !segptr->vmsize) {
                 goto omit;
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
-                memcpy(&segLINK, segptr, sizeof(segLINK));
                 segLINK.initprot = Mach_segment_command::VM_PROT_READ
                                  | Mach_segment_command::VM_PROT_EXECUTE;
-                delta = offLINK - segLINK.fileoff;  // relocation constant
+                delta = offLINK - segptr->fileoff;  // relocation constant
 
-                // The contents for __LINKEDIT remain the same,
-                // but move to a different offset in the file
-                fo->seek(offLINK, SEEK_SET);
-                fo->write(&stub_amd64_darwin_macho_upxmain_exe[segLINK.fileoff], segLINK.filesize);
+                //// The contents for __LINKEDIT remain the same,
+                //// but move to a different offset in the file
+                //fo->seek(offLINK, SEEK_SET);
+                //fo->write(&stub_amd64_darwin_macho_upxmain_exe[segLINK.fileoff], segLINK.filesize);
 
                 // Mach_segment_command for new segXHDR
                 segXHDR.cmdsize = sizeof(segXHDR);  // no need for sections
@@ -857,8 +853,10 @@ next:
                 fo->rewrite(&segXHDR, sizeof(segXHDR));
 
                 // Update the __LINKEDIT header
-                segLINK.vmaddr = segXHDR.vmsize + segXHDR.vmaddr;
-                segLINK.fileoff = offLINK;
+                segLINK.filesize = eofcmpr - offLINK;
+                segLINK.vmsize = PAGE_MASK64 & (~PAGE_MASK64 + eofcmpr - offLINK);
+                segLINK.fileoff = segXHDR.filesize + segXHDR.fileoff;
+                segLINK.vmaddr =  segXHDR.vmsize   + segXHDR.vmaddr;
                 fo->rewrite(&segLINK, sizeof(segLINK));
             }
         } break;
@@ -1317,11 +1315,18 @@ void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
     unsigned const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len));
+    len += (3& (0u-len));  // 0 mod 4
+
     disp = len - sz_mach_headers;
     fo->write(&disp, sizeof(disp));
+    len += sizeof(disp);
 
-    threado.state.rip = len + sizeof(disp) + segTEXT.vmaddr;  /* entry address */
+    char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
+    fo->write(page, ~PAGE_MASK & -len);
+    len += ~PAGE_MASK & -len;
+    segLINK.fileoff = len;
+
+    threado.state.rip = len + segTEXT.vmaddr;  /* entry address */
     super::pack3(fo, ft);
 }
 

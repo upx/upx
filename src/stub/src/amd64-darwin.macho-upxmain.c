@@ -727,17 +727,15 @@ main(int argc, char *argv[])
     for (j=0; j < mhdr0->ncmds; ++j,
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr))
     if (LC_SEGMENT_64==ptr->cmd) {
-        Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
-        if ((long)0x0000545845545f5ful == *(long const *)segptr->segname) { // "__TEXT"
-            Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
-            //if ((long)0x0000747865745f5ful == *(long const *)secptr->sectname) { // "__text"
-                f_unf = (f_unfilter *)(sizeof(unsigned short) + secptr->addr);
-                f_exp = (f_expand *)(*(unsigned short *)secptr->addr + secptr->addr);
-            //}
-        }
-        if ((long)0x415441445f585055ul == *(long const *)segptr->segname) { // "UPX_DATA"
-            payload = (char *)(segptr->vmaddr);
-            paysize = segptr->filesize;
+        Mach_segment_command const *const seg = (Mach_segment_command const *)ptr;
+        // Compare 8 characters
+        if (*(long const *)(&"__LINKEDIT"[2]) == *(long const *)(&seg->segname[2])) {
+            f_unf = (f_unfilter *)(sizeof(unsigned short)             + seg->vmaddr);
+            f_exp = (f_expand *)(*(unsigned short const *)seg->vmaddr + seg->vmaddr);
+            unsigned const *q = (unsigned const *)seg->vmaddr;
+            while (!(paysize = *--q)) /*empty*/ ;
+            payload = (char *)(-paysize + (char const *)q);
+            break;
         }
     }
     char mhdr[2048];
