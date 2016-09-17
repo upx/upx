@@ -760,10 +760,16 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         + sizeof(N_Mach::Mach_function_starts_command) + sizeof(N_Mach::Mach_data_in_code_command)
         + sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
+        overlay_offset = PAGE_SIZE;  // FIXME
+        overlay_offset += sizeof(linfo);
     }
 
     super::pack4(fo, ft);
+    if (my_filetype == Mach_header::MH_EXECUTE) {
+        unsigned long const zero = 0;
+        unsigned const len = fo->getBytesWritten();
+        fo->write(&zero, 7& (0u-len));
+    }
     unsigned const eofcmpr = fo->getBytesWritten();
     segTEXT.vmaddr = segZERO.vmaddr + segZERO.vmsize;
     segTEXT.filesize = eofcmpr;
@@ -1312,7 +1318,7 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    unsigned long const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));  // 0 mod 4
@@ -1328,6 +1334,8 @@ void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 
     threado.state.rip = len + segTEXT.vmaddr;  /* entry address */
     super::pack3(fo, ft);
+    len = fo->getBytesWritten();
+    fo->write(&zero, 7& (0u-len));
 }
 
 void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
