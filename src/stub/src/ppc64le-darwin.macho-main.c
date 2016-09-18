@@ -334,7 +334,7 @@ do_xmap(
     unsigned j;
 
     for ( j=0; j < mhdr->ncmds; ++j,
-        (sc = (Mach_segment_command const *)(sc->cmdsize + (char const *)sc))
+        (sc = (Mach_segment_command const *)(void const *)(sc->cmdsize + (char const *)sc))
     ) if (LC_SEGMENT==sc->cmd) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
@@ -352,7 +352,7 @@ do_xmap(
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
-                *mhdrpp = (Mach_header *)addr;
+                *mhdrpp = (Mach_header *)(void *)addr;
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
@@ -404,7 +404,7 @@ upx_main(
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
     xo.buf  = (char *)mhdr;
-    xo.size = ((struct b_info const *)xi.buf)->sz_unc;
+    xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
     xi0 = xi;
 
     // Uncompress Macho headers
@@ -417,9 +417,9 @@ upx_main(
     unsigned j;
 
     for (j=0; j < mhdr->ncmds; ++j,
-        (lc = (Mach_load_command const *)(lc->cmdsize + (char const *)lc))
+        (lc = (Mach_load_command const *)(void const *)(lc->cmdsize + (char const *)lc))
     ) if (LC_LOAD_DYLINKER==lc->cmd) {
-        char const *const dyld_name = ((Mach_lc_str const *)(1+ lc))->offset +
+        char const *const dyld_name = ((Mach_lc_str const *)(void const *)(1+ lc))->offset +
             (char const *)lc;
         int const fdi = open(dyld_name, O_RDONLY, 0);
         if (0 > fdi) {

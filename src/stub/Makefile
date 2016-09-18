@@ -121,21 +121,14 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
-
-# Need a UPX-standard compiler for ppc64le !
 STUBS += ppc64le-darwin.dylib-entry.h
 STUBS += ppc64le-darwin.macho-entry.h
 #STUBS += ppc64le-darwin.macho-fold.h
-#  undefined reference to `_savegpr0_28' `_restgpr0_28' `_savegpr0_16' `_restgpr0_16' `_savegpr0_27' `_restgpr0_27'
-
 STUBS += ppc64le-linux.elf-entry.h
-#STUBS += ppc64le-linux.elf-fold.h
-#  SIGSEGV: bin-upx-20130920/multiarch-ld-2.17 -b elf64-powerpcle --strip-all -T ./src/ppc64le-linux.elf-fold.lds -Map tmp/ppc64le-linux.elf-fold.map tmp/ppc64le-linux.elf-fold.o tmp/ppc64le-linux.elf-main.o -o tmp/ppc64le-linux.elf-fold.bin
-
+STUBS += ppc64le-linux.elf-fold.h
 STUBS += ppc64le-linux.kernel.vmlinux-head.h
 STUBS += ppc64le-linux.kernel.vmlinux.h
-
-#STUBS += thumb-eabi-linux.shlib-init.h
+STUBS += thumb-eabi-linux.shlib-init.h
 endif
 
 
@@ -154,8 +147,9 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20160902
+	upx-stubtools-check-version 20160918
 	@echo "timestamp" > $@
+.DELETE_ON_ERROR: .upx-stubtools-stamp
 %/.tmp-stamp:
 	@mkdir -p $(dir $@)
 	@echo "timestamp" > $@
@@ -234,7 +228,7 @@ tc.default.brandelf   = $(PYTHON) $(top_srcdir)/src/stub/scripts/brandelf.py $(i
 tc.default.gpp_inc    = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py
 tc.default.gpp_mkdep  = $(PYTHON) $(top_srcdir)/src/stub/scripts/gpp_inc.py -o /dev/null
 tc.default.pp-as      = i386-linux-gcc-3.4.6 -E -nostdinc -x assembler-with-cpp -Wall
-tc.default.sstrip     = sstrip
+tc.default.sstrip     = sstrip-20060518
 tc.default.xstrip     = $(PYTHON) $(top_srcdir)/src/stub/scripts/xstrip.py
 
 # default multiarch-binutils
@@ -277,7 +271,7 @@ endef
 tc.arch-i086.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
 tc.arch-i086.wdis     = $(WATCOM)/binl/wdis
 tc.arch-i386.gcc      = i386-linux-gcc-3.4.6 -m32 -march=i386 -nostdinc -MMD -MT $@
-tc.arch-i386.djasm    = djasm
+tc.arch-i386.djasm    = djasm-20060614
 
 
 # /***********************************************************************
@@ -444,19 +438,19 @@ tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
 # info: we use the tc settings from arm64-linux.elf, but override v4 with v5
 arm64-darwin.macho%.h : tc_list = arm64-linux.elf default
 arm64-darwin.macho%.h : tc_bfdname = elf64-littleaarch64
-tc.arm64-darwin.macho-entry.gcc  = /usr/bin/aarch64-linux-gnu-gcc -nostdinc -MMD -MT $@
-tc.arm64-darwin.macho-fold.gcc   = /usr/bin/aarch64-linux-gnu-gcc -nostdinc -MMD -MT $@
-tc.arm64-darwin.macho-main.gcc   = /usr/bin/aarch64-linux-gnu-gcc -nostdinc -MMD -MT $@
+tc.arm64-darwin.macho-entry.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
+tc.arm64-darwin.macho-fold.gcc   = $(tc.arm64-darwin.macho-entry.gcc)
+tc.arm64-darwin.macho-main.gcc   = $(tc.arm64-darwin.macho-entry.gcc)
 
-tc.arm64-darwin.macho-fold.ld    = /usr/bin/aarch64-linux-gnu-ld
+tc.arm64-darwin.macho-fold.ld    = arm64-linux-ld-2.25
 
-tc.arm64-darwin.macho-entry.objcopy  = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
-tc.arm64-darwin.macho-fold.objcopy   = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
-tc.arm64-darwin.macho-main.objcopy   = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
+tc.arm64-darwin.macho-entry.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-darwin.macho-fold.objcopy   = $(tc.arm64-darwin.macho-entry.objcopy)
+tc.arm64-darwin.macho-main.objcopy   = $(tc.arm64-darwin.macho-entry.objcopy)
 
-tc.arm64-darwin.macho-entry.objdump  = /usr/bin/aarch64-linux-gnu-objdump
-tc.arm64-darwin.macho-fold.objdump   = /usr/bin/aarch64-linux-gnu-objdump
-tc.arm64-darwin.macho-main.objdump   = /usr/bin/aarch64-linux-gnu-objdump
+tc.arm64-darwin.macho-entry.objdump  = arm64-linux-objdump-2.25
+tc.arm64-darwin.macho-fold.objdump   = $(tc.arm64-darwin.macho-entry.objdump)
+tc.arm64-darwin.macho-main.objdump   = $(tc.arm64-darwin.macho-entry.objdump)
 
 arm64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
@@ -466,6 +460,7 @@ arm64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 arm64-darwin.macho-fold.h : tmp/$$T.o tmp/arm64-darwin.macho-main.o
 	$(call tc,ld) --no-warn-mismatch --strip-all -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.tmp
 	$(call tc,objcopy) -O binary tmp/$T.tmp tmp/$T.bin
+	rm tmp/$T.tmp
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -1307,13 +1302,16 @@ powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
+
 # /***********************************************************************
 # // ppc64le-darwin.macho
 # ************************************************************************/
 
 # info: we use the tc settings from ppc64le-linux.elf
-ppc64le-darwin.macho%.h : tc_list = ppc64le-linux.elf default
+ppc64le-darwin.macho%.h : tc_list = ppc64le-darwin.macho ppc64le-linux.elf default
 ppc64le-darwin.macho%.h : tc_bfdname = elf64-powerpcle
+
+tc.ppc64le-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
 
 ppc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
@@ -1355,9 +1353,11 @@ ppc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 ppc64le-linux.elf%.h : tc_list = ppc64le-linux.elf default
 ppc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
 
-tc.ppc64le-linux.elf.gcc  = ppc64-linux-gnu-gcc   -m64 -mlittle-endian -nostdinc -MMD -MT $@
+tc.ppc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT $@
 tc.ppc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.ppc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+tc.ppc64le-linux.elf.ld   = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
 
 ppc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin

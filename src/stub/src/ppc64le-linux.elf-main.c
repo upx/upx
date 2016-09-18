@@ -233,7 +233,7 @@ do_xmap(
     f_unfilter *const f_unf
 )
 {
-    Elf64_Phdr const *phdr = (Elf64_Phdr const *) (ehdr->e_phoff +
+    Elf64_Phdr const *phdr = (Elf64_Phdr const *) (void const *) (ehdr->e_phoff +
         (char const *)ehdr);
     char *v_brk;
     unsigned long const reloc = xfind_pages(
@@ -269,8 +269,8 @@ do_xmap(
         //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
         /* if  (! (PROT_WRITE & prot))  {
-            	bzero(mlen+addr, frag);  // fragment at hi end
-	} */
+              bzero(mlen+addr, frag);  // fragment at hi end
+        } */
         if (xi) {
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -310,7 +310,7 @@ void *upx_main(
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
     xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
     xo.buf  = (char *)ehdr;
-    xo.size = ((struct b_info const *)xi.buf)->sz_unc;
+    xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
     xi0 = xi;
 
     ACC_UNUSED(sz_ehdr);
