@@ -708,8 +708,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segTEXT) + sizeof(secTEXT)
+        + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         overlay_offset += sizeof(uuid_cmd) + sizeof(linkitem);
@@ -732,13 +732,23 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         foff1 += PAGE_SIZE;  // codesign disallows overhang
     segLINK.fileoff = foff1;
     segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
+        segTEXT.vmsize = 0x1000;
+        secTEXT.size = 0x1000;
+
+        segXHDR.vmaddr = PAGE_MASK64 & (~PAGE_MASK64 + segTEXT.vmsize + segTEXT.vmaddr);
+        segXHDR.vmsize = 0x1000;
+        secXHDR.size = 0x1000;
+
+        segLINK.vmaddr = PAGE_MASK64 & (~PAGE_MASK64 + segXHDR.vmsize + segXHDR.vmaddr);
+        segLINK.vmsize = 0x1000;
+    fo->seek(-1+ 0x4000, SEEK_SET); fo->write("", 1);
+
     fo->seek(sizeof(mhdro), SEEK_SET);
     fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
     fo->rewrite(&segTEXT, sizeof(segTEXT));
     fo->rewrite(&secTEXT, sizeof(secTEXT));
+    fo->rewrite(&segXHDR, sizeof(segXHDR));
+    fo->rewrite(&secXHDR, sizeof(secXHDR));
     fo->rewrite(&segLINK, sizeof(segLINK));
     fo->rewrite(&threado, sizeof(threado));
     if (my_filetype==Mach_header::MH_EXECUTE) {
@@ -1453,9 +1463,12 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segTEXT.vmsize = 0;    // adjust later
     segTEXT.fileoff = 0;
     segTEXT.filesize = 0;  // adjust later
-    segTEXT.initprot = segTEXT.maxprot =
+    segTEXT.maxprot =
         Mach_segment_command::VM_PROT_READ |
         Mach_segment_command::VM_PROT_WRITE |
+        Mach_segment_command::VM_PROT_EXECUTE;
+    segTEXT.initprot =
+        Mach_segment_command::VM_PROT_READ |
         Mach_segment_command::VM_PROT_EXECUTE;
     segTEXT.nsects = 1;  // secTEXT
     segTEXT.flags = 0;

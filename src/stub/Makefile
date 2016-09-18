@@ -154,7 +154,7 @@ endif
 all.targets ?= .upx-stubtools-stamp tmp/.tmp-stamp .all-stamp
 all: $$(all.targets)
 .upx-stubtools-stamp: $(MAKEFILE_LIST)
-	upx-stubtools-check-version 20130920
+	upx-stubtools-check-version 20160902
 	@echo "timestamp" > $@
 %/.tmp-stamp:
 	@mkdir -p $(dir $@)
