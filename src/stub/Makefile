@@ -123,7 +123,7 @@ STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
 STUBS += ppc64le-darwin.dylib-entry.h
 STUBS += ppc64le-darwin.macho-entry.h
-#STUBS += ppc64le-darwin.macho-fold.h
+STUBS += ppc64le-darwin.macho-fold.h
 STUBS += ppc64le-linux.elf-entry.h
 STUBS += ppc64le-linux.elf-fold.h
 STUBS += ppc64le-linux.kernel.vmlinux-head.h
@@ -1319,7 +1319,9 @@ ppc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 ppc64le-darwin.macho-fold.h : tmp/$$T.o tmp/ppc64le-darwin.macho-main.o
-	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+# FIXME: undefined reference to `_savegpr0_28' etc.
+#	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	echo "FIXME" > tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
