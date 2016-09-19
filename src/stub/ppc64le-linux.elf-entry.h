@@ -32,13 +32,13 @@
 
 
 #define STUB_PPC64LE_LINUX_ELF_ENTRY_SIZE    9657
-#define STUB_PPC64LE_LINUX_ELF_ENTRY_ADLER32 0xbd87cf84
-#define STUB_PPC64LE_LINUX_ELF_ENTRY_CRC32   0xcd1a5c42
+#define STUB_PPC64LE_LINUX_ELF_ENTRY_ADLER32 0x20e0ce9f
+#define STUB_PPC64LE_LINUX_ELF_ENTRY_CRC32   0x65fa7f1a
 
 unsigned char stub_ppc64le_linux_elf_entry[9657] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,248, 25,  0,  0,  0,  0,  0,  0,
+/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0, 16, 28,  0,  0,  0,  0,  0,  0,
 /* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 24,  0, 21,  0,
 /* 0x0040 */   1,  0,  0, 72,236, 41,  0,124,166,  2,168,125,  8,  0,  7, 40,
 /* 0x0050 */  92,  1,130, 64,  0,  0,166,248, 20, 26,132,124,  0,128,  0, 60,

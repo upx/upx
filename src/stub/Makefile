@@ -1359,7 +1359,9 @@ tc.ppc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nost
 tc.ppc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
 tc.ppc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.ppc64le-linux.elf.ld   = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
+tc.ppc64le-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
+tc.ppc64le-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
+tc.ppc64le-linux.elf.objdump = multiarch-objdump-2.27 -b $(tc_bfdname)
 
 ppc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin

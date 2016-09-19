@@ -30,7 +30,7 @@ include $(top_srcdir)/src/stub/Makefile
 # ************************************************************************/
 
 lzma_d_c%.S : tc_list = method-lzma ppc64le-linux.elf default
-lzma_d_c%.S : tc_bfdname = elf64-ppc64le
+lzma_d_c%.S : tc_bfdname = elf64-powerpcle
 
 c := tc.method-lzma.gcc
 $c  = $(tc.ppc64le-linux.elf.gcc)
@@ -42,6 +42,7 @@ $c += -fwrapv
 $c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
+$c += -Wno-error
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o

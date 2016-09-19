@@ -32,13 +32,13 @@
 
 
 #define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_SIZE    9851
-#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_ADLER32 0x75d95bd9
-#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_CRC32   0x3fcb6329
+#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_ADLER32 0x2a885bc3
+#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_CRC32   0x9d3b5811
 
 unsigned char stub_ppc64le_darwin_dylib_entry[9851] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,176, 27,  0,  0,  0,  0,  0,  0,
+/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,152, 29,  0,  0,  0,  0,  0,  0,
 /* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 22,  0, 19,  0,
 /* 0x0040 */ 166,  2, 72,124,  1,  0,  0, 72,236, 41,  0,124,166,  2,168,125,
 /* 0x0050 */   8,  0,  7, 40, 92,  1,130, 64,  0,  0,166,248, 20, 26,132,124,
