@@ -1043,6 +1043,7 @@ unsigned Packer::unoptimizeReloc64(upx_byte **in, upx_byte *image,
 
 static const char *getIdentstr(unsigned *size, int small)
 {
+    // IMPORTANT: we do NOT change "http://upx.sf.net"
     static char identbig[] =
         "\n\0"
         "$Info: "
