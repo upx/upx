@@ -47,6 +47,11 @@ __packed_struct(Mach_fat_arch)
     BE32 align;  /* shift count; log base 2 */
 __packed_struct_end()
 
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t data[2];  // because cmdsize >= 16
+} Mach_command;  // generic prefix
 
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
@@ -283,10 +288,78 @@ template <class TMachITypes>
 __packed_struct(Mach_uuid_command)
     typedef typename TMachITypes::Word Word;
 
-    Word cmd;
-    Word cmdsize;
+    Word cmd;  // LC_UUID
+    Word cmdsize;  // 24
     unsigned char uuid[16];
 __packed_struct_end()
+
+typedef struct {
+    uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
+    uint32_t cmdsize;  // 24
+    uint64_t entryoff;  // file offset of main() [expected in __TEXT]
+    uint64_t stacksize;  // non-default initial stack size
+} Mach_main_command;
+
+typedef struct {
+    uint32_t cmd;  // LC_SOURCE_VERSION
+    uint32_t cmdsize;  // 16
+    uint32_t long version;
+} Mach_source_version_command;
+
+typedef struct {
+    uint32_t cmd;  // LC_VERSION_MIN_MACOSX
+    uint32_t cmdsize;  // 16
+    uint32_t version;  // X.Y.Z ==> xxxx.yy.zz
+    uint32_t sdk;  // X.Y.Z ==> xxxx.yy.zz
+} Mach_version_min_command;
+
+typedef struct {
+    uint32_t cmd;  // LC_DYLD_INFO_ONLY
+    uint32_t cmdsize;  // 48
+    uint32_t rebase_off;
+    uint32_t rebase_size;
+    uint32_t bind_off;
+    uint32_t bind_size;
+    uint32_t weak_bind_off;
+    uint32_t weak_bind_size;
+    uint32_t lazy_bind_off;
+    uint32_t lazy_bind_size;
+    uint32_t export_off;
+    uint32_t export_size;
+} Mach_dyld_info_only_command;
+
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t name;
+} Mach_load_dylinker_command;
+
+typedef struct {
+    uint32_t name;         /* library's path name */
+    uint32_t timestamp;         /* library's build time stamp */
+    uint32_t current_version;       /* library's current version number */
+    uint32_t compatibility_version; /* library's compatibility vers number*/
+} Mach_dylib;
+
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    Mach_dylib dylib;
+} Mach_load_dylib_command;
+
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t dataoff;
+    uint32_t datasize;
+} Mach_function_starts_command;
+
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t dataoff;
+    uint32_t datasize;
+} Mach_data_in_code_command;
 
 template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state)
@@ -650,7 +723,9 @@ protected:
     Mach_section_command secTEXT;
     Mach_segment_command segLINK;
     Mach_linkedit_data_command linkitem;
-    Mach_uuid_command uuid_cmd;
+    Mach_uuid_command cmdUUID;  // copied from input, then incremented
+    N_Mach::Mach_source_version_command cmdSRCVER;  // copied from input
+    N_Mach::Mach_version_min_command cmdVERMIN;  // copied from input
 
     __packed_struct(b_info)     // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size

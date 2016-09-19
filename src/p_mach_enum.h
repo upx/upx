@@ -58,13 +58,17 @@
     };
     enum { // flags
         MH_NOUNDEFS = 1,
-        MH_DYLDLINK = 4     /* code signing demands this */
+        MH_DYLDLINK = 4,    /* code signing demands this */
+        MH_BINDATLOAD = 0x8,   // DT_BIND_NOW
+        MH_TWOLEVEL = 0x80,
+        MH_PIE      = 0x200000   // ASLR
     };
 #endif  /*}*/
 
 #ifdef WANT_MACH_SEGMENT_ENUM  /*{*/
 #undef WANT_MACH_SEGMENT_ENUM
     enum { // cmd
+        LC_REQ_DYLD      = 0x80000000,  // OR'ed ==> must not ignore
         LC_SEGMENT       = 0x1,
         LC_SYMTAB        = 0x2,
         LC_THREAD        = 0x4,
@@ -85,10 +89,12 @@
         LC_LAZY_LOAD_DYLIB= 0x20,
         LC_ENCRYPTION_INFO= 0x21,
         LC_DYLD_INFO      = 0x22,  // compressed dyld information (10.6.x)
+        LC_DYLD_INFO_ONLY = (0x22|LC_REQ_DYLD),
         LC_VERSION_MIN_MACOSX= 0x24,
         LC_FUNCTION_STARTS= 0x26,
+        LC_MAIN           = (0x28|LC_REQ_DYLD),
         LC_DATA_IN_CODE   = 0x29,
-        LC_REQ_DYLD      = 0x80000000  // OR'ed ==> must not ignore
+        LC_SOURCE_VERSION = 0x2a,
     };
     enum { // maxprot
         VM_PROT_READ = 1,

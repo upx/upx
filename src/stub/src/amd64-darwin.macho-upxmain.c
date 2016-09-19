@@ -1,4 +1,4 @@
-/* amd64-darwin.macho-main.c -- loader stub for Mach-o AMD64
+/* amd64-darwin.macho-upxmain.c -- loader hack for Mach-o AMD64
 
    This file is part of the UPX executable compressor.
 
@@ -29,7 +29,8 @@
    <jreiser@users.sourceforge.net>
  */
 
-
+#include <stdio.h>
+#include <stdlib.h>
 #include "include/darwin.h"
 
 #ifndef DEBUG  /*{*/
@@ -135,10 +136,10 @@ heximal(unsigned long x, char *ptr, int n)
 }
 
 
-#define DPRINTF(a) dprintf a
+#define DPRINTF(a) my_printf a
 
 static int
-dprintf(char const *fmt, ...)
+my_printf(char const *fmt, ...)
 {
     char c;
     int n= 0;
@@ -397,11 +398,13 @@ typedef struct {
     unsigned cmdsize;
 } Mach_load_command;
         enum e4 {
+            LC_REQ_DYLD      = 0x80000000,  // OR'ed ==> must not ignore
             LC_SEGMENT       = 0x1,
             LC_SEGMENT_64    = 0x19,
             LC_THREAD        = 0x4,
             LC_UNIXTHREAD    = 0x5,
-            LC_LOAD_DYLINKER = 0xe
+            LC_LOAD_DYLINKER = 0xe,
+            LC_MAIN          = (0x28|LC_REQ_DYLD)
         };
 
 typedef struct {
@@ -422,6 +425,20 @@ typedef struct {
             VM_PROT_WRITE = 2,
             VM_PROT_EXECUTE = 4
         };
+
+typedef struct {
+    char sectname[16];
+    char segname[16];
+    uint64_t addr;   /* memory address */
+    uint64_t size;   /* size in bytes */
+    unsigned offset; /* file offset */
+    unsigned align;  /* power of 2 */
+    unsigned reloff; /* file offset of relocation entries */
+    unsigned nreloc; /* number of relocation entries */
+    unsigned flags;  /* section type and attributes */
+    unsigned reserved1;  /* for offset or index */
+    unsigned reserved2;  /* for count or sizeof */
+} Mach_section_command;
 
 typedef struct {
     uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
@@ -465,6 +482,7 @@ typedef union {
 #define PROT_WRITE     2
 #define PROT_EXEC      4
 #define MAP_ANON_FD    -1
+#define MAP_FAILED ((void *) -1)
 
 extern void *mmap(void *, size_t, unsigned, unsigned, int, off_t);
 ssize_t pread(int, void *, size_t, off_t);
@@ -475,7 +493,7 @@ DEBUG_STRCON(STR_mmap,
 DEBUG_STRCON(STR_do_xmap,
     "do_xmap  fdi=%%x  mhdr=%%p  xi=%%p(%%x %%p) f_unf=%%p\\n")
 
-static Mach_AMD64_thread_state const *
+static uint64_t  // entry address
 do_xmap(
     Mach_header64 const *const mhdr,
     off_t const fat_offset,
@@ -487,7 +505,9 @@ do_xmap(
 )
 {
     Mach_segment_command const *sc = (Mach_segment_command const *)(1+ mhdr);
-    Mach_AMD64_thread_state const *entry = 0;
+    Mach_segment_command const *segTEXT = 0;
+    uint64_t entry = 0;
+    unsigned long base = 0;
     unsigned j;
 
     DPRINTF((STR_do_xmap(),
@@ -498,28 +518,34 @@ do_xmap(
     ) if (LC_SEGMENT_64==sc->cmd && sc->vmsize!=0) {
         Extent xo;
         size_t mlen = xo.size = sc->filesize;
-        unsigned char  *addr = xo.buf  =        (unsigned char *)sc->vmaddr;
-        unsigned char *haddr =           sc->vmsize +                  addr;
+        unsigned char  *addr = xo.buf  = base + (unsigned char *)sc->vmaddr;
+        unsigned char *haddr =     sc->vmsize +                        addr;
         size_t frag = (int)(uint64_t)addr &~ PAGE_MASK;
         addr -= frag;
         mlen += frag;
 
-        if (0!=mlen) {
+        if (0!=mlen) { // In particular, omitted for __PAGEZERO
             // Decompressor can overrun the destination by 3 bytes.  [x86 only]
             size_t const mlen3 = mlen + (xi ? 3 : 0);
             unsigned const prot = VM_PROT_READ | VM_PROT_WRITE;
-            unsigned const flags = MAP_FIXED | MAP_PRIVATE |
+            unsigned const flags = (addr ? MAP_FIXED : 0) | MAP_PRIVATE |
                         ((xi || 0==sc->filesize) ? MAP_ANON : 0);
             int const fdm = ((0==sc->filesize) ? MAP_ANON_FD : fdi);
             off_t const offset = sc->fileoff + fat_offset;
 
-            DPRINTF((STR_mmap(), addr, mlen3, prot, flags, fdm, offset));
-            if (addr !=     mmap(addr, mlen3, prot, flags, fdm, offset)) {
+            DPRINTF((STR_mmap(),       addr, mlen3, prot, flags, fdm, offset));
+            unsigned char *mapa = mmap(addr, mlen3, prot, flags, fdm, offset);
+            if (MAP_FAILED == mapa) {
                 err_exit(8);
             }
+            if (0 == addr) { // dyld auto-relocate
+                base = (unsigned long)mapa;  // relocation constant
+            }
+            addr = mapa;
         }
         if (xi && 0!=sc->filesize) {
             if (0==sc->fileoff /*&& 0!=mhdrpp*/) {
+                segTEXT = sc;
                 *mhdrpp = (Mach_header64 *)(void *)addr;
             }
             unpackExtent(xi, &xo, f_decompress, f_unf);
@@ -553,12 +579,33 @@ ERR_LAB
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = &thrc->state;
+            entry = thrc->state.rip + base;  // JMP 
         }
+    }
+    else if (LC_MAIN==sc->cmd) {
+        entry = ((Mach_main_command const *)sc)->entryoff;
+        if (segTEXT->fileoff <= entry && entry < segTEXT->filesize) {
+            entry += segTEXT->vmaddr;  // CALL
+        }
+        // XXX FIXME TODO: if entry not in segTEXT?
+        // XXX FIXME TODO: LC_MAIN is a CALL; LC_*THREAD is a JMP
     }
     return entry;
 }
 
+static off_t
+fat_find(Fat_header *fh) // *fh suffers bswap()
+{
+    Fat_arch *fa = (Fat_arch *)(1+ fh);
+    bswap(fh, sizeof(*fh) + (fh->nfat_arch>>24)*sizeof(*fa));
+    unsigned j;
+    for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
+        if (CPU_TYPE_AMD64==fa->cputype) {
+            return fa->offset;  // should not be 0 because of header
+        }
+    }
+    return 0;
+}
 
 /*************************************************************************
 // upx_main - called by our entry code
@@ -569,7 +616,7 @@ DEBUG_STRCON(STR_upx_main,
     "upx_main szc=%%x  f_dec=%%p  f_unf=%%p  "
     "  xo=%%p(%%x %%p)  xi=%%p(%%x %%p)  mhdrpp=%%p\\n")
 
-Mach_AMD64_thread_state const *
+uint64_t // entry address
 upx_main(
     struct l_info const *const li,
     size_t volatile sz_compressed,  // total length
@@ -580,7 +627,7 @@ upx_main(
     Mach_header64 **const mhdrpp  // Out: *mhdrpp= &real Mach_header64
 )
 {
-    Mach_AMD64_thread_state const *entry;
+    uint64_t entry;
     off_t fat_offset = 0;
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(unsigned char *, 1+ (struct p_info const *)(1+ li));  // &b_info
@@ -611,28 +658,27 @@ upx_main(
         if (0 > fdi) {
             err_exit(18);
         }
-fat:
-        if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
+        for (;;) { // possibly 2 times for 'fat' binary
+            if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
 ERR_LAB
-            err_exit(19);
-        }
-        switch (mhdr->magic) {
-        case MH_MAGIC: break;
-        case MH_MAGIC64: break;
-        case FAT_CIGAM:
-        case FAT_MAGIC: {
-            // stupid Apple: waste code and a page fault on EVERY execve
-            Fat_header *const fh = (Fat_header *)mhdr;
-            Fat_arch *fa = (Fat_arch *)(1+ fh);
-            bswap(fh, sizeof(*fh) + (fh->nfat_arch>>24)*sizeof(*fa));
-            for (j= 0; j < fh->nfat_arch; ++j, ++fa) {
-                if (CPU_TYPE_AMD64==fa->cputype) {
-                    fat_offset= fa->offset;
-                    goto fat;
-                }
+                err_exit(19);
             }
-        } break;
-        } // switch
+            switch (mhdr->magic) {
+            case MH_MAGIC: break;  // i686 on x86_64 ?
+            case MH_MAGIC64: break;
+
+            case FAT_CIGAM:
+            case FAT_MAGIC: {
+                // stupid Apple: waste code and a page fault on EVERY execve
+                fat_offset = fat_find((Fat_header *)mhdr);
+                if (fat_offset) {
+                    continue;  // the 'for' loop
+                }
+                err_exit(20);  // no other choice
+            } break;
+            } // switch
+            break;
+        }
         entry = do_xmap(mhdr, fat_offset, 0, fdi, 0, 0, 0);
         close(fdi);
         break;
@@ -642,8 +688,67 @@ ERR_LAB
     return entry;
 }
 
+typedef struct {
+    uint32_t cmd;
+    uint32_t cmdsize;
+    uint32_t data[2];  // because cmdsize >= 16
+} Mach_command;  // generic prefix
+
+//
+// Build on Mac OS X: (where gcc is really clang)
+// gcc -o amd64-darwin.macho-upxmain.exe \
+//    -Os -fPIC -fno-stack-protector \
+//    amd64-darwin.macho-upxmain.c \
+//    amd64-darwin.macho-upxsubr.S \
+//    -Wl,-pagezero_size,0xf0000000 \
+//    -Wl,-no_pie \
+//    -Wl,-no_uuid \
+//    -Wl,-no_function_starts \
+//    -Wl,-bind_at_load \
+//    -Wl,-headerpad,0x400 \
+//
+//#    -Wl,-unexported_symbols_list unexport-upxload.txt \
+//# strip -u -r amd64-darwin.macho-upxmain.exe
+
+int
+main(int argc, char *argv[])
+{
+    // Entry via JMP (with no parameters) instead of CALL
+    asm("movl 1*8(%%rbp),%0; leaq 2*8(%%rbp),%1" : "=r" (argc), "=r" (argv) : );
+
+    Mach_header64 const *mhdr0 = (Mach_header64 const *)((~0ul<<16) & (unsigned long)&main);
+    Mach_command const *ptr = (Mach_command const *)(1+ mhdr0);
+    f_unfilter *f_unf;
+    f_expand *f_exp;
+    char *payload;
+    size_t paysize;
+
+    unsigned j;
+    for (j=0; j < mhdr0->ncmds; ++j,
+            ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr))
+    if (LC_SEGMENT_64==ptr->cmd) {
+        Mach_segment_command const *const seg = (Mach_segment_command const *)ptr;
+        // Compare 8 characters
+        if (*(long const *)(&"__LINKEDIT"[2]) == *(long const *)(&seg->segname[2])) {
+            f_unf = (f_unfilter *)(sizeof(unsigned short)             + seg->vmaddr);
+            f_exp = (f_expand *)(*(unsigned short const *)seg->vmaddr + seg->vmaddr);
+            unsigned const *q = (unsigned const *)seg->vmaddr;
+            while (!(paysize = *--q)) /*empty*/ ;
+            payload = (char *)(-paysize + (char const *)q);
+            break;
+        }
+    }
+    char mhdr[2048];
+    uint64_t entry = upx_main((struct l_info const *)payload, paysize,
+        (Mach_header64 *)mhdr, sizeof(mhdr),
+        f_exp, f_unf, (Mach_header64 **)&argv[-2]);
+
+    munmap(payload, paysize);  // leaving __LINKEDIT
+    argv[-1] = (char *)(long)argc;
+    asm("lea -2*8(%1),%%rsp; jmp *%0" : : "r" (entry), "r" (argv));
+    return 0;
+}
 
 /*
 vi:ts=4:et:nowrap
 */
-

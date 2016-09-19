@@ -40,12 +40,18 @@
 // see glibc/sysdeps/amd64/elf/start.S
 **************************************************************************/
 
+  section AMD64BXX
+0:     .word 9f - 0b
+#include "arch/amd64/bxx.S"
+9:
+
 section MACHMAINX
 _start: .globl _start
 //    int3
         call main  // push &decompress
 ret_main:
 
+  section MACH_UNC
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
 
@@ -136,7 +142,7 @@ copy4:
         movl %edx,(%rdi); leaq  4(%rdi),%rdi; jnc copy4
         addl $4,len; movb (%rax),%dl; jz copy0
 copy1:
-        incq %rax; movb %dl,(%rdi); subl $1,len
+        addq $1,%rax; movb %dl,(%rdi); subl $1,len
                    movb (%rax),%dl
         leaq 1(%rdi),%rdi;          jnz copy1
 copy0:
