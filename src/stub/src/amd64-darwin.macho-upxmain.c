@@ -579,7 +579,7 @@ ERR_LAB
         Mach_thread_command const *const thrc = (Mach_thread_command const *)sc;
         if (AMD64_THREAD_STATE      ==thrc->flavor
         &&  AMD64_THREAD_STATE_COUNT==thrc->count ) {
-            entry = thrc->state.rip + base;  // JMP 
+            entry = thrc->state.rip + base;  // JMP
         }
     }
     else if (LC_MAIN==sc->cmd) {

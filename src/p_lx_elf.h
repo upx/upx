@@ -355,7 +355,7 @@ class PackLinuxElf64Le : public PackLinuxElf64
     typedef PackLinuxElf64 super;
 protected:
     PackLinuxElf64Le(InputFile *f) : super(f) {
-	lg2_page=16;
+        lg2_page=16;
         page_size=1u<<lg2_page;
         bele = &N_BELE_RTP::le_policy;
         PackLinuxElf64help1(f);

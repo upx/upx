@@ -475,7 +475,7 @@ PackMachAMD64::buildLoader(const Filter *ft)
 if (0) {
         Mach_command const *ptr1 = (Mach_command const *)(1+
             (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe);
-        for (unsigned j = 0; j < mhdro.ncmds; ++j, 
+        for (unsigned j = 0; j < mhdro.ncmds; ++j,
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1))
         switch (ptr1->cmd) {
         case Mach_segment_command::LC_SEGMENT_64: {
@@ -809,7 +809,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         unsigned const ncmds = mhdro.ncmds;
         unsigned delta = 0;
-        for (unsigned j = 0; j < ncmds -1; ++j, 
+        for (unsigned j = 0; j < ncmds -1; ++j,
                 (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command *)(ptr1->cmdsize + (char *)ptr1))
 next:
@@ -1752,7 +1752,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
-        for (unsigned j = 0; j < mhdro.ncmds -1; ++j, 
+        for (unsigned j = 0; j < mhdro.ncmds -1; ++j,
                 (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1)) {
                 Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;

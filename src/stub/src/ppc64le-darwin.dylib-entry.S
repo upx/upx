@@ -156,7 +156,7 @@ main2:
     //teq r0,r0  // debugging
         stdu r2,-8*(1+ 32-a0)(sp)  # retaddr
 //        stmw a0,4*1(sp)
-	std  3,3*8-8*2(sp)
+        std  3,3*8-8*2(sp)
         std  4,4*8-8*2(sp)
         std  5,5*8-8*2(sp)
         std  6,6*8-8*2(sp)
@@ -279,8 +279,8 @@ dy_done1:  # escape hatch
         sc  # munmap
         li a0,~0  # failure
 //        lmw t0,0(sp)
-	ld  2,2*8-8*2(sp)
-	ld  3,3*8-8*2(sp)
+        ld  2,2*8-8*2(sp)
+        ld  3,3*8-8*2(sp)
         ld  4,4*8-8*2(sp)
         ld  5,5*8-8*2(sp)
         ld  6,6*8-8*2(sp)

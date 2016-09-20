@@ -310,7 +310,7 @@ amd64-darwin.macho-fold.h : tmp/$$T.o tmp/amd64-darwin.macho-main.o
 
 amd64-darwin.macho-upxmain.h: amd64-darwin.macho-upxmain.exe
 	$(call tc,bin2h) $< $@
-	
+
 tmp/amd64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)

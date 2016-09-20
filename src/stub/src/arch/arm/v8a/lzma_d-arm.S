@@ -171,7 +171,7 @@ LzmaDecode: .globl LzmaDecode
 #undef vs
 
         add w14,w5,w6  // lp + lc
-        mov Range,#~0 
+        mov Range,#~0
         lsl w5,Range,w5; mvn w5,w5  // ~(~0<<lp) == litPosMask
         lsl w4,Range,w4; mvn w4,w4  // ~(~0<<ps) == posStateMask
         mov w3,#1

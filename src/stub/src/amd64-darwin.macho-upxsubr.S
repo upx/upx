@@ -45,10 +45,10 @@ GLOBAL(bswap)
 
 GLOBAL(bzero)
 GLOBAL(__bzero)
-	xor %eax,%eax  // the value
-	mov %esi,%ecx  // the count
-	rep; stosb  // *rdi++ = %al
-	ret
+        xor %eax,%eax  // the value
+        mov %esi,%ecx  // the count
+        rep; stosb  // *rdi++ = %al
+        ret
 
 SYS_exit  =1
 SYS_read  =3
