@@ -105,11 +105,11 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #if !defined(WITH_UCL)
 #  define WITH_UCL 1
 #endif
-#if 0 && !defined(WITH_LZMA)
-#  define WITH_LZMA 1
+#if !defined(WITH_LZMA) || (WITH_LZMA+0 == 0)
+#  error "WITH_LZMA is missing"
 #endif
-#if 1 && (ACC_CC_WATCOMC)
-#  undef WITH_LZMA
+#if (WITH_LZMA+0 != 0x443)
+#  error "invalud WITH_LZMA"
 #endif
 #if defined(UPX_OFFICIAL_BUILD)
 #  if !(WITH_LZMA) || !(WITH_NRV) || !(WITH_UCL)
