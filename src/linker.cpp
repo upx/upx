@@ -313,7 +313,7 @@ void ElfLinker::preprocessRelocations(char *start, char *end)
                 assert(add == ull);
                 assert(endptr && *endptr == '\0');
                 if (sign == '-')
-                    add = -add;
+                    add = 0 - add;
             }
 
             addRelocation(section->name, offset, t, symbol, add);

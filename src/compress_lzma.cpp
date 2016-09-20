@@ -424,7 +424,8 @@ STDMETHODIMP ProgressInfo::SetRatioInfo(const UInt64 *inSize, const UInt64 *outS
 
 
 #if (ACC_CC_INTELC_GNUC)
-#  pragma warning(disable: 424)         // #424: extra ";" ignored
+//#  pragma warning(disable: 424)         // #424: extra ";" ignored
+#  pragma warning(error: 424)         // #424: extra ";" ignored
 #endif
 
 #if (WITH_LZMA >= 0x449)
@@ -530,8 +531,8 @@ int upx_lzma_compress      ( const upx_bytep src, unsigned  src_len,
     os.b_pos = 0;
     // extra stuff in first byte: 5 high bits convenience for stub decompressor
     unsigned t = res->lit_context_bits + res->lit_pos_bits;
-    os.WriteByte((t << 3) | res->pos_bits);
-    os.WriteByte((res->lit_pos_bits << 4) | (res->lit_context_bits));
+    os.WriteByte(Byte((t << 3) | res->pos_bits));
+    os.WriteByte(Byte((res->lit_pos_bits << 4) | (res->lit_context_bits)));
 #endif
 
     rh = enc.Code(&is, &os, NULL, NULL, &progress);

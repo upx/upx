@@ -222,18 +222,18 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
         linker->defineSymbol("vp_size", ((addr & 0xfff) + 0x28 >= 0x1000) ?
                              0x2000 : 0x1000);          // 2 pages or 1 page
         linker->defineSymbol("vp_base", addr &~ 0xfff); // page mask
-        linker->defineSymbol("VirtualProtect", -rvamin +
+        linker->defineSymbol("VirtualProtect", 0u-rvamin +
                              ilinkerGetAddress("kernel32.dll", "VirtualProtect"));
     }
     linker->defineSymbol("reloc_delt", 0u - (unsigned) ih.imagebase - rvamin);
     linker->defineSymbol("start_of_relocs", crelocs);
     if (!isdll)
-        linker->defineSymbol("ExitProcess", -rvamin +
+        linker->defineSymbol("ExitProcess", 0u-rvamin +
                              ilinkerGetAddress("kernel32.dll", "ExitProcess"));
-    linker->defineSymbol("GetProcAddress", -rvamin +
+    linker->defineSymbol("GetProcAddress", 0u-rvamin +
                          ilinkerGetAddress("kernel32.dll", "GetProcAddress"));
     linker->defineSymbol("kernel32_ordinals", myimport);
-    linker->defineSymbol("LoadLibraryA", -rvamin +
+    linker->defineSymbol("LoadLibraryA", 0u-rvamin +
                          ilinkerGetAddress("kernel32.dll", "LoadLibraryA"));
     linker->defineSymbol("start_of_imports", myimport);
     linker->defineSymbol("compressed_imports", cimports);

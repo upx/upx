@@ -41,7 +41,10 @@
 #endif
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC)
-#  error "only clang and gcc are officially supported"
+   // other compilers may work, but we're NOT interested into supporting them
+#endif
+#if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
+#  error "UINT_MAX"
 #endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
@@ -80,6 +83,9 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #define UPX_UINT32_C    ACC_UINT32_C
 #define UPX_INT64_C     ACC_INT64_C
 #define UPX_UINT64_C    ACC_UINT64_C
+
+#define upx_byte        unsigned char
+#define upx_bytep       upx_byte *
 
 
 /*************************************************************************
@@ -132,12 +138,6 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #  undef ucl_compress_config_t
 #  undef ucl_compress_config_p
 #endif
-#if !defined(UINT_MAX) || (UINT_MAX < 0xffffffffL)
-#  error "UINT_MAX"
-#endif
-
-#define upx_byte                    unsigned char
-#define upx_bytep                   upx_byte *
 
 
 /*************************************************************************
@@ -245,25 +245,15 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #endif
 
 
-#if (ACC_CC_CLANG || ACC_CC_GNUC || (ACC_CC_INTELC_GNUC && (__INTEL_COMPILER >= 800)) || ACC_CC_PATHSCALE)
-#  define __packed_struct(s)        struct s {
-#  define __packed_struct_end()     } __attribute__((__packed__,__aligned__(1)));
-#elif (ACC_CC_WATCOMC)
-#  define __packed_struct(s)        _Packed struct s {
-#  define __packed_struct_end()     };
-#endif
-#if !defined(__packed_struct)
-#  define __packed_struct(s)        struct s {
-#  define __packed_struct_end()     };
-#endif
-
-
 /*************************************************************************
 //
 **************************************************************************/
 
-#define UNUSED(var)              ACC_UNUSED(var)
-#define COMPILE_TIME_ASSERT(e)   ACC_COMPILE_TIME_ASSERT(e)
+#define __packed_struct(s)      __acc_struct_packed(s)
+#define __packed_struct_end()   __acc_struct_packed_end()
+
+#define UNUSED(var)             ACC_UNUSED(var)
+#define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
 
 #define __COMPILE_TIME_ASSERT_ALIGNOF_SIZEOF(a,b) { \
      typedef a acc_tmp_a_t; typedef b acc_tmp_b_t; \
@@ -503,10 +493,10 @@ struct OptVar
 
 
 // optional assignments
-template <class T> inline void oassign(T& self, const T& other) {
+template <class T> inline void oassign(T &self, const T &other) {
     if (other.is_set) { self.v = other.v; self.is_set += 1; }
 }
-template <class T> inline void oassign(unsigned& v, const T& other) {
+template <class T> inline void oassign(unsigned &v, const T &other) {
     if (other.is_set) { v = other.v; }
 }
 
@@ -514,7 +504,7 @@ template <class T> inline void oassign(unsigned& v, const T& other) {
 struct lzma_compress_config_t
 {
     typedef OptVar<unsigned,  2u, 0u,   4u> pos_bits_t;             // pb
-    typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lb
+    typedef OptVar<unsigned,  0u, 0u,   4u> lit_pos_bits_t;         // lp
     typedef OptVar<unsigned,  3u, 0u,   8u> lit_context_bits_t;     // lc
     typedef OptVar<unsigned, (1u<<22), 1u, (1u<<30) > dict_size_t;
     typedef OptVar<unsigned, 64u, 5u, 273u> num_fast_bytes_t;

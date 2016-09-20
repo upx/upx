@@ -200,8 +200,7 @@ public:
 **************************************************************************/
 
 #undef NORET
-#if 0 && defined(__GNUC__)
-// (noreturn) is probably not the correct semantics for throwing exceptions
+#if 1 && defined(__GNUC__)
 #define NORET __attribute__((__noreturn__))
 #else
 #define NORET /*empty*/

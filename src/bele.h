@@ -187,18 +187,16 @@ inline int sign_extend(unsigned v, unsigned bits)
 {
     const unsigned sign_bit = 1u << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
-    //v = (v ^ sign_bit) - sign_bit;
     v |= 0 - (v & sign_bit);
-    return (int) v;
+    return ACC_ICAST(int, v);
 }
 
 inline upx_int64_t sign_extend(upx_uint64_t v, unsigned bits)
 {
     const upx_uint64_t sign_bit = UPX_UINT64_C(1) << (bits - 1);
     v &= sign_bit | (sign_bit - 1);
-    //v = (v ^ sign_bit) - sign_bit;
     v |= 0 - (v & sign_bit);
-    return (upx_int64_t) v;
+    return ACC_ICAST(upx_int64_t, v);
 }
 
 inline int get_be16_signed(const void *p)
@@ -282,12 +280,12 @@ inline unsigned acc_swap32p(const upx_uint32_t *p)
 
 inline void acc_swab16s(upx_uint16_t *p)
 {
-    *p = (upx_uint16_t) acc_swab16(*p);
+    *p = ACC_ICONV(upx_uint16_t, acc_swab16(*p));
 }
 
 inline void acc_swab32s(upx_uint32_t *p)
 {
-    *p = (upx_uint32_t) acc_swab32(*p);
+    *p = ACC_ICONV(upx_uint32_t, acc_swab32(*p));
 }
 
 
@@ -486,15 +484,12 @@ template <class T> T* operator - (T* ptr, const LE64& v);
 // global overloads
 **************************************************************************/
 
-#if 1 && !defined(ALIGN_DOWN)
 inline unsigned ALIGN_DOWN(unsigned a, const LE32& b) { return ALIGN_DOWN(a, (unsigned) b); }
 inline unsigned ALIGN_DOWN(const LE32& a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
 inline unsigned ALIGN_UP  (unsigned a, const LE32& b) { return ALIGN_UP  (a, (unsigned) b); }
 inline unsigned ALIGN_UP  (const LE32& a, unsigned b) { return ALIGN_UP  ((unsigned) a, b); }
-#endif
 
 
-#if !defined(UPX_MAX)
 inline unsigned UPX_MAX(unsigned a, const BE16& b)    { return UPX_MAX(a, (unsigned) b); }
 inline unsigned UPX_MAX(const BE16& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
 inline unsigned UPX_MIN(unsigned a, const BE16& b)    { return UPX_MIN(a, (unsigned) b); }
@@ -514,7 +509,6 @@ inline unsigned UPX_MAX(unsigned a, const LE32& b)    { return UPX_MAX(a, (unsig
 inline unsigned UPX_MAX(const LE32& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
 inline unsigned UPX_MIN(unsigned a, const LE32& b)    { return UPX_MIN(a, (unsigned) b); }
 inline unsigned UPX_MIN(const LE32& a, unsigned b)    { return UPX_MIN((unsigned) a, b); }
-#endif
 
 
 /*************************************************************************
