@@ -34,6 +34,43 @@
 //
 **************************************************************************/
 
+// DO NOT CHANGE
+#define MAX_SIZE (768 * 1024 * 1024)
+ACC_COMPILE_TIME_ASSERT_HEADER(2ull * MAX_SIZE * 9 / 8 + 16*1024*1024 < INT_MAX)
+
+size_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra)
+{
+    assert(element_size > 0);
+    if (element_size > MAX_SIZE) throwCantPack("mem_size 1; take care");
+    if (n > MAX_SIZE) throwCantPack("mem_size 2; take care");
+    if (extra > MAX_SIZE) throwCantPack("mem_size 3; take care");
+    upx_uint64_t bytes = element_size * n + extra; // cannot overflow
+    if (bytes > MAX_SIZE) throwCantPack("mem_size 4; take care");
+    return ACC_ICONV(size_t, bytes);
+}
+
+size_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
+{
+    (void) mem_size(element_size, n);   // check
+    return ACC_ICONV(size_t, n);        // return n
+}
+
+bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra)
+{
+    assert(element_size > 0);
+    if (element_size > MAX_SIZE) return false;
+    if (n > MAX_SIZE) return false;
+    if (extra > MAX_SIZE) return false;
+    upx_uint64_t bytes = element_size * n + extra; // cannot overflow
+    if (bytes > MAX_SIZE) return false;
+    return true;
+}
+
+
+/*************************************************************************
+//
+**************************************************************************/
+
 static int use_mcheck = -1;
 
 static int mcheck_init()
@@ -103,23 +140,19 @@ void MemBuffer::dealloc()
 
 unsigned MemBuffer::getSizeForCompression(unsigned uncompressed_size, unsigned extra)
 {
-    assert((int)uncompressed_size > 0);
-    assert((int)extra >= 0);
-    unsigned size = uncompressed_size + uncompressed_size/8 + 256 + extra;
-    return size;
+    size_t bytes = mem_size(1, uncompressed_size, extra);
+    bytes += uncompressed_size/8 + 256;
+    return ACC_ICONV(unsigned, bytes);
 }
 
 unsigned MemBuffer::getSizeForUncompression(unsigned uncompressed_size, unsigned extra)
 {
-    assert((int)uncompressed_size > 0);
-    assert((int)extra >= 0);
-    unsigned size = uncompressed_size + extra;
-//    size += 512;   // 512 safety bytes
+    size_t bytes = mem_size(1, uncompressed_size, extra);
     // INFO: 3 bytes are the allowed overrun for the i386 asm_fast decompressors
 #if (ACC_ARCH_I386)
-    size += 3;
+    bytes += 3;
 #endif
-    return size;
+    return ACC_ICONV(unsigned, bytes);
 }
 
 
@@ -187,10 +220,8 @@ void MemBuffer::alloc(unsigned size)
     assert(b == NULL);
     assert(b_size == 0);
     //
-    assert((int)size > 0);
-    unsigned total = use_mcheck ? size + 32 : size;
-    assert((int)total > 0);
-    unsigned char *p = (unsigned char *) malloc(total);
+    size_t bytes = mem_size(1, size, use_mcheck ? 32 : 0);
+    unsigned char *p = (unsigned char *) malloc(bytes);
     if (!p)
         throwOutOfMemoryException();
     b_size = size;

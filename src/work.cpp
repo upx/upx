@@ -83,7 +83,7 @@ void do_one_file(const char *iname, char *oname)
         throwIOException("empty file -- skipped");
     if (st.st_size < 512)
         throwIOException("file is too small -- skipped");
-    if (st.st_size >= 1024*1024*1024)
+    if (!mem_size_valid(1, st.st_size))
         throwIOException("file is too large -- skipped");
     if ((st.st_mode & S_IWUSR) == 0)
     {
@@ -298,7 +298,7 @@ void do_files(int i, int argc, char *argv[])
             unlink_ofile(oname);
             if (opt->verbose >= 1 || (opt->verbose >= 0 && !e.isWarning()))
                 printErr(iname,&e);
-            set_ec(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
+            set_exit_code(e.isWarning() ? EXIT_WARN : EXIT_ERROR);
         } catch (const Error &e) {
             unlink_ofile(oname);
             printErr(iname,&e);

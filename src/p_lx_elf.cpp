@@ -230,14 +230,14 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
-        file_image = new char[len];
+        file_image = New(char, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
         phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
     }
     if (f && Elf32_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        file_image = new char[file_size];
+        file_image = New(char, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
         phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
@@ -600,14 +600,14 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
-        file_image = new char[len];
+        file_image = New(char, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
         phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
     }
     if (f && Elf64_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        file_image = new char[file_size];
+        file_image = New(char, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
         phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
@@ -911,7 +911,7 @@ PackLinuxElf32::buildLinuxLoader(
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
+    unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
@@ -919,7 +919,7 @@ PackLinuxElf32::buildLinuxLoader(
 #if 0  //{  debugging only
     if (M_IS_LZMA(ph.method)) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
-        unsigned char *tmp = new unsigned char[tmp_len];
+        unsigned char *tmp = New(unsigned char, tmp_len);
         memset(tmp, 0, tmp_len);
         r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
         if (r == UPX_E_OUT_OF_MEMORY)
@@ -976,7 +976,7 @@ PackLinuxElf64::buildLinuxLoader(
     unsigned char const *const uncLoader = fold_hdrlen + fold;
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
-    unsigned char *const cprLoader = new unsigned char[sizeof(h) + h.sz_cpr];
+    unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
     int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
@@ -1662,7 +1662,7 @@ PackLinuxElf64ppcle::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        file_image = new char[file_size];
+        file_image = New(char, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf64_Ehdr));
@@ -1837,7 +1837,7 @@ PackLinuxElf64amd::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        file_image = new char[file_size];
+        file_image = New(char, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf64_Ehdr));
@@ -2302,7 +2302,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         }
     }
     if (note_size) {
-        note_body = new unsigned char[note_size];
+        note_body = New(unsigned char, note_size);
         note_size = 0;
     }
     phdr = phdri;
@@ -2342,7 +2342,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         Elf32_Shdr const *tmp = shdri;
 
         if (! shdri) {
-            shdr = new Elf32_Shdr[e_shnum];
+            shdr = New(Elf32_Shdr, e_shnum);
 
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
@@ -2355,7 +2355,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         //set the shstrtab
         sec_strndx = &shdr[ehdri.e_shstrndx];
 
-        char *strtab = new char[(unsigned) sec_strndx->sh_size];
+        char *strtab = New(char, sec_strndx->sh_size);
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
@@ -2364,7 +2364,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
 
         Elf32_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
-            unsigned char *data = new unsigned char[(unsigned) buildid->sh_size];
+            unsigned char *data = New(unsigned char, buildid->sh_size);
             memset(data,0,buildid->sh_size);
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
@@ -2495,7 +2495,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         }
     }
     if (note_size) {
-        note_body = new unsigned char[note_size];
+        note_body = New(unsigned char, note_size);
         note_size = 0;
     }
     phdr = phdri;
@@ -2540,7 +2540,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         Elf64_Shdr *shdr = NULL;
 
         if (! shdri) {
-            shdr = new Elf64_Shdr[e_shnum];
+            shdr = New(Elf64_Shdr, e_shnum);
 
             fi->seek(0,SEEK_SET);
             fi->seek(ehdri.e_shoff,SEEK_SET);
@@ -2553,7 +2553,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
         //set the shstrtab
         sec_strndx = &shdri[ehdri.e_shstrndx];
 
-        char *strtab = new char[(unsigned) sec_strndx->sh_size];
+        char *strtab = New(char, sec_strndx->sh_size);
         fi->seek(0,SEEK_SET);
         fi->seek(sec_strndx->sh_offset,SEEK_SET);
         fi->readx(strtab,sec_strndx->sh_size);
@@ -2562,7 +2562,7 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
 
         Elf64_Shdr const *buildid = elf_find_section_name(".note.gnu.build-id");
         if (buildid) {
-            unsigned char *data = new unsigned char[(unsigned) buildid->sh_size];
+            unsigned char *data = New(unsigned char, buildid->sh_size);
             memset(data,0,buildid->sh_size);
             fi->seek(0,SEEK_SET);
             fi->seek(buildid->sh_offset,SEEK_SET);
@@ -3255,7 +3255,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
-    ||  blocksize > 1024*1024*1024)
+        || !mem_size_valid(1, blocksize, OVERHEAD))
         throwCantUnpack("p_info corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);
@@ -3712,7 +3712,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
-        upx_uint64_t const *const bitmask = (upx_uint64_t const *)&gashtab[4];
+        upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
 
         unsigned const h = gnu_hash(name);
@@ -3784,7 +3784,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     unsigned orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
-    ||  blocksize > 1024*1024*1024)
+        || !mem_size_valid(1, blocksize, OVERHEAD))
         throwCantUnpack("p_info corrupted");
 
     ibuf.alloc(blocksize + OVERHEAD);

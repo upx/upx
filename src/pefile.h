@@ -101,7 +101,7 @@ protected:
     void rebuildImports(upx_byte *& extrainfo,
                         ord_mask_t ord_mask, bool set_oft);
     virtual unsigned processImports() = 0;
-    virtual void processImports(unsigned, unsigned);
+    virtual void processImports2(unsigned, unsigned);
     upx_byte *oimport;
     unsigned soimport;
     upx_byte *oimpdlls;

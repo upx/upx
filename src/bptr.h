@@ -77,19 +77,31 @@ public:
 
 private:
     void checkNULL() const {
-        if (!ptr_)
+        if __acc_very_unlikely(!ptr_)
             throwCantUnpack("unexpected NULL pointer; take care!");
     }
-    void checkRange(size_t extra=0) const {
+    void checkRange() const {
         size_t off = (const char *) ptr_ - (const char *) base_;
-        if (off > size_ || off + extra > size_)
+        if __acc_very_unlikely(off > size_)
             throwCantUnpack("pointer out of range; take care!");
     }
-    void checkStrict(size_t extra=0) const {
+    void checkRange(size_t extra) const {
+        size_t off = (const char *) ptr_ - (const char *) base_;
+        if __acc_very_unlikely(off > size_ || off + extra > size_)
+            throwCantUnpack("pointer out of range; take care!");
+    }
+    void checkStrict() const {
+        checkNULL();
+        checkRange();
+    }
+    void checkStrict(size_t extra) const {
         checkNULL();
         checkRange(extra);
     }
-    void check(size_t extra=0) const {
+    void check() const {
+        if (ptr_) checkRange();
+    }
+    void check(size_t extra) const {
         if (ptr_) checkRange(extra);
     }
 

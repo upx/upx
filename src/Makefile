@@ -1,7 +1,7 @@
 #
 # UPX Makefile - needs GNU make 3.81 or better
 #
-# Copyright (C) 1996-2015 Markus Franz Xaver Johannes Oberhumer
+# Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
 #
 
 # In GNU Make 4.0 this "MAKEFLAGS += -rR" is not executed immediately.
@@ -9,7 +9,18 @@
 # with respect to builtin variables.  So if we want to have no
 # dependencies on the default values of builtin variables,
 # then we cannot use builtin variables at all.
+# See: http://lists.gnu.org/archive/html/help-make/2016-08/msg00011.html
 MAKEFLAGS += -rR
+ifneq ($(upx_CXX),)
+CXX = $(upx_CXX)
+else
+CXX = g++
+endif
+ifneq ($(upx_CXXLD),)
+CXXLD = $(upx_CXXLD)
+else
+CXXLD = $(CXX)
+endif
 
 .SUFFIXES:
 export SHELL = /bin/sh
@@ -32,30 +43,21 @@ ifneq ($(srcdir),.)
 VPATH := . $(srcdir)
 endif
 
-ifeq ($(upx_CXX),)
-upx_CXX = g++
-endif
-ifneq ($(findstring $(firstword $(upx_CXX)),g++),)
-USE_GNUC ?= 1
-endif
-ifeq ($(USE_GNUC),1)
 ifeq ($(DEBUG),1)
-upx_CXXFLAGS += -O0 -g
+CXXFLAGS += -O0 -g
 else
-upx_CXXFLAGS += -O2
+CXXFLAGS += -O2
 LDFLAGS += -s
 endif
 # some gcc versions suffer over-agressive aliasing and wrapv optimization features/bugs
-upx_CXXFLAGS_OPTIMIZE_STRICT_ALIASING ?= -fno-strict-aliasing
-upx_CXXFLAGS_OPTIMIZE_WRAPV ?= -fwrapv
-upx_CXXFLAGS += $(upx_CXXFLAGS_OPTIMIZE_STRICT_ALIASING)
-upx_CXXFLAGS += $(upx_CXXFLAGS_OPTIMIZE_WRAPV)
-upx_CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
-upx_CXXFLAGS_WERROR ?= -Werror
-upx_CXXFLAGS += $(upx_CXXFLAGS_WERROR)
-endif
-upx_CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
-upx_CXXLD ?= $(upx_CXX)
+CXXFLAGS_OPTIMIZE_STRICT_ALIASING ?= -fno-strict-aliasing
+CXXFLAGS_OPTIMIZE_WRAPV ?= -fwrapv
+CXXFLAGS += $(CXXFLAGS_OPTIMIZE_STRICT_ALIASING)
+CXXFLAGS += $(CXXFLAGS_OPTIMIZE_WRAPV)
+CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
+CXXFLAGS_WERROR ?= -Werror
+CXXFLAGS += $(CXXFLAGS_WERROR)
+CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 
 exeext ?= .out
 libext ?= .a
@@ -70,13 +72,10 @@ INCLUDES += -I$(UPX_UCLDIR)/include
 LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
-# you should set envvar UPX_LZMADIR to point to your unpacked LZMA SDK
+# LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
-$(info UPX_LZMA_VERSION=$(UPX_LZMA_VERSION))
-ifneq ($(UPX_LZMA_VERSION),)
 DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 INCLUDES += -I$(UPX_LZMADIR)
-endif
 
 
 all: upx$(exeext) | .depend
@@ -84,33 +83,25 @@ all: upx$(exeext) | .depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
-	$(strip $(upx_CXXLD) $(call e,upx_CPPFLAGS) $(call e,upx_CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
+	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
 
 %.o : %.cpp | .depend
-	$(strip $(upx_CXX) $(call e,upx_CPPFLAGS) $(call e,upx_CXXFLAGS) -o $@ -c $<)
+	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
 
 .depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
-ifeq ($(USE_GNUC),1)
+ifeq (1,1)
 	@echo "Updating $@"
-	@$(strip $(upx_CXX) $(call e,upx_CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
+	@$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
 	touch $@
 endif
 
 
-ifeq ($(USE_GNUC),1)
-##compress_lzma$(objext) : upx_CXXFLAGS += -O3 -fomit-frame-pointer
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-cast-qual
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-shadow
-ifeq ($(UPX_LZMA_VERSION),0x443)
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-non-virtual-dtor
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-unused
-endif
-# needed for gcc-4.3:
-compress_lzma$(objext) : upx_CXXFLAGS += -Wno-error
-endif
+##compress_lzma$(objext) : CXXFLAGS += -O3 -fomit-frame-pointer
+compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
+p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
 
 mostlyclean clean distclean maintainer-clean:

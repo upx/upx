@@ -58,7 +58,6 @@ static unsigned my_strlen(const unsigned char *s)
 #define strlen my_strlen
 #endif
 
-#if (__ACC_CXX_HAVE_PLACEMENT_DELETE) || defined(__DJGPP__)
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
 #define OPTR(type, var)         BoundedPtr<type> var(obuf, obuf.getSize())
@@ -68,16 +67,6 @@ static unsigned my_strlen(const unsigned char *s)
 #define OPTR_I(type, var, v)    BoundedPtr<type> var(obuf, obuf.getSize(), v)
 #define IPTR_C(type, var, v)    const BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
 #define OPTR_C(type, var, v)    const BoundedPtr<type> var(obuf, obuf.getSize(), v)
-#else
-#define IPTR(type, var)         type* var = 0
-#define OPTR(type, var)         type* var = 0
-#define IPTR_I_D(type, var, disp) \
-                                type* var = (v) + (disp)
-#define IPTR_I(type, var, v)    type* var = (v)
-#define OPTR_I(type, var, v)    type* var = (v)
-#define IPTR_C(type, var, v)    type* const var = (v)
-#define OPTR_C(type, var, v)    type* const var = (v)
-#endif
 
 static void xcheck(const void *p)
 {
@@ -321,7 +310,7 @@ PeFile::Reloc::Reloc(upx_byte *s,unsigned si) :
 PeFile::Reloc::Reloc(unsigned rnum) :
     start(NULL), size(0), rel(NULL), rel1(NULL)
 {
-    start = new upx_byte[rnum * 4 + 8192];
+    start = new upx_byte[mem_size(4, rnum, 8192)];
     counts[0] = 0;
 }
 
@@ -404,7 +393,7 @@ void PeFile32::processRelocs() // pass1
 
     LE32 *fix[4];
     for (; ic; ic--)
-        fix[ic] = new LE32 [counts[ic]];
+        fix[ic] = New(LE32, counts[ic]);
 
     unsigned xcounts[4];
     memset(xcounts, 0, sizeof(xcounts));
@@ -441,7 +430,7 @@ void PeFile32::processRelocs() // pass1
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-    orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
+    orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
     sorelocs = ptr_diff(optimizeReloc32((upx_byte*) fix[3], xcounts[3],
                                         orelocs, ibuf + rvamin,1, &big_relocs),
                         orelocs);
@@ -499,7 +488,7 @@ void PeFile64::processRelocs() // pass1
 
     LE32 *fix[16];
     for (ic = 15; ic; ic--)
-        fix[ic] = new LE32 [counts[ic]];
+        fix[ic] = New(LE32, counts[ic]);
 
     unsigned xcounts[16];
     memset(xcounts, 0, sizeof(xcounts));
@@ -539,7 +528,7 @@ void PeFile64::processRelocs() // pass1
     }
 
     ibuf.fill(IDADDR(PEDIR_RELOC), IDSIZE(PEDIR_RELOC), FILLVAL);
-    orelocs = new upx_byte [rnum * 4 + 1024];  // 1024 - safety
+    orelocs = new upx_byte [mem_size(4, rnum, 1024)];  // 1024 - safety
     sorelocs = ptr_diff(optimizeReloc64((upx_byte*) fix[10], xcounts[10],
                                         orelocs, ibuf + rvamin,1, &big_relocs),
                         orelocs);
@@ -628,7 +617,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         unsigned l = strlen(dll);
         assert(l > 0);
 
-        char *name = new char[3 * l + 2];
+        char *name = New(char, 3 * l + 2);
         assert(name);
         name[0] = first_char;
         char *n = name + 1 + 2 * l;
@@ -643,7 +632,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
     {
         unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
         tstr dlln(name_for_dll(dll, first_char));
-        char *procn = new char[len];
+        char *procn = New(char, len);
         upx_snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
         encode_name(proc, procn + strlen(procn));
         return procn;
@@ -772,7 +761,7 @@ public:
         int osize = 4 + 2 * nsections; // upper limit for alignments
         for (unsigned ic = 0; ic < nsections; ic++)
             osize += sections[ic]->size;
-        output = new upx_byte[osize];
+        output = New(upx_byte, osize);
         outputlen = 0;
 
         // sort the sections by name before adding them all
@@ -787,7 +776,7 @@ public:
         return outputlen;
     }
 
-    void relocate(unsigned myimport)
+    void relocate_import(unsigned myimport)
     {
         assert(nsections > 0);
         assert(output);
@@ -856,11 +845,11 @@ void PeFile::addStubImports()
     addKernelImport("VirtualProtect");
 }
 
-void PeFile::processImports(unsigned myimport, unsigned) // pass 2
+void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 {
     COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
 
-    ilinker->relocate(myimport);
+    ilinker->relocate_import(myimport);
     int len;
     oimpdlls = ilinker->getLoader(&len);
     assert(len == (int) soimpdlls);
@@ -947,7 +936,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             soimport++; // separator
         }
     }
-    oimport = new upx_byte[soimport];
+    oimport = New(upx_byte, soimport);
     memset(oimport,0,soimport);
 
     qsort(idlls,dllnum,sizeof (udll*),udll::compare);
@@ -1123,13 +1112,13 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
     iv.add(edir.name,len);
 
     len = 4 * edir.functions;
-    functionptrs = new char[len + 1];
+    functionptrs = New(char, len + 1);
     memcpy(functionptrs,base + edir.addrtable,len);
     size += len;
     iv.add(edir.addrtable,len);
 
     unsigned ic;
-    names = new char* [edir.names + edir.functions + 1];
+    names = New(char *, edir.names + edir.functions + 1);
     for (ic = 0; ic < edir.names; ic++)
     {
         char *n = base + get_le32(base + edir.nameptrtable + ic * 4);
@@ -1156,7 +1145,7 @@ void PeFile::Export::convert(unsigned eoffs,unsigned esize)
             names[ic + edir.names] = NULL;
 
     len = 2 * edir.names;
-    ordinals = new char[len + 1];
+    ordinals = New(char, len + 1);
     memcpy(ordinals,base + edir.ordinaltable,len);
     size += len;
     iv.add(edir.ordinaltable,len);
@@ -1218,7 +1207,7 @@ void PeFile::processExports(Export *xport) // pass1
     }
     xport->convert(IDADDR(PEDIR_EXPORT),IDSIZE(PEDIR_EXPORT));
     soexport = ALIGN_UP(xport->getsize(), 4u);
-    oexport = new upx_byte[soexport];
+    oexport = New(upx_byte, soexport);
     memset(oexport, 0, soexport);
 }
 
@@ -1338,7 +1327,7 @@ void PeFile::processTls1(Interval *iv,
         sotls = ALIGN_UP(sotls, cb_size) + 2 * cb_size;
 
     // the PE loader wants this stuff uncompressed
-    otls = new upx_byte[sotls];
+    otls = New(upx_byte, sotls);
     memset(otls,0,sotls);
     memcpy(otls,ibuf + IDADDR(PEDIR_TLS),sizeof(tls));
     // WARNING: this can acces data in BSS
@@ -1430,7 +1419,7 @@ void PeFile::processLoadConf(Interval *iv) // pass 1
             // printf("loadconf reloc detected: %x\n", pos);
         }
 
-    oloadconf = new upx_byte[soloadconf];
+    oloadconf = New(upx_byte, soloadconf);
     memcpy(oloadconf, loadconf, soloadconf);
 }
 
@@ -1654,7 +1643,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
             ibufcheck(p, 2);
             const unsigned len = 2 + 2 * get_le16(p);
             ibufcheck(p, len);
-            child->name = new upx_byte[len];
+            child->name = New(upx_byte, len);
             memcpy(child->name,p,len); // copy unicode string
             ssize += len; // size of unicode strings
         }
@@ -1709,7 +1698,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
 
 upx_byte *PeFile::Resource::build()
 {
-    newstart = new upx_byte [dirsize()];
+    newstart = New(upx_byte, dirsize());
     unsigned bpos = 0,spos = dsize;
     build(root,bpos,spos,0);
 
@@ -1875,7 +1864,7 @@ void PeFile::processResources(Resource *res)
 
     for (soresources = res->dirsize(); res->next(); soresources += 4 + res->size())
         ;
-    oresources = new upx_byte[soresources];
+    oresources = New(upx_byte, soresources);
     upx_byte *ores = oresources + res->dirsize();
 
     char *keep_icons = NULL; // icon ids in the first icon group
@@ -1885,7 +1874,7 @@ void PeFile::processResources(Resource *res)
             if (res->itype() == RT_GROUP_ICON && iconsin1stdir == 0)
             {
                 iconsin1stdir = get_le16(ibuf + res->offs() + 4);
-                keep_icons = new char[1 + iconsin1stdir * 9];
+                keep_icons = New(char, 1 + iconsin1stdir * 9);
                 *keep_icons = 0;
                 for (unsigned ic = 0; ic < iconsin1stdir; ic++)
                     upx_snprintf(keep_icons + strlen(keep_icons), 9, "3/%u,",
@@ -2041,7 +2030,7 @@ unsigned PeFile::stripDebug(unsigned overlaystart)
 
 void PeFile::readSectionHeaders(unsigned objs, unsigned sizeof_ih)
 {
-    isection = new pe_section_t[objs];
+    isection = New(pe_section_t, objs);
     fi->seek(pe_offset+sizeof_ih,SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
     rvamin = isection[0].vaddr;
@@ -2370,7 +2359,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (rel_at_sections_start)
         callProcessRelocs(rel, ic);
 
-    processImports(ic, getProcessImportParam(upxsection));
+    processImports2(ic, getProcessImportParam(upxsection));
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;
@@ -2931,7 +2920,7 @@ int PeFile::canUnpack0(unsigned max_sections, LE16 &ih_objects,
         return false;
 
     unsigned objs = ih_objects;
-    isection = new pe_section_t[objs];
+    isection = New(pe_section_t, objs);
     fi->seek(pe_offset + ihsize, SEEK_SET);
     fi->readx(isection,sizeof(pe_section_t)*objs);
     if (ih_objects < 3)

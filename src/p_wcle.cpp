@@ -207,7 +207,7 @@ void PackWcle::encodeObjectTable()
 {
     unsigned ic,jc;
 
-    oobject_table = new le_object_table_entry_t[soobject_table = 2];
+    oobject_table = New(le_object_table_entry_t, soobject_table = 2);
     memset(oobject_table,0,soobject_table * sizeof(*oobject_table));
 
     // object #1:
@@ -242,7 +242,7 @@ void PackWcle::encodeObjectTable()
 
 void PackWcle::encodePageMap()
 {
-    opm_entries = new le_pagemap_entry_t[sopm_entries = opages];
+    opm_entries = New(le_pagemap_entry_t, sopm_entries = opages);
     for (unsigned ic = 0; ic < sopm_entries; ic++)
     {
         opm_entries[ic].l = (unsigned char) (ic+1);
@@ -256,7 +256,7 @@ void PackWcle::encodePageMap()
 void PackWcle::encodeFixupPageTable()
 {
     unsigned ic;
-    ofpage_table = new unsigned[sofpage_table = 1 + opages];
+    ofpage_table = New(unsigned, sofpage_table = 1 + opages);
     for (ofpage_table[0] = ic = 0; ic < opages; ic++)
         set_le32(ofpage_table+ic+1,sofixups-FIXUP_EXTRA);
 }
@@ -264,7 +264,7 @@ void PackWcle::encodeFixupPageTable()
 
 void PackWcle::encodeFixups()
 {
-    ofixups = new upx_byte[sofixups = 1*7 + FIXUP_EXTRA];
+    ofixups = New(upx_byte, sofixups = 1*7 + FIXUP_EXTRA);
     memset(ofixups,0,sofixups);
     ofixups[0] = 7;
     set_le16(ofixups+2,(LE_STUB_EDI + neweip) & (mps-1));
@@ -608,7 +608,7 @@ void PackWcle::decodeFixups()
     selfrel_fixups++;
     unsigned selectlen = ptr_diff(selfrel_fixups, selector_fixups)/9;
 
-    ofixups = new upx_byte[fixupn*9+1000+selectlen*5];
+    ofixups = New(upx_byte, fixupn*9+1000+selectlen*5);
     upx_bytep fp = ofixups;
 
     for (ic = 1, jc = 0; ic <= opages; ic++)
@@ -682,7 +682,7 @@ void PackWcle::decodeFixups()
 
 void PackWcle::decodeFixupPageTable()
 {
-    ofpage_table = new unsigned[sofpage_table = 1 + opages];
+    ofpage_table = New(unsigned, sofpage_table = 1 + opages);
     set_le32(ofpage_table,0);
     // the rest of ofpage_table is filled by decodeFixups()
 }
@@ -691,7 +691,7 @@ void PackWcle::decodeFixupPageTable()
 void PackWcle::decodeObjectTable()
 {
     soobject_table = oimage[ph.u_len - 1];
-    oobject_table = new le_object_table_entry_t[soobject_table];
+    oobject_table = New(le_object_table_entry_t, soobject_table);
     unsigned jc, ic = soobject_table * sizeof(*oobject_table);
 
     const unsigned extradata = ph.version == 10 ? 17 : 13;

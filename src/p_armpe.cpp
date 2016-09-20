@@ -88,9 +88,9 @@ Linker* PackArmPe::newLinker() const
 // import handling
 **************************************************************************/
 
-void PackArmPe::processImports(unsigned myimport, unsigned iat_off) // pass 2
+void PackArmPe::processImports2(unsigned myimport, unsigned iat_off) // pass 2
 {
-    PeFile::processImports(myimport, iat_off);
+    PeFile::processImports2(myimport, iat_off);
 
 __packed_struct(import_desc)
     LE32  oft;      // orig first thunk

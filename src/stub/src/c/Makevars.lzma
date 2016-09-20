@@ -1,28 +1,14 @@
-# you should set envvar UPX_LZMADIR to point to your unpacked LZMA SDK lzma443.tar.bz2
-# NOTE: only version 4.43 is currently sufficiently tested !
+# UPX unconditionally uses its own version in src/lzma-sdk because
+# that version works fine since 2006 and that is the only version
+# that is actually sufficiently tested!!!
 
-ifndef UPX_LZMADIR
-ifdef top_srcdir
-ifneq ($(wildcard $(top_srcdir)/src/stub/src/c/lzma-sdk/C/.),)
-UPX_LZMADIR := $(top_srcdir)/src/stub/src/c/lzma-sdk
-else ifneq ($(wildcard $(top_srcdir)/src/lzma-sdk/C/.),)
-UPX_LZMADIR := $(top_srcdir)/src/lzma-sdk
-endif
-endif
-endif
+override UPX_LZMADIR := $(top_srcdir)/src/lzma-sdk
+override UPX_LZMA_VERSION := 0x443
 
-ifneq ($(wildcard $(UPX_LZMADIR)/C/7zVersion.h),)
-UPX_LZMA_VERSION := $(shell perl -ne 'print "0x$$1$$2" if /^\s*\#\s*define\s+MY_VERSION\s+"(\d*)\.(\d\d)[\s\w]*"/;' $(UPX_LZMADIR)/C/7zVersion.h)
-else ifneq ($(wildcard $(UPX_LZMADIR)/CPP/Windows/Time.cpp),)
-UPX_LZMA_VERSION = 0x459
-else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zBuf.h),)
-UPX_LZMA_VERSION = 0x458
-else ifneq ($(wildcard $(UPX_LZMADIR)/C/CpuArch.h),)
-UPX_LZMA_VERSION = 0x457
-else ifneq ($(wildcard $(UPX_LZMADIR)/CPP/7zip/.),)
-UPX_LZMA_VERSION = 0x449
-else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/Compress/LZ/Patricia/.),)
-UPX_LZMA_VERSION = 0x442
-else ifneq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
-UPX_LZMA_VERSION = 0x443
+ifeq ($(wildcard $(UPX_LZMADIR)/C/7zip/.),)
+  ifneq ($(wildcard $(top_srcdir)/.git/.),)
+    $(error ERROR: missing git submodule; run 'git submodule update --init --recursive')
+  else
+    $(error ERROR: missing directory src/lzma-sdk/; visit https://github.com/upx/upx-lzma-sdk )
+  endif
 endif
