@@ -69,7 +69,8 @@ ElfLinker::Section::Section(const char *n, const void *i, unsigned s, unsigned a
     assert(name != NULL);
     input = malloc(s + 1);
     assert(input != NULL);
-    memcpy(input, i, s);
+    if (s != 0)
+        memcpy(input, i, s);
     ((char *)input)[s] = 0;
 }
 

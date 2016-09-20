@@ -325,7 +325,7 @@ void PackUnix::packExtent(
     }
     fi->seek(x.offset, SEEK_SET);
     for (off_t rest = x.size; 0 != rest; ) {
-        int const filter_strategy = getStrategy(*ft);
+        int const filter_strategy = ft ? getStrategy(*ft) : 0;
         int l = fi->readx(ibuf, UPX_MIN(rest, (off_t)blocksize));
         if (l == 0) {
             break;

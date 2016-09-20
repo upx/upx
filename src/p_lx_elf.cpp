@@ -230,6 +230,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
+        assert(file_image == NULL);
         file_image = New(char, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
@@ -237,6 +238,7 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
     }
     if (f && Elf32_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
+        assert(file_image == NULL);
         file_image = New(char, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
@@ -600,6 +602,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
+        assert(file_image == NULL);
         file_image = New(char, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
@@ -607,6 +610,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     }
     if (f && Elf64_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
+        assert(file_image == NULL);
         file_image = New(char, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
@@ -1662,6 +1666,7 @@ PackLinuxElf64ppcle::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
+        assert(file_image == NULL);
         file_image = New(char, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
@@ -1837,6 +1842,7 @@ PackLinuxElf64amd::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
+        assert(file_image == NULL);
         file_image = New(char, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
