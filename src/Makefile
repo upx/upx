@@ -72,13 +72,10 @@ INCLUDES += -I$(UPX_UCLDIR)/include
 LIBS += $(addprefix -L,$(dir $(wildcard $(UPX_UCLDIR)/libucl$(libext) $(UPX_UCLDIR)/src/.libs/libucl$(libext))))
 endif
 LIBS += -lucl -lz
-# you should set envvar UPX_LZMADIR to point to your unpacked LZMA SDK
+# LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
-$(info UPX_LZMA_VERSION=$(UPX_LZMA_VERSION))
-ifneq ($(UPX_LZMA_VERSION),)
 DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 INCLUDES += -I$(UPX_LZMADIR)
-endif
 
 
 all: upx$(exeext) | .depend
@@ -103,14 +100,7 @@ endif
 
 
 ##compress_lzma$(objext) : CXXFLAGS += -O3 -fomit-frame-pointer
-compress_lzma$(objext) : CXXFLAGS += -Wno-cast-qual
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
-ifeq ($(UPX_LZMA_VERSION),0x443)
-compress_lzma$(objext) : CXXFLAGS += -Wno-non-virtual-dtor
-compress_lzma$(objext) : CXXFLAGS += -Wno-unused
-endif
-# needed for gcc-4.3:
-compress_lzma$(objext) : CXXFLAGS += -Wno-error
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
 
