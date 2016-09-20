@@ -58,7 +58,6 @@ static unsigned my_strlen(const unsigned char *s)
 #define strlen my_strlen
 #endif
 
-#if (__ACC_CXX_HAVE_PLACEMENT_DELETE) || defined(__DJGPP__)
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
 #define OPTR(type, var)         BoundedPtr<type> var(obuf, obuf.getSize())
@@ -68,16 +67,6 @@ static unsigned my_strlen(const unsigned char *s)
 #define OPTR_I(type, var, v)    BoundedPtr<type> var(obuf, obuf.getSize(), v)
 #define IPTR_C(type, var, v)    const BoundedPtr<type> var(ibuf, ibuf.getSize(), v)
 #define OPTR_C(type, var, v)    const BoundedPtr<type> var(obuf, obuf.getSize(), v)
-#else
-#define IPTR(type, var)         type* var = 0
-#define OPTR(type, var)         type* var = 0
-#define IPTR_I_D(type, var, disp) \
-                                type* var = (v) + (disp)
-#define IPTR_I(type, var, v)    type* var = (v)
-#define OPTR_I(type, var, v)    type* var = (v)
-#define IPTR_C(type, var, v)    type* const var = (v)
-#define OPTR_C(type, var, v)    type* const var = (v)
-#endif
 
 static void xcheck(const void *p)
 {
