@@ -1324,8 +1324,8 @@ ppc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 
 ppc64le-darwin.macho-fold.h : tmp/$$T.o tmp/ppc64le-darwin.macho-main.o
 # FIXME: undefined reference to `_savegpr0_28' etc.
-#	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	echo "FIXME" > tmp/$T.bin
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+#	echo "FIXME" > tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -1333,8 +1333,12 @@ tmp/ppc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
+# Omit -Os because it references _savegpr0_28 and _restgpr0_28 (and *_16 and *_27)
+# only 3 times, so sharing the code of those routines saves almost nothing
+# (and we would have to write them ourselves.)
+# Besides, PowerPC has 31.5 registers (r0 cannot index), which is plenty.
 tmp/ppc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,f-objstrip,$@)
 
 
