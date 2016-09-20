@@ -42,6 +42,7 @@
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC)
    // other compilers may work, but we're NOT interested into supporting them
+#  error "only clang and gcc are officially supported"
 #endif
 #if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
 #  error "UINT_MAX"
