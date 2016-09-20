@@ -258,9 +258,10 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
         gashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf32_Dyn::DT_HASH);
         jni_onload_sym = elf_lookup("JNI_OnLoad");
-        if (jni_onload_sym)
+        if (jni_onload_sym) {
             jni_onload_va = get_te32(&jni_onload_sym->st_value);
             jni_onload_va = 0;
+        }
     }
 }
 
@@ -627,9 +628,10 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
         gashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_GNU_HASH);
         hashtab = (unsigned const *)elf_find_dynamic(Elf64_Dyn::DT_HASH);
         jni_onload_sym = elf_lookup("JNI_OnLoad");
-        if (jni_onload_sym)
+        if (jni_onload_sym) {
             jni_onload_va = get_te64(&jni_onload_sym->st_value);
             jni_onload_va = 0;
+        }
     }
 }
 
