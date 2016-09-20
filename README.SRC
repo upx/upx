@@ -66,8 +66,7 @@ Prerequisites
 Tools needed to build/modify the UPX sources
 --------------------------------------------
 
-  - A C++ compiler supporting inner classes, templates, exceptions
-    and RTTI.
+  - A C++ compiler: gcc >= 3.3 or clang.
 
   - GNU make 3.81 or better
 

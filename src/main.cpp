@@ -158,7 +158,7 @@ static bool set_eec(int ec, int *eec)
     return 0;
 }
 
-bool set_ec(int ec)
+bool set_exit_code(int ec)
 {
     return set_eec(ec,&exit_code);
 }
@@ -166,7 +166,7 @@ bool set_ec(int ec)
 
 void e_exit(int ec)
 {
-    (void) set_ec(ec);
+    (void) set_exit_code(ec);
     do_exit();
 }
 
@@ -469,7 +469,6 @@ done:
     return r;
 }
 
-#if 1 && (ACC_CC_GNUC >= 0x030300)
 template <class T, T default_value, T min_value, T max_value>
 int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal)
 {
@@ -479,17 +478,6 @@ int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_
         *var = v;
     return r;
 }
-#else
-template <class T>
-int getoptvar(T *var, const char *arg_fatal)
-{
-    typename T::Type v = T::default_value_c;
-    int r = getoptvar(&v, T::min_value_c, T::max_value_c, arg_fatal);
-    if (r == 0)
-        *var = v;
-    return r;
-}
-#endif
 
 
 static int do_option(int optc, const char *arg)
@@ -1289,12 +1277,8 @@ static bool test(void)
     COMPILE_TIME_ASSERT_ALIGNED1(test2_t)
     COMPILE_TIME_ASSERT(sizeof(t2) == 7 + 21*sizeof(T))
 #if defined(__acc_alignof)
-#if (ACC_CC_CLANG && ACC_ARCH_AMD64)
-    // CBUG: clang-2.8 bug in 64-bit mode
-#else
     COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
     COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
-#endif
 #endif
 #if 1 && (ACC_CC_WATCOMC)
     test1_t t11; COMPILE_TIME_ASSERT(sizeof(t11.a) <= sizeof(t11.b))

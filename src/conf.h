@@ -36,105 +36,17 @@
 // ACC
 **************************************************************************/
 
-#if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
-#ifndef _CRT_NONSTDC_NO_DEPRECATE
-#define _CRT_NONSTDC_NO_DEPRECATE 1
-#endif
-#ifndef _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_NONSTDC_NO_WARNINGS 1
-#endif
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE 1
-#endif
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS 1
-#endif
+#include "miniacc.h"
+#if !(ACC_CC_CLANG || ACC_CC_GNUC)
+#  error "only clang and gcc are officially supported"
 #endif
 
-#include "miniacc.h"
-#if ((ACC_OS_WIN32 || ACC_OS_WIN64) && ACC_CC_MWERKS) && defined(__MSL__)
-#  undef HAVE_UTIME_H /* this pulls in <windows.h> */
-#endif
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
 #if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(_WIN32)
 #  undef HAVE_CHMOD
 #  undef HAVE_CHOWN
 #  undef HAVE_LSTAT
 #  undef HAVE_UTIME
-#endif
-
-
-// pragmas
-#if (ACC_CC_BORLANDC)
-#  if (__BORLANDC__ < 0x0500)
-#    error "need Borland C++ 5.0 or newer"
-#  endif
-#  pragma warn -aus     // 8004: 'x' is assigned a value that is never used
-#  pragma warn -inl     // 8026+8027: Function not expanded inline
-   // Borland compilers typically produce a number of bogus warnings, and
-   // the actual diagnostics vary from version to version...
-#  if (__BORLANDC__ < 0x0530)
-#    pragma warn -csu   // 8012: Comparing signed and unsigned values
-#  endif
-#  if (__BORLANDC__ >= 0x0530 && __BORLANDC__ < 0x0560)
-#    pragma warn -osh   // 8055: Possible overflow in shift operation
-#  endif
-#  if (__BORLANDC__ >= 0x0560)
-#    pragma warn -use   // 8080: 'x' is declared but never used
-#  endif
-#elif (ACC_CC_DMC)
-#  if (__DMC__ < 0x829)
-#    error "need Digital Mars C++ 8.29 or newer"
-#  endif
-#elif (ACC_CC_INTELC)
-#  if (__INTEL_COMPILER < 450)
-#    error "need Intel C++ 4.5 or newer"
-#  endif
-#  if (ACC_OS_WIN32 || ACC_OS_WIN64)
-#  elif defined(__linux__)
-#    pragma warning(error: 424)         // #424: extra ";" ignored
-//#    pragma warning(disable: 128)       // #128: loop is not reachable from preceding code
-//#    pragma warning(disable: 181)       // #181: argument is incompatible with corresponding format string conversion
-#    pragma warning(disable: 193)       // #193: zero used for undefined preprocessing identifier
-#    pragma warning(disable: 810)       // #810: conversion from "A" to "B" may lose significant bits
-#    pragma warning(disable: 981)       // #981: operands are evaluated in unspecified order
-#    pragma warning(disable: 1418)      // #1418: external function definition with no prior declaration
-//#    pragma warning(disable: 1419)      // #1419: external declaration in primary source file
-#  else
-#    error "untested platform"
-#  endif
-#elif (ACC_CC_MSC)
-#  if (_MSC_VER < 1100)
-#    error "need Visual C++ 5.0 or newer"
-#  endif
-#  pragma warning(error: 4096)          // W2: '__cdecl' must be used with '...'
-#  pragma warning(error: 4138)          // Wx: '*/' found outside of comment
-#  pragma warning(disable: 4097)        // W3: typedef-name 'A' used as synonym for class-name 'B'
-#  pragma warning(disable: 4511)        // W3: 'class': copy constructor could not be generated
-#  pragma warning(disable: 4512)        // W4: 'class': assignment operator could not be generated
-#  pragma warning(disable: 4514)        // W4: 'function': unreferenced inline function has been removed
-#  pragma warning(disable: 4710)        // W4: 'function': function not inlined
-#  if (_MSC_VER >= 1300)
-#    pragma warning(disable: 4625)      // W4: 'class' : copy constructor could not be generated because a base class copy constructor is inaccessible
-#    pragma warning(disable: 4626)      // W4: 'class' : assignment operator could not be generated because a base class assignment operator is inaccessible
-#    pragma warning(disable: 4711)      // W4: 'function' selected for automatic inline expansion
-#    pragma warning(disable: 4820)      // W4: 'struct' : 'x' bytes padding added after member 'member'
-#  endif
-#  if (_MSC_VER >= 1400)
-#    pragma warning(disable: 4996)      // W1: 'function': was declared deprecated
-#  endif
-#elif (ACC_CC_SUNPROC)
-//#  pragma error_messages(off,"badargtype2w")    // FIXME
-#elif (ACC_CC_WATCOMC)
-#  if (__WATCOMC__ < 1280)
-#    error "need Open Watcom C++ 1.8 or newer"  // because earlier versions do not support nested classes
-#  endif
-#  if defined(__cplusplus)
-#    pragma warning 367 9               // w3: conditional expression in if statement is always true
-#    pragma warning 368 9               // w3: conditional expression in if statement is always false
-#    pragma warning 389 9               // w3: integral value may be truncated
-#    pragma warning 656 9               // w5: define this function inside its class definition (may improve code quality)
-#  endif
 #endif
 
 
@@ -184,12 +96,6 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #undef linux
 #undef small
 #undef tos
-#if (ACC_CC_DMC)
-#  undef tell
-#endif
-#if !(ACC_CC_PGI)
-#  undef unix
-#endif
 #if defined(__DJGPP__)
 #  undef sopen
 #  undef __unix__
@@ -375,35 +281,17 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #define TABLESIZE(table)    ((sizeof(table)/sizeof((table)[0])))
 
 
-#if 0
-#define ALIGN_DOWN(a,b)     (((a) / (b)) * (b))
-#define ALIGN_UP(a,b)       ALIGN_DOWN((a) + ((b) - 1), b)
-#define ALIGN_GAP(a,b)      (ALIGN_UP(a,b) - (a))
-#elif 1
 template <class T>
 inline T ALIGN_DOWN(const T& a, const T& b) { T r; r = (a / b) * b; return r; }
 template <class T>
 inline T ALIGN_UP  (const T& a, const T& b) { T r; r = ((a + b - 1) / b) * b; return r; }
 template <class T>
 inline T ALIGN_GAP (const T& a, const T& b) { T r; r = ALIGN_UP(a, b) - a; return r; }
-#else
-inline unsigned ALIGN_DOWN(unsigned a, unsigned b) { return (a / b) * b; }
-inline unsigned ALIGN_UP  (unsigned a, unsigned b) { return ((a + b - 1) / b) * b; }
-inline unsigned ALIGN_GAP (unsigned a, unsigned b) { return ALIGN_UP(a, b) - a; }
-#endif
 
-#if 0
-#define UPX_MAX(a,b)        ((a) >= (b) ? (a) : (b))
-#define UPX_MIN(a,b)        ((a) <= (b) ? (a) : (b))
-#elif 1
 template <class T>
 inline const T& UPX_MAX(const T& a, const T& b) { if (a < b) return b; return a; }
 template <class T>
 inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b; }
-#else
-inline unsigned UPX_MAX(unsigned a, unsigned b) { return a < b ? b : a; }
-inline unsigned UPX_MIN(unsigned a, unsigned b) { return a < b ? a : b; }
-#endif
 
 
 // An Array allocates memory on the heap, but automatically
@@ -415,7 +303,7 @@ inline unsigned UPX_MIN(unsigned a, unsigned b) { return a < b ? a : b; }
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 
-struct noncopyable
+class noncopyable
 {
 protected:
     inline noncopyable() {}
@@ -567,13 +455,7 @@ private:
 **************************************************************************/
 
 struct upx_callback_t;
-#define upx_callback_p upx_callback_t *
-#if 0
-typedef void* (__acc_cdecl *upx_alloc_func_t)
-    (upx_callback_p self, unsigned items, unsigned size);
-typedef void      (__acc_cdecl *upx_free_func_t)
-    (upx_callback_p self, void* ptr);
-#endif
+typedef upx_callback_t *upx_callback_p;
 typedef void (__acc_cdecl *upx_progress_func_t)
     (upx_callback_p, unsigned, unsigned);
 
@@ -609,15 +491,6 @@ struct OptVar
         assertValue();
         return *this;
     }
-#if 0
-#error
-    // there is too much implicit magic in this copy operator;
-    // better introduce an explicit "oassign" function.
-    OptVar& operator= (const OptVar& other) {
-        if (other.is_set) { v = other.v; is_set += 1; }
-        assertValue(); return *this;
-    }
-#endif
 
     void reset() { v = default_value; is_set = 0; }
     operator T () const { return v; }
@@ -631,15 +504,9 @@ struct OptVar
 template <class T> inline void oassign(T& self, const T& other) {
     if (other.is_set) { self.v = other.v; self.is_set += 1; }
 }
-#if 0
-template <class V, class T> inline void oassign(V& v, const T& other) {
-    if (other.is_set) { v = other.v; }
-}
-#else
 template <class T> inline void oassign(unsigned& v, const T& other) {
     if (other.is_set) { v = other.v; }
 }
-#endif
 
 
 struct lzma_compress_config_t
@@ -770,7 +637,7 @@ typedef ElfLinker Linker;
 
 // main.cpp
 extern const char *progname;
-bool set_ec(int ec);
+bool set_exit_code(int ec);
 #if (ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 void e_exit(int ec) __attribute__((__noreturn__));
 #else
