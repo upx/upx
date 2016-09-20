@@ -776,7 +776,7 @@ public:
         return outputlen;
     }
 
-    void relocate(unsigned myimport)
+    void relocate_import(unsigned myimport)
     {
         assert(nsections > 0);
         assert(output);
@@ -845,11 +845,11 @@ void PeFile::addStubImports()
     addKernelImport("VirtualProtect");
 }
 
-void PeFile::processImports(unsigned myimport, unsigned) // pass 2
+void PeFile::processImports2(unsigned myimport, unsigned) // pass 2
 {
     COMPILE_TIME_ASSERT(sizeof(import_desc) == 20);
 
-    ilinker->relocate(myimport);
+    ilinker->relocate_import(myimport);
     int len;
     oimpdlls = ilinker->getLoader(&len);
     assert(len == (int) soimpdlls);
@@ -2359,7 +2359,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     if (rel_at_sections_start)
         callProcessRelocs(rel, ic);
 
-    processImports(ic, getProcessImportParam(upxsection));
+    processImports2(ic, getProcessImportParam(upxsection));
     ODADDR(PEDIR_IMPORT) = ic;
     ODSIZE(PEDIR_IMPORT) = soimpdlls;
     ic += soimpdlls;

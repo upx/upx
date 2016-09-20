@@ -67,7 +67,7 @@ protected:
     virtual Linker* newLinker() const;
 
     virtual const char *kernelDll() const { return "coredll.dll"; }
-    virtual void processImports(unsigned, unsigned);
+    virtual void processImports2(unsigned, unsigned);
     virtual void addStubImports();
 
     virtual void processTls(Interval *);

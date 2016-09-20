@@ -3710,7 +3710,7 @@ Elf64_Sym const *PackLinuxElf64::elf_lookup(char const *name) const
         unsigned const symbias  = get_te32(&gashtab[1]);
         unsigned const n_bitmask = get_te32(&gashtab[2]);
         unsigned const gnu_shift = get_te32(&gashtab[3]);
-        upx_uint64_t const *const bitmask = (upx_uint64_t const *)&gashtab[4];
+        upx_uint64_t const *const bitmask = (upx_uint64_t const *)(void const *)&gashtab[4];
         unsigned     const *const buckets = (unsigned const *)&bitmask[n_bitmask];
 
         unsigned const h = gnu_hash(name);
