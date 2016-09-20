@@ -62,7 +62,7 @@ f80_jcc2(Filter const *f)
     return f80_jmp1(f);
 }
 
-static int const N_MRU = 32;  // does not have to be a power of 2
+#define N_MRU 32    // does not have to be a power of 2
 
 // Adaptively remember recent destinations.
 static void
@@ -340,7 +340,7 @@ static int U(Filter *f)
 }
 #endif
 
-
+#undef N_MRU
 #undef F
 #undef U
 
