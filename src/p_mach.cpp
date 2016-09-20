@@ -752,6 +752,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     N_Mach::Mach_main_command cmdMAIN;
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
+        + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segTEXT) + sizeof(secTEXT)
         + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(cmdMAIN)
         + sizeof(N_Mach::Mach_dyld_info_only_command) + sizeof(Mach_dysymtab_command)
