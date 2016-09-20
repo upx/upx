@@ -10,11 +10,9 @@
 # dependencies on the default values of builtin variables,
 # then we cannot use builtin variables at all.
 # See: http://lists.gnu.org/archive/html/help-make/2016-08/msg00011.html
-MAKEFLAGS += -rR
+MAKEFLAGS += -r
 ifneq ($(upx_CXX),)
 CXX = $(upx_CXX)
-else
-CXX = g++
 endif
 ifneq ($(upx_CXXLD),)
 CXXLD = $(upx_CXXLD)
@@ -73,7 +71,10 @@ CXXFLAGS += -O2
 LDFLAGS += -s
 endif
 # protect against security threats caused by misguided C++ compiler "optimizations"
-CXXFLAGS += -fno-delete-null-pointer-checks -fno-strict-aliasing -fwrapv
+ifeq ($(findstring clang,$(CXX)),)
+CXXFLAGS += -fno-delete-null-pointer-checks
+endif
+CXXFLAGS += -fno-strict-aliasing -fwrapv
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
 CXXFLAGS_WERROR ?= -Werror
 CXXFLAGS += $(CXXFLAGS_WERROR)
