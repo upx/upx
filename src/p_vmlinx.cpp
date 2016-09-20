@@ -98,7 +98,7 @@ PackVmlinuxBase<T>::compare_Phdr(void const *aa, void const *bb)
             if (xa > xb)         return  1;
     if (a->p_paddr < b->p_paddr) return -1;  // ascending by .p_paddr
     if (a->p_paddr > b->p_paddr) return  1;
-                                 return  0;
+    return  0;
 }
 
 template <class T>

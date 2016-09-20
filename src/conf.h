@@ -297,8 +297,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
 // An Array allocates memory on the heap, but automatically
 // gets destructed when leaving scope or on exceptions.
 #define Array(type, var, size) \
-    assert((int)(size) > 0); \
-    MemBuffer var ## _membuf((size)*(sizeof(type))); \
+    MemBuffer var ## _membuf(mem_size(sizeof(type), size)); \
     type * const var = ((type *) var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)

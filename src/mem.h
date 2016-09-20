@@ -34,6 +34,13 @@
 //
 **************************************************************************/
 
+size_t mem_size      (upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra=0);
+size_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n);
+bool   mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra=0);
+
+#define New(type,n)  new type [ mem_size_get_n(sizeof(type),n) ]
+
+
 class MemBuffer
 {
 public:
