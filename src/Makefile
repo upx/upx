@@ -22,6 +22,10 @@ else
 CXXLD = $(CXX)
 endif
 
+# build configuration options
+#USE_DEBUG = 1
+#USE_SANITIZE = 1
+
 .SUFFIXES:
 export SHELL = /bin/sh
 override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
@@ -43,22 +47,6 @@ ifneq ($(srcdir),.)
 VPATH := . $(srcdir)
 endif
 
-ifeq ($(DEBUG),1)
-CXXFLAGS += -O0 -g
-else
-CXXFLAGS += -O2
-LDFLAGS += -s
-endif
-# some gcc versions suffer over-agressive aliasing and wrapv optimization features/bugs
-CXXFLAGS_OPTIMIZE_STRICT_ALIASING ?= -fno-strict-aliasing
-CXXFLAGS_OPTIMIZE_WRAPV ?= -fwrapv
-CXXFLAGS += $(CXXFLAGS_OPTIMIZE_STRICT_ALIASING)
-CXXFLAGS += $(CXXFLAGS_OPTIMIZE_WRAPV)
-CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
-CXXFLAGS_WERROR ?= -Werror
-CXXFLAGS += $(CXXFLAGS_WERROR)
-CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
-
 exeext ?= .out
 libext ?= .a
 objext ?= .o
@@ -76,6 +64,27 @@ LIBS += -lucl -lz
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 INCLUDES += -I$(UPX_LZMADIR)
+
+CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
+ifdef USE_DEBUG
+CXXFLAGS += -O0 -g
+else
+CXXFLAGS += -O2
+LDFLAGS += -s
+endif
+# protect against security threats caused by misguided C++ compiler "optimizations"
+CXXFLAGS += -fno-delete-null-pointer-checks -fno-strict-aliasing -fwrapv
+CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
+CXXFLAGS_WERROR ?= -Werror
+CXXFLAGS += $(CXXFLAGS_WERROR)
+
+ifdef USE_SANITIZE
+CXXFLAGS_SANITIZE := -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
+CXXFLAGS += $(CXXFLAGS_SANITIZE)
+LDFLAGS  += $(CXXFLAGS_SANITIZE)
+# these are the only 2 objects that are actually speed-sensitive
+compress_lzma$(objext) filteri$(objext) : CXXFLAGS := $(filter-out $(CXXFLAGS_SANITIZE),$(CXXFLAGS))
+endif
 
 
 all: upx$(exeext) | .depend
@@ -99,7 +108,6 @@ else
 endif
 
 
-##compress_lzma$(objext) : CXXFLAGS += -O3 -fomit-frame-pointer
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
