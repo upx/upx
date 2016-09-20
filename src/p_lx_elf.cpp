@@ -2125,12 +2125,12 @@ PackNetBSDElf32x86::generateElfHdr(
         set_te32(&phdr->p_flags, Elf32_Phdr::PF_R);
         set_te32(&phdr->p_align, 4);
 
-        unsigned bits = get_te32(  /* &np_PaX->body[4] */
-            &(ACC_UNCONST_CAST(unsigned char *, (1+ np_PaX)))[4] );
+        /* &np_PaX->body[4] */
+        const unsigned char *p4 =  &(ACC_STATIC_CAST2(const unsigned char *, const void *, (1+ np_PaX)))[4];
+        unsigned bits = get_te32(p4);
         bits &= ~PAX_MPROTECT;
         bits |=  PAX_NOMPROTECT;
-        set_te32(  /* &np_PaX->body[4] */
-            &(ACC_UNCONST_CAST(unsigned char *, (1+ np_PaX)))[4],  bits);
+        set_te32(ACC_UNCONST_CAST(unsigned char *, p4), bits);
 
         sz_elf_hdrs += sz_PaX + sizeof(*phdr);
         note_offset += sz_PaX;

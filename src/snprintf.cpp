@@ -761,13 +761,13 @@ static size_t dopr(char *buffer, size_t maxlen, const char *format, va_list args
 **************************************************************************/
 
 // UPX version with assertions
-static int xdopr(char *buffer, size_t maxlen, const char *format, va_list args) {
+__acc_static_noinline int xdopr(char *buffer, size_t maxlen, const char *format, va_list args) {
     size_t ret;
 
     // preconditions
     assert(maxlen < INT_MAX);
     if (buffer != NULL)
-        assert((int) maxlen > 0);
+        assert(maxlen > 0);
     else
         assert(maxlen == 0);
 

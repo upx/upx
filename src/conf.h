@@ -36,6 +36,9 @@
 // ACC
 **************************************************************************/
 
+#ifndef ACC_CFG_USE_NEW_STYLE_CASTS
+#define ACC_CFG_USE_NEW_STYLE_CASTS 1
+#endif
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC)
 #  error "only clang and gcc are officially supported"
@@ -108,8 +111,8 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #if !defined(WITH_LZMA) || (WITH_LZMA+0 == 0)
 #  error "WITH_LZMA is missing"
 #endif
-#if (WITH_LZMA+0 != 0x443)
-#  error "invalud WITH_LZMA"
+#if (WITH_LZMA != 0x443)
+#  error "invalid WITH_LZMA version"
 #endif
 #if defined(UPX_OFFICIAL_BUILD)
 #  if !(WITH_LZMA) || !(WITH_NRV) || !(WITH_UCL)

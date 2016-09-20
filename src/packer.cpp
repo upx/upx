@@ -26,7 +26,6 @@
  */
 
 
-//#define WANT_STL 1
 #include "conf.h"
 #include "file.h"
 #include "packer.h"
