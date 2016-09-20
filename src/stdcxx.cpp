@@ -25,42 +25,24 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
-//#define WANT_STL 1
 #include "conf.h"
 #include "stdcxx.h"
-
 
 #if 1 && defined(__linux__) && (ACC_CC_GNUC >= 0x030400)
 /* this is used by __gnu_cxx::__verbose_terminate_handler() */
 extern "C" {
-char * __attribute__((__weak__)) __cxa_demangle(const char *, char *, size_t *, int *);
-char *__cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status)
-{
-    UNUSED(mangled_name); UNUSED(buf); UNUSED(n);
-    if (status) *status = -1; /* memory_allocation_failure */
+char *__attribute__((__weak__)) __cxa_demangle(const char *, char *, size_t *, int *);
+char *__cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status) {
+    UNUSED(mangled_name);
+    UNUSED(buf);
+    UNUSED(n);
+    if (status)
+        *status = -1; /* memory_allocation_failure */
     return NULL;
 }
 } /* extern "C" */
 #endif
 
-
-#ifdef WANT_STL
-
-#if defined(__GNUC__)
-// provide missing oom_handler
-void (*__malloc_alloc_template<0>::__malloc_alloc_oom_handler)() = 0;
-# if !defined(__USE_MALLOC)
-// instantiate default allocator
-template class __default_alloc_template<false, 0>;
-# endif
-#endif
-
-#endif
-
-
-
 /*
 vi:ts=4:et:nowrap
 */
-

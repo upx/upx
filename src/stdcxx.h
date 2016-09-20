@@ -25,115 +25,34 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #ifndef __UPX_STDCXX_H
 #define __UPX_STDCXX_H 1
 
 #ifdef __cplusplus
 
-#define NOTHROW             ACC_CXX_NOTHROW
-#define DISABLE_NEW_DELETE  ACC_CXX_DISABLE_NEW_DELETE
-
+#define NOTHROW ACC_CXX_NOTHROW
+#define DISABLE_NEW_DELETE ACC_CXX_DISABLE_NEW_DELETE
 
 /*************************************************************************
 // exceptions & RTTI
 **************************************************************************/
 
-#if (ACC_CC_BORLANDC && (__BORLANDC__ < 0x0530))
-
-#include <stdcomp.h>
-#undef RWSTD_MULTI_THREAD
-#include <stdexcep.h>
-#include <new.h>
-#include <typeinfo.h>
-namespace std { class bad_alloc { }; }
-
-#elif (ACC_CC_DMC && (__DMC__ < 0x834))
-
-#include <new.h>
-#include <typeinfo.h>
-
-namespace std {
-class exception
-{
-public:
-    exception() NOTHROW { }
-    virtual ~exception() NOTHROW { }
-    virtual const char* what() const NOTHROW { return "exception"; }
-};
-}
-
-#elif (ACC_CC_SYMANTECC)
-
-#include <new.h>
-#include <typeinfo.h>
-
-class exception
-{
-public:
-    exception() NOTHROW { }
-    virtual ~exception() NOTHROW { }
-    virtual const char* what() const NOTHROW { return "exception"; }
-};
-#define bool int
-#define true 1
-#define false 0
-
-#else
-
 #include <exception>
 #include <new>
 #include <typeinfo>
-
-#endif
-
-
-#if (ACC_CC_BORLANDC)
-using namespace std;
-#elif (ACC_CC_DMC)
-namespace std { class bad_alloc { }; }
-#elif (ACC_CC_GNUC && ACC_OS_EMX)
-#define std /*empty*/
-#elif (ACC_CC_SYMANTECC)
-#define std /*empty*/
-class bad_alloc { };
-#endif
-
 
 /*************************************************************************
 // STL
 **************************************************************************/
 
 #ifdef WANT_STL
-
-#if defined(__linux__)
-#  define _NOTHREADS 1
-#endif
-#if defined(__GNUC__)
-#  define __THROW_BAD_ALLOC     throw bad_alloc()
-#  define __USE_MALLOC          1
-#  define enable                upx_stl_enable
-#endif
-#if defined(_MSC_VER)
-#  pragma warning(push)
-#  pragma warning(disable: 4018 4100 4663)
-#endif
-
-#include <vector>
-
-#if defined(_MSC_VER)
-#  pragma warning(pop)
-#endif
-
+#error "WANT_STL"
 #endif /* WANT_STL */
-
 
 #endif /* __cplusplus */
 
 #endif /* already included */
 
-
 /*
 vi:ts=4:et:nowrap
 */
-
