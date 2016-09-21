@@ -287,7 +287,7 @@ inline const T& UPX_MIN(const T& a, const T& b) { if (a < b) return a; return b;
 // gets destructed when leaving scope or on exceptions.
 #define Array(type, var, size) \
     MemBuffer var ## _membuf(mem_size(sizeof(type), size)); \
-    type * const var = ((type *) var ## _membuf.getVoidPtr())
+    type * const var = ACC_STATIC_CAST(type *, var ## _membuf.getVoidPtr())
 
 #define ByteArray(var, size)    Array(unsigned char, var, size)
 

@@ -241,11 +241,7 @@ void UiPacker::startCallback(unsigned u_len, unsigned step, int pass, int total_
         return;
     }
 
-#if (ACC_CC_MSC && (_MSC_VER == 1300))
-    cb.nprogress = &UiPacker::progress_callback;
-#else
     cb.nprogress = progress_callback;
-#endif
     cb.user = this; // parameter for static function UiPacker::progress_callback()
 
     if (s->mode == M_CB_TERM) {

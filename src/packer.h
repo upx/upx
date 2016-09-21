@@ -80,7 +80,7 @@ public:
     unsigned saved_c_adler;
 
     // info fields set by fillPackHeader()
-    long buf_offset;
+    unsigned buf_offset;
 
     // info fields set by Packer::compress()
     upx_compress_result_t compress_result;
@@ -264,7 +264,7 @@ protected:
     virtual void defineFilterSymbols(const Filter *ft);
 
     // stub and overlay util
-    static void handleStub(InputFile *fi, OutputFile *fo, long size);
+    static void handleStub(InputFile *fi, OutputFile *fo, unsigned size);
     virtual void checkOverlay(unsigned overlay);
     virtual void copyOverlay(OutputFile *fo, unsigned overlay,
                              MemBuffer *buf, bool do_seek=true);
