@@ -766,7 +766,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
     super::pack4(fo, ft);
     if (my_filetype == Mach_header::MH_EXECUTE) {
-        unsigned long const zero = 0;
+        upx_uint64_t const zero = 0;
         unsigned const len = fo->getBytesWritten();
         fo->write(&zero, 7& (0u-len));
     }
@@ -1284,7 +1284,7 @@ void PackDylibPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint32_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + sizeof(disp);
@@ -1298,7 +1298,7 @@ void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE64 disp;
-    unsigned const zero = 0;
+    upx_uint64_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + sizeof(disp);
@@ -1312,7 +1312,7 @@ void PackMachPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint32_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));
@@ -1326,7 +1326,7 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned long const zero = 0;
+    upx_uint64_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));  // 0 mod 4
@@ -1349,7 +1349,7 @@ void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint32_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));
@@ -1363,7 +1363,7 @@ void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackMachARM64EL::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint64_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));
@@ -1377,7 +1377,7 @@ void PackMachARM64EL::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint32_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
@@ -1401,7 +1401,7 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     TE64 disp64;
-    unsigned const zero = 0;
+    upx_uint64_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 7& (0u-len));
     len += (7& (0u-len)) + sizeof(disp64) + 4*sizeof(disp);
@@ -1427,7 +1427,7 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
-    unsigned const zero = 0;
+    upx_uint32_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
@@ -1449,7 +1449,7 @@ void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
 void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE64 disp;
-    unsigned const zero = 0;
+    upx_uint64_t const zero = 0;
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
