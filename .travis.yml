@@ -1,0 +1,35 @@
+sudo: false
+language: cpp
+
+branches:
+  only:
+    - devel
+    - travis
+
+install:
+  - DEPS_DIR="$TRAVIS_BUILD_DIR/deps"
+  - mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
+  - wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+
+os:
+  - linux
+#  - osx
+
+compiler:
+  - clang
+  - gcc
+
+env:
+  global:
+    - B=
+  matrix:
+    - B=make/debug
+    - B=make/release
+#    - B=make/scan-build
+
+before_script:
+  - export BUILD_DIR="$TRAVIS_BUILD_DIR/build"
+  - export BUILD_METHOD_AND_BUILD_TYPE="$B"
+  - export UPX_UCLDIR="$TRAVIS_BUILD_DIR/deps/ucl-1.03"
+script:
+  - bash "$TRAVIS_BUILD_DIR/.travis_build.sh"
