@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #include "conf.h"
 
 #if (USE_SCREEN_WIN32)
@@ -37,28 +36,25 @@
 #define mask_fg 0x0f
 #define mask_bg 0xf0
 
-
 /*************************************************************************
 // direct screen access
 **************************************************************************/
 
 #if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
-   /* avoid -W4 warnings in <conio.h> */
-#  pragma warning(disable: 4032)
-   /* avoid -W4 warnings in <windows.h> */
-#  pragma warning(disable: 4201 4214 4514)
+/* avoid -W4 warnings in <conio.h> */
+#pragma warning(disable : 4032)
+/* avoid -W4 warnings in <windows.h> */
+#pragma warning(disable : 4201 4214 4514)
 #endif
 #if defined(__RSXNT__)
-#  define timeval win32_timeval  /* struct timeval already in <sys/time.h> */
+#define timeval win32_timeval /* struct timeval already in <sys/time.h> */
 #endif
 #include <windows.h>
 #if (HAVE_CONIO_H)
-#  include <conio.h>
+#include <conio.h>
 #endif
 
-
-struct screen_data_t
-{
+struct screen_data_t {
     HANDLE hi;
     HANDLE ho;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -80,106 +76,65 @@ struct screen_data_t
     CHAR_INFO empty_line[256];
 };
 
+#define P(x) ((SHORT)(x))
 
-#define P(x)    ((SHORT) (x))
-
-static const COORD pos00 = { 0, 0 };
-static const COORD size11 = { 1, 1 };
-
+static const COORD pos00 = {0, 0};
+static const COORD size11 = {1, 1};
 
 /* atExit information */
-static struct
-{
+static struct {
     int is_valid;
     HANDLE ho;
     CONSOLE_CURSOR_INFO cci;
 } ae;
 
+static void refresh(screen_t *this) { UNUSED(this); }
 
-static void refresh(screen_t *this)
-{
-    UNUSED(this);
-}
+static int getMode(const screen_t *this) { return this->data->mode; }
 
-
-static int getMode(const screen_t *this)
-{
-    return this->data->mode;
-}
-
-
-static int getPage(const screen_t *this)
-{
+static int getPage(const screen_t *this) {
     UNUSED(this);
     return 0;
 }
 
+static int getRows(const screen_t *this) { return this->data->rows; }
 
-static int getRows(const screen_t *this)
-{
-    return this->data->rows;
-}
+static int getCols(const screen_t *this) { return this->data->cols; }
 
-
-static int getCols(const screen_t *this)
-{
-    return this->data->cols;
-}
-
-
-static int isMono(const screen_t *this)
-{
+static int isMono(const screen_t *this) {
     UNUSED(this);
     return 0;
 }
 
+static int getFg(const screen_t *this) { return this->data->attr & mask_fg; }
 
-static int getFg(const screen_t *this)
-{
-    return this->data->attr & mask_fg;
-}
+static int getBg(const screen_t *this) { return this->data->attr & mask_bg; }
 
-
-static int getBg(const screen_t *this)
-{
-    return this->data->attr & mask_bg;
-}
-
-
-static void setFg(screen_t *this, int fg)
-{
-    this->data->attr = (WORD) ((this->data->attr & mask_bg) | (fg & mask_fg));
+static void setFg(screen_t *this, int fg) {
+    this->data->attr = (WORD)((this->data->attr & mask_bg) | (fg & mask_fg));
     SetConsoleTextAttribute(this->data->ho, this->data->attr);
 }
 
-
-static void setBg(screen_t *this, int bg)
-{
-    this->data->attr = (WORD) ((this->data->attr & mask_fg) | (bg & mask_bg));
+static void setBg(screen_t *this, int bg) {
+    this->data->attr = (WORD)((this->data->attr & mask_fg) | (bg & mask_bg));
     SetConsoleTextAttribute(this->data->ho, this->data->attr);
 }
 
-
-static void setCursor(screen_t *this, int x, int y)
-{
-    if (x >= 0 && y >= 0 && x < this->data->cols && y < this->data->rows)
-    {
-        COORD coord = { P(x), P(y) };
+static void setCursor(screen_t *this, int x, int y) {
+    if (x >= 0 && y >= 0 && x < this->data->cols && y < this->data->rows) {
+        COORD coord = {P(x), P(y)};
         SetConsoleCursorPosition(this->data->ho, coord);
         this->data->cursor_x = x;
         this->data->cursor_y = y;
     }
 }
 
-
-static void getCursor(const screen_t *this, int *x, int *y)
-{
+static void getCursor(const screen_t *this, int *x, int *y) {
     int cx = this->data->cursor_x;
     int cy = this->data->cursor_y;
 #if 1
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (GetConsoleScreenBufferInfo(this->data->ho, &csbi))
-    {
+    if (GetConsoleScreenBufferInfo(this->data->ho, &csbi)) {
         cx = csbi.dwCursorPosition.X;
         cy = csbi.dwCursorPosition.Y;
 #if 0
@@ -188,30 +143,26 @@ static void getCursor(const screen_t *this, int *x, int *y)
 #endif
     }
 #endif
-    if (x) *x = cx;
-    if (y) *y = cy;
+    if (x)
+        *x = cx;
+    if (y)
+        *y = cy;
 }
 
-
-static void putCharAttr(screen_t *this, int ch, int attr, int x, int y)
-{
+static void putCharAttr(screen_t *this, int ch, int attr, int x, int y) {
     CHAR_INFO ci;
-    SMALL_RECT region = { P(x), P(y), P(x), P(y) };
+    SMALL_RECT region = {P(x), P(y), P(x), P(y)};
     ci.Char.UnicodeChar = 0;
     ci.Char.AsciiChar = (CHAR) ch;
     ci.Attributes = (WORD) attr;
     WriteConsoleOutputA(this->data->ho, &ci, size11, pos00, &region);
 }
 
-
-static void putChar(screen_t *this, int ch, int x, int y)
-{
+static void putChar(screen_t *this, int ch, int x, int y) {
     this->putCharAttr(this, ch, this->data->attr, x, y);
 }
 
-
-static void putStringAttr(screen_t *this, const char *s, int attr, int x, int y)
-{
+static void putStringAttr(screen_t *this, const char *s, int attr, int x, int y) {
     int i;
     int l = (int) strlen(s);
     if (l <= 0)
@@ -219,10 +170,9 @@ static void putStringAttr(screen_t *this, const char *s, int attr, int x, int y)
     assert(l <= 256);
     assert(x + l <= this->data->cols);
     CHAR_INFO ci[256];
-    COORD size = { P(l), 1 };
-    SMALL_RECT region = { P(x), P(y), P(x + l - 1), P(y) };
-    for (i = 0; i < l; i++)
-    {
+    COORD size = {P(l), 1};
+    SMALL_RECT region = {P(x), P(y), P(x + l - 1), P(y)};
+    for (i = 0; i < l; i++) {
         ci[i].Char.UnicodeChar = 0;
         ci[i].Char.AsciiChar = *s++;
         ci[i].Attributes = (WORD) attr;
@@ -230,58 +180,45 @@ static void putStringAttr(screen_t *this, const char *s, int attr, int x, int y)
     WriteConsoleOutputA(this->data->ho, &ci[0], size, pos00, &region);
 }
 
-
-static void putString(screen_t *this, const char *s, int x, int y)
-{
+static void putString(screen_t *this, const char *s, int x, int y) {
     this->putStringAttr(this, s, this->data->attr, x, y);
 }
 
-
 /* private */
-static int cci2shape(const CONSOLE_CURSOR_INFO *cci)
-{
+static int cci2shape(const CONSOLE_CURSOR_INFO *cci) {
     int shape = cci->dwSize & 255;
     if (!cci->bVisible)
         shape |= 0x2000;
     return shape;
 }
 
-
-static int getCursorShape(const screen_t *this)
-{
+static int getCursorShape(const screen_t *this) {
     CONSOLE_CURSOR_INFO cci;
     GetConsoleCursorInfo(this->data->ho, &cci);
     return cci2shape(&cci);
 }
 
-
-static void setCursorShape(screen_t *this, int shape)
-{
+static void setCursorShape(screen_t *this, int shape) {
     CONSOLE_CURSOR_INFO cci;
     cci.dwSize = shape & 255;
     cci.bVisible = (shape & 0x2000) ? 0 : 1;
     SetConsoleCursorInfo(this->data->ho, &cci);
 }
 
-
-static int hideCursor(screen_t *this)
-{
+static int hideCursor(screen_t *this) {
     CONSOLE_CURSOR_INFO cci;
     int shape;
 
     GetConsoleCursorInfo(this->data->ho, &cci);
     shape = cci2shape(&cci);
-    if (cci.bVisible)
-    {
+    if (cci.bVisible) {
         cci.bVisible = 0;
         SetConsoleCursorInfo(this->data->ho, &cci);
     }
     return shape;
 }
 
-
-static int init(screen_t *this, int fd)
-{
+static int init(screen_t *this, int fd) {
     HANDLE hi, ho;
     CONSOLE_SCREEN_BUFFER_INFO *csbi;
     DWORD mode;
@@ -338,7 +275,7 @@ static int init(screen_t *this, int fd)
     attr = csbi->wAttributes;
     this->data->hi = hi;
     this->data->ho = ho;
-    this->data->mode = 3;       // ???
+    this->data->mode = 3; // ???
     this->data->attr = attr;
     this->data->init_attr = attr;
     this->data->empty_cell.Char.UnicodeChar = 0;
@@ -350,11 +287,8 @@ static int init(screen_t *this, int fd)
     return 0;
 }
 
-
-static void updateLineN(screen_t *this, const void *line, int y, int len)
-{
-    if (y >= 0 && y < this->data->rows && len > 0 && len <= 2*this->data->cols)
-    {
+static void updateLineN(screen_t *this, const void *line, int y, int len) {
+    if (y >= 0 && y < this->data->rows && len > 0 && len <= 2 * this->data->cols) {
 #if 0
         const char *s = (const char *) line;
         int l = len / 2;
@@ -376,160 +310,108 @@ static void updateLineN(screen_t *this, const void *line, int y, int len)
     }
 }
 
-
-static void clearLine(screen_t *this, int y)
-{
-    if (y >= 0 && y < this->data->rows)
-    {
-        COORD size = { P(this->data->cols), 1 };
-        SMALL_RECT region = { 0, P(y), P(this->data->cols-1), P(y) };
+static void clearLine(screen_t *this, int y) {
+    if (y >= 0 && y < this->data->rows) {
+        COORD size = {P(this->data->cols), 1};
+        SMALL_RECT region = {0, P(y), P(this->data->cols - 1), P(y)};
         WriteConsoleOutputA(this->data->ho, this->data->empty_line, size, pos00, &region);
     }
 }
 
-
-static void clear(screen_t *this)
-{
+static void clear(screen_t *this) {
     int y;
     for (y = 0; y < this->data->rows; y++)
         this->clearLine(this, y);
 }
 
-
 /* private */
-static int do_scroll(screen_t *this, int lines, int way)
-{
+static int do_scroll(screen_t *this, int lines, int way) {
     if (lines <= 0 || lines > this->data->rows)
         return 0;
-    if (lines == this->data->rows)
-    {
+    if (lines == this->data->rows) {
         this->clear(this);
         return lines;
     }
 
-    SMALL_RECT rect = { 0, 0, P(this->data->cols-1), P(this->data->rows-1) };
-    //SMALL_RECT clip = rect;
-    COORD dest = { 0, 0 };
-    switch (way)
-    {
-        case 0:
-            rect.Top = P(rect.Top + lines);
-            break;
-        case 1:
-            rect.Bottom = P(rect.Bottom - lines);
-            dest.Y = P(dest.Y + lines);
-            break;
+    SMALL_RECT rect = {0, 0, P(this->data->cols - 1), P(this->data->rows - 1)};
+    // SMALL_RECT clip = rect;
+    COORD dest = {0, 0};
+    switch (way) {
+    case 0:
+        rect.Top = P(rect.Top + lines);
+        break;
+    case 1:
+        rect.Bottom = P(rect.Bottom - lines);
+        dest.Y = P(dest.Y + lines);
+        break;
     }
-    //ScrollConsoleScreenBuffer(this->data->ho, &rect, &clip, dest, &this->data->empty_cell);
+    // ScrollConsoleScreenBuffer(this->data->ho, &rect, &clip, dest, &this->data->empty_cell);
     ScrollConsoleScreenBuffer(this->data->ho, &rect, NULL, dest, &this->data->empty_cell);
 
     return lines;
 }
 
-static int scrollUp(screen_t *this, int lines)
-{
+static int scrollUp(screen_t *this, int lines) {
     lines = do_scroll(this, lines, 0);
     this->data->scroll_counter += lines;
     return lines;
 }
 
-static int scrollDown(screen_t *this, int lines)
-{
+static int scrollDown(screen_t *this, int lines) {
     lines = do_scroll(this, lines, 1);
     this->data->scroll_counter -= lines;
     return lines;
 }
 
-static int getScrollCounter(const screen_t *this)
-{
-    return this->data->scroll_counter;
-}
+static int getScrollCounter(const screen_t *this) { return this->data->scroll_counter; }
 
-
-static int s_kbhit(screen_t *this)
-{
+static int s_kbhit(screen_t *this) {
     UNUSED(this);
 #if (HAVE_CONIO_H)
-# if defined(__RSXNT__)
+#if defined(__RSXNT__)
     return 0;
-# elif defined(__BORLANDC__) || defined(__WATCOMC__)
+#elif defined(__BORLANDC__) || defined(__WATCOMC__)
     return kbhit();
-# else
+#else
     return _kbhit();
-# endif
+#endif
 #else
     return 0;
 #endif
 }
 
-
-static int intro(screen_t *this, void (*show_frames)(screen_t *) )
-{
+static int intro(screen_t *this, void (*show_frames)(screen_t *)) {
     UNUSED(this);
     UNUSED(show_frames);
     return 0;
 }
 
-
-static void atExit(void)
-{
+static void atExit(void) {
     static int done = 0;
-    if (done) return;
+    if (done)
+        return;
     done = 1;
-    if (ae.is_valid)
-    {
+    if (ae.is_valid) {
     }
 }
 
-
-static const screen_t driver =
-{
-    sobject_destroy,
-    0,                  /* finalize, */
-    atExit,
-    init,
-    refresh,
-    getMode,
-    getPage,
-    getRows,
-    getCols,
-    isMono,
-    getFg,
-    getBg,
-    getCursor,
-    getCursorShape,
-    setFg,
-    setBg,
-    setCursor,
-    setCursorShape,
-    hideCursor,
-    putChar,
-    putCharAttr,
-    putString,
-    putStringAttr,
-    clear,
-    clearLine,
-    updateLineN,
-    scrollUp,
-    scrollDown,
-    getScrollCounter,
-    s_kbhit,
-    intro,
-    (struct screen_data_t *) 0
-};
-
+static const screen_t driver = {sobject_destroy, 0, /* finalize, */
+                                atExit,          init,       refresh,
+                                getMode,         getPage,    getRows,
+                                getCols,         isMono,     getFg,
+                                getBg,           getCursor,  getCursorShape,
+                                setFg,           setBg,      setCursor,
+                                setCursorShape,  hideCursor, putChar,
+                                putCharAttr,     putString,  putStringAttr,
+                                clear,           clearLine,  updateLineN,
+                                scrollUp,        scrollDown, getScrollCounter,
+                                s_kbhit,         intro,      (struct screen_data_t *) 0};
 
 /* public constructor */
-screen_t *screen_win32_construct(void)
-{
-    return sobject_construct(&driver,sizeof(*driver.data));
-}
-
+screen_t *screen_win32_construct(void) { return sobject_construct(&driver, sizeof(*driver.data)); }
 
 #endif /* (USE_SCREEN_WIN32) */
-
 
 /*
 vi:ts=4:et
 */
-

@@ -25,12 +25,10 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #ifndef __UPX_SCREEN_H
 #define __UPX_SCREEN_H 1
 
 #if (USE_SCREEN)
-
 
 /*************************************************************************
 //
@@ -40,12 +38,11 @@ struct screen_data_t;
 struct screen_t;
 typedef struct screen_t screen_t;
 
-struct screen_t
-{
-/* public: */
+struct screen_t {
+    /* public: */
     void (*destroy)(screen_t *s);
     void (*finalize)(screen_t *s);
-    void (*atExit)(void);               /* atexit/signal handler */
+    void (*atExit)(void); /* atexit/signal handler */
 
     int (*init)(screen_t *s, int fd);
 
@@ -83,12 +80,11 @@ struct screen_t
 
     int (*kbhit)(screen_t *s);
 
-    int (*intro)(screen_t *s, void (*)(screen_t*) );
+    int (*intro)(screen_t *s, void (*)(screen_t *));
 
-/* private: */
+    /* private: */
     struct screen_data_t *data;
 };
-
 
 screen_t *sobject_construct(const screen_t *c, size_t data_size);
 void sobject_destroy(screen_t *);
@@ -101,13 +97,10 @@ screen_t *screen_win32_construct(void);
 
 void screen_show_frames(screen_t *);
 
-
 #endif /* USE_SCREEN */
 
 #endif /* already included */
 
-
 /*
 vi:ts=4:et
 */
-

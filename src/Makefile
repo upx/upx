@@ -129,6 +129,7 @@ else
 endif
 
 
+CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
 CLANG_FORMAT_FILES += stdcxx.h stdcxx.cpp
 clang-format:

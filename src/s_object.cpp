@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #include "conf.h"
 
 #if (USE_SCREEN)
@@ -34,7 +33,6 @@
 
 #include "screen.h"
 
-
 /*************************************************************************
 //
 **************************************************************************/
@@ -42,19 +40,13 @@
 // ugly hacks
 static screen_t *last_screen = NULL;
 
-screen_t *sobject_get_screen(void)
-{
-    return last_screen;
-}
+screen_t *sobject_get_screen(void) { return last_screen; }
 
-
-void sobject_destroy(screen_t *this)
-{
+void sobject_destroy(screen_t *this) {
     last_screen = NULL;
     if (!this)
         return;
-    if (this->data)
-    {
+    if (this->data) {
         if (this->finalize)
             this->finalize(this);
         free(this->data);
@@ -63,9 +55,7 @@ void sobject_destroy(screen_t *this)
     free(this);
 }
 
-
-screen_t *sobject_construct(const screen_t *c, size_t data_size)
-{
+screen_t *sobject_construct(const screen_t *c, size_t data_size) {
     screen_t *this;
 
     last_screen = NULL;
@@ -80,22 +70,18 @@ screen_t *sobject_construct(const screen_t *c, size_t data_size)
 
     /* initialize instance variables */
     this->data = (struct screen_data_t *) malloc(data_size);
-    if (!this->data)
-    {
+    if (!this->data) {
         free(this);
         return NULL;
     }
-    memset(this->data,0,data_size);
+    memset(this->data, 0, data_size);
 
     last_screen = this;
     return this;
 }
 
-
 #endif /* (USE_SCREEN) */
-
 
 /*
 vi:ts=4:et
 */
-
