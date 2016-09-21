@@ -426,7 +426,7 @@ bool PackPs1::findBssSection()
     // check 18 opcodes for sw zero,0(x)
     for (signed i = BSS_CHK_LIMIT; i >= 0; i--)
     {
-        unsigned short op = p1[i] >> 16;
+        upx_uint16_t op = p1[i] >> 16;
         if (IS_SW_ZERO(op))
         {
             // found! get reg (x) for bss_start
@@ -434,7 +434,7 @@ bool PackPs1::findBssSection()
             for (; i >= 0; i--)
             {
                 bss_nfo *p = (bss_nfo *)(void *)&p1[i];
-                unsigned short op1 = p->op1, op2 = p->op2;
+                upx_uint16_t op1 = p->op1, op2 = p->op2;
 
                 // check for la (x),bss_start
                 if ((IS_LUI(op1) && REG2(op1) == reg) &&

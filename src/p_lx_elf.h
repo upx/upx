@@ -87,7 +87,7 @@ protected:
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
 
-    unsigned short e_machine;
+    upx_uint16_t  e_machine;
     unsigned char ei_class;
     unsigned char ei_data;
     unsigned char ei_osabi;

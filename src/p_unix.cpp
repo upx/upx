@@ -235,7 +235,7 @@ PackUnix::patchLoaderChecksum()
     l_info *const lp = &linfo;
     // checksum for loader; also some PackHeader info
     lp->l_magic = UPX_MAGIC_LE32;  // LE32 always
-    set_te16(&lp->l_lsize, (unsigned short) lsize);
+    set_te16(&lp->l_lsize, (upx_uint16_t) lsize);
     lp->l_version = (unsigned char) ph.version;
     lp->l_format  = (unsigned char) ph.format;
     // INFO: lp->l_checksum is currently unused

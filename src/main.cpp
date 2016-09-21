@@ -1352,7 +1352,7 @@ __acc_static_noinline void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_YEAR) == 4 + 1)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
-    assert(memcmp(&UPX_VERSION_DATE[strlen(UPX_VERSION_DATE) - 4], UPX_VERSION_YEAR, 4) == 0);
+    assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE)-1 - 4], UPX_VERSION_YEAR, 4) == 0);
 
 #if 1
     assert(TestBELE<LE16>::test());
