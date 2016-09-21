@@ -37,43 +37,43 @@
 template <class T>
 class BoundedPtr
 {
-//    typedef BoundedPtr<T> Self;
 public:
-    typedef T* StoredType;
-    typedef T* PointerType;
-    typedef T& ReferenceType;
+    //typedef T* StoredType;
+    //typedef T* PointerType;
+    //typedef T& ReferenceType;
 
     ~BoundedPtr() { }
 
-    explicit BoundedPtr(void* base, unsigned size, T* ptr=0)
-        : ptr_(ptr), base_(base), size_(size) { check(); }
+    explicit BoundedPtr(void* base, size_t size_in_bytes, T* ptr=0)
+        : ptr_(ptr), base_(base), size_in_bytes_(0)
+    {
+        assert(base_ != NULL);
+        size_in_bytes_ = mem_size(1, size_in_bytes);
+        check();
+    }
+
+    // assignment
     BoundedPtr& operator= (const BoundedPtr& other) {
-        assert(base_ == other.base_); assert(size_ == other.size_);
+        assert(base_ == other.base_);
+        assert(size_in_bytes_ == other.size_in_bytes_);
         ptr_ = other.ptr_; check(); return *this;
     }
     BoundedPtr& operator= (T* other) {
         ptr_ = other; check(); return *this;
     }
 
-    operator T* () { check(); return ptr_; }
-    operator const T* () const { check(); return ptr_; }
+    operator       T* ()       { return ptr_; }
+    operator const T* () const { return ptr_; }
 
     BoundedPtr& operator += (size_t n) {
-        checkStrict(); ptr_ += n; checkStrict(); return *this;
+        checkNULL(); ptr_ += n; checkRange(); return *this;
     }
     BoundedPtr& operator -= (size_t n) {
-        checkStrict(); ptr_ -= n; checkStrict(); return *this;
+        checkNULL(); ptr_ -= n; checkRange(); return *this;
     }
     BoundedPtr& operator ++ (void) {
-        checkStrict(); ptr_ += 1; checkStrict(); return *this;
+        checkNULL(); ptr_ += 1; checkRange(); return *this;
     }
-//    T* operator ++ (int) {
-//        T* p = ptr_; checkStrict(); ptr_ += 1; checkStrict(); return p;
-//    }
-//    BoundedPtr& operator -- (void) {
-//        checkStrict(); ptr_ -= 1; checkStrict(); return *this;
-//    }
-
 
 private:
     void checkNULL() const {
@@ -82,37 +82,20 @@ private:
     }
     void checkRange() const {
         size_t off = (const char *) ptr_ - (const char *) base_;
-        if __acc_very_unlikely(off > size_)
+        if __acc_very_unlikely(off > size_in_bytes_)
             throwCantUnpack("pointer out of range; take care!");
     }
-    void checkRange(size_t extra) const {
-        size_t off = (const char *) ptr_ - (const char *) base_;
-        if __acc_very_unlikely(off > size_ || off + extra > size_)
-            throwCantUnpack("pointer out of range; take care!");
-    }
-    void checkStrict() const {
-        checkNULL();
-        checkRange();
-    }
-    void checkStrict(size_t extra) const {
-        checkNULL();
-        checkRange(extra);
-    }
-    void check() const {
-        if (ptr_) checkRange();
-    }
-    void check(size_t extra) const {
-        if (ptr_) checkRange(extra);
+    void check() const { // check ptr_ invariant: either NULL or valid checkRange()
+        if (ptr_ != NULL)
+            checkRange();
     }
 
     T* ptr_;
     void* base_;
-    size_t size_;
+    size_t size_in_bytes_;
 
     // disable copy
     BoundedPtr(const BoundedPtr&); // {}
-//    BoundedPtr& operator= (const BoundedPtr&); // { return *this; }
-
     // disable dynamic allocation
     DISABLE_NEW_DELETE
 };

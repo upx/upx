@@ -47,7 +47,7 @@ static bool update_capacity(unsigned size, unsigned *capacity)
 
 static void __acc_cdecl_va internal_error(const char *format, ...)
 {
-    char buf[1024];
+    static char buf[1024];
     va_list ap;
 
     va_start(ap, format);
@@ -181,7 +181,8 @@ void ElfLinker::init(const void *pdata_v, int plen)
     {
         inputlen = plen;
         input = new upx_byte[inputlen + 1];
-        memcpy(input, pdata, inputlen);
+        if (inputlen)
+            memcpy(input, pdata, inputlen);
     }
     input[inputlen] = 0; // NUL terminate
 
