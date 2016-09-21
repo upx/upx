@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #ifndef __UPX_UI_H
 #define __UPX_UI_H 1
 
@@ -34,22 +33,21 @@ class OutputFile;
 class Packer;
 class UiPacker;
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-class UiPacker
-{
+class UiPacker {
 public:
     UiPacker(const Packer *p_);
+
 public:
     virtual ~UiPacker();
 
     static void uiConfirmUpdate();
     static void uiPackTotal();
     static void uiUnpackTotal();
-    static void uiListTotal(bool uncompress=false);
+    static void uiListTotal(bool uncompress = false);
     static void uiTestTotal();
     static void uiFileInfoTotal();
 
@@ -59,7 +57,7 @@ public:
     virtual void uiUnpackStart(const OutputFile *fo);
     virtual void uiUnpackEnd(const OutputFile *fo);
     virtual void uiListStart();
-    virtual void uiList(long fu=-1);
+    virtual void uiList(long fu = -1);
     virtual void uiListEnd();
     virtual void uiTestStart();
     virtual void uiTestEnd();
@@ -67,19 +65,19 @@ public:
     virtual void uiFileInfoEnd();
 
     // callback
-    virtual void startCallback(unsigned u_len, unsigned step,
-                               int pass, int total_passes);
+    virtual void startCallback(unsigned u_len, unsigned step, int pass, int total_passes);
     virtual void firstCallback();
     virtual void finalCallback(unsigned u_len, unsigned c_len);
     virtual void endCallback();
     virtual void endCallback(bool done);
     virtual upx_callback_t *getCallback() { return &cb; }
+
 protected:
     static void __acc_cdecl progress_callback(upx_callback_p cb, unsigned, unsigned);
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
-    virtual void uiUpdate(long fc=-1, long fu=-1);
+    virtual void uiUpdate(long fc = -1, long fu = -1);
 
 public:
     static void uiHeader();
@@ -89,7 +87,7 @@ public:
     int ui_total_passes;
 
 protected:
-    virtual void printInfo(int nl=0);
+    virtual void printInfo(int nl = 0);
     const Packer *p;
 
     // callback
@@ -112,11 +110,6 @@ protected:
     static long update_fu_len;
 };
 
-
 #endif /* already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */
