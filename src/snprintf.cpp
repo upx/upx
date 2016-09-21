@@ -83,15 +83,14 @@
 #undef LDOUBLE
 #if 1
 #define NO_FLOAT 1
-#if (ACC_CC_SUNPROC)
-#else
 #define float error no_float
 #define double error no_float
-#endif
-#elif 0 || (HAVE_LONG_DOUBLE)
+#else
+#if (HAVE_LONG_DOUBLE)
 #define LDOUBLE long double
 #else
 #define LDOUBLE double
+#endif
 #endif
 
 /*
@@ -969,6 +968,4 @@ int main(void)
 }
 #endif /* SNPRINTF_TEST */
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */

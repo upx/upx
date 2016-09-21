@@ -49,7 +49,7 @@
 #endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
-#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(_WIN32)
+#if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
 #  undef HAVE_CHMOD
 #  undef HAVE_CHOWN
 #  undef HAVE_LSTAT

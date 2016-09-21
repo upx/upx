@@ -314,9 +314,6 @@ inline void acc_ua_swab32s(void *p)
 __packed_struct(BE16)
     unsigned char d[2];
 
-    //inline BE16() { }
-    //BE16(unsigned v) { set_be16(d, v); }
-
     BE16& operator =  (unsigned v) { set_be16(d, v); return *this; }
     BE16& operator += (unsigned v) { set_be16(d, get_be16(d) + v); return *this; }
     BE16& operator -= (unsigned v) { set_be16(d, get_be16(d) - v); return *this; }
@@ -334,9 +331,6 @@ __packed_struct_end()
 
 __packed_struct(BE32)
     unsigned char d[4];
-
-    //inline BE32() { }
-    //BE32(unsigned v) { set_be32(d, v); }
 
     BE32& operator =  (unsigned v) { set_be32(d, v); return *this; }
     BE32& operator += (unsigned v) { set_be32(d, get_be32(d) + v); return *this; }
@@ -356,9 +350,6 @@ __packed_struct_end()
 __packed_struct(BE64)
     unsigned char d[8];
 
-    //inline BE64() { }
-    //BE64(upx_uint64_t v) { set_be64(d, v); }
-
     BE64& operator =  (upx_uint64_t v) { set_be64(d, v); return *this; }
     BE64& operator += (upx_uint64_t v) { set_be64(d, get_be64(d) + v); return *this; }
     BE64& operator -= (upx_uint64_t v) { set_be64(d, get_be64(d) - v); return *this; }
@@ -376,9 +367,6 @@ __packed_struct_end()
 
 __packed_struct(LE16)
     unsigned char d[2];
-
-    //inline LE16() { }
-    //LE16(unsigned v) { set_le16(d, v); }
 
     LE16& operator =  (unsigned v) { set_le16(d, v); return *this; }
     LE16& operator += (unsigned v) { set_le16(d, get_le16(d) + v); return *this; }
@@ -418,9 +406,6 @@ __packed_struct_end()
 
 __packed_struct(LE64)
     unsigned char d[8];
-
-    //inline LE64() { }
-    //LE64(upx_uint64_t v) { set_le64(d, v); }
 
     LE64& operator =  (upx_uint64_t v) { set_le64(d, v); return *this; }
     LE64& operator += (upx_uint64_t v) { set_le64(d, get_le64(d) + v); return *this; }
@@ -484,11 +469,15 @@ template <class T> T* operator - (T* ptr, const LE64& v);
 // global overloads
 **************************************************************************/
 
+inline unsigned ALIGN_DOWN(unsigned a, const BE32& b) { return ALIGN_DOWN(a, (unsigned) b); }
+inline unsigned ALIGN_DOWN(const BE32& a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
+inline unsigned ALIGN_UP  (unsigned a, const BE32& b) { return ALIGN_UP  (a, (unsigned) b); }
+inline unsigned ALIGN_UP  (const BE32& a, unsigned b) { return ALIGN_UP  ((unsigned) a, b); }
+
 inline unsigned ALIGN_DOWN(unsigned a, const LE32& b) { return ALIGN_DOWN(a, (unsigned) b); }
 inline unsigned ALIGN_DOWN(const LE32& a, unsigned b) { return ALIGN_DOWN((unsigned) a, b); }
 inline unsigned ALIGN_UP  (unsigned a, const LE32& b) { return ALIGN_UP  (a, (unsigned) b); }
 inline unsigned ALIGN_UP  (const LE32& a, unsigned b) { return ALIGN_UP  ((unsigned) a, b); }
-
 
 inline unsigned UPX_MAX(unsigned a, const BE16& b)    { return UPX_MAX(a, (unsigned) b); }
 inline unsigned UPX_MAX(const BE16& a, unsigned b)    { return UPX_MAX((unsigned) a, b); }
@@ -536,42 +525,6 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 } // extern "C"
 
 
-// just for testing...
-#if !(ACC_CFG_NO_UNALIGNED)
-#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_GNUC >= 0x030200)
-   typedef upx_uint16_t LE16_unaligned __attribute__((__aligned__(1)));
-   typedef upx_uint32_t LE32_unaligned __attribute__((__aligned__(1)));
-#  ifndef LE16
-#    define LE16    LE16_unaligned
-#  endif
-#  ifndef LE32
-#    define LE32    LE32_unaligned
-#  endif
-#endif
-#if 0 && (ACC_ARCH_I386) && (ACC_CC_INTELC)
-   typedef __declspec(align(1)) upx_uint16_t LE16_unaligned;
-   typedef __declspec(align(1)) upx_uint32_t LE32_unaligned;
-#  ifndef LE16
-#    define LE16    LE16_unaligned
-#  endif
-#  ifndef LE32
-#    define LE32    LE32_unaligned
-#  endif
-#endif
-#if 0 && (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_CC_MSC) && (_MSC_VER >= 1200)
-   typedef __declspec(align(1)) upx_uint16_t LE16_unaligned;
-   typedef __declspec(align(1)) upx_uint32_t LE32_unaligned;
-#  ifndef LE16
-#    define LE16    LE16_unaligned
-#  endif
-#  ifndef LE32
-#    define LE32    LE32_unaligned
-#  endif
-#  pragma warning(disable: 4244)        // Wx: conversion, possible loss of data
-#endif
-#endif
-
-
 /*************************************************************************
 // Provide namespaces and classes to abstract endianness policies.
 //
@@ -581,13 +534,15 @@ int __acc_cdecl_qsort le64_compare_signed(const void *, const void *);
 
 // forward declarations
 namespace N_BELE_CTP {
-struct BEPolicy; struct LEPolicy;
+struct BEPolicy;
+struct LEPolicy;
 extern const BEPolicy be_policy;
 extern const LEPolicy le_policy;
 }
 namespace N_BELE_RTP {
 struct AbstractPolicy;
-struct BEPolicy; struct LEPolicy;
+struct BEPolicy;
+struct LEPolicy;
 extern const BEPolicy be_policy;
 extern const LEPolicy le_policy;
 }
@@ -614,8 +569,4 @@ inline const N_BELE_RTP::AbstractPolicy* getRTP(const LEPolicy*)
 
 #endif /* already included */
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

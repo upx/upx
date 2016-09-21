@@ -494,11 +494,7 @@ struct MachClass_32
     typedef typename TP::U32 TE32;
     typedef typename TP::U64 TE64;
     typedef N_Mach::MachITypes<TE32, TE64, TE32, TE32> MachITypes;
-#if (ACC_CC_BORLANDC)
-    typedef TE32 Addr;
-#else
     typedef typename MachITypes::Addr Addr;
-#endif
 
     // Mach types
     typedef N_Mach::Mach_header<MachITypes> Mach_header;
@@ -532,11 +528,7 @@ struct MachClass_64
     typedef typename TP::U32 TE32;
     typedef typename TP::U64 TE64;
     typedef N_Mach::MachITypes<TE32, TE64, TE64, TE64> MachITypes;
-#if (ACC_CC_BORLANDC)
-    typedef TE64 Addr;
-#else
     typedef typename MachITypes::Addr Addr;
-#endif
 
     // Mach types
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
@@ -1059,9 +1051,6 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-#if (ACC_CC_BORLANDC)
-public:
-#endif
     enum { N_FAT_ARCH = 5 };
 protected:
     __packed_struct(Fat_head)

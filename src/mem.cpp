@@ -67,6 +67,25 @@ bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extr
     return true;
 }
 
+bool mem_size_valid_bytes(upx_uint64_t bytes)
+{
+    if (bytes > MAX_BUF_SIZE) return false;
+    return true;
+}
+
+
+int ptr_diff(const char *p1, const char *p2)
+{
+    assert(p1 != NULL);
+    assert(p2 != NULL);
+    ptrdiff_t d = p1 - p2;
+    if (p1 >= p2)
+        assert(mem_size_valid_bytes(d));
+    else
+        assert(mem_size_valid_bytes(-d));
+    return ACC_ICONV(int, d);
+}
+
 #undef MAX_BUF_SIZE
 
 

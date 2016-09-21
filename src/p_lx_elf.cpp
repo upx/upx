@@ -2126,7 +2126,7 @@ PackNetBSDElf32x86::generateElfHdr(
         set_te32(&phdr->p_align, 4);
 
         /* &np_PaX->body[4] */
-        const unsigned char *p4 =  &(ACC_STATIC_CAST2(const unsigned char *, const void *, (1+ np_PaX)))[4];
+        const unsigned char *p4 =  &(ACC_CCAST(const unsigned char *, (1+ np_PaX)))[4];
         unsigned bits = get_te32(p4);
         bits &= ~PAX_MPROTECT;
         bits |=  PAX_NOMPROTECT;
@@ -3746,10 +3746,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 #define MAX_ELF_HDR 512
     union {
         unsigned char buf[MAX_ELF_HDR];
-#if (ACC_CC_BORLANDC || ACC_CC_SUNPROC)
-#else
         struct { Elf32_Ehdr ehdr; Elf32_Phdr phdr; } e;
-#endif
     } u;
     COMPILE_TIME_ASSERT(sizeof(u) == MAX_ELF_HDR)
     Elf32_Ehdr *const ehdr = (Elf32_Ehdr *) u.buf;

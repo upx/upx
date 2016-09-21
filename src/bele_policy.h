@@ -276,8 +276,4 @@ struct HostAlignedPolicy
 #undef S
 #undef C
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */
