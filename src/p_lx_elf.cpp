@@ -616,7 +616,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
     }
     if (f && Elf64_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
         phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
