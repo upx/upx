@@ -72,7 +72,7 @@ protected:
     unsigned e_type;
     unsigned e_phnum;       /* Program header table entry count */
     unsigned e_shnum;
-    char       *file_image;       // if ET_DYN investigation
+    MemBuffer file_image;   // if ET_DYN investigation
     char const *dynstr;   // from DT_STRTAB
 
     unsigned sz_phdrs;  // sizeof Phdr[]
@@ -600,8 +600,4 @@ protected:
 
 #endif /*} already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

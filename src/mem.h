@@ -55,7 +55,8 @@ public:
     unsigned getSize() const { return b_size; }
 
     operator       unsigned char * ()       { return b; }
-    //operator const unsigned char * () const { return b; }
+    operator const unsigned char * () const { return b; }
+
           void *getVoidPtr()                { return (void *) b; }
     const void *getVoidPtr() const          { return (const void *) b; }
 
@@ -79,8 +80,4 @@ private:
 
 #endif /* already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

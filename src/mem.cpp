@@ -242,6 +242,7 @@ void MemBuffer::alloc(unsigned size)
     assert(b == NULL);
     assert(b_size == 0);
     //
+    assert(size > 0);
     size_t bytes = mem_size(1, size, use_mcheck ? 32 : 0);
     unsigned char *p = (unsigned char *) malloc(bytes);
     if (!p)
@@ -262,8 +263,4 @@ void MemBuffer::alloc(unsigned size)
     //fill(0, b_size, (rand() & 0xff) | 1); // debug
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

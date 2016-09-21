@@ -78,6 +78,13 @@ inline int ptr_diff(const void *p1, const void *p2) {
     return ptr_diff((const char *) p1, (const char *) p2);
 }
 
+template <class T1, class T2>
+inline int ptr_udiff(const T1 &p1, const T2 &p2) {
+    int d = ptr_diff(p1, p2);
+    assert(d >= 0);
+    return d;
+}
+
 /*************************************************************************
 // some unsigned char string support functions
 **************************************************************************/

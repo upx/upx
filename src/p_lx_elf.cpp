@@ -94,6 +94,16 @@ funpad4(InputFile *fi)
     return d;
 }
 
+static void alloc_file_image(MemBuffer &mb, off_t size)
+{
+    assert(mem_size_valid_bytes(size));
+    if (mb.getVoidPtr() == NULL) {
+        mb.alloc(size);
+    } else {
+        assert(size <= (off_t) mb.getSize());
+    }
+}
+
 int
 PackLinuxElf32::checkEhdr(Elf32_Ehdr const *ehdr) const
 {
@@ -192,7 +202,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 }
 
 PackLinuxElf::PackLinuxElf(InputFile *f)
-    : super(f), e_phnum(0), file_image(NULL), dynstr(NULL),
+    : super(f), e_phnum(0), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
     lg2_page(12), page_size(1u<<lg2_page), xct_off(0), xct_va(0),
     jni_onload_va(0),
@@ -203,7 +213,6 @@ PackLinuxElf::PackLinuxElf(InputFile *f)
 
 PackLinuxElf::~PackLinuxElf()
 {
-    delete[] file_image; file_image = NULL;
 }
 
 void
@@ -230,14 +239,14 @@ PackLinuxElf32::PackLinuxElf32help1(InputFile *f)
 
     if (f && Elf32_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
         phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
     }
     if (f && Elf32_Ehdr::ET_DYN==e_type) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, file_size);
         f->seek(0, SEEK_SET);
         f->readx(file_image, file_size);
         phdri= (Elf32_Phdr       *)(e_phoff + file_image);  // do not free() !!
@@ -600,7 +609,7 @@ PackLinuxElf64::PackLinuxElf64help1(InputFile *f)
 
     if (f && Elf64_Ehdr::ET_DYN!=e_type) {
         unsigned const len = sz_phdrs + e_phoff;
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, len);
         f->seek(0, SEEK_SET);
         f->readx(file_image, len);
         phdri= (Elf64_Phdr       *)(e_phoff + file_image);  // do not free() !!
@@ -1662,7 +1671,7 @@ PackLinuxElf64ppcle::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf64_Ehdr));
@@ -1837,7 +1846,7 @@ PackLinuxElf64amd::canPack()
 
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_STRTAB has no designated length.  Read the whole file.
-        assert(file_image != NULL);  // set by PackLinuxElf64help1
+        alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
         fi->readx(file_image, file_size);
         memcpy(&ehdri, ehdr, sizeof(Elf64_Ehdr));
@@ -3135,7 +3144,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
             unsigned tmp = sz_pack2 + get_te32(&elfout.phdr[0].p_vaddr);
             tmp |= (Elf32_Ehdr::EM_ARM==e_machine);  // THUMB mode
             set_te32(&tmp, tmp);
-            fo->seek((char const *)&jni_onload_sym->st_value - file_image, SEEK_SET);
+            fo->seek(ptr_udiff(&jni_onload_sym->st_value, file_image), SEEK_SET);
             fo->rewrite(&tmp, sizeof(tmp));
             fo->seek(0, SEEK_SET);
         }
@@ -3978,7 +3987,4 @@ void PackLinuxElf::unpack(OutputFile * /*fo*/)
     throwCantUnpack("internal error");
 }
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */
