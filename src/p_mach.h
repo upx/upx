@@ -765,7 +765,7 @@ public:
     PackMachPPC32(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_PPC32; }
-    virtual const char *getName() const { return "Mach/ppc32"; }
+    virtual const char *getName() const { return "macho/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.macho"; }
 
 protected:
@@ -798,8 +798,8 @@ public:
     PackMachPPC64LE(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_PPC64LE; }
-    virtual const char *getName() const { return "Mach/ppc64LE"; }
-    virtual const char *getFullName(const options_t *) const { return "ppc64le-darwin.macho"; }
+    virtual const char *getName() const { return "macho/ppc64le"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64le-darwin.macho"; }
 
 protected:
     virtual const int *getFilters() const;
@@ -831,7 +831,7 @@ public:
     PackDylibPPC32(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_DYLIB_PPC32; }
-    virtual const char *getName() const { return "Dylib/ppc32"; }
+    virtual const char *getName() const { return "dylib/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-darwin.dylib"; }
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
@@ -847,8 +847,8 @@ public:
     PackDylibPPC64LE(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_DYLIB_PPC64LE; }
-    virtual const char *getName() const { return "Dylib/ppc64LE"; }
-    virtual const char *getFullName(const options_t *) const { return "ppc64le-darwin.dylib"; }
+    virtual const char *getName() const { return "dylib/ppc64le"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64le-darwin.dylib"; }
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
@@ -863,7 +863,7 @@ public:
     PackMachI386(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_i386; }
-    virtual const char *getName() const { return "Mach/i386"; }
+    virtual const char *getName() const { return "macho/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-darwin.macho"; }
 protected:
     virtual const int *getFilters() const;
@@ -896,7 +896,7 @@ public:
     PackDylibI386(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_DYLIB_i386; }
-    virtual const char *getName() const { return "Dylib/i386"; }
+    virtual const char *getName() const { return "dylib/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-darwin.dylib"; }
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
@@ -912,8 +912,8 @@ public:
     PackMachAMD64(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_AMD64; }
-    virtual const char *getName() const { return "Mach/AMD64"; }
-    virtual const char *getFullName(const options_t *) const { return "AMD64-darwin.macho"; }
+    virtual const char *getName() const { return "macho/amd64"; }
+    virtual const char *getFullName(const options_t *) const { return "amd64-darwin.macho"; }
 protected:
     virtual const int *getFilters() const;
 
@@ -945,8 +945,8 @@ public:
     PackDylibAMD64(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_DYLIB_AMD64; }
-    virtual const char *getName() const { return "Dylib/AMD64"; }
-    virtual const char *getFullName(const options_t *) const { return "AMD64-darwin.dylib"; }
+    virtual const char *getName() const { return "dylib/amd64"; }
+    virtual const char *getFullName(const options_t *) const { return "amd64-darwin.dylib"; }
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
@@ -961,8 +961,8 @@ public:
     PackMachARMEL(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_ARMEL; }
-    virtual const char *getName() const { return "Mach/ARMEL"; }
-    virtual const char *getFullName(const options_t *) const { return "ARMEL-darwin.macho"; }
+    virtual const char *getName() const { return "macho/arm"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-darwin.macho"; }
 protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -995,8 +995,8 @@ public:
     PackMachARM64EL(InputFile *f);
 
     virtual int getFormat() const { return UPX_F_MACH_ARM64EL; }
-    virtual const char *getName() const { return "Mach/ARM64EL"; }
-    virtual const char *getFullName(const options_t *) const { return "ARM64EL-darwin.macho"; }
+    virtual const char *getName() const { return "macho/arm64"; }
+    virtual const char *getFullName(const options_t *) const { return "arm64-darwin.macho"; }
 protected:
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -1030,7 +1030,7 @@ public:
 
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_MACH_FAT; }
-    virtual const char *getName() const { return "Mach/fat"; }
+    virtual const char *getName() const { return "macho/fat"; }
     virtual const char *getFullName(const options_t *) const { return "fat-darwin.macho"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;

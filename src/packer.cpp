@@ -66,9 +66,9 @@ void Packer::assertPacker() const
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 15);
-    // info: 32 is limit for show_all_packers() in help.cpp
-    assert(strlen(getFullName(opt)) <= 28);
-    assert(strlen(getFullName(NULL)) <= 28);
+    // info: 36 is the limit for show_all_packers() in help.cpp
+    assert(strlen(getFullName(opt)) <= 32);
+    assert(strlen(getFullName(NULL)) <= 32);
     if (bele == NULL) fprintf(stderr, "%s\n", getName());
     assert(bele != NULL);
 #if 1

@@ -46,7 +46,7 @@ public:
     virtual ~PackLinuxI386sh();
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_LINUX_SH_i386; }
-    virtual const char *getName() const { return "linux/sh386"; }
+    virtual const char *getName() const { return "linux.sh/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.shell"; }
     virtual const int *getFilters() const { return NULL; }
     virtual void buildLoader(const Filter *);

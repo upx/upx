@@ -48,7 +48,7 @@ public:
         unsigned const brka
     );
     virtual int getFormat() const { return UPX_F_LINUX_i386; }
-    virtual const char *getName() const { return "linux/386"; }
+    virtual const char *getName() const { return "linux.exec/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf.execve"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -135,7 +135,7 @@ class PackBSDI386 : public PackLinuxI386
 public:
     PackBSDI386(InputFile *f);
     virtual int getFormat() const { return UPX_F_BSD_i386; }
-    virtual const char *getName() const { return "BSD/386"; }
+    virtual const char *getName() const { return "bsd.exec/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-bsd.elf.execve"; }
 
 protected:

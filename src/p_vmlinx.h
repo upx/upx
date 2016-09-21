@@ -101,7 +101,7 @@ public:
     PackVmlinuxI386(InputFile *f) : super(f, Ehdr::EM_386,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "startup_32") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_i386; }
-    virtual const char *getName() const { return "vmlinux/386"; }
+    virtual const char *getName() const { return "vmlinux/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -126,7 +126,7 @@ public:
     PackVmlinuxARMEL(InputFile *f) : super(f, Ehdr::EM_ARM,
         Ehdr::ELFCLASS32, Ehdr::ELFDATA2LSB, "decompress_kernel") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_ARMEL; }
-    virtual const char *getName() const { return "vmlinux/armel"; }
+    virtual const char *getName() const { return "vmlinux/arm"; }
     virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -198,8 +198,8 @@ public:
     PackVmlinuxPPC64LE(InputFile *f) : super(f, Ehdr::EM_PPC64,
         Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "_vmlinux_start") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_PPC64LE; }
-    virtual const char *getName() const { return "ppc64LE"; }
-    virtual const char *getFullName(const options_t *) const { return "ppc64le-linux.kernel.vmlinux"; }
+    virtual const char *getName() const { return "vmlinux/ppc64le"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64le-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
 
@@ -223,7 +223,7 @@ public:
     PackVmlinuxAMD64(InputFile *f) : super(f, Ehdr::EM_X86_64,
         Ehdr::ELFCLASS64, Ehdr::ELFDATA2LSB, "startup_32") { }
     virtual int getFormat() const { return UPX_F_VMLINUX_AMD64; }
-    virtual const char *getName() const { return "vmlinux/AMD64"; }
+    virtual const char *getName() const { return "vmlinux/amd64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-linux.kernel.vmlinux"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;

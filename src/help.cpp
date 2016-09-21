@@ -138,7 +138,7 @@ static void show_all_packers(FILE *f, int verbose)
         const char *sn = pn.names[i].sname;
         if (verbose)
         {
-            con_fprintf(f, "    %-32s %s\n", fn, sn);
+            con_fprintf(f, "    %-36s %s\n", fn, sn);
         }
         else
         {

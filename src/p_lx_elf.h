@@ -374,7 +374,7 @@ public:
     PackLinuxElf64amd(InputFile *f);
     virtual ~PackLinuxElf64amd();
     virtual int getFormat() const { return UPX_F_LINUX_ELF64_AMD; }
-    virtual const char *getName() const { return "linux/ElfAMD"; }
+    virtual const char *getName() const { return "linux/amd64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-linux.elf"; }
     virtual const int *getFilters() const;
     virtual bool canPack();
@@ -398,7 +398,7 @@ public:
     PackLinuxElf32ppc(InputFile *f);
     virtual ~PackLinuxElf32ppc();
     virtual int getFormat() const { return UPX_F_LINUX_ELFPPC32; }
-    virtual const char *getName() const { return "linux/ElfPPC"; }
+    virtual const char *getName() const { return "linux/ppc32"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc-linux.elf"; }
     virtual const int *getFilters() const;
 protected:
@@ -418,8 +418,8 @@ public:
     PackLinuxElf64ppcle(InputFile *f);
     virtual ~PackLinuxElf64ppcle();
     virtual int getFormat() const { return UPX_F_LINUX_ELFPPC64LE; }
-    virtual const char *getName() const { return "ElfPPC64LE"; }
-    virtual const char *getFullName(const options_t *) const { return "ppc64le-linux.elf"; }
+    virtual const char *getName() const { return "linux/ppc64le"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64le-linux.elf"; }
     virtual const int *getFilters() const;
 protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)
@@ -442,7 +442,7 @@ public:
     PackLinuxElf32x86(InputFile *f);
     virtual ~PackLinuxElf32x86();
     virtual int getFormat() const { return UPX_F_LINUX_ELF_i386; }
-    virtual const char *getName() const { return "linux/elf386"; }
+    virtual const char *getName() const { return "linux/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.elf"; }
     virtual const int *getFilters() const;
 
@@ -462,7 +462,7 @@ public:
     PackBSDElf32x86(InputFile *f);
     virtual ~PackBSDElf32x86();
     virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
-    virtual const char *getName() const { return "BSD/elf386"; }
+    virtual const char *getName() const { return "bsd/i386"; }
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -485,7 +485,7 @@ class PackNetBSDElf32x86 : public PackLinuxElf32x86
 public:
     PackNetBSDElf32x86(InputFile *f);
     virtual ~PackNetBSDElf32x86();
-    virtual const char *getName() const { return "netbsd/elf386"; }
+    virtual const char *getName() const { return "netbsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-netbsd.elf"; }
 protected:
     virtual void buildLoader(const Filter *ft);
@@ -502,7 +502,7 @@ class PackOpenBSDElf32x86 : public PackBSDElf32x86
 public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
-    virtual const char *getName() const { return "opnbsd/elf386"; }
+    virtual const char *getName() const { return "opnbsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-openbsd.elf"; }
 
 protected:
@@ -526,7 +526,7 @@ public:
     PackLinuxElf32armLe(InputFile *f);
     virtual ~PackLinuxElf32armLe();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_ARMEL; }
-    virtual const char *getName() const { return "linux/armel"; }
+    virtual const char *getName() const { return "linux/arm"; }
     virtual const char *getFullName(const options_t *) const { return "arm-linux.elf"; }
     virtual const int *getFilters() const;
 
@@ -566,7 +566,7 @@ public:
     PackLinuxElf32mipseb(InputFile *f);
     virtual ~PackLinuxElf32mipseb();
     virtual int getFormat() const { return UPX_F_LINUX_ELF32_MIPSEB; }
-    virtual const char *getName() const { return "linux/mipseb"; }
+    virtual const char *getName() const { return "linux/mips"; }
     virtual const char *getFullName(const options_t *) const { return "mips-linux.elf"; }
     virtual const int *getFilters() const;
 

@@ -41,7 +41,7 @@ public:
     PackVmlinuzI386(InputFile *f);
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUZ_i386; }
-    virtual const char *getName() const { return "vmlinuz/386"; }
+    virtual const char *getName() const { return "vmlinuz/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.vmlinuz"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -110,7 +110,7 @@ class PackBvmlinuzI386 : public PackVmlinuzI386
 public:
     PackBvmlinuzI386(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_BVMLINUZ_i386; }
-    virtual const char *getName() const { return "bvmlinuz/386"; }
+    virtual const char *getName() const { return "bvmlinuz/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-linux.kernel.bvmlinuz"; }
     virtual const int *getFilters() const;
 
@@ -131,7 +131,7 @@ class PackElks8086 : public PackVmlinuzI386
 public:
     PackElks8086(InputFile *f) : super(f) { }
     virtual int getFormat() const { return UPX_F_ELKS_8086; }
-    virtual const char *getName() const { return "elks/8086"; }
+    virtual const char *getName() const { return "elks/i086"; }
     virtual const char *getFullName(const options_t *) const { return "i086-elks ???"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
@@ -160,8 +160,8 @@ public:
     PackVmlinuzARMEL(InputFile *f);
     virtual int getVersion() const { return 13; }
     virtual int getFormat() const { return UPX_F_VMLINUZ_ARMEL; }
-    virtual const char *getName() const { return "vmlinuz/armel"; }
-    virtual const char *getFullName(const options_t *) const { return "armel-linux.kernel.vmlinuz"; }
+    virtual const char *getName() const { return "vmlinuz/arm"; }
+    virtual const char *getFullName(const options_t *) const { return "arm-linux.kernel.vmlinuz"; }
     virtual const int *getCompressionMethods(int method, int level) const;
     virtual const int *getFilters() const;
     virtual int getStrategy(Filter &);
