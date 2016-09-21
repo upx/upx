@@ -683,6 +683,7 @@ public:
     virtual void unpack(OutputFile *fo);
 
     virtual bool canPack();
+    virtual int canUnpack();
     virtual unsigned find_SEGMENT_gap(unsigned const k);
 
 protected:

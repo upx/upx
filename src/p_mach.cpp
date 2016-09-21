@@ -1827,7 +1827,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     // FIXME forgot space left for LC_CODE_SIGNATURE;
-    // but PackUnix::canUnpack() sets overlay_offset anyway.
+    // but canUnpack() sets overlay_offset anyway.
     //overlay_offset = sizeof(mhdri) + mhdri.sizeofcmds + sizeof(linfo);
 
     fi->seek(overlay_offset, SEEK_SET);
@@ -1934,6 +1934,79 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     delete [] mhdr;
 }
 
+// The prize is the value of overlay_offset: the offset of compressed data
+template <class T>
+int PackMachBase<T>::canUnpack()
+{
+    unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
+    fi->seek(0, SEEK_SET);
+    fi->readx(&mhdri, sizeof(mhdri));
+
+    if (((unsigned) Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) !=mhdri.magic
+    ||  my_cputype   !=mhdri.cputype
+    ||  my_filetype  !=mhdri.filetype
+    )
+        return false;
+
+    rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
+    fi->readx(rawmseg, mhdri.sizeofcmds);
+
+    unsigned style = 0;
+    off_t offLINK = 0;
+    unsigned const ncmds = mhdri.ncmds;
+    Mach_command const *ptr = (Mach_command const *)rawmseg;
+    for (unsigned j= 0; j < ncmds;
+            ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr), ++j) {
+        Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
+        if (lc_seg == ptr->cmd) {
+            if (!strcmp("__XHDR", segptr->segname)) {
+                // PackHeader precedes __LINKEDIT (pre-Sierra MacOS 10.12)
+                style = 391;  // UPX 3.91
+            }
+            if (!strcmp("UPX_DATA", segptr->segname)) {
+                // PackHeader follows loader at __LINKEDIT (Sierra MacOS 10.12)
+                style = 392;  // UPX 3.92
+            }
+            if (!strcmp("__LINKEDIT", segptr->segname)) {
+                offLINK = segptr->fileoff;
+                break;
+            }
+        }
+     }
+    if (0 == style || 0 == offLINK) {
+        return false;
+    }
+
+    int const small = 32 + sizeof(overlay_offset);
+    int bufsize = 4096;
+    if (391 == style) { // PackHeader precedes __LINKEDIT
+        fi->seek(offLINK - bufsize, SEEK_SET);
+    } else
+    if (392 == style) { // PackHeader follows loader at __LINKEDIT
+        if (bufsize > (fi->st_size() - offLINK)) {
+            bufsize =  fi->st_size() - offLINK;
+        }
+        fi->seek(offLINK, SEEK_SET);
+    }
+    MemBuffer buf(bufsize);
+
+    fi->readx(buf, bufsize);
+    int i = bufsize;
+    while (i > small && 0 == buf[--i]) { }
+    i -= small;
+    // allow incompressible extents
+    if (i < 0 || !getPackHeader(buf + i, bufsize - i, true))
+        return false;
+
+    int l = ph.buf_offset + ph.getPackHeaderSize();
+    if (l < 0 || l + 4 > bufsize)
+        throwCantUnpack("file corrupted");
+    overlay_offset = get_te32(buf + i + l);
+    if ((off_t)overlay_offset >= file_size)
+        throwCantUnpack("file corrupted");
+
+    return true;
+}
 
 template <class T>
 bool PackMachBase<T>::canPack()
