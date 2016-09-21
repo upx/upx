@@ -32,7 +32,7 @@
 
 #include "screen.h"
 
-#define this local_this
+#define this self
 
 #define mask_fg 0x0f
 #define mask_bg 0xf0
@@ -57,6 +57,7 @@
 #define co80    _go32_info_block.linear_address_of_primary_screen
 #undef kbhit
 
+#define Cell upx_uint16_t
 
 struct screen_data_t
 {
@@ -69,10 +70,10 @@ struct screen_data_t
     unsigned char attr;
     unsigned char init_attr;
     unsigned char empty_attr;
-    unsigned short empty_cell;
+    Cell empty_cell;
 #if USE_SCROLLBACK
     /* scrollback buffer */
-    unsigned short sb_buf[32][256];
+    Cell sb_buf[32][256];
     int sb_size;
     int sb_base;
     int sb_sp;
@@ -95,19 +96,19 @@ static __inline__ void sb_add(screen_t *this, int *val, int inc)
     *val = (*val + inc) & (this->data->sb_size - 1);
 }
 
-static void sb_push(screen_t *this, const unsigned short *line, int len)
+static void sb_push(screen_t *this, const Cell *line, int len)
 {
     memcpy(this->data->sb_buf[this->data->sb_sp],line,len);
     sb_add(this,&this->data->sb_sp,1);
     if (this->data->sb_sp == this->data->sb_base)
-        sb_add(this,&this->data->sb_base,1);
+        sb_add(this, &this->data->sb_base, 1);
 }
 
-static const unsigned short *sb_pop(screen_t *this)
+static const Cell *sb_pop(screen_t *this)
 {
     if (this->data->sb_sp == this->data->sb_base)
         return NULL;
-    sb_add(this,&this->data->sb_sp,-1);
+    sb_add(this, &this->data->sb_sp, -1);
     return this->data->sb_buf[this->data->sb_sp];
 }
 #endif /* USE_SCROLLBACK */
@@ -120,10 +121,10 @@ static void refresh(screen_t *this)
 
 
 static __inline__
-unsigned short make_cell(screen_t *this, int ch, int attr)
+Cell make_cell(screen_t *this, int ch, int attr)
 {
     UNUSED(this);
-    return (unsigned short) (((attr & 0xff) << 8) | (ch & 0xff));
+    return (Cell) (((attr & 0xff) << 8) | (ch & 0xff));
 }
 
 
@@ -270,7 +271,7 @@ static void setCursorShape(screen_t *this, int shape)
 {
     __dpmi_regs r;
 
-    memset(&r,0,sizeof(r));         /* just in case... */
+    memset(&r, 0, sizeof(r));       /* just in case... */
     r.x.ax = 0x0103;
 #if 1
     if (this)
@@ -339,8 +340,8 @@ static int init(screen_t *this, int fd)
         if (mode != 2 && mode != 3 && mode != 7)
             return -1;
     }
-    ScreenGetCursor(&this->data->cursor_y,&this->data->cursor_x);
-    getChar(this,NULL,&attr,this->data->cursor_x,this->data->cursor_y);
+    ScreenGetCursor(&this->data->cursor_y, &this->data->cursor_x);
+    getChar(this, NULL, &attr, this->data->cursor_x, this->data->cursor_y);
     this->data->init_attr = attr;
     if (mode != 7)
     {
@@ -364,7 +365,7 @@ static int init(screen_t *this, int fd)
 static void updateLineN(screen_t *this, const void *line, int y, int len)
 {
     if (y >= 0 && y < this->data->rows && len > 0 && len <= 2*this->data->cols)
-        movedata(_my_ds(),(unsigned)line,dossel,co80+y*this->data->cols*2,len);
+        movedata(_my_ds(), (unsigned)line, dossel, co80+y*this->data->cols*2, len);
 }
 
 
@@ -373,7 +374,7 @@ static void clearLine(screen_t *this, int y)
     if (y >= 0 && y < this->data->rows)
     {
         unsigned sp = co80 + y * this->data->cols * 2;
-        unsigned short a = this->data->empty_cell;
+        Cell a = this->data->empty_cell;
         int i = this->data->cols;
 
         _farsetsel(dossel);
@@ -408,15 +409,15 @@ static int scrollUp(screen_t *this, int lines)
     /* copy to scrollback buffer */
     for (y = 0; y < lines; y++)
     {
-        unsigned short buf[ sc ];
-        movedata(dossel,co80+y*this->data->cols*2,_my_ds(),(unsigned)buf,sizeof(buf));
-        sb_push(this,buf,sizeof(buf));
+        Cell buf[ sc ];
+        movedata(dossel, co80+y*this->data->cols*2, _my_ds(), (unsigned)buf, sizeof(buf));
+        sb_push(this, buf, sizeof(buf));
     }
 #endif
 
     /* move screen up */
     if (lines < sr)
-        movedata(dossel,co80+lines*sc*2,dossel,co80,(sr-lines)*sc*2);
+        movedata(dossel, co80+lines*sc*2, dossel,co80, (sr-lines)*sc*2);
 
     /* fill in blank lines at bottom */
     for (y = sr - lines; y < sr; y++)
@@ -441,7 +442,7 @@ static int scrollDown(screen_t *this, int lines)
     {
         /* !@#% movedata can't handle overlapping regions... */
         /* movedata(dossel,co80,dossel,co80+lines*sc*2,(sr-lines)*sc*2); */
-        unsigned short buf[ (sr-lines)*sc ];
+        Cell buf[ (sr-lines)*sc ];
         movedata(dossel,co80,_my_ds(),(unsigned)buf,sizeof(buf));
         movedata(_my_ds(),(unsigned)buf,dossel,co80+lines*sc*2,sizeof(buf));
     }
@@ -450,7 +451,7 @@ static int scrollDown(screen_t *this, int lines)
     for (y = lines; --y >= 0; )
     {
 #if USE_SCROLLBACK
-        const unsigned short *buf = sb_pop(this);
+        const Cell *buf = sb_pop(this);
         if (buf == NULL)
             clearLine(this,y);
         else
@@ -481,7 +482,7 @@ static int s_kbhit(screen_t *this)
 static int intro(screen_t *this, void (*show_frames)(screen_t *) )
 {
     int shape;
-    unsigned short old_flags = __djgpp_hwint_flags;
+    upx_uint16_t old_flags = __djgpp_hwint_flags;
 
     if ((this->data->init_attr & mask_bg) != BG_BLACK)
         return 0;

@@ -102,45 +102,6 @@ screen_t *screen_win32_construct(void);
 void screen_show_frames(screen_t *);
 
 
-/*************************************************************************
-// debugging support
-**************************************************************************/
-
-#if 0
-
-#undef LOG
-#undef LOGI
-#undef LOGU
-#undef LOGS
-
-#if (SCREEN_DEBUG)
-static void LOG(const char *format, ...)
-{
-    static FILE *logfile = NULL;
-    va_list args;
-
-    if (!logfile)
-        logfile = fopen("screen.log", "wt");
-    if (!logfile)
-        return;
-
-    va_start(args,format);
-    vfprintf(logfile,format,args);
-    fflush(logfile);
-    va_end(args);
-}
-#  define LOGI(x)   LOG(#x " %ld\n", (long)(x))
-#  define LOGU(x)   LOG(#x " %lu\n", (long)(x))
-#  define LOGS(x)   LOG(#x " %s\n", x)
-#else
-#  define LOGI(x)   /*empty*/
-#  define LOGU(x)   /*empty*/
-#  define LOGS(x)   /*empty*/
-#endif
-
-#endif /* if #0 */
-
-
 #endif /* USE_SCREEN */
 
 #endif /* already included */

@@ -30,7 +30,7 @@
 
 #if (USE_SCREEN)
 
-#define this local_this
+#define this self
 
 #include "screen.h"
 

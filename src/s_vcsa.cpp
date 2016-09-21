@@ -32,7 +32,7 @@
 
 #include "screen.h"
 
-#define this local_this
+#define this self
 
 #define mask_fg 0x0f
 #define mask_bg 0xf0
@@ -54,6 +54,8 @@
 #endif
 
 
+#define Cell upx_uint16_t
+
 struct screen_data_t
 {
     int fd;
@@ -67,10 +69,10 @@ struct screen_data_t
     unsigned char attr;
     unsigned char init_attr;
     unsigned char map[256];
-    unsigned short empty_line[256];
+    Cell empty_line[256];
 #if USE_SCROLLBACK
     /* scrollback buffer */
-    unsigned short sb_buf[32][256];
+    Cell sb_buf[32][256];
     int sb_size;
     int sb_base;
     int sb_sp;
@@ -84,7 +86,7 @@ static __inline__ void sb_add(screen_t *this, int *val, int inc)
     *val = (*val + inc) & (this->data->sb_size - 1);
 }
 
-static void sb_push(screen_t *this, const unsigned short *line, int len)
+static void sb_push(screen_t *this, const Cell *line, int len)
 {
     memcpy(this->data->sb_buf[this->data->sb_sp],line,len);
     sb_add(this,&this->data->sb_sp,1);
@@ -92,7 +94,7 @@ static void sb_push(screen_t *this, const unsigned short *line, int len)
         sb_add(this,&this->data->sb_base,1);
 }
 
-static const unsigned short *sb_pop(screen_t *this)
+static const Cell *sb_pop(screen_t *this)
 {
     if (this->data->sb_sp == this->data->sb_base)
         return NULL;
@@ -109,7 +111,7 @@ static void refresh(screen_t *this)
 
 
 static __inline__
-unsigned short make_cell(screen_t *this, int ch, int attr)
+Cell make_cell(screen_t *this, int ch, int attr)
 {
     return ((attr & 0xff) << 8) | (this->data->map[ch & 0xff] & 0xff);
 }
@@ -223,7 +225,7 @@ static void getCursor(const screen_t *this, int *x, int *y)
 
 static void putCharAttr(screen_t *this, int ch, int attr, int x, int y)
 {
-    unsigned short a = make_cell(this,ch,attr);
+    Cell a = make_cell(this,ch,attr);
 
     if (gotoxy(this,x,y) == 0)
         write(this->data->fd, &a, 2);
@@ -254,7 +256,7 @@ static void putString(screen_t *this, const char *s, int x, int y)
 /* private */
 static void getChar(screen_t *this, int *ch, int *attr, int x, int y)
 {
-    unsigned short a;
+    upx_uint16_t a;
 
     if (gotoxy(this,x,y) == 0 && read(this->data->fd, &a, 2) == 2)
     {
@@ -275,7 +277,7 @@ static int init_scrnmap(screen_t *this, int fd)
 #if 1 && defined(GIO_UNISCRNMAP) && defined(E_TABSZ)
     if (!scrnmap_done)
     {
-        unsigned short scrnmap[E_TABSZ];
+        upx_uint16_t scrnmap[E_TABSZ];
         if (ioctl(fd, GIO_UNISCRNMAP, scrnmap) == 0)
         {
             for (i = 0; i < E_TABSZ; i++)
@@ -329,7 +331,7 @@ static int init(screen_t *this, int fd)
         unsigned char vc_data[4];
         int i;
         int attr;
-        unsigned short a;
+        Cell a;
 
         upx_snprintf(vc_name, sizeof(vc_name), "/dev/vcsa%d", (int) MINOR(st.st_rdev));
         this->data->fd = open(vc_name, O_RDWR);
@@ -431,7 +433,7 @@ static int scrollUp(screen_t *this, int lines)
     /* copy to scrollback buffer */
     for (y = 0; y < lines; y++)
     {
-        unsigned short buf[ sc ];
+        Cell buf[ sc ];
         gotoxy(this,0,y);
         read(this->data->fd, buf, sizeof(buf));
         sb_push(this,buf,sizeof(buf));
@@ -441,7 +443,7 @@ static int scrollUp(screen_t *this, int lines)
     /* move screen up */
     if (lines < sr)
     {
-        unsigned short buf[ (sr-lines)*sc ];
+        Cell buf[ (sr-lines)*sc ];
         gotoxy(this,0,lines);
         read(this->data->fd, buf, sizeof(buf));
         gotoxy(this,0,0);
@@ -469,7 +471,7 @@ static int scrollDown(screen_t *this, int lines)
     /* move screen down */
     if (lines < sr)
     {
-        unsigned short buf[ (sr-lines)*sc ];
+        Cell buf[ (sr-lines)*sc ];
         gotoxy(this,0,0);
         read(this->data->fd, buf, sizeof(buf));
         gotoxy(this,0,lines);
@@ -480,7 +482,7 @@ static int scrollDown(screen_t *this, int lines)
     for (y = lines; --y >= 0; )
     {
 #if USE_SCROLLBACK
-        const unsigned short *buf = sb_pop(this);
+        const Cell *buf = sb_pop(this);
         if (buf == NULL)
             clearLine(this,y);
         else
@@ -518,7 +520,7 @@ static void setCursorShape(screen_t *this, int shape)
 static int kbhit(screen_t *this)
 {
     const int fd = STDIN_FILENO;
-    const unsigned long usec = 0;
+    const unsigned usec = 0;
     struct timeval tv;
     fd_set fds;
 

@@ -32,7 +32,7 @@
 
 #include "screen.h"
 
-#define this local_this
+#define this self
 
 #define mask_fg 0x0f
 #define mask_bg 0xf0
