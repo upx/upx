@@ -61,7 +61,6 @@ LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
-INCLUDES += -I$(UPX_LZMADIR)
 
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 ifdef USE_DEBUG
@@ -75,7 +74,7 @@ ifeq ($(findstring clang,$(CXX)),)
 CXXFLAGS += -fno-delete-null-pointer-checks
 endif
 CXXFLAGS += -fno-strict-aliasing -fwrapv
-CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wpointer-arith -Wshadow -Wwrite-strings
+CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wwrite-strings
 CXXFLAGS_WERROR ?= -Werror
 CXXFLAGS += $(CXXFLAGS_WERROR)
 
@@ -109,6 +108,8 @@ else
 endif
 
 
+.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
+
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
@@ -122,6 +123,14 @@ ifeq ($(MAKECMDGOALS),mostlyclean)
 else ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),distclean)
 else ifeq ($(MAKECMDGOALS),maintainer-clean)
+else ifeq ($(MAKECMDGOALS),clang-format)
 else
 -include .depend
 endif
+
+
+CLANG_FORMAT_FILES += snprintf.cpp
+CLANG_FORMAT_FILES += stdcxx.h stdcxx.cpp
+clang-format:
+	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
+.PHONY: clang-format

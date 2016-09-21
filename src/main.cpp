@@ -27,6 +27,7 @@
 
 
 #include "conf.h"
+#include "compress.h"
 #include "file.h"
 #include "packer.h"
 #include "p_elf.h"
@@ -171,20 +172,22 @@ void e_exit(int ec)
 }
 
 
-void e_usage(void)
+static void e_usage(void)
 {
     show_usage();
     e_exit(EXIT_USAGE);
 }
 
 
-void e_memory(void)
+#if 0 // UNUSED
+static void e_memory(void)
 {
     show_head();
     fflush(con_term);
     fprintf(stderr,"%s: out of memory\n", argv0);
     e_exit(EXIT_MEMORY);
 }
+#endif // UNUSED
 
 
 static void e_method(int m, int l)
@@ -212,7 +215,7 @@ static void e_optval(const char *n)
 
 
 #if defined(OPTIONS_VAR)
-void e_envopt(const char *n)
+static void e_envopt(const char *n)
 {
     fflush(con_term);
     if (n)
@@ -226,18 +229,20 @@ void e_envopt(const char *n)
 #endif /* defined(OPTIONS_VAR) */
 
 
-void __acc_cdecl_sighandler e_sighandler(int signum)
+#if 0 // UNUSED
+static void __acc_cdecl_sighandler e_sighandler(int signum)
 {
     UNUSED(signum);
     e_exit(EXIT_FATAL);
 }
+#endif // UNUSED
 
 
 /*************************************************************************
 // check options
 **************************************************************************/
 
-void check_not_both(bool e1, bool e2, const char *c1, const char *c2)
+static void check_not_both(bool e1, bool e2, const char *c1, const char *c2)
 {
     if (e1 && e2)
     {
@@ -248,7 +253,7 @@ void check_not_both(bool e1, bool e2, const char *c1, const char *c2)
 }
 
 
-void check_options(int i, int argc)
+static void check_options(int i, int argc)
 {
     assert(i <= argc);
 
@@ -298,7 +303,7 @@ void check_options(int i, int argc)
 // misc
 **************************************************************************/
 
-void e_help(void)
+static void e_help(void)
 {
     show_help();
     e_exit(EXIT_USAGE);
@@ -439,7 +444,7 @@ char* prepare_shortopts(char *buf, const char *n,
 
 
 template <class T>
-int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal)
+static int getoptvar(T *var, const T min_value, const T max_value, const char *arg_fatal)
 {
     const char *p = mfx_optarg;
     char *endptr;
@@ -470,7 +475,7 @@ done:
 }
 
 template <class T, T default_value, T min_value, T max_value>
-int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal)
+static int getoptvar(OptVar<T,default_value,min_value,max_value> *var, const char *arg_fatal)
 {
     T v = default_value;
     int r = getoptvar(&v, min_value, max_value, arg_fatal);
@@ -1310,7 +1315,7 @@ static bool test(void)
 #undef ACCCHK_ASSERT
 #include "miniacc.h"
 
-void upx_sanity_check(void)
+__acc_static_noinline void upx_sanity_check(void)
 {
 #define ACC_WANT_ACC_CHK_CH 1
 #undef ACCCHK_ASSERT
@@ -1347,7 +1352,7 @@ void upx_sanity_check(void)
     COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_YEAR) == 4 + 1)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
-    assert(memcmp(UPX_VERSION_DATE + strlen(UPX_VERSION_DATE) - 4, UPX_VERSION_YEAR, 4) == 0);
+    assert(memcmp(&UPX_VERSION_DATE[strlen(UPX_VERSION_DATE) - 4], UPX_VERSION_YEAR, 4) == 0);
 
 #if 1
     assert(TestBELE<LE16>::test());
@@ -1464,8 +1469,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
     set_term(stderr);
 
-#if (WITH_UCL)
-    if (ucl_init() != UCL_E_OK)
+    if (upx_ucl_init() != 0)
     {
         show_head();
         fprintf(stderr,"ucl_init() failed - check your UCL installation !\n");
@@ -1474,17 +1478,10 @@ int __acc_cdecl_main main(int argc, char *argv[])
                     (long) UCL_VERSION, (long) ucl_version());
         e_exit(EXIT_INIT);
     }
-#endif
+    assert(upx_lzma_init() == 0);
+    assert(upx_zlib_init() == 0);
 #if (WITH_NRV)
-    if (nrv_init() != NRV_E_OK || NRV_VERSION != nrv_version())
-    {
-        show_head();
-        fprintf(stderr,"nrv_init() failed - check your NRV installation !\n");
-        if (NRV_VERSION != nrv_version())
-            fprintf(stderr,"library version conflict (%lx, %lx) - check your NRV installation !\n",
-                    (long) NRV_VERSION, (long) nrv_version());
-        e_exit(EXIT_INIT);
-    }
+    assert(upx_nrv_init() == 0);
 #endif
 
     //srand((int) time(NULL));

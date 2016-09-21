@@ -283,7 +283,7 @@ static const char dir_sep[] = "/\\";
 
 #else
 
-static const char dir_sep[] = "/";
+//static const char dir_sep[] = "/";
 #define fn_is_drive(s)      (0)
 #define fn_is_sep(c)        ((c) == '/')
 #define fn_skip_drive(s)    (s)
@@ -319,6 +319,7 @@ bool fn_has_ext(const char *name, const char *ext, bool ignore_case)
 }
 
 
+#if 0 // UNUSED
 void fn_addslash(char *name, bool slash)
 {
     char *p;
@@ -334,6 +335,7 @@ void fn_addslash(char *name, bool slash)
         *p = 0;
     }
 }
+#endif // UNUSED
 
 
 char *fn_strlwr(char *n)
@@ -362,6 +364,7 @@ int fn_strcmp(const char *n1, const char *n2)
 }
 
 
+#if 0 // UNUSED
 bool fn_is_same_file(const char *n1, const char *n2)
 {
     /* very simple... */
@@ -369,6 +372,7 @@ bool fn_is_same_file(const char *n1, const char *n2)
         return 1;
     return 0;
 }
+#endif // UNUSED
 
 
 /*************************************************************************

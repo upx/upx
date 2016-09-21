@@ -393,6 +393,7 @@ void Packer::decompress(const upx_bytep in, upx_bytep out,
 // overlapping decompression
 **************************************************************************/
 
+static
 bool ph_testOverlappingDecompression(const PackHeader &ph,
                                      const upx_bytep buf,
                                      const upx_bytep tbuf,

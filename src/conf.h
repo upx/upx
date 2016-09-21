@@ -112,22 +112,17 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #  undef __unix
 #endif
 
-#if !defined(WITH_UCL)
-#  define WITH_UCL 1
-#endif
+#define WITH_UCL 1
+#define WITH_ZLIB 1
 #if !defined(WITH_LZMA) || (WITH_LZMA+0 == 0)
 #  error "WITH_LZMA is missing"
-#endif
-#if (WITH_LZMA != 0x443)
+#elif (WITH_LZMA != 0x443)
 #  error "invalid WITH_LZMA version"
 #endif
 #if defined(UPX_OFFICIAL_BUILD)
-#  if !(WITH_LZMA) || !(WITH_NRV) || !(WITH_UCL)
+#  if !(WITH_LZMA && WITH_NRV && WITH_UCL && WITH_ZLIB)
 #    error
 #  endif
-#endif
-#if (WITH_NRV)
-#  include <nrv/nrvconf.h>
 #endif
 #if (WITH_UCL)
 #  define ucl_compress_config_t REAL_ucl_compress_config_t
@@ -160,7 +155,7 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #endif
 
 
-// unconditionally turn on assertions
+// IMPORTANT: unconditionally enable assertions
 #undef NDEBUG
 #include <assert.h>
 
@@ -473,9 +468,11 @@ struct OptVar
     static const T min_value_c = min_value;
     static const T max_value_c = max_value;
 
-    void assertValue() {
-        // FIXME: this generates annoying warnings "unsigned >= 0 is always true"
-        //assert((v >= min_value) && (v <= max_value));
+    void assertValue() const {
+        // info: this generates annoying warnings "unsigned >= 0 is always true"
+        //assert(v >= min_value_c);
+        assert(v == min_value_c || v >= min_value_c + 1);
+        assert(v <= max_value_c);
     }
 
     OptVar() : v(default_value), is_set(0) { }
@@ -494,10 +491,12 @@ struct OptVar
 
 
 // optional assignments
-template <class T> inline void oassign(T &self, const T &other) {
+template <class T, T a, T b, T c>
+inline void oassign(OptVar<T,a,b,c> &self, const OptVar<T,a,b,c> &other) {
     if (other.is_set) { self.v = other.v; self.is_set += 1; }
 }
-template <class T> inline void oassign(unsigned &v, const T &other) {
+template <class T, T a, T b, T c>
+inline void oassign(unsigned &v, const OptVar<T,a,b,c> &other) {
     if (other.is_set) { v = other.v; }
 }
 

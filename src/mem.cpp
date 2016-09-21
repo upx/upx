@@ -31,21 +31,22 @@
 
 
 /*************************************************************************
-//
+// assert sane memory buffer sizes to protect against integer overflows
+// and malicious header fields
 **************************************************************************/
 
 // DO NOT CHANGE
-#define MAX_SIZE (768 * 1024 * 1024)
-ACC_COMPILE_TIME_ASSERT_HEADER(2ull * MAX_SIZE * 9 / 8 + 16*1024*1024 < INT_MAX)
+#define MAX_BUF_SIZE (768 * 1024 * 1024)
+ACC_COMPILE_TIME_ASSERT_HEADER(2ull * MAX_BUF_SIZE * 9 / 8 + 16*1024*1024 < INT_MAX)
 
 size_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra)
 {
     assert(element_size > 0);
-    if (element_size > MAX_SIZE) throwCantPack("mem_size 1; take care");
-    if (n > MAX_SIZE) throwCantPack("mem_size 2; take care");
-    if (extra > MAX_SIZE) throwCantPack("mem_size 3; take care");
+    if (element_size > MAX_BUF_SIZE) throwCantPack("mem_size 1; take care");
+    if (n > MAX_BUF_SIZE) throwCantPack("mem_size 2; take care");
+    if (extra > MAX_BUF_SIZE) throwCantPack("mem_size 3; take care");
     upx_uint64_t bytes = element_size * n + extra; // cannot overflow
-    if (bytes > MAX_SIZE) throwCantPack("mem_size 4; take care");
+    if (bytes > MAX_BUF_SIZE) throwCantPack("mem_size 4; take care");
     return ACC_ICONV(size_t, bytes);
 }
 
@@ -58,13 +59,15 @@ size_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra)
 {
     assert(element_size > 0);
-    if (element_size > MAX_SIZE) return false;
-    if (n > MAX_SIZE) return false;
-    if (extra > MAX_SIZE) return false;
+    if (element_size > MAX_BUF_SIZE) return false;
+    if (n > MAX_BUF_SIZE) return false;
+    if (extra > MAX_BUF_SIZE) return false;
     upx_uint64_t bytes = element_size * n + extra; // cannot overflow
-    if (bytes > MAX_SIZE) return false;
+    if (bytes > MAX_BUF_SIZE) return false;
     return true;
 }
+
+#undef MAX_BUF_SIZE
 
 
 /*************************************************************************

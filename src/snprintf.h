@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
  */
 
-
 #ifndef __UPX_SNPRINTF_H
 #define __UPX_SNPRINTF_H 1
 
@@ -33,21 +32,22 @@
 extern "C" {
 #endif
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
 int                upx_vsnprintf(char *str, size_t count, const char *format, va_list ap);
-int __acc_cdecl_va upx_snprintf(char *str, size_t count, const char *format,...);
+int __acc_cdecl_va upx_snprintf (char *str, size_t count, const char *format, ...);
 int                upx_vasprintf(char **ptr, const char *format, va_list ap);
-int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...);
+int __acc_cdecl_va upx_asprintf (char **ptr, const char *format, ...);
 
-#if 1
-#  undef sprintf
-#  define sprintf   error_sprintf_is_dangerous_use_snprintf
-#endif
+#undef sprintf
+#define sprintf error_sprintf_is_dangerous_use_snprintf
 
+size_t upx_strlen(const char *);
+
+#undef strlen
+#define strlen upx_strlen
 
 #ifdef __cplusplus
 }
@@ -55,8 +55,6 @@ int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...);
 
 #endif /* already included */
 
-
 /*
 vi:ts=4:et:nowrap
 */
-

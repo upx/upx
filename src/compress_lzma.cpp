@@ -787,13 +787,21 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
 // misc
 **************************************************************************/
 
+int upx_lzma_init(void)
+{
+    return 0;
+}
+
 const char *upx_lzma_version_string(void)
 {
 #if (WITH_LZMA >= 0x461)
+#   error "invalid WITH_LZMA version"
     return MY_VERSION;
 #elif (WITH_LZMA + 0 == 0x457)
+#   error "invalid WITH_LZMA version"
     return "4.57";
 #elif (WITH_LZMA + 0 == 0x449)
+#   error "invalid WITH_LZMA version"
     return "4.49";
 #elif (WITH_LZMA + 0 == 0x443)
     return "4.43";

@@ -222,10 +222,31 @@ int upx_zlib_test_overlap  ( const upx_bytep buf,
 // misc
 **************************************************************************/
 
+int upx_zlib_init(void)
+{
+#if defined(UPX_OFFICIAL_BUILD)
+    if (strcmp(ZLIB_VERSION, zlibVersion()) != 0)
+        return -2;
+#endif
+    return 0;
+}
+
 const char *upx_zlib_version_string(void)
 {
     return zlibVersion();
 }
+
+unsigned upx_zlib_adler32(const void *buf, unsigned len, unsigned adler)
+{
+    return adler32(adler, (const Bytef *) buf, len);
+}
+
+#if 0 /* UNUSED */
+unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
+{
+    return crc32(crc, (const Bytef *) buf, len);
+}
+#endif
 
 
 #endif /* WITH_ZLIB */

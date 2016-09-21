@@ -281,11 +281,29 @@ int upx_ucl_test_overlap   ( const upx_bytep buf,
 // misc
 **************************************************************************/
 
+int upx_ucl_init(void)
+{
+    if (ucl_init() != UCL_E_OK)
+        return -1;
+    return 0;
+}
+
 const char *upx_ucl_version_string(void)
 {
     return ucl_version_string();
 }
 
+unsigned upx_ucl_adler32(const void *buf, unsigned len, unsigned adler)
+{
+    return ucl_adler32(adler, (const ucl_bytep) buf, len);
+}
+
+#if 0 /* UNUSED */
+unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
+{
+    return ucl_crc32(crc, (const ucl_bytep) buf, len);
+}
+#endif
 
 #endif /* WITH_UCL */
 /*

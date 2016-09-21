@@ -39,25 +39,6 @@
 //
 **************************************************************************/
 
-#if defined(__BORLANDC__)
-#  undef strcpy
-#  define strcpy(a,b)   strcpy((char *)(a),(const char *)(b))
-#endif
-
-#if 1
-//static
-unsigned my_strlen(const char *s)
-{
-    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
-}
-static unsigned my_strlen(const unsigned char *s)
-{
-    size_t l = strlen((const char*)s); assert((unsigned) l == l); return (unsigned) l;
-}
-#undef strlen
-#define strlen my_strlen
-#endif
-
 #include "bptr.h"
 #define IPTR(type, var)         BoundedPtr<type> var(ibuf, ibuf.getSize())
 #define OPTR(type, var)         BoundedPtr<type> var(obuf, obuf.getSize())
