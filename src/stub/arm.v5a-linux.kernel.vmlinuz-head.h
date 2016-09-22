@@ -1,5 +1,5 @@
-/* armel-linux.kernel.vmlinuz-head.h
-   created from armel-linux.kernel.vmlinuz-head.bin, 8 (0x8) bytes
+/* arm.v5a-linux.kernel.vmlinuz-head.h
+   created from arm.v5a-linux.kernel.vmlinuz-head.bin, 8 (0x8) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,10 +31,10 @@
  */
 
 
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_HEAD_SIZE    8
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_HEAD_ADLER32 0x17bb0637
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_HEAD_CRC32   0xccc03eaa
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_HEAD_SIZE    8
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_HEAD_ADLER32 0x17bb0637
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_HEAD_CRC32   0xccc03eaa
 
-unsigned char stub_armel_linux_kernel_vmlinuz_head[8] = {
+unsigned char stub_arm_v5a_linux_kernel_vmlinuz_head[8] = {
 /* 0x0000 */  14,192,160,225,254,255,255,235
 };

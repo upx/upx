@@ -1,5 +1,5 @@
-/* armel-linux.kernel.vmlinuz.h
-   created from armel-linux.kernel.vmlinuz.bin, 15163 (0x3b3b) bytes
+/* arm.v5a-linux.kernel.vmlinuz.h
+   created from arm.v5a-linux.kernel.vmlinuz.bin, 15163 (0x3b3b) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_SIZE    15163
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_ADLER32 0x690d3249
-#define STUB_ARMEL_LINUX_KERNEL_VMLINUZ_CRC32   0x579d826c
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_SIZE    15163
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_ADLER32 0x690d3249
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_CRC32   0x579d826c
 
-unsigned char stub_armel_linux_kernel_vmlinuz[15163] = {
+unsigned char stub_arm_v5a_linux_kernel_vmlinuz[15163] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 244, 18,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
