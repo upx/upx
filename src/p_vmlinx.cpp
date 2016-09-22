@@ -918,11 +918,11 @@ void PackVmlinuxPPC32::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/ppc64le-linux.kernel.vmlinux.h"
+#include "stub/powerpc64le-linux.kernel.vmlinux.h"
 void PackVmlinuxPPC64LE::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(stub_ppc64le_linux_kernel_vmlinux, sizeof(stub_ppc64le_linux_kernel_vmlinux));
+    initLoader(stub_powerpc64le_linux_kernel_vmlinux, sizeof(stub_powerpc64le_linux_kernel_vmlinux));
     addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
@@ -1140,11 +1140,11 @@ bool PackVmlinuxPPC32::has_valid_vmlinux_head()
     return false;
 }
 
-#include "stub/ppc64le-linux.kernel.vmlinux-head.h"
+#include "stub/powerpc64le-linux.kernel.vmlinux-head.h"
 bool PackVmlinuxPPC64LE::has_valid_vmlinux_head()
 {
     TE64 buf[2];
-    fi->seek(p_text->sh_offset + sizeof(stub_ppc64le_linux_kernel_vmlinux_head) -8, SEEK_SET);
+    fi->seek(p_text->sh_offset + sizeof(stub_powerpc64le_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];

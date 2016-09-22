@@ -443,16 +443,16 @@ PackMachPPC32::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/ppc64le-darwin.macho-entry.h"
+#include "stub/powerpc64le-darwin.macho-entry.h"
 static const
-#include "stub/ppc64le-darwin.macho-fold.h"
+#include "stub/powerpc64le-darwin.macho-fold.h"
 
 void
 PackMachPPC64LE::buildLoader(const Filter *ft)
 {
     buildMachLoader(
-        stub_ppc64le_darwin_macho_entry, sizeof(stub_ppc64le_darwin_macho_entry),
-        stub_ppc64le_darwin_macho_fold,  sizeof(stub_ppc64le_darwin_macho_fold),  ft );
+        stub_powerpc64le_darwin_macho_entry, sizeof(stub_powerpc64le_darwin_macho_entry),
+        stub_powerpc64le_darwin_macho_fold,  sizeof(stub_powerpc64le_darwin_macho_fold),  ft );
 }
 
 void
@@ -538,12 +538,12 @@ PackDylibPPC32::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/ppc64le-darwin.dylib-entry.h"
+#include "stub/powerpc64le-darwin.dylib-entry.h"
 void
 PackDylibPPC64LE::buildLoader(const Filter *ft)
 {
     buildMachLoader(
-        stub_ppc64le_darwin_dylib_entry, sizeof(stub_ppc64le_darwin_dylib_entry),
+        stub_powerpc64le_darwin_dylib_entry, sizeof(stub_powerpc64le_darwin_dylib_entry),
         0,  0,  ft );
 }
 
