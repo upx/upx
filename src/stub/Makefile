@@ -58,26 +58,27 @@ STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pep.h
-STUBS += arm.v5a-darwin.macho-entry.h
-STUBS += arm.v5a-darwin.macho-fold.h
-STUBS += arm64-darwin.macho-entry.h
-STUBS += arm64-darwin.macho-fold.h
 STUBS += arm.v4a-linux.elf-entry.h
 STUBS += arm.v4a-linux.elf-fold.h
+STUBS += arm.v4a-wince.pe.h
+STUBS += arm.v4t-wince.pe.h
+STUBS += arm.v5a-darwin.macho-entry.h
+STUBS += arm.v5a-darwin.macho-fold.h
+STUBS += arm.v5a-linux.elf-entry.h
+STUBS += arm.v5a-linux.elf-fold.h
 STUBS += arm.v5a-linux.kernel.vmlinux-head.h
 STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
 STUBS += arm.v5a-linux.kernel.vmlinuz.h
 STUBS += arm.v5a-linux.shlib-init.h
-STUBS += arm.v4a-wince.pe.h
-STUBS += arm.v4t-wince.pe.h
+STUBS += arm.v5a-linux.shlib-init.h
+STUBS += arm.v5t-linux.shlib-init.h
 STUBS += armeb.v4a-linux.elf-entry.h
 STUBS += armeb.v4a-linux.elf-fold.h
 STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
-STUBS += arm.v5a-linux.elf-entry.h
-STUBS += arm.v5a-linux.elf-fold.h
-STUBS += arm.v5a-linux.shlib-init.h
+STUBS += arm64-darwin.macho-entry.h
+STUBS += arm64-darwin.macho-fold.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
@@ -86,7 +87,7 @@ STUBS += i386-bsd.elf-fold.h
 STUBS += i386-bsd.elf.execve-entry.h
 STUBS += i386-bsd.elf.execve-fold.h
 STUBS += i386-darwin.dylib-entry.h
-## STUBS += i386-darwin.dylib-fold.h
+# STUBS += i386-darwin.dylib-fold.h
 STUBS += i386-darwin.macho-entry.h
 STUBS += i386-darwin.macho-fold.h
 STUBS += i386-dos32.djgpp2-stubify.h
@@ -129,7 +130,6 @@ STUBS += powerpc64le-linux.elf-entry.h
 STUBS += powerpc64le-linux.elf-fold.h
 STUBS += powerpc64le-linux.kernel.vmlinux-head.h
 STUBS += powerpc64le-linux.kernel.vmlinux.h
-STUBS += arm.v5t-linux.shlib-init.h
 endif
 
 
@@ -170,8 +170,11 @@ maintainer-clean:
 	rm -f .upx-stubtools-stamp
 	rm -rf tmp
 	rm -f $(STUBS)
+list-stubs: $(STUBS)
+#	@ls -l $(STUBS)
+	@wc $(STUBS)
 
-.PHONY: default all mostlyclean clean distclean maintainer-clean
+.PHONY: default all mostlyclean clean distclean maintainer-clean list-stubs
 
 
 # util var for use in the rules - basename of the current target
@@ -359,7 +362,6 @@ tmp/amd64-linux.elf-main.o : $(srcdir)/src/$$T.c
 # ************************************************************************/
 
 # info: we use the tc settings from arch-i386 !!
-
 amd64-linux.kernel.vmlinu%.h : tc_list = arch-i386 default
 amd64-linux.kernel.vmlinu%.h : tc_bfdname = elf32-i386
 
@@ -391,7 +393,7 @@ amd64-linux.shlib-init.h : $(srcdir)/src/$$T.S
 # // amd64-win64.pep
 # ************************************************************************/
 
-amd64-win64.pep.h : tc_list = amd64-win64.pep amd64-linux.elf default
+amd64-win64.pep.h : tc_list = amd64-win64.pep default
 amd64-win64.pep.h : tc_bfdname = elf64-x86-64
 amd64-win64.pep.h : tc_objdump_disasm_options = -M intel-mnemonic
 
@@ -413,6 +415,7 @@ amd64-win64.pep.h : $(srcdir)/src/$$T.S
 # info: we use the tc settings from arm.v4a-linux.elf, but override v4 with v5
 arm.v5a-darwin.macho%.h : tc_list = arm.v4a-linux.elf default
 arm.v5a-darwin.macho%.h : tc_bfdname = elf32-littlearm
+
 tc.arm.v5a-darwin.macho-entry.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
 tc.arm.v5a-darwin.macho-fold.gcc   = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
 
@@ -431,48 +434,6 @@ tmp/arm.v5a-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/arm.v5a-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
-	$(call tc,f-objstrip,$@)
-
-
-# /***********************************************************************
-# // arm64-darwin.macho
-# ************************************************************************/
-
-# info: we use the tc settings from arm64-linux.elf
-arm64-darwin.macho%.h : tc_list = arm64-linux.elf default
-arm64-darwin.macho%.h : tc_bfdname = elf64-littleaarch64
-tc.arm64-darwin.macho-entry.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
-tc.arm64-darwin.macho-fold.gcc   = $(tc.arm64-darwin.macho-entry.gcc)
-tc.arm64-darwin.macho-main.gcc   = $(tc.arm64-darwin.macho-entry.gcc)
-
-tc.arm64-darwin.macho-fold.ld    = arm64-linux-ld-2.25
-
-tc.arm64-darwin.macho-entry.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
-tc.arm64-darwin.macho-fold.objcopy   = $(tc.arm64-darwin.macho-entry.objcopy)
-tc.arm64-darwin.macho-main.objcopy   = $(tc.arm64-darwin.macho-entry.objcopy)
-
-tc.arm64-darwin.macho-entry.objdump  = arm64-linux-objdump-2.25
-tc.arm64-darwin.macho-fold.objdump   = $(tc.arm64-darwin.macho-entry.objdump)
-tc.arm64-darwin.macho-main.objdump   = $(tc.arm64-darwin.macho-entry.objdump)
-
-arm64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
-
-arm64-darwin.macho-fold.h : tmp/$$T.o tmp/arm64-darwin.macho-main.o
-	$(call tc,ld) --no-warn-mismatch --strip-all -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.tmp
-	$(call tc,objcopy) -O binary tmp/$T.tmp tmp/$T.bin
-	rm tmp/$T.tmp
-	chmod a-x tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-tmp/arm64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
-tmp/arm64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -539,6 +500,37 @@ arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
+# // arm.v5a-linux.elf (arm.v5a)
+# ************************************************************************/
+
+arm.v5a-linux.elf%.h : tc_list = arm.v5a-linux.elf default
+arm.v5a-linux.elf%.h : tc_bfdname = elf32-littlearm
+
+tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm.v5a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm.v5a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+arm.v5a-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm.v4a-linux.elf-fold.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/arm.v4a-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/arm.v5a-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+
+# /***********************************************************************
 # // arm.v5a-linux.shlib (arm.v5a)
 # ************************************************************************/
 
@@ -555,36 +547,13 @@ arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
 # // arm.v5t-linux.shlib (arm.v5t)
 # ************************************************************************/
 
-arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf arm.v5a-linux.elf default
+arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf default
 arm.v5t-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
 tc.arm.v5t-linux.elf.gcc  = $(tc.arm.v5a-linux.elf.gcc) -march=armv5t
 
 arm.v5t-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // arm.v4a-wince.pe (arm.v4a)
-# // arm.v4t-wince.pe (arm.v4t)
-# ************************************************************************/
-
-# info: we use the tc settings from arm.v4a-linux.elf
-arm.v4a-wince.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4t-wince.pe.h : tc_list = arm.v4a-linux.elf default
-arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
-arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
-
-arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
@@ -640,47 +609,59 @@ armeb.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm.v5a-linux.elf (arm.v5a)
+# // arm.v4a-wince.pe (arm.v4a)
+# // arm.v4t-wince.pe (arm.v4t)
 # ************************************************************************/
 
-arm.v5a-linux.elf%.h : tc_list = arm.v5a-linux.elf default
-arm.v5a-linux.elf%.h : tc_bfdname = elf32-littlearm
+# info: we use the tc settings from arm.v4a-linux.elf
+arm.v4a-wince.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4t-wince.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
+arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
 
-tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.arm.v5a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm.v5a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-arm.v5a-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
+arm.v4a-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
-arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm.v4a-linux.elf-fold.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/arm.v4a-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-	$(call tc,f-objstrip,tmp/$T.bin)
-	$(call tc,sstrip) tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
-
-tmp/arm.v5a-linux.elf-fold.o : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o $@
-	$(call tc,f-objstrip,$@)
-
-tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
-	$(call tc,gcc) -c -Os $< -o $@
-	$(call tc,f-objstrip,$@)
+arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -march=armv4t -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
-# // arm.v5a-linux.shlib (arm.v5a)
+# // arm64-darwin.macho
 # ************************************************************************/
 
-arm.v5a-linux.shlib%.h : tc_list = arm.v5a-linux.elf default
-arm.v5a-linux.shlib%.h : tc_bfdname = elf32-littlearm
+arm64-darwin.macho%.h : tc_list = arm64-darwin.macho default
+arm64-darwin.macho%.h : tc_bfdname = elf64-littleaarch64
 
-arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+tc.arm64-darwin.macho.gcc      = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
+tc.arm64-darwin.macho.ld       = arm64-linux-ld-2.25
+tc.arm64-darwin.macho.objcopy  = arm64-linux-objcopy-2.25 -F $(tc_bfdname)
+tc.arm64-darwin.macho.objdump  = arm64-linux-objdump-2.25 -b $(tc_bfdname)
+
+arm64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm64-darwin.macho-fold.h : tmp/$$T.o tmp/arm64-darwin.macho-main.o
+	$(call tc,ld) --no-warn-mismatch --strip-all -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.tmp
+	$(call tc,objcopy) -O binary tmp/$T.tmp tmp/$T.bin
+	rm tmp/$T.tmp
+	chmod a-x tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/arm64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/arm64-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
 
 
 # /***********************************************************************
@@ -804,7 +785,7 @@ tmp/i386-openbsd.elf-main.o : $(srcdir)/src/$$T.c
 # // i386-bsd.elf.execve
 # ************************************************************************/
 
-# note: tc_list settings are inherited from i386-bsd.elf
+# note: tc_list settings are inherited from i386-bsd.elf because of wildcard matching
 
 i386-bsd.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -960,7 +941,7 @@ tmp/i386-linux.elf-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.elf.execve
 # ************************************************************************/
 
-# note: tc_list settings are inherited from i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf because of wildcard matching
 
 i386-linux.elf.execve-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -991,7 +972,7 @@ tmp/i386-linux.elf.execve-upx_itoa.o : $(srcdir)/src/$$T.S
 # // i386-linux.elf.interp
 # ************************************************************************/
 
-# note: tc_list settings are inherited from i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf because of wildcard matching
 
 i386-linux.elf.interp-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -1018,7 +999,7 @@ tmp/i386-linux.elf.interp-main.o : $(srcdir)/src/$$T.c
 # // i386-linux.elf.shell
 # ************************************************************************/
 
-# note: tc_list settings are inherited from i386-linux.elf
+# note: tc_list settings are inherited from i386-linux.elf because of wildcard matching
 
 i386-linux.elf.shell-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -1307,6 +1288,20 @@ powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
+# // powerpc64le-darwin.dylib
+# ************************************************************************/
+
+# info: we use the tc settings from powerpc64le-linux.elf
+powerpc64le-darwin.dylib%.h : tc_list = powerpc64le-linux.elf default
+powerpc64le-darwin.dylib%.h : tc_bfdname = elf64-powerpcle
+
+powerpc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+# /***********************************************************************
 # // powerpc64le-darwin.macho
 # ************************************************************************/
 
@@ -1339,20 +1334,6 @@ tmp/powerpc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 tmp/powerpc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,f-objstrip,$@)
-
-
-# /***********************************************************************
-# // powerpc64le-darwin.dylib
-# ************************************************************************/
-
-# info: we use the tc settings from powerpc64le-linux.elf
-powerpc64le-darwin.dylib%.h : tc_list = powerpc64le-linux.elf default
-powerpc64le-darwin.dylib%.h : tc_bfdname = elf64-powerpcle
-
-powerpc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
