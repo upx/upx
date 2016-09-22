@@ -1638,7 +1638,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
 {
     if (level == 3)
     {
-        if (bpos + sizeof(res_data) >= dirsize())
+        if (bpos + sizeof(res_data) > dirsize())
             throwCantUnpack("corrupted resources");
 
         res_data *l = (res_data*) (newstart + bpos);
@@ -1649,7 +1649,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
         bpos += sizeof(*l);
         return;
     }
-    if (bpos + sizeof(res_dir) >= dirsize())
+    if (bpos + sizeof(res_dir) > dirsize())
         throwCantUnpack("corrupted resources");
 
     res_dir * const b = (res_dir*) (newstart + bpos);
@@ -1667,7 +1667,7 @@ void PeFile::Resource::build(const upx_rnode *node, unsigned &bpos,
         if ((p = branch->children[ic]->name) != 0)
         {
             be->tnl = spos + 0x80000000;
-            if (spos + get_le16(p) * 2 + 2 >= dirsize())
+            if (spos + get_le16(p) * 2 + 2 > dirsize())
                 throwCantUnpack("corrupted resources");
             memcpy(newstart + spos,p,get_le16(p) * 2 + 2);
             spos += get_le16(p) * 2 + 2;
