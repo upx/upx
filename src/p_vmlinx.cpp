@@ -43,7 +43,7 @@ static const
 static const
 #include "stub/amd64-linux.kernel.vmlinux.h"
 static const
-#include "stub/arm-linux.kernel.vmlinux.h"
+#include "stub/arm.v5a-linux.kernel.vmlinux.h"
 static const
 #include "stub/armeb.v5a-linux.kernel.vmlinux.h"
 static const
@@ -851,7 +851,7 @@ Linker* PackVmlinuxPPC64LE::newLinker() const
 void PackVmlinuxARMEL::buildLoader(const Filter *ft)
 {
     // prepare loader
-    initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
+    initLoader(stub_arm_v5a_linux_kernel_vmlinux, sizeof(stub_arm_v5a_linux_kernel_vmlinux));
     addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
@@ -950,7 +950,7 @@ static const
 static const
 #include "stub/amd64-linux.kernel.vmlinux-head.h"
 static const
-#include "stub/arm-linux.kernel.vmlinux-head.h"
+#include "stub/arm.v5a-linux.kernel.vmlinux-head.h"
 static const
 #include "stub/armeb.v5a-linux.kernel.vmlinux-head.h"
 static const
@@ -1043,20 +1043,20 @@ unsigned PackVmlinuxARMEL::write_vmlinux_head(
 )
 {
     // First word from vmlinux-head.S
-    fo->write(&stub_arm_linux_kernel_vmlinux_head[0], 4);
+    fo->write(&stub_arm_v5a_linux_kernel_vmlinux_head[0], 4);
 
     // Second word
     TE32 tmp_u32;
     unsigned const t = (0xff000000 &
-            BeLePolicy::get32(&stub_arm_linux_kernel_vmlinux_head[4]))
+            BeLePolicy::get32(&stub_arm_v5a_linux_kernel_vmlinux_head[4]))
         | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
     tmp_u32 = t;
     fo->write(&tmp_u32, 4);
 
     stxt->sh_addralign = 4;
-    stxt->sh_size += sizeof(stub_arm_linux_kernel_vmlinux_head);
+    stxt->sh_size += sizeof(stub_arm_v5a_linux_kernel_vmlinux_head);
 
-    return sizeof(stub_arm_linux_kernel_vmlinux_head);
+    return sizeof(stub_arm_v5a_linux_kernel_vmlinux_head);
 }
 
 unsigned PackVmlinuxARMEB::write_vmlinux_head(
@@ -1101,7 +1101,7 @@ unsigned PackVmlinuxPPC64LE::write_vmlinux_head(
 bool PackVmlinuxARMEL::has_valid_vmlinux_head()
 {
     TE32 buf[2];
-    fi->seek(p_text->sh_offset + sizeof(stub_arm_linux_kernel_vmlinux_head) -8, SEEK_SET);
+    fi->seek(p_text->sh_offset + sizeof(stub_arm_v5a_linux_kernel_vmlinux_head) -8, SEEK_SET);
     fi->readx(buf, sizeof(buf));
     //unsigned const word0 = buf[0];
     unsigned const word1 = buf[1];

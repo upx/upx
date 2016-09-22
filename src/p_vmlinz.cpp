@@ -923,14 +923,14 @@ Linker* PackVmlinuzARMEL::newLinker() const
 }
 
 static const
-#include "stub/arm-linux.kernel.vmlinux.h"
+#include "stub/arm.v5a-linux.kernel.vmlinux.h"
 static const
 #include "stub/arm.v5a-linux.kernel.vmlinuz-head.h"
 
 void PackVmlinuzARMEL::buildLoader(const Filter *ft)
 {
     // prepare loader; same as vmlinux (with 'x')
-    initLoader(stub_arm_linux_kernel_vmlinux, sizeof(stub_arm_linux_kernel_vmlinux));
+    initLoader(stub_arm_v5a_linux_kernel_vmlinux, sizeof(stub_arm_v5a_linux_kernel_vmlinux));
     addLoader("LINUX000", NULL);
     if (ft->id) {
         assert(ft->calls > 0);
