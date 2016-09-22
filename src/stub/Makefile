@@ -62,8 +62,8 @@ STUBS += arm.v5a-darwin.macho-entry.h
 STUBS += arm.v5a-darwin.macho-fold.h
 STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
-STUBS += arm-linux.elf-entry.h
-STUBS += arm-linux.elf-fold.h
+STUBS += arm.v4a-linux.elf-entry.h
+STUBS += arm.v4a-linux.elf-fold.h
 STUBS += arm.v5a-linux.kernel.vmlinux-head.h
 STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
@@ -75,8 +75,8 @@ STUBS += armeb.v4a-linux.elf-entry.h
 STUBS += armeb.v4a-linux.elf-fold.h
 STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
-STUBS += armel-eabi-linux.elf-entry.h
-STUBS += armel-eabi-linux.elf-fold.h
+STUBS += arm.v5a-linux.elf-entry.h
+STUBS += arm.v5a-linux.elf-fold.h
 STUBS += arm.v5a-linux.shlib-init.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
@@ -410,8 +410,8 @@ amd64-win64.pep.h : $(srcdir)/src/$$T.S
 # // arm.v5a-darwin.macho (arm.v5a)
 # ************************************************************************/
 
-# info: we use the tc settings from arm-linux.elf, but override v4 with v5
-arm.v5a-darwin.macho%.h : tc_list = arm-linux.elf default
+# info: we use the tc settings from arm.v4a-linux.elf, but override v4 with v5
+arm.v5a-darwin.macho%.h : tc_list = arm.v4a-linux.elf default
 arm.v5a-darwin.macho%.h : tc_bfdname = elf32-littlearm
 tc.arm.v5a-darwin.macho-entry.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
 tc.arm.v5a-darwin.macho-fold.gcc   = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
@@ -478,32 +478,32 @@ tmp/arm64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 
 
 # /***********************************************************************
-# // arm-linux.elf (arm.v4a)
+# // arm.v4a-linux.elf (arm.v4a)
 # ************************************************************************/
 
-arm-linux.elf%.h : tc_list = arm-linux.elf default
-arm-linux.elf%.h : tc_bfdname = elf32-littlearm
+arm.v4a-linux.elf%.h : tc_list = arm.v4a-linux.elf default
+arm.v4a-linux.elf%.h : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
-tc.arm-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.arm.v4a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv4 -nostdinc -MMD -MT $@
+tc.arm.v4a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm.v4a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-arm-linux.elf-entry.h : $(srcdir)/src/$$T.S
+arm.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm-linux.elf-fold.h : tmp/$$T.o tmp/arm-linux.elf-main.o $(srcdir)/src/$$T.lds
+arm.v4a-linux.elf-fold.h : tmp/$$T.o tmp/arm.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/arm-linux.elf-fold.o : $(srcdir)/src/$$T.S
+tmp/arm.v4a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+tmp/arm.v4a-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -542,7 +542,7 @@ arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
 # // arm-linux.shlib (arm.v5a)
 # ************************************************************************/
 
-arm-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+arm-linux.shlib%.h : tc_list = arm.v5a-linux.elf default
 arm-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
 arm-linux.shlib%.h : $(srcdir)/src/$$T.S
@@ -556,9 +556,9 @@ arm-linux.shlib%.h : $(srcdir)/src/$$T.S
 # // arm.v4t-wince.pe (arm.v4t)
 # ************************************************************************/
 
-# info: we use the tc settings from arm-linux.elf
-arm.v4a-wince.pe.h : tc_list = arm-linux.elf default
-arm.v4t-wince.pe.h : tc_list = arm-linux.elf default
+# info: we use the tc settings from arm.v4a-linux.elf
+arm.v4a-wince.pe.h : tc_list = arm.v4a-linux.elf default
+arm.v4t-wince.pe.h : tc_list = arm.v4a-linux.elf default
 arm.v4a-wince.pe.h : tc_bfdname = elf32-littlearm
 arm.v4t-wince.pe.h : tc_bfdname = elf32-littlearm
 arm.v4t-wince.pe.h : tc_objdump_disasm_options = -M force-thumb
@@ -581,7 +581,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 armeb.v4a-linux.elf%.h : tc_list = armeb.v4a-linux.elf default
 armeb.v4a-linux.elf%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb.v4a-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
+tc.armeb.v4a-linux.elf.gcc = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian
 
 armeb.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
@@ -611,7 +611,7 @@ tmp/armeb.v4a-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.el
 armeb.v5a-linux.kernel.vmlinu%.h : tc_list = armeb.v5a-linux.kernel default
 armeb.v5a-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb.v5a-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
+tc.armeb.v5a-linux.kernel.gcc  = $(tc.arm.v4a-linux.elf.gcc) -mbig-endian -march=armv5
 
 armeb.v5a-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
@@ -625,28 +625,28 @@ armeb.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armel-eabi-linux.elf (arm.v5a)
+# // arm.v5a-linux.elf (arm.v5a)
 # ************************************************************************/
 
-armel-eabi-linux.elf%.h : tc_list = armel-eabi-linux.elf default
-armel-eabi-linux.elf%.h : tc_bfdname = elf32-littlearm
+arm.v5a-linux.elf%.h : tc_list = arm.v5a-linux.elf default
+arm.v5a-linux.elf%.h : tc_bfdname = elf32-littlearm
 
-tc.armel-eabi-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.armel-eabi-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.armel-eabi-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.arm.v5a-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm.v5a-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm.v5a-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-armel-eabi-linux.elf-entry.h : $(srcdir)/src/$$T.S
+arm.v5a-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -march=armv5 -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-armel-eabi-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm-linux.elf-fold.lds
-	$(call tc,ld) --strip-all -T $(srcdir)/src/arm-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+arm.v5a-linux.elf-fold.h : tmp/$$T.o tmp/armel-linux.elf-main.o $(srcdir)/src/arm.v4a-linux.elf-fold.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/arm.v4a-linux.elf-fold.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/armel-eabi-linux.elf-fold.o : $(srcdir)/src/$$T.S
+tmp/arm.v5a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -659,7 +659,7 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 # // arm.v5a-linux.shlib (arm.v5a)
 # ************************************************************************/
 
-arm.v5a-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+arm.v5a-linux.shlib%.h : tc_list = arm.v5a-linux.elf default
 arm.v5a-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
 arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
@@ -1400,7 +1400,7 @@ powerpc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 # // arm.v5t-linux.shlib (arm.v5t)
 # ************************************************************************/
 
-arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf armel-eabi-linux.elf default
+arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf arm.v5a-linux.elf default
 arm.v5t-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
 tc.arm.v5t-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@

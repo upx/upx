@@ -1,5 +1,5 @@
-/* arm-linux.elf-entry.h
-   created from arm-linux.elf-entry.bin, 14939 (0x3a5b) bytes
+/* arm.v4a-linux.elf-entry.h
+   created from arm.v4a-linux.elf-entry.bin, 14939 (0x3a5b) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARM_LINUX_ELF_ENTRY_SIZE    14939
-#define STUB_ARM_LINUX_ELF_ENTRY_ADLER32 0x63c9224e
-#define STUB_ARM_LINUX_ELF_ENTRY_CRC32   0x33ce036f
+#define STUB_ARM_V4A_LINUX_ELF_ENTRY_SIZE    14939
+#define STUB_ARM_V4A_LINUX_ELF_ENTRY_ADLER32 0x63c9224e
+#define STUB_ARM_V4A_LINUX_ELF_ENTRY_CRC32   0x33ce036f
 
-unsigned char stub_arm_linux_elf_entry[14939] = {
+unsigned char stub_arm_v4a_linux_elf_entry[14939] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 120, 19,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,

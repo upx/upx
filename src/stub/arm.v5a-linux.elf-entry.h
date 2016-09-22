@@ -1,5 +1,5 @@
-/* armel-eabi-linux.elf-entry.h
-   created from armel-eabi-linux.elf-entry.bin, 15023 (0x3aaf) bytes
+/* arm.v5a-linux.elf-entry.h
+   created from arm.v5a-linux.elf-entry.bin, 15023 (0x3aaf) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEL_EABI_LINUX_ELF_ENTRY_SIZE    15023
-#define STUB_ARMEL_EABI_LINUX_ELF_ENTRY_ADLER32 0x2bde4a99
-#define STUB_ARMEL_EABI_LINUX_ELF_ENTRY_CRC32   0x88e4202b
+#define STUB_ARM_V5A_LINUX_ELF_ENTRY_SIZE    15023
+#define STUB_ARM_V5A_LINUX_ELF_ENTRY_ADLER32 0x2bde4a99
+#define STUB_ARM_V5A_LINUX_ELF_ENTRY_CRC32   0x88e4202b
 
-unsigned char stub_armel_eabi_linux_elf_entry[15023] = {
+unsigned char stub_arm_v5a_linux_elf_entry[15023] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 204, 19,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,

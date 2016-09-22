@@ -1,5 +1,5 @@
-/* armel-eabi-linux.elf-fold.h
-   created from armel-eabi-linux.elf-fold.bin, 2732 (0xaac) bytes
+/* arm.v5a-linux.elf-fold.h
+   created from arm.v5a-linux.elf-fold.bin, 2732 (0xaac) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEL_EABI_LINUX_ELF_FOLD_SIZE    2732
-#define STUB_ARMEL_EABI_LINUX_ELF_FOLD_ADLER32 0x86407765
-#define STUB_ARMEL_EABI_LINUX_ELF_FOLD_CRC32   0x6bd6d8af
+#define STUB_ARM_V5A_LINUX_ELF_FOLD_SIZE    2732
+#define STUB_ARM_V5A_LINUX_ELF_FOLD_ADLER32 0x86407765
+#define STUB_ARM_V5A_LINUX_ELF_FOLD_CRC32   0x6bd6d8af
 
-unsigned char stub_armel_eabi_linux_elf_fold[2732] = {
+unsigned char stub_arm_v5a_linux_elf_fold[2732] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   2,  0, 40,  0,  1,  0,  0,  0,128,128,  0,  0, 52,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  2,  0,  0,  0, 52,  0, 32,  0,  2,  0,  0,  0,

@@ -29,7 +29,7 @@
 
 #define ARM_OLDABI 1
 #define FILTER_ID 0x51  /* big-endian */
-#include "arm-linux.elf-fold.S"
+#include "arm.v4a-linux.elf-fold.S"
 #undef FILTER_ID
 
 @ vi:ts=8:et:nowrap
