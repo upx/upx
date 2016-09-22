@@ -1,5 +1,5 @@
-/* arm-darwin.macho-fold.h
-   created from arm-darwin.macho-fold.bin, 1696 (0x6a0) bytes
+/* arm.v5a-darwin.macho-fold.h
+   created from arm.v5a-darwin.macho-fold.bin, 1696 (0x6a0) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARM_DARWIN_MACHO_FOLD_SIZE    1696
-#define STUB_ARM_DARWIN_MACHO_FOLD_ADLER32 0x93dddb92
-#define STUB_ARM_DARWIN_MACHO_FOLD_CRC32   0x2a2f439c
+#define STUB_ARM_V5A_DARWIN_MACHO_FOLD_SIZE    1696
+#define STUB_ARM_V5A_DARWIN_MACHO_FOLD_ADLER32 0x93dddb92
+#define STUB_ARM_V5A_DARWIN_MACHO_FOLD_CRC32   0x2a2f439c
 
-unsigned char stub_arm_darwin_macho_fold[1696] = {
+unsigned char stub_arm_v5a_darwin_macho_fold[1696] = {
 /* 0x0000 */   0, 16,155,229, 68,112,141,226,  1,  0, 75,224, 24, 48,144,229,
 /* 0x0010 */   2, 10, 83,227,  2, 58,160,147,  3,208, 77,224, 13, 32,160,225,
 /* 0x0020 */  20, 96,143,226,224,  0, 45,233, 54,  1,  0,235, 60,  0,144,229,

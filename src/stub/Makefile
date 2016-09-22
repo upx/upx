@@ -58,8 +58,8 @@ STUBS += amd64-linux.kernel.vmlinux-head.h
 STUBS += amd64-linux.kernel.vmlinux.h
 STUBS += amd64-linux.shlib-init.h
 STUBS += amd64-win64.pep.h
-STUBS += arm-darwin.macho-entry.h
-STUBS += arm-darwin.macho-fold.h
+STUBS += arm.v5a-darwin.macho-entry.h
+STUBS += arm.v5a-darwin.macho-fold.h
 STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
@@ -407,30 +407,30 @@ amd64-win64.pep.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm-darwin.macho (arm.v5a)
+# // arm.v5a-darwin.macho (arm.v5a)
 # ************************************************************************/
 
 # info: we use the tc settings from arm-linux.elf, but override v4 with v5
-arm-darwin.macho%.h : tc_list = arm-linux.elf default
-arm-darwin.macho%.h : tc_bfdname = elf32-littlearm
-tc.arm-darwin.macho-entry.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.arm-darwin.macho-fold.gcc   = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+arm.v5a-darwin.macho%.h : tc_list = arm-linux.elf default
+arm.v5a-darwin.macho%.h : tc_bfdname = elf32-littlearm
+tc.arm.v5a-darwin.macho-entry.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm.v5a-darwin.macho-fold.gcc   = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
 
-arm-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+arm.v5a-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-arm-darwin.macho-fold.h : tmp/$$T.o tmp/arm-darwin.macho-main.o
+arm.v5a-darwin.macho-fold.h : tmp/$$T.o tmp/arm.v5a-darwin.macho-main.o
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/arm-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+tmp/arm.v5a-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
+tmp/arm.v5a-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 

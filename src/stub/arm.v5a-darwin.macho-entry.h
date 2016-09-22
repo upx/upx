@@ -1,5 +1,5 @@
-/* arm-darwin.macho-entry.h
-   created from arm-darwin.macho-entry.bin, 14217 (0x3789) bytes
+/* arm.v5a-darwin.macho-entry.h
+   created from arm.v5a-darwin.macho-entry.bin, 14217 (0x3789) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARM_DARWIN_MACHO_ENTRY_SIZE    14217
-#define STUB_ARM_DARWIN_MACHO_ENTRY_ADLER32 0x46748cb2
-#define STUB_ARM_DARWIN_MACHO_ENTRY_CRC32   0x3eabef0a
+#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_SIZE    14217
+#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_ADLER32 0x46748cb2
+#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_CRC32   0x3eabef0a
 
-unsigned char stub_arm_darwin_macho_entry[14217] = {
+unsigned char stub_arm_v5a_darwin_macho_entry[14217] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */  28, 19,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
