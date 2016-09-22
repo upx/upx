@@ -1215,7 +1215,7 @@ static const
 static const
 #include "stub/armel-eabi-linux.elf-fold.h"
 static const
-#include "stub/thumb-eabi-linux.shlib-init.h"
+#include "stub/arm.v5t-linux.shlib-init.h"
 
 static const
 #include "stub/arm-linux.elf-entry.h"
@@ -1248,7 +1248,7 @@ PackLinuxElf32armLe::buildLoader(Filter const *ft)
 
         if (0!=xct_off) {  // shared library
             buildLinuxLoader(
-                stub_thumb_eabi_linux_shlib_init, sizeof(stub_thumb_eabi_linux_shlib_init),
+                stub_arm_v5t_linux_shlib_init, sizeof(stub_arm_v5t_linux_shlib_init),
                 NULL,                      0,                                ft );
             return;
         }
