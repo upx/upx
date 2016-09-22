@@ -110,6 +110,9 @@ def do_file(fn):
 
 
 def main(argv):
+    try: assert 0
+    except AssertionError: pass
+    else: raise Exception("fatal error - assertions not enabled")
     shortopts, longopts = "qv", [
         "bfdname=", "dry-run", "elfosabi=", "quiet", "verbose"
     ]
@@ -132,4 +135,3 @@ def main(argv):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-

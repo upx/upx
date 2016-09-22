@@ -174,7 +174,11 @@ def do_file(fn):
     pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
     if opts.with_dump:
         eh, odata = strip_with_dump(opts.with_dump, eh, idata)
-#        assert len(odata) == pos, "unexpected strip_with_dump"
+        if re.search(r"^powerpc64le-", os.path.basename(fn)):
+            # FIXME / TODO
+            pass
+        else:
+            assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
     else:
         if pos >= 0:
             odata = idata[:pos]
@@ -187,6 +191,9 @@ def do_file(fn):
 
 
 def main(argv):
+    try: assert 0
+    except AssertionError: pass
+    else: raise Exception("fatal error - assertions not enabled")
     shortopts, longopts = "qv", [
         "create-bindump=", "dry-run", "quiet", "verbose", "with-dump="
     ]
@@ -214,4 +221,3 @@ def main(argv):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-

@@ -140,6 +140,9 @@ def handle_file(ifn, ofp, parent_state=None):
 
 
 def main(argv):
+    try: assert 0
+    except AssertionError: pass
+    else: raise Exception("fatal error - assertions not enabled")
     ofile = None
     shortopts, longopts = "qvI:o:", ["dry-run", "MF=", "MMD=", "mode=", "quiet", "verbose"]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
@@ -187,4 +190,3 @@ def main(argv):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
-
