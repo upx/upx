@@ -1,11 +1,11 @@
 /.bzr*
 /.hg*
-/Makevars.global
+/Makevars.global*
 /build*
 /maint*
 
 .depend
-Makevars.local
+Makevars.local*
 
 *.a
 *.dll
