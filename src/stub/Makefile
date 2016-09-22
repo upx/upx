@@ -75,7 +75,7 @@ STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
-STUBS += armel-eabi-linux.shlib-init.h
+STUBS += arm.v5a-linux.shlib-init.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
 STUBS += arm.v5a-linux.kernel.vmlinuz.h
 STUBS += i086-dos16.com.h
@@ -649,13 +649,13 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 
 
 # /***********************************************************************
-# // armel-eabi-linux.shlib (arm.v5a)
+# // arm.v5a-linux.shlib (arm.v5a)
 # ************************************************************************/
 
-armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
-armel-eabi-linux.shlib%.h : tc_bfdname = elf32-littlearm
+arm.v5a-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
+arm.v5a-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
-armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
+arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@

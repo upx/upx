@@ -1,5 +1,5 @@
-/* armel-eabi-linux.shlib-init.h
-   created from armel-eabi-linux.shlib-init.bin, 15670 (0x3d36) bytes
+/* arm.v5a-linux.shlib-init.h
+   created from arm.v5a-linux.shlib-init.bin, 15670 (0x3d36) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEL_EABI_LINUX_SHLIB_INIT_SIZE    15670
-#define STUB_ARMEL_EABI_LINUX_SHLIB_INIT_ADLER32 0x35f447f7
-#define STUB_ARMEL_EABI_LINUX_SHLIB_INIT_CRC32   0x6b0fd042
+#define STUB_ARM_V5A_LINUX_SHLIB_INIT_SIZE    15670
+#define STUB_ARM_V5A_LINUX_SHLIB_INIT_ADLER32 0x35f447f7
+#define STUB_ARM_V5A_LINUX_SHLIB_INIT_CRC32   0x6b0fd042
 
-unsigned char stub_armel_eabi_linux_shlib_init[15670] = {
+unsigned char stub_arm_v5a_linux_shlib_init[15670] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 220, 21,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
