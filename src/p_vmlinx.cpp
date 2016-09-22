@@ -1215,8 +1215,4 @@ template class PackVmlinuxBase<ElfClass_LE32>;
 template class PackVmlinuxBase<ElfClass_BE32>;
 template class PackVmlinuxBase<ElfClass_LE64>;
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

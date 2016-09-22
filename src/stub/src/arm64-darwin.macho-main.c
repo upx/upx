@@ -461,8 +461,4 @@ ERR_LAB
     return entry;
 }
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

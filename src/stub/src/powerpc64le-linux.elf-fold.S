@@ -197,7 +197,4 @@ munmap: .globl munmap
 brk: .globl brk
         li 0,SYS_brk; b sysgo
 
-/*
-vi:ts=8:et:nowrap
-*/
-
+/* vim:set ts=8 sw=8 et: */

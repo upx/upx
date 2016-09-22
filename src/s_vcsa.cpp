@@ -491,6 +491,4 @@ screen_t *screen_vcsa_construct(void) { return sobject_construct(&driver, sizeof
 
 #endif /* (USE_SCREEN) && (USE_SCREEN_VCSA) */
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */

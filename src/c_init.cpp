@@ -159,8 +159,4 @@ void __acc_cdecl_va con_fprintf(FILE *f, const char *format, ...)
 
 #endif /* USE_CONSOLE */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

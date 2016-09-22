@@ -3102,7 +3102,4 @@ void PeFile64::processTls(Reloc *r, const Interval *iv, unsigned a)
 */
 
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

@@ -499,6 +499,5 @@ wlen_subr:  // Out: ecx= nwords of inline subr at *tmp
         ret
 
 /*__XTHEENDX__*/
-/*
-vi:ts=8:et:nowrap
-*/
+
+/* vim:set ts=8 sw=8 et: */

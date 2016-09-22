@@ -130,7 +130,4 @@ close: .globl close
 mprotect: .globl mprotect
         li 0,SYS_mprotect; b sysgo
 
-/*
-vi:ts=8:et:nowrap
-*/
-
+/* vim:set ts=8 sw=8 et: */

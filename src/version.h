@@ -4,3 +4,5 @@
 #define UPX_VERSION_DATE        "Sep 22nd 2016"
 #define UPX_VERSION_DATE_ISO    "2016-09-22"
 #define UPX_VERSION_YEAR        "2016"
+
+/* vim:set ts=4 sw=4 et: */

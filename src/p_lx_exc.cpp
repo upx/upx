@@ -614,8 +614,4 @@ void PackLinuxI386::updateLoader(OutputFile *fo)
     elfout.ehdr.e_entry = fo->getBytesWritten() + elfout.phdr[0].p_vaddr;
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

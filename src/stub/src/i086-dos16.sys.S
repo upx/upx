@@ -107,6 +107,4 @@ section         SYSI0862
 section         SYSJUMP1
                 jmp     original_strategy
 
-/*
-; vi:ts=8:et:nowrap
-*/
+/* vim:set ts=8 sw=8 et: */

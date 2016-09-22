@@ -1570,8 +1570,4 @@ int __acc_cdecl_main main(int argc, char *argv[])
 
 #endif /* !(WITH_GUI) */
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

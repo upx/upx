@@ -64,3 +64,5 @@ _restgpr0_29: .globl _restgpr0_29
         ldd r30,-8*(32-30)(r1)
         ldd r31,-8*(32-31)(r1)
          blr  # return to caller
+
+/* vim:set ts=8 sw=8 et: */

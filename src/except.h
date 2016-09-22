@@ -230,8 +230,4 @@ void throwEOFException(const char *msg = NULL, int e = 0) NORET;
 
 #endif /* already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

@@ -152,8 +152,4 @@ NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
 #undef ldstx
 #undef ldst
 
-/*
-vi:ts=8:et:nowrap
-*/
-
-
+/* vim:set ts=8 sw=8 et: */

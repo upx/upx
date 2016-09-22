@@ -88,3 +88,5 @@ GLOBAL(read)
         or $~0,%rax  //mov errno,eax
 0:
         ret
+
+/* vim:set ts=8 sw=8 et: */

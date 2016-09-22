@@ -360,8 +360,4 @@ void LeFile::countFixups(unsigned *counts) const
     counts[o+1] += 4; // extra space for 0xFFFFFFFF
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

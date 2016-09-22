@@ -967,8 +967,4 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
         super::relocate1(rel, location, value, type);
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

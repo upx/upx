@@ -168,7 +168,4 @@ PackLinuxI386sh::pack3(OutputFile *fo, Filter &ft)
     elfout.phdr[0].p_filesz = fo->getBytesWritten();
 }
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

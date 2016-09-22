@@ -43,6 +43,4 @@ char *__cxa_demangle(const char *mangled_name, char *buf, size_t *n, int *status
 } /* extern "C" */
 #endif
 
-/*
-vi:ts=4:et:nowrap
-*/
+/* vim:set ts=4 sw=4 et: */

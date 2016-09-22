@@ -55,6 +55,4 @@ size_t upx_strlen(const char *);
 
 #endif /* already included */
 
-/*
-vi:ts=4:et:nowrap
-*/
+/* vim:set ts=4 sw=4 et: */

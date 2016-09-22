@@ -1593,8 +1593,4 @@ void Packer::compressWithFilters(Filter *ft,
     ibuf.checkState(); obuf.checkState();
 }
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

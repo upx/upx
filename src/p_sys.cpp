@@ -125,8 +125,4 @@ void PackSys::buildLoader(const Filter *ft)
              );
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

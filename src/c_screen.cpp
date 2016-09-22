@@ -317,8 +317,4 @@ console_t console_screen =
 
 #endif /* USE_SCREEN */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

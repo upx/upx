@@ -412,6 +412,4 @@ screen_t *screen_win32_construct(void) { return sobject_construct(&driver, sizeo
 
 #endif /* (USE_SCREEN_WIN32) */
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */

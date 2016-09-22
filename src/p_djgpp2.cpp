@@ -469,8 +469,4 @@ void PackDjgpp2::unpack(OutputFile *fo)
         handle_allegropak(fi, fo);
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

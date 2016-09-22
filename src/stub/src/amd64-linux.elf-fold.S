@@ -149,4 +149,4 @@ close: .globl close
 exit: .globl exit
         movb $ __NR_exit,%al; jmp sysgo
 
-# vi:ts=8:et:nowrap
+/* vim:set ts=8 sw=8 et: */

@@ -4,3 +4,5 @@
  *    #include "stub/arm.v5a-linux.kernel.vmlinux.h"
  */
 #include "arm.v5a-linux.kernel.vmlinux.S"
+
+/* vim:set ts=8 sw=8 et: */

@@ -171,9 +171,4 @@ void PackElks8086::unpack(OutputFile *)
 
 #endif /* if 0 */
 
-
-/*
-vi:ts=4:et
-*/
-
-
+/* vim:set ts=4 sw=4 et: */

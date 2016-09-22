@@ -265,7 +265,4 @@ L71:
 cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
-/*
-vi:ts=8:et:nowrap
-*/
-
+/* vim:set ts=8 sw=8 et: */

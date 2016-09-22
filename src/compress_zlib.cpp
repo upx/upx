@@ -250,7 +250,5 @@ unsigned upx_zlib_crc32(const void *buf, unsigned len, unsigned crc)
 
 
 #endif /* WITH_ZLIB */
-/*
-vi:ts=4:et:nowrap
-*/
 
+/* vim:set ts=4 sw=4 et: */

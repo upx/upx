@@ -325,5 +325,4 @@ section LUNMP001
 section LEXEC025
 section LEXECDYN
 
-// vi:ts=8:et:nowrap
-
+/* vim:set ts=8 sw=8 et: */

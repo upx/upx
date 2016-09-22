@@ -259,7 +259,4 @@ void PackArmPe::pack(OutputFile *fo)
     super::pack0(fo, 1U << 9, 0x10000, true);
 }
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

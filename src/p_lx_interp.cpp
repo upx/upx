@@ -306,8 +306,4 @@ void PackLinuxElf32x86interp::unpack(OutputFile *fo)
 #undef MAX_INTERP_HDR
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

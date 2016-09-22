@@ -813,7 +813,5 @@ const char *upx_lzma_version_string(void)
 
 
 #endif /* WITH_LZMA */
-/*
-vi:ts=4:et:nowrap
-*/
 
+/* vim:set ts=4 sw=4 et: */

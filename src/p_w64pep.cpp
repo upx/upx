@@ -278,7 +278,4 @@ void PackW64Pep::pack(OutputFile *fo)
     super::pack0(fo, 0x0c, 0x0000000140000000ULL);
 }
 
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

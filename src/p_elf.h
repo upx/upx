@@ -438,8 +438,4 @@ typedef ElfClass_LE64::External_Note    Elf_LE64_External_Note;
 
 #endif /* already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

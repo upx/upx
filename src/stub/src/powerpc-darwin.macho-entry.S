@@ -135,7 +135,4 @@ L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
         b GAP+L100  # 'isync' has trouble on Macintosh G4?
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
-/*
-vi:ts=8:et:nowrap
-*/
-
+/* vim:set ts=8 sw=8 et: */

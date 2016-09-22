@@ -215,8 +215,4 @@ int upx_test_overlap       ( const upx_bytep buf,
     return r;
 }
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

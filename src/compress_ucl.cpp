@@ -306,7 +306,5 @@ unsigned upx_ucl_crc32(const void *buf, unsigned len, unsigned crc)
 #endif
 
 #endif /* WITH_UCL */
-/*
-vi:ts=4:et:nowrap
-*/
 
+/* vim:set ts=4 sw=4 et: */

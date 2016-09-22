@@ -651,6 +651,4 @@ N(lzma,small)
 
 #endif
 
-
-// vi:ts=4:et:nowrap
-
+/* vim:set ts=8 sw=8 et: */

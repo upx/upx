@@ -492,8 +492,4 @@ void MemoryOutputFile::write(const void *buf, int len)
 
 #endif /* if 0 */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

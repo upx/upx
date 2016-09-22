@@ -75,8 +75,4 @@ console_t console_none =
 
 #endif /* USE_CONSOLE */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

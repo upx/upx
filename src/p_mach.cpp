@@ -2501,6 +2501,4 @@ void PackMachFat::list()
     assert(false);
 }
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */

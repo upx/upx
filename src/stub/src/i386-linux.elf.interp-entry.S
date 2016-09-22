@@ -178,5 +178,4 @@ L300:
 
 eof:
 
-// vi:ts=8:et:nowrap
-
+/* vim:set ts=8 sw=8 et: */

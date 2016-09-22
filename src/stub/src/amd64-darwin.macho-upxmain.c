@@ -749,6 +749,4 @@ main(int argc, char *argv[])
     return 0;
 }
 
-/*
-vi:ts=4:et:nowrap
-*/
+/* vim:set ts=4 sw=4 et: */

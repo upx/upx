@@ -173,5 +173,5 @@ mmap: .globl mmap
 
 
 .balign 4,0
-// vi:ts=8:et:nowrap
 
+/* vim:set ts=8 sw=8 et: */

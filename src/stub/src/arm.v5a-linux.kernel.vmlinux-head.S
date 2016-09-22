@@ -29,4 +29,4 @@
         bl LINUX000  // lr= PIC location of compressed data
 // Compressed data appears >here<, then decompressor.
 
-// vi:ts=8:et:nowrap
+/* vim:set ts=8 sw=8 et: */

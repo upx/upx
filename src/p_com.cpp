@@ -266,8 +266,4 @@ Linker* PackCom::newLinker() const
     return new ElfLinkerX86();
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

@@ -366,3 +366,4 @@ section LZMA_DECODE
 section LZMA_DEC10
 #include "arch/arm/v4t/lzma_d_cs.S"
 
+/* vim:set ts=8 sw=8 et: */

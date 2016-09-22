@@ -32,4 +32,4 @@
 #include "arm.v4a-linux.elf-fold.S"
 #undef FILTER_ID
 
-@ vi:ts=8:et:nowrap
+/* vim:set ts=8 sw=8 et: */

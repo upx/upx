@@ -228,8 +228,4 @@ bool Filter::scan(const upx_byte *buf_, unsigned buf_len_)
     return false;
 }
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

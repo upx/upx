@@ -260,8 +260,4 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
 
 const int FilterImp::n_filters = TABLESIZE(filters);
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

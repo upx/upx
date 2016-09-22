@@ -128,8 +128,4 @@ unsigned upx_zlib_crc32  (const void *buf, unsigned len, unsigned crc);
 
 #endif /* already included */
 
-
-/*
-vi:ts=4:et
-*/
-
+/* vim:set ts=4 sw=4 et: */

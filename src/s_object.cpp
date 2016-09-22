@@ -82,6 +82,4 @@ screen_t *sobject_construct(const screen_t *c, size_t data_size) {
 
 #endif /* (USE_SCREEN) */
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */

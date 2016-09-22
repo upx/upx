@@ -134,8 +134,4 @@ L100:
 GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
 NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
 
-/*
-vi:ts=8:et:nowrap
-*/
-
-
+/* vim:set ts=8 sw=8 et: */

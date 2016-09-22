@@ -434,6 +434,4 @@ screen_t *screen_djgpp2_construct(void) { return sobject_construct(&driver, size
 
 #endif /* (USE_SCREEN) && defined(__DJGPP__) */
 
-/*
-vi:ts=4:et
-*/
+/* vim:set ts=4 sw=4 et: */
