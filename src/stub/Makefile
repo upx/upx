@@ -71,8 +71,8 @@ STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
 STUBS += armeb-linux.elf-entry.h
 STUBS += armeb-linux.elf-fold.h
-STUBS += armeb-linux.kernel.vmlinux-head.h
-STUBS += armeb-linux.kernel.vmlinux.h
+STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
+STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
 STUBS += armel-eabi-linux.shlib-init.h
@@ -597,21 +597,21 @@ tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 
 
 # /***********************************************************************
-# // armeb-linux.kernel.vmlinux      (arm.v5a)
-# // armeb-linux.kernel.vmlinux-head (arm.v5a)
+# // armeb.v5a-linux.kernel.vmlinux      (arm.v5a)
+# // armeb.v5a-linux.kernel.vmlinux-head (arm.v5a)
 # ************************************************************************/
 
-armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
-armeb-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
+armeb.v5a-linux.kernel.vmlinu%.h : tc_list = armeb.v5a-linux.kernel default
+armeb.v5a-linux.kernel.vmlinu%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
+tc.armeb.v5a-linux.kernel.gcc  = $(tc.arm-linux.elf.gcc) -mbig-endian -march=armv5
 
-armeb-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+armeb.v5a-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-armeb-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+armeb.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@

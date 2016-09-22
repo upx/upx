@@ -1,5 +1,5 @@
-/* armeb-linux.kernel.vmlinux.h
-   created from armeb-linux.kernel.vmlinux.bin, 15160 (0x3b38) bytes
+/* armeb.v5a-linux.kernel.vmlinux.h
+   created from armeb.v5a-linux.kernel.vmlinux.bin, 15160 (0x3b38) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_SIZE    15160
-#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_ADLER32 0x785730ee
-#define STUB_ARMEB_LINUX_KERNEL_VMLINUX_CRC32   0x7efd8186
+#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_SIZE    15160
+#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_ADLER32 0x785730ee
+#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_CRC32   0x7efd8186
 
-unsigned char stub_armeb_linux_kernel_vmlinux[15160] = {
+unsigned char stub_armeb_v5a_linux_kernel_vmlinux[15160] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 40,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 18,244,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
