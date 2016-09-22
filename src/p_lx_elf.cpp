@@ -1227,9 +1227,9 @@ static const
 #endif
 
 static const
-#include "stub/armeb-linux.elf-entry.h"
+#include "stub/armeb.v4a-linux.elf-entry.h"
 static const
-#include "stub/armeb-linux.elf-fold.h"
+#include "stub/armeb.v4a-linux.elf-fold.h"
 
 #include "mem.h"
 
@@ -1237,8 +1237,8 @@ void
 PackLinuxElf32armBe::buildLoader(Filter const *ft)
 {
     buildLinuxLoader(
-        stub_armeb_linux_elf_entry, sizeof(stub_armeb_linux_elf_entry),
-        stub_armeb_linux_elf_fold,  sizeof(stub_armeb_linux_elf_fold), ft);
+        stub_armeb_v4a_linux_elf_entry, sizeof(stub_armeb_v4a_linux_elf_entry),
+        stub_armeb_v4a_linux_elf_fold,  sizeof(stub_armeb_v4a_linux_elf_fold), ft);
 }
 
 void
@@ -2448,7 +2448,7 @@ void PackLinuxElf32armBe::pack1(OutputFile *fo, Filter &ft)
         return;
     unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
-    memcpy(&h3, stub_armeb_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+    memcpy(&h3, stub_armeb_v4a_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     set_te32(&h3.ehdr.e_flags, e_flags);
     generateElfHdr(fo, &h3, getbrk(phdri, e_phnum) );
 }
