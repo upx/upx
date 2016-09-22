@@ -1,5 +1,5 @@
-/* armeb-linux.elf-fold.h
-   created from armeb-linux.elf-fold.bin, 2580 (0xa14) bytes
+/* armeb.v4a-linux.elf-fold.h
+   created from armeb.v4a-linux.elf-fold.bin, 2580 (0xa14) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_ARMEB_LINUX_ELF_FOLD_SIZE    2580
-#define STUB_ARMEB_LINUX_ELF_FOLD_ADLER32 0x7ce42e4a
-#define STUB_ARMEB_LINUX_ELF_FOLD_CRC32   0x256662b1
+#define STUB_ARMEB_V4A_LINUX_ELF_FOLD_SIZE    2580
+#define STUB_ARMEB_V4A_LINUX_ELF_FOLD_ADLER32 0x7ce42e4a
+#define STUB_ARMEB_V4A_LINUX_ELF_FOLD_CRC32   0x256662b1
 
-unsigned char stub_armeb_linux_elf_fold[2580] = {
+unsigned char stub_armeb_v4a_linux_elf_fold[2580] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  2,  0, 40,  0,  0,  0,  1,  0,  0,128,128,  0,  0,  0, 52,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  2,  0, 52,  0, 32,  0,  2,  0,  0,

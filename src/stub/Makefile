@@ -69,8 +69,8 @@ STUBS += arm-linux.kernel.vmlinux.h
 STUBS += arm-linux.shlib-init.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
-STUBS += armeb-linux.elf-entry.h
-STUBS += armeb-linux.elf-fold.h
+STUBS += armeb.v4a-linux.elf-entry.h
+STUBS += armeb.v4a-linux.elf-fold.h
 STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += armel-eabi-linux.elf-entry.h
@@ -568,30 +568,30 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armeb-linux.elf (arm.v4a)
+# // armeb.v4a-linux.elf (arm.v4a)
 # ************************************************************************/
 
-armeb-linux.elf%.h : tc_list = armeb-linux.elf default
-armeb-linux.elf%.h : tc_bfdname = elf32-bigarm
+armeb.v4a-linux.elf%.h : tc_list = armeb.v4a-linux.elf default
+armeb.v4a-linux.elf%.h : tc_bfdname = elf32-bigarm
 
-tc.armeb-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
+tc.armeb.v4a-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
 
-armeb-linux.elf-entry.h : $(srcdir)/src/$$T.S
+armeb.v4a-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-armeb-linux.elf-fold.h : tmp/$$T.o tmp/armeb-linux.elf-main.o $(srcdir)/src/$$T.lds
+armeb.v4a-linux.elf-fold.h : tmp/$$T.o tmp/armeb.v4a-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/armeb-linux.elf-fold.o : $(srcdir)/src/$$T.S
+tmp/armeb.v4a-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
+tmp/armeb.v4a-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
