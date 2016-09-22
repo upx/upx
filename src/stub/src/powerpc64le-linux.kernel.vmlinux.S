@@ -30,8 +30,8 @@
 ;  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/ppc64le/64/macros.S"
-#include "arch/ppc64le/64/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
+#include "arch/powerpc/64le/ppc_regs.h"
 
 // offsets in struct b_info
 sz_unc   = 0
@@ -57,7 +57,7 @@ section LINUX020  // adjust return value
 
 unfilter:
 //section ctok32.00
-#include "arch/ppc64le/64/bxx.S"
+#include "arch/powerpc/64le/bxx.S"
 
 // ========== DECOMPRESSION
 
@@ -82,13 +82,13 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 
 
 section NRV2B
-#include "arch/ppc64le/64/nrv2b_d.S"
+#include "arch/powerpc/64le/nrv2b_d.S"
 
 section NRV2D
-#include "arch/ppc64le/64/nrv2d_d.S"
+#include "arch/powerpc/64le/nrv2d_d.S"
 
 section NRV2E
-#include "arch/ppc64le/64/nrv2e_d.S"
+#include "arch/powerpc/64le/nrv2e_d.S"
 
   section NRV_TAIL
 eof_nrv:
@@ -140,7 +140,7 @@ cfl_ret:
 #undef disp
 
 section LZMA
-#include "arch/ppc64le/64/lzma_d.S"
+#include "arch/powerpc/64le/lzma_d.S"
 
 // ========== IDENT
 

@@ -1,5 +1,5 @@
-/* ppc64le-linux.kernel.vmlinux.h
-   created from ppc64le-linux.kernel.vmlinux.bin, 9824 (0x2660) bytes
+/* powerpc64le-linux.kernel.vmlinux.h
+   created from powerpc64le-linux.kernel.vmlinux.bin, 9824 (0x2660) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_SIZE    9824
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0xfa8bc568
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0x0e1bf668
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_SIZE    9824
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0xfa8bc568
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0x0e1bf668
 
-unsigned char stub_ppc64le_linux_kernel_vmlinux[9824] = {
+unsigned char stub_powerpc64le_linux_kernel_vmlinux[9824] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,104, 25,  0,  0,  0,  0,  0,  0,

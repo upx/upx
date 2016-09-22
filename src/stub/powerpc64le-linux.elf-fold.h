@@ -1,5 +1,5 @@
-/* ppc64le-linux.elf-fold.h
-   created from ppc64le-linux.elf-fold.bin, 2379 (0x94b) bytes
+/* powerpc64le-linux.elf-fold.h
+   created from powerpc64le-linux.elf-fold.bin, 2379 (0x94b) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_PPC64LE_LINUX_ELF_FOLD_SIZE    2379
-#define STUB_PPC64LE_LINUX_ELF_FOLD_ADLER32 0x1fa74a77
-#define STUB_PPC64LE_LINUX_ELF_FOLD_CRC32   0xc33ee113
+#define STUB_POWERPC64LE_LINUX_ELF_FOLD_SIZE    2379
+#define STUB_POWERPC64LE_LINUX_ELF_FOLD_ADLER32 0x1fa74a77
+#define STUB_POWERPC64LE_LINUX_ELF_FOLD_CRC32   0xc33ee113
 
-unsigned char stub_ppc64le_linux_elf_fold[2379] = {
+unsigned char stub_powerpc64le_linux_elf_fold[2379] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   2,  0, 21,  0,  1,  0,  0,  0,  0,  9, 16,  0,  0,  0,  0,  0,
 /* 0x0020 */  64,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,

@@ -1,4 +1,4 @@
-/* ppc64le-darwin.macho-main.c -- loader stub for Mach-o PowerPC64LE
+/* powerpc64le-darwin.macho-main.c -- loader stub for Mach-o PowerPC64LE
 
    This file is part of the UPX executable compressor.
 

@@ -1,4 +1,4 @@
-/*  ppc64le-linux.elf-fold.S -- linkage to C code to process ELF binary
+/*  powerpc64le-linux.elf-fold.S -- linkage to C code to process ELF binary
 *
 *  This file is part of the UPX executable compressor.
 *
@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/ppc64le/64/macros.S"
-#include "arch/ppc64le/64/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
+#include "arch/powerpc/64le/ppc_regs.h"
 
 #define szElf64_Ehdr 0x40
 #define szElf64_Phdr 0x38
@@ -49,7 +49,7 @@ LINKAREA= 6*8  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 */
 fold_begin:
         call L90
-#include "arch/ppc64le/64/bxx.S"
+#include "arch/powerpc/64le/bxx.S"
 
 /* The SysV convention for argument registers after execve is nice:
         a0= argc

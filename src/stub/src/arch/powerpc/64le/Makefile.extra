@@ -29,11 +29,11 @@ include $(top_srcdir)/src/stub/Makefile
 # // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = method-lzma ppc64le-linux.elf default
+lzma_d_c%.S : tc_list = method-lzma powerpc64le-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf64-powerpcle
 
 c := tc.method-lzma.gcc
-$c  = $(tc.ppc64le-linux.elf.gcc)
+$c  = $(tc.powerpc64le-linux.elf.gcc)
 $c += -mcpu=405 -fPIC
 $c += -Os -fomit-frame-pointer
 $c += -fno-unit-at-a-time

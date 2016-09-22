@@ -1,11 +1,8 @@
-/* ppc64le-linux.kernel.vmlinux-head.h
-   created from ppc64le-linux.kernel.vmlinux-head.bin, 8 (0x8) bytes
+/* powerpc64le-linux.elf-fold.lds --
 
    This file is part of the UPX executable compressor.
 
-   Copyright (C) 1996-2015 Markus Franz Xaver Johannes Oberhumer
-   Copyright (C) 1996-2015 Laszlo Molnar
-   Copyright (C) 2000-2015 John F. Reiser
+   Copyright (C) 2000-2016 John F. Reiser
    All Rights Reserved.
 
    UPX and the UCL library are free software; you can redistribute them
@@ -31,10 +28,21 @@
  */
 
 
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_HEAD_SIZE    8
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_HEAD_ADLER32 0x0d7d0259
-#define STUB_PPC64LE_LINUX_KERNEL_VMLINUX_HEAD_CRC32   0xdfb1607d
-
-unsigned char stub_ppc64le_linux_kernel_vmlinux_head[8] = {
-/* 0x0000 */ 166,  2,232,127,  1,  0,  0, 72
-};
+OUTPUT_FORMAT("elf64-powerpcle", "elf64-powerpcle", "elf64-powerpcle")
+OUTPUT_ARCH(powerpc:common64)
+/*ENTRY(_start)*/
+PHDRS
+{
+    text PT_LOAD FILEHDR PHDRS ;
+    data PT_LOAD ;  /* for setting brk(0) */
+}
+SECTIONS
+{
+  . = 0x00100000 + SIZEOF_HEADERS + 12;  /* 12==sizeof(l_info) */
+  .text : {
+    *(.text)
+    *(.data)
+  } : text
+  .data : {
+  } : data
+}

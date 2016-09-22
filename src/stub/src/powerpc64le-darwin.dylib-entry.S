@@ -1,5 +1,5 @@
 /*
- *  ppc64le-darwin.dylib-entry.S -- program entry point & decompress (PowerPC32 dylib)
+ *  powerpc64le-darwin.dylib-entry.S -- program entry point & decompress (PowerPC32 dylib)
  *
  *  This file is part of the UPX executable compressor.
  *
@@ -26,8 +26,8 @@
  *
  */
 
-#include "arch/ppc64le/64/macros.S"
-#include "arch/ppc64le/64/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
+#include "arch/powerpc/64le/ppc_regs.h"
 
 /*************************************************************************
 // We have been CALLed as a subroutine from dyld; C-language rules apply.
@@ -60,15 +60,15 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #define disp a7
 
   section NRV2E
-#include "arch/ppc64le/64/nrv2e_d.S"
+#include "arch/powerpc/64le/nrv2e_d.S"
 
   section NRV2D
-#include "arch/ppc64le/64/nrv2d_d.S"
+#include "arch/powerpc/64le/nrv2d_d.S"
 
   section NRV2B
-#include "arch/ppc64le/64/nrv2b_d.S"
+#include "arch/powerpc/64le/nrv2b_d.S"
 
-#include "arch/ppc64le/64/lzma_d.S"
+#include "arch/powerpc/64le/lzma_d.S"
 
 #undef off
 #undef len
@@ -341,7 +341,7 @@ get4:
         blr
 
 unfilter:
-#include "arch/ppc64le/64/bxx.S"
+#include "arch/powerpc/64le/bxx.S"
 
 main:
         b main2

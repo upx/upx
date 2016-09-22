@@ -1,5 +1,5 @@
-/* ppc64le-darwin.dylib-entry.h
-   created from ppc64le-darwin.dylib-entry.bin, 9851 (0x267b) bytes
+/* powerpc64le-darwin.dylib-entry.h
+   created from powerpc64le-darwin.dylib-entry.bin, 9851 (0x267b) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_SIZE    9851
-#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_ADLER32 0x2a885bc3
-#define STUB_PPC64LE_DARWIN_DYLIB_ENTRY_CRC32   0x9d3b5811
+#define STUB_POWERPC64LE_DARWIN_DYLIB_ENTRY_SIZE    9851
+#define STUB_POWERPC64LE_DARWIN_DYLIB_ENTRY_ADLER32 0x2a885bc3
+#define STUB_POWERPC64LE_DARWIN_DYLIB_ENTRY_CRC32   0x9d3b5811
 
-unsigned char stub_ppc64le_darwin_dylib_entry[9851] = {
+unsigned char stub_powerpc64le_darwin_dylib_entry[9851] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,152, 29,  0,  0,  0,  0,  0,  0,

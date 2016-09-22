@@ -122,13 +122,13 @@ STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
 STUBS += powerpc-linux.kernel.vmlinux.h
-STUBS += ppc64le-darwin.dylib-entry.h
-STUBS += ppc64le-darwin.macho-entry.h
-STUBS += ppc64le-darwin.macho-fold.h
-STUBS += ppc64le-linux.elf-entry.h
-STUBS += ppc64le-linux.elf-fold.h
-STUBS += ppc64le-linux.kernel.vmlinux-head.h
-STUBS += ppc64le-linux.kernel.vmlinux.h
+STUBS += powerpc64le-darwin.dylib-entry.h
+STUBS += powerpc64le-darwin.macho-entry.h
+STUBS += powerpc64le-darwin.macho-fold.h
+STUBS += powerpc64le-linux.elf-entry.h
+STUBS += powerpc64le-linux.elf-fold.h
+STUBS += powerpc64le-linux.kernel.vmlinux-head.h
+STUBS += powerpc64le-linux.kernel.vmlinux.h
 STUBS += thumb-eabi-linux.shlib-init.h
 endif
 
@@ -1308,28 +1308,28 @@ powerpc-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // ppc64le-darwin.macho
+# // powerpc64le-darwin.macho
 # ************************************************************************/
 
-# info: we use the tc settings from ppc64le-linux.elf
-ppc64le-darwin.macho%.h : tc_list = ppc64le-darwin.macho ppc64le-linux.elf default
-ppc64le-darwin.macho%.h : tc_bfdname = elf64-powerpcle
+# info: we use the tc settings from powerpc64le-linux.elf
+powerpc64le-darwin.macho%.h : tc_list = powerpc64le-darwin.macho powerpc64le-linux.elf default
+powerpc64le-darwin.macho%.h : tc_bfdname = elf64-powerpcle
 
-tc.ppc64le-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
+tc.powerpc64le-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
 
-ppc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+powerpc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-ppc64le-darwin.macho-fold.h : tmp/$$T.o tmp/ppc64le-darwin.macho-main.o
+powerpc64le-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc64le-darwin.macho-main.o
 # FIXME: undefined reference to `_savegpr0_28' etc.
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 #	echo "FIXME" > tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/ppc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+tmp/powerpc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -1337,76 +1337,76 @@ tmp/ppc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 # only 3 times, so sharing the code of those routines saves almost nothing
 # (and we would have to write them ourselves.)
 # Besides, PowerPC has 31.5 registers (r0 cannot index), which is plenty.
-tmp/ppc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
+tmp/powerpc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,f-objstrip,$@)
 
 
 # /***********************************************************************
-# // ppc64le-darwin.dylib
+# // powerpc64le-darwin.dylib
 # ************************************************************************/
 
-# info: we use the tc settings from ppc64le-linux.elf
-ppc64le-darwin.dylib%.h : tc_list = ppc64le-linux.elf default
-ppc64le-darwin.dylib%.h : tc_bfdname = elf64-powerpcle
+# info: we use the tc settings from powerpc64le-linux.elf
+powerpc64le-darwin.dylib%.h : tc_list = powerpc64le-linux.elf default
+powerpc64le-darwin.dylib%.h : tc_bfdname = elf64-powerpcle
 
-ppc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
+powerpc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************
-# // ppc64le-linux.elf
+# // powerpc64le-linux.elf
 # ************************************************************************/
 
-ppc64le-linux.elf%.h : tc_list = ppc64le-linux.elf default
-ppc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
+powerpc64le-linux.elf%.h : tc_list = powerpc64le-linux.elf default
+powerpc64le-linux.elf%.h : tc_bfdname = elf64-powerpcle
 
-tc.ppc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT $@
-tc.ppc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
-tc.ppc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.powerpc64le-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mlittle-endian -nostdinc -MMD -MT $@
+tc.powerpc64le-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
+tc.powerpc64le-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.ppc64le-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
-tc.ppc64le-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
-tc.ppc64le-linux.elf.objdump = multiarch-objdump-2.27 -b $(tc_bfdname)
+tc.powerpc64le-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
+tc.powerpc64le-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
+tc.powerpc64le-linux.elf.objdump = multiarch-objdump-2.27 -b $(tc_bfdname)
 
-ppc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
+powerpc64le-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
-ppc64le-linux.elf-fold.h : tmp/$$T.o tmp/ppc64le-linux.elf-main.o $(srcdir)/src/$$T.lds
+powerpc64le-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64le-linux.elf-main.o $(srcdir)/src/$$T.lds
 	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	$(call tc,f-objstrip,tmp/$T.bin)
 	$(call tc,sstrip) tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
-tmp/ppc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
+tmp/powerpc64le-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
-tmp/ppc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
+tmp/powerpc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
 
 
 # /***********************************************************************
-# // ppc64le-linux.kernel.vmlinux
-# // ppc64le-linux.kernel.vmlinux-head
+# // powerpc64le-linux.kernel.vmlinux
+# // powerpc64le-linux.kernel.vmlinux-head
 # ************************************************************************/
 
-ppc64le-linux.kernel.vmlinu%.h : tc_list = ppc64le-linux.kernel default
-ppc64le-linux.kernel.vmlinu%.h : tc_bfdname = elf64-powerpcle
+powerpc64le-linux.kernel.vmlinu%.h : tc_list = powerpc64le-linux.kernel default
+powerpc64le-linux.kernel.vmlinu%.h : tc_bfdname = elf64-powerpcle
 
-tc.ppc64le-linux.kernel.gcc  = $(tc.ppc64le-linux.elf.gcc)
+tc.powerpc64le-linux.kernel.gcc  = $(tc.powerpc64le-linux.elf.gcc)
 
-ppc64le-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+powerpc64le-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-ppc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+powerpc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@

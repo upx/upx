@@ -1,5 +1,5 @@
-/* ppc64le-darwin.macho-fold.h
-   created from ppc64le-darwin.macho-fold.bin, 6344 (0x18c8) bytes
+/* powerpc64le-darwin.macho-fold.h
+   created from powerpc64le-darwin.macho-fold.bin, 6344 (0x18c8) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_PPC64LE_DARWIN_MACHO_FOLD_SIZE    6344
-#define STUB_PPC64LE_DARWIN_MACHO_FOLD_ADLER32 0xaa2e4fd4
-#define STUB_PPC64LE_DARWIN_MACHO_FOLD_CRC32   0x06ae68ec
+#define STUB_POWERPC64LE_DARWIN_MACHO_FOLD_SIZE    6344
+#define STUB_POWERPC64LE_DARWIN_MACHO_FOLD_ADLER32 0xaa2e4fd4
+#define STUB_POWERPC64LE_DARWIN_MACHO_FOLD_CRC32   0x06ae68ec
 
-unsigned char stub_ppc64le_darwin_macho_fold[6344] = {
+unsigned char stub_powerpc64le_darwin_macho_fold[6344] = {
 /* 0x0000 */ 105,  0,  0, 72,208,  0,  6, 40, 32,  0,194, 76,191,240,132, 84,
 /* 0x0010 */  32,  0,194, 77, 16,  0,  0, 60, 64,  0,  4,124,  8,  0,128, 65,
 /* 0x0020 */ 120,  3,  4,124, 32,  1,165, 56,120, 27,103,124,252,255, 99, 56,

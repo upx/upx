@@ -1,5 +1,5 @@
 /*
- *  ppc64le-darwin.macho-entry.S -- program entry point & decompressor (PowerPC32 Mach-o)
+ *  powerpc64le-darwin.macho-entry.S -- program entry point & decompressor (PowerPC32 Mach-o)
  *
  *  This file is part of the UPX executable compressor.
  *
@@ -26,8 +26,8 @@
  *
  */
 
-#include "arch/ppc64le/64/macros.S"
-#include "arch/ppc64le/64/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
+#include "arch/powerpc/64le/ppc_regs.h"
 
   section MACOS000
 _start: .globl _start
@@ -51,15 +51,15 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #define disp a7
 
   section NRV2E
-#include "arch/ppc64le/64/nrv2e_d.S"
+#include "arch/powerpc/64le/nrv2e_d.S"
 
   section NRV2D
-#include "arch/ppc64le/64/nrv2d_d.S"
+#include "arch/powerpc/64le/nrv2d_d.S"
 
   section NRV2B
-#include "arch/ppc64le/64/nrv2b_d.S"
+#include "arch/powerpc/64le/nrv2b_d.S"
 
-#include "arch/ppc64le/64/lzma_d.S"
+#include "arch/powerpc/64le/lzma_d.S"
 
   section NRV_TAIL
 eof_nrv:
