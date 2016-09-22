@@ -407,7 +407,7 @@ amd64-win64.pep.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm-darwin.macho
+# // arm-darwin.macho (arm.v5a)
 # ************************************************************************/
 
 # info: we use the tc settings from arm-linux.elf, but override v4 with v5
@@ -439,7 +439,7 @@ tmp/arm-darwin.macho-main.o : $(srcdir)/src/$$T.c
 # // arm64-darwin.macho
 # ************************************************************************/
 
-# info: we use the tc settings from arm64-linux.elf, but override v4 with v5
+# info: we use the tc settings from arm64-linux.elf
 arm64-darwin.macho%.h : tc_list = arm64-linux.elf default
 arm64-darwin.macho%.h : tc_bfdname = elf64-littleaarch64
 tc.arm64-darwin.macho-entry.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
@@ -478,7 +478,7 @@ tmp/arm64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 
 
 # /***********************************************************************
-# // arm-linux.elf
+# // arm-linux.elf (arm.v4a)
 # ************************************************************************/
 
 arm-linux.elf%.h : tc_list = arm-linux.elf default
@@ -509,8 +509,8 @@ tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main
 
 
 # /***********************************************************************
-# // arm-linux.kernel.vmlinux
-# // arm-linux.kernel.vmlinux-head
+# // arm-linux.kernel.vmlinux      (arm.v5a)
+# // arm-linux.kernel.vmlinux-head (arm.v5a)
 # ************************************************************************/
 
 arm-linux.kernel.vmlinu%.h : tc_list = arm-linux.kernel default
@@ -532,7 +532,7 @@ arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm-linux.shlib
+# // arm-linux.shlib (arm.v5a)
 # ************************************************************************/
 
 arm-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
@@ -545,8 +545,8 @@ arm-linux.shlib%.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm.v4a-wince.pe
-# // arm.v4t-wince.pe
+# // arm.v4a-wince.pe (arm.v4a)
+# // arm.v4t-wince.pe (arm.v4t)
 # ************************************************************************/
 
 # info: we use the tc settings from arm-linux.elf
@@ -568,7 +568,7 @@ arm.v4t-wince.pe.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armeb-linux.elf
+# // armeb-linux.elf (arm.v4a)
 # ************************************************************************/
 
 armeb-linux.elf%.h : tc_list = armeb-linux.elf default
@@ -577,7 +577,7 @@ armeb-linux.elf%.h : tc_bfdname = elf32-bigarm
 tc.armeb-linux.elf.gcc = $(tc.arm-linux.elf.gcc) -mbig-endian
 
 armeb-linux.elf-entry.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -march=armv4 -c $< -o tmp/$T.bin
+	$(call tc,gcc) -c $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h) tmp/$T.bin $@
 
@@ -597,8 +597,8 @@ tmp/armeb-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 
 
 # /***********************************************************************
-# // armeb-linux.kernel.vmlinux
-# // armeb-linux.kernel.vmlinux-head
+# // armeb-linux.kernel.vmlinux      (arm.v5a)
+# // armeb-linux.kernel.vmlinux-head (arm.v5a)
 # ************************************************************************/
 
 armeb-linux.kernel.vmlinu%.h : tc_list = armeb-linux.kernel default
@@ -618,7 +618,7 @@ armeb-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armel-eabi-linux.elf
+# // armel-eabi-linux.elf (arm.v5a)
 # ************************************************************************/
 
 armel-eabi-linux.elf%.h : tc_list = armel-eabi-linux.elf default
@@ -649,7 +649,7 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 
 
 # /***********************************************************************
-# // armel-eabi-linux.shlib
+# // armel-eabi-linux.shlib (arm.v5a)
 # ************************************************************************/
 
 armel-eabi-linux.shlib%.h : tc_list = armel-eabi-linux.elf default
@@ -662,8 +662,8 @@ armel-eabi-linux.shlib%.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // armel-linux.kernel.vmlinuz
-# // armel-linux.kernel.vmlinuz-head
+# // armel-linux.kernel.vmlinuz      (arm.v5a)
+# // armel-linux.kernel.vmlinuz-head (arm.v5a)
 # ************************************************************************/
 #
 armel-linux.kernel.vmlinu%.h : tc_list = armel-linux.kernel default
@@ -1413,7 +1413,7 @@ powerpc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // thumb-eabi-linux.shlib
+# // thumb-eabi-linux.shlib (arm.v5t)
 # ************************************************************************/
 
 thumb-eabi-linux.shlib%.h : tc_list = thumb-eabi-linux.elf armel-eabi-linux.elf default
