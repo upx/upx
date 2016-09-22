@@ -50,9 +50,9 @@ static const
 #include "stub/amd64-darwin.macho-fold.h"
 
 static const
-#include "stub/arm-darwin.macho-entry.h"
+#include "stub/arm.v5a-darwin.macho-entry.h"
 static const
-#include "stub/arm-darwin.macho-fold.h"
+#include "stub/arm.v5a-darwin.macho-fold.h"
 static const
 #include "stub/amd64-darwin.macho-upxmain.h"
 
@@ -501,8 +501,8 @@ void
 PackMachARMEL::buildLoader(const Filter *ft)
 {
     buildMachLoader(
-        stub_arm_darwin_macho_entry, sizeof(stub_arm_darwin_macho_entry),
-        stub_arm_darwin_macho_fold,  sizeof(stub_arm_darwin_macho_fold),  ft );
+        stub_arm_v5a_darwin_macho_entry, sizeof(stub_arm_v5a_darwin_macho_entry),
+        stub_arm_v5a_darwin_macho_fold,  sizeof(stub_arm_v5a_darwin_macho_fold),  ft );
 }
 
 void
