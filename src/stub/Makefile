@@ -68,7 +68,7 @@ STUBS += arm.v5a-linux.kernel.vmlinux-head.h
 STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
 STUBS += arm.v5a-linux.kernel.vmlinuz.h
-STUBS += arm-linux.shlib-init.h
+STUBS += arm.v5a-linux.shlib-init.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
 STUBS += armeb.v4a-linux.elf-entry.h
@@ -539,13 +539,28 @@ arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
 
 
 # /***********************************************************************
-# // arm-linux.shlib (arm.v5a)
+# // arm.v5a-linux.shlib (arm.v5a)
 # ************************************************************************/
 
-arm-linux.shlib%.h : tc_list = arm.v5a-linux.elf default
-arm-linux.shlib%.h : tc_bfdname = elf32-littlearm
+arm.v5a-linux.shlib%.h : tc_list = arm.v5a-linux.elf default
+arm.v5a-linux.shlib%.h : tc_bfdname = elf32-littlearm
 
-arm-linux.shlib%.h : $(srcdir)/src/$$T.S
+arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+
+# /***********************************************************************
+# // arm.v5t-linux.shlib (arm.v5t)
+# ************************************************************************/
+
+arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf arm.v5a-linux.elf default
+arm.v5t-linux.shlib%.h : tc_bfdname = elf32-littlearm
+
+tc.arm.v5t-linux.elf.gcc  = $(tc.arm.v5a-linux.elf.gcc) -march=armv5t
+
+arm.v5t-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
@@ -1394,23 +1409,6 @@ powerpc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // arm.v5t-linux.shlib (arm.v5t)
-# ************************************************************************/
-
-arm.v5t-linux.shlib%.h : tc_list = arm.v5t-linux.elf arm.v5a-linux.elf default
-arm.v5t-linux.shlib%.h : tc_bfdname = elf32-littlearm
-
-tc.arm.v5t-linux.elf.gcc  = arm-linux-gcc-4.1.0 -march=armv5t -nostdinc -MMD -MT $@
-tc.arm.v5t-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm.v5t-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-arm.v5t-linux.shlib%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************
