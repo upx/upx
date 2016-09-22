@@ -925,7 +925,7 @@ Linker* PackVmlinuzARMEL::newLinker() const
 static const
 #include "stub/arm-linux.kernel.vmlinux.h"
 static const
-#include "stub/armel-linux.kernel.vmlinuz-head.h"
+#include "stub/arm.v5a-linux.kernel.vmlinuz-head.h"
 
 void PackVmlinuzARMEL::buildLoader(const Filter *ft)
 {
@@ -968,17 +968,17 @@ void PackVmlinuzARMEL::defineDecompressorSymbols()
 
 unsigned PackVmlinuzARMEL::write_vmlinuz_head(OutputFile *const fo)
 { // First word from vmlinuz-head.S
-    fo->write(&stub_armel_linux_kernel_vmlinuz_head[0], 4);
+    fo->write(&stub_arm_v5a_linux_kernel_vmlinuz_head[0], 4);
 
     // Second word
     LE32 tmp_u32;
     unsigned const t = (0xff000000 &
-            get_te32(&stub_armel_linux_kernel_vmlinuz_head[4]))
+            get_te32(&stub_arm_v5a_linux_kernel_vmlinuz_head[4]))
         | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
     tmp_u32 = t;
     fo->write((void const *)&tmp_u32, 4);
 
-    return sizeof(stub_armel_linux_kernel_vmlinuz_head);
+    return sizeof(stub_arm_v5a_linux_kernel_vmlinuz_head);
 }
 
 void PackVmlinuzARMEL::pack(OutputFile *fo)
