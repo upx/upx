@@ -67,9 +67,4 @@ static int getcto(Filter *f, const unsigned char *buf, const int n=256)
     return ic;
 }
 
-
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

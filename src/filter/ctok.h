@@ -171,8 +171,4 @@ static int U(Filter *f)
 #undef F
 #undef U
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

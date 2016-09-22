@@ -122,8 +122,4 @@ typedef unsigned int nrv_uint;
 #  define __attribute_cdecl /*empty*/
 #endif
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

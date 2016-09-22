@@ -180,9 +180,4 @@ static int s_sw32_e8e9(Filter *f)
 
 #undef SW32
 
-
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

@@ -115,8 +115,4 @@ static int s_sub16_4(Filter *f)
 #undef ADD16
 #undef SCAN16
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

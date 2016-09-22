@@ -1439,5 +1439,4 @@ extra-clean: $$(filter %.~clean,$$(EXTRA_MAKEFILES.targets))
 .PHONY: extra-all extra-clean $(EXTRA_MAKEFILES.targets)
 endif
 
-
-# vi:ts=8:noet:nowrap
+# vim:set ts=8 sw=8 noet:

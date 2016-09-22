@@ -115,8 +115,4 @@ static int s_sub32_4(Filter *f)
 #undef ADD32
 #undef SCAN32
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

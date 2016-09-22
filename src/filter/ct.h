@@ -459,7 +459,4 @@ static int s_ct24arm_be(Filter *f)
 #undef CT24ARM_BE
 #undef ARMCT_COND
 
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

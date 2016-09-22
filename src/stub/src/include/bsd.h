@@ -362,8 +362,4 @@ struct p_info       // 12-byte packed program header follows stub loader
 #  define __attribute_cdecl /*empty*/
 #endif
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

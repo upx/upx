@@ -166,8 +166,4 @@ static int s_ctsw32_e9_e8(Filter *f)
 
 #undef CTSW32
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */

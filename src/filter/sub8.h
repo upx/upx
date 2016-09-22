@@ -115,8 +115,4 @@ static int s_sub8_4(Filter *f)
 #undef ADD8
 #undef SCAN8
 
-
-/*
-vi:ts=4:et:nowrap
-*/
-
+/* vim:set ts=4 sw=4 et: */
