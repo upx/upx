@@ -1,4 +1,4 @@
-/*  thumb-linux.shlib-init.S -- Linux Elf shared library init & decompressor
+/* arm.v4t-linux.shlib-init.S -- Linux Elf shared library init & decompressor
 *
 *  This file is part of the UPX executable compressor.
 *

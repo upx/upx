@@ -1,5 +1,5 @@
-/* thumb-eabi-linux.shlib-init.h
-   created from thumb-eabi-linux.shlib-init.bin, 15562 (0x3cca) bytes
+/* arm.v5t-linux.shlib-init.h
+   created from arm.v5t-linux.shlib-init.bin, 15562 (0x3cca) bytes
 
    This file is part of the UPX executable compressor.
 
@@ -31,11 +31,11 @@
  */
 
 
-#define STUB_THUMB_EABI_LINUX_SHLIB_INIT_SIZE    15562
-#define STUB_THUMB_EABI_LINUX_SHLIB_INIT_ADLER32 0xa92f2082
-#define STUB_THUMB_EABI_LINUX_SHLIB_INIT_CRC32   0xe5449bd7
+#define STUB_ARM_V5T_LINUX_SHLIB_INIT_SIZE    15562
+#define STUB_ARM_V5T_LINUX_SHLIB_INIT_ADLER32 0xa92f2082
+#define STUB_ARM_V5T_LINUX_SHLIB_INIT_CRC32   0xe5449bd7
 
-unsigned char stub_thumb_eabi_linux_shlib_init[15562] = {
+unsigned char stub_arm_v5t_linux_shlib_init[15562] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 232, 20,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
