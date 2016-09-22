@@ -30,6 +30,6 @@
 ;  <jreiser@users.sourceforge.net>
 */
 
-#include "arm-linux.kernel.vmlinux.S"
+#include "arm.v5a-linux.kernel.vmlinux.S"
 
 // vi:ts=8:et:nowrap

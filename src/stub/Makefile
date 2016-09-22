@@ -64,8 +64,10 @@ STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
 STUBS += arm-linux.elf-entry.h
 STUBS += arm-linux.elf-fold.h
-STUBS += arm-linux.kernel.vmlinux-head.h
-STUBS += arm-linux.kernel.vmlinux.h
+STUBS += arm.v5a-linux.kernel.vmlinux-head.h
+STUBS += arm.v5a-linux.kernel.vmlinux.h
+STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
+STUBS += arm.v5a-linux.kernel.vmlinuz.h
 STUBS += arm-linux.shlib-init.h
 STUBS += arm.v4a-wince.pe.h
 STUBS += arm.v4t-wince.pe.h
@@ -76,8 +78,6 @@ STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += armel-eabi-linux.elf-entry.h
 STUBS += armel-eabi-linux.elf-fold.h
 STUBS += arm.v5a-linux.shlib-init.h
-STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
-STUBS += arm.v5a-linux.kernel.vmlinuz.h
 STUBS += i086-dos16.com.h
 STUBS += i086-dos16.exe.h
 STUBS += i086-dos16.sys.h
@@ -509,23 +509,30 @@ tmp/arm-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-main
 
 
 # /***********************************************************************
-# // arm-linux.kernel.vmlinux      (arm.v5a)
-# // arm-linux.kernel.vmlinux-head (arm.v5a)
+# // arm.v5a-linux.kernel.vmlinux      (arm.v5a)
+# // arm.v5a-linux.kernel.vmlinux-head (arm.v5a)
+# // arm.v5a-linux.kernel.vmlinuz      (arm.v5a)
+# // arm.v5a-linux.kernel.vmlinuz-head (arm.v5a)
 # ************************************************************************/
 
-arm-linux.kernel.vmlinu%.h : tc_list = arm-linux.kernel default
-arm-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
+arm.v5a-linux.kernel.vmlinu%.h : tc_list = arm.v5a-linux.kernel default
+arm.v5a-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
 
-tc.arm-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.arm-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+tc.arm.v5a-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
+tc.arm.v5a-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
+tc.arm.v5a-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-arm-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+arm.v5a-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
-arm-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+arm.v5a-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
@@ -659,29 +666,6 @@ arm.v5a-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
 	$(call tc,f-embed_objinfo,tmp/$T.bin)
 	$(call tc,bin2h-c) tmp/$T.bin $@
-
-
-# /***********************************************************************
-# // arm.v5a-linux.kernel.vmlinuz      (arm.v5a)
-# // arm.v5a-linux.kernel.vmlinuz-head (arm.v5a)
-# ************************************************************************/
-#
-arm.v5a-linux.kernel.vmlinu%.h : tc_list = arm.v5a-linux.kernel default
-arm.v5a-linux.kernel.vmlinu%.h : tc_bfdname = elf32-littlearm
-
-tc.arm.v5a-linux.kernel.gcc  = arm-linux-gcc-4.1.0 -march=armv5 -nostdinc -MMD -MT $@
-tc.arm.v5a-linux.kernel.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
-tc.arm.v5a-linux.kernel.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
-
-arm.v5a-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
-	$(call tc,f-embed_objinfo,tmp/$T.bin)
-	$(call tc,bin2h-c) tmp/$T.bin $@
-
-arm.v5a-linux.kernel.vmlinuz-head.h : $(srcdir)/src/$$T.S
-	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
-	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
-	$(call tc,bin2h) tmp/$T.bin $@
 
 
 # /***********************************************************************

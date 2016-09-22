@@ -25,6 +25,6 @@
 ;  <jreiser@users.sourceforge.net>
 */
 
-#include "arm-linux.kernel.vmlinux-head.S"
+#include "arm.v5a-linux.kernel.vmlinux-head.S"
 
 // vi:ts=8:et:nowrap
