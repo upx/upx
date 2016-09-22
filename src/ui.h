@@ -57,7 +57,7 @@ public:
     virtual void uiUnpackStart(const OutputFile *fo);
     virtual void uiUnpackEnd(const OutputFile *fo);
     virtual void uiListStart();
-    virtual void uiList(long fu = -1);
+    virtual void uiList();
     virtual void uiListEnd();
     virtual void uiTestStart();
     virtual void uiTestEnd();
@@ -77,7 +77,7 @@ protected:
     virtual void doCallback(unsigned isize, unsigned osize);
 
 protected:
-    virtual void uiUpdate(long fc = -1, long fu = -1);
+    virtual void uiUpdate(off_t fc_len = -1, off_t fu_len = -1);
 
 public:
     static void uiHeader();
@@ -98,16 +98,16 @@ protected:
     State *s;
 
     // totals
-    static long total_files;
-    static long total_files_done;
-    static long total_c_len;
-    static long total_u_len;
-    static long total_fc_len;
-    static long total_fu_len;
-    static long update_c_len;
-    static long update_u_len;
-    static long update_fc_len;
-    static long update_fu_len;
+    static unsigned total_files;
+    static unsigned total_files_done;
+    static upx_uint64_t total_c_len;
+    static upx_uint64_t total_u_len;
+    static upx_uint64_t total_fc_len;
+    static upx_uint64_t total_fu_len;
+    static unsigned update_c_len;
+    static unsigned update_u_len;
+    static unsigned update_fc_len;
+    static unsigned update_fu_len;
 };
 
 #endif /* already included */

@@ -76,16 +76,16 @@ struct UiPacker::State {
 #endif
 };
 
-long UiPacker::total_files = 0;
-long UiPacker::total_files_done = 0;
-long UiPacker::total_c_len = 0;
-long UiPacker::total_u_len = 0;
-long UiPacker::total_fc_len = 0;
-long UiPacker::total_fu_len = 0;
-long UiPacker::update_c_len = 0;
-long UiPacker::update_u_len = 0;
-long UiPacker::update_fc_len = 0;
-long UiPacker::update_fu_len = 0;
+unsigned UiPacker::total_files = 0;
+unsigned UiPacker::total_files_done = 0;
+upx_uint64_t UiPacker::total_c_len = 0;
+upx_uint64_t UiPacker::total_u_len = 0;
+upx_uint64_t UiPacker::total_fc_len = 0;
+upx_uint64_t UiPacker::total_fu_len = 0;
+unsigned UiPacker::update_c_len = 0;
+unsigned UiPacker::update_u_len = 0;
+unsigned UiPacker::update_fc_len = 0;
+unsigned UiPacker::update_fu_len = 0;
 
 /*************************************************************************
 // constants
@@ -126,33 +126,28 @@ static void init_global_constants(void) {
 //
 **************************************************************************/
 
-static const char *mkline(unsigned long fu_len, unsigned long fc_len, unsigned long u_len,
-                          unsigned long c_len, const char *format_name, const char *filename,
+static const char *mkline(upx_uint64_t fu_len, upx_uint64_t fc_len, upx_uint64_t u_len,
+                          upx_uint64_t c_len, const char *format_name, const char *filename,
                           bool decompress = false) {
     static char buf[2048];
     char r[7 + 1];
-    char fn[13 + 1];
+    char fn[15 + 1];
     const char *f;
 
     // Large ratios can happen because of overlays that are
     // appended after a program is packed.
-    unsigned ratio = get_ratio(fu_len, fc_len) + 50;
-#if 1
+    unsigned ratio = get_ratio(fu_len, fc_len);
     if (ratio >= 1000 * 1000)
         strcpy(r, "overlay");
-#else
-    if (ratio >= 10 * 1000 * 1000) // >= "1000%"
-        strcpy(r, "999.99%");
-#endif
     else
         upx_snprintf(r, sizeof(r), "%3u.%02u%%", ratio / 10000, (ratio % 10000) / 100);
     if (decompress)
-        f = "%10ld <-%10ld  %7s  %13s  %s";
+        f = "%10lld <-%10lld  %7s %15s %s";
     else
-        f = "%10ld ->%10ld  %7s  %13s  %s";
+        f = "%10lld ->%10lld  %7s %15s %s";
     center_string(fn, sizeof(fn), format_name);
-    assert(strlen(fn) == 13);
-    upx_snprintf(buf, sizeof(buf), f, fu_len, fc_len, r, fn, filename);
+    assert(strlen(fn) == 15);
+    upx_snprintf(buf, sizeof(buf), f, (long long) fu_len, (long long) fc_len, r, fn, filename);
     UNUSED(u_len);
     UNUSED(c_len);
     return buf;
@@ -517,12 +512,10 @@ void UiPacker::uiUnpackTotal() {
 
 void UiPacker::uiListStart() { total_files++; }
 
-void UiPacker::uiList(long fu_len) {
-    if (fu_len < 0)
-        fu_len = p->ph.u_file_size;
+void UiPacker::uiList() {
     const char *name = p->fi->getName();
-    con_fprintf(stdout, "%s\n",
-                mkline(fu_len, p->file_size, p->ph.u_len, p->ph.c_len, p->getName(), name));
+    con_fprintf(stdout, "%s\n", mkline(p->ph.u_file_size, p->file_size, p->ph.u_len, p->ph.c_len,
+                                       p->getName(), name));
     printSetNl(0);
 }
 
@@ -531,7 +524,7 @@ void UiPacker::uiListEnd() { uiUpdate(); }
 void UiPacker::uiListTotal(bool decompress) {
     if (opt->verbose >= 1 && total_files >= 2) {
         char name[32];
-        upx_snprintf(name, sizeof(name), "[ %ld file%s ]", total_files_done,
+        upx_snprintf(name, sizeof(name), "[ %u file%s ]", total_files_done,
                      total_files_done == 1 ? "" : "s");
         con_fprintf(stdout, "%s%s\n", header_line2, mkline(total_fu_len, total_fc_len, total_u_len,
                                                            total_c_len, "", name, decompress));
@@ -569,6 +562,11 @@ void UiPacker::uiTestTotal() { uiFooter("Tested"); }
 **************************************************************************/
 
 bool UiPacker::uiFileInfoStart() {
+#if defined(_WIN32) // msvcrt
+#define PRLLD "I64d"
+#else
+#define PRLLD "lld"
+#endif
     total_files++;
 
     int fg = con_fg(stdout, FG_CYAN);
@@ -576,15 +574,16 @@ bool UiPacker::uiFileInfoStart() {
     fg = con_fg(stdout, fg);
     UNUSED(fg);
     if (p->ph.c_len > 0) {
-        con_fprintf(stdout, "  %8ld bytes", (long) p->file_size);
+        con_fprintf(stdout, "  %8" PRLLD " bytes", (long long) p->file_size);
         con_fprintf(stdout, ", compressed by UPX %d, method %d, level %d, filter 0x%02x/0x%02x\n",
                     p->ph.version, p->ph.method, p->ph.level, p->ph.filter, p->ph.filter_cto);
         return false;
     } else {
-        con_fprintf(stdout, "  %8ld bytes", (long) p->file_size);
+        con_fprintf(stdout, "  %8" PRLLD " bytes", (long long) p->file_size);
         con_fprintf(stdout, ", not compressed by UPX\n");
         return true;
     }
+#undef PRLLD
 }
 
 void UiPacker::uiFileInfoEnd() { uiUpdate(); }
@@ -613,18 +612,19 @@ void UiPacker::uiFooter(const char *t) {
         return;
     done = true;
     if (opt->verbose >= 1) {
-        long n1 = total_files;
-        long n2 = total_files_done;
-        long n3 = total_files - total_files_done;
+        assert(total_files >= total_files_done);
+        unsigned n1 = total_files;
+        unsigned n2 = total_files_done;
+        unsigned n3 = total_files - total_files_done;
         if (n3 == 0)
-            con_fprintf(stdout, "\n%s %ld file%s.\n", t, n1, n1 == 1 ? "" : "s");
+            con_fprintf(stdout, "\n%s %u file%s.\n", t, n1, n1 == 1 ? "" : "s");
         else
-            con_fprintf(stdout, "\n%s %ld file%s: %ld ok, %ld error%s.\n", t, n1,
-                        n1 == 1 ? "" : "s", n2, n3, n3 == 1 ? "" : "s");
+            con_fprintf(stdout, "\n%s %u file%s: %u ok, %u error%s.\n", t, n1, n1 == 1 ? "" : "s",
+                        n2, n3, n3 == 1 ? "" : "s");
     }
 }
 
-void UiPacker::uiUpdate(long fc_len, long fu_len) {
+void UiPacker::uiUpdate(off_t fc_len, off_t fu_len) {
     update_fc_len = (fc_len >= 0) ? fc_len : p->file_size;
     update_fu_len = (fu_len >= 0) ? fu_len : p->ph.u_file_size;
     update_c_len = p->ph.c_len;

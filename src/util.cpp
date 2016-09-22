@@ -270,7 +270,7 @@ int mem_replace(void *bb, int blen, const void *what, int wlen, const void *r)
 
 
 /*************************************************************************
-// filename util
+// fn - FileName util
 **************************************************************************/
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS16 || ACC_OS_TOS || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
@@ -300,7 +300,7 @@ char *fn_basename(const char *name)
     for (nn = n = name; *nn; nn++)
         if (fn_is_sep(*nn))
             n = nn + 1;
-    return const_cast<char *>(n);
+    return ACC_UNCONST_CAST(char *, n);
 }
 
 
@@ -317,25 +317,6 @@ bool fn_has_ext(const char *name, const char *ext, bool ignore_case)
     else
         return (fn_strcmp(ext,e+1) == 0);
 }
-
-
-#if 0 // UNUSED
-void fn_addslash(char *name, bool slash)
-{
-    char *p;
-
-    name = fn_skip_drive(name);
-    p = name + strlen(name);
-    while (p > name && fn_is_sep(p[-1]))
-        *p-- = 0;
-    if (p > name)
-    {
-        if (slash)
-            *p++ = dir_sep[0];
-        *p = 0;
-    }
-}
-#endif // UNUSED
 
 
 char *fn_strlwr(char *n)
@@ -362,53 +343,6 @@ int fn_strcmp(const char *n1, const char *n2)
         n1++; n2++;
     }
 }
-
-
-#if 0 // UNUSED
-bool fn_is_same_file(const char *n1, const char *n2)
-{
-    /* very simple... */
-    if (fn_strcmp(n1, n2) == 0)
-        return 1;
-    return 0;
-}
-#endif // UNUSED
-
-
-/*************************************************************************
-// time util
-**************************************************************************/
-
-#if 0 // not used
-
-#if (HAVE_LOCALTIME)
-void tm2str(char *s, size_t size, const struct tm *tmp)
-{
-    upx_snprintf(s, size, "%04d-%02d-%02d %02d:%02d:%02d",
-                 (int) tmp->tm_year + 1900, (int) tmp->tm_mon + 1,
-                 (int) tmp->tm_mday,
-                 (int) tmp->tm_hour, (int) tmp->tm_min, (int) tmp->tm_sec);
-}
-#endif
-
-
-void time2str(char *s, size_t size, const time_t *t)
-{
-    assert(size >= 18);
-#if (HAVE_LOCALTIME)
-    tm2str(s, size, localtime(t));
-#elif (HAVE_CTIME)
-    const char *p = ctime(t);
-    memset(s, ' ', 16);
-    memcpy(s + 2, p + 4, 6);
-    memcpy(s + 11, p + 11, 5);
-    s[16] = 0;
-#else
-    s[0] = 0;
-#endif
-}
-
-#endif
 
 
 /*************************************************************************
@@ -561,12 +495,18 @@ bool makebakname(char *ofilename, size_t size,
 // return compression ratio, where 100% == 1000*1000 == 1e6
 **************************************************************************/
 
-unsigned get_ratio(unsigned u_len, unsigned c_len)
+unsigned get_ratio(upx_uint64_t u_len, upx_uint64_t c_len)
 {
-    const unsigned n = 1000000;
-    if (u_len <= 0)
-        return c_len <= 0 ? 0 : n;
-    return (unsigned) ((c_len * (upx_uint64_t)n) / u_len);
+    const unsigned n = 1000 * 1000;
+    if (u_len == 0)
+        return c_len == 0 ? 0 : n;
+    upx_uint64_t x = c_len * n;
+    assert(x / n == c_len);
+    x /= u_len;
+    x += 50; // rounding
+    if (x >= 10 * n) // >= "1000%"
+        x = 10 * n - 1;
+    return ACC_ICONV(unsigned, x);
 }
 
 

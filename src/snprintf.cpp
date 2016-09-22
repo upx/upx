@@ -71,13 +71,8 @@
 
 #undef LLONG
 #undef ULLONG
-#if 1
 #define LLONG upx_int64_t
 #define ULLONG upx_uint64_t
-#else
-#define LLONG long int
-#define ULLONG unsigned long int
-#endif
 
 #undef NO_FLOAT
 #undef LDOUBLE
@@ -615,7 +610,7 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
                 else if (cflags == DP_C_LONG)
                     value = (long) va_arg(args, unsigned long int);
                 else if (cflags == DP_C_LLONG)
-                    value = (long) va_arg(args, ULLONG);
+                    value = (LLONG) va_arg(args, ULLONG);
                 else
                     value = (long) va_arg(args, unsigned int);
                 fmtint(buffer, &currsize, maxsize, value, 8, min, max, flags);

@@ -31,6 +31,10 @@
 
 #include "version.h"
 
+#if !defined(_FILE_OFFSET_BITS)
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 
 /*************************************************************************
 // ACC

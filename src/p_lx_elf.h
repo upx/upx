@@ -502,7 +502,7 @@ class PackOpenBSDElf32x86 : public PackBSDElf32x86
 public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
-    virtual const char *getName() const { return "opnbsd/i386"; }
+    virtual const char *getName() const { return "openbsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-openbsd.elf"; }
 
 protected:

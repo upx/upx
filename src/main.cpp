@@ -1331,6 +1331,9 @@ __acc_static_noinline void upx_sanity_check(void)
 
     COMPILE_TIME_ASSERT(sizeof(off_t) >= sizeof(long))
     COMPILE_TIME_ASSERT(((off_t) -1) < 0)
+#if (ACC_OS_POSIX_DARWIN || ACC_OS_POSIX_LINUX)
+    COMPILE_TIME_ASSERT(sizeof(off_t) >= 8)
+#endif
 
     COMPILE_TIME_ASSERT(sizeof(BE16) == 2)
     COMPILE_TIME_ASSERT(sizeof(BE32) == 4)
