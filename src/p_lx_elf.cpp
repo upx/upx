@@ -1211,19 +1211,19 @@ PackOpenBSDElf32x86::buildLoader(const Filter *ft)
 }
 
 static const
-#include "stub/armel-eabi-linux.elf-entry.h"
+#include "stub/arm.v5a-linux.elf-entry.h"
 static const
-#include "stub/armel-eabi-linux.elf-fold.h"
+#include "stub/arm.v5a-linux.elf-fold.h"
 static const
 #include "stub/arm.v5t-linux.shlib-init.h"
 
 static const
-#include "stub/arm-linux.elf-entry.h"
+#include "stub/arm.v4a-linux.elf-entry.h"
 static const
-#include "stub/arm-linux.elf-fold.h"
+#include "stub/arm.v4a-linux.elf-fold.h"
 #if 0
 static const
-#include "stub/arm-linux.shlib-init.h"
+#include "stub/arm.v4a-linux.shlib-init.h"
 #endif
 
 static const
@@ -1253,13 +1253,13 @@ PackLinuxElf32armLe::buildLoader(Filter const *ft)
             return;
         }
         buildLinuxLoader(
-            stub_armel_eabi_linux_elf_entry, sizeof(stub_armel_eabi_linux_elf_entry),
-            stub_armel_eabi_linux_elf_fold,  sizeof(stub_armel_eabi_linux_elf_fold), ft);
+            stub_arm_v5a_linux_elf_entry, sizeof(stub_arm_v5a_linux_elf_entry),
+            stub_arm_v5a_linux_elf_fold,  sizeof(stub_arm_v5a_linux_elf_fold), ft);
     }
     else {
         buildLinuxLoader(
-            stub_arm_linux_elf_entry,        sizeof(stub_arm_linux_elf_entry),
-            stub_arm_linux_elf_fold,         sizeof(stub_arm_linux_elf_fold), ft);
+            stub_arm_v4a_linux_elf_entry, sizeof(stub_arm_v4a_linux_elf_entry),
+            stub_arm_v4a_linux_elf_fold,  sizeof(stub_arm_v4a_linux_elf_fold), ft);
     }
 }
 
@@ -2427,12 +2427,12 @@ void PackLinuxElf32armLe::pack1(OutputFile *fo, Filter &ft)
     unsigned const e_flags = get_te32(&ehdri.e_flags);
     cprElfHdr3 h3;
     if (Elf32_Ehdr::ELFOSABI_LINUX==ei_osabi) {
-        memcpy(&h3, stub_armel_eabi_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+        memcpy(&h3, stub_arm_v5a_linux_elf_fold, sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
 
         h3.ehdr.e_ident[Elf32_Ehdr::EI_ABIVERSION] = e_flags>>24;
     }
     else {
-        memcpy(&h3, stub_arm_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
+        memcpy(&h3, stub_arm_v4a_linux_elf_fold,        sizeof(Elf32_Ehdr) + 2*sizeof(Elf32_Phdr));
     }
     // Fighting over .e_ident[EI_ABIVERSION]: Debian armhf is latest culprit.
     // So copy from input to output; but see PackLinuxElf32::generateElfHdr
