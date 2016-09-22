@@ -1,4 +1,4 @@
-/*  arm-darwin.macho-entry.S -- iPhone program entry point & decompressor (Elf binary)
+/* arm64-darwin.macho-entry.S -- iPhone program entry point & decompressor (Elf binary)
 *
 *  This file is part of the UPX executable compressor.
 *
@@ -42,7 +42,7 @@
 
 #define lr x30
 
-#include "arch/arm/v8a/macros.S"
+#include "arch/arm64/v8/macros.S"
 
 sz_b_info= 12
   sz_unc= 0
@@ -97,18 +97,18 @@ f_decompress:
         // empty
 
   section NRV2E
-#include "arch/arm/v8a/nrv2e_d8.S"
+#include "arch/arm64/v8/nrv2e_d8.S"
 
   section NRV2D
-#include "arch/arm/v8a/nrv2d_d8.S"
+#include "arch/arm64/v8/nrv2d_d8.S"
 
   section NRV2B
-#include "arch/arm/v8a/nrv2b_d8.S"
+#include "arch/arm64/v8/nrv2b_d8.S"
 
   section NRV_TAIL
         // empty
 
-#include "arch/arm/v8a/lzma_d.S"
+#include "arch/arm64/v8/lzma_d.S"
 
   section MACHMAINY
 end_decompress: .globl end_decompress

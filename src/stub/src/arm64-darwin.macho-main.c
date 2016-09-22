@@ -1,4 +1,4 @@
-/* arm-darwin.macho-main.c -- loader stub for Mach-o ARMEL
+/* arm64-darwin.macho-main.c -- loader stub for Mach-o
 
    This file is part of the UPX executable compressor.
 

@@ -1,4 +1,4 @@
-//  arm-darwin.macho-fold.S -- linkage to C code to process Mach-O binary
+//  arm64-darwin.macho-fold.S -- linkage to C code to process Mach-O binary
 //
 //  This file is part of the UPX executable compressor.
 //
@@ -38,7 +38,7 @@
   #define ARMEL_DARWIN 1
 #endif  /*}*/
 
-#include "arch/arm/v8a/macros.S"
+#include "arch/arm64/v8/macros.S"
 
 sz_l_info = 12
 sz_p_info = 12
