@@ -875,6 +875,7 @@ protected:
     virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
+    virtual upx_uint64_t getEntryVMA(Mach_command const *);
 
     __packed_struct(Mach_thread_command)
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */

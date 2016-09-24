@@ -1938,6 +1938,12 @@ upx_uint64_t PackMachBase<T>::getEntryVMA(Mach_command const *ptr)
     return ptr->cmd;  // FIXME must be specialized
 }
 
+upx_uint64_t PackMachI386::getEntryVMA(Mach_command const *ptr)
+{
+    Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+    return tc->state.eip;
+}
+
 upx_uint64_t PackMachAMD64::getEntryVMA(Mach_command const *ptr)
 {
     Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
