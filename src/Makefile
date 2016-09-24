@@ -131,3 +131,5 @@ CLANG_FORMAT_FILES += ui.cpp ui.h util.h
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
 .PHONY: clang-format
+
+# vim:set ts=8 sw=8 noet:

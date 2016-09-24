@@ -17,12 +17,12 @@ top_srcdir = .
 include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 
 
-# info: src/stub needs special build tools
+# info: src/stub needs special build tools from https://github.com/upx/upx-stubtools
 BUILD_STUB = 0
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
 BUILD_STUB = 1
 endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
+ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
 BUILD_STUB = 1
 endif
 
@@ -40,3 +40,4 @@ endif
 
 .PHONY: default all mostlyclean clean distclean maintainer-clean
 
+# vim:set ts=8 sw=8 noet:
