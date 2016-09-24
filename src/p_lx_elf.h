@@ -485,6 +485,7 @@ class PackNetBSDElf32x86 : public PackLinuxElf32x86
 public:
     PackNetBSDElf32x86(InputFile *f);
     virtual ~PackNetBSDElf32x86();
+    virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
     virtual const char *getName() const { return "netbsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-netbsd.elf"; }
 protected:
