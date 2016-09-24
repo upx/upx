@@ -58,7 +58,7 @@ xargs -0r perl -n -e '
        if ($ARGV =~ m,(^|/)\.gitmodules$,) { }
        elsif ($ARGV =~ m,(^|/)make(file|vars),i) { }
        elsif ($ARGV =~ m,/tmp/.*\.(disasm|dump)$,) { }
-       elsif ($ARGV =~ m,\.S$,) { }
+       elsif ($ARGV =~ m,/src/stub/src/arch/.*\.S$,) { }
        else { print "ERROR: hard TAB detected $ARGV: $_"; exit(1); }
     }
 ' || exit 1
@@ -92,12 +92,7 @@ release)
 sanitize)
     $make USE_SANITIZE=1 ;;
 scan-build)
-    if test "$CC" = "clang"; then
-        scan-build $make
-    else
-        $make USE_SANITIZE=1
-    fi
-    ;;
+    scan-build $make ;;
 *)
     echo "ERROR: invalid BUILD_METHOD '$BUILD_METHOD'"
     exit 1
