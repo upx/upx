@@ -676,7 +676,7 @@ public:
 
     virtual bool canPack();
     virtual int canUnpack();
-    virtual unsigned find_SEGMENT_gap(unsigned const k);
+    virtual unsigned find_SEGMENT_gap(unsigned const k, unsigned pos_eof);
 
 protected:
     virtual void patchLoader();
@@ -690,6 +690,7 @@ protected:
         Filter const *ft );
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
+    virtual upx_uint64_t getEntryVMA(Mach_command const *);
 
     static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
 
@@ -923,6 +924,8 @@ protected:
     virtual Linker* newLinker() const;
     virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
+    virtual upx_uint64_t getEntryVMA(Mach_command const *ptr);
+
 
     __packed_struct(Mach_thread_command)
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */

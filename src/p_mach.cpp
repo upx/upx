@@ -1475,7 +1475,7 @@ void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 
 template <class T>
 unsigned PackMachBase<T>::find_SEGMENT_gap(
-    unsigned const k
+    unsigned const k, unsigned pos_eof
 )
 {
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
@@ -1484,9 +1484,7 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         return 0;
     }
     unsigned const hi = msegcmd[k].fileoff + msegcmd[k].filesize;
-    unsigned lo = ph.u_file_size;
-    if (lo < hi)
-        throwCantPack("bad input: LC_SEGMENT beyond end-of-file");
+    unsigned lo = pos_eof;
     unsigned j = k;
     for (;;) { // circular search, optimize for adjacent ascending
         ++j;
@@ -1538,7 +1536,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
             if (my_filetype==Mach_header::MH_DYLIB) {
                 break;
             }
-            if (find_SEGMENT_gap(k)) {
+            if (find_SEGMENT_gap(k, fi->st_size())) {
                 uip->ui_total_passes++;
             }
         }
@@ -1590,7 +1588,7 @@ int  PackMachBase<T>::pack2(OutputFile *fo, Filter &ft)  // append compressed bo
     }
     if (my_filetype!=Mach_header::MH_DYLIB)
     for (k = 0; k < n_segment; ++k) {
-        x.size = find_SEGMENT_gap(k);
+        x.size = find_SEGMENT_gap(k, fi->st_size());
         if (x.size) {
             x.offset = msegcmd[k].fileoff +msegcmd[k].filesize;
             packExtent(x, total_in, total_out, 0, fo);
@@ -1833,7 +1831,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     fi->seek(overlay_offset, SEEK_SET);
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
-    unsigned orig_file_size = get_te32(&hbuf.p_filesize);
+    unsigned const orig_file_size = get_te32(&hbuf.p_filesize);
     blocksize = get_te32(&hbuf.p_blocksize);
     if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
     ||  blocksize > 0x05000000)  // emacs-21.2.1 was 0x01d47e6c (== 30703212)
@@ -1922,7 +1920,7 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     }
     else
     for (unsigned j = 0; j < ncmds; ++j) {
-        unsigned const size = find_SEGMENT_gap(j);
+        unsigned const size = find_SEGMENT_gap(j, orig_file_size);
         if (size) {
             unsigned const where = msegcmd[j].fileoff +msegcmd[j].filesize;
             if (fo)
@@ -1932,6 +1930,18 @@ void PackMachBase<T>::unpack(OutputFile *fo)
         }
     }
     delete [] mhdr;
+}
+
+template <class T>
+upx_uint64_t PackMachBase<T>::getEntryVMA(Mach_command const *ptr)
+{
+    return ptr->cmd;  // FIXME must be specialized
+}
+
+upx_uint64_t PackMachAMD64::getEntryVMA(Mach_command const *ptr)
+{
+    Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+    return tc->state.rip;
 }
 
 // The prize is the value of overlay_offset: the offset of compressed data
@@ -1951,6 +1961,8 @@ int PackMachBase<T>::canUnpack()
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
+    Mach_segment_command const *ptrTEXT = 0;
+    upx_uint64_t rip = 0;
     unsigned style = 0;
     off_t offLINK = 0;
     unsigned const ncmds = mhdri.ncmds;
@@ -1963,14 +1975,20 @@ int PackMachBase<T>::canUnpack()
                 // PackHeader precedes __LINKEDIT (pre-Sierra MacOS 10.12)
                 style = 391;  // UPX 3.91
             }
+            if (!strcmp("__TEXT", segptr->segname)) {
+                ptrTEXT = segptr;
+                style = 391;  // UPX 3.91
+            }
             if (!strcmp("UPX_DATA", segptr->segname)) {
                 // PackHeader follows loader at __LINKEDIT (Sierra MacOS 10.12)
                 style = 392;  // UPX 3.92
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 offLINK = segptr->fileoff;
-                break;
             }
+        }
+        else if (Mach_segment_command::LC_UNIXTHREAD==ptr->cmd) {
+            rip = getEntryVMA(ptr);
         }
      }
     if (0 == style || 0 == offLINK) {
@@ -1978,7 +1996,7 @@ int PackMachBase<T>::canUnpack()
     }
 
     int const small = 32 + sizeof(overlay_offset);
-    int bufsize = 4096;
+    unsigned bufsize = 4096;
     if (391 == style) { // PackHeader precedes __LINKEDIT
         fi->seek(offLINK - bufsize, SEEK_SET);
     } else
@@ -1995,11 +2013,48 @@ int PackMachBase<T>::canUnpack()
     while (i > small && 0 == buf[--i]) { }
     i -= small;
     // allow incompressible extents
-    if (i < 0 || !getPackHeader(buf + i, bufsize - i, true))
-        return false;
+    if (i < 1 || !getPackHeader(buf + i, bufsize - i, true)) {
+        // Breadcrumbs failed.
+        // Pirates might overwrite the UPX! marker.  Try harder.
+        upx_uint64_t const rip_off = rip - ptrTEXT->vmaddr;
+        if (ptrTEXT && rip && rip_off < ptrTEXT->vmsize) {
+            fi->seek(ptrTEXT->fileoff + rip_off, SEEK_SET);
+            fi->readx(buf, bufsize);
+            unsigned char const *b = &buf[0];
+            unsigned disp = *(TE32 const *)&b[1];
+            // Emulate the code
+            if (0xe8==b[0] && disp < bufsize
+            &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
+                unsigned disp2 = - *(TE32 const *)&b[7+disp];
+                if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
+                    struct b_info const *bptr = (struct b_info const *)&b[11+disp];
+                    // This is the folded stub.
+                    // FIXME: check b_method?
+                    if (bptr->sz_cpr < bptr->sz_unc && bptr->sz_unc < 0x1000) {
+                        b = bptr->sz_cpr + (unsigned char const *)(1+ bptr);
+                        // FIXME: check PackHeader::putPackHeader(), packhead.cpp
+                        overlay_offset = *(TE32 const *)(32 + b);
+                        if (overlay_offset < 0x1000) {
+                            return true;  // success
+                        }
+                        overlay_offset = 0;
+                    }
+                }
+            }
+        }
+        if (391==style) {
+            TE32 const *uptr = (TE32 const *)&buf[bufsize];
+            while (0==*--uptr) /*empty*/ ;
+            overlay_offset = *uptr;
+            if (overlay_offset < 0x1000) {
+                return true;  // success
+            }
+            overlay_offset = 0;
+        }
+    }
 
     int l = ph.buf_offset + ph.getPackHeaderSize();
-    if (l < 0 || l + 4 > bufsize)
+    if (l < 0 || (unsigned)(l + 4) > bufsize)
         throwCantUnpack("file corrupted");
     overlay_offset = get_te32(buf + i + l);
     if ((off_t)overlay_offset >= file_size)
