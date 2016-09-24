@@ -66,11 +66,6 @@
 #define ACC_WANT_ACC_LIB_H 1
 #define ACC_WANT_ACC_CXX_H 1
 #include "miniacc.h"
-#if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
-#  if defined(INVALID_HANDLE_VALUE) || defined(MAKEWORD) || defined(RT_CURSOR)
-#    error "something pulled in <windows.h>"
-#  endif
-#endif
 
 /* intergral types */
 typedef acc_int8_t      upx_int8_t;
@@ -89,7 +84,7 @@ typedef acc_uintptr_t   upx_uintptr_t;
 #define UPX_INT64_C     ACC_INT64_C
 #define UPX_UINT64_C    ACC_UINT64_C
 
-#define upx_byte        unsigned char
+typedef unsigned char   upx_byte;
 #define upx_bytep       upx_byte *
 
 
@@ -615,9 +610,6 @@ struct upx_compress_result_t
 **************************************************************************/
 
 #include "snprintf.h"
-
-#if defined(__cplusplus)
-
 #include "stdcxx.h"
 #include "options.h"
 #include "except.h"
@@ -705,9 +697,6 @@ int upx_test_overlap       ( const upx_bytep buf,
                                    unsigned* dst_len,
                                    int method,
                              const upx_compress_result_t *cresult );
-
-
-#endif /* __cplusplus */
 
 
 #if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)

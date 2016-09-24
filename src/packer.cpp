@@ -1116,27 +1116,29 @@ void Packer::initLoader(const void *pdata, int plen, int small)
 
 
 #define C const char *
+#define N ACC_STATIC_CAST(void *, 0)
 void Packer::addLoader(C a)
-{ addLoaderVA(a, NULL); }
+{ addLoaderVA(a, N); }
 void Packer::addLoader(C a, C b)
-{ addLoaderVA(a, b, NULL); }
+{ addLoaderVA(a, b, N); }
 void Packer::addLoader(C a, C b, C c)
-{ addLoaderVA(a, b, c, NULL); }
+{ addLoaderVA(a, b, c, N); }
 void Packer::addLoader(C a, C b, C c, C d)
-{ addLoaderVA(a, b, c, d, NULL); }
+{ addLoaderVA(a, b, c, d, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e)
-{ addLoaderVA(a, b, c, d, e, NULL); }
+{ addLoaderVA(a, b, c, d, e, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e, C f)
-{ addLoaderVA(a, b, c, d, e, f, NULL); }
+{ addLoaderVA(a, b, c, d, e, f, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g)
-{ addLoaderVA(a, b, c, d, e, f, g, NULL); }
+{ addLoaderVA(a, b, c, d, e, f, g, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h)
-{ addLoaderVA(a, b, c, d, e, f, g, h, NULL); }
+{ addLoaderVA(a, b, c, d, e, f, g, h, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i)
-{ addLoaderVA(a, b, c, d, e, f, g, h, i, NULL); }
+{ addLoaderVA(a, b, c, d, e, f, g, h, i, N); }
 void Packer::addLoader(C a, C b, C c, C d, C e, C f, C g, C h, C i, C j)
-{ addLoaderVA(a, b, c, d, e, f, g, h, i, j, NULL); }
+{ addLoaderVA(a, b, c, d, e, f, g, h, i, j, N); }
 #undef C
+#undef N
 
 void __acc_cdecl_va Packer::addLoaderVA(const char *s, ...)
 {

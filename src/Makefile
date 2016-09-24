@@ -4,12 +4,10 @@
 # Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
 #
 
-# In GNU Make 4.0 this "MAKEFLAGS += -rR" is not executed immediately.
-# Instead, it is executed later, and we cannot rely on sequentiality
-# with respect to builtin variables.  So if we want to have no
-# dependencies on the default values of builtin variables,
-# then we cannot use builtin variables at all.
-# See: http://lists.gnu.org/archive/html/help-make/2016-08/msg00011.html
+# build configuration options
+#USE_DEBUG = 1
+#USE_SANITIZE = 1
+
 MAKEFLAGS += -r
 ifneq ($(upx_CXX),)
 CXX = $(upx_CXX)
@@ -19,10 +17,6 @@ CXXLD = $(upx_CXXLD)
 else
 CXXLD = $(CXX)
 endif
-
-# build configuration options
-#USE_DEBUG = 1
-#USE_SANITIZE = 1
 
 .SUFFIXES:
 export SHELL = /bin/sh
@@ -104,7 +98,7 @@ ifeq (1,1)
 	@echo "Updating $@"
 	@$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
-	touch $@
+	@echo "timestamp" > $@
 endif
 
 
@@ -137,3 +131,5 @@ CLANG_FORMAT_FILES += ui.cpp ui.h util.h
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
 .PHONY: clang-format
+
+# vim:set ts=8 sw=8 noet:

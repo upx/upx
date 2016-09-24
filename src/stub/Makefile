@@ -35,10 +35,10 @@ endif
 include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 
 # update $PATH for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
 endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
+ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 
@@ -1317,9 +1317,7 @@ powerpc64le-darwin.macho-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 powerpc64le-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc64le-darwin.macho-main.o
-# FIXME: undefined reference to `_savegpr0_28' etc.
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
-#	echo "FIXME" > tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
 
