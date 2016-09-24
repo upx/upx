@@ -6,30 +6,104 @@ branches:
     - devel
     - travis
 
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+      env: C=clang-m32 B=debug
+      addons:
+        apt:
+          packages:
+            - g++-multilib
+            - zlib1g-dev:i386
+    - os: linux
+      compiler: clang
+      env: C=clang-m64 B=debug
+    - os: linux
+      compiler: clang
+      env: C=clang-m32
+      addons:
+        apt:
+          packages:
+            - g++-multilib
+            - zlib1g-dev:i386
+    - os: linux
+      compiler: clang
+      env: C=clang-m64
+    - os: linux
+      compiler: gcc
+      env: C=gcc-m32
+      addons:
+        apt:
+          packages:
+            - g++-multilib
+            - zlib1g-dev:i386
+    - os: linux
+      compiler: gcc
+      env: C=gcc-m64
+    - os: linux
+      compiler: gcc-5
+      env: C=gcc-5-m32
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5-multilib
+            - zlib1g-dev:i386
+    - os: linux
+      compiler: gcc-5
+      env: C=gcc-5-m64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+    - os: linux
+      compiler: gcc-6
+      env: C=gcc-6-m32
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6-multilib
+            - zlib1g-dev:i386
+    - os: linux
+      compiler: gcc-6
+      env: C=gcc-6-m64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+    - os: linux
+      compiler: gcc-6
+      env: C=gcc-6-m64 B=sanitize
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+    - os: osx
+      compiler: clang
+      env: C=clang-m64 B=debug
+      #osx_image: xcode7
+    - os: osx
+      compiler: clang
+      env: C=clang-m64 B=release ALLOW_FAIL=1
+      #osx_image: xcode7
+
 install:
   - DEPS_DIR="$TRAVIS_BUILD_DIR/deps"
   - mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
   - wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+  - git clone https://github.com/upx/upx-testsuite
 
-os:
-  - linux
-#  - osx
-
-compiler:
-  - clang
-  - gcc
-
-env:
-  global:
-    - B=
-  matrix:
-    - B=make/debug
-    - B=make/release
-#    - B=make/scan-build
-
-before_script:
-  - export BUILD_DIR="$TRAVIS_BUILD_DIR/build"
-  - export BUILD_METHOD_AND_BUILD_TYPE="$B"
-  - export UPX_UCLDIR="$TRAVIS_BUILD_DIR/deps/ucl-1.03"
 script:
   - bash "$TRAVIS_BUILD_DIR/.travis_build.sh"
+
+# vim:set ts=2 sw=2 et:
