@@ -659,7 +659,8 @@ upx_main(
             err_exit(18);
         }
         for (;;) { // possibly 2 times for 'fat' binary
-            if ((ssize_t)sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
+            unsigned const fatmax = sizeof(Fat_header) + 10 * sizeof(Fat_arch);
+            if (fatmax!=pread(fdi, (void *)mhdr, fatmax, fat_offset)) {
 ERR_LAB
                 err_exit(19);
             }
@@ -738,7 +739,7 @@ main(int argc, char *argv[])
             break;
         }
     }
-    char mhdr[2048];
+    char mhdr[16384];
     uint64_t entry = upx_main((struct l_info const *)payload, paysize,
         (Mach_header64 *)mhdr, sizeof(mhdr),
         f_exp, f_unf, (Mach_header64 **)&argv[-2]);
