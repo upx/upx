@@ -1,0 +1,32 @@
+# Support for Circle CI -- https://circleci.com/gh/upx/upx
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+branches:
+  only:
+    - circle
+    - devel
+
+machine:
+  environment:
+    TRAVIS_BUILD_DIR: $HOME/upx
+    TRAVIS_OS_NAME: linux
+    C: gcc-m64
+    B: release
+
+checkout:
+  post:
+    - git submodule update --init --recursive
+
+dependencies:
+  pre:
+    - mkdir -p $TRAVIS_BUILD_DIR/deps
+    - cd $TRAVIS_BUILD_DIR/deps && wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+    - cd $TRAVIS_BUILD_DIR/deps && git clone https://github.com/upx/upx-testsuite
+  override:
+    - bash $TRAVIS_BUILD_DIR/.ci/travis_build.sh
+
+test:
+  override:
+    - bash $TRAVIS_BUILD_DIR/.ci/travis_testsuite.sh
+
+# vim:set ts=2 sw=2 et:
