@@ -642,6 +642,8 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
                 fmtint(buffer, &currsize, maxsize, value, 16, min, max, flags);
                 break;
 #if !(NO_FLOAT)
+            case 'F':
+                flags |= DP_F_UP;
             case 'f':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);
@@ -667,11 +669,14 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
                     fvalue = va_arg(args, double);
                 break;
 #else
+            case 'F':
             case 'f':
             case 'E':
             case 'e':
             case 'G':
             case 'g':
+            case 'A':
+            case 'a':
                 assert(0);
                 exit(255);
 #endif /* !(NO_FLOAT) */
@@ -714,10 +719,6 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
                 break;
             case '%':
                 dopr_outch(buffer, &currsize, maxsize, ch);
-                break;
-            case 'w':
-                /* not supported yet, treat as next char */
-                ch = *format++;
                 break;
             default:
                 /* Unknown, skip */
@@ -791,7 +792,8 @@ int upx_vasprintf(char **ptr, const char *format, va_list ap) {
         assert(*ptr != NULL);
         if (*ptr == NULL)
             return -1;
-        len = upx_vsnprintf(*ptr, len + 1, format, ap);
+        int len2 = upx_vsnprintf(*ptr, len + 1, format, ap);
+        assert(len2 == len);
     }
     return len;
 }
