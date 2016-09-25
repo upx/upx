@@ -263,7 +263,6 @@ int PackVmlinuzI386::decompressKernel()
         for (;;)
         {
             klen = -1;
-            fd = -1;
             fd_pos = -1;
             // open
             fi->seek(gzoff, SEEK_SET);
@@ -846,7 +845,6 @@ int PackVmlinuzARMEL::decompressKernel()
         for (;;)
         {
             klen = -1;
-            fd = -1;
             fd_pos = -1;
             // open
             fi->seek(gzoff, SEEK_SET);
