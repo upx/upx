@@ -33,6 +33,8 @@
 /*#define ACC_OS_FREESTANDING 1*/
 #include "miniacc.h"
 
+#define UPX_LZMA_COMPAT 1
+
 #if 0
 #undef _LZMA_IN_CB
 #undef _LZMA_OUT_READ

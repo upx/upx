@@ -29,11 +29,11 @@ include $(top_srcdir)/src/stub/Makefile
 # // method-lzma
 # ************************************************************************/
 
-lzma_d_c%.S : tc_list = method-lzma arm-linux.elf default
+lzma_d_c%.S : tc_list = method-lzma arm.v4a-linux.elf default
 lzma_d_c%.S : tc_bfdname = elf32-littlearm
 
 c := tc.method-lzma.gcc
-$c  = $(tc.arm-linux.elf.gcc)
+$c  = $(tc.arm.v4a-linux.elf.gcc)
 # -fPIC not needed: no globals, no string constants, no &func.
 # Omitting -fPIC enables general use of r10.
 $c += -march=armv4
