@@ -5,7 +5,7 @@ set -e; set -o pipefail
 # Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
-source "$TRAVIS_BUILD_DIR/.ci/travis_init.sh" || exit 1
+source "$TRAVIS_BUILD_DIR/.github/travis_init.sh" || exit 1
 
 echo "BUILD_METHOD='$BUILD_METHOD'"
 echo "BUILD_DIR='$BUILD_DIR'"
@@ -70,21 +70,29 @@ cd /; cd "$BUILD_DIR" || exit 1
 make="make -f $TRAVIS_BUILD_DIR/src/Makefile"
 export EXTRA_CPPFLAGS="-DUCL_NO_ASM"
 case $BUILD_METHOD in
-    debug | debug+*) make="$make USE_DEBUG=1" ;;
+    debug | debug+* | *+debug | *+debug+*)
+       make="$make USE_DEBUG=1" ;;
 esac
 case $BUILD_METHOD in
-    *sanitize)
-        make="$make USE_SANITIZE=1"
+    sanitize | sanitize+* | *+sanitize | *+sanitize+*)
         case $TRAVIS_OS_NAME-$CC in linux-gcc*) export EXTRA_LDFLAGS="-fuse-ld=gold" ;; esac
-        ;;
-    *scan-build) make="$SCAN_BUILD $make" ;;
-    *valgrind) export EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DWITH_VALGRIND" ;;
+        make="$make USE_SANITIZE=1" ;;
+esac
+case $BUILD_METHOD in
+    scan-build | scan-build+* | *+scan-build | *+scan-build+*)
+        make="$SCAN_BUILD $make" ;;
+esac
+case $BUILD_METHOD in
+    valgrind | valgrind+* | *+valgrind | *+valgrind+*)
+        export EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DWITH_VALGRIND" ;;
 esac
 if test "$ALLOW_FAIL" = "1"; then
     echo "ALLOW_FAIL=$ALLOW_FAIL"
     set +e
 fi
+
 $make
+
 ls -l upx.out
 size upx.out
 file upx.out

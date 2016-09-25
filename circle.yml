@@ -10,8 +10,9 @@ machine:
   environment:
     TRAVIS_BUILD_DIR: $HOME/upx
     TRAVIS_OS_NAME: linux
-    C: gcc-m64
+    C: gcc-4.8-m64
     B: release
+    ALLOW_FAIL:
 
 checkout:
   post:
@@ -23,10 +24,10 @@ dependencies:
     - cd $TRAVIS_BUILD_DIR/deps && wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
     - cd $TRAVIS_BUILD_DIR/deps && git clone https://github.com/upx/upx-testsuite
   override:
-    - bash $TRAVIS_BUILD_DIR/.ci/travis_build.sh
+    - bash $TRAVIS_BUILD_DIR/.github/travis_build.sh
 
 test:
   override:
-    - bash $TRAVIS_BUILD_DIR/.ci/travis_testsuite.sh
+    - bash $TRAVIS_BUILD_DIR/.github/travis_testsuite.sh
 
 # vim:set ts=2 sw=2 et:

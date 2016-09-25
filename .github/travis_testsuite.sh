@@ -5,7 +5,7 @@ set -e; set -o pipefail
 # Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
-source "$TRAVIS_BUILD_DIR/.ci/travis_init.sh" || exit 1
+source "$TRAVIS_BUILD_DIR/.github/travis_init.sh" || exit 1
 
 set -x
 
@@ -29,7 +29,8 @@ if test "$TRAVIS_OS_NAME" = "osx"; then
 fi
 upx="$PWD/upx.out"
 case $BUILD_METHOD in
-    *valgrind) upx="valgrind $upx" ;;
+    valgrind | valgrind+* | *+valgrind | *+valgrind+*)
+        upx="valgrind --leak-check=full --show-reachable=yes $upx" ;;
 esac
 upx_391=false
 if test "$TRAVIS_OS_NAME" = "linux"; then
@@ -38,9 +39,10 @@ if test "$TRAVIS_OS_NAME" = "linux"; then
 fi
 $upx --help
 cd /; cd "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files" || exit 1
-ls -l packed/*/upx-3.91*
-$upx -l packed/*/upx-3.91*
+ls -l            packed/*/upx-3.91*
+$upx -l          packed/*/upx-3.91*
 $upx --file-info packed/*/upx-3.91*
+$upx -t          packed/*/upx-3.91*
 for f in packed/*/upx-3.91*; do
     echo "===== $f"
     if test "$TRAVIS_OS_NAME" = "linux"; then

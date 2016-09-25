@@ -22,7 +22,7 @@ addons:
 
 env:
   global:
-    - C= B=
+    - C= B= ALLOW_FAIL=
   matrix:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
@@ -75,6 +75,10 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
+      env: C=gcc-6-m64 B=sanitize
+      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+    - os: linux
+      compiler: gcc
       env: C=gcc-6-m64 B=valgrind
       addons: { apt: { sources: *S, packages: [ "g++-6", "valgrind" ] } }
     - os: linux
@@ -118,8 +122,28 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: linux
       compiler: clang
+      env: C=clang-3.8-m64 B=debug+sanitize
+      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: linux
+      compiler: clang
+      env: C=clang-3.8-m64 B=sanitize
+      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: linux
+      compiler: clang
+      env: C=clang-3.8-m64 B=debug+scan-build
+      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: linux
+      compiler: clang
       env: C=clang-3.8-m64 B=scan-build
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: osx
+      compiler: clang
+      # must use debug or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-600-m32 B=debug
+    - os: osx
+      compiler: clang
+      # must use debug or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-600-m64 B=debug
     - os: osx
       compiler: clang
       env: C=clang-703-m32
@@ -136,9 +160,6 @@ matrix:
       compiler: clang
       env: C=clang-800-m64
       osx_image: xcode8
-  allow_failures:
-    - os: linux
-      env: C=gcc-6-m64 B=debug+sanitize
 
 install:
   - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
@@ -146,7 +167,7 @@ install:
   - travis_retry git clone https://github.com/upx/upx-testsuite
 
 script:
-  - bash $TRAVIS_BUILD_DIR/.ci/travis_build.sh
-  - bash $TRAVIS_BUILD_DIR/.ci/travis_testsuite.sh
+  - bash $TRAVIS_BUILD_DIR/.github/travis_build.sh
+  - bash $TRAVIS_BUILD_DIR/.github/travis_testsuite.sh
 
 # vim:set ts=2 sw=2 et:
