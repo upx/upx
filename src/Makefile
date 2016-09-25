@@ -46,6 +46,13 @@ objext ?= .o
 upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
+ifneq ($(wildcard $(top_srcdir)/.git/.),)
+UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=6 HEAD || echo ""))
+ifneq ($(UPX_VERSION_GITREV),)
+DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)"'
+endif
+endif
+
 # we need UCL and zlib - you can set envvar UPX_UCLDIR
 ifneq ($(wildcard $(UPX_UCLDIR)/include/ucl/ucl.h),)
 INCLUDES += -I$(UPX_UCLDIR)/include
@@ -126,7 +133,7 @@ endif
 CLANG_FORMAT_FILES += packhead.cpp
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
-CLANG_FORMAT_FILES += stdcxx.h stdcxx.cpp
+CLANG_FORMAT_FILES += stdcxx.cpp stdcxx.h
 CLANG_FORMAT_FILES += ui.cpp ui.h util.h
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))

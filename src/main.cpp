@@ -1285,10 +1285,6 @@ static bool test(void)
     COMPILE_TIME_ASSERT(__acc_alignof(t1) == 1)
     COMPILE_TIME_ASSERT(__acc_alignof(t2) == 1)
 #endif
-#if 1 && (ACC_CC_WATCOMC)
-    test1_t t11; COMPILE_TIME_ASSERT(sizeof(t11.a) <= sizeof(t11.b))
-    test2_t t22; COMPILE_TIME_ASSERT(sizeof(t22.a) <= sizeof(t22.b))
-#endif
 #if 1 && !defined(UPX_OFFICIAL_BUILD)
     T allbits; allbits = 0; allbits -= 1;
     //++allbits; allbits++; --allbits; allbits--;
@@ -1356,6 +1352,10 @@ __acc_static_noinline void upx_sanity_check(void)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
     assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE)-1 - 4], UPX_VERSION_YEAR, 4) == 0);
+#if defined(UPX_VERSION_GITREV)
+    assert(strlen(UPX_VERSION_GITREV) >= 5);
+    assert(strlen(UPX_VERSION_GITREV) <= 7);
+#endif
 
 #if 1
     assert(TestBELE<LE16>::test());
@@ -1552,7 +1552,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
-#if 0 && (UPX_VERSION_HEX < 0x030000)
+#if 1 && defined(UPX_VERSION_GITREV)
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);

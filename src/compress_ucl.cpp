@@ -285,6 +285,10 @@ int upx_ucl_init(void)
 {
     if (ucl_init() != UCL_E_OK)
         return -1;
+#if defined(UPX_OFFICIAL_BUILD)
+    if (UCL_VERSION != ucl_version())
+        return -2;
+#endif
     return 0;
 }
 

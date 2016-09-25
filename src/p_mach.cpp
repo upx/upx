@@ -2007,8 +2007,8 @@ int PackMachBase<T>::canUnpack()
         fi->seek(offLINK - bufsize, SEEK_SET);
     } else
     if (392 == style) { // PackHeader follows loader at __LINKEDIT
-        if (bufsize > (fi->st_size() - offLINK)) {
-            bufsize =  fi->st_size() - offLINK;
+        if ((off_t)bufsize > (fi->st_size() - offLINK)) {
+            bufsize = fi->st_size() - offLINK;
         }
         fi->seek(offLINK, SEEK_SET);
     }

@@ -90,40 +90,37 @@ int ptr_diff(const char *p1, const char *p2)
 
 
 /*************************************************************************
-//
+// bool use_mcheck()
 **************************************************************************/
 
-static int use_mcheck = -1;
-
-static int mcheck_init()
+#if defined(__SANITIZE_ADDRESS__)
+__acc_static_forceinline bool use_mcheck() { return false; }
+#elif (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
+static int use_mcheck_flag = -1;
+__acc_static_noinline void use_mcheck_init()
 {
-    if (use_mcheck < 0)
-    {
-        use_mcheck = 1;
-#if (WITH_VALGRIND) && defined(RUNNING_ON_VALGRIND)
-        if (RUNNING_ON_VALGRIND)
-        {
-            //fprintf(stderr, "upx: detected RUNNING_ON_VALGRIND\n");
-            use_mcheck = 0;
-        }
-#endif
+    use_mcheck_flag = 1;
+    if (RUNNING_ON_VALGRIND) {
+        use_mcheck_flag = 0;
+        //fprintf(stderr, "upx: detected RUNNING_ON_VALGRIND\n");
     }
-    return use_mcheck;
 }
+__acc_static_forceinline bool use_mcheck()
+{
+    if __acc_unlikely(use_mcheck_flag < 0)
+        use_mcheck_init();
+    return (bool) use_mcheck_flag;
+}
+#else
+__acc_static_forceinline bool use_mcheck() { return true; }
+#endif
 
 
 /*************************************************************************
 //
 **************************************************************************/
 
-MemBuffer::MemBuffer() :
-    b(NULL), b_size(0)
-{
-    if (use_mcheck < 0)
-        mcheck_init();
-}
-
-MemBuffer::MemBuffer(unsigned size) :
+MemBuffer::MemBuffer(upx_uint64_t size) :
     b(NULL), b_size(0)
 {
     alloc(size);
@@ -137,10 +134,10 @@ MemBuffer::~MemBuffer()
 
 void MemBuffer::dealloc()
 {
-    if (b)
+    if (b != NULL)
     {
         checkState();
-        if (use_mcheck)
+        if (use_mcheck())
         {
             // remove magic constants
             set_be32(b - 8, 0);
@@ -220,7 +217,7 @@ void MemBuffer::checkState() const
 {
     if (!b)
         throwInternalError("block not allocated");
-    if (use_mcheck)
+    if (use_mcheck())
     {
         if (get_be32(b - 4) != MAGIC1(b))
             throwInternalError("memory clobbered before allocated block 1");
@@ -233,22 +230,19 @@ void MemBuffer::checkState() const
 }
 
 
-void MemBuffer::alloc(unsigned size)
+void MemBuffer::alloc(upx_uint64_t size)
 {
-    if (use_mcheck < 0)
-        mcheck_init();
-
     // NOTE: we don't automatically free a used buffer
     assert(b == NULL);
     assert(b_size == 0);
     //
     assert(size > 0);
-    size_t bytes = mem_size(1, size, use_mcheck ? 32 : 0);
+    size_t bytes = mem_size(1, size, use_mcheck() ? 32 : 0);
     unsigned char *p = (unsigned char *) malloc(bytes);
     if (!p)
         throwOutOfMemoryException();
-    b_size = size;
-    if (use_mcheck)
+    b_size = ACC_ICONV(unsigned, size);
+    if (use_mcheck())
     {
         b = p + 16;
         // store magic constants to detect buffer overruns

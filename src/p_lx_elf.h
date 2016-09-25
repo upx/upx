@@ -461,8 +461,9 @@ class PackBSDElf32x86 : public PackLinuxElf32x86
 public:
     PackBSDElf32x86(InputFile *f);
     virtual ~PackBSDElf32x86();
-    virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
-    virtual const char *getName() const { return "bsd/i386"; }
+    virtual int getFormat() const = 0;
+    virtual const char *getName() const = 0;
+    virtual const char *getFullName(const options_t *) const = 0;
 
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
@@ -476,6 +477,8 @@ class PackFreeBSDElf32x86 : public PackBSDElf32x86
 public:
     PackFreeBSDElf32x86(InputFile *f);
     virtual ~PackFreeBSDElf32x86();
+    virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
+    virtual const char *getName() const { return "freebsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-freebsd.elf"; }
 };
 
@@ -503,6 +506,7 @@ class PackOpenBSDElf32x86 : public PackBSDElf32x86
 public:
     PackOpenBSDElf32x86(InputFile *f);
     virtual ~PackOpenBSDElf32x86();
+    virtual int getFormat() const { return UPX_F_BSD_ELF_i386; }
     virtual const char *getName() const { return "openbsd/i386"; }
     virtual const char *getFullName(const options_t *) const { return "i386-openbsd.elf"; }
 

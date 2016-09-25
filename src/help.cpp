@@ -51,15 +51,14 @@ void show_head(void)
     fg = con_fg(f,FG_GREEN);
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
-                "                          Copyright (C) 1996 - %s\n"
-                "UPX %-10s  Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
-                UPX_VERSION_YEAR,
-#if (ACC_OS_DOS16 || ACC_OS_DOS32)
+                "                          Copyright (C) 1996 - " UPX_VERSION_YEAR "\n"
+                "UPX %-11s Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
+#if defined(UPX_VERSION_GITREV)
+                "git-" UPX_VERSION_GITREV,
+#elif (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
 #elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
                 V("w"),
-#elif 0 && defined(__linux__)
-                V("l"),
 #else
                 UPX_VERSION_STRING,
 #endif
@@ -136,7 +135,7 @@ static void show_all_packers(FILE *f, int verbose)
     {
         const char *fn = pn.names[i].fname;
         const char *sn = pn.names[i].sname;
-        if (verbose)
+        if (verbose > 0)
         {
             con_fprintf(f, "    %-36s %s\n", fn, sn);
         }
@@ -155,7 +154,7 @@ static void show_all_packers(FILE *f, int verbose)
             }
         }
     }
-    if (!verbose && pn.names_count)
+    if (verbose <= 0 && pn.names_count)
         con_fprintf(f, "\n");
 }
 

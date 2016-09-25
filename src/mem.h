@@ -37,14 +37,14 @@
 class MemBuffer
 {
 public:
-    MemBuffer();
-    explicit MemBuffer(unsigned size);
+    MemBuffer() : b(NULL), b_size(0) { }
+    explicit MemBuffer(upx_uint64_t size);
     ~MemBuffer();
 
     static unsigned getSizeForCompression(unsigned uncompressed_size, unsigned extra=0);
     static unsigned getSizeForUncompression(unsigned uncompressed_size, unsigned extra=0);
 
-    void alloc(unsigned size);
+    void alloc(upx_uint64_t size);
     void allocForCompression(unsigned uncompressed_size, unsigned extra=0);
     void allocForUncompression(unsigned uncompressed_size, unsigned extra=0);
 
