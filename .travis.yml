@@ -1,3 +1,6 @@
+# Support for Travis CI -- https://travis-ci.org/
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
 sudo: false
 language: cpp
 
@@ -10,7 +13,7 @@ branches:
     - travis
 
 addons:
-  sources: &apt_sources
+  sources: &S
     - ubuntu-toolchain-r-test
     - llvm-toolchain-precise-3.5
     - llvm-toolchain-precise-3.6
@@ -28,153 +31,114 @@ matrix:
     - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
   include:
     - os: linux
-      compiler: clang
-      env: C=clang-m32 B=debug
-      addons:
-        apt:
-          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
+      compiler: gcc
+      env: C=gcc-4.6-m32
+      addons: { apt: { packages: [ "g++-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.6-m64
+    - os: linux
+      compiler: gcc
+      env: C=gcc-5.4-m32
+      addons: { apt: { sources: *S, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-5.4-m64
+      addons: { apt: { sources: *S, packages: [ "g++-5" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m32
+      addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m64
+      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m32 B=debug
+      addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m64 B=debug
+      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m64 B=debug+sanitize
+      addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-6.2-m64 B=release+valgrind
+      addons: { apt: { sources: *S, packages: [ "g++-6", "valgrind" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-m64 B=debug
+      env: C=clang-3.4-m32
+      addons: { apt: { packages: [ "g++-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-m32
-      addons:
-        apt:
-          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
-    - os: linux
-      compiler: clang
-      env: C=clang-m64
+      env: C=clang-3.4-m64
     - os: linux
       compiler: clang
       env: C=clang-3.5-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.5", "g++-6-multilib", "zlib1g-dev:i386" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.5", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.5-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.5" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.5" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.6-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.6", "g++-6-multilib", "zlib1g-dev:i386" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.6", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.6-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.6" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.6" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.7-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.7", "g++-6-multilib", "zlib1g-dev:i386" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.7", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.7-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.7" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.7" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.8-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.8", "g++-6-multilib", "zlib1g-dev:i386" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.8", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.8-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "clang-3.8" ]
+      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: linux
-      compiler: gcc
-      env: C=gcc-m32
-      addons:
-        apt:
-          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
-    - os: linux
-      compiler: gcc
-      env: C=gcc-m64
-    - os: linux
-      compiler: gcc-5
-      env: C=gcc-5-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-5-multilib", "zlib1g-dev:i386" ]
-    - os: linux
-      compiler: gcc-5
-      env: C=gcc-5-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-5" ]
-    - os: linux
-      compiler: gcc-6
-      env: C=gcc-6-m32
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-6-multilib", "zlib1g-dev:i386" ]
-    - os: linux
-      compiler: gcc-6
-      env: C=gcc-6-m64
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-6" ]
-    - os: linux
-      compiler: gcc-6
-      env: C=gcc-6-m64 B=debug+sanitize
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-6" ]
-    - os: linux
-      compiler: gcc-6
-      env: C=gcc-6-m64 B=debug+valgrind
-      addons:
-        apt:
-          sources: *apt_sources
-          packages: [ "g++-6", "valgrind" ]
+      compiler: clang
+      env: C=clang-3.8-m64 B=scan-build
+      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: osx
       compiler: clang
-      env: C=clang-m32
+      env: C=clang-703-m32
       osx_image: xcode7.3
     - os: osx
       compiler: clang
-      env: C=clang-m64
+      env: C=clang-703-m64
       osx_image: xcode7.3
     - os: osx
       compiler: clang
-      env: C=clang-m32
+      env: C=clang-800-m32
       osx_image: xcode8
     - os: osx
       compiler: clang
-      env: C=clang-m64
+      env: C=clang-800-m64
       osx_image: xcode8
+  allow_failures:
+    - os: linux
+      env: C=gcc-6.2-m64 B=debug+sanitize
 
 install:
-  - DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
+  - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
   - wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
   - git clone https://github.com/upx/upx-testsuite
 
 script:
-  - bash "$TRAVIS_BUILD_DIR/.travis_build.sh"
+  - bash $TRAVIS_BUILD_DIR/.ci/travis_build.sh
+  - bash $TRAVIS_BUILD_DIR/.ci/travis_testsuite.sh
 
 # vim:set ts=2 sw=2 et:
