@@ -2,7 +2,7 @@
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 
-# Support for Travis CI -- https://travis-ci.org/
+# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 source "$TRAVIS_BUILD_DIR/.ci/travis_init.sh" || exit 1

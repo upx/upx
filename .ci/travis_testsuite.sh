@@ -2,7 +2,7 @@
 ## vim:set ts=4 sw=4 et:
 set -e; set -o pipefail
 
-# Support for Travis CI -- https://travis-ci.org/
+# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 source "$TRAVIS_BUILD_DIR/.ci/travis_init.sh" || exit 1
@@ -10,6 +10,11 @@ source "$TRAVIS_BUILD_DIR/.ci/travis_init.sh" || exit 1
 set -x
 
 cd /; cd "$BUILD_DIR" || exit 1
+if test "$ALLOW_FAIL" = "1"; then
+    echo "ALLOW_FAIL=$ALLOW_FAIL"
+    set +e
+    if ! test -x $PWD/upx.out; then exit 0; fi
+fi
 if ! test -x $PWD/upx.out; then exit 1; fi
 
 #

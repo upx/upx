@@ -1,6 +1,6 @@
 ## vim:set ts=4 sw=4 et:
 
-# Support for Travis CI -- https://travis-ci.org/
+# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 umask 022
@@ -14,12 +14,16 @@ BUILD_METHOD="$B"
 
 CC=false CXX=false SCAN_BUILD=false
 case $C in
-    clang-m?? | clang-3.4-m?? | clang-[78][0-9][0-9]-m??)
+    clang | clang-m?? | clang-3.4-m?? | clang-[78][0-9][0-9]-m??)
+        # standard system compiler
         CC="clang -std=gnu90"; CXX="clang++" ;;
     clang-3.[0-9]-m??)
         v=${C:6:3}; CC="clang-$v -std=gnu90"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
-    gcc-m?? | gcc-4.6-m??)
+    gcc | gcc-m?? | gcc-4.6-m??)
+        # standard system compiler
         CC="gcc -std=gnu90"; CXX="g++" ;;
+    gcc-4.[0-9]-m??)
+        v=${C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
     gcc-[56]-m?? | gcc-[56].[0-9]-m??)
         v=${C:4:1}; CC="gcc-$v -std=gnu90"; CXX="g++-$v" ;;
 esac

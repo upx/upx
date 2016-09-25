@@ -1,4 +1,4 @@
-# Support for Travis CI -- https://travis-ci.org/
+# Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 sudo: false
@@ -32,6 +32,14 @@ matrix:
   include:
     - os: linux
       compiler: gcc
+      env: C=gcc-4.4-m32
+      addons: { apt: { sources: *S, packages: [ "g++-4.4-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.4-m64
+      addons: { apt: { sources: *S, packages: [ "g++-4.4" ] } }
+    - os: linux
+      compiler: gcc
       env: C=gcc-4.6-m32
       addons: { apt: { packages: [ "g++-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
@@ -39,35 +47,35 @@ matrix:
       env: C=gcc-4.6-m64
     - os: linux
       compiler: gcc
-      env: C=gcc-5.4-m32
+      env: C=gcc-5-m32
       addons: { apt: { sources: *S, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-5.4-m64
+      env: C=gcc-5-m64
       addons: { apt: { sources: *S, packages: [ "g++-5" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m32
+      env: C=gcc-6-m32
       addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m64
+      env: C=gcc-6-m64
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m32 B=debug
+      env: C=gcc-6-m32 B=debug
       addons: { apt: { sources: *S, packages: [ "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m64 B=debug
+      env: C=gcc-6-m64 B=debug
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m64 B=debug+sanitize
+      env: C=gcc-6-m64 B=debug+sanitize
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6.2-m64 B=release+valgrind
+      env: C=gcc-6-m64 B=valgrind
       addons: { apt: { sources: *S, packages: [ "g++-6", "valgrind" ] } }
     - os: linux
       compiler: clang
@@ -130,12 +138,12 @@ matrix:
       osx_image: xcode8
   allow_failures:
     - os: linux
-      env: C=gcc-6.2-m64 B=debug+sanitize
+      env: C=gcc-6-m64 B=debug+sanitize
 
 install:
   - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
-  - wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
-  - git clone https://github.com/upx/upx-testsuite
+  - travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+  - travis_retry git clone https://github.com/upx/upx-testsuite
 
 script:
   - bash $TRAVIS_BUILD_DIR/.ci/travis_build.sh
