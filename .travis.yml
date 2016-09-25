@@ -1,21 +1,38 @@
 sudo: false
 language: cpp
 
+notifications:
+  email: false
+
 branches:
   only:
     - devel
     - travis
 
+addons:
+  sources: &apt_sources
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.5
+    - llvm-toolchain-precise-3.6
+    - llvm-toolchain-precise-3.7
+    - llvm-toolchain-precise-3.8
+
+env:
+  global:
+    - C= B=
+  matrix:
+    - TRAVIS_EMPTY_JOB_WORKAROUND=true
+
 matrix:
+  exclude:
+    - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
   include:
     - os: linux
       compiler: clang
       env: C=clang-m32 B=debug
       addons:
         apt:
-          packages:
-            - g++-multilib
-            - zlib1g-dev:i386
+          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
     - os: linux
       compiler: clang
       env: C=clang-m64 B=debug
@@ -24,20 +41,72 @@ matrix:
       env: C=clang-m32
       addons:
         apt:
-          packages:
-            - g++-multilib
-            - zlib1g-dev:i386
+          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
     - os: linux
       compiler: clang
       env: C=clang-m64
+    - os: linux
+      compiler: clang
+      env: C=clang-3.5-m32
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.5", "g++-6-multilib", "zlib1g-dev:i386" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.5-m64
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.5" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.6-m32
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.6", "g++-6-multilib", "zlib1g-dev:i386" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.6-m64
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.6" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.7-m32
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.7", "g++-6-multilib", "zlib1g-dev:i386" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.7-m64
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.7" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.8-m32
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.8", "g++-6-multilib", "zlib1g-dev:i386" ]
+    - os: linux
+      compiler: clang
+      env: C=clang-3.8-m64
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "clang-3.8" ]
     - os: linux
       compiler: gcc
       env: C=gcc-m32
       addons:
         apt:
-          packages:
-            - g++-multilib
-            - zlib1g-dev:i386
+          packages: [ "g++-multilib", "zlib1g-dev:i386" ]
     - os: linux
       compiler: gcc
       env: C=gcc-m64
@@ -46,62 +115,62 @@ matrix:
       env: C=gcc-5-m32
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5-multilib
-            - zlib1g-dev:i386
+          sources: *apt_sources
+          packages: [ "g++-5-multilib", "zlib1g-dev:i386" ]
     - os: linux
       compiler: gcc-5
       env: C=gcc-5-m64
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
+          sources: *apt_sources
+          packages: [ "g++-5" ]
     - os: linux
       compiler: gcc-6
       env: C=gcc-6-m32
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6-multilib
-            - zlib1g-dev:i386
+          sources: *apt_sources
+          packages: [ "g++-6-multilib", "zlib1g-dev:i386" ]
     - os: linux
       compiler: gcc-6
       env: C=gcc-6-m64
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
+          sources: *apt_sources
+          packages: [ "g++-6" ]
     - os: linux
       compiler: gcc-6
-      # FIXME: linking fails - need updated binutils?
-      env: C=gcc-6-m64 B=sanitize ALLOW_FAIL=1
+      env: C=gcc-6-m64 B=debug+sanitize
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
+          sources: *apt_sources
+          packages: [ "g++-6" ]
+    - os: linux
+      compiler: gcc-6
+      env: C=gcc-6-m64 B=debug+valgrind
+      addons:
+        apt:
+          sources: *apt_sources
+          packages: [ "g++-6", "valgrind" ]
     - os: osx
       compiler: clang
-      env: C=clang-m64 B=debug
-      #osx_image: xcode7
+      env: C=clang-m32
+      osx_image: xcode7.3
     - os: osx
       compiler: clang
-      # FIXME: linking fails with "ld: internal error: atom not found"
-      env: C=clang-m64 B=release ALLOW_FAIL=1
-      #osx_image: xcode7
+      env: C=clang-m64
+      osx_image: xcode7.3
+    - os: osx
+      compiler: clang
+      env: C=clang-m32
+      osx_image: xcode8
+    - os: osx
+      compiler: clang
+      env: C=clang-m64
+      osx_image: xcode8
 
 install:
-  - DEPS_DIR="$TRAVIS_BUILD_DIR/deps"
-  - mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
+  - DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
   - wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
   - git clone https://github.com/upx/upx-testsuite
 

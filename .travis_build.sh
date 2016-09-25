@@ -10,6 +10,18 @@ BUILD_METHOD="$B"
 case $C in
     clang-m32) CC="clang -m32"; CXX="clang++ -m32" ;;
     clang-m64) CC="clang -m64"; CXX="clang++ -m64" ;;
+    clang-3.4-m32) CC="clang-3.4 -m32"; CXX="clang++-3.4 -m32" ;;
+    clang-3.4-m64) CC="clang-3.4 -m64"; CXX="clang++-3.4 -m64" ;;
+    clang-3.5-m32) CC="clang-3.5 -m32"; CXX="clang++-3.5 -m32" ;;
+    clang-3.5-m64) CC="clang-3.5 -m64"; CXX="clang++-3.5 -m64" ;;
+    clang-3.6-m32) CC="clang-3.6 -m32"; CXX="clang++-3.6 -m32" ;;
+    clang-3.6-m64) CC="clang-3.6 -m64"; CXX="clang++-3.6 -m64" ;;
+    clang-3.7-m32) CC="clang-3.7 -m32"; CXX="clang++-3.7 -m32" ;;
+    clang-3.7-m64) CC="clang-3.7 -m64"; CXX="clang++-3.7 -m64" ;;
+    clang-3.8-m32) CC="clang-3.8 -m32"; CXX="clang++-3.8 -m32" ;;
+    clang-3.8-m64) CC="clang-3.8 -m64"; CXX="clang++-3.8 -m64" ;;
+    clang-3.9-m32) CC="clang-3.9 -m32"; CXX="clang++-3.9 -m32" ;;
+    clang-3.9-m64) CC="clang-3.9 -m64"; CXX="clang++-3.9 -m64" ;;
     gcc-m32) CC="gcc -m32"; CXX="g++ -m32" ;;
     gcc-m64) CC="gcc -m64"; CXX="g++ -m64" ;;
     gcc-5-m32) CC="gcc-5 -m32"; CXX="g++-5 -m32" ;;
@@ -71,23 +83,27 @@ mkdir -p "$BUILD_DIR"
 
 # build UCL
 cd /; cd "$UPX_UCLDIR" || exit 1
-./configure --enable-static --disable-shared
+./configure --enable-static --disable-shared --disable-asm
 make
 
 # build UPX
 cd /; cd "$BUILD_DIR" || exit 1
-f="EXTRA_CPPFLAGS=-DUCL_NO_ASM"
-make="make -f $TRAVIS_BUILD_DIR/src/Makefile $f"
+export EXTRA_CPPFLAGS="-DUCL_NO_ASM"
+case $BUILD_METHOD in
+*sanitize) case $CC in gcc*) export EXTRA_LDFLAGS="-fuse-ld=gold" ;; esac ;;
+*valgrind) export EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DWITH_VALGRIND" ;;
+esac
+make="make -f $TRAVIS_BUILD_DIR/src/Makefile"
 if test "X$ALLOW_FAIL" = "X1"; then
     echo "ALLOW_FAIL=$ALLOW_FAIL"
     set +e
 fi
 case $BUILD_METHOD in
-debug)
+debug | debug+valgrind)
     $make USE_DEBUG=1 ;;
 debug+sanitize)
     $make USE_DEBUG=1 USE_SANITIZE=1 ;;
-release)
+release | release+valgrind | valgrind)
     $make ;;
 sanitize)
     $make USE_SANITIZE=1 ;;
@@ -111,6 +127,9 @@ if test "X$TRAVIS_OS_NAME" = "Xosx"; then
     checksum=true # TODO: travis-osx does not have md5sum and friends?
 fi
 upx="$PWD/upx.out"
+case $BUILD_METHOD in
+*valgrind) upx="valgrind $upx" ;;
+esac
 upx_391=false
 if test "X$TRAVIS_OS_NAME" = "Xlinux"; then
     cp "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files/packed/amd64-linux.elf/upx-3.91" upx391.out
