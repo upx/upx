@@ -659,8 +659,7 @@ upx_main(
             err_exit(18);
         }
         for (;;) { // possibly 2 times for 'fat' binary
-            unsigned const fatmax = sizeof(Fat_header) + 10 * sizeof(Fat_arch);
-            if (fatmax!=pread(fdi, (void *)mhdr, fatmax, fat_offset)) {
+            if (sz_mhdr!=pread(fdi, (void *)mhdr, sz_mhdr, fat_offset)) {
 ERR_LAB
                 err_exit(19);
             }
