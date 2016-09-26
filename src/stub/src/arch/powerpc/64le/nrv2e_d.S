@@ -1,4 +1,4 @@
-/* ppc_d_nrv2e.S -- PowerPC decompressor for NRV2E
+/* ppc_d_nrv2e.S -- ppc64le decompressor for NRV2E
 
    This file is part of the UPX executable compressor.
 
@@ -60,10 +60,10 @@
 
    beql-: branch and link [call subroutine] if cr0 is eq, unlikely
 */
-#define jnextb0y  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32; blt+
-#define jnextb0n  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32; blt-
-#define jnextb1y  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32; bgt+
-#define jnextb1n  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32; bgt-
+#define jnextb0y  cmpld bits,hibit; add bits,bits,bits; beql- get32; blt+
+#define jnextb0n  cmpld bits,hibit; add bits,bits,bits; beql- get32; blt-
+#define jnextb1y  cmpld bits,hibit; add bits,bits,bits; beql- get32; bgt+
+#define jnextb1n  cmpld bits,hibit; add bits,bits,bits; beql- get32; bgt-
 
 #undef  getnextb
 /* rotate next bit into bottom bit of reg */
@@ -84,12 +84,11 @@ get32:
 #endif  /*}*/
 
         rldicr  bits,bits,32,31        // upper bits
-        cmpl    0,1,bits,hibit  // cr0  for   jnextb
-        addc bits,bits,bits  // CArry for getnextb
-//        ori  bits,bits,1  // the flag bit
-        li        t2,1
-        rldicr t2,t2,32,31
-        or    bits,bits,t2  // the flag bit
+        cmpld   bits,hibit  // cr0  for   jnextb
+        addc    bits,bits,bits  // CArry for getnextb
+        li      t2,1
+        rldicr  t2,t2,32,31
+        or      bits,bits,t2  // the flag bit
         ret
 
 lit_n2e:

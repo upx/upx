@@ -42,7 +42,7 @@
         lis hibit,0x8000  // 0x80000000 for detecting next bit
         rldicr  hibit,hibit,32,31        // upper bits
         lis  bits,0x8000 // prepare for first load
-        rldicr  hibit,hibit,32,31        // upper bits
+        rldicr  bits,bits,32,31        // upper bits
         addi src,src,-1  // prepare for 'lbzu'
         addi dst,dst,-1  // prepare for 'stbu'
         li disp,-1  // initial displacement
@@ -68,11 +68,14 @@
 #define getnextb(reg) call get1; adde. reg,reg,reg
 
 get1:
-        cmpl  cr0,1,bits,hibit  // cr0  for   jnextb
-        addc bits,bits,bits  // CArry for getnextb
+        cmpld  bits,hibit  // cr0  for   jnextb
+        addc   bits,bits,bits  // CArry for getnextb
         bnelr+ cr0  // return if reload not needed; likely 31/32
 
 /* CArry has been set from adding 0x80000000 to itself; preserve for 'adde' */
+        li     t2,0
+        adde   t2,t2,t2 // CArry was set from adding 0x80000000 to itself
+        rldicr t2,t2,32,31
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  // lo8
@@ -87,8 +90,9 @@ get1:
 #endif  /*}*/
 
         rldicr  bits,bits,32,31        // upper bits
-        cmpl  cr0,1,bits,hibit  // cr0  for   jnextb
-        adde bits,bits,bits  // CArry for getnextb; set lo bit from CarryIn
+        cmpld   bits,hibit  // cr0  for   jnextb
+        addc    bits,bits,bits  // CArry for getnextb; set lo bit from CarryIn
+        add     bits,bits,t2
         ret
 
 lit_n2b:
@@ -106,12 +110,12 @@ offmore_n2b:
         addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
         li len,0
         blt- offprev_n2b
-        lbzu t0,1(src)
         rlwinm off,off,8,0,31-8  // off<<=8;
+        lbzu t0,1(src)
+        nor. disp,off,t0  // disp = -(1+ (off|t0));
         li        t2,-1
         rldicr t2,t2,32,31       // 0xffffffff00000000 mask
-        or        off,off,t2     // simulate 32bits extended to 64 bits
-        nor. disp,off,t0  // disp = -(1+ (off|t0));
+        cmpd   disp,t2
         beq- eof_nrv
 
 offprev_n2b:  // In: 0==len

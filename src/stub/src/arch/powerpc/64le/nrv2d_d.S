@@ -42,7 +42,7 @@
         lis hibit,0x8000  // 0x80000000 for detecting next bit
         rldicr  hibit,hibit,32,31        // upper bits
         lis  bits,0x8000 // prepare for first load
-        rldicr  hibit,hibit,32,31        // upper bits
+        rldicr  bits,bits,32,31        // upper bits
         addi src,src,-1  // prepare for 'lbzu'
         addi dst,dst,-1  // prepare for 'stbu'
         li disp,-1  // initial displacement
@@ -60,10 +60,10 @@
 
    beql-: branch and link [call subroutine] if cr0 is eq, unlikely
 */
-#define jnextb0y  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32d; blt+
-#define jnextb0n  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32d; blt-
-#define jnextb1y  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32d; bgt+
-#define jnextb1n  cmpl 0,1,bits,hibit; add bits,bits,bits; beql- get32d; bgt-
+#define jnextb0y  cmpld bits,hibit; add bits,bits,bits; beql- get32d; blt+
+#define jnextb0n  cmpld bits,hibit; add bits,bits,bits; beql- get32d; blt-
+#define jnextb1y  cmpld bits,hibit; add bits,bits,bits; beql- get32d; bgt+
+#define jnextb1n  cmpld bits,hibit; add bits,bits,bits; beql- get32d; bgt-
 
 #undef  getnextb
 /* rotate next bit into bottom bit of reg, set CC on entire result */
@@ -84,9 +84,11 @@ get32d:
 #endif  /*}*/
 
         rldicr  bits,bits,32,31        // upper bits
-        cmpl    0,bits,hibit  // cr0  for   jnextb
-        addc bits,bits,bits  // CArry for getnextb
-        ori  bits,bits,1  // the flag bit
+        cmpld   bits,hibit  // cr0  for   jnextb
+        addc    bits,bits,bits  // CArry for getnextb
+        li      t2,1  // flag bit on upper bit pos
+        rldicr  t2,t2,32,31
+        or      bits,bits,t2  // the flag bit
         ret
 
 lit_n2d:
@@ -109,14 +111,12 @@ getoff_n2d:
         li len,0
         addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
         rlwinm off,off,8,0,31-8  // off<<=8;
-        li        t2,-1
-        rldicr t2,t2,32,31       // 0xffffffff00000000 mask
-        or        off,off,t2     // simulate 32bits extended to 64 bits
         blt- offprev_n2d
         lbzu t0,1(src)
         nor. disp,off,t0  // disp = -(1+ (off|t0));
         srawi disp,disp,1  // shift off low bit (sets CArry)
-        beq- eof_nrv  // test the 'nor'
+        cmpdi disp,0  // test result of srawi instead of nor.
+        beq-  eof_nrv  //
         b len_n2d -4  // CHEAT [getnextb ends "adde. len,len,len"]: bit from srawi
 offprev_n2d:
         getnextb(len)
