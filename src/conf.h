@@ -386,7 +386,7 @@ private:
 #define UPX_F_VMLINUX_PPC64LE   40
 #define UPX_F_DYLIB_PPC64LE     41
 
-#define UPX_F_PLAIN_TEXT        127
+#define UPX_F_PLAIN_TEXT        127             // FIXME: what is this ??
 
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130

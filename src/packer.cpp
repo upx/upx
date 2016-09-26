@@ -62,7 +62,7 @@ Packer::~Packer()
 void Packer::assertPacker() const
 {
     assert(getFormat() > 0);
-    assert(getFormat() <= 255);
+    assert(getFormat() < 255);
     assert(getVersion() >= 11);
     assert(getVersion() <= 14);
     assert(strlen(getName()) <= 15);
@@ -71,6 +71,16 @@ void Packer::assertPacker() const
     assert(strlen(getFullName(NULL)) <= 32);
     if (bele == NULL) fprintf(stderr, "%s\n", getName());
     assert(bele != NULL);
+    if (getFormat() != UPX_F_MACH_FAT) // macho/fat is multiarch
+    {
+        const N_BELE_RTP::AbstractPolicy *format_bele;
+        if (getFormat() < 128)
+            format_bele = &N_BELE_RTP::le_policy;
+        else
+            format_bele = &N_BELE_RTP::be_policy;
+        if (bele != format_bele) fprintf(stderr, "%s\n", getName());
+        assert(bele == format_bele);
+    }
 #if 1
     Linker *l = newLinker();
     if (bele != l->bele) fprintf(stderr, "%s\n", getName());
