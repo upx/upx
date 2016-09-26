@@ -381,6 +381,11 @@ private:
 
 #define UPX_F_MACH_ARM64EL      37
 
+#define UPX_F_MACH_PPC64LE      38
+#define UPX_F_LINUX_ELFPPC64LE  39
+#define UPX_F_VMLINUX_PPC64LE   40
+#define UPX_F_DYLIB_PPC64LE     41
+
 #define UPX_F_PLAIN_TEXT        127
 
 #define UPX_F_ATARI_TOS         129
@@ -393,11 +398,6 @@ private:
 #define UPX_F_VMLINUX_PPC32     136
 #define UPX_F_LINUX_ELF32_MIPSEB 137
 #define UPX_F_DYLIB_PPC32       138
-
-#define UPX_F_MACH_PPC64LE      140
-#define UPX_F_LINUX_ELFPPC64LE  141
-#define UPX_F_VMLINUX_PPC64LE   142
-#define UPX_F_DYLIB_PPC64LE     143
 
 
 // compression methods
