@@ -384,7 +384,11 @@ void show_version(int x)
     UNUSED(x);
     UNUSED(v);
 
-    fprintf(fp, "upx %s\n", UPX_VERSION_STRING);
+    fprintf(fp, "upx %s\n", UPX_VERSION_STRING
+#if defined(UPX_VERSION_GITREV)
+            "-" UPX_VERSION_GITREV
+#endif
+           );
 #if (WITH_NRV)
     v = upx_nrv_version_string();
     if (v != NULL && v[0])

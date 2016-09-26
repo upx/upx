@@ -37,7 +37,10 @@ if test "$TRAVIS_OS_NAME" = "linux"; then
     cp "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files/packed/amd64-linux.elf/upx-3.91" upx391.out
     upx_391="$PWD/upx391.out"
 fi
+
+$upx --version
 $upx --help
+
 cd /; cd "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files" || exit 1
 ls -l            packed/*/upx-3.91*
 $upx -l          packed/*/upx-3.91*

@@ -1353,6 +1353,7 @@ __acc_static_noinline void upx_sanity_check(void)
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
     assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE)-1 - 4], UPX_VERSION_YEAR, 4) == 0);
 #if defined(UPX_VERSION_GITREV)
+    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_GITREV) <= 7 + 1)
     assert(strlen(UPX_VERSION_GITREV) >= 5);
     assert(strlen(UPX_VERSION_GITREV) <= 7);
 #endif
