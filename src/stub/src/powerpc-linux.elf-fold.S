@@ -80,11 +80,12 @@ L90:
         addi r29,r29,-8  // &our_Elf32_Ehdr
         addi a1,a1,-(szElf32_Ehdr + 2*szElf32_Phdr)
         addi a0,r29,(szElf32_Ehdr + 2*szElf32_Phdr)  // &{l_info; p_info; b_info}
+        lwz  a7,23*4(sp)  // pagesize
         addi sp,sp,-(LINKAREA+OVERHEAD)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
         call upx_main  // Out: a0= entry
         /* entry= upx_main(l_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
-      f_decomp a4, f_unf a5, Elf32_auxv_t *a6)
+      f_decomp a4, f_unf a5, Elf32_auxv_t *a6, page_size a7)
 */
         mr r31,a0  // save &entry
 
