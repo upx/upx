@@ -47,7 +47,7 @@ upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
-UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=6 HEAD || echo 'ERROR'))
+UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
 ifneq ($(UPX_VERSION_GITREV),)
 x := $(strip $(shell cd '$(top_srcdir)' && git diff --exit-code HEAD >/dev/null && echo '' || echo '+'))
 DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)$(x)"'
@@ -128,6 +128,7 @@ else ifeq ($(MAKECMDGOALS),maintainer-clean)
 else ifeq ($(MAKECMDGOALS),clang-format)
 else
 -include .depend
+help$(objext): $(MAKEFILE_LIST)
 endif
 
 

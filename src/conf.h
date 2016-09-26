@@ -670,6 +670,7 @@ void do_files(int i, int argc, char *argv[]);
 
 
 // help.cpp
+extern const char gitrev[];
 void show_head(void);
 void show_help(int verbose=0);
 void show_license(void);

@@ -1352,11 +1352,12 @@ __acc_static_noinline void upx_sanity_check(void)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
     assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE)-1 - 4], UPX_VERSION_YEAR, 4) == 0);
-#if defined(UPX_VERSION_GITREV)
-    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_GITREV) <= 7 + 1)
-    assert(strlen(UPX_VERSION_GITREV) >= 5);
-    assert(strlen(UPX_VERSION_GITREV) <= 7);
-#endif
+    if (gitrev[0]) {
+        size_t revlen = strlen(gitrev);
+        if (strncmp(gitrev, "ERROR", 5) == 0) { assert(revlen == 5 || revlen == 6); }
+        else { assert(revlen == 12 || revlen == 13); }
+        if (revlen == 6 || revlen == 13) { assert(gitrev[revlen-1] == '+'); }
+    }
 
 #if 1
     assert(TestBELE<LE16>::test());
@@ -1553,7 +1554,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
-#if 1 && defined(UPX_VERSION_GITREV)
+    if (gitrev[0])
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);
@@ -1561,7 +1562,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
         fg = con_fg(f,fg);
         UNUSED(fg);
     }
-#endif
 
 #if 0 && defined(__GLIBC__)
     //malloc_stats();
