@@ -5,7 +5,9 @@ sudo: false
 language: cpp
 
 notifications:
-  email: false
+  email:
+    on_success: never
+    on_failure: change
 
 branches:
   only:
@@ -47,6 +49,10 @@ matrix:
       env: C=gcc-4.6-m64
     - os: linux
       compiler: gcc
+      env: C=gcc-4.6-m64 B=coverage
+      addons: { apt: { packages: [ lcov ] } }
+    - os: linux
+      compiler: gcc
       env: C=gcc-5-m32
       addons: { apt: { sources: *S, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
@@ -80,7 +86,7 @@ matrix:
     - os: linux
       compiler: gcc
       env: C=gcc-6-m64 B=valgrind
-      addons: { apt: { sources: *S, packages: [ "g++-6", "valgrind" ] } }
+      addons: { apt: { sources: *S, packages: [ "g++-6", valgrind ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.4-m32
@@ -164,16 +170,26 @@ matrix:
       osx_image: xcode8
 
 install:
-  - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
-  - travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
-  - travis_retry git clone https://github.com/upx/upx-testsuite
+  - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps
+  - cd ../deps && travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+  - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
   - |
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    cd /
+    if [[ $TRAVIS_OS_NAME == linux ]]; then
+      case $B in coverage | coverage+* | *+coverage | *+coverage+*)
+        travis_retry pip install --user cpp-coveralls ;;
+      esac
+    fi
+    if [[ $TRAVIS_OS_NAME == osx ]]; then
       if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
+      case $B in coverage | coverage+* | *+coverage | *+coverage+*)
+        travis_retry brew install lcov
+        travis_retry pip install --user cpp-coveralls ;;
+      esac
     fi
 
 script:
-  - bash $TRAVIS_BUILD_DIR/.github/travis_build.sh
-  - bash $TRAVIS_BUILD_DIR/.github/travis_testsuite.sh
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite.sh
 
 # vim:set ts=2 sw=2 et:

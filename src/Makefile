@@ -20,7 +20,7 @@ endif
 
 .SUFFIXES:
 export SHELL = /bin/sh
-override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
+override e = $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
 
 ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
 $(error GNU make 3.81 or better is required)
@@ -69,7 +69,6 @@ ifdef USE_DEBUG
 CXXFLAGS += -O0 -g
 else
 CXXFLAGS += -O2
-LDFLAGS += -s
 endif
 # protect against security threats caused by misguided C++ compiler "optimizations"
 ifeq ($(findstring clang,$(CXX)),)

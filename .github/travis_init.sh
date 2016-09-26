@@ -3,17 +3,11 @@
 # Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
+#set -x # debug
 umask 022
-cd /; cd "$TRAVIS_BUILD_DIR" || exit 1
-
-if test "X$C" = "X"; then C=gcc; fi
-BUILD_DIR="$TRAVIS_BUILD_DIR/build/$C"
-mkdir -p "$BUILD_DIR"
-
-if test "X$B" = "X"; then B=release; fi
-BUILD_METHOD="$B"
 
 CC=false CXX=false SCAN_BUILD=false
+[[ -z $C ]] && C=gcc
 case $C in
     clang | clang-m?? | clang-3.4-m?? | clang-[678][0-9][0-9]-m??)
         # standard system compiler
@@ -37,4 +31,32 @@ case $C in
 esac
 export CC CXX
 
-export UPX_UCLDIR="$TRAVIS_BUILD_DIR/deps/ucl-1.03"
+[[ -z $B ]] && B=release
+BUILD_METHOD="$B"
+
+# dirs
+[[ -z $upx_SRCDIR ]] && upx_SRCDIR="$PWD"
+[[ -z $ucl_SRCDIR ]] && ucl_SRCDIR="$PWD/../deps/ucl-1.03"
+[[ -z $upx_testsuite_SRCDIR ]] && upx_testsuite_SRCDIR="$PWD/../deps/upx-testsuite"
+
+[[ -z $tmake_top_builddir ]] && tmake_top_builddir="$PWD/../build"
+[[ -z $tmake_top_bdir ]] && tmake_top_bdir="$tmake_top_builddir/$C/$B"
+upx_BUILDDIR="$tmake_top_bdir/upx"
+ucl_BUILDDIR="$tmake_top_bdir/ucl-1.03"
+upx_testsuite_BUILDDIR="$tmake_top_bdir/upx-testsuite"
+# tools
+lcov_OUTPUTDIR="$tmake_top_bdir/.lcov-results"
+
+mkdir -p -v $upx_BUILDDIR $ucl_BUILDDIR $upx_testsuite_BUILDDIR
+[[ -d $tmake_top_bdir/.mfxnobackup ]] || echo "timestamp" > $tmake_top_bdir/.mfxnobackup
+
+export UPX_UCLDIR="$ucl_SRCDIR"
+
+# check dirs
+cd / && cd $ucl_BUILDDIR || exit 1
+cd / && cd $ucl_SRCDIR || exit 1
+cd / && cd $upx_testsuite_BUILDDIR || exit 1
+cd / && cd $upx_testsuite_SRCDIR || exit 1
+cd / && cd $upx_BUILDDIR || exit 1
+# enter srcdir
+cd / && cd $upx_SRCDIR || exit 1

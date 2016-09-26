@@ -5,17 +5,17 @@ set -e; set -o pipefail
 # Support for Travis CI -- https://travis-ci.org/upx/upx/builds
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
-source "$TRAVIS_BUILD_DIR/.github/travis_init.sh" || exit 1
+source ./.github/travis_init.sh || exit 1
 
 set -x
 
-cd /; cd "$BUILD_DIR" || exit 1
-if test "$ALLOW_FAIL" = "1"; then
+cd $upx_BUILDDIR || exit 1
+if [[ $ALLOW_FAIL == 1 ]]; then
     echo "ALLOW_FAIL=$ALLOW_FAIL"
     set +e
-    if ! test -x $PWD/upx.out; then exit 0; fi
+    if [[ ! -x $PWD/upx.out ]]; then exit 0; fi
 fi
-if ! test -x $PWD/upx.out; then exit 1; fi
+if [[ ! -x $PWD/upx.out ]]; then exit 1; fi
 
 #
 # very first version of the upx-testsuite
@@ -24,61 +24,96 @@ if ! test -x $PWD/upx.out; then exit 1; fi
 exit_code=0
 
 sha256sum=sha256sum
-if test "$TRAVIS_OS_NAME" = "osx"; then
+if [[ $TRAVIS_OS_NAME == osx ]]; then
     sha256sum=gsha256sum # brew install coreutils
 fi
-upx="$PWD/upx.out"
-case $BUILD_METHOD in
-    valgrind | valgrind+* | *+valgrind | *+valgrind+*)
-        upx="valgrind --leak-check=full --show-reachable=yes $upx" ;;
+upx=$PWD/upx.out
+case $BUILD_METHOD in valgrind | valgrind+* | *+valgrind | *+valgrind+*)
+    upx="valgrind --leak-check=full --show-reachable=yes $upx" ;;
 esac
-upx_391=false
-if test "$TRAVIS_OS_NAME" = "linux"; then
-    cp "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files/packed/amd64-linux.elf/upx-3.91" upx391.out
-    upx_391="$PWD/upx391.out"
+upx_391=
+if [[ $TRAVIS_OS_NAME == linux ]]; then
+    rm -f upx391.out
+    cp $upx_testsuite_SRCDIR/files/packed/amd64-linux.elf/upx-3.91 upx391.out
+    upx_391="$PWD/upx391.out --fake-stub-version=3.92 --fake-stub-year=2016"
 fi
+
+case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
+    lcov -d $upx_BUILDDIR --zerocounters ;;
+esac
 
 $upx --version
 $upx --help
 
-cd /; cd "$TRAVIS_BUILD_DIR/deps/upx-testsuite/files" || exit 1
+cd $upx_testsuite_SRCDIR/files || exit 1
 ls -l            packed/*/upx-3.91*
 $upx -l          packed/*/upx-3.91*
 $upx --file-info packed/*/upx-3.91*
 $upx -t          packed/*/upx-3.91*
-for f in packed/*/upx-3.91*; do
+cd $upx_testsuite_BUILDDIR || exit 1
+rm -rf ./t
+for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
     echo "===== $f"
-    if test "$TRAVIS_OS_NAME" = "linux"; then
-        $upx_391 -d $f -o v391.tmp
-        $upx     -d $f -o v392.tmp
-        $sha256sum v391.tmp v392.tmp
-        cmp -s v391.tmp v392.tmp
-        $upx_391 --lzma --fake-stub-version=3.92 --fake-stub-year=2016 v391.tmp -o v391_packed.tmp
-        $upx     --lzma                                                v392.tmp -o v392_packed.tmp
-        $sha256sum v391_packed.tmp v392_packed.tmp
+    mkdir -p ./t
+    if [[ -n $upx_391 ]]; then
+        $upx_391 -d $f -o t/v391
+        $upx     -d $f -o t/v392
+        $sha256sum t/v391 t/v392
+        cmp -s t/v391 t/v392
+        $upx_391 --lzma t/v391 -o t/v391_packed
+        $upx     --lzma t/v392 -o t/v392_packed
+        $sha256sum t/v391_packed t/v392_packed
     else
-        $upx     -d $f -o v392.tmp
-        $sha256sum v392.tmp
-        $upx     --lzma                                                v392.tmp -o v392_packed.tmp
-        $sha256sum v392_packed.tmp
+        $upx     -d $f -o t/v392
+        $sha256sum t/v392
+        $upx     --lzma t/v392 -o t/v392_packed
+        $sha256sum t/v392_packed
     fi
-    $upx -d v392_packed.tmp -o v392_decompressed.tmp
+    $upx -d t/v392_packed -o t/v392_decompressed
     # after the first compression+decompression step the exe should be
     # canonicalized so that further compression+decompression runs
     # should yield identical results
-    if ! cmp -s v392.tmp v392_decompressed.tmp; then
+    if ! cmp -s t/v392 t/v392_decompressed; then
         # UPX 3.91 and 3.92 differ; run one more compression+decompression
-        ls -l v392.tmp v392_decompressed.tmp
+        ls -l t/v392 t/v392_decompressed
         echo "UPX-WARNING: $f"
-        $upx v392_decompressed.tmp -o v392_packed_2.tmp
-        $upx -d v392_packed_2.tmp -o v392_decompressed_2.tmp
-        if ! cmp -s v392_decompressed.tmp v392_decompressed_2.tmp; then
-            ls -l v392_decompressed.tmp v392_decompressed_2.tmp
+        $upx t/v392_decompressed -o t/v392_packed_2
+        $upx -d t/v392_packed_2 -o t/v392_decompressed_2
+        if ! cmp -s t/v392_decompressed t/v392_decompressed_2; then
+            ls -l t/v392_decompressed t/v392_decompressed_2
             echo "UPX-ERROR: $f"
             exit_code=1
         fi
     fi
-    rm *.tmp
+    #
+    u391=$upx_391
+    [[ -z $u391 ]] && u391=true
+    x=t/v392
+    $u391 --lzma -2 $x -o t/x_v391_lzma2
+    $upx  --lzma -2 $x -o t/x_v392_lzma2
+    $u391 --lzma -2 --small $x -o t/x_v391_lzma2_small
+    $upx  --lzma -2 --small $x -o t/x_v392_lzma2_small
+    $u391 --lzma -2 --all-filters $x -o t/x_v391_lzma2_small_all_filters
+    $upx  --lzma -2 --all-filters $x -o t/x_v392_lzma2_small_all_filters
+    ls -l      t/x_v*
+    $upx -t    t/x_v*
+    $sha256sum t/x_v*
+    #
+    rm -rf ./t
 done
+
+case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
+    if [[ -n $TRAVIS_JOB_ID ]]; then
+        cd $upx_SRCDIR || exit 1
+        coveralls -b $upx_BUILDDIR --gcov-options '\-lp' || true
+    else
+        cd $upx_BUILDDIR || exit 1
+        mkdir -p $lcov_OUTPUTDIR
+        lcov -d . --capture -o $lcov_OUTPUTDIR/upx.info
+        cd $lcov_OUTPUTDIR || exit 1
+        genhtml upx.info
+    fi
+    ;;
+esac
 
 exit $exit_code
