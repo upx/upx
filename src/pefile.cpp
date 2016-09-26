@@ -1701,8 +1701,10 @@ void PeFile::Resource::destroy(upx_rnode *node,unsigned level)
         for (int ic = branch->nc; --ic >= 0; )
             destroy(branch->children[ic],level + 1);
         delete [] branch->children; branch->children = NULL;
+        delete static_cast<upx_rbranch *>(node);
     }
-    delete node;
+    else
+        delete static_cast<upx_rleaf *>(node);
 }
 
 static void lame_print_unicode(const upx_byte *p)
