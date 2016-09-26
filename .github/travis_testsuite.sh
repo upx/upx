@@ -23,9 +23,9 @@ if ! test -x $PWD/upx.out; then exit 1; fi
 
 exit_code=0
 
-checksum=sha256sum
+sha256sum=sha256sum
 if test "$TRAVIS_OS_NAME" = "osx"; then
-    checksum=true # TODO: travis-osx does not have md5sum and friends?
+    sha256sum=gsha256sum # brew install coreutils
 fi
 upx="$PWD/upx.out"
 case $BUILD_METHOD in
@@ -51,16 +51,16 @@ for f in packed/*/upx-3.91*; do
     if test "$TRAVIS_OS_NAME" = "linux"; then
         $upx_391 -d $f -o v391.tmp
         $upx     -d $f -o v392.tmp
-        $checksum v391.tmp v392.tmp
+        $sha256sum v391.tmp v392.tmp
         cmp -s v391.tmp v392.tmp
         $upx_391 --lzma --fake-stub-version=3.92 --fake-stub-year=2016 v391.tmp -o v391_packed.tmp
         $upx     --lzma                                                v392.tmp -o v392_packed.tmp
-        $checksum v391_packed.tmp v392_packed.tmp
+        $sha256sum v391_packed.tmp v392_packed.tmp
     else
         $upx     -d $f -o v392.tmp
-        $checksum v392.tmp
+        $sha256sum v392.tmp
         $upx     --lzma                                                v392.tmp -o v392_packed.tmp
-        $checksum v392_packed.tmp
+        $sha256sum v392_packed.tmp
     fi
     $upx -d v392_packed.tmp -o v392_decompressed.tmp
     # after the first compression+decompression step the exe should be

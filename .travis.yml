@@ -138,12 +138,14 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: osx
       compiler: clang
-      # must use debug or else we get "ld: internal error: atom not found" when linking
-      env: C=clang-600-m32 B=debug
+      # must use debug build or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-602-m32 B=debug
+      osx_image: xcode6.4
     - os: osx
       compiler: clang
-      # must use debug or else we get "ld: internal error: atom not found" when linking
-      env: C=clang-600-m64 B=debug
+      # must use debug build or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-602-m64 B=debug
+      osx_image: xcode6.4
     - os: osx
       compiler: clang
       env: C=clang-703-m32
@@ -165,6 +167,10 @@ install:
   - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
   - travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
   - travis_retry git clone https://github.com/upx/upx-testsuite
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
+    fi
 
 script:
   - bash $TRAVIS_BUILD_DIR/.github/travis_build.sh
