@@ -323,7 +323,7 @@ void show_help(int verbose)
         con_fprintf(f,"\nType '%s --help' for more detailed help.\n", progname);
     }
 
-    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
+    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit https://upx.github.io\n"
 //                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
                 "");
 
