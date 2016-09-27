@@ -1,0 +1,47 @@
+# Support for AppVeyor CI -- https://www.appveyor.com/
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+os: Visual Studio 2015
+
+environment:
+  matrix:
+    - APPVEYOR_JOB_ARCH: x64
+    - APPVEYOR_JOB_ARCH: x86
+
+init:
+  - git config --global core.autocrlf input
+
+install:
+  - cd c:\projects
+  - mkdir deps
+  - cd c:\projects\upx
+  - git submodule update --init --recursive
+  - cd c:\projects\deps
+  - appveyor DownloadFile "https://download.freenas.org/distfiles/ucl-1.03.tar.gz"
+  - appveyor DownloadFile "http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz?download"
+  - tar -xzf ucl-1.03.tar.gz
+  - sed -i '/snprintf  *_v*snprintf/d' ucl-1.03/acc/acc_auto.h
+  - tar -xzf zlib-1.2.8.tar.gz
+  - git clone https://github.com/upx/upx-testsuite
+  - if "%APPVEYOR_JOB_ARCH%"=="x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64 )
+  - if "%APPVEYOR_JOB_ARCH%"=="x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 )
+
+build_script:
+  - set DEFS=-D_CRT_SECURE_NO_WARNINGS
+  - cd c:\projects\deps\ucl-1.03
+  - cl -MT -O2 -W4 %DEFS% -Iinclude -I. -c src\*.c
+  - link -lib -out:ucl.lib *.obj
+  - cd c:\projects\deps\zlib-1.2.8
+  - cl -MT -O2 -W3 -wd4131 -wd4996 %DEFS% -I. -c *.c
+  - link -lib -out:zlib.lib *.obj
+  - cd c:\projects\upx\src
+  - cl -MT -EHsc -O2 -W4 -wd4244 %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -Ilzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe *.cpp c:\projects\deps\ucl-1.03\ucl.lib c:\projects\deps\zlib-1.2.8\zlib.lib
+
+test_script:
+  - cd c:\projects\upx\src
+  - .\upx.exe --version
+  - .\upx.exe upx.exe -o upx_packed.exe
+  - dir *.exe
+  - .\upx_packed.exe --version
+
+# vim:set ts=2 sw=2 et:
