@@ -44,7 +44,7 @@
 #define ACC_CFG_USE_NEW_STYLE_CASTS 1
 #endif
 #include "miniacc.h"
-#if !(ACC_CC_CLANG || ACC_CC_GNUC)
+#if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
    // other compilers may work, but we're NOT interested into supporting them
 #  error "only clang and gcc are officially supported"
 #endif
@@ -244,8 +244,13 @@ typedef unsigned char   upx_byte;
 //
 **************************************************************************/
 
+#if (ACC_CC_MSC)
+#define __packed_struct(s)      struct s {
+#define __packed_struct_end()   };
+#else
 #define __packed_struct(s)      __acc_struct_packed(s)
 #define __packed_struct_end()   __acc_struct_packed_end()
+#endif
 
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)

@@ -30,6 +30,10 @@
 #include "compress.h"
 #include "mem.h"
 
+#if (ACC_CC_MSC)
+#  pragma warning(disable: 4456) // -Wno-shadow
+#endif
+
 
 void lzma_compress_config_t::reset()
 {
