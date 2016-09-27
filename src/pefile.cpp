@@ -2272,7 +2272,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     identsize += ic;
 
     const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
-    pe_section_t osection[oobjs];
+    ////pe_section_t osection[oobjs];
+    pe_section_t osection[4];
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
@@ -2466,7 +2467,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     // write loader + compressed file
     fo->write(&oh,sizeof(oh));
-    fo->write(osection,sizeof(osection));
+    fo->write(osection,sizeof(osection[0])*oobjs);
     // some alignment
     if (identsplit == identsize)
     {
@@ -2509,7 +2510,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
 #if 0
     printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
-    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
+    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection[0])*oobjs);
     printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
