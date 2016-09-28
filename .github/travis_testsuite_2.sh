@@ -53,6 +53,7 @@ $upx -t          packed/*/upx-3.91*
 cd $upx_testsuite_BUILDDIR || exit 1
 rm -rf ./t
 for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
+    [[ -d $f ]] && continue
     echo "===== $f"
     mkdir -p ./t
     if [[ -n $upx_391 ]]; then

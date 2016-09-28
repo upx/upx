@@ -27,6 +27,6 @@ dependencies:
 
 test:
   override:
-    - bash ./.github/travis_testsuite.sh
+    - bash ./.github/travis_testsuite_1.sh
 
 # vim:set ts=2 sw=2 et:

@@ -186,6 +186,6 @@ install:
 
 script:
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
-  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite.sh
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite_1.sh
 
 # vim:set ts=2 sw=2 et:
