@@ -163,7 +163,7 @@ int PackVmlinuzI386::decompressKernel()
     unsigned relocated = 0;
 
     // See startup_32: in linux/arch/i386/boot/compressed/head.S
-    const upx_byte *p = &obuf[setup_size];
+    const upx_byte *p;
     unsigned cpa_0 = 0;
     unsigned cpa_1 = 0;
     int j;

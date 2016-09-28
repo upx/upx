@@ -314,6 +314,7 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
 
     len = fpad4(fo);  // MATCH03
+    ACC_UNUSED(len);
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
@@ -1079,6 +1080,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     linker->defineSymbol("LENU", lenu);  // len  for unmap
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     //linker->defineSymbol("ADRU", adru);  // addr for unmap
+    ACC_UNUSED(adru);
 #define EI_NIDENT 16  /* <elf.h> */
     linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
 #undef EI_NIDENT
@@ -1584,6 +1586,7 @@ bool PackLinuxElf32::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1761,6 +1764,7 @@ PackLinuxElf64ppcle::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1936,6 +1940,7 @@ PackLinuxElf64amd::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -2924,6 +2929,7 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 
     linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
+    ACC_UNUSED(adrc);
 
 #define MAP_PRIVATE      2     /* UNIX standard */
 #define MAP_FIXED     0x10     /* UNIX standard */
