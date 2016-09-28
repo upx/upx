@@ -20,7 +20,7 @@ checkout:
 dependencies:
   pre:
     - mkdir -p ../deps
-    - cd ../deps && wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+    - cd ../deps && wget -q -O - https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz | tar -xz
     - cd ../deps && git clone https://github.com/upx/upx-testsuite
   override:
     - bash ./.github/travis_build.sh

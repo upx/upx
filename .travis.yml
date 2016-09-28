@@ -167,7 +167,7 @@ matrix:
 
 install:
   - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps
-  - cd ../deps && travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz | tar -xz
   - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
   - |
     cd /

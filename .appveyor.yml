@@ -23,8 +23,8 @@ install:
   - cd c:\projects\upx
   - git submodule update --init --recursive
   - cd c:\projects\deps
-  - appveyor DownloadFile "https://download.freenas.org/distfiles/ucl-1.03.tar.gz"
-  - appveyor DownloadFile "http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz?download"
+  - appveyor DownloadFile "https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz"
+  - appveyor DownloadFile "https://github.com/upx/upx/files/499381/zlib-1.2.8.tar.gz"
   - tar -xzf ucl-1.03.tar.gz
   - sed -i '/snprintf  *_v*snprintf/d' ucl-1.03/acc/acc_auto.h
   - tar -xzf zlib-1.2.8.tar.gz
