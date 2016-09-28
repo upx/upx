@@ -79,7 +79,10 @@ if [[ $TRAVIS_OS_NAME == osx ]]; then
 fi
 upx=$PWD/upx.out
 if [[ $B =~ (^|\+)valgrind($|\+) ]]; then
-    upx="valgrind --leak-check=full --show-reachable=yes $upx"
+    valgrind_flags="--leak-check=full --show-reachable=yes"
+    valgrind_flags="-q --leak-check=no --error-exitcode=1"
+    valgrind_flags="--leak-check=no --error-exitcode=1"
+    upx="valgrind $valgrind_flags $upx"
 fi
 upx_391=
 if [[ $TRAVIS_OS_NAME == linux ]]; then

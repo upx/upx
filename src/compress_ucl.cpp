@@ -281,6 +281,11 @@ int upx_ucl_test_overlap   ( const upx_bytep buf,
 // misc
 **************************************************************************/
 
+extern "C" {
+static ucl_voidp __UCL_CDECL my_malloc(ucl_uint n) { return calloc(1, n); }
+static void __UCL_CDECL my_free(ucl_voidp p) { free(p); }
+}
+
 int upx_ucl_init(void)
 {
     if (ucl_init() != UCL_E_OK)
@@ -289,6 +294,7 @@ int upx_ucl_init(void)
     if (UCL_VERSION != ucl_version())
         return -2;
 #endif
+    ucl_set_malloc_hooks(my_malloc, my_free);
     return 0;
 }
 
