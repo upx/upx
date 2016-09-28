@@ -7,7 +7,7 @@ set -e; set -o pipefail
 
 source ./.github/travis_init.sh || exit 1
 
-echo "BUILD_METHOD='$BUILD_METHOD'"
+echo "B='$B'"
 echo "UPX_UCLDIR='$UPX_UCLDIR'"
 echo "CC='$CC'"
 echo "CXX='$CXX'"
@@ -74,23 +74,23 @@ cd $upx_BUILDDIR || exit 1
 make="make -f $upx_SRCDIR/src/Makefile"
 EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DUCL_NO_ASM"
 EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$ucl_BUILDDIR/src/.libs"
-case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
+if [[ $B =~ (^|\+)coverage($|\+) ]]; then
     EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS -fprofile-arcs -ftest-coverage"
-    EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fprofile-arcs -ftest-coverage" ;;
-esac
-case $BUILD_METHOD in debug | debug+* | *+debug | *+debug+*)
-    make="$make USE_DEBUG=1" ;;
-esac
-case $BUILD_METHOD in sanitize | sanitize+* | *+sanitize | *+sanitize+*)
+    EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fprofile-arcs -ftest-coverage"
+fi
+if [[ $B =~ (^|\+)debug($|\+) ]]; then
+    make="$make USE_DEBUG=1"
+fi
+if [[ $B =~ (^|\+)sanitize($|\+) ]]; then
     case $TRAVIS_OS_NAME-$CC in linux-gcc*) EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fuse-ld=gold" ;; esac
-    make="$make USE_SANITIZE=1" ;;
-esac
-case $BUILD_METHOD in scan-build | scan-build+* | *+scan-build | *+scan-build+*)
-    make="$SCAN_BUILD $make" ;;
-esac
-case $BUILD_METHOD in valgrind | valgrind+* | *+valgrind | *+valgrind+*)
-    EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DWITH_VALGRIND" ;;
-esac
+    make="$make USE_SANITIZE=1"
+fi
+if [[ $B =~ (^|\+)scan-build($|\+) ]]; then
+    make="$SCAN_BUILD $make"
+fi
+if [[ $B =~ (^|\+)valgrind($|\+) ]]; then
+    EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DWITH_VALGRIND"
+fi
 if [[ $ALLOW_FAIL == 1 ]]; then
     echo "ALLOW_FAIL=$ALLOW_FAIL"
     set +e

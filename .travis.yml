@@ -49,10 +49,6 @@ matrix:
       env: C=gcc-4.6-m64
     - os: linux
       compiler: gcc
-      env: C=gcc-4.6-m64 B=coverage
-      addons: { apt: { packages: [ lcov ] } }
-    - os: linux
-      compiler: gcc
       env: C=gcc-5-m32
       addons: { apt: { sources: *S, packages: [ "g++-5-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
@@ -176,16 +172,16 @@ install:
   - |
     cd /
     if [[ $TRAVIS_OS_NAME == linux ]]; then
-      case $B in coverage | coverage+* | *+coverage | *+coverage+*)
-        travis_retry pip install --user cpp-coveralls ;;
-      esac
+      if [[ $B =~ (^|\+)coverage($|\+) ]]; then
+        travis_retry pip install --user cpp-coveralls
+      fi
     fi
     if [[ $TRAVIS_OS_NAME == osx ]]; then
       if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
-      case $B in coverage | coverage+* | *+coverage | *+coverage+*)
+      if [[ $B =~ (^|\+)coverage($|\+) ]]; then
         travis_retry brew install lcov
-        travis_retry pip install --user cpp-coveralls ;;
-      esac
+        travis_retry pip install --user cpp-coveralls
+      fi
     fi
 
 script:

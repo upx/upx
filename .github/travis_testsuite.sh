@@ -28,9 +28,9 @@ if [[ $TRAVIS_OS_NAME == osx ]]; then
     sha256sum=gsha256sum # brew install coreutils
 fi
 upx=$PWD/upx.out
-case $BUILD_METHOD in valgrind | valgrind+* | *+valgrind | *+valgrind+*)
-    upx="valgrind --leak-check=full --show-reachable=yes $upx" ;;
-esac
+if [[ $B =~ (^|\+)valgrind($|\+) ]]; then
+    upx="valgrind --leak-check=full --show-reachable=yes $upx"
+fi
 upx_391=
 if [[ $TRAVIS_OS_NAME == linux ]]; then
     rm -f upx391.out
@@ -38,9 +38,9 @@ if [[ $TRAVIS_OS_NAME == linux ]]; then
     upx_391="$PWD/upx391.out --fake-stub-version=3.92 --fake-stub-year=2016"
 fi
 
-case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
-    lcov -d $upx_BUILDDIR --zerocounters ;;
-esac
+if [[ $B =~ (^|\+)coverage($|\+) ]]; then
+    lcov -d $upx_BUILDDIR --zerocounters
+fi
 
 $upx --version
 $upx --help
@@ -102,7 +102,7 @@ for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
     rm -rf ./t
 done
 
-case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
+if [[ $B =~ (^|\+)coverage($|\+) ]]; then
     if [[ -n $TRAVIS_JOB_ID ]]; then
         cd $upx_SRCDIR || exit 1
         coveralls -b $upx_BUILDDIR --gcov-options '\-lp' || true
@@ -113,7 +113,6 @@ case $BUILD_METHOD in coverage | coverage+* | *+coverage | *+coverage+*)
         cd $lcov_OUTPUTDIR || exit 1
         genhtml upx.info
     fi
-    ;;
-esac
+fi
 
 exit $exit_code

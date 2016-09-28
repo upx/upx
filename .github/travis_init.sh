@@ -6,33 +6,35 @@
 #set -x # debug
 umask 022
 
+# set CC and CXX from C
 CC=false CXX=false SCAN_BUILD=false
 [[ -z $C ]] && C=gcc
 case $C in
     clang | clang-m?? | clang-3.4-m?? | clang-[678][0-9][0-9]-m??)
-        # standard system compiler
-        CC="clang"; CXX="clang++" ;;
+        CC="clang"; CXX="clang++" ;; # standard system compiler
     clang-[34].[0-9]-m??)
         v=${C:6:3}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
-    gcc | gcc-m?? | gcc-4.6-m??)
-        # standard system compiler
-        CC="gcc"; CXX="g++" ;;
+    gcc | gcc-m??)
+        CC="gcc"; CXX="g++" ;; # standard system compiler
     gcc-[34].[0-9]-m??)
         v=${C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
     gcc-[56]-m?? | gcc-[56].[0-9]-m??)
         v=${C:4:1}; CC="gcc-$v"; CXX="g++-$v" ;;
+    msvc | msvc-*)
+        CC="cl"; CXX="cl" ;; # standard system compiler
 esac
 case $C in
-    *-m32) CC="$CC -m32"; CXX="$CXX -m32" ;;
-    *-m64) CC="$CC -m64"; CXX="$CXX -m64" ;;
+    msvc*) ;;
+    clang*-m32) CC="$CC -m32"; CXX="$CXX -m32" ;;
+    gcc*-m64)   CC="$CC -m64"; CXX="$CXX -m64" ;;
 esac
 case $C in
     clang* | gcc*) CC="$CC -std=gnu89" ;;
 esac
 export CC CXX
 
+# B is BUILD_TYPE
 [[ -z $B ]] && B=release
-BUILD_METHOD="$B"
 
 # dirs
 [[ -z $upx_SRCDIR ]] && upx_SRCDIR="$PWD"
