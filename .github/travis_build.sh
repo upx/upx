@@ -79,11 +79,11 @@ if [[ $B =~ (^|\+)coverage($|\+) ]]; then
     EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fprofile-arcs -ftest-coverage"
 fi
 if [[ $B =~ (^|\+)debug($|\+) ]]; then
-    make="$make USE_DEBUG=1"
+    make="$make BUILD_TYPE_DEBUG=1"
 fi
 if [[ $B =~ (^|\+)sanitize($|\+) ]]; then
     case $TRAVIS_OS_NAME-$CC in linux-gcc*) EXTRA_LDFLAGS="$EXTRA_LDFLAGS -fuse-ld=gold" ;; esac
-    make="$make USE_SANITIZE=1"
+    make="$make BUILD_TYPE_SANITIZE=1"
 fi
 if [[ $B =~ (^|\+)scan-build($|\+) ]]; then
     make="$SCAN_BUILD $make"
