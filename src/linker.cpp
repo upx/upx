@@ -649,11 +649,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n",
                            displ, rel->section->name, rel->offset);
@@ -912,11 +908,7 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n",
                            displ, rel->section->name, rel->offset);
@@ -954,11 +946,7 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d,%d,%d) in reloc %s:%x\n",
                            displ, *location, value, rel->section->name, rel->offset);
