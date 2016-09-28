@@ -4,6 +4,7 @@
 os: Visual Studio 2015
 
 environment:
+  global: { C: "", B: release, ALLOW_FAIL: "", TRAVIS_OS_NAME: windows }
   matrix:
     - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 }
 ### - { C: msvc-10.0-x64, CL_VERSION: 16.00, VS_VERSION: 2010 } # AppVeyor: x64 compiler is not installed
@@ -19,14 +20,15 @@ init:
 
 install:
   - cd c:\projects
-  - mkdir build build\%C% deps
+  - md build build\%C% deps
   - cd c:\projects\upx
   - git submodule update --init --recursive
   - cd c:\projects\deps
   - appveyor DownloadFile "https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz"
   - appveyor DownloadFile "https://github.com/upx/upx/files/499381/zlib-1.2.8.tar.gz"
   - tar -xzf ucl-1.03.tar.gz
-  - sed -i '/snprintf  *_v*snprintf/d' ucl-1.03/acc/acc_auto.h
+  # patch UCL for msvc-14.0 (vsnprintf issue)
+  - sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
   - tar -xzf zlib-1.2.8.tar.gz
   - git clone https://github.com/upx/upx-testsuite
   - if "%C%"=="msvc-10.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86 )
@@ -39,30 +41,40 @@ install:
   - if "%C%"=="msvc-14.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64 )
 
 build_script:
-  - set B=release
+  # setup directories following the VPATH build in travis_build.sh
   - cd c:\projects\upx
-#  - if "%C%"=="gcc-m64" ( bash -x ./.github/travis_build.sh && exit 0 ) # TODO
-  - set DEFS=-D_CRT_SECURE_NO_WARNINGS
+##- if "%C%"=="gcc-m64" ( bash -x ./.github/travis_build.sh && exit 0 ) # TODO
   - set BDIR=c:\projects\build\%C%\%B%
-  - mkdir %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
+  - md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
+  - set DEFS=-D_CRT_SECURE_NO_WARNINGS
+  - git rev-parse --short=12 HEAD > %BDIR%\upx\.GITREV.txt
+  # build UCL
   - cd %BDIR%\ucl-1.03
   - set s=c:\projects\deps\ucl-1.03
   - cl -MT -O2 -W4 %DEFS% -I%s%\include -I%s% -c %s%\src\*.c
   - link -lib -out:ucl.lib *.obj
+  # build zlib
   - cd %BDIR%\zlib-1.2.8
   - cl -MT -O2 -W2 %DEFS% -c c:\projects\deps\zlib-1.2.8\*.c
   - link -lib -out:zlib.lib *.obj
+  # build UPX
   - cd %BDIR%\upx
   - set s=c:\projects\upx\src
-  - cl -MT -EHsc -O2 -W4 -wd4244 %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
-
+  - cat .GITREV.txt
+  - set /p GITREV=<.GITREV.txt
+  - cl -MT -EHsc -O2 -W4 -wd4244 -DUPX_VERSION_GITREV="""%GITREV%""" %DEFS% -DWITH_LZMA=0x443 -DUCL_NO_ASM -I%s%\lzma-sdk -Ic:\projects\deps\ucl-1.03\include -Ic:\projects\deps\zlib-1.2.8 -Feupx.exe %s%\*.cpp %BDIR%\ucl-1.03\ucl.lib %BDIR%\zlib-1.2.8\zlib.lib
 
 test_script:
+  - set UPX=--no-color --no-progress
   - cd %BDIR%\upx
+  # basic tests
   - .\upx.exe --version
   - .\upx.exe upx.exe -o upx_packed.exe
   - dir *.exe
+  - .\upx.exe -l upx_packed.exe
+  - .\upx.exe -t upx_packed.exe
   - .\upx_packed.exe --version
+  # now run the UPX testsuite using Cygwin bash - this really works!
   - cd c:\projects\upx
   - bash ./.github/travis_testsuite_1.sh
 

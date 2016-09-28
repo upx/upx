@@ -18,7 +18,7 @@ source ./.github/travis_init.sh || exit 1
 # ************************************************************************/
 
 testsuite_header() {
-    local x="========"; x="$x$x$x$x$x$x$x$x$x"
+    local x="==========="; x="$x$x$x$x$x$x$x"
     echo -e "\n${x}\n${1}\n${x}\n"
 }
 
@@ -34,26 +34,28 @@ testsuite_split_f() {
 
 testsuite_check_sha() {
     (cd "$1" && $sha256sum -b */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    echo
     cat $1/.sha256sums.current
-    if ! cmp -s $1/.sha256sums.current $1/.sha256sums.expected; then
+    if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         echo "UPX-ERROR: checksum mismatch"
-        diff -u $1/.sha256sums.current $1/.sha256sums.expected || true
+        diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
         #exit 1
         exit_code=1
     fi
+    echo
 }
 
 testsuite_run_compress() {
-    testsuite_header "$t"
+    testsuite_header $t
     local f ff
     for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
-        testsuite_split_f "$f"
+        testsuite_split_f $f
         [[ -z $fb ]] && continue
         mkdir -p $t/$fsubdir
         ff=t01_decompressed/$fsubdir/$fb
         $upx_exe --prefer-ucl "$@" $ff -o $t/$fsubdir/$fb
     done
-    testsuite_check_sha "$t"
+    testsuite_check_sha $t
     $upx_exe -l $t/*/*
     $upx_exe --file-info $t/*/*
     $upx_exe -t $t/*/*
@@ -75,8 +77,8 @@ if [[ ! -d $upx_testsuite_SRCDIR/files/packed ]]; then exit 1; fi
 
 [[ -z $upx_exe && -f $upx_BUILDDIR/upx.out ]] && upx_exe=$upx_BUILDDIR/upx.out
 [[ -z $upx_exe && -f $upx_BUILDDIR/upx.exe ]] && upx_exe=$upx_BUILDDIR/upx.exe
-if [[ ! -f $upx_exe ]]; then exit 1; fi
-if [[ ! -x $upx_exe ]]; then exit 1; fi
+if [[ -z $upx_exe ]]; then exit 1; fi
+if ! $upx_exe --version >/dev/null; then exit 1; fi
 
 sha256sum=sha256sum
 if [[ $TRAVIS_OS_NAME == osx ]]; then
@@ -99,7 +101,7 @@ mkdir testsuite_1
 cd testsuite_1
 
 export UPX=
-export UPX="--no-progress"
+export UPX="--no-color --no-progress"
 
 
 # /***********************************************************************
@@ -119,14 +121,14 @@ c3f44b4d00a87384c03a6f9e7aec809c1addfe3e271244d38a474f296603088c *mipsel-linux.e
 b8c35fa2956da17ca505956e9f5017bb5f3a746322647e24ccb8ff28059cafa4 *powerpc-linux.elf/upx-3.91
 " > $t/.sha256sums.expected
 
-testsuite_header "$t"
+testsuite_header $t
 for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
-    testsuite_split_f "$f"
+    testsuite_split_f $f
     [[ -z $fb ]] && continue
     mkdir -p $t/$fsubdir
     $upx_exe -d $f -o $t/$fsubdir/$fb
 done
-testsuite_check_sha "$t"
+testsuite_check_sha $t
 
 
 # /***********************************************************************

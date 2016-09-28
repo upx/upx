@@ -6,9 +6,13 @@
 #set -x # debug
 umask 022
 
+# just in case
+UPX=
+
 # set CC and CXX from C
-CC=false CXX=false SCAN_BUILD=false
 [[ -z $C ]] && C=gcc
+if [[ -z $CC_OVERRIDE ]]; then
+CC=false CXX=false SCAN_BUILD=false
 case $C in
     clang | clang-m?? | clang-3.4-m?? | clang-[678][0-9][0-9]-m??)
         CC="clang"; CXX="clang++" ;; # standard system compiler
@@ -32,6 +36,7 @@ case $C in
     clang* | gcc*) CC="$CC -std=gnu89" ;;
 esac
 export CC CXX
+fi # CC_OVERRIDE
 
 # B is BUILD_TYPE
 [[ -z $B ]] && B=release
@@ -50,7 +55,7 @@ upx_testsuite_BUILDDIR="$tmake_top_bdir/upx-testsuite"
 lcov_OUTPUTDIR="$tmake_top_bdir/.lcov-results"
 
 mkdir -p -v $upx_BUILDDIR $ucl_BUILDDIR $upx_testsuite_BUILDDIR
-[[ -d $tmake_top_bdir/.mfxnobackup ]] || echo "timestamp" > $tmake_top_bdir/.mfxnobackup
+[[ -d $tmake_top_bdir/.mfxnobackup ]] && echo "timestamp" > $tmake_top_bdir/.mfxnobackup
 
 export UPX_UCLDIR="$ucl_SRCDIR"
 
@@ -63,7 +68,9 @@ cd / && cd $upx_BUILDDIR || exit 1
 # enter srcdir
 cd / && cd $upx_SRCDIR || exit 1
 
+if [[ -n $APPVEYOR_JOB_ID ]]; then
 # for some reason this is needed for bash on AppVeyor
 sort() {
     /usr/bin/sort "$@"
 }
+fi
