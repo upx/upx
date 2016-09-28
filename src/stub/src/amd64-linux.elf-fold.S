@@ -21,7 +21,7 @@
 *  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
 *  Markus F.X.J. Oberhumer              Laszlo Molnar
-*  <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+*  <markus@oberhumer.com>               <ezerotven+github@gmail.com>
 *
 *  John F. Reiser
 *  <jreiser@users.sourceforge.net>

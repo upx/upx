@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -377,7 +377,7 @@ void show_license(void)
     con_fprintf(f,
         "\n"
         "   Markus F.X.J. Oberhumer              Laszlo Molnar\n"
-        "   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>\n"
+        "   <markus@oberhumer.com>               <ezerotven+github@gmail.com>\n"
     );
     fg = con_fg(f,fg);
 
