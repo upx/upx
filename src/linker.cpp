@@ -307,13 +307,18 @@ void ElfLinker::preprocessRelocations(char *start, char *end)
                 char sign = *p;
                 *p = 0;  // terminate the symbol name
                 p += 3;
-
                 assert(strlen(p) == 8 || strlen(p) == 16);
+#if (ACC_CC_MSC && (_MSC_VER < 1800))
+                unsigned a = 0, b = 0;
+                if (sscanf(p, "%08x%08x", &a, &b) == 2)
+                    add = ((upx_uint64_t)a << 32) | b;
+                else
+                    add = a;
+#else
                 char *endptr = NULL;
-                upx_uint64_t ull = strtoull(p, &endptr, 16);
-                add = (upx_uint64_t) ull;
-                assert(add == ull);
+                add = strtoull(p, &endptr, 16);
                 assert(endptr && *endptr == '\0');
+#endif
                 if (sign == '-')
                     add = 0 - add;
             }

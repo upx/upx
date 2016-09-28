@@ -5,9 +5,9 @@ os: Visual Studio 2015
 
 environment:
   matrix:
-#   - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 } # missing strtoull()
+    - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 }
 ### - { C: msvc-10.0-x64, CL_VERSION: 16.00, VS_VERSION: 2010 } # AppVeyor: x64 compiler is not installed
-#   - { C: msvc-11.0-x86, CL_VERSION: 17.00, VS_VERSION: 2012 } # missing strtoull()
+    - { C: msvc-11.0-x86, CL_VERSION: 17.00, VS_VERSION: 2012 }
 ### - { C: msvc-11.0-x64, CL_VERSION: 17.00, VS_VERSION: 2012 } # AppVeyor: x64 compiler is not installed
     - { C: msvc-12.0-x86, CL_VERSION: 18.00, VS_VERSION: 2013 }
     - { C: msvc-12.0-x64, CL_VERSION: 18.00, VS_VERSION: 2013 }
