@@ -62,3 +62,8 @@ cd / && cd $upx_testsuite_SRCDIR || exit 1
 cd / && cd $upx_BUILDDIR || exit 1
 # enter srcdir
 cd / && cd $upx_SRCDIR || exit 1
+
+# for some reason this is needed for bash on AppVeyor
+sort() {
+    /usr/bin/sort "$@"
+}
