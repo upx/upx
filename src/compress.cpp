@@ -101,7 +101,7 @@ int upx_compress           ( const upx_bytep src, unsigned  src_len,
     cresult->c_len = 0;
 #endif
 
-    if (0) {
+    if __acc_cte(0) {
     }
 #if (WITH_LZMA)
     else if (M_IS_LZMA(method))
@@ -147,7 +147,7 @@ int upx_decompress         ( const upx_bytep src, unsigned  src_len,
     if (cresult && cresult->method == 0)
         cresult = NULL;
 
-    if (0) {
+    if __acc_cte(0) {
     }
 #if (WITH_LZMA)
     else if (M_IS_LZMA(method))
@@ -194,7 +194,7 @@ int upx_test_overlap       ( const upx_bytep buf,
     unsigned overlap_overhead = src_off + src_len - *dst_len;
     assert((int)overlap_overhead > 0);
 
-    if (0) {
+    if __acc_cte(0) {
     }
 #if (WITH_LZMA)
     else if (M_IS_LZMA(method))

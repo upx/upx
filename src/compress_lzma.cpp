@@ -33,6 +33,9 @@
 #if (ACC_CC_MSC)
 #  pragma warning(disable: 4456) // -Wno-shadow
 #endif
+#if (ACC_CC_MSC && (_MSC_VER < 1900))
+#  pragma warning(disable: 4127) // warning C4127: conditional expression is constant
+#endif
 
 
 void lzma_compress_config_t::reset()
