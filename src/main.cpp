@@ -332,14 +332,9 @@ static bool set_method(int m, int l)
     {
         if (!Packer::isValidCompressionMethod(m))
             return false;
-#if 1
         // something like "--brute --lzma" should not disable "--brute"
         if (!opt->all_methods)
-#endif
-        {
             opt->method = m;
-            opt->all_methods = false;
-        }
     }
     if (l > 0)
         opt->level = l;
@@ -586,6 +581,12 @@ static int do_option(int optc, const char *arg)
         opt->all_methods_use_lzma = false;
         if (M_IS_LZMA(opt->method))
             opt->method = -1;
+        break;
+    case 723:
+        opt->prefer_ucl = false;
+        break;
+    case 724:
+        opt->prefer_ucl = true;
         break;
 
     // compression level
@@ -983,7 +984,9 @@ static const struct mfx_option longopts[] =
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
     {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
+    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, 0, 723},
+    {"prefer-ucl",       0x10, 0, 724},
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},
@@ -1142,7 +1145,9 @@ static const struct mfx_option longopts[] =
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
     {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
+    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, 0, 723},
+    {"prefer-ucl",       0x10, 0, 724},
     // compression settings
     // compression runtime parameters
 

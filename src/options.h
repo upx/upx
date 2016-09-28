@@ -63,6 +63,7 @@ struct options_t {
     bool all_methods_use_lzma;
     bool all_filters;       // try all available filters ?
     bool no_filter;         // force no filter
+    bool prefer_ucl;        // prefer UCL
     bool exact;             // user requires byte-identical decompression
 
     // other options
