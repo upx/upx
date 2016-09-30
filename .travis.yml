@@ -24,7 +24,7 @@ addons:
 
 env:
   global:
-    - C= B= ALLOW_FAIL=
+    - C= B= CROSS= T=
   matrix:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
@@ -81,7 +81,7 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6-m64 B=valgrind
+      env: C=gcc-6-m64 B=valgrind T=valgrind
       addons: { apt: { sources: *S, packages: [ "g++-6", valgrind ] } }
     - os: linux
       compiler: clang
@@ -138,6 +138,22 @@ matrix:
       compiler: clang
       env: C=clang-3.8-m64 B=scan-build
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.6 CROSS=arm-linux-gnueabi T=SKIP
+      addons: { apt: { packages: [ "g++-arm-linux-gnueabi", "qemu-user" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.6 CROSS=arm-linux-gnueabihf T=SKIP
+      addons: { apt: { packages: [ "g++-arm-linux-gnueabihf", "qemu-user" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.6 CROSS=i386-w64-mingw32 T=wine
+      addons: { apt: { packages: [ "binutils-mingw-w64-i686", "g++-mingw-w64-i686", "wine" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.6 CROSS=x86_64-w64-mingw32 T=wine
+      addons: { apt: { packages: [ "binutils-mingw-w64-x86-64", "g++-mingw-w64-x86-64", "wine" ] } }
     - os: osx
       compiler: clang
       # must use debug build or else we get "ld: internal error: atom not found" when linking
@@ -167,7 +183,8 @@ matrix:
 
 install:
   - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps
-  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz | tar -xz
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
   - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
   - |
     cd /
@@ -185,6 +202,7 @@ install:
     fi
 
 script:
+  - cd $TRAVIS_BUILD_DIR && mkdir -p ../build/travis
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite_1.sh
 

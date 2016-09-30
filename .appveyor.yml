@@ -4,7 +4,7 @@
 os: Visual Studio 2015
 
 environment:
-  global: { C: "", B: release, ALLOW_FAIL: "", TRAVIS_OS_NAME: windows }
+  global: { TRAVIS_OS_NAME: windows, C: "", B: release, CROSS: "", T: "" }
   matrix:
     - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 }
 ### - { C: msvc-10.0-x64, CL_VERSION: 16.00, VS_VERSION: 2010 } # AppVeyor: x64 compiler is not installed
@@ -14,9 +14,16 @@ environment:
     - { C: msvc-12.0-x64, CL_VERSION: 18.00, VS_VERSION: 2013 }
     - { C: msvc-14.0-x86, CL_VERSION: 19.00, VS_VERSION: 2015 }
     - { C: msvc-14.0-x64, CL_VERSION: 19.00, VS_VERSION: 2015 }
+#   - { C: gcc-4.9-m32, T: SKIP }
+#   - { C: gcc-4.9-m64, T: SKIP }
 
 init:
   - git config --global core.autocrlf input
+  - where bash & where cat & where curl & where git & where sed & where tar
+# - dir "c:\Program Files\Git\usr\bin"
+# - dir "c:\cygwin\bin"
+# - dir "c:\mingw\bin"
+# - dir "c:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
 
 install:
   - cd c:\projects
@@ -24,13 +31,17 @@ install:
   - cd c:\projects\upx
   - git submodule update --init --recursive
   - cd c:\projects\deps
-  - appveyor DownloadFile "https://github.com/upx/upx/files/499379/ucl-1.03.tar.gz"
-  - appveyor DownloadFile "https://github.com/upx/upx/files/499381/zlib-1.2.8.tar.gz"
+  - curl -q -L --retry 5 -o ucl-1.03.tar.gz   "https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.gz"
+  - curl -q -L --retry 5 -o zlib-1.2.8.tar.gz "https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.gz"
+  - git clone https://github.com/upx/upx-testsuite
   - tar -xzf ucl-1.03.tar.gz
+  - tar -xzf zlib-1.2.8.tar.gz
   # patch UCL for msvc-14.0 (vsnprintf issue)
   - sed -i '/# *define.*snprintf  *_v*snprintf$/d' ucl-1.03/acc/acc_auto.h
-  - tar -xzf zlib-1.2.8.tar.gz
-  - git clone https://github.com/upx/upx-testsuite
+##- curl -q -L --retry 5 -o config.guess "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD"
+##- curl -q -L --retry 5 -o config.sub   "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD"
+##- cp config.guess config.sub ucl-1.03/acconfig/
+  # setup compiler
   - if "%C%"=="msvc-10.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86 )
   - if "%C%"=="msvc-10.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" amd64 )
   - if "%C%"=="msvc-11.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" x86 )
@@ -41,9 +52,15 @@ install:
   - if "%C%"=="msvc-14.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64 )
 
 build_script:
-  # setup directories following the VPATH build in travis_build.sh
   - cd c:\projects\upx
-##- if "%C%"=="gcc-m64" ( bash -x ./.github/travis_build.sh && exit 0 ) # TODO
+  - if "%C%"=="gcc-4.9-m32" set PATH=c:\cygwin\bin;%PATH%
+  - if "%C%"=="gcc-4.9-m32" bash -x ./.github/travis_build.sh
+  - if "%C%"=="gcc-4.9-m32" exit
+  - if "%C%"=="gcc-4.9-m64" set PATH=c:\cygwin\bin;%PATH%
+  - if "%C%"=="gcc-4.9-m64" bash -x ./.github/travis_build.sh
+  - if "%C%"=="gcc-4.9-m64" exit
+  # setup directories following the VPATH build in travis_build.sh
+  - where cl & where link
   - set BDIR=c:\projects\build\%C%\%B%
   - md %BDIR% %BDIR%\ucl-1.03 %BDIR%\upx %BDIR%\upx-testsuite %BDIR%\zlib-1.2.8
   - set DEFS=-D_CRT_SECURE_NO_WARNINGS
@@ -74,7 +91,7 @@ test_script:
   - .\upx.exe -l upx_packed.exe
   - .\upx.exe -t upx_packed.exe
   - .\upx_packed.exe --version
-  # now run the UPX testsuite using Cygwin bash - this really works!
+  # now run the UPX testsuite using bash
   - cd c:\projects\upx
   - bash ./.github/travis_testsuite_1.sh
 
