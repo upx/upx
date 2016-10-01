@@ -65,13 +65,17 @@ void do_one_file(const char *iname, char *oname)
     struct stat st;
     memset(&st, 0, sizeof(st));
 #if (HAVE_LSTAT)
-    r = lstat(iname,&st);
+    r = lstat(iname, &st);
 #else
-    r = stat(iname,&st);
+    r = stat(iname, &st);
 #endif
-
     if (r != 0)
-        throw FileNotFoundException(iname);
+    {
+        if (errno == ENOENT)
+            throw FileNotFoundException(iname, errno);
+        else
+            throwIOException(iname, errno);
+    }
     if (!(S_ISREG(st.st_mode)))
         throwIOException("not a regular file -- skipped");
 #if defined(__unix__)

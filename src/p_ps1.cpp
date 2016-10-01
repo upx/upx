@@ -418,7 +418,7 @@ void PackPs1::buildLoader(const Filter *)
 bool PackPs1::findBssSection()
 {
     unsigned char reg;
-    LE32 *p1 = (LE32 *)(ibuf + (ih.epc - ih.tx_ptr));
+    const LE32 * const p1 = ACC_CCAST(const LE32 *, ibuf + (ih.epc - ih.tx_ptr));
 
     if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4)) > fdata_size)
         return false;
@@ -433,7 +433,7 @@ bool PackPs1::findBssSection()
             reg = REG1(op);
             for (; i >= 0; i--)
             {
-                bss_nfo *p = (bss_nfo *)(void *)&p1[i];
+                const bss_nfo * const p = ACC_CCAST(const bss_nfo *, &p1[i]);
                 upx_uint16_t op1 = p->op1, op2 = p->op2;
 
                 // check for la (x),bss_start

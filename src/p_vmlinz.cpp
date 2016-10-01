@@ -969,12 +969,12 @@ unsigned PackVmlinuzARMEL::write_vmlinuz_head(OutputFile *const fo)
     fo->write(&stub_arm_v5a_linux_kernel_vmlinuz_head[0], 4);
 
     // Second word
-    LE32 tmp_u32;
+    upx_uint32_t tmp_u32;
     unsigned const t = (0xff000000 &
             get_te32(&stub_arm_v5a_linux_kernel_vmlinuz_head[4]))
         | (0x00ffffff & (0u - 1 + ((3+ ph.c_len)>>2)));
-    tmp_u32 = t;
-    fo->write((void const *)&tmp_u32, 4);
+    set_te32(&tmp_u32, t);
+    fo->write(&tmp_u32, 4);
 
     return sizeof(stub_arm_v5a_linux_kernel_vmlinuz_head);
 }
