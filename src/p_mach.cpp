@@ -845,9 +845,15 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 segXHDR.filesize = offLINK - segTEXT.filesize;  // XXX FIXME: assumes no __DATA in stub;
                 segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
-                memcpy(tail, &segXHDR, sizeof(segXHDR));
-                tail += sizeof(segXHDR);
-                goto next;
+                if (1) { // replace __DATA with segXHDR
+                    memcpy(tail, &segXHDR, sizeof(segXHDR));
+                    tail += sizeof(segXHDR);
+                    goto next;
+                }
+                else {
+                    // FIXME: no need for LC_SEGMENT; just append to segTEXT and secTEXT
+                    skip = 1;
+                }
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 segLINK.initprot = Mach_segment_command::VM_PROT_READ
@@ -965,6 +971,9 @@ next:
             memset(tail, 0, sz_cmd);
             fo->rewrite(tail, sz_cmd);
         }
+        // Rewrite linfo in file.
+        fo->seek(sz_mach_headers, SEEK_SET);
+        fo->rewrite(&linfo, sizeof(linfo));
         fo->seek(0, SEEK_END);
     }
 }
