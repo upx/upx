@@ -344,7 +344,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     // because of a feature (bug?) in stub.asm we need some padding
     memcpy(obuf+data->size, "UPX", 3);
-    data->size = ALIGN_UP(data->size, 4);
+    data->size = ALIGN_UP(data->size, 4u);
 
     linker->defineSymbol("DJ2MAIN1", coff_hdr.a_entry);
     relocateLoader();

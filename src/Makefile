@@ -72,6 +72,7 @@ ifeq ($(findstring clang,$(CXX)),)
 CXXFLAGS += -fno-delete-null-pointer-checks
 endif
 CXXFLAGS += -fno-strict-aliasing -fwrapv
+CXXFLAGS += -funsigned-char
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wwrite-strings
 CXXFLAGS_WERROR ?= -Werror
 CXXFLAGS += $(CXXFLAGS_WERROR)
@@ -85,16 +86,19 @@ compress_lzma$(objext) filteri$(objext) : CXXFLAGS := $(filter-out $(CXXFLAGS_SA
 endif
 
 
-all: check-whitespace upx$(exeext) | ./.depend
+all: upx$(exeext) | ./.depend
 .DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) ./.depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
 	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
+	$(CHECK_WHITESPACE)
 
 %.o : %.cpp | ./.depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
+%.cpp.ii : %.cpp | ./.depend
+	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -E $<)
 
 ifeq ($(BUILD_USE_DEPEND),1)
 ./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
@@ -106,8 +110,13 @@ else
 .PHONY: ./.depend
 endif
 
+CHECK_WHITESPACE =
 ifeq ($(shell uname),Linux)
-check-whitespace : ; bash $(top_srcdir)/src/stub/scripts/check_whitespace.sh $(top_srcdir)
+CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace.sh $(top_srcdir)
+ifneq ($(wildcard $(top_srcdir)/.git/.),)
+CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace_git.sh $(top_srcdir)
+endif
+check-whitespace : ; $(CHECK_WHITESPACE)
 endif
 .PHONY: check-whitespace
 

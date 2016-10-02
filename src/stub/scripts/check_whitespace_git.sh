@@ -5,18 +5,13 @@ set -e; set -o pipefail
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 [[ -z $1 ]] || cd "$1" || exit 1
+[[ -d .git ]] || exit 1
 
-find . \
-    -type d -name '.git' -prune -o \
-    -type d -name '.hg' -prune -o \
-    -type d -name 'build*' -prune -o \
-    -type d -name 'tmp*' -prune -o \
-    -type f -iname '*.bat' -prune -o \
-    -type f -iname '*.exe' -prune -o \
-    -type f -iname '*.pdf' -prune -o \
-    -type f -iname '*.swp' -prune -o \
-    -type f -print0 | LC_ALL=C sort -z | \
-xargs -0r perl -n -e '
+# info: cannot use "-z" as that needs GNU sed 4.2.2 which is not installed on Ubuntu 12.04
+git ls-files --full-name | sed 's/^/\.\//' |\
+sed -e '/lzma-sdk$/d' -e '/\.exe$/d' |\
+LC_ALL=C sort | \
+xargs -r perl -n -e '
     #print("$ARGV\n");
     if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }
     if (m,([ \t]+)$,) {
