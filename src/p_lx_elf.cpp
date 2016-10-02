@@ -2159,8 +2159,12 @@ PackNetBSDElf32x86::generateElfHdr(
         fo->seek(0, SEEK_SET);
         fo->rewrite(h2, sizeof(*h2) - sizeof(h2->linfo));
 
-        memcpy(&((char *)phdr)[0],         np_NetBSD, sz_NetBSD);
-        memcpy(&((char *)phdr)[sz_NetBSD], np_PaX,    sz_PaX);
+        // The 'if' guards on these two calls to memcpy are required
+        // because the C Standard Committee did not debug the Standard
+        // before publishing.  An empty region (0==size) must nevertheless
+        // have a valid (non-NULL) pointer.
+        if (sz_NetBSD) memcpy(&((char *)phdr)[0],         np_NetBSD, sz_NetBSD);
+        if (sz_PaX)    memcpy(&((char *)phdr)[sz_NetBSD], np_PaX,    sz_PaX);
 
         fo->write(&elfout.phdr[2],
             &((char *)phdr)[sz_PaX + sz_NetBSD] - (char *)&elfout.phdr[2]);
@@ -2367,7 +2371,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         }
 
         //set the shstrtab
-        sec_strndx = &shdr[ehdri.e_shstrndx];
+        sec_strndx = &shdri[ehdri.e_shstrndx];
 
         char *strtab = New(char, sec_strndx->sh_size);
         fi->seek(0,SEEK_SET);
@@ -2404,6 +2408,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             shdri = tmp;
             delete [] shdr;
             shdr = NULL;
+            sec_strndx = NULL;
         }
     }
 }
