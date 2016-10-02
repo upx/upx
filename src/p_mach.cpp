@@ -805,48 +805,38 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         unsigned char upxstub[sizeof(stub_amd64_darwin_macho_upxmain_exe)];
         memcpy(upxstub, stub_amd64_darwin_macho_upxmain_exe, sizeof(upxstub));
 
-        Mach_header *const ptr0 = (Mach_header *)upxstub;
-        Mach_command *ptr1 = (Mach_command *)(1+ ptr0);
-        unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
+        Mach_header *const mhp = (Mach_header *)upxstub;
+        char *tail = (char *)(1+ mhp);
+        char *const lcp_end = mhdro.sizeofcmds + tail;
+        Mach_command *lcp = (Mach_command *)(1+ mhp);
+        Mach_command *lcp_next;
         unsigned const ncmds = mhdro.ncmds;
+        //unsigned cmdsize = mhdro.sizeofcmds;
         unsigned delta = 0;
-        for (unsigned j = 0; j < ncmds -1; ++j,
-                (cmdsize -= ptr1->cmdsize),
-                ptr1 = (Mach_command *)(ptr1->cmdsize + (char *)ptr1))
-next:
-        switch (ptr1->cmd) {
+
+    for (unsigned j = 0; j < ncmds; ++j) {
+        unsigned skip = 0;
+        unsigned sz_cmd = lcp->cmdsize;
+        lcp_next = (Mach_command *)(sz_cmd + (char *)lcp);
+
+        switch (lcp->cmd) {
         case Mach_segment_command::LC_SEGMENT_64: {
-            Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
+            Mach_segment_command *const segptr = (Mach_segment_command *)lcp;
             if (!strcmp("__TEXT", segptr->segname)) {
+                if (0) { // Why is codesign unhappy with this?
+                    int const d = (-1+ segptr->nsects) * sizeof(secTEXT);
+                    if (0 < d) {
+                        segptr->nsects = 1;
+                        segptr->cmdsize -= d;
+                        sz_cmd -= d;
+                    }
+                }
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
-                //    // Put f_unf and f_exp before compiled C code:
-                //    // steal space from -Wl,-headerpadsize
-                //secTEXT.align = 0;
-                //unsigned const d = getLoaderSize();
-                //secTEXT.addr -= d;
-                //secTEXT.size += d;
-                //secTEXT.offset -= d;
-                fo->seek((char const *)secptr - (char const *)ptr0, SEEK_SET);
-                fo->rewrite(&secTEXT, sizeof(secTEXT));
-                //fo->seek(secTEXT.offset, SEEK_SET);
-                //fo->rewrite(getLoader(), d);
-                fo->seek(0, SEEK_END);
+                break;
             }
             if (!strcmp("__DATA", segptr->segname) && !segptr->vmsize) {
-                goto omit;
-            }
-            if (!strcmp("__LINKEDIT", segptr->segname)) {
-                segLINK.initprot = Mach_segment_command::VM_PROT_READ
-                                 | Mach_segment_command::VM_PROT_EXECUTE;
-                delta = offLINK - segptr->fileoff;  // relocation constant
-
-                //// The contents for __LINKEDIT remain the same,
-                //// but move to a different offset in the file
-                //fo->seek(offLINK, SEEK_SET);
-                //fo->write(&stub_amd64_darwin_macho_upxmain_exe[segLINK.fileoff], segLINK.filesize);
-
                 // Mach_segment_command for new segXHDR
                 segXHDR.cmdsize = sizeof(segXHDR);  // no need for sections
                 segXHDR.vmaddr = segTEXT.vmsize + segTEXT.vmaddr;  // XXX FIXME
@@ -855,62 +845,66 @@ next:
                 segXHDR.filesize = offLINK - segTEXT.filesize;  // XXX FIXME: assumes no __DATA in stub;
                 segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
-                fo->seek((char const *)ptr1 - (char const *)ptr0, SEEK_SET);
-                fo->rewrite(&segXHDR, sizeof(segXHDR));
+                memcpy(tail, &segXHDR, sizeof(segXHDR));
+                tail += sizeof(segXHDR);
+                goto next;
+            }
+            if (!strcmp("__LINKEDIT", segptr->segname)) {
+                segLINK.initprot = Mach_segment_command::VM_PROT_READ
+                                 | Mach_segment_command::VM_PROT_EXECUTE;
+                delta = offLINK - segptr->fileoff;  // relocation constant
 
                 // Update the __LINKEDIT header
                 segLINK.filesize = eofcmpr - offLINK;
                 segLINK.vmsize = PAGE_MASK64 & (~PAGE_MASK64 + eofcmpr - offLINK);
                 segLINK.fileoff = segXHDR.filesize + segXHDR.fileoff;
                 segLINK.vmaddr =  segXHDR.vmsize   + segXHDR.vmaddr;
-                fo->rewrite(&segLINK, sizeof(segLINK));
+                memcpy(tail, &segLINK, sizeof(segLINK));
+                tail += sizeof(segLINK);
+                goto next;
             }
         } break;
         case Mach_segment_command::LC_DYLD_INFO_ONLY: {
-            N_Mach::Mach_dyld_info_only_command blk; memcpy(&blk, ptr1, sizeof(blk));
-            if (blk.rebase_off)    blk.rebase_off    += delta;
-            if (blk.bind_off)      blk.bind_off      += delta;
-            if (blk.lazy_bind_off) blk.lazy_bind_off += delta;
-            if (blk.export_off)    blk.export_off    += delta;
+            N_Mach::Mach_dyld_info_only_command *p = (N_Mach::Mach_dyld_info_only_command *)lcp;
+            if (p->rebase_off)    p->rebase_off    += delta;
+            if (p->bind_off)      p->bind_off      += delta;
+            if (p->lazy_bind_off) p->lazy_bind_off += delta;
+            if (p->export_off)    p->export_off    += delta;
                 // But we don't want any exported symbols.
-                blk.export_off = 0;
-                blk.export_size = 0;
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
-            goto omit;  // try omitting this
+                p->export_off = 0;
+                p->export_size = 0;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_SYMTAB: {
-            Mach_symtab_command blk; memcpy(&blk, ptr1, sizeof(blk));
-            if (blk.symoff) blk.symoff += delta;
-            if (blk.stroff) blk.stroff += delta;
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
-            goto omit;  // try omitting this
+            // Apple codesign requires that string table is last in the file.
+            Mach_symtab_command *p = (Mach_symtab_command *)lcp;
+            p->symoff = segLINK.filesize + segLINK.fileoff;
+            p->nsyms = 0;
+            p->stroff = segLINK.fileoff;
+            p->strsize = segLINK.filesize;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_DYSYMTAB: {
-            Mach_dysymtab_command blk; memcpy(&blk, ptr1, sizeof(blk));
-            if (blk.tocoff)         blk.tocoff         += delta;
-            if (blk.modtaboff)      blk.modtaboff      += delta;
-            if (blk.extrefsymoff)   blk.extrefsymoff   += delta;
-            if (blk.indirectsymoff) blk.indirectsymoff += delta;
-            if (blk.extreloff)      blk.extreloff      += delta;
-            if (blk.locreloff)      blk.locreloff      += delta;
+            Mach_dysymtab_command *p = (Mach_dysymtab_command *)lcp;
+            if (p->tocoff)         p->tocoff         += delta;
+            if (p->modtaboff)      p->modtaboff      += delta;
+            if (p->extrefsymoff)   p->extrefsymoff   += delta;
+            if (p->indirectsymoff) p->indirectsymoff += delta;
+            if (p->extreloff)      p->extreloff      += delta;
+            if (p->locreloff)      p->locreloff      += delta;
                 // But we don't want any symbols.
-                blk.ilocalsym = 0;
-                blk.nlocalsym = 0;
-                blk.iextdefsym = 0;
-                blk.nextdefsym = 0;
-                blk.iundefsym = 0;
-                blk.nundefsym = 0;
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
-            goto omit;  // adds full path as another agrument?
+                p->ilocalsym = 0;
+                p->nlocalsym = 0;
+                p->iextdefsym = 0;
+                p->nextdefsym = 0;
+                p->iundefsym = 0;
+                p->nundefsym = 0;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_FUNCTION_STARTS: {
-            N_Mach::Mach_function_starts_command blk; memcpy(&blk, ptr1, sizeof(blk));
-            if (blk.dataoff) blk.dataoff += delta;
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
+            N_Mach::Mach_function_starts_command *p = (N_Mach::Mach_function_starts_command *)lcp;
+            if (p->dataoff) p->dataoff += delta;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_MAIN: {
                 // Change to LC_UNIX_THREAD; known to be contiguous with last
@@ -921,69 +915,56 @@ next:
             threado.flavor = my_thread_flavor;
             threado.count =  my_thread_state_word_count;
             memset(&threado.state, 0, sizeof(threado.state));
-            threado.state.rip = ((N_Mach::Mach_main_command const *)ptr1)->entryoff + segTEXT.vmaddr;
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&threado, sizeof(threado));
-            mhdro.sizeofcmds += sizeof(threado) - ((Mach_command const *)ptr1)->cmdsize;
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(&mhdro, sizeof(mhdro));
+            threado.state.rip = ((N_Mach::Mach_main_command const *)lcp)->entryoff + segTEXT.vmaddr;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_LOAD_DYLIB: {
-                // Remove this command; known to be contiguous with last
-            N_Mach::Mach_load_dylib_command blk; memset(&blk, 0, sizeof(blk));
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
-            mhdro.ncmds -= 1;
-            mhdro.sizeofcmds -= ((Mach_command const *)ptr1)->cmdsize;
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(&mhdro, sizeof(mhdro));
+            skip = 1;
         } break;
         case Mach_segment_command::LC_DATA_IN_CODE: {
-            N_Mach::Mach_data_in_code_command blk; memcpy(&blk, ptr1, sizeof(blk));
-            if (blk.dataoff) blk.dataoff += delta;
-                memset(&blk, 0, sizeof(blk));
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&blk, sizeof(blk));
-                // Temporary test: remove this command; known to be last
-            mhdro.ncmds -= 1;
-            mhdro.sizeofcmds -= ((Mach_command const *)ptr1)->cmdsize;
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(&mhdro, sizeof(mhdro));
+            N_Mach::Mach_data_in_code_command *p = (N_Mach::Mach_data_in_code_command *)lcp;
+            if (p->dataoff) p->dataoff += delta;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_LOAD_DYLINKER: {
-            // Try omitting this
-omit:
-            fo->seek(sizeof(mhdro) + mhdro.sizeofcmds - cmdsize, SEEK_SET);
-            Mach_command *ptr2 = ptr1;
-            unsigned const sz_omit = ptr1->cmdsize;
-            ptr1 = (Mach_command *)(sz_omit + (char *)ptr1);
-            cmdsize -= sz_omit;
-
-            fo->rewrite(ptr1, cmdsize);  // slide in file  TODO: clear the garbage
-            memmove(ptr2, ptr1, cmdsize);  // overlapping slide lower
-            ptr1 = ptr2;
-
-            mhdro.ncmds -= 1;
-            mhdro.sizeofcmds -= sz_omit;
-            fo->seek(0, SEEK_SET);
-            fo->rewrite(&mhdro, sizeof(mhdro));
-            if (++j < (ncmds -1))
-                goto next;
-            goto done;
+            skip = 1;
         } break;
         case Mach_segment_command::LC_SOURCE_VERSION: { // copy from saved original
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&cmdSRCVER, sizeof(cmdSRCVER));
-            memcpy(ptr1, &cmdSRCVER, sizeof(cmdSRCVER));
-            goto omit;
+            memcpy(lcp, &cmdSRCVER, sizeof(cmdSRCVER));
         } break;
         case Mach_segment_command::LC_VERSION_MIN_MACOSX: { // copy from saved original
-            fo->seek(sizeof(segXHDR) + ((char const *)ptr1 - (char const *)ptr0), SEEK_SET);
-            fo->rewrite(&cmdVERMIN, sizeof(cmdVERMIN));
-            memcpy(ptr1, &cmdVERMIN, sizeof(cmdVERMIN));
+            memcpy(lcp, &cmdVERMIN, sizeof(cmdVERMIN));
         } break;
         } // end switch
-done:
+
+        if (skip) {
+            mhp->ncmds -= 1;
+            mhp->sizeofcmds -= sz_cmd;
+        }
+        else {
+            if (tail != (char *)lcp) {
+                memmove(tail, lcp, sz_cmd);
+            }
+            tail += sz_cmd;
+        }
+next:
+        lcp = lcp_next;
+      }  // end for
+
+        // Add LC_UNIX_THREAD
+        mhp->ncmds += 1;
+        mhp->sizeofcmds += sizeof(threado);
+        fo->seek(0, SEEK_SET);
+        fo->rewrite(mhp, tail - (char *)mhp);
+        fo->rewrite(&threado, sizeof(threado));
+        tail += sizeof(threado);
+        //
+        // Zero any remaining tail.
+        if (tail < lcp_end) {
+            unsigned sz_cmd = lcp_end - tail;
+            memset(tail, 0, sz_cmd);
+            fo->rewrite(tail, sz_cmd);
+        }
         fo->seek(0, SEEK_END);
     }
 }
@@ -2022,7 +2003,7 @@ int PackMachBase<T>::canUnpack()
     if (i < 1 || !getPackHeader(buf + i, bufsize - i, true)) {
         // Breadcrumbs failed.
         // Pirates might overwrite the UPX! marker.  Try harder.
-        upx_uint64_t const rip_off = rip - ptrTEXT->vmaddr;
+        upx_uint64_t const rip_off = ptrTEXT ? (rip - ptrTEXT->vmaddr) : 0;
         if (ptrTEXT && rip && rip_off < ptrTEXT->vmsize) {
             fi->seek(ptrTEXT->fileoff + rip_off, SEEK_SET);
             fi->readx(buf, bufsize);
