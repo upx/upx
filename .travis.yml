@@ -24,7 +24,7 @@ addons:
 
 env:
   global:
-    - C= B= CROSS= T=
+    - CROSS= C= B= T=
   matrix:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
@@ -140,19 +140,19 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-4.6 CROSS=arm-linux-gnueabi T=SKIP
+      env: CROSS=arm-linux-gnueabi C=gcc-4.6 T=SKIP
       addons: { apt: { packages: [ "g++-arm-linux-gnueabi", "qemu-user" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-4.6 CROSS=arm-linux-gnueabihf T=SKIP
+      env: CROSS=arm-linux-gnueabihf C=gcc-4.6 T=SKIP
       addons: { apt: { packages: [ "g++-arm-linux-gnueabihf", "qemu-user" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-4.6 CROSS=i386-w64-mingw32 T=wine
+      env: CROSS=i386-w64-mingw32 C=gcc-4.6 T=wine
       addons: { apt: { packages: [ "binutils-mingw-w64-i686", "g++-mingw-w64-i686", "wine" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-4.6 CROSS=x86_64-w64-mingw32 T=wine
+      env: CROSS=x86_64-w64-mingw32 C=gcc-4.6 T=wine
       addons: { apt: { packages: [ "binutils-mingw-w64-x86-64", "g++-mingw-w64-x86-64", "wine" ] } }
     - os: osx
       compiler: clang
