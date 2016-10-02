@@ -9,9 +9,9 @@ branches:
 machine:
   environment:
     TRAVIS_OS_NAME: linux
+    CROSS:
     C: gcc-4.8-m64
     B: release
-    CROSS:
     T:
 
 checkout:

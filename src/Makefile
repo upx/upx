@@ -85,7 +85,7 @@ compress_lzma$(objext) filteri$(objext) : CXXFLAGS := $(filter-out $(CXXFLAGS_SA
 endif
 
 
-all: upx$(exeext) | ./.depend
+all: check-whitespace upx$(exeext) | ./.depend
 .DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) ./.depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
@@ -105,6 +105,11 @@ else
 ./.depend:
 .PHONY: ./.depend
 endif
+
+ifeq ($(shell uname),Linux)
+check-whitespace : ; bash $(top_srcdir)/src/stub/scripts/check_whitespace.sh $(top_srcdir)
+endif
+.PHONY: check-whitespace
 
 
 ./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)

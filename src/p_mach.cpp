@@ -2086,7 +2086,7 @@ int PackMachBase<T>::canUnpack()
             unsigned const *p;
             for (p = (unsigned const *)&buf[0x1000]; p > lo; ) if (*--p) {
                 overlay_offset  = *(TE32 const *)p;
-                if (overlay_offset < offLINK) {
+                if ((off_t)overlay_offset < offLINK) {
                     overlay_offset -= (char const *)p - (char const *)lo
                         + (offLINK - 0x1000) - sizeof(l_info);
                     fi->seek(overlay_offset, SEEK_SET);
@@ -2097,7 +2097,7 @@ int PackMachBase<T>::canUnpack()
                     }
                 }
             }
-            
+
             overlay_offset = 0;
         }
     }

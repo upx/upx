@@ -6,12 +6,12 @@
 #set -x # debug
 umask 022
 
-# rename short Build-Matrix variables to more readable names
+# rename short variables to more readable Build-Matrix BM_ names
 #   C is COMPILER
-#   B is BUILD_TYPE
-#   T is TESTSUITE_FLAGS
-BM_C=$C; BM_B=$B; BM_CROSS=$CROSS; BM_T=$T
-unset C B CROSS T
+#   B is BUILD_OPTIONS
+#   T is TESTSUITE_OPTIONS
+BM_CROSS=$CROSS; BM_C=$C; BM_B=$B; BM_T=$T
+unset CROSS C B T
 [[ -z $BM_C ]] && BM_C=gcc
 [[ -z $BM_B ]] && BM_B=release
 
@@ -41,7 +41,7 @@ CC=false CXX=false SCAN_BUILD=false
 AR=ar SIZE=size
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     BUILD_LOCAL_ZLIB=1
-    export exeext=.exe
+    upx_exeext=.exe
     # dir c:\cygwin
     case $BM_C in
         gcc-m32 | gcc-4.9-m32)
@@ -68,7 +68,7 @@ if [[ -n $BM_CROSS ]]; then
     case $BM_CROSS-$BM_C in
         arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
             export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm-static -L/usr/arm-linux-gnueabi"
+            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L/usr/arm-linux-gnueabi"
             x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
         arm-linux-gnueabihf-gcc | arm-linux-gnueabihf-gcc-4.6)
             export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
@@ -142,22 +142,28 @@ done
 [[ -z $lcov_OUTPUTDIR ]] && lcov_OUTPUTDIR=$(readlink -mn -- "$toptop_bdir/.lcov-results")
 unset toptop_builddir toptop_bdir
 
-# ensure absolute dirs
+# ensure absolute directories
+make_absolute() {
+    while [[ $# -gt 0 ]]; do
+        if [[ -n ${!1} ]]; then
+            d=$(readlink -mn -- "${!1}")
+            eval $1="$d"
+        fi
+        shift
+    done
+}
 for var_prefix in ucl upx upx_testsuite zlib; do
-for var_suffix in _BUILDDIR _SRCDIR; do
-    var_name=${var_prefix}${var_suffix}
-    if [[ -n ${!var_name} ]]; then
-        d=$(readlink -mn -- "${!var_name}")
-        eval $var_name="$d"
-    fi
+    for var_suffix in _BUILDDIR _SRCDIR; do
+        make_absolute ${var_prefix}${var_suffix}
+    done
 done
-done
-unset var_name var_prefix var_suffix
+make_absolute lcov_OUTPUTDIR
+unset var_prefix var_suffix
 
 print_settings() {
     local v var_prefix var_suffix
     # Build Matrix
-    for v in TRAVIS_OS_NAME BM_C BM_B BM_CROSS BM_T; do
+    for v in TRAVIS_OS_NAME BM_CROSS BM_C BM_B BM_T; do
         [[ -n ${!v} ]] && echo "${v}='${!v}'"
     done
     # BM_C related
@@ -166,8 +172,8 @@ print_settings() {
         v=EXTRA_${v}
         [[ -n ${!v} ]] && echo "${v}='${!v}'"
     done
-    # dirs and other info
-    for v in TRAVIS_XCODE_SDK UPX_UCLDIR; do
+    # directories and other info
+    for v in TRAVIS_XCODE_SDK UPX_UCLDIR lcov_OUTPUTDIR; do
         [[ -n ${!v} ]] && echo "${v}='${!v}'"
     done
     for var_prefix in ucl upx upx_testsuite zlib; do
@@ -178,6 +184,5 @@ print_settings() {
     done
     ##env | LC_ALL=C sort
 }
-
 
 true

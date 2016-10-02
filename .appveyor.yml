@@ -4,7 +4,7 @@
 os: Visual Studio 2015
 
 environment:
-  global: { TRAVIS_OS_NAME: windows, C: "", B: release, CROSS: "", T: "" }
+  global: { TRAVIS_OS_NAME: windows, CROSS: "", C: "", B: release, T: "" }
   matrix:
     - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 }
 ### - { C: msvc-10.0-x64, CL_VERSION: 16.00, VS_VERSION: 2010 } # AppVeyor: x64 compiler is not installed
@@ -20,6 +20,8 @@ environment:
 init:
   - git config --global core.autocrlf input
   - where bash & where cat & where curl & where git & where sed & where tar
+# - bash --version & git --version & sed --version & tar --version
+  - git --version & bash --version
 # - dir "c:\Program Files\Git\usr\bin"
 # - dir "c:\cygwin\bin"
 # - dir "c:\mingw\bin"

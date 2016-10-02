@@ -24,35 +24,11 @@ echo "$CC --version"; $CC --version
 echo "$CXX --version"; $CXX --version
 echo
 
-# whitespace
+# check whitespace
 if [[ $TRAVIS_OS_NAME == linux ]]; then
 cd / && cd $upx_SRCDIR || exit 1
 echo "Checking source code for whitespace violations..."
-find . \
-    -type d -name '.git' -prune -o \
-    -type d -name '.hg' -prune -o \
-    -type d -name 'build' -prune -o \
-    -type d -name 'tmp' -prune -o \
-    -type f -iname '*.bat' -prune -o \
-    -type f -iname '*.exe' -prune -o \
-    -type f -iname '*.pdf' -prune -o \
-    -type f -print0 | LC_ALL=C sort -z | \
-xargs -0r perl -n -e '
-    if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }
-    if (m,([ \t]+)$,) {
-        # allow exactly two trailing spaces for GitHub flavoured Markdown in .md files
-        if ($1 ne "  " || $ARGV !~ m,\.md$,) {
-            print "ERROR: trailing whitespace detected $ARGV: $_"; exit(1);
-        }
-    }
-    if (m,\t,) {
-       if ($ARGV =~ m,(^|/)\.gitmodules$,) { }
-       elsif ($ARGV =~ m,(^|/)(gnu|m)?make(file|vars),i) { }
-       elsif ($ARGV =~ m,/tmp/.*\.(disasm|dump)$,) { }
-       elsif ($ARGV =~ m,/src/stub/src/arch/.*\.S$,) { }
-       else { print "ERROR: hard TAB detected $ARGV: $_"; exit(1); }
-    }
-' || exit 1
+bash ./src/stub/scripts/check_whitespace.sh || exit 1
 echo "  Passed."
 fi # linux
 
@@ -64,7 +40,7 @@ set -x
 
 cd / && cd $ucl_BUILDDIR || exit 1
 if [[ -n $BM_CROSS || $TRAVIS_OS_NAME == windows ]]; then
-    # configure is too old
+    # ucl-1.03/configure is too old - build manually
     rm -f ./*.o libucl.a
     $CC -O2 -I$ucl_SRCDIR/include -I$ucl_SRCDIR -c $ucl_SRCDIR/src/*.c
     $AR rcs libucl.a *.o
@@ -81,12 +57,13 @@ fi
 # build zlib
 #
 
-if [[ $BUILD_LOCAL_ZLIB ]]; then
+if [[ $BUILD_LOCAL_ZLIB == 1 ]]; then
     cd / && cd $zlib_BUILDDIR || exit 1
+    # build manually
     rm -f ./*.o libz.a
     $CC -O2 -c $zlib_SRCDIR/*.c
     $AR rcs libz.a *.o
-fi # BUILD_LOCAL_ZLIB
+fi
 
 #
 # build UPX
@@ -97,7 +74,7 @@ cd / && cd $upx_BUILDDIR || exit 1
 make="make -f $upx_SRCDIR/src/Makefile"
 EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -DUCL_NO_ASM"
 EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$ucl_BUILDDIR/src/.libs"
-if [[ $BUILD_LOCAL_ZLIB ]]; then
+if [[ $BUILD_LOCAL_ZLIB == 1 ]]; then
     EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -I$zlib_SRCDIR"
     EXTRA_LDFLAGS="$EXTRA_LDFLAGS -L$zlib_BUILDDIR"
 fi
@@ -124,11 +101,11 @@ if [[ $BM_B =~ (^|\+)ALLOW_FAIL($|\+) ]]; then
 fi
 export EXTRA_CPPFLAGS EXTRA_CXXFLAGS EXTRA_LDFLAGS
 
-$make
+[[ -z $upx_exeext ]] && upx_exeext=.out
+$make exeext=$upx_exeext
 
-[[ -z $exeext ]] && exeext=.out
-ls -l upx${exeext}
-$SIZE upx${exeext} || true
-file upx${exeext}
+ls -l upx${upx_exeext}
+$SIZE upx${upx_exeext} || true
+file upx${upx_exeext}
 
 exit 0

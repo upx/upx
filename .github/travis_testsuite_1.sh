@@ -16,7 +16,6 @@ argv0="$0"; argv0dir=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0dir")
 fi
 source "$argv0dir/travis_init.sh" || exit 1
 
-# BM_T is TESTSUITE_FLAGS
 if [[ $BM_T =~ (^|\+)SKIP($|\+) ]]; then
     echo "UPX testsuite SKIPPED."
     exit 0
@@ -58,32 +57,33 @@ testsuite_check_sha() {
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
         #exit 1
         exit_code=1
+        let num_errors+=1 || true
     fi
     echo
 }
 
 testsuite_run_compress() {
     testsuite_header $testdir
-    local f ff
-    for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
+    local f
+    for f in t01_decompressed/*/*; do
         testsuite_split_f $f
         [[ -z $fb ]] && continue
         mkdir -p $testdir/$fsubdir
-        ff=t01_decompressed/$fsubdir/$fb
-        $upx_exe --prefer-ucl "$@" $ff -o $testdir/$fsubdir/$fb
+        $upx_run --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
     done
     testsuite_check_sha $testdir
-    $upx_exe -l $testdir/*/*
-    $upx_exe --file-info $testdir/*/*
-    $upx_exe -t $testdir/*/*
+    $upx_run -l $testdir/*/*
+    $upx_run --file-info $testdir/*/*
+    $upx_run -t $testdir/*/*
 }
 
 # /***********************************************************************
 # // init
 # ************************************************************************/
 
-#set -x
+#set -x # debug
 exit_code=0
+num_errors=0
 
 if [[ $BM_T =~ (^|\+)ALLOW_FAIL($|\+) ]]; then
     echo "ALLOW_FAIL"
@@ -93,31 +93,37 @@ fi
 [[ -z $upx_exe && -f $upx_BUILDDIR/upx.out ]] && upx_exe=$upx_BUILDDIR/upx.out
 [[ -z $upx_exe && -f $upx_BUILDDIR/upx.exe ]] && upx_exe=$upx_BUILDDIR/upx.exe
 if [[ -z $upx_exe ]]; then exit 1; fi
+upx_run=$upx_exe
 if [[ $BM_T =~ (^|\+)qemu($|\+) && -n $upx_qemu ]]; then
-    upx_exe="$upx_qemu $upx_qemu_flags -- $upx_exe"
+    upx_run="$upx_qemu $upx_qemu_flags -- $upx_exe"
 fi
 if [[ $BM_T =~ (^|\+)wine($|\+) && -n $upx_wine ]]; then
-    upx_exe="$upx_wine $upx_wine_flags $upx_exe"
+    upx_run="$upx_wine $upx_wine_flags $upx_exe"
 fi
-if ! $upx_exe --version >/dev/null; then exit 1; fi
-
 if [[ $BM_T =~ (^|\+)valgrind($|\+) ]]; then
-    valgrind_flags="--leak-check=full --show-reachable=yes"
-    valgrind_flags="-q --leak-check=no --error-exitcode=1"
-    valgrind_flags="--leak-check=no --error-exitcode=1"
-    upx_exe="valgrind $valgrind_flags $upx_exe"
+    if [[ -z $upx_valgrind ]]; then
+        upx_valgrind="valgrind"
+    fi
+    if [[ -z $upx_valgrind_flags ]]; then
+        upx_valgrind_flags="--leak-check=full --show-reachable=yes"
+        upx_valgrind_flags="-q --leak-check=no --error-exitcode=1"
+        upx_valgrind_flags="--leak-check=no --error-exitcode=1"
+    fi
+    upx_run="$upx_valgrind $upx_valgrind_flags $upx_exe"
 fi
 
 if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then
     (cd / && cd $upx_BUILDDIR && lcov -d . --zerocounters)
 fi
 
-rm -rf ./testsuite_1
-mkdir testsuite_1
-cd testsuite_1
-
 export UPX=
 export UPX="--no-color --no-progress"
+
+# let's go
+if ! $upx_run --version >/dev/null; then exit 1; fi
+rm -rf ./testsuite_1
+mkbuilddirs testsuite_1
+cd testsuite_1 || exit 1
 
 
 # /***********************************************************************
@@ -142,7 +148,7 @@ for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
     testsuite_split_f $f
     [[ -z $fb ]] && continue
     mkdir -p $testdir/$fsubdir
-    $upx_exe -d $f -o $testdir/$fsubdir/$fb
+    $upx_run -d $f -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
@@ -222,10 +228,21 @@ a647ed1aea16f58b544228279ad7159cd3ec5c3533efef1fd2df5a5a59b5d663 *i386-win32.pe/
 time testsuite_run_compress --all-methods --no-lzma --no-filter
 
 
+testsuite_header "UPX testsuite summary"
+echo "upx_exe='$upx_exe'"
+if [[ $upx_run != $upx_exe ]]; then
+    echo "upx_run='$upx_run'"
+fi
+if [[ -f $upx_exe ]]; then
+    ls -l "$upx_exe"
+    file "$upx_exe" || true
+fi
+echo "upx_testsuite_SRCDIR='$upx_testsuite_SRCDIR'"
+echo "upx_testsuite_BUILDDIR='$upx_testsuite_BUILDDIR'"
 echo
 if [[ $exit_code == 0 ]]; then
     echo "UPX testsuite passed. All done."
 else
-    echo "UPX-ERROR: UPX testsuite FAILED. See log file."
+    echo "UPX-ERROR: UPX testsuite FAILED with $num_errors error(s). See log file."
 fi
 exit $exit_code
