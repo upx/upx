@@ -1982,6 +1982,8 @@ int PackMachBase<T>::canUnpack()
         return false;
     }
 
+    // FIXME: ::pack1 writes l_info as all zero at 0x1000, and it is never updated.
+
     int const small = 32 + sizeof(overlay_offset);
     unsigned bufsize = 4096;
     if (391 == style) { // PackHeader precedes __LINKEDIT
@@ -2036,6 +2038,57 @@ int PackMachBase<T>::canUnpack()
             if (overlay_offset < 0x1000) {
                 return true;  // success
             }
+            overlay_offset = 0;
+        }
+        if (392==style) {
+            overlay_offset = 0x100c;  // (l_info precedes;) p_info; b_info; cpr_data
+            // p_info isn't used for execution, so it has less value for checking:
+            //      0== .p_progid
+            //      .p_filesize == .p_blocksize
+            fi->seek(overlay_offset, SEEK_SET);
+            fi->readx(buf, bufsize);
+            struct p_info const *const p_ptr = (struct p_info const *)&buf[0];
+            struct b_info const *const b_ptr = (struct b_info const *)(1+ p_ptr);
+            TE32 const *uptr = (TE32 const *)(1+ b_ptr);
+            if (b_ptr->sz_unc < 0x4000
+            &&  b_ptr->sz_cpr < b_ptr->sz_unc ) {
+                unsigned const method = b_ptr->b_method;
+                if ((M_NRV2B_LE32 == method || M_NRV2E_LE32 == method)
+                &&  0xff==(uptr[0] >> 24)  // 1st 8 bytes are unique literals
+                &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == uptr[1]) {
+                    return true;
+                }
+                unsigned const magic = get_te32(1+ (char const *)uptr);
+                if ((M_NRV2B_8 == method || M_NRV2E_8 == method)
+                && 0xff==(0xff & uptr[0])
+                &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == magic) {
+                    return true;
+                }
+                // FIXME: M_LZMA
+            }
+
+            overlay_offset = 0;
+            // The first non-zero word scanning backwards from __LINKEDIT.fileoff
+            // is the total length of compressed data which preceeds it
+            //(distance to l_info), so that's another method.
+            fi->seek(offLINK-0x1000, SEEK_SET);
+            fi->readx(buf, 0x1000);
+            unsigned const *const lo = (unsigned const *)&buf[0];
+            unsigned const *p;
+            for (p = (unsigned const *)&buf[0x1000]; p > lo; ) if (*--p) {
+                overlay_offset  = *(TE32 const *)p;
+                if (overlay_offset < offLINK) {
+                    overlay_offset -= (char const *)p - (char const *)lo
+                        + (offLINK - 0x1000) - sizeof(l_info);
+                    fi->seek(overlay_offset, SEEK_SET);
+                    fi->readx(buf, bufsize);
+                    if (b_ptr->sz_unc < 0x4000
+                    &&  b_ptr->sz_cpr < b_ptr->sz_unc ) {
+                        return true;
+                    }
+                }
+            }
+            
             overlay_offset = 0;
         }
     }
