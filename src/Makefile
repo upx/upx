@@ -156,12 +156,13 @@ endif
 
 # run the UPX testsuite - git clone https://github.com/upx/upx-testsuite.git
 # you have to set upx_testsuite_SRCDIR
+ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 ifndef upx_testsuite_SRCDIR
 # search standard locations below $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/../upx-testsuite.git/files/packed/.),)
 upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite.git
 else ifneq ($(wildcard $(top_srcdir)/../upx-testsuite/files/packed/.),)
-upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuit
+upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite
 endif
 endif
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
@@ -171,6 +172,7 @@ run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
 run-testsuite: ./upx$(exeext)
 	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
 .PHONY: run-testsuite
+endif
 endif
 
 # vim:set ts=8 sw=8 noet:
