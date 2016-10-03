@@ -2286,7 +2286,17 @@ PackLinuxElf64::generateElfHdr(
         // linux-2.6.14 binfmt_elf.c: SIGKILL if (0==.p_memsz) on a page boundary
         unsigned const brkb = brka | ((0==(~page_mask & brka)) ? 0x20 : 0);
         set_te32(&h2->phdr[1].p_type, PT_LOAD64);  // be sure
-        set_te64(&h2->phdr[1].p_offset, ~page_mask & brkb);
+
+        // Invoking by ld-linux-x86_64-2.21 complains if (filesize < .p_offset),
+        // which can happen with good compression of a stripped executable
+        // and large .p_align.  However (0==.p_filesz) so ld-linux has a bug.
+        // Try to evade the bug by reducing .p_align.  The alignment is forced
+        // anyway by phdr[0].p_align and constant offset from phdr[0].p_vaddr.
+        // However, somebody might complain because (.p_vaddr - .p_offset)
+        // is divisible only by phdr[1].p_align, and not by phdr[0].p_align.
+        set_te64(&h2->phdr[1].p_align, 0x1000);
+        set_te64(&h2->phdr[1].p_offset, /*~page_mask*/ 0xfff & brkb);
+
         set_te64(&h2->phdr[1].p_vaddr, brkb);
         set_te64(&h2->phdr[1].p_paddr, brkb);
         h2->phdr[1].p_filesz = 0;
