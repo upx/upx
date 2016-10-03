@@ -2,14 +2,15 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.92 (XX XXX 2015):
-  * all pe formats: important internal changes - reunited the diverged
-    source files - please report regressions into the bug tracker
+Changes in 3.92 (XX XXX 2016):
+  * UPX has moved to GitHub - the new home page is https://upx.github.io
+  * All pe formats: important internal changes - reunited the diverged
+    source files - please report regressions into the bug tracker.
   * Fix CERT-FI Case 829767 UPX command line tools segfaults.
     Received by UPX Team on 2015-May-08; originally reported
     by Codenomicon to NCSC-FI on 2015-01-08.
     The vulnerabilities were discovered by Joonas Kuorilehto and
-    Antti Häyrynen from Codenomicon
+    Antti Häyrynen from Codenomicon.
   * Explicitly diagnose Go-language bad PT_LOAD; recommend hemfix.c.
     https://sourceforge.net/p/upx/bugs/195/   https://github.com/pwaller/goupx
   * bug fixes

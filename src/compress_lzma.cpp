@@ -22,13 +22,20 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
 #include "conf.h"
 #include "compress.h"
 #include "mem.h"
+
+#if (ACC_CC_MSC)
+#  pragma warning(disable: 4456) // -Wno-shadow
+#endif
+#if (ACC_CC_MSC && (_MSC_VER < 1900))
+#  pragma warning(disable: 4127) // warning C4127: conditional expression is constant
+#endif
 
 
 void lzma_compress_config_t::reset()

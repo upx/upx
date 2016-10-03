@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -307,13 +307,18 @@ void ElfLinker::preprocessRelocations(char *start, char *end)
                 char sign = *p;
                 *p = 0;  // terminate the symbol name
                 p += 3;
-
                 assert(strlen(p) == 8 || strlen(p) == 16);
+#if (ACC_CC_MSC && (_MSC_VER < 1800))
+                unsigned a = 0, b = 0;
+                if (sscanf(p, "%08x%08x", &a, &b) == 2)
+                    add = ((upx_uint64_t)a << 32) | b;
+                else
+                    add = a;
+#else
                 char *endptr = NULL;
-                upx_uint64_t ull = strtoull(p, &endptr, 16);
-                add = (upx_uint64_t) ull;
-                assert(add == ull);
+                add = strtoull(p, &endptr, 16);
                 assert(endptr && *endptr == '\0');
+#endif
                 if (sign == '-')
                     add = 0 - add;
             }
@@ -644,11 +649,7 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n",
                            displ, rel->section->name, rel->offset);
@@ -907,11 +908,7 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d) in reloc %s:%x\n",
                            displ, rel->section->name, rel->offset);
@@ -949,11 +946,7 @@ void ElfLinkerX86::relocate1(const Relocation *rel, upx_byte *location,
 
     if (strcmp(type, "8") == 0)
     {
-#if (ACC_CC_PGI)
-        int displ = * (signed char *) location + (int) value; // CBUG
-#else
         int displ = (signed char) *location + (int) value;
-#endif
         if (range_check && (displ < -128 || displ > 127))
             internal_error("target out of range (%d,%d,%d) in reloc %s:%x\n",
                            displ, *location, value, rel->section->name, rel->offset);

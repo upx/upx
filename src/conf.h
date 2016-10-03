@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -44,7 +44,7 @@
 #define ACC_CFG_USE_NEW_STYLE_CASTS 1
 #endif
 #include "miniacc.h"
-#if !(ACC_CC_CLANG || ACC_CC_GNUC)
+#if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
    // other compilers may work, but we're NOT interested into supporting them
 #  error "only clang and gcc are officially supported"
 #endif
@@ -244,8 +244,13 @@ typedef unsigned char   upx_byte;
 //
 **************************************************************************/
 
+#if (ACC_CC_MSC)
+#define __packed_struct(s)      struct s {
+#define __packed_struct_end()   };
+#else
 #define __packed_struct(s)      __acc_struct_packed(s)
 #define __packed_struct_end()   __acc_struct_packed_end()
+#endif
 
 #define UNUSED(var)             ACC_UNUSED(var)
 #define COMPILE_TIME_ASSERT(e)  ACC_COMPILE_TIME_ASSERT(e)
@@ -386,7 +391,7 @@ private:
 #define UPX_F_VMLINUX_PPC64LE   40
 #define UPX_F_DYLIB_PPC64LE     41
 
-#define UPX_F_PLAIN_TEXT        127
+#define UPX_F_PLAIN_TEXT        127             // FIXME: what is this ??
 
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130
@@ -670,6 +675,7 @@ void do_files(int i, int argc, char *argv[]);
 
 
 // help.cpp
+extern const char gitrev[];
 void show_head(void);
 void show_help(int verbose=0);
 void show_license(void);

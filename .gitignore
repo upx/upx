@@ -5,6 +5,8 @@
 /maint*
 
 .depend
+GNUmakefile
+MMakefile
 Makevars.local*
 
 *.a
@@ -21,8 +23,6 @@ doc/*.man
 doc/*.ps
 doc/*.tex
 
-src/GNUmakefile
-src/MMakefile
 src/compress_nrv*
 src/*.mft
 src/*.rc

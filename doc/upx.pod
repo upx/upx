@@ -923,7 +923,7 @@ Please report all bugs immediately to the authors.
  Markus F.X.J. Oberhumer <markus@oberhumer.com>
  http://www.oberhumer.com
 
- Laszlo Molnar <ml1050@users.sourceforge.net>
+ Laszlo Molnar <ezerotven+github@gmail.com>
 
  John F. Reiser <jreiser@BitWagon.com>
 

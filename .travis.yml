@@ -5,7 +5,9 @@ sudo: false
 language: cpp
 
 notifications:
-  email: false
+  email:
+    on_success: never
+    on_failure: change
 
 branches:
   only:
@@ -22,7 +24,7 @@ addons:
 
 env:
   global:
-    - C= B= ALLOW_FAIL=
+    - CROSS= C= B= T=
   matrix:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
@@ -79,8 +81,8 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "g++-6" ] } }
     - os: linux
       compiler: gcc
-      env: C=gcc-6-m64 B=valgrind
-      addons: { apt: { sources: *S, packages: [ "g++-6", "valgrind" ] } }
+      env: C=gcc-6-m64 B=valgrind T=valgrind
+      addons: { apt: { sources: *S, packages: [ "g++-6", valgrind ] } }
     - os: linux
       compiler: clang
       env: C=clang-3.4-m32
@@ -136,14 +138,32 @@ matrix:
       compiler: clang
       env: C=clang-3.8-m64 B=scan-build
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+    - os: linux
+      compiler: gcc
+      env: CROSS=arm-linux-gnueabi C=gcc-4.6 T=SKIP
+      addons: { apt: { packages: [ "g++-arm-linux-gnueabi", "qemu-user" ] } }
+    - os: linux
+      compiler: gcc
+      env: CROSS=arm-linux-gnueabihf C=gcc-4.6 T=SKIP
+      addons: { apt: { packages: [ "g++-arm-linux-gnueabihf", "qemu-user" ] } }
+    - os: linux
+      compiler: gcc
+      env: CROSS=i386-w64-mingw32 C=gcc-4.6 T=wine
+      addons: { apt: { packages: [ "binutils-mingw-w64-i686", "g++-mingw-w64-i686", "wine" ] } }
+    - os: linux
+      compiler: gcc
+      env: CROSS=x86_64-w64-mingw32 C=gcc-4.6 T=wine
+      addons: { apt: { packages: [ "binutils-mingw-w64-x86-64", "g++-mingw-w64-x86-64", "wine" ] } }
     - os: osx
       compiler: clang
-      # must use debug or else we get "ld: internal error: atom not found" when linking
-      env: C=clang-600-m32 B=debug
+      # must use debug build or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-602-m32 B=debug
+      osx_image: xcode6.4
     - os: osx
       compiler: clang
-      # must use debug or else we get "ld: internal error: atom not found" when linking
-      env: C=clang-600-m64 B=debug
+      # must use debug build or else we get "ld: internal error: atom not found" when linking
+      env: C=clang-602-m64 B=debug
+      osx_image: xcode6.4
     - os: osx
       compiler: clang
       env: C=clang-703-m32
@@ -162,12 +182,28 @@ matrix:
       osx_image: xcode8
 
 install:
-  - umask 022; DEPS_DIR="$TRAVIS_BUILD_DIR/deps"; mkdir -p "$DEPS_DIR" && cd "$DEPS_DIR"
-  - travis_retry wget --no-check-certificate -q -O - https://download.freenas.org/distfiles/ucl-1.03.tar.gz | tar -xz
-  - travis_retry git clone https://github.com/upx/upx-testsuite
+  - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+  - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
+  - |
+    cd /
+    if [[ $TRAVIS_OS_NAME == linux ]]; then
+      if [[ $B =~ (^|\+)coverage($|\+) ]]; then
+        travis_retry pip install --user cpp-coveralls
+      fi
+    fi
+    if [[ $TRAVIS_OS_NAME == osx ]]; then
+      if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
+      if [[ $B =~ (^|\+)coverage($|\+) ]]; then
+        travis_retry brew install lcov
+        travis_retry pip install --user cpp-coveralls
+      fi
+    fi
 
 script:
-  - bash $TRAVIS_BUILD_DIR/.github/travis_build.sh
-  - bash $TRAVIS_BUILD_DIR/.github/travis_testsuite.sh
+  - cd $TRAVIS_BUILD_DIR && mkdir -p ../build/travis
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite_1.sh
 
 # vim:set ts=2 sw=2 et:

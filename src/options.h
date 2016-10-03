@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -63,6 +63,7 @@ struct options_t {
     bool all_methods_use_lzma;
     bool all_filters;       // try all available filters ?
     bool no_filter;         // force no filter
+    bool prefer_ucl;        // prefer UCL
     bool exact;             // user requires byte-identical decompression
 
     // other options

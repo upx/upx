@@ -23,7 +23,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
 
    John F. Reiser
    <jreiser@users.sourceforge.net>
@@ -314,6 +314,7 @@ void PackLinuxElf::pack3(OutputFile *fo, Filter &ft)
     get_te16(&linfo.l_lsize) + len - sz_pack2a));
 
     len = fpad4(fo);  // MATCH03
+    ACC_UNUSED(len);
 }
 
 void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
@@ -1079,6 +1080,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     linker->defineSymbol("LENU", lenu);  // len  for unmap
     linker->defineSymbol("ADRC", adrc);  // addr for copy
     //linker->defineSymbol("ADRU", adru);  // addr for unmap
+    ACC_UNUSED(adru);
 #define EI_NIDENT 16  /* <elf.h> */
     linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
 #undef EI_NIDENT
@@ -1584,6 +1586,7 @@ bool PackLinuxElf32::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1761,6 +1764,7 @@ PackLinuxElf64ppcle::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -1936,6 +1940,7 @@ PackLinuxElf64amd::canPack()
                     break;
                 }
             }
+            ACC_UNUSED(shdr);
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
@@ -2154,8 +2159,12 @@ PackNetBSDElf32x86::generateElfHdr(
         fo->seek(0, SEEK_SET);
         fo->rewrite(h2, sizeof(*h2) - sizeof(h2->linfo));
 
-        memcpy(&((char *)phdr)[0],         np_NetBSD, sz_NetBSD);
-        memcpy(&((char *)phdr)[sz_NetBSD], np_PaX,    sz_PaX);
+        // The 'if' guards on these two calls to memcpy are required
+        // because the C Standard Committee did not debug the Standard
+        // before publishing.  An empty region (0==size) must nevertheless
+        // have a valid (non-NULL) pointer.
+        if (sz_NetBSD) memcpy(&((char *)phdr)[0],         np_NetBSD, sz_NetBSD);
+        if (sz_PaX)    memcpy(&((char *)phdr)[sz_NetBSD], np_PaX,    sz_PaX);
 
         fo->write(&elfout.phdr[2],
             &((char *)phdr)[sz_PaX + sz_NetBSD] - (char *)&elfout.phdr[2]);
@@ -2362,7 +2371,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
         }
 
         //set the shstrtab
-        sec_strndx = &shdr[ehdri.e_shstrndx];
+        sec_strndx = &shdri[ehdri.e_shstrndx];
 
         char *strtab = New(char, sec_strndx->sh_size);
         fi->seek(0,SEEK_SET);
@@ -2399,6 +2408,7 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             shdri = tmp;
             delete [] shdr;
             shdr = NULL;
+            sec_strndx = NULL;
         }
     }
 }
@@ -2924,6 +2934,7 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
 
     linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
     linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
+    ACC_UNUSED(adrc);
 
 #define MAP_PRIVATE      2     /* UNIX standard */
 #define MAP_FIXED     0x10     /* UNIX standard */

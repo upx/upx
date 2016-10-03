@@ -23,7 +23,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
 
    Jens Medoch
    <jssg@users.sourceforge.net>
@@ -418,7 +418,7 @@ void PackPs1::buildLoader(const Filter *)
 bool PackPs1::findBssSection()
 {
     unsigned char reg;
-    LE32 *p1 = (LE32 *)(ibuf + (ih.epc - ih.tx_ptr));
+    const LE32 * const p1 = ACC_CCAST(const LE32 *, ibuf + (ih.epc - ih.tx_ptr));
 
     if ((ih.epc - ih.tx_ptr + (BSS_CHK_LIMIT * 4)) > fdata_size)
         return false;
@@ -433,7 +433,7 @@ bool PackPs1::findBssSection()
             reg = REG1(op);
             for (; i >= 0; i--)
             {
-                bss_nfo *p = (bss_nfo *)(void *)&p1[i];
+                const bss_nfo * const p = ACC_CCAST(const bss_nfo *, &p1[i]);
                 upx_uint16_t op1 = p->op1, op2 = p->op2;
 
                 // check for la (x),bss_start
@@ -547,7 +547,7 @@ void PackPs1::pack(OutputFile *fo)
 
     const int lsize = getLoaderSize();
 
-    unsigned filelen = ALIGN_UP(ih.tx_len, 4);
+    unsigned filelen = ALIGN_UP(ih.tx_len, 4u);
 
     const unsigned decomp_data_start = ih.tx_ptr;
     const unsigned comp_data_start = (decomp_data_start + filelen + overlap) - ph.c_len;
@@ -594,7 +594,7 @@ void PackPs1::pack(OutputFile *fo)
     if (!opt->ps1_exe.no_align || !isCon)
     {
         pad = oh.tx_len;
-        oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC);
+        oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC+0u);
         pad = oh.tx_len - pad;
         oh.tx_ptr -= pad;
     }

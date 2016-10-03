@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -332,14 +332,9 @@ static bool set_method(int m, int l)
     {
         if (!Packer::isValidCompressionMethod(m))
             return false;
-#if 1
         // something like "--brute --lzma" should not disable "--brute"
         if (!opt->all_methods)
-#endif
-        {
             opt->method = m;
-            opt->all_methods = false;
-        }
     }
     if (l > 0)
         opt->level = l;
@@ -586,6 +581,12 @@ static int do_option(int optc, const char *arg)
         opt->all_methods_use_lzma = false;
         if (M_IS_LZMA(opt->method))
             opt->method = -1;
+        break;
+    case 723:
+        opt->prefer_ucl = false;
+        break;
+    case 724:
+        opt->prefer_ucl = true;
         break;
 
     // compression level
@@ -983,7 +984,9 @@ static const struct mfx_option longopts[] =
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
     {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
+    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, 0, 723},
+    {"prefer-ucl",       0x10, 0, 724},
     // compression settings
     {"all-filters",      0x10, 0, 523},
     {"all-methods",      0x10, 0, 524},
@@ -1142,7 +1145,9 @@ static const struct mfx_option longopts[] =
     {"nrv2d",            0x10, 0, 704},     // --nrv2d
     {"nrv2e",            0x10, 0, 705},     // --nrv2e
     {"lzma",             0x10, 0, 721},     // --lzma
-    {"no-lzma",          0x10, 0, 722},     // (disable all_methods_use_lzma)
+    {"no-lzma",          0x10, 0, 722},     // disable all_methods_use_lzma
+    {"prefer-nrv",       0x10, 0, 723},
+    {"prefer-ucl",       0x10, 0, 724},
     // compression settings
     // compression runtime parameters
 
@@ -1352,11 +1357,12 @@ __acc_static_noinline void upx_sanity_check(void)
     assert(strlen(UPX_VERSION_YEAR) == 4);
     assert(memcmp(UPX_VERSION_DATE_ISO, UPX_VERSION_YEAR, 4) == 0);
     assert(memcmp(&UPX_VERSION_DATE[sizeof(UPX_VERSION_DATE)-1 - 4], UPX_VERSION_YEAR, 4) == 0);
-#if defined(UPX_VERSION_GITREV)
-    COMPILE_TIME_ASSERT(sizeof(UPX_VERSION_GITREV) <= 7 + 1)
-    assert(strlen(UPX_VERSION_GITREV) >= 5);
-    assert(strlen(UPX_VERSION_GITREV) <= 7);
-#endif
+    if (gitrev[0]) {
+        size_t revlen = strlen(gitrev);
+        if (strncmp(gitrev, "ERROR", 5) == 0) { assert(revlen == 5 || revlen == 6); }
+        else { assert(revlen == 12 || revlen == 13); }
+        if (revlen == 6 || revlen == 13) { assert(gitrev[revlen-1] == '+'); }
+    }
 
 #if 1
     assert(TestBELE<LE16>::test());
@@ -1553,7 +1559,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     set_term(stdout);
     do_files(i,argc,argv);
 
-#if 1 && defined(UPX_VERSION_GITREV)
+    if (gitrev[0])
     {
         FILE *f = stdout;
         int fg = con_fg(f,FG_RED);
@@ -1561,7 +1567,6 @@ int __acc_cdecl_main main(int argc, char *argv[])
         fg = con_fg(f,fg);
         UNUSED(fg);
     }
-#endif
 
 #if 0 && defined(__GLIBC__)
     //malloc_stats();

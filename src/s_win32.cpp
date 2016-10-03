@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 #include "conf.h"
@@ -42,9 +42,9 @@
 
 #if (ACC_CC_MSC && (_MSC_VER >= 1000 && _MSC_VER < 1200))
 /* avoid -W4 warnings in <conio.h> */
-#pragma warning(disable : 4032)
+#pragma warning(disable: 4032)
 /* avoid -W4 warnings in <windows.h> */
-#pragma warning(disable : 4201 4214 4514)
+#pragma warning(disable: 4201 4214 4514)
 #endif
 #if defined(__RSXNT__)
 #define timeval win32_timeval /* struct timeval already in <sys/time.h> */

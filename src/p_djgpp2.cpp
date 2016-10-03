@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -344,7 +344,7 @@ void PackDjgpp2::pack(OutputFile *fo)
 
     // because of a feature (bug?) in stub.asm we need some padding
     memcpy(obuf+data->size, "UPX", 3);
-    data->size = ALIGN_UP(data->size, 4);
+    data->size = ALIGN_UP(data->size, 4u);
 
     linker->defineSymbol("DJ2MAIN1", coff_hdr.a_entry);
     relocateLoader();

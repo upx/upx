@@ -4,9 +4,10 @@
 # Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
 #
 
-# build configuration options
-#USE_DEBUG = 1
-#USE_SANITIZE = 1
+# build configuration options for this Makefile
+BUILD_TYPE_DEBUG    ?= 0
+BUILD_TYPE_SANITIZE ?= 0
+BUILD_USE_DEPEND    ?= 1
 
 MAKEFLAGS += -r
 ifneq ($(upx_CXX),)
@@ -20,11 +21,7 @@ endif
 
 .SUFFIXES:
 export SHELL = /bin/sh
-override e = $($1) $(EXTRA_$1) $(upx_$1) $($(basename $(notdir $@)).$1)
-
-ifneq ($(findstring $(firstword $(MAKE_VERSION)),3.77 3.78 3.78.1 3.79 3.79.1 3.80),)
-$(error GNU make 3.81 or better is required)
-endif
+override e = $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
 
 ifndef srcdir
 srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
@@ -47,7 +44,7 @@ upx_SOURCES := $(sort $(wildcard $(srcdir)/*.cpp))
 upx_OBJECTS := $(notdir $(upx_SOURCES:.cpp=$(objext)))
 
 ifneq ($(wildcard $(top_srcdir)/.git/.),)
-UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=6 HEAD || echo 'ERROR'))
+UPX_VERSION_GITREV := $(strip $(shell cd '$(top_srcdir)' && git rev-parse --short=12 HEAD || echo 'ERROR'))
 ifneq ($(UPX_VERSION_GITREV),)
 x := $(strip $(shell cd '$(top_srcdir)' && git diff --exit-code HEAD >/dev/null && echo '' || echo '+'))
 DEFS += '-DUPX_VERSION_GITREV="$(UPX_VERSION_GITREV)$(x)"'
@@ -65,22 +62,22 @@ include $(top_srcdir)/src/stub/src/c/Makevars.lzma
 DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
-ifdef USE_DEBUG
+ifeq ($(BUILD_TYPE_DEBUG),1)
 CXXFLAGS += -O0 -g
 else
 CXXFLAGS += -O2
-LDFLAGS += -s
 endif
 # protect against security threats caused by misguided C++ compiler "optimizations"
 ifeq ($(findstring clang,$(CXX)),)
 CXXFLAGS += -fno-delete-null-pointer-checks
 endif
 CXXFLAGS += -fno-strict-aliasing -fwrapv
+CXXFLAGS += -funsigned-char
 CXXFLAGS += -Wall -W -Wcast-align -Wcast-qual -Wmissing-declarations -Wpointer-arith -Wshadow -Wwrite-strings
 CXXFLAGS_WERROR ?= -Werror
 CXXFLAGS += $(CXXFLAGS_WERROR)
 
-ifdef USE_SANITIZE
+ifeq ($(BUILD_TYPE_SANITIZE),1)
 CXXFLAGS_SANITIZE := -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
 CXXFLAGS += $(CXXFLAGS_SANITIZE)
 LDFLAGS  += $(CXXFLAGS_SANITIZE)
@@ -89,35 +86,49 @@ compress_lzma$(objext) filteri$(objext) : CXXFLAGS := $(filter-out $(CXXFLAGS_SA
 endif
 
 
-all: upx$(exeext) | .depend
-.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) .depend
+all: upx$(exeext) | ./.depend
+.DELETE_ON_ERROR: upx$(exeext) $(upx_OBJECTS) ./.depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
 	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
+	$(CHECK_WHITESPACE)
 
-%.o : %.cpp | .depend
+%.o : %.cpp | ./.depend
 	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
+%.cpp.ii : %.cpp | ./.depend
+	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -E $<)
 
-.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
+ifeq ($(BUILD_USE_DEPEND),1)
+./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
-ifeq (1,1)
 	@echo "Updating $@"
 	@$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
-	@echo "timestamp" > $@
+./.depend:
+.PHONY: ./.depend
 endif
 
+CHECK_WHITESPACE =
+ifeq ($(shell uname),Linux)
+CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace.sh $(top_srcdir)
+ifneq ($(wildcard $(top_srcdir)/.git/.),)
+CHECK_WHITESPACE = $(top_srcdir)/src/stub/scripts/check_whitespace_git.sh $(top_srcdir)
+endif
+check-whitespace : ; $(CHECK_WHITESPACE)
+endif
+.PHONY: check-whitespace
 
-.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
+
+./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
 
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
 
 
 mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.map *.o *.obj *.res .depend upx.exe upx.out upx.ttp upx$(exeext)
+	rm -f *.d *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 
@@ -127,7 +138,10 @@ else ifeq ($(MAKECMDGOALS),distclean)
 else ifeq ($(MAKECMDGOALS),maintainer-clean)
 else ifeq ($(MAKECMDGOALS),clang-format)
 else
--include .depend
+ifeq ($(BUILD_USE_DEPEND),1)
+-include ./.depend
+endif
+help$(objext): $(MAKEFILE_LIST)
 endif
 
 

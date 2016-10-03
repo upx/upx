@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -38,6 +38,12 @@
 
 static bool head_done = 0;
 
+#if defined(UPX_VERSION_GITREV)
+const char gitrev[] = UPX_VERSION_GITREV;
+#else
+const char gitrev[1] = { 0 };
+#endif
+
 void show_head(void)
 {
     FILE *f = con_term;
@@ -52,9 +58,15 @@ void show_head(void)
     con_fprintf(f,
                 "                       Ultimate Packer for eXecutables\n"
                 "                          Copyright (C) 1996 - " UPX_VERSION_YEAR "\n"
-                "UPX %-11s Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
 #if defined(UPX_VERSION_GITREV)
-                "git-" UPX_VERSION_GITREV,
+                "UPX git-%6.6s%c"
+#else
+                "UPX %-11s"
+#endif
+                " Markus Oberhumer, Laszlo Molnar & John Reiser  %14s\n\n",
+#if defined(UPX_VERSION_GITREV)
+                gitrev,
+                (sizeof(gitrev)-1 > 6 && gitrev[sizeof(gitrev)-2] == '+') ? '+' : ' ',
 #elif (ACC_OS_DOS16 || ACC_OS_DOS32)
                 V("d"),
 #elif (ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
@@ -311,7 +323,7 @@ void show_help(int verbose)
         con_fprintf(f,"\nType '%s --help' for more detailed help.\n", progname);
     }
 
-    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit http://upx.sf.net\n"
+    con_fprintf(f,"\nUPX comes with ABSOLUTELY NO WARRANTY; for details visit https://upx.github.io\n"
 //                "\nUPX comes with ABSOLUTELY NO WARRANTY; for details type 'upx -L'.\n"
                 "");
 
@@ -365,7 +377,7 @@ void show_license(void)
     con_fprintf(f,
         "\n"
         "   Markus F.X.J. Oberhumer              Laszlo Molnar\n"
-        "   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>\n"
+        "   <markus@oberhumer.com>               <ezerotven+github@gmail.com>\n"
     );
     fg = con_fg(f,fg);
 
@@ -386,7 +398,7 @@ void show_version(int x)
 
     fprintf(fp, "upx %s\n", UPX_VERSION_STRING
 #if defined(UPX_VERSION_GITREV)
-            "-" UPX_VERSION_GITREV
+            "-git-" UPX_VERSION_GITREV
 #endif
            );
 #if (WITH_NRV)

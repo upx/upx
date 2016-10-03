@@ -22,7 +22,7 @@
    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
-   <markus@oberhumer.com>               <ml1050@users.sourceforge.net>
+   <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
 
@@ -330,7 +330,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
         {
             prev = pos;
             *rel1 = 0;
-            rel->size = ALIGN_UP(ptr_diff(rel1,rel),4);
+            rel->size = ALIGN_UP(ptr_diff(rel1,rel), 4);
             newRelocPos((char *)rel + rel->size);
             rel->pagestart = (pos >> 4) &~ 0xfff;
         }
@@ -1177,7 +1177,7 @@ void PeFile::Export::build(char *newbase, unsigned newoffs)
 
 void PeFile::processExports(Export *xport) // pass1
 {
-    soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4);
+    soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4u);
     if (soexport == 0)
         return;
     if (!isdll && opt->win32_pe.compress_exports)
@@ -1258,7 +1258,7 @@ void PeFile::processTls1(Interval *iv,
     COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
 
-    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
+    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4u)) == 0)
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
@@ -1508,7 +1508,7 @@ const upx_byte *PeFile::Resource::ntype() const
 
 unsigned PeFile::Resource::size() const
 {
-    return ALIGN_UP(current->data.size,4);
+    return ALIGN_UP(current->data.size, 4u);
 }
 
 unsigned PeFile::Resource::offs() const
@@ -2272,7 +2272,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     identsize += ic;
 
     const unsigned oobjs = last_section_rsrc_only ? 4 : 3;
-    pe_section_t osection[oobjs];
+    ////pe_section_t osection[oobjs];
+    pe_section_t osection[4];
     // section 0 : bss
     //         1 : [ident + header] + packed_data + unpacker + tls + loadconf
     //         2 : not compressed data
@@ -2466,7 +2467,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     // write loader + compressed file
     fo->write(&oh,sizeof(oh));
-    fo->write(osection,sizeof(osection));
+    fo->write(osection,sizeof(osection[0])*oobjs);
     // some alignment
     if (identsplit == identsize)
     {
@@ -2509,7 +2510,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
 #if 0
     printf("%-13s: program hdr  : %8ld bytes\n", getName(), (long) sizeof(oh));
-    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection));
+    printf("%-13s: sections     : %8ld bytes\n", getName(), (long) sizeof(osection[0])*oobjs);
     printf("%-13s: ident        : %8ld bytes\n", getName(), (long) identsize);
     printf("%-13s: compressed   : %8ld bytes\n", getName(), (long) c_len);
     printf("%-13s: decompressor : %8ld bytes\n", getName(), (long) codesize);
