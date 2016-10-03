@@ -48,9 +48,14 @@
    // other compilers may work, but we're NOT interested into supporting them
 #  error "only clang and gcc are officially supported"
 #endif
+// UPX sanity checks for a sane compiler
 #if !defined(UINT_MAX) || (UINT_MAX != 0xffffffffL)
 #  error "UINT_MAX"
 #endif
+ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
+ACC_COMPILE_TIME_ASSERT_HEADER((1u << 31) << 1 == 0)
+ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic right shift
+ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
 #if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)

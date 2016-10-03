@@ -5,18 +5,15 @@ set -e; set -o pipefail
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 [[ -z $1 ]] || cd "$1" || exit 1
+[[ -d .git ]] || exit 1
 
-find . \
-    -type d -name '.git' -prune -o \
-    -type d -name '.hg' -prune -o \
-    -type d -name 'build*' -prune -o \
-    -type d -name 'tmp*' -prune -o \
-    -type f -iname '*.bat' -prune -o \
-    -type f -iname '*.exe' -prune -o \
-    -type f -iname '*.pdf' -prune -o \
-    -type f -iname '*.swp' -prune -o \
-    -type f -print0 | \
-LC_ALL=C sort -z | xargs -0r perl -n -e '
+git ls-files --full-name -z | perl -0 -n -e '
+    s,^,./,;
+    if (m,^\./src/lzma-sdk(\0|$),) { }
+    elsif (m,\.bat(\0|$),) { }
+    elsif (m,\.exe(\0|$),) { }
+    else { print; }
+' | LC_ALL=C sort -z | xargs -0r perl -n -e '
     #print("$ARGV\n");
     if (m,[\x00\x01\x02\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
     if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }

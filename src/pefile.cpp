@@ -330,7 +330,7 @@ void PeFile::Reloc::finish(upx_byte *&p,unsigned &siz)
         {
             prev = pos;
             *rel1 = 0;
-            rel->size = ALIGN_UP(ptr_diff(rel1,rel),4);
+            rel->size = ALIGN_UP(ptr_diff(rel1,rel), 4);
             newRelocPos((char *)rel + rel->size);
             rel->pagestart = (pos >> 4) &~ 0xfff;
         }
@@ -1177,7 +1177,7 @@ void PeFile::Export::build(char *newbase, unsigned newoffs)
 
 void PeFile::processExports(Export *xport) // pass1
 {
-    soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4);
+    soexport = ALIGN_UP(IDSIZE(PEDIR_EXPORT),4u);
     if (soexport == 0)
         return;
     if (!isdll && opt->win32_pe.compress_exports)
@@ -1258,7 +1258,7 @@ void PeFile::processTls1(Interval *iv,
     COMPILE_TIME_ASSERT(sizeof(tls) == tls_traits<LEXX>::sotls)
     COMPILE_TIME_ASSERT_ALIGNED1(tls)
 
-    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4)) == 0)
+    if ((sotls = ALIGN_UP(IDSIZE(PEDIR_TLS),4u)) == 0)
         return;
 
     const tls * const tlsp = (const tls*) (ibuf + IDADDR(PEDIR_TLS));
@@ -1508,7 +1508,7 @@ const upx_byte *PeFile::Resource::ntype() const
 
 unsigned PeFile::Resource::size() const
 {
-    return ALIGN_UP(current->data.size,4);
+    return ALIGN_UP(current->data.size, 4u);
 }
 
 unsigned PeFile::Resource::offs() const

@@ -547,7 +547,7 @@ void PackPs1::pack(OutputFile *fo)
 
     const int lsize = getLoaderSize();
 
-    unsigned filelen = ALIGN_UP(ih.tx_len, 4);
+    unsigned filelen = ALIGN_UP(ih.tx_len, 4u);
 
     const unsigned decomp_data_start = ih.tx_ptr;
     const unsigned comp_data_start = (decomp_data_start + filelen + overlap) - ph.c_len;
@@ -594,7 +594,7 @@ void PackPs1::pack(OutputFile *fo)
     if (!opt->ps1_exe.no_align || !isCon)
     {
         pad = oh.tx_len;
-        oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC);
+        oh.tx_len = ALIGN_UP(oh.tx_len, CD_SEC+0u);
         pad = oh.tx_len - pad;
         oh.tx_ptr -= pad;
     }
