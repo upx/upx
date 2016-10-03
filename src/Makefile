@@ -141,6 +141,8 @@ help$(objext): $(MAKEFILE_LIST)
 endif
 
 
+# automatically format some C++ source code files
+ifeq ($(shell uname),Linux)
 CLANG_FORMAT_FILES += packhead.cpp
 CLANG_FORMAT_FILES += s_djgpp2.cpp s_object.cpp s_vcsa.cpp s_win32.cpp screen.h
 CLANG_FORMAT_FILES += snprintf.cpp
@@ -149,5 +151,26 @@ CLANG_FORMAT_FILES += ui.cpp ui.h util.h
 clang-format:
 	$(top_srcdir)/src/stub/scripts/upx-clang-format -i $(addprefix $(top_srcdir)/src/,$(CLANG_FORMAT_FILES))
 .PHONY: clang-format
+endif
+
+
+# run the UPX testsuite - git clone https://github.com/upx/upx-testsuite.git
+# you have to set upx_testsuite_SRCDIR
+ifndef upx_testsuite_SRCDIR
+# search standard locations below $(top_srcdir)
+ifneq ($(wildcard $(top_srcdir)/../upx-testsuite.git/files/packed/.),)
+upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite.git
+else ifneq ($(wildcard $(top_srcdir)/../upx-testsuite/files/packed/.),)
+upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuit
+endif
+endif
+ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
+run-testsuite: export upx_exe                := ./upx$(exeext)
+run-testsuite: export upx_testsuite_SRCDIR   := $(upx_testsuite_SRCDIR)
+run-testsuite: export upx_testsuite_BUILDDIR := ./tmp-testsuite
+run-testsuite: ./upx$(exeext)
+	time -p bash $(top_srcdir)/.github/travis_testsuite_1.sh
+.PHONY: run-testsuite
+endif
 
 # vim:set ts=8 sw=8 noet:
