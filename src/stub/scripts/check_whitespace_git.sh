@@ -7,12 +7,15 @@ set -e; set -o pipefail
 [[ -z $1 ]] || cd "$1" || exit 1
 [[ -d .git ]] || exit 1
 
-# info: cannot use "-z" as that needs GNU sed 4.2.2 which is not installed on Ubuntu 12.04
-git ls-files --full-name | sed 's/^/\.\//' |\
-sed -e '/lzma-sdk$/d' -e '/\.exe$/d' |\
-LC_ALL=C sort | \
-xargs -r perl -n -e '
+git ls-files --full-name -z | perl -0 -n -e '
+    s,^,./,;
+    if (m,^\./src/lzma-sdk(\0|$),) { }
+    elsif (m,\.bat(\0|$),) { }
+    elsif (m,\.exe(\0|$),) { }
+    else { print; }
+' | LC_ALL=C sort -z | xargs -0r perl -n -e '
     #print("$ARGV\n");
+    if (m,[\x00\x01\x02\xfe\xff],) { print "ERROR: binary file detected $ARGV: $_"; exit(1); }
     if (m,[\r\x1a],) { print "ERROR: DOS EOL detected $ARGV: $_"; exit(1); }
     if (m,([ \t]+)$,) {
         # allow exactly two trailing spaces for GitHub flavoured Markdown in .md files
