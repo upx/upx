@@ -706,8 +706,10 @@ protected:
     unsigned sz_mach_headers;
     unsigned sz_stub_entry;
     unsigned sz_stub_fold;
+    unsigned sz_stub_main;
     upx_byte const *stub_entry;
     upx_byte const *stub_fold;
+    upx_byte const *stub_main;
     Mach_segment_command *rawmseg;  // as input, with sections
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
     unsigned o_routines_cmd;  // file offset to LC_ROUINTES
@@ -781,7 +783,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
 
     __packed_struct(Mach_thread_command)
         BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
@@ -814,7 +815,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
 
     __packed_struct(Mach_thread_command)
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
@@ -842,7 +842,6 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-    virtual void buildLoader(const Filter *ft);
 };
 
 class PackDylibPPC64LE : public PackMachPPC64LE
@@ -858,7 +857,6 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-    virtual void buildLoader(const Filter *ft);
 };
 
 class PackMachI386 : public PackMachBase<MachClass_LE32>
@@ -878,7 +876,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
     virtual upx_uint64_t getEntryVMA(Mach_command const *);
 
@@ -908,7 +905,6 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-    virtual void buildLoader(const Filter *ft);
 };
 
 class PackMachAMD64 : public PackMachBase<MachClass_LE64>
@@ -928,7 +924,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
     virtual upx_uint64_t getEntryVMA(Mach_command const *ptr);
 
@@ -959,7 +954,6 @@ public:
 protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
-    virtual void buildLoader(const Filter *ft);
 };
 
 class PackMachARMEL : public PackMachBase<MachClass_LE32>
@@ -980,7 +974,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
 
     __packed_struct(Mach_thread_command)
@@ -1014,7 +1007,6 @@ protected:
     virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
-    virtual void buildLoader(const Filter *ft);
     virtual void addStubEntrySections(Filter const *);
 
     __packed_struct(Mach_thread_command)

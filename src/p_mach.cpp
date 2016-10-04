@@ -437,30 +437,6 @@ PackMachBase<T>::buildMachLoader(
     relocateLoader();
 }
 
-void
-PackMachPPC32::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_powerpc_darwin_macho_entry, sizeof(stub_powerpc_darwin_macho_entry),
-        stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
-}
-
-void
-PackMachPPC64LE::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_powerpc64le_darwin_macho_entry, sizeof(stub_powerpc64le_darwin_macho_entry),
-        stub_powerpc64le_darwin_macho_fold,  sizeof(stub_powerpc64le_darwin_macho_fold),  ft );
-}
-
-void
-PackMachI386::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_i386_darwin_macho_entry, sizeof(stub_i386_darwin_macho_entry),
-        stub_i386_darwin_macho_fold,  sizeof(stub_i386_darwin_macho_fold),  ft );
-}
-
 template <class T>
 void
 PackMachBase<T>::buildLoader(const Filter *ft)
@@ -468,88 +444,6 @@ PackMachBase<T>::buildLoader(const Filter *ft)
     buildMachLoader(
         stub_entry, sz_stub_entry,
         stub_fold,  sz_stub_fold,  ft );
-}
-
-void
-PackMachAMD64::buildLoader(const Filter *ft)
-{
-    if (0 && my_filetype==Mach_header::MH_EXECUTE) {
-        initLoader(NULL, 0);
-        addStubEntrySections(ft);
-
-        defineSymbols(ft);
-        relocateLoader();
-if (0) {
-        Mach_command const *ptr1 = (Mach_command const *)(1+
-            (Mach_header const *)stub_entry);
-        for (unsigned j = 0; j < mhdro.ncmds; ++j,
-                ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1))
-        switch (ptr1->cmd) {
-        case Mach_segment_command::LC_SEGMENT_64: {
-            Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
-            if (!strcmp("__TEXT", segptr->segname)) {
-                Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
-                linker->addSection("UPXMAIN", &stub_entry[secptr->offset],
-                    secptr->size, 0);
-                addLoader("UPXMAIN", NULL);
-            }
-        } break;
-        } // end switch
-}
-    }
-    else {
-        buildMachLoader(
-            stub_amd64_darwin_macho_entry, sizeof(stub_amd64_darwin_macho_entry),
-            stub_amd64_darwin_macho_fold,  sizeof(stub_amd64_darwin_macho_fold),  ft );
-    }
-}
-
-void
-PackMachARMEL::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_arm_v5a_darwin_macho_entry, sizeof(stub_arm_v5a_darwin_macho_entry),
-        stub_arm_v5a_darwin_macho_fold,  sizeof(stub_arm_v5a_darwin_macho_fold),  ft );
-}
-
-void
-PackMachARM64EL::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_arm64_darwin_macho_entry, sizeof(stub_arm64_darwin_macho_entry),
-        stub_arm64_darwin_macho_fold,  sizeof(stub_arm64_darwin_macho_fold),  ft );
-}
-
-void
-PackDylibI386::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_i386_darwin_dylib_entry, sizeof(stub_i386_darwin_dylib_entry),
-        0,  0,  ft );
-}
-
-void
-PackDylibAMD64::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_amd64_darwin_dylib_entry, sizeof(stub_amd64_darwin_dylib_entry),
-        0,  0,  ft );
-}
-
-void
-PackDylibPPC32::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_powerpc_darwin_dylib_entry, sizeof(stub_powerpc_darwin_dylib_entry),
-        0,  0,  ft );
-}
-
-void
-PackDylibPPC64LE::buildLoader(const Filter *ft)
-{
-    buildMachLoader(
-        stub_powerpc64le_darwin_dylib_entry, sizeof(stub_powerpc64le_darwin_dylib_entry),
-        0,  0,  ft );
 }
 
 template <class T>
@@ -807,8 +701,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
     if (my_filetype == Mach_header::MH_EXECUTE) {
         // Get a writeable copy of the stub to make editing easier.
-        unsigned char upxstub[sz_stub_entry];
-        memcpy(upxstub, stub_entry, sizeof(upxstub));
+        unsigned char upxstub[sz_stub_main];
+        memcpy(upxstub, stub_main, sizeof(upxstub));
 
         Mach_header *const mhp = (Mach_header *)upxstub;
         char *tail = (char *)(1+ mhp);
@@ -1665,7 +1559,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        memcpy(&mhdro, stub_entry, sizeof(mhdro));
+        memcpy(&mhdro, stub_main, sizeof(mhdro));
         mhdro.ncmds += 1;  // we add LC_SEGMENT{,_64} for UPX_DATA
         mhdro.sizeofcmds += sizeof(segXHDR);
         mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
@@ -1744,7 +1638,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 
     if (my_filetype == Mach_header::MH_EXECUTE) {
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
-        Mach_header const *const ptr0 = (Mach_header const *)stub_entry;
+        Mach_header const *const ptr0 = (Mach_header const *)stub_main;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
         for (unsigned j = 0; j < mhdro.ncmds -1; ++j,
                 (cmdsize -= ptr1->cmdsize),
@@ -1766,7 +1660,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     fo->write((char const *)ptr1, cmdsize);
                     // Contents before __LINKEDIT; put non-headers at same offset in file
                     unsigned pos = sizeof(mhdro) + mhdro.sizeofcmds; // includes sizeof(segXHDR)
-                    fo->write(&stub_entry[pos], segptr->fileoff - pos);
+                    fo->write(&stub_main[pos], segptr->fileoff - pos);
                     break;
                 }
             }
@@ -2207,34 +2101,72 @@ bool PackMachBase<T>::canPack()
         return false;
     }
     struct {
-        unsigned filetype;
         unsigned cputype;
-        unsigned sz_stub_entry;
-        unsigned sz_stub_fold;
+        unsigned short filetype;
+        unsigned short sz_stub_entry;
+        unsigned short sz_stub_fold;
+        unsigned short sz_stub_main;
         upx_byte const *stub_entry;
         upx_byte const *stub_fold;
+        upx_byte const *stub_main;
     } const stub_list[] = {
-        {MH_EXECUTE, CPU_TYPE_I386,
-            sizeof(stub_i386_darwin_macho_entry), sizeof(stub_i386_darwin_macho_fold),
-                   stub_i386_darwin_macho_entry,         stub_i386_darwin_macho_fold},
-
-        {MH_EXECUTE, CPU_TYPE_X86_64,
-            sizeof(stub_amd64_darwin_macho_upxmain_exe), 0,
-                   stub_amd64_darwin_macho_upxmain_exe,  0},
-
-        {MH_EXECUTE, CPU_TYPE_ARM,
-            sizeof(stub_arm_v5a_darwin_macho_entry), sizeof(stub_arm_v5a_darwin_macho_fold),
-                   stub_arm_v5a_darwin_macho_entry,         stub_arm_v5a_darwin_macho_fold},
-
-        {MH_EXECUTE, CPU_TYPE_POWERPC,
-            sizeof(stub_powerpc_darwin_macho_entry), sizeof(stub_powerpc_darwin_macho_fold),
-                   stub_powerpc_darwin_macho_entry,         stub_powerpc_darwin_macho_fold},
-
-        {MH_EXECUTE, CPU_TYPE_POWERPC64LE,
-            sizeof(stub_powerpc64le_darwin_macho_entry), sizeof(stub_powerpc64le_darwin_macho_fold),
-                   stub_powerpc64le_darwin_macho_entry,         stub_powerpc64le_darwin_macho_fold},
-
-        {0,0,0,0,0,0}
+        {CPU_TYPE_I386, MH_EXECUTE,
+            sizeof(stub_i386_darwin_macho_entry),
+            sizeof(stub_i386_darwin_macho_fold),
+            0,
+                   stub_i386_darwin_macho_entry,
+                   stub_i386_darwin_macho_fold,
+                   0
+        },
+        {CPU_TYPE_I386, MH_DYLIB,
+            sizeof(stub_i386_darwin_dylib_entry), 0, 0,
+                   stub_i386_darwin_dylib_entry,  0, 0
+        },
+        {CPU_TYPE_X86_64, MH_EXECUTE,
+            sizeof(stub_amd64_darwin_macho_entry),
+            sizeof(stub_amd64_darwin_macho_fold),
+            sizeof(stub_amd64_darwin_macho_upxmain_exe),
+                   stub_amd64_darwin_macho_entry,
+                   stub_amd64_darwin_macho_fold,
+                   stub_amd64_darwin_macho_upxmain_exe
+        },
+        {CPU_TYPE_X86_64, MH_DYLIB,
+            sizeof(stub_amd64_darwin_dylib_entry), 0, 0,
+                   stub_amd64_darwin_dylib_entry,  0, 0
+        },
+        {CPU_TYPE_ARM, MH_EXECUTE,
+            sizeof(stub_arm_v5a_darwin_macho_entry),
+            sizeof(stub_arm_v5a_darwin_macho_fold),
+            0,
+                   stub_arm_v5a_darwin_macho_entry,
+                   stub_arm_v5a_darwin_macho_fold,
+                   0
+        },
+        {CPU_TYPE_POWERPC, MH_EXECUTE,
+            sizeof(stub_powerpc_darwin_macho_entry),
+            sizeof(stub_powerpc_darwin_macho_fold),
+            0,
+                   stub_powerpc_darwin_macho_entry,
+                   stub_powerpc_darwin_macho_fold,
+                   0
+        },
+        {CPU_TYPE_POWERPC, MH_DYLIB,
+            sizeof(stub_powerpc_darwin_dylib_entry), 0, 0,
+                   stub_powerpc_darwin_dylib_entry,  0, 0
+        },
+        {CPU_TYPE_POWERPC64LE, MH_EXECUTE,
+            sizeof(stub_powerpc64le_darwin_macho_entry),
+            sizeof(stub_powerpc64le_darwin_macho_fold),
+            0,
+                   stub_powerpc64le_darwin_macho_entry,
+                   stub_powerpc64le_darwin_macho_fold,
+                   0
+        },
+        {CPU_TYPE_POWERPC64LE, MH_DYLIB,
+            sizeof(stub_powerpc64le_darwin_dylib_entry), 0, 0,
+                   stub_powerpc64le_darwin_dylib_entry,  0, 0
+        },
+        {0,0, 0,0,0, 0,0,0}
     };
     for (unsigned j = 0; stub_list[j].cputype; ++j) {
         if (stub_list[j].cputype  == my_cputype
@@ -2243,6 +2175,8 @@ bool PackMachBase<T>::canPack()
                stub_entry = stub_list[j].stub_entry;
             sz_stub_fold  = stub_list[j].sz_stub_fold;
                stub_fold  = stub_list[j].stub_fold;
+            sz_stub_main  = stub_list[j].sz_stub_main;
+               stub_main  = stub_list[j].stub_main;
         }
     }
     return true;
