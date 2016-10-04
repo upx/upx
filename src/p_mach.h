@@ -682,6 +682,7 @@ protected:
     virtual void patchLoader();
     virtual void patchLoaderChecksum();
     virtual void updateLoader(OutputFile *);
+    virtual void buildLoader(const Filter *ft);
     virtual void buildMachLoader(
         upx_byte const *const proto,
         unsigned        const szproto,
@@ -703,6 +704,10 @@ protected:
     unsigned  n_segment;
     unsigned sz_segment;
     unsigned sz_mach_headers;
+    unsigned sz_stub_entry;
+    unsigned sz_stub_fold;
+    upx_byte const *stub_entry;
+    upx_byte const *stub_fold;
     Mach_segment_command *rawmseg;  // as input, with sections
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
     unsigned o_routines_cmd;  // file offset to LC_ROUINTES

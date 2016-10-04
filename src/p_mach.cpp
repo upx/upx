@@ -35,31 +35,44 @@
 #include "ui.h"
 
 static const
-#include "stub/powerpc-darwin.macho-entry.h"
-static const
-#include "stub/powerpc-darwin.macho-fold.h"
-
-static const
 #include "stub/i386-darwin.macho-entry.h"
 static const
 #include "stub/i386-darwin.macho-fold.h"
+static const
+#include "stub/i386-darwin.dylib-entry.h"
 
 static const
 #include "stub/amd64-darwin.macho-entry.h"
 static const
 #include "stub/amd64-darwin.macho-fold.h"
+static const
+#include "stub/amd64-darwin.dylib-entry.h"
+static const
+#include "stub/amd64-darwin.macho-upxmain.h"
 
 static const
 #include "stub/arm.v5a-darwin.macho-entry.h"
 static const
 #include "stub/arm.v5a-darwin.macho-fold.h"
-static const
-#include "stub/amd64-darwin.macho-upxmain.h"
 
 static const
 #include "stub/arm64-darwin.macho-entry.h"
 static const
 #include "stub/arm64-darwin.macho-fold.h"
+
+static const
+#include "stub/powerpc-darwin.macho-entry.h"
+static const
+#include "stub/powerpc-darwin.macho-fold.h"
+static const
+#include "stub/powerpc-darwin.dylib-entry.h"
+
+static const
+#include "stub/powerpc64le-darwin.macho-entry.h"
+static const
+#include "stub/powerpc64le-darwin.macho-fold.h"
+static const
+#include "stub/powerpc64le-darwin.dylib-entry.h"
 
 // Packing a Darwin (Mach-o) Mac OS X dylib (dynamic shared library)
 // is restricted.  UPX gets control as the -init function, at the very
@@ -69,16 +82,6 @@ static const
 // that is modifed by relocation, etc., cannot be compressed.
 // We simplify arbitrarily by compressing only the __TEXT segment,
 // which must be the first segment.
-
-static const
-#include "stub/i386-darwin.dylib-entry.h"
-// The runtime stub for the dyld -init routine does not use "fold"ed code.
-//#include "stub/i386-darwin.dylib-fold.h"
-
-static const
-#include "stub/powerpc-darwin.dylib-entry.h"
-static const
-#include "stub/amd64-darwin.dylib-entry.h"
 
 static const unsigned lc_segment[2] = {
     0x1, 0x19
@@ -442,11 +445,6 @@ PackMachPPC32::buildLoader(const Filter *ft)
         stub_powerpc_darwin_macho_fold,  sizeof(stub_powerpc_darwin_macho_fold),  ft );
 }
 
-static const
-#include "stub/powerpc64le-darwin.macho-entry.h"
-static const
-#include "stub/powerpc64le-darwin.macho-fold.h"
-
 void
 PackMachPPC64LE::buildLoader(const Filter *ft)
 {
@@ -463,6 +461,15 @@ PackMachI386::buildLoader(const Filter *ft)
         stub_i386_darwin_macho_fold,  sizeof(stub_i386_darwin_macho_fold),  ft );
 }
 
+template <class T>
+void
+PackMachBase<T>::buildLoader(const Filter *ft)
+{
+    buildMachLoader(
+        stub_entry, sz_stub_entry,
+        stub_fold,  sz_stub_fold,  ft );
+}
+
 void
 PackMachAMD64::buildLoader(const Filter *ft)
 {
@@ -474,7 +481,7 @@ PackMachAMD64::buildLoader(const Filter *ft)
         relocateLoader();
 if (0) {
         Mach_command const *ptr1 = (Mach_command const *)(1+
-            (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe);
+            (Mach_header const *)stub_entry);
         for (unsigned j = 0; j < mhdro.ncmds; ++j,
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1))
         switch (ptr1->cmd) {
@@ -482,7 +489,7 @@ if (0) {
             Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
             if (!strcmp("__TEXT", segptr->segname)) {
                 Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
-                linker->addSection("UPXMAIN", &stub_amd64_darwin_macho_upxmain_exe[secptr->offset],
+                linker->addSection("UPXMAIN", &stub_entry[secptr->offset],
                     secptr->size, 0);
                 addLoader("UPXMAIN", NULL);
             }
@@ -537,8 +544,6 @@ PackDylibPPC32::buildLoader(const Filter *ft)
         0,  0,  ft );
 }
 
-static const
-#include "stub/powerpc64le-darwin.dylib-entry.h"
 void
 PackDylibPPC64LE::buildLoader(const Filter *ft)
 {
@@ -802,8 +807,8 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
     if (my_filetype == Mach_header::MH_EXECUTE) {
         // Get a writeable copy of the stub to make editing easier.
-        unsigned char upxstub[sizeof(stub_amd64_darwin_macho_upxmain_exe)];
-        memcpy(upxstub, stub_amd64_darwin_macho_upxmain_exe, sizeof(upxstub));
+        unsigned char upxstub[sz_stub_entry];
+        memcpy(upxstub, stub_entry, sizeof(upxstub));
 
         Mach_header *const mhp = (Mach_header *)upxstub;
         char *tail = (char *)(1+ mhp);
@@ -1660,7 +1665,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
-        memcpy(&mhdro, stub_amd64_darwin_macho_upxmain_exe, sizeof(mhdro));
+        memcpy(&mhdro, stub_entry, sizeof(mhdro));
         mhdro.ncmds += 1;  // we add LC_SEGMENT{,_64} for UPX_DATA
         mhdro.sizeofcmds += sizeof(segXHDR);
         mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
@@ -1739,7 +1744,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
 
     if (my_filetype == Mach_header::MH_EXECUTE) {
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
-        Mach_header const *const ptr0 = (Mach_header const *)stub_amd64_darwin_macho_upxmain_exe;
+        Mach_header const *const ptr0 = (Mach_header const *)stub_entry;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
         for (unsigned j = 0; j < mhdro.ncmds -1; ++j,
                 (cmdsize -= ptr1->cmdsize),
@@ -1761,7 +1766,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     fo->write((char const *)ptr1, cmdsize);
                     // Contents before __LINKEDIT; put non-headers at same offset in file
                     unsigned pos = sizeof(mhdro) + mhdro.sizeofcmds; // includes sizeof(segXHDR)
-                    fo->write(&stub_amd64_darwin_macho_upxmain_exe[pos], segptr->fileoff - pos);
+                    fo->write(&stub_entry[pos], segptr->fileoff - pos);
                     break;
                 }
             }
@@ -2198,7 +2203,49 @@ bool PackMachBase<T>::canPack()
 
     // set options
     opt->o_unix.blocksize = file_size;
-    return 0 < n_segment;
+    if (!n_segment) {
+        return false;
+    }
+    struct {
+        unsigned filetype;
+        unsigned cputype;
+        unsigned sz_stub_entry;
+        unsigned sz_stub_fold;
+        upx_byte const *stub_entry;
+        upx_byte const *stub_fold;
+    } const stub_list[] = {
+        {MH_EXECUTE, CPU_TYPE_I386,
+            sizeof(stub_i386_darwin_macho_entry), sizeof(stub_i386_darwin_macho_fold),
+                   stub_i386_darwin_macho_entry,         stub_i386_darwin_macho_fold},
+
+        {MH_EXECUTE, CPU_TYPE_X86_64,
+            sizeof(stub_amd64_darwin_macho_upxmain_exe), 0,
+                   stub_amd64_darwin_macho_upxmain_exe,  0},
+
+        {MH_EXECUTE, CPU_TYPE_ARM,
+            sizeof(stub_arm_v5a_darwin_macho_entry), sizeof(stub_arm_v5a_darwin_macho_fold),
+                   stub_arm_v5a_darwin_macho_entry,         stub_arm_v5a_darwin_macho_fold},
+
+        {MH_EXECUTE, CPU_TYPE_POWERPC,
+            sizeof(stub_powerpc_darwin_macho_entry), sizeof(stub_powerpc_darwin_macho_fold),
+                   stub_powerpc_darwin_macho_entry,         stub_powerpc_darwin_macho_fold},
+
+        {MH_EXECUTE, CPU_TYPE_POWERPC64LE,
+            sizeof(stub_powerpc64le_darwin_macho_entry), sizeof(stub_powerpc64le_darwin_macho_fold),
+                   stub_powerpc64le_darwin_macho_entry,         stub_powerpc64le_darwin_macho_fold},
+
+        {0,0,0,0,0,0}
+    };
+    for (unsigned j = 0; stub_list[j].cputype; ++j) {
+        if (stub_list[j].cputype  == my_cputype
+        &&  stub_list[j].filetype == my_filetype) {
+            sz_stub_entry = stub_list[j].sz_stub_entry;
+               stub_entry = stub_list[j].stub_entry;
+            sz_stub_fold  = stub_list[j].sz_stub_fold;
+               stub_fold  = stub_list[j].stub_fold;
+        }
+    }
+    return true;
 }
 
 template class PackMachBase<MachClass_BE32>;
