@@ -90,6 +90,7 @@ STUBS += i386-darwin.dylib-entry.h
 # STUBS += i386-darwin.dylib-fold.h
 STUBS += i386-darwin.macho-entry.h
 STUBS += i386-darwin.macho-fold.h
+STUBS += i386-darwin.macho-upxmain.h
 STUBS += i386-dos32.djgpp2-stubify.h
 STUBS += i386-dos32.djgpp2.h
 STUBS += i386-dos32.tmt.h
@@ -845,6 +846,9 @@ i386-darwin.macho-fold.h : tmp/$$T.o tmp/i386-darwin.macho-main.o
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
+
+i386-darwin.macho-upxmain.h: i386-darwin.macho-upxmain.exe
+	$(call tc,bin2h) $< $@
 
 tmp/i386-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
