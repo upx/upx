@@ -716,8 +716,9 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 }
                 Mach_section_command *const secptr = (Mach_section_command *)(1+ segptr);
                 if (Mach_header::CPU_TYPE_I386 == my_cputype) {
-                    segptr->vmaddr = segTEXT.vmaddr;
-                    secptr->addr   = segTEXT.vmaddr;
+                    upx_uint64_t const delt2 = segTEXT.vmaddr - segptr->vmaddr;
+                    segptr->vmaddr += delt2;
+                    secptr->addr   += delt2;
                 }
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
