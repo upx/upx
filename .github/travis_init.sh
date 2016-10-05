@@ -54,15 +54,7 @@ if [[ -n $APPVEYOR_JOB_ID ]]; then
             AR="link -lib"; CC="cl"; CXX="cl" ;; # standard system compiler
     esac
 fi # APPVEYOR_JOB_ID
-if [[ -n $CIRCLE_BUILD_NUM ]]; then
-    case $BM_C in
-        gcc | gcc-m??)
-            CC="gcc"; CXX="g++" ;; # standard system compiler
-        gcc-[34].[0-9]-m??)
-            v=${BM_C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
-    esac
-fi # $CIRCLE_BUILD_NUM
-if [[ -n $TRAVIS_JOB_ID ]]; then
+if [[ -n $TRAVIS_JOB_ID ]]; then # TODO: should check for Ubuntu and not for Travis
 if [[ -n $BM_CROSS ]]; then
     BUILD_LOCAL_ZLIB=1
     case $BM_CROSS-$BM_C in
@@ -107,9 +99,9 @@ case $BM_C in
     gcc*-m32)   CC="$CC -m32"; CXX="$CXX -m32" ;;
     gcc*-m64)   CC="$CC -m64"; CXX="$CXX -m64" ;;
 esac
-case $BM_C in
-    clang* | gcc*) CC="$CC -std=gnu89" ;;
-esac
+if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
+    CC="$CC -std=gnu89"
+fi
 export AR CC CXX
 fi # CC_OVERRIDE
 
@@ -128,9 +120,16 @@ mkbuilddirs() {
     done
 }
 # search for an existing toptop builddir
-for d in ./build/travis ./build ../build/travis ../build; do
-    [[ -z $toptop_builddir && -d $d ]] && toptop_builddir=$(readlink -mn -- "$d")
+for d in . ..;  do
+    for subdir in "local" appveyor circle gitlab travis .; do
+        dd=$d/build/$subdir
+        if [[ -z $toptop_builddir && -d $dd ]]; then
+            toptop_builddir=$(readlink -en -- "$dd")
+            break 2
+        fi
+    done
 done
+unset d subdir dd
 [[ -z $toptop_builddir ]] && toptop_builddir=$(readlink -mn -- ./build)
 [[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/$BM_C/$BM_B")
 
@@ -144,6 +143,7 @@ unset toptop_builddir toptop_bdir
 
 # ensure absolute directories
 make_absolute() {
+    local d
     while [[ $# -gt 0 ]]; do
         if [[ -n ${!1} ]]; then
             d=$(readlink -mn -- "${!1}")

@@ -14,13 +14,12 @@ branches:
     - devel
     - travis
 
-addons:
-  sources: &S
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.5
-    - llvm-toolchain-precise-3.6
-    - llvm-toolchain-precise-3.7
-    - llvm-toolchain-precise-3.8
+.ubuntu_toolchain_sources: &S
+  - ubuntu-toolchain-r-test
+  - llvm-toolchain-precise-3.5
+  - llvm-toolchain-precise-3.6
+  - llvm-toolchain-precise-3.7
+  - llvm-toolchain-precise-3.8
 
 env:
   global:
