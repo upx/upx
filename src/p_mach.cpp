@@ -39,6 +39,8 @@ static const
 static const
 #include "stub/i386-darwin.macho-fold.h"
 static const
+#include "stub/i386-darwin.macho-upxmain.h"
+static const
 #include "stub/i386-darwin.dylib-entry.h"
 
 static const
@@ -46,9 +48,9 @@ static const
 static const
 #include "stub/amd64-darwin.macho-fold.h"
 static const
-#include "stub/amd64-darwin.dylib-entry.h"
-static const
 #include "stub/amd64-darwin.macho-upxmain.h"
+static const
+#include "stub/amd64-darwin.dylib-entry.h"
 
 static const
 #include "stub/arm.v5a-darwin.macho-entry.h"
@@ -601,52 +603,9 @@ void PackMachPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 #undef PAGE_SIZE64
 #define PAGE_MASK64 (~(upx_uint64_t)0<<12)
 #define PAGE_SIZE64 ((upx_uint64_t)0-PAGE_MASK64)
-void PackMachI386::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
-    }
 
-    super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
-
-void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+template <class T>
+void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
     N_Mach::Mach_main_command cmdMAIN;
     // offset of p_info in compressed file
@@ -693,7 +652,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         fo->rewrite(&secTEXT, sizeof(secTEXT));
         fo->rewrite(&cmdUUID, sizeof(cmdUUID));
         fo->rewrite(&segLINK, sizeof(segLINK));
-        fo->rewrite(&threado, sizeof(threado));
+        threado_rewrite(fo);
         if (my_filetype==Mach_header::MH_EXECUTE) {
             fo->rewrite(&linkitem, sizeof(linkitem));
         }
@@ -719,6 +678,7 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         lcp_next = (Mach_command *)(sz_cmd + (char *)lcp);
 
         switch (lcp->cmd) {
+        case Mach_segment_command::LC_SEGMENT: // fall through
         case Mach_segment_command::LC_SEGMENT_64: {
             Mach_segment_command *const segptr = (Mach_segment_command *)lcp;
             if (!strcmp("__TEXT", segptr->segname)) {
@@ -812,15 +772,11 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             skip = 1;
         } break;
         case Mach_segment_command::LC_MAIN: {
-                // Change to LC_UNIX_THREAD; known to be contiguous with last
+                // Replace later with LC_UNIX_THREAD.
 // LC_MAIN requires libSystem.B.dylib to provide the environment for main(), and CALLs the entryoff.
 // LC_UNIXTHREAD does not need libSystem.B.dylib, and JMPs to the .rip with %rsp/argc and argv= 8+%rsp
-            threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
-            threado.cmdsize = sizeof(threado);
-            threado.flavor = my_thread_flavor;
-            threado.count =  my_thread_state_word_count;
-            memset(&threado.state, 0, sizeof(threado.state));
-            threado.state.rip = ((N_Mach::Mach_main_command const *)lcp)->entryoff + segTEXT.vmaddr;
+            threado_setPC(segTEXT.vmaddr +
+                (((N_Mach::Mach_main_command const *)lcp)->entryoff - segTEXT.fileoff));
             skip = 1;
         } break;
         case Mach_segment_command::LC_LOAD_DYLIB: {
@@ -836,9 +792,15 @@ void PackMachAMD64::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         } break;
         case Mach_segment_command::LC_SOURCE_VERSION: { // copy from saved original
             memcpy(lcp, &cmdSRCVER, sizeof(cmdSRCVER));
+            if (Mach_segment_command::LC_SOURCE_VERSION != cmdSRCVER.cmd) {
+                skip = 1;  // was not seen
+            }
         } break;
         case Mach_segment_command::LC_VERSION_MIN_MACOSX: { // copy from saved original
             memcpy(lcp, &cmdVERMIN, sizeof(cmdVERMIN));
+            if (Mach_segment_command::LC_VERSION_MIN_MACOSX != cmdVERMIN.cmd) {
+                skip = 1;  // was not seen
+            }
         } break;
         } // end switch
 
@@ -857,12 +819,13 @@ next:
       }  // end for
 
         // Add LC_UNIX_THREAD
+        unsigned const sz_threado = threado_size();
         mhp->ncmds += 1;
-        mhp->sizeofcmds += sizeof(threado);
+        mhp->sizeofcmds += sz_threado;
         fo->seek(0, SEEK_SET);
         fo->rewrite(mhp, tail - (char *)mhp);
-        fo->rewrite(&threado, sizeof(threado));
-        tail += sizeof(threado);
+        threado_rewrite(fo);
+        tail += sz_threado;
         //
         // Zero any remaining tail.
         if (tail < lcp_end) {
@@ -1205,11 +1168,20 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     unsigned len = fo->getBytesWritten();
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len));
+
     disp = len - sz_mach_headers;
     fo->write(&disp, sizeof(disp));
+    len += sizeof(disp);
 
-    threado.state.eip = len + sizeof(disp) + segTEXT.vmaddr;  /* entry address */
+    char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
+    fo->write(page, ~PAGE_MASK & -len);
+    len += ~PAGE_MASK & -len;
+    segLINK.fileoff = len;
+
+    threado.state.eip = len + segTEXT.vmaddr;  /* entry address */
     super::pack3(fo, ft);
+    len = fo->getBytesWritten();
+    fo->write(&zero, 7& (0u-len));
 }
 
 void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
@@ -1395,12 +1367,6 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         }
     }
     return lo - hi;
-}
-
-template <class T>
-void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)
-{
-    PackUnix::pack4(fo, ft);  // FIXME  super() does not work?
 }
 
 template <class T>
@@ -1821,24 +1787,6 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     delete [] mhdr;
 }
 
-template <class T>
-upx_uint64_t PackMachBase<T>::getEntryVMA(Mach_command const *ptr)
-{
-    return ptr->cmd;  // FIXME must be specialized
-}
-
-upx_uint64_t PackMachI386::getEntryVMA(Mach_command const *ptr)
-{
-    Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
-    return tc->state.eip;
-}
-
-upx_uint64_t PackMachAMD64::getEntryVMA(Mach_command const *ptr)
-{
-    Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
-    return tc->state.rip;
-}
-
 // The prize is the value of overlay_offset: the offset of compressed data
 template <class T>
 int PackMachBase<T>::canUnpack()
@@ -1883,7 +1831,7 @@ int PackMachBase<T>::canUnpack()
             }
         }
         else if (Mach_segment_command::LC_UNIXTHREAD==ptr->cmd) {
-            rip = getEntryVMA(ptr);
+            rip = entryVMA;
         }
      }
     if (0 == style || 0 == offLINK) {
@@ -2113,10 +2061,10 @@ bool PackMachBase<T>::canPack()
         {CPU_TYPE_I386, MH_EXECUTE,
             sizeof(stub_i386_darwin_macho_entry),
             sizeof(stub_i386_darwin_macho_fold),
-            0,
+            sizeof(stub_i386_darwin_macho_upxmain_exe),
                    stub_i386_darwin_macho_entry,
                    stub_i386_darwin_macho_fold,
-                   0
+                   stub_i386_darwin_macho_upxmain_exe
         },
         {CPU_TYPE_I386, MH_DYLIB,
             sizeof(stub_i386_darwin_dylib_entry), 0, 0,

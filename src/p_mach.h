@@ -293,6 +293,19 @@ __packed_struct(Mach_uuid_command)
     unsigned char uuid[16];
 __packed_struct_end()
 
+template <class TMachITypes, class TMachThreadState>
+__packed_struct(Mach_thread_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+    Word cmdsize;        /* total size of this command */
+    Word flavor;
+    Word count;          /* sizeof(following_thread_state)/4 */
+    TMachThreadState state;
+#define WANT_MACH_THREAD_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end()
+
 typedef struct {
     upx_uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
     upx_uint32_t cmdsize;  // 24
@@ -361,6 +374,10 @@ typedef struct {
     upx_uint32_t datasize;
 } Mach_data_in_code_command;
 
+}  // namespace N_Mach
+
+namespace N_Mach32 {
+
 template <class TMachITypes>
 __packed_struct(Mach_ppc_thread_state)
     typedef typename TMachITypes::Addr Addr;
@@ -392,10 +409,6 @@ __packed_struct(Mach_i386_thread_state)
     Word eip, cs;
     Word ds, es, fs, gs;
 __packed_struct_end()
-
-}  // namespace N_Mach
-
-namespace N_Mach32 {
 
 template <class TMachITypes>
 __packed_struct(Mach_ARM_thread_state)
@@ -508,8 +521,8 @@ struct MachClass_32
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
 
-    typedef N_Mach::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
-    typedef N_Mach::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
+    typedef N_Mach32::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
+    typedef N_Mach32::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
     typedef N_Mach32::Mach_ARM_thread_state<MachITypes> Mach_ARM_thread_state;
 
     static void compileTimeAssertions() {
@@ -667,10 +680,14 @@ public:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
     virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
-    virtual void pack4(OutputFile *, Filter &) = 0;  // append PackHeader
+    virtual void pack4(OutputFile *, Filter &) /*= 0*/;  // append PackHeader
 
     virtual void pack4dylib(OutputFile *, Filter &, Addr init_address);
 
+    virtual int  threado_size() const = 0;
+    virtual void threado_setPC(upx_uint64_t pc) = 0;
+    virtual void threado_rewrite(OutputFile *) = 0;
+    virtual void threado_write(OutputFile *) = 0;
     virtual void pack1_setup_threado(OutputFile *const fo) = 0;
     virtual void unpack(OutputFile *fo);
 
@@ -691,10 +708,10 @@ protected:
         Filter const *ft );
     virtual void defineSymbols(Filter const *);
     virtual void addStubEntrySections(Filter const *);
-    virtual upx_uint64_t getEntryVMA(Mach_command const *);
 
     static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
 
+    upx_uint64_t entryVMA;
     unsigned my_cputype;
     unsigned my_filetype;
     unsigned my_thread_flavor;
@@ -795,6 +812,17 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int  threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state.srr0 = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackMachPPC64LE : public PackMachBase<MachClass_LE64>
@@ -827,6 +855,17 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state64.srr0 = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackDylibPPC32 : public PackMachPPC32
@@ -874,10 +913,8 @@ protected:
 
     virtual void pack1_setup_threado(OutputFile *const fo);
     virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
-    virtual upx_uint64_t getEntryVMA(Mach_command const *);
 
     __packed_struct(Mach_thread_command)
         LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
@@ -890,6 +927,17 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state.eip = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackDylibI386 : public PackMachI386
@@ -922,23 +970,32 @@ protected:
 
     virtual void pack1_setup_threado(OutputFile *const fo);
     virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
-    virtual upx_uint64_t getEntryVMA(Mach_command const *ptr);
-
 
     __packed_struct(Mach_thread_command)
-        LE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
-        LE32 cmdsize;        /* total size of this command */
-        LE32 flavor;
-        LE32 count;          /* sizeof(following_thread_state)/4 */
+        typedef typename MachITypes::Word Word;
+        Word cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        Word cmdsize;        /* total size of this command */
+        Word flavor;
+        Word count;          /* sizeof(following_thread_state)/4 */
         Mach_AMD64_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state.rip = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackDylibAMD64 : public PackMachAMD64
@@ -987,6 +1044,17 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state.pc = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) { return   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackMachARM64EL : public PackMachBase<MachClass_LE64>
@@ -1020,6 +1088,17 @@ protected:
     __packed_struct_end()
 
     Mach_thread_command threado;
+    int threado_size() const { return sizeof(threado); }
+    void threado_setPC(upx_uint64_t pc) {
+        memset(&threado, 0, sizeof(threado));
+        threado.cmd = Mach_segment_command::LC_UNIXTHREAD;
+        threado.cmdsize = sizeof(threado);
+        threado.flavor = my_thread_flavor;
+        threado.count =  my_thread_state_word_count;
+        threado.state.pc = pc;
+    }
+    void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
+    void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
 };
 
 class PackMachFat : public Packer
