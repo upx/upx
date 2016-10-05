@@ -55,26 +55,41 @@ testsuite_check_sha() {
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         echo "UPX-ERROR: checksum mismatch"
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
-        #exit 1
         exit_code=1
         let num_errors+=1 || true
+        #exit 1
     fi
     echo
+}
+
+testsuite_check_sha_decompressed() {
+    (cd "$1" && sha256sum -b */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
+    if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
+        cat $1/.sha256sums.current
+        echo "UPX-ERROR: decompressed checksum mismatch"
+        diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
+        exit 1
+    fi
 }
 
 testsuite_run_compress() {
     testsuite_header $testdir
     local f
-    for f in t01_decompressed/*/*; do
+    for f in t01_canonicalized/*/*; do
         testsuite_split_f $f
         [[ -z $fb ]] && continue
-        mkdir -p $testdir/$fsubdir
+        mkdir -p $testdir/$fsubdir $testdir/.decompressed/$fsubdir
         $upx_run --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
+        $upx_run -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
     done
     testsuite_check_sha $testdir
     $upx_run -l $testdir/*/*
     $upx_run --file-info $testdir/*/*
     $upx_run -t $testdir/*/*
+    # check that after decompression the file matches the canonicalized version
+    cp t01_canonicalized/.sha256sums.expected $testdir/.decompressed/
+    testsuite_check_sha_decompressed $testdir/.decompressed
+    rm -rf ./$testdir/.decompressed
 }
 
 # /***********************************************************************
@@ -116,8 +131,7 @@ if [[ $BM_B =~ (^|\+)coverage($|\+) ]]; then
     (cd / && cd $upx_BUILDDIR && lcov -d . --zerocounters)
 fi
 
-export UPX=
-export UPX="--no-color --no-progress"
+export UPX="--prefer-ucl --no-color --no-progress"
 
 # let's go
 if ! $upx_run --version >/dev/null; then exit 1; fi
@@ -149,6 +163,31 @@ for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
     [[ -z $fb ]] && continue
     mkdir -p $testdir/$fsubdir
     $upx_run -d $f -o $testdir/$fsubdir/$fb
+done
+testsuite_check_sha $testdir
+
+
+# run one pack+unpack step to canonicalize the files
+testdir=t01_canonicalized
+mkdir $testdir; echo -n "\
+24158f78c34c4ef94bb7773a6dda7231d289be76c2f5f60e8b9ddb3f800c100e *amd64-linux.elf/upx-3.91
+28d7ca8f0dfca8159e637eaf2057230b6e6719e07751aca1d19a45b5efed817c *arm-wince.pe/upx-3.91.exe
+b1c1c38d50007616aaf8e942839648c80a6111023e0b411e5fa7a06c543aeb4a *armeb-linux.elf/upx-3.91
+bcac77a287289301a45fde9a75e4e6c9ad7f8d57856bae6eafaae12ae4445a34 *i386-dos32.djgpp2.coff/upx-3.91.exe
+730a513b72a094697f827e4ac1a4f8ef58a614fc7a7ad448fa58d60cd89af7ed *i386-linux.elf/upx-3.91
+1f378dc3f8c6f0cf604c057b468c22beb46a16837bd2410cf5f8fa44a42b2f6f *i386-win32.pe/upx-3.91.exe
+8e5333ea040f5594d3e67d5b09e005d52b3a52ef55099a7c11d7e39ead38e66d *m68k-atari.tos/upx-3.91.ttp
+c3f44b4d00a87384c03a6f9e7aec809c1addfe3e271244d38a474f296603088c *mipsel-linux.elf/upx-3.91
+b8c35fa2956da17ca505956e9f5017bb5f3a746322647e24ccb8ff28059cafa4 *powerpc-linux.elf/upx-3.91
+" > $testdir/.sha256sums.expected
+
+testsuite_header $testdir
+for f in t01_decompressed/*/*; do
+    testsuite_split_f $f
+    [[ -z $fb ]] && continue
+    mkdir -p $testdir/$fsubdir/.packed
+    $upx_run --prefer-ucl -1 $f -o $testdir/$fsubdir/.packed/$fb
+    $upx_run -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
