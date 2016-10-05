@@ -273,57 +273,75 @@ void PackMachI386::addStubEntrySections(Filter const *ft)
 {
     int const n_mru = ft->n_mru;  // FIXME: belongs to filter? packerf?
 
-            // entry to stub
-    addLoader("LEXEC000", NULL);
-
-    if (ft->id) {
-        { // decompr, unfilter are separate
-            addLoader("LXUNF000", NULL);
-            addLoader("LXUNF002", NULL);
-                if (0x80==(ft->id & 0xF0)) {
-                    if (256==n_mru) {
-                        addLoader("MRUBYTE0", NULL);
-                    }
-                    else if (n_mru) {
-                        addLoader("LXMRU005", NULL);
-                    }
-                    if (n_mru) {
-                        addLoader("LXMRU006", NULL);
-                    }
-                    else {
-                        addLoader("LXMRU007", NULL);
-                    }
+    if (Mach_header::MH_EXECUTE == my_filetype) {
+        addLoader("I386BXX0", NULL);  // .word offset to f_exp
+    }
+    else {
+        addLoader("LEXEC000", NULL);  // entry to stub
+    }
+    if (ft->id) { // decompr, unfilter are separate
+        if (Mach_header::MH_EXECUTE != my_filetype) {
+            addLoader("LXUNF000", NULL);  // 2-byte jump to f_exp
+        }
+        addLoader("LXUNF002", NULL);  // entry to f_unf
+        // prolog to f_unf
+        if (0x80==(ft->id & 0xF0)) {
+            if (256==n_mru) {
+                addLoader("MRUBYTE0", NULL);
             }
-            else if (0x40==(ft->id & 0xF0)) {
+            else if (n_mru) {
+                addLoader("LXMRU005", NULL);
+            }
+            if (n_mru) {
+                addLoader("LXMRU006", NULL);
+            }
+            else {
+                addLoader("LXMRU007", NULL);
+            }
+        }
+        else {
+            if (0x40==(ft->id & 0xF0)) {
                 addLoader("LXUNF008", NULL);
             }
-            addLoader("LXUNF010", NULL);
         }
-        if (n_mru) {
-            addLoader("LEXEC009", NULL);
-        }
-    }
-    addLoader("LEXEC010", NULL);
-    addLoader(getDecompressorSections(), NULL);
-    addLoader("LEXEC015", NULL);
-    if (ft->id) {
-        {  // decompr, unfilter are separate
-            if (0x80!=(ft->id & 0xF0)) {
-                addLoader("LXUNF042", NULL);
-            }
-        }
-        addFilter32(ft->id);
-        { // decompr, unfilter are separate
+        if (Mach_header::MH_EXECUTE == my_filetype) {
+            addFilter32(ft->id);  // f_unf body
             if (0x80==(ft->id & 0xF0)) {
                 if (0==n_mru) {
                     addLoader("LXMRU058", NULL);
                 }
             }
-            addLoader("LXUNF035", NULL);
+            addLoader("LXUNF035", NULL);  // epilog to f_unf
+        }
+        else { // MH_DYLIB
+            addLoader("LXUNF010", NULL);  // jmp32 lxunf0  # to rest of f_unf
+            if (n_mru) {
+                addLoader("LEXEC009", NULL);  // empty (unify source with other cases)
+            }
+        }
+    }
+    if (Mach_header::MH_EXECUTE == my_filetype) {
+        addLoader("I386BXX1", NULL);
+    }
+    addLoader("LEXEC010", NULL);  // prolog to f_exp
+    addLoader(getDecompressorSections(), NULL);
+    addLoader("LEXEC015", NULL);  // epilog to f_exp
+    if (ft->id) {
+        if (Mach_header::MH_EXECUTE != my_filetype) {
+            if (0x80!=(ft->id & 0xF0)) {
+                addLoader("LXUNF042", NULL);  // lxunf0:
+            }
+            addFilter32(ft->id);  // body of f_unf
+            if (0x80==(ft->id & 0xF0)) {
+                if (0==n_mru) {
+                    addLoader("LXMRU058", NULL);
+                }
+            }
+            addLoader("LXUNF035", NULL);  // epilog to f_unf
         }
     }
     else {
-        addLoader("LEXEC017", NULL);
+        addLoader("LEXEC017", NULL);  // epilog to f_exp
     }
 
     addLoader("IDENTSTR", NULL);
@@ -629,7 +647,13 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         fo->write(&zero, 7& (0u-len));
     }
     unsigned const eofcmpr = fo->getBytesWritten();
-    segTEXT.vmaddr = segZERO.vmaddr + segZERO.vmsize;
+    if (Mach_header::CPU_TYPE_X86_64 == my_cputype) {
+        // sneak in a little below 4GiB
+        segTEXT.vmaddr = segZERO.vmaddr + segZERO.vmsize;
+    }
+    else {
+        // ::pack1 set segTEXT.vmaddr to be va_hi: no conflict
+    }
     segTEXT.filesize = eofcmpr;
     segTEXT.vmsize  += eofcmpr;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
     secTEXT.offset = overlay_offset - sizeof(linfo);
@@ -690,8 +714,12 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                         sz_cmd -= d;
                     }
                 }
+                Mach_section_command *const secptr = (Mach_section_command *)(1+ segptr);
+                if (Mach_header::CPU_TYPE_I386 == my_cputype) {
+                    segptr->vmaddr = segTEXT.vmaddr;
+                    secptr->addr   = segTEXT.vmaddr;
+                }
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
-                Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
                 memcpy(&secTEXT, secptr, sizeof(secTEXT));
                 break;
             }
@@ -1838,8 +1866,6 @@ int PackMachBase<T>::canUnpack()
         return false;
     }
 
-    // FIXME: ::pack1 writes l_info as all zero at 0x1000, and it is never updated.
-
     int const small = 32 + sizeof(overlay_offset);
     unsigned bufsize = 4096;
     if (391 == style) { // PackHeader precedes __LINKEDIT
@@ -1910,13 +1936,13 @@ int PackMachBase<T>::canUnpack()
             &&  b_ptr->sz_cpr < b_ptr->sz_unc ) {
                 unsigned const method = b_ptr->b_method;
                 if ((M_NRV2B_LE32 == method || M_NRV2E_LE32 == method)
-                &&  0xff==(uptr[0] >> 24)  // 1st 8 bytes are unique literals
+                &&  (0xff>>2)==(uptr[0] >> (2+ 24))  // 1st 6 bytes are unique literals
                 &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == uptr[1]) {
                     return true;
                 }
                 unsigned const magic = get_te32(1+ (char const *)uptr);
                 if ((M_NRV2B_8 == method || M_NRV2E_8 == method)
-                && 0xff==(0xff & uptr[0])
+                && 0xfc==(0xfc & uptr[0])
                 &&  (Mach_header::MH_MAGIC + (sizeof(Addr)>>3)) == magic) {
                     return true;
                 }

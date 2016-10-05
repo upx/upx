@@ -33,6 +33,13 @@
 
 #include "arch/i386/macros.S"
 
+  section I386BXX0
+0:      .word end_filter //  - 0b  // sizeof unfilter
+
+  section I386BXX1
+        ret  // in case no filter
+end_filter:
+
 
 /*************************************************************************
 // program entry point
