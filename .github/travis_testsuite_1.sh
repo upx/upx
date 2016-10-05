@@ -159,7 +159,7 @@ testsuite_check_sha $testdir
 
 testdir=t02_compress_ucl_3_no_filter
 mkdir $testdir; echo -n "\
-3dd2564078aa15d35fbf70928cdb094697c4ef8909bd711c7a3bd79eb18ab400 *amd64-linux.elf/upx-3.91
+86fcb3e1c6255511173ff9a86baf3407263677dfe73bff072b978da41c892bcb *amd64-linux.elf/upx-3.91
 16c0493d4d89e6c581748826afd26d2b4caeeae6074b0bdcf55747a4bc9777a5 *arm-wince.pe/upx-3.91.exe
 ea42d52676d2698f29587e98a9e1536b96ebf523a7d8bc926f6c241a159b4116 *armeb-linux.elf/upx-3.91
 27f1afd1e1fec37d4dcd43163b9ec60a6af3abeab21a4adf539b7faea848eb20 *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -173,7 +173,7 @@ time testsuite_run_compress -3 --no-filter
 
 testdir=t03_compress_lzma_1_no_filter
 mkdir $testdir; echo -n "\
-542124e236f4dc3ba92de02a07f29df3d8a015bb9f3a5a9681c978746b16e0df *amd64-linux.elf/upx-3.91
+9d5a98a9f2f17e4d7066e0b953dae94cdbb1ea28c6c792ce8f92e8b8d932b311 *amd64-linux.elf/upx-3.91
 99ad77f2280a5b4791ead800c7d4d5b29aa49ce40319616f682c1b29ddf20702 *arm-wince.pe/upx-3.91.exe
 07ca9736f1cd478bde2c8da95a6ecb95bd865dcf8ea48a396b13050ac40d196e *armeb-linux.elf/upx-3.91
 9e852e95b38ca57319d1e911bf97226a82b60dd336e201496c30bf62943aecce *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -187,7 +187,7 @@ time testsuite_run_compress -1 --lzma --no-filter
 
 testdir=t04_compress_ucl_2_all_filters
 mkdir $testdir; echo -n "\
-bde869b9b0e29c7930591b3582ef3e864db7757d774082d772df8f6b874e6fd6 *amd64-linux.elf/upx-3.91
+b7f51c8da38cc65c4bdec8a07e29a7c47404fc4b057c2026c13fd2a83b24da76 *amd64-linux.elf/upx-3.91
 247e385b1bf2559982cfedde0dc6dafc3fe99ad09100afc8b6ec3e59722afd4f *arm-wince.pe/upx-3.91.exe
 db894f24777334abb9bf8e34661d057e25c2889b46290cf83db7310c4cdd86fa *armeb-linux.elf/upx-3.91
 33bde57c3f7ed8809bec0658fe6c48d047bdec97476643f2e8e2970ab0c4eb5f *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -201,7 +201,7 @@ time testsuite_run_compress -2 --all-filters
 
 testdir=t05_compress_all_methods_1_no_filter
 mkdir $testdir; echo -n "\
-542124e236f4dc3ba92de02a07f29df3d8a015bb9f3a5a9681c978746b16e0df *amd64-linux.elf/upx-3.91
+9d5a98a9f2f17e4d7066e0b953dae94cdbb1ea28c6c792ce8f92e8b8d932b311 *amd64-linux.elf/upx-3.91
 99ad77f2280a5b4791ead800c7d4d5b29aa49ce40319616f682c1b29ddf20702 *arm-wince.pe/upx-3.91.exe
 07ca9736f1cd478bde2c8da95a6ecb95bd865dcf8ea48a396b13050ac40d196e *armeb-linux.elf/upx-3.91
 9e852e95b38ca57319d1e911bf97226a82b60dd336e201496c30bf62943aecce *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -215,7 +215,7 @@ time testsuite_run_compress -1 --all-methods --no-filter
 
 testdir=t06_compress_all_methods_no_lzma_no_filter
 mkdir $testdir; echo -n "\
-6e669ac40043287516be85ddce6e4ac9d41d4e550ea080e23f9dfde7fff8fd64 *amd64-linux.elf/upx-3.91
+7ff6b8f6f8ce5dfbe8dacd5f9e1ebc8c9af20059a00c52b5e3703d31718b4839 *amd64-linux.elf/upx-3.91
 63be06791e4caa5ea530bd58d0fe5af7830fe6907cebb4de6eec5a73ff57bf58 *arm-wince.pe/upx-3.91.exe
 b95b5a9a1ba4577df41c135b0061a7282e633f006ce6a5c729d73a708f80c0f0 *armeb-linux.elf/upx-3.91
 bbf7d2290c2aff5c914f14aaa7a089895888f3e25b468ba406f9723c046b0ccb *i386-dos32.djgpp2.coff/upx-3.91.exe

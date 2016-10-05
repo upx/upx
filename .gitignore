@@ -8,6 +8,7 @@
 GNUmakefile
 MMakefile
 Makevars.local*
+tmp-testsuite*
 
 *.a
 *.dll
