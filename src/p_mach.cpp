@@ -684,8 +684,8 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     }
     if (my_filetype == Mach_header::MH_EXECUTE) {
         // Get a writeable copy of the stub to make editing easier.
-        unsigned char upxstub[sz_stub_main];
-        memcpy(upxstub, stub_main, sizeof(upxstub));
+        ByteArray(upxstub, sz_stub_main);
+        memcpy(upxstub, stub_main, sz_stub_main);
 
         Mach_header *const mhp = (Mach_header *)upxstub;
         char *tail = (char *)(1+ mhp);
