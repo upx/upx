@@ -1,0 +1,58 @@
+# Support for GibLab CI -- https://gitlab.com/
+# Copyright (C) Markus Franz Xaver Johannes Oberhumer
+
+.fedora_install_compilers: &fedora_install_compilers
+  time dnf install -y --best --allowerasing
+    coreutils curl diffutils grep gzip sed
+    bzip2 file findutils git perl tar wget which xz
+    clang gcc gcc-c++ lcov make valgrind
+    glibc-devel      libasan      libstdc++-devel      libubsan      zlib-devel
+    glibc-devel.i686 libasan.i686 libstdc++-devel.i686 libubsan.i686 zlib-devel.i686
+
+before_script:
+  - uname -a; pwd; id; umask; env
+  - time rpm -qa | LC_ALL=C sort
+  - *fedora_install_compilers
+  - umask 022; mkdir -p ../deps ../build/gitlab
+  - git submodule update --init --recursive
+  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+  - cd ../deps && time git clone https://github.com/upx/upx-testsuite
+  - cd $CI_PROJECT_DIR
+  - export TRAVIS_OS_NAME=linux
+
+Fedora23-clang+gcc-m32+m64:
+  image: fedora:23
+  script:
+  - time C=clang-m32            bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=clang-m64            bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_build.sh
+  - time C=clang-m32            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=clang-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   T=valgrind bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Fedora24-clang+gcc-m32+m64:
+  image: fedora:24
+  script:
+  - time C=clang-m32            bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=clang-m64            bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_build.sh
+  - time C=clang-m32            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=clang-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   T=valgrind bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+# vim:set ts=2 sw=2 et:

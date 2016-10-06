@@ -325,7 +325,7 @@ __packed_struct(BE16)
     BE16& operator <<= (unsigned v) { set_be16(d, get_be16(d) << v); return *this; }
     BE16& operator >>= (unsigned v) { set_be16(d, get_be16(d) >> v); return *this; }
 
-    operator unsigned () const  { return get_be16(d); }
+    operator unsigned () const { return get_be16(d); }
 __packed_struct_end()
 
 
@@ -343,7 +343,7 @@ __packed_struct(BE32)
     BE32& operator <<= (unsigned v) { set_be32(d, get_be32(d) << v); return *this; }
     BE32& operator >>= (unsigned v) { set_be32(d, get_be32(d) >> v); return *this; }
 
-    operator unsigned () const  { return get_be32(d); }
+    operator unsigned () const { return get_be32(d); }
 __packed_struct_end()
 
 
@@ -361,7 +361,7 @@ __packed_struct(BE64)
     BE64& operator <<= (unsigned v) { set_be64(d, get_be64(d) << v); return *this; }
     BE64& operator >>= (unsigned v) { set_be64(d, get_be64(d) >> v); return *this; }
 
-    operator upx_uint64_t () const  { return get_be64(d); }
+    operator upx_uint64_t () const { return get_be64(d); }
 __packed_struct_end()
 
 
@@ -379,15 +379,12 @@ __packed_struct(LE16)
     LE16& operator <<= (unsigned v) { set_le16(d, get_le16(d) << v); return *this; }
     LE16& operator >>= (unsigned v) { set_le16(d, get_le16(d) >> v); return *this; }
 
-    operator unsigned () const  { return get_le16(d); }
+    operator unsigned () const { return get_le16(d); }
 __packed_struct_end()
 
 
 __packed_struct(LE32)
     unsigned char d[4];
-
-    //inline LE32() { }
-    //LE32(unsigned v) { set_le32(d, v); }
 
     LE32& operator =  (unsigned v) { set_le32(d, v); return *this; }
     LE32& operator += (unsigned v) { set_le32(d, get_le32(d) + v); return *this; }
@@ -400,7 +397,7 @@ __packed_struct(LE32)
     LE32& operator <<= (unsigned v) { set_le32(d, get_le32(d) << v); return *this; }
     LE32& operator >>= (unsigned v) { set_le32(d, get_le32(d) >> v); return *this; }
 
-    operator unsigned () const  { return get_le32(d); }
+    operator unsigned () const { return get_le32(d); }
 __packed_struct_end()
 
 
@@ -418,7 +415,7 @@ __packed_struct(LE64)
     LE64& operator <<= (unsigned v) { set_le64(d, get_le64(d) << v); return *this; }
     LE64& operator >>= (unsigned v) { set_le64(d, get_le64(d) >> v); return *this; }
 
-    operator upx_uint64_t () const  { return get_le64(d); }
+    operator upx_uint64_t () const { return get_le64(d); }
 __packed_struct_end()
 
 
