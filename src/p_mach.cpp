@@ -599,6 +599,8 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 
         Mach_header *const mhp = (Mach_header *)upxstub;
         char *tail = (char *)(1+ mhp);
+        Mach_segment_command *segtxt = 0;  // in temp for output
+        Mach_section_command *sectxt = 0;  // in temp for output
         char *const lcp_end = mhdro.sizeofcmds + tail;
         Mach_command *lcp = (Mach_command *)(1+ mhp);
         Mach_command *lcp_next;
@@ -616,22 +618,38 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         case Mach_segment_command::LC_SEGMENT_64: {
             Mach_segment_command *const segptr = (Mach_segment_command *)lcp;
             if (!strcmp("__TEXT", segptr->segname)) {
-                if (0) { // Why is codesign unhappy with this?
-                    int const d = (-1+ segptr->nsects) * sizeof(secTEXT);
-                    if (0 < d) {
-                        segptr->nsects = 1;
-                        segptr->cmdsize -= d;
-                        sz_cmd -= d;
+                segtxt = segptr;  // remember base for appending
+                sectxt = (Mach_section_command *)(1+ segptr);
+                // Collapse into 1 section by appending onto the first section.
+                unsigned off_hi = sectxt->size + sectxt->offset;
+                Mach_section_command const *scpk = 1+ sectxt;
+                for (unsigned k = 1; k < segptr->nsects; ++scpk, ++k) {
+                    if (off_hi == scpk->offset) {
+                        off_hi += scpk->size;
+                        sectxt->size += scpk->size;
+                    }
+                    else {
+                        printWarn(fi->getName(), "Unexpected .text section %s\n", (char const *)&scpk->sectname);
+                        // Assume the maximum size: to end of the page.
+                        sectxt->size = (segptr->vmsize + segptr->vmaddr) - sectxt->addr;
+                        break;
                     }
                 }
-                Mach_section_command *const secptr = (Mach_section_command *)(1+ segptr);
+                int const d = (-1+ segptr->nsects) * sizeof(secTEXT);
+                if (0 < d) {
+                    segptr->nsects = 1;
+                    sz_cmd -= d;
+                    segptr->cmdsize -= d;
+                    mhp->sizeofcmds -= d;
+                }
                 if (Mach_header::CPU_TYPE_I386 == my_cputype) {
+                    // Avoid overlap by moving to va_hi.
                     upx_uint64_t const delt2 = segTEXT.vmaddr - segptr->vmaddr;
                     segptr->vmaddr += delt2;
-                    secptr->addr   += delt2;
+                    sectxt->addr   += delt2;
                 }
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
-                memcpy(&secTEXT, secptr, sizeof(secTEXT));
+                memcpy(&secTEXT, sectxt, sizeof(secTEXT));
                 break;
             }
             if (!strcmp("__DATA", segptr->segname) && !segptr->vmsize) {
@@ -643,13 +661,15 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 segXHDR.filesize = offLINK - segTEXT.filesize;  // XXX FIXME: assumes no __DATA in stub;
                 segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
-                if (1) { // replace __DATA with segXHDR
+                if (0) { // replace __DATA with segXHDR
                     memcpy(tail, &segXHDR, sizeof(segXHDR));
                     tail += sizeof(segXHDR);
                     goto next;
                 }
-                else {
-                    // FIXME: no need for LC_SEGMENT; just append to segTEXT and secTEXT
+                else { // append to .text
+                    segtxt->vmsize = offLINK;
+                    segtxt->filesize = offLINK;
+                    sectxt->size = offLINK - (~PAGE_MASK & sectxt->offset);
                     skip = 1;
                 }
             }
