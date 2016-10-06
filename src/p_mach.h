@@ -47,12 +47,6 @@ __packed_struct(Mach_fat_arch)
     BE32 align;  /* shift count; log base 2 */
 __packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;
-    upx_uint32_t cmdsize;
-    upx_uint32_t data[2];  // because cmdsize >= 16
-} Mach_command;  // generic prefix
-
 /*************************************************************************
 // Mach  Mach Object executable; all structures are target-endian
 // 'otool' is the Mach analog of 'readelf' (convert executable file to ASCII).
@@ -101,6 +95,17 @@ __packed_struct(Mach_header64)
 #define WANT_MACH_HEADER_ENUM 1
 #include "p_mach_enum.h"
 __packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_command)  // generic prefix
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    Word data[2];  // because cmdsize >= 16
+#define WANT_MACH_SEGMENT_ENUM 1
+#include "p_mach_enum.h"
+__packed_struct_end();
 
 template <class TMachITypes>
 __packed_struct(Mach_segment_command)
@@ -263,7 +268,6 @@ __packed_struct_end()
 template <class TMachITypes>
 __packed_struct(Mach_twolevel_hints_command)
     typedef typename TMachITypes::Word Word;
-    typedef typename TMachITypes::Addr Addr;
     typedef typename TMachITypes::Off  Off;
 
     Word cmd;
@@ -306,73 +310,101 @@ __packed_struct(Mach_thread_command)
 #include "p_mach_enum.h"
 __packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;  // LC_MAIN;  MH_EXECUTE only
-    upx_uint32_t cmdsize;  // 24
-    upx_uint64_t entryoff;  // file offset of main() [expected in __TEXT]
-    upx_uint64_t stacksize;  // non-default initial stack size
-} Mach_main_command;
+template <class TMachITypes>
+__packed_struct(Mach_main_command)
+    typedef typename TMachITypes::Word Word;
+    typedef typename TMachITypes::Xword Xword;
 
-typedef struct {
-    upx_uint32_t cmd;  // LC_SOURCE_VERSION
-    upx_uint32_t cmdsize;  // 16
-    upx_uint32_t version;
-} Mach_source_version_command;
+    Word cmd;  // LC_MAIN;  MH_EXECUTE only
+    Word cmdsize;  // 24
+    Xword entryoff;  // file offset of main() [expected in __TEXT]
+    Xword stacksize;  // non-default initial stack size
+__packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;  // LC_VERSION_MIN_MACOSX
-    upx_uint32_t cmdsize;  // 16
-    upx_uint32_t version;  // X.Y.Z ==> xxxx.yy.zz
-    upx_uint32_t sdk;  // X.Y.Z ==> xxxx.yy.zz
-} Mach_version_min_command;
+template <class TMachITypes>
+__packed_struct(Mach_source_version_command)
+    typedef typename TMachITypes::Word Word;
 
-typedef struct {
-    upx_uint32_t cmd;  // LC_DYLD_INFO_ONLY
-    upx_uint32_t cmdsize;  // 48
-    upx_uint32_t rebase_off;
-    upx_uint32_t rebase_size;
-    upx_uint32_t bind_off;
-    upx_uint32_t bind_size;
-    upx_uint32_t weak_bind_off;
-    upx_uint32_t weak_bind_size;
-    upx_uint32_t lazy_bind_off;
-    upx_uint32_t lazy_bind_size;
-    upx_uint32_t export_off;
-    upx_uint32_t export_size;
-} Mach_dyld_info_only_command;
+    Word cmd;  // LC_SOURCE_VERSION
+    Word cmdsize;  // 16
+    Word version;
+__packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;
-    upx_uint32_t cmdsize;
-    upx_uint32_t name;
-} Mach_load_dylinker_command;
+template <class TMachITypes>
+__packed_struct(Mach_version_min_command)
+    typedef typename TMachITypes::Word Word;
 
-typedef struct {
-    upx_uint32_t name;         /* library's path name */
-    upx_uint32_t timestamp;         /* library's build time stamp */
-    upx_uint32_t current_version;       /* library's current version number */
-    upx_uint32_t compatibility_version; /* library's compatibility vers number*/
-} Mach_dylib;
+    Word cmd;  // LC_VERSION_MIN_MACOSX
+    Word cmdsize;  // 16
+    Word version;  // X.Y.Z ==> xxxx.yy.zz
+    Word sdk;  // X.Y.Z ==> xxxx.yy.zz
+__packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;
-    upx_uint32_t cmdsize;
-    Mach_dylib dylib;
-} Mach_load_dylib_command;
+template <class TMachITypes>
+__packed_struct(Mach_dyld_info_only_command)
+    typedef typename TMachITypes::Word Word;
 
-typedef struct {
-    upx_uint32_t cmd;
-    upx_uint32_t cmdsize;
-    upx_uint32_t dataoff;
-    upx_uint32_t datasize;
-} Mach_function_starts_command;
+    Word cmd;  // LC_DYLD_INFO_ONLY
+    Word cmdsize;  // 48
+    Word rebase_off;
+    Word rebase_size;
+    Word bind_off;
+    Word bind_size;
+    Word weak_bind_off;
+    Word weak_bind_size;
+    Word lazy_bind_off;
+    Word lazy_bind_size;
+    Word export_off;
+    Word export_size;
+__packed_struct_end()
 
-typedef struct {
-    upx_uint32_t cmd;
-    upx_uint32_t cmdsize;
-    upx_uint32_t dataoff;
-    upx_uint32_t datasize;
-} Mach_data_in_code_command;
+template <class TMachITypes>
+__packed_struct(Mach_load_dylinker_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    Word name;
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_dylib)
+    typedef typename TMachITypes::Word Word;
+
+    Word name;         /* library's path name */
+    Word timestamp;         /* library's build time stamp */
+    Word current_version;       /* library's current version number */
+    Word compatibility_version; /* library's compatibility vers number*/
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_load_dylib_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    Mach_dylib<TMachITypes> dylib;
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_function_starts_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    Word dataoff;
+    Word datasize;
+__packed_struct_end()
+
+template <class TMachITypes>
+__packed_struct(Mach_data_in_code_command)
+    typedef typename TMachITypes::Word Word;
+
+    Word cmd;
+    Word cmdsize;
+    Word dataoff;
+    Word datasize;
+__packed_struct_end()
 
 }  // namespace N_Mach
 
@@ -511,6 +543,7 @@ struct MachClass_32
 
     // Mach types
     typedef N_Mach::Mach_header<MachITypes> Mach_header;
+    typedef N_Mach::Mach_command<MachITypes> Mach_command;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_symtab_command<MachITypes>  Mach_symtab_command;
@@ -520,6 +553,15 @@ struct MachClass_32
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
+    typedef N_Mach::Mach_data_in_code_command<MachITypes> Mach_data_in_code_command;
+    typedef N_Mach::Mach_function_starts_command<MachITypes> Mach_function_starts_command;
+    typedef N_Mach::Mach_load_dylib_command<MachITypes> Mach_load_dylib_command;
+    typedef N_Mach::Mach_dylib<MachITypes> Mach_dylib;
+    typedef N_Mach::Mach_load_dylinker_command<MachITypes> Mach_load_dylinker_command;
+    typedef N_Mach::Mach_dyld_info_only_command<MachITypes> Mach_dyld_info_only_command;
+    typedef N_Mach::Mach_version_min_command<MachITypes> Mach_version_min_command;
+    typedef N_Mach::Mach_source_version_command<MachITypes> Mach_source_version_command;
+    typedef N_Mach::Mach_main_command<MachITypes> Mach_main_command;
 
     typedef N_Mach32::Mach_ppc_thread_state<MachITypes> Mach_ppc_thread_state;
     typedef N_Mach32::Mach_i386_thread_state<MachITypes> Mach_i386_thread_state;
@@ -545,6 +587,7 @@ struct MachClass_64
 
     // Mach types
     typedef N_Mach::Mach_header64<MachITypes> Mach_header;
+    typedef N_Mach::Mach_command<MachITypes> Mach_command;
     typedef N_Mach::Mach_segment_command<MachITypes> Mach_segment_command;
     typedef N_Mach::Mach_section_command_64<MachITypes> Mach_section_command;
     typedef N_Mach::Mach_symtab_command<MachITypes>  Mach_symtab_command;
@@ -554,6 +597,15 @@ struct MachClass_64
     typedef N_Mach::Mach_twolevel_hints_command<MachITypes> Mach_twolevel_hints_command;
     typedef N_Mach::Mach_linkedit_data_command<MachITypes> Mach_linkedit_data_command;
     typedef N_Mach::Mach_uuid_command<MachITypes> Mach_uuid_command;
+    typedef N_Mach::Mach_data_in_code_command<MachITypes> Mach_data_in_code_command;
+    typedef N_Mach::Mach_function_starts_command<MachITypes> Mach_function_starts_command;
+    typedef N_Mach::Mach_load_dylib_command<MachITypes> Mach_load_dylib_command;
+    typedef N_Mach::Mach_dylib<MachITypes> Mach_dylib;
+    typedef N_Mach::Mach_load_dylinker_command<MachITypes> Mach_load_dylinker_command;
+    typedef N_Mach::Mach_dyld_info_only_command<MachITypes> Mach_dyld_info_only_command;
+    typedef N_Mach::Mach_version_min_command<MachITypes> Mach_version_min_command;
+    typedef N_Mach::Mach_source_version_command<MachITypes> Mach_source_version_command;
+    typedef N_Mach::Mach_main_command<MachITypes> Mach_main_command;
 
     typedef N_Mach64::Mach_ppcle_thread_state64<MachITypes> Mach_ppcle_thread_state64;
     typedef N_Mach64::Mach_AMD64_thread_state<MachITypes> Mach_AMD64_thread_state;
@@ -584,6 +636,15 @@ typedef MachClass_Host32::Mach_routines_command Mach32_routines_command;
 typedef MachClass_Host32::Mach_twolevel_hints_command Mach32_twolevel_hints_command;
 typedef MachClass_Host32::Mach_linkedit_data_command Mach32_linkedit_data_command;
 typedef MachClass_Host32::Mach_uuid_command Mach32_uuid_command;
+typedef MachClass_Host32::Mach_main_command Mach32_main_command;
+typedef MachClass_Host32::Mach_data_in_code_command Mach32_data_in_code_command;
+typedef MachClass_Host32::Mach_function_starts_command Mach32_function_starts_command;
+typedef MachClass_Host32::Mach_load_dylib_command Mach32_load_dylib_command;
+typedef MachClass_Host32::Mach_dylib Mach32_dylib;
+typedef MachClass_Host32::Mach_load_dylinker_command Mach32_load_dylinker_command;
+typedef MachClass_Host32::Mach_dyld_info_only_command Mach32_dyld_info_only_command;
+typedef MachClass_Host32::Mach_version_min_command Mach32_version_min_command;
+typedef MachClass_Host32::Mach_source_version_command Mach32_source_version_command;
 
 typedef MachClass_Host64::Mach_segment_command Mach64_segment_command;
 typedef MachClass_Host64::Mach_section_command Mach64_section_command;
@@ -594,6 +655,15 @@ typedef MachClass_Host64::Mach_routines_command Mach64_routines_command;
 typedef MachClass_Host64::Mach_twolevel_hints_command Mach64_twolevel_hints_command;
 typedef MachClass_Host64::Mach_linkedit_data_command Mach64_linkedit_data_command;
 typedef MachClass_Host64::Mach_uuid_command Mach64_uuid_command;
+typedef MachClass_Host64::Mach_main_command Mach64_main_command;
+typedef MachClass_Host64::Mach_data_in_code_command Mach64_data_in_code_command;
+typedef MachClass_Host64::Mach_function_starts_command Mach64_function_starts_command;
+typedef MachClass_Host64::Mach_load_dylib_command Mach64_load_dylib_command;
+typedef MachClass_Host64::Mach_dylib Mach64_dylib;
+typedef MachClass_Host64::Mach_load_dylinker_command Mach64_load_dylinker_command;
+typedef MachClass_Host64::Mach_dyld_info_only_command Mach64_dyld_info_only_command;
+typedef MachClass_Host64::Mach_version_min_command Mach64_version_min_command;
+typedef MachClass_Host64::Mach_source_version_command Mach64_source_version_command;
 
 typedef MachClass_BE32::Mach_segment_command   MachBE32_segment_command;
 typedef MachClass_BE32::Mach_section_command   MachBE32_section_command;
@@ -604,6 +674,15 @@ typedef MachClass_BE32::Mach_routines_command   MachBE32_routines_command;
 typedef MachClass_BE32::Mach_twolevel_hints_command   MachBE32_twolevel_hints_command;
 typedef MachClass_BE32::Mach_linkedit_data_command   MachBE32_linkedit_data_command;
 typedef MachClass_BE32::Mach_uuid_command   MachBE32_uuid_command;
+typedef MachClass_BE32::Mach_main_command MachBE32_main_command;
+typedef MachClass_BE32::Mach_data_in_code_command MachBE32_data_in_code_command;
+typedef MachClass_BE32::Mach_function_starts_command MachBE32_function_starts_command;
+typedef MachClass_BE32::Mach_load_dylib_command MachBE32_load_dylib_command;
+typedef MachClass_BE32::Mach_dylib MachBE32_dylib;
+typedef MachClass_BE32::Mach_load_dylinker_command MachBE32_load_dylinker_command;
+typedef MachClass_BE32::Mach_dyld_info_only_command MachBE32_dyld_info_only_command;
+typedef MachClass_BE32::Mach_version_min_command MachBE32_version_min_command;
+typedef MachClass_BE32::Mach_source_version_command MachBE32_source_version_command;
 
 typedef MachClass_BE64::Mach_segment_command   MachBE64_segment_command;
 typedef MachClass_BE64::Mach_section_command   MachBE64_section_command;
@@ -614,6 +693,15 @@ typedef MachClass_BE64::Mach_routines_command   MachBE64_routines_command;
 typedef MachClass_BE64::Mach_twolevel_hints_command   MachBE64_twolevel_hints_command;
 typedef MachClass_BE64::Mach_linkedit_data_command   MachBE64_linkedit_data_command;
 typedef MachClass_BE64::Mach_uuid_command   MachBE64_uuid_command;
+typedef MachClass_BE64::Mach_main_command MachBE64_main_command;
+typedef MachClass_BE64::Mach_data_in_code_command MachBE64_data_in_code_command;
+typedef MachClass_BE64::Mach_function_starts_command MachBE64_function_starts_command;
+typedef MachClass_BE64::Mach_load_dylib_command MachBE64_load_dylib_command;
+typedef MachClass_BE64::Mach_dylib MachBE64_dylib;
+typedef MachClass_BE64::Mach_load_dylinker_command MachBE64_load_dylinker_command;
+typedef MachClass_BE64::Mach_dyld_info_only_command MachBE64_dyld_info_only_command;
+typedef MachClass_BE64::Mach_version_min_command MachBE64_version_min_command;
+typedef MachClass_BE64::Mach_source_version_command MachBE64_source_version_command;
 
 typedef MachClass_LE32::Mach_segment_command   MachLE32_segment_command;
 typedef MachClass_LE32::Mach_section_command   MachLE32_section_command;
@@ -624,6 +712,15 @@ typedef MachClass_LE32::Mach_routines_command   MachLE32_routines_command;
 typedef MachClass_LE32::Mach_twolevel_hints_command   MachLE32_twolevel_hints_command;
 typedef MachClass_LE32::Mach_linkedit_data_command   MachLE32_linkedit_data_command;
 typedef MachClass_LE32::Mach_uuid_command   MachLE32_uuid_command;
+typedef MachClass_LE32::Mach_main_command  MachLE32_main_command;
+typedef MachClass_LE32::Mach_data_in_code_command  MachLE32_data_in_code_command;
+typedef MachClass_LE32::Mach_function_starts_command  MachLE32_function_starts_command;
+typedef MachClass_LE32::Mach_load_dylib_command  MachLE32_load_dylib_command;
+typedef MachClass_LE32::Mach_dylib  MachLE32_dylib;
+typedef MachClass_LE32::Mach_load_dylinker_command  MachLE32_load_dylinker_command;
+typedef MachClass_LE32::Mach_dyld_info_only_command  MachLE32_dyld_info_only_command;
+typedef MachClass_LE32::Mach_version_min_command  MachLE32_version_min_command;
+typedef MachClass_LE32::Mach_source_version_command MachLE32_source_version_command;
 
 typedef MachClass_LE64::Mach_segment_command   MachLE64_segment_command;
 typedef MachClass_LE64::Mach_section_command   MachLE64_section_command;
@@ -634,6 +731,15 @@ typedef MachClass_LE64::Mach_routines_command   MachLE64_routines_command;
 typedef MachClass_LE64::Mach_twolevel_hints_command   MachLE64_twolevel_hints_command;
 typedef MachClass_LE64::Mach_linkedit_data_command   MachLE64_linkedit_data_command;
 typedef MachClass_LE64::Mach_uuid_command   MachLE64_uuid_command;
+typedef MachClass_LE64::Mach_main_command MachLE64_main_command;
+typedef MachClass_LE64::Mach_data_in_code_command MachLE64_data_in_code_command;
+typedef MachClass_LE64::Mach_function_starts_command MachLE64_function_starts_command;
+typedef MachClass_LE64::Mach_load_dylib_command MachLE64_load_dylib_command;
+typedef MachClass_LE64::Mach_dylib MachLE64_dylib;
+typedef MachClass_LE64::Mach_load_dylinker_command MachLE64_load_dylinker_command;
+typedef MachClass_LE64::Mach_dyld_info_only_command MachLE64_dyld_info_only_command;
+typedef MachClass_LE64::Mach_version_min_command MachLE64_version_min_command;
+typedef MachClass_LE64::Mach_source_version_command MachLE64_source_version_command;
 
 typedef MachClass_BE32::Mach_ppc_thread_state  Mach_ppc_thread_state;
 typedef MachClass_LE64::Mach_ppcle_thread_state64  Mach_ppcle_thread_state64;
@@ -659,6 +765,7 @@ protected:
     typedef typename MachClass::Addr  Addr;
     // Mach types
     typedef typename MachClass::Mach_header Mach_header;
+    typedef typename MachClass::Mach_command Mach_command;
     typedef typename MachClass::Mach_segment_command Mach_segment_command;
     typedef typename MachClass::Mach_section_command Mach_section_command;
     typedef typename MachClass::Mach_symtab_command Mach_symtab_command;
@@ -668,6 +775,15 @@ protected:
     typedef typename MachClass::Mach_twolevel_hints_command Mach_twolevel_hints_command;
     typedef typename MachClass::Mach_linkedit_data_command Mach_linkedit_data_command;
     typedef typename MachClass::Mach_uuid_command Mach_uuid_command;
+    typedef typename MachClass::Mach_main_command Mach_main_command;
+    typedef typename MachClass::Mach_data_in_code_command Mach_data_in_code_command;
+    typedef typename MachClass::Mach_function_starts_command Mach_function_starts_command;
+    typedef typename MachClass::Mach_load_dylib_command Mach_load_dylib_command;
+    typedef typename MachClass::Mach_dylib Mach_dylib;
+    typedef typename MachClass::Mach_load_dylinker_command Mach_load_dylinker_command;
+    typedef typename MachClass::Mach_dyld_info_only_command Mach_dyld_info_only_command;
+    typedef typename MachClass::Mach_version_min_command Mach_version_min_command;
+    typedef typename MachClass::Mach_source_version_command Mach_source_version_command;
 
 public:
     PackMachBase(InputFile *, unsigned cpuid, unsigned filetype,
@@ -742,8 +858,8 @@ protected:
     Mach_segment_command segLINK;
     Mach_linkedit_data_command linkitem;
     Mach_uuid_command cmdUUID;  // copied from input, then incremented
-    N_Mach::Mach_source_version_command cmdSRCVER;  // copied from input
-    N_Mach::Mach_version_min_command cmdVERMIN;  // copied from input
+    Mach_source_version_command cmdSRCVER;  // copied from input
+    Mach_version_min_command cmdVERMIN;  // copied from input
 
     __packed_struct(b_info)     // 12-byte header before each compressed block
         TE32 sz_unc;  // uncompressed_size

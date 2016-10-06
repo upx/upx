@@ -535,15 +535,15 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 template <class T>
 void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
-    N_Mach::Mach_main_command cmdMAIN;
+    Mach_main_command cmdMAIN;
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
         + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segTEXT) + sizeof(secTEXT)
         + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(cmdMAIN)
-        + sizeof(N_Mach::Mach_dyld_info_only_command) + sizeof(Mach_dysymtab_command)
-        + sizeof(N_Mach::Mach_load_dylinker_command) + sizeof(N_Mach::Mach_load_dylib_command)
-        + sizeof(N_Mach::Mach_function_starts_command) + sizeof(N_Mach::Mach_data_in_code_command)
+        + sizeof(Mach_dyld_info_only_command) + sizeof(Mach_dysymtab_command)
+        + sizeof(Mach_load_dylinker_command) + sizeof(Mach_load_dylib_command)
+        + sizeof(Mach_function_starts_command) + sizeof(Mach_data_in_code_command)
         + sizeof(linfo);
     if (my_filetype==Mach_header::MH_EXECUTE) {
         overlay_offset = PAGE_SIZE;  // FIXME
@@ -669,7 +669,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             }
         } break;
         case Mach_segment_command::LC_DYLD_INFO_ONLY: {
-            N_Mach::Mach_dyld_info_only_command *p = (N_Mach::Mach_dyld_info_only_command *)lcp;
+            Mach_dyld_info_only_command *p = (Mach_dyld_info_only_command *)lcp;
             if (p->rebase_off)    p->rebase_off    += delta;
             if (p->bind_off)      p->bind_off      += delta;
             if (p->lazy_bind_off) p->lazy_bind_off += delta;
@@ -706,7 +706,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             skip = 1;
         } break;
         case Mach_segment_command::LC_FUNCTION_STARTS: {
-            N_Mach::Mach_function_starts_command *p = (N_Mach::Mach_function_starts_command *)lcp;
+            Mach_function_starts_command *p = (Mach_function_starts_command *)lcp;
             if (p->dataoff) p->dataoff += delta;
             skip = 1;
         } break;
@@ -715,14 +715,14 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 // LC_MAIN requires libSystem.B.dylib to provide the environment for main(), and CALLs the entryoff.
 // LC_UNIXTHREAD does not need libSystem.B.dylib, and JMPs to the .rip with %rsp/argc and argv= 8+%rsp
             threado_setPC(segTEXT.vmaddr +
-                (((N_Mach::Mach_main_command const *)lcp)->entryoff - segTEXT.fileoff));
+                (((Mach_main_command const *)lcp)->entryoff - segTEXT.fileoff));
             skip = 1;
         } break;
         case Mach_segment_command::LC_LOAD_DYLIB: {
             skip = 1;
         } break;
         case Mach_segment_command::LC_DATA_IN_CODE: {
-            N_Mach::Mach_data_in_code_command *p = (N_Mach::Mach_data_in_code_command *)lcp;
+            Mach_data_in_code_command *p = (Mach_data_in_code_command *)lcp;
             if (p->dataoff) p->dataoff += delta;
             skip = 1;
         } break;
