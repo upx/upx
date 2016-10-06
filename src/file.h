@@ -67,7 +67,7 @@ protected:
     virtual int read(void *buf, int len);
     virtual int readx(void *buf, int len);
     virtual void write(const void *buf, int len);
-    virtual off_t seek(off_t off, int whence);
+    virtual off_t seek(upx_int64_t off, int whence);
     virtual off_t tell() const;
 
     int _fd;
@@ -106,7 +106,7 @@ public:
     virtual int read(MemBuffer &buf, int len);
     virtual int readx(MemBuffer &buf, int len);
 
-    virtual off_t seek(off_t off, int whence);
+    virtual off_t seek(upx_int64_t off, int whence);
     virtual off_t tell() const;
     virtual off_t st_size_orig() const;
 protected:
@@ -142,7 +142,7 @@ public:
     virtual off_t st_size() const;  // { return _length; }
 
     // FIXME - these won't work when using the '--stdout' option
-    virtual off_t seek(off_t off, int whence);
+    virtual off_t seek(upx_int64_t off, int whence);
     virtual void rewrite(const void *buf, int len);
 
     // util

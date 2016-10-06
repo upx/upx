@@ -168,8 +168,10 @@ void FileBase::write(const void *buf, int len)
 }
 
 
-off_t FileBase::seek(off_t off, int whence)
+off_t FileBase::seek(upx_int64_t off64, int whence)
 {
+    (void) mem_size(1, off64 >= 0 ? off64 : -off64); // sanity check
+    off_t off = ACC_ICONV(off_t, off64);
     if (!isOpen())
         throwIOException("bad seek 1");
     if (whence == SEEK_SET) {
@@ -285,9 +287,9 @@ int InputFile::readx(MemBuffer &buf, int len)
 }
 
 
-off_t InputFile::seek(off_t off, int whence)
+off_t InputFile::seek(upx_int64_t off64, int whence)
 {
-    off_t pos = super::seek(off,whence);
+    off_t pos = super::seek(off64, whence);
     if (_length < pos)
         throwIOException("bad seek 4");
     return pos;
@@ -402,8 +404,10 @@ void OutputFile::rewrite(const void *buf, int len)
     bytes_written -= len;       // restore
 }
 
-off_t OutputFile::seek(off_t off, int whence)
+off_t OutputFile::seek(upx_int64_t off64, int whence)
 {
+    (void) mem_size(1, off64 >= 0 ? off64 : -off64); // sanity check
+    off_t off = ACC_ICONV(off_t, off64);
     assert(!opt->to_stdout);
     switch (whence) {
     case SEEK_SET: {
