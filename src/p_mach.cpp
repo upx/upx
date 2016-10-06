@@ -527,96 +527,6 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 // At 2013-02-03 part of the source for codesign was
 //    http://opensource.apple.com/source/cctools/cctools-836/libstuff/ofile.c
 
-void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
-    }
-
-    super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
-
-void PackMachPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
-    }
-
-    super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
-
 #undef PAGE_MASK64
 #undef PAGE_SIZE64
 #define PAGE_MASK64 (~(upx_uint64_t)0<<12)
@@ -869,96 +779,6 @@ next:
     }
 }
 
-void PackMachARMEL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
-    }
-
-    super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
-
-void PackMachARM64EL::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(linkitem);
-    }
-
-    super::pack4(fo, ft);
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
-
 template <class T>
 void PackMachBase<T>::pack4dylib(  // append PackHeader
     OutputFile *const fo,
@@ -1162,35 +982,8 @@ void PackDylibPPC64LE::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
     pack4dylib(fo, ft, threado.state64.srr0);
 }
 
-void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE32 disp;
-    upx_uint32_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + sizeof(disp);
-    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
-    fo->write(&disp, sizeof(disp));
-
-    threado.state.srr0 = len + segTEXT.vmaddr;  /* entry address */
-    super::pack3(fo, ft);
-}
-
-void PackMachPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE64 disp;
-    upx_uint64_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + sizeof(disp);
-    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
-    fo->write(&disp, sizeof(disp));
-
-    threado.state64.srr0 = len + segTEXT.vmaddr;  /* entry address */
-    super::pack3(fo, ft);
-}
-
-void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
+template <class T>
+void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE32 disp;
     upx_uint32_t const zero = 0;
@@ -1207,61 +1000,10 @@ void PackMachI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     len += ~PAGE_MASK & -len;
     segLINK.fileoff = len;
 
-    threado.state.eip = len + segTEXT.vmaddr;  /* entry address */
+    threado_setPC(len + segTEXT.vmaddr);  /* entry address */
     super::pack3(fo, ft);
     len = fo->getBytesWritten();
     fo->write(&zero, 7& (0u-len));
-}
-
-void PackMachAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE32 disp;
-    upx_uint64_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len));  // 0 mod 4
-
-    disp = len - sz_mach_headers;
-    fo->write(&disp, sizeof(disp));
-    len += sizeof(disp);
-
-    char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
-    fo->write(page, ~PAGE_MASK & -len);
-    len += ~PAGE_MASK & -len;
-    segLINK.fileoff = len;
-
-    threado.state.rip = len + segTEXT.vmaddr;  /* entry address */
-    super::pack3(fo, ft);
-    len = fo->getBytesWritten();
-    fo->write(&zero, 7& (0u-len));
-}
-
-void PackMachARMEL::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE32 disp;
-    upx_uint32_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len));
-    disp = len - sz_mach_headers;
-    fo->write(&disp, sizeof(disp));
-
-    threado.state.pc = len + sizeof(disp) + segTEXT.vmaddr;  /* entry address */
-    super::pack3(fo, ft);
-}
-
-void PackMachARM64EL::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE32 disp;
-    upx_uint64_t const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len));
-    disp = len - sz_mach_headers;
-    fo->write(&disp, sizeof(disp));
-
-    threado.state.pc = len + sizeof(disp) + segTEXT.vmaddr;  /* entry address */
-    super::pack3(fo, ft);
 }
 
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
@@ -1336,6 +1078,7 @@ void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
     sz_mach_headers = save_sz_mach_headers;
 }
+
 void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
 {
     TE64 disp;
@@ -1396,12 +1139,6 @@ unsigned PackMachBase<T>::find_SEGMENT_gap(
         }
     }
     return lo - hi;
-}
-
-template <class T>
-void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)
-{
-    PackUnix::pack3(fo, ft);  // FIXME  super() does not work?
 }
 
 template <class T>

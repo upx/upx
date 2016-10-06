@@ -679,7 +679,7 @@ public:
     // called by the generic pack()
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
-    virtual void pack3(OutputFile *, Filter &) = 0;  // append loader
+    virtual void pack3(OutputFile *, Filter &) /*= 0*/;  // append loader
     virtual void pack4(OutputFile *, Filter &) /*= 0*/;  // append PackHeader
 
     virtual void pack4dylib(OutputFile *, Filter &, Addr init_address);
@@ -797,8 +797,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
 
     __packed_struct(Mach_thread_command)
@@ -840,8 +838,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
 
     __packed_struct(Mach_thread_command)
@@ -912,7 +908,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
 
@@ -969,7 +964,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
 
@@ -1028,8 +1022,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
 
@@ -1072,8 +1064,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
     virtual void addStubEntrySections(Filter const *);
 
