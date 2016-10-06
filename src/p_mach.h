@@ -974,7 +974,7 @@ protected:
     virtual void addStubEntrySections(Filter const *);
 
     __packed_struct(Mach_thread_command)
-        typedef typename MachITypes::Word Word;
+        typedef MachITypes::Word Word;
         Word cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
         Word cmdsize;        /* total size of this command */
         Word flavor;

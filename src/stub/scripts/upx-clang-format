@@ -1,15 +1,17 @@
-#!/bin/sh
-set -e
+#! /usr/bin/env bash
+## vim:set ts=4 sw=4 et:
+set -e; set -o pipefail
 
 # NOTE: we are using clang-format-3.9.0 from upx-stubtools
 # see https://github.com/upx/upx-stubtools/releases
 
 CLANG_FORMAT="$HOME/local/bin/bin-upx/clang-format-3.9.0"
-if ! test -f "$CLANG_FORMAT"; then
+if [[ ! -f $CLANG_FORMAT ]]; then
 CLANG_FORMAT="$HOME/bin/bin-upx/clang-format-3.9.0"
 fi
-if ! test -f "$CLANG_FORMAT"; then
+if [[ ! -f $CLANG_FORMAT ]]; then
     echo "ERROR: $0: cannot find clang-format-3.9.0"
+    echo "ERROR: $0: please visit https://github.com/upx/upx-stubtools/releases"
     exit 1
 fi
 
