@@ -170,7 +170,7 @@ void FileBase::write(const void *buf, int len)
 
 off_t FileBase::seek(upx_int64_t off64, int whence)
 {
-    (void) mem_size(1, off64 >= 0 ? off64 : -off64); // sanity check
+    mem_size_assert(1, off64 >= 0 ? off64 : -off64); // sanity check
     off_t off = ACC_ICONV(off_t, off64);
     if (!isOpen())
         throwIOException("bad seek 1");
@@ -406,7 +406,7 @@ void OutputFile::rewrite(const void *buf, int len)
 
 off_t OutputFile::seek(upx_int64_t off64, int whence)
 {
-    (void) mem_size(1, off64 >= 0 ? off64 : -off64); // sanity check
+    mem_size_assert(1, off64 >= 0 ? off64 : -off64); // sanity check
     off_t off = ACC_ICONV(off_t, off64);
     assert(!opt->to_stdout);
     switch (whence) {

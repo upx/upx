@@ -63,6 +63,10 @@ int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
 size_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra = 0);
 size_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n);
 
+inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra = 0) {
+    (void) mem_size(element_size, n, extra); // sanity check
+}
+
 bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra = 0);
 bool mem_size_valid_bytes(upx_uint64_t bytes);
 
