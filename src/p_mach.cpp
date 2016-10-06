@@ -845,9 +845,9 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         }
 next:
         lcp = lcp_next;
-      }  // end for
+    }  // end for each Mach_command
 
-        // Add LC_UNIX_THREAD
+        // Append LC_UNIX_THREAD
         unsigned const sz_threado = threado_size();
         mhp->ncmds += 1;
         mhp->sizeofcmds += sz_threado;
