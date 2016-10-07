@@ -783,7 +783,7 @@ int upx_lzma_test_overlap  ( const upx_bytep buf,
         return UPX_E_ERROR;
     // NOTE: there is a very tiny possibility that decompression has
     //   succeeded but the data is not restored correctly because of
-    //   in-place buffer overlapping.
+    //   in-place buffer overlapping, so we use an extra memcmp().
     if (tbuf != NULL && memcmp(tbuf, b, *dst_len) != 0)
         return UPX_E_ERROR;
     return UPX_E_OK;

@@ -163,6 +163,13 @@ typedef unsigned char   upx_byte;
 #undef NDEBUG
 #include <assert.h>
 
+// protect against integer overflows and malicious header fields
+// see C 11 standard, Annex K
+typedef size_t upx_rsize_t;
+#define UPX_RSIZE_MAX       UPX_RSIZE_MAX_MEM
+#define UPX_RSIZE_MAX_MEM   (768 * 1024 * 1024)   // DO NOT CHANGE
+#define UPX_RSIZE_MAX_STR   (1024 * 1024)
+
 
 /*************************************************************************
 // portab

@@ -44,7 +44,7 @@ int __acc_cdecl_va upx_asprintf (char **ptr, const char *format, ...);
 #undef sprintf
 #define sprintf error_sprintf_is_dangerous_use_snprintf
 
-size_t upx_strlen(const char *);
+upx_rsize_t upx_strlen(const char *);
 
 #undef strlen
 #define strlen upx_strlen

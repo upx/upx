@@ -12,19 +12,19 @@ BUILD_USE_DEPEND    ?= 1
 MAKEFLAGS += -r
 .SUFFIXES:
 export SHELL = /bin/sh
-override e = $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
+override ee = $($1) $(EXTRA_$1) $(upx_$1) $(upx_EXTRA_$1) $($(basename $(notdir $@)).$1)
 
 ifndef srcdir
-srcdir := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,')
+srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
+srcdir := $(shell echo '$(srcdir)' | sed 's,/*$$,,' || echo 'ERROR')
 endif
 ifndef top_srcdir
 top_srcdir := $(srcdir)/..
 endif
 include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 ifneq ($(srcdir),.)
-##$(info Info: using VPATH . $(srcdir))
-VPATH := . $(srcdir)
+vpath %.cpp .:$(srcdir)
+vpath %.h   .:$(srcdir)
 endif
 
 # toolchain
@@ -75,9 +75,8 @@ CXXFLAGS += $(CXXFLAGS_WERROR)
 ifeq ($(BUILD_TYPE_SANITIZE),1)
 CXXFLAGS_SANITIZE ?= -fsanitize=address,undefined -fno-omit-frame-pointer -DACC_CFG_NO_UNALIGNED
 CXXFLAGS += $(CXXFLAGS_SANITIZE)
-LDFLAGS  += $(CXXFLAGS_SANITIZE)
 # these are the only 2 objects that are actually speed-sensitive
-compress_lzma$(objext) filteri$(objext) : CXXFLAGS_SANITIZE =
+compress_lzma$(objext) filteri$(objext) : override CXXFLAGS_SANITIZE =
 endif
 
 # rules
@@ -86,20 +85,20 @@ all: upx$(exeext) | ./.depend
 
 upx$(exeext): $(upx_OBJECTS) $(upx_DEPENDENCIES)
 	$($(notdir $@).PRE_LINK_STEP)
-	$(strip $(CXXLD) $(call e,CPPFLAGS) $(call e,CXXFLAGS) $(call e,LDFLAGS) -o $@ $(upx_OBJECTS) $(call e,LDADD) $(call e,LIBS))
+	$(strip $(CXXLD) $(call ee,CXXFLAGS) $(call ee,LDFLAGS) -o $@ $(upx_OBJECTS) $(call ee,LDADD) $(call ee,LIBS))
 	$($(notdir $@).POST_LINK_STEP)
 	$(CHECK_WHITESPACE)
 
 %.o : %.cpp | ./.depend
-	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -c $<)
+	$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -o $@ -c $<)
 %.cpp.ii : %.cpp
-	$(strip $(CXX) $(call e,CPPFLAGS) $(call e,CXXFLAGS) -o $@ -E $<)
+	$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -o $@ -E $<)
 
 ifeq ($(BUILD_USE_DEPEND),1)
 ./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
 	@echo "Updating $@"
-	@$(strip $(CXX) $(call e,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
+	@$(strip $(CXX) $(call ee,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
 ./.depend:
 .PHONY: ./.depend
@@ -115,15 +114,13 @@ check-whitespace : ; $(CHECK_WHITESPACE)
 endif
 .PHONY: check-whitespace
 
+mostlyclean clean distclean maintainer-clean:
+	rm -f *.d *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
 
-./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
+./.depend compress_lzma$(objext) : override INCLUDES += -I$(UPX_LZMADIR)
 
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align
-
-
-mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
 
 .PHONY: all mostlyclean clean distclean maintainer-clean
 
@@ -140,11 +137,9 @@ endif
 help$(objext): $(MAKEFILE_LIST)
 endif
 
-
 # "make run-testsuite"
-#
 # search for the UPX testsuite -- git clone https://github.com/upx/upx-testsuite.git
-# you also can set upx_testsuite_SRCDIR
+# you also can override upx_testsuite_SRCDIR
 ifndef upx_testsuite_SRCDIR
 # search standard locations below $(top_srcdir)
 ifneq ($(wildcard $(top_srcdir)/../upx-testsuite.git/files/packed/.),)
@@ -164,7 +159,6 @@ run-testsuite: ./upx$(exeext)
 .PHONY: run-testsuite
 endif
 endif
-
 
 # automatically format some C++ source code files
 ifeq ($(shell uname),Linux)

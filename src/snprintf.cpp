@@ -744,15 +744,12 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
 // public entries
 **************************************************************************/
 
-// protect against integer overflows and malicious header fields
-#define MAX_STR_SIZE (1024 * 1024)
-
 // UPX version with assertions
 int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap) {
     size_t size;
 
     // preconditions
-    assert(count <= MAX_STR_SIZE);
+    assert(count <= UPX_RSIZE_MAX_STR);
     if (str != NULL)
         assert(count > 0);
     else
@@ -762,7 +759,7 @@ int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap) {
 
     // postconditions
     assert(size > 0);
-    assert(size <= MAX_STR_SIZE);
+    assert(size <= UPX_RSIZE_MAX_STR);
     if (str != NULL) {
         assert(size <= count);
         assert(str[size - 1] == '\0');
@@ -809,13 +806,12 @@ int __acc_cdecl_va upx_asprintf(char **ptr, const char *format, ...) {
 }
 
 #undef strlen
-size_t upx_strlen(const char *s) {
+upx_rsize_t upx_strlen(const char *s) {
+    assert(s != NULL);
     size_t len = strlen(s);
-    assert(len < MAX_STR_SIZE);
+    assert(len < UPX_RSIZE_MAX_STR);
     return len;
 }
-
-#undef MAX_STR_SIZE
 
 /*************************************************************************
  //

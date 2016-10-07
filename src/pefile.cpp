@@ -1609,7 +1609,7 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
     branch->name = NULL;
     branch->parent = parent;
     branch->nc = ic;
-    branch->children = new upx_rnode*[ic];
+    branch->children = New(upx_rnode *, ic);
     branch->data = *node;
 
     for (const res_dir_entry *rde = node->entries + ic - 1; --ic >= 0; rde--)
