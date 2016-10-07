@@ -10,9 +10,9 @@ set -e; set -o pipefail
 #
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
-argv0="$0"; argv0dir=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0dir")
+argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 else
-argv0="$0"; argv0dir=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0dir")
+argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 fi
 source "$argv0dir/travis_init.sh" || exit 1
 
@@ -53,10 +53,11 @@ testsuite_check_sha() {
     echo
     cat $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
-        echo "UPX-ERROR: checksum mismatch"
+        echo "UPX-ERROR: $1 FAILED: checksum mismatch"
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
         exit_code=1
         let num_errors+=1 || true
+        all_errors="${all_errors} $1"
         #exit 1
     fi
     echo
@@ -66,18 +67,25 @@ testsuite_check_sha_decompressed() {
     (cd "$1" && sha256sum -b */* | LC_ALL=C sort -k2) > $1/.sha256sums.current
     if ! cmp -s $1/.sha256sums.expected $1/.sha256sums.current; then
         cat $1/.sha256sums.current
-        echo "UPX-ERROR: decompressed checksum mismatch"
+        echo "UPX-ERROR: FATAL: $1 FAILED: decompressed checksum mismatch"
         diff -u $1/.sha256sums.expected $1/.sha256sums.current || true
         exit 1
     fi
 }
 
+testsuite_use_canonicalized=0
 testsuite_run_compress() {
     testsuite_header $testdir
-    local f
-    for f in t01_canonicalized/*/*; do
+    local files f
+    if [[ $testsuite_use_canonicalized == 1 ]]; then
+        files=t01_canonicalized/*/*
+    else
+        files=t01_decompressed/*/*
+    fi
+    for f in $files; do
         testsuite_split_f $f
         [[ -z $fb ]] && continue
+        echo "# $f"
         mkdir -p $testdir/$fsubdir $testdir/.decompressed/$fsubdir
         $upx_run --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
         $upx_run -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
@@ -86,10 +94,12 @@ testsuite_run_compress() {
     $upx_run -l $testdir/*/*
     $upx_run --file-info $testdir/*/*
     $upx_run -t $testdir/*/*
-    # check that after decompression the file matches the canonicalized version
-    cp t01_canonicalized/.sha256sums.expected $testdir/.decompressed/
-    testsuite_check_sha_decompressed $testdir/.decompressed
-    rm -rf ./$testdir/.decompressed
+    if [[ $testsuite_use_canonicalized == 1 ]]; then
+        # check that after decompression the file matches the canonicalized version
+        cp t01_canonicalized/.sha256sums.expected $testdir/.decompressed/
+        testsuite_check_sha_decompressed $testdir/.decompressed
+        rm -rf ./$testdir/.decompressed
+    fi
 }
 
 # /***********************************************************************
@@ -99,6 +109,7 @@ testsuite_run_compress() {
 #set -x # debug
 exit_code=0
 num_errors=0
+all_errors=
 
 if [[ $BM_T =~ (^|\+)ALLOW_FAIL($|\+) ]]; then
     echo "ALLOW_FAIL"
@@ -134,7 +145,10 @@ fi
 export UPX="--prefer-ucl --no-color --no-progress"
 
 # let's go
-if ! $upx_run --version >/dev/null; then exit 1; fi
+if ! $upx_run --version; then
+    echo "UPX-ERROR: FATAL: upx --version FAILED"
+    exit 1;
+fi
 rm -rf ./testsuite_1
 mkbuilddirs testsuite_1
 cd testsuite_1 || exit 1
@@ -298,6 +312,8 @@ time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 
 
 testsuite_header "UPX testsuite summary"
+$upx_run --version || echo "UPX-ERROR: upx --version FAILED"
+echo
 echo "upx_exe='$upx_exe'"
 if [[ $upx_run != $upx_exe ]]; then
     echo "upx_run='$upx_run'"
@@ -315,6 +331,7 @@ echo
 if [[ $exit_code == 0 ]]; then
     echo "UPX testsuite passed. All done."
 else
+    echo "UPX-ERROR: UPX testsuite FAILED:${all_errors}"
     echo "UPX-ERROR: UPX testsuite FAILED with $num_errors error(s). See log file."
 fi
 exit $exit_code

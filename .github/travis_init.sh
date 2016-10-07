@@ -16,7 +16,7 @@ unset CROSS C B T
 [[ -z $BM_B ]] && BM_B=release
 
 # just in case, unset variable for passing extra UPX options
-UPX=
+export UPX=
 
 # compatibility wrappers
 if [[ $TRAVIS_OS_NAME == osx ]]; then
@@ -35,7 +35,7 @@ sort() {
 }
 fi
 
-# set CC and CXX from BM_C
+# set CC and CXX from BM_C and BM_CROSS
 if [[ -z $CC_OVERRIDE ]]; then
 CC=false CXX=false SCAN_BUILD=false
 AR=ar SIZE=size
@@ -102,6 +102,7 @@ esac
 if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
     CC="$CC -std=gnu89"
 fi
+unset v x
 export AR CC CXX
 fi # CC_OVERRIDE
 
@@ -119,25 +120,25 @@ mkbuilddirs() {
         [[ -f "$d/.mfxnobackup" ]] || touch "$d/.mfxnobackup"
     done
 }
-# search for an existing toptop builddir
-for d in . ..;  do
-    for subdir in "local" appveyor circle gitlab travis .; do
-        dd=$d/build/$subdir
-        if [[ -z $toptop_builddir && -d $dd ]]; then
-            toptop_builddir=$(readlink -en -- "$dd")
-            break 2
-        fi
+# search for an existing $toptop_builddir
+if [[ -z $toptop_builddir ]]; then
+    for d in . ..;  do
+        for subdir in "local" appveyor circle gitlab travis .; do
+            dd=$d/build/$subdir
+            if [[ -d $dd ]]; then
+                toptop_builddir=$(readlink -en -- "$dd")
+                break 2
+            fi
+        done
     done
-done
-unset d subdir dd
+    unset d subdir dd
+fi
 [[ -z $toptop_builddir ]] && toptop_builddir=$(readlink -mn -- ./build)
 [[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/$BM_C/$BM_B")
-
 [[ -z $upx_BUILDDIR ]] && upx_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx")
 [[ -z $ucl_BUILDDIR ]] && ucl_BUILDDIR=$(readlink -mn -- "$toptop_bdir/ucl-1.03")
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx-testsuite")
 [[ -z $zlib_BUILDDIR ]] && zlib_BUILDDIR=$(readlink -mn -- "$toptop_bdir/zlib-1.2.8")
-
 [[ -z $lcov_OUTPUTDIR ]] && lcov_OUTPUTDIR=$(readlink -mn -- "$toptop_bdir/.lcov-results")
 unset toptop_builddir toptop_bdir
 

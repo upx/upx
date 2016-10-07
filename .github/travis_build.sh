@@ -6,9 +6,9 @@ set -e; set -o pipefail
 # Copyright (C) Markus Franz Xaver Johannes Oberhumer
 
 if [[ $TRAVIS_OS_NAME == osx ]]; then
-argv0="$0"; argv0dir=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0dir")
+argv0=$0; argv0abs=$(greadlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 else
-argv0="$0"; argv0dir=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0dir")
+argv0=$0; argv0abs=$(readlink -en -- "$0"); argv0dir=$(dirname "$argv0abs")
 fi
 source "$argv0dir/travis_init.sh" || exit 1
 
