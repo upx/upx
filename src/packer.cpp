@@ -626,9 +626,9 @@ unsigned Packer::getRandomId() const
     unsigned id = 0;
 #if 0 && defined(__unix__)
     // Don't consume precious bytes from /dev/urandom.
-    int fd = open("/dev/urandom", O_RDONLY);
+    int fd = open("/dev/urandom", O_RDONLY | O_BINARY);
     if (fd < 0)
-        fd = open("/dev/random", O_RDONLY);
+        fd = open("/dev/random", O_RDONLY | O_BINARY);
     if (fd >= 0)
     {
         if (read(fd, &id, 4) != 4)

@@ -512,7 +512,7 @@ int PackUnix::canUnpack()
         bufsize = fi->st_size();
     MemBuffer buf(bufsize);
 
-    fi->seek(-bufsize, SEEK_END);
+    fi->seek(-(off_t)bufsize, SEEK_END);
     fi->readx(buf, bufsize);
     int i = bufsize;
     while (i > small && 0 == buf[--i]) { }

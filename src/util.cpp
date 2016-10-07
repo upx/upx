@@ -392,7 +392,7 @@ bool file_exists(const char *name)
     struct stat st;
 
     /* return true if we can open it */
-    fd = open(name, O_RDONLY, 0);
+    fd = open(name, O_RDONLY | O_BINARY, 0);
     if (fd >= 0)
     {
         (void) close(fd);

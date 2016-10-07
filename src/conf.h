@@ -236,6 +236,11 @@ typedef unsigned char   upx_byte;
 #undef PAGE_MASK
 #undef PAGE_SIZE
 
+#if !defined(O_BINARY) || (O_BINARY+0 == 0)
+#  if (ACC_OS_CYGWIN || ACC_OS_DOS16 || ACC_OS_DOS32 || ACC_OS_EMX || ACC_OS_OS2 || ACC_OS_OS216 || ACC_OS_WIN16 || ACC_OS_WIN32 || ACC_OS_WIN64)
+#    error "missing O_BINARY"
+#  endif
+#endif
 #if !defined(O_BINARY)
 #  define O_BINARY  0
 #endif

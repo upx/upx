@@ -429,7 +429,7 @@ off_t OutputFile::seek(upx_int64_t off64, int whence)
 //{
 //    fsync(_fd);
 //    InputFile infile;
-//    infile.open(this->getName(), O_RDONLY);
+//    infile.open(this->getName(), O_RDONLY | O_BINARY);
 //    infile.seek(this->tell(), SEEK_SET);
 //    return infile.read(buf, len);
 //}
@@ -459,8 +459,8 @@ off_t OutputFile::unset_extent()
 void OutputFile::dump(const char *name, const void *buf, int len, int flags)
 {
     if (flags < 0)
-         flags = O_CREAT | O_BINARY | O_TRUNC;
-    flags |= O_WRONLY;
+         flags = O_CREAT | O_TRUNC;
+    flags |= O_WRONLY | O_BINARY;
     OutputFile f;
     f.open(name, flags, 0600);
     f.write(buf, len);
