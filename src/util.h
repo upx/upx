@@ -100,6 +100,10 @@ inline char *strcpy(unsigned char *s1, const unsigned char *s2) {
     return strcpy((char *) s1, (const char *) s2);
 }
 
+inline int strcmp(const unsigned char *s1, const unsigned char *s2) {
+    return strcmp((const char *) s1, (const char *) s2);
+}
+
 inline int strcasecmp(const unsigned char *s1, const unsigned char *s2) {
     return strcasecmp((const char *) s1, (const char *) s2);
 }

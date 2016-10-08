@@ -874,7 +874,9 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
             if (u2->ordinal) return 1;
             if (!u1->shname) return 1;
             if (!u2->shname) return -1;
-            return strlen(u1->shname) - strlen(u2->shname);
+            rc = (int) (upx_strlen(u1->shname) - upx_strlen(u2->shname));
+            if (rc) return rc;
+            return strcmp(u1->shname, u2->shname);
         }
     };
 
