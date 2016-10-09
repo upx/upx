@@ -2287,7 +2287,8 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
     // note: there should be no data in the last section which needs fixup
 
     // identsplit - number of ident + (upx header) bytes to put into the PE header
-    int identsplit = pe_offset + sizeof(osection) + sizeof(oh);
+    const unsigned sizeof_osection = sizeof(osection[0]) * oobjs;
+    int identsplit = pe_offset + sizeof_osection + sizeof(ht);
     if ((identsplit & 0x1ff) == 0)
         identsplit = 0;
     else if (((identsplit + identsize) ^ identsplit) < 0x200)
@@ -2413,7 +2414,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         osection[1].vsize = (osection[1].size + oam1) &~ oam1;
         osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
         oh.imagesize = osection[2].vaddr + osection[2].vsize;
-        osection[0].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+        osection[0].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ fam1;
         osection[1].rawdataptr = osection[0].rawdataptr;
     }
     else
@@ -2421,7 +2422,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         osection[1].vsize = osection[1].size;
         osection[2].vsize = osection[2].size;
         osection[0].rawdataptr = 0;
-        osection[1].rawdataptr = (pe_offset + sizeof(oh) + sizeof(osection) + fam1) &~ fam1;
+        osection[1].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ fam1;
     }
     osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
 
