@@ -614,7 +614,7 @@ class PeFile::ImportLinker : public ElfLinkerAMD64
         unsigned len = 1 + 2 * strlen(dll) + 1 + 2 * strlen(proc) + 1 + 1;
         tstr dlln(name_for_dll(dll, first_char));
         char *procn = New(char, len);
-        upx_snprintf(procn, len - 1, "%s%c", (const char*) dlln, separator);
+        upx_snprintf(procn, len, "%s%c", (const char*) dlln, separator);
         encode_name(proc, procn + strlen(procn));
         return procn;
     }

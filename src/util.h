@@ -29,6 +29,28 @@
 #define __UPX_UTIL_H 1
 
 /*************************************************************************
+// protect against integer overflows and malicious header fields
+**************************************************************************/
+
+#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
+
+upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
+                     upx_uint64_t extra2 = 0);
+upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n);
+
+inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
+                            upx_uint64_t extra2 = 0) {
+    (void) mem_size(element_size, n, extra1, extra2); // sanity check
+}
+
+bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
+                    upx_uint64_t extra2 = 0);
+bool mem_size_valid_bytes(upx_uint64_t bytes);
+
+int ptr_diff(const void *p1, const void *p2);
+unsigned ptr_udiff(const void *p1, const void *p2); // asserts p1 >= p2
+
+/*************************************************************************
 // misc. support functions
 **************************************************************************/
 
@@ -55,52 +77,6 @@ int find_le32(const void *b, int blen, unsigned what);
 int find_le64(const void *b, int blen, upx_uint64_t what);
 
 int mem_replace(void *b, int blen, const void *what, int wlen, const void *r);
-
-/*************************************************************************
-// protect against integer overflows and malicious header fields
-**************************************************************************/
-
-upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                     upx_uint64_t extra2 = 0);
-upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n);
-
-inline void mem_size_assert(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                            upx_uint64_t extra2 = 0) {
-    (void) mem_size(element_size, n, extra1, extra2); // sanity check
-}
-
-bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1 = 0,
-                    upx_uint64_t extra2 = 0);
-bool mem_size_valid_bytes(upx_uint64_t bytes);
-
-#define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
-
-int ptr_diff(const void *p1, const void *p2);
-
-template <class T1, class T2>
-inline unsigned ptr_udiff(const T1 &p1, const T2 &p2) {
-    int d = ptr_diff(p1, p2);
-    assert(d >= 0);
-    return ACC_ICONV(unsigned, d);
-}
-
-/*************************************************************************
-// some unsigned char string support functions
-**************************************************************************/
-
-inline char *strcpy(unsigned char *s1, const unsigned char *s2) {
-    return strcpy((char *) s1, (const char *) s2);
-}
-
-inline int strcmp(const unsigned char *s1, const unsigned char *s2) {
-    return strcmp((const char *) s1, (const char *) s2);
-}
-
-inline int strcasecmp(const unsigned char *s1, const unsigned char *s2) {
-    return strcasecmp((const char *) s1, (const char *) s2);
-}
-
-inline size_t strlen(const unsigned char *s) { return strlen((const char *) s); }
 
 #endif /* already included */
 

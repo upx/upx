@@ -745,35 +745,35 @@ static size_t dopr(char *buffer, size_t maxsize, const char *format, va_list arg
 **************************************************************************/
 
 // UPX version with assertions
-int upx_vsnprintf(char *str, size_t count, const char *format, va_list ap) {
+int upx_vsnprintf(char *str, upx_rsize_t max_size, const char *format, va_list ap) {
     size_t size;
 
     // preconditions
-    assert(count <= UPX_RSIZE_MAX_STR);
+    assert(max_size <= UPX_RSIZE_MAX_STR);
     if (str != NULL)
-        assert(count > 0);
+        assert(max_size > 0);
     else
-        assert(count == 0);
+        assert(max_size == 0);
 
-    size = dopr(str, count, format, ap);
+    size = dopr(str, max_size, format, ap);
 
     // postconditions
     assert(size > 0);
     assert(size <= UPX_RSIZE_MAX_STR);
     if (str != NULL) {
-        assert(size <= count);
+        assert(size <= max_size);
         assert(str[size - 1] == '\0');
     }
 
     return ACC_ICONV(int, size - 1); // snprintf() returns length, not size
 }
 
-int __acc_cdecl_va upx_snprintf(char *str, size_t count, const char *format, ...) {
+int __acc_cdecl_va upx_snprintf(char *str, upx_rsize_t max_size, const char *format, ...) {
     va_list ap;
     int len;
 
     va_start(ap, format);
-    len = upx_vsnprintf(str, count, format, ap);
+    len = upx_vsnprintf(str, max_size, format, ap);
     va_end(ap);
     return len;
 }

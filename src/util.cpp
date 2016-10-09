@@ -47,6 +47,72 @@
 
 
 /*************************************************************************
+// assert sane memory buffer sizes to protect against integer overflows
+// and malicious header fields
+**************************************************************************/
+
+ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_MEM == UPX_RSIZE_MAX)
+ACC_COMPILE_TIME_ASSERT_HEADER(UPX_RSIZE_MAX_STR <= UPX_RSIZE_MAX / 256)
+ACC_COMPILE_TIME_ASSERT_HEADER(2ull * UPX_RSIZE_MAX * 9 / 8 + 16*1024*1024 < INT_MAX)
+
+upx_rsize_t mem_size(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1, upx_uint64_t extra2)
+{
+    assert(element_size > 0);
+    if (element_size > UPX_RSIZE_MAX) throwCantPack("mem_size 1; take care");
+    if (n > UPX_RSIZE_MAX) throwCantPack("mem_size 2; take care");
+    if (extra1 > UPX_RSIZE_MAX) throwCantPack("mem_size 3; take care");
+    if (extra2 > UPX_RSIZE_MAX) throwCantPack("mem_size 4; take care");
+    upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
+    if (bytes > UPX_RSIZE_MAX) throwCantPack("mem_size 5; take care");
+    return ACC_ICONV(upx_rsize_t, bytes);
+}
+
+upx_rsize_t mem_size_get_n(upx_uint64_t element_size, upx_uint64_t n)
+{
+    mem_size_assert(element_size, n);
+    return ACC_ICONV(upx_rsize_t, n);        // return n
+}
+
+bool mem_size_valid(upx_uint64_t element_size, upx_uint64_t n, upx_uint64_t extra1, upx_uint64_t extra2)
+{
+    assert(element_size > 0);
+    if (element_size > UPX_RSIZE_MAX) return false;
+    if (n > UPX_RSIZE_MAX) return false;
+    if (extra1 > UPX_RSIZE_MAX) return false;
+    if (extra2 > UPX_RSIZE_MAX) return false;
+    upx_uint64_t bytes = element_size * n + extra1 + extra2; // cannot overflow
+    if (bytes > UPX_RSIZE_MAX) return false;
+    return true;
+}
+
+bool mem_size_valid_bytes(upx_uint64_t bytes)
+{
+    if (bytes > UPX_RSIZE_MAX) return false;
+    return true;
+}
+
+
+int ptr_diff(const void *p1, const void *p2)
+{
+    assert(p1 != NULL);
+    assert(p2 != NULL);
+    ptrdiff_t d = (const char *)p1 - (const char *)p2;
+    if (p1 >= p2)
+        assert(mem_size_valid_bytes(d));
+    else
+        assert(mem_size_valid_bytes(-d));
+    return ACC_ICONV(int, d);
+}
+
+unsigned ptr_udiff(const void *p1, const void *p2)
+{
+    int d = ptr_diff(p1, p2);
+    assert(d >= 0);
+    return ACC_ICONV(unsigned, d);
+}
+
+
+/*************************************************************************
 // bele.h
 **************************************************************************/
 

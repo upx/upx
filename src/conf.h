@@ -631,7 +631,7 @@ struct upx_compress_result_t
 // globals
 **************************************************************************/
 
-#include "snprintf.h"
+#include "snprintf.h"   // must get included first!
 #include "stdcxx.h"
 #include "options.h"
 #include "except.h"
