@@ -117,7 +117,7 @@ endif
 mostlyclean clean distclean maintainer-clean:
 	rm -f *.d *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
 
-./.depend compress_lzma$(objext) : override INCLUDES += -I$(UPX_LZMADIR)
+./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
 
 compress_lzma$(objext) : CXXFLAGS += -Wno-shadow
 p_mach$(objext)        : CXXFLAGS += -Wno-cast-align

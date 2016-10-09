@@ -76,11 +76,11 @@ bool mem_size_valid_bytes(upx_uint64_t bytes)
 }
 
 
-int ptr_diff(const char *p1, const char *p2)
+int ptr_diff(const void *p1, const void *p2)
 {
     assert(p1 != NULL);
     assert(p2 != NULL);
-    ptrdiff_t d = p1 - p2;
+    ptrdiff_t d = (const char *)p1 - (const char *)p2;
     if (p1 >= p2)
         assert(mem_size_valid_bytes(d));
     else

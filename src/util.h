@@ -75,21 +75,13 @@ bool mem_size_valid_bytes(upx_uint64_t bytes);
 
 #define New(type, n) new type[mem_size_get_n(sizeof(type), n)]
 
-int ptr_diff(const char *p1, const char *p2);
-
-inline int ptr_diff(const unsigned char *p1, const unsigned char *p2) {
-    return ptr_diff((const char *) p1, (const char *) p2);
-}
-
-inline int ptr_diff(const void *p1, const void *p2) {
-    return ptr_diff((const char *) p1, (const char *) p2);
-}
+int ptr_diff(const void *p1, const void *p2);
 
 template <class T1, class T2>
-inline int ptr_udiff(const T1 &p1, const T2 &p2) {
+inline unsigned ptr_udiff(const T1 &p1, const T2 &p2) {
     int d = ptr_diff(p1, p2);
     assert(d >= 0);
-    return d;
+    return ACC_ICONV(unsigned, d);
 }
 
 /*************************************************************************
