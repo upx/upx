@@ -66,7 +66,7 @@ protected:
     virtual void buildLoader(const Filter *ft);
     virtual Linker* newLinker() const;
 
-    virtual const char *kernelDll() const { return "coredll.dll"; }
+    virtual const char *kernelDll() const { return "COREDLL.dll"; }
     virtual void processImports2(unsigned, unsigned);
     virtual void addStubImports();
 

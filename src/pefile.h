@@ -107,7 +107,7 @@ protected:
     upx_byte *oimpdlls;
     unsigned soimpdlls;
     ImportLinker *ilinker;
-    virtual const char *kernelDll() const { return "kernel32.dll"; }
+    virtual const char *kernelDll() const { return "KERNEL32.DLL"; }
     void addKernelImport(const char *);
     virtual void addStubImports();
     upx_uint64_t ilinkerGetAddress(const char *, const char *) const;
