@@ -661,7 +661,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 segXHDR.filesize = offLINK - segTEXT.filesize;  // XXX FIXME: assumes no __DATA in stub;
                 segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
-                if (0) { // replace __DATA with segXHDR
+                if (!segtxt) { // replace __DATA with segXHDR
                     memcpy(tail, &segXHDR, sizeof(segXHDR));
                     tail += sizeof(segXHDR);
                     goto next;
