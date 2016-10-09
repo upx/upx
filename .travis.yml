@@ -193,7 +193,9 @@ install:
       fi
     fi
     if [[ $TRAVIS_OS_NAME == osx ]]; then
-      if ! gsha256sum </bin/sh >/dev/null 2>/dev/null; then travis_retry brew install coreutils; fi
+      # make sure we have recent bash and coreutils versions
+      travis_retry brew install bash
+      travis_retry brew install coreutils
       if [[ $B =~ (^|\+)coverage($|\+) ]]; then
         travis_retry brew install lcov
         travis_retry pip install --user cpp-coveralls
