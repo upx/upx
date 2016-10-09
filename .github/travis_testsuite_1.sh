@@ -87,13 +87,13 @@ testsuite_run_compress() {
         [[ -z $fb ]] && continue
         echo "# $f"
         mkdir -p $testdir/$fsubdir $testdir/.decompressed/$fsubdir
-        $upx_run --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
+        $upx_run -qq --prefer-ucl "$@" $f -o $testdir/$fsubdir/$fb
         $upx_run -qq -d $testdir/$fsubdir/$fb -o $testdir/.decompressed/$fsubdir/$fb
     done
     testsuite_check_sha $testdir
-    $upx_run -l $testdir/*/*
-    $upx_run --file-info $testdir/*/*
-    $upx_run -t $testdir/*/*
+    $upx_run -qq -l $testdir/*/*
+    $upx_run -qq --file-info $testdir/*/*
+    $upx_run -q -t $testdir/*/*
     if [[ $testsuite_use_canonicalized == 1 ]]; then
         # check that after decompression the file matches the canonicalized version
         cp t020_canonicalized/.sha256sums.expected $testdir/.decompressed/
@@ -107,26 +107,26 @@ testsuite_run_compress() {
 # // expected checksums
 # //
 # // To ease maintenance of this script in case of updates this section
-# // can be automatically re-created - see call of function
-# // recreate_expected_sha256sums below.
+# // can be automatically re-created from the current checksums -
+# // see call of function recreate_expected_sha256sums below.
 # ************************************************************************/
 
 recreate_expected_sha256sums() {
     local o="$1"
     local files f d
-    echo "declare -A expected_sha256sums" > "$o"
+    echo "########## begin sha256sums.recreate" > "$o"
     files=*/.sha256sums.current
     for f in $files; do
         d=$(dirname "$f")
-        echo 'expected_sha256sums["'"$d"'"]="\' >> "$o"
+        echo "expected_sha256sums__${d}="'"\' >> "$o"
         cat "$f" >> "$o"
         echo '"' >> "$o"
     done
+    echo "########## end sha256sums.recreate" >> "$o"
 }
 
 ########## begin sha256sums.recreate
-declare -A expected_sha256sums
-expected_sha256sums["t010_decompressed"]="\
+expected_sha256sums__t010_decompressed="\
 24158f78c34c4ef94bb7773a6dda7231d289be76c2f5f60e8b9ddb3f800c100e *amd64-linux.elf/upx-3.91
 28d7ca8f0dfca8159e637eaf2057230b6e6719e07751aca1d19a45b5efed817c *arm-wince.pe/upx-3.91.exe
 b1c1c38d50007616aaf8e942839648c80a6111023e0b411e5fa7a06c543aeb4a *armeb-linux.elf/upx-3.91
@@ -137,7 +137,7 @@ bcac77a287289301a45fde9a75e4e6c9ad7f8d57856bae6eafaae12ae4445a34 *i386-dos32.djg
 c3f44b4d00a87384c03a6f9e7aec809c1addfe3e271244d38a474f296603088c *mipsel-linux.elf/upx-3.91
 b8c35fa2956da17ca505956e9f5017bb5f3a746322647e24ccb8ff28059cafa4 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t020_canonicalized"]="\
+expected_sha256sums__t020_canonicalized="\
 24158f78c34c4ef94bb7773a6dda7231d289be76c2f5f60e8b9ddb3f800c100e *amd64-linux.elf/upx-3.91
 28d7ca8f0dfca8159e637eaf2057230b6e6719e07751aca1d19a45b5efed817c *arm-wince.pe/upx-3.91.exe
 b1c1c38d50007616aaf8e942839648c80a6111023e0b411e5fa7a06c543aeb4a *armeb-linux.elf/upx-3.91
@@ -148,7 +148,7 @@ bcac77a287289301a45fde9a75e4e6c9ad7f8d57856bae6eafaae12ae4445a34 *i386-dos32.djg
 c3f44b4d00a87384c03a6f9e7aec809c1addfe3e271244d38a474f296603088c *mipsel-linux.elf/upx-3.91
 b8c35fa2956da17ca505956e9f5017bb5f3a746322647e24ccb8ff28059cafa4 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t110_compress_ucl_nrv2b_3_no_filter"]="\
+expected_sha256sums__t110_compress_ucl_nrv2b_3_no_filter="\
 aefe34311318ea210df73cc3c8fa8c7258673f2e27f8a511a3a8f2af135a918d *amd64-linux.elf/upx-3.91
 6be5bd999387712f90fde45556c9487d02306593146c8d3cd4ced89568732729 *arm-wince.pe/upx-3.91.exe
 9d0ccc7e39ef23845b858869bf9718c43de5fd0eee7c61edbd63565a55110032 *armeb-linux.elf/upx-3.91
@@ -159,7 +159,7 @@ b9145c02bac9ce7f10bd65587ce35001d3e15a7a102d8f7cc51930b92f477ebf *i386-win32.pe/
 6b33a055b2c85dddd5fa6d846939d114ee24a342205f5a23aad31b8873041592 *mipsel-linux.elf/upx-3.91
 611bde9c83fe28dd8f7119414724318c23ef532577bb404d618d100e3a801fe8 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t120_compress_ucl_nrv2d_3_no_filter"]="\
+expected_sha256sums__t120_compress_ucl_nrv2d_3_no_filter="\
 6e9fd36871cf4afebf6609a39690565c933668ec6791e547916e93bbb32bbbd8 *amd64-linux.elf/upx-3.91
 23ef6083a6e678975305ceb96f78ce186973b4400d357ca643573b6dd6487512 *arm-wince.pe/upx-3.91.exe
 5f1584a75584ef3421ba4aec8167422e78d33e2451ef9a925560d1112eacf88e *armeb-linux.elf/upx-3.91
@@ -170,7 +170,7 @@ expected_sha256sums["t120_compress_ucl_nrv2d_3_no_filter"]="\
 ac552f23195dfebd82558e0523eaa6ece695c711f298ed9a3cdbb571f1df4f1d *mipsel-linux.elf/upx-3.91
 abd1d89deb62839e957089e636a1e53bfc7436f6fd2a210ac92907346c239562 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t130_compress_ucl_nrv2e_3_no_filter"]="\
+expected_sha256sums__t130_compress_ucl_nrv2e_3_no_filter="\
 86fcb3e1c6255511173ff9a86baf3407263677dfe73bff072b978da41c892bcb *amd64-linux.elf/upx-3.91
 8844ace5189f90a9bf696e5fa2323be9e715d90df4ba60805a2079cb94c218f1 *arm-wince.pe/upx-3.91.exe
 ea42d52676d2698f29587e98a9e1536b96ebf523a7d8bc926f6c241a159b4116 *armeb-linux.elf/upx-3.91
@@ -181,7 +181,7 @@ e440de3826a193a81700dd6238eab5f903826e08af120a25bc963ffb6d365087 *i386-win32.pe/
 b61aa58e493b3961646e5c0bcb7f19f74b439fe8f5c934db25b00f97f51a05d0 *mipsel-linux.elf/upx-3.91
 21071b7dfa542a7e3d6c6a3586b4b844d28270a2beccdc5d03f608a2e71b787d *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t140_compress_lzma_2_no_filter"]="\
+expected_sha256sums__t140_compress_lzma_2_no_filter="\
 2aee8c5a4d1fb9f7a84700b9880da1098544c110a188750a937e0c231cce664f *amd64-linux.elf/upx-3.91
 0eceefcc32ed25b2f1296cfa853935124aa1b7785b8a177d6e8c5804c24ca319 *arm-wince.pe/upx-3.91.exe
 3e7446d8ac6d9b442d6c8e6a3c45aec97f54aa8e90bdc554dd39976495bfa36a *armeb-linux.elf/upx-3.91
@@ -192,7 +192,7 @@ expected_sha256sums["t140_compress_lzma_2_no_filter"]="\
 20526efe085aee06bfde1952f90e9d0e1524e0cb56d582caa720934f55562b78 *mipsel-linux.elf/upx-3.91
 49c88eb39416858ac1a485dfd3bcee3825ef76ed5a16cb951f68f212a057c014 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t150_compress_ucl_2_all_filters"]="\
+expected_sha256sums__t150_compress_ucl_2_all_filters="\
 b7f51c8da38cc65c4bdec8a07e29a7c47404fc4b057c2026c13fd2a83b24da76 *amd64-linux.elf/upx-3.91
 0bf874c45ebb90b062cd986fe10cfbd01cdc6a50e3e0b5dda035eb55ded492ff *arm-wince.pe/upx-3.91.exe
 db894f24777334abb9bf8e34661d057e25c2889b46290cf83db7310c4cdd86fa *armeb-linux.elf/upx-3.91
@@ -203,7 +203,7 @@ b00756ba6b73b937ac3b2c1222267dc44953ac69337a7ac582ba2e7a471e83a6 *i386-win32.pe/
 707b7f32b8b0c1a4e5c26e370b93ae6eb60ab78f7d6163b4e853eb94e69f5d14 *mipsel-linux.elf/upx-3.91
 3951a8dbe60f41f7ae1d71ca8d0f022675a04542786351c09281dfce41fd49e0 *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t160_compress_all_methods_1_no_filter"]="\
+expected_sha256sums__t160_compress_all_methods_1_no_filter="\
 9d5a98a9f2f17e4d7066e0b953dae94cdbb1ea28c6c792ce8f92e8b8d932b311 *amd64-linux.elf/upx-3.91
 df81b2376af28989faa0e48f9cb5d5f339d94166b7e11232c8d1ff952113a669 *arm-wince.pe/upx-3.91.exe
 07ca9736f1cd478bde2c8da95a6ecb95bd865dcf8ea48a396b13050ac40d196e *armeb-linux.elf/upx-3.91
@@ -214,7 +214,7 @@ dd561ff9c530711be0934db352cf40f606066c280e27b26e7f8fd6dd1a087e6a *m68k-atari.tos
 813536a8f1b8b8852ed52c560afce8b51612876ac5a3a9e51434d8677932ef7b *mipsel-linux.elf/upx-3.91
 5a3607a37534bab2a22c2e1dc3f1aa26144c2b75c261f092a3d9116d884edc1a *powerpc-linux.elf/upx-3.91
 "
-expected_sha256sums["t170_compress_all_methods_no_lzma_5_no_filter"]="\
+expected_sha256sums__t170_compress_all_methods_no_lzma_5_no_filter="\
 d2607801730ae28244a4ca310676f912131383d6126801df05ff54903c9ef18a *amd64-linux.elf/upx-3.91
 debd7f6b30bfcb1fef0fac558d8ae721c6a9d193c9b41126b3491c66870435ab *arm-wince.pe/upx-3.91.exe
 7ee87918e7473d44c3a5af014cad48298f0a99c4028880d0a87a5a1776b977c7 *armeb-linux.elf/upx-3.91
@@ -271,10 +271,9 @@ fi
 export UPX="--prefer-ucl --no-color --no-progress"
 
 # let's go
-if ! $upx_run --version; then
-    echo "UPX-ERROR: FATAL: upx --version FAILED"
-    exit 1;
-fi
+if ! $upx_run --version;          then echo "UPX-ERROR: FATAL: upx --version FAILED"; exit 1; fi
+if ! $upx_run -L >/dev/null 2>&1; then echo "UPX-ERROR: FATAL: upx -L FAILED"; exit 1; fi
+if ! $upx_run --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED"; exit 1; fi
 rm -rf ./testsuite_1
 mkbuilddirs testsuite_1
 cd testsuite_1 || exit 1
@@ -285,29 +284,31 @@ cd testsuite_1 || exit 1
 # ************************************************************************/
 
 testdir=t010_decompressed
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 
 testsuite_header $testdir
 for f in $upx_testsuite_SRCDIR/files/packed/*/upx-3.91*; do
     testsuite_split_f $f
     [[ -z $fb ]] && continue
+    echo "# $f"
     mkdir -p $testdir/$fsubdir
-    $upx_run -d $f -o $testdir/$fsubdir/$fb
+    $upx_run -qq -d $f -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
 
 # run one pack+unpack step to canonicalize the files
 testdir=t020_canonicalized
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 
 testsuite_header $testdir
 for f in t010_decompressed/*/*; do
     testsuite_split_f $f
     [[ -z $fb ]] && continue
+    echo "# $f"
     mkdir -p $testdir/$fsubdir/.packed
-    $upx_run --prefer-ucl -1 $f -o $testdir/$fsubdir/.packed/$fb
-    $upx_run -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
+    $upx_run -qq --prefer-ucl -1 $f -o $testdir/$fsubdir/.packed/$fb
+    $upx_run -qq -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
 
@@ -319,31 +320,31 @@ testsuite_check_sha $testdir
 # ************************************************************************/
 
 testdir=t110_compress_ucl_nrv2b_3_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2b -3 --no-filter
 
 testdir=t120_compress_ucl_nrv2d_3_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2d -3 --no-filter
 
 testdir=t130_compress_ucl_nrv2e_3_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --nrv2e -3 --no-filter
 
 testdir=t140_compress_lzma_2_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --lzma -2 --no-filter
 
 testdir=t150_compress_ucl_2_all_filters
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress -2 --all-filters
 
 testdir=t160_compress_all_methods_1_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods -1 --no-filter
 
 testdir=t170_compress_all_methods_no_lzma_5_no_filter
-mkdir $testdir; echo -n "${expected_sha256sums[$testdir]}" >$testdir/.sha256sums.expected
+mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 
 
@@ -351,7 +352,7 @@ time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 # // summary
 # ************************************************************************/
 
-# recreate checkums for easy update
+# recreate checkums from current version for an easy update in case of changes
 recreate_expected_sha256sums .sha256sums.recreate
 
 testsuite_header "UPX testsuite summary"
@@ -368,8 +369,8 @@ fi
 echo "upx_testsuite_SRCDIR='$upx_testsuite_SRCDIR'"
 echo "upx_testsuite_BUILDDIR='$upx_testsuite_BUILDDIR'"
 echo ".sha256sums.{expected,current}:"
-cat */.sha256sums.expected | LC_ALL=C sort -u | wc
-cat */.sha256sums.current  | LC_ALL=C sort -u | wc
+cat */.sha256sums.expected | LC_ALL=C sort | wc
+cat */.sha256sums.current  | LC_ALL=C sort | wc
 echo
 if [[ $exit_code == 0 ]]; then
     echo "UPX testsuite passed. All done."
