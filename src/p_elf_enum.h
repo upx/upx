@@ -146,6 +146,7 @@
         DT_STRTAB   =  5,       /* String table */
         DT_SYMTAB   =  6,       /* Symbol table */
         DT_RELA     =  7,       /* Relocations which do contain an addend */
+        DT_RELASZ   =  8,       /* Total size of Rela relocs */
         DT_RELAENT  =  9,       /* Size of one RELA relocation */
         DT_INIT     = 12,       /* Address of init function */
         DT_REL      = 17,       /* Relocations which contain no addend */

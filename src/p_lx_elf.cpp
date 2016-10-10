@@ -1703,6 +1703,8 @@ PackLinuxElf64ppcle::canPack()
         // defined symbols, and there might be no DT_HASH.
 
         Elf64_Rela const *
+        rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
+        Elf64_Rela const *
         jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
         for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
                 0 < sz;
@@ -1716,6 +1718,19 @@ PackLinuxElf64ppcle::canPack()
                 goto proceed;
         }
 
+        // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
+        // Check the general case, too.
+        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ);
+                0 < sz;
+                (sz -= sizeof(Elf64_Rela)), ++rela
+        ) {
+            unsigned const symnum = get_te64(&rela->r_info) >> 32;
+            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+            if (0==strcmp(symnam, "__libc_start_main")
+            ||  0==strcmp(symnam, "__uClibc_main")
+            ||  0==strcmp(symnam, "__uClibc_start_main"))
+                goto proceed;
+        }
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
         // If there is an existing DT_INIT, and if everything that the dynamic
         // linker ld-linux needs to perform relocations before calling DT_INIT
@@ -1879,12 +1894,28 @@ PackLinuxElf64amd::canPack()
         // defined symbols, and there might be no DT_HASH.
 
         Elf64_Rela const *
+        rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
+        Elf64_Rela const *
         jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
         for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
                 0 < sz;
                 (sz -= sizeof(Elf64_Rela)), ++jmprela
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
+            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+            if (0==strcmp(symnam, "__libc_start_main")
+            ||  0==strcmp(symnam, "__uClibc_main")
+            ||  0==strcmp(symnam, "__uClibc_start_main"))
+                goto proceed;
+        }
+
+        // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
+        // Check the general case, too.
+        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ);
+                0 < sz;
+                (sz -= sizeof(Elf64_Rela)), ++rela
+        ) {
+            unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
