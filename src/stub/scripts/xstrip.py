@@ -174,11 +174,11 @@ def do_file(fn):
     pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
     if opts.with_dump:
         eh, odata = strip_with_dump(opts.with_dump, eh, idata)
-        if re.search(r"^powerpc64le-", os.path.basename(fn)):
+        #if re.search(r"^powerpc64le-", os.path.basename(fn)):
             # FIXME / TODO
-            pass
-        else:
-            assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
+        #    pass
+        #else:
+            # assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
     else:
         if pos >= 0:
             odata = idata[:pos]
