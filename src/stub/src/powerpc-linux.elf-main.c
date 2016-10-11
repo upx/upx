@@ -31,6 +31,8 @@
 
 
 #include "include/linux.h"
+#undef PAGE_MASK
+#undef PAGE_SIZE
 
 
 /*************************************************************************
@@ -197,7 +199,7 @@ auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
 // won't place the first piece in a way that leaves no room for the rest.
 static unsigned long  // returns relocation constant
 xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum,
-    char **const p_brk
+    char **const p_brk, unsigned int PAGE_MASK
 )
 {
     size_t lo= ~0, hi= 0, szlo= 0;
@@ -229,14 +231,16 @@ do_xmap(
     int const fdi,
     Elf32_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_unfilter *const f_unf,
+    unsigned int PAGE_MASK
 )
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (char const *)ehdr);
     char *v_brk;
     unsigned long const reloc = xfind_pages(
-        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
+        ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum,
+          &v_brk, PAGE_MASK);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -270,17 +274,19 @@ do_xmap(
         if (PROT_WRITE & prot) {
             bzero(mlen+addr, frag);  // fragment at hi end
         }
-        if (xi) {
+/*         if (xi) {
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
 ERR_LAB
             }
         }
+*/
         addr += mlen + frag;  /* page boundary on hi end */
         if (addr < haddr) { // need pages for .bss
             if (addr != mmap(addr, haddr - addr, prot,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0 ) ) {
                 err_exit(9);
+ERR_LAB
             }
         }
     }
@@ -299,11 +305,17 @@ void *upx_main(
     size_t const sz_ehdr,
     f_expand *const f_decompress,
     f_unfilter *const f_unf,
-    Elf32_auxv_t *const av
+    Elf32_auxv_t *const av,
+    unsigned int page_size
 )
 {
     Elf32_Phdr const *phdr = (Elf32_Phdr const *)(1+ ehdr);
     Elf32_Addr entry;
+    int page_mask;
+
+    if ((page_size != 4096) && (page_size != 65536))
+       exit(232);
+    page_mask=-page_size;
 
     Extent xi, xo, xi0;
     xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
@@ -324,7 +336,7 @@ void *upx_main(
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf);
+    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf, page_mask);
 
   { // Map PT_INTERP program interpreter
     int j;
@@ -338,7 +350,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, page_mask);
         close(fdi);
     }
   }

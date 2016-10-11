@@ -47,11 +47,15 @@ MAP_ANONYMOUS= 0x20
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
+PAGE_SHIFT64= 16
+PAGE_SIZE64 = -(~0<<PAGE_SHIFT64)
+
 
 /* /usr/include/asm-ppc/unistd.h */
 __NR_write = 4
 __NR_exit  = 1
 __NR_mmap  = 90
+__NR_munmap = 91
 
   section ELFMAINX
 _start: .globl _start
@@ -148,21 +152,74 @@ unfold:
 
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
-          lwz  a0,sz_cpr(r30)
-        li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        li a2,PROT_READ | PROT_WRITE | PROT_EXEC
-        li a1,PAGE_SIZE
-          add  a0,a0,r30
-        li 0,__NR_mmap
-          addi a0,a0,sz_b_info+PAGE_SIZE-1
+        li     a3,MAP_PRIVATE | MAP_ANONYMOUS
+        li     a2,PROT_READ | PROT_WRITE
+        li     a1,PAGE_SIZE
+        add    a1,a1,a1        // allocate twice 4K
+        lwz    a0,sz_cpr(r30)
+        add    a0,a0,r30
+        addi   a0,a0,sz_b_info+PAGE_SIZE-1
         rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
-        sc; bso- msg_SELinux  // Branch if SummaryOverflow (failure)
+        mr     23,a1  // save PAGE_SIZE value
+        mr     14,a0  // save address being allocated
+        li     0,__NR_mmap
+        sc
+        cmp    0,0,a0,14
+        beq    alloc4
+        b      alloc64
+        /* try to allocate a 4k page - if failure then allocate 64k page */
+alloc4:
+        /* deallocate stub allocation */
+        mr     a1,23
+        li     0,__NR_munmap
+        sc
+        /* allocate 4k page */
+        li     a5,0  // off_t
+        li     a4,-1  // fd; cater to *BSD for MAP_ANON
+        li     a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC
+        li     a1,PAGE_SIZE
+        lwz    a0,sz_cpr(r30)
+        add    a0,a0,r30
+        addi   a0,a0,sz_b_info+PAGE_SIZE-1
+        rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
+        li     0,__NR_mmap
+        mr     23,a1  // save PAGE_SIZE value
+        mr     14,a0  // save address being allocated
+        sc
+        cmpi   0,0,a0,14 //
+        bne    decomp
+        b      msg_SELinux  // Branch if SummaryOverflow (failure)
+        /* 64k page */
+alloc64:
+        /* deallocate stub allocation */
+        mr     a1,23
+        li     0,__NR_munmap
+        sc
+        /* allocate 64k page */
+        li     a5,0  // off_t
+        li     a4,-1  // fd; cater to *BSD for MAP_ANON
+        li     a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC
+        lis    a1,1    // 64K
+        lwz    a0,sz_cpr(r30)
+        add    a0,a0,r30
+        addi   a0,a0,sz_b_info-1
+        add    a0,a0,a1
+        rlwinm a0,a0,0,0,31-PAGE_SHIFT64  // next page boundary after fold
+        li     0,__NR_mmap
+        mr     23,a1  // save PAGE_SIZE value
+        sc
+        cmpi    0,0,a0,22  // return code
+        beq    msg_SELinux
+decomp:
 0:
         mtctr r31
         lwz r0,sz_unc(r30)
         lbz meth,b_method(r30)
         la ldst,31*4(sp)  // &slot on stack
         stw  r0,31*4(sp)  // lzma uses for EOF
+        stw    23,23*4(sp)        // save pag shift value
         mr dst,a0
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)
