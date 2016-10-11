@@ -10,6 +10,8 @@
     glibc-devel.i686 libasan.i686 libstdc++-devel.i686 libubsan.i686 zlib-devel.i686
 
 before_script:
+  - export TRAVIS_OS_NAME=linux
+  - unset CROSS C B T X
   - uname -a; pwd; id; umask; env
   - time rpm -qa | LC_ALL=C sort
   - *fedora_install_compilers
@@ -19,7 +21,6 @@ before_script:
   - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
   - cd ../deps && time git clone https://github.com/upx/upx-testsuite
   - cd $CI_PROJECT_DIR
-  - export TRAVIS_OS_NAME=linux
 
 Fedora23-clang+gcc-m32+m64:
   image: fedora:23

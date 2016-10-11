@@ -98,7 +98,7 @@ ifeq ($(BUILD_USE_DEPEND),1)
 ./.depend: $(sort $(wildcard $(srcdir)/*.cpp $(srcdir)/*.h)) $(MAKEFILE_LIST)
 	@rm -f $@
 	@echo "Updating $@"
-	@$(strip $(CXX) $(call ee,CPPFLAGS) -MM) $(filter %.cpp,$^) > $@
+	@$(strip $(CXX) $(call ee,CPPFLAGS) $(call ee,CXXFLAGS) -MM) $(filter %.cpp,$^) > $@
 else
 ./.depend:
 .PHONY: ./.depend
@@ -115,7 +115,7 @@ endif
 .PHONY: check-whitespace
 
 mostlyclean clean distclean maintainer-clean:
-	rm -f *.d *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
+	rm -f *.d *.ii *.map *.o *.obj *.res ./.depend upx.exe upx.out upx.ttp upx$(exeext)
 
 ./.depend compress_lzma$(objext) : INCLUDES += -I$(UPX_LZMADIR)
 

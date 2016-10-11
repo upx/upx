@@ -5,13 +5,15 @@
 
 #set -x # debug
 umask 022
+export GIT_PAGER=
 
 # rename short variables to more readable Build-Matrix BM_ names
 #   C is COMPILER
 #   B is BUILD_OPTIONS
 #   T is TESTSUITE_OPTIONS
-BM_CROSS=$CROSS; BM_C=$C; BM_B=$B; BM_T=$T
-unset CROSS C B T
+#   X is EXTRA_OPTIONS
+BM_CROSS=$CROSS; BM_C=$C; BM_B=$B; BM_T=$T; BM_X=$X
+unset CROSS C B T X
 [[ -z $BM_C ]] && BM_C=gcc
 [[ -z $BM_B ]] && BM_B=release
 

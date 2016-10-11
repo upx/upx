@@ -35,6 +35,33 @@ fi # linux
 set -x
 
 #
+# rebuild UPX stubs (needs upx-stubtools)
+#
+
+if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
+    bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20160918")
+    cd / && cd $upx_SRCDIR || exit 1
+    make -C src/stub maintainer-clean
+    failed=0
+    PATH="$bin_upx:$PATH" make -C src/stub all || failed=1
+    if [[ $failed != 0 ]]; then
+        echo "UPX-ERROR: FATAL: rebuild-stubs failed"
+        exit 1
+    fi
+    if ! git diff --quiet; then
+        git status || true
+        git diff || true
+        echo "UPX-ERROR: FATAL: rebuild-stubs git status mismatch. See log file."
+        exit 1
+    fi
+    if [[ $BM_X == rebuild-stubs ]]; then
+        echo "X=rebuild-stubs done. Exiting."
+        exit 0
+    fi
+    unset bin_upx failed
+fi
+
+#
 # build UCL
 #
 

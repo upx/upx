@@ -23,7 +23,7 @@ branches:
 
 env:
   global:
-    - CROSS= C= B= T=
+    - CROSS= C= B= T= X=
   matrix:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
@@ -31,6 +31,12 @@ matrix:
   exclude:
     - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
   include:
+    - os: linux
+      sudo: required
+      dist: trusty
+      compiler: gcc
+      env: X=rebuild-stubs
+      addons: { apt: { packages: [ "g++-multilib", "lib32z1" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.4-m32
@@ -185,6 +191,7 @@ install:
   - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
   - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
   - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
+  - if [[ $X =~ (^|\+)rebuild-stubs($|\+) ]]; then cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ; fi
   - |
     cd /
     if [[ $TRAVIS_OS_NAME == linux ]]; then

@@ -4,7 +4,7 @@
 os: Visual Studio 2015
 
 environment:
-  global: { TRAVIS_OS_NAME: windows, CROSS: "", C: "", B: release, T: "" }
+  global: { TRAVIS_OS_NAME: windows, CROSS: "", C: "", B: release, T: "", X: "" }
   matrix:
     - { C: msvc-10.0-x86, CL_VERSION: 16.00, VS_VERSION: 2010 }
 ### - { C: msvc-10.0-x64, CL_VERSION: 16.00, VS_VERSION: 2010 } # AppVeyor: x64 compiler is not installed

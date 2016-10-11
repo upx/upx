@@ -13,6 +13,7 @@ machine:
     C: gcc-4.8-m64
     B: release
     T:
+    X:
 
 checkout:
   post:
