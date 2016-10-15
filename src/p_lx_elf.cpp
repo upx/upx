@@ -204,8 +204,8 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
-    lg2_page(12), page_size(1u<<lg2_page), xct_off(0), xct_va(0),
-    jni_onload_va(0),
+    lg2_page(12), page_size(1u<<lg2_page), is_big(0),
+    xct_off(0), xct_va(0), jni_onload_va(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
 {
@@ -516,11 +516,11 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 void
 PackLinuxElf::addStubEntrySections(Filter const *)
 {
+    int all_pages = opt->o_unix.unmap_all_pages | is_big;
     addLoader("ELFMAINX", NULL);
     if (hasLoaderSection("ELFMAINXu")) {
-        int const all_pages = opt->o_unix.unmap_all_pages ||
             // brk() trouble if static
-            (Elf32_Ehdr::EM_ARM==e_machine && 0x8000==load_va);
+        all_pages |= (Elf32_Ehdr::EM_ARM==e_machine && 0x8000==load_va);
         addLoader((all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINXu", NULL);
     }
    //addLoader(getDecompressorSections(), NULL);
@@ -534,7 +534,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         addLoader("CFLUSH");
     addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ", NULL);
     if (hasLoaderSection("ELFMAINZu")) {
-        addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINZu", NULL);
+        addLoader((all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINZu", NULL);
     }
     addLoader("FOLDEXEC", NULL);
 }
@@ -881,7 +881,8 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         addLoader("LEXECDYN", NULL);
     }
-    addLoader((opt->o_unix.unmap_all_pages ? "LUNMP000" : "LUNMP001"), "LEXEC025", NULL);
+    addLoader(((opt->o_unix.unmap_all_pages|is_big) ? "LUNMP000" : "LUNMP001"),
+        "LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 
@@ -1041,7 +1042,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
+    is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
     if (is_big && ehdri.ET_EXEC==get_te16(&ehdri.e_type)) {
         set_te64(    &elfout.ehdr.e_entry,
             get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
@@ -2958,7 +2959,7 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
     unsigned adrc;
     unsigned adrm;
 
-    bool const is_big = true;  // kernel disallows mapping below 0x8000.
+    is_big = true;  // kernel disallows mapping below 0x8000.
     if (is_big) {
         set_te32(    &elfout.ehdr.e_entry, linker->getSymbolOffset("_start") +
             get_te32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
@@ -3026,7 +3027,7 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
+    is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
     if (is_big) {
         set_te32(    &elfout.ehdr.e_entry,
             get_te32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
@@ -3099,7 +3100,7 @@ void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
     unsigned lenm;
     unsigned lenu;
     len += (7&-lsize) + lsize;
-    bool const is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
+    is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
     if (is_big) {
         set_te32(    &elfout.ehdr.e_entry,
             get_te32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
