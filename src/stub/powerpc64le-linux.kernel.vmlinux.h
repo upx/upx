@@ -32,13 +32,13 @@
 
 
 #define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_SIZE    9840
-#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0x4de4c52d
-#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0x237440dd
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0x6930c592
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0xcb40735a
 
 unsigned char stub_powerpc64le_linux_kernel_vmlinux[9840] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0, 16, 28,  0,  0,  0,  0,  0,  0,
+/* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,120, 25,  0,  0,  0,  0,  0,  0,
 /* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 25,  0, 22,  0,
 /* 0x0040 */   0,  0,  0, 72,  0,  0,  0, 72,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0050 */ 208,  0,  6, 40, 32,  0,194, 76,191,240,132, 84, 32,  0,194, 77,
