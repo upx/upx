@@ -20,6 +20,9 @@ if [[ $BM_T =~ (^|\+)SKIP($|\+) ]]; then
     echo "UPX testsuite SKIPPED."
     exit 0
 fi
+if [[ $BM_X == rebuild-stubs ]]; then
+    exit 0
+fi
 [[ -f $upx_exe ]] && upx_exe=$(readlink -en -- "$upx_exe")
 
 # create dirs
