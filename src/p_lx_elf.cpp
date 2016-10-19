@@ -2956,8 +2956,8 @@ void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
         }
     }
     unsigned lo_va_stub = get_te32(&elfout.phdr[0].p_vaddr);
-    unsigned adrc;
-    unsigned adrm;
+    unsigned adrc = 0;  // init: pacify c++-analyzer
+    unsigned adrm = 0;  // init: pacify c++-analyzer
 
     is_big = true;  // kernel disallows mapping below 0x8000.
     if (is_big) {
