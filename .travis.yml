@@ -28,6 +28,7 @@ env:
     - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
 matrix:
+  fast_finish: true
   exclude:
     - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
   include:

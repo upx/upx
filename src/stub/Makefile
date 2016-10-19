@@ -1221,7 +1221,7 @@ tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/powerpc-darwin.macho-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
 
@@ -1266,7 +1266,7 @@ tmp/powerpc-linux.elf-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,f-objstrip,$@)
 
 tmp/powerpc-linux.elf-main.o : $(srcdir)/src/$$T.c
-	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,gcc) -c $< -o $@
 	$(call tc,f-objstrip,$@)
 
 
