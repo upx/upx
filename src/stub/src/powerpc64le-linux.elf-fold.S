@@ -94,7 +94,25 @@ L90:
         call munmap  // unmap compressed program; /proc/self/exe disappears
 
         mtlr r31  // entry address
-//        lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31 32bits load
+
+        lis    15,0x1000
+        addi   15,15,0x8c0  // Check if statically allocated i.e.
+        cmpld  15,r31       // entry @ 0x10008c0
+        beq+   rest
+
+/* Dynamic load settings */
+        addis r31,r31,5
+        addi  r31,r31,27232    // @+0x57e00
+
+        addi  12,r31,-27828
+        std   12,-27984(r31)  // required : Inconsistency detected by ld.so: rtld.c:
+
+        li    12,0
+        std   12,-28192(r31)    // p 0x...d7e00-0x...d0fe0
+
+//      lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31 32bits load
+/* Restore Save Area     */
+rest:
         ld  2,2*8-8+LINKAREA+OVERHEAD(sp)
         ld  3,3*8-8+LINKAREA+OVERHEAD(sp)
         ld  4,4*8-8+LINKAREA+OVERHEAD(sp)
@@ -127,38 +145,7 @@ L90:
         ld  31,31*8-8+LINKAREA+OVERHEAD(sp)
 
         ld  r1,LINKAREA+OVERHEAD(sp)  // restore r1; deallocate space
-/*
-        ld  2,2*8-8(r1)
-        ld  3,3*8-8(r1)
-        ld  4,4*8-8(r1)
-        ld  5,5*8-8(r1)
-        ld  6,6*8-8(r1)
-        ld  7,7*8-8(r1)
-        ld  8,8*8-8(r1)
-        ld  9,9*8-8(r1)
-        ld  10,10*8-8(r1)
-        ld  11,11*8-8(r1)
-        ld  12,12*8-8(r1)
-        ld  13,13*8-8(r1)
-        ld  14,14*8-8(r1)
-        ld  15,15*8-8(r1)
-        ld  16,16*8-8(r1)
-        ld  17,17*8-8(r1)
-        ld  18,18*8-8(r1)
-        ld  19,19*8-8(r1)
-        ld  20,20*8-8(r1)
-        ld  21,21*8-8(r1)
-        ld  22,22*8-8(r1)
-        ld  23,23*8-8(r1)
-        ld  24,24*8-8(r1)
-        ld  25,25*8-8(r1)
-        ld  26,26*8-8(r1)
-        ld  27,27*8-8(r1)
-        ld  28,28*8-8(r1)
-        ld  29,29*8-8(r1)
-        ld  30,30*8-8(r1)
-        ld  31,31*8-8(r1)
-*/
+        mflr  12        // load ld.so.2 address
         ret  // enter /lib/ld.so.1
 
 SYS_exit=  1
