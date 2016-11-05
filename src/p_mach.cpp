@@ -1678,10 +1678,11 @@ int PackMachBase<T>::canUnpack()
             TE32 const *uptr = (TE32 const *)&buf[bufsize];
             while (0==*--uptr) /*empty*/ ;
             overlay_offset = *uptr;
-            if (overlay_offset < 0x1000) {
+            if (mhdri.sizeofcmds <= overlay_offset && overlay_offset < 0x1000) {
                 return true;  // success
             }
             overlay_offset = 0;
+            return false;
         }
         if (392==style) {
             overlay_offset = 0x100c;  // (l_info precedes;) p_info; b_info; cpr_data
@@ -1767,8 +1768,9 @@ bool PackMachBase<T>::canPack()
     msegcmd = new Mach_segment_command[ncmds];
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
-        if (lc_seg == *(unsigned const *)ptr) {
-            msegcmd[j] = *(Mach_segment_command const *)ptr;
+        Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
+        if (lc_seg == segptr->cmd) {
+            msegcmd[j] = *segptr;
         }
         else {
             memcpy(&msegcmd[j], ptr, 2*sizeof(unsigned)); // cmd and size
