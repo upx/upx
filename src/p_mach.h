@@ -827,6 +827,8 @@ protected:
 
     static int __acc_cdecl_qsort compare_segment_command(void const *aa, void const *bb);
 
+    virtual upx_uint64_t threadc_getPC(void /*MachThreadCommand*/ const *) = 0;
+
     upx_uint64_t entryVMA;
     unsigned my_cputype;
     unsigned my_filetype;
@@ -937,6 +939,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state.srr0;
+    }
 };
 
 class PackMachPPC64LE : public PackMachBase<MachClass_LE64>
@@ -978,6 +991,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state64.srr0;
+    }
 };
 
 class PackDylibPPC32 : public PackMachPPC32
@@ -1049,6 +1073,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state.eip;
+    }
 };
 
 class PackDylibI386 : public PackMachI386
@@ -1106,6 +1141,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state.rip;
+    }
 };
 
 class PackDylibAMD64 : public PackMachAMD64
@@ -1163,6 +1209,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) { return   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state.pc;
+    }
 };
 
 class PackMachARM64EL : public PackMachBase<MachClass_LE64>
@@ -1205,6 +1262,17 @@ protected:
     }
     void threado_rewrite(OutputFile *fo) { fo->rewrite(&threado, sizeof(threado)); }
     void   threado_write(OutputFile *fo) {   fo->write(&threado, sizeof(threado)); }
+
+    upx_uint64_t threadc_getPC(void const *ptr) {
+        Mach_thread_command const *tc = (Mach_thread_command const *)ptr;
+        if (tc->cmd!=Mach_segment_command::LC_UNIXTHREAD
+        ||  tc->cmdsize!=sizeof(threado)
+        ||  tc->flavor!=my_thread_flavor
+        ||  tc->count!=my_thread_state_word_count) {
+            return ~0ull;
+        }
+        return tc->state.pc;
+    }
 };
 
 class PackMachFat : public Packer

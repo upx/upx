@@ -1617,9 +1617,12 @@ int PackMachBase<T>::canUnpack()
             }
         }
         else if (Mach_segment_command::LC_UNIXTHREAD==ptr->cmd) {
-            rip = entryVMA;
+            rip = entryVMA = threadc_getPC(ptr);
         }
-     }
+    }
+    if (391==style && 0==offLINK && 2==ncmds) { // pre-3.91 ?
+        offLINK = ptrTEXT->fileoff + ptrTEXT->filesize;  // fake __LINKEDIT at EOF
+    }
     if (0 == style || 0 == offLINK) {
         return false;
     }
