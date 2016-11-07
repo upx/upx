@@ -915,13 +915,15 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
+    virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
 
     __packed_struct(Mach_thread_command)
-        BE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
-        BE32 cmdsize;        /* total size of this command */
-        BE32 flavor;
-        BE32 count;          /* sizeof(following_thread_state)/4 */
+        TE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */
+        TE32 cmdsize;        /* total size of this command */
+        TE32 flavor;
+        TE32 count;          /* sizeof(following_thread_state)/4 */
         Mach_ppc_thread_state state;
     #define WANT_MACH_THREAD_ENUM 1
     #include "p_mach_enum.h"

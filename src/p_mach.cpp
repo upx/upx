@@ -67,6 +67,8 @@ static const
 static const
 #include "stub/powerpc-darwin.macho-fold.h"
 static const
+#include "stub/powerpc-darwin.macho-upxmain.h"
+static const
 #include "stub/powerpc-darwin.dylib-entry.h"
 
 static const
@@ -110,6 +112,7 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
     memset(&cmdUUID, 0, sizeof(cmdUUID));
     memset(&cmdSRCVER, 0, sizeof(cmdSRCVER));
     memset(&cmdVERMIN, 0, sizeof(cmdVERMIN));
+    memset(&linkitem, 0, sizeof(linkitem));
 }
 
 template <class T>
@@ -498,6 +501,7 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
     unsigned const xb = b->cmd - lc_seg;
            if (xa < xb)        return -1;  // LC_SEGMENT first
            if (xa > xb)        return  1;
+           if (0 != xa)        return  0;  // not LC_SEGMENT
     // Beware 0==.vmsize (some MacOSX __DWARF debug info: a "comment")
     if (a->vmsize!=0 && b->vmsize!=0) {
         if (a->vmaddr < b->vmaddr) return -1;  // ascending by .vmaddr
@@ -608,6 +612,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         //unsigned cmdsize = mhdro.sizeofcmds;
         unsigned delta = 0;
 
+    unsigned va_next = 0;
     for (unsigned j = 0; j < ncmds; ++j) {
         unsigned skip = 0;
         unsigned sz_cmd = lcp->cmdsize;
@@ -624,14 +629,17 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 unsigned off_hi = sectxt->size + sectxt->offset;
                 Mach_section_command const *scpk = 1+ sectxt;
                 for (unsigned k = 1; k < segptr->nsects; ++scpk, ++k) {
-                    if (off_hi == scpk->offset) {
+                    if (off_hi == scpk->offset || scpk->size==0) {
                         off_hi += scpk->size;
                         sectxt->size += scpk->size;
                     }
                     else {
-                        printWarn(fi->getName(), "Unexpected .text section %s\n", (char const *)&scpk->sectname);
+                        printWarn(fi->getName(), "Unexpected .text section %s  size=%u\n",
+                            (char const *)&scpk->sectname, (unsigned)scpk->size);
                         // Assume the maximum size: to end of the page.
                         sectxt->size = (segptr->vmsize + segptr->vmaddr) - sectxt->addr;
+                        // Try to stop the cascade of errors.
+                        off_hi = scpk->size + scpk->offset;
                         break;
                     }
                 }
@@ -650,10 +658,12 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 }
                 memcpy(&segTEXT, segptr, sizeof(segTEXT));
                 memcpy(&secTEXT, sectxt, sizeof(secTEXT));
+                va_next  = segTEXT.vmsize + segTEXT.vmaddr;
                 break;
             }
             if (!strcmp("__DATA", segptr->segname) && !segptr->vmsize) {
-                // Mach_segment_command for new segXHDR
+                // __DATA with no pages.
+                // Use the space as Mach_segment_command for new segXHDR, or elide.
                 segXHDR.cmdsize = sizeof(segXHDR);  // no need for sections
                 segXHDR.vmaddr = segTEXT.vmsize + segTEXT.vmaddr;  // XXX FIXME
                 segXHDR.vmsize = offLINK - segTEXT.vmsize;
@@ -662,6 +672,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 segXHDR.maxprot = Mach_segment_command::VM_PROT_READ;
                 segXHDR.nsects = 0;
                 if (!segtxt) { // replace __DATA with segXHDR
+                    va_next  = segXHDR.vmsize + segXHDR.vmaddr;
                     memcpy(tail, &segXHDR, sizeof(segXHDR));
                     tail += sizeof(segXHDR);
                     goto next;
@@ -670,6 +681,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                     segtxt->vmsize = offLINK;
                     segtxt->filesize = offLINK;
                     sectxt->size = offLINK - (~PAGE_MASK & sectxt->offset);
+                    va_next  = segtxt->vmsize + segtxt->vmaddr;
                     skip = 1;
                 }
             }
@@ -681,8 +693,10 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 // Update the __LINKEDIT header
                 segLINK.filesize = eofcmpr - offLINK;
                 segLINK.vmsize = PAGE_MASK64 & (~PAGE_MASK64 + eofcmpr - offLINK);
-                segLINK.fileoff = segXHDR.filesize + segXHDR.fileoff;
-                segLINK.vmaddr =  segXHDR.vmsize   + segXHDR.vmaddr;
+                if (Mach_header::CPU_TYPE_I386 == my_cputype) {
+                    segLINK.fileoff = offLINK;  // otherwise written by ::pack3
+                }
+                segLINK.vmaddr = va_next;
                 memcpy(tail, &segLINK, sizeof(segLINK));
                 tail += sizeof(segLINK);
                 goto next;
@@ -797,6 +811,58 @@ next:
         fo->rewrite(&linfo, sizeof(linfo));
         fo->seek(0, SEEK_END);
     }
+}
+
+// At 2013-02-03 part of the source for codesign was
+//    http://opensource.apple.com/source/cctools/cctools-836/libstuff/ofile.c
+
+// 2017-11-06 Apple no longer supports PowerPC, and in particular
+// MacOS 10.12 ("Sierra") was not released for PowerPC.
+// Making the template PackMachBase<T>::pack4 work
+// (especially stub_powerpc_darwin_macho_upxmain_exe)
+// was too tricky.  So just use the previous specialization.
+void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
+{
+    // offset of p_info in compressed file
+    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
+        + sizeof(segXHDR) + sizeof(secXHDR)
+        + sizeof(segTEXT) + sizeof(secTEXT)
+        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        overlay_offset += sizeof(cmdUUID) + sizeof(linkitem);
+    }
+
+    PackUnix::pack4(fo, ft);  // deliberately skip PackMachBase<T>::pack4
+    unsigned const t = fo->getBytesWritten();
+    segTEXT.filesize = t;
+    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
+    secTEXT.offset = overlay_offset - sizeof(linfo);
+    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
+    secTEXT.size = segTEXT.filesize - secTEXT.offset;
+    secXHDR.offset = overlay_offset - sizeof(linfo);
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        secXHDR.offset -= sizeof(cmdUUID) + sizeof(linkitem);
+    }
+    secXHDR.addr += secXHDR.offset;
+    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
+    if (foff1 < segTEXT.vmsize)
+        foff1 += PAGE_SIZE;  // codesign disallows overhang
+    segLINK.fileoff = foff1;
+    segLINK.vmaddr = segTEXT.vmaddr + foff1;
+    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
+    fo->seek(sizeof(mhdro), SEEK_SET);
+    fo->rewrite(&segZERO, sizeof(segZERO));
+    fo->rewrite(&segXHDR, sizeof(segXHDR));
+    fo->rewrite(&secXHDR, sizeof(secXHDR));
+    fo->rewrite(&segTEXT, sizeof(segTEXT));
+    fo->rewrite(&secTEXT, sizeof(secTEXT));
+    fo->rewrite(&segLINK, sizeof(segLINK));
+    fo->rewrite(&threado, sizeof(threado));
+    if (my_filetype==Mach_header::MH_EXECUTE) {
+        fo->rewrite(&cmdUUID, sizeof(cmdUUID));
+        fo->rewrite(&linkitem, sizeof(linkitem));
+    }
+    fo->rewrite(&linfo, sizeof(linfo));
 }
 
 template <class T>
@@ -1024,6 +1090,20 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
     len = fo->getBytesWritten();
     fo->write(&zero, 7& (0u-len));
+}
+
+void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
+{
+    TE32 disp;
+    unsigned const zero = 0;
+    unsigned len = fo->getBytesWritten();
+    fo->write(&zero, 3& (0u-len));
+    len += (3& (0u-len)) + sizeof(disp);
+    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
+    fo->write(&disp, sizeof(disp));
+
+    threado_setPC(len + segTEXT.vmaddr);  /* entry address */
+    PackUnix::pack3(fo, ft);  // deliberately skip PackMachBase<T>::pack3
 }
 
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
@@ -1401,13 +1481,21 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     // Mach_command before __LINKEDIT
                     fo->write((1+ ptr0), (char const *)ptr1 - (char const *)(1+ ptr0));
                     // LC_SEGMENT_64 for UPX_DATA; steal space from -Wl,-headerpadsize
-                    segXHDR.cmdsize = sizeof(segXHDR);
-                    segXHDR.vmaddr = 0;
-                    segXHDR.fileoff = 0;
-                    segXHDR.maxprot =  Mach_segment_command::VM_PROT_READ;
-                    segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
-                    segXHDR.nsects = 0;
+                    if (Mach_header::CPU_TYPE_POWERPC != my_cputype) {
+                        segXHDR.cmdsize = sizeof(segXHDR);
+                        segXHDR.vmaddr = 0;
+                        segXHDR.fileoff = 0;
+                        segXHDR.maxprot =  Mach_segment_command::VM_PROT_READ;
+                        segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
+                        segXHDR.nsects = 0;
+                    }
                     fo->write(&segXHDR, sizeof(segXHDR));
+                    if (Mach_header::CPU_TYPE_POWERPC == my_cputype) {
+                        // First LC_SEGMENT must have a section because
+                        // its .offset is the limit for adding new headers
+                        // for UUID or code signing (by Apple tools).
+                        fo->write(&secXHDR, sizeof(secXHDR));
+                    }
                     // Mach_command __LINKEDIT and after
                     fo->write((char const *)ptr1, cmdsize);
                     // Contents before __LINKEDIT; put non-headers at same offset in file
@@ -1594,12 +1682,15 @@ int PackMachBase<T>::canUnpack()
     upx_uint64_t rip = 0;
     unsigned style = 0;
     off_t offLINK = 0;
+    unsigned pos_next = 0;
+    unsigned nseg = 0;
     unsigned const ncmds = mhdri.ncmds;
     Mach_command const *ptr = (Mach_command const *)rawmseg;
     for (unsigned j= 0; j < ncmds;
             ptr = (Mach_command const *)(ptr->cmdsize + (char const *)ptr), ++j) {
         Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr;
         if (lc_seg == ptr->cmd) {
+            ++nseg;
             if (!strcmp("__XHDR", segptr->segname)) {
                 // PackHeader precedes __LINKEDIT (pre-Sierra MacOS 10.12)
                 style = 391;  // UPX 3.91
@@ -1614,11 +1705,18 @@ int PackMachBase<T>::canUnpack()
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 offLINK = segptr->fileoff;
+                if (offLINK < pos_next) {
+                    offLINK = pos_next;
+                }
             }
+            pos_next = segptr->filesize + segptr->fileoff;
         }
         else if (Mach_segment_command::LC_UNIXTHREAD==ptr->cmd) {
             rip = entryVMA = threadc_getPC(ptr);
         }
+    }
+    if (3==nseg) { // __PAGEZERO, __TEXT, __LINKEDIT;  no __XHDR, no UPX_DATA
+        style = 392;
     }
     if (391==style && 0==offLINK && 2==ncmds) { // pre-3.91 ?
         offLINK = ptrTEXT->fileoff + ptrTEXT->filesize;  // fake __LINKEDIT at EOF
@@ -1882,10 +1980,10 @@ bool PackMachBase<T>::canPack()
         {CPU_TYPE_POWERPC, MH_EXECUTE,
             sizeof(stub_powerpc_darwin_macho_entry),
             sizeof(stub_powerpc_darwin_macho_fold),
-            0,
+            sizeof(stub_powerpc_darwin_macho_upxmain_exe),
                    stub_powerpc_darwin_macho_entry,
                    stub_powerpc_darwin_macho_fold,
-                   0
+                   stub_powerpc_darwin_macho_upxmain_exe
         },
         {CPU_TYPE_POWERPC, MH_DYLIB,
             sizeof(stub_powerpc_darwin_dylib_entry), 0, 0,

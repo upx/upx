@@ -120,6 +120,7 @@ STUBS += mipsel.r3000-ps1.h
 STUBS += powerpc-darwin.dylib-entry.h
 STUBS += powerpc-darwin.macho-entry.h
 STUBS += powerpc-darwin.macho-fold.h
+STUBS += powerpc-darwin.macho-upxmain.h
 STUBS += powerpc-linux.elf-entry.h
 STUBS += powerpc-linux.elf-fold.h
 STUBS += powerpc-linux.kernel.vmlinux-head.h
@@ -1215,6 +1216,9 @@ powerpc-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc-darwin.macho-main.o
 	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
 	chmod a-x tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@
+
+powerpc-darwin.macho-upxmain.h: powerpc-darwin.macho-upxmain.exe
+	$(call tc,bin2h) $< $@
 
 tmp/powerpc-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o $@
