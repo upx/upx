@@ -650,7 +650,8 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                     segptr->cmdsize -= d;
                     mhp->sizeofcmds -= d;
                 }
-                if (Mach_header::CPU_TYPE_I386 == my_cputype) {
+                if (Mach_header::CPU_TYPE_I386 == my_cputype
+                ||  Mach_header::CPU_TYPE_POWERPC == my_cputype ) {
                     // Avoid overlap by moving to va_hi.
                     upx_uint64_t const delt2 = segTEXT.vmaddr - segptr->vmaddr;
                     segptr->vmaddr += delt2;
@@ -775,6 +776,9 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 skip = 1;  // was not seen
             }
         } break;
+        case Mach_segment_command::LC_UNIXTHREAD: {
+            skip = 1;  // we will use our own
+        } break;
         } // end switch
 
         if (skip) {
@@ -815,55 +819,6 @@ next:
 
 // At 2013-02-03 part of the source for codesign was
 //    http://opensource.apple.com/source/cctools/cctools-836/libstuff/ofile.c
-
-// 2017-11-06 Apple no longer supports PowerPC, and in particular
-// MacOS 10.12 ("Sierra") was not released for PowerPC.
-// Making the template PackMachBase<T>::pack4 work
-// (especially stub_powerpc_darwin_macho_upxmain_exe)
-// was too tricky.  So just use the previous specialization.
-void PackMachPPC32::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
-{
-    // offset of p_info in compressed file
-    overlay_offset = sizeof(mhdro) + sizeof(segZERO)
-        + sizeof(segXHDR) + sizeof(secXHDR)
-        + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(segLINK) + sizeof(threado) + sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        overlay_offset += sizeof(cmdUUID) + sizeof(linkitem);
-    }
-
-    PackUnix::pack4(fo, ft);  // deliberately skip PackMachBase<T>::pack4
-    unsigned const t = fo->getBytesWritten();
-    segTEXT.filesize = t;
-    segTEXT.vmsize  += t;  // utilize GAP + NO_LAP + sz_unc - sz_cpr
-    secTEXT.offset = overlay_offset - sizeof(linfo);
-    secTEXT.addr = segTEXT.vmaddr   + secTEXT.offset;
-    secTEXT.size = segTEXT.filesize - secTEXT.offset;
-    secXHDR.offset = overlay_offset - sizeof(linfo);
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        secXHDR.offset -= sizeof(cmdUUID) + sizeof(linkitem);
-    }
-    secXHDR.addr += secXHDR.offset;
-    unsigned foff1 = (PAGE_MASK & (~PAGE_MASK + segTEXT.filesize));
-    if (foff1 < segTEXT.vmsize)
-        foff1 += PAGE_SIZE;  // codesign disallows overhang
-    segLINK.fileoff = foff1;
-    segLINK.vmaddr = segTEXT.vmaddr + foff1;
-    fo->seek(foff1 - 1, SEEK_SET); fo->write("", 1);
-    fo->seek(sizeof(mhdro), SEEK_SET);
-    fo->rewrite(&segZERO, sizeof(segZERO));
-    fo->rewrite(&segXHDR, sizeof(segXHDR));
-    fo->rewrite(&secXHDR, sizeof(secXHDR));
-    fo->rewrite(&segTEXT, sizeof(segTEXT));
-    fo->rewrite(&secTEXT, sizeof(secTEXT));
-    fo->rewrite(&segLINK, sizeof(segLINK));
-    fo->rewrite(&threado, sizeof(threado));
-    if (my_filetype==Mach_header::MH_EXECUTE) {
-        fo->rewrite(&cmdUUID, sizeof(cmdUUID));
-        fo->rewrite(&linkitem, sizeof(linkitem));
-    }
-    fo->rewrite(&linfo, sizeof(linfo));
-}
 
 template <class T>
 void PackMachBase<T>::pack4dylib(  // append PackHeader
@@ -1090,20 +1045,6 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     super::pack3(fo, ft);
     len = fo->getBytesWritten();
     fo->write(&zero, 7& (0u-len));
-}
-
-void PackMachPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
-{
-    TE32 disp;
-    unsigned const zero = 0;
-    unsigned len = fo->getBytesWritten();
-    fo->write(&zero, 3& (0u-len));
-    len += (3& (0u-len)) + sizeof(disp);
-    disp = 4+ len - sz_mach_headers;  // 4: sizeof(instruction)
-    fo->write(&disp, sizeof(disp));
-
-    threado_setPC(len + segTEXT.vmaddr);  /* entry address */
-    PackUnix::pack3(fo, ft);  // deliberately skip PackMachBase<T>::pack3
 }
 
 void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader

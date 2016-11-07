@@ -915,8 +915,6 @@ protected:
     virtual const int *getFilters() const;
 
     virtual void pack1_setup_threado(OutputFile *const fo);
-    virtual void pack3(OutputFile *, Filter &);  // append loader
-    virtual void pack4(OutputFile *, Filter &);  // append PackHeader
     virtual Linker* newLinker() const;
 
     __packed_struct(Mach_thread_command)
