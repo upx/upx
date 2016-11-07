@@ -152,7 +152,7 @@ c3f44b4d00a87384c03a6f9e7aec809c1addfe3e271244d38a474f296603088c *mipsel-linux.e
 b8c35fa2956da17ca505956e9f5017bb5f3a746322647e24ccb8ff28059cafa4 *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t110_compress_ucl_nrv2b_3_no_filter="\
-a1f0fd57e4323eb25abf1d000569d3c7b62ceb12fb59e645d4807742baf0cd1f *amd64-linux.elf/upx-3.91
+92839fcb951cfeb37a3bbbcc49fb954e8ce3fd983ca749101f7b8e7ce3c1830e *amd64-linux.elf/upx-3.91
 6be5bd999387712f90fde45556c9487d02306593146c8d3cd4ced89568732729 *arm-wince.pe/upx-3.91.exe
 9d0ccc7e39ef23845b858869bf9718c43de5fd0eee7c61edbd63565a55110032 *armeb-linux.elf/upx-3.91
 03988f039a5372125bf90b6658516656a8582dd1c46423cb12faeb82870348bb *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -163,7 +163,7 @@ b9145c02bac9ce7f10bd65587ce35001d3e15a7a102d8f7cc51930b92f477ebf *i386-win32.pe/
 3e97639d9b13132edd3cf5e17f18a5d3f158124b920cabe8c415b8df3e4a8d1d *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t120_compress_ucl_nrv2d_3_no_filter="\
-1e870e9e12336eaa18289efa86275822025e15feeb9168b21f8c438f2560b84e *amd64-linux.elf/upx-3.91
+21aaf94748d315fe38af79da78d96ed100c382027af089cb3188d71d6a910b84 *amd64-linux.elf/upx-3.91
 23ef6083a6e678975305ceb96f78ce186973b4400d357ca643573b6dd6487512 *arm-wince.pe/upx-3.91.exe
 5f1584a75584ef3421ba4aec8167422e78d33e2451ef9a925560d1112eacf88e *armeb-linux.elf/upx-3.91
 8d2938aa4c2b6ee3c50a2fce1041592a766d48c26605b50129b8a14697cc9694 *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -174,7 +174,7 @@ ac552f23195dfebd82558e0523eaa6ece695c711f298ed9a3cdbb571f1df4f1d *mipsel-linux.e
 d30f7e75bcfab63aa620e0c677f738395ab7c8b26ba0871e94e052849660dccb *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t130_compress_ucl_nrv2e_3_no_filter="\
-bc67396d280c28532b2687fe694fb5dfaef60b1d1b05881027a2a97322545f7e *amd64-linux.elf/upx-3.91
+ec993e4115bc2d4b88b640bd2c4beb0dabdbb2af3df6d03e3f0ba946bd57b157 *amd64-linux.elf/upx-3.91
 8844ace5189f90a9bf696e5fa2323be9e715d90df4ba60805a2079cb94c218f1 *arm-wince.pe/upx-3.91.exe
 ea42d52676d2698f29587e98a9e1536b96ebf523a7d8bc926f6c241a159b4116 *armeb-linux.elf/upx-3.91
 27f1afd1e1fec37d4dcd43163b9ec60a6af3abeab21a4adf539b7faea848eb20 *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -185,7 +185,7 @@ b61aa58e493b3961646e5c0bcb7f19f74b439fe8f5c934db25b00f97f51a05d0 *mipsel-linux.e
 18c6b0ec20590dfbe4851ad837e2bb9bc99c6e4e1ac97b49dff2fb632e0e9d4c *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t140_compress_lzma_2_no_filter="\
-07e31b504273082dc475f217d8418f76ca409f018d42073a387f8a886dbaa83e *amd64-linux.elf/upx-3.91
+73e37cb63dac97dac1276d8ed627b54500ddd32378c74d83df161be967643202 *amd64-linux.elf/upx-3.91
 0eceefcc32ed25b2f1296cfa853935124aa1b7785b8a177d6e8c5804c24ca319 *arm-wince.pe/upx-3.91.exe
 3e7446d8ac6d9b442d6c8e6a3c45aec97f54aa8e90bdc554dd39976495bfa36a *armeb-linux.elf/upx-3.91
 1ecd559c89d3995fa0e7ecfa8e60b7746f804fc74ddce87d2c6cbeac8e372a39 *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -196,7 +196,7 @@ expected_sha256sums__t140_compress_lzma_2_no_filter="\
 65990ec2ab6bceb2d5444918af797be0bdb0931abce8e7db0d2e774614faa64b *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t150_compress_ucl_2_all_filters="\
-e773ed4ac55d5b967e4c1654f2b540899a63f7722a44d7056d424a6292274aa4 *amd64-linux.elf/upx-3.91
+6ada3f67b70c39c0c2cc2c0ee946859ac38339a4276e94539e484a0755f60f51 *amd64-linux.elf/upx-3.91
 0bf874c45ebb90b062cd986fe10cfbd01cdc6a50e3e0b5dda035eb55ded492ff *arm-wince.pe/upx-3.91.exe
 db894f24777334abb9bf8e34661d057e25c2889b46290cf83db7310c4cdd86fa *armeb-linux.elf/upx-3.91
 33bde57c3f7ed8809bec0658fe6c48d047bdec97476643f2e8e2970ab0c4eb5f *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -207,7 +207,7 @@ b00756ba6b73b937ac3b2c1222267dc44953ac69337a7ac582ba2e7a471e83a6 *i386-win32.pe/
 4403a20c1951c9d42b51a175b55a4a9ee6901d626b8e3ed1e7e55a51ae098272 *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t160_compress_all_methods_1_no_filter="\
-db82bffefd5ec10cea93b7cc47860db0dc122fac441980b3ae320e3b9c48c7e2 *amd64-linux.elf/upx-3.91
+cd9d2ded81609941406fd6d64bfddcd5b674a8da67fd936643293494c404c724 *amd64-linux.elf/upx-3.91
 df81b2376af28989faa0e48f9cb5d5f339d94166b7e11232c8d1ff952113a669 *arm-wince.pe/upx-3.91.exe
 07ca9736f1cd478bde2c8da95a6ecb95bd865dcf8ea48a396b13050ac40d196e *armeb-linux.elf/upx-3.91
 9e852e95b38ca57319d1e911bf97226a82b60dd336e201496c30bf62943aecce *i386-dos32.djgpp2.coff/upx-3.91.exe
@@ -218,7 +218,7 @@ dd561ff9c530711be0934db352cf40f606066c280e27b26e7f8fd6dd1a087e6a *m68k-atari.tos
 c6d010b0cdee8adc381efc424a44c14a1d110c52d7b12925265fddc4ba781a6c *powerpc-linux.elf/upx-3.91
 "
 expected_sha256sums__t170_compress_all_methods_no_lzma_5_no_filter="\
-689160a438a5650a40db1193b115566b55b3caa1fbbce88b5c608dda0ebc7c43 *amd64-linux.elf/upx-3.91
+1ee8b3195a96b7677b296b852931fa5eb86fde8e68f428f7081022fecea1c8a4 *amd64-linux.elf/upx-3.91
 debd7f6b30bfcb1fef0fac558d8ae721c6a9d193c9b41126b3491c66870435ab *arm-wince.pe/upx-3.91.exe
 7ee87918e7473d44c3a5af014cad48298f0a99c4028880d0a87a5a1776b977c7 *armeb-linux.elf/upx-3.91
 dcdcad70f1b79290022041938957dccd4daa2f2fad166864cfb55f3400d5b03b *i386-dos32.djgpp2.coff/upx-3.91.exe
