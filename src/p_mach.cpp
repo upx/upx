@@ -753,6 +753,11 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                 (((Mach_main_command const *)lcp)->entryoff - segTEXT.fileoff));
             skip = 1;
         } break;
+        case Mach_segment_command::LC_UNIXTHREAD: { // pre-LC_MAIN
+            threado_setPC(segTEXT.vmaddr +
+                (threadc_getPC(lcp) - segTEXT.fileoff));
+            skip = 1;
+        } break;
         case Mach_segment_command::LC_LOAD_DYLIB: {
             skip = 1;
         } break;
@@ -775,9 +780,6 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             if (Mach_segment_command::LC_VERSION_MIN_MACOSX != cmdVERMIN.cmd) {
                 skip = 1;  // was not seen
             }
-        } break;
-        case Mach_segment_command::LC_UNIXTHREAD: {
-            skip = 1;  // we will use our own
         } break;
         } // end switch
 
