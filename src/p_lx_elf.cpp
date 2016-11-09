@@ -2327,7 +2327,10 @@ PackLinuxElf64::generateElfHdr(
         // However, somebody might complain because (.p_vaddr - .p_offset)
         // is divisible only by phdr[1].p_align, and not by phdr[0].p_align.
         set_te64(&h2->phdr[1].p_align, 0x1000);
-        set_te64(&h2->phdr[1].p_offset, /*~page_mask*/ 0xfff & brkb);
+        if ( ~page_mask == 0xffff )       /* 64K specific case */
+            set_te64(&h2->phdr[1].p_offset, /*~page_mask*/ 0xffff & brkb);
+        else
+            set_te64(&h2->phdr[1].p_offset, /*~page_mask*/ 0xfff & brkb);
 
         set_te64(&h2->phdr[1].p_vaddr, brkb);
         set_te64(&h2->phdr[1].p_paddr, brkb);
