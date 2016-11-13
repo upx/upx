@@ -45,7 +45,7 @@ SYS_munmap=   73
 SYS_mprotect= 74
 
 _start: .globl _start
-        trap  // debug
+        //trap  // debug
         lwz r3,0(r1)  // argc
         la  r4,4(r1)  // argv
         la  r1,-(1+6)*4(r1)  // 6:frame convention, 1: mhdrpp
