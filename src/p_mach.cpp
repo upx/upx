@@ -376,6 +376,30 @@ void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
     }
 }
 
+void PackMachPPC32::addStubEntrySections(Filter const * /*ft*/)
+{
+    if (my_filetype!=Mach_header::MH_EXECUTE) {
+        addLoader("MACHMAINX", NULL);
+    }
+    else {
+        addLoader("PPC32BXX", NULL);
+    }
+    addLoader("MACH_UNC", NULL);
+   //addLoader(getDecompressorSections(), NULL);
+    addLoader(
+        ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
+        : M_IS_NRV2D(ph.method) ? "NRV_HEAD,NRV2D,NRV_TAIL"
+        : M_IS_NRV2B(ph.method) ? "NRV_HEAD,NRV2B,NRV_TAIL"
+        : M_IS_LZMA(ph.method)  ? "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30"
+        : NULL), NULL);
+    if (hasLoaderSection("CFLUSH"))
+        addLoader("CFLUSH");
+    addLoader("MACHMAINY,IDENTSTR,+40,MACHMAINZ", NULL);
+    if (my_filetype!=Mach_header::MH_EXECUTE) {
+        addLoader("FOLDEXEC", NULL);
+    }
+}
+
 void PackMachARMEL::addStubEntrySections(Filter const * /*ft*/)
 {
     addLoader("MACHMAINX", NULL);
@@ -605,6 +629,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         char *tail = (char *)(1+ mhp);
         Mach_segment_command *segtxt = 0;  // in temp for output
         Mach_section_command *sectxt = 0;  // in temp for output
+        unsigned txt_addr = 0;
         char *const lcp_end = mhdro.sizeofcmds + tail;
         Mach_command *lcp = (Mach_command *)(1+ mhp);
         Mach_command *lcp_next;
@@ -625,6 +650,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             if (!strcmp("__TEXT", segptr->segname)) {
                 segtxt = segptr;  // remember base for appending
                 sectxt = (Mach_section_command *)(1+ segptr);
+                txt_addr = sectxt->addr;
                 // Collapse into 1 section by appending onto the first section.
                 unsigned off_hi = sectxt->size + sectxt->offset;
                 Mach_section_command const *scpk = 1+ sectxt;
@@ -634,8 +660,12 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
                         sectxt->size += scpk->size;
                     }
                     else {
-                        printWarn(fi->getName(), "Unexpected .text section %s  size=%u\n",
-                            (char const *)&scpk->sectname, (unsigned)scpk->size);
+                        if (!(Mach_header::CPU_TYPE_POWERPC == my_cputype
+                                && 12==(unsigned)scpk->size
+                                && !strcmp("__cstring", (char const *)&scpk->sectname))) {
+                            printWarn(fi->getName(), "Unexpected .text section %s  size=%u\n",
+                             (char const *)&scpk->sectname, (unsigned)scpk->size);
+                        }
                         // Assume the maximum size: to end of the page.
                         sectxt->size = (segptr->vmsize + segptr->vmaddr) - sectxt->addr;
                         // Try to stop the cascade of errors.
@@ -746,7 +776,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             skip = 1;
         } break;
         case Mach_segment_command::LC_MAIN: {
-                // Replace later with LC_UNIX_THREAD.
+                // Replace later with LC_UNIXTHREAD.
 // LC_MAIN requires libSystem.B.dylib to provide the environment for main(), and CALLs the entryoff.
 // LC_UNIXTHREAD does not need libSystem.B.dylib, and JMPs to the .rip with %rsp/argc and argv= 8+%rsp
             threado_setPC(segTEXT.vmaddr +
@@ -754,8 +784,8 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
             skip = 1;
         } break;
         case Mach_segment_command::LC_UNIXTHREAD: { // pre-LC_MAIN
-            threado_setPC(segTEXT.vmaddr +
-                (threadc_getPC(lcp) - segTEXT.fileoff));
+            threado_setPC(secTEXT.addr +
+                (threadc_getPC(lcp) - txt_addr));
             skip = 1;
         } break;
         case Mach_segment_command::LC_LOAD_DYLIB: {
@@ -797,7 +827,7 @@ next:
         lcp = lcp_next;
     }  // end for each Mach_command
 
-        // Append LC_UNIX_THREAD
+        // Append LC_UNIXTHREAD
         unsigned const sz_threado = threado_size();
         mhp->ncmds += 1;
         mhp->sizeofcmds += sz_threado;
@@ -1335,11 +1365,10 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
-        mhdro.ncmds += 1;  // we add LC_SEGMENT{,_64} for UPX_DATA
-        mhdro.sizeofcmds += sizeof(segXHDR);
         mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
         mhdro.flags |= Mach_header::MH_BINDATLOAD;  // DT_BIND_NOW
     }
+    unsigned pos = sizeof(mhdro);
     fo->write(&mhdro, sizeof(mhdro));
 
     memset(&segZERO, 0, sizeof(segZERO));
@@ -1422,27 +1451,14 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
             if (lc_seg == ptr1->cmd) {
                 if (!strcmp("__LINKEDIT", segptr->segname)) {
                     // Mach_command before __LINKEDIT
+                    pos += (char const *)ptr1 - (char const *)(1+ ptr0);
                     fo->write((1+ ptr0), (char const *)ptr1 - (char const *)(1+ ptr0));
-                    // LC_SEGMENT_64 for UPX_DATA; steal space from -Wl,-headerpadsize
-                    if (Mach_header::CPU_TYPE_POWERPC != my_cputype) {
-                        segXHDR.cmdsize = sizeof(segXHDR);
-                        segXHDR.vmaddr = 0;
-                        segXHDR.fileoff = 0;
-                        segXHDR.maxprot =  Mach_segment_command::VM_PROT_READ;
-                        segXHDR.initprot = Mach_segment_command::VM_PROT_READ;
-                        segXHDR.nsects = 0;
-                    }
+                    pos += sizeof(segXHDR);
                     fo->write(&segXHDR, sizeof(segXHDR));
-                    if (Mach_header::CPU_TYPE_POWERPC == my_cputype) {
-                        // First LC_SEGMENT must have a section because
-                        // its .offset is the limit for adding new headers
-                        // for UUID or code signing (by Apple tools).
-                        fo->write(&secXHDR, sizeof(secXHDR));
-                    }
                     // Mach_command __LINKEDIT and after
+                    pos += cmdsize;
                     fo->write((char const *)ptr1, cmdsize);
                     // Contents before __LINKEDIT; put non-headers at same offset in file
-                    unsigned pos = sizeof(mhdro) + mhdro.sizeofcmds; // includes sizeof(segXHDR)
                     fo->write(&stub_main[pos], segptr->fileoff - pos);
                     break;
                 }

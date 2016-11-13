@@ -916,6 +916,7 @@ protected:
 
     virtual void pack1_setup_threado(OutputFile *const fo);
     virtual Linker* newLinker() const;
+    virtual void addStubEntrySections(Filter const *);
 
     __packed_struct(Mach_thread_command)
         TE32 cmd;            /* LC_THREAD or  LC_UNIXTHREAD */

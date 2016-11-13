@@ -30,6 +30,7 @@
 ;  <jreiser@users.sourceforge.net>
 ;
 */
+        .machine ppc
 
 SYS_exit  =1
 SYS_fork  =2
@@ -44,7 +45,17 @@ SYS_munmap=   73
 SYS_mprotect= 74
 
 _start: .globl _start
-        b _main
+        trap  // debug
+        lwz r3,0(r1)  // argc
+        la  r4,4(r1)  // argv
+        la  r1,-(1+6)*4(r1)  // 6:frame convention, 1: mhdrpp
+        bl _main
+        mtctr r3  // entry to dyloader
+        la  r1, (0+6)*4(r1)  // undo frame; retain mhdrp
+        li r0,0
+        mtlr r0  // paranoia
+        bctrl
+        trap  // should never happen
 
 /* SYS_mmap takes a 64-bit off_t, but gcc-3.4.1-20040827 passes long long
    in wrong registers.  So change C interface to use size_t (32-bits) instead

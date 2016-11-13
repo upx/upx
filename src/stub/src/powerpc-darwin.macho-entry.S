@@ -29,9 +29,16 @@
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
 
-  section MACOS000
+  section PPC32BXX
+0:     .int 9f - 0b
+#include "arch/powerpc/32/bxx.S"
+9:
+
+  section MACMAINX
 _start: .globl _start
         call main  # must be exactly 1 instruction; link_register= &decompress
+
+  section MACH_UNC
 
   section NRV_HEAD
 SZ_DLINE=128  # size of data cache line in Apple G5
@@ -94,13 +101,12 @@ cfl_nrv:
 #undef dst0
         sync   // wait for all memory operations to finish
         isync  // discard prefetched instructions (if any)
-cfl_ret:
-        ret
 
-  section ELFMAINY
+  section MACHMAINY
+        ret
         // IDENTSTR goes here
 
-  section ELFMAINZ
+  section MACHMAINZ
 sz_b_info= 12
   sz_unc= 0
   sz_cpr= 4
