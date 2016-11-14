@@ -831,6 +831,7 @@ protected:
 
     upx_uint64_t entryVMA;
     unsigned my_cputype;
+    unsigned my_cpusubtype;
     unsigned my_filetype;
     unsigned my_thread_flavor;
     unsigned my_thread_state_word_count;

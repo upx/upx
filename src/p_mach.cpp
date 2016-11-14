@@ -626,6 +626,7 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         memcpy(upxstub, stub_main, sz_stub_main);
 
         Mach_header *const mhp = (Mach_header *)upxstub;
+        mhp->cpusubtype = my_cpusubtype;
         char *tail = (char *)(1+ mhp);
         Mach_segment_command *segtxt = 0;  // in temp for output
         Mach_section_command *sectxt = 0;  // in temp for output
@@ -1633,6 +1634,7 @@ int PackMachBase<T>::canUnpack()
     ||  my_filetype  !=mhdri.filetype
     )
         return false;
+    my_cpusubtype = mhdri.cpusubtype;
 
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
@@ -1817,6 +1819,7 @@ bool PackMachBase<T>::canPack()
     ||  my_filetype  !=mhdri.filetype
     )
         return false;
+    my_cpusubtype = mhdri.cpusubtype;
 
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
