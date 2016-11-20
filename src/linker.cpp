@@ -207,7 +207,7 @@ void ElfLinker::init(const void *pdata_v, int plen)
     }
 }
 
-void ElfLinker::preprocessSections(char *start, char const *end)
+void ElfLinker::preprocessSections(char *start, char *end)
 {
     char *nextl;
     for (nsections = 0; start < end; start = 1+ nextl)
@@ -233,7 +233,7 @@ void ElfLinker::preprocessSections(char *start, char const *end)
     addSection("*UND*", NULL, 0, 0);
 }
 
-void ElfLinker::preprocessSymbols(char *start, char const *end)
+void ElfLinker::preprocessSymbols(char *start, char *end)
 {
     char *nextl;
     for (nsymbols = 0; start < end; start = 1+ nextl)
@@ -273,7 +273,7 @@ void ElfLinker::preprocessSymbols(char *start, char const *end)
     }
 }
 
-void ElfLinker::preprocessRelocations(char *start, char const *end)
+void ElfLinker::preprocessRelocations(char *start, char *end)
 {
     Section *section = NULL;
     char *nextl;
