@@ -161,31 +161,31 @@ matrix:
       env: CROSS=x86_64-w64-mingw32 C=gcc-4.6 T=wine
       addons: { apt: { packages: [ "binutils-mingw-w64-x86-64", "g++-mingw-w64-x86-64", "wine" ] } }
     - os: osx
+      osx_image: xcode6.4
       compiler: clang
       # must use debug build or else we get "ld: internal error: atom not found" when linking
       env: C=clang-602-m32 B=debug
-      osx_image: xcode6.4
     - os: osx
+      osx_image: xcode6.4
       compiler: clang
       # must use debug build or else we get "ld: internal error: atom not found" when linking
       env: C=clang-602-m64 B=debug
-      osx_image: xcode6.4
     - os: osx
+      osx_image: xcode7.3
       compiler: clang
       env: C=clang-703-m32
-      osx_image: xcode7.3
     - os: osx
+      osx_image: xcode7.3
       compiler: clang
       env: C=clang-703-m64
-      osx_image: xcode7.3
     - os: osx
+      osx_image: xcode8.1
       compiler: clang
       env: C=clang-800-m32
-      osx_image: xcode8
     - os: osx
+      osx_image: xcode8.1
       compiler: clang
       env: C=clang-800-m64
-      osx_image: xcode8
 
 install:
   - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps

@@ -10,9 +10,12 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[{GNUmakefile,Makefile,MMakefile}]
+[{GNUmakefile*,MMakefile*,Makefile*,Makevars*,*.mk}]
 indent_size = 8
 indent_style = tab
 
 [*.S]
 indent_size = 8
+
+[*.yml]
+indent_size = 2
