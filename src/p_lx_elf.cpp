@@ -1438,7 +1438,7 @@ bool PackLinuxElf32::canPack()
             exetype = 1;
             load_va = get_te32(&phdr->p_vaddr);
             unsigned file_offset = get_te32(&phdr->p_offset);
-            if (~page_mask & file_offset) {
+            if (~(upx_uint64_t)page_mask & file_offset) {
                 if ((~page_mask & (unsigned)load_va) == file_offset) {
                     throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
                     // Fixing it inside upx fails because packExtent() reads original file.

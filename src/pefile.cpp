@@ -2414,7 +2414,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         osection[1].vsize = (osection[1].size + oam1) &~ oam1;
         osection[2].vsize = (osection[2].size + ncsize_virt_increase + oam1) &~ oam1;
         oh.imagesize = osection[2].vaddr + osection[2].vsize;
-        osection[0].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ fam1;
+        osection[0].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ (size_t)fam1;
         osection[1].rawdataptr = osection[0].rawdataptr;
     }
     else
@@ -2422,7 +2422,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         osection[1].vsize = osection[1].size;
         osection[2].vsize = osection[2].size;
         osection[0].rawdataptr = 0;
-        osection[1].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ fam1;
+        osection[1].rawdataptr = (pe_offset + sizeof(ht) + sizeof_osection + fam1) &~ (size_t)fam1;
     }
     osection[2].rawdataptr = osection[1].rawdataptr + osection[1].size;
 
