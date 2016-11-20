@@ -207,16 +207,17 @@ void ElfLinker::init(const void *pdata_v, int plen)
     }
 }
 
-void ElfLinker::preprocessSections(char *start, char *end)
+void ElfLinker::preprocessSections(char *start, char const *end)
 {
-    nsections = 0;
-    while (start < end)
+    char *nextl;
+    for (nsections = 0; start < end; start = 1+ nextl)
     {
-        char name[1024];
-        unsigned offset, size, align;
-
-        char *nextl = strchr(start, '\n');
+        nextl = strchr(start, '\n');
         assert(nextl != NULL);
+        *nextl = '\0';  // a record is a line
+
+        unsigned offset, size, align;
+        char name[1024];
 
         if (sscanf(start, "%*d %1023s %x %*d %*d %x 2**%d",
                    name, &size, &offset, &align) == 4)
@@ -227,23 +228,23 @@ void ElfLinker::preprocessSections(char *start, char *end)
 
             //printf("section %s preprocessed\n", n);
         }
-        start = nextl + 1;
     }
     addSection("*ABS*", NULL, 0, 0);
     addSection("*UND*", NULL, 0, 0);
 }
 
-void ElfLinker::preprocessSymbols(char *start, char *end)
+void ElfLinker::preprocessSymbols(char *start, char const *end)
 {
-    nsymbols = 0;
-    while (start < end)
+    char *nextl;
+    for (nsymbols = 0; start < end; start = 1+ nextl)
     {
+        nextl = strchr(start, '\n');
+        assert(nextl != NULL);
+        *nextl = '\0';  // a record is a line
+
+        unsigned value, offset;
         char section[1024];
         char symbol[1024];
-        unsigned value, offset;
-
-        char *nextl = strchr(start, '\n');
-        assert(nextl != NULL);
 
         if (sscanf(start, "%x g *ABS* %x %1023s",
                    &value, &offset, symbol) == 3)
@@ -269,28 +270,28 @@ void ElfLinker::preprocessSymbols(char *start, char *end)
             assert(strcmp(section, "*ABS*") != 0);
             addSymbol(s, section, offset);
         }
-
-        start = nextl + 1;
     }
 }
 
-void ElfLinker::preprocessRelocations(char *start, char *end)
+void ElfLinker::preprocessRelocations(char *start, char const *end)
 {
-    char sect[1024];
     Section *section = NULL;
-
-    nrelocations = 0;
-    while (start < end)
+    char *nextl;
+    for (nrelocations = 0; start < end; start = 1+ nextl)
     {
-        if (sscanf(start, "RELOCATION RECORDS FOR [%[^]]", sect) == 1)
-            section = findSection(sect);
+        nextl = strchr(start, '\n');
+        assert(nextl != NULL);
+        *nextl = '\0';  // a record is a line
+
+        {
+            char sect[1024];
+            if (sscanf(start, "RELOCATION RECORDS FOR [%[^]]", sect) == 1)
+                section = findSection(sect);
+        }
 
         unsigned offset;
         char type[100];
         char symbol[1024];
-
-        char *nextl = strchr(start, '\n');
-        assert(nextl != NULL);
 
         if (sscanf(start, "%x %99s %1023s",
                    &offset, type, symbol) == 3)
@@ -323,11 +324,11 @@ void ElfLinker::preprocessRelocations(char *start, char *end)
                     add = 0 - add;
             }
 
-            addRelocation(section->name, offset, t, symbol, add);
-            //printf("relocation %s %s %x %llu preprocessed\n", section->name, symbol, offset, (unsigned long long) add);
+            if (section) {
+                addRelocation(section->name, offset, t, symbol, add);
+                //printf("relocation %s %s %x %llu preprocessed\n", section->name, symbol, offset, (unsigned long long) add);
+            }
         }
-
-        start = nextl + 1;
     }
 }
 
@@ -419,7 +420,11 @@ int ElfLinker::addLoader(const char *sname)
         if (sect[0] == '+') // alignment
         {
             assert(tail);
-            unsigned l = (hex(sect[2]) - tail->offset - tail->size) % hex(sect[1]);
+            unsigned l = hex(sect[2]) - tail->offset - tail->size;
+            unsigned m = hex(sect[1]);
+            if (m) {
+                l %= hex(sect[1]);
+            }
             if (l)
             {
                 if (sect[3] == 'D')
@@ -438,7 +443,6 @@ int ElfLinker::addLoader(const char *sname)
                 // .p2align must be < 32
                 unsigned const v = ~0u << section->p2align;
                 if (unsigned const l = ~v & (0u-(unsigned)(tail->offset + tail->size))) {
-
                     alignCode(l);
                     tail->size += l;
                 }
