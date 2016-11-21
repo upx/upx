@@ -13,6 +13,7 @@ Changes in 3.92 (27 Nov 2016):
     Antti Häyrynen from Codenomicon.
   * Explicitly diagnose Go-language bad PT_LOAD; recommend hemfix.c.
     https://sourceforge.net/p/upx/bugs/195/   https://github.com/pwaller/goupx
+  * Support Apple MacOS 10.12 "Sierra", including more-robust de-compression.
   * bug fixes
 
 Changes in 3.91 (30 Sep 2013):
