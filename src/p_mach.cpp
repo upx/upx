@@ -1666,7 +1666,7 @@ int PackMachBase<T>::canUnpack()
             }
             if (!strcmp("__LINKEDIT", segptr->segname)) {
                 offLINK = segptr->fileoff;
-                if (offLINK < pos_next) {
+                if (offLINK < (off_t) pos_next) {
                     offLINK = pos_next;
                 }
             }

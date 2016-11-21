@@ -178,8 +178,7 @@ def do_file(fn):
             # FIXME / TODO
             pass
         else:
-            pass
-            #assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
+            assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
     else:
         if pos >= 0:
             odata = idata[:pos]

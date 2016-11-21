@@ -55,7 +55,12 @@
 ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(int) == 4)
 ACC_COMPILE_TIME_ASSERT_HEADER((1u << 31) << 1 == 0)
 ACC_COMPILE_TIME_ASSERT_HEADER(((int)(1u << 31)) >> 31 == -1) // arithmetic right shift
+ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
+
+#if (ACC_CC_MSC)
+#  pragma warning(error: 4319)
+#endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
 #if 1 && (ACC_ARCH_ARM) && defined(__pe__) && !defined(__CEGCC__) && !defined(_WIN32)
