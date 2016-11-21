@@ -699,10 +699,10 @@ typedef struct {
 //    powerpc-darwin.macho-upxmain.c
 //
 // /usr/libexec/gcc/powerpc-apple-darwin8/4.0.0/collect2 -arch ppc -weak_reference_mismatches non-weak \
-//	-o powerpc-darwin.macho-upxmain.exe \
-//	powerpc-darwin.macho-upxsubr.o \
-//	powerpc-darwin.macho-upxmain.o \
-//	-pagezero_size 0x1000 -bind_at_load -headerpad 0x300
+//    -o powerpc-darwin.macho-upxmain.exe \
+//    powerpc-darwin.macho-upxsubr.o \
+//    powerpc-darwin.macho-upxmain.o \
+//    -pagezero_size 0x1000 -bind_at_load -headerpad 0x300
 //# -unexported_symbols_list unexport-upxload.txt
 //
 //  strip -u -r powerpc-darwin.macho-upxmain.exe
