@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.92 (27 Nov 2016):
+Changes in 3.92 (04 Dec 2016):
   * UPX has moved to GitHub - the new home page is https://upx.github.io
   * All pe formats: important internal changes - reunited the diverged
     source files - please report regressions into the bug tracker.
