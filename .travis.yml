@@ -9,11 +9,6 @@ notifications:
     on_success: never
     on_failure: change
 
-branches:
-  only:
-    - devel
-    - travis
-
 .ubuntu_toolchain_sources: &S
   - ubuntu-toolchain-r-test
   - llvm-toolchain-precise-3.5
