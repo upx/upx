@@ -81,12 +81,7 @@ Please report all problems or suggestions to the authors. Thanks.
 THE FUTURE
 ==========
 
-  - We'd really love to support handheld systems like the PalmPilot because
-    compression makes a lot of sense here. And - because of the atari/tos
-    format - we already have a working decompressor in 68000 assembly.
-    Unfortunately we know next to nothing about the operating system
-    architecture of such handhelds, so we need some information from
-    an expert. Please contact us if you think you can help.
+  - AArch64 (64-bit ARM) for Linux and iOS.
 
   - The Linux approach could probably get ported to a lot of other Unix
     variants, at least for other i386 architectures it shouldn't be too
@@ -125,12 +120,14 @@ with this program; see the file LICENSE. If not, visit the UPX home page.
 
 
 Share and enjoy,
-Markus & Laszlo
+Markus & Laszlo & John
 
 
    Markus F.X.J. Oberhumer              Laszlo Molnar
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
 
+   John F. Reiser
+   <jreiser@BitWagon.com>
 
 
 [ The term UPX is a shorthand for the Ultimate Packer for eXecutables

@@ -21,3 +21,4 @@ The main news since UPX 2 are:
 
   * better compression using the LZMA algorithm (option '--lzma')
 
+  * better support for MacOS
