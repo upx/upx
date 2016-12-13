@@ -131,6 +131,7 @@ export EXTRA_CPPFLAGS EXTRA_CXXFLAGS EXTRA_LDFLAGS
 [[ -z $upx_exeext ]] && upx_exeext=.out
 $make exeext=$upx_exeext
 
+pwd
 ls -l upx${upx_exeext}
 $SIZE upx${upx_exeext} || true
 file upx${upx_exeext}

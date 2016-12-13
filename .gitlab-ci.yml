@@ -7,8 +7,48 @@ before_script:
   - uname -a; pwd; id; umask; env
   - cat /etc/os-release || true
   -
-    if egrep -q '^PRETTY_NAME="?Fedora' /etc/os-release; then
+    if [[ $CI_BUILD_NAME =~ ^(CentOS|Fedora) ]]; then
       time rpm -qa | LC_ALL=C sort;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^(Debian|Ubuntu) ]]; then
+      export DEBIAN_FRONTEND=noninteractive;
+      time dpkg -l;
+      if [[ $CI_BUILD_NAME =~ ^Ubuntu1604-cross ]]; then
+        dpkg --add-architecture i386;
+      fi;
+      time apt-get -yq update;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^CentOS5- ]]; then
+      time rpm -Uvh http://dl.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm;
+      time yum install -y
+        coreutils curl diffutils grep gzip sed
+        bzip2 file findutils git perl tar wget which xz
+        gcc gcc-c++ make valgrind
+        glibc-devel      libstdc++-devel      zlib-devel
+        glibc-devel.i386 libstdc++-devel.i386 zlib-devel.i386;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^CentOS6- ]]; then
+      time yum install -y
+        coreutils curl diffutils grep gzip sed
+        bzip2 file findutils git perl tar wget which xz
+        gcc gcc-c++ make valgrind
+        glibc-devel      libstdc++-devel      zlib-devel
+        glibc-devel.i686 libstdc++-devel.i686 zlib-devel.i686;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^CentOS7- ]]; then
+      time yum install -y
+        coreutils curl diffutils grep gzip sed
+        bzip2 file findutils git perl tar wget which xz
+        clang gcc gcc-c++ make valgrind
+        glibc-devel      libasan      libstdc++-devel      zlib-devel
+        glibc-devel.i686 libasan.i686 libstdc++-devel.i686 zlib-devel.i686;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^Fedora ]]; then
       time dnf install -y --best --allowerasing
         coreutils curl diffutils grep gzip sed
         bzip2 file findutils git perl tar wget which xz
@@ -17,33 +57,92 @@ before_script:
         glibc-devel.i686 libasan.i686 libstdc++-devel.i686 libubsan.i686 zlib-devel.i686;
     fi
   -
-    if egrep -q '^PRETTY_NAME="?Ubuntu' /etc/os-release; then
-      export DEBIAN_FRONTEND=noninteractive;
-      time dpkg -l;
-      time apt-get -yq update;
+    if [[ $CI_BUILD_NAME =~ ^(Debian|Ubuntu) ]]; then
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes upgrade;
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes install
         build-essential ca-certificates curl file git wget xz-utils zlib1g-dev;
     fi
   -
-    if egrep -q '^PRETTY_NAME="?Ubuntu 16\.04' /etc/os-release; then
-      dpkg --add-architecture i386;
-      time apt-get -yq update;
+    if [[ $CI_BUILD_NAME =~ ^Ubuntu1604-cross ]]; then
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes install
         crossbuild-essential-arm64 crossbuild-essential-armel crossbuild-essential-armhf
         crossbuild-essential-powerpc crossbuild-essential-ppc64el crossbuild-essential-s390x
-        qemu wine;
+        binutils-mingw-w64-i686 g++-mingw-w64-i686
+        binutils-mingw-w64-x86-64 g++-mingw-w64-x86-64
+        binutils-mips-linux-gnu g++-mips-linux-gnu
+        binutils-mipsel-linux-gnu g++-mipsel-linux-gnu
+        binutils-powerpc-linux-gnu g++-powerpc-linux-gnu
+        binutils-powerpc64-linux-gnu g++-powerpc64-linux-gnu
+        qemu-user qemu-utils wine;
     fi
   - umask 022; mkdir -p ../deps ../build/gitlab
   - time git submodule update --init --recursive
-  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -x --use-compress-program=xz
+  - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -x --use-compress-program=xz
   - cd ../deps && time git clone https://github.com/upx/upx-testsuite
+  -
+    if [[ $CI_BUILD_NAME =~ ^Fedora ]]; then
+      time dnf install -y --best --allowerasing python;
+      cd ../deps && time wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -x --use-compress-program=xz;
+    fi
   - cd $CI_PROJECT_DIR; pwd
 
-Fedora23-clang+gcc-m32+m64:
+CentOS5-gcc-m32+64: # gcc-4.1
+  image: centos:5
+  script:
+  # patch src/Makefile for gcc-4.1
+  - perl -i -p -e 's/ -Wmissing-declarations / /; s/ -Wvla / /;' src/Makefile
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+CentOS6-gcc-m32+64: # gcc-4.4
+  image: centos:6
+  script:
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+CentOS7-clang+gcc-m32+64: # clang-3.4, gcc-4.8
+  image: centos:7
+  script:
+  - time C=clang-m32            bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=clang-m64            bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=clang-m32            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=clang-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Debian7-gcc-m64: # gcc-4.7
+  image: debian:7
+  script:
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Debian8-gcc-m64: # gcc-4.9
+  image: debian:8
+  script:
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Fedora23-clang+gcc-m32+m64: # clang-3.7, gcc-5
   image: fedora:23
   script:
+  - time X=rebuild-stubs        bash ./.github/travis_build.sh
   - time C=clang-m32            bash ./.github/travis_build.sh
   - time C=gcc-m32              bash ./.github/travis_build.sh
   - time C=clang-m64            bash ./.github/travis_build.sh
@@ -58,9 +157,10 @@ Fedora23-clang+gcc-m32+m64:
   tags: [ shared ]
   except: [ tags ]
 
-Fedora24-clang+gcc-m32+m64:
+Fedora24-clang+gcc-m32+m64: # clang-3.8, gcc-6
   image: fedora:24
   script:
+  - time X=rebuild-stubs        bash ./.github/travis_build.sh
   - time C=clang-m32            bash ./.github/travis_build.sh
   - time C=gcc-m32              bash ./.github/travis_build.sh
   - time C=clang-m64            bash ./.github/travis_build.sh
@@ -75,7 +175,25 @@ Fedora24-clang+gcc-m32+m64:
   tags: [ shared ]
   except: [ tags ]
 
-Ubuntu1204-gcc-m64:
+Fedora25-clang+gcc-m32+m64: # clang-3.8, gcc-6
+  image: fedora:25
+  script:
+  - time X=rebuild-stubs        bash ./.github/travis_build.sh
+  - time C=clang-m32            bash ./.github/travis_build.sh
+  - time C=gcc-m32              bash ./.github/travis_build.sh
+  - time C=clang-m64            bash ./.github/travis_build.sh
+  - time C=gcc-m64              bash ./.github/travis_build.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_build.sh
+  - time C=clang-m32            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m32              bash ./.github/travis_testsuite_1.sh
+  - time C=clang-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   B=sanitize bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-m64   T=valgrind bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Ubuntu1204-gcc-m64: # gcc-4.6
   image: ubuntu:12.04
   script:
   - time C=gcc-m64              bash ./.github/travis_build.sh
@@ -83,7 +201,7 @@ Ubuntu1204-gcc-m64:
   tags: [ shared ]
   except: [ tags ]
 
-Ubuntu1404-gcc-m64:
+Ubuntu1404-gcc-m64: # gcc-4.8
   image: ubuntu:14.04
   script:
   - time C=gcc-m64              bash ./.github/travis_build.sh
@@ -91,11 +209,39 @@ Ubuntu1404-gcc-m64:
   tags: [ shared ]
   except: [ tags ]
 
-Ubuntu1604-gcc-m64:
+Ubuntu1604-gcc-m64: # gcc-5
   image: ubuntu:16.04
   script:
   - time C=gcc-m64              bash ./.github/travis_build.sh
   - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
+Ubuntu1604-cross:
+  image: ubuntu:16.04
+  script:
+  - time CROSS=aarch64-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=arm-linux-gnueabi     C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=arm-linux-gnueabihf   C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=i686-w64-mingw32      C=gcc-5 T=wine bash ./.github/travis_build.sh
+  - time CROSS=mips-linux-gnu        C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=mipsel-linux-gnu      C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=powerpc-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=powerpc64-linux-gnu   C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=powerpc64le-linux-gnu C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=s390x-linux-gnu       C=gcc-5 T=qemu bash ./.github/travis_build.sh
+  - time CROSS=x86_64-w64-mingw32    C=gcc-5 T=wine bash ./.github/travis_build.sh
+  - time CROSS=aarch64-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+  - time CROSS=arm-linux-gnueabi     C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+  - time CROSS=arm-linux-gnueabihf   C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=i686-w64-mingw32      C=gcc-5 T=wine bash ./.github/travis_testsuite_1.sh
+# - time CROSS=mips-linux-gnu        C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+  - time CROSS=mipsel-linux-gnu      C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=powerpc-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=powerpc64-linux-gnu   C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=powerpc64le-linux-gnu C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=s390x-linux-gnu       C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
+# - time CROSS=x86_64-w64-mingw32    C=gcc-5 T=wine bash ./.github/travis_testsuite_1.sh
   tags: [ shared ]
   except: [ tags ]
 

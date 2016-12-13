@@ -1,4 +1,4 @@
 [submodule "src/lzma-sdk"]
-	path = src/lzma-sdk
-	url = https://github.com/upx/upx-lzma-sdk.git
-	branch = master
+    path = src/lzma-sdk
+    url = https://github.com/upx/upx-lzma-sdk.git
+    branch = master

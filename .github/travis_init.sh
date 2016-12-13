@@ -43,42 +43,79 @@ CC=false CXX=false SCAN_BUILD=false
 AR=ar SIZE=size
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     BUILD_LOCAL_ZLIB=1
+    if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
+        export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
+    fi
     upx_exeext=.exe
     # dir c:\cygwin
     case $BM_C in
         gcc-m32 | gcc-4.9-m32)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
             x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
         gcc-m64 | gcc-4.9-m64)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
             x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         msvc | msvc-*)
             AR="link -lib"; CC="cl"; CXX="cl" ;; # standard system compiler
     esac
 fi # APPVEYOR_JOB_ID
-if [[ -n $TRAVIS_JOB_ID ]]; then # TODO: should check for Ubuntu and not for Travis
 if [[ -n $BM_CROSS ]]; then
     BUILD_LOCAL_ZLIB=1
-    case $BM_CROSS-$BM_C in
-        arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L/usr/arm-linux-gnueabi"
-            x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
-        arm-linux-gnueabihf-gcc | arm-linux-gnueabihf-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L/usr/arm-linux-gnueabihf"
-            x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
-        i[36]86-w64-mingw32-gcc | i[36]86-w64-mingw32-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_wine ]] && upx_wine="wine"
-            x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
-        x86_64-w64-mingw32-gcc | x86_64-w64-mingw32-gcc-4.6)
-            export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
-            [[ -z $upx_wine ]] && upx_wine="wine"
-            x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
-    esac
-fi
-fi # TRAVIS_JOB_ID
+    if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
+        export upx_EXTRA_LDFLAGS="-static-libgcc -static-libstdc++"
+    fi
+    cat /etc/os-release || true
+    if egrep -q '^PRETTY_NAME="?Ubuntu .*12\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            arm-linux-gnueabi-gcc | arm-linux-gnueabi-gcc-4.6)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabi"
+                x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
+            arm-linux-gnueabihf-gcc | arm-linux-gnueabihf-gcc-4.6)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
+                x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
+            i[36]86-w64-mingw32-gcc | i[36]86-w64-mingw32-gcc-4.6)
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
+            x86_64-w64-mingw32-gcc | x86_64-w64-mingw32-gcc-4.6)
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
+    elif egrep -q '^PRETTY_NAME="?Ubuntu 16\.04' /etc/os-release; then
+        case $BM_CROSS-$BM_C in
+            aarch64-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-aarch64 -L /usr/aarch64-linux-gnu"
+                x=aarch64-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            arm-linux-gnueabi-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabi"
+                x=arm-linux-gnueabi; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            arm-linux-gnueabihf-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
+                x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            i[36]86-w64-mingw32-gcc-5)
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
+            mips-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-mips -L /usr/mips-linux-gnu"
+                x=mips-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            mipsel-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-mipsel -L /usr/mipsel-linux-gnu"
+                x=mipsel-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc -L /usr/powerpc-linux-gnu"
+                x=powerpc-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc64-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc64 -L /usr/powerpc64-linux-gnu"
+                x=powerpc64-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            powerpc64le-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-ppc64le -L /usr/powerpc64le-linux-gnu"
+                x=powerpc64le-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            s390x-linux-gnu-gcc-5)
+                [[ -z $upx_qemu ]] && upx_qemu="qemu-s390x -L /usr/s390x-linux-gnu"
+                x=s390x-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
+            x86_64-w64-mingw32-gcc-5)
+                [[ -z $upx_wine ]] && upx_wine="wine"
+                x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
+        esac
+    fi
+fi # BM_CROSS
 if [[ "$CC" == "false" ]]; then # generic
 if [[ -z $BM_CROSS ]]; then
     case $BM_C in
@@ -136,7 +173,7 @@ if [[ -z $toptop_builddir ]]; then
     unset d subdir dd
 fi
 [[ -z $toptop_builddir ]] && toptop_builddir=$(readlink -mn -- ./build)
-[[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/$BM_C/$BM_B")
+[[ -z $toptop_bdir ]] && toptop_bdir=$(readlink -mn -- "$toptop_builddir/${BM_CROSS:+$BM_CROSS-}$BM_C/$BM_B")
 [[ -z $upx_BUILDDIR ]] && upx_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx")
 [[ -z $ucl_BUILDDIR ]] && ucl_BUILDDIR=$(readlink -mn -- "$toptop_bdir/ucl-1.03")
 [[ -z $upx_testsuite_BUILDDIR ]] && upx_testsuite_BUILDDIR=$(readlink -mn -- "$toptop_bdir/upx-testsuite")
