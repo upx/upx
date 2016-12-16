@@ -1070,8 +1070,8 @@ void PackMachBase<T>::pack3(OutputFile *fo, Filter &ft)  // append loader
     len += sizeof(disp);
 
     char page[~PAGE_MASK]; memset(page, 0, sizeof(page));
-    fo->write(page, ~PAGE_MASK & -len);
-    len += ~PAGE_MASK & -len;
+    fo->write(page, ~PAGE_MASK & (0u - len));
+    len += ~PAGE_MASK & (0u - len);
     segLINK.fileoff = len;
 
     threado_setPC(len + segTEXT.vmaddr);  /* entry address */
@@ -1716,7 +1716,7 @@ int PackMachBase<T>::canUnpack()
             // Emulate the code
             if (0xe8==b[0] && disp < bufsize
             &&  0x5d==b[5+disp] && 0xe8==b[6+disp]) {
-                unsigned disp2 = - *(TE32 const *)&b[7+disp];
+                unsigned disp2 = 0u - *(TE32 const *)&b[7+disp];
                 if (disp2 < (12+disp) && 0x5b==b[11+disp-disp2]) {
                     struct b_info const *bptr = (struct b_info const *)&b[11+disp];
                     // This is the folded stub.
