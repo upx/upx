@@ -123,8 +123,9 @@
         S_16BYTE_LITERALS,
         S_DTRACE_DOF
     };
+    static const unsigned S_ATTR_PURE_INSTRUCTIONS = 0x80000000;
     enum { // section flags (high 24 bits)
-        S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
+        //S_ATTR_PURE_INSTRUCTIONS = 0x80000000,
         S_ATTR_NO_TOC            = 0x40000000,
         S_ATTR_STRIP_STATIC_SYMS = 0x20000000,
         S_ATTR_NO_DEAD_STRIP     = 0x10000000,

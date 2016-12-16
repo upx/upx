@@ -142,7 +142,7 @@ void PackW64Pep::buildLoader(const Filter *ft)
                   "RELOC64J",
                   NULL
                  );
-        if (0)
+        if __acc_cte(0)
         {
             addLoader(big_relocs&6 ? "PERLOHI0" : "",
                       big_relocs&4 ? "PERELLO0" : "",

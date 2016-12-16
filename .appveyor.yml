@@ -19,7 +19,7 @@ environment:
 
 init:
   - git config --global core.autocrlf input
-  - where bash & where cat & where curl & where file & where git & where gzip & where readlink & where sed & where sha256sum & where tar
+  - where bash & where cat & where cp & where curl & where file & where git & where gzip & where mkdir & where mv & where readlink & where rm & where rmdir & where sed & where sha256sum & where tar
 # - bash --version & git --version & sed --version & tar --version
   - git --version & bash --version
 # - dir "c:\Program Files\Git\usr\bin"

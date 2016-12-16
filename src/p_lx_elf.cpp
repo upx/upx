@@ -3373,7 +3373,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         }
     }
     bool const is_shlib = 0;  // XXX: THIS IS BROKEN; see 32-bit ::unpack
-    if (is_shlib
+    if __acc_cte(is_shlib
     ||  ((unsigned)(get_te64(&ehdri.e_entry) - load_va) + up4(lsize) +
                 ph.getPackHeaderSize() + sizeof(overlay_offset))
             < up4(file_size)) {

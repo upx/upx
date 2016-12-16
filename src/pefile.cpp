@@ -393,7 +393,7 @@ void PeFile32::processRelocs() // pass1
     for (ic = 1; ic <= 3; ic++)
     {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
-        unsigned prev = ~0;
+        unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
             if (fix[ic][kc] != prev)
@@ -491,7 +491,7 @@ void PeFile64::processRelocs() // pass1
     for (ic = 1; ic <= 15; ic++)
     {
         qsort(fix[ic], xcounts[ic], 4, le32_compare);
-        unsigned prev = ~0;
+        unsigned prev = ~0u;
         unsigned jc = 0;
         for (unsigned kc = 0; kc < xcounts[ic]; kc++)
             if (fix[ic][kc] != prev)
@@ -1341,7 +1341,7 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
         return;
     // add new relocation entries
 
-    if (tls_handler_offset_reloc > 0)
+    if __acc_cte(tls_handler_offset_reloc > 0)
         rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
 
     unsigned ic;
@@ -1808,7 +1808,7 @@ static bool match(unsigned itype, const unsigned char *ntype,
     };
 
     // FIXME this comparison is not too exact
-    while (1)
+    for (;;)
     {
         char const *delim1 = strchr(keep, '/');
         char const *delim2 = strchr(keep, ',');

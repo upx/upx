@@ -59,7 +59,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER(CHAR_MAX == 255) // -funsigned-char
 ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 
 #if (ACC_CC_MSC)
+#  pragma warning(error: 4127)
+#  pragma warning(error: 4146)
 #  pragma warning(error: 4319)
+#  pragma warning(error: 4805)
+#  pragma warning(disable: 4244) // -Wconversion
+#  pragma warning(disable: 4267) // -Wconversion
 #endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)

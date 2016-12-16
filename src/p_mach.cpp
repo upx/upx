@@ -563,12 +563,11 @@ PackMachBase<T>::compare_segment_command(void const *const aa, void const *const
 template <class T>
 void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
 {
-    Mach_main_command cmdMAIN;
     // offset of p_info in compressed file
     overlay_offset = sizeof(mhdro) + sizeof(segZERO)
         + sizeof(segXHDR) + sizeof(secXHDR)
         + sizeof(segTEXT) + sizeof(secTEXT)
-        + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(cmdMAIN)
+        + sizeof(cmdUUID) + sizeof(cmdSRCVER) + sizeof(cmdVERMIN) + sizeof(Mach_main_command)
         + sizeof(Mach_dyld_info_only_command) + sizeof(Mach_dysymtab_command)
         + sizeof(Mach_load_dylinker_command) + sizeof(Mach_load_dylib_command)
         + sizeof(Mach_function_starts_command) + sizeof(Mach_data_in_code_command)
@@ -1377,7 +1376,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     segZERO.cmdsize = sizeof(segZERO);
     strncpy((char *)segZERO.segname, "__PAGEZERO", sizeof(segZERO.segname));
     segZERO.vmsize = PAGE_SIZE;
-    if (sizeof(segZERO.vmsize) == 8
+    if __acc_cte(sizeof(segZERO.vmsize) == 8
     && mhdro.filetype == Mach_header::MH_EXECUTE
     && mhdro.cputype == Mach_header::CPU_TYPE_X86_64) {
         segZERO.vmsize <<= 20;  // (1ul<<32)
