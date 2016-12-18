@@ -516,7 +516,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
 void
 PackLinuxElf::addStubEntrySections(Filter const *)
 {
-    int all_pages = opt->o_unix.unmap_all_pages | is_big;
+    bool all_pages = opt->o_unix.unmap_all_pages | is_big;
     addLoader("ELFMAINX", NULL);
     if (hasLoaderSection("ELFMAINXu")) {
             // brk() trouble if static
