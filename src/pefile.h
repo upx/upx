@@ -63,7 +63,7 @@ protected:
                                          unsigned ih_codebase);
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               Reloc &rel, unsigned s1addr) = 0;
+                               unsigned s1addr) = 0;
     virtual void addNewRelocations(Reloc &, unsigned) {}
     void callProcessRelocs(Reloc &rel, unsigned &ic);
     void callProcessResources(Resource &res, unsigned &ic);

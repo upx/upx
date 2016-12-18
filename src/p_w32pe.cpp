@@ -189,7 +189,7 @@ bool PackW32Pe::handleForceOption()
 
 void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
                               unsigned sizeof_oh, unsigned ic,
-                              Reloc &, unsigned s1addr)
+                              unsigned s1addr)
 {
     const unsigned myimport = ncsection + soresources - rvamin;
 
@@ -269,12 +269,6 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
 void PackW32Pe::addNewRelocations(Reloc &rel, unsigned)
 {
     rel.add(linker->getSymbolOffset("PEMAIN01") + 2, 3);
-    if (use_tls_callbacks)
-    {
-        tls_handler_offset = linker->getSymbolOffset("PETLSC2");
-        //add relocation entry for TLS callback handler
-        rel.add(tls_handler_offset + 4, 3);
-    }
 }
 
 void PackW32Pe::setOhDataBase(const pe_section_t *osection)

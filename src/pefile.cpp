@@ -1229,6 +1229,7 @@ struct PeFile::tls_traits<LE32>
     static const unsigned cb_size = 4;
     typedef unsigned cb_value_t;
     static const unsigned reloc_type = 3;
+    static const int tls_handler_offset_reloc = 4;
 };
 
 template <>
@@ -1246,6 +1247,7 @@ struct PeFile::tls_traits<LE64>
     static const unsigned cb_size = 8;
     typedef upx_uint64_t cb_value_t;
     static const unsigned reloc_type = 10;
+    static const int tls_handler_offset_reloc = -1;  // no need to relocate
 };
 
 template <typename LEXX>
@@ -1333,10 +1335,15 @@ void PeFile::processTls2(Reloc *rel,const Interval *iv,unsigned newaddr,
     typedef typename tls_traits<LEXX>::cb_value_t cb_value_t;
     const unsigned cb_size = tls_traits<LEXX>::cb_size;
     const unsigned reloc_type = tls_traits<LEXX>::reloc_type;
+    const int tls_handler_offset_reloc = tls_traits<LEXX>::tls_handler_offset_reloc;
 
     if (sotls == 0)
         return;
     // add new relocation entries
+
+    if (tls_handler_offset_reloc > 0)
+        rel->add(tls_handler_offset + tls_handler_offset_reloc, reloc_type);
+
     unsigned ic;
     //NEW: if TLS callbacks are used, relocate the VA of the callback chain, too - Stefan Widmann
     for (ic = 0; ic < (use_tls_callbacks ? 4 * cb_size : 3 * cb_size); ic += cb_size)
@@ -2328,6 +2335,10 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
 
     // tls & loadconf are put into section 1
     ic = s1addr + s1size - sotls - soloadconf;
+
+    if (use_tls_callbacks)
+        tls_handler_offset = linker->getSymbolOffset("PETLSC2") + upxsection;
+
     processTls(&rel,&tlsiv,ic);
     ODADDR(PEDIR_TLS) = sotls ? ic : 0;
     ODSIZE(PEDIR_TLS) = sotls ? (sizeof(LEXX) == 4 ? 0x18 : 0x28) : 0;
@@ -2370,7 +2381,7 @@ void PeFile::pack0(OutputFile *fo, ht &ih, ht &oh,
         callProcessResources(res, ic = res_start);
 
     defineSymbols(ncsection, upxsection, sizeof(oh),
-                  identsize - identsplit, rel, s1addr);
+                  identsize - identsplit, s1addr);
     defineFilterSymbols(&ft);
     relocateLoader();
     const unsigned lsize = getLoaderSize();

@@ -49,7 +49,7 @@ public:
     virtual bool handleForceOption();
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               Reloc &rel, unsigned s1addr);
+                               unsigned s1addr);
     virtual void setOhDataBase(const pe_section_t *) {}
     virtual void setOhHeaderSize(const pe_section_t *osection);
     virtual void pack(OutputFile *fo);

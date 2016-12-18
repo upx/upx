@@ -53,7 +53,7 @@ public:
                                          unsigned ih_codebase);
     virtual void defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned isize_isplit,
-                               Reloc &rel, unsigned s1addr);
+                               unsigned s1addr);
     virtual void addNewRelocations(Reloc &, unsigned upxsection);
     virtual unsigned getProcessImportParam(unsigned upxsection);
     virtual void setOhDataBase(const pe_section_t *osection);

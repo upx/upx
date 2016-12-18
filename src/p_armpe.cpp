@@ -228,7 +228,7 @@ unsigned PackArmPe::getProcessImportParam(unsigned upxsection)
 }
 
 void PackArmPe::defineSymbols(unsigned ncsection, unsigned, unsigned,
-                              unsigned ic, Reloc &, unsigned s1addr)
+                              unsigned ic, unsigned s1addr)
 {
     const unsigned onam = ncsection + soxrelocs + ih.imagebase;
     linker->defineSymbol("start_of_dll_names", onam);

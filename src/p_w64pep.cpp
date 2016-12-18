@@ -188,7 +188,7 @@ bool PackW64Pep::handleForceOption()
 
 void PackW64Pep::defineSymbols(unsigned ncsection, unsigned upxsection,
                                unsigned sizeof_oh, unsigned ic,
-                               Reloc &, unsigned s1addr)
+                               unsigned s1addr)
 {
     const unsigned myimport = ncsection + soresources - rvamin;
 
