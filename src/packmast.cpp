@@ -219,11 +219,6 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if ((p = func(new PackVmlinuzARMEL(f), user)) != NULL)
         return p;
     delete p; p = NULL;
-#if 0
-    if ((p = func(new PackElks8086(f), user)) != NULL)
-        return p;
-    delete p; p = NULL;
-#endif
 
     //
     // linux
