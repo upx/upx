@@ -40,7 +40,6 @@
 #include "p_unix.h"
 #include "p_lx_exc.h"
 #include "p_lx_elf.h"
-//#include "p_lx_sep.h"
 #include "p_lx_sh.h"
 #include "p_lx_interp.h"
 #include "p_sys.h"
@@ -225,14 +224,6 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     if (!o->o_unix.force_execve)
     {
-#if 0
-        if (o->unix.script_name)
-        {
-            if ((p = func(new PackLinuxI386sep(f), user)) != NULL)
-                return p;
-            delete p; p = NULL;
-        }
-#endif
         if (o->o_unix.use_ptinterp) {
             if ((p = func(new PackLinuxElf32x86interp(f), user)) != NULL)
                 return p;
