@@ -190,30 +190,6 @@ protected:
 };
 
 
-/*************************************************************************
-// solaris/sparc
-**************************************************************************/
-
-#if 0
-class PackSolarisSparc : public PackUnixBe32
-{
-    typedef PackUnixBe32 super;
-public:
-    PackSolarisSparc(InputFile *f) : super(f) { }
-    virtual int getFormat() const { return UPX_F_SOLARIS_SPARC; }
-    virtual const char *getName() const { return "solaris/sparc"; }
-
-    virtual bool canPack();
-
-protected:
-    virtual upx_byte *getLoader() const;
-    virtual int getLoaderSize() const;
-
-    virtual void patchLoader();
-};
-#endif /* #if 0 */
-
-
 #endif /* already included */
 
 /* vim:set ts=4 sw=4 et: */

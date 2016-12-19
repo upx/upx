@@ -419,7 +419,7 @@ private:
 #define UPX_F_DYLIB_PPC64LE     41
 
 #define UPX_F_ATARI_TOS         129
-#define UPX_F_SOLARIS_SPARC     130
+#define UPX_F_SOLARIS_SPARC     130             // NOT IMPLEMENTED
 #define UPX_F_MACH_PPC32        131
 #define UPX_F_LINUX_ELFPPC32    132
 #define UPX_F_LINUX_ELF32_ARMEB 133
