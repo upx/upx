@@ -1,5 +1,5 @@
 #
-# UPX doc Makefile - needs GNU make 3.80 or better
+# UPX doc Makefile - needs GNU make 3.81 or better
 #
 
 MAKEFLAGS += -rR
@@ -11,14 +11,6 @@ comma := ,
 empty :=
 space := $(empty) $(empty)
 tab   := $(empty)	$(empty)
-
-# update $PATH for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
-export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
-endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
-export PATH := $(HOME)/bin/bin-upx:$(PATH)
-endif
 
 
 # /***********************************************************************
