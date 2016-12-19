@@ -376,18 +376,18 @@ private:
 #define UPX_F_DOS_EXE           3
 #define UPX_F_DJGPP2_COFF       4
 #define UPX_F_WATCOM_LE         5
-#define UPX_F_VXD_LE            6
-#define UPX_F_DOS_EXEH          7               /* OBSOLETE */
+#define UPX_F_VXD_LE            6               // NOT IMPLEMENTED
+#define UPX_F_DOS_EXEH          7               // OBSOLETE
 #define UPX_F_TMT_ADAM          8
 #define UPX_F_WIN32_PE          9
 #define UPX_F_LINUX_i386        10
-#define UPX_F_WIN16_NE          11
+#define UPX_F_WIN16_NE          11              // NOT IMPLEMENTED
 #define UPX_F_LINUX_ELF_i386    12
 #define UPX_F_LINUX_SEP_i386    13
 #define UPX_F_LINUX_SH_i386     14
 #define UPX_F_VMLINUZ_i386      15
 #define UPX_F_BVMLINUZ_i386     16
-#define UPX_F_ELKS_8086         17
+#define UPX_F_ELKS_8086         17              // NOT IMPLEMENTED
 #define UPX_F_PS1_EXE           18
 #define UPX_F_VMLINUX_i386      19
 #define UPX_F_LINUX_ELFI_i386   20
@@ -417,8 +417,6 @@ private:
 #define UPX_F_LINUX_ELFPPC64LE  39
 #define UPX_F_VMLINUX_PPC64LE   40
 #define UPX_F_DYLIB_PPC64LE     41
-
-#define UPX_F_PLAIN_TEXT        127             // FIXME: what is this ??
 
 #define UPX_F_ATARI_TOS         129
 #define UPX_F_SOLARIS_SPARC     130
