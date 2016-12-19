@@ -84,7 +84,6 @@ static options_t global_options;
 options_t *opt = &global_options;
 
 static int done_output_name = 0;
-static int done_script_name = 0;
 
 
 const char *argv0 = "";
@@ -364,29 +363,6 @@ static void set_output_name(const char *n, bool allow_m)
     }
     opt->output_name = n;
     done_output_name++;
-}
-
-static void set_script_name(const char *n, bool allow_m)
-{
-#if 1
-    if (done_script_name > 0)
-    {
-        fprintf(stderr,"%s: option '--script' more than once given\n",argv0);
-        e_usage();
-    }
-#endif
-    if (!n || !n[0] || (!allow_m && n[0] == '-'))
-    {
-        fprintf(stderr,"%s: missing script name\n",argv0);
-        e_usage();
-    }
-    if (strlen(n) >= (size_t)opt->o_unix.SCRIPT_MAX - 3)
-    {
-        fprintf(stderr,"%s: script name too long\n",argv0);
-        e_usage();
-    }
-    opt->o_unix.script_name = n;
-    done_script_name++;
 }
 
 
@@ -850,11 +826,6 @@ static int do_option(int optc, const char *arg)
     case 661:
         opt->o_unix.force_execve = true;
         break;
-    case 662:
-        opt->o_unix.script_name = "/usr/local/lib/upx/upxX";
-        if (mfx_optarg && mfx_optarg[0])
-            set_script_name(mfx_optarg, 1);
-        break;
     case 663:
         opt->o_unix.is_ptinterp = true;
         break;
@@ -1032,9 +1003,6 @@ static const struct mfx_option longopts[] =
     // unix
     {"blocksize",        0x31, 0, 660},     // --blocksize=
     {"force-execve",     0x10, 0, 661},     // force linux/386 execve format
-#if 0
-    {"script",           0x31, 0, 662},     // --script=
-#endif
     {"is_ptinterp",      0x10, 0, 663},     // linux/elf386 PT_INTERP program
     {"use_ptinterp",     0x10, 0, 664},     // linux/elf386 PT_INTERP program
     {"make_ptinterp",    0x10, 0, 665},     // linux/elf386 PT_INTERP program
