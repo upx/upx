@@ -48,7 +48,6 @@
 #include "p_wcle.h"
 #include "p_tmt.h"
 #include "p_vxd.h"
-#include "p_w16ne.h"
 #include "p_w32pe.h"
 #include "p_w64pep.h"
 #include "p_vmlinz.h"
@@ -172,11 +171,6 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         delete p; p = NULL;
 #if 0
         if ((p = func(new PackVxd(f), user)) != NULL)
-            return p;
-        delete p; p = NULL;
-#endif
-#if 0
-        if ((p = func(new PackW16Ne(f), user)) != NULL)
             return p;
         delete p; p = NULL;
 #endif
