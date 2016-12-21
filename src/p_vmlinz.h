@@ -150,7 +150,7 @@ protected:
     virtual void readKernel();
 
     virtual void buildLoader(const Filter *ft);
-    virtual unsigned write_vmlinuz_head(OutputFile *const fo);
+    virtual unsigned write_vmlinuz_head(OutputFile *fo);
     virtual void defineDecompressorSymbols();
     virtual Linker* newLinker() const;
 

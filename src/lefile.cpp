@@ -338,6 +338,7 @@ void LeFile::countFixups(unsigned *counts) const
                 break;
             case 6:       // 16:32 pointer
                 counts[o] += 9;
+                // fall through
             case 7:       // 32-bit offset
                 counts[fix[4]-1] += 4;
                 fix += (fix[1] & 0x10) ? 9 : 7;

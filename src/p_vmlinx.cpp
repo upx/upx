@@ -957,8 +957,8 @@ static const
 #include "stub/powerpc-linux.kernel.vmlinux-head.h"
 
 unsigned PackVmlinuxI386::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // COMPRESSED_LENGTH
@@ -972,8 +972,8 @@ unsigned PackVmlinuxI386::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxAMD64::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // COMPRESSED_LENGTH
@@ -1038,8 +1038,8 @@ void PackVmlinuxAMD64::defineDecompressorSymbols()
 }
 
 unsigned PackVmlinuxARMEL::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // First word from vmlinux-head.S
@@ -1060,8 +1060,8 @@ unsigned PackVmlinuxARMEL::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxARMEB::write_vmlinux_head(
-    OutputFile *const fo,
-    Shdr *const stxt
+    OutputFile *fo,
+    Shdr *stxt
 )
 {
     // First word from vmlinux-head.S
@@ -1082,8 +1082,8 @@ unsigned PackVmlinuxARMEB::write_vmlinux_head(
 }
 
 unsigned PackVmlinuxPPC32::write_vmlinux_head(
-    OutputFile * /*const fo*/,
-    Shdr * /*const stxt*/
+    OutputFile * /*fo*/,
+    Shdr * /*stxt*/
 )
 {
     return 0;

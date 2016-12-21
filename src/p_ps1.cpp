@@ -709,7 +709,7 @@ void PackPs1::unpack(OutputFile *fo)
 {
     // restore orig exec hdr
     memcpy(&oh, &ih, sizeof(ih));
-    memcpy(&oh.epc, &bh, SZ_IH_BKUP);
+    memcpy((void *) &oh.epc, &bh, SZ_IH_BKUP);
 
     // check for removed sector alignment
     assert(oh.tx_len >= ph.u_len);

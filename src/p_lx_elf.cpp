@@ -3582,7 +3582,7 @@ Linker* PackLinuxElf32armBe::newLinker() const
 }
 
 unsigned
-PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
+PackLinuxElf32::elf_get_offset_from_address(unsigned addr) const
 {
     Elf32_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -3596,7 +3596,7 @@ PackLinuxElf32::elf_get_offset_from_address(unsigned const addr) const
 }
 
 Elf32_Dyn const *
-PackLinuxElf32::elf_has_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_has_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3607,7 +3607,7 @@ PackLinuxElf32::elf_has_dynamic(unsigned int const key) const
 }
 
 void const *
-PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_find_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3622,7 +3622,7 @@ PackLinuxElf32::elf_find_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
+PackLinuxElf32::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf32_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3633,7 +3633,7 @@ PackLinuxElf32::elf_unsigned_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t const addr) const
+PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t addr) const
 {
     Elf64_Phdr const *phdr = phdri;
     int j = e_phnum;
@@ -3647,7 +3647,7 @@ PackLinuxElf64::elf_get_offset_from_address(upx_uint64_t const addr) const
 }
 
 Elf64_Dyn const *
-PackLinuxElf64::elf_has_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_has_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3658,7 +3658,7 @@ PackLinuxElf64::elf_has_dynamic(unsigned int const key) const
 }
 
 void const *
-PackLinuxElf64::elf_find_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_find_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)
@@ -3673,7 +3673,7 @@ PackLinuxElf64::elf_find_dynamic(unsigned int const key) const
 }
 
 upx_uint64_t
-PackLinuxElf64::elf_unsigned_dynamic(unsigned int const key) const
+PackLinuxElf64::elf_unsigned_dynamic(unsigned int key) const
 {
     Elf64_Dyn const *dynp= dynseg;
     if (dynp)

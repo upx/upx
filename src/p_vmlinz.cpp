@@ -964,7 +964,7 @@ void PackVmlinuzARMEL::defineDecompressorSymbols()
     linker->defineSymbol("METHOD", ph.method);
 }
 
-unsigned PackVmlinuzARMEL::write_vmlinuz_head(OutputFile *const fo)
+unsigned PackVmlinuzARMEL::write_vmlinuz_head(OutputFile *fo)
 { // First word from vmlinuz-head.S
     fo->write(&stub_arm_v5a_linux_kernel_vmlinuz_head[0], 4);
 

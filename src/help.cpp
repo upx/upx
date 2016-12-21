@@ -140,8 +140,8 @@ static void show_all_packers(FILE *f, int verbose)
 {
     options_t o; o.reset();
     PackerNames pn; pn.o = &o;
-    PackMaster::visitAllPackers(pn.visit, NULL, &o, &pn);
-    qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), pn.cmp_fname);
+    PackMaster::visitAllPackers(PackerNames::visit, NULL, &o, &pn);
+    qsort(pn.names, pn.names_count, sizeof(PackerNames::Entry), PackerNames::cmp_fname);
     size_t pos = 0;
     for (size_t i = 0; i < pn.names_count; ++i)
     {

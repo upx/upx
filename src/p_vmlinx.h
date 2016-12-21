@@ -87,8 +87,8 @@ protected:
     virtual int canUnpack();  // bool, except -1: format known, but not packed
     virtual void unpack(OutputFile *fo);
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     ) = 0;
     static int __acc_cdecl_qsort compare_Phdr(void const *aa, void const *bb);
 };
@@ -113,8 +113,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
@@ -138,8 +138,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
@@ -162,8 +162,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
@@ -186,8 +186,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
@@ -210,8 +210,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
@@ -235,8 +235,8 @@ protected:
     virtual bool is_valid_e_entry(Addr);
     virtual bool has_valid_vmlinux_head();
     virtual unsigned write_vmlinux_head(
-        OutputFile *const fo,
-        Shdr *const stxt
+        OutputFile *fo,
+        Shdr *stxt
     );
 };
 
