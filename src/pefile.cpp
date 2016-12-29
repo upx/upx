@@ -1491,7 +1491,7 @@ PeFile::Resource::Resource(const upx_byte *p,
 
 PeFile::Resource::~Resource()
 {
-    if (root) destroy (root,0);
+    if (root) { destroy(root, 0); root = NULL; }
 }
 
 unsigned PeFile::Resource::dirsize() const
@@ -1594,9 +1594,10 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
 {
     if (level == 3)
     {
-        const res_data *node = (const res_data *) rnode;
+        const res_data *node = ACC_STATIC_CAST(const res_data *, rnode);
         ibufcheck(node, sizeof(*node));
         upx_rleaf *leaf = new upx_rleaf;
+        leaf->id = 0;
         leaf->name = NULL;
         leaf->parent = parent;
         leaf->next = head;
@@ -1608,13 +1609,14 @@ PeFile::Resource::upx_rnode *PeFile::Resource::convert(const void *rnode,
         return leaf;
     }
 
-    const res_dir *node = (const res_dir *) rnode;
+    const res_dir *node = ACC_STATIC_CAST(const res_dir *, rnode);
     ibufcheck(node, sizeof(*node));
     int ic = node->identr + node->namedentr;
     if (ic == 0)
         return NULL;
 
     upx_rbranch *branch = new upx_rbranch;
+    branch->id = 0;
     branch->name = NULL;
     branch->parent = parent;
     branch->nc = ic;
@@ -1703,17 +1705,21 @@ upx_byte *PeFile::Resource::build()
 void PeFile::Resource::destroy(upx_rnode *node,unsigned level)
 {
     xcheck(node);
-    delete [] node->name; node->name = NULL;
-    if (level != 3)
+    if (level == 3)
     {
-        upx_rbranch * const branch = (upx_rbranch *) node;
-        for (int ic = branch->nc; --ic >= 0; )
-            destroy(branch->children[ic],level + 1);
-        delete [] branch->children; branch->children = NULL;
-        delete static_cast<upx_rbranch *>(node);
+        upx_rleaf *leaf = ACC_STATIC_CAST(upx_rleaf *, node);
+        delete [] leaf->name; leaf->name = NULL;
+        delete leaf;
     }
     else
-        delete static_cast<upx_rleaf *>(node);
+    {
+        upx_rbranch *branch = ACC_STATIC_CAST(upx_rbranch *, node);
+        delete [] branch->name; branch->name = NULL;
+        for (int ic = branch->nc; --ic >= 0; )
+            destroy(branch->children[ic], level + 1);
+        delete [] branch->children; branch->children = NULL;
+        delete branch;
+    }
 }
 
 static void lame_print_unicode(const upx_byte *p)
