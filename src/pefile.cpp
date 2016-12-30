@@ -997,7 +997,7 @@ unsigned PeFile::processImports0(ord_mask_t ord_mask) // pass 1
                 unsigned len = strlen(ibuf + *tarr + 2) + 1;
                 memcpy(ppi,ibuf + *tarr + 2,len);
                 ppi += len;
-                names.add(*tarr,len + 2 + 1);
+                names.add(*tarr,len + 2);
             }
         ppi++;
 
