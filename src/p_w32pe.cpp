@@ -266,9 +266,9 @@ void PackW32Pe::defineSymbols(unsigned ncsection, unsigned upxsection,
     //linker->dumpSymbols();
 }
 
-void PackW32Pe::addNewRelocations(Reloc &rel, unsigned)
+void PackW32Pe::addNewRelocations(Reloc &rel, unsigned base)
 {
-    rel.add(linker->getSymbolOffset("PEMAIN01") + 2, 3);
+    rel.add(base + linker->getSymbolOffset("PEMAIN01") + 2, 3);
 }
 
 void PackW32Pe::setOhDataBase(const pe_section_t *osection)
