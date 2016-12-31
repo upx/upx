@@ -40,7 +40,7 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
         movq ptr,%rsi  # remember start of buffer
         jmp ckstart
 ckloop3:
-        movb (%rdi),%al; addq $1,%rdi
+        movb (%rdi),%al; incq %rdi
         cmpb $0x80,%al; jb ckloop2  # lo of 6-byte Jcc
         cmpb $0x8F,%al; ja ckloop2  # hi of 6-byte Jcc
         cmpb $0x0F,-2(%rdi); je ckmark  # prefix of 6-byte Jcc
@@ -48,20 +48,25 @@ ckloop2:
         subb $     0xE8,%al
         cmpb $0xE9-0xE8,%al; ja ckcount  # not JMP, not CALL
 ckmark:
-        cmpb %dl,(%rdi); jne ckcount  # not marked with cto8
-        movl (%rdi),%eax  # the marked, bswapped 32-bit displacement
-        andl $~0<<8,%eax  # clear the mark
-        bswap %eax
+        cmpq $4,%rcx; jb ckend  # peek only; not marked ==> do not consume
+        movl (%rdi),%eax  # (assume) marked, bswapped 32-bit displacement
+        subb %dl,%al; jne ckcount  # not marked with cto8
+        bswap %eax  # (0<<24) | d24
         subl %edi,%eax
         addl %esi,%eax
+        subq $4,%rcx  # consume; length was checked before the fetch
         stosl  # *%rdi++ = %eax;
-ckstart:
-        subq $4,%rcx
-        movb (%rdi),%al; addq $1,%rdi
-        decq %rcx; jnz ckloop2  # prefix cannot overlap previous displacement
-        jmp ckend
+
+/* We might do "extra" work checking opcodes that are too close to the end.
+   But not having 4 bytes for displacement is caught by ckmark,
+   and it is simpler to count exactly the bytes that are consumed.
+*/
+ckstart:  # %rcx might be 0 on fall-through from above
+        subq $1,%rcx; jb ckend  # 'dec' does not set Carry
+        movb (%rdi),%al; incq %rdi
+        jmp ckloop2  # 0x0F prefix must not overlap previous displacement
 ckcount:
-        decq %rcx; jnz ckloop3
+        subq $1,%rcx; jnb ckloop3  # 0x0F prefix is allowed
 ckend:
 #ifndef NO_METHOD_CHECK
         ret

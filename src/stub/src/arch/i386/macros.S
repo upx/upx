@@ -308,7 +308,7 @@ section         ctok32.00
                 jmps    ckstart
 ckloop3:
                 mov     al, [edi]
-                add     edi, 1
+                inc     edi
 section         ctok32.10                // Jcc only
                 cmp     al, 0x80        // lo of 6-byte Jcc
                 jb      ckloop2
@@ -322,15 +322,16 @@ section         ctok32.20
                 cmp     al, 0xE9 - 0xE8
                 jas     ckcount
 ckmark:
-                cmpb    [edi], \cto8
-                jnzs    ckcount
+                cmp     ecx, 4          // peek only: not marked ==> do not consume
+                jbs     ckend           // too close to the end
                 mov     eax, [edi]
+                subb    al, \cto8       // set al=0 when marked
+                jnes    ckcount         // not marked
 
-                shr     ax, 8
+                xchg    ah, al
                 rol     eax, 16
                 xchg    ah, al
-// above 3 instr are equivalent to the following 2 instr:
-//               mov     al, 0   ; clear cto8  [setup partial-write stall]
+// above 3 instr are equivalent to the following instr:
 //               bswap   eax     ; not on 386: need 486 and up
 
                 sub     eax, edi
@@ -341,18 +342,19 @@ ckmark:
                 add     eax, \addvalue
         .endif
         .endif
-                mov     [edi], eax
-                add     edi, 4
+                sub     ecx, 4          // consume; length was checked before fetch
+                stosd                   // *%edi++ = %eax
 ckstart:
-                sub     ecx, 4
 section         ctok32.30   // Jcc only
+                sub     ecx, 1
+                jbs     ckend
                 mov     al, [edi]
-                add     edi, 1
-                loop    ckloop2  // prefix cannot overlap previous displacement
+                inc     edi
+                jmps    ckloop2         // 0x0F prefix must not overlap previous displacement
 section         ctok32.40
 ckcount:
                 sub     ecx, 1
-                jgs     ckloop3
+                jnbs    ckloop3         // 0x0F prefix is allowed
 ckend:
 .endm
 
