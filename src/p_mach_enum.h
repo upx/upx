@@ -35,9 +35,13 @@
 
 #ifdef WANT_MACH_HEADER_ENUM  /*{*/
 #undef WANT_MACH_HEADER_ENUM
+# if 0
     enum { // magic
         MH_MAGIC = 0xfeedface
     };
+# else
+    static const unsigned MH_MAGIC = 0xfeedface;
+# endif
     enum { // cputype
         CPU_TYPE_I386      =          7,
         CPU_TYPE_X86_64    = 0x01000007,
