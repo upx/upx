@@ -8,7 +8,7 @@
 
 
                     The Ultimate Packer for eXecutables
-   Copyright (c) 1996-2016 Markus Oberhumer, Laszlo Molnar & John Reiser
+   Copyright (c) 1996-2017 Markus Oberhumer, Laszlo Molnar & John Reiser
                            https://upx.github.io
 
 
@@ -103,9 +103,9 @@ THE FUTURE
 COPYRIGHT
 =========
 
-Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
-Copyright (C) 1996-2016 Laszlo Molnar
-Copyright (C) 2000-2016 John F. Reiser
+Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+Copyright (C) 1996-2017 Laszlo Molnar
+Copyright (C) 2000-2017 John F. Reiser
 
 This program may be used freely, and you are welcome to
 redistribute it under certain conditions.

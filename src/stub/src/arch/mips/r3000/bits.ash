@@ -3,7 +3,7 @@
 ;
 ;  This file is part of the UCL data compression library.
 ;
-;  Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
 ;  All Rights Reserved.
 ;
 ;  The UCL library is free software; you can redistribute it and/or

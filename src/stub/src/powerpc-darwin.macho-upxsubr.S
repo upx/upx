@@ -3,9 +3,9 @@
 ;
 ;  This file is part of the UPX executable compressor.
 ;
-;  Copyright (C) 1996-2015 Markus Franz Xaver Johannes Oberhumer
-;  Copyright (C) 1996-2015 Laszlo Molnar
-;  Copyright (C) 2000-2015 John F. Reiser
+;  Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 1996-2017 Laszlo Molnar
+;  Copyright (C) 2000-2017 John F. Reiser
 ;  All Rights Reserved.
 ;
 ;  UPX and the UCL library are free software; you can redistribute them

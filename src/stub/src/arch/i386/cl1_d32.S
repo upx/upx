@@ -2,8 +2,8 @@
 ;  cl1_d32.ash -- cl1_decompress_le32 in 32-bit assembly
 ;  schema from ucl/nrv2b_d32.ash
 ;
-;  Copyright (C) 2004-2016 John Reiser
-;  Copyright (C) 1996-2016 Markus Franz Xaver Johannes Oberhumer
+;  Copyright (C) 2004-2017 John Reiser
+;  Copyright (C) 1996-2017 Markus Franz Xaver Johannes Oberhumer
 ;  All Rights Reserved.
 ;
 ;  This file is free software; you can redistribute it and/or
