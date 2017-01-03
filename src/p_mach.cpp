@@ -1365,7 +1365,8 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     mhdro = mhdri;
     if (my_filetype==Mach_header::MH_EXECUTE) {
         memcpy(&mhdro, stub_main, sizeof(mhdro));
-        mhdro.flags &= ~Mach_header::MH_PIE;  // we require fixed address
+        COMPILE_TIME_ASSERT(sizeof(mhdro.flags) == sizeof(unsigned))
+        mhdro.flags &= ~ (unsigned) Mach_header::MH_PIE;  // we require fixed address
         mhdro.flags |= Mach_header::MH_BINDATLOAD;  // DT_BIND_NOW
     }
     unsigned pos = sizeof(mhdro);

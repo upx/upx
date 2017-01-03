@@ -65,6 +65,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  pragma warning(error: 4805)
 #  pragma warning(disable: 4244) // -Wconversion
 #  pragma warning(disable: 4267) // -Wconversion
+#  pragma warning(disable: 4820) // padding added after data member
 #endif
 
 // FIXME - quick hack for arm-wince-gcc-3.4 (Debian pocketpc-*.deb packages)
