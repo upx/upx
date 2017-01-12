@@ -36,10 +36,10 @@ ppcbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 
 #define ptr0 a4
 
-        cmpli cr0,ftid,0xd0;       bnelr- cr0  # if (0xd0!=ftid)   return;
+        cmpldi cr0,ftid,0xd0;       bnelr- cr0  # if (0xd0!=ftid)   return;
         rlwinm. len,len,32-2,2,31; beqlr- cr0  # if (0==(len>>=2)) return;
         lis r0,-(~0<<(32-16- (2+6+ W_CTO)))  # limit in 32-bit words
-        cmpl cr0,len,r0
+        cmpld cr0,len,r0
         blt  cr0,L5
         mr       len,r0
 L5:
@@ -58,7 +58,7 @@ L10:
 L20:
         lwzu t0,4(ptr)  # t0= *++ptr;
         rlwinm t1,t0,6+W_CTO,32-(6+W_CTO),31  # t1= top (6+W_CTO) bits of t0
-        cmpl cr0,t1,cto8; beq- cr0,L10  # unconditional branch marked with cto8; unlikely
+        cmpld cr0,t1,cto8; beq- cr0,L10  # unconditional branch marked with cto8; unlikely
         bdnz+ L20  # if (0!=--ctr) goto L20;  // likely
         ret
 

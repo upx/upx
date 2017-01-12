@@ -65,7 +65,7 @@ fold_begin:
 zfind:
         ld t0,0(a6)        // parameters are 16byte aligned
         addi a6,a6,8
-        cmpi cr7,t0,0; bne+ cr7,zfind
+        cmpdi cr7,t0,0; bne+ cr7,zfind
         ret
 L90:
         la sp,LINKAREA(sp)  // trim save area used by decompressor
@@ -95,20 +95,27 @@ L90:
 
         mtlr r31  // entry address
 
-        lis    15,0x1000
-        addi   15,15,0x8c0  // Check if statically allocated i.e.
-        cmpld  15,r31       // entry @ 0x10008c0
+        ld     15,72(r1)
+        cmpld  15,r31       // Check if statically allocated
         beq+   rest
 
 /* Dynamic load settings */
-        addis r31,r31,5
-        addi  r31,r31,27232    // @+0x57e00
+        lhz   13,0(r31)  // load offset from entry in ld.so
+        lhz   12,4(r31)
+        cmpli  0,0,13,4	 // offset is +0x40000 or 0x50000 ?
+        beq   addstart
+        addis r31,r31,1
+addstart:
+        addis r31,r31,4
+        add   r31,r31,12  // Ubuntu: @+0x57e00 Fedora:0x512c8 Debian:0x9296
+                           
 
-        addi  12,r31,-27828
-        std   12,-27984(r31)  // required : Inconsistency detected by ld.so: rtld.c:
+/* required : Inconsistency detected by ld.so: rtld.c: */
+        addi  12,r31,-27828  // Ubuntu: r31=0x57e00 -> 0x5114c
+        std   12,-27984(r31) //       : store in 0x510b0
 
         li    12,0
-        std   12,-28192(r31)    // p 0x...d7e00-0x...d0fe0
+        std   12,-28192(r31) // Ubuntu: in 0x50fe0
 
 //      lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31 32bits load
 /* Restore Save Area     */
