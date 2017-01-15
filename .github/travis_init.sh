@@ -23,6 +23,9 @@ export UPX=
 # compatibility wrappers
 if [[ $TRAVIS_OS_NAME == osx ]]; then
 # use GNU coreutils ("brew install coreutils")
+date() {
+    gdate "$@"
+}
 readlink() {
     greadlink "$@"
 }
@@ -31,6 +34,9 @@ sha256sum() {
 }
 fi
 if [[ -n $APPVEYOR_JOB_ID ]]; then
+openssl() {
+    /usr/bin/openssl "$@"
+}
 # for some reason this is needed for bash on AppVeyor
 sort() {
     /usr/bin/sort "$@"
@@ -72,9 +78,11 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
                 x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc"; CXX="$x-g++" ;;
             i[36]86-w64-mingw32-gcc | i[36]86-w64-mingw32-gcc-4.6)
+                upx_exeext=.exe
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
             x86_64-w64-mingw32-gcc | x86_64-w64-mingw32-gcc-4.6)
+                upx_exeext=.exe
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
@@ -90,6 +98,7 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_qemu ]] && upx_qemu="qemu-arm -L /usr/arm-linux-gnueabihf"
                 x=arm-linux-gnueabihf; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
             i[36]86-w64-mingw32-gcc-5)
+                upx_exeext=.exe
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=i686-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m32"; CXX="$x-g++ -m32" ;;
             mips-linux-gnu-gcc-5)
@@ -111,6 +120,7 @@ if [[ -n $BM_CROSS ]]; then
                 [[ -z $upx_qemu ]] && upx_qemu="qemu-s390x -L /usr/s390x-linux-gnu"
                 x=s390x-linux-gnu; AR="$x-ar"; CC="$x-gcc-5"; CXX="$x-g++-5" ;;
             x86_64-w64-mingw32-gcc-5)
+                upx_exeext=.exe
                 [[ -z $upx_wine ]] && upx_wine="wine"
                 x=x86_64-w64-mingw32; AR="$x-ar"; CC="$x-gcc -m64"; CXX="$x-g++ -m64" ;;
         esac
