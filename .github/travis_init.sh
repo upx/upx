@@ -19,6 +19,8 @@ unset CROSS C B T X
 
 # just in case, unset variable for passing extra UPX options
 export UPX=
+# un-export some vars
+declare +x UPX_AUTOMATIC_BUILDS_SSL_KEY UPX_AUTOMATIC_BUILDS_SSL_IV
 
 # compatibility wrappers
 if [[ $TRAVIS_OS_NAME == osx ]]; then
@@ -37,7 +39,6 @@ if [[ -n $APPVEYOR_JOB_ID ]]; then
 openssl() {
     /usr/bin/openssl "$@"
 }
-# for some reason this is needed for bash on AppVeyor
 sort() {
     /usr/bin/sort "$@"
 }

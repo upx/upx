@@ -25,6 +25,8 @@ if [[ $BM_B =~ (^|\+)valgrind($|\+) ]]; then exit 0; fi
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     TRAVIS_BRANCH=$APPVEYOR_REPO_BRANCH
     if [[ -n $APPVEYOR_PULL_REQUEST_NUMBER ]]; then exit 0; fi
+elif [[ -n $GITLAB_CI ]]; then
+    TRAVIS_BRANCH=$CI_BUILD_REF_NAME
 else
     if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then exit 0; fi
 fi
@@ -32,7 +34,7 @@ if [[ "$TRAVIS_BRANCH" != "devel" ]]; then
     exit 0
 fi
 
-# get $rev and $branch
+# get $rev, $branch and $git_user
 cd / && cd $upx_SRCDIR || exit 1
 rev=$(git rev-parse --verify HEAD)
 timestamp=$(git log -n1 --format='%at' HEAD)
@@ -40,8 +42,13 @@ date=$(TZ=UTC0 date -d "@$timestamp" '+%Y%m%d-%H%M%S')
 branch="$TRAVIS_BRANCH-$date-${rev:0:6}"
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     branch="$branch-appveyor"
+    git_user="AppVeyor CI"
+elif [[ -n $GITLAB_CI ]]; then
+    branch="$branch-gitlab"
+    git_user="GitLab CI"
 else
     branch="$branch-travis"
+    git_user="Travis CI"
 fi
 unset timestamp date
 
@@ -52,6 +59,7 @@ unset timestamp date
 cd / && cd $upx_BUILDDIR || exit 1
 
 mkdir deploy || exit 1
+chmod 700 deploy
 cd deploy || exit 1
 
 if [[ -n $BM_CROSS ]]; then
@@ -79,8 +87,8 @@ mkdir $d || exit 1
 for exeext in .exe .out; do
     f=$upx_BUILDDIR/upx$exeext
     if [[ -f $f ]]; then
-        cp -p -i $f $d/upx-${rev:0:12}$exeext
-        sha256sum -b $d/upx-${rev:0:12}$exeext
+        cp -p -i $f  $d/upx-git-${rev:0:12}$exeext
+        sha256sum -b $d/upx-git-${rev:0:12}$exeext
     fi
 done
 
@@ -94,9 +102,8 @@ if ! git clone -b $branch --single-branch https://github.com/upx/upx-automatic-b
     new_branch=1
 fi
 cd upx-automatic-builds || exit 1
-if [[ -n $APPVEYOR_JOB_ID ]]; then git config user.name "AppVeyor CI"
-else git config user.name "Travis CI"
-fi
+chmod 700 .git
+git config user.name "$git_user"
 git config user.email "none@none"
 if [[ $new_branch == 1 ]]; then
     git checkout --orphan $branch
@@ -117,6 +124,8 @@ git commit --date="$now" -m "Automatic build $d"
 git ls-files
 #git log --pretty=fuller
 
+umask 077
+[[ -d ~/.ssh ]] || mkdir ~/.ssh
 repo=$(git config remote.origin.url)
 ssh_repo=${repo/https:\/\/github.com\//git@github.com:}
 eval $(ssh-agent -s)
@@ -125,6 +134,7 @@ openssl aes-256-cbc -d -a -K "$UPX_AUTOMATIC_BUILDS_SSL_KEY" -iv "$UPX_AUTOMATIC
 set -x
 chmod 600 .git/deploy.key
 ssh-add .git/deploy.key
+ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
 let i=0 || true
 while [[ $i -lt 10 ]]; do
@@ -134,7 +144,6 @@ while [[ $i -lt 10 ]]; do
         if git push    $ssh_repo $branch; then break; fi
     fi
     git fetch origin $branch
-    new_branch=0
     git rebase origin/$branch $branch
     sleep $((RANDOM % 5 + 1))
     let i=i+1

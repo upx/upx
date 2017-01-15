@@ -4,7 +4,7 @@
 before_script:
   - export TRAVIS_OS_NAME=linux
   - unset CROSS C B T X
-  - uname -a; pwd; id; umask; env
+  - uname -a; pwd; id; umask
   - cat /etc/os-release || true
   -
     if [[ $CI_BUILD_NAME =~ ^(CentOS|Fedora) ]]; then
@@ -24,7 +24,7 @@ before_script:
       time rpm -Uvh http://dl.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm;
       time yum install -y
         coreutils curl diffutils grep gzip sed
-        bzip2 file findutils git perl tar wget which xz
+        bzip2 file findutils git openssh-clients openssl perl tar wget which xz
         gcc gcc-c++ make valgrind
         glibc-devel      libstdc++-devel      zlib-devel
         glibc-devel.i386 libstdc++-devel.i386 zlib-devel.i386;
@@ -33,7 +33,7 @@ before_script:
     if [[ $CI_BUILD_NAME =~ ^CentOS6- ]]; then
       time yum install -y
         coreutils curl diffutils grep gzip sed
-        bzip2 file findutils git perl tar wget which xz
+        bzip2 file findutils git openssh-clients openssl perl tar wget which xz
         gcc gcc-c++ make valgrind
         glibc-devel      libstdc++-devel      zlib-devel
         glibc-devel.i686 libstdc++-devel.i686 zlib-devel.i686;
@@ -42,7 +42,7 @@ before_script:
     if [[ $CI_BUILD_NAME =~ ^CentOS7- ]]; then
       time yum install -y
         coreutils curl diffutils grep gzip sed
-        bzip2 file findutils git perl tar wget which xz
+        bzip2 file findutils git openssh-clients openssl perl tar wget which xz
         clang gcc gcc-c++ make valgrind
         glibc-devel      libasan      libstdc++-devel      zlib-devel
         glibc-devel.i686 libasan.i686 libstdc++-devel.i686 zlib-devel.i686;
@@ -51,7 +51,7 @@ before_script:
     if [[ $CI_BUILD_NAME =~ ^Fedora ]]; then
       time dnf install -y --best --allowerasing
         coreutils curl diffutils grep gzip sed
-        bzip2 file findutils git perl tar wget which xz
+        bzip2 file findutils git openssh-clients openssl perl tar wget which xz
         clang gcc gcc-c++ lcov make valgrind
         glibc-devel      libasan      libstdc++-devel      libubsan      zlib-devel
         glibc-devel.i686 libasan.i686 libstdc++-devel.i686 libubsan.i686 zlib-devel.i686;
@@ -60,7 +60,7 @@ before_script:
     if [[ $CI_BUILD_NAME =~ ^(Debian|Ubuntu) ]]; then
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes upgrade;
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes install
-        build-essential ca-certificates curl file git wget xz-utils zlib1g-dev;
+        build-essential ca-certificates curl file git openssh-client openssl wget xz-utils zlib1g-dev;
     fi
   -
     if [[ $CI_BUILD_NAME =~ ^Ubuntu1604-cross ]]; then
@@ -126,16 +126,17 @@ CentOS7-clang+gcc-m32+64: # clang-3.4, gcc-4.8
 Debian7-gcc-m64: # gcc-4.7
   image: debian:7
   script:
-  - time C=gcc-m64              bash ./.github/travis_build.sh
-  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.7-m64          bash ./.github/travis_build.sh
+  - time C=gcc-4.7-m64          bash ./.github/travis_testsuite_1.sh
   tags: [ shared ]
   except: [ tags ]
 
 Debian8-gcc-m64: # gcc-4.9
   image: debian:8
   script:
-  - time C=gcc-m64              bash ./.github/travis_build.sh
-  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.9-m64          bash ./.github/travis_build.sh
+  - time C=gcc-4.9-m64          bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.9-m64          bash ./.github/travis_deploy.sh
   tags: [ shared ]
   except: [ tags ]
 
@@ -196,24 +197,26 @@ Fedora25-clang+gcc-m32+m64: # clang-3.8, gcc-6
 Ubuntu1204-gcc-m64: # gcc-4.6
   image: ubuntu:12.04
   script:
-  - time C=gcc-m64              bash ./.github/travis_build.sh
-  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.6-m64          bash ./.github/travis_build.sh
+  - time C=gcc-4.6-m64          bash ./.github/travis_testsuite_1.sh
   tags: [ shared ]
   except: [ tags ]
 
 Ubuntu1404-gcc-m64: # gcc-4.8
   image: ubuntu:14.04
   script:
-  - time C=gcc-m64              bash ./.github/travis_build.sh
-  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.8-m64          bash ./.github/travis_build.sh
+  - time C=gcc-4.8-m64          bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.8-m64          bash ./.github/travis_deploy.sh
   tags: [ shared ]
   except: [ tags ]
 
 Ubuntu1604-gcc-m64: # gcc-5
   image: ubuntu:16.04
   script:
-  - time C=gcc-m64              bash ./.github/travis_build.sh
-  - time C=gcc-m64              bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-5-m64            bash ./.github/travis_build.sh
+  - time C=gcc-5-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-5-m64            bash ./.github/travis_deploy.sh
   tags: [ shared ]
   except: [ tags ]
 
@@ -242,6 +245,17 @@ Ubuntu1604-cross:
 # - time CROSS=powerpc64le-linux-gnu C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
 # - time CROSS=s390x-linux-gnu       C=gcc-5 T=qemu bash ./.github/travis_testsuite_1.sh
 # - time CROSS=x86_64-w64-mingw32    C=gcc-5 T=wine bash ./.github/travis_testsuite_1.sh
+  - time CROSS=aarch64-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=arm-linux-gnueabi     C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=arm-linux-gnueabihf   C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=i686-w64-mingw32      C=gcc-5 T=wine bash ./.github/travis_deploy.sh
+  - time CROSS=mips-linux-gnu        C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=mipsel-linux-gnu      C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=powerpc-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=powerpc64-linux-gnu   C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=powerpc64le-linux-gnu C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=s390x-linux-gnu       C=gcc-5 T=qemu bash ./.github/travis_deploy.sh
+  - time CROSS=x86_64-w64-mingw32    C=gcc-5 T=wine bash ./.github/travis_deploy.sh
   tags: [ shared ]
   except: [ tags ]
 
