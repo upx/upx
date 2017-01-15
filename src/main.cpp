@@ -1399,6 +1399,9 @@ __acc_static_noinline void upx_sanity_check(void)
 #if (ACC_ARCH_M68K && ACC_OS_TOS && ACC_CC_GNUC) && defined(__MINT__)
 extern "C" { extern long _stksize; long _stksize = 256 * 1024L; }
 #endif
+#if (ACC_OS_WIN32 || ACC_OS_WIN64) && (defined(__MINGW32__) || defined(__MINGW64__))
+extern "C" { extern int _dowildcard; int _dowildcard = -1; }
+#endif
 
 int __acc_cdecl_main main(int argc, char *argv[])
 {
