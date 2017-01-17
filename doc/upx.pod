@@ -78,6 +78,7 @@ B<UPX> is a versatile executable packer with the following features:
       * vmlinux/386
       * watcom/le (supporting DOS4G, PMODE/W, DOS32a and CauseWay)
       * win32/pe (exe and dll)
+      * win64/pe (exe and dll)
       * arm/pe (exe and dll)
       * linux/elfamd64
       * linux/elfppc32
