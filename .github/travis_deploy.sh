@@ -39,7 +39,9 @@ cd / && cd $upx_SRCDIR || exit 1
 rev=$(git rev-parse --verify HEAD)
 timestamp=$(git log -n1 --format='%at' HEAD)
 date=$(TZ=UTC0 date -d "@$timestamp" '+%Y%m%d-%H%M%S')
-branch="$TRAVIS_BRANCH-$date-${rev:0:6}"
+#branch="$TRAVIS_BRANCH-$date-${rev:0:6}"
+# make the branch name a little bit shorter so that is shows up nicely on GitHub
+branch="$TRAVIS_BRANCH-${date:0:8}-${rev:0:7}"
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     branch="$branch-appveyor"
     git_user="AppVeyor CI"
@@ -137,7 +139,11 @@ ssh-add .git/deploy.key
 ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
 let i=0 || true
-while [[ $i -lt 10 ]]; do
+while true; do
+    if [[ $i -ge 10 ]]; then
+        echo "ERROR: git push failed"
+        exit 1
+    fi
     if [[ $new_branch == 1 ]]; then
         if git push -u $ssh_repo $branch; then break; fi
     else
@@ -146,7 +152,7 @@ while [[ $i -lt 10 ]]; do
     git fetch origin $branch
     git rebase origin/$branch $branch
     sleep $((RANDOM % 5 + 1))
-    let i=i+1
+    let i+=1
 done
 
 exit 0
