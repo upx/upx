@@ -34,40 +34,41 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #define ftid %arg4l
 
 #ifndef NO_METHOD_CHECK
-        cmpl $0x49,ftid; jne ckend  # filter: JMP, CALL, 6-byte Jxx
-        movq len,%rcx  # byte count
+        cmpl $0x49,ftid; jne ckend0  # filter: JMP, CALL, 6-byte Jxx
 #endif
-        movq ptr,%rsi  # remember start of buffer
+        push %rbx  # save
+
+        push %rdi; lea (1- 4)(%rdi,%rsi),%rcx  # beyond last possible opcode
+        pop  %rsi  # start of buffer
+        push %rsi
+        pop  %rbx  # remember start of buffer
         jmp ckstart
+ckloop4:
+        cmpq %rcx,%rsi; jae ckend
+        push %rsi  # tail merge
 ckloop3:
-        movb (%rdi),%al; incq %rdi
+        pop %rsi; lodsb  # next main opcode
         cmpb $0x80,%al; jb ckloop2  # lo of 6-byte Jcc
         cmpb $0x8F,%al; ja ckloop2  # hi of 6-byte Jcc
-        cmpb $0x0F,-2(%rdi); je ckmark  # prefix of 6-byte Jcc
+        cmpb $0x0F,-2(%rsi); je ckmark  # prefix of 6-byte Jcc
 ckloop2:
         subb $     0xE8,%al
-        cmpb $0xE9-0xE8,%al; ja ckcount  # not JMP, not CALL
+        cmpb $0xE9-0xE8,%al; ja ckloop4  # not JMP, not CALL
 ckmark:
-        cmpq $4,%rcx; jb ckend  # peek only; not marked ==> do not consume
-        movl (%rdi),%eax  # (assume) marked, bswapped 32-bit displacement
-        subb %dl,%al; jne ckcount  # not marked with cto8
+        cmpq %rcx,%rsi; jae ckend  # peek only; not marked ==> do not consume
+        push %rsi; lodsl  # (assume) marked, bswapped 32-bit displacement
+        subb %dl,%al; jne ckloop3  # not marked with cto8
+        pop %rdi
         bswap %eax  # (0<<24) | d24
-        subl %edi,%eax
-        addl %esi,%eax
-        subq $4,%rcx  # consume; length was checked before the fetch
-        stosl  # *%rdi++ = %eax;
-
-/* We might do "extra" work checking opcodes that are too close to the end.
-   But not having 4 bytes for displacement is caught by ckmark,
-   and it is simpler to count exactly the bytes that are consumed.
-*/
-ckstart:  # %rcx might be 0 on fall-through from above
-        subq $1,%rcx; jb ckend  # 'dec' does not set Carry
-        movb (%rdi),%al; incq %rdi
-        jmp ckloop2  # 0x0F prefix must not overlap previous displacement
-ckcount:
-        subq $1,%rcx; jnb ckloop3  # 0x0F prefix is allowed
+        subl %edi,%eax  # hardware: %esi;  software: %edi  [ 4==delta ]
+        addl %ebx,%eax
+        stosl
+ckstart:
+        cmpq %rcx,%rsi; jae ckend
+        lodsb; jmp ckloop2  # 0x0F prefix would overlap previous displacement
 ckend:
+        pop %rbx  # restore
+ckend0:
 #ifndef NO_METHOD_CHECK
         ret
 #endif
