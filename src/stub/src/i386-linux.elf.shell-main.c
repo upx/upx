@@ -229,6 +229,10 @@ xfind_pages(unsigned mflags, Elf32_Phdr const *phdr, int phnum)
 static Elf32_Addr  // entry address
 do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Elf32_auxv_t *const av)
 {
+#define EM_386           3              /* Intel 80386 */
+    if (EM_386 != ehdr->e_machine) {
+        return 1;  // not an i386 executable!
+    }
     Elf32_Phdr const *phdr = (Elf32_Phdr const *) (ehdr->e_phoff +
         (char const *)ehdr);
     unsigned long const reloc = xfind_pages(
@@ -330,6 +334,9 @@ void *upx_main(
     char const c = *efn;  *efn = 0;  // terminator
     entry = getexec(fn, ehdr, av);
     *efn = c;  // replace terminator character
+    if (1==entry) { // must execve, such as /bin/sh is amd64
+        return (void *)entry;
+    }
 
     // av[AT_PHDR -1].a_un.a_val  is set again by do_xmap if PT_PHDR is present.
     av[AT_PHDR   -1].a_type = AT_PHDR  ; // av[AT_PHDR-1].a_un.a_val  is set by do_xmap

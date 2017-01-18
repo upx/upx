@@ -158,7 +158,74 @@ L40:
 // on the stack.  So, we would have to dirty a page of the shell
 // or of /lib/ld-linux.so.  It's simpler just to omit the unmapping.
         popa
+        cmpw [esp], 1
+        je must_execve  // 1==e_entry
         ret
+
+#define __NR_execve 11
+must_execve:  // when interpreter is not EM_386 (such as "#!/bin/sh" on amd64)
+        pop eax  // toss the 1
+        pop ecx  // argc
+        pop ebx  // filename
+        lea edx, [esp + 4*ecx]  // edx= envp (== arg3 for execve)
+        pop edi  // "-c"
+        pop esi  // text of script
+        pop ebp  // filename
+        push ebp  // filename
+
+        lodsb  // '#'
+        lodsb  // '!'
+pre_shel:
+        mov ebx, esi  // ebx= assumed &shell (== arg1 for execve)
+        lodsb
+        cmp al, ' '
+        je pre_shel
+        cmp al, '\t'
+        je pre_shel
+shel_find:
+        mov ecx, esi  // assumed &terminator
+        lodsb
+        cmp al, ' '
+        je end_shell
+        cmp al, '\t'
+        je end_shell
+        cmp al, '\n'
+        jne shel_find
+end_shell:
+        movb [ecx], 0  // null-terminate name of shell
+        xor ecx, ecx  // assume no optional-arg
+        cmp al, '\n'  // re-check
+        je no_opt_arg
+
+//   "#! interpreter [optional-arg]\nscript"
+//   ==> interpreter [optional-arg] "-c" script filename arg...
+pre_opt:
+        lodsb
+        cmp al, ' '
+        je pre_opt
+        cmp al, '\t'
+        je pre_opt
+        cmp al,'\n'
+        je no_opt_arg
+        lea ecx, [esi -1]  // &optional-arg
+opt_term:
+        lodsb
+        cmp al,'\n'
+        jne opt_term
+        movb [esi -1], 0  // null-terminate optional-arg
+no_opt_arg:
+        push esi  // &command
+        push edi  // "-c"
+        jecxz 0f
+          push ecx  // optional-arg
+0:
+        push ebp  // argv[0] = filename (replaces shell name)
+        mov ecx, esp  // ecx= argv (== arg2 for execve)
+
+        push __NR_execve
+        pop eax
+        int 0x80
+        hlt
 
 #define __NR_mmap 90
 
@@ -170,7 +237,6 @@ mmap: .globl mmap
         int 0x80
         pop ebx
         ret
-
 
 .balign 4,0
 
