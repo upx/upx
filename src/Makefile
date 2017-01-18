@@ -148,6 +148,8 @@ upx_testsuite_SRCDIR := $(top_srcdir)/../upx-testsuite
 endif
 endif
 # run the UPX testsuite
+# The expected (old) checksums are in $(top_srcdir)/.github/travis_testsuite_1.sh
+# The   actual (new) checksums are in tmp-testsuite/testsuite_1/.sha256sums.recreate
 ifneq ($(wildcard $(upx_testsuite_SRCDIR)/files/packed/.),)
 ifneq ($(wildcard $(top_srcdir)/.github/travis_testsuite_1.sh),)
 run-testsuite: export upx_exe                := ./upx$(exeext)
