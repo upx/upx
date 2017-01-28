@@ -45,11 +45,49 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "g++-4.4" ] } }
     - os: linux
       compiler: gcc
+      env: C=gcc-4.5-m32
+      addons: { apt: { sources: *S, packages: [ "g++-4.5-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.5-m64
+      addons: { apt: { sources: *S, packages: [ "g++-4.5" ] } }
+    - os: linux
+      compiler: gcc
       env: C=gcc-4.6-m32
       addons: { apt: { packages: [ "g++-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.6-m64
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.7-m32
+      addons: { apt: { sources: *S, packages: [ "g++-4.7-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.7-m64
+      addons: { apt: { sources: *S, packages: [ "g++-4.7" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.8-m32
+      addons: { apt: { sources: *S, packages: [ "g++-4.8-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.8-m64
+      addons: { apt: { sources: *S, packages: [ "g++-4.8" ] } }
+#   - os: linux
+#     sudo: required
+#     dist: trusty
+#     compiler: gcc
+#     env: C=gcc-4.8-mx32
+#     addons: { apt: { packages: [ "g++-multilib", "libx32stdc++-4.8-dev", "libx32z1-dev" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.9-m32
+      addons: { apt: { sources: *S, packages: [ "g++-4.9-multilib", "zlib1g-dev:i386" ] } }
+    - os: linux
+      compiler: gcc
+      env: C=gcc-4.9-m64
+      addons: { apt: { sources: *S, packages: [ "g++-4.9" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-5-m32
@@ -185,11 +223,8 @@ matrix:
       env: C=clang-800-m64
 
 install:
-  - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps
-  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
-  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
-  - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
-  - if [[ $X =~ (^|\+)rebuild-stubs($|\+) ]]; then cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ; fi
+  - uname -a; pwd; id; umask
+  - cat /etc/os-release || true
   - |
     cd /
     if [[ $TRAVIS_OS_NAME == linux ]]; then
@@ -204,11 +239,20 @@ install:
         travis_retry pip install --user cpp-coveralls
       fi
     fi
+  - git --version && bash --version
+  - umask 022; cd $TRAVIS_BUILD_DIR && mkdir -p ../deps ../build/travis
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -xJ
+  - cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -xJ
+  - cd ../deps && travis_retry git clone https://github.com/upx/upx-testsuite
+  - |
+    if [[ $X =~ (^|\+)rebuild-stubs($|\+) ]]; then
+      cd ../deps && travis_retry wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -xJ
+    fi
 
 script:
-  - cd $TRAVIS_BUILD_DIR && mkdir -p ../build/travis
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite_1.sh
+after_success:
   - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_deploy.sh
 
 # vim:set ts=2 sw=2 et:

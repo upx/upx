@@ -31,7 +31,6 @@ mkbuilddirs $upx_testsuite_BUILDDIR
 cd / && cd $upx_testsuite_BUILDDIR || exit 1
 if [[ ! -d $upx_testsuite_SRCDIR/files/packed ]]; then exit 1; fi
 
-
 # /***********************************************************************
 # // support functions
 # ************************************************************************/
@@ -104,7 +103,6 @@ testsuite_run_compress() {
         rm -rf "./$testdir/.decompressed"
     fi
 }
-
 
 # /***********************************************************************
 # // expected checksums
@@ -230,7 +228,6 @@ b371684bbb2693797dd1164159de3bff9618bf6b99536542f57da07093dbb649 *m68k-atari.tos
 "
 ########## end .sha256sums.recreate
 
-
 # /***********************************************************************
 # // init
 # ************************************************************************/
@@ -260,8 +257,8 @@ if [[ $BM_T =~ (^|\+)valgrind($|\+) ]]; then
         upx_valgrind="valgrind"
     fi
     if [[ -z $upx_valgrind_flags ]]; then
-        upx_valgrind_flags="--leak-check=full --show-reachable=yes"
-        upx_valgrind_flags="-q --leak-check=no --error-exitcode=1"
+        #upx_valgrind_flags="--leak-check=full --show-reachable=yes"
+        #upx_valgrind_flags="-q --leak-check=no --error-exitcode=1"
         upx_valgrind_flags="--leak-check=no --error-exitcode=1"
     fi
     upx_run="$upx_valgrind $upx_valgrind_flags $upx_exe"
@@ -280,7 +277,6 @@ if ! $upx_run --help >/dev/null;  then echo "UPX-ERROR: FATAL: upx --help FAILED
 rm -rf ./testsuite_1
 mkbuilddirs testsuite_1
 cd testsuite_1 || exit 1
-
 
 # /***********************************************************************
 # // decompression tests
@@ -314,7 +310,6 @@ for f in t010_decompressed/*/*; do
     $upx_run -qq -d $testdir/$fsubdir/.packed/$fb -o $testdir/$fsubdir/$fb
 done
 testsuite_check_sha $testdir
-
 
 # /***********************************************************************
 # // compression tests
@@ -350,7 +345,6 @@ testdir=t170_compress_all_methods_no_lzma_5_no_filter
 mkdir $testdir; v=expected_sha256sums__$testdir; echo -n "${!v}" >$testdir/.sha256sums.expected
 time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 
-
 # /***********************************************************************
 # // summary
 # ************************************************************************/
@@ -359,13 +353,16 @@ time testsuite_run_compress --all-methods --no-lzma -5 --no-filter
 recreate_expected_sha256sums .sha256sums.recreate
 
 testsuite_header "UPX testsuite summary"
-$upx_run --version || echo "UPX-ERROR: upx --version FAILED"
+if ! $upx_run --version; then
+    echo "UPX-ERROR: upx --version FAILED"
+    exit 1
+fi
 echo
 echo "upx_exe='$upx_exe'"
-if [[ $upx_run != $upx_exe ]]; then
+if [[ "$upx_run" != "$upx_exe" ]]; then
     echo "upx_run='$upx_run'"
 fi
-if [[ -f $upx_exe ]]; then
+if [[ -f "$upx_exe" ]]; then
     ls -l "$upx_exe"
     file "$upx_exe" || true
 fi

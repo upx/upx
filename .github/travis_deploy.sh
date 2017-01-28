@@ -22,26 +22,35 @@ if [[ $BM_B =~ (^|\+)sanitize($|\+) ]]; then exit 0; fi
 if [[ $BM_B =~ (^|\+)scan-build($|\+) ]]; then exit 0; fi
 if [[ $BM_B =~ (^|\+)valgrind($|\+) ]]; then exit 0; fi
 
+# prepare $subdir and $branch
+subdir=
+branch=
 if [[ -n $APPVEYOR_JOB_ID ]]; then
-    TRAVIS_BRANCH=$APPVEYOR_REPO_BRANCH
+    branch=$APPVEYOR_REPO_BRANCH
     if [[ -n $APPVEYOR_PULL_REQUEST_NUMBER ]]; then exit 0; fi
 elif [[ -n $GITLAB_CI ]]; then
-    TRAVIS_BRANCH=$CI_BUILD_REF_NAME
+    subdir=$CI_BUILD_NAME
+    branch=$CI_BUILD_REF_NAME
 else
+    branch=$TRAVIS_BRANCH
     if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then exit 0; fi
 fi
-if [[ "$TRAVIS_BRANCH" != "devel" ]]; then
-    exit 0
-fi
+subdir=${subdir%%:*}; subdir=${subdir%%/*}; subdir=${subdir%%-*}
+case $branch in
+    devel*) ;;
+    master*) ;;
+    travis*) ;;
+    *) exit 0;;
+esac
 
 # get $rev, $branch and $git_user
 cd / && cd $upx_SRCDIR || exit 1
 rev=$(git rev-parse --verify HEAD)
 timestamp=$(git log -n1 --format='%at' HEAD)
 date=$(TZ=UTC0 date -d "@$timestamp" '+%Y%m%d-%H%M%S')
-#branch="$TRAVIS_BRANCH-$date-${rev:0:6}"
-# make the branch name a little bit shorter so that is shows up nicely on GitHub
-branch="$TRAVIS_BRANCH-${date:0:8}-${rev:0:7}"
+#branch="$branch-$date-${rev:0:6}"
+# make the branch name a little bit shorter so that it looks nice on GitHub
+branch="$branch-${date:0:8}-${rev:0:7}"
 if [[ -n $APPVEYOR_JOB_ID ]]; then
     branch="$branch-appveyor"
     git_user="AppVeyor CI"
@@ -69,8 +78,9 @@ if [[ -n $BM_CROSS ]]; then
 else
     cpu=unknown
     case $BM_C in
-        clang*-m32 | gcc*-m32) cpu=i386;;
-        clang*-m64 | gcc*-m64) cpu=amd64;;
+        clang*-m32  | gcc*-m32)  cpu=i386;;
+        clang*-m64  | gcc*-m64)  cpu=amd64;;
+        clang*-mx32 | gcc*-mx32) cpu=amd64;;
         msvc*-x86) cpu=i386;;
         msvc*-x64) cpu=amd64;;
     esac
@@ -112,11 +122,17 @@ if [[ $new_branch == 1 ]]; then
     git reset --hard
 fi
 
-mv ../$d .
-git add $d
+if [[ -n $subdir ]]; then
+    [[ -d $subdir ]] || mkdir $subdir
+    mv ../$d $subdir/
+    git add $subdir/$d
+else
+    mv ../$d .
+    git add $d
+fi
 
 if git diff --cached --exit-code --quiet >/dev/null; then
-    # nothing to do
+    # nothing to do ???
     exit 0
 fi
 
@@ -149,8 +165,8 @@ while true; do
     else
         if git push    $ssh_repo $branch; then break; fi
     fi
-    git fetch origin $branch
-    git rebase origin/$branch $branch
+    git fetch -v origin $branch
+    git rebase origin/$branch
     sleep $((RANDOM % 5 + 1))
     let i+=1
 done

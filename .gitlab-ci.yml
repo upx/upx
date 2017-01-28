@@ -6,18 +6,18 @@ before_script:
   - unset CROSS C B T X
   - uname -a; pwd; id; umask
   - cat /etc/os-release || true
-  -
-    if [[ $CI_BUILD_NAME =~ ^(CentOS|Fedora) ]]; then
-      time rpm -qa | LC_ALL=C sort;
+  - |
+    if [[ $CI_BUILD_NAME =~ ^(CentOS|Fedora|OpenSUSE) ]]; then
+      time rpm -qa | LC_ALL=C sort
     fi
-  -
+  - |
     if [[ $CI_BUILD_NAME =~ ^(Debian|Ubuntu) ]]; then
-      export DEBIAN_FRONTEND=noninteractive;
-      time dpkg -l;
-      if [[ $CI_BUILD_NAME =~ ^Ubuntu1604-cross ]]; then
-        dpkg --add-architecture i386;
+      export DEBIAN_FRONTEND=noninteractive
+      time dpkg -l
+      if [[ $CI_BUILD_NAME =~ ^Ubuntu1604- ]]; then
+        dpkg --add-architecture i386
       fi;
-      time apt-get -yq update;
+      time apt-get -yq update
     fi
   -
     if [[ $CI_BUILD_NAME =~ ^CentOS5- ]]; then
@@ -57,10 +57,27 @@ before_script:
         glibc-devel.i686 libasan.i686 libstdc++-devel.i686 libubsan.i686 zlib-devel.i686;
     fi
   -
+    if [[ $CI_BUILD_NAME =~ ^OpenSUSE42.2- ]]; then
+      time zypper update -y;
+      time zypper install -y
+        coreutils curl diffutils grep gzip sed
+        bzip2 file findutils git openssh openssl perl tar wget which xz
+        llvm-clang gcc gcc-32bit gcc-c++ gcc-c++-32bit lcov make valgrind
+        glibc-devel       libstdc++-devel       libz1       zlib-devel
+        glibc-devel-32bit libstdc++-devel-32bit libz1-32bit zlib-devel-32bit;
+    fi
+  -
     if [[ $CI_BUILD_NAME =~ ^(Debian|Ubuntu) ]]; then
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes upgrade;
       time apt-get -yq --no-install-suggests --no-install-recommends --force-yes install
         build-essential ca-certificates curl file git openssh-client openssl wget xz-utils zlib1g-dev;
+    fi
+  -
+    if [[ $CI_BUILD_NAME =~ ^Ubuntu1604- ]]; then
+      time apt-get -yq --no-install-suggests --no-install-recommends --force-yes install
+        g++-multilib
+        libstdc++-5-dev:i386 zlib1g-dev:i386
+        libx32stdc++-5-dev   libx32z1-dev;
     fi
   -
     if [[ $CI_BUILD_NAME =~ ^Ubuntu1604-cross ]]; then
@@ -75,19 +92,20 @@ before_script:
         binutils-powerpc64-linux-gnu g++-powerpc64-linux-gnu
         qemu-user qemu-utils wine;
     fi
+  - git --version && bash --version
   - umask 022; mkdir -p ../deps ../build/gitlab
   - time git submodule update --init --recursive
   - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/ucl-1.03.tar.xz | tar -x --use-compress-program=xz
   - cd ../deps && time wget -q -O - https://github.com/upx/upx/releases/download/v3.00/zlib-1.2.8.tar.xz | tar -x --use-compress-program=xz
   - cd ../deps && time git clone https://github.com/upx/upx-testsuite
-  -
+  - |
     if [[ $CI_BUILD_NAME =~ ^Fedora ]]; then
-      time dnf install -y --best --allowerasing python;
-      cd ../deps && time wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -x --use-compress-program=xz;
+      time dnf install -y --best --allowerasing python
+      cd ../deps && time wget -q -O - https://github.com/upx/upx-stubtools/releases/download/v20160918/bin-upx-20160918.tar.xz | tar -x --use-compress-program=xz
     fi
   - cd $CI_PROJECT_DIR; pwd
 
-CentOS5-gcc-m32+64: # gcc-4.1
+CentOS5-gcc-m32+m64: # gcc-4.1
   image: centos:5
   script:
   # patch src/Makefile for gcc-4.1
@@ -99,7 +117,7 @@ CentOS5-gcc-m32+64: # gcc-4.1
   tags: [ shared ]
   except: [ tags ]
 
-CentOS6-gcc-m32+64: # gcc-4.4
+CentOS6-gcc-m32+m64: # gcc-4.4
   image: centos:6
   script:
   - time C=gcc-m32              bash ./.github/travis_build.sh
@@ -109,7 +127,7 @@ CentOS6-gcc-m32+64: # gcc-4.4
   tags: [ shared ]
   except: [ tags ]
 
-CentOS7-clang+gcc-m32+64: # clang-3.4, gcc-4.8
+CentOS7-clang+gcc-m32+m64: # clang-3.4, gcc-4.8
   image: centos:7
   script:
   - time C=clang-m32            bash ./.github/travis_build.sh
@@ -194,6 +212,18 @@ Fedora25-clang+gcc-m32+m64: # clang-3.8, gcc-6
   tags: [ shared ]
   except: [ tags ]
 
+OpenSUSE42.2-clang+gcc-m32+m64: # clang-3.8, gcc-4.8
+  image: opensuse:42.2
+  script:
+  - time C=clang-m64            bash ./.github/travis_build.sh
+  - time C=gcc-4.8-m32          bash ./.github/travis_build.sh
+  - time C=gcc-4.8-m64          bash ./.github/travis_build.sh
+  - time C=clang-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.8-m32          bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-4.8-m64          bash ./.github/travis_testsuite_1.sh
+  tags: [ shared ]
+  except: [ tags ]
+
 Ubuntu1204-gcc-m64: # gcc-4.6
   image: ubuntu:12.04
   script:
@@ -211,16 +241,19 @@ Ubuntu1404-gcc-m64: # gcc-4.8
   tags: [ shared ]
   except: [ tags ]
 
-Ubuntu1604-gcc-m64: # gcc-5
+Ubuntu1604-gcc-m32+m64: # gcc-5
   image: ubuntu:16.04
   script:
+  - time C=gcc-5-m32            bash ./.github/travis_build.sh
   - time C=gcc-5-m64            bash ./.github/travis_build.sh
+  - time C=gcc-5-m32            bash ./.github/travis_testsuite_1.sh
   - time C=gcc-5-m64            bash ./.github/travis_testsuite_1.sh
+  - time C=gcc-5-m32            bash ./.github/travis_deploy.sh
   - time C=gcc-5-m64            bash ./.github/travis_deploy.sh
   tags: [ shared ]
   except: [ tags ]
 
-Ubuntu1604-cross:
+Ubuntu1604-cross: # gcc-5
   image: ubuntu:16.04
   script:
   - time CROSS=aarch64-linux-gnu     C=gcc-5 T=qemu bash ./.github/travis_build.sh

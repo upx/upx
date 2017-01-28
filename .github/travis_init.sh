@@ -132,22 +132,23 @@ if [[ -z $BM_CROSS ]]; then
     case $BM_C in
         clang | clang-m?? | clang-3.4-m?? | clang-[678][0-9][0-9]-m??)
             CC="clang"; CXX="clang++" ;; # standard system compiler
-        clang-[34].[0-9]-m??)
+        clang-[3].[0-9]-m??)
             v=${BM_C:6:3}; CC="clang-$v"; CXX="clang++-$v"; SCAN_BUILD="scan-build-$v" ;;
-        gcc | gcc-m??)
+        gcc | gcc-m?? | gcc-mx32)
             CC="gcc"; CXX="g++" ;; # standard system compiler
-        gcc-[34].[0-9]-m??)
+        gcc-[34].[0-9]-m?? | gcc-[34].[0-9]-mx32)
             v=${BM_C:4:3}; CC="gcc-$v"; CXX="g++-$v" ;;
-        gcc-[56]-m?? | gcc-[56].[0-9]-m??)
+        gcc-[56]-m?? | gcc-[56]-mx32)
             v=${BM_C:4:1}; CC="gcc-$v"; CXX="g++-$v" ;;
     esac
 fi
 fi # generic
 case $BM_C in
-    clang*-m32) CC="$CC -m32"; CXX="$CXX -m32" ;;
-    clang*-m64) CC="$CC -m64"; CXX="$CXX -m64" ;;
-    gcc*-m32)   CC="$CC -m32"; CXX="$CXX -m32" ;;
-    gcc*-m64)   CC="$CC -m64"; CXX="$CXX -m64" ;;
+    clang*-m32) CC="$CC -m32";  CXX="$CXX -m32" ;;
+    clang*-m64) CC="$CC -m64";  CXX="$CXX -m64" ;;
+    gcc*-m32)   CC="$CC -m32";  CXX="$CXX -m32" ;;
+    gcc*-m64)   CC="$CC -m64";  CXX="$CXX -m64" ;;
+    gcc*-mx32)  CC="$CC -mx32"; CXX="$CXX -mx32" ;;
 esac
 if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
     CC="$CC -std=gnu89"
