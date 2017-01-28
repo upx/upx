@@ -53,7 +53,6 @@ endif
 LIBS += -lucl -lz
 # LZMA from https://github.com/upx/upx-lzma-sdk
 include $(top_srcdir)/src/stub/src/c/Makevars.lzma
-DEFS += -DWITH_LZMA=$(UPX_LZMA_VERSION)
 
 CPPFLAGS += $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 ifeq ($(BUILD_TYPE_DEBUG),1)

@@ -34,6 +34,7 @@
 #if !defined(_FILE_OFFSET_BITS)
 #  define _FILE_OFFSET_BITS 64
 #endif
+#undef NDEBUG
 
 
 /*************************************************************************
@@ -78,7 +79,6 @@ ACC_COMPILE_TIME_ASSERT_HEADER((char)(-1) > 0) // -funsigned-char
 #  undef HAVE_UTIME
 #endif
 
-
 #define ACC_WANT_ACC_INCD_H 1
 #define ACC_WANT_ACC_INCE_H 1
 #define ACC_WANT_ACC_LIB_H 1
@@ -118,29 +118,20 @@ typedef unsigned char   upx_byte;
 #undef _
 #undef __
 #undef ___
-#undef NDEBUG
 #undef dos
 #undef linux
 #undef small
 #undef tos
+#undef unix
 #if defined(__DJGPP__)
 #  undef sopen
 #  undef __unix__
 #  undef __unix
 #endif
 
+#define WITH_LZMA 0x443
 #define WITH_UCL 1
 #define WITH_ZLIB 1
-#if !defined(WITH_LZMA) || (WITH_LZMA+0 == 0)
-#  error "WITH_LZMA is missing"
-#elif (WITH_LZMA != 0x443)
-#  error "invalid WITH_LZMA version"
-#endif
-#if defined(UPX_OFFICIAL_BUILD)
-#  if !(WITH_LZMA && WITH_NRV && WITH_UCL && WITH_ZLIB)
-#    error
-#  endif
-#endif
 #if (WITH_UCL)
 #  define ucl_compress_config_t REAL_ucl_compress_config_t
 #  include <ucl/uclconf.h>
@@ -151,11 +142,6 @@ typedef unsigned char   upx_byte;
 #  undef ucl_compress_config_t
 #  undef ucl_compress_config_p
 #endif
-
-
-/*************************************************************************
-// system includes
-**************************************************************************/
 
 // malloc debuggers
 #if (WITH_VALGRIND)
@@ -170,7 +156,6 @@ typedef unsigned char   upx_byte;
 #if !defined(VALGRIND_MAKE_MEM_UNDEFINED)
 #  define VALGRIND_MAKE_MEM_UNDEFINED(addr,len) 0
 #endif
-
 
 // IMPORTANT: unconditionally enable assertions
 #undef NDEBUG
@@ -198,14 +183,12 @@ typedef size_t upx_rsize_t;
 #  define STDERR_FILENO     (fileno(stderr))
 #endif
 
-
 #if !(HAVE_STRCASECMP) && (HAVE_STRICMP)
 #  define strcasecmp        stricmp
 #endif
 #if !(HAVE_STRNCASECMP) && (HAVE_STRNICMP)
 #  define strncasecmp       strnicmp
 #endif
-
 
 #if !defined(S_IWUSR) && defined(_S_IWUSR)
 #  define S_IWUSR           _S_IWUSR
@@ -245,7 +228,6 @@ typedef size_t upx_rsize_t;
 #    define S_ISCHR(m)      (((m) & S_IFMT) == S_IFCHR)
 #  endif
 #endif
-
 
 // avoid warnings about shadowing global functions
 #undef index
