@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20160919L
+#define ACC_VERSION     20170125L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -234,9 +234,11 @@
 #  endif
 #endif
 #endif
-#if defined(_MSC_VER) && defined(M_I86HM) && (UINT_MAX == ACC_0xffffL)
+#if (UINT_MAX == ACC_0xffffL)
+#if defined(_MSC_VER) && defined(M_I86HM)
 #  define ptrdiff_t long
 #  define _PTRDIFF_T_DEFINED 1
+#endif
 #endif
 #if (UINT_MAX == ACC_0xffffL)
 #  undef __ACC_RENAME_A
@@ -386,7 +388,7 @@
 #define ACC_CPP_ECONCAT6(a,b,c,d,e,f)   ACC_CPP_CONCAT6(a,b,c,d,e,f)
 #define ACC_CPP_ECONCAT7(a,b,c,d,e,f,g) ACC_CPP_CONCAT7(a,b,c,d,e,f,g)
 #endif
-#define __ACC_MASK_GEN(o,b)     (((((o) << ((b)-!!(b))) - (o)) << 1) + (o)*!!(b))
+#define __ACC_MASK_GEN(o,b)     (((((o) << ((b)-((b)!=0))) - (o)) << 1) + (o)*((b)!=0))
 #if 1 && defined(__cplusplus)
 #  if !defined(__STDC_CONSTANT_MACROS)
 #    define __STDC_CONSTANT_MACROS 1
@@ -2139,6 +2141,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(3 == 3)
 #endif
 #endif
 #endif
+#define ACC_SIZEOF_CHAR             1
 #ifndef ACC_SIZEOF_SHORT
 #if defined(SIZEOF_SHORT)
 #  define ACC_SIZEOF_SHORT          (SIZEOF_SHORT)
@@ -2733,7 +2736,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #elif (ACC_ARCH_POWERPC)
 #  define ACC_OPT_PREFER_PREINC             1
 #  define ACC_OPT_PREFER_PREDEC             1
-#  if (ACC_ABI_BIG_ENDIAN)
+#  if (ACC_ABI_BIG_ENDIAN) || (ACC_WORDSIZE == 8)
 #    ifndef ACC_OPT_UNALIGNED16
 #    define ACC_OPT_UNALIGNED16             1
 #    endif
@@ -2865,11 +2868,14 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #endif
 #endif
 #if !defined(acc_int16e_t)
-#if (ACC_SIZEOF_LONG == 2)
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT) && (ACC_SIZEOF_SHORT != 2)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T
+#endif
+#if (ACC_SIZEOF_LONG == 2) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT)
 #  define acc_int16e_t              long
 #  define acc_uint16e_t             unsigned long
 #  define ACC_TYPEOF_ACC_INT16E_T   ACC_TYPEOF_LONG
-#elif (ACC_SIZEOF_INT == 2)
+#elif (ACC_SIZEOF_INT == 2) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT)
 #  define acc_int16e_t              int
 #  define acc_uint16e_t             unsigned int
 #  define ACC_TYPEOF_ACC_INT16E_T   ACC_TYPEOF_INT
@@ -2898,7 +2904,10 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int16e_t) == ACC_SIZEOF_ACC_INT16E_T)
 #endif
 #if !defined(acc_int32e_t)
-#if (ACC_SIZEOF_LONG == 4)
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T == ACC_TYPEOF_INT) && (ACC_SIZEOF_INT != 4)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T
+#endif
+#if (ACC_SIZEOF_LONG == 4) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T == ACC_TYPEOF_INT)
 #  define acc_int32e_t              long int
 #  define acc_uint32e_t             unsigned long int
 #  define ACC_TYPEOF_ACC_INT32E_T   ACC_TYPEOF_LONG
@@ -2946,19 +2955,25 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #endif
 #if !defined(acc_int64e_t)
 #if (ACC_SIZEOF___INT64 == 8)
-#  if (ACC_CC_BORLANDC) && !(ACC_CFG_TYPE_PREFER___INT64)
-#    define ACC_CFG_TYPE_PREFER___INT64 1
+#  if (ACC_CC_BORLANDC) && !defined(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T)
+#    define ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T  ACC_TYPEOF___INT64
 #  endif
+#endif
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF_LONG_LONG) && (ACC_SIZEOF_LONG_LONG != 8)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T
+#endif
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64) && (ACC_SIZEOF___INT64 != 8)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T
 #endif
 #if (ACC_SIZEOF_INT == 8) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int64e_t              int
 #  define acc_uint64e_t             unsigned int
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_INT
-#elif (ACC_SIZEOF_LONG == 8)
+#elif (ACC_SIZEOF_LONG == 8) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF_LONG_LONG) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64)
 #  define acc_int64e_t              long int
 #  define acc_uint64e_t             unsigned long int
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_LONG
-#elif (ACC_SIZEOF_LONG_LONG == 8) && !(ACC_CFG_TYPE_PREFER___INT64)
+#elif (ACC_SIZEOF_LONG_LONG == 8) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64)
 #  define acc_int64e_t              acc_llong_t
 #  define acc_uint64e_t             acc_ullong_t
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_LONG_LONG
@@ -3320,12 +3335,12 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #if (ACC_OS_POSIX)
 #  if (ACC_OS_POSIX_AIX)
 #    define HAVE_SYS_RESOURCE_H 1
-#  elif (ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_MACOSX || ACC_OS_POSIX_NETBSD || ACC_OS_POSIX_OPENBSD)
+#  elif (ACC_OS_POSIX_DARWIN || ACC_OS_POSIX_FREEBSD || ACC_OS_POSIX_NETBSD || ACC_OS_POSIX_OPENBSD)
 #    define HAVE_STRINGS_H 1
 #    undef HAVE_MALLOC_H
 #  elif (ACC_OS_POSIX_HPUX || ACC_OS_POSIX_INTERIX)
 #    define HAVE_ALLOCA_H 1
-#  elif (ACC_OS_POSIX_MACOSX && ACC_LIBC_MSL)
+#  elif (ACC_OS_POSIX_DARWIN && ACC_LIBC_MSL)
 #    undef HAVE_SYS_TIME_H
 #    undef HAVE_SYS_TYPES_H
 #  elif (ACC_OS_POSIX_SOLARIS || ACC_OS_POSIX_SUNOS)
@@ -3601,7 +3616,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #if (ACC_OS_POSIX)
 #  if (ACC_OS_POSIX_AIX)
 #    define HAVE_GETRUSAGE 1
-#  elif (ACC_OS_POSIX_MACOSX && ACC_LIBC_MSL)
+#  elif (ACC_OS_POSIX_DARWIN && ACC_LIBC_MSL)
 #    undef HAVE_CHOWN
 #    undef HAVE_LSTAT
 #  elif (ACC_OS_POSIX_UNICOS)
@@ -4093,11 +4108,14 @@ void __ACC_UA_SET_LE32(__acc_ua_volatile void* pp, unsigned long v) {
 #endif
 #endif
 #if !defined(acc_int16e_t)
-#if (ACC_SIZEOF_LONG == 2)
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT) && (ACC_SIZEOF_SHORT != 2)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T
+#endif
+#if (ACC_SIZEOF_LONG == 2) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT)
 #  define acc_int16e_t              long
 #  define acc_uint16e_t             unsigned long
 #  define ACC_TYPEOF_ACC_INT16E_T   ACC_TYPEOF_LONG
-#elif (ACC_SIZEOF_INT == 2)
+#elif (ACC_SIZEOF_INT == 2) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT16E_T == ACC_TYPEOF_SHORT)
 #  define acc_int16e_t              int
 #  define acc_uint16e_t             unsigned int
 #  define ACC_TYPEOF_ACC_INT16E_T   ACC_TYPEOF_INT
@@ -4126,7 +4144,10 @@ void __ACC_UA_SET_LE32(__acc_ua_volatile void* pp, unsigned long v) {
    ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int16e_t) == ACC_SIZEOF_ACC_INT16E_T)
 #endif
 #if !defined(acc_int32e_t)
-#if (ACC_SIZEOF_LONG == 4)
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T == ACC_TYPEOF_INT) && (ACC_SIZEOF_INT != 4)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T
+#endif
+#if (ACC_SIZEOF_LONG == 4) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T == ACC_TYPEOF_INT)
 #  define acc_int32e_t              long int
 #  define acc_uint32e_t             unsigned long int
 #  define ACC_TYPEOF_ACC_INT32E_T   ACC_TYPEOF_LONG
@@ -4174,19 +4195,25 @@ void __ACC_UA_SET_LE32(__acc_ua_volatile void* pp, unsigned long v) {
 #endif
 #if !defined(acc_int64e_t)
 #if (ACC_SIZEOF___INT64 == 8)
-#  if (ACC_CC_BORLANDC) && !(ACC_CFG_TYPE_PREFER___INT64)
-#    define ACC_CFG_TYPE_PREFER___INT64 1
+#  if (ACC_CC_BORLANDC) && !defined(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T)
+#    define ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T  ACC_TYPEOF___INT64
 #  endif
+#endif
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF_LONG_LONG) && (ACC_SIZEOF_LONG_LONG != 8)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T
+#endif
+#if (ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64) && (ACC_SIZEOF___INT64 != 8)
+#  undef ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T
 #endif
 #if (ACC_SIZEOF_INT == 8) && (ACC_SIZEOF_INT < ACC_SIZEOF_LONG)
 #  define acc_int64e_t              int
 #  define acc_uint64e_t             unsigned int
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_INT
-#elif (ACC_SIZEOF_LONG == 8)
+#elif (ACC_SIZEOF_LONG == 8) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF_LONG_LONG) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64)
 #  define acc_int64e_t              long int
 #  define acc_uint64e_t             unsigned long int
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_LONG
-#elif (ACC_SIZEOF_LONG_LONG == 8) && !(ACC_CFG_TYPE_PREFER___INT64)
+#elif (ACC_SIZEOF_LONG_LONG == 8) && !(ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T == ACC_TYPEOF___INT64)
 #  define acc_int64e_t              acc_llong_t
 #  define acc_uint64e_t             acc_ullong_t
 #  define ACC_TYPEOF_ACC_INT64E_T   ACC_TYPEOF_LONG_LONG
@@ -5508,18 +5535,17 @@ ACCLIB_EXTERN(int, acc_spawnve) (int mode, const char* fn, const char* const * a
 #  endif
 #endif
     ACCCHK_ASSERT(1 == 1)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,1) == 1)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,2) == 3)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,3) == 7)
-    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,8) == 255)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,1) == 1u)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,2) == 3u)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,3) == 7u)
+    ACCCHK_ASSERT(__ACC_MASK_GEN(1u,8) == 255u)
 #if (ACC_SIZEOF_INT >= 2)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1,15) == 32767)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1u,16) == 0xffffU)
     ACCCHK_ASSERT(__ACC_MASK_GEN(0u,16) == 0u)
-#else
+#endif
     ACCCHK_ASSERT(__ACC_MASK_GEN(1ul,16) == 0xffffUL)
     ACCCHK_ASSERT(__ACC_MASK_GEN(0ul,16) == 0ul)
-#endif
 #if (ACC_SIZEOF_INT >= 4)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1,31) == 2147483647)
     ACCCHK_ASSERT(__ACC_MASK_GEN(1u,32) == 0xffffffffU)
@@ -6080,7 +6106,7 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_ua_get_be64) (const acc_hvoid_p p)
     v1 = ACC_UA_GET_BE32(b + 0);
     v0 = ACC_UA_GET_BE32(b + 4);
     return ACC_ICONV(acc_uint64l_t, v0) | (ACC_ICONV(acc_uint64l_t, v1) << 32);
-#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
+#elif (ACC_WORDSIZE >= 8)
     const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
     return (ACC_ICONV(acc_uint64l_t, b[7])) | (ACC_ICONV(acc_uint64l_t, b[6]) << 8) | (ACC_ICONV(acc_uint64l_t, b[5]) << 16) | (ACC_ICONV(acc_uint64l_t, b[4]) << 24) | (ACC_ICONV(acc_uint64l_t, b[3]) << 32) | (ACC_ICONV(acc_uint64l_t, b[2]) << 40) | (ACC_ICONV(acc_uint64l_t, b[1]) << 48) | (ACC_ICONV(acc_uint64l_t, b[0]) << 56);
 #else
@@ -6101,7 +6127,7 @@ ACCLIB_PUBLIC(void, acc_ua_set_be64) (acc_hvoid_p p, acc_uint64l_t v)
     ACC_UA_SET_BE32(b + 4, v);
     v >>= 32;
     ACC_UA_SET_BE32(b + 0, v);
-#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
+#elif (ACC_WORDSIZE >= 8)
     acc_hbyte_p b = ACC_PCAST(acc_hbyte_p, p);
     b[7] = ACC_ITRUNC(unsigned char, v); v >>= 8;
     b[6] = ACC_ITRUNC(unsigned char, v); v >>= 8;
@@ -6139,7 +6165,7 @@ ACCLIB_PUBLIC(acc_uint64l_t, acc_ua_get_le64) (const acc_hvoid_p p)
     v0 = ACC_UA_GET_LE32(b + 0);
     v1 = ACC_UA_GET_LE32(b + 4);
     return ACC_ICONV(acc_uint64l_t, v0) | (ACC_ICONV(acc_uint64l_t, v1) << 32);
-#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
+#elif (ACC_WORDSIZE >= 8)
     const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
     return ACC_ICONV(acc_uint64l_t, b[0]) | (ACC_ICONV(acc_uint64l_t, b[1]) << 8) | (ACC_ICONV(acc_uint64l_t, b[2]) << 16) | (ACC_ICONV(acc_uint64l_t, b[3]) << 24) | (ACC_ICONV(acc_uint64l_t, b[4]) << 32) | (ACC_ICONV(acc_uint64l_t, b[5]) << 40) | (ACC_ICONV(acc_uint64l_t, b[6]) << 48) | (ACC_ICONV(acc_uint64l_t, b[7]) << 56);
 #else
@@ -6160,7 +6186,7 @@ ACCLIB_PUBLIC(void, acc_ua_set_le64) (acc_hvoid_p p, acc_uint64l_t v)
     ACC_UA_SET_LE32(b + 0, v);
     v >>= 32;
     ACC_UA_SET_LE32(b + 4, v);
-#elif (ACC_SIZEOF_LONG >= 8) || (ACC_SIZEOF_SIZE_T >= 8)
+#elif (ACC_WORDSIZE >= 8)
     acc_hbyte_p b = ACC_PCAST(acc_hbyte_p, p);
     b[0] = ACC_ITRUNC(unsigned char, v); v >>= 8;
     b[1] = ACC_ITRUNC(unsigned char, v); v >>= 8;
@@ -6888,7 +6914,7 @@ ACCLIB_PUBLIC(acc_hvoid_p, acc_halloc) (acc_hsize_t size)
     p = lmalloc(size);
 #else
     if (size < ACC_STATIC_CAST(size_t, -1))
-        p = malloc((size_t) size);
+        p = malloc(ACC_STATIC_CAST(size_t, size));
 #endif
 }
 #endif
