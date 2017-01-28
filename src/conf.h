@@ -43,6 +43,8 @@
 #ifndef ACC_CFG_USE_NEW_STYLE_CASTS
 #define ACC_CFG_USE_NEW_STYLE_CASTS 1
 #endif
+#define ACC_CFG_PREFER_TYPEOF_ACC_INT32E_T ACC_TYPEOF_INT
+#define ACC_CFG_PREFER_TYPEOF_ACC_INT64E_T ACC_TYPEOF_LONG_LONG
 #include "miniacc.h"
 #if !(ACC_CC_CLANG || ACC_CC_GNUC || ACC_CC_MSC)
    // other compilers may work, but we're NOT interested into supporting them
