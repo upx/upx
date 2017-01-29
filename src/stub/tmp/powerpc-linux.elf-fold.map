@@ -1,0 +1,39 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+TARGET(elf32-powerpc)
+                0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x0000000000100080      0xc84
+ *(.text)
+ .text          0x0000000000100080      0x12c tmp/powerpc-linux.elf-fold.o
+                0x000000000010019c                munmap
+                0x0000000000100160                mmap
+                0x000000000010017c                read
+                0x0000000000100174                exit
+                0x00000000001001a4                brk
+                0x0000000000100184                open
+                0x0000000000100194                mprotect
+                0x000000000010018c                close
+ .text          0x00000000001001ac      0xb58 tmp/powerpc-linux.elf-main.o
+                0x0000000000100ad0                upx_main
+ *(.data)
+ .data          0x0000000000100d04        0x0 tmp/powerpc-linux.elf-fold.o
+ .data          0x0000000000100d04        0x0 tmp/powerpc-linux.elf-main.o
+
+.data
+
+.bss            0x0000000000100d04        0x0
+ .bss           0x0000000000100d04        0x0 tmp/powerpc-linux.elf-fold.o
+ .bss           0x0000000000100d04        0x0 tmp/powerpc-linux.elf-main.o
+
+.rela.dyn       0x0000000000100d04        0x0
+ .rela.text     0x0000000000000000        0x0 tmp/powerpc-linux.elf-fold.o
+LOAD tmp/powerpc-linux.elf-fold.o
+LOAD tmp/powerpc-linux.elf-main.o
+OUTPUT(tmp/powerpc-linux.elf-fold.bin elf32-powerpc)

@@ -1,0 +1,40 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+                0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x00000000001000bc      0x670
+ *(.text)
+ .text          0x00000000001000bc      0x121 tmp/amd64-linux.elf-fold.o
+                0x00000000001001aa                munmap
+                0x00000000001001b6                mmap
+                0x00000000001001cd                read
+                0x00000000001001d9                exit
+                0x00000000001001b2                brk
+                0x00000000001001d1                open
+                0x00000000001001ae                mprotect
+                0x00000000001001d5                close
+ *fill*         0x00000000001001dd        0x3 00
+ .text          0x00000000001001e0      0x54a tmp/amd64-linux.elf-main.o
+                0x00000000001005f2                upx_main
+ *(.data)
+ *fill*         0x000000000010072a        0x2 00
+ .data          0x000000000010072c        0x0 tmp/amd64-linux.elf-fold.o
+ .data          0x000000000010072c        0x0 tmp/amd64-linux.elf-main.o
+
+.data
+
+.bss            0x000000000010072c        0x0
+ .bss           0x000000000010072c        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x000000000010072c        0x0 tmp/amd64-linux.elf-main.o
+
+.rela.dyn       0x0000000000100730        0x0
+ .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
+LOAD tmp/amd64-linux.elf-fold.o
+LOAD tmp/amd64-linux.elf-main.o
+OUTPUT(tmp/amd64-linux.elf-fold.bin elf64-x86-64)

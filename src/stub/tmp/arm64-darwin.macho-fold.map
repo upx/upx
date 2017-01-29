@@ -1,0 +1,313 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD tmp/arm64-darwin.macho-fold.o
+LOAD tmp/arm64-darwin.macho-main.o
+                0x0000000000400000                PROVIDE (__executable_start, 0x400000)
+                0x0000000000400078                . = (0x400000 + SIZEOF_HEADERS)
+
+.interp
+ *(.interp)
+
+.note.gnu.build-id
+ *(.note.gnu.build-id)
+
+.hash
+ *(.hash)
+
+.gnu.hash
+ *(.gnu.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rela.dyn
+ *(.rela.init)
+ *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+ *(.rela.fini)
+ *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+ *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+ *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+ *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+ *(.rela.ctors)
+ *(.rela.dtors)
+ *(.rela.got)
+ *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+ *(.rela.ifunc)
+
+.rela.plt       0x0000000000400078        0x0
+ *(.rela.plt)
+                0x0000000000400078                PROVIDE (__rela_iplt_start, .)
+ *(.rela.iplt)
+ .rela.iplt     0x0000000000400078        0x0 tmp/arm64-darwin.macho-fold.o
+                0x0000000000400078                PROVIDE (__rela_iplt_end, .)
+
+.init
+ *(SORT(.init))
+
+.plt            0x0000000000400080        0x0
+ *(.plt)
+ *(.iplt)
+ .iplt          0x0000000000400080        0x0 tmp/arm64-darwin.macho-fold.o
+
+.text           0x0000000000400078      0x6a8
+ *(.text.unlikely .text.*_unlikely .text.unlikely.*)
+ *(.text.exit .text.exit.*)
+ *(.text.startup .text.startup.*)
+ *(.text.hot .text.hot.*)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x0000000000400078      0x188 tmp/arm64-darwin.macho-fold.o
+                0x0000000000400078                _start
+                0x0000000000400134                spin
+                0x0000000000400138                exit
+                0x0000000000400144                read
+                0x0000000000400154                write
+                0x0000000000400164                open
+                0x0000000000400174                close
+                0x0000000000400184                brk
+                0x0000000000400194                munmap
+                0x00000000004001a4                mprotect
+                0x00000000004001b4                mmap
+                0x00000000004001c4                pread
+                0x00000000004001d4                bswap
+ .text          0x0000000000400200      0x520 tmp/arm64-darwin.macho-main.o
+                0x0000000000400578                upx_main
+ *(.gnu.warning)
+
+.fini
+ *(SORT(.fini))
+                0x0000000000400720                PROVIDE (__etext, .)
+                0x0000000000400720                PROVIDE (_etext, .)
+                0x0000000000400720                PROVIDE (etext, .)
+
+.rodata
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+
+.rodata1
+ *(.rodata1)
+
+.eh_frame_hdr
+ *(.eh_frame_hdr)
+
+.eh_frame       0x0000000000400720      0x100
+ *(.eh_frame)
+ .eh_frame      0x0000000000400720      0x100 tmp/arm64-darwin.macho-main.o
+                                         0xf8 (size before relaxing)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+                0x0000000000400820                . = (ALIGN (0x10000) - ((0x10000 - .) & 0xffff))
+                0x0000000000410820                . = DATA_SEGMENT_ALIGN (0x10000, 0x1000)
+
+.eh_frame
+ *(.eh_frame)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+
+.tdata
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x0000000000410820        0x0
+                0x0000000000410820                PROVIDE (__preinit_array_start, .)
+ *(.preinit_array)
+                0x0000000000410820                PROVIDE (__preinit_array_end, .)
+
+.init_array     0x0000000000410820        0x0
+                0x0000000000410820                PROVIDE (__init_array_start, .)
+ *(SORT(.init_array.*))
+ *(.init_array)
+                0x0000000000410820                PROVIDE (__init_array_end, .)
+
+.fini_array     0x0000000000410820        0x0
+                0x0000000000410820                PROVIDE (__fini_array_start, .)
+ *(SORT(.fini_array.*))
+ *(.fini_array)
+                0x0000000000410820                PROVIDE (__fini_array_end, .)
+
+.ctors
+ *crtbegin.o(.ctors)
+ *crtbegin?.o(.ctors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+ *(SORT(.ctors.*))
+ *(.ctors)
+
+.dtors
+ *crtbegin.o(.dtors)
+ *crtbegin?.o(.dtors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+ *(SORT(.dtors.*))
+ *(.dtors)
+
+.jcr
+ *(.jcr)
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*)
+
+.dynamic
+ *(.dynamic)
+
+.got
+ *(.got)
+ *(.igot)
+                0x0000000000410820                . = DATA_SEGMENT_RELRO_END (., 0x18)
+
+.got.plt        0x0000000000410820        0x0
+ *(.got.plt)
+ *(.igot.plt)
+ .igot.plt      0x0000000000410820        0x0 tmp/arm64-darwin.macho-fold.o
+
+.data           0x0000000000410820        0x0
+                0x0000000000410820                PROVIDE (__data_start, .)
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000000410820        0x0 tmp/arm64-darwin.macho-fold.o
+ .data          0x0000000000410820        0x0 tmp/arm64-darwin.macho-main.o
+
+.data1
+ *(.data1)
+                0x0000000000410820                _edata = .
+                0x0000000000410820                PROVIDE (edata, .)
+                0x0000000000410820                . = .
+                0x0000000000410820                __bss_start = .
+                0x0000000000410820                __bss_start__ = .
+
+.bss            0x0000000000410820        0x0
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x0000000000410820        0x0 tmp/arm64-darwin.macho-fold.o
+ .bss           0x0000000000410820        0x0 tmp/arm64-darwin.macho-main.o
+ *(COMMON)
+                0x0000000000410820                . = ALIGN ((. != 0x0)?0x8:0x1)
+                0x0000000000410820                _bss_end__ = .
+                0x0000000000410820                __bss_end__ = .
+                0x0000000000410820                . = ALIGN (0x8)
+                0x0000000000410820                . = SEGMENT_START ("ldata-segment", .)
+                0x0000000000410820                . = ALIGN (0x8)
+                0x0000000000410820                __end__ = .
+                0x0000000000410820                _end = .
+                0x0000000000410820                PROVIDE (end, .)
+                0x0000000000410820                . = DATA_SEGMENT_END (.)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info .gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line .debug_line.* .debug_line_end)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.debug_macro
+ *(.debug_macro)
+
+.ARM.attributes
+ *(.ARM.attributes)
+ *(.gnu.attributes)
+
+.note.gnu.arm.ident
+ *(.note.gnu.arm.ident)
+
+/DISCARD/
+ *(.note.GNU-stack)
+ *(.gnu_debuglink)
+ *(.gnu.lto_*)
+ *(.gnu_object_only)
+OUTPUT(tmp/arm64-darwin.macho-fold.tmp elf64-littleaarch64)

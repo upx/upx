@@ -1,0 +1,272 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+TARGET(elf32-powerpc)
+LOAD tmp/powerpc-darwin.macho-fold.o
+LOAD tmp/powerpc-darwin.macho-main.o
+                0x0000000008048000                PROVIDE (__executable_start, 0x8048000)
+                0x0000000008048000                . = (0x8048000 + SIZEOF_HEADERS)
+
+.interp
+ *(.interp)
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.dyn
+ *(.rel.init)
+ *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+ *(.rel.fini)
+ *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+ *(.rel.data.rel.ro* .rel.gnu.linkonce.d.rel.ro.*)
+ *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+ *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+ *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+ *(.rel.ctors)
+ *(.rel.dtors)
+ *(.rel.got)
+ *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+
+.rela.dyn
+ *(.rela.init)
+ *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
+ *(.rela.fini)
+ *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
+ *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*)
+ *(.rela.tdata .rela.tdata.* .rela.gnu.linkonce.td.*)
+ *(.rela.tbss .rela.tbss.* .rela.gnu.linkonce.tb.*)
+ *(.rela.ctors)
+ *(.rela.dtors)
+ *(.rela.got)
+ *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.init
+ *(.init)
+
+.plt
+ *(.plt)
+
+.text           0x0000000008048000      0xa04
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x0000000008048000      0x134 tmp/powerpc-darwin.macho-fold.o
+                0x00000000080480f4                mmap
+                0x0000000008048000                _start
+                0x0000000008048114                read
+                0x00000000080480e4                pread
+                0x000000000804810c                exit
+                0x000000000804811c                open
+                0x000000000804812c                mprotect
+                0x0000000008048124                close
+ .text          0x0000000008048134      0x8d0 tmp/powerpc-darwin.macho-main.o
+                0x00000000080487a4                upx_main
+ *(.text.*personality*)
+ *(.gnu.warning)
+
+.fini
+ *(.fini)
+                0x0000000008048a04                PROVIDE (__etext, .)
+                0x0000000008048a04                PROVIDE (_etext, .)
+                0x0000000008048a04                PROVIDE (etext, .)
+
+.rodata
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+
+.rodata1
+ *(.rodata1)
+
+.eh_frame_hdr
+ *(.eh_frame_hdr)
+
+.eh_frame
+ *(.eh_frame)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+                0x0000000008048a04                . = (ALIGN (0x1000) - ((0x1000 - .) & 0xfff))
+                0x0000000008049a04                . = (0x1000 DATA_SEGMENT_ALIGN 0x1000)
+
+.eh_frame
+ *(.eh_frame)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.tdata
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x0000000008049a04        0x0
+                0x0000000008049a04                PROVIDE (__preinit_array_start, .)
+ *(.preinit_array)
+                0x0000000008049a04                PROVIDE (__preinit_array_end, .)
+
+.init_array     0x0000000008049a04        0x0
+                0x0000000008049a04                PROVIDE (__init_array_start, .)
+ *(SORT(.init_array.*))
+ *(.init_array)
+                0x0000000008049a04                PROVIDE (__init_array_end, .)
+
+.fini_array     0x0000000008049a04        0x0
+                0x0000000008049a04                PROVIDE (__fini_array_start, .)
+ *(.fini_array)
+ *(SORT(.fini_array.*))
+                0x0000000008049a04                PROVIDE (__fini_array_end, .)
+
+.ctors
+ *crtbegin*.o(.ctors)
+ *(EXCLUDE_FILE(*crtend*.o) .ctors)
+ *(SORT(.ctors.*))
+ *(.ctors)
+
+.dtors
+ *crtbegin*.o(.dtors)
+ *(EXCLUDE_FILE(*crtend*.o) .dtors)
+ *(SORT(.dtors.*))
+ *(.dtors)
+
+.jcr
+ *(.jcr)
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro* .gnu.linkonce.d.rel.ro.*)
+
+.dynamic
+ *(.dynamic)
+
+.got
+ *(.got)
+                0x0000000008049a04                . = (. DATA_SEGMENT_RELRO_END 0xc)
+
+.got.plt
+ *(.got.plt)
+
+.data           0x0000000008049a04        0x0
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000008049a04        0x0 tmp/powerpc-darwin.macho-fold.o
+ .data          0x0000000008049a04        0x0 tmp/powerpc-darwin.macho-main.o
+ *(.gnu.linkonce.d.*personality*)
+
+.data1
+ *(.data1)
+                0x0000000008049a04                _edata = .
+                0x0000000008049a04                PROVIDE (edata, .)
+                0x0000000008049a04                __bss_start = .
+
+.bss            0x0000000008049a04        0x0
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x0000000008049a04        0x0 tmp/powerpc-darwin.macho-fold.o
+ .bss           0x0000000008049a04        0x0 tmp/powerpc-darwin.macho-main.o
+ *(COMMON)
+                0x0000000008049a04                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x0000000008049a04                . = ALIGN (0x4)
+                0x0000000008049a04                . = ALIGN (0x4)
+                0x0000000008049a04                _end = .
+                0x0000000008049a04                PROVIDE (end, .)
+                0x0000000008049a04                . = DATA_SEGMENT_END (.)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info .gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+/DISCARD/
+ *(.note.GNU-stack)
+OUTPUT(tmp/powerpc-darwin.macho-fold.bin binary)

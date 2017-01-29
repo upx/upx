@@ -1,0 +1,32 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+TARGET(elf32-i386)
+                0x0000000001400074                . = (0x1400000 + SIZEOF_HEADERS)
+                0x0000000001400080                . = ALIGN (0x80)
+
+.data           0x0000000001400080      0x4a4
+ *(.text)
+ .text          0x0000000001400080       0xec tmp/i386-linux.elf.shell-fold.o
+                0x000000000140015f                mmap
+ .text          0x000000000140016c      0x3b8 tmp/i386-linux.elf.shell-main.o
+                0x00000000014003b4                upx_main
+ *(.rodata)
+ *(.data)
+ .data          0x0000000001400524        0x0 tmp/i386-linux.elf.shell-fold.o
+ .data          0x0000000001400524        0x0 tmp/i386-linux.elf.shell-main.o
+ *(.bss)
+ .bss           0x0000000001400524        0x0 tmp/i386-linux.elf.shell-fold.o
+ .bss           0x0000000001400524        0x0 tmp/i386-linux.elf.shell-main.o
+ *(COMMON)
+
+.rel.dyn        0x0000000001400524        0x0
+ .rel.text      0x0000000000000000        0x0 tmp/i386-linux.elf.shell-fold.o
+LOAD tmp/i386-linux.elf.shell-fold.o
+LOAD tmp/i386-linux.elf.shell-main.o
+OUTPUT(tmp/i386-linux.elf.shell-fold.bin elf32-i386)

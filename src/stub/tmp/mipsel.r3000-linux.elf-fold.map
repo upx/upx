@@ -1,0 +1,40 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+TARGET(elf32-littlemips)
+                0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x0000000000100080      0x9a0
+ *(.text)
+ .text          0x0000000000100080      0x120 tmp/mipsel.r3000-linux.elf-fold.o
+ .text          0x00000000001001a0      0x880 tmp/mipsel.r3000-linux.elf-main.o
+                0x0000000000100854                upx_main
+ *(.data)
+ .data          0x0000000000100a20        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+ .data          0x0000000000100a20        0x0 tmp/mipsel.r3000-linux.elf-main.o
+
+.data
+
+.bss            0x0000000000100a20        0x0
+ .bss           0x0000000000100a20        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+ .bss           0x0000000000100a20        0x0 tmp/mipsel.r3000-linux.elf-main.o
+LOAD tmp/mipsel.r3000-linux.elf-fold.o
+LOAD tmp/mipsel.r3000-linux.elf-main.o
+OUTPUT(tmp/mipsel.r3000-linux.elf-fold.bin elf32-littlemips)
+
+.pdr            0x0000000000000000        0x0
+ .pdr           0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-fold.o
+
+.mdebug.eabi32  0x0000000000000000        0x0
+ .mdebug.eabi32
+                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-main.o
+
+.gcc_compiled_long32
+                0x0000000000000000        0x0
+ .gcc_compiled_long32
+                0x0000000000000000        0x0 tmp/mipsel.r3000-linux.elf-main.o
