@@ -33,7 +33,7 @@
         dcbtst 0,dst  // prime dcache for store
         mflr t3  // return address
 
-        cmpli cr0,meth,M_NRV2B_LE32
+        cmpli cr0,0,meth,M_NRV2B_LE32
         bne   cr0,not_nrv2b
 
         std dst,0(ldst)  // original dst
