@@ -37,6 +37,7 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
         cmpl $0x49,ftid; jne ckend0  # filter: JMP, CALL, 6-byte Jxx
 #endif
         push %rbx  # save
+	cld  # convention should have guaranteed this already
 
         push %rdi; lea (1- 4)(%rdi,%rsi),%rcx  # beyond last possible opcode
         pop  %rsi  # start of buffer
