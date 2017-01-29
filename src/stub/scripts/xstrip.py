@@ -161,7 +161,8 @@ def do_file(fn):
         # ELF64 LE
         eh, idata = idata[:64], idata[64:]
         e_shnum, e_shstrndx = struct.unpack("<HH", eh[60:64])
-        assert e_shstrndx + 3 == e_shnum
+        if ( e_shstrndx + 1 != e_shnum  and  e_shstrndx + 3 != e_shnum ):
+            assert e_shnum == e_shstrndx
     elif idata[4:7] == "\x02\x02\x01":
         # ELF64 BE
         eh, idata = idata[:64], idata[64:]
