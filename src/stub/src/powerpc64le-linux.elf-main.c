@@ -98,7 +98,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, nrv_uint *, unsigned );
+          nrv_byte *, long *, unsigned );
 
 static void
 unpackExtent(
@@ -136,7 +136,7 @@ ERR_LAB
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
-            nrv_uint out_len = h.sz_unc;  // EOF for lzma
+            long out_len = h.sz_unc;  // EOF for lzma
             int const j = (*f_decompress)((const unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (nrv_uint)h.sz_unc)
@@ -155,7 +155,7 @@ ERR_LAB
     }
 }
 
-#if 0
+#if 1
 static void
 upx_bzero(char *p, size_t len)
 {
@@ -268,9 +268,9 @@ do_xmap(
         //    bzero(addr, frag);  // fragment at lo end
         //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        /* if  (! (PROT_WRITE & prot))  {
+        if  ( PROT_WRITE & prot )  {
               bzero(mlen+addr, frag);  // fragment at hi end
-        } */
+        }
         if (xi) {
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
