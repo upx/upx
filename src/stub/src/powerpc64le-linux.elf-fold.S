@@ -65,7 +65,7 @@ fold_begin:
 zfind:
         ld t0,0(a6)        // parameters are 16byte aligned
         addi a6,a6,8
-        cmpi cr7,t0,0; bne+ cr7,zfind
+        cmpi cr7,0,t0,0; bne+ cr7,zfind
         ret
 L90:
         la sp,LINKAREA(sp)  // trim save area used by decompressor
@@ -94,21 +94,6 @@ L90:
         call munmap  // unmap compressed program; /proc/self/exe disappears
 
         mtlr r31  // entry address
-
-        lis    15,0x1000
-        addi   15,15,0x8c0  // Check if statically allocated i.e.
-        cmpld  15,r31       // entry @ 0x10008c0
-        beq+   rest
-
-/* Dynamic load settings */
-        addis r31,r31,5
-        addi  r31,r31,27232    // @+0x57e00
-
-        addi  12,r31,-27828
-        std   12,-27984(r31)  // required : Inconsistency detected by ld.so: rtld.c:
-
-        li    12,0
-        std   12,-28192(r31)    // p 0x...d7e00-0x...d0fe0
 
 //      lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31 32bits load
 /* Restore Save Area     */
