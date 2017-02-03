@@ -105,7 +105,7 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
     super(f), my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
     n_segment(0), rawmseg(NULL), msegcmd(NULL), o_routines_cmd(0),
-    prev_init_address(0)
+    prev_init_address(0), pagezero_vmsize(0)
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
@@ -647,6 +647,11 @@ void PackMachBase<T>::pack4(OutputFile *fo, Filter &ft)  // append PackHeader
         case Mach_segment_command::LC_SEGMENT: // fall through
         case Mach_segment_command::LC_SEGMENT_64: {
             Mach_segment_command *const segptr = (Mach_segment_command *)lcp;
+            if (!strcmp("__PAGEZERO", segptr->segname)) {
+                if (pagezero_vmsize < 0xF0000000ull) {
+                    segptr->vmsize = pagezero_vmsize;
+                }
+            }
             if (!strcmp("__TEXT", segptr->segname)) {
                 segtxt = segptr;  // remember base for appending
                 sectxt = (Mach_section_command *)(1+ segptr);
@@ -1380,7 +1385,12 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
     if __acc_cte(sizeof(segZERO.vmsize) == 8
     && mhdro.filetype == Mach_header::MH_EXECUTE
     && mhdro.cputype == Mach_header::CPU_TYPE_X86_64) {
-        segZERO.vmsize <<= 20;  // (1ul<<32)
+        if (pagezero_vmsize < 0xF0000000ull) {
+            segZERO.vmsize = pagezero_vmsize;
+        }
+        else {
+            segZERO.vmsize <<= 20;  // (1ul<<32)
+        }
     }
 
     segTEXT.cmd = lc_seg;
@@ -1867,6 +1877,11 @@ bool PackMachBase<T>::canPack()
 
     // Put LC_SEGMENT together at the beginning, ascending by .vmaddr.
     qsort(msegcmd, ncmds, sizeof(*msegcmd), compare_segment_command);
+
+    if (lc_seg==msegcmd[0].cmd && 0==msegcmd[0].vmaddr
+    &&  !strcmp("__PAGEZERO", msegcmd[0].segname)) {
+        pagezero_vmsize = msegcmd[0].vmsize;
+    }
 
     // Check alignment of non-null LC_SEGMENT.
     for (unsigned j= 0; j < ncmds; ++j) {
