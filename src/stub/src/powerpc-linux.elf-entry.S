@@ -164,7 +164,7 @@ unfold:
         mr     14,a0  // save address being allocated
         li     0,__NR_mmap
         sc
-        cmplw cr0,a0,14
+        cmplwi cr0,a0,14
         beq    alloc4
         b      alloc64
         /* try to allocate a 4k page - if failure then allocate 64k page */
@@ -187,7 +187,7 @@ alloc4:
         mr     23,a1  // save PAGE_SIZE value
         mr     14,a0  // save address being allocated
         sc
-        cmpwi cr0,a0,14 //
+        cmplwi cr0,a0,14 //
         bne    decomp
         b      msg_SELinux  // Branch if SummaryOverflow (failure)
         /* 64k page */
