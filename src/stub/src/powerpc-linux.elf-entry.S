@@ -146,80 +146,56 @@ die:
         li a0,127
         li 0,__NR_exit; sc
 
+zfind:
+        lwz t0,0(a0); addi a0,a0,4
+        cmpi cr7,t0,0; bne+ cr7,zfind
+        ret
+
         /* Decompress the rest of this loader, and jump to it. */
 unfold:
         mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+
+        la a0,32*4(sp)
+        call zfind  // a0= envp
+        call zfind  // a0= &Elf32_auxv
+        mr r28,a0  // save for folded code
+
+// set a1= actual page size in Elf32_auxv_t
+AT_NULL= 0  // <elf.h>
+AT_PAGESZ= 6
+a_type= 0
+a_val= 4
+sz_auxv= 2*4
+1:
+        lwz t0,a_type(a0)
+        lwz a1,a_val(a0); addi a0,a0,sz_auxv
+        cmpi cr0,t0,AT_PAGESZ; beq- 2f
+        cmpi cr0,t0,AT_NULL; bne+ 1b
+        li a1,PAGE_SIZE  // not found; use default
+2:
+        mr r27,a1  // save for folded code
 
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
         li     a3,MAP_PRIVATE | MAP_ANONYMOUS
         li     a2,PROT_READ | PROT_WRITE
-        li     a1,PAGE_SIZE
-        add    a1,a1,a1        // allocate twice 4K
-        lwz    a0,sz_cpr(r30)
-        add    a0,a0,r30
-        addi   a0,a0,sz_b_info+PAGE_SIZE-1
-        rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
-        mr     23,a1  // save PAGE_SIZE value
-        mr     14,a0  // save address being allocated
-        li     0,__NR_mmap
+        lwz    a0,sz_cpr(r30)  // sizeof(folded_loader)
+        addi   a0,a0,sz_b_info
+        addi   t0,a1,-1  // ~page_mask
+        add    a0,a0,r30  // beyond folded_loader
+        add    a0,a0,t0  // + page_size -1
+        and    t0,t0,a0  // fragment above page boundary
+        sub    a0,a0,t0  // next page boundary after folded code
+        li     r0,__NR_mmap
+        mr     t4,a0  // save address being allocated
         sc
-        cmplwi cr0,a0,14
-        beq    alloc4
-        b      alloc64
-        /* try to allocate a 4k page - if failure then allocate 64k page */
-alloc4:
-        /* deallocate stub allocation */
-        mr     a1,23
-        li     0,__NR_munmap
-        sc
-        /* allocate 4k page */
-        li     a5,0  // off_t
-        li     a4,-1  // fd; cater to *BSD for MAP_ANON
-        li     a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC
-        li     a1,PAGE_SIZE
-        lwz    a0,sz_cpr(r30)
-        add    a0,a0,r30
-        addi   a0,a0,sz_b_info+PAGE_SIZE-1
-        rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
-        li     0,__NR_mmap
-        mr     23,a1  // save PAGE_SIZE value
-        mr     14,a0  // save address being allocated
-        sc
-        cmplwi cr0,a0,14 //
-        bne    decomp
-        b      msg_SELinux  // Branch if SummaryOverflow (failure)
-        /* 64k page */
-alloc64:
-        /* deallocate stub allocation */
-        mr     a1,23
-        li     0,__NR_munmap
-        sc
-        /* allocate 64k page */
-        li     a5,0  // off_t
-        li     a4,-1  // fd; cater to *BSD for MAP_ANON
-        li     a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
-        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC
-        lis    a1,1    // 64K
-        lwz    a0,sz_cpr(r30)
-        add    a0,a0,r30
-        addi   a0,a0,sz_b_info-1
-        add    a0,a0,a1
-        rlwinm a0,a0,0,0,31-PAGE_SHIFT64  // next page boundary after fold
-        li     0,__NR_mmap
-        mr     23,a1  // save PAGE_SIZE value
-        sc
-        cmplwi cr0,a0,22  // return code
-        beq    msg_SELinux
-decomp:
-0:
+        cmpl cr0,t4,a0; bne msg_SELinux
+
         mtctr r31
         lwz r0,sz_unc(r30)
         lbz meth,b_method(r30)
         la ldst,31*4(sp)  // &slot on stack
         stw  r0,31*4(sp)  // lzma uses for EOF
-        stw    23,23*4(sp)        // save pag shift value
         mr dst,a0
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)

@@ -46,32 +46,17 @@ OVERHEAD= 2048
 LINKAREA= 6*4  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
+   r28= &Elf32_auxv_t
+   r27= actual page size
 */
 fold_begin:
+////  teq r0,r0  // debugging
         call L90
 #include "arch/powerpc/32/bxx.S"
-
-/* The SysV convention for argument registers after execve is nice:
-        a0= argc
-        a1= argv
-        a2= envp
-        a3= auxvp
-        a4= fini
-        sp= ~0xf & (-2*4 + (void *)&argc)  // 0(sp): old_sp, pc
-   Instead, Linux gives only
-        sp= &{argc,argv...,0,env...,0,auxv...,strings}  // 16-byte aligned?
-   We must figure out the rest, particularly auxvp.
-*/
-zfind:
-        lwz t0,0(a6); addi a6,a6,4
-        cmpi cr7,t0,0; bne+ cr7,zfind
-        ret
 L90:
         la sp,6*4(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
-        lwz a6,0(sp)  // sp at execve
-        call zfind  // a6= &env
-        call zfind  // a6= &Elf32_auxv
+        mr a6,r28  // a6= &Elf32_auxv
         lwz a1,-8(r31)  // #bytes which preceed -8(r31)
           rlwinm r30,a5,0,0,31-12  // r30= &this_page
         mr a4,r31  // &decompress: f_expand
@@ -80,7 +65,7 @@ L90:
         addi r29,r29,-8  // &our_Elf32_Ehdr
         addi a1,a1,-(szElf32_Ehdr + 2*szElf32_Phdr)
         addi a0,r29,(szElf32_Ehdr + 2*szElf32_Phdr)  // &{l_info; p_info; b_info}
-        lwz  a7,23*4(sp)  // pagesize
+        mr  a7,r27  // pagesize
         addi sp,sp,-(LINKAREA+OVERHEAD)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
         call upx_main  // Out: a0= entry
@@ -111,8 +96,9 @@ SYS_munmap=    91
 SYS_mprotect= 125
 
 mmap: .globl mmap
-        li 0,SYS_mmap
+        li r0,SYS_mmap
 sysgo:
+  teq r0,r0  // debugging
         sc
         bns+ no_fail  // 'bns': branch if No Summary[Overflow]
         li a0,-1  // failure; IGNORE errno
@@ -120,18 +106,18 @@ no_fail:
         ret
 
 exit: .globl exit
-        li 0,SYS_exit; b sysgo
+        li r0,SYS_exit;        b 5f
 read: .globl read
-        li 0,SYS_read; b sysgo
+        li r0,SYS_read;     5: b 5f
 open: .globl open
-        li 0,SYS_open; b sysgo
+        li r0,SYS_open;     5: b 5f
 close: .globl close
-        li 0,SYS_close; b sysgo
+        li r0,SYS_close;    5: b 5f
 mprotect: .globl mprotect
-        li 0,SYS_mprotect; b sysgo
+        li r0,SYS_mprotect; 5: b 5f
 munmap: .globl munmap
-        li 0,SYS_munmap; b sysgo
+        li r0,SYS_munmap;   5: b 5f
 brk: .globl brk
-        li 0,SYS_brk; b sysgo
+        li r0,SYS_brk;      5: b sysgo
 
 /* vim:set ts=8 sw=8 et: */
