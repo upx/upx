@@ -44,7 +44,7 @@ retaddr = 6*8  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 ////  teq r0,r0  // debugging
 
 #define M_LZMA          14
-        cmpli cr0,0,meth,M_LZMA
+        cmplwi cr0,meth,M_LZMA
         bne   cr0,not_lzma
         mflr r0
 
@@ -82,7 +82,7 @@ retaddr = 6*8  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         stw r0,0(a6)  // outSizeProcessed= 0;
 1:
         stwu r0,-4(a0)  // clear CLZmaDecoderState on stack
-        cmpl cr0,0,sp,a0  // compare logical ==> compare unsigned
+        cmpld cr0,sp,a0  // compare logical ==> compare unsigned
         blt cr0,1b
         stw a3,0(sp)  // frame chain
 

@@ -65,7 +65,7 @@ fold_begin:
 zfind:
         ld t0,0(a6)        // parameters are 16byte aligned
         addi a6,a6,8
-        cmpi cr7,0,t0,0; bne+ cr7,zfind
+        cmpldi cr7,t0,0; bne+ cr7,zfind
         ret
 L90:
         la sp,LINKAREA(sp)  // trim save area used by decompressor

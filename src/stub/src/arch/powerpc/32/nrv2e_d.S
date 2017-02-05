@@ -58,10 +58,10 @@
 
    beql-: branch and link [call subroutine] if cr0 is eq, unlikely
 */
-#define jnextb0y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt+
-#define jnextb0n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; blt-
-#define jnextb1y  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt+
-#define jnextb1n  cmpl 0,bits,hibit; add bits,bits,bits; beql- get32; bgt-
+#define jnextb0y  cmpl cr0,bits,hibit; add bits,bits,bits; beql- get32; blt+
+#define jnextb0n  cmpl cr0,bits,hibit; add bits,bits,bits; beql- get32; blt-
+#define jnextb1y  cmpl cr0,bits,hibit; add bits,bits,bits; beql- get32; bgt+
+#define jnextb1n  cmpl cr0,bits,hibit; add bits,bits,bits; beql- get32; bgt-
 
 #undef  getnextb
 /* rotate next bit into bottom bit of reg */

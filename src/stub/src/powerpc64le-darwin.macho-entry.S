@@ -87,7 +87,7 @@ CACHELINE=32
         ori dst0,dst0,-1+ CACHELINE  // highest addr on cache line
 cfl_nrv:
         dcbst  0,dst0  // initiate store (modified) cacheline to memory
-        cmpl cr0,0,dst0,dst  // did we cover the highest-addressed byte?
+        cmpld cr0,dst0,dst  // did we cover the highest-addressed byte?
         icbi   0,dst0  // discard instructions from cacheline
         addi     dst0,dst0,CACHELINE  // highest addr on next line
         blt  cr0,cfl_nrv  // not done yet
