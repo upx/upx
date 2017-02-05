@@ -82,7 +82,7 @@ retaddr = 6*8  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         stw r0,0(a6)  // outSizeProcessed= 0;
 1:
         stwu r0,-4(a0)  // clear CLZmaDecoderState on stack
-        cmpl cr0,0,sp,a0  // compare logical ==> compare unsigned
+        cmpl cr0,1,sp,a0  // compare logical ==> compare unsigned
         blt cr0,1b
         stw a3,0(sp)  // frame chain
 
