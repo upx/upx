@@ -35,11 +35,9 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 
 #ifndef NO_METHOD_CHECK
         cmpl $0x49,ftid; jne ckend0  # filter: JMP, CALL, 6-byte Jxx
-#endif
         push %rbx  # save
-	cld  # convention should have guaranteed this already
-
-        push %rdi; lea (1- 4)(%rdi,%rsi),%rcx  # beyond last possible opcode
+#endif
+        push %rdi; lea -4(%rdi,%rsi),%rcx  # last possible displacement
         pop  %rsi  # start of buffer
         push %rsi
         pop  %rbx  # remember start of buffer
@@ -56,7 +54,7 @@ ckloop2:
         subb $     0xE8,%al
         cmpb $0xE9-0xE8,%al; ja ckloop4  # not JMP, not CALL
 ckmark:
-        cmpq %rcx,%rsi; jae ckend  # peek only; not marked ==> do not consume
+        cmpq %rcx,%rsi; ja ckend  # peek only; not marked ==> do not consume
         push %rsi; lodsl  # (assume) marked, bswapped 32-bit displacement
         subb %dl,%al; jne ckloop3  # not marked with cto8
         pop %rdi
@@ -68,9 +66,9 @@ ckstart:
         cmpq %rcx,%rsi; jae ckend
         lodsb; jmp ckloop2  # 0x0F prefix would overlap previous displacement
 ckend:
+#ifndef NO_METHOD_CHECK
         pop %rbx  # restore
 ckend0:
-#ifndef NO_METHOD_CHECK
         ret
 #endif
 

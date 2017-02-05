@@ -234,11 +234,10 @@ section         PEFILTER49
                 mov     ecx, offset filter_length
                 mov     dl, IMM8(filter_cto)
 .att_syntax
-#define esi ebx
-#define rsi rbx
+        push %rsi  // save
+        push %rbx; pop %rsi  // input len
 #include "arch/amd64/bxx.S"
-#undef esi
-#undef rsi
+        pop  %rsi  // restore
 .intel_syntax noprefix
 
 // =============
