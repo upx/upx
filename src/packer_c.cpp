@@ -190,11 +190,11 @@ const char *Packer::getDecompressorSections() const
     static const char lzma_small[] =
         "LZMA_DEC00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_fast[] =
-        "LZMA_DEC00,+80C,LZMA_DEC20,LZMA_DEC30";
+        "LZMA_DEC00,LZMA_DEC20,LZMA_DEC30";
     static const char lzma_elf_small[] =
         "LZMA_ELF00,LZMA_DEC10,LZMA_DEC30";
     static const char lzma_elf_fast[] =
-        "LZMA_ELF00,+80C,LZMA_DEC20,LZMA_DEC30";
+        "LZMA_ELF00,LZMA_DEC20,LZMA_DEC30";
 
     if (ph.method == M_NRV2B_LE32)
         return opt->small ? nrv2b_le32_small : nrv2b_le32_fast;
