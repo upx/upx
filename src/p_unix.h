@@ -77,7 +77,7 @@ protected:
     virtual void unpackExtent(unsigned wanted, OutputFile *fo,
         unsigned &total_in, unsigned &total_out,
         unsigned &c_adler, unsigned &u_adler,
-        bool first_PF_X, unsigned szb_info );
+        bool first_PF_X, unsigned szb_info, bool is_rewrite = false);
 
     int exetype;
     unsigned blocksize;

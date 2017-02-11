@@ -3388,6 +3388,12 @@ void PackLinuxElf64::unpack(OutputFile *fo)
 
     // The gaps between PT_LOAD and after last PT_LOAD
     phdr = (Elf64_Phdr *) (u.buf + sizeof(*ehdr));
+    upx_uint64_t hi_offset(0);
+    for (unsigned j = 0; j < u_phnum; ++j) {
+        if (PT_LOAD64==phdr[j].p_type
+        &&  hi_offset < phdr[j].p_offset)
+            hi_offset = phdr[j].p_offset;
+    }
     for (unsigned j = 0; j < u_phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
         if (size) {
@@ -3396,7 +3402,8 @@ void PackLinuxElf64::unpack(OutputFile *fo)
             if (fo)
                 fo->seek(where, SEEK_SET);
             unpackExtent(size, fo, total_in, total_out,
-                c_adler, u_adler, false, szb_info);
+                c_adler, u_adler, false, szb_info,
+                (phdr[j].p_offset != hi_offset));
         }
     }
 
@@ -3959,6 +3966,12 @@ void PackLinuxElf32::unpack(OutputFile *fo)
 
     // The gaps between PT_LOAD and after last PT_LOAD
     phdr = (Elf32_Phdr *) (u.buf + sizeof(*ehdr));
+    unsigned hi_offset(0);
+    for (unsigned j = 0; j < u_phnum; ++j) {
+        if (PT_LOAD32==phdr[j].p_type
+        &&  hi_offset < phdr[j].p_offset)
+            hi_offset = phdr[j].p_offset;
+    }
     for (unsigned j = 0; j < u_phnum; ++j) {
         unsigned const size = find_LOAD_gap(phdr, j, u_phnum);
         if (size) {
@@ -3967,7 +3980,8 @@ void PackLinuxElf32::unpack(OutputFile *fo)
             if (fo)
                 fo->seek(where, SEEK_SET);
             unpackExtent(size, fo, total_in, total_out,
-                c_adler, u_adler, false, szb_info);
+                c_adler, u_adler, false, szb_info,
+                (phdr[j].p_offset != hi_offset));
         }
     }
 
