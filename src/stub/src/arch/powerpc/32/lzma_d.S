@@ -46,7 +46,8 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 #define M_LZMA          14
         cmpli cr0,meth,M_LZMA
         bne   cr0,not_lzma
-        mflr r0
+        stwu sp,-6*4(sp)  // defend against callers who omit the linkage area
+        mflr r0  // return address
 
 //LzmaDecode(  // from lzmaSDK/C/7zip/Compress/LZMA_C/LzmaDecode.h
 //      a0= &CLzmaDecoderState,
@@ -60,7 +61,7 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         addi  a2,lsrc,-2  // inSize
         la    a1,2(src)  // inp
 
-        stw r0,retaddr(sp)  // save return address in caller's frame
+        stw r0,retaddr(sp)  // save return address in linkage area
         lbz r0,0(src)  // first byte, replaces LzmaDecodeProperties()
         rlwinm t1,r0,32-3,3,31  // t1= (r0>>3)==(lit_context-bits + lit_pos_bits)
         rlwinm t0,r0,0,32-3,31  // t0= (7& t0)==pos_bits
@@ -82,7 +83,7 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         stw r0,0(a6)  // outSizeProcessed= 0;
 1:
         stwu r0,-4(a0)  // clear CLZmaDecoderState on stack
-        cmpl cr0,0,sp,a0  // compare logical ==> compare unsigned
+        cmplw cr0,sp,a0  // compare logical ==> compare unsigned
         blt cr0,1b
         stw a3,0(sp)  // frame chain
 
@@ -111,6 +112,7 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
           add a2,a2,a4  // &next byte to store
         lwz r0,retaddr(sp)
           addi a2,a2,-1  // &highest byte stored
+        lwz sp,0(sp)  // un-defend
         mtlr r0
 
 not_lzma:

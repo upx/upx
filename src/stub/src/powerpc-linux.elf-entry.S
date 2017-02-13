@@ -197,11 +197,10 @@ sz_auxv= 2*4
         la ldst,31*4(sp)  // &slot on stack
         stw  r0,31*4(sp)  // lzma uses for EOF
         mr dst,a0
-        mtlr   a0  // &continuation
+        mtlr a0  // &continuation at unfolded code
         lwz lsrc,sz_cpr(r30)
         addi src,r30,sz_b_info
-        la sp,-6*4(sp)  // (sp,pc,cr, xx,yy,zz) save area per calling convention
-        bctr  // goto decomrpess; return to link register (mmap'ed page)
+        bctr  // goto decompress; continue at unfolded code on mmap'ed page
 
 // Example code at entrypoint of C-language subroutine:
 //      mflr    r0  # r0= return address
