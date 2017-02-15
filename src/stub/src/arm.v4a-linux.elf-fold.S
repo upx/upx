@@ -86,9 +86,14 @@ fold_begin:
         sub r0,r0,#1  @ one page
         mov r0,r0,lsl #2+ PAGE_SHIFT
         sub r0,r0,r1  @ space for argv,env,auxv
-        sub r0,r0,#4  @ room for added env ptr
+        sub r0,r0,#4  @ new_argv= room for added env ptr
         mov r1,sp  @ old_argv
-        mov sp,r0  @ new_argv
+/* preserve 8-byte alignment of stack pointer */
+        eor r2,sp,r0  @ the misalignment of old_argv and new_argv
+        and r2,r2,#4  @ must be 0 or 4 (mod 8)
+        sub r0,r0,r2  @ new_argv with same 8-byte alignment as old_argv
+        mov sp,r0
+
         stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,crumb,argc;  drop MFLG
 SP_sz_unc= 2*4
 SP_argc= 4*4
