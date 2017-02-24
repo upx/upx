@@ -98,7 +98,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, long *, unsigned );
+          nrv_byte *, uint64_t *, unsigned );
 
 static void
 unpackExtent(
@@ -136,13 +136,16 @@ ERR_LAB
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
-            long out_len = h.sz_unc;  // EOF for lzma
+            uint64_t out_len = h.sz_unc;  // EOF for lzma
             int const j = (*f_decompress)((const unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len, h.b_method);
-            if (j != 0 || out_len != (nrv_uint)h.sz_unc)
+            if (j != 0 || out_len != (uint64_t)h.sz_unc)
                 err_exit(7);
-            if (h.b_ftid!=0 && f_unf) {  // have filter
-                (*f_unf)((unsigned char *)xo->buf, out_len, h.b_cto8, h.b_ftid);
+            if (h.b_ftid!=0 && f_unf
+               &&  ((512 < out_len)  // this block is longer than Ehdr+Phdrs
+               || (xo->size==(unsigned)h.sz_unc) )  // block is last in Extent
+               ) {  // have filter
+                (*f_unf)((unsigned char *)xo->buf, h.sz_cpr, h.b_cto8, h.b_ftid);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
@@ -168,7 +171,7 @@ upx_bzero(char *p, size_t len)
 
 
 static void
-auxv_up(Elf64_auxv_t *av, unsigned type, unsigned const value)
+auxv_up(Elf64_auxv_t *av, unsigned type, uint64_t const value)
 {
     if (av)
     for (;; ++av) {
@@ -248,18 +251,23 @@ do_xmap(
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
         char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
-        char *haddr =           phdr->p_memsz +                  addr;
         size_t frag  = (long)addr &~ PAGE_MASK;
         mlen += frag;
-        addr -= frag;
-        addr  += reloc;
-        haddr += reloc;
+        addr  += reloc - frag;
 
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
+
+        char *haddr =           phdr->p_memsz + frag +           addr;
+
+        if ( xo.buf != addr  + frag ) { // pie relocatable addr ?
+            xo.buf = addr  + frag ;
+        } else if ( xo.buf != addr  -reloc + frag )
+            err_exit(39);
+
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
@@ -331,7 +339,9 @@ void *upx_main(
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = (char const *)phdr->p_vaddr;
+        char *iname = (char *)phdr->p_vaddr;
+        if ( phdr->p_vaddr <= (entry & PAGE_MASK )) // pie relocatable addr ?
+           iname += ( entry & PAGE_MASK ) ;
         int const fdi = open(iname, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
