@@ -98,7 +98,7 @@ typedef void f_unfilter(
 );
 typedef int f_expand(
     const nrv_byte *, nrv_uint,
-          nrv_byte *, long *, unsigned );
+          nrv_byte *, uint64_t *, unsigned );
 
 static void
 unpackExtent(
@@ -136,13 +136,14 @@ ERR_LAB
         //   assert(h.sz_cpr > 0 && h.sz_cpr <= blocksize);
 
         if (h.sz_cpr < h.sz_unc) { // Decompress block
-            long out_len = h.sz_unc;  // EOF for lzma
+            uint64_t out_len = h.sz_unc;  // EOF for lzma
             int const j = (*f_decompress)((const unsigned char *)xi->buf, h.sz_cpr,
                 (unsigned char *)xo->buf, &out_len, h.b_method);
-            if (j != 0 || out_len != (nrv_uint)h.sz_unc)
+            if (j != 0 || out_len != (uint64_t)h.sz_unc)
                 err_exit(7);
-            if (h.b_ftid!=0 && f_unf) {  // have filter
-                (*f_unf)((unsigned char *)xo->buf, out_len, h.b_cto8, h.b_ftid);
+            if (h.b_ftid!=0 && f_unf
+               ) {  // have filter
+                (*f_unf)((unsigned char *)xo->buf, h.sz_cpr, h.b_cto8, h.b_ftid);
             }
             xi->buf  += h.sz_cpr;
             xi->size -= h.sz_cpr;
@@ -168,7 +169,7 @@ upx_bzero(char *p, size_t len)
 
 
 static void
-auxv_up(Elf64_auxv_t *av, unsigned type, unsigned const value)
+auxv_up(Elf64_auxv_t *av, unsigned type, uint64_t const value)
 {
     if (av)
     for (;; ++av) {
@@ -230,7 +231,8 @@ do_xmap(
     int const fdi,
     Elf64_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_unfilter *const f_unf,
+    Elf64_Addr *p_reloc
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *) (void const *) (ehdr->e_phoff +
@@ -247,19 +249,18 @@ do_xmap(
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
+        char  *addr = xo.buf  =         reloc + (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz +                  addr;
         size_t frag  = (long)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
-        addr  += reloc;
-        haddr += reloc;
 
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
                 (xi ? -1 : fdi), phdr->p_offset - frag) ) {
             err_exit(8);
         }
+
         if (xi) {
             unpackExtent(xi, &xo, f_decompress, f_unf);
         }
@@ -285,6 +286,11 @@ ERR_LAB
             }
         }
     }
+
+    if (0!=p_reloc) {
+        *p_reloc = reloc;
+    }
+
     return ehdr->e_entry + reloc;
 }
 
@@ -300,7 +306,8 @@ void *upx_main(
     size_t const sz_ehdr,
     f_expand *const f_decompress,
     f_unfilter *const f_unf,
-    Elf64_auxv_t *const av
+    Elf64_auxv_t *const av,
+    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
@@ -325,13 +332,13 @@ void *upx_main(
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf);
+    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf, &reloc); // "rewind"
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = (char const *)phdr->p_vaddr;
+        char const *const iname = reloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
@@ -340,7 +347,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
         close(fdi);
     }
   }

@@ -34,8 +34,8 @@ lzma_d_c%.S : tc_bfdname = elf64-powerpcle
 
 c := tc.method-lzma.gcc
 $c  = $(tc.powerpc64le-linux.elf.gcc)
-$c += -mcpu=405 -fPIC
-$c += -Os -fomit-frame-pointer
+$c += -m64 -mlittle-endian -fPIC
+$c += -fomit-frame-pointer
 $c += -fno-unit-at-a-time
 $c += -ffunction-sections
 $c += -fwrapv
@@ -49,7 +49,7 @@ lzma_d_c%.S : lzma_d_c.c
 	$(call tc,f-objstrip,tmp/$T.o)
 	$(call tc,objcopy) -O binary --only-section .text.LzmaDecode tmp/$T.o tmp/$T.bin
 	head -c-4 tmp/$T.bin > tmp/$T.out
-	$(call tc,objdump) -b binary -m ppc64le -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	$(call tc,objdump) -b binary -m powerpc:common64 -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
 	$(call tc,bin2h) --mode=gas tmp/$T.out $@
 
 lzma_d_cf.% : PP_FLAGS = -DFAST
