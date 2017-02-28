@@ -141,8 +141,7 @@ ERR_LAB
                 (unsigned char *)xo->buf, &out_len, h.b_method);
             if (j != 0 || out_len != (uint64_t)h.sz_unc)
                 err_exit(7);
-            if (h.b_ftid!=0 && f_unf
-               ) {  // have filter
+            if (h.b_ftid!=0 && f_unf) {  // have filter
                 (*f_unf)((unsigned char *)xo->buf, h.sz_cpr, h.b_cto8, h.b_ftid);
             }
             xi->buf  += h.sz_cpr;
