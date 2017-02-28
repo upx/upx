@@ -37,7 +37,7 @@ ppcbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #define ptr0 a4
 
         cmplwi cr0,ftid,0xd0;       bnelr- cr0  # if (0xd0!=ftid)   return;
-        rlwinm. len,len,32-2,2,31; beqlr- cr0  # if (0==(len>>=2)) return;
+        rldicl. len,len,64-2,2; beqlr- cr0  # if (0==(len>>=2)) return;
         lis r0,-(~0<<(32-16- (2+6+ W_CTO)))  # limit in 32-bit words
         cmplw cr0,len,r0
         blt  cr0,L5
