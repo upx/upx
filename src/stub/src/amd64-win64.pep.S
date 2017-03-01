@@ -231,14 +231,14 @@ section         PECTTNUL
                 mov     rdi, rsi
 
 section         PEFILTER49
-                mov     ecx, offset filter_length
+                push    rsi
+                mov     rdi, rsi
+                mov     rsi, offset filter_length
                 mov     dl, IMM8(filter_cto)
 .att_syntax
-        push %rsi  // save
-        push %rbx; pop %rsi  // input len
 #include "arch/amd64/bxx.S"
-        pop  %rsi  // restore
 .intel_syntax noprefix
+                pop     rsi
 
 // =============
 // ============= IMPORTS

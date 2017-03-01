@@ -29,7 +29,7 @@
 #define t1 11
 #define t2 12
 #define t3 13
-/* t4 is unofficial? */
+/* t4 is unofficial */
 #define t4 14
 
 /* branch and link */

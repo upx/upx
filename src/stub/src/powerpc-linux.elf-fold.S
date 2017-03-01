@@ -54,7 +54,6 @@ fold_begin:
         call L90
 #include "arch/powerpc/32/bxx.S"
 L90:
-        la sp,6*4(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
         mr a6,r28  // a6= &Elf32_auxv
         lwz a1,-8(r31)  // #bytes which preceed -8(r31)

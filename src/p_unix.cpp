@@ -448,7 +448,7 @@ void PackUnix::packExtent(
 void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
     unsigned &total_in, unsigned &total_out,
     unsigned &c_adler, unsigned &u_adler,
-    bool first_PF_X, unsigned szb_info
+    bool first_PF_X, unsigned szb_info, bool is_rewrite
 )
 {
     b_info hdr; memset(&hdr, 0, sizeof(hdr));
@@ -501,8 +501,14 @@ void PackUnix::unpackExtent(unsigned wanted, OutputFile *fo,
         total_in  += sz_cpr;
         total_out += sz_unc;
         // write block
-        if (fo)
-            fo->write(ibuf + j, sz_unc);
+        if (fo) {
+            if (is_rewrite) {
+                fo->rewrite(ibuf + j, sz_unc);
+            }
+            else {
+                fo->write(ibuf + j, sz_unc);
+            }
+        }
         if (wanted < (unsigned)sz_unc)
             throwCantUnpack("corrupt b_info");
         wanted -= sz_unc;
