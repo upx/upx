@@ -117,7 +117,8 @@ eof_n2e:
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
         mov x2,#0
-        do_sys2 __ARM_NR_cacheflush  // decompressed region
+        mov x8,#255  // __ARM_NR_cacheflush  FIXME
+        svc #0
         mov x0,x4  // result value
 #endif  /*}*/
 #if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/

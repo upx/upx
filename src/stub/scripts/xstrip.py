@@ -27,6 +27,11 @@
 #  <markus@oberhumer.com>               <ezerotven+github@gmail.com>
 #
 
+from __future__ import print_function
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 import getopt, os, re, string, struct, sys
 
@@ -47,16 +52,18 @@ def strip_with_dump(dump_fn, eh, idata):
     lines = open(dump_fn, "rb").readlines()
     for l in lines:
         l = re.sub(r"\s+", " ", l.strip())
+        # eprint("l=", l, "\n")
         f = l.split(" ")
+        # eprint("f=", f, "len(f)=", len(f), "\n")
         if len(f) >= 8:
             if f[7].startswith("CONTENTS"):
                 sh_offset = int("0x" + f[5], 16)
                 sh_size   = int("0x" + f[2], 16)
                 if sh_offset + sh_size > new_len:
                     new_len = sh_offset + sh_size
-                    ##print sh_offset, sh_size, f
+                    # eprint("sh_offset=", sh_offset, "sh_size=", sh_size, "f=", f, "\n")
     if new_len > len(eh):
-        ##print dump_fn, new_len
+        # eprint("dump_fn=", dump_fn, "new_len=", new_len, "\n")
         return eh, idata[:new_len-len(eh)]
     return eh, idata
 
@@ -176,6 +183,8 @@ def do_file(fn):
         eh, odata = strip_with_dump(opts.with_dump, eh, idata)
         if re.search(r"^powerpc64le-", os.path.basename(fn)):
             # FIXME / TODO
+            pass
+        elif re.search(r"^arm64-", os.path.basename(fn)):
             pass
         else:
             assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))

@@ -77,8 +77,8 @@ eof_n2b:
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
         mov w2,#0
-        do_sys2 __ARM_NR_cacheflush  // decompressed region
-        mov x0,x4  // result value
+        mov x8,#255  // __ARM_NR_cacheflush FIXME
+        svc #0
 #endif  /*}*/
 #if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
         mov x4,x0  // save result value
