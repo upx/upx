@@ -591,6 +591,27 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
+void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+                               const char *type) {
+    if (strncmp(type, "R_AARCH64_", 10))
+        return super::relocate1(rel, location, value, type);
+    type += 10;
+
+    if (!strncmp(type, "PREL", 4)) {
+        value -= rel->section->offset + rel->offset;
+        type += 4;
+    }
+
+    if (!strcmp(type, "16"))
+        set_le16(location, get_le16(location) + value);
+    else if (!strncmp(type, "32", 2)) // for "32" and "32S"
+        set_le32(location, get_le32(location) + value);
+    else if (!strcmp(type, "64"))
+        set_le64(location, get_le64(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
 void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
     if (strcmp(type, "R_ARM_PC24") == 0) {

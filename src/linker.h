@@ -160,6 +160,15 @@ protected:
                            const char *type);
 };
 
+class ElfLinkerARM64 : public ElfLinker {
+    typedef ElfLinker super;
+
+protected:
+    virtual void alignCode(unsigned len) { alignWithByte(len, 0x90); }
+    virtual void relocate1(const Relocation *, upx_byte *location, upx_uint64_t value,
+                           const char *type);
+};
+
 class ElfLinkerArmBE : public ElfLinker {
     typedef ElfLinker super;
 

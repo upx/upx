@@ -73,7 +73,8 @@
         EM_PPC    = 20,
         EM_PPC64  = 21,
         EM_ARM    = 40,
-        EM_X86_64 = 62
+        EM_X86_64 = 62,
+        EM_AARCH64 = 183
 
     };
     enum { // e_version

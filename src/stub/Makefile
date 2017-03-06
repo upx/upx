@@ -71,7 +71,6 @@ STUBS += arm.v5a-linux.kernel.vmlinux.h
 STUBS += arm.v5a-linux.kernel.vmlinuz-head.h
 STUBS += arm.v5a-linux.kernel.vmlinuz.h
 STUBS += arm.v5a-linux.shlib-init.h
-STUBS += arm.v5a-linux.shlib-init.h
 STUBS += arm.v5t-linux.shlib-init.h
 STUBS += armeb.v4a-linux.elf-entry.h
 STUBS += armeb.v4a-linux.elf-fold.h
@@ -79,6 +78,7 @@ STUBS += armeb.v5a-linux.kernel.vmlinux-head.h
 STUBS += armeb.v5a-linux.kernel.vmlinux.h
 STUBS += arm64-linux.elf-entry.h
 STUBS += arm64-linux.elf-fold.h
+STUBS += arm64-linux.shlib-init.h
 STUBS += arm64-darwin.macho-entry.h
 STUBS += arm64-darwin.macho-fold.h
 STUBS += i086-dos16.com.h
@@ -573,6 +573,20 @@ tmp/arm64-linux.elf-fold.o : $(srcdir)/src/$$T.S
 tmp/arm64-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/arm64-linux.elf-main.c
 	$(call tc,gcc) -c -Os $< -o $@
 	$(call tc,f-objstrip,$@)
+
+# /***********************************************************************
+# // arm64-linux.shlib arm64
+# ************************************************************************/
+
+arm64-linux.shlib%.h : tc_list = arm64-linux.elf default
+arm64-linux.shlib%.h : tc_bfdname = elf64-littleaarch64
+tc.arm64-linux.shlib-init.objcopy  = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
+tc.arm64-linux.shlib-init.objdump  = /usr/bin/aarch64-linux-gnu-objdump
+
+arm64-linux.shlib%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
 
 
 # /***********************************************************************

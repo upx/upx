@@ -387,6 +387,25 @@ protected:
     virtual void defineSymbols(Filter const *);
 };
 
+class PackLinuxElf64arm : public PackLinuxElf64Le
+{
+    typedef PackLinuxElf64Le super;
+public:
+    PackLinuxElf64arm(InputFile *f);
+    virtual ~PackLinuxElf64arm();
+    virtual int getFormat() const { return UPX_F_LINUX_ELF64_ARM; }
+    virtual const char *getName() const { return "linux/arm64"; }
+    virtual const char *getFullName(const options_t *) const { return "arm64-linux.elf"; }
+    virtual const int *getFilters() const;
+    virtual bool canPack();
+protected:
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    //virtual void pack3(OutputFile *, Filter &);  // append loader
+    virtual void buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
+    virtual void defineSymbols(Filter const *);
+};
+
 
 /*************************************************************************
 // linux/elf32ppc
