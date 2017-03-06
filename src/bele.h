@@ -142,6 +142,24 @@ inline void set_le24(void *p, unsigned v)
 #endif
 }
 
+inline unsigned get_le26(const void *p)
+{
+#if defined(ACC_UA_GET_LE26)
+    return ACC_UA_GET_LE26(p);
+#else
+    return acc_ua_get_le26(p);
+#endif
+}
+
+inline void set_le26(void *p, unsigned v)
+{
+#if defined(ACC_UA_SET_LE26)
+    ACC_UA_SET_LE26(p, v);
+#else
+    acc_ua_set_le26(p, v);
+#endif
+}
+
 inline unsigned get_le32(const void *p)
 {
 #if defined(ACC_UA_GET_LE32)

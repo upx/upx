@@ -541,7 +541,7 @@ void ElfLinker::alignWithByte(unsigned len, unsigned char b) {
 }
 
 void ElfLinker::relocate1(const Relocation *rel, upx_byte *, upx_uint64_t, const char *) {
-    internal_error("unknown relocation type '%s\n", rel->type);
+    internal_error("unknown relocation type '%s\n'", rel->type);
 }
 
 /*************************************************************************
@@ -600,14 +600,18 @@ void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
     if (!strncmp(type, "PREL", 4)) {
         value -= rel->section->offset + rel->offset;
         type += 4;
-    }
 
-    if (!strcmp(type, "16"))
-        set_le16(location, get_le16(location) + value);
-    else if (!strncmp(type, "32", 2)) // for "32" and "32S"
+        if (!strcmp(type, "16"))
+            set_le16(location, get_le16(location) + value);
+        else if (!strncmp(type, "32", 2)) // for "32" and "32S"
+            set_le32(location, get_le32(location) + value);
+        else if (!strcmp(type, "64"))
+            set_le64(location, get_le64(location) + value);
+    } else if (!strcmp(type, "ABS32") == 0) {
         set_le32(location, get_le32(location) + value);
-    else if (!strcmp(type, "64"))
+    } else if (!strcmp(type, "ABS64") == 0) {
         set_le64(location, get_le64(location) + value);
+    }
     else
         super::relocate1(rel, location, value, type);
 }

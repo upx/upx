@@ -705,7 +705,7 @@ int const *
 PackLinuxElf64arm::getFilters() const
 {
     static const int filters[] = {
-        0x4A,
+        0x52,
     FT_END };
     return filters;
 }
@@ -1041,85 +1041,6 @@ PackLinuxElf64::buildLinuxLoader(
 
 void
 PackLinuxElf64amd::defineSymbols(Filter const *)
-{
-    unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
-
-    // We want to know if compressed data, plus stub, plus a couple pages,
-    // will fit below the uncompressed program in memory.  But we don't
-    // know the final total compressed size yet, so use the uncompressed
-    // size (total over all PT_LOAD64) as an upper bound.
-    unsigned len = 0;
-    upx_uint64_t lo_va_user = ~0ull;  // infinity
-    for (int j= e_phnum; --j>=0; ) {
-        if (PT_LOAD64 == get_te32(&phdri[j].p_type)) {
-            len += (unsigned)get_te64(&phdri[j].p_filesz);
-            upx_uint64_t const va = get_te64(&phdri[j].p_vaddr);
-            if (va < lo_va_user) {
-                lo_va_user = va;
-            }
-        }
-    }
-    lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
-    upx_uint64_t       lo_va_stub = get_te64(&elfout.phdr[0].p_vaddr);
-    upx_uint64_t adrc;
-    upx_uint64_t adrm;
-    upx_uint64_t adru;
-    upx_uint64_t adrx;
-    unsigned cntc;
-    unsigned lenm;
-    unsigned lenu;
-    len += (7&-lsize) + lsize;
-    is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
-    if (is_big && ehdri.ET_EXEC==get_te16(&ehdri.e_type)) {
-        set_te64(    &elfout.ehdr.e_entry,
-            get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
-        set_te64(&elfout.phdr[0].p_vaddr, lo_va_user);
-        set_te64(&elfout.phdr[0].p_paddr, lo_va_user);
-               lo_va_stub      = lo_va_user;
-        adrc = lo_va_stub;
-        adrm = getbrk(phdri, e_phnum);
-        adru = page_mask & (~page_mask + adrm);  // round up to page boundary
-        adrx = adru + hlen;
-        lenm = page_size + len;
-        lenu = page_size + len;
-        cntc = len >> 3;  // over-estimate; corrected at runtime
-    }
-    else {
-        adrm = lo_va_stub + len;
-        adrc = adrm;
-        adru = lo_va_stub;
-        adrx = lo_va_stub + hlen;
-        lenm = page_size;
-        lenu = page_size + len;
-        cntc = 0;
-    }
-    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
-    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
-
-    //linker->defineSymbol("ADRX", adrx); // compressed input for eXpansion
-    ACC_UNUSED(adrx);
-
-    // For actual moving, we need the true count, which depends on sz_pack2
-    // and is not yet known.  So the runtime stub detects "no move"
-    // if adrm==adrc, and otherwise uses actual sz_pack2 to compute cntc.
-    //linker->defineSymbol("CNTC", cntc);  // count  for copy
-    ACC_UNUSED(cntc);
-
-    linker->defineSymbol("LENU", lenu);  // len  for unmap
-    linker->defineSymbol("ADRC", adrc);  // addr for copy
-    //linker->defineSymbol("ADRU", adru);  // addr for unmap
-    ACC_UNUSED(adru);
-#define EI_NIDENT 16  /* <elf.h> */
-    linker->defineSymbol("JMPU", EI_NIDENT -4 + lo_va_user);  // unmap trampoline
-#undef EI_NIDENT
-    linker->defineSymbol("LENM", lenm);  // len  for map
-    linker->defineSymbol("ADRM", adrm);  // addr for map
-
-    //linker->dumpSymbols();  // debug
-}
-
-void
-PackLinuxElf64arm::defineSymbols(Filter const *)
 {
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
@@ -3327,6 +3248,51 @@ void PackLinuxElf32armLe::defineSymbols(Filter const *ft)
 void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 {
     ARM_defineSymbols(ft);
+}
+
+void PackLinuxElf64arm::defineSymbols(Filter const * /*ft*/)
+{
+    lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
+    unsigned lo_va_user = ~0u;  // infinity
+    for (int j= e_phnum; --j>=0; ) {
+        if (PT_LOAD64 == get_te64(&phdri[j].p_type)) {
+            unsigned const va = get_te64(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
+    unsigned lo_va_stub = get_te64(&elfout.phdr[0].p_vaddr);
+    unsigned adrc = 0;  // init: pacify c++-analyzer
+    unsigned adrm = 0;  // init: pacify c++-analyzer
+
+    is_big = true;  // kernel disallows mapping below 0x8000.
+    if (is_big) {
+        set_te64(    &elfout.ehdr.e_entry, linker->getSymbolOffset("_start") +
+            get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_te64(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_te64(&elfout.phdr[0].p_paddr, lo_va_user);
+                              lo_va_stub    = lo_va_user;
+        adrc = lo_va_stub;
+        adrm = getbrk(phdri, e_phnum);
+    }
+    adrc = page_mask & (~page_mask + adrc);  // round up to page boundary
+    adrm = page_mask & (~page_mask + adrm);  // round up to page boundary
+    adrm += page_size;  // Try: hole so that kernel does not extend the brk(0)
+    linker->defineSymbol("ADRM", adrm);  // addr for map
+
+    linker->defineSymbol("CPR0", 4+ linker->getSymbolOffset("cpr0"));
+    linker->defineSymbol("LENF", 4+ linker->getSymbolOffset("end_decompress"));
+    ACC_UNUSED(adrc);
+
+#define MAP_PRIVATE      2     /* UNIX standard */
+#define MAP_FIXED     0x10     /* UNIX standard */
+#define MAP_ANONYMOUS 0x20     /* UNIX standard */
+#define MAP_PRIVANON     3     /* QNX anonymous private memory */
+    unsigned mflg = MAP_PRIVATE | MAP_ANONYMOUS;
+    //if (ARM_is_QNX())
+    //    mflg = MAP_PRIVANON;
+    linker->defineSymbol("MFLG", mflg);
 }
 
 void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)

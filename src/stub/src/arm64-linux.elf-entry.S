@@ -70,7 +70,7 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
         .xword ADRM  // dst  for map
 _start: .globl _start
-////    nop; bkpt
+        brk #0
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -89,13 +89,12 @@ _start: .globl _start
         adr x12,start_params -4  // &sz_pack2
         ldp w1,w10,[x12]  // w1= sz_pack2; w10= LENF
         ldp w11,w13,[x12,#2*4]  // w11= CPRO; w13= MFLG
-        ldr x2,[x12,#4*4]  // x2= ADRM
         add x11,x11,x12  // cpr0
         add x10,x10,x12  // end_decompress
         ldr w3,[x11,# sz_unc]
         sub x9,x12,x1  // &our_Elf64_Ehdr
         add w1,w1,w3  // sz_pack2 + cpr0.sz_unc
-        mov x0,x2  // ADRM
+        ldr x0,[x12,#4*4]  // ADRM
         add x1,x1,# PAGE_SIZE
   section LUNMP000
         mov w3,#0<<12  // 0-page crumb
