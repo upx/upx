@@ -30,28 +30,34 @@
 #define __MACROS_S__ 1
 
                 .altmacro
+lr .req x30
 
-#define PUSH1(r1)          str r1,   [sp,#-1*8]!
-#define PUSH2(r1,r2)       stp r1,r2,[sp,#-2*8]!
-#define PUSH3(r1,r2,r3)    stp r1,r2,[sp,#-3*8]!; str r3,   [sp,#2*8]
-#define PUSH4(r1,r2,r3,r4) stp r1,r2,[sp,#-4*8]!; stp r3,r4,[sp,#2*8]
-#define PUSH5(r1,r2,r3,r4,r5) PUSH2(r4,r5); PUSH3(r1,r2,r3)
+// ARM64 (AARCH64) REQUIRES 16-BYTE ALIGNED STACK POINTER (SP)
+// Therefore PUSH of an odd number of registers, inserts an 8-byte hole.
 
-#define POP1(r1)                               ldr r1,   [sp],#1*8
+#define PUSH1(r1)             str r1,   [sp,#-2*8]! /* HOLE */
+#define PUSH2(r1,r2)          stp r1,r2,[sp,#-2*8]!
+#define PUSH3(r1,r2,r3)       stp r1,r2,[sp,#-4*8]!;\
+                              str r3,   [sp,# 2*8]  /* HOLE */
+#define PUSH4(r1,r2,r3,r4)    stp r1,r2,[sp,#-4*8]!; \
+                              stp r3,r4,[sp,# 2*8]
+#define PUSH5(r1,r2,r3,r4,r5) stp r1,r2,[sp,#-6*8]!;\
+                              stp r3,r4,[sp,# 2*8];\
+                              str r5,   [sp,# 4*8]  /* HOLE */
+
+#define POP1(r1)                               ldr r1,   [sp],#2*8
 #define POP2(r1,r2)                            ldp r1,r2,[sp],#2*8
-#define POP3(r1,r2,r3)    ldr r3,   [sp,#2*8]; ldp r1,r2,[sp],#3*8
+#define POP3(r1,r2,r3)    ldr r3,   [sp,#2*8]; ldp r1,r2,[sp],#4*8
 #define POP4(r1,r2,r3,r4) ldp r3,r4,[sp,#2*8]; ldp r1,r2,[sp],#4*8
 
 .macro          section name
                 .section \name
 .endm
 
-__NR_SYSCALL_BASE = 0
 .macro          do_sys N
                 mov w8,#\N
                 svc #0 // sets Carry iff error
                 // orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
-                ret
 .endm
 
 .macro          do_dcache_flush  // In: r0=addr; r1=len

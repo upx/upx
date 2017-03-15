@@ -31,7 +31,6 @@
 
 #include "arch/arm64/v8/macros.S"
 
-#define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 sz_Elf64_Ehdr= 64
 sz_Elf64_Phdr= 56
 
@@ -86,6 +85,7 @@ _start: .globl _start
 
         stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
+
         adr x12,start_params -4  // &sz_pack2
         ldp w1,w10,[x12]  // w1= sz_pack2; w10= LENF
         ldp w11,w13,[x12,#2*4]  // w11= CPRO; w13= MFLG
@@ -101,9 +101,7 @@ _start: .globl _start
   section LUNMP001
         mov w3,#1<<12  // 1-page crumb
   section ELFMAINXu
-        stp x0,x1,[sp,#-8*5]!  // ADRU, LENU
-        stp x2,x3,[sp,#2*8]  // space for sz_unc, crumb
-        str x13,[sp,#4*8]  // MFLG
+        PUSH5(x0,x1,x2,x3,x13)  // ADRU, LENU, space for sz_unc, crumb, MFLG
 SP_MFLG= 4*8
 D_sz_unc=2*8  // stack displacement to sz_unc
         mov w2,#PROT_READ | PROT_WRITE | PROT_EXEC
@@ -124,7 +122,6 @@ copy:
         ldr w1,[sp,#SP_MFLG]
         adr x5,f_decompress
         str w1,[x0],#4  // MFLG at -4+ fold_begin
-#define lr x30
         mov lr,x0  // dst for unfolded code
         add x5,x5,x4  // relocated f_decompress
 
@@ -138,8 +135,8 @@ copy:
         sub x10,x12,x9  // &b_info
         add x10,x10,x4  // relocated &b_info
 
-        ldr w0,[x11,# b_method ]  // 5th param (whole word: endian issues!)
-        stp x0,lr,[sp,#-2*8]!  // 5th param, dst for unfolded
+        ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)
+        PUSH1(lr)  // dst for unfolded
 D_stm1=2*8
         ldr  w3,[x11,# sz_unc]
         add  x0, x11,# sz_b_info
@@ -151,7 +148,7 @@ D_stm1=2*8
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
         blr x5  // decompress folded code
-        ldp x1,lr,[sp],#2*8  // discard parameter, load retaddr
+        POP1(lr)  // load retaddr
         ret  // goto unfolded
 
 #if DEBUG  /*{*/

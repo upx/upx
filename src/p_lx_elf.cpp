@@ -754,6 +754,7 @@ void PackLinuxElf32::updateLoader(OutputFile * /*fo*/)
 void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
 {
     set_te64(&elfout.ehdr.e_entry, sz_pack2 +
+        linker->getSymbolOffset("_start") +
         get_te64(&elfout.phdr[0].p_vaddr));
 }
 
@@ -1071,6 +1072,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     len += (7&-lsize) + lsize;
     is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
     if (is_big && ehdri.ET_EXEC==get_te16(&ehdri.e_type)) {
+        // .e_entry is set later by PackLinuxElf64::updateLoader
         set_te64(    &elfout.ehdr.e_entry,
             get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
         set_te64(&elfout.phdr[0].p_vaddr, lo_va_user);
@@ -3253,18 +3255,18 @@ void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
 void PackLinuxElf64arm::defineSymbols(Filter const * /*ft*/)
 {
     lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
-    unsigned lo_va_user = ~0u;  // infinity
+    upx_uint64_t lo_va_user = ~0ul;  // infinity
     for (int j= e_phnum; --j>=0; ) {
-        if (PT_LOAD64 == get_te64(&phdri[j].p_type)) {
-            unsigned const va = get_te64(&phdri[j].p_vaddr);
+        if (PT_LOAD64 == get_te32(&phdri[j].p_type)) {
+            upx_uint64_t const va = get_te64(&phdri[j].p_vaddr);
             if (va < lo_va_user) {
                 lo_va_user = va;
             }
         }
     }
-    unsigned lo_va_stub = get_te64(&elfout.phdr[0].p_vaddr);
-    unsigned adrc = 0;  // init: pacify c++-analyzer
-    unsigned adrm = 0;  // init: pacify c++-analyzer
+    upx_uint64_t lo_va_stub = get_te64(&elfout.phdr[0].p_vaddr);
+    upx_uint64_t adrc = 0;  // init: pacify c++-analyzer
+    upx_uint64_t adrm = 0;  // init: pacify c++-analyzer
 
     is_big = true;  // kernel disallows mapping below 0x8000.
     if (is_big) {
