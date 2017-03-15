@@ -114,9 +114,20 @@ D_sz_unc=2*8  // stack displacement to sz_unc
 #endif  /*}*/
         cmn x0,#4096
         bcs msg_SELinux
-copy:
-        ldp x1,x2,[x9],#2*8; cmp x9,x10  // upto end-decompress
-        stp x1,x2,[x0],#2*8; blo copy
+copy_cl:
+          add x5,x0,#64; dc zva,x5  // clear FOLLOWING 64-byte line
+        ldp x1,x2,[x9],#2*8
+        ldp x3,x4,[x9],#2*8
+        stp x1,x2,[x0],#2*8
+        stp x3,x4,[x0],#2*8
+
+        ldp x1,x2,[x9],#2*8
+        ldp x3,x4,[x9],#2*8
+        stp x1,x2,[x0],#2*8
+        stp x3,x4,[x0],#2*8
+        cmp x9,x10
+          sub x5,x9,#64; dc cvau,x5  // clean 64-byte line
+        blo copy_cl  // all source lines
 
         sub x4,x0,x9  // relocation amount
         ldr w1,[sp,#SP_MFLG]
@@ -124,11 +135,6 @@ copy:
         str w1,[x0],#4  // MFLG at -4+ fold_begin
         mov lr,x0  // dst for unfolded code
         add x5,x5,x4  // relocated f_decompress
-
-        mov x0,x5
-        add x1,x9,x4  // relocated end_decompress
-        mov x2,#0
-        do_sys __ARM_NR_cacheflush
 
         ldr w9,[x12]  // sz_pack2
         sub w9,w9,#sz_Elf64_Ehdr + 2*sz_Elf64_Phdr + sz_l_info + sz_p_info
