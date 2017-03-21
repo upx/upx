@@ -153,6 +153,7 @@ D_stm1=2*8
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
+        brk #0
         blr x5  // decompress folded code
         POP1(lr)  // load retaddr
         ret  // goto unfolded
@@ -213,13 +214,13 @@ f_decompress:
         // empty
 
   section NRV2E
-#include "arch/arm64/v8/nrv2e_d8.S"
+#include "arch/arm64/v8/nrv2e_d32.S"
 
   section NRV2D
-#include "arch/arm64/v8/nrv2d_d8.S"
+#include "arch/arm64/v8/nrv2d_d32.S"
 
   section NRV2B
-#include "arch/arm64/v8/nrv2b_d8.S"
+#include "arch/arm64/v8/nrv2b_d32.S"
 
 #include "arch/arm64/v8/lzma_d.S"
 

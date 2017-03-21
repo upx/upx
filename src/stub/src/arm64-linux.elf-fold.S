@@ -61,6 +61,7 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 #define MAX_ELF_HDR 512
 
 fold_begin:
+        brk #0
 /* In:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
@@ -71,7 +72,7 @@ fold_begin:
         POP4(x6,x7,x8,x11)  // x6= sz_unc; x7= crumb; x8= MFLG; x11= argc
         mov x0,sp  // current stack pointer
 
-        add x1,sp,w11,lsl #2  // skip argv pointers
+        add x1,sp,w11,lsl #3  // skip argv pointers
         add x1,x1,#8  // skip argv terminator
 .L10:  // skip env
         ldr x2,[x1],#8
@@ -90,6 +91,7 @@ fold_begin:
         sub x0,x0,#8  // room for added env ptr
         mov x1,sp  // old_argv
         mov sp,x0  // new_argv
+// FIXME: argc must be 16-byte aligned
         PUSH5(x2,x4,x6,x7,x11)  // ADRU, LENU, sz_unc, crumb, argc
 SP_sz_unc= 2*8
 SP_argc= 4*8
@@ -321,7 +323,7 @@ __ARM_NR_cacheflush = 2 + __ARM_NR_BASE
 
         .globl my_bkpt
 my_bkpt:
-        bkpt
+        brk #0
         ret
 
         .globl exit

@@ -1,4 +1,4 @@
-/* armv4_n2e_d8.S -- ARM decompressor for NRV2E
+/* nrv2d_d32.S -- ARM64 decompressor for NRV2D
 
    This file is part of the UPX executable compressor.
 
@@ -55,12 +55,13 @@
 #define ADC2S(dst,src) adcs dst,dst,src
 #define SUB2( dst,src) sub  dst,dst,src
 #define SUB2S(dst,src) subs dst,dst,src
+#define LDR3( reg,psrc,incr) ldr  reg,psrc,incr
 #define LDRB3(reg,psrc,incr) ldrb reg,psrc,incr
 #define STRB3(reg,pdst,incr) strb reg,pdst,incr
 
 #if 1==SAFE  /*{*/
-#define CHECK_SRC  cmp srclim,src; bls bad_src_n2e /* Out: 1==Carry for get8_n2e */
-#define CHECK_DST  cmp dst,dstlim; bhs bad_dst_n2e
+#define CHECK_SRC  cmp srclim,src; bls bad_src_n2d /* Out: 1==Carry for get32_n2d */
+#define CHECK_DST  cmp dst,dstlim; bhs bad_dst_n2d
 #else  /*}{*/
 #define CHECK_SRC  /*empty*/
 #define CHECK_DST  /*empty*/
@@ -74,16 +75,16 @@
 #define CHECK_BYTE  /*empty*/
 #endif  /*}*/
 
-#undef GETBIT
-#define GETBIT bl get1_n2e
+#undef  GETBIT
+#define GETBIT bl get1_n2d
 
-#undef getnextb
-#define getnextb(reg) GETBIT; ADC2(reg,reg) /* Out: condition code not changed */
+#undef  getnextb
+#define getnextb(reg) GETBIT; ADC2S(reg,reg) /* Out: condition code changed */
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs
 
-ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  // ARM mode
-        .type ucl_nrv2e_decompress_8, %function
+ucl_nrv2d_decompress_8: .globl ucl_nrv2d_decompress_8  // ARM mode
+        .type ucl_nrv2d_decompress_8, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
@@ -92,21 +93,21 @@ ucl_nrv2e_decompress_8: .globl ucl_nrv2e_decompress_8  // ARM mode
 #define sp_DST0 0  /* stack offset of original dst */
         add srclim,src,len,uxtw  // srclim= eof_src;
 #if 1==SAFE  /*{*/
-        ldr tmp,[r3]  // len_dst
-        add dstlim,tmp,dst
+        ldr tmp,[x3]  // len_dst
+        add dstlim,dst,tmp,uxtw
 #endif  /*}*/
         mov off,#-1  // off= -1 initial condition
         mov bits,#1<<31  // refill next time
-        b top_n2e
+        b top_n2d
 
 #if 1==SAFE  /*{*/
-bad_dst_n2e:  # return value will be 2
+bad_dst_n2d:  # return value will be 2
 bkpt
         add src,srclim,#1
-bad_src_n2e:  # return value will be 1
+bad_src_n2d:  # return value will be 1
         ADD2(src,#1)
 #endif  /*}*/
-eof_n2e:
+eof_n2d:
         POP2(x3,x4)  // r3= orig_dst; r4= plen_dst
         SUB2(src,srclim)  // 0 if actual src length equals expected length
         SUB2(dst,x3)  // actual dst length
@@ -116,7 +117,7 @@ eof_n2e:
         mov x4,x0  // save result value
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
-        mov x2,#0
+        mov w2,#0
         mov x8,#255  // __ARM_NR_cacheflush  FIXME
         svc #0
         mov x0,x4  // result value
@@ -130,79 +131,70 @@ eof_n2e:
         mov x0,x4  // result value
 #endif  /*}*/
 
-        POP1(lr)
+        ldr lr,[sp],#8
         ret
 
-get1_n2e:
-        ADD2S(bits,bits); cbz bits,get8_n2e; ret
-get8_n2e:
-          // In: Carry set [from adding 0x80000000 (1<<31) to itself]
-        CHECK_SRC; LDRB3(bits,[src],#1)  // zero-extend next byte
+get1_n2d:
+        ADD2S(bits,bits); cbz bits,get32_n2d; ret
+get32_n2d:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
+        CHECK_SRC; LDR3(bits,[src],#4)
         ADC2S(bits,bits)  // double and insert CarryIn as low bit
-        lsl bits,bits,#23  // top 9 bits
-        ADD2S(bits,bits)  // top 8 bits; CarryOut from doubling
         ret
 
-lit_n2e:
+lit_n2d:
         CHECK_SRC; LDRB3(tmp,[src],#1)
         CHECK_BYTE
         CHECK_DST; STRB3(tmp,[dst],#1)
-top_n2e:
-        jnextb1 lit_n2e
-        mov cnt,#1; b getoff_n2e
+top_n2d:
+        jnextb1 lit_n2d
+        mov cnt,#1; b getoff_n2d
 
-off_n2e:
+off_n2d:
         SUB2(cnt,#1)
         getnextb(cnt)
-getoff_n2e:
+getoff_n2d:
         getnextb(cnt)
-        jnextb0 off_n2e
+        jnextb0 off_n2d
 
         subs tmp,cnt,#3  // set Carry
         mov len,#0  // Carry unaffected
-        blo offprev_n2e  // cnt was 2; tests Carry only
+        blo offprev_n2d  // cnt was 2; tests Carry only
         CHECK_SRC; LDRB3(off,[src],#1)  // low 7+1 bits
         orr  off,off,tmp,lsl #8
-        mvn off,off; cbz off,eof_n2e  // off= ~off
-        tst off,#1; asr off,off,#1; bne lenlast_n2e  // branch on former bottom bit
-        b lenmore_n2e
+        mvn off,off; cbz off,eof_n2d  // off= ~off
+        lsl tmp,off,#31; lsr off,off,#1; adds tmp,tmp,tmp
+        b len_n2d -4 // CHEAT [getnextb ends in ADC2(reg,reg)]
 
-offprev_n2e:
-        jnextb1 lenlast_n2e
-lenmore_n2e:
-        mov len,#1
-        jnextb1 lenlast_n2e
-len_n2e:
+offprev_n2d:
         getnextb(len)
-        jnextb0 len_n2e
-        ADD2(len,#6-2)
-        b gotlen_n2e
-
-lenlast_n2e:
-        getnextb(len)  // 0,1,2,3
-        ADD2(len,#2)
-gotlen_n2e:  // 'cmn': add the inputs, set condition codes, discard the sum
-        cmn off,#5<<8  // within M2_MAX_OFFSET
+len_n2d:
+        getnextb(len); bne gotlen_n2d  // 1..3  getnextb() must set Condition Code
+        mov len,#1  // begin ss11
+lenmore_n2d:
+        getnextb(len)
+        jnextb0 lenmore_n2d
+        ADD2(len,#2)  // 2.. ==> 4..
+gotlen_n2d:  // 'cmn': add the inputs, set condition codes, discard the sum
+        ADD2(len,#1)  // 1..3 ==> 2..4;  4.. ==> 5..
+        cmn off,#5<<8  // displ<=M2_MAX_OFFSET ==> no increment
         csinc len,len,len,cc  // too far away, so minimum match length is 3
-near_n2e:
 #if 1==SAFE  /*{*/
         ldr tmp,[sp,#sp_DST0]
         SUB2( tmp,dst)
-        SUB2S(tmp,off); bhi bad_dst_n2e  // reaching back too far
+        SUB2S(tmp,off); bhi bad_dst_n2d  // reaching back too far
 
         add tmp,dst,cnt
-        cmp tmp,dstlim; bhi bad_dst_n2e  // too much output
+        cmp tmp,dstlim; bhi bad_dst_n2d  // too much output
 #endif  /*}*/
-        add tmpx,dst,len,sxtw
-        ldrb tmp,[tmpx,#-1]  // force cacheline allocate
-copy_n2e:
+        ldrb tmp,[dst]  // force cacheline allocate
+copy_n2d:
         ldrb tmp,[dst,off,sxtw]
         CHECK_BYTE
         STRB3(tmp,[dst],#1)
-        SUB2S(len,#1); bne copy_n2e
-        b top_n2e
+        SUB2S(len,#1); bne copy_n2d
+        b top_n2d
 
-        .size ucl_nrv2e_decompress_8, .-ucl_nrv2e_decompress_8
+        .size ucl_nrv2d_decompress_8, .-ucl_nrv2d_decompress_8
 
 /*
 vi:ts=8:et:nowrap

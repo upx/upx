@@ -88,7 +88,8 @@ ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  // ARM mode
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
 */
-        PUSH3(x2,x3, lr)
+        PUSH1(lr)
+        PUSH2(x2,x3)
 #define sp_DST0 0  /* stack offset of original dst */
         add srclim,src,len,uxtw  // srclim= eof_src;
 #if 1==SAFE  /*{*/
@@ -111,25 +112,19 @@ eof_n2e:
         SUB2(src,srclim)  // 0 if actual src length equals expected length
         SUB2(dst,x3)  // actual dst length
         str dstw,[x4]
-
-#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
         mov x4,x0  // save result value
+
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
-        mov w2,#0
-        do_sys2 __ARM_NR_cacheflush  // decompressed region
-        mov x0,x4  // result value
-#endif  /*}*/
-#if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
-        mov x4,x0  // save result value
-        mov x0,x3  // orig_dst
-        mov x1,dst  // dst_len
-        PUSH2(x0,x1); do_dcache_flush
-        POP  {x0,x1}; do_icache_invalidate
-        mov x0,x4  // result value
-#endif  /*}*/
+cflush:
+        dc cvau,x0  // Clean by VA to point of Unification
+        ic ivau,x0  // Invalidate by VA to point of Unification
+        add x0,x0,#64  // next line
+        cmp x0,x1; blo cflush
 
-        ldr lr,[sp],#8; br lr
+        mov x0,x4  // result value
+        POP1(lr)
+        ret
 
 get1_n2e:
         ADD2S(bits,bits); cbz bits,get32_n2e; ret

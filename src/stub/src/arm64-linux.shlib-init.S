@@ -29,7 +29,7 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/arm/v8a/macros.S"
+#include "arch/arm64/v8/macros.S"
 
 sz_Elf64_Ehdr = 16 + 2*2 + 4 + 3*8 + 4 + 6*2
 sz_Elf64_Phdr = 2*4 + 6*8
@@ -117,15 +117,15 @@ f_decompress:
         // empty
 
   section NRV2E
-#include "arch/arm/v8a/nrv2e_d8.S"
+#include "arch/arm64/v8/nrv2e_d32.S"
 
   section NRV2D
-#include "arch/arm/v8a/nrv2d_d8.S"
+#include "arch/arm64/v8/nrv2d_d32.S"
 
   section NRV2B
-#include "arch/arm/v8a/nrv2b_d8.S"
+#include "arch/arm64/v8/nrv2b_d32.S"
 
-#include "arch/arm/v8a/lzma_d.S"
+#include "arch/arm64/v8/lzma_d.S"
 
   section ELFMAINY
 end_decompress: .globl end_decompress

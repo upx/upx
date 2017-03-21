@@ -93,12 +93,10 @@ eof_n2b:
         ret
 
 get1_n2b:
-        ADD2S(bits,bits); cbz bits,get8_n2b; ret
-get8_n2b:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
-        LDRB3(bits,[src],#1)  // zero-extend next byte
+        ADD2S(bits,bits); cbz bits,get32_n2b; ret
+get32_n2b:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
+        LDR3(bits,[src],#4)
         ADC2(bits,bits)  // double and insert CarryIn as low bit
-        lsl bits,bits,#23  // top 9 bits
-        ADD2S(bits,bits)  // top 8 bits; CarryOut from doubling
         ret
 
 ss11_n2b:  // return len= [2..)
