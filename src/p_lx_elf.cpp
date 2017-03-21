@@ -4161,7 +4161,6 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     ||  ph.u_len > sizeof(u))
         throwCantUnpack("b_info corrupted");
     ph.filter_cto = bhdr.b_cto8;
-    bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
 
     // Peek at resulting Ehdr and Phdrs for use in controlling unpacking.
     // Uncompress an extra time, and don't verify or update checksums.
@@ -4177,6 +4176,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
         // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
     ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf32_Ehdr::EI_OSABI))
         throwCantUnpack("ElfXX_Ehdr corrupted");
+    bool const is_shlib = (ehdr->e_entry==0) || (ehdr->e_shoff!=0);
 
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
