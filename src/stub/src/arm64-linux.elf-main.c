@@ -323,7 +323,7 @@ upx_main(  // returns entry address
 /*x3*/    Elf64_auxv_t *const av,
 /*x4*/    f_expand *const f_decompress,
 /*x5*/    f_unfilter *const f_unf,
-/*x6*/    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
+/*x6*/    Elf64_Addr *preloc  // IN OUT; value result for ET_DYN
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
@@ -344,13 +344,13 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
+    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, preloc);  // "rewind"
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = reloc + (char const *)phdr->p_vaddr;
+        char const *const iname = *preloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
