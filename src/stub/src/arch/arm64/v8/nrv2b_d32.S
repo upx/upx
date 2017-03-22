@@ -57,9 +57,9 @@
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs
 
-ucl_nrv2b_decompress_8: .globl ucl_nrv2b_decompress_8  // ARM mode
-        .type ucl_nrv2b_decompress_8, %function
-/* error = (*)(char const *src, int len_src, char *dst, int *plen_dst) */
+ucl_nrv2b_decompress_32: .globl ucl_nrv2b_decompress_32  // ARM mode
+        .type ucl_nrv2b_decompress_32, %function
+/* error = (*)(char const *src, uint32_t len_src, char *dst, uint32_t *plen_dst) */
         add x1,src,len,uxtw  // x1= eof_src;
         PUSH4(x1,x2,x3, lr)
         mov off,#-1  // off= -1 initial condition
@@ -67,36 +67,28 @@ ucl_nrv2b_decompress_8: .globl ucl_nrv2b_decompress_8  // ARM mode
         b top_n2b
 
 eof_n2b:
-        POP3(x1,x3,x4)  // x1= eof_src; r3= orig_dst; r4= plen_dst
+        POP4(x1,x3,x4, lr)  // x1= eof_src; r3= orig_dst; r4= plen_dst
         SUB2(src,x1)  // 0 if actual src length equals expected length
         SUB2(dst,x3)  // actual dst length
         str dstw,[x4]
-
-#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
         mov x4,x0  // save result value
+
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
-        mov w2,#0
-        mov x8,#255  // __ARM_NR_cacheflush FIXME
-        svc #0
-#endif  /*}*/
-#if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
-        mov x4,x0  // save result value
-        mov x0,x3  // orig_dst
-        mov x1,dst  // dst_len
-        PUSH2(x0,x1); do_dcache_flush
-        POP2 (x0,x1); do_icache_invalidate
-        mov x0,x4  // result value
-#endif  /*}*/
+cache_n2b:
+        dc cvau,x0  // Clean by VA to point of Unification
+        ic ivau,x0  // Invalidate by VA to point of Unification
+        add x0,x0,#64  // next line
+        cmp x0,x1; blo cache_n2b
 
-        ldr lr,[sp],#8
+        mov x0,x4  // result value
         ret
 
 get1_n2b:
         ADD2S(bits,bits); cbz bits,get32_n2b; ret
 get32_n2b:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
         LDR3(bits,[src],#4)
-        ADC2(bits,bits)  // double and insert CarryIn as low bit
+        ADC2S(bits,bits)  // left shift 1 bit with CarryIn and CarryOut
         ret
 
 ss11_n2b:  // return len= [2..)
@@ -133,7 +125,7 @@ copy_n2b:  // copy 1+len bytes
         STRB3(tmp,[dst],#1); bhs copy_n2b
         b top_n2b  // exit with -1==len
 
-        .size ucl_nrv2b_decompress_8, .-ucl_nrv2b_decompress_8
+        .size ucl_nrv2b_decompress_32, .-ucl_nrv2b_decompress_32
 /*
 vi:ts=8:et:nowrap
  */

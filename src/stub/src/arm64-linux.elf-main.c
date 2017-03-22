@@ -317,13 +317,13 @@ ERR_LAB
 
 void *
 upx_main(  // returns entry address
-    struct b_info const *const bi,  // 1st block header
-    size_t const sz_compressed,  // total length
-    Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
-    Elf64_auxv_t *const av,
-    f_expand *const f_decompress,
-    f_unfilter *const f_unf,
-    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
+/*x0*/    struct b_info const *const bi,  // 1st block header
+/*x1*/    size_t const sz_compressed,  // total length
+/*x2*/    Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
+/*x3*/    Elf64_auxv_t *const av,
+/*x4*/    f_expand *const f_decompress,
+/*x5*/    f_unfilter *const f_unf,
+/*x6*/    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);

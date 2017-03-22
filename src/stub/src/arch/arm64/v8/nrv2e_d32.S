@@ -69,7 +69,7 @@
 #if 0  /*{ DEBUG only: check newly-decompressed against original dst */
 #define CHECK_BYTE \
    ldrb  w6,[dst]; \
-   cmp   w6,tmp; beq 0f; bkpt; 0:
+   cmp   w6,tmp; beq 0f; brk #0; 0:
 #else  /*}{*/
 #define CHECK_BYTE  /*empty*/
 #endif  /*}*/
@@ -84,7 +84,7 @@
 
 ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  // ARM mode
         .type ucl_nrv2e_decompress_32, %function
-/* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
+/* error = (*)(char const *src, uint32_t len_src, char *dst, uint32_t *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
 */
@@ -102,7 +102,6 @@ ucl_nrv2e_decompress_32: .globl ucl_nrv2e_decompress_32  // ARM mode
 
 #if 1==SAFE  /*{*/
 bad_dst_n2e:  # return value will be 2
-bkpt
         add src,srclim,#1
 bad_src_n2e:  # return value will be 1
         ADD2(src,#1)
@@ -116,11 +115,11 @@ eof_n2e:
 
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
-cflush:
+cache_n2e:
         dc cvau,x0  // Clean by VA to point of Unification
         ic ivau,x0  // Invalidate by VA to point of Unification
         add x0,x0,#64  // next line
-        cmp x0,x1; blo cflush
+        cmp x0,x1; blo cache_n2e
 
         mov x0,x4  // result value
         POP1(lr)
@@ -130,7 +129,7 @@ get1_n2e:
         ADD2S(bits,bits); cbz bits,get32_n2e; ret
 get32_n2e:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
         CHECK_SRC; ldr bits,[src],#4
-        ADC2S(bits,bits)  // double, insert CarryIn as low bit, record CarryOut
+        ADC2S(bits,bits)  // left shift 1 bit with CarryIn and CarryOut
         ret
 
 lit_n2e:

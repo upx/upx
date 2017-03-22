@@ -69,7 +69,6 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
         .xword ADRM  // dst  for map
 _start: .globl _start
-        brk #0
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -97,11 +96,11 @@ _start: .globl _start
         ldr x0,[x12,#4*4]  // ADRM
         add x1,x1,# PAGE_SIZE
   section LUNMP000
-        mov w3,#0<<12  // 0-page crumb
+        // unused
   section LUNMP001
-        mov w3,#1<<12  // 1-page crumb
+        // unused
   section ELFMAINXu
-        PUSH5(x0,x1,x2,x3,x13)  // ADRU, LENU, space for sz_unc, crumb, MFLG
+        PUSH4(x0,x1,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
 SP_MFLG= 4*8
 D_sz_unc=2*8  // stack displacement to sz_unc
         mov w2,#PROT_READ | PROT_WRITE | PROT_EXEC
@@ -114,7 +113,7 @@ D_sz_unc=2*8  // stack displacement to sz_unc
 #endif  /*}*/
         cmn x0,#4096
         bcs msg_SELinux
-copy_cl:
+copy_cl:  // copy decompressor and folded code
           add x5,x0,#64; dc zva,x5  // clear FOLLOWING 64-byte line
         ldp x1,x2,[x9],#2*8
         ldp x3,x4,[x9],#2*8
@@ -131,10 +130,10 @@ copy_cl:
 
         sub x4,x0,x9  // relocation amount
         ldr w1,[sp,#SP_MFLG]
-        adr x5,f_decompress
+        adr x15,f_decompress
         str w1,[x0],#4  // MFLG at -4+ fold_begin
         mov lr,x0  // dst for unfolded code
-        add x5,x5,x4  // relocated f_decompress
+        add x15,x15,x4  // relocated f_decompress
 
         ldr w9,[x12]  // sz_pack2
         sub w9,w9,#sz_Elf64_Ehdr + 2*sz_Elf64_Phdr + sz_l_info + sz_p_info
@@ -142,8 +141,7 @@ copy_cl:
         add x10,x10,x4  // relocated &b_info
 
         ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)
-        PUSH1(lr)  // dst for unfolded
-D_stm1=2*8
+D_stm1=0*8
         ldr  w3,[x11,# sz_unc]
         add  x0, x11,# sz_b_info
         ldr  w1,[x11,# sz_cpr ]
@@ -153,10 +151,7 @@ D_stm1=2*8
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
-        brk #0
-        blr x5  // decompress folded code
-        POP1(lr)  // load retaddr
-        ret  // goto unfolded
+        br x15  // decompress folded code, return to *lr
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512

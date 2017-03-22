@@ -83,8 +83,8 @@
 #define   jnextb0     GETBIT; bcc
 #define   jnextb1     GETBIT; bcs
 
-ucl_nrv2d_decompress_8: .globl ucl_nrv2d_decompress_8  // ARM mode
-        .type ucl_nrv2d_decompress_8, %function
+ucl_nrv2d_decompress_32: .globl ucl_nrv2d_decompress_32  // ARM mode
+        .type ucl_nrv2d_decompress_32, %function
 /* error = (*)(char const *src, int len_src, char *dst, int *plen_dst)
    Actual decompressed length is stored through plen_dst.
    For SAFE mode: at call, *plen_dst must be allowed length of output buffer.
@@ -112,33 +112,25 @@ eof_n2d:
         SUB2(src,srclim)  // 0 if actual src length equals expected length
         SUB2(dst,x3)  // actual dst length
         str dstw,[x4]
-
-#if defined(LINUX_ARM_CACHEFLUSH)  /*{*/
         mov x4,x0  // save result value
+
         mov x0,x3  // orig_dst
         add x1,x3,dst  // orig_dst + dst_len
-        mov w2,#0
-        mov x8,#255  // __ARM_NR_cacheflush  FIXME
-        svc #0
-        mov x0,x4  // result value
-#endif  /*}*/
-#if defined(DARWIN_ARM_CACHEFLUSH)  /*{*/
-        mov x4,x0  // save result value
-        mov x0,x3  // orig_dst
-        mov x1,dst  // dst_len
-        PUSH2(x0,x1); do_dcache_flush
-        POP2 (x0,x1); do_icache_invalidate
-        mov x0,x4  // result value
-#endif  /*}*/
+cache_n2d:
+        dc cvau,x0  // Clean by VA to point of Unification
+        ic ivau,x0  // Invalidate by VA to point of Unification
+        add x0,x0,#64  // next line
+        cmp x0,x1; blo cache_n2d
 
-        ldr lr,[sp],#8
+        mov x0,x4  // result value
+        POP1(lr)
         ret
 
 get1_n2d:
         ADD2S(bits,bits); cbz bits,get32_n2d; ret
 get32_n2d:  // In: Carry set [from adding 0x80000000 (1<<31) to itself]
         CHECK_SRC; LDR3(bits,[src],#4)
-        ADC2S(bits,bits)  // double and insert CarryIn as low bit
+        ADC2S(bits,bits)  // left shift one bit with CarryIn and CarryOut
         ret
 
 lit_n2d:
@@ -194,7 +186,7 @@ copy_n2d:
         SUB2S(len,#1); bne copy_n2d
         b top_n2d
 
-        .size ucl_nrv2d_decompress_8, .-ucl_nrv2d_decompress_8
+        .size ucl_nrv2d_decompress_32, .-ucl_nrv2d_decompress_32
 
 /*
 vi:ts=8:et:nowrap
