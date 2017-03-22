@@ -70,13 +70,13 @@ LOAD tmp/powerpc64le-darwin.macho-main.o
 .plt.got
  *(.plt.got)
 
-.text           0x0000000008048000      0x884
+.text           0x0000000008048000      0x928
  *(.text.unlikely .text.*_unlikely .text.unlikely.*)
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
  *(.text.hot .text.hot.*)
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text          0x0000000008048000      0x134 tmp/powerpc64le-darwin.macho-fold.o
+ .text          0x0000000008048000      0x1d8 tmp/powerpc64le-darwin.macho-fold.o
                 0x0000000008048000                _start
                 0x00000000080480e4                pread
                 0x00000000080480f4                mmap
@@ -85,7 +85,39 @@ LOAD tmp/powerpc64le-darwin.macho-main.o
                 0x000000000804811c                open
                 0x0000000008048124                close
                 0x000000000804812c                mprotect
- .text          0x0000000008048134      0x750 tmp/powerpc64le-darwin.macho-main.o
+                0x0000000008048134                _savegpr0_14
+                0x0000000008048138                _savegpr0_15
+                0x000000000804813c                _savegpr0_16
+                0x0000000008048140                _savegpr0_17
+                0x0000000008048144                _savegpr0_18
+                0x0000000008048148                _savegpr0_19
+                0x000000000804814c                _savegpr0_20
+                0x0000000008048150                _savegpr0_21
+                0x0000000008048154                _savegpr0_22
+                0x0000000008048158                _savegpr0_23
+                0x000000000804815c                _savegpr0_24
+                0x0000000008048160                _savegpr0_25
+                0x0000000008048164                _savegpr0_26
+                0x0000000008048168                _savegpr0_27
+                0x000000000804816c                _savegpr0_28
+                0x0000000008048170                _savegpr0_29
+                0x0000000008048184                _restgpr0_14
+                0x0000000008048188                _restgpr0_15
+                0x000000000804818c                _restgpr0_16
+                0x0000000008048190                _restgpr0_17
+                0x0000000008048194                _restgpr0_18
+                0x0000000008048198                _restgpr0_19
+                0x000000000804819c                _restgpr0_20
+                0x00000000080481a0                _restgpr0_21
+                0x00000000080481a4                _restgpr0_22
+                0x00000000080481a8                _restgpr0_23
+                0x00000000080481ac                _restgpr0_24
+                0x00000000080481b0                _restgpr0_25
+                0x00000000080481b4                _restgpr0_26
+                0x00000000080481b8                _restgpr0_27
+                0x00000000080481bc                _restgpr0_28
+                0x00000000080481c0                _restgpr0_29
+ .text          0x00000000080481d8      0x750 tmp/powerpc64le-darwin.macho-main.o
  *(.gnu.warning)
 
 .fini
@@ -116,7 +148,7 @@ LOAD tmp/powerpc64le-darwin.macho-main.o
 
 .exception_ranges
  *(.exception_ranges .exception_ranges*)
-                0x0000000008049884                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
+                0x0000000008049928                . = DATA_SEGMENT_ALIGN (0x1000, 0x1000)
 
 .eh_frame
  *(.eh_frame)
@@ -138,18 +170,18 @@ LOAD tmp/powerpc64le-darwin.macho-main.o
  *(.tbss .tbss.* .gnu.linkonce.tb.*)
  *(.tcommon)
 
-.preinit_array  0x0000000008049884        0x0
+.preinit_array  0x0000000008049928        0x0
                 [!provide]                        PROVIDE (__preinit_array_start, .)
  *(.preinit_array)
                 [!provide]                        PROVIDE (__preinit_array_end, .)
 
-.init_array     0x0000000008049884        0x0
+.init_array     0x0000000008049928        0x0
                 [!provide]                        PROVIDE (__init_array_start, .)
  *(SORT(.init_array.*) SORT(.ctors.*))
  *(.init_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .ctors)
                 [!provide]                        PROVIDE (__init_array_end, .)
 
-.fini_array     0x0000000008049884        0x0
+.fini_array     0x0000000008049928        0x0
                 [!provide]                        PROVIDE (__fini_array_start, .)
  *(SORT(.fini_array.*) SORT(.dtors.*))
  *(.fini_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .dtors)
@@ -182,44 +214,44 @@ LOAD tmp/powerpc64le-darwin.macho-main.o
 .got
  *(.got)
  *(.igot)
-                0x0000000008049884                . = DATA_SEGMENT_RELRO_END (., (SIZEOF (.got.plt) >= 0xc)?0xc:0x0)
+                0x0000000008049928                . = DATA_SEGMENT_RELRO_END (., (SIZEOF (.got.plt) >= 0xc)?0xc:0x0)
 
-.got.plt        0x0000000008049884        0x0
+.got.plt        0x0000000008049928        0x0
  *(.got.plt)
  *(.igot.plt)
 
-.data           0x0000000008049884        0x0
+.data           0x0000000008049928        0x0
  *(.data .data.* .gnu.linkonce.d.*)
- .data          0x0000000008049884        0x0 tmp/powerpc64le-darwin.macho-fold.o
- .data          0x0000000008049884        0x0 tmp/powerpc64le-darwin.macho-main.o
+ .data          0x0000000008049928        0x0 tmp/powerpc64le-darwin.macho-fold.o
+ .data          0x0000000008049928        0x0 tmp/powerpc64le-darwin.macho-main.o
 
-.toc            0x0000000008049884        0x0
- .toc           0x0000000008049884        0x0 tmp/powerpc64le-darwin.macho-main.o
+.toc            0x0000000008049928        0x0
+ .toc           0x0000000008049928        0x0 tmp/powerpc64le-darwin.macho-main.o
 
-.opd            0x0000000008049888       0x40
- .opd           0x0000000008049888       0x40 tmp/powerpc64le-darwin.macho-main.o
-                0x00000000080498b8                upx_main
+.opd            0x0000000008049928       0x40
+ .opd           0x0000000008049928       0x40 tmp/powerpc64le-darwin.macho-main.o
+                0x0000000008049958                upx_main
 
 .data1
  *(.data1)
-                0x00000000080498c8                _edata = .
+                0x0000000008049968                _edata = .
                 [!provide]                        PROVIDE (edata, .)
-                0x00000000080498c8                . = .
-                0x00000000080498c8                __bss_start = .
+                0x0000000008049968                . = .
+                0x0000000008049968                __bss_start = .
 
-.bss            0x00000000080498c8        0x0
+.bss            0x0000000008049968        0x0
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss           0x00000000080498c8        0x0 tmp/powerpc64le-darwin.macho-fold.o
- .bss           0x00000000080498c8        0x0 tmp/powerpc64le-darwin.macho-main.o
+ .bss           0x0000000008049968        0x0 tmp/powerpc64le-darwin.macho-fold.o
+ .bss           0x0000000008049968        0x0 tmp/powerpc64le-darwin.macho-main.o
  *(COMMON)
-                0x00000000080498c8                . = ALIGN ((. != 0x0)?0x4:0x1)
-                0x00000000080498c8                . = ALIGN (0x4)
-                0x00000000080498c8                . = SEGMENT_START ("ldata-segment", .)
-                0x00000000080498c8                . = ALIGN (0x4)
-                0x00000000080498c8                _end = .
+                0x0000000008049968                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x0000000008049968                . = ALIGN (0x4)
+                0x0000000008049968                . = SEGMENT_START ("ldata-segment", .)
+                0x0000000008049968                . = ALIGN (0x4)
+                0x0000000008049968                _end = .
                 [!provide]                        PROVIDE (end, .)
-                0x00000000080498c8                . = DATA_SEGMENT_END (.)
+                0x0000000008049968                . = DATA_SEGMENT_END (.)
 
 .stab
  *(.stab)

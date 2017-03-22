@@ -129,6 +129,7 @@ msg_SELinux:
         call L72
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
+        .align 4
 L71:
         // IDENTSTR goes here
 

@@ -29,8 +29,8 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-#include "arch/powerpc/32/macros.S"
-#include "arch/powerpc/32/ppc_regs.h"
+#include "arch/powerpc/64le/macros.S"
+#include "arch/powerpc/64le/ppc_regs.h"
 retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
 
 sz_b_info= 12
@@ -129,5 +129,7 @@ close: .globl close
         li 0,SYS_close; b sysgo
 mprotect: .globl mprotect
         li 0,SYS_mprotect; b sysgo
+
+#include "powerpc64-savegpr0.S"
 
 /* vim:set ts=8 sw=8 et: */
