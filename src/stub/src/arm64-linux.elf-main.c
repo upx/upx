@@ -160,6 +160,40 @@ ERR_LAB
     }
 }
 
+//DEBUG_STRCON(STR_make_hatch, "make_hatch %%p %%x\\n");
+
+static void *
+make_hatch_arm64(
+    Elf64_Phdr const *const phdr,
+    uint64_t const reloc
+)
+{
+    unsigned *hatch = 0;
+    //DPRINTF((STR_make_hatch(),phdr,reloc));
+    if (phdr->p_type==PT_LOAD && phdr->p_flags & PF_X) {
+        // The format of the 'if' is
+        //  if ( ( (hatch = loc1), test_loc1 )
+        //  ||   ( (hatch = loc2), test_loc2 ) ) {
+        //      action
+        //  }
+        // which uses the comma to save bytes when test_locj involves locj
+        // and the action is the same when either test succeeds.
+
+        // Try page fragmentation just beyond .text .
+        if ( ( (hatch = (void *)(~3ul & (3+ phdr->p_memsz + phdr->p_vaddr + reloc))),
+                ( phdr->p_memsz==phdr->p_filesz  // don't pollute potential .bss
+                &&  (2*4)<=(~PAGE_MASK & -(uint64_t)hatch) ) ) // space left on page
+        ) {
+            hatch[0]= 0xd4000001;  // svc #0
+            hatch[1]= 0xd65f03c0;  // ret (jmp *lr)
+        }
+        else {
+            hatch = 0;
+        }
+    }
+    return hatch;
+}
+
 #if 1  /*{*/
 static void
 upx_bzero(char *p, size_t len)
@@ -277,11 +311,9 @@ do_xmap(
             bzero(mlen+addr, frag);  // fragment at hi end
         }
         if (xi) {
-            if (0==phdr->p_offset) {
-                Elf64_Ehdr *const ehdr = (Elf64_Ehdr *)addr;
-                int *const p = (int *)&ehdr->e_ident[12];
-                *p = 0x90c3050f;  // syscall; ret; nop
-                auxv_up(av, AT_NULL, (uint64_t)&ehdr->e_ident[12]);
+            void *const hatch = make_hatch_arm64(phdr, reloc);
+            if (0!=hatch) {
+                auxv_up(av, AT_NULL, (uint64_t)hatch);
             }
             if (0!=mprotect(addr, mlen, prot)) {
                 err_exit(10);
@@ -359,7 +391,11 @@ upx_main(  // returns entry address
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
+        {
+            Elf64_Addr i_reloc = 0;
+            entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &i_reloc);
+            auxv_up(av, AT_BASE, i_reloc);
+        }
         close(fdi);
     }
   }

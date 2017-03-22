@@ -154,7 +154,7 @@ SP_argc= 4*8  // remember the hole from PUSH3
         mov x0,x10  // &b_info
         bl upx_main
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
-        mov x29,x0  // entry address
+        mov lr,x0  // entry address
 
 brk #0
         POP4(x0,x1,x2,x3)  // x0= ADRU; x1= LENU; x2= 1+ &Elf64_auxv_t[AT_NULL@.atype]; x3= reloc
@@ -168,7 +168,6 @@ brk #0
 #endif  /*}*/
 
         mov w8,#__NR_munmap
-        mov w12,#0
         ldr x3,[x2,#8 -2*8]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
         br x3
 
