@@ -66,7 +66,10 @@ fi
 #
 
 cd / && cd $ucl_BUILDDIR || exit 1
-if [[ -n $BM_CROSS || $TRAVIS_OS_NAME == windows ]]; then
+# patch UCL
+sed 's/^#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)$/& \&\& !defined(__ILP32__)/' $ucl_SRCDIR/acc/acc_chk.ch > a.tmp
+if cmp -s a.tmp $ucl_SRCDIR/acc/acc_chk.ch; then rm a.tmp; else mv a.tmp $ucl_SRCDIR/acc/acc_chk.ch; fi
+if [[ $BUILD_LOCAL_UCL == 1 ]]; then
     # ucl-1.03/configure is too old - build manually
     rm -f ./*.o libucl.a
     $CC -O2 -I$ucl_SRCDIR/include -I$ucl_SRCDIR -c $ucl_SRCDIR/src/*.c

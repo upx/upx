@@ -14,6 +14,8 @@ environment:
     - { C: msvc-12.0-x64, CL_VERSION: 18.00, VS_VERSION: 2013 }
     - { C: msvc-14.0-x86, CL_VERSION: 19.00, VS_VERSION: 2015 }
     - { C: msvc-14.0-x64, CL_VERSION: 19.00, VS_VERSION: 2015 }
+    - { C: msvc-15.0-x86, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
+    - { C: msvc-15.0-x64, CL_VERSION: 19.10, VS_VERSION: 2017, APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017 }
 #   - { C: gcc-4.9-m32, T: SKIP }
 #   - { C: gcc-4.9-m64, T: SKIP }
   UPX_AUTOMATIC_BUILDS_SSL_KEY:
@@ -23,7 +25,7 @@ environment:
 
 init:
   - git config --global core.autocrlf input
-  - where bash & where cat & where chmod & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar
+  - where bash & where cat & where chmod & where cmp & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar
 # - bash --version & git --version & sed --version & tar --version
   - git --version & bash --version
 # - dir "c:\Program Files\Git\usr\bin"
@@ -32,6 +34,7 @@ init:
 # - dir "c:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
 
 install:
+  - set PATH=%PATH%;C:\Program Files\Git\mingw64\bin
   - cd c:\projects
   - md build build\%C% deps
   - cd c:\projects\upx
@@ -56,6 +59,8 @@ install:
   - if "%C%"=="msvc-12.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64 )
   - if "%C%"=="msvc-14.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 )
   - if "%C%"=="msvc-14.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64 )
+  - if "%C%"=="msvc-15.0-x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86 )
+  - if "%C%"=="msvc-15.0-x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64 )
 
 build_script:
   - cd c:\projects\upx
