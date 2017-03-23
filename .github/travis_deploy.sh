@@ -35,9 +35,10 @@ else
     branch=$TRAVIS_BRANCH
     if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then exit 0; fi
 fi
-subdir=${subdir%%:*}; subdir=${subdir%%/*}; subdir=${subdir%%-*}
+subdir=${subdir%%:*}; subdir=${subdir%%/*}; subdir=${subdir%%--*}
 case $branch in
     devel*) ;;
+    gitlab*) ;;
     master*) ;;
     travis*) ;;
     *) exit 0;;
@@ -166,6 +167,11 @@ while true; do
         if git push    $ssh_repo $branch; then break; fi
     fi
     git fetch -v origin $branch
+    git branch -a -v
+    if [[ $new_branch == 1 ]]; then
+        git branch --set-upstream-to origin/$branch
+        new_branch=0
+    fi
     git rebase origin/$branch
     sleep $((RANDOM % 5 + 1))
     let i+=1

@@ -4,10 +4,7 @@
 sudo: false
 language: cpp
 
-notifications:
-  email:
-    on_success: never
-    on_failure: change
+notifications: { email: { on_success: never, on_failure: change } }
 
 .ubuntu_toolchain_sources: &S
   - ubuntu-toolchain-r-test
@@ -74,12 +71,12 @@ matrix:
       compiler: gcc
       env: C=gcc-4.8-m64
       addons: { apt: { sources: *S, packages: [ "g++-4.8" ] } }
-#   - os: linux
-#     sudo: required
-#     dist: trusty
-#     compiler: gcc
-#     env: C=gcc-4.8-mx32
-#     addons: { apt: { packages: [ "g++-multilib", "libx32stdc++-4.8-dev", "libx32z1-dev" ] } }
+    - os: linux
+      sudo: required
+      dist: trusty
+      compiler: gcc
+      env: C=gcc-4.8-mx32
+      addons: { apt: { packages: [ "g++-multilib", "libx32stdc++-4.8-dev" ] } }
     - os: linux
       compiler: gcc
       env: C=gcc-4.9-m32
@@ -250,9 +247,6 @@ install:
     fi
 
 script:
-  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh
-  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_testsuite_1.sh
-after_success:
-  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_deploy.sh
+  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh && bash ./.github/travis_testsuite_1.sh && bash ./.github/travis_deploy.sh
 
 # vim:set ts=2 sw=2 et:

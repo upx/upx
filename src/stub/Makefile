@@ -37,8 +37,9 @@ include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
 # update $PATH for our special stub build tools
 ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
-endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
+else ifneq ($(wildcard $(HOME)/.local/bin/bin-upx/upx-stubtools-check-version),)
+export PATH := $(HOME)/.local/bin/bin-upx:$(PATH)
+else ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 

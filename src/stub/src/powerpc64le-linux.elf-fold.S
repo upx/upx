@@ -75,6 +75,7 @@ L90:
         call zfind  // a6= &Elf64_auxv
         lwz a1,-8(r31)  // #bytes which preceed -8(r31)
         rlwinm r30,a5,0,0,31-12  // r30= &this_page
+        mr a7,r30  // reloc addr
         mr a4,r31  // &decompress: f_expand
         subf r29,a1,r31  // 8+ (char *)&our_Elf64_Ehdr
         la a2,-OVERHEAD(sp)  // &Elf64_Ehdr temporary space

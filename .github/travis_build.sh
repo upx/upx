@@ -39,10 +39,34 @@ set -x
 #
 
 if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
-    bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20160918")
+    if [[ -f "$HOME/local/bin/bin-upx/upx-stubtools-check-version" ]]; then
+        bin_upx=$(readlink -en -- "$HOME/local/bin/bin-upx")
+    elif [[ -f "$HOME/.local/bin/bin-upx/upx-stubtools-check-version" ]]; then
+        bin_upx=$(readlink -en -- "$HOME/.local/bin/bin-upx")
+    else
+        bin_upx=$(readlink -en -- "$upx_SRCDIR/../deps/bin-upx-20160918")
+    fi
     cd / && cd $upx_SRCDIR || exit 1
+    extra_subdirs=()
+    extra_subdirs+=( src/stub/src/arch/amd64 )
+    extra_subdirs+=( src/stub/src/arch/arm/v4a )
+    extra_subdirs+=( src/stub/src/arch/arm/v4t )
+    extra_subdirs+=( src/stub/src/arch/i386 )
+    extra_subdirs+=( src/stub/src/arch/m68k/m68000 )
+    extra_subdirs+=( src/stub/src/arch/m68k/m68020 )
+    extra_subdirs+=( src/stub/src/arch/mips/r3000 )
+    #extra_subdirs+=( src/stub/src/arch/powerpc/32 ) # FIXME / TODO
+    extra_subdirs+=( src/stub/src/arch/powerpc/64le )
     make -C src/stub maintainer-clean
+    for d in ${extra_subdirs[@]}; do
+        make -C $d -f Makefile.extra maintainer-clean
+        git status $d || true
+    done
+    git status || true
     failed=0
+    for d in ${extra_subdirs[@]}; do
+        PATH="$bin_upx:$PATH" make -C $d -f Makefile.extra || failed=1
+    done
     PATH="$bin_upx:$PATH" make -C src/stub all || failed=1
     if [[ $failed != 0 ]]; then
         echo "UPX-ERROR: FATAL: rebuild-stubs failed"
@@ -58,7 +82,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
         echo "X=rebuild-stubs done. Exiting."
         exit 0
     fi
-    unset bin_upx failed
+    unset bin_upx extra_subdirs d failed
 fi
 
 #
@@ -66,7 +90,10 @@ fi
 #
 
 cd / && cd $ucl_BUILDDIR || exit 1
-if [[ -n $BM_CROSS || $TRAVIS_OS_NAME == windows ]]; then
+# patch UCL
+sed 's/^#elif (ACC_ARCH_AMD64 || ACC_ARCH_IA64)$/& \&\& !defined(__ILP32__)/' $ucl_SRCDIR/acc/acc_chk.ch > a.tmp
+if cmp -s a.tmp $ucl_SRCDIR/acc/acc_chk.ch; then rm a.tmp; else mv a.tmp $ucl_SRCDIR/acc/acc_chk.ch; fi
+if [[ $BUILD_LOCAL_UCL == 1 ]]; then
     # ucl-1.03/configure is too old - build manually
     rm -f ./*.o libucl.a
     $CC -O2 -I$ucl_SRCDIR/include -I$ucl_SRCDIR -c $ucl_SRCDIR/src/*.c

@@ -27,7 +27,7 @@
 
 #ifndef __ACC_H_INCLUDED
 #define __ACC_H_INCLUDED 1
-#define ACC_VERSION     20170125L
+#define ACC_VERSION     20170301L
 #if defined(__CYGWIN32__) && !defined(__CYGWIN__)
 #  define __CYGWIN__ __CYGWIN32__
 #endif
@@ -639,6 +639,12 @@
 #  define ACC_CC_ARMCC          __ARMCC_VERSION
 #  define ACC_INFO_CC           "ARM C Compiler"
 #  define ACC_INFO_CCVER        __VERSION__
+#elif defined(__clang__) && defined(__c2__) && defined(__c2_version__) && defined(_MSC_VER)
+#  define ACC_CC_CLANG          (__clang_major__ * 0x10000L + (__clang_minor__-0) * 0x100 + (__clang_patchlevel__-0))
+#  define ACC_CC_CLANG_C2       _MSC_VER
+#  define ACC_CC_CLANG_VENDOR_MICROSOFT 1
+#  define ACC_INFO_CC           "clang/c2"
+#  define ACC_INFO_CCVER        ACC_PP_MACRO_EXPAND(__c2_version__)
 #elif defined(__clang__) && defined(__llvm__) && defined(__VERSION__)
 #  if defined(__clang_major__) && defined(__clang_minor__) && defined(__clang_patchlevel__)
 #    define ACC_CC_CLANG        (__clang_major__ * 0x10000L + (__clang_minor__-0) * 0x100 + (__clang_patchlevel__-0))
@@ -650,7 +656,13 @@
 #  elif defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__VERSION__)
 #    define ACC_CC_CLANG_GNUC   (__GNUC__ * 0x10000L + (__GNUC_MINOR__-0) * 0x100 + (__GNUC_PATCHLEVEL__-0))
 #  endif
-#  define ACC_INFO_CC           "clang"
+#  if defined(__APPLE_CC__)
+#    define ACC_CC_CLANG_VENDOR_APPLE 1
+#    define ACC_INFO_CC         "clang/apple"
+#  else
+#    define ACC_CC_CLANG_VENDOR_LLVM 1
+#    define ACC_INFO_CC         "clang"
+#  endif
 #  if defined(__clang_version__)
 #    define ACC_INFO_CCVER      __clang_version__
 #  else
@@ -971,6 +983,9 @@
 #elif defined(__powerpc64le__) || defined(__powerpc64le) || defined(__ppc64le__) || defined(__PPC64LE__)
 #  define ACC_ARCH_POWERPC          1
 #  define ACC_INFO_ARCH             "powerpc"
+#elif defined(__riscv)
+#  define ACC_ARCH_RISCV            1
+#  define ACC_INFO_ARCH             "riscv"
 #elif defined(__s390__) || defined(__s390) || defined(__s390x__) || defined(__s390x)
 #  define ACC_ARCH_S390             1
 #  define ACC_INFO_ARCH             "s390"
@@ -1011,6 +1026,8 @@
 #    if defined(__thumb2__)
 #      define ACC_ARCH_ARM_THUMB2   1
 #    elif 1 && defined(__TARGET_ARCH_THUMB) && ((__TARGET_ARCH_THUMB)+0 >= 4)
+#      define ACC_ARCH_ARM_THUMB2   1
+#    elif 1 && defined(_MSC_VER) && defined(_M_THUMB) && ((_M_THUMB)+0 >= 7)
 #      define ACC_ARCH_ARM_THUMB2   1
 #    endif
 #  endif
@@ -1223,7 +1240,7 @@
 #    error "unexpected configuration - check your compiler defines"
 #  endif
 #endif
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 #if (ACC_CC_BORLANDC && (__BORLANDC__ >= 0x0200))
@@ -1246,7 +1263,7 @@ extern "C" {
 #else
 #  error "FIXME - implement ACC_MM_AHSHIFT"
 #endif
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 #endif
@@ -1945,6 +1962,7 @@ extern "C" {
 #elif (ACC_CC_INTELC && (__INTEL_COMPILER >= 800))
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
+#elif (ACC_CC_CLANG && ACC_CC_CLANG_C2)
 #elif (ACC_CC_ARMCC_GNUC || ACC_CC_CLANG || ACC_CC_LLVM || ACC_CC_PATHSCALE)
 #  define __acc_likely(e)       (__builtin_expect(!!(e),1))
 #  define __acc_unlikely(e)     (__builtin_expect(!!(e),0))
@@ -2486,7 +2504,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif (ACC_ARCH_IA64) && (ACC_OS_POSIX_LINUX || ACC_OS_WIN64)
 #  define ACC_ABI_LITTLE_ENDIAN     1
-#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430)
+#elif (ACC_ARCH_ALPHA || ACC_ARCH_AMD64 || ACC_ARCH_BLACKFIN || ACC_ARCH_CRIS || ACC_ARCH_I086 || ACC_ARCH_I386 || ACC_ARCH_MSP430 || ACC_ARCH_RISCV)
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif (ACC_ARCH_AVR32 || ACC_ARCH_M68K || ACC_ARCH_S390 || ACC_ARCH_SPU)
 #  define ACC_ABI_BIG_ENDIAN        1
@@ -2506,6 +2524,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif 1 && (ACC_ARCH_ARM) && defined(__ARMEL__) && !defined(__ARMEB__)
 #  define ACC_ABI_LITTLE_ENDIAN     1
+#elif 1 && (ACC_ARCH_ARM) && defined(_MSC_VER) && defined(_WIN32)
+#  define ACC_ABI_LITTLE_ENDIAN     1
 #elif 1 && (ACC_ARCH_ARM && ACC_CC_ARMCC_ARMCC)
 #  if defined(__BIG_ENDIAN) && defined(__LITTLE_ENDIAN)
 #    error "unexpected configuration - check your compiler defines"
@@ -2520,6 +2540,8 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #elif 1 && (ACC_ARCH_ARM64) && defined(__AARCH64EB__) && !defined(__AARCH64EL__)
 #  define ACC_ABI_BIG_ENDIAN        1
 #elif 1 && (ACC_ARCH_ARM64) && defined(__AARCH64EL__) && !defined(__AARCH64EB__)
+#  define ACC_ABI_LITTLE_ENDIAN     1
+#elif 1 && (ACC_ARCH_ARM64) && defined(_MSC_VER) && defined(_WIN32)
 #  define ACC_ABI_LITTLE_ENDIAN     1
 #elif 1 && (ACC_ARCH_MIPS) && defined(__MIPSEB__) && !defined(__MIPSEL__)
 #  define ACC_ABI_BIG_ENDIAN        1
@@ -2691,6 +2713,13 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #    ifndef ACC_OPT_UNALIGNED32
 #    define ACC_OPT_UNALIGNED32             1
 #    endif
+#  elif 1 && defined(_MSC_VER) && defined(_M_ARM) && ((_M_ARM)+0 >= 7)
+#    ifndef ACC_OPT_UNALIGNED16
+#    define ACC_OPT_UNALIGNED16             1
+#    endif
+#    ifndef ACC_OPT_UNALIGNED32
+#    define ACC_OPT_UNALIGNED32             1
+#    endif
 #  endif
 #elif (ACC_ARCH_ARM64)
 #  ifndef ACC_OPT_UNALIGNED16
@@ -2747,6 +2776,19 @@ ACC_COMPILE_TIME_ASSERT_HEADER(ACC_SIZEOF_PTRDIFF_T == sizeof(ptrdiff_t))
 #      ifndef ACC_OPT_UNALIGNED64
 #      define ACC_OPT_UNALIGNED64           1
 #      endif
+#    endif
+#  endif
+#elif (ACC_ARCH_RISCV)
+#  define ACC_OPT_AVOID_UINT_INDEX          1
+#  ifndef ACC_OPT_UNALIGNED16
+#  define ACC_OPT_UNALIGNED16               1
+#  endif
+#  ifndef ACC_OPT_UNALIGNED32
+#  define ACC_OPT_UNALIGNED32               1
+#  endif
+#  if (ACC_WORDSIZE == 8)
+#    ifndef ACC_OPT_UNALIGNED64
+#    define ACC_OPT_UNALIGNED64             1
 #    endif
 #  endif
 #elif (ACC_ARCH_S390)
@@ -3418,7 +3460,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #  undef HAVE_UTIME_H
 #  undef HAVE_SYS_TIME_H
 #  define HAVE_SYS_UTIME_H 1
-#elif (ACC_CC_CLANG_MSC || ACC_CC_GHS || ACC_CC_INTELC_MSC || ACC_CC_MSC)
+#elif (ACC_CC_CLANG_C2 || ACC_CC_CLANG_MSC || ACC_CC_GHS || ACC_CC_INTELC_MSC || ACC_CC_MSC)
 #  undef HAVE_DIRENT_H
 #  undef HAVE_UNISTD_H
 #  undef HAVE_UTIME_H
@@ -3721,7 +3763,7 @@ ACC_COMPILE_TIME_ASSERT_HEADER(sizeof(acc_int_fast64_t) == sizeof(acc_uint_fast6
 #  endif
 #elif (ACC_CC_LCCWIN32)
 #  define utime _utime
-#elif (ACC_CC_MSC)
+#elif (ACC_CC_CLANG_C2 || ACC_CC_MSC)
 #  if (_MSC_VER < 600)
 #    undef HAVE_STRFTIME
 #  endif
@@ -3921,8 +3963,6 @@ extern "C" {
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(acc_signo_t);
-#elif defined(RETSIGTYPE)
-typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
@@ -4542,8 +4582,6 @@ extern "C" {
 #endif
 #if (ACC_BROKEN_CDECL_ALT_SYNTAX)
 typedef void __acc_cdecl_sighandler (*acc_sighandler_t)(acc_signo_t);
-#elif defined(RETSIGTYPE)
-typedef RETSIGTYPE (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #else
 typedef void (__acc_cdecl_sighandler *acc_sighandler_t)(acc_signo_t);
 #endif
@@ -4834,7 +4872,7 @@ typedef unsigned short wchar_t;
 #if (HAVE_SIGNAL_H)
 #  include <signal.h>
 #endif
-#if (TIME_WITH_SYS_TIME)
+#if (HAVE_SYS_TIME_H && HAVE_TIME_H)
 #  include <sys/time.h>
 #  include <time.h>
 #elif (HAVE_TIME_H)
