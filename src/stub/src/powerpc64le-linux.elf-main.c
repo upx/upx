@@ -168,7 +168,7 @@ upx_bzero(char *p, size_t len)
 
 
 static void
-auxv_up(Elf64_auxv_t *av, unsigned type, unsigned const value)
+auxv_up(Elf64_auxv_t *av, unsigned type, uint64_t const value)
 {
     if (av)
     for (;; ++av) {
@@ -230,7 +230,8 @@ do_xmap(
     int const fdi,
     Elf64_auxv_t *const av,
     f_expand *const f_decompress,
-    f_unfilter *const f_unf
+    f_unfilter *const f_unf,
+    Elf64_Addr *p_reloc
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *) (void const *) (ehdr->e_phoff +
@@ -247,13 +248,11 @@ do_xmap(
         unsigned const prot = PF_TO_PROT(phdr->p_flags);
         Extent xo;
         size_t mlen = xo.size = phdr->p_filesz;
-        char  *addr = xo.buf  =                 (char *)phdr->p_vaddr;
+        char  *addr = xo.buf  =         reloc + (char *)phdr->p_vaddr;
         char *haddr =           phdr->p_memsz +                  addr;
         size_t frag  = (long)addr &~ PAGE_MASK;
         mlen += frag;
         addr -= frag;
-        addr  += reloc;
-        haddr += reloc;
 
         if (addr != mmap(addr, mlen, prot | (xi ? PROT_WRITE : 0),
                 MAP_FIXED | MAP_PRIVATE | (xi ? MAP_ANONYMOUS : 0),
@@ -268,7 +267,7 @@ do_xmap(
         //    bzero(addr, frag);  // fragment at lo end
         //}
         frag = (-mlen) &~ PAGE_MASK;  // distance to next page boundary
-        if  ( PROT_WRITE & prot )  {
+        if  (PROT_WRITE & prot)  {
               bzero(mlen+addr, frag);  // fragment at hi end
         }
         if (xi) {
@@ -285,6 +284,10 @@ ERR_LAB
             }
         }
     }
+    if (0!=p_reloc) {
+        *p_reloc = reloc;
+    }
+
     return ehdr->e_entry + reloc;
 }
 
@@ -300,7 +303,8 @@ void *upx_main(
     size_t const sz_ehdr,
     f_expand *const f_decompress,
     f_unfilter *const f_unf,
-    Elf64_auxv_t *const av
+    Elf64_auxv_t *const av,
+    Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
     Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
@@ -325,13 +329,13 @@ void *upx_main(
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf);
+    entry = do_xmap(ehdr, &xi0, 0, av, f_decompress, f_unf, &reloc); // "rewind"
     auxv_up(av, AT_ENTRY , entry);
 
   { // Map PT_INTERP program interpreter
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
-        char const *const iname = (char const *)phdr->p_vaddr;
+        char const *const iname = reloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
         if (0 > fdi) {
             err_exit(18);
@@ -340,7 +344,7 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
         close(fdi);
     }
   }
