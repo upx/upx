@@ -150,7 +150,7 @@ case $BM_C in
     clang*-m64) CC="$CC -m64";  CXX="$CXX -m64" ;;
     gcc*-m32)   CC="$CC -m32";  CXX="$CXX -m32" ;;
     gcc*-m64)   CC="$CC -m64";  CXX="$CXX -m64" ;;
-    gcc*-mx32)  CC="$CC -mx32"; CXX="$CXX -mx32"; BUILD_LOCAL_ZLIB=1 ;;
+    gcc*-mx32)  CC="$CC -mx32"; CXX="$CXX -mx32"; BUILD_LOCAL_UCL=1; BUILD_LOCAL_ZLIB=1 ;;
 esac
 if [[ $BM_C =~ (^|\-)(clang|gcc)($|\-) ]]; then
     CC="$CC -std=gnu89"

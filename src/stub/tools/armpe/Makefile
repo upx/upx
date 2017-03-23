@@ -8,10 +8,11 @@ export LC_ALL = C
 export SHELL = /bin/sh
 
 # update $PATH for our special stub build tools
-ifneq ($(wildcard $(HOME)/local/bin/bin-upx/.),)
+ifneq ($(wildcard $(HOME)/local/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/local/bin/bin-upx:$(PATH)
-endif
-ifneq ($(wildcard $(HOME)/bin/bin-upx/.),)
+else ifneq ($(wildcard $(HOME)/.local/bin/bin-upx/upx-stubtools-check-version),)
+export PATH := $(HOME)/.local/bin/bin-upx:$(PATH)
+else ifneq ($(wildcard $(HOME)/bin/bin-upx/upx-stubtools-check-version),)
 export PATH := $(HOME)/bin/bin-upx:$(PATH)
 endif
 

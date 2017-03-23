@@ -75,7 +75,7 @@ matrix:
       sudo: required
       dist: trusty
       compiler: gcc
-      env: C=gcc-4.8-mx32 T=SKIP
+      env: C=gcc-4.8-mx32
       addons: { apt: { packages: [ "g++-multilib", "libx32stdc++-4.8-dev" ] } }
     - os: linux
       compiler: gcc
