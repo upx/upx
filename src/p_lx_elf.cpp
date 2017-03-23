@@ -923,16 +923,20 @@ PackLinuxElf32::buildLinuxLoader(
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
     unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
+    {
+    unsigned h_sz_cpr = h.sz_cpr;
+    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
+    h.sz_cpr = h_sz_cpr;
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+    }
 #if 0  //{  debugging only
     if (M_IS_LZMA(ph.method)) {
         ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
         unsigned char *tmp = New(unsigned char, tmp_len);
         memset(tmp, 0, tmp_len);
-        r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
+        int r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
         if (r == UPX_E_OUT_OF_MEMORY)
             throwOutOfMemoryException();
         printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
@@ -988,10 +992,14 @@ PackLinuxElf64::buildLinuxLoader(
 
     h.sz_cpr = MemBuffer::getSizeForCompression(h.sz_unc + (0==h.sz_unc));
     unsigned char *const cprLoader = New(unsigned char, sizeof(h) + h.sz_cpr);
-    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h.sz_cpr,
+    {
+    unsigned h_sz_cpr = h.sz_cpr;
+    int r = upx_compress(uncLoader, h.sz_unc, sizeof(h) + cprLoader, &h_sz_cpr,
         NULL, ph.method, 10, NULL, NULL );
+    h.sz_cpr = h_sz_cpr;
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
+    }
     unsigned const sz_cpr = h.sz_cpr;
     set_te32(&h.sz_cpr, h.sz_cpr);
     set_te32(&h.sz_unc, h.sz_unc);
