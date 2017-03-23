@@ -156,7 +156,6 @@ SP_argc= 4*8  // remember the hole from PUSH3
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
         mov lr,x0  // entry address
 
-brk #0
         POP4(x0,x1,x2,x3)  // x0= ADRU; x1= LENU; x2= 1+ &Elf64_auxv_t[AT_NULL@.atype]; x3= reloc
 
 #if DEBUG  /*{*/

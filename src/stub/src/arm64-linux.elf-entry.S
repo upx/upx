@@ -114,7 +114,7 @@ D_sz_unc=2*8  // stack displacement to sz_unc
         cmn x0,#4096
         bcs msg_SELinux
 copy_cl:  // copy decompressor and folded code
-          add x5,x0,#64; dc zva,x5  // clear FOLLOWING 64-byte line
+          add x5,x0,#64;  // FIXME(memcheck) dc zva,x5  // clear FOLLOWING 64-byte line
         ldp x1,x2,[x9],#2*8
         ldp x3,x4,[x9],#2*8
         stp x1,x2,[x0],#2*8
@@ -125,7 +125,7 @@ copy_cl:  // copy decompressor and folded code
         stp x1,x2,[x0],#2*8
         stp x3,x4,[x0],#2*8
         cmp x9,x10
-          sub x5,x9,#64; dc cvau,x5  // clean 64-byte line
+          sub x5,x9,#64; // FIXME(memcheck) dc cvau,x5  // clean 64-byte line
         blo copy_cl  // all source lines
 
         sub x4,x0,x9  // relocation amount
