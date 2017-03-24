@@ -166,8 +166,8 @@ SP_argc= 4*8  // remember the hole from PUSH3
         stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
 #endif  /*}*/
 
-        mov w8,#__NR_munmap
         ldr x3,[x2,#8 -2*8]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
+        mov w8,#__NR_munmap
         br x3
 
 space3eq:
@@ -199,8 +199,8 @@ top_unf:
         ldr t1,[ptr,len,lsl #2]
         ubfx t2,t1,#26,#5
         cmp t2,#5; bne tst_unf  // not unconditional branch
-        sub t1,t1,lenw  // word displ; hi 0b.00101 preserves bit 31
-        ubfm t1,t2,#26,#5
+        sub t2,t1,lenw  // word displ
+        bfi t1,t2,#0,#26  // replace
         str t1,[ptr,len,lsl #2]
 tst_unf:
         cbnz len,top_unf
@@ -304,10 +304,6 @@ write:
 close:
         do_sys __NR_close; ret
 
-        .globl unlink
-unlink:
-        do_sys __NR_unlink; ret
-
         .globl getpid
 getpid:
         do_sys __NR_getpid; ret
@@ -337,23 +333,33 @@ mmap_privanon: .globl mmap_privanon
 mmap:
         do_sys __NR_mmap; ret
 
+        .globl unlink
+unlink:
+        mov x1,#0  // flags as last arg
+        mov w8,#__NR_unlink
+        b svc_AT
+
         .globl open
 open:
-        mov x5,x0; mov x0,#AT_FDCWD
-        mov x4,x1
+        mov w8,#__NR_open
+svc_AT:
+        //mov x4,x3
         mov x3,x2  // mode
-        mov x2,x4  // flags
-        mov x1,x5  // fname
-        do_sys __NR_open; ret
+        mov x2,x1  // flags
+        mov x1,x0  // fname
+        mov x0,#AT_FDCWD
+        svc #0; ret
 
         .globl readlink
 readlink:
-        mov x5,x0; mov x0,#AT_FDCWD
-        mov x4,x1
+        mov w8,#__NR_readlink
         mov x3,x2  // buflen
-        mov x2,x4  // buffer
-        mov x1,x5  // fname
-        do_sys __NR_readlink; cmn x0,#4096; bcs 0f  // error
+        mov x2,x1  // buffer
+        mov x1,x0  // fname
+        mov x0,#AT_FDCWD
+        svc #0
+
+        cmn x0,#4096; bcs 0f  // error
         mov w3,#0
         strb w3,[x2,x0]  // null terminate pathname
 0:
@@ -369,36 +375,9 @@ __clear_cache:
 #if DEBUG  /*{*/
 
 div10: .globl div10
-        mov ip,r0  // extra copy used at end
-        sub r1,r1,r1  // hi
-
-        mov r2,r0  // copy lo
-        adds r0,r0,r0,lsl #3   // 9*lo
-        adc  r1,r1,r1,lsl #3   // 9*hi + C
-        add  r1,r1,r2,lsr #(32 - 3)  // bits shifted from lo to hi
-
-        mov r2,r0  // copy lo
-        adds r0,r0,r0,lsl #4
-        adc  r1,r1,r1,lsl #4
-        add  r1,r1,r2,lsr #(32 - 4)  // * 0x99
-
-        mov r2,r0  // copy lo
-        adds r0,r0,r0,lsl #8
-        adc  r1,r1,r1,lsl #8
-        add  r1,r1,r2,lsr #(32 - 8)  // * 0x9999
-
-        mov r2,r0  // copy lo
-        adds r0,r0,r0,lsl #16
-        adc  r1,r1,r1,lsl #16
-        add  r1,r1,r2,lsr #(32 - 16)  // * 0x99999999
-
-        subs r0,r0,ip,lsl #(32 - 1)  // - * 0x80000000
-        sbc  r1,r1,ip,lsr #1         //   * 0x19999999
-
-        adds r0,r0,ip
-        adc  r0,r1,#0  // * 0x0.1999999a
+        mov x1,#10
+        udiv x0,x0,x1
         ret
-
 #endif  /*}*/
 
 // vi:ts=8:et:nowrap
