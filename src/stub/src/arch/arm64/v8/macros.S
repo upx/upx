@@ -31,6 +31,7 @@
 
                 .altmacro
 lr .req x30
+fp .req x29
 
 // ARM64 (AARCH64) REQUIRES 16-BYTE ALIGNED STACK POINTER (SP)
 // Therefore PUSH of an odd number of registers, inserts an 8-byte hole.

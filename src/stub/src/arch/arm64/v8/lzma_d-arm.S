@@ -71,8 +71,9 @@ Align= (SpecPos + kNumFullDistances - kEndPosModelIndex)
 RepLenCoder= (LenCoder + kNumLenProbs)
 Literal=  (RepLenCoder + kNumLenProbs)
 
-LZMA_BASE_SIZE= Literal  /* 1846 */
-LZMA_LIT_SIZE=  768
+// Already #define in lzma_d.S
+//LZMA_BASE_SIZE= Literal
+//LZMA_LIT_SIZE=  768
 
 #define call bl  /* subroutine call */
 
@@ -137,7 +138,7 @@ vs_lc= 0
 */
 LzmaDecode: .globl LzmaDecode
                 // save &inSizeProcesesed and caller registers
-        PUSH5(x3,x4,x5,x6, x30)
+        PUSH5(x3,x4,x5,x6, lr)
         mov inPtr,x1
         add inLim,x1,w2, uxtw
         mov outPtr,x4
@@ -489,8 +490,8 @@ rcGetBit_mi:  // rcGetBit(mi, mi + p_in)
         add p_in,p_in,mi, uxtw #1
 rcGetBit:  // Out: CC set on mo
         lsr t0,Range,#kNumTopBits
-        mov t2x,x30  // save lr if need rcLoad
-        adr x30,rcGetBitCont; cbz t0,rcLoad  // conditional subroutine call
+        mov t2x,lr  // save lr if need rcLoad
+        adr lr,rcGetBitCont; cbz t0,rcLoad  // conditional subroutine call
 rcGetBitCont:
 #define starp t0
 #define bound t1

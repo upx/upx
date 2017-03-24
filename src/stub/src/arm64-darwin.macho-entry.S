@@ -29,19 +29,6 @@
 *  <jreiser@users.sourceforge.net>
 */
 
-//#define SIMULATE_ON_DEBIAN_EABI4 1
-#undef  SIMULATE_ON_DEBIAN_EABI4
-
-#ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-  #define LINUX_ARM_CACHEFLUSH 1  /* SIMULATE_ON_DEBIAN_EABI4 */
-  #define ARMEL_EABI4 1           /* SIMULATE_ON_DEBIAN_EABI4 */
-#else  /*}{ usual case */
-  #define DARWIN_ARM_CACHEFLUSH 1
-  #define ARMEL_DARWIN 1
-#endif  /*}*/
-
-#define lr x30
-
 #include "arch/arm64/v8/macros.S"
 
 sz_b_info= 12
@@ -116,9 +103,9 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
   section MACHMAINZ
-#define lsrc w1
-#define ldst w3
-#define ldstx x3
+lsrc .req w1
+ldst .req w3
+ldstx .req x3
 unfold:  // lr= &L100
         ldr ldst,[lr,#sz_unc]
         ldr lsrc,[lr,#sz_cpr]
@@ -126,7 +113,7 @@ unfold:  // lr= &L100
         add src,lr,ldst,uxtw; add src,src,#GAP+NO_LAP  // defend against prefetch and overlap
 
         mov w4,lsrc  // loop count
-#define t0 w9
+t0 .req w9
 movup:  // descending copy folded_loader to higher address
         ldr t0,[dst,#-4]!; sub w4,w4,#4
         str t0,[src,#-4]!; cbnz w4,movup
@@ -148,8 +135,5 @@ L100:
 
 GAP= 128  // > farthest prefetch;               must match ../../p_mach.cpp
 NO_LAP= 64  // avoid overlap for folded loader; must match ../../p_mach.cpp
-
-#undef ldstx
-#undef ldst
 
 /* vim:set ts=8 sw=8 et: */
