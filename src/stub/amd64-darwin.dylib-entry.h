@@ -32,14 +32,14 @@
 
 
 #define STUB_AMD64_DARWIN_DYLIB_ENTRY_SIZE    9652
-#define STUB_AMD64_DARWIN_DYLIB_ENTRY_ADLER32 0xf9d1e2f3
-#define STUB_AMD64_DARWIN_DYLIB_ENTRY_CRC32   0x35440f9f
+#define STUB_AMD64_DARWIN_DYLIB_ENTRY_ADLER32 0xf965e2ca
+#define STUB_AMD64_DARWIN_DYLIB_ENTRY_CRC32   0xe822ad82
 
 unsigned char stub_amd64_darwin_dylib_entry[9652] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 62,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0,240, 24,  0,  0,  0,  0,  0,  0,
-/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 22,  0, 19,  0,
+/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0,  0,  0,  0,  0,
 /* 0x0040 */ 243,144,235,252,204, 80, 85, 83,232,  0,  0,  0,  0, 85, 83, 81,
 /* 0x0050 */  82, 72,  1,254, 86, 72,137,254, 72,137,215, 49,219, 49,201, 72,
 /* 0x0060 */ 131,205,255,232, 80,  0,  0,  0,  1,219,116,  2,243,195,139, 30,

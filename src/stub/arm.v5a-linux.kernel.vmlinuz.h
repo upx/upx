@@ -32,14 +32,14 @@
 
 
 #define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_SIZE    15163
-#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_ADLER32 0x690d3249
-#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_CRC32   0x579d826c
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_ADLER32 0xb9213212
+#define STUB_ARM_V5A_LINUX_KERNEL_VMLINUZ_CRC32   0xd03fe05b
 
 unsigned char stub_arm_v5a_linux_kernel_vmlinuz[15163] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 244, 18,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
-/* 0x0030 */  29,  0, 26,  0,  4,192, 34,229,  9, 32, 34,233,  4, 32, 66,226,
+/* 0x0030 */   0,  0,  0,  0,  4,192, 34,229,  9, 32, 34,233,  4, 32, 66,226,
 /* 0x0040 */   0, 48,160,227,  8, 64, 34,233,  2,208,160,225, 28, 48,159,229,
 /* 0x0050 */   8, 48,141,229,  8, 48,141,226,  0, 32,160,225,  8, 16,159,229,
 /* 0x0060 */  14,  0,160,225,254,255,255,235, 14,  0,  0,234,  0,  0,  0,  0,

@@ -32,14 +32,14 @@
 
 
 #define STUB_AMD64_DARWIN_MACHO_ENTRY_SIZE    9461
-#define STUB_AMD64_DARWIN_MACHO_ENTRY_ADLER32 0x47b28eb0
-#define STUB_AMD64_DARWIN_MACHO_ENTRY_CRC32   0xb6f8387f
+#define STUB_AMD64_DARWIN_MACHO_ENTRY_ADLER32 0x1c6d8e85
+#define STUB_AMD64_DARWIN_MACHO_ENTRY_CRC32   0x175a7a79
 
 unsigned char stub_amd64_darwin_macho_entry[9461] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 62,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0, 88, 24,  0,  0,  0,  0,  0,  0,
-/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 23,  0, 20,  0,
+/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0,  0,  0,  0,  0,
 /* 0x0040 */  76,  0,131,249, 73,117, 68, 83, 87, 72,141, 76, 55,252, 94, 86,
 /* 0x0050 */  91,235, 47, 72, 57,206,115, 50, 86, 94,172, 60,128,114, 10, 60,
 /* 0x0060 */ 143,119,  6,128,126,254, 15,116,  6, 44,232, 60,  1,119,228, 72,

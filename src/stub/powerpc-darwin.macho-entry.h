@@ -32,14 +32,14 @@
 
 
 #define STUB_POWERPC_DARWIN_MACHO_ENTRY_SIZE    8920
-#define STUB_POWERPC_DARWIN_MACHO_ENTRY_ADLER32 0x50f6183a
-#define STUB_POWERPC_DARWIN_MACHO_ENTRY_CRC32   0x6c3cff3a
+#define STUB_POWERPC_DARWIN_MACHO_ENTRY_ADLER32 0x396b180d
+#define STUB_POWERPC_DARWIN_MACHO_ENTRY_CRC32   0x553738e1
 
 unsigned char stub_powerpc_darwin_macho_entry[8920] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 20,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 25, 64,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 24,  0, 21,  0,  0,  0,104, 40,  6,  0,208, 76,130,  0, 32,
+/* 0x0030 */   0,  0,  0,  0,  0,  0,  0,104, 40,  6,  0,208, 76,130,  0, 32,
 /* 0x0040 */  84,132,240,191, 77,130,  0, 32, 60,  0,  0, 16,124,  4,  0, 64,
 /* 0x0050 */  65,128,  0,  8,124,  4,  3,120, 56,165,  1, 32,124,103, 27,120,
 /* 0x0060 */  56, 99,255,252,124,137,  3,166, 72,  0,  0, 28, 84, 75,  2,186,

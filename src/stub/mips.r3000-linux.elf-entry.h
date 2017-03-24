@@ -32,14 +32,14 @@
 
 
 #define STUB_MIPS_R3000_LINUX_ELF_ENTRY_SIZE    9847
-#define STUB_MIPS_R3000_LINUX_ELF_ENTRY_ADLER32 0x36d02a72
-#define STUB_MIPS_R3000_LINUX_ELF_ENTRY_CRC32   0x9c96ab6e
+#define STUB_MIPS_R3000_LINUX_ELF_ENTRY_ADLER32 0x15662a49
+#define STUB_MIPS_R3000_LINUX_ELF_ENTRY_CRC32   0x26b6403c
 
 unsigned char stub_mips_r3000_linux_elf_entry[9847] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0,  8,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 28, 68,  0,  0,  0,  1,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 22,  0, 19,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+/* 0x0030 */   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0040 */   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4, 17,  0, 48,
 /* 0x0050 */  39,247,  0,  0, 60, 13,128,  0,  1,160, 72, 33, 36, 11,  0,  1,
 /* 0x0060 */   4, 17,  0, 77, 36, 15,  0,  1, 17,192,  0,  5,144,142,  0,  0,

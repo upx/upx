@@ -32,14 +32,14 @@
 
 
 #define STUB_ARMEB_V4A_LINUX_ELF_ENTRY_SIZE    14936
-#define STUB_ARMEB_V4A_LINUX_ELF_ENTRY_ADLER32 0x155120f3
-#define STUB_ARMEB_V4A_LINUX_ELF_ENTRY_CRC32   0x9e120aec
+#define STUB_ARMEB_V4A_LINUX_ELF_ENTRY_ADLER32 0x7f0820c0
+#define STUB_ARMEB_V4A_LINUX_ELF_ENTRY_CRC32   0xd292f910
 
 unsigned char stub_armeb_v4a_linux_elf_entry[14936] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 40,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 19,120,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 27,  0, 24,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+/* 0x0030 */   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0040 */   0,  0,  0,  0,226, 79,192, 28,232,156, 76,  6,224,139,176, 12,
 /* 0x0050 */ 224,138,160, 12,229,155, 48,  0,224, 76,144,  1,224,129, 16,  3,
 /* 0x0060 */ 225,160,  0,  2,226,129, 26,  1,227,160, 48,  0,227,160, 58,  1,

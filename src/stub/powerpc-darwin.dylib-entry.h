@@ -32,14 +32,14 @@
 
 
 #define STUB_POWERPC_DARWIN_DYLIB_ENTRY_SIZE    8993
-#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_ADLER32 0x22e76239
-#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_CRC32   0x3e9d84f7
+#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_ADLER32 0x8a436210
+#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_CRC32   0x3d13cd40
 
 unsigned char stub_powerpc_darwin_dylib_entry[8993] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 20,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 26,120,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 22,  0, 19,124, 72,  2,166, 72,  0,  2,  1,124,  0, 41,236,
+/* 0x0030 */   0,  0,  0,  0,124, 72,  2,166, 72,  0,  2,  1,124,  0, 41,236,
 /* 0x0040 */ 125,168,  2,166, 40,  7,  0,  8, 64,130,  1, 60,144,166,  0,  0,
 /* 0x0050 */ 124,132, 26, 20, 60,  0,128,  0, 61, 32,128,  0, 56, 99,255,255,
 /* 0x0060 */  56,165,255,255, 57, 64,255,255, 72,  0,  1, 12, 57, 32,  0,  1,
