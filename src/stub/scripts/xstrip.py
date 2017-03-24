@@ -175,11 +175,14 @@ def do_file(fn):
     pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
     if opts.with_dump:
         eh, odata = strip_with_dump(opts.with_dump, eh, idata)
+        # Other compilers can intermix the contents of .rela sections
+        # with PROGBITS sections.  This happens on powerpc64le and arm64.
+        # The general solution probably requires a C++ program
+        # that combines "objcopy -R", "objdump -htr", and xstrip.
         if re.search(r"^powerpc64le-", os.path.basename(fn)):
-            # FIXME / TODO
-            pass
+            assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))
         elif re.search(r"^arm64-", os.path.basename(fn)):
-            pass
+            assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))
         else:
             assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
     else:
