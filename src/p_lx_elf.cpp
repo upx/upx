@@ -1651,7 +1651,7 @@ bool PackLinuxElf32::canPack()
             goto proceed;  // But proper packing depends on checking xct_va.
         }
         else
-            infoWarning("no DT_INIT or JNI_OnLoad: %s", fi->getName());
+            throwCantPack("need DT_INIT; try \"void _init(void){}\"");
 abandon:
         return false;
 proceed: ;
@@ -1843,6 +1843,8 @@ PackLinuxElf64ppcle::canPack()
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
+        else
+            throwCantPack("need DT_INIT; try \"void _init(void){}\"");
 abandon:
         return false;
 proceed: ;
@@ -2035,6 +2037,8 @@ PackLinuxElf64amd::canPack()
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
+        else
+            throwCantPack("need DT_INIT; try \"void _init(void){}\"");
 abandon:
         return false;
 proceed: ;
