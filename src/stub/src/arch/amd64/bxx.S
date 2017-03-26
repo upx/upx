@@ -38,7 +38,7 @@ amdbxx:  # (*f_unf)(xo->buf, out_len, h.b_cto8, h.b_ftid);
 #endif
         push %rbx  # save
 
-        push %rdi; lea (1 -4)(%rdi,%rsi),%rcx  # beyond last possible displacement
+        push %rdi; lea (1- 4)(%rdi,%rsi),%rcx  # beyond last possible displacement
         pop  %rsi  # start of buffer
         push %rsi
         pop  %rbx  # remember start of buffer
