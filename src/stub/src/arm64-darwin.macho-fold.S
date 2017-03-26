@@ -59,7 +59,6 @@ fold_begin:
     sp/ junk1,junk2,{30 original regs (omit sp,lr)},junk3,original_stack...
 */
 #define t0w w9  /* scratch value */
-lr .req x30
         ldr x1,[x11]  // sz_pack2
         add x7,sp,#8*(2+(32-2))  // &junk3; will become &mhdrp
         sub x0,x11,x1,uxtw  // &{l_info; p_info; b_info}
@@ -134,23 +133,23 @@ unf_ret:
 spin: .globl spin
         ret
 
-__NR_exit  =  1 + __NR_SYSCALL_BASE
-__NR_read  =  3 + __NR_SYSCALL_BASE
-__NR_write =  4 + __NR_SYSCALL_BASE
-__NR_open  =  5 + __NR_SYSCALL_BASE
-__NR_close =  6 + __NR_SYSCALL_BASE
-__NR_brk   = 45 + __NR_SYSCALL_BASE
+__NR_exit  =  1
+__NR_read  =  3
+__NR_write =  4
+__NR_open  =  5
+__NR_close =  6
+__NR_brk   = 45
 
-__NR_mmap     = 197 + __NR_SYSCALL_BASE
-__NR_munmap   =  73 + __NR_SYSCALL_BASE
-__NR_mprotect =  74 + __NR_SYSCALL_BASE
-__NR_pread    = 153 + __NR_SYSCALL_BASE
+__NR_mmap     = 197
+__NR_munmap   =  73
+__NR_mprotect =  74
+__NR_pread    = 153
 
 #ifdef SIMULATE_ON_DEBIAN_EABI4  /*{*/
-__NR_mmap     = 192 + __NR_SYSCALL_BASE  // mmap2
-__NR_munmap   =  91 + __NR_SYSCALL_BASE
-__NR_mprotect = 125 + __NR_SYSCALL_BASE
-__NR_pread    = 180 + __NR_SYSCALL_BASE
+__NR_mmap     = 192  // mmap2
+__NR_munmap   =  91
+__NR_mprotect = 125
+__NR_pread    = 180
 #endif  /*}*/
 
         .globl exit

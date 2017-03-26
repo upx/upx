@@ -228,6 +228,9 @@ const FilterImp::FilterEntry FilterImp::filters[] = {
     { 0x50, 8, 0x01ffffff, f_ct24arm_le, u_ct24arm_le, s_ct24arm_le },
     { 0x51, 8, 0x01ffffff, f_ct24arm_be, u_ct24arm_be, s_ct24arm_be },
 
+    // 26-bit calltrick for arm64
+    { 0x52, 8, 0x03ffffff, f_ct26arm_le, u_ct26arm_le, s_ct26arm_le },
+
     // 32-bit cto calltrick with jmp and jcc(swap 0x0f/0x8Y) and relative renumbering
     { 0x80, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },
     { 0x81, 8, 0x00ffffff, f_ctojr32_e8e9_bswap_le, u_ctojr32_e8e9_bswap_le, s_ctojr32_e8e9_bswap_le },

@@ -472,9 +472,9 @@ void ElfLinker::relocate() {
             value = rel->value->section->offset + rel->value->offset + rel->add;
         }
         upx_byte *location = rel->section->output + rel->offset;
-        // printf("%-28s %-28s %-10s 0x%16llx 0x%16llx\n", rel->section->name, rel->value->name,
+        // printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
         // rel->type, (long long) value, (long long) value - rel->section->offset - rel->offset);
-        // printf("  %llx %d %llx %d %llx : %d\n", (long long) value, rel->value->section->offset,
+        // printf("  %llx %d %llx %d %llx : %d\n", (long long) value, (int)rel->value->section->offset,
         // rel->value->offset, rel->offset, (long long) rel->add, *location);
         relocate1(rel, location, value, rel->type);
     }
@@ -541,7 +541,7 @@ void ElfLinker::alignWithByte(unsigned len, unsigned char b) {
 }
 
 void ElfLinker::relocate1(const Relocation *rel, upx_byte *, upx_uint64_t, const char *) {
-    internal_error("unknown relocation type '%s\n", rel->type);
+    internal_error("unknown relocation type '%s\n'", rel->type);
 }
 
 /*************************************************************************
@@ -587,6 +587,37 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         set_le32(location, get_le32(location) + value);
     else if (strcmp(type, "64") == 0)
         set_le64(location, get_le64(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+                               const char *type) {
+    if (strncmp(type, "R_AARCH64_", 10))
+        return super::relocate1(rel, location, value, type);
+    type += 10;
+
+    if (!strncmp(type, "PREL", 4)) {
+        value -= rel->section->offset + rel->offset;
+        type += 4;
+
+        if (!strcmp(type, "16"))
+            set_le16(location, get_le16(location) + value);
+        else if (!strncmp(type, "32", 2)) // for "32" and "32S"
+            set_le32(location, get_le32(location) + value);
+        else if (!strcmp(type, "64"))
+            set_le64(location, get_le64(location) + value);
+    } else if (!strcmp(type, "ABS32")) {
+        set_le32(location, get_le32(location) + value);
+    } else if (!strcmp(type, "ABS64")) {
+        set_le64(location, get_le64(location) + value);
+    }
+    else if (!strcmp(type, "CONDBR19")) {
+        value -= rel->section->offset + rel->offset;
+        uint32_t const m19 = ~(~0u << 19);
+        uint32_t w = get_le32(location);
+        set_le32(location, (w &~(m19<<5)) | ((((w>>5) + (value>>2)) & m19) << 5) );
+    }
     else
         super::relocate1(rel, location, value, type);
 }

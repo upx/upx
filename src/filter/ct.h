@@ -459,4 +459,45 @@ static int s_ct24arm_be(Filter *f)
 #undef CT24ARM_BE
 #undef ARMCT_COND
 
+/*************************************************************************
+// 26-bit ARM calltrick ("naive")
+**************************************************************************/
+
+#define CT26ARM_LE(f, cond, addvalue, get, set) \
+    upx_byte *b = f->buf; \
+    upx_byte *b_end = b + f->buf_len - 4; \
+    do { \
+        if (cond) \
+        { \
+            unsigned a = (unsigned) (b - f->buf); \
+            f->lastcall = a; \
+            set(b, get(b) + (addvalue)); \
+            f->calls++; \
+        } \
+        b += 4; \
+    } while (b < b_end); \
+    if (f->lastcall) f->lastcall += 4; \
+    return 0;
+
+
+#define ARMCT_COND (((b[3] & 0x7C) == 0x14))
+
+static int f_ct26arm_le(Filter *f)
+{
+    CT26ARM_LE(f, ARMCT_COND, a / 4 + f->addvalue, get_le26, set_le26)
+}
+
+static int u_ct26arm_le(Filter *f)
+{
+    CT26ARM_LE(f, ARMCT_COND, 0 - a / 4 - f->addvalue, get_le26, set_le26)
+}
+
+static int s_ct26arm_le(Filter *f)
+{
+    CT26ARM_LE(f, ARMCT_COND, a + f->addvalue, get_le26, set_dummy)
+}
+
+#undef CT26ARM_LE
+#undef ARMCT_COND
+
 /* vim:set ts=4 sw=4 et: */

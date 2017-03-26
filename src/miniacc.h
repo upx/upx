@@ -5103,9 +5103,11 @@ ACCLIB_EXTERN(void, acc_ua_set_be24) (acc_hvoid_p, acc_uint32l_t);
 ACCLIB_EXTERN(void, acc_ua_set_be32) (acc_hvoid_p, acc_uint32l_t);
 ACCLIB_EXTERN(unsigned, acc_ua_get_le16) (const acc_hvoid_p);
 ACCLIB_EXTERN(acc_uint32l_t, acc_ua_get_le24) (const acc_hvoid_p);
+ACCLIB_EXTERN(acc_uint32l_t, acc_ua_get_le26) (const acc_hvoid_p);
 ACCLIB_EXTERN(acc_uint32l_t, acc_ua_get_le32) (const acc_hvoid_p);
 ACCLIB_EXTERN(void, acc_ua_set_le16) (acc_hvoid_p, unsigned);
 ACCLIB_EXTERN(void, acc_ua_set_le24) (acc_hvoid_p, acc_uint32l_t);
+ACCLIB_EXTERN(void, acc_ua_set_le26) (acc_hvoid_p, acc_uint32l_t);
 ACCLIB_EXTERN(void, acc_ua_set_le32) (acc_hvoid_p, acc_uint32l_t);
 #if defined(acc_int64l_t)
 ACCLIB_EXTERN(acc_uint64l_t, acc_ua_get_be64) (const acc_hvoid_p);
@@ -6095,6 +6097,12 @@ ACCLIB_PUBLIC(acc_uint32l_t, acc_ua_get_le24) (const acc_hvoid_p p)
     const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
     return ACC_ICONV(acc_uint32l_t, b[0]) | (ACC_ICONV(acc_uint32l_t, b[1]) << 8) | (ACC_ICONV(acc_uint32l_t, b[2]) << 16);
 }
+ACCLIB_PUBLIC(acc_uint32l_t, acc_ua_get_le26) (const acc_hvoid_p p)
+{
+    const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
+    return ACC_ICONV(acc_uint32l_t, b[0]       ) | (  ACC_ICONV(acc_uint32l_t, b[1])     <<  8) |
+          (ACC_ICONV(acc_uint32l_t, b[2]) << 16) | (((ACC_ICONV(acc_uint32l_t, b[3]) & 3)<< 24));
+}
 ACCLIB_PUBLIC(acc_uint32l_t, acc_ua_get_le32) (const acc_hvoid_p p)
 {
 #if defined(ACC_UA_GET_LE32)
@@ -6120,6 +6128,14 @@ ACCLIB_PUBLIC(void, acc_ua_set_le24) (acc_hvoid_p p, acc_uint32l_t v)
     b[0] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
     b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
     b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+}
+ACCLIB_PUBLIC(void, acc_ua_set_le26) (acc_hvoid_p p, acc_uint32l_t v)
+{
+    acc_hbyte_p b = ACC_PCAST(acc_hbyte_p, p);
+    b[0] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
+    b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
+    b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+    b[3] = ACC_ICONV(unsigned char, (v >> 24) & 0x03) | (0xFC & b[3]);
 }
 ACCLIB_PUBLIC(void, acc_ua_set_le32) (acc_hvoid_p p, acc_uint32l_t v)
 {

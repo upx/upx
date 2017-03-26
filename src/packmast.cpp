@@ -250,6 +250,9 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         if ((p = func(new PackLinuxElf32armBe(f), user)) != NULL)
             return p;
         delete p; p = NULL;
+        if ((p = func(new PackLinuxElf64arm(f), user)) != NULL)
+            return p;
+        delete p; p = NULL;
         if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
             return p;
         delete p; p = NULL;

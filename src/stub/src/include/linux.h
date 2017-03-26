@@ -96,7 +96,7 @@ struct timespec {
 #elif defined(__amd64__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
-#elif defined(__i386__) || defined(__powerpc__) || defined(__arm__)
+#elif defined(__i386__) || defined(__powerpc__) || defined(__arm__)  || defined(__AARCH64EL__)
 #define PAGE_MASK       (~0ul<<12)   // discards the offset, keeps the page
 #define PAGE_SIZE       ( 1ul<<12)
 #endif
