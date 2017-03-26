@@ -97,7 +97,6 @@ SYS_mprotect= 125
 mmap: .globl mmap
         li r0,SYS_mmap
 sysgo:
-////  teq r0,r0  // debugging
         sc
         bns+ no_fail  // 'bns': branch if No Summary[Overflow]
         li a0,-1  // failure; IGNORE errno
