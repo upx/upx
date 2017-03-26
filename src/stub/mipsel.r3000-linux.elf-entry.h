@@ -32,14 +32,14 @@
 
 
 #define STUB_MIPSEL_R3000_LINUX_ELF_ENTRY_SIZE    9730
-#define STUB_MIPSEL_R3000_LINUX_ELF_ENTRY_ADLER32 0x275115ef
-#define STUB_MIPSEL_R3000_LINUX_ELF_ENTRY_CRC32   0xb72886a9
+#define STUB_MIPSEL_R3000_LINUX_ELF_ENTRY_ADLER32 0x187b15c6
+#define STUB_MIPSEL_R3000_LINUX_ELF_ENTRY_CRC32   0x76e36ebe
 
 unsigned char stub_mipsel_r3000_linux_elf_entry[9730] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0,  8,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */ 204, 27,  0,  0,  1,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
-/* 0x0030 */  22,  0, 19,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+/* 0x0030 */   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0040 */   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 48,  0, 17,  4,
 /* 0x0050 */   0,  0,247, 39,  0,128, 13, 60, 33, 72,160,  1,  1,  0, 11, 36,
 /* 0x0060 */  67,  0, 17,  4,  1,  0, 15, 36,  5,  0,192, 17,  0,  0,142,144,

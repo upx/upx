@@ -65,8 +65,7 @@ def strip_with_dump(dump_fn, eh, idata):
 # // FIXME - this is only a first stub version
 # ************************************************************************/
 
-def create_bindump(bindump_fn, dump_fn):
-    data = ""
+def check_dump(dump_fn):
     lines = open(dump_fn, "rb").readlines()
     lines = map(lambda l: re.sub(r"\s+", " ", l.strip()).strip(), lines)
     lines = filter(None, lines)
@@ -125,10 +124,6 @@ def create_bindump(bindump_fn, dump_fn):
         if f[0] == "OFFSET": continue
         assert len(f) == 3, (l, f)
         pass
-    fp = open(bindump_fn, "wb")
-    fp.write(data)
-    fp.write(struct.pack("<I", len(data) + 4))
-    fp.close()
 
 
 # /***********************************************************************
@@ -143,7 +138,6 @@ def do_file(fn):
         fp = open(fn, "r+b")
     fp.seek(0, 0)
     idata = fp.read()
-    fp.seek(0, 0)
     if idata[:4] != "\x7f\x45\x4c\x46":
         raise Exception, "%s is not %s" % (fn, "ELF")
     if idata[4:7] == "\x01\x01\x01":
@@ -174,9 +168,14 @@ def do_file(fn):
     pos = idata.find("\0.symtab\0.strtab\0.shstrtab\0")
     if opts.with_dump:
         eh, odata = strip_with_dump(opts.with_dump, eh, idata)
+        # Other compilers can intermix the contents of .rela sections
+        # with PROGBITS sections.  This happens on powerpc64le and arm64.
+        # The general solution probably requires a C++ program
+        # that combines "objcopy -R", "objdump -htr", and xstrip.
         if re.search(r"^powerpc64le-", os.path.basename(fn)):
-            # FIXME / TODO
-            pass
+            assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))
+        elif re.search(r"^arm64-", os.path.basename(fn)):
+            assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))
         else:
             assert pos == len(odata), ("unexpected strip_with_dump", pos, len(odata))
     else:
@@ -184,7 +183,9 @@ def do_file(fn):
             odata = idata[:pos]
 
     if eh and odata and not opts.dry_run:
-        fp.write(eh)
+        fp.seek(0, 0)
+        fp.write(eh[:-4])  # all but e_shnum, e_shstrndx
+        fp.write(struct.pack("I", 0))  # clear e_shnum, e_shstrndx
         fp.write(odata)
         fp.truncate()
     fp.close()
@@ -195,7 +196,7 @@ def main(argv):
     except AssertionError: pass
     else: raise Exception("fatal error - assertions not enabled")
     shortopts, longopts = "qv", [
-        "create-bindump=", "dry-run", "quiet", "verbose", "with-dump="
+        "dry-run", "quiet", "verbose", "with-dump="
     ]
     xopts, args = getopt.gnu_getopt(argv[1:], shortopts, longopts)
     for opt, optarg in xopts:
@@ -203,7 +204,6 @@ def main(argv):
         elif opt in ["-q", "--quiet"]: opts.verbose = opts.verbose - 1
         elif opt in ["-v", "--verbose"]: opts.verbose = opts.verbose + 1
         elif opt in ["--dry-run"]: opts.dry_run = opts.dry_run + 1
-        elif opt in ["--create-bindump"]: opts.bindump = optarg
         elif opt in ["--with-dump"]: opts.with_dump = optarg
         else: assert 0, ("getopt problem:", opt, optarg, xopts, args)
     if not args:
@@ -213,9 +213,7 @@ def main(argv):
     # process arguments
     for arg in args:
         do_file(arg)
-        if opts.bindump:
-            assert opts.with_dump, "need --with-dump"
-            create_bindump(opts.bindump, opts.with_dump)
+        check_dump(opts.with_dump);
     return 0
 
 

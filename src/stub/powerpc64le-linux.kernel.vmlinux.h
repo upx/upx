@@ -32,14 +32,14 @@
 
 
 #define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_SIZE    11032
-#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0xa14b1db4
-#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0x2560fccd
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_ADLER32 0xc29b1d85
+#define STUB_POWERPC64LE_LINUX_KERNEL_VMLINUX_CRC32   0xdefad3ae
 
 unsigned char stub_powerpc64le_linux_kernel_vmlinux[11032] = {
 /* 0x0000 */ 127, 69, 76, 70,  2,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 21,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0,  0,  0,  0,  0,  0,  0, 32, 30,  0,  0,  0,  0,  0,  0,
-/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0, 25,  0, 22,  0,
+/* 0x0030 */   0,  0,  0,  0, 64,  0,  0,  0,  0,  0, 64,  0,  0,  0,  0,  0,
 /* 0x0040 */   0,  0,  0, 72,  0,  0,  0, 72,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0050 */ 208,  0,  6, 40, 32,  0,194, 76,191,240,132, 84, 32,  0,194, 77,
 /* 0x0060 */  16,  0,  0, 60, 64,  0,  4,124,  8,  0,128, 65,120,  3,  4,124,

@@ -32,14 +32,14 @@
 
 
 #define STUB_POWERPC_LINUX_ELF_ENTRY_SIZE    8959
-#define STUB_POWERPC_LINUX_ELF_ENTRY_ADLER32 0x92d421b9
-#define STUB_POWERPC_LINUX_ELF_ENTRY_CRC32   0x80619bc1
+#define STUB_POWERPC_LINUX_ELF_ENTRY_ADLER32 0x746e218c
+#define STUB_POWERPC_LINUX_ELF_ENTRY_CRC32   0x6aec58fa
 
 unsigned char stub_powerpc_linux_elf_entry[8959] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 20,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 25,128,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 24,  0, 21, 72,  0,  0,213,124,  0, 41,236,125,168,  2,166,
+/* 0x0030 */   0,  0,  0,  0, 72,  0,  0,213,124,  0, 41,236,125,168,  2,166,
 /* 0x0040 */  40,  7,  0,  8, 64,130,  1, 60,144,166,  0,  0,124,132, 26, 20,
 /* 0x0050 */  60,  0,128,  0, 61, 32,128,  0, 56, 99,255,255, 56,165,255,255,
 /* 0x0060 */  57, 64,255,255, 72,  0,  1, 12, 57, 32,  0,  1,125, 41, 28, 44,

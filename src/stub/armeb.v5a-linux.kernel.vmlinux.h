@@ -32,14 +32,14 @@
 
 
 #define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_SIZE    15160
-#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_ADLER32 0x785730ee
-#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_CRC32   0x7efd8186
+#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_ADLER32 0xc94730b7
+#define STUB_ARMEB_V5A_LINUX_KERNEL_VMLINUX_CRC32   0xd44eb1b4
 
 unsigned char stub_armeb_v5a_linux_kernel_vmlinux[15160] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   0,  1,  0, 40,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */   0,  0, 18,244,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,
-/* 0x0030 */   0, 29,  0, 26,229, 34,192,  4,233, 34, 32,  9,226, 66, 32,  4,
+/* 0x0030 */   0,  0,  0,  0,229, 34,192,  4,233, 34, 32,  9,226, 66, 32,  4,
 /* 0x0040 */ 227,160, 48,  0,233, 34, 64,  8,225,160,208,  2,229,159, 48, 28,
 /* 0x0050 */ 229,141, 48,  8,226,141, 48,  8,225,160, 32,  0,229,159, 16,  8,
 /* 0x0060 */ 225,160,  0, 14,235,255,255,254,234,  0,  0, 14,  0,  0,  0,  0,

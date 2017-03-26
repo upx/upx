@@ -32,14 +32,14 @@
 
 
 #define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_SIZE    14217
-#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_ADLER32 0x46748cb2
-#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_CRC32   0x3eabef0a
+#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_ADLER32 0x8b638c85
+#define STUB_ARM_V5A_DARWIN_MACHO_ENTRY_CRC32   0xebbae95b
 
 unsigned char stub_arm_v5a_darwin_macho_entry[14217] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  1,  1, 97,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0010 */   1,  0, 40,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 /* 0x0020 */  28, 19,  0,  0,  0,  0,  0,  0, 52,  0,  0,  0,  0,  0, 40,  0,
-/* 0x0030 */  24,  0, 21,  0,  4,208, 77,226,255,223, 45,233, 19,  0,  0,235,
+/* 0x0030 */   0,  0,  0,  0,  4,208, 77,226,255,223, 45,233, 19,  0,  0,235,
 /* 0x0040 */ 252, 64, 45,233,  0,112,129,224,  0, 80,224,227,  2, 65,160,227,
 /* 0x0050 */  26,  0,  0,234, 24,  0,189,232,  7,  0, 64,224,  3, 32, 66,224,
 /* 0x0060 */   0, 32,132,229,  0, 64,160,225,  3,  0,160,225,  2, 16,160,225,
