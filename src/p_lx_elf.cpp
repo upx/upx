@@ -2253,6 +2253,8 @@ PackLinuxElf64arm::canPack()
             xct_off = elf_get_offset_from_address(xct_va);
             goto proceed;  // But proper packing depends on checking xct_va.
         }
+        else
+            throwCantPack("need DT_INIT; try \"void _init(void){}\"");
 abandon:
         return false;
 proceed: ;
