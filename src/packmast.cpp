@@ -147,6 +147,10 @@ static Packer* try_unpack(Packer *p, void *user)
 //
 **************************************************************************/
 
+
+
+#define D(name) if (o->debug.debug_level) fprintf(stderr, "%s\n", #name)
+
 Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o, void *user)
 {
     Packer *p = NULL;
@@ -158,66 +162,49 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     if (!o->dos_exe.force_stub)
     {
-        if ((p = func(new PackDjgpp2(f), user)) != NULL)
+        D(PackDjgpp2); if ((p = func(new PackDjgpp2(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackTmt(f), user)) != NULL)
+        D(PackTmt); if ((p = func(new PackTmt(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackWcle(f), user)) != NULL)
+        D(PackWcle); if ((p = func(new PackWcle(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackW64Pep(f), user)) != NULL)
+        D(PackW64Pep); if ((p = func(new PackW64Pep(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackW32Pe(f), user)) != NULL)
+        D(PackW32Pe); if ((p = func(new PackW32Pe(f), user)))
             return p;
-        delete p; p = NULL;
     }
-    if ((p = func(new PackArmPe(f), user)) != NULL)
+    D(PackArmPe); if ((p = func(new PackArmPe(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackExe(f), user)) != NULL)
+    D(PackExe); if ((p = func(new PackExe(f), user)))
         return p;
-    delete p; p = NULL;
 
     //
     // atari
     //
-    if ((p = func(new PackTos(f), user)) != NULL)
+    D(PackTos); if ((p = func(new PackTos(f), user)))
         return p;
-    delete p; p = NULL;
 
     //
     // linux kernel
     //
-    if ((p = func(new PackVmlinuxARMEL(f), user)) != NULL)
+    D(PackVmlinuxARMEL); if ((p = func(new PackVmlinuxARMEL(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuxARMEB(f), user)) != NULL)
+    D(PackVmlinuxARMEB); if ((p = func(new PackVmlinuxARMEB(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuxPPC32(f), user)) != NULL)
+    D(PackVmlinuxPPC32); if ((p = func(new PackVmlinuxPPC32(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuxPPC64LE(f), user)) != NULL)
+    D(PackVmlinuxPPC64LE); if ((p = func(new PackVmlinuxPPC64LE(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuxAMD64(f), user)) != NULL)
+    D(PackVmlinuxAMD64); if ((p = func(new PackVmlinuxAMD64(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuxI386(f), user)) != NULL)
+    D(PackVmlinuxI386); if ((p = func(new PackVmlinuxI386(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuzI386(f), user)) != NULL)
+    D(PackVmlinuzI386); if ((p = func(new PackVmlinuzI386(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackBvmlinuzI386(f), user)) != NULL)
+    D(PackBvmlinuzI386); if ((p = func(new PackBvmlinuzI386(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackVmlinuzARMEL(f), user)) != NULL)
+    D(PackVmlinuzARMEL); if ((p = func(new PackVmlinuzARMEL(f), user)))
         return p;
-    delete p; p = NULL;
 
     //
     // linux
@@ -225,106 +212,78 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if (!o->o_unix.force_execve)
     {
         if (o->o_unix.use_ptinterp) {
-            if ((p = func(new PackLinuxElf32x86interp(f), user)) != NULL)
+            D(PackLinuxElf32x86interp); if ((p = func(new PackLinuxElf32x86interp(f), user)))
                 return p;
-            delete p; p = NULL;
         }
-        if ((p = func(new PackFreeBSDElf32x86(f), user)) != NULL)
+        D(PackFreeBSDElf32x86); if ((p = func(new PackFreeBSDElf32x86(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackNetBSDElf32x86(f), user)) != NULL)
+        D(PackNetBSDElf32x86); if ((p = func(new PackNetBSDElf32x86(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackOpenBSDElf32x86(f), user)) != NULL)
+        D(PackOpenBSDElf32x86); if ((p = func(new PackOpenBSDElf32x86(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32x86(f), user)) != NULL)
+        D(PackLinuxElf32x86); if ((p = func(new PackLinuxElf32x86(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf64amd(f), user)) != NULL)
+        D(PackLinuxElf64amd); if ((p = func(new PackLinuxElf64amd(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32armLe(f), user)) != NULL)
+        D(PackLinuxElf32armLe); if ((p = func(new PackLinuxElf32armLe(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32armBe(f), user)) != NULL)
+        D(PackLinuxElf32armBe); if ((p = func(new PackLinuxElf32armBe(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf64arm(f), user)) != NULL)
+        D(PackLinuxElf64arm); if ((p = func(new PackLinuxElf64arm(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32ppc(f), user)) != NULL)
+        D(PackLinuxElf32ppc); if ((p = func(new PackLinuxElf32ppc(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf64ppcle(f), user)) != NULL)
+        D(PackLinuxElf64ppcle); if ((p = func(new PackLinuxElf64ppcle(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32mipsel(f), user)) != NULL)
+        D(PackLinuxElf32mipsel); if ((p = func(new PackLinuxElf32mipsel(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxElf32mipseb(f), user)) != NULL)
+        D(PackLinuxElf32mipseb); if ((p = func(new PackLinuxElf32mipseb(f), user)))
             return p;
-        delete p; p = NULL;
-        if ((p = func(new PackLinuxI386sh(f), user)) != NULL)
+        D(PackLinuxI386sh); if ((p = func(new PackLinuxI386sh(f), user)))
             return p;
-        delete p; p = NULL;
     }
-    if ((p = func(new PackBSDI386(f), user)) != NULL)
+    D(PackBSDI386); if ((p = func(new PackBSDI386(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackMachFat(f), user)) != NULL)  // cafebabe conflict
+    D(PackMachFat); if ((p = func(new PackMachFat(f), user)))  // cafebabe conflict
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackLinuxI386(f), user)) != NULL)  // cafebabe conflict
+    D(PackLinuxI386); if ((p = func(new PackLinuxI386(f), user)))  // cafebabe conflict
         return p;
-    delete p; p = NULL;
 
     //
     // psone
     //
-    if ((p = func(new PackPs1(f), user)) != NULL)
+    D(PackPs1); if ((p = func(new PackPs1(f), user)))
         return p;
-    delete p; p = NULL;
 
     //
     // .sys and .com
     //
-    if ((p = func(new PackSys(f), user)) != NULL)
+    D(PackSys); if ((p = func(new PackSys(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackCom(f), user)) != NULL)
+    D(PackCom); if ((p = func(new PackCom(f), user)))
         return p;
-    delete p; p = NULL;
 
     // Mach (MacOS X PowerPC)
-    if ((p = func(new PackMachPPC32(f), user)) != NULL)
+    D(PackMachPPC32); if ((p = func(new PackMachPPC32(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackMachPPC64LE(f), user)) != NULL)
+    D(PackMachPPC64LE); if ((p = func(new PackMachPPC64LE(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackMachI386(f), user)) != NULL)
+    D(PackMachI386); if ((p = func(new PackMachI386(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackMachAMD64(f), user)) != NULL)
+    D(PackMachAMD64); if ((p = func(new PackMachAMD64(f), user)))
         return p;
-    delete p; p = NULL;
-    if ((p = func(new PackMachARMEL(f), user)) != NULL)
+    D(PackMachARMEL); if ((p = func(new PackMachARMEL(f), user)))
         return p;
-    delete p; p = NULL;
 
     // 2010-03-12  omit these because PackMachBase<T>::pack4dylib (p_mach.cpp)
     // does not understand what the Darwin (Apple Mac OS X) dynamic loader
     // assumes about .dylib file structure.
-    //if ((p = func(new PackDylibI386(f), user)) != NULL)
+    // D(PackDylibI386); if ((p = func(new PackDylibI386(f), user)))
     //    return p;
-    //delete p; p = NULL;
-    //if ((p = func(new PackDylibPPC32(f), user)) != NULL)
+    // D(PackDylibPPC32); if ((p = func(new PackDylibPPC32(f), user)))
     //    return p;
-    //delete p; p = NULL;
-    //if ((p = func(new PackDylibAMD64(f), user)) != NULL)
+    // D(PackDylibAMD64); if ((p = func(new PackDylibAMD64(f), user)))
     //    return p;
-    //delete p; p = NULL;
 
     return NULL;
 }
