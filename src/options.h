@@ -146,6 +146,7 @@ struct options_t {
         bool unmap_all_pages;       // thus /proc/self/exe vanishes
         unsigned char osabi0;       // replacement if 0==.e_ident[EI_OSABI]
         bool preserve_build_id;     // copy the build-id to the compressed binary
+        bool android_shlib;         // keep some ElfXX_Shdr for dlopen()
     } o_unix;
     struct {
         bool le;

@@ -344,8 +344,8 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         unsigned va_init = sz_pack2;   // virtual address
-        unsigned rel = 0;
         unsigned old_dtinit = 0;
+        so_slide = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
             unsigned const len  = get_te32(&phdr->p_filesz);
             unsigned const ioff = get_te32(&phdr->p_offset);
@@ -367,8 +367,8 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                     off += ~page_mask & (ioff - off);
                     fo->seek(off, SEEK_SET);
                     fo->write(ibuf, len);
-                    rel = off - ioff;
-                    set_te32(&phdr->p_offset, rel + ioff);
+                    so_slide = off - ioff;
+                    set_te32(&phdr->p_offset, so_slide + ioff);
                 }
                 else {  // Change length of first PT_LOAD.
                     va_init += get_te32(&phdr->p_vaddr);
@@ -379,7 +379,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             }
             // Compute new offset of &DT_INIT.d_val.
             if (/*0==jni_onload_sym &&*/ phdr->PT_DYNAMIC==type) {
-                off_init = rel + ioff;
+                off_init = so_slide + ioff;
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
@@ -395,7 +395,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 // fall through to relocate .p_offset
             }
             if (xct_off < ioff)
-                set_te32(&phdr->p_offset, rel + ioff);
+                set_te32(&phdr->p_offset, so_slide + ioff);
         }
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
@@ -546,7 +546,7 @@ void PackLinuxElf::defineSymbols(Filter const *)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
+    : super(f), phdri(NULL) , shdri(NULL), note_body(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
@@ -566,7 +566,7 @@ PackLinuxElf32::~PackLinuxElf32()
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdri(NULL), note_body(NULL), shdri(NULL),
+    : super(f), phdri(NULL), shdri(NULL), note_body(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
@@ -3521,8 +3521,62 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
     }
 
-    fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
+        if (opt->o_unix.android_shlib && shdri) { // dlopen() checks Elf32_Shdr vs Elf32_Phdr
+            unsigned load0_hi = ~0;
+            Elf32_Phdr const *phdr = phdri;
+            for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
+                unsigned load0_lo = get_te32(&phdr->p_vaddr);
+                unsigned load0_sz = get_te32(&phdr->p_memsz);
+                if (PT_LOAD32==get_te32(&phdr->p_type)
+                && (xct_off -  load0_lo) < load0_sz) {
+                    load0_hi = load0_lo  + load0_sz;
+                    break;
+                }
+            }
+            MemBuffer smap(e_shnum); smap.clear();  // smap[0] = 0;  // SHN_UNDEF
+            MemBuffer snew(e_shnum * sizeof(*shdri));
+            Elf32_Shdr const *shdr = shdri;
+            unsigned k = 0;
+            for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
+                // Select some Elf32_Shdr by .sh_type
+                unsigned const type = get_te32(&shdr->sh_type);
+                unsigned const flags = get_te32(&shdr->sh_flags);
+                if (((Elf32_Shdr::SHT_STRTAB  == type) && (Elf32_Shdr::SHF_ALLOC & flags))
+                ||  ((Elf32_Shdr::SHT_DYNAMIC == type) && (Elf32_Shdr::SHF_ALLOC & flags))
+                ||  (  ((1+ Elf32_Shdr::SHT_LOOS) <= type)  // SHT_ANDROID_REL
+                    && ((2+ Elf32_Shdr::SHT_LOOS) >= type)) // SHT_ANDROID_RELA
+                ) {
+                    Elf32_Shdr *const sptr = k + (Elf32_Shdr *)(void *)snew;
+                    unsigned va = get_te32(&shdr->sh_addr);
+                    if (xct_off <= va && va <= load0_hi) {
+                        throwCantPack("Android-required Shdr in packed region");
+                    }
+                    *sptr = *shdr;  // copy old Elf32_Shdr
+                    smap[j] = 1+ k++;  // for later forwarding
+                }
+            }
+            if (k && fo) {
+                set_te32(&ehdri.e_shoff, fpad4(fo));
+                set_te16(&ehdri.e_shentsize, sizeof(*shdri));
+                set_te16(&ehdri.e_shnum, 1+ k);
+                Elf32_Shdr shdr_undef; memset(&shdr_undef, 0, sizeof(shdr_undef));
+                fo->write(&shdr_undef, sizeof(shdr_undef));
+
+                for (unsigned j = 0; j < k; ++j) { // forward .sh_link
+                    Elf32_Shdr *const sptr = j + (Elf32_Shdr *)(void *)snew;
+                    unsigned sh_offset = get_te32(&sptr->sh_offset);
+                    if (xct_off <= sh_offset) {
+                        set_te32(&sptr->sh_offset, so_slide + sh_offset);
+                    }
+                    sptr->sh_name = 0;  // we flushed .e_shstrndx
+                    set_te16(&sptr->sh_link, smap[sptr->sh_link]);
+                    set_te16(&sptr->sh_info, smap[sptr->sh_info]);  // ?
+                }
+                fo->write(snew, k * sizeof(*shdri));
+            }
+        }
+        fo->seek(0, SEEK_SET);
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
         fo->seek(sz_elf_hdrs, SEEK_SET);
@@ -3534,7 +3588,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
             set_te32(&tmp, tmp);
             fo->seek(ptr_udiff(&jni_onload_sym->st_value, file_image), SEEK_SET);
             fo->rewrite(&tmp, sizeof(tmp));
-            fo->seek(0, SEEK_SET);
         }
     }
     else {
@@ -3549,6 +3602,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                     reloc + get_te32(&phdr->p_paddr));
             }
         }
+        fo->seek(0, SEEK_SET);
         fo->rewrite(&elfout, sizeof(Elf32_Phdr) * o_phnum + sizeof(Elf32_Ehdr));
         fo->seek(sz_elf_hdrs, SEEK_SET);  // skip over PT_NOTE bodies, if any
         fo->rewrite(&linfo, sizeof(linfo));

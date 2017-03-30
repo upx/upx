@@ -123,6 +123,8 @@
         SHT_GROUP = 17,         /* Section group */
         SHT_SYMTAB_SHNDX = 18,  /* Extended section indeces */
         SHT_GNU_LIBLIST = 0x6ffffff7    /* Prelink library list */
+
+        , SHT_LOOS = 0x60000000  /* LOcal OS; SHT_ANDROID_REL{,A} is +1, +2 */
     };
 
     enum { // sh_flags
