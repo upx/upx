@@ -3501,26 +3501,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
         fo->write(buildid_data,shdrout.shdr[1].sh_size);
     }
 
-    // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
-    // tries to make .bss, which requires PF_W.
-    // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
-    set_te32(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
-              elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
-    super::pack4(fo, ft);  // write PackHeader and overlay_offset
-
-    // rewrite Elf header
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        unsigned const base= get_te32(&elfout.phdr[0].p_vaddr);
-        set_te16(&elfout.ehdr.e_type, Elf32_Ehdr::ET_DYN);
-        set_te16(&elfout.ehdr.e_phnum, 1);
-        set_te32(    &elfout.ehdr.e_entry,
-            get_te32(&elfout.ehdr.e_entry) -  base);
-        set_te32(&elfout.phdr[0].p_vaddr, get_te32(&elfout.phdr[0].p_vaddr) - base);
-        set_te32(&elfout.phdr[0].p_paddr, get_te32(&elfout.phdr[0].p_paddr) - base);
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
-    }
-
     if (0!=xct_off) {  // shared library
         if (opt->o_unix.android_shlib && shdri) { // dlopen() checks Elf32_Shdr vs Elf32_Phdr
             unsigned load0_hi = ~0;
@@ -3576,7 +3556,29 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                 fo->write(snew, k * sizeof(*shdri));
             }
         }
-        fo->seek(0, SEEK_SET);
+    }
+    // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
+    // tries to make .bss, which requires PF_W.
+    // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.
+    set_te32(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
+              elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
+    super::pack4(fo, ft);  // write PackHeader and overlay_offset
+
+    // rewrite Elf header
+    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
+        unsigned const base= get_te32(&elfout.phdr[0].p_vaddr);
+        set_te16(&elfout.ehdr.e_type, Elf32_Ehdr::ET_DYN);
+        set_te16(&elfout.ehdr.e_phnum, 1);
+        set_te32(    &elfout.ehdr.e_entry,
+            get_te32(&elfout.ehdr.e_entry) -  base);
+        set_te32(&elfout.phdr[0].p_vaddr, get_te32(&elfout.phdr[0].p_vaddr) - base);
+        set_te32(&elfout.phdr[0].p_paddr, get_te32(&elfout.phdr[0].p_paddr) - base);
+        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
+        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
+    }
+
+    fo->seek(0, SEEK_SET);
+    if (0!=xct_off) {  // shared library
         fo->rewrite(&ehdri, sizeof(ehdri));
         fo->rewrite(phdri, e_phnum * sizeof(*phdri));
         fo->seek(sz_elf_hdrs, SEEK_SET);
@@ -3602,7 +3604,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
                     reloc + get_te32(&phdr->p_paddr));
             }
         }
-        fo->seek(0, SEEK_SET);
         fo->rewrite(&elfout, sizeof(Elf32_Phdr) * o_phnum + sizeof(Elf32_Ehdr));
         fo->seek(sz_elf_hdrs, SEEK_SET);  // skip over PT_NOTE bodies, if any
         fo->rewrite(&linfo, sizeof(linfo));
