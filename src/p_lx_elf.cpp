@@ -344,7 +344,6 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
         unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         unsigned va_init = sz_pack2;   // virtual address
-        unsigned old_dtinit = 0;
         so_slide = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
             unsigned const len  = get_te32(&phdr->p_filesz);
@@ -385,7 +384,6 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
                 Elf32_Dyn *dyn = (Elf32_Dyn *)(void *)ibuf;
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te32(&dyn->d_tag)) {
-                        old_dtinit = dyn->d_val;  // copy ONLY, never examined
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)ibuf;
                         off_init += t;
@@ -405,9 +403,7 @@ void PackLinuxElf32::pack3(OutputFile *fo, Filter &ft)
             fo->seek(0, SEEK_END);
         }
         ehdri.e_shnum = 0;
-        ehdri.e_shoff = old_dtinit;  // easy to find for unpacking
         ehdri.e_shoff = 0;
-        ehdri.e_shentsize = 0;
         ehdri.e_shstrndx = 0;
     }
 }
@@ -440,7 +436,6 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         unsigned off_init = 0;  // where in file
         upx_uint64_t va_init = sz_pack2;   // virtual address
         upx_uint64_t rel = 0;
-        upx_uint64_t old_dtinit = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
             upx_uint64_t const len  = get_te64(&phdr->p_filesz);
             upx_uint64_t const ioff = get_te64(&phdr->p_offset);
@@ -488,7 +483,6 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 Elf64_Dyn *dyn = (Elf64_Dyn *)(void *)ibuf;
                 for (int j2 = len; j2 > 0; ++dyn, j2 -= sizeof(*dyn)) {
                     if (dyn->DT_INIT==get_te64(&dyn->d_tag)) {
-                        old_dtinit = dyn->d_val;  // copy ONLY, never examined
                         unsigned const t = (unsigned char *)&dyn->d_val -
                                            (unsigned char *)ibuf;
                         off_init += t;
@@ -507,9 +501,8 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             fo->seek(0, SEEK_END);
         }
         ehdri.e_shnum = 0;
-        ehdri.e_shoff = old_dtinit;  // easy to find for unpacking
-        //ehdri.e_shentsize = 0;
-        //ehdri.e_shstrndx = 0;
+        ehdri.e_shoff = 0;
+        ehdri.e_shstrndx = 0;
     }
 }
 
@@ -3681,7 +3674,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     upx_uint64_t old_data_off = 0;
     upx_uint64_t old_data_len = 0;
-    upx_uint64_t const old_dtinit = ehdri.e_shoff;  // copy ONLY, never examined
+    upx_uint64_t old_dtinit = 0;
 
     unsigned szb_info = sizeof(b_info);
     {
@@ -3820,9 +3813,9 @@ void PackLinuxElf64::unpack(OutputFile *fo)
         // Loader is not at end; skip past it.
         funpad4(fi);  // MATCH01
         unsigned d_info[6]; fi->readx(d_info, sizeof(d_info));
-        //if (0==old_dtinit) {
-        //    old_dtinit = d_info[2 + (0==d_info[0])];
-        //}
+        if (0==old_dtinit) {
+            old_dtinit = d_info[2 + (0==d_info[0])];
+        }
         fi->seek(lsize - sizeof(d_info), SEEK_CUR);
     }
 
@@ -4297,7 +4290,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     unsigned const c_phnum = get_te16(&ehdri.e_phnum);
     unsigned old_data_off = 0;
     unsigned old_data_len = 0;
-    unsigned old_dtinit = ehdri.e_shoff;  // copy ONLY, never examined
+    unsigned old_dtinit = 0;
 
     unsigned szb_info = sizeof(b_info);
     {
