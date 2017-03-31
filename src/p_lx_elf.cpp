@@ -1515,18 +1515,17 @@ bool PackLinuxElf32::canPack()
         }
         unsigned const p_type = get_te32(&phdr->p_type);
         unsigned const p_offset = get_te32(&phdr->p_offset);
-        if (1!=exetype && phdr->PT_LOAD32 == p_type) {
+        if (1!=exetype && phdr->PT_LOAD32 == p_type) { // 1st PT_LOAD
             exetype = 1;
-            load_va = get_te32(&phdr->p_vaddr);
-            unsigned file_offset = get_te32(&phdr->p_offset);
-            if (~(upx_uint64_t)page_mask & file_offset) {
-                if ((~page_mask & (unsigned)load_va) == file_offset) {
-                    throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
-                    // Fixing it inside upx fails because packExtent() reads original file.
-                }
-                else {
-                    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
-                }
+            load_va = get_te32(&phdr->p_vaddr);  // class data member
+            unsigned const off = ~page_mask & load_va;
+            if (off && off == p_offset) { // specific hint
+                throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
+                // Fixing it inside upx fails because packExtent() reads original file.
+                return false;
+            }
+            if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
+                throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
         }
@@ -1537,25 +1536,24 @@ bool PackLinuxElf32::canPack()
                 throwCantPack("PT_NOTEs too big; try '--force-execve'");
                 return false;
             }
-        }
-        if (Elf32_Ehdr::ELFOSABI_NONE==osabi0  // Still seems to be generic.
-        && NULL!=osabi_note && phdr->PT_NOTE == p_type) {
-            struct {
-                struct Elf32_Nhdr nhdr;
-                char name[8];
-                unsigned body;
-            } note;
-            memset(&note, 0, sizeof(note));
-            fi->seek(p_offset, SEEK_SET);
-            fi->readx(&note, sizeof(note));
-            fi->seek(0, SEEK_SET);
-            if (4==get_te32(&note.nhdr.descsz)
-            &&  1==get_te32(&note.nhdr.type)
-            // &&  0==note.end
-            &&  (1+ strlen(osabi_note))==get_te32(&note.nhdr.namesz)
-            &&  0==strcmp(osabi_note, (char const *)&note.name[0])
-            ) {
-                osabi0 = ei_osabi;  // Specified by PT_NOTE.
+            if (osabi_note && Elf32_Ehdr::ELFOSABI_NONE==osabi0) { // Still seems to be generic.
+                struct {
+                    struct Elf32_Nhdr nhdr;
+                    char name[8];
+                    unsigned body;
+                } note;
+                memset(&note, 0, sizeof(note));
+                fi->seek(p_offset, SEEK_SET);
+                fi->readx(&note, sizeof(note));
+                fi->seek(0, SEEK_SET);
+                if (4==get_te32(&note.nhdr.descsz)
+                &&  1==get_te32(&note.nhdr.type)
+                // &&  0==note.end
+                &&  (1+ strlen(osabi_note))==get_te32(&note.nhdr.namesz)
+                &&  0==strcmp(osabi_note, (char const *)&note.name[0])
+                ) {
+                    osabi0 = ei_osabi;  // Specified by PT_NOTE.
+                }
             }
         }
     }
@@ -1723,20 +1721,21 @@ PackLinuxElf64ppcle::canPack()
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
             return false;
-        if (phdr->PT_LOAD64 == get_te32(&phdr->p_type)) {
-            load_va = get_te64(&phdr->p_vaddr);
-            upx_uint64_t file_offset = get_te64(&phdr->p_offset);
-            if (~page_mask & file_offset) {
-                if ((~page_mask & load_va) == file_offset) {
-                    throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
-                    // Fixing it inside upx fails because packExtent() reads original file.
-                }
-                else {
-                    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
-                }
+        unsigned const p_type = get_te32(&phdr->p_type);
+        if (1!=exetype && phdr->PT_LOAD64 == p_type) { // 1st PT_LOAD
+            exetype = 1;
+            load_va = get_te64(&phdr->p_vaddr);  // class data member
+            upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
+            upx_uint64_t const off = ~page_mask & load_va;
+            if (off && off == p_offset) { // specific hint
+                throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
+                // Fixing it inside upx fails because packExtent() reads original file.
                 return false;
             }
-            exetype = 1;
+            if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
+                throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
+                return false;
+            }
             break;
         }
     }
@@ -1916,20 +1915,21 @@ PackLinuxElf64amd::canPack()
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
             return false;
-        if (phdr->PT_LOAD64 == get_te32(&phdr->p_type)) {
-            load_va = get_te64(&phdr->p_vaddr);
-            upx_uint64_t file_offset = get_te64(&phdr->p_offset);
-            if (~page_mask & file_offset) {
-                if ((~page_mask & load_va) == file_offset) {
-                    throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
-                    // Fixing it inside upx fails because packExtent() reads original file.
-                }
-                else {
-                    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
-                }
+        unsigned const p_type = get_te32(&phdr->p_type);
+        if (1!=exetype && phdr->PT_LOAD64 == p_type) { // 1st PT_LOAD
+            exetype = 1;
+            load_va = get_te64(&phdr->p_vaddr);  // class data member
+            upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
+            upx_uint64_t const off = ~page_mask & load_va;
+            if (off && off == p_offset) { // specific hint
+                throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
+                // Fixing it inside upx fails because packExtent() reads original file.
                 return false;
             }
-            exetype = 1;
+            if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
+                throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
+                return false;
+            }
             break;
         }
     }
@@ -2110,20 +2110,21 @@ PackLinuxElf64arm::canPack()
     for (unsigned j=0; j < e_phnum; ++phdr, ++j) {
         if (j >= 14)
             return false;
-        if (phdr->PT_LOAD64 == get_te32(&phdr->p_type)) {
-            load_va = get_te64(&phdr->p_vaddr);
-            upx_uint64_t file_offset = get_te64(&phdr->p_offset);
-            if (~page_mask & file_offset) {
-                if ((~page_mask & load_va) == file_offset) {
-                    throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
-                    // Fixing it inside upx fails because packExtent() reads original file.
-                }
-                else {
-                    throwCantPack("invalid Phdr p_offset; try '--force-execve'");
-                }
+        unsigned const p_type = get_te32(&phdr->p_type);
+        if (1!=exetype && phdr->PT_LOAD64 == p_type) { // 1st PT_LOAD
+            exetype = 1;
+            load_va = get_te64(&phdr->p_vaddr);  // class data member
+            upx_uint64_t const p_offset = get_te64(&phdr->p_offset);
+            upx_uint64_t const off = ~page_mask & load_va;
+            if (off && off == p_offset) { // specific hint
+                throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
+                // Fixing it inside upx fails because packExtent() reads original file.
                 return false;
             }
-            exetype = 1;
+            if (0 != p_offset) { // 1st PT_LOAD must cover Ehdr and Phdr
+                throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
+                return false;
+            }
             break;
         }
     }
