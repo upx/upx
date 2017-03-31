@@ -3626,6 +3626,62 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
         fo->write(buildid_data,shdrout.shdr[1].sh_size);
     }
 
+    if (0!=xct_off) {  // shared library
+        if (opt->o_unix.android_shlib && shdri) { // dlopen() checks Elf64_Shdr vs Elf64_Phdr
+            unsigned load0_hi = ~0;
+            Elf64_Phdr const *phdr = phdri;
+            for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
+                upx_uint64_t load0_lo = get_te64(&phdr->p_vaddr);
+                upx_uint64_t load0_sz = get_te64(&phdr->p_memsz);
+                if (PT_LOAD64==get_te32(&phdr->p_type)
+                && (xct_off -  load0_lo) < load0_sz) {
+                    load0_hi = load0_lo  + load0_sz;
+                    break;
+                }
+            }
+            MemBuffer smap(e_shnum); smap.clear();  // smap[0] = 0;  // SHN_UNDEF
+            MemBuffer snew(e_shnum * sizeof(*shdri));
+            Elf64_Shdr const *shdr = shdri;
+            unsigned k = 0;
+            for (unsigned j = 0; j < e_shnum; ++j, ++shdr) {
+                // Select some Elf64_Shdr by .sh_type
+                unsigned const type = get_te32(&shdr->sh_type);
+                unsigned const flags = get_te32(&shdr->sh_flags);
+                if (((Elf64_Shdr::SHT_STRTAB  == type) && (Elf64_Shdr::SHF_ALLOC & flags))
+                ||  ((Elf64_Shdr::SHT_DYNAMIC == type) && (Elf64_Shdr::SHF_ALLOC & flags))
+                ||  (  ((1+ Elf64_Shdr::SHT_LOOS) <= type)  // SHT_ANDROID_REL
+                    && ((2+ Elf64_Shdr::SHT_LOOS) >= type)) // SHT_ANDROID_RELA
+                ) {
+                    Elf64_Shdr *const sptr = k + (Elf64_Shdr *)(void *)snew;
+                    upx_uint64_t va = get_te64(&shdr->sh_addr);
+                    if (xct_off <= va && va <= load0_hi) {
+                        throwCantPack("Android-required Shdr in packed region");
+                    }
+                    *sptr = *shdr;  // copy old Elf64_Shdr
+                    smap[j] = 1+ k++;  // for later forwarding
+                }
+            }
+            if (k && fo) {
+                set_te64(&ehdri.e_shoff, fpad4(fo));
+                set_te16(&ehdri.e_shentsize, sizeof(*shdri));
+                set_te16(&ehdri.e_shnum, 1+ k);
+                Elf64_Shdr shdr_undef; memset(&shdr_undef, 0, sizeof(shdr_undef));
+                fo->write(&shdr_undef, sizeof(shdr_undef));
+
+                for (unsigned j = 0; j < k; ++j) { // forward .sh_link
+                    Elf64_Shdr *const sptr = j + (Elf64_Shdr *)(void *)snew;
+                    upx_uint64_t sh_offset = get_te64(&sptr->sh_offset);
+                    if (xct_off <= sh_offset) {
+                        set_te64(&sptr->sh_offset, so_slide + sh_offset);
+                    }
+                    sptr->sh_name = 0;  // we flushed .e_shstrndx
+                    set_te16(&sptr->sh_link, smap[sptr->sh_link]);
+                    set_te16(&sptr->sh_info, smap[sptr->sh_info]);  // ?
+                }
+                fo->write(snew, k * sizeof(*shdri));
+            }
+        }
+    }
     // Cannot pre-round .p_memsz.  If .p_filesz < .p_memsz, then kernel
     // tries to make .bss, which requires PF_W.
     // But strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X.

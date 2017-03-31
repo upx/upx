@@ -274,6 +274,7 @@ protected:
     Elf64_Shdr const *shdri; // from input file
     upx_uint64_t e_phoff;
     upx_uint64_t e_shoff;
+    unsigned so_slide;
     unsigned char *note_body;  // concatenated contents of PT_NOTEs, if any
     unsigned note_size;  // total size of PT_NOTEs
     upx_uint64_t page_mask;  // AND clears the offset-within-page
