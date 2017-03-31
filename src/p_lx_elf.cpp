@@ -3733,7 +3733,7 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     else {  // main executable
         // Decompress each PT_LOAD.
         bool first_PF_X = true;
-        phdr = phdri;
+        phdr = (Elf64_Phdr *) (void *) (1+ ehdr);  // uncompressed
         for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD64==get_te32(&phdr->p_type)) {
                 unsigned const filesz = get_te64(&phdr->p_filesz);
@@ -4354,7 +4354,7 @@ void PackLinuxElf32::unpack(OutputFile *fo)
     else {  // main executable
         // Decompress each PT_LOAD.
         bool first_PF_X = true;
-        phdr = phdri;
+        phdr = (Elf32_Phdr *) (void *) (1+ ehdr);  // uncompressed
         for (unsigned j=0; j < u_phnum; ++phdr, ++j) {
             if (PT_LOAD32==get_te32(&phdr->p_type)) {
                 unsigned const filesz = get_te32(&phdr->p_filesz);
