@@ -1373,18 +1373,17 @@ static const
 #include "stub/arm64-linux.elf-entry.h"
 static const
 #include "stub/arm64-linux.elf-fold.h"
-//static const
-//#include "stub/arm64-linux.shlib-init.h"
+static const
+#include "stub/arm64-linux.shlib-init.h"
 
 void
 PackLinuxElf64arm::buildLoader(const Filter *ft)
 {
     if (0!=xct_off) {  // shared library
-        abort();  // FIXME
-        //buildLinuxLoader(
-        //    stub_arm64_linux_shlib_init, sizeof(stub_arm64_linux_shlib_init),
-        //    NULL,                        0,                                 ft );
-        //return;
+        buildLinuxLoader(
+            stub_arm64_linux_shlib_init, sizeof(stub_arm64_linux_shlib_init),
+            NULL,                        0,                                 ft );
+        return;
     }
     buildLinuxLoader(
         stub_arm64_linux_elf_entry, sizeof(stub_arm64_linux_elf_entry),
