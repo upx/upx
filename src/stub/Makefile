@@ -542,19 +542,19 @@ tmp/armel-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/i386-linux.elf-ma
 arm64-linux.elf%.h : tc_list = arm64-linux.elf default
 arm64-linux.elf%.h : tc_bfdname = elf64-littleaarch64
 
-tc.arm64-linux.elf.gcc  = /usr/bin/aarch64-linux-gnu-gcc -nostdinc -MMD -MT $@
+tc.arm64-linux.elf.gcc  = arm64-linux-gcc-4.9.2 -nostdinc -MMD -MT $@
 tc.arm64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.arm64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
-tc.arm64-linux.elf-fold.ld    = /usr/bin/aarch64-linux-gnu-ld
+tc.arm64-linux.elf-fold.ld    = arm64-linux-ld-2.25
 
-tc.arm64-linux.elf-entry.objcopy  = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
-tc.arm64-linux.elf-fold.objcopy   = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
-tc.arm64-linux.elf-main.objcopy   = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
+tc.arm64-linux.elf-entry.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-fold.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.elf-main.objcopy   = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
 
-tc.arm64-linux.elf-entry.objdump  = /usr/bin/aarch64-linux-gnu-objdump
-tc.arm64-linux.elf-fold.objdump   = /usr/bin/aarch64-linux-gnu-objdump
-tc.arm64-linux.elf-main.objdump   = /usr/bin/aarch64-linux-gnu-objdump
+tc.arm64-linux.elf-entry.objdump  = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-fold.objdump   = arm64-linux-objdump-2.25
+tc.arm64-linux.elf-main.objdump   = arm64-linux-objdump-2.25
 
 arm64-linux.elf-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c $< -o tmp/$T.bin
@@ -581,8 +581,8 @@ tmp/arm64-linux.elf-main.o : $(srcdir)/src/$$T.c $(srcdir)/src/arm64-linux.elf-m
 
 arm64-linux.shlib%.h : tc_list = arm64-linux.elf default
 arm64-linux.shlib%.h : tc_bfdname = elf64-littleaarch64
-tc.arm64-linux.shlib-init.objcopy  = /usr/bin/aarch64-linux-gnu-objcopy -F elf64-littleaarch64
-tc.arm64-linux.shlib-init.objdump  = /usr/bin/aarch64-linux-gnu-objdump
+tc.arm64-linux.shlib-init.objcopy  = arm64-linux-objcopy-2.25 -F elf64-littleaarch64
+tc.arm64-linux.shlib-init.objdump  = arm64-linux-objdump-2.25
 
 arm64-linux.shlib%.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
