@@ -1531,10 +1531,14 @@ void PackMachBase<T>::unpack(OutputFile *fo)
     p_info hbuf;
     fi->readx(&hbuf, sizeof(hbuf));
     unsigned const orig_file_size = get_te32(&hbuf.p_filesize);
-    blocksize = get_te32(&hbuf.p_blocksize);
-    if (file_size > (off_t)orig_file_size || blocksize > orig_file_size
-    ||  blocksize > 0x05000000)  // emacs-21.2.1 was 0x01d47e6c (== 30703212)
+    blocksize = get_te32(&hbuf.p_blocksize);  // emacs-21.2.1 was 0x01d47e6c (== 30703212)
+    if (blocksize > orig_file_size || blocksize > 0x05000000)
         throwCantUnpack("file header corrupted");
+    if (file_size > (off_t)orig_file_size) {
+        opt->info_mode += !opt->info_mode ? 1 : 0;  // make visible
+        opt->backup = 1;
+        infoWarning("packed size too big; discarding appended data, keeping backup");
+    }
 
     ibuf.alloc(blocksize + OVERHEAD);
     b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
