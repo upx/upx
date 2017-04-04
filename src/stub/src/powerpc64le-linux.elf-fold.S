@@ -34,6 +34,7 @@
 
 #define szElf64_Ehdr 0x40
 #define szElf64_Phdr 0x38
+#define e_phnum 56
 
 sz_b_info= 12
   sz_unc= 0
@@ -80,8 +81,11 @@ L90:
         subf r29,a1,r31  // 8+ (char *)&our_Elf64_Ehdr
         la a2,-OVERHEAD(sp)  // &Elf64_Ehdr temporary space
         addi r29,r29,-8  // &our_Elf64_Ehdr
-        addi a1,a1,-(szElf64_Ehdr + 2*szElf64_Phdr)
-        addi a0,r29,(szElf64_Ehdr + 2*szElf64_Phdr)  // &{l_info; p_info; b_info}
+        lhz a3,e_phnum(r29)
+        mulli a3,a3,szElf64_Phdr
+        addi  a3,a3,szElf64_Ehdr
+        sub a1,a1,a3
+        add a0,r29,a3  // &{l_info; p_info; b_info}
         addi sp,sp,-(LINKAREA+OVERHEAD)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
         call upx_main  // Out: a0= entry

@@ -34,6 +34,7 @@
 
 #define szElf32_Ehdr 0x34
 #define szElf32_Phdr 0x20
+#define e_phnum 44
 
 sz_b_info= 12
   sz_unc= 0
@@ -62,8 +63,11 @@ L90:
         subf r29,a1,r31  // 8+ (char *)&our_Elf32_Ehdr
         la a2,-OVERHEAD(sp)  // &Elf32_Ehdr temporary space
         addi r29,r29,-8  // &our_Elf32_Ehdr
-        addi a1,a1,-(szElf32_Ehdr + 2*szElf32_Phdr)
-        addi a0,r29,(szElf32_Ehdr + 2*szElf32_Phdr)  // &{l_info; p_info; b_info}
+        lhz a3,e_phnum(r29)
+        mulli a3,a3,szElf32_Phdr
+        addi  a3,a3,szElf32_Ehdr
+        sub a1,a1,a3
+        add a0,r29,a3  // &{l_info; p_info; b_info}
         mr  a7,r27  // pagesize
         addi sp,sp,-(LINKAREA+OVERHEAD)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers

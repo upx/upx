@@ -33,6 +33,7 @@
 #include "arch/amd64/regs.h"
 
 sz_Ehdr= 64
+e_phnum= 56
 sz_Phdr= 56
 
 sz_l_info= 12
@@ -300,8 +301,9 @@ main:
         pop %rbp  // &decompress
         lea -4-(ret_main - _start)(%rbp),%rax  // &sz_pack2
         movl (%rax),%r15d  // sz_pack2: length before stub
-        movl $ sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info,%edx
         subq %r15,%rax  // ADRU= &Elf64_Ehdr of this stub (ET_DYN)
+        imul $ sz_Phdr,e_phnum(%rax),%edx  // sz_phdrs
+        addl $ sz_Ehdr + sz_l_info + sz_p_info,%edx  // sz_elf_hdrs
         subl %edx,%r15d  // LENX for upx_main
         lea (%rax,%rdx),%rcx  // ADRX= &b_info of user program for upx_main
         call unfold  // push &b_info of folded_loader

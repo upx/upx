@@ -153,6 +153,7 @@ protected:
     Elf32_Ehdr  ehdri; // from input file
     Elf32_Phdr *phdri; // for  input file
     Elf32_Shdr const *shdri; // from input file
+    Elf32_Phdr const *gnu_stack;  // propagate NX
     unsigned e_phoff;
     unsigned e_shoff;
     unsigned so_slide;
@@ -272,6 +273,7 @@ protected:
     Elf64_Ehdr  ehdri; // from input file
     Elf64_Phdr *phdri; // for  input file
     Elf64_Shdr const *shdri; // from input file
+    Elf64_Phdr const *gnu_stack;  // propagate NX
     upx_uint64_t e_phoff;
     upx_uint64_t e_shoff;
     unsigned so_slide;

@@ -36,6 +36,7 @@
 #define szElf32_Ehdr 0x34
 #define szElf32_Phdr 8*4
 #define e_type    16
+#define e_phnum   44
 #define e_entry  (16 + 2*2 + 4)
 #define p_memsz  5*4
 #define szb_info 12
@@ -138,7 +139,8 @@ L55:
 L53:
         push eax  // dynbase
 
-        lea eax, [szElf32_Ehdr + 2*szElf32_Phdr + szl_info + szp_info + ebx]  // 1st &b_info
+        imul eax,[e_phnum + ebx],szElf32_Phdr  // sz_Phdrs
+        lea eax, [szElf32_Ehdr + eax + szl_info + szp_info + ebx]  // 1st &b_info
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
         add ecx, szb_info
