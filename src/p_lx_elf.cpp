@@ -46,6 +46,8 @@
 #define PT_LOAD64   Elf64_Phdr::PT_LOAD
 #define PT_NOTE32   Elf32_Phdr::PT_NOTE
 #define PT_NOTE64   Elf64_Phdr::PT_NOTE
+#define PT_GNU_STACK32  Elf32_Phdr::PT_GNU_STACK
+#define PT_GNU_STACK64  Elf64_Phdr::PT_GNU_STACK
 
 //static unsigned const EF_ARM_HASENTRY = 0x02;
 static unsigned const EF_ARM_EABI_VER4 = 0x04000000;
@@ -539,7 +541,7 @@ void PackLinuxElf::defineSymbols(Filter const *)
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
-    : super(f), phdri(NULL) , shdri(NULL), note_body(NULL),
+    : super(f), phdri(NULL) , shdri(NULL), gnu_stack(NULL), note_body(NULL),
     page_mask(~0u<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
@@ -559,7 +561,7 @@ PackLinuxElf32::~PackLinuxElf32()
 }
 
 PackLinuxElf64::PackLinuxElf64(InputFile *f)
-    : super(f), phdri(NULL), shdri(NULL), note_body(NULL),
+    : super(f), phdri(NULL), shdri(NULL), gnu_stack(NULL), note_body(NULL),
     page_mask(~0ull<<lg2_page),
     dynseg(NULL), hashtab(NULL), gashtab(NULL), dynsym(NULL),
     jni_onload_sym(NULL),
@@ -2322,6 +2324,7 @@ PackLinuxElf32::generateElfHdr(
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
     if (Elf32_Ehdr::EM_MIPS==e_machine) { // MIPS R3000  FIXME
         h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = Elf32_Ehdr::ELFOSABI_NONE;
         h3->ehdr.e_flags = ehdri.e_flags;
@@ -2342,11 +2345,18 @@ PackLinuxElf32::generateElfHdr(
     }
 
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
+    if (gnu_stack) {
+        sz_elf_hdrs += sizeof(Elf32_Phdr);
+        memcpy(&h2->phdr[phnum_o++], gnu_stack, sizeof(*gnu_stack));
+        set_te16(&h2->ehdr.e_phnum, phnum_o);
+    }
     set_te32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
               h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
     for (unsigned j=0; j < 3; ++j) {
-        set_te32(&h3->phdr[j].p_align, page_size);
+        if (PT_LOAD32==get_te32(&h3->phdr[j].p_type)) {
+            set_te32(&h3->phdr[j].p_align, page_size);
+        }
     }
 
     // Info for OS kernel to set the brk()
@@ -2364,10 +2374,16 @@ PackLinuxElf32::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert(2==get_te16(&h2->ehdr.e_phnum));
+        assert((2+ !!gnu_stack) == get_te16(&h2->ehdr.e_phnum));
         set_te32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
-        memset(&h2->linfo, 0, sizeof(h2->linfo));
-        fo->write(h2, sizeof(*h2));
+        if (!gnu_stack) {
+            memset(&h2->linfo, 0, sizeof(h2->linfo));
+            fo->write(h2, sizeof(*h2));
+        }
+        else {
+            memset(&h3->linfo, 0, sizeof(h3->linfo));
+            fo->write(h3, sizeof(*h3));
+        }
     }
     else {
         assert(false);  // unknown ph.format, PackLinuxElf32
@@ -2562,6 +2578,7 @@ PackLinuxElf64::generateElfHdr(
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
     h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
 
     assert(get_te32(&h2->ehdr.e_phoff)     == sizeof(Elf64_Ehdr));
                          h2->ehdr.e_shoff = 0;
@@ -2578,11 +2595,18 @@ PackLinuxElf64::generateElfHdr(
     }
 
     sz_elf_hdrs = sizeof(*h2) - sizeof(linfo);  // default
+    if (gnu_stack) {
+        sz_elf_hdrs += sizeof(Elf64_Phdr);
+        memcpy(&h2->phdr[phnum_o++], gnu_stack, sizeof(*gnu_stack));
+        set_te16(&h2->ehdr.e_phnum, phnum_o);
+    }
     set_te64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
-    for (unsigned j=0; j < 3; ++j) {
-        set_te64(&h3->phdr[j].p_align, page_size);
+    for (unsigned j=0; j < 4; ++j) {
+        if (PT_LOAD64==get_te32(&h3->phdr[j].p_type)) {
+            set_te64(&h3->phdr[j].p_align, page_size);
+        }
     }
 
     // Info for OS kernel to set the brk()
@@ -2611,10 +2635,16 @@ PackLinuxElf64::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert(2==get_te16(&h2->ehdr.e_phnum));
+        assert((2+ !!gnu_stack) ==  get_te16(&h2->ehdr.e_phnum));
         set_te32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
-        memset(&h2->linfo, 0, sizeof(h2->linfo));
-        fo->write(h2, sizeof(*h2));
+        if (!gnu_stack) {
+            memset(&h2->linfo, 0, sizeof(h2->linfo));
+            fo->write(h2, sizeof(*h2));
+        }
+        else {
+            memset(&h3->linfo, 0, sizeof(h3->linfo));
+            fo->write(h3, sizeof(*h3));
+        }
     }
     else {
         assert(false);  // unknown ph.format, PackLinuxElf64
@@ -2653,6 +2683,12 @@ void PackLinuxElf32::pack1(OutputFile *fo, Filter & /*ft*/)
             unsigned x = get_te32(&phdr->p_align) >> lg2_page;
             while (x>>=1) {
                 ++lg2_page;
+            }
+        }
+        if (phdr->PT_GNU_STACK32 == type) {
+            // MIPS stub cannot handle GNU_STACK yet.
+            if (Elf32_Ehdr::EM_MIPS != this->e_machine) {
+                gnu_stack = phdr;
             }
         }
     }
@@ -2849,6 +2885,9 @@ void PackLinuxElf64::pack1(OutputFile *fo, Filter & /*ft*/)
                 ++lg2_page;
             }
         }
+        if (phdr->PT_GNU_STACK64 == type) {
+            gnu_stack = phdr;
+        }
     }
     page_size =  1u  <<lg2_page;
     page_mask = ~0ull<<lg2_page;
@@ -3003,6 +3042,7 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
+    // TODO: propagate that to the stubs (varies by gnu_stack)
 
     unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
     unsigned total_out = xct_off;
@@ -3112,6 +3152,7 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
+    // TODO: propagate that to the stubs (varies by gnu_stack)
 
     unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
     unsigned total_out = xct_off;
