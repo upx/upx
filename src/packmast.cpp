@@ -25,7 +25,6 @@
    <markus@oberhumer.com>               <ezerotven+github@gmail.com>
  */
 
-
 #include "conf.h"
 #include "file.h"
 #include "packmast.h"
@@ -54,56 +53,48 @@
 #include "p_mach.h"
 #include "p_armpe.h"
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-PackMaster::PackMaster(InputFile *f, options_t *o) :
-    fi(f), p(NULL)
-{
+PackMaster::PackMaster(InputFile *f, options_t *o) : fi(f), p(NULL) {
     // replace global options with local options
     saved_opt = o;
-    if (o)
-    {
+    if (o) {
         memcpy(&this->local_options, o, sizeof(*o)); // struct copy
         opt = &this->local_options;
     }
 }
 
-
-PackMaster::~PackMaster()
-{
+PackMaster::~PackMaster() {
     fi = NULL;
-    delete p; p = NULL;
+    delete p;
+    p = NULL;
     // restore global options
     if (saved_opt)
         opt = saved_opt;
     saved_opt = NULL;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-static Packer* try_pack(Packer *p, void *user)
-{
+static Packer *try_pack(Packer *p, void *user) {
     if (p == NULL)
         return NULL;
     InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
         p->initPackHeader();
-        f->seek(0,SEEK_SET);
-        if (p->canPack())
-        {
+        f->seek(0, SEEK_SET);
+        if (p->canPack()) {
             if (opt->cmd == CMD_COMPRESS)
                 p->updatePackHeader();
-            f->seek(0,SEEK_SET);
+            f->seek(0, SEEK_SET);
             return p;
         }
-    } catch (const IOException&) {
+    } catch (const IOException &) {
     } catch (...) {
         delete p;
         throw;
@@ -112,28 +103,24 @@ static Packer* try_pack(Packer *p, void *user)
     return NULL;
 }
 
-
-static Packer* try_unpack(Packer *p, void *user)
-{
+static Packer *try_unpack(Packer *p, void *user) {
     if (p == NULL)
         return NULL;
     InputFile *f = (InputFile *) user;
     p->assertPacker();
     try {
         p->initPackHeader();
-        f->seek(0,SEEK_SET);
+        f->seek(0, SEEK_SET);
         int r = p->canUnpack();
-        if (r > 0)
-        {
-            f->seek(0,SEEK_SET);
+        if (r > 0) {
+            f->seek(0, SEEK_SET);
             return p;
         }
-        if (r < 0)
-        {
+        if (r < 0) {
             // FIXME - could stop testing all other unpackers at this time
             // see canUnpack() in packer.h
         }
-    } catch (const IOException&) {
+    } catch (const IOException &) {
     } catch (...) {
         delete p;
         throw;
@@ -142,20 +129,20 @@ static Packer* try_unpack(Packer *p, void *user)
     return NULL;
 }
 
-
 /*************************************************************************
 //
 **************************************************************************/
 
-
-Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o, void *user)
-{
+Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o,
+                                    void *user) {
     Packer *p = NULL;
 
-#define D(klass) \
-    ACC_BLOCK_BEGIN \
-        if (o->debug.debug_level) fprintf(stderr, "visitAllPackers: %s\n", #klass); \
-        if ((p = func(new klass(f), user)) != NULL) return p; \
+#define D(klass)                                                                                   \
+    ACC_BLOCK_BEGIN                                                                                \
+    if (o->debug.debug_level)                                                                      \
+        fprintf(stderr, "visitAllPackers: %s\n", #klass);                                          \
+    if ((p = func(new klass(f), user)) != NULL)                                                    \
+        return p;                                                                                  \
     ACC_BLOCK_END
 
     // note: order of tries is important !
@@ -163,8 +150,7 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     // .exe
     //
-    if (!o->dos_exe.force_stub)
-    {
+    if (!o->dos_exe.force_stub) {
         D(PackDjgpp2);
         D(PackTmt);
         D(PackWcle);
@@ -195,8 +181,7 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     // linux
     //
-    if (!o->o_unix.force_execve)
-    {
+    if (!o->o_unix.force_execve) {
         if (o->o_unix.use_ptinterp) {
             D(PackLinuxElf32x86interp);
         }
@@ -215,7 +200,7 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackLinuxI386sh);
     }
     D(PackBSDI386);
-    D(PackMachFat); // cafebabe conflict
+    D(PackMachFat);   // cafebabe conflict
     D(PackLinuxI386); // cafebabe conflict
 
     //
@@ -247,9 +232,7 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
 #undef D
 }
 
-
-Packer *PackMaster::getPacker(InputFile *f)
-{
+Packer *PackMaster::getPacker(InputFile *f) {
     Packer *pp = visitAllPackers(try_pack, f, opt, f);
     if (!pp)
         throwUnknownExecutableFormat();
@@ -257,9 +240,7 @@ Packer *PackMaster::getPacker(InputFile *f)
     return pp;
 }
 
-
-Packer *PackMaster::getUnpacker(InputFile *f)
-{
+Packer *PackMaster::getUnpacker(InputFile *f) {
     Packer *pp = visitAllPackers(try_unpack, f, opt, f);
     if (!pp)
         throwNotPacked();
@@ -267,51 +248,41 @@ Packer *PackMaster::getUnpacker(InputFile *f)
     return pp;
 }
 
-
 /*************************************************************************
 // delegation
 **************************************************************************/
 
-void PackMaster::pack(OutputFile *fo)
-{
+void PackMaster::pack(OutputFile *fo) {
     p = getPacker(fi);
     fi = NULL;
     p->doPack(fo);
 }
 
-
-void PackMaster::unpack(OutputFile *fo)
-{
+void PackMaster::unpack(OutputFile *fo) {
     p = getUnpacker(fi);
     p->assertPacker();
     fi = NULL;
     p->doUnpack(fo);
 }
 
-
-void PackMaster::test()
-{
+void PackMaster::test() {
     p = getUnpacker(fi);
     fi = NULL;
     p->doTest();
 }
 
-
-void PackMaster::list()
-{
+void PackMaster::list() {
     p = getUnpacker(fi);
     fi = NULL;
     p->doList();
 }
 
-
-void PackMaster::fileInfo()
-{
+void PackMaster::fileInfo() {
     p = visitAllPackers(try_unpack, fi, opt, fi);
     if (!p)
         p = visitAllPackers(try_pack, fi, opt, fi);
     if (!p)
-        throwUnknownExecutableFormat(NULL, 1);    // make a warning here
+        throwUnknownExecutableFormat(NULL, 1); // make a warning here
     p->assertPacker();
     fi = NULL;
     p->doFileInfo();

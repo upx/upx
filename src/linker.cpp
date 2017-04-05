@@ -474,7 +474,8 @@ void ElfLinker::relocate() {
         upx_byte *location = rel->section->output + rel->offset;
         // printf("%-28s %-28s %-10s %#16llx %#16llx\n", rel->section->name, rel->value->name,
         // rel->type, (long long) value, (long long) value - rel->section->offset - rel->offset);
-        // printf("  %llx %d %llx %d %llx : %d\n", (long long) value, (int)rel->value->section->offset,
+        // printf("  %llx %d %llx %d %llx : %d\n", (long long) value,
+        // (int)rel->value->section->offset,
         // rel->value->offset, rel->offset, (long long) rel->add, *location);
         relocate1(rel, location, value, rel->type);
     }
@@ -611,14 +612,12 @@ void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         set_le32(location, get_le32(location) + value);
     } else if (!strcmp(type, "ABS64")) {
         set_le64(location, get_le64(location) + value);
-    }
-    else if (!strcmp(type, "CONDBR19")) {
+    } else if (!strcmp(type, "CONDBR19")) {
         value -= rel->section->offset + rel->offset;
         upx_uint32_t const m19 = ~(~0u << 19);
         upx_uint32_t w = get_le32(location);
-        set_le32(location, (w &~(m19<<5)) | ((((w>>5) + (value>>2)) & m19) << 5) );
-    }
-    else
+        set_le32(location, (w & ~(m19 << 5)) | ((((w >> 5) + (value >> 2)) & m19) << 5));
+    } else
         super::relocate1(rel, location, value, type);
 }
 
