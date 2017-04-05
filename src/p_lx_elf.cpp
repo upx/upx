@@ -2374,7 +2374,7 @@ PackLinuxElf32::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert((2+ !!gnu_stack) == get_te16(&h2->ehdr.e_phnum));
+        assert((2u+ !!gnu_stack) == get_te16(&h2->ehdr.e_phnum));
         set_te32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
         if (!gnu_stack) {
             memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -2635,7 +2635,7 @@ PackLinuxElf64::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert((2+ !!gnu_stack) ==  get_te16(&h2->ehdr.e_phnum));
+        assert((2u+ !!gnu_stack) ==  get_te16(&h2->ehdr.e_phnum));
         set_te32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
         if (!gnu_stack) {
             memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -3537,7 +3537,7 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
 
     if (0!=xct_off) {  // shared library
         if (opt->o_unix.android_shlib && shdri) { // dlopen() checks Elf32_Shdr vs Elf32_Phdr
-            unsigned load0_hi = ~0;
+            unsigned load0_hi = ~0u;
             Elf32_Phdr const *phdr = phdri;
             for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
                 unsigned load0_lo = get_te32(&phdr->p_vaddr);
@@ -3668,7 +3668,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
 
     if (0!=xct_off) {  // shared library
         if (opt->o_unix.android_shlib && shdri) { // dlopen() checks Elf64_Shdr vs Elf64_Phdr
-            unsigned load0_hi = ~0;
+            unsigned load0_hi = ~0u;
             Elf64_Phdr const *phdr = phdri;
             for (unsigned j = 0; j < e_phnum; ++j, ++phdr) {
                 upx_uint64_t load0_lo = get_te64(&phdr->p_vaddr);

@@ -148,12 +148,15 @@ static Packer* try_unpack(Packer *p, void *user)
 **************************************************************************/
 
 
-
-#define D(name) if (o->debug.debug_level) fprintf(stderr, "%s\n", #name)
-
 Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const options_t *o, void *user)
 {
     Packer *p = NULL;
+
+#define D(klass) \
+    ACC_BLOCK_BEGIN \
+        if (o->debug.debug_level) fprintf(stderr, "visitAllPackers: %s\n", #klass); \
+        if ((p = func(new klass(f), user)) != NULL) return p; \
+    ACC_BLOCK_END
 
     // note: order of tries is important !
 
@@ -162,49 +165,32 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     //
     if (!o->dos_exe.force_stub)
     {
-        D(PackDjgpp2); if ((p = func(new PackDjgpp2(f), user)))
-            return p;
-        D(PackTmt); if ((p = func(new PackTmt(f), user)))
-            return p;
-        D(PackWcle); if ((p = func(new PackWcle(f), user)))
-            return p;
-        D(PackW64Pep); if ((p = func(new PackW64Pep(f), user)))
-            return p;
-        D(PackW32Pe); if ((p = func(new PackW32Pe(f), user)))
-            return p;
+        D(PackDjgpp2);
+        D(PackTmt);
+        D(PackWcle);
+        D(PackW64Pep);
+        D(PackW32Pe);
     }
-    D(PackArmPe); if ((p = func(new PackArmPe(f), user)))
-        return p;
-    D(PackExe); if ((p = func(new PackExe(f), user)))
-        return p;
+    D(PackArmPe);
+    D(PackExe);
 
     //
     // atari
     //
-    D(PackTos); if ((p = func(new PackTos(f), user)))
-        return p;
+    D(PackTos);
 
     //
     // linux kernel
     //
-    D(PackVmlinuxARMEL); if ((p = func(new PackVmlinuxARMEL(f), user)))
-        return p;
-    D(PackVmlinuxARMEB); if ((p = func(new PackVmlinuxARMEB(f), user)))
-        return p;
-    D(PackVmlinuxPPC32); if ((p = func(new PackVmlinuxPPC32(f), user)))
-        return p;
-    D(PackVmlinuxPPC64LE); if ((p = func(new PackVmlinuxPPC64LE(f), user)))
-        return p;
-    D(PackVmlinuxAMD64); if ((p = func(new PackVmlinuxAMD64(f), user)))
-        return p;
-    D(PackVmlinuxI386); if ((p = func(new PackVmlinuxI386(f), user)))
-        return p;
-    D(PackVmlinuzI386); if ((p = func(new PackVmlinuzI386(f), user)))
-        return p;
-    D(PackBvmlinuzI386); if ((p = func(new PackBvmlinuzI386(f), user)))
-        return p;
-    D(PackVmlinuzARMEL); if ((p = func(new PackVmlinuzARMEL(f), user)))
-        return p;
+    D(PackVmlinuxARMEL);
+    D(PackVmlinuxARMEB);
+    D(PackVmlinuxPPC32);
+    D(PackVmlinuxPPC64LE);
+    D(PackVmlinuxAMD64);
+    D(PackVmlinuxI386);
+    D(PackVmlinuzI386);
+    D(PackBvmlinuzI386);
+    D(PackVmlinuzARMEL);
 
     //
     // linux
@@ -212,80 +198,53 @@ Packer* PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     if (!o->o_unix.force_execve)
     {
         if (o->o_unix.use_ptinterp) {
-            D(PackLinuxElf32x86interp); if ((p = func(new PackLinuxElf32x86interp(f), user)))
-                return p;
+            D(PackLinuxElf32x86interp);
         }
-        D(PackFreeBSDElf32x86); if ((p = func(new PackFreeBSDElf32x86(f), user)))
-            return p;
-        D(PackNetBSDElf32x86); if ((p = func(new PackNetBSDElf32x86(f), user)))
-            return p;
-        D(PackOpenBSDElf32x86); if ((p = func(new PackOpenBSDElf32x86(f), user)))
-            return p;
-        D(PackLinuxElf32x86); if ((p = func(new PackLinuxElf32x86(f), user)))
-            return p;
-        D(PackLinuxElf64amd); if ((p = func(new PackLinuxElf64amd(f), user)))
-            return p;
-        D(PackLinuxElf32armLe); if ((p = func(new PackLinuxElf32armLe(f), user)))
-            return p;
-        D(PackLinuxElf32armBe); if ((p = func(new PackLinuxElf32armBe(f), user)))
-            return p;
-        D(PackLinuxElf64arm); if ((p = func(new PackLinuxElf64arm(f), user)))
-            return p;
-        D(PackLinuxElf32ppc); if ((p = func(new PackLinuxElf32ppc(f), user)))
-            return p;
-        D(PackLinuxElf64ppcle); if ((p = func(new PackLinuxElf64ppcle(f), user)))
-            return p;
-        D(PackLinuxElf32mipsel); if ((p = func(new PackLinuxElf32mipsel(f), user)))
-            return p;
-        D(PackLinuxElf32mipseb); if ((p = func(new PackLinuxElf32mipseb(f), user)))
-            return p;
-        D(PackLinuxI386sh); if ((p = func(new PackLinuxI386sh(f), user)))
-            return p;
+        D(PackFreeBSDElf32x86);
+        D(PackNetBSDElf32x86);
+        D(PackOpenBSDElf32x86);
+        D(PackLinuxElf32x86);
+        D(PackLinuxElf64amd);
+        D(PackLinuxElf32armLe);
+        D(PackLinuxElf32armBe);
+        D(PackLinuxElf64arm);
+        D(PackLinuxElf32ppc);
+        D(PackLinuxElf64ppcle);
+        D(PackLinuxElf32mipsel);
+        D(PackLinuxElf32mipseb);
+        D(PackLinuxI386sh);
     }
-    D(PackBSDI386); if ((p = func(new PackBSDI386(f), user)))
-        return p;
-    D(PackMachFat); if ((p = func(new PackMachFat(f), user)))  // cafebabe conflict
-        return p;
-    D(PackLinuxI386); if ((p = func(new PackLinuxI386(f), user)))  // cafebabe conflict
-        return p;
+    D(PackBSDI386);
+    D(PackMachFat); // cafebabe conflict
+    D(PackLinuxI386); // cafebabe conflict
 
     //
     // psone
     //
-    D(PackPs1); if ((p = func(new PackPs1(f), user)))
-        return p;
+    D(PackPs1);
 
     //
     // .sys and .com
     //
-    D(PackSys); if ((p = func(new PackSys(f), user)))
-        return p;
-    D(PackCom); if ((p = func(new PackCom(f), user)))
-        return p;
+    D(PackSys);
+    D(PackCom);
 
     // Mach (MacOS X PowerPC)
-    D(PackMachPPC32); if ((p = func(new PackMachPPC32(f), user)))
-        return p;
-    D(PackMachPPC64LE); if ((p = func(new PackMachPPC64LE(f), user)))
-        return p;
-    D(PackMachI386); if ((p = func(new PackMachI386(f), user)))
-        return p;
-    D(PackMachAMD64); if ((p = func(new PackMachAMD64(f), user)))
-        return p;
-    D(PackMachARMEL); if ((p = func(new PackMachARMEL(f), user)))
-        return p;
+    D(PackMachPPC32);
+    D(PackMachPPC64LE);
+    D(PackMachI386);
+    D(PackMachAMD64);
+    D(PackMachARMEL);
 
     // 2010-03-12  omit these because PackMachBase<T>::pack4dylib (p_mach.cpp)
     // does not understand what the Darwin (Apple Mac OS X) dynamic loader
     // assumes about .dylib file structure.
-    // D(PackDylibI386); if ((p = func(new PackDylibI386(f), user)))
-    //    return p;
-    // D(PackDylibPPC32); if ((p = func(new PackDylibPPC32(f), user)))
-    //    return p;
-    // D(PackDylibAMD64); if ((p = func(new PackDylibAMD64(f), user)))
-    //    return p;
+    //   D(PackDylibI386);
+    //   D(PackDylibPPC32);
+    //   D(PackDylibAMD64);
 
     return NULL;
+#undef D
 }
 
 
