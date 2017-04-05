@@ -614,8 +614,8 @@ void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
     }
     else if (!strcmp(type, "CONDBR19")) {
         value -= rel->section->offset + rel->offset;
-        uint32_t const m19 = ~(~0u << 19);
-        uint32_t w = get_le32(location);
+        upx_uint32_t const m19 = ~(~0u << 19);
+        upx_uint32_t w = get_le32(location);
         set_le32(location, (w &~(m19<<5)) | ((((w>>5) + (value>>2)) & m19) << 5) );
     }
     else
