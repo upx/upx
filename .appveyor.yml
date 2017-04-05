@@ -34,7 +34,6 @@ init:
 # - dir "c:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin"
 
 install:
-  - set PATH=%PATH%;C:\Program Files\Git\mingw64\bin
   - cd c:\projects
   - md build build\%C% deps
   - cd c:\projects\upx
