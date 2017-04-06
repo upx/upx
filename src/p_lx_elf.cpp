@@ -2353,7 +2353,7 @@ PackLinuxElf32::generateElfHdr(
     set_te32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
               h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
-    for (unsigned j=0; j < 3; ++j) {
+    for (unsigned j=0; j < phnum_o; ++j) {
         if (PT_LOAD32==get_te32(&h3->phdr[j].p_type)) {
             set_te32(&h3->phdr[j].p_align, page_size);
         }
