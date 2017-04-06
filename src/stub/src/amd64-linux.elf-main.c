@@ -325,8 +325,7 @@ upx_main(  // returns entry address
     Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
-    Elf64_Phdr const *phdr = (Elf64_Phdr const *)(1+ ehdr);
-    Elf64_Addr entry;
+    Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
 
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
@@ -343,11 +342,27 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
-    entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
-    auxv_up(av, AT_ENTRY , entry);
+    unsigned const orig_e_type = ehdr->e_type;
+    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -fpie /*FIXME: and not pre-linked*/
+        // Unpacked must start at same place as packed, so that brk(0) works.
+        ehdr->e_type = ET_EXEC;
+        auxv_up(av, AT_ENTRY, ehdr->e_entry + reloc);
+        phdr = (Elf64_Phdr *)(1+ ehdr);
+        unsigned j;
+        for (j=0; j < ehdr->e_phnum; ++phdr, ++j) {
+            phdr->p_vaddr += reloc;
+            phdr->p_paddr += reloc;
+        }
+    }
+
+    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
+    if (ET_DYN!=orig_e_type) {
+        auxv_up(av, AT_ENTRY , entry);
+    }
 
   { // Map PT_INTERP program interpreter
-    int j;
+    phdr = (Elf64_Phdr *)(1+ ehdr);
+    unsigned j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
         char const *const iname = reloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
