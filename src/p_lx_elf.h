@@ -81,8 +81,10 @@ protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
     bool is_big;  // stub style: must use area above the brk
+    bool is_pie;  // is Position-Independent-Executable (ET_DYN main program)
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
+    unsigned o_binfo;  // offset to first b_info
     upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
@@ -126,6 +128,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
+    virtual void defineSymbols(Filter const *);
     virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
@@ -247,6 +250,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
+    virtual void defineSymbols(Filter const *);
     virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,

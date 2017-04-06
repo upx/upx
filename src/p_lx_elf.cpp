@@ -206,7 +206,7 @@ PackLinuxElf64::checkEhdr(Elf64_Ehdr const *ehdr) const
 PackLinuxElf::PackLinuxElf(InputFile *f)
     : super(f), e_phnum(0), dynstr(NULL),
     sz_phdrs(0), sz_elf_hdrs(0), sz_pack2(0), sz_pack2a(0),
-    lg2_page(12), page_size(1u<<lg2_page), is_big(0),
+    lg2_page(12), page_size(1u<<lg2_page), is_big(0), is_pie(0),
     xct_off(0), xct_va(0), jni_onload_va(0),
     e_machine(0), ei_class(0), ei_data(0), ei_osabi(0), osabi_note(NULL),
     o_elf_shnum(0)
@@ -516,7 +516,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
     if (hasLoaderSection("ELFMAINXu")) {
             // brk() trouble if static
         all_pages |= (Elf32_Ehdr::EM_ARM==e_machine && 0x8000==load_va);
-        addLoader((all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINXu", NULL);
+        addLoader(/*(all_pages ? "LUNMP000" : "LUNMP001"),*/ "ELFMAINXu", NULL);
     }
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
@@ -529,7 +529,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
         addLoader("CFLUSH");
     addLoader("ELFMAINY,IDENTSTR,+40,ELFMAINZ", NULL);
     if (hasLoaderSection("ELFMAINZu")) {
-        addLoader((all_pages ? "LUNMP000" : "LUNMP001"), "ELFMAINZu", NULL);
+        addLoader(/*(all_pages ? "LUNMP000" : "LUNMP001"),*/ "ELFMAINZu", NULL);
     }
     addLoader("FOLDEXEC", NULL);
 }
@@ -537,7 +537,17 @@ PackLinuxElf::addStubEntrySections(Filter const *)
 
 void PackLinuxElf::defineSymbols(Filter const *)
 {
-    // empty
+    linker->defineSymbol("O_BINFO", o_binfo);
+}
+
+void PackLinuxElf32::defineSymbols(Filter const *ft)
+{
+    PackLinuxElf::defineSymbols(ft);
+}
+
+void PackLinuxElf64::defineSymbols(Filter const *ft)
+{
+    PackLinuxElf::defineSymbols(ft);
 }
 
 PackLinuxElf32::PackLinuxElf32(InputFile *f)
@@ -904,13 +914,15 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         addLoader("LEXECDYN", NULL);
     }
-    addLoader(((opt->o_unix.unmap_all_pages|is_big) ? "LUNMP000" : "LUNMP001"),
+    addLoader(/*((opt->o_unix.unmap_all_pages|is_big) ? "LUNMP000" : "LUNMP001"),*/
         "LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 
 void PackLinuxElf32x86::defineSymbols(Filter const *const ft)
 {
+    PackLinuxElf32::defineSymbols(ft);
+
     if (0x80==(ft->id & 0xF0)) {
         int const mru = ft->n_mru ? 1+ ft->n_mru : 0;
         if (mru && mru!=256) {
@@ -1044,15 +1056,17 @@ PackLinuxElf64::buildLinuxLoader(
 }
 
 void
-PackLinuxElf64amd::defineSymbols(Filter const *)
+PackLinuxElf64amd::defineSymbols(Filter const *ft)
 {
+    PackLinuxElf64::defineSymbols(ft);
+
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
     // We want to know if compressed data, plus stub, plus a couple pages,
     // will fit below the uncompressed program in memory.  But we don't
     // know the final total compressed size yet, so use the uncompressed
     // size (total over all PT_LOAD64) as an upper bound.
-    unsigned len = 0;
+    unsigned len = 0;  // XXX: 4GB
     upx_uint64_t lo_va_user = ~0ull;  // infinity
     for (int j= e_phnum; --j>=0; ) {
         if (PT_LOAD64 == get_te32(&phdri[j].p_type)) {
@@ -1074,7 +1088,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     unsigned lenu;
     len += (7&-lsize) + lsize;
     is_big = (lo_va_user < (lo_va_stub + len + 2*page_size));
-    if (is_big && ehdri.ET_EXEC==get_te16(&ehdri.e_type)) {
+    if (is_pie || (is_big /*&& ehdri.ET_EXEC==get_te16(&ehdri.e_type)*/)) {
         // .e_entry is set later by PackLinuxElf64::updateLoader
         set_te64(    &elfout.ehdr.e_entry,
             get_te64(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
@@ -1111,7 +1125,7 @@ PackLinuxElf64amd::defineSymbols(Filter const *)
     ACC_UNUSED(cntc);
 
     linker->defineSymbol("LENU", lenu);  // len  for unmap
-    linker->defineSymbol("ADRC", adrc);  // addr for copy
+    //linker->defineSymbol("ADRC", adrc);  // addr for copy
     //linker->defineSymbol("ADRU", adru);  // addr for unmap
     ACC_UNUSED(adru);
 #define EI_NIDENT 16  /* <elf.h> */
@@ -1599,8 +1613,10 @@ bool PackLinuxElf32::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
@@ -1789,8 +1805,10 @@ PackLinuxElf64ppcle::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
@@ -1803,8 +1821,10 @@ PackLinuxElf64ppcle::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
         // If there is an existing DT_INIT, and if everything that the dynamic
@@ -1983,8 +2003,10 @@ PackLinuxElf64amd::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
@@ -1997,8 +2019,10 @@ PackLinuxElf64amd::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
@@ -2178,8 +2202,10 @@ PackLinuxElf64arm::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
@@ -2192,8 +2218,10 @@ PackLinuxElf64arm::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")) {
+                is_pie = true;
                 goto proceed;
+            }
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
@@ -2350,10 +2378,11 @@ PackLinuxElf32::generateElfHdr(
         memcpy(&h2->phdr[phnum_o++], gnu_stack, sizeof(*gnu_stack));
         set_te16(&h2->ehdr.e_phnum, phnum_o);
     }
+    o_binfo =  sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr)*phnum_o + sizeof(l_info) + sizeof(p_info);
     set_te32(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
               h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
-    for (unsigned j=0; j < 3; ++j) {
+    for (unsigned j=0; j < phnum_o; ++j) {
         if (PT_LOAD32==get_te32(&h3->phdr[j].p_type)) {
             set_te32(&h3->phdr[j].p_align, page_size);
         }
@@ -2374,7 +2403,7 @@ PackLinuxElf32::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf32_Phdr::PF_R | Elf32_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert((2+ !!gnu_stack) == get_te16(&h2->ehdr.e_phnum));
+        assert((2+ !!gnu_stack) == phnum_o);
         set_te32(&h2->phdr[0].p_flags, ~Elf32_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
         if (!gnu_stack) {
             memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -2600,6 +2629,7 @@ PackLinuxElf64::generateElfHdr(
         memcpy(&h2->phdr[phnum_o++], gnu_stack, sizeof(*gnu_stack));
         set_te16(&h2->ehdr.e_phnum, phnum_o);
     }
+    o_binfo =  sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr)*phnum_o + sizeof(l_info) + sizeof(p_info);
     set_te64(&h2->phdr[0].p_filesz, sizeof(*h2));  // + identsize;
                   h2->phdr[0].p_memsz = h2->phdr[0].p_filesz;
 
@@ -2635,7 +2665,7 @@ PackLinuxElf64::generateElfHdr(
         set_te32(&h2->phdr[1].p_flags, Elf64_Phdr::PF_R | Elf64_Phdr::PF_W);
     }
     if (ph.format==getFormat()) {
-        assert((2+ !!gnu_stack) ==  get_te16(&h2->ehdr.e_phnum));
+        assert((2+ !!gnu_stack) == phnum_o);
         set_te32(&h2->phdr[0].p_flags, ~Elf64_Phdr::PF_W & get_te32(&h2->phdr[0].p_flags));
         if (!gnu_stack) {
             memset(&h2->linfo, 0, sizeof(h2->linfo));
@@ -3042,7 +3072,6 @@ int PackLinuxElf32::pack2(OutputFile *fo, Filter &ft)
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf32_Ehdr) + sz_phdrs;
-    // TODO: propagate that to the stubs (varies by gnu_stack)
 
     unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
     unsigned total_out = xct_off;
@@ -3152,7 +3181,6 @@ int PackLinuxElf64::pack2(OutputFile *fo, Filter &ft)
 
     // compress extents
     unsigned hdr_u_len = sizeof(Elf64_Ehdr) + sz_phdrs;
-    // TODO: propagate that to the stubs (varies by gnu_stack)
 
     unsigned total_in = xct_off - (is_shlib ? hdr_u_len : 0);
     unsigned total_out = xct_off;
@@ -3267,8 +3295,10 @@ int PackLinuxElf32::ARM_is_QNX(void)
     return 0;
 }
 
-void PackLinuxElf32::ARM_defineSymbols(Filter const * /*ft*/)
+void PackLinuxElf32::ARM_defineSymbols(Filter const *ft)
 {
+    PackLinuxElf32::defineSymbols(ft);
+
     lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
     unsigned lo_va_user = ~0u;  // infinity
     for (int j= e_phnum; --j>=0; ) {
@@ -3322,8 +3352,10 @@ void PackLinuxElf32armBe::defineSymbols(Filter const *ft)
     ARM_defineSymbols(ft);
 }
 
-void PackLinuxElf64arm::defineSymbols(Filter const * /*ft*/)
+void PackLinuxElf64arm::defineSymbols(Filter const *ft)
 {
+    PackLinuxElf64::defineSymbols(ft);
+
     lsize = /*getLoaderSize()*/  4 * 1024;  // upper bound; avoid circularity
     upx_uint64_t lo_va_user = ~0ul;  // infinity
     for (int j= e_phnum; --j>=0; ) {
@@ -3367,8 +3399,10 @@ void PackLinuxElf64arm::defineSymbols(Filter const * /*ft*/)
     linker->defineSymbol("MFLG", mflg);
 }
 
-void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)
+void PackLinuxElf32mipseb::defineSymbols(Filter const *ft)
 {
+    PackLinuxElf32::defineSymbols(ft);
+
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
     // We want to know if compressed data, plus stub, plus a couple pages,
@@ -3440,8 +3474,10 @@ void PackLinuxElf32mipseb::defineSymbols(Filter const * /*ft*/)
     //linker->dumpSymbols();  // debug
 }
 
-void PackLinuxElf32mipsel::defineSymbols(Filter const * /*ft*/)
+void PackLinuxElf32mipsel::defineSymbols(Filter const *ft)
 {
+    PackLinuxElf32::defineSymbols(ft);
+
     unsigned const hlen = sz_elf_hdrs + sizeof(l_info) + sizeof(p_info);
 
     // We want to know if compressed data, plus stub, plus a couple pages,
