@@ -153,7 +153,9 @@ zfind:
 
         /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        mflr r30  // -4+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        lwz r26,0(r30)  // O_BINFO
+sz_obinfo= 4
 
         la a0,32*4(sp)
         call zfind  // a0= envp
@@ -179,7 +181,7 @@ sz_auxv= 2*4
         li a4,-1  // fd; cater to *BSD for MAP_ANON
         li     a3,MAP_PRIVATE | MAP_ANONYMOUS
         li     a2,PROT_READ | PROT_WRITE
-        lwz    a0,sz_cpr(r30)  // sizeof(folded_loader)
+        lwz    a0,sz_obinfo + sz_cpr(r30)  // sizeof(folded_loader)
         addi   a0,a0,sz_b_info
         addi   t0,a1,-1  // ~page_mask
         add    a0,a0,r30  // beyond folded_loader
@@ -192,14 +194,14 @@ sz_auxv= 2*4
         cmpl cr0,t4,a0; bne msg_SELinux
 
         mtctr r31
-        lwz r0,sz_unc(r30)
-        lbz meth,b_method(r30)
+        lwz r0,sz_obinfo + sz_unc(r30)
+        lbz meth,sz_obinfo + b_method(r30)
         la ldst,31*4(sp)  // &slot on stack
         stw  r0,31*4(sp)  // lzma uses for EOF
         mr dst,a0
         mtlr a0  // &continuation at unfolded code
-        lwz lsrc,sz_cpr(r30)
-        addi src,r30,sz_b_info
+        lwz lsrc,sz_obinfo + sz_cpr(r30)
+        addi src,r30,sz_obinfo + sz_b_info
         bctr  // goto decompress; continue at unfolded code on mmap'ed page
 
 // Example code at entrypoint of C-language subroutine:
@@ -220,6 +222,7 @@ main:
         stmw r2,4(sp) // save registers r2 thru r31
         mflr r31  // &decompress
         call unfold
+        .long O_BINFO
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

@@ -145,11 +145,13 @@ die:
 
         /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        mflr r30  // -4+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        lwz r26,0(r30)  // O_BINFO
+sz_obinfo= 4
 
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
-        lwz  a0,sz_cpr(r30)        // size < 1 Page
+        lwz  a0,sz_obinfo + sz_cpr(r30)        // size < 1 Page
         li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
         li a2,PROT_READ | PROT_WRITE | PROT_EXEC
 //        li a1,PAGE_SIZE
@@ -157,20 +159,20 @@ unfold:
         add  a0,a0,r30
         li 0,__NR_mmap
 //          addi a0,a0,sz_b_info+PAGE_SIZE-1
-        addi a0,a0,sz_b_info-1
+        addi a0,a0,sz_obinfo + sz_b_info-1
         add  a0,a0,a1
         rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
         sc; bso- msg_SELinux  // Branch if SummaryOverflow (failure)
 0:
         mtctr r31
-        lwz r0,sz_unc(r30)        // size uncompressed
-        lbz meth,b_method(r30)
+        lwz r0,sz_obinfo + sz_unc(r30)        // size uncompressed
+        lbz meth,sz_obinfo + b_method(r30)
         la ldst,31*8(sp)  // &slot on stack
         std  r0,31*8(sp)  // lzma uses for EOF
         mr dst,a0
         mtlr   a0  // &continuation
-        lwz lsrc,sz_cpr(r30)        // size of compressed
-        addi src,r30,sz_b_info
+        lwz lsrc,sz_obinfo + sz_cpr(r30)        // size of compressed
+        addi src,r30,sz_obinfo + sz_b_info
         la sp,-6*8(sp)  // (sp,pc,cr, xx,yy,zz) save area per calling convention
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
@@ -187,7 +189,7 @@ unfold:
 //      blr  # goto return address
 
 main:
-////  teq r0,r0  // debugging
+  teq r0,r0  // debugging
         stdu r1,-32*8(sp)  // allocate space (keeping 0 mod 16), save r1
 //        stm  r2,8(sp) // save registers r2 thru r31 - 32bits save
         std  2,2*8-8(sp)
@@ -222,6 +224,7 @@ main:
         std  31,31*8-8(sp)
         mflr r31  // &decompress
         call unfold
+        .long O_BINFO
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

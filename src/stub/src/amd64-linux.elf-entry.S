@@ -221,12 +221,17 @@ die:
    PT_LOAD, which is the only way that linux allows to set the brk() for the
    uncompressed program.  [This is a significant kernel misfeature.]
 */
-unfold:
-        pop %rbx  // &b_info
-  section LUNMP000
-        push $0  // 0-page bread crumb
-  section LUNMP001
-        push $1  // 1-page bread crumb
+unfold:  // enter: %rbp= &decompress === &ret_main
+        pop %rsi  // &O_BINFO
+        lodsl; xchg %eax,%edx  // O_BINFO
+        push %rsi; pop %rbx  // &b_info of folded decompressor
+        lea -4-(ret_main - _start)(%rbp),%rax  // &sz_pack2
+        movl (%rax),%r15d  // sz_pack2: length before stub
+        subq %r15,%rax  // ADRU= &Elf64_Ehdr of this stub (ET_DYN)
+        push %rax  // "slide" for ET_DYN
+        subl %edx,%r15d  // LENX for upx_main
+        lea (%rax,%rdx),%rcx  // ADRX= &b_info of user program for upx_main
+
   section ELFMAINZu
 
 /* Load the addresses and lengths.
@@ -241,14 +246,14 @@ unfold:
    Avoid that until tested.
 */
         .byte 0x68; .int JMPU   // push $ JMPU (R_X86_64_32)
-        push %rax    // for unmap in fold
+        push %rax    // ADRU for unmap in fold; updated later
         .byte 0x68; .int LENU   // push $ LENU (R_X86_64_32)
 #else
         push $ JMPU  // for unmap in fold
-        push %rax    // for unmap in fold
+        push %rax    // ADRU for unmap in fold; updated later
         push $ LENU  // for unmap in fold
 #endif
-        push %rcx    // ADRX for upx_main
+        push %rcx    // ADRX for upx_main; updated later
         push %r15    // LENX for upx_main
 
 /* Get some pages.  If small, then get 1 page located just after the end
@@ -258,35 +263,32 @@ unfold:
    the brk() of the _un_compressed program.  The address and length are pre-
    calculated by PackLinuxElf64amd::defineSymbols().
 */
-        movl $ ADRM,%edi  // XXX: 4GB
+        lea ADRM(%rax),%rdi  // dst for mmap and copy
         push $ PROT_READ | PROT_WRITE | PROT_EXEC; pop %arg3
         movl $ LENM,%esi  // XXX: 4GB
         push $ MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS; pop %sys4
         subl %arg5l,%arg5l  //; subl %arg6l,%arg6l  // MAP_ANON ==> ignore offset
         push $ SYS_mmap; pop %rax
         syscall  // %rax= result; trashes %rcx,%r11 only
-        cmpl %eax,%edi; jne msg_SELinux  // XXX: 4GB
+        cmpq %rax,%rdi; jne msg_SELinux
 
-        movl $ ADRC,%esi
-        movl %edi,%edx  //  ADRM
-        subl %esi,%edx  // (ADRM - ADRC) == relocation amount
-        je L80  // no copy
-        addl      %edx,%ebp  // update &decompress
-        //addl      %edx,%ebx  // copy==>no overlap; unfolded before overwrite
-        addl      %edx,1*8(%rsp)  // update ADRX  XXX: 4GB
-        addl      %edx,3*8(%rsp)  // update ADRU  XXX: 4GB
-        movl %ebx,%ecx  // XXX: 4GB  [&b_info] beyond end of decompressor
-        subl %esi,%ecx  // byte length
-        shrl $3,%ecx  // qwords to copy
+        movq 3*8(%rsp),%rsi  // ADRU src for copy
+        movq %rdi,%rdx  //  ADRM
+        subq %rsi,%rdx  // (ADRM - ADRU) == relocation amount
+        addq %rdx,%rbp  // update &decompress
+        addq %rdx,1*8(%rsp)  // update ADRX
+        addq %rdx,3*8(%rsp)  // update ADRU
+        movq %rbx,%rcx  // [&b_info] beyond end of decompressor
+        subq %rsi,%rcx  // byte length
+        shrq $3,%rcx  // qwords to copy
         cld
         rep; movsq
-L80:
-        xchgl %eax,%edi
+        xchgq %rax,%rdi
 
 /* Decompress the folded part of this stub, then execute it. */
         movq %rbx,%arg2  // &b_info
         push %rax  // ret_addr after decompression
-               xchgl %eax,%arg3l  // %arg3= dst for unfolding  XXX: 4GB
+               xchgq %rax,%arg3   // %arg3= dst for unfolding
         lodsl; push %rax          // allocate slot on stack
                movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
         lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
@@ -299,14 +301,8 @@ L80:
 main:
 ////    nop; int3  # uncomment for debugging
         pop %rbp  // &decompress
-        lea -4-(ret_main - _start)(%rbp),%rax  // &sz_pack2
-        movl (%rax),%r15d  // sz_pack2: length before stub
-        subq %r15,%rax  // ADRU= &Elf64_Ehdr of this stub (ET_DYN)
-        imul $ sz_Phdr,e_phnum(%rax),%edx  // sz_phdrs
-        addl $ sz_Ehdr + sz_l_info + sz_p_info,%edx  // sz_elf_hdrs
-        subl %edx,%r15d  // LENX for upx_main
-        lea (%rax,%rdx),%rcx  // ADRX= &b_info of user program for upx_main
-        call unfold  // push &b_info of folded_loader
+        call unfold
+        .long O_BINFO  // offset of b_info for .text
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/

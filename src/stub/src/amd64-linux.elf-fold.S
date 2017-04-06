@@ -59,7 +59,7 @@ __NR_readlink= 89
 /* In:
     cld
     %rbp= &decompress
-    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,crumb,argc,argv...,0,env...,0,auxv...,0...,strings}
+    %rsp= &{LENX,ADRX,LENU,ADRU,JMPU,slide,argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
         call L90  # push &L90a
@@ -72,7 +72,7 @@ L90:
         movq %rsp,%rsi
         leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
         movq %rdi,%rsp
-        push $7; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,JMPU,crumb,argc
+        push $7; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,JMPU,slide,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
         movq %rdi,%arg3  # remember &new_env[0]
@@ -97,11 +97,12 @@ L90:
         pop %arg4  # &Elf64_auxv
         pop %arg2  # LENX
         pop %arg1  # ADRX
+        mov 3*8(%rsp),%rax  // slide
 
         subq $ OVERHEAD,%rsp
         movq %rsp,%arg3  # &ELf64_Ehdr temporary space
         movq %rbp,%arg5  # &decompress: f_expand
-        pushq $0  # reloc
+        pushq %rax  // reloc
         call upx_main  # Out: %rax= entry
 /* entry= upx_main(b_info *arg1, total_size arg2, Elf64_Ehdr *arg3,
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6,
@@ -112,10 +113,7 @@ L90:
         pop %arg2  # LENU
         pop %arg1  # ADRU
         pop %rcx   # JMPU [unused]
-        pop %rcx   # breadcrumb size in pages
-        shl $12,%ecx
-        addq %rcx,%arg1   # addr += crumb
-        subl %ecx,%arg2l  # len  -= crumb  XXX 4GB
+        pop %rcx   # slide [unused]
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
         jmp *(%r15)  # goto: syscall; ret

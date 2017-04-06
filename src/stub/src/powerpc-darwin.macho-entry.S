@@ -114,11 +114,13 @@ sz_b_info= 12
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr t0  # -4+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        mflr t0  # -2*4+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        # lwz t1,(t0)  # O_BINFO
+        # stwu t1,-4(sp)
 
-        lwz lsrc,4+sz_cpr(t0); mtctr lsrc  # length to copy (and decompress)
-        lwz ldst,4+sz_unc(t0)
-        lbz meth,4+b_method(t0)
+        lwz lsrc,2*4+sz_cpr(t0); mtctr lsrc  # length to copy (and decompress)
+        lwz ldst,2*4+sz_unc(t0)
+        lbz meth,2*4+b_method(t0)
         add  dst,lsrc,t0; addi dst,dst,4+sz_b_info
         add  src,ldst,t0; addi src,src,GAP+64  # defend against prefetch and overlap
 movup:  # descending copy moves folded_loader to higher address
@@ -139,6 +141,7 @@ main:
         call unfold
 L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
         b GAP+L100  # 'isync' has trouble on Macintosh G4?
+        .long O_BINFO
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

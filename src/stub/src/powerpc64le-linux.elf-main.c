@@ -297,7 +297,7 @@ ERR_LAB
 **************************************************************************/
 
 void *upx_main(
-    struct l_info const *const li,
+    struct b_info const *const bi,
     size_t const sz_compressed,  // total length
     Elf64_Ehdr *const ehdr,  // temp char[sz_ehdr] for decompressing
     size_t const sz_ehdr,
@@ -311,10 +311,10 @@ void *upx_main(
     Elf64_Addr entry;
 
     Extent xi, xo, xi0;
-    xi.buf  = CONST_CAST(char *, 1+ (struct p_info const *)(1+ li));  // &b_info
-    xi.size = sz_compressed - (sizeof(struct l_info) + sizeof(struct p_info));
+    xi.buf  = CONST_CAST(char *, bi);  // &b_info
+    xi.size = sz_compressed;
     xo.buf  = (char *)ehdr;
-    xo.size = ((struct b_info const *)(void const *)xi.buf)->sz_unc;
+    xo.size = bi->sz_unc;
     xi0 = xi;
 
     ACC_UNUSED(sz_ehdr);

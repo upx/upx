@@ -5,6 +5,7 @@
 #define r1 1
 #define r2 2
 
+#define r26 26
 #define r27 27
 #define r28 28
 #define r29 29

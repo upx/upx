@@ -118,6 +118,7 @@ L52:
 L55:
         pop ebx  // recover &Elf32_Ehdr
         pop esi  // recover total length of compressed data
+        pop ecx  // O_BINFO
 
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
@@ -139,8 +140,7 @@ L55:
 L53:
         push eax  // dynbase
 
-        imul eax,[e_phnum + ebx],szElf32_Phdr  // sz_Phdrs
-        lea eax, [szElf32_Ehdr + eax + szl_info + szp_info + ebx]  // 1st &b_info
+        lea eax, [ecx + ebx]  // 1st &b_info
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
         add ecx, szb_info

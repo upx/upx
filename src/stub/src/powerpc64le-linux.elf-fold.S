@@ -47,6 +47,9 @@ OVERHEAD= 2048
 LINKAREA= 6*8  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
+   r28= &Elf64_auxv_t
+   r27= actual page size
+   r26= o_binfo
 */
 fold_begin:
         call L90
@@ -81,15 +84,12 @@ L90:
         subf r29,a1,r31  // 8+ (char *)&our_Elf64_Ehdr
         la a2,-OVERHEAD(sp)  // &Elf64_Ehdr temporary space
         addi r29,r29,-8  // &our_Elf64_Ehdr
-        lhz a3,e_phnum(r29)
-        mulli a3,a3,szElf64_Phdr
-        addi  a3,a3,szElf64_Ehdr
-        sub a1,a1,a3
-        add a0,r29,a3  // &{l_info; p_info; b_info}
+        sub a1,a1,r26  // total_size
+        add a0,r29,r26  // &b_info
         addi sp,sp,-(LINKAREA+OVERHEAD)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
         call upx_main  // Out: a0= entry
-        /* entry= upx_main(l_info *a0, total_size a1, Elf64_Ehdr *a2, sz_ehdr a3,
+        /* entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, sz_ehdr a3,
       f_decomp a4, f_unf a5, Elf64_auxv_t *a6)
 */
         mr r31,a0  // save &entry

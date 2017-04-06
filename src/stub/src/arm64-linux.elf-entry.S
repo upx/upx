@@ -33,6 +33,7 @@
 
 sz_Elf64_Ehdr= 64
 sz_Elf64_Phdr= 56
+e_phnum= 56
 
 sz_b_info= 12
   sz_unc= 0
@@ -69,6 +70,7 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
         .xword ADRM  // dst  for map
 _start: .globl _start
+    brk #0
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -135,8 +137,9 @@ copy_cl:  // copy decompressor and folded code
         mov lr,x0  // dst for unfolded code
         add x15,x15,x4  // relocated f_decompress
 
+        ldr w7,o_binfo
         ldr w9,[x12]  // sz_pack2
-        sub w9,w9,#sz_Elf64_Ehdr + 2*sz_Elf64_Phdr + sz_l_info + sz_p_info
+        sub w9,w9,w7
         sub x10,x12,x9  // &b_info
         add x10,x10,x4  // relocated &b_info
 
@@ -236,6 +239,8 @@ L71:
         /* IDENTSTR goes here */
 
   section ELFMAINZ
+o_binfo:
+        .word O_BINFO
 cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
