@@ -245,11 +245,9 @@ unfold:  // enter: %rbp= &decompress === &ret_main
    a R_X86_64_32S instead of R_X86_64_32 relocation type.
    Avoid that until tested.
 */
-        .byte 0x68; .int JMPU   // push $ JMPU (R_X86_64_32)
         push %rax    // ADRU for unmap in fold; updated later
         .byte 0x68; .int LENU   // push $ LENU (R_X86_64_32)
 #else
-        push $ JMPU  // for unmap in fold
         push %rax    // ADRU for unmap in fold; updated later
         push $ LENU  // for unmap in fold
 #endif
@@ -271,31 +269,32 @@ unfold:  // enter: %rbp= &decompress === &ret_main
         push $ SYS_mmap; pop %rax
         syscall  // %rax= result; trashes %rcx,%r11 only
         cmpq %rax,%rdi; jne msg_SELinux
+        cmpq $4096,%rsi; jna L80  // only 1 page: no move required
 
         movq 3*8(%rsp),%rsi  // ADRU src for copy
-        movq %rdi,%rdx  //  ADRM
+        push %rdi; pop %rdx  //  ADRM
         subq %rsi,%rdx  // (ADRM - ADRU) == relocation amount
         addq %rdx,%rbp  // update &decompress
         addq %rdx,1*8(%rsp)  // update ADRX
         addq %rdx,3*8(%rsp)  // update ADRU
-        movq %rbx,%rcx  // [&b_info] beyond end of decompressor
+        push %rbx; pop %rcx  // [&b_info] beyond end of decompressor
         subq %rsi,%rcx  // byte length
         shrq $3,%rcx  // qwords to copy
         cld
         rep; movsq
         xchgq %rax,%rdi
-
+L80:
 /* Decompress the folded part of this stub, then execute it. */
-        movq %rbx,%arg2  // &b_info
-        push %rax  // ret_addr after decompression
-               xchgq %rax,%arg3   // %arg3= dst for unfolding
-        lodsl; push %rax          // allocate slot on stack
-               movq  %rsp,%arg4   // &len_dst ==> used by lzma for EOF
+        push %rbx; pop %arg2  // &b_info
+        push %rax             // ret_addr after decompression
+        push %rax; pop %arg3  // dst for unfolding
+        lodsl; push %rax      // allocate slot on stack
+        push %rsp; pop %arg4  // &len_dst ==> used by lzma for EOF
         lodsl; xchgl %eax,%arg1l  // sz_cpr  XXX: 4GB
         lodsl; movzbl %al,%arg5l  // b_method
-              xchg %arg1,%arg2
+          xchg %arg1,%arg2
         call *%rbp  // decompress
-               pop %rcx  // discard len_dst
+          pop %rcx  // discard len_dst
         ret
 
 main:
