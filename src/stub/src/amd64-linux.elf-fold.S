@@ -40,6 +40,13 @@ sz_b_info= 12
 sz_l_info= 12
 sz_p_info= 12
 
+MAP_PRIVATE=   0x02
+MAP_FIXED=     0x10
+
+PROT_READ=     0x1
+
+O_RDONLY=       0
+
 OVERHEAD=2048
 MAX_ELF_HDR=1024
 
@@ -68,33 +75,73 @@ L90a:
 L90b:
 #include "arch/amd64/bxx.S"
 L90:
-        pop %arg6  # L90a; later, &amdbxx: f_unfilter
-        movq %rsp,%rsi
-        leaq -8 -4 -4 -4096(%rsi),%rdi  # 8:ptr, 4:"   =", 4:align, 4096:buffer
-        movq %rdi,%rsp
-        push $6; pop %rcx; rep movsq  # move LENX,ADRX,LENU,ADRU,slide,argc
+        pop %rbx  # L90a
+        lea L90b - L90a(%rbx),%rax; push %rax  # &amdbxx: f_unfilter
+        mov %rsp,%rsi
+        sub $3*4096,%rsp
+        push %rsp; pop %rdi
+        push $7; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,LENU,ADRU,slide,argc
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past argv
-        movq %rdi,%arg3  # remember &new_env[0]
+        movq %rdi,%r14  # remember &new_env[0]
         stosq  # space for new_env[0]
 0:
         cmpq $0,(%rsi); movsq; jne 0b  # move past env
-        pushq %rdi  # &Elf64_auxv
+        mov %rdi,%r12  # &old Elf64_auxv
 0:
         cmpq $0,(%rsi); movsq; movsq; jne 0b  # move past auxv
-        lea -8(%rdi),%r15  # &auxv[N].a_un
+        mov %rdi,%r15  # beyond auxv
+        mov %rsi,%r13  # beginning of strings
+        sub %r15,%r12  # -length of auxv
 
-        movq %rdi,(%arg3)  # new_env[0]
-        movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),%eax  # "   ="
-        stosl
-        movl $4096,%arg3l # buflen
-        movq  %rdi,%arg2  # buffer
-        movq %arg6,%arg1  # "/proc/self/exe"
-        push $ __NR_readlink; pop %rax
-        syscall; testl %eax,%eax; js 0f; movb $0,(%arg2,%rax)
+        push $ __NR_readlink
+        movl $-1+ 4096,%arg3l # buflen
+        push %rdi; pop %arg2  #buffer
+        push %rbx; pop %arg1  # "/proc/self/exe"
+        pop %rax; syscall; testl %eax,%eax; jns 0f
+// readlink() failed. Set the result equal to the argument.
+        push %rbx; pop %arg2  # result= "/proc/self/exe"
+        push $-1+ (L90b - L90a); pop %rax
 0:
-        addq $ L90b - L90a,%arg6  # &amdbxx: f_unfilter
-        pop %arg4  # &Elf64_auxv
+        xchg %eax,%ecx  # %ecx= byte count
+        std
+        lea -1(%r13),%rdi  # dst last byte
+        movb $0,%al; stosb  # terminate
+        lea -1(%arg2,%rcx),%rsi  # src last byte
+        rep movsb  # slide up
+        sub $3,%rdi; movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),(%rdi)  # env var name
+        mov %rdi,(%r14)  # new_env[0]
+        shr $12,%rdi; dec %rdi; shl $12,%rdi; mov %rdi,%r14  # &page
+
+        push $__NR_open
+        sub %arg2l,%arg2l  # O_RDONLY
+        push %rbx; pop %arg1  # "/proc/self/exe"
+        pop %rax; syscall; xchg %eax,%ebx  # %ebx= fd
+
+        push $__NR_mmap
+        sub %arg6l,%arg6l  # 0 offset
+        mov %ebx,%arg5l
+        push $MAP_PRIVATE|MAP_FIXED; pop %sys4  # BEWARE:  %sys4
+        push $PROT_READ; pop %arg3
+        mov $4096,%arg2l
+        push %r14; pop %arg1
+        pop %rax; syscall
+
+        push $__NR_close
+        mov %ebx,%edi  # fd
+        pop %rax; syscall
+
+        lea -8(%r15),%rsi  # &last qword of old auxv
+        lea -8(%r14),%rdi  # &last qword of new auxv
+
+        mov %r15,%rcx
+        sub %rsp,%rcx
+        shr   $3,%rcx; rep movsq
+        lea 8(%rdi),%rsp
+        cld
+
+        lea (%r14,%r12),%arg4  # &new Elf64_auxv
+        pop %arg6  # f_unfilter
         pop %arg2  # LENX
         pop %arg1  # ADRX
         mov 2*8(%rsp),%rax  // slide
@@ -115,7 +162,7 @@ L90:
         pop %rcx   # slide [unused]
         push %rax  # &entry
         push $ __NR_munmap; pop %rax
-        jmp *(%r15)  # goto: syscall; ret
+        jmp *-8(%r14)  # goto: syscall; ret
 
 munmap: .globl munmap
         movb $ __NR_munmap,%al; jmp sysgo
