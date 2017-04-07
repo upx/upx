@@ -43,8 +43,8 @@ $c += -I$(UPX_LZMADIR)
 $c += -I$(top_srcdir)/src
 $c += -Wno-error
 
-tc.method-lzma.objcopy = /usr/bin/aarch64-linux-gnu-objcopy
-tc.method-lzma.objdump = /usr/bin/aarch64-linux-gnu-objdump
+tc.method-lzma.objcopy = arm64-linux-objcopy-2.25
+tc.method-lzma.objdump = arm64-linux-objdump-2.25
 
 lzma_d_c%.S : lzma_d_c.c
 	$(call tc,gcc) $(PP_FLAGS) -c $< -o tmp/$T.o
