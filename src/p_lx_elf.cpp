@@ -1512,7 +1512,12 @@ bool PackLinuxElf32::canPack()
         if (1!=exetype && phdr->PT_LOAD32 == p_type) { // 1st PT_LOAD
             exetype = 1;
             load_va = get_te32(&phdr->p_vaddr);  // class data member
-            unsigned const off = ~page_mask & load_va;
+
+            // Cast on next line is to avoid a compiler bug (incorrect complaint) in
+            // Microsoft (R) C/C++ Optimizing Compiler Version 19.00.24215.1 for x64
+            // error C4319: '~': zero extending 'unsigned int' to 'upx_uint64_t' of greater size
+            unsigned const off = ~page_mask & (unsigned)load_va;
+
             if (off && off == p_offset) { // specific hint
                 throwCantPack("Go-language PT_LOAD: try hemfix.c, or try '--force-execve'");
                 // Fixing it inside upx fails because packExtent() reads original file.
