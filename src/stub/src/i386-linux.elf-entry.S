@@ -214,10 +214,6 @@ AT_SYSINFO_EHDR=33
         pop eax
         pop esi
 
-section LUNMP000
-        push 0  // 0-page bread crumb
-section LUNMP001
-        push 1  // 1-page bread crumb
 section LEXEC025
         push eax  // destination for 'ret'
 

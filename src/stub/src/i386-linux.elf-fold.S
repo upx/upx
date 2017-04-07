@@ -52,11 +52,15 @@
 // control just falls through, after this part and compiled C code
 // are uncompressed.
 
-fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program; %ebp= f_expand
-        //   %edi=total length of compressed data
-        // patchLoader will modify to be
-        //   dword sz_uncompressed, sz_compressed
-        //   byte  compressed_data...
+fold_begin:
+// enter: %ebx= &Elf32_Ehdr of this program
+// %ebp= f_expand
+// %edi= total length of compressed data
+// %esp: O_BINFO,argc,argv,0,envp,0,auxv,0,strings
+
+// patchLoader will modify to be
+//   dword sz_uncompressed, sz_compressed
+//   byte  compressed_data...
 
 // ld-linux.so.2 depends on AT_PHDR and AT_ENTRY, for instance.
 // Move argc,argv,envp down to make room for Elf_auxv table.
@@ -80,7 +84,7 @@ fold_begin:  // enter: %ebx= &Elf32_Ehdr of this program; %ebp= f_expand
 
         push edi  // save total length of compressed data
         push ebx  // save &Elf32_Ehdr
-        sub ecx, ecx
+        sub ecx, ecx  // 0
         mov edx, (1<<AT_PHDR) | (1<<AT_PHENT) | (1<<AT_PHNUM) | (1<<AT_PAGESZ) | (1<<AT_ENTRY)
         mov esi, esp
         mov edi, esp
@@ -153,9 +157,7 @@ L53:
         pop ecx  // end of unmap region
         pop ebx  // start of unmap region (&Elf32_Ehdr of this stub)
         add esp, MAX_ELF_HDR + OVERHEAD  // un-alloca
-        pop edx  // bread crumb size in pages
-        shl edx,12
-        add ebx,edx  // start of unmap region
+        add ebx,4096  // start of unmap region (assume crumb of 1 page)
         push eax  // save entry address
 
         dec edi  // auxv table
@@ -189,7 +191,7 @@ do_auxv:
         // cld
         lodsd; stosd  // saved &Elf32_Ehdr
         lodsd; stosd  // saved total length of compressed data
-        lodsd; stosd  // crumb
+        lodsd; stosd  // O_BINFO
         lodsd; stosd  // argc can be 0
 
 L10:  // move argv
