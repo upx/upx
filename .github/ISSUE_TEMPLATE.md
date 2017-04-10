@@ -27,5 +27,7 @@ Just read it and fill in the details we're asking, it saves so much of our time.
 ## Please tell us details about your environment.
 <!--- Include as many relevant details about the environment you experienced the bug in -->
 * UPX version used (`upx --version`):
-* Operating System and version:
-* CPU architecture:
+* Host Operating System and version:
+* Host CPU architecture:
+* Target Operating System and version:
+* Target CPU architecture:

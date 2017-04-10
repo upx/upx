@@ -51,7 +51,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
     extra_subdirs+=( src/stub/src/arch/amd64 )
     extra_subdirs+=( src/stub/src/arch/arm/v4a )
     extra_subdirs+=( src/stub/src/arch/arm/v4t )
-    #extra_subdirs+=( src/stub/src/arch/arm64/v8 ) # FIXME / TODO
+    extra_subdirs+=( src/stub/src/arch/arm64/v8 )
     extra_subdirs+=( src/stub/src/arch/i386 )
     extra_subdirs+=( src/stub/src/arch/m68k/m68000 )
     extra_subdirs+=( src/stub/src/arch/m68k/m68020 )
@@ -63,6 +63,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
         make -C $d -f Makefile.extra maintainer-clean
         git status $d || true
     done
+    git status src/stub/src || true
     git status || true
     failed=0
     for d in ${extra_subdirs[@]}; do
@@ -79,6 +80,7 @@ if [[ $BM_X =~ (^|\+)rebuild-stubs($|\+) ]]; then
         echo "UPX-ERROR: FATAL: rebuild-stubs git status mismatch. See log file."
         exit 1
     fi
+    git status
     if [[ $BM_X == rebuild-stubs ]]; then
         echo "X=rebuild-stubs done. Exiting."
         exit 0

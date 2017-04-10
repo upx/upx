@@ -36,8 +36,7 @@ if [[ ! -d $upx_testsuite_SRCDIR/files/packed ]]; then exit 1; fi
 # ************************************************************************/
 
 testsuite_header() {
-    local x="==========="; x="$x$x$x$x$x$x$x"
-    echo -e "\n${x}\n${1}\n${x}\n"
+    print_header "$1"
 }
 
 testsuite_split_f() {

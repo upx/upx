@@ -96,6 +96,12 @@ else
 fi
 d=$d-$BM_C-$BM_B
 
+if [[ -n $subdir ]]; then
+    print_header "DEPLOY $subdir/$d"
+else
+    print_header "DEPLOY $d"
+fi
+
 mkdir $d || exit 1
 for exeext in .exe .out; do
     f=$upx_BUILDDIR/upx$exeext
@@ -120,8 +126,9 @@ git config user.name "$git_user"
 git config user.email "none@none"
 if [[ $new_branch == 1 ]]; then
     git checkout --orphan $branch
-    git reset --hard
+    git reset --hard || true
 fi
+git ls-files -v
 
 if [[ -n $subdir ]]; then
     [[ -d $subdir ]] || mkdir $subdir
@@ -140,7 +147,7 @@ fi
 now=$(date '+%s')
 ##date=$(TZ=UTC0 date -d "@$now" '+%Y-%m-%d %H:%M:%S')
 git commit --date="$now" -m "Automatic build $d"
-git ls-files
+git ls-files -v
 #git log --pretty=fuller
 
 umask 077
@@ -166,13 +173,11 @@ while true; do
     else
         if git push    $ssh_repo $branch; then break; fi
     fi
+    git branch -a -v
     git fetch -v origin $branch
     git branch -a -v
-    if [[ $new_branch == 1 ]]; then
-        git branch --set-upstream-to origin/$branch
-        new_branch=0
-    fi
-    git rebase origin/$branch
+    git rebase FETCH_HEAD
+    git branch -a -v
     sleep $((RANDOM % 5 + 1))
     let i+=1
 done
