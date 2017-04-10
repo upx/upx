@@ -50,6 +50,7 @@ AT_FDCWD= -100
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
+PATHMAX= 4096
 
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
@@ -63,9 +64,9 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 
 fold_begin:
 /* In:
-   r15= f_decompress
-   r10= &b_info of first compressed block (after move)
-    r9= total size of compressed data
+   x28= f_decompress
+   x27= &b_info of first compressed block (after move)
+   w26= total size of compressed data
     sp/ ADRU,LENU,sz_unc,MFLG, argc,argv...
 */
         POP4(x3,x4,x5,x8)  // x3= ADRU; x4= LENU; x5= sz_unc; x8= MFLG
@@ -81,7 +82,7 @@ fold_begin:
         ldr x2,[x1],#2*8
         cbnz x2,.L20  // AT_NULL
 
-        sub x0,x1,#4096 // buffer for readlink
+        sub x0,x1,#PATHMAX // buffer for readlink
         sub x0,x0,#4  // space for copy of space3eq
         sub x1,x1,x0  // amount needed for argc,argv,env,auxv
         lsr x0,x0,#PAGE_SHIFT  // round down
@@ -124,7 +125,7 @@ SP_argc= 4*8  // remember the hole from PUSH3
         ldr w2,space3eq
         str w2,[x1],#4  // "   =" of new env var
 
-        mov w2,#4096-1  // buffer length and null terminator
+        mov w2,#PATHMAX-1  // buffer length and null terminator
         adr x0,proc_self_exe
         bl readlink
 /* Preserve symlink /proc/self/exe by mapping one page into stack */
@@ -147,11 +148,11 @@ SP_argc= 4*8  // remember the hole from PUSH3
         add x6,sp,#3*8  // &reloc
           sub sp,sp,#MAX_ELF_HDR + OVERHEAD  // alloca
         adr x5,f_unfilter
-        mov x4,x15  // f_decompress
+        mov x4,x28  // f_decompress
         mov x3,x7  // new &Elf64_auxv_t
         mov x2,sp  // ehdr
-        mov w1,w9  // total size of compressed data
-        mov x0,x10  // &b_info
+        mov w1,w26  // total size of compressed data
+        mov x0,x27  // &b_info
         bl upx_main
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
         mov lr,x0  // entry address

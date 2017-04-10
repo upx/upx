@@ -41,6 +41,7 @@ sz_b_info= 12
   b_method= 8
 sz_l_info= 12
 sz_p_info= 12
+sz_o_binfo= 4
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -70,7 +71,6 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
         .xword ADRM  // dst  for map
 _start: .globl _start
-    brk #0
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -88,23 +88,22 @@ _start: .globl _start
 #endif  /*}*/
 
         adr x12,start_params -4  // &sz_pack2
-        ldp w1,w10,[x12]  // w1= sz_pack2; w10= LENF
+        ldp w26,w10,[x12]  // w1= sz_pack2; w10= LENF
         ldp w11,w13,[x12,#2*4]  // w11= CPRO; w13= MFLG
         add x11,x11,x12  // cpr0
         add x10,x10,x12  // end_decompress
         ldr w3,[x11,# sz_unc]
-        sub x9,x12,x1  // &our_Elf64_Ehdr
-        add w1,w1,w3  // sz_pack2 + cpr0.sz_unc
+        sub x9,x12,x26  // &our_Elf64_Ehdr
+        add w26,w26,w3  // sz_pack2 + cpr0.sz_unc
+        ldr w27,[x11,#o_binfo - cpr0]
+        add x27,x27,x9  // &b_info for Elf64_Ehdr
         ldr x0,[x12,#4*4]  // ADRM
-        add x1,x1,# PAGE_SIZE
-  section LUNMP000
-        // unused
-  section LUNMP001
-        // unused
+        add w26,w26,# PAGE_SIZE
   section ELFMAINXu
-        PUSH4(x0,x1,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
+        PUSH4(x0,x26,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
 SP_MFLG= 4*8
 D_sz_unc=2*8  // stack displacement to sz_unc
+        mov w1,w26  // length
         mov w2,#PROT_READ | PROT_WRITE | PROT_EXEC
         orr w3,w13,#MAP_FIXED  // MFLG: MAP_{PRIVATE|ANON}
         mov x5,#0  // offset= 0
@@ -130,31 +129,26 @@ copy_cl:  // copy decompressor and folded code
           sub x5,x9,#64; // FIXME(memcheck) dc cvau,x5  // clean 64-byte line
         blo copy_cl  // all source lines
 
-        sub x4,x0,x9  // relocation amount
         ldr w1,[sp,#SP_MFLG]
-        adr x15,f_decompress
+        sub x4,x0,x9  // relocation amount
         str w1,[x0],#4  // MFLG at -4+ fold_begin
         mov lr,x0  // dst for unfolded code
-        add x15,x15,x4  // relocated f_decompress
+        adr x28,f_decompress
+        add x28,x28,x4  // relocated f_decompress
+        add x27,x27,x4  // relocated &b_info
 
-        ldr w7,o_binfo
-        ldr w9,[x12]  // sz_pack2
-        sub w9,w9,w7
-        sub x10,x12,x9  // &b_info
-        add x10,x10,x4  // relocated &b_info
-
-        ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)
+        ldr w4,[x11,# b_method]  // 5th param (whole word: endian issues!)
 D_stm1=0*8
         ldr  w3,[x11,# sz_unc]
         add  x0, x11,# sz_b_info
-        ldr  w1,[x11,# sz_cpr ]
+        ldr  w1,[x11,# sz_cpr]
         mov  x2,lr  // dst
         str  w3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
         add  x3, sp,#D_stm1 + D_sz_unc   // &sz_unc
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
-        br x15  // decompress folded code, return to *lr
+        br x28  // decompress folded code, return to *lr
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512
