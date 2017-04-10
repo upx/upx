@@ -96,15 +96,14 @@ _start: .globl _start
         ldr r3,[r11,# sz_unc]
         sub r9,r12,r1  // &our_Elf32_Ehdr
         add r1,r1,r3  // sz_pack2 + cpr0.sz_unc
+        ldr r3,[r11,#o_binfo - cpr0]
         mov r0,r2  // ADRM
+        add r3,r3,r9  // &b_info for Elf32_Ehdr
         add r1,r1,# PAGE_SIZE
-  section LUNMP000
-        mov r3,#0<<12  // 0-page crumb
-  section LUNMP001
-        mov r3,#1<<12  // 1-page crumb
   section ELFMAINXu
-        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,crumb,MFLG
+        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,&b_info,MFLG
 SP_MFLG= 4*4
+D_b_info=3*4  // stack displacement to b_info
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
@@ -144,9 +143,7 @@ copy:
         swi __ARM_NR_cacheflush
 #endif  /*}*/
 
-        ldr r9,[r12]  // sz_pack2
-        sub r9,r9,#sz_Elf32_Ehdr + 2*sz_Elf32_Phdr + sz_l_info + sz_p_info
-        sub r10,r12,r9  // &b_info
+        ldr r10,[sp,#D_b_info]
         add r10,r10,r4  // relocated &b_info
 
         ldr r0,[r11,# b_method ]  // 5th param (whole word: endian issues!)
@@ -162,6 +159,9 @@ D_stm1=2*4
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
         mov lr,pc; mov pc,r5  // decompress folded code [opcode 'blx' not in v4a]
+#if DEBUG  /*{*/
+        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
+#endif  /*}*/
         ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
 
 #if DEBUG  /*{*/
@@ -262,6 +262,8 @@ L71:
         /* IDENTSTR goes here */
 
   section ELFMAINZ
+o_binfo:
+        .long O_BINFO  // .int4
 cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 

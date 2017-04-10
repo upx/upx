@@ -49,6 +49,7 @@ O_RDONLY=       0
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
+PATHMAX=  4096
 
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
@@ -61,13 +62,17 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 #define MAX_ELF_HDR 512
 
 fold_begin:
+#if DEBUG  //{
+#define TRACE_REGS r0-r12,r14,r15
+        stmdb sp!,{TRACE_REGS}; mov r0,#5; bl trace
+#endif  //}
 /* In:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
     r5= f_decompress
-    sp/ ADRU,LENU,sz_unc,crumb,MFLG,argc,argv...
+    sp/ ADRU,LENU,sz_unc,&b_info,MFLG,argc,argv...
 */
-        ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,crumb,MFLG,argc
+        ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,&b_info,MFLG,argc
         mov r0,sp  @ current stack pointer
 
         add r1,sp,r11,lsl #2  @ skip argv pointers
@@ -79,7 +84,10 @@ fold_begin:
         ldr r2,[r1],#8
         cmp r2,#0; bne .L20
 
-        sub r0,r1,#4096 @ buffer for readlink
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#6; bl trace
+#endif  //}
+        sub r0,r1,#PATHMAX @ buffer for readlink
         sub r0,r0,#4  @ space for copy of space3eq
         sub r1,r1,sp  @ amount needed for argv,env,auxv
         mov r0,r0,lsr #2+ PAGE_SHIFT  @ 2+ because hardware might require
@@ -94,7 +102,10 @@ fold_begin:
         sub r0,r0,r2  @ new_argv with same 8-byte alignment as old_argv
         mov sp,r0
 
-        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,crumb,argc;  drop MFLG
+        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,&b_info,argc;  drop MFLG
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#7; bl trace
+#endif  //}
 SP_sz_unc= 2*4
 SP_argc= 4*4
 
@@ -120,6 +131,9 @@ SP_argc= 4*4
         cmp r2,#0; bne .Laux
 
         str r0,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#8; bl trace
+#endif  //}
 
         add r1,r0,#1<<(2+ PAGE_SHIFT)  @ after the page
         str r1,[r4]  @ new env ptr
@@ -127,7 +141,7 @@ SP_argc= 4*4
         ldr r2,space3eq
         str r2,[r1],#4  @ "   =" of new env var
 
-        mov r2,#4096  @ buffer length
+        mov r2,#PATHMAX  @ buffer length
         adr r0,proc_self_exe
         sub r2,r2,#1  @ room for null terminator
         bl readlink; cmn r0,#4096; bcs 0f  @ error
@@ -170,7 +184,13 @@ SP_argc= 4*4
 #endif  /*}*/
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#9; bl trace
+#endif  //}
         bl upx_main
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#10; bl trace
+#endif  //}
         mov lr,r0  @ entry address
         add sp,sp,#(10-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
@@ -184,16 +204,13 @@ SP_argc= 4*4
         do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
 #endif  //}
 
-        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],crumb
-        add r0,r0,r3  @ ADRU+=crumb
-        sub r1,r1,r3  @ LENU-=crumb
+        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],&b_info
 
 #if DEBUG  /*{*/
         ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
         ldr r4,[r3,#0]  @ 1st instr
         ldr r5,[r3,#4]  @ 2nd instr
-#define TRACE_REGS r0-r12,r14,r15
-        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
+        stmdb sp!,{TRACE_REGS}; mov r0,#9; bl trace
 #endif  /*}*/
         mov r3,#0  @ clear registers: paranoia
         mov r4,#0
