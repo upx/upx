@@ -180,7 +180,7 @@ sz_auxv= 2*4
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
         li     a3,MAP_PRIVATE | MAP_ANONYMOUS
-        li     a2,PROT_READ | PROT_WRITE
+        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC  // 'fold' will execute here
         lwz    a0,sz_obinfo + sz_cpr(r30)  // sizeof(folded_loader)
         addi   a0,a0,sz_b_info
         addi   t0,a1,-1  // ~page_mask
