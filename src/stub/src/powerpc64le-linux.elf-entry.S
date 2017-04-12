@@ -77,6 +77,10 @@ SZ_DLINE=128  # size of data cache line in Apple G5
 #define bits a6
 #define disp a7
 
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN 0
+#endif
+
   section NRV2E
 #include "arch/powerpc/64le/nrv2e_d.S"
 
@@ -129,11 +133,19 @@ msg_SELinux:
         call L72
 L70:
         .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-        .align 4
 L71:
         // IDENTSTR goes here
 
+#if BIG_ENDIAN  //{
+  section ELFMAINZe
+        .balign 8
+        .globl entry_descr
+entry_descr:  // Elf64_Ehdr.e_entry points here (big endian only)
+        .quad _start,0,0
+#endif  //}
+
   section ELFMAINZ
+        .balign 4
 L72:
         li   a2,L71 - L70  // length
         mflr a1    // message text
@@ -149,21 +161,19 @@ unfold:
         lwz r26,0(r30)  // O_BINFO
 sz_obinfo= 4
 
+             lwz  a0,sz_obinfo + sz_cpr(r30)  // sz_cpr(fold) (< 1 Page)
         li a5,0  // off_t
+             lis  a1,1  // PAGE_SIZE
         li a4,-1  // fd; cater to *BSD for MAP_ANON
-        lwz  a0,sz_obinfo + sz_cpr(r30)        // size < 1 Page
+             add  a0,a0,r30  // beyond compressed fold
         li a3,MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS
+             addi a0,a0,sz_obinfo + sz_b_info-1
         li a2,PROT_READ | PROT_WRITE | PROT_EXEC
-//        li a1,PAGE_SIZE
-        lis        a1,1
-        add  a0,a0,r30
+             add  a0,a0,a1  // across next page boundary
         li 0,__NR_mmap
-//          addi a0,a0,sz_b_info+PAGE_SIZE-1
-        addi a0,a0,sz_obinfo + sz_b_info-1
-        add  a0,a0,a1
-        rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
+             rlwinm a0,a0,0,0,31-PAGE_SHIFT  // next page boundary after fold
         sc; bso- msg_SELinux  // Branch if SummaryOverflow (failure)
-0:
+
         mtctr r31
         lwz r0,sz_obinfo + sz_unc(r30)        // size uncompressed
         lbz meth,sz_obinfo + b_method(r30)
@@ -173,15 +183,16 @@ sz_obinfo= 4
         mtlr   a0  // &continuation
         lwz lsrc,sz_obinfo + sz_cpr(r30)        // size of compressed
         addi src,r30,sz_obinfo + sz_b_info
-        la sp,-6*8(sp)  // (sp,pc,cr, xx,yy,zz) save area per calling convention
+LINKAREA= 6*8  // matches fold.S
+        la sp,-LINKAREA(sp)  // (sp,cr,lr, xlc.tmp,ld.tmp,save.toc) save area per calling convention
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
-// Example code at entrypoint of C-language subroutine:
+// Example 32-bit code at entrypoint of C-language subroutine:
 //      mflr    r0  # r0= return address
 //      stwu    sp,-96(sp)  # allocate local frame; chain to previous frame
 //      stmw    r14,24(sp)  # save 18 regs r14,r15,...,r31; 4*18 == (96 - 24)
 //      stw     r0,100(sp)  # save return address into caller's frame (100 >= 96)
-// Example code at exit:
+// Example 32-bit code at exit:
 //      lwz     r0,100(sp)  # r0= return address
 //      lmw     r14,24(sp)  # restore 18 regs r14,r15,...,r31
 //      mtlr    r0  # prepare for indirect jump
@@ -189,7 +200,7 @@ sz_obinfo= 4
 //      blr  # goto return address
 
 main:
-  teq r0,r0  // debugging
+////  teq r0,r0  // debugging
         stdu r1,-32*8(sp)  // allocate space (keeping 0 mod 16), save r1
 //        stm  r2,8(sp) // save registers r2 thru r31 - 32bits save
         std  2,2*8-8(sp)
@@ -224,7 +235,7 @@ main:
         std  31,31*8-8(sp)
         mflr r31  // &decompress
         call unfold
-        .long O_BINFO
+        .long O_BINFO  // .int4
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

@@ -78,8 +78,11 @@ get32:
         lbzu  t0,4(src); rlwimi bits,t0,24, 0, 7
 #else  /*}{ pray for no unalignment trap or slowdown */
         li bits,1  // compensate for 'lbzu'
-//        lwbrx bits,bits,src  // bits= fetch_le32(bits+src) endianess
+#if BIG_ENDIAN  //{
+        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
+#else  //}{
         lwzx  bits,bits,src
+#endif  //}
         addi src,src,4
 #endif  /*}*/
 

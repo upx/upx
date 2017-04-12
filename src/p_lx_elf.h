@@ -372,6 +372,18 @@ protected:
     }
 };
 
+class PackLinuxElf64Be : public PackLinuxElf64
+{
+    typedef PackLinuxElf64 super;
+protected:
+    PackLinuxElf64Be(InputFile *f) : super(f) {
+        lg2_page=16;
+        page_size=1u<<lg2_page;
+        bele = &N_BELE_RTP::be_policy;
+        PackLinuxElf64help1(f);
+    }
+};
+
 
 /*************************************************************************
 // linux/elf64amd
@@ -449,6 +461,26 @@ public:
     virtual int getFormat() const { return UPX_F_LINUX_ELFPPC64LE; }
     virtual const char *getName() const { return "linux/ppc64le"; }
     virtual const char *getFullName(const options_t *) const { return "powerpc64le-linux.elf"; }
+    virtual const int *getFilters() const;
+protected:
+    unsigned lg2_page;  // log2(PAGE_SIZE)
+    unsigned page_size;  // 1u<<lg2_page
+    virtual bool canPack();
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
+};
+
+
+class PackLinuxElf64ppc : public PackLinuxElf64Be
+{
+    typedef PackLinuxElf64Be super;
+public:
+    PackLinuxElf64ppc(InputFile *f);
+    virtual ~PackLinuxElf64ppc();
+    virtual int getFormat() const { return UPX_F_LINUX_ELFPPC64; }
+    virtual const char *getName() const { return "linux/ppc64"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64-linux.elf"; }
     virtual const int *getFilters() const;
 protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)

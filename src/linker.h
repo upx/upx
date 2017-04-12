@@ -246,6 +246,17 @@ protected:
                            const char *type);
 };
 
+class ElfLinkerPpc64 : public ElfLinker {
+    typedef ElfLinker super;
+
+public:
+    ElfLinkerPpc64() { bele = &N_BELE_RTP::be_policy; }
+
+protected:
+    virtual void relocate1(const Relocation *, upx_byte *location, upx_uint64_t value,
+                           const char *type);
+};
+
 class ElfLinkerX86 : public ElfLinker {
     typedef ElfLinker super;
 

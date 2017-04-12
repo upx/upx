@@ -32,6 +32,10 @@
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
 
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN 0
+#endif
+
 #define szElf64_Ehdr 0x40
 #define szElf64_Phdr 0x38
 #define e_phnum 56
@@ -44,54 +48,52 @@ sz_l_info= 12
 sz_p_info= 12
 
 OVERHEAD= 2048
-LINKAREA= 6*8  // (sp,pc,cr, xx,yy.zz) save area per calling convention
+LINKAREA= 6*8  // (sp,cr,lr, tmp.xlc,tmp.ld,save.toc) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
    r28= &Elf64_auxv_t
    r27= actual page size
    r26= o_binfo
+   sp/ LINKAREA,regsav(r1-31),&eof_src,argc,argv,0,env,0,auxv,0,chars
 */
 fold_begin:
         call L90
 #include "arch/powerpc/64le/bxx.S"
 
-/* The SysV convention for argument registers after execve is nice:
-        a0= argc
-        a1= argv
-        a2= envp
-        a3= auxvp
-        a4= fini
-        sp= ~0xf & (-2*4 + (void *)&argc)  // 0(sp): old_sp, pc
-   Instead, Linux gives only
-        sp= &{argc,argv...,0,env...,0,auxv...,strings}  // 16-byte aligned?
-   We must figure out the rest, particularly auxvp.
-*/
 zfind:
         ld t0,0(a6)        // parameters are 16byte aligned
         addi a6,a6,8
         cmpldi cr7,t0,0; bne+ cr7,zfind
         ret
 L90:
-        la sp,LINKAREA(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
-        ld a6,0(sp)  // sp at execve
+        ld a6,LINKAREA(sp)  // sp from regsav at execve
         call zfind  // a6= &env
-        call zfind  // a6= &Elf64_auxv
-        lwz a1,-8(r31)  // #bytes which preceed -8(r31)
+        call zfind  // a6= &Elf64_auxv; t0= 0
+        la a7,LINKAREA+(32-1)*8(sp)  // &reloc
+        std t0,0(a7)  // reloc= 0
+        la sp,-OVERHEAD(sp)  // -LINKAREA + &Elf64_Ehdr temporary space
+        lwz a1,-2*4(r31)  // sz_pack2 == #bytes which preceed -8(r31)
         rlwinm r30,a5,0,0,31-12  // r30= &this_page
-        mr a7,r30  // reloc addr
-        mr a4,r31  // &decompress: f_expand
         subf r29,a1,r31  // 8+ (char *)&our_Elf64_Ehdr
-        la a2,-OVERHEAD(sp)  // &Elf64_Ehdr temporary space
-        addi r29,r29,-8  // &our_Elf64_Ehdr
+        mr  a4,r31  // &decompress: f_expand
+        addi r29,r29,-2*4  // &our_Elf64_Ehdr
         sub a1,a1,r26  // total_size
         add a0,r29,r26  // &b_info
-        addi sp,sp,-(LINKAREA+OVERHEAD)
-        lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
-        call upx_main  // Out: a0= entry
-        /* entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, sz_ehdr a3,
-      f_decomp a4, f_unf a5, Elf64_auxv_t *a6)
-*/
+        la  a2,LINKAREA(sp)  // &Elf64_Ehdr temporary space
+        lwz a3,sz_unc(a0)  // sz_elf_headers
+#if BIG_ENDIAN  //{
+        std a4,3*8(sp); la a4,3*8(sp)  // use tmp.xlc
+        std a5,4*8(sp); la a5,4*8(sp)  // use tmp.ld
+#endif  //}
+        call upx_main
+        // a0=entry= upx_main(b_info *a0, total_size a1, Elf64_Ehdr *a2, sz_ehdr a3,
+        // f_decomp a4, f_unf a5, Elf64_auxv_t *a6, void *a7=p_reloc)
+#if BIG_ENDIAN  //{
+        ld r0,LINKAREA+OVERHEAD +(32-1)*8(sp)  // reloc for ET_DYN
+        ld r2,8(r3); add r2,r2,r0  // toc
+        ld r3,0(r3); add r3,r3,r0  // .func
+#endif  //}
         mr r31,a0  // save &entry
 
         mr a0,r29  // &our_Elf64_Ehdr
@@ -100,10 +102,11 @@ L90:
 
         mtlr r31  // entry address
 
-//      lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31 32bits load
 /* Restore Save Area     */
 rest:
+#if !BIG_ENDIAN  //{
         ld  2,2*8-8+LINKAREA+OVERHEAD(sp)
+#endif  //}
         ld  3,3*8-8+LINKAREA+OVERHEAD(sp)
         ld  4,4*8-8+LINKAREA+OVERHEAD(sp)
         ld  5,5*8-8+LINKAREA+OVERHEAD(sp)
@@ -135,7 +138,9 @@ rest:
         ld  31,31*8-8+LINKAREA+OVERHEAD(sp)
 
         ld  r1,LINKAREA+OVERHEAD(sp)  // restore r1; deallocate space
-        mflr  12        // load ld.so.2 address
+        li r0,0
+        mtcr r0
+        mtctr r0
         ret  // enter /lib/ld.so.1
 
 SYS_exit=  1

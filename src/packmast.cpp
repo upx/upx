@@ -194,6 +194,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackLinuxElf32armBe);
         D(PackLinuxElf64arm);
         D(PackLinuxElf32ppc);
+        D(PackLinuxElf64ppc);
         D(PackLinuxElf64ppcle);
         D(PackLinuxElf32mipsel);
         D(PackLinuxElf32mipseb);
