@@ -106,9 +106,9 @@ end_decompress: .globl end_decompress
 lsrc .req w1
 ldst .req w3
 ldstx .req x3
-unfold:  // lr= &L100
-        ldr ldst,[lr,#sz_unc]
-        ldr lsrc,[lr,#sz_cpr]
+unfold:  // lr= -4+ &L100
+        ldr ldst,[lr,#sz_unc+sz_b_info]
+        ldr lsrc,[lr,#sz_cpr+sz_b_info]
         add dst,lr,lsrc,uxtw; add dst,dst,#sz_b_info
         add src,lr,ldst,uxtw; add src,src,#GAP+NO_LAP  // defend against prefetch and overlap
 
@@ -130,6 +130,8 @@ movup:  // descending copy folded_loader to higher address
 main:
         mov x5,lr  // &f_decompress
         bl unfold
+o_binfo:
+        .long O_BINFO  // .int4
 L100:
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
