@@ -1526,7 +1526,8 @@ bool PackLinuxElf32::canPack()
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
             if (0==strcmp(symnam, "__libc_start_main")
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")
+            ||  0==strcmp(symnam, "__libc_init"))
                 goto proceed;
         }
 
