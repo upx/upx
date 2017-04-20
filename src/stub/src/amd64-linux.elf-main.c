@@ -301,7 +301,7 @@ ERR_LAB
             // brk(v_brk);  // SIGSEGV when is_big [unmaps ourself!]
         }
     }
-    if (0!=p_reloc) {
+    if (p_reloc) {
         *p_reloc = reloc;
     }
     return ehdr->e_entry + reloc;

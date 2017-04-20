@@ -1,3 +1,6 @@
+#ifndef __POWERPC64_SAVEGPR0_S  //{
+#define __POWERPC64_SAVEGPR0_S 1
+
 _savegpr0_14: .globl _savegpr0_14
         std r14,-8*(32-14)(r1)
 _savegpr0_15: .globl _savegpr0_15
@@ -72,5 +75,6 @@ _restgpr0_29: .globl _restgpr0_29
         ld r30,-8*(32-30)(r1)
         ld r31,-8*(32-31)(r1)
          blr  # return to caller
+#endif  //}
 
 /* vim:set ts=8 sw=8 et: */

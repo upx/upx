@@ -516,7 +516,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
     if (hasLoaderSection("ELFMAINXu")) {
             // brk() trouble if static
         all_pages |= (Elf32_Ehdr::EM_ARM==e_machine && 0x8000==load_va);
-        addLoader(/*(all_pages ? "LUNMP000" : "LUNMP001"),*/ "ELFMAINXu", NULL);
+        addLoader("ELFMAINXu", NULL);
     }
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
@@ -533,7 +533,7 @@ PackLinuxElf::addStubEntrySections(Filter const *)
     }
     addLoader("+40,ELFMAINZ", NULL);
     if (hasLoaderSection("ELFMAINZu")) {
-        addLoader(/*(all_pages ? "LUNMP000" : "LUNMP001"),*/ "ELFMAINZu", NULL);
+        addLoader("ELFMAINZu", NULL);
     }
     addLoader("FOLDEXEC", NULL);
 }
@@ -547,6 +547,54 @@ void PackLinuxElf::defineSymbols(Filter const *)
 void PackLinuxElf32::defineSymbols(Filter const *ft)
 {
     PackLinuxElf::defineSymbols(ft);
+
+    // We want to know if compressed data, plus stub, plus a couple pages,
+    // will fit below the uncompressed program in memory.  But we don't
+    // know the final total compressed size yet, so use the uncompressed
+    // size (total over all PT_LOAD32) as an upper bound.
+    unsigned len = 0;  // XXX: 4GB
+    upx_uint32_t lo_va_user = ~0u;  // infinity
+    for (int j= e_phnum; --j>=0; ) {
+        if (PT_LOAD32 == get_te32(&phdri[j].p_type)) {
+            len += (unsigned)get_te32(&phdri[j].p_filesz);
+            upx_uint32_t const va = get_te32(&phdri[j].p_vaddr);
+            if (va < lo_va_user) {
+                lo_va_user = va;
+            }
+        }
+    }
+    lsize = /*getLoaderSize()*/  64 * 1024;  // XXX: upper bound; avoid circularity
+    upx_uint32_t       lo_va_stub = get_te32(&elfout.phdr[0].p_vaddr);
+    upx_uint32_t adrm;
+    unsigned lenm;
+    unsigned lenu;
+    len += (7&-lsize) + lsize;
+    upx_uint32_t my_page_size = 4096u;
+    upx_uint32_t my_page_mask = -my_page_size;
+    is_big = (lo_va_user < (lo_va_stub + len + 2 * my_page_size));
+    if (is_pie || (is_big /*&& ehdri.ET_EXEC==get_te16(&ehdri.e_type)*/)) {
+        // .e_entry is set later by PackLinuxElf32::updateLoader
+        set_te32(    &elfout.ehdr.e_entry,
+            get_te32(&elfout.ehdr.e_entry) + lo_va_user - lo_va_stub);
+        set_te32(&elfout.phdr[0].p_vaddr, lo_va_user);
+        set_te32(&elfout.phdr[0].p_paddr, lo_va_user);
+               lo_va_stub      = lo_va_user;
+        adrm = getbrk(phdri, e_phnum) - lo_va_user;
+        lenm = my_page_size + len;
+        lenu = my_page_size + len;
+    }
+    else {
+        adrm = len;
+        lenm = my_page_size;
+        lenu = my_page_size + len;
+    }
+    adrm = my_page_mask & (~my_page_mask + adrm);  // round up to page boundary
+
+    linker->defineSymbol("LENU", lenu);  // len  for unmap
+    linker->defineSymbol("LENM", lenm);  // len  for map
+    linker->defineSymbol("ADRM", adrm);  // offset from &Elf32_Ehdr
+
+    //linker->dumpSymbols();  // debug
 }
 
 void PackLinuxElf64::defineSymbols(Filter const *ft)
@@ -765,8 +813,9 @@ void PackLinuxElf32mipseb::updateLoader(OutputFile *fo)
 
 void PackLinuxElf32::updateLoader(OutputFile * /*fo*/)
 {
-    set_te32(&elfout.ehdr.e_entry, sz_pack2 +
-        get_te32(&elfout.phdr[0].p_vaddr));
+    unsigned start = linker->getSymbolOffset("_start");
+    unsigned vbase = get_te32(&elfout.phdr[0].p_vaddr);
+    set_te32(&elfout.ehdr.e_entry, start + sz_pack2 + vbase);
 }
 
 void PackLinuxElf64::updateLoader(OutputFile * /*fo*/)
@@ -959,8 +1008,7 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         addLoader("LEXECDYN", NULL);
     }
-    addLoader(/*((opt->o_unix.unmap_all_pages|is_big) ? "LUNMP000" : "LUNMP001"),*/
-        "LEXEC025", NULL);
+    addLoader("LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }
 
@@ -1080,6 +1128,21 @@ PackLinuxElf64::buildLinuxLoader(
     if (r != UPX_E_OK || h.sz_cpr >= h.sz_unc)
         throwInternalError("loader compression failed");
     }
+#if 1  //{  debugging only
+    if (M_IS_LZMA(ph.method)) {
+        ucl_uint tmp_len = h.sz_unc;  // LZMA uses this as EOF
+        unsigned char *tmp = New(unsigned char, tmp_len);
+        memset(tmp, 0, tmp_len);
+        int r = upx_decompress(sizeof(h) + cprLoader, h.sz_cpr, tmp, &tmp_len, h.b_method, NULL);
+        if (r == UPX_E_OUT_OF_MEMORY)
+            throwOutOfMemoryException();
+        printf("\n%d %d: %d %d %d\n", h.b_method, r, h.sz_cpr, h.sz_unc, tmp_len);
+        for (unsigned j=0; j < h.sz_unc; ++j) if (tmp[j]!=uncLoader[j]) {
+            printf("%d: %x %x\n", j, tmp[j], uncLoader[j]);
+        }
+        delete[] tmp;
+    }
+#endif  //}
     unsigned const sz_cpr = h.sz_cpr;
     set_te32(&h.sz_cpr, h.sz_cpr);
     set_te32(&h.sz_unc, h.sz_unc);

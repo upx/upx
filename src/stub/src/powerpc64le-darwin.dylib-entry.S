@@ -230,15 +230,15 @@ movup2:  # descending copy [base, movup2)
         add  f_unc,a1,f_unc  # relocated decompress
         add  f_uini,f_uini,a0
 
-        lwz  t0,-4*3+ _start - decompress(f_unc)  # offset(b_info)
-        add  r_cpr,a1,t0  # &b_info
-        add  r_unc,a0,t0  # &b_info
+        lwz  t1,-4*3+ _start - decompress(f_unc)  # offset(b_info)
+        add  r_cpr,a1,t1  # &b_info
+        add  r_unc,a0,t1  # &b_info
         addi r_unc,r_unc,-sz_l_info -sz_p_info
 
         // skip compressed Mach headers
-        lwz  t0,sz_cpr(r_cpr)
+        lwz  t1,sz_cpr(r_cpr)
         addi r_cpr,r_cpr,sz_b_info
-        add  r_cpr,r_cpr,t0
+        add  r_cpr,r_cpr,t1
 dy_uncpr:
         mr s_cpr,r_cpr
         mr s_unc,r_unc
@@ -278,7 +278,7 @@ dy_done:
 dy_done1:  # escape hatch
         sc  # munmap
         li a0,~0  # failure
-//        lmw t0,0(sp)
+//        lmw r0,0(sp)
         ld  2,2*8-8*2(sp)
         ld  3,3*8-8*2(sp)
         ld  4,4*8-8*2(sp)
@@ -309,17 +309,17 @@ dy_done1:  # escape hatch
         ld  29,29*8-8*2(sp)
         ld  30,30*8-8*2(sp)
         ld  31,31*8-8*2(sp)
-        addi sp,sp,8*(32-t0)
-        mtlr t0  # &continuation in dyld
+        addi sp,sp,8*(32-r0)
+        mtlr r0  # &continuation in dyld
         bctr  # goto user_init_function
 dy_done2:
-        li t0,(dy_done2 - dy_done1)/4
+        li r0,(dy_done2 - dy_done1)/4
         mflr a0
         la a0,dy_done2 - dy_done1(a0)
-        mtctr t0
+        mtctr r0
 dy_done3:
-        lwzu t0,-4(a0)
-        stwu t0,-4(s_unc)
+        lwzu r0,-4(a0)
+        stwu r0,-4(s_unc)
         bdnz+ dy_done3
 
         mtlr s_unc
@@ -330,14 +330,14 @@ dy_done3:
         blr  # goto relocated dy_done1
 
 get4:
-        lbz t0,3(a0)
-        lbz t1,2(a0)
-        rlwimi t0,t1, 8,16,23
-        lbz t1,1(a0)
-        rlwimi t0,t1,16, 8,15
-        lbz t1,0(a0)
-        rlwimi t0,t1,24, 0, 7
-        mr. a0,t0  # set condition codes
+        lbz t1,3(a0)
+        lbz t2,2(a0)
+        rlwimi t1,t2, 8,16,23
+        lbz t2,1(a0)
+        rlwimi t1,t2,16, 8,15
+        lbz t2,0(a0)
+        rlwimi t1,t2,24, 0, 7
+        mr. a0,t1  # set condition codes
         blr
 
 unfilter:

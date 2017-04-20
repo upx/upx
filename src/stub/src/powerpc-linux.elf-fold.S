@@ -44,35 +44,58 @@ sz_l_info= 12
 sz_p_info= 12
 
 OVERHEAD= 2048
-LINKAREA= 6*4  // (sp,pc,cr, xx,yy.zz) save area per calling convention
+
+// http://refspecs.linuxfoundation.org/elf/elfspec_ppc.pdf  p.3-17 (pdf p.33)
+// SZ_LINKA= (2 + max(0, #params - 8))*4  // (sp,lr, arg9,arg10, ... )
+SZ_LINKA= (2 + 2)*4  // (sp,pc, arg9,arg10,... ) and 16-byte aligned
+  ARG9= 2*4
+  ARG10= 3*4
+SZ_FRAME= SZ_LINKA
+
 /* In:
-   r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
+   r31= &decompress; also 2*4+ (char *)&(#bytes which preceed &-8(r31)
+   r30= reserved for &this page
+   r29= reserved for &our_Elf32_Ehdr
    r28= &Elf32_auxv_t
-   r27= actual page size
+   r27= actual page size (4K or 64K)
    r26= o_binfo
+   r25= ADRX
+   r24= ADRU
+   r23= LENU
+   r22= slide
 */
 fold_begin:
-////  teq r0,r0  // debugging
+  teq r0,r0  // debugging
         call L90
 #include "arch/powerpc/32/bxx.S"
+
 L90:
+        li r0,0
+r_reloc= 32 - 1  # use a slot in register save area
+        la a7,SZ_FRAME+r_reloc*4(sp)  // &reloc
+        stw r22,0(a7)  // reloc === slide
+        sub r0,r0,r27  // -pagesize == pagemask
+        mr a7,r27  // pagesize
+        mr a6,r28  // &Elf32_auxv_t
         mflr a5  // &ppcbxx: f_unfilter
-        mr a6,r28  // a6= &Elf32_auxv
-        lwz a1,-8(r31)  // #bytes which preceed -8(r31)
-          rlwinm r30,a5,0,0,31-12  // r30= &this_page
+          and r30,a5,r0  // r30= &this_page
         mr a4,r31  // &decompress: f_expand
-        subf r29,a1,r31  // 8+ (char *)&our_Elf32_Ehdr
-        la a2,-OVERHEAD(sp)  // &Elf32_Ehdr temporary space
-        addi r29,r29,-8  // &our_Elf32_Ehdr
-        sub a1,a1,r26  // total_size
+
+        la sp,-OVERHEAD(sp)  // -SZ_FRAME + &Elf32_Ehdr temporary space
+        lwz a1,-2*4(r31)  // sz_pack2 == #bytes which preceed -2*4(r31)
+        subf r29,a1,r31  // 2*4+ (char *)&our_Elf32_Ehdr
+        addi r29,r29,-2*4  // &our_Elf32_Ehdr
+          stw r29,ARG9(sp)  // reloc
+
         add a0,r29,r26  // &b_info
-        mr  a7,r27  // pagesize
-        addi sp,sp,-(LINKAREA+OVERHEAD)
+        sub a1,a1,r26  // total_size
+        la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
         lwz a3,sz_unc(a0)  // sz_elf_headers
+
+teq r0,r0
         call upx_main  // Out: a0= entry
-        /* entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
-      f_decomp a4, f_unf a5, Elf32_auxv_t *a6, page_size a7)
-*/
+// entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
+//      f_exp a4, f_unf a5, Elf32_auxv_t *a6, page_size a7, reloc ARG9)
         mr r31,a0  // save &entry
 
         mr a0,r29  // &our_Elf32_Ehdr
@@ -80,8 +103,8 @@ L90:
         call munmap  // unmap compressed program; /proc/self/exe disappears
 
         mtlr r31  // entry address
-        lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31
-        lwz r1,  LINKAREA+OVERHEAD(sp)  // restore r1; deallocate space
+        lmw r2,OVERHEAD+SZ_FRAME+2*4-4(sp)  // restore registers r2 thru r31
+        lwz sp,OVERHEAD(sp)  // restore r1; deallocate space
         ret  // enter /lib/ld.so.1
 
 SYS_exit=  1

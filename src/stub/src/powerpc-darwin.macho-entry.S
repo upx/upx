@@ -28,6 +28,7 @@
 
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
+LINKAREA= 6*4
 
   section PPC32BXX
 0:     .int 9f - 0b
@@ -114,25 +115,25 @@ sz_b_info= 12
 
 /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr t0  # -2*4+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
-        # lwz t1,(t0)  # O_BINFO
+        mflr t2  # -(L105-L100)+ &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        # lwz t1,(t2)  # O_BINFO
         # stwu t1,-4(sp)
 
-        lwz lsrc,2*4+sz_cpr(t0); mtctr lsrc  # length to copy (and decompress)
-        lwz ldst,2*4+sz_unc(t0)
-        lbz meth,2*4+b_method(t0)
-        add  dst,lsrc,t0; addi dst,dst,4+sz_b_info
-        add  src,ldst,t0; addi src,src,GAP+64  # defend against prefetch and overlap
+        lwz lsrc,L105-L100+sz_cpr(t2); mtctr lsrc  # length to copy (and decompress)
+        lwz ldst,L105-L100+sz_unc(t2)
+        lbz meth,L105-L100+b_method(t2)
+        add  dst,lsrc,t2; addi dst,dst,4+sz_b_info
+        add  src,ldst,t2; addi src,src,GAP+64  # defend against prefetch and overlap
 movup:  # descending copy moves folded_loader to higher address
         lbzu r0,-1(dst)
         stbu r0,-1(src)
         bdnz+ movup  # typical count is about 0x4cb(1227) bytes
 
         mtctr r31  # &decompress
-        addi dst,t0,GAP  # &unfolded result
+        addi dst,t2,GAP  # &unfolded result
         stw ldst,-4(sp)  # LZMA needs for EOF
         la  ldst,-4(sp)  # &sz_result
-        la sp,-6*4(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
+        la sp,-LINKAREA(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         bctr  # call decompress: branch to counter register, return to link register
 
 main:
@@ -141,7 +142,8 @@ main:
         call unfold
 L100: GAP= 128  # > farthest_prefetch; must match ../p_mach.cpp
         b GAP+L100  # 'isync' has trouble on Macintosh G4?
-        .long O_BINFO
+        .long 0  // O_BINFO
+L105:
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

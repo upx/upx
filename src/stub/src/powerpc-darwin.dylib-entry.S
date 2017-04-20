@@ -153,9 +153,9 @@ SYS_munmap=   73
 SYS_mprotect= 74
 
 main2:
-    //teq r0,r0  // debugging
+    teq r0,r0  // debugging
         stwu r2,-4*(1+ 32-a0)(sp)  # retaddr
-        stmw a0,4*1(sp)
+        stmw r3,4*1(sp)
         mflr f_unc  # f_unc= &decompress
         lwz  t_h, -4*1(f_unc)  # "call main" at _start
         lwz  l_unm,-4*1+ _start - decompress(f_unc)  # 4+ offset(_start)
@@ -200,15 +200,15 @@ movup2:  # descending copy [base, movup2)
         add  f_unc,a1,f_unc  # relocated decompress
         add  f_uini,f_uini,a0
 
-        lwz  t0,-4*3+ _start - decompress(f_unc)  # offset(b_info)
-        add  r_cpr,a1,t0  # &b_info
-        add  r_unc,a0,t0  # &b_info
+        lwz  t2,-4*3+ _start - decompress(f_unc)  # offset(b_info)
+        add  r_cpr,a1,t2  # &b_info
+        add  r_unc,a0,t2  # &b_info
         addi r_unc,r_unc,-sz_l_info -sz_p_info
 
         // skip compressed Mach headers
-        lwz  t0,sz_cpr(r_cpr)
+        lwz  t2,sz_cpr(r_cpr)
         addi r_cpr,r_cpr,sz_b_info
-        add  r_cpr,r_cpr,t0
+        add  r_cpr,r_cpr,t2
 dy_uncpr:
         mr s_cpr,r_cpr
         mr s_unc,r_unc
@@ -242,16 +242,16 @@ dy_done:
 dy_done1:  # escape hatch
         sc  # munmap
           li a0,~0  # failure
-        lmw t0,0(sp); addi sp,sp,4*(32-t0)
-        mtlr t0  # &continuation in dyld
+        lmw r2,4*1(sp); addi sp,sp,4*(32-r2)
+        mtlr t2  # &continuation in dyld
         bctr  # goto user_init_function
 dy_done2:
-        li t0,(dy_done2 - dy_done1)/4
+        li t2,(dy_done2 - dy_done1)/4
         mflr a0; la a0,dy_done2 - dy_done1(a0)
-        mtctr t0
+        mtctr t2
 dy_done3:
-        lwzu t0,-4(a0)
-        stwu t0,-4(s_unc)
+        lwzu t2,-4(a0)
+        stwu t2,-4(s_unc)
         bdnz+ dy_done3
 
         mtlr s_unc
@@ -262,11 +262,11 @@ dy_done3:
         blr  # goto relocated dy_done1
 
 get4:
-        lbz t0,3(a0)
-        lbz t1,2(a0); rlwimi t0,t1, 8,16,23
-        lbz t1,1(a0); rlwimi t0,t1,16, 8,15
-        lbz t1,0(a0); rlwimi t0,t1,24, 0, 7
-        mr. a0,t0  # set condition codes
+        lbz t2,3(a0)
+        lbz t1,2(a0); rlwimi t2,t1, 8,16,23
+        lbz t1,1(a0); rlwimi t2,t1,16, 8,15
+        lbz t1,0(a0); rlwimi t2,t1,24, 0, 7
+        mr. a0,t2  # set condition codes
         blr
 
 unfilter:

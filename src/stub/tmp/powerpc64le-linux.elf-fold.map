@@ -9,36 +9,36 @@ Linker script and memory map
 TARGET(elf64-powerpcle)
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0x80c
+.text           0x00000000001000bc      0x810
  *(.text)
- .text          0x00000000001000bc      0x1ac tmp/powerpc64le-linux.elf-fold.o
-                0x000000000010021c                mmap
-                0x0000000000100230                exit
-                0x0000000000100238                read
-                0x0000000000100240                open
-                0x0000000000100248                close
-                0x0000000000100250                mprotect
-                0x0000000000100258                munmap
-                0x0000000000100260                brk
- .text          0x0000000000100268      0x660 tmp/powerpc64le-linux.elf-main.o
+ .text          0x00000000001000bc      0x1b0 tmp/powerpc64le-linux.elf-fold.o
+                0x0000000000100220                exit
+                0x0000000000100228                brk
+                0x0000000000100230                close
+                0x0000000000100238                open
+                0x0000000000100240                munmap
+                0x0000000000100248                mprotect
+                0x0000000000100250                read
+                0x0000000000100258                mmap
+ .text          0x000000000010026c      0x660 tmp/powerpc64le-linux.elf-main.o
  *(.data)
- .data          0x00000000001008c8        0x0 tmp/powerpc64le-linux.elf-fold.o
- .data          0x00000000001008c8        0x0 tmp/powerpc64le-linux.elf-main.o
+ .data          0x00000000001008cc        0x0 tmp/powerpc64le-linux.elf-fold.o
+ .data          0x00000000001008cc        0x0 tmp/powerpc64le-linux.elf-main.o
 
-.sfpr           0x00000000001008c8       0xa4
- .sfpr          0x00000000001008c8       0xa4 linker stubs
-                0x00000000001008c8                _savegpr0_14
-                0x00000000001008f8                _savegpr0_26
-                0x0000000000100900                _savegpr0_28
-                0x0000000000100918                _restgpr0_14
-                0x0000000000100948                _restgpr0_26
-                0x0000000000100950                _restgpr0_28
+.sfpr           0x00000000001008cc       0xa4
+ .sfpr          0x00000000001008cc       0xa4 linker stubs
+                0x00000000001008cc                _savegpr0_14
+                0x00000000001008fc                _savegpr0_26
+                0x0000000000100904                _savegpr0_28
+                0x000000000010091c                _restgpr0_14
+                0x000000000010094c                _restgpr0_26
+                0x0000000000100954                _restgpr0_28
 
 .glink          0x0000000000100970        0x0
  .glink         0x0000000000100970        0x0 linker stubs
 
-.eh_frame       0x000000000010096c        0x0
- .eh_frame      0x000000000010096c        0x0 linker stubs
+.eh_frame       0x0000000000100970        0x0
+ .eh_frame      0x0000000000100970        0x0 linker stubs
 
 .rela.dyn       0x0000000000100970        0x0
  .rela.iplt     0x0000000000100970        0x0 linker stubs
