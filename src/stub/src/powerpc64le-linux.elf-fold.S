@@ -50,11 +50,11 @@ sz_p_info= 12
 OVERHEAD= 2048
 
 // http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#STACK
-SZ_LINK= 6*8  // (sp,cr,lr, tmp.xlc,tmp.ld,save.toc)
-SZ_PSAV= 8*8  // for arg9, arg10, ...; and for spilling a0-a7 if necessary
+//SZ_LINK= 6*8  // (sp,cr,lr, tmp.xlc,tmp.ld,save.toc)
+//SZ_PSAV= 8*8  // for arg9, arg10, ...; and for spilling a0-a7 if necessary
 // The parameter save area shall be allocated by the caller.
 // It shall be doubleword aligned, and shall be at least 8 doublewords in length.
-SZ_FRAME= SZ_LINK + SZ_PSAV
+//SZ_FRAME= SZ_LINK + SZ_PSAV  // in ppc_regs.h
 
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)

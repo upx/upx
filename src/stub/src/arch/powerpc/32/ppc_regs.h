@@ -36,6 +36,7 @@
 
 /* Stack pointer */
 #define sp 1
+SZ_FRAME= 6*4  // (sp,cr,lr, xx,yy,zz) save area per calling convention
 
 /* Subroutine arguments; not saved by callee */
 #define a0 3

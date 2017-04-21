@@ -35,9 +35,6 @@
 
 #include "arch/powerpc/64le/macros.S"
 #include "arch/powerpc/64le/ppc_regs.h"
-SZ_LINK= 6*8
-SZ_PSAV= 8*8
-SZ_FRAME= SZ_LINK + SZ_PSAV
 
 sz_b_info= 12
   sz_unc= 0
