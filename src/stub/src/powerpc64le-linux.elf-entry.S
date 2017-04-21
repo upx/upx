@@ -171,8 +171,8 @@ unfold:
         mtlr   a0  // &continuation
         lwz lsrc,sz_cpr(r30)        // size of compressed
         addi src,r30,sz_b_info
-        la sp,-6*8(sp)  // (sp,pc,cr, xx,yy,zz) save area per calling convention
-        bctr  // goto decomrpess; return to link register (mmap'ed page)
+        stdu sp,-SZ_FRAME(sp)  // ABI calling convention (for lzma compiled by gcc)
+        bctr  // goto decompress; return to link register (mmap'ed page)
 
 // Example code at entrypoint of C-language subroutine:
 //      mflr    r0  # r0= return address

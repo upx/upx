@@ -44,7 +44,6 @@ sz_l_info= 12
 sz_p_info= 12
 
 OVERHEAD= 2048
-LINKAREA= 6*4  // (sp,pc,cr, xx,yy.zz) save area per calling convention
 /* In:
    r31= &decompress; also 8+ (char *)&(#bytes which preceed &-8(r31)
    r28= &Elf32_auxv_t
@@ -69,7 +68,7 @@ L90:
         sub a1,a1,a3
         add a0,r29,a3  // &{l_info; p_info; b_info}
         mr  a7,r27  // pagesize
-        addi sp,sp,-(LINKAREA+OVERHEAD)
+        stwu sp,-(SZ_FRAME+OVERHEAD)(sp)
         lwz a3,sz_unc+sz_p_info+sz_l_info(a0)  // sz_elf_headers
         call upx_main  // Out: a0= entry
         /* entry= upx_main(l_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
@@ -82,8 +81,8 @@ L90:
         call munmap  // unmap compressed program; /proc/self/exe disappears
 
         mtlr r31  // entry address
-        lmw r2,4+LINKAREA+OVERHEAD(sp)  // restore registers r2 thru r31
-        lwz r1,  LINKAREA+OVERHEAD(sp)  // restore r1; deallocate space
+        lmw r2,4+SZ_FRAME+OVERHEAD(sp)  // restore registers r2 thru r31
+        lwz r1,  SZ_FRAME+OVERHEAD(sp)  // restore r1; deallocate space
         ret  // enter /lib/ld.so.1
 
 SYS_exit=  1

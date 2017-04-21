@@ -36,6 +36,7 @@
 
 /* Stack pointer */
 #define sp 1
+SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, xx,yy,zz) + spill area for a0-a7
 
 /* Subroutine arguments; not saved by callee */
 #define a0 3
