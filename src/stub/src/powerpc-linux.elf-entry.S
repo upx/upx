@@ -158,6 +158,8 @@ unfold:
         lwz r24,-2*4(r31)  // sz_pack2
         lwz r26,LOBINFO - LrUNF(r30)  // O_BINFO
         lwz r23,LLENU - LrUNF(r30)
+        addi r24,r24,2*4
+        sub r24,r31,r24  // ADRU
 
         la a0,SZ_FRAME+32*4(sp)
         call zfind  // a0= envp
@@ -193,11 +195,8 @@ sz_auxv= 2*4
         li r22,0  // slide= 0
         cmpl cr0,r0,r27; ble L80  // only 1 page; no move required
 
-        addi r24,r24,2*4
-        sub r24,r31,r24  // ADRU
         sub r22,a0,r24  // (ADRM - ADRU) == relocation amount
         add r31,r31,r22  // update &decompress
-        add r25,r25,r22  // update ADRX
         add r24,r24,r22  // update ADRU
         addi r0,r0,7  // roundup (8, )
           addi a1,a1,-4  // prepare for lwu
@@ -232,7 +231,7 @@ L80:
 //      blr  # goto return address
 
 main:
-  teq r0,r0  // debugging
+  ////teq r0,r0  // debugging
         stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), save r1
         stmw r2,  SZ_FRAME+2*4-4(sp) // save registers r2 thru r31
         mflr r31  // &decompress

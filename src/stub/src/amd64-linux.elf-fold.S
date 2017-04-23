@@ -30,8 +30,10 @@
 #include "arch/amd64/macros.S"
 #include "arch/amd64/regs.h"
 
-PAGE_SHIFT= 12
-PAGE_MASK= 0xffffffffffffffff<<PAGE_SHIFT
+PATH_MAX= 4096  // /usr/include/linux/limits.h
+PAGE_SHIFT= 12  // /usr/include/sys/user.h
+PAGE_SIZE=  1 << PAGE_SHIFT
+PAGE_MASK= ~0 << PAGE_SHIFT
 
 sz_b_info= 12
   sz_unc= 0
@@ -78,7 +80,7 @@ L90:
         pop %rbx  # L90a
         lea L90b - L90a(%rbx),%rax; push %rax  # &amdbxx: f_unfilter
         mov %rsp,%rsi
-        sub $3*4096,%rsp
+        sub $2*PAGE_SIZE + PATH_MAX,%rsp
         push %rsp; pop %rdi
         push $7; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,LENU,ADRU,slide,argc
 0:
@@ -95,7 +97,7 @@ L90:
         sub %r15,%r12  # -length of auxv
 
         push $ __NR_readlink
-        movl $-1+ 4096,%arg3l # buflen
+        movl $-1+ PATH_MAX,%arg3l # buflen
         push %rdi; pop %arg2  #buffer
         push %rbx; pop %arg1  # "/proc/self/exe"
         pop %rax; syscall; testl %eax,%eax; jns 0f
@@ -111,7 +113,7 @@ L90:
         rep movsb  # slide up
         sub $3,%rdi; movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),(%rdi)  # env var name
         mov %rdi,(%r14)  # new_env[0]
-        shr $12,%rdi; dec %rdi; shl $12,%rdi; mov %rdi,%r14  # &page
+        shr $PAGE_SHIFT,%rdi; dec %rdi; shl $PAGE_SHIFT,%rdi; mov %rdi,%r14  # &page
 
         push $__NR_open
         sub %arg2l,%arg2l  # O_RDONLY
@@ -123,7 +125,7 @@ L90:
         mov %ebx,%arg5l
         push $MAP_PRIVATE|MAP_FIXED; pop %sys4  # BEWARE:  %sys4
         push $PROT_READ; pop %arg3
-        mov $4096,%arg2l
+        mov $PAGE_SIZE,%arg2l
         push %r14; pop %arg1
         pop %rax; syscall
 
