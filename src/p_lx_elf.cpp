@@ -1602,7 +1602,8 @@ bool PackLinuxElf32::canPack()
         ) {
             unsigned const symnum = get_te32(&jmprel->r_info) >> 8;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -1792,7 +1793,8 @@ PackLinuxElf64ppcle::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -1806,7 +1808,8 @@ PackLinuxElf64ppcle::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -1986,7 +1989,8 @@ PackLinuxElf64amd::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -2000,7 +2004,8 @@ PackLinuxElf64amd::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -2181,7 +2186,8 @@ PackLinuxElf64arm::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
@@ -2195,7 +2201,8 @@ PackLinuxElf64arm::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main"))
                 goto proceed;
