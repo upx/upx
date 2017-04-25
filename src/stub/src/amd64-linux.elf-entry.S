@@ -302,7 +302,8 @@ main:
         lea -4-(ret_main - _start)(%rbp),%rax  // &sz_pack2
         movl (%rax),%r15d  // sz_pack2: length before stub
         subq %r15,%rax  // ADRU= &Elf64_Ehdr of this stub (ET_DYN)
-        imul $ sz_Phdr,e_phnum(%rax),%edx  // sz_phdrs
+        movzwl e_phnum(%rax),%edx
+        imul $ sz_Phdr,%edx  // sz_phdrs
         addl $ sz_Ehdr + sz_l_info + sz_p_info,%edx  // sz_elf_hdrs
         subl %edx,%r15d  // LENX for upx_main
         lea (%rax,%rdx),%rcx  // ADRX= &b_info of user program for upx_main
