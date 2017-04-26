@@ -3610,19 +3610,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
               elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
-    // rewrite Elf header
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        unsigned const base= get_te32(&elfout.phdr[0].p_vaddr);
-        set_te16(&elfout.ehdr.e_type, Elf32_Ehdr::ET_DYN);
-        set_te16(&elfout.ehdr.e_phnum, 1);
-        set_te32(    &elfout.ehdr.e_entry,
-            get_te32(&elfout.ehdr.e_entry) -  base);
-        set_te32(&elfout.phdr[0].p_vaddr, get_te32(&elfout.phdr[0].p_vaddr) - base);
-        set_te32(&elfout.phdr[0].p_paddr, get_te32(&elfout.phdr[0].p_paddr) - base);
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
-    }
-
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
         fo->rewrite(&ehdri, sizeof(ehdri));
@@ -3740,19 +3727,6 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
     set_te64(&elfout.phdr[0].p_filesz, sz_pack2 + lsize);
               elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
-
-    // rewrite Elf header
-    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        upx_uint64_t const base= get_te64(&elfout.phdr[0].p_vaddr);
-        set_te16(&elfout.ehdr.e_type, Elf64_Ehdr::ET_DYN);
-        set_te16(&elfout.ehdr.e_phnum, 1);
-        set_te64(    &elfout.ehdr.e_entry,
-            get_te64(&elfout.ehdr.e_entry) -  base);
-        set_te64(&elfout.phdr[0].p_vaddr, get_te64(&elfout.phdr[0].p_vaddr) - base);
-        set_te64(&elfout.phdr[0].p_paddr, get_te64(&elfout.phdr[0].p_paddr) - base);
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf64_Phdr::PF_W;
-    }
 
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library

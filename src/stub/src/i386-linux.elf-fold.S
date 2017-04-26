@@ -139,7 +139,8 @@ L55:
 L53:
         push eax  // dynbase
 
-        imul eax,[e_phnum + ebx],szElf32_Phdr  // sz_Phdrs
+        movzwl eax,[e_phnum + ebx]
+        imul eax,szElf32_Phdr  // sz_Phdrs
         lea eax, [szElf32_Ehdr + eax + szl_info + szp_info + ebx]  // 1st &b_info
         mov ebx, [   eax]  // length of uncompressed ELF headers
         mov ecx, [4+ eax]  // length of   compressed ELF headers
