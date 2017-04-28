@@ -323,9 +323,9 @@ void *upx_main(
     unpackExtent(&xi, &xo, f_decompress, 0);  // never filtered?
 
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, (unsigned ) AT_PHDR  , (long )(1+(Elf64_Ehdr *)phdr->p_vaddr));
-    auxv_up(av, (unsigned ) AT_PHNUM , ehdr->e_phnum);
-    auxv_up(av, (unsigned ) AT_ENTRY , (unsigned ) ehdr->e_entry);
+    auxv_up(av, (unsigned)AT_PHDR  , (long )(1+(Elf64_Ehdr *)phdr->p_vaddr));
+    auxv_up(av, (unsigned)AT_PHNUM , ehdr->e_phnum);
+    auxv_up(av, (unsigned)AT_ENTRY , (unsigned ) ehdr->e_entry);
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
@@ -344,7 +344,8 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &reloc);
+        auxv_up(av, (unsigned)AT_BASE, reloc);
         close(fdi);
     }
   }

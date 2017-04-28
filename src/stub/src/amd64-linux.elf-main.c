@@ -344,7 +344,7 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
     entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
-    auxv_up(av, AT_ENTRY , entry);
+    auxv_up(av, AT_ENTRY, entry);
 
   { // Map PT_INTERP program interpreter
     int j;
@@ -358,7 +358,8 @@ upx_main(  // returns entry address
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &reloc);
+        auxv_up(av, AT_BASE, reloc);  // musl
         close(fdi);
     }
   }
