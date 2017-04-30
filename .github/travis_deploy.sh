@@ -47,7 +47,13 @@ esac
 # get $rev, $branch and $git_user
 cd / && cd $upx_SRCDIR || exit 1
 rev=$(git rev-parse --verify HEAD)
-timestamp=$(git log -n1 --format='%at' HEAD)
+if [[ "$branch" == gitlab* ]]; then
+    if git fetch -v origin devel; then
+        git branch -a -v
+        rev=$(git merge-base origin/devel $rev || echo $rev)
+    fi
+fi
+timestamp=$(git log -n1 --format='%at' $rev)
 date=$(TZ=UTC0 date -d "@$timestamp" '+%Y%m%d-%H%M%S')
 #branch="$branch-$date-${rev:0:6}"
 # make the branch name a little bit shorter so that it looks nice on GitHub
@@ -116,8 +122,8 @@ done
 # ************************************************************************/
 
 new_branch=0
-if ! git clone -b $branch --single-branch https://github.com/upx/upx-automatic-builds.git; then
-    git  clone -b master  --single-branch https://github.com/upx/upx-automatic-builds.git
+if ! git clone -b "$branch" --single-branch https://github.com/upx/upx-automatic-builds.git; then
+    git  clone -b master    --single-branch https://github.com/upx/upx-automatic-builds.git
     new_branch=1
 fi
 cd upx-automatic-builds || exit 1
@@ -125,7 +131,7 @@ chmod 700 .git
 git config user.name "$git_user"
 git config user.email "none@none"
 if [[ $new_branch == 1 ]]; then
-    git checkout --orphan $branch
+    git checkout --orphan "$branch"
     git reset --hard || true
 fi
 git ls-files -v
@@ -169,12 +175,12 @@ while true; do
         exit 1
     fi
     if [[ $new_branch == 1 ]]; then
-        if git push -u $ssh_repo $branch; then break; fi
+        if git push -u $ssh_repo "$branch"; then break; fi
     else
-        if git push    $ssh_repo $branch; then break; fi
+        if git push    $ssh_repo "$branch"; then break; fi
     fi
     git branch -a -v
-    git fetch -v origin $branch
+    git fetch -v origin "$branch"
     git branch -a -v
     git rebase FETCH_HEAD
     git branch -a -v
