@@ -33,8 +33,9 @@
 #include "arch/arm/v4a/macros.S"
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
-sz_Elf32_Ehdr = 13*4
 sz_Elf32_Phdr =  8*4
+sz_Elf32_Ehdr = 13*4
+  e_phnum= 16 + 2*2 + 5*4 + 2*2
 
 sz_b_info= 12
   sz_unc= 0
@@ -91,23 +92,25 @@ _start: .globl _start
         adr r12,start_params -4  // &sz_pack2
         ldmia r12,{r1,r2, r10,r11,lr}  // r1= sz_pack2; r2= ADRM; r10= LENF;
                                        //r11= CPR0; lr= MFLG
+        mov r0,r2  // ADRM
         add r11,r11,r12  // cpr0
         add r10,r10,r12  // end_decompress
         ldr r3,[r11,# sz_unc]
         sub r9,r12,r1  // &our_Elf32_Ehdr
+        mov r2,r1  // sz_pack2
         add r1,r1,r3  // sz_pack2 + cpr0.sz_unc
-        mov r0,r2  // ADRM
         add r1,r1,# PAGE_SIZE
   section LUNMP000
         mov r3,#0<<12  // 0-page crumb
   section LUNMP001
         mov r3,#1<<12  // 1-page crumb
   section ELFMAINXu
-        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,crumb,MFLG
+        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,sz_pack2{later sz_unc},crumb,MFLG
 SP_MFLG= 4*4
 D_sz_unc=2*4  // stack displacement to sz_unc
         mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
         ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
+        mov r12,r9  // &our_Elf32_Ehdr
         mov r5,#0  // offset= 0
         mvn r4,#0  // fd= -1; cater to *BSD for fd when MAP_ANON
         orr r3,r3,#MAP_FIXED
@@ -144,9 +147,13 @@ copy:
         swi __ARM_NR_cacheflush
 #endif  /*}*/
 
-        ldr r9,[r12]  // sz_pack2
-        sub r9,r9,#sz_Elf32_Ehdr + 2*sz_Elf32_Phdr + sz_l_info + sz_p_info
-        sub r10,r12,r9  // &b_info
+        ldrh r10,[r12,#e_phnum]
+        mov r0,#sz_Elf32_Phdr
+        ldr r9,[sp,#D_sz_unc]  // sz_pack2
+        mul r10,r0,r10
+        add r10,r10,#sz_Elf32_Ehdr + sz_l_info + sz_p_info  // O_BINFO
+        sub r9,r9,r10  // total compressed size
+        add r10,r10,r12  // + &our_Elf32_Ehdr
         add r10,r10,r4  // relocated &b_info
 
         ldr r0,[r11,# b_method ]  // 5th param (whole word: endian issues!)
