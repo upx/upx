@@ -31,8 +31,9 @@
 
 #include "arch/arm64/v8/macros.S"
 
-sz_Elf64_Ehdr= 64
 sz_Elf64_Phdr= 56
+sz_Elf64_Ehdr= 64
+e_phnum= 16 + 2*2 + 4 + 3*8 + 4 + 2*2
 
 sz_b_info= 12
   sz_unc= 0
@@ -69,6 +70,7 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
         .xword ADRM  // dst  for map
 _start: .globl _start
+////    brk #0  // DEBUG
 /* Get some pages: enough
    to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
    the brk() of the _un_compressed program.  The address is pre-calculated
@@ -86,14 +88,14 @@ _start: .globl _start
 #endif  /*}*/
 
         adr x12,start_params -4  // &sz_pack2
-        ldp w1,w10,[x12]  // w1= sz_pack2; w10= LENF
+        ldp w29,w10,[x12]  // w29= sz_pack2; w10= LENF
         ldp w11,w13,[x12,#2*4]  // w11= CPRO; w13= MFLG
         add x11,x11,x12  // cpr0
+        ldr x0,[x12,#4*4]  // ADRM
         add x10,x10,x12  // end_decompress
         ldr w3,[x11,# sz_unc]
-        sub x9,x12,x1  // &our_Elf64_Ehdr
-        add w1,w1,w3  // sz_pack2 + cpr0.sz_unc
-        ldr x0,[x12,#4*4]  // ADRM
+        sub x12,x12,w29,uxtw  // &our_Elf64_Ehdr
+        add w1,w29,w3  // sz_pack2 + cpr0.sz_unc
         add x1,x1,# PAGE_SIZE
   section LUNMP000
         // unused
@@ -113,6 +115,7 @@ D_sz_unc=2*8  // stack displacement to sz_unc
 #endif  /*}*/
         cmn x0,#4096
         bcs msg_SELinux
+        mov x9,x12  // &our_Elf64_Ehdr
 copy_cl:  // copy decompressor and folded code
           add x5,x0,#64;  // FIXME(memcheck) dc zva,x5  // clear FOLLOWING 64-byte line
         ldp x1,x2,[x9],#2*8
@@ -130,14 +133,17 @@ copy_cl:  // copy decompressor and folded code
 
         sub x4,x0,x9  // relocation amount
         ldr w1,[sp,#SP_MFLG]
-        adr x15,f_decompress
         str w1,[x0],#4  // MFLG at -4+ fold_begin
+        adr x15,f_decompress
         mov lr,x0  // dst for unfolded code
         add x15,x15,x4  // relocated f_decompress
 
-        ldr w9,[x12]  // sz_pack2
-        sub w9,w9,#sz_Elf64_Ehdr + 2*sz_Elf64_Phdr + sz_l_info + sz_p_info
-        sub x10,x12,x9  // &b_info
+        ldrh w9,[x12,#e_phnum]
+        mov w10,#sz_Elf64_Phdr
+        mul w10,w10,w9
+        add w10,w10,#sz_Elf64_Ehdr + sz_l_info + sz_p_info
+        add x10,x12,w10,uxtw  // &b_info
+        sub w9,w29,w10  // total compressed size
         add x10,x10,x4  // relocated &b_info
 
         ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)

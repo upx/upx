@@ -62,6 +62,7 @@ PAGE_SIZE = -(~0<<PAGE_SHIFT)
 #define MAX_ELF_HDR 512
 
 fold_begin:
+////    brk #0  // DEBUG
 /* In:
    r15= f_decompress
    r10= &b_info of first compressed block (after move)
