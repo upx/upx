@@ -104,8 +104,8 @@ PackMachBase<T>::PackMachBase(InputFile *f, unsigned cputype, unsigned filetype,
         unsigned flavor, unsigned count, unsigned size) :
     super(f), my_cputype(cputype), my_filetype(filetype), my_thread_flavor(flavor),
     my_thread_state_word_count(count), my_thread_command_size(size),
-    n_segment(0), rawmseg(NULL), msegcmd(NULL), o_routines_cmd(0),
-    prev_init_address(0), pagezero_vmsize(0)
+    n_segment(0), rawmseg(NULL), msegcmd(NULL), o__mod_init_func(0),
+    prev_mod_init_func(0), pagezero_vmsize(0)
 {
     MachClass::compileTimeAssertions();
     bele = N_BELE_CTP::getRTP((const BeLePolicy*) NULL);
@@ -354,13 +354,13 @@ void PackMachI386::addStubEntrySections(Filter const *ft)
 
 void PackMachAMD64::addStubEntrySections(Filter const * /*ft*/)
 {
-    if (my_filetype!=Mach_header::MH_EXECUTE) {
+    if (my_filetype==Mach_header::MH_DYLIB) {
         addLoader("MACHMAINX", NULL);
     }
     else {
         addLoader("AMD64BXX", NULL);
+        addLoader("MACH_UNC", NULL);
     }
-    addLoader("MACH_UNC", NULL);
    //addLoader(getDecompressorSections(), NULL);
     addLoader(
         ( M_IS_NRV2E(ph.method) ? "NRV_HEAD,NRV2E,NRV_TAIL"
@@ -876,10 +876,15 @@ void PackMachBase<T>::pack4dylib(  // append PackHeader
         (Mach_segment_command const *)(mhdri.sizeofcmds + (char const *)seg);
     for ( ; seg < endseg; seg = (Mach_segment_command const *)(
             seg->cmdsize + (char const *)seg )
-    ) switch (~Mach_segment_command::LC_REQ_DYLD & seg->cmd) {
+    ) switch (seg->cmd & ~Mach_segment_command::LC_REQ_DYLD) {
     default:  // unknown if any file offset field must slide
         printf("Unrecognized Macho cmd  offset=0x%lx  cmd=0x%lx  size=0x%lx\n", (unsigned long)((const char *)seg - (const char *)rawmseg), (unsigned long)seg->cmd, (unsigned long)seg->cmdsize);
         // fall through
+    case Mach_segment_command::LC_DYLD_INFO_ONLY & ~Mach_segment_command::LC_REQ_DYLD:
+    case Mach_segment_command::LC_VERSION_MIN_MACOSX:
+    case Mach_segment_command::LC_FUNCTION_STARTS:  // points into __LINKEDIT
+    case Mach_segment_command::LC_DATA_IN_CODE:  // points into __LINKEDIT
+    case Mach_segment_command::LC_SOURCE_VERSION:
     case Mach_segment_command::LC_THREAD:
     case Mach_segment_command::LC_UNIXTHREAD:
     case Mach_segment_command::LC_LOAD_DYLIB:
@@ -1092,7 +1097,7 @@ void PackDylibI386::pack3(OutputFile *fo, Filter &ft)  // append loader
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
-    disp = prev_init_address;
+    disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
 
     disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
@@ -1119,7 +1124,7 @@ void PackDylibAMD64::pack3(OutputFile *fo, Filter &ft)  // append loader
     disp64= len;
     fo->write(&disp64, sizeof(disp64));  // __mod_init_func
 
-    disp = prev_init_address;
+    disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
 
     disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
@@ -1142,7 +1147,7 @@ void PackDylibPPC32::pack3(OutputFile *fo, Filter &ft)  // append loader
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
-    disp = prev_init_address;
+    disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
 
     disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
@@ -1165,7 +1170,7 @@ void PackDylibPPC64LE::pack3(OutputFile *fo, Filter &ft)  // append loader
     fo->write(&zero, 3& (0u-len));
     len += (3& (0u-len)) + 4*sizeof(disp);
 
-    disp = prev_init_address;
+    disp = prev_mod_init_func;
     fo->write(&disp, sizeof(disp));  // user .init_address
 
     disp = sizeof(mhdro) + mhdro.sizeofcmds + sizeof(l_info) + sizeof(p_info);
@@ -1824,7 +1829,6 @@ template <class T>
 bool PackMachBase<T>::canPack()
 {
     unsigned const lc_seg = lc_segment[sizeof(Addr)>>3];
-    unsigned const lc_rout = lc_routines[sizeof(Addr)>>3];
     fi->seek(0, SEEK_SET);
     fi->readx(&mhdri, sizeof(mhdri));
 
@@ -1835,16 +1839,36 @@ bool PackMachBase<T>::canPack()
         return false;
     my_cpusubtype = mhdri.cpusubtype;
 
-    rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
+    unsigned const sz_mhcmds = (unsigned)mhdri.sizeofcmds;
+    if (16384 < sz_mhcmds) { // somewhat arbitrary, but amd64-darwin.macho-upxmain.c
+        throwCantPack("16384 < Mach_header.sizeofcmds");
+    }
+    rawmseg = (Mach_segment_command *)new char[sz_mhcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
     unsigned const ncmds = mhdri.ncmds;
+    if (256 < ncmds) { // arbitrary, but guard against garbage
+        throwCantPack("256 < Mach_header.ncmds");
+    }
     msegcmd = new Mach_segment_command[ncmds];
     unsigned char const *ptr = (unsigned char const *)rawmseg;
     for (unsigned j= 0; j < ncmds; ++j) {
         Mach_segment_command const *segptr = (Mach_segment_command const *)ptr;
         if (lc_seg == segptr->cmd) {
             msegcmd[j] = *segptr;
+            if (!strcmp("__DATA", segptr->segname)) {
+                for (Mach_section_command const *secptr = (Mach_section_command const *)(1+ segptr);
+                    ((char const *)secptr - (char const *)segptr) < segptr->cmdsize;
+                    ++secptr
+                ) {
+                    if (sizeof(Addr) == secptr->size
+                    && !strcmp("__mod_init_func", secptr->sectname)) {
+                        o__mod_init_func = secptr->offset;
+                        fi->seek(o__mod_init_func, SEEK_SET);
+                        fi->readx(&prev_mod_init_func, sizeof(Addr));
+                    }
+                }
+            }
         }
         else {
             memcpy(&msegcmd[j], ptr, 2*sizeof(unsigned)); // cmd and size
@@ -1867,14 +1891,9 @@ bool PackMachBase<T>::canPack()
             memcpy(&cmdSRCVER, ptr, sizeof(cmdSRCVER));
         } break;
         }
-        if (((Mach_segment_command const *)ptr)->cmd == lc_rout) {
-            o_routines_cmd = (const char *)ptr - (const char *)rawmseg;
-            prev_init_address =
-                ((Mach_routines_command const *)ptr)->init_address;
-        }
         ptr += (unsigned) ((const Mach_segment_command *)ptr)->cmdsize;
     }
-    if (Mach_header::MH_DYLIB==my_filetype && 0==o_routines_cmd) {
+    if (Mach_header::MH_DYLIB==my_filetype && 0==o__mod_init_func) {
         infoWarning("missing -init function");
         return false;
     }

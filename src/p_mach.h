@@ -853,8 +853,8 @@ protected:
     upx_byte const *stub_main;
     Mach_segment_command *rawmseg;  // as input, with sections
     Mach_segment_command *msegcmd;  // LC_SEGMENT first, without sections
-    unsigned o_routines_cmd;  // file offset to LC_ROUINTES
-    upx_uint64_t prev_init_address;
+    unsigned o__mod_init_func;  // file offset to __DATA.__mod_init_func Mach_section_command
+    upx_uint64_t prev_mod_init_func;
     upx_uint64_t pagezero_vmsize;
     Mach_header mhdri;
 
