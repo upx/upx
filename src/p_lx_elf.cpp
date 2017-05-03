@@ -777,7 +777,7 @@ PackLinuxElf64ppcle::PackLinuxElf64ppcle(InputFile *f)
     e_machine = Elf64_Ehdr::EM_PPC64;
     ei_class  = Elf64_Ehdr::ELFCLASS64;
     ei_data   = Elf64_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
+    ei_osabi  = Elf64_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf64ppcle::~PackLinuxElf64ppcle()
@@ -2589,7 +2589,16 @@ PackLinuxElf64::generateElfHdr(
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
-    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ei_osabi;
+    if (Elf64_Ehdr::ELFOSABI_LINUX == ei_osabi  // proper
+    &&  Elf64_Ehdr::ELFOSABI_NONE  == ehdri.e_ident[Elf64_Ehdr::EI_OSABI]  // sloppy
+    ) { // propagate sloppiness so that decompression does not complain
+        h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ehdri.e_ident[Elf64_Ehdr::EI_OSABI];
+    }
+    if (Elf64_Ehdr::EM_PPC64 == ehdri.e_machine) {
+        h3->ehdr.e_flags = ehdri.e_flags;  // "0x1, abiv1" vs "0x2, abiv2"
+    }
+
     unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
 
     assert(get_te32(&h2->ehdr.e_phoff)     == sizeof(Elf64_Ehdr));
@@ -3804,11 +3813,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     if (ehdr->e_type   !=ehdri.e_type
     ||  ehdr->e_machine!=ehdri.e_machine
     ||  ehdr->e_version!=ehdri.e_version
-    ||  ehdr->e_flags  !=ehdri.e_flags
+        // less strict for EM_PPC64 to workaround earlier bug
+    ||  !( ehdr->e_flags==ehdri.e_flags
+        || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine))
     ||  ehdr->e_ehsize !=ehdri.e_ehsize
         // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
-    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI))
+    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
         throwCantUnpack("ElfXX_Ehdr corrupted");
+    }
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);
