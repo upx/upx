@@ -144,20 +144,18 @@ inline void set_le24(void *p, unsigned v)
 
 inline unsigned get_le26(const void *p)
 {
-#if defined(ACC_UA_GET_LE26)
-    return ACC_UA_GET_LE26(p);
-#else
-    return acc_ua_get_le26(p);
-#endif
+    const acc_hbyte_p b = ACC_CCAST(const acc_hbyte_p, p);
+    return ACC_ICONV(acc_uint32l_t, b[0]       ) | (  ACC_ICONV(acc_uint32l_t, b[1])     <<  8) |
+          (ACC_ICONV(acc_uint32l_t, b[2]) << 16) | (((ACC_ICONV(acc_uint32l_t, b[3]) & 3)<< 24));
 }
 
 inline void set_le26(void *p, unsigned v)
 {
-#if defined(ACC_UA_SET_LE26)
-    ACC_UA_SET_LE26(p, v);
-#else
-    acc_ua_set_le26(p, v);
-#endif
+    acc_hbyte_p b = ACC_PCAST(acc_hbyte_p, p);
+    b[0] = ACC_ICONV(unsigned char, (v >>  0) & 0xff);
+    b[1] = ACC_ICONV(unsigned char, (v >>  8) & 0xff);
+    b[2] = ACC_ICONV(unsigned char, (v >> 16) & 0xff);
+    b[3] = ACC_ICONV(unsigned char, (v >> 24) & 0x03) | (0xFC & b[3]);
 }
 
 inline unsigned get_le32(const void *p)
