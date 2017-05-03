@@ -56,7 +56,7 @@
 #  endif
 #endif
 
-#if 1 && defined(__DJGPP__)
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
 #  define USE_SCREEN 1
 #elif 1 && (ACC_OS_CYGWIN || ACC_OS_WIN32 || ACC_OS_WIN64)
 #  define USE_SCREEN 1

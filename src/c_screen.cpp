@@ -126,7 +126,7 @@ static int init(FILE *f, int o, int now)
     else
         return CON_INIT;
 
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
     if (!screen)
         screen = do_construct(screen_djgpp2_construct(),fd);
 #endif

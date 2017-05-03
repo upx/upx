@@ -587,24 +587,14 @@ extern "C" {
 int dup(int fd) { UNUSED(fd); return -1; }
 #endif
 
-#if defined(__DJGPP__)
-int _is_executable(const char *, int, const char *)
-{
-    return 0;
-}
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
+//int _is_executable(const char *, int, const char *) { return 0; }
 
 // FIXME: something wants to link in ctime.o
-time_t XXX_mktime(struct tm *)
-{
-    return 0;
-}
+//time_t mktime(struct tm *) { return 0; }
 
-time_t time(time_t *t)
-{
-    if (t) *t = 0;
-    return 0;
-}
-#endif /* __DJGPP__ */
+//time_t time(time_t *t) { if (t) *t = 0; return 0; }
+#endif
 
 
 } // extern "C"

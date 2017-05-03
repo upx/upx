@@ -48,7 +48,7 @@ void File::chmod(const char *name, int mode)
 
 void File::rename(const char *old_, const char *new_)
 {
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
     if (::_rename(old_,new_) != 0)
 #else
     if (::rename(old_,new_) != 0)
@@ -94,7 +94,7 @@ bool FileBase::do_sopen()
         _fd = ::open(_name, _flags, _mode);
     else
     {
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
         _fd = ::open(_name,_flags | _shflags, _mode);
 #elif defined(__MINT__)
         _fd = ::open(_name,_flags | (_shflags & O_SHMODE), _mode);

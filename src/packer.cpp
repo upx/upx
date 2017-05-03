@@ -638,7 +638,7 @@ unsigned Packer::getRandomId() const
 #endif
     while (id == 0)
     {
-#if !(HAVE_GETTIMEOFDAY) || defined(__DJGPP__)
+#if !(HAVE_GETTIMEOFDAY) || ((ACC_OS_DOS32) && defined(__DJGPP__))
         id ^= (unsigned) time(NULL);
         id ^= ((unsigned) clock()) << 12;
 #else

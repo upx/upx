@@ -123,7 +123,7 @@ typedef unsigned char   upx_byte;
 #undef small
 #undef tos
 #undef unix
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
 #  undef sopen
 #  undef __unix__
 #  undef __unix
