@@ -44,7 +44,7 @@ testsuite_split_f() {
     fb=$(basename "$1")
     fsubdir=$(basename "$fd")
     # sanity checks
-    if [[ ! -f $f || -z $fsubdir || -z $fb ]]; then
+    if [[ ! -f "$1" || -z "$fsubdir" || -z "$fb" ]]; then
         fd= fb= fsubdir=
     fi
 }

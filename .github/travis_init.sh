@@ -244,4 +244,13 @@ print_settings() {
     ##env | LC_ALL=C sort
 }
 
+fix_home_ssh_perms() {
+    if [[ -d ~/.ssh ]]; then
+        if [[ -x /usr/sbin/restorecon ]]; then
+            /usr/sbin/restorecon -v -R ~/.ssh || true
+        fi
+        chmod -c -R go-rwx ~/.ssh || true
+    fi
+}
+
 true
