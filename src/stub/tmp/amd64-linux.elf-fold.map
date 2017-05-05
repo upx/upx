@@ -8,31 +8,33 @@ Linker script and memory map
 
                 0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x00000000001000bc      0x734
+.text           0x00000000001000bc      0x750
  *(.text)
- .text          0x00000000001000bc      0x18e tmp/amd64-linux.elf-fold.o
-                0x0000000000100217                munmap
-                0x0000000000100223                mmap
-                0x000000000010023a                read
-                0x0000000000100246                exit
-                0x000000000010021f                brk
-                0x000000000010023e                open
-                0x000000000010021b                mprotect
-                0x0000000000100242                close
- *fill*         0x000000000010024a        0x2 00
- .text          0x000000000010024c      0x5a4 tmp/amd64-linux.elf-main.o
-                0x000000000010065e                upx_main
+ .text          0x00000000001000bc      0x192 tmp/amd64-linux.elf-fold.o
+                0x000000000010023e                munmap
+                0x0000000000100217                mmap
+                0x0000000000100246                write
+                0x000000000010024a                read
+                0x000000000010022e                exit
+                0x0000000000100232                brk
+                0x000000000010023a                open
+                0x0000000000100242                mprotect
+                0x0000000000100236                close
+ *fill*         0x000000000010024e        0x2 00
+ .text          0x0000000000100250      0x5bb tmp/amd64-linux.elf-main.o
+                0x0000000000100662                upx_main
  *(.data)
- .data          0x00000000001007f0        0x0 tmp/amd64-linux.elf-fold.o
- .data          0x00000000001007f0        0x0 tmp/amd64-linux.elf-main.o
+ *fill*         0x000000000010080b        0x1 00
+ .data          0x000000000010080c        0x0 tmp/amd64-linux.elf-fold.o
+ .data          0x000000000010080c        0x0 tmp/amd64-linux.elf-main.o
 
 .data
 
-.bss            0x00000000001007f0        0x0
- .bss           0x00000000001007f0        0x0 tmp/amd64-linux.elf-fold.o
- .bss           0x00000000001007f0        0x0 tmp/amd64-linux.elf-main.o
+.bss            0x000000000010080c        0x0
+ .bss           0x000000000010080c        0x0 tmp/amd64-linux.elf-fold.o
+ .bss           0x000000000010080c        0x0 tmp/amd64-linux.elf-main.o
 
-.rela.dyn       0x00000000001007f0        0x0
+.rela.dyn       0x0000000000100810        0x0
  .rela.text     0x0000000000000000        0x0 tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-fold.o
 LOAD tmp/amd64-linux.elf-main.o

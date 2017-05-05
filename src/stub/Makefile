@@ -342,7 +342,7 @@ tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 amd64-linux.elf%.h : tc_list = amd64-linux.elf default
 amd64-linux.elf%.h : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD -MT $@
+tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -fPIC -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 

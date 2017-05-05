@@ -32,6 +32,41 @@
 
 #include "include/linux.h"
 
+#ifndef DEBUG  //{
+#define DEBUG 0
+#endif  //}
+
+#if !DEBUG //{
+#define DPRINTF(fmt, args...) /*empty*/
+#else  //}{
+// DPRINTF is defined as an expression using "({ ... })"
+// so that DPRINTF can be invoked inside an expression,
+// and then followed by a comma to ignore the return value.
+// The only complication is that percent and backslash
+// must be doubled in the format string, because the format
+// string is processd twice: once at compile-time by 'asm'
+// to produce the assembled value, and once at runtime to use it.
+#if defined(__powerpc__)  //{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("bl 0f; .string \"" fmt "\"; .balign 4; 0: mflr %0" \
+/*out*/ : "=r"(r_fmt) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    dprintf(r_fmt, args); \
+})
+#elif defined(__x86_64) //{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("call 0f; .asciz \"" fmt "\"; 0: pop %0" \
+/*out*/ : "=r"(r_fmt) ); \
+    dprintf(r_fmt, args); \
+})
+#endif  //}
+
+static int dprintf(char const *fmt, ...); // forward
+#endif  /*}*/
+
 
 /*************************************************************************
 // configuration section
@@ -176,8 +211,11 @@ upx_bzero(char *p, size_t len)
 static void
 auxv_up(Elf64_auxv_t *av, unsigned const type, uint64_t const value)
 {
-    if (av)
+    if (!av)
+        return;
+    DPRINTF("\\nauxv_up %%d  %%p\\n", type, value);
     for (;; ++av) {
+        DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
             av->a_un.a_val = value;
@@ -373,12 +411,189 @@ upx_main(  // returns entry address
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &reloc);
+        auxv_up(av, AT_BASE, reloc);
         close(fdi);
     }
   }
 
     return (void *)entry;
 }
+
+#if DEBUG  //{
+
+#if defined(__powerpc64__) //{
+#define __NR_write 4
+
+typedef unsigned long size_t;
+
+#if 0  //{
+static int
+write(int fd, char const *ptr, size_t len)
+{
+    register  int        sys asm("r0") = __NR_write;
+    register  int         a0 asm("r3") = fd;
+    register void const  *a1 asm("r4") = ptr;
+    register size_t const a2 asm("r5") = len;
+    __asm__ __volatile__("sc"
+    : "=r"(a0)
+    : "r"(sys), "r"(a0), "r"(a1), "r"(a2)
+    : "r0", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13"
+    );
+    return a0;
+}
+#else //}{
+static int
+write(int fd, char const *ptr, size_t len)
+{
+    register  int        sys asm("r0") = __NR_write;
+    register  int         a0 asm("r3") = fd;
+    register void const  *a1 asm("r4") = ptr;
+    register size_t       a2 asm("r5") = len;
+    __asm__ __volatile__("sc"
+    : "+r"(sys), "+r"(a0), "+r"(a1), "+r"(a2)
+    :
+    : "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13"
+    );
+    return a0;
+}
+#endif  //}
+#endif  //}
+
+#if defined(__i386__)  /*{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "call 0f; .asciz \"" value "\"; \
+      0: pop %0;" : "=r"(var) : \
+    )
+#elif defined(__arm__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        "mov %0,pc; b 0f; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " : "=r"(var) \
+    )
+#elif defined(__mips__)  /*}{*/
+#define PIC_STRING(value, var) \
+    __asm__ __volatile__ ( \
+        ".set noreorder; bal 0f; move %0,$31; .set reorder; \
+        .asciz \"" value "\"; .balign 4; \
+      0: " \
+        : "=r"(var) : : "ra" \
+    )
+#elif defined(__powerpc__) || defined(__powerpc64__)  /*}{*/
+#define PIC_STRING(value,var) \
+    __asm__ ( \
+        "bl 0f; .asciz \"" value "\"; .balign 4; \
+      0: mflr %0" \
+        : "=r"(var) : \
+    )
+#endif  /*}*/
+
+static int
+unsimal(unsigned x, char *ptr, int n)
+{
+    unsigned m = 10;
+    while (10 <= (x / m)) m *= 10;
+    while (10 <= x) {
+        unsigned d = x / m;
+    x -= m * d;
+        m /= 10;
+        ptr[n++] = '0' + d;
+    }
+    ptr[n++] = '0' + x;
+    return n;
+}
+
+static int
+decimal(int x, char *ptr, int n)
+{
+    if (x < 0) {
+        x = -x;
+        ptr[n++] = '-';
+    }
+    return unsimal(x, ptr, n);
+}
+
+static int
+heximal(unsigned long x, char *ptr, int n)
+{
+    unsigned j = -1+ 2*sizeof(unsigned long);
+    unsigned long m = 0xful << (4 * j);
+    for (; j; --j, m >>= 4) { // omit leading 0 digits
+        if (m & x) break;
+    }
+    for (; m; --j, m >>= 4) {
+        unsigned d = 0xf & (x >> (4 * j));
+        ptr[n++] = ((10<=d) ? ('a' - 10) : '0') + d;
+    }
+    return n;
+}
+
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+
+static int
+dprintf(char const *fmt, ...)
+{
+    int n= 0;
+    char const *literal = 0;  // NULL
+    char buf[24];  // ~0ull == 18446744073709551615 ==> 20 chars
+    va_list va; va_start(va, fmt);
+    for (;;) {
+        char c = *fmt++;
+        if (!c) { // end of fmt
+            if (literal) {
+                goto finish;
+            }
+            break;  // goto done
+        }
+        if ('%'!=c) {
+            if (!literal) {
+                literal = fmt;  // 1 beyond start of literal
+            }
+            continue;
+        }
+        // '%' == c
+        if (literal) {
+finish:
+            n += write(2, -1+ literal, fmt - literal);
+            literal = 0;  // NULL
+            if (!c) { // fmt already ended
+               break;  // goto done
+            }
+        }
+        switch (c= *fmt++) { // deficiency: does not handle _long_
+        default: { // un-implemented conversion
+            n+= write(2, -1+ fmt, 1);
+        } break;
+        case 0: { // fmt ends with "%\0" ==> ignore
+            goto done;
+        } break;
+        case 'u': {
+            n+= write(2, buf, unsimal(va_arg(va, unsigned), buf, 0));
+        } break;
+        case 'd': {
+            n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
+        } break;
+        case 'p': {
+            buf[0] = '0';
+            buf[1] = 'x';
+            n+= write(2, buf, heximal((unsigned long)va_arg(va, void *), buf, 2));
+        } break;
+        case 'x': {
+            buf[0] = '0';
+            buf[1] = 'x';
+            n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+        } break;
+        } // 'switch'
+    }
+done:
+    va_end(va);
+    return n;
+ }
+#endif  //}
 
 /* vim:set ts=4 sw=4 et: */

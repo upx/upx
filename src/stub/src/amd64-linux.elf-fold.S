@@ -54,6 +54,7 @@ MAX_ELF_HDR=1024
 
 /* 64-bit mode only! */
 __NR_read=  0
+__NR_write= 1
 __NR_open=  2
 __NR_close= 3
 
@@ -71,6 +72,7 @@ __NR_readlink= 89
     %rsp= &{LENX,ADRX,LENU,ADRU,slide,argc,argv...,0,env...,0,auxv...,0...,strings}
 */
 fold_begin:
+////    int3  // DEBUG only
         call L90  # push &L90a
 L90a:
         .asciz "/proc/self/exe"
@@ -166,13 +168,6 @@ L90:
         push $ __NR_munmap; pop %rax
         jmp *-8(%r14)  # goto: syscall; ret
 
-munmap: .globl munmap
-        movb $ __NR_munmap,%al; jmp sysgo
-mprotect: .globl mprotect
-        movb $ __NR_mprotect,%al; jmp sysgo
-brk: .globl brk
-        movb $ __NR_brk,%al; jmp sysgo
-
 mmap: .globl mmap
         movb $ __NR_mmap,%al
 sysarg4:
@@ -185,14 +180,21 @@ sysgo:  # NOTE: kernel demands 4th arg in %sys4, NOT %arg4
 no_fail:
         ret
 
-read: .globl read
-        movb $ __NR_read,%al; jmp sysgo
-open: .globl open
-        movb $ __NR_open,%al; jmp sysgo
-close: .globl close
-        movb $ __NR_close,%al; jmp sysgo
-
 exit: .globl exit
-        movb $ __NR_exit,%al; jmp sysgo
+        movb $ __NR_exit,%al; 5: jmp 5f
+brk: .globl brk
+        movb $ __NR_brk,%al; 5: jmp 5f
+close: .globl close
+        movb $ __NR_close,%al; 5: jmp 5f
+open: .globl open
+        movb $ __NR_open,%al; 5: jmp 5f
+munmap: .globl munmap
+        movb $ __NR_munmap,%al; 5: jmp 5f
+mprotect: .globl mprotect
+        movb $ __NR_mprotect,%al; 5: jmp 5f
+write: .globl write
+        mov $__NR_write,%al; 5: jmp 5f
+read: .globl read
+        movb $ __NR_read,%al; 5: jmp sysgo
 
 /* vim:set ts=8 sw=8 et: */
