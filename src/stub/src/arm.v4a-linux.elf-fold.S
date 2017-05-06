@@ -86,13 +86,9 @@ fold_begin:
         cmp r2,#0; bne .L20
 
         sub r0,r1,#PATH_MAX @ buffer for readlink
-        sub r0,r0,#4  @ space for copy of space3eq
         sub r1,r1,sp  @ amount needed for argv,env,auxv
-        mov r0,r0,lsr #2+ PAGE_SHIFT  @ 2+ because hardware might require
-        sub r0,r0,#1  @ one page
-        mov r8,r0,lsl #2+ PAGE_SHIFT  @ exe_page
-        sub r0,r8,r1  @ space for argv,env,auxv
-        sub r0,r0,#4  @ new_argv= room for added env ptr
+        sub r0,r0,#2*4  @ space for added env ptr and copy of space3eq
+        sub r0,r0,r1  @ new_argv= space for argv,env,auxv
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x12; bl trace
 #endif  //}
@@ -103,7 +99,7 @@ fold_begin:
         sub r0,r0,r2  @ new_argv with same 8-byte alignment as old_argv
         mov sp,r0
 
-        stmdb sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,crumb,exe_page,argc; drop MFLG
+        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,crumb,argc; drop MFLG
 SP_sz_unc= 2*4
 
         add r11,r11,#1  @ (1+argc) for end of argv
@@ -129,7 +125,7 @@ SP_sz_unc= 2*4
 
         str r0,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
 
-        add r1,r0,#1<<(2+ PAGE_SHIFT)  @ after the page
+        mov r1,r0
         str r1,[r4]  @ new env ptr
         ldr r2,space3eq
         str r2,[r1],#4  @ "   =" of new env var
@@ -141,21 +137,6 @@ SP_sz_unc= 2*4
         mov r2,#0
         strb r2,[r1,r0]  @ null terminate pathname
 0:
-/* Preserve symlink /proc/self/exe by mapping one page into stack */
-        adr r0,proc_self_exe
-        mov r1,#O_RDONLY
-        bl open  @ no error check: cannot recover
-
-        mov r1,#0
-        stmdb sp!,{r0,r1,r3}  @ fd, offset, new &Elf32_auxv_t
-        mov r0,r8  @ exe_page
-        mov r1,#PAGE_SIZE
-        mov r2,#PROT_READ
-        mov r3,#MAP_PRIVATE|MAP_FIXED
-        bl mmap  @ no error check: cannot recover
-        ldr r0,[sp],#4  @ fd
-        bl close
-        ldmia sp!,{r1,r3}  @ junk, new &Elf32_auxv_t
 
 /* Construct arglist for upx_main */
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
@@ -175,18 +156,21 @@ SP_sz_unc= 2*4
 #else  /*}{*/
         mov r12,#0
 #endif  /*}*/
+
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
+// r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
+// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, dynbase, sys_munmap
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
 #endif  //}
         bl upx_main
+        add sp,sp,#(10-4)*4
+        add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#0x18; bl trace
 #endif  //}
-        mov lr,r0  @ entry address
-        add sp,sp,#(10-4)*4
-        add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
+        str r0,[sp,#3*4]  @ replace crumb with entry address
 
 #if 0  //{ make_hatch_arm() does it then
   @ __clear_cache(hatch, &hatch[2]);
@@ -197,8 +181,22 @@ SP_sz_unc= 2*4
         do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
 #endif  //}
 
-        ldmia sp!,{r0,r1,r2, r3,r4}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], crumb,exe_page
-        // crumb is unused: replaced by mapping /proc/self/exe into exe_page on stack
+// Map 1 page of /proc/self/exe so that munmap does not remove all references
+        adr r0,proc_self_exe
+        mov r1,#O_RDONLY
+        bl open  @ no error check: cannot recover
+        mov r1,#0
+        str r0,[sp,#-4]!  @ fd
+        mov r0,#0  @ any page
+        mov r1,#PAGE_SIZE
+        mov r2,#PROT_READ
+        mov r3,#MAP_PRIVATE
+        bl mmap  @ no error check: cannot recover
+        ldr r0,[sp],#4  @ fd
+        bl close
+
+        ldmia sp!,{r0,r1,r2, lr}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], entry
+        // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
 #if DEBUG  /*{*/
         ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
@@ -463,5 +461,8 @@ div10: .globl div10
         ret
 
 #endif  /*}*/
+
+/* Preserve symlink /proc/self/exe by mapping one page into stack */
+
 
 /* vim:set ts=8 sw=8 et: */

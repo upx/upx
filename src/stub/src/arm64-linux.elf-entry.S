@@ -142,8 +142,8 @@ copy_cl:  // copy decompressor and folded code
         mov w10,#sz_Elf64_Phdr
         mul w10,w10,w9
         add w10,w10,#sz_Elf64_Ehdr + sz_l_info + sz_p_info
-        add x10,x12,w10,uxtw  // &b_info
         sub w9,w29,w10  // total compressed size
+        add x10,x12,w10,uxtw  // &b_info
         add x10,x10,x4  // relocated &b_info
 
         ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)
