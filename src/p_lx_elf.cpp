@@ -647,7 +647,7 @@ Linker* PackLinuxElf64amd::newLinker() const
 
 Linker* PackLinuxElf64arm::newLinker() const
 {
-    return new ElfLinkerARM64;
+    return new ElfLinkerArm64LE;
 }
 
 int const *
