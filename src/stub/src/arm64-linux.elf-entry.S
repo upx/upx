@@ -162,7 +162,7 @@ D_stm1=0*8
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=1024
-trace:  // DEFICIENCY: modifies condition code
+trace:  // preserves condition code (thank you, CBNZ) [if write() does!]
         stp  x0, x1,[sp,#-32*8]!
         stp  x2, x3,[sp,# 2*8]
         stp  x4, x5,[sp,# 4*8]
@@ -234,20 +234,21 @@ L610:  // each word
 
 trace_hex2:
         mov w3,#2; b trace_hexwid
-trace_hex:  // In: x0=val, w1=punctuation before, x2=ptr; Uses: w3, x7
+trace_hex:  // In: x0=value, w1=punctuation before, x2=ptr; Uses: w3, x8
         mov w3,#16  // ndigits
-trace_hexwid:
-        strb w1,[x2],#1; lsr w1,w1,#8; cbnz w1,trace_hexwid  // punctuation
-        adr x7,hex
-        sub w3,w3,#1
+trace_hexwid:  // In: x0= value; w1= punctuation; x2= ptr; w3= number of low-order digits
+        strb w1,[x2],#1; lsr w1,w1,#8; cbnz w1,trace_hexwid  // prefix punctuation
+        adr x8,hex
 L620:
-        cmp w3,#-1+ 8; mov w1,#'_'; strb w1,[x2]; cinc x2,x2,eq
+        sub w3,w3,#1  // number of less-significant digits
         lsl w1,w3,#2  // 4 bits per hex digit
-        lsr x1,x0,x1  // right justify next digit
+        lsr x1,x0,x1  // right justify this digit
         and x1,x1,#0xf
-        ldrb w1,[x7, x1]
+        ldrb w1,[x8, x1]
         strb w1,[x2],#1
-        subs w3,w3,#1; bge L620
+        sub w1,w3,#8; cbnz w1,0f; mov w1,#'_'; strb w1,[x2],#1  // 8-digit readability
+0:
+        cbnz w3,L620
         ret
 hex:
         .ascii "0123456789abcdef"
