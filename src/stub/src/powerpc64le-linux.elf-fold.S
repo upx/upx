@@ -73,6 +73,7 @@ zfind:
         cmpldi cr7,r0,0; bne+ cr7,zfind
         ret
 L90:
+        la sp,SZ_FRAME(sp)  // trim save area used by decompressor
         mflr a5  // &ppcbxx: f_unfilter
         ld a6,SZ_FRAME(sp)  // sp from regsav at execve
         call zfind  // a6= &env

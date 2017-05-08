@@ -33,7 +33,7 @@
 #include "ui.h"
 
 
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
 #  define USE_FTIME 1
 #elif (ACC_OS_WIN32 && ACC_CC_MWERKS) && defined(__MSL__)
 #  include <utime.h>

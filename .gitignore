@@ -1,5 +1,6 @@
 /.bzr*
 /.hg*
+/.vscode*
 /Makevars.global*
 /build*
 /maint*

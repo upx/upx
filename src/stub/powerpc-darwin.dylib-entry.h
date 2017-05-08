@@ -32,8 +32,8 @@
 
 
 #define STUB_POWERPC_DARWIN_DYLIB_ENTRY_SIZE    8997
-#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_ADLER32 0x45c96881
-#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_CRC32   0xd5b27dad
+#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_ADLER32 0xfdf268dd
+#define STUB_POWERPC_DARWIN_DYLIB_ENTRY_CRC32   0xcf49c4b1
 
 unsigned char stub_powerpc_darwin_dylib_entry[8997] = {
 /* 0x0000 */ 127, 69, 76, 70,  1,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -432,7 +432,7 @@ unsigned char stub_powerpc_darwin_dylib_entry[8997] = {
 /* 0x1890 */  65,130,  0,104,127,123, 26, 20,124,119, 27,120, 56,122,  0,  4,
 /* 0x18a0 */  72,  0,  0,169,127, 90, 26, 20,124,118, 27,120, 59, 90,  0, 12,
 /* 0x18b0 */ 150,225,255,248,127,232,  3,166, 56,120,  0, 12,126,196,179,120,
-/* 0x18c0 */ 127, 37,203,120,124, 38, 11,120,136,248,  0,  8, 56, 33,255,232,
+/* 0x18c0 */ 127, 37,203,120,124, 38, 11,120,136,248,  0,  8,148, 33,255,232,
 /* 0x18d0 */  78,128,  0, 33, 56, 33,  0, 32,136,216,  0,  9, 40,  6,  0,  0,
 /* 0x18e0 */  65,130,255,160,136,184,  0, 10,128,152,  0,  0,127, 35,203,120,
 /* 0x18f0 */  72,  0,  0,125, 75,255,255,140, 72,  0,  0, 29, 68,  0,  0,  2,

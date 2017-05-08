@@ -130,7 +130,7 @@ movup:  # descending copy moves folded_loader to higher address
         addi dst,t1,GAP  # &unfolded result
         std ldst,-8(sp)  # LZMA needs for EOF
         la  ldst,-8(sp)  # &sz_result
-        la sp,-LINKAREA(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
+        stdu sp,-SZ_FRAME(sp)  // ABI convention (for lzma compiled by gcc)
         bctr  # call decompress: branch to counter register, return to link register
 
 main:

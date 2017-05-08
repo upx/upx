@@ -137,8 +137,6 @@ sz_b_info= 12
 #define l_cpr 22
 #define t_h   21  /* temporary */
 
-LINKAREA= 6*8  // (sp,pc,cr, xx,yy.zz) save area per calling convention
-
 PROT_NONE  =0x00
 PROT_READ  =0x01
 PROT_WRITE =0x02
@@ -259,9 +257,9 @@ dy_uncpr:
         mr a2,s_unc  # dst
         mr a3,sp  # &l_dst
         lbz a4,b_method(s_cpr)
-        la sp,-LINKAREA(sp)
+        stdu sp,-SZ_FRAME(sp)
         blrl  # uncompress
-        la sp,8+LINKAREA(sp)
+        la sp,8+SZ_FRAME(sp)
                 // FIXME: check status
 
         lbz a3,b_ftid(s_cpr)

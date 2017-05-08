@@ -9,30 +9,30 @@ Linker script and memory map
 TARGET(elf32-powerpc)
                 0x0000000000100080                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000100080      0xe74
+.text           0x0000000000100080      0xe78
  *(.text)
- .text          0x0000000000100080      0x250 tmp/powerpc-linux.elf-fold.o
-                0x00000000001002c0                munmap
-                0x0000000000100284                mmap
-                0x00000000001002a0                read
-                0x0000000000100298                exit
-                0x00000000001002c8                brk
-                0x00000000001002a8                open
-                0x00000000001002b8                mprotect
-                0x00000000001002b0                close
- .text          0x00000000001002d0      0xc24 tmp/powerpc-linux.elf-main.o
-                0x0000000000100bf8                upx_main
+ .text          0x0000000000100080      0x254 tmp/powerpc-linux.elf-fold.o
+                0x00000000001002c4                munmap
+                0x0000000000100288                mmap
+                0x00000000001002a4                read
+                0x000000000010029c                exit
+                0x00000000001002cc                brk
+                0x00000000001002ac                open
+                0x00000000001002bc                mprotect
+                0x00000000001002b4                close
+ .text          0x00000000001002d4      0xc24 tmp/powerpc-linux.elf-main.o
+                0x0000000000100bfc                upx_main
  *(.data)
- .data          0x0000000000100ef4        0x0 tmp/powerpc-linux.elf-fold.o
- .data          0x0000000000100ef4        0x0 tmp/powerpc-linux.elf-main.o
+ .data          0x0000000000100ef8        0x0 tmp/powerpc-linux.elf-fold.o
+ .data          0x0000000000100ef8        0x0 tmp/powerpc-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000100ef4        0x0
- .bss           0x0000000000100ef4        0x0 tmp/powerpc-linux.elf-fold.o
- .bss           0x0000000000100ef4        0x0 tmp/powerpc-linux.elf-main.o
+.bss            0x0000000000100ef8        0x0
+ .bss           0x0000000000100ef8        0x0 tmp/powerpc-linux.elf-fold.o
+ .bss           0x0000000000100ef8        0x0 tmp/powerpc-linux.elf-main.o
 
-.rela.dyn       0x0000000000100ef4        0x0
+.rela.dyn       0x0000000000100ef8        0x0
  .rela.text     0x0000000000000000        0x0 tmp/powerpc-linux.elf-fold.o
 LOAD tmp/powerpc-linux.elf-fold.o
 LOAD tmp/powerpc-linux.elf-main.o

@@ -12,19 +12,16 @@ notifications: { email: { on_success: never, on_failure: change } }
   - llvm-toolchain-precise-3.6
   - llvm-toolchain-precise-3.7
   - llvm-toolchain-precise-3.8
+  - llvm-toolchain-precise-3.9
 
 env:
   global:
     - CROSS= C= B= T= X=
     - secure: "YXHLXK+CM5d8yELIUSSs+P0/CoefClO7/AUX1oBj5W75g+YzR5uS2doVsB8UH8S8/GdNxk4P9Jgn4EiEVnjfGgn2eAD9MVpDPIxyJs5vI+5G77asq3QNdSl6QFv3O9I/6yBoVCewgPFPqsMd7Yvs/Ea3LcQkqalVhrC8ybYtmfs6VL2w33gn2J3b3TCn/s21L0ijklM0xvP1GNMDtuUpTSish5wvGOHE/91rwtdUDbJR8u31QY7fTASDiNnL/7ihgEIZ5XxpDYXviX1GC+nemhX1fWpmVmuT8m30Ruodi0yJVGASw9i2SaKv/VX/fJ/w2vlCfspL5LMZKkVLlfpIo3mQGqmMHFxv7mNy+hRu50ptoWNSkWArcqifwveh2liHUpl4jTvWaVll5Tw5VUGJhAUdzCTnqLIbWFnKIgCedL3iRFi4+EbyWNxel8lFESMOTDZFfJG5yEiDJbgbLsUaT2GmrsOphwAG7zDcZzvYTdjg/lF4Wh0MUnQJ+0MhDpii8Ahjp49lAPdw8uRQyyY7d7ksYKXVIkbgl6dRCC5vZSPucJiFjq2BClqIoEmzZPvHveDbovzFkNhJX9tFLrHLcXbPPcegww1FGoQ3wBM6JwJ+TvSD6N4OdCmou05aDuuQeznHi3GxOScjGwxdMIU28fdJDCTDg2rOihm22kHVajo="
     - secure: "JpSv3+QRmHcfN/bmT3mVkqET44NCPhM/qpcUssCVXnd2GW0qWURoyPHzVMn/gbeAkUjR6djtN3OzJ+M181QmlmTmE26pZC9Q6r1buNDWdkIH1FcpMCa67BBAjmq+yDwulDtvCMv0lbz60v57lzHBOLczF3yMxBVTjXxt1RsrzDLHzzVaDR5lEe+sQUNeRL7Vaq8crimPNTr4ZhMe59eweTO/3AWovuSPf250k1flfv7I8audZgrVZdbVKvj5C3Sziy1AGXcu8mDfET9/Ya2XBCQHWODjiKlnhSxqthhP3gQuacaLjpS2FjvQlamd+I9x6BBoLSeNbiXD9vgCydDUKvmUrU+zQs64U1hHk9WZWVC19kG7lTtTdanGDIUlIUtFZgqE4AQpJaIUWkUmHGyHi61JMvduzX21eL5c5j9DoJteX42FPb1n3xK/JSnUkLMpbFdQuy5inhzefhDfeNzaYxt8nPwHnJqrF73SW4PLDKeRyzvg/P+zqcou8nXrHfA1z9/FlnYzf7Qc9meai9Q/JARX3Q1ZKu5uyG+RuBLe2POq0192w6pflTr1ZlLJsKNSc1147PviKfmpla1lg3/6uVzMp5tgwbve/hx9SDXiRueGttKw/ymsY662+8G24NRKo4fxNklWFHaB4owM84edDzXDckPXbPgue8/HQT8BFio="
-  matrix:
-    - TRAVIS_EMPTY_JOB_WORKAROUND=true
 
 matrix:
   fast_finish: true
-  exclude:
-    - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
   include:
     - os: linux
       sudo: required
@@ -162,20 +159,28 @@ matrix:
       addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-3.8-m64 B=debug+sanitize
-      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+      env: C=clang-3.9-m32
+      addons: { apt: { sources: *S, packages: [ "clang-3.9", "g++-6-multilib", "zlib1g-dev:i386" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-3.8-m64 B=sanitize
-      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+      env: C=clang-3.9-m64
+      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-3.8-m64 B=debug+scan-build
-      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+      env: C=clang-3.9-m64 B=debug+sanitize
+      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: clang
-      env: C=clang-3.8-m64 B=scan-build
-      addons: { apt: { sources: *S, packages: [ "clang-3.8" ] } }
+      env: C=clang-3.9-m64 B=sanitize
+      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+    - os: linux
+      compiler: clang
+      env: C=clang-3.9-m64 B=debug+scan-build
+      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
+    - os: linux
+      compiler: clang
+      env: C=clang-3.9-m64 B=scan-build
+      addons: { apt: { sources: *S, packages: [ "clang-3.9" ] } }
     - os: linux
       compiler: gcc
       env: CROSS=arm-linux-gnueabi C=gcc-4.6 T=SKIP
@@ -211,13 +216,13 @@ matrix:
       compiler: clang
       env: C=clang-703-m64
     - os: osx
-      osx_image: xcode8.2
+      osx_image: xcode8.3
       compiler: clang
-      env: C=clang-800-m32
+      env: C=clang-802-m32
     - os: osx
-      osx_image: xcode8.2
+      osx_image: xcode8.3
       compiler: clang
-      env: C=clang-800-m64
+      env: C=clang-802-m64
 
 install:
   - uname -a; pwd; id; umask
@@ -247,6 +252,11 @@ install:
     fi
 
 script:
-  - cd $TRAVIS_BUILD_DIR && bash ./.github/travis_build.sh && bash ./.github/travis_testsuite_1.sh && bash ./.github/travis_deploy.sh
+  - success=1
+  - cd $TRAVIS_BUILD_DIR || success=0
+  - test $success = 0 || bash ./.github/travis_build.sh || success=0
+  - test $success = 0 || bash ./.github/travis_testsuite_1.sh || success=0
+  - test $success = 0 || bash ./.github/travis_deploy.sh || success=0
+  - test $success = 1
 
 # vim:set ts=2 sw=2 et:

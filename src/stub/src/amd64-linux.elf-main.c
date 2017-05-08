@@ -412,7 +412,7 @@ ERR_LAB
             err_exit(19);
         }
         entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &reloc);
-        auxv_up(av, AT_BASE, reloc);
+        auxv_up(av, AT_BASE, reloc);  // musl
         close(fdi);
     }
   }

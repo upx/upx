@@ -62,7 +62,7 @@ fold_begin:
 #include "arch/powerpc/32/bxx.S"
 
 L90:
-        la sp,6*4(sp)  // trim save area used by decompressor
+        la sp,SZ_FRAME(sp)  // trim save area used by decompressor
         li   a6,0
         stwu a6,-4(sp)  # _push_ default value for dyld
         movr a6,sp  # &mhdrp
@@ -76,7 +76,7 @@ L100:
         movr r29,sp  # remember for restoring later
         subf sp,a3,sp  # alloca
         movr a2,sp  # &temp char[sz_mach_headers]
-        addi sp,sp,-4*6  # linkage area assumed by C code (sp,cr,lr, xx,yy,zz)
+        stwu sp,-SZ_FRAME(sp)  # ABI
         movr a4,r31  # f_decompress
         call upx_main  # Out: a0= &Mach_ppc_thread_state of dyld
 

@@ -50,7 +50,7 @@ AT_FDCWD= -100
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
-PATHMAX= 4096
+PATH_MAX= 4096
 
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
@@ -63,6 +63,7 @@ PATHMAX= 4096
 #define MAX_ELF_HDR 512
 
 fold_begin:
+////    brk #0  // DEBUG
 /* In:
    x28= f_decompress
    x27= &b_info of first compressed block (after move)
@@ -82,12 +83,9 @@ fold_begin:
         ldr x2,[x1],#2*8
         cbnz x2,.L20  // AT_NULL
 
-        sub x0,x1,#PATHMAX // buffer for readlink
-        sub x0,x0,#4  // space for copy of space3eq
-        sub x1,x1,x0  // amount needed for argc,argv,env,auxv
-        lsr x0,x0,#PAGE_SHIFT  // round down
-        sub x0,x0,#1  // one page
-        lsl x6,x0,#PAGE_SHIFT  // page address
+        sub x0,x1,#PATH_MAX // buffer for readlink
+        sub x6,x0,#4  // space for copy of space3eq
+        sub x1,x1,x6  // amount needed for argc,argv,env,auxv
         sub x0,x6,x1  // space for argc,argv,env,auxv
         sub x0,x0,#8  // room for added env ptr
         and x0,x0,#~0<<4  // sp must be 16-byte aligned
@@ -110,7 +108,7 @@ SP_argc= 4*8  // remember the hole from PUSH3
         cbnz x2,.Lenv
 
         sub x4,x0,#8  // added env ptr goes here
-        str x2,[x0],#8  // terminator after added ptr
+        str xzr,[x0],#8  // terminator after added ptr
         mov x7,x0  // new &Elf64_auxv_t
 
 .Laux:  // copy auxv
@@ -120,29 +118,17 @@ SP_argc= 4*8  // remember the hole from PUSH3
 
         str x0,[sp,#SP_sz_unc]  // clobber sz_unc with 1+ &Elf64_auxv_t[AT_NULL@.a_type]
 
-        add x1,x6,#1<<PAGE_SHIFT  // after the mmap'ed page
+        mov x1,x6
         str x1,[x4]  // new env ptr
         ldr w2,space3eq
         str w2,[x1],#4  // "   =" of new env var
 
-        mov w2,#PATHMAX-1  // buffer length and null terminator
+        mov w2,#PATH_MAX-1  // buffer length and null terminator
         adr x0,proc_self_exe
         bl readlink
-/* Preserve symlink /proc/self/exe by mapping one page into stack */
-        adr x0,proc_self_exe
-        mov w1,#O_RDONLY
-        bl open  // no error check: cannot recover
-
-        mov w4,w0  // fd
-        mov x0,x6  // page address
-
-        mov x5,#0  // offset
-        mov w3,#MAP_PRIVATE|MAP_FIXED
-        mov w2,#PROT_READ
-        mov x1,#PAGE_SIZE
-        bl mmap  // no error check: cannot recover
-        mov w0,w4  // fd
-        bl close
+        cmn x0,#4096; bcs 0f  // error
+        strb wzr,[x2,x0]  // null terminate pathname (x2 is old x1)
+0:
 
 /* Construct arglist for upx_main */
         add x6,sp,#3*8  // &reloc
@@ -155,9 +141,26 @@ SP_argc= 4*8  // remember the hole from PUSH3
         mov x0,x27  // &b_info
         bl upx_main
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca
-        mov lr,x0  // entry address
+        str x0,[sp,#3*8]  // entry address
 
-        POP4(x0,x1,x2,x3)  // x0= ADRU; x1= LENU; x2= 1+ &Elf64_auxv_t[AT_NULL@.atype]; x3= reloc
+// Map 1 page of /proc/self/exe so that munmap does not remove all references
+        adr x0,proc_self_exe
+        mov w1,#O_RDONLY
+        bl open
+        mov w15,w0  // fd
+
+        mov x5,xzr  // offset
+        mov w4,w0  // fd
+        mov w3,#MAP_PRIVATE
+        mov w2,#PROT_READ
+        mov x1,#PAGE_SIZE
+        mov x0,xzr  // addr
+        bl mmap
+
+        mov w0,w15  // fd
+        bl close
+
+        POP4(x0,x1,x2,lr)  // x0= ADRU; x1= LENU; x2= 1+ &Elf64_auxv_t[AT_NULL@.atype]; lr= entry
 
 #if DEBUG  /*{*/
         ldr x4,[x2,#8 -2*8]  // Elf64_auxv_t[AT_NULL@.a_type].a_val
@@ -340,6 +343,11 @@ unlink:
         mov w8,#__NR_unlink
         b svc_AT
 
+        .globl readlink
+readlink:
+        mov w8,#__NR_readlink
+        b svc_AT
+
         .globl open
 open:
         mov w8,#__NR_open
@@ -350,21 +358,6 @@ svc_AT:
         mov x1,x0  // fname
         mov x0,#AT_FDCWD
         svc #0; ret
-
-        .globl readlink
-readlink:
-        mov w8,#__NR_readlink
-        mov x3,x2  // buflen
-        mov x2,x1  // buffer
-        mov x1,x0  // fname
-        mov x0,#AT_FDCWD
-        svc #0
-
-        cmn x0,#4096; bcs 0f  // error
-        mov w3,#0
-        strb w3,[x2,x0]  // null terminate pathname
-0:
-        ret
 
         .globl __clear_cache
 __clear_cache:

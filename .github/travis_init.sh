@@ -214,6 +214,11 @@ done
 make_absolute lcov_OUTPUTDIR
 unset var_prefix var_suffix
 
+print_header() {
+    local x="==========="; x="$x$x$x$x$x$x$x"
+    echo -e "\n${x}\n${1}\n${x}\n"
+}
+
 print_settings() {
     local v var_prefix var_suffix
     # Build Matrix

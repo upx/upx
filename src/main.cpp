@@ -33,7 +33,7 @@
 #include "p_elf.h"
 
 
-#if 1 && defined(__DJGPP__)
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
 #include <crt0.h>
 int _crt0_startup_flags = _CRT0_FLAG_UNIX_SBRK;
 #endif
@@ -61,7 +61,7 @@ void options_t::reset()
     o->preserve_timestamp = true;
 
     o->console = CON_FILE;
-#if defined(__DJGPP__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
     o->console = CON_INIT;
 #elif (USE_SCREEN_WIN32)
     o->console = CON_INIT;
@@ -1413,7 +1413,7 @@ int __acc_cdecl_main main(int argc, char *argv[])
     static char default_argv0[] = "upx";
 //    int cmdline_cmd = CMD_NONE;
 
-#if 0 && defined(__DJGPP__)
+#if 0 && (ACC_OS_DOS32) && defined(__DJGPP__)
     // LFN=n may cause problems with 2.03's _rename and mkdir under WinME
     putenv("LFN=y");
 #endif

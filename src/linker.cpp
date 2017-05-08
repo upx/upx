@@ -592,35 +592,6 @@ void ElfLinkerAMD64::relocate1(const Relocation *rel, upx_byte *location, upx_ui
         super::relocate1(rel, location, value, type);
 }
 
-void ElfLinkerARM64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
-                               const char *type) {
-    if (strncmp(type, "R_AARCH64_", 10))
-        return super::relocate1(rel, location, value, type);
-    type += 10;
-
-    if (!strncmp(type, "PREL", 4)) {
-        value -= rel->section->offset + rel->offset;
-        type += 4;
-
-        if (!strcmp(type, "16"))
-            set_le16(location, get_le16(location) + value);
-        else if (!strncmp(type, "32", 2)) // for "32" and "32S"
-            set_le32(location, get_le32(location) + value);
-        else if (!strcmp(type, "64"))
-            set_le64(location, get_le64(location) + value);
-    } else if (!strcmp(type, "ABS32")) {
-        set_le32(location, get_le32(location) + value);
-    } else if (!strcmp(type, "ABS64")) {
-        set_le64(location, get_le64(location) + value);
-    } else if (!strcmp(type, "CONDBR19")) {
-        value -= rel->section->offset + rel->offset;
-        upx_uint32_t const m19 = ~(~0u << 19);
-        upx_uint32_t w = get_le32(location);
-        set_le32(location, (w & ~(m19 << 5)) | ((((w >> 5) + (value >> 2)) & m19) << 5));
-    } else
-        super::relocate1(rel, location, value, type);
-}
-
 void ElfLinkerArmBE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                const char *type) {
     if (strcmp(type, "R_ARM_PC24") == 0) {
@@ -670,12 +641,36 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 }
 
 void ElfLinkerArm64LE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
-                                 const char *type) {
-    if (strcmp(type, "R_AARCH64_CALL26") == 0) {
+                                 const char *type)
+{
+    if (strncmp(type, "R_AARCH64_", 10))
+        return super::relocate1(rel, location, value, type);
+    type += 10;
+
+    if (!strncmp(type, "PREL", 4)) {
         value -= rel->section->offset + rel->offset;
-        set_le24(location, get_le24(location) + value / 4); // FIXME set_le26
-    } else if (strcmp(type, "R_AARCH64_ABS32") == 0) {
+        type += 4;
+
+        if (!strcmp(type, "16"))
+            set_le16(location, get_le16(location) + value);
+        else if (!strncmp(type, "32", 2)) // for "32" and "32S"
+            set_le32(location, get_le32(location) + value);
+        else if (!strcmp(type, "64"))
+            set_le64(location, get_le64(location) + value);
+    } else if (!strcmp(type, "ABS32")) {
         set_le32(location, get_le32(location) + value);
+    } else if (!strcmp(type, "ABS64")) {
+        set_le64(location, get_le64(location) + value);
+    } else if (!strcmp(type, "CONDBR19")) {
+        value -= rel->section->offset + rel->offset;
+        upx_uint32_t const m19 = ~(~0u << 19);
+        upx_uint32_t w = get_le32(location);
+        set_le32(location, (w & ~(m19 << 5)) | ((((w >> 5) + (value >> 2)) & m19) << 5));
+    } else if (!strcmp(type, "CALL26")) {
+        value -= rel->section->offset + rel->offset;
+        upx_uint32_t const m26 = ~(~0u << 26);
+        upx_uint32_t w = get_le32(location);
+        set_le32(location, (w & ~m26) | (m26 & (value >> 2)));
     } else
         super::relocate1(rel, location, value, type);
 }

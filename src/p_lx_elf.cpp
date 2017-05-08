@@ -709,7 +709,7 @@ Linker* PackLinuxElf64amd::newLinker() const
 
 Linker* PackLinuxElf64arm::newLinker() const
 {
-    return new ElfLinkerARM64;
+    return new ElfLinkerArm64LE;
 }
 
 int const *
@@ -863,7 +863,7 @@ PackLinuxElf64ppcle::PackLinuxElf64ppcle(InputFile *f)
     e_machine = Elf64_Ehdr::EM_PPC64;
     ei_class  = Elf64_Ehdr::ELFCLASS64;
     ei_data   = Elf64_Ehdr::ELFDATA2LSB;
-    ei_osabi  = Elf32_Ehdr::ELFOSABI_LINUX;
+    ei_osabi  = Elf64_Ehdr::ELFOSABI_LINUX;
 }
 
 PackLinuxElf64ppc::PackLinuxElf64ppc(InputFile *f)
@@ -1709,7 +1709,8 @@ bool PackLinuxElf32::canPack()
         ) {
             unsigned const symnum = get_te32(&jmprel->r_info) >> 8;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -1901,7 +1902,8 @@ PackLinuxElf64ppcle::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2115,7 +2117,8 @@ PackLinuxElf64ppc::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2297,7 +2300,8 @@ PackLinuxElf64amd::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2313,7 +2317,8 @@ PackLinuxElf64amd::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2496,7 +2501,8 @@ PackLinuxElf64arm::canPack()
         ) {
             unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2512,7 +2518,8 @@ PackLinuxElf64arm::canPack()
         ) {
             unsigned const symnum = get_te64(&rela->r_info) >> 32;
             char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")
+            if (0==strcmp(symnam, "__libc_start_main")  // glibc
+            ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
             ||  0==strcmp(symnam, "__uClibc_start_main")) {
                 is_pie = true;
@@ -2902,7 +2909,16 @@ PackLinuxElf64::generateElfHdr(
     cprElfHdr3 *const h3 = (cprElfHdr3 *)(void *)&elfout;
     memcpy(h3, proto, sizeof(*h3));  // reads beyond, but OK
     h3->ehdr.e_type = ehdri.e_type;  // ET_EXEC vs ET_DYN (gcc -pie -fPIC)
-    h3->ehdr.e_ident[Elf32_Ehdr::EI_OSABI] = ei_osabi;
+    h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ei_osabi;
+    if (Elf64_Ehdr::ELFOSABI_LINUX == ei_osabi  // proper
+    &&  Elf64_Ehdr::ELFOSABI_NONE  == ehdri.e_ident[Elf64_Ehdr::EI_OSABI]  // sloppy
+    ) { // propagate sloppiness so that decompression does not complain
+        h3->ehdr.e_ident[Elf64_Ehdr::EI_OSABI] = ehdri.e_ident[Elf64_Ehdr::EI_OSABI];
+    }
+    if (Elf64_Ehdr::EM_PPC64 == ehdri.e_machine) {
+        h3->ehdr.e_flags = ehdri.e_flags;  // "0x1, abiv1" vs "0x2, abiv2"
+    }
+
     unsigned phnum_o = get_te16(&h2->ehdr.e_phnum);
 
     assert(get_te64(&h2->ehdr.e_phoff)     == sizeof(Elf64_Ehdr));
@@ -3937,19 +3953,6 @@ void PackLinuxElf32::pack4(OutputFile *fo, Filter &ft)
               elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
-    // rewrite Elf header
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        unsigned const base= get_te32(&elfout.phdr[0].p_vaddr);
-        set_te16(&elfout.ehdr.e_type, Elf32_Ehdr::ET_DYN);
-        set_te16(&elfout.ehdr.e_phnum, 1);
-        set_te32(    &elfout.ehdr.e_entry,
-            get_te32(&elfout.ehdr.e_entry) -  base);
-        set_te32(&elfout.phdr[0].p_vaddr, get_te32(&elfout.phdr[0].p_vaddr) - base);
-        set_te32(&elfout.phdr[0].p_paddr, get_te32(&elfout.phdr[0].p_paddr) - base);
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf32_Phdr::PF_W;
-    }
-
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
         fo->rewrite(&ehdri, sizeof(ehdri));
@@ -4068,19 +4071,6 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
               elfout.phdr[0].p_memsz = elfout.phdr[0].p_filesz;
     super::pack4(fo, ft);  // write PackHeader and overlay_offset
 
-    // rewrite Elf header
-    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
-        upx_uint64_t const base= get_te64(&elfout.phdr[0].p_vaddr);
-        set_te16(&elfout.ehdr.e_type, Elf64_Ehdr::ET_DYN);
-        //set_te16(&elfout.ehdr.e_phnum, 1);
-        set_te64(    &elfout.ehdr.e_entry,
-            get_te64(&elfout.ehdr.e_entry) -  base);
-        set_te64(&elfout.phdr[0].p_vaddr, get_te64(&elfout.phdr[0].p_vaddr) - base);
-        set_te64(&elfout.phdr[0].p_paddr, get_te64(&elfout.phdr[0].p_paddr) - base);
-        // Strict SELinux (or PaX, grSecurity) disallows PF_W with PF_X
-        //elfout.phdr[0].p_flags |= Elf64_Phdr::PF_W;
-    }
-
     fo->seek(0, SEEK_SET);
     if (0!=xct_off) {  // shared library
         fo->rewrite(&ehdri, sizeof(ehdri));
@@ -4157,11 +4147,14 @@ void PackLinuxElf64::unpack(OutputFile *fo)
     if (ehdr->e_type   !=ehdri.e_type
     ||  ehdr->e_machine!=ehdri.e_machine
     ||  ehdr->e_version!=ehdri.e_version
-    ||  ehdr->e_flags  !=ehdri.e_flags
+        // less strict for EM_PPC64 to workaround earlier bug
+    ||  !( ehdr->e_flags==ehdri.e_flags
+        || Elf64_Ehdr::EM_PPC64 == get_te16(&ehdri.e_machine))
     ||  ehdr->e_ehsize !=ehdri.e_ehsize
         // check EI_MAG[0-3], EI_CLASS, EI_DATA, EI_VERSION
-    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI))
+    ||  memcmp(ehdr->e_ident, ehdri.e_ident, Elf64_Ehdr::EI_OSABI)) {
         throwCantUnpack("ElfXX_Ehdr corrupted");
+    }
     fi->seek(- (off_t) (szb_info + ph.c_len), SEEK_CUR);
 
     unsigned const u_phnum = get_te16(&ehdr->e_phnum);

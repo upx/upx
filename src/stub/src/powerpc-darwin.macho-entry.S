@@ -133,7 +133,7 @@ movup:  # descending copy moves folded_loader to higher address
         addi dst,t2,GAP  # &unfolded result
         stw ldst,-4(sp)  # LZMA needs for EOF
         la  ldst,-4(sp)  # &sz_result
-        la sp,-LINKAREA(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
+        stwu sp,-SZ_FRAME(sp)  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         bctr  # call decompress: branch to counter register, return to link register
 
 main:

@@ -91,7 +91,7 @@ void show_usage(void)
     FILE *f = con_term;
 
     con_fprintf(f,"Usage: %s [-123456789dlthVL] [-qvfk] [-o file] %sfile..\n", progname,
-#if defined(__DJGPP__) || defined(__EMX__)
+#if (ACC_OS_DOS32) && defined(__DJGPP__)
                 "[@]");
 #else
                 "");

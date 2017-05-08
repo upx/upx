@@ -188,6 +188,7 @@ r_reloc= 32 - 1  # use a slot in register save area
         add a0,r29,r26  // &b_info
         sub a1,a1,r26  // total_size
         la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
+        stwu sp,-(SZ_FRAME+OVERHEAD)(sp)
         lwz a3,sz_unc(a0)  // sz_elf_headers
 
         call upx_main  // Out: a0= entry

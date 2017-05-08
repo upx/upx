@@ -3,6 +3,12 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.94 (XX XXX 2017):
+  * Elf formats propagate NX via PT_GNU_STACK (but MIPS in future)
+  * --android-shlib preserves selected ElfXX_Shdr for Android N
+  * arm64-linux (aarch64) supported; (in future for Mach)
+  * --lzma compression supported for 64-bit PowerPC (Thierry Fauck)
+  * For Mach, "upx -d" will unpack a prefix of the file (and warn)
+  * bug fixes
 
 Changes in 3.93 (29 Jan 2017):
   * UPX has moved to GitHub - the new home page is https://upx.github.io

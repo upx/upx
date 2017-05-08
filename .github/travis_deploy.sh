@@ -47,7 +47,13 @@ esac
 # get $rev, $branch and $git_user
 cd / && cd $upx_SRCDIR || exit 1
 rev=$(git rev-parse --verify HEAD)
-timestamp=$(git log -n1 --format='%at' HEAD)
+if [[ "$branch" == gitlab* ]]; then
+    if git fetch -v origin devel; then
+        git branch -a -v
+        rev=$(git merge-base origin/devel $rev || echo $rev)
+    fi
+fi
+timestamp=$(git log -n1 --format='%at' $rev)
 date=$(TZ=UTC0 date -d "@$timestamp" '+%Y%m%d-%H%M%S')
 #branch="$branch-$date-${rev:0:6}"
 # make the branch name a little bit shorter so that it looks nice on GitHub
@@ -96,6 +102,12 @@ else
 fi
 d=$d-$BM_C-$BM_B
 
+if [[ -n $subdir ]]; then
+    print_header "DEPLOY $subdir/$d"
+else
+    print_header "DEPLOY $d"
+fi
+
 mkdir $d || exit 1
 for exeext in .exe .out; do
     f=$upx_BUILDDIR/upx$exeext
@@ -110,8 +122,8 @@ done
 # ************************************************************************/
 
 new_branch=0
-if ! git clone -b $branch --single-branch https://github.com/upx/upx-automatic-builds.git; then
-    git  clone -b master  --single-branch https://github.com/upx/upx-automatic-builds.git
+if ! git clone -b "$branch" --single-branch https://github.com/upx/upx-automatic-builds.git; then
+    git  clone -b master    --single-branch https://github.com/upx/upx-automatic-builds.git
     new_branch=1
 fi
 cd upx-automatic-builds || exit 1
@@ -119,9 +131,10 @@ chmod 700 .git
 git config user.name "$git_user"
 git config user.email "none@none"
 if [[ $new_branch == 1 ]]; then
-    git checkout --orphan $branch
-    git reset --hard
+    git checkout --orphan "$branch"
+    git reset --hard || true
 fi
+git ls-files -v
 
 if [[ -n $subdir ]]; then
     [[ -d $subdir ]] || mkdir $subdir
@@ -140,7 +153,7 @@ fi
 now=$(date '+%s')
 ##date=$(TZ=UTC0 date -d "@$now" '+%Y-%m-%d %H:%M:%S')
 git commit --date="$now" -m "Automatic build $d"
-git ls-files
+git ls-files -v
 #git log --pretty=fuller
 
 umask 077
@@ -162,17 +175,15 @@ while true; do
         exit 1
     fi
     if [[ $new_branch == 1 ]]; then
-        if git push -u $ssh_repo $branch; then break; fi
+        if git push -u $ssh_repo "$branch"; then break; fi
     else
-        if git push    $ssh_repo $branch; then break; fi
+        if git push    $ssh_repo "$branch"; then break; fi
     fi
-    git fetch -v origin $branch
     git branch -a -v
-    if [[ $new_branch == 1 ]]; then
-        git branch --set-upstream-to origin/$branch
-        new_branch=0
-    fi
-    git rebase origin/$branch
+    git fetch -v origin "$branch"
+    git branch -a -v
+    git rebase FETCH_HEAD
+    git branch -a -v
     sleep $((RANDOM % 5 + 1))
     let i+=1
 done

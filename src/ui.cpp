@@ -105,7 +105,7 @@ static void init_global_constants(void) {
         return;
     done = true;
 
-#if 1 && defined(__DJGPP__)
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
     /* check for Windows NT/2000/XP */
     if (_get_dos_version(1) == 0x0532)
         return;

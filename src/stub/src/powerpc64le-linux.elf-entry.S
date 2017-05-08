@@ -191,6 +191,7 @@ sz_obinfo= 4
         mtlr   a0  // &continuation
         lwz lsrc,sz_obinfo + sz_cpr(r30)        // size of compressed
         addi src,r30,sz_obinfo + sz_b_info
+        stdu sp,-SZ_FRAME(sp)  // ABI calling convention (for lzma compiled by gcc)
         bctr  // goto decomrpess; return to link register (mmap'ed page)
 
 main:

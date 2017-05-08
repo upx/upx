@@ -813,7 +813,7 @@ ERR_LAB
             err_exit(19);
         }
         entry = do_xmap(fdi, ehdr, 0, av, &reloc, 0);
-        auxv_up(av, AT_BASE, reloc);  // uClibc only?
+        auxv_up(av, AT_BASE, reloc);  // uClibc and musl
         close(fdi);
         break;
     }

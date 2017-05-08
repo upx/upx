@@ -27,7 +27,10 @@
 
 #include "conf.h"
 
-#if (USE_SCREEN) && defined(__DJGPP__)
+#if (USE_SCREEN) && (ACC_OS_DOS32) && defined(__DJGPP__)
+#if (ACC_CC_GNUC >= 0x040300ul)
+#pragma GCC diagnostic ignored "-Wvla"
+#endif
 
 #include "screen.h"
 
@@ -248,7 +251,7 @@ static int init(screen_t *this, int fd) {
     if (getPage(this) != 0)
         return -1;
 
-#if 1 && defined(__DJGPP__)
+#if 1 && (ACC_OS_DOS32) && defined(__DJGPP__)
     /* check for Windows NT/2000/XP */
     if (_get_dos_version(1) == 0x0532)
         return -1;
@@ -432,6 +435,6 @@ static const screen_t driver = {sobject_destroy, 0, /* finalize, */
 /* public constructor */
 screen_t *screen_djgpp2_construct(void) { return sobject_construct(&driver, sizeof(*driver.data)); }
 
-#endif /* (USE_SCREEN) && defined(__DJGPP__) */
+#endif /* (USE_SCREEN) && (ACC_OS_DOS32) && defined(__DJGPP__) */
 
 /* vim:set ts=4 sw=4 et: */

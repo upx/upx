@@ -51,8 +51,11 @@ PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
 PATHMAX=  4096
 
+PATH_MAX= 4096
+
 #ifndef DEBUG  /*{*/
 #define DEBUG 0
+#define TRACE_REGS r0-r12,r14,r15
 #endif  /*}*/
 
 @@ control just falls through, after this part and compiled C code
@@ -73,7 +76,10 @@ fold_begin:
     sp/ ADRU,LENU,sz_unc,&b_info,MFLG,argc,argv...
 */
         ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,&b_info,MFLG,argc
+#if DEBUG  //{
         mov r0,sp  @ current stack pointer
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
+#endif  //}
 
         add r1,sp,r11,lsl #2  @ skip argv pointers
         add r1,r1,#4  @ skip argv terminator
@@ -87,14 +93,13 @@ fold_begin:
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#6; bl trace
 #endif  //}
-        sub r0,r1,#PATHMAX @ buffer for readlink
-        sub r0,r0,#4  @ space for copy of space3eq
+        sub r0,r1,#PATH_MAX @ buffer for readlink
         sub r1,r1,sp  @ amount needed for argv,env,auxv
-        mov r0,r0,lsr #2+ PAGE_SHIFT  @ 2+ because hardware might require
-        sub r0,r0,#1  @ one page
-        mov r0,r0,lsl #2+ PAGE_SHIFT
-        sub r0,r0,r1  @ space for argv,env,auxv
-        sub r0,r0,#4  @ new_argv= room for added env ptr
+        sub r0,r0,#2*4  @ space for added env ptr and copy of space3eq
+        sub r0,r0,r1  @ new_argv= space for argv,env,auxv
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x12; bl trace
+#endif  //}
         mov r1,sp  @ old_argv
 /* preserve 8-byte alignment of stack pointer */
         eor r2,sp,r0  @ the misalignment of old_argv and new_argv
@@ -107,7 +112,6 @@ fold_begin:
         stmdb sp!,{TRACE_REGS}; mov r0,#7; bl trace
 #endif  //}
 SP_sz_unc= 2*4
-SP_argc= 4*4
 
         add r11,r11,#1  @ (1+argc) for end of argv
 .Larg:  @ copy argv
@@ -135,34 +139,18 @@ SP_argc= 4*4
         stmdb sp!,{TRACE_REGS}; mov r0,#8; bl trace
 #endif  //}
 
-        add r1,r0,#1<<(2+ PAGE_SHIFT)  @ after the page
+        mov r1,r0
         str r1,[r4]  @ new env ptr
-        mov r4,r0  @ save page address
         ldr r2,space3eq
         str r2,[r1],#4  @ "   =" of new env var
 
-        mov r2,#PATHMAX  @ buffer length
+        mov r2,#PATH_MAX  @ buffer length
         adr r0,proc_self_exe
         sub r2,r2,#1  @ room for null terminator
         bl readlink; cmn r0,#4096; bcs 0f  @ error
         mov r2,#0
         strb r2,[r1,r0]  @ null terminate pathname
 0:
-/* Preserve symlink /proc/self/exe by mapping one page into stack */
-        adr r0,proc_self_exe
-        mov r1,#O_RDONLY
-        bl open  @ no error check: cannot recover
-
-        mov r1,#0
-        stmdb sp!,{r0,r1,r3}  @ fd, offset, new &Elf32_auxv_t
-        mov r0,r4  @ page address
-        mov r1,#PAGE_SIZE
-        mov r2,#PROT_READ
-        mov r3,#MAP_PRIVATE|MAP_FIXED
-        bl mmap  @ no error check: cannot recover
-        ldr r0,[sp],#4  @ fd
-        bl close
-        ldmia sp!,{r1,r3}  @ junk, new &Elf32_auxv_t
 
 /* Construct arglist for upx_main */
         sub sp,sp,#MAX_ELF_HDR + OVERHEAD  @ alloca
@@ -182,18 +170,22 @@ SP_argc= 4*4
 #else  /*}{*/
         mov r12,#0
 #endif  /*}*/
+
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
 #if DEBUG  //{
         stmdb sp!,{TRACE_REGS}; mov r0,#9; bl trace
 #endif  //}
+// r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
+// xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, dynbase, sys_munmap
         bl upx_main
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#10; bl trace
-#endif  //}
         mov lr,r0  @ entry address
         add sp,sp,#(10-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#0x18; bl trace
+#endif  //}
+        str r0,[sp,#3*4]  @ replace crumb with entry address
 
 #if 0  //{ make_hatch_arm() does it then
   @ __clear_cache(hatch, &hatch[2]);
@@ -204,7 +196,22 @@ SP_argc= 4*4
         do_sys7t2 __ARM_NR_cacheflush  @ scribble r7
 #endif  //}
 
-        ldmia sp!,{r0,r1,r2,r3}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type],&b_info
+// Map 1 page of /proc/self/exe so that munmap does not remove all references
+        adr r0,proc_self_exe
+        mov r1,#O_RDONLY
+        bl open  @ no error check: cannot recover
+        mov r1,#0
+        str r0,[sp,#-4]!  @ fd
+        mov r0,#0  @ any page
+        mov r1,#PAGE_SIZE
+        mov r2,#PROT_READ
+        mov r3,#MAP_PRIVATE
+        bl mmap  @ no error check: cannot recover
+        ldr r0,[sp],#4  @ fd
+        bl close
+
+        ldmia sp!,{r0,r1,r2, lr}  @ ADRU,LENU,1+ &Elf32_auxv_t[AT_NULL@.a_type], entry
+        // crumb is unused: replaced by mapping /proc/self/exe into a free page
 
 #if DEBUG  /*{*/
         ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
@@ -468,5 +475,8 @@ div10: .globl div10
         ret
 
 #endif  /*}*/
+
+/* Preserve symlink /proc/self/exe by mapping one page into stack */
+
 
 /* vim:set ts=8 sw=8 et: */
