@@ -82,7 +82,7 @@ L90:
         pop %rbx  # L90a
         lea L90b - L90a(%rbx),%rax; push %rax  # &amdbxx: f_unfilter
         mov %rsp,%rsi
-        sub $2*PAGE_SIZE + PATH_MAX,%rsp
+        sub $PATH_MAX,%rsp
         push %rsp; pop %rdi
         push $7; pop %rcx; rep movsq  # f_unfilter,LENX,ADRX,LENU,ADRU,slide,argc
 0:
@@ -115,31 +115,18 @@ L90:
         rep movsb  # slide up
         sub $3,%rdi; movl $('='<<24)|(' '<<16)|(' '<<8)|(' '<<0),(%rdi)  # env var name
         mov %rdi,(%r14)  # new_env[0]
-        shr $PAGE_SHIFT,%rdi; dec %rdi; shl $PAGE_SHIFT,%rdi; mov %rdi,%r14  # &page
-
-        push $__NR_open
-        sub %arg2l,%arg2l  # O_RDONLY
-        push %rbx; pop %arg1  # "/proc/self/exe"
-        pop %rax; syscall; xchg %eax,%ebx  # %ebx= fd
-
-        push $__NR_mmap
-        sub %arg6l,%arg6l  # 0 offset
-        mov %ebx,%arg5l
-        push $MAP_PRIVATE|MAP_FIXED; pop %sys4  # BEWARE:  %sys4
-        push $PROT_READ; pop %arg3
-        mov $PAGE_SIZE,%arg2l
-        push %r14; pop %arg1
-        pop %rax; syscall
-
-        push $__NR_close
-        mov %ebx,%edi  # fd
-        pop %rax; syscall
-
-        lea -8(%r15),%rsi  # &last qword of old auxv
-        lea -8(%r14),%rdi  # &last qword of new auxv
-
+        and $~0<<3,%rdi  # align
         mov %r15,%rcx
-        sub %rsp,%rcx
+        sub %rsp,%rcx  # byte count
+
+        mov %ecx,%eax
+        xor %edi,%eax
+        and   $8,%eax
+        sub %rax,%rdi  # keep 16-byte alignment of %rsp
+
+        mov %rdi,%r14  # end of new auxv
+        sub $8,%rdi        # &last qword of new auxv
+        lea -8(%r15),%rsi  # &last qword of old auxv
         shr   $3,%rcx; rep movsq
         lea 8(%rdi),%rsp
         cld
@@ -159,12 +146,32 @@ L90:
                 Elf32_Auxv_t *arg4, f_decompr arg5, f_unfilter arg6,
                 Elf64_Addr reloc )
 */
+        push %rax; pop %rbp  # entry
         popq %rdx  # reloc
         addq $OVERHEAD,%rsp
+
+        push $__NR_open
+        sub %arg2l,%arg2l  # O_RDONLY
+        push %rbx; pop %arg1  # "/proc/self/exe"
+        pop %rax; syscall; xchg %eax,%ebx  # %ebx= fd
+
+        push $__NR_mmap
+        sub %arg6l,%arg6l  # 0 offset
+        mov %ebx,%arg5l
+        push $MAP_PRIVATE; pop %sys4  # BEWARE:  %sys4
+        push $PROT_READ; pop %arg3
+        mov $PAGE_SIZE,%arg2l
+        push $0; pop %arg1
+        pop %rax; syscall
+
+        push $__NR_close
+        mov %ebx,%edi  # fd
+        pop %rax; syscall
+
         pop %arg2  # LENU
         pop %arg1  # ADRU
         pop %rcx   # slide [unused]
-        push %rax  # &entry
+        push %rbp  # &entry
         push $ __NR_munmap; pop %rax
         jmp *-8(%r14)  # goto: syscall; ret
 
