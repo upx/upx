@@ -590,9 +590,9 @@ void PackLinuxElf32::defineSymbols(Filter const *ft)
     }
     adrm = my_page_mask & (~my_page_mask + adrm);  // round up to page boundary
 
-    linker->defineSymbol("LENU", lenu);  // len  for unmap
-    linker->defineSymbol("LENM", lenm);  // len  for map
-    linker->defineSymbol("ADRM", adrm);  // offset from &Elf32_Ehdr
+    (void)lenu; //linker->defineSymbol("LENU", lenu);  // len  for unmap
+    (void)lenm; //linker->defineSymbol("LENM", lenm);  // len  for map
+    (void)adrm; //linker->defineSymbol("ADRM", adrm);  // offset from &Elf32_Ehdr
 
     //linker->dumpSymbols();  // debug
 }
