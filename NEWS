@@ -2,7 +2,7 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.94 (XX XXX 2017):
+Changes in 3.94 (12 May 2017):
   * Elf formats propagate NX via PT_GNU_STACK (but MIPS in future)
   * --android-shlib preserves selected ElfXX_Shdr for Android N
   * arm64-linux (aarch64) supported; (in future for Mach)
