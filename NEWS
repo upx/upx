@@ -2,6 +2,8 @@
 User visible changes for UPX
 ==================================================================
 
+Changes in 3.95 (XX XXX 2017):
+
 Changes in 3.94 (12 May 2017):
   * Add support for arm64-linux (aka "aarch64").
   * Add support for --lzma compression on 64-bit PowerPC (Thierry Fauck).
