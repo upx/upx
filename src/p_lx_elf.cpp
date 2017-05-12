@@ -1605,7 +1605,8 @@ bool PackLinuxElf32::canPack()
             if (0==strcmp(symnam, "__libc_start_main")  // glibc
             ||  0==strcmp(symnam, "__libc_init")  // Android
             ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
+            ||  0==strcmp(symnam, "__uClibc_start_main")
+            ||  0==strcmp(symnam, "__libc_init"))
                 goto proceed;
         }
 
