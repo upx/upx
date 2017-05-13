@@ -3,6 +3,7 @@ User visible changes for UPX
 ==================================================================
 
 Changes in 3.95 (XX XXX 2017):
+  * UPX has moved to GitHub - the new home page is https://upx.github.io
 
 Changes in 3.94 (12 May 2017):
   * Add support for arm64-linux (aka "aarch64").
@@ -12,9 +13,8 @@ Changes in 3.94 (12 May 2017):
   * bug fixes - see https://github.com/upx/upx/milestone/3
 
 Changes in 3.93 (29 Jan 2017):
-  * UPX has moved to GitHub - the new home page is https://upx.github.io
   * Fixed some win32/pe and win64/pe regressions introduced in 3.92
-  * bug fixes - see https://github.com/upx/upx/milestone/1
+  * bug fixes - see https://github.com/upx/upx/milestone/2
 
 Changes in 3.92 (11 Dec 2016):
   * UPX has moved to GitHub - the new home page is https://upx.github.io
