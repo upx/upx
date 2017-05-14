@@ -1367,7 +1367,7 @@ void Packer::compressWithFilters(upx_bytep i_ptr, unsigned i_len,
                                  const unsigned overlap_range,
                                  const upx_compress_config_t *cconf,
                                  int filter_strategy,
-                                 int inhibit_compression_check)
+                                 bool inhibit_compression_check)
 {
     parm_ft->buf_len = f_len;
     // struct copies
@@ -1568,7 +1568,7 @@ void Packer::compressWithFilters(Filter *ft,
                                  const unsigned overlap_range,
                                  const upx_compress_config_t *cconf,
                                  int filter_strategy,
-                                 int inhibit_compression_check)
+                                 bool inhibit_compression_check)
 {
     compressWithFilters(ft, overlap_range, cconf, filter_strategy,
                         0, 0, 0, NULL, 0, inhibit_compression_check);
@@ -1583,7 +1583,7 @@ void Packer::compressWithFilters(Filter *ft,
                                  unsigned ibuf_off,
                                  unsigned obuf_off,
                                  const upx_bytep hdr_ptr, unsigned hdr_len,
-                                 int inhibit_compression_check)
+                                 bool inhibit_compression_check)
 {
     ibuf.checkState(); obuf.checkState();
 

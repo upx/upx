@@ -50,22 +50,28 @@ mostlyclean clean distclean maintainer-clean:
 
 %.1 : %.pod
 	pod2man --center=" " --release="$(PACKAGE) $(VERSION)" --date="$(VERSION_DATE)" $< | $(RTRIM) > $@
+	test -s $@
 
 %.doc : %.pod
 	pod2text < $< | $(RTRIM) > $@
+	test -s $@
 
 %.html : %.pod
 	pod2html --noindex $< | $(RTRIM) | $(DETAB2) > $@
 	@rm -f pod2htm*
+	test -s $@
 
 %.man : %.1
 	nroff -man $< | $(RTRIM) > $@
+	test -s $@
 
 %.ps : %.1
 	groff -man $< | $(RTRIM) > $@
+	test -s $@
 
 %.tex : %.pod
 	pod2latex $<
+	test -s $@
 
 
 ###
