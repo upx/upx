@@ -46,9 +46,7 @@
 
 section MACHMAINX
 _start: .globl _start
-L100: pause; jmp L100  // FIXME
-    int3  // FIXME
-        push $~0  // space for &user_init function
+        push %rax  // space for &user_init_fn
         push %rdi; push %rsi; push %rdx; push %rcx; push %r8  // args
         push %rbp  // callee-save registers
         push %rbx
@@ -224,15 +222,16 @@ main:
         pop %rbp  # &escape
 
 // Get temp pages for compressed __TEXT and this stub
-        lea -1*4 + _start - escape(%rbp),%rbx
-        mov (%rbx),%eax; sub %rax,%rbx  # our &Mach_header
-        mov -4*4 + _start - escape(%rbp),%edx  # offset(user_init_fn)
+        lea -4*4 + _start - escape(%rbp),%rsi
+        lodsl; xchg %eax,%edx  # offset(user_init_fn)
+        lodsl; xchg %eax,%ecx  # offset(b_info)
+        lodsl  # skip
+        mov (%rsi),%eax  # #preceding bytes in file
+        sub %rax,%rsi; push %rsi; pop %rbx  # our &Mach_header
         add %rbx,%rdx; mov %rdx,7*8(%rsp)  # reloc(user_init_fn)
-        mov -3*4 + _start - escape(%rbp),%edx  # offset(b_info)
-        sub %edx,%eax; add %rbx,%rdx
-        sub $-4+ _start,%eax
-        add $    dy_top,%eax; push %rax  # P_02  length(tmppag)
-        push %rdx  # P_01  &b_info
+        sub %ecx,%eax  # omit Mach_headers from copy
+        add $4+dy_top,%eax; push %rax  # P_02  length(tmppag)
+        add %rbx,%rcx;      push %rcx  # P_01  &b_info
         xchg %eax,%arg2l  # length
 
         xor %arg6,%arg6  # 0  offset
@@ -257,17 +256,26 @@ main:
 // Make temp pages executable, and go there
         pop %arg1  # P_03 src (tmppag)
         pop %arg2  # P_02 length(tmppag)
-        push $PROT_READ|PROT_EXEC; pop %arg3
         push %arg2  # P_02 length(tmppag)
         push %arg1  # P_03 src(tmppag)
         push %rcx  # P_06 reloc(&b_info)
         push %rax  # P_04  reloc(dy_top)
-        mov $SYS_mprotect,%eax; syscall; jc bad_mmap
+        call mprot_RE
 
         pop %rax  # P_04 reloc(dy_top)
         add $dy_reloc - dy_top,%rax
         jmp *%rax
 
+mprot_RW:
+        push $PROT_READ|PROT_WRITE; jmp mprot
+mprot_RE:
+        push $PROT_READ|PROT_EXEC
+mprot:
+        mov $SYS_mprotect,%eax
+mding:
+        pop %arg3
+        syscall; jc bad_mmap
+        ret
 bad_mmap:
         hlt
         jmp bad_mmap
@@ -277,8 +285,7 @@ dy_reloc:
 // Make __TEXT writeable
         push %rbx; pop %arg1  # our &Mach_header
         mov -2*4 + _start - escape(%rbp),%arg2l
-        push $PROT_READ|PROT_WRITE; pop %arg3
-        mov $SYS_mprotect,%eax; syscall; jc bad_mmap
+        call mprot_RW
 
         pop %rsi  # P_06  reloc(&b_info)
         push %rbx; pop %rdi  # our &Mach_header
@@ -325,13 +332,12 @@ sz_Mach_header64 = 0x20
           add $8+ 2*4 + sz_Mach_header64,%rbx  # &segname[8] after "__TEXT\0\0"
           mov %rax,(%rbx)
         mov -2*4 + _start - decompress(%rbp),%arg2l
-        push $PROT_READ|PROT_EXEC; pop %arg3
-        mov $SYS_mprotect,%eax; syscall; jc bad_mmap
+        call mprot_RE
 
         pop %arg1  # P_03 tmppag
         pop %arg2  # P_02 len(tmppag)
         mov $SYS_munmap,%eax
-        push %rbx; pop %rcx
+        push %rbx; pop %rcx  # &hatch
         pop %rbx; pop %rbp  // saved registers
         pop %r8
         jmp *%rcx
