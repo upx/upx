@@ -14,6 +14,8 @@ find . \
     -type f -iname '*.bat' -prune -o \
     -type f -iname '*.exe' -prune -o \
     -type f -iname '*.pdf' -prune -o \
+    -type f -iname '*.o' -prune -o \
+    -type f -iname '*.out' -prune -o \
     -type f -iname '*.swp' -prune -o \
     -type f -print0 | \
 LC_ALL=C sort -z | xargs -0r perl -n -e '
