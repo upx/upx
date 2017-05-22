@@ -262,15 +262,6 @@ void show_help(int verbose)
         con_fprintf(f,
                     "  --8086              make compressed sys work on any 8086\n"
                     "\n");
-#if 0
-        fg = con_fg(f,FG_YELLOW);
-        con_fprintf(f,"Options for linux/386\n");
-        fg = con_fg(f,fg);
-        con_fprintf(f,
-                    "  --script             use /usr/local/lib/upx/upx[bd] as decompressor\n"
-                    "  --script=/path/upxX  use path/upxX as decompressor\n"
-                    "\n");
-#endif
         fg = con_fg(f,FG_YELLOW);
         con_fprintf(f,"Options for ps1/exe:\n");
         fg = con_fg(f,fg);
@@ -370,7 +361,7 @@ void show_license(void)
     );
     int fg = con_fg(f,FG_CYAN);
     con_fprintf(f,
-        "        http://upx.sourceforge.net\n"
+        "        https://upx.github.io\n"
         "        http://www.oberhumer.com/opensource/upx/\n"
     );
     (void)con_fg(f,FG_ORANGE);

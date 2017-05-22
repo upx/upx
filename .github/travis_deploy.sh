@@ -158,6 +158,7 @@ git ls-files -v
 
 umask 077
 [[ -d ~/.ssh ]] || mkdir ~/.ssh
+fix_home_ssh_perms
 repo=$(git config remote.origin.url)
 ssh_repo=${repo/https:\/\/github.com\//git@github.com:}
 eval $(ssh-agent -s)
@@ -166,7 +167,9 @@ openssl aes-256-cbc -d -a -K "$UPX_AUTOMATIC_BUILDS_SSL_KEY" -iv "$UPX_AUTOMATIC
 set -x
 chmod 600 .git/deploy.key
 ssh-add .git/deploy.key
+fix_home_ssh_perms
 ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+fix_home_ssh_perms
 
 let i=0 || true
 while true; do

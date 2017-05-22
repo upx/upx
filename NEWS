@@ -2,17 +2,19 @@
 User visible changes for UPX
 ==================================================================
 
-Changes in 3.94 (XX XXX 2017):
-  * Elf formats propagate NX via PT_GNU_STACK (but MIPS in future)
-  * --android-shlib preserves selected ElfXX_Shdr for Android N
-  * arm64-linux (aarch64) supported; (in future for Mach)
-  * --lzma compression supported for 64-bit PowerPC (Thierry Fauck)
-  * For Mach, "upx -d" will unpack a prefix of the file (and warn)
-  * bug fixes
+Changes in 3.95 (XX XXX 2017):
+  * UPX has moved to GitHub - the new home page is https://upx.github.io
+
+Changes in 3.94 (12 May 2017):
+  * Add support for arm64-linux (aka "aarch64").
+  * Add support for --lzma compression on 64-bit PowerPC (Thierry Fauck).
+  * For Mach, "upx -d" will unpack a prefix of the file (and warn).
+  * Various improvements to the ELF formats.
+  * bug fixes - see https://github.com/upx/upx/milestone/3
 
 Changes in 3.93 (29 Jan 2017):
-  * UPX has moved to GitHub - the new home page is https://upx.github.io
-  * fixed some win32/pe and win64/pe regressions introduced in 3.92
+  * Fixed some win32/pe and win64/pe regressions introduced in 3.92
+  * bug fixes - see https://github.com/upx/upx/milestone/2
 
 Changes in 3.92 (11 Dec 2016):
   * UPX has moved to GitHub - the new home page is https://upx.github.io
@@ -27,7 +29,7 @@ Changes in 3.92 (11 Dec 2016):
     by Codenomicon to NCSC-FI on 2015-01-08.
     The vulnerabilities were discovered by Joonas Kuorilehto and
     Antti Häyrynen from Codenomicon.
-  * bug fixes
+  * bug fixes - see https://github.com/upx/upx/milestone/1
 
 Changes in 3.91 (30 Sep 2013):
   * Added experimental support for Windows 64-bit PE files, based on
