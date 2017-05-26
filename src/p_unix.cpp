@@ -557,7 +557,10 @@ int PackUnix::canUnpack()
 
 void PackUnix::unpack(OutputFile *fo)
 {
-    unsigned const szb_info = sizeof(b_info);
+    b_info bhdr;
+    unsigned const szb_info = (ph.version <= 11)
+        ? sizeof(bhdr.sz_unc) + sizeof(bhdr.sz_cpr)  // old style
+        : sizeof(bhdr);
 
     unsigned c_adler = upx_adler32(NULL, 0);
     unsigned u_adler = upx_adler32(NULL, 0);
@@ -590,7 +593,7 @@ void PackUnix::unpack(OutputFile *fo)
     // decompress blocks
     unsigned total_in = 0;
     unsigned total_out = 0;
-    b_info bhdr; memset(&bhdr, 0, sizeof(bhdr));
+    memset(&bhdr, 0, sizeof(bhdr));
     for (;;)
     {
 #define buf ibuf
