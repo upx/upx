@@ -137,12 +137,14 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
                                     void *user) {
     Packer *p = NULL;
 
-#define D(klass)                                                                                   \
-    ACC_BLOCK_BEGIN                                                                                \
-    if (o->debug.debug_level)                                                                      \
-        fprintf(stderr, "visitAllPackers: %s\n", #klass);                                          \
-    if ((p = func(new klass(f), user)) != NULL)                                                    \
-        return p;                                                                                  \
+#define D(Klass)                                                               \
+    ACC_BLOCK_BEGIN                                                            \
+    Klass *const kp = new Klass(f);                                            \
+    if (o->debug.debug_level)                                                  \
+        fprintf(stderr, "visitAllPackers: (ver=%d, fmt=%3d) %s\n",             \
+            kp->getVersion(), kp->getFormat(), #Klass);                        \
+    if ((p = func(kp, user)))                                                  \
+        return p;                                                              \
     ACC_BLOCK_END
 
     // note: order of tries is important !

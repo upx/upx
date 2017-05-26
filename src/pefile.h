@@ -37,6 +37,8 @@
 class PeFile : public Packer
 {
     typedef Packer super;
+public:
+    virtual int getVersion() const { return 13; }
 protected:
     class Interval;
     class Reloc;
@@ -47,7 +49,6 @@ protected:
 
     PeFile(InputFile *f);
     virtual ~PeFile();
-    virtual int getVersion() const { return 13; }
 
     void readSectionHeaders(unsigned objs, unsigned sizeof_ih);
     unsigned readSections(unsigned objs, unsigned usize,
