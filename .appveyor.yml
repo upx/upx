@@ -25,7 +25,7 @@ environment:
 
 init:
   - git config --global core.autocrlf input
-  - where bash & where cat & where chmod & where cmp & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar
+  - where bash & where cat & where chmod & where cmp & where cp & where curl & where date & where file & where git & where gzip & where mkdir & where mv & where openssl & where readlink & where rm & where rmdir & where sed & where sha256sum & where sort & where ssh & where ssh-add & where ssh-agent & where ssh-keyscan & where tar & where touch
 # - bash --version & git --version & sed --version & tar --version
   - git --version & bash --version
 # - dir "c:\Program Files\Git\usr\bin"

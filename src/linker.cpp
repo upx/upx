@@ -641,8 +641,7 @@ void ElfLinkerArmLE::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 }
 
 void ElfLinkerArm64LE::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
-                                 const char *type)
-{
+                                 const char *type) {
     if (strncmp(type, "R_AARCH64_", 10))
         return super::relocate1(rel, location, value, type);
     type += 10;
