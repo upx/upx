@@ -1309,7 +1309,7 @@ powerpc-linux.elf%.h : tc_list = powerpc-linux.elf default
 powerpc-linux.elf%.h : tc_bfdname = elf32-powerpc
 
 tc.powerpc-linux.elf.gcc  = powerpc.405-linux-gcc-3.4.5 -m32 -mbig-endian -mtune=powerpc -nostdinc -MMD -MT $@
-tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables   # -fno-stack-protector
+tc.powerpc-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables # -fno-stack-protector
 tc.powerpc-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
 powerpc-linux.elf-entry.h : $(srcdir)/src/$$T.S
