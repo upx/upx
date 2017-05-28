@@ -1949,7 +1949,7 @@ PackLinuxElf64amd::canPack()
     // Otherwise (no __libc_start_main as global undefined): skip it.
     // Also allow  __uClibc_main  and  __uClibc_start_main .
 
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
+    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_SYMTAB has no designated length.  Read the whole file.
         alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
@@ -1983,6 +1983,10 @@ PackLinuxElf64amd::canPack()
         rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
         Elf64_Rela const *
         jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
+
+        if (Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)) {
+            goto proceed;  // marked as main program
+        }
         for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
                 0 < sz;
                 (sz -= sizeof(Elf64_Rela)), ++jmprela

@@ -344,6 +344,10 @@ upx_main(  // returns entry address
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
     entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
+    if (!phdr->p_vaddr) { // -fPIE at 0
+        // Needed if no PT_PHDR (libmusl); else repeat of do_xmap()
+        auxv_up(av, AT_PHDR, reloc + (unsigned long)(1+(Elf64_Ehdr *)phdr->p_vaddr));
+    }
     auxv_up(av, AT_ENTRY, entry);
 
   { // Map PT_INTERP program interpreter

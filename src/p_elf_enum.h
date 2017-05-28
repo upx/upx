@@ -162,8 +162,13 @@
         DT_CHECKSUM = 0x6ffffdf8,       /* Only for prelink? */
         DT_GNU_HASH = 0x6ffffef5,       /* GNU-style hash table */
         DT_VERSYM   = 0x6ffffff0,       /* version[] for each symbol */
+        DT_FLAGS_1  = 0x6ffffffb,       /* DF_1_* */
         DT_VERDEF   = 0x6ffffffc,       /* version definitions[] */
         DT_VERNEEDED= 0x6ffffffe        /* version[] needed */
+    };
+    enum { // DT_FLAGS_1
+        DF_1_NOW    = 0x00000001,  /* Set RTLD_NOW for this object.  */
+        DF_1_PIE    = 0x08000000   // Position-Independent Executable (main program)
     };
 #endif
 
