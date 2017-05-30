@@ -1481,6 +1481,34 @@ Elf64_Shdr const *PackLinuxElf64::elf_find_section_type(
     return 0;
 }
 
+bool PackLinuxElf64::calls_crt1(Elf64_Rela const *rela, int sz)
+{
+    for (; 0 < sz; (sz -= sizeof(Elf64_Rela)), ++rela) {
+        unsigned const symnum = get_te32(&rela->r_info) >> 8;
+        char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+        if (0==strcmp(symnam, "__libc_start_main")  // glibc
+        ||  0==strcmp(symnam, "__libc_init")  // Android
+        ||  0==strcmp(symnam, "__uClibc_main")
+        ||  0==strcmp(symnam, "__uClibc_start_main"))
+            return true;
+    }
+    return false;
+}
+
+bool PackLinuxElf32::calls_crt1(Elf32_Rel const *rel, int sz)
+{
+    for (; 0 < sz; (sz -= sizeof(Elf32_Rel)), ++rel) {
+        unsigned const symnum = get_te32(&rel->r_info) >> 8;
+        char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
+        if (0==strcmp(symnam, "__libc_start_main")  // glibc
+        ||  0==strcmp(symnam, "__libc_init")  // Android
+        ||  0==strcmp(symnam, "__uClibc_main")
+        ||  0==strcmp(symnam, "__uClibc_start_main"))
+            return true;
+    }
+    return false;
+}
+
 bool PackLinuxElf32::canPack()
 {
     union {
@@ -1600,23 +1628,14 @@ bool PackLinuxElf32::canPack()
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         memcpy(&ehdri, ehdr, sizeof(Elf32_Ehdr));
 
-        // Modified 2009-10-10 to detect a ProgramLinkageTable relocation
-        // which references the symbol, because DT_GNU_HASH contains only
-        // defined symbols, and there might be no DT_HASH.
-
-        Elf32_Rel const *
-        jmprel=     (Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_JMPREL);
-        for (   int sz = elf_unsigned_dynamic(Elf32_Dyn::DT_PLTRELSZ);
-                0 < sz;
-                (sz -= sizeof(Elf32_Rel)), ++jmprel
-        ) {
-            unsigned const symnum = get_te32(&jmprel->r_info) >> 8;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
+        if (Elf32_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf32_Dyn::DT_FLAGS_1)) {
+            goto proceed;  // marked as main program
+        }
+        if (calls_crt1((Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_REL),
+                                 (int)elf_unsigned_dynamic(Elf32_Dyn::DT_RELSZ))
+        ||  calls_crt1((Elf32_Rel const *)elf_find_dynamic(Elf32_Dyn::DT_JMPREL),
+                                 (int)elf_unsigned_dynamic(Elf32_Dyn::DT_PLTRELSZ))) {
+            goto proceed;  // calls C library init for main program
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
@@ -1763,7 +1782,7 @@ PackLinuxElf64ppcle::canPack()
     // Otherwise (no __libc_start_main as global undefined): skip it.
     // Also allow  __uClibc_main  and  __uClibc_start_main .
 
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
+    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_SYMTAB has no designated length.  Read the whole file.
         alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
@@ -1793,37 +1812,16 @@ PackLinuxElf64ppcle::canPack()
         // which references the symbol, because DT_GNU_HASH contains only
         // defined symbols, and there might be no DT_HASH.
 
-        Elf64_Rela const *
-        rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
-        Elf64_Rela const *
-        jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++jmprela
-        ) {
-            unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
+        if (Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)) {
+            goto proceed;  // marked as main program
+        }
+        if (calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ))
+        ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ))) {
+            goto proceed;  // calls C library init for main program
         }
 
-        // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
-        // Check the general case, too.
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++rela
-        ) {
-            unsigned const symnum = get_te64(&rela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
-        }
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
         // If there is an existing DT_INIT, and if everything that the dynamic
         // linker ld-linux needs to perform relocations before calling DT_INIT
@@ -1985,44 +1983,14 @@ PackLinuxElf64amd::canPack()
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
         dynsym=     (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
 
-        // Modified 2009-10-10 to detect a ProgramLinkageTable relocation
-        // which references the symbol, because DT_GNU_HASH contains only
-        // defined symbols, and there might be no DT_HASH.
-
-        Elf64_Rela const *
-        rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
-        Elf64_Rela const *
-        jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
-
         if (Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)) {
             goto proceed;  // marked as main program
         }
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++jmprela
-        ) {
-            unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
-        }
-
-        // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
-        // Check the general case, too.
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++rela
-        ) {
-            unsigned const symnum = get_te64(&rela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
+        if (calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ))
+        ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ))) {
+            goto proceed;  // calls C library init for main program
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
@@ -2160,7 +2128,7 @@ PackLinuxElf64arm::canPack()
     // Otherwise (no __libc_start_main as global undefined): skip it.
     // Also allow  __uClibc_main  and  __uClibc_start_main .
 
-    if (Elf32_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
+    if (Elf64_Ehdr::ET_DYN==get_te16(&ehdr->e_type)) {
         // The DT_SYMTAB has no designated length.  Read the whole file.
         alloc_file_image(file_image, file_size);
         fi->seek(0, SEEK_SET);
@@ -2186,40 +2154,14 @@ PackLinuxElf64arm::canPack()
         dynstr=          (char const *)elf_find_dynamic(Elf64_Dyn::DT_STRTAB);
         dynsym=     (Elf64_Sym const *)elf_find_dynamic(Elf64_Dyn::DT_SYMTAB);
 
-        // Modified 2009-10-10 to detect a ProgramLinkageTable relocation
-        // which references the symbol, because DT_GNU_HASH contains only
-        // defined symbols, and there might be no DT_HASH.
-
-        Elf64_Rela const *
-        rela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA);
-        Elf64_Rela const *
-        jmprela= (Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL);
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++jmprela
-        ) {
-            unsigned const symnum = get_te64(&jmprela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
+        if (Elf64_Dyn::DF_1_PIE & elf_unsigned_dynamic(Elf64_Dyn::DT_FLAGS_1)) {
+            goto proceed;  // marked as main program
         }
-
-        // 2016-10-09 DT_JMPREL is no more (binutils-2.26.1)?
-        // Check the general case, too.
-        for (   int sz = elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ);
-                0 < sz;
-                (sz -= sizeof(Elf64_Rela)), ++rela
-        ) {
-            unsigned const symnum = get_te64(&rela->r_info) >> 32;
-            char const *const symnam = get_te32(&dynsym[symnum].st_name) + dynstr;
-            if (0==strcmp(symnam, "__libc_start_main")  // glibc
-            ||  0==strcmp(symnam, "__libc_init")  // Android
-            ||  0==strcmp(symnam, "__uClibc_main")
-            ||  0==strcmp(symnam, "__uClibc_start_main"))
-                goto proceed;
+        if (calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_RELA),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_RELASZ))
+        ||  calls_crt1((Elf64_Rela const *)elf_find_dynamic(Elf64_Dyn::DT_JMPREL),
+                                  (int)elf_unsigned_dynamic(Elf64_Dyn::DT_PLTRELSZ))) {
+            goto proceed;  // calls C library init for main program
         }
 
         // Heuristic HACK for shared libraries (compare Darwin (MacOS) Dylib.)
