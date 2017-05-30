@@ -154,6 +154,7 @@
         DT_RELAENT  =  9,       /* Size of one RELA relocation */
         DT_INIT     = 12,       /* Address of init function */
         DT_REL      = 17,       /* Relocations which contain no addend */
+        DT_RELSZ   =  18,       /* Total size of Rel relocs */
         DT_RELENT   = 19,       /* Size of one Rel relocation */
         DT_STRSZ    = 10,       /* Sizeof string table */
         DT_PLTREL   = 20,       /* Type of reloc in PLT */

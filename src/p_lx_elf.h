@@ -139,6 +139,7 @@ protected:
     virtual unsigned find_LOAD_gap(Elf32_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
     virtual off_t getbase(const Elf32_Phdr *phdr, int e_phnum) const;
+    bool calls_crt1(Elf32_Rel const *rel, int sz);
 
     virtual Elf32_Sym const *elf_lookup(char const *) const;
     virtual unsigned elf_get_offset_from_address(unsigned) const;
@@ -259,6 +260,7 @@ protected:
     virtual void updateLoader(OutputFile *fo);
     virtual unsigned find_LOAD_gap(Elf64_Phdr const *const phdri, unsigned const k,
         unsigned const e_phnum);
+    bool calls_crt1(Elf64_Rela const *rela, int sz);
 
     virtual Elf64_Sym const *elf_lookup(char const *) const;
     virtual upx_uint64_t elf_get_offset_from_address(upx_uint64_t) const;
