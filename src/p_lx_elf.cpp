@@ -88,6 +88,16 @@ fpad4(OutputFile *fo)
 }
 
 static unsigned
+fpad8(OutputFile *fo)
+{
+    unsigned len = fo->st_size();
+    unsigned d = 7u & (0 - len);
+    upx_uint64_t zero = 0;
+    fo->write(&zero, d);
+    return d + len;
+}
+
+static unsigned
 funpad4(InputFile *fi)
 {
     unsigned d = 3u & (0 - fi->tell());
@@ -3714,7 +3724,7 @@ void PackLinuxElf64::pack4(OutputFile *fo, Filter &ft)
                 }
             }
             if (k && fo) {
-                set_te64(&ehdri.e_shoff, fpad4(fo));
+                set_te64(&ehdri.e_shoff, fpad8(fo));
                 set_te16(&ehdri.e_shentsize, sizeof(*shdri));
                 set_te16(&ehdri.e_shnum, 1+ k);
                 Elf64_Shdr shdr_undef; memset(&shdr_undef, 0, sizeof(shdr_undef));
