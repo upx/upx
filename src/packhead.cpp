@@ -182,8 +182,8 @@ bool PackHeader::fillPackHeader(const upx_bytep buf, int blen) {
     filter_cto = 0;
 
     if (opt->debug.debug_level) {
-        fprintf(stderr, "  fillPackHeader  version=%d  format=%d  method=%d  level=%d\n",
-            version, format, method, level);
+        fprintf(stderr, "  fillPackHeader  version=%d  format=%d  method=%d  level=%d\n", version,
+                format, method, level);
     }
     const int size = getPackHeaderSize();
     if (boff + size <= 0 || boff + size > blen)
