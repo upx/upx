@@ -447,7 +447,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
         unsigned off = fo->st_size();
         unsigned off_init = 0;  // where in file
         upx_uint64_t va_init = sz_pack2;   // virtual address
-        upx_uint64_t rel = 0;
+        so_slide = 0;
         for (int j = e_phnum; --j>=0; ++phdr) {
             upx_uint64_t const len  = get_te64(&phdr->p_filesz);
             upx_uint64_t const ioff = get_te64(&phdr->p_offset);
@@ -477,8 +477,8 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                     off += (align-1) & (ioff - off);
                     fi->seek(ioff, SEEK_SET); fi->readx(ibuf, len);
                     fo->seek( off, SEEK_SET); fo->write(ibuf, len);
-                    rel = off - ioff;
-                    set_te64(&phdr->p_offset, rel + ioff);
+                    so_slide = off - ioff;
+                    set_te64(&phdr->p_offset, so_slide + ioff);
                 }
                 else {  // Change length of first PT_LOAD.
                     va_init += get_te64(&phdr->p_vaddr);
@@ -489,7 +489,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
             }
             // Compute new offset of &DT_INIT.d_val.
             if (phdr->PT_DYNAMIC==type) {
-                off_init = rel + ioff;
+                off_init = so_slide + ioff;
                 fi->seek(ioff, SEEK_SET);
                 fi->read(ibuf, len);
                 Elf64_Dyn *dyn = (Elf64_Dyn *)(void *)ibuf;
@@ -504,7 +504,7 @@ void PackLinuxElf64::pack3(OutputFile *fo, Filter &ft)
                 // fall through to relocate .p_offset
             }
             if (xct_off < ioff)
-                set_te64(&phdr->p_offset, rel + ioff);
+                set_te64(&phdr->p_offset, so_slide + ioff);
         }
         if (off_init) {  // change DT_INIT.d_val
             fo->seek(off_init, SEEK_SET);
