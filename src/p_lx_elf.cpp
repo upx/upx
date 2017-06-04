@@ -2444,6 +2444,7 @@ PackLinuxElf64arm::canPack()
                 throwCantPack("first PT_LOAD.p_offset != 0; try '--force-execve'");
                 return false;
             }
+            hatch_off = phdr->p_memsz;
             break;
         }
     }
@@ -2571,7 +2572,7 @@ PackLinuxElf64arm::canPack()
                 if ( sh_addr==va_gash
                 ||  (sh_addr==va_hash && 0==va_gash) ) {
                     shdr= &shdri[get_te32(&shdr->sh_link)];  // the associated SHT_SYMTAB
-                    hatch_off = (char *)&ehdri.e_ident[11] - (char *)&ehdri;
+                    //hatch_off = (char *)&ehdri.e_ident[11] - (char *)&ehdri;
                     break;
                 }
             }
