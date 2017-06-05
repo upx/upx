@@ -1,0 +1,66 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+TARGET(elf64-powerpc)
+                0x00000000001000bc                . = ((0x100000 + SIZEOF_HEADERS) + 0xc)
+
+.text           0x00000000001000bc      0x850
+ *(.text)
+ .text          0x00000000001000bc      0x1d8 tmp/powerpc64-linux.elf-fold.o
+                0x0000000000100248                exit
+                0x0000000000100250                brk
+                0x0000000000100258                close
+                0x0000000000100260                open
+                0x0000000000100268                munmap
+                0x0000000000100270                mprotect
+                0x0000000000100278                read
+                0x0000000000100280                mmap
+ .text          0x0000000000100294      0x678 tmp/powerpc64-linux.elf-main.o
+ *(.data)
+ .data          0x000000000010090c        0x0 tmp/powerpc64-linux.elf-fold.o
+ .data          0x000000000010090c        0x0 tmp/powerpc64-linux.elf-main.o
+
+.sfpr           0x000000000010090c       0xa4
+ .sfpr          0x000000000010090c       0xa4 linker stubs
+                0x000000000010090c                _savegpr0_14
+                0x0000000000100938                _savegpr0_25
+                0x0000000000100944                _savegpr0_28
+                0x000000000010095c                _restgpr0_14
+                0x0000000000100988                _restgpr0_25
+                0x0000000000100994                _restgpr0_28
+
+.glink          0x00000000001009b0        0x0
+ .glink         0x00000000001009b0        0x0 linker stubs
+
+.eh_frame       0x00000000001009b0        0x0
+ .eh_frame      0x00000000001009b0        0x0 linker stubs
+
+.rela.dyn       0x00000000001009b0        0x0
+ .rela.iplt     0x00000000001009b0        0x0 linker stubs
+
+.data
+LOAD tmp/powerpc64-linux.elf-fold.o
+LOAD tmp/powerpc64-linux.elf-main.o
+OUTPUT(tmp/powerpc64-linux.elf-fold.bin elf64-powerpc)
+
+.branch_lt      0x00000000001009b0        0x0
+ .branch_lt     0x00000000001009b0        0x0 linker stubs
+
+.toc            0x00000000001009b0        0x0
+ .toc           0x00000000001009b0        0x0 tmp/powerpc64-linux.elf-main.o
+
+.opd            0x00000000001009b0       0x58
+ .opd           0x00000000001009b0       0x58 tmp/powerpc64-linux.elf-main.o
+                0x00000000001009f0                upx_main
+
+.iplt           0x0000000000100a08        0x0
+ .iplt          0x0000000000100a08        0x0 linker stubs
+
+.bss            0x0000000000100a08        0x0
+ .bss           0x0000000000100a08        0x0 tmp/powerpc64-linux.elf-fold.o
+ .bss           0x0000000000100a08        0x0 tmp/powerpc64-linux.elf-main.o

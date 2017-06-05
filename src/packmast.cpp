@@ -196,6 +196,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
         D(PackLinuxElf32armBe);
         D(PackLinuxElf64arm);
         D(PackLinuxElf32ppc);
+        D(PackLinuxElf64ppc);
         D(PackLinuxElf64ppcle);
         D(PackLinuxElf32mipsel);
         D(PackLinuxElf32mipseb);
@@ -217,6 +218,7 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     D(PackCom);
 
     // Mach (MacOS X PowerPC)
+    D(PackDylibAMD64);
     D(PackMachPPC32);
     D(PackMachPPC64LE);
     D(PackMachI386);
@@ -228,7 +230,6 @@ Packer *PackMaster::visitAllPackers(visit_func_t func, InputFile *f, const optio
     // assumes about .dylib file structure.
     //   D(PackDylibI386);
     //   D(PackDylibPPC32);
-    //   D(PackDylibAMD64);
 
     return NULL;
 #undef D

@@ -82,11 +82,11 @@ L100:
         call upx_main  # Out: a0= &Mach_ppc_thread_state of dyld
 
         movr sp,r29  # restore stack pointer
-        lwz t0,   srr0(a0); mtctr t0  # entry address
+        lwz r0,   srr0(a0); mtctr r0  # entry address
                 /* Next 3 lines probably are not needed, but ... */
-        lwz t0, reg_cr(a0); mtcr  t0  # condition code
-        lwz t0,reg_xer(a0); mtxer t0  # extended error reg (CArry, etc.)
-        lwz t0, reg_lr(a0); mtlr  t0  # link register
+        lwz r0, reg_cr(a0); mtcr  r0  # condition code
+        lwz r0,reg_xer(a0); mtxer r0  # extended error reg (CArry, etc.)
+        lwz r0, reg_lr(a0); mtlr  r0  # link register
 
         lmw 4,4*4+reg0(3)  # reg 4 thru 31
         lwz 0,0*4+reg0(3)

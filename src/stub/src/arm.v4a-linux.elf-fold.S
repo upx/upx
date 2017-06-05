@@ -49,6 +49,7 @@ O_RDONLY=       0
 
 PAGE_SHIFT= 12
 PAGE_SIZE = -(~0<<PAGE_SHIFT)
+PATHMAX=  4096
 
 PATH_MAX= 4096
 
@@ -64,13 +65,17 @@ PATH_MAX= 4096
 #define MAX_ELF_HDR 512
 
 fold_begin:
+#if DEBUG  //{
+#define TRACE_REGS r0-r12,r14,r15
+        stmdb sp!,{TRACE_REGS}; mov r0,#5; bl trace
+#endif  //}
 /* In:
    r10= &b_info of first compressed block (after move)
     r9= total size of compressed data
     r5= f_decompress
-    sp/ ADRU,LENU,sz_unc,crumb,MFLG,argc,argv...
+    sp/ ADRU,LENU,sz_unc,&b_info,MFLG,argc,argv...
 */
-        ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,crumb,MFLG,argc
+        ldmia sp!,{r3,r4,r6,r7,r8,r11}  @ ADRU,LENU,sz_unc,&b_info,MFLG,argc
 #if DEBUG  //{
         mov r0,sp  @ current stack pointer
         stmdb sp!,{TRACE_REGS}; mov r0,#0x10; bl trace
@@ -85,6 +90,9 @@ fold_begin:
         ldr r2,[r1],#8
         cmp r2,#0; bne .L20
 
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#6; bl trace
+#endif  //}
         sub r0,r1,#PATH_MAX @ buffer for readlink
         sub r1,r1,sp  @ amount needed for argv,env,auxv
         sub r0,r0,#2*4  @ space for added env ptr and copy of space3eq
@@ -99,7 +107,10 @@ fold_begin:
         sub r0,r0,r2  @ new_argv with same 8-byte alignment as old_argv
         mov sp,r0
 
-        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,crumb,argc; drop MFLG
+        stmdb sp!,{r3,r4,r6,r7,r11}  @ ADRU,LENU,sz_unc,&b_info,argc;  drop MFLG
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#7; bl trace
+#endif  //}
 SP_sz_unc= 2*4
 
         add r11,r11,#1  @ (1+argc) for end of argv
@@ -124,6 +135,9 @@ SP_sz_unc= 2*4
         cmp r2,#0; bne .Laux
 
         str r0,[sp,#SP_sz_unc]  @ clobber sz_unc with 1+ &Elf32_auxv_t[AT_NULL@.a_type]
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#8; bl trace
+#endif  //}
 
         mov r1,r0
         str r1,[r4]  @ new env ptr
@@ -159,12 +173,13 @@ SP_sz_unc= 2*4
 
         stmdb sp!,{r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}
         ldmia sp!,{r0,r1,r2,r3}
+#if DEBUG  //{
+        stmdb sp!,{TRACE_REGS}; mov r0,#9; bl trace
+#endif  //}
 // r0=av; r1=sz_cpr; r2=f_decompress; r3=f_unfilter;
 // xo={sz_unc, &tmp_ehdr}, xi={sz_cpr, &b_info}, dynbase, sys_munmap
-#if DEBUG  //{
-        stmdb sp!,{TRACE_REGS}; mov r0,#0x14; bl trace
-#endif  //}
         bl upx_main
+        mov lr,r0  @ entry address
         add sp,sp,#(10-4)*4
         add sp,sp,#MAX_ELF_HDR + OVERHEAD  @ un-alloca
 #if DEBUG  //{
@@ -202,8 +217,7 @@ SP_sz_unc= 2*4
         ldr r3,[r2,#4 -2*4]  @ Elf32_auxv_t[AT_NULL@.a_type].a_val
         ldr r4,[r3,#0]  @ 1st instr
         ldr r5,[r3,#4]  @ 2nd instr
-#define TRACE_REGS r0-r12,r14,r15
-        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
+        stmdb sp!,{TRACE_REGS}; mov r0,#9; bl trace
 #endif  /*}*/
         mov r3,#0  @ clear registers: paranoia
         mov r4,#0

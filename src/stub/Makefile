@@ -135,6 +135,13 @@ STUBS += powerpc64le-linux.elf-entry.h
 STUBS += powerpc64le-linux.elf-fold.h
 STUBS += powerpc64le-linux.kernel.vmlinux-head.h
 STUBS += powerpc64le-linux.kernel.vmlinux.h
+#STUBS += powerpc64-darwin.dylib-entry.h
+#STUBS += powerpc64-darwin.macho-entry.h
+#STUBS += powerpc64-darwin.macho-fold.h
+STUBS += powerpc64-linux.elf-entry.h
+STUBS += powerpc64-linux.elf-fold.h
+#STUBS += powerpc64-linux.kernel.vmlinux-head.h
+#STUBS += powerpc64-linux.kernel.vmlinux.h
 endif
 
 
@@ -335,7 +342,7 @@ tmp/amd64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 amd64-linux.elf%.h : tc_list = amd64-linux.elf default
 amd64-linux.elf%.h : tc_bfdname = elf64-x86-64
 
-tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -m64 -nostdinc -MMD -MT $@
+tc.amd64-linux.elf.gcc  = amd64-linux-gcc-3.4.4 -fPIC -m64 -nostdinc -MMD -MT $@
 tc.amd64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables
 tc.amd64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
 
@@ -1367,6 +1374,15 @@ powerpc64le-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h) tmp/$T.bin $@
 
 
+powerpc64-darwin.dylib%.h : tc_list = powerpc64-linux.elf default
+powerpc64-darwin.dylib%.h : tc_bfdname = elf64-powerpc
+
+powerpc64-darwin.dylib-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
 # /***********************************************************************
 # // powerpc64le-darwin.macho
 # ************************************************************************/
@@ -1396,6 +1412,34 @@ tmp/powerpc64le-darwin.macho-fold.o : $(srcdir)/src/$$T.S
 # (and we would have to write them ourselves.)
 # Besides, PowerPC has 31.5 registers (r0 cannot index), which is plenty.
 tmp/powerpc64le-darwin.macho-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -O $< -o $@
+	$(call tc,f-objstrip,$@)
+
+
+powerpc64-darwin.macho%.h : tc_list = powerpc64-darwin.macho powerpc64-linux.elf default
+powerpc64-darwin.macho%.h : tc_bfdname = elf64-powerpcbe
+
+tc.powerpc64-darwin.macho.ld = multiarch-ld-2.27 -b $(tc_bfdname)
+
+powerpc64-darwin.macho-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+powerpc64-darwin.macho-fold.h : tmp/$$T.o tmp/powerpc64-darwin.macho-main.o
+	$(call tc,ld) --no-warn-mismatch --strip-all --oformat binary -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	chmod a-x tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/powerpc64-darwin.macho-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+# Omit -Os because it references _savegpr0_28 and _restgpr0_28 (and *_16 and *_27)
+# only 3 times, so sharing the code of those routines saves almost nothing
+# (and we would have to write them ourselves.)
+# Besides, PowerPC has 31.5 registers (r0 cannot index), which is plenty.
+tmp/powerpc64-darwin.macho-main.o : $(srcdir)/src/$$T.c
 	$(call tc,gcc) -c -O $< -o $@
 	$(call tc,f-objstrip,$@)
 
@@ -1435,6 +1479,38 @@ tmp/powerpc64le-linux.elf-main.o : $(srcdir)/src/$$T.c
 	$(call tc,f-objstrip,$@)
 
 
+powerpc64-linux.elf%.h : tc_list = powerpc64-linux.elf default
+powerpc64-linux.elf%.h : tc_bfdname = elf64-powerpc
+
+tc.powerpc64-linux.elf.gcc  = powerpc64-linux-gcc-4.9.2 -m64 -mbig-endian -nostdinc -MMD -MT $@
+tc.powerpc64-linux.elf.gcc += -fno-exceptions -fno-asynchronous-unwind-tables -fno-stack-protector
+tc.powerpc64-linux.elf.gcc += -mno-longcall
+tc.powerpc64-linux.elf.gcc += -Wall -W -Wcast-align -Wcast-qual -Wstrict-prototypes -Wwrite-strings -Werror
+
+tc.powerpc64-linux.elf.ld      = powerpc64-linux-ld-2.25 -b $(tc_bfdname)
+tc.powerpc64-linux.elf.objcopy = multiarch-objcopy-2.27 -F $(tc_bfdname)
+tc.powerpc64-linux.elf.objdump = multiarch-objdump-2.27 -b $(tc_bfdname)
+
+powerpc64-linux.elf-entry.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h) tmp/$T.bin $@
+
+powerpc64-linux.elf-fold.h : tmp/$$T.o tmp/powerpc64-linux.elf-main.o $(srcdir)/src/$$T.lds
+	$(call tc,ld) --strip-all -T $(srcdir)/src/$T.lds -Map tmp/$T.map $(filter %.o,$^) -o tmp/$T.bin
+	$(call tc,f-objstrip,tmp/$T.bin)
+	$(call tc,sstrip) tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+tmp/powerpc64-linux.elf-fold.o : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c $< -o $@
+	$(call tc,f-objstrip,$@)
+
+tmp/powerpc64-linux.elf-main.o : $(srcdir)/src/$$T.c
+	$(call tc,gcc) -c -Os $< -o $@
+	$(call tc,f-objstrip,$@)
+
+
 # /***********************************************************************
 # // powerpc64le-linux.kernel.vmlinux
 # // powerpc64le-linux.kernel.vmlinux-head
@@ -1451,6 +1527,22 @@ powerpc64le-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
 	$(call tc,bin2h-c) tmp/$T.bin $@
 
 powerpc64le-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
+	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
+	$(call tc,bin2h) tmp/$T.bin $@
+
+
+powerpc64-linux.kernel.vmlinu%.h : tc_list = powerpc64-linux.kernel default
+powerpc64-linux.kernel.vmlinu%.h : tc_bfdname = elf64-powerpc
+
+tc.powerpc64-linux.kernel.gcc  = $(tc.powerpc64-linux.elf.gcc)
+
+powerpc64-linux.kernel.vmlinu%.h : $(srcdir)/src/$$T.S
+	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.bin
+	$(call tc,f-embed_objinfo,tmp/$T.bin)
+	$(call tc,bin2h-c) tmp/$T.bin $@
+
+powerpc64-linux.kernel.vmlinux-head.h : $(srcdir)/src/$$T.S
 	$(call tc,gcc) -c -x assembler-with-cpp $< -o tmp/$T.o
 	$(call tc,objcopy) --output-target binary --only-section .text tmp/$T.o tmp/$T.bin
 	$(call tc,bin2h) tmp/$T.bin $@

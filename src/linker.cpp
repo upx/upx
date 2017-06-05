@@ -791,6 +791,14 @@ void ElfLinkerPpc32::relocate1(const Relocation *rel, upx_byte *location, upx_ui
 
 void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
                                  const char *type) {
+    if (!strcmp(type, "R_PPC64_ADDR64")) {
+        set_le64(location, get_le64(location) + value);
+        return;
+    }
+    if (!strcmp(type, "R_PPC64_ADDR32")) {
+        set_le32(location, get_le32(location) + value);
+        return;
+    }
     if (strncmp(type, "R_PPC64_REL", 11))
         return super::relocate1(rel, location, value, type);
     type += 11;
@@ -810,16 +818,46 @@ void ElfLinkerPpc64le::relocate1(const Relocation *rel, upx_byte *location, upx_
             internal_error("target out of range (%d) in reloc %s:%x\n", displ, rel->section->name,
                            rel->offset);
         *location += value;
-    } else if (strncmp(type, "14", 2) == 0) // for "32" and "32S"
+    } else if (strncmp(type, "14", 2) == 0) // for "14" and "14S"
         set_le16(location, get_le16(location) + value);
     else if (strcmp(type, "16") == 0)
         set_le16(location, get_le16(location) + value);
-    else if (strncmp(type, "24", 2) == 0) // for "32" and "32S"
+    else if (strncmp(type, "24", 2) == 0) // for "24" and "24S"
         set_le24(location, get_le24(location) + value);
     else if (strncmp(type, "32", 2) == 0) // for "32" and "32S"
         set_le32(location, get_le32(location) + value);
     else if (strcmp(type, "64") == 0)
         set_le64(location, get_le64(location) + value);
+    else
+        super::relocate1(rel, location, value, type);
+}
+
+void ElfLinkerPpc64::relocate1(const Relocation *rel, upx_byte *location, upx_uint64_t value,
+                                 const char *type) {
+    if (!strcmp(type, "R_PPC64_ADDR32")) {
+        set_be32(location, get_be32(location) + value);
+        return;
+    }
+    if (!strcmp(type, "R_PPC64_ADDR64")) {
+        set_be64(location, get_be64(location) + value);
+        return;
+    }
+    if (strncmp(type, "R_PPC64_REL", 11))
+        return super::relocate1(rel, location, value, type);
+    type += 11;
+
+    if (strncmp(type, "PC", 2) == 0) {
+        type += 2;
+    }
+
+    // We have "R_PPC64_REL" or "R_PPC64_RELPC" as a prefix.
+    /* value will hold relative displacement */
+    value -= rel->section->offset + rel->offset;
+
+    if (strncmp(type, "14", 2) == 0) // for "14" and "14S"
+        set_be16(2+ location, get_be16(2+ location) + value);
+    else if (strncmp(type, "24", 2) == 0) // for "24" and "24S"
+        set_be24(1+ location, get_be24(1+ location) + value);
     else
         super::relocate1(rel, location, value, type);
 }

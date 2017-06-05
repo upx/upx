@@ -64,7 +64,7 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         stw r0,retaddr(sp)  // save return address in linkage area
         lbz r0,0(src)  // first byte, replaces LzmaDecodeProperties()
         rlwinm t1,r0,32-3,3,31  // t1= (r0>>3)==(lit_context-bits + lit_pos_bits)
-        rlwinm t0,r0,0,32-3,31  // t0= (7& t0)==pos_bits
+        rlwinm t2,r0,0,32-3,31  // t2= (7& t2)==pos_bits
 
 #define LZMA_BASE_SIZE 1846
 #define LZMA_LIT_SIZE   768
@@ -94,7 +94,7 @@ retaddr = 2*4  // (sp,cr,pc, xx,yy,zz) save area per calling convention
         la a0,4*4+szSizeT(sp)  // &CLzmaDecoderState
         rlwinm t1,r0,32-4,4,31  // t1= (r0>>4)==lit_pos_bits
         rlwinm r0,r0,0,32-4,31  // r0= (0xf& r0)==lit_context_bits
-        stb t0,2(a0)  // pos_bits
+        stb t2,2(a0)  // pos_bits
         stb t1,1(a0)  // lit_pos_bits
         stb r0,0(a0)  // lit_context_bits
 

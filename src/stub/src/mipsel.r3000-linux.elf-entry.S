@@ -336,7 +336,8 @@ err_syscall:
 main:
         lw s5,sz_pack2 - decompressor(s7)  // length before stub
         bal unfold
-          move s6,ra
+          addiu s6,ra,4  // &b_info for folded_loader
+        .long O_BINFO
         // { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
 
 /*__XTHEENDX__*/

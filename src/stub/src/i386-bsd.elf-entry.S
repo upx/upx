@@ -167,7 +167,8 @@ die:
 
 // Decompress the rest of this loader, and jump to it
 unfold:
-        pop esi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+        pop esi  // &{ .long O_BINFO; b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+        lodsd; push eax  // O_BINFO
 
         lea eax, [ebp - (4+ decompress - _start)]  // 4: sizeof(int)
         sub eax, [eax]  // %eax= &Elf32_Ehdr of this program
@@ -224,6 +225,7 @@ section LEXEC025
 main:
         pop ebp  // &decompress
         call unfold
+        .long O_BINFO
             // compressed fold_elf86 follows
 eof:
 

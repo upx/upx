@@ -114,7 +114,7 @@ L30:  # copy auxv
         li a2,PATHSIZE-1
         addiu a1,v1,4  # &buf[0]
         bal 9f
-          move a0,ra
+          move a0,ra  # &path
         .asciz "/proc/self/exe"
         .balign 4
 9:
@@ -129,7 +129,7 @@ L30:  # copy auxv
         move t0,s7  # &f_decompress
         move a3,s4  # new &auxv[0]
         move a2,sp  # &Elf32_Ehdr tmp space
-        addiu a1,s5,-(sz_Ehdr + 2*sz_Phdr + sz_l_info + sz_p_info)
+        subu a1,s5,s0  # total_size
 
 /* We need a position-independent call of upx_main, which is external.
    "bal upx_main" cannot be assembled by mipsel-elf-as-20060406.

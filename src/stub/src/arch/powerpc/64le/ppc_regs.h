@@ -49,7 +49,7 @@ SZ_FRAME= 6*8 + 8*8  // (sp,cr,lr, xx,yy,zz) + spill area for a0-a7
 #define a7 10
 
 /* Scratch (temporary) registers; not saved by callee */
-#define t0  2
+//#define t0  0  /* BEWARE: OVERLAPS r0 */
 #define t1 11
 #define t2 12
 #define t3 13

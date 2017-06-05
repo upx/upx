@@ -172,7 +172,7 @@ def do_file(fn):
         # with PROGBITS sections.  This happens on powerpc64le and arm64.
         # The general solution probably requires a C++ program
         # that combines "objcopy -R", "objdump -htr", and xstrip.
-        if re.search(r"^powerpc64le-", os.path.basename(fn)):
+        if re.search(r"^powerpc64", os.path.basename(fn)):
             assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))
         elif re.search(r"^arm64-", os.path.basename(fn)):
             assert pos >= len(odata), ("unexpected strip_with_dump", pos, len(odata))

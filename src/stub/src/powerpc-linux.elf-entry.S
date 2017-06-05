@@ -31,6 +31,7 @@
 
 #include "arch/powerpc/32/macros.S"
 #include "arch/powerpc/32/ppc_regs.h"
+SZ_FRAME= (2 + 2)*4  // (sp,LR, 2 slots)  0 mod 16
 
 sz_b_info= 12
   sz_unc= 0
@@ -147,15 +148,20 @@ die:
         li 0,__NR_exit; sc
 
 zfind:
-        lwz t0,0(a0); addi a0,a0,4
-        cmpi cr7,t0,0; bne+ cr7,zfind
+        lwz r0,0(a0); addi a0,a0,4
+        cmpi cr7,r0,0; bne+ cr7,zfind
         ret
 
         /* Decompress the rest of this loader, and jump to it. */
 unfold:
-        mflr r30  // &{ b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...}
+        mflr r30  // LrUNF
+        lwz r24,-2*4(r31)  // sz_pack2
+        lwz r26,LOBINFO - LrUNF(r30)  // O_BINFO
+        lwz r23,LLENU - LrUNF(r30)
+        addi r24,r24,2*4
+        sub r24,r31,r24  // ADRU
 
-        la a0,32*4(sp)
+        la a0,SZ_FRAME+32*4(sp)
         call zfind  // a0= envp
         call zfind  // a0= &Elf32_auxv
         mr r28,a0  // save for folded code
@@ -167,10 +173,10 @@ a_type= 0
 a_val= 4
 sz_auxv= 2*4
 1:
-        lwz t0,a_type(a0)
+        lwz r0,a_type(a0)
         lwz a1,a_val(a0); addi a0,a0,sz_auxv
-        cmpi cr0,t0,AT_PAGESZ; beq- 2f
-        cmpi cr0,t0,AT_NULL; bne+ 1b
+        cmpi cr0,r0,AT_PAGESZ; beq- 2f
+        cmpi cr0,r0,AT_NULL; bne+ 1b
         li a1,PAGE_SIZE  // not found; use default
 2:
         mr r27,a1  // save for folded code
@@ -178,28 +184,38 @@ sz_auxv= 2*4
         li a5,0  // off_t
         li a4,-1  // fd; cater to *BSD for MAP_ANON
         li     a3,MAP_PRIVATE | MAP_ANONYMOUS
-        li     a2,PROT_READ | PROT_WRITE
-        lwz    a0,sz_cpr(r30)  // sizeof(folded_loader)
-        addi   a0,a0,sz_b_info
-        addi   t0,a1,-1  // ~page_mask
-        add    a0,a0,r30  // beyond folded_loader
-        add    a0,a0,t0  // + page_size -1
-        and    t0,t0,a0  // fragment above page boundary
-        sub    a0,a0,t0  // next page boundary after folded code
+        li     a2,PROT_READ | PROT_WRITE | PROT_EXEC  // 'fold' will execute here
+        lwz    a1,LLENM - LrUNF(r30)
+        lwz    a0,LADRM - LrUNF(r30)
         li     r0,__NR_mmap
         mr     t4,a0  // save address being allocated
         sc
         cmpl cr0,t4,a0; bne msg_SELinux
+        lwz r0,LLENM - LrUNF(r30)
+        li r22,0  // slide= 0
+        cmpl cr0,r0,r27; ble L80  // only 1 page; no move required
 
-        mtctr r31
-        lwz r0,sz_unc(r30)
-        lbz meth,b_method(r30)
-        la ldst,31*4(sp)  // &slot on stack
-        stw  r0,31*4(sp)  // lzma uses for EOF
-        mr dst,a0
-        mtlr a0  // &continuation at unfolded code
-        lwz lsrc,sz_cpr(r30)
-        addi src,r30,sz_b_info
+        sub r22,a0,r24  // (ADRM - ADRU) == relocation amount
+        add r31,r31,r22  // update &decompress
+        add r24,r24,r22  // update ADRU
+        addi r0,r0,7  // roundup (8, )
+          addi a1,a1,-4  // prepare for lwu
+        srwi r0,r0,3  // number of 8-byte chunks
+          addi a0,a0,-4  // prepare for stwu
+        mtctr r0
+0:
+        lwz t1,4(a1); lwzu t2,2*4(a1)
+        stw t1,4(a0); stwu t2,2*4(a0); bdnz 0b
+L80:
+        mtctr r31  // &decompress
+        lwz r0,sz_unc     + LBINFO - LrUNF(r30)
+        lbz meth,b_method + LBINFO - LrUNF(r30)
+        la ldst,SZ_FRAME+31*4(sp)  // &slot on stack
+        stw  r0,SZ_FRAME+31*4(sp)  // lzma uses for EOF
+        mr dst,t4
+        mtlr t4  // &continuation at unfolded code
+        lwz lsrc,sz_cpr  + LBINFO - LrUNF(r30)
+        la src,sz_b_info + LBINFO - LrUNF(r30)
         bctr  // goto decompress; continue at unfolded code on mmap'ed page
 
 // Example code at entrypoint of C-language subroutine:
@@ -215,11 +231,21 @@ sz_auxv= 2*4
 //      blr  # goto return address
 
 main:
-////  teq r0,r0  // debugging
-        stwu r1,-32*4(sp)  // allocate space (keeping 0 mod 16), save r1
-        stmw r2,4(sp) // save registers r2 thru r31
+  ////teq r0,r0  // debugging
+        stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), save r1
+        stmw r2,  SZ_FRAME+2*4-4(sp) // save registers r2 thru r31
         mflr r31  // &decompress
         call unfold
+LrUNF:
+LADRM:
+        .long ADRM
+LLENM:
+        .long LENM
+LLENU:
+        .long LENU
+LOBINFO:
+        .long O_BINFO
+LBINFO:
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 
 /* vim:set ts=8 sw=8 et: */

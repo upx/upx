@@ -49,16 +49,16 @@ L5:
         mtctr len  # count of words
         b L20
 L10:
-        rlwinm t1,t0,0,6+W_CTO,31-2  # the displacement field in position
-        subf   t1,ptr,t1   # raw distance
-        add    t1,t1,ptr0  # relative to virtual address of base
-        rlwimi t0,t1,0,6      ,31-2  # unfiltered instruction
-        stw    t0,0(ptr)   # replace in memory
+        rlwinm r0,t1,0,6+W_CTO,31-2  # the displacement field in position
+        subf   r0,ptr,r0   # raw distance
+        add    r0,r0,ptr0  # relative to virtual address of base
+        rlwimi t1,r0,0,6      ,31-2  # unfiltered instruction
+        stw    t1,0(ptr)   # replace in memory
         bdzlr-  # if (0==--ctr) return;  // extremely unlikely
 L20:
-        lwzu t0,4(ptr)  # t0= *++ptr;
-        rlwinm t1,t0,6+W_CTO,32-(6+W_CTO),31  # t1= top (6+W_CTO) bits of t0
-        cmplw cr0,t1,cto8; beq- cr0,L10  # unconditional branch marked with cto8; unlikely
+        lwzu t1,4(ptr)  # t1= *++ptr;
+        rlwinm r0,t1,6+W_CTO,32-(6+W_CTO),31  # r0= top (6+W_CTO) bits of t1
+        cmplw cr0,r0,cto8; beq- cr0,L10  # unconditional branch marked with cto8; unlikely
         bdnz+ L20  # if (0!=--ctr) goto L20;  // likely
         ret
 

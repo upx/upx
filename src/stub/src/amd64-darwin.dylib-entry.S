@@ -37,20 +37,24 @@
 
 /*************************************************************************
 // We have been CALLed as a subroutine from dyld; C-language rules apply.
+// init(%edi=argc, %rsi=argv, %rdx=envp, %rcx=apple, %r8=...)
 // -4*4+_start: .int32 offset(user_init_function)
 // -3*4+_start: .int32 offset(&b_info of compressed Mach_headers)
-// -2*4+_start: .int32 length(compressed __TEXT)
+// -2*4+_start: .int32 segTEXT.vmsize
 // -1*4+_start: .int32 total_length  # of preceding bytes in file
 **************************************************************************/
 
 section MACHMAINX
 _start: .globl _start
-L100: pause; jmp L100  // FIXME
-    int3  // FIXME
-        push %rax  // space for &user_init function
+        push %rax  // space for &user_init_fn
+        push %rdi; push %rsi; push %rdx; push %rcx; push %r8  // args
         push %rbp  // callee-save registers
         push %rbx
-        call main  // push &decompress
+        call main  // push &escape
+escape:
+        syscall
+        pop %rcx; pop %rdx; pop %rsi; pop %rdi
+        ret
 
 /* Returns 0 on success; non-zero on failure. */
 decompress:  // (uchar const *src, size_t lsrc, uchar *dst, u32 &ldst, uint method)
@@ -187,7 +191,9 @@ end_decompress: .globl end_decompress
         /* IDENTSTR goes here */
 
   section MACHMAINZ
-SYS_mmap = 0x02000000 + 197
+SYS_mmap =     0x2000000 + 197
+SYS_mprotect = 0x2000000 + 0x4a
+SYS_munmap =   0x2000000 + 73
 PAGE_SIZE= ( 1<<12)
 
 sz_Mach_header= 7*4
@@ -212,54 +218,78 @@ PROT_WRITE=     2
 PROT_EXEC=      4
 
 
+main:
+        pop %rbp  # &escape
+
+// Get temp pages for compressed __TEXT and this stub
+        lea -4*4 + _start - escape(%rbp),%rsi
+        lodsl; xchg %eax,%edx  # offset(user_init_fn)
+        lodsl; xchg %eax,%ecx  # offset(b_info)
+        lodsl  # skip
+        mov (%rsi),%eax  # #preceding bytes in file
+        sub %rax,%rsi; push %rsi; pop %rbx  # our &Mach_header
+        add %rbx,%rdx; mov %rdx,7*8(%rsp)  # reloc(user_init_fn)
+        sub %ecx,%eax  # omit Mach_headers from copy
+        add $4+dy_top,%eax; push %rax  # P_02  length(tmppag)
+        add %rbx,%rcx;      push %rcx  # P_01  &b_info
+        xchg %eax,%arg2l  # length
+
+        xor %arg6,%arg6  # 0  offset
+        or $~0,%arg5l  #  -1  fd
+        mov $MAP_ANON|MAP_PRIVATE,%sys4l
+        push $PROT_READ|PROT_WRITE; pop %arg3
+        xor %arg1l,%arg1l  # 0  addr
+        mov $SYS_mmap,%eax; syscall; jc bad_mmap
+
+// Copy compressed__TEXT and this stub to temp pages
+        pop %rsi  # P_01 &b_info  src
+        pop %rcx; push %rcx  # P_02  length(tmppag)
+        push %rax  # P_03  addr(tmppag)
+        push %rax; pop %rdi  # dst
+        add %rcx,%rax  # reloc(dy_top)
+        sub %rsi,%rbp
+        add %rdi,%rbp  # reloc(&escape)
+        push %rdi  # P_05  reloc(&b_info)
+        add $7,%ecx; shr $3,%ecx; rep movsq
+        pop %rcx  # P_05 reloc(&b_info)
+
+// Make temp pages executable, and go there
+        pop %arg1  # P_03 src (tmppag)
+        pop %arg2  # P_02 length(tmppag)
+        push %arg2  # P_02 length(tmppag)
+        push %arg1  # P_03 src(tmppag)
+        push %rcx  # P_06 reloc(&b_info)
+        push %rax  # P_04  reloc(dy_top)
+        call mprot_RE
+
+        pop %rax  # P_04 reloc(dy_top)
+        add $dy_reloc - dy_top,%rax
+        jmp *%rax
+
+mprot_RW:
+        push $PROT_READ|PROT_WRITE; jmp mprot
+mprot_RE:
+        push $PROT_READ|PROT_EXEC
+mprot:
+        mov $SYS_mprotect,%eax
+mding:
+        pop %arg3
+        syscall; jc bad_mmap
+        ret
 bad_mmap:
         hlt
         jmp bad_mmap
-main:
-        pop %rbp  # &decompress
-        lea -4+ _start - decompress(%rbp),%rbx  # &total_length
-        mov -1*4(%rbx),%eax  # length(compressed __TEXT)
-        add $dy_top,%eax
-        sub $decompress,%eax
 
-        push %rax  # length for eventual munmap
-
-        mov $0,%arg6l  # offset
-        mov $0,%arg5l  # fd
-        mov $MAP_ANON|MAP_PRIVATE,%sys4l
-        mov $PROT_READ|PROT_WRITE,%arg3l
-        mov %eax,%arg2l  # length
-        sub %arg1l,%arg1l  # 0  addr
-        mov $SYS_mmap,%eax
-        syscall
-        jc bad_mmap
-
-        push %rax  # addr for eventual munmap
-
-        // Copy interval [decompress, dy_top).
-        mov %rbp,%rsi  # decompressor
-        mov %rax,%rbp  # new location
-        mov %rax,%rdi  # dst for decompressor
-        mov $dy_top,%ecx
-        sub $decompress,%ecx
-        cld; rep movsb
-
-        // Goto the copied dy_reloc.
-        lea -(dy_top - dy_reloc)(%rdi),%rax
-        jmp *%rax
 dy_reloc:
 
-        // Copy compressed __TEXT.
-        push %rdi  # remember start of compressed __TEXT
-        mov %rbx,%rdx  # &total_length
-          mov -4*4(%rbx),%eax  # offset(user_init_function)
-        sub (%rbx),%edx  # runtime base address
-          add %rdx,%rax; mov %rax,(1+2+2)*4(%rsp)  # relocate &user_init_function
-        mov -2*4(%rbx),%esi; add %rdx,%rsi
-        mov -1*4(%rbx),%ecx
-        rep movsb
-        pop %rsi  # &b_info for Mach_header
-        mov %rdx,%rdi  # runtime base address
+// Make __TEXT writeable
+        push %rbx; pop %arg1  # our &Mach_header
+        mov -2*4 + _start - escape(%rbp),%arg2l
+        call mprot_RW
+
+        pop %rsi  # P_06  reloc(&b_info)
+        push %rbx; pop %rdi  # our &Mach_header
+        add $decompress - escape,%rbp
 
         // Decompress __TEXT, but do not overwrite Mach_headers
         // in order to maintain consistency with dyld partial caching of them.
@@ -271,44 +301,46 @@ dy_uncpr:
         push %rsi; push %rdi  # save in case unfilter
 
         lodsl; test %eax,%eax; jz dy_done
-          push %rax  // sz_uncompressed  (maximum dstlen for lzma)
-        mov %rsp,%arg4  // &dstlen
-        mov %rdi,%arg3  // dst
-          add %rdi,%rax; push %rax  // next dst
-        lodsl; mov %eax,%arg2l  // sz_compressed  (srclen)
-        mov %rax,%rcx
-        lodsl; mov %eax,%arg5l // last 4 bytes of b_info
-        mov %rsi,%arg1  // &compressed __TEXT
-          add %rsi,%rcx; push %rcx  // next src
+          push %rax  // P_09 sz_unc  (maximum dstlen for lzma)
+        mov %rsp,%arg4  // &dstlen (%rcx)
+          add %rdi,%rax; push %rax  // P_07 next dst
+        lodsl; xchg %eax,%edx  // sz_cpr (srclen)
+        lodsl; xchg %eax,%arg5l // last 4 bytes of b_info
+        lea (%rsi,%rdx),%rax; push %rax  // P_08 next src
+        push %rdx  // P_10 sz_cpr
+        mov %rdi,%arg3  // %rdx dst
+        mov %rsi,%arg1  // %rdi &compressed __TEXT
+        pop %arg2  // P_10 sz_cpr (srclen)
         call *%rbp  // decompress(1=rdi=src, 2=rsi=srclen, 3=rdx=dst, 4=rcx=&dstlen, 5=r8=b_info.misc)
-          pop %rsi  // next src
-          pop %rdi  // next dst
-          pop %rcx  // dstlen (junk)
+          pop %rsi  // P_08 next src
+          pop %rdi  // P_07 next dst
+          pop %rcx  // P_09 dstlen (junk)
 
-        pop %rdx; pop %rax  # rdx= old dst; rax= old &b_info
-        movzbl 1+ b_method(%rax),%arg4l  # ftid
-          test %arg4l,%arg4l; je dy_uncpr  # no filter
-        movzbl 2+ b_method(%rax),%arg3l  # cto8
-#if 0
-        mov sz_unc(%rax),%arg2l
-#else
-        // sz_unc == 0
-        mov (%rax),%arg2l
-#endif
-        mov %rdx,%arg1    # dst
+        pop %rdi; pop %rcx  # rdi= old dst; rcx= old &b_info
+        mov (%rcx),%esi  # sz_unc
+        movzbl 2+ b_method(%rcx),%edx  # cto8
+        movzbl 1+ b_method(%rcx),%ecx  # ftid
+        test %ecx,%ecx; je dy_done
         call f_unfilter  # f_unfilter(1=rdi=dst, 2=rsi=dstlen, 3=rdx=cto8, 4=rcx=ftid)
-        jmp dy_uncpr
+        jmp dy_done
 
-SYS_munmap= 0x02000000 + 73
 dy_done:
-        pop %rax; pop %rcx  # discard
-        mov $PAGE_SIZE,%arg2l  // length for munmap
-        pop %arg1  // addr for munmap
-        pop %rbx; pop %rbp  // saved registers
+sz_Mach_header64 = 0x20
+// Make __TEXT executable
+        push %rbx; pop %arg1  # our &Mach_header
+          mov escape - decompress(%rbp),%rax  # 8 bytes of instructions
+          add $8+ 2*4 + sz_Mach_header64,%rbx  # &segname[8] after "__TEXT\0\0"
+          mov %rax,(%rbx)
+        mov -2*4 + _start - decompress(%rbp),%arg2l
+        call mprot_RE
+
+        pop %arg1  # P_03 tmppag
+        pop %arg2  # P_02 len(tmppag)
         mov $SYS_munmap,%eax
-        lea -4(%rdi),%rdx  # steal some space at high end of __TEXT
-        movl $0x90c3050f,(%rdx)  # syscall; ret; nop
-        jmp *%rdx
+        push %rbx; pop %rcx  # &hatch
+        pop %rbx; pop %rbp  // saved registers
+        pop %r8
+        jmp *%rcx
 
 #undef off
 #undef len

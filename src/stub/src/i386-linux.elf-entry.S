@@ -166,7 +166,8 @@ die:
 
 // Decompress the rest of this loader, and jump to it
 unfold:
-        pop esi  // &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
+        pop esi; lodsd; push %eax  // O_BINFO
+// esi= &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
 
         lea eax, [ebp - (4+ decompress - _start)]  // 4: sizeof(int)
         mov edi, [eax]  // total length of compressed data
@@ -213,10 +214,6 @@ AT_SYSINFO_EHDR=33
         pop eax
         pop esi
 
-section LUNMP000
-        push 0  // 0-page bread crumb
-section LUNMP001
-        push 1  // 1-page bread crumb
 section LEXEC025
         push eax  // destination for 'ret'
 
@@ -257,6 +254,7 @@ section LEXEC025
 main:
         pop ebp  // &decompress
         call unfold
+        .long O_BINFO
             // compressed fold_elf86 follows
 eof:
 

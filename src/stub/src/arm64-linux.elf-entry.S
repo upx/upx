@@ -41,6 +41,7 @@ sz_b_info= 12
   b_method= 8
 sz_l_info= 12
 sz_p_info= 12
+sz_o_binfo= 4
 
 PROT_READ=  1
 PROT_WRITE= 2
@@ -103,9 +104,10 @@ _start: .globl _start
   section LUNMP001
         // unused
   section ELFMAINXu
-        PUSH4(x0,x1,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
+        PUSH4(x0,x26,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
 SP_MFLG= 4*8
 D_sz_unc=2*8  // stack displacement to sz_unc
+        mov w1,w26  // length
         mov w2,#PROT_READ | PROT_WRITE | PROT_EXEC
         orr w3,w13,#MAP_FIXED  // MFLG: MAP_{PRIVATE|ANON}
         mov x5,#0  // offset= 0
@@ -132,33 +134,27 @@ copy_cl:  // copy decompressor and folded code
           sub x5,x9,#64; // FIXME(memcheck) dc cvau,x5  // clean 64-byte line
         blo copy_cl  // all source lines
 
-        sub x4,x0,x9  // relocation amount
         ldr w1,[sp,#SP_MFLG]
+        sub x4,x0,x9  // relocation amount
         str w1,[x0],#4  // MFLG at -4+ fold_begin
         adr x15,f_decompress
         mov lr,x0  // dst for unfolded code
-        add x15,x15,x4  // relocated f_decompress
+        adr x28,f_decompress
+        add x28,x28,x4  // relocated f_decompress
+        add x27,x27,x4  // relocated &b_info
 
-        ldrh w9,[x12,#e_phnum]
-        mov w10,#sz_Elf64_Phdr
-        mul w10,w10,w9
-        add w10,w10,#sz_Elf64_Ehdr + sz_l_info + sz_p_info
-        sub w9,w29,w10  // total compressed size
-        add x10,x12,w10,uxtw  // &b_info
-        add x10,x10,x4  // relocated &b_info
-
-        ldr w4,[x11,# b_method ]  // 5th param (whole word: endian issues!)
+        ldr w4,[x11,# b_method]  // 5th param (whole word: endian issues!)
 D_stm1=0*8
         ldr  w3,[x11,# sz_unc]
         add  x0, x11,# sz_b_info
-        ldr  w1,[x11,# sz_cpr ]
+        ldr  w1,[x11,# sz_cpr]
         mov  x2,lr  // dst
         str  w3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
         add  x3, sp,#D_stm1 + D_sz_unc   // &sz_unc
 #if DEBUG  /*{*/
         TRACE(#3)
 #endif  /*}*/
-        br x15  // decompress folded code, return to *lr
+        br x28  // decompress folded code, return to *lr
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=1024
@@ -290,6 +286,8 @@ L71:
         /* IDENTSTR goes here */
 
   section ELFMAINZ
+o_binfo:
+        .word O_BINFO
 cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
 

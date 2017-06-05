@@ -74,9 +74,9 @@ get1:
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  // lo8
-        lbz   t0,2(src); rlwimi bits,t0, 8,16,23
-        lbz   t0,3(src); rlwimi bits,t0,16, 8,15
-        lbzu  t0,4(src); rlwimi bits,t0,24, 0, 7
+        lbz   t1,2(src); rlwimi bits,t1, 8,16,23
+        lbz   t1,3(src); rlwimi bits,t1,16, 8,15
+        lbzu  t1,4(src); rlwimi bits,t1,24, 0, 7
 #else  /*}{ pray for no unalignment trap or slowdown */
         li bits,1  // compensate for 'lbzu'
         lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
@@ -102,9 +102,9 @@ offmore_n2b:
         addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
            li len,0
         blt- offprev_n2b
-        lbzu t0,1(src)
-        rlwinm off,off,8,0,31-8  // off<<=8;
-        nor. disp,off,t0  // disp = -(1+ (off|t0));
+        lbzu t1,1(src)
+        slwi off,off,8  // off<<=8;
+        nor. disp,off,t1  // disp = -(1+ (off|t1));
         beq- eof_nrv
 
 offprev_n2b:  // In: 0==len
@@ -116,7 +116,7 @@ lenmore_n2b:
         getnextb(len)
         jnextb0n lenmore_n2b
 gotlen_n2b:
-        subfic t0,disp,(~0)+(-0xd00)  // want CArry only
+        subfic t1,disp,(~0)+(-0xd00)  // want CArry only
         adde len,len,off  // len += off + (disp < -0xd00);
 
 copy:

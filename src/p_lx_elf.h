@@ -81,8 +81,10 @@ protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
     bool is_big;  // stub style: must use area above the brk
+    bool is_pie;  // is Position-Independent-Executable (ET_DYN main program)
     unsigned xct_off;  // shared library: file offset of SHT_EXECINSTR
     unsigned hatch_off;  // file offset of escape hatch
+    unsigned o_binfo;  // offset to first b_info
     upx_uint64_t load_va;  // PT_LOAD[0].p_vaddr
     upx_uint64_t xct_va;  // minimum SHT_EXECINSTR virtual address
     upx_uint64_t jni_onload_va;  // runtime &JNI_OnLoad
@@ -126,6 +128,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
+    virtual void defineSymbols(Filter const *);
     virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
@@ -236,6 +239,7 @@ public:
 protected:
     virtual void PackLinuxElf64help1(InputFile *f);
     virtual int checkEhdr(Elf64_Ehdr const *ehdr) const;
+    virtual bool canPack();
 
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual int  pack2(OutputFile *, Filter &);  // append compressed data
@@ -248,6 +252,7 @@ protected:
         void const *proto,
         unsigned const brka
     );
+    virtual void defineSymbols(Filter const *);
     virtual void buildLinuxLoader(
         upx_byte const *const proto,  // assembly-only sections
         unsigned const szproto,
@@ -370,6 +375,18 @@ protected:
     }
 };
 
+class PackLinuxElf64Be : public PackLinuxElf64
+{
+    typedef PackLinuxElf64 super;
+protected:
+    PackLinuxElf64Be(InputFile *f) : super(f) {
+        lg2_page=16;
+        page_size=1u<<lg2_page;
+        bele = &N_BELE_RTP::be_policy;
+        PackLinuxElf64help1(f);
+    }
+};
+
 
 /*************************************************************************
 // linux/elf64amd
@@ -385,7 +402,6 @@ public:
     virtual const char *getName() const { return "linux/amd64"; }
     virtual const char *getFullName(const options_t *) const { return "amd64-linux.elf"; }
     virtual const int *getFilters() const;
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     //virtual void pack3(OutputFile *, Filter &);  // append loader
@@ -404,7 +420,6 @@ public:
     virtual const char *getName() const { return "linux/arm64"; }
     virtual const char *getFullName(const options_t *) const { return "arm64-linux.elf"; }
     virtual const int *getFilters() const;
-    virtual bool canPack();
 protected:
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     //virtual void pack3(OutputFile *, Filter &);  // append loader
@@ -451,7 +466,25 @@ public:
 protected:
     unsigned lg2_page;  // log2(PAGE_SIZE)
     unsigned page_size;  // 1u<<lg2_page
-    virtual bool canPack();
+    virtual void pack1(OutputFile *, Filter &);  // generate executable header
+    virtual void buildLoader(const Filter *);
+    virtual Linker* newLinker() const;
+};
+
+
+class PackLinuxElf64ppc : public PackLinuxElf64Be
+{
+    typedef PackLinuxElf64Be super;
+public:
+    PackLinuxElf64ppc(InputFile *f);
+    virtual ~PackLinuxElf64ppc();
+    virtual int getFormat() const { return UPX_F_LINUX_ELFPPC64; }
+    virtual const char *getName() const { return "linux/ppc64"; }
+    virtual const char *getFullName(const options_t *) const { return "powerpc64-linux.elf"; }
+    virtual const int *getFilters() const;
+protected:
+    unsigned lg2_page;  // log2(PAGE_SIZE)
+    unsigned page_size;  // 1u<<lg2_page
     virtual void pack1(OutputFile *, Filter &);  // generate executable header
     virtual void buildLoader(const Filter *);
     virtual Linker* newLinker() const;

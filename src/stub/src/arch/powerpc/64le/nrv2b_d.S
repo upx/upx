@@ -40,9 +40,8 @@
         add lsrc,lsrc,src  // input eof
 
         lis hibit,0x8000  // 0x80000000 for detecting next bit
-        rldicr  hibit,hibit,32,31        // upper bits
-        lis  bits,0x8000 // prepare for first load
-        rldicr  bits,bits,32,31        // upper bits
+        sldi hibit,hibit,32        // upper bits
+        mr bits,hibit  // prepare for first load
         addi src,src,-1  // prepare for 'lbzu'
         addi dst,dst,-1  // prepare for 'stbu'
         li disp,-1  // initial displacement
@@ -67,33 +66,30 @@
 /* rotate next bit into bottom bit of reg; set cr0 based on entire result reg */
 #define getnextb(reg) call get1; adde. reg,reg,reg
 
+get2:
+        adde  bits,bits,bits  // shift in CArry from 'addc' below
+        sldi bits,bits,32-1  // left justify 33-bit result
 get1:
-        cmpld  bits,hibit  // cr0  for   jnextb
-        addc   bits,bits,bits  // CArry for getnextb
+        cmpld bits,hibit  // cr0  for   jnextb
+        addc  bits,bits,bits  // CArry for getnextb
         bnelr+ cr0  // return if reload not needed; likely 31/32
 
-/* CArry has been set from adding 0x80000000 to itself; preserve for 'adde' */
-        li     t2,0
-        adde   t2,t2,t2 // CArry was set from adding 0x80000000 to itself
-        rldicr t2,t2,32,31
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  // lo8
-        lbz   t0,2(src); rlwimi bits,t0, 8,16,23
-        lbz   t0,3(src); rlwimi bits,t0,16, 8,15
-        lbzu  t0,4(src); rlwimi bits,t0,24, 0, 7
+        lbz   t1,2(src); rlwimi bits,t1, 8,16,23
+        lbz   t1,3(src); rlwimi bits,t1,16, 8,15
+        lbzu  t1,4(src); rlwimi bits,t1,24, 0, 7
 #else  /*}{ pray for no unalignment trap or slowdown */
         li bits,1  // compensate for 'lbzu'
-//        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
+#if BIG_ENDIAN  //{
+        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
+#else  //}{
         lwzx  bits,bits,src
+#endif  //}
         addi src,src,4
 #endif  /*}*/
-
-        rldicr  bits,bits,32,31        // upper bits
-        cmpld   bits,hibit  // cr0  for   jnextb
-        addc    bits,bits,bits  // CArry for getnextb; set lo bit from CarryIn
-        add     bits,bits,t2
-        ret
+        b get2
 
 lit_n2b:
 #define tmp len
@@ -110,12 +106,10 @@ offmore_n2b:
         addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
         li len,0
         blt- offprev_n2b
-        rlwinm off,off,8,0,31-8  // off<<=8;
-        lbzu t0,1(src)
-        nor. disp,off,t0  // disp = -(1+ (off|t0));
-        li        t2,-1
-        rldicr t2,t2,32,31       // 0xffffffff00000000 mask
-        cmpd   disp,t2
+        lbzu t1,1(src)
+        slwi off,off,8  // off<<=8;
+        nor disp,off,t1  // disp = -(1+ (off|t1));
+        slwi. t1,disp,0  // t1= 0xffffffff & disp;
         beq- eof_nrv
 
 offprev_n2b:  // In: 0==len
@@ -127,7 +121,7 @@ lenmore_n2b:
         getnextb(len)
         jnextb0n lenmore_n2b
 gotlen_n2b:
-        subfic t0,disp,(~0)+(-0xd00)  // want CArry only
+        subfic t1,disp,(~0)+(-0xd00)  // want CArry only
         adde len,len,off  // len += off + (disp < -0xd00);
 
 copy:

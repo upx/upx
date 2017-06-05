@@ -1,0 +1,71 @@
+# How to transform from source code in src/stub/src/c/lzma_d_c.c
+# to the pieces for use in UPX runtime decompression stub.
+#
+MAKEFLAGS += -rR
+.SUFFIXES:
+.SECONDEXPANSION:
+
+ifndef top_srcdir
+__dir_list   = . .. ../.. ../../.. ../../../.. ../../../../..
+__dir_list  += ../../../../../.. ../../../../../../.. ../../../../../../../..
+__dir_search = $(firstword $(foreach v,$1,$(if $(wildcard $v/$2),$v)) $3)
+top_srcdir := $(call __dir_search,$(__dir_list),src/bele.h,NOT_FOUND)
+endif
+include $(wildcard $(top_srcdir)/Makevars.global ./Makevars.local)
+vpath %.c $(top_srcdir)/src/stub/src/c
+
+STUBS =
+include $(top_srcdir)/src/stub/src/c/Makevars.lzma
+ifneq ($(UPX_LZMA_VERSION),)
+STUBS += lzma_d_cf.S lzma_d_cs.S
+endif
+
+default.targets = all
+ifeq ($(strip $(STUBS)),)
+STUBS = NO_STUBS
+all.targets =
+endif
+include $(top_srcdir)/src/stub/Makefile
+
+
+# /***********************************************************************
+# // method-lzma
+# ************************************************************************/
+
+lzma_d_c%.S : tc_list = method-lzma powerpc64-linux.elf default
+lzma_d_c%.S : tc_bfdname = elf64-powerpc
+
+c := tc.method-lzma.gcc
+$c = /usr/bin/powerpc64-linux-gnu-gcc
+$c += -fPIC
+$c += -fomit-frame-pointer
+$c += -fno-unit-at-a-time
+$c += -ffunction-sections
+$c += -fwrapv
+$c += -DWITH_LZMA=$(UPX_LZMA_VERSION)
+$c += -I$(UPX_LZMADIR)
+$c += -I$(top_srcdir)/src
+$c += -Wno-error
+
+lzma_d_c%.S : lzma_d_c.c
+	$(call tc,gcc) $(PP_FLAGS) -S $< -o tmp/$T.s
+	sed  < tmp/$T.s  > tmp/$T.S \
+	  -e '/^[ \t]*\.section[ \t]*"\.text"/d' \
+	  -e '/^[ \t]*\.section[ \t]*"\.toc"/d' \
+	  -e '/^[ \t]*\.section[ \t]*\.note/d' \
+	  -e '/^[ \t]*\.section[ \t]*\.text\.[^L]/d' \
+	  -e '/^[ \t]*\.section[ \t]*\.text\.LzmaDecodeProperties/,/^[ \t]*\.size[ \t]*LzmaDecodeProperties/d' \
+	  -e '/^[ \t]*\.section[ \t]*"\.opd"/,/^[ \t]*\.previous/d' \
+	  -e 's/\.L\.//g' \
+	  -e "/b *_restgpr0_/a\
+#include \"stub/src/arch/powerpc/64/ppc_regs.h\"\n\
+#include \"stub/src/powerpc64-savegpr0.S\""
+	$(call tc,gcc) $(PP_FLAGS) -c tmp/$T.S -o tmp/$T.o  # assemble big-endian
+	$(call tc,f-objstrip,tmp/$T.o)
+	$(call tc,objcopy) -O binary tmp/$T.o tmp/$T.bin
+	head -c-4 tmp/$T.bin > tmp/$T.out
+	$(call tc,objdump) -b binary -m powerpc -D tmp/$T.out | $(RTRIM) > tmp/$T.out.disasm
+	$(call tc,bin2h) --mode=gas tmp/$T.out $@
+
+lzma_d_cf.% : PP_FLAGS = -DFAST  -O2
+lzma_d_cs.% : PP_FLAGS = -DSMALL -Os

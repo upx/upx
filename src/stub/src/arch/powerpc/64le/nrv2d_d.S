@@ -73,13 +73,16 @@ get32d:
                 // fetch 4 bytes unaligned and LITTLE ENDIAN
 #if 0  /*{ clean; but 4 instr larger, and 3 cycles longer */
         lbz bits,1(src)  // lo8
-        lbz   t0,2(src); rlwimi bits,t0, 8,16,23
-        lbz   t0,3(src); rlwimi bits,t0,16, 8,15
-        lbzu  t0,4(src); rlwimi bits,t0,24, 0, 7
+        lbz   r0,2(src); rlwimi bits,r0, 8,16,23
+        lbz   r0,3(src); rlwimi bits,r0,16, 8,15
+        lbzu  r0,4(src); rlwimi bits,r0,24, 0, 7
 #else  /*}{ pray for no unalignment trap or slowdown */
         li bits,1  // compensate for 'lbzu'
-//        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
+#if BIG_ENDIAN  //{
+        lwbrx bits,bits,src  // bits= fetch_le32(bits+src)
+#else  //}{
         lwzx  bits,bits,src
+#endif  //}
         addi src,src,4
 #endif  /*}*/
 
@@ -112,8 +115,8 @@ getoff_n2d:
         addic. off,off,-3  // CArry set [and ignored], but no 'addi.'
         rlwinm off,off,8,0,31-8  // off<<=8;
         blt- offprev_n2d
-        lbzu t0,1(src)
-        nor. disp,off,t0  // disp = -(1+ (off|t0));
+        lbzu r0,1(src)
+        nor. disp,off,r0  // disp = -(1+ (off|r0));
         srawi disp,disp,1  // shift off low bit (sets CArry)
         cmpdi disp,0  // test result of srawi instead of nor.
         beq-  eof_nrv  //
