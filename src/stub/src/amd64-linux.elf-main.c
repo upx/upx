@@ -283,6 +283,7 @@ do_xmap(
     char *v_brk;
     unsigned long const reloc = xfind_pages(
         ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum, &v_brk);
+    DPRINTF("do_xmap reloc=%%p", reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -363,8 +364,6 @@ upx_main(  // returns entry address
     Elf64_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
-    Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
-
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
     xo.size = bi->sz_unc;
@@ -375,27 +374,28 @@ upx_main(  // returns entry address
     unpackExtent(&xi2, &xo, f_decompress, 0);  // never filtered?
 
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, AT_PHDR  , (unsigned long)phdr->p_vaddr);
-    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
+    auxv_up(av, AT_PHDR , reloc + ehdr->e_phoff);
+    auxv_up(av, AT_PHNUM,         ehdr->e_phnum);
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
+    DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p", ehdr->e_entry, reloc);
+    Elf64_Phdr *phdr = (Elf64_Phdr *)(1+ ehdr);
     unsigned const orig_e_type = ehdr->e_type;
-    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -fpie /*FIXME: and not pre-linked*/
+    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
         // Unpacked must start at same place as packed, so that brk(0) works.
         ehdr->e_type = ET_EXEC;
-        auxv_up(av, AT_ENTRY, ehdr->e_entry + reloc);
-        phdr = (Elf64_Phdr *)(1+ ehdr);
+        auxv_up(av, AT_ENTRY, ehdr->e_entry += reloc);
         unsigned j;
         for (j=0; j < ehdr->e_phnum; ++phdr, ++j) {
             phdr->p_vaddr += reloc;
             phdr->p_paddr += reloc;
         }
-        // Needed for libmusl which has no PT_PHDR
-        auxv_up(av, AT_PHDR, (unsigned long)((Elf64_Phdr *)(1+ ehdr))->p_vaddr);
     }
 
-    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);  // "rewind"
+    // De-compress Ehdr again into actual position, then de-compress the rest.
+    Elf64_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc);
+    DPRINTF("upx_main2  entry=%%p  reloc=%%p", entry, reloc);
     if (ET_DYN!=orig_e_type) {
         auxv_up(av, AT_ENTRY , entry);
     }
