@@ -1410,11 +1410,19 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         unsigned cmdsize = mhdro.sizeofcmds - sizeof(segXHDR);
         Mach_header const *const ptr0 = (Mach_header const *)stub_main;
         Mach_command const *ptr1 = (Mach_command const *)(1+ ptr0);
-        for (unsigned j = 0; j < mhdro.ncmds -1; ++j,
-                (cmdsize -= ptr1->cmdsize),
+        for (unsigned j = 0; j < mhdro.ncmds -1; ++j, (cmdsize -= ptr1->cmdsize),
                 ptr1 = (Mach_command const *)(ptr1->cmdsize + (char const *)ptr1)) {
             if (lc_seg == ptr1->cmd) {
                 Mach_segment_command const *const segptr = (Mach_segment_command const *)ptr1;
+                Mach_section_command const *const secptr = (Mach_section_command const *)(1+ segptr);
+                if (!strcmp("__TEXT", segptr->segname)) {
+                    strncpy((char *)secTEXT.segname,   "__TEXT", sizeof(secTEXT.segname));
+                    strncpy((char *)secTEXT.sectname, "upxTEXT", sizeof(secTEXT.sectname));
+                    secTEXT.addr   = secptr->addr;
+                    secTEXT.size   = secptr->size;  // update later
+                    secTEXT.offset = secptr->offset;
+                    secTEXT.align  = secptr->align;
+                }
                 if (!strcmp("__LINKEDIT", segptr->segname)) {
                     // Mach_command before __LINKEDIT
                     pos += (char const *)ptr1 - (char const *)(1+ ptr0);
@@ -1426,6 +1434,7 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     fo->write((char const *)ptr1, cmdsize);
                     // Contents before __LINKEDIT; put non-headers at same offset in file
                     fo->write(&stub_main[pos], segptr->fileoff - pos);
+                    sz_mach_headers = fo->getBytesWritten();
                     break;
                 }
             }
@@ -1443,7 +1452,6 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
                     if (!(1 <= segptr->nsects)) {
                         throwCantPack("TEXT.nsects == 0");
                     }
-                    mhdro.sizeofcmds += segTEXT.cmdsize - ptr->cmdsize;
                     strncpy((char *)secTEXT.sectname, "upxTEXT", sizeof(secTEXT.sectname));
                     secTEXT.addr   = secptr->addr;
                     secTEXT.size   = secptr->size;  // update later
@@ -1463,13 +1471,14 @@ void PackMachBase<T>::pack1(OutputFile *const fo, Filter &/*ft*/)  // generate e
         memset(&linkitem, 0, sizeof(linkitem));
         fo->write(&linkitem, sizeof(linkitem));
         fo->write(rawmseg, mhdri.sizeofcmds);
+
+        sz_mach_headers = fo->getBytesWritten();
+        unsigned gap = secTEXT.offset - sz_mach_headers;
+        MemBuffer filler(gap);
+        memset(filler, 0, gap);
+        fo->write(filler, gap);
+        sz_mach_headers += gap;
     }
-    sz_mach_headers = fo->getBytesWritten();
-    unsigned gap = secTEXT.offset - sz_mach_headers;
-    MemBuffer filler(gap);
-    memset(filler, 0, gap);
-    fo->write(filler, gap);
-    sz_mach_headers += gap;
 
     memset((char *)&linfo, 0, sizeof(linfo));
     fo->write(&linfo, sizeof(linfo));

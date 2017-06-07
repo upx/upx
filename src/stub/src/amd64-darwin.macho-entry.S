@@ -223,7 +223,6 @@ unfold:
 main:
         pop %rbp  // &decompress
         call unfold
-        .long O_BINFO
             // compressed fold_elf86 follows
 
 /* vim:set ts=8 sw=8 et: */
