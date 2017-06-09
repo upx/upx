@@ -65,9 +65,10 @@ PATH_MAX= 4096
 fold_begin:
 ////    brk #0  // DEBUG
 /* In:
-   x28= f_decompress
+   x26= &Elf64_Ehdr
    x27= &b_info of first compressed block (after move)
-   w26= total size of compressed data
+   x28= f_decompress
+   w29= total size of compressed data
     sp/ ADRU,LENU,sz_unc,MFLG, argc,argv...
 */
         POP4(x3,x4,x5,x8)  // x3= ADRU; x4= LENU; x5= sz_unc; x8= MFLG
@@ -131,13 +132,13 @@ SP_argc= 4*8  // remember the hole from PUSH3
 0:
 
 /* Construct arglist for upx_main */
-        add x6,sp,#3*8  // &reloc
+        mov x6,x26  // Elf64_Ehdr (reloc if ET_DYN and not pre-link)
           sub sp,sp,#MAX_ELF_HDR + OVERHEAD  // alloca
         adr x5,f_unfilter
         mov x4,x28  // f_decompress
         mov x3,x7  // new &Elf64_auxv_t
         mov x2,sp  // ehdr
-        mov w1,w26  // total size of compressed data
+        mov w1,w29  // total size of compressed data
         mov x0,x27  // &b_info
         bl upx_main
           add sp,sp,#MAX_ELF_HDR + OVERHEAD  // un-alloca

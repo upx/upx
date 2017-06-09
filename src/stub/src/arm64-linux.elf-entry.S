@@ -91,34 +91,37 @@ _start: .globl _start
 
         adr x12,start_params -4  // &sz_pack2
         ldp w29,w10,[x12]  // w29= sz_pack2; w10= LENF
-        ldp w11,w13,[x12,#2*4]  // w11= CPRO; w13= MFLG
+        ldp w11,w3,[x12,#2*4]  // w11= CPRO; w3= MFLG
         add x11,x11,x12  // cpr0
         ldr x0,[x12,#4*4]  // ADRM
         add x10,x10,x12  // end_decompress
-        ldr w3,[x11,# sz_unc]
-        sub x12,x12,w29,uxtw  // &our_Elf64_Ehdr
-        add w1,w29,w3  // sz_pack2 + cpr0.sz_unc
+        ldr w4,[x11,# sz_unc]
+        ldr w27,[x11,#o_binfo - cpr0]  // O_BINFO
+        sub x26,x12,w29,uxtw  // &our_Elf64_Ehdr
+        add x27,x27,x26  // &b_info for Elf64_Ehdr
+        add w1,w29,w4  // sz_pack2 + cpr0.sz_unc
         add x1,x1,# PAGE_SIZE
-  section LUNMP000
-        // unused
-  section LUNMP001
-        // unused
+
+// It would be nice to choose a random address (x0= 0; x3 &~ MAP_FIXED).
+// But the kernel might put the region in the "hole" between compressed .text
+// and brk(0).  The compressor could layout PT_LOAD[1] to cover that
+// entire region, but that might leave a mapping that covers a deliberate
+// hole between .text and .data.  [Can be fixed with PROT_NONE for .p_flags ?]
   section ELFMAINXu
-        PUSH4(x0,x26,x2,x13)  // ADRU, LENU, space for sz_unc, MFLG
-SP_MFLG= 4*8
-D_sz_unc=2*8  // stack displacement to sz_unc
-        mov w1,w26  // length
         mov w2,#PROT_READ | PROT_WRITE | PROT_EXEC
-        orr w3,w13,#MAP_FIXED  // MFLG: MAP_{PRIVATE|ANON}
+        orr w3,w3,#MAP_FIXED  // MFLG: MAP_{PRIVATE|ANON}
         mov x5,#0  // offset= 0
         mov w4,#-1  // fd= -1; cater to *BSD for fd when MAP_ANON
         do_sys __NR_mmap64
+        PUSH4(x0,x1,x2,x3)  // ADRU, LENU, space for sz_unc, MFLG
+SP_MFLG= 3*8
+D_sz_unc=2*8  // stack displacement to sz_unc
 #if DEBUG  /*{*/
         TRACE(#2)
 #endif  /*}*/
         cmn x0,#4096
         bcs msg_SELinux
-        mov x9,x12  // &our_Elf64_Ehdr
+        mov x9,x26  // &our_Elf64_Ehdr
 copy_cl:  // copy decompressor and folded code
           add x5,x0,#64;  // FIXME(memcheck) dc zva,x5  // clear FOLLOWING 64-byte line
         ldp x1,x2,[x9],#2*8

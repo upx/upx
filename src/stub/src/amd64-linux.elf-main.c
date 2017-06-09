@@ -55,7 +55,7 @@
 /*und*/ : "lr"); \
     dprintf(r_fmt, args); \
 })
-#elif defined(__x86_64) //{
+#elif defined(__x86_64) //}{
 #define DPRINTF(fmt, args...) ({ \
     char const *r_fmt; \
     asm("call 0f; .asciz \"" fmt "\"; 0: pop %0" \
