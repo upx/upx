@@ -92,12 +92,10 @@ _start: .globl _start
         adr r12,start_params -4  // &sz_pack2
         ldmia r12,{r1,r2, r10,r11,lr}  // r1= sz_pack2; r2= ADRM; r10= LENF;
                                        //r11= CPR0; lr= MFLG
-        mov r0,r2  // ADRM
         add r11,r11,r12  // cpr0
         add r10,r10,r12  // end_decompress
         ldr r3,[r11,# sz_unc]
         sub r9,r12,r1  // &our_Elf32_Ehdr
-        mov r2,r1  // sz_pack2
         add r1,r1,r3  // sz_pack2 + cpr0.sz_unc
         ldr r3,[r11,#o_binfo - cpr0]
         mov r0,r2  // ADRM
