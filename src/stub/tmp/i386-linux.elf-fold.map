@@ -12,7 +12,7 @@ TARGET(elf32-i386)
 .text           0x0000000000c01080      0x6ac
  *(.text)
  .text          0x0000000000c01080      0x160 tmp/i386-linux.elf-fold.o
-                0x0000000000c011b5                mmap
+                0x0000000000c011b3                mmap
  .text          0x0000000000c011e0      0x54a tmp/i386-linux.elf-main.o
                 0x0000000000c015e2                upx_main
  *(.data)

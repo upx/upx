@@ -76,21 +76,22 @@ fold_begin:
 
         mov ecx,edi  // total length of compressed data
         mov esi,esp  // argv
-        sub esp,2*PAGE_SIZE + PATH_MAX
+        sub esp,PATH_MAX
         mov edi,esp
         push edx  // argc
         push eax  // O_BINFO
         push ecx  // total length of compressed data
+        push 0  // space for fd
         push ebx  // &Elf32_Ehdr
         push ebp  // f_exp
-        mov ebp,esp  // frame: f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        mov ebp,esp  // frame: f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // argv
-        push edi  // &new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        push edi  // &new_env[0]; f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
         stosd  // space for new_env[0]
 0:
         lodsd; test %eax,%eax; stosd; jne 0b  // env
-        push edi  // &old_auxv,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        push edi  // &old_auxv,&new_env[0]; f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
 0:
         lodsd; test %eax,%eax; stosd; movsd; jne 0b  // auxv
 
@@ -99,8 +100,8 @@ fold_begin:
         mov ecx,5*2; rep stosd  // 5 extra slots
         dec eax; stosd; stosd  // {AT_IGNORE}
         sub [-2*4 + ebp],edi  // -len_aux
-        push edi  // &new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
-        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        push edi  // &new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
+        push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
 
         mov edx,-1+ PATH_MAX  // buflen
         mov ecx,edi  // buffer
@@ -117,37 +118,26 @@ fold_begin:
         xchg ecx,eax  // ecx= byte count
 
         std
-        pop edi; dec edi  // abuts old strings; &new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        pop edi; dec edi  // abuts old strings; &new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,0,tot_len,O_BINFO,argc
         mov al,0; stosb  // terminate
         rep movsb  // slide up
         mov eax, 0+ ('='<<24)|(' '<<16)|(' '<<8)|(' '<<0)  # env var name
         sub edi,3; mov [edi],eax
         mov eax,[-1*4 + ebp]; mov [eax],edi  // new_env[0]
-        shr edi,12; dec edi; shl edi,12
-        push edi  // &page,&new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        and edi,~3  // word align
 
         sub ecx,ecx  // O_RDONLY
         // mov ebx,ebx  // name
         mov eax,__NR_open; int 0x80
+        mov [2*4 + ebp],eax  // fd for later mmap
 
-        pop ebx  // &page; &new_aux[N],-len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
-        mov ecx,PAGE_SIZE
-        mov edx,PROT_READ
-        mov esi,MAP_PRIVATE|MAP_FIXED
-        xchg eax,edi  // fd
-        sub ebp,ebp  // 0 block in file
-        mov eax,__NR_mmap; int 0x80
-
-        xchg edi,ebx  // ebx= fd; edi= &page
-        mov eax,__NR_close; int 0x80
-
-        pop esi  // &new_aux[N]; -len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
-        pop edx  // -len_aux; &new_env[0]; f_exp,&Elf32_Ehdr,tot_len,O_BINFO,argc
+        pop esi  // &new_aux[N]; -len_aux,&new_env[0]; f_exp,&Elf32_Ehdr,fd,tot_len,O_BINFO,argc
+        pop edx  // -len_aux; &new_env[0]; f_exp,&Elf32_Ehdr,fd,tot_len,O_BINFO,argc
           add edx,edi  // edx= &final_aux[0]
 
-        sub edi,4
+        scasd  // edi -= 4
                 mov ecx,esi
-        sub esi,4
+        lodsd  // esi -= 4
                 sub ecx,esp
                 shr ecx,2
         rep movsd
@@ -158,23 +148,21 @@ fold_begin:
         pop ecx  // toss &new_env[0]
         pop ebp  // f_exp
         pop ebx  // &Elf32_Ehdr
+        pop eax  // fd
         pop esi  // tot_len
         pop ecx  // O_BINFO
 // stack is back to original state: argc,argv,0,env,0,aux,0,strings,0
 
+        mov edx, [p_memsz + szElf32_Ehdr + ebx]  // phdr[0].p_memsz
+        lea edx, [       PAGE_SIZE + edx + ebx]  // 1 page for unfold
+        sub edx,ebx; push edx  // length
+        push ebx  // start of unmap region (&Elf32_Ehdr of this stub)
+        push eax  // fd
+
 #define OVERHEAD 2048
 #define MAX_ELF_HDR 512
-
         sub esp, MAX_ELF_HDR + OVERHEAD  // alloca
-        push ebx  // start of unmap region (&Elf32_Ehdr of this stub)
 
-// Cannot pre-round .p_memsz because kernel requires PF_W to setup .bss,
-// but strict SELinux (or PaX, grsecurity) prohibits PF_W with PF_X.
-        mov edx, [p_memsz + szElf32_Ehdr + ebx]  // phdr[0].p_memsz
-        lea edx, [-1 + 2*PAGE_SIZE + edx + ebx]  // 1 page for round, 1 for unfold
-        and edx, 0-PAGE_SIZE
-
-        push edx  // end of unmap region
         sub eax, eax  // 0
         cmp word ptr [e_type + ebx], ET_DYN
         jne L53
@@ -191,13 +179,30 @@ L53:
         inc edi  // swap with above 'pusha' to inhibit auxv_up for PT_INTERP
 .extern upx_main
         call upx_main  // returns entry address
-        add esp, (8 +1)*4  // remove 8 params from pusha, also dynbase
-        pop ecx  // end of unmap region
-        pop ebx  // start of unmap region (&Elf32_Ehdr of this stub)
-        add esp, MAX_ELF_HDR + OVERHEAD  // un-alloca
-        push eax  // save entry address
+        dec edi
+        add esp, (8 +1)*4 + MAX_ELF_HDR + OVERHEAD  // 8 params, dynbase, un-alloca
+        pop ecx  // fd
+        pop ebx  // base to unmap
+        pop edx  // length
 
-        dec edi  // auxv table
+        push eax  // entry address
+        push edx  // length
+        push ebx  // base to unmap
+        push edi  // auxv
+        push ecx  // fd, auxv, unmap, length, entry
+
+        sub ebp,ebp  // 0 block in file
+        mov edi,ecx  // fd
+        mov esi,MAP_PRIVATE
+        mov edx,PROT_READ
+        mov ecx,PAGE_SIZE
+        sub ebx,ebx  // 0 ==> Linux chooses page frame
+        mov eax,__NR_mmap; int 0x80
+
+        pop ebx  // fd;  auxv, base, length, entry
+        mov eax,__NR_close; int 0x80
+
+        pop edi  // auxv table
         sub eax,eax  // 0, also AT_NULL
         .byte 0x3c  // "cmpb al, byte ..." like "jmp 1+L60" but 1 byte shorter
 L60:
@@ -205,6 +210,8 @@ L60:
         scasd  // a_type
         jne L60  // not AT_NULL
 // edi now points at [AT_NULL]a_un.a_ptr which contains result of make_hatch()
+        pop ebx  // base to unmap (&Elf32_Ehdr of this stub)
+        pop ecx  // length
 
         push eax
         push eax
@@ -215,7 +222,6 @@ L60:
         push eax
         push eax  // 32 bytes of zeroes now on stack, ready for 'popa'
 
-        sub ecx, ebx  // length to unmap
         mov al, __NR_munmap  // eax was 0 from L60
         jmp [edi]  // unmap ourselves via escape hatch, then goto entry
 
@@ -233,6 +239,7 @@ mmap: .globl mmap  // what happened to the ebx->args_on_stack method?
         shr ebp,12
         mov eax,__NR_mmap
         int 0x80
+
         pop edi
         pop esi
         pop ebx
