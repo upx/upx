@@ -190,10 +190,10 @@ section LEXECDYN
 // and VDSO follows.  When stack is limited, then allocation is from high
 // (just below stack) to low: VDSO will be below our PT_LOAD, and mmap()
 // below will steal the lowest page of stack.
-        pop ecx; push ecx  // argc
+        mov ecx,[4+ esp]  // argc
         push esi
         push eax
-        lea esi,[esp + 4*ecx + (3+1)*4]  // &env
+        lea esi,[esp + 4*ecx + (3+1+1)*4]  // &env
 1:
         lodsd; test eax,eax; jne 1b  // skip env
 2:
