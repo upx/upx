@@ -733,7 +733,7 @@ bool Packer::getPackHeader(void *b, int blen, bool allow_incompressible)
     {
 #if 0
         // FIXME: does this check make sense w.r.t. overlays ???
-        if (ph.format == UPX_F_W32_PE || ph.format == UPX_F_DOS_EXE)
+        if (ph.format == UPX_F_WIN32_PE || ph.format == UPX_F_DOS_EXE)
             // may get longer
             ((void)0);
         else
