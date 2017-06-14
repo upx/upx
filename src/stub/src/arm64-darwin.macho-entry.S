@@ -60,7 +60,7 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
         //.long sz_pack2  // placed there by ::pack3()
   section MACHMAINX
 _start: .globl _start
-        sub sp,sp,#4  // space for mhdrp
+        sub sp,sp,#8  // space for mhdrp
         stp x0,x1,[sp,#-30*8]!  // paranoia; omit r30(lr), r31(sp)
         stp x2,x3,[sp,#2*8]
         stp x4,x5,[sp,#4*8]
