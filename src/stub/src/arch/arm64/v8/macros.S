@@ -61,17 +61,5 @@ fp .req x29
                 // orrcs r0,r0,#(1<<31)  // force negative on error; FIXME: needed?
 .endm
 
-.macro          do_dcache_flush  // In: r0=addr; r1=len
-                mov w3,#1  // _sys_dcache_flush
-                mov w8,#(1<<31)  // syscall number?
-                svc #0
-.endm
-
-.macro          do_icache_invalidate  // In: r0=addr; r1=len
-                mov w3,#0  // _sys_icache_invalidate
-                mov w8,#(1<<31)  // syscall number?
-                svc #0
-.endm
-
 #endif  //}
 // vi:ts=8:et:nowrap
