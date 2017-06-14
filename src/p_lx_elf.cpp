@@ -1020,6 +1020,9 @@ void PackLinuxElf32x86::addStubEntrySections(Filter const *ft)
     if (Elf32_Ehdr::ET_DYN==get_te16(&ehdri.e_type)) {
         addLoader("LEXECDYN", NULL);
     }
+    else {
+        addLoader("LEXECEXE", NULL);
+    }
     addLoader("LEXEC025", NULL);
     addLoader("FOLDEXEC", NULL);
 }

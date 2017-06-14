@@ -9,35 +9,37 @@ Linker script and memory map
 TARGET(elf32-littlearm)
                 0x0000000000008080                . = ((0x8000 + SIZEOF_HEADERS) + 0xc)
 
-.text           0x0000000000008080      0x980
+.text           0x0000000000008080      0xa88
  *(.text)
- .text          0x0000000000008080      0x28c tmp/arm.v4a-linux.elf-fold.o
-                0x00000000000082b0                munmap
-                0x0000000000008298                getpid
-                0x00000000000082a8                readlink
-                0x00000000000082cc                mmap
-                0x00000000000082c0                __clear_cache
-                0x00000000000082f0                mmap_privanon
-                0x0000000000008278                write
-                0x0000000000008270                read
-                0x0000000000008290                unlink
-                0x0000000000008264                my_bkpt
-                0x000000000000826c                exit
-                0x00000000000082a0                brk
-                0x0000000000008280                open
-                0x00000000000082b8                mprotect
-                0x0000000000008288                close
- .text          0x000000000000830c      0x6f4 tmp/arm.v4a-linux.elf-main.o
-                0x0000000000008880                upx_main
+ .text          0x0000000000008080      0x324 tmp/arm.v4a-linux.elf-fold.o
+                0x00000000000082e8                munmap
+                0x0000000000008328                get_sys_munmap
+                0x00000000000082d0                getpid
+                0x00000000000082e0                readlink
+                0x0000000000008304                mmap
+                0x00000000000082f8                __clear_cache
+                0x0000000000008330                mmap_privanon
+                0x00000000000082b0                write
+                0x00000000000082a8                read
+                0x00000000000082c8                unlink
+                0x000000000000829c                my_bkpt
+                0x00000000000082a4                exit
+                0x00000000000082d8                brk
+                0x00000000000082b8                open
+                0x0000000000008348                div10
+                0x00000000000082f0                mprotect
+                0x00000000000082c0                close
+ .text          0x00000000000083a4      0x764 tmp/arm.v4a-linux.elf-main.o
+                0x0000000000008934                upx_main
  *(.data)
- .data          0x0000000000008a00        0x0 tmp/arm.v4a-linux.elf-fold.o
- .data          0x0000000000008a00        0x0 tmp/arm.v4a-linux.elf-main.o
+ .data          0x0000000000008b08        0x0 tmp/arm.v4a-linux.elf-fold.o
+ .data          0x0000000000008b08        0x0 tmp/arm.v4a-linux.elf-main.o
 
 .data
 
-.bss            0x0000000000008a00        0x0
- .bss           0x0000000000008a00        0x0 tmp/arm.v4a-linux.elf-fold.o
- .bss           0x0000000000008a00        0x0 tmp/arm.v4a-linux.elf-main.o
+.bss            0x0000000000008b08        0x0
+ .bss           0x0000000000008b08        0x0 tmp/arm.v4a-linux.elf-fold.o
+ .bss           0x0000000000008b08        0x0 tmp/arm.v4a-linux.elf-main.o
 LOAD tmp/arm.v4a-linux.elf-fold.o
 LOAD tmp/arm.v4a-linux.elf-main.o
 OUTPUT(tmp/arm.v4a-linux.elf-fold.bin elf32-littlearm)

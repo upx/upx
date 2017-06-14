@@ -34,7 +34,10 @@
 
 #define bkpt .long 0xe7f001f0  /* reserved instr; Linux GNU eabi breakpoint */
 sz_Elf32_Phdr =  8*4
+  p_vaddr = 2*4
 sz_Elf32_Ehdr = 13*4
+  e_type= 16
+    ET_DYN= 3
   e_phnum= 16 + 2*2 + 5*4 + 2*2
 
 sz_b_info= 12
@@ -64,6 +67,14 @@ __ARM_NR_cacheflush =  2 + __ARM_NR_BASE
 #define DEBUG 0
 #endif  /*}*/
 
+#if DEBUG  //{
+#define TRACE_REGS r0-r12,r14,r15
+// sp (r13) is not included because the write-back might cause UNDEFINED behavior
+// if the write-back register is not first or last.  The actual value of sp
+// usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
+// one word closer to the stack pointer because r13 has been omitted.
+#endif  //
+
         //.long sz_pack2  // placed there by ::pack3()
   section ELFMAINX
 start_params:
@@ -74,44 +85,86 @@ mflg:
         .long MFLG  // MAP_{PRIVATE|ANONYMOUS}  // QNX vs linux
 _start: .globl _start
 ////    nop; bkpt
-/* Get some pages: enough
-   to duplicate the entire compressed PT_LOAD, plus 1 page, located just after
-   the brk() of the _un_compressed program.  The address is pre-calculated
-   calculated by PackLinuxElf32arm::addLinkerSymbols().
-*/
+        bl main  // lr= &f_exp
+f_exp:
+#define LINUX_ARM_CACHEFLUSH 1
 
+  section NRV_HEAD
+        // empty
+  section NRV_TAIL
+        // empty
+
+  section NRV2E
+#include "arch/arm/v4a/nrv2e_d8.S"
+
+  section NRV2D
+#include "arch/arm/v4a/nrv2d_d8.S"
+
+  section NRV2B
+#include "arch/arm/v4a/nrv2b_d8.S"
+
+#include "arch/arm/v4a/lzma_d.S"
+
+  section ELFMAINY
+end_decompress: .globl end_decompress
+
+msg_SELinux:
+        mov r2,#L71 - L70  // length
+        adr r1,L70  // message text
+        mov r0,#2  // fd stderr
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_write
+        swi 0
+#else  /*}{*/
+        swi __NR_write
+#endif  /*}*/
+die:
+        mov r0,#127
+#if defined(ARMEL_EABI4)  /*{*/
+        mov r7,#__NR_exit
+        swi 0
+#else  /*}{*/
+        swi __NR_exit
+#endif  /*}*/
+L70:
+        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
+L71:
+        /* IDENTSTR goes here */
+
+section ELFMAINZ
+unfold:  // in: r11= &f_exp; lr= &O_BINFO
 #if DEBUG  /*{*/
-#define TRACE_REGS r0-r12,r14,r15
-// sp (r13) is not included because the write-back might cause UNDEFINED behavior
-// if the write-back register is not first or last.  The actual value of sp
-// usually does not matter.  Just remember that lr (r14) and pc (r15) are stored
-// one word closer to the stack pointer because r13 has been omitted.
-
         stmdb sp!,{TRACE_REGS}; mov r0,#1; bl trace
 #endif  /*}*/
-        adr r12,start_params -4  // &sz_pack2
-        ldmia r12,{r1,r2, r10,r11,lr}  // r1= sz_pack2; r2= ADRM; r10= LENF;
-                                       //r11= CPR0; lr= MFLG
-        add r11,r11,r12  // cpr0
-        add r10,r10,r12  // end_decompress
-        ldr r3,[r11,# sz_unc]
-        sub r9,r12,r1  // &our_Elf32_Ehdr
-        add r1,r1,r3  // sz_pack2 + cpr0.sz_unc
-        ldr r3,[r11,#o_binfo - cpr0]
-        mov r0,r2  // ADRM
-        add r3,r3,r9  // &b_info for Elf32_Ehdr
-        add r1,r1,# PAGE_SIZE
-  section ELFMAINXu
-        stmdb sp!,{r0,r1,r2,r3,lr}  // ADRU,LENU,space for sz_unc,&b_info,MFLG
-SP_MFLG= 4*4
-D_b_info=3*4  // stack displacement to b_info
-D_sz_unc=2*4  // stack displacement to sz_unc
-        mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
-        ldr r3,[r12, #mflg - (start_params -4)]  // MAP_{PRIVATE|ANON}
-        mov r12,r9  // &our_Elf32_Ehdr
-        mov r5,#0  // offset= 0
+        add r0,r11,#-4 + start_params - f_exp
+        ldr r5,[r0]  @ sz_pack2; LENX
+        ldr r6,[lr],#4  @ O_BINFO
+        sub r7,r0,r5  @ &Elf_Ehdr  dynbase
+        ldrh r0,[r7,#e_type]
+        ldr r9,[r7,#p_vaddr + sz_Elf32_Phdr + sz_Elf32_Ehdr]  @ PT_LOAD[1].p_vaddr
+        cmp r0,#ET_DYN
+          addeq r9,r9,r7  @ brk(0)
+        add r9,r9,#PAGE_SIZE
+        sub r9,r9,#1
+        mov r9,r9,lsr #PAGE_SHIFT
+        mov r9,r9,lsl #PAGE_SHIFT  @ ADRU
+        ldr r8,[lr]  @ {fold_begin}.sz_unc
+        add r6,r6,r9  @ ADRX= O_BINFO + new_base
+        sub r0,lr,r7  @ &eof - &Elf_Ehdr
+        add r10,r8,r0  @ .sz_unc + sizeof(this_stub) == LENU
+        ldr r3,[r11, #mflg - f_exp]  // MAP_{PRIVATE|ANON}
+        sub r11,r11,r7  @ offset(f_exp)
+        add r11,r11,r9  @ new f_exp
+        stmdb sp!,{r3,r5,r6,r7,r8,r9,r10,r11,r12}
+        // MFLG, LENX,ADRX, dynbase,%fd, ADRU,LENU, f_exp,%entry
+
+// alloc new pages via mmap
+        mov r5,#0  // offset
         mvn r4,#0  // fd= -1; cater to *BSD for fd when MAP_ANON
         orr r3,r3,#MAP_FIXED
+        mov r2,#PROT_READ | PROT_WRITE | PROT_EXEC
+        mov r1,r10  @ LENU
+        mov r0,r9  @ ADRU
 #if defined(ARMEL_EABI4)  /*{*/
         mov r7,#__NR_mmap64
         swi 0
@@ -123,48 +176,30 @@ D_sz_unc=2*4  // stack displacement to sz_unc
 #endif  /*}*/
         cmn r0,#4096
         bcs msg_SELinux
-copy:
-        ldmia r9!,{r1,r2,r3,r4,r5,r6,r7,r8}; cmp r9,r10  // upto end-decompress
-        stmia r0!,{r1,r2,r3,r4,r5,r6,r7,r8}; blo copy
 
-        sub r4,r0,r9  // relocation amount
-        ldr r1,[sp,#SP_MFLG]
-        adr r5,f_decompress
-        str r1,[r0],#4  // MFLG at -4+ fold_begin
-        mov lr,r0  // dst for unfolded code
-        add r5,r5,r4  // relocated f_decompress
+// copy to new pages
+        ldr r2,[sp,#3*4]  @ dynbase
+        sub r1,r1,r8  @ omit {fold_begin}.sz_unc
+        add r12,r0,r1  @ end dst
+        add r1, r2,r1  @ end src
+cop2:  // overrun OK: dst is page aligned, fold_begin follows src
+        ldmia r2!,{r3,r4,r5,r6,r7,r8,r9,r10}; cmp r2,r1
+        stmia r0!,{r3,r4,r5,r6,r7,r8,r9,r10}; blo cop2
 
-        mov r0,r5
-        add r1,r9,r4  // relocated end_decompress
-        mov r2,#0
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,   #__ARM_NR_cacheflush& 0xff
-        orr r7,r7,#__ARM_NR_cacheflush&~0xff
-        swi 0
-#else  /*}{*/
-        swi __ARM_NR_cacheflush
-#endif  /*}*/
-
-        ldr r10,[sp,#D_b_info]
-        add r10,r10,r4  // relocated &b_info
-
-        ldr r0,[r11,# b_method ]  // 5th param (whole word: endian issues!)
-        stmdb sp!,{r0, lr}  // 5th param, dst for unfolded
-D_stm1=2*4
-        ldr  r3,[r11,# sz_unc]
-        add  r0, r11,# sz_b_info
-        ldr  r1,[r11,# sz_cpr ]
-        mov  r2,lr  // dst
-        str  r3,[sp,#D_stm1 + D_sz_unc]  // sz_unc; lzma needs for EOF
-        add  r3, sp,#D_stm1 + D_sz_unc   // &sz_unc
+// decompress fold_begin and jump to it
+        ldr r6,[sp],#4  @ MFLG
+        ldr r5,[lr],#4  @ sz_unc
+        ldr r1,[lr],#4  @ 2nd arg: .sz_cpr
+        ldr r4,[lr],#4  @ b_method
+        stmdb sp!,{r4,r5,r6,r12}  @ 5th arg, dstlen, MFLG, retaddr
+        add r3,sp,#1*4  @ 4th arg: &dstlen  (used by lzma)
+        mov r2,r12  @ 3rd arg: dst
+        mov r0,lr  @ 1st arg: &payload
 #if DEBUG  /*{*/
         stmdb sp!,{TRACE_REGS}; mov r0,#3; bl trace
 #endif  /*}*/
-        mov lr,pc; mov pc,r5  // decompress folded code [opcode 'blx' not in v4a]
-#if DEBUG  /*{*/
-        stmdb sp!,{TRACE_REGS}; mov r0,#4; bl trace
-#endif  /*}*/
-        ldmia sp!,{r1, pc}  // discard 5th param; goto unfolded
+        mov lr,pc; mov pc,r11  // decompress folded code [arm.v4a lacks 'blx']
+        ldmia sp!,{r1,r2,r3,pc}  // toss 5th arg and dstlen; goto unfolded
 
 #if DEBUG  /*{*/
 TRACE_BUFLEN=512
@@ -218,55 +253,13 @@ hex:
         .ascii "0123456789abcdef"
 #endif  /*}*/
 
-f_decompress:
-#define LINUX_ARM_CACHEFLUSH 1
-
-  section NRV_HEAD
-        // empty
-  section NRV_TAIL
-        // empty
-
-  section NRV2E
-#include "arch/arm/v4a/nrv2e_d8.S"
-
-  section NRV2D
-#include "arch/arm/v4a/nrv2d_d8.S"
-
-  section NRV2B
-#include "arch/arm/v4a/nrv2b_d8.S"
-
-#include "arch/arm/v4a/lzma_d.S"
-
-  section ELFMAINY
-end_decompress: .globl end_decompress
-
-msg_SELinux:
-        mov r2,#L71 - L70  // length
-        adr r1,L70  // message text
-        mov r0,#2  // fd stderr
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_write
-        swi 0
-#else  /*}{*/
-        swi __NR_write
-#endif  /*}*/
-die:
-        mov r0,#127
-#if defined(ARMEL_EABI4)  /*{*/
-        mov r7,#__NR_exit
-        swi 0
-#else  /*}{*/
-        swi __NR_exit
-#endif  /*}*/
-L70:
-        .asciz "PROT_EXEC|PROT_WRITE failed.\n"
-L71:
-        /* IDENTSTR goes here */
-
-  section ELFMAINZ
+main:
+        mov r11,lr  // r11= &f_exp
+        call unfold
 o_binfo:
-        .long O_BINFO  // .int4
+        .long O_BINFO  // .int4 offset of b_info for text
 cpr0: .globl cpr0
         /* { b_info={sz_unc, sz_cpr, {4 char}}, folded_loader...} */
+eof:
 
 /* vim:set ts=8 sw=8 et: */
