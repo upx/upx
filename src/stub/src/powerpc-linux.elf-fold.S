@@ -86,6 +86,7 @@ SZ_FRAME= SZ_LINKA
 #define pag    r16
 
 fold_begin:
+////    teq r0,r0  // debugging
         call L90
 L90b:
 #include "arch/powerpc/32/bxx.S"
@@ -97,13 +98,10 @@ L90:
 // open /proc/self/exe
         li a1,O_RDONLY
         la a0,4+ L90a - L90b(r21)  // "/proc/self/exe"
-        li r0,SYS_open
-        sc; movr r_fd,a0
+        call open; movr r_fd,a0
 // slide {<<stuff>>,argc,argv,0,env,0,auxv} down with maximum room before strings
         la a1,-4(sp)  // src ready for lwzu
         la sp,-(4+ PATH_MAX)(sp)
-        sub sp,sp,r27  // sp -= PAGE_SIZE
-        sub sp,sp,r27  // sp -= PAGE_SIZE
         la a0,-4(sp)  // dst ready for stwu
         la av_lo,-4(av_lo)  // &end ready for lwzu
 0: // copy upto auxv
@@ -127,8 +125,7 @@ L90:
         li a2,-1+ PATH_MAX
         movr a1,r14  // buffer
         la a0,4+ L90a - L90b(r21)  //     "/proc/self/exe"
-        li r0,SYS_readlink
-        sc; la a2,-4(r14)  // a0= len; a2= buffer
+        call readlink; la a2,-4(r14)  // a0= len; a2= buffer
         cmpwi a0,0; bgt 0f  // success
         la a2,L90a - L90b(r21)  // "   =/proc/self/exe"
         li a0,L90  - (4+ L90a)  // round_up(4, strlen("/proc/self/exe"))
@@ -144,29 +141,19 @@ L90:
         stbu r0,-1(a0); bdnz 0b
         stw a0,-2*4(av_lo)  // &"   =<<path>>" for env
 
-        subf r0,r27,a2  // -PAGE_SIZE == PAGE_MASK
-        and pag, a0,r0  // round down to page boundary
-        add pag,pag,r0  // next lower page
-        subf av_lo,av_len,pag  // final auxv  (stack alignment?)
-// map the first page of /proc/self/exe
-        li a5,0  // offset
-        movr a4,r_fd
-        li a3,MAP_PRIVATE|MAP_FIXED
-        li a2,PROT_READ
-        movr a1,r27  // PAGE_SIZE
-        movr a0,pag  // &page
-        li r0,SYS_mmap
-        sc  // a0= &page
-// slide the rest of the stack up to just below the mapped page
+        clrrwi a0,a0,2  // word align
+        xor r0,sp,a1  // parity of length
+        xor r0,r0,a0  // length vs destination
+        rlwinm r0,r0,0,29,29  // andi r0,r0,1<<(31-29)
+        sub a0,a0,r0
+
+// slide the rest of the stack up
         movr a1,av_hi
+        sub av_lo,a0,av_len
 0:
         lwzu r0,-4(a1); cmpl cr7,a1,sp
         stwu r0,-4(a0); bgt+ cr7,0b
         movr sp,a0
-// close /proc/self/exe
-        movr a0,r_fd
-        li r0,SYS_close
-        sc
 
         li r0,0
 r_reloc= 32 - 1  # use a slot in register save area
@@ -179,7 +166,7 @@ r_reloc= 32 - 1  # use a slot in register save area
           and r30,a5,r0  // r30= &this_page
         mr a4,r31  // &decompress: f_expand
 
-        la sp,-OVERHEAD(sp)  // -SZ_FRAME + &Elf32_Ehdr temporary space
+        stwu sp,-(SZ_FRAME+OVERHEAD)(sp)  // allocate this frame
         lwz a1,-2*4(r31)  // sz_pack2 == #bytes which preceed -2*4(r31)
         subf r29,a1,r31  // 2*4+ (char *)&our_Elf32_Ehdr
         addi r29,r29,-2*4  // &our_Elf32_Ehdr
@@ -188,21 +175,33 @@ r_reloc= 32 - 1  # use a slot in register save area
         add a0,r29,r26  // &b_info
         sub a1,a1,r26  // total_size
         la  a2,SZ_FRAME(sp)  // &Elf32_Ehdr temporary space
-        stwu sp,-(SZ_FRAME+OVERHEAD)(sp)
         lwz a3,sz_unc(a0)  // sz_elf_headers
 
         call upx_main  // Out: a0= entry
 // entry= upx_main(b_info *a0, total_size a1, Elf32_Ehdr *a2, sz_ehdr a3,
 //      f_exp a4, f_unf a5, Elf32_auxv_t *a6, page_size a7, reloc ARG9)
+        la  sp,SZ_FRAME+OVERHEAD(sp)  // deallocate this frame
         mr r31,a0  // save &entry
 
+// map the first page of /proc/self/exe
+        li a5,0  // offset
+        movr a4,r_fd
+        li a3,MAP_PRIVATE
+        li a2,PROT_READ
+        movr a1,r27  // PAGE_SIZE
+        li a0,0  // kernel chooses where
+        call mmap
+// close /proc/self/exe
+        movr a0,r_fd
+        call close
+
         movr a0,adru
-        movr a2,lenu
+        movr a1,lenu
         call munmap  // unmap compressed program; /proc/self/exe disappears
 
         mtlr r31  // entry address
-        lmw r2,OVERHEAD+SZ_FRAME+2*4-4(sp)  // restore registers r2 thru r31
-        la  sp,OVERHEAD+SZ_FRAME+32*4(sp)  // deallocate space
+        lmw r2,SZ_FRAME+2*4-4(sp) // restore registers r2 thru r31
+        la sp, SZ_FRAME+32*4(sp)  // deallocate outer frame
         ret  // enter /lib/ld.so.1
 
 SYS_exit=  1
@@ -229,6 +228,8 @@ no_fail:
 
 exit: .globl exit
         li r0,SYS_exit;        b 5f
+readlink: .globl readlink
+        li r0,SYS_readlink; 5: b 5f
 read: .globl read
         li r0,SYS_read;     5: b 5f
 open: .globl open

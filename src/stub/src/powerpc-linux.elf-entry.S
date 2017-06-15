@@ -186,6 +186,7 @@ sz_auxv= 2*4
         li     a3,MAP_PRIVATE | MAP_ANONYMOUS
         li     a2,PROT_READ | PROT_WRITE | PROT_EXEC  // 'fold' will execute here
         lwz    a1,LLENM - LrUNF(r30)
+li a1,2*4096  // FIXME: .sz_unc
         lwz    a0,LADRM - LrUNF(r30)
         li     r0,__NR_mmap
         mr     t4,a0  // save address being allocated
@@ -231,7 +232,7 @@ L80:
 //      blr  # goto return address
 
 main:
-  ////teq r0,r0  // debugging
+////    teq r0,r0  // debugging
         stwu r1,-(SZ_FRAME+32*4)(sp)  // allocate space (keeping 0 mod 16), save r1
         stmw r2,  SZ_FRAME+2*4-4(sp) // save registers r2 thru r31
         mflr r31  // &decompress

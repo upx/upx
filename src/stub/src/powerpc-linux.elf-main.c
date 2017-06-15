@@ -34,6 +34,49 @@
 #undef PAGE_MASK
 #undef PAGE_SIZE
 
+#ifndef DEBUG  //{
+#define DEBUG 0
+#endif  //}
+
+#if !DEBUG //{
+#define DPRINTF(fmt, args...) /*empty*/
+#else  //}{
+// DPRINTF is defined as an expression using "({ ... })"
+// so that DPRINTF can be invoked inside an expression,
+// and then followed by a comma to ignore the return value.
+// The only complication is that percent and backslash
+// must be doubled in the format string, because the format
+// string is processd twice: once at compile-time by 'asm'
+// to produce the assembled value, and once at runtime to use it.
+#if defined(__powerpc__)  //{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("bl 0f; .string \"" fmt "\"; .balign 4; 0: mflr %0" \
+/*out*/ : "=r"(r_fmt) \
+/* in*/ : \
+/*und*/ : "lr"); \
+    dprintf(r_fmt, args); \
+})
+#elif defined(__x86_64) //}{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("call 0f; .asciz \"" fmt "\"; 0: pop %0" \
+/*out*/ : "=r"(r_fmt) ); \
+    dprintf(r_fmt, args); \
+})
+#elif defined(__AARCH64EL__) //}{
+#define DPRINTF(fmt, args...) ({ \
+    char const *r_fmt; \
+    asm("bl 0f; .string \"" fmt "\"; .balign 4; 0: mov %0,x30" \
+/*out*/ : "=r"(r_fmt) \
+/* in*/ : \
+/*und*/ : "x30"); \
+    dprintf(r_fmt, args); \
+})
+#endif  //}
+
+static int dprintf(char const *fmt, ...); // forward
+#endif  /*}*/
 
 /*************************************************************************
 // configuration section
@@ -61,6 +104,7 @@ xread(Extent *x, char *buf, size_t count)
 {
     char *p=x->buf, *q=buf;
     size_t j;
+    DPRINTF("xread %%p(%%x %%p) %%p %%x\\n", x, x->size, x->buf, buf, count);
     if (x->size < count) {
         exit(127);
     }
@@ -76,7 +120,7 @@ xread(Extent *x, char *buf, size_t count)
 // util
 **************************************************************************/
 
-#if 1  //{  save space
+#if 0  //{  save space
 #define ERR_LAB error: exit(127);
 #define err_exit(a) goto error
 #else  //}{  save debugging time
@@ -84,6 +128,7 @@ xread(Extent *x, char *buf, size_t count)
 static void
 err_exit(int a)
 {
+    DPRINTF("err_exit %%x\\n", a);
     (void)a;  // debugging convenience
     exit(127);
 }
@@ -111,6 +156,8 @@ unpackExtent(
     f_unfilter *f_unf
 )
 {
+    DPRINTF("unpackExtent in=%%p(%%x %%p)  out=%%p(%%x %%p)  %%p %%p\\n",
+        xi, xi->size, xi->buf, xo, xo->size, xo->buf, f_decompress, f_unf);
     while (xo->size) {
         struct b_info h;
         //   Note: if h.sz_unc == h.sz_cpr then the block was not
@@ -131,6 +178,7 @@ ERR_LAB
         }
         if (h.sz_cpr > h.sz_unc
         ||  h.sz_unc > xo->size ) {
+            DPRINTF("sz_cpr=%%x  sz_unc=%%x  xo->size=%%x\\n", h.sz_cpr, h.sz_unc, xo->size);
             err_exit(5);
         }
         // Now we have:
@@ -171,8 +219,11 @@ upx_bzero(char *p, size_t len)
 static void
 auxv_up(Elf32_auxv_t *av, unsigned type, unsigned const value)
 {
-    if (av)
+    if (!av)
+        return;
+    DPRINTF("\\nauxv_up av=%%p  %%d  %%p\\n", av, type, value);
     for (;; ++av) {
+        DPRINTF("  %%d  %%p\\n", av->a_type, av->a_un.a_val);
         if (av->a_type==type || (av->a_type==AT_IGNORE && type!=AT_NULL)) {
             av->a_type = type;
             av->a_un.a_val = value;
@@ -242,6 +293,7 @@ do_xmap(
     unsigned long const reloc = xfind_pages(
         ((ET_DYN!=ehdr->e_type) ? MAP_FIXED : 0), phdr, ehdr->e_phnum,
           &v_brk, PAGE_MASK);
+    DPRINTF("do_xmap reloc=%%p", reloc);
     int j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j)
     if (xi && PT_PHDR==phdr->p_type) {
@@ -312,13 +364,10 @@ void *upx_main(
     Elf32_Addr reloc  // IN OUT; value result for ET_DYN
 )
 {
-    ACC_UNUSED(sz_ehdr);
-
     int const page_mask = -page_size;
     if ((page_size != 4096) && (page_size != 65536))
        exit(232);
-
-    Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
+    ACC_UNUSED(sz_ehdr);
 
     Extent xo, xi1, xi2;
     xo.buf  = (char *)ehdr;
@@ -329,18 +378,19 @@ void *upx_main(
     // ehdr = Uncompress Ehdr and Phdrs
     unpackExtent(&xi2, &xo, f_decompress, 0);  // never filtered?
 
+    DPRINTF("upx_main1  .e_entry=%%p  reloc=%%p\\n", ehdr->e_entry, reloc);
     // AT_PHDR.a_un.a_val  is set again by do_xmap if PT_PHDR is present.
-    auxv_up(av, AT_PHDR  , (unsigned)phdr->p_vaddr);
-    auxv_up(av, AT_PHNUM , ehdr->e_phnum);
+    auxv_up(av, AT_PHDR , reloc + ehdr->e_phoff);
+    auxv_up(av, AT_PHNUM,         ehdr->e_phnum);
     //auxv_up(av, AT_PHENT , ehdr->e_phentsize);  /* this can never change */
     //auxv_up(av, AT_PAGESZ, PAGE_SIZE);  /* ld-linux.so.2 does not need this */
 
+    Elf32_Phdr *phdr = (Elf32_Phdr *)(1+ ehdr);
     unsigned const orig_e_type = ehdr->e_type;
-    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -fpie /*FIXME: and not pre-linked*/
+    if (ET_DYN==orig_e_type /*&& phdr->p_vaddr==0*/) { // -pie /*FIXME: and not pre-linked*/
         // Unpacked must start at same place as packed, so that brk(0) works.
         ehdr->e_type = ET_EXEC;
-        auxv_up(av, AT_ENTRY, ehdr->e_entry + reloc);
-        phdr = (Elf32_Phdr *)(1+ ehdr);
+        auxv_up(av, AT_ENTRY, ehdr->e_entry += reloc);
         unsigned j;
         for (j=0; j < ehdr->e_phnum; ++phdr, ++j) {
             phdr->p_vaddr += reloc;
@@ -348,13 +398,16 @@ void *upx_main(
         }
     }
 
-    Elf32_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc, page_mask);  // "rewind"
+    // De-compress Ehdr again into actual position, then de-compress the rest.
+    Elf32_Addr entry = do_xmap(ehdr, &xi1, 0, av, f_decompress, f_unf, &reloc, page_mask);
+    DPRINTF("upx_main2  entry=%%p  reloc=%%p\\n", entry, reloc);
     if (ET_DYN!=orig_e_type) {
         auxv_up(av, AT_ENTRY , entry);
     }
 
   { // Map PT_INTERP program interpreter
-    int j;
+    phdr = (Elf32_Phdr *)(1+ ehdr);
+    unsigned j;
     for (j=0; j < ehdr->e_phnum; ++phdr, ++j) if (PT_INTERP==phdr->p_type) {
         char const *const iname = reloc + (char const *)phdr->p_vaddr;
         int const fdi = open(iname, O_RDONLY, 0);
@@ -365,7 +418,8 @@ void *upx_main(
 ERR_LAB
             err_exit(19);
         }
-        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, 0, page_mask);
+        entry = do_xmap(ehdr, 0, fdi, 0, 0, 0, &reloc, page_mask);
+        auxv_up(av, AT_BASE, reloc);  // musl
         close(fdi);
     }
   }
@@ -373,4 +427,130 @@ ERR_LAB
     return (void *)entry;
 }
 
+#if DEBUG  //{
+
+#if defined(__powerpc__) //{
+#define __NR_write 4
+
+ssize_t
+write(int fd, void const *ptr, size_t len)
+{
+    register  int        sys asm("r0") = __NR_write;
+    register  int         a0 asm("r3") = fd;
+    register void const  *a1 asm("r4") = ptr;
+    register size_t       a2 asm("r5") = len;
+    __asm__ __volatile__("sc"
+    : "+r"(sys), "+r"(a0), "+r"(a1), "+r"(a2)
+    :
+    : "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13"
+    );
+    return a0;
+}
+#endif  //}
+
+static int
+unsimal(unsigned x, char *ptr, int n)
+{
+    unsigned m = 10;
+    while (10 <= (x / m)) m *= 10;
+    while (10 <= x) {
+        unsigned d = x / m;
+    x -= m * d;
+        m /= 10;
+        ptr[n++] = '0' + d;
+    }
+    ptr[n++] = '0' + x;
+    return n;
+}
+
+static int
+decimal(int x, char *ptr, int n)
+{
+    if (x < 0) {
+        x = -x;
+        ptr[n++] = '-';
+    }
+    return unsimal(x, ptr, n);
+}
+
+static int
+heximal(unsigned long x, char *ptr, int n)
+{
+    unsigned j = -1+ 2*sizeof(unsigned long);
+    unsigned long m = 0xful << (4 * j);
+    for (; j; --j, m >>= 4) { // omit leading 0 digits
+        if (m & x) break;
+    }
+    for (; m; --j, m >>= 4) {
+        unsigned d = 0xf & (x >> (4 * j));
+        ptr[n++] = ((10<=d) ? ('a' - 10) : '0') + d;
+    }
+    return n;
+}
+
+#define va_arg      __builtin_va_arg
+#define va_end      __builtin_va_end
+#define va_list     __builtin_va_list
+#define va_start    __builtin_va_start
+
+static int
+dprintf(char const *fmt, ...)
+{
+    int n= 0;
+    char const *literal = 0;  // NULL
+    char buf[24];  // ~0ull == 18446744073709551615 ==> 20 chars
+    va_list va; va_start(va, fmt);
+    for (;;) {
+        char c = *fmt++;
+        if (!c) { // end of fmt
+            if (literal) {
+                goto finish;
+            }
+            break;  // goto done
+        }
+        if ('%'!=c) {
+            if (!literal) {
+                literal = fmt;  // 1 beyond start of literal
+            }
+            continue;
+        }
+        // '%' == c
+        if (literal) {
+finish:
+            n += write(2, -1+ literal, fmt - literal);
+            literal = 0;  // NULL
+            if (!c) { // fmt already ended
+               break;  // goto done
+            }
+        }
+        switch (c= *fmt++) { // deficiency: does not handle _long_
+        default: { // un-implemented conversion
+            n+= write(2, -1+ fmt, 1);
+        } break;
+        case 0: { // fmt ends with "%\0" ==> ignore
+            goto done;
+        } break;
+        case 'u': {
+            n+= write(2, buf, unsimal(va_arg(va, unsigned), buf, 0));
+        } break;
+        case 'd': {
+            n+= write(2, buf, decimal(va_arg(va, int), buf, 0));
+        } break;
+        case 'p': {
+            buf[0] = '0';
+            buf[1] = 'x';
+            n+= write(2, buf, heximal((unsigned long)va_arg(va, void *), buf, 2));
+        } break;
+        case 'x': {
+            buf[0] = '0';
+            buf[1] = 'x';
+            n+= write(2, buf, heximal(va_arg(va, int), buf, 2));
+        } break;
+        } // 'switch'
+    }
+done:
+    va_end(va);
+    return n;
+}
+#endif  //}
 /* vim:set ts=4 sw=4 et: */
