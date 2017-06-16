@@ -130,6 +130,7 @@ section LEXEC020
 
 #define PAGE_SHIFT 12
 #define PAGE_SIZE ( 1 << PAGE_SHIFT)
+#define PAGE_MASK (~0 << PAGE_SHIFT)
 
 #define MAP_FIXED     0x10
 #define MAP_PRIVATE   0x02
@@ -138,6 +139,7 @@ section LEXEC020
 #define PROT_WRITE     2
 #define PROT_EXEC      4
 #define __NR_mmap     90
+#define __NR_mprotect 125
 #define szElf32_Ehdr 0x34
 #define p_memsz  5*4
 
@@ -151,7 +153,7 @@ msg_SELinux:
         pop edx  // length
         call L71
 L70:
-        .ascii "PROT_EXEC|PROT_WRITE failed.\n"
+        .ascii "mmap failed.\n"
 L71:
         pop ecx  // message text
         push 2; pop ebx  // fd stderr
@@ -191,7 +193,7 @@ section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
         push 0  // offset
         push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
         push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push PROT_READ | PROT_WRITE | PROT_EXEC
+        push PROT_READ | PROT_WRITE
         push [esi]  // length {fold_begin}.sz_unc
         push eax  // destination
         mov ebx, esp  // address of parameter vector for __NR_mmap
@@ -203,6 +205,7 @@ section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
         sub ecx,edx  // - &Elf32_Ehdr
         mov [4*4 + esp],ecx  // LENU
         xchg eax,edx  // edx= new fold_begin
+        push ebp  // P_12  old f_exp  (also new f_exp)
 
 section LEXECDYN  // in: eax= roundup(PAGE_SIZE, hi(.text))
 // VDSO might be at [eax]; if so, then erase AT_SYSINFO and AT_SYSINFO_EHDR.
@@ -247,7 +250,7 @@ AT_SYSINFO_EHDR=33
         push 0  // offset
         push -1  // *BSD demands -1==fd for mmap(,,,MAP_ANON,,)
         push MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS
-        push PROT_READ | PROT_WRITE | PROT_EXEC
+        push PROT_READ | PROT_WRITE
         push edi  // length
         push eax  // destination
         mov ebx, esp  // address of parameter vector for __NR_mmap
@@ -264,6 +267,7 @@ AT_SYSINFO_EHDR=33
         xchg eax, ebx  // %ebx= &Elf32_Ehdr of this program
 
 // Copy to new pages
+        push ebp  // P_11  old f_exp
         sub edi,[esi]  // - {fold_begin}.sz_unc
         lea ecx,[3+ edi]  // len
         push edi; mov edi,edx  // dst
@@ -272,15 +276,20 @@ AT_SYSINFO_EHDR=33
           add ebp,edx
           mov ebx,edx  // reloc &Elf32_Ehdr
         shr ecx,2; rep movsd
+
         mov edx,edi  // new &fold_begin
         pop esi
         pop edi
+        pop eax  // P_11
         sub edi,offset eof  // edi= sz_pack2
         push edi  // LENX
+        push eax  // P_12  old f_exp (has PROT_EXEC)
 
 section LEXEC025  // entry edx= new fold_begin; esi= &{fold_begin}.b_info
         push edx  // P_10  &retaddr= fold_begin
-        lodsd; push eax  // {fold_begin}.sz_unc  (maximum dstlen for lzma)
+        lodsd  // eax= {fold_begin}.sz_unc
+        push eax; push edx  // P_13  params for mprotect
+        push eax  // {fold_begin}.sz_unc  (maximum dstlen for lzma)
         mov ecx,esp  // save &dstlen
         push eax  // space for 5th param
         push ecx  // &dstlen
@@ -290,9 +299,23 @@ section LEXEC025  // entry edx= new fold_begin; esi= &{fold_begin}.b_info
         lodsd     // last 4 bytes of b_info
         mov [4*3 + esp],eax
         push esi  // &compressed_data
-        call ebp  // decompress(&src, srclen, &dst, &dstlen, b_info.misc)
+        call [9*4 + esp]  // old_f_exp(&src, srclen, &dst, &dstlen, b_info.misc)
         add esp, 0+(5+1)*4  // args to decompress
-        ret      // P_10  &destination
+
+        pop ebx; pop ecx  // P_13  fold_begin, .sz_unc
+        sub ebx,ebp  // extend down to new f_exp
+        add ecx,ebx  // len(fold_begin) + len(new f_exp)
+        mov ebx,ebp  // start at new f_exp
+        mov eax,ebx  // base
+        and eax,~PAGE_MASK  // fragment on low end
+        sub ebx,eax  // round down to page boundary
+        add ecx,eax  // increase length
+
+        push PROT_READ | PROT_EXEC; pop edx
+        push __NR_mprotect; pop eax; int 0x80
+
+        ret 4*1  // P_10 jmp; P_12 toss
+
 main:
         pop ebp  // &decompress
         call unfold

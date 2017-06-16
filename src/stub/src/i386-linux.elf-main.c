@@ -636,14 +636,14 @@ do_xmap(int const fdi, Elf32_Ehdr const *const ehdr, Extent *const xi,
 #  define LEN_OVER 0
 #endif  /*}*/
 
-        if (xi) {
+        if (xi) { // compresed source: mprotect(,,prot) later
             if (addr != mmap_privanon(addr, LEN_OVER + mlen,
-                    prot | PROT_WRITE, MAP_FIXED) )
+                    PROT_WRITE | PROT_READ, MAP_FIXED) )
                 err_exit(6);
             unpackExtent(xi, &xo, (f_expand *)fdi,
                 ((PROT_EXEC & prot) ? f_unf : 0) );
         }
-        else {
+        else {  // PT_INTERP
             if (addr != mmap(addr, mlen, prot, MAP_FIXED | MAP_PRIVATE,
                     fdi, phdr->p_offset - frag) )
                 err_exit(8);
