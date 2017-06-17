@@ -145,6 +145,7 @@ section LEXEC020
 
 #define __NR_write 4
 #define __NR_exit  1
+EINVAL= 22
 
 #define pushsbli .byte 0x6a,  /* push sign-extended byte to long immediate*/
 
@@ -254,8 +255,15 @@ AT_SYSINFO_EHDR=33
         push edi  // length
         push eax  // destination
         mov ebx, esp  // address of parameter vector for __NR_mmap
+0:
         push __NR_mmap; pop eax; int 0x80  // changes only %eax; %edx is live
-        cmp eax,[ebx]; jne msg_SELinux  // not the expected address (includes error)
+        sub ecx,ecx; cmp [ebx],ecx; je 7f  // "any address" always succeeds
+        cmp eax,[ebx]; je 7f  // success
+          mov [ebx],ecx  // any addr
+          mov [word ptr 3*4 + ebx], MAP_PRIVATE | MAP_ANONYMOUS  // not MAP_FIXED
+        cmp eax,-EINVAL; je 0b
+        jmp msg_SELinux
+7:
         add esp,6*4
         pop ecx  // O_BINFO
         push eax  // ADRU

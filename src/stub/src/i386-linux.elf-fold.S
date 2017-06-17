@@ -94,16 +94,21 @@ F_fd= 4*4  // frame offset to fd
         mov ecx,5*2; rep stosd  // 5 extra slots of AT_IGNORE
         dec eax; stosd; stosd  // 0, AT_NULL
         sub [-2*4 + ebp],edi  // -len_aux
-        push edi  // &new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+        push edi  // P_07  &new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
         push esi  // &strings,&new_aux[N],-len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,fd,entry,argc
 
-        mov edx,-5*2*4 -1+ PATH_MAX  // buflen
-        mov ecx,edi  // buffer
         call 1f
 0:
         .asciz "/proc/self/exe"
 1:
         pop ebx  // path
+        sub ecx,ecx  // O_RDONLY
+        push __NR_open; pop eax; int 0x80
+        mov [F_fd + ebp],eax  // fd for later mmap
+
+        mov edx,-5*2*4 -1+ PATH_MAX  // buflen
+        mov ecx,edi  // buffer
+        // mov ebx,ebx  // name
         push __NR_readlink; pop eax; int 0x80; test eax,eax; jns 0f
         mov ecx,ebx  // point at name
         mov eax,-1+ (1b - 0b)  // len
@@ -120,26 +125,32 @@ F_fd= 4*4  // frame offset to fd
         mov eax,[-1*4 + ebp]; mov [eax],edi  // new_env[0]
         and edi,~3  // word align
 
-        sub ecx,ecx  // O_RDONLY
-        // mov ebx,ebx  // name
-        push __NR_open; pop eax; int 0x80
-        mov [F_fd + ebp],eax  // fd for later mmap
+        pop esi  // P_07  &new_aux[N]; -len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
+// Final sp must be 0 mod 8.  There are now 10 words below argc.
+        mov ecx,esi  // last
+        sub ecx,esp  // length of moved block
+        mov eax,ecx
+        xor eax,edi  // check parity of purported destination
+        and eax,4
+        sub edi,eax  // align &new_aux[last]
 
-        pop esi  // &new_aux[N]; -len_aux,&new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
         pop edx  // -len_aux; &new_env[0]; f_exp,LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
           add edx,edi  // edx= &final_aux[0]
 
         scasd  // edi -= 4
-                mov ecx,esi
         lodsd  // esi -= 4
-                sub ecx,esp
-                shr ecx,2
-        rep movsd
-        lea esp,[4+ edi]
-          mov edi,edx  // &final_aux[0]
+        shr ecx,2; dec ecx; rep movsd  // dec: compensate for P_07
    cld
+// Clear the vacated stack, for buggy programs that assume it is 0
+        lea ecx,[1*4+ edi]  // correct for 'std'
+        xor eax,eax  // 0
+        sub ecx,esp
+        mov edi,esp
+        shr ecx,2; rep stosd
+        mov esp,edi
+          mov edi,edx  // &final_aux[0]
 
-        pop ecx  // toss &new_env[0]
+        pop eax  // toss &new_env[0]
         pop ebp  // f_exp
 // stack is back to original state: LENX,ADRX,slide,fd,LENU,ADRU,entry,argc
 
@@ -160,16 +171,25 @@ F_fd= 4*4  // frame offset to fd
 .extern upx_main
         call upx_main  // returns entry address
         dec edi
-        add esp, (8 +1)*4 + MAX_ELF_HDR + OVERHEAD  // 8 params, slide, un-alloca
-        mov [3*4 + esp],eax  // entry
-        pop ecx  // fd
-        push edi  // auxv
-        push ecx  // fd, auxv, LENU, ADRU, entry, argc
+
+// Buggy programs may depend on uninit stack being 0, so clear what we used.
+        mov esi,eax  // save entry
+        mov edx,edi  // save auxv
+        mov edi,esp
+        mov ecx,((8 +1)*4 + MAX_ELF_HDR + OVERHEAD) >>2  // 8 params, slide, un-alloca
+        xor eax,eax  // 0
+        rep stosd  // clear frame on exit
+        mov esp,edi  // end of frame
+
+        mov [3*4 + esp],esi  // entry
+        pop edi  // fd
+        push edx  // auxv
+        push edi  // fd, auxv, LENU, ADRU, entry, argc
 
         sub ebp,ebp  // 0 block in file
-        mov edi,ecx  // fd
-        mov esi,MAP_PRIVATE
-        mov edx,PROT_READ
+        // edi has fd
+        push MAP_PRIVATE; pop esi
+        push PROT_READ; pop edx
         mov ecx,PAGE_SIZE
         sub ebx,ebx  // 0 ==> Linux chooses page frame
         push __NR_mmap; pop eax; int 0x80
