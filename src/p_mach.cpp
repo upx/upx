@@ -1639,6 +1639,10 @@ int PackMachBase<T>::canUnpack()
         return false;
     my_cpusubtype = mhdri.cpusubtype;
 
+    int headway = (int)mhdri.sizeofcmds;
+    if (1024 < headway) {
+        infoWarning("Mach_header.sizeofcmds(%d) > 1024", headway);
+    }
     rawmseg = (Mach_segment_command *)new char[(unsigned) mhdri.sizeofcmds];
     fi->readx(rawmseg, mhdri.sizeofcmds);
 
@@ -1674,6 +1678,12 @@ int PackMachBase<T>::canUnpack()
                 }
             }
             pos_next = segptr->filesize + segptr->fileoff;
+            if ((headway -= ptr->cmdsize) < 0) {
+                infoWarning("Mach_command[%u]{@%lu}.cmdsize = %u", j,
+                    sizeof(mhdri) + mhdri.sizeofcmds - (headway + ptr->cmdsize),
+                    (unsigned)ptr->cmdsize);
+                throwCantUnpack("sum(.cmdsize) exceeds .sizeofcmds");
+            }
         }
         else if (Mach_command::LC_UNIXTHREAD==ptr->cmd) {
             rip = entryVMA = threadc_getPC(ptr);
@@ -1777,15 +1787,15 @@ int PackMachBase<T>::canUnpack()
             // The first non-zero word scanning backwards from __LINKEDIT.fileoff
             // is the total length of compressed data which preceeds it
             //(distance to l_info), so that's another method.
-            fi->seek(offLINK-0x1000, SEEK_SET);
+            fi->seek(offLINK - 0x1000, SEEK_SET);
             fi->readx(buf, 0x1000);
             unsigned const *const lo = (unsigned const *)&buf[0];
             unsigned const *p;
             for (p = (unsigned const *)&buf[0x1000]; p > lo; ) if (*--p) {
                 overlay_offset  = *(TE32 const *)p;
                 if ((off_t)overlay_offset < offLINK) {
-                    overlay_offset -= (char const *)p - (char const *)lo
-                        + (offLINK - 0x1000) - sizeof(l_info);
+                    overlay_offset = ((char const *)p - (char const *)lo) +
+                        (offLINK - 0x1000) - overlay_offset + sizeof(l_info);
                     fi->seek(overlay_offset, SEEK_SET);
                     fi->readx(buf, bufsize);
                     if (b_ptr->sz_unc < 0x4000
