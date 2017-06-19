@@ -169,6 +169,7 @@ unfold:
         mov eax, edx    // %eax= &Elf32_Ehdr of this program
 // esi= &{ b_info:{sz_unc, sz_cpr, 4{byte}}, compressed_data...}
 
+section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
 // Linux requires PF_W in order to create .bss (implied by .p_filesz!=.p_memsz),
 // but strict SELinux (or PaX, grSecurity) forbids PF_W with PF_X.
 // So first PT_LOAD must be PF_R|PF_X only, and .p_memsz==.p_filesz.
@@ -177,7 +178,6 @@ unfold:
         add eax,   PAGE_SIZE -1
         and eax, 0-PAGE_SIZE
 
-section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
         pop ecx  // O_BINFO
         push edx  // ADRU
         push edx  // space for LENU
@@ -204,44 +204,44 @@ section LEXECEXE  // in: eax= roundup(PAGE_SIZE, hi(.text))
         mov [4*4 + esp],ecx  // LENU
         xchg eax,edx  // edx= new fold_begin
 
-section LEXECDYN  // in: eax= roundup(PAGE_SIZE, hi(.text))
-// VDSO might be at [eax]; if so, then erase AT_SYSINFO and AT_SYSINFO_EHDR.
-// This happens with some kernels (Linux-2.6.34) for ET_DYN when stack is
-// unlimited (ulimit -s unlimited), because the only PT_LOAD of compressed
-// ET_DYN is placed at TASK_UNMAPPED_BASE (TASK_SIZE/3, typically 0x40000000)
-// and VDSO follows.  When stack is limited, then allocation is from high
-// (just below stack) to low: VDSO will be below our PT_LOAD, and mmap()
-// below will steal the lowest page of stack.
-        mov ecx,[2*4+ esp]  // argc
-        push esi
-        push eax  // P_05
-        lea esi,[esp + 4*ecx + (3+2+1)*4]  // &env
+section LEXECDYN
+// VDSO might interfere with our desired placement; move down to avoid it
+//  edx= &Elf32_Ehdr this ET_DYN (stub and compressed data)
+//  esi= &b_info of fold_begin
+//  edi= sz_pack2
+//  esp/ O_BINFO,%entry,argc,...
+        add edi,[esi]  // sz_pack2 + {fold_begin}.sz_unc
+        add edi,offset eof  // + sizeof(this_stub)
+        push edx; push edi  // P_03
+        mov ecx,edx  // hi_va of desired placement
+        sub edx,edi  // tentative placement
+        and edx,-PAGE_SIZE  // on page boundary
+        mov edi,ecx  // hi_va
+        sub edi,edx  // length in whole pages
+
+        mov ecx,[4*4+ esp]  // argc
+        push esi  // P_05
+        lea esi,[esp + 4*ecx + (3+3+1)*4]  // &env
 1:
         lodsd; test eax,eax; jne 1b  // skip env
 2:
-        lodsd; test eax,eax; je 5f  // done with auxv
-AT_IGNORE=  1
+        lodsd; test eax,eax; je 5f  // AT_NULL; done with auxv
 AT_SYSINFO= 32
 AT_SYSINFO_EHDR=33
         subb al,AT_SYSINFO
         cmpb al,AT_SYSINFO_EHDR - AT_SYSINFO
         lodsd
         ja 2b  // not AT_SYSINFO*
-        xor eax,[esp]  // P_05
-        shr eax,PAGE_SHIFT
-        jne 2b  // no conflict with decompressed fold_elf86
-        movb [esi - 2*4],AT_IGNORE
+        sub eax,edx  // offset
+        sub eax,edi  // length
+        jnb 2b  // no conflict with the pages we will map
+        add edx,eax  // move down
+        and edx,-PAGE_SIZE  // to page boundary
         jmp 2b
 5:
-        pop eax  // P_05
-        pop esi
-
-// 2017-06-10 -pie is not so easy
-        mov eax,edx  // &Elf32_Ehdr of this stub
-        add edi,[esi]  // sz_pack2 + {fold_begin}.sz_unc
-        add edi,offset eof  // sz_this_stub
-        sub eax,edi  // dst for new pages
-        and eax,-PAGE_SIZE  // round down
+        pop esi  // P_05
+        mov eax,edx  // placement
+        pop edi; pop edx  // P_03
 
 // mmap new pages
         push 0  // offset
@@ -265,7 +265,7 @@ AT_SYSINFO_EHDR=33
 
 // Copy to new pages
         sub edi,[esi]  // - {fold_begin}.sz_unc
-        lea ecx,[3+ edi]  // len
+        lea ecx,[3+ edi]  // len; 3: decompressor overrun on x86*
         push edi; mov edi,edx  // dst
         push esi; mov esi,ebx  // src
           sub ebp,ebx  // reloc &f_exp
